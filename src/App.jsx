@@ -1,13 +1,13 @@
 import { Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-
-// Pages
 import Home from "./pages/Home";
 import Articles from "./pages/Articles";
+import Article from "./pages/Article";
 import Boutique from "./pages/Boutique";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+
 
 export default function App() {
   return (
@@ -18,21 +18,15 @@ export default function App() {
         <div className="absolute bottom-0 right-1/4 w-1/2 h-40 bg-white opacity-10 blur-2xl rounded-full" />
       </div>
 
-      {/* Navbar */}
       <Navbar />
-
-      {/* Routes */}
-      <main>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/articles" element={<Articles />} />
-          <Route path="/boutique" element={<Boutique />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-        </Routes>
-      </main>
-
-      {/* Footer */}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/articles" element={<Articles />} />
+        <Route path="/articles/:slug" element={<Article />} />
+        <Route path="/boutique" element={<Boutique />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+      </Routes>
       <Footer />
     </div>
   );

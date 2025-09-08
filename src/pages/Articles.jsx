@@ -1,24 +1,27 @@
 import { Link } from "react-router-dom";
-import { Mountain, Wind, Snowflake, FileText } from "lucide-react";
+import articles from "../content/articles.json";
 
 export default function Articles() {
-  const posts = [
-    { title: "Trail en sandales : mon premier 100 miles", desc: "Un récit d’expérience et d’exploration des limites physiques et mentales.", icon: <Mountain className="text-[#8CB9BD]" size={28}/>, link: "#" },
-    { title: "Respiration et états de conscience", desc: "Analyse scientifique des fréquences respiratoires et leur lien avec les ondes cérébrales.", icon: <Wind className="text-[#8CB9BD]" size={28}/>, link: "#" },
-    { title: "L’hormèse par le froid et le chaud", desc: "Approche pratique et scientifique des expositions extrêmes pour renforcer le corps.", icon: <Snowflake className="text-[#8CB9BD]" size={28}/>, link: "#" },
-  ];
-
   return (
-    <section className="p-12 bg-[#FEFBF6] relative">
-      <h3 className="text-3xl font-bold text-center mb-8 text-[#8CB9BD]">Carnets du Lab</h3>
+    <section className="p-12 bg-[#FEFBF6]">
+      <h2 className="text-3xl font-bold mb-6 text-[#8CB9BD] text-center">
+        Carnets du Lab
+      </h2>
       <div className="grid md:grid-cols-3 gap-8">
-        {posts.map((post, idx) => (
-          <div key={idx} className="bg-white rounded-2xl shadow-md p-6 hover:shadow-2xl transition relative overflow-hidden">
-            <div className="relative mb-4">{post.icon}</div>
-            <h4 className="relative text-xl font-semibold mb-3 text-[#B67352]">{post.title}</h4>
-            <p className="relative text-sm mb-4">{post.desc}</p>
-            <Link to={post.link} className="relative text-[#EFB159] font-semibold hover:underline flex items-center space-x-1">
-              <FileText size={16}/> <span>Lire l’article</span>
+        {articles.map((article) => (
+          <div
+            key={article.slug}
+            className="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition"
+          >
+            <h3 className="text-xl font-semibold text-[#B67352] mb-2">
+              {article.title}
+            </h3>
+            <p className="text-sm mb-4">{article.excerpt}</p>
+            <Link
+              to={`/articles/${article.slug}`}
+              className="text-[#EFB159] font-semibold hover:underline"
+            >
+              Lire l’article →
             </Link>
           </div>
         ))}
