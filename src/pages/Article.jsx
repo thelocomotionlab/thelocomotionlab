@@ -20,12 +20,12 @@ export default function Article() {
   if (!article) return <p>Article non trouvé</p>;
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold mb-4">{article.title}</h1>
-      <p className="text-sm text-gray-500 mb-6">{article.date}</p>
-      <div className="prose prose-lg">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+    <article className="p-6 md:p-8 max-w-3xl mx-auto bg-white rounded-xl shadow-card">
+      <h1 className="text-3xl md:text-4xl font-extrabold mb-3">{article.title}</h1>
+      <p className="text-sm text-gray-500 mb-6">{new Date(article.date).toLocaleDateString('fr-FR')}</p>
+      <div className="prose prose-lg max-w-none">
+       <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
       </div>
-    </div>
-  );
-}
+    </article>
+   );
+ }
