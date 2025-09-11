@@ -3,13 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "vite",
+    "prebuild": "node scripts/generate-articles.js",
     "build": "vite build",
-    "preview": "vite preview"
+    "dev": "vite"
   },
   "dependencies": {
     "framer-motion": "^10.18.0",
-    "gray-matter": "^4.0.3",
     "lucide-react": "^0.344.0",
     "marked": "^16.2.1",
     "react": "^18.2.0",
@@ -22,6 +21,7 @@
     "@tailwindcss/typography": "^0.5.16",
     "@vitejs/plugin-react": "^4.0.0",
     "autoprefixer": "^10.4.16",
+    "gray-matter": "^4.0.3",
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.3",
     "vite": "^7.1.5"
