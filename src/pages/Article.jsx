@@ -15,17 +15,10 @@ export default function Article() {
 const mdFiles = import.meta.glob('../content/articles/*.md', { as: 'raw', eager: false });
 
 useEffect(() => {
-  const key = `../content/articles/${slug}.md`;
-  const loader = mdFiles[key];
-
-  if (!loader) {
-    setContent("# Erreur\nArticle introuvable.");
-    return;
-  }
-
-  loader()
-    .then((raw) => {
-      // Retire le front-matter YAML pour ne pas l’afficher dans la page
+  fetch(`/articles/${slug}.md`)
+    .then(res => res.ok ? res.text() : Promise.reject())
+    .then(raw => {
+      // Retirer le front-matter YAML
       const cleaned = raw.replace(/^---[\s\S]*?---\n?/, "");
       setContent(cleaned);
     })
