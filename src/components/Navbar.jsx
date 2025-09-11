@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { BookOpen, Activity, Flame, ShoppingBag, Mail, Menu, X } from "lucide-react";
+import { BookOpen, FlaskConical, Activity, HeartHandshake, Mail, Menu, X, Instagram } from "lucide-react";
 import { useState } from "react";
 import logo from "../assets/logo.png";
 
@@ -10,21 +10,18 @@ export default function Navbar() {
       <div className="flex items-center space-x-3">
         <img src={logo} alt="Locomotion Lab" className="h-12 w-auto" loading="lazy" />
       </div>
-      <nav className="hidden md:flex space-x-6 font-medium" aria-label="Navigation principale">
-        <Link to="/" className="hover:text-[#EFB159] flex items-center space-x-1">
+      <nav className="hidden md:flex items-center space-x-6 font-medium" aria-label="Navigation principale">
+        <Link to="/" className="hover:text-brand-accent flex items-center gap-1">
           <Activity size={18}/> <span>Accueil</span>
         </Link>
-        <Link to="/articles" className="hover:text-[#EFB159] flex items-center space-x-1">
-          <BookOpen size={18}/> <span>Carnets du Lab</span>
+        <Link to="/articles" className="hover:text-brand-accent flex items-center gap-1">
+          <BookOpen size={18}/> <span>Carnets</span>
         </Link>
-        <Link to="/boutique" className="hover:text-[#EFB159] flex items-center space-x-1">
-          <ShoppingBag size={18}/> <span>Boutique</span>
+        <Link to="/projets" className="hover:text-brand-accent flex items-center gap-1">
+          <FlaskConical size={18}/> <span>Projets</span>
         </Link>
-        <Link to="/about" className="hover:text-[#EFB159] flex items-center space-x-1">
-          <Flame size={18}/> <span>À propos</span>
-        </Link>
-        <Link to="/contact" className="hover:text-[#EFB159] flex items-center space-x-1">
-          <Mail size={18}/> <span>Contact</span>
+        <Link to="/soutenir" className="hover:text-brand-accent flex items-center gap-1">
+          <HeartHandshake size={18}/> <span>Soutenir</span>
         </Link>
       </nav>
       {/* Bouton mobile */}
@@ -42,10 +39,9 @@ export default function Navbar() {
         <div id="mobile-menu" className="absolute top-full inset-x-0 bg-white shadow-lg md:hidden">
           <div className="flex flex-col p-4 space-y-3" role="menu" aria-label="Navigation mobile">
             <Link to="/" onClick={() => setOpen(false)} className="py-2">Accueil</Link>
-            <Link to="/articles" onClick={() => setOpen(false)} className="py-2">Carnets du Lab</Link>
-            <Link to="/boutique" onClick={() => setOpen(false)} className="py-2">Boutique</Link>
-            <Link to="/about" onClick={() => setOpen(false)} className="py-2">À propos</Link>
-            <Link to="/contact" onClick={() => setOpen(false)} className="py-2">Contact</Link>
+            <Link to="/articles" onClick={() => setOpen(false)} className="py-2">Carnets</Link>
+            <Link to="/projets" onClick={() => setOpen(false)} className="py-2">Projets</Link>
+            <Link to="/soutenir" onClick={() => setOpen(false)} className="py-2">Soutenir</Link>
           </div>
         </div>
       )}      
