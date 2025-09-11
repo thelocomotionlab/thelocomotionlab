@@ -10,12 +10,28 @@ export default function Article() {
 
   const [content, setContent] = useState("");
 
-  useEffect(() => {
-    import(`../content/articles/${slug}.md`)
-      .then(res => res.text())
-      .then(setContent)
-      .catch(() => setContent("# Erreur\nLe contenu n'a pas pu être chargé."));
-  }, [slug]);
+// Prépare une “carte” de tous les .md disponibles comme texte brut.
+// => pas besoin de plugin Markdown côté build.
+const mdFiles = import.meta.glob('../content/articles/*.md', { as: 'raw', eager: false });
+
+useEffect(() => {
+  const key = `../content/articles/${slug}.md`;
+  const loader = mdFiles[key];
+
+  if (!loader) {
+    setContent("# Erreur\nArticle introuvable.");
+    return;
+  }
+
+  loader()
+    .then((raw) => {
+      // Retire le front-matter YAML pour ne pas l’afficher dans la page
+      const cleaned = raw.replace(/^---[\s\S]*?---\n?/, "");
+      setContent(cleaned);
+    })
+    .catch(() => setContent("# Erreur\nLe contenu n'a pas pu être chargé."));
+}, [slug]);
+
 
   if (!article) return <p>Article non trouvé</p>;
 
