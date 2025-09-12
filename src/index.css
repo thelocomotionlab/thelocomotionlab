@@ -4,9 +4,10 @@
 
 body {
   margin: 0;
-  font-family: sans-serif;
+  @apply font-sans;
   background: theme('colors.brand.bg');
-  color: theme('colors.brand.text');
+/*  color: theme('colors.brand.text');*/
+  color: #374151; /* Tailwind gray-700 pour une lecture confortable */
 }
 
 /* Focus visible pour accessibilité */

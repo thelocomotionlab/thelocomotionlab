@@ -4,9 +4,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        // Keep your current default sans; we’ll only opt-in on headings
-        heading: ['Oswald', 'Montserrat', 'Inter', 'ui-sans-serif', 'system-ui'],
-        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+        heading: ['Ubuntu', 'ui-sans-serif', 'system-ui'],
+        sans: ['Ubuntu', 'ui-sans-serif', 'system-ui'],
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
       },
       colors: {
@@ -21,7 +20,8 @@ export default {
         }
       },
       boxShadow: {
-        card: '0 6px 24px rgba(0,0,0,0.08)'
+        card: '0 6px 24px rgba(0,0,0,0.08)',
+        cta: '0 10px 24px rgba(0,0,0,0.20)', // ajout pour les boutons CTA
       },
       backgroundImage: {
         'lab-grid': 'linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px)'
