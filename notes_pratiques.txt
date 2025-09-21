@@ -1,0 +1,7 @@
+Images :
+- largeur max = 1200px
+- hauteur max = 1600px
+- dpi = 72
+- photos (paysages, portraits) = .jpeg
+- illustrations = .png
+- vecto = .svg

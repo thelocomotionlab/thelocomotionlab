@@ -18,7 +18,9 @@ const articles = files.map(file => {
   return {
     slug,
     title: data.title || slug,
-    date: data.date || null
+    date: data.date || null,
+    cover: data.cover || null,     // Ajout de la cover
+    tags: data.tags || []          // pratique pour filtrer plus tard
   };
 });
 

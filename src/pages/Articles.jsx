@@ -18,7 +18,7 @@ export default function Articles() {
           <button key={t} onClick={()=>setParams({tag: t})} className={`px-3 py-1 rounded-full border ${tag===t ? 'bg-brand-accent text-white' : 'bg-white'}`}>{t}</button>
         ))}
       </div>
-      <div className="grid md:grid-cols-3 gap-8">
+      <div className="grid md:grid-cols-3 gap-8 justify-center">
         {list.map((article) => (
           <div
             key={article.slug}

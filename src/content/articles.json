@@ -1,12 +1,31 @@
 [
   {
-    "slug": "hello-world",
-    "title": "Ceci est un hello world",
-    "date": "2025-08-11"
+    "slug": "2025_09_21_la-genese",
+    "title": "L'an 0 : la genèse du labo",
+    "date": "2025-09-21",
+    "cover": "/images/articles/2025_09_21_la-genese/cover_menez_hom.jpg",
+    "tags": [
+      "ultra-trail",
+      "minimalisme",
+      "expérience perso"
+    ]
   },
   {
     "slug": "trail-100-miles",
     "title": "Trail en sandales : mon premier 100 miles",
-    "date": "2025-08-01"
+    "date": "2025-09-21",
+    "cover": null,
+    "tags": [
+      "ultra-trail",
+      "minimalisme",
+      "expérience perso"
+    ]
+  },
+  {
+    "slug": "hello-world",
+    "title": "Ceci est un hello world",
+    "date": "2025-08-11",
+    "cover": null,
+    "tags": []
   }
 ]
