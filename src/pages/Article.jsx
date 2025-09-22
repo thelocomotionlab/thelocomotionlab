@@ -29,7 +29,7 @@ useEffect(() => {
   if (!article) return <p>Article non trouvé</p>;
 
   return (
-    <article className="p-6 md:p-8 max-w-3xl mx-auto bg-white rounded-xl shadow-card">
+    <article className="p-6 md:p-8 max-w-3xl mx-auto px-4 py-10 bg-white rounded-xl shadow-card">
       {article.cover && (
         <img
           src={article.cover}
@@ -41,12 +41,10 @@ useEffect(() => {
       <p className="text-sm text-gray-500 mb-6">
         {new Date(article.date).toLocaleDateString("fr-FR")}
       </p>
-      <div className="prose prose-neutral md:prose-lg max-w-none">
+      <div className="prose prose-lg max-w-none font-lora text-gray-800 leading-relaxed">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
       </div>
     </article>
    );
  }
-
-
 

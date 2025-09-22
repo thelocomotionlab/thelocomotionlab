@@ -20,12 +20,5 @@
       "minimalisme",
       "expérience perso"
     ]
-  },
-  {
-    "slug": "hello-world",
-    "title": "Ceci est un hello world",
-    "date": "2025-08-11",
-    "cover": null,
-    "tags": []
   }
 ]

@@ -6,7 +6,9 @@ export default {
       fontFamily: {
         heading: ['Ubuntu', 'ui-sans-serif', 'system-ui'],
         sans: ['Ubuntu', 'ui-sans-serif', 'system-ui'],
-        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+        serif: ['"Ubuntu Serif"', 'Georgia', 'serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        lora: ['Lora', 'serif']
       },
       colors: {
         brand: {
