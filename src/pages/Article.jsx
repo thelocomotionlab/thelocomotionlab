@@ -34,7 +34,8 @@ export default function Article() {
       )}
 
       <div className="bg-white rounded-xl shadow-card p-6 md:p-10">
-        <h1 className="text-4xl md:text-5xl font-lora font-bold mb-3">
+{/*        <h1 className="text-4xl md:text-5xl font-lora font-bold mb-3">*/}
+        <h1 className="text-4xl md:text-5xl font-sans font-bold mb-3">
           {article.title}
         </h1>
         <p className="text-sm text-gray-500 mb-8">
@@ -72,7 +73,7 @@ export default function Article() {
         {/* Bouton retour au Labo */}
         <div className="mt-12 text-center">
           <Link
-            to="/carnets"
+            to="/articles"
             className="inline-block bg-brand-primary text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-brand-primary/90 transition"
           >
             Retour aux carnets

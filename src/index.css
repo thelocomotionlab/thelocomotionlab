@@ -17,6 +17,11 @@ body {
   border-radius: 4px;
 }
 
+/* Titres : Ubuntu (héritent déjà de font-sans) */
+h1, h2, h3, h4, h5, h6 {
+  @apply font-sans;
+}
+
 /* Césure auto dans les blocs markdown */
 .prose { hyphens: auto; }
 
@@ -31,6 +36,7 @@ body {
   font-weight: 700;
   font-size: 1.25rem;
   margin-bottom: 0.75rem;
+  font-family: 'Ubuntu', sans-serif; /* titres = Ubuntu */
 }
 
 /* Liste des références plus compacte */
