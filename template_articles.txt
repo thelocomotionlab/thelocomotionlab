@@ -1,0 +1,135 @@
+---
+title: "Titre de l’article"
+date: "2025-09-21"
+cover: "/images/articles/template/couverture.jpg"
+tags: ["exemple", "markdown", "style"]
+---
+
+# Introduction
+
+Ceci est un **article type** pour tester la mise en page.
+
+Le texte peut contenir :
+- du **gras** (`**gras**`),
+- de l’*italique* (`*italique*`),
+- ~~du barré~~ (`~~barré~~`),
+- du `code` inline,
+- [un lien externe](https://exemple.com),
+- une note de bas de page[^1].
+
+---
+
+# Titres & Sous-titres
+
+## Niveau 2
+### Niveau 3
+#### Niveau 4
+
+Les titres sont utiles pour structurer ton récit ou ton analyse scientifique.
+
+---
+
+# Citations
+
+> Ceci est une citation simple en blockquote.
+> Elle peut s’étaler sur plusieurs lignes.
+
+## Citation de livre
+
+> *« La santé par la course à pieds »*, Blaise Dubois, *Clinique du Coureur*, 2012.
+
+👉 Convention :  
+- Italique pour le titre du livre.  
+- Guillemets français « … » pour l’extrait.  
+- Auteur + éditeur + année.
+
+## Citation d’article scientifique
+
+> *« Breathing frequency can entrain brain oscillations »*, Journal of Neuroscience, 2020.
+
+👉 Convention :  
+- Italique pour le titre de l’article.  
+- Indique la revue + année.
+
+[^1]: Exemple de note de bas de page. Dans la version finale, elles apparaissent en bas.
+
+---
+
+## Exemple citation :
+# Introduction
+
+Voici un exemple où je cite un **livre** comme dans une thèse :  
+Selon Dupont [^1], la respiration nasale améliore l’endurance.
+
+Et voici une citation façon **auteur-année** (style APA) :  
+Il a aussi été montré que la respiration peut **synchroniser les ondes cérébrales** (Zaccaro et al., 2018) [^2].
+
+---
+
+# Citations dans le corps de texte
+
+> *« La respiration consciente est une passerelle entre le corps et l’esprit. »* [1]
+On peut aussi écrire
+une note **inline** directement ici ^[Cette note succincte apparaît en bas.].
+---
+
+# Références
+
+[^1]: Dupont, J. *La respiration et la performance sportive*. Paris : Éditions Sportives, 2015.  
+[^2]. Zaccaro, A., Piarulli, A., Laurino, M., Garbella, E., Menicucci, D., Neri, B., & Gemignani, A. (2018).  
+   *How Breath-Control Can Change Your Life: A Systematic Review on Psychophysiological Correlates of Slow Breathing.*  
+   **Frontiers in Human Neuroscience**, 12, 353. https://doi.org/10.3389/fnhum.2018.00353
+
+
+# Listes
+
+## Liste à puces
+- Premier point
+- Deuxième point
+- Troisième point
+
+## Liste numérotée
+1. Étape une
+2. Étape deux
+3. Étape trois
+
+---
+
+# Images
+
+![Légende de l’image](/images/articles/template/schema-exemple.jpg)
+
+Astuce : ajoute une **légende** sous l’image en italique :
+
+*Figure 1 : schéma d’exemple*
+
+---
+
+# Texte enrichi
+
+Par défaut Markdown ne gère pas les couleurs.  
+Mais tu peux utiliser du HTML brut si besoin :
+
+<span style="color:tomato">Texte en rouge</span>  
+<span style="color:seagreen">Texte en vert</span>  
+
+⚠️ Utilise ça avec parcimonie pour ne pas casser l’esthétique du site.
+
+---
+
+# Tableaux
+
+| Colonne 1 | Colonne 2 | Colonne 3 |
+|-----------|-----------|-----------|
+| A         | B         | C         |
+| 1         | 2         | 3         |
+
+---
+
+# Code blocs
+
+```js
+// Exemple de code en JavaScript
+function respiration(freq) {
+  return `Fréquence: ${freq} Hz`;
+}

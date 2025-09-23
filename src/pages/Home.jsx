@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import hero from "../assets/hero.png";
+/*import hero from "../assets/hero.png";*/
+import hero from "../assets/hero_sunset_run.png";
 
 export default function Home() {
   return (
@@ -15,7 +16,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-black/20" aria-hidden />
         <div className="relative z-10 px-4 sm:px-6 max-w-4xl mx-auto">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white drop-shadow-xl font-heading">
-            Explorer le mouvement, le corps et l'esprit
+{/*            Explorer le mouvement, le corps et l'esprit*/}
           </h1>
         </div>
       </section>

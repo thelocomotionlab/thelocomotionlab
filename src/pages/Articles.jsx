@@ -5,41 +5,67 @@ export default function Articles() {
   const [params, setParams] = useSearchParams();
   const tag = params.get("tag");
 
-  const allTags = Array.from(new Set(articles.flatMap(a => a.tags || [])));
-  const list = tag ? articles.filter(a => (a.tags || []).includes(tag)) : articles;
+  const allTags = Array.from(new Set(articles.flatMap((a) => a.tags || [])));
+  const list = tag ? articles.filter((a) => (a.tags || []).includes(tag)) : articles;
 
   return (
     <section className="py-12">
       <h2 className="text-3xl font-bold mb-6 text-brand-primary text-center">Carnets du Lab</h2>
-      {/* Tags */}
+
+      {/* Filtre tags */}
       <div className="flex flex-wrap gap-2 justify-center mb-8">
-        <button onClick={()=>setParams({})} className={`px-3 py-1 rounded-full border ${!tag ? 'bg-brand-primary text-white' : 'bg-white'}`}>Tous</button>
-        {allTags.map(t => (
-          <button key={t} onClick={()=>setParams({tag: t})} className={`px-3 py-1 rounded-full border ${tag===t ? 'bg-brand-accent text-white' : 'bg-white'}`}>{t}</button>
+        <button
+          onClick={() => setParams({})}
+          className={`px-3 py-1 rounded-full border ${!tag ? "bg-brand-primary text-white" : "bg-white"}`}
+        >
+          Tous
+        </button>
+        {allTags.map((t) => (
+          <button
+            key={t}
+            onClick={() => setParams({ tag: t })}
+            className={`px-3 py-1 rounded-full border ${tag === t ? "bg-brand-primary text-white" : "bg-white"}`}
+          >
+            {t}
+          </button>
         ))}
       </div>
-      <div className="grid md:grid-cols-3 gap-8 justify-center">
+
+      {/* Grille d’articles */}
+      <div className="grid md:grid-cols-2 gap-6">
         {list.map((article) => (
-          <div
+          <Link
             key={article.slug}
-            className="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition"
+            to={`/articles/${article.slug}`}
+            className="group block bg-white rounded-2xl shadow-card p-6 hover:shadow-lg transition-shadow"
           >
-            <h3 className="text-xl font-semibold text-brand-deep mb-2">
+            {article.cover && (
+              <img
+                src={article.cover}
+                alt={article.title}
+                className="w-full h-56 object-cover rounded-lg mb-4"
+                loading="lazy"
+              />
+            )}
+            <h3 className="text-xl font-semibold text-brand-deep mb-2 group-hover:underline">
               {article.title}
             </h3>
-            <p className="text-sm mb-4">{article.excerpt}</p>
-            <div className="flex gap-2 flex-wrap mb-4">
-              {(article.tags || []).map(t => (
-                <button key={t} onClick={()=>setParams({tag: t})} className="text-xs px-2 py-1 rounded-full border">{t}</button>
-              ))}
-            </div>
-            <Link
-              to={`/articles/${article.slug}`}
-              className="text-brand-accent font-semibold hover:underline"
-            >
-              Lire l’article →
-            </Link>
-          </div>
+            <p className="text-sm text-gray-500 mb-3">
+              {new Date(article.date).toLocaleDateString("fr-FR")}
+            </p>
+            {article.excerpt && <p className="text-gray-700 line-clamp-3">{article.excerpt}</p>}
+
+            {/* Tags */}
+            {(article.tags || []).length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {article.tags.map((t) => (
+                  <span key={t} className="text-xs px-2 py-1 rounded-full border">
+                    {t}
+                  </span>
+                ))}
+              </div>
+            )}
+          </Link>
         ))}
       </div>
     </section>

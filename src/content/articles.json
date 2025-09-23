@@ -1,24 +1,23 @@
 [
   {
-    "slug": "2025_09_21_la-genese",
-    "title": "L'an 0 : la genèse du labo",
+    "slug": "2025_09_21_grf-2025",
+    "title": "Mon Grand Raid du Finistère 2025",
     "date": "2025-09-21",
-    "cover": "/images/articles/2025_09_21_la-genese/cover_menez_hom.jpg",
+    "cover": "/images/articles/2025_09_21_grf-2025/menez_hom_sunset.jpg",
     "tags": [
       "ultra-trail",
       "minimalisme",
-      "expérience perso"
+      "récit de course"
     ]
   },
   {
-    "slug": "trail-100-miles",
-    "title": "Trail en sandales : mon premier 100 miles",
+    "slug": "2025_09_21_la-genese",
+    "title": "L'an 0 : la genèse du labo",
     "date": "2025-09-21",
-    "cover": null,
+    "cover": "/images/articles/2025_09_21_la-genese/cover_genese.png",
     "tags": [
       "ultra-trail",
-      "minimalisme",
-      "expérience perso"
+      "minimalisme"
     ]
   }
 ]

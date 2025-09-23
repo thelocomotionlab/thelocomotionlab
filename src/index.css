@@ -16,3 +16,43 @@ body {
   outline-offset: 2px;
   border-radius: 4px;
 }
+
+/* Césure auto dans les blocs markdown */
+.prose { hyphens: auto; }
+
+/* Pied de page des notes (généré par remark-footnotes) */
+.prose .footnotes { margin-top: 2rem; }
+.prose .footnotes > hr { display: none; } /* on cache le trait horizontal par défaut */
+
+/* Ajoute un titre visuel “Références” avant la liste */
+.prose .footnotes::before {
+  content: "Références";
+  display: block;
+  font-weight: 700;
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Liste des références plus compacte */
+.prose .footnotes > hr { display: none !important; }
+.prose .footnotes ol { list-style: decimal; margin-left: 1.25rem; }
+.prose .footnotes li { margin: 0.5rem 0; }
+.prose sup { font-size: 0.75em; }
+
+/* Supprimer le titre automatique "Footnotes" */
+.prose .footnotes > h2 {
+  display: none;
+}
+
+/* Supprimer le symbole ↩︎ dans les références */
+.data-footnote-backref,
+a.data-footnote-backref,
+[data-footnote-backref] {
+  display: none !important;
+}
+
+/* Footnotes : supprimer le <p> en bloc dans chaque référence */
+.prose .footnotes li p {
+  display: inline;
+  margin: 0;
+}
