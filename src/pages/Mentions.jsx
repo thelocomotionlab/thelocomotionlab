@@ -1,17 +1,39 @@
 export default function Mentions() {
   return (
-    <section className="py-12">
-      <h1 className="text-3xl font-bold mb-6 text-brand-primary">Mentions légales</h1>
-      <div className="bg-white rounded-xl shadow-card p-6 prose max-w-none">
-        <h2>Éditeur</h2>
-        <p>Locomotion Lab — thelocomotionlab.com</p>
-        <h2>Contact</h2>
-        <p><a href="mailto:contact@thelocomotionlab.com">contact@thelocomotionlab.com</a></p>
-        <h2>Hébergement</h2>
-        <p>À compléter selon votre hébergeur.</p>
-        <h2>Propriété intellectuelle</h2>
-        <p>Contenus © {new Date().getFullYear()} Locomotion Lab — tous droits réservés.</p>
-      </div>
-    </section>
+    <main className="max-w-3xl mx-auto px-6 py-12 text-gray-800 font-sans">
+      <h1 className="text-3xl font-sans font-bold mb-6 text-brand-primary">
+        Mentions légales
+      </h1>
+
+      <section className="mb-8">
+        <h2 className="text-xl font-sans font-semibold mb-2 text-brand-primary">Éditeur du site</h2>
+        <p>
+          Ce site est édité par Valentin FER.<br/>  
+          Contact : <a
+            href="mailto:thelocomotionlab@gmail.com"
+            className="text-brand-primary hover:underline"
+          >
+            thelocomotionlab@gmail.com
+          </a>
+        </p>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="text-xl font-sans font-semibold mb-2 text-brand-primary">Hébergement</h2>
+        <p>
+          Le site est hébergé par Cloudflare, Inc.<br/>
+          Adresse : 101 Townsend St, San Francisco, CA 94107, États-Unis<br/>
+          Téléphone : +1 (650) 319-8930
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-sans font-semibold mb-2 text-brand-primary">Propriété intellectuelle</h2>
+        <p>
+          Sauf mention contraire, l’ensemble des contenus (textes, images, codes) de ce site
+          sont la propriété exclusive de l’éditeur et ne peuvent être reproduits sans autorisation préalable.
+        </p>
+      </section>
+    </main>
   );
 }
