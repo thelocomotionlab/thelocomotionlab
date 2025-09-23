@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -10,9 +10,6 @@ export default function Article() {
   const article = articles.find((a) => a.slug === slug);
 
   const [content, setContent] = useState("");
-
-  // (facultatif chez toi)
-  const mdFiles = import.meta.glob("../content/articles/*.md", { as: "raw", eager: false });
 
   useEffect(() => {
     fetch(`/articles/${slug}.md`)
@@ -37,7 +34,9 @@ export default function Article() {
       )}
 
       <div className="bg-white rounded-xl shadow-card p-6 md:p-10">
-        <h1 className="text-4xl md:text-5xl font-lora font-bold mb-3">{article.title}</h1>
+        <h1 className="text-4xl md:text-5xl font-lora font-bold mb-3">
+          {article.title}
+        </h1>
         <p className="text-sm text-gray-500 mb-8">
           {new Date(article.date).toLocaleDateString("fr-FR")}
         </p>
@@ -54,22 +53,30 @@ export default function Article() {
           style={{ hyphens: "auto" }}
         >
           <ReactMarkdown
-            remarkPlugins={[remarkGfm,
-              // active la syntaxe [^1] et ^[note inline]
-              [remarkFootnotes, { inlineNotes: true }],]}
+            remarkPlugins={[remarkGfm, [remarkFootnotes, { inlineNotes: true }]]}
             components={{
               a: ({ node, ...props }) => (
-              <a
-                {...props}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-brand-primary hover:underline"
-              />
-            ),
-          }}
+                <a
+                  {...props}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand-primary hover:underline"
+                />
+              ),
+            }}
           >
             {content}
           </ReactMarkdown>
+        </div>
+
+        {/* Bouton retour au Labo */}
+        <div className="mt-12 text-center">
+          <Link
+            to="/carnets"
+            className="inline-block bg-brand-primary text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-brand-primary/90 transition"
+          >
+            Retour aux carnets
+          </Link>
         </div>
       </div>
     </article>
