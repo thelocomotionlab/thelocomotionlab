@@ -38,16 +38,27 @@ export default function Labo() {
 
       <section className="grid md:grid-cols-2 gap-6 md:gap-8">
         {cards.map(({ title, description, to, icon: Icon }) => (
-          <article key={title} className="bg-white rounded-2xl shadow-card p-6 flex flex-col">
+          <article
+            key={title}
+            className="
+              bg-white rounded-2xl shadow-card p-6 flex flex-col
+              transform transition duration-300 ease-in-out
+              hover:shadow-xl hover:-translate-y-1
+            "
+          >
             <div className="flex items-center gap-3 mb-3">
               <Icon className="text-brand-primary shrink-0" />
-              <h2 className="text-2xl font-bold font-heading text-brand-deep">{title}</h2>
+              <Link to={to}>
+                <h2 className="text-2xl font-bold font-heading text-brand-deep hover:underline">
+                  {title}
+                </h2>
+              </Link>
             </div>
             <p className="text-gray-700 mb-6 flex-1">{description}</p>
             <div>
               <Link
                 to={to}
-                className="inline-flex items-center justify-center px-5 py-2.5 rounded-full text-brand-accent font-semibold hover:underline"
+                className="inline-flex items-center justify-center font-semibold text-brand-accent hover:underline"
               >
                 Ouvrir →
               </Link>

@@ -1,7 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import { BookOpen, FlaskConical, HeartHandshake, Menu, X, Search } from "lucide-react";
 import { useState } from "react";
-import logo from "../assets/logo_.png";
+import logo1 from "../assets/logo1.png";
+import logo2 from "../assets/logo2.png";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -9,6 +10,7 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [hovered, setHovered] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
@@ -26,7 +28,7 @@ export default function Navbar() {
       setClosing(false);
       setSearchOpen(false);
       setSearchTerm("");
-    }, 300); // durée = animation CSS
+    }, 300);
   };
 
   const handleCloseMenu = () => {
@@ -34,15 +36,26 @@ export default function Navbar() {
     setTimeout(() => {
       setClosingMenu(false);
       setOpen(false);
-    }, 300); // durée = animation CSS
+    }, 300);
   };
 
   return (
     <header className="flex items-center justify-between p-4 shadow-md bg-white/90 backdrop-blur sticky top-0 z-50 text-gray-700">
       {/* Logo à gauche */}
       <div className="flex items-center">
-        <Link to="/" className="inline-flex items-center" aria-label="Accueil">
-          <img src={logo} alt="Locomotion Lab" className="h-12 w-auto" loading="lazy" />
+        <Link
+          to="/"
+          className="inline-flex items-center"
+          aria-label="Accueil"
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
+          <img
+            src={hovered ? logo2 : logo1}
+            alt="Locomotion Lab"
+            className="h-12 w-auto transition duration-300"
+            loading="lazy"
+          />
         </Link>
       </div>
 

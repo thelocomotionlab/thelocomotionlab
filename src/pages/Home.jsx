@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 /*import hero from "../assets/hero.png";*/
 import hero from "../assets/hero_sunset_run.png";
+/*import logo from "../assets/logo_bone.png"; // ajoute ton logo ici*/
+import logo from "../assets/logo_fond_flou.png"; // ajoute ton logo ici
 
 export default function Home() {
   return (
@@ -10,13 +12,21 @@ export default function Home() {
         <img
           src={hero}
           alt="Locomotion Lab – mouvement, respiration, hormèse"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover object-bottom object-right"
           loading="eager"
         />
         <div className="absolute inset-0 bg-black/20" aria-hidden />
+
+        {/* Logo en haut à droite */}
+{/*        <img
+          src={logo}
+          alt="Locomotion Lab"
+          className="absolute top-24 right-4 h-36 w-auto z-20"
+        />
+*/}
         <div className="relative z-10 px-4 sm:px-6 max-w-4xl mx-auto">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white drop-shadow-xl font-heading">
-{/*            Explorer le mouvement, le corps et l'esprit*/}
+            {/* Explorer le mouvement, le corps et l'esprit */}
           </h1>
         </div>
       </section>
