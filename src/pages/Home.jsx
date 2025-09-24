@@ -33,7 +33,7 @@ export default function Home() {
           <div>
             <Link
               to="/labo"
-              className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-brand-accent text-white font-semibold shadow-cta shadow-lg hover:opacity-90 focus-visible:outline-none"
+              className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-brand-primary text-white font-semibold shadow-cta shadow-lg hover:opacity-90 focus-visible:outline-none"
             >
               Entrer dans le labo
             </Link>

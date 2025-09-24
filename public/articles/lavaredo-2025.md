@@ -1,8 +1,8 @@
 ---
-title: "Grand Raid du Finistère 2025"
+title: "Ultra-trail du Lavaredo 2025"
 date: "2025-09-21"
 tags: ["ultra-trail", "minimalisme", "récit de course"]
-cover: "/images/articles/grf-2025/menez_hom_sunset.jpg"
+cover: "/images/articles/lavaredo-2025/cover_lavaredo.jpg"
 type: "recit"
 ---
 

@@ -5,7 +5,9 @@ import logo from "../assets/logo_.png";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [closingMenu, setClosingMenu] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
@@ -16,6 +18,23 @@ export default function Navbar() {
       setSearchOpen(false);
       setSearchTerm("");
     }
+  };
+
+  const handleCloseSearch = () => {
+    setClosing(true);
+    setTimeout(() => {
+      setClosing(false);
+      setSearchOpen(false);
+      setSearchTerm("");
+    }, 300); // durée = animation CSS
+  };
+
+  const handleCloseMenu = () => {
+    setClosingMenu(true);
+    setTimeout(() => {
+      setClosingMenu(false);
+      setOpen(false);
+    }, 300); // durée = animation CSS
   };
 
   return (
@@ -56,7 +75,9 @@ export default function Navbar() {
         ) : (
           <form
             onSubmit={handleSubmit}
-            className="flex items-center animate-slideIn"
+            className={`flex items-center ${
+              closing ? "animate-slideOut" : "animate-slideIn"
+            }`}
           >
             <input
               type="text"
@@ -68,10 +89,7 @@ export default function Navbar() {
             />
             <button
               type="button"
-              onClick={() => {
-                setSearchOpen(false);
-                setSearchTerm("");
-              }}
+              onClick={handleCloseSearch}
               className="ml-2"
               aria-label="Fermer la recherche"
             >
@@ -87,28 +105,34 @@ export default function Navbar() {
         aria-controls="mobile-menu"
         aria-expanded={open}
         aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
-        onClick={() => setOpen(!open)}
+        onClick={() => (open ? handleCloseMenu() : setOpen(true))}
       >
         {open ? <X className="text-gray-700" /> : <Menu className="text-gray-700" />}
       </button>
 
-      {/* Menu mobile */}
-      {open && (
+      {/* Menu mobile avec animation */}
+      {(open || closingMenu) && (
         <div
           id="mobile-menu"
-          className="absolute top-full inset-x-0 bg-white shadow-lg md:hidden text-gray-700"
+          className={`absolute top-full inset-x-0 bg-white shadow-lg md:hidden text-gray-700 ${
+            closingMenu ? "animate-slideUp" : "animate-slideDown"
+          }`}
         >
-          <div className="flex flex-col p-4 space-y-3" role="menu" aria-label="Navigation mobile">
-            <Link to="/recherche" onClick={() => setOpen(false)} className="py-2">
+          <div
+            className="flex flex-col p-4 space-y-3"
+            role="menu"
+            aria-label="Navigation mobile"
+          >
+            <Link to="/recherche" onClick={handleCloseMenu} className="py-2">
               Recherche
             </Link>
-            <Link to="/articles" onClick={() => setOpen(false)} className="py-2">
+            <Link to="/articles" onClick={handleCloseMenu} className="py-2">
               Carnets
             </Link>
-            <Link to="/projets" onClick={() => setOpen(false)} className="py-2">
+            <Link to="/projets" onClick={handleCloseMenu} className="py-2">
               Projets
             </Link>
-            <Link to="/soutenir" onClick={() => setOpen(false)} className="py-2">
+            <Link to="/soutenir" onClick={handleCloseMenu} className="py-2">
               Soutenir
             </Link>
           </div>

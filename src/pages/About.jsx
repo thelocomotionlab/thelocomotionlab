@@ -28,7 +28,15 @@ export default function About() {
           Mon parcours
         </h2>
         <p className="mb-4">
-          Ingénieur de formation, je suis aussi passionné par l’ultra-trail en
+          Ingénieur et docteur en mécanique des fluides depuis 2023 (          
+          <a
+            href="https://artsetmetiers.hal.science/tel-04041476/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand-primary hover:underline"
+          >
+            consulter ma thèse
+          </a>), je suis aussi passionné par l’ultra-trail en
           sandales, le parkour et les pratiques d’hormèse (froid, chaud, respiration).
         </p>
         <p>
