@@ -124,3 +124,27 @@ a.data-footnote-backref,
 .animate-slideUp {
   animation: slideUp 0.3s ease-in forwards;
 }
+
+/* Personnalisation des titres Markdown */
+.prose h1 {
+  color: theme("colors.brand.primary"); /* Bleu */
+}
+
+
+.prose h2,
+.prose h3 {
+  color: theme("colors.brand.deep"); /* Bleu */
+}
+
+.prose h4,
+.prose h5 {
+  color: theme("colors.brand.accent"); /* Marron */
+}
+
+
+
+/* Section Références spécifique */
+.prose .footnotes h2 {
+  color: theme("colors.brand.accent"); /* Orange clair */
+  font-size: 1.25rem; /* un peu plus petit */
+}

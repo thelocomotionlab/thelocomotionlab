@@ -1,0 +1,25 @@
+[
+  {
+    "slug": "traversee-reunion",
+    "title": "Traversée de la Réunion en autonomie",
+    "date": "2025-08-20",
+    "status": "en cours",
+    "cover": "/images/projets/traversee-reunion/cover_traversee_reunion.png",
+    "description": "Projet OFF. Documentation du parcours, établissement du matériel, réflexion sur le bienfondé d'une telle expédition...",
+    "notes": [
+      "30/09/2025 – Début création de la trace GPX"
+    ]
+  },
+  {
+    "slug": "utmb-sandales",
+    "title": "UTMB en sandales",
+    "date": "2025-08-20",
+    "status": "en cours",
+    "cover": "/images/projets/utmb.jpg",
+    "description": "Préparation, protocole d’entraînement, stratégies de course, retour d’expérience.",
+    "notes": [
+      "01/09/2025 – Boucle dénivelée 30km — calibration rythme respiratoire en côte",
+      "20/08/2025 – Tests de nutrition 100% maison sur sorties >4h"
+    ]
+  }
+]

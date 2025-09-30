@@ -34,7 +34,6 @@ export default function Article() {
       )}
 
       <div className="bg-white rounded-xl shadow-card p-6 md:p-10">
-{/*        <h1 className="text-4xl md:text-5xl font-lora font-bold mb-3">*/}
         <h1 className="text-4xl md:text-5xl font-sans font-bold mb-3">
           {article.title}
         </h1>
@@ -56,14 +55,26 @@ export default function Article() {
           <ReactMarkdown
             remarkPlugins={[remarkGfm, [remarkFootnotes, { inlineNotes: true }]]}
             components={{
-              a: ({ node, ...props }) => (
-                <a
-                  {...props}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-brand-primary hover:underline"
-                />
-              ),
+              a: ({ node, ...props }) => {
+                // Liens internes (footnotes)
+                if (props.href && props.href.startsWith("#")) {
+                  return (
+                    <a
+                      {...props}
+                      className="text-brand-primary hover:underline cursor-pointer"
+                    />
+                  );
+                }
+                // Liens externes
+                return (
+                  <a
+                    {...props}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand-primary hover:underline"
+                  />
+                );
+              },
             }}
           >
             {content}

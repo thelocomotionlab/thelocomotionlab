@@ -7,7 +7,7 @@ export default function About() {
 
       {/* Vision */}
       <section className="mb-10">
-        <h2 className="text-xl font-sans font-semibold mb-3 text-brand-primary">
+        <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
           Vision
         </h2>
         <p className="mb-4">
@@ -24,7 +24,7 @@ export default function About() {
 
       {/* Parcours */}
       <section className="mb-10">
-        <h2 className="text-xl font-sans font-semibold mb-3 text-brand-primary">
+        <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
           Mon parcours
         </h2>
         <p className="mb-4">
@@ -47,7 +47,7 @@ export default function About() {
 
       {/* Identité du Labo */}
       <section>
-        <h2 className="text-xl font-sans font-semibold mb-3 text-brand-primary">
+        <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
           Identité du Labo
         </h2>
         <ul className="list-disc pl-5 space-y-2">

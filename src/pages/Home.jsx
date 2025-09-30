@@ -12,18 +12,23 @@ export default function Home() {
         <img
           src={hero}
           alt="Locomotion Lab – mouvement, respiration, hormèse"
-          className="absolute inset-0 w-full h-full object-cover object-bottom object-right"
+          className="
+            absolute inset-0 w-full h-full object-cover
+            object-center md:object-[50%_70%]
+          "
           loading="eager"
         />
         <div className="absolute inset-0 bg-black/20" aria-hidden />
 
-        {/* Logo en haut à droite */}
-{/*        <img
+        {/* Logo en haut à droite (désactivé pour l’instant) */}
+        {/* 
+        <img
           src={logo}
           alt="Locomotion Lab"
           className="absolute top-24 right-4 h-36 w-auto z-20"
         />
-*/}
+        */}
+
         <div className="relative z-10 px-4 sm:px-6 max-w-4xl mx-auto">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white drop-shadow-xl font-heading">
             {/* Explorer le mouvement, le corps et l'esprit */}

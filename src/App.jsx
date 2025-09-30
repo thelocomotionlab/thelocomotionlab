@@ -4,6 +4,7 @@ import Labo from "./pages/Labo";
 import Articles from "./pages/Articles";
 import Article from "./pages/Article";
 import Projets from "./pages/Projets";
+import Projet from "./pages/Projet";
 import Soutenir from "./pages/Soutenir";
 import Mentions from "./pages/Mentions";
 import About from "./pages/About";
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/articles" element={<Articles />} />
           <Route path="/articles/:slug" element={<Article />} />
           <Route path="/projets" element={<Projets />} />
+          <Route path="/projets/:slug" element={<Projet />} />
           <Route path="/soutenir" element={<Soutenir />} />
           <Route path="/mentions-legales" element={<Mentions />} />
           <Route path="/about" element={<About />} />
