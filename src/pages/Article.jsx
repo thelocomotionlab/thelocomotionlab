@@ -34,7 +34,7 @@ export default function Article() {
       )}
 
       <div className="bg-white rounded-xl shadow-card p-6 md:p-10">
-        <h1 className="text-4xl md:text-5xl font-sans font-bold mb-3">
+        <h1 className="text-2xl text-brand-primary md:text-5xl font-sans font-bold mb-3">
           {article.title}
         </h1>
         <p className="text-sm text-gray-500 mb-8">
@@ -61,7 +61,7 @@ export default function Article() {
                   return (
                     <a
                       {...props}
-                      className="text-brand-primary hover:underline cursor-pointer"
+                      className="text-brand-deep hover:underline cursor-pointer"
                     />
                   );
                 }
@@ -71,7 +71,7 @@ export default function Article() {
                     {...props}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-brand-primary hover:underline"
+                    className="text-brand-deep hover:underline"
                   />
                 );
               },

@@ -12,5 +12,5 @@ Le 19 septembre 2025, j'ai manqué un rendez-vous avec moi-même en choisissant 
 ---
 
 ## 30/09/2025 – Début création de la trace GPX
-J’ai dessiné une première trace basée sur le GR R2, avec quelques variantes.
+Ébauche de de la trace du GR R2 (to be continued)
 

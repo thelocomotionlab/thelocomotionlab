@@ -105,7 +105,7 @@ export default function Search() {
 
   return (
     <main className="container mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold font-heading mb-4">Recherche</h1>
+      <h1 className="text-3xl font-bold font-heading mb-4 text-brand-primary">Recherche</h1>
 
       {/* Champ de recherche */}
       <form onSubmit={onSubmit} className="mb-8">
@@ -128,7 +128,7 @@ export default function Search() {
 
       {results.arts.length > 0 && (
         <section className="mb-12">
-          <h2 className="text-2xl font-heading font-bold mb-4">Carnets</h2>
+          <h2 className="text-2xl font-heading font-bold mb-4 text-brand-deep">Carnets</h2>
           <div className="grid md:grid-cols-2 gap-6">
             {results.arts.map((a) => (
               <Link
@@ -136,7 +136,7 @@ export default function Search() {
                 to={`/articles/${a.slug}`}
                 className="group block bg-white rounded-2xl shadow-card p-6 hover:shadow-lg transition-shadow"
               >
-                <h3 className="text-xl font-semibold mb-2 group-hover:underline">{a.title}</h3>
+                <h3 className="text-xl font-semibold mb-2 text-brand-accent group-hover:underline">{a.title}</h3>
                 {a.snippet && <p className="text-gray-700 line-clamp-3">{a.snippet}</p>}
               </Link>
             ))}
@@ -146,7 +146,7 @@ export default function Search() {
 
       {results.pros.length > 0 && (
         <section>
-          <h2 className="text-2xl font-heading font-bold mb-4">Projets</h2>
+          <h2 className="text-2xl font-heading font-bold mb-4 text-brand-deep">Projets</h2>
           <div className="grid md:grid-cols-2 gap-6">
             {results.pros.map((p) => (
               <Link
@@ -154,7 +154,7 @@ export default function Search() {
                 to="/projets"
                 className="group block bg-white rounded-2xl shadow-card p-6 hover:shadow-lg transition-shadow"
               >
-                <h3 className="text-xl font-semibold mb-2 group-hover:underline">{p.title}</h3>
+                <h3 className="text-xl font-semibold mb-2 text-brand-accent group-hover:underline">{p.title}</h3>
                 {p.summary && <p className="text-gray-700 line-clamp-3">{p.summary}</p>}
               </Link>
             ))}

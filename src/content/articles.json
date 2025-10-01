@@ -1,8 +1,19 @@
 [
   {
+    "slug": "grf-2025",
+    "title": "Grand Raid du Finistère 2025",
+    "date": "2025-10-21",
+    "cover": "/images/articles/grf-2025/menez_hom_sunset.jpg",
+    "tags": [
+      "ultra-trail",
+      "minimalisme",
+      "récit de course"
+    ]
+  },
+  {
     "slug": "chianti-2025",
     "title": "Ultra-trail du Chianti 2025",
-    "date": "2025-09-21",
+    "date": "2025-10-02",
     "cover": "/images/articles/chianti-2025/cover_chianti.jpg",
     "tags": [
       "ultra-trail",
@@ -11,10 +22,10 @@
     ]
   },
   {
-    "slug": "grf-2025",
-    "title": "Grand Raid du Finistère 2025",
-    "date": "2025-09-21",
-    "cover": "/images/articles/grf-2025/menez_hom_sunset.jpg",
+    "slug": "lavaredo-2025",
+    "title": "Ultra-trail du Lavaredo 2025",
+    "date": "2025-09-22",
+    "cover": "/images/articles/lavaredo-2025/cover_lavaredo.jpg",
     "tags": [
       "ultra-trail",
       "minimalisme",
@@ -29,17 +40,6 @@
     "tags": [
       "ultra-trail",
       "minimalisme"
-    ]
-  },
-  {
-    "slug": "lavaredo-2025",
-    "title": "Ultra-trail du Lavaredo 2025",
-    "date": "2025-09-21",
-    "cover": "/images/articles/lavaredo-2025/cover_lavaredo.jpg",
-    "tags": [
-      "ultra-trail",
-      "minimalisme",
-      "récit de course"
     ]
   }
 ]

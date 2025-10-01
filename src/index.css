@@ -36,6 +36,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
   font-size: 1.25rem;
   margin-bottom: 0.75rem;
+  color: theme("colors.brand.accent");
   font-family: 'Ubuntu', sans-serif; /* titres = Ubuntu */
 }
 
@@ -148,3 +149,4 @@ a.data-footnote-backref,
   color: theme("colors.brand.accent"); /* Orange clair */
   font-size: 1.25rem; /* un peu plus petit */
 }
+

@@ -16,11 +16,11 @@ export default function Projets() {
     <main className="container mx-auto px-4 py-12">
       {/* Header */}
       <header className="max-w-3xl mx-auto text-center mb-10">
-        <h1 className="text-4xl font-bold font-heading mb-2 text-brand-primary">
+        <h1 className="text-3xl font-bold font-heading mb-2 text-brand-primary">
           Projets du Labo
         </h1>
         <p className="text-lg text-gray-700">
-          Suivi expérimental vivant — différent des Carnets (contenus finalisés).
+          Suivi expérimental vivant — 
         </p>
       </header>
 
