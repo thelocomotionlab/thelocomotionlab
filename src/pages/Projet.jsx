@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import projects from "../content/projects.json";
+import MapEmbed from "../components/MapEmbed";
+
 
 export default function Projet() {
   const { slug } = useParams();
@@ -45,7 +47,39 @@ export default function Projet() {
           "
         style={{ hyphens: "auto" }}
       >
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          code: ({ node, inline, className, children, ...props }) => {
+            const text = String(children || "").trim();
+
+            // Bloc de code type ```map { ...json... } ```
+            const isBlock = !inline && /language-map/.test(className || "") || (!inline && text.startsWith("{") && text.endsWith("}"));
+
+            if (isBlock) {
+              try {
+                const cfg = JSON.parse(text);
+                return <MapEmbed {...cfg} />;
+              } catch (e) {
+                // Si le JSON est invalide, on affiche le bloc brut pour aider au debug
+                return (
+                  <pre className="bg-gray-100 p-4 rounded border border-gray-200 text-sm overflow-x-auto">
+                    ⚠️ JSON invalide pour la carte : {e.message}
+                    {"\n\n"}
+                    {text}
+                  </pre>
+                );
+              }
+            }
+
+            // rendu normal pour le reste
+            return <code className={className} {...props}>{children}</code>;
+          },
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+              
       </div>
 
       <div className="mt-12 text-center">

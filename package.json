@@ -3,16 +3,19 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "prebuild": "node scripts/generate-articles.js",
+    "prebuild": "node scripts/generate-articles.js && node scripts/generate-projects.js",
     "build": "vite build",
     "dev": "vite"
   },
   "dependencies": {
+    "@tmcw/togeojson": "^7.1.2",
     "framer-motion": "^10.18.0",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.344.0",
     "marked": "^16.2.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-leaflet": "^4.2.1",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.8.2",
     "remark-footnotes": "^4.0.1",
