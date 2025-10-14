@@ -19,9 +19,7 @@ export default function Projets() {
         <h1 className="text-3xl font-bold font-heading mb-2 text-brand-primary">
           Projets du Labo
         </h1>
-        <p className="text-lg text-gray-700">
-          Suivi expérimental vivant — 
-        </p>
+        <p className="text-lg text-gray-700">Suivi expérimental vivant —</p>
       </header>
 
       {/* Filtres */}
@@ -31,9 +29,7 @@ export default function Projets() {
             key={s}
             onClick={() => setFilter(s)}
             className={`px-3 py-1 rounded-full border ${
-              filter === s
-                ? "bg-brand-primary text-white"
-                : "bg-white"
+              filter === s ? "bg-brand-primary text-white" : "bg-white"
             }`}
           >
             {s}
@@ -44,9 +40,10 @@ export default function Projets() {
       {/* Grille des projets */}
       <section className="grid md:grid-cols-3 gap-6">
         {filtered.map((p) => (
-          <article
+          <Link
             key={p.slug}
-            className="bg-white rounded-2xl shadow-card p-6 hover:shadow-lg transition flex flex-col"
+            to={`/projets/${p.slug}`}
+            className="group block bg-white rounded-2xl shadow-card p-6 hover:shadow-lg transition flex flex-col hover:-translate-y-1"
           >
             {/* Statut */}
             <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
@@ -54,10 +51,8 @@ export default function Projets() {
             </p>
 
             {/* Titre */}
-            <h3 className="text-xl font-semibold text-brand-deep mb-2 group-hover:underline">
-              <Link to={`/projets/${p.slug}`} className="hover:underline">
-                {p.title}
-              </Link>
+            <h3 className="text-xl font-semibold text-brand-deep mb-2">
+              {p.title}
             </h3>
 
             {/* Description */}
@@ -88,7 +83,7 @@ export default function Projets() {
                 </ul>
               </div>
             )}
-          </article>
+          </Link>
         ))}
       </section>
     </main>

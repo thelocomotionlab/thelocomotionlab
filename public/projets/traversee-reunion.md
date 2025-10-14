@@ -11,16 +11,28 @@ Le 19 septembre 2025, j'ai manqué un rendez-vous avec moi-même en choisissant 
 
 ---
 
-## 30/09/2025 – Début création de la trace GPX
-Ébauche de de la trace du GR R2 (to be continued)
+## 29/09/2025 – Début du bloc d'entraînement spécifique
+
+L'objectif pour ce mois d'octobre est clair : borner comme un phacochère tout en prenant un maximum de plaisir. Le temps de préparation est court donc j'ai besoin d'optimiser les facteurs de réussite. Je ne retomberai donc pas dans mes écueils passés de courir un poil trop vite à chaque sortie, ou de ne pas augmenter mes apports caloriques alors que je double voire triple ma dose de sport hebdomadaire. Cette fois-ci, on rentre directement dans le vif du sujet en mangeant souvent, en quantité et des aliments à tendance anti-inflammatoire, on se couche tôt et on court le plus lentement possible. 
+
+## 30/09/2025 – Création de la trace GPX
+
+Cette trace a été construite à l'aide du site [geoportail](https://www.geoportail.gouv.fr/) pour m'assurer d'une certaine fiabilité dans le parcours. Elle sera à adapter en fonction des fermetures de sentiers quelques jours avant. Celle-ci autorise 3 petits détours par rapport au tracé du GR2, pour aller voir la roche écrite, le piton des neige mais aussi le piton de la fournaise. Elle démarre de Saint-Denis et se termine à Basse Vallée.
 
 ```map
 {
-  "gpx": "/tracks/reunion-r2.gpx",
-  "height": 300,
+  "gpx": "/tracks/reunion-r2_.gpx",
+  "height": 320,
   "tiles": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-  "attribution": "Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics, USDA, USGS, AeroGRID, IGN, and the GIS User Community",
+  "attribution": "Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, USDA, USGS, AeroGRID, IGN, and the GIS User Community",
   "lineColor": "#B67352",
-  "lineWeight": 4,
+  "lineWeight": 3,
   "showEndpoints": false
 }
+```
+
+*Todo : placer les points d'intérêts importants (ravito, source, ...)*
+
+## 05/10/2025 – Bilan S1
+
+Semaine de reprise à 64 km 2000 m D+. Plaisir de courir intact après l'abandon au GRF. Plaisir d'ailleurs potentiellement décuplé par la pression inexistante sur ce projet qui n'est que du kiff. Pas de dossard, juste l'aventure et moi-même. Vivement la suite.
