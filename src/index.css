@@ -149,3 +149,35 @@ a.data-footnote-backref,
   color: theme("colors.brand.accent"); /* Orange clair */
   font-size: 1.25rem; /* un peu plus petit */
 }
+
+
+/* ====== Mise en page "split" pour les blocs :::split ====== */
+.md-split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem; /* ~24px */
+  margin: 2rem 0;
+}
+
+@media (min-width: 768px) {
+  .md-split {
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+  }
+}
+
+/* Colonnes */
+.md-split-col img,
+.md-split-col video,
+.md-split-col iframe {
+  width: 100%;
+  height: auto;
+  border-radius: 0.75rem; /* 12px */
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
+}
+
+/* Harmonisation typographique dans les colonnes */
+.md-split-col :is(p, ul, ol, h1, h2, h3, h4, h5, h6, blockquote) {
+  margin-top: revert;
+  margin-bottom: revert;
+}

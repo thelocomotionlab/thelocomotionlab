@@ -36,3 +36,11 @@ Cette trace a été construite à l'aide du site [geoportail](https://www.geopor
 ## 05/10/2025 – Bilan S1
 
 Semaine de reprise à 64 km 2000 m D+. Plaisir de courir intact après l'abandon au GRF. Plaisir d'ailleurs potentiellement décuplé par la pression inexistante sur ce projet qui n'est que du kiff. Pas de dossard, juste l'aventure et moi-même. Vivement la suite.
+
+:::split
+test de texte splitté
+
+---
+
+[Voir la trace GPX](/tracks/reunion-r2.gpx)
+:::
