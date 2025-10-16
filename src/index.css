@@ -181,3 +181,58 @@ a.data-footnote-backref,
   margin-top: revert;
   margin-bottom: revert;
 }
+
+.md-split-col.left p:has(img):has(+ p img) {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.md-split-col.left p:has(img):has(+ p img) img {
+  width: 48%;
+  border-radius: 0.5rem;
+}
+
+/* ===== Légendes globales ===== */
+
+/* Si une ligne en italique suit un bloc split → légende commune */
+.md-split + em {
+  display: block;
+  text-align: center;
+  margin-top: -0.5rem;   /* rapproche un peu de la figure */
+  margin-bottom: 2rem;
+  color: #555;
+  font-size: 0.9rem;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* Variante : si tu veux une police plus fine pour les légendes */
+.md-split + em strong {
+  font-weight: 600;
+}
+
+
+/* ===== Légendes sous les images individuelles ===== */
+
+/* Quand une image est suivie d'un paragraphe en italique */
+.prose p:has(img) + em {
+  display: block;
+  text-align: center;
+  margin-top: -0.3rem;
+  margin-bottom: 1.5rem;
+  color: #555;
+  font-size: 0.9rem;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* Optionnel : harmonise la taille et ombre des images */
+.prose img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}

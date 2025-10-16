@@ -1,4 +1,3 @@
-// src/components/MapEmbed.jsx
 import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -6,21 +5,66 @@ import * as toGeoJSON from "@tmcw/togeojson";
 
 export default function MapEmbed({
   gpx,
-  height = 420,
   lineColor = "#EFB159",
   lineWeight = 3,
+  defaultMinHeight = 350,
 }) {
   const mapRef = useRef(null);
   const mapContainer = useRef(null);
   const [mapStyle, setMapStyle] = useState("topo");
+  const [dynamicHeight, setDynamicHeight] = useState(defaultMinHeight);
 
   const defaultCenter = [55.5364, -21.1151];
   const defaultZoom = 9;
 
+  // 🔹 1. Ajuste automatiquement la hauteur selon l'image voisine
+  useEffect(() => {
+    function syncHeight() {
+      const mapEl = mapContainer.current;
+      if (!mapEl) return;
+
+      const parentSplit = mapEl.closest(".md-split");
+      if (!parentSplit) {
+        setDynamicHeight(defaultMinHeight);
+        return;
+      }
+
+      // On cherche la colonne sœur
+      const siblingCol = Array.from(parentSplit.children).find(
+        (col) => col !== mapEl.parentElement
+      );
+      if (!siblingCol) {
+        setDynamicHeight(defaultMinHeight);
+        return;
+      }
+
+      // On cherche une image dans la colonne sœur
+      const siblingImg = siblingCol.querySelector("img");
+      if (siblingImg) {
+        // Si l’image est chargée, on prend sa hauteur
+        const setHeight = () => {
+          const h = siblingImg.getBoundingClientRect().height;
+          if (h > 0) setDynamicHeight(h);
+        };
+        setHeight();
+        siblingImg.addEventListener("load", setHeight);
+        return () => siblingImg.removeEventListener("load", setHeight);
+      } else {
+        // Sinon, on prend la hauteur du bloc frère complet
+        const h = siblingCol.getBoundingClientRect().height;
+        setDynamicHeight(h > 0 ? h : defaultMinHeight);
+      }
+    }
+
+    syncHeight();
+    window.addEventListener("resize", syncHeight);
+    return () => window.removeEventListener("resize", syncHeight);
+  }, [defaultMinHeight]);
+
+  // 🔹 2. Création de la carte
   useEffect(() => {
     if (!mapContainer.current) return;
 
-    // Définition des styles disponibles
     const styles = {
       topo: {
         version: 8,
@@ -78,8 +122,7 @@ export default function MapEmbed({
       },
     };
 
-    // Création de la carte MapLibre
-    mapRef.current = new maplibregl.Map({
+    const map = new maplibregl.Map({
       container: mapContainer.current,
       style: styles[mapStyle],
       center: defaultCenter,
@@ -88,8 +131,7 @@ export default function MapEmbed({
       bearing: 0,
     });
 
-    const map = mapRef.current;
-
+    mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl(), "top-right");
 
     async function loadGPX() {
@@ -104,22 +146,14 @@ export default function MapEmbed({
           if (map.getSource("track")) map.removeSource("track");
           if (map.getLayer("track-line")) map.removeLayer("track-line");
 
-          map.addSource("track", {
-            type: "geojson",
-            data: geojson,
-          });
-
+          map.addSource("track", { type: "geojson", data: geojson });
           map.addLayer({
             id: "track-line",
             type: "line",
             source: "track",
-            paint: {
-              "line-color": lineColor,
-              "line-width": lineWeight,
-            },
+            paint: { "line-color": lineColor, "line-width": lineWeight },
           });
 
-          // Fit sur la trace
           const coords = geojson.features[0].geometry.coordinates;
           const bounds = coords.reduce(
             (b, c) => b.extend(c),
@@ -133,9 +167,8 @@ export default function MapEmbed({
     }
 
     loadGPX();
-
     return () => map.remove();
-  }, [gpx, lineColor, lineWeight, mapStyle]);
+  }, [gpx, mapStyle, lineColor, lineWeight]);
 
   const resetView = () => {
     if (mapRef.current) {
@@ -143,11 +176,24 @@ export default function MapEmbed({
     }
   };
 
+  // 🔹 3. Rendu
   return (
-    <div style={{ position: "relative", height }} className="w-full rounded-2xl shadow overflow-hidden">
-      <div ref={mapContainer} style={{ height: "100%", width: "100%" }} />
+    <div
+      className="w-full rounded-2xl shadow overflow-hidden relative"
+      style={{
+        height: dynamicHeight,
+        transition: "height 0.3s ease",
+      }}
+    >
+      <div
+        ref={mapContainer}
+        style={{
+          width: "100%",
+          height: "100%",
+        }}
+      />
 
-      {/* Bouton de bascule en bas à droite */}
+      {/* Sélecteur de style de fond */}
       <div
         className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md text-sm"
         style={{ zIndex: 10 }}
@@ -160,14 +206,18 @@ export default function MapEmbed({
           <button
             key={opt.key}
             onClick={() => setMapStyle(opt.key)}
-            className={`px-3 py-1 ${mapStyle === opt.key ? "bg-[#EFB159] text-white" : "text-gray-700"} hover:bg-[#EFB159]/80 hover:text-white rounded`}
+            className={`px-3 py-1 ${
+              mapStyle === opt.key
+                ? "bg-[#EFB159] text-white"
+                : "text-gray-700"
+            } hover:bg-[#EFB159]/80 hover:text-white rounded`}
           >
             {opt.label}
           </button>
         ))}
       </div>
 
-      {/* Bouton Recentrer en bas à gauche */}
+      {/* Bouton recentrer */}
       <button
         onClick={resetView}
         className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md text-sm px-3 py-1 hover:bg-[#EFB159]/80 hover:text-white text-gray-700"

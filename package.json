@@ -21,9 +21,10 @@
     "react-leaflet": "^4.2.1",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.8.2",
-    "remark-footnotes": "^4.0.1",
-    "remark-gfm": "^4.0.1",
     "remark-directive": "^3.0.0",
+    "remark-footnotes": "^4.0.1",
+    "remark-frontmatter": "^5.0.0",
+    "remark-gfm": "^4.0.1",
     "unist-util-visit": "^5.0.0"
   },
   "devDependencies": {

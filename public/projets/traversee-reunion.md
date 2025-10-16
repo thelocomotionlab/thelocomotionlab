@@ -37,10 +37,49 @@ Cette trace a été construite à l'aide du site [geoportail](https://www.geopor
 
 Semaine de reprise à 64 km 2000 m D+. Plaisir de courir intact après l'abandon au GRF. Plaisir d'ailleurs potentiellement décuplé par la pression inexistante sur ce projet qui n'est que du kiff. Pas de dossard, juste l'aventure et moi-même. Vivement la suite.
 
+## 12/10/2025 - Bilan S2 et sortie longue conditions OFF
+
+Pour cette deuxième semaine, l'objectif a été simple : monter le volume (distance et dénivelé), et réaliser une première sortie longue en conditions de OFF pour tester le matériel et voir les choses à ajouter/enlever. Pour cette sortie, j'ai jeté mon dévolu sur le tour du Taillefer, une belle balade d'environ 39 km 2500 m D+/D-, au départ de La Morte. 
+
+
 :::split
-test de texte splitté
+
+![Taillefer mer de nuages](/images/projets/traversee-reunion/taillefer_mer_nuages.webp)
 
 ---
 
-[Voir la trace GPX](/tracks/reunion-r2.gpx)
+[Tour du Taillefer](/tracks/tour-du-taillefer.gpx)
+
 :::
+
+*Mer de nuage dans la vallée (gauche) et trace GPX du tour du Taillefer (droite)*
+
+J'appréhendais cette sortie par le fait de me retrouver seul en montagne pendant de longues heures. Au final, je me suis retrouvé assez vite en état de flow, entouré par cette nature calme, slendide et rassérénante. Je suis également satisfait d'avoir pu appréhender cette sortie avec ma carapace de Franklin sur le dos. Car, oui, niveau matos, j'étais plutôt chargé pour une sortie trail, prépa OFF oblige :
+
+
+
+:::split
+
+- Salomon SLab Adventure 20
+- habits de rechange
+- autres
+
+---
+
+![Tour du Taillefer](/images/projets/traversee-reunion/taillefer_lyophilisé.webp)
+
+:::
+
+
+:::split
+
+![Taillefer mer de nuages](/images/projets/traversee-reunion/taillefer_vue_plateau.webp)
+
+---
+
+![Tour du Taillefer](/images/projets/traversee-reunion/taillefer_vue_sandales.webp)
+
+:::
+
+
+J'ai choisi de ne pas utiliser les bâtons sur cette traversée de la Réunion, et de me placer à fond dans l'esprit "diag". Du coup, ma prépa pour ce projet se fait elle aussi sans bâtons. Ce qui a rendu les choses particulièrement ardue lors de cette sortie avec des montées pouvant s'apparenter à des murs très abruptes, caractéristiques des Alpes. 
