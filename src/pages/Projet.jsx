@@ -8,12 +8,17 @@ import remarkFrontmatter from "remark-frontmatter";
 import projects from "../content/projects.json";
 import MapEmbed from "../components/MapEmbed";
 import remarkSplit from "../markdown/remarkSplit";
+import rehypeSlug from "rehype-slug";
+import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import useTocFromMarkdown from "../hooks/useTocFromMarkdown";
+
+
 
 export default function Projet() {
   const { slug } = useParams();
   const project = projects.find((p) => p.slug === slug);
   const [content, setContent] = useState("");
-
+  const toc = useTocFromMarkdown(content);
   useEffect(() => {
     fetch(`/projets/${slug}.md`)
       .then((res) => (res.ok ? res.text() : Promise.reject()))
@@ -40,6 +45,36 @@ export default function Projet() {
         </h1>
         <p className="text-sm text-gray-500 mb-8">{project.status}</p>
 
+        {/* Sommaire dynamique */}
+        {toc.length > 0 && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-10">
+            <h2 className="text-lg font-semibold text-brand-deep mb-3">Sommaire</h2>
+            <ul className="space-y-1">
+              {toc.map((item) => (
+                <li
+                  key={item.id}
+                  className={`text-sm ${
+                    item.level === 3
+                      ? "ml-6 list-disc list-inside text-brand-primary"
+                      : "ml-0 font-medium text-gray-700"
+                  }`}
+                >
+                  <a
+                    href={`#${item.id}`}
+                    className={`hover:underline ${
+                      item.level === 2 ? "text-brand-primary" : "text-gray-600"
+                    }`}
+                  >
+                    {item.text}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+
+
         <div
           className="
             prose prose-lg max-w-none
@@ -53,6 +88,7 @@ export default function Projet() {
         >
           <ReactMarkdown
             remarkPlugins={[remarkFrontmatter, remarkGfm, remarkDirective, remarkSplit]}
+            rehypePlugins={[rehypeSlug, rehypeAutolinkHeadings]}
             components={{
               // Liens : GPX → carte
               a: ({ href, children, ...props }) => {
