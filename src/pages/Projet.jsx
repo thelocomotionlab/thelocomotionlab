@@ -9,8 +9,10 @@ import MapEmbed from "../components/MapEmbed";
 import remarkSplit from "../markdown/remarkSplit";
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import rehypeRaw from "rehype-raw"; // ✅ ajouté pour autoriser le HTML inline
 import useTocFromMarkdown from "../hooks/useTocFromMarkdown";
 import { Helmet } from "react-helmet";
+import LiveTracking from "../components/LiveTracking"; // ✅ nouveau composant
 
 export default function Projet() {
   const { slug } = useParams();
@@ -32,7 +34,9 @@ export default function Projet() {
     if (!highlight) return;
     const timer = setTimeout(() => {
       const regex = new RegExp(highlight, "i");
-      const paragraphs = document.querySelectorAll("article p, article h2, article h3, article li");
+      const paragraphs = document.querySelectorAll(
+        "article p, article h2, article h3, article li"
+      );
       for (const p of paragraphs) {
         if (regex.test(p.textContent)) {
           p.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -60,15 +64,42 @@ export default function Projet() {
           rel="canonical"
           href={`https://thelocomotionlab.com/projets/${project.slug}`}
         />
-        <meta property="og:title" content={`${project.title} – Projets du Locomotion Lab`} />
-        <meta property="og:description" content={project.description || "Projet expérimental du Locomotion Lab autour du mouvement et de la respiration."} />
-        <meta property="og:image" content={`https://thelocomotionlab.com${project.cover}`} />
-        <meta property="og:url" content={`https://thelocomotionlab.com/projets/${project.slug}`} />
+        <meta
+          property="og:title"
+          content={`${project.title} – Projets du Locomotion Lab`}
+        />
+        <meta
+          property="og:description"
+          content={
+            project.description ||
+            "Projet expérimental du Locomotion Lab autour du mouvement et de la respiration."
+          }
+        />
+        <meta
+          property="og:image"
+          content={`https://thelocomotionlab.com${project.cover}`}
+        />
+        <meta
+          property="og:url"
+          content={`https://thelocomotionlab.com/projets/${project.slug}`}
+        />
         <meta property="og:type" content="article" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`${project.title} – Projets du Locomotion Lab`} />
-        <meta name="twitter:description" content={project.description || "Projet expérimental du Locomotion Lab autour du mouvement et de la respiration."} />
-        <meta name="twitter:image" content={`https://thelocomotionlab.com${project.cover}`} />
+        <meta
+          name="twitter:title"
+          content={`${project.title} – Projets du Locomotion Lab`}
+        />
+        <meta
+          name="twitter:description"
+          content={
+            project.description ||
+            "Projet expérimental du Locomotion Lab autour du mouvement et de la respiration."
+          }
+        />
+        <meta
+          name="twitter:image"
+          content={`https://thelocomotionlab.com${project.cover}`}
+        />
       </Helmet>
 
       <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -85,12 +116,16 @@ export default function Projet() {
           <h1 className="text-2xl text-brand-primary md:text-5xl font-sans font-bold mb-3 text-center">
             {project.title}
           </h1>
-          <p className="text-sm text-gray-500 mb-8 text-center">{project.status}</p>
+          <p className="text-sm text-gray-500 mb-8 text-center">
+            {project.status}
+          </p>
 
           {/* Sommaire dynamique */}
           {toc.length > 0 && (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-10">
-              <h2 className="text-lg font-semibold text-brand-deep mb-3">Sommaire</h2>
+              <h2 className="text-lg font-semibold text-brand-deep mb-3">
+                Sommaire
+              </h2>
               <ul className="space-y-1">
                 {toc.map((item) => (
                   <li
@@ -104,7 +139,9 @@ export default function Projet() {
                     <a
                       href={`#${item.id}`}
                       className={`hover:underline ${
-                        item.level === 2 ? "text-brand-accent" : "text-gray-600"
+                        item.level === 2
+                          ? "text-brand-accent"
+                          : "text-gray-600"
                       }`}
                     >
                       {item.text}
@@ -125,12 +162,24 @@ export default function Projet() {
               prose-blockquote:italic prose-blockquote:text-gray-600
               prose-blockquote:border-l-4 prose-blockquote:border-brand-primary prose-blockquote:pl-4
             "
-            style={{ hyphens: 'auto' }}
+            style={{ hyphens: "auto" }}
           >
             <ReactMarkdown
-              remarkPlugins={[remarkFrontmatter, remarkGfm, remarkDirective, remarkSplit]}
-              rehypePlugins={[rehypeSlug, rehypeAutolinkHeadings]}
+              remarkPlugins={[
+                remarkFrontmatter,
+                remarkGfm,
+                remarkDirective,
+                remarkSplit,
+              ]}
+              rehypePlugins={[
+                rehypeSlug,
+                rehypeAutolinkHeadings,
+                rehypeRaw, // ✅ permet de lire <livetracking> comme HTML
+              ]}
               components={{
+                // 🛰️ Composant LiveTracking depuis le markdown
+                livetracking: () => <LiveTracking />,
+
                 // Liens : GPX → carte
                 a: ({ href, children, ...props }) => {
                   if (href && href.endsWith(".gpx")) {
@@ -141,8 +190,14 @@ export default function Projet() {
                       href={href}
                       {...props}
                       className="text-brand-deep hover:underline cursor-pointer"
-                      target={href?.startsWith("http") ? "_blank" : undefined}
-                      rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}
+                      target={
+                        href?.startsWith("http") ? "_blank" : undefined
+                      }
+                      rel={
+                        href?.startsWith("http")
+                          ? "noopener noreferrer"
+                          : undefined
+                      }
                     >
                       {children}
                     </a>

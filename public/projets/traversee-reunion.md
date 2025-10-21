@@ -91,3 +91,8 @@ Côté déroulement de la sortie, on était sur des sentiers bien techniques en 
 
 
 Suite à mes difficultés à maintenir une allure aérobique en montées durant le tour du Taillefer, j'ai cherché des manières plus économiques de gravir des montagnes. Et ce que j'ai trouvé à attiré 
+
+
+## Suivi en direct (Live tracking)
+
+<livetracking />
