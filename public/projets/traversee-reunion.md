@@ -25,17 +25,7 @@ L'objectif pour ce mois d'octobre est clair : borner comme un phacochère tout e
 
 Cette trace a été construite à l'aide du site [geoportail](https://www.geoportail.gouv.fr/) pour m'assurer d'une certaine fiabilité dans le parcours. Elle sera à adapter en fonction des fermetures de sentiers quelques jours avant. Celle-ci autorise 3 petits détours par rapport au tracé du GR2, pour aller voir la roche écrite, le piton des neige mais aussi le piton de la fournaise. Elle démarre de Saint-Denis et se termine à Basse Vallée.
 
-```map
-{
-  "gpx": "/tracks/reunion-r2_.gpx",
-  "height": 320,
-  "tiles": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-  "attribution": "Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, USDA, USGS, AeroGRID, IGN, and the GIS User Community",
-  "lineColor": "#B67352",
-  "lineWeight": 3,
-  "showEndpoints": false
-}
-```
+[Tour du Taillefer](/tracks/reunion-r2.gpx)
 
 Todo : placer les points d'intérêts importants (ravito, source, ...).
 
