@@ -51,13 +51,12 @@ export default function About() {
           </h2>
           <p className="mb-4">
             Le <strong>Locomotion Lab</strong> est un laboratoire vivant pour explorer
-            la locomotion sous toutes ses formes : course minimaliste, grimpe d’arbre,
-            mouvement quadrupède, parkour primal…
+            la locomotion sous toutes ses formes : trail minimaliste, déplacement dans les arbres,
+            mouvement animal, etc.
           </p>
           <p>
             L’objectif : relier <em>pratique physique</em>, <em>science</em> et{" "}
-            <em>expérience vécue</em>, afin de mieux comprendre comment le mouvement,
-            la respiration et l’hormèse transforment notre corps et notre esprit.
+            <em>expérience vécue</em>, afin d'explorer l'optimisation de la gestuelle Humaine.
           </p>
         </section>
 
@@ -91,7 +90,7 @@ export default function About() {
           </h2>
           <ul className="list-disc pl-5 space-y-2">
             <li><strong>Carnets du Labo</strong> : récits et articles scientifiques.</li>
-            <li><strong>Projets</strong> : expériences en cours (UTMB en sandales, Tarzan Movement, respiration-hormèse…)</li>
+            <li><strong>Projets</strong> : expériences et projets en cours.</li>
             <li><strong>Soutenir</strong> : moyens d’aider le Labo à grandir.</li>
           </ul>
         </section>

@@ -1,9 +1,20 @@
 <!DOCTYPE html>
 <html lang="fr">
-  <meta http-equiv="Content-Security-Policy"
-  content="default-src 'self'; img-src 'self' data: https:; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com;">
-  <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
   <head>
+    <!-- Sécurité -->
+    <meta http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        worker-src 'self' blob:;
+        connect-src 'self' https://a.tile.opentopomap.org https://b.tile.opentopomap.org https://c.tile.opentopomap.org https://tile.openstreetmap.org https://server.arcgisonline.com;
+        img-src 'self' data: blob: https: https://a.tile.opentopomap.org https://b.tile.opentopomap.org https://c.tile.opentopomap.org https://tile.openstreetmap.org https://server.arcgisonline.com;
+        script-src 'self';
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        font-src https://fonts.gstatic.com;
+        object-src 'none';
+      ">
+    <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
+
     <!-- Polices -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,16 +26,16 @@
     <!-- Meta de base -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Locomotion Lab</title>
+    <title>The Locomotion Lab</title>
     <meta
       name="description"
-      content="Explorations de la locomotion humaine sous toutes ses formes — mouvement, respiration, hormèse et conscience — avec une approche scientifique et expérimentale."
+      content="Explorations de la locomotion humaine sous toutes ses formes avec une approche scientifique et expérimentale."
     >
     <meta
       name="keywords"
-      content="locomotion, mouvement, ultra-trail, sandales, parkour primal, respiration, hormèse, conscience, exploration, laboratoire, performance, endurance"
+      content="locomotion, mouvement, ultra-trail, trail primal, parkour primal, respiration, hormèse, conscience, exploration, laboratoire, performance, endurance"
     >
-    <meta name="author" content="Le Locomotion Lab" />
+    <meta name="author" content="The Locomotion Lab" />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://thelocomotionlab.com/" />
 
@@ -38,13 +49,13 @@
 
     <!-- Manifest PWA -->
     <link rel="manifest" href="/images/assets/site.webmanifest">
-    <meta name="theme-color" content="#EFB159" />
+    <meta name="theme-color" content="#8CB9BD" />
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Locomotion Lab" />
+    <meta property="og:title" content="The Locomotion Lab" />
     <meta
       property="og:description"
-      content="Explorations de la locomotion humaine sous toutes ses formes — mouvement, respiration, hormèse et conscience — avec une approche scientifique et expérimentale."
+      content="Explorations de la locomotion humaine sous toutes ses formes avec une approche scientifique et expérimentale."
     />
     <meta property="og:image" content="https://thelocomotionlab.com/images/assets/og-image.jpg" />
     <meta property="og:url" content="https://thelocomotionlab.com/" />
@@ -53,7 +64,7 @@
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Locomotion Lab" />
+    <meta name="twitter:title" content="The Locomotion Lab" />
     <meta
       name="twitter:description"
       content="Explorations de la locomotion humaine sous toutes ses formes avec une approche scientifique et expérimentale."
@@ -65,12 +76,12 @@
       {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        "name": "Le Locomotion Lab",
+        "name": "The Locomotion Lab",
         "url": "https://thelocomotionlab.com",
-        "description": "Exploration du mouvement, de la respiration, de l’hormèse et de la conscience corporelle.",
+        "description": "Explorations de la locomotion humaine sous toutes ses formes avec une approche scientifique et expérimentale.",
         "publisher": {
           "@type": "Organization",
-          "name": "Le Locomotion Lab"
+          "name": "The Locomotion Lab"
         }
       }
     </script>

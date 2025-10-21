@@ -121,7 +121,6 @@ export default function Projet() {
               prose prose-lg max-w-none
               font-lora text-gray-800 leading-relaxed
               text-left md:text-justify
-              prose-h2:text-brand-accent prose-h3:text-brand-accent
               prose-img:rounded-lg prose-img:shadow-md prose-img:mx-auto prose-img:my-6
               prose-blockquote:italic prose-blockquote:text-gray-600
               prose-blockquote:border-l-4 prose-blockquote:border-brand-primary prose-blockquote:pl-4
@@ -132,8 +131,6 @@ export default function Projet() {
               remarkPlugins={[remarkFrontmatter, remarkGfm, remarkDirective, remarkSplit]}
               rehypePlugins={[rehypeSlug, rehypeAutolinkHeadings]}
               components={{
-
-
                 // Liens : GPX → carte
                 a: ({ href, children, ...props }) => {
                   if (href && href.endsWith(".gpx")) {
