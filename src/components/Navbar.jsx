@@ -1,8 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import { BookOpen, FlaskConical, HeartHandshake, Menu, X, Search } from "lucide-react";
 import { useState } from "react";
-import logo1 from "../assets/logo1.png";
-import logo2 from "../assets/logo2.png";
+import logo1 from "../assets/logo_primary_deep.png";
+import logo2 from "../assets/logo_deep_primary.png";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);

@@ -1,33 +1,29 @@
+// scripts/generate-articles.js
 import fs from "fs";
-import path from "path";
 import matter from "gray-matter";
 
-const articlesDir = path.resolve("public/articles");
-const outputFile = path.resolve("src/content/articles.json");
+const folder = "./public/articles";
+const output = "./src/content/articles.json";
 
-const files = fs.readdirSync(articlesDir).filter(f => f.endsWith(".md"));
+const articles = fs
+  .readdirSync(folder)
+  .filter((f) => f.endsWith(".md"))
+  .map((filename) => {
+    const file = fs.readFileSync(`${folder}/${filename}`, "utf8");
+    const { data } = matter(file);
+    return {
+      slug: filename.replace(".md", ""),
+      title: data.title || filename.replace(".md", ""),
+      date: data.date || "",
+      description: data.description || "",
+      cover: data.cover || "",
+      published: data.published !== false, // <= clé importante
+    };
+  })
+  // 🔸 On garde uniquement les articles publiés
+  .filter((a) => a.published)
+  // tri chronologique
+  .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-const articles = files.map(file => {
-  const filePath = path.join(articlesDir, file);
-  const raw = fs.readFileSync(filePath, "utf-8");
-  const { data } = matter(raw);
-
-  // slug = nom du fichier sans extension
-  const slug = path.basename(file, ".md");
-
-  return {
-    slug,
-    title: data.title || slug,
-    date: data.date || null,
-    cover: data.cover || null,     // Ajout de la cover
-    tags: data.tags || []          // pratique pour filtrer plus tard
-  };
-});
-
-// Tri du plus récent au plus ancien
-articles.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-// Écriture dans articles.json
-fs.writeFileSync(outputFile, JSON.stringify(articles, null, 2));
-
-console.log(`✅ ${articles.length} articles générés dans ${outputFile}`);
+fs.writeFileSync(output, JSON.stringify(articles, null, 2));
+console.log(`✅ ${articles.length} articles publiés exportés vers ${output}`);

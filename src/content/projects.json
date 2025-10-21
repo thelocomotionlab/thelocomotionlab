@@ -1,32 +1,20 @@
 [
   {
-    "slug": "utmb-sandales",
-    "title": "UTMB en sandales",
-    "date": "2026-01-10",
-    "status": "à venir",
-    "cover": "/images/projets/utmb.jpg",
-    "description": "Préparation, protocole d’entraînement, stratégies de course, retour d’expérience.",
-    "notes": []
-  },
-  {
     "slug": "coach-tarzan-movement",
     "title": "Formation Coach Tarzan Movement",
     "date": "2025-10-16",
-    "status": "à venir",
-    "cover": "/images/projets/cover_tarzan.jpg",
+    "status": "À venir",
     "description": "Détails des différents apprentissages au fil de l'eau, sur les cours Gibbon, Orang-Outan, Gorille et Chimpanzé",
-    "notes": []
+    "cover": "/images/projets/cover_tarzan.jpg",
+    "published": true
   },
   {
     "slug": "traversee-reunion",
     "title": "Traversée de la Réunion en autonomie",
     "date": "2025-08-20",
-    "status": "en cours",
-    "cover": "/images/projets/traversee-reunion/cover_traversee_reunion.png",
-    "description": "Projet OFF. Documentation du parcours, établissement du matériel, réflexion sur le bienfondé d'une telle expédition...",
-    "notes": [
-      "Semaine 3",
-      "Semaine 2"
-    ]
+    "status": "En cours",
+    "description": "Projet OFF. Documentation du parcours, liste du matériel, préparation spécifique et détails de l'expédition.",
+    "cover": "/images/projets/traversee-reunion/cover_traversee_reunion.webp",
+    "published": true
   }
 ]

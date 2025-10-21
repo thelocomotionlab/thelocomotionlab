@@ -4,6 +4,7 @@ date: "2025-09-22"
 tags: ["ultra-trail", "minimalisme", "récit de course"]
 cover: "/images/articles/lavaredo-2025/cover_lavaredo.jpg"
 type: "recit"
+published: false
 ---
 
 

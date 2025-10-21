@@ -2,7 +2,8 @@
 title: "L'an 2020 : la genèse du labo"
 date: "2025-09-21"
 tags: ["ultra-trail", "minimalisme"]
-cover: "/images/articles/la-genese/cover_genese.png"
+cover: "/images/articles/la-genese/cover_genese.webp"
+description: "Retour sur les origines profondes de la création du labo."
 type: "recit"
 ---
 

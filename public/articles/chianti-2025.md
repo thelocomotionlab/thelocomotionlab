@@ -4,6 +4,7 @@ date: "2025-10-02"
 tags: ["ultra-trail", "minimalisme", "récit de course"]
 cover: "/images/articles/chianti-2025/cover_chianti.jpg"
 type: "recit"
+published: false
 ---
 
 Cet ultra-trail du Chianti 2025 format 100M (125 km / 5200 m D+) s'annonçait comme la première brique du projet UTMB, car permettant de glaner 4 précieuses running stones nécessaires pour augmenter ses chances d'y être tiré au sort. Mais pas que. Il s'agissait aussi d'explorer ma capacité à boucler un format de plus de 100 km, mon max étant jusqu'alors les 92 km du Grand Raid du Finistère 2024. Entre pluie, brouillard et boue à gogo, cette course fut épique. En voici la genèse, son déroulement, et les leçons que j'en ai tirées.

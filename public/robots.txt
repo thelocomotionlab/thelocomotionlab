@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://thelocomotionlab.com/sitemap.xml

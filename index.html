@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html lang="fr">
+  <meta http-equiv="Content-Security-Policy"
+  content="default-src 'self'; img-src 'self' data: https:; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com;">
+  <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
   <head>
     <!-- Polices -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Serif:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&display=swap" rel="stylesheet">
@@ -10,32 +16,66 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Locomotion Lab</title>
-    <meta name="description" content="Explorations en trail minimaliste, parkour primal, grimpe d’arbres, respiration et hormèse avec une approche carnet de terrain × rigueur scientifique.">
+    <meta
+      name="description"
+      content="Explorations de la locomotion humaine sous toutes ses formes — mouvement, respiration, hormèse et conscience — avec une approche scientifique et expérimentale."
+    >
+    <meta
+      name="keywords"
+      content="locomotion, mouvement, ultra-trail, sandales, parkour primal, respiration, hormèse, conscience, exploration, laboratoire, performance, endurance"
+    >
+    <meta name="author" content="Le Locomotion Lab" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://thelocomotionlab.com/" />
 
-    <!-- Favicon & icônes -->
-    <link rel="icon" href="/images/assets/favicon.ico" sizes="any">
-    <link rel="icon" type="image/png" sizes="32x32" href="/images/assets/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/images/assets/favicon-16x16.png">
+    <!-- Favicon & icônes générés par RealFaviconGenerator -->
     <link rel="apple-touch-icon" sizes="180x180" href="/images/assets/apple-touch-icon.png">
-
-    <!-- Open Graph -->
-    <meta property="og:title" content="Locomotion Lab">
-    <meta property="og:description" content="Explorations en trail minimaliste, parkour primal, respiration et hormèse.">
-    <meta property="og:image" content="/images/assets/og-image.jpg">
-    <meta property="og:url" content="https://thelocomotionlab.com">
-    <meta property="og:type" content="website">
-    <meta property="og:locale" content="fr_FR">
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Locomotion Lab">
-    <meta name="twitter:description" content="Explorations en trail minimaliste, parkour primal, respiration et hormèse.">
-    <meta name="twitter:image" content="/images/assets/og-image.jpg">
+    <link rel="icon" type="image/png" sizes="96x96" href="/images/assets/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/images/assets/web-app-manifest-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/images/assets/web-app-manifest-512x512.png">
+    <link rel="icon" href="/images/assets/favicon.ico" sizes="any">
+    <link rel="mask-icon" href="/images/assets/favicon.svg" color="#EFB159">
 
     <!-- Manifest PWA -->
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#ffffff">
+    <link rel="manifest" href="/images/assets/site.webmanifest">
+    <meta name="theme-color" content="#EFB159" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Locomotion Lab" />
+    <meta
+      property="og:description"
+      content="Explorations de la locomotion humaine sous toutes ses formes — mouvement, respiration, hormèse et conscience — avec une approche scientifique et expérimentale."
+    />
+    <meta property="og:image" content="https://thelocomotionlab.com/images/assets/og-image.jpg" />
+    <meta property="og:url" content="https://thelocomotionlab.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="fr_FR" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Locomotion Lab" />
+    <meta
+      name="twitter:description"
+      content="Explorations de la locomotion humaine sous toutes ses formes avec une approche scientifique et expérimentale."
+    />
+    <meta name="twitter:image" content="https://thelocomotionlab.com/images/assets/og-image.jpg" />
+
+    <!-- Données structurées Schema.org -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Le Locomotion Lab",
+        "url": "https://thelocomotionlab.com",
+        "description": "Exploration du mouvement, de la respiration, de l’hormèse et de la conscience corporelle.",
+        "publisher": {
+          "@type": "Organization",
+          "name": "Le Locomotion Lab"
+        }
+      }
+    </script>
   </head>
+
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
