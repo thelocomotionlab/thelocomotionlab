@@ -1,109 +1,165 @@
-import { useEffect, useState, useRef } from "react";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Polyline,
-  Popup,
-  useMap,
-} from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-
-// --- Icône personnalisée pour ton coureur
-const runnerIcon = new L.Icon({
-  iconUrl: "https://cdn-icons-png.flaticon.com/512/847/847969.png",
-  iconSize: [32, 32],
-  iconAnchor: [16, 32],
-  popupAnchor: [0, -28],
-});
-
-// --- Mouvement fluide de la carte
-function MapAutoPan({ position }) {
-  const map = useMap();
-  useEffect(() => {
-    if (position) map.panTo(position, { animate: true, duration: 0.5 });
-  }, [position, map]);
-  return null;
-}
+import { useEffect, useRef, useState } from "react";
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
+import * as toGeoJSON from "@tmcw/togeojson";
 
 export default function LiveTracking() {
-  const [positions, setPositions] = useState([]);
-  const [latest, setLatest] = useState(null);
+  const mapRef = useRef(null);
+  const mapContainer = useRef(null);
   const [stats, setStats] = useState({ distance: 0, ascent: 0, descent: 0 });
   const [lastUpdate, setLastUpdate] = useState(null);
-  const mapRef = useRef();
 
-  // --- Ton domaine
   const API_BASE = "https://tracking.thelocomotionlab.com";
 
-  // --- Récupère les positions stockées sur le serveur
-  async function fetchPositions() {
-    try {
-      const res = await fetch(`${API_BASE}/live-positions.json?cacheBust=${Date.now()}`);
-      if (!res.ok) throw new Error(`Erreur API: ${res.status}`);
-      const data = await res.json();
-      if (!Array.isArray(data) || data.length === 0) return;
+  // Styles identiques à MapEmbed.jsx
+  const styles = {
+    osm: {
+      version: 8,
+      sources: {
+        osm: {
+          type: "raster",
+          tiles: [
+            "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          ],
+          tileSize: 256,
+          attribution: "© OpenStreetMap contributors",
+        },
+      },
+      layers: [
+        { id: "osm", type: "raster", source: "osm", minzoom: 0, maxzoom: 19 },
+      ],
+    },
+  };
 
-      setPositions(data);
-      const last = data[data.length - 1];
-      setLatest([last.lat, last.lon]);
-      setLastUpdate(last.time);
-    } catch (err) {
-      console.error("Erreur récupération positions :", err);
-    }
-  }
-
-  // --- Récupère les stats calculées serveur
-  async function fetchStats() {
-    try {
-      const res = await fetch(`${API_BASE}/live-stats.json?cacheBust=${Date.now()}`);
-      if (!res.ok) throw new Error(`Erreur API: ${res.status}`);
-      const data = await res.json();
-      if (!data) return;
-
-      setStats({
-        distance: (data.distance_km || 0).toFixed(2),
-        ascent: data.ascent_m || 0,
-        descent: data.descent_m || 0,
-      });
-    } catch (err) {
-      console.error("Erreur récupération stats :", err);
-    }
-  }
-
-  // --- Rafraîchissement automatique toutes les 10 s
+  // --- Initialisation de la carte ---
   useEffect(() => {
-    fetchPositions();
-    fetchStats();
-    const interval = setInterval(() => {
-      fetchPositions();
-      fetchStats();
-    }, 10000);
+    if (!mapContainer.current) return;
+
+    const map = new maplibregl.Map({
+      container: mapContainer.current,
+      style: styles.osm,
+      center: [5.3641, 44.4196],
+      zoom: 13,
+    });
+
+    mapRef.current = map;
+    map.addControl(new maplibregl.NavigationControl(), "top-left");
+
+    // --- Trace GPX bleue (référence) ---
+    map.on("load", async () => {
+      try {
+        const res = await fetch("/tracks/utmc.gpx");
+        const xml = await res.text();
+        const doc = new DOMParser().parseFromString(xml, "application/xml");
+        const geojson = toGeoJSON.gpx(doc);
+
+        map.addSource("reference-track", { type: "geojson", data: geojson });
+        map.addLayer({
+          id: "reference-line",
+          type: "line",
+          source: "reference-track",
+          paint: {
+            "line-color": "#007bff",
+            "line-width": 3,
+            "line-dasharray": [2, 2],
+          },
+        });
+      } catch (err) {
+        console.warn("GPX non chargé :", err);
+      }
+    });
+
+    // --- Rafraîchissement des données live ---
+    async function fetchLiveData() {
+      try {
+        const [posRes, statsRes] = await Promise.all([
+          fetch(`${API_BASE}/live-positions.json?cacheBust=${Date.now()}`),
+          fetch(`${API_BASE}/live-stats.json?cacheBust=${Date.now()}`),
+        ]);
+
+        const positions = await posRes.json();
+        const stats = await statsRes.json();
+
+        if (!Array.isArray(positions) || positions.length === 0) return;
+
+        setStats({
+          distance: (stats.distance_km || 0).toFixed(2),
+          ascent: stats.ascent_m || 0,
+          descent: stats.descent_m || 0,
+        });
+        setLastUpdate(positions[positions.length - 1].time);
+
+        const coords = positions.map((p) => [p.lon, p.lat]);
+        const geojson = {
+          type: "Feature",
+          geometry: { type: "LineString", coordinates: coords },
+        };
+
+        // --- Trace live (rouge) ---
+        if (map.getSource("live-track")) {
+          map.getSource("live-track").setData(geojson);
+        } else {
+          map.addSource("live-track", { type: "geojson", data: geojson });
+          map.addLayer({
+            id: "live-track-line",
+            type: "line",
+            source: "live-track",
+            paint: {
+              "line-color": "#ff5500",
+              "line-width": 4,
+              "line-opacity": 0.9,
+            },
+          });
+        }
+
+        // --- Marqueur coureur ---
+        const last = coords[coords.length - 1];
+        if (!map._runnerMarker) {
+          const el = document.createElement("div");
+          el.style.width = "28px";
+          el.style.height = "28px";
+          el.style.backgroundImage =
+            "url('https://cdn-icons-png.flaticon.com/512/847/847969.png')";
+          el.style.backgroundSize = "contain";
+          el.style.backgroundRepeat = "no-repeat";
+          map._runnerMarker = new maplibregl.Marker(el).setLngLat(last).addTo(map);
+        } else {
+          map._runnerMarker.setLngLat(last);
+        }
+
+        map.flyTo({ center: last, speed: 0.5, essential: true });
+      } catch (err) {
+        console.error("Erreur récupération live data :", err);
+      }
+    }
+
+    fetchLiveData();
+    const interval = setInterval(fetchLiveData, 10000);
     return () => clearInterval(interval);
   }, []);
 
-  // --- Chargement initial
-  if (!latest)
-    return (
-      <div className="text-center text-gray-500 py-10">
-        Chargement du suivi en direct…
-      </div>
-    );
-
-  // --- Rendu principal
   return (
-    <div className="w-full flex flex-col items-center gap-4 py-8">
-      <h2 className="text-2xl font-semibold text-[#b66b47]">
-        Suivi en direct (Live tracking)
-      </h2>
-
-      {/* Bloc stats */}
-      <div className="bg-white/90 shadow-md rounded-xl p-4 w-[90%] max-w-3xl text-center">
-        <div className="flex justify-around text-sm sm:text-base font-medium">
-          <div>🏃 Distance : {stats.distance} km</div>
-          <div>⬆️ D+ : {stats.ascent} m</div>
-          <div>⬇️ D− : {stats.descent} m</div>
+    <div className="flex flex-col items-center w-full py-6 px-3 sm:px-6 gap-3">
+      {/* --- Bloc stats --- */}
+      <div className="bg-white/80 backdrop-blur-md shadow-md rounded-2xl p-4 w-full max-w-3xl text-center border border-gray-200">
+        <div className="flex justify-center items-center gap-2 font-semibold text-lg text-[#b66b47] mb-1">
+          🛰️ Suivi en direct
+        </div>
+        <div className="flex justify-around text-sm sm:text-base font-medium text-gray-800">
+          <div>
+            <span className="font-semibold">{stats.distance}</span> km
+            <div className="text-xs text-gray-500">Distance</div>
+          </div>
+          <div>
+            <span className="font-semibold text-green-600">+{stats.ascent}</span> m
+            <div className="text-xs text-gray-500">D+</div>
+          </div>
+          <div>
+            <span className="font-semibold text-red-500">−{stats.descent}</span> m
+            <div className="text-xs text-gray-500">D−</div>
+          </div>
         </div>
         <div className="text-xs mt-2 text-gray-500">
           Dernière maj :{" "}
@@ -111,43 +167,11 @@ export default function LiveTracking() {
         </div>
       </div>
 
-      {/* Carte */}
-      <div className="w-[90%] h-[500px] rounded-xl overflow-hidden shadow-lg">
-        <MapContainer
-          center={latest}
-          zoom={14}
-          style={{ height: "100%", width: "100%" }}
-          whenCreated={(map) => (mapRef.current = map)}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-
-          {/* Trace progressive */}
-          {positions.length > 1 && (
-            <Polyline
-              positions={positions.map((p) => [p.lat, p.lon])}
-              pathOptions={{
-                color: "#ff6600",
-                weight: 4,
-                opacity: 0.9,
-              }}
-            />
-          )}
-
-          {/* Dernière position */}
-          <Marker position={latest} icon={runnerIcon}>
-            <Popup>
-              <strong>Dernière position</strong>
-              <br />
-              {new Date(lastUpdate).toLocaleTimeString("fr-FR")}
-            </Popup>
-          </Marker>
-
-          <MapAutoPan position={latest} />
-        </MapContainer>
-      </div>
+      {/* --- Carte --- */}
+      <div
+        ref={mapContainer}
+        className="w-full max-w-6xl h-[70vh] sm:h-[75vh] rounded-2xl overflow-hidden shadow-lg border border-gray-200"
+      ></div>
     </div>
   );
 }
