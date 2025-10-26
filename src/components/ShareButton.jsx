@@ -44,8 +44,8 @@ export default function ShareButton() {
       }}
       aria-label="Partager cette page"
     >
-      <Share2 className="w-5 h-5 sm:w-5 sm:h-5 text-gray-700 sm:text-gray-800"/>
-      <span className="hidden sm:inline sm:ml-1">{copied ? "Lien copié" : "Partager"}</span>
+      <Share2 className="w-5 h-5 sm:w-5 sm:h-5 text-gray-700 sm:text-gray-800 translate-x-[-0.1em]"/>
+      <span className="hidden sm:inline sm:ml-1 sm:translate-x-[-0.25em]">{copied ? "Lien copié" : "Partager"}</span>
     </button>
   );
 }
