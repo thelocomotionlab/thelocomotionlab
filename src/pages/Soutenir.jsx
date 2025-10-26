@@ -12,10 +12,14 @@ export default function Soutenir() {
     setStatus("sending");
 
     try {
-      const res = await fetch("/api/send-email", {
+      const res = await fetch("https://send-email.thelocomotionlab.workers.dev/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          email,
+          subject: "Nouvelle souscription",
+          message: email,
+        }),
       });
 
       if (res.ok) {
@@ -52,7 +56,7 @@ export default function Soutenir() {
           <strong className="font-semibold text-brand-deep">
             Locomotion Lab
           </strong>{" "}
-          est un projet indépendant nourri par la passion de l'exploration et le
+          est un projet indépendant axé sur l'exploration et le
           partage des connaissances.
         </p>
 
@@ -80,7 +84,11 @@ export default function Soutenir() {
             ci-dessous.
           </p>
 
-          <form onSubmit={handleSubmit} className="flex justify-center">
+          {/* Formulaire responsive avec arrondis constants */}
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col sm:flex-row justify-center items-stretch gap-2 w-full max-w-md mx-auto"
+          >
             <input
               type="email"
               name="email"
@@ -88,31 +96,34 @@ export default function Soutenir() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Votre adresse e-mail"
-              className="px-4 py-2 border focus:outline-none focus:ring-2 focus:ring-brand-accent w-64 rounded-l-full sm:rounded-l-full"
+              className="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-accent focus:rounded-full transition-all"
             />
             <button
               type="submit"
               disabled={status === "sending"}
-              className={`bg-brand-accent text-white px-5 py-2 font-semibold flex items-center gap-2 transition-all duration-300 rounded-r-full sm:rounded-r-full ${
+              className={`bg-brand-accent text-white px-5 py-2 font-semibold flex items-center justify-center gap-2 transition-all duration-300 rounded-full ${
                 status === "sending"
                   ? "opacity-70 cursor-wait"
                   : "hover:opacity-90"
               }`}
             >
-              <Mail size={18} />{" "}
+              <Mail size={18} />
               {status === "sending" ? "Envoi..." : "M'inscrire"}
             </button>
           </form>
 
+          {/* ✅ Message bien aligné */}
           <div className="h-6 mt-3">
             {status === "success" && (
-              <p className="text-green-600 text-sm font-medium animate-fade-in">
-                Merci pour ton inscription ! Tu recevras bientôt les nouvelles
-                explorations du Labo <Microscope />
+              <p className="text-brand-deep text-sm font-medium animate-fade-in flex items-center justify-center gap-2 leading-none">
+                <span>
+                  Merci pour ton inscription ! Tu recevras bientôt les nouvelles
+                  explorations du labo.
+                </span>
               </p>
             )}
             {status === "error" && (
-              <p className="text-red-500 text-sm font-medium animate-fade-in">
+              <p className="text-brand-deep text-sm font-medium animate-fade-in">
                 Une erreur est survenue. Vérifie ton adresse mail.
               </p>
             )}

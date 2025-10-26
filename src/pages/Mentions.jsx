@@ -91,14 +91,14 @@ export default function Mentions() {
           </h2>
           <p>
             La photo présente en page d'accueil est une œuvre originale réalisée
-            par <strong>Caroline Fer</strong>.
+            par <strong>Caroline Fer</strong>, et retouchée à l'aide de l'Intelligence Artificielle.
             <br />
             Pour toute demande de contact ou de collaboration éventuelle :{" "}
             <a
-              href="mailto:thelocomotionlab@gmail.com"
+              href="mailto:caroline.fer69@gmail.com"
               className="text-brand-accent hover:underline"
             >
-              thelocomotionlab@gmail.com
+              caroline.fer69@gmail.com
             </a>
           </p>
         </section>
