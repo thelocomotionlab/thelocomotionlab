@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { SatelliteDish } from "lucide-react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import * as toGeoJSON from "@tmcw/togeojson";
@@ -50,7 +51,7 @@ export default function LiveTracking() {
     // --- Trace GPX bleue (référence) ---
     map.on("load", async () => {
       try {
-        const res = await fetch("/tracks/utmc.gpx");
+        const res = await fetch("/tracks/utmc_off.gpx");
         const xml = await res.text();
         const doc = new DOMParser().parseFromString(xml, "application/xml");
         const geojson = toGeoJSON.gpx(doc);
@@ -145,24 +146,25 @@ export default function LiveTracking() {
       {/* --- Bloc stats --- */}
       <div className="bg-white/80 backdrop-blur-md shadow-md rounded-2xl p-4 w-full max-w-3xl text-center border border-gray-200">
         <div className="flex justify-center items-center gap-2 font-semibold text-lg text-[#b66b47] mb-1">
-          🛰️ Suivi en direct
+          <SatelliteDish size={18} /> Suivi en direct
         </div>
         <div className="flex justify-around text-sm sm:text-base font-medium text-gray-800">
           <div>
-            <span className="font-semibold">{stats.distance}</span> km
+            <span className="font-semibold">{stats.distance} km</span> 
             <div className="text-xs text-gray-500">Distance</div>
           </div>
           <div>
-            <span className="font-semibold text-green-600">+{stats.ascent}</span> m
+            <span className="font-semibold">{stats.ascent} m</span>
             <div className="text-xs text-gray-500">D+</div>
+
           </div>
           <div>
-            <span className="font-semibold text-red-500">−{stats.descent}</span> m
+            <span className="font-semibold">{stats.descent} m</span>
             <div className="text-xs text-gray-500">D−</div>
           </div>
         </div>
         <div className="text-xs mt-2 text-gray-500">
-          Dernière maj :{" "}
+          Dernière màj :{" "}
           {lastUpdate ? new Date(lastUpdate).toLocaleTimeString("fr-FR") : "—"}
         </div>
       </div>

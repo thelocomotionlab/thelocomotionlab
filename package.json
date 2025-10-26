@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@tmcw/togeojson": "^7.1.2",
+    "emailjs-com": "^3.2.0",
     "framer-motion": "^10.18.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.344.0",

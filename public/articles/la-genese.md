@@ -5,6 +5,7 @@ tags: ["ultra-trail", "minimalisme"]
 cover: "/images/articles/la-genese/cover_genese.webp"
 description: "Retour sur les origines profondes de la création du labo."
 type: "recit"
+published: true
 ---
 
 

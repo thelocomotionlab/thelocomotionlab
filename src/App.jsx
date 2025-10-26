@@ -11,7 +11,8 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import Search from "./pages/Search"; // import ajouté
+import Search from "./pages/Search";
+import ShareButton from "./components/ShareButton"; // ✅ ajout ici
 
 export default function App() {
   return (
@@ -29,10 +30,13 @@ export default function App() {
           <Route path="/mentions-legales" element={<Mentions />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/recherche" element={<Search />} /> {/* route ajoutée */}
+          <Route path="/recherche" element={<Search />} />
         </Routes>
       </main>
       <Footer />
+
+      {/* ✅ Bouton global de partage (présent sur tout le site) */}
+      <ShareButton />
     </div>
   );
 }
