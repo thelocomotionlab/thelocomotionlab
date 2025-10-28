@@ -7,5 +7,14 @@
     "description": "Détails des différents apprentissages au fil de l'eau, sur les cours Gibbon, Orang-Outan, Gorille et Chimpanzé",
     "cover": "/images/projets/cover_tarzan.jpg",
     "published": true
+  },
+  {
+    "slug": "live-tracking-test",
+    "title": "Test de live-tracking",
+    "date": "2025-08-20",
+    "status": "En cours",
+    "description": "Test de live-tracking avant mise en place définitive pour la traversée de la Réunion",
+    "cover": "/images/projets/traversee-reunion/cover_traversee_reunion.webp",
+    "published": true
   }
 ]
