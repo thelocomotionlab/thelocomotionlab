@@ -4,7 +4,7 @@ date: "2025-08-20"
 status: "En cours"
 description: "Projet OFF. Documentation du parcours, liste du matériel, préparation spécifique et détails de l'expédition."
 cover: "/images/projets/traversee-reunion/cover_traversee_reunion.webp"
-published: false
+published: true
 ---
 
 
