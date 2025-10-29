@@ -261,6 +261,15 @@ export default function LiveTracking() {
     return null;
   };
 
+  // --- Animation courbe profil altimétrique ---
+  const [isInitialRender, setIsInitialRender] = useState(true);
+  useEffect(() => {
+    // Au bout de quelques secondes, on désactive l’animation pour les updates suivantes
+    const timer = setTimeout(() => setIsInitialRender(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+
   const isMobile = window.innerWidth < 640; // sm: breakpoint Tailwind
   const xTicks = isMobile ? [0, 45, TOTAL_DISTANCE_KM] : [0, 30, 60, TOTAL_DISTANCE_KM];
 
@@ -297,7 +306,7 @@ export default function LiveTracking() {
       <div className="relative w-full max-w-6xl">
         <div
           ref={mapContainer}
-          className="w-full h-[70vh] sm:h-[75vh] rounded-2xl overflow-hidden shadow-lg border border-gray-200"
+          className="w-full h-[70vh] sm:h-[75vh] overflow-hidden shadow-lg border border-gray-200"
         ></div>
 
         {/* Sélecteur de style responsive */}
@@ -335,7 +344,7 @@ export default function LiveTracking() {
                 {[
                   { key: "osm", label: "OSM" },
                   { key: "topo", label: "Topo" },
-                  { key: "satellite", label: "Satellite" },
+                  { key: "satellite", label: "Sat." },
                 ].map((opt) => (
                   <button
                     key={opt.key}
@@ -425,10 +434,13 @@ export default function LiveTracking() {
               <Line
                 type="monotone"
                 dataKey="alt"
-                stroke="#EFB159"
+                stroke="#B67352"
                 strokeWidth={2}
                 dot={false}
+                isAnimationActive={isInitialRender} // ✅ animé uniquement au chargement
+                //animationDuration={100000} // optionnel : vitesse du dessin initial
               />
+
             </LineChart>
 
 
