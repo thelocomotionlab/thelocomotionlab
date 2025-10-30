@@ -12,7 +12,9 @@ import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeRaw from "rehype-raw"; // ✅ ajouté pour autoriser le HTML inline
 import useTocFromMarkdown from "../hooks/useTocFromMarkdown";
 import { Helmet } from "react-helmet";
-import LiveTracking from "../components/LiveTracking"; // ✅ nouveau composant
+import LiveTracking from "../components/LiveTracking"; 
+import Citation from "../components/Citation";
+
 
 export default function Projet() {
   const { slug } = useParams();
@@ -158,7 +160,7 @@ export default function Projet() {
               prose prose-lg max-w-none
               font-lora text-gray-800 leading-relaxed
               text-left md:text-justify
-              prose-img:rounded-lg prose-img:shadow-md prose-img:mx-auto prose-img:my-6
+              prose-img:shadow-md prose-img:mx-auto prose-img:my-6
               prose-blockquote:italic prose-blockquote:text-gray-600
               prose-blockquote:border-l-4 prose-blockquote:border-brand-primary prose-blockquote:pl-4
             "
@@ -172,9 +174,9 @@ export default function Projet() {
                 remarkSplit,
               ]}
               rehypePlugins={[
+                rehypeRaw, // ✅ permet de lire <livetracking> comme HTML
                 rehypeSlug,
                 rehypeAutolinkHeadings,
-                rehypeRaw, // ✅ permet de lire <livetracking> comme HTML
               ]}
               components={{
                 // 🛰️ Composant LiveTracking depuis le markdown
@@ -232,6 +234,7 @@ export default function Projet() {
                     </code>
                   );
                 },
+                citation: Citation
               }}
             >
               {content}

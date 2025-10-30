@@ -4,7 +4,7 @@ date: "2025-08-20"
 status: "En cours"
 description: "Projet OFF. Documentation du parcours, liste du matériel, préparation spécifique et détails de l'expédition."
 cover: "/images/projets/traversee-reunion/cover_traversee_reunion.webp"
-published: false
+published: true
 ---
 
 
@@ -92,6 +92,16 @@ Côté déroulement de la sortie, on était sur des sentiers bien techniques en 
 
 
 Suite à mes difficultés à maintenir une allure aérobique en montées durant le tour du Taillefer, j'ai cherché des manières plus économiques de gravir des montagnes. Et ce que j'ai trouvé à attiré 
+
+
+### Bilan S3
+
+## Semaine 4 
+
+### Expérimenter le concept de la chasse d'eau
+
+Vous connaissez le concept de la chasse d'eau ? <Citation id="millet2012">l’étude de Millet</Citation>
+
 
 
 ## Suivi en direct (Live tracking)
