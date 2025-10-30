@@ -1,4 +1,19 @@
 {
+  "template": {
+    "type": "Type de référence (article, book, thesis, chapter, etc.)",
+    "author": "Auteurices",
+    "year" : "Année de publication",
+    "title": "Titre complet",
+    "journal": "Nom du journal",
+    "publisher": "Maison d'édition (si livre, rapport, etc.)",
+    "volume": "Volume (du magasine par exemple)",
+    "issue": "Numéro de publication",
+    "pages": "Numéros de pages ex : 453-589",
+    "doi": "doi brut ex : 10.2165/11588760-000000000-00000",
+    "issn": "Numéro issn ex : 1179-2035",
+    "issbn": "Numéro issbn (pour les livres) ex : 978-2-7609-0570-9"
+
+  },
   "millet2012": {
     "author": "Guillaume Millet",
     "year": "2012",
@@ -15,3 +30,4 @@
     "publisher": "La Clinique du Coureur"
   }
 }
+

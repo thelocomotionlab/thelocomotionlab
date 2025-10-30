@@ -1,6 +1,9 @@
 import bibliography from "../content/bibliography.json";
 import Tooltip from "./Tooltip";
 
+// On garde un registre global des références citées
+window.__usedRefs = window.__usedRefs || new Set();
+
 export default function Citation({ id, children }) {
   const ref = bibliography[id];
 
@@ -9,7 +12,10 @@ export default function Citation({ id, children }) {
     return <span>{children || id}</span>;
   }
 
-  // Construction automatique du texte à afficher dans le tooltip
+  // Ajout au registre
+  window.__usedRefs.add(id);
+
+  // Format pour le tooltip
   const formatted = [
     `${ref.author} (${ref.year})`,
     ref.title ? `${ref.title}` : "",
