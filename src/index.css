@@ -240,6 +240,19 @@ a.data-footnote-backref,
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
+
+/* 1️⃣ Réinitialise d'abord tout le monde à bords arrondis (covers incluses) */
+.prose img,
+.cover-image {
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 2️⃣ Puis retire les arrondis uniquement pour les images dans le contenu markdown */
+.prose img:not(.cover-image) {
+  border-radius: 0;
+}
+
 /* Animation pour mail soutien */
 @keyframes fade-in {
   from {
