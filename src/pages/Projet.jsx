@@ -174,9 +174,9 @@ export default function Projet() {
                 remarkSplit,
               ]}
               rehypePlugins={[
-                rehypeRaw, // ✅ permet de lire <livetracking> comme HTML
                 rehypeSlug,
                 rehypeAutolinkHeadings,
+                rehypeRaw, // ✅ permet de lire <livetracking> comme HTML
               ]}
               components={{
                 // 🛰️ Composant LiveTracking depuis le markdown

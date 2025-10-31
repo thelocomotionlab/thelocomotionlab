@@ -269,3 +269,145 @@ a.data-footnote-backref,
   animation: fade-in 0.6s ease-out forwards;
 }
 
+/* ============================================================
+   🎨 LOCOMOTION LAB — STYLING DES PROJETS ET ARTICLES (.prose)
+   ============================================================ */
+
+/* === LÉGENDES D’IMAGES ET CARTES (centrées et sobres) === */
+
+/* === LÉGENDES D’IMAGES, CARTES ET BLOCS SPLIT === */
+/* === LÉGENDES D’IMAGES, CARTES, GPX & BLOCS SPLIT === */
+
+/* 1️⃣ Image seule */
+.prose img + em {
+  display: block;
+  text-align: center;
+  font-size: 0.85rem;
+  font-style: normal;
+  font-weight: 400;
+  color: #6b7280; /* gris neutre */
+  margin: 0.5rem auto 1.2rem;
+  line-height: 1.4;
+  font-family: "Inter", sans-serif;
+  letter-spacing: 0.01em;
+  max-width: 90%;
+}
+
+.prose img + em::before {
+  content: "";
+  display: block;
+  width: 2.25rem;
+  height: 1px;
+  background-color: rgba(239, 177, 89, 0.35);
+  margin: 0.4rem auto 0.6rem;
+  border-radius: 1px;
+}
+
+/* 2️⃣ GPX seule (MapEmbed) : <p><div>…</div></p> + <p><em>…</em></p> */
+.prose p:has(> div) + p > em {
+  display: block;
+  text-align: center;
+  font-size: 0.85rem;
+  font-style: normal;
+  color: #6b7280;
+  margin: 0.8rem auto 1.5rem;
+  line-height: 1.4;
+  font-family: "Inter", sans-serif;
+  max-width: 90%;
+}
+
+.prose p:has(> div) + p > em::before {
+  content: "";
+  display: block;
+  width: 2.25rem;
+  height: 1px;
+  background-color: rgba(239, 177, 89, 0.35);
+  margin: 0.4rem auto 0.6rem;
+  border-radius: 1px;
+}
+
+/* 3️⃣ Bloc split (image + carte, ou deux images) */
+.md-split + p > em {
+  display: block;
+  text-align: center;
+  font-size: 0.85rem;
+  font-style: normal;
+  color: #6b7280;
+  margin: 0.8rem auto 1.5rem;
+  line-height: 1.4;
+  font-family: "Inter", sans-serif;
+  max-width: 90%;
+}
+
+.md-split + p > em::before {
+  content: "";
+  display: block;
+  width: 2.25rem;
+  height: 1px;
+  background-color: rgba(239, 177, 89, 0.35);
+  margin: 0.4rem auto 0.6rem;
+  border-radius: 1px;
+}
+
+/* === Raffinement visuel des légendes (espacement + ligne) === */
+
+/* Réduit l’espace entre image/carte et légende */
+.prose img + em,
+.prose p:has(> div) + p > em,
+.md-split + p > em {
+  margin-top: 0.2rem !important;   /* rapproche la légende du visuel */
+  margin-bottom: 1rem !important;  /* réduit l'espace sous la légende */
+}
+
+/* Ligne décorative plus visible */
+.prose img + em::before,
+.prose p:has(> div) + p > em::before,
+.md-split + p > em::before {
+  width: 3.5rem;                      /* un peu plus longue */
+  height: 1.5px;                    /* plus épaisse */
+  background-color: rgba(239, 177, 89, 0.65); /* accent orange plus vif */
+  margin: 0.3rem auto 0.4rem;       /* rapproche la ligne du texte */
+  border-radius: 2px;
+}
+
+
+/* === LISTES : STYLE Labo / carnet scientifique === */
+/* === Harmonisation des listes dans les articles et projets === */
+.prose ul,
+.prose ol {
+  margin-top: 0.25rem;        /* réduit l’espace au-dessus */
+  margin-bottom: 0.75rem;     /* réduit l’espace en dessous */
+  padding-left: 1.25rem;      /* espace standard avant puce */
+  line-height: 1.5;           /* même interligne que le texte */
+  font-size: 1rem;            /* taille du texte courant */
+  color: #374151;             /* même couleur que le corps (gray-700) */
+  font-family: "Lora", serif; /* cohérence avec ton texte principal */
+}
+
+/* Ajuste l'espacement entre chaque élément */
+.prose ul li,
+.prose ol li {
+  margin-top: 0.1rem;
+  margin-bottom: 0.1rem;
+}
+
+/* Style de puce (diamant discret, taille ajustée) */
+.prose ul li::marker {
+  color: rgba(239, 177, 89, 0.65); /* même accent que les légendes */
+  font-size: 0.7em;                /* plus petit */
+  content: "◆ ";                  /* symbole diamant stylisé */
+}
+
+/* Style cohérent pour listes numérotées */
+.prose ol li::marker {
+  color: rgba(239, 177, 89, 0.65);
+  font-weight: 500;
+}
+
+
+/* === Harmonisation des espacements entre sections === */
+.prose h2,
+.prose h3 {
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+}
