@@ -4,7 +4,7 @@ IFS=$'\n\t'
 
 # ========= Paramètres =========
 MAX_DIM=3840      # largeur/hauteur max en pixels
-QUALITY=95        # qualité WebP (0-100)
+QUALITY=98        # qualité WebP (0-100)
 SUBDIR="compressed"  # sous-dossier de sortie
 OVERWRITE=true    # true: réécrit si le fichier existe déjà ; false: saute
 

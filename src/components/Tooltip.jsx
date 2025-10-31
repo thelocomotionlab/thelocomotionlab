@@ -41,7 +41,7 @@ export default function Tooltip({ text, link, children }) {
               rel="noopener noreferrer"
               className="block text-brand-primary font-semibold mt-2 hover:underline"
             >
-              Lire la publication →
+              Voir la référence
             </a>
           )}
         </div>
