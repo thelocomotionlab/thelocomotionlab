@@ -9,7 +9,7 @@ published: true
 
 
 
-Le 19 septembre 2025 s'annonçait comme le jour où j'allais accomplir mon rêve de courir 100 miles d'une traite au Grand Raid du Finistère. Ce rendez-vous avec moi-même s'est achevé au 86ième km après une dizaine d'heures de courses, devant abandonner à cause d'une présumée fracture de fatigue tibiale. 3 jours après, je pouvais de nouveau courir, la fracture tibiale était en réalité un excès de compression due à une chaussette de sandale pas assez éprouvée à l'entraînement. Dès lors, j'ai compris qu'une dernière tentative de 100 miles s'offrirait à moi avant la fin de l'année, lors d'un voyage à la Réunion prévu de longue date. Mais dans un cadre qui me ressemble, hors de toute compétition, une aventure en OFF avec mes propres règles : traverser la Réunion d'une traite en sandales, en autonomie et sans bâtons pour respecter l'esprit diag'. Un chantier énorme à ficeler en 6 semaines, et dont je vous raconte les coulisses jusqu'au partage de l'aventure le jour J. Bonne lecture !
+Le 19 septembre 2025 s'annonçait comme le jour où j'allais accomplir mon rêve de courir 100 miles d'une traite au Grand Raid du Finistère. Ce rendez-vous avec moi-même s'est achevé au 86$^{\text{ième}}$ km après une dizaine d'heures de courses, devant abandonner à cause d'une présumée fracture de fatigue tibiale. 3 jours après, je pouvais de nouveau courir, la fracture tibiale était en réalité un excès de compression due à une chaussette de sandale pas assez éprouvée à l'entraînement. Dès lors, j'ai compris qu'une dernière tentative de 100 miles s'offrirait à moi avant la fin de l'année, lors d'un voyage à la Réunion prévu de longue date. Mais dans un cadre qui me ressemble, hors de toute compétition, une aventure en OFF avec mes propres règles : traverser la Réunion d'une traite en sandales, en autonomie et sans bâtons pour respecter l'esprit diag'. Un chantier énorme à ficeler en 6 semaines, et dont je vous raconte les coulisses jusqu'au partage de l'aventure le jour J. Bonne lecture !
 
 ---
 
@@ -35,6 +35,8 @@ L'idée de faire le parcours en OFF de la diagonale des fous fut tentante. Mais 
 
 Semaine de reprise à 64 km 2000 m D+/D-. Plaisir de courir intact après l'abandon au GRF. Plaisir d'ailleurs potentiellement décuplé par la pression inexistante sur ce projet qui n'est que du kiff. Pas de dossard, juste l'aventure et moi-même. Vivement la suite.
 
+[Retour au sommaire](#sommaire)
+
 ## Semaine 2
 
 ### Première simulation en sortie longue
@@ -57,7 +59,7 @@ Pour cette deuxième semaine, l'objectif a été simple : monter le volume (dist
 
 J'appréhendais cette sortie par le fait de me retrouver seul en montagne pendant de longues heures. Finalement, l'état de flow s'est vite emparé de ma personne, entouré par cette nature calme, slendide et rassérénante. Autre satisfaction : aller au bout d'une telle sortie avec une carapace de Franklin sur le dos. Car oui, pour assurer une quarantaine d'heures de déplacement en autonomie, il faut du matos, et de la bouffe, beaucoup de bouffe. J'étais donc plutôt chargé pour une sortie trail, avec à peu près 6 kg sur le dos au départ.
 
-Côté nutrition, je suis parti un peu à l'arrache avec 4-5 flasques isotoniques dosées à 38 g de glucides par 500 mL, un demi saucisson, quelques boules d'énergie et, grosse nouveauté pour moi, un sachet de bouffe lyophilisé. Ce dernier choix me semble intéressant pour un OFF car il permet d'optimiser le rapport masse/kcal transportés. D'autre part, je souhaitais vérifier la non-vomissabilité d'un tel plat réhydraté à l'eau froide (car flemme de me charger d'un réchaud à la Réunion). Verdict : tuerie maximale après 30 minutes de réhydratation. Après, j'avoue être très bon public en cas de forte dalle.
+Côté nutrition, je suis parti un peu à l'arrache avec 4-5 flasques isotoniques dosées à 38 g de glucides par 500 mL, un demi saucisson, quelques boules d'énergie et, grosse nouveauté pour moi, un sachet de bouffe lyophilisé. Ce dernier choix me semble intéressant pour un OFF car il permet d'optimiser le rapport masse/kcal transporté. D'autre part, je souhaitais vérifier la non-vomissabilité d'un tel plat réhydraté à l'eau froide (car flemme de me charger d'un réchaud à la Réunion). Verdict : tuerie maximale après 30 minutes de réhydratation. Après, j'avoue être très bon public en cas de forte dalle.
 
 
 :::split
@@ -87,7 +89,7 @@ Matos :
 
 :::
 
-Côté caractéristiques du parcours, on était sur des sentiers bien techniques en montées comme en descentes. Mon choix de ne pas utiliser de bâtons m'a compliqué la tâche dans ces montées très abruptes et techniques. L'objectif était de passer le plus de temps possible en respiration nasale, signe signe de bien rester en régime aérobie. Cela est à mes yeux indispensable pour des efforts aussi longs que celui de la Réunion. Je n'ai pas encore assez décortiqué la science sur ce sujet pour parler d'autre chose que de mes ressentis, mais j'ai remarqué qu'en oxydant trop rapidement mes réserves de glycogène à cause du régime anaérobique, la perception moyenne de l'effort devient de plus en plus élevée, trop pour un effort de si longue distance. Et plus la perception de l'effort est grande, plus le plaisir de se mouvoir s'estompe. Parfois juste un poil au-dessus du seuil acceptable, et on passe d'un effort agréable, totalement addictif, à un stress corporel et cognitif continu.
+Côté caractéristiques du parcours, on était sur des sentiers bien techniques en montées comme en descentes. Mon choix de ne pas utiliser de bâtons m'a compliqué la tâche dans ces montées très abruptes et techniques. L'objectif était de passer le plus de temps possible en respiration nasale, signe de bien rester en régime aérobie. Cela est à mes yeux indispensable pour des efforts aussi longs que celui de la Réunion. Je n'ai pas encore assez décortiqué la science sur ce sujet pour parler d'autre chose que de mes ressentis, mais j'ai remarqué qu'en oxydant trop rapidement mes réserves de glycogène à cause du régime anaérobique, la perception moyenne de l'effort devient de plus en plus élevée, trop pour un effort de si longue distance. Et plus la perception de l'effort est grande, plus le plaisir de se mouvoir s'estompe. Parfois juste un poil au-dessus du seuil acceptable, et on passe d'un effort agréable, totalement addictif, à un stress corporel et cognitif continu.
 
 J'ai donc commencé à me poser des questions et à douter ma capacité à accomplir le dénivelé du GR R2 sans bâtons, lorsque l'effort perçu devenait trop important pour la respiration nasale passé les 1000-1500 m de dénivelé. Mais je n'avais pas dit mon dernier mot.
 
@@ -108,13 +110,15 @@ J'ai donc commencé à me poser des questions et à douter ma capacité à accom
 
 Je termine la semaine avec 104 km et 4800 m D+/D-. Ces stats me font plaisir et me rendent confiant pour la suite, malgré un état inflammatoire qui s'installe parfois un peu trop durablement. Tu sais cet état où tu n'as pas forcément de douleur précise, mais tu sens que ton corps ne tourne pas totalement comme il le devrait, qu'il galère à retourner à l'homéostasie. Prudence.
 
+[Retour au sommaire](#sommaire)
+
 ## Semaine 3
 
 ### La découverte du "rest step" en montée
 *13/10/2025*
 
 
-Suite à mes difficultés à maintenir une allure aérobique en montées durant le tour du Taillefer, j'ai pensé qu'il existait forcément une manière plus économe de marcher dans les pentes abruptes. J'ai aussi remarqué pendant cette sortie une sur-utilisation de mes quadriceps, probablement masquée habituellement par l'utilisation des bâtons. Or, les quadri, c'est précieux pour enquiller des grosses quantités de D-, alors il faut les préserver à tout prix en montée et utiliser son bon gros bubble but à la place. C'est ainsi qu'en fouillant, et inspiré par les sherpas Népalais du film 14x8000 que je viens de voir (et aussi par toi Bib), que je suis tombé sur le concept du "rest step", ou "pas de repos" en français.
+Suite à mes difficultés à maintenir une allure aérobique en montées durant le tour du Taillefer, j'ai pensé qu'il existait forcément une manière plus économe de marcher dans les pentes abruptes. J'ai aussi remarqué pendant cette sortie une sur-utilisation de mes quadriceps, probablement masquée habituellement par l'utilisation des bâtons. Or, les quadri, c'est précieux pour enquiller des grosses quantités de D-, alors il faut les préserver à tout prix en montée et utiliser son bon gros bubble butt à la place. C'est ainsi qu'en fouillant, et inspiré par les sherpas Népalais du film 14x8000 que je viens de voir (et aussi par toi Bib), que je suis tombé sur le concept du "rest step", ou "pas de repos" en français.
 
 Il s'agit d'une technique fondamentale utilisée par toustes les montagnard.e.s aguerri.e.s, basée sur l'introduction d'une micro-pause de repos à chaque pas. Ceci permet le transfert de la charge du système musculaire vers le système squelettique. Le mécanisme est le suivant : lorsque le marcheur prend un pas vers l'avant, en inclinant le buste de manière appropriée, il transfère son poids sur la jambe en contact avec le sol, qui se redresse par gravité. Le genou ainsi verrouillé permet au squelette (os et ligaments) de supporter l'ensemble de la masse du marcheur, épargnant quadriceps et mollets. Pendant ce temps, l'autre jambe est suspendue au-dessus du sol, et bénéficie d'une micro-pause (parfois très brève, juste une fraction de seconde) avant d'avancer, les muscles complètement détendus, pour effectuer le pas suivant.
 
@@ -132,13 +136,13 @@ Dans mon cas, je n'ai pas vécu de blessure physique. Mais après ces premières
 ### Bilan S3
 *19/10/2025*
 
-Petite semaine à 48 km 1200 m D+/D-. La déception de ne pas réussir à enchaîner d'aussi grosses semaines de trail que je le voudrais m'a poussé à l'introspection et au cheminement. Pourquoi courir autant après les kilomètres ? À quoi bon ce projet de traversée de la Réunion ? Pourquoi est-ce que je m'inflige tout ça ? De sérieux questionnements que j'ai abordé avec certains outils désormais en ma possession. 
+Petite semaine à 48 km 1200 m D+/D-. La déception de ne pas réussir à enchaîner d'aussi grosses semaines de trail que je le voudrais m'a poussé à l'introspection et au cheminement. Pourquoi courir autant après les kilomètres ? À quoi bon ce projet de traversée de la Réunion ? Suis-je aligné avec ce que je fais ? De sérieux questionnements que j'ai abordés avec certains outils désormais en ma possession. 
 
-J'ai finalement trouvé une nouvelle logique dans mon programme : faire une petite semaine à ce niveau de la prépa, ce n'est pas déconnant, ça fait une semaine d'intégration pour assimiler les 3 dernières semaines. Aussi, ça permet de recréer du manque et de faire autre chose, avant de repartir plus fort la semaine prochaine. C'est ainsi que je me suis copieusement adonné au repos, mais aussi au mouvement primal et à la grimpe d'arbre, en attaquant enfin le programme d'un an pour devenir coach certifié [Huden Movement](https://www.instagram.com/huden_movement/). Un page projet y sera bientôt entièrement consacrée sur ce site (inscris-toi [ici](https://www.thelocomotionlab.com/soutenir) pour rester informé.e des news).
+J'ai finalement trouvé une nouvelle logique dans mon programme : faire une petite semaine à ce niveau de la prépa, ce n'est pas déconnant, ça fait une semaine d'intégration pour assimiler les 3 dernières semaines. Aussi, ça permet de recréer du manque et de faire autre chose, avant de repartir plus fort la semaine prochaine. C'est ainsi que je me suis copieusement adonné au repos, mais aussi au mouvement primal et à la grimpe d'arbre, en attaquant enfin le programme d'un an pour devenir coach certifié [Huden Movement](https://www.instagram.com/huden_movement/). Une page projet y sera d'ailleurs bientôt entièrement consacrée sur ce site (inscris-toi [ici](https://www.thelocomotionlab.com/soutenir) pour rester informé.e des news).
 
 :::split
 
-Je me suis donc rendu au grand Ratz, un endroit avec du calme, de la nature, et de beaux arbres à grimper. J'ai commencé par la première leçon du premier cours : gorille niveau 1. L'idée est de maîtriser la marche quadrupédique et les premiers exercices se sont direct fait sentir au niveau quadri et sangle abdominale. Néanmoins, très addictif.
+Je me suis donc rendu au grand Ratz, un endroit avec du calme, de la nature, et de beaux arbres à grimper. J'ai commencé par la première leçon du premier cours : gorille niveau 1. L'idée est de maîtriser la marche quadrupédique et les premiers exercices se sont directement fait sentir au niveau quadri et sangle abdominale. Néanmoins, très addictif.
 
 ---
 
@@ -152,14 +156,16 @@ J'ai aussi amélioré ma technique de grimpe d'arbres sans branche, j'y reviendr
 ![Grimpe d'arbre dans le bois du Ratz](/images/projets/traversee-reunion/assembled_tree_climb.webp)
 *Grimpe d'arbre en technique coconut monkey.*
 
+[Retour au sommaire](#sommaire)
+
 ## Semaine 4 
 
 ### Développement d'un live-tracking maison
 *17/10/2025*
 
-Dimanche dernier, mon pote Lolo me sort "on pourra te suivre pendant ta traversée de la Réunion ?". Évidemment que j'y avais pensé, mais moi j'aime bien les solutions open source, et mettre 300€ dans un système GPS pour l'utiliser qu'une fois, c'est pas trop mon truc. Mais l'idée me taraudait et j'ai fini par découvrir une méthode pour coder mon propre live-tracking, pour pas plus de 5€, moyennant une dose certaine de geekerie.
+Dimanche dernier, mon pote Lolo me sort "on pourra te suivre pendant ta traversée de la Réunion ?". Évidemment que j'y avais pensé, mais moi j'aime bien les solutions open-source, et mettre 300€ dans un système GPS pour l'utiliser qu'une fois, c'est pas trop mon truc. Mais l'idée me taraudait et j'ai fini par découvrir une méthode pour coder mon propre live-tracking, pour pas plus de 5€, moyennant une dose certaine de geekerie.
 
-Donc pour les plus curieux.euses d'entre vous, voici les détails. Mon live-tracking, qui sera proposé le jour de la traversée, est basé sur l'utilisation d'un serveur VPS distant. Sur celui-ci, loué 5€ pour un mois, j'ai installé le logiciel de géolocalisation open-source Traccar, et établi un serveur dédié associé à mon site web. En rentrant les paramètres de ce serveur dans mon téléphone avec l'application Client Traccar, celui-ci échange, selon les paramètrages de précision et fréquence de mon choix, la position directement sur ce serveur. Ainsi, de manière distante, les données de mes positions successives sont stockées, post-traitées, puis rendues lisibles par mon site web qui, via un petit composant React, devient capable d'afficher un suivi en temps réel. Relativement simple en apparence, mais plutôt redoutable à mettre en place, surtout quand comme moi, on n'a aucune expérience en administration des serveurs (merci l'IA). Je m'en suis néanmoins pas mal sorti, et l'objectif est d'expérimenter la fonctionnalité sur une big sortie ce week-end.
+Donc pour les plus curieux.euses d'entre vous, voici les détails. Le live-tracking, que je proposerai le jour de la traversée, est basé sur l'utilisation d'un serveur VPS distant. Sur celui-ci, loué 5€ pour un mois, j'ai installé le logiciel de géolocalisation open-source Traccar, et établi un serveur dédié associé à mon site web. En rentrant les paramètres de ce serveur dans mon téléphone avec l'application Client Traccar, celui-ci échange, selon les paramètrages de précision et fréquence de mon choix, la position directement sur ce serveur. Ainsi, de manière distante, les données de mes positions successives sont stockées, post-traitées, puis rendues lisibles par mon site web qui, via un petit composant React, devient capable d'afficher un suivi en temps réel. Relativement simple en apparence, mais plutôt redoutable à mettre en place, surtout quand comme moi, on n'a aucune expérience en administration des serveurs (merci l'IA). Je m'en suis néanmoins pas mal sorti, et l'objectif est d'expérimenter la fonctionnalité sur une big sortie ce week-end.
 
 ![Le serveur Traccar fonctionne](/images/projets/traversee-reunion/traccar_fonctionne.webp)
 *Ne m'dis pas que ça fonctionne enfin :').*
@@ -167,9 +173,9 @@ Donc pour les plus curieux.euses d'entre vous, voici les détails. Mon live-trac
 ### La BIG sortie
 *25/10/2025*
 
-Au sortir d'une semaine très chargée que je qualifierai de sub-aquatique, je ne m'aventurai pas sur cette sortie avec une ambition autre que tester le live-tracking. Et aussi me dégourdir les pattes, après 50h d'ordi dans la semaine. De longue date, je zieutais le parcours de l'Utra-Trail de la Motte-Chalancon, un trail qui n'existe plus aujourd'hui, mais qui reste une chouette boucle de 85 km 4500 m D+/D- (tracé légèrement revu par mes soins), et ai décidé de me lancer.
+Au sortir d'une semaine très chargée que je qualifierai de sub-aquatique, je ne m'aventurais pas sur cette sortie avec une ambition autre que celle de tester le live-tracking. Et aussi me dégourdir les pattes, après 50h d'ordi dans la semaine. De longue date, je zieutais le parcours de l'Utra-Trail de la Motte-Chalancon, un trail qui n'existe plus aujourd'hui, mais qui reste une chouette boucle de 85 km 4500 m D+/D- (tracé légèrement revu par mes soins), et ai décidé de m'y lancer.
 
-Côté matos, je suis parti comme sur le tour du Taillefer, mais avec l'expérience d'une sortie longue en plus. Résultat : meilleur répartition des masses dans mon sac, malgré le poids augmenté par rapport au Taillefer. J'ai cette fois pris 3 plats lyphilisés, une douzaine de boules d'énergie, un saucisson et demi, et une dizaine de portions de flasques isotoniques. Avec le reste du matériel, masse totale au départ : 7.4 kg. Ça commence à se faire sentir. Mais étrangement, avec la bonne répartition, le sac fusionne avec son hôte, et je me suis senti très à l'aise des les premiers kilomètres. Ce sac est exceptionnel.  
+Côté matos, je suis parti comme sur le tour du Taillefer, mais avec l'expérience d'une sortie longue en plus. Résultat : meilleur répartition des masses dans mon sac, malgré le poids augmenté par rapport au Taillefer. J'ai cette fois pris 3 plats lyphilisés, une douzaine de boules d'énergie, un saucisson et demi, et une dizaine de portions de flasques isotoniques. Avec le reste du matériel, masse totale au départ : 7.4 kg. Ça commence à se faire sentir. Mais étrangement, avec la bonne répartition, le sac fusionne avec son hôte, et je me suis senti très à l'aise dès les premiers kilomètres. Ce sac est exceptionnel.  
 
 :::split
 
@@ -183,7 +189,7 @@ Côté matos, je suis parti comme sur le tour du Taillefer, mais avec l'expérie
 
 *Vue sur le lac du pas des ondes (gauche) et traces GPX de l'UTMC (droite).*
 
-Avec une bonne team de beta-testeurs.euses, j'étais euphorique de voir que le tracking fonctionnait toujours nickel après plusieurs heures d'effort. Côté sentiers, on était sur des terrains drômois parfois techniques, parfois feuillus, mais souvent très agréables. J'ai pu éprouver la technique du "rest step" (voir [plus haut](#la-decouverte-du-rest-step-en-montee)) pendant de longues heures puisque, ici encore, je n'avais pas les bâtons. Résultat : une utilisation majorée des fessiers se fut ressentir, et plus du tout des quadriceps comme pendant le tour du Taillefer. 
+Avec une bonne team de beta-testeurs.euses, j'étais euphorique de voir que le tracking fonctionnait toujours nickel après plusieurs heures d'effort. Côté sentiers, on était sur des terrains drômois parfois techniques, parfois feuillus, mais souvent très agréables. J'ai pu éprouver la technique du "rest step" (voir [plus haut](#la-découverte-du-rest-step-en-montée)) pendant de longues heures puisque, ici encore, je n'avais pas les bâtons. Résultat : une utilisation majorée des fessiers se fut ressentir, et plus du tout des quadriceps comme pendant le tour du Taillefer. 
 
 :::split
 
@@ -219,7 +225,7 @@ Ma batterie s'était complètement vidée, entraînant la fin du suivi. Mais l'e
 
 Cette semaine se termine à 117 km 5100 m D+/D-. Elle correspond à un rebond de charge après la phase d'intégration que je me suis offerte pendant plus de 10j. Au programme de la semaine à venir : repos complet, et derniers préparatifs avant le voyage. 
 
-
+[Retour au sommaire](#sommaire)
 
 <!-- ## Suivi en direct (Live tracking)
 

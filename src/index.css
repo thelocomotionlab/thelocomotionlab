@@ -415,3 +415,23 @@ a.data-footnote-backref,
 html {
   scroll-behavior:  smooth;
 }
+
+/* ======== Lien "Retour au sommaire" fin, orange et aligné à droite ======== */
+.prose a[href="#sommaire"] {
+  display: block;                /* prend toute la ligne */
+  width: fit-content;            /* largeur du texte */
+  margin-left: auto;             /* ✅ aligne à droite */
+  font-size: 0.9rem;
+  color: #555;
+  text-decoration: none;
+  border-bottom: 1px solid #e47f2c;  /* trait orange fin */
+  padding-bottom: 2px;
+  margin-top: 0.2rem;            /* espace réduit au-dessus */
+  margin-bottom: 0.8rem;         /* espace réduit dessous */
+  transition: color 0.25s ease, border-color 0.25s ease;
+}
+
+.prose a[href="#sommaire"]:hover {
+  color: #e47f2c;
+  border-bottom-color: #e47f2c;
+}

@@ -10,6 +10,9 @@ import remarkSplit from "../markdown/remarkSplit";
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeRaw from "rehype-raw"; // ✅ ajouté pour autoriser le HTML inline
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css"; // obligatoire pour le style math
 import useTocFromMarkdown from "../hooks/useTocFromMarkdown";
 import { Helmet } from "react-helmet";
 import LiveTracking from "../components/LiveTracking"; 
@@ -48,6 +51,34 @@ export default function Projet() {
     }, 500);
     return () => clearTimeout(timer);
   }, [highlight, content]);
+
+  // 🧭 Gère le scroll vers les ancres Markdown (##, ###, etc.)
+  useEffect(() => {
+    const handleHashScroll = () => {
+      const { hash } = window.location;
+      if (!hash) return;
+
+      const id = decodeURIComponent(hash.replace("#", ""));
+      const target = document.getElementById(id);
+
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        // 💡 Optionnel : petit effet de surlignage temporaire
+        target.style.transition = "background-color 0.8s ease";
+        target.style.backgroundColor = "rgba(239,177,89,0.15)";
+        setTimeout(() => (target.style.backgroundColor = "transparent"), 1000);
+      }
+    };
+
+    // Exécution initiale après chargement du contenu
+    setTimeout(handleHashScroll, 400);
+
+    // Gestion des clics internes (liens #)
+    window.addEventListener("hashchange", handleHashScroll);
+    return () => window.removeEventListener("hashchange", handleHashScroll);
+  }, [content]);
+
 
   if (!project) return <p className="p-6">Projet non trouvé</p>;
 
@@ -124,7 +155,9 @@ export default function Projet() {
 
           {/* Sommaire dynamique */}
           {toc.length > 0 && (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-10">
+            <div 
+              id="sommaire"
+              className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-10">
               <h2 className="text-lg font-semibold text-brand-deep mb-3">
                 Sommaire
               </h2>
@@ -172,11 +205,13 @@ export default function Projet() {
                 remarkGfm,
                 remarkDirective,
                 remarkSplit,
+                remarkMath,
               ]}
               rehypePlugins={[
                 rehypeSlug,
                 rehypeAutolinkHeadings,
                 rehypeRaw, // ✅ permet de lire <livetracking> comme HTML
+                rehypeKatex,
               ]}
               components={{
                 // 🛰️ Composant LiveTracking depuis le markdown
