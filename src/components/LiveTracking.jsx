@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { SatelliteDish, Crosshair, Map as MapIcon } from "lucide-react";
+import { SatelliteDish, Crosshair, Map as MapIcon, ChevronDown, ChevronUp } from "lucide-react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import * as toGeoJSON from "@tmcw/togeojson";
@@ -10,9 +10,6 @@ import {
   YAxis,
   ResponsiveContainer,
   Tooltip,
-  CartesianGrid,
-  ReferenceLine,
-  Label,
 } from "recharts";
 
 export default function LiveTracking() {
@@ -24,6 +21,7 @@ export default function LiveTracking() {
   const [mapStyle, setMapStyle] = useState("osm");
   const [showStyleMenu, setShowStyleMenu] = useState(false);
   const [runnerPosition, setRunnerPosition] = useState(null);
+  const [showElevation, setShowElevation] = useState(true);
 
   const API_BASE = "https://tracking.thelocomotionlab.com";
   const TOTAL_DISTANCE_KM = 90;
@@ -134,7 +132,7 @@ export default function LiveTracking() {
         if (!Array.isArray(positions) || positions.length === 0) return;
 
         setStats({
-          distance: (stats.distance/1000 || 0).toFixed(2),
+          distance: (stats.distance / 1000 || 0).toFixed(2),
           ascent: stats.dplus || 0,
           descent: stats.dminus || 0,
         });
@@ -179,9 +177,11 @@ export default function LiveTracking() {
           map._runnerMarker.setLngLat(last);
         }
 
-        // --- Profil altimétrique avec D+ / D- cumulés ---
+        // --- Profil altimétrique ---
         const elev = [];
-        let distAcc = 0, dPlus = 0, dMinus = 0;
+        let distAcc = 0,
+          dPlus = 0,
+          dMinus = 0;
         for (let i = 1; i < positions.length; i++) {
           const prev = positions[i - 1];
           const curr = positions[i];
@@ -189,11 +189,11 @@ export default function LiveTracking() {
           const dLon = ((curr.longitude - prev.longitude) * Math.PI) / 180;
           const a =
             Math.sin(dLat / 2) ** 2 +
-            Math.cos(prev.latitude * Math.PI / 180) *
-              Math.cos(curr.latitude * Math.PI / 180) *
+            Math.cos((prev.latitude * Math.PI) / 180) *
+              Math.cos((curr.latitude * Math.PI) / 180) *
               Math.sin(dLon / 2) ** 2;
           const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-          const d = 6371 * c; // km
+          const d = 6371 * c;
           distAcc += d;
 
           const deltaAlt = (curr.altitude || 0) - (prev.altitude || 0);
@@ -218,42 +218,40 @@ export default function LiveTracking() {
     return () => clearInterval(interval);
   }, []);
 
+  // --- Recentrage quand on replie/déplie ---
+  useEffect(() => {
+    if (!mapRef.current || !runnerPosition) return;
+    mapRef.current.flyTo({
+      center: runnerPosition,
+      zoom: showElevation ? 12.5 : 13.5,
+      speed: 0.6,
+    });
+  }, [showElevation, runnerPosition]);
+
   const recenterMap = () => {
     if (mapRef.current && runnerPosition) {
       mapRef.current.flyTo({ center: runnerPosition, zoom: 13, speed: 0.7 });
     }
   };
 
-  // --- Calcul altitudes ---
-  const avgAlt =
-    elevationData.length > 0
-      ? Math.round(elevationData.reduce((s, e) => s + e.alt, 0) / elevationData.length)
-      : 0;
-  const maxAlt =
-    elevationData.length > 0
-      ? Math.round(Math.max(...elevationData.map((e) => e.alt)))
-      : 0;
-
-  // --- Tooltip personnalisé ---
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const { km, alt, dPlus, dMinus } = payload[0].payload;
       return (
         <div
           style={{
-            background: "rgba(255, 255, 255, 0.8)",
+            background: "rgba(255,255,255,0.8)",
             border: "1px solid rgba(150,150,150,0.3)",
             borderRadius: "6px",
             padding: "4px 8px",
             fontSize: "11px",
-            lineHeight: "1.2",
           }}
         >
           <div>
             {km.toFixed(1)} km, {Math.round(alt)} m
           </div>
           <div className="text-gray-600">
-            D+ {dPlus} m  D− {dMinus} m
+            D+ {dPlus} m D− {dMinus} m
           </div>
         </div>
       );
@@ -261,18 +259,8 @@ export default function LiveTracking() {
     return null;
   };
 
-  // --- Animation courbe profil altimétrique ---
-  const [isInitialRender, setIsInitialRender] = useState(true);
-  useEffect(() => {
-    // Au bout de quelques secondes, on désactive l’animation pour les updates suivantes
-    const timer = setTimeout(() => setIsInitialRender(false), 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
-
-  const isMobile = window.innerWidth < 640; // sm: breakpoint Tailwind
+  const isMobile = window.innerWidth < 640;
   const xTicks = isMobile ? [0, 45, TOTAL_DISTANCE_KM] : [0, 30, 60, TOTAL_DISTANCE_KM];
-
 
   // --- Rendu principal ---
   return (
@@ -302,14 +290,14 @@ export default function LiveTracking() {
         </div>
       </div>
 
-      {/* Carte */}
+      {/* Carte + profil intégré */}
       <div className="relative w-full max-w-6xl">
         <div
           ref={mapContainer}
-          className="w-full h-[70vh] sm:h-[75vh] overflow-hidden shadow-lg border border-gray-200"
+          className="w-full h-[60vh] sm:h-[65vh] overflow-hidden shadow-lg border border-gray-200 rounded-2xl"
         ></div>
 
-        {/* Sélecteur de style responsive */}
+        {/* Sélecteur de style */}
         <div className="absolute top-3 left-3 z-20">
           <div className="hidden sm:flex bg-white/90 backdrop-blur-sm rounded-md shadow-md text-sm gap-1 p-1">
             {[
@@ -330,125 +318,67 @@ export default function LiveTracking() {
               </button>
             ))}
           </div>
-
-          {/* Mobile */}
-          <div className="sm:hidden relative">
-            <button
-              onClick={() => setShowStyleMenu(!showStyleMenu)}
-              className="p-2 bg-white/90 rounded-md shadow-md hover:bg-[#EFB159]/80 hover:text-white"
-            >
-              <MapIcon size={18} />
-            </button>
-            {showStyleMenu && (
-              <div className="absolute top-10 left-0 bg-white/95 backdrop-blur-sm rounded-md shadow-md text-sm flex flex-col">
-                {[
-                  { key: "osm", label: "OSM" },
-                  { key: "topo", label: "Topo" },
-                  { key: "satellite", label: "Sat." },
-                ].map((opt) => (
-                  <button
-                    key={opt.key}
-                    onClick={() => {
-                      setMapStyle(opt.key);
-                      setShowStyleMenu(false);
-                    }}
-                    className={`px-4 py-1 text-left ${
-                      mapStyle === opt.key
-                        ? "bg-[#EFB159] text-white"
-                        : "text-gray-700 hover:bg-[#EFB159]/70 hover:text-white"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Bouton recentrer */}
         <button
           onClick={recenterMap}
-          className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md text-sm px-3 py-1 hover:bg-[#EFB159]/80 hover:text-white text-gray-700 flex items-center gap-1 z-10"
+          className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md text-sm px-3 py-1 hover:bg-[#EFB159]/80 hover:text-white text-gray-700 flex items-center gap-1 z-20"
         >
-          <Crosshair size={16} className="sm:mr-1" />
+          <Crosshair size={16} />
           <span className="hidden sm:inline">Recentrer</span>
         </button>
-      </div>
 
-      {/* Profil altimétrique */}
-      {elevationData.length > 0 && (
-        <div className="w-full max-w-6xl h-48 mt-4 bg-white/70 rounded-2xl shadow-md border border-gray-200 p-3">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={elevationData}
-              margin={{ top: 20, right: 20, bottom: 0, left: 20 }}
+        {/* Profil altimétrique intégré */}
+        {elevationData.length > 0 && (
+          <>
+            {/* Bouton pliant toujours visible */}
+            <button
+              onClick={() => setShowElevation(!showElevation)}
+              className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-white shadow-md rounded-full p-1.5 border border-gray-300 hover:bg-[#EFB159]/90 hover:text-white transition z-30"
             >
+              {showElevation ? (
+                <ChevronDown size={18} className="text-gray-700" />
+              ) : (
+                <ChevronUp size={18} className="text-gray-700" />
+              )}
+            </button>
 
-              
-              {/* ✅ Axe X avec 0 km forcé */}
-              <XAxis
-                dataKey="km"
-                type="number"
-                domain={[0, TOTAL_DISTANCE_KM]}
-                ticks={xTicks}
-                tickFormatter={(v) => `${v.toFixed(0)} km`}
-                tick={{ fontSize: 12 }}
-                allowDecimals={false}
-                allowDataOverflow={true} // ✅ empêche le rognage du 0
-
-              />
-
-              <YAxis hide />
-
-              {/* ✅ altitude moyenne — placée manuellement à gauche */}
-              <ReferenceLine y={avgAlt} stroke="#ccc" strokeDasharray="3 3" />
-              <text
-                x={30} // décale légèrement depuis le bord gauche
-                y={
-                  // position verticale selon l'altitude moyenne
-                  (() => {
-                    const range = Math.max(...elevationData.map((d) => d.alt)) - Math.min(...elevationData.map((d) => d.alt));
-                    const heightRatio = (maxAlt - avgAlt) / range;
-                    return 130 * heightRatio + 10;
-                  })()
-                }
-                fill="#888"
-                fontSize={11}
-              >
-                {`${avgAlt} m`}
-              </text>
-
-              {/* ✅ altitude max — placée juste au-dessus de la ligne */}
-              <ReferenceLine y={maxAlt} stroke="#bbb" strokeDasharray="3 3" />
-              <text
-                x={30}
-                y={20}
-                fill="#555"
-                fontSize={11}
-              >
-                {`${maxAlt} m`}
-              </text>
-
-              <Tooltip content={<CustomTooltip />} />
-              <Line
-                type="monotone"
-                dataKey="alt"
-                stroke="#B67352"
-                strokeWidth={2}
-                dot={false}
-                isAnimationActive={isInitialRender} // ✅ animé uniquement au chargement
-                //animationDuration={100000} // optionnel : vitesse du dessin initial
-              />
-
-            </LineChart>
-
-
-          </ResponsiveContainer>
-        </div>
-      )}
+            <div
+              className={`absolute bottom-0 left-0 w-full bg-white/60 backdrop-blur-md border-t border-gray-200 shadow-lg transition-all duration-500 ${
+                showElevation ? "max-h-48" : "max-h-0"
+              } overflow-hidden rounded-t-2xl`}
+              style={{ zIndex: 20 }}
+            >
+              {showElevation && (
+                <div className="h-44 mt-3 px-3">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={elevationData} margin={{ top: 10, right: 20, bottom: 0, left: 20 }}>
+                      <XAxis
+                        dataKey="km"
+                        type="number"
+                        domain={[0, TOTAL_DISTANCE_KM]}
+                        tickFormatter={(v) => `${v.toFixed(0)} km`}
+                        tick={{ fontSize: 11 }}
+                        allowDecimals={false}
+                      />
+                      <YAxis hide />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Line
+                        type="monotone"
+                        dataKey="alt"
+                        stroke="#B67352"
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
-
-
