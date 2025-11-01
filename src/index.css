@@ -411,3 +411,7 @@ a.data-footnote-backref,
   margin-top: 2.5rem;
   margin-bottom: 1rem;
 }
+
+html {
+  scroll-behavior:  smooth;
+}
