@@ -9,10 +9,9 @@ import MapEmbed from "../components/MapEmbed";
 import remarkSplit from "../markdown/remarkSplit";
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
-import rehypeRaw from "rehype-raw"; // ✅ ajouté pour autoriser le HTML inline
+import rehypeRaw from "rehype-raw"; //  ajouté pour autoriser le HTML inline
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
-import "katex/dist/katex.min.css"; // obligatoire pour le style math
 import useTocFromMarkdown from "../hooks/useTocFromMarkdown";
 import { Helmet } from "react-helmet";
 import LiveTracking from "../components/LiveTracking"; 

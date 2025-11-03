@@ -24,7 +24,7 @@ export default function LiveTracking() {
   const [showElevation, setShowElevation] = useState(true);
 
   const API_BASE = "https://tracking.thelocomotionlab.com";
-  const TOTAL_DISTANCE_KM = 90;
+  const TOTAL_DISTANCE_KM = 165;
 
   // --- Styles de cartes ---
   const styles = {
@@ -83,8 +83,8 @@ export default function LiveTracking() {
     const map = new maplibregl.Map({
       container: mapContainer.current,
       style: styles[mapStyle],
-      center: [5.3641, 44.4196],
-      zoom: 13,
+      center: [55.5325, -21.1151], // ✅ Démarre sur La Réunion
+      zoom: 10,
     });
 
     mapRef.current = map;
@@ -92,7 +92,7 @@ export default function LiveTracking() {
 
     map.on("load", async () => {
       try {
-        const res = await fetch("/tracks/utmc_off.gpx");
+        const res = await fetch("/tracks/reunion-r2_temp.gpx");
         const xml = await res.text();
         const doc = new DOMParser().parseFromString(xml, "application/xml");
         const geojson = toGeoJSON.gpx(doc);
@@ -163,6 +163,12 @@ export default function LiveTracking() {
 
         const last = coords.at(-1);
         setRunnerPosition(last);
+
+        // ✅ Centre une seule fois sur la première position reçue
+        if (!map._hasCentered && last) {
+          map.flyTo({ center: last, zoom: 12, speed: 0.7 });
+          map._hasCentered = true;
+        }
 
         if (!map._runnerMarker) {
           const el = document.createElement("div");
