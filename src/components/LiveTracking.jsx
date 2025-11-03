@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { SatelliteDish, Crosshair, Map as MapIcon, ChevronDown, ChevronUp } from "lucide-react";
+import { SatelliteDish, Crosshair, ChevronDown, ChevronUp, Map as MapIcon, Mountain, Globe2 } from "lucide-react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import * as toGeoJSON from "@tmcw/togeojson";
@@ -10,6 +10,8 @@ import {
   YAxis,
   ResponsiveContainer,
   Tooltip,
+  ReferenceLine,
+  Label,
 } from "recharts";
 
 export default function LiveTracking() {
@@ -83,8 +85,9 @@ export default function LiveTracking() {
     const map = new maplibregl.Map({
       container: mapContainer.current,
       style: styles[mapStyle],
-      center: [55.5325, -21.1151], // ✅ Démarre sur La Réunion
+      center: [55.5325, -21.1151],
       zoom: 10,
+      attributionControl: false,
     });
 
     mapRef.current = map;
@@ -153,18 +156,14 @@ export default function LiveTracking() {
             id: "live-track-line",
             type: "line",
             source: "live-track",
-            paint: {
-              "line-color": "#ff5500",
-              "line-width": 4,
-              "line-opacity": 0.9,
-            },
+            paint: { "line-color": "#ff5500", "line-width": 4, "line-opacity": 0.9 },
           });
         }
 
         const last = coords.at(-1);
         setRunnerPosition(last);
 
-        // ✅ Centre une seule fois sur la première position reçue
+        // ✅ Centre une seule fois seulement
         if (!map._hasCentered && last) {
           map.flyTo({ center: last, zoom: 12, speed: 0.7 });
           map._hasCentered = true;
@@ -183,37 +182,40 @@ export default function LiveTracking() {
           map._runnerMarker.setLngLat(last);
         }
 
-        // --- Profil altimétrique ---
-        const elev = [];
-        let distAcc = 0,
-          dPlus = 0,
-          dMinus = 0;
-        for (let i = 1; i < positions.length; i++) {
-          const prev = positions[i - 1];
-          const curr = positions[i];
-          const dLat = ((curr.latitude - prev.latitude) * Math.PI) / 180;
-          const dLon = ((curr.longitude - prev.longitude) * Math.PI) / 180;
-          const a =
-            Math.sin(dLat / 2) ** 2 +
-            Math.cos((prev.latitude * Math.PI) / 180) *
-              Math.cos((curr.latitude * Math.PI) / 180) *
-              Math.sin(dLon / 2) ** 2;
-          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-          const d = 6371 * c;
-          distAcc += d;
+        // --- Profil altimétrique continu ---
+        setElevationData((prev) => {
+          const newData = [...prev];
+          let distAcc = prev.length > 0 ? prev.at(-1).km : 0;
+          let dPlus = prev.length > 0 ? prev.at(-1).dPlus : 0;
+          let dMinus = prev.length > 0 ? prev.at(-1).dMinus : 0;
 
-          const deltaAlt = (curr.altitude || 0) - (prev.altitude || 0);
-          if (deltaAlt > 0) dPlus += deltaAlt;
-          else dMinus += Math.abs(deltaAlt);
+          for (let i = Math.max(prev.length, 1); i < positions.length; i++) {
+            const prevPt = positions[i - 1];
+            const curr = positions[i];
+            const dLat = ((curr.latitude - prevPt.latitude) * Math.PI) / 180;
+            const dLon = ((curr.longitude - prevPt.longitude) * Math.PI) / 180;
+            const a =
+              Math.sin(dLat / 2) ** 2 +
+              Math.cos((prevPt.latitude * Math.PI) / 180) *
+                Math.cos((curr.latitude * Math.PI) / 180) *
+                Math.sin(dLon / 2) ** 2;
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const d = 6371 * c;
+            distAcc += d;
 
-          elev.push({
-            km: distAcc,
-            alt: curr.altitude || 0,
-            dPlus: Math.round(dPlus),
-            dMinus: Math.round(dMinus),
-          });
-        }
-        setElevationData(elev);
+            const deltaAlt = (curr.altitude || 0) - (prevPt.altitude || 0);
+            if (deltaAlt > 0) dPlus += deltaAlt;
+            else dMinus += Math.abs(deltaAlt);
+
+            newData.push({
+              km: distAcc,
+              alt: curr.altitude || 0,
+              dPlus: Math.round(dPlus),
+              dMinus: Math.round(dMinus),
+            });
+          }
+          return newData;
+        });
       } catch (err) {
         console.error("Erreur récupération live data :", err);
       }
@@ -224,20 +226,9 @@ export default function LiveTracking() {
     return () => clearInterval(interval);
   }, []);
 
-  // --- Recentrage quand on replie/déplie ---
-  useEffect(() => {
-    if (!mapRef.current || !runnerPosition) return;
-    mapRef.current.flyTo({
-      center: runnerPosition,
-      zoom: showElevation ? 12.5 : 13.5,
-      speed: 0.6,
-    });
-  }, [showElevation, runnerPosition]);
-
   const recenterMap = () => {
-    if (mapRef.current && runnerPosition) {
+    if (mapRef.current && runnerPosition)
       mapRef.current.flyTo({ center: runnerPosition, zoom: 13, speed: 0.7 });
-    }
   };
 
   const CustomTooltip = ({ active, payload }) => {
@@ -264,9 +255,6 @@ export default function LiveTracking() {
     }
     return null;
   };
-
-  const isMobile = window.innerWidth < 640;
-  const xTicks = isMobile ? [0, 45, TOTAL_DISTANCE_KM] : [0, 30, 60, TOTAL_DISTANCE_KM];
 
   // --- Rendu principal ---
   return (
@@ -300,66 +288,103 @@ export default function LiveTracking() {
       <div className="relative w-full max-w-6xl">
         <div
           ref={mapContainer}
-          className="w-full h-[60vh] sm:h-[65vh] overflow-hidden shadow-lg border border-gray-200 rounded-2xl"
+          className="w-full h-[65vh] overflow-hidden shadow-lg border border-gray-200 rounded-2xl"
         ></div>
-
-        {/* Sélecteur de style */}
-        <div className="absolute top-3 left-3 z-20">
-          <div className="hidden sm:flex bg-white/90 backdrop-blur-sm rounded-md shadow-md text-sm gap-1 p-1">
-            {[
-              { key: "osm", label: "OSM" },
-              { key: "topo", label: "Topo" },
-              { key: "satellite", label: "Satellite" },
-            ].map((opt) => (
-              <button
-                key={opt.key}
-                onClick={() => setMapStyle(opt.key)}
-                className={`px-3 py-1 rounded ${
-                  mapStyle === opt.key
-                    ? "bg-[#EFB159] text-white"
-                    : "text-gray-700 hover:bg-[#EFB159]/80 hover:text-white"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Bouton recentrer */}
         <button
           onClick={recenterMap}
-          className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md text-sm px-3 py-1 hover:bg-[#EFB159]/80 hover:text-white text-gray-700 flex items-center gap-1 z-20"
+          className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md text-sm px-3 py-1 hover:bg-[#EFB159]/80 hover:text-white text-gray-700 flex items-center gap-1 z-20"
         >
           <Crosshair size={16} />
           <span className="hidden sm:inline">Recentrer</span>
         </button>
 
+        {/* Sélecteur de style compact, sous le contrôle de zoom */}
+        {/* Sélecteur de style compact (superposé sur le bouton) */}
+        <div className="absolute top-[100px] right-2.5 z-30">
+          <div className="relative">
+            {/* Bouton principal + menu superposé */}
+            <div className="relative">
+              {!showStyleMenu ? (
+                // Bouton carte par défaut
+                <button
+                  onClick={() => setShowStyleMenu(true)}
+                  className="bg-white/90 backdrop-blur-sm border border-gray-300 shadow rounded-md p-[6px] hover:bg-[#EFB159]/80 hover:text-white transition flex items-center justify-center"
+                  style={{ width: "32px", height: "32px" }}
+                >
+                  <MapIcon size={16} className="text-gray-700" />
+                </button>
+              ) : (
+                // Menu superposé (recouvre le bouton)
+                <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-md shadow-md flex flex-col items-center p-[2px]" style={{ width: "32px" }}>
+                  <button
+                    onClick={() => {
+                      setMapStyle("osm");
+                      setShowStyleMenu(false);
+                    }}
+                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${
+                      mapStyle === "osm" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"
+                    }`}
+                  >
+                    <MapIcon size={14} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMapStyle("topo");
+                      setShowStyleMenu(false);
+                    }}
+                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${
+                      mapStyle === "topo" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"
+                    }`}
+                  >
+                    <Mountain size={14} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMapStyle("satellite");
+                      setShowStyleMenu(false);
+                    }}
+                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${
+                      mapStyle === "satellite" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"
+                    }`}
+                  >
+                    <Globe2 size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+
         {/* Profil altimétrique intégré */}
         {elevationData.length > 0 && (
           <>
-            {/* Bouton pliant toujours visible */}
             <button
               onClick={() => setShowElevation(!showElevation)}
-              className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-white shadow-md rounded-full p-1.5 border border-gray-300 hover:bg-[#EFB159]/90 hover:text-white transition z-30"
+              className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-white shadow-md rounded-lg p-1.5 border border-gray-300 hover:bg-[#EFB159]/90 hover:text-white transition z-30"
             >
               {showElevation ? (
-                <ChevronDown size={18} className="text-gray-700" />
+                <ChevronDown size={24} className="text-gray-700" />
               ) : (
-                <ChevronUp size={18} className="text-gray-700" />
+                <ChevronUp size={24} className="text-gray-700" />
               )}
             </button>
 
             <div
               className={`absolute bottom-0 left-0 w-full bg-white/60 backdrop-blur-md border-t border-gray-200 shadow-lg transition-all duration-500 ${
-                showElevation ? "max-h-48" : "max-h-0"
+                showElevation ? "max-h-36" : "max-h-0"
               } overflow-hidden rounded-t-2xl`}
               style={{ zIndex: 20 }}
             >
               {showElevation && (
-                <div className="h-44 mt-3 px-3">
+                <div className="h-32 mt-3 px-3">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={elevationData} margin={{ top: 10, right: 20, bottom: 0, left: 20 }}>
+                    <LineChart
+                      data={elevationData}
+                      margin={{ top: 10, right: 20, bottom: 0, left: 30 }}
+                    >
                       <XAxis
                         dataKey="km"
                         type="number"
@@ -368,14 +393,47 @@ export default function LiveTracking() {
                         tick={{ fontSize: 11 }}
                         allowDecimals={false}
                       />
-                      <YAxis hide />
+                      <YAxis
+                        domain={[0, 3100]}
+                        tick={false}
+                        axisLine={false}
+                        width={0}
+                      />
+
                       <Tooltip content={<CustomTooltip />} />
+
+                      {/* Lignes iso-altitude visibles */}
+                      {[1000, 2000, 3000].map((alt) => (
+                        <ReferenceLine
+                          key={alt}
+                          y={alt}
+                          stroke="#999"
+                          strokeDasharray="4 4"
+                          ifOverflow="extendDomain"
+                        >
+                          {/* Label interne, aligné à gauche du graphe */}
+                          <Label
+                            value={`${alt} m`}
+                            position="insideTopLeft"
+                            dy={-15}          // légèrement au-dessus de la ligne
+                            dx={-4}           // petit décalage depuis le bord gauche
+                            fill="#555"
+                            fontSize={10}
+                            fontWeight={400}
+                            background={{ fill: "rgba(255,255,255,0.4)" }} // léger fond pour la lisibilité
+                          />
+                        </ReferenceLine>
+                      ))}
+
+
+
                       <Line
                         type="monotone"
                         dataKey="alt"
                         stroke="#B67352"
                         strokeWidth={2}
                         dot={false}
+                        isAnimationActive={false}
                       />
                     </LineChart>
                   </ResponsiveContainer>

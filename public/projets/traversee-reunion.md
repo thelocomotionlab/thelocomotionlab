@@ -227,6 +227,6 @@ Cette semaine se termine à 117 km 5100 m D+/D-. Elle correspond à un rebond de
 
 [Retour au sommaire](#sommaire)
 
-<!-- ## Suivi en direct (Live tracking)
+## Suivi en direct (Live tracking)
 
-<livetracking /> -->
+<livetracking /> 
