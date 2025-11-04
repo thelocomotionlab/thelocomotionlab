@@ -314,7 +314,7 @@ export default function LiveTracking() {
     <div className="flex flex-col items-center w-full py-6 px-3 sm:px-6 gap-3">
       {/* Bloc stats */}
       <div className="bg-white/80 backdrop-blur-md shadow-md rounded-2xl p-4 w-full max-w-3xl text-center border border-gray-200">
-        <div className="flex justify-center items-center gap-2 font-semibold text-lg text-[#b66b47]">
+        <div className="flex justify-center items-center gap-2 font-semibold text-lg text-[#b66b47] sm:mb-1">
           <SatelliteDish size={18} /> Suivi en direct
         </div>
 
@@ -331,7 +331,7 @@ export default function LiveTracking() {
 
           {/* Desktop (tout en ligne) */}
           <div className="hidden sm:inline">
-            <span className="text-sm">Durée de locomotion :</span><span className="text-sm font-semibold">{formatDuration(elapsed)}</span>
+            <span className="text-sm">Durée de locomotion :</span><span className="text-sm font-semibold mb-1">{formatDuration(elapsed)}</span>
           </div>
         </div>
 
@@ -349,10 +349,10 @@ export default function LiveTracking() {
           </div>
           <div>
             <span className="font-semibold">{stats.descent} m</span>
-            <div className="sm:text-xs text-xxs text-gray-500">D−</div>
+            <div className="sm:text-xs text-xxs text-gray-500 sm:mb-2">D−</div>
           </div>
         </div>
-        <div className="sm:text-xs text-xxs mt-0 text-gray-500">
+        <div className="sm:text-xs text-xxs mt-0 text-gray-500 ">
           Dernière màj :{" "}
           {lastUpdate ? new Date(lastUpdate).toLocaleTimeString("fr-FR") : "—"}
         </div>
