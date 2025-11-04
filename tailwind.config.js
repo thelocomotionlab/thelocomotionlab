@@ -31,6 +31,9 @@ export default {
       backgroundSize: {
         'grid-sm': '16px 16px',
         'grid-lg': '32px 32px'
+      },
+      fontSize: {
+        'xxs': '0.625rem', // ≈ 10px
       }
     },
   },

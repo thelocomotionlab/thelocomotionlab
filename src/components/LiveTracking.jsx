@@ -32,6 +32,7 @@ export default function LiveTracking() {
   const API_BASE = "https://tracking.thelocomotionlab.com";
   const TOTAL_DISTANCE_KM = 165;
 
+
   // --- Styles de cartes ---
   const styles = {
     topo: {
@@ -306,35 +307,52 @@ export default function LiveTracking() {
     return null;
   };
 
+
+
   // --- Rendu principal ---
   return (
     <div className="flex flex-col items-center w-full py-6 px-3 sm:px-6 gap-3">
       {/* Bloc stats */}
       <div className="bg-white/80 backdrop-blur-md shadow-md rounded-2xl p-4 w-full max-w-3xl text-center border border-gray-200">
-        <div className="flex justify-center items-center gap-2 font-semibold text-lg text-[#b66b47] mb-1">
+        <div className="flex justify-center items-center gap-2 font-semibold text-lg text-[#b66b47]">
           <SatelliteDish size={18} /> Suivi en direct
         </div>
 
         {/* 🔹 Durée de locomotion */}
-        <div className="text-sm font-mono text-gray-700 mb-2">
-          Durée de locomotion : {formatDuration(elapsed)}
+        <div className="font-mono text-gray-700 mb-2 text-sm sm:flex sm:flex-row sm:items-center sm:justify-center sm:gap-1">
+          {/* Mobile (stacké) */}
+          <div className="flex flex-col items-center sm:hidden">
+            <span className="text-xxs">Durée de locomotion :</span>
+            <span className="text-xs font-bold mb-1">{formatDuration(elapsed)}</span>
+            {/* 🔸 Barre orange de séparation */}
+            <div className="w-16 h-[2px] bg-[#EFB159] mt-1 rounded-full tr"></div>
+          </div>
+
+
+          {/* Desktop (tout en ligne) */}
+          <div className="hidden sm:inline">
+            <span className="text-sm">Durée de locomotion :</span><span className="text-sm font-semibold">{formatDuration(elapsed)}</span>
+          </div>
         </div>
+
+        {/* 🔸 Barre orange desktop */}
+        <div className="hidden sm:block w-24 h-[2px] bg-[#EFB159] mt-1 mb-2 rounded-full mx-auto"></div>
 
         <div className="flex justify-around text-sm sm:text-base font-medium text-gray-800">
           <div>
             <span className="font-semibold">{stats.distance} km</span>
-            <div className="text-xs text-gray-500">Distance</div>
+            <div className="sm:text-xs text-xxs text-gray-500">Distance</div>
           </div>
           <div>
             <span className="font-semibold">{stats.ascent} m</span>
-            <div className="text-xs text-gray-500">D+</div>
+            <div className="sm:text-xs text-xxs text-gray-500">D+</div>
           </div>
           <div>
             <span className="font-semibold">{stats.descent} m</span>
-            <div className="text-xs text-gray-500">D−</div>
+            <div className="sm:text-xs text-xxs text-gray-500">D−</div>
           </div>
         </div>
-        <div className="text-xs mt-2 text-gray-500">
+        <div className="sm:text-xs text-xxs mt-0 text-gray-500">
           Dernière màj :{" "}
           {lastUpdate ? new Date(lastUpdate).toLocaleTimeString("fr-FR") : "—"}
         </div>
@@ -439,16 +457,19 @@ export default function LiveTracking() {
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
                       data={elevationData}
-                      margin={{ top: 10, right: 20, bottom: 0, left: 30 }}
+                      margin={window.innerWidth < 640 ? { top: 5, right: 10, bottom: 5, left: 15 } : { top: 10, right: 20, bottom: 0, left: 30 }}
+
                     >
                       <XAxis
                         dataKey="km"
                         type="number"
                         domain={[0, TOTAL_DISTANCE_KM]}
-                        tickFormatter={(v) => `${v.toFixed(0)} km`}
+                        ticks={window.innerWidth < 640 ? [0, 165] : [0, 40, 80, 120, 160]}
+                        tickFormatter={(v) => `${v.toFixed(0)}km`}
                         tick={{ fontSize: 11 }}
                         allowDecimals={false}
                       />
+
                       <YAxis
                         domain={[0, 3100]}
                         tick={false}
@@ -469,12 +490,12 @@ export default function LiveTracking() {
                         >
                           {/* Label interne, aligné à gauche du graphe */}
                           <Label
-                            value={`${alt} m`}
-                            position="insideTopLeft"
-                            dy={-15}          // légèrement au-dessus de la ligne
+                            value={`${alt}m`}
+                            position={window.innerWidth < 640 ? "insideTopRight" : "insideTopLeft"}
+                            dy={window.innerWidth < 640 ? -11 : -15}          // légèrement au-dessus de la ligne
                             dx={-4}           // petit décalage depuis le bord gauche
                             fill="#555"
-                            fontSize={10}
+                            fontSize={window.innerWidth < 640 ? 6 : 10}
                             fontWeight={400}
                             background={{ fill: "rgba(255,255,255,0.4)" }} // léger fond pour la lisibilité
                           />
