@@ -25,6 +25,10 @@ export default function LiveTracking() {
   const [runnerPosition, setRunnerPosition] = useState(null);
   const [showElevation, setShowElevation] = useState(true);
 
+  // 🔹 États chrono
+  const [timer, setTimer] = useState({ running: false, startTime: null, stopTime: null });
+  const [elapsed, setElapsed] = useState(0);
+
   const API_BASE = "https://tracking.thelocomotionlab.com";
   const TOTAL_DISTANCE_KM = 165;
 
@@ -92,6 +96,7 @@ export default function LiveTracking() {
 
     mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl(), "top-right");
+    map.addControl(new maplibregl.AttributionControl({ compact: true }));
 
     map.on("load", async () => {
       try {
@@ -222,9 +227,54 @@ export default function LiveTracking() {
     }
 
     fetchLiveData();
-    const interval = setInterval(fetchLiveData, 10000);
+    const interval = setInterval(fetchLiveData, 60000); // <--- changer ici pour modifier la fréquence
     return () => clearInterval(interval);
   }, []);
+
+  // --- Récupération du timer (toutes les 5 min) ---
+  useEffect(() => {
+    async function fetchTimer() {
+      try {
+        const res = await fetch(`${API_BASE}/live-timer.json?cacheBust=${Date.now()}`);
+        const data = await res.json();
+        console.log("⏱️ TIMER DATA :", data); // <-- AJOUTE ÇA
+        setTimer(data);
+      } catch (err) {
+        console.error("Erreur timer :", err);
+      }
+    }
+
+    fetchTimer();
+    const interval = setInterval(fetchTimer, 300000); // 5 minutes*/
+/*    const interval = setInterval(fetchTimer, 10000); // 5 minutes*/
+    return () => clearInterval(interval);
+  }, []);
+
+  // --- Calcul du chrono en continu ---
+  useEffect(() => {
+    let interval;
+    if (timer.startTime) {
+      interval = setInterval(() => {
+        const now = new Date();
+        const start = new Date(timer.startTime);
+        const stop = timer.stopTime ? new Date(timer.stopTime) : null;
+        const diff = timer.running
+          ? now - start
+          : stop
+          ? stop - start
+          : 0;
+        setElapsed(Math.max(0, Math.floor(diff / 1000)));
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  const formatDuration = (s) => {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    return `${h}h${String(m).padStart(2, "0")}min${String(sec).padStart(2, "0")}s`;
+  };
 
   const recenterMap = () => {
     if (mapRef.current && runnerPosition)
@@ -264,6 +314,12 @@ export default function LiveTracking() {
         <div className="flex justify-center items-center gap-2 font-semibold text-lg text-[#b66b47] mb-1">
           <SatelliteDish size={18} /> Suivi en direct
         </div>
+
+        {/* 🔹 Durée de locomotion */}
+        <div className="text-sm font-mono text-gray-700 mb-2">
+          Durée de locomotion : {formatDuration(elapsed)}
+        </div>
+
         <div className="flex justify-around text-sm sm:text-base font-medium text-gray-800">
           <div>
             <span className="font-semibold">{stats.distance} km</span>
