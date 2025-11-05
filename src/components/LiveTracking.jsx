@@ -32,7 +32,6 @@ export default function LiveTracking() {
   const API_BASE = "https://tracking.thelocomotionlab.com";
   const TOTAL_DISTANCE_KM = 165;
 
-
   // --- Styles de cartes ---
   const styles = {
     topo: {
@@ -83,13 +82,13 @@ export default function LiveTracking() {
     },
   };
 
-  // --- Initialisation carte ---
+  // --- Initialisation unique de la carte ---
   useEffect(() => {
     if (!mapContainer.current) return;
 
     const map = new maplibregl.Map({
       container: mapContainer.current,
-      style: styles[mapStyle],
+      style: styles.osm,
       center: [55.5325, -21.1151],
       zoom: 10,
       attributionControl: false,
@@ -99,6 +98,7 @@ export default function LiveTracking() {
     map.addControl(new maplibregl.NavigationControl(), "top-right");
     map.addControl(new maplibregl.AttributionControl({ compact: true }));
 
+    // Chargement du tracé GPX
     map.on("load", async () => {
       try {
         const res = await fetch("/tracks/reunion-r2_temp.gpx");
@@ -112,7 +112,7 @@ export default function LiveTracking() {
           type: "line",
           source: "reference-track",
           paint: {
-            "line-color": mapStyle === "satellite" ? "#4CAF50" : "#007bff",
+            "line-color": "#007bff",
             "line-width": 3,
             "line-dasharray": [2, 2],
           },
@@ -123,6 +123,58 @@ export default function LiveTracking() {
     });
 
     return () => map.remove();
+  }, []);
+
+  // --- Changement de style sans recréer la carte ---
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    map.setStyle(styles[mapStyle]);
+
+    map.once("styledata", async () => {
+      // Recharge le tracé GPX si le style a effacé les couches
+      if (!map.getSource("reference-track")) {
+        try {
+          const res = await fetch("/tracks/reunion-r2_temp.gpx");
+          const xml = await res.text();
+          const doc = new DOMParser().parseFromString(xml, "application/xml");
+          const geojson = toGeoJSON.gpx(doc);
+
+          map.addSource("reference-track", { type: "geojson", data: geojson });
+          map.addLayer({
+            id: "reference-line",
+            type: "line",
+            source: "reference-track",
+            paint: {
+              "line-color": mapStyle === "satellite" ? "#4CAF50" : "#007bff",
+              "line-width": 3,
+              "line-dasharray": [2, 2],
+            },
+          });
+        } catch (err) {
+          console.warn("Erreur reload GPX :", err);
+        }
+      }
+
+      // Réaffiche la trace live
+      if (map._liveTrackGeoJSON) {
+        if (!map.getSource("live-track")) {
+          map.addSource("live-track", { type: "geojson", data: map._liveTrackGeoJSON });
+          map.addLayer({
+            id: "live-track-line",
+            type: "line",
+            source: "live-track",
+            paint: { "line-color": "#ff5500", "line-width": 4, "line-opacity": 0.9 },
+          });
+        }
+      }
+
+      // Réaffiche le marqueur du coureur
+      if (map._runnerMarker && map._runnerMarker.getLngLat()) {
+        map._runnerMarker.addTo(map);
+      }
+    });
   }, [mapStyle]);
 
   // --- Récupération live ---
@@ -154,6 +206,8 @@ export default function LiveTracking() {
         };
 
         const map = mapRef.current;
+        map._liveTrackGeoJSON = geojson;
+
         if (map.getSource("live-track")) {
           map.getSource("live-track").setData(geojson);
         } else {
@@ -169,7 +223,6 @@ export default function LiveTracking() {
         const last = coords.at(-1);
         setRunnerPosition(last);
 
-        // ✅ Centre une seule fois seulement
         if (!map._hasCentered && last) {
           map.flyTo({ center: last, zoom: 12, speed: 0.7 });
           map._hasCentered = true;
@@ -188,7 +241,6 @@ export default function LiveTracking() {
           map._runnerMarker.setLngLat(last);
         }
 
-        // --- Profil altimétrique continu ---
         setElevationData((prev) => {
           const newData = [...prev];
           let distAcc = prev.length > 0 ? prev.at(-1).km : 0;
@@ -228,17 +280,16 @@ export default function LiveTracking() {
     }
 
     fetchLiveData();
-    const interval = setInterval(fetchLiveData, 60000); // <--- changer ici pour modifier la fréquence
+    const interval = setInterval(fetchLiveData, 10000);
     return () => clearInterval(interval);
   }, []);
 
-  // --- Récupération du timer (toutes les 5 min) ---
+  // --- Récupération du timer ---
   useEffect(() => {
     async function fetchTimer() {
       try {
         const res = await fetch(`${API_BASE}/live-timer.json?cacheBust=${Date.now()}`);
         const data = await res.json();
-        console.log("⏱️ TIMER DATA :", data); // <-- AJOUTE ÇA
         setTimer(data);
       } catch (err) {
         console.error("Erreur timer :", err);
@@ -246,12 +297,11 @@ export default function LiveTracking() {
     }
 
     fetchTimer();
-    const interval = setInterval(fetchTimer, 300000); // 5 minutes*/
-/*    const interval = setInterval(fetchTimer, 10000); // 5 minutes*/
+    const interval = setInterval(fetchTimer, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // --- Calcul du chrono en continu ---
+  // --- Calcul chrono en continu ---
   useEffect(() => {
     let interval;
     if (timer.startTime) {
@@ -259,11 +309,7 @@ export default function LiveTracking() {
         const now = new Date();
         const start = new Date(timer.startTime);
         const stop = timer.stopTime ? new Date(timer.stopTime) : null;
-        const diff = timer.running
-          ? now - start
-          : stop
-          ? stop - start
-          : 0;
+        const diff = timer.running ? now - start : stop ? stop - start : 0;
         setElapsed(Math.max(0, Math.floor(diff / 1000)));
       }, 1000);
     }
@@ -307,8 +353,6 @@ export default function LiveTracking() {
     return null;
   };
 
-
-
   // --- Rendu principal ---
   return (
     <div className="flex flex-col items-center w-full py-6 px-3 sm:px-6 gap-3">
@@ -320,23 +364,18 @@ export default function LiveTracking() {
 
         {/* 🔹 Durée de locomotion */}
         <div className="font-mono text-gray-700 mb-2 text-sm sm:flex sm:flex-row sm:items-center sm:justify-center sm:gap-1">
-          {/* Mobile (stacké) */}
           <div className="flex flex-col items-center sm:hidden">
             <span className="text-xxs">Durée de locomotion :</span>
             <span className="text-xs font-bold mb-1">{formatDuration(elapsed)}</span>
-            {/* 🔸 Barre orange de séparation */}
-            <div className="w-16 h-[2px] bg-[#EFB159] mt-1 rounded-full tr"></div>
+            <div className="w-16 h-[2px] bg-[#EFB159] mt-1 mb-4 rounded-full mx-auto"></div>
           </div>
 
-
-          {/* Desktop (tout en ligne) */}
           <div className="hidden sm:inline">
             <span className="text-sm">Durée de locomotion :</span><span className="text-sm font-semibold mb-1">{formatDuration(elapsed)}</span>
           </div>
         </div>
 
-        {/* 🔸 Barre orange desktop */}
-        <div className="hidden sm:block w-24 h-[2px] bg-[#EFB159] mt-1 mb-2 rounded-full mx-auto"></div>
+        <div className="hidden sm:block w-24 h-[2px] bg-[#EFB159] mt-1 mb-4 rounded-full mx-auto"></div>
 
         <div className="flex justify-around text-sm sm:text-base font-medium text-gray-800">
           <div>
@@ -352,18 +391,14 @@ export default function LiveTracking() {
             <div className="sm:text-xs text-xxs text-gray-500 sm:mb-2">D−</div>
           </div>
         </div>
-        <div className="sm:text-xs text-xxs mt-0 text-gray-500 ">
-          Dernière màj :{" "}
-          {lastUpdate ? new Date(lastUpdate).toLocaleTimeString("fr-FR") : "—"}
+        <div className="sm:text-xs text-xxs mt-0 text-gray-500">
+          Dernière màj : {lastUpdate ? new Date(lastUpdate).toLocaleTimeString("fr-FR") : "—"}
         </div>
       </div>
 
       {/* Carte + profil intégré */}
       <div className="relative w-full max-w-6xl">
-        <div
-          ref={mapContainer}
-          className="w-full h-[65vh] overflow-hidden shadow-lg border border-gray-200 rounded-2xl"
-        ></div>
+        <div ref={mapContainer} className="w-full h-[65vh] overflow-hidden shadow-lg border border-gray-200 rounded-2xl"></div>
 
         {/* Bouton recentrer */}
         <button
@@ -374,14 +409,11 @@ export default function LiveTracking() {
           <span className="hidden sm:inline">Recentrer</span>
         </button>
 
-        {/* Sélecteur de style compact, sous le contrôle de zoom */}
-        {/* Sélecteur de style compact (superposé sur le bouton) */}
+        {/* Sélecteur de style compact */}
         <div className="absolute top-[100px] right-2.5 z-30">
           <div className="relative">
-            {/* Bouton principal + menu superposé */}
             <div className="relative">
               {!showStyleMenu ? (
-                // Bouton carte par défaut
                 <button
                   onClick={() => setShowStyleMenu(true)}
                   className="bg-white/90 backdrop-blur-sm border border-gray-300 shadow rounded-md p-[6px] hover:bg-[#EFB159]/80 hover:text-white transition flex items-center justify-center"
@@ -390,16 +422,13 @@ export default function LiveTracking() {
                   <MapIcon size={16} className="text-gray-700" />
                 </button>
               ) : (
-                // Menu superposé (recouvre le bouton)
                 <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-md shadow-md flex flex-col items-center p-[2px]" style={{ width: "32px" }}>
                   <button
                     onClick={() => {
                       setMapStyle("osm");
                       setShowStyleMenu(false);
                     }}
-                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${
-                      mapStyle === "osm" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"
-                    }`}
+                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${mapStyle === "osm" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"}`}
                   >
                     <MapIcon size={14} />
                   </button>
@@ -408,9 +437,7 @@ export default function LiveTracking() {
                       setMapStyle("topo");
                       setShowStyleMenu(false);
                     }}
-                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${
-                      mapStyle === "topo" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"
-                    }`}
+                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${mapStyle === "topo" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"}`}
                   >
                     <Mountain size={14} />
                   </button>
@@ -419,9 +446,7 @@ export default function LiveTracking() {
                       setMapStyle("satellite");
                       setShowStyleMenu(false);
                     }}
-                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${
-                      mapStyle === "satellite" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"
-                    }`}
+                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${mapStyle === "satellite" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"}`}
                   >
                     <Globe2 size={14} />
                   </button>
@@ -431,7 +456,6 @@ export default function LiveTracking() {
           </div>
         </div>
 
-
         {/* Profil altimétrique intégré */}
         {elevationData.length > 0 && (
           <>
@@ -439,11 +463,7 @@ export default function LiveTracking() {
               onClick={() => setShowElevation(!showElevation)}
               className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-white shadow-md rounded-lg p-1.5 border border-gray-300 hover:bg-[#EFB159]/90 hover:text-white transition z-30"
             >
-              {showElevation ? (
-                <ChevronDown size={24} className="text-gray-700" />
-              ) : (
-                <ChevronUp size={24} className="text-gray-700" />
-              )}
+              {showElevation ? <ChevronDown size={24} className="text-gray-700" /> : <ChevronUp size={24} className="text-gray-700" />}
             </button>
 
             <div
@@ -458,7 +478,6 @@ export default function LiveTracking() {
                     <LineChart
                       data={elevationData}
                       margin={window.innerWidth < 640 ? { top: 5, right: 10, bottom: 5, left: 15 } : { top: 10, right: 20, bottom: 0, left: 30 }}
-
                     >
                       <XAxis
                         dataKey="km"
@@ -469,49 +488,23 @@ export default function LiveTracking() {
                         tick={{ fontSize: 11 }}
                         allowDecimals={false}
                       />
-
-                      <YAxis
-                        domain={[0, 3100]}
-                        tick={false}
-                        axisLine={false}
-                        width={0}
-                      />
-
+                      <YAxis domain={[0, 3100]} tick={false} axisLine={false} width={0} />
                       <Tooltip content={<CustomTooltip />} />
-
-                      {/* Lignes iso-altitude visibles */}
                       {[1000, 2000, 3000].map((alt) => (
-                        <ReferenceLine
-                          key={alt}
-                          y={alt}
-                          stroke="#999"
-                          strokeDasharray="4 4"
-                          ifOverflow="extendDomain"
-                        >
-                          {/* Label interne, aligné à gauche du graphe */}
+                        <ReferenceLine key={alt} y={alt} stroke="#999" strokeDasharray="4 4" ifOverflow="extendDomain">
                           <Label
                             value={`${alt}m`}
                             position={window.innerWidth < 640 ? "insideTopRight" : "insideTopLeft"}
-                            dy={window.innerWidth < 640 ? -11 : -15}          // légèrement au-dessus de la ligne
-                            dx={-4}           // petit décalage depuis le bord gauche
+                            dy={window.innerWidth < 640 ? -11 : -15}
+                            dx={-4}
                             fill="#555"
                             fontSize={window.innerWidth < 640 ? 6 : 10}
                             fontWeight={400}
-                            background={{ fill: "rgba(255,255,255,0.4)" }} // léger fond pour la lisibilité
+                            background={{ fill: "rgba(255,255,255,0.4)" }}
                           />
                         </ReferenceLine>
                       ))}
-
-
-
-                      <Line
-                        type="monotone"
-                        dataKey="alt"
-                        stroke="#B67352"
-                        strokeWidth={2}
-                        dot={false}
-                        isAnimationActive={false}
-                      />
+                      <Line type="monotone" dataKey="alt" stroke="#B67352" strokeWidth={2} dot={false} isAnimationActive={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
