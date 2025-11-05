@@ -1,1 +1,1 @@
-npm run build ; npm install ; npm run dev -- --host
+npm install ; npm run build ; npm run preview
