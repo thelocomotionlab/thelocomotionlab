@@ -45,10 +45,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>The Locomotion Lab</title>
-    <meta
-      name="description"
-      content="Exploration de la locomotion humaine sous toutes ses formes avec une approche scientifique et expérimentale."
-    >
+
+    <!-- ⚠️ Suppression de la meta description globale -->
+    <meta name="description" content="">
+
     <meta
       name="keywords"
       content="locomotion, mouvement, ultra-trail, trail primal, parkour primal, respiration, hormèse, conscience, exploration, laboratoire, performance, endurance"
@@ -69,25 +69,8 @@
     <link rel="manifest" href="/images/assets/site.webmanifest">
     <meta name="theme-color" content="#8CB9BD" />
 
-    <!-- Open Graph -->
-    <meta property="og:title" content="The Locomotion Lab" />
-    <meta
-      property="og:description"
-      content="Exploration de la locomotion humaine sous toutes ses formes avec une approche scientifique et expérimentale."
-    />
-    <meta property="og:image" content="https://thelocomotionlab.com/images/assets/og-image.jpg" />
-    <meta property="og:url" content="https://thelocomotionlab.com/" />
-    <meta property="og:type" content="website" />
-    <meta property="og:locale" content="fr_FR" />
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="The Locomotion Lab" />
-    <meta
-      name="twitter:description"
-      content="Exploration de la locomotion humaine sous toutes ses formes avec une approche scientifique et expérimentale."
-    />
-    <meta name="twitter:image" content="https://thelocomotionlab.com/images/assets/og-image.jpg" />
+    <!-- ⚠️ Retirer les balises OG/Twitter globales pour laisser Helmet gérer -->
+    <!-- Open Graph / Twitter Cards seront injectés par React Helmet -->
 
     <!-- Données structurées Schema.org -->
     <script type="application/ld+json">
@@ -96,7 +79,6 @@
         "@type": "WebSite",
         "name": "The Locomotion Lab",
         "url": "https://thelocomotionlab.com",
-        "description": "Exploration de la locomotion humaine sous toutes ses formes avec une approche scientifique et expérimentale.",
         "publisher": {
           "@type": "Organization",
           "name": "The Locomotion Lab"

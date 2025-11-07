@@ -297,7 +297,7 @@ export default function LiveTracking() {
     }
 
     fetchTimer();
-    const interval = setInterval(fetchTimer, 60000);
+    const interval = setInterval(fetchTimer, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -375,7 +375,7 @@ export default function LiveTracking() {
           </div>
         </div>
 
-        <div className="hidden sm:block w-24 h-[2px] bg-[#EFB159] mt-1 mb-4 rounded-full mx-auto"></div>
+        <div className="hidden sm:block w-24 h-[2px] bg-[#EFB159] mt-1 mb-1 rounded-full mx-auto"></div>
 
         <div className="flex justify-around text-sm sm:text-base font-medium text-gray-800">
           <div>

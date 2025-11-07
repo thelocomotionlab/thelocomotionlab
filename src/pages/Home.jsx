@@ -49,7 +49,7 @@ export default function Home() {
             {/* --- Nouveau lien Live Tracking --- */}
             <div className="pt-6">
               <a
-                href="https://www.thelocomotionlab.com/projets/traversee-reunion#suivi-en-direct-live-tracking"
+                href="https://www.thelocomotionlab.com/projets/traversee-reunion#la-traversée-de-la-réunion"
                 className="inline-flex items-center gap-2 text-brand-deep font-medium hover:text-brand-accent transition-colors duration-200 group"
               >
                 <SatelliteDish

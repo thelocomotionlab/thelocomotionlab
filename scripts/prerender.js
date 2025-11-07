@@ -4,16 +4,14 @@ import puppeteer from "puppeteer";
 import { spawn } from "child_process";
 
 const BASE_PATH = path.resolve("dist");
-const START_URL = "http://localhost:4173"; // port du "vite preview" ou de "serve dist"
+const START_URL = "http://localhost:4173"; // port du "vite preview" ou "serve dist"
 
-// Lancer un petit serveur pour servir le build
-const serve = spawn("npx", ["serve", "dist", "-l", "4173", "--single"], { stdio: "inherit" });
+const serve = spawn("npx", ["serve", "dist", "-l", "4173"], { stdio: "inherit" });
 
-// Petit helper pour attendre
 const wait = (ms) => new Promise((res) => setTimeout(res, ms));
 
 (async () => {
-  await wait(2000); // laisse le temps au serveur de démarrer
+  await wait(3000); // laisse le temps au serveur de démarrer
 
   const browser = await puppeteer.launch({
     headless: true,
@@ -31,26 +29,25 @@ const wait = (ms) => new Promise((res) => setTimeout(res, ms));
 
     try {
       await page.goto(url, { waitUntil: "networkidle0", timeout: 90000 });
+      await wait(1500); // attend que Helmet et React aient fini d'injecter les balises
     } catch (err) {
       console.warn(`⚠️ Erreur lors du chargement de ${url}: ${err.message}`);
       return;
     }
 
-    // Ignore les fichiers non HTML
-    if (/\.(md|png|jpg|jpeg|webp|ico|json|xml|pdf|svg|mp4|webm)$/i.test(url)) {
-      console.log(`⏭ Ignoré (non HTML) : ${url}`);
-      return;
-    }
+    // ignore les fichiers non HTML
+    if (/\.(md|png|jpg|jpeg|webp|ico|json|xml|pdf|svg|mp4|webm|gpx)$/i.test(url)) return;
 
-    // Sauvegarde du HTML complet rendu
     const html = await page.content();
-    const relativePath = url.replace(START_URL, "");
-    const filePath = path.join(BASE_PATH, relativePath, "index.html");
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFileSync(filePath, html);
+    const relativePath = url.replace(START_URL, "").replace(/\/$/, "");
+    const outDir = path.join(BASE_PATH, relativePath);
+    const outFile = path.join(outDir, "index.html");
+
+    fs.mkdirSync(outDir, { recursive: true });
+    fs.writeFileSync(outFile, html);
     console.log(`✅ Page prérendue : ${relativePath || "/"}`);
 
-    // Recherche des liens internes pour explorer récursivement
+    // cherche les liens internes
     const links = await page.$$eval("a[href]", (as) =>
       as
         .map((a) => a.getAttribute("href"))
@@ -66,12 +63,12 @@ const wait = (ms) => new Promise((res) => setTimeout(res, ms));
     );
 
     for (const link of links) {
-      const absolute = `${START_URL}${link.startsWith("/") ? link : "/" + link}`;
-      if (!visited.has(absolute)) toVisit.add(absolute);
+      const abs = `${START_URL}${link.startsWith("/") ? link : "/" + link}`;
+      if (!visited.has(abs)) toVisit.add(abs);
     }
   }
 
-  // Boucle principale de crawl
+  // boucle principale
   while (toVisit.size > 0) {
     const next = [...toVisit][0];
     toVisit.delete(next);
@@ -80,30 +77,6 @@ const wait = (ms) => new Promise((res) => setTimeout(res, ms));
 
   await browser.close();
   serve.kill();
-
-  // --- Génération automatique du sitemap.xml ---
-  const sitemapPath = path.join(BASE_PATH, "sitemap.xml");
-
-  const urls = [...visited]
-    .filter((url) => url.startsWith(START_URL))
-    .map((url) => {
-      const relative = url
-        .replace(START_URL, "")
-        .replace(/\/$/, "")
-        .replace(/\.html$/, "");
-      const clean = relative.startsWith("/") ? relative : "/" + relative;
-      return `<url><loc>https://thelocomotionlab.com${clean}</loc></url>`;
-    });
-
-  const uniqueUrls = [...new Set(urls)];
-
-  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-  <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  ${uniqueUrls.join("\n")}
-  </urlset>`;
-
-  fs.writeFileSync(sitemapPath, sitemap);
-  console.log(`🗺️ Sitemap généré : ${sitemapPath}`);
 
   console.log("🎉 Prérendu complet terminé !");
 })();

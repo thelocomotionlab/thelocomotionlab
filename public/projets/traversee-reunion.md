@@ -21,6 +21,12 @@ Le 19 septembre 2025 s'annonçait comme le jour où j'allais accomplir mon rêve
 
 L'objectif pour ce mois d'octobre est clair : borner comme un phacochère tout en prenant un maximum de plaisir. Le temps de préparation est court donc j'ai besoin d'optimiser les facteurs de réussite. Je ne retomberai pas dans certains écueils passés de courir un poil trop vite à chaque sortie, ou de ne pas augmenter mes apports caloriques alors que je double voire triple ma dose de sport hebdomadaire. Cette fois-ci, on rentre directement dans le vif du sujet en mangeant souvent, en quantité et des aliments à tendance anti-inflammatoire, on se couche tôt et on court le plus lentement possible. 
 
+Côté préparation physique, rien de neuf sous les tropiques. À savoir que je repars sur un bloc de 6 semaines basé sur les séances concotées par le best [Quentin Giacomazzo](https://www.instagram.com/conditionacademy/) pour le GRF, en augmentant légèrement les charges pour continuer de créer des adaptations. 
+
+![PPG 28 août 2025](/images/projets/traversee-reunion/ppg_28_08_2025.webp)
+*Séance PPG n°5 réalisée pour le GRF.*
+
+
 ### Création de la trace GPX
 *30/09/2025*
 
@@ -227,6 +233,8 @@ Cette semaine se termine à 117 km 5100 m D+/D-. Elle correspond à un rebond de
 
 [Retour au sommaire](#sommaire)
 
-## Suivi en direct (Live tracking)
+## La traversée de la Réunion
+*10/11/2025 - joyeux 10$^{\text{ième}}$ anniversaire Malo je t'aime* 
 
+Voir la trace complète : [ici](#création-de-la-trace-gpx), (167 km 9800 m D+/D-).
 <livetracking /> 
