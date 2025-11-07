@@ -32,9 +32,11 @@ Côté préparation physique, rien de neuf sous les tropiques. À savoir que je 
 
 L'idée de faire le parcours en OFF de la diagonale des fous fut tentante. Mais pas assez créative à mon goût. J'ai donc choisi de me baser sur le parcours du GR R2, qui traverse l'île, en apportant les modifications nécessaires pour gravir les pitons des neige et de la fournaise. Cette trace a été construite à l'aide des sites [komoot](https://www.komoot.com/), [tracedetrail](https://tracedetrail.fr), et  vérifiée à l'aide de [geoportail](https://www.geoportail.gouv.fr/), véritable banger pour s'assurer gratuitement de la fiabilité d'une trace. Elle sera également à adapter en fonction des fermetures de sentiers quelques jours avant. J'ai choisi de faire le parcours depuis Saint-Denis, et de terminer à Basse Vallée. Total : 167 km 10000 m D+/D-, j'en salive d'avance.
 
-[Tour du Taillefer](/tracks/reunion-r2.gpx)
+Update 07/11/2025 : correction de la trace pour prise en compte des sentiers fermés + ajout des checkpoint flotte.
 
-*Trace élaborée à partir du GR R2, à affiner en fonctions des fermetures en vigueur.*
+[Traversée de la Réunion](/tracks/reunion-r2.gpx)
+
+*Trace de la traversée de la Réunion élaborée à partir du GR R2.*
 
 ### Bilan S1
 *05/10/2025*
@@ -232,6 +234,56 @@ Ma batterie s'était complètement vidée, entraînant la fin du suivi. Mais l'e
 Cette semaine se termine à 117 km 5100 m D+/D-. Elle correspond à un rebond de charge après la phase d'intégration que je me suis offerte pendant plus de 10j. Au programme de la semaine à venir : repos complet, et derniers préparatifs avant le voyage. 
 
 [Retour au sommaire](#sommaire)
+
+
+## Semaines 5 et 6
+
+### Bilan S5
+*01/11/2025*
+
+Rien de neuf à raconter sur la semaine 5 qui fut essentiellement consacrée à récupérer de la sortie de 15h du week-end dernier et préparer le voyage.
+
+### Quelques images de la Réunion
+*08/11/2025*
+
+Petit update après quasiment une semaine ici. Premier constat : il fait chaud, très chaud. Après que mon organisme ait commencé à se conditionner au froid qui pointe le bout de son nez en métropole, le voilà brutalement soumis à une chaleur comme en plein mois d'août, voire pire. Ajouter à cela un +3h de décalage horaire, à peine une semaine après s'être pris un -1h, et vous obtenez une fatigue très forte. 
+
+La traversée se fera en deuxième semaine. Pour l'heure, place à l'acclimatation et au chill. Démarrage à Saint-André, puis balade vers le trou de fer (oui c'est drôle) avec des rencontres cool de l'hébergement, qui ont ensuite eu pitié de mon déplacement en bus, et m'ont proposé de me lâcher à l'ouest de l'île. Très sympa de leur part, et go Saint-Leu pour faire de la playa et du chill. 
+
+:::split
+
+![Vue du trou de fer](/images/projets/traversee-reunion/vue_trou_de_fer.webp)
+
+---
+
+![Reine des Tamarins](/images/projets/traversee-reunion/reine_tamarins.webp)
+
+:::
+
+*Vue du trou de fer (gauche) et reine des tamarins (droite) : les arbres sont zinzins ici.*
+
+Tentative de running pour aller à la plage de l'Hermitage à pieds (environ 20 km), mais partir à midi avec un débardeur, sous indice UV à 12 = pas la bonne idée. Je m'arrête à 10 km et termine en bus. Mon corps a ramassé sur cet effort, j'ai dormi 3h sur la plage, et en ai senti les séquelles jusqu'au lendemain soir. Stop les bêtises, place au repos, au vrai. La suite se compose essentiellement de mobilité, natation et sieste. J'ai d'ailleurs entrepris de réintégrer quelques exercices basés sur la clinique du squat d'Ido Portal (voir [ici](https://www.youtube.com/watch?v=xPwG2hqnOx0) et [là](https://www.youtube.com/watch?v=lbozu0DPcYI), dans le but d'améliorer ma posture d'accroupissement que je trouve, malgré une nette amélioration depuis quelques années, loin d'un vrai squat primordial. 
+
+Go Saint-Pierre ensuite, dernière vraie étape avant le départ pour la traversée fixé au lundi 10 novembre. Lieu stratégique car pourvu de plages mais aussi de moult commerces pour acquérir les dernières emplettes nécessaires à mon aventure. 
+
+:::split
+
+![Vue hauteurs Saint-Leu](/images/projets/traversee-reunion/vue_hauteurs_saint-leu.webp)
+
+---
+
+![Clinique du squat Val](/images/projets/traversee-reunion/clinic_squat_val.webp)
+
+:::
+
+*Vue des hauteurs de Saint-Leu avant ma dessication complète (gauche) et exo de squat avec vue par dégeu (droite).*
+
+
+### Les derniers préparatifs pour la traversée
+*09/11/2025*
+
+
+
 
 ## La traversée de la Réunion
 *10/11/2025 - joyeux 10$^{\text{ième}}$ anniversaire Malo je t'aime* 
