@@ -262,7 +262,7 @@ La traversée se fera en deuxième semaine. Pour l'heure, place à l'acclimatati
 
 *Vue du trou de fer (gauche) et reine des tamarins (droite) : les arbres sont zinzins ici.*
 
-Tentative de running pour aller à la plage de l'Hermitage à pieds (environ 20 km), mais partir à midi avec un débardeur, sous indice UV à 12 = pas la bonne idée. Je m'arrête à 10 km et termine en bus. Mon corps a ramassé sur cet effort, j'ai dormi 3h sur la plage, et en ai senti les séquelles jusqu'au lendemain soir. Stop les bêtises, place au repos, au vrai. La suite se compose essentiellement de mobilité, natation et sieste. J'ai d'ailleurs entrepris de réintégrer quelques exercices basés sur la clinique du squat d'Ido Portal (voir [ici](https://www.youtube.com/watch?v=xPwG2hqnOx0) et [là](https://www.youtube.com/watch?v=lbozu0DPcYI), dans le but d'améliorer ma posture d'accroupissement que je trouve, malgré une nette amélioration depuis quelques années, loin d'un vrai squat primordial. 
+Tentative de running pour aller à la plage de l'Hermitage à pieds (environ 20 km), mais partir à midi avec un débardeur, sous indice UV à 12 = pas la bonne idée. Je m'arrête à 10 km et termine en bus. Mon corps a ramassé sur cet effort, j'ai dormi 3h sur la plage, et en ai senti les séquelles jusqu'au lendemain soir. Stop les bêtises, place au repos, au vrai. La suite se compose essentiellement de mobilité, natation et sieste. J'ai d'ailleurs entrepris de réintégrer quelques exercices basés sur la clinique du squat d'Ido Portal (voir [ici](https://www.youtube.com/watch?v=xPwG2hqnOx0) et [là](https://www.youtube.com/watch?v=lbozu0DPcYI)), dans le but d'améliorer ma posture d'accroupissement que je trouve, malgré une nette amélioration depuis quelques années, loin d'un vrai squat primordial. 
 
 Go Saint-Pierre ensuite, dernière vraie étape avant le départ pour la traversée fixé au lundi 10 novembre. Lieu stratégique car pourvu de plages mais aussi de moult commerces pour acquérir les dernières emplettes nécessaires à mon aventure. 
 
@@ -276,7 +276,7 @@ Go Saint-Pierre ensuite, dernière vraie étape avant le départ pour la travers
 
 :::
 
-*Vue des hauteurs de Saint-Leu avant ma dessication complète (gauche) et exo de squat avec vue par dégeu (droite).*
+*Vue des hauteurs de Saint-Leu avant ma dessication complète (gauche) et exo de squat avec vue pas dégeu (droite).*
 
 
 ### Les derniers préparatifs pour la traversée
@@ -289,4 +289,9 @@ Go Saint-Pierre ensuite, dernière vraie étape avant le départ pour la travers
 *10/11/2025 - joyeux 10$^{\text{ième}}$ anniversaire Malo je t'aime* 
 
 Voir la trace complète : [ici](#création-de-la-trace-gpx), (167 km 9800 m D+/D-).
+
 <livetracking /> 
+
+*Tracking actualisé tous les 90 s ou 100 m environ. Si la position tarde à s'actualiser, c'est que je suis dans une zone reculée et qu'il faut attendre que j'aie à nouveau des données cellulaires. Vous vous plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
+
+[Retour au sommaire](#sommaire)

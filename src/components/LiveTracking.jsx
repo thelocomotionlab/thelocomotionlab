@@ -363,15 +363,15 @@ export default function LiveTracking() {
         </div>
 
         {/* 🔹 Durée de locomotion */}
-        <div className="font-mono text-gray-700 mb-2 text-sm sm:flex sm:flex-row sm:items-center sm:justify-center sm:gap-1">
+        <div className="text-gray-700 mb-2 text-sm sm:flex sm:flex-row sm:items-center sm:justify-center sm:gap-1">
           <div className="flex flex-col items-center sm:hidden">
-            <span className="text-xxs">Durée de locomotion :</span>
+            <span className="text-xxs">Durée de locomotion : </span>
             <span className="text-xs font-bold mb-1">{formatDuration(elapsed)}</span>
             <div className="w-16 h-[2px] bg-[#EFB159] mt-1 mb-4 rounded-full mx-auto"></div>
           </div>
 
           <div className="hidden sm:inline">
-            <span className="text-sm">Durée de locomotion :</span><span className="text-sm font-semibold mb-1">{formatDuration(elapsed)}</span>
+            <span className="text-sm">Durée de locomotion : </span><span className="text-sm font-semibold mb-1">{formatDuration(elapsed)}</span>
           </div>
         </div>
 
@@ -483,7 +483,7 @@ export default function LiveTracking() {
                         dataKey="km"
                         type="number"
                         domain={[0, TOTAL_DISTANCE_KM]}
-                        ticks={window.innerWidth < 640 ? [0, 165] : [0, 40, 80, 120, 160]}
+                        ticks={window.innerWidth < 640 ? [0, 170] : [0, 42.5, 95, 137.5, 170]}
                         tickFormatter={(v) => `${v.toFixed(0)}km`}
                         tick={{ fontSize: 11 }}
                         allowDecimals={false}

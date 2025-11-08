@@ -435,3 +435,28 @@ html {
   color: #e47f2c;
   border-bottom-color: #e47f2c;
 }
+
+/* Légende sous le live-tracking */
+.prose .lt-figure + p > em {
+  display: block;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #666;
+  font-style: normal;
+  margin-top: 0.4rem;
+  margin-bottom: 0.8rem;
+  line-height: 1.4;
+  position: relative;
+  font-family: "Inter", sans-serif;
+}
+
+.prose .lt-figure + p > em::before {
+  content: "";
+  display: block;
+  width: 3rem;
+  height: 2px;
+  background: rgba(239, 177, 89, 0.7);
+  margin: 0.3rem auto 0.4rem;
+  border-radius: 2px;
+}
+

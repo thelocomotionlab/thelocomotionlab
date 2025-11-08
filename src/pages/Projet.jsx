@@ -12,6 +12,7 @@ import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeRaw from "rehype-raw"; //  ajouté pour autoriser le HTML inline
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
+import remarkLiveTracking from "../markdown/remarkLiveTracking";
 import useTocFromMarkdown from "../hooks/useTocFromMarkdown";
 import { Helmet } from "react-helmet";
 import LiveTracking from "../components/LiveTracking"; 
@@ -202,6 +203,7 @@ export default function Projet() {
               remarkPlugins={[
                 remarkFrontmatter,
                 remarkGfm,
+                remarkLiveTracking,
                 remarkDirective,
                 remarkSplit,
                 remarkMath,
@@ -214,7 +216,19 @@ export default function Projet() {
               ]}
               components={{
                 // 🛰️ Composant LiveTracking depuis le markdown
-                livetracking: () => <LiveTracking />,
+/*                livetracking: () => <LiveTracking />,*/
+                p: ({ node, children }) => {
+                  const text = String(children);
+                  if (text.includes("[[LIVE_TRACKING_BLOCK]]")) {
+                    return (
+                      <figure className="lt-figure my-8">
+                        <LiveTracking />
+                      </figure>
+                    );
+                  }
+                  return <p>{children}</p>;
+                },
+
 
                 // Liens : GPX → carte
                 a: ({ href, children, ...props }) => {
