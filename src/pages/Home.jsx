@@ -29,12 +29,24 @@ export default function Home() {
         {/* Intro + CTA */}
         <section className="py-12 md:py-16">
           <div className="max-w-3xl mx-auto text-center space-y-6">
-            <p className="text-lg text-center md:text-xl leading-relaxed">
-              Le <span className="font-heading font-semibold">Locomotion Lab</span> explore et décortique la locomotion
-              humaine sous toutes ses formes. De la course minimaliste au déplacement dans les arbres, des stress hormétiques
-              au travail de respiration, l'expérience brute s'allie à l'analyse scientifique pour explorer le potentiel Humain. 
-              Bienvenue dans ce laboratoire vivant. 
-            </p>
+
+
+            <div className="text-lg text-center md:text-l leading-relaxed space-y-6">
+              <p>
+                Le <span className="font-heading font-semibold">Locomotion Lab</span> est un espace d'exploration de la locomotion humaine sous toutes ses formes.
+                Du trail primal, au déplacement dans les arbres, à la locomotion animale, en passant par la natation ou toute autre forme de déplacement primordial.
+              </p>
+
+              <p>
+                L'objectif est d'analyser et de décortiquer les facteurs favorisant la fluidité, l'endurance et la résilience dans le mouvement, pour optimiser potentiel et bien-être.
+              </p>
+
+              <p>
+                Rigueur scientifique et expériences personnelles fusionnent pour proposer des contenus utiles et accessibles.
+                Bienvenue dans ce laboratoire vivant.
+              </p>
+            </div>
+
 
             {/* --- CTA principal --- */}
             <div>
@@ -45,20 +57,21 @@ export default function Home() {
                 Entrer dans le labo
               </Link>
             </div>
-
             {/* --- Nouveau lien Live Tracking --- */}
             <div className="pt-6">
               <a
-                href="https://www.thelocomotionlab.com/projets/traversee-reunion#la-traversée-de-la-réunion"
-                className="inline-flex items-center gap-2 text-brand-deep font-medium hover:text-brand-accent transition-colors duration-200 group"
+                href="https://www.thelocomotionlab.com/projets/traversee-reunion#la-travers%C3%A9e-de-la-r%C3%A9union-en-direct"
+                className="inline-flex flex-col sm:flex-row items-center justify-center gap-2 text-brand-deep font-medium hover:text-brand-accent transition-colors duration-200 group text-center"
               >
                 <SatelliteDish
                   size={18}
-                  className="text-brand-accent group-hover:translate-y-[-1px] transition-transform duration-200"
+                  className="text-brand-deep shrink-0 group-hover:translate-y-[-1px] transition-transform duration-200"
                 />
                 <span>Suivre la traversée de la Réunion en direct</span>
               </a>
+
             </div>
+
           </div>
         </section>
       </div>

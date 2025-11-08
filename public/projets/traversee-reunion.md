@@ -32,7 +32,7 @@ Côté préparation physique, rien de neuf sous les tropiques. À savoir que je 
 
 L'idée de faire le parcours en OFF de la diagonale des fous fut tentante. Mais pas assez créative à mon goût. J'ai donc choisi de me baser sur le parcours du GR R2, qui traverse l'île, en apportant les modifications nécessaires pour gravir les pitons des neige et de la fournaise. Cette trace a été construite à l'aide des sites [komoot](https://www.komoot.com/), [tracedetrail](https://tracedetrail.fr), et  vérifiée à l'aide de [geoportail](https://www.geoportail.gouv.fr/), véritable banger pour s'assurer gratuitement de la fiabilité d'une trace. Elle sera également à adapter en fonction des fermetures de sentiers quelques jours avant. J'ai choisi de faire le parcours depuis Saint-Denis, et de terminer à Basse Vallée. Total : 167 km 10000 m D+/D-, j'en salive d'avance.
 
-Update 07/11/2025 : correction de la trace pour prise en compte des sentiers fermés + ajout des checkpoint flotte.
+Update 07/11/2025 : correction de la trace pour prise en compte des sentiers fermés + ajout des checkpoint flotte + départ gare Saint-Denis et arrivée direct au Airbnb d'Éliane. Total : 170 km 9800 m D+/D-.
 
 [Traversée de la Réunion](/tracks/reunion-r2.gpx)
 
@@ -248,7 +248,7 @@ Rien de neuf à raconter sur la semaine 5 qui fut essentiellement consacrée à 
 
 Petit update après quasiment une semaine ici. Premier constat : il fait chaud, très chaud. Après que mon organisme ait commencé à se conditionner au froid qui pointe le bout de son nez en métropole, le voilà brutalement soumis à une chaleur comme en plein mois d'août, voire pire. Ajouter à cela un +3h de décalage horaire, à peine une semaine après s'être pris un -1h, et vous obtenez une fatigue très forte. 
 
-La traversée se fera en deuxième semaine. Pour l'heure, place à l'acclimatation et au chill. Démarrage à Saint-André, puis balade vers le trou de fer (oui c'est drôle) avec des rencontres cool de l'hébergement, qui ont ensuite eu pitié de mon déplacement en bus, et m'ont proposé de me lâcher à l'ouest de l'île. Très sympa de leur part, et go Saint-Leu pour faire de la playa et du chill. 
+La traversée se fera en deuxième semaine. Pour l'heure, place à l'acclimatation et au chill. Démarrage à Saint-André, puis balade vers le trou de fer (oui c'est drôle) avec des rencontres cool de l'hébergement, qui ont ensuite eu de la compassion pour mes déplacements en bus, et m'ont proposé de me lâcher à l'ouest de l'île. Très sympa de leur part, et go Saint-Leu pour faire de la playa et du chill. 
 
 :::split
 
@@ -285,13 +285,15 @@ Go Saint-Pierre ensuite, dernière vraie étape avant le départ pour la travers
 
 
 
-## La traversée de la Réunion
+## Semaine 7
+
+### La traversée de la Réunion (en direct)
 *10/11/2025 - joyeux 10$^{\text{ième}}$ anniversaire Malo je t'aime* 
 
 Voir la trace complète : [ici](#création-de-la-trace-gpx), (167 km 9800 m D+/D-).
 
 <livetracking /> 
 
-*Tracking actualisé tous les 90 s ou 100 m environ. Si la position tarde à s'actualiser, c'est que je suis dans une zone reculée et qu'il faut attendre que j'aie à nouveau des données cellulaires. Vous vous plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
+*Tracking actualisé tous les 90 s ou 100 m environ. Si la position tarde à s'actualiser, c'est que je suis dans une zone reculée et qu'il faut attendre que j'aie à nouveau des données cellulaires. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
 
 [Retour au sommaire](#sommaire)
