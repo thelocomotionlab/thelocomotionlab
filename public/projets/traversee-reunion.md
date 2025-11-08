@@ -34,7 +34,7 @@ L'idée de faire le parcours en OFF de la diagonale des fous fut tentante. Mais 
 
 Update 07/11/2025 : correction de la trace pour prise en compte des sentiers fermés + ajout des checkpoint flotte + départ gare Saint-Denis et arrivée direct au Airbnb d'Éliane. Total : 170 km 9800 m D+/D-.
 
-[Traversée de la Réunion](/tracks/reunion-r2.gpx)
+[Traversée de la Réunion](/tracks/reunion-r2_komoot.gpx)
 
 *Trace de la traversée de la Réunion élaborée à partir du GR R2.*
 
@@ -313,7 +313,7 @@ Pour le reste, j'ai essayé de penser à tous les cas de figures possibles, et m
 
 Ce qui nous fait un total de 2.71 kg. En sommant l'ensemble + les 3 L de liquide, on atteint un sac d'environ 8.3 kg, soit un peu moins d'1 kg de plus que ce que j'avais emporté sur mon OFF de l'UTMC (voir [ici](#la-big-sortie)). Avec la réserve de 2 L du Sawyer, je peux même monter à 5 L d'eau transportés dans les endroits critiques, et j'ai l'impression que sur la portion Volcan - Basse-Vallée, ce ne sera pas de trop.
 
-### Ajustement du live-tracking
+#### Ajustement du live-tracking
 
 
 
