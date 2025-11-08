@@ -6,9 +6,10 @@
   "scripts": {
     "prebuild": "node scripts/generate-articles.js && node scripts/generate-projects.js",
     "build": "vite build",
-    "build:full": "npm run build && node scripts/prerender.js",
+    "build:full": "npm run build && npm run prerender",
+    "prerender": "node scripts/prerender.js",
     "dev": "vite",
-    "preview": "vite preview --host"
+    "preview": "vite preview --host --port 4173 --strictPort"
   },
   "dependencies": {
     "@tmcw/togeojson": "^7.1.2",
@@ -20,6 +21,7 @@
     "maplibre-gl": "^5.9.0",
     "markdown-it": "^14.1.0",
     "marked": "^16.2.1",
+    "node-fetch": "^3.3.2",
     "proj4": "^2.19.10",
     "proj4leaflet": "^1.0.2",
     "react": "^18.2.0",
