@@ -50,48 +50,68 @@ export default function About() {
             Vision
           </h2>
           <p className="mb-4">
-            Le <strong>Locomotion Lab</strong> est un laboratoire vivant pour explorer
-            la locomotion sous toutes ses formes : trail minimaliste, déplacement dans les arbres,
-            mouvement animal, etc.
+            Le <strong>Locomotion Lab</strong> est un espace d'exploration de
+            la locomotion humaine primordiale sous toutes ses formes : trail primal, déplacement dans les arbres,
+            mouvement animal, natation, etc. La liste est longue !
           </p>
-          <p>
-            L’objectif : relier <em>pratique physique</em>, <em>science</em> et{" "}
-            <em>expérience vécue</em>, afin d'explorer l'optimisation de la gestuelle Humaine.
+          <p className="mb-4">
+            Mais aussi tout ce qui favorise la fluidité, l'endurance et la résilience
+            dans le mouvement. Ceci allant de la préparation physique générale, à la nutrition, la respiration, en passant par l'exploration
+            du monde de l'hormèse.
+          </p>
+          <p className="mb-4">
+            L’objectif : relier <em> les science théoriques et expérimentales</em>, à une approche <em>consciente et explorative</em> du mouvement Humain.
           </p>
         </section>
 
         {/* Parcours */}
         <section className="mb-10">
           <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
-            Mon parcours
+            Qui suis-je ?
           </h2>
           <p className="mb-4">
-            Ingénieur et docteur en mécanique des fluides depuis 2023 (          
+            Ingénieur et docteur en mécanique des fluides, je pratique la course à pieds minimaliste depuis 2020. 
+            À l'issue de ma thèse début 2023 (          
             <a
               href="https://artsetmetiers.hal.science/tel-04041476/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-brand-primary hover:underline"
             >
-              consulter ma thèse
-            </a>), je suis aussi passionné par l’ultra-trail en
-            sandales, le parkour et les pratiques d’hormèse (froid, chaud, respiration).
+              la consulter ici
+            </a>), j'ai entrepris
+            un processus introspectif de 2 ans dans la nature drômoise. C'est alors que j'ai découvert le monde de 
+            l'optimisation du potentiel humain.
           </p>
-          <p>
-            Mon cheminement m’a amené à créer le Locomotion Lab : un espace pour
-            expérimenter, documenter et partager mes explorations physiques et mentales.
+          <p className="mb-4">
+            Durant ces deux ans, j'ai été mon propre laboratoire d'expérimentation. Remise à plat de ma biomécanique de course,
+            processus d'athlétisation spécifique à l'ultra-trail, découverte de l'exposition au froid, du parkour primal, de la nutrition. 
+          </p>
+          <p className="mb-4">
+            Grâce à ces milliers d'heures de pratiques, d'écoutes de podcasts, d'analyses, de remise en question, de succès, d'échecs, j'ai
+            pu réaliser mon premier trail, de 82 km en mars 2024. Dans la même année, s'en sont suivis deux autres courses de 92 km et 82 km. 
+            À chaque fois en sandales ou chaussettes-chaussures.
+          </p>
+          <p className="mb-4">
+            En 2025, j'ai couru le Chianti et le Lavaredo, au format 100M, toujours en sandales. Intensément marqué par ces deux expériences de très longue distance, 
+            et fort d'une salve de séances de préparation mentale,
+            j'ai compris qu'il était temps pour moi de partager mes connaissances, processus physiques, mentaux, et expériences passées. 
+          </p>
+          <p className="mb-4">
+            Ce n'est qu'après plusieurs mois de réflexion que l'idée du Locomotion Lab a germé. Un espace ouvert, sans bornes et qui me ressemble.
+            Un laboratoire de création, d'exploration et de partage centré autour de toutes les pratiques et découvertes qui m'animent au quotidien.
           </p>
         </section>
 
         {/* Identité du Labo */}
         <section>
           <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
-            Identité du Labo
+            Organisation du labo
           </h2>
           <ul className="list-disc pl-5 space-y-2">
-            <li><strong>Carnets du Labo</strong> : récits et articles scientifiques.</li>
-            <li><strong>Projets</strong> : expériences et projets en cours.</li>
-            <li><strong>Soutenir</strong> : moyens d’aider le Labo à grandir.</li>
+            <li><strong>Carnets du Labo</strong> : la partie articles scientifiques mêlés aux expérimentations personnelles. Approche cartésienne et exploratoire.</li>
+            <li><strong>Projets</strong> : détails au fil de l'eau des expériences et projets du labo passés, en cours et à venir.</li>
+            <li><strong>Soutien</strong> : moyens d’aider le Labo à perdurer et grandir.</li>
           </ul>
         </section>
       </main>

@@ -282,18 +282,50 @@ Go Saint-Pierre ensuite, dernière vraie étape avant le départ pour la travers
 ### Les derniers préparatifs pour la traversée
 *09/11/2025*
 
+#### Matériel, nutrition et hydratation
+
+J'avais l'espoir de trouver mes victuailles habituelles de sorties longues à Saint-Pierre, mais la réalité dépassa mes espérances. J'ai pu acquérir (à prix d'or certes), tout le nécessaire pour ne pas mourir de faim pendant cette longue traversée, en utilisant quasiment exactement les mêmes produits que j'utilise habituellement. Ma nutrition sera donc composée ainsi :
+
+- 39 boules d'énergie poudre d'amande/pâte de dattes (ratio 1/1.54) dont 13 avec du café (765 g)
+- 14 doses de flasques isotoniques (720 g)
+- 2 saucissons bio (400 g)
+- 4 gels caféine citron (140 g)
+- 5 plats lyophilisés (600 g)
+
+Un total de 2.62 kg. La surprise du chef sera sur les gels. Je n'ai en effet jamais ingurgité le moindre gel de ma vie jusqu'alors, mais le combo caféine + sucre est un combo gagnant pour lutter contre les coups de mous. De toute façon, j'ai évidemment prévu du PQ si ceux-ci ressortaient aussi vite qu'ils seraient rentrés (kikou les gels Ta Rapace).
+
+Pour le reste, j'ai essayé de penser à tous les cas de figures possibles, et ma carapace de Franklin sera cette fois composée de :
+
+- Sac Salomon SLab Aventure 20 (485 g)
+- Poche à eau 1.5 L Salomon (120 g) 
+- 3 flasques 500 mL Salomon (100 g)
+- Paire de Panta Zaros de rechange (225 g)
+- Bivy Sol Escape (245 g)
+- GoPro Hero 8 + 2 batteries (150 g)
+- Short + T-shirt + 2 paires de chaussettes (220 g)
+- Bob Raidlight + Manchettes Raidlight + Buff merinos (100 g)
+- Gants Decath + sur-mouffles Raidlight (77 g)
+- 2 lampes Stoots Kiska II + 2 batteries (140 g)
+- 2 batteries externes Nitecore Gen II (300 g)
+- 2 Galaxy S21 (380 g)
+- Masque de snorkeling (pour l'arrivée faut pas déconner) (70 g)
+- Filtre sawyer PointOne + réserve 2 L (98 g)
+
+Ce qui nous fait un total de 2.71 kg. En sommant l'ensemble + les 3 L de liquide, on atteint un sac d'environ 8.3 kg, soit un peu moins d'1 kg de plus que ce que j'avais emporté sur mon OFF de l'UTMC (voir [ici](#la-big-sortie)). Avec la réserve de 2 L du Sawyer, je peux même monter à 5 L d'eau transportés dans les endroits critiques, et j'ai l'impression que sur la portion Volcan - Basse-Vallée, ce ne sera pas de trop.
+
+### Ajustement du live-tracking
 
 
 
 ## Semaine 7
 
 ### La traversée de la Réunion (en direct)
-*10/11/2025 - joyeux 10$^{\text{ième}}$ anniversaire Malo je t'aime* 
+*10/11/2025* 
 
-Voir la trace complète : [ici](#création-de-la-trace-gpx), (167 km 9800 m D+/D-).
+Voir la trace complète : [ici](#création-de-la-trace-gpx), (170 km 9800 m D+/D-). 
 
 <livetracking /> 
 
-*Tracking actualisé tous les 90 s ou 100 m environ. Si la position tarde à s'actualiser, c'est que je suis dans une zone reculée et qu'il faut attendre que j'aie à nouveau des données cellulaires. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
+*Tracking actualisé tous les 90 s ou 100 m environ. Si la position tarde à s'actualiser, c'est que je suis dans une zone reculée et qu'il faut attendre que j'aie à nouveau des données cellulaires. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré. Joyeux 10$^{\text{ième}}$ anniversaire mon Malo d'amour je t'aime.*
 
 [Retour au sommaire](#sommaire)
