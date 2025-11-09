@@ -69,7 +69,7 @@ export default function Soutenir() {
             bientôt.
           </p>
           <p className="text-sm opacity-70">
-            Votre futur soutien aidera à financer les expérimentations, le
+            Ton futur soutien aidera à financer les expérimentations, le
             matériel, la création de contenu et l’entretien du site web.
           </p>
         </div>
@@ -79,8 +79,8 @@ export default function Soutenir() {
             Stay tuned !
           </h4>
           <p className="text-brand-text opacity-80 mb-4">
-            Si ce projet vous parle et que vous souhaitez rester informé·e des
-            futures explorations ou soutenir le Labo à terme, laissez votre mail
+            Si ce projet te parle et que tu souhaites rester informé·e des
+            futures explorations ou soutenir le labo à terme, laisse ton mail
             ci-dessous.
           </p>
 
