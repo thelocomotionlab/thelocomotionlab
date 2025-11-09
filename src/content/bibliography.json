@@ -28,6 +28,35 @@
     "year": "2020",
     "title": "La santé par la course à pied",
     "publisher": "La Clinique du Coureur"
+  },
+  "fearnhead2003": {
+    "title": "On-line inference for hidden Markov models via particle filters",
+    "author": "Fearnhead, Paul and Clifford, Peter",
+    "journal": "Journal of the Royal Statistical Society Series B: Statistical Methodology",
+    "volume": "65",
+    "number": "4",
+    "pages": "887--899",
+    "year": "2003",
+    "publisher": "Oxford University Press"
+  },
+  "haklay2010": {
+    "title": "How good is volunteered geographical information? A comparative study of OpenStreetMap and Ordnance Survey datasets",
+    "author": "Haklay, Mordechai",
+    "journal": "Environment and planning B: Planning and design",
+    "volume": "37",
+    "number": "4",
+    "pages": "682--703",
+    "year": "2010",
+    "publisher": "SAGE Publications Sage UK: London, England"
+  },
+  "sanchez2025": {
+    "author": "Raimundo Sanchez and Pascal E Egli and Kilian Jornet and Michael Duggan and Manuela Besomi",
+    "title" : "How fractal complexity distorts distance and elevation gain in trail and mountain running: The case for course measurement standardization",
+    "journal": "Proceedings of the Institution of Mechanical Engineers, Part P: Journal of Sports Engineering and Technology",
+    "volume": "0",
+    "number": "0",
+    "year": "2025",
+    "doi": "10.1177/17543371251341660"
   }
 }
 

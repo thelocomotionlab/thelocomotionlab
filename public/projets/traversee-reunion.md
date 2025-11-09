@@ -315,14 +315,24 @@ Ce qui nous fait un total de 2.71 kg. En sommant l'ensemble + les 3 L de liquide
 
 #### Ajustement du live-tracking
 
+J'ai encore éprouvé ce live-tracking toute la semaine pour trouver les paramètres optimaux pour cette traverée. L'affaire n'est pas si simple car il faut préserver la batterie du téléphone émetteur, mais à la fois ne pas envoyer une position toutes les 5 min au risque de biaiser totalement les stats affichées. Dans le détail : le S21 émetteur sera doté d'une e-SIM avec 1 Go de données, et enverra ses positions sur le réseau 3G, celles-ci étant des paquets de données de tailles vraiment réduites, la 3G suffit amplement. Cette solution permet d'économiser la batterie, la 4G étant bien plus énergivore. Côté fréquence de temps et distance, j'ai choisi d'émettre une position toutes les 90 s ou tous les 100 m. Avec ça, le téléphone perd environ 5 % de batterie par heure, ce qui, même en mettant 50h, nécessiterait 2.5 recharges complètes, totalement gérable avec mes deux batteries externes. À voir néanmoins dans Mafate ou dans les zones reculées avec peu d'antennes relai, où le captage du signal sera probablement plus difficile, donc énergivore. Quoiqu'il en soit, j'ai un peu de marge. Je me laisse la possibilité d'augmenter la fréquence de raffraichissement à mi-chemin, si je vois qu'il y a encore du jus.
 
+J'ai aussi amélioré le modèle de reconstruction du signal, car un point toutes les 90 s / 100 m corrrespond à un sous-échantillonnage assez marqué du signal réel. Sans rentrer trop dans les détails, j'applique en plus du modèle, des coefficients correctifs pour la distance ($\times$1.12), basé sur les études de <Citation id="fearnhead2003">Fearnhead et Clifford</Citation> et <Citation id="haklay2010">Haklay et al.</Citation>, ainsi que sur les dénivelés positif ($\times$1.3) et négatif ($\times$0.9), basé sur l'étude de <Citation id="sanchez2025">Sanchez et al.</Citation>, et interpolé à mon cas. Ces coefficients ont aussi été ajustés en fonction de mes expériences, même si celles-ci ont été essentiellement sur des terrains bitumés. 
+
+#### Déroulé du parcours
+
+La dernière partie de ce projet. L'objectif majeur de l'aventure est d'arriver au piton des neiges au lever de soleil (5h30). Je ne dois donc pas partir trop tôt ce lundi, au risque d'arriver au sommet quelques heures avant le lever du soleil, et de laisser tous mes tissus se refroidir, conduisant à une descente potentiellement infâme. Je vais donc viser un départ autour de 8h30 - 9h. Ça me semble pas mal et me correspond car j'ai en horreur de ne pas me réveiller naturellement, et l'idée de mettre le réveil à 5h30 est un stress inutile. L'arrivée au sommet correspond au km 94 avec 7700 m D+ cumulés de mon aventure.
+
+Niveau points d'eau, je vais être pas mal sur tout le parcours jusqu'à Bourg-Murat, dernier vrai point de ravito avant la fin. Le hic, c'est qu'à Bourg-Murat, on n'est qu'au km 115 avec 7900 m D+ cumulés. Il en reste donc encore 55, avec le piton de la Fournaise, où je risque de passer à un des moments les plus chauds de la journée. Il va donc falloir charger la mulle à mort en eau, et c'est là que mon extension de 2 L intervient. Si j'arrive là, et selon comment se sera passé l'aventure jusqu'alors, je m'autoriserais peut-être à acheter une bouteille supplémentaire pour monter à 7 L jusqu'à la fin. En sachant que la dernière portion est une descente de 2000 m D- sur 20 km (souvenir souvenir du Lavaredo), qui se fera probablement de nuit et dans une forêt humide. Le risque de déshydratation semble donc minoré. Je suis conscient de cette difficulté, j'ai des idées pour la gérer, maintenant il n'y a plus qu'à.
+
+Sur ce, une belle aprem de repos m'attend pour accumuler un maximum d'énergie. Si tu as lu ce projet jusqu'ici, j'espère qu'il t'a plu, et que tu apprécieras de suivre cette traversée avec moi en direct. De mon côté, je vais puiser dans tous vos soutiens pour me dépasser et aller explorer mes limites en jouant à ce grand jeu très complexes. On se revoit de l'autre côté !
 
 ## Semaine 7
 
 ### La traversée de la Réunion (en direct)
 *10/11/2025* 
 
-Voir la trace complète : [ici](#création-de-la-trace-gpx), (170 km 9800 m D+/D-). 
+Trace complète (170 km 9800 m D+/D-) disponible et téléchargeable [ici](#création-de-la-trace-gpx).
 
 <livetracking /> 
 
