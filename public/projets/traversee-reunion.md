@@ -1,7 +1,7 @@
 ---
 title: "Traversée de la Réunion en autonomie"
 date: "2025-08-20"
-status: "En cours"
+status: "Terminé"
 description: "Projet OFF. Documentation du parcours, liste du matériel, préparation spécifique et détails de l'expédition."
 cover: "/images/projets/traversee-reunion/cover_traversee_reunion.webp"
 published: true
@@ -305,13 +305,14 @@ Pour le reste, j'ai essayé de penser à tous les cas de figures possibles, et m
 - Short + T-shirt + 2 paires de chaussettes (220 g)
 - Bob Raidlight + Manchettes Raidlight + Buff merinos (100 g)
 - Gants Decath + sur-mouffles Raidlight (77 g)
+- Veste imperméable respirante Raidlight (225 g)
 - 2 lampes Stoots Kiska II + 2 batteries (140 g)
 - 2 batteries externes Nitecore Gen II (300 g)
 - 2 Galaxy S21 (380 g)
 - Masque de snorkeling (pour l'arrivée faut pas déconner) (70 g)
 - Filtre sawyer PointOne + réserve 2 L (98 g)
 
-Ce qui nous fait un total de 2.71 kg. En sommant l'ensemble + les 3 L de liquide, on atteint un sac d'environ 8.3 kg, soit un peu moins d'1 kg de plus que ce que j'avais emporté sur mon OFF de l'UTMC (voir [ici](#la-big-sortie)). Avec la réserve de 2 L du Sawyer, je peux même monter à 5 L d'eau transportés dans les endroits critiques, et j'ai l'impression que sur la portion Volcan - Basse-Vallée, ce ne sera pas de trop.
+Ce qui nous fait un total de 2.9 kg. En sommant l'ensemble + les 3 L de liquide, on atteint un sac d'environ 8.5 kg, soit un peu plus d'1 kg de plus que ce que j'avais emporté sur mon OFF de l'UTMC (voir [ici](#la-big-sortie)). Avec la réserve de 2 L du Sawyer, je peux même monter à 5 L d'eau transportés dans les endroits critiques, et j'ai l'impression que sur la portion Volcan - Basse-Vallée, ce ne sera pas de trop.
 
 #### Ajustement du live-tracking
 
@@ -325,7 +326,9 @@ La dernière partie de ce projet. L'objectif majeur de l'aventure est d'arriver 
 
 Niveau points d'eau, je vais être pas mal sur tout le parcours jusqu'à Bourg-Murat, dernier vrai point de ravito avant la fin. Le hic, c'est qu'à Bourg-Murat, on n'est qu'au km 115 avec 7900 m D+ cumulés. Il en reste donc encore 55, avec le piton de la Fournaise, où je risque de passer à un des moments les plus chauds de la journée. Il va donc falloir charger la mulle à mort en eau, et c'est là que mon extension de 2 L intervient. Si j'arrive là, et selon comment se sera passé l'aventure jusqu'alors, je m'autoriserais peut-être à acheter une bouteille supplémentaire pour monter à 7 L jusqu'à la fin. En sachant que la dernière portion est une descente de 2000 m D- sur 20 km (souvenir souvenir du Lavaredo), qui se fera probablement de nuit et dans une forêt humide. Le risque de déshydratation semble donc minoré. Je suis conscient de cette difficulté, j'ai des idées pour la gérer, maintenant il n'y a plus qu'à.
 
-Sur ce, une belle aprem de repos m'attend pour accumuler un maximum d'énergie. Si tu as lu ce projet jusqu'ici, j'espère qu'il t'a plu, et que tu apprécieras de suivre cette traversée avec moi en direct. De mon côté, je vais puiser dans tous vos soutiens pour me dépasser et aller explorer mes limites en jouant à ce grand jeu très complexes. On se revoit de l'autre côté !
+Sur ce, une belle aprem de repos m'attend pour accumuler un maximum d'énergie. Si tu as lu ce projet jusqu'ici, j'espère qu'il t'a plu, et que tu apprécieras de suivre cette traversée avec moi en direct. De mon côté, je vais puiser dans tous vos soutiens pour me dépasser et aller explorer mes limites en jouant à ce grand jeu très complexe. On se revoit de l'autre côté !
+
+[Retour au sommaire](#sommaire)
 
 ## Semaine 7
 
@@ -336,6 +339,6 @@ Trace complète (170 km 9800 m D+/D-) disponible et téléchargeable [ici](#cré
 
 <livetracking /> 
 
-*Tracking actualisé tous les 90 s ou 100 m environ. Si la position tarde à s'actualiser, c'est que je suis dans une zone reculée et qu'il faut attendre que j'aie à nouveau des données cellulaires. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré. Joyeux 10$^{\text{ième}}$ anniversaire mon Malo d'amour je t'aime.*
+*Tracking actualisé tous les 90 s ou 100 m environ. Si la position tarde à s'actualiser, c'est que je suis dans une zone reculée et qu'il faut attendre que j'aie à nouveau des données cellulaires. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
 
 [Retour au sommaire](#sommaire)
