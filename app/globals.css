@@ -1,0 +1,490 @@
+@import "tailwindcss";
+
+/* ===========================
+   Thème Tailwind v4 – Locomotion Lab
+   =========================== */
+
+@theme {
+  /* Couleurs de marque */
+  --color-brand-bg: #FEFBF6;
+  --color-brand-primary: #8CB9BD;
+  --color-brand-accent: #EFB159;
+  --color-brand-deep: #B67352;
+  --color-brand-text: #333333;
+  --color-brand-paper: #FFFFFF;
+  --color-brand-grid: #F3EEE6;
+
+  /* Polices (liées à next/font dans layout.js) */
+  --font-heading: var(--font-ubuntu), ui-sans-serif, system-ui;
+  --font-sans: var(--font-ubuntu), ui-sans-serif, system-ui;
+  --font-serif: "Ubuntu Serif", Georgia, serif;
+  --font-lora: var(--font-lora), serif;
+
+  /* Ombres & backgrounds */
+  --shadow-card: 0 6px 24px rgba(0, 0, 0, 0.08);
+  --shadow-cta: 0 10px 24px rgba(0, 0, 0, 0.2);
+
+  --background-image-lab-grid: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.03) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.03) 1px,
+      transparent 1px
+    );
+  --background-size-grid-sm: 16px 16px;
+  --background-size-grid-lg: 32px 32px;
+
+  --text-xxs: 0.625rem;
+}
+
+/* ===========================
+   Styles globaux
+   =========================== */
+
+body {
+  margin: 0;
+  font-family: var(--font-ubuntu), ui-sans-serif, system-ui;
+  background: var(--color-brand-bg);
+  color: #374151; /* gray-700 */
+}
+
+/* Focus visible global (sauf champs de formulaire pour éviter le double cadre) */
+:focus-visible:not(input):not(textarea):not(select) {
+  outline: 3px solid var(--color-brand-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Les inputs gardent leurs styles Tailwind sans outline supplémentaire */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
+/* Titres "hors prose" (Hero, etc.) */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+}
+
+/* Bloc markdown .prose : césure automatique */
+.prose {
+  hyphens: auto;
+}
+
+/* ===========================
+   Footnotes / Références
+   =========================== */
+
+.prose .footnotes {
+  margin-top: 2rem;
+}
+
+.prose .footnotes > hr {
+  display: none;
+}
+
+.prose .footnotes::before {
+  content: "Références";
+  display: block;
+  font-weight: 700;
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+  color: var(--color-brand-accent);
+  font-family: "Ubuntu", sans-serif;
+}
+
+/* Supprimer le titre automatique "Footnotes" */
+.prose .footnotes > h2 {
+  display: none;
+}
+
+/* Supprimer le symbole ↩︎ dans les références */
+.data-footnote-backref,
+a.data-footnote-backref,
+[data-footnote-backref] {
+  display: none !important;
+}
+
+/* Footnotes : texte inline */
+.prose .footnotes li p {
+  display: inline;
+  margin: 0;
+}
+
+.prose sup {
+  font-size: 0.75em;
+}
+
+/* ===========================
+   Animations (search bar & burger)
+   =========================== */
+
+/* Barre de recherche */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
+}
+
+.animate-slideOut {
+  animation: slideOut 0.3s ease-in forwards;
+}
+
+/* Menu burger mobile */
+@keyframes slideDown {
+  from {
+    transform: translateY(-20%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-20%);
+    opacity: 0;
+  }
+}
+
+.animate-slideDown {
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-in forwards;
+}
+
+/* ===========================
+   Titres markdown (dans .prose)
+   =========================== */
+
+/* Typo & poids */
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  font-family: var(--font-ubuntu), ui-sans-serif, system-ui;
+  font-weight: 700;
+}
+
+/* Couleurs */
+.prose h1 {
+  color: var(--color-brand-primary);
+}
+
+.prose h2 {
+  color: var(--color-brand-deep);
+}
+
+.prose h3 {
+  color: var(--color-brand-accent);
+}
+
+.prose h4,
+.prose h5,
+.prose h6 {
+  color: var(--color-brand-accent);
+}
+
+/* Tailles + espacements verticaux des titres markdown */
+.prose h1 {
+  font-size: 1.9rem;
+  line-height: 1.3;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.prose h2 {
+  font-size: 1.6rem;
+  line-height: 1.3;
+  margin-top: 3rem;      /* espace avant une nouvelle section */
+  margin-bottom: 0.4rem; /* espace entre titre et texte suivant */
+}
+
+.prose h3 {
+  font-size: 1.3rem;
+  line-height: 1.35;
+  margin-top: 2rem;
+  margin-bottom: 0.3rem;
+}
+
+.prose h4 {
+  font-size: 1.15rem;
+  line-height: 1.4;
+  margin-top: 1.5rem;
+  margin-bottom: 0.3rem;
+}
+
+/* ===========================
+   Blocs :::split
+   =========================== */
+
+/* Conteneur du split : espacement avant, pas après
+   (c'est la légende qui gère l'espace sous le bloc) */
+.md-split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  margin-bottom: 0 !important;
+}
+
+@media (min-width: 768px) {
+  .md-split {
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+  }
+}
+
+.md-split-col img,
+.md-split-col video,
+.md-split-col iframe {
+  width: 100%;
+  height: auto;
+  border-radius: 0;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Harmonisation typographique dans les colonnes du split */
+.md-split-col :is(p, ul, ol, h1, h2, h3, h4, h5, h6, blockquote) {
+  margin-top: revert;
+  margin-bottom: revert;
+}
+
+/* Deux images côte à côte dans la colonne gauche */
+.md-split-col.left p:has(img):has(+ p img) {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.md-split-col.left p:has(img):has(+ p img) img {
+  width: 48%;
+  border-radius: 0;
+}
+
+/* Images internes à un split :
+   pas de marge, l'espace est géré par la légende */
+.md-split img,
+.md-split video,
+.md-split iframe {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Après un split, on neutralise la marge du <p> contenant la légende */
+.md-split + p {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* ===========================
+   Harmonisation spacing images / médias
+   =========================== */
+
+/* Espace AVANT et APRÈS toutes les images/vidéos/iframes markdown */
+.prose img,
+.prose video,
+.prose iframe {
+  margin-top: 1.8rem !important;   /* texte → image */
+  margin-bottom: 0.8rem !important; /* image → barre de légende */
+}
+
+/* Bloc carte GPX (<div class="map-block"> depuis ReactMarkdown) */
+.prose .map-block {
+  margin-top: 1.8rem !important;
+  margin-bottom: 0.8rem !important;
+}
+
+/* ===========================
+   Légendes images / cartes / split / live tracking / replay
+   =========================== */
+
+/* Cas "classiques" : image seule, MapEmbed, split */
+.prose img + em,
+.prose .map-block + p > em,
+.md-split + p > em,
+/* Live / replay : figure.lt-figure juste suivi d'un <p><em> */
+.prose .lt-figure + p > em,
+/* Live / replay : cas plus souple, légende dans un <p><em> un peu plus loin */
+.lt-figure ~ p > em {
+  display: block;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 400;
+  font-style: normal !important; /* enlève l’italique markdown uniquement sur la légende */
+  margin: 0.6rem auto 1.4rem;
+  line-height: 1.4;
+  color: #6b7280;
+  font-family: "Inter", sans-serif;
+  max-width: 90%;
+}
+
+/* Trait au-dessus de toutes les légendes */
+.prose img + em::before,
+.prose .map-block + p > em::before,
+.md-split + p > em::before,
+.prose .lt-figure + p > em::before,
+.lt-figure ~ p > em::before {
+  content: "";
+  display: block;
+  width: 3.5rem;
+  height: 1.5px;
+  background-color: rgba(239, 177, 89, 0.65);
+  margin: 0.35rem auto 0.4rem;
+  border-radius: 2px;
+}
+
+/* Supprimer la marge du paragraphe qui contient la légende
+   (split, GPX via .map-block, live/replay) */
+.prose .map-block + p,
+.prose .lt-figure + p,
+.lt-figure ~ p {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+
+/* ===========================
+   Listes dans .prose
+   =========================== */
+
+.prose ul,
+.prose ol {
+  margin-top: 0.25rem;
+  margin-bottom: 0.75rem;
+  padding-left: 1.25rem;
+  line-height: 1.5;
+  font-size: 1rem;
+  color: #374151;
+  font-family: "Lora", serif;
+}
+
+.prose ul li,
+.prose ol li {
+  margin-top: 0.1rem;
+  margin-bottom: 0.1rem;
+}
+
+.prose ul li::marker {
+  color: rgba(239, 177, 89, 0.65);
+  font-size: 0.7em;
+  content: "◆ ";
+}
+
+.prose ol li::marker {
+  color: rgba(239, 177, 89, 0.65);
+  font-weight: 500;
+}
+
+/* ===========================
+   HR dans les contenus markdown
+   =========================== */
+
+.prose hr {
+  border: none;
+  border-top: 1.5px solid #e5e5e5; /* gris doux */
+  margin-top: 2.5rem;
+  margin-bottom: 2.5rem;
+}
+
+/* ===========================
+   Divers
+   =========================== */
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Lien "Retour au sommaire" aligné à droite dans les articles/projets */
+.prose a[href="#sommaire"] {
+  display: block;
+  width: fit-content;
+  margin-left: auto;
+  font-size: 0.9rem;
+  color: #555;
+  text-decoration: none;
+  border-bottom: 1px solid #e47f2c;
+  padding-bottom: 2px;
+  margin-top: 0.2rem;
+  margin-bottom: 0.8rem;
+  transition: color 0.25s ease, border-color 0.25s ease;
+}
+
+.prose a[href="#sommaire"]:hover {
+  color: #e47f2c;
+  border-bottom-color: #e47f2c;
+}
+
+/* ===========================
+   Texte des articles / projets
+   =========================== */
+
+/* Paragraphe "de base" dans le corps des articles/projets
+   (wrapper .article-body autour du markdown) */
+.article-body p {
+  font-size: 1.09rem; /* ≈ 17px */
+  line-height: 1.7;
+  font-family: "Lora", serif;
+  margin-top: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+/* ===========================
+   Animation fade-in (ShareButton, etc.)
+   =========================== */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  opacity: 1; /* s'assure que l'élément devient visible */
+  animation: fade-in 0.35s ease-out forwards;
+}

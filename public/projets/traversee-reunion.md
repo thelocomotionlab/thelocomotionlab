@@ -332,12 +332,23 @@ Sur ce, une belle aprem de repos m'attend pour accumuler un maximum d'énergie. 
 
 ## Semaine 7
 
-### La traversée de la Réunion (en direct)
+### La traversée de la Réunion (replay)
 *10/11/2025* 
 
 Trace complète (170 km 9800 m D+/D-) disponible et téléchargeable [ici](#création-de-la-trace-gpx).
-
-<livetracking /> 
+<!-- <livetracking /> 
+ -->
+<postlivetracking
+  positions="/replays/traversee-reunion/live-positions.json"
+  stats="/replays/traversee-reunion/live-stats.json"
+  totalDistance="85.50"
+  distanceFactor="1.3"
+  ascentFactor="1.22"
+  descentFactor="1.29"
+  elevationMax="3100"
+  referenceGpx="/tracks/reunion-r2_temp.gpx"
+  title="Replay de la traversée de la Réunion 2025"
+/>
 
 *Tracking actualisé tous les 90 s ou 100 m environ. Si la position tarde à s'actualiser, c'est que je suis dans une zone reculée et qu'il faut attendre que j'aie à nouveau des données cellulaires. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
 

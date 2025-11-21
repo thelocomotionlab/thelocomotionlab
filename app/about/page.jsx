@@ -1,0 +1,138 @@
+// app/about/page.jsx
+
+export const metadata = {
+  title: "À propos – The Locomotion Lab",
+  description:
+    "Découvre la vision du Locomotion Lab : un espace d’exploration de la locomotion humaine.",
+  alternates: {
+    canonical: "https://thelocomotionlab.com/a-propos",
+  },
+  openGraph: {
+    title: "À propos – The Locomotion Lab",
+    description:
+      "Découvre la vision du Locomotion Lab : un espace d’exploration de la locomotion humaine.",
+    url: "https://thelocomotionlab.com/a-propos",
+    type: "website",
+    locale: "fr_FR",
+    images: [
+      {
+        url: "https://thelocomotionlab.com/images/assets/og-image.jpg",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "À propos – The Locomotion Lab",
+    description:
+      "Découvre la vision du Locomotion Lab : un espace d’exploration de la locomotion humaine.",
+    images: ["https://thelocomotionlab.com/images/assets/og-image.jpg"],
+  },
+};
+
+export default function AboutPage() {
+  return (
+    <main className="max-w-3xl mx-auto px-6 py-12 text-gray-800 font-sans">
+      <h1 className="text-3xl font-sans font-bold mb-8 text-brand-primary">
+        À propos
+      </h1>
+
+      {/* Vision */}
+      <section className="mb-10">
+        <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
+          Vision
+        </h2>
+        <p className="mb-4">
+          Le <strong>Locomotion Lab</strong> est un espace d&apos;exploration de
+          la locomotion humaine primordiale sous toutes ses formes : trail
+          primal, déplacement dans les arbres, mouvement animal, natation, etc.
+          La liste est longue !
+        </p>
+        <p className="mb-4">
+          Mais aussi tout ce qui favorise la fluidité, l&apos;endurance et la
+          résilience dans le mouvement. Ceci allant de la préparation physique
+          générale, à la nutrition, la respiration, en passant par
+          l&apos;exploration du monde de l&apos;hormèse.
+        </p>
+        <p className="mb-4">
+          L’objectif : relier{" "}
+          <em>les science théoriques et expérimentales</em>, à une approche{" "}
+          <em>consciente et explorative</em> du mouvement Humain.
+        </p>
+      </section>
+
+      {/* Parcours */}
+      <section className="mb-10">
+        <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
+          Qui suis-je ?
+        </h2>
+        <p className="mb-4">
+          Ingénieur et docteur en mécanique des fluides, je pratique la course à
+          pieds minimaliste depuis 2020. À l&apos;issue de ma thèse début 2023 (
+          <a
+            href="https://artsetmetiers.hal.science/tel-04041476/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand-primary hover:underline"
+          >
+            la consulter ici
+          </a>
+          ), j&apos;ai entrepris un processus introspectif de 2 ans dans la
+          nature drômoise. C&apos;est alors que j&apos;ai découvert le monde de
+          l&apos;optimisation du potentiel humain.
+        </p>
+        <p className="mb-4">
+          Durant ces deux ans, j&apos;ai été mon propre laboratoire
+          d&apos;expérimentation. Remise à plat de ma biomécanique de course,
+          processus d&apos;athlétisation spécifique à l&apos;ultra-trail,
+          découverte de l&apos;exposition au froid, du parkour primal, de la
+          nutrition.
+        </p>
+        <p className="mb-4">
+          Grâce à ces milliers d&apos;heures de pratiques, d&apos;écoutes de
+          podcasts, d&apos;analyses, de remise en question, de succès,
+          d&apos;échecs, j&apos;ai pu réaliser mon premier trail, de 82 km en
+          mars 2024. Dans la même année, s&apos;en sont suivis deux autres
+          courses de 92 km et 82 km. À chaque fois en sandales ou
+          chaussettes-chaussures.
+        </p>
+        <p className="mb-4">
+          En 2025, j&apos;ai couru le Chianti et le Lavaredo, au format 100M,
+          toujours en sandales. Intensément marqué par ces deux expériences de
+          très longue distance, et fort d&apos;une salve de séances de
+          préparation mentale, j&apos;ai compris qu&apos;il était temps pour moi
+          de partager mes connaissances, processus physiques, mentaux, et
+          expériences passées.
+        </p>
+        <p className="mb-4">
+          Ce n&apos;est qu&apos;après plusieurs mois de réflexion que l&apos;idée
+          du Locomotion Lab a germé. Un espace ouvert, sans bornes et qui me
+          ressemble. Un laboratoire de création, d&apos;exploration et de
+          partage centré autour de toutes les pratiques et découvertes qui
+          m&apos;animent au quotidien.
+        </p>
+      </section>
+
+      {/* Organisation */}
+      <section>
+        <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
+          Organisation du labo
+        </h2>
+        <ul className="list-disc pl-5 space-y-2">
+          <li>
+            <strong>Carnets du Labo</strong> : la partie articles scientifiques
+            mêlés aux expérimentations personnelles. Approche cartésienne et
+            exploratoire.
+          </li>
+          <li>
+            <strong>Projets</strong> : détails au fil de l&apos;eau des
+            expériences et projets du labo passés, en cours et à venir.
+          </li>
+          <li>
+            <strong>Soutien</strong> : moyens d’aider le Labo à perdurer et
+            grandir.
+          </li>
+        </ul>
+      </section>
+    </main>
+  );
+}
