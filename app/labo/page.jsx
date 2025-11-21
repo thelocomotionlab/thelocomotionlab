@@ -51,7 +51,7 @@ const cards = [
   },
   {
     title: "Qui suis-je ?",
-    description: "Vision, parcours, et l’identité du labo.",
+    description: "Vision, parcours et identité du labo.",
     href: "/about",
     icon: UserRound,
   },

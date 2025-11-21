@@ -3,7 +3,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Ubuntu, Lora } from "next/font/google";
-import ShareButton from "@/components/ShareButton"; // ⬅️ ajoute ça
+import ShareButton from "@/components/ShareButton";
 
 const ubuntu = Ubuntu({
   subsets: ["latin"],
@@ -23,6 +23,27 @@ export const metadata = {
   title: "The Locomotion Lab",
   description:
     "Explorations de la locomotion humaine (site du Locomotion Lab).",
+  // Configuration des icônes pointant vers ton dossier public/images/assets/
+  manifest: "/images/assets/site.webmanifest",
+  icons: {
+    icon: [
+      { url: "/images/assets/favicon.ico" },
+      { url: "/images/assets/favicon.svg", type: "image/svg+xml" },
+      {
+        url: "/images/assets/favicon-96x96.png",
+        type: "image/png",
+        sizes: "96x96",
+      },
+    ],
+    apple: [
+      {
+        url: "/images/assets/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+    shortcut: ["/images/assets/favicon.ico"],
+  },
 };
 
 export default function RootLayout({ children }) {
