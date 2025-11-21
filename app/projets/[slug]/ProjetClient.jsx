@@ -1,7 +1,7 @@
 // app/projets/[slug]/ProjetClient.jsx
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
@@ -24,7 +24,19 @@ import MapEmbed from "../../../components/MapEmbed";
 import LiveTracking from "../../../components/LiveTracking";
 import PostLiveTracking from "../../../components/PostLiveTracking";
 
-export default function ProjetClient({ project, initialContent }) {
+/**
+ * Wrapper avec Suspense pour satisfaire Next.js
+ * (useSearchParams est utilisé dans ProjetClientInner).
+ */
+export default function ProjetClient(props) {
+  return (
+    <Suspense fallback={null}>
+      <ProjetClientInner {...props} />
+    </Suspense>
+  );
+}
+
+function ProjetClientInner({ project, initialContent }) {
   const searchParams = useSearchParams();
   const highlight = searchParams.get("highlight") || "";
   const content = initialContent || "";

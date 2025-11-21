@@ -1,7 +1,13 @@
 // app/recherche/SearchClient.jsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  Suspense,
+} from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -49,7 +55,19 @@ function highlight(text, q) {
   );
 }
 
-export default function SearchClient({ articles, projects }) {
+/**
+ * Wrapper avec Suspense pour satisfaire Next 16 :
+ * le hook useSearchParams est utilisé dans SearchClientInner.
+ */
+export default function SearchClient(props) {
+  return (
+    <Suspense fallback={null}>
+      <SearchClientInner {...props} />
+    </Suspense>
+  );
+}
+
+function SearchClientInner({ articles, projects }) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -80,7 +98,8 @@ export default function SearchClient({ articles, projects }) {
           if (mdCache[key]) return [key, mdCache[key]];
 
           try {
-            const folder = item.type === "article" ? "articles" : "projets";
+            const folder =
+              item.type === "article" ? "articles" : "projets";
             const res = await fetch(`/${folder}/${item.slug}.md`);
             if (!res.ok) return [key, ""];
             const raw = await res.text();
@@ -111,7 +130,7 @@ export default function SearchClient({ articles, projects }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, articles, projects]);
 
-  // Résultats combinés (même logique que ton ancien Search.jsx)
+  // Résultats combinés
   const results = useMemo(() => {
     const query = normalize(q);
     if (!query) return { arts: [], pros: [] };
