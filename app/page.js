@@ -1,5 +1,6 @@
 // app/page.jsx
 import Link from "next/link";
+import Script from "next/script"; // ⬅️ Ajout de l'import nécessaire
 import { SatelliteDish } from "lucide-react";
 
 export const metadata = {
@@ -25,8 +26,45 @@ export const metadata = {
 };
 
 export default function HomePage() {
+  // 👇 Définition des données structurées pour influencer les Sitelinks
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "The Locomotion Lab",
+    "url": "https://thelocomotionlab.com",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://thelocomotionlab.com/recherche?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    },
+    "hasPart": [
+      {
+        "@type": "SiteNavigationElement",
+        "name": "Projets",
+        "url": "https://thelocomotionlab.com/projets"
+      },
+      {
+        "@type": "SiteNavigationElement",
+        "name": "Carnets",
+        "url": "https://thelocomotionlab.com/articles"
+      },
+      {
+        "@type": "SiteNavigationElement",
+        "name": "Le Labo",
+        "url": "https://thelocomotionlab.com/labo"
+      }
+    ]
+  };
+
   return (
     <div>
+      {/* 👇 Injection du JSON-LD invisible */}
+      <Script
+        id="json-ld-sitelinks"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* Hero identique à l’ancien : section dans le container, image en “carte” */}
       <section className="relative min-h-[70vh] grid place-items-center text-center rounded-2xl overflow-hidden mt-6">
         {/* ⚠️ mets hero_sunset_run.webp dans /public/hero_sunset_run.webp */}
@@ -85,7 +123,7 @@ export default function HomePage() {
           </div>
 
           {/* Lien Live Tracking */}
-{/*          <div className="pt-6">
+{/* <div className="pt-6">
             <a
               href="https://www.thelocomotionlab.com/projets/traversee-reunion#la-travers%C3%A9e-de-la-r%C3%A9union-en-direct"
               className="inline-flex flex-col sm:flex-row items-center justify-center gap-2 text-brand-deep font-medium hover:text-brand-accent transition-colors duration-200 group text-center"

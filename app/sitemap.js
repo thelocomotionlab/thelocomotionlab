@@ -32,22 +32,23 @@ function isPublished(filePath) {
 }
 
 export default async function sitemap() {
-  // 1. Les routes statiques de base
+  // 1. Les routes statiques avec priorités personnalisées
   const routes = [
-    "",
-    "/about",
-    "/labo",
-    "/projets",
-    "/articles",
-    "/contact",
-    "/soutenir",
-    "/mentions-legales",
-    "/recherche",
+    { url: "", priority: 1.0, freq: "monthly" },
+    { url: "/projets", priority: 0.9, freq: "weekly" },
+    { url: "/articles", priority: 0.9, freq: "weekly" },
+    { url: "/labo", priority: 0.8, freq: "monthly" },
+    { url: "/about", priority: 0.7, freq: "monthly" },
+    { url: "/soutenir", priority: 0.6, freq: "monthly" },
+    { url: "/contact", priority: 0.5, freq: "yearly" },
+    { url: "/recherche", priority: 0.3, freq: "yearly" },
+    // 👇 PRIORITÉ BASSE POUR LES MENTIONS LÉGALES
+    { url: "/mentions-legales", priority: 0.1, freq: "yearly" },
   ].map((route) => ({
-    url: `${URL}${route}`,
+    url: `${URL}${route.url}`,
     lastModified: new Date().toISOString(),
-    changeFrequency: "monthly",
-    priority: route === "" ? 1 : 0.8,
+    changeFrequency: route.freq,
+    priority: route.priority,
   }));
 
   // 2. PROJETS (filtrés par published: false)
@@ -58,14 +59,14 @@ export default async function sitemap() {
       projects = fs
         .readdirSync(projectsDir)
         .filter((file) => file.endsWith(".md"))
-        .filter((file) => isPublished(path.join(projectsDir, file))) // 👈 Le filtre magique
+        .filter((file) => isPublished(path.join(projectsDir, file))) 
         .map((file) => {
           const slug = file.replace(".md", "");
           return {
             url: `${URL}/projets/${slug}`,
             lastModified: new Date().toISOString(),
             changeFrequency: "weekly",
-            priority: 0.7,
+            priority: 0.9, // Priorité haute pour le contenu
           };
         });
     }
@@ -81,14 +82,14 @@ export default async function sitemap() {
       articles = fs
         .readdirSync(articlesDir)
         .filter((file) => file.endsWith(".md"))
-        .filter((file) => isPublished(path.join(articlesDir, file))) // 👈 Le filtre magique
+        .filter((file) => isPublished(path.join(articlesDir, file)))
         .map((file) => {
           const slug = file.replace(".md", "");
           return {
             url: `${URL}/articles/${slug}`,
             lastModified: new Date().toISOString(),
             changeFrequency: "weekly",
-            priority: 0.7,
+            priority: 0.9, // Priorité haute pour le contenu
           };
         });
     }
