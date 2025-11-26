@@ -235,7 +235,7 @@ a.data-footnote-backref,
 .prose h2 {
   font-size: 1.6rem;
   line-height: 1.3;
-  margin-top: 3rem;      /* espace avant une nouvelle section */
+  margin-top: 1.5rem;      /* espace avant une nouvelle section */
   margin-bottom: 0.4rem; /* espace entre titre et texte suivant */
 }
 
@@ -325,7 +325,7 @@ a.data-footnote-backref,
 .prose img,
 .prose video,
 .prose iframe {
-  margin-top: 1.8rem !important;   /* texte → image */
+  margin-top: 1.rem !important;   /* texte → image */
   margin-bottom: 0.8rem !important; /* image → barre de légende */
 }
 

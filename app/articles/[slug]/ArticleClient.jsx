@@ -6,11 +6,16 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkFootnotes from "remark-footnotes";
+import remarkDirective from "remark-directive";
+import remarkMath from "remark-math";
+import remarkCitations from "../../../markdown/remarkCitations";
+import remarkSplit from "../../../markdown/remarkSplit";
+
+
 import rehypeSlug from "rehype-slug";
 import rehypeRaw from "rehype-raw";
 
 import bibliography from "../../../content/bibliography.json";
-import remarkCitations from "../../../markdown/remarkCitations";
 import Tooltip from "../../../components/Tooltip";
 
 export default function ArticleClient({ article, initialContent }) {
@@ -105,6 +110,9 @@ export default function ArticleClient({ article, initialContent }) {
               remarkGfm,
               [remarkFootnotes, { inlineNotes: true }],
               remarkCitations,
+              remarkDirective,
+              remarkSplit,
+              remarkMath,
             ]}
             rehypePlugins={[rehypeSlug, rehypeRaw]}
             components={{
