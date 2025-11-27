@@ -263,7 +263,7 @@ a.data-footnote-backref,
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.5rem;
-  margin-top: 2rem;
+  margin-top: 0;
   margin-bottom: 0 !important;
 }
 
@@ -325,14 +325,14 @@ a.data-footnote-backref,
 .prose img,
 .prose video,
 .prose iframe {
-  margin-top: 1.8rem !important;   /* texte → image */
-  margin-bottom: 0.8rem !important; /* image → barre de légende */
+  margin-top: 0rem !important;   /* texte → image */
+  margin-bottom: 0rem !important; /* image → barre de légende */
 }
 
 /* Bloc carte GPX (<div class="map-block"> depuis ReactMarkdown) */
 .prose .map-block {
-  margin-top: 1.2rem !important;
-  margin-bottom: 0.8rem !important;
+  margin-top: 0rem !important;
+  margin-bottom: 0rem !important;
 }
 
 /* ===========================
@@ -367,7 +367,7 @@ a.data-footnote-backref,
 .lt-figure ~ p > em::before {
   content: "";
   display: block;
-  width: 3.5rem;
+  width: 4.5rem;
   height: 1.5px;
   background-color: rgba(239, 177, 89, 0.65);
   margin: 0.35rem auto 0.4rem;
