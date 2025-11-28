@@ -283,32 +283,31 @@ a.data-footnote-backref,
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
-
-/* Harmonisation typographique dans les colonnes du split
-   → pas de marge verticale par défaut sur les éléments de texte */
-.md-split-col :is(p, ul, ol, h1, h2, h3, h4, h5, h6, blockquote) {
+/* Harmonisation typographique dans les colonnes du split */
+/*.md-split-col :is(p, ul, ol, h1, h2, h3, h4, h5, h6, blockquote) {
+  margin-top: revert;
+  margin-bottom: revert;
+}
+*/
+/* Dans un split, aucun <p> ne doit ajouter de marge
+   (ni ceux avec texte, ni ceux avec image) */
+.md-split-col p {
   margin-top: 0;
   margin-bottom: 0;
 }
 
 
-/* Harmonisation typographique dans les colonnes du split */
-/*.md-split-col :is(p, ul, ol, h1, h2, h3, h4, h5, h6, blockquote) {
-  margin-top: revert;
-  margin-bottom: revert;
-}*/
-
 /* Dans un split, les <p> qui ne contiennent QUE des médias
    ne doivent pas avoir la marge par défaut, sinon ils se décallent
    verticalement par rapport aux .map-block */
-/*.md-split-col p:has(> img),
+.md-split-col p:has(> img),
 .md-split-col p:has(> video),
 .md-split-col p:has(> iframe) {
   margin-top: 0;
   margin-bottom: 0;
 }
 
-*/
+
 /* Deux images côte à côte dans la colonne gauche */
 .md-split-col.left p:has(img):has(+ p img) {
   display: flex;
@@ -550,12 +549,6 @@ html {
   margin-bottom: 1.25rem;
 }
 
-/* Dans les blocs :::split, on désactive les marges des <p>
-   pour aligner correctement texte / image / map */
-.article-body .md-split-col p {
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-}
 
 
 /* ===========================
