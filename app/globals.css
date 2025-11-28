@@ -270,9 +270,22 @@ a.data-footnote-backref,
 @media (min-width: 768px) {
   .md-split {
     grid-template-columns: 1fr 1fr;
-    align-items: center;
+    align-items: center; /* centrage vertical basé sur TEXTE vs IMAGE (la légende sera hors flux) */
+  }
+
+  /* Légende interne positionnée en absolu sous la colonne qui contient l'image */
+  .md-split.md-split--with-caption
+    .md-split-col
+    p:last-child:has(> em):not(:has(> img)) {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: calc(100% + 0.8rem); /* 0.8rem sous le bas de la colonne image */
+    width: 100%;
+    max-width: 90%;
   }
 }
+
 
 .md-split-col img,
 .md-split-col video,
@@ -282,6 +295,12 @@ a.data-footnote-backref,
   border-radius: 0;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
+
+/* Chaque colonne sert de repère pour positionner une éventuelle légende */
+.md-split-col {
+  position: relative;
+}
+
 
 /* Harmonisation typographique dans les colonnes du split */
 /*.md-split-col :is(p, ul, ol, h1, h2, h3, h4, h5, h6, blockquote) {
@@ -329,6 +348,21 @@ a.data-footnote-backref,
   margin-top: 0 !important;
   margin-bottom: 0 !important;
 }
+
+/* On laisse un peu de place sous les splits qui ont une légende */
+.md-split.md-split--with-caption {
+  padding-bottom: 2.8rem; /* ajuste légèrement si tu veux plus/moins d'air global */
+}
+
+/* Le paragraphe de légende (dernier <p> d'une colonne de split avec légende)
+   ne rajoute pas de marge verticale par lui-même */
+.md-split.md-split--with-caption
+  .md-split-col
+  p:last-child:has(> em):not(:has(> img)) {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
 
 /* Après un split, on neutralise la marge du <p> contenant la légende */
 .md-split + p {
@@ -452,6 +486,34 @@ a.data-footnote-backref,
   border-radius: 2px;
 }
 
+/* Style de la légende interne d'un split (texte) */
+.md-split.md-split--with-caption
+  .md-split-col
+  p:last-child:has(> em):not(:has(> img)) > em {
+  display: block;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 400;
+  font-style: normal !important;
+  margin: 0rem auto 0rem; /* même espace image/trait que les autres légendes */
+  line-height: 1.4;
+  color: #6b7280;
+  font-family: "Inter", sans-serif;
+  max-width: 90%;
+}
+
+/* Trait doré au-dessus de cette légende interne */
+.md-split.md-split--with-caption
+  .md-split-col
+  p:last-child:has(> em):not(:has(> img)) > em::before {
+  content: "";
+  display: block;
+  width: 4.5rem;
+  height: 1.5px;
+  background-color: rgba(239, 177, 89, 0.65);
+  margin: 0rem auto 0.4rem;
+  border-radius: 2px;
+}
 
 
 /* Supprimer la marge du paragraphe qui contient la légende
@@ -549,6 +611,10 @@ html {
   margin-bottom: 1.25rem;
 }
 
+.article-body .md-split-col p {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
 
 
 /* ===========================
