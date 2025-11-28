@@ -173,7 +173,7 @@ export default function MapEmbed({
   // --- Rendu principal
   return (
     <div
-      className="relative w-full overflow-hidden shadow-md border border-gray-200"
+      className="relative w-full overflow-hidden"
       style={{
         height: dynamicHeight,
         transition: "height 0.3s ease",

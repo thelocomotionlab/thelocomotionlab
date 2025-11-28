@@ -10,7 +10,7 @@ import remarkDirective from "remark-directive";
 import remarkMath from "remark-math";
 import remarkCitations from "../../../markdown/remarkCitations";
 import remarkSplit from "../../../markdown/remarkSplit";
-
+import remarkImageOptions from "../../../markdown/remarkImageOptions";
 
 import rehypeSlug from "rehype-slug";
 import rehypeRaw from "rehype-raw";
@@ -108,6 +108,7 @@ export default function ArticleClient({ article, initialContent }) {
           <ReactMarkdown
             remarkPlugins={[
               remarkGfm,
+              remarkImageOptions,
               [remarkFootnotes, { inlineNotes: true }],
               remarkCitations,
               remarkDirective,

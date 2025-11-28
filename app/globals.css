@@ -283,12 +283,32 @@ a.data-footnote-backref,
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
-/* Harmonisation typographique dans les colonnes du split */
+
+/* Harmonisation typographique dans les colonnes du split
+   → pas de marge verticale par défaut sur les éléments de texte */
 .md-split-col :is(p, ul, ol, h1, h2, h3, h4, h5, h6, blockquote) {
-  margin-top: revert;
-  margin-bottom: revert;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
+
+/* Harmonisation typographique dans les colonnes du split */
+/*.md-split-col :is(p, ul, ol, h1, h2, h3, h4, h5, h6, blockquote) {
+  margin-top: revert;
+  margin-bottom: revert;
+}*/
+
+/* Dans un split, les <p> qui ne contiennent QUE des médias
+   ne doivent pas avoir la marge par défaut, sinon ils se décallent
+   verticalement par rapport aux .map-block */
+/*.md-split-col p:has(> img),
+.md-split-col p:has(> video),
+.md-split-col p:has(> iframe) {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+*/
 /* Deux images côte à côte dans la colonne gauche */
 .md-split-col.left p:has(img):has(+ p img) {
   display: flex;
@@ -318,21 +338,80 @@ a.data-footnote-backref,
 }
 
 /* ===========================
-   Harmonisation spacing images / médias
+   Harmonisation images / médias (markdown)
    =========================== */
 
-/* Espace AVANT et APRÈS toutes les images/vidéos/iframes markdown */
+/* Base : toutes les images / vidéos / iframes dans le markdown */
 .prose img,
 .prose video,
 .prose iframe {
-  margin-top: 0rem !important;   /* texte → image */
-  margin-bottom: 0rem !important; /* image → barre de légende */
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 0 !important;     /* l’espace est géré par le paragraphe + la légende */
+  margin-bottom: 0 !important;
 }
 
 /* Bloc carte GPX (<div class="map-block"> depuis ReactMarkdown) */
 .prose .map-block {
-  margin-top: 0rem !important;
-  margin-bottom: 0rem !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Variantes de TAILLE appliquées uniquement à partir du breakpoint md
+   (sur mobile : 100% de largeur pour tout le monde) */
+@media (min-width: 768px) {
+  /* petite image (schémas, détails) */
+  .prose img.md-img-size-sm {
+    max-width: 280px;
+  }
+
+  /* taille standard d’article */
+  .prose img.md-img-size-md {
+    max-width: 480px;
+  }
+
+  /* grande image (photo importante) */
+  .prose img.md-img-size-lg {
+    max-width: 720px;
+  }
+
+  /* très grande image, quasi pleine largeur */
+  .prose img.md-img-size-xl {
+    max-width: 960px;
+  }
+
+  /* moitié de la largeur du texte */
+  .prose img.md-img-size-half {
+    max-width: 50%;
+  }
+
+  /* pleine largeur explicite (au cas où) */
+  .prose img.md-img-size-full {
+    max-width: 100%;
+  }
+}
+
+/* Alignements horizontaux (facultatifs) */
+.prose img.md-img-align-left {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.prose img.md-img-align-center {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.prose img.md-img-align-right {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+/* Cas particulier : on NE veut PAS que les classes de taille
+   perturbent les blocs :::split */
+.md-split img {
+  max-width: 100% !important;
 }
 
 /* ===========================
@@ -352,7 +431,7 @@ a.data-footnote-backref,
   font-size: 0.85rem;
   font-weight: 400;
   font-style: normal !important; /* enlève l’italique markdown uniquement sur la légende */
-  margin: 0.6rem auto 1.4rem;
+  margin: 0.8rem auto 1.4rem; /* espace image/barre */
   line-height: 1.4;
   color: #6b7280;
   font-family: "Inter", sans-serif;
@@ -373,6 +452,8 @@ a.data-footnote-backref,
   margin: 0.35rem auto 0.4rem;
   border-radius: 2px;
 }
+
+
 
 /* Supprimer la marge du paragraphe qui contient la légende
    (split, GPX via .map-block, live/replay) */
@@ -469,6 +550,14 @@ html {
   margin-bottom: 1.25rem;
 }
 
+/* Dans les blocs :::split, on désactive les marges des <p>
+   pour aligner correctement texte / image / map */
+.article-body .md-split-col p {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+
 /* ===========================
    Animation fade-in (ShareButton, etc.)
    =========================== */
@@ -488,3 +577,4 @@ html {
   opacity: 1; /* s'assure que l'élément devient visible */
   animation: fade-in 0.35s ease-out forwards;
 }
+
