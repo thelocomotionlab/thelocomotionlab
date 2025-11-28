@@ -91,7 +91,7 @@ Matos :
 
 
 
-![Taillefer lyophilisé](/images/projets/traversee-reunion/taillefer_lyophilisé.webp)
+![Taillefer lyophilisé](/images/projets/traversee-reunion/taillefer_lyophilise.webp)
 *Premier test de plat lyophilisé (purée steack haché la base) : muy rico !!*
 
 
