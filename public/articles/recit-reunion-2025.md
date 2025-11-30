@@ -5,7 +5,7 @@ tags: ["ultra-off", "autonomie"]
 cover: "/images/articles/recit-reunion-2025/cover_reunion_2025.webp"
 description: "Récit et bilan de la tentative de traversée de la Réunion."
 type: "recit"
-published: true
+published: false
 ---
 
 Cette aventure ambitieuse était une occasion d'éprouver mes capacités d'adaptation en autonomie complète sur très longue distance et en milieu tropical. Après quasiment deux mois de préparations (documentés [ici](https://thelocomotionlab.com/projets/traversee-reunion)), et avec quelques semaines de recul maintenant, elle a surtout été l'occasion d'observer ma manière d'interagir avec un objectif. Explorative, intense, parfois dévorante, mais toujours nourissante. Le projet n'est finalement que partiellement abouti, certes, mais de nombreux enseignements en découlent, et cette aventure incroyable mérite tout de même son récit. Belle lecture.
