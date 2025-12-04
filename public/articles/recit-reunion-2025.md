@@ -5,7 +5,7 @@ tags: ["ultra-off", "autonomie"]
 cover: "/images/articles/recit-reunion-2025/cover_reunion_2025.webp"
 description: "Récit et bilan de la tentative de traversée de la Réunion."
 type: "recit"
-published: false
+published: true
 ---
 
 Cette aventure ambitieuse était une occasion d'éprouver mes capacités d'adaptation en autonomie complète sur très longue distance et en milieu tropical. Après quasiment deux mois de préparations (documentés [ici](https://thelocomotionlab.com/projets/traversee-reunion)), et avec quelques semaines de recul maintenant, elle a surtout été l'occasion d'observer ma manière d'interagir avec un objectif. Explorative, intense, parfois dévorante, mais toujours nourissante. Le projet n'est finalement que partiellement abouti, certes, mais de nombreux enseignements en découlent, et cette aventure incroyable mérite tout de même son récit. Belle lecture.
@@ -76,9 +76,14 @@ Le lendemain, je me réveille groggy. Forcément fatigué, mais surtout frustré
 Je m'élance un peu moins de 45h plus tard, le 14 novembre à 4h45. La gestion de l'eau est cruciale, car il n'y a, d'après mes informations, quasiment pas de point de ravitaillement sur le parcours. Je pars avec 4.5L et les restes de la traversée de l'île avortée. La montée est rude et directe, mais je commence à être habitué et mieux que ça, je kiffe évoluer dans cette végétation tropicale. Le parcours est très bourrin. On monte des pentes ignobles, avant un léger replat d'une quinzaine de kilomètres, puis on descend dans la caldera du volcan, puis on monte au cratère, et demi-tour jusqu'à la casba. Simple, basique.
 
 ![Forêt luxuriante {size=md align=center}](/images/articles/recit-reunion-2025/foret_luxuriante.webp)
-
 *Sourire de facade mais torpeur intérieure au col du Taïbit.*
 
 Quand j'arrive au relai du pas de Bellecombe en haut de la caldera, je commence à m'inquiéter des réserves de flotte. J'ai encore 2.5L, mais il me reste 37 km à parcourir et il fait diablement chaud à cette heure méridionale. Les petites bouteilles de 50 cL sont affichées à 4€, mais tant pis, j'en prends deux. Le gars oublie de m'en compter une, ça me fait kiffer, j'engloutis mon plat lyophilisé, m'allonge 5 min en pleine cagne, puis go explorer cette caldera. La plupart des gens ici sont venus en voiture, et beaucoup d'entre eux se contentent de regarder la vue, d'aller chercher une collation au relai, puis de repartir. Je me sens un peu étranger à ce type de congénère. J'ai la confirmation que cette façon de consommer le voyage n'est plus celle qui m'anime. Ce que j'aime, c'est en voir moins, mais le faire par mes propres moyens, en bus, en vélo, en courant. La sensation d'accomplissement ressentie lorsqu'on arrive à un point d'intérêt n'en est que décuplée.
 
 ![Hauteur caldera {size=md align=center}](/images/articles/recit-reunion-2025/hauteur_caldera.webp)
+
+La caldera est une sorte de sauna en plein air. Je me dois d'économiser la moindre goutte d'eau, la route avant de rentrer étant encore longue. Je m'autorise à boire une demi-bouche d'eau toutes les 15-20 min. En faisant cela, je parviens à maintenir un niveau d'hydratation suffisant, et les réserves diminuent beaucoup plus lentement. J'arrive au cratère autour de 13h. Grosse satisfaction de ne pas repartir de la Réunion sans avoir vu cette merveille de dame Nature. 
+
+7h de plus furent nécessaires pour faire le chemin en sens inverse. Les descentes interminables, les glissades dans les scories, et la chaleur tropicales en forêt, me rendant encore dégoulinant même la nuit, ont eu raison de mes émotions. J'ai en effet atteint un état où, après toutes ces difficultés et ces efforts à endurer durant la semaine, mon cerveau a lâché l'affaire. Pas de tristesse, pas de joie, plus rien, juste le fait d'avancer coûte que coûte. Idem une fois arrivé au logement : ni soulagement ni fièreté. En tout cas, l'objectif était accompli, la page Réunion pouvait être cloturée proprement, avec une semaine à 147 km et 12000 m D+, mon record. Place au repos désormais !
+
+## Le bilan
