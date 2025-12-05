@@ -22,7 +22,7 @@ Arrivé à la gare, je temporise. Je prends un café, puis deux, et enfin un der
 
 ---
 
-![Forêt humide GR R2](/images/articles/recit-reunion-2025/foret_humide.webp)
+![Forêt humide 2 GR R2](/images/articles/recit-reunion-2025/foret_humide_2.webp)
 
 :::
 
@@ -30,19 +30,21 @@ Arrivé à la gare, je temporise. Je prends un café, puis deux, et enfin un der
 
 Les 2h qui suivent paraissent un comte de fées. J'évolue sur des chemins de crêtes avec du brouillard panoramique qui m'empêche de voir le vide d'un côté comme de l'autre. Tant pis pour les paysages, cette météo me procure la sensation d'une symbiose avec l'île. Comme si j'évoluais dans un cocon, et que rien ne pouvait m'arriver. À dos d'Ane, le robinet de l'église que j'attendais avec impatience est visible mais rendu inaccessible par un portail fermé. Nouveau coup dur. D'un autre côté, je dois trouver une solution, et les 6h d'effort déjà réalisés me poussent de plus en plus vers le versant animal de ma personnalité. Je décide de pénétrer dans l'église, d'ouvrir une fenêtre, et de passer à travers pour accéder au jardin et ainsi au sacro-saint robinet. Que le seigneur me pardonne d'avoir ainsi enfreint l'interdiction du lieu imposé par ses disciples, mais aux grands maux les grands remèdes. Je peux ainsi enfin me restaurer avec un plat lyophilisé, et refaire les niveaux de flotte, avec en prime un petit goût de tuyau d'arrosage qui ne gâche rien. 
 
-La suite me conduit jusqu'au coeur de Mafate, Mike Horn dans les oreilles. Quand je croise la rivière des Galets, je tente de me réapprovisionner en eau, et ma poche de filtre Sawyer se perce dès sa première utilisation (n'achetez pas cette camelote). Nouveau coup dur. Je parviens péniblement à filtrer 1.5L d'eau en 30 min et me dis que sans capacité de filtrage, la suite de l'aventure va prendre se pimenter. Peu importe, il faut avancer. Les kilomètres défilent de plus en plus lentement, les terrains étant très accidentés et pourvus de centaines de marches excédans parfois les 40 cm de haut. La nuit commence à poindre. Nouvelle confrontation à l'iconfort. Moi qui, comme beaucoup de mes congénères, ai peur d'évoluer seul de nuit, je vais être servi. Me voilà en effet sur le point de passer toute une nuit en solitaire dans une forêt tropical à  l'autre bout du monde, avec peu de chances de croiser âme qui vive. La peur commence à me tétaniser, et je ressens le besoin d'utiliser l'appel à un ami. Ma famille et mes proches me reboostent, me voilà prêt à passer à l'acte II.
-
 :::split
 
 ![Forêt cocon](/images/articles/recit-reunion-2025/foret_cocon.webp)
 
 ---
 
-![Mafate avant la nuit](/images/articles/recit-reunion-2025/mafate_avant_nuit.webp)
+![Mafate avant la nuit](/images/articles/recit-reunion-2025/foret_humide.webp)
 
 :::
+*Joie d'évluer pendant plus de 6h dans ce cocon humide.*
 
-*Joie d'évoluer dans un cocon (gauche) et, 6h après, appréhension de la nuit Mafataise à venir (droite).*
+La suite me conduit jusqu'au coeur de Mafate, Mike Horn dans les oreilles. Quand je croise la rivière des Galets, je tente de me réapprovisionner en eau, et ma poche de filtre Sawyer se perce dès sa première utilisation (n'achetez pas cette camelote). Nouveau coup dur. Je parviens péniblement à filtrer 1.5L d'eau en 30 min et me dis que sans capacité de filtrage, la suite de l'aventure va prendre se pimenter. Peu importe, il faut avancer. Les kilomètres défilent de plus en plus lentement, les terrains étant très accidentés et pourvus de centaines de marches excédans parfois les 40 cm de haut. La nuit commence à poindre. Nouvelle confrontation à l'iconfort. Moi qui, comme beaucoup de mes congénères, ai peur d'évoluer seul de nuit, je vais être servi. Me voilà en effet sur le point de passer toute une nuit en solitaire dans une forêt tropical à  l'autre bout du monde, avec peu de chances de croiser âme qui vive. La peur commence à me tétaniser, et je ressens le besoin d'utiliser l'appel à un ami. Ma famille et mes proches me reboostent, me voilà prêt à passer à l'acte II.
+
+![Mafate avant la nuit {size=md align=center}](/images/articles/recit-reunion-2025/nuit_mafataise.webp)
+*Appréhension de la nuit Mafataise à venir.*
 
 
 ## Second acte : solitude nocturne enchantée
@@ -75,15 +77,32 @@ Le lendemain, je me réveille groggy. Forcément fatigué, mais surtout frustré
 
 Je m'élance un peu moins de 45h plus tard, le 14 novembre à 4h45. La gestion de l'eau est cruciale, car il n'y a, d'après mes informations, quasiment pas de point de ravitaillement sur le parcours. Je pars avec 4.5L et les restes de la traversée de l'île avortée. La montée est rude et directe, mais je commence à être habitué et mieux que ça, je kiffe évoluer dans cette végétation tropicale. Le parcours est très bourrin. On monte des pentes ignobles, avant un léger replat d'une quinzaine de kilomètres, puis on descend dans la caldera du volcan, puis on monte au cratère, et demi-tour jusqu'à la casba. Simple, basique.
 
-![Forêt luxuriante {size=md align=center}](/images/articles/recit-reunion-2025/foret_luxuriante.webp)
-*Sourire de facade mais torpeur intérieure au col du Taïbit.*
+
+![Forêt luxuriante {width=580px align=center}](/images/articles/recit-reunion-2025/foret_luxuriante.webp)
+*Forêt luxuriante du début du parcours.*
 
 Quand j'arrive au relai du pas de Bellecombe en haut de la caldera, je commence à m'inquiéter des réserves de flotte. J'ai encore 2.5L, mais il me reste 37 km à parcourir et il fait diablement chaud à cette heure méridionale. Les petites bouteilles de 50 cL sont affichées à 4€, mais tant pis, j'en prends deux. Le gars oublie de m'en compter une, ça me fait kiffer, j'engloutis mon plat lyophilisé, m'allonge 5 min en pleine cagne, puis go explorer cette caldera. La plupart des gens ici sont venus en voiture, et beaucoup d'entre eux se contentent de regarder la vue, d'aller chercher une collation au relai, puis de repartir. Je me sens un peu étranger à ce type de congénère. J'ai la confirmation que cette façon de consommer le voyage n'est plus celle qui m'anime. Ce que j'aime, c'est en voir moins, mais le faire par mes propres moyens, en bus, en vélo, en courant. La sensation d'accomplissement ressentie lorsqu'on arrive à un point d'intérêt n'en est que décuplée.
 
-![Hauteur caldera {size=md align=center}](/images/articles/recit-reunion-2025/hauteur_caldera.webp)
+![Plateau Caldera {width=580px align=center}](/images/articles/recit-reunion-2025/plateau_caldera.webp)
+*Plateau surplombant la Caldera.*
 
 La caldera est une sorte de sauna en plein air. Je me dois d'économiser la moindre goutte d'eau, la route avant de rentrer étant encore longue. Je m'autorise à boire une demi-bouche d'eau toutes les 15-20 min. En faisant cela, je parviens à maintenir un niveau d'hydratation suffisant, et les réserves diminuent beaucoup plus lentement. J'arrive au cratère autour de 13h. Grosse satisfaction de ne pas repartir de la Réunion sans avoir vu cette merveille de dame Nature. 
 
+![Piton de la Fournaise](/images/articles/recit-reunion-2025/volcan_wide.webp)
+:::split
+
+![Vue du cratère en hauteur](/images/articles/recit-reunion-2025/vue_cratere_hauteur.webp)
+
+---
+
+![Vue du cratère](/images/articles/recit-reunion-2025/vue_cratere.webp)
+
+:::
+*Vue du volcan depuis les hauteurs de la Caldera, du relai du pas de Bellecombe, et depuis le bord du cratère.*
+
 7h de plus furent nécessaires pour faire le chemin en sens inverse. Les descentes interminables, les glissades dans les scories, et la chaleur tropicales en forêt, me rendant encore dégoulinant même la nuit, ont eu raison de mes émotions. J'ai en effet atteint un état où, après toutes ces difficultés et ces efforts à endurer durant la semaine, mon cerveau a lâché l'affaire. Pas de tristesse, pas de joie, plus rien, juste le fait d'avancer coûte que coûte. Idem une fois arrivé au logement : ni soulagement ni fièreté. En tout cas, l'objectif était accompli, la page Réunion pouvait être cloturée proprement, avec une semaine à 147 km et 12000 m D+, mon record. Place au repos désormais !
+
+![Pitons au loin {width=580px align=center}](/images/articles/recit-reunion-2025/pitons_au_loin.webp)
+*Vue des pitons sur le chemin du retour.*
 
 ## Le bilan
