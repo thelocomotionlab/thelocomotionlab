@@ -2,55 +2,63 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatRelativeDays } from "@/lib/getRecentActivity";
 
-export default function RecentActivity({ items = [] }) {
+/**
+ * FeedSection
+ * - Articles  : affiche uniquement "Publié le ..."
+ * - Projets   : affiche uniquement "Mis à jour ..."
+ * - Status projet purement informatif (hors <Link>)
+ * - CTA "Voir tout" sous le feed (même style que "Entrer dans le labo")
+ */
+
+export default function RecentActivity({
+  title,
+  Icon = null,
+  items = [],
+  ctaHref = null,
+  ctaLabel = "Voir tout",
+}) {
   if (!items?.length) return null;
 
   return (
-    <section className="py-10 md:py-12">
+    <section className="py-6 md:py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-center gap-3 mb-6">
-          <span aria-hidden="true" className="text-2xl">🧪</span>
+        {/* Title */}
+        <div className="flex items-center justify-center gap-2 mb-4">
+          {Icon ? (
+            <Icon size={22} aria-hidden="true" className="text-brand-primary" />
+          ) : null}
+
           <h2 className="text-2xl sm:text-3xl font-bold text-brand-primary text-center">
-            Activité récente du Labo
+            {title}
           </h2>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {items.map((item) => {
-            const updatedLabel = item.updatedAt
-              ? `Mis à jour ${formatRelativeDays(item.updatedAt)}`
-              : "";
-            const dateLabel = item.date
-              ? `Publié le ${item.date.toLocaleDateString("fr-FR")}`
-              : "";
-
-            return (
+        {/* Cards */}
+        <div className="flex flex-wrap justify-center gap-6">
+          {items.map((item) => (
+            <div key={`${item.type}-${item.slug}`} className="relative w-full max-w-sm">
+              {/* Card link */}
               <Link
-                key={`${item.type}-${item.slug}`}
                 href={item.href}
                 className="group block bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-lg transition-shadow"
               >
+                {/* Cover */}
                 {item.cover ? (
-                  <div className="relative w-full h-48">
+                  <div className="relative w-full h-44">
                     <Image
                       src={item.cover}
                       alt={item.title}
                       fill
                       className="object-cover"
-                      sizes="(min-width: 768px) 33vw, 100vw"
+                      sizes="(min-width: 768px) 384px, 100vw"
                     />
                   </div>
                 ) : (
-                  <div className="w-full h-48 bg-brand-bg" aria-hidden="true" />
+                  <div className="w-full h-44 bg-brand-bg" aria-hidden="true" />
                 )}
 
+                {/* Content */}
                 <div className="p-5">
-                  <div className="flex items-center justify-between gap-3 mb-2">
-                    <span className="text-xxs uppercase tracking-wide px-2 py-1 rounded-full bg-brand-bg text-brand-deep font-semibold">
-                      {item.type}
-                    </span>
-                  </div>
-
                   <h3 className="text-lg font-semibold text-brand-deep group-hover:underline mb-2">
                     {item.title}
                   </h3>
@@ -63,30 +71,40 @@ export default function RecentActivity({ items = [] }) {
                     <p className="text-sm text-gray-500">&nbsp;</p>
                   )}
 
-                  <div className="mt-4 space-y-1 text-xs text-gray-500">
-                    {dateLabel && <p>{dateLabel}</p>}
-                    {updatedLabel && <p>{updatedLabel}</p>}
+                  {/* Meta info (context-aware) */}
+                  <div className="mt-4 text-xs text-gray-500">
+                    {item.type === "Carnet" && item.date ? (
+                      <p>Publié le {item.date.toLocaleDateString("fr-FR")}</p>
+                    ) : null}
+
+                    {item.type === "Projet" && item.updatedAt ? (
+                      <p>Mis à jour {formatRelativeDays(item.updatedAt)}</p>
+                    ) : null}
                   </div>
                 </div>
               </Link>
-            );
-          })}
+
+              {/* Project status (purely informative, not a CTA) */}
+              {item.type === "Projet" && item.status ? (
+                <span className="absolute bottom-3 right-3 text-xxs uppercase tracking-wide text-gray-500">
+                  {item.status}
+                </span>
+              ) : null}
+            </div>
+          ))}
         </div>
 
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link
-            href="/articles"
-            className="inline-flex items-center justify-center px-5 py-2 rounded-full bg-white shadow-card hover:shadow-lg transition-shadow text-brand-deep font-semibold"
-          >
-            Explorer les carnets
-          </Link>
-          <Link
-            href="/projets"
-            className="inline-flex items-center justify-center px-5 py-2 rounded-full bg-white shadow-card hover:shadow-lg transition-shadow text-brand-deep font-semibold"
-          >
-            Voir les projets
-          </Link>
-        </div>
+        {/* CTA under feed (same style as "Entrer dans le labo") */}
+        {ctaHref ? (
+          <div className="mt-7 flex items-center justify-center">
+            <Link
+              href={ctaHref}
+              className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-brand-accent text-white font-semibold shadow-cta shadow-lg hover:opacity-90 focus-visible:outline-none"
+            >
+              {ctaLabel}
+            </Link>
+          </div>
+        ) : null}
       </div>
     </section>
   );

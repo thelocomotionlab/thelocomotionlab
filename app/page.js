@@ -4,8 +4,21 @@ import Script from "next/script";
 import Image from "next/image";
 import { cookies } from "next/headers";
 
-import RecentActivity from "@/components/RecentActivity";
-import { getRecentActivity } from "@/lib/getRecentActivity";
+import FeedSection from "@/components/RecentActivity";
+import NewsletterSignup from "@/components/NewsletterSignup";
+import { getRecentArticles, getRecentProjects } from "@/lib/getRecentActivity";
+
+import {
+  ArrowRight,
+  BookOpen,
+  FlaskConical,
+  HeartHandshake,
+  Menu,
+  X,
+  Search,
+} from "lucide-react";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "The Locomotion Lab",
@@ -31,31 +44,12 @@ export const metadata = {
 
 const HERO_COOKIE = "ll_hero_index";
 
+// ✅ TEMP: single hero only (keep structure for later)
 const HEROES = [
   {
     src: "/images/heroes/hero-01.webp",
     alt: "Trail en forêt – The Locomotion Lab",
     objectPosition: "50% 70%",
-  },
-  {
-    src: "/images/heroes/hero-02.webp",
-    alt: "Exploration en nature – The Locomotion Lab",
-    objectPosition: "50% 60%",
-  },
-  {
-    src: "/images/heroes/hero-03.webp",
-    alt: "Mouvement en terrain naturel – The Locomotion Lab",
-    objectPosition: "50% 65%",
-  },
-  {
-    src: "/images/heroes/hero-04.webp",
-    alt: "Locomotion et endurance – The Locomotion Lab",
-    objectPosition: "50% 70%",
-  },
-  {
-    src: "/images/heroes/hero-05.webp",
-    alt: "Carnet de terrain – The Locomotion Lab",
-    objectPosition: "50% 60%",
   },
 ];
 
@@ -64,8 +58,16 @@ function clampIndex(n, max) {
   return Math.min(Math.max(0, n), max);
 }
 
+function Separator() {
+  return (
+    <div className="max-w-3xl mx-auto px-4 sm:px-6">
+      <div className="h-[1px] bg-gray-300/80" />
+    </div>
+  );
+}
+
+
 export default async function HomePage() {
-  // ✅ Next 16: cookies() is async
   const cookieStore = await cookies();
   const raw = cookieStore.get(HERO_COOKIE)?.value;
   const heroIndex = clampIndex(Number(raw), HEROES.length - 1);
@@ -76,11 +78,6 @@ export default async function HomePage() {
     "@type": "WebSite",
     name: "The Locomotion Lab",
     url: "https://thelocomotionlab.com",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: "https://thelocomotionlab.com/recherche?q={search_term_string}",
-      "query-input": "required name=search_term_string",
-    },
     hasPart: [
       {
         "@type": "SiteNavigationElement",
@@ -100,7 +97,8 @@ export default async function HomePage() {
     ],
   };
 
-  const recent = getRecentActivity({ limit: 6 });
+  const recentArticles = getRecentArticles({ limit: 3 });
+  const recentProjects = getRecentProjects({ limit: 3 });
 
   return (
     <div>
@@ -111,7 +109,7 @@ export default async function HomePage() {
       />
 
       {/* HERO */}
-      <section className="relative min-h-[70vh] grid place-items-center text-center rounded-2xl overflow-hidden mt-6">
+      <section className="relative min-h-[68vh] grid place-items-center text-center rounded-2xl overflow-hidden mt-6">
         <Image
           src={hero.src}
           alt={hero.alt}
@@ -125,61 +123,92 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-black/35" aria-hidden="true" />
 
         <div className="relative z-10 px-4 sm:px-6 max-w-4xl mx-auto">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white drop-shadow-xl font-heading">
-            Explorer la locomotion humaine ancestrale.
+          <h1 className="text-4xl sm:text-5xl md:text-4xl font-extrabold text-white drop-shadow-xl font-heading">
+            Explorer la locomotion humaine primordiale
           </h1>
 
-          <p className="mt-4 text-base sm:text-lg md:text-xl text-white/90 leading-relaxed">
-            Carnets, projets et expériences autour du mouvement, de l’ultra-endurance et de l’hormèse.
+          <p className="mt-4 text-base sm:text-lg md:text-lg text-white/90 leading-relaxed">
+            Carnets, projets et expériences autour du mouvement, de l’ultra-endurance et de l’hormèse
           </p>
 
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <div className="mt-7 flex items-center justify-center">
             <Link
               href="/labo"
               className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-brand-accent text-white font-semibold shadow-cta shadow-lg hover:opacity-90 focus-visible:outline-none"
             >
               Entrer dans le labo
             </Link>
-
-            <Link
-              href="#activite"
-              className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-white/90 text-brand-deep font-semibold shadow-card hover:shadow-lg transition-shadow"
-            >
-              Voir l’activité récente
-            </Link>
           </div>
         </div>
       </section>
 
-      {/* FEED */}
-      <div id="activite">
-        <RecentActivity items={recent} />
+      {/* FEED 1: ARTICLES */}
+      <FeedSection
+        title="Les derniers articles"
+        Icon={BookOpen}
+        items={recentArticles}
+        ctaHref="/articles"
+        ctaLabel="Voir tout"
+      />
+
+      {/* Line */}
+      <div>
+        <Separator />
       </div>
 
-      {/* TEXTE (conservé mais hiérarchisé) */}
-      <section className="py-10 md:py-14">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center space-y-6">
-          <p className="text-lg md:text-xl leading-relaxed text-gray-700">
-            Le <span className="font-heading font-semibold">Locomotion Lab</span> est un espace d’exploration du mouvement
-            humain sous toutes ses formes : trail primal, déplacement dans les arbres, locomotion animale…
+      {/* FEED 2: PROJETS */}
+      <FeedSection
+        title="Derniers projets"
+        Icon={FlaskConical}
+        items={recentProjects}
+        ctaHref="/projets"
+        ctaLabel="Voir tout"
+      />
+
+      {/* Line */}
+      <div >
+        <Separator />
+      </div>
+
+      {/* LAB DESCRIPTION (no card) + CTA + newsletter just below (no separator between) */}
+      <section className="py-6 md:py-8">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+          <h3 className="text-xl md:text-2xl font-bold text-brand-primary">
+            Qu’est-ce que le Locomotion Lab ?
+          </h3>
+
+          <p className="mt-3 text-base md:text-lg leading-relaxed text-gray-700">
+            Le Locomotion Lab est un espace d'exploration de la locomotion humaine sous toutes ses formes.
+          </p>
+          <p className="mt-3 text-base md:text-lg leading-relaxed text-gray-700">
+            Son but est d'explorer, décortiquer et analyser les facteurs et pratiques favorisant fluidité, endurance et résilience dans le mouvement.
           </p>
 
-          <details className="mx-auto max-w-2xl text-left bg-white rounded-2xl shadow-card p-6">
-            <summary className="cursor-pointer font-semibold text-brand-deep">
-              Lire la démarche du Labo
-            </summary>
+          <div className="mt-4">
+            <Link
+              href="/about"
+              className="inline-flex items-center justify-center px-5 py-2 hover:underline text-brand-deep font-semibold"
+            >
 
-            <div className="mt-4 text-base leading-relaxed text-gray-700 space-y-4">
-              <p>
-                L&apos;objectif est d&apos;analyser et de décortiquer les facteurs favorisant la fluidité, l&apos;endurance et la
-                résilience dans le mouvement, pour optimiser potentiel et bien-être.
-              </p>
-              <p>
-                Rigueur scientifique et expériences personnelles fusionnent pour proposer des contenus utiles et accessibles.
-                Bienvenue dans ce laboratoire vivant.
-              </p>
-            </div>
-          </details>
+{/*className="inline-flex items-center gap-1 text-sm font-medium text-brand-deep hover:underline"*/}
+
+              En savoir plus →
+            </Link>
+          </div>
+
+          {/* ✅ No separator here */}
+          <div className="mt-4">
+            <h4 className="text-lg font-semibold text-brand-accent text-center mb-3">
+              Recevoir les prochaines explorations
+            </h4>
+
+            <NewsletterSignup
+              title={null}         // ✅ only the title above
+              description={null}    // ✅ no extra text
+              placeholder="Votre adresse e-mail"
+              buttonLabel="M'inscrire"
+            />
+          </div>
         </div>
       </section>
     </div>
