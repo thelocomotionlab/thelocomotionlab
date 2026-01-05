@@ -2,7 +2,6 @@
 import Link from "next/link";
 import Script from "next/script";
 import Image from "next/image";
-import { cookies } from "next/headers";
 
 import FeedSection from "@/components/RecentActivity";
 import NewsletterSignup from "@/components/NewsletterSignup";
@@ -18,7 +17,6 @@ import {
   Search,
 } from "lucide-react";
 
-export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "The Locomotion Lab",
@@ -42,7 +40,6 @@ export const metadata = {
   },
 };
 
-const HERO_COOKIE = "ll_hero_index";
 
 // ✅ TEMP: single hero only (keep structure for later)
 const HEROES = [
@@ -52,11 +49,6 @@ const HEROES = [
     objectPosition: "50% 70%",
   },
 ];
-
-function clampIndex(n, max) {
-  if (!Number.isFinite(n)) return 0;
-  return Math.min(Math.max(0, n), max);
-}
 
 function Separator() {
   return (
@@ -68,10 +60,7 @@ function Separator() {
 
 
 export default async function HomePage() {
-  const cookieStore = await cookies();
-  const raw = cookieStore.get(HERO_COOKIE)?.value;
-  const heroIndex = clampIndex(Number(raw), HEROES.length - 1);
-  const hero = HEROES[heroIndex] ?? HEROES[0];
+  const hero = HEROES[0];
 
   const jsonLd = {
     "@context": "https://schema.org",
