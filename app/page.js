@@ -8,7 +8,7 @@ import NewsletterSignup from "@/components/NewsletterSignup";
 import { getRecentArticles, getRecentProjects } from "@/lib/getRecentActivity";
 
 import {
-  ArrowRight,
+  Activity,
   BookOpen,
   FlaskConical,
   HeartHandshake,
@@ -133,7 +133,7 @@ export default async function HomePage() {
 
       {/* FEED 1: ARTICLES */}
       <FeedSection
-        title="Les derniers articles"
+        title="Derniers articles"
         Icon={BookOpen}
         items={recentArticles}
         ctaHref="/articles"
@@ -162,25 +162,31 @@ export default async function HomePage() {
       {/* LAB DESCRIPTION (no card) + CTA + newsletter just below (no separator between) */}
       <section className="py-6 md:py-8">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-          <h3 className="text-xl md:text-2xl font-bold text-brand-primary">
-            Qu’est-ce que le Locomotion Lab ?
+          <h3 className="flex items-center justify-center gap-2 text-xl md:text-2xl font-bold text-brand-primary">
+            <Activity
+              size={22}
+              className="shrink-0 text-brand-primary"
+              aria-hidden="true"
+            />
+            <span>Qu’est-ce que le Locomotion Lab&nbsp;?</span>
           </h3>
 
+
           <p className="mt-3 text-base md:text-lg leading-relaxed text-gray-700">
-            Le Locomotion Lab est un espace d'exploration de la locomotion humaine sous toutes ses formes.
+            Il s'agit d'un <strong>espace d'exploration</strong> de la locomotion humaine sous toutes ses formes.
           </p>
           <p className="mt-3 text-base md:text-lg leading-relaxed text-gray-700">
-            Son but est d'explorer, décortiquer et analyser les facteurs et pratiques favorisant fluidité, endurance et résilience dans le mouvement.
+            Son but est d'explorer, décortiquer et analyser les facteurs et pratiques favorisant <strong>fluidité</strong>, <strong>endurance</strong> et <strong>adaptabilité</strong> dans le mouvement.
           </p>
           <p className="mt-3 text-base md:text-lg leading-relaxed text-gray-700">
-            Rigueur scientifique et expériences personnelles fusionnent pour proposer des contenus utiles et accessibles.          
+            <strong>Rigueur scientifique</strong> et expériences personnelles fusionnent pour proposer des contenus utiles et accessibles.          
           </p>
 
 
           <div className="mt-4">
             <Link
               href="/about"
-              className="inline-flex items-center justify-center px-5 py-2 hover:underline text-brand-deep font-semibold"
+              className="inline-flex items-center md:text-lg justify-center px-5 py-2 hover:underline text-brand-deep font-semibold"
             >
 
 {/*className="inline-flex items-center gap-1 text-sm font-medium text-brand-deep hover:underline"*/}
