@@ -183,6 +183,10 @@ export default async function HomePage() {
           <p className="mt-3 text-base md:text-lg leading-relaxed text-gray-700">
             Son but est d'explorer, décortiquer et analyser les facteurs et pratiques favorisant fluidité, endurance et résilience dans le mouvement.
           </p>
+          <p className="mt-3 text-base md:text-lg leading-relaxed text-gray-700">
+            Rigueur scientifique et expériences personnelles fusionnent pour proposer des contenus utiles et accessibles.          
+          </p>
+
 
           <div className="mt-4">
             <Link
