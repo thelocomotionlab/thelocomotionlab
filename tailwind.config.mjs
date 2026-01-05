@@ -1,5 +1,6 @@
 // tailwind.config.mjs
 import typography from "@tailwindcss/typography";
+import lineClamp from "@tailwindcss/line-clamp";
 
 /** @type {import('tailwindcss').Config} */
 const config = {
@@ -46,7 +47,7 @@ const config = {
       },
     },
   },
-  plugins: [typography],
+  plugins: [typography, lineClamp],
 };
 
 export default config;

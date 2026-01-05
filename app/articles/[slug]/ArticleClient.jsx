@@ -96,7 +96,7 @@ export default function ArticleClient({ article, initialContent }) {
         <div
           className="
             prose prose-lg max-w-none
-            prose-p:text-[1.1rem]
+            prose-p:text-[1.5rem]
             font-lora text-gray-800 leading-relaxed
             text-left md:text-justify
             prose-img:rounded-lg prose-img:shadow-md prose-img:mx-auto prose-img:my-6
