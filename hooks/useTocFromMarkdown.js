@@ -16,15 +16,30 @@ function extractText(node) {
   return text.trim();
 }
 
-/** Normalise l'ID exactement comme rehype-slug */
-function slugify(text) {
-  return text
+/**
+ * Slug proche de l'algorithme GitHub (utilisé par rehype-slug via github-slugger).
+ * Important : on NE supprime PAS les accents, sinon l'ID ne matche pas celui
+ * réellement posé sur les titres (ex: "création-de-la-trace-gpx").
+ *
+ * - minuscules
+ * - retire ponctuation / symboles (mais conserve toutes les lettres Unicode)
+ * - espaces → tirets
+ */
+function baseSlug(text) {
+  return String(text)
     .toLowerCase()
-    .normalize("NFD")                // sépare accents
-    .replace(/[\u0300-\u036f]/g, "") // supprime accents
-    .replace(/[^a-z0-9\s-]/g, "")    // garde lettres/chiffres/espace/-
+    // garde lettres (Unicode), chiffres, espaces et tirets
+    .replace(/[^\p{L}\p{N}\s-]/gu, "")
     .trim()
-    .replace(/\s+/g, "-");           // espaces → tirets
+    .replace(/\s+/g, "-");
+}
+
+/** Déduplication (GitHub ajoute -1, -2, ...) */
+function makeUniqueSlug(slug, seen) {
+  const count = seen.get(slug) || 0;
+  seen.set(slug, count + 1);
+  if (count === 0) return slug;
+  return `${slug}-${count}`;
 }
 
 /**
@@ -46,6 +61,7 @@ export default function useTocFromMarkdown(markdown = "") {
       .parse(markdown);
 
     const headings = [];
+    const seen = new Map();
 
     visit(tree, "heading", (node) => {
       if (node.depth < 2 || node.depth > 3) return;
@@ -53,7 +69,7 @@ export default function useTocFromMarkdown(markdown = "") {
       const text = extractText(node);
       if (!text) return;
 
-      const id = slugify(text);
+      const id = makeUniqueSlug(baseSlug(text), seen);
 
       headings.push({
         id,
