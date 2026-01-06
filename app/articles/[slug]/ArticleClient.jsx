@@ -1,7 +1,7 @@
 // app/articles/[slug]/ArticleClient.jsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -21,7 +21,18 @@ import Tooltip from "../../../components/Tooltip";
 export default function ArticleClient({ article, initialContent }) {
   const [usedCitations, setUsedCitations] = useState([]);
 
-  // Scanner le markdown pour trouver les citations dans l'ordre de première apparition
+  // ✅ Correctif déterministe :
+  // On transforme {{cite:xxx}} en balises <citation id="xxx"></citation>
+  // avant le rendu markdown (rehypeRaw les interprète ensuite).
+  const markdown = useMemo(() => {
+    if (!initialContent) return "";
+    return initialContent.replace(
+      /\{\{cite:([\w-]+)\}\}/g,
+      '<citation id="$1"></citation>'
+    );
+  }, [initialContent]);
+
+  // Scanner le markdown ORIGINAL (avant remplacement) pour l'ordre d'apparition
   useEffect(() => {
     if (!initialContent) {
       setUsedCitations([]);
@@ -49,9 +60,11 @@ export default function ArticleClient({ article, initialContent }) {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const Citation = ({ id }) => {
-    const ref = bibliography[id];
-    if (!ref) return <sup>[?]</sup>;
+  const Citation = (props) => {
+    const id = props?.id;
+    const ref = bibliography?.[id];
+
+    if (!id || !ref) return <sup>[?]</sup>;
 
     const index = usedCitations.indexOf(id) + 1;
 
@@ -59,14 +72,17 @@ export default function ArticleClient({ article, initialContent }) {
       ref.journal || ref.publisher || ""
     }`;
 
+    // bibliography.json utilise "link" (dans ton repo), mais on tolère "url" si tu ajoutes plus tard
+    const link = ref.link || ref.url;
+
     return (
       <span style={{ display: "inline" }}>
-        <Tooltip text={formatted} link={ref.url}>
+        <Tooltip text={formatted} link={link}>
           <sup
             onClick={() => scrollToRef(id)}
             className="text-brand-accent font-semibold hover:underline cursor-pointer text-xs"
           >
-            {index > 0 ? `[${index}]` : "[?]"}
+            {index > 0 ? `${index}` : "?"}
           </sup>
         </Tooltip>
       </span>
@@ -110,7 +126,7 @@ export default function ArticleClient({ article, initialContent }) {
               remarkGfm,
               remarkImageOptions,
               [remarkFootnotes, { inlineNotes: true }],
-              remarkCitations,
+              remarkCitations, // (peut rester, mais le pré-remplacement suffit déjà)
               remarkDirective,
               remarkSplit,
               remarkMath,
@@ -138,7 +154,7 @@ export default function ArticleClient({ article, initialContent }) {
               },
             }}
           >
-            {initialContent}
+            {markdown}
           </ReactMarkdown>
         </div>
 
@@ -152,15 +168,18 @@ export default function ArticleClient({ article, initialContent }) {
               {usedCitations.map((id) => {
                 const ref = bibliography[id];
                 if (!ref) return null;
+
+                const link = ref.link || ref.url;
+
                 return (
                   <li key={id} id={`ref-${id}`} className="scroll-mt-24">
                     <span className="text-gray-700">
                       {ref.author} ({ref.year}). <em>{ref.title}</em>.{" "}
                       {ref.journal || ref.publisher || ""}
                     </span>
-                    {ref.url && (
+                    {link && (
                       <a
-                        href={ref.url}
+                        href={link}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-brand-primary hover:underline ml-1"

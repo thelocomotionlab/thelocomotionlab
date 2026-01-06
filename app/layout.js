@@ -1,5 +1,7 @@
 // app/layout.js
 import "./globals.css";
+// KaTeX (math) styles: required to hide the MathML fallback and avoid duplicated/overlapping glyphs.
+import "katex/dist/katex.min.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Ubuntu, Lora } from "next/font/google";

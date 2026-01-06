@@ -98,7 +98,8 @@ export default async function HomePage() {
       />
 
       {/* HERO */}
-      <section className="relative min-h-[68vh] grid place-items-center text-center rounded-2xl overflow-hidden mt-6">
+      <section className="relative min-h-[68vh] grid items-end justify-items-center pb-10 sm:pb-14 md:pb-16 text-center rounded-2xl overflow-hidden mt-6">
+
         <Image
           src={hero.src}
           alt={hero.alt}
