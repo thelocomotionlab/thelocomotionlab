@@ -132,6 +132,7 @@ export default async function HomePage() {
         </div>
       </section>
 
+
       {/* FEED 1: ARTICLES */}
       <FeedSection
         title="Derniers articles"

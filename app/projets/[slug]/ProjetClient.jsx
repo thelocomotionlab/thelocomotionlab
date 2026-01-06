@@ -92,13 +92,25 @@ function ProjetClientInner({ project, initialContent }) {
   }, [content]);
 
   return (
-    <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    // ✅ pt-0 : la cover peut “coller” à la navbar sur mobile
+    <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
+      {/* ✅ Cover full-bleed mobile, sans arrondi. Pas de ratio figé. */}
       {project.cover && (
-        <img
-          src={project.cover}
-          alt={project.title}
-          className="w-full h-auto rounded-xl shadow-card mb-6"
-        />
+        <div
+          className="
+            w-screen relative left-1/2 -ml-[50vw]
+            sm:w-full sm:left-auto sm:ml-0
+            mb-6 overflow-hidden
+            rounded-none sm:rounded-xl
+            shadow-card
+          "
+        >
+          <img
+            src={project.cover}
+            alt={project.title}
+            className="block w-full h-auto"
+          />
+        </div>
       )}
 
       <div className="bg-white rounded-xl shadow-card p-6 md:p-10">
@@ -132,9 +144,7 @@ function ProjetClientInner({ project, initialContent }) {
                   <a
                     href={`#${item.id}`}
                     className={`hover:underline ${
-                      item.level === 2
-                        ? "text-brand-accent"
-                        : "text-gray-600"
+                      item.level === 2 ? "text-brand-accent" : "text-gray-600"
                     }`}
                   >
                     {item.text}
@@ -195,9 +205,7 @@ function ProjetClientInner({ project, initialContent }) {
                 if (
                   childArray.length === 1 &&
                   typeof childArray[0] === "string" &&
-                  childArray[0].startsWith(
-                    "[[POST_LIVE_TRACKING_BLOCK|"
-                  )
+                  childArray[0].startsWith("[[POST_LIVE_TRACKING_BLOCK|")
                 ) {
                   const text = childArray[0];
                   const jsonPart = text
@@ -207,10 +215,7 @@ function ProjetClientInner({ project, initialContent }) {
                   try {
                     props = JSON.parse(jsonPart);
                   } catch (e) {
-                    console.error(
-                      "JSON PostLiveTracking invalide :",
-                      e
-                    );
+                    console.error("JSON PostLiveTracking invalide :", e);
                   }
 
                   return (
@@ -250,9 +255,7 @@ function ProjetClientInner({ project, initialContent }) {
                     {...props}
                     className="text-brand-deep hover:underline cursor-pointer"
                     target={isExternal ? "_blank" : undefined}
-                    rel={
-                      isExternal ? "noopener noreferrer" : undefined
-                    }
+                    rel={isExternal ? "noopener noreferrer" : undefined}
                   >
                     {children}
                   </a>

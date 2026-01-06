@@ -1,0 +1,66 @@
+Images :
+- largeur max = 1200px
+- hauteur max = 1600px
+- dpi = 72
+- photos (paysages, portraits) = .jpeg
+- illustrations = .png
+- vecto = .svg
+
+Cover :
+- ratio 11:6
+- viser autour de 2048x1118px
+
+
+tail -1000 /etc/nginx/sites-available/traccar-api.conf
+server {
+    listen 443 ssl;
+    server_name tracking.thelocomotionlab.com;
+
+    ssl_certificate /etc/letsencrypt/live/tracking.thelocomotionlab.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/tracking.thelocomotionlab.com/privkey.pem;
+
+    # Interface Traccar normale (requiert login)
+    location / {
+        proxy_pass http://127.0.0.1:8082/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    #  API publique sans login, avec token auto-injecté
+    location /api/public/ {
+        # Réécriture de l’URL vers l’API réelle
+        rewrite ^/api/public/(.*)$ /api/$1 break;
+        proxy_pass http://127.0.0.1:8082;
+
+        #  Ton token API ici (remplace TON_TOKEN par ton vrai token Traccar)
+        proxy_set_header Authorization "Bearer RjBEAiAEwIolCiioxWhLTDiIvTtUatn1oWJzsZgrVxfEQWADcAIgcMi5_w8sgrRCn05vT5d3vKR4K-Pz4o9eu0vRHdJ2MwN7InUiOjUsImUiOiIyMDI1LTEwLTI3VDIzOjAwOjAwLjAwMCswMDowMCJ9";
+
+        # En-têtes de proxy standard
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        # ---  Autorisation CORS (pour appels depuis ton front React / site web) ---
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'Origin, Content-Type, Accept, Authorization' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+
+        # Réponse immédiate aux requêtes préflight (OPTIONS)
+        if ($request_method = OPTIONS) {
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Origin, Content-Type, Accept, Authorization' always;
+            add_header 'Access-Control-Max-Age' 86400;
+            return 204;
+        }
+
+        # Empêche Traccar d’imposer des cookies de session
+        proxy_hide_header Set-Cookie;
+        proxy_hide_header WWW-Authenticate;
+    }
+
+    #  Redirection HTTP -> HTTPS
+    error_page 497 https://$host$request_uri;
+}

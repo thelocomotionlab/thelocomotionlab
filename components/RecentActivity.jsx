@@ -99,12 +99,18 @@ export default function RecentActivity({
           <div className="mt-7 flex items-center justify-center">
             <Link
               href={ctaHref}
-              className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-brand-accent text-white font-semibold shadow-cta shadow-lg hover:opacity-90 focus-visible:outline-none"
+              className="
+                inline-block
+                bg-brand-accent text-white font-semibold
+                px-6 py-3 rounded-full shadow
+                hover:bg-brand-primary/90 transition
+              "
             >
               {ctaLabel}
             </Link>
           </div>
         ) : null}
+
       </div>
     </section>
   );

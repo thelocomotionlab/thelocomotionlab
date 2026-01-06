@@ -21,9 +21,8 @@ import Tooltip from "../../../components/Tooltip";
 export default function ArticleClient({ article, initialContent }) {
   const [usedCitations, setUsedCitations] = useState([]);
 
-  // ✅ Correctif déterministe :
-  // On transforme {{cite:xxx}} en balises <citation id="xxx"></citation>
-  // avant le rendu markdown (rehypeRaw les interprète ensuite).
+  // ✅ Remplacement déterministe des tokens de citation (évite l’affichage brut)
+  // On génère des balises HTML interprétées ensuite par rehypeRaw + components.citation
   const markdown = useMemo(() => {
     if (!initialContent) return "";
     return initialContent.replace(
@@ -45,9 +44,7 @@ export default function ArticleClient({ article, initialContent }) {
 
     while ((match = regex.exec(initialContent)) !== null) {
       const id = match[1];
-      if (!ids.includes(id) && bibliography[id]) {
-        ids.push(id);
-      }
+      if (!ids.includes(id) && bibliography[id]) ids.push(id);
     }
 
     setUsedCitations(ids);
@@ -62,8 +59,7 @@ export default function ArticleClient({ article, initialContent }) {
 
   const Citation = (props) => {
     const id = props?.id;
-    const ref = bibliography?.[id];
-
+    const ref = id ? bibliography[id] : null;
     if (!id || !ref) return <sup>[?]</sup>;
 
     const index = usedCitations.indexOf(id) + 1;
@@ -72,8 +68,7 @@ export default function ArticleClient({ article, initialContent }) {
       ref.journal || ref.publisher || ""
     }`;
 
-    // bibliography.json utilise "link" (dans ton repo), mais on tolère "url" si tu ajoutes plus tard
-    const link = ref.link || ref.url;
+    const link = ref.link || ref.url; // tolère les 2 champs
 
     return (
       <span style={{ display: "inline" }}>
@@ -90,14 +85,27 @@ export default function ArticleClient({ article, initialContent }) {
   };
 
   return (
-    <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    // ✅ pt-0 : la cover peut “coller” à la navbar sur mobile
+    <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
+      {/* ✅ Cover full-bleed mobile (annule px-4 via -mx-4), sans arrondi */}
       {article.cover && (
-        <img
-          src={article.cover}
-          alt={article.title}
-          className="w-full h-auto rounded-xl shadow-md mb-6"
-        />
+        <div
+          className="
+            w-screen relative left-1/2 -ml-[50vw]
+            sm:w-full sm:left-auto sm:ml-0
+            mb-6 overflow-hidden
+            rounded-none sm:rounded-xl
+            shadow-md
+          "
+        >
+          <img
+            src={article.cover}
+            alt={article.title}
+            className="block w-full h-auto"
+          />
+        </div>
       )}
+
 
       <div className="bg-white rounded-xl shadow-card p-6 md:p-10">
         <h1 className="text-2xl text-brand-primary md:text-5xl font-sans font-bold mb-3 text-center">
@@ -126,7 +134,7 @@ export default function ArticleClient({ article, initialContent }) {
               remarkGfm,
               remarkImageOptions,
               [remarkFootnotes, { inlineNotes: true }],
-              remarkCitations, // (peut rester, mais le pré-remplacement suffit déjà)
+              remarkCitations,
               remarkDirective,
               remarkSplit,
               remarkMath,
