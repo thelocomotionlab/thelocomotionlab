@@ -93,7 +93,7 @@ function ProjetClientInner({ project, initialContent }) {
 
   return (
     // ✅ pt-0 : la cover peut “coller” à la navbar sur mobile
-    <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
+    <article className="max-w-4xl mx-auto px-1 sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
       {/* ✅ Cover full-bleed mobile, sans arrondi. Pas de ratio figé. */}
       {project.cover && (
         <div
@@ -113,7 +113,7 @@ function ProjetClientInner({ project, initialContent }) {
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-card p-6 md:p-10">
+      <div className="bg-white rounded-xl shadow-card p-4 sm:p-6 md:p-10">
         <h1 className="text-2xl text-brand-primary md:text-5xl font-sans font-bold mb-3 text-center">
           {project.title}
         </h1>
@@ -165,7 +165,6 @@ function ProjetClientInner({ project, initialContent }) {
             prose-blockquote:border-l-4 prose-blockquote:border-brand-primary prose-blockquote:pl-4
             article-body
           "
-          style={{ hyphens: "auto" }}
         >
           <ReactMarkdown
             remarkPlugins={[
@@ -253,7 +252,7 @@ function ProjetClientInner({ project, initialContent }) {
                   <a
                     href={href}
                     {...props}
-                    className="text-brand-deep hover:underline cursor-pointer"
+                    className="font-semibold hover:underline cursor-pointer"
                     target={isExternal ? "_blank" : undefined}
                     rel={isExternal ? "noopener noreferrer" : undefined}
                   >

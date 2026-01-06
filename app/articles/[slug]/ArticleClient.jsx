@@ -86,7 +86,7 @@ export default function ArticleClient({ article, initialContent }) {
 
   return (
     // ✅ pt-0 : la cover peut “coller” à la navbar sur mobile
-    <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
+    <article className="max-w-4xl mx-auto px-1 sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
       {/* ✅ Cover full-bleed mobile (annule px-4 via -mx-4), sans arrondi */}
       {article.cover && (
         <div
@@ -107,7 +107,7 @@ export default function ArticleClient({ article, initialContent }) {
       )}
 
 
-      <div className="bg-white rounded-xl shadow-card p-6 md:p-10">
+      <div className="bg-white rounded-xl shadow-card p-4 sm:p-6 md:p-10">
         <h1 className="text-2xl text-brand-primary md:text-5xl font-sans font-bold mb-3 text-center">
           {article.title}
         </h1>
@@ -120,7 +120,7 @@ export default function ArticleClient({ article, initialContent }) {
         <div
           className="
             prose prose-lg max-w-none
-            prose-p:text-[1.5rem]
+            prose-p:text-[1.25rem] sm:prose-p:text-[1.5rem]
             font-lora text-gray-800 leading-relaxed
             text-left md:text-justify
             prose-img:rounded-lg prose-img:shadow-md prose-img:mx-auto prose-img:my-6
@@ -147,7 +147,7 @@ export default function ArticleClient({ article, initialContent }) {
                   return (
                     <a
                       {...props}
-                      className="text-brand-deep hover:underline cursor-pointer"
+                      className="font-semibold hover:underline cursor-pointer"
                     />
                   );
                 }
@@ -156,7 +156,7 @@ export default function ArticleClient({ article, initialContent }) {
                     {...props}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-brand-deep hover:underline"
+                    className="font-semibold hover:underline"
                   />
                 );
               },
