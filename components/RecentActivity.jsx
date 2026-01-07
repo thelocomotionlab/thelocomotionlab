@@ -19,6 +19,15 @@ export default function RecentActivity({
 }) {
   if (!items?.length) return null;
 
+  const count = items.length;
+
+  const gridCols =
+    count >= 3
+      ? "grid-cols-1 sm:grid-cols-2 lg:[grid-template-columns:repeat(3,22rem)]"
+      : count === 2
+      ? "grid-cols-1 sm:grid-cols-2 lg:[grid-template-columns:repeat(2,22rem)]"
+      : "grid-cols-1";
+
   return (
     <section className="py-6 md:py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -34,13 +43,21 @@ export default function RecentActivity({
         </div>
 
         {/* Cards */}
-        <div className="flex flex-wrap justify-center gap-6">
+        <div className={`grid gap-6 justify-center justify-items-center ${gridCols}`}>
           {items.map((item) => (
-            <div key={`${item.type}-${item.slug}`} className="relative w-full max-w-sm">
+            <div
+              key={`${item.type}-${item.slug}`}
+              className="relative w-full max-w-[22rem] h-full"
+            >
               {/* Card link */}
               <Link
                 href={item.href}
-                className="group block bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-lg transition-shadow"
+                className="
+                  group
+                  bg-white rounded-2xl shadow-card overflow-hidden
+                  hover:shadow-lg transition-shadow
+                  h-full flex flex-col
+                "
               >
                 {/* Cover */}
                 {item.cover ? (
@@ -58,7 +75,7 @@ export default function RecentActivity({
                 )}
 
                 {/* Content */}
-                <div className="p-5">
+                <div className="p-5 flex flex-col flex-1">
                   <h3 className="text-lg font-semibold text-brand-deep group-hover:underline mb-2">
                     {item.title}
                   </h3>
@@ -72,7 +89,7 @@ export default function RecentActivity({
                   )}
 
                   {/* Meta info (context-aware) */}
-                  <div className="mt-4 text-xs text-gray-500">
+                  <div className="mt-auto pt-4 text-xs text-gray-500">
                     {item.type === "Carnet" && item.date ? (
                       <p>Publié le {item.date.toLocaleDateString("fr-FR")}</p>
                     ) : null}
@@ -110,7 +127,6 @@ export default function RecentActivity({
             </Link>
           </div>
         ) : null}
-
       </div>
     </section>
   );

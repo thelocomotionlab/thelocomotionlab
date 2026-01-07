@@ -138,10 +138,10 @@ export default async function HomePage() {
 
           <p className="mt-4 text-base sm:text-lg text-white/90 leading-relaxed">
             <span className="sm:hidden">
-              Carnets, projets, expériences
+              Carnets, projets, expérimentations
             </span>
             <span className="hidden sm:inline">
-              Carnets, projets et expériences autour du mouvement, de l’ultra-endurance et de l’hormèse
+              Carnets, projets et expérimentations autour du mouvement, de l’ultra-endurance et de l’hormèse
             </span>
           </p>
 
