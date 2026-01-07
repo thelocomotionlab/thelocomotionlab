@@ -131,8 +131,8 @@ export default async function HomePage() {
 
         <div className="absolute inset-0 bg-black/35" aria-hidden="true" />
 
-        <div className="relative z-10 px-4 sm:px-6 max-w-xl sm:max-w-2xl md:max-w-3xl mx-auto">
-          <h1 className="text-2xl sm:text-5xl md:text-5xl font-extrabold text-white drop-shadow-xl font-heading leading-tight">
+        <div className="relative z-10 px-4 sm:px-6 max-w-xl sm:max-w-2xl md:max-w-4xl mx-auto">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white drop-shadow-xl font-heading leading-tight">
             Explorer la locomotion humaine primordiale
           </h1>
 
@@ -156,7 +156,6 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-
 
 
       {/* FEED 1: ARTICLES */}
@@ -190,7 +189,7 @@ export default async function HomePage() {
       {/* LAB DESCRIPTION (no card) + CTA + newsletter just below (no separator between) */}
       <section className="py-6 md:py-8">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-          <h3 className="flex items-center justify-center gap-2 text-2xl md:text-2xl font-bold text-brand-primary">
+          <h3 className="flex items-center justify-center gap-2 text-2xl md:text-xl font-bold text-brand-primary">
             <Activity
               size={22}
               className="shrink-0 text-brand-primary"
