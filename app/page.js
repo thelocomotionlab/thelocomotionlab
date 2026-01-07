@@ -190,7 +190,7 @@ export default async function HomePage() {
       {/* LAB DESCRIPTION (no card) + CTA + newsletter just below (no separator between) */}
       <section className="py-6 md:py-8">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-          <h3 className="flex items-center justify-center gap-2 text-xl md:text-2xl font-bold text-brand-primary">
+          <h3 className="flex items-center justify-center gap-2 text-2xl md:text-2xl font-bold text-brand-primary">
             <Activity
               size={22}
               className="shrink-0 text-brand-primary"
