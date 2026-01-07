@@ -98,7 +98,26 @@ export default async function HomePage() {
       />
 
       {/* HERO */}
-      <section className="relative min-h-[68vh] grid items-end justify-items-center pb-10 sm:pb-14 md:pb-16 text-center rounded-2xl overflow-hidden mt-6">
+      <section
+        className="
+          relative
+          min-h-[70vh] sm:min-h-[68vh]
+          grid place-items-end
+          text-center
+          overflow-hidden
+
+          /* ✅ Mobile : full-bleed + collé navbar */
+          w-screen left-1/2 -ml-[50vw]
+          mt-0 rounded-none
+
+          /* ✅ Desktop : comportement actuel */
+          sm:w-auto sm:left-auto sm:ml-0
+          sm:mt-6 sm:rounded-2xl
+
+          pt-10 sm:pt-14 md:pt-16
+          pb-12 sm:pb-16 md:pb-20
+        "
+      >
 
         <Image
           src={hero.src}
@@ -112,25 +131,32 @@ export default async function HomePage() {
 
         <div className="absolute inset-0 bg-black/35" aria-hidden="true" />
 
-        <div className="relative z-10 px-4 sm:px-6 max-w-4xl mx-auto">
-          <h1 className="text-4xl sm:text-5xl md:text-4xl font-extrabold text-white drop-shadow-xl font-heading">
+        <div className="relative z-10 px-4 sm:px-6 max-w-xl sm:max-w-2xl md:max-w-3xl mx-auto">
+          <h1 className="text-2xl sm:text-5xl md:text-5xl font-extrabold text-white drop-shadow-xl font-heading leading-tight">
             Explorer la locomotion humaine primordiale
           </h1>
 
-          <p className="mt-4 text-base sm:text-lg md:text-lg text-white/90 leading-relaxed">
-            Carnets, projets et expériences autour du mouvement, de l’ultra-endurance et de l’hormèse
+          <p className="mt-4 text-base sm:text-lg text-white/90 leading-relaxed">
+            <span className="sm:hidden">
+              Carnets, projets, expériences
+            </span>
+            <span className="hidden sm:inline">
+              Carnets, projets et expériences autour du mouvement, de l’ultra-endurance et de l’hormèse
+            </span>
           </p>
 
-          <div className="mt-7 flex items-center justify-center">
+
+          <div className="mt-8 flex items-center justify-center">
             <Link
               href="/labo"
-              className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-brand-accent text-white font-semibold shadow-cta shadow-lg hover:opacity-90 focus-visible:outline-none"
+              className="inline-block bg-brand-accent text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-primary/90 transition"
             >
               Entrer dans le labo
             </Link>
           </div>
         </div>
       </section>
+
 
 
       {/* FEED 1: ARTICLES */}

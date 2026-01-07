@@ -75,7 +75,7 @@ export default function ArticleClient({ article, initialContent }) {
         <Tooltip text={formatted} link={link}>
           <sup
             onClick={() => scrollToRef(id)}
-            className="text-brand-accent font-semibold hover:underline cursor-pointer text-xs"
+            className="citation-ref"
           >
             {index > 0 ? `${index}` : "?"}
           </sup>
@@ -86,7 +86,7 @@ export default function ArticleClient({ article, initialContent }) {
 
   return (
     // ✅ pt-0 : la cover peut “coller” à la navbar sur mobile
-    <article className="max-w-4xl mx-auto px-1 sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
+    <article className="max-w-4xl mx-auto sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
       {/* ✅ Cover full-bleed mobile (annule px-4 via -mx-4), sans arrondi */}
       {article.cover && (
         <div
