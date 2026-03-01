@@ -24,31 +24,38 @@ const lora = Lora({
 export const metadata = {
   title: {
     default: "The Locomotion Lab",
-    template: "%s | The Locomotion Lab", // Permet d'avoir "Titre Article | The Locomotion Lab" automatiquement
+    template: "%s | The Locomotion Lab",
   },
-  description: "Explorations de la locomotion humaine, analyse de la foulée et aventures sportives.",
-  metadataBase: new URL('https://thelocomotionlab.com'), // Indispensable pour que les images sociales marchent
-  manifest: "/images/assets/site.webmanifest",
+  description:
+    "Explorations de la locomotion humaine, analyse de la foulée et aventures sportives.",
+  metadataBase: new URL("https://thelocomotionlab.com"),
+
+  manifest: "/site.webmanifest",
+
   icons: {
     icon: [
-      { url: "/images/assets/favicon.ico" },
-      { url: "/images/assets/favicon.svg", type: "image/svg+xml" },
-      { url: "/images/assets/favicon-96x96.png", type: "image/png", sizes: "96x96" },
+      { url: "/favicon.ico" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
     ],
     apple: [
-      { url: "/images/assets/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      {
+        url: "/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
     ],
-    shortcut: ["/images/assets/favicon.ico"],
+    shortcut: ["/favicon.ico"],
   },
-  // 👇 C'est ça qui manquait pour que tes liens soient beaux :
+
   openGraph: {
     title: "The Locomotion Lab",
-    description: "Explorations de la locomotion humaine et aventures sportives.",
+    description:
+      "Explorations de la locomotion humaine et aventures sportives.",
     url: "https://thelocomotionlab.com",
     siteName: "The Locomotion Lab",
     images: [
       {
-        url: "/images/assets/og-image.jpg", // Ton image existante
+        url: "/images/assets/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "The Locomotion Lab - Explorations",
@@ -70,8 +77,6 @@ export default function RootLayout({ children }) {
           {children}
         </main>
         <Footer />
-
-        {/* Bouton de partage global, par-dessus le reste */}
         <ShareButton />
       </body>
     </html>
