@@ -28,7 +28,7 @@ export const metadata = {
   },
   description: "Explorations de la locomotion humaine, analyse de la foulée et aventures sportives.",
   metadataBase: new URL('https://thelocomotionlab.com'), // Indispensable pour que les images sociales marchent
-  manifest: "/images/assets/site.webmanifest",
+  manifest: "/manifest.json",
   icons: {
     icon: [
       { url: "/images/assets/favicon.ico" },
@@ -74,6 +74,6 @@ export default function RootLayout({ children }) {
         {/* Bouton de partage global, par-dessus le reste */}
         <ShareButton />
       </body>
-    </html>
+    </html >
   );
 }
