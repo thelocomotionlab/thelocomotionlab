@@ -5,5 +5,5 @@ tags: ["hormèse", "exposition au froid"]
 cover: "/images/articles/initiation-exposition-au-froid/cover_initiation-exposition-au-froid.webp"
 description: "Zoom sur cette pratique hormétique fondamentale."
 type: "article"
-published: true
+published: false
 ---

@@ -83,8 +83,7 @@ export default function MentionsPage() {
         </h2>
         <p>
           La photo présente en page d&apos;accueil est une œuvre originale
-          réalisée par <strong>Caroline Fer</strong>, et retouchée à l&apos;aide
-          de l&apos;Intelligence Artificielle.
+          réalisée par <strong>Caroline Fer</strong>.
           <br />
           Pour toute demande de contact ou de collaboration éventuelle :{" "}
           <a
