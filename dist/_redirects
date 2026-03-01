@@ -1,6 +1,0 @@
-/projets/*   /projets/:splat   200!
-/articles/*  /articles/:splat  200!
-/soutenir    /soutenir/index.html  200!
-/about       /about/index.html     200!
-/contact     /contact/index.html   200!
-/            /index.html           200
