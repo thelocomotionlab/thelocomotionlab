@@ -32,7 +32,7 @@ export default function LiveTracking() {
   const [elapsed, setElapsed] = useState(0);
 
   const API_BASE = "https://tracking.thelocomotionlab.com";
-  const TOTAL_DISTANCE_KM = 165;
+  const TOTAL_DISTANCE_KM = 65;
 
   // --- Styles de cartes ---
   const styles = {
@@ -138,7 +138,7 @@ export default function LiveTracking() {
       // Recharge le tracé GPX si le style a effacé les couches
       if (!map.getSource("reference-track")) {
         try {
-          const res = await fetch("/tracks/reunion-r2_temp.gpx");
+          const res = await fetch("/tracks/mdl-65km_off.gpx");
           const xml = await res.text();
           const doc = new DOMParser().parseFromString(xml, "application/xml");
           const geojson = toGeoJSON.gpx(doc);
@@ -490,7 +490,7 @@ export default function LiveTracking() {
                         tick={{ fontSize: 11 }}
                         allowDecimals={false}
                       />
-                      <YAxis domain={[0, 3100]} tick={false} axisLine={false} width={0} />
+                      <YAxis domain={[0, 860]} tick={false} axisLine={false} width={0} />
                       <Tooltip content={<CustomTooltip />} />
                       {[1000, 2000, 3000].map((alt) => (
                         <ReferenceLine key={alt} y={alt} stroke="#999" strokeDasharray="4 4" ifOverflow="extendDomain">
