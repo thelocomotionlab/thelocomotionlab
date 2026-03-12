@@ -1,5 +1,5 @@
 ---
-title: "Formation Coach Huden Movement"
+title: "Formation Coach Tarzan Movement"
 date: "2025-10-16"
 status: "À venir"
 description: "Détails des différents apprentissages au fil de l'eau, sur les cours Gibbon, Orang-Outan, Gorille et Chimpanzé"
