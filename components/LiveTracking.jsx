@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { SatelliteDish, Crosshair, ChevronDown, ChevronUp, Map as MapIcon, Mountain, Globe2 } from "lucide-react";
+import {
+  SatelliteDish,
+  Crosshair,
+  ChevronDown,
+  ChevronUp,
+  Map as MapIcon,
+  Mountain,
+  Globe2,
+} from "lucide-react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import * as toGeoJSON from "@tmcw/togeojson";
@@ -16,23 +24,110 @@ import {
   Label,
 } from "recharts";
 
-export default function LiveTracking() {
+function getBoundsFromCoords(coords) {
+  if (!Array.isArray(coords) || coords.length === 0) return null;
+
+  const lngs = coords.map((c) => c[0]).filter((v) => Number.isFinite(v));
+  const lats = coords.map((c) => c[1]).filter((v) => Number.isFinite(v));
+
+  if (!lngs.length || !lats.length) return null;
+
+  return [
+    [Math.min(...lngs), Math.min(...lats)],
+    [Math.max(...lngs), Math.max(...lats)],
+  ];
+}
+
+function getCoordsFromGeoJSON(geojson) {
+  if (!geojson || !Array.isArray(geojson.features)) return [];
+
+  const coords = [];
+
+  const collect = (geometry) => {
+    if (!geometry || !geometry.type || !geometry.coordinates) return;
+
+    if (geometry.type === "LineString") {
+      geometry.coordinates.forEach((c) => {
+        if (Array.isArray(c) && c.length >= 2) coords.push([c[0], c[1]]);
+      });
+      return;
+    }
+
+    if (geometry.type === "MultiLineString") {
+      geometry.coordinates.forEach((line) => {
+        if (!Array.isArray(line)) return;
+        line.forEach((c) => {
+          if (Array.isArray(c) && c.length >= 2) coords.push([c[0], c[1]]);
+        });
+      });
+      return;
+    }
+
+    if (geometry.type === "Point") {
+      const c = geometry.coordinates;
+      if (Array.isArray(c) && c.length >= 2) coords.push([c[0], c[1]]);
+    }
+  };
+
+  geojson.features.forEach((feature) => collect(feature.geometry));
+  return coords;
+}
+
+function buildUrl(base, endpoint) {
+  if (!endpoint) return null;
+  if (/^https?:\/\//i.test(endpoint)) return endpoint;
+
+  const safeBase = (base || "").replace(/\/+$/, "");
+  const safeEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+
+  return `${safeBase}${safeEndpoint}`;
+}
+
+export default function LiveTracking({
+  apiBase = "https://tracking.thelocomotionlab.com",
+  positionsEndpoint = "/live-positions.json",
+  statsEndpoint = "/live-stats.json",
+  timerEndpoint = "/live-timer.json",
+  totalDistanceKm = 65,
+  elevationMax = 3100,
+  referenceGpx = "/tracks/reunion-r2_temp.gpx",
+  title = "Suivi en direct",
+  pollIntervalMs = 10000,
+  initialMapStyle = "osm",
+}) {
   const mapRef = useRef(null);
   const mapContainer = useRef(null);
+
   const [stats, setStats] = useState({ distance: 0, ascent: 0, descent: 0 });
   const [lastUpdate, setLastUpdate] = useState(null);
   const [elevationData, setElevationData] = useState([]);
-  const [mapStyle, setMapStyle] = useState("osm");
+  const [mapStyle, setMapStyle] = useState(initialMapStyle || "osm");
   const [showStyleMenu, setShowStyleMenu] = useState(false);
   const [runnerPosition, setRunnerPosition] = useState(null);
   const [showElevation, setShowElevation] = useState(true);
 
   // 🔹 États chrono
-  const [timer, setTimer] = useState({ running: false, startTime: null, stopTime: null });
+  const [timer, setTimer] = useState({
+    running: false,
+    startTime: null,
+    stopTime: null,
+  });
   const [elapsed, setElapsed] = useState(0);
 
-  const API_BASE = "https://tracking.thelocomotionlab.com";
-  const TOTAL_DISTANCE_KM = 65;
+  const TOTAL_DISTANCE_KM =
+    typeof totalDistanceKm === "number"
+      ? totalDistanceKm
+      : Number(totalDistanceKm) || 65;
+
+  const ELEVATION_MAX =
+    typeof elevationMax === "number"
+      ? elevationMax
+      : Number(elevationMax) || 3100;
+
+  const POLL_INTERVAL_MS =
+    typeof pollIntervalMs === "number"
+      ? pollIntervalMs
+      : Number(pollIntervalMs) || 10000;
 
   // --- Styles de cartes ---
   const styles = {
@@ -84,66 +179,112 @@ export default function LiveTracking() {
     },
   };
 
-  // --- Initialisation unique de la carte ---
+  /* ---------- 1) Initialisation de la carte + GPX de référence ---------- */
   useEffect(() => {
-    if (!mapContainer.current) return;
+    if (!mapContainer.current || mapRef.current) return;
 
-    const map = new maplibregl.Map({
-      container: mapContainer.current,
-      style: styles.osm,
-      center: [55.5325, -21.1151],
-      zoom: 10,
-      attributionControl: false,
-    });
+    const container = mapContainer.current;
 
-    mapRef.current = map;
-    map.addControl(new maplibregl.NavigationControl(), "top-right");
-    map.addControl(new maplibregl.AttributionControl({ compact: true }));
+    const initMap = () => {
+      const map = new maplibregl.Map({
+        container,
+        style: styles[initialMapStyle] || styles.osm,
+        center: [0, 0],
+        zoom: 2,
+        attributionControl: false,
+      });
 
-    // Chargement du tracé GPX
-    map.on("load", async () => {
-      try {
-        const res = await fetch("/tracks/reunion-r2_temp.gpx");
-        const xml = await res.text();
-        const doc = new DOMParser().parseFromString(xml, "application/xml");
-        const geojson = toGeoJSON.gpx(doc);
+      mapRef.current = map;
+      map.addControl(new maplibregl.NavigationControl(), "top-right");
+      map.addControl(new maplibregl.AttributionControl({ compact: true }));
 
-        map.addSource("reference-track", { type: "geojson", data: geojson });
-        map.addLayer({
-          id: "reference-line",
-          type: "line",
-          source: "reference-track",
-          paint: {
-            "line-color": "#007bff",
-            "line-width": 3,
-            "line-dasharray": [2, 2],
-          },
-        });
-      } catch (err) {
-        console.warn("GPX non chargé :", err);
-      }
-    });
+      map.on("load", async () => {
+        map.resize();
 
-    return () => map.remove();
-  }, []);
+        if (!referenceGpx) return;
 
-  // --- Changement de style sans recréer la carte ---
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-
-    map.setStyle(styles[mapStyle]);
-
-    map.once("styledata", async () => {
-      // Recharge le tracé GPX si le style a effacé les couches
-      if (!map.getSource("reference-track")) {
         try {
-          const res = await fetch("/tracks/mdl-65km_off.gpx");
+          const res = await fetch(referenceGpx);
+          if (!res.ok) {
+            console.warn("Référence GPX non chargée :", referenceGpx, res.status);
+            return;
+          }
+
           const xml = await res.text();
           const doc = new DOMParser().parseFromString(xml, "application/xml");
           const geojson = toGeoJSON.gpx(doc);
 
-          map.addSource("reference-track", { type: "geojson", data: geojson });
+          map._referenceGeoJSON = geojson;
+
+          if (!map.getSource("reference-track")) {
+            map.addSource("reference-track", {
+              type: "geojson",
+              data: geojson,
+            });
+          }
+
+          if (!map.getLayer("reference-line")) {
+            map.addLayer({
+              id: "reference-line",
+              type: "line",
+              source: "reference-track",
+              paint: {
+                "line-color": "#007bff",
+                "line-width": 3,
+                "line-dasharray": [2, 2],
+              },
+            });
+          }
+
+          if (!map._hasAutoFramed) {
+            const referenceCoords = getCoordsFromGeoJSON(geojson);
+            const bounds = getBoundsFromCoords(referenceCoords);
+
+            if (bounds) {
+              try {
+                map.fitBounds(bounds, { padding: 40 });
+                map._hasAutoFramed = true;
+              } catch (e) {
+                console.warn("fitBounds référence échoué :", e);
+              }
+            }
+          }
+        } catch (err) {
+          console.warn("Erreur chargement GPX référence :", err);
+        }
+      });
+    };
+
+    if (container.clientWidth === 0 || container.clientHeight === 0) {
+      requestAnimationFrame(initMap);
+    } else {
+      initMap();
+    }
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, [referenceGpx, initialMapStyle]);
+
+  /* ---------- 2) Changement de style ---------- */
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !styles[mapStyle]) return;
+
+    map.setStyle(styles[mapStyle]);
+
+    map.once("styledata", () => {
+      // réinjecter la trace de référence si on a déjà chargé le GPX
+      if (map._referenceGeoJSON && !map.getSource("reference-track")) {
+        map.addSource("reference-track", {
+          type: "geojson",
+          data: map._referenceGeoJSON,
+        });
+
+        if (!map.getLayer("reference-line")) {
           map.addLayer({
             id: "reference-line",
             type: "line",
@@ -154,52 +295,79 @@ export default function LiveTracking() {
               "line-dasharray": [2, 2],
             },
           });
-        } catch (err) {
-          console.warn("Erreur reload GPX :", err);
         }
       }
 
-      // Réaffiche la trace live
-      if (map._liveTrackGeoJSON) {
-        if (!map.getSource("live-track")) {
-          map.addSource("live-track", { type: "geojson", data: map._liveTrackGeoJSON });
+      // réinjecter la trace live
+      if (map._liveTrackGeoJSON && !map.getSource("live-track")) {
+        map.addSource("live-track", {
+          type: "geojson",
+          data: map._liveTrackGeoJSON,
+        });
+
+        if (!map.getLayer("live-track-line")) {
           map.addLayer({
             id: "live-track-line",
             type: "line",
             source: "live-track",
-            paint: { "line-color": "#ff5500", "line-width": 4, "line-opacity": 0.9 },
+            paint: {
+              "line-color": "#ff5500",
+              "line-width": 4,
+              "line-opacity": 0.9,
+            },
           });
         }
       }
 
-      // Réaffiche le marqueur du coureur
       if (map._runnerMarker && map._runnerMarker.getLngLat()) {
         map._runnerMarker.addTo(map);
       }
+
+      map.resize();
     });
   }, [mapStyle]);
 
-  // --- Récupération live ---
+  /* ---------- 3) Récupération live ---------- */
   useEffect(() => {
     if (!mapRef.current) return;
 
     async function fetchLiveData() {
       try {
+        const positionsUrl = buildUrl(apiBase, positionsEndpoint);
+        const statsUrl = buildUrl(apiBase, statsEndpoint);
+
         const [posRes, statsRes] = await Promise.all([
-          fetch(`${API_BASE}/live-positions.json?cacheBust=${Date.now()}`),
-          fetch(`${API_BASE}/live-stats.json?cacheBust=${Date.now()}`),
+          fetch(
+            `${positionsUrl}${
+              positionsUrl.includes("?") ? "&" : "?"
+            }cacheBust=${Date.now()}`
+          ),
+          statsUrl
+            ? fetch(
+                `${statsUrl}${
+                  statsUrl.includes("?") ? "&" : "?"
+                }cacheBust=${Date.now()}`
+              )
+            : Promise.resolve(null),
         ]);
 
         const positions = await posRes.json();
-        const stats = await statsRes.json();
+        const externalStats =
+          statsRes && statsRes.ok ? await statsRes.json() : null;
+
         if (!Array.isArray(positions) || positions.length === 0) return;
 
         setStats({
-          distance: (stats.distance / 1000 || 0).toFixed(2),
-          ascent: stats.dplus || 0,
-          descent: stats.dminus || 0,
+          distance: (
+            externalStats?.distance != null
+              ? externalStats.distance / 1000
+              : 0
+          ).toFixed(2),
+          ascent: externalStats?.dplus || 0,
+          descent: externalStats?.dminus || 0,
         });
-        setLastUpdate(positions.at(-1)?.fixTime);
+
+        setLastUpdate(positions.at(-1)?.fixTime || null);
 
         const coords = positions.map((p) => [p.longitude, p.latitude]);
         const geojson = {
@@ -208,6 +376,8 @@ export default function LiveTracking() {
         };
 
         const map = mapRef.current;
+        if (!map) return;
+
         map._liveTrackGeoJSON = geojson;
 
         if (map.getSource("live-track")) {
@@ -218,19 +388,34 @@ export default function LiveTracking() {
             id: "live-track-line",
             type: "line",
             source: "live-track",
-            paint: { "line-color": "#ff5500", "line-width": 4, "line-opacity": 0.9 },
+            paint: {
+              "line-color": "#ff5500",
+              "line-width": 4,
+              "line-opacity": 0.9,
+            },
           });
         }
 
         const last = coords.at(-1);
         setRunnerPosition(last);
 
-        if (!map._hasCentered && last) {
-          map.flyTo({ center: last, zoom: 12, speed: 0.7 });
-          map._hasCentered = true;
+        if (!map._hasAutoFramed) {
+          const bounds = getBoundsFromCoords(coords);
+
+          if (bounds) {
+            try {
+              map.fitBounds(bounds, { padding: 40 });
+              map._hasAutoFramed = true;
+            } catch (e) {
+              console.warn("fitBounds live échoué :", e);
+            }
+          } else if (last) {
+            map.flyTo({ center: last, zoom: 12, speed: 0.7 });
+            map._hasAutoFramed = true;
+          }
         }
 
-        if (!map._runnerMarker) {
+        if (!map._runnerMarker && last) {
           const el = document.createElement("div");
           el.style.width = "28px";
           el.style.height = "28px";
@@ -239,7 +424,7 @@ export default function LiveTracking() {
           el.style.backgroundSize = "contain";
           el.style.backgroundRepeat = "no-repeat";
           map._runnerMarker = new maplibregl.Marker(el).setLngLat(last).addTo(map);
-        } else {
+        } else if (map._runnerMarker && last) {
           map._runnerMarker.setLngLat(last);
         }
 
@@ -252,6 +437,7 @@ export default function LiveTracking() {
           for (let i = Math.max(prev.length, 1); i < positions.length; i++) {
             const prevPt = positions[i - 1];
             const curr = positions[i];
+
             const dLat = ((curr.latitude - prevPt.latitude) * Math.PI) / 180;
             const dLon = ((curr.longitude - prevPt.longitude) * Math.PI) / 180;
             const a =
@@ -274,6 +460,7 @@ export default function LiveTracking() {
               dMinus: Math.round(dMinus),
             });
           }
+
           return newData;
         });
       } catch (err) {
@@ -282,15 +469,20 @@ export default function LiveTracking() {
     }
 
     fetchLiveData();
-    const interval = setInterval(fetchLiveData, 10000);
+    const interval = setInterval(fetchLiveData, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, []);
+  }, [apiBase, positionsEndpoint, statsEndpoint, POLL_INTERVAL_MS]);
 
-  // --- Récupération du timer ---
+  /* ---------- 4) Récupération du timer ---------- */
   useEffect(() => {
     async function fetchTimer() {
       try {
-        const res = await fetch(`${API_BASE}/live-timer.json?cacheBust=${Date.now()}`);
+        const timerUrl = buildUrl(apiBase, timerEndpoint);
+        if (!timerUrl) return;
+
+        const res = await fetch(
+          `${timerUrl}${timerUrl.includes("?") ? "&" : "?"}cacheBust=${Date.now()}`
+        );
         const data = await res.json();
         setTimer(data);
       } catch (err) {
@@ -299,13 +491,14 @@ export default function LiveTracking() {
     }
 
     fetchTimer();
-    const interval = setInterval(fetchTimer, 10000);
+    const interval = setInterval(fetchTimer, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, []);
+  }, [apiBase, timerEndpoint, POLL_INTERVAL_MS]);
 
-  // --- Calcul chrono en continu ---
+  /* ---------- 5) Calcul chrono en continu ---------- */
   useEffect(() => {
     let interval;
+
     if (timer.startTime) {
       interval = setInterval(() => {
         const now = new Date();
@@ -315,6 +508,7 @@ export default function LiveTracking() {
         setElapsed(Math.max(0, Math.floor(diff / 1000)));
       }, 1000);
     }
+
     return () => clearInterval(interval);
   }, [timer]);
 
@@ -326,8 +520,13 @@ export default function LiveTracking() {
   };
 
   const recenterMap = () => {
-    if (mapRef.current && runnerPosition)
-      mapRef.current.flyTo({ center: runnerPosition, zoom: 13, speed: 0.7 });
+    if (mapRef.current && runnerPosition) {
+      mapRef.current.flyTo({
+        center: runnerPosition,
+        zoom: 13,
+        speed: 0.7,
+      });
+    }
   };
 
   const CustomTooltip = ({ active, payload }) => {
@@ -355,25 +554,33 @@ export default function LiveTracking() {
     return null;
   };
 
-  // --- Rendu principal ---
+  const isSmallScreen =
+    typeof window !== "undefined" && window.innerWidth < 640;
+
+  /* ---------- 6) Rendu principal ---------- */
   return (
     <div className="flex flex-col items-center w-full py-6 px-3 sm:px-6 gap-3">
       {/* Bloc stats */}
       <div className="bg-white/80 backdrop-blur-md shadow-md rounded-2xl p-4 w-full max-w-3xl text-center border border-gray-200">
         <div className="flex justify-center items-center gap-2 font-semibold text-lg text-[#b66b47] sm:mb-1">
-          <SatelliteDish size={18} /> Suivi en direct
+          <SatelliteDish size={18} /> {title}
         </div>
 
         {/* 🔹 Durée de locomotion */}
         <div className="text-gray-700 mb-2 text-sm sm:flex sm:flex-row sm:items-center sm:justify-center sm:gap-1">
           <div className="flex flex-col items-center sm:hidden">
             <span className="text-xxs">Durée de locomotion : </span>
-            <span className="text-xs font-bold mb-1">{formatDuration(elapsed)}</span>
+            <span className="text-xs font-bold mb-1">
+              {formatDuration(elapsed)}
+            </span>
             <div className="w-16 h-[2px] bg-[#EFB159] mt-1 mb-4 rounded-full mx-auto"></div>
           </div>
 
           <div className="hidden sm:inline">
-            <span className="text-sm">Durée de locomotion : </span><span className="text-sm font-semibold mb-1">{formatDuration(elapsed)}</span>
+            <span className="text-sm">Durée de locomotion : </span>
+            <span className="text-sm font-semibold mb-1">
+              {formatDuration(elapsed)}
+            </span>
           </div>
         </div>
 
@@ -394,13 +601,17 @@ export default function LiveTracking() {
           </div>
         </div>
         <div className="sm:text-xs text-xxs mt-0 text-gray-500">
-          Dernière màj : {lastUpdate ? new Date(lastUpdate).toLocaleTimeString("fr-FR") : "—"}
+          Dernière màj :{" "}
+          {lastUpdate ? new Date(lastUpdate).toLocaleTimeString("fr-FR") : "—"}
         </div>
       </div>
 
       {/* Carte + profil intégré */}
       <div className="relative w-full max-w-6xl">
-        <div ref={mapContainer} className="w-full h-[65vh] overflow-hidden shadow-lg border border-gray-200"></div>
+        <div
+          ref={mapContainer}
+          className="w-full h-[65vh] overflow-hidden shadow-lg border border-gray-200"
+        ></div>
 
         {/* Bouton recentrer */}
         <button
@@ -424,13 +635,20 @@ export default function LiveTracking() {
                   <MapIcon size={16} className="text-gray-700" />
                 </button>
               ) : (
-                <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-md shadow-md flex flex-col items-center p-[2px]" style={{ width: "32px" }}>
+                <div
+                  className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-md shadow-md flex flex-col items-center p-[2px]"
+                  style={{ width: "32px" }}
+                >
                   <button
                     onClick={() => {
                       setMapStyle("osm");
                       setShowStyleMenu(false);
                     }}
-                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${mapStyle === "osm" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"}`}
+                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${
+                      mapStyle === "osm"
+                        ? "bg-[#EFB159]/90 text-white"
+                        : "text-gray-700"
+                    }`}
                   >
                     <MapIcon size={14} />
                   </button>
@@ -439,7 +657,11 @@ export default function LiveTracking() {
                       setMapStyle("topo");
                       setShowStyleMenu(false);
                     }}
-                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${mapStyle === "topo" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"}`}
+                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${
+                      mapStyle === "topo"
+                        ? "bg-[#EFB159]/90 text-white"
+                        : "text-gray-700"
+                    }`}
                   >
                     <Mountain size={14} />
                   </button>
@@ -448,7 +670,11 @@ export default function LiveTracking() {
                       setMapStyle("satellite");
                       setShowStyleMenu(false);
                     }}
-                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${mapStyle === "satellite" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"}`}
+                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${
+                      mapStyle === "satellite"
+                        ? "bg-[#EFB159]/90 text-white"
+                        : "text-gray-700"
+                    }`}
                   >
                     <Globe2 size={14} />
                   </button>
@@ -465,7 +691,11 @@ export default function LiveTracking() {
               onClick={() => setShowElevation(!showElevation)}
               className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-white shadow-md rounded-lg p-1.5 border border-gray-300 hover:bg-[#EFB159]/90 hover:text-white transition z-30"
             >
-              {showElevation ? <ChevronDown size={24} className="text-gray-700" /> : <ChevronUp size={24} className="text-gray-700" />}
+              {showElevation ? (
+                <ChevronDown size={24} className="text-gray-700" />
+              ) : (
+                <ChevronUp size={24} className="text-gray-700" />
+              )}
             </button>
 
             <div
@@ -479,34 +709,72 @@ export default function LiveTracking() {
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
                       data={elevationData}
-                      margin={window.innerWidth < 640 ? { top: 5, right: 10, bottom: 5, left: 15 } : { top: 10, right: 20, bottom: 0, left: 30 }}
+                      margin={
+                        isSmallScreen
+                          ? { top: 5, right: 10, bottom: 5, left: 15 }
+                          : { top: 10, right: 20, bottom: 0, left: 30 }
+                      }
                     >
                       <XAxis
                         dataKey="km"
                         type="number"
                         domain={[0, TOTAL_DISTANCE_KM]}
-                        ticks={window.innerWidth < 640 ? [0, 170] : [0, 42.5, 95, 137.5, 170]}
+                        ticks={
+                          isSmallScreen
+                            ? [0, Math.round(TOTAL_DISTANCE_KM)]
+                            : [
+                                0,
+                                TOTAL_DISTANCE_KM * 0.25,
+                                TOTAL_DISTANCE_KM * 0.5,
+                                TOTAL_DISTANCE_KM * 0.75,
+                                TOTAL_DISTANCE_KM,
+                              ]
+                        }
                         tickFormatter={(v) => `${v.toFixed(0)}km`}
                         tick={{ fontSize: 11 }}
                         allowDecimals={false}
                       />
-                      <YAxis domain={[0, 860]} tick={false} axisLine={false} width={0} />
+                      <YAxis
+                        domain={[0, ELEVATION_MAX]}
+                        tick={false}
+                        axisLine={false}
+                        width={0}
+                      />
                       <Tooltip content={<CustomTooltip />} />
-                      {[1000, 2000, 3000].map((alt) => (
-                        <ReferenceLine key={alt} y={alt} stroke="#999" strokeDasharray="4 4" ifOverflow="extendDomain">
-                          <Label
-                            value={`${alt}m`}
-                            position={window.innerWidth < 640 ? "insideTopRight" : "insideTopLeft"}
-                            dy={window.innerWidth < 640 ? -11 : -15}
-                            dx={-4}
-                            fill="#555"
-                            fontSize={window.innerWidth < 640 ? 6 : 10}
-                            fontWeight={400}
-                            background={{ fill: "rgba(255,255,255,0.4)" }}
-                          />
-                        </ReferenceLine>
-                      ))}
-                      <Line type="monotone" dataKey="alt" stroke="#B67352" strokeWidth={2} dot={false} isAnimationActive={false} />
+                      {[400,800]
+                        .filter((alt) => alt <= ELEVATION_MAX)
+                        .map((alt) => (
+                          <ReferenceLine
+                            key={alt}
+                            y={alt}
+                            stroke="#999"
+                            strokeDasharray="4 4"
+                            ifOverflow="extendDomain"
+                          >
+                            <Label
+                              value={`${alt}m`}
+                              position={
+                                isSmallScreen
+                                  ? "insideTopRight"
+                                  : "insideTopLeft"
+                              }
+                              dy={isSmallScreen ? -11 : -15}
+                              dx={-4}
+                              fill="#555"
+                              fontSize={isSmallScreen ? 6 : 10}
+                              fontWeight={400}
+                              background={{ fill: "rgba(255,255,255,0.4)" }}
+                            />
+                          </ReferenceLine>
+                        ))}
+                      <Line
+                        type="monotone"
+                        dataKey="alt"
+                        stroke="#B67352"
+                        strokeWidth={2}
+                        dot={false}
+                        isAnimationActive={false}
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>

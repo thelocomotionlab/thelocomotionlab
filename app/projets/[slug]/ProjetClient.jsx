@@ -191,11 +191,26 @@ function ProjetClientInner({ project, initialContent }) {
                 if (
                   childArray.length === 1 &&
                   typeof childArray[0] === "string" &&
-                  childArray[0].includes("[[LIVE_TRACKING_BLOCK]]")
+                  childArray[0].startsWith("[[LIVE_TRACKING_BLOCK")
                 ) {
+                  const text = childArray[0];
+                  let props = {};
+
+                  if (text.startsWith("[[LIVE_TRACKING_BLOCK|")) {
+                    const jsonPart = text
+                      .replace("[[LIVE_TRACKING_BLOCK|", "")
+                      .replace("]]", "");
+
+                    try {
+                      props = JSON.parse(jsonPart);
+                    } catch (e) {
+                      console.error("JSON LiveTracking invalide :", e);
+                    }
+                  }
+
                   return (
                     <figure className="lt-figure my-8">
-                      <LiveTracking />
+                      <LiveTracking {...props} />
                     </figure>
                   );
                 }

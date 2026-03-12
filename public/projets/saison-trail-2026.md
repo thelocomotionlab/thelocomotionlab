@@ -336,7 +336,20 @@ Sur ce, une belle aprem de repos m'attend pour accumuler un maximum d'énergie. 
 *10/11/2025* 
 
 Trace complète (170 km 9800 m D+/D-) disponible et téléchargeable [ici](#création-de-la-trace-gpx).
-<livetracking /> 
+<!-- <livetracking />  -->
+
+<livetracking
+  apiBase="https://tracking.thelocomotionlab.com"
+  positionsEndpoint="/live-positions.json"
+  statsEndpoint="/live-stats.json"
+  timerEndpoint="/live-timer.json"
+  referenceGpx="/tracks/mdl-65km_off.gpx"
+  totalDistance="65"
+  elevationMax="860"
+  title="Suivi en direct"
+  pollIntervalMs="10000"
+  initialMapStyle="osm"
+/>
 
 <!-- <postlivetracking
   positions="/replays/traversee-reunion/live-positions.json"
