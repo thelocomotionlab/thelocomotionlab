@@ -5,7 +5,10 @@ import { formatRelativeDays } from "@/lib/getRecentActivity";
 /**
  * FeedSection
  * - Articles  : affiche uniquement "Publié le ..."
- * - Projets   : affiche uniquement "Mis à jour ..."
+ * - Projets   : affiche une date métier plus propre :
+ *   - "Terminé le ..." si status = Terminé
+ *   - sinon "Mis à jour ..." basé sur activityAt
+ *   - fallback sur updatedAt
  * - Status projet purement informatif (hors <Link>)
  * - CTA "Voir tout" sous le feed (même style que "Entrer dans le labo")
  */
@@ -27,6 +30,24 @@ export default function RecentActivity({
       : count === 2
       ? "grid-cols-1 sm:grid-cols-2 lg:[grid-template-columns:repeat(2,22rem)]"
       : "grid-cols-1";
+
+  function renderProjectMeta(item) {
+    if (item.status === "Terminé" && item.completedAt) {
+      return (
+        <p>Terminé le {item.completedAt.toLocaleDateString("fr-FR")}</p>
+      );
+    }
+
+    if (item.activityAt) {
+      return <p>Mis à jour {formatRelativeDays(item.activityAt)}</p>;
+    }
+
+    if (item.updatedAt) {
+      return <p>Mis à jour {formatRelativeDays(item.updatedAt)}</p>;
+    }
+
+    return null;
+  }
 
   return (
     <section className="py-6 md:py-8">
@@ -94,9 +115,7 @@ export default function RecentActivity({
                       <p>Publié le {item.date.toLocaleDateString("fr-FR")}</p>
                     ) : null}
 
-                    {item.type === "Projet" && item.updatedAt ? (
-                      <p>Mis à jour {formatRelativeDays(item.updatedAt)}</p>
-                    ) : null}
+                    {item.type === "Projet" ? renderProjectMeta(item) : null}
                   </div>
                 </div>
               </Link>

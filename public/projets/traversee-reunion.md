@@ -1,9 +1,14 @@
 ---
 title: "Traversée de la Réunion en autonomie"
 date: "2025-08-20"
-status: "Terminé"
 description: "Projet OFF. Documentation du parcours, liste du matériel, préparation spécifique et détails de l'expédition."
 cover: "/images/projets/traversee-reunion/cover_traversee_reunion.webp"
+
+status: "Terminé"
+completedAt: 2025-11-30
+activityAt: 2025-11-30
+
+
 published: true
 ---
 
