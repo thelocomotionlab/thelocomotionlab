@@ -43,9 +43,7 @@ Voici un carnet de bord de mon année de trail 2026. Celle-ci s'annonce bien dif
 ### Projet OFF Monts du Lyonnais 
 *14/03/2026*
 
-Trace complète (65 km 3100 m D+/D-) disponible et téléchargeable
-
- [ici](/tracks/mdl-65km_off.gpx).
+Trace complète (65 km 3100 m D+/D-)
 
 <livetracking
   apiBase="https://tracking.thelocomotionlab.com"

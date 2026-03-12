@@ -184,7 +184,7 @@ function ProjetClientInner({ project, initialContent }) {
             ]}
             components={{
               // Gestion spéciale des paragraphes
-              p: ({ node, children }) => {
+              p: ({ children }) => {
                 const childArray = React.Children.toArray(children);
 
                 // 1) Live tracking temps réel
@@ -240,14 +240,12 @@ function ProjetClientInner({ project, initialContent }) {
                 }
 
                 // 3) paragraphe qui ne contient QU’UN lien .gpx
+                const onlyChild = childArray[0];
                 const gpxLinkOnly =
-                  node &&
-                  Array.isArray(node.children) &&
-                  node.children.length === 1 &&
-                  node.children[0].type === "element" &&
-                  node.children[0].tagName === "a" &&
-                  typeof node.children[0].properties?.href === "string" &&
-                  node.children[0].properties.href.endsWith(".gpx");
+                  childArray.length === 1 &&
+                  React.isValidElement(onlyChild) &&
+                  typeof onlyChild.props?.href === "string" &&
+                  onlyChild.props.href.endsWith(".gpx");
 
                 if (gpxLinkOnly) {
                   return <div className="map-block">{children}</div>;

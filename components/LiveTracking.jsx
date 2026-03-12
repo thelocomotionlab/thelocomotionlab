@@ -9,6 +9,7 @@ import {
   Map as MapIcon,
   Mountain,
   Globe2,
+  Download,
 } from "lucide-react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -94,6 +95,7 @@ export default function LiveTracking({
   title = "Suivi en direct",
   pollIntervalMs = 10000,
   initialMapStyle = "osm",
+  mapHeight = 400,
 }) {
   const mapRef = useRef(null);
   const mapContainer = useRef(null);
@@ -105,6 +107,7 @@ export default function LiveTracking({
   const [showStyleMenu, setShowStyleMenu] = useState(false);
   const [runnerPosition, setRunnerPosition] = useState(null);
   const [showElevation, setShowElevation] = useState(true);
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
 
   // 🔹 États chrono
   const [timer, setTimer] = useState({
@@ -128,6 +131,11 @@ export default function LiveTracking({
     typeof pollIntervalMs === "number"
       ? pollIntervalMs
       : Number(pollIntervalMs) || 10000;
+
+  const MAP_HEIGHT =
+    typeof mapHeight === "number"
+      ? `${mapHeight}px`
+      : mapHeight || "350px";
 
   // --- Styles de cartes ---
   const styles = {
@@ -178,6 +186,16 @@ export default function LiveTracking({
       layers: [{ id: "esri", type: "raster", source: "esri" }],
     },
   };
+
+  useEffect(() => {
+    const syncScreen = () => {
+      setIsSmallScreen(window.innerWidth < 640);
+    };
+
+    syncScreen();
+    window.addEventListener("resize", syncScreen);
+    return () => window.removeEventListener("resize", syncScreen);
+  }, []);
 
   /* ---------- 1) Initialisation de la carte + GPX de référence ---------- */
   useEffect(() => {
@@ -554,9 +572,6 @@ export default function LiveTracking({
     return null;
   };
 
-  const isSmallScreen =
-    typeof window !== "undefined" && window.innerWidth < 640;
-
   /* ---------- 6) Rendu principal ---------- */
   return (
     <div className="flex flex-col items-center w-full py-6 px-3 sm:px-6 gap-3">
@@ -610,7 +625,8 @@ export default function LiveTracking({
       <div className="relative w-full max-w-6xl">
         <div
           ref={mapContainer}
-          className="w-full h-[65vh] overflow-hidden shadow-lg border border-gray-200"
+          className="w-full overflow-hidden shadow-lg border border-gray-200"
+          style={{ height: MAP_HEIGHT }}
         ></div>
 
         {/* Bouton recentrer */}
@@ -621,6 +637,19 @@ export default function LiveTracking({
           <Crosshair size={16} />
           <span className="hidden sm:inline">Recentrer</span>
         </button>
+
+        {/* Bouton télécharger */}
+        {referenceGpx && (
+          <a
+            href={referenceGpx}
+            download
+            className="absolute top-[43px] left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md px-3 py-1 hover:bg-[#EFB159]/80 hover:text-white text-gray-700 z-20 flex items-center gap-1 transition no-underline"
+            title="Télécharger la trace GPX"
+          >
+            <Download size={16} />
+            <span className="hidden sm:inline text-sm font-medium">Télécharger</span>
+          </a>
+        )}
 
         {/* Sélecteur de style compact */}
         <div className="absolute top-[100px] right-2.5 z-30">
@@ -741,7 +770,7 @@ export default function LiveTracking({
                         width={0}
                       />
                       <Tooltip content={<CustomTooltip />} />
-                      {[400,800]
+                      {[400, 800]
                         .filter((alt) => alt <= ELEVATION_MAX)
                         .map((alt) => (
                           <ReferenceLine
