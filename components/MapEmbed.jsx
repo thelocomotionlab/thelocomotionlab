@@ -4,7 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import * as toGeoJSON from "@tmcw/togeojson";
-import { Crosshair, Map as MapIcon, Mountain, Globe2, Download } from "lucide-react";
+import {
+  Crosshair,
+  Map as MapIcon,
+  Mountain,
+  Globe2,
+  Download,
+} from "lucide-react";
 
 export default function MapEmbed({
   gpx,
@@ -13,6 +19,9 @@ export default function MapEmbed({
 }) {
   const mapRef = useRef(null);
   const mapContainer = useRef(null);
+  const trackGeoJSONRef = useRef(null);
+  const trackBoundsRef = useRef(null);
+
   const [mapStyle, setMapStyle] = useState("osm");
   const [showStyleMenu, setShowStyleMenu] = useState(false);
   const [dynamicHeight, setDynamicHeight] = useState(defaultMinHeight);
@@ -110,63 +119,149 @@ export default function MapEmbed({
     },
   };
 
-  // --- Création de la carte
+  // --- Création de la carte une seule fois
   useEffect(() => {
-    if (!mapContainer.current) return;
+    if (!mapContainer.current || mapRef.current) return;
 
     const map = new maplibregl.Map({
       container: mapContainer.current,
-      style: styles[mapStyle],
+      style: styles.osm,
       center: defaultCenter,
       zoom: defaultZoom,
       attributionControl: false,
     });
 
     map.addControl(new maplibregl.AttributionControl({ compact: true }));
+    map.addControl(new maplibregl.NavigationControl(), "top-right");
 
     mapRef.current = map;
-    map.addControl(new maplibregl.NavigationControl(), "top-right");
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, []);
+
+  // --- Chargement du GPX
+  useEffect(() => {
+    if (!mapRef.current || !gpx) return;
 
     async function loadGPX() {
       try {
+        const map = mapRef.current;
+        if (!map) return;
+
         const res = await fetch(gpx);
         if (!res.ok) throw new Error("Erreur de chargement GPX");
+
         const xml = await res.text();
         const doc = new DOMParser().parseFromString(xml, "application/xml");
         const geojson = toGeoJSON.gpx(doc);
 
-        map.on("load", () => {
-          if (map.getSource("track")) map.removeSource("track");
-          if (map.getLayer("track-line")) map.removeLayer("track-line");
+        trackGeoJSONRef.current = geojson;
 
-          const color = "#FF3B3B";
-          map.addSource("track", { type: "geojson", data: geojson });
-          map.addLayer({
-            id: "track-line",
-            type: "line",
-            source: "track",
-            paint: { "line-color": color, "line-width": lineWeight },
-          });
+        const firstLineFeature = geojson.features.find(
+          (f) =>
+            f?.geometry?.type === "LineString" &&
+            Array.isArray(f.geometry.coordinates) &&
+            f.geometry.coordinates.length > 0
+        );
 
-          const coords = geojson.features[0].geometry.coordinates;
-          const bounds = coords.reduce(
+        if (firstLineFeature) {
+          const coords = firstLineFeature.geometry.coordinates;
+          trackBoundsRef.current = coords.reduce(
             (b, c) => b.extend(c),
             new maplibregl.LngLatBounds(coords[0], coords[0])
           );
-          map.fitBounds(bounds, { padding: 40, duration: 1000 });
-        });
+        } else {
+          trackBoundsRef.current = null;
+        }
+
+        const applyTrack = () => {
+          if (!map.getSource("track")) {
+            map.addSource("track", { type: "geojson", data: geojson });
+          } else {
+            map.getSource("track").setData(geojson);
+          }
+
+          if (!map.getLayer("track-line")) {
+            const color = "#FF3B3B";
+            map.addLayer({
+              id: "track-line",
+              type: "line",
+              source: "track",
+              paint: { "line-color": color, "line-width": lineWeight },
+            });
+          } else {
+            map.setPaintProperty("track-line", "line-width", lineWeight);
+          }
+
+          if (trackBoundsRef.current) {
+            map.fitBounds(trackBoundsRef.current, {
+              padding: 40,
+              duration: 1000,
+            });
+          }
+        };
+
+        if (map.isStyleLoaded()) {
+          applyTrack();
+        } else {
+          map.once("load", applyTrack);
+        }
       } catch (err) {
         console.error("Erreur GPX:", err);
       }
     }
 
     loadGPX();
-    return () => map.remove();
-  }, [gpx, mapStyle, lineWeight]);
+  }, [gpx, lineWeight]);
+
+  // --- Changement de style sans recréer la carte
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !styles[mapStyle]) return;
+
+    map.setStyle(styles[mapStyle]);
+
+    map.once("styledata", () => {
+      if (trackGeoJSONRef.current && !map.getSource("track")) {
+        map.addSource("track", {
+          type: "geojson",
+          data: trackGeoJSONRef.current,
+        });
+      }
+
+      if (trackGeoJSONRef.current && !map.getLayer("track-line")) {
+        const color = "#FF3B3B";
+        map.addLayer({
+          id: "track-line",
+          type: "line",
+          source: "track",
+          paint: { "line-color": color, "line-width": lineWeight },
+        });
+      }
+
+      map.resize();
+    });
+  }, [mapStyle, lineWeight]);
 
   const resetView = () => {
     if (mapRef.current) {
-      mapRef.current.flyTo({ center: defaultCenter, zoom: defaultZoom, speed: 0.8 });
+      if (trackBoundsRef.current) {
+        mapRef.current.fitBounds(trackBoundsRef.current, {
+          padding: 40,
+          duration: 1000,
+        });
+      } else {
+        mapRef.current.flyTo({
+          center: defaultCenter,
+          zoom: defaultZoom,
+          speed: 0.8,
+        });
+      }
     }
   };
 
