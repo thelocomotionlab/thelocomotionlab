@@ -10,6 +10,7 @@ import {
   Map as MapIcon,
   Mountain,
   Globe2,
+  Download,
 } from "lucide-react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -159,6 +160,7 @@ export default function PostLiveTracking({
   distanceFactor = 1,
   ascentFactor = 1,
   descentFactor = 1,
+  mapHeight = 400,
 }) {
   const mapRef = useRef(null);
   const mapContainer = useRef(null);
@@ -172,9 +174,15 @@ export default function PostLiveTracking({
   const [showElevation, setShowElevation] = useState(true);
   const [elapsed, setElapsed] = useState(0);
   const [computedTotalDistance, setComputedTotalDistance] = useState(null);
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
 
   // si pas de prop → fallback
   const gpxPath = referenceGpx || "/tracks/reunion-r2_temp.gpx";
+
+  const MAP_HEIGHT =
+    typeof mapHeight === "number"
+      ? `${mapHeight}px`
+      : mapHeight || "400px";
 
   const styles = {
     topo: {
@@ -224,6 +232,16 @@ export default function PostLiveTracking({
       layers: [{ id: "esri", type: "raster", source: "esri" }],
     },
   };
+
+  useEffect(() => {
+    const syncScreen = () => {
+      setIsSmallScreen(window.innerWidth < 640);
+    };
+
+    syncScreen();
+    window.addEventListener("resize", syncScreen);
+    return () => window.removeEventListener("resize", syncScreen);
+  }, []);
 
   /* ---------- 1) Initialisation de la carte + GPX de référence ---------- */
   useEffect(() => {
@@ -574,9 +592,6 @@ export default function PostLiveTracking({
       ? totalDistanceKm
       : computedTotalDistance || 100;
 
-  const isSmallScreen =
-    typeof window !== "undefined" && window.innerWidth < 640;
-
   /* ---------- 5) Rendu ---------- */
 
   return (
@@ -638,9 +653,11 @@ export default function PostLiveTracking({
       <div className="relative w-full max-w-6xl">
         <div
           ref={mapContainer}
-          className="w-full h-[65vh] overflow-hidden shadow-lg border border-gray-200"
+          className="w-full overflow-hidden shadow-lg border border-gray-200"
+          style={{ height: MAP_HEIGHT }}
         />
 
+        {/* Bouton recentrer */}
         <button
           onClick={recenterMap}
           className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md text-sm px-3 py-1 hover:bg-[#EFB159]/80 hover:text-white text-gray-700 flex items-center gap-1 z-20"
@@ -648,6 +665,19 @@ export default function PostLiveTracking({
           <Crosshair size={16} />
           <span className="hidden sm:inline">Recentrer</span>
         </button>
+
+        {/* Bouton télécharger */}
+        {referenceGpx && (
+          <a
+            href={referenceGpx}
+            download
+            className="absolute top-[43px] left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md px-3 py-1 hover:bg-[#EFB159]/80 hover:text-white text-gray-700 z-20 flex items-center gap-1 transition no-underline"
+            title="Télécharger la trace GPX"
+          >
+            <Download size={16} />
+            <span className="hidden sm:inline text-sm font-medium">Télécharger</span>
+          </a>
+        )}
 
         {/* Sélecteur de style */}
         <div className="absolute top-[100px] right-2.5 z-30">

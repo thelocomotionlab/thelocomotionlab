@@ -340,7 +340,7 @@ Sur ce, une belle aprem de repos m'attend pour accumuler un maximum d'énergie. 
 ### La traversée de la Réunion (replay)
 *10/11/2025* 
 
-Trace complète (170 km 9800 m D+/D-) disponible et téléchargeable [ici](#création-de-la-trace-gpx).
+Trace complète (170 km 9800 m D+/D-) disponible et téléchargeable [ici](#création-de-la-trace-gpx). Le récit complet de l'aventure est à retrouver dans l'article [L'île intense vous dites ?](https://thelocomotionlab.com/articles/recit-reunion-2025).
 <!-- <livetracking /> 
  -->
 <postlivetracking

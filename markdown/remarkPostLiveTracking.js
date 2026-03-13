@@ -37,6 +37,7 @@ export default function remarkPostLiveTracking() {
         descentFactor: attrs.descentFactor || attrs.descentfactor || "",
         elevationMax: attrs.elevationMax || attrs.elevationmax || "",
         referenceGpx: attrs.referenceGpx || attrs.referencegpx || "",
+        mapHeight: attrs.mapHeight || attrs.mapheight || "",
         title: attrs.title || "",
       };
 

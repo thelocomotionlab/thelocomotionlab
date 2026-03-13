@@ -84,6 +84,86 @@ function buildUrl(base, endpoint) {
   return `${safeBase}${safeEndpoint}`;
 }
 
+function computeProfileFromPoints(points) {
+  if (!Array.isArray(points) || points.length < 2) return [];
+
+  const R = 6371000;
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const haversine = (a, b) => {
+    const dLat = toRad(b.latitude - a.latitude);
+    const dLon = toRad(b.longitude - a.longitude);
+    const lat1 = toRad(a.latitude);
+    const lat2 = toRad(b.latitude);
+    const h =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+  };
+
+  // --- phase 1 : segments bruts ---
+  const segs = [];
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1];
+    const b = points[i];
+    const d = haversine(a, b);
+    const dz = (b.altitude || 0) - (a.altitude || 0);
+    segs.push({ d, dz, a, b });
+  }
+
+  // --- phase 2 : correction locale (virages)
+  const correctedSegs = [];
+  for (let i = 0; i < segs.length; i++) {
+    const prev = segs[i - 1];
+    const curr = segs[i];
+    if (!prev) {
+      correctedSegs.push(curr);
+      continue;
+    }
+    const v1 = [
+      curr.a.latitude - prev.a.latitude,
+      curr.a.longitude - prev.a.longitude,
+    ];
+    const v2 = [
+      curr.b.latitude - curr.a.latitude,
+      curr.b.longitude - curr.a.longitude,
+    ];
+    const dot = v1[0] * v2[0] + v1[1] * v2[1];
+    const norm1 = Math.hypot(...v1);
+    const norm2 = Math.hypot(...v2);
+    const angle =
+      norm1 && norm2
+        ? Math.acos(Math.min(1, Math.max(-1, dot / (norm1 * norm2))))
+        : 0;
+    const curvatureFactor = 1 + 0.25 * (angle / Math.PI);
+    correctedSegs.push({ ...curr, d: curr.d * curvatureFactor });
+  }
+
+  // --- phase 3 : intégration
+  let cumDist = 0;
+  let cumDplus = 0;
+  let cumDminus = 0;
+  const profile = [];
+
+  for (const s of correctedSegs) {
+    cumDist += s.d;
+
+    if (s.dz > 0) {
+      cumDplus += s.dz;
+    } else {
+      cumDminus += -s.dz;
+    }
+
+    profile.push({
+      km: cumDist / 1000,
+      alt: s.b.altitude || 0,
+      dPlus: Math.round(cumDplus),
+      dMinus: Math.round(cumDminus),
+    });
+  }
+
+  return profile;
+}
+
 export default function LiveTracking({
   apiBase = "https://tracking.thelocomotionlab.com",
   positionsEndpoint = "/live-positions.json",
@@ -135,7 +215,7 @@ export default function LiveTracking({
   const MAP_HEIGHT =
     typeof mapHeight === "number"
       ? `${mapHeight}px`
-      : mapHeight || "350px";
+      : mapHeight || "400px";
 
   // --- Styles de cartes ---
   const styles = {
@@ -446,41 +526,8 @@ export default function LiveTracking({
           map._runnerMarker.setLngLat(last);
         }
 
-        setElevationData((prev) => {
-          const newData = [...prev];
-          let distAcc = prev.length > 0 ? prev.at(-1).km : 0;
-          let dPlus = prev.length > 0 ? prev.at(-1).dPlus : 0;
-          let dMinus = prev.length > 0 ? prev.at(-1).dMinus : 0;
-
-          for (let i = Math.max(prev.length, 1); i < positions.length; i++) {
-            const prevPt = positions[i - 1];
-            const curr = positions[i];
-
-            const dLat = ((curr.latitude - prevPt.latitude) * Math.PI) / 180;
-            const dLon = ((curr.longitude - prevPt.longitude) * Math.PI) / 180;
-            const a =
-              Math.sin(dLat / 2) ** 2 +
-              Math.cos((prevPt.latitude * Math.PI) / 180) *
-                Math.cos((curr.latitude * Math.PI) / 180) *
-                Math.sin(dLon / 2) ** 2;
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            const d = 6371 * c;
-            distAcc += d;
-
-            const deltaAlt = (curr.altitude || 0) - (prevPt.altitude || 0);
-            if (deltaAlt > 0) dPlus += deltaAlt;
-            else dMinus += Math.abs(deltaAlt);
-
-            newData.push({
-              km: distAcc,
-              alt: curr.altitude || 0,
-              dPlus: Math.round(dPlus),
-              dMinus: Math.round(dMinus),
-            });
-          }
-
-          return newData;
-        });
+        const nextElevationData = computeProfileFromPoints(positions);
+        setElevationData(nextElevationData);
       } catch (err) {
         console.error("Erreur récupération live data :", err);
       }
@@ -561,7 +608,7 @@ export default function LiveTracking({
           }}
         >
           <div>
-            {km.toFixed(1)} km, {Math.round(alt)} m
+            {km.toFixed(1)} km, alt {Math.round(alt)} m
           </div>
           <div className="text-gray-600">
             D+ {dPlus} m D− {dMinus} m
