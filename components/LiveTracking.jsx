@@ -170,7 +170,7 @@ export default function LiveTracking({
   statsEndpoint = "/live-stats.json",
   timerEndpoint = "/live-timer.json",
   totalDistanceKm = 65,
-  elevationMax = 3100,
+  elevationMax = 860,
   referenceGpx = "/tracks/reunion-r2_temp.gpx",
   title = "Suivi en direct",
   pollIntervalMs = 10000,

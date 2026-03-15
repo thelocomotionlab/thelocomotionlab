@@ -27,22 +27,24 @@ import {
 } from "recharts";
 
 /**
- * Même logique que computeStats côté serveur,
- * mais en gardant aussi un profil cumulatif pour le graphe.
+ * Logique alignée sur le serveur :
+ * - segments bruts
+ * - correction locale des virages
+ * - intégration brute distance / D+ / D-
+ *
+ * Les coefficients globaux sont appliqués ensuite
+ * dans le composant via distanceFactor / ascentFactor / descentFactor.
  */
 function computeStatsFromPoints(points) {
   if (!Array.isArray(points) || points.length < 2) {
     return {
-      distanceMetersCorrected: 0,
-      dplusCorrected: 0,
-      dminusCorrected: 0,
+      distanceMeters: 0,
+      dplus: 0,
+      dminus: 0,
       profile: [],
       rawDistanceMeters: 0,
       rawDplus: 0,
       rawDminus: 0,
-      samplingCorrection: 1.3,
-      elevationPlusCorrection: 1.22,
-      elevationMinusCorrection: 1.29,
     };
   }
 
@@ -78,6 +80,7 @@ function computeStatsFromPoints(points) {
       correctedSegs.push(curr);
       continue;
     }
+
     const v1 = [
       curr.a.latitude - prev.a.latitude,
       curr.a.longitude - prev.a.longitude,
@@ -86,18 +89,21 @@ function computeStatsFromPoints(points) {
       curr.b.latitude - curr.a.latitude,
       curr.b.longitude - curr.a.longitude,
     ];
+
     const dot = v1[0] * v2[0] + v1[1] * v2[1];
     const norm1 = Math.hypot(...v1);
     const norm2 = Math.hypot(...v2);
+
     const angle =
       norm1 && norm2
         ? Math.acos(Math.min(1, Math.max(-1, dot / (norm1 * norm2))))
         : 0;
+
     const curvatureFactor = 1 + 0.25 * (angle / Math.PI);
     correctedSegs.push({ ...curr, d: curr.d * curvatureFactor });
   }
 
-  // phase 3 : intégration + correction globale
+  // phase 3 : intégration brute
   let totalDist = 0;
   let totalDplus = 0;
   let totalDminus = 0;
@@ -127,26 +133,14 @@ function computeStatsFromPoints(points) {
     });
   }
 
-  // mêmes coefficients que le backend
-  const samplingCorrection = 1.3;
-  const elevationPlusCorrection = 1.22;
-  const elevationMinusCorrection = 1.29;
-
-  const distanceMetersCorrected = totalDist * samplingCorrection;
-  const dplusCorrected = totalDplus * elevationPlusCorrection;
-  const dminusCorrected = totalDminus * elevationMinusCorrection;
-
   return {
-    distanceMetersCorrected,
-    dplusCorrected,
-    dminusCorrected,
+    distanceMeters: totalDist,
+    dplus: totalDplus,
+    dminus: totalDminus,
     profile,
     rawDistanceMeters: totalDist,
     rawDplus: totalDplus,
     rawDminus: totalDminus,
-    samplingCorrection,
-    elevationPlusCorrection,
-    elevationMinusCorrection,
   };
 }
 
@@ -384,18 +378,9 @@ export default function PostLiveTracking({
 
     async function loadData() {
       try {
-        const [posRes, statsRes] = await Promise.all([
-          fetch(positionsUrl),
-          statsUrl ? fetch(statsUrl) : Promise.resolve(null),
-        ]);
-
+        const posRes = await fetch(positionsUrl);
         const positions = await posRes.json();
         if (!Array.isArray(positions) || positions.length === 0) return;
-
-        let externalStats = null;
-        if (statsRes && statsRes.ok) {
-          externalStats = await statsRes.json();
-        }
 
         const map = mapRef.current;
         if (!map) return;
@@ -466,27 +451,19 @@ export default function PostLiveTracking({
           map._runnerMarker.setLngLat(last);
         }
 
-        // stats & profil
+        // stats & profil : uniquement à partir des positions
         const computed = computeStatsFromPoints(positions);
         const {
           rawDistanceMeters,
           rawDplus,
           rawDminus,
           profile,
-          samplingCorrection,
-          elevationPlusCorrection,
-          elevationMinusCorrection,
         } = computed;
 
-        // Coeffs finaux : markdown > fallback backend
-        const distCorrection =
-          Number(distanceFactor) || samplingCorrection;
-        const dplusCorrection =
-          Number(ascentFactor) || elevationPlusCorrection;
-        const dminusCorrection =
-          Number(descentFactor) || elevationMinusCorrection;
+        const distCorrection = Number(distanceFactor) || 1;
+        const dplusCorrection = Number(ascentFactor) || 1;
+        const dminusCorrection = Number(descentFactor) || 1;
 
-        // Distance & D+/D- finales
         const distanceKmFinal =
           (rawDistanceMeters * distCorrection) / 1000;
         const dplusFinal = rawDplus * dplusCorrection;
@@ -502,34 +479,19 @@ export default function PostLiveTracking({
         }));
         setElevationData(elev);
 
-        if (externalStats) {
-          setStats({
-            distance:
-              (externalStats.distance / 1000)?.toFixed(2) ??
-              distanceKmFinal.toFixed(2),
-            ascent:
-              externalStats.dplus ?? Math.round(dplusFinal),
-            descent:
-              externalStats.dminus ?? Math.round(dminusFinal),
-          });
-        } else {
-          setStats({
-            distance: distanceKmFinal.toFixed(2),
-            ascent: Math.round(dplusFinal),
-            descent: Math.round(dminusFinal),
-          });
-        }
+        setStats({
+          distance: distanceKmFinal.toFixed(2),
+          ascent: Math.round(dplusFinal),
+          descent: Math.round(dminusFinal),
+        });
 
-        if (externalStats && externalStats.durationSeconds) {
-          setElapsed(externalStats.durationSeconds);
-        } else if (
-          positions[0]?.fixTime &&
-          positions.at(-1)?.fixTime
-        ) {
+        if (positions[0]?.fixTime && positions.at(-1)?.fixTime) {
           const start = new Date(positions[0].fixTime);
           const end = new Date(positions.at(-1).fixTime);
           const diff = Math.max(0, (end - start) / 1000);
           setElapsed(Math.floor(diff));
+        } else {
+          setElapsed(0);
         }
       } catch (err) {
         console.error("Erreur chargement replay live tracking :", err);
@@ -537,7 +499,7 @@ export default function PostLiveTracking({
     }
 
     loadData();
-  }, [positionsUrl, statsUrl, distanceFactor, ascentFactor, descentFactor]);
+  }, [positionsUrl, distanceFactor, ascentFactor, descentFactor]);
 
   /* ---------- 4) Formatage & interactions ---------- */
 
