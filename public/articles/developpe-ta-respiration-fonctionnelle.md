@@ -11,7 +11,7 @@ cover: "/images/articles/draft_cover.png"
 date: "2026-03-11"
 tags: ["respiration", ""]
 
-published: true
+published: false
 ---
 
 Avec le sommeil, la respiration constitue probablement un des besoins les plus fondamentaux de l'être humain. Le geste de respirer, d'apparence simple et réalisé la plupart du temps inconsciemment, se base en réalité sur des mécanismes complexes et profondément ingénieux, développés et optimisés au fil de l'évolution. Cette fine horlogerie, rythmée par une respiration nasale, douce et appaisante, s'est pourtant déréglée au fil de l'histoire et de l'industrialisation, pour laisser place, chez un nombre croissant d'humains [https://pubmed.ncbi.nlm.nih.gov/18830512/], à un système respiratoire buccal et hâletant générant un stress chronique inconfortable et silencieux. À l'effort, un schéma respiratoire dysfonctionnel pourrait conduire à des augmentations de l'effort perçu (le fameux RPE pour Rate of Perceived Exertion), à des instabilités biomécaniques [https://stsmiles.com/blog/the-vital-role-of-nasal-nitric-oxide/] ou même au surentraînement [https://pmc.ncbi.nlm.nih.gov/articles/PMC8967998/]. Cet article vise à produire une base théorique accessible sur les mécanismes respiratoires, mais aussi pratique pour aider celleux qui le souhaitent à rétablir une respiration fonctionnelle au repos comme à l'effort.
