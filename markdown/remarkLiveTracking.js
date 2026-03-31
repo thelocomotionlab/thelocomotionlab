@@ -23,7 +23,6 @@ export default function remarkLiveTracking() {
 
       if (!rawLower.startsWith("<livetracking")) return;
 
-      // Cas simple rétrocompatible : <livetracking /> ou <livetracking>
       if (rawLower === "<livetracking />" || rawLower === "<livetracking>") {
         parent.children[index] = {
           type: "paragraph",
@@ -32,7 +31,6 @@ export default function remarkLiveTracking() {
         return;
       }
 
-      // Récupération des attributs
       const attrRegex = /(\w+)="([^"]*)"/g;
       const attrs = {};
       let match;
@@ -47,8 +45,6 @@ export default function remarkLiveTracking() {
         apiBase: attrs.apiBase || attrs.apibase || "",
         positionsEndpoint:
           attrs.positionsEndpoint || attrs.positionsendpoint || "",
-        statsEndpoint: attrs.statsEndpoint || attrs.statsendpoint || "",
-        timerEndpoint: attrs.timerEndpoint || attrs.timerendpoint || "",
         totalDistanceKm:
           attrs.totalDistanceKm ||
           attrs.totaldistancekm ||
@@ -58,10 +54,10 @@ export default function remarkLiveTracking() {
         elevationMax: attrs.elevationMax || attrs.elevationmax || "",
         referenceGpx: attrs.referenceGpx || attrs.referencegpx || "",
         title: attrs.title || "",
-        pollIntervalMs:
-          attrs.pollIntervalMs || attrs.pollintervalms || "",
+        pollIntervalMs: attrs.pollIntervalMs || attrs.pollintervalms || "",
         initialMapStyle:
           attrs.initialMapStyle || attrs.initialmapstyle || "",
+        mapHeight: attrs.mapHeight || attrs.mapheight || "",
       };
 
       parent.children[index] = {

@@ -84,90 +84,9 @@ function buildUrl(base, endpoint) {
   return `${safeBase}${safeEndpoint}`;
 }
 
-function computeProfileFromPoints(points) {
-  if (!Array.isArray(points) || points.length < 2) return [];
-
-  const R = 6371000;
-  const toRad = (deg) => (deg * Math.PI) / 180;
-  const haversine = (a, b) => {
-    const dLat = toRad(b.latitude - a.latitude);
-    const dLon = toRad(b.longitude - a.longitude);
-    const lat1 = toRad(a.latitude);
-    const lat2 = toRad(b.latitude);
-    const h =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
-    return 2 * R * Math.asin(Math.sqrt(h));
-  };
-
-  // --- phase 1 : segments bruts ---
-  const segs = [];
-  for (let i = 1; i < points.length; i++) {
-    const a = points[i - 1];
-    const b = points[i];
-    const d = haversine(a, b);
-    const dz = (b.altitude || 0) - (a.altitude || 0);
-    segs.push({ d, dz, a, b });
-  }
-
-  // --- phase 2 : correction locale (virages)
-  const correctedSegs = [];
-  for (let i = 0; i < segs.length; i++) {
-    const prev = segs[i - 1];
-    const curr = segs[i];
-    if (!prev) {
-      correctedSegs.push(curr);
-      continue;
-    }
-    const v1 = [
-      curr.a.latitude - prev.a.latitude,
-      curr.a.longitude - prev.a.longitude,
-    ];
-    const v2 = [
-      curr.b.latitude - curr.a.latitude,
-      curr.b.longitude - curr.a.longitude,
-    ];
-    const dot = v1[0] * v2[0] + v1[1] * v2[1];
-    const norm1 = Math.hypot(...v1);
-    const norm2 = Math.hypot(...v2);
-    const angle =
-      norm1 && norm2
-        ? Math.acos(Math.min(1, Math.max(-1, dot / (norm1 * norm2))))
-        : 0;
-    const curvatureFactor = 1 + 0.25 * (angle / Math.PI);
-    correctedSegs.push({ ...curr, d: curr.d * curvatureFactor });
-  }
-
-  // --- phase 3 : intégration
-  let cumDist = 0;
-  let cumDplus = 0;
-  let cumDminus = 0;
-  const profile = [];
-
-  for (const s of correctedSegs) {
-    cumDist += s.d;
-
-    if (s.dz > 0) {
-      cumDplus += s.dz;
-    } else {
-      cumDminus += -s.dz;
-    }
-
-    profile.push({
-      km: cumDist / 1000,
-      alt: s.b.altitude || 0,
-      dPlus: Math.round(cumDplus),
-      dMinus: Math.round(cumDminus),
-    });
-  }
-
-  return profile;
-}
-
 export default function LiveTracking({
   apiBase = "https://tracking.thelocomotionlab.com",
   positionsEndpoint = "/live-positions.json",
-  statsEndpoint = "/live-stats.json",
   timerEndpoint = "/live-timer.json",
   totalDistanceKm = 65,
   elevationMax = 860,
@@ -188,24 +107,23 @@ export default function LiveTracking({
   const [runnerPosition, setRunnerPosition] = useState(null);
   const [showElevation, setShowElevation] = useState(true);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
-
-  // 🔹 États chrono
   const [timer, setTimer] = useState({
     running: false,
     startTime: null,
     stopTime: null,
   });
   const [elapsed, setElapsed] = useState(0);
+  const [computedTotalDistance, setComputedTotalDistance] = useState(null);
 
   const TOTAL_DISTANCE_KM =
     typeof totalDistanceKm === "number"
       ? totalDistanceKm
-      : Number(totalDistanceKm) || 65;
+      : Number(totalDistanceKm) || computedTotalDistance || 65;
 
   const ELEVATION_MAX =
     typeof elevationMax === "number"
       ? elevationMax
-      : Number(elevationMax) || 3100;
+      : Number(elevationMax) || 860;
 
   const POLL_INTERVAL_MS =
     typeof pollIntervalMs === "number"
@@ -304,12 +222,19 @@ export default function LiveTracking({
         try {
           const res = await fetch(referenceGpx);
           if (!res.ok) {
-            console.warn("Référence GPX non chargée :", referenceGpx, res.status);
+            console.warn(
+              "Référence GPX non chargée :",
+              referenceGpx,
+              res.status
+            );
             return;
           }
 
           const xml = await res.text();
-          const doc = new DOMParser().parseFromString(xml, "application/xml");
+          const doc = new DOMParser().parseFromString(
+            xml,
+            "application/xml"
+          );
           const geojson = toGeoJSON.gpx(doc);
 
           map._referenceGeoJSON = geojson;
@@ -375,7 +300,6 @@ export default function LiveTracking({
     map.setStyle(styles[mapStyle]);
 
     map.once("styledata", () => {
-      // réinjecter la trace de référence si on a déjà chargé le GPX
       if (map._referenceGeoJSON && !map.getSource("reference-track")) {
         map.addSource("reference-track", {
           type: "geojson",
@@ -396,7 +320,6 @@ export default function LiveTracking({
         }
       }
 
-      // réinjecter la trace live
       if (map._liveTrackGeoJSON && !map.getSource("live-track")) {
         map.addSource("live-track", {
           type: "geojson",
@@ -432,49 +355,35 @@ export default function LiveTracking({
     async function fetchLiveData() {
       try {
         const positionsUrl = buildUrl(apiBase, positionsEndpoint);
-        const statsUrl = buildUrl(apiBase, statsEndpoint);
+        if (!positionsUrl) return;
 
-        const [posRes, statsRes] = await Promise.all([
-          fetch(
-            `${positionsUrl}${
-              positionsUrl.includes("?") ? "&" : "?"
-            }cacheBust=${Date.now()}`
-          ),
-          statsUrl
-            ? fetch(
-                `${statsUrl}${
-                  statsUrl.includes("?") ? "&" : "?"
-                }cacheBust=${Date.now()}`
-              )
-            : Promise.resolve(null),
-        ]);
+        const res = await fetch(
+          `${positionsUrl}${positionsUrl.includes("?") ? "&" : "?"}cacheBust=${Date.now()}`
+        );
 
-        const positions = await posRes.json();
-        const externalStats =
-          statsRes && statsRes.ok ? await statsRes.json() : null;
+        const data = await res.json();
+        const profile = Array.isArray(data?.profile) ? data.profile : [];
+        const serverStats = data?.stats || null;
 
-        if (!Array.isArray(positions) || positions.length === 0) return;
+        if (!profile.length) return;
 
-        setStats({
-          distance: (
-            externalStats?.distance != null
-              ? externalStats.distance / 1000
-              : 0
-          ).toFixed(2),
-          ascent: externalStats?.dplus || 0,
-          descent: externalStats?.dminus || 0,
-        });
+        const map = mapRef.current;
+        if (!map) return;
 
-        setLastUpdate(positions.at(-1)?.fixTime || null);
+        const coords = profile
+          .map((p) =>
+            Number.isFinite(p?.longitude) && Number.isFinite(p?.latitude)
+              ? [p.longitude, p.latitude]
+              : null
+          )
+          .filter(Boolean);
 
-        const coords = positions.map((p) => [p.longitude, p.latitude]);
+        if (!coords.length) return;
+
         const geojson = {
           type: "Feature",
           geometry: { type: "LineString", coordinates: coords },
         };
-
-        const map = mapRef.current;
-        if (!map) return;
 
         map._liveTrackGeoJSON = geojson;
 
@@ -494,8 +403,43 @@ export default function LiveTracking({
           });
         }
 
+        const lastPoint = profile.at(-1);
         const last = coords.at(-1);
+
         setRunnerPosition(last);
+        setLastUpdate(serverStats?.lastFixTime || lastPoint?.fixTime || null);
+
+        setStats({
+          distance:
+            serverStats?.distance != null
+              ? (serverStats.distance / 1000).toFixed(2)
+              : ((lastPoint?.distMeters || 0) / 1000).toFixed(2),
+          ascent:
+            serverStats?.dplus != null
+              ? serverStats.dplus
+              : Math.round(lastPoint?.dPlus || 0),
+          descent:
+            serverStats?.dminus != null
+              ? serverStats.dminus
+              : Math.round(lastPoint?.dMinus || 0),
+        });
+
+        const nextElevationData = profile.map((p) => ({
+          km:
+            p?.distKm != null
+              ? Number(p.distKm)
+              : Number((p?.distMeters || 0) / 1000),
+          alt: p?.alt || 0,
+          dPlus: Math.round(p?.dPlus || 0),
+          dMinus: Math.round(p?.dMinus || 0),
+        }));
+        setElevationData(nextElevationData);
+
+        const lastKm =
+          lastPoint?.distKm != null
+            ? Number(lastPoint.distKm)
+            : Number((lastPoint?.distMeters || 0) / 1000);
+        setComputedTotalDistance(lastKm || 0);
 
         if (!map._hasAutoFramed) {
           const bounds = getBoundsFromCoords(coords);
@@ -521,13 +465,12 @@ export default function LiveTracking({
             "url('https://cdn-icons-png.flaticon.com/512/847/847969.png')";
           el.style.backgroundSize = "contain";
           el.style.backgroundRepeat = "no-repeat";
-          map._runnerMarker = new maplibregl.Marker(el).setLngLat(last).addTo(map);
+          map._runnerMarker = new maplibregl.Marker(el)
+            .setLngLat(last)
+            .addTo(map);
         } else if (map._runnerMarker && last) {
           map._runnerMarker.setLngLat(last);
         }
-
-        const nextElevationData = computeProfileFromPoints(positions);
-        setElevationData(nextElevationData);
       } catch (err) {
         console.error("Erreur récupération live data :", err);
       }
@@ -536,7 +479,7 @@ export default function LiveTracking({
     fetchLiveData();
     const interval = setInterval(fetchLiveData, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [apiBase, positionsEndpoint, statsEndpoint, POLL_INTERVAL_MS]);
+  }, [apiBase, positionsEndpoint, POLL_INTERVAL_MS]);
 
   /* ---------- 4) Récupération du timer ---------- */
   useEffect(() => {
@@ -549,7 +492,11 @@ export default function LiveTracking({
           `${timerUrl}${timerUrl.includes("?") ? "&" : "?"}cacheBust=${Date.now()}`
         );
         const data = await res.json();
-        setTimer(data);
+        setTimer({
+          running: Boolean(data?.running),
+          startTime: data?.startTime || null,
+          stopTime: data?.stopTime || null,
+        });
       } catch (err) {
         console.error("Erreur timer :", err);
       }
@@ -564,14 +511,23 @@ export default function LiveTracking({
   useEffect(() => {
     let interval;
 
-    if (timer.startTime) {
-      interval = setInterval(() => {
-        const now = new Date();
-        const start = new Date(timer.startTime);
-        const stop = timer.stopTime ? new Date(timer.stopTime) : null;
-        const diff = timer.running ? now - start : stop ? stop - start : 0;
-        setElapsed(Math.max(0, Math.floor(diff / 1000)));
-      }, 1000);
+    const computeElapsed = () => {
+      if (!timer.startTime) {
+        setElapsed(0);
+        return;
+      }
+
+      const now = new Date();
+      const start = new Date(timer.startTime);
+      const stop = timer.stopTime ? new Date(timer.stopTime) : null;
+      const diff = timer.running ? now - start : stop ? stop - start : 0;
+      setElapsed(Math.max(0, Math.floor(diff / 1000)));
+    };
+
+    computeElapsed();
+
+    if (timer.startTime && timer.running) {
+      interval = setInterval(computeElapsed, 1000);
     }
 
     return () => clearInterval(interval);
@@ -581,7 +537,10 @@ export default function LiveTracking({
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
     const sec = s % 60;
-    return `${h}h${String(m).padStart(2, "0")}min${String(sec).padStart(2, "0")}s`;
+    return `${h}h${String(m).padStart(2, "0")}min${String(sec).padStart(
+      2,
+      "0"
+    )}s`;
   };
 
   const recenterMap = () => {
@@ -694,7 +653,9 @@ export default function LiveTracking({
             title="Télécharger la trace GPX"
           >
             <Download size={16} />
-            <span className="hidden sm:inline text-sm font-medium">Télécharger</span>
+            <span className="hidden sm:inline text-sm font-medium">
+              Télécharger
+            </span>
           </a>
         )}
 
@@ -839,7 +800,9 @@ export default function LiveTracking({
                               fill="#555"
                               fontSize={isSmallScreen ? 6 : 10}
                               fontWeight={400}
-                              background={{ fill: "rgba(255,255,255,0.4)" }}
+                              background={{
+                                fill: "rgba(255,255,255,0.4)",
+                              }}
                             />
                           </ReferenceLine>
                         ))}

@@ -130,6 +130,9 @@ function computeStatsFromPoints(points) {
       alt: s.b.altitude || 0,
       dPlus: cumDplus,
       dMinus: cumDminus,
+      latitude: s.b.latitude ?? null,
+      longitude: s.b.longitude ?? null,
+      fixTime: s.b.fixTime || null,
     });
   }
 
@@ -141,6 +144,99 @@ function computeStatsFromPoints(points) {
     rawDistanceMeters: totalDist,
     rawDplus: totalDplus,
     rawDminus: totalDminus,
+  };
+}
+
+function isNewLivePositionsFormat(data) {
+  return !!data && !Array.isArray(data) && Array.isArray(data.profile);
+}
+
+function normalizeReplayData(data) {
+  if (isNewLivePositionsFormat(data)) {
+    const profile = Array.isArray(data.profile) ? data.profile : [];
+    const stats = data.stats || {};
+    const lastPoint = profile.at(-1) || null;
+
+    const coords = profile
+      .map((p) =>
+        Number.isFinite(p?.longitude) && Number.isFinite(p?.latitude)
+          ? [p.longitude, p.latitude]
+          : null
+      )
+      .filter(Boolean);
+
+    const normalizedProfile = profile.map((p) => ({
+      distMeters:
+        typeof p?.distMeters === "number"
+          ? p.distMeters
+          : Number(p?.distKm || 0) * 1000,
+      alt: p?.alt || 0,
+      dPlus: p?.dPlus || 0,
+      dMinus: p?.dMinus || 0,
+      latitude: p?.latitude ?? null,
+      longitude: p?.longitude ?? null,
+      fixTime: p?.fixTime || null,
+    }));
+
+    const rawDistanceMeters =
+      typeof stats?.distance === "number"
+        ? stats.distance
+        : lastPoint?.distMeters || 0;
+
+    const rawDplus =
+      typeof stats?.dplus === "number"
+        ? stats.dplus
+        : lastPoint?.dPlus || 0;
+
+    const rawDminus =
+      typeof stats?.dminus === "number"
+        ? stats.dminus
+        : lastPoint?.dMinus || 0;
+
+    return {
+      coords,
+      profile: normalizedProfile,
+      rawDistanceMeters,
+      rawDplus,
+      rawDminus,
+      lastFixTime: stats?.lastFixTime || lastPoint?.fixTime || null,
+      durationSeconds:
+        typeof stats?.durationSeconds === "number"
+          ? stats.durationSeconds
+          : null,
+      firstFixTime: profile[0]?.fixTime || null,
+      lastProfilePoint: lastPoint,
+    };
+  }
+
+  if (Array.isArray(data)) {
+    const positions = data;
+    const computed = computeStatsFromPoints(positions);
+    const coords = positions.map((p) => [p.longitude, p.latitude]);
+
+    return {
+      coords,
+      profile: computed.profile,
+      rawDistanceMeters: computed.rawDistanceMeters,
+      rawDplus: computed.rawDplus,
+      rawDminus: computed.rawDminus,
+      lastFixTime: positions.at(-1)?.fixTime || null,
+      durationSeconds: null,
+      firstFixTime: positions[0]?.fixTime || null,
+      lastProfilePoint: computed.profile.at(-1) || null,
+    };
+  }
+
+  return {
+    coords: [],
+    profile: [],
+    rawDistanceMeters: 0,
+    rawDplus: 0,
+    rawDminus: 0,
+    lastFixTime: null,
+    durationSeconds: null,
+    firstFixTime: null,
+    lastProfilePoint: null,
   };
 }
 
@@ -247,11 +343,10 @@ export default function PostLiveTracking({
       const map = new maplibregl.Map({
         container,
         style: styles.osm,
-        center: [55.5325, -21.1151],
-        zoom: 10,
+        center: [0, 0],
+        zoom: 2,
         attributionControl: false,
       });
-
       mapRef.current = map;
       map.addControl(new maplibregl.NavigationControl(), "top-right");
       map.addControl(new maplibregl.AttributionControl({ compact: true }));
@@ -379,13 +474,24 @@ export default function PostLiveTracking({
     async function loadData() {
       try {
         const posRes = await fetch(positionsUrl);
-        const positions = await posRes.json();
-        if (!Array.isArray(positions) || positions.length === 0) return;
+        const rawData = await posRes.json();
+
+        const normalized = normalizeReplayData(rawData);
+        const {
+          coords,
+          profile,
+          rawDistanceMeters,
+          rawDplus,
+          rawDminus,
+          lastFixTime,
+          durationSeconds,
+        } = normalized;
+
+        if (!coords.length) return;
 
         const map = mapRef.current;
         if (!map) return;
 
-        const coords = positions.map((p) => [p.longitude, p.latitude]);
         const geojson = {
           type: "Feature",
           geometry: { type: "LineString", coordinates: coords },
@@ -411,30 +517,27 @@ export default function PostLiveTracking({
 
         const last = coords.at(-1);
         setRunnerPosition(last);
-        setLastUpdate(positions.at(-1)?.fixTime || null);
+        setLastUpdate(lastFixTime || null);
 
-        const fit = () => {
+        if (!map._hasAutoFramed && coords.length > 1) {
           try {
-            map.fitBounds(
+            const bounds = [
               [
-                [
-                  Math.min(...coords.map((c) => c[0])),
-                  Math.min(...coords.map((c) => c[1])),
-                ],
-                [
-                  Math.max(...coords.map((c) => c[0])),
-                  Math.max(...coords.map((c) => c[1])),
-                ],
+                Math.min(...coords.map((c) => c[0])),
+                Math.min(...coords.map((c) => c[1])),
               ],
-              { padding: 40 }
-            );
+              [
+                Math.max(...coords.map((c) => c[0])),
+                Math.max(...coords.map((c) => c[1])),
+              ],
+            ];
+
+            map.fitBounds(bounds, { padding: 40, duration: 0 });
+            map._hasAutoFramed = true;
           } catch (e) {
             console.warn("fitBounds échoué :", e);
           }
-        };
-
-        if (map.isStyleLoaded()) fit();
-        else map.once("load", fit);
+        }
 
         if (!map._runnerMarker && last) {
           const el = document.createElement("div");
@@ -450,15 +553,6 @@ export default function PostLiveTracking({
         } else if (map._runnerMarker && last) {
           map._runnerMarker.setLngLat(last);
         }
-
-        // stats & profil : uniquement à partir des positions
-        const computed = computeStatsFromPoints(positions);
-        const {
-          rawDistanceMeters,
-          rawDplus,
-          rawDminus,
-          profile,
-        } = computed;
 
         const distCorrection = Number(distanceFactor) || 1;
         const dplusCorrection = Number(ascentFactor) || 1;
@@ -485,13 +579,20 @@ export default function PostLiveTracking({
           descent: Math.round(dminusFinal),
         });
 
-        if (positions[0]?.fixTime && positions.at(-1)?.fixTime) {
-          const start = new Date(positions[0].fixTime);
-          const end = new Date(positions.at(-1).fixTime);
-          const diff = Math.max(0, (end - start) / 1000);
-          setElapsed(Math.floor(diff));
+        if (typeof durationSeconds === "number" && durationSeconds >= 0) {
+          setElapsed(Math.floor(durationSeconds));
         } else {
-          setElapsed(0);
+          const firstFixTime = profile[0]?.fixTime || null;
+          const lastProfileFixTime = profile.at(-1)?.fixTime || null;
+
+          if (firstFixTime && lastProfileFixTime) {
+            const start = new Date(firstFixTime);
+            const end = new Date(lastProfileFixTime);
+            const diff = Math.max(0, (end - start) / 1000);
+            setElapsed(Math.floor(diff));
+          } else {
+            setElapsed(0);
+          }
         }
       } catch (err) {
         console.error("Erreur chargement replay live tracking :", err);

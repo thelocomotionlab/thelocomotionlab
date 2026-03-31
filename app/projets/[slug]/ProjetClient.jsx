@@ -93,7 +93,7 @@ function ProjetClientInner({ project, initialContent }) {
 
   return (
     // ✅ pt-0 : la cover peut “coller” à la navbar sur mobile
-    <article className="max-w-5xl mx-auto sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
+    <article className="max-w-4xl mx-auto sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
       {/* ✅ Cover full-bleed mobile, sans arrondi. Pas de ratio figé. */}
       {project.cover && (
         <div
