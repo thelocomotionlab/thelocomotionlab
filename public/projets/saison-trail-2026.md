@@ -73,6 +73,36 @@ Voici un carnet de bord de mon année de trail 2026. Celle-ci s'annonce bien dif
 *Tracking actualisé tous les 60 s ou 100 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
 
 
+### Projet OFF Traversée de la Chartreuse
+*04/01/2026*
+<!-- <livetracking
+  apiBase="https://tracking.thelocomotionlab.com"
+  positionsEndpoint="/live-positions.json"
+  statsEndpoint="/live-stats.json"
+  timerEndpoint="/live-timer.json"
+  referenceGpx="/tracks/mdl-65km_off.gpx"
+  totalDistance="65"
+  elevationMax="860"
+  title="Suivi en direct"
+  pollIntervalMs="10000"
+  initialMapStyle="osm"
+/>
+ -->
+<!-- <postlivetracking
+  positions="/replays/mdl-65km_off/live-positions.json"
+  totalDistance="65"
+  distanceFactor="1."
+  ascentFactor=".8"
+  descentFactor=".8"
+  elevationMax="860"
+  referenceGpx="/tracks/mdl-65km_off.gpx"
+  title="OFF Monts du Lyonnais 65 km"
+/>
+ -->
+
+*Tracking actualisé tous les 60 s ou 100 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
+
+
 <!-- ![PPG 28 août 2025](/images/projets/traversee-reunion/ppg_28_08_2025.webp)
 *Séance PPG n°5 réalisée pour le GRF.* -->
 

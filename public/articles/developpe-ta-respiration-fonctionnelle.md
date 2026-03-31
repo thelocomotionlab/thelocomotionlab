@@ -36,5 +36,6 @@ Là où ça devient intéressant, et tu vas rapidement comprendre pourquoi, c'es
 
 La présence de CO2 dans l'organisme est donc essentielle pour garantir une bonne oxygénation cellulaire. Car tu comprends maintenant que plus tu as de CO2 dans le corps, plus ton hémoglobine chargé d'O2 aura de facilité à délivrer ce précieux sésame de manière chirurgicale au niveau des cellules. D'ailleurs, tu as déjà entendu parler de l'acide lactique ? Cette molécule produite lors d'effort intense [anaérobie, fermentation lactique], provoque l'acidification du sang (comme son nom l'indique) et donc une baisse de pH ce qui fait fortement baisser l'affinité de l'oxygène pour l'hémoglobine et stimule intensément le relargage d'O2 dans l'organisme. Plus l'effort est intense, plus la quantité d'oxygène délivrée est grande. La nature est quand même sacrément bien faite n'est-ce pas ?
 
-## Ce qu'une respiration buccale ne fait pas
+## La respiration dysfonctionnelle moderne
 
+Au cours des précédents millénaires, l'être humain a connu des modifications très importantes de son mode de vie. Nos ancêtres chasseurs-cueilleurs opportunistes se sont sédentarisés il y XX millénaires avec l'apparition de l'agriculture [source] Nos ancêtre chasseurs-cueilleurs passaient en effet des heures chaque jour à mâcher des racines, du gibier et des plantes crues
