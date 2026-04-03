@@ -5,7 +5,7 @@ description: "Carnet de bord de ma saison de trail 2026 : projets OFF, sorties l
 cover: "/images/projets/saison-trail-2026/cover_saison-trail-2026.webp"
 
 status: "En cours"
-activityAt: 2026-03-12
+activityAt: 2026-04-03
 
 published: true
 ---
@@ -145,7 +145,7 @@ Après environ 12h30 d'effort, nous revînmes à Vaugneray, notre lieu de dépar
 /> -->
 
 
-*Tracking actualisé tous les 60 s ou 100 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
+*Tracking actualisé tous les 30 s ou 25 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
 
 
 <!-- ![PPG 28 août 2025](/images/projets/traversee-reunion/ppg_28_08_2025.webp)
