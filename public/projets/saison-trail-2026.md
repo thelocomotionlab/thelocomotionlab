@@ -78,15 +78,16 @@ Dans le détail, l'évolution de mes séances en côtes a ressemblé à ceci :
 
 Ces temps-ci, l'envie d'aventure est forte, et les jambes répondent plutôt très bien. C'est donc le couteau entre les dents que je suis parti sur ce premier marathon de l'année. 44km 2100m D+/D-, avec uné énième traversée du rocher du Caire, une longue promenade sur les hauteurs de Chalancon. Avec un sac chargé à 6.4 kg au départ, toujours en vue de préparer un OFF sur plusieurs jours en mai en autonomie complète (plus de détails plus loin dans le projet), je suis plutôt très satisfait des sensations et de ma capacité à endurer l'effort sur quasiment 7h. Un petit montage vidéo qui retranscrit cette aventure est [disponible ici](https://www.instagram.com/p/DVjT_3DjORS/?hl=fr).
 
-[Traversée de la Réunion](/tracks/premier-marathon-2026_komoot.gpx)
+[Premier marathon de l'année 2026](/tracks/premier-marathon-2026_komoot.gpx)
 
 *Parcours de mon premier marathon de l'année.*
 
 ### Projet OFF Monts du Lyonnais 
 *14/03/2026*
 
-![Contenu du sac {width=480px align=center}](/images/projets/saison-trail-2026/sac_contenu.webp)
-*Mer de nuage dans la vallée (gauche) et trace GPX du tour du Taillefer (droite).*
+![Contenu du sac {width=620px align=center}](/images/projets/saison-trail-2026/sac_full.webp)
+*Contenu du sac simulant le OFF projet 31 lors de l'aventure dans les Monts du Lyonnais.*
+
 
 <postlivetracking
   positions="/replays/mdl-65km_off/live-positions.json"

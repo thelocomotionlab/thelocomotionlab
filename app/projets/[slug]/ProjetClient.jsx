@@ -12,6 +12,7 @@ import remarkMath from "remark-math";
 import remarkSplit from "../../../markdown/remarkSplit";
 import remarkLiveTracking from "../../../markdown/remarkLiveTracking";
 import remarkPostLiveTracking from "../../../markdown/remarkPostLiveTracking";
+import remarkImageOptions from "../../../markdown/remarkImageOptions";
 
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
@@ -169,6 +170,7 @@ function ProjetClientInner({ project, initialContent }) {
           <ReactMarkdown
             remarkPlugins={[
               remarkFrontmatter,
+              remarkImageOptions,
               remarkGfm,
               remarkLiveTracking,
               remarkPostLiveTracking,
