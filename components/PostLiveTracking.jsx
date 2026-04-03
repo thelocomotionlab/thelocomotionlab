@@ -244,6 +244,7 @@ export default function PostLiveTracking({
   positionsUrl,
   statsUrl,
   totalDistanceKm,
+  elevationMin = 1000,
   elevationMax = 3100,
   referenceGpx, // <postlivetracking referenceGpx="...">
   title = "Replay GPS",
@@ -273,6 +274,17 @@ export default function PostLiveTracking({
     typeof mapHeight === "number"
       ? `${mapHeight}px`
       : mapHeight || "400px";
+
+  const parsedElevationMin = Number(elevationMin);
+  const parsedElevationMax = Number(elevationMax);
+
+  const ELEVATION_MIN = Number.isFinite(parsedElevationMin)
+    ? parsedElevationMin
+    : 1000;
+
+  const ELEVATION_MAX = Number.isFinite(parsedElevationMax)
+    ? parsedElevationMax
+    : 3100;
 
   const styles = {
     topo: {
@@ -859,14 +871,20 @@ export default function PostLiveTracking({
                         allowDecimals={false}
                       />
                       <YAxis
-                        domain={[0, elevationMax]}
+                        domain={[0, ELEVATION_MAX]}
                         tick={false}
                         axisLine={false}
                         width={0}
                       />
                       <Tooltip content={<CustomTooltip />} />
-                      {[1000, 2000, 3000]
-                        .filter((a) => a <= elevationMax)
+                      {[ELEVATION_MIN, ELEVATION_MAX]
+                        .filter(
+                          (alt, index, arr) =>
+                            Number.isFinite(alt) &&
+                            alt >= 0 &&
+                            alt <= ELEVATION_MAX &&
+                            arr.indexOf(alt) === index
+                        )
                         .map((alt) => (
                           <ReferenceLine
                             key={alt}

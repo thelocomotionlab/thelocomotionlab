@@ -68,6 +68,7 @@ export default function remarkLiveTracking() {
             attrs.totalDistance ||
             attrs.totaldistance ||
             "",
+          elevationMin: attrs.elevationMin || attrs.elevationmin || "",
           elevationMax: attrs.elevationMax || attrs.elevationmax || "",
           referenceGpx: attrs.referenceGpx || attrs.referencegpx || "",
           title: attrs.title || "",

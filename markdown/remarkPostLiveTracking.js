@@ -60,6 +60,7 @@ export default function remarkPostLiveTracking() {
         distanceFactor: attrs.distanceFactor || attrs.distancefactor || "",
         ascentFactor: attrs.ascentFactor || attrs.ascentfactor || "",
         descentFactor: attrs.descentFactor || attrs.descentfactor || "",
+        elevationMin: attrs.elevationMin || attrs.elevationmin || "",
         elevationMax: attrs.elevationMax || attrs.elevationmax || "",
         referenceGpx: attrs.referenceGpx || attrs.referencegpx || "",
         mapHeight: attrs.mapHeight || attrs.mapheight || "",

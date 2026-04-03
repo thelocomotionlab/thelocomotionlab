@@ -89,6 +89,7 @@ export default function LiveTracking({
   positionsEndpoint = "/live-positions.json",
   timerEndpoint = "/live-timer.json",
   totalDistanceKm = 65,
+  elevationMin = 400,
   elevationMax = 860,
   referenceGpx = "/tracks/reunion-r2_temp.gpx",
   title = "Suivi en direct",
@@ -120,10 +121,16 @@ export default function LiveTracking({
       ? totalDistanceKm
       : Number(totalDistanceKm) || computedTotalDistance || 65;
 
-  const ELEVATION_MAX =
-    typeof elevationMax === "number"
-      ? elevationMax
-      : Number(elevationMax) || 860;
+  const parsedElevationMin = Number(elevationMin);
+  const parsedElevationMax = Number(elevationMax);
+
+  const ELEVATION_MIN = Number.isFinite(parsedElevationMin)
+    ? parsedElevationMin
+    : 400;
+
+  const ELEVATION_MAX = Number.isFinite(parsedElevationMax)
+    ? parsedElevationMax
+    : 860;
 
   const POLL_INTERVAL_MS =
     typeof pollIntervalMs === "number"
@@ -790,8 +797,14 @@ export default function LiveTracking({
                         width={0}
                       />
                       <Tooltip content={<CustomTooltip />} />
-                      {[400, 800]
-                        .filter((alt) => alt <= ELEVATION_MAX)
+                      {[ELEVATION_MIN, ELEVATION_MAX]
+                        .filter(
+                          (alt, index, arr) =>
+                            Number.isFinite(alt) &&
+                            alt >= 0 &&
+                            alt <= ELEVATION_MAX &&
+                            arr.indexOf(alt) === index
+                        )
                         .map((alt) => (
                           <ReferenceLine
                             key={alt}
