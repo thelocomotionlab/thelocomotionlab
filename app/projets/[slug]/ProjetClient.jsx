@@ -9,6 +9,7 @@ import remarkDirective from "remark-directive";
 import remarkFrontmatter from "remark-frontmatter";
 import remarkMath from "remark-math";
 import remarkSplit from "../../../markdown/remarkSplit";
+import remarkImageOptions from "../../../markdown/remarkImageOptions";
 import remarkLiveTracking from "../../../markdown/remarkLiveTracking";
 import remarkPostLiveTracking from "../../../markdown/remarkPostLiveTracking";
 
@@ -168,6 +169,7 @@ function ProjetClientInner({ project, initialContent }) {
           <ReactMarkdown
             remarkPlugins={[
               remarkFrontmatter,
+              remarkImageOptions,
               remarkGfm,
               remarkLiveTracking,
               remarkPostLiveTracking,

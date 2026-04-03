@@ -43,7 +43,7 @@ Oui les choses sérieuses reprennent car aujourd'hui, c'était ma première vrai
 
 *Parcours de ma première sortie longue de l'année.*
 
-### Bilan février - *Use it or lose it*, vous êtes sûr ?
+### *Use it or lose it*, vous êtes sûr ?
 *26/02/2026*
 
 Sur la fin février, l'entraînement poursuit son cours avec une montée de volume tranquille et des semaines qui gravitent autour de 70-80km avec entre 2000 m et 3000 m D+/D-. Je suis assez étonné de voir comment mon corps a bien réagi à cette reprise depuis le début d'année, et comment il s'est vite remis dans le bain de la course à pieds sans perdre de masse musculaire  malgré une longue période d'interruption. Moi qui étais matrixé par le fameux *use it or lose it*, je me rends compte que la réalité est plus complexe que cela, ce qui m'a mené à quelques recherches bibliographiques dont je vous certaines pistes de façon informelle, car j'y reviendrai dans un article futur.
@@ -85,8 +85,24 @@ Ces temps-ci, l'envie d'aventure est forte, et les jambes répondent plutôt tr�
 ### Projet OFF Monts du Lyonnais 
 *14/03/2026*
 
+Cette aventure, prévue de longue date, revêtait plusieurs objectifs. D'abord, celui de réaliser un projet trail tous les trois avec Lolo et Rapace pour la première fois. Mais aussi, tester ma capacité à parcourir une longue distance (ici autour de 65km 3500m D+/D-) avec un sac lesté dans les conditions du *31 project* à venir. J'ai donc préparé mon sac avec minutie, et celui-ci affichait 8.9kg sur la balance au début de l'aventure. 
+
 ![Contenu du sac {width=620px align=center}](/images/projets/saison-trail-2026/sac_full.webp)
-*Contenu du sac simulant le OFF projet 31 lors de l'aventure dans les Monts du Lyonnais.*
+*Contenu du sac simulant les conditions du "31 project" lors de l'aventure dans les Monts du Lyonnais.*
+
+Si les premiers kms furent relativement difficiles, j'ai compris, par les lumières du bon Rapace, qu'il fallait un certain temps pour que toutes les filières énergétiques se mettent en place au moment de débuter un effort. Une fois celles-ci établies, le corps atteint un certain rythme de croisière qui, s'il est respecté, peut être tenu pendant de longues heures. 
+
+![Gueux avant {width=580px align=center}](/images/projets/saison-trail-2026/gueux_avant.webp)
+*Les trois gueux au début de cette belle aventure.*
+
+Concernant le contenu de la sortie, on était sur un parcours qui serpentait les Monts du Lyonnais, probablement établi par un borneur fou, puisque nous ne comptions plus les moments où le parcours était artificiellement rallongé par des bosses pour engranger du D+ additionnel. Comment en vouloir à cette personne ? Car dans le fond, on a vraiment kiffé.
+
+En terme de ressenti, je n'ai jamais fait une sortie aussi longue qui s'est écoulé aussi rapidement. C'est incroyable comment le fait d'être à plusieurs dans l'effort, transcende et modifie la perception du temps. Je n'en avais pas conscience dans une telle mesure. Cela me donne fort envie de réitérer l'expérience.
+
+Après environ 12h30 d'effort, nous revînmes à Vaugneray, notre lieu de départ, sous la neige. Un résumé vidéo de cette aventure incroyable est [disponible ici](https://www.instagram.com/p/DWHeZDeDCOD/?hl=fr).
+
+![Gueux après {width=580px align=center}](/images/projets/saison-trail-2026/gueux_apres.webp)
+*Les trois gueux à l'arrivée de cette belle aventure.*
 
 
 <postlivetracking
@@ -103,7 +119,6 @@ Ces temps-ci, l'envie d'aventure est forte, et les jambes répondent plutôt tr�
 *Replay du tracking OFF Monts du Lyonnais. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
 
 ## Avril
-
 ### Projet OFF Traversée de la Chartreuse
 *04/04/2026*
 

@@ -28,7 +28,7 @@ L'objectif pour ce mois d'octobre est clair : borner comme un phacochère tout e
 
 Côté préparation physique, rien de neuf sous les tropiques. À savoir que je repars sur un bloc de 6 semaines basé sur les séances concotées par le best [Quentin Giacomazzo](https://www.instagram.com/conditionacademy/) pour le GRF, en augmentant légèrement les charges pour continuer de créer des adaptations. 
 
-![PPG 28 août 2025](/images/projets/traversee-reunion/ppg_28_08_2025.webp)
+![PPG 28 août 2025 {width=680px align=center}](/images/projets/traversee-reunion/ppg_28_08_2025.webp)
 *Séance PPG n°5 réalisée pour le GRF.*
 
 
