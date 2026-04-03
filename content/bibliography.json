@@ -57,6 +57,48 @@
     "number": "0",
     "year": "2025",
     "doi": "10.1177/17543371251341660"
-  }
+  },
+  "gundersen2016": {
+    "author": "Gundersen, Kristian and Lindstedt, Stan L. and Hoppeler, Hans H",
+    "title": "Muscle memory and a new cellular model for muscle atrophy and hypertrophy",
+    "journal": "Journal of Experimental Biology",
+    "volume": "219",
+    "number": "2",
+    "pages": "235-242",
+    "year": "2016",
+    "month": "01",
+    "issn": "0022-0949",
+    "doi": "10.1242/jeb.124495"
+  },
+  "buxton2024": {
+    "author": "Buxton J, Daugherty M, Grubbs R, Isles M, Mulligan S, Plank E, Taylor E, Prins P.",
+    "title": "Comparison of muscle activation during quadrupedal movement training and traditional bodyweight exercises.",
+    "journal": "Journal of Bodywork and Movement Therapies",
+    "year": "2024",
+    "month": "11",
+    "issn": "2173-2178",
+    "doi": "10.1016/j.jbmt.2024.11.002"
+  },
+  "encarnacao2022": {
+    "author": "Encarnação Irismar G. A., and Viana Ricardo B., and Soares Saulo R. S., and Freitas Eduardo D. S., and de Lira Claudio A. B., and Ferreira-Junior João B.",
+    "title": "Effects of Detraining on Muscle Strength and Hypertrophy Induced by Resistance Training: A Systematic Review",
+    "journal": "Muscles",
+    "volume": "1",
+    "number": "1",
+    "pages": "1-15",
+    "year": "2022",
+    "issn": "2813-0413",
+    "doi": "10.3390/muscles1010001"
+  },  
+  "bonaldo2013": {
+    "author": "Bonaldo, P., and Sandri, M. ",
+    "title": "Cellular and molecular mechanisms of muscle atrophy.",
+    "journal": "Disease models & mechanisms",
+    "volume": "1",
+    "number": "6",
+    "pages": "25-39",
+    "year": "2013",
+    "doi": "10.1242/dmm.010389"
+  }    
 }
 

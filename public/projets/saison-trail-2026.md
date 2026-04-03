@@ -19,9 +19,16 @@ Voici un carnet de bord de mon année de trail 2026. Celle-ci s'annonce bien dif
 ### Reprise après quasiment 2 mois d'arrêt
 *05/01/2026*
 
+Depuis fin novembre 2025, la course à pieds a quasiment disparu de ma vie. J'ai souhaité ne plus en entendre parler, mes récentes pérégrinations réunionnaises ayant probablement eu raison de mon envie de courir. À la place, j'ai décidé de m'engouffrer pleinement dans la formation pour devenir coach [Tarzan Movement](https://www.tarzanmovementofficial.com/). Je prendrai bientôt le temps de détailler cet entraînement incroyable qui m'a apporté plusieurs pièces de mon puzzle d'athlètes que je n'étais pas forcément venu chercher.
+
+Néanmoins, en ce début d'année, le goût de l'exploration commence à revenir, comme l'envie de partir à l'aventure seul ou à plusieurs, mais aussi d'enfin parcourir la distance de 100 miles. Le fait que les jambes fourmillent à nouveau me rassure, car certaines préoccupation sur le fait que je n'aie plus jamais envie de recourir commençaient à germer dans mon esprit. C'est donc le moment de reprendre. Pour cela, on va y aller tranquille, pas d'objectif, pas de pression, juste relancer tranquillement la machine sans me blesser. J'attends d'ailleurs toujours de savoir si je serai pris à l'UTMB, dont les résultats du tirage au sort auront lieu le 16 janvier.
 
 ### Bilan de reprise
 *31/01/2026*
+
+Les 2 premières semaines furent tâtonnantes, ponctuées notamment par un rassemblement d'entraînement intensif inter-coachs Tarzan Movement à Barcelone sur 3j, qui m'a mis au repos ensuite pendant pendant plusieurs jours. N'ayant pas été tiré au sort à l'UTMB, j'ai choisi dans la foulée de m'inscrire au Nice by UTMB, version 100M. Cela signifie 165 km et 9000 m D+ / D-, une distance qui me met des étoiles dans les yeux. Ça y est, la saison est lancée, et d'ailleurs, j'ai décidé que ce serait mon seul dossard cetet année.
+
+Donc je suis reparti sur un cycle de préparation physique de 2 mois, avec la vocation d'aller jusqu'à début avril, date d'une aventure prévue de longue date avec l'ami Thomas : la traversée de la Chartreuse. Côté course à pieds, je monte tranquillement le volume mais surtout, en me basant sur les principes de Scott Johnston, l'entraîneur des vainqueurs femme et homme de l'UTMB 2025, j'ai décidé de reprendre et développer les fractionnés long en côtes. À cette fin, j'ai débuté par un 5x(3min rapide, 2min récup) dans une côte vers chez moi. Cette séance est passée étonnamment bien et m'a donné envie de poursuivre ce type de séances ! 
 
 [Retour au sommaire](#sommaire)
 
@@ -30,15 +37,25 @@ Voici un carnet de bord de mon année de trail 2026. Celle-ci s'annonce bien dif
 ### Les choses sérieuses reprennent
 *08/02/2026*
 
-### Bilan février
+Oui les choses sérieuses reprennent car aujourd'hui, c'était ma première vraie sortie longue depuis des mois. 32km 2000 m D+, avec de la pluie, des chemins de crêtes, des sentiers enneigés. Le genre de sortie difficile mais qui redonne confiance en sa capacité à endurer et à perdurer dans l'effort. Un petit film de l'aventure est dispo [en suivant ce lien](https://www.instagram.com/p/DUg1NXtDD65/?hl=fr).
+
+### Bilan février - *Use it or lose it*, vous êtes sûr ?
 *26/02/2026*
 
-[Retour au sommaire](#sommaire)
+Sur la fin février, l'entraînement poursuit son cours avec une montée de volume tranquille et des semaines qui gravitent autour de 70-80km avec entre 2000 m et 3000 m D+/D-. Je suis assez étonné de voir comment mon corps a bien réagi à cette reprise depuis le début d'année, et comment il s'est vite remis dans le bain de la course à pieds sans perdre de masse musculaire  malgré une longue période d'interruption. Moi qui étais matrixé par le fameux *use it or lose it*, je me rends compte que la réalité est plus complexe que cela, ce qui m'a mené à quelques recherches bibliographiques dont je vous certaines pistes de façon informelle, car j'y reviendrai dans un article futur.
+
+Les cellules des muscles squelettiques forment ce que l'on appelle un syncytium, c'est-à-dire un espace continu de plusieurs cellules possédant chacune un noyau, mais partageant le même cytoplasme. Chaque noyau a une influence spatiale définie et, lorsque l'on impose aux muscles des stress impliquant notamment des charges comme dans le cas de la préparation physique, le nombre de noyaux augmente pour améliorer l'activité et l'efficacité musculaire. Le fait de disposer d'un grand nombre de ces noyaux implique une sensibilité plus élevée aux stress musculaires, et favorise la synthèse protéique dans le but de renforcer le muscle. D'après une étude de <Citation id="gundersen2016">Gundersen et al.</Citation> de 2016, ces noyaux pourraient, sauf pathologies spécifiques, persister de manière stable chez l'être humain durant plus de 15 ans, voire rester permanents. Lors de l'absence de stimuli important, ces noyaux ne sont donc pas éliminés. Ils rentrent dans un état de dormance fonctionnelle, mais restent activables au moindre stimulus mécanique pour assurer une synthèse protéique de maintenance. 
+
+D'autre part, le remplacement de la course à pieds par du mouvement primal pendant ces deux mois a fortement contribué à maintenir mes capacités musculaires. J'ai en effet découvert que, s'il existait un seuil de tension mécanique minimal pour stimuler l'hyperthropie, il existe également un seuil, beaucoup plus faible, au-delà duquel l'atrophie musculaire est inhibée (voir <Citation id="bonaldo2013">Bonaldo et Sandri 2013</Citation>). En effet, malgré un volume moindre, les mouvements au sol de type quadrupédie ont favorisé une force de tension continue dans l'ensemble de la chaîne abdominale, mais aussi dans les membres postérieurs et supérieurs, comparables à des entraînements en endurance de force (voir <Citation id="buxton2024">Buxton et al. 2024</Citation>). Les sauts de précision ont eu contribué au maintien de l'édifice de par l'intensité des impacts à la réception, mais également par les contraintes excentriques fortes appliquées sur les quadriceps et les mollets, ces derniers ayant été d'autant plus mis à contribution de par l'atterrissage sur l'avant du pied pour maximiser la dissipation de l'énergie cinétique sur la distance la plus courte possible. Cette activité m'a permis de stimuler les fibres rapides de type II, les premières dans la ligne de mire de l'atrophie musculaire (voir <Citation id="encarnacao2022">Encarnação et al. 2022</Citation>), ainsi que les voies de signalisation mécanotransductrices mTOR (voir), sujet sur lequel je reviendrai abondamment dans le futur. 
+
+Ce bloc, largement non exhaustif, et à visée purement explorative, permet je le pense de modérer la crainte du déconditionnement chez l'athlète souhaitant interrompre sa pratique sportive principale pendant une période plus ou moins prolongée. Durant ces deux mois sans trail, je n'ai pas vraiment eu l'impression de faire du sport, mais plutôt d'être dans le jeu, et de développer mes capacités de primates ancestrales. Cela a semble-t-il suffit à préserver mes qualités athlétiques nécessaires à la course à pieds, en plus de mettre à mal le dicton *no pain no gain*, auquel je ne souscris définitivement plus. 
 
 ## Mars 
 
 ### Objectif côtes atteint
 *04/03/2026*
+
+Les séances se côtes passent tellement bien, c'est grisant de se rendre compte qu'on est capables de courir en montée pendant des temps assez long. D'ailleurs, je ne
 
 ### Premier maratrail
 *06/03/2026*
@@ -69,12 +86,13 @@ Voici un carnet de bord de mon année de trail 2026. Celle-ci s'annonce bien dif
   title="OFF Monts du Lyonnais 65 km"
 />
 
-
 *Replay du tracking OFF Monts du Lyonnais. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
 
-
 ### Projet OFF Traversée de la Chartreuse
-*04/01/2026*
+*04/04/2026*
+
+test
+
 <livetracking
   apiBase="https://tracking.thelocomotionlab.com"
   positionsEndpoint="/live-positions.json"
@@ -95,8 +113,8 @@ Voici un carnet de bord de mon année de trail 2026. Celle-ci s'annonce bien dif
   elevationMax="860"
   referenceGpx="/tracks/mdl-65km_off.gpx"
   title="OFF Monts du Lyonnais 65 km"
-/>
- -->
+/> -->
+
 
 *Tracking actualisé tous les 60 s ou 100 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
 
