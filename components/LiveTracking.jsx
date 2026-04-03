@@ -269,7 +269,7 @@ export default function LiveTracking({
             });
           }
 
-/*          if (!map._hasAutoFramed) {
+          if (!map._hasAutoFramed) {
             const referenceCoords = getCoordsFromGeoJSON(geojson);
             const bounds = getBoundsFromCoords(referenceCoords);
 
@@ -285,7 +285,7 @@ export default function LiveTracking({
                 console.warn("fitBounds référence échoué :", e);
               }
             }
-          }*/
+          }
         } catch (err) {
           console.warn("Erreur chargement GPX référence :", err);
         }
