@@ -37,7 +37,11 @@ Donc je suis reparti sur un cycle de préparation physique de 2 mois, avec la vo
 ### Les choses sérieuses reprennent
 *08/02/2026*
 
-Oui les choses sérieuses reprennent car aujourd'hui, c'était ma première vraie sortie longue depuis des mois. 32km 2000 m D+, avec de la pluie, des chemins de crêtes, des sentiers enneigés. Le genre de sortie difficile mais qui redonne confiance en sa capacité à endurer et à perdurer dans l'effort. Un petit film de l'aventure est dispo [en suivant ce lien](https://www.instagram.com/p/DUg1NXtDD65/?hl=fr).
+Oui les choses sérieuses reprennent car aujourd'hui, c'était ma première vraie sortie longue depuis des mois. 32km 1900 m D+, avec de la pluie, des chemins de crêtes, des sentiers enneigés. Le genre de sortie difficile mais qui redonne confiance en sa capacité à endurer et à perdurer dans l'effort. Lesté à environ 5 kg pour reprendre en douceur l'entraînement spécifique, avec un gros projet OFF prévu pour début mai en ligne de mire. Un petit film de l'aventure est dispo [en suivant ce lien](https://www.instagram.com/p/DUg1NXtDD65/?hl=fr).
+
+[Traversée de la Réunion](/tracks/premiere-sortie-longue-2026_komoot.gpx)
+
+*Parcours de ma première sortie longue de l'année.*
 
 ### Bilan février - *Use it or lose it*, vous êtes sûr ?
 *26/02/2026*
@@ -52,28 +56,37 @@ Ce bloc, largement non exhaustif, et à visée purement explorative, permet je l
 
 ## Mars 
 
-### Objectif côtes atteint
+### Objectif 3x10min en côtes atteint
 *04/03/2026*
 
-Les séances se côtes passent tellement bien, c'est grisant de se rendre compte qu'on est capables de courir en montée pendant des temps assez long. D'ailleurs, je ne
+Ben dis donc, je ne pensais pas prendre autant de plaisir à effectuer ce travail en côtes qui m'a conduit à atteindre les 3x(10min rapide, 5min30 récup) en côtes. Je ne pense pas que des adaptations physiologiques aient pu se produire aussi rapidement. En revanche, je pense que mon corps et mon esprit ont développé et entraîné une stratégie de cadence à effort minimale en côtes. En effet, mon RPE (pour *Rate of Perceveid Exertion*) s'est stabilisé au fur et à mesure des semaines, ces séances devenant pourtant de plus en plus difficiles. Cela signifie que j'ai développé une allure optimale spécifique à la montée. Cela m'a permis de travailler les qualités cardio-vasculaires en minimisant l'impact d'un fractionné classique à plat sur les tendons, comme le préconise Scott Johnston dans sa philosophie d'entraînement (voir son livre [Training for the Uphill Athletes](https://eu.patagonia.com/fr/fr/product/training-for-the-uphill-athlete-a-manual-for-mountain-runners-and-ski-mountaineers-paperback-book/BK800.html), co-écrit, entre autre, par un jeune prodige catalan...).
+
+Dans le détail, l'évolution de mes séances en côtes a ressemblé à ceci :
+
+- Semaine 1 : 5x(3min rapide, 2min récup)
+- Semaine 2 : 5x(4min rapide, 2min30 récup)
+- Semaine 3 : pyramidal 2min/1min30-3min/2min-4min/2min30-3min/2min-2min/1min30
+- Semaine 4 : 4x(6min rapide, 3min30 récup)
+- Semaine 5 (décharge) : 3x(5min rapide, 3min récup)
+- Semaine 6 : 3x(10min rapide, 5min30 récup)
+
+À noter que toutes séances de fractionné sont précédés d'au moins 15-20 min d'échauffement en endurance douce. La logique du calcul de fraction rapide/récup est basée sur celle décrite dans l'excellent [Ultra-trail](https://www.fnac.com/a16953651/Guillaume-Millet-ULTRA-TRAIL-nouvelle-edition) de Guillaume Millet, illustre inventeur, entre autres, du concepts de la chasse d'eau (voir [ici](https://thelocomotionlab.com/projets/traversee-reunion#incarner-le-concept-de-la-chasse-deau)). Cette logique respecte l'équation suivante, si $R$ est la fraction rapide en minutes, et $r$ la fraction de récup : $$ r = R/2 + 30 \text{s}$$. 
+
 
 ### Premier maratrail
 *06/03/2026*
 
+Ces temps-ci, l'envie d'aventure est forte, et les jambes répondent plutôt très bien. C'est donc le couteau entre les dents que je suis parti sur ce premier marathon de l'année. 44km 2100m D+/D-, avec uné énième traversée du rocher du Caire, une longue promenade sur les hauteurs de Chalancon. Avec un sac chargé à 6.4 kg au départ, toujours en vue de préparer un OFF sur plusieurs jours en mai en autonomie complète (plus de détails plus loin dans le projet), je suis plutôt très satisfait des sensations et de ma capacité à endurer l'effort sur quasiment 7h. Un petit montage vidéo qui retranscrit cette aventure est [disponible ici](https://www.instagram.com/p/DVjT_3DjORS/?hl=fr).
+
+[Traversée de la Réunion](/tracks/premier-marathon-2026_komoot.gpx)
+
+*Parcours de mon premier marathon de l'année.*
+
 ### Projet OFF Monts du Lyonnais 
 *14/03/2026*
-<!-- <livetracking
-  apiBase="https://tracking.thelocomotionlab.com"
-  positionsEndpoint="/live-positions.json"
-  statsEndpoint="/live-stats.json"
-  timerEndpoint="/live-timer.json"
-  referenceGpx="/tracks/mdl-65km_off.gpx"
-  totalDistance="65"
-  elevationMax="860"
-  title="Suivi en direct"
-  pollIntervalMs="10000"
-  initialMapStyle="osm"
-/> -->
+
+![Contenu du sac {width=480px align=center}](/images/projets/saison-trail-2026/sac_contenu.webp)
+*Mer de nuage dans la vallée (gauche) et trace GPX du tour du Taillefer (droite).*
 
 <postlivetracking
   positions="/replays/mdl-65km_off/live-positions.json"
@@ -88,10 +101,10 @@ Les séances se côtes passent tellement bien, c'est grisant de se rendre compte
 
 *Replay du tracking OFF Monts du Lyonnais. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
 
+## Avril
+
 ### Projet OFF Traversée de la Chartreuse
 *04/04/2026*
-
-test
 
 <livetracking
   apiBase="https://tracking.thelocomotionlab.com"

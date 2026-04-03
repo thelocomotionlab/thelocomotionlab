@@ -148,6 +148,7 @@ export default function LiveTracking({
             "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
           ],
           tileSize: 256,
+          maxzoom: 17,
           attribution: "© OpenTopoMap contributors",
         },
       },
@@ -164,6 +165,7 @@ export default function LiveTracking({
             "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
           ],
           tileSize: 256,
+          maxzoom: 19,
           attribution: "© OpenStreetMap contributors",
         },
       },
@@ -178,6 +180,7 @@ export default function LiveTracking({
             "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
           ],
           tileSize: 256,
+          maxzoom: 19,
           attribution: "Tiles © Esri",
         },
       },
@@ -259,19 +262,23 @@ export default function LiveTracking({
             });
           }
 
-          if (!map._hasAutoFramed) {
+/*          if (!map._hasAutoFramed) {
             const referenceCoords = getCoordsFromGeoJSON(geojson);
             const bounds = getBoundsFromCoords(referenceCoords);
 
             if (bounds) {
               try {
-                map.fitBounds(bounds, { padding: 40 });
+                map.fitBounds(bounds, {
+                  padding: 20,
+                  maxZoom: 16,
+                  duration: 2000,
+                });
                 map._hasAutoFramed = true;
               } catch (e) {
                 console.warn("fitBounds référence échoué :", e);
               }
             }
-          }
+          }*/
         } catch (err) {
           console.warn("Erreur chargement GPX référence :", err);
         }
@@ -446,13 +453,17 @@ export default function LiveTracking({
 
           if (bounds) {
             try {
-              map.fitBounds(bounds, { padding: 40 });
+              map.fitBounds(bounds, {
+                padding: 20,
+                maxZoom: 18,
+                duration: 2000,
+              });
               map._hasAutoFramed = true;
             } catch (e) {
               console.warn("fitBounds live échoué :", e);
             }
           } else if (last) {
-            map.flyTo({ center: last, zoom: 12, speed: 0.7 });
+            map.flyTo({ center: last, zoom: 12, speed: 0.5 });
             map._hasAutoFramed = true;
           }
         }
@@ -545,6 +556,7 @@ export default function LiveTracking({
 
   const recenterMap = () => {
     if (mapRef.current && runnerPosition) {
+      mapRef.current._hasAutoFramed = true;
       mapRef.current.flyTo({
         center: runnerPosition,
         zoom: 13,

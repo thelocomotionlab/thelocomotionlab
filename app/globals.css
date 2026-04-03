@@ -455,7 +455,10 @@ a.data-footnote-backref,
 .prose img + em,
 .prose .map-block + p > em,
 .md-split + p > em,
-.prose .lt-figure + p > em {
+/* Live / replay : figure.lt-figure juste suivi d'un <p><em> */
+.prose .lt-figure + p > em,
+/* Live / replay : cas plus souple, légende dans un <p><em> un peu plus loin */
+.lt-figure ~ p > em {
   display: block;
   text-align: center;
   font-size: 0.85rem;
@@ -472,7 +475,8 @@ a.data-footnote-backref,
 .prose img + em::before,
 .prose .map-block + p > em::before,
 .md-split + p > em::before,
-.prose .lt-figure + p > em::before {
+.prose .lt-figure + p > em::before,
+.lt-figure ~ p > em::before {
   content: "";
   display: block;
   width: 4.5rem;
@@ -515,10 +519,12 @@ a.data-footnote-backref,
 /* Supprimer la marge du paragraphe qui contient la légende
    (split, GPX via .map-block, live/replay) */
 .prose .map-block + p,
-.prose .lt-figure + p {
+.prose .lt-figure + p,
+.lt-figure ~ p {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
 }
+
 
 /* ===========================
    Listes dans .prose
