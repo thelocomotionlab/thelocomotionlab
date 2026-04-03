@@ -235,8 +235,8 @@ a.data-footnote-backref,
 .prose h2 {
   font-size: 1.6rem;
   line-height: 1.3;
-  margin-top: 1.5rem;      /* espace avant une nouvelle section */
-  margin-bottom: 0.4rem; /* espace entre titre et texte suivant */
+  margin-top: 1.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .prose h3 {
@@ -257,8 +257,6 @@ a.data-footnote-backref,
    Blocs :::split
    =========================== */
 
-/* Conteneur du split : espacement avant, pas après
-   (c'est la légende qui gère l'espace sous le bloc) */
 .md-split {
   display: grid;
   grid-template-columns: 1fr;
@@ -270,22 +268,20 @@ a.data-footnote-backref,
 @media (min-width: 768px) {
   .md-split {
     grid-template-columns: 1fr 1fr;
-    align-items: center; /* centrage vertical basé sur TEXTE vs IMAGE (la légende sera hors flux) */
+    align-items: center;
   }
 
-  /* Légende interne positionnée en absolu sous la colonne qui contient l'image */
   .md-split.md-split--with-caption
     .md-split-col
     p:last-child:has(> em):not(:has(> img)) {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    top: calc(100% + 0.8rem); /* 0.8rem sous le bas de la colonne image */
+    top: calc(100% + 0.8rem);
     width: 100%;
     max-width: 90%;
   }
 }
-
 
 .md-split-col img,
 .md-split-col video,
@@ -296,29 +292,15 @@ a.data-footnote-backref,
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
-/* Chaque colonne sert de repère pour positionner une éventuelle légende */
 .md-split-col {
   position: relative;
 }
 
-
-/* Harmonisation typographique dans les colonnes du split */
-/*.md-split-col :is(p, ul, ol, h1, h2, h3, h4, h5, h6, blockquote) {
-  margin-top: revert;
-  margin-bottom: revert;
-}
-*/
-/* Dans un split, aucun <p> ne doit ajouter de marge
-   (ni ceux avec texte, ni ceux avec image) */
 .md-split-col p {
   margin-top: 0;
   margin-bottom: 0;
 }
 
-
-/* Dans un split, les <p> qui ne contiennent QUE des médias
-   ne doivent pas avoir la marge par défaut, sinon ils se décallent
-   verticalement par rapport aux .map-block */
 .md-split-col p:has(> img),
 .md-split-col p:has(> video),
 .md-split-col p:has(> iframe) {
@@ -326,8 +308,6 @@ a.data-footnote-backref,
   margin-bottom: 0;
 }
 
-
-/* Deux images côte à côte dans la colonne gauche */
 .md-split-col.left p:has(img):has(+ p img) {
   display: flex;
   gap: 1rem;
@@ -340,8 +320,6 @@ a.data-footnote-backref,
   border-radius: 0;
 }
 
-/* Images internes à un split :
-   pas de marge, l'espace est géré par la légende */
 .md-split img,
 .md-split video,
 .md-split iframe {
@@ -349,13 +327,10 @@ a.data-footnote-backref,
   margin-bottom: 0 !important;
 }
 
-/* On laisse un peu de place sous les splits qui ont une légende */
 .md-split.md-split--with-caption {
-  padding-bottom: 2.8rem; /* ajuste légèrement si tu veux plus/moins d'air global */
+  padding-bottom: 2.8rem;
 }
 
-/* Le paragraphe de légende (dernier <p> d'une colonne de split avec légende)
-   ne rajoute pas de marge verticale par lui-même */
 .md-split.md-split--with-caption
   .md-split-col
   p:last-child:has(> em):not(:has(> img)) {
@@ -363,8 +338,6 @@ a.data-footnote-backref,
   margin-bottom: 0;
 }
 
-
-/* Après un split, on neutralise la marge du <p> contenant la légende */
 .md-split + p {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
@@ -374,14 +347,13 @@ a.data-footnote-backref,
    Harmonisation images / médias (markdown)
    =========================== */
 
-/* Base : toutes les images / vidéos / iframes dans le markdown */
 .prose img,
 .prose video,
 .prose iframe {
   display: block;
   width: 100%;
   height: auto;
-  margin-top: 0 !important;     /* l’espace est géré par le paragraphe + la légende */
+  margin-top: 0 !important;
   margin-bottom: 0 !important;
 }
 
@@ -391,41 +363,32 @@ a.data-footnote-backref,
   margin-bottom: 0 !important;
 }
 
-/* Variantes de TAILLE appliquées uniquement à partir du breakpoint md
-   (sur mobile : 100% de largeur pour tout le monde) */
 @media (min-width: 768px) {
-  /* petite image (schémas, détails) */
   .prose img.md-img-size-sm {
     max-width: 280px;
   }
 
-  /* taille standard d’article */
   .prose img.md-img-size-md {
     max-width: 480px;
   }
 
-  /* grande image (photo importante) */
   .prose img.md-img-size-lg {
     max-width: 720px;
   }
 
-  /* très grande image, quasi pleine largeur */
   .prose img.md-img-size-xl {
     max-width: 960px;
   }
 
-  /* moitié de la largeur du texte */
   .prose img.md-img-size-half {
     max-width: 50%;
   }
 
-  /* pleine largeur explicite (au cas où) */
   .prose img.md-img-size-full {
     max-width: 100%;
   }
 }
 
-/* Alignements horizontaux (facultatifs) */
 .prose img.md-img-align-left {
   margin-left: 0;
   margin-right: auto;
@@ -441,8 +404,6 @@ a.data-footnote-backref,
   margin-right: 0;
 }
 
-/* Cas particulier : on NE veut PAS que les classes de taille
-   perturbent les blocs :::split */
 .md-split img {
   max-width: 100% !important;
 }
@@ -451,32 +412,26 @@ a.data-footnote-backref,
    Légendes images / cartes / split / live tracking / replay
    =========================== */
 
-/* Cas "classiques" : image seule, MapEmbed, split */
 .prose img + em,
 .prose .map-block + p > em,
 .md-split + p > em,
-/* Live / replay : figure.lt-figure juste suivi d'un <p><em> */
-.prose .lt-figure + p > em,
-/* Live / replay : cas plus souple, légende dans un <p><em> un peu plus loin */
-.lt-figure ~ p > em {
-  display: block;
-  text-align: center;
-  font-size: 0.85rem;
-  font-weight: 400;
-  font-style: normal !important; /* enlève l’italique markdown uniquement sur la légende */
-  margin: 0.8rem auto 1.4rem; /* espace image/barre */
-  line-height: 1.4;
-  color: #6b7280;
-  font-family: "Inter", sans-serif;
+.prose p.md-caption > em {
+  display: block !important;
+  text-align: center !important;
+  font-size: 0.85rem !important;
+  font-weight: 400 !important;
+  font-style: normal !important;
+  line-height: 1.4 !important;
+  color: #6b7280 !important;
+  font-family: "Inter", sans-serif !important;
   max-width: 90%;
+  margin: 0.8rem auto 1.4rem !important;
 }
 
-/* Trait au-dessus de toutes les légendes */
 .prose img + em::before,
 .prose .map-block + p > em::before,
 .md-split + p > em::before,
-.prose .lt-figure + p > em::before,
-.lt-figure ~ p > em::before {
+.prose p.md-caption > em::before {
   content: "";
   display: block;
   width: 4.5rem;
@@ -486,7 +441,6 @@ a.data-footnote-backref,
   border-radius: 2px;
 }
 
-/* Style de la légende interne d'un split (texte) */
 .md-split.md-split--with-caption
   .md-split-col
   p:last-child:has(> em):not(:has(> img)) > em {
@@ -495,14 +449,13 @@ a.data-footnote-backref,
   font-size: 0.85rem;
   font-weight: 400;
   font-style: normal !important;
-  margin: 0rem auto 0rem; /* même espace image/trait que les autres légendes */
+  margin: 0rem auto 0rem;
   line-height: 1.4;
   color: #6b7280;
   font-family: "Inter", sans-serif;
   max-width: 90%;
 }
 
-/* Trait doré au-dessus de cette légende interne */
 .md-split.md-split--with-caption
   .md-split-col
   p:last-child:has(> em):not(:has(> img)) > em::before {
@@ -515,16 +468,19 @@ a.data-footnote-backref,
   border-radius: 2px;
 }
 
-
-/* Supprimer la marge du paragraphe qui contient la légende
-   (split, GPX via .map-block, live/replay) */
 .prose .map-block + p,
-.prose .lt-figure + p,
-.lt-figure ~ p {
+.prose p.md-caption {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
 }
 
+.article-body p.md-caption {
+  font-size: inherit !important;
+  line-height: inherit !important;
+  font-family: inherit !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
 
 /* ===========================
    Listes dans .prose
@@ -564,7 +520,7 @@ a.data-footnote-backref,
 
 .prose hr {
   border: none;
-  border-top: 1.5px solid #e5e5e5; /* gris doux */
+  border-top: 1.5px solid #e5e5e5;
   margin-top: 2.5rem;
   margin-bottom: 2.5rem;
 }
@@ -577,7 +533,6 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Lien "Retour au sommaire" aligné à droite dans les articles/projets */
 .prose a[href="#sommaire"] {
   display: block;
   width: fit-content;
@@ -601,10 +556,8 @@ html {
    Texte des articles / projets
    =========================== */
 
-/* Paragraphe "de base" dans le corps des articles/projets
-   (wrapper .article-body autour du markdown) */
 .article-body p {
-  font-size: 1.09rem; /* ≈ 17px */
+  font-size: 1.09rem;
   line-height: 1.7;
   font-family: "Lora", serif;
   margin-top: 1.25rem;
@@ -615,7 +568,6 @@ html {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
 }
-
 
 /* ===========================
    Animation fade-in (ShareButton, etc.)
@@ -633,7 +585,6 @@ html {
 }
 
 .animate-fade-in {
-  opacity: 1; /* s'assure que l'élément devient visible */
+  opacity: 1;
   animation: fade-in 0.35s ease-out forwards;
 }
-

@@ -1,4 +1,3 @@
-// app/projets/[slug]/ProjetClient.jsx
 "use client";
 
 import React, { useEffect, Suspense } from "react";
@@ -12,7 +11,6 @@ import remarkMath from "remark-math";
 import remarkSplit from "../../../markdown/remarkSplit";
 import remarkLiveTracking from "../../../markdown/remarkLiveTracking";
 import remarkPostLiveTracking from "../../../markdown/remarkPostLiveTracking";
-import remarkImageOptions from "../../../markdown/remarkImageOptions";
 
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
@@ -170,7 +168,6 @@ function ProjetClientInner({ project, initialContent }) {
           <ReactMarkdown
             remarkPlugins={[
               remarkFrontmatter,
-              remarkImageOptions,
               remarkGfm,
               remarkLiveTracking,
               remarkPostLiveTracking,
@@ -186,7 +183,7 @@ function ProjetClientInner({ project, initialContent }) {
             ]}
             components={{
               // Gestion spéciale des paragraphes
-              p: ({ children }) => {
+              p: ({ node, children }) => {
                 const childArray = React.Children.toArray(children);
 
                 // 1) Live tracking temps réel
@@ -253,7 +250,28 @@ function ProjetClientInner({ project, initialContent }) {
                   return <div className="map-block">{children}</div>;
                 }
 
-                // 4) cas normal
+                // 4) détecter une vraie légende markdown : paragraphe ne contenant qu’un <em>
+                const emOnly =
+                  childArray.length === 1 &&
+                  React.isValidElement(onlyChild) &&
+                  onlyChild.type === "em";
+
+                if (emOnly) {
+                  const text = React.Children.toArray(onlyChild.props?.children)
+                    .map((c) => (typeof c === "string" ? c : ""))
+                    .join("")
+                    .trim();
+
+                  const looksLikeDate =
+                    /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(text) ||
+                    /^\d{4}-\d{2}-\d{2}$/.test(text);
+
+                  if (!looksLikeDate) {
+                    return <p className="md-caption">{children}</p>;
+                  }
+                }
+
+                // 5) cas normal
                 return <p>{children}</p>;
               },
 
