@@ -791,7 +791,7 @@ export default function LiveTracking({
                         allowDecimals={false}
                       />
                       <YAxis
-                        domain={[0, ELEVATION_MAX]}
+                        domain={[ELEVATION_MIN, ELEVATION_MAX]}
                         tick={false}
                         axisLine={false}
                         width={0}

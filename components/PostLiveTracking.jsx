@@ -244,7 +244,7 @@ export default function PostLiveTracking({
   positionsUrl,
   statsUrl,
   totalDistanceKm,
-  elevationMin = 1000,
+  elevationMin = 0,
   elevationMax = 3100,
   referenceGpx, // <postlivetracking referenceGpx="...">
   title = "Replay GPS",
@@ -280,7 +280,7 @@ export default function PostLiveTracking({
 
   const ELEVATION_MIN = Number.isFinite(parsedElevationMin)
     ? parsedElevationMin
-    : 1000;
+    : 0;
 
   const ELEVATION_MAX = Number.isFinite(parsedElevationMax)
     ? parsedElevationMax
@@ -871,7 +871,7 @@ export default function PostLiveTracking({
                         allowDecimals={false}
                       />
                       <YAxis
-                        domain={[0, ELEVATION_MAX]}
+                        domain={[ELEVATION_MIN, ELEVATION_MAX]}
                         tick={false}
                         axisLine={false}
                         width={0}

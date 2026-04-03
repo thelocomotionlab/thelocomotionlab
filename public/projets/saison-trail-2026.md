@@ -114,7 +114,7 @@ Après environ 12h30 d'effort, nous revînmes à Vaugneray, notre lieu de dépar
   ascentFactor=".8"
   descentFactor=".8"
   elevationMin="400"
-  elevationMax="860"
+  elevationMax="900"
   referenceGpx="/tracks/mdl-65km_off.gpx"
   title="OFF Monts du Lyonnais 65 km"
 />
@@ -133,7 +133,7 @@ Après environ 12h30 d'effort, nous revînmes à Vaugneray, notre lieu de dépar
   referenceGpx="/tracks/traversee-chartreuse.gpx"
   totalDistance="88"
   elevationMin="0"
-  elevationMax="1800"
+  elevationMax="2000"
   title="Suivi en direct"
   pollIntervalMs="10000"
   initialMapStyle="osm"
@@ -151,7 +151,7 @@ Après environ 12h30 d'effort, nous revînmes à Vaugneray, notre lieu de dépar
 /> -->
 
 
-*Tracking actualisé tous les 30 s ou 25 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
+*Tracking actualisé toutes les 30 s ou 25 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
 
 [Retour au sommaire](#sommaire)
 
