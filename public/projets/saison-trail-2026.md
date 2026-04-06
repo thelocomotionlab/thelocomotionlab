@@ -127,7 +127,7 @@ Après environ 12h30 d'effort, nous revînmes à Vaugneray, notre lieu de dépar
 ### Projet OFF Traversée de la Chartreuse
 *04/04/2026*
 
-<livetracking
+<!-- <livetracking
   apiBase="https://tracking.thelocomotionlab.com"
   positionsEndpoint="/live-positions.json"
   referenceGpx="/tracks/traversee-chartreuse.gpx"
@@ -137,18 +137,19 @@ Après environ 12h30 d'effort, nous revînmes à Vaugneray, notre lieu de dépar
   title="Suivi en direct"
   pollIntervalMs="10000"
   initialMapStyle="osm"
-/>
-
-<!-- <postlivetracking
-  positions="/replays/mdl-65km_off/live-positions.json"
-  totalDistance="65"
-  distanceFactor="1."
-  ascentFactor=".8"
-  descentFactor=".8"
-  elevationMax="860"
-  referenceGpx="/tracks/mdl-65km_off.gpx"
-  title="OFF Monts du Lyonnais 65 km"
 /> -->
+
+<postlivetracking
+  positions="/replays/traversee-chartreuse/live-positions.json"
+  totalDistance="81"
+  distanceFactor="1."
+  ascentFactor=".85"
+  descentFactor=".85"
+  elevationMin="0"
+  elevationMax="1800"
+  referenceGpx="/tracks/traversee-chartreuse.gpx"
+  title="OFF Traversée de la Chartreuse"
+/>
 
 
 *Tracking actualisé toutes les 30 s ou 25 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
