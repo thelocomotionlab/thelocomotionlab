@@ -24,44 +24,40 @@ import MapEmbed from "../../../components/MapEmbed";
 import LiveTracking from "../../../components/LiveTracking";
 import PostLiveTracking from "../../../components/PostLiveTracking";
 
-/**
- * Wrapper avec Suspense pour satisfaire Next.js
- * (useSearchParams est utilisé dans ProjetClientInner).
- */
-export default function ProjetClient(props) {
-  return (
-    <Suspense fallback={null}>
-      <ProjetClientInner {...props} />
-    </Suspense>
-  );
-}
-
-function ProjetClientInner({ project, initialContent }) {
+function HighlightEffect({ content = "" }) {
   const searchParams = useSearchParams();
   const highlight = searchParams.get("highlight") || "";
-  const content = initialContent || "";
 
-  const toc = useTocFromMarkdown(content);
-
-  if (!project) return <p className="p-6">Projet non trouvé</p>;
-
-  // Scroll sur mot-clé
   useEffect(() => {
     if (!highlight) return;
+
     const timer = setTimeout(() => {
-      const regex = new RegExp(highlight, "i");
-      const paragraphs = document.querySelectorAll(
+      const safeHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(safeHighlight, "i");
+
+      const elements = document.querySelectorAll(
         "article p, article h2, article h3, article li"
       );
-      for (const p of paragraphs) {
-        if (regex.test(p.textContent || "")) {
-          p.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      for (const el of elements) {
+        if (regex.test(el.textContent || "")) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
           break;
         }
       }
     }, 500);
+
     return () => clearTimeout(timer);
   }, [highlight, content]);
+
+  return null;
+}
+
+export default function ProjetClient({ project, initialContent }) {
+  const content = initialContent || "";
+  const toc = useTocFromMarkdown(content);
+
+  if (!project) return <p className="p-6">Projet non trouvé</p>;
 
   // Scroll ancres
   useEffect(() => {
@@ -92,9 +88,11 @@ function ProjetClientInner({ project, initialContent }) {
   }, [content]);
 
   return (
-    // ✅ pt-0 : la cover peut “coller” à la navbar sur mobile
     <article className="max-w-4xl mx-auto sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
-      {/* ✅ Cover full-bleed mobile, sans arrondi. Pas de ratio figé. */}
+      <Suspense fallback={null}>
+        <HighlightEffect content={content} />
+      </Suspense>
+
       {project.cover && (
         <div
           className="
@@ -117,6 +115,7 @@ function ProjetClientInner({ project, initialContent }) {
         <h1 className="text-2xl text-brand-primary md:text-5xl font-sans font-bold mb-3 text-center">
           {project.title}
         </h1>
+
         {project.status && (
           <p className="text-sm text-gray-500 mb-8 text-center">
             {project.status}
@@ -184,8 +183,7 @@ function ProjetClientInner({ project, initialContent }) {
               rehypeKatex,
             ]}
             components={{
-              // Gestion spéciale des paragraphes
-              p: ({ node, children }) => {
+              p: ({ children }) => {
                 const childArray = React.Children.toArray(children);
 
                 // 1) Live tracking temps réel
@@ -226,6 +224,7 @@ function ProjetClientInner({ project, initialContent }) {
                   const jsonPart = text
                     .replace("[[POST_LIVE_TRACKING_BLOCK|", "")
                     .replace("]]", "");
+
                   let props = {};
                   try {
                     props = JSON.parse(jsonPart);
@@ -252,7 +251,7 @@ function ProjetClientInner({ project, initialContent }) {
                   return <div className="map-block">{children}</div>;
                 }
 
-                // 4) détecter une vraie légende markdown : paragraphe ne contenant qu’un <em>
+                // 4) légende markdown : paragraphe ne contenant qu’un <em>
                 const emOnly =
                   childArray.length === 1 &&
                   React.isValidElement(onlyChild) &&
@@ -273,16 +272,16 @@ function ProjetClientInner({ project, initialContent }) {
                   }
                 }
 
-                // 5) cas normal
                 return <p>{children}</p>;
               },
 
-              // Liens : GPX → MapEmbed
               a: ({ href, children, ...props }) => {
                 if (href && href.endsWith(".gpx")) {
                   return <MapEmbed gpx={href} />;
                 }
+
                 const isExternal = href?.startsWith("http");
+
                 return (
                   <a
                     href={href}
@@ -296,9 +295,9 @@ function ProjetClientInner({ project, initialContent }) {
                 );
               },
 
-              // Bloc code → MapEmbed JSON
-              code: ({ node, inline, className, children, ...props }) => {
+              code: ({ inline, className, children, ...props }) => {
                 const text = String(children || "").trim();
+
                 const isMapBlock =
                   !inline &&
                   (/\blanguage-map\b/.test(className || "") ||
@@ -318,6 +317,7 @@ function ProjetClientInner({ project, initialContent }) {
                     );
                   }
                 }
+
                 return (
                   <code className={className} {...props}>
                     {children}

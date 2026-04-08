@@ -1,5 +1,6 @@
 // app/projets/[slug]/page.jsx
 export const dynamicParams = false;
+
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
@@ -13,11 +14,18 @@ function getProjectFilePath(slug) {
   return path.join(process.cwd(), "public", "projets", `${slug}.md`);
 }
 
-/**
- * Lit un projet à partir de son slug.
- * - retourne null si le fichier n'existe pas ou si published: false
- * - ne change pas le rendu fonctionnel, juste la centralisation de la lecture
- */
+function toDate(value) {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function toIsoString(value) {
+  if (!value) return undefined;
+  const d = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
+}
+
 function readProject(slug) {
   const filePath = getProjectFilePath(slug);
 
@@ -26,7 +34,6 @@ function readProject(slug) {
   const fileContent = fs.readFileSync(filePath, "utf8");
   const { data, content } = matter(fileContent);
 
-  // Projet explicitement non publié → ignoré / 404
   if (data.published === false) return null;
 
   const project = {
@@ -36,7 +43,9 @@ function readProject(slug) {
     cover: data.cover || "",
     description: data.description || "",
     tags: data.tags || [],
-    // ajoute d'autres champs de frontmatter ici si besoin
+    date: toDate(data.date),
+    completedAt: toDate(data.completedAt),
+    activityAt: toDate(data.activityAt),
   };
 
   return { project, content, frontmatter: data };
@@ -47,32 +56,23 @@ export async function generateStaticParams() {
   const projectsDir = path.join(process.cwd(), "public", "projets");
   if (!fs.existsSync(projectsDir)) return [];
 
-  const filenames = fs
+  return fs
     .readdirSync(projectsDir)
-    .filter((fn) => fn.endsWith(".md"));
-
-  const params = filenames
+    .filter((fn) => fn.endsWith(".md"))
     .map((fn) => fn.replace(/\.md$/, ""))
     .map((slug) => {
       const data = readProject(slug);
-      if (!data) return null; // non publié ou inexistant
+      if (!data) return null;
       return { slug };
     })
     .filter(Boolean);
-
-  return params;
 }
 
-/**
- * Métadonnées spécifiques à chaque projet
- * → important pour l’indexation correcte des projets
- */
 export async function generateMetadata({ params }) {
   const { slug } = await params;
 
   const data = readProject(slug);
 
-  // Si le projet n’existe pas / n’est pas publié : on indique de ne pas indexer
   if (!data) {
     return {
       title: "Projet introuvable – The Locomotion Lab",
@@ -94,6 +94,9 @@ export async function generateMetadata({ params }) {
     project.description ||
     "Projets du labo : expérimentations en cours autour du mouvement, du minimalisme, de l’hormèse et de la performance humaine.";
 
+  const publishedTime = toIsoString(project.date);
+  const modifiedTime = toIsoString(project.completedAt || project.activityAt);
+
   return {
     title: project.title,
     description,
@@ -105,18 +108,20 @@ export async function generateMetadata({ params }) {
       description,
       url,
       type: "article",
-      images: [
-        {
-          url: ogImage,
-        },
-      ],
       locale: "fr_FR",
+      images: [{ url: ogImage }],
+      ...(publishedTime ? { publishedTime } : {}),
+      ...(modifiedTime ? { modifiedTime } : {}),
     },
     twitter: {
       card: "summary_large_image",
       title: project.title,
       description,
       images: [ogImage],
+    },
+    robots: {
+      index: true,
+      follow: true,
     },
   };
 }
@@ -132,6 +137,5 @@ export default async function ProjetPage({ params }) {
 
   const { project, content } = data;
 
-  // Rendu identique à avant : on passe le projet et le markdown au composant client
   return <ProjetClient project={project} initialContent={content} />;
 }
