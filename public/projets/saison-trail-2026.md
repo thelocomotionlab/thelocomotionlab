@@ -127,6 +127,7 @@ Après environ 12h30 d'effort, nous revînmes à Vaugneray, notre lieu de dépar
 ### Projet OFF Traversée de la Chartreuse
 *04/04/2026*
 
+Avril commence fort avec ce projet de longue date avec l'ami Thomas (Crasse l'ancien pour les intimes) : rallier Grenoble (chez moi) à Chambéry (chez lui) d'une traite en traversant la Chartreuse. Un itinéraire autour de 90 km 4500 m D+ / D-.
 <!-- <livetracking
   apiBase="https://tracking.thelocomotionlab.com"
   positionsEndpoint="/live-positions.json"
@@ -151,10 +152,30 @@ Après environ 12h30 d'effort, nous revînmes à Vaugneray, notre lieu de dépar
   title="OFF Traversée de la Chartreuse"
 />
 
+*Replay du tracking OFF Traversée de la Chartreuse. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
 
 *Tracking actualisé toutes les 30 s ou 25 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
 
 [Retour au sommaire](#sommaire)
+
+
+## Mai
+### Projet OFF Fontaine à Rémuzat en traversant le Vercors
+*04/04/2026*
+
+
+<livetracking
+  apiBase="https://tracking.thelocomotionlab.com"
+  positionsEndpoint="/live-positions.json"
+  referenceGpx="/tracks/fontaine-remuzat.gpx"
+  totalDistance="162"
+  elevationMin="200"
+  elevationMax="2000"
+  title="Suivi en direct"
+  pollIntervalMs="5000"
+  initialMapStyle="osm"
+/>
+
 
 
 <!-- ![PPG 28 août 2025](/images/projets/traversee-reunion/ppg_28_08_2025.webp)
