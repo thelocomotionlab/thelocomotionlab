@@ -28,14 +28,26 @@ import {
 function getBoundsFromCoords(coords) {
   if (!Array.isArray(coords) || coords.length === 0) return null;
 
-  const lngs = coords.map((c) => c[0]).filter((v) => Number.isFinite(v));
-  const lats = coords.map((c) => c[1]).filter((v) => Number.isFinite(v));
+  // CORRECTION : Utilisation d'une boucle classique pour éviter le Stack Overflow
+  let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+  
+  for (let i = 0; i < coords.length; i++) {
+    const lng = coords[i][0];
+    const lat = coords[i][1];
+    
+    if (Number.isFinite(lng) && Number.isFinite(lat)) {
+      if (lng < minLng) minLng = lng;
+      if (lng > maxLng) maxLng = lng;
+      if (lat < minLat) minLat = lat;
+      if (lat > maxLat) maxLat = lat;
+    }
+  }
 
-  if (!lngs.length || !lats.length) return null;
+  if (minLng === Infinity) return null;
 
   return [
-    [Math.min(...lngs), Math.min(...lats)],
-    [Math.max(...lngs), Math.max(...lats)],
+    [minLng, minLat],
+    [maxLng, maxLat],
   ];
 }
 
@@ -88,14 +100,14 @@ export default function LiveTracking({
   apiBase = "https://tracking.thelocomotionlab.com",
   positionsEndpoint = "/live-positions.json",
   timerEndpoint = "/live-timer.json",
-  totalDistanceKm = 65,
-  elevationMin = 400,
-  elevationMax = 860,
+  totalDistanceKm = 1,
+  elevationMin = 0,
+  elevationMax = 10,
   referenceGpx = "/tracks/reunion-r2_temp.gpx",
   title = "Suivi en direct",
   pollIntervalMs = 10000,
   initialMapStyle = "osm",
-  mapHeight = 400,
+  mapHeight = 500,
 }) {
   const mapRef = useRef(null);
   const mapContainer = useRef(null);
@@ -597,6 +609,8 @@ export default function LiveTracking({
     return null;
   };
 
+  const maxChartDistance = Math.max(TOTAL_DISTANCE_KM, computedTotalDistance || 0);
+
   /* ---------- 6) Rendu principal ---------- */
   return (
     <div className="flex flex-col items-center w-full py-6 px-3 sm:px-6 gap-3">
@@ -771,19 +785,19 @@ export default function LiveTracking({
                           : { top: 10, right: 20, bottom: 0, left: 30 }
                       }
                     >
-                      <XAxis
+                    <XAxis
                         dataKey="km"
                         type="number"
-                        domain={[0, TOTAL_DISTANCE_KM]}
+                        domain={[0, maxChartDistance]}
                         ticks={
                           isSmallScreen
-                            ? [0, Math.round(TOTAL_DISTANCE_KM)]
+                            ? [0, Math.round(maxChartDistance)]
                             : [
                                 0,
-                                TOTAL_DISTANCE_KM * 0.25,
-                                TOTAL_DISTANCE_KM * 0.5,
-                                TOTAL_DISTANCE_KM * 0.75,
-                                TOTAL_DISTANCE_KM,
+                                maxChartDistance * 0.25,
+                                maxChartDistance * 0.5,
+                                maxChartDistance * 0.75,
+                                maxChartDistance,
                               ]
                         }
                         tickFormatter={(v) => `${v.toFixed(0)}km`}

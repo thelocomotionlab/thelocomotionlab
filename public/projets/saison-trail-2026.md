@@ -172,7 +172,7 @@ Avril commence fort avec ce projet de longue date avec l'ami Thomas (Crasse l'an
   elevationMin="200"
   elevationMax="2000"
   title="Suivi en direct"
-  pollIntervalMs="5000"
+  pollIntervalMs="2000"
   initialMapStyle="osm"
 />
 
