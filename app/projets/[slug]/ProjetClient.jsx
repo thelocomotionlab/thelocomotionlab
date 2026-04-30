@@ -208,7 +208,7 @@ export default function ProjetClient({ project, initialContent }) {
                   }
 
                   return (
-                    <figure className="lt-figure my-8">
+                    <figure className="lt-figure my-8 -mx-4">
                       <LiveTracking {...props} />
                     </figure>
                   );

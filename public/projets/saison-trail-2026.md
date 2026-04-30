@@ -5,7 +5,7 @@ description: "Carnet de bord de ma saison de trail 2026 : projets OFF, sorties l
 cover: "/images/projets/saison-trail-2026/cover_saison-trail-2026.webp"
 
 status: "En cours"
-activityAt: 2026-04-03
+activityAt: 2026-04-30
 
 published: true
 ---
@@ -189,7 +189,7 @@ Enfin, et c'est probablement le plus gros changement que j'ai opéré ces dernie
 
 
 ### Projet OFF Fontaine-Rémuzat
-*04/04/2026*
+*02/05/2026*
 
 
 <livetracking
