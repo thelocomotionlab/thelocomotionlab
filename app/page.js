@@ -203,10 +203,10 @@ export default async function HomePage() {
             Il s'agit d'un <strong>espace d'exploration</strong> de la locomotion humaine sous toutes ses formes.
           </p>
           <p className="mt-3 text-base md:text-lg leading-relaxed text-gray-700">
-            Son but est d'explorer, décortiquer et analyser les facteurs et pratiques favorisant <strong>fluidité</strong>, <strong>endurance</strong> et <strong>adaptabilité</strong> dans le mouvement.
+            Son but est d'explorer, décortiquer et analyser les facteurs et pratiques favorisant la <strong>robustesse physiologique</strong>.
           </p>
           <p className="mt-3 text-base md:text-lg leading-relaxed text-gray-700">
-            <strong>Rigueur scientifique</strong> et expériences personnelles fusionnent pour proposer des contenus utiles et accessibles.          
+            <strong>Rigueur scientifique</strong> et expériences personnelles se mélangent pour proposer des contenus utiles et accessibles.          
           </p>
 
 

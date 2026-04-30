@@ -10,7 +10,7 @@ activityAt: 2026-04-03
 published: true
 ---
 
-Voici un carnet de bord de mon année de trail 2026. Celle-ci s'annonce bien différente de 2025 avec seulement un seul dossard au programme, celui du Nice by UTMB, 165 km 9000 m D+ / D- le 25 septembre. Et davantage de sorties OFF et en auto-suffisance. Le but de cet espace est de partager mes méthodes, découvertes, essais-erreurs, et accumuler ensemble de l'expérience pour nourir projets et reflexions autour d'ultra-endurance. Belle lecture !
+Voici un carnet de bord de mon année de trail 2026. Celle-ci s'annonce bien différente de 2025 avec seulement un seul dossard au programme, celui du Nice by UTMB, 165 km 9000 m D+ / D- le 25 septembre. Et davantage de sorties OFF et en auto-suffisance. Le but de cet espace est de partager mes méthodes, découvertes, essais-erreurs, et accumuler ensemble de l'expérience pour nourir projets et reflexions autour de l'ultra-endurance. Belle lecture !
 
 ---
 
@@ -128,6 +128,23 @@ Après environ 12h30 d'effort, nous revînmes à Vaugneray, notre lieu de dépar
 *04/04/2026*
 
 Avril commence fort avec ce projet de longue date avec l'ami Thomas (Crasse l'ancien pour les intimes) : rallier Grenoble (chez moi) à Chambéry (chez lui) d'une traite en traversant la Chartreuse. Un itinéraire autour de 90 km 4500 m D+ / D-.
+
+Notre départ, visé pour 7h30, se fait sur les chapeaux de roues lorsque, au moment de partir, je claque la porte en oubliant de retirer le double de mes clés d'appart sur la serrures. La phrase « Sésame, ouvre-toi » a parfaitement fonctionné une fois délesté de 165€ par le serrurier 50 min plus tard (rire amer). Après cette première mise à l'épreuve du mental, nous pressentons que la journée va être belle, grâce à la météo de fou furieux qui nous attend. C'est la première vraie journée de Printemps de l'année, avec un mercure annoncé autour de 24°C dans l'après-midi, une sorte d'éden pour une telle aventure.
+
+![Photo 1 {align=center}](/images/projets/saison-trail-2026/traversee-chartreuse-1.webp)
+*Thomas et moi avant le départ et premier panoramas au niveau de la Bastille à Grenoble.*
+
+À mesure que nous nous engoufrons en Chartreuse, nous prenons conscience que la neige risque d'être un problème. Les faces exposées Nord, abondantes sur notre parcours, sont en effet recouvertes d'épais manteaux neigeux dès 1300 m d'altitude. Or, notre parcours contient de nombreux passages à plus de 1700 m, dont certains allant jusqu'à 2000 m. Évoluer dans la neige en sandales n'est pas chose aisée, surtout lorsque la couche avoisine les 50 cm. Après quelques heures à jauger la faisabilité, nous décidons d'adapter la trace, pour éviter les passages trop abruptes. C'est aussi ça l'aventure, savoir faire preuve de discernement, et être dans l'adaptation permanente.
+
+Je dois avouer que ces changements d'itinéraires, qui réduisent de plus en plus la trace, affectent mon moral. Quand je vois que nous ne ferons pas 90 km, mais 85 km. Et puis en fait pas 85 km, mais 80 km. Et puis quoi encore ? Moi je voulais mes 90 km, faisant presque une fixette sur cette data. Après quelques heures de rumination, je prends conscience que mon mental s'égare dans la mauvaise direction. Je ne suis pas ici pour accumuler 70, 80, 90 ou même 100 km. Non, je suis là pour rallier Grenoble à Chambéry, avec mon poto Thomas. M'attacher aux datas comme je le fais est une impasse, puisqu'elle revient à considérer que ma motivation principale est dûe à des facteurs totalement extrinsèques. Ce n'est pas suffisant pour venir à bout d'un ultra. Au moment où je prends conscience de tout cela, mon mental switch, comme remis à l'endroit, et je me sens pleinement épanoui, en phase avec l'instant. 
+
+Nous décidons malgré tout, car nous sommes en quelque sorte des explorateurs, de tenter un passage très neigeux qui durera de longues heures. Malgré la raideur des pentes, évoluer dans la difficulté à deux dans ce décor incroyable nous procure une forme de plaisir inattendu. Plaisir décuplé lorsque la portion se termine et que nous retrouvons enfin la route. Fort heureusement, j'avais prévu dans ma besace une paire de Skinners pour arpenter la neige, celles-ci étant particulièrement adaptée pour ce type de terrains.
+
+![Photo 2 {align=center}](/images/projets/saison-trail-2026/traversee-chartreuse-2.webp)
+*Let it snow, let it snow, let it snow !*
+
+La fin de la trace se fera sans encombre, de nuit, avec une pointe de frustration de mon côté que cela ne dure pas plus longtemps. J'en veux encore et ne suis pas rassasié. C'est bon signe, bien que le projet Fontaine-Rémuzat, qui arrive à grands pas, devrait m'apporter de quoi manger à ma faim. Du reste, un petit film de cette belle aventure est dispo [en suivant ce lien](https://www.instagram.com/p/DUg1NXtDD65/?hl=fr). Maintenant, place au repos !
+
 <!-- <livetracking
   apiBase="https://tracking.thelocomotionlab.com"
   positionsEndpoint="/live-positions.json"
@@ -154,13 +171,24 @@ Avril commence fort avec ce projet de longue date avec l'ami Thomas (Crasse l'an
 
 *Replay du tracking OFF Traversée de la Chartreuse. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
 
-*Tracking actualisé toutes les 30 s ou 25 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
+### Se préparer par l'hormèse
+*30/04/2026*
+
+Durant ce mois d'avril, après la traversée de Chartreuse, je n'ai que très peu couru, entretenant un volume autour de 40-60 km par semaine selon l'envie. J'ai par ailleurs abondamment développé ma pratique de mouvement primal, et je perçois une réelle progression, dans sur le plan athlétique, de la mobilité, mais aussi du système nerveux autonome qui parvient beaucoup mieux à gérer la hauteur. C'est fou comment tout s'entrâine, même quelque chose d'aussi instinctif que d'avoir peur de mourir parce qu'on est très haut.
+
+En parallèle, avec l'arrivée des beaux jours et la hausse des températures, j'ai repris l'exposition au chaud dans mon hammam Jolt. Au début timidement, puis de plus en plus franchement avec entre 4 et 5 sessions par semaine d'une durée de 15-18 min. Car si je n'ai pas vraiment de problème à gérer le froid, j'ai plutôt du mal avec le chaud, et je me dis qu'au plus vite je m'y prépare, au plus vite j'y suis adapté. J'ai senti une réelle évolution au fil des semaines dans ma capacité à tolérer le chaud, et même si je n'ai pas de donnée quantifiable à fournir, j'ai la conviction que cet entraînement me servira pour l'été, et à plus court terme, pour le projet Fontaine-Rémuzat.
+
+Enfin, et c'est probablement le plus gros changement que j'ai opéré ces derniers mois : j'ai repris le jeûne intermittent depuis maintenant 6 semaines. C'est une pratique que j'avais expérimentée pendant près de 2 ans entre 2023 et début 2025, me rendant compte que je n'avais jamais vraiment faim au réveil, et que je mangeais plus par habitude. J'avais interrompu cette pratique début 2025, quelques mois après avoir repris un job d'ingénieur, car je sentais que mes besoins d'énergie n'étaient plus couverts. Je me sentais faibles le matin, j'avais des dalles énormes dès 10h du matin, et je n'arrivais plus à me concentrer correctement, alors même que le matin est ma période privilégiée pour le deep work. Connaissant les dangers, et les causes du sur-entraînement, j'avais préféré lâcher l'affaire et reprendre des petits-déjeuners. Jusqu'à ce que je visionne courant mars, le documentaire Arte [Le jeûne : enquête sur un phénomène]https://www.arte.tv/fr/videos/118244-000-A/le-jeune-enquete-sur-un-phenomene/. Ce fût une révélation et je pris conscience que mon corps était littéralement fait pour jeûner, et que l'en priver revenait à me priver d'un nombre incalculables de bienfaits parmi lesquels l'autophagie cellulaire via l'activation de la filière AMPK. J'ai donc décidé de reprendre, mais en ne répétant pas les mêmes erreurs, à savoir jeûne ≠ manger moins. Juste manger la même chose sur des fenêtres de temps plus resserrées. Les premirès semaines furent difficiles mais je vis rapidement que mon niveau d'énergie était globalement bien plus élevé, et que mon envie de manger le matin diminuait de jours en jours. Ce que j'ai fait en gros, c'est que j'ai déplacé mon petit déj vers le goûter, autour de 15-16h (je ne prenais pas de goûter avant). Donc je mange exactement les mêmes choses qu'avant, mais j'observe une fenêtre de jeûne d'entre 14 et 16h tous les jours. Cela fait une différence majeur en terme de récupération, j'en suis désormais convaincu par la pratique. Je reviendrai sur la pratique du jeûne intermittent plus en profondeur dans un prochain article, car il y a tellement de choses à raconter sur le sujet !
+
 
 [Retour au sommaire](#sommaire)
 
 
 ## Mai
-### Projet OFF Fontaine à Rémuzat en traversant le Vercors
+### Préparatifs du projet Fontaine-Rémuzat
+
+
+### Projet OFF Fontaine-Rémuzat
 *04/04/2026*
 
 
@@ -168,14 +196,15 @@ Avril commence fort avec ce projet de longue date avec l'ami Thomas (Crasse l'an
   apiBase="https://tracking.thelocomotionlab.com"
   positionsEndpoint="/live-positions.json"
   referenceGpx="/tracks/fontaine-remuzat.gpx"
-  totalDistance="162"
+  totalDistance="160"
   elevationMin="200"
   elevationMax="2000"
   title="Suivi en direct"
-  pollIntervalMs="2000"
+  pollIntervalMs="30000"
   initialMapStyle="osm"
 />
 
+*Tracking actualisé toutes les 30 s ou 25 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
 
 
 <!-- ![PPG 28 août 2025](/images/projets/traversee-reunion/ppg_28_08_2025.webp)

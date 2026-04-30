@@ -262,7 +262,7 @@ export default function PostLiveTracking({
   const [mapStyle, setMapStyle] = useState("osm");
   const [showStyleMenu, setShowStyleMenu] = useState(false);
   const [runnerPosition, setRunnerPosition] = useState(null);
-  const [showElevation, setShowElevation] = useState(true);
+  const [showElevation, setShowElevation] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [computedTotalDistance, setComputedTotalDistance] = useState(null);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
