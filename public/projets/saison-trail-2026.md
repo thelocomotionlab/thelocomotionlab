@@ -140,7 +140,7 @@ Je dois avouer que ces changements d'itinéraires, qui réduisent de plus en plu
 
 Nous décidons malgré tout, car nous sommes en quelque sorte des explorateurs, de tenter un passage très neigeux qui durera de longues heures. Malgré la raideur des pentes, évoluer dans la difficulté à deux dans ce décor incroyable nous procure une forme de plaisir inattendu. Plaisir décuplé lorsque la portion se termine et que nous retrouvons enfin la route. Fort heureusement, j'avais prévu dans ma besace une paire de Skinners pour arpenter la neige, celles-ci étant particulièrement adaptées pour ce type de terrains.
 
-![Photo 2 {align=center}](/images/projets/saison-trail-2026/traversee-chartreuse-2.webp)
+![Photo 2 {width=580px align=center}](/images/projets/saison-trail-2026/traversee-chartreuse-2.webp)
 *Let it snow, let it snow, let it snow !*
 
 La fin de la trace se fera sans encombre, de nuit, avec une pointe de frustration de mon côté que cela ne dure pas plus longtemps. J'en veux encore et ne suis pas rassasié. C'est bon signe, bien que le projet Fontaine-Rémuzat, qui arrive à grands pas, devrait m'apporter de quoi manger à ma faim. Du reste, un petit film de cette belle aventure est dispo [en suivant ce lien](https://www.instagram.com/p/DUg1NXtDD65/?hl=fr). Maintenant, place au repos !
@@ -186,7 +186,39 @@ Enfin, et c'est probablement le plus gros changement que j'ai opéré ces dernie
 
 ## Mai
 ### Préparatifs du projet Fontaine-Rémuzat
+*01/05/2026*
 
+#### La genèse du projet
+
+À la veille de m'élancer sur ce projet que je fomente depuis des mois, je ne réalise pas vraiment. À la base, l'idée a germé en début d'année, en voulant prendre une forme de revanche sur ma traversée de la Réunion avortée en novembre 2025. J'avais dans un coin de ma tête que ce sentier de Grenoble à Rémuzat faisait autour de 100 miles, et l'idée d'évoluer en autonomie dans un contexte différent de celui de la Réunion me faisait de l'oeil. J'ai donc rapidement établi une trace avec l'outil de tracé de komoot. Verdict : 158 km 7500 m D+ / D-. Boum, le genre de stats qui fait instantanément palpiter mon coeur et pétiller les yeux. Je ne réfléchis pas plus, et acte que j'effectuerai ce voyage au printemps, début mai, période concomitante avec la célébration de mes 31 bougies. 
+
+Mais au fil du temps, je me rends compte que quelque chose cloche. Que cette seule volonté de parcourir 100 miles ne suffit pas vraiment à faire s'embraser l'étincelle. Je prends alors conscience, un soir d'avril, que le moment où je compte m'élancer, le 1$^\text{er}$ mai, est la date à laquelle un être qui m'a été très cher, Jean-Phi, est décédé 3 ans jour pour jour auparavant. La vie ayant défilé bien vite depuis cette perte douloureuse, je me rends alors compte que je n'ai jamais réellement pris le temps de lui rendre hommage. Tout du moins, pas d'une manière qui me corresponde vraiment. L'évidence m'apparaît alors : cette aventure, elle est pour Jean-Phi, à 100%. D'autant que les choses sont bien faites, et que le Vercors était son terrain de jeu d'enfance, tandis que Rémuzat, le lieu de ce qui devait être sa paisible retraite. La symbolique est forte. Aller m'immerger en profondeur dans cette nature sauvage pendant des dizaines et des dizaines d'heures pour rentrer dans une sorte de dialogue intime entre lui et moi, la voilà ma manière de lui rendre hommage. 
+
+![Photo Jean-Phi et moi {width=580px align=center}](/images/projets/saison-trail-2026/jean-phi-et-moi.webp)
+*Coucou Jean-Phi :')*
+
+#### Caractéristiques du projet
+
+La trace finale est téléchargeable un peu plus bas, dans l'encart du live-tracking. Concernant le déroulé, je pars sur une autonomie complète. Aucun objectif de durée, le but de cette quête étant justement de s'affranchir des données qui, je cite Éric Lacroix avec qui je travaille en ce moment "viennent APRÈS l'effort". Côté couchage, l'affaire n'a pas été simple puisque, ne sachant pas réellement si j'allais m'arrêter pour dormir, je souhaitais un système le plus léger possible, mais à la fois rapide à installer et qui puisse me permettre de m'arrêter dans les pires conditions possibles, c'est-à-dire à 1900 m, sous la pluie ou la neige éventuelle. J'ai donc opté pour un équipement minimaliste mais fonctionnel, avec un tarp (que je n'utiliserai que s'il pleut), un duvet Cumulus Xlite 300, un bivy Escape Lite, un sac à viande en soie, et un matelas en mousse Decath MT500 découpé juste à la taille de mon buste (n'incluant pas les bras). Avec un tel système, j'arrive à un couchage robuste et modulable, me permettant d'encaisser des températures très basses (jusqu'à -10°C en confort), mais également très léger, avec un poids autour de 1.3 kg. Je me suis d'ailleurs entraîné à plier/replier tout mon système plusieurs fois pour être le plus efficace possible pour installer mon camp en cas d'urgence.
+
+![Entraînement campement] {width=680px align=center}](/images/projets/saison-trail-2026/depliage_tente.webp)
+*Entraînement intensif de pliage/repliage de couchage par 28°C (lol).*
+
+Côté alimentation, je pars sur du classique avec :
+
+- 14 boules d'énergie amandes/dattes (330 g) 
+- 12 boules d'énergie amandes/cramberries (290 g)
+- 10 barres avoines/cacahuètes/amandes/miel (350 g)
+- 10 doses de flasques isotoniques (350 g)
+- 1 saucisson (250 g)
+- 1 bloc d'emmental (250 g)
+- 5 gels caféine coca (308 g)
+- 4 plats lyophilisés (480 g)
+
+pour un total d'environ 2.6 kg. En comptant les liquides, j'obtiens un paquetage de départ, hors bâtons, vêtements, écouteurs et montre, de 9.5 kg. La liste complète de mon matériel pour cette aventure est à retrouver [ici](https://lighterpack.com/r/6molzo). On dirait bien qu'il n'y a plus qu'à !
+
+![Matos traversée du Vercors {width=580px align=center}](/images/projets/saison-trail-2026/paquetage.webp)
+*Paquetage complet.*
 
 ### Projet OFF Fontaine-Rémuzat
 *02/05/2026*
@@ -204,7 +236,7 @@ Enfin, et c'est probablement le plus gros changement que j'ai opéré ces dernie
   initialMapStyle="osm"
 />
 
-*Tracking actualisé toutes les 30 s ou 25 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
+*Tracking actualisé toutes les 30 s ou 25 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux déplier/plier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
 
 
 <!-- ![PPG 28 août 2025](/images/projets/traversee-reunion/ppg_28_08_2025.webp)
