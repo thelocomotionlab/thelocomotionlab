@@ -201,7 +201,7 @@ Mais au fil du temps, je me rends compte que quelque chose cloche. Que cette seu
 
 La trace finale est téléchargeable un peu plus bas, dans l'encart du live-tracking. Concernant le déroulé, je pars sur une autonomie complète. Aucun objectif de durée, le but de cette quête étant justement de s'affranchir des données qui, je cite Éric Lacroix avec qui je travaille en ce moment "viennent APRÈS l'effort". Côté couchage, l'affaire n'a pas été simple puisque, ne sachant pas réellement si j'allais m'arrêter pour dormir, je souhaitais un système le plus léger possible, mais à la fois rapide à installer et qui puisse me permettre de m'arrêter dans les pires conditions possibles, c'est-à-dire à 1900 m, sous la pluie ou la neige éventuelle. J'ai donc opté pour un équipement minimaliste mais fonctionnel, avec un tarp (que je n'utiliserai que s'il pleut), un duvet Cumulus Xlite 300, un bivy Escape Lite, un sac à viande en soie, et un matelas en mousse Decath MT500 découpé juste à la taille de mon buste (n'incluant pas les bras). Avec un tel système, j'arrive à un couchage robuste et modulable, me permettant d'encaisser des températures très basses (jusqu'à -10°C en confort), mais également très léger, avec un poids autour de 1.3 kg. Je me suis d'ailleurs entraîné à plier/replier tout mon système plusieurs fois pour être le plus efficace possible pour installer mon camp en cas d'urgence.
 
-![Entraînement campement] {width=680px align=center}](/images/projets/saison-trail-2026/depliage_tente.webp)
+![Entraînement campement {width=680px align=center}](/images/projets/saison-trail-2026/depliage_tente.webp)
 *Entraînement intensif de pliage/repliage de couchage par 28°C (lol).*
 
 Côté alimentation, je pars sur du classique avec :
