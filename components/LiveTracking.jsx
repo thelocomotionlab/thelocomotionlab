@@ -118,7 +118,7 @@ export default function LiveTracking({
   const [mapStyle, setMapStyle] = useState(initialMapStyle || "osm");
   const [showStyleMenu, setShowStyleMenu] = useState(false);
   const [runnerPosition, setRunnerPosition] = useState(null);
-  const [showElevation, setShowElevation] = useState(false);
+  const [showElevation, setShowElevation] = useState(true);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const [timer, setTimer] = useState({
     running: false,
