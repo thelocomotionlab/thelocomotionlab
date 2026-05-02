@@ -1,7 +1,7 @@
 ---
-title: "Saison trail 2026"
+title: "Journal d'aventures 2026"
 date: "2026-01-01"
-description: "Carnet de bord de ma saison de trail 2026 : projets OFF, sorties longues, préparation spécifique"
+description: "Journal de bord de ma saison de trail 2026 : projets OFF, sorties longues, préparation spécifique"
 cover: "/images/projets/saison-trail-2026/cover_saison-trail-2026.webp"
 
 status: "En cours"
@@ -206,16 +206,59 @@ La trace finale est téléchargeable un peu plus bas, dans l'encart du live-trac
 
 Côté alimentation, je pars sur du classique avec :
 
-- 14 boules d'énergie amandes/dattes (330 g) 
-- 12 boules d'énergie amandes/cramberries (290 g)
-- 10 barres avoines/cacahuètes/amandes/miel (350 g)
-- 10 doses de flasques isotoniques (350 g)
-- 1 saucisson (250 g)
-- 1 bloc d'emmental (250 g)
-- 5 gels caféine coca (308 g)
-- 4 plats lyophilisés (480 g)
+- x14 boule d'énergie amandes/dattes (330 g) 
+- x12 boule d'énergie amandes/cramberries (290 g)
+- x10 barre avoines/cacahuètes/amandes/miel (350 g)
+- x10 dose de boisson isotonique (350 g)
+- x1 saucisson (250 g)
+- x1 bloc d'emmental (250 g)
+- x5 gel caféine coca (308 g)
+- x4 plat lyophilisé (480 g)
 
-pour un total d'environ 2.6 kg. En comptant les liquides, j'obtiens un paquetage de départ, hors bâtons, vêtements, écouteurs et montre, de 9.5 kg. La liste complète de mon matériel pour cette aventure est à retrouver [ici](https://lighterpack.com/r/6molzo). On dirait bien qu'il n'y a plus qu'à !
+pour un total d'environ 2.6 kg. Concernant le matos dans le sac, voici le contenu :
+
+Couchage
+- Gatewood cape (310 g)
+- x5 Sardines (50 g)
+- Matelas mousse MT500 découpé (190 g)
+- Bivy Escape Lite (155 g)
+- Sac de couchage Cumulus Xlite 300 (515 g)
+- Sac à viande soie (110 g)
+
+Hydratation
+- Hydrapak Contour 2L (142 g)
+- x2 Salomon Soft Flask 500 mL (66 g)
+- Hydrapak Stow 1L (57 g)
+- Sawyer Micro Squeeze (50 g)
+
+Multimédia
+- GoPro HERO 8 Black (103 g)
+- x2 Batterie GoPro (46 g)
+- x2 Batterie externe Nitecore Gen 2 (300 g)
+- x2 Galaxy S21 (380 g)
+- Montre Coros APEX 2 Pro (53g)
+
+Trail
+- Salomon S/Lab Adventure 20 (485 g)
+- Bâtons Leki Crosstrail FX One 125 cm (182 g)
+- Lampe frontale STOOTS Kiska II (38 g)
+- x2 Batterie lampe frontale Kiska II (92 g)
+- Julbo Fury Photochromic 1–3 (25 g)
+- Mini couteau (77 g)
+- Cuillère en titane (18 g)
+
+Vêtements
+- Veste Raidlight Ultralight 3.0 MP+ (185 g)
+- Pantalon Zaros (225 g)
+- Gants Decathlon Evolutiv (57 g)
+- Sur-mouffles Raidlight Ultralight MP+ (20 g)
+- Bob Aventure Raidlight (50 g)
+- Manchettes Performance Raidlight (30 g)
+- T-shirt Salomon (70 g)
+- Short On Ultra Shorts (150 g)
+- Caleçon long Decathlon (120 g)
+
+pour un total de 4.3 kg. En ajoutant à cela les liquides, de 9.7 kg. Cela représente une belle masse, néanmoins je garde en tête que ce paquetage est voué à se réduire progressivement en même temps que ma consommation d'aliments. En plus, j'ai beaucoup utilisé mon gilet lesté à 12 kg ces temps-ci, une quinzaine de minutes tous les jours en faisant la vaisselle, préparant à manger, ou en faisant de la mobilité. Donc finalement, ce paquetage me semble relativement léger ! Eh bien voilà, on dirait qu'il n'y a désormais plus qu'à ! :)
 
 ![Matos traversée du Vercors {width=580px align=center}](/images/projets/saison-trail-2026/paquetage.webp)
 *Paquetage complet.*
