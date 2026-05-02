@@ -46,7 +46,7 @@ const HEROES = [
   {
     src: "/images/heroes/hero-01.webp",
     alt: "Trail en forêt – The Locomotion Lab",
-    objectPosition: "50% 70%",
+    objectPosition: "50% 50%",
   },
 ];
 
@@ -105,20 +105,13 @@ export default async function HomePage() {
           grid place-items-end
           text-center
           overflow-hidden
-
-          /* ✅ Mobile : full-bleed + collé navbar */
-          w-screen left-1/2 -ml-[50vw]
-          mt-0 rounded-none
-
-          /* ✅ Desktop : comportement actuel */
-          sm:w-auto sm:left-auto sm:ml-0
-          sm:mt-6 sm:rounded-2xl
-
+          w-full
+          mt-0
+          rounded-none
           pt-10 sm:pt-14 md:pt-16
           pb-12 sm:pb-16 md:pb-20
         "
       >
-
         <Image
           src={hero.src}
           alt={hero.alt}
@@ -141,10 +134,9 @@ export default async function HomePage() {
               Carnets, projets, expérimentations
             </span>
             <span className="hidden sm:inline">
-              Carnets, projets et expérimentations autour du mouvement, de l’ultra-endurance et de l’hormèse
+              Carnets, projets et expérimentations autour du mouvement, de l'ultra-endurance et de l'hormèse
             </span>
           </p>
-
 
           <div className="mt-8 flex items-center justify-center">
             <Link
@@ -156,6 +148,25 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ENCART TEMPORAIRE LIVE */}
+      <div className="bg-brand-primary text-white text-center py-3 px-4 flex items-center justify-center gap-3">
+        <span className="pulse-fast w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" />
+        <p className="text-sm sm:text-base font-medium">
+          Traversée du Vercors en direct –{" "}
+          <Link
+            href="https://www.thelocomotionlab.com/live"
+            className="underline underline-offset-2 font-semibold hover:opacity-80 transition"
+          >
+            Rejoindre le live
+          </Link>
+        </p>
+      </div>
+
+      {/* Line */}
+      <div>
+        <Separator />
+      </div>
 
 
       {/* FEED 1: ARTICLES */}

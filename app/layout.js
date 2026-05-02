@@ -66,7 +66,7 @@ export default function RootLayout({ children }) {
         className={`${ubuntu.variable} ${lora.variable} font-sans text-gray-700 relative min-h-screen`}
       >
         <Navbar />
-        <main className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8">
+        <main>
           {children}
         </main>
         <Footer />
