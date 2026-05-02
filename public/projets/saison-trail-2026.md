@@ -143,7 +143,7 @@ Nous décidons malgré tout, car nous sommes en quelque sorte des explorateurs, 
 ![Photo 2 {width=580px align=center}](/images/projets/saison-trail-2026/traversee-chartreuse-2.webp)
 *Let it snow, let it snow, let it snow !*
 
-La fin de la trace se fera sans encombre, de nuit, avec une pointe de frustration de mon côté que cela ne dure pas plus longtemps. J'en veux encore et ne suis pas rassasié. C'est bon signe, bien que le projet Fontaine-Rémuzat, qui arrive à grands pas, devrait m'apporter de quoi manger à ma faim. Du reste, un petit film de cette belle aventure est dispo [en suivant ce lien](https://www.instagram.com/p/DUg1NXtDD65/?hl=fr). Maintenant, place au repos !
+La fin de la trace se fera sans encombre, de nuit, avec une pointe de frustration de mon côté que cela ne dure pas plus longtemps. J'en veux encore et ne suis pas rassasié. C'est bon signe, bien que le projet Fontaine-Rémuzat, qui arrive à grands pas, devrait m'apporter de quoi manger à ma faim. Du reste, un petit film de cette belle aventure est dispo [en suivant ce lien](https://www.instagram.com/p/DXjsuHojABt/?hl=fr). Maintenant, place au repos !
 
 <!-- <livetracking
   apiBase="https://tracking.thelocomotionlab.com"
@@ -275,11 +275,11 @@ pour un total de 4.3 kg. En ajoutant à cela les liquides, de 9.7 kg. Cela repr�
   elevationMin="200"
   elevationMax="2000"
   title="Suivi en direct"
-  pollIntervalMs="30000"
+  pollIntervalMs="20000"
   initialMapStyle="osm"
 />
 
-*Tracking actualisé toutes les 30 s ou 25 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux déplier/plier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
+*Tracking actualisé toutes les 20 s ou 25 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux déplier/plier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
 
 
 <!-- ![PPG 28 août 2025](/images/projets/traversee-reunion/ppg_28_08_2025.webp)

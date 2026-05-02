@@ -163,12 +163,6 @@ export default async function HomePage() {
         </p>
       </div>
 
-      {/* Line */}
-      <div>
-        <Separator />
-      </div>
-
-
       {/* FEED 1: ARTICLES */}
       <FeedSection
         title="Derniers articles"
