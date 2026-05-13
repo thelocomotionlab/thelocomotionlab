@@ -25,9 +25,9 @@ import rehypeRaw from "rehype-raw";
 import rehypeKatex from "rehype-katex";
 
 import Citation from "../../../components/Citation";
-import MapEmbed from "../../../components/MapEmbed";
-import LiveTracking from "../../../components/LiveTracking";
-import PostLiveTracking from "../../../components/PostLiveTracking";
+import MapEmbed from "../../../components/MapEmbedLazy";
+import LiveTracking from "../../../components/LiveTrackingLazy";
+import PostLiveTracking from "../../../components/PostLiveTrackingLazy";
 
 import { extractToc } from "../../../lib/extractToc";
 import ProjetClientFx from "./ProjetClientFx";
