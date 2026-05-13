@@ -1,9 +1,8 @@
 // components/ProjectsGrid.jsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { extractSubheadings } from "@/utils/extractSubheadings";
 
 /**
  * Parse une date au format français "JJ/MM/AAAA" ou "J/M/AA"
@@ -21,7 +20,6 @@ function parseFrenchDate(str) {
 
   if (!day || !month || !year) return null;
   if (year < 100) {
-    // Gestion années sur 2 chiffres (25 -> 2025 par ex.)
     year += year < 50 ? 2000 : 1900;
   }
 
@@ -30,9 +28,8 @@ function parseFrenchDate(str) {
   return d;
 }
 
-export default function ProjectsGrid({ projets }) {
+export default function ProjectsGrid({ projets, notesMap = {} }) {
   const [filter, setFilter] = useState("Tous");
-  const [headingsMap, setHeadingsMap] = useState({});
 
   const statuses = [
     "Tous",
@@ -46,17 +43,6 @@ export default function ProjectsGrid({ projets }) {
       ? projets
       : projets.filter((p) => p.status === filter);
 
-  // Chargement des notes (titres ### + dates sous forme *JJ/MM/AAAA*)
-  useEffect(() => {
-    async function loadAll() {
-      const entries = await Promise.all(
-        projets.map(async (p) => [p.slug, await extractSubheadings(p.slug)])
-      );
-      setHeadingsMap(Object.fromEntries(entries));
-    }
-    loadAll();
-  }, [projets]);
-
   return (
     <>
       {/* Filtres */}
@@ -64,7 +50,9 @@ export default function ProjectsGrid({ projets }) {
         {statuses.map((s) => (
           <button
             key={s}
+            type="button"
             onClick={() => setFilter(s)}
+            aria-pressed={filter === s}
             className={`px-3 py-1 rounded-full border border-gray-300 ${
               filter === s ? "bg-brand-accent text-white" : "bg-white"
             }`}
@@ -77,19 +65,17 @@ export default function ProjectsGrid({ projets }) {
       {/* Grille des projets */}
       <section className="grid md:grid-cols-3 gap-6">
         {filtered.map((p) => {
-          const notes = headingsMap[p.slug] || [];
+          const notes = notesMap[p.slug] || [];
 
-          // 🔹 On trie les notes par date décroissante,
-          // puis on garde les 2 plus récentes.
+          // Tri par date décroissante, on garde les 2 plus récentes
           const lastNotes = [...notes]
             .sort((a, b) => {
               const dA = parseFrenchDate(a.date);
               const dB = parseFrenchDate(b.date);
-
               if (!dA && !dB) return 0;
-              if (!dA) return 1;   // les notes sans date vont en bas
+              if (!dA) return 1;
               if (!dB) return -1;
-              return dB - dA;      // DESC : la plus récente en premier
+              return dB - dA;
             })
             .slice(0, 2);
 
@@ -111,7 +97,6 @@ export default function ProjectsGrid({ projets }) {
                 {p.description}
               </p>
 
-              {/* Barre horizontale gris clair comme l’ancien site */}
               <hr className="my-3 border border-gray-300/70" />
 
               {lastNotes.length > 0 && (

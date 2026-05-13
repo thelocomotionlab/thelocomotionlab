@@ -274,14 +274,21 @@ export default function MapEmbed({
         transition: "height 0.3s ease",
       }}
     >
-      <div ref={mapContainer} style={{ width: "100%", height: "100%" }} />
+      <div
+        ref={mapContainer}
+        role="application"
+        aria-label="Carte interactive du parcours GPX"
+        style={{ width: "100%", height: "100%" }}
+      />
 
       {/* Bouton Recentrer */}
       <button
+        type="button"
         onClick={resetView}
+        aria-label="Recentrer la carte sur le parcours"
         className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md text-sm px-3 py-1 hover:bg-[#EFB159]/80 hover:text-white text-gray-700 flex items-center gap-1 z-20"
       >
-        <Crosshair size={16} />
+        <Crosshair size={16} aria-hidden="true" />
         <span className="hidden sm:inline">Recentrer</span>
       </button>
 
@@ -290,18 +297,28 @@ export default function MapEmbed({
         <div className="relative">
           {!showStyleMenu ? (
             <button
+              type="button"
               onClick={() => setShowStyleMenu(true)}
+              aria-label="Choisir le style de carte"
+              aria-haspopup="menu"
+              aria-expanded={showStyleMenu}
               className="bg-white/90 backdrop-blur-sm border border-gray-300 shadow rounded-md p-[6px] hover:bg-[#EFB159]/80 hover:text-white transition flex items-center justify-center"
               style={{ width: "32px", height: "32px" }}
             >
-              <MapIcon size={16} className="text-gray-700" />
+              <MapIcon size={16} className="text-gray-700" aria-hidden="true" />
             </button>
           ) : (
             <div
+              role="menu"
+              aria-label="Styles de carte"
               className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-md shadow-md flex flex-col items-center p-[2px]"
               style={{ width: "32px" }}
             >
               <button
+                type="button"
+                role="menuitemradio"
+                aria-checked={mapStyle === "osm"}
+                aria-label="Carte OpenStreetMap"
                 onClick={() => {
                   setMapStyle("osm");
                   setShowStyleMenu(false);
@@ -310,9 +327,13 @@ export default function MapEmbed({
                   mapStyle === "osm" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"
                 }`}
               >
-                <MapIcon size={14} />
+                <MapIcon size={14} aria-hidden="true" />
               </button>
               <button
+                type="button"
+                role="menuitemradio"
+                aria-checked={mapStyle === "topo"}
+                aria-label="Carte topographique"
                 onClick={() => {
                   setMapStyle("topo");
                   setShowStyleMenu(false);
@@ -321,9 +342,13 @@ export default function MapEmbed({
                   mapStyle === "topo" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"
                 }`}
               >
-                <Mountain size={14} />
+                <Mountain size={14} aria-hidden="true" />
               </button>
               <button
+                type="button"
+                role="menuitemradio"
+                aria-checked={mapStyle === "satellite"}
+                aria-label="Vue satellite"
                 onClick={() => {
                   setMapStyle("satellite");
                   setShowStyleMenu(false);
@@ -332,7 +357,7 @@ export default function MapEmbed({
                   mapStyle === "satellite" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"
                 }`}
               >
-                <Globe2 size={14} />
+                <Globe2 size={14} aria-hidden="true" />
               </button>
             </div>
           )}
@@ -343,10 +368,11 @@ export default function MapEmbed({
       <a
         href={gpx}
         download
+        aria-label="Télécharger la trace GPX"
         className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md px-3 py-1 hover:bg-[#EFB159]/80 hover:text-white text-gray-700 z-20 flex items-center gap-1 transition no-underline"
         title="Télécharger la trace GPX"
       >
-        <Download size={16} />
+        <Download size={16} aria-hidden="true" />
         <span className="hidden sm:inline text-sm font-medium">Télécharger</span>
       </a>
     </div>

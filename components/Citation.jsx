@@ -1,27 +1,21 @@
-"use client";
+// components/Citation.jsx
+//
+// Server Component : se contente de formater l'entrée de bibliographie
+// et d'envelopper l'enfant dans un Tooltip (qui reste client component).
+// Plus de hack window.__usedRefs, plus de "use client" inutile.
 
 import bibliography from "../content/bibliography.json";
 import Tooltip from "./Tooltip";
-
-// Registre global des références citées (protégé pour SSR)
-let usedRefs = null;
-
-if (typeof window !== "undefined") {
-  window.__usedRefs = window.__usedRefs || new Set();
-  usedRefs = window.__usedRefs;
-}
 
 export default function Citation({ id, children }) {
   const ref = bibliography[id];
 
   if (!ref) {
-    console.warn(`Référence ${id} non trouvée dans bibliography.json`);
+    if (process.env.NODE_ENV !== "production") {
+      // Visible côté dev : indique qu'une citation pointe sur un ID absent.
+      console.warn(`Référence ${id} non trouvée dans bibliography.json`);
+    }
     return <span>{children || id}</span>;
-  }
-
-  // Ajout au registre (si disponible dans le navigateur)
-  if (usedRefs) {
-    usedRefs.add(id);
   }
 
   const formatted = [

@@ -1,23 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
 export default function Tooltip({ text, link, children }) {
   const [visible, setVisible] = useState(false);
+  const tooltipId = useId();
 
   return (
     <span
       className="relative text-brand-accent cursor-pointer"
       onMouseEnter={() => setVisible(true)}
       onMouseLeave={() => setVisible(false)}
-      onClick={() => setVisible((v) => !v)} // mobile friendly
+      onClick={() => setVisible((v) => !v)}
+      aria-describedby={visible ? tooltipId : undefined}
     >
       {children}
       {visible && (
         <span
+          id={tooltipId}
+          role="tooltip"
           className="
-            absolute z-50 bg-white border border-gray-200 shadow-xl rounded-lg 
-            p-4 w-80 max-w-xs top-7 left-1/2 -translate-x-1/2 
+            absolute z-50 bg-white border border-gray-200 shadow-xl rounded-lg
+            p-4 w-80 max-w-xs top-7 left-1/2 -translate-x-1/2
             text-gray-800 text-sm leading-snug font-serif
           "
           style={{
