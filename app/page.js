@@ -149,7 +149,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ENCART TEMPORAIRE LIVE */}
+      {/* ENCART TEMPORAIRE LIVE 
       <div className="bg-brand-primary text-white text-center py-3 px-4 flex items-center justify-center gap-3">
         <span className="pulse-fast w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" />
         <p className="text-sm sm:text-base font-medium">
@@ -162,6 +162,7 @@ export default async function HomePage() {
           </Link>
         </p>
       </div>
+      */}
 
       {/* FEED 1: ARTICLES */}
       <FeedSection
