@@ -5,7 +5,7 @@ import path from "path";
 import matter from "gray-matter";
 import { notFound } from "next/navigation";
 
-import ArticleClient from "./ArticleClient";
+import ArticleBody from "./ArticleBody";
 
 const SITE_URL = "https://thelocomotionlab.com";
 
@@ -132,6 +132,5 @@ export default async function ArticlePage({ params }) {
 
   const { article, content } = data;
 
-  // On garde exactement le même rendu fonctionnel qu’avant
-  return <ArticleClient article={article} initialContent={content} />;
+  return <ArticleBody article={article} initialContent={content} />;
 }
