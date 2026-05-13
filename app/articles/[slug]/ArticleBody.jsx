@@ -1,7 +1,10 @@
-// app/articles/[slug]/ArticleClient.jsx
-"use client";
+// app/articles/[slug]/ArticleBody.jsx
+//
+// Server Component : tout le rendu markdown se fait au build.
+// → HTML complet présent dans la réponse SSR (crucial pour le SEO).
+// → react-markdown + remark/rehype plugins disparaissent du bundle client.
+// Seul le <Tooltip> autour des numéros de citation reste interactif côté client.
 
-import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -17,47 +20,19 @@ import rehypeRaw from "rehype-raw";
 
 import bibliography from "../../../content/bibliography.json";
 import Tooltip from "../../../components/Tooltip";
+import { getUsedCitations } from "../../../lib/getUsedCitations";
 
-export default function ArticleClient({ article, initialContent }) {
-  const [usedCitations, setUsedCitations] = useState([]);
-
-  // ✅ Remplacement déterministe des tokens de citation (évite l’affichage brut)
-  // On génère des balises HTML interprétées ensuite par rehypeRaw + components.citation
-  const markdown = useMemo(() => {
-    if (!initialContent) return "";
-    return initialContent.replace(
-      /\{\{cite:([\w-]+)\}\}/g,
-      '<citation id="$1"></citation>'
-    );
-  }, [initialContent]);
-
-  // Scanner le markdown ORIGINAL (avant remplacement) pour l'ordre d'apparition
-  useEffect(() => {
-    if (!initialContent) {
-      setUsedCitations([]);
-      return;
-    }
-
-    const regex = /\{\{cite:([\w-]+)\}\}/g;
-    const ids = [];
-    let match;
-
-    while ((match = regex.exec(initialContent)) !== null) {
-      const id = match[1];
-      if (!ids.includes(id) && bibliography[id]) ids.push(id);
-    }
-
-    setUsedCitations(ids);
-  }, [initialContent]);
-
+export default function ArticleBody({ article, initialContent }) {
   if (!article) return <p className="p-6">Article non trouvé</p>;
 
-  const scrollToRef = (id) => {
-    const el = document.getElementById(`ref-${id}`);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+  const usedCitations = getUsedCitations(initialContent);
 
-  const Citation = (props) => {
+  const markdown = (initialContent || "").replace(
+    /\{\{cite:([\w-]+)\}\}/g,
+    '<citation id="$1"></citation>'
+  );
+
+  function Citation(props) {
     const id = props?.id;
     const ref = id ? bibliography[id] : null;
     if (!id || !ref) return <sup>[?]</sup>;
@@ -68,26 +43,23 @@ export default function ArticleClient({ article, initialContent }) {
       ref.journal || ref.publisher || ""
     }`;
 
-    const link = ref.link || ref.url; // tolère les 2 champs
+    const link = ref.link || ref.url;
 
     return (
       <span style={{ display: "inline" }}>
         <Tooltip text={formatted} link={link}>
-          <sup
-            onClick={() => scrollToRef(id)}
-            className="citation-ref"
-          >
-            {index > 0 ? `${index}` : "?"}
-          </sup>
+          <a href={`#ref-${id}`} className="no-underline">
+            <sup className="citation-ref">
+              {index > 0 ? `${index}` : "?"}
+            </sup>
+          </a>
         </Tooltip>
       </span>
     );
-  };
+  }
 
   return (
-    // ✅ pt-0 : la cover peut “coller” à la navbar sur mobile
     <article className="max-w-5xl mx-auto sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
-      {/* ✅ Cover full-bleed mobile (annule px-4 via -mx-4), sans arrondi */}
       {article.cover && (
         <div
           className="
@@ -105,7 +77,6 @@ export default function ArticleClient({ article, initialContent }) {
           />
         </div>
       )}
-
 
       <div className="bg-white rounded-xl shadow-card p-4 sm:p-6 md:p-10">
         <h1 className="text-2xl text-brand-primary md:text-5xl font-sans font-bold mb-3 text-center">
@@ -166,7 +137,6 @@ export default function ArticleClient({ article, initialContent }) {
           </ReactMarkdown>
         </div>
 
-        {/* Section Références */}
         {usedCitations.length > 0 && (
           <section className="mt-12">
             <h2 className="text-2xl font-bold text-brand-accent mb-4">

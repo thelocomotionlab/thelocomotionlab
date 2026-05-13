@@ -1,9 +1,15 @@
-"use client";
+// app/projets/[slug]/ProjetBody.jsx
+//
+// Server Component : tout le rendu markdown (titres, texte, légendes, split…)
+// est calculé au build. Les blocs vraiment interactifs (MapEmbed, LiveTracking,
+// PostLiveTracking, Tooltip via Citation) restent en client components mais
+// sont insérés en place par react-markdown au moment du SSR.
+// Le TOC est calculé côté serveur via lib/extractToc.
 
-import React, { useEffect, Suspense } from "react";
+import React from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
+
 import remarkGfm from "remark-gfm";
 import remarkDirective from "remark-directive";
 import remarkFrontmatter from "remark-frontmatter";
@@ -18,80 +24,23 @@ import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeRaw from "rehype-raw";
 import rehypeKatex from "rehype-katex";
 
-import useTocFromMarkdown from "../../../hooks/useTocFromMarkdown";
 import Citation from "../../../components/Citation";
 import MapEmbed from "../../../components/MapEmbed";
 import LiveTracking from "../../../components/LiveTracking";
 import PostLiveTracking from "../../../components/PostLiveTracking";
 
-function HighlightEffect({ content = "" }) {
-  const searchParams = useSearchParams();
-  const highlight = searchParams.get("highlight") || "";
+import { extractToc } from "../../../lib/extractToc";
+import ProjetClientFx from "./ProjetClientFx";
 
-  useEffect(() => {
-    if (!highlight) return;
-
-    const timer = setTimeout(() => {
-      const safeHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const regex = new RegExp(safeHighlight, "i");
-
-      const elements = document.querySelectorAll(
-        "article p, article h2, article h3, article li"
-      );
-
-      for (const el of elements) {
-        if (regex.test(el.textContent || "")) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-          break;
-        }
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [highlight, content]);
-
-  return null;
-}
-
-export default function ProjetClient({ project, initialContent }) {
-  const content = initialContent || "";
-  const toc = useTocFromMarkdown(content);
-
+export default function ProjetBody({ project, initialContent }) {
   if (!project) return <p className="p-6">Projet non trouvé</p>;
 
-  // Scroll ancres
-  useEffect(() => {
-    const handleHashScroll = () => {
-      const { hash } = window.location;
-      if (!hash) return;
-
-      const id = decodeURIComponent(hash.replace("#", ""));
-      const target = document.getElementById(id);
-
-      if (target) {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-        target.style.transition = "background-color 0.8s ease";
-        target.style.backgroundColor = "rgba(239,177,89,0.15)";
-        setTimeout(() => {
-          target.style.backgroundColor = "transparent";
-        }, 1000);
-      }
-    };
-
-    const timer = setTimeout(handleHashScroll, 400);
-
-    window.addEventListener("hashchange", handleHashScroll);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener("hashchange", handleHashScroll);
-    };
-  }, [content]);
+  const content = initialContent || "";
+  const toc = extractToc(content);
 
   return (
     <article className="max-w-4xl mx-auto sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
-      <Suspense fallback={null}>
-        <HighlightEffect content={content} />
-      </Suspense>
+      <ProjetClientFx />
 
       {project.cover && (
         <div

@@ -6,7 +6,7 @@ import path from "path";
 import matter from "gray-matter";
 import { notFound } from "next/navigation";
 
-import ProjetClient from "./ProjetClient";
+import ProjetBody from "./ProjetBody";
 
 const SITE_URL = "https://thelocomotionlab.com";
 
@@ -137,5 +137,5 @@ export default async function ProjetPage({ params }) {
 
   const { project, content } = data;
 
-  return <ProjetClient project={project} initialContent={content} />;
+  return <ProjetBody project={project} initialContent={content} />;
 }
