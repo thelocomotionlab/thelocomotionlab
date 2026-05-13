@@ -1,75 +1,26 @@
 // app/recherche/page.jsx
-import fs from "fs";
-import path from "path";
-import matter from "gray-matter";
+//
+// Page de recherche : noindex / follow (page interne à thin content),
+// et l'index est chargé côté client depuis /search-index.json
+// (pré-généré au build par le route handler).
 
 import SearchClient from "./SearchClient";
 
-export const metadata = { /* … comme avant … */ };
+const SITE_URL = "https://thelocomotionlab.com";
 
-// Articles
-function getAllArticlesMeta() {
-  const articlesDir = path.join(process.cwd(), "public", "articles");
-  if (!fs.existsSync(articlesDir)) return [];
-
-  const filenames = fs
-    .readdirSync(articlesDir)
-    .filter((fn) => fn.endsWith(".md"));
-
-  return filenames
-    .map((fn) => {
-      const slug = fn.replace(/\.md$/, "");
-      const fullPath = path.join(articlesDir, fn);
-      const fileContent = fs.readFileSync(fullPath, "utf8");
-      const { data } = matter(fileContent);
-
-      // ⬇⬇ uniquement les articles publiés
-      if (data.published === false) return null;
-
-      return {
-        slug,
-        title: data.title || slug,
-        date: data.date || null,
-        description: data.description || "",
-        tags: data.tags || [],
-      };
-    })
-    .filter(Boolean);
-}
-
-// Projets
-function getAllProjectsMeta() {
-  const projectsDir = path.join(process.cwd(), "public", "projets");
-  if (!fs.existsSync(projectsDir)) return [];
-
-  const filenames = fs
-    .readdirSync(projectsDir)
-    .filter((fn) => fn.endsWith(".md"));
-
-  return filenames
-    .map((fn) => {
-      const slug = fn.replace(/\.md$/, "");
-      const fullPath = path.join(projectsDir, fn);
-      const fileContent = fs.readFileSync(fullPath, "utf8");
-      const { data } = matter(fileContent);
-
-      // ⬇⬇ uniquement les projets publiés
-      if (data.published === false) return null;
-
-      return {
-        slug,
-        title: data.title || slug,
-        status: data.status || "",
-        description: data.description || "",
-        tags: data.tags || [],
-      };
-    })
-    .filter(Boolean);
-}
+export const metadata = {
+  title: "Recherche",
+  description:
+    "Recherche dans les carnets et projets du Locomotion Lab.",
+  alternates: {
+    canonical: `${SITE_URL}/recherche`,
+  },
+  robots: {
+    index: false,
+    follow: true,
+  },
+};
 
 export default function SearchPage() {
-  const articles = getAllArticlesMeta();
-  const projects = getAllProjectsMeta();
-
-  return <SearchClient articles={articles} projects={projects} />;
+  return <SearchClient />;
 }

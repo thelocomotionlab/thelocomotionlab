@@ -1,4 +1,9 @@
 // app/recherche/SearchClient.jsx
+//
+// Recherche client-side : charge UN seul fichier /search-index.json
+// (pré-généré au build) puis filtre en mémoire. Plus de fetch par
+// fichier .md, plus de strip markdown côté client.
+
 "use client";
 
 import {
@@ -11,19 +16,17 @@ import {
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
-// Met tout en minuscule
 function normalize(s) {
   return (s || "").toString().toLowerCase();
 }
 
-// Découpe un extrait propre autour de la première occurrence
 function makeSnippet(text, q, radius = 120) {
-  const t = text.replace(/\s+/g, " ").trim();
-  const i = t.toLowerCase().indexOf(q.toLowerCase());
-  if (i === -1)
-    return (
-      t.slice(0, radius * 2) + (t.length > radius * 2 ? "…" : "")
-    );
+  const t = (text || "").replace(/\s+/g, " ").trim();
+  if (!t) return "";
+  const i = t.toLowerCase().indexOf((q || "").toLowerCase());
+  if (i === -1) {
+    return t.slice(0, radius * 2) + (t.length > radius * 2 ? "…" : "");
+  }
   const start = Math.max(0, i - radius);
   const end = Math.min(t.length, i + q.length + radius);
   const left = start > 0 ? "…" : "";
@@ -31,150 +34,101 @@ function makeSnippet(text, q, radius = 120) {
   return left + t.slice(start, end) + right;
 }
 
-// Nettoie le markdown pour n’afficher que du texte brut
-function stripMarkdown(md) {
-  return (
-    md
-      .replace(/!\[[^\]]*\]\([^)]*\)/g, "") // images
-      .replace(/\[[^\]]*\]\([^)]*\)/g, "") // liens
-      .replace(/[`*_>#~\-\[\]\(\)]/g, "") // symboles markdown
-      .replace(/:{3,}/g, "") // blocs :::split etc.
-      .replace(/\/images\/[^\s]+/g, "") // chemins images
-      .replace(/\s{2,}/g, " ") // espaces multiples
-      .trim()
-  );
+function escapeRegExp(s) {
+  return (s || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-// Surligne les occurrences du mot clé
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function highlight(text, q) {
-  if (!q) return text;
-  const regex = new RegExp(`(${q})`, "gi");
-  return text.replace(
+  const safe = escapeHtml(text);
+  if (!q) return safe;
+  const regex = new RegExp(`(${escapeRegExp(q)})`, "gi");
+  return safe.replace(
     regex,
     `<strong class="text-gray-700 font-semibold">$1</strong>`
   );
 }
 
-/**
- * Wrapper avec Suspense pour satisfaire Next 16 :
- * le hook useSearchParams est utilisé dans SearchClientInner.
- */
-export default function SearchClient(props) {
+export default function SearchClient() {
   return (
     <Suspense fallback={null}>
-      <SearchClientInner {...props} />
+      <SearchClientInner />
     </Suspense>
   );
 }
 
-function SearchClientInner({ articles, projects }) {
+function SearchClientInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const q = searchParams.get("q") || "";
-  const [mdCache, setMdCache] = useState({}); // { "article:slug": rawMarkdown }
+  const [index, setIndex] = useState(null); // null = loading, [] = vide
   const inputRef = useRef(null);
 
-  // Focus initial sur l'input si vide
+  // Focus initial sur l'input quand pas de requête
   useEffect(() => {
     if (!q && inputRef.current) inputRef.current.focus();
   }, [q]);
 
-  // Charge le markdown des articles + projets à la volée (comme avant)
+  // Chargement unique de l'index (mis en cache navigateur grâce au header)
   useEffect(() => {
     let cancelled = false;
-
-    async function loadAll() {
-      if (!q) return;
-
-      const allItems = [
-        ...articles.map((a) => ({ type: "article", slug: a.slug })),
-        ...projects.map((p) => ({ type: "project", slug: p.slug })),
-      ];
-
-      const entries = await Promise.all(
-        allItems.map(async (item) => {
-          const key = `${item.type}:${item.slug}`;
-          if (mdCache[key]) return [key, mdCache[key]];
-
-          try {
-            const folder =
-              item.type === "article" ? "articles" : "projets";
-            const res = await fetch(`/${folder}/${item.slug}.md`);
-            if (!res.ok) return [key, ""];
-            const raw = await res.text();
-            const cleaned = raw.replace(/^---[\s\S]*?---\n?/, ""); // retire frontmatter
-            return [key, cleaned];
-          } catch {
-            return [key, ""];
-          }
-        })
-      );
-
-      if (!cancelled) {
-        setMdCache((prev) => {
-          const next = { ...prev };
-          for (const [key, raw] of entries) {
-            next[key] = raw;
-          }
-          return next;
-        });
-      }
-    }
-
-    loadAll();
-
+    fetch("/search-index.json")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (!cancelled) setIndex(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setIndex([]);
+      });
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, articles, projects]);
+  }, []);
 
-  // Résultats combinés
   const results = useMemo(() => {
     const query = normalize(q);
-    if (!query) return { arts: [], pros: [] };
+    if (!query || !index) return { arts: [], pros: [] };
 
-    // Articles
-    const arts = articles
-      .map((a) => {
-        const hayMeta = normalize(
-          [a.title, (a.tags || []).join(" "), a.date].join(" ")
+    const filtered = index
+      .map((item) => {
+        const meta = normalize(
+          [
+            item.title,
+            item.description,
+            item.status,
+            (item.tags || []).join(" "),
+          ].join(" ")
         );
-        const body = mdCache[`article:${a.slug}`] || "";
-        const hayBody = normalize(body);
-        const hit = hayMeta.includes(query) || hayBody.includes(query);
+        const body = normalize(item.body || "");
+        const hit = meta.includes(query) || body.includes(query);
         if (!hit) return null;
 
-        const snippet = stripMarkdown(
-          body ? makeSnippet(body, q) : a.description || ""
-        );
-        return { ...a, snippet };
+        const source = (item.body || "").length
+          ? item.body
+          : item.description || "";
+
+        return {
+          ...item,
+          snippet: makeSnippet(source, q),
+        };
       })
       .filter(Boolean);
 
-    // Projets
-    const pros = projects
-      .map((p) => {
-        const hayMeta = normalize(
-          [p.title, p.status, p.description].join(" ")
-        );
-        const body = mdCache[`project:${p.slug}`] || "";
-        const hayBody = normalize(body);
-        const hit = hayMeta.includes(query) || hayBody.includes(query);
-        if (!hit) return null;
+    return {
+      arts: filtered.filter((i) => i.type === "article"),
+      pros: filtered.filter((i) => i.type === "project"),
+    };
+  }, [q, index]);
 
-        const snippet = stripMarkdown(
-          body ? makeSnippet(body, q) : p.description || ""
-        );
-        return { ...p, snippet };
-      })
-      .filter(Boolean);
-
-    return { arts, pros };
-  }, [q, mdCache, articles, projects]);
-
-  // Soumission du formulaire : met à jour l'URL /recherche?q=...
   function onSubmit(e) {
     e.preventDefault();
     const value = e.currentTarget.q.value.trim();
@@ -185,13 +139,16 @@ function SearchClientInner({ articles, projects }) {
     }
   }
 
+  const isLoading = q && index === null;
+  const noResults =
+    q && index !== null && results.arts.length === 0 && results.pros.length === 0;
+
   return (
     <main className="container mx-auto px-4 py-10">
       <h1 className="text-3xl font-bold font-heading mb-4 text-brand-primary">
         Recherche
       </h1>
 
-      {/* Champ de recherche */}
       <form onSubmit={onSubmit} className="mb-8">
         <input
           ref={inputRef}
@@ -210,11 +167,14 @@ function SearchClientInner({ articles, projects }) {
         </p>
       )}
 
-      {q && results.arts.length === 0 && results.pros.length === 0 && (
+      {isLoading && (
+        <p className="text-gray-600">Chargement de l’index…</p>
+      )}
+
+      {noResults && (
         <p className="text-gray-600">Aucun résultat pour « {q} ».</p>
       )}
 
-      {/* Articles */}
       {results.arts.length > 0 && (
         <section className="mb-12">
           <h2 className="text-2xl font-heading font-bold mb-4 text-brand-deep">
@@ -224,9 +184,7 @@ function SearchClientInner({ articles, projects }) {
             {results.arts.map((a) => (
               <Link
                 key={a.slug}
-                href={`/articles/${a.slug}?highlight=${encodeURIComponent(
-                  q
-                )}`}
+                href={`/articles/${a.slug}?highlight=${encodeURIComponent(q)}`}
                 className="group block bg-white rounded-2xl shadow-card p-6 hover:shadow-lg transition-shadow"
               >
                 <h3 className="text-xl font-semibold mb-2 text-brand-accent group-hover:underline">
@@ -246,7 +204,6 @@ function SearchClientInner({ articles, projects }) {
         </section>
       )}
 
-      {/* Projets */}
       {results.pros.length > 0 && (
         <section>
           <h2 className="text-2xl font-heading font-bold mb-4 text-brand-deep">
@@ -256,9 +213,7 @@ function SearchClientInner({ articles, projects }) {
             {results.pros.map((p) => (
               <Link
                 key={p.slug}
-                href={`/projets/${p.slug}?highlight=${encodeURIComponent(
-                  q
-                )}`}
+                href={`/projets/${p.slug}?highlight=${encodeURIComponent(q)}`}
                 className="group block bg-white rounded-2xl shadow-card p-6 hover:shadow-lg transition-shadow"
               >
                 <h3 className="text-xl font-semibold mb-2 text-brand-accent group-hover:underline">
