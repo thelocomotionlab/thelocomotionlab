@@ -95,6 +95,7 @@ export default function ContactForm() {
             value={formData.name}
             onChange={handleChange}
             required
+            aria-required="true"
             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-accent"
           />
         </div>
@@ -110,6 +111,7 @@ export default function ContactForm() {
             value={formData.email}
             onChange={handleChange}
             required
+            aria-required="true"
             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-accent"
           />
         </div>
@@ -125,6 +127,7 @@ export default function ContactForm() {
             value={formData.message}
             onChange={handleChange}
             required
+            aria-required="true"
             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-accent"
           ></textarea>
         </div>
@@ -141,7 +144,7 @@ export default function ContactForm() {
           {status === "sending" ? "Envoi..." : "Envoyer"}
         </button>
 
-        <div className="h-6 mt-2">
+        <div className="h-6 mt-2" aria-live="polite" aria-atomic="true">
           {status === "success" && (
             <p className="text-brand-deep text-sm font-medium animate-fade-in">
               Merci pour ton message, il a bien été envoyé !

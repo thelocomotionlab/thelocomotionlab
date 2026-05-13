@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 import ProjectsGrid from "@/components/ProjectsGrid";
+import { extractProjectNotes } from "@/lib/extractProjectNotes";
 
 export const metadata = {
   title: "Projets du Labo – Expérimentations vivantes et terrain",
@@ -70,6 +71,11 @@ function getAllProjects() {
 export default function ProjetsPage() {
   const projets = getAllProjects();
 
+  // Notes pré-calculées au build, plus de fetch .md côté client
+  const notesMap = Object.fromEntries(
+    projets.map((p) => [p.slug, extractProjectNotes(p.slug)])
+  );
+
   return (
     <main className="container mx-auto px-4 py-12">
       {/* Header */}
@@ -83,7 +89,7 @@ export default function ProjetsPage() {
       </header>
 
       {/* Grille + filtres en client component */}
-      <ProjectsGrid projets={projets} />
+      <ProjectsGrid projets={projets} notesMap={notesMap} />
     </main>
   );
 }

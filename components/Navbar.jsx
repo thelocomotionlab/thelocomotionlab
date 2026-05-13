@@ -62,9 +62,10 @@ export default function Navbar() {
         >
           <img
             src={hovered ? "/logo_deep_primary.png" : "/logo_primary_deep.png"}
-            alt="Locomotion Lab"
+            alt="Logo The Locomotion Lab — retour à l'accueil"
+            width={48}
+            height={48}
             className="h-12 w-auto transition duration-300"
-            loading="lazy"
           />
         </Link>
       </div>

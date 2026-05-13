@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Mail } from "lucide-react";
 
 /**
@@ -16,6 +16,8 @@ export default function NewsletterSignup({
 }) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
+  const emailId = useId();
+  const statusId = useId();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -63,10 +65,16 @@ export default function NewsletterSignup({
         onSubmit={handleSubmit}
         className="flex flex-col sm:flex-row justify-center items-stretch gap-2 w-full max-w-md mx-auto"
       >
+        <label htmlFor={emailId} className="sr-only">
+          Adresse e-mail pour s'inscrire à la newsletter
+        </label>
         <input
+          id={emailId}
           type="email"
           name="email"
           required
+          aria-required="true"
+          aria-describedby={statusId}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder={placeholder}
@@ -79,12 +87,17 @@ export default function NewsletterSignup({
             status === "sending" ? "opacity-70 cursor-wait" : "hover:opacity-90"
           }`}
         >
-          <Mail size={18} />
+          <Mail size={18} aria-hidden="true" />
           {status === "sending" ? "Envoi..." : buttonLabel}
         </button>
       </form>
 
-      <div className="h-6 mt-3 text-center">
+      <div
+        id={statusId}
+        className="h-6 mt-3 text-center"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         {status === "success" && (
           <p className="text-brand-deep text-sm font-medium animate-fade-in leading-none">
             Merci ! Tu recevras bientôt les nouvelles explorations du labo.
