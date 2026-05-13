@@ -136,6 +136,69 @@ export default async function ProjetPage({ params }) {
   }
 
   const { project, content } = data;
+  const jsonLd = buildProjectJsonLd(project);
 
-  return <ProjetBody project={project} initialContent={content} />;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ProjetBody project={project} initialContent={content} />
+    </>
+  );
+}
+
+/**
+ * Construit un objet JSON-LD de type Article pour le projet.
+ * Les projets sont des comptes-rendus de longue haleine (saison de trail,
+ * expéditions, formations) : Article avec articleSection "Projet" est le
+ * type Schema.org le plus représentatif et le plus reconnu par Google.
+ */
+function buildProjectJsonLd(project) {
+  const url = `${SITE_URL}/projets/${project.slug}`;
+  const imageUrl = project.cover
+    ? `${SITE_URL}${project.cover}`
+    : `${SITE_URL}/images/assets/og-image.jpg`;
+
+  const datePublished = toIsoString(project.date);
+  const dateModified =
+    toIsoString(project.completedAt) ||
+    toIsoString(project.activityAt) ||
+    datePublished;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: project.title,
+    description:
+      project.description ||
+      "Projets du labo : expérimentations en cours autour du mouvement, du minimalisme, de l'hormèse et de la performance humaine.",
+    image: [imageUrl],
+    ...(datePublished ? { datePublished } : {}),
+    ...(dateModified ? { dateModified } : {}),
+    articleSection: "Projet",
+    author: {
+      "@type": "Organization",
+      name: "The Locomotion Lab",
+      url: SITE_URL,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "The Locomotion Lab",
+      url: SITE_URL,
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/images/assets/og-image.jpg`,
+        width: 1200,
+        height: 630,
+      },
+    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    url,
+    inLanguage: "fr-FR",
+    ...(Array.isArray(project.tags) && project.tags.length
+      ? { keywords: project.tags.filter(Boolean).join(", ") }
+      : {}),
+  };
 }

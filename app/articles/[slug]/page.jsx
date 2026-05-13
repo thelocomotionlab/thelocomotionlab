@@ -41,8 +41,6 @@ function readArticle(slug) {
 
   return { article, content, frontmatter: data };
 }
-
-// Génération statique de tous les slugs d'articles publiés
 export async function generateStaticParams() {
   const articlesDir = path.join(process.cwd(), "public", "articles");
   if (!fs.existsSync(articlesDir)) return [];
@@ -131,6 +129,64 @@ export default async function ArticlePage({ params }) {
   }
 
   const { article, content } = data;
+  const jsonLd = buildArticleJsonLd(article);
 
-  return <ArticleBody article={article} initialContent={content} />;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ArticleBody article={article} initialContent={content} />
+    </>
+  );
+}
+
+/**
+ * Construit un objet JSON-LD de type BlogPosting pour l'article.
+ * Permet à Google d'afficher des rich snippets (date, image, auteur, etc.)
+ * et améliore la compréhension du contenu par les crawlers.
+ */
+function buildArticleJsonLd(article) {
+  const url = `${SITE_URL}/articles/${article.slug}`;
+  const imageUrl = article.cover
+    ? `${SITE_URL}${article.cover}`
+    : `${SITE_URL}/images/assets/og-image.jpg`;
+
+  const datePublished = article.date
+    ? new Date(article.date).toISOString()
+    : undefined;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: article.title,
+    description:
+      article.description ||
+      "Carnets du labo : récits, analyses scientifiques et expérimentations autour du mouvement, du minimalisme et de l'hormèse.",
+    image: [imageUrl],
+    ...(datePublished ? { datePublished, dateModified: datePublished } : {}),
+    author: {
+      "@type": "Organization",
+      name: "The Locomotion Lab",
+      url: SITE_URL,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "The Locomotion Lab",
+      url: SITE_URL,
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/images/assets/og-image.jpg`,
+        width: 1200,
+        height: 630,
+      },
+    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    url,
+    inLanguage: "fr-FR",
+    ...(Array.isArray(article.tags) && article.tags.length
+      ? { keywords: article.tags.filter(Boolean).join(", ") }
+      : {}),
+  };
 }
