@@ -63,11 +63,10 @@ export default function ProjectsGrid({ projets, notesMap = {} }) {
       </div>
 
       {/* Grille des projets */}
-      <section className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid gap-6 justify-center justify-items-center grid-cols-1 sm:grid-cols-2 lg:[grid-template-columns:repeat(3,22rem)]">
         {filtered.map((p) => {
           const notes = notesMap[p.slug] || [];
 
-          // Tri par date décroissante, on garde les 2 plus récentes
           const lastNotes = [...notes]
             .sort((a, b) => {
               const dA = parseFrenchDate(a.date);
@@ -80,45 +79,46 @@ export default function ProjectsGrid({ projets, notesMap = {} }) {
             .slice(0, 2);
 
           return (
-            <Link
-              key={p.slug}
-              href={`/projets/${p.slug}`}
-              className="group block bg-white rounded-2xl shadow-card p-6 hover:shadow-lg transition flex flex-col hover:-translate-y-1"
-            >
-              <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
-                {p.status}
-              </p>
-
-              <h3 className="text-xl font-semibold text-brand-deep mb-2">
-                {p.title}
-              </h3>
-
-              <p className="italic text-sm text-gray-700 mb-4 flex-1">
-                {p.description}
-              </p>
-
-              <hr className="my-3 border border-gray-300/70" />
-
-              {lastNotes.length > 0 && (
-                <div>
-                  <p className="text-sm font-semibold text-gray-600 mb-1">
-                    Dernières notes :
+            <div key={p.slug} className="relative w-full max-w-[22rem] h-full">
+              <Link
+                href={`/projets/${p.slug}`}
+                className="group bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col"
+              >
+                <div className="p-5 flex flex-col flex-1">
+                  <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
+                    {p.status}
                   </p>
-                  <ul className="space-y-1">
-                    {lastNotes.map((note, i) => (
-                      <li key={i} className="text-sm text-gray-700">
-                        {note.date
-                          ? `${note.date} – ${note.title}`
-                          : note.title}
-                      </li>
-                    ))}
-                  </ul>
+
+                  <h3 className="text-lg font-semibold text-brand-deep group-hover:underline mb-2">
+                    {p.title}
+                  </h3>
+
+                  <p className="text-sm text-gray-700 italic line-clamp-3">
+                    {p.description}
+                  </p>
+
+                  {lastNotes.length > 0 && (
+                    <div className="mt-auto pt-3 border-t border-gray-200">
+                      <p className="text-xs font-semibold text-gray-500 mb-1">
+                        Dernières notes :
+                      </p>
+                      <ul className="space-y-1">
+                        {lastNotes.map((note, i) => (
+                          <li key={i} className="text-xs text-gray-600">
+                            {note.date
+                              ? `${note.date} – ${note.title}`
+                              : note.title}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
-              )}
-            </Link>
+              </Link>
+            </div>
           );
         })}
-      </section>
+      </div>
     </>
   );
 }

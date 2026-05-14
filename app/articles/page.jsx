@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 import Link from "next/link";
+import Image from "next/image";
 
 export const metadata = {
   title: "Carnets du labo – Récits, réflexions et analyses scientifiques",
@@ -87,41 +88,49 @@ export default function ArticlesPage() {
       </header>
 
       {/* Grille d’articles */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid gap-6 justify-center justify-items-center grid-cols-1 sm:grid-cols-2 lg:[grid-template-columns:repeat(3,22rem)]">
         {articles.map((article) => (
-          <Link
-            key={article.slug}
-            href={`/articles/${article.slug}`}
-            className="group block bg-white rounded-2xl shadow-card p-6 hover:shadow-lg transition-shadow"
-          >
-            {article.cover && (
-              <img
-                src={article.cover}
-                alt={article.title}
-                className="w-full h-56 object-cover rounded-lg mb-4"
-                loading="lazy"
-              />
-            )}
+          <div key={article.slug} className="relative w-full max-w-[22rem] h-full">
+            <Link
+              href={`/articles/${article.slug}`}
+              className="group bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col"
+            >
+              {article.cover ? (
+                <div className="relative w-full h-44">
+                  <Image
+                    src={article.cover}
+                    alt={article.title}
+                    fill
+                    className="object-cover"
+                    sizes="(min-width: 768px) 384px, 100vw"
+                    loading="lazy"
+                  />
+                </div>
+              ) : (
+                <div className="w-full h-44 bg-brand-bg" aria-hidden="true" />
+              )}
 
-            {/* Titre */}
-            <h3 className="text-xl font-semibold text-brand-deep mb-2 group-hover:underline">
-              {article.title}
-            </h3>
+              <div className="p-5 flex flex-col flex-1">
+                <h3 className="text-lg font-semibold text-brand-deep group-hover:underline mb-2">
+                  {article.title}
+                </h3>
 
-            {/* Date si présente */}
-            {article.date && (
-              <p className="text-sm text-gray-500 mb-2">
-                {article.date.toLocaleDateString("fr-FR")}
-              </p>
-            )}
+                {article.description ? (
+                  <p className="text-sm text-gray-700 italic line-clamp-3">
+                    {article.description}
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-500">&nbsp;</p>
+                )}
 
-            {/* Texte d’aperçu basé sur description du .md */}
-            {article.description && (
-              <p className="italic text-sm text-gray-700 line-clamp-3">
-                {article.description}
-              </p>
-            )}
-          </Link>
+                <div className="mt-auto pt-4 text-xs text-gray-500">
+                  {article.date && (
+                    <p>Publié le {article.date.toLocaleDateString("fr-FR")}</p>
+                  )}
+                </div>
+              </div>
+            </Link>
+          </div>
         ))}
       </div>
     </section>
