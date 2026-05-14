@@ -39,22 +39,15 @@ export default function ProjetBody({ project, initialContent }) {
   const toc = extractToc(content);
 
   return (
-    <article className={`max-w-4xl mx-auto sm:px-6 lg:px-8 pt-0 pb-10 sm:pb-10${project.cover ? '' : ' sm:pt-10'}`}>
+    <article className="max-w-4xl mx-auto sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
       <ProjetClientFx />
 
       {project.cover && (
-        <div
-          className="
-            w-screen relative left-1/2 -ml-[50vw]
-            mb-6 overflow-hidden
-            rounded-none
-            shadow-card
-          "
-        >
+        <div className="sm:-mx-6 lg:-mx-8 mb-6 overflow-hidden rounded-2xl shadow-card">
           <img
             src={project.cover}
             alt={project.title}
-            className="block w-full h-auto max-h-[70vh] object-cover"
+            className="block w-full h-auto"
           />
         </div>
       )}
