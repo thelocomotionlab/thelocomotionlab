@@ -75,7 +75,7 @@ export default function ArticlesPage() {
   const articles = getAllArticles();
 
   return (
-    <section className="py-12 max-w-5xl mx-auto px-4 sm:px-6">
+    <section className="py-12 max-w-6xl mx-auto px-4 sm:px-6">
       {/* Header */}
       <header className="max-w-3xl mx-auto text-center mb-10">
         <h1 className="text-3xl font-bold font-heading mb-2 text-brand-primary">
@@ -87,7 +87,7 @@ export default function ArticlesPage() {
       </header>
 
       {/* Grille d’articles */}
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {articles.map((article) => (
           <Link
             key={article.slug}

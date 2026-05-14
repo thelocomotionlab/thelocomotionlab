@@ -63,7 +63,7 @@ export default function ProjectsGrid({ projets, notesMap = {} }) {
       </div>
 
       {/* Grille des projets */}
-      <section className="grid md:grid-cols-3 gap-6">
+      <section className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.map((p) => {
           const notes = notesMap[p.slug] || [];
 
