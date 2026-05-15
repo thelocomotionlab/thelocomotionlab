@@ -153,16 +153,12 @@ Petite semaine à 48 km 1200 m D+/D-. La déception de ne pas réussir à encha�
 
 J'ai finalement trouvé une nouvelle logique dans mon programme : faire une petite semaine à ce niveau de la prépa, ce n'est pas déconnant, ça fait une semaine d'intégration pour assimiler les 3 dernières semaines. Aussi, ça permet de recréer du manque et de faire autre chose, avant de repartir plus fort la semaine prochaine. C'est ainsi que je me suis copieusement adonné au repos, mais aussi au mouvement primal et à la grimpe d'arbre, en attaquant enfin le programme d'un an pour devenir coach certifié [Huden Movement](https://www.instagram.com/huden_movement/). Une page projet y sera d'ailleurs bientôt entièrement consacrée sur ce site (inscris-toi [ici](https://www.thelocomotionlab.com/soutenir) pour rester informé.e des news).
 
-:::split
-
 Je me suis donc rendu au grand Ratz, un endroit avec du calme, de la nature, et de beaux arbres à grimper. J'ai commencé par la première leçon du premier cours : gorille niveau 1. L'idée est de maîtriser la marche quadrupédique et les premiers exercices se sont directement fait sentir au niveau quadri et sangle abdominale. Néanmoins, très addictif.
 
----
 
-![Quadrupédie statique dans le bois du Ratz](/images/projets/traversee-reunion/quadrupedie.webp)
+![Quadrupédie statique dans le bois du Ratz {size=md align=center}](/images/projets/traversee-reunion/quadrupedie.webp)
 *Position statique de quadrupédie.*
 
-:::
 
 J'ai aussi amélioré ma technique de grimpe d'arbres sans branche, j'y reviendrai de manière approfondie dans un futur article. Cette parenthèse m'a fait du bien, d'attaque pour la semaine 4 !
 

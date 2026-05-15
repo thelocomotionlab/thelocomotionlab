@@ -7,7 +7,7 @@ cover: "/images/projets/coach-tarzan-movement/cover_tarzan-movement.webp"
 status: "À venir"
 activityAt: 2025-12-01
 
-published: true
+published: false
 ---
 
 # Journal du projet
