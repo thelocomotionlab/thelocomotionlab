@@ -3,7 +3,7 @@ title: "L'île intense vous dites ?"
 date: "2025-12-9"
 tags: ["ultra-trail", "fast-packing","minimalisme"]
 cover: "/images/articles/recit-reunion-2025/cover_reunion_2025.webp"
-description: "Récit et bilan de la tentative de traversée de la Réunion."
+description: "Récit et bilan de la tentative de traversée de la Réunion en autonomie en sandales."
 type: "recit"
 published: true
 ---

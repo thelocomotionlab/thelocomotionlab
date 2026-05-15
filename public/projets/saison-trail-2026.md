@@ -5,7 +5,7 @@ description: "Journal de bord de ma saison de trail 2026 : projets OFF, sorties 
 cover: "/images/projets/saison-trail-2026/cover_saison-trail-2026.webp"
 
 status: "En cours"
-activityAt: 2026-05-01
+activityAt: 2026-05-16
 
 published: true
 ---
@@ -166,7 +166,7 @@ La fin de la trace se fera sans encombre, de nuit, avec une pointe de frustratio
   elevationMin="0"
   elevationMax="1800"
   referenceGpx="/tracks/traversee-chartreuse.gpx"
-  title="OFF Traversée de la Chartreuse"
+  title="Replay OFF Traversée de la Chartreuse"
 />
 
 *Replay du tracking OFF Traversée de la Chartreuse. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
@@ -199,7 +199,7 @@ Mais au fil du temps, je me rends compte que quelque chose cloche. Que cette seu
 
 #### Caractéristiques du projet
 
-La trace finale est téléchargeable un peu plus bas, dans l'encart du live-tracking. Concernant le déroulé, je pars sur une autonomie complète. Aucun objectif de durée, le but de cette quête étant justement de s'affranchir des données qui, je cite Éric Lacroix avec qui je travaille en ce moment "viennent APRÈS l'effort". Côté couchage, l'affaire n'a pas été simple puisque, ne sachant pas réellement si j'allais m'arrêter pour dormir, je souhaitais un système le plus léger possible, mais à la fois rapide à installer et qui puisse me permettre de m'arrêter dans les pires conditions possibles, c'est-à-dire à 1900 m, sous la pluie ou la neige éventuelle. J'ai donc opté pour un équipement minimaliste mais fonctionnel, avec un tarp (que je n'utiliserai que s'il pleut), un duvet Cumulus Xlite 300, un bivy Escape Lite, un sac à viande en soie, et un matelas en mousse Decath MT500 découpé juste à la taille de mon buste (n'incluant pas les bras). Avec un tel système, j'arrive à un couchage robuste et modulable, me permettant d'encaisser des températures très basses (jusqu'à -10°C en confort), mais également très léger, avec un poids autour de 1.3 kg. Je me suis d'ailleurs entraîné à plier/replier tout mon système plusieurs fois pour être le plus efficace possible pour installer mon camp en cas d'urgence.
+La trace finale est téléchargeable un peu plus bas, dans l'encart du live-tracking. Concernant le déroulé, je pars sur une autonomie complète. Aucun objectif de durée, le but de cette quête étant justement de s'affranchir des données qui, je cite Éric Lacroix avec qui je travaille en ce moment "viennent APRÈS l'effort". Côté couchage, l'affaire n'a pas été simple puisque, ne sachant pas réellement si j'allais m'arrêter pour dormir, je souhaitais un système le plus léger possible, mais à la fois rapide à installer et qui puisse me permettre de m'arrêter dans les pires conditions possibles, c'est-à-dire à 1900 m, sous la pluie ou la neige éventuelle. J'ai donc opté pour un équipement minimaliste mais fonctionnel, avec un tarp (que je n'utiliserai que s'il pleut), un duvet Cumulus Xlite 300, un bivy Escape Lite, un sac à viande en soie, et un matelas en mousse Decath MT500 découpé juste à la taille de mon buste (n'incluant pas les bras). Avec un tel système, j'obtiens un couchage robuste et modulable, me permettant d'encaisser des températures très basses (jusqu'à -10°C en confort), mais également très léger, avec un poids autour de 1.3 kg. Je me suis d'ailleurs entraîné à plier/replier tout mon système plusieurs fois pour être le plus efficace possible pour installer le campement en situation d'urgence.
 
 ![Entraînement campement {width=680px align=center}](/images/projets/saison-trail-2026/depliage_tente.webp)
 *Entraînement intensif de pliage/repliage de couchage par 28°C (lol).*
@@ -266,8 +266,8 @@ pour un total de 4.3 kg. En ajoutant à cela les liquides, de 9.7 kg. Cela repr�
 ### Projet OFF Fontaine-Rémuzat
 *02/05/2026*
 
-
-<livetracking
+Le récit complet de cette aventure est à retrouver 
+<!-- <livetracking
   apiBase="https://tracking.thelocomotionlab.com"
   positionsEndpoint="/live-positions.json"
   referenceGpx="/tracks/fontaine-remuzat.gpx"
@@ -277,10 +277,26 @@ pour un total de 4.3 kg. En ajoutant à cela les liquides, de 9.7 kg. Cela repr�
   title="Suivi en direct"
   pollIntervalMs="20000"
   initialMapStyle="osm"
+/> -->
+
+<postlivetracking
+  positions="/replays/traversee-vercors/live-positions.json"
+  totalDistance="160"
+  distanceFactor="1."
+  ascentFactor="1."
+  descentFactor="1."
+  elevationMin="200"
+  elevationMax="2000"
+  referenceGpx="/tracks/fontaine-remuzat.gpx"
+  title="Replay OFF Fontaine Rémuzat"
 />
 
-*Tracking actualisé toutes les 20 s ou 25 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux déplier/plier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
+*Replay du tracking OFF Fontaine Rémuzat. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
 
+
+
+<!-- *Tracking actualisé toutes les 20 s ou 25 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux déplier/plier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
+ -->
 
 <!-- ![PPG 28 août 2025](/images/projets/traversee-reunion/ppg_28_08_2025.webp)
 *Séance PPG n°5 réalisée pour le GRF.* -->
