@@ -266,7 +266,7 @@ pour un total de 4.3 kg. En ajoutant à cela les liquides, de 9.7 kg. Cela repr�
 ### Projet OFF Fontaine-Rémuzat
 *02/05/2026*
 
-Le récit complet de cette aventure est à retrouver 
+Le récit complet de cette aventure est à retrouver [par ici](https://thelocomotionlab.com/articles/immersion-primale-entre-vercors-et-drome).
 <!-- <livetracking
   apiBase="https://tracking.thelocomotionlab.com"
   positionsEndpoint="/live-positions.json"

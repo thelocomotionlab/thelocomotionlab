@@ -5,7 +5,7 @@ tags: ["ultra-trail", "fast-packing","minimalisme"]
 cover: "/images/articles/immersion-primale-entre-vercors-et-drome/cover_immersion-primale-entre-vercors-et-drome.webp"
 description: "Récit détaillé de cette folle aventure en autonomie."
 type: "recit"
-published: true
+published: false
 ---
 
 Ces dernières années, mon goût pour l'aventure au long court en mode fast-packing a été de plus en plus prononcé. Cette discipline a de fascinant qu'elle incarne par essence la recherche de robustesse, qu'elle soit dans l'équipement, qui doit être le plus versatile et complet possible, mais aussi physiologique, où l'organisme, mis à rude épreuve pendant plusieurs journées d'affilée, doit être capable d'encaisser des dénivelés positifs et négatifs très importants, de la privation calorique ou du manque de sommeil. Pratiquer l'ultra en autonomie, avec mes propres règles, au cours d'aventures construites sur-mesure, est un rite de passage évident dans ma quête perpétuelle de robustesse et de reconnexion à mon instinct animal. Si l'idée d'aller de chez moi à chez ma mère en traversant le Vercors (160km8000mD+), m'est rapidement apparu comme un jalon évident au moment de construire ma saison de trail, je dois avouer que je ne m'attendais pas à vivre un tel voyage. Sans vouloir abuser des superlatifs, on pourrait même parler d'une épopée sur ce coup. Voici le récit de cette immersion primale entre Vercors et Drôme. Belle lecture !
