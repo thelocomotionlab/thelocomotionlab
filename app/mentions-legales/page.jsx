@@ -46,7 +46,7 @@ export default function MentionsPage() {
           Contact :{" "}
           <a
             href="mailto:thelocomotionlab@gmail.com"
-            className="text-brand-accent hover:underline"
+            className="font-semibold text-gray-800 hover:underline"
           >
             thelocomotionlab@gmail.com
           </a>
@@ -88,7 +88,7 @@ export default function MentionsPage() {
           Pour toute demande de contact ou de collaboration éventuelle :{" "}
           <a
             href="mailto:caroline.fer69@gmail.com"
-            className="text-brand-accent hover:underline"
+            className="font-semibold text-gray-800 hover:underline"
           >
             caroline.fer69@gmail.com
           </a>

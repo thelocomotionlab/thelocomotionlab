@@ -18,7 +18,7 @@ export default function Tooltip({ entry, children }) {
 
   return (
     <span
-      className="relative text-brand-accent cursor-pointer"
+      className="relative cursor-pointer"
       onMouseEnter={() => setVisible(true)}
       onMouseLeave={() => setVisible(false)}
       onClick={() => setVisible((v) => !v)}

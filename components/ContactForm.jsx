@@ -76,7 +76,7 @@ export default function ContactForm() {
         formulaire ou directement par mail à{" "}
         <a
           href="mailto:thelocomotionlab@gmail.com"
-          className="text-brand-accent hover:underline"
+          className="font-semibold text-gray-800 hover:underline"
         >
           thelocomotionlab@gmail.com
         </a>

@@ -34,7 +34,10 @@ export function createCitation(usedCitations = []) {
 
     return (
       <Tooltip entry={entry}>
-        <a href={`#ref-${id}`} className="no-underline">
+        <a
+          href={`#ref-${id}`}
+          className="font-semibold text-gray-800 hover:underline"
+        >
           {children ? (
             <>
               {children}

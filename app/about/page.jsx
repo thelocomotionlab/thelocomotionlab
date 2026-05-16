@@ -72,7 +72,7 @@ export default function AboutPage() {
             href="https://artsetmetiers.hal.science/tel-04041476/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-brand-primary hover:underline"
+            className="font-semibold text-gray-800 hover:underline"
           >
             la consulter ici
           </a>
