@@ -2,9 +2,19 @@
 
 import { useId, useState } from "react";
 
-export default function Tooltip({ text, link, children }) {
+export default function Tooltip({ entry, children }) {
   const [visible, setVisible] = useState(false);
   const tooltipId = useId();
+
+  if (!entry) return <span>{children}</span>;
+
+  const link = entry.link || entry.url;
+
+  const source = entry.journal
+    ? `${entry.journal}${entry.volume ? `, ${entry.volume}` : ""}${
+        entry.pages ? `, ${entry.pages}` : ""
+      }`
+    : entry.publisher || "";
 
   return (
     <span
@@ -30,16 +40,17 @@ export default function Tooltip({ text, link, children }) {
             display: "inline-block",
           }}
         >
-          {/* Format stylisé façon bibliographie */}
           <span className="mb-1 font-semibold text-gray-900 block">
-            {text.split(".")[0]}
+            {entry.author} ({entry.year})
           </span>
-          <span className="italic text-gray-700 mb-1 block">
-            {text.split(".")[1]?.trim() || ""}
-          </span>
-          <span className="text-gray-500 text-xs block">
-            {text.split(".").slice(2).join(".").trim()}
-          </span>
+          {entry.title && (
+            <span className="italic text-gray-700 mb-1 block">
+              {entry.title}
+            </span>
+          )}
+          {source && (
+            <span className="text-gray-500 text-xs block">{source}</span>
+          )}
 
           {link && (
             <a

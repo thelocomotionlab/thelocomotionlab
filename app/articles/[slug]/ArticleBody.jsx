@@ -18,45 +18,16 @@ import remarkImageOptions from "../../../markdown/remarkImageOptions";
 import rehypeSlug from "rehype-slug";
 import rehypeRaw from "rehype-raw";
 
-import bibliography from "../../../content/bibliography.json";
-import Tooltip from "../../../components/Tooltip";
 import { getUsedCitations } from "../../../lib/getUsedCitations";
+import { createCitation } from "../../../components/Citation";
+import CitationReferences from "../../../components/CitationReferences";
 
 export default function ArticleBody({ article, initialContent }) {
   if (!article) return <p className="p-6">Article non trouvé</p>;
 
-  const usedCitations = getUsedCitations(initialContent);
-
-  const markdown = (initialContent || "").replace(
-    /\{\{cite:([\w-]+)\}\}/g,
-    '<citation id="$1"></citation>'
-  );
-
-  function Citation(props) {
-    const id = props?.id;
-    const ref = id ? bibliography[id] : null;
-    if (!id || !ref) return <sup>[?]</sup>;
-
-    const index = usedCitations.indexOf(id) + 1;
-
-    const formatted = `${ref.author} (${ref.year}). ${ref.title}. ${
-      ref.journal || ref.publisher || ""
-    }`;
-
-    const link = ref.link || ref.url;
-
-    return (
-      <span style={{ display: "inline" }}>
-        <Tooltip text={formatted} link={link}>
-          <a href={`#ref-${id}`} className="no-underline">
-            <sup className="citation-ref">
-              {index > 0 ? `${index}` : "?"}
-            </sup>
-          </a>
-        </Tooltip>
-      </span>
-    );
-  }
+  const markdown = initialContent || "";
+  const usedCitations = getUsedCitations(markdown);
+  const Citation = createCitation(usedCitations);
 
   return (
     <article className="max-w-5xl mx-auto sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
@@ -129,40 +100,7 @@ export default function ArticleBody({ article, initialContent }) {
           </ReactMarkdown>
         </div>
 
-        {usedCitations.length > 0 && (
-          <section className="mt-12">
-            <h2 className="text-2xl font-bold text-brand-accent mb-4">
-              Références
-            </h2>
-            <ol className="list-decimal list-inside space-y-2 text-gray-700 font-lora">
-              {usedCitations.map((id) => {
-                const ref = bibliography[id];
-                if (!ref) return null;
-
-                const link = ref.link || ref.url;
-
-                return (
-                  <li key={id} id={`ref-${id}`} className="scroll-mt-24">
-                    <span className="text-gray-700">
-                      {ref.author} ({ref.year}). <em>{ref.title}</em>.{" "}
-                      {ref.journal || ref.publisher || ""}
-                    </span>
-                    {link && (
-                      <a
-                        href={link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-brand-primary hover:underline ml-1"
-                      >
-                        Lire
-                      </a>
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
-          </section>
-        )}
+        <CitationReferences ids={usedCitations} />
 
         <div className="mt-12 text-center">
           <Link

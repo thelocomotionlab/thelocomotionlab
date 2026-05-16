@@ -1,40 +1,50 @@
 // components/Citation.jsx
 //
-// Server Component : se contente de formater l'entrée de bibliographie
-// et d'envelopper l'enfant dans un Tooltip (qui reste client component).
-// Plus de hack window.__usedRefs, plus de "use client" inutile.
+// Composant unifié pour les deux syntaxes de citation :
+//   - {{cite:ID}}                          → superscript numéroté [N]
+//   - <Citation id="ID">texte</Citation>   → texte custom + superscript [N]
+//
+// Les deux passent par le même Tooltip et pointent vers la même ancre
+// #ref-ID dans la section Références. La numérotation suit l'ordre
+// d'apparition dans le markdown (via getUsedCitations).
+//
+// Usage côté Body :
+//   const used = getUsedCitations(content);
+//   const Citation = createCitation(used);
+//   <ReactMarkdown components={{ citation: Citation }} />
 
 import bibliography from "../content/bibliography.json";
 import Tooltip from "./Tooltip";
 
-export default function Citation({ id, children }) {
-  const ref = bibliography[id];
+export function createCitation(usedCitations = []) {
+  return function Citation({ id, children }) {
+    const entry = id ? bibliography[id] : null;
 
-  if (!ref) {
-    if (process.env.NODE_ENV !== "production") {
-      // Visible côté dev : indique qu'une citation pointe sur un ID absent.
-      console.warn(`Référence ${id} non trouvée dans bibliography.json`);
+    if (!entry) {
+      if (process.env.NODE_ENV !== "production" && id) {
+        console.warn(`Référence ${id} non trouvée dans bibliography.json`);
+      }
+      return children ? <span>{children}</span> : <sup>[?]</sup>;
     }
-    return <span>{children || id}</span>;
-  }
 
-  const formatted = [
-    `${ref.author} (${ref.year})`,
-    ref.title ? `${ref.title}` : "",
-    ref.journal
-      ? `${ref.journal}${ref.volume ? `, ${ref.volume}` : ""}${
-          ref.pages ? `, ${ref.pages}` : ""
-        }.`
-      : ref.publisher
-      ? `${ref.publisher}.`
-      : "",
-  ]
-    .filter(Boolean)
-    .join(". ");
+    const index = usedCitations.indexOf(id) + 1;
+    const sup = (
+      <sup className="citation-ref">{index > 0 ? `${index}` : "?"}</sup>
+    );
 
-  return (
-    <Tooltip text={formatted} link={ref.link}>
-      {children || `${ref.author.split(" ").slice(-1)[0]}, ${ref.year}`}
-    </Tooltip>
-  );
+    return (
+      <Tooltip entry={entry}>
+        <a href={`#ref-${id}`} className="no-underline">
+          {children ? (
+            <>
+              {children}
+              {sup}
+            </>
+          ) : (
+            sup
+          )}
+        </a>
+      </Tooltip>
+    );
+  };
 }

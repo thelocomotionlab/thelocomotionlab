@@ -18,13 +18,16 @@ import remarkSplit from "../../../markdown/remarkSplit";
 import remarkImageOptions from "../../../markdown/remarkImageOptions";
 import remarkLiveTracking from "../../../markdown/remarkLiveTracking";
 import remarkPostLiveTracking from "../../../markdown/remarkPostLiveTracking";
+import remarkCitations from "../../../markdown/remarkCitations";
 
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeRaw from "rehype-raw";
 import rehypeKatex from "rehype-katex";
 
-import Citation from "../../../components/Citation";
+import { createCitation } from "../../../components/Citation";
+import CitationReferences from "../../../components/CitationReferences";
+import { getUsedCitations } from "../../../lib/getUsedCitations";
 import MapEmbed from "../../../components/MapEmbedLazy";
 import LiveTracking from "../../../components/LiveTrackingLazy";
 import PostLiveTracking from "../../../components/PostLiveTrackingLazy";
@@ -37,6 +40,8 @@ export default function ProjetBody({ project, initialContent }) {
 
   const content = initialContent || "";
   const toc = extractToc(content);
+  const usedCitations = getUsedCitations(content);
+  const Citation = createCitation(usedCitations);
 
   return (
     <article className="max-w-4xl mx-auto sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
@@ -113,6 +118,7 @@ export default function ProjetBody({ project, initialContent }) {
               remarkGfm,
               remarkLiveTracking,
               remarkPostLiveTracking,
+              remarkCitations,
               remarkDirective,
               remarkSplit,
               remarkMath,
@@ -272,6 +278,8 @@ export default function ProjetBody({ project, initialContent }) {
             {content}
           </ReactMarkdown>
         </div>
+
+        <CitationReferences ids={usedCitations} />
 
         <div className="mt-12 text-center">
           <Link
