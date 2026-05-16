@@ -38,10 +38,18 @@ import ProjetClientFx from "./ProjetClientFx";
 export default function ProjetBody({ project, initialContent }) {
   if (!project) return <p className="p-6">Projet non trouvé</p>;
 
-  const content = initialContent || "";
-  const toc = extractToc(content);
-  const usedCitations = getUsedCitations(content);
+  const raw = initialContent || "";
+  const toc = extractToc(raw);
+  const usedCitations = getUsedCitations(raw);
   const Citation = createCitation(usedCitations);
+
+  // Conversion {{cite:ID}} → <citation id="ID"></citation> AVANT le parsing
+  // markdown : sinon `remark-directive` interprète le `:ID` comme une
+  // directive texte et casse la citation.
+  const content = raw.replace(
+    /\{\{cite:([\w-]+)\}\}/g,
+    '<citation id="$1"></citation>'
+  );
 
   return (
     <article className="max-w-4xl mx-auto sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">

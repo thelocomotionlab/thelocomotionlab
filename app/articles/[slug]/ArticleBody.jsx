@@ -25,9 +25,17 @@ import CitationReferences from "../../../components/CitationReferences";
 export default function ArticleBody({ article, initialContent }) {
   if (!article) return <p className="p-6">Article non trouvé</p>;
 
-  const markdown = initialContent || "";
-  const usedCitations = getUsedCitations(markdown);
+  const raw = initialContent || "";
+  const usedCitations = getUsedCitations(raw);
   const Citation = createCitation(usedCitations);
+
+  // Conversion {{cite:ID}} → <citation id="ID"></citation> AVANT le parsing
+  // markdown : sinon `remark-directive` interprète le `:ID` comme une
+  // directive texte et casse la citation.
+  const markdown = raw.replace(
+    /\{\{cite:([\w-]+)\}\}/g,
+    '<citation id="$1"></citation>'
+  );
 
   return (
     <article className="max-w-5xl mx-auto sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
