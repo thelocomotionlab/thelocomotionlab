@@ -21,24 +21,18 @@
       "x": ["S1", "S19"],
       "y": [55.72, 55.72],
       "line": { "color": "#EFB159", "width": 1.5, "dash": "dash" },
-      "hoverinfo": "skip"
+      "hovertemplate": "Semaine %{x}<br><b>%{y:.2f} km</b><extra></extra>"
     }
   ],
   "layout": {
-    "title": {
-      "text": "",
-      "font": { "size": 17 },
-      "x": 0.5,
-      "xanchor": "center"
-    },
     "xaxis": {
-      "title": { "text": "" }
+      "range": [0, 18]
     },
     "yaxis": {
-      "title": { "text": "" },
+      "title": { "text": "Kilométrage (km)" },
       "rangemode": "tozero"
     },
-    "showlegend": true,
+    "showlegend": false,
     "legend": {
       "x": 0.02,
       "y": 0.98,
@@ -52,7 +46,7 @@
       {
         "x": "S10",
         "y": 100.16,
-        "text": "$d_{\\max} = 100{,}16\\;\\mathrm{km}$",
+        "text": "$D_{\\max} = 100{,}16\\;\\mathrm{km}$",
         "showarrow": true,
         "arrowhead": 2,
         "arrowsize": 1,
