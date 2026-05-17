@@ -18,6 +18,7 @@ import remarkSplit from "../../../markdown/remarkSplit";
 import remarkImageOptions from "../../../markdown/remarkImageOptions";
 import remarkLiveTracking from "../../../markdown/remarkLiveTracking";
 import remarkPostLiveTracking from "../../../markdown/remarkPostLiveTracking";
+import remarkPlot from "../../../markdown/remarkPlot";
 import remarkCitations from "../../../markdown/remarkCitations";
 
 import rehypeSlug from "rehype-slug";
@@ -31,6 +32,7 @@ import { getUsedCitations } from "../../../lib/getUsedCitations";
 import MapEmbed from "../../../components/MapEmbedLazy";
 import LiveTracking from "../../../components/LiveTrackingLazy";
 import PostLiveTracking from "../../../components/PostLiveTrackingLazy";
+import Plot from "../../../components/PlotLazy";
 
 import { extractToc } from "../../../lib/extractToc";
 import ProjetClientFx from "./ProjetClientFx";
@@ -126,6 +128,7 @@ export default function ProjetBody({ project, initialContent }) {
               remarkGfm,
               remarkLiveTracking,
               remarkPostLiveTracking,
+              remarkPlot,
               remarkCitations,
               remarkDirective,
               remarkSplit,
@@ -194,7 +197,32 @@ export default function ProjetBody({ project, initialContent }) {
                   );
                 }
 
-                // 3) paragraphe qui ne contient QU’UN lien .gpx
+                // 3) Bloc Plot (Plotly)
+                if (
+                  childArray.length === 1 &&
+                  typeof childArray[0] === "string" &&
+                  childArray[0].startsWith("[[PLOT_BLOCK|")
+                ) {
+                  const text = childArray[0];
+                  const jsonPart = text
+                    .replace("[[PLOT_BLOCK|", "")
+                    .replace("]]", "");
+
+                  let props = {};
+                  try {
+                    props = JSON.parse(jsonPart);
+                  } catch (e) {
+                    console.error("JSON Plot invalide :", e);
+                  }
+
+                  return (
+                    <figure className="my-8">
+                      <Plot {...props} />
+                    </figure>
+                  );
+                }
+
+                // 4) paragraphe qui ne contient QU’UN lien .gpx
                 const onlyChild = childArray[0];
                 const gpxLinkOnly =
                   childArray.length === 1 &&
@@ -206,7 +234,7 @@ export default function ProjetBody({ project, initialContent }) {
                   return <div className="map-block">{children}</div>;
                 }
 
-                // 4) légende markdown : paragraphe ne contenant qu’un <em>
+                // 5) légende markdown : paragraphe ne contenant qu’un <em>
                 const emOnly =
                   childArray.length === 1 &&
                   React.isValidElement(onlyChild) &&
