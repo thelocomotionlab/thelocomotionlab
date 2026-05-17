@@ -84,16 +84,17 @@ const AXIS_DEFAULTS = {
 // Marges adaptatives selon la présence des titres. Plotly réserve toujours
 // l'espace de la marge même quand le texte est vide → on rétrécit la marge
 // correspondante. `automargin: true` sur les axes garantit en plus que les
-// graduations longues (dates, labels rotated) ne sont jamais tronquées.
+// graduations longues (dates, labels rotated) ne sont jamais tronquées :
+// les valeurs ci-dessous sont donc des planchers, jamais des plafonds.
 function computeMargin(userLayout) {
   const hasTitle = !!userLayout?.title?.text?.trim?.();
   const hasXTitle = !!userLayout?.xaxis?.title?.text?.trim?.();
   const hasYTitle = !!userLayout?.yaxis?.title?.text?.trim?.();
   return {
-    l: hasYTitle ? 70 : 45,
-    r: 30,
-    t: hasTitle ? 60 : 20,
-    b: hasXTitle ? 60 : 40,
+    l: hasYTitle ? 60 : 35,
+    r: 20,
+    t: hasTitle ? 50 : 10,
+    b: hasXTitle ? 55 : 30,
   };
 }
 
