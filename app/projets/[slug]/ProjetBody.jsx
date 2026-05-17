@@ -48,10 +48,31 @@ export default function ProjetBody({ project, initialContent }) {
   // Conversion {{cite:ID}} → <citation id="ID"></citation> AVANT le parsing
   // markdown : sinon `remark-directive` interprète le `:ID` comme une
   // directive texte et casse la citation.
-  const content = raw.replace(
+  let content = raw.replace(
     /\{\{cite:([\w-]+)\}\}/g,
     '<citation id="$1"></citation>'
   );
+
+  // Conversion {{fig:NOM}} → [fig. N](#fig-N), AUSSI avant le parsing
+  // markdown pour la même raison (remark-directive bouffe le `:NOM`).
+  // On scanne les <plot name="..."> dans l'ordre d'apparition pour
+  // attribuer le numéro, puis on substitue chaque référence.
+  const figNameToIndex = new Map();
+  const plotTags = content.matchAll(/<plot\b[^>]*>/gi);
+  let figIdx = 0;
+  for (const m of plotTags) {
+    figIdx += 1;
+    const nameMatch = m[0].match(/name="([\w-]+)"/);
+    if (nameMatch) figNameToIndex.set(nameMatch[1], figIdx);
+  }
+  content = content.replace(/\{\{fig:([\w-]+)\}\}/g, (full, name) => {
+    const n = figNameToIndex.get(name);
+    if (n === undefined) {
+      console.warn(`[ProjetBody] Référence figure inconnue : ${name}`);
+      return full;
+    }
+    return `[fig. ${n}](#fig-${n})`;
+  });
 
   return (
     <article className="max-w-4xl mx-auto sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
