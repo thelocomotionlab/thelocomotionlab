@@ -310,53 +310,7 @@ Du fait de ma (légère) neuro-atypie, et de ma difficulté à agir si les chose
 
 *Volume hebdomadaire de course à pied depuis début 2026.*
 
-#### Nouvelle gestion de l'alimentation
 
-En écoutant récemment les derniers podcasts de David Nicolas ([cet épisode](https://limitless-project.com/david-nicolas-2/) et [celui-ci](https://limitless-project.com/ulrich-genisson/)), et dans ma mouvance personnelle de remédier à la discordance évolutive dans laquelle les sociétés modernes occidentales nous font baigner, j'ai eu un déclic sur le fait que l'être humain était construit par défaut comme étant un brûleur de gras. Pour la faire courte, l'humain possède deux voies métaboliques principales pour produire de l'énergie : l'oxydation des glucides ou des lipides. Si les glucides sont une source d'énergie rapidement mobilisable pour être oxydés et produire de l'ATP au sein de nos mitonchondries, ils furent de tout temps une denrée rare et peu disponible à l'état naturel. Pour pallier à cela, l'humain a développé une deuxième voie métabolique qui consiste a convertir la graisse stockée un peu partout dans l'organisme en corps cétonique utilisables comme une source d'énergie. La différence par rapport aux glucides, dont on peu en stocker autour de 3 000 kcal au maximum dans le corps, c'est que nos réserves de graisses sont quasiment illimités puisqu'elles dépassent, pour la plupart d'entre nous, les 100 000 kcal (voir <Citation id="abdullah2021">cette étude</Citation>). À titre personnel, pour mon aventure récente dans le Vercors, ma montre affichait autour de 13 000 kcal dépensées pour 130km8000D+. 13 000 kcal, à peine plus de 10 % des 100 000 kcal théoriques dont je dispose dans mon organisme. Cela voudrait-il dire que je pourrais parcourir 100 miles sans manger ? Apparemment, plusieurs personnes ont déjà réalisé cet exploit (voir [cette interview](https://eatfat2befit.com/regime-cetogene-pour-le-sport-michael-mcknight-courir-160-km-sans-calories) et [une perf de ce type](https://www.strava.com/activities/3422161620/overview)). 
-
-Sans vouloir entrer dans de tels extrêmes (bien que ce soit totalement mon genre), j'ai décidé, basé sur tous ces faits, de développer ma flexibilité métabolique et d'expérimenter, au cours des prochains mois de préparations pour les futurs jalons de ma quête 2026, un pannel de protocole pour entraîner mon organisme à devenir davantage "céto-adapté", c'est-à-dire capable de faire bien plus, avec bien moins de kcal. Je sais que je prends encore une direction opposée à ce qui se fait aujourd'hui, dans un monde où les carbs sont plus abondantes que jamais, et où la mode tend vers le toujours plus de carbs à l'effort. Mais, est-ce moi qui suis dans le faux ou bien le monde qui m'entoure qui part complètement en vrille par rapport à la constitution physiologique humaine ? Hmmm.
-
-J'expérimente donc de nouveaux protocoles d'entraînement à glycogène bas, construit par mes soins, inspirés de la littérature, et initiés par la lecture de <Citation id="kuhn2018">Ultra Performance</Citation> de Fabrice Kuhn (également interviewé à l'occasion de [cet épisode de Limitless](https://limitless-project.com/fabrice-kuhn/) que je recommande). J'avoue ne pas exactement savoir où je vais mais il faut bien commencer quelque part, et je me dis qu'en restant étroitement connecté.e à ses sensations, on ne peut guère se tromper. Je précise également que je suis tous les jours sans exception en jeûne intermittent puisque mon premier repas de la journée n'est jamais avant midi, et le dernier jamais après 20h.
-
-#### Protocole 1
-
-Footing à jeûn d'1h, puis retarder la prise alimentaire de 45 min - 1h.
-
-Objectif : mieux gérer la faim et amener gentiment le corps sur la voie de l'adaptation.
-
-Sensations : très facile.
-
-#### Protocole 2
-
-Footing à jeûn d'1h puis repas et goûter cétogènes avec mouvement dans les arbres + exposition au froid l'après-midi. Le footing est réalisé avec glycogène hépatique vide, mais glycogène musculaire plein.  Recharge glucidique au dîner. 
-
-Objectif : le footing abaisse le glycogène musculaire, et le corps se débrouille avec ça pour l'entraînement de l'après-midi => créations d'adaptations.
-
-Sensations : légers maux de têtes après le déjeûner, que je mets sur le compte de la "keto-flu" (=adaptation de mon corps à cette pénurie temporaire de glucides).
-
-#### Protocole 3
-
-Séance de descentes d'1h45 le matin sans petit déj mais avec une c.s. de miel avant de partir. 3$x$250 m D- avec remontée en marche rapide avec bâtons. Apport d'une banane en 2 prises en bas des descentes 2 et 3. Déjeûner low carb ensuite, et recharge glucidique au dîner.
-
-Objectif : entraîner mon corps à faire pareil voire mieux, avec juste ce qu'il faut. L'idée est de simuler un contexte de chasseurs-cueilleurs où l'on peut s'imaginer nos ancêtres partir à la chasse en intensité le ventre vide, et se ravitailler frugalement sur le chemin (fruits, baies, miel).
-
-Sensations : aucun problème pour effectuer la séance à pleine intensité. Rations apportées durant l'effort largement suffisantes. En revanche, grosse fatigue post-séance.
-
-#### Protocole 4
-
-Bi-quotidien avec footing à jeûn de 50 min comprenant des accélérations en montées (pour vider gentiment le glycogène musculaire), suivi d'un déjeûner cétogène, suivi d'un deuxième footing d'1h en fin d'après-midi. Recharge glucidique au dîner.
-
-Objectif : s'entraîner spécifiquement sur des réserves quasi vides lors de la deuxième séance. C'est là que le corps crée, supposément, le plus d'adaptations. 
-
-Sensations : début de deuxième footing difficile, sensation de manquer un peu d'énergie, mais qui s'est dissipée au fil de la séance.
-
-#### Protocole 5
-
-Sortie longue de 3h30 après déjeûner cétogène. Retarder le plus possible la prise de calories pour vivre sur les réserves (au départ, glycogène hépatique vide, musculaire quasi-plein). Ingestion d'une boule d'énergie et d'une banane au bout de 2h30 d'effort.
-
-Objectif : pousser le corps en fonctionnement sur un effort long à intensité basse à modérée => conditions optimales pour utiliser les cétones comme substrat énergétique.
-
-Sensations : pas de sensation de faim, mais réelle sensation de faiblesse par moments, surtout lors des montées. Impression de "keto-flu".
 
 <!-- *Tracking actualisé toutes les 20 s ou 25 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux déplier/plier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
  -->
