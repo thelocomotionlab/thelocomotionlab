@@ -148,7 +148,7 @@ export default function Plot({ src, height = 420 }) {
     if (!src) return undefined;
     let cancelled = false;
     setError(null);
-    fetch(src)
+    fetch(src, { cache: "no-cache" })
       .then((r) => {
         if (!r.ok) throw new Error("HTTP " + r.status);
         return r.json();
