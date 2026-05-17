@@ -300,7 +300,7 @@ Cette expérience d'ultra en OFF, bien que non aboutie, m'a fait prendre conscie
 
 #### Nouveau bloc d'entraînement et variabilité des séances
 
-<plot src="/data/plots/kilometrage-hebdo-2026.json" height="400" name="km-2026" />
+<plot src="/data/plots/kilometrage-hebdo-2026.json" height="300" name="km-2026" />
 
 *Volume hebdomadaire de course à pied depuis début 2026.*
 
