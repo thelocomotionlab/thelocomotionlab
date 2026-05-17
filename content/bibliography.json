@@ -29,6 +29,12 @@
     "title": "La santé par la course à pied",
     "publisher": "La Clinique du Coureur"
   },
+  "kuhn2018": {
+    "author": "Fabrice Kuhn",
+    "year": "2018",
+    "title": "Ultra Performance",
+    "publisher": "Thierry Souccar"
+  },
   "fearnhead2003": {
     "title": "On-line inference for hidden Markov models via particle filters",
     "author": "Fearnhead, Paul and Clifford, Peter",
