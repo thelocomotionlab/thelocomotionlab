@@ -1,0 +1,68 @@
+{
+  "_derived": {
+    "moyenne": { "agg": "mean", "of": "km", "round": 2 }
+  },
+  "data": [
+    {
+      "type": "scatter",
+      "mode": "lines+markers",
+      "name": "Kilométrage",
+      "x": "@semaine",
+      "y": "@km",
+      "line": { "color": "#8CB9BD", "width": 2.5, "shape": "linear" },
+      "marker": {
+        "color": "#B67352",
+        "size": 7,
+        "line": { "color": "white", "width": 1.5 }
+      },
+      "hovertemplate": "Semaine %{x}<br><b>%{y:.2f} km</b><extra></extra>"
+    },
+    {
+      "type": "scatter",
+      "mode": "lines",
+      "name": "Moyenne $\\bar{d} = 55{,}72\\;\\mathrm{km}$",
+      "x": "@semaine",
+      "y": "@moyenne",
+      "line": { "color": "#EFB159", "width": 1.5, "dash": "dash" },
+      "hovertemplate": "Moyenne = <b>%{y:.2f} km</b><extra></extra>"
+    }
+  ],
+  "layout": {
+    "xaxis": {
+      "range": [0, 18]
+    },
+    "yaxis": {
+      "title": { "text": "Kilométrage (km)" },
+      "rangemode": "tozero"
+    },
+    "showlegend": false,
+    "legend": {
+      "x": 0.02,
+      "y": 0.98,
+      "xanchor": "left",
+      "yanchor": "top",
+      "bgcolor": "rgba(255,255,255,0.9)",
+      "bordercolor": "#d1d5db",
+      "borderwidth": 1
+    },
+    "annotations": [
+      {
+        "x": "S10",
+        "y": 100.16,
+        "text": "$D_{\\max} = 100{,}16\\;\\mathrm{km}$",
+        "showarrow": true,
+        "arrowhead": 2,
+        "arrowsize": 1,
+        "arrowwidth": 1,
+        "arrowcolor": "#6b7280",
+        "ax": 30,
+        "ay": -30,
+        "font": { "size": 12, "color": "#374151" },
+        "bgcolor": "rgba(255,255,255,0.85)",
+        "bordercolor": "#d1d5db",
+        "borderwidth": 1,
+        "borderpad": 3
+      }
+    ]
+  }
+}
