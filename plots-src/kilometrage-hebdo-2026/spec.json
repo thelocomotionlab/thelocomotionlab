@@ -18,10 +18,10 @@
       "x": "@semaine",
       "y": "@deniv",
       "yaxis": "y2",
-      "line": { "color": "#B67352", "width": 2 },
+      "line": { "color": "#EFB159", "width": 2 },
       "marker": {
         "color": "#B67352",
-        "size": 6,
+        "size": 12,
         "line": { "color": "white", "width": 1 }
       },
       "hovertemplate": "<b>%{y:.0f} m D+</b><extra></extra>"
