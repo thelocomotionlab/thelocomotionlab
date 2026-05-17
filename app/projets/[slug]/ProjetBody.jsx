@@ -208,16 +208,20 @@ export default function ProjetBody({ project, initialContent }) {
                     .replace("[[PLOT_BLOCK|", "")
                     .replace("]]", "");
 
-                  let props = {};
+                  let parsed = {};
                   try {
-                    props = JSON.parse(jsonPart);
+                    parsed = JSON.parse(jsonPart);
                   } catch (e) {
                     console.error("JSON Plot invalide :", e);
                   }
+                  const { index: figIndex, ...plotProps } = parsed;
 
                   return (
-                    <figure className="my-8">
-                      <Plot {...props} />
+                    <figure
+                      id={figIndex ? `fig-${figIndex}` : undefined}
+                      className="plot-figure"
+                    >
+                      <Plot {...plotProps} />
                     </figure>
                   );
                 }
