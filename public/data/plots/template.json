@@ -1,0 +1,361 @@
+{
+  "_doc": "TEMPLATE PLOTLY — référence complète des options utilisées via le composant <plot>. Trois sections top-level : `data` (les courbes), `layout` (mise en page), `config` (interactivité). Toutes les clés `_doc` / `_doc_*` sont ignorées par Plotly (warnings console possibles mais sans effet). Copie ce fichier, renomme-le, retire les options dont tu n'as pas besoin. Référence officielle exhaustive : https://plotly.com/javascript/reference/",
+
+  "data": [
+    {
+      "_doc": "TRACE SCATTER 2D — le type le plus polyvalent (lignes, points, aires). type peut aussi être : scattergl (perf pour >10k points), bar, histogram, box, violin, heatmap, contour, pie. Pour la 3D voir _doc_3d en bas.",
+      "type": "scatter",
+      "mode": "lines+markers",
+      "_doc_mode": "lines | markers | lines+markers | lines+markers+text | text | none",
+      "name": "Série principale",
+      "x": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "y": [2.1, 3.4, 2.9, 4.7, 5.2, 6.1, 5.8, 7.3, 8.0, 7.5],
+
+      "line": {
+        "color": "#8CB9BD",
+        "width": 2.5,
+        "dash": "solid",
+        "_doc_dash": "solid | dot | dash | longdash | dashdot | longdashdot — ou un pattern personnalisé '5px,10px'",
+        "shape": "linear",
+        "_doc_shape": "linear | spline (courbe lissée) | hv | vh | hvh | vhv (escaliers)",
+        "smoothing": 1.0
+      },
+
+      "marker": {
+        "color": "#B67352",
+        "size": 8,
+        "symbol": "circle",
+        "_doc_symbol": "circle | square | diamond | cross | x | triangle-up | triangle-down | star | hexagon | etc. (suffixes : -open, -dot, -open-dot)",
+        "opacity": 1.0,
+        "line": { "color": "white", "width": 1.5 },
+        "_doc_marker_array": "size et color peuvent être des tableaux pour varier point par point",
+        "colorbar": {
+          "_doc": "Apparaît si marker.color est un tableau numérique et colorscale défini",
+          "title": { "text": "" },
+          "thickness": 15,
+          "len": 0.7
+        },
+        "colorscale": "Viridis",
+        "_doc_colorscale": "Viridis | Plasma | Inferno | Cividis | Greys | RdBu | etc. — ou tableau [[0,'#fff'],[1,'#000']]"
+      },
+
+      "fill": "none",
+      "_doc_fill": "none | tozeroy | tozerox | tonexty | tonextx | toself | tonext — pour les aires sous la courbe",
+      "fillcolor": "rgba(140, 185, 189, 0.2)",
+
+      "text": ["", "", "", "", "", "", "", "", "", ""],
+      "_doc_text": "Texte affiché sur chaque point (si mode contient 'text') ou utilisable dans hovertemplate via %{text}",
+      "textposition": "top center",
+      "textfont": { "family": "Lora", "size": 11, "color": "#374151" },
+
+      "hovertemplate": "x = %{x}<br>y = <b>%{y:.2f}</b><extra>%{fullData.name}</extra>",
+      "_doc_hovertemplate": "Format d3 dans %{...:.2f}. <extra> = badge à droite (vide = pas de badge). hoverinfo: 'skip' pour désactiver. customdata: [[...]] accessible via %{customdata[0]}",
+
+      "showlegend": true,
+      "legendgroup": "",
+      "visible": true,
+      "_doc_visible": "true | false | 'legendonly' (masqué mais cliquable dans la légende)",
+      "opacity": 1.0,
+      "connectgaps": false,
+      "_doc_connectgaps": "true pour relier les points même si y contient des null"
+    },
+
+    {
+      "_doc": "Deuxième trace — exemple d'une ligne de référence (moyenne)",
+      "type": "scatter",
+      "mode": "lines",
+      "name": "Moyenne",
+      "x": [1, 10],
+      "y": [5.3, 5.3],
+      "line": { "color": "#EFB159", "width": 1.5, "dash": "dash" },
+      "hoverinfo": "skip"
+    }
+  ],
+
+  "layout": {
+    "_doc": "Mise en page globale du graphique",
+
+    "title": {
+      "text": "$\\text{Titre du graphique en LaTeX}$",
+      "_doc_text": "Vide '' pour pas de titre. LaTeX entre $...$ déclenche le chargement de MathJax v2.",
+      "font": { "family": "Lora, Georgia, serif", "size": 18, "color": "#1f2937" },
+      "x": 0.5,
+      "xanchor": "center",
+      "y": 0.95,
+      "yanchor": "top"
+    },
+
+    "xaxis": {
+      "_doc": "Axe X — tous les défauts de mergeLayout sont fusionnés ici",
+      "title": {
+        "text": "$x\\;(\\mathrm{unit\\acute{e}})$",
+        "_doc_text": "'' pour aucun titre",
+        "font": { "size": 15, "color": "#1f2937" },
+        "standoff": 10
+      },
+      "type": "linear",
+      "_doc_type": "linear | log | date | category | multicategory",
+      "range": [0, 11],
+      "_doc_range": "Force les bornes. Retire range et utilise rangemode si tu veux auto.",
+      "autorange": false,
+      "_doc_autorange": "true | false | 'reversed'",
+      "rangemode": "normal",
+      "_doc_rangemode": "normal | tozero (force 0) | nonnegative",
+      "fixedrange": false,
+      "_doc_fixedrange": "true pour bloquer zoom/pan sur cet axe",
+
+      "showgrid": true,
+      "gridcolor": "#e5e7eb",
+      "gridwidth": 1,
+      "griddash": "solid",
+      "_doc_griddash": "solid | dot | dash | longdash | dashdot",
+      "minor": {
+        "_doc": "Sous-graduations (entre les ticks principaux)",
+        "showgrid": false,
+        "gridcolor": "#f3f4f6",
+        "ticks": "",
+        "ticklen": 3
+      },
+
+      "zeroline": false,
+      "zerolinecolor": "#9ca3af",
+      "zerolinewidth": 1,
+
+      "showline": true,
+      "linecolor": "#1f2937",
+      "linewidth": 1,
+      "mirror": true,
+      "_doc_mirror": "true (axe répété en face) | 'ticks' (avec graduations) | 'all' (sur tous les sous-plots) | false",
+
+      "ticks": "outside",
+      "_doc_ticks": "outside | inside | ''",
+      "ticklen": 6,
+      "tickwidth": 1,
+      "tickcolor": "#1f2937",
+      "tickfont": { "family": "Lora", "size": 12, "color": "#1f2937" },
+      "tickangle": 0,
+      "_doc_tickangle": "Angle en degrés (-90 = vertical). 'auto' pour rotation automatique",
+
+      "tickmode": "auto",
+      "_doc_tickmode": "auto (utilise nticks/dtick) | linear (dtick/tick0) | array (tickvals/ticktext)",
+      "nticks": 10,
+      "dtick": 1,
+      "_doc_dtick": "Pas entre graduations. Pour dates : 'M1' (mois), 'M3', 'D1' (jour), 86400000 (ms)",
+      "tick0": 0,
+      "tickvals": null,
+      "ticktext": null,
+      "_doc_ticks_array": "Avec tickmode:'array' : tickvals=[0,5,10] et ticktext=['début','milieu','fin']",
+
+      "tickformat": "",
+      "_doc_tickformat": "Format d3 : .0f .2e .1% — pour dates : %Y-%m-%d %H:%M",
+      "exponentformat": "B",
+      "_doc_exponentformat": "none | e | E | power | SI | B (1k, 1M…)",
+      "showexponent": "all",
+
+      "side": "bottom",
+      "_doc_side": "bottom | top (pour Y : left | right)",
+      "anchor": "y",
+      "position": 0,
+      "overlaying": null,
+      "_doc_overlaying": "'y' pour superposer un second axe X sur le même domaine",
+
+      "spikethickness": 1,
+      "_doc_spike": "showspikes:true affiche une ligne de référence au survol",
+      "showspikes": false,
+      "spikemode": "toaxis",
+      "spikedash": "dot"
+    },
+
+    "yaxis": {
+      "_doc": "Axe Y — mêmes options que xaxis",
+      "title": { "text": "$y\\;(\\mathrm{unit\\acute{e}})$" },
+      "range": [0, 10],
+      "rangemode": "tozero",
+      "scaleanchor": null,
+      "_doc_scaleanchor": "'x' pour forcer un rapport d'aspect 1:1 (axes égaux)",
+      "scaleratio": 1
+    },
+
+    "yaxis2": {
+      "_doc": "Second axe Y indépendant — ajouter 'yaxis': 'y2' à la trace concernée",
+      "title": { "text": "" },
+      "overlaying": "y",
+      "side": "right",
+      "showgrid": false
+    },
+
+    "margin": {
+      "l": 70, "r": 30, "t": 60, "b": 60,
+      "pad": 0,
+      "autoexpand": true
+    },
+
+    "paper_bgcolor": "white",
+    "_doc_paper_bgcolor": "Fond global (autour de la zone des axes)",
+    "plot_bgcolor": "white",
+    "_doc_plot_bgcolor": "Fond de la zone des axes seulement",
+
+    "font": { "family": "Lora, Georgia, serif", "size": 14, "color": "#1f2937" },
+    "_doc_font": "Police par défaut héritée par tous les éléments texte",
+
+    "showlegend": true,
+    "legend": {
+      "x": 0.02, "y": 0.98,
+      "_doc_xy": "Position en coordonnées normalisées [0,1]. Pour mettre en bas : x:0.5, y:-0.2, xanchor:'center'",
+      "xanchor": "left",
+      "yanchor": "top",
+      "orientation": "v",
+      "_doc_orientation": "v (vertical) | h (horizontal)",
+      "bgcolor": "rgba(255,255,255,0.9)",
+      "bordercolor": "#d1d5db",
+      "borderwidth": 1,
+      "font": { "size": 12 },
+      "itemsizing": "trace",
+      "_doc_itemsizing": "trace | constant",
+      "itemclick": "toggle",
+      "_doc_itemclick": "toggle | toggleothers | false",
+      "title": { "text": "" }
+    },
+
+    "hovermode": "closest",
+    "_doc_hovermode": "closest | x | y | x unified | y unified | false (désactive complètement)",
+    "hoverlabel": {
+      "bgcolor": "white",
+      "bordercolor": "#8CB9BD",
+      "font": { "family": "Lora", "size": 13, "color": "#1f2937" },
+      "align": "left"
+    },
+
+    "dragmode": "zoom",
+    "_doc_dragmode": "zoom | pan | select | lasso | drawrect | drawline | false",
+
+    "shapes": [
+      {
+        "_doc": "Forme libre dessinée sur le plot (ligne, rectangle, cercle, chemin)",
+        "type": "line",
+        "_doc_type": "line | rect | circle | path",
+        "xref": "x", "yref": "y",
+        "_doc_ref": "'x' = coord données, 'paper' = [0,1] du conteneur",
+        "x0": 1, "x1": 10, "y0": 5.3, "y1": 5.3,
+        "line": { "color": "#EFB159", "width": 1.5, "dash": "dash" },
+        "fillcolor": "rgba(0,0,0,0)",
+        "opacity": 1,
+        "layer": "above",
+        "_doc_layer": "above | below (par rapport aux traces)"
+      },
+      {
+        "_doc": "Exemple rectangle — bande verticale",
+        "type": "rect",
+        "xref": "x", "yref": "paper",
+        "x0": 4, "x1": 6, "y0": 0, "y1": 1,
+        "fillcolor": "#8CB9BD", "opacity": 0.1,
+        "line": { "width": 0 }
+      }
+    ],
+
+    "annotations": [
+      {
+        "_doc": "Texte ancré à un point — flèche optionnelle",
+        "x": 10, "y": 7.5,
+        "xref": "x", "yref": "y",
+        "text": "$\\text{max} = 7{,}5$",
+        "_doc_text": "Supporte LaTeX entre $...$ + HTML basique <b> <i> <br>",
+        "showarrow": true,
+        "arrowhead": 2,
+        "_doc_arrowhead": "0 à 8 (formes de flèche différentes)",
+        "arrowsize": 1, "arrowwidth": 1, "arrowcolor": "#6b7280",
+        "ax": 30, "ay": -30,
+        "_doc_axay": "Décalage du texte par rapport au point ancré (en pixels)",
+        "font": { "size": 12, "color": "#374151" },
+        "bgcolor": "rgba(255,255,255,0.85)",
+        "bordercolor": "#d1d5db",
+        "borderwidth": 1, "borderpad": 3,
+        "align": "center"
+      }
+    ],
+
+    "images": [
+      {
+        "_doc": "Image insérée dans le plot (logo, watermark, etc.)",
+        "source": "/icons/logo.png",
+        "xref": "paper", "yref": "paper",
+        "x": 1, "y": 0,
+        "sizex": 0.15, "sizey": 0.15,
+        "xanchor": "right", "yanchor": "bottom",
+        "opacity": 0.5, "layer": "above"
+      }
+    ]
+  },
+
+  "config": {
+    "_doc": "Interactivité et barre d'outils (modebar)",
+
+    "responsive": true,
+    "displaylogo": false,
+    "displayModeBar": "hover",
+    "_doc_displayModeBar": "true (toujours) | false (jamais) | 'hover' (au survol — défaut Plotly)",
+
+    "modeBarButtonsToRemove": ["lasso2d", "select2d"],
+    "_doc_modeBarButtonsToRemove": "2D : zoom2d, pan2d, select2d, lasso2d, zoomIn2d, zoomOut2d, autoScale2d, resetScale2d, toImage, hoverClosestCartesian, hoverCompareCartesian. 3D : zoom3d, pan3d, orbitRotation, tableRotation, resetCameraDefault3d, resetCameraLastSave3d, hoverClosest3d.",
+    "modeBarButtonsToAdd": [],
+    "_doc_modeBarButtonsToAdd": "Ex: ['drawline', 'drawrect', 'eraseshape']",
+    "modeBarButtons": null,
+    "_doc_modeBarButtons": "Remplace TOUS les boutons. Ex: [['zoom2d','pan2d'],['toImage']] (groupes séparés par []).",
+
+    "toImageButtonOptions": {
+      "format": "png",
+      "_doc_format": "png | svg | jpeg | webp",
+      "filename": "plot",
+      "width": 1200,
+      "height": 700,
+      "scale": 2
+    },
+
+    "scrollZoom": false,
+    "doubleClick": "reset",
+    "_doc_doubleClick": "false | 'reset' | 'autosize' | 'reset+autosize'",
+    "showAxisDragHandles": true,
+    "showAxisRangeEntryBoxes": true,
+    "showTips": false,
+
+    "staticPlot": false,
+    "_doc_staticPlot": "true = mode publication, désactive TOUTE interactivité et masque la modebar",
+
+    "editable": false,
+    "_doc_editable": "true = labels, titres, légendes éditables au clic (mode dev)",
+
+    "locale": "fr",
+    "_doc_locale": "Nécessite que Plotly charge la locale FR ; sinon en par défaut. Pas critique."
+  },
+
+  "_doc_3d": {
+    "intro": "Pour passer en 3D, change `type` dans les traces et utilise `scene` au lieu de `xaxis`/`yaxis` dans le layout. Toutes les autres options (config, modebar, légende) restent identiques.",
+    "trace_3d_exemple": {
+      "type": "scatter3d",
+      "_doc_type_3d": "scatter3d | surface | mesh3d | cone | streamtube | volume | isosurface",
+      "mode": "lines+markers",
+      "x": [0, 1, 2, 3], "y": [0, 1, 4, 9], "z": [0, 1, 8, 27],
+      "line": { "color": "#8CB9BD", "width": 4 },
+      "marker": { "size": 4, "color": "#B67352" }
+    },
+    "layout_3d_exemple": {
+      "scene": {
+        "_doc": "Remplace xaxis/yaxis pour les plots 3D. Chaque sous-axe a les mêmes options qu'un axe 2D.",
+        "xaxis": { "title": { "text": "$x$" }, "range": [0, 3] },
+        "yaxis": { "title": { "text": "$y$" }, "range": [0, 10] },
+        "zaxis": { "title": { "text": "$z$" }, "range": [0, 30] },
+        "aspectmode": "cube",
+        "_doc_aspectmode": "auto | cube | data | manual (+ aspectratio:{x,y,z})",
+        "camera": {
+          "_doc": "Position initiale de la caméra",
+          "eye": { "x": 1.5, "y": 1.5, "z": 1.5 },
+          "center": { "x": 0, "y": 0, "z": 0 },
+          "up": { "x": 0, "y": 0, "z": 1 }
+        },
+        "bgcolor": "white"
+      }
+    }
+  },
+
+  "_doc_lien": "Toute option absente de ce template est documentée sur https://plotly.com/javascript/reference/ — chercher par nom de trace (scatter, surface…) ou par section (layout.xaxis, config, etc.)."
+}
