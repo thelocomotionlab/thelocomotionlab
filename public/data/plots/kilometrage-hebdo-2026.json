@@ -26,16 +26,16 @@
   ],
   "layout": {
     "title": {
-      "text": "$\\text{Kilométrage hebdomadaire en course à pied — saison 2026}$",
+      "text": "",
       "font": { "size": 17 },
       "x": 0.5,
       "xanchor": "center"
     },
     "xaxis": {
-      "title": { "text": "$\\text{Semaine de l'année}$" }
+      "title": { "text": "" }
     },
     "yaxis": {
-      "title": { "text": "$\\text{Distance parcourue}\\;\\;d\\;(\\mathrm{km})$" },
+      "title": { "text": "" },
       "rangemode": "tozero"
     },
     "showlegend": true,
