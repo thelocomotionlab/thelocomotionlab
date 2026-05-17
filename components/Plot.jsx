@@ -43,7 +43,7 @@ function ensureMathJax() {
       },
       showProcessingMessages: false,
       messageStyle: "none",
-      SVG: { font: "STIX-Web" },
+      SVG: { font: "TeX" },
     };
     const s = document.createElement("script");
     s.id = MATHJAX_SCRIPT_ID;
@@ -57,7 +57,6 @@ function ensureMathJax() {
 
 const DEFAULT_LAYOUT = {
   autosize: true,
-  margin: { l: 70, r: 30, t: 60, b: 60 },
   paper_bgcolor: "white",
   plot_bgcolor: "white",
   font: { family: "Lora, Georgia, serif", size: 14, color: "#1f2937" },
@@ -79,13 +78,28 @@ const AXIS_DEFAULTS = {
   tickcolor: "#1f2937",
   mirror: true,
   titlefont: { size: 15 },
+  automargin: true,
 };
+
+// Marges adaptatives selon la présence des titres. Plotly réserve toujours
+// l'espace de la marge même quand le texte est vide → on rétrécit la marge
+// correspondante. `automargin: true` sur les axes garantit en plus que les
+// graduations longues (dates, labels rotated) ne sont jamais tronquées.
+function computeMargin(userLayout) {
+  const hasTitle = !!userLayout?.title?.text?.trim?.();
+  const hasXTitle = !!userLayout?.xaxis?.title?.text?.trim?.();
+  const hasYTitle = !!userLayout?.yaxis?.title?.text?.trim?.();
+  return {
+    l: hasYTitle ? 70 : 45,
+    r: 30,
+    t: hasTitle ? 60 : 20,
+    b: hasXTitle ? 60 : 40,
+  };
+}
 
 function mergeLayout(userLayout) {
   const layout = { ...DEFAULT_LAYOUT, ...(userLayout || {}) };
-  if (userLayout?.margin) {
-    layout.margin = { ...DEFAULT_LAYOUT.margin, ...userLayout.margin };
-  }
+  layout.margin = { ...computeMargin(userLayout), ...(userLayout?.margin || {}) };
   if (userLayout?.font) {
     layout.font = { ...DEFAULT_LAYOUT.font, ...userLayout.font };
   }
