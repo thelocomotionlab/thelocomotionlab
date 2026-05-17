@@ -81,6 +81,20 @@ const AXIS_DEFAULTS = {
   automargin: true,
 };
 
+// Défauts pour axes secondaires (yaxis2, xaxis2…). On désactive grid et
+// mirror pour ne pas dupliquer la grille ou la ligne d'axe primaire.
+const SECONDARY_AXIS_DEFAULTS = {
+  showgrid: false,
+  zeroline: false,
+  showline: true,
+  linecolor: "#1f2937",
+  linewidth: 1,
+  ticks: "outside",
+  tickcolor: "#1f2937",
+  titlefont: { size: 15 },
+  automargin: true,
+};
+
 // Marges adaptatives selon la présence des titres. Plotly réserve toujours
 // l'espace de la marge même quand le texte est vide → on rétrécit la marge
 // correspondante. `automargin: true` sur les axes garantit en plus que les
@@ -90,9 +104,10 @@ function computeMargin(userLayout) {
   const hasTitle = !!userLayout?.title?.text?.trim?.();
   const hasXTitle = !!userLayout?.xaxis?.title?.text?.trim?.();
   const hasYTitle = !!userLayout?.yaxis?.title?.text?.trim?.();
+  const hasRightAxisTitle = !!userLayout?.yaxis2?.title?.text?.trim?.();
   return {
     l: hasYTitle ? 60 : 35,
-    r: 20,
+    r: hasRightAxisTitle ? 60 : 20,
     t: hasTitle ? 50 : 10,
     b: hasXTitle ? 55 : 30,
   };
@@ -106,6 +121,14 @@ function mergeLayout(userLayout) {
   }
   layout.xaxis = { ...AXIS_DEFAULTS, ...(userLayout?.xaxis || {}) };
   layout.yaxis = { ...AXIS_DEFAULTS, ...(userLayout?.yaxis || {}) };
+  // Défauts pour axes secondaires : xaxis2/3…, yaxis2/3…
+  if (userLayout) {
+    for (const k of Object.keys(userLayout)) {
+      if (/^[xy]axis[2-9]\d*$/.test(k)) {
+        layout[k] = { ...SECONDARY_AXIS_DEFAULTS, ...userLayout[k] };
+      }
+    }
+  }
   return layout;
 }
 
