@@ -40,7 +40,7 @@ export default function ArticleBody({ article, initialContent }) {
   return (
     <article className="max-w-5xl mx-auto sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
       {article.cover && (
-        <div className="sm:-mx-6 lg:-mx-8 mb-6 overflow-hidden rounded-2xl shadow-md">
+        <div className="sm:-mx-6 lg:-mx-8 mb-6 overflow-hidden rounded-none sm:rounded-2xl shadow-md">
           <img
             src={article.cover}
             alt={article.title}

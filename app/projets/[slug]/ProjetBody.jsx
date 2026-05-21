@@ -79,7 +79,7 @@ export default function ProjetBody({ project, initialContent }) {
       <ProjetClientFx />
 
       {project.cover && (
-        <div className="sm:-mx-6 lg:-mx-8 mb-6 overflow-hidden rounded-2xl shadow-card">
+        <div className="sm:-mx-6 lg:-mx-8 mb-6 overflow-hidden rounded-none sm:rounded-2xl shadow-card">
           <img
             src={project.cover}
             alt={project.title}
