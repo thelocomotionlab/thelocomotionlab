@@ -29,3 +29,8 @@ Préparer l'équipement nécessaire pour faire de l'ultra en autonomie prend du 
 Je prends conscience aussi grâce à Eric Lacroix, qu'une des composantes que j'ai besoin d'ajouter à ce projet est le partage. Un partage sincère et délié de cette aventure, pas facile
 
  
+
+
+## Conclusion
+
+De cette expérience d'ultra en OFF, bien que partiellement aboutie, je tire des enseignements importants. D'abord, sur ma capacité à endurer malgré des conditions météo très exigeantes, parfois extrêmes, mais aussi à rebondir, et à me remobiliser coûte que coûte pour avancer et accueillir la difficulté telle qu'elle est, sans en rajouter. Des enseignements sur mon corps également, car je n'ai pas ressenti la moindre douleurs avant le km 110. Si l'on m'avait dit cela après le marathon de Paris 2022, quand j'avais dû poser mon lundi, totalement incapable de me mouvoir hors du canapé et de la position horizontale, j'aurais eu peine à le croire. 110 km, c'est presque trois marathons sans douleur. Je prends la mesure du chemin parcouru depuis.

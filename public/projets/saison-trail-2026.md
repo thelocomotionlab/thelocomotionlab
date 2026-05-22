@@ -5,7 +5,7 @@ description: "Journal de bord de ma saison de trail 2026 : projets OFF, sorties 
 cover: "/images/projets/saison-trail-2026/cover_saison-trail-2026.webp"
 
 status: "En cours"
-activityAt: 2026-05-16
+activityAt: 2026-05-17
 
 published: true
 ---
@@ -293,15 +293,72 @@ Le récit complet de cette aventure est à retrouver [par ici](https://thelocomo
 
 *Replay du tracking OFF Fontaine Rémuzat. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
 
-### Ça repart fort
+### Nouveau bloc d'entraînement
 *17/05/2026*
 
-De cette expérience d'ultra en OFF, bien que partiellement aboutie, je tire des enseignements importants. D'abord, sur ma capacité à endurer malgré des conditions météo très exigeantes, parfois extrêmes, mais aussi à rebondir, et à me remobiliser coûte que coûte pour avancer malgré la difficulté. Des enseignements sur mon corps également, car je n'ai pas ressenti la moindre douleurs avant le km 110. Si l'on m'avait dit cela après le marathon de Paris 2022, quand j'avais dû poser mon lundi, totalement incapable de me mouvoir hors du canapé et de la position horizontal. Là, on parle désormais de 110 km, soit presque trois marathons sans douleur, et je prends la mesure des progrès réalisés. 
+#### Structure et variabilité des séances
 
-Fort de cette aventure, et après une petite semaine de coupure au cours de laquelle j'ai pu festoyer mes 31 ans autour d'un bivouac entre amis, j'ai décidé de repartir à l'entraînement. Mais à l'entraînement en difficulté ++, je dirais même difficulté God of War pour celleux qui ont la réf. J'ai envie cette fois de poursuivre cette progression, et de repousser plus loin que je ne l'ai encore fait les curseurs de la robustesse (et donc de la performance). Je m'explique.
+Depuis le début de l'année, mes objectifs étaient flous, et cela s'est propagé à mes entraînements qui existaient sans véritable structure ni cohérence quantifiable (voir la {{fig:km-2026}}). J'avais besoin de passer par une telle phase pour expérimenter des choses nouvelles, et consacrer davantage de temps au programme Tarzan Coach. Aussi, je réalise que quand les objectifs sont flous (le projet Vercors a été mouvant quasiment jusqu'au dernier moment), ce qui se passe dans la tête en vue d'atteindre ledit jalon l'est aussi. J'imagine qu'il doit exister des travaux de psychologie sur le sujet. Est-ce qu'être précis dans sa préparation demande systématiquement d'être précis dans ses objectifs ? Mais a-t-on toujours besoin de faire les choses avec précision ? 
 
+<plot src="/data/plots/kilometrage-hebdo-2026.json" height="300" name="km-2026" />
 
+*Volume hebdomadaire de course à pied depuis début 2026.*
 
+Ainsi, fort de cette aventure entre Vercors et Drôme (dont tu trouveras le récit [ici](https://thelocomotionlab.com/articles/immersion-primale-entre-vercors-et-drome)), et après une petite semaine de coupure au cours de laquelle j'ai pu festoyer mes 31 ans autour d'un bivouac entre amis, j'ai décidé de repartir à l'entraînement. Dans une optique cette fois plus structurée, pour continuer de me développer en tant qu'athlète, et tenter de repousser plus loin que je ne l'ai encore fait les curseurs de ma robustesse phjysiologique. Je m'explique.
+
+Pour ce nouveau bloc, du fait de ma neuro-atypie, et de ma difficulté à agir si les choses ne sont pas préalablement balisées de manière à abaisser la barrière dopaminergique inhérente à une tâche, j'ai décidé de bâtir un plan d'entraînement sur 5 mois, jusqu'à fin septembre pour le Nice by UTMB. Un programme semaine par semaine, exigeant, avec beaucoup de variabilité dans les séances pour rajouter du jeu et minimiser la lassitude. Mais aussi un programme qui inclue plusieurs Week-End choc (WEC). Parmi eux, une aventure commence à mijoter dans mon esprit, et pourrait s'annoncer incroyable : le tour des Écrins en Autonomie sur 3 ou 4 jours. 194 km 11 000 D+, truc de fou. Ce projet, à l'état d'idée pour l'instant, s'inscritait dans la lignée de ma récente traversée du Vercors, qui ne m'a visiblement pas rassasié. Ainsi, pour rompre la monotonie, mes semaines seront constituées de séances de côtes longues ou courtes, de descentes longues ou courtes, de footing à jeûn, d'entraînements bi-quotidiens, de sorties longues en montagne, de sorties lestées, de bivouacs, et bien sûr de mouvement primal et de grimpe d'arbre. De quoi passer du bon temps dehors et affûter corps et esprit pour étendre toujours plus mes capacités d'exploration. 
+
+#### Nouvelle gestion de l'alimentation
+
+En écoutant récemment les derniers podcasts de David Nicolas ([cet épisode](https://limitless-project.com/david-nicolas-2/) où il débrief son régime cétogène, et [celui-ci](https://limitless-project.com/ulrich-genisson/) avec Ulrich Genisson), et dans ma démarche personnelle visant à réduire la discordance évolutive propres aux sociétés modernes, j'ai pris conscience de l'importance de notre flexibilité métabolique. L'être humain n'est pas uniquement un "brûleur de sucre", il possède aussi une prédisposition physiologique ancestrale à être hautement efficace dans l'oxydation des lipides.
+
+Pour simplifier, le corps dispose de deux voies énergétiques majeures pour l'effort d'endurance : l'oxydation des glucides et l'oxydation des lipides. Si les glucides permettent une production rapide d'adénosine triphosphate (ATP) via la glycolyse cellulaire puis la respiration mitochondriale, leur disponibilité à l'état naturel fluctuait considérablement selon les biotopes et les saisons au cours de notre évolution. Pour faire face aux périodes de faible disponibilité en glucose, l'organisme utilise une la lipolyse, qui libère les acides gras stockés dans le tissu adipeux pour qu'ils soient oxydés directement dans les mitochondries des cellules musculaires (via la bêta-oxydation). La production de corps cétonique par le foie (cétogénèse) est un mécanisme complémentaire, activé principalement lors d'un jeûne prolongé ou d'une restriction glucidique stricte, visant à fournir un substrat énergétique alternatif, notamment pour le cerveau. La différence majeure réside dans la capacité de stockage : nos réserves de glucides (sous forme de glycogène hépatique et musculaire) sont limitées et représentent environ 2 000 à 2 500 kcal, à mettre en relief par rapport à nos réserves de graisses qui, même chez un athlète affûté, constituent un réservoir d'énergie quasiment inépuisable, dépassant généralement les 80 000 à 100 000 kcal (voir <Citation id="abdullah2021">cette étude</Citation>).
+
+À titre personnel, lors de mon récent périple dans le Vercors, ma montre estimait la dépense énergétique à environ 13 000 kcal, pour 131 km et 8 000 m D+. Cela ne réprésente qu'environ 13 % des réserves adipeuses théoriques de mon organisme. Est-ce à dire qu'il est biologiquement possible de courir des ultra-distances type 100 miles sans aucun apport calorique exogène ? Sur le plan purement énergétique, oui, et des performances de ce type on déjà été documentées (comme celle de l'ultra-traileur Michale McKnight voir [cette interview](https://eatfat2befit.com/regime-cetogene-pour-le-sport-michael-mcknight-courir-160-km-sans-calories) et [son 100 miles sans calorie](https://www.strava.com/activities/3422161620/overview)). La faisabilité d'un tel effort dépedant néanmoins du débit maximal d'oxydation des lipides de l'individu, qui limite l'intensité absolue soutenable sans épuiser prématurément le glycogène résiduel (voir <Citation id="volek2016">cette étude</Citation>).
+
+Sans vouloir entrer dans de tels extrêmes (bien que ce soit totalement mon genre), j'ai décidé, basé sur tous ces faits, de développer ma flexibilité métabolique et d'expérimenter, au cours des prochains mois de préparations pour les futurs jalons de ma quête 2026, un pannel de protocoles pour entraîner mon organisme à augmenter sa capacité d'oxydation des lipides à l'effort. Je sais que je prends encore une direction différente des pratiques majoritaires actuelles, dans un monde où les carbs sont plus abondantes que jamais, et où les recommandations s'orientent vers des apports de plus en plus élevés à l'effort (allant de 90g à 120g/h). L'approche de la périodisation des flucides, visant à optimiser à la fois la capacité glycolitique et l'oxydation des graisses, repose sur des bases physiologiques solides. Et puis, je trouve une forme de logique à tenter de restaurer une des fonctionnalité de base du corps humain. Respecter ma physiologie et lui accorder l'attention qu'elle mérite.
+
+J'expérimente donc de nouveaux protocoles d'entraînement à glycogène bas, construit par mes soins, inspirés de la littérature, et initiés par la lecture de <Citation id="kuhn2018">Ultra Performance</Citation> de Fabrice Kuhn (également interviewé à l'occasion de [cet épisode de Limitless](https://limitless-project.com/fabrice-kuhn/) que je recommande). J'avoue ne pas exactement savoir où je vais mais il faut bien commencer quelque part, et je me dis qu'en restant étroitement connecté.e à ses sensations, on ne peut guère se tromper. Je précise également que je suis tous les jours sans exception en jeûne intermittent puisque mon premier repas de la journée n'est jamais avant midi, et le dernier jamais après 20h.
+
+#### Protocole 1
+
+Footing à jeûn d'1h, puis retarder la prise alimentaire de 45 min - 1h.
+
+Objectif : prolonger la signalisation cellulaire post-exercice liée à la basse disponibilité en substrats énergétiques.
+
+Sensations : très facile.
+
+#### Protocole 2
+
+Footing à jeûn d'1h puis repas et goûter cétogènes avec mouvement dans les arbres et exposition au froid l'après-midi. Le footing est réalisé avec glycogène hépatique bas (dû au jeûne nocturne), mais un glycogène musculaire initialement préservé.  Recharge glucidique au dîner. 
+
+Objectif : maintenir une faible disponibilité systémique en glucose durant l'après-midi afin de stimuler les adaptations enzymatiques musculaires et maximiser l'oxydation des lipides lors des activités qui suivent.
+
+Sensations : légers maux de têtes après le déjeûner, potentiellement liés à la baisse d'insuline qui entraîne une excrétion accrue de sodium et d'eau par les reins, souvent confondu avec la "grippe cétogène".
+
+#### Protocole 3
+
+Séance de descentes d'1h45 le matin sans petit déj mais avec une c.s. de miel avant de partir. 3 x 250 m D- avec remontée en marche rapide avec bâtons. Apport d'une banane fractionnée en deux prises en bas des descentes 2 et 3. Déjeûner à faible teneur en glucides (low carb) ensuite, puis recharge glucidique au dîner.
+
+Objectif : fournir des flucides exogènes rapides pour soutenir le coût énergétique élevé et l'intensité des contractions excentriques et de la marche rapide en côte, tout en limitant la recharge globale des stocks de glycogène au déjeuner. L'idée est aussi de simuler un contexte de chasseurs-cueilleurs où l'on peut s'imaginer nos ancêtres partir à la chasse en intensité le ventre vide, et se ravitailler frugalement sur le chemin (fruits, baies, miel).
+
+Sensations : aucun problème pour effectuer la séance à pleine intensité. Rations apportées durant l'effort largement suffisantes. En revanche, fatigue marquée post-séance, caractéristique des contraintes mécaniques et des dommages musculaires induits par le travail excentrique en descente.
+
+#### Protocole 4
+
+Entraînement bi-quotidien avec footing à jeûn de 50 min comprenant des accélérations en montées (pour abaisser gentiment le glycogène musculaire), suivi d'un déjeûner cétogène, puis d'un second footing d'1h en fin d'après-midi. Recharge glucidique au dîner.
+
+Objectif : appliquer le protocole scientifique classique du "Train-low, Sleep-low" adapté sur une seule journée ("Train-low, Eat-low"). Le premier entraînement et l'absence de glucides au déjeuner réduisent le glycogène musculaire. La seconde séance est ainsi débutées avec des réserves initiales basses, une condition démontrée pour maximiser l'activation de l'AMPK et du coactivateur PGC-1$\alpha$ (voir <Citation id="marquet2016">cette étude</Citation>).
+
+Sensations : début de deuxième footing difficile, perception dd'un manque d'énergie transitoire qui s'atténue au fil de la séance, à mesure que les voies d'oxydation des lipides répondent à la demande énergétique.
+
+#### Protocole 5
+
+Sortie longue de 3h30 initiée après déjeûner cétogène. Retarder au maximum la prise de calories. Au départ, le glycogène hépatique est partiellement restauré par le déjeuner (via les protéines et la néoglucogénèse), mais le glycogène musculaire reste à son niveau de base. Ingestion d'une boule d'énergie et d'une banane au bout de 2h30 d'effort.
+
+Objectif : solliciter l'oxydation des lipides (acides gras libres) sur un effort de longue durée à intensité basse à modérée.
+
+Sensations : pas de sensation de faim, mais réelle sensation de faiblesse par moments, particulièrement lors des ascensions. Cela traduit ma limite actuelle en terme de débit d'oxydation des lipides, lorsqu'un débit d'ATP supérieur est requis.
 
 <!-- *Tracking actualisé toutes les 20 s ou 25 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux déplier/plier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
  -->

@@ -116,7 +116,27 @@
     "month": "01",
     "issn": "1660-4601",
     "doi": "10.3390/ijerph18094963"
+  },
+  "volek2016": {
+    "author": "Volek JS, Freidenreich DJ, Saenz C, Kunces LJ, Creighton BC, Bartley JM, Davitt PM, Munoz CX, Anderson JM, Maresh CM, Lee EC, Schuenke MD, Aerni G, Kraemer WJ, Phinney SD",
+    "title": "Metabolic characteristics of keto-adapted ultra-endurance runners.",
+    "journal": "Metabolism",
+    "volume": "65",
+    "number": "3",
+    "year": "2016",
+    "month": "11",
+    "issn": "1660-4601",
+    "doi": "10.1016/j.metabol.2015.10.028"
+  },
+  "marquet2016": {
+    "author": "Marquet LA, Brisswalter J, Louis J, Tiollier E, Burke LM, Hawley JA, Hausswirth C",
+    "title": "Enhanced Endurance Performance by Periodization of Carbohydrate Intake: Sleep Low Strategy.",
+    "journal": "Med Sci Sports Exerc.",
+    "volume": "48",
+    "number": "4",
+    "year": "2016",
+    "month": "04",
+    "issn": "1660-4601",
+    "doi": "10.1249/MSS.0000000000000823"
   }
 }
-
-
