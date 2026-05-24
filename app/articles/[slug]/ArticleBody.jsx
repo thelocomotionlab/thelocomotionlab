@@ -118,7 +118,7 @@ export default function ArticleBody({ article, initialContent }) {
         <div className="mt-12 text-center">
           <Link
             href="/articles"
-            className="inline-block bg-brand-accent text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-primary/90 transition"
+            className="inline-block bg-brand-accent text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-primary-dark transition"
           >
             Retour aux carnets
           </Link>

@@ -202,7 +202,7 @@ export default function ContactForm() {
           className={`bg-brand-accent text-white font-semibold px-6 py-2 rounded-full shadow transition cursor-pointer ${
             status === "sending"
               ? "opacity-70 cursor-wait"
-              : "hover:bg-brand-primary/90"
+              : "hover:bg-brand-primary-dark"
           }`}
         >
           {status === "sending" ? "Envoi..." : "Envoyer"}

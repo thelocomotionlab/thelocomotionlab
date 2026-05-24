@@ -8,8 +8,14 @@
   /* Couleurs de marque */
   --color-brand-bg: #FEFBF6;
   --color-brand-primary: #8CB9BD;
+  --color-brand-primary-light: #A8CDD0;
+  --color-brand-primary-dark: #6E9CA0;
   --color-brand-accent: #EFB159;
+  --color-brand-accent-light: #F4C480;
+  --color-brand-accent-dark: #D89A3D;
   --color-brand-deep: #B67352;
+  --color-brand-deep-light: #C68F76;
+  --color-brand-deep-dark: #9A6044;
   --color-brand-text: #333333;
   --color-brand-paper: #FFFFFF;
   --color-brand-grid: #F3EEE6;
@@ -46,9 +52,10 @@
 
 body {
   margin: 0;
-  font-family: var(--font-ubuntu), ui-sans-serif, system-ui;
   background: var(--color-brand-bg);
   color: #374151; /* gray-700 */
+  /* La famille de police est appliquée via la classe `font-sans` (var(--font-sans))
+     posée sur le body dans app/layout.js. Une seule source de vérité = @theme. */
 }
 
 /* Skip-to-content link : invisible jusqu'au focus clavier */

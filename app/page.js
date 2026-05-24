@@ -141,7 +141,7 @@ export default async function HomePage() {
           <div className="mt-8 flex items-center justify-center">
             <Link
               href="/labo"
-              className="inline-block bg-brand-accent text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-primary/90 transition"
+              className="inline-block bg-brand-accent text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-primary-dark transition"
             >
               Entrer dans le labo
             </Link>

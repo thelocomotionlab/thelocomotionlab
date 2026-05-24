@@ -139,7 +139,7 @@ export default function RecentActivity({
                 inline-block
                 bg-brand-accent text-white font-semibold
                 px-6 py-3 rounded-full shadow
-                hover:bg-brand-primary/90 transition
+                hover:bg-brand-primary-dark transition
               "
             >
               {ctaLabel}
