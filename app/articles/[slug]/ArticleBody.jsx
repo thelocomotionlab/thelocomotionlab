@@ -22,8 +22,14 @@ import rehypeRaw from "rehype-raw";
 import { getUsedCitations } from "../../../lib/getUsedCitations";
 import { createCitation } from "../../../components/Citation";
 import CitationReferences from "../../../components/CitationReferences";
+import ArticleNav from "../../../components/ArticleNav";
 
-export default function ArticleBody({ article, initialContent }) {
+export default function ArticleBody({
+  article,
+  initialContent,
+  readingMinutes = 0,
+  adjacent = { prev: null, next: null },
+}) {
   if (!article) return <p className="p-6">Article non trouvé</p>;
 
   const raw = initialContent || "";
@@ -58,9 +64,19 @@ export default function ArticleBody({ article, initialContent }) {
         <h1 className="text-2xl text-brand-primary md:text-5xl font-sans font-bold mb-3 text-center">
           {article.title}
         </h1>
-        {article.date && (
-          <p className="text-sm text-gray-500 mb-8 text-center">
-            {new Date(article.date).toLocaleDateString("fr-FR")}
+        {(article.date || readingMinutes > 0) && (
+          <p className="text-sm text-gray-500 mb-8 text-center flex items-center justify-center gap-2 flex-wrap">
+            {article.date && (
+              <time dateTime={new Date(article.date).toISOString()}>
+                {new Date(article.date).toLocaleDateString("fr-FR")}
+              </time>
+            )}
+            {article.date && readingMinutes > 0 && (
+              <span aria-hidden="true">·</span>
+            )}
+            {readingMinutes > 0 && (
+              <span>{readingMinutes} min de lecture</span>
+            )}
           </p>
         )}
 
@@ -114,6 +130,8 @@ export default function ArticleBody({ article, initialContent }) {
         </div>
 
         <CitationReferences ids={usedCitations} />
+
+        <ArticleNav prev={adjacent.prev} next={adjacent.next} label="Carnet" />
 
         <div className="mt-12 text-center">
           <Link

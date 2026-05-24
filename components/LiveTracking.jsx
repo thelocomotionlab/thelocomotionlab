@@ -630,7 +630,7 @@ export default function LiveTracking({
 
       {/* Bloc stats */}
       <div className="bg-white/80 backdrop-blur-md shadow-md rounded-2xl p-4 w-full max-w-3xl text-center border border-gray-200">
-        <div className="flex justify-center items-center gap-2 font-semibold text-lg text-[#b66b47] sm:mb-1">
+        <div className="flex justify-center items-center gap-2 font-semibold text-lg text-brand-deep sm:mb-1">
           <SatelliteDish size={18} /> {title}
         </div>
 
@@ -641,7 +641,7 @@ export default function LiveTracking({
             <span className="text-xs font-bold mb-1">
               {formatDuration(elapsed)}
             </span>
-            <div className="w-16 h-[2px] bg-[#EFB159] mt-1 mb-4 rounded-full mx-auto"></div>
+            <div className="w-16 h-[2px] bg-brand-accent mt-1 mb-4 rounded-full mx-auto"></div>
           </div>
 
           <div className="hidden sm:inline">
@@ -652,7 +652,7 @@ export default function LiveTracking({
           </div>
         </div>
 
-        <div className="hidden sm:block w-24 h-[2px] bg-[#EFB159] mt-1 mb-1 rounded-full mx-auto"></div>
+        <div className="hidden sm:block w-24 h-[2px] bg-brand-accent mt-1 mb-1 rounded-full mx-auto"></div>
 
         <div className="flex justify-around text-sm sm:text-base font-medium text-gray-800">
           <div>
@@ -689,7 +689,7 @@ export default function LiveTracking({
           type="button"
           onClick={recenterMap}
           aria-label="Recentrer la carte sur la position courante"
-          className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md text-sm px-3 py-1 hover:bg-[#EFB159]/80 hover:text-white text-gray-700 flex items-center gap-1 z-20"
+          className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md text-sm px-3 py-1 hover:bg-brand-accent/80 hover:text-white text-gray-700 flex items-center gap-1 z-20"
         >
           <Crosshair size={16} aria-hidden="true" />
           <span className="hidden sm:inline">Recentrer</span>
@@ -701,7 +701,7 @@ export default function LiveTracking({
             href={referenceGpx}
             download
             aria-label="Télécharger la trace GPX de référence"
-            className="absolute top-[43px] left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md px-3 py-1 hover:bg-[#EFB159]/80 hover:text-white text-gray-700 z-20 flex items-center gap-1 transition no-underline"
+            className="absolute top-[43px] left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md px-3 py-1 hover:bg-brand-accent/80 hover:text-white text-gray-700 z-20 flex items-center gap-1 transition no-underline"
             title="Télécharger la trace GPX"
           >
             <Download size={16} aria-hidden="true" />
@@ -722,7 +722,7 @@ export default function LiveTracking({
                   aria-label="Choisir le style de carte"
                   aria-haspopup="menu"
                   aria-expanded={showStyleMenu}
-                  className="bg-white/90 backdrop-blur-sm border border-gray-300 shadow rounded-md p-[6px] hover:bg-[#EFB159]/80 hover:text-white transition flex items-center justify-center"
+                  className="bg-white/90 backdrop-blur-sm border border-gray-300 shadow rounded-md p-[6px] hover:bg-brand-accent/80 hover:text-white transition flex items-center justify-center"
                   style={{ width: "32px", height: "32px" }}
                 >
                   <MapIcon size={16} className="text-gray-700" aria-hidden="true" />
@@ -743,9 +743,9 @@ export default function LiveTracking({
                       setMapStyle("osm");
                       setShowStyleMenu(false);
                     }}
-                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${
+                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-brand-accent/80 transition ${
                       mapStyle === "osm"
-                        ? "bg-[#EFB159]/90 text-white"
+                        ? "bg-brand-accent/90 text-white"
                         : "text-gray-700"
                     }`}
                   >
@@ -760,9 +760,9 @@ export default function LiveTracking({
                       setMapStyle("topo");
                       setShowStyleMenu(false);
                     }}
-                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${
+                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-brand-accent/80 transition ${
                       mapStyle === "topo"
-                        ? "bg-[#EFB159]/90 text-white"
+                        ? "bg-brand-accent/90 text-white"
                         : "text-gray-700"
                     }`}
                   >
@@ -777,9 +777,9 @@ export default function LiveTracking({
                       setMapStyle("satellite");
                       setShowStyleMenu(false);
                     }}
-                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${
+                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-brand-accent/80 transition ${
                       mapStyle === "satellite"
-                        ? "bg-[#EFB159]/90 text-white"
+                        ? "bg-brand-accent/90 text-white"
                         : "text-gray-700"
                     }`}
                   >
@@ -799,7 +799,8 @@ export default function LiveTracking({
               onClick={() => setShowElevation(!showElevation)}
               aria-label={showElevation ? "Masquer le profil altimétrique" : "Afficher le profil altimétrique"}
               aria-expanded={showElevation}
-              className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-white shadow-md rounded-lg p-1.5 border border-gray-300 hover:bg-[#EFB159]/90 hover:text-white transition z-30"
+              aria-controls="live-elevation-panel"
+              className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-white shadow-md rounded-lg p-1.5 border border-gray-300 hover:bg-brand-accent/90 hover:text-white transition z-30"
             >
               {showElevation ? (
                 <ChevronDown size={24} className="text-gray-700" />
@@ -809,6 +810,7 @@ export default function LiveTracking({
             </button>
 
             <div
+              id="live-elevation-panel"
               className={`absolute bottom-0 left-0 w-full bg-white/60 backdrop-blur-md border-t border-gray-200 shadow-lg transition-all duration-500 ${
                 showElevation ? "max-h-36" : "max-h-0"
               } overflow-hidden`}

@@ -36,8 +36,14 @@ import Plot from "../../../components/PlotLazy";
 
 import { extractToc } from "../../../lib/extractToc";
 import ProjetClientFx from "./ProjetClientFx";
+import ArticleNav from "../../../components/ArticleNav";
 
-export default function ProjetBody({ project, initialContent }) {
+export default function ProjetBody({
+  project,
+  initialContent,
+  readingMinutes = 0,
+  adjacent = { prev: null, next: null },
+}) {
   if (!project) return <p className="p-6">Projet non trouvé</p>;
 
   const raw = initialContent || "";
@@ -93,9 +99,15 @@ export default function ProjetBody({ project, initialContent }) {
           {project.title}
         </h1>
 
-        {project.status && (
-          <p className="text-sm text-gray-500 mb-8 text-center">
-            {project.status}
+        {(project.status || readingMinutes > 0) && (
+          <p className="text-sm text-gray-500 mb-8 text-center flex items-center justify-center gap-2 flex-wrap">
+            {project.status && <span>{project.status}</span>}
+            {project.status && readingMinutes > 0 && (
+              <span aria-hidden="true">·</span>
+            )}
+            {readingMinutes > 0 && (
+              <span>{readingMinutes} min de lecture</span>
+            )}
           </p>
         )}
 
@@ -341,6 +353,8 @@ export default function ProjetBody({ project, initialContent }) {
         </div>
 
         <CitationReferences ids={usedCitations} />
+
+        <ArticleNav prev={adjacent.prev} next={adjacent.next} label="Projet" />
 
         <div className="mt-12 text-center">
           <Link

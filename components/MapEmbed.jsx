@@ -310,7 +310,7 @@ export default function MapEmbed({
         type="button"
         onClick={resetView}
         aria-label="Recentrer la carte sur le parcours"
-        className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md text-sm px-3 py-1 hover:bg-[#EFB159]/80 hover:text-white text-gray-700 flex items-center gap-1 z-20"
+        className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md text-sm px-3 py-1 hover:bg-brand-accent/80 hover:text-white text-gray-700 flex items-center gap-1 z-20"
       >
         <Crosshair size={16} aria-hidden="true" />
         <span className="hidden sm:inline">Recentrer</span>
@@ -326,7 +326,7 @@ export default function MapEmbed({
               aria-label="Choisir le style de carte"
               aria-haspopup="menu"
               aria-expanded={showStyleMenu}
-              className="bg-white/90 backdrop-blur-sm border border-gray-300 shadow rounded-md p-[6px] hover:bg-[#EFB159]/80 hover:text-white transition flex items-center justify-center"
+              className="bg-white/90 backdrop-blur-sm border border-gray-300 shadow rounded-md p-[6px] hover:bg-brand-accent/80 hover:text-white transition flex items-center justify-center"
               style={{ width: "32px", height: "32px" }}
             >
               <MapIcon size={16} className="text-gray-700" aria-hidden="true" />
@@ -347,8 +347,8 @@ export default function MapEmbed({
                   setMapStyle("osm");
                   setShowStyleMenu(false);
                 }}
-                className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${
-                  mapStyle === "osm" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"
+                className={`w-full h-8 flex items-center justify-center rounded hover:bg-brand-accent/80 transition ${
+                  mapStyle === "osm" ? "bg-brand-accent/90 text-white" : "text-gray-700"
                 }`}
               >
                 <MapIcon size={14} aria-hidden="true" />
@@ -362,8 +362,8 @@ export default function MapEmbed({
                   setMapStyle("topo");
                   setShowStyleMenu(false);
                 }}
-                className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${
-                  mapStyle === "topo" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"
+                className={`w-full h-8 flex items-center justify-center rounded hover:bg-brand-accent/80 transition ${
+                  mapStyle === "topo" ? "bg-brand-accent/90 text-white" : "text-gray-700"
                 }`}
               >
                 <Mountain size={14} aria-hidden="true" />
@@ -377,8 +377,8 @@ export default function MapEmbed({
                   setMapStyle("satellite");
                   setShowStyleMenu(false);
                 }}
-                className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${
-                  mapStyle === "satellite" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"
+                className={`w-full h-8 flex items-center justify-center rounded hover:bg-brand-accent/80 transition ${
+                  mapStyle === "satellite" ? "bg-brand-accent/90 text-white" : "text-gray-700"
                 }`}
               >
                 <Globe2 size={14} aria-hidden="true" />
@@ -393,7 +393,7 @@ export default function MapEmbed({
         href={gpx}
         download
         aria-label="Télécharger la trace GPX"
-        className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md px-3 py-1 hover:bg-[#EFB159]/80 hover:text-white text-gray-700 z-20 flex items-center gap-1 transition no-underline"
+        className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md px-3 py-1 hover:bg-brand-accent/80 hover:text-white text-gray-700 z-20 flex items-center gap-1 transition no-underline"
         title="Télécharger la trace GPX"
       >
         <Download size={16} aria-hidden="true" />

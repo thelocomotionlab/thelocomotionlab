@@ -6,6 +6,10 @@ import matter from "gray-matter";
 import { notFound } from "next/navigation";
 
 import ArticleBody from "./ArticleBody";
+import Breadcrumb from "@/components/Breadcrumb";
+import ArticleNav from "@/components/ArticleNav";
+import { getAdjacentArticles } from "@/lib/getAdjacent";
+import { estimateReadingMinutes } from "@/lib/readingTime";
 
 const SITE_URL = "https://thelocomotionlab.com";
 
@@ -130,6 +134,8 @@ export default async function ArticlePage({ params }) {
 
   const { article, content } = data;
   const jsonLd = buildArticleJsonLd(article);
+  const adjacent = getAdjacentArticles(slug);
+  const readingMinutes = estimateReadingMinutes(content);
 
   return (
     <>
@@ -137,7 +143,19 @@ export default async function ArticlePage({ params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <ArticleBody article={article} initialContent={content} />
+      <Breadcrumb
+        items={[
+          { href: "/", label: "Accueil" },
+          { href: "/articles", label: "Carnets" },
+          { label: article.title },
+        ]}
+      />
+      <ArticleBody
+        article={article}
+        initialContent={content}
+        readingMinutes={readingMinutes}
+        adjacent={adjacent}
+      />
     </>
   );
 }

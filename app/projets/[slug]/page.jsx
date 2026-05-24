@@ -7,6 +7,9 @@ import matter from "gray-matter";
 import { notFound } from "next/navigation";
 
 import ProjetBody from "./ProjetBody";
+import Breadcrumb from "@/components/Breadcrumb";
+import { getAdjacentProjects } from "@/lib/getAdjacent";
+import { estimateReadingMinutes } from "@/lib/readingTime";
 
 const SITE_URL = "https://thelocomotionlab.com";
 
@@ -137,6 +140,8 @@ export default async function ProjetPage({ params }) {
 
   const { project, content } = data;
   const jsonLd = buildProjectJsonLd(project);
+  const adjacent = getAdjacentProjects(slug);
+  const readingMinutes = estimateReadingMinutes(content);
 
   return (
     <>
@@ -144,7 +149,19 @@ export default async function ProjetPage({ params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <ProjetBody project={project} initialContent={content} />
+      <Breadcrumb
+        items={[
+          { href: "/", label: "Accueil" },
+          { href: "/projets", label: "Projets" },
+          { label: project.title },
+        ]}
+      />
+      <ProjetBody
+        project={project}
+        initialContent={content}
+        readingMinutes={readingMinutes}
+        adjacent={adjacent}
+      />
     </>
   );
 }

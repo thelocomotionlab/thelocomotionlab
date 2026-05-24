@@ -127,7 +127,7 @@ h6 {
   font-size: 1.25rem;
   margin-bottom: 0.75rem;
   color: var(--color-brand-accent);
-  font-family: "Ubuntu", sans-serif;
+  font-family: var(--font-heading);
 }
 
 /* Supprimer le titre automatique "Footnotes" */
@@ -457,8 +457,8 @@ a.data-footnote-backref,
   font-weight: 400 !important;
   font-style: normal !important;
   line-height: 1.4 !important;
-  color: #6b7280 !important;
-  font-family: "Inter", sans-serif !important;
+  color: var(--color-gray-500, #6b7280) !important;
+  font-family: var(--font-sans) !important;
   max-width: 90%;
   margin: 0.8rem auto 1.4rem !important;
 }
@@ -486,8 +486,8 @@ a.data-footnote-backref,
   font-style: normal !important;
   margin: 0rem auto 0rem;
   line-height: 1.4;
-  color: #6b7280;
-  font-family: "Inter", sans-serif;
+  color: var(--color-gray-500, #6b7280);
+  font-family: var(--font-sans);
   max-width: 90%;
 }
 
@@ -533,8 +533,8 @@ a.data-footnote-backref,
   padding-left: 1.25rem;
   line-height: 1.5;
   font-size: 1rem;
-  color: #374151;
-  font-family: "Lora", serif;
+  color: var(--color-brand-text);
+  font-family: var(--font-lora);
 }
 
 .prose ul li,
@@ -578,9 +578,9 @@ html {
   width: fit-content;
   margin-left: auto;
   font-size: 0.9rem;
-  color: #555;
+  color: var(--color-gray-600, #4b5563);
   text-decoration: none;
-  border-bottom: 1px solid #e47f2c;
+  border-bottom: 1px solid var(--color-brand-accent-dark);
   padding-bottom: 2px;
   margin-top: 0.2rem;
   margin-bottom: 0.8rem;
@@ -588,8 +588,8 @@ html {
 }
 
 .prose a[href="#sommaire"]:hover {
-  color: #e47f2c;
-  border-bottom-color: #e47f2c;
+  color: var(--color-brand-accent-dark);
+  border-bottom-color: var(--color-brand-accent-dark);
 }
 
 /* ===========================
@@ -599,7 +599,7 @@ html {
 .article-body p {
   font-size: 1.09rem;
   line-height: 1.7;
-  font-family: "Lora", serif;
+  font-family: var(--font-lora);
   margin-top: 1.25rem;
   margin-bottom: 1.25rem;
 }
@@ -627,4 +627,22 @@ html {
 .animate-fade-in {
   opacity: 1;
   animation: fade-in 0.35s ease-out forwards;
+}
+
+/* ===========================
+   Réduction des animations (a11y)
+   =========================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html {
+    scroll-behavior: auto !important;
+  }
 }

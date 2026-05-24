@@ -135,7 +135,7 @@ export default function ShareButton() {
     rounded-full shadow-md border border-gray-300
     bg-white/80 backdrop-blur-md text-gray-800 text-sm font-medium
     sm:px-4 sm:py-2 transition-all duration-300 ease-out opacity-0 animate-fade-in
-    sm:hover:bg-[#EFB159]/90 sm:hover:text-white active:scale-95 
+    sm:hover:bg-brand-accent/90 sm:hover:text-white active:scale-95
     w-[2.75rem] h-[2.75rem] sm:w-auto sm:h-auto sm:rounded-full
     cursor-pointer
   `;

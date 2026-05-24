@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   BookOpen,
   FlaskConical,
@@ -14,6 +14,18 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+const NAV_LINKS = [
+  { href: "/articles", label: "Carnets", Icon: BookOpen },
+  { href: "/projets", label: "Projets", Icon: FlaskConical },
+  { href: "/soutenir", label: "Soutenir", Icon: HeartHandshake },
+];
+
+function isActivePath(pathname, href) {
+  if (!pathname) return false;
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [closingMenu, setClosingMenu] = useState(false);
@@ -21,8 +33,10 @@ export default function Navbar() {
   const [closing, setClosing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
 
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -50,6 +64,8 @@ export default function Navbar() {
     }, 300);
   };
 
+  const logoActive = hovered || focused;
+
   return (
     <header className="flex items-center justify-between p-4 shadow-md bg-white/90 backdrop-blur sticky top-0 z-50 text-gray-700">
       {/* Logo à gauche */}
@@ -60,9 +76,11 @@ export default function Navbar() {
           aria-label="Accueil"
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
         >
           <Image
-            src={hovered ? "/logo_deep_primary.png" : "/logo_primary_deep.png"}
+            src={logoActive ? "/logo_deep_primary.webp" : "/logo_primary_deep.webp"}
             alt="Logo The Locomotion Lab — retour à l'accueil"
             width={296}
             height={96}
@@ -78,26 +96,34 @@ export default function Navbar() {
         className="hidden md:flex items-center space-x-8 font-medium absolute left-1/2 -translate-x-1/2"
         aria-label="Navigation principale"
       >
-        <Link
-          href="/articles"
-          className="hover:text-brand-accent flex items-center gap-1"
-        >
-          <BookOpen size={18} className="text-gray-700" /> <span>Carnets</span>
-        </Link>
-        <Link
-          href="/projets"
-          className="hover:text-brand-accent flex items-center gap-1"
-        >
-          <FlaskConical size={18} className="text-gray-700" />{" "}
-          <span>Projets</span>
-        </Link>
-        <Link
-          href="/soutenir"
-          className="hover:text-brand-accent flex items-center gap-1"
-        >
-          <HeartHandshake size={18} className="text-gray-700" />{" "}
-          <span>Soutenir</span>
-        </Link>
+        {NAV_LINKS.map(({ href, label, Icon }) => {
+          const active = isActivePath(pathname, href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active ? "page" : undefined}
+              className={`hover:text-brand-accent flex items-center gap-1 ${
+                active ? "text-brand-accent" : ""
+              }`}
+            >
+              <Icon
+                size={18}
+                className={active ? "text-brand-accent" : "text-gray-700"}
+                aria-hidden="true"
+              />
+              <span
+                className={
+                  active
+                    ? "underline underline-offset-4 decoration-2"
+                    : ""
+                }
+              >
+                {label}
+              </span>
+            </Link>
+          );
+        })}
       </nav>
 
       {/* Barre de recherche à droite */}
@@ -169,15 +195,20 @@ export default function Navbar() {
             <Link href="/recherche" onClick={handleCloseMenu} className="py-2">
               Recherche
             </Link>
-            <Link href="/articles" onClick={handleCloseMenu} className="py-2">
-              Carnets
-            </Link>
-            <Link href="/projets" onClick={handleCloseMenu} className="py-2">
-              Projets
-            </Link>
-            <Link href="/soutenir" onClick={handleCloseMenu} className="py-2">
-              Soutenir
-            </Link>
+            {NAV_LINKS.map(({ href, label }) => {
+              const active = isActivePath(pathname, href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={handleCloseMenu}
+                  aria-current={active ? "page" : undefined}
+                  className={`py-2 ${active ? "text-brand-accent font-semibold" : ""}`}
+                >
+                  {label}
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}

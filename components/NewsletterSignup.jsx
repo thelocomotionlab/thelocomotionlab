@@ -72,6 +72,7 @@ export default function NewsletterSignup({
           id={emailId}
           type="email"
           name="email"
+          autoComplete="email"
           required
           aria-required="true"
           aria-describedby={statusId}

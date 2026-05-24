@@ -2,6 +2,8 @@
 "use client";
 
 import { useState } from "react";
+import Button from "./ui/Button";
+import Field from "./ui/Field";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -118,95 +120,47 @@ export default function ContactForm() {
       </p>
 
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium mb-1">
-            Nom
-          </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            required
-            aria-required="true"
-            aria-invalid={Boolean(errors.name) || undefined}
-            aria-describedby={errors.name ? "name-error" : undefined}
-            className={`w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-accent ${
-              errors.name ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-          {errors.name && (
-            <p id="name-error" className="text-red-700 text-sm mt-1">
-              {errors.name}
-            </p>
-          )}
-        </div>
+        <Field
+          label="Nom"
+          id="name"
+          name="name"
+          autoComplete="name"
+          required
+          value={formData.name}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          error={errors.name}
+        />
 
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium mb-1">
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            required
-            aria-required="true"
-            aria-invalid={Boolean(errors.email) || undefined}
-            aria-describedby={errors.email ? "email-error" : undefined}
-            className={`w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-accent ${
-              errors.email ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-          {errors.email && (
-            <p id="email-error" className="text-red-700 text-sm mt-1">
-              {errors.email}
-            </p>
-          )}
-        </div>
+        <Field
+          label="Email"
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+          value={formData.email}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          error={errors.email}
+        />
 
-        <div>
-          <label htmlFor="message" className="block text-sm font-medium mb-1">
-            Message
-          </label>
-          <textarea
-            id="message"
-            name="message"
-            rows="5"
-            value={formData.message}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            required
-            aria-required="true"
-            aria-invalid={Boolean(errors.message) || undefined}
-            aria-describedby={errors.message ? "message-error" : undefined}
-            className={`w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-accent ${
-              errors.message ? "border-red-500" : "border-gray-300"
-            }`}
-          ></textarea>
-          {errors.message && (
-            <p id="message-error" className="text-red-700 text-sm mt-1">
-              {errors.message}
-            </p>
-          )}
-        </div>
+        <Field
+          label="Message"
+          id="message"
+          name="message"
+          as="textarea"
+          rows={5}
+          required
+          value={formData.message}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          error={errors.message}
+        />
 
-        <button
-          type="submit"
-          disabled={status === "sending"}
-          className={`bg-brand-accent text-white font-semibold px-6 py-2 rounded-full shadow transition cursor-pointer ${
-            status === "sending"
-              ? "opacity-70 cursor-wait"
-              : "hover:bg-brand-primary-dark"
-          }`}
-        >
+        <Button type="submit" loading={status === "sending"}>
           {status === "sending" ? "Envoi..." : "Envoyer"}
-        </button>
+        </Button>
 
         <div className="mt-2" aria-live="polite" aria-atomic="true" role="status">
           {status === "success" && (

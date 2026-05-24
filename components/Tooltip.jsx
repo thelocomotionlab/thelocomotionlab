@@ -1,10 +1,32 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 export default function Tooltip({ entry, children }) {
   const [visible, setVisible] = useState(false);
   const tooltipId = useId();
+  const wrapperRef = useRef(null);
+
+  // Ferme au clic en dehors et avec Escape
+  useEffect(() => {
+    if (!visible) return undefined;
+
+    const handlePointerDown = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setVisible(false);
+      }
+    };
+    const handleKey = (e) => {
+      if (e.key === "Escape") setVisible(false);
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [visible]);
 
   if (!entry) return <span>{children}</span>;
 
@@ -16,15 +38,30 @@ export default function Tooltip({ entry, children }) {
       }`
     : entry.publisher || "";
 
+  const toggle = () => setVisible((v) => !v);
+
   return (
     <span
-      className="relative cursor-pointer"
+      ref={wrapperRef}
+      className="relative inline cursor-pointer"
       onMouseEnter={() => setVisible(true)}
       onMouseLeave={() => setVisible(false)}
-      onClick={() => setVisible((v) => !v)}
-      aria-describedby={visible ? tooltipId : undefined}
     >
-      {children}
+      <button
+        type="button"
+        onClick={toggle}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            toggle();
+          }
+        }}
+        aria-describedby={visible ? tooltipId : undefined}
+        aria-expanded={visible}
+        className="inline bg-transparent border-0 p-0 m-0 text-inherit font-inherit cursor-pointer"
+      >
+        {children}
+      </button>
       {visible && (
         <span
           id={tooltipId}

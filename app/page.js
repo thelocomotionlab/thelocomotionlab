@@ -45,7 +45,7 @@ export const metadata = {
 const HEROES = [
   {
     src: "/images/heroes/hero-01.webp",
-    alt: "Trail en forêt – The Locomotion Lab",
+    alt: "Coureur en trail dans une forêt baignée par la lumière du soir, illustration éditoriale du Locomotion Lab.",
     objectPosition: "50% 50%",
   },
 ];
