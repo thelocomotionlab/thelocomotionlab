@@ -99,7 +99,7 @@ export default function ArticlesPage() {
                 <div className="relative w-full h-44">
                   <Image
                     src={article.cover}
-                    alt={article.title}
+                    alt={`Illustration de l'article : ${article.title}`}
                     fill
                     className="object-cover"
                     sizes="(min-width: 768px) 384px, 100vw"

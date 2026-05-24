@@ -97,14 +97,15 @@ export default function NewsletterSignup({
         className="h-6 mt-3 text-center"
         aria-live="polite"
         aria-atomic="true"
+        role="status"
       >
         {status === "success" && (
-          <p className="text-brand-deep text-sm font-medium animate-fade-in leading-none">
+          <p className="text-green-700 text-sm font-medium animate-fade-in leading-none">
             Merci ! Tu recevras bientôt les nouvelles explorations du labo.
           </p>
         )}
         {status === "error" && (
-          <p className="text-brand-deep text-sm font-medium animate-fade-in">
+          <p className="text-red-700 text-sm font-medium animate-fade-in">
             Une erreur est survenue. Vérifie ton adresse mail.
           </p>
         )}

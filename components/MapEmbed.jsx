@@ -25,6 +25,7 @@ export default function MapEmbed({
   const [mapStyle, setMapStyle] = useState("osm");
   const [showStyleMenu, setShowStyleMenu] = useState(false);
   const [dynamicHeight, setDynamicHeight] = useState(defaultMinHeight);
+  const [gpxError, setGpxError] = useState(false);
 
   const defaultCenter = [55.5364, -21.1151];
   const defaultZoom = 9;
@@ -150,10 +151,14 @@ export default function MapEmbed({
 
     async function loadGPX() {
       try {
+        setGpxError(false);
         const map = mapRef.current;
         if (!map) return;
 
-        const res = await fetch(gpx);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch(gpx, { signal: controller.signal });
+        clearTimeout(timeoutId);
         if (!res.ok) throw new Error("Erreur de chargement GPX");
 
         const xml = await res.text();
@@ -213,6 +218,7 @@ export default function MapEmbed({
         }
       } catch (err) {
         console.error("Erreur GPX:", err);
+        setGpxError(true);
       }
     }
 
@@ -280,6 +286,24 @@ export default function MapEmbed({
         aria-label="Carte interactive du parcours GPX"
         style={{ width: "100%", height: "100%" }}
       />
+
+      {gpxError && (
+        <div
+          role="alert"
+          className="absolute top-3 right-3 z-30 max-w-[260px] bg-white/95 backdrop-blur-sm border border-red-200 text-red-700 text-sm rounded-md shadow-md px-3 py-2"
+        >
+          Impossible de charger la trace GPX.{" "}
+          {gpx && (
+            <a
+              href={gpx}
+              className="underline font-semibold"
+              download
+            >
+              Télécharger le fichier
+            </a>
+          )}
+        </div>
+      )}
 
       {/* Bouton Recentrer */}
       <button

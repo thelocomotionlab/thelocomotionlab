@@ -197,8 +197,11 @@ export default function Plot({ src, height = 420 }) {
 
   if (error) {
     return (
-      <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-3">
-        Erreur de chargement du graphique : {error}
+      <div
+        role="alert"
+        className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-3"
+      >
+        Le graphique n’a pas pu se charger. Vérifie ta connexion et recharge la page.
       </div>
     );
   }

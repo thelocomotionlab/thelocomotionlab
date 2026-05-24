@@ -70,8 +70,7 @@ export default async function sitemap() {
     { url: "/soutenir", priority: 0.6, freq: "monthly" },
     { url: "/contact", priority: 0.5, freq: "yearly" },
     { url: "/recherche", priority: 0.3, freq: "yearly" },
-    // 👇 PRIORITÉ BASSE POUR LES MENTIONS LÉGALES
-    { url: "/mentions-legales", priority: 0.1, freq: "yearly" },
+    { url: "/mentions-legales", priority: 0.4, freq: "yearly" },
   ].map((route) => ({
     url: `${URL}${route.url}`,
     lastModified: new Date().toISOString(),
