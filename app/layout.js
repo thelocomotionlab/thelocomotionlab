@@ -61,7 +61,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="fr">
+    <html lang="fr" data-scroll-behavior="smooth">
       <body
         className={`${ubuntu.variable} ${lora.variable} font-sans text-gray-700 relative min-h-screen`}
       >
