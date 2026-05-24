@@ -13,6 +13,8 @@ const LiveTracking = dynamic(() => import("./LiveTracking"), {
   loading: () => (
     <div
       className="w-full h-96 bg-brand-grid/40 rounded-lg animate-pulse"
+      role="status"
+      aria-live="polite"
       aria-label="Chargement du live-tracking"
     />
   ),

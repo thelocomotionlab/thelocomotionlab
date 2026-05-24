@@ -12,6 +12,8 @@ const Plot = dynamic(() => import("./Plot"), {
   loading: () => (
     <div
       className="w-full h-[420px] bg-brand-grid/40 rounded-lg animate-pulse"
+      role="status"
+      aria-live="polite"
       aria-label="Chargement du graphique"
     />
   ),

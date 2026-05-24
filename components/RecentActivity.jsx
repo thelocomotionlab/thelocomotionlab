@@ -85,7 +85,7 @@ export default function RecentActivity({
                   <div className="relative w-full h-44">
                     <Image
                       src={item.cover}
-                      alt={item.title}
+                      alt={`Illustration : ${item.title}`}
                       fill
                       className="object-cover"
                       sizes="(min-width: 768px) 384px, 100vw"

@@ -14,6 +14,8 @@ const MapEmbed = dynamic(() => import("./MapEmbed"), {
   loading: () => (
     <div
       className="w-full h-64 bg-brand-grid/40 rounded-lg animate-pulse"
+      role="status"
+      aria-live="polite"
       aria-label="Chargement de la carte"
     />
   ),

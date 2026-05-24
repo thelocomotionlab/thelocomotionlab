@@ -127,6 +127,7 @@ export default function LiveTracking({
   });
   const [elapsed, setElapsed] = useState(0);
   const [computedTotalDistance, setComputedTotalDistance] = useState(null);
+  const [connectionError, setConnectionError] = useState(false);
 
   const TOTAL_DISTANCE_KM =
     typeof totalDistanceKm === "number"
@@ -387,7 +388,10 @@ export default function LiveTracking({
           `${positionsUrl}${positionsUrl.includes("?") ? "&" : "?"}cacheBust=${Date.now()}`
         );
 
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
         const data = await res.json();
+        setConnectionError(false);
         const profile = Array.isArray(data?.profile) ? data.profile : [];
         const serverStats = data?.stats || null;
 
@@ -503,6 +507,7 @@ export default function LiveTracking({
         }
       } catch (err) {
         console.error("Erreur récupération live data :", err);
+        setConnectionError(true);
       }
     }
 
@@ -614,6 +619,15 @@ export default function LiveTracking({
   /* ---------- 6) Rendu principal ---------- */
   return (
     <div className="flex flex-col items-center w-full py-6 px-3 sm:px-6 gap-3">
+      {connectionError && (
+        <div
+          role="alert"
+          className="w-full max-w-3xl text-sm bg-red-50 border border-red-200 text-red-700 rounded-lg px-3 py-2 text-center"
+        >
+          Connexion au serveur live perdue. Tentatives de reconnexion automatiques…
+        </div>
+      )}
+
       {/* Bloc stats */}
       <div className="bg-white/80 backdrop-blur-md shadow-md rounded-2xl p-4 w-full max-w-3xl text-center border border-gray-200">
         <div className="flex justify-center items-center gap-2 font-semibold text-lg text-[#b66b47] sm:mb-1">
