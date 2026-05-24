@@ -103,24 +103,14 @@ export default function Navbar() {
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
-              className={`hover:text-brand-accent flex items-center gap-1 ${
-                active ? "text-brand-accent" : ""
-              }`}
+              className="hover:text-brand-accent flex items-center gap-1 group"
             >
               <Icon
                 size={18}
-                className={active ? "text-brand-accent" : "text-gray-700"}
+                className="text-gray-700 group-hover:text-brand-accent"
                 aria-hidden="true"
               />
-              <span
-                className={
-                  active
-                    ? "underline underline-offset-4 decoration-2"
-                    : ""
-                }
-              >
-                {label}
-              </span>
+              <span>{label}</span>
             </Link>
           );
         })}
@@ -203,7 +193,7 @@ export default function Navbar() {
                   href={href}
                   onClick={handleCloseMenu}
                   aria-current={active ? "page" : undefined}
-                  className={`py-2 ${active ? "text-brand-accent font-semibold" : ""}`}
+                  className="py-2"
                 >
                   {label}
                 </Link>

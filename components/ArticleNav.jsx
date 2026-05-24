@@ -1,54 +1,60 @@
 // components/ArticleNav.jsx
 //
-// Navigation prev/next en bas d'un article ou projet.
-// `label` permet de personnaliser le mot ("Carnet", "Projet").
+// Suggestions de lecture en bas d'un article ou projet.
+// Présente jusqu'à deux fiches voisines (chronologiquement) sous une
+// formulation positive ("À découvrir aussi"), sans mettre l'accent sur
+// l'ordre prev/next. Les liens portent quand même rel="prev"/"next"
+// pour les crawlers et les navigateurs.
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 
 export default function ArticleNav({ prev = null, next = null, label = "Article" }) {
-  if (!prev && !next) return null;
+  const items = [
+    next ? { ...next, rel: "next" } : null,
+    prev ? { ...prev, rel: "prev" } : null,
+  ].filter(Boolean);
+
+  if (items.length === 0) return null;
+
+  const heading = items.length > 1 ? "À découvrir aussi" : "À découvrir ensuite";
 
   return (
     <nav
-      aria-label={`Navigation entre ${label.toLowerCase()}s`}
-      className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-3"
+      aria-label={`Autres ${label.toLowerCase()}s à découvrir`}
+      className="mt-14"
     >
-      {prev ? (
-        <Link
-          href={prev.href}
-          rel="prev"
-          className="group flex flex-col gap-1 rounded-xl border border-gray-200 bg-white p-4 shadow-card hover:border-brand-accent hover:shadow-md transition no-underline"
-        >
-          <span className="flex items-center gap-1 text-xs uppercase tracking-wide text-gray-500">
-            <ArrowLeft size={14} aria-hidden="true" />
-            {label} précédent
-          </span>
-          <span className="font-semibold text-brand-deep group-hover:text-brand-accent transition line-clamp-2">
-            {prev.title}
-          </span>
-        </Link>
-      ) : (
-        <div aria-hidden="true" />
-      )}
+      <div className="flex items-center justify-center gap-3 mb-5">
+        <span aria-hidden="true" className="h-px w-10 bg-brand-accent/40" />
+        <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-deep">
+          {heading}
+        </h2>
+        <span aria-hidden="true" className="h-px w-10 bg-brand-accent/40" />
+      </div>
 
-      {next ? (
-        <Link
-          href={next.href}
-          rel="next"
-          className="group flex flex-col gap-1 rounded-xl border border-gray-200 bg-white p-4 shadow-card hover:border-brand-accent hover:shadow-md transition no-underline sm:text-right"
-        >
-          <span className="flex items-center gap-1 text-xs uppercase tracking-wide text-gray-500 sm:justify-end">
-            {label} suivant
-            <ArrowRight size={14} aria-hidden="true" />
-          </span>
-          <span className="font-semibold text-brand-deep group-hover:text-brand-accent transition line-clamp-2">
-            {next.title}
-          </span>
-        </Link>
-      ) : (
-        <div aria-hidden="true" />
-      )}
+      <ul
+        className={`mx-auto grid gap-4 ${
+          items.length === 1
+            ? "max-w-md grid-cols-1"
+            : "max-w-3xl grid-cols-1 sm:grid-cols-2"
+        }`}
+      >
+        {items.map((item) => (
+          <li key={item.slug} className="flex">
+            <Link
+              href={item.href}
+              rel={item.rel}
+              className="group flex w-full flex-col items-center text-center gap-2 rounded-2xl border border-gray-200 bg-white px-5 py-6 shadow-card transition hover:-translate-y-0.5 hover:border-brand-accent hover:shadow-md no-underline"
+            >
+              <span className="text-[0.7rem] uppercase tracking-[0.18em] text-brand-accent/90">
+                {label}
+              </span>
+              <span className="font-semibold text-brand-deep group-hover:text-brand-accent transition line-clamp-2">
+                {item.title}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </nav>
   );
 }
