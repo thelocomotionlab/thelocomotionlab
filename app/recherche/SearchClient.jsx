@@ -144,7 +144,7 @@ function SearchClientInner() {
     q && index !== null && results.arts.length === 0 && results.pros.length === 0;
 
   return (
-    <main className="container mx-auto px-4 py-10">
+    <div className="container mx-auto px-4 py-10">
       <h1 className="text-3xl font-bold font-heading mb-4 text-brand-primary">
         Recherche
       </h1>
@@ -232,6 +232,6 @@ function SearchClientInner() {
           </div>
         </section>
       )}
-    </main>
+    </div>
   );
 }

@@ -81,10 +81,15 @@ export default function SoutenirSection() {
           onSubmit={handleSubmit}
           className="flex flex-col sm:flex-row justify-center items-stretch gap-2 w-full max-w-md mx-auto"
         >
+          <label htmlFor="soutenir-email" className="sr-only">
+            Adresse e-mail
+          </label>
           <input
+            id="soutenir-email"
             type="email"
             name="email"
             required
+            aria-required="true"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Votre adresse e-mail"
@@ -104,9 +109,9 @@ export default function SoutenirSection() {
           </button>
         </form>
 
-        <div className="h-6 mt-3">
+        <div className="h-6 mt-3" aria-live="polite" aria-atomic="true" role="status">
           {status === "success" && (
-            <p className="text-brand-deep text-sm font-medium animate-fade-in flex items-center justify-center gap-2 leading-none">
+            <p className="text-green-700 text-sm font-medium animate-fade-in flex items-center justify-center gap-2 leading-none">
               <span>
                 Merci pour ton inscription ! Tu recevras bientôt les nouvelles
                 explorations du labo.
@@ -114,7 +119,7 @@ export default function SoutenirSection() {
             </p>
           )}
           {status === "error" && (
-            <p className="text-brand-deep text-sm font-medium animate-fade-in">
+            <p className="text-red-700 text-sm font-medium animate-fade-in">
               Une erreur est survenue. Vérifie ton adresse mail.
             </p>
           )}

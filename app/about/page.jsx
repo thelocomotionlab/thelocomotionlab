@@ -5,13 +5,13 @@ export const metadata = {
   description:
     "Découvre la vision du Locomotion Lab : un espace d’exploration de la locomotion humaine.",
   alternates: {
-    canonical: "https://thelocomotionlab.com/a-propos",
+    canonical: "https://thelocomotionlab.com/about",
   },
   openGraph: {
     title: "À propos – The Locomotion Lab",
     description:
       "Découvre la vision du Locomotion Lab : un espace d’exploration de la locomotion humaine.",
-    url: "https://thelocomotionlab.com/a-propos",
+    url: "https://thelocomotionlab.com/about",
     type: "website",
     locale: "fr_FR",
     images: [
@@ -31,7 +31,7 @@ export const metadata = {
 
 export default function AboutPage() {
   return (
-    <main className="max-w-3xl mx-auto px-6 py-12 text-gray-800 font-sans">
+    <div className="max-w-3xl mx-auto px-6 py-12 text-gray-800 font-sans">
       <h1 className="text-3xl font-sans font-bold mb-8 text-brand-primary">
         À propos
       </h1>
@@ -133,6 +133,6 @@ export default function AboutPage() {
           </li>
         </ul>
       </section>
-    </main>
+    </div>
   );
 }

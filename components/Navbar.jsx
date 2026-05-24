@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   BookOpen,
@@ -60,11 +61,12 @@ export default function Navbar() {
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
         >
-          <img
+          <Image
             src={hovered ? "/logo_deep_primary.png" : "/logo_primary_deep.png"}
             alt="Logo The Locomotion Lab — retour à l'accueil"
             width={48}
             height={48}
+            priority
             className="h-12 w-auto transition duration-300"
           />
         </Link>
@@ -119,9 +121,9 @@ export default function Navbar() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               autoFocus
-              placeholder="Recherche..."
-              className="px-3 py-1 border border-gray-300 rounded-full focus:outline-none focus:ring-0 focus:border-brand-accent"
-
+              placeholder="Rechercher un article, un projet…"
+              aria-label="Rechercher sur le site"
+              className="px-3 py-1 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent"
             />
             <button
               type="button"

@@ -31,7 +31,7 @@ export const metadata = {
 
 export default function MentionsPage() {
   return (
-    <main className="max-w-3xl mx-auto px-6 py-12 text-gray-800 font-sans">
+    <div className="max-w-3xl mx-auto px-6 py-12 text-gray-800 font-sans">
       <h1 className="text-3xl font-sans font-bold mb-6 text-brand-primary">
         Mentions légales
       </h1>
@@ -94,6 +94,6 @@ export default function MentionsPage() {
           </a>
         </p>
       </section>
-    </main>
+    </div>
   );
 }

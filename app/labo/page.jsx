@@ -66,7 +66,7 @@ const cards = [
 
 export default function LaboPage() {
   return (
-    <main className="container mx-auto px-4 py-12">
+    <div className="container mx-auto px-4 py-12">
       <header className="max-w-3xl mx-auto text-center mb-10">
         <h1 className="text-4xl font-bold font-heading mb-3 text-brand-primary">
           Le Labo
@@ -102,6 +102,6 @@ export default function LaboPage() {
           </article>
         ))}
       </section>
-    </main>
+    </div>
   );
 }

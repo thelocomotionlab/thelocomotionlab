@@ -77,7 +77,7 @@ export default function ProjetsPage() {
   );
 
   return (
-    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
       {/* Header */}
       <header className="max-w-3xl mx-auto text-center mb-10">
         <h1 className="text-3xl font-bold font-heading mb-2 text-brand-primary">
@@ -90,6 +90,6 @@ export default function ProjetsPage() {
 
       {/* Grille + filtres en client component */}
       <ProjectsGrid projets={projets} notesMap={notesMap} />
-    </main>
+    </div>
   );
 }

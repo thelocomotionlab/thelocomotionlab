@@ -65,8 +65,11 @@ export default function RootLayout({ children }) {
       <body
         className={`${ubuntu.variable} ${lora.variable} font-sans text-gray-700 relative min-h-screen`}
       >
+        <a href="#main-content" className="skip-link">
+          Aller au contenu principal
+        </a>
         <Navbar />
-        <main>
+        <main id="main-content">
           {children}
         </main>
         <Footer />
@@ -74,6 +77,6 @@ export default function RootLayout({ children }) {
         {/* Bouton de partage global, par-dessus le reste */}
         <ShareButton />
       </body>
-    </html >
+    </html>
   );
 }

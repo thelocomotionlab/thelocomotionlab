@@ -66,7 +66,7 @@ export default function ContactForm() {
   };
 
   return (
-    <main className="max-w-2xl mx-auto px-6 py-12 text-gray-800 font-sans">
+    <div className="max-w-2xl mx-auto px-6 py-12 text-gray-800 font-sans">
       <h1 className="text-3xl font-sans font-bold mb-8 text-brand-primary">
         Contact
       </h1>
@@ -144,19 +144,19 @@ export default function ContactForm() {
           {status === "sending" ? "Envoi..." : "Envoyer"}
         </button>
 
-        <div className="h-6 mt-2" aria-live="polite" aria-atomic="true">
+        <div className="h-6 mt-2" aria-live="polite" aria-atomic="true" role="status">
           {status === "success" && (
-            <p className="text-brand-deep text-sm font-medium animate-fade-in">
+            <p className="text-green-700 text-sm font-medium animate-fade-in">
               Merci pour ton message, il a bien été envoyé !
             </p>
           )}
           {status === "error" && (
-            <p className="text-brand-deep text-sm font-medium animate-fade-in">
+            <p className="text-red-700 text-sm font-medium animate-fade-in">
               Une erreur est survenue. Réessaie dans un instant.
             </p>
           )}
         </div>
       </form>
-    </main>
+    </div>
   );
 }

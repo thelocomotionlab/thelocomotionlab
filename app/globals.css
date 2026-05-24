@@ -51,6 +51,27 @@ body {
   color: #374151; /* gray-700 */
 }
 
+/* Skip-to-content link : invisible jusqu'au focus clavier */
+.skip-link {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(-150%);
+  z-index: 100;
+  padding: 0.75rem 1rem;
+  background: var(--color-brand-primary);
+  color: white;
+  font-weight: 600;
+  border-radius: 0 0 0.5rem 0;
+  transition: transform 0.2s ease;
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 3px solid var(--color-brand-accent);
+  outline-offset: 2px;
+}
+
 /* Focus visible global (sauf champs de formulaire pour éviter le double cadre) */
 :focus-visible:not(input):not(textarea):not(select) {
   outline: 3px solid var(--color-brand-accent);

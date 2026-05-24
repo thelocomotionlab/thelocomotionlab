@@ -6,6 +6,7 @@
 // Seul le <Tooltip> autour des numéros de citation reste interactif côté client.
 
 import Link from "next/link";
+import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkFootnotes from "remark-footnotes";
@@ -41,9 +42,13 @@ export default function ArticleBody({ article, initialContent }) {
     <article className="max-w-5xl mx-auto sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
       {article.cover && (
         <div className="sm:-mx-6 lg:-mx-8 mb-6 overflow-hidden rounded-none sm:rounded-2xl shadow-md">
-          <img
+          <Image
             src={article.cover}
-            alt={article.title}
+            alt={`Illustration de l'article : ${article.title}`}
+            width={1600}
+            height={900}
+            priority
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1024px"
             className="block w-full h-auto"
           />
         </div>
