@@ -42,7 +42,7 @@ export default function AboutPage() {
           Vision
         </h2>
         <p className="mb-4">
-          Le <strong>Locomotion Lab</strong> est un espace d&apos;exploration de
+          Le <strong>Locomotion Lab </strong> est un espace d&apos;exploration de
           la locomotion humaine primordiale sous toutes ses formes : trail
           primal, déplacement dans les arbres, mouvement animal, natation, etc.
           La liste est longue !
