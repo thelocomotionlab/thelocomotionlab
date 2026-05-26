@@ -4,19 +4,47 @@ import { formatRelativeDays } from "@/lib/getRecentActivity";
 
 /**
  * FeedSection
- * - Articles  : affiche uniquement "Publié le ..."
- * - Projets   : affiche une date métier plus propre :
- *   - "Terminé le ..." si status = Terminé
- *   - sinon "Mis à jour ..." basé sur activityAt
- *   - fallback sur updatedAt
- * - Status projet purement informatif (hors <Link>)
- * - CTA "Voir tout" sous le feed (même style que "Entrer dans le labo")
+ * - Articles : cover + title + description + "Publié le ..."
+ * - Projets  : cover + status + title + description + dernières notes
+ *              + meta de récence ("Terminé le X" / "Mis à jour ...").
+ *   Les notes proviennent de notesMap[slug] (extractProjectNotes côté
+ *   serveur) afin de matcher l'affichage de la page /projets.
+ * - CTA "Voir tout" sous le feed.
  */
+
+function parseFrenchDate(str) {
+  if (!str) return null;
+  const parts = str.split("/");
+  if (parts.length !== 3) return null;
+  const [dayStr, monthStr, yearStr] = parts;
+  const day = Number(dayStr);
+  const month = Number(monthStr);
+  let year = Number(yearStr);
+  if (!day || !month || !year) return null;
+  if (year < 100) year += year < 50 ? 2000 : 1900;
+  const d = new Date(year, month - 1, day);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function pickLastNotes(notes, limit = 2) {
+  if (!Array.isArray(notes) || notes.length === 0) return [];
+  return [...notes]
+    .sort((a, b) => {
+      const dA = parseFrenchDate(a.date);
+      const dB = parseFrenchDate(b.date);
+      if (!dA && !dB) return 0;
+      if (!dA) return 1;
+      if (!dB) return -1;
+      return dB - dA;
+    })
+    .slice(0, limit);
+}
 
 export default function RecentActivity({
   title,
   Icon = null,
   items = [],
+  notesMap = {},
   ctaHref = null,
   ctaLabel = "Voir tout",
 }) {
@@ -65,69 +93,93 @@ export default function RecentActivity({
 
         {/* Cards */}
         <div className={`grid gap-6 justify-center justify-items-center ${gridCols}`}>
-          {items.map((item) => (
-            <div
-              key={`${item.type}-${item.slug}`}
-              className="relative w-full max-w-[22rem] h-full"
-            >
-              {/* Card link */}
-              <Link
-                href={item.href}
-                className="
-                  group
-                  bg-white rounded-2xl shadow-card overflow-hidden
-                  hover:shadow-lg transition-shadow
-                  h-full flex flex-col
-                "
+          {items.map((item) => {
+            const isProjet = item.type === "Projet";
+            const lastNotes = isProjet ? pickLastNotes(notesMap[item.slug]) : [];
+
+            return (
+              <div
+                key={`${item.type}-${item.slug}`}
+                className="relative w-full max-w-[22rem] h-full"
               >
-                {/* Cover */}
-                {item.cover ? (
-                  <div className="relative w-full h-44">
-                    <Image
-                      src={item.cover}
-                      alt={`Illustration : ${item.title}`}
-                      fill
-                      className="object-cover"
-                      sizes="(min-width: 768px) 384px, 100vw"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-full h-44 bg-brand-bg" aria-hidden="true" />
-                )}
-
-                {/* Content */}
-                <div className="p-5 flex flex-col flex-1">
-                  <h3 className="text-lg font-semibold text-brand-deep group-hover:underline mb-2">
-                    {item.title}
-                  </h3>
-
-                  {item.description ? (
-                    <p className="text-sm text-gray-700 italic line-clamp-3">
-                      {item.description}
-                    </p>
+                <Link
+                  href={item.href}
+                  className="
+                    group
+                    bg-white rounded-2xl shadow-card overflow-hidden
+                    hover:shadow-lg transition-shadow
+                    h-full flex flex-col
+                  "
+                >
+                  {/* Cover */}
+                  {item.cover ? (
+                    <div className="relative w-full h-44">
+                      <Image
+                        src={item.cover}
+                        alt={`Illustration : ${item.title}`}
+                        fill
+                        className="object-cover"
+                        sizes="(min-width: 768px) 384px, 100vw"
+                      />
+                    </div>
                   ) : (
-                    <p className="text-sm text-gray-500">&nbsp;</p>
+                    <div className="w-full h-44 bg-brand-bg" aria-hidden="true" />
                   )}
 
-                  {/* Meta info (context-aware) */}
-                  <div className="mt-auto pt-4 text-xs text-gray-500">
-                    {item.type === "Carnet" && item.date ? (
-                      <p>Publié le {item.date.toLocaleDateString("fr-FR")}</p>
+                  {/* Content */}
+                  <div className="p-5 flex flex-col flex-1">
+                    {isProjet && item.status ? (
+                      <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
+                        {item.status}
+                      </p>
                     ) : null}
 
-                    {item.type === "Projet" ? renderProjectMeta(item) : null}
-                  </div>
-                </div>
-              </Link>
+                    <h3 className="text-lg font-semibold text-brand-deep group-hover:underline mb-2">
+                      {item.title}
+                    </h3>
 
-              {/* Project status (purely informative, not a CTA) */}
-              {item.type === "Projet" && item.status ? (
-                <span className="absolute bottom-3 right-3 text-xxs uppercase tracking-wide text-gray-500">
-                  {item.status}
-                </span>
-              ) : null}
-            </div>
-          ))}
+                    {item.description ? (
+                      <p className="text-sm text-gray-700 italic line-clamp-3">
+                        {item.description}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-gray-500">&nbsp;</p>
+                    )}
+
+                    {isProjet && lastNotes.length > 0 ? (
+                      <div className="mt-auto pt-3 border-t border-gray-200">
+                        <p className="text-xs font-semibold text-gray-500 mb-1">
+                          Dernières notes :
+                        </p>
+                        <ul className="space-y-1">
+                          {lastNotes.map((note, i) => (
+                            <li key={i} className="text-xs text-gray-600">
+                              {note.date
+                                ? `${note.date} – ${note.title}`
+                                : note.title}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+
+                    {/* Meta info (context-aware) */}
+                    <div
+                      className={`${
+                        isProjet && lastNotes.length > 0 ? "mt-2" : "mt-auto"
+                      } pt-4 text-xs text-gray-500`}
+                    >
+                      {item.type === "Carnet" && item.date ? (
+                        <p>Publié le {item.date.toLocaleDateString("fr-FR")}</p>
+                      ) : null}
+
+                      {isProjet ? renderProjectMeta(item) : null}
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            );
+          })}
         </div>
 
         {/* CTA under feed (same style as "Entrer dans le labo") */}

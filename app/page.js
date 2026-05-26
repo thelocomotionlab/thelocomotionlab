@@ -6,6 +6,7 @@ import Image from "next/image";
 import FeedSection from "@/components/RecentActivity";
 import NewsletterSignup from "@/components/NewsletterSignup";
 import { getRecentArticles, getRecentProjects } from "@/lib/getRecentActivity";
+import { extractProjectNotes } from "@/lib/extractProjectNotes";
 
 import {
   Activity,
@@ -88,6 +89,9 @@ export default async function HomePage() {
 
   const recentArticles = getRecentArticles({ limit: 3 });
   const recentProjects = getRecentProjects({ limit: 3 });
+  const projectNotesMap = Object.fromEntries(
+    recentProjects.map((p) => [p.slug, extractProjectNotes(p.slug)])
+  );
 
   return (
     <div>
@@ -183,6 +187,7 @@ export default async function HomePage() {
         title="Derniers projets"
         Icon={FlaskConical}
         items={recentProjects}
+        notesMap={projectNotesMap}
         ctaHref="/projets"
         ctaLabel="Voir tout"
       />
