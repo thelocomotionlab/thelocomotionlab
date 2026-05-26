@@ -13,8 +13,6 @@ activityAt: 2025-11-30
 published: true
 ---
 
-
-
 Le 19 septembre 2025 s'annonçait comme le jour où j'allais accomplir mon rêve de courir 100 miles d'une traite au Grand Raid du Finistère. Ce rendez-vous avec moi-même s'est achevé au 86$^{\text{ième}}$ km après une dizaine d'heures de courses, devant abandonner à cause d'une présumée fracture de fatigue tibiale. 3 jours après, je pouvais de nouveau courir, la fracture tibiale était en réalité un excès de compression due à une chaussette de sandale pas assez éprouvée à l'entraînement. Dès lors, j'ai compris qu'une dernière tentative de 100 miles s'offrirait à moi avant la fin de l'année, lors d'un voyage à la Réunion prévu de longue date. Mais dans un cadre qui me ressemble, hors de toute compétition, une aventure en OFF avec mes propres règles : traverser la Réunion d'une traite en sandales, en autonomie et sans bâtons pour respecter l'esprit diag'. Un chantier énorme à ficeler en 6 semaines, et dont je vous raconte les coulisses jusqu'au partage de l'aventure le jour J. Bonne lecture !
 
 ---
