@@ -41,7 +41,6 @@ import ArticleNav from "../../../components/ArticleNav";
 export default function ProjetBody({
   project,
   initialContent,
-  readingMinutes = 0,
   adjacent = { prev: null, next: null },
 }) {
   if (!project) return <p className="p-6">Projet non trouvé</p>;
@@ -99,14 +98,22 @@ export default function ProjetBody({
           {project.title}
         </h1>
 
-        {(project.status || readingMinutes > 0) && (
+        {(project.status || project.author) && (
           <p className="text-sm text-gray-500 mb-8 text-center flex items-center justify-center gap-2 flex-wrap">
             {project.status && <span>{project.status}</span>}
-            {project.status && readingMinutes > 0 && (
+            {project.status && project.author && (
               <span aria-hidden="true">·</span>
             )}
-            {readingMinutes > 0 && (
-              <span>{readingMinutes} min de lecture</span>
+            {project.author && (
+              <span>
+                par{" "}
+                <Link
+                  href="/about"
+                  className="text-brand-deep hover:text-brand-accent hover:underline"
+                >
+                  {project.author}
+                </Link>
+              </span>
             )}
           </p>
         )}

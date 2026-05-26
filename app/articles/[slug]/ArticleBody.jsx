@@ -27,7 +27,6 @@ import ArticleNav from "../../../components/ArticleNav";
 export default function ArticleBody({
   article,
   initialContent,
-  readingMinutes = 0,
   adjacent = { prev: null, next: null },
 }) {
   if (!article) return <p className="p-6">Article non trouvé</p>;
@@ -64,18 +63,26 @@ export default function ArticleBody({
         <h1 className="text-2xl text-brand-primary md:text-5xl font-sans font-bold mb-3 text-center">
           {article.title}
         </h1>
-        {(article.date || readingMinutes > 0) && (
+        {(article.date || article.author) && (
           <p className="text-sm text-gray-500 mb-8 text-center flex items-center justify-center gap-2 flex-wrap">
             {article.date && (
               <time dateTime={new Date(article.date).toISOString()}>
                 {new Date(article.date).toLocaleDateString("fr-FR")}
               </time>
             )}
-            {article.date && readingMinutes > 0 && (
+            {article.date && article.author && (
               <span aria-hidden="true">·</span>
             )}
-            {readingMinutes > 0 && (
-              <span>{readingMinutes} min de lecture</span>
+            {article.author && (
+              <span>
+                par{" "}
+                <Link
+                  href="/about"
+                  className="text-brand-deep hover:text-brand-accent hover:underline"
+                >
+                  {article.author}
+                </Link>
+              </span>
             )}
           </p>
         )}

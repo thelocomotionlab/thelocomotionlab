@@ -7,9 +7,7 @@ import { notFound } from "next/navigation";
 
 import ArticleBody from "./ArticleBody";
 import Breadcrumb from "@/components/Breadcrumb";
-import ArticleNav from "@/components/ArticleNav";
 import { getAdjacentArticles } from "@/lib/getAdjacent";
-import { estimateReadingMinutes } from "@/lib/readingTime";
 
 const SITE_URL = "https://thelocomotionlab.com";
 
@@ -41,6 +39,7 @@ function readArticle(slug) {
     description: data.description || "",
     type: data.type || "",
     tags: data.tags || [],
+    author: data.author || "",
   };
 
   return { article, content, frontmatter: data };
@@ -135,7 +134,6 @@ export default async function ArticlePage({ params }) {
   const { article, content } = data;
   const jsonLd = buildArticleJsonLd(article);
   const adjacent = getAdjacentArticles(slug);
-  const readingMinutes = estimateReadingMinutes(content);
 
   return (
     <>
@@ -153,7 +151,6 @@ export default async function ArticlePage({ params }) {
       <ArticleBody
         article={article}
         initialContent={content}
-        readingMinutes={readingMinutes}
         adjacent={adjacent}
       />
     </>

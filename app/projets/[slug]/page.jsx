@@ -9,7 +9,6 @@ import { notFound } from "next/navigation";
 import ProjetBody from "./ProjetBody";
 import Breadcrumb from "@/components/Breadcrumb";
 import { getAdjacentProjects } from "@/lib/getAdjacent";
-import { estimateReadingMinutes } from "@/lib/readingTime";
 
 const SITE_URL = "https://thelocomotionlab.com";
 
@@ -46,6 +45,7 @@ function readProject(slug) {
     cover: data.cover || "",
     description: data.description || "",
     tags: data.tags || [],
+    author: data.author || "",
     date: toDate(data.date),
     completedAt: toDate(data.completedAt),
     activityAt: toDate(data.activityAt),
@@ -141,7 +141,6 @@ export default async function ProjetPage({ params }) {
   const { project, content } = data;
   const jsonLd = buildProjectJsonLd(project);
   const adjacent = getAdjacentProjects(slug);
-  const readingMinutes = estimateReadingMinutes(content);
 
   return (
     <>
@@ -159,7 +158,6 @@ export default async function ProjetPage({ params }) {
       <ProjetBody
         project={project}
         initialContent={content}
-        readingMinutes={readingMinutes}
         adjacent={adjacent}
       />
     </>
