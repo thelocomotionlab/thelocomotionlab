@@ -361,6 +361,22 @@ Objectif : solliciter l'oxydation des lipides (acides gras libres) sur un effort
 
 Sensations : pas de sensation de faim, mais réelle sensation de faiblesse par moments, particulièrement lors des ascensions. Cela traduit ma limite actuelle en terme de débit d'oxydation des lipides, lorsqu'un débit d'ATP supérieur est requis.
 
+### Test
+
+<livetracking
+  apiBase="https://tracking.thelocomotionlab.com"
+  positionsEndpoint="/live-positions.json"
+  referenceGpx="/tracks/traversee-chartreuse.gpx"
+  totalDistance="88"
+  elevationMin="0"
+  elevationMax="2000"
+  title="Suivi en direct"
+  pollIntervalMs="10000"
+  initialMapStyle="osm"
+/>
+
+
+
 <!-- *Tracking actualisé toutes les 20 s ou 25 m environ. Si la position tarde à s'actualiser, la couverture réseau est temporairement réduite. Tu peux déplier/plier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
  -->
 
