@@ -44,7 +44,7 @@ export default function ArticleBody({
   );
 
   return (
-    <article className="max-w-5xl mx-auto sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
+    <article className="max-w-4xl mx-auto sm:px-6 lg:px-8 pt-0 pb-10 sm:py-10">
       {article.cover && (
         <div className="sm:-mx-6 lg:-mx-8 mb-6 overflow-hidden rounded-none sm:rounded-2xl shadow-md">
           <Image
@@ -90,7 +90,6 @@ export default function ArticleBody({
         <div
           className="
             prose prose-lg max-w-none
-            prose-p:text-[1.25rem] sm:prose-p:text-[1.5rem]
             font-lora text-gray-800 leading-relaxed
             text-left md:text-justify
             prose-img:rounded-lg prose-img:shadow-md prose-img:mx-auto prose-img:my-6
