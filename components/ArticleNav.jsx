@@ -1,10 +1,10 @@
 // components/ArticleNav.jsx
 //
 // Suggestions de lecture en bas d'un article ou projet.
-// Présente jusqu'à deux fiches voisines (chronologiquement) sous une
-// formulation positive ("À découvrir aussi"), sans mettre l'accent sur
-// l'ordre prev/next. Les liens portent quand même rel="prev"/"next"
-// pour les crawlers et les navigateurs.
+// Style éditorial sobre : un bloc encadré par deux liserés accent fins,
+// un kicker centré "À découvrir ensuite", puis chaque suggestion en pur
+// texte, sans carte ni ombre. Les liens portent rel="prev"/"next" pour
+// les crawlers et la navigation clavier des navigateurs.
 
 import Link from "next/link";
 
@@ -21,34 +21,28 @@ export default function ArticleNav({ prev = null, next = null, label = "Article"
   return (
     <nav
       aria-label={`Autres ${label.toLowerCase()}s à découvrir`}
-      className="mt-14"
+      className="mt-14 border-y border-brand-accent/25 py-8"
     >
-      <div className="flex items-center justify-center gap-3 mb-5">
-        <span aria-hidden="true" className="h-px w-10 bg-brand-accent/40" />
-        <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-deep">
-          {heading}
-        </h2>
-        <span aria-hidden="true" className="h-px w-10 bg-brand-accent/40" />
-      </div>
+      <p className="text-center text-[0.7rem] uppercase tracking-[0.28em] text-brand-deep/80 mb-6">
+        {heading}
+      </p>
 
       <ul
-        className={`mx-auto grid gap-4 ${
-          items.length === 1
-            ? "max-w-md grid-cols-1"
-            : "max-w-3xl grid-cols-1 sm:grid-cols-2"
+        className={`mx-auto flex items-center justify-center gap-x-12 gap-y-6 ${
+          items.length > 1 ? "flex-col sm:flex-row" : "flex-col"
         }`}
       >
         {items.map((item) => (
-          <li key={item.slug} className="flex">
+          <li key={item.slug} className="text-center">
             <Link
               href={item.href}
               rel={item.rel}
-              className="group flex w-full flex-col items-center text-center gap-2 rounded-2xl border border-gray-200 bg-white px-5 py-6 shadow-card transition hover:-translate-y-0.5 hover:border-brand-accent hover:shadow-md no-underline"
+              className="group inline-block no-underline"
             >
-              <span className="text-[0.7rem] uppercase tracking-[0.18em] text-brand-accent/90">
+              <span className="block text-[0.65rem] uppercase tracking-[0.2em] text-brand-accent/90 mb-1">
                 {label}
               </span>
-              <span className="font-semibold text-brand-deep group-hover:text-brand-accent transition line-clamp-2">
+              <span className="font-medium text-brand-deep transition group-hover:text-brand-accent border-b border-transparent group-hover:border-brand-accent/60 pb-0.5">
                 {item.title}
               </span>
             </Link>

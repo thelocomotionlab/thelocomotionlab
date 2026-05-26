@@ -56,6 +56,7 @@ function getAllProjects() {
         date,
         status: data.status || "",
         description: data.description || "",
+        cover: data.cover || "",
         published: data.published !== false,
       };
     })

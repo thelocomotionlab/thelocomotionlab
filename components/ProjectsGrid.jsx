@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 /**
  * Parse une date au format français "JJ/MM/AAAA" ou "J/M/AA"
@@ -84,6 +85,20 @@ export default function ProjectsGrid({ projets, notesMap = {} }) {
                 href={`/projets/${p.slug}`}
                 className="group bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col"
               >
+                {p.cover ? (
+                  <div className="relative w-full h-44">
+                    <Image
+                      src={p.cover}
+                      alt={`Illustration : ${p.title}`}
+                      fill
+                      className="object-cover"
+                      sizes="(min-width: 768px) 352px, 100vw"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-full h-44 bg-brand-bg" aria-hidden="true" />
+                )}
+
                 <div className="p-5 flex flex-col flex-1">
                   <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
                     {p.status}
