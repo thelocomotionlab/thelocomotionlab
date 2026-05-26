@@ -99,28 +99,27 @@ export default function ProjetBody({
         </h1>
 
         {(project.date || project.author) && (
-          <p className="text-sm text-gray-500 mb-8 text-center">
-            {project.date && (
-              <>
-                le{" "}
-                <time dateTime={new Date(project.date).toISOString()}>
-                  {new Date(project.date).toLocaleDateString("fr-FR")}
-                </time>
-              </>
-            )}
-            {project.date && project.author && " "}
+          <div className="text-sm text-gray-500 mb-8 text-center">
             {project.author && (
-              <>
-                par{" "}
+              <p>
+                Par{" "}
                 <Link
                   href="/about"
                   className="font-bold text-brand-deep hover:text-brand-accent hover:underline"
                 >
                   {project.author}
                 </Link>
-              </>
+              </p>
             )}
-          </p>
+            {project.date && (
+              <p>
+                Le{" "}
+                <time dateTime={new Date(project.date).toISOString()}>
+                  {new Date(project.date).toLocaleDateString("fr-FR")}
+                </time>
+              </p>
+            )}
+          </div>
         )}
 
         {toc.length > 0 && (

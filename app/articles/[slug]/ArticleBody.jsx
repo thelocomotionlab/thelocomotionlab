@@ -64,28 +64,27 @@ export default function ArticleBody({
           {article.title}
         </h1>
         {(article.date || article.author) && (
-          <p className="text-sm text-gray-500 mb-8 text-center">
-            {article.date && (
-              <>
-                le{" "}
-                <time dateTime={new Date(article.date).toISOString()}>
-                  {new Date(article.date).toLocaleDateString("fr-FR")}
-                </time>
-              </>
-            )}
-            {article.date && article.author && " "}
+          <div className="text-sm text-gray-500 mb-8 text-center">
             {article.author && (
-              <>
-                par{" "}
+              <p>
+                Par{" "}
                 <Link
                   href="/about"
                   className="font-bold text-brand-deep hover:text-brand-accent hover:underline"
                 >
                   {article.author}
                 </Link>
-              </>
+              </p>
             )}
-          </p>
+            {article.date && (
+              <p>
+                Le{" "}
+                <time dateTime={new Date(article.date).toISOString()}>
+                  {new Date(article.date).toLocaleDateString("fr-FR")}
+                </time>
+              </p>
+            )}
+          </div>
         )}
 
         <div
