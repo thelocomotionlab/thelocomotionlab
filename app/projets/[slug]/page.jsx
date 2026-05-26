@@ -8,7 +8,7 @@ import { notFound } from "next/navigation";
 
 import ProjetBody from "./ProjetBody";
 import Breadcrumb from "@/components/Breadcrumb";
-import { getAdjacentProjects } from "@/lib/getAdjacent";
+import { getRelatedProjects } from "@/lib/getRelated";
 
 const SITE_URL = "https://thelocomotionlab.com";
 
@@ -140,7 +140,7 @@ export default async function ProjetPage({ params }) {
 
   const { project, content } = data;
   const jsonLd = buildProjectJsonLd(project);
-  const adjacent = getAdjacentProjects(slug);
+  const related = getRelatedProjects(slug, 3);
 
   return (
     <>
@@ -158,7 +158,7 @@ export default async function ProjetPage({ params }) {
       <ProjetBody
         project={project}
         initialContent={content}
-        adjacent={adjacent}
+        related={related}
       />
     </>
   );

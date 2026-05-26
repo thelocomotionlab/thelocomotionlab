@@ -41,7 +41,7 @@ import ArticleNav from "../../../components/ArticleNav";
 export default function ProjetBody({
   project,
   initialContent,
-  adjacent = { prev: null, next: null },
+  related = [],
 }) {
   if (!project) return <p className="p-6">Projet non trouvé</p>;
 
@@ -98,22 +98,27 @@ export default function ProjetBody({
           {project.title}
         </h1>
 
-        {(project.status || project.author) && (
-          <p className="text-sm text-gray-500 mb-8 text-center flex items-center justify-center gap-2 flex-wrap">
-            {project.status && <span>{project.status}</span>}
-            {project.status && project.author && (
-              <span aria-hidden="true">·</span>
+        {(project.date || project.author) && (
+          <p className="text-sm text-gray-500 mb-8 text-center">
+            {project.date && (
+              <>
+                le{" "}
+                <time dateTime={new Date(project.date).toISOString()}>
+                  {new Date(project.date).toLocaleDateString("fr-FR")}
+                </time>
+              </>
             )}
+            {project.date && project.author && " "}
             {project.author && (
-              <span>
+              <>
                 par{" "}
                 <Link
                   href="/about"
-                  className="text-brand-deep hover:text-brand-accent hover:underline"
+                  className="font-bold text-brand-deep hover:text-brand-accent hover:underline"
                 >
                   {project.author}
                 </Link>
-              </span>
+              </>
             )}
           </p>
         )}
@@ -361,7 +366,7 @@ export default function ProjetBody({
 
         <CitationReferences ids={usedCitations} />
 
-        <ArticleNav prev={adjacent.prev} next={adjacent.next} label="Projet" />
+        <ArticleNav items={related} kind="projet" />
 
         <div className="mt-12 text-center">
           <Link

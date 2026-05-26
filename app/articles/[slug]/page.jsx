@@ -7,7 +7,7 @@ import { notFound } from "next/navigation";
 
 import ArticleBody from "./ArticleBody";
 import Breadcrumb from "@/components/Breadcrumb";
-import { getAdjacentArticles } from "@/lib/getAdjacent";
+import { getRelatedArticles } from "@/lib/getRelated";
 
 const SITE_URL = "https://thelocomotionlab.com";
 
@@ -133,7 +133,7 @@ export default async function ArticlePage({ params }) {
 
   const { article, content } = data;
   const jsonLd = buildArticleJsonLd(article);
-  const adjacent = getAdjacentArticles(slug);
+  const related = getRelatedArticles(slug, 3);
 
   return (
     <>
@@ -151,7 +151,7 @@ export default async function ArticlePage({ params }) {
       <ArticleBody
         article={article}
         initialContent={content}
-        adjacent={adjacent}
+        related={related}
       />
     </>
   );

@@ -27,7 +27,7 @@ import ArticleNav from "../../../components/ArticleNav";
 export default function ArticleBody({
   article,
   initialContent,
-  adjacent = { prev: null, next: null },
+  related = [],
 }) {
   if (!article) return <p className="p-6">Article non trouvé</p>;
 
@@ -64,25 +64,26 @@ export default function ArticleBody({
           {article.title}
         </h1>
         {(article.date || article.author) && (
-          <p className="text-sm text-gray-500 mb-8 text-center flex items-center justify-center gap-2 flex-wrap">
+          <p className="text-sm text-gray-500 mb-8 text-center">
             {article.date && (
-              <time dateTime={new Date(article.date).toISOString()}>
-                {new Date(article.date).toLocaleDateString("fr-FR")}
-              </time>
+              <>
+                le{" "}
+                <time dateTime={new Date(article.date).toISOString()}>
+                  {new Date(article.date).toLocaleDateString("fr-FR")}
+                </time>
+              </>
             )}
-            {article.date && article.author && (
-              <span aria-hidden="true">·</span>
-            )}
+            {article.date && article.author && " "}
             {article.author && (
-              <span>
+              <>
                 par{" "}
                 <Link
                   href="/about"
-                  className="text-brand-deep hover:text-brand-accent hover:underline"
+                  className="font-bold text-brand-deep hover:text-brand-accent hover:underline"
                 >
                   {article.author}
                 </Link>
-              </span>
+              </>
             )}
           </p>
         )}
@@ -138,7 +139,7 @@ export default function ArticleBody({
 
         <CitationReferences ids={usedCitations} />
 
-        <ArticleNav prev={adjacent.prev} next={adjacent.next} label="Carnet" />
+        <ArticleNav items={related} kind="article" />
 
         <div className="mt-12 text-center">
           <Link
