@@ -1,5 +1,6 @@
 ---
 title: "Journal d'aventures 2026"
+author: "Valentin Fer"
 date: "2026-01-01"
 description: "Journal de bord de ma saison de trail 2026 : projets OFF, sorties longues, préparation spécifique"
 cover: "/images/projets/saison-trail-2026/cover_saison-trail-2026.webp"

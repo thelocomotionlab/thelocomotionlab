@@ -2,7 +2,7 @@
 type: "article"
 
 title: "Développe ta respiration fonctionnelle"
-
+author: "Valentin Fer"
 description: ""
 
 cover: "/images/articles/draft_cover.png"

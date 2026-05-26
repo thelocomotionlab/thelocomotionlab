@@ -1,5 +1,6 @@
 ---
 title: "L'île intense vous dites ?"
+author: "Valentin Fer"
 date: "2025-12-9"
 tags: ["ultra-trail", "fast-packing","minimalisme"]
 cover: "/images/articles/recit-reunion-2025/cover_reunion_2025.webp"

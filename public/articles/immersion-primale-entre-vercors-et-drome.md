@@ -1,5 +1,6 @@
 ---
 title: "Immersion primale entre Vercors et Drôme"
+author: "Valentin Fer"
 date: "2026-05-14"
 tags: ["ultra-trail", "fast-packing","minimalisme"]
 cover: "/images/articles/immersion-primale-entre-vercors-et-drome/cover_immersion-primale-entre-vercors-et-drome.webp"

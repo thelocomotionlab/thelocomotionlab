@@ -1,5 +1,6 @@
 ---
 title: "L'an 2020 : la genèse du labo"
+author: "Valentin Fer"
 date: "2025-09-21"
 tags: ["ultra-trail", "minimalisme"]
 cover: "/images/articles/la-genese/cover_genese.webp"
