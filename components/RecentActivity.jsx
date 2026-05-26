@@ -1,12 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
-import { formatRelativeDays } from "@/lib/getRecentActivity";
 
 /**
  * FeedSection
  * - Articles : cover + title + description + "Publié le ..."
- * - Projets  : cover + status + title + description + dernières notes
- *              + meta de récence ("Terminé le X" / "Mis à jour ...").
+ * - Projets  : cover + status + title + description + dernières notes.
+ *              Pour les projets termines on conserve "Terminé le X" ;
+ *              les "Mis à jour il y a..." sont volontairement omis pour
+ *              aligner sur la page /projets.
  *   Les notes proviennent de notesMap[slug] (extractProjectNotes côté
  *   serveur) afin de matcher l'affichage de la page /projets.
  * - CTA "Voir tout" sous le feed.
@@ -65,15 +66,6 @@ export default function RecentActivity({
         <p>Terminé le {item.completedAt.toLocaleDateString("fr-FR")}</p>
       );
     }
-
-    if (item.activityAt) {
-      return <p>Mis à jour {formatRelativeDays(item.activityAt)}</p>;
-    }
-
-    if (item.updatedAt) {
-      return <p>Mis à jour {formatRelativeDays(item.updatedAt)}</p>;
-    }
-
     return null;
   }
 
@@ -96,6 +88,12 @@ export default function RecentActivity({
           {items.map((item) => {
             const isProjet = item.type === "Projet";
             const lastNotes = isProjet ? pickLastNotes(notesMap[item.slug]) : [];
+            const projetMeta = isProjet ? renderProjectMeta(item) : null;
+            const articleMeta =
+              item.type === "Carnet" && item.date ? (
+                <p>Publié le {item.date.toLocaleDateString("fr-FR")}</p>
+              ) : null;
+            const meta = articleMeta || projetMeta;
 
             return (
               <div
@@ -163,18 +161,15 @@ export default function RecentActivity({
                       </div>
                     ) : null}
 
-                    {/* Meta info (context-aware) */}
-                    <div
-                      className={`${
-                        isProjet && lastNotes.length > 0 ? "mt-2" : "mt-auto"
-                      } pt-4 text-xs text-gray-500`}
-                    >
-                      {item.type === "Carnet" && item.date ? (
-                        <p>Publié le {item.date.toLocaleDateString("fr-FR")}</p>
-                      ) : null}
-
-                      {isProjet ? renderProjectMeta(item) : null}
-                    </div>
+                    {meta ? (
+                      <div
+                        className={`${
+                          isProjet && lastNotes.length > 0 ? "mt-2" : "mt-auto"
+                        } pt-4 text-xs text-gray-500`}
+                      >
+                        {meta}
+                      </div>
+                    ) : null}
                   </div>
                 </Link>
               </div>
