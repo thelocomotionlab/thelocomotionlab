@@ -100,9 +100,16 @@ export default function ProjectsGrid({ projets, notesMap = {} }) {
                 )}
 
                 <div className="p-5 flex flex-col flex-1">
-                  <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
-                    {p.status}
-                  </p>
+                  {(p.status || p.date) && (
+                    <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
+                      {[
+                        p.status,
+                        p.date ? `le ${p.date.toLocaleDateString("fr-FR")}` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  )}
 
                   <h3 className="text-lg font-semibold text-brand-deep group-hover:underline mb-2">
                     {p.title}

@@ -4,10 +4,9 @@ import Image from "next/image";
 /**
  * FeedSection
  * - Articles : cover + title + description + "Publié le ..."
- * - Projets  : cover + status + title + description + dernières notes.
- *              Pour les projets termines on conserve "Terminé le X" ;
- *              les "Mis à jour il y a..." sont volontairement omis pour
- *              aligner sur la page /projets.
+ * - Projets  : cover + statut "STATUS · LE date" + title + description
+ *              + dernières notes. Pas de meta de récence : alignement
+ *              avec /projets.
  *   Les notes proviennent de notesMap[slug] (extractProjectNotes côté
  *   serveur) afin de matcher l'affichage de la page /projets.
  * - CTA "Voir tout" sous le feed.
@@ -60,13 +59,13 @@ export default function RecentActivity({
       ? "grid-cols-1 sm:grid-cols-2 lg:[grid-template-columns:repeat(2,22rem)]"
       : "grid-cols-1";
 
-  function renderProjectMeta(item) {
-    if (item.status === "Terminé" && item.completedAt) {
-      return (
-        <p>Terminé le {item.completedAt.toLocaleDateString("fr-FR")}</p>
-      );
+  function formatProjectStatusLine(item) {
+    const parts = [];
+    if (item.status) parts.push(item.status);
+    if (item.date) {
+      parts.push(`le ${item.date.toLocaleDateString("fr-FR")}`);
     }
-    return null;
+    return parts.join(" · ");
   }
 
   return (
@@ -88,12 +87,11 @@ export default function RecentActivity({
           {items.map((item) => {
             const isProjet = item.type === "Projet";
             const lastNotes = isProjet ? pickLastNotes(notesMap[item.slug]) : [];
-            const projetMeta = isProjet ? renderProjectMeta(item) : null;
-            const articleMeta =
+            const projetStatusLine = isProjet ? formatProjectStatusLine(item) : "";
+            const meta =
               item.type === "Carnet" && item.date ? (
                 <p>Publié le {item.date.toLocaleDateString("fr-FR")}</p>
               ) : null;
-            const meta = articleMeta || projetMeta;
 
             return (
               <div
@@ -126,9 +124,9 @@ export default function RecentActivity({
 
                   {/* Content */}
                   <div className="p-5 flex flex-col flex-1">
-                    {isProjet && item.status ? (
+                    {isProjet && projetStatusLine ? (
                       <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
-                        {item.status}
+                        {projetStatusLine}
                       </p>
                     ) : null}
 
