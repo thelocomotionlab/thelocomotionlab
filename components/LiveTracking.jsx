@@ -111,6 +111,9 @@ export default function LiveTracking({
 }) {
   const mapRef = useRef(null);
   const mapContainer = useRef(null);
+  // Suit le style applique pour eviter le no-op au montage (qui declenche un
+  // warning "Style is not done loading" cote maplibre).
+  const appliedStyleRef = useRef(initialMapStyle || "osm");
 
   const [stats, setStats] = useState({ distance: 0, ascent: 0, descent: 0 });
   const [lastUpdate, setLastUpdate] = useState(null);
@@ -326,6 +329,8 @@ export default function LiveTracking({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !styles[mapStyle]) return;
+    if (appliedStyleRef.current === mapStyle) return;
+    appliedStyleRef.current = mapStyle;
 
     map.setStyle(styles[mapStyle]);
 

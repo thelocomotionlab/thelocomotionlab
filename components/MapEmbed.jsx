@@ -21,6 +21,9 @@ export default function MapEmbed({
   const mapContainer = useRef(null);
   const trackGeoJSONRef = useRef(null);
   const trackBoundsRef = useRef(null);
+  // Suit le style applique pour eviter le no-op au montage (qui declenche un
+  // warning "Style is not done loading" cote maplibre).
+  const appliedStyleRef = useRef("osm");
 
   const [mapStyle, setMapStyle] = useState("osm");
   const [showStyleMenu, setShowStyleMenu] = useState(false);
@@ -232,6 +235,8 @@ export default function MapEmbed({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !styles[mapStyle]) return;
+    if (appliedStyleRef.current === mapStyle) return;
+    appliedStyleRef.current = mapStyle;
 
     map.setStyle(styles[mapStyle]);
 
