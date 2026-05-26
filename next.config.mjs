@@ -3,6 +3,18 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
 
+  // Autorise l'acces au dev server depuis le LAN (telephone connecte au
+  // meme wifi). Sans ca, Next.js bloque les requetes HMR et chunks
+  // dynamiques quand on accede via une IP autre que localhost, ce qui
+  // empeche les composants `dynamic(...)` de monter (carte, plots, etc.).
+  // N'a aucun effet en production.
+  allowedDevOrigins: [
+    "192.168.1.42",
+    "192.168.0.*",
+    "192.168.1.*",
+    "10.0.0.*",
+  ],
+
   // Tree-shake les gros packages d'icônes / charts / animations :
   // Next n'embarquera dans le bundle client que ce qui est vraiment importé.
   experimental: {

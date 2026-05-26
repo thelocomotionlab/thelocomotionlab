@@ -876,13 +876,8 @@ export default function PostLiveTracking({
               style={{ zIndex: 20 }}
             >
               {showElevation && (
-                <div className="h-32 mt-3 px-3">
-                  <ResponsiveContainer
-                    width="100%"
-                    height="100%"
-                    minWidth={0}
-                    minHeight={0}
-                  >
+                <div className="mt-3 px-3">
+                  <ResponsiveContainer width="100%" height={128}>
                     <LineChart
                       data={elevationData}
                       margin={
