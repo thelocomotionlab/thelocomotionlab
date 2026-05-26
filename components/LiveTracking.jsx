@@ -863,7 +863,12 @@ export default function LiveTracking({
             >
               {showElevation && (
                 <div className="h-32 mt-3 px-3">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                    minWidth={0}
+                    minHeight={0}
+                  >
                     <LineChart
                       data={elevationData}
                       margin={
@@ -949,15 +954,23 @@ export default function LiveTracking({
         )}
       </div>
 
-      {/* Bouton refresh flottant : visible quand le live tracking est a l'ecran */}
+      {/* Bouton refresh flottant : visible quand le live tracking est a l'ecran,
+          empile au-dessus du ShareButton (qui est en bas a droite).
+          fontFamily force a font-sans car le composant vit dans un .prose .font-lora. */}
       <button
         type="button"
         onClick={handleRefresh}
         aria-label="Rafraîchir le suivi en direct"
         aria-hidden={!showRefresh}
         tabIndex={showRefresh ? 0 : -1}
+        style={{
+          // Le composant vit sous .article-body (font-lora), on force la meme
+          // famille sans-serif que le ShareButton (qui herite de body.font-sans).
+          fontFamily:
+            'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
+        }}
         className={`
-          fixed z-50 bottom-5 left-5 sm:bottom-6 sm:left-6
+          fixed z-50 bottom-[5rem] right-5 sm:bottom-[5rem] sm:right-6
           flex items-center justify-center sm:justify-between gap-0 sm:gap-2
           rounded-full shadow-md border border-gray-300
           bg-white/80 backdrop-blur-md text-gray-800 text-sm font-medium

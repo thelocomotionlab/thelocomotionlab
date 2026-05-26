@@ -877,7 +877,12 @@ export default function PostLiveTracking({
             >
               {showElevation && (
                 <div className="h-32 mt-3 px-3">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                    minWidth={0}
+                    minHeight={0}
+                  >
                     <LineChart
                       data={elevationData}
                       margin={
