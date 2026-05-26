@@ -244,6 +244,8 @@ export default function LiveTracking({
 
         try {
           const res = await fetch(referenceGpx);
+          // La carte peut avoir ete detruite (StrictMode, navigation) pendant l'await.
+          if (!map.style) return;
           if (!res.ok) {
             console.warn(
               "Référence GPX non chargée :",
@@ -254,6 +256,7 @@ export default function LiveTracking({
           }
 
           const xml = await res.text();
+          if (!map.style) return;
           const doc = new DOMParser().parseFromString(
             xml,
             "application/xml"
@@ -327,6 +330,7 @@ export default function LiveTracking({
     map.setStyle(styles[mapStyle]);
 
     map.once("styledata", () => {
+      if (!map.style) return;
       if (map._referenceGeoJSON && !map.getSource("reference-track")) {
         map.addSource("reference-track", {
           type: "geojson",
@@ -398,7 +402,7 @@ export default function LiveTracking({
         if (!profile.length) return;
 
         const map = mapRef.current;
-        if (!map) return;
+        if (!map || !map.style) return;
 
         const coords = profile
           .map((p) =>

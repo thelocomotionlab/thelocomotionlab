@@ -159,9 +159,12 @@ export default function MapEmbed({
         const timeoutId = setTimeout(() => controller.abort(), 8000);
         const res = await fetch(gpx, { signal: controller.signal });
         clearTimeout(timeoutId);
+        // La carte peut avoir ete detruite (StrictMode, navigation) pendant l'await.
+        if (!map.style) return;
         if (!res.ok) throw new Error("Erreur de chargement GPX");
 
         const xml = await res.text();
+        if (!map.style) return;
         const doc = new DOMParser().parseFromString(xml, "application/xml");
         const geojson = toGeoJSON.gpx(doc);
 
@@ -233,6 +236,7 @@ export default function MapEmbed({
     map.setStyle(styles[mapStyle]);
 
     map.once("styledata", () => {
+      if (!map.style) return;
       if (trackGeoJSONRef.current && !map.getSource("track")) {
         map.addSource("track", {
           type: "geojson",

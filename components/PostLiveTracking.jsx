@@ -370,12 +370,15 @@ export default function PostLiveTracking({
 
         try {
           const res = await fetch(gpxPath);
+          // La carte peut avoir ete detruite (StrictMode, navigation) pendant l'await.
+          if (!map.style) return;
           if (!res.ok) {
             console.warn("Référence GPX non chargée :", gpxPath, res.status);
             return;
           }
 
           const xml = await res.text();
+          if (!map.style) return;
           const doc = new DOMParser().parseFromString(
             xml,
             "application/xml"
@@ -431,6 +434,7 @@ export default function PostLiveTracking({
     map.setStyle(styles[mapStyle]);
 
     map.once("styledata", () => {
+      if (!map.style) return;
       // réinjecter la trace de référence si on a déjà chargé le GPX
       if (map._referenceGeoJSON && !map.getSource("reference-track")) {
         map.addSource("reference-track", {
@@ -502,7 +506,7 @@ export default function PostLiveTracking({
         if (!coords.length) return;
 
         const map = mapRef.current;
-        if (!map) return;
+        if (!map || !map.style) return;
 
         const geojson = {
           type: "Feature",
