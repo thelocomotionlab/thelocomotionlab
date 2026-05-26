@@ -10,6 +10,7 @@ import {
   Mountain,
   Globe2,
   Download,
+  RefreshCw,
 } from "lucide-react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -111,6 +112,8 @@ export default function LiveTracking({
 }) {
   const mapRef = useRef(null);
   const mapContainer = useRef(null);
+  // Racine du composant : observee pour declencher le fade in/out du bouton refresh.
+  const rootRef = useRef(null);
   // Suit le style applique pour eviter le no-op au montage (qui declenche un
   // warning "Style is not done loading" cote maplibre).
   const appliedStyleRef = useRef(initialMapStyle || "osm");
@@ -131,6 +134,7 @@ export default function LiveTracking({
   const [elapsed, setElapsed] = useState(0);
   const [computedTotalDistance, setComputedTotalDistance] = useState(null);
   const [connectionError, setConnectionError] = useState(false);
+  const [showRefresh, setShowRefresh] = useState(false);
 
   const TOTAL_DISTANCE_KM =
     typeof totalDistanceKm === "number"
@@ -220,6 +224,38 @@ export default function LiveTracking({
     window.addEventListener("resize", syncScreen);
     return () => window.removeEventListener("resize", syncScreen);
   }, []);
+
+  /* ---------- Bouton refresh : visibilite via IntersectionObserver ---------- */
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowRefresh(entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  /* ---------- Restauration de la position de scroll apres refresh ---------- */
+  const SCROLL_KEY = "live-refresh-scroll-y";
+  useEffect(() => {
+    const saved = sessionStorage.getItem(SCROLL_KEY);
+    if (!saved) return;
+    sessionStorage.removeItem(SCROLL_KEY);
+    const y = Number(saved);
+    if (!Number.isFinite(y)) return;
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: y, behavior: "instant" });
+    });
+  }, []);
+
+  const handleRefresh = () => {
+    if (typeof window === "undefined") return;
+    sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
+    window.location.reload();
+  };
 
   /* ---------- 1) Initialisation de la carte + GPX de référence ---------- */
   useEffect(() => {
@@ -627,7 +663,7 @@ export default function LiveTracking({
 
   /* ---------- 6) Rendu principal ---------- */
   return (
-    <div className="flex flex-col items-center w-full py-6 px-3 sm:px-6 gap-3">
+    <div ref={rootRef} className="flex flex-col items-center w-full py-6 px-3 sm:px-6 gap-3">
       {connectionError && (
         <div
           role="alert"
@@ -912,6 +948,31 @@ export default function LiveTracking({
           </>
         )}
       </div>
+
+      {/* Bouton refresh flottant : visible quand le live tracking est a l'ecran */}
+      <button
+        type="button"
+        onClick={handleRefresh}
+        aria-label="Rafraîchir le suivi en direct"
+        aria-hidden={!showRefresh}
+        tabIndex={showRefresh ? 0 : -1}
+        className={`
+          fixed z-50 bottom-5 left-5 sm:bottom-6 sm:left-6
+          flex items-center justify-center sm:justify-between gap-0 sm:gap-2
+          rounded-full shadow-md border border-gray-300
+          bg-white/80 backdrop-blur-md text-gray-800 text-sm font-medium
+          sm:px-4 sm:py-2 sm:hover:bg-brand-accent/90 sm:hover:text-white active:scale-95
+          w-[2.75rem] h-[2.75rem] sm:w-auto sm:h-auto sm:rounded-full
+          cursor-pointer transition-opacity duration-300
+          ${showRefresh ? "opacity-100" : "opacity-0 pointer-events-none"}
+        `}
+      >
+        <RefreshCw
+          className="w-5 h-5 sm:w-5 sm:h-5 text-gray-700 sm:text-gray-800"
+          aria-hidden="true"
+        />
+        <span className="hidden sm:inline sm:ml-1">Rafraîchir</span>
+      </button>
     </div>
   );
 }
