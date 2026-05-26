@@ -100,14 +100,11 @@ export default function ProjectsGrid({ projets, notesMap = {} }) {
                 )}
 
                 <div className="p-5 flex flex-col flex-1">
-                  {(p.status || p.date) && (
+                  {p.status && (
                     <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
-                      {[
-                        p.status,
-                        p.date ? `le ${p.date.toLocaleDateString("fr-FR")}` : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
+                      {p.status === "Terminé" && p.completedAt
+                        ? `${p.status} le ${p.completedAt.toLocaleDateString("fr-FR")}`
+                        : p.status}
                     </p>
                   )}
 

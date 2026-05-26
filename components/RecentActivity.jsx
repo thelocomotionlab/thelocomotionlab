@@ -60,12 +60,11 @@ export default function RecentActivity({
       : "grid-cols-1";
 
   function formatProjectStatusLine(item) {
-    const parts = [];
-    if (item.status) parts.push(item.status);
-    if (item.date) {
-      parts.push(`le ${item.date.toLocaleDateString("fr-FR")}`);
+    if (!item.status) return "";
+    if (item.status === "Terminé" && item.completedAt) {
+      return `${item.status} le ${item.completedAt.toLocaleDateString("fr-FR")}`;
     }
-    return parts.join(" · ");
+    return item.status;
   }
 
   return (

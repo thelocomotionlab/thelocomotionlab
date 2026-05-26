@@ -50,10 +50,13 @@ function getAllProjects() {
       const slug = fn.replace(/\.md$/, "");
       const date = data.date ? new Date(data.date) : null;
 
+      const completedAt = data.completedAt ? new Date(data.completedAt) : null;
+
       return {
         slug,
         title: data.title || slug,
         date,
+        completedAt: completedAt && !Number.isNaN(completedAt.getTime()) ? completedAt : null,
         status: data.status || "",
         description: data.description || "",
         cover: data.cover || "",
