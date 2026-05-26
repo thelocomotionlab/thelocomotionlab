@@ -965,7 +965,7 @@ export default function LiveTracking({
             'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
         }}
         className={`
-          fixed z-50 bottom-[5rem] right-5 sm:bottom-[5rem] sm:right-6
+          fixed z-50 bottom-[4rem] right-5 sm:bottom-[4rem] sm:right-6
           flex items-center justify-center sm:justify-between gap-0 sm:gap-2
           rounded-full shadow-md border border-gray-300
           bg-white/80 backdrop-blur-md text-gray-800 text-sm font-medium
