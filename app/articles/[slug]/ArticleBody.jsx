@@ -18,6 +18,7 @@ import remarkImageOptions from "../../../markdown/remarkImageOptions";
 
 import rehypeSlug from "rehype-slug";
 import rehypeRaw from "rehype-raw";
+import rehypeKatex from "rehype-katex";
 
 import { getUsedCitations } from "../../../lib/getUsedCitations";
 import { createCitation } from "../../../components/Citation";
@@ -108,7 +109,7 @@ export default function ArticleBody({
               remarkSplit,
               remarkMath,
             ]}
-            rehypePlugins={[rehypeSlug, rehypeRaw]}
+            rehypePlugins={[rehypeSlug, rehypeRaw, rehypeKatex]}
             components={{
               citation: Citation,
               a: ({ node, ...props }) => {
