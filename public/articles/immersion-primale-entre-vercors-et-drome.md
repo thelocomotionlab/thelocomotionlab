@@ -24,7 +24,7 @@ C'est alors qu'un jour, en observant la date du départ de mon aventure, j'ai pr
 
 Préparer l'équipement nécessaire pour faire de l'ultra en autonomie prend du temps, beaucoup de temps. Outre un vrai travail d'anticipation et de réflexion, cela demande surtout de capitaliser sur ses expériences passées, pour connaître ses besoins et ses capacités, en adaptant à chaque projet. Car moi qui aime la versatilité, force est de constater que de toutes les aventures que j'ai réalisées pour l'instant, je n'ai jamais emporté le même baluchon.  Pour en savoir plus à propos de la constitution de mon paquetage, je te renvoie à [cette page](https://thelocomotionlab.com/projets/saison-trail-2026#pr%C3%A9paratifs-du-projet-fontaine-r%C3%A9muzat), qui contient la liste détaillée du matériel emporté. Ce coup-ci, même si je pars sans plan précis, je présume qu'il y aura un moment où je devrais bivouaquer en altitude, et mon matériel doit donc être adapté aux pire conditions possibles. Je me suis donc équipé avec un duvet ultra light, et j'emporte un tarp sous lequel je dormirai à même le sol, sans cabine, dans un sursac étanche. Enfin, les deux dernières semaines ayant été particulièrement chaudes, avec un mercure frôlant parfois les 30°C, je m'attends à une météo difficile sur le plan de la chaleur. Je décide donc, pour gratter un peu de masse, de partir sans les Skinners, qui ne me servent que lorsqu'il y a de la neige (grâce à leur excellente adhérence et protection thermique). Comme raconté plus loin, ceci s'avérera être une grosse erreur.
 
-![Paquetage et moi prêt à démarrer {width=580px align=center}](/images/articles/immersion-primale-entre-vercors-et-drome/recit-vercors1.webp)
+![Paquetage et moi prêt à démarrer](/images/articles/immersion-primale-entre-vercors-et-drome/recit-vercors1.webp)
 *Paquetage complet et moi prêt à démarrer*
 
 Je prends conscience aussi grâce à Eric Lacroix, qu'une des composantes que j'ai besoin d'ajouter à ce projet est le partage. Un partage sincère et délié de cette aventure. Cet exercice est difficile car teinté de la peur que mon projet n'intéresse personne, et ainsi d'investir de l'énergie et de l'espoir dans quelque chose de futile. Cette composante m'a particulièrement travaillé à la veille de démarrer, et trouver une formule de partage qui soit à la fois humble, honnête, et éventuellement participative, a mis mon cerveau en ébullition. J'ai finalement proposé, à qui le souhaitait, de s'associer à mon aventure et joignant un mot, un objet, un mantra, n'importe quoi qui reconnecte à une personne chère disparue. La résonnance était très forte, mon cœur s'emballait, je savais que j'étais dans le registre adéquat.
@@ -35,27 +35,19 @@ Mais à trop s'emballer, mon système nerveux a fini par rester coincé dans l'e
 
 Je m'engage, enfin, sur cette trace le lendemain matin. Ce coup-ci, la nuit a été parfaite, et je me sens rempli d'émotions mais aussi d'envie. Aussi, je  La première difficulté arrive dès le départ avec une montée raide de 1 800 m de dénivelé jusqu'au sommet du Moucherotte, qui s'étale sur plus de 13 km. Le poids du sac, de 9,7 kg au départ, se fait ressentir, mais l'habituation avec le gilet lesté semble porter ses fruits. La météo est stable et le ciel un peu couvert. J'atteins le sommet du Moucherotte un peu plus de 3h après mon départ et décide d'enclencher un vlog sur Instagram (visionnable [ici](https://www.instagram.com/stories/highlights/17910311190200648/))pour embarquer les personnes qui le souhaitent dans cette aventure. Inconfort dans l'inconfort puisque s'exprimer face caméra, dans sa vulnérabilité est un exercice peu évident dans un monde où il faut toujours se présenter sous un jour agréable. 
 
-![Vue depuis les trois pucelles {width=580px align=center}](/images/articles/immersion-primale-entre-vercors-et-drome/recit-vercors2.webp)
+![Vue depuis les trois pucelles}](/images/articles/immersion-primale-entre-vercors-et-drome/recit-vercors2.webp)
 *Vue depuis les trois pucelles avant l'arrivée au sommet du Moucherotte.*
 
 J'avais lu çà et là que les sources étaient rares dans le Vercors, et je fais en sorte d'économiser mon eau. Avec les températures étonnamment douces qui m'obligent parfois à sortir la veste, je suis assez vite rassuré quant au fait que je n'aurais pas de grands besoins d'hydratation, et que c'est donc une inquiétude que je peux chasser de ma tête. Corrençon En Vercors signe tout à la fois la fin du premier marathon de la trace, mais aussi la fin de la civilisation puisque l'on entre ensuite dans les Hauts-Plateaux du Vercors. Un endroit silencieux, sauvage et dépourvu d'habitation sur des kilomètres à la rondes. J'ai environ 50 km à parcourir dans cet environnement que je découvre. Je me sens confiant, et prêt à m'immerger en profondeur dans cette nature nouvelle, comme fusionner avec elle. 
 
-![Vue de la prairie de Darbounouse {width=580px align=center}](/images/articles/immersion-primale-entre-vercors-et-drome/recit-vercors3.webp)
+![Vue de la prairie de Darbounouse ](/images/articles/immersion-primale-entre-vercors-et-drome/recit-vercors3.webp)
 *Prairie de Darbounouse.*
 
-Les premiers kilomètres se déroulent au mieux, ma foulée est légère, déliée et le fait de ne plus voir trace de la moindre construction humaine me grise. J'atteins rapidement le monument du 45$^\text{e}$ parallèle, puis la prairie de Darbounouse, où l'ambiance venteuse de cette immensité silencieuse est aussi fantastique qu'inquiétante. Le paysage défile, et j'aperçois plus loin, autour des 1 600 m d'altitude, que certains sentiers sont encore recouverts d'une épaisse couche de neige dense et tassée. Je m'en étonne, au vue des chaleurs dès dernières semaines, et me dis que ceux-ci devraient être une exception. Malheureusement pour moi, plus j'avance, plus la neige est présente, et mes sandales limitent considérablement ma vitesse de progression. Je suis frustré, si seulement j'avais emporté mes Skinners, je n'aurais fait qu'une bouchée de ces portions enneigées. Tant pis, il faut avancer, d'autant que j'aimerais atteindre la cabane de Châtillon au km 83 pour bivouaquer, et entreprendre au petit matin la descente vers Châtillon En Diois, synonyme de fin de la traversée du Vercors.
+Les premiers kilomètres se déroulent au mieux, ma foulée est légère, déliée et le fait de ne plus voir trace de la moindre construction humaine me grise. J'atteins rapidement le monument du 45$^{\text{e}}$ parallèle, puis la prairie de Darbounouse, où l'ambiance venteuse de cette immensité silencieuse est aussi fantastique qu'inquiétante. Le paysage défile, et j'aperçois plus loin, autour des 1 600 m d'altitude, que certains sentiers sont encore recouverts d'une épaisse couche de neige dense et tassée. Je m'en étonne, au vue des chaleurs dès dernières semaines, et me dis que ceux-ci devraient être une exception. Malheureusement pour moi, plus j'avance, plus la neige est présente, et mes sandales limitent considérablement ma vitesse de progression. Je suis frustré, si seulement j'avais emporté mes Skinners, je n'aurais fait qu'une bouchée de ces portions enneigées. Tant pis, il faut avancer, d'autant que j'aimerais atteindre la cabane de Châtillon au km 83 pour bivouaquer, et entreprendre au petit matin la descente vers Châtillon En Diois, synonyme de fin de la traversée du Vercors.
 
-:::split
-
-![Neige sandales 1 {height=10px}](/images/articles/immersion-primale-entre-vercors-et-drome/sandales_neige1.webp)
-
----
-
-![Neige sandales 2 {height=200px}](/images/articles/immersion-primale-entre-vercors-et-drome/sandales_neige2.webp)
-
-:::
-
+![Neige sandales ](/images/articles/immersion-primale-entre-vercors-et-drome/recit-vercors4.webp)
 *De la neige, encore et toujours de la neige.*
+
 
 ## Conclusion
 
