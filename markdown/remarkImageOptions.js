@@ -6,12 +6,17 @@ import { visit } from "unist-util-visit";
  *
  *   ![Alt lisible {size=md}](./image.png)
  *   ![Alt {size=lg align=center width=580px}](./img.png)
- *   ![Alt {width=580}](./img.png)  -> width=580px
+ *   ![Alt {width=580}](./img.png)        -> max-width: 580px
+ *   ![Alt {height=240}](./img.png)       -> max-height: 240px (width auto)
  *
  * Options supportées :
- *   - size  = sm | md | lg | xl | half | full
- *   - align = left | center | right
- *   - width = valeur CSS (580, 580px, 60%, 40rem, etc.)
+ *   - size   = sm | md | lg | xl | half | full
+ *   - align  = left | center | right
+ *   - width  = valeur CSS (580, 580px, 60%, 40rem, etc.)
+ *   - height = valeur CSS (240, 240px, 20rem, etc.)
+ *
+ * Si width ET height sont définies, seul width est appliqué : height
+ * est ignoré silencieusement (priorité au pilotage horizontal).
  *
  * Effet :
  *   - nettoie l'alt ("Alt lisible") pour l'accessibilité
@@ -19,6 +24,10 @@ import { visit } from "unist-util-visit";
  *       md-img-size-<size>  /  md-img-align-<align>
  *   - ajoute un style inline :
  *       style="max-width: <width>;"
+ *       ou
+ *       style="width:auto; max-height: <height>;"   (pour que le ratio
+ *       reste correct malgré le `width:100%` posé sur .prose img et
+ *       .md-split-col img dans globals.css)
  */
 export default function remarkImageOptions() {
   return function transformer(tree) {
@@ -49,7 +58,7 @@ export default function remarkImageOptions() {
       node.alt = altText;
 
       const extraClasses = [];
-      let widthStyle = "";
+      let sizeStyle = "";
 
       // Taille logique
       if (options.size) {
@@ -61,19 +70,22 @@ export default function remarkImageOptions() {
         extraClasses.push(`md-img-align-${options.align}`);
       }
 
-      // Largeur précise
+      // Dimensions precises : width prime, height ignore si width present.
+      const normalizeLength = (val) => {
+        const v = val.trim();
+        return /^\d+(\.\d+)?$/.test(v) ? `${v}px` : v;
+      };
+
       if (options.width) {
-        let widthVal = options.width.trim();
-
-        // Si c'est juste un nombre → px
-        if (/^\d+(\.\d+)?$/.test(widthVal)) {
-          widthVal = `${widthVal}px`;
-        }
-
-        widthStyle = `max-width:${widthVal};`;
+        sizeStyle = `max-width:${normalizeLength(options.width)};`;
+      } else if (options.height) {
+        // width:auto pour neutraliser le `width:100%` global, sinon
+        // l'image conserverait toute la largeur du conteneur et la
+        // contrainte de hauteur deformerait le ratio.
+        sizeStyle = `width:auto; max-height:${normalizeLength(options.height)};`;
       }
 
-      if (!extraClasses.length && !widthStyle) {
+      if (!extraClasses.length && !sizeStyle) {
         return;
       }
 
@@ -94,7 +106,7 @@ export default function remarkImageOptions() {
       );
 
       // Merge des styles inline en string
-      if (widthStyle) {
+      if (sizeStyle) {
         const existingStyle = node.data.hProperties.style;
         let styleString =
           typeof existingStyle === "string" ? existingStyle.trim() : "";
@@ -105,7 +117,7 @@ export default function remarkImageOptions() {
         if (styleString) {
           styleString += " ";
         }
-        styleString += widthStyle;
+        styleString += sizeStyle;
 
         node.data.hProperties.style = styleString;
       }
