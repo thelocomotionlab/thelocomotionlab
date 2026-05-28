@@ -58,12 +58,19 @@ export default function RecentActivity({
   const trackRef = useRef(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const measureEdges = useCallback(() => {
     const el = trackRef.current;
     if (!el) return;
     setAtStart(el.scrollLeft <= 1);
     setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 1);
+    const card = el.querySelector("[data-feed-card]");
+    const step = (card?.offsetWidth ?? el.clientWidth) + GAP_PX;
+    if (step > 0) {
+      const idx = Math.round(el.scrollLeft / step);
+      setCurrentIndex(idx);
+    }
   }, []);
 
   useEffect(() => {
@@ -88,6 +95,14 @@ export default function RecentActivity({
     const card = el.querySelector("[data-feed-card]");
     const step = (card?.offsetWidth ?? el.clientWidth) + GAP_PX;
     el.scrollBy({ left: direction * step, behavior: "smooth" });
+  }
+
+  function scrollToIndex(idx) {
+    const el = trackRef.current;
+    if (!el) return;
+    const card = el.querySelector("[data-feed-card]");
+    const step = (card?.offsetWidth ?? el.clientWidth) + GAP_PX;
+    el.scrollTo({ left: idx * step, behavior: "smooth" });
   }
 
   function formatProjectStatusLine(item) {
@@ -158,7 +173,7 @@ export default function RecentActivity({
           >
             <div
               className={`flex gap-6 py-1 ${
-                hasCarousel ? "" : "justify-center"
+                hasCarousel ? "" : "lg:justify-center"
               }`}
             >
               {items.map((item) => {
@@ -260,6 +275,34 @@ export default function RecentActivity({
             </div>
           </div>
         </div>
+
+        {/* Dots de navigation (mobile uniquement) */}
+        {items.length > 1 ? (
+          <div
+            className="flex md:hidden items-center justify-center gap-2 mt-5"
+            role="tablist"
+            aria-label="Navigation entre les cartes"
+          >
+            {items.map((_, idx) => {
+              const isActive = idx === currentIndex;
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive ? "true" : "false"}
+                  aria-label={`Aller à l'élément ${idx + 1} sur ${items.length}`}
+                  onClick={() => scrollToIndex(idx)}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    isActive
+                      ? "w-5 bg-brand-primary"
+                      : "w-2 bg-gray-300 hover:bg-gray-400"
+                  }`}
+                />
+              );
+            })}
+          </div>
+        ) : null}
 
         {/* CTA under feed (same style as "Entrer dans le labo") */}
         {ctaHref ? (
