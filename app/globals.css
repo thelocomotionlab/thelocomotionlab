@@ -638,6 +638,27 @@ html {
   display: none;
 }
 
+/* Surlignage du terme recherché (cf. SearchHighlighter) */
+mark.search-highlight {
+  background-color: var(--color-brand-accent-light);
+  color: inherit;
+  padding: 0 0.15em;
+  border-radius: 0.2em;
+  box-shadow: 0 0 0 2px var(--color-brand-accent-light);
+  animation: search-highlight-pulse 1.6s ease-out 0.3s 1;
+}
+
+@keyframes search-highlight-pulse {
+  0% {
+    background-color: var(--color-brand-accent);
+    box-shadow: 0 0 0 4px var(--color-brand-accent);
+  }
+  100% {
+    background-color: var(--color-brand-accent-light);
+    box-shadow: 0 0 0 2px var(--color-brand-accent-light);
+  }
+}
+
 /* ===========================
    Réduction des animations (a11y)
    =========================== */
