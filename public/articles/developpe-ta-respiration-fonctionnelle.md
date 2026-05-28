@@ -38,4 +38,4 @@ La présence de CO2 dans l'organisme est donc essentielle pour garantir une bonn
 
 ## La respiration dysfonctionnelle moderne
 
-Au cours des précédents millénaires, l'être humain a connu des modifications très importantes de son mode de vie. Nos ancêtres chasseurs-cueilleurs opportunistes se sont sédentarisés il y XX millénaires avec l'apparition de l'agriculture [source] Nos ancêtre chasseurs-cueilleurs passaient en effet des heures chaque jour à mâcher des racines, du gibier et des plantes crues
+Au cours des précédents millénaires, l'être humain a connu des modifications très importantes de son mode de vie. Nos ancêtres chasseurs-cueilleurs opportunistes se sont sédentarisés il y XX millénaires avec l'apparition de l'agriculture [source] Nos ancêtre chasseurs-cueilleurs passaient en effet des heures chaque jour à mâcher des racines, du gibier et des plantes crues.
