@@ -10,8 +10,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
  * - Articles : cover + title + description + "Publié le ..."
  * - Projets  : cover + statut "STATUS · LE date" + title + description
  *              + dernières notes.
- * - Carrousel : défilement smooth d'une carte à la fois (3 visibles).
- *               Flèches affichées uniquement si plus de 3 items.
+ * - Carrousel : défilement smooth d'une carte à la fois.
+ *               Flèches affichées uniquement si plus de 3 items,
+ *               positionnées en absolu en dehors des cartes (pas
+ *               de contact avec elles).
  * - CTA "Voir tout" sous le feed.
  */
 
@@ -101,7 +103,7 @@ export default function RecentActivity({
   }
 
   const arrowClass =
-    "hidden md:inline-flex shrink-0 self-center items-center justify-center w-10 h-10 rounded-full bg-white text-brand-deep shadow-md ring-1 ring-black/5 hover:text-brand-primary hover:shadow-lg transition disabled:opacity-0 disabled:pointer-events-none";
+    "hidden md:inline-flex absolute top-1/2 -translate-y-1/2 z-10 items-center justify-center w-10 h-10 rounded-full bg-white text-brand-deep shadow-md ring-1 ring-black/5 hover:text-brand-primary hover:shadow-lg transition disabled:opacity-0 disabled:pointer-events-none";
 
   return (
     <section className="py-6 md:py-8">
@@ -115,27 +117,38 @@ export default function RecentActivity({
           </h2>
         </div>
 
-        {/* Carousel row : flèche | track | flèche */}
-        <div className="flex items-stretch gap-3 md:gap-4 lg:gap-5">
+        {/* Carousel : flèches en absolu hors des cartes */}
+        <div className="relative">
           {hasCarousel ? (
-            <button
-              type="button"
-              onClick={() => scrollByCard(-1)}
-              disabled={atStart}
-              aria-label="Voir les éléments plus récents"
-              className={arrowClass}
-            >
-              <ChevronLeft size={20} aria-hidden="true" />
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => scrollByCard(-1)}
+                disabled={atStart}
+                aria-label="Voir les éléments plus récents"
+                className={`${arrowClass} left-1 sm:left-0 lg:-left-6 xl:-left-12`}
+              >
+                <ChevronLeft size={20} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollByCard(1)}
+                disabled={atEnd}
+                aria-label="Voir les éléments plus anciens"
+                className={`${arrowClass} right-1 sm:right-0 lg:-right-6 xl:-right-12`}
+              >
+                <ChevronRight size={20} aria-hidden="true" />
+              </button>
+            </>
           ) : null}
 
           <div
             ref={trackRef}
-            className="flex-1 min-w-0 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth"
+            className="overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth lg:scroll-px-6"
           >
             <div
               className={`flex gap-6 py-1 ${
-                hasCarousel ? "" : "justify-center"
+                hasCarousel ? "lg:px-6" : "justify-center"
               }`}
             >
               {items.map((item) => {
@@ -236,18 +249,6 @@ export default function RecentActivity({
               })}
             </div>
           </div>
-
-          {hasCarousel ? (
-            <button
-              type="button"
-              onClick={() => scrollByCard(1)}
-              disabled={atEnd}
-              aria-label="Voir les éléments plus anciens"
-              className={arrowClass}
-            >
-              <ChevronRight size={20} aria-hidden="true" />
-            </button>
-          ) : null}
         </div>
 
         {/* CTA under feed (same style as "Entrer dans le labo") */}
