@@ -103,7 +103,7 @@ export default function RecentActivity({
   }
 
   const arrowClass =
-    "hidden md:inline-flex absolute top-1/2 -translate-y-1/2 z-10 items-center justify-center w-10 h-10 rounded-full bg-white text-brand-deep shadow-md ring-1 ring-black/5 hover:text-brand-primary hover:shadow-lg transition disabled:opacity-0 disabled:pointer-events-none";
+    "hidden md:inline-flex absolute top-1/2 -translate-y-1/2 z-10 items-center justify-center w-10 h-10 rounded-full bg-white text-brand-deep shadow-md ring-1 ring-black/5 hover:text-brand-primary hover:shadow-lg transition";
 
   return (
     <section className="py-6 md:py-8">
@@ -123,19 +123,29 @@ export default function RecentActivity({
             <>
               <button
                 type="button"
-                onClick={() => scrollByCard(-1)}
-                disabled={atStart}
+                onClick={() => {
+                  if (atStart) return;
+                  scrollByCard(-1);
+                }}
+                aria-disabled={atStart ? "true" : "false"}
                 aria-label="Voir les éléments plus récents"
-                className={`${arrowClass} left-1 sm:left-0 lg:-left-6 xl:-left-12`}
+                className={`${arrowClass} left-1 sm:left-0 lg:-left-6 xl:-left-12 ${
+                  atStart ? "opacity-0 pointer-events-none" : ""
+                }`}
               >
                 <ChevronLeft size={20} aria-hidden="true" />
               </button>
               <button
                 type="button"
-                onClick={() => scrollByCard(1)}
-                disabled={atEnd}
+                onClick={() => {
+                  if (atEnd) return;
+                  scrollByCard(1);
+                }}
+                aria-disabled={atEnd ? "true" : "false"}
                 aria-label="Voir les éléments plus anciens"
-                className={`${arrowClass} right-1 sm:right-0 lg:-right-6 xl:-right-12`}
+                className={`${arrowClass} right-1 sm:right-0 lg:-right-6 xl:-right-12 ${
+                  atEnd ? "opacity-0 pointer-events-none" : ""
+                }`}
               >
                 <ChevronRight size={20} aria-hidden="true" />
               </button>

@@ -185,6 +185,7 @@ function SearchClientInner() {
               <Link
                 key={a.slug}
                 href={`/articles/${a.slug}?highlight=${encodeURIComponent(q)}`}
+                scroll={false}
                 className="group block bg-white rounded-2xl shadow-card p-6 hover:shadow-lg transition-shadow"
               >
                 <h3 className="text-xl font-semibold mb-2 text-brand-accent group-hover:underline">
@@ -214,6 +215,7 @@ function SearchClientInner() {
               <Link
                 key={p.slug}
                 href={`/projets/${p.slug}?highlight=${encodeURIComponent(q)}`}
+                scroll={false}
                 className="group block bg-white rounded-2xl shadow-card p-6 hover:shadow-lg transition-shadow"
               >
                 <h3 className="text-xl font-semibold mb-2 text-brand-accent group-hover:underline">
