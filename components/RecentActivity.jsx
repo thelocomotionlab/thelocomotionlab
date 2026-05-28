@@ -172,7 +172,7 @@ export default function RecentActivity({
             className="overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth"
           >
             <div
-              className={`flex gap-6 py-1 ${
+              className={`flex gap-6 ${
                 hasCarousel ? "" : "lg:justify-center"
               }`}
             >
@@ -195,7 +195,7 @@ export default function RecentActivity({
                   <div
                     key={`${item.type}-${item.slug}`}
                     data-feed-card
-                    className="snap-start shrink-0 w-72 sm:w-80 lg:w-[22rem]"
+                    className="snap-start snap-always shrink-0 w-72 sm:w-80 lg:w-[22rem]"
                   >
                     <Link
                       href={item.href}
