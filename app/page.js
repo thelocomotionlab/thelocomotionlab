@@ -87,8 +87,8 @@ export default async function HomePage() {
     ],
   };
 
-  const recentArticles = getRecentArticles({ limit: 3 });
-  const recentProjects = getRecentProjects({ limit: 3 });
+  const recentArticles = getRecentArticles({ limit: 6 });
+  const recentProjects = getRecentProjects({ limit: 6 });
   const projectNotesMap = Object.fromEntries(
     recentProjects.map((p) => [p.slug, extractProjectNotes(p.slug)])
   );
@@ -171,7 +171,7 @@ export default async function HomePage() {
       {/* FEED 1: ARTICLES */}
       <FeedSection
         title="Derniers articles"
-        Icon={BookOpen}
+        icon={<BookOpen size={22} aria-hidden="true" className="text-brand-primary" />}
         items={recentArticles}
         ctaHref="/articles"
         ctaLabel="Voir tout"
@@ -185,7 +185,7 @@ export default async function HomePage() {
       {/* FEED 2: PROJETS */}
       <FeedSection
         title="Derniers projets"
-        Icon={FlaskConical}
+        icon={<FlaskConical size={22} aria-hidden="true" className="text-brand-primary" />}
         items={recentProjects}
         notesMap={projectNotesMap}
         ctaHref="/projets"
