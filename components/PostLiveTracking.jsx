@@ -520,20 +520,32 @@ export default function PostLiveTracking({
 
         map._replayGeoJSON = geojson;
 
-        if (map.getSource("replay-track")) {
-          map.getSource("replay-track").setData(geojson);
+        const applyReplayLayer = () => {
+          if (!mapRef.current || !mapRef.current.style) return;
+          if (map.getSource("replay-track")) {
+            map.getSource("replay-track").setData(geojson);
+          } else {
+            map.addSource("replay-track", {
+              type: "geojson",
+              data: geojson,
+            });
+            map.addLayer({
+              id: "replay-track-line",
+              type: "line",
+              source: "replay-track",
+              paint: {
+                "line-color": "#ff5500",
+                "line-width": 4,
+                "line-opacity": 0.9,
+              },
+            });
+          }
+        };
+
+        if (map.isStyleLoaded()) {
+          applyReplayLayer();
         } else {
-          map.addSource("replay-track", { type: "geojson", data: geojson });
-          map.addLayer({
-            id: "replay-track-line",
-            type: "line",
-            source: "replay-track",
-            paint: {
-              "line-color": "#ff5500",
-              "line-width": 4,
-              "line-opacity": 0.9,
-            },
-          });
+          map.once("load", applyReplayLayer);
         }
 
         const last = coords.at(-1);
