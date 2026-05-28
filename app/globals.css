@@ -629,6 +629,15 @@ html {
   animation: fade-in 0.35s ease-out forwards;
 }
 
+/* Scrollbar masquée pour les carrousels horizontaux */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* ===========================
    Réduction des animations (a11y)
    =========================== */
