@@ -144,11 +144,11 @@ export default function RecentActivity({
 
           <div
             ref={trackRef}
-            className="overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth lg:scroll-px-6"
+            className="overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth"
           >
             <div
               className={`flex gap-6 py-1 ${
-                hasCarousel ? "lg:px-6" : "justify-center"
+                hasCarousel ? "" : "justify-center"
               }`}
             >
               {items.map((item) => {
