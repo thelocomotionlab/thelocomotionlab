@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 
 import ArticleBody from "./ArticleBody";
 import Breadcrumb from "@/components/Breadcrumb";
+import SearchHighlighter from "@/components/SearchHighlighter";
 import { getRelatedArticles } from "@/lib/getRelated";
 
 const SITE_URL = "https://thelocomotionlab.com";
@@ -153,6 +154,7 @@ export default async function ArticlePage({ params }) {
         initialContent={content}
         related={related}
       />
+      <SearchHighlighter targetSelector=".article-body" />
     </>
   );
 }
