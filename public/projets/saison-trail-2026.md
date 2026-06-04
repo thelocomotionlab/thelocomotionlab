@@ -361,6 +361,23 @@ Objectif : solliciter l'oxydation des lipides (acides gras libres) sur un effort
 
 Sensations : pas de sensation de faim, mais réelle sensation de faiblesse par moments, particulièrement lors des ascensions. Cela traduit ma limite actuelle en terme de débit d'oxydation des lipides, lorsqu'un débit d'ATP supérieur est requis.
 
+### Bilan du mois de mai
+*31/05/2026*
+
+Voilà déjà trois semaines que l'entraînement a repris et avec lui, mon exploration d'adaptation à la flexibilité métabolique. Le bilan est pour l'instant très positif car je sens que j'arrive de mieux en mieux à faire pareil qu'avant avec moins. Par exemple, sur la sortie longue d'aujourd'hui (35 km 2 000 D+, en 5h50 à Aiguebelette), j'ai démarré le matin à jeûn depuis la veille au soir (où je m'étais autorisé un repas copieux et riche en glucides), et ne me suis alimenté qu'au bout de 3h45 d'effort. Cette prise alimentaire, la seule de toute la sortie, était composée de 2 boules d'énergie, une banane, et environ 40g de saucisson. Cela représente, rapporté à l'ensemble de la sortie, une dizaine de grammes de glucides par heure. Autant dire pas grand chose. Je n'ai pas spécialement ressenti davantage la faim au cours de la sortie, ni une fringale insurmontable à l'issue de celle-ci, malgré un déficit calorique évident. À mes yeux, cela signifie que mon corps s'adapte à ce que je lui propose, et renforce sa tolérance au manque, et sa capacité à oxyder ce qu'il a en stock pour faire se mouvoir ma carcasse. Chouette !
+
+![Sortie longue à Aiguebelette](/images/projets/saison-trail-2026/aiguebelette.webp)
+*Vue du lac d'Aiguebelette depuis le Mont-Grêle.*
+
+À part ça, une petite réjouissance s'est glissée au menu, au détour d'une session grimpe d'arbre. En voulant redescendre d'un chêne sur un terrain pentu, je me suis laissé glisser pour atterrir sur les fesses, d'une hauteur assez ridicule (moins de 50 cm), et mon auriculaire droit avait décidé de s'installer précisément là où mes fesses se sont posées. Résultat : petit doigt retourné à 180° sur le coup, et fracture (légère) de celui-ci. Deux semaines d'immobilisation. Aux urgences, on me propose avec insistance anti-douleurs et anti-inflammatoires. Conformément à ma philosophie, je les refuse, pour laisser mon corps se débrouiller et songeant que ces artéfacts ne feront que ralentir le processus de guérison. Pour moi, ce sera calcium à gogo, exposition au soleil pour la vitamine D, et sport régulier avec de l'intensité pour stimuler la vascularisation. Après une semaine, les choses sont en bonnes voies puisque la douleur n'est quasiment plus, mon doigt a récupéré environ 80% de sa mobilité, et il retrouve peu à peu une forme normale. Sur ce coup, je m'en sors bien ! :)
+
+![Fracture auriculaire](/images/projets/saison-trail-2026/fracture_auriculaire.webp)
+*Fracture avec déplacement supérieur de l'extrémité proximale de la 1$^{\text{ère}}$ phalange du 5$^{\text{e}}$ rayon de la main droite (oui il faut la voir...).*
+
+[Retour au sommaire](#sommaire)
+
+
+
 <!-- ### Test
 
 <livetracking
