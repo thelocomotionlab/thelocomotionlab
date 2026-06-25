@@ -1,0 +1,259 @@
+# Locomotion Twin — théorie & pratique
+
+> Document de référence de la méthode. À lire **avant** de coder/durcir le moteur (`engine/`).
+> Il décrit ce que fait le pipeline, **pourquoi**, et distingue ce qui est **règle fixe**, ce qui est
+> **ajusté à partir des données de chaque athlète**, et ce qui est **garde-fou d'honnêteté**.
+>
+> Les valeurs chiffrées sont celles du **cas de référence** (Valentin, Nice by UTMB 100M) : elles
+> servent d'ancrage de non-régression (« golden test »), **pas** de constantes universelles.
+
+---
+
+## 0. Idée en une phrase
+
+À partir de **l'archive d'entraînement** d'un·e athlète et de **la trace GPX** d'une course, on estime un
+« **jumeau** » physiologique, on le confronte au **coût de la pente** le long du parcours, on **prédit**
+un temps d'arrivée **dont on mesure la fiabilité sur les propres courses de l'athlète**, et on produit
+un **plan de pacing par segment avec fenêtres horaires**.
+
+```mermaid
+flowchart LR
+  A[Archive multi-marques] --> I[Ingestion → schéma canonique]
+  G[Trace GPX] --> C[Parcours: pente, Minetti, Deq, segments]
+  I --> T[Jumeau: VC, exposant E, durabilité]
+  I --> U[Calibration ultra v(T, D+)]
+  T --> S[Test de suffisance 🟢/🟠/🔴]
+  U --> S
+  C --> P[Prédiction auto-cohérente T = Deq / v(T)]
+  U --> P
+  P --> V[Validation croisée leave-one-out → indice de confiance]
+  P --> PL[Plan par segment: fade + fenêtres + horaires/nuit]
+  V --> R[Rapport LaTeX]
+  PL --> R
+```
+
+---
+
+## 1. Le parcours : de la trace GPX à la demande
+
+**Entrée** : une trace GPX + la liste des points de découpage (km officiels des ravitaillements).
+
+1. **Distance.** Distance horizontale cumulée par **haversine** entre points ; distance **3D** =
+   √(horizontal² + Δaltitude²). La 3D colle en général à la distance officielle ; on **réaligne**
+   l'abscisse sur le carnet de route (rescale linéaire de la 3D vers la distance officielle).
+2. **Lissage de l'altimétrie.** Ré-échantillonnage sur grille régulière (pas 5 m) puis **moyenne
+   glissante** (fenêtre ~150 m). La fenêtre est **calibrée pour reproduire le D+ officiel** (ancrage de
+   bon sens). *Règle fixe.*
+3. **Pente** `i(x)` = dérivée de l'altitude lissée vs distance, **écrêtée à ±0,45** (domaine de validité
+   de Minetti).
+4. **Coût de la pente (Minetti et al., 2002).** Coût énergétique de la course en fonction de la pente :
+
+   `Cr(i) = 155.4·i⁵ − 30.4·i⁴ − 43.3·i³ + 46.3·i² + 19.5·i + 3.6`  (J·kg⁻¹·m⁻¹, `Cr(0)=3.6`)
+
+   **Facteur de pente** `f(i) = Cr(i) / 3.6` = « combien de mètres à plat coûte un mètre de pente `i` ».
+5. **Distance équivalente à plat** : `Deq = ∫ f(i(x)) dx`. C'est elle, et non la distance brute, qui
+   gouverne le temps de course.
+6. **Découpage** aux km des ravitaillements → par segment : distance réelle, D+, D−, pente moyenne,
+   `Deq`, altitude de fin.
+
+**Cas de référence** : 165 km / 8 874 m D+ lissé (officiel 8 900) / 10 461 m D− / **Deq = 200,1 km**.
+
+---
+
+## 2. Le jumeau : des données aux paramètres physiologiques
+
+### 2.1 Ingestion → schéma canonique
+Tous les formats (Garmin/Coros/Suunto `.fit`, Strava bulk export, Polar `.tcx/.gpx`…) sont normalisés
+vers **un schéma unique** (1 enregistrement/seconde : `t, dist_m, speed_ms, hr, alt_m, lat, lon`). **Tout
+le reste du moteur ne consomme que ce schéma** — jamais « par marque ».
+
+### 2.2 Vitesse ajustée à la pente
+Pour comparer des efforts sur terrains différents, chaque seconde est convertie en **vitesse équivalente
+à plat** : `v_ga = v_raw · f(i)`. En montée (`f>1`), l'allure lente « vaut » une allure plate plus rapide.
+
+> **Piège majeur (et sa parade) :** dériver l'altitude seconde-par-seconde amplifie le bruit
+> (±1 m d'altitude ÷ petit pas de distance → fausses pentes raides → `f` qui explose). **Parade :**
+> calculer la pente sur une **base de distance de ±50 m** (pas par seconde), **plafonner `f` à 3,0**
+> (≈ +25 % ; au-delà on marche), écrêter la vitesse brute, léger lissage d'altitude. *Règles fixes.*
+
+### 2.3 Courbe record ajustée
+On accumule la **distance ajustée** `d_ga = Σ f·Δdist`, puis pour chaque durée `T` on prend la meilleure
+moyenne glissante : `v_ga(T) = max_t (d_ga[t+T] − d_ga[t]) / T`. C'est l'enveloppe des meilleures
+performances de l'athlète, en équivalent plat.
+
+> **Honnêteté méthodologique (garde-fou) :** l'ajustement de Minetti est une **équivalence métabolique
+> de régime permanent, valable en aérobie**. Pour les efforts **courts** (< 30 min), presque toujours
+> menés en côte et limités par la puissance musculaire, il **surestime** l'équivalent plat. On
+> **n'utilise donc pas** les durées < 30 min pour estimer la vitesse critique. Sans conséquence pour
+> l'ultra, couru très loin sous la VC.
+
+### 2.4 Vitesse critique (VC) et réserve D′
+Modèle hyperbolique `d = VC·t + D′` (donc `v(t) = VC + D′/t`), ajusté sur les **efforts plats propres**
+(où `|v_ga − v_raw| / v_raw < 10 %`, fenêtre 30–75 min, là où l'ajustement est fiable). Incertitude par
+*bootstrap*.
+
+**Cas de référence** : **VC = 2,912 m/s (10,48 km/h, 5:43/km), ±0,12**. `D′ ≈ 1 579 m ±362` —
+**volontairement signalée comme peu fiable** (le modèle est étiré au-delà de son domaine 2–15 min) ;
+**sans importance pour un 100M** couru bien en deçà de la VC.
+
+### 2.5 Exposant d'endurance E
+Loi de puissance sur l'enveloppe longue (30 min–6 h) : `v_ga ∝ t^(−α)`, d'où l'exposant de Riegel
+`E = 1/(1−α)`. Décrit la vitesse de déclin avec la durée.
+**Cas de référence** : `α = 0,181`, **E = 1,222** (élevé, typique d'un profil d'ultra).
+
+### 2.6 Durabilité
+**Découplage intra-course** : baisse de l'efficacité (vitesse ajustée / FC) en seconde moitié vs première
+moitié, sur les longues sorties. **Cas de référence** : **~19–24 %** sur les ultras de ~20 h.
+
+### 2.7 État de forme
+Volume/charge récents (descripteur). **Garde-fou** : les données s'arrêtent souvent des semaines avant
+la course → la prédiction suppose la forme du moment, et **doit être recalculée** à l'approche.
+
+---
+
+## 3. Calibration ultra (le moteur de la prédiction)
+
+On isole les **vrais ultras engagés** par des **conditions explicites** : durée > 10 h, vitesse ajustée
+≥ 5,5 km/h, découplage < 30 % (exclut reconnaissances et randos). On ajuste alors la **vitesse ajustée
+moyenne de course** en fonction de la durée et du dénivelé :
+
+`v_ga[km/h] = β0 + β1·ln(T_heures) + β2·(D+/km)`
+
+**Cas de référence** (8 vrais ultras) : `v = 8,563 − 0,350·ln(T) − 0,0148·(D+/km)`, résidu σ = 0,14 km/h.
+
+> **Point de généralisation crucial.** Cette régression suppose **plusieurs** vrais ultras. La plupart
+> des athlètes n'en auront pas 8. Le moteur doit donc **dégrader proprement** :
+> - **≥ ~3 vrais ultras** → régression personnelle (comme le cas de référence) ;
+> - **1–2** → mélange données perso + extrapolation par VC et exposant E, **incertitude élargie** (→ souvent 🟠) ;
+> - **0 effort long proche de la durée cible** → extrapolation VC + E seule, **🟠/🔴 selon l'écart**.
+
+---
+
+## 4. Prédiction auto-cohérente
+
+Plus la course est longue, plus la vitesse baisse — mais la durée dépend de cette vitesse. On résout
+le **point fixe** :
+
+`T = Deq / v(T)`,  avec `v(T) = β0 + β1·ln(T) + β2·(D+/km du parcours)`
+
+**Incertitude** par **Monte-Carlo** (tirages de `v` dans sa loi prédictive, résidu σ inclus) → intervalle.
+
+**Cas de référence** : **T = 30,4 h**, vitesse ajustée moyenne **6,58 km/h ≈ 63 % de la VC** ;
+intervalle 80 % **29,6–31,3 h** (Monte-Carlo complet 28,0–33,0 h).
+
+> À ~63 % de la VC, la **réserve D′ n'est jamais le facteur limitant**. Les vrais limitants d'un ultra
+> sont la **durabilité** et le **ravitaillement** — d'où le focus du plan sur ces deux points.
+
+---
+
+## 5. Validation croisée (et indice de confiance)
+
+**Leave-one-out** sur les vrais ultras : pour chacun, on **réajuste la régression en l'excluant**, on
+prédit son temps, on compare au réel. La moyenne des erreurs **devient l'indice de confiance imprimé
+dans le rapport**, et l'un des critères du **test de suffisance**.
+
+**Cas de référence** : erreur moyenne **2,8 %**, RMSE 3,4 % (n = 8). Les deux ultras de 120 km+ prédits
+à +2,5 % / +2,2 %.
+
+---
+
+## 6. Le plan de pacing
+
+- **Effort ajusté constant + fade de durabilité.** On vise une **vitesse ajustée constante** (= effort
+  métabolique constant grâce à l'ajustement de pente), avec une **dérive contrôlée** (~−15 % début→fin).
+  Forme : `v_i = S · g_i`, `g_i = 1 + Δ·(0,5 − p_i)·2` (p_i = fraction d'avancement en Deq, **Δ ≈ 0,085**),
+  `S` normalisé pour que `Σ deq_i / v_i = T_mouvement`.
+- **Conversion** : par segment, temps de mouvement = `deq_i / v_ga_i` ; allure réelle = temps / distance
+  réelle (montées lentes, descentes rapides).
+- **Horloge & nuit** : heure de départ + cumul (mouvement + arrêts ravitaillement) → heure de passage ;
+  lever/coucher du soleil par l'**algorithme solaire NOAA** → sections de nuit.
+- **Fenêtres horaires** : on présente par segment une **plage** d'arrivée et d'allure (bandes
+  Monte-Carlo), pas une valeur unique (meilleure tenue psychologique en course).
+
+**Cas de référence** : mouvement 28,6 h + arrêts 1,75 h = **30,4 h** d'horloge ; départ ven. 13:00,
+arrivée sam. ~19:23 ; **nuit du km 38 au km 94**.
+
+---
+
+## 7. Rapport
+
+Rendu **LaTeX** (template `locomotionreport`, police **Ubuntu**, XeLaTeX + biber), figures matplotlib
+aux couleurs de la marque. Contient : synthèse, parcours, jumeau (pédagogique), prédiction + validation,
+plan par segment, intensité/durabilité, **limites assumées**, recommandations.
+
+---
+
+## 8. ★ Ce qui remplace le « jugement humain » (lecture clé pour l'automatisation)
+
+Tout ce qui a pu ressembler à de l'expertise au cas par cas est en réalité l'une de **trois** choses :
+
+| Type | Exemples | Statut |
+|---|---|---|
+| **Règle fixe** (même code pour tous) | lissage 150 m, écrêtage pente ±0,45, base de pente ±50 m, plafond `f≤3`, exclusion < 30 min, conditions des « vrais ultras », Δ du fade | identique pour chaque athlète |
+| **Ajusté à partir des données** | VC, D′, exposant E, durabilité, coefficients β de la régression, prédiction, plan | **calculé** par athlète → individualisation automatique |
+| **Garde-fou d'honnêteté** | invalidité < 30 min, descentes techniques = plafonds, forme du jour inconnue, D′ peu fiable, marche au-delà de ±25 % | cadrage fixe + **test de suffisance** |
+
+**Conséquence :** l'individualisation est **automatique par construction** — d'autres fichiers → d'autres
+paramètres → un autre plan. Rien n'est partagé entre clients sauf **la méthode (le code) et la charte**.
+Le « est-ce que ça a l'air juste ? » est remplacé par la **validation croisée** (un chiffre) ; le
+« ces données suffisent-elles ? » par le **test de suffisance** (🟢/🟠/🔴).
+
+---
+
+## 9. Garde-fous d'honnêteté à imprimer dans chaque rapport
+
+- Forme du jour inconnue si les données s'arrêtent avant la course → **recalcul recommandé**.
+- Ajustement de pente **invalide < 30 min** (efforts courts).
+- Allures de descente = **plafonds métaboliques** ; la **technicité** du terrain (absente du GPX) peut
+  imposer plus lent.
+- Minetti **moins valide au-delà de ±25–30 %** (marche active).
+- **Météo / nutrition** non modélisées.
+- `D′` faiblement contrainte (sans impact en ultra).
+
+---
+
+## 10. Test de suffisance — critères (🟢/🟠/🔴)
+
+Calculé **avant paiement**, sur la donnée normalisée :
+
+| Critère | 🟢 | 🟠 | 🔴 |
+|---|---|---|---|
+| Historique | ≥ 6 mois | 3–6 mois | < 3 mois |
+| Courses exploitables | ≥ ~120 | ~50–120 | < 50 |
+| Efforts longs proches de la cible | ≥ 2 | 1 | 0 |
+| Qualité (FC/altitude/distance) | majoritaire | partielle | quasi absente |
+| **Erreur validation croisée** | ≤ ~5 % | ~5–10 % | non calculable / > 10 % |
+
+🟢 → rapport complet. 🟠 → on prévient (confiance réduite) ou produit dégradé. 🔴 → **on ne vend pas**.
+
+---
+
+## 11. Ce qui reste à durcir (zones de fragilité connues)
+
+1. **Ingestion multi-marques** robuste (exports brouillons, `.gz`, Strava mixte) → tests par format.
+2. **Régime « peu d'ultras »** (cf. §3) : fallback VC+E + incertitude élargie.
+3. **FC absente** : la durabilité (découplage) repose sur la FC → dégrader proprement / signaler.
+4. **Profils atypiques** (marche dominante, treadmill, montre bruyante) → détecter et, à défaut,
+   **être honnête (🟠/🔴)** plutôt que produire un plan confiant mais faux.
+5. **Non-régression** : golden test sur le cas de référence (mêmes entrées → mêmes sorties à tolérance).
+
+---
+
+## 12. Valeurs de référence (golden test — Valentin, Nice 100M)
+
+| Grandeur | Valeur |
+|---|---|
+| Parcours | 165 km / 8 874 m D+ lissé / 10 461 m D− / Deq 200,1 km |
+| Activités exploitables | 419 / 449 · 532 jours · ~66 km/sem |
+| VC | 2,912 m/s (10,48 km/h) ±0,12 |
+| D′ | ~1 579 m ±362 (peu fiable) |
+| Exposant E | 1,222 (α = 0,181) |
+| Durabilité | découplage ~19–24 % sur ~20 h |
+| Régression ultra | v = 8,563 − 0,350·ln(h) − 0,0148·(D+/km), σ 0,14 km/h |
+| Prédiction | 30,4 h · 6,58 km/h ajustée · ~63 % VC |
+| Intervalle 80 % | 29,6–31,3 h |
+| Validation croisée | MAE 2,8 % · RMSE 3,4 % (n = 8) |
+| Plan | mvt 28,6 h + arrêts 1,75 h ; départ ven. 13:00 ; nuit km 38→94 |
+
+> Réfs : Minetti 2002 ; Poole 2016 / Jones & Vanhatalo 2017 (VC) ; Riegel 1981 / Drake 2024 (E) ;
+> Maunder 2021 / Jones 2024 (durabilité) ; NOAA (solaire).
