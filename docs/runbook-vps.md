@@ -22,17 +22,16 @@
 
 ## Sommaire des étapes
 
-| Étape | But | Risque | Statut dans ce runbook |
+| Étape | But | Risque | Statut |
 | --- | --- | --- | --- |
-| **0** | Réversibilité : snapshot OVH + sauvegarde Traccar + **inventaire** | nul (lecture/backup) | **détaillée ci-dessous** |
-| 1 | Installer Docker (si absent) | faible | rédigée après ton inventaire |
-| 2 | Déployer `apps/_template` en **mode validation** (ports 8080/8443) | nul pour Traccar | rédigée après l'infra |
-| 3 | Cloudflare devant + validation HTTPS externe | nul pour Traccar | rédigée après l'infra |
-| 4 | **Bascule Traccar** derrière Caddy (80/443) | **IMPACT PROD** — *gated* | rédigée après ton `nginx -T` |
+| **0** | Réversibilité : snapshot OVH + sauvegarde Traccar + **inventaire** | nul (lecture/backup) | détaillée ci-dessous |
+| **1** | Installer Docker (si absent) | faible | détaillée ci-dessous |
+| **2** | Déployer `apps/_template` en **mode validation** (ports 8080/8443) | nul pour Traccar | détaillée ci-dessous |
+| **3** | Cloudflare devant + validation HTTPS externe | nul pour Traccar | détaillée ci-dessous |
+| **4** | **Bascule Traccar** derrière Caddy (80/443) | **IMPACT PROD** — *gated* | détaillée ci-dessous |
 
-> Les étapes 1→4 référencent des fichiers de `infra/` ; elles sont complétées dans ce même document
-> une fois `infra/` en place. **Commence par l'étape 0** : elle est autonome et te permet de me
-> renvoyer l'inventaire dont dépend la suite.
+> **Commence par l'étape 0** : elle est autonome et me fournit l'inventaire (`nginx -T` complet) dont
+> dépend la **finalisation** du bloc Traccar (étape 4). Les étapes 1→3 ne touchent **pas** Traccar.
 
 ---
 
@@ -179,13 +178,198 @@ echo; echo ">>> Rapport écrit dans $OUT — colle son contenu à Claude."
 
 ---
 
-## Étapes 1 → 4
+# Étape 1 — Installer Docker (si l'inventaire 0.C l'a montré absent)
 
-> 🚧 Rédigées dans ce même document une fois `infra/` en place et **ton inventaire (0.C) reçu**. Elles
-> couvriront : **(1)** installation de Docker si nécessaire, **(2)** déploiement de `apps/_template` en
-> mode validation (Caddy sur 8080/8443, HTTPS via Let's Encrypt DNS-01, **Traccar intact**),
-> **(3)** mise en place de Cloudflare devant + validation HTTPS externe, **(4)** **bascule Traccar**
-> derrière Caddy (étape *gated*, avec rollback).
->
-> **Garde-fou** : aucune commande des étapes 1→4 ne touche la prod Traccar tant que (0.A) snapshot et
-> (0.B) sauvegarde ne sont pas faits. La bascule (4) n'est figée qu'après réception de ton `nginx -T`.
+Si `docker` / `docker compose` étaient présents dans l'inventaire, **saute cette étape**. Sinon,
+installe **Docker Engine + plugin compose** depuis le dépôt **officiel** Docker (Ubuntu) :
+
+```bash
+# sur le VPS — Docker Engine + plugin compose (dépôt officiel)
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
+https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+| sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# (optionnel) lancer docker sans sudo — se déconnecter/reconnecter ensuite pour appliquer
+sudo usermod -aG docker "$USER"
+
+docker version && docker compose version
+```
+
+> N'installe **rien d'autre** sur l'hôte : le but est un hôte **propre**. Tout le reste (Caddy, apps)
+> tourne en conteneurs.
+
+---
+
+# Étape 2 — Déployer `apps/_template` en mode VALIDATION (Traccar intact)
+
+But : Caddy sur **8080/8443** (nginx garde 80/443) + le conteneur `template`. **Rien ne touche
+Traccar.**
+
+### 2.1 — Récupérer l'infra (le repo) sur le VPS
+
+```bash
+# sur le VPS
+sudo mkdir -p /opt/locomotionlab && sudo chown "$USER":"$USER" /opt/locomotionlab
+git clone git@github.com:thelocomotionlab/thelocomotionlab-website.git /opt/locomotionlab
+cd /opt/locomotionlab
+git checkout claude/cool-turing-0nkgcx    # la branche qui porte l'infra (sinon `main` une fois mergé)
+cd infra
+```
+
+### 2.2 — S'assurer que l'image GHCR existe
+
+L'image `template` est construite par la CI (cf. `.github/workflows/deploy-vps.yml`). Déclenche-la une
+fois (onglet **Actions → deploy-vps → Run workflow**, sur la branche voulue), ou pousse sur `main`.
+Puis rends le **package GHCR lisible** par le VPS :
+
+- **Le plus simple** : GitHub → repo → **Packages** → `template` → **Package settings** → *Change
+  visibility* → **Public** (l'image ne contient aucun secret).
+- **Ou** garde-la privée et connecte-toi avant de déployer :
+  `export GHCR_USER=<toi> GHCR_TOKEN=<PAT read:packages>` (le `deploy.sh` fera le `docker login`).
+
+### 2.3 — Configurer `.env` (secrets hors-repo) et déployer
+
+```bash
+# sur le VPS, dans /opt/locomotionlab/infra
+cp .env.example .env
+nano .env       # renseigne CF_API_TOKEN + ACME_EMAIL ; laisse HTTP_PORT=8080 / HTTPS_PORT=8443
+                # (CF_API_TOKEN = token DNS-01, cf. docs/cloudflare-vps.md §1)
+
+# Ouvre le port 8443 entrant (pour que Cloudflare joigne l'origine). Si ufw est actif :
+sudo ufw allow 8443/tcp
+# NB : si un pare-feu OVH (Manager) est actif, autorise aussi 8443 là-bas.
+
+./deploy.sh
+docker compose ps
+docker compose logs caddy --tail=30   # tu dois voir l'obtention du certificat pour template.*
+```
+
+### 2.4 — Vérifs locales (sur le VPS, sans Cloudflare)
+
+```bash
+# Le certificat est émis par Let's Encrypt et le template répond via Caddy :
+curl --resolve template.thelocomotionlab.com:8443:127.0.0.1 \
+     https://template.thelocomotionlab.com:8443/ | head
+
+# Contrôle que Traccar est INTACT (toujours servi par nginx sur 443) :
+curl -I https://tracking.thelocomotionlab.com
+```
+
+---
+
+# Étape 3 — Cloudflare devant + validation HTTPS externe
+
+Applique [`docs/cloudflare-vps.md`](./cloudflare-vps.md) (réglages **dashboard**) : token DNS-01 (§1),
+DNS `template` proxifié (§2), TLS **Full (strict)** (§3), **blocage IA/bots OFF** (§4), **Origin Rule
+port → 8443** (§5).
+
+Puis valide **de l'extérieur** :
+
+```bash
+# depuis ta machine (ou le VPS)
+curl -I https://template.thelocomotionlab.com
+#   → HTTP/2 200 + en-tête « server: cloudflare » = chaîne complète OK
+#     (edge Cloudflare 443 → origine VPS 8443 → Caddy → conteneur template)
+
+# Traccar fonctionne TOUJOURS :
+curl -I https://tracking.thelocomotionlab.com                 # UI répond comme avant
+curl -s https://tracking.thelocomotionlab.com/api/public/server | head   # API publique (adapte l'endpoint)
+```
+
+✅ **Définition de terminé atteinte** : `apps/_template` est servi en **HTTPS derrière Cloudflare**
+(toggle IA désactivé) et **Traccar fonctionne toujours** — on n'a pas touché 80/443.
+
+---
+
+# Étape 4 — Bascule de Traccar derrière Caddy ⚠️ IMPACT PROD — *gated*
+
+> **Optionnelle / ultérieure.** À ne lancer que quand tu veux que Caddy serve aussi Traccar (80/443).
+> Jusque-là, tout ce qui précède laisse Traccar **intact**.
+
+### 4.0 — Pré-requis NON négociables
+
+- [ ] **0.A** snapshot OVH **fait** et actif.
+- [ ] **0.B** sauvegarde Traccar **faite** (archive vérifiée).
+- [ ] Tu m'as envoyé `sudo nginx -T` **complet** et j'ai **finalisé** `infra/caddy/conf.d/tracking.caddy`
+      (renommé depuis `.disabled`, et reproduisant **toutes** les routes — dont `/live-positions.json`
+      et `/live-timer.json` si la conf les sert) ; tu as **`git pull`** cette version.
+- [ ] Fenêtre calme choisie (courte coupure possible de l'UI/API tracking pendant le `up`).
+
+> **Validation préalable conseillée (sans coupure)** : avant de flipper 443, on peut tester le bloc
+> Traccar de Caddy sur un sous-domaine de *staging* (p. ex. `tracking-staging`, DNS proxifié + Origin
+> Rule → 8443, route Caddy pointant le même `:8082`) et comparer les réponses `/` et `/api/public/...`
+> à la prod. Demande-moi cette variante si tu veux la jouer.
+
+### 4.1 — Activer la route Traccar et passer Caddy en 80/443
+
+```bash
+# sur le VPS, dans /opt/locomotionlab
+git pull                          # récupère tracking.caddy finalisé (renommé depuis .disabled)
+cd infra
+nano .env                         # renseigne TRACCAR_API_TOKEN ; passe HTTP_PORT=80 / HTTPS_PORT=443
+```
+
+### 4.2 — Libérer 80/443 de nginx, puis (re)lancer Caddy
+
+```bash
+# Libère les ports (réversible : la conf nginx n'est PAS supprimée, juste le service arrêté)
+sudo systemctl stop nginx
+sudo systemctl disable nginx      # évite qu'il reprenne 443 au reboot pendant qu'on teste
+
+cd /opt/locomotionlab/infra
+./deploy.sh                       # Caddy prend 80/443 et sert template + tracking
+docker compose logs caddy --tail=40
+```
+
+### 4.3 — Cloudflare : retirer l'Origin Rule 8443
+
+Supprime la règle de [`docs/cloudflare-vps.md`](./cloudflare-vps.md) §5 (template repasse en 443
+standard). Referme 8443 si tu veux : `sudo ufw delete allow 8443/tcp`.
+
+### 4.4 — Vérifications
+
+```bash
+curl -I https://template.thelocomotionlab.com                         # toujours OK (443 standard)
+curl -I https://tracking.thelocomotionlab.com                         # UI Traccar via Caddy
+curl -s https://tracking.thelocomotionlab.com/api/public/server | head # API publique + token injecté
+```
+
+> Les **ports « device » de Traccar** (réception des balises GPS, p. ex. 5000-5150) ne passent **pas**
+> par nginx ni Caddy : ils sont inchangés. La bascule ne concerne que le **web (443)**.
+
+### 4.5 — ROLLBACK (si quoi que ce soit cloche)
+
+```bash
+# 1) Rendre 80/443 à nginx (retour à l'état d'avant bascule)
+cd /opt/locomotionlab/infra
+docker compose down
+sudo systemctl enable --now nginx
+systemctl status nginx --no-pager
+# 2) (si besoin) relancer Caddy en mode validation : remets HTTP_PORT=8080 / HTTPS_PORT=8443 dans .env
+#    puis ./deploy.sh, et rétablis l'Origin Rule 8443 côté Cloudflare.
+```
+
+Filet ultime : **restaurer le snapshot OVH** (0.A) ou la **sauvegarde Traccar** (0.B).
+
+---
+
+## Annexe — Mises à jour quotidiennes (après la mise en place)
+
+```bash
+# Déployer une nouvelle version d'app (image déjà poussée sur GHCR par la CI) :
+cd /opt/locomotionlab && git pull && cd infra && ./deploy.sh
+
+# Voir l'état / les logs :
+docker compose ps
+docker compose logs -f caddy
+```
+
+Pour **épingler / rollback** une version d'app : mets `TEMPLATE_IMAGE=ghcr.io/thelocomotionlab/template:sha-XXXXXXX`
+dans `.env` puis `./deploy.sh`.
