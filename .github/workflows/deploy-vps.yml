@@ -42,7 +42,7 @@ jobs:
           # github.repository_owner = thelocomotionlab (minuscule, requis par GHCR)
           images: ghcr.io/${{ github.repository_owner }}/template
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=latest
             type=sha,format=short
 
       - name: Build & push

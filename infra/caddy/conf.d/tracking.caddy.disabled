@@ -4,7 +4,9 @@
 # Cette route reproduit la conf nginx ACTUELLE de tracking.thelocomotionlab.com. Elle doit être
 # FINALISÉE d'après la sortie COMPLÈTE de `sudo nginx -T` : l'extrait connu (dans
 # apps/site/notes_pratiques.txt) est PARTIEL — le front appelle aussi /live-positions.json et
-# /live-timer.json, dont la route exacte est à confirmer avant d'activer.
+# /live-timer.json, dont la route exacte est à confirmer avant d'activer. Valide alors la conf avec
+# `docker compose exec caddy caddy validate --config /etc/caddy/Caddyfile` (ou un staging) avant la
+# bascule.
 #
 # ACTIVATION = runbook étape 4 (bascule), APRÈS snapshot + sauvegarde Traccar : renommer ce
 # fichier `tracking.caddy` (par un commit), passer Caddy en 80/443, redéployer. Rollback documenté.
@@ -34,10 +36,11 @@
 	}
 
 	# 2) API publique sans login : /api/public/* → Traccar /api/* + Bearer injecté + CORS.
-	#    (équiv. `rewrite ^/api/public/(.*)$ /api/$1` + Authorization + add_header CORS
-	#     + proxy_hide_header Set-Cookie/WWW-Authenticate).
-	handle_path /api/public/* {
-		rewrite * /api{uri}
+	#    `uri replace` = équiv. direct de `rewrite ^/api/public/(.*)$ /api/$1`.
+	#    `-Set-Cookie` / `-WWW-Authenticate` = équiv. de `proxy_hide_header`.
+	@public path /api/public/*
+	handle @public {
+		uri replace /api/public/ /api/
 		header {
 			Access-Control-Allow-Origin "*"
 			Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
