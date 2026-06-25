@@ -52,23 +52,29 @@ déjà configuré, **ne touche à rien**. Sinon : **Settings → Functions → C
 
 ---
 
-## Build du site dans le monorepo : webpack + racines `next.config.mjs`
+## Build du site dans le monorepo : webpack + racine par phase (`next.config.mjs`)
 
 Next 16 compile par défaut avec **Turbopack**. Mais sous le builder Vercel utilisé par
 `@cloudflare/next-on-pages` (qui lance `vercel build` **dans** `apps/site/`), Turbopack **infère mal
 la racine** du workspace pnpm : il se confine à `apps/site/` et ne peut plus suivre les symlinks vers
 les `node_modules` hoistés à la racine → échec « *inferred your workspace root… couldn't find
-next/package.json* ». Trois réglages, déjà committés, règlent ça :
+next/package.json* ». Deux réglages, déjà committés, règlent ça :
 
 | Réglage | Fichier | Pourquoi |
 | --- | --- | --- |
-| `build` = **`next build --webpack`** | `apps/site/package.json` | webpack ne confine pas la résolution à une racine → il suit les symlinks pnpm. `next dev` reste sur Turbopack (rapide). |
-| **`outputFileTracingRoot`** = dossier de l'app | `apps/site/next.config.mjs` | sinon Vercel préfixe les chemins tracés par `apps/site/`, puis les rejoint à son workPath déjà = `apps/site` → chemin **dédoublé** `apps/site/apps/site/.next` (ENOENT). |
-| **`turbopack.root`** = racine du monorepo | `apps/site/next.config.mjs` | pour `next dev` (Turbopack) : silence le warning d'inférence de racine en monorepo. |
+| `build` = **`next build --webpack`** | `apps/site/package.json` | webpack ne confine pas la résolution à une racine → il suit les symlinks pnpm. `next dev`, lui, reste sur Turbopack (rapide). |
+| **Racine du workspace choisie par _phase_** (`turbopack.root` **=** `outputFileTracingRoot`) | `apps/site/next.config.mjs` | Next 16 impose ces deux racines **identiques**. La config est donc une **fonction de la phase** : racine = **monorepo** en `dev` (Turbopack doit suivre le symlink `next`), racine = **app** en `build` (sinon le builder Vercel, lancé dans `apps/site`, **dédouble** le chemin de sortie → `apps/site/apps/site/.next`, ENOENT). |
+
+> Pourquoi une fonction et pas deux valeurs fixes ? `next dev` (Turbopack) exige la racine
+> **monorepo** pour résoudre `next` (symlink pnpm), alors que le build a besoin de la racine **app**
+> pour ne pas dédoubler le chemin — et Next **refuse que les deux racines diffèrent**. Choisir la
+> racine selon la phase satisfait les deux cas **sans** le warning « *must have the same value* », et
+> sans casser `next dev`.
 
 > Conséquence pratique : `pnpm --filter site build` et le déploiement utilisent **le même bundler
 > (webpack)** — ce que tu valides en local correspond à ce qui part sur Cloudflare. Si un jour
-> `next-on-pages` gère proprement les builds Turbopack en monorepo, on pourra retirer `--webpack`.
+> `next-on-pages` gère proprement les builds Turbopack en monorepo, on pourra retirer `--webpack` et
+> simplifier ce réglage.
 
 ---
 
