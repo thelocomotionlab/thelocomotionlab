@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "deploy:cf": "npx @cloudflare/next-on-pages && npx wrangler pages deploy .vercel/output/static --project-name=thelocomotionlab-website"

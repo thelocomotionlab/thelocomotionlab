@@ -286,6 +286,7 @@ régression :
 | `Cannot find module '@locomotionlab/ui'` | symlinks workspace pas créés | `pnpm install` à la racine |
 | `command not found: pnpm` | corepack pas activé | `corepack enable`, rouvrir le terminal |
 | Le build Cloudflare cherche un `package.json` à la racine | *Root directory* pas réglé sur `apps/site` | appliquer [`docs/deploy-cloudflare.md`](./deploy-cloudflare.md) |
+| Déploiement Cloudflare KO : « inferred your workspace root » ou chemin dédoublé `apps/site/apps/site/.next` | Turbopack confine la racine sous next-on-pages en monorepo | déjà réglé : `build` en `--webpack` + `turbopack.root`/`outputFileTracingRoot` dans `next.config.mjs` (détails : [`docs/deploy-cloudflare.md`](./deploy-cloudflare.md)) |
 | Une modif de charte ne se voit pas dans une app | cache `.next` / `@source` | relancer le `dev`, ou `rm -rf apps/<app>/.next` |
 | `pnpm build` ne recompile rien alors que j'ai changé du code | cache turbo (faux positif rare) | `pnpm build --force` |
 | J'ai ajouté un paquet et une autre app a un comportement bizarre | dépendance ajoutée à la racine au lieu de l'app | la déplacer : `pnpm --filter <app> add <paquet>` |

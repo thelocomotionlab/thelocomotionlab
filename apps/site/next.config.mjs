@@ -1,7 +1,31 @@
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+
+// Ce fichier vit dans apps/site/ ; la racine du monorepo est deux niveaux au-dessus.
+const appDir = dirname(fileURLToPath(import.meta.url));
+const monorepoRoot = resolve(appDir, "../..");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+
+  // Monorepo : indique à Turbopack (utilisé par `next dev`) que la racine du
+  // workspace est la racine du repo — sinon Turbopack émet un warning d'inférence
+  // de racine et peut mal résoudre la charte du workspace en dev.
+  // (Le build de PROD passe par webpack — cf. script `build` = `next build
+  // --webpack` ; Turbopack confine la résolution à une racine et casse sous le
+  // builder Vercel de @cloudflare/next-on-pages.)
+  turbopack: {
+    root: monorepoRoot,
+  },
+  // File-tracing de la sortie : racine maintenue SUR l'app (apps/site), pas sur le
+  // monorepo. Sinon, au build via @cloudflare/next-on-pages (Vercel CLI lancé DANS
+  // apps/site), Vercel préfixe les chemins tracés par « apps/site/ » puis les rejoint
+  // à son workPath (déjà = apps/site) → chemin dédoublé « apps/site/apps/site/.next ».
+  // Le site étant quasi 100 % statique/SSG, restreindre le tracing à l'app est sans
+  // incidence sur la sortie Cloudflare.
+  outputFileTracingRoot: appDir,
 
   // Transpile la charte partagée (TS/TSX + next/font) consommée depuis le monorepo.
   transpilePackages: ["@locomotionlab/ui"],
