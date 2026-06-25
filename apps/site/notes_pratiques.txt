@@ -33,8 +33,11 @@ server {
         rewrite ^/api/public/(.*)$ /api/$1 break;
         proxy_pass http://127.0.0.1:8082;
 
-        #  Ton token API ici (remplace TON_TOKEN par ton vrai token Traccar)
-        proxy_set_header Authorization "Bearer TON_TOKEN";
+        #  Token API Traccar : NE JAMAIS écrire le token en clair ici.
+        #  Valeur injectée au déploiement depuis la variable d'environnement
+        #  $TRACCAR_API_TOKEN (secret du VPS) — cf. docs/secrets.md.
+        #  Ex. via envsubst dans un template de conf nginx versionné sous infra/.
+        proxy_set_header Authorization "Bearer ${TRACCAR_API_TOKEN}";
 
         # En-têtes de proxy standard
         proxy_set_header Host $host;
