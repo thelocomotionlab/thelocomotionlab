@@ -1,0 +1,19 @@
+# Caddyfile — reverse-proxy unique du VPS Locomotion Lab.
+#
+# HTTPS AUTOMATIQUE via Let's Encrypt en DNS-01 Cloudflare : fonctionne DERRIÈRE le proxy
+# Cloudflare et SANS exiger le port 80 libre → on peut valider en mode ports alternatifs
+# (8080/8443) sans toucher nginx/Traccar.
+#
+# Une route = un fichier dans conf.d/. Pour ouvrir un futur sous-domaine, déposer
+# conf.d/<app>.caddy (cf. infra/README.md). Les fichiers en *.disabled sont IGNORÉS (pratique
+# pour préparer une route — ex. Traccar — sans l'activer).
+
+{
+	# Contact ACME (avis d'expiration) + résolveur DNS-01 Cloudflare.
+	# Token scopé Zone:DNS:Edit + Zone:Read (cf. infra/.env.example / docs/cloudflare-vps.md).
+	email {$ACME_EMAIL}
+	acme_dns cloudflare {$CF_API_TOKEN}
+}
+
+# Charge toutes les routes ACTIVÉES (un fichier .caddy par sous-domaine).
+import /etc/caddy/conf.d/*.caddy

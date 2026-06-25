@@ -1,0 +1,58 @@
+# ⚠️ DRAFT / DÉSACTIVÉ — l'extension « .disabled » fait que Caddy N'IMPORTE PAS ce fichier.
+# Tant qu'il porte ce suffixe, Traccar reste servi par nginx (rien n'est touché).
+#
+# Cette route reproduit la conf nginx ACTUELLE de tracking.thelocomotionlab.com. Elle doit être
+# FINALISÉE d'après la sortie COMPLÈTE de `sudo nginx -T` : l'extrait connu (dans
+# apps/site/notes_pratiques.txt) est PARTIEL — le front appelle aussi /live-positions.json et
+# /live-timer.json, dont la route exacte est à confirmer avant d'activer.
+#
+# ACTIVATION = runbook étape 4 (bascule), APRÈS snapshot + sauvegarde Traccar : renommer ce
+# fichier `tracking.caddy` (par un commit), passer Caddy en 80/443, redéployer. Rollback documenté.
+#
+# Équivalences nginx → Caddy :
+#   • Caddy préserve le Host entrant et pose X-Forwarded-For/Proto/Host par défaut
+#     (≈ proxy_set_header Host $host / X-Real-IP / X-Forwarded-For) ;
+#   • la redirection HTTP→HTTPS (nginx `error_page 497`) est automatique chez Caddy.
+
+{$TRACKING_DOMAIN} {
+	encode zstd gzip
+
+	# 1) Préflight CORS sur l'API publique → 204 immédiat (équiv. `if ($request_method = OPTIONS)`).
+	@public_options {
+		method OPTIONS
+		path /api/public/*
+	}
+	handle @public_options {
+		header {
+			Access-Control-Allow-Origin "*"
+			Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+			Access-Control-Allow-Headers "Origin, Content-Type, Accept, Authorization"
+			Access-Control-Allow-Credentials "true"
+			Access-Control-Max-Age "86400"
+		}
+		respond 204
+	}
+
+	# 2) API publique sans login : /api/public/* → Traccar /api/* + Bearer injecté + CORS.
+	#    (équiv. `rewrite ^/api/public/(.*)$ /api/$1` + Authorization + add_header CORS
+	#     + proxy_hide_header Set-Cookie/WWW-Authenticate).
+	handle_path /api/public/* {
+		rewrite * /api{uri}
+		header {
+			Access-Control-Allow-Origin "*"
+			Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+			Access-Control-Allow-Headers "Origin, Content-Type, Accept, Authorization"
+			Access-Control-Allow-Credentials "true"
+			-Set-Cookie
+			-WWW-Authenticate
+		}
+		reverse_proxy host.docker.internal:8082 {
+			header_up Authorization "Bearer {$TRACCAR_API_TOKEN}"
+		}
+	}
+
+	# 3) Reste : interface Traccar (login requis) → :8082 (équiv. `location /`).
+	handle {
+		reverse_proxy host.docker.internal:8082
+	}
+}

@@ -1,0 +1,31 @@
+# Contexte de build Docker (la racine du monorepo). On exclut ce qui n'est pas nécessaire à
+# la construction d'une image d'app — tout en GARDANT les manifests du workspace, dont pnpm a
+# besoin pour `--frozen-lockfile`.
+
+# Dépendances et sorties de build (réinstallées / régénérées dans l'image)
+**/node_modules
+**/.next
+**/.turbo
+**/.vercel
+**/.wrangler
+**/out
+**/dist
+**/build
+
+# Git / CI / docs / infra : inutiles pour builder une image d'app
+.git
+.github
+.gitignore
+docs
+infra
+
+# Secrets et logs (jamais dans une image)
+**/.env
+!**/.env.example
+**/*.log
+.DS_Store
+
+# Le site n'est pas conteneurisé (Cloudflare Pages) et son /public est lourd : on n'envoie pas
+# sa source dans le contexte, MAIS on garde son package.json (le workspace pnpm l'exige).
+apps/site/**
+!apps/site/package.json

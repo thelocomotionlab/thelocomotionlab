@@ -1,0 +1,6 @@
+# Sous-domaine de TEST. Valide la chaîne complète : image GHCR → conteneur → Caddy → HTTPS → CF.
+# Le conteneur `template` n'est joignable que par Caddy, via le réseau interne `web`.
+{$TEMPLATE_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy template:3000
+}

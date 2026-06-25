@@ -1,0 +1,51 @@
+# Stack conteneurs du VPS : reverse-proxy Caddy (HTTPS auto) + apps.
+# Lancement : depuis infra/, `./deploy.sh` (ou `docker compose -f compose.yml up -d`).
+# Variables & secrets : infra/.env (NON versionné — cf. .env.example).
+name: locomotionlab
+
+services:
+  # Reverse-proxy unique : HTTPS automatique (Let's Encrypt en DNS-01 Cloudflare),
+  # route le sous-domaine de test + (à la bascule) Traccar + les futures apps.
+  caddy:
+    build:
+      context: ./caddy
+    image: locomotionlab/caddy:local
+    restart: unless-stopped
+    # Injecte CF_API_TOKEN / ACME_EMAIL / TRACCAR_API_TOKEN / *_DOMAIN dans le conteneur
+    # (le Caddyfile les lit via la syntaxe {$VAR}).
+    env_file: .env
+    ports:
+      # Mode VALIDATION par défaut (8080/8443) : ne touche pas nginx/Traccar (80/443 libres).
+      # Mode BASCULE : passe HTTP_PORT=80 / HTTPS_PORT=443 dans .env (cf. runbook étape 4).
+      - "${HTTP_PORT:-8080}:80"
+      - "${HTTPS_PORT:-8443}:443"
+    extra_hosts:
+      # Permet à Caddy de joindre Traccar qui tourne sur l'HÔTE (127.0.0.1:8082), pas en conteneur.
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Routes par sous-domaine (un fichier .caddy chacune ; *.disabled ignoré).
+      - ./caddy/conf.d:/etc/caddy/conf.d:ro
+      # Persiste certificats ACME + état (sinon re-émission à chaque redéploiement).
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - web
+
+  # App de test, construite par la CI et poussée sur GHCR (cf. .github/workflows/deploy-vps.yml).
+  # Non exposée à l'hôte : seul Caddy la joint, par le réseau interne `web`.
+  template:
+    image: ${TEMPLATE_IMAGE:-ghcr.io/thelocomotionlab/template:latest}
+    restart: unless-stopped
+    expose:
+      - "3000"
+    networks:
+      - web
+
+networks:
+  web:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:

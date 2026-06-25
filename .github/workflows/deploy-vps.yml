@@ -1,0 +1,87 @@
+# Construit l'image de l'app `_template` et la pousse sur GHCR. (Le « git-push-to-deploy » de
+# l'ADR 0001.) Le déploiement sur le VPS se fait ensuite par `infra/deploy.sh` (manuel par défaut),
+# ou par le job `deploy` ci-dessous s'il est configuré (secrets SSH) — sinon il se saute proprement.
+name: deploy-vps
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/_template/**"
+      - "packages/ui/**"
+      - "infra/**"
+      - ".github/workflows/deploy-vps.yml"
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-vps-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-template:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # pousser sur GHCR avec le GITHUB_TOKEN
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Métadonnées d'image (tags + labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # github.repository_owner = thelocomotionlab (minuscule, requis par GHCR)
+          images: ghcr.io/${{ github.repository_owner }}/template
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=sha,format=short
+
+      - name: Build & push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/_template/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Déploiement SSH OPTIONNEL : inerte tant que le secret VPS_SSH_HOST n'est pas défini.
+  # Pour l'activer, ajouter les secrets repo : VPS_SSH_HOST, VPS_SSH_USER, VPS_SSH_KEY,
+  # VPS_INFRA_DIR (chemin du dossier infra/ sur le VPS, ex. /opt/locomotionlab/infra).
+  deploy:
+    needs: build-template
+    runs-on: ubuntu-latest
+    steps:
+      - name: Le déploiement SSH est-il configuré ?
+        id: check
+        env:
+          VPS_SSH_HOST: ${{ secrets.VPS_SSH_HOST }}
+        run: |
+          if [ -n "$VPS_SSH_HOST" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::VPS_SSH_HOST absent → déploiement SSH ignoré. Déploie via infra/deploy.sh sur le VPS."
+          fi
+
+      - name: Déploiement SSH (pull + up)
+        if: steps.check.outputs.enabled == 'true'
+        uses: appleboy/ssh-action@v1 # (recommandé : épingler un SHA de commit pour la chaîne d'appro.)
+        with:
+          host: ${{ secrets.VPS_SSH_HOST }}
+          username: ${{ secrets.VPS_SSH_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd "${{ secrets.VPS_INFRA_DIR }}"
+            ./deploy.sh

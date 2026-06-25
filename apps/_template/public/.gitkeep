@@ -1,0 +1,3 @@
+# Dossier d'assets statiques de l'app (servis à la racine). Conservé même vide pour que
+# le COPY du Dockerfile (sortie standalone) ne casse pas. Supprime ce fichier dès qu'il y a
+# de vrais assets.
