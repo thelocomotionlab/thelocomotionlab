@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/* Charte partagée — tokens @theme (SOURCE UNIQUE : packages/ui). */
+@import "@locomotionlab/ui/theme.css";
+
+/* Scanne toute la charte pour générer les classes utilitaires de marque
+   (Button, Field, PageShell, …) utilisées par cette app. */
+@source "../../../packages/ui/src";
+
+body {
+  margin: 0;
+  background: var(--color-brand-bg);
+  color: var(--color-brand-text);
+}
