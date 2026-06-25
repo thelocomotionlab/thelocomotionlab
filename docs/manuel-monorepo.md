@@ -26,6 +26,29 @@ Remplace `site` par le nom d'une autre app (`_template`, demain `twin`, …) pou
 **sur cette app uniquement**, sans toucher au site. Tout le reste de ce document explique *pourquoi*
 et *comment* ça reste cloisonné.
 
+### Raccourcis (moins taper)
+
+Du plus partagé au plus personnel :
+
+1. **Scripts racine** (versionnés → valables pour tout le monde), déjà ajoutés au `package.json`
+   racine :
+
+   ```bash
+   pnpm dev:site       # = pnpm --filter site dev
+   pnpm build:site     # = pnpm --filter site build
+   pnpm lint:site      # = pnpm --filter site lint
+   pnpm deploy:site    # = pnpm --filter site deploy:cf
+   ```
+
+2. **Flag court `-F`** (intégré à pnpm, rien à configurer) : `pnpm -F site dev` au lieu de
+   `pnpm --filter site dev`.
+
+3. **Depuis le dossier de l'app** : `cd apps/site`, puis directement `pnpm dev`, `pnpm build`,
+   `pnpm deploy:cf` (plus de filtre du tout).
+
+> Alias **personnel** (hors repo, propre à ta machine) : dans `~/.bashrc`,
+> `alias site='pnpm -F site'` → ensuite `site dev`, `site build`, `site deploy:cf`.
+
 ---
 
 ## 1. Le modèle mental (à lire une fois)
