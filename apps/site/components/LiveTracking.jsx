@@ -26,6 +26,60 @@ import {
   Label,
 } from "recharts";
 
+// Styles de carte (statiques) — au niveau module : référence stable, donc pas de
+// réinit de la carte à chaque render et plus de warning react-hooks/exhaustive-deps.
+const styles = {
+  topo: {
+    version: 8,
+    sources: {
+      opentopo: {
+        type: "raster",
+        tiles: [
+          "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
+          "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
+          "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
+        ],
+        tileSize: 256,
+        maxzoom: 17,
+        attribution: "© OpenTopoMap contributors",
+      },
+    },
+    layers: [{ id: "opentopo", type: "raster", source: "opentopo" }],
+  },
+  osm: {
+    version: 8,
+    sources: {
+      osm: {
+        type: "raster",
+        tiles: [
+          "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        ],
+        tileSize: 256,
+        maxzoom: 19,
+        attribution: "© OpenStreetMap contributors",
+      },
+    },
+    layers: [{ id: "osm", type: "raster", source: "osm" }],
+  },
+  satellite: {
+    version: 8,
+    sources: {
+      esri: {
+        type: "raster",
+        tiles: [
+          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        ],
+        tileSize: 256,
+        maxzoom: 19,
+        attribution: "Tiles © Esri",
+      },
+    },
+    layers: [{ id: "esri", type: "raster", source: "esri" }],
+  },
+};
+
 function getBoundsFromCoords(coords) {
   if (!Array.isArray(coords) || coords.length === 0) return null;
 
@@ -161,59 +215,6 @@ export default function LiveTracking({
     typeof mapHeight === "number"
       ? `${mapHeight}px`
       : mapHeight || "400px";
-
-  // --- Styles de cartes ---
-  const styles = {
-    topo: {
-      version: 8,
-      sources: {
-        opentopo: {
-          type: "raster",
-          tiles: [
-            "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
-            "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
-            "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
-          ],
-          tileSize: 256,
-          maxzoom: 17,
-          attribution: "© OpenTopoMap contributors",
-        },
-      },
-      layers: [{ id: "opentopo", type: "raster", source: "opentopo" }],
-    },
-    osm: {
-      version: 8,
-      sources: {
-        osm: {
-          type: "raster",
-          tiles: [
-            "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
-            "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
-            "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
-          ],
-          tileSize: 256,
-          maxzoom: 19,
-          attribution: "© OpenStreetMap contributors",
-        },
-      },
-      layers: [{ id: "osm", type: "raster", source: "osm" }],
-    },
-    satellite: {
-      version: 8,
-      sources: {
-        esri: {
-          type: "raster",
-          tiles: [
-            "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-          ],
-          tileSize: 256,
-          maxzoom: 19,
-          attribution: "Tiles © Esri",
-        },
-      },
-      layers: [{ id: "esri", type: "raster", source: "esri" }],
-    },
-  };
 
   useEffect(() => {
     const syncScreen = () => {

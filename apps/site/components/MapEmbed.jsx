@@ -12,6 +12,60 @@ import {
   Download,
 } from "lucide-react";
 
+// Centre par défaut (île de la Réunion) et styles de carte : statiques, donc
+// définis au niveau module — référence stable → pas de réinit de la carte à
+// chaque render, et plus de warning react-hooks/exhaustive-deps.
+const defaultCenter = [55.5364, -21.1151];
+
+const styles = {
+  osm: {
+    version: 8,
+    sources: {
+      osm: {
+        type: "raster",
+        tiles: [
+          "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        ],
+        tileSize: 256,
+        attribution: "© OpenStreetMap contributors",
+      },
+    },
+    layers: [{ id: "osm", type: "raster", source: "osm" }],
+  },
+  topo: {
+    version: 8,
+    sources: {
+      opentopo: {
+        type: "raster",
+        tiles: [
+          "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
+          "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
+          "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
+        ],
+        tileSize: 256,
+        attribution: "© OpenTopoMap contributors",
+      },
+    },
+    layers: [{ id: "opentopo", type: "raster", source: "opentopo" }],
+  },
+  satellite: {
+    version: 8,
+    sources: {
+      esri: {
+        type: "raster",
+        tiles: [
+          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        ],
+        tileSize: 256,
+        attribution: "Tiles © Esri",
+      },
+    },
+    layers: [{ id: "esri", type: "raster", source: "esri" }],
+  },
+};
+
 export default function MapEmbed({
   gpx,
   lineWeight = 3,
@@ -30,7 +84,6 @@ export default function MapEmbed({
   const [dynamicHeight, setDynamicHeight] = useState(defaultMinHeight);
   const [gpxError, setGpxError] = useState(false);
 
-  const defaultCenter = [55.5364, -21.1151];
   const defaultZoom = 9;
 
   // 🔹 Ajustement automatique de la hauteur
@@ -72,56 +125,6 @@ export default function MapEmbed({
     window.addEventListener("resize", syncHeight);
     return () => window.removeEventListener("resize", syncHeight);
   }, [defaultMinHeight]);
-
-  // --- Styles de carte identiques à LiveTracking
-  const styles = {
-    osm: {
-      version: 8,
-      sources: {
-        osm: {
-          type: "raster",
-          tiles: [
-            "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
-            "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
-            "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
-          ],
-          tileSize: 256,
-          attribution: "© OpenStreetMap contributors",
-        },
-      },
-      layers: [{ id: "osm", type: "raster", source: "osm" }],
-    },
-    topo: {
-      version: 8,
-      sources: {
-        opentopo: {
-          type: "raster",
-          tiles: [
-            "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
-            "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
-            "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
-          ],
-          tileSize: 256,
-          attribution: "© OpenTopoMap contributors",
-        },
-      },
-      layers: [{ id: "opentopo", type: "raster", source: "opentopo" }],
-    },
-    satellite: {
-      version: 8,
-      sources: {
-        esri: {
-          type: "raster",
-          tiles: [
-            "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-          ],
-          tileSize: 256,
-          attribution: "Tiles © Esri",
-        },
-      },
-      layers: [{ id: "esri", type: "raster", source: "esri" }],
-    },
-  };
 
   // --- Création de la carte une seule fois
   useEffect(() => {
