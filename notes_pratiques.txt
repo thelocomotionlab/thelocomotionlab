@@ -34,7 +34,7 @@ server {
         proxy_pass http://127.0.0.1:8082;
 
         #  Ton token API ici (remplace TON_TOKEN par ton vrai token Traccar)
-        proxy_set_header Authorization "Bearer RjBEAiAEwIolCiioxWhLTDiIvTtUatn1oWJzsZgrVxfEQWADcAIgcMi5_w8sgrRCn05vT5d3vKR4K-Pz4o9eu0vRHdJ2MwN7InUiOjUsImUiOiIyMDI1LTEwLTI3VDIzOjAwOjAwLjAwMCswMDowMCJ9";
+        proxy_set_header Authorization "Bearer TON_TOKEN";
 
         # En-têtes de proxy standard
         proxy_set_header Host $host;
