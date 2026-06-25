@@ -4,6 +4,10 @@ Monorepo du **Locomotion Lab** : plusieurs apps web indépendantes qui partagent
 graphique unique, plus (à venir) un moteur de calcul Python. Voir [`CLAUDE.md`](./CLAUDE.md) pour le
 contexte complet.
 
+> 📖 **Nouveau ici, ou besoin de compiler/déployer/créer une app ?** Le mode d'emploi complet est
+> dans **[`docs/manuel-monorepo.md`](./docs/manuel-monorepo.md)** (commandes, isolation des apps,
+> déploiement, dépannage).
+
 ## Stack
 
 - **Gestionnaire** : [pnpm](https://pnpm.io) workspaces + [Turborepo](https://turbo.build).

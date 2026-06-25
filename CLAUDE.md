@@ -51,6 +51,13 @@ thelocomotionlab/
 └─ turbo.json
 ```
 
+## Docs internes
+
+- `docs/manuel-monorepo.md` — **mode d'emploi** : compiler/déployer le site, travailler sur une autre
+  app sans casser le site, créer une app, dépannage. (Point d'entrée pour l'usage quotidien.)
+- `docs/deploy-cloudflare.md` — réglages Cloudflare Pages après passage en monorepo.
+- `docs/secrets.md` — gestion des secrets (aucune valeur dans le repo).
+
 ## Conventions
 
 - **Un `packages/<x>` n'est créé QUE quand au moins deux apps s'en servent réellement.** Sinon le
