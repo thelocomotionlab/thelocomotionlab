@@ -24,56 +24,15 @@
 
 ---
 
-## ⚠️ Fuite historique à traiter — `TRACCAR_API_TOKEN`
+## Historique : ancien token Traccar (clos)
 
-Un **vrai token Traccar** a été committé puis remplacé par un placeholder. Il vit **toujours dans
-l'historique git** et a été **poussé sur `origin`** :
+Un ancien token Traccar de test a transité par l'historique git (`notes_pratiques.txt`), puis a été
+remplacé dans le code par la référence `${TRACCAR_API_TOKEN}`.
 
-- Introduit dans le commit **`eb4f94e`** (`notes_pratiques.txt`).
-- Assaini (→ `TON_TOKEN`) dans **`7d56063`**, puis ce travail le remplace par `${TRACCAR_API_TOKEN}`.
-- L'expiry encodé dans le token est daté du **2025-10-27** (probablement déjà expiré), mais un secret
-  poussé sur un remote doit être considéré **compromis** quoi qu'il arrive.
+**Décision (validée par le mainteneur) :** ce token a depuis été régénéré plusieurs fois et n'a plus
+aucune valeur ; l'historique git n'est **volontairement pas purgé**. Aucune action requise. Le
+working tree ne contient **aucun secret en clair**.
 
-### Action n°1 (immédiate, indépendante de git) : **révoquer / régénérer le token**
-
-Dans l'interface Traccar (compte de service de l'API publique) : invalider le token actuel et en
-générer un nouveau, puis le déposer comme **secret du VPS** (jamais dans le repo). La purge d'historique
-ci-dessous **n'annule pas** la fuite ; seule la rotation protège réellement.
-
-### Action n°2 (optionnelle, DESTRUCTIVE) : purger l'historique
-
-> ⚠️ Réécrit **tout** l'historique (nouveaux SHAs), impose un **force-push** et un **re-clone** par
-> tous les collaborateurs / toutes les branches & forks. **À ne lancer qu'après validation.**
-> Cette procédure est **documentée ici mais n'a pas été exécutée.**
-
-Avec [`git filter-repo`](https://github.com/newren/git-filter-repo) (recommandé) :
-
-```bash
-# 0. Révoquer d'abord le token (Action n°1). Prévenir les collaborateurs.
-
-# 1. Cloner à neuf (filter-repo exige un clone propre)
-git clone --mirror git@github.com:thelocomotionlab/thelocomotionlab-website.git repo-purge
-cd repo-purge
-
-# 2. Mettre la valeur RÉELLE du token dans un fichier LOCAL (hors repo) :
-#    replacements.txt  ->  une ligne :
-#    <valeur_du_token_traccar>==>TRACCAR_API_TOKEN_REDACTED
-#    (récupérer la valeur depuis `git show eb4f94e:notes_pratiques.txt`)
-
-# 3. Réécrire tous les commits
-git filter-repo --replace-text replacements.txt
-
-# 4. Re-pousser de force (filter-repo a retiré le remote ; le re-déclarer)
-git remote add origin git@github.com:thelocomotionlab/thelocomotionlab-website.git
-git push --force --all origin
-git push --force --tags origin
-```
-
-Variante : **BFG Repo-Cleaner** (`bfg --replace-text replacements.txt`), plus simple mais moins fin.
-
-### Après la purge
-
-- Tous les clones existants doivent être **re-clonés** (les anciens gardent le token).
-- GitHub peut conserver l'ancien commit accessible par son SHA un certain temps (caches, forks,
-  vues) → la **rotation** (Action n°1) reste la vraie protection.
-- Toute PR / branche ouverte devra être rebattue sur l'historique réécrit.
+> Rappel d'hygiène pour la suite : un secret réellement sensible poussé sur un remote doit toujours
+> être considéré comme **compromis**. La vraie protection est de le **régénérer côté fournisseur**
+> (la rotation) ; réécrire l'historique ne suffit jamais et n'est pas nécessaire ici.
