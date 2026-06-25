@@ -66,7 +66,7 @@ export default function NewsletterSignup({
         className="flex flex-col sm:flex-row justify-center items-stretch gap-2 w-full max-w-md mx-auto"
       >
         <label htmlFor={emailId} className="sr-only">
-          Adresse e-mail pour s'inscrire à la newsletter
+          Adresse e-mail pour s’inscrire à la newsletter
         </label>
         <input
           id={emailId}

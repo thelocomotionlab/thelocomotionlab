@@ -10,6 +10,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Sortie de build @cloudflare/next-on-pages (artefacts générés, non lintés).
+    ".vercel/**",
   ]),
 ]);
 

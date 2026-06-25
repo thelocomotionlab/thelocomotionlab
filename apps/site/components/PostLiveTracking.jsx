@@ -26,6 +26,34 @@ import {
   Label,
 } from "recharts";
 
+// Tooltip du profil altimétrique. Défini au niveau module (et non dans le rendu du
+// composant) pour ne pas recréer le composant à chaque render — sinon il
+// réinitialiserait son état (règle react-hooks/static-components).
+function CustomTooltip({ active, payload }) {
+  if (active && payload && payload.length) {
+    const { km, alt, dPlus, dMinus } = payload[0].payload;
+    return (
+      <div
+        style={{
+          background: "rgba(255,255,255,0.8)",
+          border: "1px solid rgba(150,150,150,0.3)",
+          borderRadius: "6px",
+          padding: "4px 8px",
+          fontSize: "11px",
+        }}
+      >
+        <div>
+          {km.toFixed(1)} km, {Math.round(alt)} m
+        </div>
+        <div className="text-gray-600">
+          D+ {dPlus} m D− {dMinus} m
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
+
 /**
  * Logique alignée sur le serveur :
  * - segments bruts
@@ -656,31 +684,6 @@ export default function PostLiveTracking({
         speed: 0.7,
       });
     }
-  };
-
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      const { km, alt, dPlus, dMinus } = payload[0].payload;
-      return (
-        <div
-          style={{
-            background: "rgba(255,255,255,0.8)",
-            border: "1px solid rgba(150,150,150,0.3)",
-            borderRadius: "6px",
-            padding: "4px 8px",
-            fontSize: "11px",
-          }}
-        >
-          <div>
-            {km.toFixed(1)} km, {Math.round(alt)} m
-          </div>
-          <div className="text-gray-600">
-            D+ {dPlus} m D− {dMinus} m
-          </div>
-        </div>
-      );
-    }
-    return null;
   };
 
   const TOTAL_DISTANCE_KM =

@@ -138,7 +138,7 @@ export default async function HomePage() {
               Carnets, projets, expérimentations
             </span>
             <span className="hidden sm:inline">
-              Carnets, projets et expérimentations autour du mouvement, de l'ultra-endurance et de l'hormèse
+              Carnets, projets et expérimentations autour du mouvement, de l’ultra-endurance et de l’hormèse
             </span>
           </p>
 
@@ -211,10 +211,10 @@ export default async function HomePage() {
 
 
           <p className="mt-3 text-base md:text-lg leading-relaxed text-gray-700">
-            Il s'agit d'un <strong>espace d'exploration</strong> de la locomotion humaine sous toutes ses formes.
+            Il s’agit d’un <strong>espace d’exploration</strong> de la locomotion humaine sous toutes ses formes.
           </p>
           <p className="mt-3 text-base md:text-lg leading-relaxed text-gray-700">
-            Son but est d'explorer, décortiquer et analyser les facteurs et pratiques favorisant la <strong>robustesse physiologique</strong>.
+            Son but est d’explorer, décortiquer et analyser les facteurs et pratiques favorisant la <strong>robustesse physiologique</strong>.
           </p>
           <p className="mt-3 text-base md:text-lg leading-relaxed text-gray-700">
             <strong>Rigueur scientifique</strong> et expériences personnelles se mélangent pour proposer des contenus utiles et accessibles.          
