@@ -69,11 +69,11 @@ installe tout le workspace, puis ne fait que `cd` pour builder le site.
 
 ## Déploiement manuel depuis le local (inchangé)
 
-Le script `deploy` du site fonctionne toujours, lancé **dans le contexte du package `site`** :
+Le script `deploy:cf` du site fonctionne toujours, lancé **dans le contexte du package `site`** :
 
 ```bash
 pnpm install
-pnpm --filter site deploy
+pnpm --filter site deploy:cf
 # = npx @cloudflare/next-on-pages && npx wrangler pages deploy .vercel/output/static \
 #     --project-name=thelocomotionlab-website
 ```

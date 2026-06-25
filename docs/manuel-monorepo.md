@@ -18,7 +18,7 @@ pnpm --filter site dev        # 2. lancer LE SITE en local (http://localhost:300
 pnpm --filter site build      # 3. compiler le site (vérif avant de pousser)
 pnpm --filter site lint       # 4. linter le site
 
-pnpm --filter site deploy     # 5. déployer le site sur Cloudflare Pages (manuel)
+pnpm --filter site deploy:cf  # 5. déployer le site sur Cloudflare Pages (manuel)
 pnpm build                    # 6. tout compiler (turbo) — utile en vérif globale / CI
 ```
 
@@ -121,10 +121,16 @@ complète + la checklist sont dans **[`docs/deploy-cloudflare.md`](./deploy-clou
 **b) Manuel — depuis ton poste :**
 
 ```bash
-pnpm --filter site deploy
+pnpm --filter site deploy:cf
 # = npx @cloudflare/next-on-pages          (adapte le build Next pour Cloudflare)
 #   && npx wrangler pages deploy .vercel/output/static --project-name=thelocomotionlab-website
 ```
+
+> ⚠️ Le script s'appelle **`deploy:cf`** (et non `deploy`) : `deploy` est une **commande interne de
+> pnpm** (`pnpm deploy <dossier>`) qui prendrait le pas sur le script et planterait avec
+> `ERR_PNPM_INVALID_DEPLOY_TARGET`. Le suffixe `:cf` évite la collision et laisse la place à d'autres
+> cibles plus tard (p. ex. `deploy:vps` pour une app de calcul). Si tu tiens à garder un script nommé
+> `deploy`, lance-le avec le mot-clé `run` : `pnpm --filter site run deploy`.
 
 La première fois, `wrangler` ouvre un navigateur pour te connecter à Cloudflare (OAuth). **Aucun
 token n'est stocké dans le repo** (cf. [`docs/secrets.md`](./secrets.md)).
@@ -294,7 +300,7 @@ régression :
 | Tout installer / réinstaller | `pnpm install` |
 | Lancer le site en local | `pnpm --filter site dev` |
 | Compiler le site (vérif) | `pnpm --filter site build` |
-| Déployer le site (manuel) | `pnpm --filter site deploy` |
+| Déployer le site (manuel) | `pnpm --filter site deploy:cf` |
 | Lancer une autre app | `pnpm --filter <app> dev` |
 | Compiler une autre app sans toucher au site | `pnpm --filter <app> build` |
 | Créer une nouvelle app | `cp -r apps/_template apps/<nom>` → renommer `name` → `pnpm install` |
