@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Locomotion Lab — Monorepo
 
-## Getting Started
+Monorepo du **Locomotion Lab** : plusieurs apps web indépendantes qui partagent une charte
+graphique unique, plus (à venir) un moteur de calcul Python. Voir [`CLAUDE.md`](./CLAUDE.md) pour le
+contexte complet.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Gestionnaire** : [pnpm](https://pnpm.io) workspaces + [Turborepo](https://turbo.build).
+- **Apps web** : Next.js (App Router). Le **site** est en JavaScript ; toute nouvelle app est en TypeScript.
+- **Charte** : Tailwind v4. Tokens, preset, polices (Ubuntu + Lora) et primitives vivent **uniquement**
+  dans `packages/ui`.
+
+## Arborescence
+
+```
+├─ apps/
+│  ├─ site/        # le site actuel (Next + JS) → Cloudflare Pages
+│  └─ _template/   # gabarit d'app Next + TS qui consomme packages/ui
+├─ packages/
+│  └─ ui/          # LA charte partagée (tokens + preset + fonts + composants)
+├─ infra/          # infra-as-code (à venir)
+└─ docs/           # plans, runbooks, déploiement, secrets
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Commandes
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+Prérequis : Node ≥ 22, pnpm ≥ 10 (via `corepack enable`).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm install               # installe tout le workspace
 
-## Learn More
+pnpm --filter site dev     # lance le site en local
+pnpm --filter site build   # build du site (identique à avant)
 
-To learn more about Next.js, take a look at the following resources:
+pnpm --filter _template dev # lance le gabarit
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+pnpm dev                   # turbo : lance toutes les apps
+pnpm build                 # turbo : build toutes les apps
+pnpm lint                  # turbo : lint tout le workspace
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Déploiement
 
-## Deploy on Vercel
+Le site reste déployé sur **Cloudflare Pages**. Réglages à appliquer après la migration monorepo :
+voir [`docs/deploy-cloudflare.md`](./docs/deploy-cloudflare.md).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Secrets
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Aucun secret n'est versionné. La liste des secrets attendus est dans
+[`docs/secrets.md`](./docs/secrets.md).
