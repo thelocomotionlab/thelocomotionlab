@@ -2,8 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import Button from "./ui/Button";
-import Field from "./ui/Field";
+import { Button, Field } from "@locomotionlab/ui";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

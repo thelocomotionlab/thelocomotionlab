@@ -1,50 +1,18 @@
 @import "tailwindcss";
 
 /* ===========================
-   Thème Tailwind v4 – Locomotion Lab
+   Charte partagée — tokens @theme (SOURCE UNIQUE : packages/ui)
+   Une couleur / une police se change UNIQUEMENT dans packages/ui.
    =========================== */
 
-@theme {
-  /* Couleurs de marque */
-  --color-brand-bg: #FEFBF6;
-  --color-brand-primary: #8CB9BD;
-  --color-brand-primary-light: #A8CDD0;
-  --color-brand-primary-dark: #6E9CA0;
-  --color-brand-accent: #EFB159;
-  --color-brand-accent-light: #F4C480;
-  --color-brand-accent-dark: #D89A3D;
-  --color-brand-deep: #B67352;
-  --color-brand-deep-light: #C68F76;
-  --color-brand-deep-dark: #9A6044;
-  --color-brand-text: #333333;
-  --color-brand-paper: #FFFFFF;
-  --color-brand-grid: #F3EEE6;
+@import "@locomotionlab/ui/theme.css";
 
-  /* Polices (liées à next/font dans layout.js) */
-  --font-heading: var(--font-ubuntu), ui-sans-serif, system-ui;
-  --font-sans: var(--font-ubuntu), ui-sans-serif, system-ui;
-  --font-serif: "Ubuntu Serif", Georgia, serif;
-  --font-lora: var(--font-lora), serif;
-
-  /* Ombres & backgrounds */
-  --shadow-card: 0 6px 24px rgba(0, 0, 0, 0.08);
-  --shadow-cta: 0 10px 24px rgba(0, 0, 0, 0.2);
-
-  --background-image-lab-grid: linear-gradient(
-      to right,
-      rgba(0, 0, 0, 0.03) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0.03) 1px,
-      transparent 1px
-    );
-  --background-size-grid-sm: 16px 16px;
-  --background-size-grid-lg: 32px 32px;
-
-  --text-xxs: 0.625rem;
-}
+/* Tailwind v4 doit scanner les primitives de packages/ui réellement consommées
+   par le site (Button, Field) pour régénérer leurs classes utilitaires de
+   marque (bg-brand-accent, …). PageShell est volontairement hors scope ici :
+   il n'est utilisé que par les autres apps. */
+@source "../../../packages/ui/src/components/Button.tsx";
+@source "../../../packages/ui/src/components/Field.tsx";
 
 /* ===========================
    Styles globaux

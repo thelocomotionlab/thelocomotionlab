@@ -1,4 +1,4 @@
-// components/ui/Button.jsx
+// packages/ui/src/components/Button.tsx
 //
 // Bouton atomique du design system.
 // Variantes :
@@ -6,26 +6,37 @@
 //   - secondary: contour, fond transparent
 //   - ghost    : sans fond, juste hover
 // Tailles : sm | md | lg
-// Pour les liens, passer `as="a"` ou utiliser <Link asChild> côté appelant.
+// Pour les liens, passer `as="a"` (ou un composant Link) côté appelant.
 
 import { forwardRef } from "react";
+import type { ComponentPropsWithoutRef, ElementType, Ref, ReactNode } from "react";
 
 const VARIANTS = {
-  primary:
-    "bg-brand-accent text-white shadow hover:bg-brand-primary-dark",
+  primary: "bg-brand-accent text-white shadow hover:bg-brand-primary-dark",
   secondary:
     "bg-transparent border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white",
-  ghost:
-    "bg-transparent text-brand-deep hover:bg-brand-accent/10",
-};
+  ghost: "bg-transparent text-brand-deep hover:bg-brand-accent/10",
+} as const;
 
 const SIZES = {
   sm: "px-3 py-1.5 text-sm",
   md: "px-5 py-2 text-base",
   lg: "px-6 py-3 text-base",
+} as const;
+
+type ButtonOwnProps = {
+  as?: ElementType;
+  variant?: keyof typeof VARIANTS;
+  size?: keyof typeof SIZES;
+  rounded?: "full" | "lg" | "md";
+  loading?: boolean;
+  children?: ReactNode;
 };
 
-const Button = forwardRef(function Button(
+export type ButtonProps = ButtonOwnProps &
+  Omit<ComponentPropsWithoutRef<"button">, keyof ButtonOwnProps>;
+
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   {
     as: Component = "button",
     variant = "primary",
@@ -57,7 +68,7 @@ const Button = forwardRef(function Button(
 
   return (
     <Component
-      ref={ref}
+      ref={ref as Ref<HTMLButtonElement>}
       className={classes}
       disabled={Component === "button" ? disabled || loading : undefined}
       aria-busy={loading || undefined}

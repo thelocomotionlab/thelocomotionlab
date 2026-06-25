@@ -4,22 +4,8 @@ import "./globals.css";
 import "katex/dist/katex.min.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Ubuntu, Lora } from "next/font/google";
+import { ubuntu, lora } from "@locomotionlab/ui/fonts";
 import ShareButton from "@/components/ShareButton";
-
-const ubuntu = Ubuntu({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
-  variable: "--font-ubuntu",
-  display: "swap",
-});
-
-const lora = Lora({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-lora",
-  display: "swap",
-});
 
 export const metadata = {
   title: {

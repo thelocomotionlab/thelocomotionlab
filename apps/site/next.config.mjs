@@ -3,6 +3,9 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
 
+  // Transpile la charte partagée (TS/TSX + next/font) consommée depuis le monorepo.
+  transpilePackages: ["@locomotionlab/ui"],
+
   // Autorise l'acces au dev server depuis le LAN (telephone connecte au
   // meme wifi). Sans ca, Next.js bloque les requetes HMR et chunks
   // dynamiques quand on accede via une IP autre que localhost, ce qui

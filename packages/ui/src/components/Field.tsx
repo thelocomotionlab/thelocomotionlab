@@ -1,9 +1,23 @@
-// components/ui/Field.jsx
+// packages/ui/src/components/Field.tsx
 //
 // Champ de formulaire atomique : label + input/textarea + message d'erreur.
 // Câble automatiquement htmlFor, aria-invalid et aria-describedby.
 
 import { useId } from "react";
+import type { InputHTMLAttributes, ReactNode } from "react";
+
+type FieldOwnProps = {
+  label: ReactNode;
+  as?: "input" | "textarea";
+  rows?: number;
+  error?: string;
+  hideLabel?: boolean;
+  className?: string;
+  inputClassName?: string;
+};
+
+export type FieldProps = FieldOwnProps &
+  Omit<InputHTMLAttributes<HTMLInputElement>, keyof FieldOwnProps>;
 
 export default function Field({
   label,
@@ -19,7 +33,7 @@ export default function Field({
   className = "",
   inputClassName = "",
   ...rest
-}) {
+}: FieldProps) {
   const autoId = useId();
   const fieldId = id || `${name || "field"}-${autoId}`;
   const errorId = `${fieldId}-error`;
@@ -28,7 +42,8 @@ export default function Field({
     error ? "border-red-500" : "border-gray-300"
   } ${inputClassName}`;
 
-  const sharedProps = {
+  // Spread permissif vers input/textarea (les deux partagent ces attributs).
+  const sharedProps: Record<string, any> = {
     id: fieldId,
     name,
     required,
@@ -44,11 +59,7 @@ export default function Field({
     <div className={className}>
       <label
         htmlFor={fieldId}
-        className={
-          hideLabel
-            ? "sr-only"
-            : "block text-sm font-medium mb-1"
-        }
+        className={hideLabel ? "sr-only" : "block text-sm font-medium mb-1"}
       >
         {label}
       </label>
