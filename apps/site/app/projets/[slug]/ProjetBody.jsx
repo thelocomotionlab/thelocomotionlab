@@ -8,6 +8,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 
 import remarkGfm from "remark-gfm";
@@ -85,9 +86,13 @@ export default function ProjetBody({
 
       {project.cover && (
         <div className="sm:-mx-6 lg:-mx-8 mb-6 overflow-hidden rounded-none sm:rounded-2xl shadow-card">
-          <img
+          <Image
             src={project.cover}
             alt={project.title}
+            width={1600}
+            height={900}
+            priority
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1024px"
             className="block w-full h-auto"
           />
         </div>
