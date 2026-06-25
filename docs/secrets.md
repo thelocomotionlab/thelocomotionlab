@@ -8,7 +8,8 @@
 
 | Variable | Utilisé par / où | Description | Où la définir |
 | --- | --- | --- | --- |
-| `TRACCAR_API_TOKEN` | Reverse-proxy **nginx** du VPS (`tracking.thelocomotionlab.com`, location `/api/public/`) | Bearer token de l'API Traccar, injecté dans l'en-tête `Authorization` pour exposer l'API publique sans login. Référencé dans `apps/site/notes_pratiques.txt`. | Secret du **VPS** (variable d'env du service / fichier hors-repo), injecté dans la conf nginx au déploiement (p. ex. `envsubst`). Le template de conf vivra sous `infra/`. |
+| `TRACCAR_API_TOKEN` | Reverse-proxy du VPS (`tracking.thelocomotionlab.com`, route `/api/public/`) — **nginx** aujourd'hui, **Caddy** à la bascule (`infra/caddy/conf.d/tracking.caddy`) | Bearer token de l'API Traccar, injecté dans l'en-tête `Authorization` pour exposer l'API publique sans login. Référencé dans `apps/site/notes_pratiques.txt`. | Secret du **VPS** : aujourd'hui dans la conf nginx (`envsubst`), demain dans **`infra/.env`** (non versionné) lu par Caddy via `{$TRACCAR_API_TOKEN}`. |
+| `CF_API_TOKEN` | **Caddy** sur le VPS (`infra/`), pour l'**ACME DNS-01** Cloudflare (émission/renouvellement des certificats Let's Encrypt) | Token API Cloudflare **scopé** : `Zone:DNS:Edit` + `Zone:Zone:Read` sur la zone `thelocomotionlab.com`. **Jamais** la clé globale. | **`infra/.env`** (non versionné). Création du token : [`docs/cloudflare-vps.md`](./cloudflare-vps.md) §1. |
 
 ### Pas de secret côté app web
 
