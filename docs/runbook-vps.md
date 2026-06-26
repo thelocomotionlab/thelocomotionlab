@@ -25,6 +25,7 @@
 | Étape | But | Risque | Statut |
 | --- | --- | --- | --- |
 | **0** | Réversibilité : snapshot OVH + sauvegarde Traccar + **inventaire** | nul (lecture/backup) | détaillée ci-dessous |
+| **0 bis** | **Blinder l'accès SSH** (anti-lockout cloud-init) — ⚠️ à faire **avant** le 1 | faible (mais critique) | détaillée ci-dessous |
 | **1** | Installer Docker (si absent) | faible | détaillée ci-dessous |
 | **2** | Déployer `apps/_template` en **mode validation** (ports 8080/8443) | nul pour Traccar | détaillée ci-dessous |
 | **3** | Cloudflare devant + validation HTTPS externe | nul pour Traccar | détaillée ci-dessous |
@@ -175,6 +176,57 @@ echo; echo ">>> Rapport écrit dans $OUT — colle son contenu à Claude."
 >   phase de validation).
 > - `ufw`/`iptables` → vérifier qu'on pourra **ouvrir le port 8443** (Cloudflare → origine) en phase
 >   de validation, **sans** toucher 80/443.
+
+---
+
+# Étape 0 bis — Blinder l'accès SSH (anti-lockout cloud-init) ⚠️ AVANT le reste
+
+> **Pourquoi cette étape existe (retour d'expérience).** L'image Ubuntu du VPS embarque **cloud-init**
+> configuré avec `lock_passwd: True` + module `set_passwords` (visible dans `/etc/cloud/cloud.cfg`).
+> Sur certains reboots (notamment après des cycles **rescue**), cloud-init **se ré-exécute et
+> re-verrouille le mot de passe de `ubuntu`** → `Permission denied` même avec le bon mot de passe,
+> et la clé SSH peut être réécrite. Sans accès de secours **reboot-testé**, on se retrouve **enfermé
+> dehors** (seul le **snapshot OVH** sauve). On blinde donc l'accès **avant** d'installer Docker ou de
+> rebooter.
+
+**Les 3 règles d'or (à respecter pour TOUTE opération serveur ensuite) :**
+1. **Snapshot OVH avant chaque étape risquée** (install, reboot, bascule).
+2. **Deux accès** : mot de passe (principal, de partout) **+** clé SSH (filet, depuis ton poste).
+3. **Tester un reboot après tout changement d'accès**, tant qu'on peut encore se reconnecter.
+
+```bash
+# sur le VPS (connecté en ubuntu, sudo dispo)
+
+# 1) Vérifier que le réseau est figé dans netplan (=> on peut couper cloud-init sans perdre le réseau)
+ls -la /etc/netplan/                          # doit lister 50-cloud-init.yaml
+
+# 2) Désactiver cloud-init (il ne ré-écrasera plus jamais mot de passe / clés au boot)
+sudo touch /etc/cloud/cloud-init.disabled
+
+# 3) (Re)poser le mot de passe (il PERSISTERA désormais)
+sudo passwd ubuntu
+
+# 4) Ajouter une clé SSH en FILET (en plus du mot de passe). Clé publique du poste :
+#    (sur ton poste : ssh-keygen -t ed25519  si tu n'en as pas, puis  cat ~/.ssh/id_ed25519.pub)
+mkdir -p ~/.ssh && chmod 700 ~/.ssh
+echo 'COLLE_TA_CLE_PUBLIQUE' >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+```
+
+**5) Le test de sécurité — reboot (applique aussi un éventuel noyau en attente) puis reconnexion :**
+```bash
+sudo reboot
+# attendre ~2-3 min, puis depuis le poste :
+ssh-keygen -R <IP_DU_VPS>     # purge d'éventuelles vieilles clés d'hôte (rescue)
+ssh ubuntu@<IP_DU_VPS>        # doit se reconnecter par mot de passe ET/OU clé
+```
+
+✅ Si la reconnexion passe **après ce reboot**, l'accès est blindé : cloud-init ne peut plus
+verrouiller le compte. Sinon, **restaurer le snapshot** (0.A) et recommencer.
+
+> Réactiver cloud-init un jour : `sudo rm /etc/cloud/cloud-init.disabled`. Lors d'une future
+> **réinstallation propre** du VPS, on configurera l'accès (mot de passe + clé) **dès le
+> provisionnement** — ce piège est spécifique à cette image déjà installée.
 
 ---
 
