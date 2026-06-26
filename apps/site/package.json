@@ -10,6 +10,7 @@
     "deploy:cf": "npx @cloudflare/next-on-pages && npx wrangler pages deploy .vercel/output/static --project-name=thelocomotionlab-website"
   },
   "dependencies": {
+    "@locomotionlab/tracking": "workspace:*",
     "@locomotionlab/ui": "workspace:*",
     "@tmcw/togeojson": "^7.1.2",
     "emailjs-com": "^3.2.0",
