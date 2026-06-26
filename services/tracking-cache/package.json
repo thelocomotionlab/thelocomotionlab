@@ -1,0 +1,15 @@
+{
+  "name": "@locomotionlab/tracking-cache",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Back live-tracking conteneurisé : interroge Traccar, filtre/corrige les positions, écrit live-positions.json + chrono dans un volume partagé.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "cli": "node dist/cli.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "typescript": "^5"
+  }
+}

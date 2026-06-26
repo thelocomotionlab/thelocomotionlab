@@ -1,0 +1,18 @@
+{
+  "_comment": "Paramètres NON SECRETS du back live-tracking (versionnés). Le token Traccar vient UNIQUEMENT de l'env TRACCAR_API_TOKEN (infra/.env), jamais ici. Surchargeables par variables d'env (cf. src/config.ts).",
+
+  "deviceId": 8,
+  "apiUrl": "http://host.docker.internal:8082/api",
+
+  "fetchWindowHours": 50,
+  "maxPointsPerFetch": 10000,
+  "intervalSeconds": 15,
+
+  "minDistanceThreshold": 8,
+  "minElevationPlusThreshold": 0,
+  "minElevationMinusThreshold": 1,
+
+  "samplingCorrection": 1.03,
+  "elevationPlusCorrection": 0.95,
+  "elevationMinusCorrection": 0.95
+}
