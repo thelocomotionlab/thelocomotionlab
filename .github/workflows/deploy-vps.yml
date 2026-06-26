@@ -1,6 +1,6 @@
-# Construit l'image de l'app `_template` et la pousse sur GHCR. (Le « git-push-to-deploy » de
-# l'ADR 0001.) Le déploiement sur le VPS se fait ensuite par `infra/deploy.sh` (manuel par défaut),
-# ou par le job `deploy` ci-dessous s'il est configuré (secrets SSH) — sinon il se saute proprement.
+# Construit les images conteneur du VPS et les pousse sur GHCR. (Le « git-push-to-deploy »
+# de l'ADR 0001.) Le déploiement sur le VPS se fait ensuite par `infra/deploy.sh` (manuel par
+# défaut), ou par le job `deploy` ci-dessous s'il est configuré (secrets SSH) — sinon il se saute.
 name: deploy-vps
 
 on:
@@ -8,6 +8,7 @@ on:
     branches: [main]
     paths:
       - "apps/_template/**"
+      - "services/tracking-cache/**"
       - "packages/ui/**"
       - "infra/**"
       - ".github/workflows/deploy-vps.yml"
@@ -18,11 +19,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-template:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write # pousser sur GHCR avec le GITHUB_TOKEN
+    strategy:
+      matrix:
+        include:
+          # App de test (valide la chaîne) — Next standalone.
+          - image: template
+            dockerfile: apps/_template/Dockerfile
+          # Back live-tracking conteneurisé.
+          - image: tracking-cache
+            dockerfile: services/tracking-cache/Dockerfile
     steps:
       - uses: actions/checkout@v4
 
@@ -40,7 +50,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           # github.repository_owner = thelocomotionlab (minuscule, requis par GHCR)
-          images: ghcr.io/${{ github.repository_owner }}/template
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
           tags: |
             type=raw,value=latest
             type=sha,format=short
@@ -49,18 +59,19 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: apps/_template/Dockerfile
+          file: ${{ matrix.dockerfile }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Cache séparé par image pour éviter toute collision entre les builds du matrix.
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
 
   # Déploiement SSH OPTIONNEL : inerte tant que le secret VPS_SSH_HOST n'est pas défini.
   # Pour l'activer, ajouter les secrets repo : VPS_SSH_HOST, VPS_SSH_USER, VPS_SSH_KEY,
   # VPS_INFRA_DIR (chemin du dossier infra/ sur le VPS, ex. /opt/locomotionlab/infra).
   deploy:
-    needs: build-template
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Le déploiement SSH est-il configuré ?

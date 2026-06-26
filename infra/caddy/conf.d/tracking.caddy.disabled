@@ -3,8 +3,9 @@
 #
 # Reproduit FIDÈLEMENT la conf nginx complète de tracking.thelocomotionlab.com (relevée via
 # `sudo nginx -T`). ACTIVATION = runbook étape 4 (bascule), APRÈS snapshot + sauvegarde Traccar :
-# renommer ce fichier `tracking.caddy` (par un commit), décommenter le montage /opt/traccar dans
-# infra/compose.yml, passer Caddy en 80/443, redéployer. Rollback documenté dans le runbook.
+# renommer ce fichier `tracking.caddy` (par un commit), décommenter le montage `live_json:/srv/live:ro`
+# dans infra/compose.yml (Caddy sert alors les JSON produits par le service tracking-cache), passer
+# Caddy en 80/443, redéployer. Rollback documenté dans le runbook.
 # Vérifie d'abord : `docker compose exec caddy caddy validate --config /etc/caddy/Caddyfile`.
 #
 # Différences VOULUES avec la conf nginx actuelle :
@@ -22,21 +23,23 @@
 {$TRACKING_DOMAIN} {
 	encode zstd gzip
 
-	# === Fichiers live-tracking (générés par live-cache.mjs SUR L'HÔTE, dans /opt/traccar) ===
-	# Servis en lecture seule depuis le dossier monté (compose : /opt/traccar:/srv/traccar:ro).
+	# === Fichiers live-tracking (produits par le service tracking-cache) ===
+	# Servis en lecture seule depuis le volume partagé (compose : live_json:/srv/live:ro).
+	# live-stats.json a été DÉPRÉCIÉ (plus produit, plus consommé) → on ne sert que
+	# live-positions.json (carte + profil) et live-timer.json (chrono).
 	# Lecture seule stricte (équiv. `limit_except GET { deny all; }`).
 	@livejson_notget {
-		path /live-positions.json /live-stats.json /live-timer.json
+		path /live-positions.json /live-timer.json
 		not method GET
 	}
 	handle @livejson_notget {
 		respond 403
 	}
-	@livejson path /live-positions.json /live-stats.json /live-timer.json
+	@livejson path /live-positions.json /live-timer.json
 	handle @livejson {
 		header Access-Control-Allow-Origin "*"
 		header Cache-Control "no-cache, no-store, must-revalidate"
-		root * /srv/traccar
+		root * /srv/live
 		file_server
 	}
 

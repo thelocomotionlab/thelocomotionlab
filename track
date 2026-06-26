@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#
+# track — pilotage du live-tracking depuis le VPS (pensé pour Termux en SSH).
+#
+#   ./track start    # démarre le chrono ET ouvre la fenêtre de collecte (= maintenant)
+#   ./track stop     # arrête le chrono ; la donnée reste figée (consultation / replay)
+#   ./track reset    # remet tout à zéro (chrono + cache + sortie)
+#   ./track status   # affiche l'état courant (chrono, distance, D+/D-, points…)
+#   ./track logs     # suit les logs du conteneur en direct
+#
+# Depuis ton téléphone (Termux), une seule ligne :
+#   ssh vps "cd /opt/locomotionlab && ./track start"
+# ou une fonction shell :  track() { ssh vps "cd /opt/locomotionlab && ./track $*"; }
+#
+# Le pilotage passe par le conteneur tracking-cache (aucun token requis ici :
+# la CLI ne fait que manipuler le chrono + la fenêtre dans le volume partagé).
+
+set -euo pipefail
+
+# docker compose doit tourner depuis infra/ (compose.yml + .env y vivent).
+cd "$(dirname "$0")/infra"
+
+if docker compose version >/dev/null 2>&1; then
+  DC=(docker compose)
+elif command -v docker-compose >/dev/null 2>&1; then
+  DC=(docker-compose)
+else
+  echo "ERREUR : Docker Compose introuvable. Installe Docker (cf. docs/runbook-vps.md)." >&2
+  exit 1
+fi
+
+cmd="${1:-status}"
+case "$cmd" in
+  logs)
+    shift || true
+    exec "${DC[@]}" logs -f tracking-cache "$@"
+    ;;
+  start|stop|reset|status)
+    exec "${DC[@]}" exec -T tracking-cache node dist/cli.js "$cmd"
+    ;;
+  *)
+    echo "Usage : ./track <start|stop|reset|status|logs>" >&2
+    exit 1
+    ;;
+esac

@@ -13,9 +13,13 @@ conteneurs** (reverse-proxy + apps), déployé depuis ce repo, HTTPS automatique
 ## Ce que c'est (en bref)
 
 Un seul reverse-proxy **Caddy** (HTTPS automatique via Let's Encrypt) route les sous-domaines vers
-les conteneurs d'apps. Les images d'apps sont **construites par la CI** (GitHub Actions) et poussées
-sur **GHCR** ; le VPS ne fait que les **tirer et (re)lancer** (`deploy.sh`). Traccar continue de
-tourner sur l'hôte ; Caddy le **routera** (sans le migrer) lors d'une bascule ultérieure et réversible.
+les conteneurs d'apps. Les images d'apps/services sont **construites par la CI** (GitHub Actions) et
+poussées sur **GHCR** ; le VPS ne fait que les **tirer et (re)lancer** (`deploy.sh`). Traccar continue
+de tourner sur l'hôte ; Caddy le **routera** (sans le migrer) lors d'une bascule ultérieure et réversible.
+
+Le **back live-tracking** (`services/tracking-cache`) tourne aussi en conteneur : il produit les
+`live-*.json` dans le volume `live_json` (servi par Caddy à la bascule) et se pilote par la commande
+**`./track`** (cf. [`docs/tracking-cache.md`](../docs/tracking-cache.md)).
 
 ## Organisation
 
