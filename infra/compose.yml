@@ -26,6 +26,10 @@ services:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       # Routes par sous-domaine (un fichier .caddy chacune ; *.disabled ignoré).
       - ./caddy/conf.d:/etc/caddy/conf.d:ro
+      # BASCULE (étape 4) : décommenter pour servir les live-*.json générés par live-cache.mjs
+      # sur l'hôte (lecture seule). Requis par conf.d/tracking.caddy. Montage dossier (pas fichier) :
+      # live-cache.mjs réécrit les JSON par rename atomique, qui casserait un bind-mount de fichier.
+      # - /opt/traccar:/srv/traccar:ro
       # Persiste certificats ACME + état (sinon re-émission à chaque redéploiement).
       - caddy_data:/data
       - caddy_config:/config

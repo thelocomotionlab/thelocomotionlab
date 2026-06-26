@@ -45,8 +45,11 @@ infra/
 | **Validation** (défaut) | `8080:80`, `8443:443` | **aucun** (80/443 restent à nginx) | mise en place + test du template |
 | **Bascule** | `80:80`, `443:443` | Caddy sert Traccar à la place de nginx | étape *gated* du runbook, après snapshot+backup+`nginx -T` |
 
-On bascule en éditant `HTTP_PORT`/`HTTPS_PORT` dans `.env` et en activant la route Traccar (renommer
-`conf.d/tracking.caddy.disabled` → `tracking.caddy`). Détails et rollback : runbook étape 4.
+On bascule en éditant `HTTP_PORT`/`HTTPS_PORT` dans `.env`, en activant la route Traccar (renommer
+`conf.d/tracking.caddy.disabled` → `tracking.caddy`) et en décommentant le montage `/opt/traccar`
+(lecture seule, pour servir les `live-*.json` produits par `live-cache.mjs` sur l'hôte). La route
+reproduit fidèlement nginx : UI, `/api/public/*` + Bearer (token via `.env`), CORS, 3 `live-*.json`,
+CSP. Détails et rollback : runbook étape 4.
 
 ## Déployer (sur le VPS)
 

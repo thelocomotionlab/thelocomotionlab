@@ -297,10 +297,18 @@ curl -s https://tracking.thelocomotionlab.com/api/public/server | head   # API p
 
 - [ ] **0.A** snapshot OVH **fait** et actif.
 - [ ] **0.B** sauvegarde Traccar **faite** (archive vérifiée).
-- [ ] Tu m'as envoyé `sudo nginx -T` **complet** et j'ai **finalisé** `infra/caddy/conf.d/tracking.caddy`
-      (renommé depuis `.disabled`, et reproduisant **toutes** les routes — dont `/live-positions.json`
-      et `/live-timer.json` si la conf les sert) ; tu as **`git pull`** cette version.
+- [ ] La route Traccar est **finalisée** d'après ton `nginx -T` complet (UI, `/api/public/*` + Bearer,
+      CORS + préflight 204, `Set-Cookie`/`WWW-Authenticate` masqués, les **3 `live-*.json`**, CSP) dans
+      `infra/caddy/conf.d/tracking.caddy.disabled`. ✅ **Fait** — reste à l'activer (renommer en
+      `tracking.caddy`) et à `git pull` sur le VPS.
+- [ ] **Nouveau token Traccar** régénéré (l'ancien a fuité) et placé dans `infra/.env`
+      (`TRACCAR_API_TOKEN=…`). Jamais dans le repo.
 - [ ] Fenêtre calme choisie (courte coupure possible de l'UI/API tracking pendant le `up`).
+
+> **La chaîne live-tracking reste sur l'hôte.** `live-cache.mjs` + `live-cache.timer` + tes scripts
+> `~/live-tracking/` continuent de tourner et d'écrire `/opt/traccar/live-*.json` **inchangés**.
+> Caddy ne fait que **servir** ces fichiers (montés en lecture seule). On ne touche pas à cette chaîne
+> ici (le refactor éventuel est pour une autre session).
 
 > **Validation préalable conseillée (sans coupure)** : avant de flipper 443, on peut tester le bloc
 > Traccar de Caddy sur un sous-domaine de *staging* (p. ex. `tracking-staging`, DNS proxifié + Origin
@@ -309,12 +317,21 @@ curl -s https://tracking.thelocomotionlab.com/api/public/server | head   # API p
 
 ### 4.1 — Activer la route Traccar et passer Caddy en 80/443
 
+L'activation se fait **par un commit** (pas d'édition à la main sur le serveur) : je renomme
+`conf.d/tracking.caddy.disabled` → `conf.d/tracking.caddy` et je décommente le montage `/opt/traccar`
+dans `infra/compose.yml`. Côté VPS, tu n'as qu'à `git pull` puis régler `.env` :
+
 ```bash
 # sur le VPS, dans /opt/locomotionlab
-git pull                          # récupère tracking.caddy finalisé (renommé depuis .disabled)
+git pull                          # récupère tracking.caddy activé + le montage /opt/traccar
 cd infra
-nano .env                         # renseigne TRACCAR_API_TOKEN ; passe HTTP_PORT=80 / HTTPS_PORT=443
+nano .env                         # renseigne le NOUVEAU TRACCAR_API_TOKEN ; passe HTTP_PORT=80 / HTTPS_PORT=443
 ```
+
+> Le montage `- /opt/traccar:/srv/traccar:ro` (dans `compose.yml`) donne à Caddy un accès **lecture
+> seule** aux `live-*.json`. Il expose aussi le reste de `/opt/traccar` (base H2, `live-cache.config.json`)
+> en RO au conteneur : Caddy ne sert QUE les 3 routes `live-*.json` déclarées, mais un futur refactor
+> gagnerait à déplacer ces JSON dans un sous-dossier dédié (p. ex. `/opt/traccar/public/`).
 
 ### 4.2 — Libérer 80/443 de nginx, puis (re)lancer Caddy
 
@@ -336,13 +353,19 @@ standard). Referme 8443 si tu veux : `sudo ufw delete allow 8443/tcp`.
 ### 4.4 — Vérifications
 
 ```bash
-curl -I https://template.thelocomotionlab.com                         # toujours OK (443 standard)
-curl -I https://tracking.thelocomotionlab.com                         # UI Traccar via Caddy
-curl -s https://tracking.thelocomotionlab.com/api/public/server | head # API publique + token injecté
+curl -I https://template.thelocomotionlab.com                          # toujours OK (443 standard)
+curl -I https://tracking.thelocomotionlab.com                          # UI Traccar via Caddy
+curl -s https://tracking.thelocomotionlab.com/api/public/server | head  # API publique + token injecté
+# Les 3 fichiers live-tracking (servis depuis /opt/traccar, comme avant) :
+curl -s https://tracking.thelocomotionlab.com/live-positions.json | head
+curl -s https://tracking.thelocomotionlab.com/live-stats.json | head
+curl -s https://tracking.thelocomotionlab.com/live-timer.json | head
+# Et la page qui les consomme : https://www.thelocomotionlab.com (carte live) doit s'afficher.
 ```
 
-> Les **ports « device » de Traccar** (réception des balises GPS, p. ex. 5000-5150) ne passent **pas**
-> par nginx ni Caddy : ils sont inchangés. La bascule ne concerne que le **web (443)**.
+> Les **ports « device » de Traccar** ne passent **pas** par le proxy : d'après ton inventaire, seul
+> **5055/tcp** (protocole OsmAnd) est ouvert au pare-feu pour les balises ; les autres ports `5xxx`
+> écoutent mais sont filtrés. La bascule ne concerne que le **web (443)** ; 5055 reste direct, inchangé.
 
 ### 4.5 — ROLLBACK (si quoi que ce soit cloche)
 

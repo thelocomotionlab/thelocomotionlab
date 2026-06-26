@@ -1,25 +1,46 @@
 # ⚠️ DRAFT / DÉSACTIVÉ — l'extension « .disabled » fait que Caddy N'IMPORTE PAS ce fichier.
 # Tant qu'il porte ce suffixe, Traccar reste servi par nginx (rien n'est touché).
 #
-# Cette route reproduit la conf nginx ACTUELLE de tracking.thelocomotionlab.com. Elle doit être
-# FINALISÉE d'après la sortie COMPLÈTE de `sudo nginx -T` : l'extrait connu (dans
-# apps/site/notes_pratiques.txt) est PARTIEL — le front appelle aussi /live-positions.json et
-# /live-timer.json, dont la route exacte est à confirmer avant d'activer. Valide alors la conf avec
-# `docker compose exec caddy caddy validate --config /etc/caddy/Caddyfile` (ou un staging) avant la
-# bascule.
+# Reproduit FIDÈLEMENT la conf nginx complète de tracking.thelocomotionlab.com (relevée via
+# `sudo nginx -T`). ACTIVATION = runbook étape 4 (bascule), APRÈS snapshot + sauvegarde Traccar :
+# renommer ce fichier `tracking.caddy` (par un commit), décommenter le montage /opt/traccar dans
+# infra/compose.yml, passer Caddy en 80/443, redéployer. Rollback documenté dans le runbook.
+# Vérifie d'abord : `docker compose exec caddy caddy validate --config /etc/caddy/Caddyfile`.
 #
-# ACTIVATION = runbook étape 4 (bascule), APRÈS snapshot + sauvegarde Traccar : renommer ce
-# fichier `tracking.caddy` (par un commit), passer Caddy en 80/443, redéployer. Rollback documenté.
+# Différences VOULUES avec la conf nginx actuelle :
+#   • le token n'est plus EN DUR : il vient de {$TRACCAR_API_TOKEN} (infra/.env, non versionné) ;
+#   • à régénérer côté Traccar (l'ancien a fuité / est expiré).
 #
-# Équivalences nginx → Caddy :
+# Rappels d'équivalence nginx → Caddy :
 #   • Caddy préserve le Host entrant et pose X-Forwarded-For/Proto/Host par défaut
 #     (≈ proxy_set_header Host $host / X-Real-IP / X-Forwarded-For) ;
-#   • la redirection HTTP→HTTPS (nginx `error_page 497`) est automatique chez Caddy.
+#   • la redirection HTTP→HTTPS (nginx `error_page 497`) est automatique chez Caddy ;
+#   • nginx n'hérite PAS des add_header de niveau serveur dans une location qui a ses propres
+#     add_header → on applique donc la CSP UNIQUEMENT à l'UI, et la CORS uniquement aux routes API
+#     / live-json, comme l'effet réel de la conf nginx.
 
 {$TRACKING_DOMAIN} {
 	encode zstd gzip
 
-	# 1) Préflight CORS sur l'API publique → 204 immédiat (équiv. `if ($request_method = OPTIONS)`).
+	# === Fichiers live-tracking (générés par live-cache.mjs SUR L'HÔTE, dans /opt/traccar) ===
+	# Servis en lecture seule depuis le dossier monté (compose : /opt/traccar:/srv/traccar:ro).
+	# Lecture seule stricte (équiv. `limit_except GET { deny all; }`).
+	@livejson_notget {
+		path /live-positions.json /live-stats.json /live-timer.json
+		not method GET
+	}
+	handle @livejson_notget {
+		respond 403
+	}
+	@livejson path /live-positions.json /live-stats.json /live-timer.json
+	handle @livejson {
+		header Access-Control-Allow-Origin "*"
+		header Cache-Control "no-cache, no-store, must-revalidate"
+		root * /srv/traccar
+		file_server
+	}
+
+	# === Préflight CORS de l'API publique → 204 immédiat (équiv. `if ($request_method = OPTIONS)`) ===
 	@public_options {
 		method OPTIONS
 		path /api/public/*
@@ -35,9 +56,9 @@
 		respond 204
 	}
 
-	# 2) API publique sans login : /api/public/* → Traccar /api/* + Bearer injecté + CORS.
-	#    `uri replace` = équiv. direct de `rewrite ^/api/public/(.*)$ /api/$1`.
-	#    `-Set-Cookie` / `-WWW-Authenticate` = équiv. de `proxy_hide_header`.
+	# === API publique sans login : /api/public/* → Traccar /api/* (Bearer injecté + CORS) ===
+	# `uri replace` = équiv. de `rewrite ^/api/public/(.*)$ /api/$1`.
+	# `-Set-Cookie` / `-WWW-Authenticate` = équiv. de `proxy_hide_header`.
 	@public path /api/public/*
 	handle @public {
 		uri replace /api/public/ /api/
@@ -54,8 +75,9 @@
 		}
 	}
 
-	# 3) Reste : interface Traccar (login requis) → :8082 (équiv. `location /`).
+	# === Interface Traccar (login requis) + CSP (équiv. add_header serveur hérité par `location /`) ===
 	handle {
+		header Content-Security-Policy "default-src 'self'; connect-src 'self' data: blob: https://tile.openstreetmap.org https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org; img-src 'self' data: blob: https://tile.openstreetmap.org https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org; media-src 'self' data: blob: https://tile.openstreetmap.org https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org; worker-src 'self' blob:; child-src 'self' blob:; frame-src 'self' blob:; style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net;"
 		reverse_proxy host.docker.internal:8082
 	}
 }
