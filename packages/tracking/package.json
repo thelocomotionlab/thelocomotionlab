@@ -1,0 +1,27 @@
+{
+  "name": "@locomotionlab/tracking",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@tmcw/togeojson": "^7.1.2",
+    "lucide-react": "^0.554.0",
+    "maplibre-gl": "^5.13.0",
+    "recharts": "^3.4.1"
+  },
+  "peerDependencies": {
+    "react": ">=19",
+    "react-dom": ">=19"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5"
+  }
+}

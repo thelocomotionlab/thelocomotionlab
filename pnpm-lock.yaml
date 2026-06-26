@@ -60,6 +60,9 @@ importers:
 
   apps/site:
     dependencies:
+      '@locomotionlab/tracking':
+        specifier: workspace:*
+        version: link:../../packages/tracking
       '@locomotionlab/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -181,6 +184,37 @@ importers:
       tailwindcss:
         specifier: ^4.1.17
         version: 4.3.1
+
+  packages/tracking:
+    dependencies:
+      '@tmcw/togeojson':
+        specifier: ^7.1.2
+        version: 7.1.2
+      lucide-react:
+        specifier: ^0.554.0
+        version: 0.554.0(react@19.2.0)
+      maplibre-gl:
+        specifier: ^5.13.0
+        version: 5.24.0
+      react:
+        specifier: '>=19'
+        version: 19.2.0
+      react-dom:
+        specifier: '>=19'
+        version: 19.2.0(react@19.2.0)
+      recharts:
+        specifier: ^3.4.1
+        version: 3.9.0(@types/react@19.2.17)(react-dom@19.2.0(react@19.2.0))(react-is@16.13.1)(react@19.2.0)(redux@5.0.1)
+    devDependencies:
+      '@types/react':
+        specifier: ^19
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.3(@types/react@19.2.17)
+      typescript:
+        specifier: ^5
+        version: 5.9.3
 
   packages/ui:
     dependencies:
