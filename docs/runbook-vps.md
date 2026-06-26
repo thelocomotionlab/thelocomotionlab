@@ -27,7 +27,7 @@
 | **0** | Réversibilité : snapshot OVH + sauvegarde Traccar + **inventaire** | nul (lecture/backup) | détaillée ci-dessous |
 | **0 bis** | **Blinder l'accès SSH** (anti-lockout cloud-init) — ⚠️ à faire **avant** le 1 | faible (mais critique) | détaillée ci-dessous |
 | **1** | Installer Docker (si absent) | faible | détaillée ci-dessous |
-| **2** | Déployer `apps/_template` en **mode validation** (ports 8080/8443) | nul pour Traccar | détaillée ci-dessous |
+| **2** | Déployer `apps/_template` en **mode validation** (ports 8081/8443) | nul pour Traccar | détaillée ci-dessous |
 | **3** | Cloudflare devant + validation HTTPS externe | nul pour Traccar | détaillée ci-dessous |
 | **4** | **Bascule Traccar** derrière Caddy (80/443) | **IMPACT PROD** — *gated* | détaillée ci-dessous |
 
@@ -261,7 +261,7 @@ docker version && docker compose version
 
 # Étape 2 — Déployer `apps/_template` en mode VALIDATION (Traccar intact)
 
-But : Caddy sur **8080/8443** (nginx garde 80/443) + le conteneur `template`. **Rien ne touche
+But : Caddy sur **8081/8443** (nginx garde 80/443) + le conteneur `template`. **Rien ne touche
 Traccar.**
 
 ### 2.1 — Récupérer l'infra (le repo) sur le VPS
@@ -291,7 +291,9 @@ Puis rends le **package GHCR lisible** par le VPS :
 ```bash
 # sur le VPS, dans /opt/locomotionlab/infra
 cp .env.example .env
-nano .env       # renseigne CF_API_TOKEN + ACME_EMAIL ; laisse HTTP_PORT=8080 / HTTPS_PORT=8443
+nano .env       # CF_API_TOKEN + ACME_EMAIL ; HTTP_PORT=8081 / HTTPS_PORT=8443
+                # ⚠️ vérifie que les ports sont LIBRES : sudo ss -tlnp | grep -E ':(8081|8443)\b'
+                #    (8080 est pris par code-server sur ce VPS — d'où 8081)
                 # (CF_API_TOKEN = token DNS-01, cf. docs/cloudflare-vps.md §1)
 
 # Ouvre le port 8443 entrant (pour que Cloudflare joigne l'origine). Si ufw est actif :
@@ -427,7 +429,7 @@ cd /opt/locomotionlab/infra
 docker compose down
 sudo systemctl enable --now nginx
 systemctl status nginx --no-pager
-# 2) (si besoin) relancer Caddy en mode validation : remets HTTP_PORT=8080 / HTTPS_PORT=8443 dans .env
+# 2) (si besoin) relancer Caddy en mode validation : remets HTTP_PORT=8081 / HTTPS_PORT=8443 dans .env
 #    puis ./deploy.sh, et rétablis l'Origin Rule 8443 côté Cloudflare.
 ```
 
