@@ -1,16 +1,16 @@
-# ⚠️ DRAFT / DÉSACTIVÉ — l'extension « .disabled » fait que Caddy N'IMPORTE PAS ce fichier.
-# Tant qu'il porte ce suffixe, Traccar reste servi par nginx (rien n'est touché).
+# Route Traccar de tracking.thelocomotionlab.com (ACTIVE).
 #
-# Reproduit FIDÈLEMENT la conf nginx complète de tracking.thelocomotionlab.com (relevée via
-# `sudo nginx -T`). ACTIVATION = runbook étape 4 (bascule), APRÈS snapshot + sauvegarde Traccar :
-# renommer ce fichier `tracking.caddy` (par un commit), décommenter le montage `live_json:/srv/live:ro`
-# dans infra/compose.yml (Caddy sert alors les JSON produits par le service tracking-cache), passer
-# Caddy en 80/443, redéployer. Rollback documenté dans le runbook.
-# Vérifie d'abord : `docker compose exec caddy caddy validate --config /etc/caddy/Caddyfile`.
+# Reproduit FIDÈLEMENT la conf nginx complète (relevée via `sudo nginx -T`). Caddy sert :
+#   • l'UI Traccar (proxy vers l'hôte :8082) ;
+#   • /api/public/* (réécriture /api/ + Bearer injecté + CORS) ;
+#   • les live-*.json depuis le volume partagé /srv/live (produits par tracking-cache).
+# Prend effet quand Caddy tourne en 80/443 (cf. runbook étape 4) et que le montage
+# `live_json:/srv/live:ro` est actif dans infra/compose.yml.
+# Vérif config : `docker compose exec caddy caddy validate --config /etc/caddy/Caddyfile`.
 #
-# Différences VOULUES avec la conf nginx actuelle :
+# Différences VOULUES avec l'ancienne conf nginx :
 #   • le token n'est plus EN DUR : il vient de {$TRACCAR_API_TOKEN} (infra/.env, non versionné) ;
-#   • à régénérer côté Traccar (l'ancien a fuité / est expiré).
+#   • live-stats.json n'est plus servi (déprécié, plus produit, plus consommé).
 #
 # Rappels d'équivalence nginx → Caddy :
 #   • Caddy préserve le Host entrant et pose X-Forwarded-For/Proto/Host par défaut

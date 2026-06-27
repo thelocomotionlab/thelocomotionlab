@@ -26,10 +26,10 @@ services:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       # Routes par sous-domaine (un fichier .caddy chacune ; *.disabled ignoré).
       - ./caddy/conf.d:/etc/caddy/conf.d:ro
-      # BASCULE (runbook étape 4) : décommenter pour que Caddy serve les live-*.json
-      # produits par le service tracking-cache (volume partagé, lecture seule).
-      # Requis par conf.d/tracking.caddy (root * /srv/live).
-      # - live_json:/srv/live:ro
+      # BASCULE (runbook étape 4) : Caddy sert les live-*.json produits par le
+      # service tracking-cache (volume partagé, lecture seule). Requis par
+      # conf.d/tracking.caddy (root * /srv/live).
+      - live_json:/srv/live:ro
       # Persiste certificats ACME + état (sinon re-émission à chaque redéploiement).
       - caddy_data:/data
       - caddy_config:/config
