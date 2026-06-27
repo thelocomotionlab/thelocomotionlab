@@ -28,8 +28,13 @@ ENV DATA_DIR=/data
 COPY --from=build /repo/services/tracking-cache/dist ./dist
 COPY --from=build /repo/services/tracking-cache/tracking.config.json ./tracking.config.json
 
-# Le volume partagé (live-*.json) est monté ici par compose.
-VOLUME ["/data"]
+# Point de montage du volume partagé (live-*.json) : on le crée et on le donne à
+# l'utilisateur `node` AVANT de dropper les privilèges. Un volume nommé VIDE hérite
+# des permissions du dossier de l'image à sa création → le conteneur (USER node)
+# peut y écrire. Sans ça : EACCES sur /data (root-owned par défaut).
+# (Pas de `VOLUME ["/data"]` : compose monte le volume nommé explicitement, et
+# l'instruction VOLUME jetterait justement ce chown.)
+RUN mkdir -p /data && chown node:node /data
 
 USER node
 # Boucle de collecte. Le contrôle (start/stop/reset/status) se fait via
