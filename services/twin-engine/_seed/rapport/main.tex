@@ -1,0 +1,416 @@
+% =============================================================================
+%  Plan de pacing — Nice by UTMB 100M — module Locomotion Twin
+%  Compiler : latexmk -xelatex main.tex   (XeLaTeX + biber)
+% =============================================================================
+\documentclass{locomotionreport}
+
+\renewcommand{\LLCoverLogoPath}{assets/logo_primary_deep}
+\renewcommand{\LLHeaderLogoPath}{assets/logo_full_white}
+
+\input{math.tex}
+\addbibresource{references.bib}
+
+% --- macros légères propres à ce rapport ---
+\newcommand{\Deq}{D_{\mathrm{eq}}}
+\newcommand{\kmh}{\,km\,h\textsuperscript{-1}}
+\newcommand{\VC}{\mathrm{VC}}
+
+\title{Plan de pacing personnalis\'e}
+\subtitle{Nice C\^ote d'Azur by UTMB\textsuperscript{\textregistered} \textperiodcentered{} 100M \textperiodcentered{} 165\,km \textperiodcentered{} 8\,900\,m\,D+ \textperiodcentered{} 25 septembre 2026}
+\author{The Locomotion Lab}
+\date{24 juin 2026}
+\reporttype{Rapport d'analyse \textperiodcentered{} prototype}
+\reportref{LL-TWIN-2026-001}
+\reportversion{v0.9}
+\reportclient{Valentin \textperiodcentered{} coureur}
+
+\begin{document}
+
+\makecover
+
+\begin{llabstract}
+Ce rapport construit un \textbf{plan d'allure individualis\'e} pour le 100M du Nice C\^ote d'Azur by UTMB\textsuperscript{\textregistered}
+(165\,km, 8\,900\,m\,D+) \`a partir de deux sources : la trace GPX du parcours et 449~fichiers d'entra\^inement issus
+de votre montre Coros (18~mois, du 6~janvier~2025 au 22~juin~2026). La cha\^ine \emph{Locomotion Twin} estime votre
+profil physiologique --- vitesse critique, exposant d'endurance, durabilit\'e --- puis le confronte au co\^ut \'energ\'etique
+de la pente le long du parcours pour pr\'edire un temps d'arriv\'ee et r\'epartir l'effort entre les seize ravitaillements.
+La pr\'ediction centrale est de \textbf{30\,h\,24} (intervalle 80\,\% : 29\,h\,36 -- 31\,h\,18). La m\'ethode est valid\'ee
+\emph{hors \'echantillon} sur vos propres ultras, avec une erreur moyenne de \textbf{2,8\,\%}.
+\keywords{pacing \textperiodcentered{} ultra-trail \textperiodcentered{} vitesse critique \textperiodcentered{} durabilit\'e \textperiodcentered{} incertitude}
+\end{llabstract}
+
+\LLtoc
+\clearpage
+
+% =====================================================================
+\section{Synth\`ese}
+
+Ce document est un \emph{prototype} de rapport client produit par le module \emph{Locomotion Twin}. Il r\'epond \`a une
+question simple --- \,\guillemotleft\,\`a quelle allure courir le 100M, kilom\`etre par kilom\`etre, pour aller au bout
+dans les meilleures conditions\,\guillemotright\, --- en s'appuyant uniquement sur des donn\'ees mesur\'ees et des
+mod\`eles physiologiques publi\'es. Aucune valeur n'est \og~au jug\'e~\fg : chaque chiffre d\'ecoule de vos fichiers
+d'entra\^inement ou de la trace officielle.
+
+\begin{llnote}[L'essentiel]
+\textbf{Temps d'arriv\'ee pr\'edit : 30\,h\,24}, soit une arriv\'ee le \textbf{samedi vers 19\,h\,23} pour un d\'epart
+le vendredi 25~septembre \`a 13\,h\,00. Intervalle de confiance \`a 80\,\% : \textbf{29\,h\,36 -- 31\,h\,18}.
+La barri\`ere horaire (50\,h) laisse une marge consid\'erable.
+\\[2pt]
+\textbf{Intensit\'e cible : $\approx$\,63\,\% de votre vitesse critique}, soutenue avec une d\'erive ma\^itris\'ee
+($-15\,\%$ entre le d\'ebut et la fin). \`A cette intensit\'e, le facteur limitant n'est pas la \og~r\'eserve
+ana\'erobie\,\fg\ mais la \textbf{durabilit\'e} (l'usure progressive) et le \textbf{ravitaillement}.
+\\[2pt]
+\textbf{Une seule nuit} de course pour le sc\'enario m\'edian : frontale n\'ecessaire du \textbf{km\,38 (ven. 19\,h\,45)}
+au \textbf{km\,94 (sam. 7\,h\,06)} environ.
+\end{llnote}
+
+Les trois piliers du raisonnement sont d\'evelopp\'es ci-dessous : (i)~le parcours et son co\^ut, (ii)~votre jumeau
+num\'erique issu des donn\'ees, (iii)~la pr\'ediction, sa validation, puis le plan segment par segment. Les limites
+sont \'enonc\'ees franchement en fin de rapport : un plan n'est utile que si l'on sait \emph{ce qu'il ne capture pas}.
+
+% =====================================================================
+\section{Le parcours et ses exigences}
+
+\subsection{Donn\'ees officielles}
+Le 100M relie \textbf{Auron} \`a la \textbf{Promenade des Anglais} \`a Nice. Les caract\'eristiques officielles sont
+de 165\,km pour 8\,900\,m de d\'enivel\'e positif, d\'epart le vendredi 25~septembre~2026 \`a 13\,h\,00, barri\`ere
+horaire de 50~heures, point culminant au lac de Rabuons \`a plus de 2\,650\,m~\cite{niceutmb}. C'est une course de
+\og~haute montagne\,\fg\ en premi\`ere moiti\'e, puis une longue descente vers la mer.
+
+\subsection{Le profil r\'eel issu de votre trace}
+La trace GPX fournie compte 6\,077~points. Apr\`es lissage de l'altim\'etrie (fen\^etre glissante de 150\,m,
+calibr\'ee pour reproduire le d\'enivel\'e officiel), on obtient un d\'enivel\'e de \textbf{8\,874\,m\,D+} et
+\textbf{10\,461\,m\,D--} : la course \emph{descend} davantage qu'elle ne monte (d\'epart \`a 1\,591\,m, arriv\'ee
+\`a 6\,m). La distance mesur\'ee en 3D (165,8\,km) co\"incide avec l'annonce officielle ; les rep\`eres kilom\'etriques
+ci-apr\`es sont align\'es sur le carnet de route (arriv\'ee km\,167,2).
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{figures/profil.png}
+  \caption{Profil altim\'etrique liss\'e. Points dor\'es : les seize ravitaillements. La grande bosse initiale
+  (Auron \(\rightarrow\) Rabuons) concentre l'essentiel de la difficult\'e verticale ; la seconde moiti\'e encha\^ine
+  les \og~quatre monts\,\fg\ avant la mer.}
+  \label{fig:profil}
+\end{figure}
+
+\subsection{Le co\^ut de la pente : la distance \'equivalente}
+Courir n'a pas le m\^eme co\^ut \`a plat et en c\^ote. On le quantifie par le \textbf{co\^ut \'energ\'etique de la
+course} \(C_r\) en fonction de la pente \(i\), mesur\'e exp\'erimentalement par Minetti et~al.~\cite{minetti2002} :
+\begin{equation}
+C_r(i) = 155{,}4\,i^5 - 30{,}4\,i^4 - 43{,}3\,i^3 + 46{,}3\,i^2 + 19{,}5\,i + 3{,}6,
+\label{eq:minetti}
+\end{equation}
+o\`u \(C_r\) est en J\,kg\textsuperscript{-1}\,m\textsuperscript{-1} et vaut 3,6 \`a plat. Le rapport \(f(i)=C_r(i)/3{,}6\)
+indique \og~combien de m\`etres \`a plat co\^ute un m\`etre de pente \(i\)\,\fg. En int\'egrant \(f\) le long du parcours,
+on obtient sa \textbf{distance \'equivalente \`a plat} :
+\begin{equation}
+\Deq = \int_0^{L} f\big(i(x)\big)\,\mathrm{d}x \;\approx\; \textbf{200,1\,km}.
+\label{eq:deq}
+\end{equation}
+Autrement dit, ces 167\,km de montagne \og~co\^utent\,\fg\ comme \textbf{200\,km \`a plat}. C'est cette grandeur,
+et non la distance brute, qui gouverne le temps de course.
+
+\subsection{D\'ecoupage par ravitaillements}
+Le tableau~\ref{tab:demande} d\'etaille la demande de chacun des seize segments. Deux ressortent nettement :
+le \textbf{segment\,2} (km\,8,1\,\(\rightarrow\)\,16,5), montée de 1\,303\,m vers Rabuons \`a \(+15{,}9\,\%\) de moyenne ;
+et le \textbf{segment\,4} (km\,28,9\,\(\rightarrow\)\,38), descente \og~sauvage et technique\,\fg\ de 1\,757\,m \`a
+\(-18{,}9\,\%\). La figure~\ref{fig:demande} visualise cette r\'epartition.
+
+\begin{table}[ht]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4.5pt}
+  \LLzebra
+  \renewcommand{\arraystretch}{1.32}
+  \begin{tabular}{@{}clrrrrrr@{}}
+    \LLheaderrow
+    \LLthead{\#} & \LLthead{Ravitaillement} & \LLthead{dist.} & \LLthead{D+} & \LLthead{D--} & \LLthead{$\Deq$} & \LLthead{pente} & \LLthead{alt. fin} \\
+     & & \footnotesize(km) & \footnotesize(m) & \footnotesize(m) & \footnotesize(km) & \footnotesize(\%) & \footnotesize(m) \\
+1 & R1 \textperiodcentered{} km\,8,1 & \LLnum{8,1} & \LLnum{215} & \LLnum{656} & \LLnum{7,7} & \LLnum{-5,6} & \LLnum{1152} \\
+2 & R2 \textperiodcentered{} km\,16,5 & \LLnum{8,4} & \LLnum{1303} & \LLnum{19} & \LLnum{18,0} & \LLnum{15,9} & \LLnum{2436} \\
+3 & R3 \textperiodcentered{} km\,28,9 & \LLnum{12,4} & \LLnum{692} & \LLnum{608} & \LLnum{15,0} & \LLnum{0,7} & \LLnum{2521} \\
+4 & R4 \textperiodcentered{} km\,38 & \LLnum{9,1} & \LLnum{108} & \LLnum{1757} & \LLnum{7,2} & \LLnum{-18,9} & \LLnum{872} \\
+5 & R5 \textperiodcentered{} km\,50,1 & \LLnum{12,1} & \LLnum{612} & \LLnum{788} & \LLnum{15,2} & \LLnum{-1,3} & \LLnum{695} \\
+6 & R6 \textperiodcentered{} km\,63,7 & \LLnum{13,6} & \LLnum{807} & \LLnum{953} & \LLnum{16,3} & \LLnum{-1,2} & \LLnum{549} \\
+7 & R7 \textperiodcentered{} km\,68,4 & \LLnum{4,7} & \LLnum{453} & \LLnum{59} & \LLnum{7,6} & \LLnum{8,6} & \LLnum{942} \\
+8 & R8 \textperiodcentered{} km\,83,5 & \LLnum{15,1} & \LLnum{1048} & \LLnum{748} & \LLnum{19,9} & \LLnum{2,0} & \LLnum{1242} \\
+9 & R9 \textperiodcentered{} km\,93,8 & \LLnum{10,3} & \LLnum{868} & \LLnum{250} & \LLnum{16,1} & \LLnum{6,1} & \LLnum{1861} \\
+10 & R10 \textperiodcentered{} km\,109,8 & \LLnum{16,0} & \LLnum{267} & \LLnum{1367} & \LLnum{13,6} & \LLnum{-7,1} & \LLnum{761} \\
+11 & R11 \textperiodcentered{} km\,121,8 & \LLnum{12,0} & \LLnum{491} & \LLnum{682} & \LLnum{12,8} & \LLnum{-1,6} & \LLnum{570} \\
+12 & R12 \textperiodcentered{} km\,128,3 & \LLnum{6,5} & \LLnum{855} & \LLnum{188} & \LLnum{12,3} & \LLnum{10,6} & \LLnum{1237} \\
+13 & R13 \textperiodcentered{} km\,140,4 & \LLnum{12,1} & \LLnum{196} & \LLnum{1056} & \LLnum{9,7} & \LLnum{-7,2} & \LLnum{376} \\
+14 & R14 \textperiodcentered{} km\,147,4 & \LLnum{7,0} & \LLnum{249} & \LLnum{539} & \LLnum{7,0} & \LLnum{-4,3} & \LLnum{87} \\
+15 & R15 \textperiodcentered{} km\,156,5 & \LLnum{9,1} & \LLnum{537} & \LLnum{242} & \LLnum{11,8} & \LLnum{3,3} & \LLnum{382} \\
+16 & Arriv\'ee \textperiodcentered{} km\,167,2 & \LLnum{10,7} & \LLnum{173} & \LLnum{549} & \LLnum{9,9} & \LLnum{-3,6} & \LLnum{6} \\
+  \end{tabular}
+  \caption{Demande de chaque segment inter-ravitaillement (g\'eom\'etrie issue de la trace). \(\Deq\) : distance
+  \'equivalente \`a plat ; \og~pente\,\fg\ : pente moyenne sign\'ee.}
+  \label{tab:demande}
+\end{table}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{figures/demande.png}
+  \caption{Demande verticale (haut) et distance r\'eelle vs \'equivalent plat (bas) par segment. L'\'ecart entre
+  les deux barres du bas mesure la \og~taxe\,\fg\ de la pente.}
+  \label{fig:demande}
+\end{figure}
+
+% =====================================================================
+\section{Votre jumeau num\'erique}
+
+Le \emph{jumeau} est un r\'esum\'e chiffr\'e de vos capacit\'es, extrait de vos donn\'ees. Sur les 449~activit\'es
+fournies, \textbf{419 courses \`a pied} exploitables ont \'et\'e retenues : 532~jours couverts, 4\,957\,km bruts
+(5\,621\,km en \'equivalent plat), 741~heures, soit environ 66\,km par semaine. C'est un volume d'ultra solide,
+en phase de construction au moment de l'export (pic r\'ecent \`a 130\,km \'equivalents en juin).
+
+\subsection{Comment vos 18~mois de donn\'ees sont utilis\'es}
+Toutes les sorties ne servent pas \`a la m\^eme chose. C'est le c\oe ur de la m\'ethode :
+\begin{itemize}[leftmargin=1.4em]
+\item \textbf{Le gros du volume} (sorties faciles et mod\'er\'ees, l'immense majorit\'e) ne renseigne pas votre
+\emph{plafond} : il nourrit l'estimation de votre \textbf{endurance de base} et surtout de votre \textbf{durabilit\'e}
+(votre capacit\'e \`a ne pas vous d\'egrader avec les heures).
+\item \textbf{Les rares efforts quasi maximaux} (tempos, c\^otes dures, fins de course rapides) peuplent la
+\og~courbe record\,\fg\ et fixent votre \textbf{vitesse critique}.
+\item \textbf{Les sorties les plus longues} --- vos ultras --- jouent un r\^ole \`a part : elles sondent des dur\'ees
+introuvables \`a l'entra\^inement court et servent \`a \textbf{calibrer la queue longue} du mod\`ele et la durabilit\'e.
+Ce sont elles qui ancrent la pr\'ediction du 100M (partie~\ref{sec:pred}).
+\end{itemize}
+
+\subsection{Vitesse critique et courbe record}
+Pour comparer des efforts men\'es sur des terrains diff\'erents, chaque seconde de course est convertie en
+\textbf{vitesse \'equivalente \`a plat} via le m\^eme co\^ut de pente~\eqref{eq:minetti}. On extrait alors, pour chaque
+dur\'ee, votre meilleure performance : c'est la \emph{courbe record} (figure~\ref{fig:record}). Le mod\`ele de la
+\textbf{vitesse critique}~\cite{poole2016,jones2017} ajuste la relation distance--temps \(d = \VC\cdot t + D'\), o\`u
+\(\VC\) est la fronti\`ere d'effort soutenable et \(D'\) une r\'eserve. Sur vos efforts plats \og~propres\,\fg\ (o\`u
+l'ajustement de pente est fiable), on obtient :
+\begin{equation}
+\boxed{\;\VC = 2{,}91\;\text{m\,s}^{-1} \;=\; 10{,}5\kmh \;=\; 5\!:\!43\,\text{/km}\quad(\pm\,0{,}12)\;}
+\end{equation}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{figures/record.png}
+  \caption{Courbe record ajust\'ee \`a la pente. En terracotta, les efforts plats propres servant \`a estimer la
+  vitesse critique ; en gris, les points courts (non utilis\'es, voir encadr\'e) ; losanges verts, vos vrais ultras :
+  ils se situent tr\`es en dessous de la vitesse critique, l\`a o\`u se court un 100M.}
+  \label{fig:record}
+\end{figure}
+
+\begin{llattention}[Une honn\^etet\'e m\'ethodologique]
+Sur sentier, les efforts \emph{courts} (moins de 30\,min) ne permettent pas d'estimer proprement la vitesse critique :
+ils sont presque toujours men\'es en c\^ote, et l'ajustement de pente --- valable en r\'egime a\'erobie --- surestime
+alors la vitesse \'equivalente d'un effort bref limit\'e par la puissance musculaire. Ces points (en gris) sont donc
+\textbf{\'ecart\'es}. Ce n'est pas g\^enant ici : un 100M se court tr\`es loin sous la vitesse critique, o\`u ce qui
+compte est l'endurance et la durabilit\'e, pas la r\'eserve ana\'erobie.
+\end{llattention}
+
+\subsection{Exposant d'endurance et durabilit\'e}
+Deux param\`etres ach\`event le portrait. L'\textbf{exposant d'endurance}~\cite{riegel1981,drake2024} d\'ecrit la
+vitesse de d\'eclin avec la dur\'ee ; ajust\'e sur votre enveloppe longue (30\,min \`a 6\,h), il vaut \(E \approx 1{,}22\)
+--- une valeur \'elev\'ee, typique des profils d'ultra capables de tenir longtemps une fraction \'elev\'ee de leur
+potentiel. La \textbf{durabilit\'e}~\cite{maunder2021,jones2024} se mesure par le \emph{d\'ecouplage} entre vitesse
+ajust\'ee et fr\'equence cardiaque sur vos longues sorties : votre efficacit\'e en seconde moiti\'e baisse d'environ
+\textbf{19 \`a 24\,\%} sur vos ultras de $\sim$20\,h. C'est cette d\'erive que le plan anticipe.
+
+\begin{llnote}[Le jumeau, en r\'esum\'e]
+Vitesse critique \(\VC \approx 10{,}5\kmh\) \,\textbullet\,\ r\'eserve \(D'\) faiblement contrainte (peu utile ici)
+\,\textbullet\,\ exposant d'endurance \(E\approx 1{,}22\) \,\textbullet\,\ durabilit\'e : d\'erive d'efficacit\'e
+\(\sim 20\,\%\) sur 20\,h \,\textbullet\,\ base : $\sim$66\,km/semaine sur 18~mois.
+\end{llnote}
+
+% =====================================================================
+\section{Pr\'ediction et validation}
+\label{sec:pred}
+
+\subsection{Le principe : auto-coh\'erence dur\'ee \(\leftrightarrow\) vitesse}
+Plus une course est longue, plus la vitesse soutenable baisse --- mais la dur\'ee d\'epend elle-m\^eme de cette vitesse.
+On r\'esout donc un point fixe. \`A partir de vos huit ultras r\'eellement engag\'es, on ajuste la vitesse ajustée
+moyenne de course \(v\) (en \kmh) en fonction de la dur\'ee \(T\) (heures) et de la densit\'e de d\'enivel\'e
+\(\delta\) (m\,D+ par km) :
+\begin{equation}
+v(T) = 8{,}56 - 0{,}350\,\ln T - 0{,}0148\,\delta,
+\qquad T = \Deq / v(T).
+\label{eq:reg}
+\end{equation}
+Pour le 100M (\(\Deq=200{,}1\,\)km, \(\delta=53\,\)m/km), la solution auto-coh\'erente donne une vitesse ajust\'ee
+moyenne de \textbf{6,58\kmh} et un temps de \textbf{30,4\,h}.
+
+\subsection{R\'esultat}
+La propagation de l'incertitude (r\'esidu du mod\`ele et al\'ea de course) par simulation de Monte-Carlo donne :
+\begin{equation}
+\boxed{\;T_{100M} = 30\,\text{h}\,24 \quad\text{; intervalle 80\,\% : } 29\,\text{h}\,36 - 31\,\text{h}\,18\;}
+\end{equation}
+soit une arriv\'ee m\'ediane le samedi vers 19\,h\,23. Rapport\'e \`a la barri\`ere de 50\,h, la marge est tr\`es
+confortable : l'enjeu est la \emph{qualit\'e} de la course, pas le couperet.
+
+\subsection{Validation crois\'ee : la preuve sur vos propres courses}
+Une pr\'ediction ne vaut que si elle se v\'erifie. On applique donc une validation \emph{leave-one-out} : pour chacun
+de vos huit ultras, on r\'e-estime le mod\`ele \emph{en excluant cette course}, puis on pr\'edit son temps. La
+comparaison pr\'ediction/r\'ealit\'e (figure~\ref{fig:valid}) donne une erreur moyenne de \textbf{2,8\,\%}
+(\'ecart-type 3,4\,\%) --- une fid\'elit\'e remarquable pour des dur\'ees de 10 \`a 21~heures.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.62\linewidth]{figures/validation.png}
+  \caption{Validation crois\'ee hors \'echantillon sur vos huit ultras. Chaque point est pr\'edit par un mod\`ele
+  qui ne l'a jamais \og~vu\,\fg. La quasi-totalit\'e tombe dans la bande \(\pm5\,\%\).}
+  \label{fig:valid}
+\end{figure}
+
+\begin{llexemple}
+Vos deux plus longues courses --- 124\,km/20\,h\,29 et 121\,km/21\,h\,15 --- sont pr\'edites hors \'echantillon \`a
+\textbf{+2,5\,\%} et \textbf{+2,2\,\%}. Ce sont pr\'ecis\'ement les efforts les plus proches du 100M, ce qui renforce
+la confiance dans l'extrapolation \`a 30\,h.
+\end{llexemple}
+
+% =====================================================================
+\section{Le plan de pacing, segment par segment}
+
+\subsection{Strat\'egie}
+Le principe directeur est de tenir un \textbf{effort \'energ\'etique r\'egulier} (et non une allure r\'eguli\`ere) :
+gr\^ace \`a l'ajustement de pente, viser une vitesse \'equivalente constante revient \`a d\'epenser au m\^eme rythme
+en mont\'ee, sur le plat et en descente~\cite{swain1997}. On y superpose une \textbf{d\'erive ma\^itris\'ee} de
+\(-15\,\%\) entre le d\'ebut et la fin, calibr\'ee sur votre durabilit\'e : il est normal --- et optimal --- de
+ralentir l\'eg\`erement, \`a condition que ce soit \emph{pr\'evu} et non subi. L'intensit\'e moyenne ($\approx$\,63\,\%
+de la vitesse critique) reste franchement dans le domaine soutenable.
+
+Concr\`etement : \textbf{ne pas surcourir la grande mont\'ee initiale} (segments 2--3), \textbf{marcher efficacement}
+les pentes raides (au-del\`a de $\sim$20\,\%, la marche active est plus \'economique que la course), \textbf{relancer
+sur le plat et les faux-plats} de la seconde moiti\'e, et \textbf{prot\'eger les quadriceps} dans les longues descentes.
+
+\subsection{Le plan}
+Le tableau~\ref{tab:plan} donne, pour chaque segment, la vitesse ajust\'ee cible, l'allure r\'eelle \`a l'\oe il
+(qui varie \'enorm\'ement avec la pente), le temps de mouvement, l'arr\^et pr\'evu au ravitaillement et l'heure de
+passage. La figure~\ref{fig:pacing} montre la d\'erive r\'eguli\`ere de la vitesse ajust\'ee et l'allure r\'eelle
+correspondante.
+
+\begin{table}[ht]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \LLzebra
+  \renewcommand{\arraystretch}{1.32}
+  \begin{tabular}{@{}clrrrrll@{}}
+    \LLheaderrow
+    \LLthead{\#} & \LLthead{Ravitaillement} & \LLthead{$v$ ajust.} & \LLthead{allure} & \LLthead{t.\,mvt} & \LLthead{arr\^et} & \LLthead{arriv\'ee} & \LLthead{p\'eriode} \\
+     & & \footnotesize(km/h) & \footnotesize(/km) & \footnotesize(min) & \footnotesize(min) & & \\
+1 & R1 \textperiodcentered{} km\,8,1 & \LLnum{7,57} & \LLnum{7:31} & \LLnum{61} & 5 & ven. 14:05 & jour \\
+2 & R2 \textperiodcentered{} km\,16,5 & \LLnum{7,50} & \LLnum{17:06} & \LLnum{144} & 5 & ven. 16:34 & jour \\
+3 & R3 \textperiodcentered{} km\,28,9 & \LLnum{7,40} & \LLnum{9:50} & \LLnum{122} & 5 & ven. 18:41 & jour \\
+4 & R4 \textperiodcentered{} km\,38 & \LLnum{7,33} & \LLnum{6:28} & \LLnum{59} & 5 & ven. 19:45 & \textbf{nuit} \\
+5 & R5 \textperiodcentered{} km\,50,1 & \LLnum{7,27} & \LLnum{10:23} & \LLnum{126} & 15 & ven. 22:06 & \textbf{nuit} \\
+6 & R6 \textperiodcentered{} km\,63,7 & \LLnum{7,17} & \LLnum{10:00} & \LLnum{136} & 5 & sam. 00:27 & \textbf{nuit} \\
+7 & R7 \textperiodcentered{} km\,68,4 & \LLnum{7,10} & \LLnum{13:39} & \LLnum{64} & 5 & sam. 01:36 & \textbf{nuit} \\
+8 & R8 \textperiodcentered{} km\,83,5 & \LLnum{7,02} & \LLnum{11:15} & \LLnum{170} & 5 & sam. 04:31 & \textbf{nuit} \\
+9 & R9 \textperiodcentered{} km\,93,8 & \LLnum{6,91} & \LLnum{13:31} & \LLnum{139} & 15 & sam. 07:06 & \textbf{nuit} \\
+10 & R10 \textperiodcentered{} km\,109,8 & \LLnum{6,82} & \LLnum{7:27} & \LLnum{119} & 5 & sam. 09:10 & jour \\
+11 & R11 \textperiodcentered{} km\,121,8 & \LLnum{6,75} & \LLnum{9:30} & \LLnum{114} & 5 & sam. 11:09 & jour \\
+12 & R12 \textperiodcentered{} km\,128,3 & \LLnum{6,67} & \LLnum{17:03} & \LLnum{111} & 15 & sam. 13:15 & jour \\
+13 & R13 \textperiodcentered{} km\,140,4 & \LLnum{6,61} & \LLnum{7:16} & \LLnum{88} & 5 & sam. 14:48 & jour \\
+14 & R14 \textperiodcentered{} km\,147,4 & \LLnum{6,56} & \LLnum{9:12} & \LLnum{64} & 5 & sam. 15:57 & jour \\
+15 & R15 \textperiodcentered{} km\,156,5 & \LLnum{6,50} & \LLnum{11:57} & \LLnum{109} & 5 & sam. 17:51 & jour \\
+16 & Arriv\'ee \textperiodcentered{} km\,167,2 & \LLnum{6,44} & \LLnum{8:36} & \LLnum{92} & -- & \textbf{sam. 19:23} & \textbf{nuit} \\
+  \end{tabular}
+  \caption{Plan de pacing. \emph{Allure} = allure r\'eelle moyenne sur le terrain (mont\'ees lentes, descentes rapides).
+  \emph{t.\,mvt} = temps de course du segment. Total : 28\,h\,39 de mouvement \(+\) 1\,h\,45 d'arr\^ets \(=\) 30\,h\,24.}
+  \label{tab:plan}
+\end{table}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{figures/pacing.png}
+  \caption{Vitesse ajust\'ee cible (ligne, en d\'erive contr\^ol\'ee) et allure r\'eelle par segment (barres). Les
+  barres les plus hautes sont les grosses mont\'ees (segments 2 et 12).}
+  \label{fig:pacing}
+\end{figure}
+
+\subsection{Temps de passage, horaires et nuit}
+En cumulant temps de mouvement et arr\^ets depuis le d\'epart (vendredi 13\,h\,00), on obtient les heures de passage
+et leur incertitude (figure~\ref{fig:cumul}). \`A Nice, le 25~septembre, le soleil se l\`eve \`a 7\,h\,20 et se couche
+\`a 19\,h\,24~\cite{noaa}. Le sc\'enario m\'edian implique \textbf{une seule nuit} : frontale du \textbf{km\,38}
+(ven. 19\,h\,45) au \textbf{km\,94} (sam. 7\,h\,06). En cas de course plus lente (vers 33\,h), prévoir une seconde
+frontale ou des piles de rechange pour la fin de soir\'ee du samedi.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{figures/cumul.png}
+  \caption{Temps de passage cumul\'e (m\'ediane) et intervalle \`a 80\,\%, qui s'\'elargit avec la distance. Bande
+  gris\'ee : la nuit. L'incertitude reste mod\'er\'ee gr\^ace \`a la validation sur vos ultras.}
+  \label{fig:cumul}
+\end{figure}
+
+\begin{llattention}[Les allures de descente sont des \emph{plafonds}]
+Sur les descentes raides et techniques (segments 4, 10, 13), l'allure indiqu\'ee est celle que permet votre
+\emph{m\'etabolisme} ; le \emph{terrain} (pierriers, racines, d\'enivel\'e n\'egatif sur les quadriceps) peut imposer
+plus lent, surtout en fin de course. Ne cherchez pas \`a \og~tenir\,\fg\ ces allures \`a tout prix : la trace GPX ne
+conna\^it pas la nature du sol.
+\end{llattention}
+
+% =====================================================================
+\section{Intensit\'e, r\'eserve et durabilit\'e}
+
+\`A 6,58\kmh\ de vitesse ajust\'ee pour une vitesse critique de 10,5\kmh, vous courez \`a $\approx$\,63\,\% de votre
+fronti\`ere d'effort. C'est un point important : \`a cette intensit\'e mod\'er\'ee, la \emph{r\'eserve ana\'erobie}
+(\(D'\)) n'est jamais \og~vid\'ee\,\fg\ et ne limite pas la performance --- contrairement \`a une course courte.
+Les v\'eritables facteurs limitants d'un 100M sont :
+\begin{itemize}[leftmargin=1.4em]
+\item la \textbf{durabilit\'e} : la d\'erive d'efficacit\'e ($\sim$20\,\% sur 20\,h dans vos donn\'ees) explique
+pourquoi l'allure ralentit m\^eme \`a effort constant. Le plan l'int\`egre via la d\'erive de \(-15\,\%\) ;
+\item le \textbf{ravitaillement \'energ\'etique} : sur 30~heures, le d\'eficit calorique et la gestion glucidique
+deviennent d\'eterminants. Un apport r\'egulier (de l'ordre de 60--90\,g de glucides par heure, \`a tester \`a
+l'entra\^inement) soutient l'intensit\'e cible ;
+\item la \textbf{m\'ecanique} : l'accumulation de 10\,461\,m de descente sollicite fortement les quadriceps ;
+la pr\'eparation excentrique paie sur la seconde moiti\'e.
+\end{itemize}
+
+% =====================================================================
+\section{Limites et conditions du jour}
+
+Aucun mod\`ele ne capture tout. Pour un usage responsable, voici ce que ce plan \textbf{ne sait pas} :
+
+\begin{itemize}[leftmargin=1.4em]
+\item \textbf{Votre forme le jour J est inconnue.} Les donn\'ees s'arr\^etent le 22~juin, soit $\sim$13~semaines avant
+la course. Le plan suppose que vous arrivez dans l'\'etat actuel, affût\'e. \textbf{Il doit \^etre recalcul\'e en
+septembre} avec vos donn\'ees \`a jour --- c'est la mise \`a jour la plus importante.
+\item \textbf{La technicit\'e du terrain} n'est pas dans la trace GPX : boue, pierriers, n\'ee, passages \`a la
+frontale ralentissent au-del\`a du mod\`ele.
+\item \textbf{La m\'et\'eo.} L'organisation annonce des \emph{temp\'eratures n\'egatives possibles \`a 2\,000\,m} ; la
+nuit en altitude (segments 5--9) peut \^etre froide et venteuse, tandis que la descente vers Nice peut \^etre chaude.
+Chaleur, froid et vent modifient sensiblement l'allure soutenable.
+\item \textbf{Les pentes extr\^emes} : au-del\`a de \(\pm45\,\%\), le mod\`ele de co\^ut n'est plus valide, et la
+course laisse place \`a la marche (m\'ecanique diff\'erente).
+\item \textbf{Le calibrage des arr\^ets} (1\,h\,45 au total, r\'epartis) est une hypoth\`ese ajustable : si vous
+passez plus de temps aux ravitaillements, d\'ecalez les heures d'autant (les allures de course, elles, ne changent pas).
+\end{itemize}
+
+Ces limites ne sont pas des d\'efauts cach\'es mais des bornes assum\'ees : l'incertitude annonc\'ee (intervalle \`a
+80\,\%) en tient partiellement compte, et le reste rel\`eve d'une conduite prudente le jour~J.
+
+% =====================================================================
+\section{Recommandations op\'erationnelles}
+
+\begin{enumerate}[leftmargin=1.6em]
+\item \textbf{Premi\`ere mont\'ee (R2--R3) :} brider l'effort. C'est le pi\`ege classique ; chaque minute \og~gagn\'ee\,\fg\
+ici se paie au double plus tard.
+\item \textbf{Nuit (km\,38 \(\rightarrow\) km\,94) :} frontale + r\'eserve de piles, couche chaude pour les cr\^etes
+au-dessus de 2\,000\,m.
+\item \textbf{Ravitaillement :} viser 60--90\,g de glucides/heure d\`es le d\'epart ; ne pas attendre la fringale.
+\item \textbf{Descentes :} prot\'eger les quadriceps t\^ot ; l'allure du tableau est un plafond, pas un objectif.
+\item \textbf{Barri\`eres horaires :} la marge sur 50\,h est large ; en cas de coup de moins bien, ralentir sans
+paniquer plut\^ot que de \og~cramer\,\fg\ pour rattraper un horaire.
+\item \textbf{Recalculer le plan mi-septembre} avec les donn\'ees \`a jour et, si possible, la m\'et\'eo annonc\'ee.
+\end{enumerate}
+
+% =====================================================================
+\section*{Limites de responsabilit\'e}
+\addcontentsline{toc}{section}{Limites de responsabilit\'e}
+Ce document est un prototype d'analyse \`a vis\'ee d'aide \`a la pr\'eparation sportive. Il ne constitue pas un avis
+m\'edical. Les pr\'edictions reposent sur des donn\'ees pass\'ees et des mod\`eles approximatifs ; la performance r\'eelle
+d\'epend de facteurs non mod\'elis\'es (sant\'e, m\'et\'eo, terrain, nutrition). Les valeurs et coefficients cit\'es
+proviennent de la litt\'erature r\'ef\'erenc\'ee et de vos donn\'ees ; ils gagnent \`a \^etre revus avant tout usage
+commercial.
+
+\printbibliography
+
+\end{document}
