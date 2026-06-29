@@ -18,7 +18,10 @@
 set -euo pipefail
 
 # docker compose doit tourner depuis infra/ (compose.yml + .env y vivent).
-cd "$(dirname "$0")/infra"
+# On résout le VRAI chemin du script (readlink -f) pour qu'il fonctionne depuis
+# n'importe quel dossier ET via un symlink (ex. /usr/local/bin/track → idéal Termux).
+SELF="$(readlink -f "$0")"
+cd "$(dirname "$SELF")/infra"
 
 if docker compose version >/dev/null 2>&1; then
   DC=(docker compose)
