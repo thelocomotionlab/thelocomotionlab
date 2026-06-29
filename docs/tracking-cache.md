@@ -4,6 +4,10 @@
 > Il interroge Traccar, filtre/corrige les positions, et écrit `live-positions.json` + le chrono
 > dans un **volume partagé** que Caddy sert. Pilotage par une commande unique : **`./track`**.
 >
+> 👉 **Pour l'usage complet (front + back, balises `.md`, replays, appareil émetteur, changement de
+> deviceId) : [`live-tracking-guide.md`](./live-tracking-guide.md).** Ce fichier-ci se concentre sur
+> le service back et son déploiement.
+>
 > Archi : [`CLAUDE.md`](../CLAUDE.md) · ADR : [`docs/adr/0001-deploiement-vps.md`](./adr/0001-deploiement-vps.md)
 > · Infra : [`infra/README.md`](../infra/README.md) · Runbook VPS : [`docs/runbook-vps.md`](./runbook-vps.md).
 
