@@ -14,5 +14,10 @@ local-data/
 
 # Archives d'entraînement réelles déposées pour test (perso/privé, jamais committées).
 # NB : les petits échantillons de test vivent sous tests/**/fixtures/ et sont committés
-# délibérément — on n'ignore donc PAS *.fit/*.gpx globalement, seulement ce dossier.
+# délibérément — on n'ignore donc PAS *.fit/*.gpx globalement, seulement ces dossiers.
 incoming/
+
+# Cas de validation RÉELS (archives perso Coros/Strava + traces) — données PRIVÉES
+# (positions GPS, domicile…), JAMAIS committées. C'est ici que tu déposes tes données
+# de validation, ex. _seed/cas_validation/Val_Nice_24_06_2026/.
+_seed/cas_validation/
