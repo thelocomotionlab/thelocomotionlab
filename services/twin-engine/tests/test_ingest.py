@@ -99,6 +99,22 @@ def test_directory_walk(tmp_path):
     assert len(result.activities) == 2
 
 
+def test_fit_parsing_emits_no_warnings():
+    """fit.py tait les `invalid field size` de fitdecode (sinon flood sur 449 fichiers)."""
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # toute UserWarning fuyant ferait échouer
+        result = ingest_path(FIX / "sample.fit")
+    assert len(result.activities) == 1
+
+
+def test_progress_callback_called():
+    seen = []
+    ingest_path(FIX / "strava-bulk.zip", progress=lambda n, name: seen.append((n, name)))
+    assert seen and seen[-1][0] == 3  # 3 fichiers dans le bundle
+
+
 def test_missing_hr_degrades_cleanly():
     """FC absente → has_hr False, pas de crash (la durabilité le signalera en aval)."""
     gpx_no_hr = (

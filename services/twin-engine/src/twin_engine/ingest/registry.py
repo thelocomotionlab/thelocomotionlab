@@ -14,6 +14,7 @@ import os
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Callable
 
 from .archive import decompress_gz, is_gzip, iter_zip_members, recognized, strip_gz
 from .canonical import CanonicalActivity, normalize_sport
@@ -58,11 +59,17 @@ def parse_bytes(data: bytes, name: str, *, sport_hint: str | None = None) -> Can
     return act
 
 
-def ingest_path(path: str | os.PathLike[str], *, purge_source: bool = False) -> IngestResult:
+def ingest_path(
+    path: str | os.PathLike[str],
+    *,
+    purge_source: bool = False,
+    progress: Callable[[int, str], None] | None = None,
+) -> IngestResult:
     """Ingeste un fichier, une archive ``.zip``/``.gz`` ou un dossier → :class:`IngestResult`.
 
-    Si ``purge_source`` est vrai, supprime l'entrée brute après parsing (archive/dossier
-    inclus).
+    ``progress(n, name)`` est appelé après chaque fichier traité (n = total cumulé) —
+    utile pour un indicateur sur une archive de centaines de fichiers. Si ``purge_source``
+    est vrai, supprime l'entrée brute après parsing (archive/dossier inclus).
     """
     p = Path(path)
     result = IngestResult()
@@ -70,23 +77,27 @@ def ingest_path(path: str | os.PathLike[str], *, purge_source: bool = False) -> 
     if p.is_dir():
         for f in sorted(p.rglob("*")):
             if f.is_file() and (recognized(f.name) or f.suffix.lower() == ".zip"):
-                _ingest_file(f, result)
+                _ingest_file(f, result, progress)
     else:
-        _ingest_file(p, result)
+        _ingest_file(p, result, progress)
 
     if purge_source:
         _purge(p)
     return result
 
 
-def _ingest_file(p: Path, result: IngestResult) -> None:
+def _ingest_file(p: Path, result: IngestResult, progress: Callable[[int, str], None] | None) -> None:
     suffix = p.suffix.lower()
     if suffix == ".zip":
         data = p.read_bytes()
         for base, member_bytes, hint in iter_zip_members(data):
             result._add(base, member_bytes, hint)
+            if progress:
+                progress(len(result.activities) + len(result.skipped), base)
     elif recognized(p.name):
         result._add(p.name, p.read_bytes(), None)
+        if progress:
+            progress(len(result.activities) + len(result.skipped), p.name)
     else:
         result.skipped.append({"name": p.name, "reason": "format non supporté"})
 

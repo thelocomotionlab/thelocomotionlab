@@ -22,8 +22,13 @@ from .pipeline import run_full, run_preview
 _DEFAULT_RACE = Path(__file__).resolve().parents[2] / "examples" / "nice-100m.json"
 
 
+def _progress(n: int, name: str) -> None:
+    print(f"\r  ingestion : {n} fichiers lus…", end="", file=sys.stderr, flush=True)
+
+
 def _print_summary(preview, out=None) -> None:
     out = out or sys.stderr  # résolu à l'appel (compatible capture de tests)
+    print(file=out)  # termine la ligne de progression
     suf = preview.sufficiency
     print(f"\n  Verdict de suffisance : {suf.verdict}  (vendable : {suf.sellable})", file=out)
     for c in suf.criteria:
@@ -73,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "preview":
         result = run_preview(
             training_path=args.training, course_gpx=course_gpx, race=race, cfg=cfg,
-            purge_source=args.purge,
+            purge_source=args.purge, progress=_progress,
         )
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
         _print_summary(result)
@@ -82,7 +87,7 @@ def main(argv: list[str] | None = None) -> int:
     result = run_full(
         training_path=args.training, course_gpx=course_gpx, race=race, cfg=cfg,
         out_dir=Path(args.out), athlete=args.athlete, purge_source=args.purge,
-        render_pdf=not args.no_pdf,
+        render_pdf=not args.no_pdf, progress=_progress,
     )
     _print_summary(result.preview)
     if result.pdf_path:
