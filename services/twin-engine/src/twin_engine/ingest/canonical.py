@@ -57,6 +57,19 @@ def normalize_sport(raw: str | None) -> str | None:
     return _SPORT_ALIASES.get(key, key)
 
 
+def clean_token(raw: str | None) -> str | None:
+    """Minuscule + nettoyage d'un libellé **sans le réécrire** (pas d'alias de sport).
+
+    Pour ``sub_sport`` : on veut conserver « trail »/« ultra »/« generic »/« road » tels
+    quels (utiles au diagnostic) alors que :func:`normalize_sport` les ramènerait à
+    « running ». Seul ``sport`` est aliasé ; le sous-sport reste fidèle à la source.
+    """
+    if raw is None:
+        return None
+    key = str(raw).strip().lower().replace(" ", "_")
+    return key or None
+
+
 def haversine_cumulative(lat: np.ndarray, lon: np.ndarray) -> np.ndarray:
     """Distance horizontale cumulée (m) le long d'une trace lat/lon (haversine)."""
     R = 6_371_000.0
@@ -200,7 +213,7 @@ class CanonicalActivity:
         return cls(
             start_time=start_time,
             sport=normalize_sport(sport),
-            sub_sport=normalize_sport(sub_sport) if sub_sport else None,
+            sub_sport=clean_token(sub_sport),
             source_format=source_format,
             source_name=source_name,
             t=tg,
@@ -217,5 +230,6 @@ __all__ = [
     "CANONICAL_VERSION",
     "CanonicalActivity",
     "normalize_sport",
+    "clean_token",
     "haversine_cumulative",
 ]

@@ -82,7 +82,10 @@ def test_corrupt_member_does_not_abort_archive(tmp_path):
     result = ingest_path(z)
     assert len(result.activities) == 1
     assert len(result.skipped) == 1
-    assert result.skipped[0]["name"] == "broken.gpx"
+    # nom anonymisé (la PII éventuelle du nom d'origine est effacée), extension conservée
+    name = result.skipped[0]["name"]
+    assert name.startswith("activity-") and name.endswith(".gpx")
+    assert "broken" not in name
 
 
 def test_purge_source_deletes_raw_archive(tmp_path):

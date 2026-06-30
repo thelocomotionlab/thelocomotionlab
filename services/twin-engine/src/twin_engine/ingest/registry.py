@@ -26,6 +26,22 @@ from .tcx import parse_tcx
 from .walker import walk_activity_files
 
 _PARSERS = {"fit": parse_fit, "tcx": parse_tcx, "gpx": parse_gpx}
+_ACTIVITY_EXTS = (".fit", ".tcx", ".gpx")
+
+
+def _safe_name(orig: str, idx: int) -> str:
+    """Nom anonyme ``activity-NNNNN.ext`` : **efface toute PII** du nom d'origine.
+
+    Les exports RGPD de Garmin nomment chaque fichier d'après l'e-mail de l'athlète
+    (``athlete@example.com_12345.fit``). On ne conserve que l'extension reconnue (+ ``.gz``)
+    pour que l'aval sache décompresser/dispatcher ; le nom d'origine n'est jamais stocké
+    ni journalisé.
+    """
+    low = orig.lower()
+    gz = ".gz" if low.endswith(".gz") else ""
+    stem = low[: -len(gz)] if gz else low
+    ext = next((e for e in _ACTIVITY_EXTS if stem.endswith(e)), "")
+    return f"activity-{idx:05d}{ext}{gz}"
 
 
 @dataclass
@@ -39,11 +55,20 @@ class IngestResult:
     def running(self) -> list[CanonicalActivity]:
         return [a for a in self.activities if a.is_running]
 
-    def _add(self, base: str, data: bytes, sport_hint: str | None) -> None:
+    def _add(
+        self, base: str, data: bytes, sport_hint: str | None, *, running_only: bool = False
+    ) -> None:
         try:
-            self.activities.append(parse_bytes(data, base, sport_hint=sport_hint))
+            act = parse_bytes(data, base, sport_hint=sport_hint)
         except Exception as exc:  # noqa: BLE001 — robustesse: un fichier brouillon n'arrête rien
             self.skipped.append({"name": base, "reason": str(exc)})
+            return
+        # Filtre confidentialité/pertinence : on ne RETIENT que la course à pied, et le sport
+        # est lu DANS le fichier (session/sport du FIT) — jamais d'après le nom ni un manifeste.
+        if running_only and not act.is_running:
+            self.skipped.append({"name": base, "reason": f"sport ignoré: {act.sport or 'inconnu'}"})
+            return
+        self.activities.append(act)
 
 
 def parse_bytes(data: bytes, name: str, *, sport_hint: str | None = None) -> CanonicalActivity:
@@ -66,13 +91,19 @@ def ingest_path(
     path: str | os.PathLike[str],
     *,
     purge_source: bool = False,
+    running_only: bool = False,
     progress: Callable[[int, str], None] | None = None,
 ) -> IngestResult:
     """Ingeste un fichier, une archive ``.zip`` (imbriquée ou non) ou un dossier.
 
     ``progress(n, name)`` est appelé après chaque fichier traité (n = total cumulé) —
-    utile pour un indicateur sur une archive de centaines de fichiers. Si ``purge_source``
-    est vrai, supprime l'entrée brute après parsing (archive/dossier inclus).
+    utile pour un indicateur sur une archive de centaines de fichiers. ``running_only``
+    n'ajoute que les activités de course à pied (sport lu dans le fichier). Si
+    ``purge_source`` est vrai, supprime l'entrée brute après parsing (archive/dossier inclus).
+
+    Confidentialité : les noms d'origine (qui peuvent porter de la PII dans les exports RGPD)
+    sont **anonymisés** en ``activity-NNNNN.ext`` ; le nom brut ne sert que, transitoirement,
+    à retrouver l'extension et le repli de sport Strava, puis il est abandonné.
     """
     p = Path(path)
     result = IngestResult()
@@ -86,10 +117,12 @@ def ingest_path(
         return result
 
     source, sport_map = _prepare(p)
-    for name, data in walk_activity_files(source):
-        result._add(name, data, sport_map.get(posixpath.basename(name)))
+    for idx, (orig, data) in enumerate(walk_activity_files(source), start=1):
+        hint = sport_map.get(posixpath.basename(orig))  # transitoire : orig jamais conservé
+        safe = _safe_name(orig, idx)
+        result._add(safe, data, hint, running_only=running_only)
         if progress:
-            progress(len(result.activities) + len(result.skipped), name)
+            progress(len(result.activities) + len(result.skipped), safe)
 
     if purge_source:
         _purge(p)
