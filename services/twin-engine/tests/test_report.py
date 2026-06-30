@@ -76,7 +76,7 @@ def _scenario():
 def _context():
     course, twin, cal, pred, plan, race, suf = _scenario()
     return build_report_context(course=course, twin=twin, calibration=cal, prediction=pred,
-                                plan=plan, race=race, sufficiency=suf, athlete="Valentin & co")
+                                plan=plan, race=race, sufficiency=suf, cfg=CFG, athlete="Valentin & co")
 
 
 def test_render_has_no_unresolved_placeholders():
@@ -85,6 +85,15 @@ def test_render_has_no_unresolved_placeholders():
         assert token not in tex, f"délimiteur Jinja résiduel: {token}"
     assert "\\begin{document}" in tex and "\\end{document}" in tex
     assert "Valentin \\& co" in tex          # nom échappé pour LaTeX
+
+
+def test_vc_low_conditions_intensity_claim():
+    """L'affirmation « le moteur n'est pas la limite » dépend de l'intensité calculée."""
+    ctx = _context()
+    low = render_tex({**ctx, "vc_low": True})
+    high = render_tex({**ctx, "vc_low": False})
+    assert "ana\\'erobie" in low and "ana\\'erobie" not in high
+    assert "restent d\\'ecisives" in high
 
 
 def test_context_french_date_and_new_fields():

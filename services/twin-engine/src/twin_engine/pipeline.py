@@ -145,7 +145,7 @@ def analyze_full(
         context = build_report_context(
             course=course, twin=preview.twin, calibration=preview.calibration,
             prediction=preview.prediction, plan=plan, race=race, sufficiency=preview.sufficiency,
-            athlete=athlete, report_ref=report_ref, report_version=report_version,
+            cfg=cfg, athlete=athlete, report_ref=report_ref, report_version=report_version,
             report_date=report_date,
         )
         pdf_path = build_pdf(context, fig_dir, out_dir / "tex")
