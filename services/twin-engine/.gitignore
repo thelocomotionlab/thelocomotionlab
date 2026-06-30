@@ -1,0 +1,18 @@
+# Environnements virtuels & caches Python
+.venv/
+.venv-*/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+.mypy_cache/
+
+# Dossier de données LOCAL (volume monté en prod) : archives transitoires, jobs.sqlite,
+# sorties (PDF/figures). JAMAIS committé — données utilisateur, purgées après analyse.
+data/
+local-data/
+
+# Archives d'entraînement réelles déposées pour test (perso/privé, jamais committées).
+# NB : les petits échantillons de test vivent sous tests/**/fixtures/ et sont committés
+# délibérément — on n'ignore donc PAS *.fit/*.gpx globalement, seulement ce dossier.
+incoming/

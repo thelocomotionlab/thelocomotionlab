@@ -1,0 +1,62 @@
+{
+  "_comment": "Constantes scientifiques FIXES du moteur (identiques pour tous les athlètes, cf. twin-theory §8). Versionné, AUCUN secret, AUCUN chemin en dur ici. Le dossier de données vient de l'env DATA_DIR ; le chemin de CE fichier de TWIN_CONFIG_PATH. Surcharge fine possible en éditant ces valeurs (elles sont reprises telles quelles par src/twin_engine/config.py).",
+
+  "course": {
+    "grid_step_m": 5.0,
+    "smooth_window_m": 150.0,
+    "grade_clip": 0.45,
+    "cr0": 3.6
+  },
+
+  "twin": {
+    "grade_base_m": 50.0,
+    "f_cap": 3.0,
+    "v_max_ms": 7.0,
+    "alt_smooth_s": 5,
+    "record_durations_s": [
+      30, 45, 60, 90, 120, 180, 240, 300, 420, 600, 780, 900, 1200, 1500,
+      1800, 2400, 3000, 3600, 4500, 5400, 7200, 9000, 10800, 14400, 18000,
+      21600, 28800
+    ],
+    "vc_flat_threshold": 0.10,
+    "vc_window_s": [600, 5400],
+    "vc_bootstrap_n": 2000,
+    "vc_bootstrap_seed": 0,
+    "vc_short_effort_floor_s": 1800,
+    "endurance_window_s": [1800, 21600],
+    "decouple_min_duration_s": 4500
+  },
+
+  "calibration": {
+    "genuine_min_hours": 10.0,
+    "genuine_min_ga_kmh": 5.5,
+    "genuine_max_decouple_pct": 30.0,
+    "min_ultras_regression": 3
+  },
+
+  "prediction": {
+    "mc_n": 5000,
+    "mc_seed": 1,
+    "interval_low_pct": 10,
+    "interval_high_pct": 90,
+    "v_floor_kmh": 2.0
+  },
+
+  "pacing": {
+    "fade_delta": 0.085,
+    "default_stop_min": 5.0,
+    "major_base_extra_min": 10.0
+  },
+
+  "sufficiency": {
+    "history_months_green": 6.0,
+    "history_months_orange": 3.0,
+    "usable_green": 120,
+    "usable_orange": 50,
+    "long_efforts_green": 2,
+    "long_efforts_orange": 1,
+    "cv_error_green_pct": 5.0,
+    "cv_error_orange_pct": 10.0,
+    "long_effort_min_fraction": 0.5
+  }
+}

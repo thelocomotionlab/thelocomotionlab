@@ -1,0 +1,44 @@
+# Locomotion Twin — moteur d'analyse (service Python).
+#
+# Ce N'EST PAS un package pnpm : les dépendances sont gérées par pyproject (PEP 621),
+# le service se build/déploie par Docker (cf. services/twin-engine/Dockerfile), à côté
+# de services/tracking-cache mais avec un runtime Python.
+#
+# Dev local :
+#   python3 -m venv .venv && . .venv/bin/activate
+#   pip install -e "services/twin-engine[dev]"
+#   pytest services/twin-engine
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "twin-engine"
+version = "0.1.0"
+description = "Locomotion Twin — ingestion multi-format, jumeau physiologique, prédiction validée, rapport LaTeX."
+requires-python = ">=3.11"
+dependencies = [
+  "numpy>=1.26",
+  "scipy>=1.11",
+  "matplotlib>=3.8",
+  "fitdecode>=0.10",
+  "fastapi>=0.110",
+  "uvicorn[standard]>=0.29",
+  "jinja2>=3.1",
+  "python-multipart>=0.0.9",
+  "pydantic>=2.6",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "httpx>=0.27"]
+
+[project.scripts]
+# CLI qui rejoue le cas Nice 100M de bout en bout (implémenté au commit 11).
+twin-engine = "twin_engine.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/twin_engine"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
