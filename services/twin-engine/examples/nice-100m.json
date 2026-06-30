@@ -1,0 +1,17 @@
+{
+  "_comment": "Course cible de référence (cas Valentin / golden test). Données PUBLIQUES de course (carnet de route officiel), pas de donnée personnelle. Sert au CLI de replay et aux tests. La trace GPX du parcours est fournie à part (non committée par défaut).",
+  "name": "Nice Côte d'Azur by UTMB · 100M",
+  "aid_km": [0.0, 8.1, 16.5, 28.9, 38.0, 50.1, 63.7, 68.4, 83.5, 93.8, 109.8, 121.8, 128.3, 140.4, 147.4, 156.5, 167.2],
+  "aid_names": [
+    "Auron (départ)", "AS1 km8.1", "AS2 km16.5", "AS3 km28.9", "AS4 km38",
+    "AS5 km50.1", "AS6 km63.7", "AS7 km68.4", "AS8 km83.5", "AS9 km93.8",
+    "AS10 km109.8", "AS11 km121.8", "AS12 km128.3", "AS13 km140.4",
+    "AS14 km147.4", "AS15 km156.5", "Arrivée Nice km167.2"
+  ],
+  "start_time": "2026-09-25T13:00:00+02:00",
+  "lat": 43.703,
+  "lon": 7.266,
+  "tz_offset_h": 2.0,
+  "major_base_indices": [4, 8, 11],
+  "official_dplus_m": 8900
+}
