@@ -31,7 +31,11 @@
     "genuine_min_hours": 10.0,
     "genuine_min_ga_kmh": 5.5,
     "genuine_max_decouple_pct": 30.0,
-    "min_ultras_regression": 3
+    "min_ultras_regression": 3,
+    "default_dplus_penalty_kmh_per_dpkm": -0.0148,
+    "regression_min_sigma_kmh": 0.20,
+    "blend_sigma_kmh": 0.45,
+    "vc_e_sigma_kmh": 0.80
   },
 
   "prediction": {

@@ -38,6 +38,7 @@ class Twin:
     critical_speed: CriticalSpeed | None
     alpha: float | None
     endurance_E: float | None
+    endurance_coef: float | None  # v_env(t) = coef · t^(−α) (m/s), pour le fallback VC+E
     durability_pct: float | None
     record: RecordCurve
     summaries: list[ActivitySummary] = field(default_factory=list)
@@ -45,6 +46,16 @@ class Twin:
     @property
     def vc_ms(self) -> float | None:
         return self.critical_speed.vc_ms if self.critical_speed else None
+
+    def envelope_vga_ms(self, t_s: float) -> float | None:
+        """Enveloppe d'endurance (vitesse ajustée, m/s) extrapolée à la durée ``t_s``.
+
+        Sert au repli « peu d'ultras » : la meilleure allure ajustée soutenable sur la
+        durée de course, en l'absence de vrais ultras pour caler la régression.
+        """
+        if self.alpha is None or self.endurance_coef is None:
+            return None
+        return float(self.endurance_coef * t_s ** (-self.alpha))
 
     def to_dict(self) -> dict:
         cs = self.critical_speed
@@ -100,18 +111,23 @@ def fit_critical_speed(record: RecordCurve, cfg: Config) -> CriticalSpeed | None
 
 
 def fit_endurance_exponent(record: RecordCurve, cfg: Config):
-    """Loi de puissance v_ga ∝ t^(−α) sur l'enveloppe longue → exposant de Riegel E."""
+    """Loi de puissance v_ga ∝ t^(−α) → (α, exposant de Riegel E, coefficient).
+
+    Le coefficient ``coef = exp(intercept)`` permet de reconstruire l'enveloppe
+    ``v_env(t) = coef·t^(−α)`` (m/s) pour le repli VC+E.
+    """
     w0, w1 = cfg.twin.endurance_window_s
     mask = (record.durations_s >= w0) & (record.durations_s <= w1) & (record.vga > 0)
     if mask.sum() < 2:
-        return None, None
+        return None, None, None
     lt = np.log(record.durations_s[mask])
     lv = np.log(record.vga[mask])
-    slope, _ = np.polyfit(lt, lv, 1)
+    slope, intercept = np.polyfit(lt, lv, 1)
     alpha = -float(slope)
+    coef = float(np.exp(intercept))
     if alpha >= 1.0:  # garde-fou numérique (E exploserait)
-        return alpha, None
-    return alpha, 1.0 / (1.0 - alpha)
+        return alpha, None, coef
+    return alpha, 1.0 / (1.0 - alpha), coef
 
 
 def estimate_durability(summaries: list[ActivitySummary], cfg: Config) -> float | None:
@@ -128,12 +144,13 @@ def build_twin(activities: list[CanonicalActivity], cfg: Config) -> Twin:
     """Pipeline jumeau complet : courbe record → VC, E, durabilité."""
     record, summaries = build_record_curve(activities, cfg)
     cs = fit_critical_speed(record, cfg)
-    alpha, E = fit_endurance_exponent(record, cfg)
+    alpha, E, coef = fit_endurance_exponent(record, cfg)
     dur = estimate_durability(summaries, cfg)
     return Twin(
         critical_speed=cs,
         alpha=alpha,
         endurance_E=E,
+        endurance_coef=coef,
         durability_pct=dur,
         record=record,
         summaries=summaries,

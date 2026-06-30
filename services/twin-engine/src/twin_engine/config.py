@@ -59,6 +59,11 @@ class CalibrationParams:
     genuine_min_ga_kmh: float = 5.5
     genuine_max_decouple_pct: float = 30.0
     min_ultras_regression: int = 3
+    # repli « peu d'ultras » (twin-theory §3)
+    default_dplus_penalty_kmh_per_dpkm: float = -0.0148  # prior population (β2)
+    regression_min_sigma_kmh: float = 0.20               # plancher de σ (anti-surconfiance)
+    blend_sigma_kmh: float = 0.45                        # 1–2 ultras : incertitude élargie
+    vc_e_sigma_kmh: float = 0.80                         # 0 ultra : extrapolation VC+E
 
 
 @dataclass(frozen=True)

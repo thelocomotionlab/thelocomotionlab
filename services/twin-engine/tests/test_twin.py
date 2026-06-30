@@ -72,9 +72,11 @@ def test_fit_endurance_exponent_recovers_E():
     rec = RecordCurve(durs, vga, vga.copy(),
                       [RecordPoint(int(T), float(vga[i]), float(vga[i]), None, False)
                        for i, T in enumerate(durs)])
-    alpha, E = fit_endurance_exponent(rec, CFG)
+    alpha, E, coef = fit_endurance_exponent(rec, CFG)
     assert abs(alpha - alpha_true) < 1e-3
     assert abs(E - 1.0 / (1.0 - alpha_true)) < 0.01  # E ≈ 1.2195
+    # le coefficient reconstruit l'enveloppe : coef·t^(−α) ≈ vga mesurée
+    assert abs(coef * durs[0] ** (-alpha) - vga[0]) < 1e-6
 
 
 def test_build_twin_end_to_end():
