@@ -52,11 +52,17 @@ def _fig_profil(course, ax) -> None:
     off = course.off_km_grid
     es = course.alt_smooth_m
     aid = course.aid_km
-    ax.fill_between(off, es, es.min() - 50, color=SAGE, alpha=0.30, lw=0)
+    ymin, ymax = float(es.min()), float(es.max())
+    pad = (ymax - ymin) * 0.08  # un peu d'air en haut seulement
+    ax.fill_between(off, es, ymin, color=SAGE, alpha=0.30, lw=0)
     ax.plot(off, es, color=TERRA, lw=1.3)
     for a in aid[1:-1]:
         ax.axvline(a, color=DEEPGRID, lw=0.7, ls=(0, (3, 3)), zorder=0)
-    ax.scatter(aid[1:-1], np.interp(aid[1:-1], off, es), s=14, color=GOLDINK, zorder=5, clip_on=False)
+    ax.scatter(aid[1:-1], np.interp(aid[1:-1], off, es), s=14, color=GOLDINK, zorder=5)
+    # la courbe colle aux axes (pas de marge en bas / gauche / droite)
+    ax.set_xlim(float(off.min()), float(off.max()))
+    ax.set_ylim(ymin, ymax + pad)
+    ax.margins(x=0)
     ax.set_xlabel("distance officielle (km)")
     ax.set_ylabel("altitude (m)")
     ax.set_title(

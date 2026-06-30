@@ -1,6 +1,19 @@
-"""Formatage francophone pour le rapport LaTeX (nombres, durées, échappement)."""
+"""Formatage francophone pour le rapport LaTeX (nombres, durées, dates, échappement)."""
 
 from __future__ import annotations
+
+from datetime import datetime
+
+_JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+_MOIS = [
+    "janvier", "février", "mars", "avril", "mai", "juin",
+    "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+]
+
+
+def french_datetime(dt: datetime) -> str:
+    """``vendredi 25 septembre 2026 à 13h00`` (jour en minuscule, format FR)."""
+    return f"{_JOURS[dt.weekday()]} {dt.day} {_MOIS[dt.month - 1]} {dt.year} à {dt.hour}h{dt.minute:02d}"
 
 
 def fr(x: float | int | None, decimals: int = 0) -> str:

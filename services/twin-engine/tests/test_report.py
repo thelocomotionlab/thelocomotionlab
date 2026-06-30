@@ -87,6 +87,30 @@ def test_render_has_no_unresolved_placeholders():
     assert "Valentin \\& co" in tex          # nom échappé pour LaTeX
 
 
+def test_context_french_date_and_new_fields():
+    ctx = _context()
+    # date FR, minuscule, format demandé
+    assert ctx["start_time"] == "vendredi 25 septembre 2026 à 13h00"
+    # volume récent (les résumés sont datés)
+    assert ctx["recent_weeks"] and "km" in ctx["recent_weeks"][0]
+    # colonnes cumulées dans la table de demande
+    assert "cum_dist" in ctx["demande_rows"][0]
+    last = ctx["demande_rows"][-1]
+    assert "cum_dplus" in last and "cum_dminus" in last
+
+
+def test_night_span_is_contiguous_not_minmax():
+    """Régression : la nuit ne doit pas s'étaler du 1er au dernier segment de nuit isolés."""
+    from types import SimpleNamespace
+
+    from twin_engine.report.context import _main_night_span
+
+    segs = [SimpleNamespace(off1=k, night=n) for k, n in
+            [(10, False), (20, True), (30, True), (40, False), (90, True)]]
+    # plus long passage contigu = [20,30] → (20, 30), pas (20, 90)
+    assert _main_night_span(SimpleNamespace(segments=segs)) == (20, 30)
+
+
 def test_figures_generated(tmp_path):
     course, twin, cal, pred, plan, race, _ = _scenario()
     figs = generate_figures(course, twin, cal, pred, plan, race, tmp_path)

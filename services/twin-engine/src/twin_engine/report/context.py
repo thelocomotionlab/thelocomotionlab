@@ -6,10 +6,10 @@ calculé ici puis injecté dans report.tex.j2 — le template ne fait que de la 
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 from ..calibration import REGIME_BLEND, REGIME_REGRESSION, REGIME_VC_E
-from ._format import fr, fr_thousands, hm, tex_escape
+from ._format import fr, french_datetime, fr_thousands, hm, tex_escape
 
 _REGIME_LABELS = {
     REGIME_REGRESSION: "régression personnelle sur vos vrais ultras",
@@ -32,11 +32,55 @@ def _vc_pace(vc_ms: float) -> str:
     return _pace_str(sec / 60.0)
 
 
-def _night_range(plan) -> tuple[float, float] | None:
-    nights = [s for s in plan.segments if s.night]
-    if not nights:
+def _main_night_span(plan) -> tuple[float, float] | None:
+    """Plage de nuit PRINCIPALE = plus long passage contigu de segments de nuit.
+
+    (Reporter min→max des segments de nuit confondrait l'unique nuit longue avec une
+    brève tombée de nuit à l'arrivée et laisserait croire à une nuit de bout en bout.)
+    """
+    runs: list[list] = []
+    cur: list = []
+    for s in plan.segments:
+        if s.night:
+            cur.append(s)
+        elif cur:
+            runs.append(cur)
+            cur = []
+    if cur:
+        runs.append(cur)
+    if not runs:
         return None
-    return nights[0].off1, nights[-1].off1
+    longest = max(runs, key=len)
+    return longest[0].off1, longest[-1].off1
+
+
+def _recent_weeks(summaries, n_weeks: int = 4) -> list[dict]:
+    """Volume des dernières semaines disponibles (distance + D+), la plus récente en bas."""
+    dated = []
+    for s in summaries:
+        if s.date:
+            try:
+                dated.append((date.fromisoformat(s.date), s.dist_km, s.dplus_m))
+            except ValueError:
+                pass
+    if not dated:
+        return []
+    most_recent = max(d for d, _, _ in dated)
+    earliest = min(d for d, _, _ in dated)
+    weeks = []
+    for w in range(n_weeks):
+        hi = most_recent - timedelta(days=7 * w)
+        lo = hi - timedelta(days=6)
+        if hi < earliest:
+            break
+        wk = [(dist, dp) for d, dist, dp in dated if lo <= d <= hi]
+        weeks.append({
+            "label": f"{lo.strftime('%d/%m')}–{hi.strftime('%d/%m')}",
+            "km": sum(x[0] for x in wk),
+            "dplus": sum(x[1] for x in wk),
+            "n": len(wk),
+        })
+    return list(reversed(weeks))
 
 
 def build_report_context(
@@ -56,19 +100,24 @@ def build_report_context(
     cs = twin.critical_speed
     cv = prediction.cross_validation
 
-    demande_rows = [
-        {
+    cum_dist = cum_dplus = cum_dminus = 0.0
+    demande_rows = []
+    for s in course.segments:
+        cum_dist += s.off_len
+        cum_dplus += s.dplus_m
+        cum_dminus += s.dminus_m
+        demande_rows.append({
             "idx": s.index,
             "name": tex_escape(s.to),
             "dist": fr(s.off_len, 1),
             "dplus": fr(s.dplus_m, 0),
             "dminus": fr(s.dminus_m, 0),
             "deq": fr(s.deq_km, 1),
-            "grade": fr(s.mean_grade_pct, 1),
             "alt": fr(s.alt_end_m, 0),
-        }
-        for s in course.segments
-    ]
+            "cum_dist": fr(cum_dist, 1),
+            "cum_dplus": fr(cum_dplus, 0),
+            "cum_dminus": fr(cum_dminus, 0),
+        })
 
     plan_rows = [
         {
@@ -89,7 +138,8 @@ def build_report_context(
         for s in plan.segments
     ]
 
-    night = _night_range(plan)
+    night = _main_night_span(plan)
+    weeks = _recent_weeks(twin.summaries)
 
     return {
         # méta / couverture
@@ -139,10 +189,18 @@ def build_report_context(
         "t_move_h": hm(plan.t_move_h),
         "t_stops_h": hm(plan.t_stops_h),
         "t_clock_h": hm(plan.t_clock_h),
-        "start_time": plan.start_time.strftime("%A %d/%m %H:%M") if plan.start_time else None,
+        "start_time": french_datetime(plan.start_time) if plan.start_time else None,
         "sun": plan.sun,
         "night_from_km": fr(night[0], 0) if night else None,
         "night_to_km": fr(night[1], 0) if night else None,
+        # volume d'entraînement récent
+        "recent_weeks": [
+            {"label": w["label"], "km": fr(w["km"], 0), "dplus": fr(w["dplus"], 0), "n": w["n"]}
+            for w in weeks
+        ],
+        "recent_n_weeks": len(weeks),
+        "recent_total_km": fr_thousands(round(sum(w["km"] for w in weeks)), 0) if weeks else None,
+        "recent_total_dplus": fr_thousands(round(sum(w["dplus"] for w in weeks)), 0) if weeks else None,
         # honnêteté
         "hr_majority": (sum(1 for a in twin.summaries if a.has_hr) / max(len(twin.summaries), 1)) >= 0.5,
         "durability_known": twin.durability_pct is not None,
