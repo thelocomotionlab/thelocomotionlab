@@ -1,11 +1,16 @@
-"""Décompression & parcours d'archives → activités canoniques.
+"""Reconnaissance de formats & manifeste de sport Strava.
 
-Gère : ``.gz`` (fichier unique compressé), ``.zip`` (Coros, Garmin, ou **Strava bulk
-export** au contenu mixte ``.gpx`` / ``.fit.gz`` / ``.tcx.gz``). Tout est lu **en flux
-mémoire** : on n'extrait jamais l'archive entière sur disque (cf. budget 75 Go du VPS).
+Le **parcours** des conteneurs (zip, zip-dans-zip, dossiers) vit dans ``walker.py`` —
+volontairement générique et sans logique de marque. Ce module garde :
 
-Le bundle Strava est reconnu par la présence d'``activities.csv``, qui renseigne le
-**type de sport** des traces GPX (lesquelles ne le portent pas).
+* les helpers de format (``.gz`` simple, reconnaissance d'extension d'activité) ;
+* le **manifeste Strava** : un export *bulk* Strava porte un ``activities.csv`` qui
+  renseigne le **type de sport** des traces ``.gpx`` (lesquelles ne le portent pas).
+  C'est une logique propre à Strava (le sport n'est pas dans le fichier de trace), donc
+  elle reste ici, jamais dans le marcheur générique.
+
+Tout est lu **en flux mémoire** : on n'extrait jamais l'archive entière sur disque
+(cf. budget 75 Go du VPS).
 """
 
 from __future__ import annotations
@@ -67,18 +72,18 @@ def _strava_sport_map(zf: zipfile.ZipFile) -> dict[str, str]:
     return mapping
 
 
-def iter_zip_members(data: bytes):
-    """Itère ``(basename, bytes, sport_hint)`` pour chaque trace d'activité du zip."""
-    with zipfile.ZipFile(io.BytesIO(data)) as zf:
-        sport_map = _strava_sport_map(zf)
-        for name in zf.namelist():
-            if name.endswith("/"):
-                continue
-            base = posixpath.basename(name)
-            if not base or not recognized(base):
-                continue
-            hint = sport_map.get(base)
-            yield base, zf.read(name), hint
+def strava_sport_map(data: bytes) -> dict[str, str]:
+    """Carte ``basename -> sport`` d'un export Strava *bulk* (vide si pas un bundle Strava).
+
+    Lue depuis ``activities.csv`` au niveau racine de l'archive. Ne sert QUE de repli pour
+    les traces qui ne portent pas leur sport (``.gpx`` nu) : pour Garmin/Coros le sport est
+    lu **dans** le fichier ``.fit`` et cette carte reste vide.
+    """
+    try:
+        with zipfile.ZipFile(io.BytesIO(data)) as zf:
+            return _strava_sport_map(zf)
+    except zipfile.BadZipFile:
+        return {}
 
 
 __all__ = [
@@ -86,5 +91,5 @@ __all__ = [
     "strip_gz",
     "decompress_gz",
     "recognized",
-    "iter_zip_members",
+    "strava_sport_map",
 ]

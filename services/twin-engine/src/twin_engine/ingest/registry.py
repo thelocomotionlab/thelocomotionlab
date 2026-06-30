@@ -1,8 +1,9 @@
 """Dispatch d'ingestion : un chemin (fichier, archive ou dossier) → activités canoniques.
 
-Point d'entrée unique du sous-paquet ingest. Dispatche **par format** vers le bon
-adaptateur, agrège les activités et collecte les fichiers ignorés (avec la raison) —
-jamais d'exception qui ferait tomber toute une archive à cause d'un fichier brouillon.
+Point d'entrée unique du sous-paquet ingest. Le **parcours** du conteneur (zips imbriqués,
+dossiers) est délégué au marcheur générique (:mod:`walker`) ; ici on **parse** chaque trace
+découverte vers le schéma canonique, on agrège, et on collecte les fichiers ignorés (avec la
+raison) — jamais d'exception qui ferait tomber toute une archive à cause d'un fichier brouillon.
 
 Confidentialité : l'option ``purge_source`` supprime l'archive brute **dès la fin du
 parsing** (garde-fou CLAUDE.md : on ne conserve que le rapport + métadonnées).
@@ -11,16 +12,18 @@ parsing** (garde-fou CLAUDE.md : on ne conserve que le rapport + métadonnées).
 from __future__ import annotations
 
 import os
+import posixpath
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
-from .archive import decompress_gz, is_gzip, iter_zip_members, recognized, strip_gz
+from .archive import decompress_gz, is_gzip, recognized, strava_sport_map, strip_gz
 from .canonical import CanonicalActivity, normalize_sport
 from .fit import parse_fit
 from .gpx import parse_gpx
 from .tcx import parse_tcx
+from .walker import walk_activity_files
 
 _PARSERS = {"fit": parse_fit, "tcx": parse_tcx, "gpx": parse_gpx}
 
@@ -65,7 +68,7 @@ def ingest_path(
     purge_source: bool = False,
     progress: Callable[[int, str], None] | None = None,
 ) -> IngestResult:
-    """Ingeste un fichier, une archive ``.zip``/``.gz`` ou un dossier → :class:`IngestResult`.
+    """Ingeste un fichier, une archive ``.zip`` (imbriquée ou non) ou un dossier.
 
     ``progress(n, name)`` est appelé après chaque fichier traité (n = total cumulé) —
     utile pour un indicateur sur une archive de centaines de fichiers. Si ``purge_source``
@@ -74,32 +77,35 @@ def ingest_path(
     p = Path(path)
     result = IngestResult()
 
-    if p.is_dir():
-        for f in sorted(p.rglob("*")):
-            if f.is_file() and (recognized(f.name) or f.suffix.lower() == ".zip"):
-                _ingest_file(f, result, progress)
-    else:
-        _ingest_file(p, result, progress)
+    # Cas d'un fichier unique non reconnu : on le signale explicitement (le marcheur, lui,
+    # n'émet rien pour un format inconnu).
+    if p.is_file() and p.suffix.lower() != ".zip" and not recognized(p.name):
+        result.skipped.append({"name": p.name, "reason": "format non supporté"})
+        if purge_source:
+            _purge(p)
+        return result
+
+    source, sport_map = _prepare(p)
+    for name, data in walk_activity_files(source):
+        result._add(name, data, sport_map.get(posixpath.basename(name)))
+        if progress:
+            progress(len(result.activities) + len(result.skipped), name)
 
     if purge_source:
         _purge(p)
     return result
 
 
-def _ingest_file(p: Path, result: IngestResult, progress: Callable[[int, str], None] | None) -> None:
-    suffix = p.suffix.lower()
-    if suffix == ".zip":
+def _prepare(p: Path) -> tuple[bytes | Path, dict[str, str]]:
+    """Renvoie ``(source pour le marcheur, carte de sport Strava)``.
+
+    Pour un ``.zip`` on lit les octets une seule fois : ils servent à la fois au manifeste
+    Strava (repli de sport pour les ``.gpx`` nus) et au marcheur. Sinon, on passe le chemin.
+    """
+    if p.is_file() and p.suffix.lower() == ".zip":
         data = p.read_bytes()
-        for base, member_bytes, hint in iter_zip_members(data):
-            result._add(base, member_bytes, hint)
-            if progress:
-                progress(len(result.activities) + len(result.skipped), base)
-    elif recognized(p.name):
-        result._add(p.name, p.read_bytes(), None)
-        if progress:
-            progress(len(result.activities) + len(result.skipped), p.name)
-    else:
-        result.skipped.append({"name": p.name, "reason": "format non supporté"})
+        return data, strava_sport_map(data)
+    return p, {}
 
 
 def _purge(p: Path) -> None:
