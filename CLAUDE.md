@@ -44,7 +44,16 @@ thelocomotionlab/
 │     ├─ globals.css              # variables CSS (@theme tokens)
 │     ├─ fonts.ts                 # Ubuntu + Lora (next/font)
 │     └─ components/              # Button, Card, PageShell, Prose…
-├─ engine/                   # moteur Python (FastAPI) — nos scripts d'analyse, durcis
+├─ services/                # services backend conteneurisés (Docker → GHCR → VPS)
+│  ├─ tracking-cache/       # back live-tracking (Node/TS)
+│  └─ twin-engine/          # moteur Locomotion Twin (Python/FastAPI + TeXLive)
+│     ├─ src/twin_engine/        # ingest (multi-format → canonique), course, twin,
+│     │                          #   calibration, predict, sufficiency, pacing,
+│     │                          #   report (figures + LaTeX), jobs (SQLite), api, cli
+│     ├─ twin.config.json        # constantes scientifiques (règles fixes, twin-theory §8)
+│     ├─ examples/nice-100m.json # carnet de route de référence (golden test)
+│     ├─ Dockerfile              # Python + TeXLive (contexte de build = racine)
+│     └─ compose.local.yml       # lancement local pour tester l'API
 ├─ infra/                    # docker-compose VPS, reverse-proxy, scripts de déploiement
 ├─ docs/                     # plans, ADR (décisions d'archi), runbooks
 ├─ pnpm-workspace.yaml

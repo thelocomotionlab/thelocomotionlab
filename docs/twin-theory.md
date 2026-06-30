@@ -1,6 +1,6 @@
 # Locomotion Twin — théorie & pratique
 
-> Document de référence de la méthode. À lire **avant** de coder/durcir le moteur (`engine/`).
+> Document de référence de la méthode. À lire **avant** de coder/durcir le moteur (`services/twin-engine/`).
 > Il décrit ce que fait le pipeline, **pourquoi**, et distingue ce qui est **règle fixe**, ce qui est
 > **ajusté à partir des données de chaque athlète**, et ce qui est **garde-fou d'honnêteté**.
 >
