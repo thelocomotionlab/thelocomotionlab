@@ -46,3 +46,38 @@ on ne conserve que le rapport (le temps du SAV) et le minimum de métadonnées.
 - **Chemins** : variables d'environnement (`DATA_DIR`, `TWIN_CONFIG_PATH`). Aucun chemin en dur.
 - **Constantes scientifiques** : [`twin.config.json`](./twin.config.json) (versionné, sans secret),
   reprises telles quelles par `config.py`. Ce sont les « règles fixes » de twin-theory §8.
+
+## CLI (rejoue un cas de bout en bout)
+
+```bash
+twin-engine preview --training <archive> --course <parcours.gpx> [--race examples/nice-100m.json]
+twin-engine full    --training <archive> --course <parcours.gpx> --out ./out [--race ...]
+```
+
+En local l'archive n'est **pas** purgée (ajouter `--purge` pour l'opt-in) ; l'API de prod purge.
+
+## Docker / déploiement (comme `tracking-cache`)
+
+L'image (Python + FastAPI + **TeXLive cherry-piqué** pour XeLaTeX+biber) se build avec le
+**contexte = racine du monorepo** :
+
+```bash
+# local (API exposée sur localhost:8000, données dans ./local-data) :
+docker compose -f services/twin-engine/compose.local.yml up --build
+#   http://localhost:8000/health · http://localhost:8000/docs (OpenAPI)
+```
+
+En prod : la CI ([`deploy-vps.yml`](../../.github/workflows/deploy-vps.yml)) build et pousse
+`ghcr.io/thelocomotionlab/twin-engine` ; le service tourne **interne** (réseau `web`, pas de
+port hôte) dans [`infra/compose.yml`](../../infra/compose.yml), données dans le volume
+`twin_engine_data`. Route publique en draft : `infra/caddy/conf.d/twin-engine.caddy.disabled`.
+
+## API
+
+| Méthode | Route | Rôle |
+|---|---|---|
+| `GET`  | `/health` | sonde |
+| `POST` | `/preview` | synchrone → verdict de suffisance + fourchette (pas de PDF) |
+| `POST` | `/jobs` | crée un job `full` (arrière-plan) → `{id}` |
+| `GET`  | `/jobs/{id}` | état + résultat |
+| `GET`  | `/jobs/{id}/report` | télécharge le PDF |

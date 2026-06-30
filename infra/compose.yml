@@ -65,6 +65,23 @@ services:
     networks:
       - web
 
+  # Moteur Locomotion Twin (Python/FastAPI + TeXLive). INTERNE : pas de port hôte,
+  # joint seulement par l'app twin (et la CLI via `docker compose exec`). La route
+  # publique existe en draft (caddy/conf.d/twin-engine.caddy.disabled) si on l'expose
+  # un jour. Données (jobs.sqlite + sorties) dans le volume `twin_engine_data` ; les
+  # archives brutes sont purgées dès la fin du parsing (jamais conservées).
+  twin-engine:
+    image: ${TWIN_ENGINE_IMAGE:-ghcr.io/thelocomotionlab/twin-engine:latest}
+    restart: unless-stopped
+    environment:
+      - DATA_DIR=/data
+    expose:
+      - "8000"
+    volumes:
+      - twin_engine_data:/data
+    networks:
+      - web
+
 networks:
   web:
     driver: bridge
@@ -74,3 +91,5 @@ volumes:
   caddy_config:
   # Fichiers live-*.json produits par tracking-cache et servis par Caddy (bascule).
   live_json:
+  # Données du moteur Twin : jobs.sqlite + sorties (PDF/figures). Archives brutes purgées.
+  twin_engine_data:

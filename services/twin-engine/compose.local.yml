@@ -1,0 +1,22 @@
+# Lancement LOCAL du moteur Twin pour tester (build + run, API exposée sur l'hôte).
+#
+#   docker compose -f services/twin-engine/compose.local.yml up --build
+#   # puis : http://localhost:8000/health  ·  /docs (OpenAPI)
+#
+# Contrairement à l'infra de prod (interne, sans port hôte), on EXPOSE 8000 ici pour
+# pouvoir taper l'API depuis la machine. Les données vont dans ./local-data (git-ignoré).
+name: twin-engine-local
+
+services:
+  twin-engine:
+    build:
+      # contexte = racine du monorepo (le Dockerfile COPY depuis services/twin-engine/…)
+      context: ../..
+      dockerfile: services/twin-engine/Dockerfile
+    image: twin-engine:local
+    environment:
+      - DATA_DIR=/data
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./local-data:/data

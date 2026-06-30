@@ -1,0 +1,13 @@
+# Route du moteur Locomotion Twin — DRAFT, DÉSACTIVÉE (suffixe .disabled → ignorée par Caddy).
+#
+# Le moteur est INTERNE par défaut (joint seulement par l'app twin sur le réseau `web`).
+# Pour l'exposer publiquement : retirer le suffixe « .disabled », renseigner
+# TWIN_ENGINE_DOMAIN dans infra/.env, puis `./deploy.sh`. Caddy obtient le certificat
+# tout seul (DNS-01) ; ajouter l'enregistrement DNS Cloudflare proxifié.
+#
+# ⚠️ L'API n'a PAS d'authentification à ce stade : ne l'exposer qu'une fois protégée.
+
+{$TWIN_ENGINE_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy twin-engine:8000
+}

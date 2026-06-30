@@ -9,6 +9,7 @@ on:
     paths:
       - "apps/_template/**"
       - "services/tracking-cache/**"
+      - "services/twin-engine/**"
       - "packages/ui/**"
       - "infra/**"
       - ".github/workflows/deploy-vps.yml"
@@ -33,6 +34,9 @@ jobs:
           # Back live-tracking conteneurisé.
           - image: tracking-cache
             dockerfile: services/tracking-cache/Dockerfile
+          # Moteur Locomotion Twin (Python/FastAPI + TeXLive).
+          - image: twin-engine
+            dockerfile: services/twin-engine/Dockerfile
     steps:
       - uses: actions/checkout@v4
 

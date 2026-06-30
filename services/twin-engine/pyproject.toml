@@ -37,6 +37,8 @@ dev = ["pytest>=8", "httpx>=0.27"]
 twin-engine = "twin_engine.cli:main"
 
 [tool.hatch.build.targets.wheel]
+# hatchling inclut par défaut TOUS les fichiers du paquet (y compris le template
+# LaTeX : classe, math, .bib, fonts Ubuntu, logos, .j2) — données indispensables au rendu.
 packages = ["src/twin_engine"]
 
 [tool.pytest.ini_options]
