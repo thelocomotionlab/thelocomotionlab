@@ -93,6 +93,8 @@ class SufficiencyParams:
     cv_error_green_pct: float = 5.0
     cv_error_orange_pct: float = 10.0
     long_effort_min_fraction: float = 0.5
+    quality_green_frac: float = 0.5
+    quality_orange_frac: float = 0.15
 
 
 @dataclass(frozen=True)

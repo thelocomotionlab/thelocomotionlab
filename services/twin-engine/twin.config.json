@@ -61,6 +61,8 @@
     "long_efforts_orange": 1,
     "cv_error_green_pct": 5.0,
     "cv_error_orange_pct": 10.0,
-    "long_effort_min_fraction": 0.5
+    "long_effort_min_fraction": 0.5,
+    "quality_green_frac": 0.5,
+    "quality_orange_frac": 0.15
   }
 }
