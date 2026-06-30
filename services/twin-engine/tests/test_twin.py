@@ -6,6 +6,8 @@ athlète s'active avec l'archive réelle, cf. test_golden.py).
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 import numpy as np
 
 from twin_engine.config import load_config
@@ -89,13 +91,24 @@ def test_build_twin_end_to_end():
         _run(2.95, 5400),
         _run(2.6, long_dur, grade=0.0, hr=hr),
     ]
-    twin = build_twin(acts, CFG)
+    # seuil de durabilité abaissé pour ce test (la sortie longue ne fait que 1,5 h)
+    cfg = replace(CFG, twin=replace(CFG.twin, durability_min_hours=1.0))
+    twin = build_twin(acts, cfg)
     assert twin.critical_speed is not None
     assert 2.5 < twin.vc_ms < 3.7
     assert twin.endurance_E is not None
     assert twin.durability_pct is not None and twin.durability_pct > 0
     d = twin.to_dict()
     assert d["vc_kmh"] is not None and d["n_activities"] == 4
+
+
+def test_durability_only_on_long_efforts():
+    """Découplage reporté sur les efforts longs (§2.6) : une sortie de 1,5 h ne compte pas."""
+    hr = [140 + 20 * s / 5400 for s in range(5401)]
+    acts = [_run(2.6, 5400, hr=hr)]  # 1,5 h avec FC → découplage calculé mais < seuil 10 h
+    assert build_twin(acts, CFG).durability_pct is None              # seuil défaut 10 h
+    cfg = replace(CFG, twin=replace(CFG.twin, durability_min_hours=1.0))
+    assert build_twin(acts, cfg).durability_pct is not None          # seuil abaissé → compte
 
 
 def test_no_hr_means_no_durability():

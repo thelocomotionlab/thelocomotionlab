@@ -131,11 +131,17 @@ def fit_endurance_exponent(record: RecordCurve, cfg: Config):
 
 
 def estimate_durability(summaries: list[ActivitySummary], cfg: Config) -> float | None:
-    """Découplage médian sur les longues sorties (None si aucune FC exploitable)."""
+    """Découplage médian **sur les efforts longs** (twin-theory §2.6 : « sur les ultras »).
+
+    On ne prend que les sorties ≥ ``durability_min_hours`` (et non toutes les sorties
+    > 1,25 h) : inclure les sorties moyennes, peu découplées, sous-estimerait l'usure
+    réelle en ultra. ``None`` si aucune FC exploitable sur un effort assez long.
+    """
+    floor_s = cfg.twin.durability_min_hours * 3600
     vals = [
         s.decouple_pct
         for s in summaries
-        if s.decouple_pct is not None and s.duration_s >= cfg.twin.decouple_min_duration_s
+        if s.decouple_pct is not None and s.duration_s >= floor_s
     ]
     return float(np.median(vals)) if vals else None
 

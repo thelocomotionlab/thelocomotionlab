@@ -119,6 +119,7 @@ def test_nice_100m_reference():
     assert course.dplus_m == pytest.approx(8874, abs=150)
     assert twin.vc_ms == pytest.approx(2.912, abs=0.08)
     assert twin.endurance_E == pytest.approx(1.222, abs=0.05)
+    assert twin.durability_pct == pytest.approx(21, abs=8)          # §2.6 : ~19–24 %
     assert pred is not None
     assert pred.finish_hours == pytest.approx(30.4, rel=0.04)        # ±4 %
     assert pred.cross_validation.mae_pct == pytest.approx(2.8, abs=2.0)

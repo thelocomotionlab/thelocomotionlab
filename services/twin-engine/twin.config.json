@@ -24,7 +24,8 @@
     "vc_bootstrap_seed": 0,
     "vc_short_effort_floor_s": 1800,
     "endurance_window_s": [1800, 21600],
-    "decouple_min_duration_s": 4500
+    "decouple_min_duration_s": 4500,
+    "durability_min_hours": 10.0
   },
 
   "calibration": {

@@ -50,7 +50,8 @@ class TwinParams:
     vc_bootstrap_seed: int = 0
     vc_short_effort_floor_s: int = 1800
     endurance_window_s: tuple[int, int] = (1800, 21600)
-    decouple_min_duration_s: int = 4500
+    decouple_min_duration_s: int = 4500       # durée min pour CALCULER le découplage
+    durability_min_hours: float = 10.0        # durabilité reportée sur les efforts longs (ultras)
 
 
 @dataclass(frozen=True)
