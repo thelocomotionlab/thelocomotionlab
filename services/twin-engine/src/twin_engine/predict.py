@@ -24,6 +24,7 @@ class CrossValidation:
     mae_pct: float
     rmse_pct: float
     n: int
+    points: list[tuple[float, float]]  # (temps réel h, temps prédit hors-échantillon h)
 
     def to_dict(self) -> dict:
         return {
@@ -90,6 +91,7 @@ def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation
     deq_each = V * H  # distance ajustée (Deq) de chaque course
 
     errors: list[float] = []
+    points: list[tuple[float, float]] = []
     for i in range(n):
         keep = [j for j in range(n) if j != i]
         Xs = np.vstack([np.ones(len(keep)), np.log(H[keep]), dpk[keep]]).T
@@ -99,6 +101,7 @@ def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation
         if tp is None:
             continue
         errors.append(100.0 * (tp - H[i]) / H[i])
+        points.append((float(H[i]), float(tp)))
 
     if not errors:
         return None
@@ -108,6 +111,7 @@ def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation
         mae_pct=float(np.mean(np.abs(err))),
         rmse_pct=float(np.sqrt(np.mean(err**2))),
         n=len(errors),
+        points=points,
     )
 
 

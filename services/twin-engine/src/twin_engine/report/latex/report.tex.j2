@@ -1,0 +1,221 @@
+% Template du rapport Locomotion Twin (classe locomotionreport, police Ubuntu).
+% Delimiteurs Jinja personnalises (chevrons doubles / chevron-pourcent) pour ne pas
+% heurter les accolades LaTeX. Genere par twin_engine.report.render.
+\documentclass{locomotionreport}
+
+\renewcommand{\LLCoverLogoPath}{assets/logo_primary_deep}
+\renewcommand{\LLHeaderLogoPath}{assets/logo_full_white}
+
+\input{math.tex}
+\addbibresource{references.bib}
+
+\newcommand{\Deq}{D_{\mathrm{eq}}}
+\newcommand{\kmh}{\,km\,h\textsuperscript{-1}}
+\newcommand{\VC}{\mathrm{VC}}
+
+\title{Plan de pacing personnalis\'e}
+\subtitle{<< race_name >> \textperiodcentered{} << length_km >>\,km \textperiodcentered{} << dplus_m >>\,m\,D+}
+\author{The Locomotion Lab}
+\date{<< report_date >>}
+\reporttype{Rapport d'analyse \textperiodcentered{} Locomotion Twin}
+\reportref{<< report_ref >>}
+\reportversion{<< report_version >>}
+\reportclient{<< athlete >>}
+
+\begin{document}
+
+\makecover
+
+\begin{llabstract}
+Ce rapport construit un \textbf{plan d'allure individualis\'e} pour << race_name >>
+(<< length_km >>\,km, << dplus_m >>\,m\,D+) \`a partir de deux sources : la trace GPX du parcours et
+vos fichiers d'entra\^inement (<< n_activities >>~activit\'es de course exploit\'ees). La cha\^ine
+\emph{Locomotion Twin} estime votre profil physiologique --- vitesse critique, exposant d'endurance,
+durabilit\'e --- puis le confronte au co\^ut \'energ\'etique de la pente pour pr\'edire un temps
+d'arriv\'ee et r\'epartir l'effort. La pr\'ediction centrale est de \textbf{<< pred_central >>}
+(intervalle 80\,\% : << interval_low >> -- << interval_high >>).
+<% if has_cv %>La m\'ethode est valid\'ee \emph{hors \'echantillon} sur vos propres ultras, avec une
+erreur moyenne de \textbf{<< cv_mae >>\,\%}.<% else %>Faute d'assez d'ultras, la pr\'ediction repose
+sur une extrapolation (confiance r\'eduite, cf. limites).<% endif %>
+\keywords{pacing \textperiodcentered{} ultra-trail \textperiodcentered{} vitesse critique \textperiodcentered{} durabilit\'e \textperiodcentered{} incertitude}
+\end{llabstract}
+
+\LLtoc
+\clearpage
+
+% =====================================================================
+\section{Synth\`ese}
+
+\begin{llnote}[L'essentiel]
+\textbf{Temps d'arriv\'ee pr\'edit : << pred_central >>}<% if start_time %>, d\'epart << start_time >><% endif %>.
+Intervalle de confiance \`a 80\,\% : \textbf{<< interval_low >> -- << interval_high >>}.
+<% if vc_fraction_pct %>\\[2pt]
+\textbf{Intensit\'e cible : $\approx$\,<< vc_fraction_pct >>\,\% de votre vitesse critique}, soutenue
+avec une d\'erive ma\^itris\'ee. \`A cette intensit\'e, le facteur limitant n'est pas la r\'eserve
+ana\'erobie mais la \textbf{durabilit\'e} et le \textbf{ravitaillement}.<% endif %>
+<% if night_from_km %>\\[2pt]
+\textbf{Nuit} : frontale n\'ecessaire du \textbf{km\,<< night_from_km >>} au \textbf{km\,<< night_to_km >>} environ.<% endif %>
+\end{llnote}
+
+Mod\`ele de pr\'ediction employ\'e : \emph{<< regime_label >>}. Chaque chiffre d\'ecoule de vos fichiers
+ou de la trace officielle, jamais \og~au jug\'e~\fg.
+
+% =====================================================================
+\section{Le parcours et ses exigences}
+
+La trace donne un parcours de \textbf{<< length_km >>\,km} pour \textbf{<< dplus_m >>\,m\,D+} et
+\textbf{<< dminus_m >>\,m\,D--}, d\'ecoup\'e en << n_segments >>~segments inter-ravitaillements.
+
+\subsection{Le co\^ut de la pente : la distance \'equivalente}
+Le co\^ut \'energ\'etique de la course \(C_r\) selon la pente \(i\)~\cite{minetti2002} :
+\begin{equation}
+C_r(i) = 155{,}4\,i^5 - 30{,}4\,i^4 - 43{,}3\,i^3 + 46{,}3\,i^2 + 19{,}5\,i + 3{,}6,
+\label{eq:minetti}
+\end{equation}
+vaut 3,6 \`a plat ; \(f(i)=C_r(i)/3{,}6\) indique \og~combien de m\`etres \`a plat co\^ute un m\`etre
+de pente \(i\)\,\fg. En l'int\'egrant le long du parcours, on obtient la \textbf{distance \'equivalente
+\`a plat} \(\Deq \approx \textbf{<< deq_km >>\,km}\) : c'est elle, et non la distance brute, qui gouverne
+le temps de course.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{figures/profil.png}
+  \caption{Profil altim\'etrique liss\'e ; points dor\'es : les ravitaillements.}
+  \label{fig:profil}
+\end{figure}
+
+\begin{table}[ht]
+  \centering \footnotesize \setlength{\tabcolsep}{4.5pt}
+  \LLzebra \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{@{}clrrrrrr@{}}
+    \LLheaderrow
+    \LLthead{\#} & \LLthead{Ravitaillement} & \LLthead{dist.} & \LLthead{D+} & \LLthead{D--} & \LLthead{$\Deq$} & \LLthead{pente} & \LLthead{alt.} \\
+     & & \footnotesize(km) & \footnotesize(m) & \footnotesize(m) & \footnotesize(km) & \footnotesize(\%) & \footnotesize(m) \\
+<% for s in demande_rows %>    << s.idx >> & << s.name >> & \LLnum{<< s.dist >>} & \LLnum{<< s.dplus >>} & \LLnum{<< s.dminus >>} & \LLnum{<< s.deq >>} & \LLnum{<< s.grade >>} & \LLnum{<< s.alt >>} \\
+<% endfor %>  \end{tabular}
+  \caption{Demande de chaque segment (g\'eom\'etrie issue de la trace). \(\Deq\) : distance \'equivalente \`a plat.}
+  \label{tab:demande}
+\end{table}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{figures/demande.png}
+  \caption{Demande verticale (haut) et distance r\'eelle vs \'equivalent plat (bas) par segment.}
+  \label{fig:demande}
+\end{figure}
+
+% =====================================================================
+\section{Votre jumeau num\'erique}
+Le \emph{jumeau} r\'esume vos capacit\'es, extrait de << n_activities >>~activit\'es de course.
+
+<% if vc_kmh %>\subsection{Vitesse critique et courbe record}
+Le mod\`ele de la \textbf{vitesse critique}~\cite{poole2016,jones2017} ajuste \(d = \VC\cdot t + D'\)
+sur vos efforts plats \og~propres\,\fg :
+\begin{equation}
+\boxed{\;\VC = << vc_ms >>\;\text{m\,s}^{-1} \;=\; << vc_kmh >>\kmh \;=\; << vc_pace >>\,\text{/km}\quad(\pm\,<< vc_sd >>)\;}
+\end{equation}
+<% if not vc_from_flat %>\emph{Note : faute d'assez d'efforts plats propres, la VC est estim\'ee sur la
+fen\^etre de dur\'ee (confiance r\'eduite).}<% endif %>
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{figures/record.png}
+  \caption{Courbe record ajust\'ee \`a la pente. Losanges verts : vos vrais ultras, bien sous la VC.}
+  \label{fig:record}
+\end{figure}
+
+\begin{llattention}[Une honn\^etet\'e m\'ethodologique]
+Les efforts \emph{courts} (< 30\,min), presque toujours en c\^ote, sont \'ecart\'es de l'estimation de
+la VC : l'ajustement de pente surestime alors la vitesse \'equivalente. Sans cons\'equence pour un ultra,
+couru tr\`es loin sous la VC.
+\end{llattention}
+<% endif %>
+
+\subsection{Exposant d'endurance et durabilit\'e}
+<% if endurance_E %>L'\textbf{exposant d'endurance}~\cite{riegel1981,drake2024} vaut \(E = << endurance_E >>\)
+(\(\alpha = << alpha >>\)), typique d'un profil d'ultra.<% endif %>
+<% if durability_pct %> Votre \textbf{durabilit\'e}~\cite{maunder2021,jones2024} (d\'ecouplage allure/FC en
+seconde moiti\'e des longues sorties) est de \(\approx\)\,<< durability_pct >>\,\%.<% else %>
+\emph{Durabilit\'e non chiffr\'ee : la fr\'equence cardiaque est absente de la majorit\'e des sorties (cf. limites).}<% endif %>
+
+% =====================================================================
+\section{Pr\'ediction et validation}\label{sec:pred}
+On r\'esout le \textbf{point fixe} \(T = \Deq / v(T)\) : la vitesse d\'epend de la dur\'ee, qui d\'epend
+de la vitesse. La pr\'ediction centrale est \textbf{<< pred_central >>}, vitesse ajust\'ee moyenne
+<% if vc_fraction_pct %>\(\approx\)\,<< vc_fraction_pct >>\,\% de la VC<% endif %>. L'incertitude vient
+d'un \textbf{Monte-Carlo} (tirages de \(v\) dans sa loi pr\'edictive, \(\sigma = << sigma_kmh >>\)\kmh) :
+intervalle 80\,\% \textbf{<< interval_low >> -- << interval_high >>}.
+
+<% if has_cv %>La fiabilit\'e est mesur\'ee par \textbf{validation crois\'ee leave-one-out} sur vos
+<< cv_n >>~vrais ultras : erreur moyenne \textbf{<< cv_mae >>\,\%} (RMSE << cv_rmse >>\,\%).
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.62\linewidth]{figures/validation.png}
+  \caption{Validation crois\'ee : temps pr\'edit hors-\'echantillon vs temps r\'eel (bande $\pm$5\,\%).}
+  \label{fig:validation}
+\end{figure}
+<% else %>\begin{llattention}[Validation impossible]
+Moins de trois vrais ultras : la validation crois\'ee n'est pas calculable et la pr\'ediction repose sur
+une extrapolation (<< regime_label >>). \`A prendre comme un ordre de grandeur, non comme une cible ferme.
+\end{llattention}
+<% endif %>
+
+% =====================================================================
+\section{Le plan de pacing}
+Effort ajust\'e constant + \textbf{fade de durabilit\'e} (d\'erive contr\^ol\'ee d\'ebut\,$\to$\,fin),
+normalis\'e pour boucler le temps de mouvement. Les \textbf{fen\^etres} donnent par segment une
+\emph{plage} d'arriv\'ee (bandes Monte-Carlo), pas une valeur unique --- meilleure tenue en course.
+
+\begin{table}[ht]
+  \centering \scriptsize \setlength{\tabcolsep}{3.8pt}
+  \LLzebra \renewcommand{\arraystretch}{1.28}
+  \begin{tabular}{@{}clrrrrlrc@{}}
+    \LLheaderrow
+    \LLthead{\#} & \LLthead{Vers} & \LLthead{km} & \LLthead{$\Deq$} & \LLthead{v.aj.} & \LLthead{allure} & \LLthead{arriv\'ee} & \LLthead{fen.(h)} & \LLthead{nuit} \\
+     & & & \footnotesize(km) & \footnotesize(km/h) & \footnotesize(/km) & & & \\
+<% for s in plan_rows %>    << s.idx >> & << s.to >> & \LLnum{<< s.off1 >>} & \LLnum{<< s.deq >>} & \LLnum{<< s.vga >>} & \LLnum{<< s.pace >>} & << s.arr >> & \LLnum{<< s.window >>} & <% if s.night %>$\bullet$<% endif %> \\
+<% endfor %>  \end{tabular}
+  \caption{Plan par segment : vitesse ajust\'ee cible, allure r\'eelle terrain, heure de passage et
+  fen\^etre d'arriv\'ee (80\,\%). $\bullet$ = section de nuit.}
+  \label{tab:plan}
+\end{table}
+
+Total : mouvement << t_move_h >> + arr\^ets << t_stops_h >> = horloge \textbf{<< t_clock_h >>}.
+<% if sun %> Soleil : lever << sun.sunrise >>, coucher << sun.sunset >>.<% endif %>
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{figures/pacing.png}
+  \caption{Allure ajust\'ee cible (fade contr\^ol\'e) et allure r\'eelle terrain par segment.}
+  \label{fig:pacing}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{figures/cumul.png}
+  \caption{Temps de passage cumul\'e et incertitude (bande 80\,\%).}
+  \label{fig:cumul}
+\end{figure}
+
+% =====================================================================
+\section{Limites assum\'ees}
+Un plan n'est utile que si l'on sait \emph{ce qu'il ne capture pas}.
+\begin{llattention}[\`A garder en t\^ete]
+\begin{itemize}[leftmargin=1.4em]
+\item \textbf{Forme du jour} : si vos donn\'ees s'arr\^etent avant la course, la pr\'ediction suppose la
+forme du moment et doit \^etre recalcul\'ee \`a l'approche.
+\item \textbf{Allures de descente} = plafonds m\'etaboliques ; la \textbf{technicit\'e} du terrain (absente
+du GPX) peut imposer plus lent.
+\item \textbf{Minetti} perd en validit\'e au-del\`a de \(\pm\)25--30\,\% (marche active).
+\item \textbf{M\'et\'eo} et \textbf{nutrition} ne sont pas mod\'elis\'ees.
+<% if not durability_known %>\item \textbf{Durabilit\'e non chiffr\'ee} : la FC manque sur la majorit\'e des
+sorties --- l'usure progressive est donc moins bien contrainte.<% endif %>
+<% if regime != "regression" %>\item \textbf{Peu d'ultras} : << regime_label >> --- l'incertitude est
+volontairement \'elargie ; consid\'erez la fourchette plut\^ot que la valeur centrale.<% endif %>
+\end{itemize}
+\end{llattention}
+
+\printbibliography[heading=bibintoc, title={R\'ef\'erences}]
+
+\end{document}
