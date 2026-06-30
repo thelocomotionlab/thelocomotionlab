@@ -1,7 +1,8 @@
 """Ingestion multi-format → schéma canonique.
 
-Le sous-paquet expose le schéma canonique (commit 1) ; les adaptateurs par format
-et le dispatch sont ajoutés au commit 2.
+Adaptateurs PAR FORMAT (``.fit``/``.tcx``/``.gpx``, décompression ``.gz``/``.zip``,
+bundle Strava) normalisés vers :class:`CanonicalActivity`. Point d'entrée :
+:func:`ingest_path`. Tout l'aval ne consomme que le schéma canonique.
 """
 
 from __future__ import annotations
@@ -12,10 +13,20 @@ from .canonical import (
     haversine_cumulative,
     normalize_sport,
 )
+from .fit import parse_fit
+from .gpx import parse_gpx
+from .registry import IngestResult, ingest_path, parse_bytes
+from .tcx import parse_tcx
 
 __all__ = [
     "CANONICAL_VERSION",
     "CanonicalActivity",
     "haversine_cumulative",
     "normalize_sport",
+    "IngestResult",
+    "ingest_path",
+    "parse_bytes",
+    "parse_fit",
+    "parse_tcx",
+    "parse_gpx",
 ]
