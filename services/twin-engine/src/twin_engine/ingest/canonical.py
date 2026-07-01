@@ -27,6 +27,16 @@ import numpy as np
 
 CANONICAL_VERSION = 1
 
+
+class NotActivityData(Exception):
+    """Le contenu n'est **pas** une trace d'activité exploitable (ni une erreur de parsing).
+
+    Levée par un adaptateur quand un fichier reconnu par extension s'avère être une
+    métadonnée ou un résumé sans données (ex. un ``.json`` Polar qui n'est pas une
+    *training-session* avec échantillons). L'ingestion l'**ignore en silence** — pas de
+    fichier « ignoré » à afficher, contrairement à une vraie trace qui échoue au parsing.
+    """
+
 # Normalisation des libellés de sport vers des jetons canoniques. Seul "running"
 # est exploité par le jumeau ; les autres sont conservés mais ignorés en aval.
 _SPORT_ALIASES: dict[str, str] = {
@@ -55,6 +65,19 @@ def normalize_sport(raw: str | None) -> str | None:
     if not key:
         return None
     return _SPORT_ALIASES.get(key, key)
+
+
+def clean_token(raw: str | None) -> str | None:
+    """Minuscule + nettoyage d'un libellé **sans le réécrire** (pas d'alias de sport).
+
+    Pour ``sub_sport`` : on veut conserver « trail »/« ultra »/« generic »/« road » tels
+    quels (utiles au diagnostic) alors que :func:`normalize_sport` les ramènerait à
+    « running ». Seul ``sport`` est aliasé ; le sous-sport reste fidèle à la source.
+    """
+    if raw is None:
+        return None
+    key = str(raw).strip().lower().replace(" ", "_")
+    return key or None
 
 
 def haversine_cumulative(lat: np.ndarray, lon: np.ndarray) -> np.ndarray:
@@ -200,7 +223,7 @@ class CanonicalActivity:
         return cls(
             start_time=start_time,
             sport=normalize_sport(sport),
-            sub_sport=normalize_sport(sub_sport) if sub_sport else None,
+            sub_sport=clean_token(sub_sport),
             source_format=source_format,
             source_name=source_name,
             t=tg,
@@ -215,7 +238,9 @@ class CanonicalActivity:
 
 __all__ = [
     "CANONICAL_VERSION",
+    "NotActivityData",
     "CanonicalActivity",
     "normalize_sport",
+    "clean_token",
     "haversine_cumulative",
 ]

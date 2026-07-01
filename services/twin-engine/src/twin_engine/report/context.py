@@ -10,9 +10,10 @@ from datetime import date, datetime, timedelta
 
 from ..calibration import REGIME_BLEND, REGIME_REGRESSION, REGIME_VC_E
 from ._format import fr, french_datetime, fr_thousands, hm, tex_escape
+from .narrative import VC_FRAC_TRES_BAS, build_narrative
 
 _REGIME_LABELS = {
-    REGIME_REGRESSION: "régression personnelle sur vos vrais ultras",
+    REGIME_REGRESSION: "régression personnelle sur tes vrais ultras",
     REGIME_BLEND: "mélange VC+E recalé (peu d'ultras, confiance réduite)",
     REGIME_VC_E: "extrapolation VC+E seule (aucun ultra proche, confiance faible)",
 }
@@ -92,11 +93,16 @@ def build_report_context(
     plan,
     race,
     sufficiency,
+    cfg,
     athlete: str,
     report_ref: str = "LL-TWIN",
     report_version: str = "v1.0",
     report_date: datetime | None = None,
 ) -> dict:
+    # contrat : le rapport complet n'est construit que pour une prédiction existante
+    # (analyze_full s'arrête au preview si prediction is None) — on le rend explicite.
+    if prediction is None:
+        raise ValueError("build_report_context requiert une prédiction (depth full uniquement)")
     cs = twin.critical_speed
     cv = prediction.cross_validation
 
@@ -141,7 +147,7 @@ def build_report_context(
     night = _main_night_span(plan)
     weeks = _recent_weeks(twin.summaries)
 
-    return {
+    ctx = {
         # méta / couverture
         "athlete": tex_escape(athlete),
         "race_name": tex_escape(course.name),
@@ -157,6 +163,10 @@ def build_report_context(
         "interval_low": hm(prediction.interval_low_h),
         "interval_high": hm(prediction.interval_high_h),
         "vc_fraction_pct": fr(prediction.vc_fraction * 100, 0) if prediction.vc_fraction else None,
+        # intensité réellement BASSE ? (gouverne l'affirmation « le moteur n'est pas la limite »)
+        "vc_low": (prediction.vc_fraction is not None and prediction.vc_fraction < VC_FRAC_TRES_BAS),
+        # dérive début→fin du fade, DÉRIVÉE de fade_delta (plus de « −15 % » en dur)
+        "fade_pct": fr(round(2 * cfg.pacing.fade_delta / (1 + cfg.pacing.fade_delta) * 100), 0),
         "regime": prediction.regime,
         "regime_label": _REGIME_LABELS.get(prediction.regime, prediction.regime),
         "has_cv": cv is not None,
@@ -207,6 +217,9 @@ def build_report_context(
         # figures (rempli par le moteur de rendu)
         "figures": {},
     }
+    # couche pédagogique (textes générés à partir des valeurs calculées, jamais en dur)
+    ctx.update(build_narrative(course, twin, calibration, prediction, plan, race, cfg))
+    return ctx
 
 
 __all__ = ["build_report_context"]

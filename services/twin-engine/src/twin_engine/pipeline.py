@@ -87,7 +87,9 @@ def run_preview(
     progress=None,
 ) -> PreviewResult:
     """De l'archive brute + la trace de course au verdict. **Purge l'archive** après parsing."""
-    result: IngestResult = ingest_path(training_path, purge_source=purge_source, progress=progress)
+    result: IngestResult = ingest_path(
+        training_path, purge_source=purge_source, running_only=True, progress=progress
+    )
     course = build_course(course_gpx, race, cfg)
     return analyze_preview(result.running, course, cfg, n_skipped=len(result.skipped))
 
@@ -145,7 +147,7 @@ def analyze_full(
         context = build_report_context(
             course=course, twin=preview.twin, calibration=preview.calibration,
             prediction=preview.prediction, plan=plan, race=race, sufficiency=preview.sufficiency,
-            athlete=athlete, report_ref=report_ref, report_version=report_version,
+            cfg=cfg, athlete=athlete, report_ref=report_ref, report_version=report_version,
             report_date=report_date,
         )
         pdf_path = build_pdf(context, fig_dir, out_dir / "tex")
@@ -167,7 +169,9 @@ def run_full(
     progress=None,
 ) -> FullResult:
     """De l'archive brute au PDF. **Purge l'archive** après parsing."""
-    result: IngestResult = ingest_path(training_path, purge_source=purge_source, progress=progress)
+    result: IngestResult = ingest_path(
+        training_path, purge_source=purge_source, running_only=True, progress=progress
+    )
     course = build_course(course_gpx, race, cfg)
     return analyze_full(
         result.running, course, race, cfg, out_dir=Path(out_dir), athlete=athlete,

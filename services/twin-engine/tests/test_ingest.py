@@ -72,14 +72,20 @@ def test_unsupported_file_is_skipped_not_fatal(tmp_path):
 def test_corrupt_member_does_not_abort_archive(tmp_path):
     """Un fichier brouillon dans un zip ne doit pas faire tomber les autres."""
     good = (FIX / "sample.gpx").read_bytes()
+    # > 1 Ko pour passer le pré-filtre de taille du marcheur et atteindre le parseur,
+    # qui le rejettera (aucun point de trace) → fichier ignoré, pas une exception fatale.
+    broken = b"<gpx>not valid" + b" " * 1200
     z = tmp_path / "mix.zip"
     with zipfile.ZipFile(z, "w") as zf:
         zf.writestr("ok.gpx", good)
-        zf.writestr("broken.gpx", b"<gpx>not valid")
+        zf.writestr("broken.gpx", broken)
     result = ingest_path(z)
     assert len(result.activities) == 1
     assert len(result.skipped) == 1
-    assert result.skipped[0]["name"] == "broken.gpx"
+    # nom anonymisé (la PII éventuelle du nom d'origine est effacée), extension conservée
+    name = result.skipped[0]["name"]
+    assert name.startswith("activity-") and name.endswith(".gpx")
+    assert "broken" not in name
 
 
 def test_purge_source_deletes_raw_archive(tmp_path):
