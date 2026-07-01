@@ -22,15 +22,19 @@ class RaceSpec:
     """Course cible. ``aid_km``/``aid_names`` découpent le parcours aux ravitaillements
     (incluant 0 = départ et le dernier point = arrivée).
 
+    **Ravitaillements optionnels** : si ``aid_km`` est vide, le module course bascule en
+    mode « GPX-only » — la distance vient de la trace elle-même et le parcours est découpé
+    automatiquement (pas régulier, cf. ``CourseParams.default_segment_km``).
+
     Champs de géométrie (module course) : ``aid_km``, ``aid_names``.
     Champs de logistique (module pacing) : ``start_time``, ``lat``, ``lon``,
     ``tz_offset_h``, ``major_base_indices`` (segments dont la FIN est une base majeure,
     arrêt rallongé).
     """
 
-    name: str
-    aid_km: tuple[float, ...]
-    aid_names: tuple[str, ...]
+    name: str = "Course"
+    aid_km: tuple[float, ...] = ()
+    aid_names: tuple[str, ...] = ()
     start_time: datetime | None = None
     lat: float | None = None
     lon: float | None = None
@@ -41,27 +45,32 @@ class RaceSpec:
     def __post_init__(self) -> None:
         if len(self.aid_km) != len(self.aid_names):
             raise ValueError("aid_km et aid_names doivent avoir la même longueur")
-        if len(self.aid_km) < 2:
-            raise ValueError("au moins le départ et l'arrivée sont requis")
-        if list(self.aid_km) != sorted(self.aid_km):
-            raise ValueError("aid_km doit être croissant (km cumulés officiels)")
+        if self.aid_km:  # ravitaillements fournis → validés ; vide = mode GPX-only (auto)
+            if len(self.aid_km) < 2:
+                raise ValueError("au moins le départ et l'arrivée sont requis")
+            if list(self.aid_km) != sorted(self.aid_km):
+                raise ValueError("aid_km doit être croissant (km cumulés officiels)")
 
     @property
-    def official_finish_km(self) -> float:
-        return float(self.aid_km[-1])
+    def has_aid_stations(self) -> bool:
+        return bool(self.aid_km)
+
+    @property
+    def official_finish_km(self) -> float | None:
+        return float(self.aid_km[-1]) if self.aid_km else None
 
     @property
     def n_segments(self) -> int:
-        return len(self.aid_km) - 1
+        return max(len(self.aid_km) - 1, 0)
 
     # ------------------------------------------------------------------ #
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "RaceSpec":
         start = d.get("start_time")
         return cls(
-            name=d["name"],
-            aid_km=tuple(float(x) for x in d["aid_km"]),
-            aid_names=tuple(str(x) for x in d["aid_names"]),
+            name=str(d.get("name") or "Course"),
+            aid_km=tuple(float(x) for x in d.get("aid_km", ())),
+            aid_names=tuple(str(x) for x in d.get("aid_names", ())),
             start_time=parse_iso(start) if start else None,
             lat=d.get("lat"),
             lon=d.get("lon"),

@@ -31,6 +31,8 @@ class CourseParams:
     smooth_window_m: float = 150.0
     grade_clip: float = 0.45
     cr0: float = 3.6
+    # Découpage automatique quand la course ne fournit pas de ravitaillements (mode GPX-only).
+    default_segment_km: float = 10.0
 
 
 @dataclass(frozen=True)
