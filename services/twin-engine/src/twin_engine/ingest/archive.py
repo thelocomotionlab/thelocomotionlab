@@ -21,7 +21,10 @@ import io
 import posixpath
 import zipfile
 
-_ACTIVITY_EXTS = (".fit", ".tcx", ".gpx")
+# Extensions de conteneurs d'activité que le marcheur surface pour le dispatch. « .json »
+# est inclus pour l'export Polar (séances en JSON propriétaire) ; les json non-activité sont
+# écartés en aval (par la taille, puis par le parseur qui lève NotActivityData).
+_ACTIVITY_EXTS = (".fit", ".tcx", ".gpx", ".json")
 
 
 def is_gzip(name: str) -> bool:

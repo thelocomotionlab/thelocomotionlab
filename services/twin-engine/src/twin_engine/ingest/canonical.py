@@ -27,6 +27,16 @@ import numpy as np
 
 CANONICAL_VERSION = 1
 
+
+class NotActivityData(Exception):
+    """Le contenu n'est **pas** une trace d'activité exploitable (ni une erreur de parsing).
+
+    Levée par un adaptateur quand un fichier reconnu par extension s'avère être une
+    métadonnée ou un résumé sans données (ex. un ``.json`` Polar qui n'est pas une
+    *training-session* avec échantillons). L'ingestion l'**ignore en silence** — pas de
+    fichier « ignoré » à afficher, contrairement à une vraie trace qui échoue au parsing.
+    """
+
 # Normalisation des libellés de sport vers des jetons canoniques. Seul "running"
 # est exploité par le jumeau ; les autres sont conservés mais ignorés en aval.
 _SPORT_ALIASES: dict[str, str] = {
@@ -228,6 +238,7 @@ class CanonicalActivity:
 
 __all__ = [
     "CANONICAL_VERSION",
+    "NotActivityData",
     "CanonicalActivity",
     "normalize_sport",
     "clean_token",

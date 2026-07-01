@@ -18,15 +18,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
-from .archive import decompress_gz, is_gzip, recognized, strava_sport_map, strip_gz
-from .canonical import CanonicalActivity, normalize_sport
+from .archive import _ACTIVITY_EXTS, decompress_gz, is_gzip, recognized, strava_sport_map, strip_gz
+from .canonical import CanonicalActivity, NotActivityData, normalize_sport
 from .fit import parse_fit
 from .gpx import parse_gpx
+from .polar import parse_polar
 from .tcx import parse_tcx
 from .walker import walk_activity_files
 
-_PARSERS = {"fit": parse_fit, "tcx": parse_tcx, "gpx": parse_gpx}
-_ACTIVITY_EXTS = (".fit", ".tcx", ".gpx")
+_PARSERS = {"fit": parse_fit, "tcx": parse_tcx, "gpx": parse_gpx, "json": parse_polar}
 
 
 def _safe_name(orig: str, idx: int) -> str:
@@ -60,6 +60,8 @@ class IngestResult:
     ) -> None:
         try:
             act = parse_bytes(data, base, sport_hint=sport_hint)
+        except NotActivityData:
+            return  # conteneur reconnu mais non-activité (ex. json de métadonnée) : ignoré sans bruit
         except Exception as exc:  # noqa: BLE001 — robustesse: un fichier brouillon n'arrête rien
             self.skipped.append({"name": base, "reason": str(exc)})
             return
