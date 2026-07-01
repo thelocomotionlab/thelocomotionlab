@@ -27,7 +27,7 @@ import os
 import posixpath
 import zipfile
 from pathlib import Path
-from typing import Iterator
+from typing import Callable, Iterator
 
 from .archive import recognized
 
@@ -48,6 +48,7 @@ def walk_activity_files(
     *,
     min_bytes: int = DEFAULT_MIN_BYTES,
     max_depth: int = DEFAULT_MAX_DEPTH,
+    path_filter: Callable[[str], bool] | None = None,
 ) -> Iterator[tuple[str, bytes]]:
     """Itère ``(basename, raw_bytes)`` pour chaque trace d'activité du conteneur.
 
@@ -55,9 +56,14 @@ def walk_activity_files(
     Les fichiers ``.gz`` sont restitués **tels quels** (nom + octets compressés) — la
     décompression appartient au parseur en aval (``parse_bytes``). Récursion bornée par
     ``max_depth`` ; un zip illisible est ignoré (jamais d'exception qui tombe l'archive).
+
+    ``path_filter`` : prédicat **opaque** (le marcheur reste générique) appliqué au chemin
+    relatif d'un fichier **avant lecture** ; s'il renvoie faux, le fichier n'est ni lu ni
+    restitué. Sert au périmétrage d'un export (ex. ne lire que ``activities/`` chez Strava,
+    sans jamais charger ``media/`` ou ``routes/`` en mémoire).
     """
     if isinstance(source, (bytes, bytearray)):
-        yield from _walk_zip(bytes(source), min_bytes, max_depth, 0)
+        yield from _walk_zip(bytes(source), min_bytes, max_depth, 0, path_filter)
         return
 
     p = Path(source)
@@ -66,17 +72,24 @@ def walk_activity_files(
             if not f.is_file():
                 continue
             if _is_zip(f.name):
-                yield from _walk_zip(f.read_bytes(), min_bytes, max_depth, 0)
+                yield from _walk_zip(f.read_bytes(), min_bytes, max_depth, 0, path_filter)
             elif recognized(f.name) and f.stat().st_size >= min_bytes:
+                if path_filter is not None and not path_filter(f.relative_to(p).as_posix()):
+                    continue
                 yield f.name, f.read_bytes()
     elif _is_zip(p.name):
-        yield from _walk_zip(p.read_bytes(), min_bytes, max_depth, 0)
+        yield from _walk_zip(p.read_bytes(), min_bytes, max_depth, 0, path_filter)
     elif recognized(p.name):
-        yield p.name, p.read_bytes()
+        if path_filter is None or path_filter(p.name):
+            yield p.name, p.read_bytes()
 
 
 def _walk_zip(
-    data: bytes, min_bytes: int, max_depth: int, depth: int
+    data: bytes,
+    min_bytes: int,
+    max_depth: int,
+    depth: int,
+    path_filter: Callable[[str], bool] | None,
 ) -> Iterator[tuple[str, bytes]]:
     if depth > max_depth:
         return
@@ -98,10 +111,12 @@ def _walk_zip(
                     nested = zf.read(zi)
                 except (zipfile.BadZipFile, RuntimeError, OSError):
                     continue
-                yield from _walk_zip(nested, min_bytes, max_depth, depth + 1)
+                yield from _walk_zip(nested, min_bytes, max_depth, depth + 1, path_filter)
             elif recognized(base):
-                # Pré-filtre SANS lecture (taille décompressée dans l'en-tête du zip).
+                # Pré-filtre SANS lecture : taille (en-tête) puis périmètre (chemin).
                 if zi.file_size < min_bytes:
+                    continue
+                if path_filter is not None and not path_filter(zi.filename):
                     continue
                 try:
                     yield base, zf.read(zi)

@@ -15,7 +15,7 @@ import os
 import posixpath
 import shutil
 from dataclasses import dataclass, field
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Callable
 
 from .archive import _ACTIVITY_EXTS, decompress_gz, is_gzip, recognized, strava_sport_map, strip_gz
@@ -118,8 +118,8 @@ def ingest_path(
             _purge(p)
         return result
 
-    source, sport_map = _prepare(p)
-    for idx, (orig, data) in enumerate(walk_activity_files(source), start=1):
+    source, sport_map, scope = _prepare(p)
+    for idx, (orig, data) in enumerate(walk_activity_files(source, path_filter=scope), start=1):
         hint = sport_map.get(posixpath.basename(orig))  # transitoire : orig jamais conservé
         safe = _safe_name(orig, idx)
         result._add(safe, data, hint, running_only=running_only)
@@ -131,16 +131,29 @@ def ingest_path(
     return result
 
 
-def _prepare(p: Path) -> tuple[bytes | Path, dict[str, str]]:
-    """Renvoie ``(source pour le marcheur, carte de sport Strava)``.
+def _activities_scope(path: str) -> bool:
+    """Vrai si ``path`` est sous un dossier ``activities`` — périmètre d'un export Strava.
+
+    Écarte ``media/``, ``routes/``, ``clubs/`` et les CSV racine **avant lecture** (on ne
+    charge jamais les photos ni les routes sauvegardées en mémoire).
+    """
+    return "activities" in PurePosixPath(path).parts[:-1]
+
+
+def _prepare(p: Path) -> tuple[bytes | Path, dict[str, str], Callable[[str], bool] | None]:
+    """Renvoie ``(source pour le marcheur, carte de sport Strava, périmètre)``.
 
     Pour un ``.zip`` on lit les octets une seule fois : ils servent à la fois au manifeste
-    Strava (repli de sport pour les ``.gpx`` nus) et au marcheur. Sinon, on passe le chemin.
+    Strava (repli de sport pour les ``.gpx`` nus) et au marcheur. La présence d'``activities.csv``
+    (carte non vide) marque un export Strava → on limite l'ingestion à ``activities/``. Sinon
+    (Garmin, Polar, dossier, fichier), aucun périmètre : comportement inchangé.
     """
     if p.is_file() and p.suffix.lower() == ".zip":
         data = p.read_bytes()
-        return data, strava_sport_map(data)
-    return p, {}
+        sport_map = strava_sport_map(data)
+        scope = _activities_scope if sport_map else None
+        return data, sport_map, scope
+    return p, {}, None
 
 
 def _purge(p: Path) -> None:
