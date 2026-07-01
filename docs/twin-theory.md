@@ -77,9 +77,25 @@ Pour comparer des efforts sur terrains différents, chaque seconde est convertie
 > (≈ +25 % ; au-delà on marche), écrêter la vitesse brute, léger lissage d'altitude. *Règles fixes.*
 
 ### 2.3 Courbe record ajustée
-On accumule la **distance ajustée** `d_ga = Σ f·Δdist`, puis pour chaque durée `T` on prend la meilleure
-moyenne glissante : `v_ga(T) = max_t (d_ga[t+T] − d_ga[t]) / T`. C'est l'enveloppe des meilleures
-performances de l'athlète, en équivalent plat.
+On accumule la **distance ajustée** `d_ga = Σ f·Δdist`, puis pour chaque durée `T` la meilleure moyenne
+glissante de chaque activité `v_ga(T) = max_t (d_ga[t+T] − d_ga[t]) / T`, agrégées en une **enveloppe
+robuste** sur toutes les activités.
+
+> **Robustesse de l'enveloppe (garde-fou, §8).** Une **seule** activité contaminée (vélo mal étiqueté,
+> trace bruyante, activité **sans altitude** traitée à tort comme plate) ne doit jamais fixer VC ni
+> l'exposant. Quatre règles fixes, toutes en config :
+> 1. **altitude requise** — sans altitude on ne peut pas ajuster à la pente → activité **exclue** de la
+>    courbe record (mais **conservée** dans les résumés pour la calibration et la durabilité) ;
+> 2. **plafond physiologique** `vc_max_plausible_ms` — un point « plat » plus rapide est rejeté avant
+>    l'ajustement de la VC ;
+> 3. **support minimal** `record_min_support` — un point record n'est retenu que s'il est soutenu par au
+>    moins N activités : on garde la **N-ième meilleure** (repli sur la meilleure disponible aux durées
+>    rares), jamais le pic isolé ;
+> 4. **rejet fenêtré** `record_reject_speed_ms` / `record_reject_window_s` — une activité qui soutient une
+>    vitesse brute impossible pour de la course sur une fenêtre longue est **écartée** (log « skipped »).
+>
+> L'exposant d'endurance se lisant sur la même enveloppe, ces règles corrigent **en même temps** une VC
+> et un exposant surévalués.
 
 > **Honnêteté méthodologique (garde-fou) :** l'ajustement de Minetti est une **équivalence métabolique
 > de régime permanent, valable en aérobie**. Pour les efforts **courts** (< 30 min), presque toujours
@@ -96,10 +112,19 @@ Modèle hyperbolique `d = VC·t + D′` (donc `v(t) = VC + D′/t`), ajusté sur
 **volontairement signalée comme peu fiable** (le modèle est étiré au-delà de son domaine 2–15 min) ;
 **sans importance pour un 100M** couru bien en deçà de la VC.
 
+> **Garde-fou d'honnêteté.** Si la VC ajustée reste **au-dessus** de `vc_max_plausible_ms`, elle est
+> marquée **non plausible** (`from_flat_efforts = False`, confiance réduite) et le rapport **n'affiche
+> pas de « % de VC »** : mieux vaut ne rien dire qu'un ratio d'intensité trompeur.
+
 ### 2.5 Exposant d'endurance E
 Loi de puissance sur l'enveloppe longue (30 min–6 h) : `v_ga ∝ t^(−α)`, d'où l'exposant de Riegel
-`E = 1/(1−α)`. Décrit la vitesse de déclin avec la durée.
-**Cas de référence** : `α = 0,181`, **E = 1,222** (élevé, typique d'un profil d'ultra).
+`E = 1/(1−α)`. Il mesure **à quelle vitesse l'allure soutenable décline quand la durée s'allonge** —
+**pas** la vitesse pure (c'est la **VC** qui la mesure ; les deux axes sont **indépendants**). Sens de
+lecture : **un E bas (proche de 1) = tient très bien l'allure (« diesel ») ; un E plus haut = décline
+plus nettement.**
+**Cas de référence** : `α = 0,181`, **E = 1,222** — exposant **modéré**, profil **plutôt endurant**
+(un E plus bas tiendrait encore mieux l'allure ; un E plus haut déclinerait davantage). Le texte du
+rapport est **généré à partir de la valeur** avec ce même vocabulaire (déclin, jamais vitesse).
 
 ### 2.6 Durabilité
 **Découplage intra-course** : baisse de l'efficacité (vitesse ajustée / FC) en seconde moitié vs première
@@ -120,6 +145,18 @@ moyenne de course** en fonction de la durée et du dénivelé :
 `v_ga[km/h] = β0 + β1·ln(T_heures) + β2·(D+/km)`
 
 **Cas de référence** (8 vrais ultras) : `v = 8,563 − 0,350·ln(T) − 0,0148·(D+/km)`, résidu σ = 0,14 km/h.
+
+> **Pondération par récence (non-stationnarité).** Chez un athlète très fourni, les vrais ultras
+> s'étalent sur **plusieurs saisons de formes différentes** ; les pondérer à poids égal biaise la
+> régression vers une forme moyenne périmée. La régression (et son σ) est donc **pondérée par récence** :
+> décroissance exponentielle sur le **temps calendaire**, `w = 0,5^(âge_jours / recency_halflife_days)`
+> (défaut **365 j**), robuste aux trous (décroissance temporelle, pas par nombre d'activités). À poids
+> égaux (mêmes dates), elle **se réduit exactement** à la régression non pondérée — le golden ne bouge pas.
+>
+> **Plancher de sur-confiance.** Le régime « régression » n'est retenu que si le **nombre effectif**
+> d'ultras `N_eff = (Σw)² / Σw²` atteint `min_ultras_regression`. Sinon (assez d'ultras au total mais
+> trop peu de **récents**), on bascule dans le repli « peu d'ultras » à incertitude élargie : la récence
+> ne doit jamais fabriquer une régression sûre d'elle sur une poignée de courses récentes.
 
 > **Point de généralisation crucial.** Cette régression suppose **plusieurs** vrais ultras. La plupart
 > des athlètes n'en auront pas 8. Le moteur doit donc **dégrader proprement** :
@@ -151,6 +188,12 @@ intervalle 80 % **29,6–31,3 h** (Monte-Carlo complet 28,0–33,0 h).
 **Leave-one-out** sur les vrais ultras : pour chacun, on **réajuste la régression en l'excluant**, on
 prédit son temps, on compare au réel. La moyenne des erreurs **devient l'indice de confiance imprimé
 dans le rapport**, et l'un des critères du **test de suffisance**.
+
+> **Cohérence avec le modèle servi.** La LOO applique **exactement la même pondération par récence**
+> (§3) — dans chaque ré-ajustement **et** dans l'agrégation MAE/RMSE — pour que l'indice reflète le
+> modèle réellement utilisé : sur un athlète non stationnaire, les ultras récents (bien prédits) pèsent
+> plus que les anciens, si bien que l'erreur affichée **baisse** quand la récence corrige la forme.
+> À poids égaux, la moyenne pondérée redevient une moyenne simple (golden intact).
 
 **Cas de référence** : erreur moyenne **2,8 %**, RMSE 3,4 % (n = 8). Les deux ultras de 120 km+ prédits
 à +2,5 % / +2,2 %.
@@ -189,9 +232,9 @@ Tout ce qui a pu ressembler à de l'expertise au cas par cas est en réalité l'
 
 | Type | Exemples | Statut |
 |---|---|---|
-| **Règle fixe** (même code pour tous) | lissage 150 m, écrêtage pente ±0,45, base de pente ±50 m, plafond `f≤3`, exclusion < 30 min, conditions des « vrais ultras », Δ du fade | identique pour chaque athlète |
-| **Ajusté à partir des données** | VC, D′, exposant E, durabilité, coefficients β de la régression, prédiction, plan | **calculé** par athlète → individualisation automatique |
-| **Garde-fou d'honnêteté** | invalidité < 30 min, descentes techniques = plafonds, forme du jour inconnue, D′ peu fiable, marche au-delà de ±25 % | cadrage fixe + **test de suffisance** |
+| **Règle fixe** (même code pour tous) | lissage 150 m, écrêtage pente ±0,45, base de pente ±50 m, plafond `f≤3`, exclusion < 30 min, conditions des « vrais ultras », Δ du fade, **robustesse record** (altitude requise, plafond VC plausible, support ≥N, rejet fenêtré), **demi-vie de récence** | identique pour chaque athlète |
+| **Ajusté à partir des données** | VC, D′, exposant E, durabilité, coefficients β de la régression **pondérée par récence**, prédiction, plan | **calculé** par athlète → individualisation automatique |
+| **Garde-fou d'honnêteté** | invalidité < 30 min, descentes techniques = plafonds, forme du jour inconnue, D′ peu fiable, marche au-delà de ±25 %, **VC non plausible → pas de « % de VC »**, **plancher N_eff** (pas de régression sûre d'elle sur trop peu d'ultras récents) | cadrage fixe + **test de suffisance** |
 
 **Conséquence :** l'individualisation est **automatique par construction** — d'autres fichiers → d'autres
 paramètres → un autre plan. Rien n'est partagé entre clients sauf **la méthode (le code) et la charte**.
@@ -231,10 +274,12 @@ Calculé **avant paiement**, sur la donnée normalisée :
 ## 11. Ce qui reste à durcir (zones de fragilité connues)
 
 1. **Ingestion multi-marques** robuste (exports brouillons, `.gz`, Strava mixte) → tests par format.
-2. **Régime « peu d'ultras »** (cf. §3) : fallback VC+E + incertitude élargie.
+2. **Régime « peu d'ultras »** (cf. §3) : fallback VC+E + incertitude élargie, désormais aussi déclenché
+   par le **plancher N_eff** (assez d'ultras mais trop peu de récents).
 3. **FC absente** : la durabilité (découplage) repose sur la FC → dégrader proprement / signaler.
-4. **Profils atypiques** (marche dominante, treadmill, montre bruyante) → détecter et, à défaut,
-   **être honnête (🟠/🔴)** plutôt que produire un plan confiant mais faux.
+4. **Profils atypiques** (marche dominante, treadmill, montre bruyante, activité sans altitude) →
+   la **robustesse de la courbe record** (§2.3 : altitude requise, support ≥N, rejet fenêtré, plafond
+   plausible) les écarte de VC/exposant ; à défaut **être honnête (🟠/🔴)** plutôt que confiant mais faux.
 5. **Non-régression** : golden test sur le cas de référence (mêmes entrées → mêmes sorties à tolérance).
 
 ---
@@ -254,6 +299,13 @@ Calculé **avant paiement**, sur la donnée normalisée :
 | Intervalle 80 % | 29,6–31,3 h |
 | Validation croisée | MAE 2,8 % · RMSE 3,4 % (n = 8) |
 | Plan | mvt 28,6 h + arrêts 1,75 h ; départ ven. 13:00 ; nuit km 38→94 |
+
+> **Stabilité du golden.** Les durcissements de robustesse (§2.3) et la pondération par récence (§3/§5)
+> **ne bougent quasiment pas** ce cas (données propres, ~1,5 an, altitude présente) : sur des dates
+> proches la récence redevient neutre, et l'enveloppe robuste sur données denses retient une N-ième
+> meilleure ≈ la meilleure. Le golden **déterministe** committé (ultras de même date) est **inchangé au
+> chiffre près** ; les réfs du golden **réel** ci-dessus ne sont à recapturer que si les vraies données
+> les décalent légèrement — auquel cas on ajuste `recency_halflife_days` avant de relâcher tout seuil.
 
 > Réfs : Minetti 2002 ; Poole 2016 / Jones & Vanhatalo 2017 (VC) ; Riegel 1981 / Drake 2024 (E) ;
 > Maunder 2021 / Jones 2024 (durabilité) ; NOAA (solaire).
