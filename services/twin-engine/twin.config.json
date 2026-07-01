@@ -23,6 +23,10 @@
     "vc_bootstrap_n": 2000,
     "vc_bootstrap_seed": 0,
     "vc_short_effort_floor_s": 1800,
+    "vc_max_plausible_ms": 6.0,
+    "record_min_support": 2,
+    "record_reject_speed_ms": 6.5,
+    "record_reject_window_s": 600,
     "endurance_window_s": [1800, 21600],
     "decouple_min_duration_s": 4500,
     "durability_min_hours": 10.0
@@ -33,6 +37,7 @@
     "genuine_min_ga_kmh": 5.5,
     "genuine_max_decouple_pct": 30.0,
     "min_ultras_regression": 3,
+    "recency_halflife_days": 365.0,
     "default_dplus_penalty_kmh_per_dpkm": -0.0148,
     "regression_min_sigma_kmh": 0.20,
     "blend_sigma_kmh": 0.45,

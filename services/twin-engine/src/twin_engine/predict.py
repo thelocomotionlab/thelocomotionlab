@@ -80,7 +80,13 @@ def _solve_fixed_point(deq_km: float, dpk: float, vfunc, cfg: Config) -> float |
 
 
 def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation | None:
-    """Réajuste la régression en excluant chaque ultra, prédit son temps, compare au réel."""
+    """Réajuste la régression en excluant chaque ultra, prédit son temps, compare au réel.
+
+    Utilise **exactement la même pondération par récence** que la régression réellement servie
+    (dans chaque pli ET dans l'agrégation MAE/RMSE), afin que l'indice de confiance reflète le
+    modèle utilisé : sur un athlète non stationnaire, les ultras récents (bien prédits) pèsent
+    plus que les anciens. Poids égaux ⇒ moyenne simple (le golden reste identique).
+    """
     if not calibration.supports_cross_validation:
         return None
     g = calibration.genuine
@@ -89,27 +95,34 @@ def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation
     V = np.array([u.vga_kmh for u in g])
     dpk = np.array([u.dplus_per_km for u in g])
     deq_each = V * H  # distance ajustée (Deq) de chaque course
+    w = (np.asarray(calibration.weights, dtype=float)
+         if calibration.weights is not None else np.ones(n))
 
     errors: list[float] = []
+    w_used: list[float] = []
     points: list[tuple[float, float]] = []
     for i in range(n):
         keep = [j for j in range(n) if j != i]
+        wk = np.sqrt(w[keep])
         Xs = np.vstack([np.ones(len(keep)), np.log(H[keep]), dpk[keep]]).T
-        beta, *_ = np.linalg.lstsq(Xs, V[keep], rcond=None)
+        beta, *_ = np.linalg.lstsq(Xs * wk[:, None], V[keep] * wk, rcond=None)
         vfunc = lambda T, d, b=beta: b[0] + b[1] * np.log(T) + b[2] * d
         tp = _solve_fixed_point(deq_each[i], dpk[i], vfunc, cfg)
         if tp is None:
             continue
         errors.append(100.0 * (tp - H[i]) / H[i])
+        w_used.append(float(w[i]))
         points.append((float(H[i]), float(tp)))
 
     if not errors:
         return None
     err = np.asarray(errors)
+    wu = np.asarray(w_used)
+    sw = float(wu.sum())
     return CrossValidation(
         errors_pct=[float(e) for e in err],
-        mae_pct=float(np.mean(np.abs(err))),
-        rmse_pct=float(np.sqrt(np.mean(err**2))),
+        mae_pct=float(np.sum(wu * np.abs(err)) / sw),
+        rmse_pct=float(np.sqrt(np.sum(wu * err**2) / sw)),
         n=len(errors),
         points=points,
     )
@@ -137,8 +150,11 @@ def predict_finish(
     low = float(np.percentile(mc, cfg.prediction.interval_low_pct))
     high = float(np.percentile(mc, cfg.prediction.interval_high_pct))
 
-    vc_ms = twin.vc_ms
-    vc_fraction = (v_point / (vc_ms * 3.6)) if vc_ms else None
+    # % de VC seulement si la VC est plausible (sinon on n'affiche pas un ratio trompeur)
+    cs = twin.critical_speed
+    vc_fraction = None
+    if cs is not None and cs.plausible and cs.vc_ms:
+        vc_fraction = v_point / (cs.vc_ms * 3.6)
 
     return Prediction(
         finish_hours=float(t_point),

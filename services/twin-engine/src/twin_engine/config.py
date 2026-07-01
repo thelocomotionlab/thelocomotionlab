@@ -51,6 +51,15 @@ class TwinParams:
     vc_bootstrap_n: int = 2000
     vc_bootstrap_seed: int = 0
     vc_short_effort_floor_s: int = 1800
+    # --- robustesse de la courbe record (Problème A : VC/exposant aberrants) ---
+    vc_max_plausible_ms: float = 6.0          # plafond physiologique : un point « plat » plus rapide
+    #                                           est rejeté avant l'ajustement VC ; une VC au-dessus
+    #                                           est marquée non plausible (confiance réduite, pas de % VC).
+    record_min_support: int = 2               # nb min d'activités soutenant un point record (sinon
+    #                                           on retient la N-ième meilleure → une seule activité
+    #                                           contaminée ne peut plus fixer VC ni l'exposant).
+    record_reject_speed_ms: float = 6.5       # vitesse brute soutenue impossible pour de la course :
+    record_reject_window_s: int = 600         #   toute fenêtre ≥ ce seuil écarte l'activité (vélo/artefact).
     endurance_window_s: tuple[int, int] = (1800, 21600)
     decouple_min_duration_s: int = 4500       # durée min pour CALCULER le découplage
     durability_min_hours: float = 10.0        # durabilité reportée sur les efforts longs (ultras)
@@ -62,6 +71,13 @@ class CalibrationParams:
     genuine_min_ga_kmh: float = 5.5
     genuine_max_decouple_pct: float = 30.0
     min_ultras_regression: int = 3
+    # pondération par récence (Problème B : non-stationnarité des ultras sur plusieurs saisons)
+    recency_halflife_days: float = 365.0                 # demi-vie de la décroissance exponentielle
+    #                                                      temporelle (≤ 0 → pondération désactivée) ;
+    #                                                      appliquée à l'identique dans la régression ET
+    #                                                      la validation croisée leave-one-out. Le régime
+    #                                                      régression n'est retenu que si le nombre EFFECTIF
+    #                                                      d'ultras (N_eff = (Σw)²/Σw²) ≥ min_ultras_regression.
     # repli « peu d'ultras » (twin-theory §3)
     default_dplus_penalty_kmh_per_dpkm: float = -0.0148  # prior population (β2)
     regression_min_sigma_kmh: float = 0.20               # plancher de σ (anti-surconfiance)

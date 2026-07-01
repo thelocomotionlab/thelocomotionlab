@@ -60,6 +60,10 @@ class UltraCalibration:
     endurance_coef: float | None = None              # coef enveloppe (repli)
     dplus_penalty: float = 0.0                        # β2 prior (repli)
     offset_kmh: float = 0.0                           # recalage du mélange (blend)
+    # pondération par récence (régime régression) : réutilisée à l'identique par la LOO
+    weights: tuple[float, ...] | None = None
+    n_eff: float = 0.0                                # nb effectif d'ultras = (Σw)²/Σw²
+    recency_halflife_days: float = 0.0
 
     @property
     def n_genuine(self) -> int:
@@ -94,6 +98,8 @@ class UltraCalibration:
         return {
             "regime": self.regime,
             "n_genuine_ultras": self.n_genuine,
+            "n_eff_ultras": round(self.n_eff, 2),
+            "recency_halflife_days": self.recency_halflife_days,
             "sigma_kmh": round(self.sigma_kmh, 3),
             "beta": None if self.beta is None else [round(b, 5) for b in self.beta],
             "notes": self.notes,
@@ -128,13 +134,65 @@ def select_genuine_ultras(summaries: list[ActivitySummary], cfg: Config) -> list
     return out
 
 
-def _fit_regression(genuine: list[GenuineUltra]):
-    """β = lstsq(v ~ 1 + ln(T) + D+/km). Renvoie (beta, residuals)."""
+def recency_weights(genuine: list[GenuineUltra], cfg: Config) -> np.ndarray:
+    """Poids de récence (décroissance exponentielle sur le temps **calendaire**).
+
+    ``w_i = 0.5 ^ (age_i / demi-vie)`` où ``age_i`` est l'écart en jours au **plus récent**
+    vrai ultra. Robuste aux trous (décroissance temporelle, pas par nombre d'activités). Une
+    demi-vie ≤ 0 — ou moins de deux dates exploitables — désactive la pondération (poids 1).
+    Les ultras non datés reçoivent le **plus faible** poids daté (prudence : on ne présume pas
+    récent ce qu'on ne peut pas dater).
+    """
+    n = len(genuine)
+    if n == 0:
+        return np.zeros(0)
+    hl = cfg.calibration.recency_halflife_days
+    if hl <= 0:
+        return np.ones(n)
+    from datetime import date as _date
+
+    parsed: list[_date | None] = []
+    for g in genuine:
+        d: _date | None = None
+        if g.date:
+            try:
+                d = _date.fromisoformat(g.date)
+            except ValueError:
+                d = None
+        parsed.append(d)
+    valid = [d for d in parsed if d is not None]
+    if len(valid) < 2:
+        return np.ones(n)  # timeline non établissable → pondération neutre
+    ref = max(valid)
+    w = np.ones(n)
+    for i, d in enumerate(parsed):
+        if d is not None:
+            w[i] = 0.5 ** (max(0, (ref - d).days) / hl)
+    dated = [w[i] for i, d in enumerate(parsed) if d is not None]
+    fill = min(dated) if dated else 1.0
+    for i, d in enumerate(parsed):
+        if d is None:
+            w[i] = fill
+    return w
+
+
+def _effective_n(weights: np.ndarray) -> float:
+    """Nombre effectif d'échantillons ``(Σw)²/Σw²`` (= n quand les poids sont égaux)."""
+    sw = float(weights.sum())
+    sw2 = float(np.square(weights).sum())
+    return (sw * sw / sw2) if sw2 > 0 else 0.0
+
+
+def _fit_regression(genuine: list[GenuineUltra], weights: np.ndarray | None = None):
+    """β = lstsq **pondéré** (v ~ 1 + ln(T) + D+/km). Renvoie (beta, residuals).
+
+    Poids ``None`` ou égaux ⇒ moindres carrés ordinaires (le golden reste identique)."""
     h = np.array([g.hours for g in genuine])
     v = np.array([g.vga_kmh for g in genuine])
     dpk = np.array([g.dplus_per_km for g in genuine])
     X = np.vstack([np.ones_like(h), np.log(h), dpk]).T
-    beta, *_ = np.linalg.lstsq(X, v, rcond=None)
+    sw = np.sqrt(np.ones_like(h) if weights is None else np.asarray(weights, dtype=float))
+    beta, *_ = np.linalg.lstsq(X * sw[:, None], v * sw, rcond=None)
     resid = v - X @ beta
     return beta, resid
 
@@ -145,19 +203,35 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
     n = len(genuine)
     notes: list[str] = []
 
-    # ---------- régime régression (≥ ~3 vrais ultras) ----------
-    if n >= c.min_ultras_regression:
-        beta, resid = _fit_regression(genuine)
-        dof = max(n - 3, 1)
-        sigma = float(np.sqrt(np.sum(resid**2) / dof))
+    weights = recency_weights(genuine, cfg)
+    n_eff = _effective_n(weights) if n else 0.0
+
+    # ---------- régime régression (≥ ~3 vrais ultras ET N_eff suffisant) ----------
+    # Le plancher N_eff empêche la pondération par récence de fabriquer une régression
+    # sûre d'elle sur trop peu d'ultras récents (surconfiance) : dans ce cas on bascule
+    # dans le repli « peu d'ultras » (incertitude élargie) ci-dessous.
+    if n >= c.min_ultras_regression and n_eff >= c.min_ultras_regression:
+        beta, resid = _fit_regression(genuine, weights)
+        # σ pondérée : variance résiduelle pondérée corrigée par le nb effectif de degrés de
+        # liberté. Se réduit EXACTEMENT à √(Σr²/(n−3)) quand les poids sont égaux (golden intact).
+        sw = float(weights.sum())
+        wmse = float(np.sum(weights * resid**2) / sw) if sw > 0 else 0.0
+        dof_eff = max(n_eff - 3.0, 1.0)
+        sigma = float(np.sqrt(wmse * n_eff / dof_eff))
         sigma = max(sigma, c.regression_min_sigma_kmh)
-        notes.append(f"Régression personnelle sur {n} vrais ultras.")
+        notes.append(
+            f"Régression personnelle pondérée par récence sur {n} vrais ultras "
+            f"(≈ {n_eff:.1f} effectifs, demi-vie {c.recency_halflife_days:.0f} j)."
+        )
         return UltraCalibration(
             regime=REGIME_REGRESSION,
             genuine=genuine,
             sigma_kmh=sigma,
             notes=notes,
             beta=(float(beta[0]), float(beta[1]), float(beta[2])),
+            weights=tuple(float(x) for x in weights),
+            n_eff=n_eff,
+            recency_halflife_days=c.recency_halflife_days,
         )
 
     # ---------- replis VC+E (nécessitent l'enveloppe d'endurance) ----------
@@ -167,7 +241,8 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
             "exploitable → prédiction impossible avec confiance."
         )
         return UltraCalibration(
-            regime=REGIME_INSUFFICIENT, genuine=genuine, sigma_kmh=float("inf"), notes=notes
+            regime=REGIME_INSUFFICIENT, genuine=genuine, sigma_kmh=float("inf"), notes=notes,
+            n_eff=n_eff, recency_halflife_days=c.recency_halflife_days,
         )
 
     penalty = c.default_dplus_penalty_kmh_per_dpkm
@@ -182,10 +257,17 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
             base = v_env * 3.6 + penalty * g.dplus_per_km
             offsets.append(g.vga_kmh - base)
         offset = float(np.mean(offsets)) if offsets else 0.0
-        notes.append(
-            f"Seulement {n} vrai(s) ultra(s) : extrapolation VC+E recalée sur vos données, "
-            "incertitude élargie."
-        )
+        if n >= c.min_ultras_regression:
+            # demoté par le plancher N_eff : assez d'ultras, mais trop peu de RÉCENTS
+            notes.append(
+                f"{n} vrais ultras mais seulement ≈ {n_eff:.1f} récents (non-stationnarité) : "
+                "extrapolation VC+E recalée sur vos données, incertitude élargie."
+            )
+        else:
+            notes.append(
+                f"Seulement {n} vrai(s) ultra(s) : extrapolation VC+E recalée sur vos données, "
+                "incertitude élargie."
+            )
         return UltraCalibration(
             regime=REGIME_BLEND,
             genuine=genuine,
@@ -195,6 +277,8 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
             endurance_coef=twin.endurance_coef,
             dplus_penalty=penalty,
             offset_kmh=offset,
+            n_eff=n_eff,
+            recency_halflife_days=c.recency_halflife_days,
         )
 
     # ---------- régime VC+E seul (0 ultra) ----------
@@ -211,6 +295,8 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
         endurance_coef=twin.endurance_coef,
         dplus_penalty=penalty,
         offset_kmh=0.0,
+        n_eff=n_eff,
+        recency_halflife_days=c.recency_halflife_days,
     )
 
 
