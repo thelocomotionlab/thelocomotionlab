@@ -103,3 +103,53 @@ def test_spec_validation_rejects_mismatch():
         RaceSpec("bad", (0.0, 5.0), ("only-one",))
     with pytest.raises(ValueError):
         RaceSpec("bad", (0.0, 5.0, 3.0), ("a", "b", "c"))  # non croissant
+
+
+# --------------------------------------------------------------------------- #
+# Mode GPX-only : aucun ravitaillement → distance depuis la trace + découpage auto.
+def test_empty_spec_is_gpx_only():
+    race = RaceSpec(name="Sans ravitos")
+    assert not race.has_aid_stations
+    assert race.official_finish_km is None
+    assert race.n_segments == 0
+    assert RaceSpec().name == "Course"  # défaut
+
+
+def test_gpx_only_distance_and_dplus_come_from_trace():
+    cfg = load_config()
+    # course de 32 km horizontaux, +1000 m : AUCUN aid_km fourni
+    course = build_course(_triangle_gpx(climb_m=1000.0, half_km=16.0), RaceSpec(name="Crasse"), cfg)
+    # longueur = celle du GPX (3D), pas un chiffre officiel imposé
+    assert 32.0 < course.length_km < 33.0
+    assert 950 < course.dplus_m < 1000            # D+ depuis la trace (lissage rogne un peu)
+    assert abs(course.dplus_m - course.dminus_m) < 5
+    assert course.deq_km > course.length_km        # la pente coûte
+
+
+def test_gpx_only_auto_segmentation_every_10km():
+    cfg = load_config()
+    course = build_course(_triangle_gpx(climb_m=1000.0, half_km=16.0), RaceSpec(name="C"), cfg)
+    # ~32,1 km → bornes 0/10/20/30/arrivée = 4 segments
+    assert len(course.segments) == 4
+    assert course.segments[0].frm == "Départ"
+    assert course.segments[1].frm == "km 10"
+    assert course.segments[-1].to == "Arrivée"
+    # cohérence : la somme des segments reconstitue le total
+    assert abs(sum(s.dplus_m for s in course.segments) - course.dplus_m) < 5
+    assert abs(sum(s.off_len for s in course.segments) - course.length_km) < 0.1
+
+
+def test_gpx_only_short_course_single_segment():
+    cfg = load_config()
+    course = build_course(_triangle_gpx(climb_m=200.0, half_km=3.0), RaceSpec(name="C"), cfg)
+    assert len(course.segments) == 1            # < 10 km → départ→arrivée
+    assert course.segments[0].frm == "Départ" and course.segments[0].to == "Arrivée"
+
+
+def test_custom_segment_length_is_configurable():
+    import dataclasses
+
+    cfg = load_config()
+    cfg5 = dataclasses.replace(cfg, course=dataclasses.replace(cfg.course, default_segment_km=5.0))
+    course = build_course(_triangle_gpx(climb_m=1000.0, half_km=16.0), RaceSpec(name="C"), cfg5)
+    assert len(course.segments) == 7            # ~32 km / 5 → 0,5,…,30,arrivée

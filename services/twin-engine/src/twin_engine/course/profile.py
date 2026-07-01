@@ -104,6 +104,27 @@ def _parse_course_gpx(data: bytes) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     return np.array(lat), np.array(lon), np.array(ele)
 
 
+def _auto_segmentation(total_km: float, step_km: float) -> tuple[np.ndarray, list[str]]:
+    """Bornes de segments tous les ``step_km`` de 0 à ``total_km`` (dernier = arrivée).
+
+    Utilisé en mode GPX-only (aucun ravitaillement fourni) : noms génériques
+    « Départ » / « km N » / « Arrivée ». Le dernier segment peut être plus court.
+    """
+    if step_km <= 0:
+        step_km = 10.0
+    edges = [float(x) for x in np.arange(0.0, total_km, step_km)] or [0.0]
+    if edges[-1] < total_km - 1e-6:
+        edges.append(total_km)
+    else:
+        edges[-1] = total_km
+    n = len(edges)
+    names = [
+        "Départ" if i == 0 else "Arrivée" if i == n - 1 else f"km {int(round(k))}"
+        for i, k in enumerate(edges)
+    ]
+    return np.asarray(edges, dtype=float), names
+
+
 def build_course(gpx_data: bytes, race: RaceSpec, cfg: Config) -> CourseProfile:
     lat, lon, ele = _parse_course_gpx(gpx_data)
 
@@ -115,7 +136,10 @@ def build_course(gpx_data: bytes, race: RaceSpec, cfg: Config) -> CourseProfile:
     dist3d = np.concatenate([[0.0], np.cumsum(seg3d)])
     L = cum[-1]
     L3d = dist3d[-1]
-    scale = race.official_finish_km * 1000.0 / L3d  # 3D → km officiels (rescale linéaire)
+    # Avec ravitaillements officiels : on recale la distance 3D sur le km officiel (le GPS
+    # dérive, le carnet de route fait foi). Sans (mode GPX-only) : on fait confiance à la
+    # longueur 3D de la trace telle quelle (scale = 1).
+    scale = race.official_finish_km * 1000.0 / L3d if race.has_aid_stations else 1.0
 
     # --- grille régulière + lissage de l'altimétrie (règle fixe : fenêtre config) ---
     step = cfg.course.grid_step_m
@@ -133,9 +157,12 @@ def build_course(gpx_data: bytes, race: RaceSpec, cfg: Config) -> CourseProfile:
     dist3d_grid = np.interp(xg, cum, dist3d)
     off_km_grid = dist3d_grid * scale / 1000.0
 
-    # --- découpage par ravitaillements ---
-    aid = np.asarray(race.aid_km, dtype=float)
-    names = list(race.aid_names)
+    # --- découpage : par ravitaillements officiels, ou automatique (pas régulier) ---
+    if race.has_aid_stations:
+        aid = np.asarray(race.aid_km, dtype=float)
+        names = list(race.aid_names)
+    else:
+        aid, names = _auto_segmentation(float(off_km_grid[-1]), cfg.course.default_segment_km)
 
     def grid_idx(off_km: float) -> int:
         return int(np.argmin(np.abs(off_km_grid - off_km)))

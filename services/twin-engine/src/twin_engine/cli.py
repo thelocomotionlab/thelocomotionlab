@@ -3,8 +3,9 @@
   twin-engine preview --training <archive> --course <gpx> [--race <json>]
   twin-engine full    --training <archive> --course <gpx> --out <dir> [--race <json>] [--athlete N]
 
-Le cas Nice 100M se rejoue en pointant ``--course`` sur la trace du parcours et
-``--race`` sur examples/nice-100m.json (valeur par défaut). En local, l'archive n'est
+``--race`` est **optionnel** : sans lui, mode GPX-only (distance issue de la trace,
+découpage automatique tous les N km). Avec, il fournit ravitaillements/départ/position
+(ex. examples/nice-100m.json pour rejouer le cas Nice 100M). En local, l'archive n'est
 PAS purgée par défaut (--purge pour l'opt-in) ; l'API de production, elle, purge.
 """
 
@@ -18,8 +19,6 @@ from pathlib import Path
 from .config import load_config
 from .course import RaceSpec
 from .pipeline import run_full, run_preview
-
-_DEFAULT_RACE = Path(__file__).resolve().parents[2] / "examples" / "nice-100m.json"
 
 
 def _progress(n: int, name: str) -> None:
@@ -55,7 +54,8 @@ def _build_parser() -> argparse.ArgumentParser:
         sp = sub.add_parser(name, help=f"profondeur {name}")
         sp.add_argument("--training", required=True, help="archive d'entraînement (.zip/.fit/.tcx/.gpx/.gz ou dossier)")
         sp.add_argument("--course", required=True, help="trace GPX du parcours")
-        sp.add_argument("--race", default=str(_DEFAULT_RACE), help="spec de course JSON (défaut : Nice 100M)")
+        sp.add_argument("--race", default=None, help="spec de course JSON (optionnel : sans, mode "
+                        "GPX-only — distance issue de la trace, découpage auto tous les N km)")
         sp.add_argument("--athlete", default="athlète")
         sp.add_argument("--purge", action="store_true", help="supprimer l'archive après parsing")
         if name == "full":
@@ -68,11 +68,15 @@ def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     cfg = load_config()
 
-    race_path = Path(args.race)
-    if not race_path.exists():
-        print(f"Spec de course introuvable : {race_path}", file=sys.stderr)
-        return 2
-    race: RaceSpec = RaceSpec.from_json(race_path)
+    if args.race:
+        race_path = Path(args.race)
+        if not race_path.exists():
+            print(f"Spec de course introuvable : {race_path}", file=sys.stderr)
+            return 2
+        race: RaceSpec = RaceSpec.from_json(race_path)
+    else:
+        # Mode GPX-only : aucun ravitaillement → distance depuis la trace, découpage auto.
+        race = RaceSpec(name=Path(args.course).stem)
     course_gpx = Path(args.course).read_bytes()
 
     if args.cmd == "preview":

@@ -55,10 +55,14 @@ La commande `twin-engine` est alors disponible.
 twin-engine preview \
   --training  chemin/vers/archive.zip \
   --course    chemin/vers/parcours.gpx \
-  --race      services/twin-engine/examples/nice-100m.json \
   --athlete   "Prénom Nom" \
   --purge      # supprime l'archive après parsing (recommandé)
 ```
+
+> `--race` est **optionnel**. Sans lui (**mode GPX-only**) : la distance, le D+/D- et le
+> profil viennent **directement de la trace GPX**, et le parcours est découpé
+> **automatiquement tous les 10 km**. Ajoute `--race spec.json` seulement pour fournir les
+> vrais ravitaillements, l'heure de départ et la position (horaires/nuit) — voir §6.
 
 **Rapport complet (figures + PDF) :**
 
@@ -108,19 +112,26 @@ archives brutes envoyées sont purgées après parsing.
   de l'athlète) ; poids, notes privées, descriptions et identifiants d'appareil ne sont **jamais lus**.
 - En local, les données de test vont dans `services/twin-engine/local-data/` (git-ignoré).
 
-## 6. Décrire une course cible (`--race`)
+## 6. Décrire une course cible (`--race`, optionnel)
 
-Fichier JSON (cf. `examples/nice-100m.json`). Champs principaux :
+**Sans `--race`** : mode GPX-only — distance, D+/D-, profil et Deq viennent de la trace ;
+découpage automatique tous les 10 km (réglable via `CourseParams.default_segment_km`).
 
-| Champ | Sens |
-|---|---|
-| `name` | nom de la course |
-| `aid_km` | positions (km) des ravitaillements, départ inclus |
-| `aid_names` | noms des points correspondants |
-| `start_time` | départ (ISO 8601 avec fuseau) |
-| `lat`, `lon`, `tz_offset_h` | point de départ + décalage horaire (soleil/nuit) |
-| `major_base_indices` | indices des bases-vie majeures (arrêts longs) |
-| `official_dplus_m` | D+ officiel (contrôle de cohérence) |
+**Avec `--race spec.json`** (cf. `examples/nice-100m.json`) : pour des ravitaillements et des
+horaires réels. Tous les champs sont **optionnels** — ne mets que ce que tu veux préciser :
+
+| Champ | Sens | Si absent |
+|---|---|---|
+| `name` | nom de la course | « Course » |
+| `aid_km` | positions (km) des ravitaillements, départ inclus | découpage auto tous les 10 km |
+| `aid_names` | noms des points correspondants | « Départ » / « km N » / « Arrivée » |
+| `start_time` | départ (ISO 8601 avec fuseau) | pas d'horaires ni de calcul jour/nuit |
+| `lat`, `lon`, `tz_offset_h` | point de départ + décalage horaire (soleil/nuit) | idem |
+| `major_base_indices` | indices des bases-vie majeures (arrêts longs) | aucune base majeure |
+
+> ⚠️ Ce qui vient **toujours du GPX** (jamais du JSON) : le **D+/D-**, le profil, la pente,
+> le Deq. Fournir `aid_km` **recale** seulement la distance totale sur le km officiel et
+> nomme les segments. (`official_dplus_m` n'est pas utilisé par le moteur.)
 
 La **trace GPX du parcours** est fournie à part (`--course`) et n'est pas committée.
 
