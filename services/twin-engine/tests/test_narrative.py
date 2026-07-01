@@ -15,8 +15,9 @@ from twin_engine.report import narrative as N
 CFG = load_config()
 
 
-def _twin(*, E=1.22, durab=21.0, vc_kmh=10.5):
-    cs = SimpleNamespace(vc_kmh=vc_kmh, vc_ms=vc_kmh / 3.6, vc_sd=0.1, dprime_m=1500)
+def _twin(*, E=1.22, durab=21.0, vc_kmh=10.5, vc_plausible=True):
+    cs = SimpleNamespace(vc_kmh=vc_kmh, vc_ms=vc_kmh / 3.6, vc_sd=0.1, dprime_m=1500,
+                         plausible=vc_plausible)
     return SimpleNamespace(endurance_E=E, durability_pct=durab, critical_speed=cs)
 
 
@@ -27,9 +28,10 @@ def _pred(*, finish=30.0, vc_frac=0.63, mae=2.8):
 
 # --------------------------------------------------------------------------- #
 def test_profile_word_follows_endurance_exponent():
-    assert N._profile_word(_twin(E=1.25)) == "endurant"
-    assert N._profile_word(_twin(E=1.00)) == "rapide"
-    assert N._profile_word(_twin(E=1.10)) == "équilibré"
+    # exposant de Riegel = déclin : BAS → diesel, ÉLEVÉ → décline plus (jamais « vitesse »)
+    assert N._profile_word(_twin(E=1.05)) == "diesel"
+    assert N._profile_word(_twin(E=1.22)) == "équilibré"   # cas de référence : au milieu
+    assert N._profile_word(_twin(E=1.35)) == "fade"
     assert N._profile_word(_twin(E=None)) is None
 
 
@@ -41,9 +43,10 @@ def test_durability_word_follows_decoupling():
 
 
 def test_opening_narrative_changes_with_profile():
-    a = N.opening_narrative(_twin(E=1.25), None, _pred())
-    b = N.opening_narrative(_twin(E=1.00), None, _pred())
-    assert "endurant" in a and "rapide" in b
+    a = N.opening_narrative(_twin(E=1.05), None, _pred())   # diesel (décline peu)
+    b = N.opening_narrative(_twin(E=1.35), None, _pred())   # décline plus nettement
+    assert "moteur d'endurance" in a    # explication « diesel »
+    assert "rationner l'effort" in b    # explication « fade » (axe déclin, jamais vitesse)
     assert a != b                       # le texte suit la valeur
 
 
@@ -134,6 +137,14 @@ def test_caption_record_qualitative_follows_fraction():
     high = N.caption_record(twin, SimpleNamespace(genuine=[SimpleNamespace(vga_kmh=9.5)]))   # 95 %
     assert "loin sous le plafond" in low
     assert "proche de ton seuil" in high and "loin sous le plafond" not in high
+
+
+def test_caption_record_suppresses_vc_fraction_when_implausible():
+    """VC non plausible → aucune « % de ta VC » (cohérent avec predict.vc_fraction=None)."""
+    twin = _twin(vc_kmh=27.0, vc_plausible=False)   # VC absurde (27 km/h)
+    txt = N.caption_record(twin, SimpleNamespace(genuine=[SimpleNamespace(vga_kmh=12.0)]))
+    assert "de ta VC" not in txt         # pas de ratio d'intensité trompeur
+    assert "plafond" not in txt          # ni d'affirmation « loin sous le plafond »
 
 
 def test_aid_station_names_are_latex_escaped():

@@ -106,3 +106,28 @@ def test_insufficient_when_no_ultras_and_no_envelope():
     assert cal.regime == REGIME_INSUFFICIENT
     assert not cal.can_predict
     assert cal.predict_vga_kmh(20, 50) is None
+
+
+def test_neff_floor_demotes_when_few_recent_ultras():
+    """Plancher N_eff : assez d'ultras mais trop peu de RÉCENTS → repli blend (pas de régression)."""
+    from datetime import date, timedelta
+
+    from twin_engine.twin.record import ActivitySummary
+
+    ref = date(2026, 1, 1)
+
+    def _du(days_ago, h, dpk):
+        dist = _plane(h, dpk) * h / 1.2
+        return ActivitySummary(
+            (ref - timedelta(days=days_ago)).isoformat(), "running", h * 3600, dist,
+            _plane(h, dpk) * h, 140, dpk * dist, dpk * dist, 12, True,
+        )
+
+    # 4 vrais ultras (≥ min_ultras_regression) mais 3 datent de ~6 ans → N_eff ≈ 1
+    twin = _twin([_du(2, 20, 52), _du(2100, 14, 45), _du(2200, 18, 50), _du(2300, 16, 48)])
+    cal = build_calibration(twin, CFG)
+    assert cal.regime == REGIME_BLEND
+    assert 0 < cal.n_eff < CFG.calibration.min_ultras_regression
+    assert not cal.supports_cross_validation
+    # cohérence d'affichage : le champ exposé reflète la valeur calculée (pas le défaut 0.0)
+    assert cal.to_dict()["n_eff_ultras"] == round(cal.n_eff, 2)

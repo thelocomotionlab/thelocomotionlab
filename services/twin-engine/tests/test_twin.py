@@ -114,3 +114,64 @@ def test_durability_only_on_long_efforts():
 def test_no_hr_means_no_durability():
     twin = build_twin([_run(2.6, 5400)], CFG)  # pas de FC
     assert twin.durability_pct is None
+
+
+# --------------------------------------------------------------------------- #
+# Robustesse de la VC (Problème A) : une activité contaminée ne doit plus
+# faire exploser la vitesse critique.
+# --------------------------------------------------------------------------- #
+def _no_alt_run(v, dur):
+    """Course rapide SANS altitude (non ajustable à la pente)."""
+    t = list(range(dur + 1))
+    dist = [v * s for s in t]
+    return CanonicalActivity.from_samples(
+        timestamps=t, dist_m=dist, speed_ms=[v] * len(t), alt_m=None,
+        sport="running", source_format="fit", source_name="noalt",
+    )
+
+
+def _clean_athlete():
+    # plusieurs sorties plates « propres » ~3 m/s → VC plausible et bien soutenue
+    return [_run(3.0, 5400), _run(2.95, 5400), _run(3.05, 5400)]
+
+
+def test_fast_flat_contaminant_does_not_explode_vc():
+    """Une activité plate MAIS rapide (vélo/artefact) est écartée par le rejet fenêtré."""
+    contaminant = _run(6.6, 3600)  # plat, 6,6 m/s soutenu 1 h → impossible en course
+    twin = build_twin(_clean_athlete() + [contaminant], CFG)
+    assert twin.critical_speed is not None
+    assert twin.vc_ms < CFG.twin.vc_max_plausible_ms   # VC reste plausible (< 6 m/s)
+    assert 2.5 < twin.vc_ms < 3.7                       # ~ celle de l'athlète propre
+    assert twin.critical_speed.plausible
+    assert any(s["reason"] == "sustained_speed" for s in twin.record.skipped)
+
+
+def test_no_altitude_fast_run_excluded_from_record():
+    """Sans altitude, impossible d'ajuster à la pente → hors courbe record (donc hors VC)."""
+    contaminant = _no_alt_run(6.0, 3600)  # rapide, sans altitude
+    twin = build_twin(_clean_athlete() + [contaminant], CFG)
+    assert twin.vc_ms < CFG.twin.vc_max_plausible_ms
+    assert 2.5 < twin.vc_ms < 3.7
+    assert any(s["reason"] == "no_altitude" for s in twin.record.skipped)
+
+
+def test_single_activity_cannot_set_record_point():
+    """L'enveloppe robuste (support ≥ 2) : une seule activité ne fixe pas un point record."""
+    # deux sorties lentes + une seule sortie anormalement rapide sur toute la fenêtre
+    acts = [_run(2.8, 5400), _run(2.8, 5400), _run(5.5, 5400)]
+    twin = build_twin(acts, CFG)
+    # 5,5 m/s reste sous le rejet fenêtré (6,5) mais, isolé, il est écarté par le support ≥ 2
+    # → le point record retenu est la 2ᵉ meilleure (≈ 2,8), pas le pic isolé.
+    assert twin.vc_ms < 3.5
+
+
+def test_fast_contaminant_does_not_corrupt_endurance_exponent():
+    """Le plafond physiologique protège aussi l'exposant (pas seulement la VC)."""
+    clean = [_run(3.0, d) for d in (1800, 2400, 3000, 3600, 4500)] + [_run(2.9, 5400)]
+    twin_clean = build_twin(clean, CFG)
+    assert twin_clean.endurance_E is not None and twin_clean.endurance_E >= 1.0
+    # artefact rapide (6,4 m/s < 6,5 → non rejeté par la fenêtre) atteignant une durée rare (9000 s) :
+    # sans plafond sur la régression log-log, il inversait la pente (E < 1, α < 0, absurde).
+    twin_dirty = build_twin(clean + [_run(6.4, 9000)], CFG)
+    assert twin_dirty.endurance_E is None or twin_dirty.endurance_E >= 1.0
+    assert abs(twin_dirty.endurance_E - twin_clean.endurance_E) < 0.05

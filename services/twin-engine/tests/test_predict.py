@@ -3,10 +3,17 @@
 from __future__ import annotations
 
 import math
+from dataclasses import replace
+from datetime import date, timedelta
 
 import numpy as np
 
-from twin_engine.calibration import build_calibration
+from twin_engine.calibration import (
+    _fit_regression,
+    build_calibration,
+    recency_weights,
+    select_genuine_ultras,
+)
 from twin_engine.config import load_config
 from twin_engine.predict import _solve_fixed_point, leave_one_out, predict_finish
 from twin_engine.twin.model import CriticalSpeed, Twin
@@ -87,3 +94,61 @@ def test_no_prediction_when_calibration_insufficient():
                 summaries=[])
     cal = build_calibration(twin, CFG)
     assert predict_finish(200.0, 53.0, twin, cal, CFG) is None
+
+
+# --------------------------------------------------------------------------- #
+# Pondération par récence (Problème B) : non-stationnarité multi-saisons.
+# --------------------------------------------------------------------------- #
+def _dated_ultra(iso, hours, vga_kmh, dpk):
+    dist_km = vga_kmh * hours / 1.2
+    return ActivitySummary(
+        date=iso, sport="running", duration_s=hours * 3600, dist_km=dist_km,
+        ga_km=vga_kmh * hours, avg_hr=140, dplus_m=dpk * dist_km, dminus_m=dpk * dist_km,
+        decouple_pct=12.0, has_hr=True,
+    )
+
+
+def _nonstationary_ultras():
+    """9 vrais ultras étalés de 2023 à 2026, à forme CROISSANTE (récents plus rapides)."""
+    base = date(2023, 1, 1)
+    specs = [(14, 45), (18, 55), (13, 40), (22, 50), (16, 48), (20, 52), (15, 44), (24, 53), (17, 47)]
+    out = []
+    for k, (h, dpk) in enumerate(specs):
+        iso = (base + timedelta(days=135 * k)).isoformat()
+        out.append(_dated_ultra(iso, h, _plane(h, dpk) + 0.15 * k, dpk))  # dérive de forme
+    return out
+
+
+def test_recency_weighting_reduces_loo_and_tracks_recent_form():
+    twin = _twin(_nonstationary_ultras())
+    cfg_w = CFG                                                             # demi-vie 365 j
+    cfg_u = replace(CFG, calibration=replace(CFG.calibration, recency_halflife_days=0.0))  # désactivée
+
+    cal_w = build_calibration(twin, cfg_w)
+    cal_u = build_calibration(twin, cfg_u)
+    assert cal_w.regime == "regression" and cal_u.regime == "regression"
+    assert cal_w.n_eff < cal_u.n_eff                      # récence → moins d'ultras « effectifs »
+
+    cv_w = leave_one_out(cal_w, cfg_w)
+    cv_u = leave_one_out(cal_u, cfg_u)
+    assert cv_w is not None and cv_u is not None
+    assert cv_w.mae_pct < cv_u.mae_pct                    # (b) l'erreur LOO baisse grâce à la récence
+
+    pred_w = predict_finish(200.0, 50.0, twin, cal_w, cfg_w)
+    pred_u = predict_finish(200.0, 50.0, twin, cal_u, cfg_u)
+    # (b) la prédiction se rapproche de la forme RÉCENTE : plus rapide → temps plus court
+    assert pred_w.v_kmh > pred_u.v_kmh
+    assert pred_w.finish_hours < pred_u.finish_hours
+
+
+def test_equal_dates_weighting_is_neutral():
+    """Dates identiques → poids tous égaux → régression == non pondérée (blinde le golden)."""
+    twin = _twin([_ultra(h, _plane(h, dpk), dpk) for h, dpk in [(12, 50), (20, 55), (15, 45), (24, 53)]])
+    genuine = select_genuine_ultras(twin.summaries, CFG)
+    w = recency_weights(genuine, CFG)
+    assert np.allclose(w, 1.0)
+    cal = build_calibration(twin, CFG)
+    assert cal.weights is not None and np.allclose(cal.weights, 1.0)
+    assert abs(cal.n_eff - len(genuine)) < 1e-9
+    beta_unweighted, _ = _fit_regression(genuine)         # sans poids
+    assert np.allclose(cal.beta, beta_unweighted, atol=1e-9)
