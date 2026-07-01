@@ -17,8 +17,11 @@ from ..minetti import grade_factor
 from ._format import fr, hm, tex_escape
 
 # --- seuils de PRÉSENTATION (rendu uniquement, pas de la science) -------------
-E_ENDURANT = 1.15          # exposant d'endurance : élevé → profil orienté ultra (twin-theory §2.5)
-E_RAPIDE = 1.05
+# Exposant de Riegel = DÉCLIN de l'allure quand la durée s'allonge (orthogonal à la VC, qui mesure
+# la vitesse — les deux sont indépendants). BAS (proche de 1) = tient très bien l'allure (diesel) ;
+# ÉLEVÉ = décline plus nettement. Seuils calés pour que le cas de référence (E≈1,22) tombe au milieu.
+E_DIESEL = 1.12            # ≤ → « très endurant / diesel »
+E_FADE = 1.30             # ≥ → « allure qui décline plus nettement sur la durée »
 DURAB_EXCELLENT = 15.0     # découplage (%) : bas = garde son efficacité longtemps
 DURAB_BON = 25.0
 VC_FRAC_TRES_BAS = 0.70    # intensité de course / VC : très en dessous du plafond
@@ -35,12 +38,16 @@ def _pct(x, decimals=0):
 # Profil d'athlète + récit d'ouverture
 # --------------------------------------------------------------------------- #
 def _profile_word(twin) -> str | None:
+    """Catégorie de PRÉSENTATION sur l'axe du déclin (jamais la vitesse pure).
+
+    ``diesel`` (exposant bas, décline peu) · ``équilibré`` (déclin modéré, cas de référence) ·
+    ``fade`` (exposant élevé, décline plus nettement)."""
     if twin.endurance_E is None:
         return None
-    if twin.endurance_E >= E_ENDURANT:
-        return "endurant"
-    if twin.endurance_E <= E_RAPIDE:
-        return "rapide"
+    if twin.endurance_E <= E_DIESEL:
+        return "diesel"
+    if twin.endurance_E >= E_FADE:
+        return "fade"
     return "équilibré"
 
 
@@ -55,10 +62,16 @@ def _durability_word(twin) -> str | None:
     return "à surveiller"
 
 
+# « headline » (mis en gras) + explication, tous deux sur l'axe du DÉCLIN, jamais la vitesse.
+_PROFILE_HEADLINE = {
+    "diesel": "tr\\`es endurant",
+    "équilibré": "bien endurant",
+    "fade": "moins endurant sur la dur\\'ee",
+}
 _PROFILE_EXPLAIN = {
-    "endurant": "ton moteur est calibré pour les très longues durées — c'est le terrain de jeu d'un ultra",
-    "rapide": "tu as de la vitesse pure ; sur très long, l'enjeu sera de la rationner",
-    "équilibré": "tu combines vitesse et endurance, sans excès marqué dans un sens",
+    "diesel": "tu tiens tr\\`es bien l'allure sur la dur\\'ee, un vrai moteur d'endurance taill\\'e pour le tr\\`es long",
+    "équilibré": "tu tiens bien l'allure sur la dur\\'ee, avec un d\\'eclin mod\\'er\\'e quand l'effort s'allonge",
+    "fade": "ton allure d\\'ecline plus nettement quand la dur\\'ee s'allonge — l'enjeu sera de rationner l'effort",
 }
 _DURABILITY_EXPLAIN = {
     "excellente": "tu gardes ton efficacité même après des heures d'effort",
@@ -72,8 +85,8 @@ def opening_narrative(twin, calibration, prediction) -> str:
     parts: list[str] = []
     pw = _profile_word(twin)
     if pw:
-        # « nettement <pw> » s'accorde avec « profil » (masc.) → pas de genre supposé sur l'athlète
-        parts.append(f"Ton profil est nettement \\textbf{{{pw}}} : {_PROFILE_EXPLAIN[pw]}.")
+        # headline masculin (s'accorde avec « profil ») → aucun genre supposé sur l'athlète
+        parts.append(f"Ton profil est \\textbf{{{_PROFILE_HEADLINE[pw]}}} : {_PROFILE_EXPLAIN[pw]}.")
     dw = _durability_word(twin)
     if dw and twin.durability_pct is not None:
         # en Synthèse on évite le jargon « découplage » (défini plus loin) : langage clair
@@ -147,8 +160,10 @@ def deq_pourtoi(course) -> str:
 
 def endurance_intuition() -> str:
     return (
-        "En clair : c'est ta capacit\\'e \\`a \\textbf{garder de la vitesse quand la dur\\'ee s'allonge}. "
-        "Plus l'exposant est \\'elev\\'e, plus ton moteur est taill\\'e pour le tr\\`es long."
+        "En clair : c'est \\`a quel point ton allure soutenable \\textbf{baisse quand la dur\\'ee "
+        "s'allonge} (ind\\'ependamment de ta vitesse pure, mesur\\'ee par la VC). Plus l'exposant "
+        "est \\textbf{bas} (proche de 1), mieux tu gardes ton allure sur le tr\\`es long ; plus il "
+        "est \\'elev\\'e, plus tu d\\'eclines en t'allongeant."
     )
 
 
@@ -157,9 +172,9 @@ def endurance_pourtoi(twin) -> str | None:
         return None
     pw = _profile_word(twin)
     tail = {
-        "endurant": "c'est un atout majeur sur un ultra : tu d\\'eclines peu par rapport \\`a ta vitesse de base.",
-        "rapide": "ton point fort est plut\\^ot la vitesse ; sur ultra, appuie-toi sur la r\\'egularit\\'e.",
-        "équilibré": "un profil polyvalent : ni sprinteur ni pur diesel.",
+        "diesel": "c'est un atout majeur sur un ultra : ton allure d\\'ecline tr\\`es peu par rapport \\`a ta base.",
+        "équilibré": "un bon socle d'endurance : ton d\\'eclin reste mod\\'er\\'e quand la dur\\'ee s'allonge.",
+        "fade": "ton allure baisse plus vite sur le tr\\`es long — appuie-toi sur la r\\'egularit\\'e et la gestion de l'effort.",
     }.get(pw, "")
     return f"Ton exposant vaut \\textbf{{{fr(twin.endurance_E, 2)}}} — {tail}"
 
@@ -306,7 +321,8 @@ def caption_record(twin, calibration) -> str:
         "les losanges verts sont tes vrais ultras."
     )
     cs = twin.critical_speed
-    if cs and calibration.genuine:
+    # VC non plausible → on n'affiche aucun « % de ta VC » (cohérent avec predict.vc_fraction=None)
+    if cs and getattr(cs, "plausible", True) and calibration.genuine:
         mean_ultra = sum(u.vga_kmh for u in calibration.genuine) / len(calibration.genuine)
         frac = mean_ultra / cs.vc_kmh
         base += f" Ils tournent \\`a \\textbf{{{_pct(frac * 100)}}} de ta VC"
