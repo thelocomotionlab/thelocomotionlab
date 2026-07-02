@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import replace
 
 import numpy as np
+import pytest
 
 from twin_engine.config import load_config
 from twin_engine.ingest.canonical import CanonicalActivity
@@ -79,6 +80,29 @@ def test_fit_endurance_exponent_recovers_E():
     assert abs(E - 1.0 / (1.0 - alpha_true)) < 0.01  # E ≈ 1.2195
     # le coefficient reconstruit l'enveloppe : coef·t^(−α) ≈ vga mesurée
     assert abs(coef * durs[0] ** (-alpha) - vga[0]) < 1e-6
+
+
+def test_endurance_exponent_is_athlete_specific_not_frozen():
+    """Garde-fou H3 : E est ajusté sur les données de CHAQUE athlète, jamais figé (ex. à 1,22).
+
+    Deux courbes record différentes → deux exposants nettement distincts ; un déclin plus marqué
+    (α plus grand) donne un E plus élevé (Riegel). Verrouille l'absence de valeur en dur."""
+    durs = np.array([1800, 2400, 3000, 3600, 4500, 5400, 7200, 9000, 10800, 14400, 18000, 21600], float)
+
+    def _E(alpha_true):
+        vga = 4.0 * durs ** (-alpha_true)
+        rec = RecordCurve(durs, vga, vga.copy(),
+                          [RecordPoint(int(T), float(vga[i]), float(vga[i]), None, False)
+                           for i, T in enumerate(durs)])
+        _, E, _ = fit_endurance_exponent(rec, CFG)
+        return E
+
+    e_diesel = _E(0.10)      # allure qui décline peu
+    e_fade = _E(0.25)        # allure qui décline plus
+    assert abs(e_diesel - e_fade) > 0.1                       # deux athlètes → deux E distincts
+    assert e_fade > e_diesel                                  # plus de déclin ⇒ E plus grand
+    assert e_diesel == pytest.approx(1 / (1 - 0.10), abs=0.02)
+    assert e_fade == pytest.approx(1 / (1 - 0.25), abs=0.02)
 
 
 def test_build_twin_end_to_end():

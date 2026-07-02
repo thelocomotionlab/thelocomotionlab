@@ -33,6 +33,20 @@ def _print_summary(preview, out=None) -> None:
     for c in suf.criteria:
         lvl = c.level or "—"
         print(f"    {lvl}  {c.name} : {c.detail}", file=out)
+
+    # Jumeau physiologique CALCULÉ sur les données de l'athlète — affiché pour lever tout doute :
+    # ces valeurs (exposant d'endurance, VC, durabilité) sont ajustées par athlète, jamais figées.
+    t = preview.twin.to_dict()
+
+    def _f(v, unit=""):
+        return "n/a" if v is None else f"{v}{unit}"
+
+    print(
+        f"\n  Jumeau physiologique (ajusté sur {t['n_activities']} activités) : "
+        f"exposant d'endurance E = {_f(t['endurance_E'])} · "
+        f"VC = {_f(t['vc_kmh'], ' km/h')} · durabilité = {_f(t['durability_pct'], ' %')}",
+        file=out,
+    )
     pred = preview.prediction
     if pred is not None:
         print(
