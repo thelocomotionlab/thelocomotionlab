@@ -189,6 +189,19 @@ def test_single_activity_cannot_set_record_point():
     assert twin.vc_ms < 3.5
 
 
+def test_failed_activity_is_counted_in_skipped():
+    """C9d : une activité qui plante au traitement est COMPTÉE (processing_error), pas tue."""
+    broken = CanonicalActivity(
+        start_time=None, sport="running", sub_sport=None, source_format="fit",
+        source_name="broken", t=np.arange(120.0), dist_m=np.arange(5.0),
+        speed_ms=np.zeros(120), hr=np.full(120, np.nan), alt_m=np.full(120, 100.0),
+        lat=np.full(120, np.nan), lon=np.full(120, np.nan),
+    )
+    twin = build_twin(_clean_athlete() + [broken], CFG)
+    assert any(str(s["reason"]).startswith("processing_error") for s in twin.record.skipped)
+    assert 2.5 < twin.vc_ms < 3.7      # l'athlète propre n'est pas affecté
+
+
 def test_fast_contaminant_does_not_corrupt_endurance_exponent():
     """Le plafond physiologique protège aussi l'exposant (pas seulement la VC)."""
     clean = [_run(3.0, d) for d in (1800, 2400, 3000, 3600, 4500)] + [_run(2.9, 5400)]

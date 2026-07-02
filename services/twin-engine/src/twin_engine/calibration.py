@@ -420,14 +420,23 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
 
     # ---------- régime mélange (1–2 ultras) : recalage du niveau ----------
     if n >= 1:
-        offsets = []
-        for g in genuine:
+        # Recalage PONDÉRÉ par les mêmes poids (récence × maximalité) que partout ailleurs :
+        # le blend est précisément le régime où l'on tombe quand les vieux ultras (ou les
+        # sorties non engagées, poids de maximalité 0) ne doivent plus peser — ils ne doivent
+        # pas non plus recaler le niveau à poids plein. Repli non pondéré si Σw = 0.
+        offsets: list[float] = []
+        offset_w: list[float] = []
+        for i, g in enumerate(genuine):
             v_env = twin.envelope_vga_ms(g.hours * 3600.0)
             if v_env is None:
                 continue
             base = v_env * 3.6 + penalty * g.dplus_per_km
             offsets.append(g.vga_kmh - base)
-        offset = float(np.mean(offsets)) if offsets else 0.0
+            offset_w.append(float(weights[i]))
+        if offsets and sum(offset_w) > 0:
+            offset = float(np.average(offsets, weights=offset_w))
+        else:
+            offset = float(np.mean(offsets)) if offsets else 0.0
         if n >= c.min_ultras_regression:
             # demoté par le plancher N_eff : assez d'ultras, mais trop peu de RÉCENTS
             notes.append(

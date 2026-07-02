@@ -198,7 +198,12 @@ def build_record_curve(
             continue
         try:
             summary, vga, vraw = process_activity(act, cfg)
-        except Exception:  # noqa: BLE001 — une activité brouillonne n'arrête pas l'agrégat
+        except Exception as exc:  # noqa: BLE001 — une activité brouillonne n'arrête pas l'agrégat
+            # ... mais elle doit être COMPTÉE : un diagnostic d'archive qui tait la casse ment.
+            skipped.append({
+                "date": act.start_time.date().isoformat() if act.start_time else None,
+                "reason": f"processing_error: {type(exc).__name__}",
+            })
             continue
         summaries.append(summary)
 

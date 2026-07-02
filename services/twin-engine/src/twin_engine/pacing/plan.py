@@ -35,7 +35,7 @@ class SegmentPlan:
     pace_min_km: float       # allure réelle terrain
     t_move_min: float
     stop_min: float
-    cum_clock_h: float       # temps cumulé (mouvement + arrêts) à l'arrivée du segment
+    cum_clock_h: float       # temps cumulé à l'ARRIVÉE du segment (arrêt de CE ravito exclu)
     arr_clock: str | None    # heure de passage (ex. "sam. 19:23") si départ connu
     night: bool
     lo_h: float              # borne basse de la fenêtre d'arrivée (cumul, 80 %)
@@ -113,17 +113,21 @@ def build_pacing(course: CourseProfile, prediction: Prediction, race: RaceSpec, 
     for i in range(n):
         cum_move += t_move_h[i]
         if can_clock:
-            arr = clock + dt.timedelta(hours=t_move_h[i], minutes=float(stops_min[i]))
-            arr_clocks.append(_fmt_clock(arr))
-            nights.append(is_night(arr, race.lat, race.lon, race.tz_offset_h))
-            clock = arr
+            # heure d'ARRIVÉE au point de passage = mouvement seul ; l'arrêt du ravito
+            # s'écoule ensuite (l'ancien calcul imprimait l'heure de DÉPART du ravito,
+            # décalant heure affichée, fenêtres et drapeau nuit de la durée de l'arrêt).
+            arrival = clock + dt.timedelta(hours=t_move_h[i])
+            arr_clocks.append(_fmt_clock(arrival))
+            nights.append(is_night(arrival, race.lat, race.lon, race.tz_offset_h))
+            clock = arrival + dt.timedelta(minutes=float(stops_min[i]))
         else:
             arr_clocks.append(None)
             nights.append(False)
-    # cumul d'horloge (mouvement + arrêts) à chaque arrivée
-    cum_stop = np.cumsum(stops_min) / 60.0
-    cum_clock = np.cumsum(t_move_h) + cum_stop
-    t_clock_h = float(cum_clock[-1])
+    # cumul d'horloge à chaque ARRIVÉE = mouvement cumulé + arrêts des ravitos DÉJÀ passés
+    cum_stop_before = np.concatenate([[0.0], np.cumsum(stops_min[:-1])]) / 60.0
+    cum_clock = np.cumsum(t_move_h) + cum_stop_before
+    # horloge totale (l'arrêt d'arrivée vaut 0, donc = mouvement + tous les arrêts)
+    t_clock_h = float(cum_clock[-1] + stops_min[-1] / 60.0)
 
     # --- fenêtres horaires : bandes Monte-Carlo (on met à l'échelle tout le profil) ---
     mc = prediction.mc_samples

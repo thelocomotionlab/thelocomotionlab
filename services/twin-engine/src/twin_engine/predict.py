@@ -9,6 +9,7 @@ et critère de suffisance.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -16,6 +17,8 @@ import numpy as np
 from .calibration import UltraCalibration, _regression_beta
 from .config import Config
 from .twin.model import Twin
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -90,6 +93,8 @@ def _solve_fixed_point(deq_km: float, dpk: float, vfunc, cfg: Config) -> float |
         if abs(tn - t) < 1e-5:
             return tn
         t = 0.5 * t + 0.5 * tn
+    # cas pathologique (jamais vu sur des v(T) lisses) : on garde la valeur mais on le SIGNALE
+    logger.warning("point fixe non convergé après 200 itérations (T≈%.2f h) — valeur conservée", t)
     return t
 
 

@@ -83,6 +83,23 @@ def test_night_detected_for_evening_finish():
     assert plan.sun["sunset"].startswith("19")
 
 
+def test_arrival_clock_excludes_own_stop():
+    """C5 : l'heure affichée est l'ARRIVÉE au ravito — l'arrêt s'écoule APRÈS.
+
+    Avant le correctif, arr_clock/cum_clock incluaient l'arrêt du ravito d'arrivée :
+    le coureur lisait en fait son heure de DÉPART du poste (décalage de 5–15 min,
+    hérité par les fenêtres et le drapeau nuit)."""
+    course = build_course(_triangle_gpx(), _race(), CFG)
+    plan = build_pacing(course, _prediction(course, finish=10.0), _race(), CFG)
+    s1, s2 = plan.segments
+    # cumul à l'arrivée du 1er point = mouvement seul (pas les 15 min d'arrêt de CE ravito)
+    assert abs(s1.cum_clock_h - s1.t_move_min / 60.0) < 0.02
+    # cumul à l'arrivée finale = tout le mouvement + l'arrêt du ravito intermédiaire
+    assert abs(s2.cum_clock_h - (s1.t_move_min + s2.t_move_min) / 60.0 - s1.stop_min / 60.0) < 0.03
+    # l'horloge totale reste exactement mouvement + arrêts
+    assert abs(plan.t_clock_h - (plan.t_move_h + plan.t_stops_h)) < 1e-6
+
+
 def test_pacing_without_logistics_still_produces_paces():
     race = RaceSpec("NoLogi", (0.0, 5.0, 10.0), ("d", "s", "a"))  # pas de départ/lat/lon
     course = build_course(_triangle_gpx(), race, CFG)

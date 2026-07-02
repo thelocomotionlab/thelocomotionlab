@@ -108,6 +108,39 @@ def test_insufficient_when_no_ultras_and_no_envelope():
     assert cal.predict_vga_kmh(20, 50) is None
 
 
+def test_blend_offset_is_recency_weighted():
+    """C4 : le recalage du blend suit les MÊMES poids que la régression (récence × maximalité).
+
+    Cas démoté (3 ultras mais N_eff < 3) : deux vieux ultras « lents » ne doivent pas tirer
+    le recalage vers une forme périmée — avant le correctif, l'offset était une moyenne NON
+    pondérée et l'athlète héritait d'un niveau moyen vieux de 6 ans."""
+    from datetime import date, timedelta
+
+    from twin_engine.twin.record import ActivitySummary
+
+    ref = date(2026, 1, 1)
+
+    def _base(h, dpk):     # enveloppe du _twin (alpha 0.18, coef 10) + pénalité D+ prior
+        return 10.0 * (h * 3600) ** (-0.18) * 3.6 + CFG.calibration.default_dplus_penalty_kmh_per_dpkm * dpk
+
+    def _du(days_ago, h, dpk, vga):
+        dist = vga * h / 1.2
+        return ActivitySummary(
+            (ref - timedelta(days=days_ago)).isoformat(), "running", h * 3600, dist,
+            vga * h, 140, dpk * dist, dpk * dist, 12, True,
+        )
+
+    recent = _du(2, 20, 52, _base(20, 52) + 2.0)        # forme actuelle : offset vrai +2,0
+    old1 = _du(2200, 14, 45, _base(14, 45) + 0.3)       # vieux (≈6 ans) : offset +0,3
+    old2 = _du(2300, 18, 50, _base(18, 50) + 0.3)
+    twin = _twin([recent, old1, old2])
+    cal = build_calibration(twin, CFG)
+    assert cal.regime == REGIME_BLEND                    # démoté par le plancher N_eff
+    # l'offset reflète la forme RÉCENTE (~+2,0), pas la moyenne non pondérée (~+0,87)
+    assert abs(cal.offset_kmh - 2.0) < 0.1
+    assert abs(cal.predict_vga_kmh(20, 52) - (_base(20, 52) + 2.0)) < 0.1
+
+
 def test_neff_floor_demotes_when_few_recent_ultras():
     """Plancher N_eff : assez d'ultras mais trop peu de RÉCENTS → repli blend (pas de régression)."""
     from datetime import date, timedelta
