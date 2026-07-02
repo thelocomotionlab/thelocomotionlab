@@ -61,7 +61,8 @@
     "mc_seed": 1,
     "interval_low_pct": 10,
     "interval_high_pct": 90,
-    "v_floor_kmh": 2.0
+    "v_floor_kmh": 2.0,
+    "mc_mode": "sigma_only"
   },
 
   "pacing": {

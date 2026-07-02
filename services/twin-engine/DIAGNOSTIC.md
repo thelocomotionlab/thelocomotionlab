@@ -171,3 +171,33 @@ l'enveloppe **propre** de l'athlète (fittée sur ses données courtes).
 Scanner toutes les `.fit`, garder `is_running and duration_s ≥ 9,5 h`, sérialiser
 `process_activity(...).to_dict()`, et stocker l'enveloppe fittée (`fit_endurance_exponent`) dans
 `_meta.athlete_envelope`. **Non requis pour corriger.**
+## 9. Revue 2026-07 — l'intervalle voit enfin le levier d'extrapolation (C3)
+
+**Constat.** Le Monte-Carlo historique (`mc_mode=sigma_only`) ne propage que le bruit résiduel
+σ : l'intervalle ne voit ni l'**incertitude des coefficients β** (terme de levier
+x₀ᵀ(XᵀWX)⁻¹x₀ de la loi prédictive — il explose quand la cible sort de l'enveloppe des
+(ln T, D+/km) d'entraînement) ni la **rétroaction du point fixe** (tirage lent ⇒ T plus long ⇒
+v(T) encore plus basse). Conséquence structurelle : le critère « largeur d'intervalle » du gate
+honnête ne pouvait pas voir l'extrapolation qu'il est censé attraper — il ne mesurait que σ.
+
+**Correctif (flag).** `prediction.mc_mode=predictive` : β ~ N(β̂, σ²(XᵀWX)⁻¹) (covariance
+cohérente avec le mode terrain, `pinv`) + ε ~ N(0, σ), point fixe re-résolu **par tirage**
+(vectorisé, ~ms). Défaut `sigma_only` **inchangé au bit près** (golden intact) ; repli
+automatique hors régression (blend/vc_e). Valeur centrale identique dans les deux modes.
+
+**Preuve A/B (fixture, `python -m tools.ab_montagnhard`)** :
+
+| Configuration | sigma | i80 | MAE |
+|---|---|---|---|
+| [BASELINE] récence + terrain libre | 1,539 | 0,61 | 25,3 |
+| [BASELINE] **+ MC prédictif** | 1,539 | **2,91** | 25,3 |
+| maximalité soft (défaut livré) | 0,563 | 0,19 | 9,1 |
+| maximalité soft **+ MC prédictif** | 0,563 | **0,52** | 9,1 |
+
+Lecture : sur l'athlète « sale », l'intervalle honnête est ×4,8 plus large — le modèle avoue
+qu'il ne sait pas, au lieu d'une fourchette étroite et fausse. Sur la calibration servie
+(maximalité soft), ×2,7 : la cible (Deq 139,6, au bord de l'enveloppe des ultras) porte un
+levier réel. **Avant de basculer le défaut** : (a) vérifier le golden réel (cible Nice
+interpolée → élargissement attendu faible) ; (b) décider des seuils `interval_rel_width_*`
+(ici 0,52 > 0,5 → le critère largeur passerait 🟠 à lui seul — c'est le comportement
+recherché, mais à assumer explicitement).

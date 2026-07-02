@@ -97,6 +97,61 @@ def test_no_prediction_when_calibration_insufficient():
 
 
 # --------------------------------------------------------------------------- #
+# Monte-Carlo prédictif (revue C3) : β-covariance + point fixe par tirage.
+# --------------------------------------------------------------------------- #
+def _noisy_ultras():
+    return [_ultra(h, _plane(h, dpk) + p, dpk) for h, dpk, p in
+            [(12, 50, 0.05), (20, 55, -0.08), (16, 45, 0.03), (24, 53, -0.02), (18, 52, 0.06)]]
+
+
+def test_beta_covariance_is_valid():
+    cal = build_calibration(_twin(_noisy_ultras()), CFG)
+    assert cal.beta_cov is not None
+    C = np.array(cal.beta_cov)
+    assert C.shape == (3, 3) and np.allclose(C, C.T)
+    assert np.all(np.linalg.eigvalsh(C) >= -1e-9)      # semi-définie positive
+
+
+def test_predictive_mc_widens_more_in_extrapolation():
+    """C3 : défaut sigma_only inchangé ; predictive élargit l'intervalle, et DAVANTAGE quand
+    la cible sort de l'enveloppe (ln T, D+/km) des ultras d'entraînement (levier)."""
+    from dataclasses import replace
+
+    twin = _twin(_noisy_ultras())
+    cal = build_calibration(twin, CFG)
+    cfg_p = replace(CFG, prediction=replace(CFG.prediction, mc_mode="predictive"))
+
+    def relw(pred):
+        return (pred.interval_high_h - pred.interval_low_h) / pred.finish_hours
+
+    dpk = 50.0
+    deq_in, deq_ex = 110.0, 250.0        # ~16 h (interpolé) vs ~38 h (extrapolé, max = 24 h)
+    w_sig_in = relw(predict_finish(deq_in, dpk, twin, cal, CFG))
+    w_prd_in = relw(predict_finish(deq_in, dpk, twin, cal, cfg_p))
+    w_sig_ex = relw(predict_finish(deq_ex, dpk, twin, cal, CFG))
+    w_prd_ex = relw(predict_finish(deq_ex, dpk, twin, cal, cfg_p))
+
+    assert w_prd_in >= w_sig_in * 0.98               # jamais plus étroit (tolérance MC)
+    assert w_prd_ex > w_sig_ex * 1.1                  # extrapolation → nettement plus large
+    assert (w_prd_ex / w_sig_ex) > (w_prd_in / w_sig_in)   # le levier croît hors enveloppe
+
+    # la valeur CENTRALE (point fixe) ne bouge pas : seul l'intervalle devient honnête
+    assert abs(predict_finish(deq_ex, dpk, twin, cal, cfg_p).finish_hours
+               - predict_finish(deq_ex, dpk, twin, cal, CFG).finish_hours) < 1e-9
+
+
+def test_predictive_mc_falls_back_on_blend_regime():
+    """C3 : hors régression (pas de β-covariance), predictive retombe sur sigma_only."""
+    from dataclasses import replace
+
+    twin = _twin([_ultra(20, 6.8, 52)])
+    cal = build_calibration(twin, CFG)
+    cfg_p = replace(CFG, prediction=replace(CFG.prediction, mc_mode="predictive"))
+    p = predict_finish(200.0, 52.0, twin, cal, cfg_p)
+    assert p is not None and p.interval_low_h < p.finish_hours < p.interval_high_h
+
+
+# --------------------------------------------------------------------------- #
 # Pondération par récence (Problème B) : non-stationnarité multi-saisons.
 # --------------------------------------------------------------------------- #
 def _dated_ultra(iso, hours, vga_kmh, dpk):

@@ -137,6 +137,16 @@ class PredictionParams:
     interval_low_pct: int = 10
     interval_high_pct: int = 90
     v_floor_kmh: float = 2.0
+    # --- source d'incertitude du Monte-Carlo (revue 2026-07, C3) --------------------------
+    # ``sigma_only`` (défaut, comportement historique au bit près) : tirages v = v(T*) + ε,
+    #   ε ~ N(0, σ) — seul le bruit résiduel est propagé ; l'intervalle ne voit NI le levier
+    #   d'extrapolation (incertitude des β) NI la rétroaction T↔v.
+    # ``predictive`` (régime régression uniquement) : β ~ N(β̂, σ²(XᵀWX)⁻¹) + ε ~ N(0, σ),
+    #   point fixe T = Deq/v(T) re-résolu PAR TIRAGE (vectorisé). L'intervalle s'élargit là
+    #   où la cible sort de l'enveloppe des (ln T, D+/km) d'entraînement — exactement le
+    #   phénomène que le gate honnête marque en LOO. Mesuré : largeur ≈ ×2 sur cible
+    #   au-delà du plus long ultra. Blend/vc_e : repli automatique sur sigma_only.
+    mc_mode: str = "sigma_only"                          # {sigma_only, predictive}
 
 
 @dataclass(frozen=True)

@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from .calibration import UltraCalibration, _regression_beta
+from .calibration import REGIME_REGRESSION, UltraCalibration, _regression_beta
 from .config import Config
 from .twin.model import Twin
 
@@ -95,6 +95,42 @@ def _solve_fixed_point(deq_km: float, dpk: float, vfunc, cfg: Config) -> float |
         t = 0.5 * t + 0.5 * tn
     # cas pathologique (jamais vu sur des v(T) lisses) : on garde la valeur mais on le SIGNALE
     logger.warning("point fixe non convergé après 200 itérations (T≈%.2f h) — valeur conservée", t)
+    return t
+
+
+def _mc_predictive(
+    deq_km: float, dpk: float, calibration: UltraCalibration, cfg: Config, rng
+) -> np.ndarray:
+    """Tirages de la LOI PRÉDICTIVE complète (mode ``mc_mode=predictive``, revue C3).
+
+    Deux termes d'incertitude que le mode historique ``sigma_only`` ignore :
+      1. **paramètres** : β ~ N(β̂, σ²(XᵀWX)⁻¹) — le levier x₀ᵀ(XᵀWX)⁻¹x₀ élargit
+         l'intervalle quand la cible SORT de l'enveloppe (ln T, D+/km) d'entraînement,
+         exactement là où la LOO marque des plis d'extrapolation ;
+      2. **rétroaction du point fixe** : chaque tirage re-résout T = Deq/v(T) (vectorisé)
+         — un tirage lent allonge T donc abaisse encore v(T) (queue droite plus lourde).
+    """
+    n = cfg.prediction.mc_n
+    beta_hat = np.asarray(calibration.beta, dtype=float)
+    cov = np.asarray(calibration.beta_cov, dtype=float)
+    betas = rng.multivariate_normal(beta_hat, cov, size=n)          # (n, 3)
+    eps = rng.normal(0.0, calibration.sigma_kmh, n)
+    floor = cfg.prediction.v_floor_kmh
+    t = np.full(n, 20.0)
+    tn = t
+    for _ in range(500):
+        v = np.maximum(betas[:, 0] + betas[:, 1] * np.log(t) + betas[:, 2] * dpk + eps, floor)
+        tn = deq_km / v
+        if float(np.max(np.abs(tn - t))) < 1e-5:
+            return tn
+        t = 0.5 * t + 0.5 * tn
+    # quelques tirages extrêmes (β aberrants d'une covariance très large) peuvent osciller :
+    # ils restent bornés (v ≥ plancher ⇒ T ≤ Deq/plancher) et les percentiles 10/90 y sont
+    # insensibles — on compte et on signale, sans casser la prédiction.
+    bad = int(np.sum(np.abs(tn - t) > 1e-3 * np.maximum(t, 1.0)))
+    if bad:
+        logger.warning("MC prédictif : %d/%d tirages non convergés (bornés, percentiles robustes).",
+                       bad, n)
     return t
 
 
@@ -187,11 +223,20 @@ def predict_finish(
         return None
     v_point = calibration.predict_vga_kmh(t_point, dplus_per_km)
 
-    # --- Monte-Carlo : tirages de v dans sa loi prédictive (résidu σ) ---
+    # --- Monte-Carlo ---
     rng = np.random.default_rng(cfg.prediction.mc_seed)
-    vp = v_point + rng.normal(0.0, calibration.sigma_kmh, cfg.prediction.mc_n)
-    vp = np.maximum(vp, cfg.prediction.v_floor_kmh)
-    mc = deq_km / vp
+    if (
+        cfg.prediction.mc_mode == "predictive"
+        and calibration.regime == REGIME_REGRESSION
+        and calibration.beta_cov is not None
+    ):
+        # loi prédictive complète : β-covariance (levier) + résidu + point fixe par tirage
+        mc = _mc_predictive(deq_km, dplus_per_km, calibration, cfg, rng)
+    else:
+        # chemin historique (défaut sigma_only ; replis blend/vc_e) — inchangé au bit près
+        vp = v_point + rng.normal(0.0, calibration.sigma_kmh, cfg.prediction.mc_n)
+        vp = np.maximum(vp, cfg.prediction.v_floor_kmh)
+        mc = deq_km / vp
     low = float(np.percentile(mc, cfg.prediction.interval_low_pct))
     high = float(np.percentile(mc, cfg.prediction.interval_high_pct))
 

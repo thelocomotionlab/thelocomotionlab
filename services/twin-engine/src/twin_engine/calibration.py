@@ -63,6 +63,9 @@ class UltraCalibration:
     # pondération (récence × maximalité) du régime régression : réutilisée À L'IDENTIQUE par la LOO
     weights: tuple[float, ...] | None = None
     n_eff: float = 0.0                                # nb effectif d'ultras = (Σw)²/Σw²
+    # covariance des β = σ²(XᵀWX)⁻¹ (3×3, mode terrain inclus) — sert au Monte-Carlo
+    # « predictive » (revue 2026-07, C3) pour propager le levier d'extrapolation
+    beta_cov: tuple[tuple[float, float, float], ...] | None = None
     recency_halflife_days: float = 0.0
     # filtre de maximalité (§4.1) : mode appliqué + poids de maximalité seul (pour transparence/rapport)
     maximality_mode: str = "off"
@@ -319,6 +322,35 @@ def _regression_beta(
     return np.asarray(b, dtype=float)
 
 
+def _beta_covariance(
+    genuine: list[GenuineUltra], weights: np.ndarray, sigma: float, cfg: Config | None
+) -> np.ndarray:
+    """Covariance des coefficients : σ²(XᵀWX)⁻¹ (3×3), cohérente avec le mode de terrain.
+
+    C'est le terme de LEVIER de la loi prédictive (Var = σ²(1 + x₀ᵀ(XᵀWX)⁻¹x₀)) : il grandit
+    quand la cible sort de l'enveloppe des (ln T, D+/km) d'entraînement — le même phénomène
+    que les plis d'« extrapolation » de la LOO, jusqu'ici absent de l'intervalle vendu.
+
+    * ``none`` : β2 fixé à 0 → bloc 2×2 (β0, β1), ligne/colonne β2 nulles ;
+    * ``prior_shrunk`` : la pseudo-observation ridge entre dans XᵀWX (comme dans le fit) ;
+    * ``pinv`` (pas ``inv``) : design mal conditionné → covariance large, jamais NaN.
+    """
+    h = np.array([g.hours for g in genuine])
+    dpk = np.array([g.dplus_per_km for g in genuine])
+    sw = np.sqrt(np.asarray(weights, dtype=float))
+    term = cfg.calibration.terrain_term if cfg is not None else "free"
+    if term == "none":
+        X = np.vstack([np.ones_like(h), np.log(h)]).T * sw[:, None]
+        cov = np.zeros((3, 3))
+        cov[:2, :2] = sigma**2 * np.linalg.pinv(X.T @ X)
+        return cov
+    X = np.vstack([np.ones_like(h), np.log(h), dpk]).T * sw[:, None]
+    if term == "prior_shrunk":
+        lam = math.sqrt(max(cfg.calibration.terrain_shrink_lambda, 0.0))
+        X = np.vstack([X, np.array([[0.0, 0.0, lam]])])
+    return sigma**2 * np.linalg.pinv(X.T @ X)
+
+
 def _fit_regression(
     genuine: list[GenuineUltra], weights: np.ndarray | None = None, cfg: Config | None = None
 ):
@@ -387,6 +419,7 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
         dof_eff = max(n_eff - 3.0, 1.0)
         sigma = float(np.sqrt(wmse * n_eff / dof_eff))
         sigma = max(sigma, c.regression_min_sigma_kmh)
+        beta_cov = _beta_covariance(genuine, weights, sigma, cfg)
         notes.append(
             f"Régression personnelle pondérée par récence sur {n} vrais ultras "
             f"(≈ {n_eff:.1f} effectifs, demi-vie {c.recency_halflife_days:.0f} j)."
@@ -398,6 +431,7 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
             notes=notes,
             beta=(float(beta[0]), float(beta[1]), float(beta[2])),
             weights=tuple(float(x) for x in weights),
+            beta_cov=tuple(tuple(float(x) for x in row) for row in beta_cov),
             n_eff=n_eff,
             recency_halflife_days=c.recency_halflife_days,
             maximality_mode=c.maximality_mode,

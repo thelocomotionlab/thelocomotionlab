@@ -72,6 +72,11 @@ def row(name: str, cfg) -> str:
             f"| {interp} | {extrap} | {verdict} |")
 
 
+def with_predictive(cfg):
+    """Active le Monte-Carlo prédictif (β-covariance + point fixe par tirage, revue C3)."""
+    return replace(cfg, prediction=replace(cfg.prediction, mc_mode="predictive"))
+
+
 CONFIGS = [
     ("[BASELINE] récence + terrain libre (3p)", baseline()),
     ("récence, terrain=none (2p) — support 3.2", cfg_with(terrain_term="none")),
@@ -81,6 +86,9 @@ CONFIGS = [
     ("maximalité soft + terrain=none (combiné)", cfg_with(maximality_mode="soft_weight", terrain_term="none")),
     ("maximalité soft + prior_shrunk (combiné)",
      cfg_with(maximality_mode="soft_weight", terrain_term="prior_shrunk", terrain_shrink_lambda=50.0)),
+    # C3 : mêmes calibrations, mais l'intervalle voit le levier d'extrapolation (i80 ↑ honnête)
+    ("[BASELINE] + MC prédictif (C3)", with_predictive(baseline())),
+    ("maximalité soft + MC prédictif (C3)", with_predictive(cfg_with(maximality_mode="soft_weight"))),
 ]
 
 
