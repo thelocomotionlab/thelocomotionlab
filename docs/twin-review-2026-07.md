@@ -33,14 +33,20 @@ mémoire O(1 activité)), C6 (`scale_stops`).
   portée par le critère de suffisance, documenté au DIAGNOSTIC §9.5.
 - Tous les autres flags livrés **éteints** (comportement historique), bascule sur preuve réelle.
 
+**Validation réelle du 2026-07-02 (faite)** : golden réel **PASS** avec les défauts livrés
+(2 min 36) ; mesure C1 = **+14,9 % médian** (30 activités ≥ 5 h, cluster +29–40 % sur
+juil.–nov. 2025) → **C1 ACTIVÉ** (`dplus_basis=distance_150m`, DIAGNOSTIC §9.6) ; rapport
+relu et approuvé (ton éditorial à retravailler — backlog).
+
 **Reste chez Valentin (données réelles requises)** :
-1. relancer le **golden réel** (`TWIN_NICE_ARCHIVE`/`TWIN_NICE_GPX`) — aucune référence ne doit
-   bouger avec les défauts livrés ;
-2. `PYTHONPATH=src python -m tools.diag_dplus <archive>` → si écart médian ≳ +5 %, suivre
-   DIAGNOSTIC §9.6 (activer C1, régénérer fixture, recapturer golden) ;
-3. décider des bascules de défaut, dans l'ordre de valeur : `mc_mode=predictive` (recalibrer
-   `interval_rel_width_*`), `fade_source=durability`, `vc_flat_symmetric=true`,
-   `vc_short_effort_floor_s=1800`, `decouple_basis=moving`, `scale_stops=false`.
+1. re-golden réel post-C1 + capture `twin-engine preview` (recapture twin-theory §12) ;
+2. régénérer le fixture Montagnhard (`tools/regen_montagnhard_fixture`, enveloppe fittée → H3)
+   et me renvoyer le fichier + les chiffres imprimés (ré-épinglage des tests) ;
+3. décider des bascules de défaut suivantes, dans l'ordre de valeur : `mc_mode=predictive`
+   (recalibrer `interval_rel_width_*`), `fade_source=durability`, `vc_flat_symmetric=true`,
+   `vc_short_effort_floor_s=1800`, `decouple_basis=moving`, `scale_stops=false` ;
+4. passe éditoriale sur le narratif (phrases « moins IA ») — à faire ENSEMBLE, les tournures
+   sont des choix de marque, pas des corrections techniques.
 
 **Backlog P2 inchangé** (cf. §7) : T8, S1, S5, S2b, T6, S3, S4, C9a.
 

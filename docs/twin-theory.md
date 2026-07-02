@@ -241,7 +241,7 @@ Tout ce qui a pu ressembler à de l'expertise au cas par cas est en réalité l'
 
 | Type | Exemples | Statut |
 |---|---|---|
-| **Règle fixe** (même code pour tous) | lissage 150 m, écrêtage pente ±0,45, base de pente ±50 m, plafond `f≤3`, exclusion < 30 min, conditions des « vrais ultras », Δ du fade, **robustesse record** (altitude requise, plafond VC plausible, support ≥N, rejet fenêtré), **demi-vie de récence** | identique pour chaque athlète |
+| **Règle fixe** (même code pour tous) | lissage 150 m, écrêtage pente ±0,45, base de pente ±50 m, **base du D+ des activités = distance ~150 m (harmonisée au parcours, C1)**, plafond `f≤3`, plancher de durée VC, conditions des « vrais ultras », Δ du fade, **robustesse record** (altitude requise, plafond VC plausible, support ≥N, rejet fenêtré), **demi-vie de récence** | identique pour chaque athlète |
 | **Ajusté à partir des données** | VC, D′, exposant E, durabilité, coefficients β de la régression **pondérée par récence**, prédiction, plan (**Δ du fade si `fade_source=durability`**) | **calculé** par athlète → individualisation automatique |
 | **Garde-fou d'honnêteté** | invalidité < 30 min, descentes techniques = plafonds, forme du jour inconnue, D′ peu fiable, marche au-delà de ±25 %, **VC non plausible → pas de « % de VC »**, **plancher N_eff** (pas de régression sûre d'elle sur trop peu d'ultras récents) | cadrage fixe + **test de suffisance** |
 
@@ -312,6 +312,13 @@ Calculé **avant paiement**, sur la donnée normalisée :
 | Intervalle 80 % | 29,6–31,3 h |
 | Validation croisée | MAE 2,8 % · RMSE 3,4 % (n = 8) |
 | Plan | mvt 28,6 h + arrêts 1,75 h ; départ ven. 13:00 ; nuit km 38→94 |
+
+> **⚠ Recapture en cours (C1, 2026-07-02).** La base du D+ des activités est passée sur
+> l'échelle du parcours (`dplus_basis=distance_150m`, mesure réelle : +14,9 % d'écart médian
+> entre les deux échelles). Les lignes « Régression ultra », « Prédiction », « Intervalle » et
+> « Validation croisée » ci-dessus sont donc à recapturer (le reste — parcours, VC, E,
+> durabilité — n'est pas concerné). Chiffres à jour via `twin-engine preview` sur le cas de
+> référence, cf. DIAGNOSTIC §9.6.
 
 > **Stabilité du golden.** Les durcissements de robustesse (§2.3) et la pondération par récence (§3/§5)
 > **ne bougent quasiment pas** ce cas (données propres, ~1,5 an, altitude présente) : sur des dates

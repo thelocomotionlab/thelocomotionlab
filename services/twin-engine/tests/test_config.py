@@ -18,6 +18,9 @@ def test_defaults_from_shipped_json():
     assert cfg.twin.vc_window_s == (600, 5400)
     assert cfg.calibration.genuine_min_hours == 10.0
     assert cfg.prediction.mc_seed == 1
+    # C1 (2026-07-02) : base du D+ des activités harmonisée avec le parcours (mesure réelle
+    # +14,9 % médian entre les deux échelles — DIAGNOSTIC §9.6). Rollback : "time_5s".
+    assert cfg.twin.dplus_basis == "distance_150m"
 
 
 def test_env_overrides_data_dir(monkeypatch, tmp_path):

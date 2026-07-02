@@ -91,12 +91,12 @@ class TwinParams:
     # (fenêtre 150 m) ne sont PAS à la même échelle : le D+ est une variation totale, il gonfle
     # quand la fenêtre diminue → β2 est APPRIS sur un axe D+/km gonflé puis APPLIQUÉ à l'axe
     # dégonflé du parcours (pénalité terrain trop douce, biais optimiste sur parcours raides).
-    # ``time_5s`` = historique ; ``distance_150m`` = altitude moyennée sur une base de DISTANCE
-    # (fenêtre dplus_smooth_window_m), cohérente avec le parcours. ⚠ Changement de *feature* :
-    # INVISIBLE au fixture (agrégats) — mesurer d'abord sur archive réelle
-    # (PYTHONPATH=src python -m tools.diag_dplus <archive>), puis régénérer fixture + golden
-    # réel avant toute bascule (protocole CLAUDE.md / DIAGNOSTIC §9.6).
-    dplus_basis: str = "time_5s"              # {time_5s, distance_150m}
+    # DÉFAUT = ``distance_150m`` depuis le 2026-07-02 : mesure sur l'archive réelle de référence
+    # (tools/diag_dplus, 30 activités ≥ 5 h) → écart médian +14,9 % (min +8,3 %, max +39,9 %),
+    # trois fois le seuil de déclenchement (DIAGNOSTIC §9.6). Rollback : ``time_5s``.
+    # Recapture des références de régression (twin-theory §12) et régénération du fixture
+    # Montagnhard : tools/regen_montagnhard_fixture (archive réelle requise).
+    dplus_basis: str = "distance_150m"        # {time_5s, distance_150m}
     dplus_smooth_window_m: float = 150.0
 
 

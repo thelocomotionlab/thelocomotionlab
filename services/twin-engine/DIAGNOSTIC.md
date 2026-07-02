@@ -287,3 +287,21 @@ Protocole : (1) mesurer sur l'archive réelle — `PYTHONPATH=src python -m tool
 RÉGÉNÉRER le fixture depuis l'archive (§8) et recapturer le golden réel ; (3) coller les
 chiffres ici.
 
+**Mesure du 2026-07-02 (archive réelle de référence, `tools/diag_dplus`, 30 activités ≥ 5 h)** :
+écart médian **+14,9 %** (min +8,3 %, max +39,9 %) — trois fois le seuil de déclenchement.
+L'écart n'est pas uniforme : cluster à **+29–40 %** sur juillet–novembre 2025 (26/07, 04/08,
+31/08, 06/09, 19/09, 14/11), signature probable d'une altimétrie différente sur la période
+(montre/GPS/firmware — à confirmer par Valentin) : la base distance corrige un artefact de
+MESURE, pas du terrain.
+
+**DÉCISION : activé.** `dplus_basis=distance_150m` est le défaut depuis le 2026-07-02
+(rollback : `time_5s`). Le golden réel AVEC les anciens défauts avait été validé PASS juste
+avant la bascule (préalable du protocole). Reste à faire :
+1. recapture des références de régression du golden réel (twin-theory §12) — `twin-engine
+   preview` sur le cas Nice, chiffres collés ici ;
+2. régénération du fixture Montagnhard — `PYTHONPATH=src python -m tools.regen_montagnhard_fixture
+   <archive>` (enveloppe désormais FITTÉE → tranche H3) puis ré-épinglage des tests de
+   robustesse sur les nouveaux agrégats ;
+3. mise à jour du prior `default_dplus_penalty_kmh_per_dpkm` (β2 de référence sur la nouvelle
+   échelle — l'ancien −0,0148 vient de l'échelle 5 s).
+
