@@ -54,4 +54,7 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 *.egg-info/
-services/twin-engine/examples/
+# examples du twin : on ignore les fichiers LOURDS (traces GPX, archives d'entraînement)
+# mais PAS les carnets de route JSON (petits, publics, requis par les tests golden).
+services/twin-engine/examples/*
+!services/twin-engine/examples/*.json
