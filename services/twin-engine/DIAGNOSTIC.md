@@ -47,11 +47,19 @@ Minetti 2002 (coût de la pente), VC 2 paramètres (Poole 2016 ; Jones & Vanhata
 (exposant d'endurance), durabilité (Maunder 2021 ; Jones 2024). Le problème n'est pas la science,
 c'est **l'hypothèse d'effort maximal** implicitement violée par des données « sales ».
 
-## 3. Correctifs (tous derrière un flag, **défaut = comportement actuel** → golden intact)
+## 3. Correctifs (chacun derrière un flag)
+
+> **Défaut livré** (`twin.config.json`) : `maximality_mode=soft_weight` + `gate_policy=honest`
+> **ACTIVÉS**. `terrain_term` reste `free` et `speed_basis` reste `elapsed`. Le golden reste intact
+> même activé : ses ultras étant near-maximaux, tous les poids de maximalité valent 1 → régression
+> inchangée. Les tests de reproduction (`test_montagnhard_robustness.py`) épinglent explicitement le
+> baseline (`maximality_mode=off`, `gate_policy=strict`) pour figer l'échec de référence. Pour
+> revenir au comportement d'avant, poser `maximality_mode=off` (via `twin.config.json` ou
+> `TWIN_CONFIG_PATH`).
 
 ### 3.1 [CŒUR] Filtre de maximalité par intensité relative au plafond d'endurance
 
-`calibration.maximality_mode ∈ {off (défaut), soft_weight, hard_filter}` + `maximality_r_floor` (0,80),
+`calibration.maximality_mode ∈ {off, soft_weight (défaut livré), hard_filter}` + `maximality_r_floor` (0,80),
 `maximality_r_ref` (0,95), `maximality_hr_floor` (0,85), `maximality_hr_ref` (0,95).
 
 Pour chaque ultra : `r_i = vga_i / (envelope_vga_ms(T_i)·3.6)` = **fraction de son propre plafond**
@@ -83,7 +91,7 @@ pente ; laisser `β2·(D+/km)` libre re-compte partiellement le terrain. `none` 
 
 ### 3.3 [SUPPORT] Gate honnête tolérant à l'influence
 
-`sufficiency.gate_policy ∈ {strict (défaut), honest}`. La LOO marque désormais les plis
+`sufficiency.gate_policy ∈ {strict, honest (défaut livré)}`. La LOO marque désormais les plis
 d'**extrapolation** — le point retiré atteint le **min ou max de ln T ou de D+/km** parmi les vrais
 ultras (les restants ne l'encadrent pas). Elle rapporte `MAE_interpolation` **et** `MAE_extrapolation`.
 En mode `honest`, le verdict s'appuie sur la MAE d'interpolation (+ sanité de la largeur relative de

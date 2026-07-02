@@ -55,22 +55,38 @@ def _twin(summaries=None) -> Twin:
     )
 
 
+def _baseline_cfg():
+    """Config « ancien comportement » (tous les flags off), INDÉPENDANTE du défaut du repo.
+
+    Le repo livre désormais ``maximality_mode=soft_weight`` + ``gate_policy=honest`` par défaut
+    (twin.config.json) ; ces tests reproduisent l'échec de référence et isolent chaque correctif
+    en repartant explicitement du baseline — ils restent valides quel que soit le défaut livré."""
+    return replace(
+        CFG,
+        calibration=replace(CFG.calibration, maximality_mode="off", terrain_term="free"),
+        sufficiency=replace(CFG.sufficiency, gate_policy="strict"),
+    )
+
+
 def _cal_cfg(**cal):
-    return replace(CFG, calibration=replace(CFG.calibration, **cal))
+    """Baseline (tous flags off) + surcharges de calibration explicites."""
+    base = _baseline_cfg()
+    return replace(base, calibration=replace(base.calibration, **cal)) if cal else base
 
 
 # --------------------------------------------------------------------------- #
 # 1. Reproduction EXACTE de l'échec (base de comparaison, garde-fous par défaut)
 # --------------------------------------------------------------------------- #
 def test_fixture_reproduces_failure():
+    cfg = _baseline_cfg()                            # échec de référence = comportement AVANT correctif
     t = _twin()
-    cal = build_calibration(t, CFG)
+    cal = build_calibration(t, cfg)
     assert cal.regime == "regression"
     assert cal.n_genuine == 8                        # 8 vrais ultras (4 artefacts écartés, cf. ci-dessous)
     assert cal.n_eff == pytest.approx(4.82, abs=0.05)
     assert cal.sigma_kmh == pytest.approx(1.539, abs=0.02)
 
-    pred = predict_finish(DEQ, DPK, t, cal, CFG)
+    pred = predict_finish(DEQ, DPK, t, cal, cfg)
     assert pred.finish_hours == pytest.approx(19.63, abs=0.2)
 
     cv = pred.cross_validation
@@ -85,8 +101,9 @@ def test_four_recording_artifacts_are_excluded():
 
 
 def test_extrapolation_folds_are_the_boundary_ultras():
-    cal = build_calibration(_twin(), CFG)
-    cv = leave_one_out(cal, CFG)
+    cfg = _baseline_cfg()
+    cal = build_calibration(_twin(), cfg)
+    cv = leave_one_out(cal, cfg)
     extrap = {cal.genuine[i].date for i in range(len(cal.genuine)) if cv.is_extrapolation[i]}
     assert extrap == {"2022-07-10", "2024-10-04", "2026-05-09"}
     assert cv.n_extrapolation == 3 and cv.n_interpolation == 5
@@ -151,12 +168,13 @@ def _golden_twin() -> Twin:
 
 def test_maximality_removes_no_golden_ultra():
     gt = _golden_twin()
+    off = _baseline_cfg()
     soft = _cal_cfg(maximality_mode="soft_weight")
     g = select_genuine_ultras(gt.summaries, soft)
     assert np.allclose(maximality_weights(g, gt, soft), 1.0)   # aucun ultra down-pondéré
 
-    # soft_weight ne change NI la régression NI le nombre d'ultras du golden
-    assert np.allclose(build_calibration(gt, CFG).beta, build_calibration(gt, soft).beta)
+    # soft_weight ne change NI la régression NI le nombre d'ultras du golden (vs off explicite)
+    assert np.allclose(build_calibration(gt, off).beta, build_calibration(gt, soft).beta)
     assert build_calibration(gt, _cal_cfg(maximality_mode="hard_filter")).n_genuine == 5
 
 
@@ -184,12 +202,13 @@ def test_prior_shrunk_pulls_beta2_toward_population_prior():
 
 
 def test_honest_gate_reports_interpolation_not_raw_mae():
+    base = _baseline_cfg()                           # modèle non pondéré → MAE brute 25,3 % / interp 17,0 %
     t = _twin()
-    cal = build_calibration(t, CFG)
-    pred = predict_finish(DEQ, DPK, t, cal, CFG)
+    cal = build_calibration(t, base)
+    pred = predict_finish(DEQ, DPK, t, cal, base)
 
     def _cv_crit(policy):
-        cfg = replace(CFG, sufficiency=replace(CFG.sufficiency, gate_policy=policy))
+        cfg = replace(base, sufficiency=replace(base.sufficiency, gate_policy=policy))
         suf = assess_sufficiency(t, cal, pred, cfg)
         return next(c for c in suf.criteria if "validation" in c.name)
 

@@ -40,7 +40,7 @@
     "genuine_max_decouple_pct": 30.0,
     "min_ultras_regression": 3,
     "recency_halflife_days": 365.0,
-    "maximality_mode": "off",
+    "maximality_mode": "soft_weight",
     "maximality_r_floor": 0.80,
     "maximality_r_ref": 0.95,
     "maximality_hr_floor": 0.85,
@@ -79,7 +79,7 @@
     "long_effort_min_fraction": 0.5,
     "quality_green_frac": 0.5,
     "quality_orange_frac": 0.15,
-    "gate_policy": "strict",
+    "gate_policy": "honest",
     "interval_rel_width_green": 0.5,
     "interval_rel_width_orange": 1.0
   }

@@ -88,12 +88,14 @@ class CalibrationParams:
     # --- filtre de maximalité (Problème C : hétérogénéité d'intention des ultras) ----------
     # Le modèle v(T) suppose des efforts MAXIMAUX ; mêler des sorties faciles (footings longs)
     # gonfle σ et casse la validation croisée. On homogénéise via l'intensité relative au plafond
-    # d'endurance de l'athlète : r_i = vga_i / (enveloppe_vga(T_i)·3.6). ``off`` = comportement
-    # actuel (golden intact) ; ``soft_weight`` = pondération douce w=clip((r−floor)/(ref−floor)) ;
-    # ``hard_filter`` = retrait franc des efforts non engagés. Le poids est appliqué À L'IDENTIQUE
-    # dans le fit ET la LOO (comme la récence). Second signal anti-faux-positif (course dure mais
-    # raide) : la FC normalisée à la FC max des ultras ne peut que REMONTER le poids (jamais le baisser).
-    maximality_mode: str = "off"                         # {off, soft_weight, hard_filter}
+    # d'endurance de l'athlète : r_i = vga_i / (enveloppe_vga(T_i)·3.6). ``off`` = ancien
+    # comportement (poids 1 partout) ; ``soft_weight`` = pondération douce w=clip((r−floor)/(ref−floor))
+    # (DÉFAUT ACTIVÉ, cf. twin.config.json) ; ``hard_filter`` = retrait franc des efforts non engagés.
+    # Le poids est appliqué À L'IDENTIQUE dans le fit ET la LOO (comme la récence). Second signal
+    # anti-faux-positif (course dure mais raide) : la FC normalisée à la FC max des ultras ne peut
+    # que REMONTER le poids (jamais le baisser). NB : sur le golden, les ultras étant near-maximaux,
+    # tous les poids valent 1 → régression inchangée (le golden reste intact même activé).
+    maximality_mode: str = "soft_weight"                 # {off, soft_weight, hard_filter}
     maximality_r_floor: float = 0.80                     # r ≤ floor → effort jugé non engagé (poids 0)
     maximality_r_ref: float = 0.95                       # r ≥ ref  → effort pleinement engagé (poids 1)
     maximality_hr_floor: float = 0.85                    # FC/FCmax(ultras) ≤ floor → ne rattrape pas
@@ -140,11 +142,12 @@ class SufficiencyParams:
     quality_green_frac: float = 0.5
     quality_orange_frac: float = 0.15
     # --- gate honnête tolérant à l'influence (§4.3) --------------------------------------
-    # ``strict`` (défaut, actuel) : le verdict s'appuie sur la MAE brute de validation croisée
-    #   (un seul pli d'extrapolation peut basculer le vendable). ``honest`` : le verdict s'appuie
-    #   sur la MAE d'INTERPOLATION (plis dont le point retiré reste dans l'enveloppe des prédicteurs)
-    #   + une sanité sur la largeur relative de l'intervalle — cohérent avec « Limites assumées ».
-    gate_policy: str = "strict"                          # {strict, honest}
+    # ``strict`` (ancien comportement) : le verdict s'appuie sur la MAE brute de validation croisée
+    #   (un seul pli d'extrapolation peut basculer le vendable). ``honest`` (DÉFAUT ACTIVÉ) : le
+    #   verdict s'appuie sur la MAE d'INTERPOLATION (plis dont le point retiré reste dans l'enveloppe
+    #   des prédicteurs) + une sanité sur la largeur relative de l'intervalle — cohérent avec
+    #   « Limites assumées ». N'ajoute qu'un critère et change la source de la MAE de suffisance.
+    gate_policy: str = "honest"                          # {strict, honest}
     interval_rel_width_green: float = 0.5                # (haut−bas)/central ≤ → 🟢 (honest)
     interval_rel_width_orange: float = 1.0               # ≤ → 🟠, au-delà → 🔴 (honest)
 

@@ -44,8 +44,18 @@ def twin() -> Twin:
                 summaries=summaries())
 
 
+def baseline():
+    """« Ancien comportement » (tous flags off) — indépendant du défaut livré (soft_weight+honest)."""
+    return replace(
+        CFG,
+        calibration=replace(CFG.calibration, maximality_mode="off", terrain_term="free"),
+        sufficiency=replace(CFG.sufficiency, gate_policy="strict"),
+    )
+
+
 def cfg_with(**cal):
-    return replace(CFG, calibration=replace(CFG.calibration, **cal))
+    b = baseline()
+    return replace(b, calibration=replace(b.calibration, **cal))
 
 
 def row(name: str, cfg) -> str:
@@ -63,7 +73,7 @@ def row(name: str, cfg) -> str:
 
 
 CONFIGS = [
-    ("[ACTUEL] récence + terrain libre (3p)", CFG),
+    ("[BASELINE] récence + terrain libre (3p)", baseline()),
     ("récence, terrain=none (2p) — support 3.2", cfg_with(terrain_term="none")),
     ("récence, terrain=prior_shrunk (3p)", cfg_with(terrain_term="prior_shrunk", terrain_shrink_lambda=50.0)),
     ("maximalité soft — cœur 3.1", cfg_with(maximality_mode="soft_weight")),
