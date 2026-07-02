@@ -60,10 +60,13 @@ class UltraCalibration:
     endurance_coef: float | None = None              # coef enveloppe (repli)
     dplus_penalty: float = 0.0                        # β2 prior (repli)
     offset_kmh: float = 0.0                           # recalage du mélange (blend)
-    # pondération par récence (régime régression) : réutilisée à l'identique par la LOO
+    # pondération (récence × maximalité) du régime régression : réutilisée À L'IDENTIQUE par la LOO
     weights: tuple[float, ...] | None = None
     n_eff: float = 0.0                                # nb effectif d'ultras = (Σw)²/Σw²
     recency_halflife_days: float = 0.0
+    # filtre de maximalité (§4.1) : mode appliqué + poids de maximalité seul (pour transparence/rapport)
+    maximality_mode: str = "off"
+    maximality_weights: tuple[float, ...] | None = None
 
     @property
     def n_genuine(self) -> int:
@@ -100,6 +103,7 @@ class UltraCalibration:
             "n_genuine_ultras": self.n_genuine,
             "n_eff_ultras": round(self.n_eff, 2),
             "recency_halflife_days": self.recency_halflife_days,
+            "maximality_mode": self.maximality_mode,
             "sigma_kmh": round(self.sigma_kmh, 3),
             "beta": None if self.beta is None else [round(b, 5) for b in self.beta],
             "notes": self.notes,
@@ -107,14 +111,29 @@ class UltraCalibration:
         }
 
 
+def _basis_hours(s: ActivitySummary, cfg: Config) -> float:
+    """Durée de référence de l'effort : temps écoulé (défaut) ou temps de mouvement (§4.4).
+
+    ``moving`` n'est retenu que s'il a pu être mesuré (``moving_time_s`` renseigné et > 0) ;
+    sinon repli automatique sur le temps écoulé (pas d'invention de donnée)."""
+    if cfg.twin.speed_basis == "moving":
+        mt = getattr(s, "moving_time_s", None)
+        if mt is not None and mt > 0:
+            return mt / 3600.0
+    return s.duration_s / 3600.0
+
+
 def select_genuine_ultras(summaries: list[ActivitySummary], cfg: Config) -> list[GenuineUltra]:
-    """Vrais ultras engagés : durée > seuil, vitesse ajustée ≥ seuil, découplage < seuil."""
+    """Vrais ultras engagés : durée > seuil, vitesse ajustée ≥ seuil, découplage < seuil.
+
+    Le filtre de durée porte sur le temps ÉCOULÉ (un 10 h avec de longs arrêts reste un ultra) ;
+    la vitesse ajustée est calculée sur la base de durée configurée (écoulé/mouvement, §4.4)."""
     c = cfg.calibration
     out: list[GenuineUltra] = []
     for s in summaries:
         if s.duration_s < c.genuine_min_hours * 3600:
             continue
-        hours = s.duration_s / 3600.0
+        hours = _basis_hours(s, cfg)
         vga_kmh = s.ga_km / hours
         if vga_kmh < c.genuine_min_ga_kmh:
             continue
@@ -183,16 +202,105 @@ def _effective_n(weights: np.ndarray) -> float:
     return (sw * sw / sw2) if sw2 > 0 else 0.0
 
 
-def _fit_regression(genuine: list[GenuineUltra], weights: np.ndarray | None = None):
+def _ramp(x: float, lo: float, hi: float) -> float:
+    """Rampe linéaire bornée : 0 en ``lo``, 1 en ``hi``, clampée dans [0, 1].
+
+    ``hi ≤ lo`` (rampe dégénérée) ⇒ marche : 1 dès que ``x ≥ hi``, 0 sinon."""
+    if hi <= lo:
+        return 1.0 if x >= hi else 0.0
+    return float(min(1.0, max(0.0, (x - lo) / (hi - lo))))
+
+
+def maximality_weights(
+    genuine: list[GenuineUltra], twin: Twin, cfg: Config
+) -> np.ndarray:
+    """Poids de maximalité w ∈ [0, 1] par ultra (§4.1) — 1 = effort pleinement engagé.
+
+    ``r_i = vga_i / (enveloppe_vga(T_i)·3.6)`` = fraction du plafond d'endurance **propre** à
+    l'athlète (sans FC absolue). Effort engagé ⇒ ``r≈1`` ; footing/aventure ⇒ ``r`` bas. Le modèle
+    v(T) suppose des efforts maximaux ; homogénéiser via ``r`` restaure cette hypothèse.
+
+    * ``off`` → poids 1 partout (comportement actuel, golden intact).
+    * ``soft_weight`` → ``w = clip((r − r_floor)/(r_ref − r_floor), 0, 1)``.
+    * ``hard_filter`` → ``w ∈ {0, 1}`` (retrait franc des efforts non engagés).
+
+    **Garde-fou anti-faux-positif** : une course dure mais raide/technique (D+/km élevé) peut
+    sembler lente vs plafond (l'ajustement de pente la sous-crédite). On croise ``r`` avec un
+    second signal — la FC normalisée à la FC max des ultras — qui ne peut que **remonter** le
+    poids : on ne down-pondère fortement que si les DEUX signaux concordent (r bas ET FC basse).
+    Sans enveloppe exploitable, la maximalité n'est pas évaluable → poids 1 (neutre, signalé)."""
+    c = cfg.calibration
+    n = len(genuine)
+    if c.maximality_mode == "off" or n == 0:
+        return np.ones(n)
+    if twin.alpha is None or twin.endurance_coef is None:
+        return np.ones(n)  # pas d'enveloppe → maximalité non évaluable → neutre
+
+    hrs = np.array([g.avg_hr if g.avg_hr is not None else np.nan for g in genuine], dtype=float)
+    hr_max = float(np.nanmax(hrs)) if np.isfinite(hrs).any() else float("nan")
+
+    w = np.ones(n)
+    for i, g in enumerate(genuine):
+        env_ms = twin.envelope_vga_ms(g.hours * 3600.0)
+        if env_ms is None or env_ms <= 0:
+            w[i] = 1.0  # enveloppe non calculable à cette durée → neutre
+            continue
+        r = g.vga_kmh / (env_ms * 3.6)
+        w_i = _ramp(r, c.maximality_r_floor, c.maximality_r_ref)
+        # second signal (FC) : ne peut que remonter le poids (jamais le baisser)
+        if math.isfinite(hr_max) and hr_max > 0 and g.avg_hr is not None:
+            hr_frac = g.avg_hr / hr_max
+            w_i = max(w_i, _ramp(hr_frac, c.maximality_hr_floor, c.maximality_hr_ref))
+        w[i] = w_i
+
+    if c.maximality_mode == "hard_filter":
+        return np.where(w > 0.0, 1.0, 0.0)
+    return w
+
+
+def _regression_beta(
+    h: np.ndarray, v: np.ndarray, dpk: np.ndarray, weights: np.ndarray, cfg: Config | None
+) -> np.ndarray:
+    """β pondéré de ``v ~ 1 + ln(T) + β2·D+/km`` selon le mode de terrain (§4.2).
+
+    * ``free`` (défaut, actuel) : β2 libre.
+    * ``none`` : β2 = 0 (la vga est **déjà** ajustée à la pente → pas de double-comptage).
+    * ``prior_shrunk`` : ridge de β2 vers le prior population via une pseudo-observation pondérée
+      ``λ`` (atténue les points de levier terrain, ex. un ultra à D+/km extrême).
+
+    ``cfg`` absent ⇒ ``free`` (rétro-compatibilité du golden)."""
+    term = cfg.calibration.terrain_term if cfg is not None else "free"
+    lt = np.log(h)
+    sw = np.sqrt(np.asarray(weights, dtype=float))
+    if term == "none":
+        X = np.vstack([np.ones_like(h), lt]).T
+        b, *_ = np.linalg.lstsq(X * sw[:, None], v * sw, rcond=None)
+        return np.array([float(b[0]), float(b[1]), 0.0])
+    X = np.vstack([np.ones_like(h), lt, dpk]).T
+    Xw = X * sw[:, None]
+    yw = v * sw
+    if term == "prior_shrunk":
+        prior = cfg.calibration.default_dplus_penalty_kmh_per_dpkm
+        lam = math.sqrt(max(cfg.calibration.terrain_shrink_lambda, 0.0))
+        Xw = np.vstack([Xw, np.array([0.0, 0.0, lam])])
+        yw = np.concatenate([yw, np.array([lam * prior])])
+    b, *_ = np.linalg.lstsq(Xw, yw, rcond=None)
+    return np.asarray(b, dtype=float)
+
+
+def _fit_regression(
+    genuine: list[GenuineUltra], weights: np.ndarray | None = None, cfg: Config | None = None
+):
     """β = lstsq **pondéré** (v ~ 1 + ln(T) + D+/km). Renvoie (beta, residuals).
 
-    Poids ``None`` ou égaux ⇒ moindres carrés ordinaires (le golden reste identique)."""
+    Poids ``None`` ou égaux ⇒ moindres carrés ordinaires (le golden reste identique). Le mode de
+    terrain (``cfg.calibration.terrain_term``) est appliqué ici ET dans la LOO à l'identique."""
     h = np.array([g.hours for g in genuine])
     v = np.array([g.vga_kmh for g in genuine])
     dpk = np.array([g.dplus_per_km for g in genuine])
+    w = np.ones_like(h) if weights is None else np.asarray(weights, dtype=float)
+    beta = _regression_beta(h, v, dpk, w, cfg)
     X = np.vstack([np.ones_like(h), np.log(h), dpk]).T
-    sw = np.sqrt(np.ones_like(h) if weights is None else np.asarray(weights, dtype=float))
-    beta, *_ = np.linalg.lstsq(X * sw[:, None], v * sw, rcond=None)
     resid = v - X @ beta
     return beta, resid
 
@@ -200,18 +308,47 @@ def _fit_regression(genuine: list[GenuineUltra], weights: np.ndarray | None = No
 def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
     c = cfg.calibration
     genuine = select_genuine_ultras(twin.summaries, cfg)
-    n = len(genuine)
     notes: list[str] = []
 
-    weights = recency_weights(genuine, cfg)
+    # Poids : récence (non-stationnarité) × maximalité (hétérogénéité d'intention). Les deux sont
+    # appliqués À L'IDENTIQUE dans le fit ET la LOO → l'indice de confiance reflète le modèle servi.
+    recency = recency_weights(genuine, cfg)
+    maximality = maximality_weights(genuine, twin, cfg)
+
+    # ``hard_filter`` : on retire franchement les efforts non engagés (poids de maximalité nul).
+    dropped = 0
+    if c.maximality_mode == "hard_filter" and len(genuine):
+        keep = [i for i in range(len(genuine)) if maximality[i] > 0.0]
+        dropped = len(genuine) - len(keep)
+        genuine = [genuine[i] for i in keep]
+        recency = recency[keep]
+        maximality = maximality[keep]
+    n = len(genuine)
+
+    weights = recency * maximality
     n_eff = _effective_n(weights) if n else 0.0
 
+    if c.maximality_mode != "off":
+        if twin.alpha is None or twin.endurance_coef is None:
+            notes.append(
+                "Filtre de maximalité demandé mais enveloppe d'endurance indisponible : "
+                "poids neutre (maximalité non évaluable)."
+            )
+        elif c.maximality_mode == "hard_filter":
+            notes.append(f"Maximalité (hard) : {dropped} effort(s) non engagé(s) écarté(s).")
+        else:
+            notes.append(
+                "Maximalité (soft) : les efforts sous le plafond d'endurance pèsent moins "
+                "(homogénéisation en efforts maximaux, §4.1)."
+            )
+    max_w_tuple = tuple(float(x) for x in maximality) if c.maximality_mode != "off" else None
+
     # ---------- régime régression (≥ ~3 vrais ultras ET N_eff suffisant) ----------
-    # Le plancher N_eff empêche la pondération par récence de fabriquer une régression
-    # sûre d'elle sur trop peu d'ultras récents (surconfiance) : dans ce cas on bascule
+    # Le plancher N_eff empêche la pondération (récence × maximalité) de fabriquer une régression
+    # sûre d'elle sur trop peu d'ultras effectifs (surconfiance) : dans ce cas on bascule
     # dans le repli « peu d'ultras » (incertitude élargie) ci-dessous.
     if n >= c.min_ultras_regression and n_eff >= c.min_ultras_regression:
-        beta, resid = _fit_regression(genuine, weights)
+        beta, resid = _fit_regression(genuine, weights, cfg)
         # σ pondérée : variance résiduelle pondérée corrigée par le nb effectif de degrés de
         # liberté. Se réduit EXACTEMENT à √(Σr²/(n−3)) quand les poids sont égaux (golden intact).
         sw = float(weights.sum())
@@ -232,6 +369,8 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
             weights=tuple(float(x) for x in weights),
             n_eff=n_eff,
             recency_halflife_days=c.recency_halflife_days,
+            maximality_mode=c.maximality_mode,
+            maximality_weights=max_w_tuple,
         )
 
     # ---------- replis VC+E (nécessitent l'enveloppe d'endurance) ----------
@@ -243,6 +382,7 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
         return UltraCalibration(
             regime=REGIME_INSUFFICIENT, genuine=genuine, sigma_kmh=float("inf"), notes=notes,
             n_eff=n_eff, recency_halflife_days=c.recency_halflife_days,
+            maximality_mode=c.maximality_mode, maximality_weights=max_w_tuple,
         )
 
     penalty = c.default_dplus_penalty_kmh_per_dpkm
@@ -279,6 +419,8 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
             offset_kmh=offset,
             n_eff=n_eff,
             recency_halflife_days=c.recency_halflife_days,
+            maximality_mode=c.maximality_mode,
+            maximality_weights=max_w_tuple,
         )
 
     # ---------- régime VC+E seul (0 ultra) ----------
@@ -297,6 +439,8 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
         offset_kmh=0.0,
         n_eff=n_eff,
         recency_halflife_days=c.recency_halflife_days,
+        maximality_mode=c.maximality_mode,
+        maximality_weights=max_w_tuple,
     )
 
 
@@ -304,6 +448,7 @@ __all__ = [
     "GenuineUltra",
     "UltraCalibration",
     "select_genuine_ultras",
+    "maximality_weights",
     "build_calibration",
     "REGIME_REGRESSION",
     "REGIME_BLEND",

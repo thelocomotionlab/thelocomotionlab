@@ -51,6 +51,13 @@ class TwinParams:
     vc_bootstrap_n: int = 2000
     vc_bootstrap_seed: int = 0
     vc_short_effort_floor_s: int = 1800
+    # --- locomotion vs arrêts (twin-theory §2, Problème « écoulé ≫ mouvement ») -----------
+    # ``elapsed`` (défaut, comportement actuel) : durée = temps écoulé de bout en bout.
+    # ``moving`` : durée = temps en mouvement (secondes où la vitesse dépasse le seuil), pour
+    #   ne pas diluer l'allure des ultras avec les longs arrêts (ravitos, sommeil). Repli
+    #   automatique sur ``elapsed`` quand le temps de mouvement n'a pas pu être mesuré.
+    speed_basis: str = "elapsed"
+    moving_speed_threshold_ms: float = 0.5    # vitesse au-dessus de laquelle on compte « en mouvement »
     # --- robustesse de la courbe record (Problème A : VC/exposant aberrants) ---
     vc_max_plausible_ms: float = 6.0          # plafond physiologique : un point « plat » plus rapide
     #                                           est rejeté avant l'ajustement VC ; une VC au-dessus
@@ -78,6 +85,24 @@ class CalibrationParams:
     #                                                      la validation croisée leave-one-out. Le régime
     #                                                      régression n'est retenu que si le nombre EFFECTIF
     #                                                      d'ultras (N_eff = (Σw)²/Σw²) ≥ min_ultras_regression.
+    # --- filtre de maximalité (Problème C : hétérogénéité d'intention des ultras) ----------
+    # Le modèle v(T) suppose des efforts MAXIMAUX ; mêler des sorties faciles (footings longs)
+    # gonfle σ et casse la validation croisée. On homogénéise via l'intensité relative au plafond
+    # d'endurance de l'athlète : r_i = vga_i / (enveloppe_vga(T_i)·3.6). ``off`` = comportement
+    # actuel (golden intact) ; ``soft_weight`` = pondération douce w=clip((r−floor)/(ref−floor)) ;
+    # ``hard_filter`` = retrait franc des efforts non engagés. Le poids est appliqué À L'IDENTIQUE
+    # dans le fit ET la LOO (comme la récence). Second signal anti-faux-positif (course dure mais
+    # raide) : la FC normalisée à la FC max des ultras ne peut que REMONTER le poids (jamais le baisser).
+    maximality_mode: str = "off"                         # {off, soft_weight, hard_filter}
+    maximality_r_floor: float = 0.80                     # r ≤ floor → effort jugé non engagé (poids 0)
+    maximality_r_ref: float = 0.95                       # r ≥ ref  → effort pleinement engagé (poids 1)
+    maximality_hr_floor: float = 0.85                    # FC/FCmax(ultras) ≤ floor → ne rattrape pas
+    maximality_hr_ref: float = 0.95                      # FC/FCmax(ultras) ≥ ref  → rattrape à 1 (course dure)
+    # --- terme de terrain β2·(D+/km) : anti double-comptage (la vga est DÉJÀ ajustée pente) ----
+    # ``free`` (défaut, actuel) : β2 libre. ``none`` : β2=0 (la pente est déjà dans la vga).
+    # ``prior_shrunk`` : ridge de β2 vers le prior population, atténue les points de levier terrain.
+    terrain_term: str = "free"                           # {free, none, prior_shrunk}
+    terrain_shrink_lambda: float = 1.0                   # force du ridge (n. de pseudo-obs vers le prior)
     # repli « peu d'ultras » (twin-theory §3)
     default_dplus_penalty_kmh_per_dpkm: float = -0.0148  # prior population (β2)
     regression_min_sigma_kmh: float = 0.20               # plancher de σ (anti-surconfiance)
@@ -114,6 +139,14 @@ class SufficiencyParams:
     long_effort_min_fraction: float = 0.5
     quality_green_frac: float = 0.5
     quality_orange_frac: float = 0.15
+    # --- gate honnête tolérant à l'influence (§4.3) --------------------------------------
+    # ``strict`` (défaut, actuel) : le verdict s'appuie sur la MAE brute de validation croisée
+    #   (un seul pli d'extrapolation peut basculer le vendable). ``honest`` : le verdict s'appuie
+    #   sur la MAE d'INTERPOLATION (plis dont le point retiré reste dans l'enveloppe des prédicteurs)
+    #   + une sanité sur la largeur relative de l'intervalle — cohérent avec « Limites assumées ».
+    gate_policy: str = "strict"                          # {strict, honest}
+    interval_rel_width_green: float = 0.5                # (haut−bas)/central ≤ → 🟢 (honest)
+    interval_rel_width_orange: float = 1.0               # ≤ → 🟠, au-delà → 🔴 (honest)
 
 
 @dataclass(frozen=True)

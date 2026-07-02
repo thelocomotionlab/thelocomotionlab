@@ -163,7 +163,9 @@ def endurance_intuition() -> str:
         "En clair : c'est \\`a quel point ton allure soutenable \\textbf{baisse quand la dur\\'ee "
         "s'allonge} (ind\\'ependamment de ta vitesse pure, mesur\\'ee par la VC). Plus l'exposant "
         "est \\textbf{bas} (proche de 1), mieux tu gardes ton allure sur le tr\\`es long ; plus il "
-        "est \\'elev\\'e, plus tu d\\'eclines en t'allongeant."
+        "est \\'elev\\'e, plus tu d\\'eclines en t'allongeant. Il se mesure sur tes efforts jusqu'\\`a "
+        "quelques heures puis se \\emph{prolonge} vers les dur\\'ees d'ultra : c'est un descripteur "
+        "de ta tendance, pas une garantie chiffr\\'ee au-del\\`a de tes donn\\'ees."
     )
 
 

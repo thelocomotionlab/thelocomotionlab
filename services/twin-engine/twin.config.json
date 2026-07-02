@@ -23,6 +23,8 @@
     "vc_bootstrap_n": 2000,
     "vc_bootstrap_seed": 0,
     "vc_short_effort_floor_s": 1800,
+    "speed_basis": "elapsed",
+    "moving_speed_threshold_ms": 0.5,
     "vc_max_plausible_ms": 6.0,
     "record_min_support": 2,
     "record_reject_speed_ms": 6.5,
@@ -38,6 +40,13 @@
     "genuine_max_decouple_pct": 30.0,
     "min_ultras_regression": 3,
     "recency_halflife_days": 365.0,
+    "maximality_mode": "off",
+    "maximality_r_floor": 0.80,
+    "maximality_r_ref": 0.95,
+    "maximality_hr_floor": 0.85,
+    "maximality_hr_ref": 0.95,
+    "terrain_term": "free",
+    "terrain_shrink_lambda": 1.0,
     "default_dplus_penalty_kmh_per_dpkm": -0.0148,
     "regression_min_sigma_kmh": 0.20,
     "blend_sigma_kmh": 0.45,
@@ -69,6 +78,9 @@
     "cv_error_orange_pct": 10.0,
     "long_effort_min_fraction": 0.5,
     "quality_green_frac": 0.5,
-    "quality_orange_frac": 0.15
+    "quality_orange_frac": 0.15,
+    "gate_policy": "strict",
+    "interval_rel_width_green": 0.5,
+    "interval_rel_width_orange": 1.0
   }
 }

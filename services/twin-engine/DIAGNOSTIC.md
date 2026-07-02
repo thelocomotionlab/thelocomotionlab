@@ -1,0 +1,157 @@
+# DIAGNOSTIC — robustesse de la calibration ultra (cas « Crasse Montagnhard »)
+
+> Cause racine, correctifs et preuves du passage **LOO 25,3 % → ~9 %** sur données réelles, tout
+> reproductible depuis un fixture de 5 Ko (`tests/fixtures/genuine_ultras_montagnhard.fixture.json`)
+> — **l'archive Garmin n'est jamais requise**.
+
+## 1. Symptôme
+
+Sur l'archive de l'athlète Thomas Ducreux (12 285 fichiers), le moteur rendait `sellable = False`
+alors que tous les critères de suffisance étaient 🟢 **sauf un** : l'erreur de validation croisée
+(`sufficiency.py` : le verdict = pire critère). Chiffres exacts, **reproduits par le fixture** :
+
+| Grandeur | Valeur |
+|---|---|
+| Régime | `regression` |
+| Vrais ultras retenus | 8 (sur 12 efforts ≥ 10 h ; 4 sont des artefacts « montre laissée en enregistrement », écartés par `ga ≥ 5,5`) |
+| σ (bruit résiduel) | **1,539 km/h** |
+| Prédiction (Deq 139,6 km, D+/km 75,05) | **19,63 h** |
+| **LOO MAE** | **25,3 %** → 🔴 |
+| MAE d'interpolation | 17,0 % |
+| MAE d'extrapolation | 37,8 % |
+
+## 2. Cause racine — hétérogénéité d'intention
+
+Le modèle `v(T, D+/km)` **suppose des efforts maximaux**. Les 8 « genuine » mêlent des courses
+maximales (FC 136–152) et des **sorties faciles** — typiquement `2026-04-04` : vga 6,38 km/h, FC 119
+(la plus basse), soit **~73 % de son propre plafond d'endurance**. Aucune loi `v(T)` n'absorbe ce
+mélange → σ gonfle à 1,539 km/h et la LOO explose.
+
+**Interaction perverse mesurée** : la pondération par récence (correctif de non-stationnarité) donne
+un poids **0,94** à cette sortie facile *récente* → elle **amplifie** le problème. Le filtre de
+maximalité neutralise exactement ce point (poids → 0), sans toucher aux courses engagées.
+
+### Les deux outliers LOO (confirmés sur données exactes)
+
+| Course | Réel → Prédit LOO | Nature |
+|---|---|---|
+| `2024-10-04` (Deq 188,6 ; la plus longue) | 26,2 h → **42,9 h (+64 %)** | **extrapolation de durée** (max de ln T) |
+| `2022-07-10` (D+/km = **104**, extrême) | 10,3 h → **15,0 h (+45 %)** | **point de levier terrain** (max de D+/km) |
+
+Les deux sont des plis d'**extrapolation** (voir §4.3) : un seul pli sur 8 ne doit pas décider du
+vendable.
+
+### Fondations physio — correctes, à NE PAS réécrire
+
+Minetti 2002 (coût de la pente), VC 2 paramètres (Poole 2016 ; Jones & Vanhatalo 2017), Riegel 1981
+(exposant d'endurance), durabilité (Maunder 2021 ; Jones 2024). Le problème n'est pas la science,
+c'est **l'hypothèse d'effort maximal** implicitement violée par des données « sales ».
+
+## 3. Correctifs (tous derrière un flag, **défaut = comportement actuel** → golden intact)
+
+### 3.1 [CŒUR] Filtre de maximalité par intensité relative au plafond d'endurance
+
+`calibration.maximality_mode ∈ {off (défaut), soft_weight, hard_filter}` + `maximality_r_floor` (0,80),
+`maximality_r_ref` (0,95), `maximality_hr_floor` (0,85), `maximality_hr_ref` (0,95).
+
+Pour chaque ultra : `r_i = vga_i / (envelope_vga_ms(T_i)·3.6)` = **fraction de son propre plafond**
+(sans FC absolue, en réutilisant `Twin.envelope_vga_ms`). Poids doux
+`w = clip((r − r_floor)/(r_ref − r_floor), 0, 1)`, combiné **multiplicativement** avec la récence, et
+appliqué **À L'IDENTIQUE dans le fit ET la LOO** (comme la récence) → l'indice de confiance reflète
+le modèle réellement servi.
+
+**Garde-fou anti-faux-positif** : une course *dure mais raide* (D+/km élevé) peut paraître lente vs
+plafond (l'ajustement de pente la sous-crédite). On croise `r` avec un **second signal** — la FC
+normalisée à la FC max des ultras — qui ne peut que **remonter** le poids : on ne down-pondère
+fortement que si **les deux concordent** (r bas ET FC basse). Ainsi `2022-07-10` (r ≈ 0,92, FC 152)
+reste à poids 1, tandis que `2026-04-04` (r ≈ 0,70, FC 119) tombe à 0.
+
+Poids de maximalité obtenus (soft) sur le fixture :
+
+| Ultra | 22-07-10 | 23-05-13 | 23-07-01 | 24-02-17 | 24-10-04 | 25-10-19 | **26-04-04** | 26-05-09 |
+|---|---|---|---|---|---|---|---|---|
+| poids | 1,00 | 0,86 | 0,54 | 0,69 | 0,60 | 0,65 | **0,00** | 1,00 |
+
+→ la sortie facile tombe à 0 ; **la 26 h et la 19,7 h restent** (elles sont engagées).
+
+### 3.2 [SUPPORT] Nettoyer le double-comptage terrain
+
+`calibration.terrain_term ∈ {free (défaut), none, prior_shrunk}`. La vga est **déjà** ajustée à la
+pente ; laisser `β2·(D+/km)` libre re-compte partiellement le terrain. `none` (β2 = 0) ramène la MAE
+à 21,7 % à lui seul ; `prior_shrunk` (ridge de β2 vers le prior population) atténue le levier D+/km =
+104. Effet **modeste seul**, utile surtout en combinaison.
+
+### 3.3 [SUPPORT] Gate honnête tolérant à l'influence
+
+`sufficiency.gate_policy ∈ {strict (défaut), honest}`. La LOO marque désormais les plis
+d'**extrapolation** — le point retiré atteint le **min ou max de ln T ou de D+/km** parmi les vrais
+ultras (les restants ne l'encadrent pas). Elle rapporte `MAE_interpolation` **et** `MAE_extrapolation`.
+En mode `honest`, le verdict s'appuie sur la MAE d'interpolation (+ sanité de la largeur relative de
+l'intervalle), pas sur la MAE brute. Sur le fixture, les extrapolants sont exactement
+**`2022-07-10`, `2024-10-04`, `2026-05-09`** (MAE_interp 17,0 % vs brute 25,3 %).
+
+### 3.4 [SUPPORT] Locomotion vs arrêts + narratif
+
+`twin.speed_basis ∈ {elapsed (défaut), moving}` : `moving` calcule la durée sur le **temps de
+mouvement** (secondes où la vitesse dépasse `moving_speed_threshold_ms`, mesuré à 1 Hz sur le schéma
+canonique), pour ne pas diluer l'allure d'ultra avec les longs arrêts (ravitos, sommeil). Repli
+automatique sur `elapsed` si non mesurable (le fixture ne porte pas de temps de mouvement → mode non
+vérifiable hors archive, documenté). **Narratif** : le signe de l'interprétation de l'exposant E est
+**déjà correct** (E↑ ⇒ déclin↑, Riegel 1981 ; corrigé au commit `de04cf2` — vérifié, aucun changement
+requis) ; on ajoute un cadrage « E est mesuré sur tes efforts ≤ quelques heures puis prolongé vers
+l'ultra » (`endurance_intuition`).
+
+## 4. Preuves A/B (fixture, `python -m tools.ab_montagnhard`)
+
+`sigma` = bruit résiduel (km/h) · `i80` = largeur relative de l'intervalle 80 % · MAE/interp/extrap en %.
+
+| Configuration | sigma | i80 | MAE | interp | extrap | CV |
+|---|---|---|---|---|---|---|
+| **[ACTUEL]** récence + terrain libre (3p) | 1,539 | 0,61 | **25,3** | 17,0 | 37,8 | 🔴 |
+| récence, terrain=none (2p) — support 3.2 | 1,546 | 0,58 | 21,7 | 16,1 | 29,9 | 🔴 |
+| récence, terrain=prior_shrunk (3p) | 1,539 | 0,61 | 24,8 | 17,0 | 36,4 | 🔴 |
+| **maximalité soft — cœur 3.1** | 0,518 | 0,17 | **9,9** | 7,3 | 11,5 | 🟠 |
+| **maximalité hard — cœur 3.1** | 0,565 | 0,19 | **9,0** | 6,8 | 10,8 | 🟠 |
+| maximalité soft + terrain=none | 0,611 | 0,19 | 9,2 | 8,2 | 9,9 | 🟠 |
+| maximalité soft + prior_shrunk | 0,518 | 0,17 | 9,2 | 7,3 | 10,4 | 🟠 |
+
+**Le levier robuste est la maximalité : 25,3 % → ~9 % (−64 %), σ divisée par ~3, intervalle divisé
+par ~3.** Le nettoyage terrain et le gate honnête sont des supports de correctness/honnêteté. (Le
+critère CV passe de 🔴 à 🟠 ; le 🟢 exigerait ≤ 5 % — sur le fixture isolé la MAE reste ~9 %. Sur
+l'archive complète de l'athlète, ce sont les mêmes 8 ultras qui pilotent la CV, donc le passage
+`sellable` est identique ; les autres critères de suffisance, eux, sont déjà 🟢 sur l'archive.)
+
+## 5. Pistes TESTÉES et REJETÉES (ne pas re-tenter)
+
+- ❌ **Filtrer les ultras à `Deq > Deq_cible`.** Neutre-à-pire, **biais optimiste** (dangereux en
+  pacing), supprime la 19,7 h et la 26 h (seuls points du régime cible → transforme la cible en
+  extrapolation), et **orthogonal au vrai problème** : les efforts faciles `< Deq_cible` survivent.
+  Le bon critère est la **maximalité**, pas le Deq.
+- ❌ **Pondération par noyau en ln(T) comme levier principal.** Neutre, largeur de noyau instable à
+  n = 8. Tolérée seulement en raffinement secondaire.
+
+## 6. Limite assumée du proxy d'enveloppe
+
+`r_i` repose sur `envelope_vga_ms`, ajustée sur la courbe record **≤ 6 h** (`endurance_window_s`) puis
+**extrapolée** à 10–26 h. En usage **relatif** entre les propres ultras de l'athlète, ce biais
+d'extrapolation se **compense partiellement** (tous les `r_i` le subissent). Le fixture ne contenant
+pas la courbe record (efforts courts), il embarque une **enveloppe représentative** (`_meta.athlete_envelope`,
+E = 1,22 cohérent avec le golden) pour rendre le correctif reproductible hors archive ; le résultat
+qualitatif (2026-04-04 down-pondéré, 26 h & 19,7 h gardées, MAE < 10 %) est **stable pour α ∈ [0,15 ;
+0,25]**. Le pipeline réel utilise l'enveloppe **propre** de l'athlète (fittée sur ses données courtes).
+
+## 7. Hypothèses falsifiables restantes
+
+- **H1 (altitude Garmin / rééchantillonnage)** : écartée pour les 8 ultras — leurs features exactes
+  sont déjà extraites dans le fixture. À revérifier seulement si l'on régénère depuis l'archive.
+- **H2 (écoulé ≫ mouvement)** : plausible (ex. 26,2 h écoulé vs ~23,9 h de mouvement) ; le flag
+  `speed_basis=moving` est implémenté mais **non vérifiable sur le fixture** (pas de temps de
+  mouvement dans les agrégats).
+- **H3 (E hérité ?)** : `E = 1,22` identique au golden ; vérifier que `fit_endurance_exponent`
+  s'ajuste bien sur l'athlète nécessite la courbe record (archive) → **non vérifié ici**, documenté.
+
+## 8. Régénérer le fixture (optionnel, hors dépôt)
+
+Scanner toutes les `.fit`, garder `is_running and duration_s ≥ 9,5 h`, sérialiser
+`process_activity(...).to_dict()`, et stocker l'enveloppe fittée (`fit_endurance_exponent`) dans
+`_meta.athlete_envelope`. **Non requis pour corriger.**

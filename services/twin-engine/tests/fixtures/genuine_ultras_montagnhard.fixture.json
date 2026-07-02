@@ -10,7 +10,18 @@
    "loo_mae_pct": 25.3,
    "note": "course Deq=139.6 km, D+/km=75.05 (recalculable depuis trace_montagnhard.gpx)."
   },
-  "usage": "Charger chaque item non-_meta dans ActivitySummary(**item sans les cles _*), puis select_genuine_ultras -> build_calibration -> predict_finish/leave_one_out.",
+  "athlete_envelope": {
+   "alpha": 0.18,
+   "endurance_coef": 17.67,
+   "endurance_E": 1.22,
+   "note": "Enveloppe d endurance REPRESENTATIVE de l athlete (E=1.22, coherent avec le golden), fournie pour rendre le filtre de maximalite (§4.1) reproductible hors archive : envelope_vga_ms(t)=coef*t^-alpha (m/s). La vraie enveloppe se lit sur la courbe record complete (efforts <=6h), absente du fixture. LIMITE ASSUMEE : ajustee <=6h puis extrapolee a 10-26h ; en usage RELATIF entre les propres ultras de l athlete, le biais se compense partiellement. Resultat qualitatif (2026-04-04 down-pondere, 26h et 19.7h gardees, MAE<10%) stable pour alpha dans [0.15,0.25]."
+  },
+  "course": {
+   "deq_km": 139.6,
+   "dplus_per_km": 75.05,
+   "note": "Course cible (Crasse Montagnhard) : distance ajustee equivalente et denivele par km, recalculables depuis trace_montagnhard.gpx par course/profile.py."
+  },
+  "usage": "Charger chaque item non-_meta dans ActivitySummary(**item sans les cles _*), puis select_genuine_ultras -> build_calibration -> predict_finish/leave_one_out. Enveloppe -> Twin(alpha, endurance_coef) pour le filtre de maximalite.",
   "garbage_note": "4 activites >=10h a vga<1.5 km/h (montre laissee en enregistrement) sont incluses volontairement : elles DOIVENT etre ecartees par le filtre (ga>=5.5). Elles expliquent le compte -12 efforts >=10h- de la sortie algo."
  },
  "activities": [

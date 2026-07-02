@@ -9,11 +9,11 @@ et critère de suffisance.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 
-from .calibration import UltraCalibration
+from .calibration import UltraCalibration, _regression_beta
 from .config import Config
 from .twin.model import Twin
 
@@ -25,6 +25,14 @@ class CrossValidation:
     rmse_pct: float
     n: int
     points: list[tuple[float, float]]  # (temps réel h, temps prédit hors-échantillon h)
+    # Gate honnête (§4.3) : séparer les plis d'INTERPOLATION (point retiré dans l'enveloppe des
+    # prédicteurs restants) des plis d'EXTRAPOLATION (point retiré au bord = min/max de ln T ou
+    # de D+/km). Un seul pli d'extrapolation ne doit pas décider du « vendable ».
+    mae_interpolation_pct: float | None = None
+    mae_extrapolation_pct: float | None = None
+    is_extrapolation: list[bool] = field(default_factory=list)
+    n_interpolation: int = 0
+    n_extrapolation: int = 0
 
     def to_dict(self) -> dict:
         return {
@@ -32,6 +40,12 @@ class CrossValidation:
             "rmse_pct": round(self.rmse_pct, 2),
             "n": self.n,
             "errors_pct": [round(e, 2) for e in self.errors_pct],
+            "mae_interpolation_pct": None if self.mae_interpolation_pct is None
+            else round(self.mae_interpolation_pct, 2),
+            "mae_extrapolation_pct": None if self.mae_extrapolation_pct is None
+            else round(self.mae_extrapolation_pct, 2),
+            "n_interpolation": self.n_interpolation,
+            "n_extrapolation": self.n_extrapolation,
         }
 
 
@@ -98,14 +112,26 @@ def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation
     w = (np.asarray(calibration.weights, dtype=float)
          if calibration.weights is not None else np.ones(n))
 
+    # Un pli est en EXTRAPOLATION si le point retiré est au bord de l'espace des prédicteurs
+    # restants — i.e. il atteint le min OU le max de ln T ou de D+/km sur l'ensemble : le reste
+    # ne l'encadre pas, la prédiction hors-échantillon est alors une extrapolation (§4.3).
+    lnT = np.log(H)
+    lnT_lo, lnT_hi = lnT.min(), lnT.max()
+    dpk_lo, dpk_hi = dpk.min(), dpk.max()
+
+    def _is_extrap(i: int) -> bool:
+        return bool(
+            lnT[i] == lnT_lo or lnT[i] == lnT_hi or dpk[i] == dpk_lo or dpk[i] == dpk_hi
+        )
+
     errors: list[float] = []
     w_used: list[float] = []
     points: list[tuple[float, float]] = []
+    extrap: list[bool] = []
     for i in range(n):
         keep = [j for j in range(n) if j != i]
-        wk = np.sqrt(w[keep])
-        Xs = np.vstack([np.ones(len(keep)), np.log(H[keep]), dpk[keep]]).T
-        beta, *_ = np.linalg.lstsq(Xs * wk[:, None], V[keep] * wk, rcond=None)
+        # β du pli : MÊME pondération (récence × maximalité) ET MÊME mode de terrain que le fit servi
+        beta = _regression_beta(H[keep], V[keep], dpk[keep], w[keep], cfg)
         vfunc = lambda T, d, b=beta: b[0] + b[1] * np.log(T) + b[2] * d
         tp = _solve_fixed_point(deq_each[i], dpk[i], vfunc, cfg)
         if tp is None:
@@ -113,18 +139,32 @@ def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation
         errors.append(100.0 * (tp - H[i]) / H[i])
         w_used.append(float(w[i]))
         points.append((float(H[i]), float(tp)))
+        extrap.append(_is_extrap(i))
 
     if not errors:
         return None
     err = np.asarray(errors)
     wu = np.asarray(w_used)
+    ex = np.asarray(extrap, dtype=bool)
     sw = float(wu.sum())
+
+    def _wmae(mask: np.ndarray) -> float | None:
+        if not mask.any():
+            return None
+        m = float(wu[mask].sum())
+        return float(np.sum(wu[mask] * np.abs(err[mask])) / m) if m > 0 else None
+
     return CrossValidation(
         errors_pct=[float(e) for e in err],
         mae_pct=float(np.sum(wu * np.abs(err)) / sw),
         rmse_pct=float(np.sqrt(np.sum(wu * err**2) / sw)),
         n=len(errors),
         points=points,
+        mae_interpolation_pct=_wmae(~ex),
+        mae_extrapolation_pct=_wmae(ex),
+        is_extrapolation=[bool(x) for x in ex],
+        n_interpolation=int((~ex).sum()),
+        n_extrapolation=int(ex.sum()),
     )
 
 

@@ -1,0 +1,210 @@
+"""Non-régression : cas « Crasse Montagnhard » (athlète « sale ») — filtre de maximalité (§4.1).
+
+Le fixture ``genuine_ultras_montagnhard.fixture.json`` reproduit EXACTEMENT l'échec observé sur
+l'archive (LOO 25,3 %, σ 1,539, prédiction 19,63 h) à partir des seuls agrégats des 8 vrais
+ultras + 4 artefacts « montre laissée en enregistrement ». Aucune trace GPS, aucune PII : que des
+agrégats dérivés (conformes à la politique de purge). Ce test fige la reproduction, puis prouve
+que le correctif de maximalité ramène l'erreur < 10 % — SANS jamais retirer d'ultra du golden Nice.
+
+Tous les correctifs sont derrière des flags dont le défaut = comportement actuel : ce fichier les
+active explicitement. Le golden (``test_golden.py``) reste, lui, sur les défauts → inchangé.
+"""
+
+from __future__ import annotations
+
+import json
+import math
+from dataclasses import replace
+from pathlib import Path
+
+import numpy as np
+import pytest
+
+from twin_engine.calibration import build_calibration, maximality_weights, select_genuine_ultras
+from twin_engine.config import load_config
+from twin_engine.predict import leave_one_out, predict_finish
+from twin_engine.sufficiency import assess_sufficiency
+from twin_engine.twin.model import Twin
+from twin_engine.twin.record import ActivitySummary, RecordCurve
+
+CFG = load_config()
+FIX = Path(__file__).parent / "fixtures" / "genuine_ultras_montagnhard.fixture.json"
+_DATA = json.loads(FIX.read_text(encoding="utf-8"))
+_ENV = _DATA["_meta"]["athlete_envelope"]
+_COURSE = _DATA["_meta"]["course"]
+DEQ, DPK = _COURSE["deq_km"], _COURSE["dplus_per_km"]
+
+
+def _summaries() -> list[ActivitySummary]:
+    return [
+        ActivitySummary(**{k: v for k, v in a.items() if not k.startswith("_")})
+        for a in _DATA["activities"]
+    ]
+
+
+def _twin(summaries=None) -> Twin:
+    """Jumeau reconstruit depuis les agrégats + l'enveloppe d'endurance stockée dans le fixture."""
+    return Twin(
+        critical_speed=None,
+        alpha=_ENV["alpha"],
+        endurance_E=_ENV["endurance_E"],
+        endurance_coef=_ENV["endurance_coef"],
+        durability_pct=None,
+        record=RecordCurve(np.array([]), np.array([]), np.array([]), []),
+        summaries=_summaries() if summaries is None else summaries,
+    )
+
+
+def _cal_cfg(**cal):
+    return replace(CFG, calibration=replace(CFG.calibration, **cal))
+
+
+# --------------------------------------------------------------------------- #
+# 1. Reproduction EXACTE de l'échec (base de comparaison, garde-fous par défaut)
+# --------------------------------------------------------------------------- #
+def test_fixture_reproduces_failure():
+    t = _twin()
+    cal = build_calibration(t, CFG)
+    assert cal.regime == "regression"
+    assert cal.n_genuine == 8                        # 8 vrais ultras (4 artefacts écartés, cf. ci-dessous)
+    assert cal.n_eff == pytest.approx(4.82, abs=0.05)
+    assert cal.sigma_kmh == pytest.approx(1.539, abs=0.02)
+
+    pred = predict_finish(DEQ, DPK, t, cal, CFG)
+    assert pred.finish_hours == pytest.approx(19.63, abs=0.2)
+
+    cv = pred.cross_validation
+    assert cv.mae_pct == pytest.approx(25.3, abs=0.2)
+    assert cv.mae_interpolation_pct == pytest.approx(17.0, abs=0.3)   # les outliers sont en extrapolation
+
+
+def test_four_recording_artifacts_are_excluded():
+    # 4 activités ≥ 10 h à vga < 1,5 km/h (montre laissée en enregistrement) → écartées par ga ≥ 5,5
+    assert len(_summaries()) == 12
+    assert len(select_genuine_ultras(_summaries(), CFG)) == 8
+
+
+def test_extrapolation_folds_are_the_boundary_ultras():
+    cal = build_calibration(_twin(), CFG)
+    cv = leave_one_out(cal, CFG)
+    extrap = {cal.genuine[i].date for i in range(len(cal.genuine)) if cv.is_extrapolation[i]}
+    assert extrap == {"2022-07-10", "2024-10-04", "2026-05-09"}
+    assert cv.n_extrapolation == 3 and cv.n_interpolation == 5
+
+
+# --------------------------------------------------------------------------- #
+# 2. [CŒUR] le filtre de maximalité restaure l'hypothèse d'effort maximal
+# --------------------------------------------------------------------------- #
+def test_soft_weight_brings_mae_under_10pct():
+    cfg = _cal_cfg(maximality_mode="soft_weight")
+    t = _twin()
+    cal = build_calibration(t, cfg)
+    assert cal.regime == "regression" and cal.n_genuine == 8
+    assert cal.sigma_kmh < 0.7                        # σ ~divisée par 2–3 (1,539 → ~0,5)
+    cv = predict_finish(DEQ, DPK, t, cal, cfg).cross_validation
+    assert cv.mae_pct < 10.0                          # 25,3 % → ~9–10 %
+    assert cv.mae_interpolation_pct < 8.0             # ~7 %
+
+
+def test_soft_weight_downweights_easy_run_keeps_the_long_ultras():
+    cfg = _cal_cfg(maximality_mode="soft_weight")
+    g = select_genuine_ultras(_summaries(), cfg)
+    w = maximality_weights(g, _twin(), cfg)
+    wm = {g[i].date: float(w[i]) for i in range(len(g))}
+    assert wm["2026-04-04"] == pytest.approx(0.0, abs=1e-9)   # footing facile (FC 119) → poids nul
+    assert wm["2022-07-10"] == pytest.approx(1.0)             # course dure & raide (FC 152) → gardée
+    assert wm["2024-10-04"] > 0.3                             # la 26,2 h RESTE
+    assert wm["2023-07-01"] > 0.3                             # la 19,7 h RESTE
+
+
+def test_hard_filter_drops_only_the_easy_run():
+    cfg = _cal_cfg(maximality_mode="hard_filter")
+    t = _twin()
+    cal = build_calibration(t, cfg)
+    assert cal.n_genuine == 7                                 # 8 → 7
+    assert {u.date for u in cal.genuine} == {
+        "2022-07-10", "2023-05-13", "2023-07-01", "2024-02-17",
+        "2024-10-04", "2025-10-19", "2026-05-09",
+    }
+    cv = predict_finish(DEQ, DPK, t, cal, cfg).cross_validation
+    assert cv.mae_pct < 9.5                                   # ~8,7–9 %
+
+
+# --------------------------------------------------------------------------- #
+# 3. [GARDE-FOU] le filtre ne retire AUCUN ultra du golden Nice (ultras near-maximaux)
+# --------------------------------------------------------------------------- #
+def _golden_twin() -> Twin:
+    """Reproduit les 5 ultras synthétiques du golden (test_golden.py) : tous near-maximaux."""
+    def _plane(h, dpk):
+        return 8.5 - 0.35 * math.log(h) - 0.0148 * dpk
+
+    def _u(h, dpk, pert):
+        dist = _plane(h, dpk) * h / 1.2
+        return ActivitySummary("2025-06-01", "running", h * 3600, dist,
+                               (_plane(h, dpk) + pert) * h, 142, dpk * dist, dpk * dist, 19, True)
+
+    ultras = [(12, 50, 0.05), (20, 55, -0.08), (16, 45, 0.03), (24, 53, -0.02), (18, 52, 0.06)]
+    return Twin(critical_speed=None, alpha=0.18, endurance_E=1.22, endurance_coef=4.2,
+                durability_pct=20.0, record=RecordCurve(np.array([]), np.array([]), np.array([]), []),
+                summaries=[_u(*u) for u in ultras])
+
+
+def test_maximality_removes_no_golden_ultra():
+    gt = _golden_twin()
+    soft = _cal_cfg(maximality_mode="soft_weight")
+    g = select_genuine_ultras(gt.summaries, soft)
+    assert np.allclose(maximality_weights(g, gt, soft), 1.0)   # aucun ultra down-pondéré
+
+    # soft_weight ne change NI la régression NI le nombre d'ultras du golden
+    assert np.allclose(build_calibration(gt, CFG).beta, build_calibration(gt, soft).beta)
+    assert build_calibration(gt, _cal_cfg(maximality_mode="hard_filter")).n_genuine == 5
+
+
+# --------------------------------------------------------------------------- #
+# 4. [SUPPORT] nettoyage du terrain (§4.2) & gate honnête (§4.3)
+# --------------------------------------------------------------------------- #
+def test_terrain_none_reduces_double_counting():
+    # β2 « libre » sur une vga DÉJÀ ajustée à la pente = double-comptage ; le retirer (2 paramètres)
+    # atténue l'outlier D+/km = 104 → la MAE baisse (25,3 % → ~21,7 %).
+    cfg = _cal_cfg(terrain_term="none")
+    t = _twin()
+    cal = build_calibration(t, cfg)
+    assert cal.beta[2] == 0.0
+    cv = predict_finish(DEQ, DPK, t, cal, cfg).cross_validation
+    assert cv.mae_pct < 23.0
+
+
+def test_prior_shrunk_pulls_beta2_toward_population_prior():
+    prior = CFG.calibration.default_dplus_penalty_kmh_per_dpkm
+    b_free = build_calibration(_twin(), _cal_cfg(terrain_term="free")).beta[2]
+    b_shrunk = build_calibration(
+        _twin(), _cal_cfg(terrain_term="prior_shrunk", terrain_shrink_lambda=50.0)
+    ).beta[2]
+    assert abs(b_shrunk - prior) < abs(b_free - prior)     # le ridge rapproche β2 du prior
+
+
+def test_honest_gate_reports_interpolation_not_raw_mae():
+    t = _twin()
+    cal = build_calibration(t, CFG)
+    pred = predict_finish(DEQ, DPK, t, cal, CFG)
+
+    def _cv_crit(policy):
+        cfg = replace(CFG, sufficiency=replace(CFG.sufficiency, gate_policy=policy))
+        suf = assess_sufficiency(t, cal, pred, cfg)
+        return next(c for c in suf.criteria if "validation" in c.name)
+
+    assert _cv_crit("strict").value == pytest.approx(25.3, abs=0.3)   # MAE brute (défaut)
+    honest = _cv_crit("honest")
+    assert honest.value == pytest.approx(17.0, abs=0.3)               # MAE d'interpolation
+    assert "extrapolation" in honest.detail
+
+
+def test_combined_core_and_supports_are_consistent():
+    # cœur + supports activés ensemble : la MAE reste basse et l'intervalle se resserre.
+    cfg = _cal_cfg(maximality_mode="soft_weight", terrain_term="prior_shrunk")
+    t = _twin()
+    cal = build_calibration(t, cfg)
+    pred = predict_finish(DEQ, DPK, t, cal, cfg)
+    rel_width = (pred.interval_high_h - pred.interval_low_h) / pred.finish_hours
+    assert pred.cross_validation.mae_pct < 10.0
+    assert rel_width < 0.35                                # fourchette bien plus étroite qu'au départ (0,61)

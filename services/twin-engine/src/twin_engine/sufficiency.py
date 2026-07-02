@@ -134,19 +134,38 @@ def assess_sufficiency(
     )
 
     # 5) Erreur de validation croisée (indice de confiance)
+    # ``strict`` (défaut) : MAE brute — un seul pli d'extrapolation peut basculer le vendable.
+    # ``honest`` (§4.3) : MAE d'INTERPOLATION (le modèle jugé sur ce qu'il sait faire), l'extrapolation
+    #   étant rapportée comme incertitude assumée, pas comme un couperet.
     cv = prediction.cross_validation if prediction else None
     if cv is not None:
-        cv_level = _lower_is_better(cv.mae_pct, s.cv_error_green_pct, s.cv_error_orange_pct)
-        criteria.append(
-            Criterion("Erreur validation croisée", cv_level, round(cv.mae_pct, 1),
-                      f"erreur moyenne hors-échantillon {cv.mae_pct:.1f}%")
-        )
+        honest = s.gate_policy == "honest" and cv.mae_interpolation_pct is not None
+        if honest:
+            gate_mae = cv.mae_interpolation_pct
+            ext = "n/a" if cv.mae_extrapolation_pct is None else f"{cv.mae_extrapolation_pct:.1f}%"
+            cv_detail = (f"erreur d'interpolation {gate_mae:.1f}% "
+                         f"(brute {cv.mae_pct:.1f}%, extrapolation {ext})")
+        else:
+            gate_mae = cv.mae_pct
+            cv_detail = f"erreur moyenne hors-échantillon {cv.mae_pct:.1f}%"
+        cv_level = _lower_is_better(gate_mae, s.cv_error_green_pct, s.cv_error_orange_pct)
+        criteria.append(Criterion("Erreur validation croisée", cv_level, round(gate_mae, 1), cv_detail))
     else:
         criteria.append(
             Criterion("Erreur validation croisée", None, None,
                       "non calculable (moins de 3 vrais ultras → pas de régression)")
         )
         reasons.append("Validation croisée indisponible : prédiction par repli VC+E (§3).")
+
+    # 6) Sanité de l'intervalle (gate honnête uniquement) : une fourchette absurdement large trahit
+    #    une prédiction peu fiable même si la MAE d'interpolation est bonne.
+    if s.gate_policy == "honest" and prediction is not None and prediction.finish_hours > 0:
+        rel_width = (prediction.interval_high_h - prediction.interval_low_h) / prediction.finish_hours
+        width_level = _lower_is_better(rel_width, s.interval_rel_width_green, s.interval_rel_width_orange)
+        criteria.append(
+            Criterion("Largeur d'intervalle", width_level, round(rel_width, 2),
+                      f"intervalle 80% large de {rel_width * 100:.0f}% du temps central")
+        )
 
     # --- verdict global = pire niveau parmi les critères ÉVALUÉS ---
     if calibration.regime == REGIME_INSUFFICIENT or prediction is None:

@@ -39,6 +39,7 @@ class ActivitySummary:
     dminus_m: float
     decouple_pct: float | None
     has_hr: bool
+    moving_time_s: float | None = None   # temps en mouvement (§4.4) ; None si non mesurable
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -132,6 +133,14 @@ def process_activity(act: CanonicalActivity, cfg: Config):
     has_hr = bool(np.isfinite(hr).any())
     avhr = float(np.nanmean(hr)) if has_hr else float("nan")
 
+    # temps en mouvement (§4.4) : secondes où la vitesse dépasse le seuil (échantillonné à 1 Hz).
+    # Sert au mode ``speed_basis=moving`` (ne pas diluer l'allure d'ultra avec les longs arrêts).
+    speed = act.speed_ms
+    moving_time_s = (
+        float(np.count_nonzero(speed > cfg.twin.moving_speed_threshold_ms))
+        if speed is not None and speed.size else None
+    )
+
     summary = ActivitySummary(
         date=act.start_time.date().isoformat() if act.start_time else None,
         sport=act.sport,
@@ -143,6 +152,7 @@ def process_activity(act: CanonicalActivity, cfg: Config):
         dminus_m=round(float(-da[da < 0].sum())),
         decouple_pct=None if decouple is None else round(decouple, 2),
         has_hr=has_hr,
+        moving_time_s=moving_time_s,
     )
     return summary, vga, vraw
 
