@@ -158,13 +158,17 @@ l'enveloppe **propre** de l'athlète (fittée sur ses données courtes).
 
 ## 7. Hypothèses falsifiables restantes
 
-- **H1 (altitude Garmin / rééchantillonnage)** : écartée pour les 8 ultras — leurs features exactes
-  sont déjà extraites dans le fixture. À revérifier seulement si l'on régénère depuis l'archive.
-- **H2 (écoulé ≫ mouvement)** : plausible (ex. 26,2 h écoulé vs ~23,9 h de mouvement) ; le flag
-  `speed_basis=moving` est implémenté mais **non vérifiable sur le fixture** (pas de temps de
-  mouvement dans les agrégats).
-- **H3 (E hérité ?)** : `E = 1,22` identique au golden ; vérifier que `fit_endurance_exponent`
-  s'ajuste bien sur l'athlète nécessite la courbe record (archive) → **non vérifié ici**, documenté.
+- **H1 (altitude Garmin / rééchantillonnage)** : partiellement RÉHABILITÉE par C1 (§9.6) — pas un
+  bug de rééchantillonnage, mais une **échelle de lissage** du D+ incohérente avec le parcours,
+  mesurée à +14,9 % (médiane) sur archive réelle. Corrigée par `dplus_basis=distance_150m` ;
+  fixture régénéré sur la nouvelle échelle le 2026-07-02.
+- **H2 (écoulé ≫ mouvement)** : plausible ; le flag `speed_basis=moving` est implémenté, et le
+  comptage du temps de mouvement est désormais fiable (base distance, §9.2) — mesurable sur
+  archive à la prochaine occasion.
+- **H3 (E hérité ?) : RÉSOLU le 2026-07-02.** La régénération du fixture fitte l'enveloppe sur la
+  vraie courbe record de l'athlète : **α = 0,1792, E = 1,218, coef = 17,27** — l'enveloppe
+  « représentative » (0,18 / 1,22 / 17,67) était juste. `fit_endurance_exponent` s'ajuste bien par
+  athlète ; E n'était pas figé.
 
 ## 8. Régénérer le fixture (optionnel, hors dépôt)
 
@@ -312,4 +316,22 @@ re-centré, prior `default_dplus_penalty_kmh_per_dpkm` mis à jour (−0,0148 �
 FITTÉE → tranche H3) puis ré-épinglage des tests de robustesse et du tableau §4 sur les
 nouveaux agrégats (⚠ le prior ayant changé, les lignes `prior_shrunk` du tableau §4 bougeront
 aussi — re-générer le tableau complet à ce moment-là, l'ancien reste dans l'historique git).
+
+**Régénération du fixture (2026-07-02, archive réelle, `tools/regen_montagnhard_fixture`)** :
+12 activités ≥ 9,5 h (10 765 fichiers non-course ignorés à l'ingestion). Enveloppe **fittée** :
+α = 0,1792, E = 1,218, coef = 17,27 (→ H3 résolu, §7). Chiffres sur la nouvelle échelle D+ :
+
+| Config | σ (km/h) | prédiction (h) | MAE | interp | extrap |
+|---|---|---|---|---|---|
+| [BASELINE] flags off | 1,539 → **1,528** | 19,63 → **20,68** | 25,3 → **24,8** | 17,0 → **18,1** | 37,8 → **34,7** |
+| défauts livrés (maximalité soft) | 0,563 → **0,532** | — → **19,04** | 9,1 → **8,8** | 6,9 → **7,3** | 11,0 → **10,0** |
+
+**La conclusion du diagnostic est STABLE sur la nouvelle échelle** : l'échec de référence se
+reproduit (24,8 % en baseline) et le filtre de maximalité reste le levier (→ 8,8 %). Tests de
+robustesse ré-épinglés sur ces agrégats (l'historique pré-C1 reste dans git).
+
+**Hypothèse sur le cluster +29–40 % (juil.–nov. 2025, archive de référence)** : mise à jour
+majeure Coros probable sur la période (l'athlète ne rapporte aucun changement de montre) —
+altimétrie firmware modifiée. Cohérent avec un artefact de MESURE que la base distance corrige ;
+à re-vérifier si un nouveau cluster apparaît après une future màj.
 
