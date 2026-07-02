@@ -224,11 +224,19 @@ def maximality_weights(
     * ``soft_weight`` → ``w = clip((r − r_floor)/(r_ref − r_floor), 0, 1)``.
     * ``hard_filter`` → ``w ∈ {0, 1}`` (retrait franc des efforts non engagés).
 
-    **Garde-fou anti-faux-positif** : une course dure mais raide/technique (D+/km élevé) peut
-    sembler lente vs plafond (l'ajustement de pente la sous-crédite). On croise ``r`` avec un
-    second signal — la FC normalisée à la FC max des ultras — qui ne peut que **remonter** le
-    poids : on ne down-pondère fortement que si les DEUX signaux concordent (r bas ET FC basse).
-    Sans enveloppe exploitable, la maximalité n'est pas évaluable → poids 1 (neutre, signalé)."""
+    **Référence de l'intensité (§A, robustesse inter-athlètes).** ``maximality_reference`` :
+    ``envelope_absolute`` compare ``r`` au seul plafond extrapolé (sensible à un biais
+    d'extrapolation) ; ``self_relative`` (défaut) le compare AUSSI à un pôle robuste (quantile) des
+    propres ultras de l'athlète → **invariant à l'échelle de l'enveloppe**. Aucun réglage par athlète.
+
+    **Garde-fous anti-faux-positif — tous « rescue » (le poids final = max des signaux), donc on ne
+    down-pondère un ultra que si TOUS le jugent non engagé** :
+      * le signal auto-relatif protège un effort maximal qu'une enveloppe biaisée aurait sous-crédité ;
+      * une course dure mais raide/technique (D+/km élevé) paraît lente vs plafond : la FC normalisée
+        à la FC max des ultras la **remonte** (on ne baisse que si r bas ET FC basse).
+    Cette structure garantit le no-op sur un athlète « propre » (tous ses efforts au plafond ⇒ poids 1)
+    et empêche le filtre d'être plus agressif que le seul signal absolu. Sans enveloppe exploitable,
+    la maximalité n'est pas évaluable → poids 1 (neutre, signalé)."""
     c = cfg.calibration
     n = len(genuine)
     if c.maximality_mode == "off" or n == 0:
@@ -236,22 +244,45 @@ def maximality_weights(
     if twin.alpha is None or twin.endurance_coef is None:
         return np.ones(n)  # pas d'enveloppe → maximalité non évaluable → neutre
 
-    hrs = np.array([g.avg_hr if g.avg_hr is not None else np.nan for g in genuine], dtype=float)
-    hr_max = float(np.nanmax(hrs)) if np.isfinite(hrs).any() else float("nan")
-
-    w = np.ones(n)
+    # r_i = fraction du propre plafond d'endurance (NaN si enveloppe non calculable à cette durée).
+    r = np.full(n, np.nan)
     for i, g in enumerate(genuine):
         env_ms = twin.envelope_vga_ms(g.hours * 3600.0)
-        if env_ms is None or env_ms <= 0:
-            w[i] = 1.0  # enveloppe non calculable à cette durée → neutre
-            continue
-        r = g.vga_kmh / (env_ms * 3.6)
-        w_i = _ramp(r, c.maximality_r_floor, c.maximality_r_ref)
-        # second signal (FC) : ne peut que remonter le poids (jamais le baisser)
-        if math.isfinite(hr_max) and hr_max > 0 and g.avg_hr is not None:
-            hr_frac = g.avg_hr / hr_max
-            w_i = max(w_i, _ramp(hr_frac, c.maximality_hr_floor, c.maximality_hr_ref))
-        w[i] = w_i
+        if env_ms is not None and env_ms > 0:
+            r[i] = g.vga_kmh / (env_ms * 3.6)
+
+    def _ramp_or(x: float, floor: float, ref: float, fallback: float) -> float:
+        """Rampe, ou ``fallback`` quand le signal est absent (NaN) — jamais d'invention."""
+        return _ramp(x, floor, ref) if math.isfinite(x) else fallback
+
+    # Signaux de maximalité, tous « rescue » : on ne down-pondère un ultra que si TOUS le jugent
+    # non engagé (le poids final = max des signaux). Un signal absent contribue 0 (n'aide pas)
+    # sauf le signal absolu quand r est incalculable (fallback 1 = on garde, faute de mieux).
+    signals: list[np.ndarray] = []
+
+    # (1) absolu : r vs plafond extrapolé — garant du no-op (r ≥ ref ⇒ poids 1, athlète « propre »).
+    signals.append(np.array([_ramp_or(x, c.maximality_r_floor, c.maximality_r_ref, 1.0) for x in r]))
+
+    # (2) auto-relatif (§A) : r vs pôle robuste des propres ultras → invariant à l'échelle de
+    #     l'enveloppe (protège les efforts maximaux d'une extrapolation biaisée). Rescue uniquement.
+    if c.maximality_reference == "self_relative":
+        finite = r[np.isfinite(r)]
+        if finite.size >= 1:
+            pole = float(np.quantile(finite, c.maximality_self_quantile))
+            if pole > 0:
+                signals.append(
+                    np.array([_ramp_or(x / pole, c.maximality_r_floor, c.maximality_r_ref, 0.0) for x in r])
+                )
+
+    # (3) second signal FC (normalisée à la FC max des ultras) : course dure mais raide → rescue.
+    hrs = np.array([g.avg_hr if g.avg_hr is not None else np.nan for g in genuine], dtype=float)
+    hr_max = float(np.nanmax(hrs)) if np.isfinite(hrs).any() else float("nan")
+    if math.isfinite(hr_max) and hr_max > 0:
+        signals.append(
+            np.array([_ramp_or(h / hr_max, c.maximality_hr_floor, c.maximality_hr_ref, 0.0) for h in hrs])
+        )
+
+    w = np.maximum.reduce(signals)
 
     if c.maximality_mode == "hard_filter":
         return np.where(w > 0.0, 1.0, 0.0)

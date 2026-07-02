@@ -166,6 +166,40 @@ def _golden_twin() -> Twin:
                 summaries=[_u(*u) for u in ultras])
 
 
+def _twin_with_coef(mult: float) -> Twin:
+    return Twin(
+        critical_speed=None, alpha=_ENV["alpha"], endurance_E=_ENV["endurance_E"],
+        endurance_coef=_ENV["endurance_coef"] * mult, durability_pct=None,
+        record=RecordCurve(np.array([]), np.array([]), np.array([]), []), summaries=_summaries(),
+    )
+
+
+def test_self_relative_is_robust_to_envelope_scale_bias():
+    """§A : la décision de maximalité est invariante à un biais d'échelle de l'enveloppe.
+
+    Une enveloppe qui SUR-estime le plafond (ici coef ×2) ferait passer des efforts MAXIMAUX sous
+    le seuil absolu → écartés à tort. Le mode ``self_relative`` (défaut) les protège en comparant
+    aussi ``r`` à un pôle robuste des propres ultras de l'athlète — sans aucun réglage par athlète."""
+    def _wmap(mult, reference):
+        cfg = _cal_cfg(maximality_mode="soft_weight", maximality_reference=reference)
+        g = select_genuine_ultras(_summaries(), cfg)
+        w = maximality_weights(g, _twin_with_coef(mult), cfg)
+        return {g[i].date: float(w[i]) for i in range(len(g))}
+
+    sr1 = _wmap(1.0, "self_relative")
+    sr2 = _wmap(2.0, "self_relative")
+    # décision stable entre enveloppe correcte (×1) et biaisée (×2)
+    assert sr1["2026-04-04"] == pytest.approx(0.0, abs=1e-9)          # l'easy run reste écarté
+    assert sr2["2026-04-04"] == pytest.approx(0.0, abs=1e-9)
+    kept_sr2 = sum(1 for v in sr2.values() if v > 0.3)
+    assert kept_sr2 >= 6                                              # les efforts maximaux restent
+
+    # a contrario : le mode absolu écarte DAVANTAGE d'ultras quand l'enveloppe est biaisée (fragile)
+    ab2 = _wmap(2.0, "envelope_absolute")
+    kept_ab2 = sum(1 for v in ab2.values() if v > 0.3)
+    assert kept_ab2 < kept_sr2                                        # self_relative garde strictement plus
+
+
 def test_maximality_removes_no_golden_ultra():
     gt = _golden_twin()
     off = _baseline_cfg()

@@ -60,7 +60,8 @@ c'est **l'hypothèse d'effort maximal** implicitement violée par des données �
 ### 3.1 [CŒUR] Filtre de maximalité par intensité relative au plafond d'endurance
 
 `calibration.maximality_mode ∈ {off, soft_weight (défaut livré), hard_filter}` + `maximality_r_floor` (0,80),
-`maximality_r_ref` (0,95), `maximality_hr_floor` (0,85), `maximality_hr_ref` (0,95).
+`maximality_r_ref` (0,95), `maximality_hr_floor` (0,85), `maximality_hr_ref` (0,95), et
+`maximality_reference ∈ {envelope_absolute, self_relative (défaut, §A)}`.
 
 Pour chaque ultra : `r_i = vga_i / (envelope_vga_ms(T_i)·3.6)` = **fraction de son propre plafond**
 (sans FC absolue, en réutilisant `Twin.envelope_vga_ms`). Poids doux
@@ -113,15 +114,17 @@ l'ultra » (`endurance_intuition`).
 
 `sigma` = bruit résiduel (km/h) · `i80` = largeur relative de l'intervalle 80 % · MAE/interp/extrap en %.
 
+(maximalité `soft`/`hard` = `maximality_reference=self_relative`, le défaut livré.)
+
 | Configuration | sigma | i80 | MAE | interp | extrap | CV |
 |---|---|---|---|---|---|---|
-| **[ACTUEL]** récence + terrain libre (3p) | 1,539 | 0,61 | **25,3** | 17,0 | 37,8 | 🔴 |
+| **[BASELINE]** récence + terrain libre (3p) | 1,539 | 0,61 | **25,3** | 17,0 | 37,8 | 🔴 |
 | récence, terrain=none (2p) — support 3.2 | 1,546 | 0,58 | 21,7 | 16,1 | 29,9 | 🔴 |
 | récence, terrain=prior_shrunk (3p) | 1,539 | 0,61 | 24,8 | 17,0 | 36,4 | 🔴 |
-| **maximalité soft — cœur 3.1** | 0,518 | 0,17 | **9,9** | 7,3 | 11,5 | 🟠 |
+| **maximalité soft — cœur 3.1** | 0,563 | 0,19 | **9,1** | 6,9 | 11,0 | 🟠 |
 | **maximalité hard — cœur 3.1** | 0,565 | 0,19 | **9,0** | 6,8 | 10,8 | 🟠 |
-| maximalité soft + terrain=none | 0,611 | 0,19 | 9,2 | 8,2 | 9,9 | 🟠 |
-| maximalité soft + prior_shrunk | 0,518 | 0,17 | 9,2 | 7,3 | 10,4 | 🟠 |
+| maximalité soft + terrain=none | 0,664 | 0,21 | 8,9 | 7,9 | 9,7 | 🟠 |
+| maximalité soft + prior_shrunk | 0,563 | 0,19 | **8,7** | 6,9 | 10,2 | 🟠 |
 
 **Le levier robuste est la maximalité : 25,3 % → ~9 % (−64 %), σ divisée par ~3, intervalle divisé
 par ~3.** Le nettoyage terrain et le gate honnête sont des supports de correctness/honnêteté. (Le
@@ -141,12 +144,17 @@ l'archive complète de l'athlète, ce sont les mêmes 8 ultras qui pilotent la C
 ## 6. Limite assumée du proxy d'enveloppe
 
 `r_i` repose sur `envelope_vga_ms`, ajustée sur la courbe record **≤ 6 h** (`endurance_window_s`) puis
-**extrapolée** à 10–26 h. En usage **relatif** entre les propres ultras de l'athlète, ce biais
-d'extrapolation se **compense partiellement** (tous les `r_i` le subissent). Le fixture ne contenant
-pas la courbe record (efforts courts), il embarque une **enveloppe représentative** (`_meta.athlete_envelope`,
-E = 1,22 cohérent avec le golden) pour rendre le correctif reproductible hors archive ; le résultat
-qualitatif (2026-04-04 down-pondéré, 26 h & 19,7 h gardées, MAE < 10 %) est **stable pour α ∈ [0,15 ;
-0,25]**. Le pipeline réel utilise l'enveloppe **propre** de l'athlète (fittée sur ses données courtes).
+**extrapolée** à 10–26 h. **Mitigation (§A, `maximality_reference=self_relative`, défaut)** : on
+compare `r` non seulement au plafond extrapolé mais aussi à un **pôle robuste des propres ultras** de
+l'athlète → la décision de maximalité devient **invariante à un biais d'échelle** de l'enveloppe. Preuve
+(test `test_self_relative_is_robust_to_envelope_scale_bias`) : en perturbant l'enveloppe ×2, le mode
+absolu écarte à tort 3 ultras maximaux (4/8 gardés) tandis que self_relative reste stable (7/8, seul
+l'effort facile écarté). Résidu non couvert : un biais qui gonflerait l'enveloppe au point que **même**
+l'effort facile dépasse le plafond (tous `r > 1`) → rien n'est écarté (faux négatif prudent, prédiction
+conservatrice). Le fixture, sans courbe record (efforts courts), embarque une **enveloppe représentative**
+(`_meta.athlete_envelope`, E = 1,22 cohérent avec le golden) pour rendre le correctif reproductible hors
+archive ; le résultat qualitatif est **stable pour α ∈ [0,15 ; 0,25]**. Le pipeline réel utilise
+l'enveloppe **propre** de l'athlète (fittée sur ses données courtes).
 
 ## 7. Hypothèses falsifiables restantes
 

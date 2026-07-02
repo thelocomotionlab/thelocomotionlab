@@ -100,6 +100,16 @@ class CalibrationParams:
     maximality_r_ref: float = 0.95                       # r ≥ ref  → effort pleinement engagé (poids 1)
     maximality_hr_floor: float = 0.85                    # FC/FCmax(ultras) ≤ floor → ne rattrape pas
     maximality_hr_ref: float = 0.95                      # FC/FCmax(ultras) ≥ ref  → rattrape à 1 (course dure)
+    # référence de l'intensité relative (§A — robustesse inter-athlètes, sans réglage par athlète) :
+    #   ``envelope_absolute`` = r comparé au seul plafond extrapolé (sensible à un biais d'extrapolation
+    #     de l'enveloppe : si elle sur-estime le plafond, des efforts MAXIMAUX peuvent passer sous le
+    #     seuil et être écartés à tort) ;
+    #   ``self_relative`` (DÉFAUT) = r comparé AUSSI à un pôle robuste (quantile) des propres ultras de
+    #     l'athlète → invariant à l'échelle de l'enveloppe. Ce signal relatif ne peut que REMONTER le
+    #     poids (rescue) : il protège les efforts maximaux d'une enveloppe biaisée sans jamais casser le
+    #     no-op (un athlète « propre », tous ses efforts au plafond, garde tous ses poids à 1).
+    maximality_reference: str = "self_relative"          # {envelope_absolute, self_relative}
+    maximality_self_quantile: float = 0.90               # pôle robuste des r de l'athlète (self_relative)
     # --- terme de terrain β2·(D+/km) : anti double-comptage (la vga est DÉJÀ ajustée pente) ----
     # ``free`` (défaut, actuel) : β2 libre. ``none`` : β2=0 (la pente est déjà dans la vga).
     # ``prior_shrunk`` : ridge de β2 vers le prior population, atténue les points de levier terrain.

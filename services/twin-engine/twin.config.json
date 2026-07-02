@@ -45,6 +45,8 @@
     "maximality_r_ref": 0.95,
     "maximality_hr_floor": 0.85,
     "maximality_hr_ref": 0.95,
+    "maximality_reference": "self_relative",
+    "maximality_self_quantile": 0.90,
     "terrain_term": "free",
     "terrain_shrink_lambda": 1.0,
     "default_dplus_penalty_kmh_per_dpkm": -0.0148,
