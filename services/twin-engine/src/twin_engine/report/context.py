@@ -106,6 +106,17 @@ def build_report_context(
     cs = twin.critical_speed
     cv = prediction.cross_validation
 
+    # VC : n'afficher la valeur que si le moteur la juge PLAUSIBLE (sinon le rapport mettrait
+    # en vedette un seuil que le calcul refuse lui-même d'utiliser — incohérence d'honnêteté).
+    vc_ok = cs is not None and cs.plausible
+
+    # Gate honnête : la MAE affichée en tête doit être CELLE qui a décidé le verdict
+    # (interpolation si gate_policy=honest), la brute restant montrée à côté (transparence).
+    cv_interp = cv.mae_interpolation_pct if cv else None
+    cv_gate_is_interp = bool(
+        cv is not None and cfg.sufficiency.gate_policy == "honest" and cv_interp is not None
+    )
+
     cum_dist = cum_dplus = cum_dminus = 0.0
     demande_rows = []
     for s in course.segments:
@@ -153,7 +164,8 @@ def build_report_context(
         "race_name": tex_escape(course.name),
         "report_ref": tex_escape(report_ref),
         "report_version": tex_escape(report_version),
-        "report_date": (report_date or datetime(2026, 1, 1)).strftime("%d/%m/%Y"),
+        # date réelle de génération par défaut (l'appelant peut l'injecter pour un test/replay)
+        "report_date": (report_date or datetime.now()).strftime("%d/%m/%Y"),
         # verdict
         "verdict": sufficiency.verdict,
         "sellable": sufficiency.sellable,
@@ -171,6 +183,14 @@ def build_report_context(
         "regime_label": _REGIME_LABELS.get(prediction.regime, prediction.regime),
         "has_cv": cv is not None,
         "cv_mae": fr(cv.mae_pct, 1) if cv else None,
+        # MAE qui a réellement décidé le verdict (interpolation en gate honnête) + extrapolation
+        "cv_gate_mae": fr(cv_interp if cv_gate_is_interp else cv.mae_pct, 1) if cv else None,
+        "cv_gate_is_interp": cv_gate_is_interp,
+        "cv_extrap_mae": (
+            fr(cv.mae_extrapolation_pct, 1)
+            if cv is not None and cv.mae_extrapolation_pct is not None
+            else None
+        ),
         "cv_rmse": fr(cv.rmse_pct, 1) if cv else None,
         "cv_n": cv.n if cv else 0,
         "sigma_kmh": fr(prediction.sigma_kmh, 2),
@@ -182,13 +202,14 @@ def build_report_context(
         "dplus_per_km": fr(course.dplus_per_km, 0),
         "n_segments": len(course.segments),
         "demande_rows": demande_rows,
-        # jumeau
-        "vc_kmh": fr(cs.vc_kmh, 2) if cs else None,
-        "vc_ms": fr(cs.vc_ms, 3) if cs else None,
-        "vc_pace": _vc_pace(cs.vc_ms) if cs else None,
-        "vc_sd": fr(cs.vc_sd, 2) if cs else None,
+        # jumeau — la VC n'est affichée que plausible (sinon note d'honnêteté via vc_implausible)
+        "vc_kmh": fr(cs.vc_kmh, 2) if vc_ok else None,
+        "vc_ms": fr(cs.vc_ms, 3) if vc_ok else None,
+        "vc_pace": _vc_pace(cs.vc_ms) if vc_ok else None,
+        "vc_sd": fr(cs.vc_sd, 2) if vc_ok else None,
         "vc_from_flat": cs.from_flat_efforts if cs else False,
-        "dprime": fr(cs.dprime_m, 0) if cs else None,
+        "vc_implausible": bool(cs is not None and not cs.plausible),
+        "dprime": fr(cs.dprime_m, 0) if vc_ok else None,
         "endurance_E": fr(twin.endurance_E, 3) if twin.endurance_E else None,
         "alpha": fr(twin.alpha, 3) if twin.alpha else None,
         "durability_pct": fr(twin.durability_pct, 0) if twin.durability_pct is not None else None,

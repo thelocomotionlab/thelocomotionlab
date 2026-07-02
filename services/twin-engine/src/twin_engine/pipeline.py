@@ -165,6 +165,8 @@ def run_full(
     athlete: str,
     purge_source: bool = True,
     render_pdf: bool = True,
+    report_ref: str = "LL-TWIN",
+    report_version: str = "v1.0",
     report_date: datetime | None = None,
     progress=None,
 ) -> FullResult:
@@ -175,7 +177,8 @@ def run_full(
     course = build_course(course_gpx, race, cfg)
     return analyze_full(
         result.running, course, race, cfg, out_dir=Path(out_dir), athlete=athlete,
-        n_skipped=len(result.skipped), render_pdf=render_pdf, report_date=report_date,
+        n_skipped=len(result.skipped), render_pdf=render_pdf,
+        report_ref=report_ref, report_version=report_version, report_date=report_date,
     )
 
 

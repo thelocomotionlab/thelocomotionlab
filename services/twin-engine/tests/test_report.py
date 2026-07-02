@@ -120,6 +120,50 @@ def test_night_span_is_contiguous_not_minmax():
     assert _main_night_span(SimpleNamespace(segments=segs)) == (20, 30)
 
 
+def test_report_date_is_real_and_injectable():
+    """R1 : plus de date figée — défaut = aujourd'hui, injectable pour un replay/test."""
+    from datetime import datetime
+
+    ctx = _context()
+    assert ctx["report_date"] == datetime.now().strftime("%d/%m/%Y")
+
+    course, twin, cal, pred, plan, race, suf = _scenario()
+    ctx2 = build_report_context(course=course, twin=twin, calibration=cal, prediction=pred,
+                                plan=plan, race=race, sufficiency=suf, cfg=CFG,
+                                athlete="A", report_date=datetime(2031, 3, 2))
+    assert ctx2["report_date"] == "02/03/2031"
+
+
+def test_implausible_vc_hidden_with_honest_note():
+    """R2 : VC non plausible → encadré VC masqué + note d'honnêteté (pas de mise en vedette)."""
+    from dataclasses import replace as dc_replace
+
+    course, twin, cal, pred, plan, race, suf = _scenario()
+    bad = CriticalSpeed(7.0, 0.5, 1500, 300, False, 6, plausible=False)
+    twin_bad = dc_replace(twin, critical_speed=bad) if hasattr(twin, "__dataclass_fields__") else twin
+    twin_bad.critical_speed = bad
+    pred_bad = predict_finish(course.deq_km, course.dplus_per_km, twin_bad, cal, CFG)
+    ctx = build_report_context(course=course, twin=twin_bad, calibration=cal, prediction=pred_bad,
+                               plan=plan, race=race, sufficiency=suf, cfg=CFG, athlete="A")
+    assert ctx["vc_kmh"] is None and ctx["vc_implausible"] is True
+    assert ctx["vc_fraction_pct"] is None          # aucun « % de VC »
+    tex = render_tex(ctx)
+    assert "Vitesse critique non affich" in tex     # la note explique le masquage
+    assert "min/km" not in tex or "\\VC =" not in tex  # pas d'encadré VC rendu
+
+
+def test_abstract_uses_gate_consistent_mae():
+    """R5 : la MAE affichée en tête est celle du verdict (interpolation en gate honnête)."""
+    ctx = _context()
+    # cohérence du contexte : sans plis d'interpolation, gate = brute
+    if not ctx["cv_gate_is_interp"]:
+        assert ctx["cv_gate_mae"] == ctx["cv_mae"]
+    # chemin template : quand le gate est l'interpolation, l'abstract l'affiche ET garde la brute
+    tex = render_tex({**ctx, "cv_gate_is_interp": True, "cv_gate_mae": "3,0",
+                      "cv_extrap_mae": "9,9"})
+    assert "en interpolation" in tex and "erreur brute" in tex and "9,9" in tex
+
+
 def test_figures_generated(tmp_path):
     course, twin, cal, pred, plan, race, _ = _scenario()
     figs = generate_figures(course, twin, cal, pred, plan, race, tmp_path)

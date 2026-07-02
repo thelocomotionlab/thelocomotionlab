@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import shutil
+from datetime import datetime
 from pathlib import Path
 
 from ..config import Config
@@ -39,6 +40,9 @@ def run_job(
             athlete=athlete,
             purge_source=True,   # supprime l'archive d'entraînement dès la fin du parsing
             render_pdf=True,
+            # traçabilité : chaque rapport porte sa vraie date et une référence dérivée du job
+            report_ref=f"LL-TWIN-{job_id[:8].upper()}",
+            report_date=datetime.now(),
         )
         pdf_path = None
         if result.pdf_path:

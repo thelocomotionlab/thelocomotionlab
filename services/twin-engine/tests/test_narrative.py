@@ -147,6 +147,46 @@ def test_caption_record_suppresses_vc_fraction_when_implausible():
     assert "plafond" not in txt          # ni d'affirmation « loin sous le plafond »
 
 
+def test_vc_pourtoi_hidden_when_implausible():
+    """R2 : une VC jugée non plausible n'est jamais présentée comme « ton seuil »."""
+    assert N.vc_pourtoi(_twin(vc_plausible=False), _pred()) is None
+    assert N.vc_pourtoi(_twin(vc_plausible=True), _pred()) is not None
+
+
+def test_cv_pourtoi_mentions_interpolation_when_folds_extrapolate():
+    """R5 : quand des plis extrapolent, le texte donne aussi l'erreur d'interpolation (celle du gate)."""
+    cv = SimpleNamespace(mae_pct=25.3, mae_interpolation_pct=17.0, n_extrapolation=3)
+    txt = N.cv_pourtoi(SimpleNamespace(cross_validation=cv))
+    assert "25,3" in txt and "17" in txt and "encadrent" in txt
+    # sans info d'extrapolation (vieux objets/tests) → texte simple, pas d'erreur
+    plain = N.cv_pourtoi(SimpleNamespace(cross_validation=SimpleNamespace(mae_pct=2.8)))
+    assert "2,8" in plain and "encadrent" not in plain
+
+
+def test_caption_cumul_describes_scaling_not_accumulation():
+    """R3 : la légende décrit le scaling global réellement calculé, pas une accumulation."""
+    txt = N.caption_cumul()
+    assert "additionnent" not in txt
+    assert "sc\\'enario" in txt
+
+
+def test_caption_record_mentions_terracotta_only_with_flat_points():
+    """R : la légende ne décrit les points terracotta que si la figure en trace."""
+    cal = SimpleNamespace(genuine=[])
+    twin_with = _twin()
+    twin_with.record = SimpleNamespace(flat_points=[object()])
+    twin_without = _twin()   # pas d'attribut record → pas de points plats
+    assert "terracotta" in N.caption_record(twin_with, cal)
+    assert "terracotta" not in N.caption_record(twin_without, cal)
+
+
+def test_caption_record_labels_past_ultras_distinctly():
+    """R4 : le « % de ta VC » des ultras PASSÉS est étiqueté comme tel (≠ intensité cible)."""
+    txt = N.caption_record(_twin(vc_kmh=10.0),
+                           SimpleNamespace(genuine=[SimpleNamespace(vga_kmh=6.0)]))
+    assert "pass\\'es" in txt and "distinguer" in txt
+
+
 def test_aid_station_names_are_latex_escaped():
     """Garde-fou audit : un nom de ravito avec & / _ ne doit pas casser XeLaTeX."""
     segs = [

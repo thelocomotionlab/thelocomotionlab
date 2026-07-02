@@ -38,7 +38,8 @@ durabilit\'e --- puis le confronte au co\^ut \'energ\'etique de la pente pour pr
 d'arriv\'ee et r\'epartir l'effort. La pr\'ediction centrale est de \textbf{<< pred_central >>}
 (intervalle 80\,\% : << interval_low >> -- << interval_high >>).
 <% if has_cv %>La m\'ethode est valid\'ee \emph{hors \'echantillon} sur tes propres ultras, avec une
-erreur moyenne de \textbf{<< cv_mae >>\,\%}.<% else %>Faute d'assez d'ultras, la pr\'ediction repose
+erreur moyenne de \textbf{<< cv_gate_mae >>\,\%}<% if cv_gate_is_interp %> en interpolation
+(erreur brute << cv_mae >>\,\%<% if cv_extrap_mae %>, dont extrapolation << cv_extrap_mae >>\,\%<% endif %>)<% endif %>.<% else %>Faute d'assez d'ultras, la pr\'ediction repose
 sur une extrapolation (confiance r\'eduite, cf. limites).<% endif %>
 \keywords{pacing \textperiodcentered{} ultra-trail \textperiodcentered{} vitesse critique \textperiodcentered{} durabilit\'e \textperiodcentered{} incertitude}
 \end{llabstract}
@@ -170,6 +171,13 @@ fen\^etre de dur\'ee (confiance r\'eduite).}<% endif %>
 Les efforts \emph{courts} (< 30\,min), presque toujours en c\^ote, sont \'ecart\'es de l'estimation de
 la VC : l'ajustement de pente surestime alors la vitesse \'equivalente. Sans cons\'equence pour un ultra,
 couru tr\`es loin sous la VC.
+\end{llattention}
+<% endif %>
+<% if vc_implausible %>\begin{llattention}[Vitesse critique non affich\'ee]
+L'estimation de ta vitesse critique ressort \textbf{au-dessus du plafond physiologique plausible} :
+elle trahit des donn\'ees suspectes (activit\'e contamin\'ee r\'esiduelle, trace bruit\'ee) plut\^ot
+qu'un vrai seuil. Par honn\^etet\'e, ni sa valeur ni aucun \og~\%~de~VC~\fg\ ne sont utilis\'es dans
+ce rapport --- la pr\'ediction, elle, n'en d\'epend pas.
 \end{llattention}
 <% endif %>
 

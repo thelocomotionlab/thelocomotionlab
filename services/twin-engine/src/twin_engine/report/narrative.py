@@ -119,7 +119,9 @@ def opening_narrative(twin, calibration, prediction) -> str:
 # --------------------------------------------------------------------------- #
 def vc_pourtoi(twin, prediction) -> str | None:
     cs = twin.critical_speed
-    if cs is None:
+    # VC non plausible → on ne présente PAS ce chiffre comme « ton seuil » (cohérent avec
+    # predict.vc_fraction=None et le masquage de l'encadré VC dans le contexte).
+    if cs is None or not getattr(cs, "plausible", True):
         return None
     s = (
         f"Ta vitesse critique (\\textasciitilde{{}}{fr(cs.vc_kmh, 1)}\\,km/h) est ton \\textbf{{seuil}} : "
@@ -225,11 +227,24 @@ def cv_pourtoi(prediction) -> str | None:
     cv = prediction.cross_validation
     if cv is None:
         return None
-    return (
+    s = (
         f"On a re-pr\\'edit chacun de tes ultras pass\\'es \\emph{{sans lui}}, puis compar\\'e au r\\'eel : "
-        f"en moyenne \\textbf{{{_pct(cv.mae_pct, 1)}}} d'\\'ecart. Autrement dit, la m\\'ethode s'est "
+        f"en moyenne \\textbf{{{_pct(cv.mae_pct, 1)}}} d'\\'ecart"
+    )
+    # transparence gate honnête : quand certains plis sont de l'extrapolation (le point retiré
+    # n'est pas encadré par les autres), on donne aussi l'erreur d'interpolation — c'est ELLE
+    # qui décide du verdict (sufficiency, gate_policy=honest).
+    interp = getattr(cv, "mae_interpolation_pct", None)
+    if interp is not None and getattr(cv, "n_extrapolation", 0):
+        s += (
+            f" — dont {_pct(interp, 1)} sur les courses que tes autres ultras encadrent, "
+            "le reste \\'etant de l'extrapolation assum\\'ee"
+        )
+    s += (
+        ". Autrement dit, la m\\'ethode s'est "
         "d\\'ej\\`a \\textbf{prouv\\'ee sur toi} — ce n'est pas une promesse en l'air."
     )
+    return s
 
 
 # --------------------------------------------------------------------------- #
@@ -317,17 +332,29 @@ def race_strategy(course, plan) -> list[dict]:
 # Légendes auto-explicatives (data-driven quand pertinent)
 # --------------------------------------------------------------------------- #
 def caption_record(twin, calibration) -> str:
-    base = (
-        "\\`A lire : pour chaque dur\\'ee, ta meilleure vitesse ajust\\'ee \\`a la pente. "
-        "Les efforts plats \\og~propres~\\fg\\ (terracotta) calent la vitesse critique ; "
-        "les losanges verts sont tes vrais ultras."
-    )
+    base = "\\`A lire : pour chaque dur\\'ee, ta meilleure vitesse ajust\\'ee \\`a la pente. "
+    # la mention des points terracotta ne s'affiche que si la figure en trace vraiment
+    # (VC de repli sans efforts plats → aucun point terracotta, la légende ne doit pas en décrire)
+    rec = getattr(twin, "record", None)
+    has_flat = bool(getattr(rec, "flat_points", None)) if rec is not None else False
+    if has_flat:
+        base += (
+            "Les efforts plats \\og~propres~\\fg\\ (terracotta) calent la vitesse critique ; "
+            "les losanges verts sont tes vrais ultras."
+        )
+    else:
+        base += "Les losanges verts sont tes vrais ultras."
     cs = twin.critical_speed
     # VC non plausible → on n'affiche aucun « % de ta VC » (cohérent avec predict.vc_fraction=None)
     if cs and getattr(cs, "plausible", True) and calibration.genuine:
         mean_ultra = sum(u.vga_kmh for u in calibration.genuine) / len(calibration.genuine)
         frac = mean_ultra / cs.vc_kmh
-        base += f" Ils tournent \\`a \\textbf{{{_pct(frac * 100)}}} de ta VC"
+        # « % de ta VC » des ULTRAS PASSÉS (moyenne historique) — à ne pas confondre avec
+        # l'intensité CIBLE de la course prédite, affichée ailleurs : on le dit explicitement.
+        base += (
+            f" En moyenne, ces ultras pass\\'es se sont courus \\`a \\textbf{{{_pct(frac * 100)}}} "
+            "de ta VC (\\`a distinguer de l'intensit\\'e cible de TA course, en Synth\\`ese)"
+        )
         # l'affirmation qualitative suit la valeur (pas d'« en dessous » si la fraction est haute)
         base += (
             " : un ultra se court tr\\`es loin sous le plafond."
@@ -357,9 +384,13 @@ def caption_pacing() -> str:
 
 
 def caption_cumul() -> str:
+    # honnêteté : la bande vient d'un facteur d'échelle GLOBAL sur le scénario (un scénario lent
+    # l'est de bout en bout) — pas d'une accumulation d'erreurs indépendantes segment par segment.
     return (
         "\\`A lire : ton heure de passage cumul\\'ee. La bande, c'est la \\textbf{fourchette \\`a 80\\,"
-        f"{PCT}}} : large vers la fin, car les incertitudes s'additionnent au fil des heures."
+        f"{PCT}}} : elle s'\\'elargit avec les heures parce que l'incertitude porte sur ton "
+        "\\emph{sc\\'enario d'ensemble} — un jour lent l'est du d\\'ebut \\`a la fin, pas segment "
+        "par segment."
     )
 
 

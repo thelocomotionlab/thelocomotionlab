@@ -102,10 +102,12 @@ def main(argv: list[str] | None = None) -> int:
         _print_summary(result)
         return 0
 
+    from datetime import datetime
+
     result = run_full(
         training_path=args.training, course_gpx=course_gpx, race=race, cfg=cfg,
         out_dir=Path(args.out), athlete=args.athlete, purge_source=args.purge,
-        render_pdf=not args.no_pdf, progress=_progress,
+        render_pdf=not args.no_pdf, report_date=datetime.now(), progress=_progress,
     )
     _print_summary(result.preview)
     if result.pdf_path:
