@@ -98,15 +98,22 @@ robuste** sur toutes les activités.
 > et un exposant surévalués.
 
 > **Honnêteté méthodologique (garde-fou) :** l'ajustement de Minetti est une **équivalence métabolique
-> de régime permanent, valable en aérobie**. Pour les efforts **courts** (< 30 min), presque toujours
-> menés en côte et limités par la puissance musculaire, il **surestime** l'équivalent plat. On
-> **n'utilise donc pas** les durées < 30 min pour estimer la vitesse critique. Sans conséquence pour
-> l'ultra, couru très loin sous la VC.
+> de régime permanent, valable en aérobie**. Pour les efforts **courts**, presque toujours menés en
+> côte et limités par la puissance musculaire, il **surestime** l'équivalent plat. Le fit de la VC
+> est donc borné en durée : plancher `vc_short_effort_floor_s` (et fenêtre `vc_window_s`), auquel
+> s'ajoute le filtre « plat » (§2.4) qui n'accepte que les points où l'ajustement pèse peu. **Valeur
+> livrée : plancher à 10 min** (= début de fenêtre, tel que le golden a été capturé) ; le monter à
+> **30 min** est le réglage « théorie stricte », à valider sur le golden réel avant d'en faire le
+> défaut. Sans conséquence pour l'ultra, couru très loin sous la VC.
 
 ### 2.4 Vitesse critique (VC) et réserve D′
 Modèle hyperbolique `d = VC·t + D′` (donc `v(t) = VC + D′/t`), ajusté sur les **efforts plats propres**
-(où `|v_ga − v_raw| / v_raw < 10 %`, fenêtre 30–75 min, là où l'ajustement est fiable). Incertitude par
-*bootstrap*.
+(critère `(v_ga − v_raw)/v_raw < 10 %` — **signé** tel que livré/capturé ; `vc_flat_symmetric` applique
+la **valeur absolue**, qui écarte aussi les records en descente nette, recommandé après validation sur
+le golden réel), sur la fenêtre `vc_window_s` (livrée **10–90 min**, cf. plancher §2.3). Incertitude par
+*bootstrap*. NB : calée sur des durées bien plus longues que la CP de laboratoire (2–15 min, Poole 2016),
+cette « VC de terrain » est volontairement **conservatrice** et son `D′` n'est pas interprétable
+(signalé peu fiable) — le bon compromis pour l'ultra.
 
 **Cas de référence** : **VC = 2,912 m/s (10,48 km/h, 5:43/km), ±0,12**. `D′ ≈ 1 579 m ±362` —
 **volontairement signalée comme peu fiable** (le modèle est étiré au-delà de son domaine 2–15 min) ;
@@ -263,11 +270,15 @@ Calculé **avant paiement**, sur la donnée normalisée :
 |---|---|---|---|
 | Historique | ≥ 6 mois | 3–6 mois | < 3 mois |
 | Courses exploitables | ≥ ~120 | ~50–120 | < 50 |
-| Efforts longs proches de la cible | ≥ 2 | 1 | 0 |
-| Qualité (FC/altitude/distance) | majoritaire | partielle | quasi absente |
-| **Erreur validation croisée** | ≤ ~5 % | ~5–10 % | non calculable / > 10 % |
+| Efforts longs proches de la cible (allure plausible) | ≥ 2 | 1 | 0 |
+| Qualité (FC **et** altitude) | majoritaires | partielles | quasi absentes |
+| **Erreur validation croisée** | ≤ ~5 % | ~5–10 % **ou non calculable** | > 10 % |
 
 🟢 → rapport complet. 🟠 → on prévient (confiance réduite) ou produit dégradé. 🔴 → **on ne vend pas**.
+
+> **CV non calculable** (régimes blend/VC+E, < 3 vrais ultras) : le verdict est **plafonné à 🟠**
+> (`cv_missing_policy=cap_orange`) — jamais 🟢 sans indice de confiance, mais vendable en prévenant.
+> C'est la lecture qui réconcilie ce tableau avec §3 (« 1–2 ultras → souvent 🟠 »).
 
 ---
 

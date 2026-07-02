@@ -47,10 +47,18 @@ class TwinParams:
         21600, 28800,
     )
     vc_flat_threshold: float = 0.10
+    # critère « effort plat propre » : (v_ga − v_raw)/v_raw < seuil. Par défaut le ratio est
+    # SIGNÉ (comportement avec lequel le golden a été capturé) : un record en descente nette
+    # (v_ga ≪ v_raw) passe le critère. ``vc_flat_symmetric=true`` applique la VALEUR ABSOLUE
+    # (twin-theory §2.4) — recommandé, à valider sur le golden réel avant bascule du défaut.
+    vc_flat_symmetric: bool = False
     vc_window_s: tuple[int, int] = (600, 5400)
     vc_bootstrap_n: int = 2000
     vc_bootstrap_seed: int = 0
-    vc_short_effort_floor_s: int = 1800
+    # plancher de durée du fit VC (garde-fou twin-theory §2.3 : les efforts courts, presque
+    # toujours en côte, sont sur-crédités par Minetti). 600 = début de fenêtre (no-op, valeur
+    # de capture du golden) ; 1800 = réglage « théorie stricte » à valider sur le golden réel.
+    vc_short_effort_floor_s: int = 600
     # --- locomotion vs arrêts (twin-theory §2, Problème « écoulé ≫ mouvement ») -----------
     # ``elapsed`` (défaut, comportement actuel) : durée = temps écoulé de bout en bout.
     # ``moving`` : durée = temps en mouvement (secondes où la vitesse dépasse le seuil), pour

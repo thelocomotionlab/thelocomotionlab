@@ -19,10 +19,11 @@
       21600, 28800
     ],
     "vc_flat_threshold": 0.10,
+    "vc_flat_symmetric": false,
     "vc_window_s": [600, 5400],
     "vc_bootstrap_n": 2000,
     "vc_bootstrap_seed": 0,
-    "vc_short_effort_floor_s": 1800,
+    "vc_short_effort_floor_s": 600,
     "speed_basis": "elapsed",
     "moving_speed_threshold_ms": 0.5,
     "vc_max_plausible_ms": 6.0,

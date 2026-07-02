@@ -189,6 +189,42 @@ def test_single_activity_cannot_set_record_point():
     assert twin.vc_ms < 3.5
 
 
+def test_downhill_record_flat_flag_follows_symmetry_flag():
+    """T2 : par défaut (ratio signé, capture du golden) un record en DESCENTE nette est « plat » ;
+    vc_flat_symmetric=True (théorie §2.4, |·|) l'écarte du fit de la VC."""
+    from twin_engine.twin.record import build_record_curve
+
+    downhill = [_run(3.0, 5400, grade=-0.10), _run(2.95, 5400, grade=-0.10)]
+    rec_default, _ = build_record_curve(downhill, CFG)
+    cfg_sym = replace(CFG, twin=replace(CFG.twin, vc_flat_symmetric=True))
+    rec_sym, _ = build_record_curve(downhill, cfg_sym)
+
+    def _flat_at(rec, T=3600):
+        return next(p.flat for p in rec.points if p.duration_s == T)
+
+    assert _flat_at(rec_default) is True     # v_ga ≈ 0,6·v_raw → ratio −0,4 < 0,1 (signé)
+    assert _flat_at(rec_sym) is False        # |−0,4| ≥ 0,1 → écarté (descente ≠ plat)
+
+
+def test_vc_short_effort_floor_excludes_short_durations():
+    """T1 : le plancher (défaut 600 = no-op) borne le fit VC ; à 1800, plus rien sous 30 min."""
+    from twin_engine.twin.record import build_record_curve
+
+    acts = _clean_athlete()
+    rec_default, _ = build_record_curve(acts, CFG)
+    cfg_floor = replace(CFG, twin=replace(CFG.twin, vc_short_effort_floor_s=1800))
+    rec_floor, _ = build_record_curve(acts, cfg_floor)
+
+    durs_default = {p.duration_s for p in rec_default.flat_points}
+    durs_floor = {p.duration_s for p in rec_floor.flat_points}
+    assert 600 in durs_default and 1800 in durs_default   # défaut : fenêtre 10–90 min inchangée
+    assert durs_floor and min(durs_floor) >= 1800          # théorie stricte : < 30 min écartés
+
+    # la VC de repli (modèle) respecte le même plancher
+    cs_floor = fit_critical_speed(rec_floor, cfg_floor)
+    assert cs_floor is not None and cs_floor.n_points == len(durs_floor)
+
+
 def test_failed_activity_is_counted_in_skipped():
     """C9d : une activité qui plante au traitement est COMPTÉE (processing_error), pas tue."""
     broken = CanonicalActivity(

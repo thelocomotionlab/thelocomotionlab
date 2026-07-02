@@ -78,6 +78,7 @@ class Twin:
 def fit_critical_speed(record: RecordCurve, cfg: Config) -> CriticalSpeed | None:
     """Modèle hyperbolique d = VC·t + D′ sur les efforts plats propres (bootstrap)."""
     w0, w1 = cfg.twin.vc_window_s
+    w0 = max(w0, cfg.twin.vc_short_effort_floor_s)  # même plancher que le marquage « plat »
     ceil = cfg.twin.vc_max_plausible_ms
     flat = [(p.duration_s, p.vga) for p in record.flat_points]
     from_flat = True

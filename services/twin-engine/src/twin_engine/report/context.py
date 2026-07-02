@@ -209,6 +209,8 @@ def build_report_context(
         "vc_sd": fr(cs.vc_sd, 2) if vc_ok else None,
         "vc_from_flat": cs.from_flat_efforts if cs else False,
         "vc_implausible": bool(cs is not None and not cs.plausible),
+        # plancher de durée du fit VC réellement servi (dérivé de la config, jamais en dur)
+        "vc_floor_min": int(round(max(cfg.twin.vc_window_s[0], cfg.twin.vc_short_effort_floor_s) / 60)),
         "dprime": fr(cs.dprime_m, 0) if vc_ok else None,
         "endurance_E": fr(twin.endurance_E, 3) if twin.endurance_E else None,
         "alpha": fr(twin.alpha, 3) if twin.alpha else None,

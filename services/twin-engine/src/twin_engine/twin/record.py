@@ -228,6 +228,8 @@ def build_record_curve(
 
     flat_thr = cfg.twin.vc_flat_threshold
     w0, w1 = cfg.twin.vc_window_s
+    # plancher de durée du fit VC (twin-theory §2.3) — 600 par défaut = no-op (début de fenêtre)
+    w0 = max(w0, cfg.twin.vc_short_effort_floor_s)
     ceil = cfg.twin.vc_max_plausible_ms
     min_support = max(1, cfg.twin.record_min_support)
 
@@ -245,10 +247,15 @@ def build_record_curve(
         best_vga[j] = vga_j
         best_vraw[j] = vr_j if np.isfinite(vr_j) else 0.0
         # plafond physiologique (m/s) sur les points « plats » servant à la VC
-        flat = bool(
-            np.isfinite(vr_j) and vr_j > 0 and (vga_j - vr_j) / vr_j < flat_thr
-            and w0 <= T <= w1 and vga_j <= ceil
-        )
+        if np.isfinite(vr_j) and vr_j > 0:
+            ratio = (vga_j - vr_j) / vr_j
+            # signé par défaut (capture du golden) ; symétrique = théorie §2.4 (|·| < seuil),
+            # qui écarte aussi les records en DESCENTE nette (v_ga ≪ v_raw) du fit de la VC
+            if cfg.twin.vc_flat_symmetric:
+                ratio = abs(ratio)
+            flat = bool(ratio < flat_thr and w0 <= T <= w1 and vga_j <= ceil)
+        else:
+            flat = False
         points.append(
             RecordPoint(
                 duration_s=int(T),
