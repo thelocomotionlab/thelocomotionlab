@@ -85,6 +85,41 @@ def test_unknown_job_404(client):
     assert client.get("/jobs/inconnu/report").status_code == 404
 
 
+def test_startup_sweeps_orphan_jobs_and_previews(tmp_path, monkeypatch):
+    """R8 : au démarrage, les jobs « running » orphelins d'un crash passent en erreur et
+    leurs uploads (PII) + les dossiers preview-* sont purgés."""
+    monkeypatch.setenv("DATA_DIR", str(tmp_path / "data"))
+    from twin_engine.api import create_app
+    from twin_engine.config import load_config
+    from twin_engine.jobs import JobStore
+
+    cfg = load_config()
+    store = JobStore(cfg.data_dir / "jobs.sqlite")
+    store.create("orphan", depth="full", athlete="X", race_name="Y")
+    store.update("orphan", status="running")
+    upload = cfg.data_dir / "jobs" / "orphan" / "upload"
+    upload.mkdir(parents=True)
+    (upload / "archive.zip").write_bytes(b"pii")
+    stray = cfg.data_dir / "preview-stray"
+    stray.mkdir(parents=True)
+
+    client = TestClient(create_app(load_config()))
+    body = client.get("/jobs/orphan").json()
+    assert body["status"] == "error" and "redémarrage" in body["error"]
+    assert not upload.exists() and not stray.exists()
+
+
+def test_job_error_is_sanitized(client):
+    """R8 : le champ error public ne fuit ni chemins ni queue de log — détail en journal serveur."""
+    files = _files()
+    files["course_gpx"] = ("course.gpx", b"<gpx></gpx>", "application/gpx+xml")  # → ValueError
+    r = client.post("/jobs", files=files, data={"athlete": "T"})
+    body = client.get(f"/jobs/{r.json()['id']}").json()
+    assert body["status"] == "error"
+    assert "journaux du serveur" in body["error"]
+    assert "/" not in body["error"]                 # aucun chemin interne divulgué
+
+
 def test_report_served_when_pdf_present(client, tmp_path):
     """Le PDF est servi quand le job en a un (plomberie testée sans XeLaTeX)."""
     store = client.app.state.store

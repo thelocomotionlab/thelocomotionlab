@@ -50,6 +50,15 @@ def create_app(cfg: Config | None = None) -> FastAPI:
     jobs_root = cfg.data_dir / "jobs"
     jobs_root.mkdir(parents=True, exist_ok=True)
 
+    # Balayage de démarrage : un crash (SIGKILL/OOM) court-circuite les purges `finally` —
+    # les jobs restés « running » sont clos en erreur et leurs uploads (PII) supprimés,
+    # ainsi que les dossiers preview-* orphelins. La promesse « archives supprimées
+    # immédiatement après analyse » doit tenir AUSSI après un crash.
+    for job_id in store.sweep_stale_running("interrompu par un redémarrage du service"):
+        shutil.rmtree(jobs_root / job_id / "upload", ignore_errors=True)
+    for stray in cfg.data_dir.glob("preview-*"):
+        shutil.rmtree(stray, ignore_errors=True)
+
     app = FastAPI(
         title="Locomotion Twin Engine",
         version="0.1.0",

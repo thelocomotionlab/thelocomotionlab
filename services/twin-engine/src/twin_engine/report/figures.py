@@ -7,14 +7,16 @@ sortie. Police Ubuntu depuis le template embarqué ; palette Locomotion Lab.
 
 from __future__ import annotations
 
+import threading
 from pathlib import Path
 
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.font_manager as fm  # noqa: E402
-import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
+from matplotlib.backends.backend_agg import FigureCanvasAgg  # noqa: E402
+from matplotlib.figure import Figure  # noqa: E402
 from matplotlib.ticker import MultipleLocator  # noqa: E402
 
 # palette Locomotion Lab
@@ -31,21 +33,37 @@ GREEN = "#3F8F5B"
 _FONTS_DIR = Path(__file__).parent / "latex" / "template" / "fonts"
 
 
-def _setup_style() -> None:
+def _init_style() -> None:
+    """Style de marque appliqué UNE fois à l'import (verrou d'import CPython → thread-safe).
+
+    Le rendu utilise l'API OBJET (Figure/FigureCanvasAgg), jamais pyplot : le gestionnaire
+    de figures global de pyplot n'est pas thread-safe et deux jobs FastAPI concurrents
+    entrelaçaient leurs figures (corruption). Après l'import, rcParams n'est plus jamais
+    muté — seulement lu à la création des figures."""
     try:
         for f in ("Ubuntu-R.ttf", "Ubuntu-M.ttf", "Ubuntu-B.ttf"):
             fp = _FONTS_DIR / f
             if fp.exists():
                 fm.fontManager.addfont(str(fp))
-        plt.rcParams["font.family"] = "Ubuntu"
+        matplotlib.rcParams["font.family"] = "Ubuntu"
     except Exception:  # noqa: BLE001 — police = cosmétique, on dégrade
         pass
-    plt.rcParams.update({
+    matplotlib.rcParams.update({
         "font.size": 10, "text.color": TEXT, "axes.labelcolor": TEXT,
         "xtick.color": TEXT, "ytick.color": TEXT, "axes.edgecolor": "#B9B2A4",
         "figure.facecolor": BG, "axes.facecolor": BG, "savefig.facecolor": BG,
         "axes.linewidth": 0.8, "axes.grid": True, "grid.color": GRID, "grid.linewidth": 0.7,
     })
+
+
+_init_style()
+
+# matplotlib n'est PAS thread-safe de bout en bout même en API objet : le parseur mathtext
+# (ticks « 10^n » des axes log) partage des caches pyparsing entre threads → ParseException
+# sous jobs concurrents. On sérialise donc le RENDU (quelques centaines de ms par rapport,
+# négligeable devant XeLaTeX) ; l'API objet reste, elle, garante de l'absence de fuite d'état
+# entre figures (pas de registre pyplot global).
+_RENDER_LOCK = threading.Lock()
 
 
 def _fig_profil(course, ax) -> None:
@@ -191,7 +209,6 @@ def generate_figures(
     """Écrit les figures dans ``out_dir`` ; renvoie {nom: chemin relatif}."""
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    _setup_style()
     figures: dict[str, str] = {}
     # libellés/bandes dérivés de la config (repli sur les valeurs historiques sans cfg)
     band_pct = getattr(getattr(cfg, "sufficiency", None), "cv_error_green_pct", 5.0)
@@ -200,42 +217,42 @@ def generate_figures(
         f"{pred_cfg.interval_high_pct - pred_cfg.interval_low_pct:.0f}" if pred_cfg else "80"
     )
 
-    def _save(name: str) -> None:
-        plt.savefig(out_dir / f"{name}.png", dpi=170)
-        plt.close()
+    # API objet : chaque figure est un objet indépendant, aucun état global partagé
+    def _new(figsize: tuple[float, float]) -> Figure:
+        fig = Figure(figsize=figsize)
+        FigureCanvasAgg(fig)
+        return fig
+
+    def _save(fig: Figure, name: str) -> None:
+        fig.tight_layout()
+        fig.savefig(out_dir / f"{name}.png", dpi=170)
         figures[name] = f"{name}.png"
 
-    fig, ax = plt.subplots(figsize=(7.4, 3.3))
-    _fig_profil(course, ax)
-    fig.tight_layout()
-    _save("profil")
+    with _RENDER_LOCK:
+        fig = _new((7.4, 3.3))
+        _fig_profil(course, fig.subplots())
+        _save(fig, "profil")
 
-    fig, ax = plt.subplots(figsize=(7.4, 3.5))
-    _fig_record(twin, calibration, ax)
-    fig.tight_layout()
-    _save("record")
+        fig = _new((7.4, 3.5))
+        _fig_record(twin, calibration, fig.subplots())
+        _save(fig, "record")
 
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(7.4, 4.0), sharex=True)
-    _fig_demande(course, ax1, ax2)
-    fig.tight_layout()
-    _save("demande")
+        fig = _new((7.4, 4.0))
+        ax1, ax2 = fig.subplots(2, 1, sharex=True)
+        _fig_demande(course, ax1, ax2)
+        _save(fig, "demande")
 
-    fig, ax = plt.subplots(figsize=(7.4, 3.4))
-    _fig_pacing(plan, twin, ax)
-    fig.tight_layout()
-    _save("pacing")
+        fig = _new((7.4, 3.4))
+        _fig_pacing(plan, twin, fig.subplots())
+        _save(fig, "pacing")
 
-    fig, ax = plt.subplots(figsize=(7.4, 3.4))
-    _fig_cumul(plan, prediction, race, ax, interval_label=interval_label)
-    fig.tight_layout()
-    _save("cumul")
+        fig = _new((7.4, 3.4))
+        _fig_cumul(plan, prediction, race, fig.subplots(), interval_label=interval_label)
+        _save(fig, "cumul")
 
-    fig, ax = plt.subplots(figsize=(4.6, 4.2))
-    if _fig_validation(prediction, ax, band_pct=band_pct):
-        fig.tight_layout()
-        _save("validation")
-    else:
-        plt.close()
+        fig = _new((4.6, 4.2))
+        if _fig_validation(prediction, fig.subplots(), band_pct=band_pct):
+            _save(fig, "validation")
 
     return figures
 

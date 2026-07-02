@@ -65,5 +65,24 @@ class JobStore:
             row = c.execute("SELECT * FROM jobs WHERE id=?", (job_id,)).fetchone()
         return dict(row) if row else None
 
+    def sweep_stale_running(self, error: str) -> list[str]:
+        """Bascule en ``error`` les jobs restés ``queued``/``running`` (orphelins d'un crash).
+
+        À appeler au démarrage du service : sans reprise ni heartbeat, un job interrompu par
+        un SIGKILL/OOM resterait « running » à jamais (et son upload PII sur disque — purgé
+        par l'appelant à partir des ids renvoyés)."""
+        now = time.time()
+        with self._conn() as c:
+            rows = c.execute(
+                "SELECT id FROM jobs WHERE status IN ('queued','running')"
+            ).fetchall()
+            ids = [r["id"] for r in rows]
+            if ids:
+                c.executemany(
+                    "UPDATE jobs SET status='error', error=?, updated_at=? WHERE id=?",
+                    [(error, now, i) for i in ids],
+                )
+        return ids
+
 
 __all__ = ["JobStore"]

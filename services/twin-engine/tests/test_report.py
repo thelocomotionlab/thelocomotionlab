@@ -182,6 +182,30 @@ def test_figures_generated(tmp_path):
         assert (tmp_path / f"{name}.png").stat().st_size > 1000
 
 
+def test_figures_parallel_generation_is_safe(tmp_path):
+    """R7 : l'API objet matplotlib rend la génération concurrente sûre (2 jobs simultanés)."""
+    import threading
+
+    course, twin, cal, pred, plan, race, _ = _scenario()
+    errors: list[Exception] = []
+
+    def _work(sub: str) -> None:
+        try:
+            generate_figures(course, twin, cal, pred, plan, race, tmp_path / sub)
+        except Exception as exc:  # noqa: BLE001
+            errors.append(exc)
+
+    threads = [threading.Thread(target=_work, args=(f"d{i}",)) for i in range(4)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert not errors
+    for i in range(4):
+        for name in ("profil", "record", "cumul"):
+            assert (tmp_path / f"d{i}" / f"{name}.png").stat().st_size > 1000
+
+
 @pytest.mark.skipif(shutil.which("xelatex") is None or shutil.which("biber") is None,
                     reason="XeLaTeX/biber absents (validés dans l'image Docker)")
 def test_pdf_compiles(tmp_path):
