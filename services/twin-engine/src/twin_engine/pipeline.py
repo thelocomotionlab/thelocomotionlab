@@ -13,10 +13,12 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 
+from typing import Iterable
+
 from .calibration import UltraCalibration, build_calibration
 from .config import Config
 from .course import CourseProfile, RaceSpec, build_course
-from .ingest import CanonicalActivity, IngestResult, ingest_path
+from .ingest import CanonicalActivity, iter_activities, purge_path
 from .pacing import PacingPlan, build_pacing
 from .predict import Prediction, predict_race
 from .sufficiency import Sufficiency, assess_sufficiency
@@ -55,7 +57,7 @@ class PreviewResult:
 
 
 def analyze_preview(
-    activities: list[CanonicalActivity],
+    activities: Iterable[CanonicalActivity],
     course: CourseProfile,
     cfg: Config,
     *,
@@ -64,9 +66,19 @@ def analyze_preview(
 ) -> PreviewResult:
     """Chaîne numérique complète (sans figures/PDF) → verdict + fourchette.
 
-    ``analysis_date`` alimente le critère de fraîcheur (défaut : date du jour —
-    injectable pour un replay/test déterministe)."""
-    twin = build_twin(activities, cfg)
+    ``activities`` peut être une liste OU un flux (E1) : la courbe record consomme chaque
+    activité une seule fois, les tableaux 1 Hz sont libérés au fil de l'eau — mémoire
+    O(1 activité) sur les grosses archives. ``analysis_date`` alimente le critère de
+    fraîcheur (défaut : date du jour — injectable pour un replay/test déterministe)."""
+    n_seen = 0
+
+    def _counting(src: Iterable[CanonicalActivity]):
+        nonlocal n_seen
+        for act in src:
+            n_seen += 1
+            yield act
+
+    twin = build_twin(_counting(activities), cfg)
     calibration = build_calibration(twin, cfg)
     prediction = predict_race(course, twin, calibration, cfg)
     sufficiency = assess_sufficiency(
@@ -78,7 +90,7 @@ def analyze_preview(
         twin=twin,
         calibration=calibration,
         course=course,
-        n_ingested=len(activities),
+        n_ingested=n_seen,
         n_skipped=n_skipped,
     )
 
@@ -91,13 +103,25 @@ def run_preview(
     cfg: Config,
     purge_source: bool = True,
     progress=None,
+    analysis_date: date | None = None,
 ) -> PreviewResult:
-    """De l'archive brute + la trace de course au verdict. **Purge l'archive** après parsing."""
-    result: IngestResult = ingest_path(
-        training_path, purge_source=purge_source, running_only=True, progress=progress
+    """De l'archive brute + la trace de course au verdict. **Purge l'archive** après analyse.
+
+    Ingestion en FLUX (E1) : les activités 1 Hz traversent la courbe record une à une —
+    mémoire O(1 activité) au lieu de plusieurs Go sur les archives de milliers de fichiers.
+    La purge est en ``finally`` : elle tient aussi si l'analyse échoue en cours de route."""
+    skipped: list[dict] = []
+    stream = iter_activities(
+        training_path, running_only=True, progress=progress, skipped=skipped
     )
     course = build_course(course_gpx, race, cfg)
-    return analyze_preview(result.running, course, cfg, n_skipped=len(result.skipped))
+    try:
+        result = analyze_preview(stream, course, cfg, analysis_date=analysis_date)
+    finally:
+        if purge_source:
+            purge_path(training_path)
+    result.n_skipped = len(skipped)
+    return result
 
 
 @dataclass
@@ -116,7 +140,7 @@ class FullResult:
 
 
 def analyze_full(
-    activities: list[CanonicalActivity],
+    activities: Iterable[CanonicalActivity],
     course: CourseProfile,
     race: RaceSpec,
     cfg: Config,
@@ -180,17 +204,25 @@ def run_full(
     report_version: str = "v1.0",
     report_date: datetime | None = None,
     progress=None,
+    analysis_date: date | None = None,
 ) -> FullResult:
-    """De l'archive brute au PDF. **Purge l'archive** après parsing."""
-    result: IngestResult = ingest_path(
-        training_path, purge_source=purge_source, running_only=True, progress=progress
+    """De l'archive brute au PDF. **Purge l'archive** après analyse (flux E1, cf. run_preview)."""
+    skipped: list[dict] = []
+    stream = iter_activities(
+        training_path, running_only=True, progress=progress, skipped=skipped
     )
     course = build_course(course_gpx, race, cfg)
-    return analyze_full(
-        result.running, course, race, cfg, out_dir=Path(out_dir), athlete=athlete,
-        n_skipped=len(result.skipped), render_pdf=render_pdf,
-        report_ref=report_ref, report_version=report_version, report_date=report_date,
-    )
+    try:
+        full = analyze_full(
+            stream, course, race, cfg, out_dir=Path(out_dir), athlete=athlete,
+            render_pdf=render_pdf, report_ref=report_ref, report_version=report_version,
+            report_date=report_date, analysis_date=analysis_date,
+        )
+    finally:
+        if purge_source:
+            purge_path(training_path)
+    full.preview.n_skipped = len(skipped)
+    return full
 
 
 __all__ = ["PreviewResult", "FullResult", "analyze_preview", "analyze_full", "run_preview", "run_full"]

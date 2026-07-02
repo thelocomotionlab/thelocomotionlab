@@ -134,3 +134,56 @@ def test_missing_hr_degrades_cleanly():
     act = parse_bytes(gpx_no_hr, "nohr.gpx")
     assert not act.has_hr
     assert np.all(np.isnan(act.hr))
+
+
+# --------------------------------------------------------------------------- #
+# E1 : ingestion en flux — mêmes résultats que la version matérialisée
+# --------------------------------------------------------------------------- #
+def test_iter_activities_streams_like_batch(tmp_path):
+    """Le flux (mémoire O(1 activité)) produit exactement les mêmes activités et les mêmes
+    ignorés que ingest_path — qui est désormais bâti dessus."""
+    from twin_engine.ingest import iter_activities
+
+    skipped: list[dict] = []
+    streamed = list(iter_activities(FIX / "sample.fit", skipped=skipped))
+    batch = ingest_path(FIX / "sample.fit")
+    assert len(streamed) == len(batch.activities) == 1
+    assert skipped == batch.skipped == []
+    assert streamed[0].source_name == batch.activities[0].source_name
+
+    # running_only : le flux signale les sports ignorés comme le lot
+    import json as _json
+    bad = tmp_path / "meta.json"
+    bad.write_bytes(_json.dumps({"pas": "une activité"}).encode())
+    sk2: list[dict] = []
+    assert list(iter_activities(bad, running_only=True, skipped=sk2)) == []
+
+
+def test_run_preview_streams_and_counts(tmp_path):
+    """E1 : run_preview (flux) compte ingérés/ignorés comme avant et purge en finally."""
+    from twin_engine.config import load_config
+    from twin_engine.course import RaceSpec
+    from twin_engine.pipeline import run_preview
+
+    src = (FIX / "sample.gpx").read_bytes()
+    upload = tmp_path / "perso.gpx"
+    upload.write_bytes(src)
+    cfg = load_config()
+    race = RaceSpec("Test", (0.0, 5.0, 10.0), ("d", "s", "a"))
+    import math
+
+    def _tri(n=120):
+        lat0, lon0 = 43.70, 7.26
+        rows = []
+        for i in range(n + 1):
+            x = 10000.0 * i / n
+            ele = 1000.0 * (x / 5000.0) if x <= 5000 else 1000.0 * (2 - x / 5000.0)
+            dlon = x / (111_320.0 * math.cos(math.radians(lat0)))
+            rows.append(f'<trkpt lat="{lat0:.6f}" lon="{lon0 + dlon:.6f}"><ele>{ele:.1f}</ele></trkpt>')
+        return ('<?xml version="1.0"?><gpx xmlns="http://www.topografix.com/GPX/1/1">'
+                f'<trk><trkseg>{"".join(rows)}</trkseg></trk></gpx>').encode()
+
+    result = run_preview(training_path=upload, course_gpx=_tri(), race=race, cfg=cfg,
+                         purge_source=True)
+    assert not upload.exists()                          # purge après épuisement du flux
+    assert result.n_ingested == 1 and result.n_skipped == 0

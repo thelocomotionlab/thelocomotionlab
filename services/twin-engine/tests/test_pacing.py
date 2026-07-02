@@ -129,6 +129,26 @@ def test_fade_source_durability_personalizes_delta():
     assert abs(plan_d20.t_move_h - plan_default.t_move_h) < 1e-9
 
 
+def test_unscaled_stops_narrow_the_windows():
+    """C6 : scale_stops=false — les arrêts (constants) ne sont plus gonflés par le scénario
+    lent : fenêtres légèrement plus étroites, toujours encadrantes."""
+    from dataclasses import replace
+
+    course = build_course(_triangle_gpx(), _race(), CFG)
+    pred = _prediction(course, finish=10.0)
+    plan_scaled = build_pacing(course, pred, _race(), CFG)
+    cfg_u = replace(CFG, pacing=replace(CFG.pacing, scale_stops=False))
+    plan_unscaled = build_pacing(course, pred, _race(), cfg_u)
+
+    for s_sc, s_un in zip(plan_scaled.segments, plan_unscaled.segments):
+        assert s_un.lo_h <= s_un.cum_clock_h <= s_un.hi_h          # encadre toujours le médian
+        assert (s_un.hi_h - s_un.lo_h) <= (s_sc.hi_h - s_sc.lo_h) + 1e-9   # jamais plus large
+    # au dernier segment (0,25 h d'arrêts cumulés), la fenêtre non scalée est STRICTEMENT
+    # plus étroite : la part « arrêts » ne fluctue plus avec le multiplicateur MC
+    last_sc, last_un = plan_scaled.segments[-1], plan_unscaled.segments[-1]
+    assert (last_un.hi_h - last_un.lo_h) < (last_sc.hi_h - last_sc.lo_h)
+
+
 def test_pacing_without_logistics_still_produces_paces():
     race = RaceSpec("NoLogi", (0.0, 5.0, 10.0), ("d", "s", "a"))  # pas de départ/lat/lon
     course = build_course(_triangle_gpx(), race, CFG)

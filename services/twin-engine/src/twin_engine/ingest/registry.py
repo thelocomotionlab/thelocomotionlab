@@ -16,7 +16,7 @@ import posixpath
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import Callable
+from typing import Callable, Iterator
 
 from .archive import _ACTIVITY_EXTS, decompress_gz, is_gzip, recognized, strava_sport_map, strip_gz
 from .canonical import CanonicalActivity, NotActivityData, normalize_sport
@@ -55,23 +55,6 @@ class IngestResult:
     def running(self) -> list[CanonicalActivity]:
         return [a for a in self.activities if a.is_running]
 
-    def _add(
-        self, base: str, data: bytes, sport_hint: str | None, *, running_only: bool = False
-    ) -> None:
-        try:
-            act = parse_bytes(data, base, sport_hint=sport_hint)
-        except NotActivityData:
-            return  # conteneur reconnu mais non-activité (ex. json de métadonnée) : ignoré sans bruit
-        except Exception as exc:  # noqa: BLE001 — robustesse: un fichier brouillon n'arrête rien
-            self.skipped.append({"name": base, "reason": str(exc)})
-            return
-        # Filtre confidentialité/pertinence : on ne RETIENT que la course à pied, et le sport
-        # est lu DANS le fichier (session/sport du FIT) — jamais d'après le nom ni un manifeste.
-        if running_only and not act.is_running:
-            self.skipped.append({"name": base, "reason": f"sport ignoré: {act.sport or 'inconnu'}"})
-            return
-        self.activities.append(act)
-
 
 def parse_bytes(data: bytes, name: str, *, sport_hint: str | None = None) -> CanonicalActivity:
     """Parse des octets d'une trace unique (après éventuelle décompression ``.gz``)."""
@@ -89,6 +72,64 @@ def parse_bytes(data: bytes, name: str, *, sport_hint: str | None = None) -> Can
     return act
 
 
+def iter_activities(
+    path: str | os.PathLike[str],
+    *,
+    running_only: bool = False,
+    progress: Callable[[int, str], None] | None = None,
+    skipped: list[dict] | None = None,
+) -> Iterator[CanonicalActivity]:
+    """Ingestion en FLUX (E1) : yield chaque activité canonique puis la laisse mourir.
+
+    Mémoire O(1 activité) au lieu de O(archive) — sur une archive de ~12 000 fichiers,
+    matérialiser toutes les activités 1 Hz (7 canaux float64) coûtait plusieurs Go alors que
+    l'aval (courbe record) n'a besoin que d'UNE activité à la fois. ``skipped`` (liste fournie
+    par l'appelant) collecte les fichiers ignorés avec leur raison. Ne purge PAS la source :
+    l'appelant purge après épuisement du flux (elle est encore lue pendant l'itération).
+
+    Confidentialité : mêmes garanties que :func:`ingest_path` (noms anonymisés en
+    ``activity-NNNNN.ext``, sport lu DANS le fichier, jamais d'après le nom).
+    """
+    p = Path(path)
+    # fichier unique non reconnu : signalé explicitement (le marcheur n'émet rien pour lui)
+    if p.is_file() and p.suffix.lower() != ".zip" and not recognized(p.name):
+        if skipped is not None:
+            skipped.append({"name": p.name, "reason": "format non supporté"})
+        return
+
+    source, sport_map, scope = _prepare(p)
+    count = 0
+    for idx, (orig, data) in enumerate(walk_activity_files(source, path_filter=scope), start=1):
+        hint = sport_map.get(posixpath.basename(orig))  # transitoire : orig jamais conservé
+        safe = _safe_name(orig, idx)
+        try:
+            act = parse_bytes(data, safe, sport_hint=hint)
+        except NotActivityData:
+            continue  # conteneur reconnu mais non-activité : ignoré sans bruit
+        except Exception as exc:  # noqa: BLE001 — un fichier brouillon n'arrête rien
+            if skipped is not None:
+                skipped.append({"name": safe, "reason": str(exc)})
+            count += 1
+            if progress:
+                progress(count, safe)
+            continue
+        count += 1
+        if running_only and not act.is_running:
+            if skipped is not None:
+                skipped.append({"name": safe, "reason": f"sport ignoré: {act.sport or 'inconnu'}"})
+            if progress:
+                progress(count, safe)
+            continue
+        if progress:
+            progress(count, safe)
+        yield act
+
+
+def purge_path(path: str | os.PathLike[str]) -> None:
+    """Supprime l'entrée brute (fichier/dossier) — à appeler après épuisement du flux."""
+    _purge(Path(path))
+
+
 def ingest_path(
     path: str | os.PathLike[str],
     *,
@@ -96,38 +137,21 @@ def ingest_path(
     running_only: bool = False,
     progress: Callable[[int, str], None] | None = None,
 ) -> IngestResult:
-    """Ingeste un fichier, une archive ``.zip`` (imbriquée ou non) ou un dossier.
+    """Ingeste un fichier, une archive ``.zip`` (imbriquée ou non) ou un dossier — version
+    MATÉRIALISÉE de :func:`iter_activities` (liste complète en mémoire ; préférer le flux
+    pour les grosses archives).
 
-    ``progress(n, name)`` est appelé après chaque fichier traité (n = total cumulé) —
-    utile pour un indicateur sur une archive de centaines de fichiers. ``running_only``
-    n'ajoute que les activités de course à pied (sport lu dans le fichier). Si
-    ``purge_source`` est vrai, supprime l'entrée brute après parsing (archive/dossier inclus).
-
-    Confidentialité : les noms d'origine (qui peuvent porter de la PII dans les exports RGPD)
-    sont **anonymisés** en ``activity-NNNNN.ext`` ; le nom brut ne sert que, transitoirement,
-    à retrouver l'extension et le repli de sport Strava, puis il est abandonné.
+    ``progress(n, name)`` est appelé après chaque fichier traité (n = total cumulé).
+    ``running_only`` n'ajoute que les activités de course à pied (sport lu dans le fichier).
+    Si ``purge_source`` est vrai, supprime l'entrée brute après parsing.
     """
-    p = Path(path)
     result = IngestResult()
-
-    # Cas d'un fichier unique non reconnu : on le signale explicitement (le marcheur, lui,
-    # n'émet rien pour un format inconnu).
-    if p.is_file() and p.suffix.lower() != ".zip" and not recognized(p.name):
-        result.skipped.append({"name": p.name, "reason": "format non supporté"})
-        if purge_source:
-            _purge(p)
-        return result
-
-    source, sport_map, scope = _prepare(p)
-    for idx, (orig, data) in enumerate(walk_activity_files(source, path_filter=scope), start=1):
-        hint = sport_map.get(posixpath.basename(orig))  # transitoire : orig jamais conservé
-        safe = _safe_name(orig, idx)
-        result._add(safe, data, hint, running_only=running_only)
-        if progress:
-            progress(len(result.activities) + len(result.skipped), safe)
-
+    result.activities.extend(
+        iter_activities(path, running_only=running_only, progress=progress,
+                        skipped=result.skipped)
+    )
     if purge_source:
-        _purge(p)
+        _purge(Path(path))
     return result
 
 
@@ -166,4 +190,4 @@ def _purge(p: Path) -> None:
         pass
 
 
-__all__ = ["IngestResult", "ingest_path", "parse_bytes"]
+__all__ = ["IngestResult", "ingest_path", "iter_activities", "purge_path", "parse_bytes"]

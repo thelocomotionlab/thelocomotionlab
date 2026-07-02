@@ -150,11 +150,21 @@ def build_pacing(
     # horloge totale (l'arrêt d'arrivée vaut 0, donc = mouvement + tous les arrêts)
     t_clock_h = float(cum_clock[-1] + stops_min[-1] / 60.0)
 
-    # --- fenêtres horaires : bandes Monte-Carlo (on met à l'échelle tout le profil) ---
+    # --- fenêtres horaires : bandes Monte-Carlo ---
     mc = prediction.mc_samples
     mult = mc / tpred
-    lo = np.array([np.percentile(cum_clock[i] * mult, cfg.prediction.interval_low_pct) for i in range(n)])
-    hi = np.array([np.percentile(cum_clock[i] * mult, cfg.prediction.interval_high_pct) for i in range(n)])
+    if cfg.pacing.scale_stops:
+        # historique : tout le cumul (arrêts compris) est mis à l'échelle
+        lo = np.array([np.percentile(cum_clock[i] * mult, cfg.prediction.interval_low_pct) for i in range(n)])
+        hi = np.array([np.percentile(cum_clock[i] * mult, cfg.prediction.interval_high_pct) for i in range(n)])
+    else:
+        # physique (C6) : un scénario lent ne rallonge pas les ravitos — seule la part de
+        # MOUVEMENT est mise à l'échelle, les arrêts déjà passés s'ajoutent constants
+        cum_move_arr = np.cumsum(t_move_h)
+        lo = np.array([np.percentile(cum_move_arr[i] * mult, cfg.prediction.interval_low_pct)
+                       + cum_stop_before[i] for i in range(n)])
+        hi = np.array([np.percentile(cum_move_arr[i] * mult, cfg.prediction.interval_high_pct)
+                       + cum_stop_before[i] for i in range(n)])
 
     segments = [
         SegmentPlan(

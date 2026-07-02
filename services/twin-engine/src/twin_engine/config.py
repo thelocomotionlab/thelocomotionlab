@@ -184,6 +184,11 @@ class PacingParams:
     fade_delta_max: float = 0.13
     default_stop_min: float = 5.0
     major_base_extra_min: float = 10.0
+    # --- fenêtres horaires (revue C6) : ``true`` (défaut historique) met à l'échelle TOUT le
+    # cumul (arrêts compris) par le multiplicateur Monte-Carlo — un scénario lent « rallonge »
+    # donc les ravitos, ce qui n'a pas de sens physique. ``false`` : seul le MOUVEMENT est mis
+    # à l'échelle, les arrêts déjà passés s'ajoutent constants (fenêtres un peu plus justes).
+    scale_stops: bool = True
 
 
 @dataclass(frozen=True)
