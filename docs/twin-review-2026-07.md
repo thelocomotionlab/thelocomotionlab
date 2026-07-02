@@ -1,12 +1,48 @@
 # Revue complète du Locomotion Twin — théorie, chaîne de calcul, plan d'amélioration
 
-> **Statut : PLAN À VALIDER** (juillet 2026). Revue croisée de `docs/twin-theory.md`,
-> `services/twin-engine/` (code + tests + DIAGNOSTIC.md) et de la littérature. Une fois les
-> arbitrages rendus (colonnes « Décision » du §7), ce document se traduit en prompt
-> d'implémentation Claude Code. **Aucun changement de code n'accompagne cette revue.**
+> **Statut : LOTS P0 + P1 IMPLÉMENTÉS** (juillet 2026, arbitrages délégués puis exécutés —
+> cf. §0bis). Revue croisée de `docs/twin-theory.md`, `services/twin-engine/` (code + tests +
+> DIAGNOSTIC.md) et de la littérature.
 >
 > Chaque constat porte un identifiant stable (`T*` théorie↔code, `C*` chaîne de calcul,
 > `R*` rapport/API, `S*` science de fond, `E*` efficacité) pour pouvoir en discuter item par item.
+
+---
+
+## 0bis. Journal d'implémentation et arbitrages (2026-07-02)
+
+**Implémenté — lot P0** (défauts conservateurs, golden/Montagnhard au chiffre près) :
+T7 (+ correction de la règle `.gitignore` qui avait avalé `examples/`), R1–R5, T4, T5, C9b/c/d,
+C4, C5, T1, T2, R6, R7, R8 + balayage de crash et borne de concurrence des jobs.
+
+**Implémenté — lot P1** (flags à défaut = comportement actuel, preuve A/B au DIAGNOSTIC §9) :
+C3 (`mc_mode=predictive` — i80 fixture : 0,61→2,91 baseline, 0,19→0,52 maximalité soft),
+C2 (moving sur la distance), T3 (`fade_source=durability`, Δ=X/(200−X) borné),
+C7 (`decouple_basis=moving` + `decouple_skip_start_s`), C8 (critère « Fraîcheur des données »),
+C1 (`dplus_basis=distance_150m` + outil `tools/diag_dplus.py`), E1 (ingestion en flux,
+mémoire O(1 activité)), C6 (`scale_stops`).
+
+**Arbitrages rendus** :
+- **T4** : `cv_missing_policy=cap_orange` **activé par défaut** (seul nouveau défaut du lot) —
+  il réconcilie la théorie §3 et §10 et ne peut pas toucher le golden (qui a une CV) ;
+  rollback `ignore`.
+- **T1** : plancher branché à **600 s (no-op strict)** ; 1800 = réglage « théorie stricte » à
+  valider sur golden réel. La doc décrivait un comportement non servi → corrigée (pas le code).
+- **C8(b) recency_anchor : REJETÉ** — mathématiquement inerte (facteur commun sur tous les
+  poids ; régression pondérée, σ et N_eff de Kish invariants d'échelle). La fraîcheur est
+  portée par le critère de suffisance, documenté au DIAGNOSTIC §9.5.
+- Tous les autres flags livrés **éteints** (comportement historique), bascule sur preuve réelle.
+
+**Reste chez Valentin (données réelles requises)** :
+1. relancer le **golden réel** (`TWIN_NICE_ARCHIVE`/`TWIN_NICE_GPX`) — aucune référence ne doit
+   bouger avec les défauts livrés ;
+2. `PYTHONPATH=src python -m tools.diag_dplus <archive>` → si écart médian ≳ +5 %, suivre
+   DIAGNOSTIC §9.6 (activer C1, régénérer fixture, recapturer golden) ;
+3. décider des bascules de défaut, dans l'ordre de valeur : `mc_mode=predictive` (recalibrer
+   `interval_rel_width_*`), `fade_source=durability`, `vc_flat_symmetric=true`,
+   `vc_short_effort_floor_s=1800`, `decouple_basis=moving`, `scale_stops=false`.
+
+**Backlog P2 inchangé** (cf. §7) : T8, S1, S5, S2b, T6, S3, S4, C9a.
 
 ---
 

@@ -212,7 +212,9 @@ dans le rapport**, et l'un des critères du **test de suffisance**.
 - **Effort ajusté constant + fade de durabilité.** On vise une **vitesse ajustée constante** (= effort
   métabolique constant grâce à l'ajustement de pente), avec une **dérive contrôlée** (~−15 % début→fin).
   Forme : `v_i = S · g_i`, `g_i = 1 + Δ·(0,5 − p_i)·2` (p_i = fraction d'avancement en Deq, **Δ ≈ 0,085**),
-  `S` normalisé pour que `Σ deq_i / v_i = T_mouvement`.
+  `S` normalisé pour que `Σ deq_i / v_i = T_mouvement`. **Option `fade_source=durability`** : Δ dérivé
+  du **découplage mesuré** de l'athlète, `Δ = X/(200−X)` borné [0,04 ; 0,13] (le défaut Δ=0,085
+  correspond à X≈15,7 % — un découplage « typique ») ; repli sur la constante si la FC manque.
 - **Conversion** : par segment, temps de mouvement = `deq_i / v_ga_i` ; allure réelle = temps / distance
   réelle (montées lentes, descentes rapides).
 - **Horloge & nuit** : heure de départ + cumul (mouvement + arrêts ravitaillement) → heure de passage ;
@@ -240,7 +242,7 @@ Tout ce qui a pu ressembler à de l'expertise au cas par cas est en réalité l'
 | Type | Exemples | Statut |
 |---|---|---|
 | **Règle fixe** (même code pour tous) | lissage 150 m, écrêtage pente ±0,45, base de pente ±50 m, plafond `f≤3`, exclusion < 30 min, conditions des « vrais ultras », Δ du fade, **robustesse record** (altitude requise, plafond VC plausible, support ≥N, rejet fenêtré), **demi-vie de récence** | identique pour chaque athlète |
-| **Ajusté à partir des données** | VC, D′, exposant E, durabilité, coefficients β de la régression **pondérée par récence**, prédiction, plan | **calculé** par athlète → individualisation automatique |
+| **Ajusté à partir des données** | VC, D′, exposant E, durabilité, coefficients β de la régression **pondérée par récence**, prédiction, plan (**Δ du fade si `fade_source=durability`**) | **calculé** par athlète → individualisation automatique |
 | **Garde-fou d'honnêteté** | invalidité < 30 min, descentes techniques = plafonds, forme du jour inconnue, D′ peu fiable, marche au-delà de ±25 %, **VC non plausible → pas de « % de VC »**, **plancher N_eff** (pas de régression sûre d'elle sur trop peu d'ultras récents) | cadrage fixe + **test de suffisance** |
 
 **Conséquence :** l'individualisation est **automatique par construction** — d'autres fichiers → d'autres
