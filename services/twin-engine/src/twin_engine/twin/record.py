@@ -68,6 +68,19 @@ class RecordCurve:
         return [p for p in self.points if p.flat]
 
 
+def _distance_smoothed_altitude(dmono: np.ndarray, alt_f: np.ndarray, window_m: float) -> np.ndarray:
+    """Altitude moyennée sur une fenêtre de DISTANCE (±window/2 m), comme le parcours (C1).
+
+    Fenêtre par ``searchsorted`` sur la distance monotone + sommes cumulées : chaque
+    échantillon reçoit la moyenne des altitudes des points situés à ±window/2 m — l'analogue,
+    côté activité, du lissage 150 m du profil de course (base distance, pas base temps)."""
+    half = window_m / 2.0
+    lo = np.searchsorted(dmono, dmono - half, side="left")
+    hi = np.searchsorted(dmono, dmono + half, side="right")
+    cs = np.concatenate([[0.0], np.cumsum(alt_f)])
+    return (cs[hi] - cs[lo]) / np.maximum(hi - lo, 1)
+
+
 def _adjusted_distance(act: CanonicalActivity, cfg: Config):
     """Distance ajustée à la pente (cumulée) + distance brute dé-spikée + altitude lissée."""
     dmono = act.dist_m  # déjà monotone (schéma canonique)
@@ -97,13 +110,13 @@ def _adjusted_distance(act: CanonicalActivity, cfg: Config):
     grad = np.clip(grad, -cfg.course.grade_clip, cfg.course.grade_clip)
     f = grade_factor(grad, cfg.course.cr0, cap=cfg.twin.f_cap)
     dga = np.concatenate([[0.0], np.cumsum(f[:-1] * dd)])
-    return draw, dga, alts
+    return draw, dga, alts, alt_f
 
 
 def process_activity(act: CanonicalActivity, cfg: Config):
     """→ (:class:`ActivitySummary`, vga_par_durée, vraw_par_durée)."""
     durs = np.asarray(cfg.twin.record_durations_s, dtype=float)
-    draw, dga, alts = _adjusted_distance(act, cfg)
+    draw, dga, alts, alt_f = _adjusted_distance(act, cfg)
     tg = act.t
     n = act.n
 
@@ -116,7 +129,13 @@ def process_activity(act: CanonicalActivity, cfg: Config):
         vga[j] = np.nanmax((dga[T:] - dga[:-T]) / T)
         vraw[j] = np.nanmax((draw[T:] - draw[:-T]) / T)
 
-    da = np.diff(alts)
+    # D+ / D− : sur l'altitude lissée 5 s (historique) ou sur base de DISTANCE 150 m —
+    # cohérente avec le D+ du parcours, cf. C1 (le D+ étant une variation totale, l'échelle
+    # de lissage change la valeur ; β2 doit être appris et appliqué sur la MÊME échelle).
+    if cfg.twin.dplus_basis == "distance_150m" and act.has_altitude:
+        da = np.diff(_distance_smoothed_altitude(act.dist_m, alt_f, cfg.twin.dplus_smooth_window_m))
+    else:
+        da = np.diff(alts)
     dur = float(tg[-1])
 
     # masque « en mouvement » sur les incréments de distance (partagé par moving_time et le

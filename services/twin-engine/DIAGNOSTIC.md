@@ -267,3 +267,23 @@ multiplie tous les poids par un facteur commun, et la régression pondérée, la
 N_eff de Kish ((Σw)²/Σw²) sont invariants d'échelle. La staleness ne peut pas « démoter » la
 régression par ce biais — c'est le critère de fraîcheur qui porte le signal.
 
+### 9.6 Échelle du D+ : activités (5 s) vs parcours (150 m) (C1, `twin.dplus_basis`) — MESURE REQUISE
+
+**Constat.** Le D+ des activités vient d'une altitude lissée sur ~5 s (≈ 15–20 m de base à
+allure ultra), celui du parcours d'une fenêtre de 150 m. Le D+ étant une variation totale, il
+GONFLE quand l'échelle diminue (preuve synthétique : rampe 400 m + bruit blanc σ=1 m → D+@5s
+sur-lit de > 20 % là où D+@150m reste ~400 m). Conséquence : β2 est appris sur un axe D+/km
+gonflé puis appliqué à l'axe dégonflé du parcours — pénalité terrain trop douce, biais
+OPTIMISTE sur les parcours raides (aggravé par l'atténuation par erreur de mesure sur le
+régresseur). S'y ajoute une incohérence de convention de pente (activité : Δalt/Δdist-appareil
+≈ sinus ; parcours : Δalt/Δx horizontal = tangente — ~2 % sur i à 20 %).
+
+**Correctif (flag, mesure AVANT bascule).** `twin.dplus_basis=distance_150m` : altitude
+moyennée sur une base de distance (fenêtre `dplus_smooth_window_m`), analogue au profil de
+course. Défaut `time_5s` inchangé. ⚠ C'est un changement de *feature* : le fixture (agrégats)
+n'y voit RIEN — un A/B fixture inchangé n'est PAS une preuve (avertissement CLAUDE.md).
+Protocole : (1) mesurer sur l'archive réelle — `PYTHONPATH=src python -m tools.diag_dplus
+<archive>` (tableau D+@5s vs D+@150m par ultra + écart médian) ; (2) si écart ≳ +5 %, activer,
+RÉGÉNÉRER le fixture depuis l'archive (§8) et recapturer le golden réel ; (3) coller les
+chiffres ici.
+

@@ -281,6 +281,43 @@ def test_decouple_skip_start_ignores_warmup():
     assert d_full > 1.0 and d_skip < 0.5 and d_full > d_skip
 
 
+def test_dplus_distance_basis_matches_time_basis_on_clean_ramp():
+    """C1 : sur une rampe propre, les deux bases retrouvent le vrai D+ (validité du lissage)."""
+    n = 7200
+    dist = [2.0 * s for s in range(n + 1)]
+    alt = [100.0 + 400.0 * s / n for s in range(n + 1)]
+    act = CanonicalActivity.from_samples(
+        timestamps=list(range(n + 1)), dist_m=dist, speed_ms=[2.0] * (n + 1), alt_m=alt,
+        sport="running", source_format="fit", source_name="ramp",
+    )
+    s5, _, _ = process_activity(act, CFG)
+    cfg_d = replace(CFG, twin=replace(CFG.twin, dplus_basis="distance_150m"))
+    s150, _, _ = process_activity(act, cfg_d)
+    assert abs(s5.dplus_m - 400) < 10
+    assert abs(s150.dplus_m - 400) < 10
+
+
+def test_dplus_time_basis_inflates_on_noisy_altimetry():
+    """C1 : sur une altimétrie bruitée, le lissage 5 s gonfle le D+ (variation totale) alors
+    que la base distance 150 m — l'échelle du parcours — reste proche du vrai dénivelé.
+    C'est l'incohérence d'échelle entre le D+/km appris (activités) et appliqué (parcours)."""
+    rng = np.random.default_rng(0)
+    n = 7200
+    dist = [2.0 * s for s in range(n + 1)]
+    alt = (100.0 + np.linspace(0, 400, n + 1) + rng.normal(0, 1.0, n + 1)).tolist()
+    act = CanonicalActivity.from_samples(
+        timestamps=list(range(n + 1)), dist_m=dist, speed_ms=[2.0] * (n + 1), alt_m=alt,
+        sport="running", source_format="fit", source_name="noisy",
+    )
+    s5, _, _ = process_activity(act, CFG)
+    cfg_d = replace(CFG, twin=replace(CFG.twin, dplus_basis="distance_150m"))
+    s150, _, _ = process_activity(act, cfg_d)
+    assert s5.dplus_m > s150.dplus_m * 1.2          # l'échelle fine accumule le bruit
+    assert 380 < s150.dplus_m < 560                  # la base distance reste près du vrai 400 m
+    # le défaut (time_5s) reste le comportement historique
+    assert s5.dplus_m == process_activity(act, CFG)[0].dplus_m
+
+
 def test_failed_activity_is_counted_in_skipped():
     """C9d : une activité qui plante au traitement est COMPTÉE (processing_error), pas tue."""
     broken = CanonicalActivity(

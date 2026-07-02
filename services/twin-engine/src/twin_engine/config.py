@@ -86,6 +86,18 @@ class TwinParams:
     # ``decouple_skip_start_s`` ignore l'échauffement (dérive FC initiale) ; 0 = historique.
     decouple_basis: str = "elapsed"           # {elapsed, moving}
     decouple_skip_start_s: int = 0
+    # --- base du D+ des activités (revue C1) ------------------------------------------------
+    # Le D+ athlète (altitude lissée ~5 s ≈ 15-20 m de base à allure ultra) et le D+ parcours
+    # (fenêtre 150 m) ne sont PAS à la même échelle : le D+ est une variation totale, il gonfle
+    # quand la fenêtre diminue → β2 est APPRIS sur un axe D+/km gonflé puis APPLIQUÉ à l'axe
+    # dégonflé du parcours (pénalité terrain trop douce, biais optimiste sur parcours raides).
+    # ``time_5s`` = historique ; ``distance_150m`` = altitude moyennée sur une base de DISTANCE
+    # (fenêtre dplus_smooth_window_m), cohérente avec le parcours. ⚠ Changement de *feature* :
+    # INVISIBLE au fixture (agrégats) — mesurer d'abord sur archive réelle
+    # (PYTHONPATH=src python -m tools.diag_dplus <archive>), puis régénérer fixture + golden
+    # réel avant toute bascule (protocole CLAUDE.md / DIAGNOSTIC §9.6).
+    dplus_basis: str = "time_5s"              # {time_5s, distance_150m}
+    dplus_smooth_window_m: float = 150.0
 
 
 @dataclass(frozen=True)
