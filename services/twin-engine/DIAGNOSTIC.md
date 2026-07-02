@@ -171,7 +171,9 @@ l'enveloppe **propre** de l'athlète (fittée sur ses données courtes).
 Scanner toutes les `.fit`, garder `is_running and duration_s ≥ 9,5 h`, sérialiser
 `process_activity(...).to_dict()`, et stocker l'enveloppe fittée (`fit_endurance_exponent`) dans
 `_meta.athlete_envelope`. **Non requis pour corriger.**
-## 9. Revue 2026-07 — l'intervalle voit enfin le levier d'extrapolation (C3)
+## 9. Revue 2026-07 — correctifs (chacun derrière un flag, cf. docs/twin-review-2026-07.md)
+
+### 9.1 L'intervalle voit enfin le levier d'extrapolation (C3, `prediction.mc_mode`)
 
 **Constat.** Le Monte-Carlo historique (`mc_mode=sigma_only`) ne propage que le bruit résiduel
 σ : l'intervalle ne voit ni l'**incertitude des coefficients β** (terme de levier
@@ -201,3 +203,18 @@ levier réel. **Avant de basculer le défaut** : (a) vérifier le golden réel (
 interpolée → élargissement attendu faible) ; (b) décider des seuils `interval_rel_width_*`
 (ici 0,52 > 0,5 → le critère largeur passerait 🟠 à lui seul — c'est le comportement
 recherché, mais à assumer explicitement).
+
+### 9.2 Temps de mouvement mesuré sur la distance (C2, corrige le mode `speed_basis=moving`)
+
+**Constat (aggrave H2).** `moving_time_s` comptait les secondes où le CANAL VITESSE dépasse le
+seuil — or ce canal est interpolé à travers les trous d'enregistrement : pendant une pause de
+montre entre deux échantillons à ~3 m/s, la vitesse interpolée reste ~3 m/s alors que la
+distance fait un plateau. Les pauses passaient donc pour du mouvement, et le mode
+`speed_basis=moving` (correctif H2) était structurellement émoussé.
+
+**Correctif.** Comptage sur les incréments de distance à 1 Hz (`diff(dist_m) > seuil·Δt`) —
+cohérent avec la base distance de toute la chaîne. Preuve : test synthétique (10 min de course,
+30 min de pause, 10 min de course) → moving ≈ 1 200 s là où l'ancien comptage donnait ~3 000 s.
+Ne change RIEN au défaut (`speed_basis=elapsed` : moving_time_s est un descripteur) ; H2 devient
+réellement vérifiable sur archive.
+

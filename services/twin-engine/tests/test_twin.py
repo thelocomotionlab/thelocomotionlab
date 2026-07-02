@@ -225,6 +225,27 @@ def test_vc_short_effort_floor_excludes_short_durations():
     assert cs_floor is not None and cs_floor.n_points == len(durs_floor)
 
 
+def test_moving_time_ignores_watch_pauses():
+    """C2/H2 : une pause de montre (trou d'enregistrement) n'est PAS du temps en mouvement.
+
+    Le canal vitesse est interpolé à travers le trou (reste ~3 m/s pendant la pause) : compté
+    dessus, moving_time incluait la pause. Compté sur la distance (plateau), il l'exclut."""
+    t1 = list(range(0, 600))                                # 10 min de course
+    t2 = list(range(2400, 3001))                            # pause 30 min, puis 10 min
+    ts = t1 + t2
+    dist = [3.0 * s for s in t1] + [3.0 * 599 + 3.0 * (s - 2400) for s in t2]
+    act = CanonicalActivity.from_samples(
+        timestamps=ts, dist_m=dist, speed_ms=[3.0] * len(ts), alt_m=[100.0] * len(ts),
+        sport="running", source_format="fit", source_name="pause",
+    )
+    summary, _, _ = process_activity(act, CFG)
+    assert summary.duration_s >= 2900                       # l'écoulé inclut la pause
+    assert summary.moving_time_s is not None
+    assert summary.moving_time_s < 1300                     # ~20 min de course réelle
+    # l'ancien comptage (canal vitesse interpolé) aurait donné ~3000 s
+    assert float(np.count_nonzero(act.speed_ms > CFG.twin.moving_speed_threshold_ms)) > 2900
+
+
 def test_failed_activity_is_counted_in_skipped():
     """C9d : une activité qui plante au traitement est COMPTÉE (processing_error), pas tue."""
     broken = CanonicalActivity(

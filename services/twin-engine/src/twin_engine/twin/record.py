@@ -134,12 +134,15 @@ def process_activity(act: CanonicalActivity, cfg: Config):
     has_hr = bool(np.isfinite(hr).any())
     avhr = float(np.nanmean(hr)) if has_hr else float("nan")
 
-    # temps en mouvement (§4.4) : secondes où la vitesse dépasse le seuil (échantillonné à 1 Hz).
-    # Sert au mode ``speed_basis=moving`` (ne pas diluer l'allure d'ultra avec les longs arrêts).
-    speed = act.speed_ms
+    # temps en mouvement (§4.4) : compté sur les INCRÉMENTS DE DISTANCE à 1 Hz, pas sur le
+    # canal vitesse — celui-ci est interpolé À TRAVERS les pauses de montre (entre deux
+    # échantillons à ~3 m/s, la vitesse interpolée reste ~3 m/s pendant toute la pause, alors
+    # que la distance fait un plateau) : compté sur la vitesse, une pause passait pour du
+    # mouvement et émoussait le mode ``speed_basis=moving`` (H2, revue C2).
+    dd_raw = np.diff(act.dist_m)
     moving_time_s = (
-        float(np.count_nonzero(speed > cfg.twin.moving_speed_threshold_ms))
-        if speed is not None and speed.size else None
+        float(np.count_nonzero(dd_raw > cfg.twin.moving_speed_threshold_ms))
+        if dd_raw.size else None
     )
 
     summary = ActivitySummary(
