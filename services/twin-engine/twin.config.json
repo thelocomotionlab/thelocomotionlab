@@ -92,7 +92,9 @@
     "interval_rel_width_green": 0.5,
     "interval_rel_width_orange": 1.0,
     "cv_missing_policy": "cap_orange",
-    "long_effort_min_ga_fraction": 0.5
+    "long_effort_min_ga_fraction": 0.5,
+    "freshness_days_green": 30.0,
+    "freshness_days_orange": 90.0
   },
 
   "narrative": {

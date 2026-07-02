@@ -221,6 +221,16 @@ class SufficiencyParams:
     #   on prévient. ``ignore`` = ancien comportement (le critère absent n'entrait pas au verdict,
     #   un athlète sans AUCUNE validation pouvait sortir 🟢).
     cv_missing_policy: str = "cap_orange"                # {cap_orange, ignore}
+    # --- fraîcheur des données (revue C8) -----------------------------------------------------
+    # Jours entre la DERNIÈRE activité datée et la date d'analyse. Aucun critère ne portait le
+    # garde-fou « forme du jour inconnue » (twin-theory §2.7/§9) : une archive s'arrêtant il y a
+    # 8 mois pouvait être 🟢 partout (« Historique » mesure l'étendue, pas la fraîcheur).
+    # Évalué seulement quand la date d'analyse est connue (pipeline : date du jour) ; ≤ 0 désactive.
+    # NB : ancrer la PONDÉRATION de récence sur la date d'analyse serait inerte (facteur commun
+    # sur tous les poids — régression, σ et N_eff de Kish invariants d'échelle) : la fraîcheur
+    # se juge ici, pas dans les poids.
+    freshness_days_green: float = 30.0
+    freshness_days_orange: float = 90.0
     # « efforts longs proches de la cible » : un enregistrement-artefact (montre laissée tourner
     # 12 h à ~1 km/h) ne doit pas compter. Plancher d'allure ajustée = cette fraction du seuil
     # « vrai ultra » (calibration.genuine_min_ga_kmh) — 0 restaure l'ancien comportement.

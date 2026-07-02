@@ -10,7 +10,7 @@ chaînage commun et la suppression des archives brutes.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 from .calibration import UltraCalibration, build_calibration
@@ -60,12 +60,18 @@ def analyze_preview(
     cfg: Config,
     *,
     n_skipped: int = 0,
+    analysis_date: date | None = None,
 ) -> PreviewResult:
-    """Chaîne numérique complète (sans figures/PDF) → verdict + fourchette."""
+    """Chaîne numérique complète (sans figures/PDF) → verdict + fourchette.
+
+    ``analysis_date`` alimente le critère de fraîcheur (défaut : date du jour —
+    injectable pour un replay/test déterministe)."""
     twin = build_twin(activities, cfg)
     calibration = build_calibration(twin, cfg)
     prediction = predict_race(course, twin, calibration, cfg)
-    sufficiency = assess_sufficiency(twin, calibration, prediction, cfg)
+    sufficiency = assess_sufficiency(
+        twin, calibration, prediction, cfg, analysis_date=analysis_date or date.today()
+    )
     return PreviewResult(
         sufficiency=sufficiency,
         prediction=prediction,
@@ -122,13 +128,15 @@ def analyze_full(
     report_version: str = "v1.0",
     report_date: datetime | None = None,
     render_pdf: bool = True,
+    analysis_date: date | None = None,
 ) -> FullResult:
     """Chaîne complète jusqu'au PDF (pacing + figures + rapport LaTeX).
 
     Import paresseux du module report (matplotlib/jinja) : la profondeur preview ne le
     charge pas. Si la prédiction est impossible (🔴), on s'arrête au preview sans PDF.
     """
-    preview = analyze_preview(activities, course, cfg, n_skipped=n_skipped)
+    preview = analyze_preview(activities, course, cfg, n_skipped=n_skipped,
+                              analysis_date=analysis_date)
     if preview.prediction is None:
         return FullResult(preview=preview, plan=None, pdf_path=None, figures={})  # type: ignore[arg-type]
 

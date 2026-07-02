@@ -250,3 +250,20 @@ standard des études de découplage). Défauts `elapsed`/0 = calcul historique �
 bascule (durabilité attendue en BAISSE chez les athlètes qui s'arrêtent longtemps — donc fade
 moins pessimiste — sans toucher les vrais « diesels »).
 
+### 9.5 Fraîcheur des données (C8, critère de suffisance)
+
+**Constat.** « Historique » mesure l'ÉTENDUE (première → dernière activité), pas la fraîcheur :
+une archive s'arrêtant 8 mois avant l'analyse pouvait être 🟢 partout, alors que la prédiction
+suppose la forme du moment (garde-fou twin-theory §2.7/§9, jusqu'ici purement déclaratif).
+
+**Correctif.** Nouveau critère « Fraîcheur des données » = jours entre la dernière activité
+datée et la date d'analyse (le pipeline passe la date du jour, injectable pour replay/test).
+Seuils `freshness_days_green/orange` (30/90 j, ≤ 0 désactive). Activités non datées → critère
+non évalué + raison « recalcul recommandé ».
+
+**Piste examinée et REJETÉE (à ne pas re-tenter).** Ancrer la PONDÉRATION de récence sur la
+date d'analyse plutôt que sur le dernier ultra est mathématiquement INERTE : changer l'ancre
+multiplie tous les poids par un facteur commun, et la régression pondérée, la σ pondérée et le
+N_eff de Kish ((Σw)²/Σw²) sont invariants d'échelle. La staleness ne peut pas « démoter » la
+régression par ce biais — c'est le critère de fraîcheur qui porte le signal.
+

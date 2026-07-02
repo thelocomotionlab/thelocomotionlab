@@ -47,6 +47,9 @@ def test_analyze_preview_structure():
     assert d["twin"]["vc_kmh"] is not None
     assert d["course"]["deq_km"] > d["course"]["length_km"]
     assert d["ingestion"]["ingested"] == 3
+    # C8 : le pipeline évalue la fraîcheur (ici activités non datées → « non évaluable »)
+    names = [c["name"] for c in d["sufficiency"]["criteria"]]
+    assert "Fraîcheur des données" in names
 
 
 def test_run_preview_purges_archive(tmp_path):

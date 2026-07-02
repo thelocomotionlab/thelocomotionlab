@@ -145,6 +145,42 @@ def test_long_efforts_exclude_recording_artifacts():
 
 
 # --------------------------------------------------------------------------- #
+# C8 : fraîcheur des données (l'« Historique » mesure l'étendue, pas la fraîcheur)
+# --------------------------------------------------------------------------- #
+def test_freshness_criterion_flags_stale_archive():
+    from datetime import date as _date
+
+    summaries = [_run(int(i * 210 / 130), 3600) for i in range(130)]
+    summaries += [_ultra(d, h, dpk) for d, (h, dpk) in
+                  zip((20, 80, 140, 200), [(12, 50), (20, 55), (16, 45), (24, 53)])]
+    twin = _twin(summaries)
+    cal = build_calibration(twin, CFG)
+    pred = predict_finish(200.0, 53.0, twin, cal, CFG)
+
+    # données fraîches (11 j) → critère 🟢, verdict global 🟢 conservé
+    suf_fresh = assess_sufficiency(twin, cal, pred, CFG,
+                                   analysis_date=_date(2025, 8, 10))
+    crit = next(c for c in suf_fresh.criteria if "Fraîcheur" in c.name)
+    assert crit.level == GREEN and suf_fresh.verdict == GREEN
+
+    # archive s'arrêtant ~5 mois avant l'analyse → 🔴 (la forme du moment est inconnue)
+    suf_stale = assess_sufficiency(twin, cal, pred, CFG,
+                                   analysis_date=_date(2026, 1, 1))
+    crit = next(c for c in suf_stale.criteria if "Fraîcheur" in c.name)
+    assert crit.level == RED and suf_stale.verdict == RED
+
+    # sans date d'analyse (appel direct, compat) : critère absent, comportement historique
+    suf_none = assess_sufficiency(twin, cal, pred, CFG)
+    assert all("Fraîcheur" not in c.name for c in suf_none.criteria)
+
+    # seuils ≤ 0 → désactivé même avec date
+    from dataclasses import replace as _replace
+    cfg_off = _replace(CFG, sufficiency=_replace(CFG.sufficiency, freshness_days_green=0.0))
+    suf_off = assess_sufficiency(twin, cal, pred, cfg_off, analysis_date=_date(2026, 1, 1))
+    assert all("Fraîcheur" not in c.name for c in suf_off.criteria)
+
+
+# --------------------------------------------------------------------------- #
 # T5 : la qualité mesure aussi la fraction d'activités AVEC altitude
 # --------------------------------------------------------------------------- #
 def test_quality_degrades_when_altitude_missing():

@@ -51,7 +51,7 @@ class Sufficiency:
         }
 
 
-def _history_months(summaries) -> float:
+def _parsed_dates(summaries) -> list[date]:
     dates = []
     for s in summaries:
         if s.date:
@@ -59,6 +59,11 @@ def _history_months(summaries) -> float:
                 dates.append(date.fromisoformat(s.date))
             except ValueError:
                 pass
+    return dates
+
+
+def _history_months(summaries) -> float:
+    dates = _parsed_dates(summaries)
     if len(dates) < 2:
         return 0.0
     return (max(dates) - min(dates)).days / 30.44
@@ -77,6 +82,8 @@ def assess_sufficiency(
     calibration: UltraCalibration,
     prediction: Prediction | None,
     cfg: Config,
+    *,
+    analysis_date: date | None = None,
 ) -> Sufficiency:
     s = cfg.sufficiency
     summaries = twin.summaries
@@ -93,6 +100,30 @@ def assess_sufficiency(
             f"{months:.1f} mois de données",
         )
     )
+
+    # 1b) Fraîcheur (revue C8) : « Historique » mesure l'ÉTENDUE, pas la fraîcheur — une
+    #     archive s'arrêtant il y a 8 mois pouvait être 🟢 partout alors que la prédiction
+    #     suppose la forme du moment (twin-theory §2.7/§9). Évalué quand la date d'analyse
+    #     est connue (le pipeline passe la date du jour) ; seuils ≤ 0 → désactivé.
+    if analysis_date is not None and s.freshness_days_green > 0:
+        dates = _parsed_dates(summaries)
+        if dates:
+            gap_days = (analysis_date - max(dates)).days
+            criteria.append(
+                Criterion(
+                    "Fraîcheur des données",
+                    _lower_is_better(gap_days, s.freshness_days_green, s.freshness_days_orange),
+                    gap_days,
+                    f"dernière activité il y a {gap_days} j (analyse du {analysis_date.isoformat()})",
+                )
+            )
+        else:
+            criteria.append(
+                Criterion("Fraîcheur des données", None, None,
+                          "activités non datées → fraîcheur non évaluable")
+            )
+            reasons.append("Fraîcheur inconnue (activités non datées) : recalcul recommandé "
+                           "à l'approche de la course.")
 
     # 2) Courses exploitables
     usable = len(summaries)
