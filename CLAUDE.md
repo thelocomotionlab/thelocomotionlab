@@ -97,3 +97,26 @@ thelocomotionlab/
 la pente le long du parcours (Minetti → distance équivalente), prédit un temps d'arrivée **validé par
 validation croisée sur les propres courses de l'athlète**, et produit un **plan de pacing par segment
 avec fenêtres horaires**. La méthode complète est dans `docs/twin-theory.md`.
+
+
+## Protocole de changement du moteur (services/twin-engine)
+
+Le moteur est validé empiriquement — tout changement suit ce protocole :
+
+- **Golden intact ou re-capturé.** Les tests déterministes committés (`test_golden.py`,
+  `test_twin.py`, `test_config.py`, `test_montagnhard_robustness.py`) restent verts. Le golden
+  RÉEL Nice (`pytest -k nice`, archive réelle via `TWIN_NICE_ARCHIVE`/`TWIN_NICE_GPX`) ne tourne
+  QUE chez Valentin ; s'il sort de ses tolérances, on ARRÊTE et on décide de re-capturer les
+  références (twin-theory §12), on ne les « force » pas.
+- **Tout changement de comportement passe derrière un flag de config** (défaut = comportement
+  actuel), comme `maximality_mode`/`terrain_term`. Aucune constante ni chemin en dur.
+- **Preuve obligatoire avant merge** : `pytest` (suite committée) + `PYTHONPATH=src python -m
+  tools.ab_montagnhard` (tableau σ/MAE/interp/extrap). On colle les chiffres réels, on ne les
+  suppose jamais.
+- **Le fixture `genuine_ultras_montagnhard.fixture.json` ne contient QUE des agrégats dérivés**
+  (pas de trace brute). Un changement qui touche le calcul des *features* (D+, vga…) est INVISIBLE
+  au fixture : son effet réel ne se mesure qu'en regénérant le fixture depuis l'archive réelle
+  (Valentin, DIAGNOSTIC §8) ou via le golden réel. Ne jamais présenter un A/B inchangé comme
+  « preuve que le correctif marche » dans ce cas.
+- **`DIAGNOSTIC.md` est le carnet de labo** : chaque correctif y est consigné avec sa preuve A/B ;
+  une approche testée et écartée y est documentée avec sa raison (à ne pas re-tenter).
