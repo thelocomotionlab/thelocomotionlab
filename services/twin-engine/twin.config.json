@@ -83,6 +83,8 @@
     "quality_orange_frac": 0.15,
     "gate_policy": "honest",
     "interval_rel_width_green": 0.5,
-    "interval_rel_width_orange": 1.0
+    "interval_rel_width_orange": 1.0,
+    "cv_missing_policy": "cap_orange",
+    "long_effort_min_ga_fraction": 0.5
   }
 }

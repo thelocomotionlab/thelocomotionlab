@@ -30,13 +30,13 @@ def _run(day_offset, dur_s, *, hr=True):
     )
 
 
-def _ultra(day_offset, hours, dpk):
+def _ultra(day_offset, hours, dpk, *, decouple=18):
     dur = hours * 3600
     dist_km = _plane(hours, dpk) * hours / 1.2
     return ActivitySummary(
         date=(D0 + timedelta(days=day_offset)).isoformat(), sport="running", duration_s=dur,
         dist_km=dist_km, ga_km=_plane(hours, dpk) * hours, avg_hr=140,
-        dplus_m=dpk * dist_km, dminus_m=dpk * dist_km, decouple_pct=18, has_hr=True,
+        dplus_m=dpk * dist_km, dminus_m=dpk * dist_km, decouple_pct=decouple, has_hr=True,
     )
 
 
@@ -94,3 +94,80 @@ def test_reasons_explain_verdict():
     suf, _ = _assess([_run(i, 3600) for i in range(30)])
     assert suf.reasons  # le « pourquoi » est renseigné
     assert any("ne vend pas" in r for r in suf.reasons)
+
+
+# --------------------------------------------------------------------------- #
+# T4 : CV incalculable → verdict plafonné à 🟠 (jamais 🟢 sans indice de confiance)
+# --------------------------------------------------------------------------- #
+def _all_green_but_no_cv():
+    """1 seul vrai ultra (→ blend, CV incalculable) mais TOUT le reste 🟢."""
+    summaries = [_run(int(i * 210 / 130), 3600) for i in range(130)]   # 130 sorties / ~7 mois
+    summaries.append(_ultra(60, 20, 52))                               # l'unique vrai ultra
+    summaries.append(_ultra(80, 16, 50, decouple=35))                  # long mais découplé (pas « vrai »)
+    return summaries
+
+
+def test_cv_missing_caps_verdict_at_orange():
+    suf, pred = _assess(_all_green_but_no_cv())
+    assert pred is not None and pred.cross_validation is None       # blend → pas de LOO
+    others = [c for c in suf.criteria if "validation" not in c.name and c.level is not None]
+    assert all(c.level == GREEN for c in others), [c.to_dict() for c in others]
+    assert suf.verdict == ORANGE and suf.sellable                    # plafonné, mais vendable
+    assert any("plafonné" in r for r in suf.reasons)
+
+
+def test_cv_missing_policy_ignore_restores_old_behaviour():
+    from dataclasses import replace
+
+    cfg = replace(CFG, sufficiency=replace(CFG.sufficiency, cv_missing_policy="ignore"))
+    twin = _twin(_all_green_but_no_cv())
+    cal = build_calibration(twin, cfg)
+    pred = predict_finish(200.0, 53.0, twin, cal, cfg)
+    suf = assess_sufficiency(twin, cal, pred, cfg)
+    assert suf.verdict == GREEN                                      # ancien comportement
+
+
+# --------------------------------------------------------------------------- #
+# C9c : les artefacts d'enregistrement ne comptent pas comme « efforts longs »
+# --------------------------------------------------------------------------- #
+def test_long_efforts_exclude_recording_artifacts():
+    summaries = _all_green_but_no_cv()
+    # 3 « montres laissées tourner » : 12 h à ~1,2 km/h ajusté
+    for d in (10, 30, 50):
+        summaries.append(ActivitySummary(
+            date=(D0 + timedelta(days=d)).isoformat(), sport="running", duration_s=12 * 3600,
+            dist_km=15, ga_km=15, avg_hr=None, dplus_m=50, dminus_m=50,
+            decouple_pct=None, has_hr=False,
+        ))
+    suf, _ = _assess(summaries)
+    crit = next(c for c in suf.criteria if "longs" in c.name)
+    assert crit.value == 2                                           # les 2 vrais longs, pas 5
+
+
+# --------------------------------------------------------------------------- #
+# T5 : la qualité mesure aussi la fraction d'activités AVEC altitude
+# --------------------------------------------------------------------------- #
+def test_quality_degrades_when_altitude_missing():
+    def _run_alt(day, has_altitude):
+        return ActivitySummary(
+            date=(D0 + timedelta(days=day)).isoformat(), sport="running", duration_s=3600,
+            dist_km=10, ga_km=10, avg_hr=140, dplus_m=200, dminus_m=200,
+            decouple_pct=15, has_hr=True, has_altitude=has_altitude,
+        )
+
+    # 90 % des activités SANS altitude → qualité 🔴 malgré la FC partout
+    summaries = [_run_alt(i, i % 10 == 0) for i in range(60)]
+    summaries += [_ultra(d, h, dpk) for d, (h, dpk) in
+                  zip((20, 80, 140, 200), [(12, 50), (20, 55), (16, 45), (24, 53)])]
+    suf, _ = _assess(summaries)
+    crit = next(c for c in suf.criteria if "Qualité" in c.name)
+    assert crit.level == RED
+    assert "altitude" in crit.detail
+
+    # altitude partout → 🟢 (et le détail l'affiche)
+    summaries_ok = [_run_alt(i, True) for i in range(60)]
+    summaries_ok += [_ultra(d, h, dpk) for d, (h, dpk) in
+                     zip((20, 80, 140, 200), [(12, 50), (20, 55), (16, 45), (24, 53)])]
+    suf_ok, _ = _assess(summaries_ok)
+    crit_ok = next(c for c in suf_ok.criteria if "Qualité" in c.name)
+    assert crit_ok.level == GREEN

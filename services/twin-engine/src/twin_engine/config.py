@@ -160,6 +160,16 @@ class SufficiencyParams:
     gate_policy: str = "honest"                          # {strict, honest}
     interval_rel_width_green: float = 0.5                # (haut−bas)/central ≤ → 🟢 (honest)
     interval_rel_width_orange: float = 1.0               # ≤ → 🟠, au-delà → 🔴 (honest)
+    # --- CV incalculable (régimes blend/vc_e) : jamais 🟢 sans indice de confiance ------------
+    # ``cap_orange`` (défaut, réconcilie twin-theory §3 « 1–2 ultras → souvent 🟠 » et §10) :
+    #   le verdict est plafonné à 🟠 quand la validation croisée n'est pas calculable — on vend,
+    #   on prévient. ``ignore`` = ancien comportement (le critère absent n'entrait pas au verdict,
+    #   un athlète sans AUCUNE validation pouvait sortir 🟢).
+    cv_missing_policy: str = "cap_orange"                # {cap_orange, ignore}
+    # « efforts longs proches de la cible » : un enregistrement-artefact (montre laissée tourner
+    # 12 h à ~1 km/h) ne doit pas compter. Plancher d'allure ajustée = cette fraction du seuil
+    # « vrai ultra » (calibration.genuine_min_ga_kmh) — 0 restaure l'ancien comportement.
+    long_effort_min_ga_fraction: float = 0.5
 
 
 @dataclass(frozen=True)

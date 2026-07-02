@@ -105,11 +105,21 @@ def assess_sufficiency(
         )
     )
 
-    # 3) Efforts longs proches de la cible
+    # 3) Efforts longs proches de la cible — avec un plancher d'allure ajustée : une montre
+    #    laissée en enregistrement (12 h à ~1 km/h) n'est PAS un effort long exploitable.
     if prediction is not None:
         threshold_s = s.long_effort_min_fraction * prediction.finish_hours * 3600
-        longs = sum(1 for a in summaries if a.duration_s >= threshold_s)
-        long_detail = f"{longs} efforts ≥ {threshold_s / 3600:.0f} h (≈ moitié de la cible)"
+        ga_floor_kmh = cfg.calibration.genuine_min_ga_kmh * s.long_effort_min_ga_fraction
+        longs = sum(
+            1
+            for a in summaries
+            if a.duration_s >= threshold_s
+            and (a.ga_km / (a.duration_s / 3600.0)) >= ga_floor_kmh
+        )
+        long_detail = (
+            f"{longs} efforts ≥ {threshold_s / 3600:.0f} h "
+            f"(≈ moitié de la cible, allure ajustée ≥ {ga_floor_kmh:.1f} km/h)"
+        )
     else:
         longs = calibration.n_genuine
         long_detail = f"{longs} vrais ultras (cible non prédite)"
@@ -122,15 +132,29 @@ def assess_sufficiency(
         )
     )
 
-    # 4) Qualité (FC majoritaire — la durabilité en dépend)
+    # 4) Qualité = pire des fractions FC ET altitude (twin-theory §10 promet les deux) :
+    #    la durabilité dépend de la FC, mais la courbe record (donc VC/E) et la vitesse
+    #    ajustée de la calibration dépendent de l'ALTITUDE — plus critique encore.
+    #    (has_altitude=None = agrégats anciens sans ce champ → repli FC seule.)
     frac_hr = (sum(1 for a in summaries if a.has_hr) / len(summaries)) if summaries else 0.0
-    criteria.append(
-        Criterion(
-            "Qualité (FC / altitude / distance)",
-            _higher_is_better(frac_hr, s.quality_green_frac, s.quality_orange_frac),
-            round(frac_hr, 2),
-            f"{frac_hr * 100:.0f}% des activités avec FC",
+    alt_known = [a for a in summaries if getattr(a, "has_altitude", None) is not None]
+    frac_alt = (
+        sum(1 for a in alt_known if a.has_altitude) / len(alt_known) if alt_known else None
+    )
+    lvl_hr = _higher_is_better(frac_hr, s.quality_green_frac, s.quality_orange_frac)
+    if frac_alt is None:
+        quality_level, quality_value = lvl_hr, round(frac_hr, 2)
+        quality_detail = f"{frac_hr * 100:.0f}% des activités avec FC (altitude non renseignée)"
+    else:
+        lvl_alt = _higher_is_better(frac_alt, s.quality_green_frac, s.quality_orange_frac)
+        quality_level = min((lvl_hr, lvl_alt), key=lambda lv: _RANK[lv])
+        quality_value = round(min(frac_hr, frac_alt), 2)
+        quality_detail = (
+            f"{frac_hr * 100:.0f}% des activités avec FC · "
+            f"{frac_alt * 100:.0f}% avec altitude (ajustement pente)"
         )
+    criteria.append(
+        Criterion("Qualité (FC / altitude / distance)", quality_level, quality_value, quality_detail)
     )
 
     # 5) Erreur de validation croisée (indice de confiance)
@@ -174,6 +198,14 @@ def assess_sufficiency(
     else:
         evaluated = [c.level for c in criteria if c.level is not None]
         verdict = min(evaluated, key=lambda lv: _RANK[lv]) if evaluated else RED
+        # CV incalculable → jamais 🟢 : le 🟢 est l'engagement de confiance, et l'indice de
+        # confiance (LOO) est précisément ce qui manque. On vend quand même (🟠), on prévient.
+        if cv is None and s.cv_missing_policy == "cap_orange" and verdict == GREEN:
+            verdict = ORANGE
+            reasons.append(
+                "Verdict plafonné à 🟠 : sans validation croisée possible (moins de 3 vrais "
+                "ultras), la fiabilité de la prédiction ne peut pas être établie sur tes courses."
+            )
 
     if verdict == GREEN:
         reasons.append("Données suffisantes pour un rapport complet.")

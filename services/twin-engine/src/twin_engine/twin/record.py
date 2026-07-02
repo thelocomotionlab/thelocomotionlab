@@ -40,6 +40,7 @@ class ActivitySummary:
     decouple_pct: float | None
     has_hr: bool
     moving_time_s: float | None = None   # temps en mouvement (§4.4) ; None si non mesurable
+    has_altitude: bool | None = None     # None = inconnu (vieux agrégats sérialisés sans ce champ)
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -153,6 +154,7 @@ def process_activity(act: CanonicalActivity, cfg: Config):
         decouple_pct=None if decouple is None else round(decouple, 2),
         has_hr=has_hr,
         moving_time_s=moving_time_s,
+        has_altitude=act.has_altitude,
     )
     return summary, vga, vraw
 
