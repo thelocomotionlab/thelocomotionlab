@@ -78,6 +78,14 @@ class TwinParams:
     endurance_window_s: tuple[int, int] = (1800, 21600)
     decouple_min_duration_s: int = 4500       # durée min pour CALCULER le découplage
     durability_min_hours: float = 10.0        # durabilité reportée sur les efforts longs (ultras)
+    # --- base du découplage (revue C7) ------------------------------------------------------
+    # ``elapsed`` (défaut historique) : moyennes sur TOUTES les secondes, arrêts compris — les
+    #   ravitos (v≈0, FC>60) plombent l'efficacité de la moitié qui les contient (la 2e en
+    #   ultra) : le découplage mesure alors en partie l'ARRÊT, pas l'usure physiologique.
+    # ``moving`` : seuls les échantillons en mouvement comptent (même seuil que moving_time).
+    # ``decouple_skip_start_s`` ignore l'échauffement (dérive FC initiale) ; 0 = historique.
+    decouple_basis: str = "elapsed"           # {elapsed, moving}
+    decouple_skip_start_s: int = 0
 
 
 @dataclass(frozen=True)

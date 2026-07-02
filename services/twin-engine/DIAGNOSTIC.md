@@ -234,3 +234,19 @@ tracé (`PacingPlan.fade_delta_used`) et le rapport en dérive son « −X % » 
 `config` inchangé ; pour le cas de référence (X≈21 %), activer donnerait Δ≈0,117 (−21 % de
 dérive affichée au lieu de −15,7 %) — à valider sur le plan Nice avant bascule.
 
+### 9.4 Découplage : base « en mouvement » + échauffement ignorable (C7, `twin.decouple_basis`)
+
+**Constat.** Le découplage (→ durabilité → fade si 9.3 activé) se calculait sur des moitiés de
+temps ÉCOULÉ : pendant un arrêt (ravito, pause), v≈0 avec FC>60 → efficacité ~0 comptée dans la
+moitié qui contient l'arrêt — la 2e en ultra. Le « découplage » mesurait donc en partie le
+comportement d'ARRÊT, pas l'usure physiologique (preuve synthétique : course régulière à FC
+constante + 20 min d'arrêt en 2e moitié → découplage ~29 % en elapsed, ~0 % en moving). De
+plus, la dérive FC d'échauffement gonflait e1.
+
+**Correctif (flags).** `decouple_basis=moving` (seuls les échantillons en mouvement comptent,
+même masque distance que 9.2) + `decouple_skip_start_s` (ignorer l'échauffement, pratique
+standard des études de découplage). Défauts `elapsed`/0 = calcul historique à l'identique.
+⚠ Effet réel invisible au fixture (agrégats) : à mesurer sur archive réelle avant toute
+bascule (durabilité attendue en BAISSE chez les athlètes qui s'arrêtent longtemps — donc fade
+moins pessimiste — sans toucher les vrais « diesels »).
+

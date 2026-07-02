@@ -119,15 +119,31 @@ def process_activity(act: CanonicalActivity, cfg: Config):
     da = np.diff(alts)
     dur = float(tg[-1])
 
+    # masque « en mouvement » sur les incréments de distance (partagé par moving_time et le
+    # découplage en base moving) — le canal vitesse, interpolé à travers les pauses, ment (C2)
+    dd_raw = np.diff(act.dist_m)
+    moving_mask = np.concatenate([[False], dd_raw > cfg.twin.moving_speed_threshold_ms])
+
     # découplage (durabilité) : nécessite la FC ; sinon None → signalé en aval
     decouple = None
     hr = act.hr
     if dur >= cfg.twin.decouple_min_duration_s and np.isfinite(hr).any():
         sp = np.gradient(dga, tg)
         half = n // 2
+        # base configurable (C7) : en ``elapsed`` (défaut) toutes les secondes comptent —
+        # identique au calcul historique ; en ``moving`` les arrêts (ravitos : v≈0, FC>60)
+        # ne plombent plus la moitié qui les contient. skip_start ignore l'échauffement.
+        valid = np.ones(n, dtype=bool)
+        skip = int(cfg.twin.decouple_skip_start_s)
+        if skip > 0:
+            valid[: min(skip, n)] = False
+        if cfg.twin.decouple_basis == "moving":
+            valid &= moving_mask
         with np.errstate(all="ignore"):
-            e1 = np.nanmean(sp[:half] / np.where(hr[:half] > 60, hr[:half], np.nan))
-            e2 = np.nanmean(sp[half:] / np.where(hr[half:] > 60, hr[half:], np.nan))
+            eff = sp / np.where(hr > 60, hr, np.nan)
+            eff = np.where(valid, eff, np.nan)
+            e1 = np.nanmean(eff[:half]) if np.isfinite(eff[:half]).any() else np.nan
+            e2 = np.nanmean(eff[half:]) if np.isfinite(eff[half:]).any() else np.nan
         if np.isfinite(e1) and e1 > 0 and np.isfinite(e2):
             decouple = float((e1 - e2) / e1 * 100)
 
@@ -139,11 +155,7 @@ def process_activity(act: CanonicalActivity, cfg: Config):
     # échantillons à ~3 m/s, la vitesse interpolée reste ~3 m/s pendant toute la pause, alors
     # que la distance fait un plateau) : compté sur la vitesse, une pause passait pour du
     # mouvement et émoussait le mode ``speed_basis=moving`` (H2, revue C2).
-    dd_raw = np.diff(act.dist_m)
-    moving_time_s = (
-        float(np.count_nonzero(dd_raw > cfg.twin.moving_speed_threshold_ms))
-        if dd_raw.size else None
-    )
+    moving_time_s = float(np.count_nonzero(moving_mask)) if dd_raw.size else None
 
     summary = ActivitySummary(
         date=act.start_time.date().isoformat() if act.start_time else None,

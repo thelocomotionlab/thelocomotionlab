@@ -246,6 +246,41 @@ def test_moving_time_ignores_watch_pauses():
     assert float(np.count_nonzero(act.speed_ms > CFG.twin.moving_speed_threshold_ms)) > 2900
 
 
+def _run_with_stop(n=7200, stop=(5000, 6200)):
+    """2 h de course régulière (FC constante) avec un long arrêt en 2e moitié."""
+    v = np.full(n + 1, 3.0)
+    v[stop[0]:stop[1]] = 0.0
+    dist = np.concatenate([[0.0], np.cumsum(v[1:])])
+    return CanonicalActivity.from_samples(
+        timestamps=list(range(n + 1)), dist_m=dist.tolist(), speed_ms=v.tolist(),
+        hr=[140.0] * (n + 1), alt_m=[100.0] * (n + 1),
+        sport="running", source_format="fit", source_name="stop",
+    )
+
+
+def test_decouple_moving_basis_ignores_stops():
+    """C7 : en base elapsed, un arrêt en 2e moitié gonfle le découplage (il mesure l'ARRÊT,
+    pas l'usure) ; en base moving, l'usure réelle (nulle ici : FC et allure constantes)."""
+    act = _run_with_stop()
+    s_elapsed, _, _ = process_activity(act, CFG)
+    cfg_m = replace(CFG, twin=replace(CFG.twin, decouple_basis="moving"))
+    s_moving, _, _ = process_activity(act, cfg_m)
+    assert s_elapsed.decouple_pct is not None and s_elapsed.decouple_pct > 15
+    assert s_moving.decouple_pct is not None and abs(s_moving.decouple_pct) < 3
+
+
+def test_decouple_skip_start_ignores_warmup():
+    """C7 : la dérive FC d'échauffement gonflait e1 ; decouple_skip_start_s l'ignore."""
+    n = 7200
+    hr = [110 + 30 * min(s, 600) / 600 for s in range(n + 1)]   # FC 110→140 sur 10 min
+    act = _run(3.0, n, hr=hr)
+    d_full = process_activity(act, CFG)[0].decouple_pct
+    cfg_s = replace(CFG, twin=replace(CFG.twin, decouple_skip_start_s=600))
+    d_skip = process_activity(act, cfg_s)[0].decouple_pct
+    assert d_full is not None and d_skip is not None
+    assert d_full > 1.0 and d_skip < 0.5 and d_full > d_skip
+
+
 def test_failed_activity_is_counted_in_skipped():
     """C9d : une activité qui plante au traitement est COMPTÉE (processing_error), pas tue."""
     broken = CanonicalActivity(
