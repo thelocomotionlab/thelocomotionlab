@@ -13,19 +13,18 @@ et applique des seuils de *présentation* (profil, intensité…) pour choisir l
 
 from __future__ import annotations
 
+from ..config import NarrativeParams
 from ..minetti import grade_factor
 from ._format import fr, hm, tex_escape
 
-# --- seuils de PRÉSENTATION (rendu uniquement, pas de la science) -------------
+# --- seuils de PRÉSENTATION ----------------------------------------------------
 # Exposant de Riegel = DÉCLIN de l'allure quand la durée s'allonge (orthogonal à la VC, qui mesure
 # la vitesse — les deux sont indépendants). BAS (proche de 1) = tient très bien l'allure (diesel) ;
-# ÉLEVÉ = décline plus nettement. Seuils calés pour que le cas de référence (E≈1,22) tombe au milieu.
-E_DIESEL = 1.12            # ≤ → « très endurant / diesel »
-E_FADE = 1.30             # ≥ → « allure qui décline plus nettement sur la durée »
-DURAB_EXCELLENT = 15.0     # découplage (%) : bas = garde son efficacité longtemps
-DURAB_BON = 25.0
-VC_FRAC_TRES_BAS = 0.70    # intensité de course / VC : très en dessous du plafond
-VC_FRAC_SOUTENU = 0.85
+# ÉLEVÉ = décline plus nettement.
+# Les seuils vivent en CONFIG (bloc « narrative » de twin.config.json, cf. CLAUDE.md « aucune
+# constante en dur ») ; chaque fonction accepte ``cfg`` et retombe sur les défauts sans lui
+# (compatibilité tests/appels directs). ``_DEFAULTS`` = mêmes valeurs que NarrativeParams.
+_DEFAULTS = NarrativeParams()
 
 PCT = r"\%"  # « % » en LaTeX
 
@@ -34,30 +33,52 @@ def _pct(x, decimals=0):
     return f"{fr(x, decimals)}\\,{PCT}"
 
 
+def _ncfg(cfg) -> NarrativeParams:
+    """Seuils de présentation : ceux de la config si fournie, sinon les défauts."""
+    return getattr(cfg, "narrative", None) or _DEFAULTS
+
+
+def vc_frac_band(frac: float | None, cfg=None) -> str | None:
+    """Bande d'intensité (« low » / « sustained » / « high ») comparée sur le POURCENTAGE
+    AFFICHÉ (arrondi entier) : deux athlètes qui lisent le même « ≈ 70 % » reçoivent le
+    même conseil — jamais deux formulations opposées selon la 3ᵉ décimale."""
+    if frac is None:
+        return None
+    p = _ncfg(cfg)
+    pct = round(frac * 100)
+    if pct < round(p.vc_frac_low * 100):
+        return "low"
+    if pct < round(p.vc_frac_sustained * 100):
+        return "sustained"
+    return "high"
+
+
 # --------------------------------------------------------------------------- #
 # Profil d'athlète + récit d'ouverture
 # --------------------------------------------------------------------------- #
-def _profile_word(twin) -> str | None:
+def _profile_word(twin, cfg=None) -> str | None:
     """Catégorie de PRÉSENTATION sur l'axe du déclin (jamais la vitesse pure).
 
     ``diesel`` (exposant bas, décline peu) · ``équilibré`` (déclin modéré, cas de référence) ·
     ``fade`` (exposant élevé, décline plus nettement)."""
+    p = _ncfg(cfg)
     if twin.endurance_E is None:
         return None
-    if twin.endurance_E <= E_DIESEL:
+    if twin.endurance_E <= p.e_diesel:
         return "diesel"
-    if twin.endurance_E >= E_FADE:
+    if twin.endurance_E >= p.e_fade:
         return "fade"
     return "équilibré"
 
 
-def _durability_word(twin) -> str | None:
+def _durability_word(twin, cfg=None) -> str | None:
+    p = _ncfg(cfg)
     d = twin.durability_pct
     if d is None:
         return None
-    if d <= DURAB_EXCELLENT:
+    if d <= p.durability_excellent_pct:
         return "excellente"
-    if d <= DURAB_BON:
+    if d <= p.durability_good_pct:
         return "bonne"
     return "à surveiller"
 
@@ -80,14 +101,14 @@ _DURABILITY_EXPLAIN = {
 }
 
 
-def opening_narrative(twin, calibration, prediction) -> str:
+def opening_narrative(twin, calibration, prediction, cfg=None) -> str:
     """2–3 phrases qui synthétisent le profil et annoncent la suite, en langage clair."""
     parts: list[str] = []
-    pw = _profile_word(twin)
+    pw = _profile_word(twin, cfg)
     if pw:
         # headline masculin (s'accorde avec « profil ») → aucun genre supposé sur l'athlète
         parts.append(f"Ton profil est \\textbf{{{_PROFILE_HEADLINE[pw]}}} : {_PROFILE_EXPLAIN[pw]}.")
-    dw = _durability_word(twin)
+    dw = _durability_word(twin, cfg)
     if dw and twin.durability_pct is not None:
         # en Synthèse on évite le jargon « découplage » (défini plus loin) : langage clair
         parts.append(
@@ -96,7 +117,7 @@ def opening_narrative(twin, calibration, prediction) -> str:
         )
     if prediction is not None:
         closing = f"On pr\\'edit ton arriv\\'ee autour de \\textbf{{{hm(prediction.finish_hours)}}}"
-        if prediction.vc_fraction is not None and prediction.vc_fraction < VC_FRAC_TRES_BAS:
+        if vc_frac_band(prediction.vc_fraction, cfg) == "low":
             closing += (
                 f", \\`a seulement \\textbf{{{_pct(prediction.vc_fraction * 100)}}} de ta vitesse critique : "
                 "ta vitesse pure n'est jamais la limite, ce sont l'endurance, la durabilit\\'e et le "
@@ -117,7 +138,7 @@ def opening_narrative(twin, calibration, prediction) -> str:
 # --------------------------------------------------------------------------- #
 # Pédagogie par concept — « intuition » + « pour toi »
 # --------------------------------------------------------------------------- #
-def vc_pourtoi(twin, prediction) -> str | None:
+def vc_pourtoi(twin, prediction, cfg=None) -> str | None:
     cs = twin.critical_speed
     # VC non plausible → on ne présente PAS ce chiffre comme « ton seuil » (cohérent avec
     # predict.vc_fraction=None et le masquage de l'encadré VC dans le contexte).
@@ -132,7 +153,7 @@ def vc_pourtoi(twin, prediction) -> str | None:
         s += (
             f" Sur cet ultra tu cours \\`a \\textbf{{{_pct(frac * 100)}}} de cette VC"
         )
-        if frac < VC_FRAC_TRES_BAS:
+        if vc_frac_band(frac, cfg) == "low":
             s += " — tr\\`es loin du plafond : garde de la marge, surtout au d\\'epart."
         else:
             s += " — une intensit\\'e d\\'ej\\`a soutenue pour la distance : la r\\'egularit\\'e sera cl\\'e."
@@ -140,12 +161,14 @@ def vc_pourtoi(twin, prediction) -> str | None:
 
 
 def minetti_example(cfg) -> str:
-    """Exemple concret CALCULÉ : coût d'un mètre à +15 % et à −15 % vs plat."""
-    f_up = float(grade_factor(0.15, cfg.course.cr0))
-    f_down = float(grade_factor(-0.15, cfg.course.cr0))
+    """Exemple concret CALCULÉ : coût d'un mètre à ±(pente d'exemple config) vs plat."""
+    g = _ncfg(cfg).minetti_example_grade
+    f_up = float(grade_factor(g, cfg.course.cr0))
+    f_down = float(grade_factor(-g, cfg.course.cr0))
+    g_pct = fr(g * 100, 0)
     return (
-        f"\\`A \\textbf{{+15\\,{PCT} de pente}}, courir un m\\`etre \\og~co\\^ute~\\fg\\ comme "
-        f"\\textbf{{{fr(f_up, 2)}\\,m}} \\`a plat ; \\`a \\textbf{{$-$15\\,{PCT}}}, comme seulement "
+        f"\\`A \\textbf{{+{g_pct}\\,{PCT} de pente}}, courir un m\\`etre \\og~co\\^ute~\\fg\\ comme "
+        f"\\textbf{{{fr(f_up, 2)}\\,m}} \\`a plat ; \\`a \\textbf{{$-${g_pct}\\,{PCT}}}, comme seulement "
         f"\\textbf{{{fr(f_down, 2)}\\,m}}. C'est pour \\c{{c}}a qu'on ne raisonne pas en kilom\\`etres "
         "bruts mais en \\emph{distance \\'equivalente \\`a plat}."
     )
@@ -171,10 +194,10 @@ def endurance_intuition() -> str:
     )
 
 
-def endurance_pourtoi(twin) -> str | None:
+def endurance_pourtoi(twin, cfg=None) -> str | None:
     if twin.endurance_E is None:
         return None
-    pw = _profile_word(twin)
+    pw = _profile_word(twin, cfg)
     tail = {
         "diesel": "c'est un atout majeur sur un ultra : ton allure d\\'ecline tr\\`es peu par rapport \\`a ta base.",
         "équilibré": "un bon socle d'endurance : ton d\\'eclin reste mod\\'er\\'e quand la dur\\'ee s'allonge.",
@@ -183,13 +206,13 @@ def endurance_pourtoi(twin) -> str | None:
     return f"Ton exposant vaut \\textbf{{{fr(twin.endurance_E, 2)}}} — {tail}"
 
 
-def durability_pourtoi(twin) -> str | None:
+def durability_pourtoi(twin, cfg=None) -> str | None:
     if twin.durability_pct is None:
         return (
             "Ta durabilit\\'e n'a pas pu \\^etre chiffr\\'ee (fr\\'equence cardiaque absente de la "
             "majorit\\'e de tes sorties) : c'est une \\textbf{inconnue} \\`a garder en t\\^ete."
         )
-    dw = _durability_word(twin)
+    dw = _durability_word(twin, cfg)
     advice = {
         "excellente": "tu peux viser une d\\'erive tr\\`es l\\'eg\\`ere : tiens ton allure, elle paiera.",
         "bonne": "la d\\'erive contr\\^ol\\'ee du plan est faite pour toi : pars sans t'emballer.",
@@ -209,16 +232,16 @@ def prediction_pourtoi(prediction) -> str:
     )
 
 
-def intensity_feeling(prediction) -> str | None:
-    if prediction.vc_fraction is None:
+def intensity_feeling(prediction, cfg=None) -> str | None:
+    band = vc_frac_band(prediction.vc_fraction, cfg)
+    if band is None:
         return None
-    frac = prediction.vc_fraction
-    if frac < VC_FRAC_TRES_BAS:
+    if band == "low":
         return (
             "Au d\\'epart, \\c{c}a doit te para\\^itre \\textbf{trop facile}. C'est normal et voulu : "
             "\\`a cette intensit\\'e, l'erreur classique est de partir trop vite. Retiens-toi."
         )
-    if frac < VC_FRAC_SOUTENU:
+    if band == "sustained":
         return "Au d\\'epart, l'allure doit sembler \\textbf{confortable mais pr\\'esente} : ne la d\\'epasse pas."
     return "L'intensit\\'e cible est \\textbf{engag\\'ee} : reste \\`a l'\\'ecoute des signaux de fatigue pr\\'ecoce."
 
@@ -331,7 +354,7 @@ def race_strategy(course, plan) -> list[dict]:
 # --------------------------------------------------------------------------- #
 # Légendes auto-explicatives (data-driven quand pertinent)
 # --------------------------------------------------------------------------- #
-def caption_record(twin, calibration) -> str:
+def caption_record(twin, calibration, cfg=None) -> str:
     base = "\\`A lire : pour chaque dur\\'ee, ta meilleure vitesse ajust\\'ee \\`a la pente. "
     # la mention des points terracotta ne s'affiche que si la figure en trace vraiment
     # (VC de repli sans efforts plats → aucun point terracotta, la légende ne doit pas en décrire)
@@ -358,20 +381,25 @@ def caption_record(twin, calibration) -> str:
         # l'affirmation qualitative suit la valeur (pas d'« en dessous » si la fraction est haute)
         base += (
             " : un ultra se court tr\\`es loin sous le plafond."
-            if frac < VC_FRAC_TRES_BAS
+            if vc_frac_band(frac, cfg) == "low"
             else " : d\\'ej\\`a proche de ton seuil pour des efforts aussi longs."
         )
     return base
 
 
-def caption_validation(prediction) -> str:
+def caption_validation(prediction, cfg=None) -> str:
     cv = prediction.cross_validation
     base = (
         "\\`A lire : chaque point est un de tes ultras, pr\\'edit \\emph{sans lui}. "
         "Plus c'est proche de la diagonale, mieux la m\\'ethode te conna\\^it."
     )
     if cv:
-        base += f" Ici, \\`a \\textbf{{{_pct(cv.mae_pct, 1)}}} pr\\`es en moyenne (bande $\\pm$5\\,{PCT})."
+        # la bande tracée par la figure = le seuil 🟢 de la validation croisée (config, pas en dur)
+        band = getattr(getattr(cfg, "sufficiency", None), "cv_error_green_pct", 5.0)
+        base += (
+            f" Ici, \\`a \\textbf{{{_pct(cv.mae_pct, 1)}}} pr\\`es en moyenne "
+            f"(bande $\\pm${fr(band, 0)}\\,{PCT})."
+        )
     return base
 
 
@@ -383,14 +411,22 @@ def caption_pacing() -> str:
     )
 
 
-def caption_cumul() -> str:
+def _interval_pct(cfg) -> str:
+    """Largeur nominale de l'intervalle (« 80 » par défaut), dérivée des percentiles config."""
+    pred = getattr(cfg, "prediction", None)
+    if pred is None:
+        return "80"
+    return fr(pred.interval_high_pct - pred.interval_low_pct, 0)
+
+
+def caption_cumul(cfg=None) -> str:
     # honnêteté : la bande vient d'un facteur d'échelle GLOBAL sur le scénario (un scénario lent
     # l'est de bout en bout) — pas d'une accumulation d'erreurs indépendantes segment par segment.
     return (
-        "\\`A lire : ton heure de passage cumul\\'ee. La bande, c'est la \\textbf{fourchette \\`a 80\\,"
-        f"{PCT}}} : elle s'\\'elargit avec les heures parce que l'incertitude porte sur ton "
-        "\\emph{sc\\'enario d'ensemble} — un jour lent l'est du d\\'ebut \\`a la fin, pas segment "
-        "par segment."
+        f"\\`A lire : ton heure de passage cumul\\'ee. La bande, c'est la \\textbf{{fourchette \\`a "
+        f"{_interval_pct(cfg)}\\,{PCT}}} : elle s'\\'elargit avec les heures parce que l'incertitude "
+        "porte sur ton \\emph{sc\\'enario d'ensemble} — un jour lent l'est du d\\'ebut \\`a la fin, "
+        "pas segment par segment."
     )
 
 
@@ -427,27 +463,27 @@ GLOSSARY = [
 def build_narrative(course, twin, calibration, prediction, plan, race, cfg) -> dict:
     """Point d'entrée : tous les textes générés, prêts à injecter dans le template."""
     return {
-        "opening": opening_narrative(twin, calibration, prediction),
-        "vc_pourtoi": vc_pourtoi(twin, prediction),
+        "opening": opening_narrative(twin, calibration, prediction, cfg),
+        "vc_pourtoi": vc_pourtoi(twin, prediction, cfg),
         "minetti_example": minetti_example(cfg),
         "deq_pourtoi": deq_pourtoi(course),
         "endurance_intuition": endurance_intuition(),
-        "endurance_pourtoi": endurance_pourtoi(twin),
-        "durability_pourtoi": durability_pourtoi(twin),
+        "endurance_pourtoi": endurance_pourtoi(twin, cfg),
+        "durability_pourtoi": durability_pourtoi(twin, cfg),
         "prediction_pourtoi": prediction_pourtoi(prediction) if prediction else None,
-        "intensity_feeling": intensity_feeling(prediction) if prediction else None,
+        "intensity_feeling": intensity_feeling(prediction, cfg) if prediction else None,
         "cv_pourtoi": cv_pourtoi(prediction) if prediction else None,
         "demande_key": demande_key_sentence(course),
         "strategy": race_strategy(course, plan) if plan else [],
         "caption_profil": caption_profil(course),
         "caption_demande": caption_demande(),
-        "caption_record": caption_record(twin, calibration),
-        "caption_validation": caption_validation(prediction) if prediction else None,
+        "caption_record": caption_record(twin, calibration, cfg),
+        "caption_validation": caption_validation(prediction, cfg) if prediction else None,
         "caption_pacing": caption_pacing(),
-        "caption_cumul": caption_cumul(),
+        "caption_cumul": caption_cumul(cfg),
         "glossary": GLOSSARY,
-        "profile_word": _profile_word(twin),
-        "durability_word": _durability_word(twin),
+        "profile_word": _profile_word(twin, cfg),
+        "durability_word": _durability_word(twin, cfg),
     }
 
 

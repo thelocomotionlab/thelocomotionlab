@@ -145,13 +145,14 @@ def _fig_pacing(plan, twin, ax) -> None:
     ax.legend(fontsize=7.6, loc="upper right", edgecolor=GRID)
 
 
-def _fig_cumul(plan, prediction, race, ax) -> None:
+def _fig_cumul(plan, prediction, race, ax, interval_label: str = "80") -> None:
     segs = plan.segments
     offs = [s.off1 for s in segs]
     cum = [s.cum_clock_h for s in segs]
     lo = [s.lo_h for s in segs]
     hi = [s.hi_h for s in segs]
-    ax.fill_between(offs, lo, hi, color=SAGE, alpha=0.30, lw=0, label="intervalle 80 %")
+    ax.fill_between(offs, lo, hi, color=SAGE, alpha=0.30, lw=0,
+                    label=f"intervalle {interval_label} %")
     ax.plot(offs, cum, "-o", color=TERRA, lw=1.6, ms=3.5, label="temps cumulé (médian)")
     ax.set_xlabel("distance officielle (km)")
     ax.set_ylabel("temps depuis le départ (h)")
@@ -160,7 +161,7 @@ def _fig_cumul(plan, prediction, race, ax) -> None:
                  weight="bold", loc="left")
 
 
-def _fig_validation(prediction, ax) -> bool:
+def _fig_validation(prediction, ax, band_pct: float = 5.0) -> bool:
     cv = prediction.cross_validation
     if cv is None or not cv.points:
         return False
@@ -168,7 +169,10 @@ def _fig_validation(prediction, ax) -> bool:
     pred = np.array([p[1] for p in cv.points])
     lo, hi = float(min(actual.min(), pred.min())) - 1, float(max(actual.max(), pred.max())) + 1
     ax.plot([lo, hi], [lo, hi], color=DEEPGRID, lw=1.0, ls=(0, (4, 3)))
-    ax.fill_between([lo, hi], [lo * 0.95, hi * 0.95], [lo * 1.05, hi * 1.05],
+    # bande = seuil 🟢 de la validation croisée (cfg.sufficiency.cv_error_green_pct) : la même
+    # valeur que la légende — plus de « ±5 % » en dur qui mentirait si la config change
+    b = band_pct / 100.0
+    ax.fill_between([lo, hi], [lo * (1 - b), hi * (1 - b)], [lo * (1 + b), hi * (1 + b)],
                     color=SAGE, alpha=0.18, lw=0)
     ax.scatter(actual, pred, s=42, color=TERRA, zorder=4)
     ax.set_xlabel("temps réel (h)")
@@ -181,12 +185,20 @@ def _fig_validation(prediction, ax) -> bool:
     return True
 
 
-def generate_figures(course, twin, calibration, prediction, plan, race, out_dir: Path) -> dict[str, str]:
+def generate_figures(
+    course, twin, calibration, prediction, plan, race, out_dir: Path, cfg=None
+) -> dict[str, str]:
     """Écrit les figures dans ``out_dir`` ; renvoie {nom: chemin relatif}."""
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     _setup_style()
     figures: dict[str, str] = {}
+    # libellés/bandes dérivés de la config (repli sur les valeurs historiques sans cfg)
+    band_pct = getattr(getattr(cfg, "sufficiency", None), "cv_error_green_pct", 5.0)
+    pred_cfg = getattr(cfg, "prediction", None)
+    interval_label = (
+        f"{pred_cfg.interval_high_pct - pred_cfg.interval_low_pct:.0f}" if pred_cfg else "80"
+    )
 
     def _save(name: str) -> None:
         plt.savefig(out_dir / f"{name}.png", dpi=170)
@@ -214,12 +226,12 @@ def generate_figures(course, twin, calibration, prediction, plan, race, out_dir:
     _save("pacing")
 
     fig, ax = plt.subplots(figsize=(7.4, 3.4))
-    _fig_cumul(plan, prediction, race, ax)
+    _fig_cumul(plan, prediction, race, ax, interval_label=interval_label)
     fig.tight_layout()
     _save("cumul")
 
     fig, ax = plt.subplots(figsize=(4.6, 4.2))
-    if _fig_validation(prediction, ax):
+    if _fig_validation(prediction, ax, band_pct=band_pct):
         fig.tight_layout()
         _save("validation")
     else:

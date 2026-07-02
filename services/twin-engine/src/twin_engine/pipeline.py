@@ -142,7 +142,8 @@ def analyze_full(
 
         fig_dir = out_dir / "figures"
         figures = generate_figures(
-            course, preview.twin, preview.calibration, preview.prediction, plan, race, fig_dir
+            course, preview.twin, preview.calibration, preview.prediction, plan, race, fig_dir,
+            cfg=cfg,
         )
         context = build_report_context(
             course=course, twin=preview.twin, calibration=preview.calibration,

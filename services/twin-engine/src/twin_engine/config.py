@@ -147,6 +147,25 @@ class PacingParams:
 
 
 @dataclass(frozen=True)
+class NarrativeParams:
+    """Seuils de PRÉSENTATION du rapport (choix des mots, jamais de la science).
+
+    Ils changent le texte livré au client → ce sont des constantes de comportement, donc
+    elles vivent en config comme les autres (règle CLAUDE.md « aucune constante en dur »).
+    Les valeurs par défaut sont calées pour que le cas de référence (E≈1,22, découplage
+    ~21 %, intensité ~63 % VC) tombe au milieu des catégories."""
+
+    e_diesel: float = 1.12               # E ≤ → « très endurant / diesel »
+    e_fade: float = 1.30                 # E ≥ → « décline plus nettement sur la durée »
+    durability_excellent_pct: float = 15.0   # découplage ≤ → « excellente »
+    durability_good_pct: float = 25.0        # ≤ → « bonne », au-delà → « à surveiller »
+    vc_frac_low: float = 0.70            # intensité/VC < → « très loin du plafond »
+    vc_frac_sustained: float = 0.85      # < → « confortable » ; ≥ → « engagée »
+    recent_weeks: int = 4                # semaines de volume récent affichées
+    minetti_example_grade: float = 0.15  # pente de l'exemple pédagogique Minetti (±)
+
+
+@dataclass(frozen=True)
 class SufficiencyParams:
     history_months_green: float = 6.0
     history_months_orange: float = 3.0
@@ -189,6 +208,7 @@ class Config:
     prediction: PredictionParams = field(default_factory=PredictionParams)
     pacing: PacingParams = field(default_factory=PacingParams)
     sufficiency: SufficiencyParams = field(default_factory=SufficiencyParams)
+    narrative: NarrativeParams = field(default_factory=NarrativeParams)
 
 
 # --------------------------------------------------------------------------- #
@@ -240,6 +260,7 @@ def load_config(config_path: str | os.PathLike[str] | None = None) -> Config:
         prediction=_build(PredictionParams, raw.get("prediction")),
         pacing=_build(PacingParams, raw.get("pacing")),
         sufficiency=_build(SufficiencyParams, raw.get("sufficiency")),
+        narrative=_build(NarrativeParams, raw.get("narrative")),
     )
 
 
@@ -251,5 +272,6 @@ __all__ = [
     "PredictionParams",
     "PacingParams",
     "SufficiencyParams",
+    "NarrativeParams",
     "load_config",
 ]

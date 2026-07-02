@@ -187,6 +187,55 @@ def test_caption_record_labels_past_ultras_distinctly():
     assert "pass\\'es" in txt and "distinguer" in txt
 
 
+def test_presentation_thresholds_come_from_config():
+    """R6 : les seuils de présentation vivent en config — les déplacer change les mots ;
+    sans cfg, les défauts (identiques aux valeurs historiques) s'appliquent."""
+    from dataclasses import replace
+
+    from twin_engine.config import load_config
+
+    base = load_config()
+    cfg = replace(base, narrative=replace(base.narrative, e_diesel=1.25,
+                                          durability_excellent_pct=22.0))
+    assert N._profile_word(_twin(E=1.22)) == "équilibré"          # défauts inchangés
+    assert N._profile_word(_twin(E=1.22), cfg) == "diesel"        # seuil déplacé → mot suit
+    assert N._durability_word(_twin(durab=20)) == "bonne"
+    assert N._durability_word(_twin(durab=20), cfg) == "excellente"
+
+
+def test_vc_band_compares_on_displayed_percent():
+    """R6 : le conseil suit le POURCENTAGE AFFICHÉ — deux athlètes qui lisent « 70 % »
+    reçoivent la même formulation, quelle que soit la 3ᵉ décimale."""
+    assert N.vc_frac_band(0.699) == N.vc_frac_band(0.702)   # tous deux affichés « 70 % »
+    assert N.vc_frac_band(0.694) == "low"                    # affiché « 69 % » → sous le seuil
+    assert N.vc_frac_band(None) is None
+
+
+def test_caption_validation_band_follows_config():
+    """R6 : la bande ±X % de la légende = le seuil 🟢 de la CV (config), plus de doublon en dur."""
+    from dataclasses import replace
+
+    from twin_engine.config import load_config
+
+    base = load_config()
+    cfg = replace(base, sufficiency=replace(base.sufficiency, cv_error_green_pct=7.0))
+    txt = N.caption_validation(SimpleNamespace(cross_validation=SimpleNamespace(mae_pct=3.0)), cfg)
+    assert "$\\pm$7" in txt
+
+
+def test_interval_label_derived_from_percentiles():
+    """R6 : le « 80 % » des libellés est dérivé des percentiles config."""
+    from dataclasses import replace
+
+    from twin_engine.config import load_config
+
+    base = load_config()
+    cfg = replace(base, prediction=replace(base.prediction, interval_low_pct=5,
+                                           interval_high_pct=95))
+    assert "90" in N.caption_cumul(cfg)
+    assert "80" in N.caption_cumul(base)
+
+
 def test_aid_station_names_are_latex_escaped():
     """Garde-fou audit : un nom de ravito avec & / _ ne doit pas casser XeLaTeX."""
     segs = [

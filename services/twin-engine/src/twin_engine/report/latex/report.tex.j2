@@ -36,7 +36,7 @@ tes fichiers d'entra\^inement (<< n_activities >>~activit\'es de course exploit\
 \emph{Locomotion Twin} estime ton profil physiologique --- vitesse critique, exposant d'endurance,
 durabilit\'e --- puis le confronte au co\^ut \'energ\'etique de la pente pour pr\'edire ton temps
 d'arriv\'ee et r\'epartir l'effort. La pr\'ediction centrale est de \textbf{<< pred_central >>}
-(intervalle 80\,\% : << interval_low >> -- << interval_high >>).
+(intervalle << interval_pct >>\,\% : << interval_low >> -- << interval_high >>).
 <% if has_cv %>La m\'ethode est valid\'ee \emph{hors \'echantillon} sur tes propres ultras, avec une
 erreur moyenne de \textbf{<< cv_gate_mae >>\,\%}<% if cv_gate_is_interp %> en interpolation
 (erreur brute << cv_mae >>\,\%<% if cv_extrap_mae %>, dont extrapolation << cv_extrap_mae >>\,\%<% endif %>)<% endif %>.<% else %>Faute d'assez d'ultras, la pr\'ediction repose
@@ -54,7 +54,7 @@ sur une extrapolation (confiance r\'eduite, cf. limites).<% endif %>
 
 \begin{llnote}[L'essentiel]
 \textbf{Temps d'arriv\'ee pr\'edit : << pred_central >>}<% if start_time %>, d\'epart << start_time >><% endif %>.
-Intervalle de confiance \`a 80\,\% : \textbf{<< interval_low >> -- << interval_high >>}.
+Intervalle de confiance \`a << interval_pct >>\,\% : \textbf{<< interval_low >> -- << interval_high >>}.
 <% if vc_fraction_pct %>\\[2pt]
 \textbf{Intensit\'e cible : $\approx$\,<< vc_fraction_pct >>\,\% de ta vitesse critique}, soutenue
 avec une d\'erive ma\^itris\'ee.<% if vc_low %> \`A cette intensit\'e, le facteur limitant n'est pas la
@@ -205,12 +205,12 @@ seconde moiti\'e de tes longues sorties~\cite{maunder2021,jones2024}.
 vitesse. On r\'esout ce cercle par un \textbf{point fixe} \(T = \Deq / v(T)\). Pour l'incertitude, on fait
 un \textbf{Monte-Carlo} : on \emph{simule des milliers de courses possibles} en tirant ta vitesse au hasard
 dans sa plage probable (de dispersion \(\sigma = << sigma_kmh >>\)~\(\mathrm{km\,h^{-1}}\)). R\'esultat :
-\textbf{<< pred_central >>}, intervalle 80\,\% \textbf{<< interval_low >> -- << interval_high >>}.
+\textbf{<< pred_central >>}, intervalle << interval_pct >>\,\% \textbf{<< interval_low >> -- << interval_high >>}.
 
-\begin{llnote}[Lire l'intervalle \`a 80\,\%]
-Compte tenu de l'incertitude du mod\`ele, il y a \textbf{80\,\% de chances} que ton temps r\'eel tombe
-dans cette fourchette --- environ 1~chance sur 10 d'\^etre plus rapide que la borne basse, 1~sur~10 d'\^etre
-plus lent. La valeur centrale reste le sc\'enario le plus probable.
+\begin{llnote}[Lire l'intervalle \`a << interval_pct >>\,\%]
+Compte tenu de l'incertitude du mod\`ele, il y a \textbf{<< interval_pct >>\,\% de chances} que ton temps r\'eel tombe
+dans cette fourchette --- environ << interval_tail_low >>~chances sur 100 d'\^etre plus rapide que la borne basse,
+<< interval_tail_high >>~sur~100 d'\^etre plus lent. La valeur centrale reste le sc\'enario le plus probable.
 \end{llnote}
 
 <% if prediction_pourtoi %>\begin{llnote}[Ce que \c{c}a change pour toi]
@@ -258,7 +258,7 @@ au-dessus de la moyenne, finir un peu en dessous. Les \textbf{fen\^etres} donnen
 <% for s in plan_rows %>    << s.idx >> & << s.to >> & \LLnum{<< s.off1 >>} & \LLnum{<< s.deq >>} & \LLnum{<< s.vga >>} & \LLnum{<< s.pace >>} & << s.arr >> & \LLnum{<< s.window >>} & <% if s.night %>$\bullet$<% endif %> \\
 <% endfor %>  \end{tabular}
   \caption{Plan par segment : vitesse ajust\'ee cible, allure r\'eelle terrain, heure de passage et
-  fen\^etre d'arriv\'ee (80\,\%). $\bullet$ = section de nuit.}
+  fen\^etre d'arriv\'ee (<< interval_pct >>\,\%). $\bullet$ = section de nuit.}
   \label{tab:plan}
 \end{table}
 

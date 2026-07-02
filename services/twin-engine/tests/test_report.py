@@ -164,6 +164,16 @@ def test_abstract_uses_gate_consistent_mae():
     assert "en interpolation" in tex and "erreur brute" in tex and "9,9" in tex
 
 
+def test_context_interval_labels_from_config():
+    """R6 : les libellés « 80 % » et « 1 chance sur 10 » sont dérivés des percentiles config."""
+    ctx = _context()
+    assert ctx["interval_pct"] == "80"
+    assert ctx["interval_tail_low"] == "10" and ctx["interval_tail_high"] == "10"
+    tex = render_tex(ctx)
+    assert "80\\,\\%" in tex             # rendu final : le libellé apparaît, injecté
+    assert "chances sur 100" in tex
+
+
 def test_figures_generated(tmp_path):
     course, twin, cal, pred, plan, race, _ = _scenario()
     figs = generate_figures(course, twin, cal, pred, plan, race, tmp_path)

@@ -87,5 +87,17 @@
     "interval_rel_width_orange": 1.0,
     "cv_missing_policy": "cap_orange",
     "long_effort_min_ga_fraction": 0.5
+  },
+
+  "narrative": {
+    "_comment": "Seuils de PRÉSENTATION (choix des mots du rapport, pas de la science).",
+    "e_diesel": 1.12,
+    "e_fade": 1.30,
+    "durability_excellent_pct": 15.0,
+    "durability_good_pct": 25.0,
+    "vc_frac_low": 0.70,
+    "vc_frac_sustained": 0.85,
+    "recent_weeks": 4,
+    "minetti_example_grade": 0.15
   }
 }

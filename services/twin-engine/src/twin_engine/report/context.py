@@ -10,7 +10,7 @@ from datetime import date, datetime, timedelta
 
 from ..calibration import REGIME_BLEND, REGIME_REGRESSION, REGIME_VC_E
 from ._format import fr, french_datetime, fr_thousands, hm, tex_escape
-from .narrative import VC_FRAC_TRES_BAS, build_narrative
+from .narrative import build_narrative, vc_frac_band
 
 _REGIME_LABELS = {
     REGIME_REGRESSION: "régression personnelle sur tes vrais ultras",
@@ -156,7 +156,7 @@ def build_report_context(
     ]
 
     night = _main_night_span(plan)
-    weeks = _recent_weeks(twin.summaries)
+    weeks = _recent_weeks(twin.summaries, n_weeks=cfg.narrative.recent_weeks)
 
     ctx = {
         # méta / couverture
@@ -175,10 +175,15 @@ def build_report_context(
         "interval_low": hm(prediction.interval_low_h),
         "interval_high": hm(prediction.interval_high_h),
         "vc_fraction_pct": fr(prediction.vc_fraction * 100, 0) if prediction.vc_fraction else None,
-        # intensité réellement BASSE ? (gouverne l'affirmation « le moteur n'est pas la limite »)
-        "vc_low": (prediction.vc_fraction is not None and prediction.vc_fraction < VC_FRAC_TRES_BAS),
+        # intensité réellement BASSE ? — comparée sur le POURCENTAGE AFFICHÉ (bande unifiée),
+        # pour que le conseil et le chiffre lu par l'athlète ne se contredisent jamais
+        "vc_low": vc_frac_band(prediction.vc_fraction, cfg) == "low",
         # dérive début→fin du fade, DÉRIVÉE de fade_delta (plus de « −15 % » en dur)
         "fade_pct": fr(round(2 * cfg.pacing.fade_delta / (1 + cfg.pacing.fade_delta) * 100), 0),
+        # libellés d'intervalle DÉRIVÉS des percentiles config (plus de « 80 % » en dur)
+        "interval_pct": fr(cfg.prediction.interval_high_pct - cfg.prediction.interval_low_pct, 0),
+        "interval_tail_low": fr(cfg.prediction.interval_low_pct, 0),
+        "interval_tail_high": fr(100 - cfg.prediction.interval_high_pct, 0),
         "regime": prediction.regime,
         "regime_label": _REGIME_LABELS.get(prediction.regime, prediction.regime),
         "has_cv": cv is not None,
@@ -234,8 +239,11 @@ def build_report_context(
         "recent_n_weeks": len(weeks),
         "recent_total_km": fr_thousands(round(sum(w["km"] for w in weeks)), 0) if weeks else None,
         "recent_total_dplus": fr_thousands(round(sum(w["dplus"] for w in weeks)), 0) if weeks else None,
-        # honnêteté
-        "hr_majority": (sum(1 for a in twin.summaries if a.has_hr) / max(len(twin.summaries), 1)) >= 0.5,
+        # honnêteté — « majoritaire » = le même seuil que le critère qualité de suffisance
+        "hr_majority": (
+            (sum(1 for a in twin.summaries if a.has_hr) / max(len(twin.summaries), 1))
+            >= cfg.sufficiency.quality_green_frac
+        ),
         "durability_known": twin.durability_pct is not None,
         # figures (rempli par le moteur de rendu)
         "figures": {},
