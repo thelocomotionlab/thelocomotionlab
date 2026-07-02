@@ -218,3 +218,19 @@ cohérent avec la base distance de toute la chaîne. Preuve : test synthétique 
 Ne change RIEN au défaut (`speed_basis=elapsed` : moving_time_s est un descripteur) ; H2 devient
 réellement vérifiable sur archive.
 
+### 9.3 Le fade du plan est alimenté par la durabilité mesurée (T3, `pacing.fade_source`)
+
+**Constat.** twin-theory §8 classe la durabilité « ajustée aux données … → plan », mais le
+découplage mesuré (~19–24 % chez le cas de référence) n'alimentait QUE le narratif : le fade du
+plan restait Δ=0,085 fixe pour tous — le « diesel » (8 %) et l'athlète qui s'use vite (28 %)
+recevaient la même dérive. La promesse d'individualisation n'était pas tenue sur le livrable
+que l'athlète utilise le jour J.
+
+**Correctif (flag).** `pacing.fade_source=durability` : Δ = X/(200−X) (un fade linéaire
+1+Δ → 1−Δ réalise une chute relative 1 − X/100), borné [0,04 ; 0,13], repli sur `fade_delta`
+si la FC manque. Contrôle de cohérence : le défaut historique Δ=0,085 ↔ X≈15,7 % — la formule
+retombe sur le comportement actuel pour un athlète au découplage « typique ». Le Δ servi est
+tracé (`PacingPlan.fade_delta_used`) et le rapport en dérive son « −X % » affiché. Défaut
+`config` inchangé ; pour le cas de référence (X≈21 %), activer donnerait Δ≈0,117 (−21 % de
+dérive affichée au lieu de −15,7 %) — à valider sur le plan Nice avant bascule.
+

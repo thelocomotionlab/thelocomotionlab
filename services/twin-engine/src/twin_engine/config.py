@@ -152,6 +152,16 @@ class PredictionParams:
 @dataclass(frozen=True)
 class PacingParams:
     fade_delta: float = 0.085
+    # --- source du fade (revue 2026-07, T3) -----------------------------------------------
+    # ``config`` (défaut, comportement historique) : Δ = fade_delta identique pour tous.
+    # ``durability`` : Δ dérivé du DÉCOUPLAGE MESURÉ de l'athlète — si l'efficacité chute de
+    #   X % entre les deux moitiés à effort constant, la vitesse fait de même ; un fade
+    #   linéaire (1+Δ → 1−Δ) réalise (1−Δ)/(1+Δ) = 1 − X/100, d'où Δ = X/(200−X), borné
+    #   [fade_delta_min, fade_delta_max]. Repli sur fade_delta si durabilité non mesurable.
+    #   Contrôle de cohérence : le défaut historique Δ=0,085 correspond à X ≈ 15,7 %.
+    fade_source: str = "config"          # {config, durability}
+    fade_delta_min: float = 0.04
+    fade_delta_max: float = 0.13
     default_stop_min: float = 5.0
     major_base_extra_min: float = 10.0
 

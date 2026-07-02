@@ -53,6 +53,7 @@ class PacingPlan:
     t_clock_h: float
     start_time: dt.datetime | None
     sun: dict = field(default_factory=dict)
+    fade_delta_used: float = 0.085   # Δ réellement servi (traçabilité : le rapport en dérive le %)
 
     def to_dict(self) -> dict:
         return {
@@ -72,7 +73,27 @@ def _fmt_clock(when: dt.datetime) -> str:
     return f"{_WEEKDAYS_FR[when.weekday()]} {when.hour:02d}:{when.minute:02d}"
 
 
-def build_pacing(course: CourseProfile, prediction: Prediction, race: RaceSpec, cfg: Config) -> PacingPlan:
+def _fade_delta(cfg: Config, durability_pct: float | None) -> float:
+    """Δ du fade : constante (défaut) ou dérivé de la durabilité MESURÉE de l'athlète (T3).
+
+    Si l'efficacité chute de X % entre les deux moitiés à effort constant, la vitesse fait de
+    même ; un fade linéaire (1+Δ → 1−Δ) réalise (1−Δ)/(1+Δ) = 1 − X/100 ⇔ Δ = X/(200−X).
+    Borné [fade_delta_min, fade_delta_max] ; repli sur ``fade_delta`` si non mesurable."""
+    p = cfg.pacing
+    if p.fade_source == "durability" and durability_pct is not None and durability_pct > 0:
+        delta = durability_pct / (200.0 - min(durability_pct, 100.0))
+        return float(min(max(delta, p.fade_delta_min), p.fade_delta_max))
+    return p.fade_delta
+
+
+def build_pacing(
+    course: CourseProfile,
+    prediction: Prediction,
+    race: RaceSpec,
+    cfg: Config,
+    *,
+    durability_pct: float | None = None,
+) -> PacingPlan:
     seg = course.segments
     n = len(seg)
     deq = np.array([s.deq_km for s in seg])
@@ -81,7 +102,7 @@ def build_pacing(course: CourseProfile, prediction: Prediction, race: RaceSpec, 
     # --- fade de durabilité sur la vitesse ajustée vs avancement en Deq ---
     cum_deq = np.cumsum(deq)
     mid = (cum_deq - deq / 2) / cum_deq[-1]
-    delta = cfg.pacing.fade_delta
+    delta = _fade_delta(cfg, durability_pct)
     g = 1.0 + delta * (0.5 - mid) * 2.0
 
     # --- politique d'arrêts : base + supplément aux bases majeures, rien à l'arrivée ---
@@ -174,6 +195,7 @@ def build_pacing(course: CourseProfile, prediction: Prediction, race: RaceSpec, 
         t_clock_h=t_clock_h,
         start_time=start,
         sun=sun,
+        fade_delta_used=float(delta),
     )
 
 

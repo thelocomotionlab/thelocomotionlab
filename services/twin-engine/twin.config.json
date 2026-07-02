@@ -67,6 +67,9 @@
 
   "pacing": {
     "fade_delta": 0.085,
+    "fade_source": "config",
+    "fade_delta_min": 0.04,
+    "fade_delta_max": 0.13,
     "default_stop_min": 5.0,
     "major_base_extra_min": 10.0
   },

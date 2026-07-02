@@ -100,6 +100,35 @@ def test_arrival_clock_excludes_own_stop():
     assert abs(plan.t_clock_h - (plan.t_move_h + plan.t_stops_h)) < 1e-6
 
 
+def test_fade_source_durability_personalizes_delta():
+    """T3 : fade_source=durability dérive Δ du découplage mesuré (Δ = X/(200−X), borné) ;
+    défaut config = comportement historique ; repli si durabilité non mesurable."""
+    from dataclasses import replace
+
+    course = build_course(_triangle_gpx(), _race(), CFG)
+    pred = _prediction(course, finish=10.0)
+    cfg_d = replace(CFG, pacing=replace(CFG.pacing, fade_source="durability"))
+
+    plan_default = build_pacing(course, pred, _race(), CFG, durability_pct=20.0)
+    assert plan_default.fade_delta_used == CFG.pacing.fade_delta        # défaut : constante
+
+    plan_d20 = build_pacing(course, pred, _race(), cfg_d, durability_pct=20.0)
+    assert abs(plan_d20.fade_delta_used - 20.0 / 180.0) < 1e-12         # X/(200−X) ≈ 0,111
+
+    plan_d40 = build_pacing(course, pred, _race(), cfg_d, durability_pct=40.0)
+    assert plan_d40.fade_delta_used == cfg_d.pacing.fade_delta_max      # borné haut
+
+    plan_none = build_pacing(course, pred, _race(), cfg_d, durability_pct=None)
+    assert plan_none.fade_delta_used == CFG.pacing.fade_delta           # repli honnête
+
+    # un athlète qui s'use plus (X=20 % > 15,7 % implicite du défaut) part plus vite et
+    # finit plus lentement — le plan devient réellement individuel
+    assert plan_d20.segments[0].v_ga_kmh > plan_default.segments[0].v_ga_kmh
+    assert plan_d20.segments[-1].v_ga_kmh < plan_default.segments[-1].v_ga_kmh
+    # même temps de mouvement total (le fade redistribue, ne change pas la prédiction)
+    assert abs(plan_d20.t_move_h - plan_default.t_move_h) < 1e-9
+
+
 def test_pacing_without_logistics_still_produces_paces():
     race = RaceSpec("NoLogi", (0.0, 5.0, 10.0), ("d", "s", "a"))  # pas de départ/lat/lon
     course = build_course(_triangle_gpx(), race, CFG)

@@ -132,7 +132,9 @@ def analyze_full(
     if preview.prediction is None:
         return FullResult(preview=preview, plan=None, pdf_path=None, figures={})  # type: ignore[arg-type]
 
-    plan = build_pacing(course, preview.prediction, race, cfg)
+    plan = build_pacing(
+        course, preview.prediction, race, cfg, durability_pct=preview.twin.durability_pct
+    )
 
     out_dir = Path(out_dir)
     figures: dict = {}

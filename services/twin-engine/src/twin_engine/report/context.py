@@ -178,8 +178,12 @@ def build_report_context(
         # intensité réellement BASSE ? — comparée sur le POURCENTAGE AFFICHÉ (bande unifiée),
         # pour que le conseil et le chiffre lu par l'athlète ne se contredisent jamais
         "vc_low": vc_frac_band(prediction.vc_fraction, cfg) == "low",
-        # dérive début→fin du fade, DÉRIVÉE de fade_delta (plus de « −15 % » en dur)
-        "fade_pct": fr(round(2 * cfg.pacing.fade_delta / (1 + cfg.pacing.fade_delta) * 100), 0),
+        # dérive début→fin du fade, DÉRIVÉE du Δ réellement servi par le plan (T3 : peut être
+        # personnalisé par la durabilité mesurée) — jamais un « −15 % » en dur
+        "fade_pct": fr(round(
+            2 * getattr(plan, "fade_delta_used", cfg.pacing.fade_delta)
+            / (1 + getattr(plan, "fade_delta_used", cfg.pacing.fade_delta)) * 100
+        ), 0),
         # libellés d'intervalle DÉRIVÉS des percentiles config (plus de « 80 % » en dur)
         "interval_pct": fr(cfg.prediction.interval_high_pct - cfg.prediction.interval_low_pct, 0),
         "interval_tail_low": fr(cfg.prediction.interval_low_pct, 0),
