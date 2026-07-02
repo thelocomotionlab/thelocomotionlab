@@ -115,9 +115,9 @@ le golden réel), sur la fenêtre `vc_window_s` (livrée **10–90 min**, cf. pl
 cette « VC de terrain » est volontairement **conservatrice** et son `D′` n'est pas interprétable
 (signalé peu fiable) — le bon compromis pour l'ultra.
 
-**Cas de référence** : **VC = 2,912 m/s (10,48 km/h, 5:43/km), ±0,12**. `D′ ≈ 1 579 m ±362` —
-**volontairement signalée comme peu fiable** (le modèle est étiré au-delà de son domaine 2–15 min) ;
-**sans importance pour un 100M** couru bien en deçà de la VC.
+**Cas de référence (recapture 2026-07-02)** : **VC = 2,952 m/s (10,63 km/h, 5:39/km), ±0,04**.
+`D′ ≈ 1 339 m ±103` — **volontairement signalée comme peu fiable** (le modèle est étiré au-delà de
+son domaine 2–15 min) ; **sans importance pour un 100M** couru bien en deçà de la VC.
 
 > **Garde-fou d'honnêteté.** Si la VC ajustée reste **au-dessus** de `vc_max_plausible_ms`, elle est
 > marquée **non plausible** (`from_flat_efforts = False`, confiance réduite) et le rapport **n'affiche
@@ -129,13 +129,13 @@ Loi de puissance sur l'enveloppe longue (30 min–6 h) : `v_ga ∝ t^(−α)`, d
 **pas** la vitesse pure (c'est la **VC** qui la mesure ; les deux axes sont **indépendants**). Sens de
 lecture : **un E bas (proche de 1) = tient très bien l'allure (« diesel ») ; un E plus haut = décline
 plus nettement.**
-**Cas de référence** : `α = 0,181`, **E = 1,222** — exposant **modéré**, profil **plutôt endurant**
+**Cas de référence (recapture 2026-07-02)** : `α = 0,196`, **E = 1,244** — exposant **modéré**, profil **plutôt endurant**
 (un E plus bas tiendrait encore mieux l'allure ; un E plus haut déclinerait davantage). Le texte du
 rapport est **généré à partir de la valeur** avec ce même vocabulaire (déclin, jamais vitesse).
 
 ### 2.6 Durabilité
 **Découplage intra-course** : baisse de l'efficacité (vitesse ajustée / FC) en seconde moitié vs première
-moitié, sur les longues sorties. **Cas de référence** : **~19–24 %** sur les ultras de ~20 h.
+moitié, sur les longues sorties. **Cas de référence (recapture 2026-07-02)** : **20,9 %** (médiane des efforts ≥ 10 h).
 
 ### 2.7 État de forme
 Volume/charge récents (descripteur). **Garde-fou** : les données s'arrêtent souvent des semaines avant
@@ -151,7 +151,8 @@ moyenne de course** en fonction de la durée et du dénivelé :
 
 `v_ga[km/h] = β0 + β1·ln(T_heures) + β2·(D+/km)`
 
-**Cas de référence** (8 vrais ultras) : `v = 8,563 − 0,350·ln(T) − 0,0148·(D+/km)`, résidu σ = 0,14 km/h.
+**Cas de référence** (8 vrais ultras, recapture 2026-07-02, D+ base distance 150 m — C1) :
+`v = 8,194 − 0,260·ln(T) − 0,0170·(D+/km)`, résidu σ = 0,22 km/h.
 
 > **Pondération par récence (non-stationnarité).** Chez un athlète très fourni, les vrais ultras
 > s'étalent sur **plusieurs saisons de formes différentes** ; les pondérer à poids égal biaise la
@@ -182,8 +183,8 @@ le **point fixe** :
 
 **Incertitude** par **Monte-Carlo** (tirages de `v` dans sa loi prédictive, résidu σ inclus) → intervalle.
 
-**Cas de référence** : **T = 30,4 h**, vitesse ajustée moyenne **6,58 km/h ≈ 63 % de la VC** ;
-intervalle 80 % **29,6–31,3 h** (Monte-Carlo complet 28,0–33,0 h).
+**Cas de référence (recapture 2026-07-02)** : **T = 31,3 h**, vitesse ajustée moyenne
+**6,40 km/h ≈ 60 % de la VC** ; intervalle 80 % **30,0–32,8 h**.
 
 > À ~63 % de la VC, la **réserve D′ n'est jamais le facteur limitant**. Les vrais limitants d'un ultra
 > sont la **durabilité** et le **ravitaillement** — d'où le focus du plan sur ces deux points.
@@ -202,8 +203,8 @@ dans le rapport**, et l'un des critères du **test de suffisance**.
 > plus que les anciens, si bien que l'erreur affichée **baisse** quand la récence corrige la forme.
 > À poids égaux, la moyenne pondérée redevient une moyenne simple (golden intact).
 
-**Cas de référence** : erreur moyenne **2,8 %**, RMSE 3,4 % (n = 8). Les deux ultras de 120 km+ prédits
-à +2,5 % / +2,2 %.
+**Cas de référence (recapture 2026-07-02)** : erreur moyenne **3,1 %** (interpolation **2,7 %**),
+RMSE 4,0 % (n = 8 ; 4 plis d'interpolation, 4 d'extrapolation).
 
 ---
 
@@ -222,8 +223,9 @@ dans le rapport**, et l'un des critères du **test de suffisance**.
 - **Fenêtres horaires** : on présente par segment une **plage** d'arrivée et d'allure (bandes
   Monte-Carlo), pas une valeur unique (meilleure tenue psychologique en course).
 
-**Cas de référence** : mouvement 28,6 h + arrêts 1,75 h = **30,4 h** d'horloge ; départ ven. 13:00,
-arrivée sam. ~19:23 ; **nuit du km 38 au km 94**.
+**Cas de référence (recapture 2026-07-02)** : mouvement 29,5 h + arrêts 1,75 h = **31,3 h**
+d'horloge ; départ ven. 13:00, arrivée sam. ~20:17 ; **section de nuit à relire sur le prochain
+rapport full** (dépend du nouveau profil horaire).
 
 ---
 
@@ -299,26 +301,30 @@ Calculé **avant paiement**, sur la donnée normalisée :
 
 ## 12. Valeurs de référence (golden test — Valentin, Nice 100M)
 
-| Grandeur | Valeur |
+| Grandeur | Valeur (recapture 2026-07-02, post-C1) |
 |---|---|
-| Parcours | 165 km / 8 874 m D+ lissé / 10 461 m D− / Deq 200,1 km |
-| Activités exploitables | 419 / 449 · 532 jours · ~66 km/sem |
-| VC | 2,912 m/s (10,48 km/h) ±0,12 |
-| D′ | ~1 579 m ±362 (peu fiable) |
-| Exposant E | 1,222 (α = 0,181) |
-| Durabilité | découplage ~19–24 % sur ~20 h |
-| Régression ultra | v = 8,563 − 0,350·ln(h) − 0,0148·(D+/km), σ 0,14 km/h |
-| Prédiction | 30,4 h · 6,58 km/h ajustée · ~63 % VC |
-| Intervalle 80 % | 29,6–31,3 h |
-| Validation croisée | MAE 2,8 % · RMSE 3,4 % (n = 8) |
-| Plan | mvt 28,6 h + arrêts 1,75 h ; départ ven. 13:00 ; nuit km 38→94 |
+| Parcours | 165 km (167,2 officiels) / 8 874 m D+ lissé / 10 461 m D− / Deq 200,1 km / D+/km 53,1 |
+| Activités exploitables | 419 / 449 · 17,5 mois · fraîcheur 10 j à l'analyse |
+| VC | 2,952 m/s (10,63 km/h) ±0,04 |
+| D′ | ~1 339 m ±103 (peu fiable) |
+| Exposant E | 1,244 (α = 0,196) |
+| Durabilité | découplage 20,9 % (médiane des ≥ 10 h) |
+| Régression ultra | v = 8,194 − 0,260·ln(h) − 0,0170·(D+/km), σ 0,22 km/h — **D+ base distance 150 m (C1)** |
+| Prédiction | 31,28 h · 6,40 km/h ajustée · ~60 % VC |
+| Intervalle 80 % | 29,95–32,77 h |
+| Validation croisée | MAE 3,1 % (interp 2,7 %) · RMSE 4,0 % (n = 8, 4 interp / 4 extrap) |
+| Plan | arrêts 1,75 h ; départ ven. 13:00, arrivée sam. ~20:17 ; nuit : à relire au prochain full |
 
-> **⚠ Recapture en cours (C1, 2026-07-02).** La base du D+ des activités est passée sur
-> l'échelle du parcours (`dplus_basis=distance_150m`, mesure réelle : +14,9 % d'écart médian
-> entre les deux échelles). Les lignes « Régression ultra », « Prédiction », « Intervalle » et
-> « Validation croisée » ci-dessus sont donc à recapturer (le reste — parcours, VC, E,
-> durabilité — n'est pas concerné). Chiffres à jour via `twin-engine preview` sur le cas de
-> référence, cf. DIAGNOSTIC §9.6.
+> **Recapture du 2026-07-02 (bascule C1)** — ce qui a bougé, et pourquoi :
+> * **β2 : −0,0148 → −0,0170 = ×1,149**, pour un écart d'échelle D+ mesuré à **+14,9 %** —
+>   le recalibrage suit EXACTEMENT la mesure (validation forte du diagnostic C1) ;
+> * β1 −0,35 → −0,26 et σ 0,14 → 0,22 : l'ancien fit était en partie flatté par le bruit
+>   d'échelle corrélé absorbé dans les coefficients ;
+> * prédiction **30,4 → 31,28 h (+2,9 %)** : correction du biais optimiste de terrain
+>   (la pénalité D+ appliquée au parcours était trop douce) ;
+> * VC/E/D′ : micro-dérive vs la capture d'origine (notée depuis les scripts `_seed`),
+>   **indépendante de C1** (la courbe record ne touche pas au D+) et dans les tolérances du
+>   golden. Le golden réel est re-centré sur ces valeurs.
 
 > **Stabilité du golden.** Les durcissements de robustesse (§2.3) et la pondération par récence (§3/§5)
 > **ne bougent quasiment pas** ce cas (données propres, ~1,5 an, altitude présente) : sur des dates

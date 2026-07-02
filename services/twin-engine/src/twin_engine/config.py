@@ -143,8 +143,10 @@ class CalibrationParams:
     # ``prior_shrunk`` : ridge de β2 vers le prior population, atténue les points de levier terrain.
     terrain_term: str = "free"                           # {free, none, prior_shrunk}
     terrain_shrink_lambda: float = 1.0                   # force du ridge (n. de pseudo-obs vers le prior)
-    # repli « peu d'ultras » (twin-theory §3)
-    default_dplus_penalty_kmh_per_dpkm: float = -0.0148  # prior population (β2)
+    # repli « peu d'ultras » (twin-theory §3). Prior population (β2) = β2 du cas de référence,
+    # RECAPTURÉ le 2026-07-02 sur l'échelle D+ « distance 150 m » (C1) — l'ancien −0.0148
+    # datait de l'échelle 5 s (rapport ×1,149 = exactement l'écart d'échelle mesuré).
+    default_dplus_penalty_kmh_per_dpkm: float = -0.0170
     regression_min_sigma_kmh: float = 0.20               # plancher de σ (anti-surconfiance)
     blend_sigma_kmh: float = 0.45                        # 1–2 ultras : incertitude élargie
     vc_e_sigma_kmh: float = 0.80                         # 0 ultra : extrapolation VC+E

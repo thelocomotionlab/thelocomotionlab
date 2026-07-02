@@ -58,3 +58,8 @@ __pycache__/
 # mais PAS les carnets de route JSON (petits, publics, requis par les tests golden).
 services/twin-engine/examples/*
 !services/twin-engine/examples/*.json
+
+# sorties générées du CLI twin-engine (rapports locaux — jamais committées : un rapport
+# est une donnée client, l'historique en a déjà porté un par erreur, retiré le 2026-07-02)
+/out_nice/
+/out-*/

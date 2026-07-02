@@ -107,7 +107,11 @@ def test_full_pipeline_on_fixtures_nonregression():
     reason="archive Coros + trace GPX Nice non fournies (TWIN_NICE_ARCHIVE / TWIN_NICE_GPX)",
 )
 def test_nice_100m_reference():
-    """twin-theory §12 : VC 2,912 m/s · E 1,222 · prédiction 30,4 h · MAE 2,8 %."""
+    """twin-theory §12 (recapture 2026-07-02, post-C1) : VC 2,952 · E 1,244 · 31,28 h · MAE 3,1 %.
+
+    Références re-centrées après la bascule C1 (dplus_basis=distance_150m) — validée par la
+    mesure réelle (+14,9 % d'écart d'échelle, β2 ×1,149 = exactement la mesure). L'historique
+    pré-C1 (VC 2,912 · E 1,222 · 30,4 h · MAE 2,8 %) reste lisible dans l'historique git."""
     race = RaceSpec.from_json(EXAMPLES / "nice-100m.json")
     gpx = Path(os.environ["TWIN_NICE_GPX"]).read_bytes()
     res = run_preview(training_path=os.environ["TWIN_NICE_ARCHIVE"], course_gpx=gpx,
@@ -117,9 +121,9 @@ def test_nice_100m_reference():
     pred = res.prediction
     assert course.deq_km == pytest.approx(200.1, abs=3.0)
     assert course.dplus_m == pytest.approx(8874, abs=150)
-    assert twin.vc_ms == pytest.approx(2.912, abs=0.08)
-    assert twin.endurance_E == pytest.approx(1.222, abs=0.05)
-    assert twin.durability_pct == pytest.approx(21, abs=8)          # §2.6 : ~19–24 %
+    assert twin.vc_ms == pytest.approx(2.952, abs=0.08)
+    assert twin.endurance_E == pytest.approx(1.244, abs=0.05)
+    assert twin.durability_pct == pytest.approx(21, abs=8)          # §2.6 : 20,9 %
     assert pred is not None
-    assert pred.finish_hours == pytest.approx(30.4, rel=0.04)        # ±4 %
-    assert pred.cross_validation.mae_pct == pytest.approx(2.8, abs=2.0)
+    assert pred.finish_hours == pytest.approx(31.28, rel=0.04)       # ±4 %
+    assert pred.cross_validation.mae_pct == pytest.approx(3.1, abs=2.0)

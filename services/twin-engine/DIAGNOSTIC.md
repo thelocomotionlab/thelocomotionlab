@@ -296,12 +296,20 @@ MESURE, pas du terrain.
 
 **DÉCISION : activé.** `dplus_basis=distance_150m` est le défaut depuis le 2026-07-02
 (rollback : `time_5s`). Le golden réel AVEC les anciens défauts avait été validé PASS juste
-avant la bascule (préalable du protocole). Reste à faire :
-1. recapture des références de régression du golden réel (twin-theory §12) — `twin-engine
-   preview` sur le cas Nice, chiffres collés ici ;
-2. régénération du fixture Montagnhard — `PYTHONPATH=src python -m tools.regen_montagnhard_fixture
-   <archive>` (enveloppe désormais FITTÉE → tranche H3) puis ré-épinglage des tests de
-   robustesse sur les nouveaux agrégats ;
-3. mise à jour du prior `default_dplus_penalty_kmh_per_dpkm` (β2 de référence sur la nouvelle
-   échelle — l'ancien −0,0148 vient de l'échelle 5 s).
+avant la bascule (préalable du protocole).
+
+**Recapture du 2026-07-02 (faite — golden réel PASS avant ET après bascule)** :
+`twin-engine preview` sur le cas de référence → β = (8,194 ; −0,260 ; **−0,0170**), σ 0,224,
+prédiction **31,28 h** [29,95–32,77], LOO MAE 3,1 % (interp 2,7 %), n_eff 7,69.
+**Validation clé : β2 −0,0148 → −0,0170 = ×1,149, pour +14,9 % d'écart d'échelle mesuré — le
+recalibrage suit exactement la mesure.** La prédiction ralentit de +2,9 % (correction du biais
+optimiste de terrain). Cross-check : les `dplus_m` des vrais ultras du preview coïncident au
+mètre avec la colonne D+@150m du tableau diag_dplus. twin-theory §12 recapturée, golden réel
+re-centré, prior `default_dplus_penalty_kmh_per_dpkm` mis à jour (−0,0148 → −0,0170).
+
+**Reste à faire** : régénération du fixture Montagnhard —
+`PYTHONPATH=src python -m tools.regen_montagnhard_fixture <archive>` (enveloppe désormais
+FITTÉE → tranche H3) puis ré-épinglage des tests de robustesse et du tableau §4 sur les
+nouveaux agrégats (⚠ le prior ayant changé, les lignes `prior_shrunk` du tableau §4 bougeront
+aussi — re-générer le tableau complet à ce moment-là, l'ancien reste dans l'historique git).
 

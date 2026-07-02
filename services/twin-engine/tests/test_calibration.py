@@ -96,7 +96,9 @@ def test_vc_e_regime_uses_envelope_only():
     assert cal.sigma_kmh == CFG.calibration.vc_e_sigma_kmh
     assert not cal.supports_cross_validation
     v = cal.predict_vga_kmh(20, 50)
-    expected = 10.0 * (20 * 3600) ** (-0.18) * 3.6 + (-0.0148) * 50
+    # pénalité D+ = le prior CONFIG (recapturé post-C1), jamais une valeur en dur dans le test
+    expected = (10.0 * (20 * 3600) ** (-0.18) * 3.6
+                + CFG.calibration.default_dplus_penalty_kmh_per_dpkm * 50)
     assert v is not None and abs(v - expected) < 1e-6
 
 
