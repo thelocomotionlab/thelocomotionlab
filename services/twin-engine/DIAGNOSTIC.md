@@ -1,8 +1,9 @@
 # DIAGNOSTIC — robustesse de la calibration ultra (cas « Crasse Montagnhard »)
 
-> Cause racine, correctifs et preuves du passage **LOO 25,3 % → ~9 %** sur données réelles, tout
+> Cause racine, correctifs et preuves du passage **LOO ~25 % → ~9 %** sur données réelles, tout
 > reproductible depuis un fixture de 5 Ko (`tests/fixtures/genuine_ultras_montagnhard.fixture.json`)
-> — **l'archive Garmin n'est jamais requise**.
+> — **l'archive Garmin n'est jamais requise**. Chiffres exacts ré-épinglés post-C1 le 2026-07-02
+> (24,8 % → 8,8 % ; pré-C1 : 25,3 % → 9,1 %, lisible dans l'historique git).
 
 ## 1. Symptôme
 
@@ -14,18 +15,20 @@ alors que tous les critères de suffisance étaient 🟢 **sauf un** : l'erreur 
 |---|---|
 | Régime | `regression` |
 | Vrais ultras retenus | 8 (sur 12 efforts ≥ 10 h ; 4 sont des artefacts « montre laissée en enregistrement », écartés par `ga ≥ 5,5`) |
-| σ (bruit résiduel) | **1,539 km/h** |
-| Prédiction (Deq 139,6 km, D+/km 75,05) | **19,63 h** |
-| **LOO MAE** | **25,3 %** → 🔴 |
-| MAE d'interpolation | 17,0 % |
-| MAE d'extrapolation | 37,8 % |
+| σ (bruit résiduel) | **1,528 km/h** |
+| Prédiction (Deq 139,6 km, D+/km 75,05) | **20,68 h** |
+| **LOO MAE** | **24,8 %** → 🔴 |
+| MAE d'interpolation | 18,1 % |
+| MAE d'extrapolation | 34,7 % |
+
+*(Valeurs ré-épinglées post-C1, fixture régénéré le 2026-07-02 — D+ base distance, enveloppe fittée.)*
 
 ## 2. Cause racine — hétérogénéité d'intention
 
 Le modèle `v(T, D+/km)` **suppose des efforts maximaux**. Les 8 « genuine » mêlent des courses
 maximales (FC 136–152) et des **sorties faciles** — typiquement `2026-04-04` : vga 6,38 km/h, FC 119
-(la plus basse), soit **~73 % de son propre plafond d'endurance**. Aucune loi `v(T)` n'absorbe ce
-mélange → σ gonfle à 1,539 km/h et la LOO explose.
+(la plus basse), soit **~72 % de son propre plafond d'endurance**. Aucune loi `v(T)` n'absorbe ce
+mélange → σ gonfle à ~1,5 km/h et la LOO explose.
 
 **Interaction perverse mesurée** : la pondération par récence (correctif de non-stationnarité) donne
 un poids **0,94** à cette sortie facile *récente* → elle **amplifie** le problème. Le filtre de
@@ -35,8 +38,8 @@ maximalité neutralise exactement ce point (poids → 0), sans toucher aux cours
 
 | Course | Réel → Prédit LOO | Nature |
 |---|---|---|
-| `2024-10-04` (Deq 188,6 ; la plus longue) | 26,2 h → **42,9 h (+64 %)** | **extrapolation de durée** (max de ln T) |
-| `2022-07-10` (D+/km = **104**, extrême) | 10,3 h → **15,0 h (+45 %)** | **point de levier terrain** (max de D+/km) |
+| `2024-10-04` (Deq 188,6 ; la plus longue) | 26,2 h → **39,7 h (+52 %)** | **extrapolation de durée** (max de ln T) |
+| `2022-07-10` (D+/km = **76,6**, max) | 10,3 h → **13,4 h (+30 %)** | **point de levier terrain** (max de D+/km) |
 
 Les deux sont des plis d'**extrapolation** (voir §4.3) : un seul pli sur 8 ne doit pas décider du
 vendable.
@@ -72,14 +75,14 @@ le modèle réellement servi.
 **Garde-fou anti-faux-positif** : une course *dure mais raide* (D+/km élevé) peut paraître lente vs
 plafond (l'ajustement de pente la sous-crédite). On croise `r` avec un **second signal** — la FC
 normalisée à la FC max des ultras — qui ne peut que **remonter** le poids : on ne down-pondère
-fortement que si **les deux concordent** (r bas ET FC basse). Ainsi `2022-07-10` (r ≈ 0,92, FC 152)
-reste à poids 1, tandis que `2026-04-04` (r ≈ 0,70, FC 119) tombe à 0.
+fortement que si **les deux concordent** (r bas ET FC basse). Ainsi `2022-07-10` (r ≈ 0,93, FC 152)
+reste à poids 1, tandis que `2026-04-04` (r ≈ 0,72, FC 119) tombe à 0.
 
 Poids de maximalité obtenus (soft) sur le fixture :
 
 | Ultra | 22-07-10 | 23-05-13 | 23-07-01 | 24-02-17 | 24-10-04 | 25-10-19 | **26-04-04** | 26-05-09 |
 |---|---|---|---|---|---|---|---|---|
-| poids | 1,00 | 0,86 | 0,54 | 0,69 | 0,60 | 0,65 | **0,00** | 1,00 |
+| poids | 1,00 | 1,00 | 0,89 | 1,00 | 0,96 | 1,00 | **0,00** | 1,00 |
 
 → la sortie facile tombe à 0 ; **la 26 h et la 19,7 h restent** (elles sont engagées).
 
@@ -97,7 +100,7 @@ d'**extrapolation** — le point retiré atteint le **min ou max de ln T ou de D
 ultras (les restants ne l'encadrent pas). Elle rapporte `MAE_interpolation` **et** `MAE_extrapolation`.
 En mode `honest`, le verdict s'appuie sur la MAE d'interpolation (+ sanité de la largeur relative de
 l'intervalle), pas sur la MAE brute. Sur le fixture, les extrapolants sont exactement
-**`2022-07-10`, `2024-10-04`, `2026-05-09`** (MAE_interp 17,0 % vs brute 25,3 %).
+**`2022-07-10`, `2024-10-04`, `2026-05-09`** (MAE_interp 18,1 % vs brute 24,8 %).
 
 ### 3.4 [SUPPORT] Locomotion vs arrêts + narratif
 
@@ -116,17 +119,21 @@ l'ultra » (`endurance_intuition`).
 
 (maximalité `soft`/`hard` = `maximality_reference=self_relative`, le défaut livré.)
 
+(Tableau ré-épinglé post-C1, 2026-07-02 — fixture régénéré, enveloppe fittée.)
+
 | Configuration | sigma | i80 | MAE | interp | extrap | CV |
 |---|---|---|---|---|---|---|
-| **[BASELINE]** récence + terrain libre (3p) | 1,539 | 0,61 | **25,3** | 17,0 | 37,8 | 🔴 |
+| **[BASELINE]** récence + terrain libre (3p) | 1,528 | 0,64 | **24,8** | 18,1 | 34,7 | 🔴 |
 | récence, terrain=none (2p) — support 3.2 | 1,546 | 0,58 | 21,7 | 16,1 | 29,9 | 🔴 |
-| récence, terrain=prior_shrunk (3p) | 1,539 | 0,61 | 24,8 | 17,0 | 36,4 | 🔴 |
-| **maximalité soft — cœur 3.1** | 0,563 | 0,19 | **9,1** | 6,9 | 11,0 | 🟠 |
-| **maximalité hard — cœur 3.1** | 0,565 | 0,19 | **9,0** | 6,8 | 10,8 | 🟠 |
+| récence, terrain=prior_shrunk (3p) | 1,528 | 0,64 | 23,7 | 17,7 | 32,6 | 🔴 |
+| **maximalité soft — cœur 3.1** | 0,532 | 0,19 | **8,8** | 7,3 | 10,0 | 🟠 |
+| **maximalité hard — cœur 3.1** | 0,534 | 0,19 | **8,7** | 7,3 | 9,9 | 🟠 |
 | maximalité soft + terrain=none | 0,664 | 0,21 | 8,9 | 7,9 | 9,7 | 🟠 |
-| maximalité soft + prior_shrunk | 0,563 | 0,19 | **8,7** | 6,9 | 10,2 | 🟠 |
+| maximalité soft + prior_shrunk | 0,532 | 0,19 | **8,3** | 7,1 | 9,3 | 🟠 |
+| [BASELINE] + MC prédictif (C3, §9.1) | 1,528 | 2,82 | 24,8 | 18,1 | 34,7 | 🔴 |
+| maximalité soft + MC prédictif (C3, §9.1) | 0,532 | 0,68 | 8,8 | 7,3 | 10,0 | 🟠 |
 
-**Le levier robuste est la maximalité : 25,3 % → ~9 % (−64 %), σ divisée par ~3, intervalle divisé
+**Le levier robuste est la maximalité : 24,8 % → 8,8 % (−65 %), σ divisée par ~3, intervalle divisé
 par ~3.** Le nettoyage terrain et le gate honnête sont des supports de correctness/honnêteté. (Le
 critère CV passe de 🔴 à 🟠 ; le 🟢 exigerait ≤ 5 % — sur le fixture isolé la MAE reste ~9 %. Sur
 l'archive complète de l'athlète, ce sont les mêmes 8 ultras qui pilotent la CV, donc le passage
@@ -147,14 +154,14 @@ l'archive complète de l'athlète, ce sont les mêmes 8 ultras qui pilotent la C
 **extrapolée** à 10–26 h. **Mitigation (§A, `maximality_reference=self_relative`, défaut)** : on
 compare `r` non seulement au plafond extrapolé mais aussi à un **pôle robuste des propres ultras** de
 l'athlète → la décision de maximalité devient **invariante à un biais d'échelle** de l'enveloppe. Preuve
-(test `test_self_relative_is_robust_to_envelope_scale_bias`) : en perturbant l'enveloppe ×2, le mode
-absolu écarte à tort 3 ultras maximaux (4/8 gardés) tandis que self_relative reste stable (7/8, seul
-l'effort facile écarté). Résidu non couvert : un biais qui gonflerait l'enveloppe au point que **même**
+(test `test_self_relative_is_robust_to_envelope_scale_bias`, re-vérifiée post-C1) : en perturbant
+l'enveloppe ×2, le mode absolu écarte à tort des ultras maximaux (4/8 gardés) tandis que self_relative
+reste stable (7/8, seul l'effort facile écarté). Résidu non couvert : un biais qui gonflerait l'enveloppe au point que **même**
 l'effort facile dépasse le plafond (tous `r > 1`) → rien n'est écarté (faux négatif prudent, prédiction
-conservatrice). Le fixture, sans courbe record (efforts courts), embarque une **enveloppe représentative**
-(`_meta.athlete_envelope`, E = 1,22 cohérent avec le golden) pour rendre le correctif reproductible hors
-archive ; le résultat qualitatif est **stable pour α ∈ [0,15 ; 0,25]**. Le pipeline réel utilise
-l'enveloppe **propre** de l'athlète (fittée sur ses données courtes).
+conservatrice). Depuis la régénération du 2026-07-02, le fixture embarque l'**enveloppe réellement fittée** sur la
+courbe record de l'athlète (α = 0,179, E = 1,218 — H3 résolu, §7) ; le résultat qualitatif reste
+**stable pour α ∈ [0,15 ; 0,25]**. Le pipeline réel utilise la même mécanique (fit sur les données
+courtes de chaque athlète).
 
 ## 7. Hypothèses falsifiables restantes
 
@@ -334,4 +341,9 @@ robustesse ré-épinglés sur ces agrégats (l'historique pré-C1 reste dans git
 majeure Coros probable sur la période (l'athlète ne rapporte aucun changement de montre) —
 altimétrie firmware modifiée. Cohérent avec un artefact de MESURE que la base distance corrige ;
 à re-vérifier si un nouveau cluster apparaît après une future màj.
+
+**Ré-épinglage fait (2026-07-02)** : tests de robustesse et tableaux §1–§4 mis à jour sur les
+nouveaux agrégats. Avec l'enveloppe fittée, la séparation de maximalité est encore plus nette :
+ultras engagés à r = 0,89–0,99 (poids 0,89–1,0), sortie facile seule à r = 0,72 (poids 0). **C1 est
+bouclé de bout en bout : mesuré (+14,9 %) → activé → recapturé (golden réel) → ré-épinglé (fixture).**
 

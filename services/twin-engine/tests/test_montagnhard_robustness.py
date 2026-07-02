@@ -1,7 +1,8 @@
 """Non-régression : cas « Crasse Montagnhard » (athlète « sale ») — filtre de maximalité (§4.1).
 
 Le fixture ``genuine_ultras_montagnhard.fixture.json`` reproduit EXACTEMENT l'échec observé sur
-l'archive (LOO 25,3 %, σ 1,539, prédiction 19,63 h) à partir des seuls agrégats des 8 vrais
+l'archive (LOO 24,8 %, σ 1,528, prédiction 20,68 h — agrégats ré-épinglés post-C1 le 2026-07-02,
+enveloppe fittée ; valeurs pré-C1 25,3/1,539/19,63 dans l'historique git) à partir des seuls agrégats des 8 vrais
 ultras + 4 artefacts « montre laissée en enregistrement ». Aucune trace GPS, aucune PII : que des
 agrégats dérivés (conformes à la politique de purge). Ce test fige la reproduction, puis prouve
 que le correctif de maximalité ramène l'erreur < 10 % — SANS jamais retirer d'ultra du golden Nice.
@@ -84,14 +85,14 @@ def test_fixture_reproduces_failure():
     assert cal.regime == "regression"
     assert cal.n_genuine == 8                        # 8 vrais ultras (4 artefacts écartés, cf. ci-dessous)
     assert cal.n_eff == pytest.approx(4.82, abs=0.05)
-    assert cal.sigma_kmh == pytest.approx(1.539, abs=0.02)
+    assert cal.sigma_kmh == pytest.approx(1.528, abs=0.02)
 
     pred = predict_finish(DEQ, DPK, t, cal, cfg)
-    assert pred.finish_hours == pytest.approx(19.63, abs=0.2)
+    assert pred.finish_hours == pytest.approx(20.68, abs=0.2)
 
     cv = pred.cross_validation
-    assert cv.mae_pct == pytest.approx(25.3, abs=0.2)
-    assert cv.mae_interpolation_pct == pytest.approx(17.0, abs=0.3)   # les outliers sont en extrapolation
+    assert cv.mae_pct == pytest.approx(24.8, abs=0.2)
+    assert cv.mae_interpolation_pct == pytest.approx(18.1, abs=0.3)   # les outliers sont en extrapolation
 
 
 def test_four_recording_artifacts_are_excluded():
@@ -236,7 +237,7 @@ def test_prior_shrunk_pulls_beta2_toward_population_prior():
 
 
 def test_honest_gate_reports_interpolation_not_raw_mae():
-    base = _baseline_cfg()                           # modèle non pondéré → MAE brute 25,3 % / interp 17,0 %
+    base = _baseline_cfg()                           # modèle non pondéré → MAE brute 24,8 % / interp 18,1 %
     t = _twin()
     cal = build_calibration(t, base)
     pred = predict_finish(DEQ, DPK, t, cal, base)
@@ -246,9 +247,9 @@ def test_honest_gate_reports_interpolation_not_raw_mae():
         suf = assess_sufficiency(t, cal, pred, cfg)
         return next(c for c in suf.criteria if "validation" in c.name)
 
-    assert _cv_crit("strict").value == pytest.approx(25.3, abs=0.3)   # MAE brute (défaut)
+    assert _cv_crit("strict").value == pytest.approx(24.8, abs=0.3)   # MAE brute
     honest = _cv_crit("honest")
-    assert honest.value == pytest.approx(17.0, abs=0.3)               # MAE d'interpolation
+    assert honest.value == pytest.approx(18.1, abs=0.3)               # MAE d'interpolation
     assert "extrapolation" in honest.detail
 
 
