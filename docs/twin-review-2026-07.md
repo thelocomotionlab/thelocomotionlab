@@ -38,15 +38,22 @@ mémoire O(1 activité)), C6 (`scale_stops`).
 juil.–nov. 2025) → **C1 ACTIVÉ** (`dplus_basis=distance_150m`, DIAGNOSTIC §9.6) ; rapport
 relu et approuvé (ton éditorial à retravailler — backlog).
 
-**Reste chez Valentin (données réelles requises)** :
-1. re-golden réel post-C1 + capture `twin-engine preview` (recapture twin-theory §12) ;
-2. régénérer le fixture Montagnhard (`tools/regen_montagnhard_fixture`, enveloppe fittée → H3)
-   et me renvoyer le fichier + les chiffres imprimés (ré-épinglage des tests) ;
-3. décider des bascules de défaut suivantes, dans l'ordre de valeur : `mc_mode=predictive`
-   (recalibrer `interval_rel_width_*`), `fade_source=durability`, `vc_flat_symmetric=true`,
-   `vc_short_effort_floor_s=1800`, `decouple_basis=moving`, `scale_stops=false` ;
-4. passe éditoriale sur le narratif (phrases « moins IA ») — à faire ENSEMBLE, les tournures
-   sont des choix de marque, pas des corrections techniques.
+**Boucle C1 fermée (2026-07-02/03)** : golden réel PASS avant/après bascule, recapture §12
+(β2 ×1,149 = la mesure), fixture régénéré (enveloppe fittée → H3 résolu), tests ré-épinglés —
+conclusion maximalité stable (24,8 % → 8,8 %). **C3 activé par défaut (2026-07-03)** :
+Nice [30,0–32,8] → [≈28,9–34,7] (extrapolation de durée réelle, leveur h₀≈2,7, largeur 🟢) ;
+fixture i80 0,68 → critère largeur 🟠 voulu ; seuils inchangés ; baselines historiques
+épinglées sigma_only. **Plan** : fenêtres d'arrivée par segment en HEURES DE PASSAGE + arrivée
+finale avec fourchette horaire en synthèse. **Narratif** : passe éditoriale « moins IA » faite
+(ton sobre, gras réduit, fin des formules publicitaires) — à valider sur le prochain rapport.
+
+**Reste chez Valentin** :
+1. relire le prochain rapport (ton narratif + fenêtres horaires) et itérer si besoin ;
+2. bascules de défaut restantes, à décider sur preuve : `fade_source=durability` (Δ≈0,117 pour
+   ton découplage 20,9 %), `vc_flat_symmetric=true`, `vc_short_effort_floor_s=1800`,
+   `decouple_basis=moving`, `scale_stops=false` ;
+3. purge éventuelle de l'historique git (PDF personnel d'out_nice) avant merge vers main ;
+4. PR vers main quand demandée.
 
 **Backlog P2 inchangé** (cf. §7) : T8, S1, S5, S2b, T6, S3, S4, C9a.
 

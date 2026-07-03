@@ -21,6 +21,9 @@ def test_defaults_from_shipped_json():
     # C1 (2026-07-02) : base du D+ des activités harmonisée avec le parcours (mesure réelle
     # +14,9 % médian entre les deux échelles — DIAGNOSTIC §9.6). Rollback : "time_5s".
     assert cfg.twin.dplus_basis == "distance_150m"
+    # C3 (2026-07-02) : l'intervalle porte la loi prédictive complète (levier d'extrapolation
+    # + rétroaction du point fixe — DIAGNOSTIC §9.1). Rollback : "sigma_only".
+    assert cfg.prediction.mc_mode == "predictive"
 
 
 def test_env_overrides_data_dir(monkeypatch, tmp_path):

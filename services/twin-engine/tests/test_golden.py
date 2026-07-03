@@ -77,14 +77,17 @@ def test_prediction_chain_golden():
                 summaries=[_ultra(*u) for u in _ULTRAS])
     cal = build_calibration(twin, CFG)
     pred = predict_finish(200.1, 53.0, twin, cal, CFG)
-    # régression + point fixe + Monte-Carlo (seed fixe) + LOO : tous déterministes
+    # régression + point fixe + Monte-Carlo (seed fixe) + LOO : tous déterministes.
+    # Intervalle re-capturé le 2026-07-02 (mc_mode=predictive par défaut, C3) : la cible
+    # (31 h) extrapole la durée des 5 ultras synthétiques (max 24 h) → intervalle élargi
+    # [29.14, 33.53] vs sigma_only [29.82, 32.28] ; centre/β/MAE strictement inchangés.
     assert cal.beta[0] == pytest.approx(9.06698, abs=1e-3)
     assert cal.beta[1] == pytest.approx(-0.44203, abs=1e-3)
     assert cal.beta[2] == pytest.approx(-0.02059, abs=1e-4)
     assert pred.finish_hours == pytest.approx(30.9853, abs=1e-2)
     assert pred.v_kmh == pytest.approx(6.4579, abs=1e-3)
-    assert pred.interval_low_h == pytest.approx(29.8196, abs=2e-2)
-    assert pred.interval_high_h == pytest.approx(32.2833, abs=2e-2)
+    assert pred.interval_low_h == pytest.approx(29.1424, abs=2e-2)
+    assert pred.interval_high_h == pytest.approx(33.5271, abs=2e-2)
     assert pred.cross_validation.mae_pct == pytest.approx(1.3359, abs=1e-2)
 
 

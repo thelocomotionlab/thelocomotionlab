@@ -215,6 +215,17 @@ interpolée → élargissement attendu faible) ; (b) décider des seuils `interv
 (ici 0,52 > 0,5 → le critère largeur passerait 🟠 à lui seul — c'est le comportement
 recherché, mais à assumer explicitement).
 
+**DÉFAUT ACTIVÉ le 2026-07-02** (`mc_mode=predictive`, rollback `sigma_only`), sur double
+validation : (a) cas de référence Nice — reconstruction de la loi prédictive depuis la capture
+(β, σ, poids de récence, N_eff de Kish recalculé 7,63 ≈ 7,69 capturé) → intervalle 80 %
+[30,0–32,8] → **[≈28,9–34,7]** (rel 0,19), justifié : la cible est une extrapolation de durée
+(31,3 h vs 21,3 h max des vrais ultras, levier h₀ ≈ 2,7) ; critère de largeur toujours 🟢,
+seuils inchangés. (b) fixture Montagnhard — i80 0,19 → 0,68 sur la calibration servie (critère
+largeur 🟠, voulu : cet athlète mérite une fourchette large). Le golden déterministe est
+re-capturé (intervalle [29,14–33,53] vs sigma_only [29,82–32,28] ; centre/β/MAE strictement
+identiques) ; les baselines historiques (tests de robustesse, ab_montagnhard, regen fixture)
+épinglent explicitement `sigma_only`.
+
 ### 9.2 Temps de mouvement mesuré sur la distance (C2, corrige le mode `speed_basis=moving`)
 
 **Constat (aggrave H2).** `moving_time_s` comptait les secondes où le CANAL VITESSE dépasse le

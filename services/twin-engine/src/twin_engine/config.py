@@ -160,15 +160,19 @@ class PredictionParams:
     interval_high_pct: int = 90
     v_floor_kmh: float = 2.0
     # --- source d'incertitude du Monte-Carlo (revue 2026-07, C3) --------------------------
-    # ``sigma_only`` (défaut, comportement historique au bit près) : tirages v = v(T*) + ε,
-    #   ε ~ N(0, σ) — seul le bruit résiduel est propagé ; l'intervalle ne voit NI le levier
-    #   d'extrapolation (incertitude des β) NI la rétroaction T↔v.
-    # ``predictive`` (régime régression uniquement) : β ~ N(β̂, σ²(XᵀWX)⁻¹) + ε ~ N(0, σ),
-    #   point fixe T = Deq/v(T) re-résolu PAR TIRAGE (vectorisé). L'intervalle s'élargit là
-    #   où la cible sort de l'enveloppe des (ln T, D+/km) d'entraînement — exactement le
-    #   phénomène que le gate honnête marque en LOO. Mesuré : largeur ≈ ×2 sur cible
-    #   au-delà du plus long ultra. Blend/vc_e : repli automatique sur sigma_only.
-    mc_mode: str = "sigma_only"                          # {sigma_only, predictive}
+    # ``sigma_only`` (comportement historique) : tirages v = v(T*) + ε, ε ~ N(0, σ) — seul le
+    #   bruit résiduel est propagé ; l'intervalle ne voit NI le levier d'extrapolation
+    #   (incertitude des β) NI la rétroaction T↔v.
+    # ``predictive`` (DÉFAUT depuis le 2026-07-02, régime régression uniquement) :
+    #   β ~ N(β̂, σ²(XᵀWX)⁻¹) + ε ~ N(0, σ), point fixe T = Deq/v(T) re-résolu PAR TIRAGE
+    #   (vectorisé). L'intervalle s'élargit là où la cible sort de l'enveloppe des
+    #   (ln T, D+/km) d'entraînement — le phénomène que le gate honnête marque en LOO.
+    #   Validation sur le cas de référence (capture 2026-07-02) : Nice est une extrapolation
+    #   de durée (31,3 h vs 21,3 h max des vrais ultras, levier h₀≈2,7) → intervalle 80 %
+    #   [30,0–32,8] → [≈28,9–34,7] (rel 0,19, critère largeur toujours 🟢) ; fixture
+    #   Montagnhard : i80 0,19 → 0,68 (critère largeur 🟠, voulu). Rollback : sigma_only.
+    #   Blend/vc_e : repli automatique sur sigma_only.
+    mc_mode: str = "predictive"                          # {sigma_only, predictive}
 
 
 @dataclass(frozen=True)

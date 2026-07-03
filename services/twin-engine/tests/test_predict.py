@@ -113,12 +113,15 @@ def test_beta_covariance_is_valid():
 
 
 def test_predictive_mc_widens_more_in_extrapolation():
-    """C3 : défaut sigma_only inchangé ; predictive élargit l'intervalle, et DAVANTAGE quand
-    la cible sort de l'enveloppe (ln T, D+/km) des ultras d'entraînement (levier)."""
+    """C3 : predictive élargit l'intervalle, et DAVANTAGE quand la cible sort de l'enveloppe
+    (ln T, D+/km) des ultras d'entraînement (levier). Modes explicites des deux côtés."""
     from dataclasses import replace
 
     twin = _twin(_noisy_ultras())
     cal = build_calibration(twin, CFG)
+    # les deux modes sont demandés EXPLICITEMENT (le défaut livré est « predictive » depuis
+    # le 2026-07-02 — verrouillé dans test_config)
+    cfg_s = replace(CFG, prediction=replace(CFG.prediction, mc_mode="sigma_only"))
     cfg_p = replace(CFG, prediction=replace(CFG.prediction, mc_mode="predictive"))
 
     def relw(pred):
@@ -126,9 +129,9 @@ def test_predictive_mc_widens_more_in_extrapolation():
 
     dpk = 50.0
     deq_in, deq_ex = 110.0, 250.0        # ~16 h (interpolé) vs ~38 h (extrapolé, max = 24 h)
-    w_sig_in = relw(predict_finish(deq_in, dpk, twin, cal, CFG))
+    w_sig_in = relw(predict_finish(deq_in, dpk, twin, cal, cfg_s))
     w_prd_in = relw(predict_finish(deq_in, dpk, twin, cal, cfg_p))
-    w_sig_ex = relw(predict_finish(deq_ex, dpk, twin, cal, CFG))
+    w_sig_ex = relw(predict_finish(deq_ex, dpk, twin, cal, cfg_s))
     w_prd_ex = relw(predict_finish(deq_ex, dpk, twin, cal, cfg_p))
 
     assert w_prd_in >= w_sig_in * 0.98               # jamais plus étroit (tolérance MC)
@@ -137,7 +140,7 @@ def test_predictive_mc_widens_more_in_extrapolation():
 
     # la valeur CENTRALE (point fixe) ne bouge pas : seul l'intervalle devient honnête
     assert abs(predict_finish(deq_ex, dpk, twin, cal, cfg_p).finish_hours
-               - predict_finish(deq_ex, dpk, twin, cal, CFG).finish_hours) < 1e-9
+               - predict_finish(deq_ex, dpk, twin, cal, cfg_s).finish_hours) < 1e-9
 
 
 def test_predictive_mc_falls_back_on_blend_regime():
