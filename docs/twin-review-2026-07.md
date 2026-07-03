@@ -79,7 +79,13 @@ récent) sur la coupure. C'est la brique du banc d'essai rétrospectif « walk-f
 par Valentin : rejouer des courses passées avec exactement ce que le moteur aurait su la
 veille, confronter aux temps réels, alimenter le registre en accéléré (au lieu d'attendre les
 courses futures) puis en déduire la fenêtre empirique groupée (`interval_source=pooled`, à
-implémenter quand le registre a ≥ 8-10 cas).
+implémenter quand le registre a ≥ 8-10 cas). **Banc outillé (même jour, validé)** :
+`tools/backtest.py` (manifeste JSON par athlète → coupures veille de course → tableau
+prédit-vs-réel → registre machine `docs/twin-registre-couverture.json`, fusion idempotente,
+DNF et refus 🔴 consignés) + `tools/registre.py` (couverture 50/80, biais/MAE du central,
+score de Winkler, quantiles groupés normalisés par sd prédictif, garde-fou < 8 cas frais =
+pas de recalibration). Prochaine étape D (`interval_source=pooled`) : conception après les
+premiers registres réels (3 athlètes × 3-5 courses annoncés).
 
 **Reste chez Valentin** :
 1. relire le prochain rapport (double bande + scénarios + ton narratif) et itérer si besoin ;

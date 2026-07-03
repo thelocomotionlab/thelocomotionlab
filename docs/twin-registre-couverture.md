@@ -34,23 +34,36 @@
 
 ## Protocole de backtest rétrospectif (alimentation accélérée du registre)
 
-Chaque course PASSÉE d'un athlète consentant = une entrée potentielle, sans attendre les
-courses futures. Anti-fuite obligatoire : le paramètre `--until` (CLI) rejoue « ce que le
-moteur aurait su la veille » :
+Chaque course PASSÉE d'un athlète consentant = une entrée, sans attendre les courses
+futures. **Outillé de bout en bout** : un manifeste JSON par athlète →
+`tools/backtest.py` enchaîne les coupures « veille de course », imprime le tableau
+prédit-vs-réel et alimente le registre machine (`docs/twin-registre-couverture.json`,
+agrégats seulement) ; `tools/registre.py` calcule couverture, biais, score de Winkler et
+quantiles groupés.
 
 ```
-PYTHONPATH=src python -m twin_engine.cli preview \
-  --training <archive.zip> --course <trace-de-la-course.gpx> [--race <spec.json>] \
-  --until <veille-de-la-course>          # ex. 2026-04-25 pour une course du 26/04
+# 1. un manifeste par athlète (cf. docstring de tools/backtest.py pour le format) :
+#    { "athlete": "Pseudo", "archive": "export.zip",
+#      "races": [{"name": "…", "date": "2025-06-14", "official_time": "26:30:00",
+#                 "gpx": "trace.gpx"}] }
+# 2. depuis services/twin-engine :
+PYTHONPATH=src python -m tools.backtest manifest-a1.json manifest-a2.json ...
+PYTHONPATH=src python -m tools.registre
 ```
+
+(Le rejeu manuel d'un cas isolé reste possible : `twin-engine preview --training <archive>
+--course <trace.gpx> --until <veille>`.)
 
 Règles :
-1. **Coupure la veille de la course** (jamais le jour même : la course elle-même est souvent
-   dans l'archive). Les activités non datées sont écartées d'office (anti-fuite).
+1. **Coupure la veille de la course** (défaut de l'outil ; jamais le jour même — la course
+   elle-même est souvent dans l'archive). Les activités non datées sont écartées d'office
+   (anti-fuite).
 2. **Toutes les courses qualifiantes de l'athlète**, pas celles qui arrangent (biais de
-   sélection). Les courses d'un même athlète ne sont pas indépendantes : noter l'athlète,
-   les analyses groupées se font PAR athlète d'abord.
-3. Les cas de développement (référence Nice, Montagnhard) sont consignés mais comptés À PART :
-   le modèle a été réglé dessus.
-4. Consigner : central, deux bandes, source (mc/conforme), sd prédictif si dispo, temps réel,
-   n ultras dans la calibration à la coupure.
+   sélection). Les abandons se consignent (`"dnf": true`) et sont exclus des quantiles.
+   Les courses d'un même athlète ne sont pas indépendantes : les agrégats se lisent PAR
+   athlète d'abord (`tools/registre.py` les groupe).
+3. Les cas de développement (référence Nice, Montagnhard) portent `"dev_set": true` :
+   consignés mais comptés À PART — le modèle a été réglé dessus.
+4. L'outil consigne : central, deux bandes, source (mc/conforme), sd prédictif relatif
+   (normalisation de la future fenêtre groupée), temps réel, erreur signée, couvert ou non,
+   n ultras et verdict à la coupure. Un refus de prédire (🔴) est consigné tel quel.
