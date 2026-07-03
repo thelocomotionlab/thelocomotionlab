@@ -183,6 +183,17 @@ le **point fixe** :
 
 **Incertitude** par **Monte-Carlo** (tirages de `v` dans sa loi prédictive, résidu σ inclus) → intervalle.
 
+> **Deux fourchettes, deux usages (2026-07-03).** Le rapport présente l'incertitude en deux bandes
+> étiquetées par leur usage : la **fourchette de course** (interquartile 25–75 des tirages,
+> `pacing.plan_window_*` — une course sur deux s'y joue) pilote le plan et les fenêtres par segment ;
+> l'intervalle de la prédiction (80 %, `prediction.interval_*_pct`) devient les **bornes de
+> sécurité** (logistique : barrières, assistance, retour). Aucune ne remplace l'autre — on ne
+> resserre jamais une couverture pour flatter la largeur. Option S5 derrière flag
+> (`prediction.interval_source=conformal_normalized`) : bornes de sécurité **calées sur les erreurs
+> LOO réelles** (scores studentisés, quantile pondéré conservateur, mise à l'échelle par le sd
+> prédictif de la cible), garde-fou « jamais plus étroit que la fourchette de course », repli
+> Monte-Carlo à moins de 4 plis. Défaut : `mc`.
+
 **Cas de référence (recapture 2026-07-02)** : **T = 31,3 h**, vitesse ajustée moyenne
 **6,40 km/h ≈ 60 % de la VC** ; intervalle 80 % **30,0–32,8 h**.
 
@@ -220,8 +231,14 @@ RMSE 4,0 % (n = 8 ; 4 plis d'interpolation, 4 d'extrapolation).
   réelle (montées lentes, descentes rapides).
 - **Horloge & nuit** : heure de départ + cumul (mouvement + arrêts ravitaillement) → heure de passage ;
   lever/coucher du soleil par l'**algorithme solaire NOAA** → sections de nuit.
-- **Fenêtres horaires** : on présente par segment une **plage** d'arrivée et d'allure (bandes
-  Monte-Carlo), pas une valeur unique (meilleure tenue psychologique en course).
+- **Fenêtres horaires** : on présente par segment une **plage** d'arrivée et d'allure — la
+  **fourchette de course** (bandes Monte-Carlo interquartiles, cf. §4), pas une valeur unique
+  (meilleure tenue psychologique en course). L'arrivée finale porte en plus les **bornes de
+  sécurité** en heures de passage.
+- **Scénarios de course** : quand les bornes de sécurité sont larges relativement à la prédiction
+  (`pacing.scenario_rel_width`, défaut 0,35), le rapport ajoute une table **rapide / central /
+  prudent** par segment (bornes de la fourchette de course) et la consigne de **recalage** :
+  identifier tôt sa colonne et la suivre, plutôt que courir après la colonne centrale.
 
 **Cas de référence (recapture 2026-07-02)** : mouvement 29,5 h + arrêts 1,75 h = **31,3 h**
 d'horloge ; départ ven. 13:00, arrivée sam. ~20:17 ; **section de nuit à relire sur le prochain

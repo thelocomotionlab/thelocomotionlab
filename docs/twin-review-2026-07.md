@@ -47,15 +47,28 @@ fixture i80 0,68 → critère largeur 🟠 voulu ; seuils inchangés ; baselines
 finale avec fourchette horaire en synthèse. **Narratif** : passe éditoriale « moins IA » faite
 (ton sobre, gras réduit, fin des formules publicitaires) — à valider sur le prochain rapport.
 
-**Reste chez Valentin** :
-1. relire le prochain rapport (ton narratif + fenêtres horaires) et itérer si besoin ;
-2. bascules de défaut restantes, à décider sur preuve : `fade_source=durability` (Δ≈0,117 pour
-   ton découplage 20,9 %), `vc_flat_symmetric=true`, `vc_short_effort_floor_s=1800`,
-   `decouple_basis=moving`, `scale_stops=false` ;
-3. purge éventuelle de l'historique git (PDF personnel d'out_nice) avant merge vers main ;
-4. PR vers main quand demandée.
+**Commercialiser l'incertitude (2026-07-03, DIAGNOSTIC §9.7)** — réponse au rapport Montagnhard
+réel (intervalle 80 % ≈ 13 h) : **double bande** par USAGE (fenêtres des segments = « fourchette
+de course » interquartile 25–75, outil de pilotage ; intervalle 80 % = « bornes de sécurité »,
+logistique, converties en heures de passage), **table de scénarios** rapide/central/prudent quand
+(hi−lo)/T > `scenario_rel_width` (0,35 — Nice ~0,19 : jamais affichée), correctif du **jour
+manquant** dans les fenêtres qui passent minuit, **`terrain_term=prior_shrunk` par défaut**
+(MAE fixture 8,8 → 8,3, no-op attendu sur le cas de référence), et **S5 implémenté** derrière
+flag (`interval_source=conformal_normalized` : quantile pondéré des erreurs LOO studentisées ×
+sd prédictif de la cible ; Montagnhard 11,8 h → 7,1 h à couverture calée sur les erreurs
+réelles ; garde-fou « jamais plus étroit que la fourchette de course », repli `mc` à < 4 plis).
+Défaut `mc` inchangé — bascule sur décision. Golden déterministe ré-épinglé (prior_shrunk).
 
-**Backlog P2 inchangé** (cf. §7) : T8, S1, S5, S2b, T6, S3, S4, C9a.
+**Reste chez Valentin** :
+1. relire le prochain rapport (double bande + scénarios + ton narratif) et itérer si besoin ;
+2. golden réel à re-vérifier après `prior_shrunk` (no-op attendu : ton β2 libre ≈ le prior) ;
+3. bascules de défaut restantes, à décider sur preuve : `interval_source=conformal_normalized`,
+   `fade_source=durability` (Δ≈0,117 pour ton découplage 20,9 %), `vc_flat_symmetric=true`,
+   `vc_short_effort_floor_s=1800`, `decouple_basis=moving`, `scale_stops=false` ;
+4. purge éventuelle de l'historique git (PDF personnel d'out_nice) avant merge vers main ;
+5. PR vers main quand demandée.
+
+**Backlog P2** (cf. §7) : T8, S1, S2b, T6, S3, S4, C9a (S5 : fait derrière flag, cf. ci-dessus).
 
 ---
 

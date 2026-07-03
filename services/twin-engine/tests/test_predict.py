@@ -179,8 +179,10 @@ def _nonstationary_ultras():
 
 def test_recency_weighting_reduces_loo_and_tracks_recent_form():
     twin = _twin(_nonstationary_ultras())
-    cfg_w = CFG                                                             # demi-vie 365 j
-    cfg_u = replace(CFG, calibration=replace(CFG.calibration, recency_halflife_days=0.0))  # désactivée
+    # on teste le MÉCANISME de récence isolément → terrain libre (le ridge prior_shrunk,
+    # défaut, déplace β2 et masquerait la direction « pondéré ⇒ suit la forme récente »)
+    cfg_w = replace(CFG, calibration=replace(CFG.calibration, terrain_term="free"))  # demi-vie 365 j
+    cfg_u = replace(cfg_w, calibration=replace(cfg_w.calibration, recency_halflife_days=0.0))  # désactivée
 
     cal_w = build_calibration(twin, cfg_w)
     cal_u = build_calibration(twin, cfg_u)
@@ -208,5 +210,38 @@ def test_equal_dates_weighting_is_neutral():
     cal = build_calibration(twin, CFG)
     assert cal.weights is not None and np.allclose(cal.weights, 1.0)
     assert abs(cal.n_eff - len(genuine)) < 1e-9
-    beta_unweighted, _ = _fit_regression(genuine)         # sans poids
+    # sans poids, MÊME mode de terrain que le fit servi (on teste la neutralité des POIDS)
+    beta_unweighted, _ = _fit_regression(genuine, cfg=CFG)
     assert np.allclose(cal.beta, beta_unweighted, atol=1e-9)
+
+
+def test_conformal_interval_calibrated_on_loo_with_guard_and_fallback():
+    """S5 : ``interval_source=conformal_normalized`` — les bornes de sécurité sont étalonnées
+    sur les erreurs LOO réelles (scores studentisés × sd prédictif de la cible), avec un
+    garde-fou « jamais plus étroit que la fourchette de course » ; repli MC à < 4 plis."""
+    pts = [(12, 50, 0.05), (20, 55, -0.08), (16, 45, 0.03), (24, 53, -0.02), (18, 52, 0.06)]
+    twin = _twin([_ultra(h, _plane(h, dpk) + p, dpk) for h, dpk, p in pts])
+    cfg_c = replace(CFG, prediction=replace(CFG.prediction, interval_source="conformal_normalized"))
+    cal = build_calibration(twin, cfg_c)
+    pred_c = predict_finish(200.0, 53.0, twin, cal, cfg_c)
+    pred_m = predict_finish(200.0, 53.0, twin, cal, CFG)
+    assert pred_m.interval_source == "mc"
+    assert pred_c.interval_source == "conformal_normalized"
+    # seule la LARGEUR affichée change : centre et MC identiques
+    assert pred_c.finish_hours == pred_m.finish_hours
+    assert np.allclose(pred_c.mc_samples, pred_m.mc_samples)
+    assert (pred_c.interval_low_h, pred_c.interval_high_h) != (
+        pred_m.interval_low_h, pred_m.interval_high_h)
+    # garde-fou de cohérence : jamais plus étroit que la fourchette de course (bande du plan)
+    p_lo, p_hi = np.percentile(pred_c.mc_samples,
+                               [CFG.pacing.plan_window_low_pct, CFG.pacing.plan_window_high_pct])
+    assert pred_c.interval_low_h <= p_lo + 1e-9
+    assert pred_c.interval_high_h >= p_hi - 1e-9
+    # repli honnête : 3 ultras → 3 plis LOO < 4 → source réellement servie = mc, bornes MC
+    twin3 = _twin([_ultra(h, _plane(h, dpk) + p, dpk) for h, dpk, p in pts[:3]])
+    cal3 = build_calibration(twin3, cfg_c)
+    pred3_c = predict_finish(200.0, 53.0, twin3, cal3, cfg_c)
+    pred3_m = predict_finish(200.0, 53.0, twin3, cal3, CFG)
+    assert pred3_c is not None and pred3_c.interval_source == "mc"
+    assert pred3_c.interval_low_h == pred3_m.interval_low_h
+    assert pred3_c.interval_high_h == pred3_m.interval_high_h

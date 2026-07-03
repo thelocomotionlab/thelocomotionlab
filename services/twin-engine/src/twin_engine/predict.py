@@ -36,6 +36,10 @@ class CrossValidation:
     is_extrapolation: list[bool] = field(default_factory=list)
     n_interpolation: int = 0
     n_extrapolation: int = 0
+    # ingrédients du conforme normalisé (S5) : poids et écart-type prédictif RELATIF de
+    # chaque pli (même β-covariance que le modèle servi) — internes, pas dans to_dict
+    fold_weights: list[float] = field(default_factory=list)
+    fold_rel_sd: list[float] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
@@ -65,6 +69,7 @@ class Prediction:
     sigma_kmh: float
     vc_fraction: float | None    # v / VC (intensité relative)
     cross_validation: CrossValidation | None
+    interval_source: str = "mc"  # source RÉELLEMENT servie (repli possible vers "mc")
 
     def to_dict(self) -> dict:
         return {
@@ -74,6 +79,7 @@ class Prediction:
             "dplus_per_km": round(self.dplus_per_km, 2),
             "interval_80_low_h": round(self.interval_low_h, 3),
             "interval_80_high_h": round(self.interval_high_h, 3),
+            "interval_source": self.interval_source,
             "regime": self.regime,
             "sigma_kmh": round(self.sigma_kmh, 3),
             "vc_fraction": None if self.vc_fraction is None else round(self.vc_fraction, 3),
@@ -165,8 +171,20 @@ def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation
             lnT[i] == lnT_lo or lnT[i] == lnT_hi or dpk[i] == dpk_lo or dpk[i] == dpk_hi
         )
 
+    # écart-type prédictif RELATIF aux points de plis (β-covariance du modèle SERVI) —
+    # nourrit le conforme normalisé (S5) : score = |erreur| / sd_pred du pli
+    Sb = np.asarray(calibration.beta_cov, dtype=float) if calibration.beta_cov is not None else None
+    sig = calibration.sigma_kmh
+
+    def _rel_sd(i: int) -> float:
+        if Sb is None or V[i] <= 0:
+            return float("nan")
+        x = np.array([1.0, lnT[i], dpk[i]])
+        return float(np.sqrt(max(sig**2 + x @ Sb @ x, 0.0)) / V[i])
+
     errors: list[float] = []
     w_used: list[float] = []
+    rel_sds: list[float] = []
     points: list[tuple[float, float]] = []
     extrap: list[bool] = []
     for i in range(n):
@@ -179,6 +197,7 @@ def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation
             continue
         errors.append(100.0 * (tp - H[i]) / H[i])
         w_used.append(float(w[i]))
+        rel_sds.append(_rel_sd(i))
         points.append((float(H[i]), float(tp)))
         extrap.append(_is_extrap(i))
 
@@ -206,7 +225,62 @@ def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation
         is_extrapolation=[bool(x) for x in ex],
         n_interpolation=int((~ex).sum()),
         n_extrapolation=int(ex.sum()),
+        fold_weights=[float(x) for x in w_used],
+        fold_rel_sd=[float(x) for x in rel_sds],
     )
+
+
+def _weighted_quantile(scores: np.ndarray, weights: np.ndarray, q: float) -> float:
+    """Quantile pondéré CONSERVATEUR (conforme pondéré, Tibshirani et al. 2019) : plus petit
+    score s tel que la masse cumulée des plis ≤ s atteigne q, la masse totale incluant le
+    point CIBLE (poids 1 = récence d'une course à venir, score « +∞ »). Si même tous les
+    plis ne suffisent pas (peu de plis), on rend le score max observé (choix fini le plus
+    prudent)."""
+    order = np.argsort(scores)
+    s = scores[order]
+    w = weights[order]
+    cum = np.cumsum(w) / (float(w.sum()) + 1.0)
+    idx = int(np.searchsorted(cum, q, side="left"))
+    return float(s[min(idx, len(s) - 1)])
+
+
+def _conformal_interval(
+    t_point: float,
+    v_point: float,
+    dpk: float,
+    cv: CrossValidation | None,
+    calibration: UltraCalibration,
+    cfg: Config,
+) -> tuple[float, float] | None:
+    """Intervalle CONFORME NORMALISÉ (S5, flag ``interval_source=conformal_normalized``).
+
+    Le Monte-Carlo prédictif propage l'incertitude DU MODÈLE ; sa largeur est honnête si le
+    modèle l'est. Le conforme cale au contraire la couverture sur les erreurs RÉELLEMENT
+    observées en LOO : score de chaque pli = |erreur relative| / sd prédictif relatif du pli
+    (normalisation « studentisée », Vovk ; Romano & Candès) — la géométrie du levier est
+    conservée (une cible en extrapolation garde un intervalle plus large que les plis
+    interpolés), mais l'ÉCHELLE vient des erreurs vraies, pas de la loi supposée.
+    Rend None (⇒ repli MC) sans validation croisée exploitable (< 4 plis normalisables).
+    """
+    if cv is None or calibration.beta_cov is None or v_point is None or v_point <= 0:
+        return None
+    err = np.asarray(cv.errors_pct, dtype=float) / 100.0
+    rel = np.asarray(cv.fold_rel_sd, dtype=float)
+    w = np.asarray(cv.fold_weights, dtype=float)
+    if len(rel) != len(err) or len(w) != len(err):
+        return None
+    ok = np.isfinite(err) & np.isfinite(rel) & (rel > 0) & np.isfinite(w) & (w > 0)
+    if int(ok.sum()) < 4:
+        return None
+    scores = np.abs(err[ok]) / rel[ok]
+    coverage = (cfg.prediction.interval_high_pct - cfg.prediction.interval_low_pct) / 100.0
+    q = _weighted_quantile(scores, w[ok], coverage)
+    # sd prédictif relatif AU POINT CIBLE : même levier x₀ᵀ(XᵀWX)⁻¹x₀ que le MC prédictif
+    x0 = np.array([1.0, np.log(t_point), dpk])
+    Sb = np.asarray(calibration.beta_cov, dtype=float)
+    sd_rel = float(np.sqrt(max(calibration.sigma_kmh**2 + x0 @ Sb @ x0, 0.0)) / v_point)
+    half = q * sd_rel
+    return t_point * (1.0 - half), t_point * (1.0 + half)
 
 
 def predict_finish(
@@ -240,6 +314,21 @@ def predict_finish(
     low = float(np.percentile(mc, cfg.prediction.interval_low_pct))
     high = float(np.percentile(mc, cfg.prediction.interval_high_pct))
 
+    # --- source de l'intervalle affiché (bornes de sécurité) ---
+    # La LOO est calculée AVANT le choix : le conforme s'étalonne sur ses plis.
+    cv = leave_one_out(calibration, cfg)
+    interval_source = "mc"
+    if cfg.prediction.interval_source == "conformal_normalized":
+        ci = _conformal_interval(t_point, v_point, dplus_per_km, cv, calibration, cfg)
+        if ci is not None:
+            # garde-fou de COHÉRENCE : les bornes de sécurité ne peuvent pas être plus
+            # étroites que la fourchette de course (bande de planification des segments),
+            # sinon le rapport annoncerait une « sécurité » plus serrée que le pilotage.
+            p_lo = float(np.percentile(mc, cfg.pacing.plan_window_low_pct))
+            p_hi = float(np.percentile(mc, cfg.pacing.plan_window_high_pct))
+            low, high = min(ci[0], p_lo), max(ci[1], p_hi)
+            interval_source = "conformal_normalized"
+
     # % de VC seulement si la VC est plausible (sinon on n'affiche pas un ratio trompeur)
     cs = twin.critical_speed
     vc_fraction = None
@@ -257,7 +346,8 @@ def predict_finish(
         regime=calibration.regime,
         sigma_kmh=calibration.sigma_kmh,
         vc_fraction=vc_fraction,
-        cross_validation=leave_one_out(calibration, cfg),
+        cross_validation=cv,
+        interval_source=interval_source,
     )
 
 

@@ -67,9 +67,14 @@ def test_select_genuine_filters_hikes_and_high_decouple():
 
 
 def test_regression_regime_recovers_plane_and_floors_sigma():
+    from dataclasses import replace
+
     pts = [(12, 50), (20, 55), (15, 45), (24, 53)]
     twin = _twin([_ultra(h, _plane(h, dpk), dpk) for h, dpk in pts])
-    cal = build_calibration(twin, CFG)
+    # récupération EXACTE du plan → terrain libre (le défaut prior_shrunk tire β2 vers le
+    # prior population : c'est un biais VOULU, vérifié juste en dessous)
+    cfg_free = replace(CFG, calibration=replace(CFG.calibration, terrain_term="free"))
+    cal = build_calibration(twin, cfg_free)
     assert cal.regime == REGIME_REGRESSION
     assert cal.supports_cross_validation
     b0, b1, b2 = cal.beta
@@ -77,6 +82,11 @@ def test_regression_regime_recovers_plane_and_floors_sigma():
     # plan parfait → résidu nul → σ ramené au plancher (anti-surconfiance)
     assert cal.sigma_kmh == CFG.calibration.regression_min_sigma_kmh
     assert abs(cal.predict_vga_kmh(30, 53) - _plane(30, 53)) < 1e-3
+    # défaut prior_shrunk : β2 atterrit ENTRE le plan (−0,0148) et le prior population
+    cal_d = build_calibration(twin, CFG)
+    prior = CFG.calibration.default_dplus_penalty_kmh_per_dpkm
+    lo, hi = sorted((-0.0148, prior))
+    assert lo - 1e-9 <= cal_d.beta[2] <= hi + 1e-9
 
 
 def test_blend_regime_recalibrates_on_personal_ultra():

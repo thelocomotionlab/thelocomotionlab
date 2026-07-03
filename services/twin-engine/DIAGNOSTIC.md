@@ -88,10 +88,11 @@ Poids de maximalité obtenus (soft) sur le fixture :
 
 ### 3.2 [SUPPORT] Nettoyer le double-comptage terrain
 
-`calibration.terrain_term ∈ {free (défaut), none, prior_shrunk}`. La vga est **déjà** ajustée à la
-pente ; laisser `β2·(D+/km)` libre re-compte partiellement le terrain. `none` (β2 = 0) ramène la MAE
-à 21,7 % à lui seul ; `prior_shrunk` (ridge de β2 vers le prior population) atténue le levier D+/km =
-104. Effet **modeste seul**, utile surtout en combinaison.
+`calibration.terrain_term ∈ {free, none, prior_shrunk (défaut depuis 2026-07-03, §9.7)}`. La vga est
+**déjà** ajustée à la pente ; laisser `β2·(D+/km)` libre re-compte partiellement le terrain. `none`
+(β2 = 0) ramène la MAE à 21,7 % à lui seul ; `prior_shrunk` (ridge de β2 vers le prior population,
+`terrain_shrink_lambda=50`) atténue le levier D+/km = 104. Effet **modeste seul**, utile surtout en
+combinaison (§4 : 8,8 → 8,3 avec la maximalité).
 
 ### 3.3 [SUPPORT] Gate honnête tolérant à l'influence
 
@@ -129,7 +130,7 @@ l'ultra » (`endurance_intuition`).
 | **maximalité soft — cœur 3.1** | 0,532 | 0,19 | **8,8** | 7,3 | 10,0 | 🟠 |
 | **maximalité hard — cœur 3.1** | 0,534 | 0,19 | **8,7** | 7,3 | 9,9 | 🟠 |
 | maximalité soft + terrain=none | 0,664 | 0,21 | 8,9 | 7,9 | 9,7 | 🟠 |
-| maximalité soft + prior_shrunk | 0,532 | 0,19 | **8,3** | 7,1 | 9,3 | 🟠 |
+| **maximalité soft + prior_shrunk [DÉFAUT livré depuis 2026-07-03, §9.7]** | 0,532 | 0,19 | **8,3** | 7,1 | 9,3 | 🟠 |
 | [BASELINE] + MC prédictif (C3, §9.1) | 1,528 | 2,82 | 24,8 | 18,1 | 34,7 | 🔴 |
 | maximalité soft + MC prédictif (C3, §9.1) | 0,532 | 0,68 | 8,8 | 7,3 | 10,0 | 🟠 |
 
@@ -358,3 +359,59 @@ nouveaux agrégats. Avec l'enveloppe fittée, la séparation de maximalité est 
 ultras engagés à r = 0,89–0,99 (poids 0,89–1,0), sortie facile seule à r = 0,72 (poids 0). **C1 est
 bouclé de bout en bout : mesuré (+14,9 %) → activé → recapturé (golden réel) → ré-épinglé (fixture).**
 
+
+### 9.7 Commercialiser l'incertitude : double bande, scénarios, ridge β2, conforme normalisé (S5-présentation)
+
+**Constat (rapport Montagnhard réel, 2026-07-03).** L'intervalle 80 % servi couvrait
+[15 h 14 – 28 h 07], soit ~13 h de dispersion : honnête (extrapolation en durée ET en terrain,
+MAE LOO 8,8 %), mais invendable comme « fenêtre d'arrivée » unique. Réduire la couverture pour
+resserrer serait un mensonge ; la réponse est (a) de la **présentation** — deux bandes, deux
+usages — et (b) deux leviers **statistiques** légitimes.
+
+**Décisions (mêmes règles pour tous les athlètes, cas étroits inclus — réf. Nice ~0,19) :**
+
+1. **Double bande (défaut).** Les fenêtres PAR SEGMENT du plan passent des percentiles de la
+   prédiction (10/90) à la **fourchette de course** (`pacing.plan_window_low/high_pct`, défaut
+   interquartile 25–75 : une course sur deux s'y joue) — l'outil de PILOTAGE. L'intervalle de
+   la prédiction (80 %) devient les **bornes de sécurité** — LOGISTIQUE (barrières, assistance,
+   retour), converties en heures de passage (`PacingPlan.safety_lo/hi_clock`). Le rapport
+   étiquette chaque bande par son USAGE et n'affiche jamais l'une pour l'autre ; tous les
+   libellés (« 50 % », « 80 % ») sont dérivés de la config.
+2. **Mode scénarios** (`pacing.scenario_rel_width=0,35`) : quand (hi−lo)/T dépasse le seuil, le
+   rapport ajoute une table rapide/central/prudent par segment (bornes de la fourchette de
+   course) + consigne de RECALAGE en course (« repère ta colonne dès les premiers ravitos »).
+   Nice (~0,19) ne l'affiche pas ; Montagnhard (~0,62) oui.
+3. **Correctif d'affichage** : une fenêtre dont une borne change de jour perdait le préfixe du
+   jour (« sam. 20:13–09:07 » laissait croire à un 09:07 samedi) ; désormais les jours ne sont
+   omis que si les DEUX bornes tombent le jour de l'arrivée centrale.
+4. **`terrain_term=prior_shrunk` par défaut** (λ=50, rollback `free`) : β2 est le coefficient le
+   moins identifié ; le ridge vers le prior population améliore MAE (8,8 → 8,3, interp 7,3 → 7,1,
+   extrap 10,0 → 9,3) ET largeur (§4). No-op attendu sur le cas de référence (son β2 libre −0,0170
+   ≈ le prior, qu'il définit) — golden réel à re-vérifier chez Valentin par acquit.
+5. **Conforme normalisé derrière flag** (`prediction.interval_source=conformal_normalized`,
+   défaut `mc`) : scores studentisés |erreur LOO|/sd_pred du pli (quantile pondéré conservateur,
+   Tibshirani 2019), mis à l'échelle du sd prédictif de la CIBLE (même levier x₀ᵀ(XᵀWX)⁻¹x₀ que
+   le MC). La couverture vient des erreurs RÉELLES, la géométrie du levier est conservée.
+   Garde-fou : jamais plus étroit que la fourchette de course ; repli `mc` à < 4 plis
+   normalisables (traçé dans `Prediction.interval_source`).
+
+**Preuve (fixture, défauts servis = maximalité soft + prior_shrunk + MC prédictif) :**
+
+| Présentation (Montagnhard) | bornes (h) | largeur |
+|---|---|---|
+| avant (terrain libre, MC 80 %) | [15,23 – 28,10] | 12,87 h |
+| défaut servi (prior_shrunk, MC 80 %) — bornes de sécurité | [15,39 – 27,18] | 11,79 h |
+| **fourchette de course 25–75 (servie, pilote le plan)** | **[16,88 – 22,08]** | **5,19 h** |
+| conforme normalisé (flag) — bornes de sécurité | [15,39 – 22,52] | 7,14 h |
+
+(Sur `terrain=free`, le conforme donne [14,94 – 23,15] = 8,21 h — la mesure exploratoire
+pré-implémentation est reproduite au centième, l'implémentation est validée.) Centre 18,96 h
+(free : 19,04 h), MAE 8,3 %. Golden déterministe ré-épinglé sous prior_shrunk (β 9,011/−0,457/
+−0,0186, 31,010 h, MAE LOO 0,74 — les plis ridgés varient moins) ; anciens pins en commentaire.
+
+**Pourquoi PAS « montrer le 50 % parce qu'il est plus pertinent ».** Les deux bandes répondent à
+deux questions différentes (où se jouera probablement ta course / qu'est-ce qui reste possible) ;
+aucune n'est « plus vraie ». Remplacer le 80 % par le 50 % sans le dire reviendrait à changer la
+couverture pour flatter la largeur — exclu. Seule la table de scénarios est conditionnée à la
+largeur, parce qu'elle est un OUTIL rendu utile par la dispersion, pas une re-présentation de
+l'intervalle.

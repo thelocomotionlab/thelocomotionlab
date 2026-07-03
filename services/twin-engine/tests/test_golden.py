@@ -78,17 +78,19 @@ def test_prediction_chain_golden():
     cal = build_calibration(twin, CFG)
     pred = predict_finish(200.1, 53.0, twin, cal, CFG)
     # régression + point fixe + Monte-Carlo (seed fixe) + LOO : tous déterministes.
-    # Intervalle re-capturé le 2026-07-02 (mc_mode=predictive par défaut, C3) : la cible
-    # (31 h) extrapole la durée des 5 ultras synthétiques (max 24 h) → intervalle élargi
-    # [29.14, 33.53] vs sigma_only [29.82, 32.28] ; centre/β/MAE strictement inchangés.
-    assert cal.beta[0] == pytest.approx(9.06698, abs=1e-3)
-    assert cal.beta[1] == pytest.approx(-0.44203, abs=1e-3)
-    assert cal.beta[2] == pytest.approx(-0.02059, abs=1e-4)
-    assert pred.finish_hours == pytest.approx(30.9853, abs=1e-2)
-    assert pred.v_kmh == pytest.approx(6.4579, abs=1e-3)
-    assert pred.interval_low_h == pytest.approx(29.1424, abs=2e-2)
-    assert pred.interval_high_h == pytest.approx(33.5271, abs=2e-2)
-    assert pred.cross_validation.mae_pct == pytest.approx(1.3359, abs=1e-2)
+    # Re-capturé le 2026-07-03 (terrain_term=prior_shrunk par défaut, revue) : β2 est tiré
+    # de −0.02059 vers le prior −0.0170 (λ=50), la MAE LOO passe de 1.34 à 0.74 (les plis
+    # ridgés varient moins) ; centre quasi inchangé (30.985 → 31.010). Valeurs libres
+    # (terrain_term=free, pins du 2026-07-02) : β 9.06698/−0.44203/−0.02059, 30.9853 h,
+    # [29.1424, 33.5271], MAE 1.3359.
+    assert cal.beta[0] == pytest.approx(9.01097, abs=1e-3)
+    assert cal.beta[1] == pytest.approx(-0.45744, abs=1e-3)
+    assert cal.beta[2] == pytest.approx(-0.01863, abs=1e-4)
+    assert pred.finish_hours == pytest.approx(31.0103, abs=1e-2)
+    assert pred.v_kmh == pytest.approx(6.4527, abs=1e-3)
+    assert pred.interval_low_h == pytest.approx(29.1876, abs=2e-2)
+    assert pred.interval_high_h == pytest.approx(33.4840, abs=2e-2)
+    assert pred.cross_validation.mae_pct == pytest.approx(0.7430, abs=1e-2)
 
 
 def test_full_pipeline_on_fixtures_nonregression():

@@ -141,8 +141,12 @@ class CalibrationParams:
     # --- terme de terrain β2·(D+/km) : anti double-comptage (la vga est DÉJÀ ajustée pente) ----
     # ``free`` (défaut, actuel) : β2 libre. ``none`` : β2=0 (la pente est déjà dans la vga).
     # ``prior_shrunk`` : ridge de β2 vers le prior population, atténue les points de levier terrain.
-    terrain_term: str = "free"                           # {free, none, prior_shrunk}
-    terrain_shrink_lambda: float = 1.0                   # force du ridge (n. de pseudo-obs vers le prior)
+    # DÉFAUT ``prior_shrunk`` depuis le 2026-07-03 (revue) : β2 est le coefficient le moins
+    # identifié (n_eff faible, levier terrain) ; le ridge vers le prior population améliore À LA
+    # FOIS la MAE LOO (8,8 → 8,3 sur le fixture) et la largeur d'intervalle (−8 %). No-op sur le
+    # cas de référence (son β2 libre ≈ le prior, qu'il définit). Rollback : ``free``.
+    terrain_term: str = "prior_shrunk"                   # {free, none, prior_shrunk}
+    terrain_shrink_lambda: float = 50.0                  # force du ridge (n. de pseudo-obs vers le prior)
     # repli « peu d'ultras » (twin-theory §3). Prior population (β2) = β2 du cas de référence,
     # RECAPTURÉ le 2026-07-02 sur l'échelle D+ « distance 150 m » (C1) — l'ancien −0.0148
     # datait de l'échelle 5 s (rapport ×1,149 = exactement l'écart d'échelle mesuré).
@@ -173,6 +177,16 @@ class PredictionParams:
     #   Montagnhard : i80 0,19 → 0,68 (critère largeur 🟠, voulu). Rollback : sigma_only.
     #   Blend/vc_e : repli automatique sur sigma_only.
     mc_mode: str = "predictive"                          # {sigma_only, predictive}
+    # --- source des BORNES DE SÉCURITÉ (S5, conforme normalisé — revue 2026-07) -------------
+    # ``mc`` (défaut) : percentiles du Monte-Carlo (paramétrique). ``conformal_normalized`` :
+    # quantile pondéré des scores LOO |erreur|/sd_pred, remis à l'échelle de l'écart-type
+    # prédictif de la CIBLE — calibré sur ce que le modèle a DÉMONTRÉ hors échantillon, tout en
+    # conservant la sensibilité au levier d'extrapolation (Vovk ; Romano-Candès 2019, adapté).
+    # Mesuré (fixture Montagnhard, cible T≈19 h) : bornes 80 % [15,2-28,1] (12,9 h, MC) →
+    # [14,9-23,2] (8,2 h) — la queue paramétrique jamais observée disparaît, l'asymétrie du MC
+    # est remplacée par ±sym. Garde-fou : jamais plus étroit que la fourchette de course (MC).
+    # Repli sur ``mc`` sans validation croisée (blend/vc_e) ou à moins de 4 plis.
+    interval_source: str = "mc"                          # {mc, conformal_normalized}
 
 
 @dataclass(frozen=True)

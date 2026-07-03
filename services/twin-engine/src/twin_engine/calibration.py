@@ -297,10 +297,10 @@ def _regression_beta(
 ) -> np.ndarray:
     """β pondéré de ``v ~ 1 + ln(T) + β2·D+/km`` selon le mode de terrain (§4.2).
 
-    * ``free`` (défaut, actuel) : β2 libre.
+    * ``free`` : β2 libre (défaut historique, jusqu'au 2026-07-03).
     * ``none`` : β2 = 0 (la vga est **déjà** ajustée à la pente → pas de double-comptage).
-    * ``prior_shrunk`` : ridge de β2 vers le prior population via une pseudo-observation pondérée
-      ``λ`` (atténue les points de levier terrain, ex. un ultra à D+/km extrême).
+    * ``prior_shrunk`` (défaut) : ridge de β2 vers le prior population via une pseudo-observation
+      pondérée ``λ`` (atténue les points de levier terrain, ex. un ultra à D+/km extrême).
 
     ``cfg`` absent ⇒ ``free`` (rétro-compatibilité du golden)."""
     term = cfg.calibration.terrain_term if cfg is not None else "free"
