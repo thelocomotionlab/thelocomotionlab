@@ -55,6 +55,23 @@ def _main_night_span(plan) -> tuple[float, float] | None:
     return longest[0].off1, longest[-1].off1
 
 
+def _window_str(s) -> str:
+    """Fenêtre d'arrivée d'un segment : en HEURES DE PASSAGE quand l'horloge est connue,
+    sinon en heures cumulées. Les jours ne sont omis que si les DEUX bornes tombent le même
+    jour que l'arrivée centrale — dès qu'une borne change de jour, on répète le jour sur les
+    deux (une fenêtre « 20:13–09:07 » sans jour serait illisible, et « sam. 20:13–09:07 »
+    laisserait croire que 09:07 est samedi)."""
+    if s.arr_lo_clock and s.arr_hi_clock and s.arr_clock:
+        day = s.arr_clock.split()[0]
+        if s.arr_lo_clock.split()[0] == day and s.arr_hi_clock.split()[0] == day:
+            lo = s.arr_lo_clock.split(" ", 1)[1]
+            hi = s.arr_hi_clock.split(" ", 1)[1]
+        else:
+            lo, hi = s.arr_lo_clock, s.arr_hi_clock
+        return tex_escape(f"{lo}–{hi}")
+    return f"{fr(s.lo_h, 1)}–{fr(s.hi_h, 1)}\\,h"
+
+
 def _recent_weeks(summaries, n_weeks: int = 4) -> list[dict]:
     """Volume des dernières semaines disponibles (distance + D+), la plus récente en bas."""
     dated = []
@@ -136,16 +153,6 @@ def build_report_context(
             "cum_dminus": fr(cum_dminus, 0),
         })
 
-    def _window_str(s) -> str:
-        """Fenêtre d'arrivée : en HEURES DE PASSAGE quand l'horloge est connue (le jour n'est
-        répété que s'il diffère de celui de l'arrivée centrale), sinon en heures cumulées."""
-        if s.arr_lo_clock and s.arr_hi_clock and s.arr_clock:
-            day = s.arr_clock.split()[0]
-            lo = s.arr_lo_clock.split(" ", 1)[1] if s.arr_lo_clock.split()[0] == day else s.arr_lo_clock
-            hi = s.arr_hi_clock.split(" ", 1)[1] if s.arr_hi_clock.split()[0] == day else s.arr_hi_clock
-            return tex_escape(f"{lo}–{hi}")
-        return f"{fr(s.lo_h, 1)}–{fr(s.hi_h, 1)}\\,h"
-
     plan_rows = [
         {
             "idx": s.index,
@@ -165,8 +172,11 @@ def build_report_context(
         for s in plan.segments
     ]
 
-    # arrivée finale : heure centrale + FOURCHETTE en heures de passage (pas seulement la
-    # prédiction centrale — la fenêtre est ce que l'athlète communique à ses proches)
+    # arrivée finale : heure centrale + DEUX fenêtres en heures de passage, chacune son usage :
+    #  - fourchette de course (bande de planification, défaut interquartile) → pilotage,
+    #    c'est elle que l'athlète communique à ses proches comme « fenêtre probable » ;
+    #  - bornes de sécurité (intervalle de la prédiction, défaut 80 %) → logistique
+    #    (barrières horaires, récupération, retour) — jamais un objectif de course.
     last = plan.segments[-1] if plan.segments else None
     arrival_clock = tex_escape(last.arr_clock) if last and last.arr_clock else None
     arrival_window = (
@@ -174,6 +184,40 @@ def build_report_context(
         if last and last.arr_lo_clock and last.arr_hi_clock
         else None
     )
+    arrival_safety_window = (
+        tex_escape(f"{plan.safety_lo_clock} – {plan.safety_hi_clock}")
+        if plan.safety_lo_clock and plan.safety_hi_clock
+        else None
+    )
+    # fourchette de course de l'ARRIVÉE en durées (mêmes bornes que la dernière ligne du plan)
+    plan_low = hm(last.lo_h) if last else None
+    plan_high = hm(last.hi_h) if last else None
+
+    # mode SCÉNARIOS : quand l'intervalle de sécurité est LARGE relativement à la prédiction
+    # (largeur relative > pacing.scenario_rel_width), une valeur centrale unique sur-promet ;
+    # le tableau bascule alors en trois scénarios nommés (les bornes de la fourchette de
+    # course + le central), que l'athlète RECALE en course : « je passe plus près de la
+    # colonne prudente → je vise l'arrivée prudente ».
+    rel_width = (
+        (prediction.interval_high_h - prediction.interval_low_h) / prediction.finish_hours
+        if prediction.finish_hours > 0 else 0.0
+    )
+    scenario_mode = bool(rel_width > cfg.pacing.scenario_rel_width)
+
+    def _clock_or_h(clock: str | None, hours: float) -> str:
+        return tex_escape(clock) if clock else f"{fr(hours, 1)}\\,h"
+
+    scenario_rows = [
+        {
+            "idx": s.index,
+            "to": tex_escape(s.to),
+            "fast": _clock_or_h(s.arr_lo_clock, s.lo_h),
+            "central": _clock_or_h(s.arr_clock, s.cum_clock_h),
+            "cautious": _clock_or_h(s.arr_hi_clock, s.hi_h),
+            "night": s.night,
+        }
+        for s in plan.segments
+    ] if scenario_mode else []
 
     night = _main_night_span(plan)
     weeks = _recent_weeks(twin.summaries, n_weeks=cfg.narrative.recent_weeks)
@@ -194,6 +238,8 @@ def build_report_context(
         "pred_central": hm(prediction.finish_hours),
         "interval_low": hm(prediction.interval_low_h),
         "interval_high": hm(prediction.interval_high_h),
+        "plan_low": plan_low,
+        "plan_high": plan_high,
         "vc_fraction_pct": fr(prediction.vc_fraction * 100, 0) if prediction.vc_fraction else None,
         # intensité réellement BASSE ? — comparée sur le POURCENTAGE AFFICHÉ (bande unifiée),
         # pour que le conseil et le chiffre lu par l'athlète ne se contredisent jamais
@@ -208,6 +254,11 @@ def build_report_context(
         "interval_pct": fr(cfg.prediction.interval_high_pct - cfg.prediction.interval_low_pct, 0),
         "interval_tail_low": fr(cfg.prediction.interval_low_pct, 0),
         "interval_tail_high": fr(100 - cfg.prediction.interval_high_pct, 0),
+        # bande de PLANIFICATION (fourchette de course des segments) — distincte des bornes
+        # de sécurité ci-dessus : deux largeurs, deux usages (pilotage vs logistique)
+        "plan_band_pct": fr(
+            cfg.pacing.plan_window_high_pct - cfg.pacing.plan_window_low_pct, 0
+        ),
         "regime": prediction.regime,
         "regime_label": _REGIME_LABELS.get(prediction.regime, prediction.regime),
         "has_cv": cv is not None,
@@ -253,6 +304,9 @@ def build_report_context(
         "t_clock_h": hm(plan.t_clock_h),
         "arrival_clock": arrival_clock,
         "arrival_window": arrival_window,
+        "arrival_safety_window": arrival_safety_window,
+        "scenario_mode": scenario_mode,
+        "scenario_rows": scenario_rows,
         "start_time": french_datetime(plan.start_time) if plan.start_time else None,
         "sun": plan.sun,
         "night_from_km": fr(night[0], 0) if night else None,

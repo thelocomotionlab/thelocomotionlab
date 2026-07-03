@@ -35,8 +35,10 @@ Ce rapport construit \textbf{ton plan d'allure individualis\'e} pour << race_nam
 tes fichiers d'entra\^inement (<< n_activities >>~activit\'es de course exploit\'ees). La cha\^ine
 \emph{Locomotion Twin} estime ton profil physiologique --- vitesse critique, exposant d'endurance,
 durabilit\'e --- puis le confronte au co\^ut \'energ\'etique de la pente pour pr\'edire ton temps
-d'arriv\'ee et r\'epartir l'effort. La pr\'ediction centrale est de \textbf{<< pred_central >>}
-(intervalle << interval_pct >>\,\% : << interval_low >> -- << interval_high >>).
+d'arriv\'ee et r\'epartir l'effort. La pr\'ediction centrale est de \textbf{<< pred_central >>}<% if plan_low %>
+(fourchette de course : << plan_low >> -- << plan_high >> ; bornes de s\'ecurit\'e \`a
+<< interval_pct >>\,\% : << interval_low >> -- << interval_high >>)<% else %>
+(intervalle << interval_pct >>\,\% : << interval_low >> -- << interval_high >>)<% endif %>.
 <% if has_cv %>La m\'ethode est valid\'ee \emph{hors \'echantillon} sur tes propres ultras, avec une
 erreur moyenne de \textbf{<< cv_gate_mae >>\,\%}<% if cv_gate_is_interp %> en interpolation
 (erreur brute << cv_mae >>\,\%<% if cv_extrap_mae %>, dont extrapolation << cv_extrap_mae >>\,\%<% endif %>)<% endif %>.<% else %>Faute d'assez d'ultras, la pr\'ediction repose
@@ -54,9 +56,13 @@ sur une extrapolation (confiance r\'eduite, cf. limites).<% endif %>
 
 \begin{llnote}[L'essentiel]
 \textbf{Temps d'arriv\'ee pr\'edit : << pred_central >>}<% if start_time %>, d\'epart << start_time >><% endif %>.
-Intervalle de confiance \`a << interval_pct >>\,\% : \textbf{<< interval_low >> -- << interval_high >>}.
-<% if arrival_window %>\\[2pt]
-\textbf{Arriv\'ee : << arrival_clock >>}, fen\^etre \`a << interval_pct >>\,\% : \textbf{<< arrival_window >>}.<% endif %>
+<% if plan_low %>\textbf{Fourchette de course} (<< plan_band_pct >>\,\% central) : \textbf{<< plan_low >> -- << plan_high >>}
+--- c'est elle qui pilote le plan. Bornes de s\'ecurit\'e (<< interval_pct >>\,\%) :
+<< interval_low >> -- << interval_high >> --- pour la logistique, pas pour l'allure.
+<% else %>Intervalle de confiance \`a << interval_pct >>\,\% : \textbf{<< interval_low >> -- << interval_high >>}.
+<% endif %><% if arrival_window %>\\[2pt]
+\textbf{Arriv\'ee : << arrival_clock >>}, fourchette de course : \textbf{<< arrival_window >>}<% if arrival_safety_window %> ;
+s\'ecurit\'e : << arrival_safety_window >><% endif %>.<% endif %>
 <% if vc_fraction_pct %>\\[2pt]
 \textbf{Intensit\'e cible : $\approx$\,<< vc_fraction_pct >>\,\% de ta vitesse critique}, soutenue
 avec une d\'erive ma\^itris\'ee.<% if vc_low %> \`A cette intensit\'e, le facteur limitant n'est pas la
@@ -207,13 +213,23 @@ seconde moiti\'e de tes longues sorties~\cite{maunder2021,jones2024}.
 vitesse. On r\'esout ce cercle par un \textbf{point fixe} \(T = \Deq / v(T)\). Pour l'incertitude, on fait
 un \textbf{Monte-Carlo} : on \emph{simule des milliers de courses possibles} en tirant ta vitesse au hasard
 dans sa plage probable (de dispersion \(\sigma = << sigma_kmh >>\)~\(\mathrm{km\,h^{-1}}\)). R\'esultat :
-\textbf{<< pred_central >>}, intervalle << interval_pct >>\,\% \textbf{<< interval_low >> -- << interval_high >>}.
+\textbf{<< pred_central >>}<% if plan_low %>, fourchette de course \textbf{<< plan_low >> -- << plan_high >>},
+bornes de s\'ecurit\'e (<< interval_pct >>\,\%) << interval_low >> -- << interval_high >><% else %>,
+intervalle << interval_pct >>\,\% \textbf{<< interval_low >> -- << interval_high >>}<% endif %>.
 
-\begin{llnote}[Lire l'intervalle \`a << interval_pct >>\,\%]
-Compte tenu de l'incertitude du mod\`ele, il y a \textbf{<< interval_pct >>\,\% de chances} que ton temps r\'eel tombe
-dans cette fourchette --- environ << interval_tail_low >>~chances sur 100 d'\^etre plus rapide que la borne basse,
-<< interval_tail_high >>~sur~100 d'\^etre plus lent. La valeur centrale reste le sc\'enario le plus probable.
+\begin{llnote}[Deux fourchettes, deux usages]
+La \textbf{fourchette de course} (<< plan_band_pct >>\,\% central : une course sur deux s'y joue)
+est l'outil de \emph{pilotage} : c'est elle que le plan d\'ecline segment par segment, et elle que
+tu communiques \`a tes proches. Les \textbf{bornes de s\'ecurit\'e} \`a << interval_pct >>\,\%
+encadrent aussi les sc\'enarios rares --- << interval_tail_low >>~chances sur 100 d'\^etre plus
+rapide que la borne basse, << interval_tail_high >>~sur~100 d'\^etre plus lent --- et servent \`a la
+\emph{logistique} : barri\`eres horaires, assistance, retour. Jamais d'objectif d'allure. La valeur
+centrale reste le sc\'enario le plus probable.
 \end{llnote}
+
+<% if width_prescription %><< width_prescription >>
+
+<% endif %>
 
 <% if prediction_pourtoi %>\begin{llnote}[Ce que \c{c}a change pour toi]
 << prediction_pourtoi >><% if intensity_feeling %> << intensity_feeling >><% endif %>
@@ -247,8 +263,9 @@ plat) constante, et non une allure r\'eelle constante : courir au m\^eme \emph{c
 impose de ralentir en mont\'ee et d'acc\'el\'erer en descente. \textbf{Fade de durabilit\'e.} Comme la
 durabilit\'e d\'ecline avec les heures, on autorise une l\'eg\`ere \textbf{d\'erive} --- une baisse
 progressive de cette vitesse du d\'ebut \`a la fin (\(\approx -<< fade_pct >>\,\%\)) : partir un peu
-au-dessus de la moyenne, finir un peu en dessous. Les \textbf{fen\^etres} donnent par segment une \emph{plage} d'arriv\'ee
-(bandes Monte-Carlo), pas une valeur unique.
+au-dessus de la moyenne, finir un peu en dessous. Les \textbf{fen\^etres} donnent par segment ta
+\textbf{fourchette de course} (<< plan_band_pct >>\,\% central, bandes Monte-Carlo) : une \emph{plage}
+d'arriv\'ee, pas une valeur unique.
 
 \begin{table}[H]
   \centering \scriptsize \setlength{\tabcolsep}{3.8pt}
@@ -256,16 +273,34 @@ au-dessus de la moyenne, finir un peu en dessous. Les \textbf{fen\^etres} donnen
   \begin{tabular}{@{}clrrrrlrc@{}}
     \LLheaderrow
     \LLthead{\#} & \LLthead{Vers} & \LLthead{km} & \LLthead{$\Deq$} & \LLthead{v.aj.} & \LLthead{allure} & \LLthead{arriv\'ee} & \LLthead{fen\^etre d'arriv\'ee} & \LLthead{nuit} \\
-     & & & \scriptsize(km) & \scriptsize(km/h) & \scriptsize(/km) & & \scriptsize(<< interval_pct >>\,\%) & \\
+     & & & \scriptsize(km) & \scriptsize(km/h) & \scriptsize(/km) & & \scriptsize(<< plan_band_pct >>\,\%) & \\
 <% for s in plan_rows %>    << s.idx >> & << s.to >> & \LLnum{<< s.off1 >>} & \LLnum{<< s.deq >>} & \LLnum{<< s.vga >>} & \LLnum{<< s.pace >>} & << s.arr >> & \LLnum{<< s.window >>} & <% if s.night %>$\bullet$<% endif %> \\
 <% endfor %>  \end{tabular}
   \caption{Plan par segment : vitesse ajust\'ee cible, allure r\'eelle terrain, heure de passage et
-  fen\^etre d'arriv\'ee (<< interval_pct >>\,\%). $\bullet$ = section de nuit.}
+  fen\^etre d'arriv\'ee (fourchette de course, << plan_band_pct >>\,\% central). $\bullet$ = section de nuit.}
   \label{tab:plan}
 \end{table}
 
 Total : mouvement << t_move_h >> + arr\^ets << t_stops_h >> = horloge \textbf{<< t_clock_h >>}.
 <% if sun %> Soleil : lever << sun.sunrise >>, coucher << sun.sunset >>.<% endif %>
+
+<% if scenario_mode %>\subsection{Trois sc\'enarios de course}
+
+<< scenario_intro >>
+
+\begin{table}[H]
+  \centering \scriptsize \setlength{\tabcolsep}{5pt}
+  \LLzebra \renewcommand{\arraystretch}{1.28}
+  \begin{tabular}{@{}clcccc@{}}
+    \LLheaderrow
+    \LLthead{\#} & \LLthead{Vers} & \LLthead{sc\'enario rapide} & \LLthead{central} & \LLthead{sc\'enario prudent} & \LLthead{nuit} \\
+<% for s in scenario_rows %>    << s.idx >> & << s.to >> & << s.fast >> & << s.central >> & << s.cautious >> & <% if s.night %>$\bullet$<% endif %> \\
+<% endfor %>  \end{tabular}
+  \caption{Heures de passage des trois sc\'enarios --- \emph{rapide} et \emph{prudent} sont les
+  bornes de la fourchette de course. Rep\`ere t\^ot la colonne qui te correspond et suis-la.}
+  \label{tab:scenarios}
+\end{table}
+<% endif %>
 
 \begin{figure}[H]
   \centering

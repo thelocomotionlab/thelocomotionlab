@@ -76,7 +76,10 @@
     "fade_delta_max": 0.13,
     "default_stop_min": 5.0,
     "major_base_extra_min": 10.0,
-    "scale_stops": true
+    "scale_stops": true,
+    "plan_window_low_pct": 25,
+    "plan_window_high_pct": 75,
+    "scenario_rel_width": 0.35
   },
 
   "sufficiency": {

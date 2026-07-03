@@ -38,7 +38,7 @@ class SegmentPlan:
     cum_clock_h: float       # temps cumulé à l'ARRIVÉE du segment (arrêt de CE ravito exclu)
     arr_clock: str | None    # heure de passage (ex. "sam. 19:23") si départ connu
     night: bool
-    lo_h: float              # borne basse de la fenêtre d'arrivée (cumul, 80 %)
+    lo_h: float              # borne basse de la FOURCHETTE DE COURSE (cumul, bande de planification)
     hi_h: float              # borne haute
     arr_lo_clock: str | None = None   # borne basse en HEURE DE PASSAGE (ex. "sam. 18:55")
     arr_hi_clock: str | None = None   # borne haute — None si départ/position inconnus
@@ -56,6 +56,10 @@ class PacingPlan:
     start_time: dt.datetime | None
     sun: dict = field(default_factory=dict)
     fade_delta_used: float = 0.085   # Δ réellement servi (traçabilité : le rapport en dérive le %)
+    # bornes de SÉCURITÉ de l'arrivée (intervalle de la prédiction, ex. 80 %) en heure de
+    # passage — distinctes de la fourchette de course des segments (bande de planification)
+    safety_lo_clock: str | None = None
+    safety_hi_clock: str | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -64,6 +68,8 @@ class PacingPlan:
             "t_clock_h": round(self.t_clock_h, 2),
             "start_time": self.start_time.isoformat() if self.start_time else None,
             "sun": self.sun,
+            "safety_lo_clock": self.safety_lo_clock,
+            "safety_hi_clock": self.safety_hi_clock,
             "segments": [s.to_dict() for s in self.segments],
         }
 
@@ -153,19 +159,23 @@ def build_pacing(
     t_clock_h = float(cum_clock[-1] + stops_min[-1] / 60.0)
 
     # --- fenêtres horaires : bandes Monte-Carlo ---
+    # Les fenêtres PAR SEGMENT sont la « fourchette de course » (bande de PLANIFICATION,
+    # défaut interquartile) : une course sur deux s'y joue — c'est l'outil de pilotage.
+    # L'intervalle de la prédiction (ex. 80 %) reste les « bornes de sécurité » (logistique).
     mc = prediction.mc_samples
     mult = mc / tpred
+    b_lo, b_hi = cfg.pacing.plan_window_low_pct, cfg.pacing.plan_window_high_pct
     if cfg.pacing.scale_stops:
         # historique : tout le cumul (arrêts compris) est mis à l'échelle
-        lo = np.array([np.percentile(cum_clock[i] * mult, cfg.prediction.interval_low_pct) for i in range(n)])
-        hi = np.array([np.percentile(cum_clock[i] * mult, cfg.prediction.interval_high_pct) for i in range(n)])
+        lo = np.array([np.percentile(cum_clock[i] * mult, b_lo) for i in range(n)])
+        hi = np.array([np.percentile(cum_clock[i] * mult, b_hi) for i in range(n)])
     else:
         # physique (C6) : un scénario lent ne rallonge pas les ravitos — seule la part de
         # MOUVEMENT est mise à l'échelle, les arrêts déjà passés s'ajoutent constants
         cum_move_arr = np.cumsum(t_move_h)
-        lo = np.array([np.percentile(cum_move_arr[i] * mult, cfg.prediction.interval_low_pct)
+        lo = np.array([np.percentile(cum_move_arr[i] * mult, b_lo)
                        + cum_stop_before[i] for i in range(n)])
-        hi = np.array([np.percentile(cum_move_arr[i] * mult, cfg.prediction.interval_high_pct)
+        hi = np.array([np.percentile(cum_move_arr[i] * mult, b_hi)
                        + cum_stop_before[i] for i in range(n)])
 
     # bornes de la fenêtre en HEURES DE PASSAGE (le plan ne sert pas qu'une valeur centrale :
@@ -173,9 +183,12 @@ def build_pacing(
     if can_clock and start is not None:
         arr_lo = [_fmt_clock(start + dt.timedelta(hours=float(lo[i]))) for i in range(n)]
         arr_hi = [_fmt_clock(start + dt.timedelta(hours=float(hi[i]))) for i in range(n)]
+        safety_lo = _fmt_clock(start + dt.timedelta(hours=float(prediction.interval_low_h)))
+        safety_hi = _fmt_clock(start + dt.timedelta(hours=float(prediction.interval_high_h)))
     else:
         arr_lo = [None] * n
         arr_hi = [None] * n
+        safety_lo = safety_hi = None
 
     segments = [
         SegmentPlan(
@@ -219,6 +232,8 @@ def build_pacing(
         start_time=start,
         sun=sun,
         fade_delta_used=float(delta),
+        safety_lo_clock=safety_lo,
+        safety_hi_clock=safety_hi,
     )
 
 

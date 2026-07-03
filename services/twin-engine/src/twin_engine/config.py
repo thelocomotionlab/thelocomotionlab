@@ -195,6 +195,19 @@ class PacingParams:
     # donc les ravitos, ce qui n'a pas de sens physique. ``false`` : seul le MOUVEMENT est mis
     # à l'échelle, les arrêts déjà passés s'ajoutent constants (fenêtres un peu plus justes).
     scale_stops: bool = True
+    # --- double bande (S5-présentation, 2026-07-03) -----------------------------------------
+    # Les fenêtres PAR SEGMENT du plan utilisent la « fourchette de course » (bande de
+    # PLANIFICATION, défaut interquartile 25-75 : une course sur deux s'y joue) ; l'intervalle
+    # de la PRÉDICTION (interval_low/high_pct, défaut 80 %) devient les « bornes de sécurité »
+    # (logistique/proches). Deux questions différentes, deux bandes étiquetées par leur USAGE —
+    # on n'affiche jamais l'une en la faisant passer pour l'autre.
+    plan_window_low_pct: int = 25
+    plan_window_high_pct: int = 75
+    # au-delà de cette largeur relative des bornes de sécurité ((hi−lo)/T), le rapport ajoute
+    # la table « scénarios de course » (rapide/central/prudent par segment) : la dispersion
+    # devient un outil de pilotage. 0 = toujours affichée ; très grand = jamais. Cas étroits
+    # (réf. Nice ~0,19) : non affichée.
+    scenario_rel_width: float = 0.35
 
 
 @dataclass(frozen=True)

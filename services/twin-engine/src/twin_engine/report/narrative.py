@@ -411,22 +411,57 @@ def caption_pacing() -> str:
     )
 
 
-def _interval_pct(cfg) -> str:
-    """Largeur nominale de l'intervalle (« 80 » par défaut), dérivée des percentiles config."""
-    pred = getattr(cfg, "prediction", None)
-    if pred is None:
-        return "80"
-    return fr(pred.interval_high_pct - pred.interval_low_pct, 0)
+def _plan_band_pct(cfg) -> str:
+    """Largeur nominale de la fourchette de course (« 50 » par défaut), dérivée du pacing."""
+    pace = getattr(cfg, "pacing", None)
+    if pace is None:
+        return "50"
+    return fr(pace.plan_window_high_pct - pace.plan_window_low_pct, 0)
 
 
 def caption_cumul(cfg=None) -> str:
     # honnêteté : la bande vient d'un facteur d'échelle GLOBAL sur le scénario (un scénario lent
     # l'est de bout en bout) — pas d'une accumulation d'erreurs indépendantes segment par segment.
     return (
-        f"\\`A lire : ton heure de passage cumul\\'ee. La bande, c'est la \\textbf{{fourchette \\`a "
-        f"{_interval_pct(cfg)}\\,{PCT}}} : elle s'\\'elargit avec les heures parce que l'incertitude "
-        "porte sur ton \\emph{sc\\'enario d'ensemble} — un jour lent l'est du d\\'ebut \\`a la fin, "
-        "pas segment par segment."
+        f"\\`A lire : ton heure de passage cumul\\'ee. La bande est la \\textbf{{fourchette de "
+        f"course}} ({_plan_band_pct(cfg)}\\,{PCT} central) : elle s'\\'elargit avec les heures "
+        "parce que l'incertitude porte sur ton \\emph{sc\\'enario d'ensemble} — un jour lent "
+        "l'est du d\\'ebut \\`a la fin, pas segment par segment."
+    )
+
+
+def _rel_width(prediction) -> float:
+    if prediction is None or prediction.finish_hours <= 0:
+        return 0.0
+    return (prediction.interval_high_h - prediction.interval_low_h) / prediction.finish_hours
+
+
+def width_prescription(prediction, cfg=None) -> str | None:
+    """Phrase qui ASSUME un intervalle de sécurité large (au-delà du seuil scénarios) : la
+    largeur est une information sur l'historique de l'athlète face à ce parcours, pas un
+    défaut du plan. None quand l'intervalle est ordinaire — le mode d'emploi des deux
+    fourchettes est déjà donné par la note fixe du rapport, inutile de le répéter."""
+    pace = getattr(cfg, "pacing", None)
+    thresh = pace.scenario_rel_width if pace else 0.35
+    if _rel_width(prediction) <= thresh:
+        return None
+    return (
+        "Sur un parcours comme celui-ci, tes courses pass\\'ees ne permettent pas de resserrer "
+        "davantage les bornes de s\\'ecurit\\'e : c'est une information honn\\^ete, pas un "
+        "d\\'efaut du plan. Pilote sur la fourchette de course ; le tableau de sc\\'enarios du "
+        "plan de pacing sert \\`a te recaler en course."
+    )
+
+
+def scenario_intro(cfg=None) -> str:
+    """Chapeau du tableau de scénarios (affiché seulement quand l'intervalle est large)."""
+    return (
+        "L'incertitude sur ce parcours est trop large pour piloter sur une seule heure cible. "
+        "Le plan se d\\'ecline donc en \\textbf{trois sc\\'enarios} — \\emph{rapide} et "
+        f"\\emph{{prudent}} sont les bornes de la fourchette de course ({_plan_band_pct(cfg)}\\,{PCT} "
+        "central). D\\`es les premiers ravitaillements, rep\\`ere la colonne dont tes heures de "
+        "passage sont les plus proches : c'est elle qui devient ta r\\'ef\\'erence pour la suite, "
+        "pas la colonne centrale."
     )
 
 
@@ -472,6 +507,8 @@ def build_narrative(course, twin, calibration, prediction, plan, race, cfg) -> d
         "durability_pourtoi": durability_pourtoi(twin, cfg),
         "prediction_pourtoi": prediction_pourtoi(prediction) if prediction else None,
         "intensity_feeling": intensity_feeling(prediction, cfg) if prediction else None,
+        "width_prescription": width_prescription(prediction, cfg) if prediction else None,
+        "scenario_intro": scenario_intro(cfg),
         "cv_pourtoi": cv_pourtoi(prediction) if prediction else None,
         "demande_key": demande_key_sentence(course),
         "strategy": race_strategy(course, plan) if plan else [],

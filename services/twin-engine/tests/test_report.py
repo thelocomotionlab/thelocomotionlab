@@ -38,13 +38,13 @@ def _plane(h, dpk):
     return 8.5 - 0.35 * math.log(h) - 0.0148 * dpk
 
 
-def _scenario():
+def _scenario(cfg=CFG):
     race = RaceSpec(
         "Course Test 100M", (0.0, 5.0, 10.0), ("Base", "Sommet", "Arrivée"),
         start_time=datetime(2026, 9, 25, 13, 0, tzinfo=timezone(timedelta(hours=2))),
         lat=43.703, lon=7.266, tz_offset_h=2.0, major_base_indices=(0,),
     )
-    course = build_course(_triangle_gpx(), race, CFG)
+    course = build_course(_triangle_gpx(), race, cfg)
 
     # courbe record plausible pour la figure
     durs = np.array(CFG.twin.record_durations_s, float)
@@ -66,17 +66,17 @@ def _scenario():
     twin = Twin(critical_speed=CriticalSpeed(2.9, 0.12, 1500, 300, True, 6),
                 alpha=0.18, endurance_E=1.22, endurance_coef=4.2, durability_pct=20.0,
                 record=rec, summaries=summaries)
-    cal = build_calibration(twin, CFG)
-    pred = predict_finish(course.deq_km, course.dplus_per_km, twin, cal, CFG)
-    plan = build_pacing(course, pred, race, CFG)
-    suf = assess_sufficiency(twin, cal, pred, CFG)
+    cal = build_calibration(twin, cfg)
+    pred = predict_finish(course.deq_km, course.dplus_per_km, twin, cal, cfg)
+    plan = build_pacing(course, pred, race, cfg)
+    suf = assess_sufficiency(twin, cal, pred, cfg)
     return course, twin, cal, pred, plan, race, suf
 
 
-def _context():
-    course, twin, cal, pred, plan, race, suf = _scenario()
+def _context(cfg=CFG):
+    course, twin, cal, pred, plan, race, suf = _scenario(cfg)
     return build_report_context(course=course, twin=twin, calibration=cal, prediction=pred,
-                                plan=plan, race=race, sufficiency=suf, cfg=CFG, athlete="Valentin & co")
+                                plan=plan, race=race, sufficiency=suf, cfg=cfg, athlete="Valentin & co")
 
 
 def test_render_has_no_unresolved_placeholders():
@@ -166,24 +166,65 @@ def test_abstract_uses_gate_consistent_mae():
 
 def test_plan_windows_and_arrival_in_clock_time():
     """La table du plan affiche la fenêtre en HEURES DE PASSAGE, et la synthèse donne
-    l'arrivée centrale + sa fourchette horaire (pas seulement la prédiction en heures)."""
+    l'arrivée centrale + ses DEUX fenêtres (fourchette de course + bornes de sécurité)."""
     ctx = _context()
     assert ctx["arrival_clock"] and ":" in ctx["arrival_clock"]
     assert ctx["arrival_window"] and "–" in ctx["arrival_window"]
+    assert ctx["arrival_safety_window"] and "–" in ctx["arrival_safety_window"]
     for row in ctx["plan_rows"]:
         assert ":" in row["window"]          # fenêtre horaire, pas des heures cumulées
     tex = render_tex(ctx)
-    assert "fen\\^etre \\`a 80\\,\\%" in tex   # la synthèse imprime la fourchette d'arrivée
+    # la synthèse imprime les deux fourchettes, étiquetées par leur usage
+    assert "fourchette de course" in tex
+    assert "s\\'ecurit\\'e" in tex
 
 
 def test_context_interval_labels_from_config():
-    """R6 : les libellés « 80 % » et « 1 chance sur 10 » sont dérivés des percentiles config."""
+    """R6 : les libellés « 80 % », « 50 % » et « 1 chance sur 10 » sont dérivés de la config."""
     ctx = _context()
     assert ctx["interval_pct"] == "80"
+    assert ctx["plan_band_pct"] == "50"
     assert ctx["interval_tail_low"] == "10" and ctx["interval_tail_high"] == "10"
     tex = render_tex(ctx)
     assert "80\\,\\%" in tex             # rendu final : le libellé apparaît, injecté
+    assert "50\\,\\%" in tex
     assert "chances sur 100" in tex
+
+
+def test_window_day_prefix_kept_when_any_bound_crosses_midnight():
+    """Correctif Montagnhard : « sam. 20:13–09:07 » laissait croire que 09:07 était samedi.
+    Dès qu'UNE borne change de jour, les deux jours sont répétés ; sinon on les omet."""
+    from types import SimpleNamespace
+
+    from twin_engine.report.context import _window_str
+
+    same = SimpleNamespace(arr_clock="sam. 22:00", arr_lo_clock="sam. 20:13",
+                           arr_hi_clock="sam. 23:30", lo_h=1.0, hi_h=2.0)
+    assert _window_str(same) == "20:13–23:30"
+    cross = SimpleNamespace(arr_clock="sam. 23:50", arr_lo_clock="sam. 20:13",
+                            arr_hi_clock="dim. 09:07", lo_h=1.0, hi_h=2.0)
+    out = _window_str(cross)
+    assert "sam. 20:13" in out and "dim. 09:07" in out
+
+
+def test_scenario_table_gated_by_relative_width():
+    """La table « trois scénarios » n'apparaît que si l'intervalle de sécurité est LARGE
+    relativement à la prédiction (pacing.scenario_rel_width) — pas sur les cas étroits."""
+    from dataclasses import replace
+
+    cfg_on = replace(CFG, pacing=replace(CFG.pacing, scenario_rel_width=0.0))
+    ctx_on = _context(cfg_on)
+    assert ctx_on["scenario_mode"]
+    assert len(ctx_on["scenario_rows"]) == len(ctx_on["plan_rows"])
+    row = ctx_on["scenario_rows"][0]
+    assert row["fast"] and row["central"] and row["cautious"]
+    tex_on = render_tex(ctx_on)
+    assert "Trois sc\\'enarios" in tex_on and "sc\\'enario prudent" in tex_on
+
+    cfg_off = replace(CFG, pacing=replace(CFG.pacing, scenario_rel_width=99.0))
+    ctx_off = _context(cfg_off)
+    assert not ctx_off["scenario_mode"] and ctx_off["scenario_rows"] == []
+    assert "Trois sc\\'enarios" not in render_tex(ctx_off)
 
 
 def test_figures_generated(tmp_path):

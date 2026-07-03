@@ -163,14 +163,16 @@ def _fig_pacing(plan, twin, ax) -> None:
     ax.legend(fontsize=7.6, loc="upper right", edgecolor=GRID)
 
 
-def _fig_cumul(plan, prediction, race, ax, interval_label: str = "80") -> None:
+def _fig_cumul(plan, prediction, race, ax, interval_label: str = "50") -> None:
     segs = plan.segments
     offs = [s.off1 for s in segs]
     cum = [s.cum_clock_h for s in segs]
+    # lo_h/hi_h = FOURCHETTE DE COURSE des segments (bande de planification, défaut
+    # interquartile) — le libellé doit venir des percentiles de pacing, pas de la prédiction
     lo = [s.lo_h for s in segs]
     hi = [s.hi_h for s in segs]
     ax.fill_between(offs, lo, hi, color=SAGE, alpha=0.30, lw=0,
-                    label=f"intervalle {interval_label} %")
+                    label=f"fourchette de course ({interval_label} %)")
     ax.plot(offs, cum, "-o", color=TERRA, lw=1.6, ms=3.5, label="temps cumulé (médian)")
     ax.set_xlabel("distance officielle (km)")
     ax.set_ylabel("temps depuis le départ (h)")
@@ -212,9 +214,10 @@ def generate_figures(
     figures: dict[str, str] = {}
     # libellés/bandes dérivés de la config (repli sur les valeurs historiques sans cfg)
     band_pct = getattr(getattr(cfg, "sufficiency", None), "cv_error_green_pct", 5.0)
-    pred_cfg = getattr(cfg, "prediction", None)
+    pace_cfg = getattr(cfg, "pacing", None)
     interval_label = (
-        f"{pred_cfg.interval_high_pct - pred_cfg.interval_low_pct:.0f}" if pred_cfg else "80"
+        f"{pace_cfg.plan_window_high_pct - pace_cfg.plan_window_low_pct:.0f}"
+        if pace_cfg else "50"
     )
 
     # API objet : chaque figure est un objet indépendant, aucun état global partagé
