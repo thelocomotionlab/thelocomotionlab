@@ -1,7 +1,7 @@
 """CLI du moteur — rejoue un cas de bout en bout en local.
 
-  twin-engine preview --training <archive> --course <gpx> [--race <json>]
-  twin-engine full    --training <archive> --course <gpx> --out <dir> [--race <json>] [--athlete N]
+  twin-engine preview --training <archive> --course <gpx> [--race <json>] [--until AAAA-MM-JJ]
+  twin-engine full    --training <archive> --course <gpx> --out <dir> [--race <json>] [--athlete N] [--until AAAA-MM-JJ]
 
 ``--race`` est **optionnel** : sans lui, mode GPX-only (distance issue de la trace,
 découpage automatique tous les N km). Avec, il fournit ravitaillements/départ/position
@@ -72,6 +72,11 @@ def _build_parser() -> argparse.ArgumentParser:
                         "GPX-only — distance issue de la trace, découpage auto tous les N km)")
         sp.add_argument("--athlete", default="athlète")
         sp.add_argument("--purge", action="store_true", help="supprimer l'archive après parsing")
+        sp.add_argument("--until", default=None, metavar="AAAA-MM-JJ",
+                        help="mode BACKTEST : écarte toute activité postérieure à cette date "
+                             "(et les non datées — anti-fuite) ; la fraîcheur est jugée à "
+                             "cette date. Ex. veille d'une course passée pour rejouer « ce "
+                             "que le moteur aurait su ».")
         if name == "full":
             sp.add_argument("--out", required=True, help="dossier de sortie (figures + PDF)")
             sp.add_argument("--no-pdf", action="store_true", help="ne pas compiler le PDF")
@@ -93,11 +98,24 @@ def main(argv: list[str] | None = None) -> int:
         race = RaceSpec(name=Path(args.course).stem)
     course_gpx = Path(args.course).read_bytes()
 
+    until = None
+    if args.until:
+        from datetime import date
+
+        try:
+            until = date.fromisoformat(args.until)
+        except ValueError:
+            print(f"--until : date invalide « {args.until} » (attendu AAAA-MM-JJ)", file=sys.stderr)
+            return 2
+
     if args.cmd == "preview":
         result = run_preview(
             training_path=args.training, course_gpx=course_gpx, race=race, cfg=cfg,
-            purge_source=args.purge, progress=_progress,
+            purge_source=args.purge, progress=_progress, until=until,
         )
+        if until is not None:
+            print(f"\n  Coupure --until {until.isoformat()} : "
+                  f"{result.n_excluded_until} activité(s) écartée(s).", file=sys.stderr)
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
         _print_summary(result)
         return 0
@@ -108,7 +126,11 @@ def main(argv: list[str] | None = None) -> int:
         training_path=args.training, course_gpx=course_gpx, race=race, cfg=cfg,
         out_dir=Path(args.out), athlete=args.athlete, purge_source=args.purge,
         render_pdf=not args.no_pdf, report_date=datetime.now(), progress=_progress,
+        until=until,
     )
+    if until is not None:
+        print(f"\n  Coupure --until {until.isoformat()} : "
+              f"{result.preview.n_excluded_until} activité(s) écartée(s).", file=sys.stderr)
     _print_summary(result.preview)
     if result.pdf_path:
         print(f"\n  Rapport PDF : {result.pdf_path}", file=sys.stderr)

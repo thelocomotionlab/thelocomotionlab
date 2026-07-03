@@ -72,11 +72,21 @@ auto-normalisés + correction n+1 (la variante Tibshirani stricte dégénère qu
 récentes débordent l'IQR du modèle — honnête). Registre de couverture créé
 (`docs/twin-registre-couverture.md`, MIUT = entrée n° 1, règle de décision pré-enregistrée).
 
+**Mode backtest (2026-07-03)** : paramètre `until` (CLI `--until AAAA-MM-JJ`, bout en bout dans
+le pipeline — PAS exposé sur l'API de production) — écarte toute activité postérieure à la
+coupure ET les non datées (anti-fuite strict), et ancre « aujourd'hui » (fraîcheur, volume
+récent) sur la coupure. C'est la brique du banc d'essai rétrospectif « walk-forward » proposé
+par Valentin : rejouer des courses passées avec exactement ce que le moteur aurait su la
+veille, confronter aux temps réels, alimenter le registre en accéléré (au lieu d'attendre les
+courses futures) puis en déduire la fenêtre empirique groupée (`interval_source=pooled`, à
+implémenter quand le registre a ≥ 8-10 cas).
+
 **Reste chez Valentin** :
 1. relire le prochain rapport (double bande + scénarios + ton narratif) et itérer si besoin ;
 2. golden réel à re-vérifier après `prior_shrunk` + bandes conformes (centre/MAE non touchés,
    pins sans intervalle — PASS attendu) ; recapturer §12 (bornes conformes plus étroites) ;
-3. compléter le registre de couverture à chaque course courue (Montagnhard = entrée n° 2) ;
+3. compléter le registre de couverture à chaque course courue (Montagnhard = entrée n° 2) —
+   et l'alimenter en rétrospectif via `--until` (une ligne par course passée rejouée) ;
 4. bascules de défaut restantes, à décider sur preuve : `fade_source=durability` (Δ≈0,117 pour
    ton découplage 20,9 %), `vc_flat_symmetric=true`, `vc_short_effort_floor_s=1800`,
    `decouple_basis=moving`, `scale_stops=false` ;

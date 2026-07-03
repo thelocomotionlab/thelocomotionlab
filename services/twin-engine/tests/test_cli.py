@@ -50,3 +50,27 @@ def test_cli_missing_race_returns_2(tmp_path, monkeypatch):
     rc = main(["preview", "--training", str(FIX / "sample.gpx"), "--course", str(course),
                "--race", str(tmp_path / "absent.json")])
     assert rc == 2
+
+
+def test_cli_until_filters_and_rejects_bad_date(tmp_path, capsys, monkeypatch):
+    """--until : date invalide → code 2 ; date valide antérieure aux données → tout est
+    écarté (compteur affiché), le pipeline dégrade proprement (🔴, pas de crash)."""
+    monkeypatch.setenv("DATA_DIR", str(tmp_path / "data"))
+    course = tmp_path / "course.gpx"
+    course.write_bytes(_triangle())
+    training = tmp_path / "perso.gpx"
+    training.write_bytes((FIX / "sample.gpx").read_bytes())
+
+    rc = main(["preview", "--training", str(training), "--course", str(course),
+               "--until", "20-02-2026"])
+    assert rc == 2
+    assert "date invalide" in capsys.readouterr().err
+
+    rc = main(["preview", "--training", str(training), "--course", str(course),
+               "--until", "1990-01-01"])
+    assert rc == 0
+    out = capsys.readouterr()
+    payload = json.loads(out.out)
+    assert payload["verdict"] == "🔴"
+    assert payload["ingestion"]["excluded_after_until"] >= 1
+    assert "écartée" in out.err

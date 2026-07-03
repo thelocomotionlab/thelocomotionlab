@@ -31,3 +31,26 @@
   si utile.
 - Entrée 2 : à compléter avec le temps officiel après la course ; si le rapport est régénéré
   avec les bandes conformes avant la course, mettre à jour les bandes consignées.
+
+## Protocole de backtest rétrospectif (alimentation accélérée du registre)
+
+Chaque course PASSÉE d'un athlète consentant = une entrée potentielle, sans attendre les
+courses futures. Anti-fuite obligatoire : le paramètre `--until` (CLI) rejoue « ce que le
+moteur aurait su la veille » :
+
+```
+PYTHONPATH=src python -m twin_engine.cli preview \
+  --training <archive.zip> --course <trace-de-la-course.gpx> [--race <spec.json>] \
+  --until <veille-de-la-course>          # ex. 2026-04-25 pour une course du 26/04
+```
+
+Règles :
+1. **Coupure la veille de la course** (jamais le jour même : la course elle-même est souvent
+   dans l'archive). Les activités non datées sont écartées d'office (anti-fuite).
+2. **Toutes les courses qualifiantes de l'athlète**, pas celles qui arrangent (biais de
+   sélection). Les courses d'un même athlète ne sont pas indépendantes : noter l'athlète,
+   les analyses groupées se font PAR athlète d'abord.
+3. Les cas de développement (référence Nice, Montagnhard) sont consignés mais comptés À PART :
+   le modèle a été réglé dessus.
+4. Consigner : central, deux bandes, source (mc/conforme), sd prédictif si dispo, temps réel,
+   n ultras dans la calibration à la coupure.
