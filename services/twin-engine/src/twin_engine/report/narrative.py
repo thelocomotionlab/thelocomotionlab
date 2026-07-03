@@ -90,14 +90,14 @@ _PROFILE_HEADLINE = {
     "fade": "moins endurant sur la dur\\'ee",
 }
 _PROFILE_EXPLAIN = {
-    "diesel": "tu tiens tr\\`es bien l'allure sur la dur\\'ee, un vrai moteur d'endurance taill\\'e pour le tr\\`es long",
-    "équilibré": "tu tiens bien l'allure sur la dur\\'ee, avec un d\\'eclin mod\\'er\\'e quand l'effort s'allonge",
-    "fade": "ton allure d\\'ecline plus nettement quand la dur\\'ee s'allonge — l'enjeu sera de rationner l'effort",
+    "diesel": "ton allure baisse tr\\`es peu quand les heures s'accumulent. C'est le moteur d'endurance qu'il faut pour le tr\\`es long",
+    "équilibré": "ton allure baisse peu quand l'effort s'allonge, un d\\'eclin mod\\'er\\'e et pr\\'evisible",
+    "fade": "ton allure baisse plus vite que la moyenne quand la course s'\\'etire. Il faudra rationner l'effort d\\`es le d\\'epart",
 }
 _DURABILITY_EXPLAIN = {
-    "excellente": "tu gardes ton efficacité même après des heures d'effort",
-    "bonne": "tu tiens bien la distance, avec une usure progressive maîtrisée",
-    "à surveiller": "ton efficacité baisse sensiblement en fin d'effort — à gérer en course",
+    "excellente": "ton efficacité tient, même après de longues heures",
+    "bonne": "l'usure existe mais elle reste progressive et prévisible",
+    "à surveiller": "ton efficacité chute nettement en fin d'effort, c'est le point à gérer en course",
 }
 
 
@@ -112,25 +112,26 @@ def opening_narrative(twin, calibration, prediction, cfg=None) -> str:
     if dw and twin.durability_pct is not None:
         # en Synthèse on évite le jargon « découplage » (défini plus loin) : langage clair
         parts.append(
-            f"Ta r\\'esistance \\`a la fatigue est \\textbf{{{dw}}} "
-            f"({_pct(twin.durability_pct)} de perte d'efficacit\\'e en fin de longue sortie) : {_DURABILITY_EXPLAIN[dw]}."
+            f"R\\'esistance \\`a la fatigue : \\textbf{{{dw}}}, avec {_pct(twin.durability_pct)} "
+            f"de perte d'efficacit\\'e en fin de longue sortie — {_DURABILITY_EXPLAIN[dw]}."
         )
     if prediction is not None:
         closing = f"On pr\\'edit ton arriv\\'ee autour de \\textbf{{{hm(prediction.finish_hours)}}}"
         if vc_frac_band(prediction.vc_fraction, cfg) == "low":
             closing += (
-                f", \\`a seulement \\textbf{{{_pct(prediction.vc_fraction * 100)}}} de ta vitesse critique : "
-                "ta vitesse pure n'est jamais la limite, ce sont l'endurance, la durabilit\\'e et le "
-                "ravitaillement qui d\\'ecideront"
+                f", \\`a {_pct(prediction.vc_fraction * 100)} de ta vitesse critique seulement : "
+                "la vitesse ne sera pas le sujet. L'endurance, la durabilit\\'e et le "
+                "ravitaillement d\\'ecideront"
             )
         if prediction.cross_validation is None:
             closing += " (\\`a confirmer : peu d'ultras comparables pour valider la m\\'ethode sur toi)"
-        closing += ". On d\\'ecoupe ensuite l'effort segment par segment, avec des fen\\^etres horaires."
+        closing += (". La suite d\\'ecoupe l'effort segment par segment, avec des fen\\^etres "
+                    "horaires plut\\^ot que des heures s\\`eches.")
         parts.append(closing)
     else:
         parts.append(
-            "Faute d'assez d'ultras comparables, on reste prudent sur la pr\\'ediction : "
-            "prends les chiffres qui suivent comme un ordre de grandeur."
+            "Faute d'assez d'ultras comparables, la pr\\'ediction reste prudente : "
+            "prends les chiffres qui suivent comme un ordre de grandeur, pas comme un plan ferme."
         )
     return " ".join(parts)
 
@@ -185,12 +186,11 @@ def deq_pourtoi(course) -> str:
 
 def endurance_intuition() -> str:
     return (
-        "En clair : c'est \\`a quel point ton allure soutenable \\textbf{baisse quand la dur\\'ee "
-        "s'allonge} (ind\\'ependamment de ta vitesse pure, mesur\\'ee par la VC). Plus l'exposant "
-        "est \\textbf{bas} (proche de 1), mieux tu gardes ton allure sur le tr\\`es long ; plus il "
-        "est \\'elev\\'e, plus tu d\\'eclines en t'allongeant. Il se mesure sur tes efforts jusqu'\\`a "
-        "quelques heures puis se \\emph{prolonge} vers les dur\\'ees d'ultra : c'est un descripteur "
-        "de ta tendance, pas une garantie chiffr\\'ee au-del\\`a de tes donn\\'ees."
+        "En clair : la vitesse \\`a laquelle ton allure soutenable \\textbf{baisse quand la dur\\'ee "
+        "s'allonge} — ind\\'ependant de ta vitesse pure, que mesure la VC. Exposant bas (proche "
+        "de 1) : tu gardes ton allure sur le tr\\`es long. Exposant \\'elev\\'e : tu d\\'eclines "
+        "davantage. Il est mesur\\'e sur tes efforts jusqu'\\`a quelques heures, puis prolong\\'e "
+        "vers les dur\\'ees d'ultra : un descripteur de tendance, pas une garantie."
     )
 
 
@@ -199,9 +199,9 @@ def endurance_pourtoi(twin, cfg=None) -> str | None:
         return None
     pw = _profile_word(twin, cfg)
     tail = {
-        "diesel": "c'est un atout majeur sur un ultra : ton allure d\\'ecline tr\\`es peu par rapport \\`a ta base.",
-        "équilibré": "un bon socle d'endurance : ton d\\'eclin reste mod\\'er\\'e quand la dur\\'ee s'allonge.",
-        "fade": "ton allure baisse plus vite sur le tr\\`es long — appuie-toi sur la r\\'egularit\\'e et la gestion de l'effort.",
+        "diesel": "sur un ultra, c'est un vrai avantage : ton allure de croisi\\`ere descend peu.",
+        "équilibré": "un socle solide : le d\\'eclin reste mod\\'er\\'e quand la dur\\'ee s'allonge.",
+        "fade": "ton allure baisse plus vite sur le tr\\`es long ; la r\\'egularit\\'e et la gestion de l'effort compteront double.",
     }.get(pw, "")
     return f"Ton exposant vaut \\textbf{{{fr(twin.endurance_E, 2)}}} — {tail}"
 
@@ -220,15 +220,15 @@ def durability_pourtoi(twin, cfg=None) -> str | None:
     }.get(dw, "")
     return (
         f"\\textbf{{{_pct(twin.durability_pct)}}} de d\\'ecouplage : {advice} "
-        "C'est l'un des deux vrais facteurs limitants d'un ultra (avec le ravitaillement)."
+        "Avec le ravitaillement, c'est ce qui d\\'ecide vraiment d'un ultra."
     )
 
 
 def prediction_pourtoi(prediction) -> str:
     return (
-        f"Vise \\textbf{{{hm(prediction.finish_hours)}}}. \\`A cette intensit\\'e, ce n'est pas une "
-        "question de vitesse pure mais d'\\textbf{ex\\'ecution} : r\\'egularit\\'e, ravitaillement, "
-        "gestion des descentes. La fourchette dit l'incertitude, pas un objectif \\`a battre."
+        f"Vise \\textbf{{{hm(prediction.finish_hours)}}}. \\`A cette intensit\\'e, tout se joue sur "
+        "l'ex\\'ecution : r\\'egularit\\'e, ravitaillement, gestion des descentes. La fourchette "
+        "d\\'ecrit l'incertitude ; ce n'est pas un objectif \\`a battre."
     )
 
 
@@ -238,8 +238,8 @@ def intensity_feeling(prediction, cfg=None) -> str | None:
         return None
     if band == "low":
         return (
-            "Au d\\'epart, \\c{c}a doit te para\\^itre \\textbf{trop facile}. C'est normal et voulu : "
-            "\\`a cette intensit\\'e, l'erreur classique est de partir trop vite. Retiens-toi."
+            "Au d\\'epart, l'allure para\\^itra \\textbf{trop facile}. C'est pr\\'evu : \\`a cette "
+            "intensit\\'e, l'erreur classique est de partir trop vite les premi\\`eres heures."
         )
     if band == "sustained":
         return "Au d\\'epart, l'allure doit sembler \\textbf{confortable mais pr\\'esente} : ne la d\\'epasse pas."
@@ -264,8 +264,8 @@ def cv_pourtoi(prediction) -> str | None:
             "le reste \\'etant de l'extrapolation assum\\'ee"
         )
     s += (
-        ". Autrement dit, la m\\'ethode s'est "
-        "d\\'ej\\`a \\textbf{prouv\\'ee sur toi} — ce n'est pas une promesse en l'air."
+        ". La m\\'ethode a donc \\'et\\'e v\\'erifi\\'ee sur tes propres courses "
+        "avant de pr\\'edire celle-ci."
     )
     return s
 
@@ -328,24 +328,24 @@ def race_strategy(course, plan) -> list[dict]:
         "title": "Discipline dans la plus grosse mont\\'ee",
         "body": (
             f"Vers \\textbf{{{tex_escape(c.to)}}} (+{fr(c.dplus_m, 0)}\\,m \\`a {fr(c.mean_grade_pct, 0)}\\,{PCT}) : "
-            "\\textbf{garde de la marge}, marche d\\`es que \\c{c}a devient raide (souvent plus efficace "
-            "que courir), et ne \\og~grille pas d'allumettes~\\fg\\ ici — la course se gagne plus loin."
+            "garde de la marge, marche d\\`es que \\c{c}a devient raide (souvent plus efficace que "
+            "courir). Ne grille pas d'allumettes ici : la course se joue bien plus loin."
         ),
     })
     items.append({
         "title": "Protection des quadriceps en descente",
         "body": (
             f"La plus grosse descente m\\`ene vers \\textbf{{{tex_escape(d.to)}}} ($-${fr(d.dminus_m, 0)}\\,m) : "
-            "\\textbf{foul\\'ee courte}, cadence \\'elev\\'ee, contr\\^ole. C'est l\\`a que se joue la casse "
-            "musculaire qui peut ruiner la fin de course — m\\^eme si tu te sens bien, retiens-toi."
+            "foul\\'ee courte, cadence \\'elev\\'ee, contr\\^ole. C'est l\\`a que se joue la casse "
+            "musculaire qui co\\^ute la fin de course, m\\^eme quand les jambes r\\'epondent bien."
         ),
     })
     items.append({
         "title": "Ravitaillement",
         "body": (
-            "Le ravitaillement est l'\\textbf{autre} facteur limitant : mange et bois \\textbf{avant} "
-            "d'avoir faim ou soif, r\\'eguli\\`erement. Un creux \\'energ\\'etique co\\^ute bien plus cher "
-            "que les minutes pass\\'ees \\`a un ravito."
+            "Le ravitaillement est l'autre facteur limitant : mange et bois \\`a intervalles "
+            "r\\'eguliers, avant d'avoir faim ou soif. Un creux \\'energ\\'etique co\\^ute bien plus "
+            "cher que les minutes pass\\'ees \\`a un ravito."
         ),
     })
     return items
