@@ -164,6 +164,18 @@ def test_abstract_uses_gate_consistent_mae():
     assert "en interpolation" in tex and "erreur brute" in tex and "9,9" in tex
 
 
+def test_plan_windows_and_arrival_in_clock_time():
+    """La table du plan affiche la fenêtre en HEURES DE PASSAGE, et la synthèse donne
+    l'arrivée centrale + sa fourchette horaire (pas seulement la prédiction en heures)."""
+    ctx = _context()
+    assert ctx["arrival_clock"] and ":" in ctx["arrival_clock"]
+    assert ctx["arrival_window"] and "–" in ctx["arrival_window"]
+    for row in ctx["plan_rows"]:
+        assert ":" in row["window"]          # fenêtre horaire, pas des heures cumulées
+    tex = render_tex(ctx)
+    assert "fen\\^etre \\`a 80\\,\\%" in tex   # la synthèse imprime la fourchette d'arrivée
+
+
 def test_context_interval_labels_from_config():
     """R6 : les libellés « 80 % » et « 1 chance sur 10 » sont dérivés des percentiles config."""
     ctx = _context()

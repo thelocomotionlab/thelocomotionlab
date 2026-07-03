@@ -55,6 +55,8 @@ sur une extrapolation (confiance r\'eduite, cf. limites).<% endif %>
 \begin{llnote}[L'essentiel]
 \textbf{Temps d'arriv\'ee pr\'edit : << pred_central >>}<% if start_time %>, d\'epart << start_time >><% endif %>.
 Intervalle de confiance \`a << interval_pct >>\,\% : \textbf{<< interval_low >> -- << interval_high >>}.
+<% if arrival_window %>\\[2pt]
+\textbf{Arriv\'ee : << arrival_clock >>}, fen\^etre \`a << interval_pct >>\,\% : \textbf{<< arrival_window >>}.<% endif %>
 <% if vc_fraction_pct %>\\[2pt]
 \textbf{Intensit\'e cible : $\approx$\,<< vc_fraction_pct >>\,\% de ta vitesse critique}, soutenue
 avec une d\'erive ma\^itris\'ee.<% if vc_low %> \`A cette intensit\'e, le facteur limitant n'est pas la
@@ -253,8 +255,8 @@ au-dessus de la moyenne, finir un peu en dessous. Les \textbf{fen\^etres} donnen
   \LLzebra \renewcommand{\arraystretch}{1.28}
   \begin{tabular}{@{}clrrrrlrc@{}}
     \LLheaderrow
-    \LLthead{\#} & \LLthead{Vers} & \LLthead{km} & \LLthead{$\Deq$} & \LLthead{v.aj.} & \LLthead{allure} & \LLthead{arriv\'ee} & \LLthead{fen.(h)} & \LLthead{nuit} \\
-     & & & \scriptsize(km) & \scriptsize(km/h) & \scriptsize(/km) & & & \\
+    \LLthead{\#} & \LLthead{Vers} & \LLthead{km} & \LLthead{$\Deq$} & \LLthead{v.aj.} & \LLthead{allure} & \LLthead{arriv\'ee} & \LLthead{fen\^etre d'arriv\'ee} & \LLthead{nuit} \\
+     & & & \scriptsize(km) & \scriptsize(km/h) & \scriptsize(/km) & & \scriptsize(<< interval_pct >>\,\%) & \\
 <% for s in plan_rows %>    << s.idx >> & << s.to >> & \LLnum{<< s.off1 >>} & \LLnum{<< s.deq >>} & \LLnum{<< s.vga >>} & \LLnum{<< s.pace >>} & << s.arr >> & \LLnum{<< s.window >>} & <% if s.night %>$\bullet$<% endif %> \\
 <% endfor %>  \end{tabular}
   \caption{Plan par segment : vitesse ajust\'ee cible, allure r\'eelle terrain, heure de passage et

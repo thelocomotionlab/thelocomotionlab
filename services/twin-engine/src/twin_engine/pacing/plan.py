@@ -40,6 +40,8 @@ class SegmentPlan:
     night: bool
     lo_h: float              # borne basse de la fenêtre d'arrivée (cumul, 80 %)
     hi_h: float              # borne haute
+    arr_lo_clock: str | None = None   # borne basse en HEURE DE PASSAGE (ex. "sam. 18:55")
+    arr_hi_clock: str | None = None   # borne haute — None si départ/position inconnus
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -166,6 +168,15 @@ def build_pacing(
         hi = np.array([np.percentile(cum_move_arr[i] * mult, cfg.prediction.interval_high_pct)
                        + cum_stop_before[i] for i in range(n)])
 
+    # bornes de la fenêtre en HEURES DE PASSAGE (le plan ne sert pas qu'une valeur centrale :
+    # l'athlète lit directement « j'arriverai à ce ravito entre 18:55 et 20:20 »)
+    if can_clock and start is not None:
+        arr_lo = [_fmt_clock(start + dt.timedelta(hours=float(lo[i]))) for i in range(n)]
+        arr_hi = [_fmt_clock(start + dt.timedelta(hours=float(hi[i]))) for i in range(n)]
+    else:
+        arr_lo = [None] * n
+        arr_hi = [None] * n
+
     segments = [
         SegmentPlan(
             index=seg[i].index,
@@ -186,6 +197,8 @@ def build_pacing(
             night=nights[i],
             lo_h=round(float(lo[i]), 2),
             hi_h=round(float(hi[i]), 2),
+            arr_lo_clock=arr_lo[i],
+            arr_hi_clock=arr_hi[i],
         )
         for i in range(n)
     ]

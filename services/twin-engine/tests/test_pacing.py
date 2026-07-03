@@ -129,6 +129,27 @@ def test_fade_source_durability_personalizes_delta():
     assert abs(plan_d20.t_move_h - plan_default.t_move_h) < 1e-9
 
 
+def test_arrival_windows_in_clock_time():
+    """La fenêtre de chaque segment existe aussi en HEURES DE PASSAGE (bornes 80 %),
+    pas seulement la valeur centrale ; sans logistique, pas d'heures."""
+    course = build_course(_triangle_gpx(), _race(), CFG)
+    plan = build_pacing(course, _prediction(course, finish=10.0), _race(), CFG)
+    for s in plan.segments:
+        assert s.arr_lo_clock and s.arr_hi_clock
+        assert ":" in s.arr_lo_clock and ":" in s.arr_hi_clock
+    # départ 13:00 + borne basse du 1er segment → l'heure affichée suit lo_h (±1 min d'arrondi)
+    s1 = plan.segments[0]
+    expected_min = (13.0 + s1.lo_h) * 60
+    hhmm = s1.arr_lo_clock.split()[-1]
+    got_min = int(hhmm[:2]) * 60 + int(hhmm[3:])
+    assert abs(got_min - expected_min) <= 1.2
+
+    race = RaceSpec("NoLogi", (0.0, 5.0, 10.0), ("d", "s", "a"))
+    course2 = build_course(_triangle_gpx(), race, CFG)
+    plan2 = build_pacing(course2, _prediction(course2), race, CFG)
+    assert all(s.arr_lo_clock is None and s.arr_hi_clock is None for s in plan2.segments)
+
+
 def test_unscaled_stops_narrow_the_windows():
     """C6 : scale_stops=false — les arrêts (constants) ne sont plus gonflés par le scénario
     lent : fenêtres légèrement plus étroites, toujours encadrantes."""

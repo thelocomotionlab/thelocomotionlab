@@ -136,6 +136,16 @@ def build_report_context(
             "cum_dminus": fr(cum_dminus, 0),
         })
 
+    def _window_str(s) -> str:
+        """Fenêtre d'arrivée : en HEURES DE PASSAGE quand l'horloge est connue (le jour n'est
+        répété que s'il diffère de celui de l'arrivée centrale), sinon en heures cumulées."""
+        if s.arr_lo_clock and s.arr_hi_clock and s.arr_clock:
+            day = s.arr_clock.split()[0]
+            lo = s.arr_lo_clock.split(" ", 1)[1] if s.arr_lo_clock.split()[0] == day else s.arr_lo_clock
+            hi = s.arr_hi_clock.split(" ", 1)[1] if s.arr_hi_clock.split()[0] == day else s.arr_hi_clock
+            return tex_escape(f"{lo}–{hi}")
+        return f"{fr(s.lo_h, 1)}–{fr(s.hi_h, 1)}\\,h"
+
     plan_rows = [
         {
             "idx": s.index,
@@ -149,11 +159,21 @@ def build_report_context(
             "tmove": fr(s.t_move_min, 0),
             "stop": fr(s.stop_min, 0),
             "arr": tex_escape(s.arr_clock) if s.arr_clock else "—",
-            "window": f"{fr(s.lo_h, 1)}–{fr(s.hi_h, 1)}",
+            "window": _window_str(s),
             "night": s.night,
         }
         for s in plan.segments
     ]
+
+    # arrivée finale : heure centrale + FOURCHETTE en heures de passage (pas seulement la
+    # prédiction centrale — la fenêtre est ce que l'athlète communique à ses proches)
+    last = plan.segments[-1] if plan.segments else None
+    arrival_clock = tex_escape(last.arr_clock) if last and last.arr_clock else None
+    arrival_window = (
+        tex_escape(f"{last.arr_lo_clock} – {last.arr_hi_clock}")
+        if last and last.arr_lo_clock and last.arr_hi_clock
+        else None
+    )
 
     night = _main_night_span(plan)
     weeks = _recent_weeks(twin.summaries, n_weeks=cfg.narrative.recent_weeks)
@@ -231,6 +251,8 @@ def build_report_context(
         "t_move_h": hm(plan.t_move_h),
         "t_stops_h": hm(plan.t_stops_h),
         "t_clock_h": hm(plan.t_clock_h),
+        "arrival_clock": arrival_clock,
+        "arrival_window": arrival_window,
         "start_time": french_datetime(plan.start_time) if plan.start_time else None,
         "sun": plan.sun,
         "night_from_km": fr(night[0], 0) if night else None,
