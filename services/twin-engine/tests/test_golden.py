@@ -88,8 +88,14 @@ def test_prediction_chain_golden():
     assert cal.beta[2] == pytest.approx(-0.01863, abs=1e-4)
     assert pred.finish_hours == pytest.approx(31.0103, abs=1e-2)
     assert pred.v_kmh == pytest.approx(6.4527, abs=1e-3)
-    assert pred.interval_low_h == pytest.approx(29.1876, abs=2e-2)
-    assert pred.interval_high_h == pytest.approx(33.4840, abs=2e-2)
+    # bandes servies CONFORMES (défaut depuis 2026-07-03, S5/§9.8) : cet athlète synthétique
+    # a des erreurs LOO ~0,7 % → bandes serrées, l'honnêteté calibrée sur SES erreurs.
+    # (Percentiles MC prédictif, interval_source=mc : sécurité [29.1876, 33.4840].)
+    assert pred.interval_source == "conformal_normalized"
+    assert pred.interval_low_h == pytest.approx(30.3839, abs=2e-2)
+    assert pred.interval_high_h == pytest.approx(31.6368, abs=2e-2)
+    assert pred.plan_low_h == pytest.approx(30.8070, abs=2e-2)
+    assert pred.plan_high_h == pytest.approx(31.2136, abs=2e-2)
     assert pred.cross_validation.mae_pct == pytest.approx(0.7430, abs=1e-2)
 
 

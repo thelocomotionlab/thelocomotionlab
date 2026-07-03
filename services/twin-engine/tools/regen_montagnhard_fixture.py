@@ -50,7 +50,8 @@ def _baseline_cfg():
         CFG,
         calibration=replace(CFG.calibration, maximality_mode="off", terrain_term="free"),
         sufficiency=replace(CFG.sufficiency, gate_policy="strict"),
-        prediction=replace(CFG.prediction, mc_mode="sigma_only"),  # baseline historique
+        prediction=replace(CFG.prediction, mc_mode="sigma_only",
+                           interval_source="mc"),  # baseline historique (pré-conforme)
     )
 
 

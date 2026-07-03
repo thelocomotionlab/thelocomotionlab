@@ -174,6 +174,25 @@ def test_segment_windows_use_plan_band_not_safety_interval():
     assert plan.safety_hi_clock and ":" in plan.safety_hi_clock
 
 
+def test_segment_windows_follow_served_plan_band():
+    """S5 : quand la prédiction PORTE une fourchette de course (plan_low/high_h, ex. conforme),
+    les fenêtres des segments s'y calent (multiplicateurs de scénario global), au lieu des
+    percentiles Monte-Carlo."""
+    course = build_course(_triangle_gpx(), _race(), CFG)
+    pred = _prediction(course, finish=10.0)
+    pred.plan_low_h = 9.0
+    pred.plan_high_h = 11.5
+    plan = build_pacing(course, pred, _race(), CFG)
+    last = plan.segments[-1]
+    # dernier segment : fenêtre = bornes servies (le cumul total ≈ la prédiction)
+    assert abs(last.lo_h - 9.0 * plan.t_clock_h / 10.0) < 0.02
+    assert abs(last.hi_h - 11.5 * plan.t_clock_h / 10.0) < 0.02
+    # segments intermédiaires : mêmes multiplicateurs appliqués au cumul
+    s1 = plan.segments[0]
+    assert abs(s1.lo_h - 0.9 * s1.cum_clock_h) < 0.02
+    assert abs(s1.hi_h - 1.15 * s1.cum_clock_h) < 0.02
+
+
 def test_unscaled_stops_narrow_the_windows():
     """C6 : scale_stops=false — les arrêts (constants) ne sont plus gonflés par le scénario
     lent : fenêtres légèrement plus étroites, toujours encadrantes."""

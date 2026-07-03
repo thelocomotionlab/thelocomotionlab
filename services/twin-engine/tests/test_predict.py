@@ -120,9 +120,10 @@ def test_predictive_mc_widens_more_in_extrapolation():
     twin = _twin(_noisy_ultras())
     cal = build_calibration(twin, CFG)
     # les deux modes sont demandés EXPLICITEMENT (le défaut livré est « predictive » depuis
-    # le 2026-07-02 — verrouillé dans test_config)
-    cfg_s = replace(CFG, prediction=replace(CFG.prediction, mc_mode="sigma_only"))
-    cfg_p = replace(CFG, prediction=replace(CFG.prediction, mc_mode="predictive"))
+    # le 2026-07-02 — verrouillé dans test_config) ; on teste la machine MONTE-CARLO, donc
+    # l'intervalle affiché est épinglé sur ses percentiles (le défaut servi est conforme)
+    cfg_s = replace(CFG, prediction=replace(CFG.prediction, mc_mode="sigma_only", interval_source="mc"))
+    cfg_p = replace(CFG, prediction=replace(CFG.prediction, mc_mode="predictive", interval_source="mc"))
 
     def relw(pred):
         return (pred.interval_high_h - pred.interval_low_h) / pred.finish_hours
@@ -216,15 +217,16 @@ def test_equal_dates_weighting_is_neutral():
 
 
 def test_conformal_interval_calibrated_on_loo_with_guard_and_fallback():
-    """S5 : ``interval_source=conformal_normalized`` — les bornes de sécurité sont étalonnées
-    sur les erreurs LOO réelles (scores studentisés × sd prédictif de la cible), avec un
-    garde-fou « jamais plus étroit que la fourchette de course » ; repli MC à < 4 plis."""
+    """S5 : ``interval_source=conformal_normalized`` (défaut) — les DEUX bandes servies
+    (bornes de sécurité 80 % ET fourchette de course 50 %) sont étalonnées sur les erreurs
+    LOO réelles (scores studentisés × sd prédictif de la cible), emboîtées ; repli MC des
+    deux bandes à < 4 plis."""
     pts = [(12, 50, 0.05), (20, 55, -0.08), (16, 45, 0.03), (24, 53, -0.02), (18, 52, 0.06)]
     twin = _twin([_ultra(h, _plane(h, dpk) + p, dpk) for h, dpk, p in pts])
-    cfg_c = replace(CFG, prediction=replace(CFG.prediction, interval_source="conformal_normalized"))
-    cal = build_calibration(twin, cfg_c)
-    pred_c = predict_finish(200.0, 53.0, twin, cal, cfg_c)
-    pred_m = predict_finish(200.0, 53.0, twin, cal, CFG)
+    cfg_m = replace(CFG, prediction=replace(CFG.prediction, interval_source="mc"))
+    cal = build_calibration(twin, CFG)
+    pred_c = predict_finish(200.0, 53.0, twin, cal, CFG)
+    pred_m = predict_finish(200.0, 53.0, twin, cal, cfg_m)
     assert pred_m.interval_source == "mc"
     assert pred_c.interval_source == "conformal_normalized"
     # seule la LARGEUR affichée change : centre et MC identiques
@@ -232,16 +234,22 @@ def test_conformal_interval_calibrated_on_loo_with_guard_and_fallback():
     assert np.allclose(pred_c.mc_samples, pred_m.mc_samples)
     assert (pred_c.interval_low_h, pred_c.interval_high_h) != (
         pred_m.interval_low_h, pred_m.interval_high_h)
-    # garde-fou de cohérence : jamais plus étroit que la fourchette de course (bande du plan)
-    p_lo, p_hi = np.percentile(pred_c.mc_samples,
+    # en mode mc, la fourchette de course = percentiles du plan (25/75)
+    p_lo, p_hi = np.percentile(pred_m.mc_samples,
                                [CFG.pacing.plan_window_low_pct, CFG.pacing.plan_window_high_pct])
-    assert pred_c.interval_low_h <= p_lo + 1e-9
-    assert pred_c.interval_high_h >= p_hi - 1e-9
-    # repli honnête : 3 ultras → 3 plis LOO < 4 → source réellement servie = mc, bornes MC
+    assert abs(pred_m.plan_low_h - p_lo) < 1e-9 and abs(pred_m.plan_high_h - p_hi) < 1e-9
+    # en mode conforme, les deux bandes sont EMBOÎTÉES (mêmes scores, q80 ≥ q50) et
+    # centrées sur la prédiction (symétrie en erreur relative)
+    assert pred_c.interval_low_h <= pred_c.plan_low_h <= pred_c.finish_hours
+    assert pred_c.finish_hours <= pred_c.plan_high_h <= pred_c.interval_high_h
+    assert (pred_c.plan_high_h - pred_c.plan_low_h) > 0
+    # repli honnête : 3 ultras → 3 plis LOO < 4 → source servie = mc, DEUX bandes = MC
     twin3 = _twin([_ultra(h, _plane(h, dpk) + p, dpk) for h, dpk, p in pts[:3]])
-    cal3 = build_calibration(twin3, cfg_c)
-    pred3_c = predict_finish(200.0, 53.0, twin3, cal3, cfg_c)
-    pred3_m = predict_finish(200.0, 53.0, twin3, cal3, CFG)
+    cal3 = build_calibration(twin3, CFG)
+    pred3_c = predict_finish(200.0, 53.0, twin3, cal3, CFG)
+    pred3_m = predict_finish(200.0, 53.0, twin3, cal3, cfg_m)
     assert pred3_c is not None and pred3_c.interval_source == "mc"
     assert pred3_c.interval_low_h == pred3_m.interval_low_h
     assert pred3_c.interval_high_h == pred3_m.interval_high_h
+    assert pred3_c.plan_low_h == pred3_m.plan_low_h
+    assert pred3_c.plan_high_h == pred3_m.plan_high_h

@@ -35,10 +35,9 @@ Ce rapport construit \textbf{ton plan d'allure individualis\'e} pour << race_nam
 tes fichiers d'entra\^inement (<< n_activities >>~activit\'es de course exploit\'ees). La cha\^ine
 \emph{Locomotion Twin} estime ton profil physiologique --- vitesse critique, exposant d'endurance,
 durabilit\'e --- puis le confronte au co\^ut \'energ\'etique de la pente pour pr\'edire ton temps
-d'arriv\'ee et r\'epartir l'effort. La pr\'ediction centrale est de \textbf{<< pred_central >>}<% if plan_low %>
-(fourchette de course : << plan_low >> -- << plan_high >> ; bornes de s\'ecurit\'e \`a
-<< interval_pct >>\,\% : << interval_low >> -- << interval_high >>)<% else %>
-(intervalle << interval_pct >>\,\% : << interval_low >> -- << interval_high >>)<% endif %>.
+d'arriv\'ee et r\'epartir l'effort. La pr\'ediction centrale est de
+\textbf{<< pred_central >>}<% if plan_low %> (fourchette de course : << plan_low >> -- << plan_high >> ;
+bornes de s\'ecurit\'e \`a << interval_pct >>\,\% : << interval_low >> -- << interval_high >>)<% else %> (intervalle << interval_pct >>\,\% : << interval_low >> -- << interval_high >>)<% endif %>.
 <% if has_cv %>La m\'ethode est valid\'ee \emph{hors \'echantillon} sur tes propres ultras, avec une
 erreur moyenne de \textbf{<< cv_gate_mae >>\,\%}<% if cv_gate_is_interp %> en interpolation
 (erreur brute << cv_mae >>\,\%<% if cv_extrap_mae %>, dont extrapolation << cv_extrap_mae >>\,\%<% endif %>)<% endif %>.<% else %>Faute d'assez d'ultras, la pr\'ediction repose
@@ -224,7 +223,9 @@ tu communiques \`a tes proches. Les \textbf{bornes de s\'ecurit\'e} \`a << inter
 encadrent aussi les sc\'enarios rares --- << interval_tail_low >>~chances sur 100 d'\^etre plus
 rapide que la borne basse, << interval_tail_high >>~sur~100 d'\^etre plus lent --- et servent \`a la
 \emph{logistique} : barri\`eres horaires, assistance, retour. Jamais d'objectif d'allure. La valeur
-centrale reste le sc\'enario le plus probable.
+centrale reste le sc\'enario le plus probable.<% if interval_conformal %> Les largeurs des deux
+fourchettes sont \emph{cal\'ees sur tes erreurs r\'eellement mesur\'ees} en validation crois\'ee
+(pr\'ediction conforme), pas sur la seule dispersion suppos\'ee du mod\`ele.<% endif %>
 \end{llnote}
 
 <% if width_prescription %><< width_prescription >>

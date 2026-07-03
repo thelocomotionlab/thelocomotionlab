@@ -67,7 +67,7 @@
     "interval_high_pct": 90,
     "v_floor_kmh": 2.0,
     "mc_mode": "predictive",
-    "interval_source": "mc"
+    "interval_source": "conformal_normalized"
   },
 
   "pacing": {

@@ -158,25 +158,33 @@ def build_pacing(
     # horloge totale (l'arrêt d'arrivée vaut 0, donc = mouvement + tous les arrêts)
     t_clock_h = float(cum_clock[-1] + stops_min[-1] / 60.0)
 
-    # --- fenêtres horaires : bandes Monte-Carlo ---
+    # --- fenêtres horaires : fourchette de course déclinée par segment ---
     # Les fenêtres PAR SEGMENT sont la « fourchette de course » (bande de PLANIFICATION,
     # défaut interquartile) : une course sur deux s'y joue — c'est l'outil de pilotage.
     # L'intervalle de la prédiction (ex. 80 %) reste les « bornes de sécurité » (logistique).
+    # La bande vient de la PRÉDICTION (percentiles MC ou conforme, selon interval_source) et
+    # se décline en multiplicateurs de scénario global : un jour lent l'est de bout en bout.
+    # Repli (objets sans plan_low/high_h) : percentiles Monte-Carlo — comportement historique
+    # (le multiplicateur commute exactement avec le percentile, cum > 0).
     mc = prediction.mc_samples
     mult = mc / tpred
     b_lo, b_hi = cfg.pacing.plan_window_low_pct, cfg.pacing.plan_window_high_pct
+    if prediction.plan_low_h is not None and prediction.plan_high_h is not None and tpred > 0:
+        m_lo = prediction.plan_low_h / tpred
+        m_hi = prediction.plan_high_h / tpred
+    else:
+        m_lo = float(np.percentile(mult, b_lo))
+        m_hi = float(np.percentile(mult, b_hi))
     if cfg.pacing.scale_stops:
         # historique : tout le cumul (arrêts compris) est mis à l'échelle
-        lo = np.array([np.percentile(cum_clock[i] * mult, b_lo) for i in range(n)])
-        hi = np.array([np.percentile(cum_clock[i] * mult, b_hi) for i in range(n)])
+        lo = cum_clock * m_lo
+        hi = cum_clock * m_hi
     else:
         # physique (C6) : un scénario lent ne rallonge pas les ravitos — seule la part de
         # MOUVEMENT est mise à l'échelle, les arrêts déjà passés s'ajoutent constants
         cum_move_arr = np.cumsum(t_move_h)
-        lo = np.array([np.percentile(cum_move_arr[i] * mult, b_lo)
-                       + cum_stop_before[i] for i in range(n)])
-        hi = np.array([np.percentile(cum_move_arr[i] * mult, b_hi)
-                       + cum_stop_before[i] for i in range(n)])
+        lo = cum_move_arr * m_lo + cum_stop_before
+        hi = cum_move_arr * m_hi + cum_stop_before
 
     # bornes de la fenêtre en HEURES DE PASSAGE (le plan ne sert pas qu'une valeur centrale :
     # l'athlète lit directement « j'arriverai à ce ravito entre 18:55 et 20:20 »)

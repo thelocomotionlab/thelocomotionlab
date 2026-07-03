@@ -415,3 +415,67 @@ aucune n'est « plus vraie ». Remplacer le 80 % par le 50 % sans le dire revien
 couverture pour flatter la largeur — exclu. Seule la table de scénarios est conditionnée à la
 largeur, parce qu'elle est un OUTIL rendu utile par la dispersion, pas une re-présentation de
 l'intervalle.
+
+### 9.8 Bandes conformes PAR DÉFAUT — le MC prédictif dégénère sur les calibrations faibles (S5 activé)
+
+**Constat déclencheur (2 cas réels, 2026-07-03).**
+1. **MIUT (« Lolo », données tronquées au 20/04, course courue le 26/04)** : central **26 h 04**
+   pour un réel de **25 h 49 (−1,0 %)** — mais fourchette de course « 18 h 58 – 71 h 55 » et
+   sécurité « 16 h 36 – 71 h 55 ». Les deux bornes hautes = **71,9 h = Deq/v_floor = 143,8/2,0** :
+   le plafond mathématique du simulateur, pas une statistique. P75 ET P90 au plafond ⇒ **≥ 25 %
+   des tirages prédictifs collés au plancher de vitesse**. Mécanisme : 5 ultras dont 4 groupés
+   (10–13 h) + 1 seul long (21,5 h, prédit +65 % en LOO) ⇒ la pente ln T est identifiée par UN
+   point ⇒ β-covariance énorme ⇒ les tirages à pente très négative s'effondrent via le point
+   fixe jusqu'au plancher. La LARGEUR dit quelque chose de vrai ; la FORME (masse au plafond)
+   est un artefact.
+2. **Montagnhard (rapport réel)** : central 19 h 14, fourchette de course ≈ 16 h 50 – 22 h 30 —
+   large au regard de l'attente de l'athlète, et pilotée par la loi supposée du MC plutôt que
+   par ses erreurs démontrées.
+
+**Décision : `prediction.interval_source=conformal_normalized` PAR DÉFAUT, et la source pilote
+désormais LES DEUX bandes** (sécurité 80 % ET fourchette de course 50 % — mêmes scores, quantiles
+0,80/0,50, emboîtement garanti). Le pacing décline la fourchette servie en multiplicateurs de
+scénario global (`Prediction.plan_low/high_h` → fenêtres des segments, scénarios, figure cumul) ;
+en mode `mc` le comportement est identique au bit près (le multiplicateur commute avec le
+percentile). Repli automatique des deux bandes sur les percentiles MC : régimes blend/vc_e ou
+< 4 plis normalisables. Rollback : `interval_source=mc`.
+
+**Choix technique consigné — quantile pondéré.** La variante stricte de Tibshirani 2019 (masse
+brute Σw des plis + poids du point cible) DÉGÉNÈRE dès que la récence écrase Σw (fixture :
+Σw ≈ 2,5 pour 7 plis ⇒ q(0,50) = q(0,80) = score max, bandes confondues). Retenu : poids
+récence×maximalité **auto-normalisés au nombre de plis** (ils règlent la représentativité des
+plis, cohérent avec la MAE LOO pondérée servie) + correction d'échantillon fini n+1 ; à poids
+égaux = conforme split standard ⌈(n+1)q⌉ (golden déterministe inchangé). L'alternative « poids
+unitaires » donnerait des bandes plus étroites (q50 fixture 0,70 vs 1,07) mais jetterait
+l'information « les plis récents sont les plus mal prédits » — écartée par cohérence.
+
+**Preuve (fixture Montagnhard, défauts servis) :**
+
+| Bande | avant (mc) | après (conforme) |
+|---|---|---|
+| fourchette de course (50 %) | [16,88 – 22,08] (5,19 h) | [15,81 – 22,11] (**6,30 h**, légèrement PLUS large : ses erreurs LOO récentes-pondérées débordent l'IQR du modèle) |
+| bornes de sécurité (80 %) | [15,39 – 27,18] (11,79 h) | [15,39 – 22,52] (**7,14 h**, −4,6 h : la queue droite paramétrique jamais observée disparaît) |
+
+Centre 18,96 h et MAE 8,3 % inchangés (seule la LARGEUR affichée change). Tableau §4 : inchangé
+(baselines épinglées `interval_source=mc` dans `tools/ab_montagnhard`, `tools/regen_…` et
+`test_montagnhard_robustness`). Golden déterministe : bandes re-épinglées (athlète synthétique
+quasi parfait, erreurs LOO ~0,7 % ⇒ sécurité [30,38 – 31,64], fourchette [30,81 – 31,21] —
+l'honnêteté calibrée sur SES erreurs) ; centre/β/MAE inchangés. Golden réel : centre et MAE non
+touchés (les pins ne portent pas sur l'intervalle) — à re-vérifier chez Valentin ; §12 annonce
+des bornes plus étroites à la prochaine recapture (MAE 3,1 %).
+
+**Effet de bord assumé** : le critère de suffisance « largeur relative d'intervalle » juge
+désormais l'intervalle SERVI (conforme) — fixture : largeur relative 0,62 (MC sigma_only
+historique) → 0,38 ; c'est voulu, le critère doit juger ce qu'on vend.
+
+**Attentes à cadrer (Montagnhard)** : aucune méthode calibrée ne sortira « ±1 h » de CES données
+— ses propres erreurs hors-échantillon (MAE pondérée 8,3 %, pire sur les plis récents) valent
+±1,5–2 h au mieux sur 19 h. Si le réel tombe à ±1 h du central, c'est une entrée de plus au
+**registre de couverture** (`docs/twin-registre-couverture.md`, créé avec MIUT en entrée n° 1 et
+une règle de décision pré-enregistrée : recalibration uniquement à ≥ 8–10 cas, au score de
+Winkler, jamais sur un cas isolé).
+
+**Backlog lié** : garde-fou « part de tirages au plancher » à signaler dans le rapport quand le
+repli MC est servi (blend/vc_e — le conforme, lui, n'est plus exposé au plafond) ; champ
+`cutoff_h` du carnet de route pour borner le scénario « prudent » à la barrière horaire ;
+conforme GROUPÉ inter-athlètes quand le registre aura ≥ 8–10 entrées.

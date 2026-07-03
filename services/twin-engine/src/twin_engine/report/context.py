@@ -259,6 +259,9 @@ def build_report_context(
         "plan_band_pct": fr(
             cfg.pacing.plan_window_high_pct - cfg.pacing.plan_window_low_pct, 0
         ),
+        # source réellement servie : quand les bandes sont CONFORMES (calées sur les erreurs
+        # LOO réelles), le rapport le dit — la largeur n'est plus la loi supposée du modèle
+        "interval_conformal": getattr(prediction, "interval_source", "mc") == "conformal_normalized",
         "regime": prediction.regime,
         "regime_label": _REGIME_LABELS.get(prediction.regime, prediction.regime),
         "has_cv": cv is not None,

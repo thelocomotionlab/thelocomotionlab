@@ -24,6 +24,12 @@ def test_defaults_from_shipped_json():
     # C3 (2026-07-02) : l'intervalle porte la loi prédictive complète (levier d'extrapolation
     # + rétroaction du point fixe — DIAGNOSTIC §9.1). Rollback : "sigma_only".
     assert cfg.prediction.mc_mode == "predictive"
+    # S5 (2026-07-03) : les DEUX bandes servies (fourchette de course + bornes de sécurité)
+    # sont calées sur les erreurs LOO réelles — le MC prédictif dégénère sur les calibrations
+    # faiblement identifiées (cas MIUT : bornes = plafond Deq/v_floor — DIAGNOSTIC §9.8).
+    # Rollback : "mc".
+    assert cfg.prediction.interval_source == "conformal_normalized"
+    assert (cfg.pacing.plan_window_low_pct, cfg.pacing.plan_window_high_pct) == (25, 75)
 
 
 def test_env_overrides_data_dir(monkeypatch, tmp_path):

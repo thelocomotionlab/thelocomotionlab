@@ -177,16 +177,18 @@ class PredictionParams:
     #   Montagnhard : i80 0,19 → 0,68 (critère largeur 🟠, voulu). Rollback : sigma_only.
     #   Blend/vc_e : repli automatique sur sigma_only.
     mc_mode: str = "predictive"                          # {sigma_only, predictive}
-    # --- source des BORNES DE SÉCURITÉ (S5, conforme normalisé — revue 2026-07) -------------
-    # ``mc`` (défaut) : percentiles du Monte-Carlo (paramétrique). ``conformal_normalized`` :
-    # quantile pondéré des scores LOO |erreur|/sd_pred, remis à l'échelle de l'écart-type
-    # prédictif de la CIBLE — calibré sur ce que le modèle a DÉMONTRÉ hors échantillon, tout en
-    # conservant la sensibilité au levier d'extrapolation (Vovk ; Romano-Candès 2019, adapté).
-    # Mesuré (fixture Montagnhard, cible T≈19 h) : bornes 80 % [15,2-28,1] (12,9 h, MC) →
-    # [14,9-23,2] (8,2 h) — la queue paramétrique jamais observée disparaît, l'asymétrie du MC
-    # est remplacée par ±sym. Garde-fou : jamais plus étroit que la fourchette de course (MC).
-    # Repli sur ``mc`` sans validation croisée (blend/vc_e) ou à moins de 4 plis.
-    interval_source: str = "mc"                          # {mc, conformal_normalized}
+    # --- source des DEUX bandes servies (S5, conforme normalisé — revue 2026-07) ------------
+    # ``mc`` : percentiles du Monte-Carlo (paramétrique) — 10/90 pour les bornes de sécurité,
+    # 25/75 pour la fourchette de course. ``conformal_normalized`` (DÉFAUT depuis 2026-07-03,
+    # activé sur cas réels MIUT + Montagnhard) : mêmes couvertures nominales, mais étalonnées
+    # sur les erreurs LOO réelles — quantile pondéré des scores |erreur|/sd_pred, remis à
+    # l'échelle de l'écart-type prédictif de la CIBLE (levier d'extrapolation conservé ;
+    # Vovk ; Romano-Candès ; Tibshirani 2019). Motif d'activation : le MC prédictif DÉGÉNÈRE
+    # sur les calibrations faiblement identifiées (cas MIUT réel : ≥ 25 % des tirages au
+    # plancher de vitesse ⇒ bornes hautes = plafond Deq/v_floor = 71,9 h pour un central 26 h).
+    # Le conforme reste fini et calé sur les erreurs démontrées. Repli automatique des DEUX
+    # bandes sur ``mc`` sans validation croisée (blend/vc_e) ou à moins de 4 plis. Rollback : mc.
+    interval_source: str = "conformal_normalized"        # {mc, conformal_normalized}
 
 
 @dataclass(frozen=True)
@@ -211,10 +213,11 @@ class PacingParams:
     scale_stops: bool = True
     # --- double bande (S5-présentation, 2026-07-03) -----------------------------------------
     # Les fenêtres PAR SEGMENT du plan utilisent la « fourchette de course » (bande de
-    # PLANIFICATION, défaut interquartile 25-75 : une course sur deux s'y joue) ; l'intervalle
+    # PLANIFICATION, couverture nominale 25-75 : une course sur deux s'y joue) ; l'intervalle
     # de la PRÉDICTION (interval_low/high_pct, défaut 80 %) devient les « bornes de sécurité »
     # (logistique/proches). Deux questions différentes, deux bandes étiquetées par leur USAGE —
-    # on n'affiche jamais l'une en la faisant passer pour l'autre.
+    # on n'affiche jamais l'une en la faisant passer pour l'autre. La SOURCE des deux bandes
+    # (percentiles MC ou conforme normalisé) suit ``prediction.interval_source``.
     plan_window_low_pct: int = 25
     plan_window_high_pct: int = 75
     # au-delà de cette largeur relative des bornes de sécurité ((hi−lo)/T), le rapport ajoute

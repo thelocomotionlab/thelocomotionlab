@@ -59,16 +59,33 @@ sd prédictif de la cible ; Montagnhard 11,8 h → 7,1 h à couverture calée su
 réelles ; garde-fou « jamais plus étroit que la fourchette de course », repli `mc` à < 4 plis).
 Défaut `mc` inchangé — bascule sur décision. Golden déterministe ré-épinglé (prior_shrunk).
 
+**S5 ACTIVÉ (2026-07-03, DIAGNOSTIC §9.8)** — déclencheurs : cas réel MIUT (central 26 h 04 vs
+réel 25 h 49, soit −1,0 %… mais bornes hautes des DEUX bandes = 71 h 55 = plafond Deq/v_floor :
+≥ 25 % des tirages prédictifs au plancher — le MC dégénère sur les calibrations faiblement
+identifiées) et Montagnhard (fourchette de course pilotée par la loi supposée plutôt que par les
+erreurs démontrées). `interval_source=conformal_normalized` par défaut, et la source pilote
+désormais les DEUX bandes (fourchette de course 50 % + sécurité 80 %, mêmes scores, emboîtées) ;
+le pacing lit la fourchette servie (`Prediction.plan_low/high_h`, multiplicateurs de scénario
+global — identique au bit près en mode `mc`). Quantile pondéré : poids récence×maximalité
+auto-normalisés + correction n+1 (la variante Tibshirani stricte dégénère quand la récence
+écrase Σw — consigné). Fixture : sécurité 11,79 → 7,14 h, fourchette 5,19 → 6,30 h (ses erreurs
+récentes débordent l'IQR du modèle — honnête). Registre de couverture créé
+(`docs/twin-registre-couverture.md`, MIUT = entrée n° 1, règle de décision pré-enregistrée).
+
 **Reste chez Valentin** :
 1. relire le prochain rapport (double bande + scénarios + ton narratif) et itérer si besoin ;
-2. golden réel à re-vérifier après `prior_shrunk` (no-op attendu : ton β2 libre ≈ le prior) ;
-3. bascules de défaut restantes, à décider sur preuve : `interval_source=conformal_normalized`,
-   `fade_source=durability` (Δ≈0,117 pour ton découplage 20,9 %), `vc_flat_symmetric=true`,
-   `vc_short_effort_floor_s=1800`, `decouple_basis=moving`, `scale_stops=false` ;
-4. purge éventuelle de l'historique git (PDF personnel d'out_nice) avant merge vers main ;
-5. PR vers main quand demandée.
+2. golden réel à re-vérifier après `prior_shrunk` + bandes conformes (centre/MAE non touchés,
+   pins sans intervalle — PASS attendu) ; recapturer §12 (bornes conformes plus étroites) ;
+3. compléter le registre de couverture à chaque course courue (Montagnhard = entrée n° 2) ;
+4. bascules de défaut restantes, à décider sur preuve : `fade_source=durability` (Δ≈0,117 pour
+   ton découplage 20,9 %), `vc_flat_symmetric=true`, `vc_short_effort_floor_s=1800`,
+   `decouple_basis=moving`, `scale_stops=false` ;
+5. purge éventuelle de l'historique git (PDF personnel d'out_nice) avant merge vers main ;
+6. PR vers main quand demandée.
 
-**Backlog P2** (cf. §7) : T8, S1, S2b, T6, S3, S4, C9a (S5 : fait derrière flag, cf. ci-dessus).
+**Backlog P2** (cf. §7) : T8, S1, S2b, T6, S3, S4, C9a (S5 : FAIT et activé, cf. ci-dessus) +
+garde-fou « part de tirages au plancher » sur le repli MC, `cutoff_h` (borner le scénario
+prudent à la barrière horaire), conforme groupé inter-athlètes à ≥ 8-10 entrées du registre.
 
 ---
 

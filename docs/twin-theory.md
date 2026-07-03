@@ -184,15 +184,25 @@ le **point fixe** :
 **Incertitude** par **Monte-Carlo** (tirages de `v` dans sa loi prédictive, résidu σ inclus) → intervalle.
 
 > **Deux fourchettes, deux usages (2026-07-03).** Le rapport présente l'incertitude en deux bandes
-> étiquetées par leur usage : la **fourchette de course** (interquartile 25–75 des tirages,
+> étiquetées par leur usage : la **fourchette de course** (couverture nominale 25–75,
 > `pacing.plan_window_*` — une course sur deux s'y joue) pilote le plan et les fenêtres par segment ;
 > l'intervalle de la prédiction (80 %, `prediction.interval_*_pct`) devient les **bornes de
 > sécurité** (logistique : barrières, assistance, retour). Aucune ne remplace l'autre — on ne
-> resserre jamais une couverture pour flatter la largeur. Option S5 derrière flag
-> (`prediction.interval_source=conformal_normalized`) : bornes de sécurité **calées sur les erreurs
-> LOO réelles** (scores studentisés, quantile pondéré conservateur, mise à l'échelle par le sd
-> prédictif de la cible), garde-fou « jamais plus étroit que la fourchette de course », repli
-> Monte-Carlo à moins de 4 plis. Défaut : `mc`.
+> resserre jamais une couverture pour flatter la largeur.
+>
+> **Source des deux bandes (S5) : conforme normalisé PAR DÉFAUT depuis le 2026-07-03**
+> (`prediction.interval_source=conformal_normalized`, rollback `mc`). Les largeurs sont **calées
+> sur les erreurs LOO réelles** : score de chaque pli = |erreur relative|/sd prédictif du pli
+> (studentisation), quantile pondéré conservateur (poids de récence×maximalité auto-normalisés,
+> correction n+1), mis à l'échelle du sd prédictif de la CIBLE — le levier d'extrapolation est
+> conservé, l'échelle vient des erreurs démontrées, pas de la loi supposée (Vovk ; Lei 2018 ;
+> Romano-Candès 2019). Motif d'activation : sur une calibration faiblement identifiée, le MC
+> prédictif dégénère — cas réel MIUT : ≥ 25 % des tirages au plancher de vitesse, bornes hautes
+> = plafond mathématique Deq/v_floor (71,9 h pour un central 26 h). Repli automatique des deux
+> bandes sur les percentiles MC sans validation croisée (blend/vc_e) ou à moins de 4 plis.
+> La **couverture réelle** de ces bandes est suivie sur les courses courues
+> (`docs/twin-registre-couverture.md`) — c'est le registre, pas une impression, qui décidera
+> des recalibrages futurs.
 
 **Cas de référence (recapture 2026-07-02)** : **T = 31,3 h**, vitesse ajustée moyenne
 **6,40 km/h ≈ 60 % de la VC** ; intervalle 80 % **30,0–32,8 h**.
@@ -328,7 +338,7 @@ Calculé **avant paiement**, sur la donnée normalisée :
 | Durabilité | découplage 20,9 % (médiane des ≥ 10 h) |
 | Régression ultra | v = 8,194 − 0,260·ln(h) − 0,0170·(D+/km), σ 0,22 km/h — **D+ base distance 150 m (C1)** |
 | Prédiction | 31,28 h · 6,40 km/h ajustée · ~60 % VC |
-| Intervalle 80 % | 29,95–32,77 h |
+| Intervalle 80 % | 29,95–32,77 h *(percentiles MC — bandes CONFORMES par défaut depuis le 2026-07-03 : bornes à re-capturer au prochain preview, attendues plus étroites vu la MAE 3,1 %)* |
 | Validation croisée | MAE 3,1 % (interp 2,7 %) · RMSE 4,0 % (n = 8, 4 interp / 4 extrap) |
 | Plan | arrêts 1,75 h ; départ ven. 13:00, arrivée sam. ~20:17 ; nuit : à relire au prochain full |
 

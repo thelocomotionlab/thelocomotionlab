@@ -70,6 +70,12 @@ class Prediction:
     vc_fraction: float | None    # v / VC (intensité relative)
     cross_validation: CrossValidation | None
     interval_source: str = "mc"  # source RÉELLEMENT servie (repli possible vers "mc")
+    # FOURCHETTE DE COURSE servie (bande de planification, couverture nominale
+    # plan_window_high−low, défaut 50 %) : même source que les bornes de sécurité.
+    # None (objets construits à la main / anciens replis) ⇒ le pacing retombe sur les
+    # percentiles Monte-Carlo — comportement historique.
+    plan_low_h: float | None = None
+    plan_high_h: float | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -79,6 +85,8 @@ class Prediction:
             "dplus_per_km": round(self.dplus_per_km, 2),
             "interval_80_low_h": round(self.interval_low_h, 3),
             "interval_80_high_h": round(self.interval_high_h, 3),
+            "plan_low_h": None if self.plan_low_h is None else round(self.plan_low_h, 3),
+            "plan_high_h": None if self.plan_high_h is None else round(self.plan_high_h, 3),
             "interval_source": self.interval_source,
             "regime": self.regime,
             "sigma_kmh": round(self.sigma_kmh, 3),
@@ -231,17 +239,24 @@ def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation
 
 
 def _weighted_quantile(scores: np.ndarray, weights: np.ndarray, q: float) -> float:
-    """Quantile pondéré CONSERVATEUR (conforme pondéré, Tibshirani et al. 2019) : plus petit
-    score s tel que la masse cumulée des plis ≤ s atteigne q, la masse totale incluant le
-    point CIBLE (poids 1 = récence d'une course à venir, score « +∞ »). Si même tous les
-    plis ne suffisent pas (peu de plis), on rend le score max observé (choix fini le plus
+    """Quantile pondéré CONSERVATEUR des scores conformes.
+
+    Les poids (récence × maximalité, AUTO-NORMALISÉS au nombre de plis) règlent la
+    REPRÉSENTATIVITÉ des plis — sur un athlète non stationnaire, l'erreur des courses
+    récentes compte plus, comme partout ailleurs dans le moteur ; la correction d'échantillon
+    fini reste « n+1 » (le point cible compte pour un pli, score « +∞ »). À poids égaux on
+    retrouve exactement le conforme split standard ⌈(n+1)q⌉ (Vovk ; Lei et al. 2018).
+    (La variante stricte de Tibshirani 2019 — masse brute Σw + poids cible — dégénère dès
+    que la récence écrase Σw : q(0,50) = q(0,80) = score max, bandes 50/80 confondues.)
+    Si la masse des plis ne suffit pas, on rend le score max observé (choix fini le plus
     prudent)."""
     order = np.argsort(scores)
     s = scores[order]
     w = weights[order]
-    cum = np.cumsum(w) / (float(w.sum()) + 1.0)
+    n = len(s)
+    cum = np.cumsum(w) / float(w.sum()) * (n / (n + 1.0))
     idx = int(np.searchsorted(cum, q, side="left"))
-    return float(s[min(idx, len(s) - 1)])
+    return float(s[min(idx, n - 1)])
 
 
 def _conformal_interval(
@@ -251,8 +266,11 @@ def _conformal_interval(
     cv: CrossValidation | None,
     calibration: UltraCalibration,
     cfg: Config,
+    coverage: float,
 ) -> tuple[float, float] | None:
-    """Intervalle CONFORME NORMALISÉ (S5, flag ``interval_source=conformal_normalized``).
+    """Intervalle CONFORME NORMALISÉ (S5, ``interval_source=conformal_normalized``) à la
+    couverture nominale demandée (0,80 pour les bornes de sécurité, 0,50 pour la fourchette
+    de course — les deux bandes partagent les mêmes scores, donc leur emboîtement est garanti).
 
     Le Monte-Carlo prédictif propage l'incertitude DU MODÈLE ; sa largeur est honnête si le
     modèle l'est. Le conforme cale au contraire la couverture sur les erreurs RÉELLEMENT
@@ -273,7 +291,6 @@ def _conformal_interval(
     if int(ok.sum()) < 4:
         return None
     scores = np.abs(err[ok]) / rel[ok]
-    coverage = (cfg.prediction.interval_high_pct - cfg.prediction.interval_low_pct) / 100.0
     q = _weighted_quantile(scores, w[ok], coverage)
     # sd prédictif relatif AU POINT CIBLE : même levier x₀ᵀ(XᵀWX)⁻¹x₀ que le MC prédictif
     x0 = np.array([1.0, np.log(t_point), dpk])
@@ -314,19 +331,24 @@ def predict_finish(
     low = float(np.percentile(mc, cfg.prediction.interval_low_pct))
     high = float(np.percentile(mc, cfg.prediction.interval_high_pct))
 
-    # --- source de l'intervalle affiché (bornes de sécurité) ---
-    # La LOO est calculée AVANT le choix : le conforme s'étalonne sur ses plis.
+    # --- les DEUX bandes servies partagent la même source ---
+    # ``mc`` : percentiles du Monte-Carlo (10/90 pour la sécurité, 25/75 pour la fourchette
+    # de course). ``conformal_normalized`` : mêmes couvertures nominales, mais étalonnées
+    # sur les erreurs LOO réelles — la LOO est donc calculée AVANT le choix.
     cv = leave_one_out(calibration, cfg)
+    plan_low = float(np.percentile(mc, cfg.pacing.plan_window_low_pct))
+    plan_high = float(np.percentile(mc, cfg.pacing.plan_window_high_pct))
     interval_source = "mc"
     if cfg.prediction.interval_source == "conformal_normalized":
-        ci = _conformal_interval(t_point, v_point, dplus_per_km, cv, calibration, cfg)
-        if ci is not None:
-            # garde-fou de COHÉRENCE : les bornes de sécurité ne peuvent pas être plus
-            # étroites que la fourchette de course (bande de planification des segments),
-            # sinon le rapport annoncerait une « sécurité » plus serrée que le pilotage.
-            p_lo = float(np.percentile(mc, cfg.pacing.plan_window_low_pct))
-            p_hi = float(np.percentile(mc, cfg.pacing.plan_window_high_pct))
-            low, high = min(ci[0], p_lo), max(ci[1], p_hi)
+        cov_safety = (cfg.prediction.interval_high_pct - cfg.prediction.interval_low_pct) / 100.0
+        cov_plan = (cfg.pacing.plan_window_high_pct - cfg.pacing.plan_window_low_pct) / 100.0
+        ci = _conformal_interval(t_point, v_point, dplus_per_km, cv, calibration, cfg, cov_safety)
+        pi = _conformal_interval(t_point, v_point, dplus_per_km, cv, calibration, cfg, cov_plan)
+        if ci is not None and pi is not None:
+            plan_low, plan_high = pi
+            # garde-fou de COHÉRENCE : sécurité ⊇ fourchette de course (déjà garanti par
+            # q(0,80) ≥ q(0,50) sur les mêmes scores ; le min/max blinde le cas dégénéré)
+            low, high = min(ci[0], pi[0]), max(ci[1], pi[1])
             interval_source = "conformal_normalized"
 
     # % de VC seulement si la VC est plausible (sinon on n'affiche pas un ratio trompeur)
@@ -348,6 +370,8 @@ def predict_finish(
         vc_fraction=vc_fraction,
         cross_validation=cv,
         interval_source=interval_source,
+        plan_low_h=plan_low,
+        plan_high_h=plan_high,
     )
 
 
