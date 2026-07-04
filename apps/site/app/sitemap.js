@@ -32,6 +32,7 @@ export default async function sitemap() {
     { url: "/explorer", priority: 0.9, freq: "weekly" },
     { url: "/comprendre", priority: 0.9, freq: "weekly" },
     { url: "/manifeste", priority: 0.8, freq: "monthly" },
+    { url: "/live", priority: 0.7, freq: "weekly" },
     { url: "/outils/twin", priority: 0.7, freq: "monthly" },
     { url: "/outils", priority: 0.6, freq: "monthly" },
     { url: "/about", priority: 0.7, freq: "monthly" },

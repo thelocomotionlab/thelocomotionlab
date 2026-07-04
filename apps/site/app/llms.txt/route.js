@@ -77,6 +77,9 @@ function buildLlmsTxt() {
     `- [Explorer](${SITE_URL}/explorer): le terrain — index des récits et projets`
   );
   lines.push(
+    `- [Live](${SITE_URL}/live): le direct des aventures du Lab, ou le prochain départ`
+  );
+  lines.push(
     `- [Outils](${SITE_URL}/outils): les instruments construits au Lab`
   );
   lines.push(

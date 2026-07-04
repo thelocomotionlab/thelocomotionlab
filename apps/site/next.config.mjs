@@ -121,14 +121,8 @@ export default function nextConfig(phase) {
         ...buildLegacyRedirects(),
         // L'ancien hub /labo est remplacé par le Manifeste (PR2).
         { source: "/labo", destination: "/manifeste", permanent: true },
-        {
-          source: "/live",
-          destination:
-            "https://www.thelocomotionlab.com/explorer/saison-trail-2026#projet-off-fontaine-rémuzat",
-          // `permanent: false` (307) : cette redirection disparaît en PR3,
-          // quand /live devient une vraie page (hub live permanent).
-          permanent: false,
-        },
+        // /live est désormais une vraie page (hub live permanent, PR3) :
+        // l'ancienne redirection temporaire a été retirée.
       ];
     },
   };
