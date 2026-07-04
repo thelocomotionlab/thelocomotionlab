@@ -1,6 +1,10 @@
 import fs from "fs";
-import path from "path";
-import matter from "gray-matter";
+
+import {
+  listArticleEntries,
+  listProjetEntries,
+  routeFor,
+} from "./contentRoutes.mjs";
 
 /**
  * Utilitaires pour lire les contenus Markdown
@@ -11,6 +15,9 @@ import matter from "gray-matter";
  * - Articles : date frontmatter (publication) = clé de tri principale
  * - Projets  : date métier = completedAt si status "Terminé",
  *              sinon activityAt, sinon updatedAt en fallback technique
+ *
+ * Les hrefs pointent vers les piliers Comprendre / Explorer selon le
+ * frontmatter `type` (mapping unique dans lib/contentRoutes.mjs).
  */
 
 function safeDate(value) {
@@ -33,47 +40,41 @@ function getProjectActivityDate(item) {
   return item.updatedAt ?? null;
 }
 
-function readMarkdownDir({ dirRelativeToPublic, type, baseHref }) {
-  const dir = path.join(process.cwd(), "public", dirRelativeToPublic);
+function shapeItem(entry, type) {
+  const { data } = entry;
+  const stats = fs.statSync(entry.filePath);
 
-  if (!fs.existsSync(dir)) return [];
+  return {
+    type, // "Carnet" | "Projet"
+    slug: entry.slug,
+    href: routeFor(entry),
 
-  const filenames = fs.readdirSync(dir);
+    // Frontmatter
+    title: data.title ?? entry.slug,
+    description: data.description ?? "",
+    cover: data.cover ?? "",
+    status: data.status ?? null,
+    date: safeDate(data.date),
 
-  return filenames
-    .filter((fn) => fn.endsWith(".md"))
-    .map((fn) => {
-      const filePath = path.join(dir, fn);
-      const raw = fs.readFileSync(filePath, "utf8");
-      const { data } = matter(raw);
+    // Nouvelles dates métier projet
+    activityAt: safeDate(data.activityAt),
+    completedAt: safeDate(data.completedAt),
 
-      const slug = fn.replace(/\.md$/, "");
-      const stats = fs.statSync(filePath);
+    // Métadonnées fichier (fallback technique uniquement)
+    updatedAt: stats.mtime,
+  };
+}
 
-      return {
-        type, // "Carnet" | "Projet"
-        slug,
-        href: `${baseHref}/${slug}`,
+function readPublishedArticles() {
+  return listArticleEntries()
+    .filter((e) => e.published)
+    .map((e) => shapeItem(e, "Carnet"));
+}
 
-        // Frontmatter
-        title: data.title ?? slug,
-        description: data.description ?? "",
-        cover: data.cover ?? "",
-        status: data.status ?? null,
-        date: safeDate(data.date),
-
-        // Nouvelles dates métier projet
-        activityAt: safeDate(data.activityAt),
-        completedAt: safeDate(data.completedAt),
-
-        // Métadonnées fichier (fallback technique uniquement)
-        updatedAt: stats.mtime,
-
-        // Publication
-        published: data.published !== false,
-      };
-    })
-    .filter((item) => item.published);
+function readPublishedProjects() {
+  return listProjetEntries()
+    .filter((e) => e.published)
+    .map((e) => shapeItem(e, "Projet"));
 }
 
 /**
@@ -151,21 +152,13 @@ function sortMixedActivity(a, b) {
    ============================ */
 
 export function getRecentArticles({ limit = 3 } = {}) {
-  return readMarkdownDir({
-    dirRelativeToPublic: "articles",
-    type: "Carnet",
-    baseHref: "/articles",
-  })
+  return readPublishedArticles()
     .sort(sortArticlesByPublicationDate)
     .slice(0, limit);
 }
 
 export function getRecentProjects({ limit = 3 } = {}) {
-  return readMarkdownDir({
-    dirRelativeToPublic: "projets",
-    type: "Projet",
-    baseHref: "/projets",
-  })
+  return readPublishedProjects()
     .sort(sortProjectsByMeaningfulDate)
     .slice(0, limit);
 }
@@ -175,19 +168,9 @@ export function getRecentProjects({ limit = 3 } = {}) {
  * Utilisé si un jour tu veux un journal global du Labo
  */
 export function getRecentActivity({ limit = 6 } = {}) {
-  const articles = readMarkdownDir({
-    dirRelativeToPublic: "articles",
-    type: "Carnet",
-    baseHref: "/articles",
-  });
-
-  const projets = readMarkdownDir({
-    dirRelativeToPublic: "projets",
-    type: "Projet",
-    baseHref: "/projets",
-  });
-
-  return [...articles, ...projets].sort(sortMixedActivity).slice(0, limit);
+  return [...readPublishedArticles(), ...readPublishedProjects()]
+    .sort(sortMixedActivity)
+    .slice(0, limit);
 }
 
 /* ============================

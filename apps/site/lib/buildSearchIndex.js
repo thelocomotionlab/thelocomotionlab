@@ -1,13 +1,16 @@
 // lib/buildSearchIndex.js
 //
-// Construit, au build, un index plat des articles et projets publiés :
-// titre, description, tags, et texte plain du corps markdown.
-// Permet à la page /recherche de charger un seul fichier statique
-// (/search-index.json) au lieu de fetch tous les .md à la demande.
+// Construit, au build, un index plat des contenus publiés (articles,
+// récits, projets) : titre, description, tags, et texte plain du corps
+// markdown. Permet à la page /recherche de charger un seul fichier
+// statique (/search-index.json) au lieu de fetch tous les .md à la demande.
+// Les hrefs pointent vers les piliers Comprendre / Explorer (contentRoutes).
 
-import fs from "fs";
-import path from "path";
-import matter from "gray-matter";
+import {
+  listArticleEntries,
+  listProjetEntries,
+  routeFor,
+} from "./contentRoutes.mjs";
 
 function stripMarkdown(md = "") {
   return md
@@ -26,47 +29,17 @@ function stripMarkdown(md = "") {
     .trim();
 }
 
-function readDir({ dirRelativeToPublic, type, baseHref }) {
-  const dir = path.join(process.cwd(), "public", dirRelativeToPublic);
-  if (!fs.existsSync(dir)) return [];
-
-  return fs
-    .readdirSync(dir)
-    .filter((fn) => fn.endsWith(".md"))
-    .map((fn) => {
-      const slug = fn.replace(/\.md$/, "");
-      const filePath = path.join(dir, fn);
-      const raw = fs.readFileSync(filePath, "utf8");
-      const { data, content } = matter(raw);
-
-      if (data.published === false) return null;
-
-      return {
-        type,
-        slug,
-        href: `${baseHref}/${slug}`,
-        title: data.title || slug,
-        description: data.description || "",
-        status: data.status || "",
-        tags: Array.isArray(data.tags) ? data.tags.filter(Boolean) : [],
-        body: stripMarkdown(content),
-      };
-    })
-    .filter(Boolean);
-}
-
 export function buildSearchIndex() {
-  const articles = readDir({
-    dirRelativeToPublic: "articles",
-    type: "article",
-    baseHref: "/articles",
-  });
-
-  const projects = readDir({
-    dirRelativeToPublic: "projets",
-    type: "project",
-    baseHref: "/projets",
-  });
-
-  return [...articles, ...projects];
+  return [...listArticleEntries(), ...listProjetEntries()]
+    .filter((e) => e.published)
+    .map((e) => ({
+      type: e.kind, // "article" | "recit" | "projet"
+      slug: e.slug,
+      href: routeFor(e),
+      title: e.data.title || e.slug,
+      description: e.data.description || "",
+      status: e.data.status || "",
+      tags: Array.isArray(e.data.tags) ? e.data.tags.filter(Boolean) : [],
+      body: stripMarkdown(e.content),
+    }));
 }

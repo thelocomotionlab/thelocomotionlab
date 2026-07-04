@@ -124,8 +124,13 @@ function SearchClientInner() {
       .filter(Boolean);
 
     return {
+      // Pilier Comprendre : articles de fond.
       arts: filtered.filter((i) => i.type === "article"),
-      pros: filtered.filter((i) => i.type === "project"),
+      // Pilier Explorer : récits + projets ("project" = ancien index encore
+      // en cache navigateur pendant la bascule).
+      pros: filtered.filter(
+        (i) => i.type === "recit" || i.type === "projet" || i.type === "project"
+      ),
     };
   }, [q, index]);
 
@@ -178,13 +183,13 @@ function SearchClientInner() {
       {results.arts.length > 0 && (
         <section className="mb-12">
           <h2 className="text-2xl font-heading font-bold mb-4 text-brand-deep">
-            Carnets
+            Comprendre
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
             {results.arts.map((a) => (
               <Link
                 key={a.slug}
-                href={`/articles/${a.slug}?highlight=${encodeURIComponent(q)}`}
+                href={`${a.href}?highlight=${encodeURIComponent(q)}`}
                 scroll={false}
                 className="group block bg-white rounded-2xl shadow-card p-6 hover:shadow-lg transition-shadow"
               >
@@ -208,16 +213,19 @@ function SearchClientInner() {
       {results.pros.length > 0 && (
         <section>
           <h2 className="text-2xl font-heading font-bold mb-4 text-brand-deep">
-            Projets
+            Explorer
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
             {results.pros.map((p) => (
               <Link
                 key={p.slug}
-                href={`/projets/${p.slug}?highlight=${encodeURIComponent(q)}`}
+                href={`${p.href}?highlight=${encodeURIComponent(q)}`}
                 scroll={false}
                 className="group block bg-white rounded-2xl shadow-card p-6 hover:shadow-lg transition-shadow"
               >
+                <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
+                  {p.type === "recit" ? "Récit" : "Projet"}
+                </p>
                 <h3 className="text-xl font-semibold mb-2 text-brand-accent group-hover:underline">
                   {p.title}
                 </h3>

@@ -1,61 +1,27 @@
 // app/sitemap.js
-import fs from "fs";
-import path from "path";
+//
+// Les entrées de contenu s'appuient sur lib/contentRoutes.mjs (source
+// unique) : filtrage published/draft via gray-matter et URLs vers les
+// piliers Comprendre / Explorer. Brouillons et cartes teaser exclus.
+import {
+  listArticleEntries,
+  listProjetEntries,
+  routeFor,
+} from "@/lib/contentRoutes.mjs";
 
 const URL = "https://thelocomotionlab.com";
 
 /**
- * Fonction utilitaire pour vérifier si un article / projet est publié.
- * Elle lit le contenu du fichier et cherche "published: false" ou "draft: true" dans l'en-tête.
+ * Date du frontmatter ("date:") si présente et valide, sinon la date
+ * actuelle → lastModified cohérent dans le sitemap.
  */
-function isPublished(filePath) {
-  try {
-    const fileContent = fs.readFileSync(filePath, "utf8");
-
-    // On extrait le bloc de configuration YAML (entre les ---)
-    const frontmatterMatch = fileContent.match(/^---\n([\s\S]*?)\n---/);
-
-    if (frontmatterMatch) {
-      const frontmatter = frontmatterMatch[1];
-
-      // Si on trouve explicitement "published: false" ou "draft: true", on rejette
-      if (frontmatter.match(/^published:\s*false/m)) return false;
-      if (frontmatter.match(/^draft:\s*true/m)) return false;
+function frontmatterDateOrNow(data) {
+  if (data.date) {
+    const parsed = new Date(data.date);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toISOString();
     }
-
-    // Par défaut (si pas de mention ou si published: true), on publie
-    return true;
-  } catch (error) {
-    console.error(`Erreur lecture fichier ${filePath}:`, error);
-    return false;
   }
-}
-
-/**
- * Récupère la date du frontmatter ("date:") si présente,
- * sinon renvoie la date actuelle.
- * → permet d’avoir un lastModified cohérent dans le sitemap
- */
-function getFrontmatterDateOrNow(filePath) {
-  try {
-    const fileContent = fs.readFileSync(filePath, "utf8");
-    const frontmatterMatch = fileContent.match(/^---\n([\s\S]*?)\n---/);
-
-    if (frontmatterMatch) {
-      const frontmatter = frontmatterMatch[1];
-      const dateMatch = frontmatter.match(/^date:\s*["']?(.+?)["']?$/m);
-
-      if (dateMatch && dateMatch[1]) {
-        const parsed = new Date(dateMatch[1]);
-        if (!isNaN(parsed)) {
-          return parsed.toISOString();
-        }
-      }
-    }
-  } catch (error) {
-    console.error(`Erreur lecture date frontmatter ${filePath}:`, error);
-  }
-
   return new Date().toISOString();
 }
 
@@ -63,8 +29,9 @@ export default async function sitemap() {
   // 1. Les routes statiques avec priorités personnalisées
   const routes = [
     { url: "", priority: 1.0, freq: "monthly" },
-    { url: "/projets", priority: 0.9, freq: "weekly" },
-    { url: "/articles", priority: 0.9, freq: "weekly" },
+    { url: "/explorer", priority: 0.9, freq: "weekly" },
+    { url: "/comprendre", priority: 0.9, freq: "weekly" },
+    // /labo devient une redirection vers /manifeste en PR2.
     { url: "/labo", priority: 0.8, freq: "monthly" },
     { url: "/about", priority: 0.7, freq: "monthly" },
     { url: "/soutenir", priority: 0.6, freq: "monthly" },
@@ -78,61 +45,20 @@ export default async function sitemap() {
     priority: route.priority,
   }));
 
-  // 2. PROJETS (filtrés par published / draft, avec lastModified basé sur le frontmatter.date si présent)
-  let projects = [];
+  // 2. Contenus publiés (articles → /comprendre, récits + projets → /explorer)
+  let entries = [];
   try {
-    const projectsDir = path.join(process.cwd(), "public/projets");
-    if (fs.existsSync(projectsDir)) {
-      projects = fs
-        .readdirSync(projectsDir)
-        .filter((file) => file.endsWith(".md"))
-        .map((file) => {
-          const filePath = path.join(projectsDir, file);
-          if (!isPublished(filePath)) return null;
-
-          const slug = file.replace(".md", "");
-          const lastModified = getFrontmatterDateOrNow(filePath);
-
-          return {
-            url: `${URL}/projets/${slug}`,
-            lastModified,
-            changeFrequency: "weekly",
-            priority: 0.9, // Priorité haute pour le contenu
-          };
-        })
-        .filter(Boolean);
-    }
+    entries = [...listArticleEntries(), ...listProjetEntries()]
+      .filter((e) => e.published)
+      .map((e) => ({
+        url: `${URL}${routeFor(e)}`,
+        lastModified: frontmatterDateOrNow(e.data),
+        changeFrequency: "weekly",
+        priority: 0.9, // Priorité haute pour le contenu
+      }));
   } catch (error) {
-    console.error("Erreur sitemap projets:", error);
+    console.error("Erreur sitemap contenus:", error);
   }
 
-  // 3. ARTICLES (filtrés par published / draft, avec lastModified basé sur le frontmatter.date si présent)
-  let articles = [];
-  try {
-    const articlesDir = path.join(process.cwd(), "public/articles");
-    if (fs.existsSync(articlesDir)) {
-      articles = fs
-        .readdirSync(articlesDir)
-        .filter((file) => file.endsWith(".md"))
-        .map((file) => {
-          const filePath = path.join(articlesDir, file);
-          if (!isPublished(filePath)) return null;
-
-          const slug = file.replace(".md", "");
-          const lastModified = getFrontmatterDateOrNow(filePath);
-
-          return {
-            url: `${URL}/articles/${slug}`,
-            lastModified,
-            changeFrequency: "weekly",
-            priority: 0.9, // Priorité haute pour le contenu
-          };
-        })
-        .filter(Boolean);
-    }
-  } catch (error) {
-    console.error("Erreur sitemap articles:", error);
-  }
-
-  return [...routes, ...projects, ...articles];
+  return [...routes, ...entries];
 }

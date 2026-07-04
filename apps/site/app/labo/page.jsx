@@ -10,14 +10,14 @@ import {
 export const metadata = {
   title: "Le Labo – The Locomotion Lab",
   description:
-    "Découvre les espaces du Locomotion Lab : carnets, projets et soutien. Un laboratoire vivant d'exploration de la locomotion et du potentiel humain.",
+    "Découvre les espaces du Locomotion Lab : comprendre, explorer et soutenir. Un laboratoire vivant d'exploration de la locomotion et du potentiel humain.",
   alternates: {
     canonical: "https://thelocomotionlab.com/labo",
   },
   openGraph: {
     title: "Le Labo – The Locomotion Lab",
     description:
-      "Découvre les espaces du Locomotion Lab : carnets, projets et soutien.",
+      "Découvre les espaces du Locomotion Lab : comprendre, explorer et soutenir.",
     url: "https://thelocomotionlab.com/labo",
     type: "website",
     images: [
@@ -30,23 +30,24 @@ export const metadata = {
     card: "summary_large_image",
     title: "Le Labo – The Locomotion Lab",
     description:
-      "Découvre les espaces du Locomotion Lab : carnets, projets et soutien.",
+      "Découvre les espaces du Locomotion Lab : comprendre, explorer et soutenir.",
     images: ["https://thelocomotionlab.com/images/assets/og-image.jpg"],
   },
 };
 
 const cards = [
   {
-    title: "Carnets du Labo",
+    title: "Comprendre",
     description:
-      "Récits, découvertes et protocoles scientifiques organisés par thèmes.",
-    href: "/articles",
+      "La science de la robustesse physiologique : articles de fond sourcés et vulgarisés.",
+    href: "/comprendre",
     icon: BookOpen,
   },
   {
-    title: "Projets du Labo",
-    description: "Projets et explorations à court, moyen ou long terme.",
-    href: "/projets",
+    title: "Explorer",
+    description:
+      "Le terrain : récits d'aventures et projets au long cours.",
+    href: "/explorer",
     icon: FlaskConical,
   },
   {

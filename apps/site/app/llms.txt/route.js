@@ -6,64 +6,52 @@
 // modèles de langage qui veulent comprendre la structure du contenu.
 // Cloudflare Pages le sert ensuite comme un asset statique.
 
-import fs from "fs";
-import path from "path";
-import matter from "gray-matter";
+import {
+  listArticleEntries,
+  listProjetEntries,
+  routeFor,
+} from "@/lib/contentRoutes.mjs";
 
 const SITE_URL = "https://thelocomotionlab.com";
 
 export const dynamic = "force-static";
 
-function readMarkdownEntries(dirName) {
-  const dir = path.join(process.cwd(), "public", dirName);
-  if (!fs.existsSync(dir)) return [];
-
-  return fs
-    .readdirSync(dir)
-    .filter((fn) => fn.endsWith(".md"))
-    .map((fn) => {
-      const slug = fn.replace(/\.md$/, "");
-      const raw = fs.readFileSync(path.join(dir, fn), "utf8");
-      const { data } = matter(raw);
-
-      if (data.published === false || data.draft === true) return null;
-
-      return {
-        slug,
-        title: data.title || slug,
-        description: data.description || "",
-        date: data.date ? new Date(data.date) : null,
-        status: data.status || null,
-        completedAt: data.completedAt ? new Date(data.completedAt) : null,
-        activityAt: data.activityAt ? new Date(data.activityAt) : null,
-      };
-    })
-    .filter(Boolean);
+function shapeEntry(e) {
+  const { data } = e;
+  return {
+    entry: e,
+    title: data.title || e.slug,
+    description: data.description || "",
+    date: data.date ? new Date(data.date) : null,
+    activityAt: data.activityAt ? new Date(data.activityAt) : null,
+  };
 }
 
-function articleDateKey(a) {
-  return a.date?.getTime() ?? 0;
+// Même clé de tri que l'index /explorer : activityAt ?? date.
+function activityDateKey(item) {
+  return item.activityAt?.getTime() ?? item.date?.getTime() ?? 0;
 }
 
-function projectDateKey(p) {
-  if (p.status === "Terminé" && p.completedAt) return p.completedAt.getTime();
-  if (p.activityAt) return p.activityAt.getTime();
-  return 0;
-}
-
-function formatEntry(baseHref, item) {
-  const url = `${SITE_URL}${baseHref}/${item.slug}`;
+function formatEntry(item) {
+  const url = `${SITE_URL}${routeFor(item.entry)}`;
   const desc = item.description ? `: ${item.description}` : "";
   return `- [${item.title}](${url})${desc}`;
 }
 
 function buildLlmsTxt() {
-  const articles = readMarkdownEntries("articles").sort(
-    (a, b) => articleDateKey(b) - articleDateKey(a)
+  const published = [...listArticleEntries(), ...listProjetEntries()].filter(
+    (e) => e.published
   );
-  const projects = readMarkdownEntries("projets").sort(
-    (a, b) => projectDateKey(b) - projectDateKey(a)
-  );
+
+  const comprendre = published
+    .filter((e) => e.kind === "article")
+    .map(shapeEntry)
+    .sort((a, b) => (b.date?.getTime() ?? 0) - (a.date?.getTime() ?? 0));
+
+  const explorer = published
+    .filter((e) => e.kind !== "article")
+    .map(shapeEntry)
+    .sort((a, b) => activityDateKey(b) - activityDateKey(a));
 
   const lines = [];
   lines.push("# The Locomotion Lab");
@@ -73,7 +61,7 @@ function buildLlmsTxt() {
   );
   lines.push("");
   lines.push(
-    "Le Locomotion Lab est un laboratoire vivant qui explore les facteurs et pratiques favorisant la robustesse physiologique. On y trouve des carnets (articles de fond ou récits), des projets (comptes-rendus de longue haleine type saisons d'entraînement et traversées) et un labo (présentation, méthodes)."
+    "Le Locomotion Lab est un laboratoire vivant qui explore les facteurs et pratiques favorisant la robustesse physiologique. On y trouve deux piliers : Comprendre (la science — articles de fond sourcés et vulgarisés) et Explorer (le terrain — récits d'aventures et projets au long cours type saisons d'entraînement et traversées)."
   );
   lines.push("");
   lines.push("## Pages principales");
@@ -83,10 +71,10 @@ function buildLlmsTxt() {
     `- [Le Labo](${SITE_URL}/labo): présentation des thématiques et méthodes du Locomotion Lab`
   );
   lines.push(
-    `- [Carnets](${SITE_URL}/articles): index des articles de fond et récits`
+    `- [Comprendre](${SITE_URL}/comprendre): la science — index des articles de fond`
   );
   lines.push(
-    `- [Projets](${SITE_URL}/projets): index des projets et comptes-rendus suivis`
+    `- [Explorer](${SITE_URL}/explorer): le terrain — index des récits et projets`
   );
   lines.push(`- [À propos](${SITE_URL}/about): qui est derrière le site`);
   lines.push(
@@ -95,20 +83,20 @@ function buildLlmsTxt() {
   lines.push(`- [Contact](${SITE_URL}/contact)`);
   lines.push("");
 
-  if (articles.length) {
-    lines.push("## Carnets");
+  if (comprendre.length) {
+    lines.push("## Comprendre");
     lines.push("");
-    for (const a of articles) {
-      lines.push(formatEntry("/articles", a));
+    for (const a of comprendre) {
+      lines.push(formatEntry(a));
     }
     lines.push("");
   }
 
-  if (projects.length) {
-    lines.push("## Projets");
+  if (explorer.length) {
+    lines.push("## Explorer");
     lines.push("");
-    for (const p of projects) {
-      lines.push(formatEntry("/projets", p));
+    for (const p of explorer) {
+      lines.push(formatEntry(p));
     }
     lines.push("");
   }

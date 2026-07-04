@@ -71,13 +71,13 @@ export default async function HomePage() {
     hasPart: [
       {
         "@type": "SiteNavigationElement",
-        name: "Projets",
-        url: "https://thelocomotionlab.com/projets",
+        name: "Comprendre",
+        url: "https://thelocomotionlab.com/comprendre",
       },
       {
         "@type": "SiteNavigationElement",
-        name: "Carnets",
-        url: "https://thelocomotionlab.com/articles",
+        name: "Explorer",
+        url: "https://thelocomotionlab.com/explorer",
       },
       {
         "@type": "SiteNavigationElement",
@@ -168,12 +168,13 @@ export default async function HomePage() {
       </div>
       */}
 
-      {/* FEED 1: ARTICLES */}
+      {/* FEED 1: ARTICLES — les items pointent vers /comprendre ou
+          /explorer selon leur type ; refonte « dernières parutions » en PR5 */}
       <FeedSection
         title="Derniers articles"
         icon={<BookOpen size={22} aria-hidden="true" className="text-brand-primary" />}
         items={recentArticles}
-        ctaHref="/articles"
+        ctaHref="/explorer"
         ctaLabel="Voir tout"
       />
 
@@ -188,7 +189,7 @@ export default async function HomePage() {
         icon={<FlaskConical size={22} aria-hidden="true" className="text-brand-primary" />}
         items={recentProjects}
         notesMap={projectNotesMap}
-        ctaHref="/projets"
+        ctaHref="/explorer"
         ctaLabel="Voir tout"
       />
 
