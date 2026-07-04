@@ -350,6 +350,6 @@ Trace complète (170 km 9 800 m D+/D-) disponible et téléchargeable [ici](#cr�
   title="Replay de la traversée de la Réunion 2025"
 />
 
-*Tracking actualisé tous les 90 s ou 100 m environ. Si la position tarde à s'actualiser, c'est que je suis dans une zone reculée et qu'il faut attendre que j'aie à nouveau des données cellulaires. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
+*Tracking actualisé tous les 90 s ou 100 m environ. Si la position tarde à s'actualiser, c'est que je suis dans une zone reculée et qu'il faut attendre que j'aie à nouveau des données cellulaires. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré. Direct v1 (2025) — smartphone + Traccar, conservé tel quel.*
 
 [Retour au sommaire](#sommaire)

@@ -120,7 +120,7 @@ Après environ 12h30 d'effort, nous revînmes à Vaugneray, notre lieu de dépar
   title="OFF Monts du Lyonnais 65 km"
 />
 
-*Replay du tracking OFF Monts du Lyonnais. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
+*Replay du tracking OFF Monts du Lyonnais. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré. Direct v1 (2026) — smartphone + Traccar, conservé tel quel.*
 
 [Retour au sommaire](#sommaire)
 
@@ -170,7 +170,7 @@ La fin de la trace se fera sans encombre, de nuit, avec une pointe de frustratio
   title="Replay OFF Traversée de la Chartreuse"
 />
 
-*Replay du tracking OFF Traversée de la Chartreuse. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
+*Replay du tracking OFF Traversée de la Chartreuse. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré. Direct v1 (2026) — smartphone + Traccar, conservé tel quel.*
 
 ### Se préparer par l'hormèse
 *30/04/2026*
@@ -292,7 +292,7 @@ Le récit complet de cette aventure est à retrouver [par ici](https://thelocomo
   title="Replay OFF Fontaine Rémuzat"
 />
 
-*Replay du tracking OFF Fontaine Rémuzat. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré.*
+*Replay du tracking OFF Fontaine Rémuzat. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré. Direct v1 (2026) — smartphone + Traccar, conservé tel quel.*
 
 ### Nouveau bloc d'entraînement
 *17/05/2026*
