@@ -7,6 +7,7 @@
 // dernières notes comme sur l'ancien index /projets.
 import Link from "next/link";
 import Image from "next/image";
+import LiveStatusBlock from "@/components/LiveStatusBlock";
 import { listArticleEntries, listProjetEntries } from "@/lib/contentRoutes.mjs";
 import { extractProjectNotes } from "@/lib/extractProjectNotes";
 
@@ -212,9 +213,9 @@ export default function ExplorerPage() {
         </p>
       </header>
 
-      {/* Emplacement réservé : bloc Live compact (badge EN DIRECT /
-          « Prochain départ ») — implémenté en PR3, même source d'état que
-          la page /live. */}
+      {/* Bloc Live compact : badge EN DIRECT / « Prochain départ »,
+          même source d'état que la page /live. */}
+      <LiveStatusBlock />
 
       {/* Grille fusionnée récits + projets */}
       <div className="grid gap-6 justify-center justify-items-center grid-cols-1 sm:grid-cols-2 lg:[grid-template-columns:repeat(3,22rem)]">
