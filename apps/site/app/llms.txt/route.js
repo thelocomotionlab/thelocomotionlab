@@ -68,13 +68,19 @@ function buildLlmsTxt() {
   lines.push("");
   lines.push(`- [Accueil](${SITE_URL}/)`);
   lines.push(
-    `- [Le Labo](${SITE_URL}/labo): présentation des thématiques et méthodes du Locomotion Lab`
+    `- [Manifeste](${SITE_URL}/manifeste): la quête du Lab — la robustesse physiologique`
   );
   lines.push(
     `- [Comprendre](${SITE_URL}/comprendre): la science — index des articles de fond`
   );
   lines.push(
     `- [Explorer](${SITE_URL}/explorer): le terrain — index des récits et projets`
+  );
+  lines.push(
+    `- [Outils](${SITE_URL}/outils): les instruments construits au Lab`
+  );
+  lines.push(
+    `- [Locomotion Twin](${SITE_URL}/outils/twin): prédiction de temps de course calibrée sur les données de l'athlète (en construction)`
   );
   lines.push(`- [À propos](${SITE_URL}/about): qui est derrière le site`);
   lines.push(

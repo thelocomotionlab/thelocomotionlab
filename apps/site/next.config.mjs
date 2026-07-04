@@ -119,6 +119,8 @@ export default function nextConfig(phase) {
         // Explorer. Générées au build depuis le frontmatter, par slug exact
         // (cf. lib/legacyRedirects.mjs).
         ...buildLegacyRedirects(),
+        // L'ancien hub /labo est remplacé par le Manifeste (PR2).
+        { source: "/labo", destination: "/manifeste", permanent: true },
         {
           source: "/live",
           destination:

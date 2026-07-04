@@ -31,8 +31,9 @@ export default async function sitemap() {
     { url: "", priority: 1.0, freq: "monthly" },
     { url: "/explorer", priority: 0.9, freq: "weekly" },
     { url: "/comprendre", priority: 0.9, freq: "weekly" },
-    // /labo devient une redirection vers /manifeste en PR2.
-    { url: "/labo", priority: 0.8, freq: "monthly" },
+    { url: "/manifeste", priority: 0.8, freq: "monthly" },
+    { url: "/outils/twin", priority: 0.7, freq: "monthly" },
+    { url: "/outils", priority: 0.6, freq: "monthly" },
     { url: "/about", priority: 0.7, freq: "monthly" },
     { url: "/soutenir", priority: 0.6, freq: "monthly" },
     { url: "/contact", priority: 0.5, freq: "yearly" },
