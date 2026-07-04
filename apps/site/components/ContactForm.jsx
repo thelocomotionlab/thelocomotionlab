@@ -1,10 +1,17 @@
 // components/ContactForm.jsx
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button, Field } from "@locomotionlab/ui";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Messages pré-remplis via /contact?sujet=… (le formulaire n'a pas de champ
+// sujet : on amorce le message, l'utilisateur reste libre de l'éditer).
+const SUBJECT_PRESETS = {
+  twin: "Bonjour, je souhaite rejoindre la cohorte de calibration du Locomotion Twin.",
+};
 
 function validate(formData) {
   const errors = {};
@@ -19,10 +26,26 @@ function validate(formData) {
 }
 
 export default function ContactForm() {
+  // useSearchParams exige une frontière Suspense pour rester compatible
+  // avec le pré-rendu statique ; le fallback est le formulaire vierge.
+  return (
+    <Suspense fallback={<ContactFormInner />}>
+      <ContactFormWithPreset />
+    </Suspense>
+  );
+}
+
+function ContactFormWithPreset() {
+  const searchParams = useSearchParams();
+  const preset = SUBJECT_PRESETS[searchParams.get("sujet")] ?? "";
+  return <ContactFormInner initialMessage={preset} />;
+}
+
+function ContactFormInner({ initialMessage = "" }) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    message: "",
+    message: initialMessage,
   });
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});

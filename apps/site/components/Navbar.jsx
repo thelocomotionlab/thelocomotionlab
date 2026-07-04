@@ -16,9 +16,9 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-// Menu « Outils » livré masqué en PR1 : activé en PR2 avec la page
-// /outils/twin (bascule = passer SHOW_OUTILS à true).
-const SHOW_OUTILS = false;
+// Menu « Outils » livré masqué en PR1, activé en PR2 avec la page
+// /outils/twin.
+const SHOW_OUTILS = true;
 
 const NAV_ITEMS = [
   { type: "link", href: "/comprendre", label: "Comprendre", Icon: BookOpen },
@@ -34,8 +34,8 @@ const NAV_ITEMS = [
     type: "menu",
     label: "Le Lab",
     Icon: FlaskConical,
-    // « Manifeste » est ajouté en tête de ce menu en PR2.
     items: [
+      { href: "/manifeste", label: "Manifeste" },
       { href: "/about", label: "À propos" },
       { href: "/soutenir", label: "Soutenir" },
       { href: "/contact", label: "Contact" },
@@ -69,8 +69,19 @@ function DesktopDropdown({ label, Icon, items, pathname }) {
         setOpen(false);
       }
     };
+    // Échap ferme le menu même si le focus est sorti du composant.
+    const onDocKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
+    };
     document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onDocKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onDocKeyDown);
+    };
   }, [open]);
 
   const focusItem = (delta) => {
