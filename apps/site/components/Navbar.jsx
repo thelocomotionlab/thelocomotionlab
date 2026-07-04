@@ -5,9 +5,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Activity,
   BookOpen,
   ChevronDown,
+  Compass,
   FlaskConical,
   Menu,
   Search,
@@ -22,7 +22,7 @@ const SHOW_OUTILS = false;
 
 const NAV_ITEMS = [
   { type: "link", href: "/comprendre", label: "Comprendre", Icon: BookOpen },
-  { type: "link", href: "/explorer", label: "Explorer", Icon: FlaskConical },
+  { type: "link", href: "/explorer", label: "Explorer", Icon: Compass },
   {
     type: "menu",
     label: "Outils",
@@ -33,7 +33,7 @@ const NAV_ITEMS = [
   {
     type: "menu",
     label: "Le Lab",
-    Icon: Activity,
+    Icon: FlaskConical,
     // « Manifeste » est ajouté en tête de ce menu en PR2.
     items: [
       { href: "/about", label: "À propos" },
