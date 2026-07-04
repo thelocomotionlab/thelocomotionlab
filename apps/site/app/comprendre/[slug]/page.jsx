@@ -41,8 +41,12 @@ function readArticle(slug) {
 }
 
 export async function generateStaticParams() {
+  // Les brouillons sont inclus et pré-rendus en 404 (readArticle les refuse) :
+  // sous @cloudflare/next-on-pages, une route [slug] sans AUCUN chemin
+  // pré-rendu serait traitée comme dynamique et exigerait le runtime edge.
+  // Ils deviennent de vraies pages dès published: true, sans autre changement.
   return listArticleEntries()
-    .filter((e) => e.kind === "article" && e.published)
+    .filter((e) => e.kind === "article")
     .map((e) => ({ slug: e.slug }));
 }
 
