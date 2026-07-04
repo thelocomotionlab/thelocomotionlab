@@ -1,4 +1,4 @@
-// app/projets/[slug]/ProjetBody.jsx
+// components/ProjetBody.jsx
 //
 // Server Component : tout le rendu markdown (titres, texte, légendes, split…)
 // est calculé au build. Les blocs vraiment interactifs (MapEmbed, LiveTracking,
@@ -15,29 +15,29 @@ import remarkGfm from "remark-gfm";
 import remarkDirective from "remark-directive";
 import remarkFrontmatter from "remark-frontmatter";
 import remarkMath from "remark-math";
-import remarkSplit from "../../../markdown/remarkSplit";
-import remarkImageOptions from "../../../markdown/remarkImageOptions";
-import remarkLiveTracking from "../../../markdown/remarkLiveTracking";
-import remarkPostLiveTracking from "../../../markdown/remarkPostLiveTracking";
-import remarkPlot from "../../../markdown/remarkPlot";
-import remarkCitations from "../../../markdown/remarkCitations";
+import remarkSplit from "@/markdown/remarkSplit";
+import remarkImageOptions from "@/markdown/remarkImageOptions";
+import remarkLiveTracking from "@/markdown/remarkLiveTracking";
+import remarkPostLiveTracking from "@/markdown/remarkPostLiveTracking";
+import remarkPlot from "@/markdown/remarkPlot";
+import remarkCitations from "@/markdown/remarkCitations";
 
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeRaw from "rehype-raw";
 import rehypeKatex from "rehype-katex";
 
-import { createCitation } from "../../../components/Citation";
-import CitationReferences from "../../../components/CitationReferences";
-import { getUsedCitations } from "../../../lib/getUsedCitations";
-import MapEmbed from "../../../components/MapEmbedLazy";
-import LiveTracking from "../../../components/LiveTrackingLazy";
-import PostLiveTracking from "../../../components/PostLiveTrackingLazy";
-import Plot from "../../../components/PlotLazy";
+import { createCitation } from "./Citation";
+import CitationReferences from "./CitationReferences";
+import { getUsedCitations } from "@/lib/getUsedCitations";
+import MapEmbed from "./MapEmbedLazy";
+import LiveTracking from "./LiveTrackingLazy";
+import PostLiveTracking from "./PostLiveTrackingLazy";
+import Plot from "./PlotLazy";
 
-import { extractToc } from "../../../lib/extractToc";
+import { extractToc } from "@/lib/extractToc";
 import ProjetClientFx from "./ProjetClientFx";
-import ArticleNav from "../../../components/ArticleNav";
+import ArticleNav from "./ArticleNav";
 
 export default function ProjetBody({
   project,
@@ -374,10 +374,10 @@ export default function ProjetBody({
 
         <div className="mt-12 text-center">
           <Link
-            href="/projets"
+            href="/explorer"
             className="inline-block bg-brand-accent text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-primary-dark transition"
           >
-            Retour aux projets
+            Retour à Explorer
           </Link>
         </div>
       </div>

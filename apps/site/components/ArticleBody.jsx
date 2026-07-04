@@ -1,9 +1,11 @@
-// app/articles/[slug]/ArticleBody.jsx
+// components/ArticleBody.jsx
 //
 // Server Component : tout le rendu markdown se fait au build.
 // → HTML complet présent dans la réponse SSR (crucial pour le SEO).
 // → react-markdown + remark/rehype plugins disparaissent du bundle client.
 // Seul le <Tooltip> autour des numéros de citation reste interactif côté client.
+// Utilisé par /comprendre/[slug] (articles) ET /explorer/[slug] (récits) :
+// le bouton de retour est piloté par les props backHref / backLabel.
 
 import Link from "next/link";
 import Image from "next/image";
@@ -12,23 +14,25 @@ import remarkGfm from "remark-gfm";
 import remarkFootnotes from "remark-footnotes";
 import remarkDirective from "remark-directive";
 import remarkMath from "remark-math";
-import remarkCitations from "../../../markdown/remarkCitations";
-import remarkSplit from "../../../markdown/remarkSplit";
-import remarkImageOptions from "../../../markdown/remarkImageOptions";
+import remarkCitations from "@/markdown/remarkCitations";
+import remarkSplit from "@/markdown/remarkSplit";
+import remarkImageOptions from "@/markdown/remarkImageOptions";
 
 import rehypeSlug from "rehype-slug";
 import rehypeRaw from "rehype-raw";
 import rehypeKatex from "rehype-katex";
 
-import { getUsedCitations } from "../../../lib/getUsedCitations";
-import { createCitation } from "../../../components/Citation";
-import CitationReferences from "../../../components/CitationReferences";
-import ArticleNav from "../../../components/ArticleNav";
+import { getUsedCitations } from "@/lib/getUsedCitations";
+import { createCitation } from "./Citation";
+import CitationReferences from "./CitationReferences";
+import ArticleNav from "./ArticleNav";
 
 export default function ArticleBody({
   article,
   initialContent,
   related = [],
+  backHref = "/comprendre",
+  backLabel = "Retour à Comprendre",
 }) {
   if (!article) return <p className="p-6">Article non trouvé</p>;
 
@@ -142,10 +146,10 @@ export default function ArticleBody({
 
         <div className="mt-12 text-center">
           <Link
-            href="/articles"
+            href={backHref}
             className="inline-block bg-brand-accent text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-primary-dark transition"
           >
-            Retour aux carnets
+            {backLabel}
           </Link>
         </div>
       </div>

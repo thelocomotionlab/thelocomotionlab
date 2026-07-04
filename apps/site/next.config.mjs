@@ -1,5 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { buildLegacyRedirects } from "./lib/legacyRedirects.mjs";
 
 // Ce fichier vit dans apps/site/ ; la racine du monorepo est deux niveaux au-dessus.
 const appDir = dirname(fileURLToPath(import.meta.url));
@@ -114,14 +115,16 @@ export default function nextConfig(phase) {
 
     async redirects() {
       return [
+        // Anciennes routes /articles/* et /projets/* → piliers Comprendre /
+        // Explorer. Générées au build depuis le frontmatter, par slug exact
+        // (cf. lib/legacyRedirects.mjs).
+        ...buildLegacyRedirects(),
         {
           source: "/live",
-          /* destination: 'https://www.thelocomotionlab.com/projets/traversee-reunion#la-travers%C3%A9e-de-la-r%C3%A9union-en-direct', */
           destination:
-            "https://www.thelocomotionlab.com/projets/saison-trail-2026#projet-off-fontaine-rémuzat",
-          // `permanent: false` effectue une redirection 307 (équivalent au 302).
-          // Passe-le à `true` (308/301) uniquement si cette URL `/live` pointera
-          // TOUJOURS vers cette page précise, même après ton retour de la Réunion.
+            "https://www.thelocomotionlab.com/explorer/saison-trail-2026#projet-off-fontaine-rémuzat",
+          // `permanent: false` (307) : cette redirection disparaît en PR3,
+          // quand /live devient une vraie page (hub live permanent).
           permanent: false,
         },
       ];

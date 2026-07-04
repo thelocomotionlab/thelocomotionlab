@@ -1,4 +1,4 @@
-// app/projets/[slug]/ProjetClientFx.jsx
+// components/ProjetClientFx.jsx
 //
 // Petit composant client isolé qui ne gère QUE les effets interactifs
 // liés au projet : surlignage depuis ?highlight=… et scroll fluide

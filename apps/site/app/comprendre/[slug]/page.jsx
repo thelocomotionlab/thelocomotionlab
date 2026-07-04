@@ -1,36 +1,30 @@
-// app/articles/[slug]/page.jsx
+// app/comprendre/[slug]/page.jsx
+//
+// Détail d'un article du pilier Comprendre : uniquement les contenus
+// `type: "article"` publiés de public/articles/ (les récits vivent sous
+// /explorer/[slug]). Les cartes teaser n'ont volontairement AUCUNE route.
 export const dynamicParams = false;
-import fs from "fs";
-import path from "path";
-import matter from "gray-matter";
+
 import { notFound } from "next/navigation";
 
-import ArticleBody from "./ArticleBody";
+import ArticleBody from "@/components/ArticleBody";
 import Breadcrumb from "@/components/Breadcrumb";
 import SearchHighlighter from "@/components/SearchHighlighter";
 import { getRelatedArticles } from "@/lib/getRelated";
+import { listArticleEntries, findComprendreEntry } from "@/lib/contentRoutes.mjs";
 
 const SITE_URL = "https://thelocomotionlab.com";
 
-function getArticleFilePath(slug) {
-  return path.join(process.cwd(), "public", "articles", `${slug}.md`);
-}
-
 /**
  * Lit un article à partir de son slug.
- * - retourne null si le fichier n'existe pas ou si published: false
- * - ne change pas le contenu fonctionnel, seulement la façon de le centraliser
+ * - retourne null si le fichier n'existe pas, n'est pas publié ou n'est
+ *   pas un `type: "article"` (les récits ont leur route sous /explorer)
  */
 function readArticle(slug) {
-  const filePath = getArticleFilePath(slug);
+  const entry = findComprendreEntry(slug);
+  if (!entry) return null;
 
-  if (!fs.existsSync(filePath)) return null;
-
-  const fileContent = fs.readFileSync(filePath, "utf8");
-  const { data, content } = matter(fileContent);
-
-  // Article explicitement non publié → ignoré / 404
-  if (data.published === false) return null;
+  const { data, content } = entry;
 
   const article = {
     slug,
@@ -45,24 +39,11 @@ function readArticle(slug) {
 
   return { article, content, frontmatter: data };
 }
+
 export async function generateStaticParams() {
-  const articlesDir = path.join(process.cwd(), "public", "articles");
-  if (!fs.existsSync(articlesDir)) return [];
-
-  const filenames = fs
-    .readdirSync(articlesDir)
-    .filter((fn) => fn.endsWith(".md"));
-
-  const params = filenames
-    .map((fn) => fn.replace(/\.md$/, ""))
-    .map((slug) => {
-      const data = readArticle(slug);
-      if (!data) return null; // non publié ou inexistant
-      return { slug };
-    })
-    .filter(Boolean);
-
-  return params;
+  return listArticleEntries()
+    .filter((e) => e.kind === "article" && e.published)
+    .map((e) => ({ slug: e.slug }));
 }
 
 /**
@@ -87,14 +68,14 @@ export async function generateMetadata({ params }) {
 
   const { article } = data;
 
-  const url = `${SITE_URL}/articles/${article.slug}`;
+  const url = `${SITE_URL}/comprendre/${article.slug}`;
   const ogImage = article.cover
     ? `${SITE_URL}${article.cover}`
     : `${SITE_URL}/images/assets/og-image.jpg`;
 
   const description =
     article.description ||
-    "Carnets du labo : récits, analyses scientifiques et expérimentations autour du mouvement, du minimalisme et de l’hormèse.";
+    "Comprendre : articles de fond sourcés et vulgarisés sur la robustesse physiologique — mouvement, minimalisme, hormèse.";
 
   return {
     title: article.title,
@@ -145,7 +126,7 @@ export default async function ArticlePage({ params }) {
       <Breadcrumb
         items={[
           { href: "/", label: "Accueil" },
-          { href: "/articles", label: "Carnets" },
+          { href: "/comprendre", label: "Comprendre" },
           { label: article.title },
         ]}
       />
@@ -153,6 +134,8 @@ export default async function ArticlePage({ params }) {
         article={article}
         initialContent={content}
         related={related}
+        backHref="/comprendre"
+        backLabel="Retour à Comprendre"
       />
       <SearchHighlighter targetSelector=".article-body" />
     </>
@@ -165,7 +148,7 @@ export default async function ArticlePage({ params }) {
  * et améliore la compréhension du contenu par les crawlers.
  */
 function buildArticleJsonLd(article) {
-  const url = `${SITE_URL}/articles/${article.slug}`;
+  const url = `${SITE_URL}/comprendre/${article.slug}`;
   const imageUrl = article.cover
     ? `${SITE_URL}${article.cover}`
     : `${SITE_URL}/images/assets/og-image.jpg`;
@@ -180,7 +163,7 @@ function buildArticleJsonLd(article) {
     headline: article.title,
     description:
       article.description ||
-      "Carnets du labo : récits, analyses scientifiques et expérimentations autour du mouvement, du minimalisme et de l'hormèse.",
+      "Comprendre : articles de fond sourcés et vulgarisés sur la robustesse physiologique — mouvement, minimalisme, hormèse.",
     image: [imageUrl],
     ...(datePublished ? { datePublished, dateModified: datePublished } : {}),
     author: {
