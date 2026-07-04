@@ -9,7 +9,7 @@ type: "recit"
 published: true
 ---
 
-Cette aventure était une occasion d'éprouver mes capacités d'adaptation en autonomie complète sur très longue distance et en milieu tropical. Après quasiment deux mois de préparation (documentés [ici](https://thelocomotionlab.com/projets/traversee-reunion)) et avec quelques semaines de recul maintenant, elle a surtout été l'occasion d'observer ma manière d'interagir avec un objectif. Explorative, intense, parfois dévorante, mais toujours nourrissante. Le projet n'est finalement que partiellement abouti certes, mais de nombreux enseignements en découlent, et cette tranche de vie incroyable mérite tout de même son récit. Belle lecture.
+Cette aventure était une occasion d'éprouver mes capacités d'adaptation en autonomie complète sur très longue distance et en milieu tropical. Après quasiment deux mois de préparation (documentés [ici](https://thelocomotionlab.com/explorer/traversee-reunion)) et avec quelques semaines de recul maintenant, elle a surtout été l'occasion d'observer ma manière d'interagir avec un objectif. Explorative, intense, parfois dévorante, mais toujours nourrissante. Le projet n'est finalement que partiellement abouti certes, mais de nombreux enseignements en découlent, et cette tranche de vie incroyable mérite tout de même son récit. Belle lecture.
 
 ## Premier acte : joie et symbiose
 

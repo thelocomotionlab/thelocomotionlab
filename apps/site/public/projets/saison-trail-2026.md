@@ -73,7 +73,7 @@ Dans le détail, l'évolution de mes séances en côtes a ressemblé à ceci :
 - Semaine 5 (décharge) : 3x(5min rapide, 3min récup)
 - Semaine 6 : 3x(10min rapide, 5min30 récup)
 
-À noter que toutes les séances de fractionné sont précédées d'au moins 15 - 20 min d'échauffement en endurance douce. La logique du calcul de fraction rapide/récup est basée sur celle décrite dans l'excellent [Ultra-trail](https://www.fnac.com/a16953651/Guillaume-Millet-ULTRA-TRAIL-nouvelle-edition) de Guillaume Millet, illustre inventeur, entre autres, du concept de la chasse d'eau (voir [ici](https://thelocomotionlab.com/projets/traversee-reunion#incarner-le-concept-de-la-chasse-deau)). Cette logique respecte l'équation suivante, si $R$ est la fraction rapide en minutes, et $r$ la fraction de récup : $$ r = R/2 + 30 \text{s}$$. 
+À noter que toutes les séances de fractionné sont précédées d'au moins 15 - 20 min d'échauffement en endurance douce. La logique du calcul de fraction rapide/récup est basée sur celle décrite dans l'excellent [Ultra-trail](https://www.fnac.com/a16953651/Guillaume-Millet-ULTRA-TRAIL-nouvelle-edition) de Guillaume Millet, illustre inventeur, entre autres, du concept de la chasse d'eau (voir [ici](https://thelocomotionlab.com/explorer/traversee-reunion#incarner-le-concept-de-la-chasse-deau)). Cette logique respecte l'équation suivante, si $R$ est la fraction rapide en minutes, et $r$ la fraction de récup : $$ r = R/2 + 30 \text{s}$$. 
 
 
 ### Premier maratrail
@@ -267,7 +267,7 @@ pour un total de 4,3 kg. En ajoutant à cela les liquides, de 9,7 kg. Cela repr�
 ### Projet OFF Fontaine-Rémuzat
 *02/05/2026*
 
-Le récit complet de cette aventure est à retrouver [par ici](https://thelocomotionlab.com/articles/immersion-primale-entre-vercors-et-drome).
+Le récit complet de cette aventure est à retrouver [par ici](https://thelocomotionlab.com/explorer/immersion-primale-entre-vercors-et-drome).
 <!-- <livetracking
   apiBase="https://tracking.thelocomotionlab.com"
   positionsEndpoint="/live-positions.json"
@@ -305,7 +305,7 @@ Depuis le début de l'année, mes objectifs étaient flous, et cela s'est propag
 
 *Volume hebdomadaire de course à pied depuis début 2026.*
 
-Ainsi, fort de cette aventure entre Vercors et Drôme (dont tu trouveras le récit [ici](https://thelocomotionlab.com/articles/immersion-primale-entre-vercors-et-drome)), et après une petite semaine de coupure au cours de laquelle j'ai pu festoyer mes 31 ans autour d'un bivouac entre amis, j'ai décidé de repartir à l'entraînement. Dans une optique cette fois plus structurée, pour continuer de me développer en tant qu'athlète, et tenter de repousser plus loin que je ne l'ai encore fait les curseurs de ma robustesse phjysiologique. Je m'explique.
+Ainsi, fort de cette aventure entre Vercors et Drôme (dont tu trouveras le récit [ici](https://thelocomotionlab.com/explorer/immersion-primale-entre-vercors-et-drome)), et après une petite semaine de coupure au cours de laquelle j'ai pu festoyer mes 31 ans autour d'un bivouac entre amis, j'ai décidé de repartir à l'entraînement. Dans une optique cette fois plus structurée, pour continuer de me développer en tant qu'athlète, et tenter de repousser plus loin que je ne l'ai encore fait les curseurs de ma robustesse phjysiologique. Je m'explique.
 
 Pour ce nouveau bloc, du fait de ma neuro-atypie, et de ma difficulté à agir si les choses ne sont pas préalablement balisées de manière à abaisser la barrière dopaminergique inhérente à une tâche, j'ai décidé de bâtir un plan d'entraînement sur 5 mois, jusqu'à fin septembre pour le Nice by UTMB. Un programme semaine par semaine, exigeant, avec beaucoup de variabilité dans les séances pour rajouter du jeu et minimiser la lassitude. Mais aussi un programme qui inclue plusieurs Week-End choc (WEC). Parmi eux, une aventure commence à mijoter dans mon esprit, et pourrait s'annoncer incroyable : le tour des Écrins en Autonomie sur 3 ou 4 jours. 194 km 11 000 D+, truc de fou. Ce projet, à l'état d'idée pour l'instant, s'inscritait dans la lignée de ma récente traversée du Vercors, qui ne m'a visiblement pas rassasié. Ainsi, pour rompre la monotonie, mes semaines seront constituées de séances de côtes longues ou courtes, de descentes longues ou courtes, de footing à jeûn, d'entraînements bi-quotidiens, de sorties longues en montagne, de sorties lestées, de bivouacs, et bien sûr de mouvement primal et de grimpe d'arbre. De quoi passer du bon temps dehors et affûter corps et esprit pour étendre toujours plus mes capacités d'exploration. 
 
