@@ -1,7 +1,7 @@
-# Plan PR1 — Service `live-journal` + simulateur (chantier 2, à valider)
+# Plan PR1 — Service `live-journal` + simulateur (chantier 2, VALIDÉ)
 
-> **Statut : PLAN — aucune ligne de code écrite.** Point d'arrêt n°1 du protocole
-> (`docs/live-brief.md` §0.2) : validation de Valentin requise avant implémentation.
+> **Statut : VALIDÉ par Valentin le 2026-07-07** (réponses aux 6 questions du §12 —
+> décisions consignées au §13, qui PRÉVAUT sur le corps du plan en cas d'écart).
 > Base de travail : branche courante (= chantier 1 + brief + design commités).
 > Les faits cités (formats, conventions, infra) ont été vérifiés dans le code du repo.
 
@@ -392,3 +392,37 @@ Les 4 réponses (200 / 400 / 429 / 502) donnent au front PR2 ses états envoi / 
 5. **J-index/heure calculés côté front** depuis `liveConfig` (service agnostique, ts UTC purs,
    §2.4) — OK ?
 6. **Album multi-photos = une entrée par photo** (caption sur la première) — OK ?
+
+## 13. Validation de Valentin (2026-07-07) — décisions actées
+
+Réponses aux 6 questions du §12 (elles PRÉVALENT sur le corps du plan) :
+
+1. **Branche** : la branche de session (`claude/live-brief-docs-ur6fhf`), le nom importe peu.
+   **Exigence non négociable** : basée sur la branche de refonte
+   (`claude/thelocomotionlab-reorganization-zbte6u`), PAS sur `main` — base confirmée avant
+   le code (HEAD = sommet de la refonte `e6a79f5` + commits du chantier 2).
+2. **Domaine** : **NON à `live.thelocomotionlab.com` pour le service** — ce sous-domaine est
+   réservé au public. Le service vit sur **`api.thelocomotionlab.com`, préfixe `/journal/`**
+   (`infra/caddy/conf.d/api.caddy` — les futurs services s'ajouteront sous le même domaine).
+   Bonus acté : **redirection 301 `live.thelocomotionlab.com` → `thelocomotionlab.com/live`**
+   (`infra/caddy/conf.d/live-redirect.caddy`).
+3. **Fastify : OUI** (MIT, versions épinglées, dépendances au strict minimum). **Architecture
+   imposée** : le service Node ne fait QUE l'API (webhook, POST /message, traitement médias) ;
+   `journal.json`, `/media/*` et les futures images OG sont écrits sur le volume et servis
+   **directement par Caddy** (Range, cache, compression). Si le service tombe, la page continue
+   de se servir.
+4. **Vitest : OUI** — devient **le standard de test JS/TS du monorepo**. Épinglé.
+5. **J-index côté front : OUI** — fuseau **FORCÉ Europe/Paris** via `Intl` (jamais celui du
+   visiteur), **frontière de jour à minuit heure française**, fonction **pure testée
+   unitairement** (minuit, changement de jour), réutilisée à l'identique pour le live et
+   l'archive. (Implémentation : PR2.)
+6. **Album : OUI, une entrée par photo** — la légende **reste sur la photo qui la porte**
+   (pas de report sur la première), **aucune logique de regroupement** (robustesse en signal
+   faible > élégance). `media_group_id` stocké dans l'entrée sans être exploité.
+
+Textes validés dès maintenant pour la **PR2** (§11.1 — trous du design comblés) :
+
+- Module message, envoi : « **Envoi…** »
+- Module message, confirmation : « **Remis. Il le lira ce soir au bivouac.** »
+- Module message, erreur : « **Le message n'est pas parti — réessaie dans un instant.** »
+- Fraîcheur, premier signal : « **En attente du premier signal — le départ est imminent.** »

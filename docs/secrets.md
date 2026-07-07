@@ -10,6 +10,9 @@
 | --- | --- | --- | --- |
 | `TRACCAR_API_TOKEN` | Reverse-proxy du VPS (`tracking.thelocomotionlab.com`, route `/api/public/`) — **nginx** aujourd'hui, **Caddy** à la bascule (`infra/caddy/conf.d/tracking.caddy`) | Bearer token de l'API Traccar, injecté dans l'en-tête `Authorization` pour exposer l'API publique sans login. Référencé dans `apps/site/notes_pratiques.txt`. | Secret du **VPS** : aujourd'hui dans la conf nginx (`envsubst`), demain dans **`infra/.env`** (non versionné) lu par Caddy via `{$TRACCAR_API_TOKEN}`. |
 | `CF_API_TOKEN` | **Caddy** sur le VPS (`infra/`), pour l'**ACME DNS-01** Cloudflare (émission/renouvellement des certificats Let's Encrypt) | Token API Cloudflare **scopé** : `Zone:DNS:Edit` + `Zone:Zone:Read` sur la zone `thelocomotionlab.com`. **Jamais** la clé globale. | **`infra/.env`** (non versionné). Création du token : [`docs/cloudflare-vps.md`](./cloudflare-vps.md) §1. |
+| `TELEGRAM_BOT_TOKEN` | `services/live-journal` (webhook du journal, envoi des messages privés, script `set-webhook.sh`) | Token du bot Telegram du journal de bord, créé via **BotFather**. Donne le contrôle TOTAL du bot : à régénérer chez BotFather (`/revoke`) au moindre doute. | **`infra/.env`** (non versionné). |
+| `TELEGRAM_WEBHOOK_SECRET` | `services/live-journal` (vérification de l'en-tête `X-Telegram-Bot-Api-Secret-Token`) | Secret d'authentification du webhook — seule preuve que l'appel vient bien de Telegram. À inventer : `openssl rand -hex 32`. | **`infra/.env`** (non versionné), déclaré à Telegram par `services/live-journal/scripts/set-webhook.sh`. |
+| `VALENTIN_CHAT_ID` | `services/live-journal` (filtre « seul Valentin alimente le journal » + destinataire des messages privés) | `chat_id` Telegram personnel de Valentin (le bot `@userinfobot` le donne). Pas un secret cryptographique, mais on le traite comme tel : il désigne la boîte de réception privée. | **`infra/.env`** (non versionné). |
 
 ### Pas de secret côté app web
 
