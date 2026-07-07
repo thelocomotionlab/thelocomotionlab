@@ -28,7 +28,13 @@ développer chaque app sans casser les autres, tout en gardant une identité vis
 ```
 thelocomotionlab/
 ├─ apps/
-│  ├─ site/                  # site actuel, migré tel quel (Next + JS), reste sur CF Pages
+│  ├─ site/                  # site public (Next + JS, App Router), CF Pages
+│  │  ├─ app/                     # IA refonte 2026 : comprendre (la science, type "article"),
+│  │  │                           #   explorer (le terrain : récits + projets fusionnés),
+│  │  │                           #   manifeste, outils/twin (teaser), live (hub direct),
+│  │  │                           #   about, contact, soutenir, recherche ; /articles /projets
+│  │  │                           #   /labo → 301 (générées au build, lib/legacyRedirects.mjs)
+│  │  └─ lib/contentRoutes.mjs    # source unique slug/type→pilier + collision de slugs
 │  └─ twin/                  # Locomotion Twin (Next + TS) — app indépendante
 │     └─ app/
 │        ├─ page.tsx              # dépôt archive d'entraînement + champs course cible
@@ -39,13 +45,16 @@ thelocomotionlab/
 │           ├─ checkout/route.ts      # crée la session Stripe
 │           └─ webhook/route.ts       # reçoit Stripe → demande un job au moteur
 ├─ packages/
-│  └─ ui/                    # LA charte partagée (tokens + preset + composants)
-│     ├─ tailwind-preset.js       # couleurs, typo, radius, spacing
-│     ├─ globals.css              # variables CSS (@theme tokens)
-│     ├─ fonts.ts                 # Ubuntu + Lora (next/font)
-│     └─ components/              # Button, Card, PageShell, Prose…
+│  ├─ ui/                    # LA charte partagée (tokens + preset + composants)
+│  │  └─ src/
+│  │     ├─ tailwind-preset.js    # preset (plugin typography)
+│  │     ├─ styles/theme.css      # tokens @theme (couleurs, typo, ombres)
+│  │     ├─ fonts.ts              # Ubuntu + Lora (next/font)
+│  │     └─ components/           # Button, Field, PageShell
+│  └─ tracking/              # live-tracking partagé (carte, replay, useTrackingData)
 ├─ services/                # services backend conteneurisés (Docker → GHCR → VPS)
 │  ├─ tracking-cache/       # back live-tracking (Node/TS)
+│  ├─ email-gateway/        # Worker CF : formulaires site → Listmonk (double opt-in)
 │  └─ twin-engine/          # moteur Locomotion Twin (Python/FastAPI + TeXLive)
 │     ├─ src/twin_engine/        # ingest (multi-format → canonique), course, twin,
 │     │                          #   calibration, predict, sufficiency, pacing,
@@ -54,7 +63,8 @@ thelocomotionlab/
 │     ├─ examples/nice-100m.json # carnet de route de référence (golden test)
 │     ├─ Dockerfile              # Python + TeXLive (contexte de build = racine)
 │     └─ compose.local.yml       # lancement local pour tester l'API
-├─ infra/                    # docker-compose VPS, reverse-proxy, scripts de déploiement
+├─ infra/                    # docker-compose VPS (Caddy, tracking-cache, twin-engine,
+│                            #   Listmonk+Postgres = liste email auto-hébergée), déploiement
 ├─ docs/                     # plans, ADR (décisions d'archi), runbooks
 ├─ pnpm-workspace.yaml
 └─ turbo.json
