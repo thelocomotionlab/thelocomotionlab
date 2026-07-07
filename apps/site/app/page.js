@@ -5,31 +5,24 @@ import Image from "next/image";
 
 import FeedSection from "@/components/RecentActivity";
 import EmailCapture from "@/components/EmailCapture";
-import { getRecentArticles, getRecentProjects } from "@/lib/getRecentActivity";
+import LiveStatusBlock from "@/components/LiveStatusBlock";
+import { getRecentActivity } from "@/lib/getRecentActivity";
 import { extractProjectNotes } from "@/lib/extractProjectNotes";
 
-import {
-  Activity,
-  BookOpen,
-  FlaskConical,
-  HeartHandshake,
-  Menu,
-  X,
-  Search,
-} from "lucide-react";
+import { Activity, BookOpen, Gauge } from "lucide-react";
 
 
 export const metadata = {
   title: "The Locomotion Lab",
   description:
-    "Le Locomotion Lab est un laboratoire vivant d'exploration de la locomotion humaine, du trail primal à la grimpe d’arbres et à l’hormèse.",
+    "Comprendre le corps comme un scientifique, l'utiliser comme un animal : le Locomotion Lab explore la robustesse physiologique — science, terrain et instruments.",
   alternates: {
     canonical: "https://thelocomotionlab.com/",
   },
   openGraph: {
     title: "The Locomotion Lab",
     description:
-      "Espace d'exploration de la locomotion humaine, entre rigueur scientifique et expériences personnelles.",
+      "Comprendre le corps comme un scientifique, l'utiliser comme un animal : science, terrain et instruments de la robustesse physiologique.",
     url: "https://thelocomotionlab.com/",
     type: "website",
   },
@@ -37,7 +30,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "The Locomotion Lab",
     description:
-      "Espace d'exploration de la locomotion humaine, entre rigueur scientifique et expériences personnelles.",
+      "Comprendre le corps comme un scientifique, l'utiliser comme un animal : science, terrain et instruments de la robustesse physiologique.",
   },
 };
 
@@ -87,10 +80,13 @@ export default async function HomePage() {
     ],
   };
 
-  const recentArticles = getRecentArticles({ limit: 6 });
-  const recentProjects = getRecentProjects({ limit: 6 });
+  // Dernières parutions : feed mixte récits + articles + projets, tri métier
+  // (date de publication pour les carnets, activité/complétion pour les projets).
+  const recentItems = getRecentActivity({ limit: 6 });
   const projectNotesMap = Object.fromEntries(
-    recentProjects.map((p) => [p.slug, extractProjectNotes(p.slug)])
+    recentItems
+      .filter((item) => item.type === "Projet")
+      .map((p) => [p.slug, extractProjectNotes(p.slug)])
   );
 
   return (
@@ -101,7 +97,7 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* HERO */}
+      {/* HERO — la formule du Lab en titre, CTA vers le Manifeste */}
       <section
         className="
           relative
@@ -130,15 +126,24 @@ export default async function HomePage() {
 
         <div className="relative z-10 px-4 sm:px-6 max-w-xl sm:max-w-2xl md:max-w-4xl mx-auto">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white drop-shadow-xl font-heading leading-tight">
-            Explorer la locomotion humaine primordiale
+            Comprendre le corps comme un scientifique.
+            <br className="hidden sm:block" /> L&rsquo;utiliser comme un
+            animal.
           </h1>
 
+          {/* [Brief texte n°1 — 25-35 mots : une phrase sur la quête
+              (robustesse physiologique) + ce qu'on trouve ici.] */}
           <p className="mt-4 text-base sm:text-lg text-white/90 leading-relaxed">
             <span className="sm:hidden">
-              Carnets, projets, expérimentations
+              [PROVISOIRE — texte n°1] La science, le terrain et les
+              instruments de la robustesse physiologique.
             </span>
             <span className="hidden sm:inline">
-              Carnets, projets et expérimentations autour du mouvement, de l’ultra-endurance et de l’hormèse
+              [PROVISOIRE — texte n°1] Le Locomotion Lab explore ce qui rend
+              un corps robuste — capable d&rsquo;encaisser, de s&rsquo;adapter
+              et de durer. Ici : la science qui l&rsquo;explique, le terrain
+              qui la met à l&rsquo;épreuve, et les instruments pour s&rsquo;y
+              frotter.
             </span>
           </p>
 
@@ -147,33 +152,23 @@ export default async function HomePage() {
               href="/manifeste"
               className="inline-block bg-brand-accent text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-primary-dark transition"
             >
-              Entrer dans le labo
+              Lire le manifeste
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ENCART TEMPORAIRE LIVE 
-      <div className="bg-brand-primary text-white text-center py-3 px-4 flex items-center justify-center gap-3">
-        <span className="pulse-fast w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" />
-        <p className="text-sm sm:text-base font-medium">
-          Traversée du Vercors en direct –{" "}
-          <Link
-            href="https://www.thelocomotionlab.com/live"
-            className="underline underline-offset-2 font-semibold hover:opacity-80 transition"
-          >
-            Rejoindre le live
-          </Link>
-        </p>
+      {/* BLOC LIVE — EN DIRECT ou prochain départ (composant de la PR3) */}
+      <div className="mt-8 px-4 sm:px-6">
+        <LiveStatusBlock />
       </div>
-      */}
 
-      {/* FEED 1: ARTICLES — les items pointent vers /comprendre ou
-          /explorer selon leur type ; refonte « dernières parutions » en PR5 */}
+      {/* DERNIÈRES PARUTIONS — feed mixte récits + articles + projets */}
       <FeedSection
-        title="Derniers articles"
+        title="Dernières parutions"
         icon={<BookOpen size={22} aria-hidden="true" className="text-brand-primary" />}
-        items={recentArticles}
+        items={recentItems}
+        notesMap={projectNotesMap}
         ctaHref="/explorer"
         ctaLabel="Voir tout"
       />
@@ -183,22 +178,39 @@ export default async function HomePage() {
         <Separator />
       </div>
 
-      {/* FEED 2: PROJETS */}
-      <FeedSection
-        title="Derniers projets"
-        icon={<FlaskConical size={22} aria-hidden="true" className="text-brand-primary" />}
-        items={recentProjects}
-        notesMap={projectNotesMap}
-        ctaHref="/explorer"
-        ctaLabel="Voir tout"
-      />
+      {/* CARTE LOCOMOTION TWIN */}
+      <section className="py-10">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <article className="bg-white rounded-2xl shadow-card p-6 sm:p-8 text-center transform transition duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1">
+            <h2 className="flex items-center justify-center gap-2 text-2xl font-bold font-heading text-brand-deep mb-3">
+              <Gauge
+                size={24}
+                className="shrink-0 text-brand-primary"
+                aria-hidden="true"
+              />
+              <span>Locomotion Twin</span>
+            </h2>
+            <p className="text-gray-700 mb-6 max-w-xl mx-auto">
+              Une prédiction honnête de ton temps de course, calibrée sur tes
+              propres données d&rsquo;entraînement — le premier instrument du
+              Lab.
+            </p>
+            <Link
+              href="/outils/twin"
+              className="inline-block bg-brand-accent text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-primary-dark transition"
+            >
+              Découvrir le Twin
+            </Link>
+          </article>
+        </div>
+      </section>
 
       {/* Line */}
-      <div >
+      <div>
         <Separator />
       </div>
 
-      {/* LAB DESCRIPTION (no card) + CTA + newsletter just below (no separator between) */}
+      {/* LAB DESCRIPTION (no card) + CTA + capture email */}
       <section className="py-6 md:py-8">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
           <h3 className="flex items-center justify-center gap-2 text-2xl md:text-xl font-bold text-brand-primary">
@@ -207,18 +219,18 @@ export default async function HomePage() {
               className="shrink-0 text-brand-primary"
               aria-hidden="true"
             />
-            <span>Qu’est-ce que le Locomotion Lab&nbsp;?</span>
+            <span>Qu&rsquo;est-ce que le Locomotion Lab&nbsp;?</span>
           </h3>
 
 
           <p className="mt-3 text-base md:text-lg leading-relaxed text-gray-700">
-            Il s’agit d’un <strong>espace d’exploration</strong> de la locomotion humaine sous toutes ses formes.
+            Il s&rsquo;agit d&rsquo;un <strong>espace d&rsquo;exploration</strong> de la locomotion humaine sous toutes ses formes.
           </p>
           <p className="mt-3 text-base md:text-lg leading-relaxed text-gray-700">
-            Son but est d’explorer, décortiquer et analyser les facteurs et pratiques favorisant la <strong>robustesse physiologique</strong>.
+            Son but est d&rsquo;explorer, décortiquer et analyser les facteurs et pratiques favorisant la <strong>robustesse physiologique</strong>.
           </p>
           <p className="mt-3 text-base md:text-lg leading-relaxed text-gray-700">
-            <strong>Rigueur scientifique</strong> et expériences personnelles se mélangent pour proposer des contenus utiles et accessibles.          
+            <strong>Rigueur scientifique</strong> et expériences personnelles se mélangent pour proposer des contenus utiles et accessibles.
           </p>
 
 
@@ -227,22 +239,18 @@ export default async function HomePage() {
               href="/about"
               className="inline-flex items-center md:text-lg justify-center px-5 py-2 hover:underline text-brand-deep font-semibold"
             >
-
-{/*className="inline-flex items-center gap-1 text-sm font-medium text-brand-deep hover:underline"*/}
-
               En savoir plus →
             </Link>
           </div>
 
-          {/* ✅ No separator here */}
           <div className="mt-4">
             <h4 className="text-lg font-semibold text-brand-accent text-center mb-3">
               Recevoir les prochaines explorations
             </h4>
 
             <EmailCapture
-              title={null}         // ✅ only the title above
-              description={null}    // ✅ no extra text
+              title={null}
+              description={null}
               source="home"
               placeholder="Votre adresse e-mail"
               buttonLabel="M'inscrire"
