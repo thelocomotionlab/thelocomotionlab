@@ -1,0 +1,21 @@
+{
+  "positions": {
+    "paceKmh": 6,
+    "speed": 120,
+    "firstFixDelaySeconds": 20,
+    "gaps": [{ "atKm": 60, "durationSeconds": 120, "apparentMinutes": 90 }]
+  },
+  "journal": [
+    { "at": 5, "kind": "text", "text": "Départ du refuge dans le brouillard. Les jambes sont là." },
+    {
+      "at": 20,
+      "kind": "photo",
+      "fixture": "fixture-photo.jpg",
+      "caption": "Bascule au Col de l'Aup Martin, 2 761 m — le point culminant du tour."
+    },
+    { "at": 35, "kind": "voice", "fixture": "fixture-audio.ogg" },
+    { "at": 50, "kind": "edit", "target": 0, "text": "Départ du refuge — le brouillard se lève. Les jambes sont là." },
+    { "at": 65, "kind": "text", "text": "Ravito express au Lautaret, ça repart." },
+    { "at": 80, "kind": "delete", "target": 4 }
+  ]
+}

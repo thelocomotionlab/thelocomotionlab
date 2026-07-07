@@ -1,0 +1,23 @@
+{
+  "name": "@locomotionlab/live-journal",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Journal de bord du live : webhook Telegram (texte/photo/vocal), traitement médias (sharp + ffmpeg), journal.json + /media/* écrits sur un volume servi par Caddy, POST /message (visiteur → Telegram privé, zéro stockage), simulateur GPX + journal scripté.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "dev": "pnpm build && TELEGRAM_MODE=polling node dist/index.js",
+    "sim": "pnpm build && LIVE_JOURNAL_SIMULATION=1 node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "fastify": "5.10.0",
+    "sharp": "0.35.3"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.0",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  }
+}

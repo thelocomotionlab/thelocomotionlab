@@ -1,0 +1,23 @@
+{
+  "//": "Paramètres NON SECRETS du service live-journal, versionnés. Chaque clé est surchargeable par variable d'environnement (cf. src/config.ts). Les secrets (TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET, VALENTIN_CHAT_ID) ne vivent QUE dans l'environnement (infra/.env sur le VPS).",
+  "port": 3000,
+  "publicPrefix": "/journal",
+  "allowedOrigins": [
+    "https://thelocomotionlab.com",
+    "https://www.thelocomotionlab.com",
+    "http://localhost:3000"
+  ],
+  "message": {
+    "maxMessageLength": 1000,
+    "maxPrenomLength": 50,
+    "maxEmailLength": 254,
+    "ratePerMinute": 5,
+    "ratePerHour": 30
+  },
+  "media": {
+    "photoMaxWidth": 1600,
+    "photoQuality": 80,
+    "maxDownloadBytes": 20971520
+  },
+  "videoEnabled": false
+}
