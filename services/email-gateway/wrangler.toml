@@ -1,0 +1,24 @@
+# services/email-gateway — Worker Cloudflare de capture email.
+#
+# Reçoit les inscriptions des formulaires du site (POST /subscribe) et crée
+# le contact dans Listmonk (auto-hébergé sur le VPS) avec son attribut
+# `source` ; Listmonk envoie l'email de confirmation (double opt-in).
+#
+# Secrets (JAMAIS ici — `npx wrangler secret put <NOM>`) :
+#   LISTMONK_API_USER   — nom de l'utilisateur d'API créé dans Listmonk
+#   LISTMONK_API_TOKEN  — son token
+#
+# Dev local : `npx wrangler dev` (cf. README.md).
+
+name = "email-gateway"
+main = "src/index.ts"
+compatibility_date = "2026-06-01"
+
+[vars]
+# URL publique de l'instance Listmonk (pas un secret).
+LISTMONK_URL = "https://liste.thelocomotionlab.com"
+# ID numérique de la liste « Le Lab » dans Listmonk (pas un secret ;
+# visible dans l'UI Listmonk → Lists). À ajuster après création de la liste.
+LISTMONK_LIST_ID = "1"
+# Origines autorisées à appeler la passerelle (CORS), séparées par des virgules.
+ALLOWED_ORIGINS = "https://thelocomotionlab.com,https://www.thelocomotionlab.com,http://localhost:3000"
