@@ -650,3 +650,50 @@ mark.search-highlight {
     scroll-behavior: auto !important;
   }
 }
+/* ===========================
+   Live v2 (design live-v2) — animations de l'état « En cours ».
+   Neutralisées par le bloc prefers-reduced-motion ci-dessus.
+   =========================== */
+
+@keyframes ll-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes ll-pulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes ll-eq {
+  from {
+    transform: scaleY(0.35);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* Attribution maplibre discrète, aux couleurs de la charte (design 2a). */
+.live-map .maplibregl-ctrl-attrib {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  background: rgba(254, 251, 246, 0.7);
+}
+.live-map .maplibregl-ctrl-attrib a {
+  color: var(--color-brand-primary-dark);
+}

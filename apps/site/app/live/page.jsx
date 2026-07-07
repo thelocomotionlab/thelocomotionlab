@@ -61,20 +61,14 @@ const CROSS_LINKS = [
 
 export default function LivePage() {
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
-      <header className="max-w-3xl mx-auto text-center mb-10">
-        <h1 className="text-3xl font-bold font-heading mb-2 text-brand-primary">
-          Live
-        </h1>
-        <p className="text-lg text-gray-700">
-          <em>Le direct des aventures du Lab</em>
-        </p>
-      </header>
-
+    <div className="px-4 sm:px-6 py-12">
+      {/* L'en-tête de page vit dans LiveHub : l'état « En cours » (design
+          live-v2) apporte son propre header ; l'état « Prochain départ »
+          garde l'en-tête du chantier 1. */}
       <LiveHub />
 
       {/* Cross-links, dans les deux états */}
-      <section className="mt-14">
+      <section className="mt-14 max-w-4xl mx-auto">
         <h2 className="text-xl font-bold font-heading text-brand-deep text-center mb-6">
           À lire en attendant, pour aller plus loin
         </h2>
@@ -83,6 +77,9 @@ export default function LivePage() {
             <Link
               key={href}
               href={href}
+              // prefetch coupé : Next préchargerait les IMAGES des pages cibles
+              // (~1,5 Mo) — mortel pour le budget « premier chargement » du live.
+              prefetch={false}
               className="group bg-white rounded-2xl shadow-card p-5 hover:shadow-lg transition-shadow flex flex-col"
             >
               <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
@@ -97,7 +94,7 @@ export default function LivePage() {
       </section>
 
       {/* Phrase pack (texte n°9, fixe), discrète */}
-      <p className="mt-12 text-center text-sm text-gray-600 italic">
+      <p className="mt-12 max-w-4xl mx-auto text-center text-sm text-gray-600 italic">
         Ce dispositif de suivi est conçu et développé au Lab. Il vous ferait
         envie pour vos propres aventures ?{" "}
         <Link href="/contact" className="underline hover:text-brand-accent">

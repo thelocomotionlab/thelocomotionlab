@@ -1,0 +1,154 @@
+// components/live/MessageCard.jsx
+//
+// « Laisse un mot à Valentin » (design 2a, variante compacte 2d) : message
+// privé transmis directement au Telegram de Valentin par le service
+// live-journal — rien n'est public, rien n'est stocké. Quatre états, textes
+// VALIDÉS (PR1 §13) : repos / « Envoi… » / « Remis. Il le lira ce soir au
+// bivouac. » / « Le message n'est pas parti — réessaie dans un instant. »
+// Honeypot `website` : champ invisible pour un humain.
+
+"use client";
+
+import { useState } from "react";
+
+import { journalApiBase } from "@/lib/liveConfig";
+
+const CONFIRMATION = "Remis. Il le lira ce soir au bivouac.";
+const ERREUR = "Le message n'est pas parti — réessaie dans un instant.";
+
+export default function MessageCard() {
+  const [message, setMessage] = useState("");
+  const [prenom, setPrenom] = useState("");
+  const [email, setEmail] = useState("");
+  const [website, setWebsite] = useState(""); // honeypot
+  const [status, setStatus] = useState("idle"); // idle | sending | sent | error
+
+  async function submit(event) {
+    event.preventDefault();
+    if (status === "sending" || message.trim().length === 0) return;
+    setStatus("sending");
+    try {
+      const res = await fetch(`${journalApiBase}/journal/message`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: message.trim(),
+          prenom: prenom.trim(),
+          email: email.trim(),
+          website,
+        }),
+      });
+      const body = await res.json().catch(() => null);
+      if (res.ok && body?.ok) {
+        setStatus("sent");
+        setMessage("");
+      } else {
+        setStatus("error");
+      }
+    } catch {
+      setStatus("error");
+    }
+  }
+
+  const fieldClass =
+    "rounded-xl border border-brand-text/15 bg-brand-bg px-[13px] py-[11px] font-heading text-[13px] text-brand-text outline-none placeholder:text-brand-text/40";
+
+  return (
+    <section className="rounded-[18px] border border-brand-primary/30 bg-brand-primary/12 px-[18px] py-5 lg:px-5 lg:py-4">
+      <h2 className="m-0 font-heading text-base font-bold text-brand-text lg:text-[14.5px]">
+        Laisse un mot à Valentin
+      </h2>
+
+      {status === "sent" ? (
+        <p className="mt-3 font-heading text-sm font-bold text-brand-text" role="status">
+          {CONFIRMATION}
+        </p>
+      ) : (
+        <form onSubmit={submit}>
+          {/* 2a : formulaire complet (mobile et tablette) */}
+          <div className="lg:hidden">
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Ton message…"
+              maxLength={1000}
+              required
+              className={`mt-3 min-h-[84px] w-full resize-y ${fieldClass} text-sm`}
+            />
+            <div className="mt-2 flex gap-2">
+              <input
+                value={prenom}
+                onChange={(e) => setPrenom(e.target.value)}
+                placeholder="Prénom (facultatif)"
+                maxLength={50}
+                className={`min-w-0 flex-1 ${fieldClass}`}
+              />
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email (facultatif)"
+                type="email"
+                maxLength={254}
+                className={`min-w-0 flex-[1.2] ${fieldClass}`}
+              />
+            </div>
+            <p className="mt-1.5 font-heading text-[11px] text-brand-text/60">
+              Email : si tu veux une réponse après l&rsquo;aventure.
+            </p>
+            <button
+              type="submit"
+              disabled={status === "sending"}
+              className="mt-3 w-full cursor-pointer rounded-xl border-none bg-brand-deep px-4 py-[13px] font-heading text-sm font-bold text-brand-bg shadow-[0_6px_16px_rgba(182,115,82,0.3)] disabled:opacity-70"
+            >
+              {status === "sending" ? "Envoi…" : "Envoyer"}
+            </button>
+          </div>
+
+          {/* 2d : variante compacte (une ligne) — même état, même envoi */}
+          <div className="mt-2.5 hidden gap-2 lg:flex">
+            <input
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Ton message…"
+              maxLength={1000}
+              required
+              className={`min-w-0 flex-1 rounded-[11px] ${fieldClass}`}
+            />
+            <button
+              type="submit"
+              disabled={status === "sending"}
+              className="flex-none cursor-pointer rounded-[11px] border-none bg-brand-deep px-4 py-[11px] font-heading text-[13px] font-bold text-brand-bg disabled:opacity-70"
+            >
+              {status === "sending" ? "Envoi…" : "Envoyer"}
+            </button>
+          </div>
+
+          {/* Honeypot — hors écran, hors tabulation, ignoré des humains. */}
+          <input
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            className="absolute -left-[9999px] h-px w-px opacity-0"
+          />
+
+          {status === "error" && (
+            <p className="mt-2 font-heading text-xs font-medium text-brand-deep" role="status">
+              {ERREUR}
+            </p>
+          )}
+        </form>
+      )}
+
+      <p className="mt-[11px] flex items-start gap-[7px] font-heading text-[11px] leading-normal text-brand-text/65 lg:mt-2 lg:text-[10.5px]">
+        <svg width="12" height="14" viewBox="0 0 12 14" className="mt-px flex-none lg:hidden" aria-hidden="true">
+          <rect x="1" y="6" width="10" height="7" rx="2" fill="none" stroke="#6E9CA0" strokeWidth="1.3" />
+          <path d="M3.5 6 V4 a2.5 2.5 0 0 1 5 0 V6" fill="none" stroke="#6E9CA0" strokeWidth="1.3" />
+        </svg>
+        <span>Message privé — remis à Valentin le soir au bivouac. Rien n&rsquo;est publié.</span>
+      </p>
+    </section>
+  );
+}

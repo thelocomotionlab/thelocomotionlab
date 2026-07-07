@@ -1,0 +1,50 @@
+// lib/freshness.js
+//
+// L'indicateur de fraîcheur à DEUX RÉGIMES + le cas « premier signal » (brief §5).
+// Fonction pure : le composant FreshnessPill ne fait que l'habiller.
+// Ton : information de terrain — la zone blanche n'est JAMAIS une alerte.
+
+import { formatAgo } from "./liveTime";
+
+/**
+ * @param {object} p
+ * @param {boolean} p.running        live-timer.running
+ * @param {string|null} p.lastFixTime ISO de la dernière position (ou null)
+ * @param {number} p.nowMs           horloge injectée (testabilité)
+ * @param {number} p.zoneBlancheMinutes seuil (liveConfig, défaut 60)
+ * @returns {{regime: "premier-signal"|"normal"|"zone-blanche", ageMinutes: number|null, strong: string, rest: string}|null}
+ *          null si rien à afficher (pas de direct).
+ */
+export function freshnessState({ running, lastFixTime, nowMs, zoneBlancheMinutes }) {
+  if (!lastFixTime) {
+    if (!running) return null;
+    // Texte validé (PR1 §13) pour le trou du design.
+    return {
+      regime: "premier-signal",
+      ageMinutes: null,
+      strong: "En attente du premier signal",
+      rest: " — le départ est imminent.",
+    };
+  }
+
+  const parsed = Date.parse(lastFixTime);
+  if (!Number.isFinite(parsed)) return null;
+  const ageMinutes = Math.max(0, Math.floor((nowMs - parsed) / 60_000));
+
+  if (ageMinutes >= zoneBlancheMinutes) {
+    // Texte exact du design (2e) — seul « Zone blanche probable » est en gras.
+    return {
+      regime: "zone-blanche",
+      ageMinutes,
+      strong: "Zone blanche probable",
+      rest: ` — dernière position ${formatAgo(ageMinutes)}`,
+    };
+  }
+
+  return {
+    regime: "normal",
+    ageMinutes,
+    strong: "",
+    rest: `Dernière position ${formatAgo(ageMinutes)}`,
+  };
+}

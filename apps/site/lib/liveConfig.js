@@ -2,11 +2,40 @@
 //
 // Configuration de l'aventure courante du hub /live : LE seul endroit à
 // éditer quand une nouvelle aventure se prépare. Consommé par la page /live
-// (embed plein écran + bloc « prochain départ ») et par le bloc compact en
-// tête de /explorer.
+// (état « En cours » v2 + bloc « prochain départ ») et par le bloc compact
+// en tête de /explorer.
 
 export const liveConfig = {
-  // Affiché quand aucun direct n'est en cours.
+  // L'aventure (une aventure = un objet). `dateDebut` porte l'HEURE DE DÉPART
+  // réelle avec offset : c'est elle qui pilote le J-index du journal (frontière
+  // de jour à minuit heure française) et le cas « premier signal ».
+  aventure: {
+    slug: "tour-des-ecrins-2026",
+    nom: "Tour des Écrins en autonomie",
+    dateDebut: "2026-08-20T06:00:00+02:00", // À AFFINER : heure de départ réelle
+    dates: "20–24 août 2026",
+    distanceKm: 194,
+    deniveleM: 12000,
+  },
+
+  // Paramètres de l'état « En cours » (design live-v2).
+  live: {
+    positionsPollMs: 10000, // sonde live-positions.json
+    journalPollMs: 30000, // sonde journal.json
+    zoneBlancheMinutes: 60, // seuil du régime « zone blanche probable »
+    // Trace prévisionnelle (pointillés sous la trace vécue + profil altimétrique).
+    // Version LÉGÈRE précalculée : `pnpm -F site build:track public/tracks/<x>.gpx`.
+    // TEMPORAIRE : trace de travail — régénérer depuis le GPX définitif des Écrins.
+    referenceTrack: "/tracks/tour-des-ecrins_temp.track.json",
+    elevationMin: 700, // À REMPLACER : bornes altimétriques réelles du tour
+    elevationMax: 3200, // À REMPLACER
+    // Repères du profil altimétrique { nom, km } — Sarenne, Lautaret, Arsine,
+    // Aup Martin, Vauze/Muzelle… PLACEHOLDER PROPRE (vide) tant que Valentin
+    // n'a pas fourni la liste avec les kilométrages (brief §10.3).
+    waypoints: [],
+  },
+
+  // Affiché quand aucun direct n'est en cours (état chantier 1 — refonte en PR3).
   nextDeparture: {
     nom: "Tour des Écrins en autonomie",
     dates: "20–24 août 2026",
@@ -16,18 +45,22 @@ export const liveConfig = {
     shortLabel: "Écrins · 20 août",
   },
 
-  // Props de l'embed live (LiveTrackingLazy → LiveTrackingMap) quand le
-  // direct est actif. apiBase et les endpoints sont résolus par l'adaptateur
-  // (NEXT_PUBLIC_TRACKING_PROXY, puis domaine historique).
+  // Props de l'ancien embed (LiveTrackingLazy → LiveTrackingMap). Encore utilisé
+  // par LiveStatusBlock (title). L'état « En cours » v2 ne s'en sert plus.
   embed: {
     title: "Tour des Écrins en direct",
     totalDistanceKm: 194,
-    elevationMin: 700, // À REMPLACER : bornes altimétriques réelles du tour
-    elevationMax: 3200, // À REMPLACER
-    // À REMPLACER par la trace réelle (public/tracks/…) quand elle existera ;
-    // null = l'embed s'affiche sans trace de référence.
+    elevationMin: 700,
+    elevationMax: 3200,
     referenceGpx: null,
     pollIntervalMs: 10000,
     initialMapStyle: "osm",
   },
 };
+
+// Bases d'API, résolues au build (variables NEXT_PUBLIC_*). En dev avec le
+// simulateur du chantier 2, pointer LES DEUX sur http://localhost:3000.
+export const trackingApiBase =
+  process.env.NEXT_PUBLIC_TRACKING_PROXY || "https://tracking.thelocomotionlab.com";
+export const journalApiBase =
+  process.env.NEXT_PUBLIC_JOURNAL_API || "https://api.thelocomotionlab.com";
