@@ -5,7 +5,7 @@
 // marche en trois pas → statut de calibration honnête (valeurs factices
 // marquées À REMPLACER) → CTA cohorte → capture email.
 import Link from "next/link";
-import NewsletterSignup from "@/components/NewsletterSignup";
+import EmailCapture from "@/components/EmailCapture";
 
 export const metadata = {
   // [PROVISOIRE] Descriptions meta à affiner avec les textes définitifs (PR5).
@@ -107,14 +107,14 @@ export default function TwinTeaserPage() {
           </Link>
         </div>
 
-        {/* Capture email — composant actuel, source="twin" en PR4. */}
         <div className="mt-10 max-w-2xl mx-auto text-center">
           <h2 className="text-lg font-semibold text-brand-accent mb-3">
             Être prévenu·e au lancement
           </h2>
-          <NewsletterSignup
+          <EmailCapture
             title={null}
             description={null}
+            source="twin"
             placeholder="Votre adresse e-mail"
             buttonLabel="M'inscrire"
           />

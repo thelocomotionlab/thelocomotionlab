@@ -1,10 +1,22 @@
 // components/Footer.jsx
 import Link from "next/link";
+import EmailCapture from "./EmailCapture";
 
 export default function Footer() {
   return (
     <footer className="bg-brand-deep text-white mt-12">
       <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-10">
+        {/* Capture email de pied de page, visible sur tout le site. */}
+        <div className="bg-white rounded-2xl shadow-card px-4 py-5 sm:px-6 mb-8 max-w-2xl mx-auto">
+          <EmailCapture
+            title="Suivre le Lab"
+            description={null}
+            source="footer"
+            placeholder="Votre adresse e-mail"
+            buttonLabel="M'inscrire"
+          />
+        </div>
+
         <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
           <div className="text-center md:text-left">
             <p className="font-semibold tracking-wide">The Locomotion Lab</p>

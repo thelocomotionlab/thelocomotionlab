@@ -6,7 +6,7 @@
 // textes provisoires, briefs en commentaires — Valentin écrira la version
 // définitive (1 200 – 1 800 mots).
 import Link from "next/link";
-import NewsletterSignup from "@/components/NewsletterSignup";
+import EmailCapture from "@/components/EmailCapture";
 
 export const metadata = {
   // [PROVISOIRE] Descriptions meta à affiner avec les textes définitifs (PR5).
@@ -119,14 +119,14 @@ export default function ManifestePage() {
           </p>
         </div>
 
-        {/* Capture email — composant actuel, refactoré (source) en PR4. */}
         <div className="mt-10 max-w-2xl mx-auto text-center">
           <h2 className="text-lg font-semibold text-brand-accent mb-3">
             Recevoir les prochaines parutions
           </h2>
-          <NewsletterSignup
+          <EmailCapture
             title={null}
             description={null}
+            source="manifeste"
             placeholder="Votre adresse e-mail"
             buttonLabel="M'inscrire"
           />

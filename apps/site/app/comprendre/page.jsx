@@ -6,7 +6,7 @@
 // badge « En écriture », SANS lien — leur corps n'est jamais rendu.
 import Link from "next/link";
 import Image from "next/image";
-import NewsletterSignup from "@/components/NewsletterSignup";
+import EmailCapture from "@/components/EmailCapture";
 import { listArticleEntries } from "@/lib/contentRoutes.mjs";
 
 export const metadata = {
@@ -201,15 +201,14 @@ export default function ComprendrePage() {
         </p>
       )}
 
-      {/* Capture email — composant actuel, refactoré en EmailCapture
-          (source="comprendre") en PR4. */}
       <div className="mt-14 max-w-3xl mx-auto text-center">
         <h2 className="text-lg font-semibold text-brand-accent mb-3">
           Être prévenu·e des parutions
         </h2>
-        <NewsletterSignup
+        <EmailCapture
           title={null}
           description={null}
+          source="comprendre"
           placeholder="Votre adresse e-mail"
           buttonLabel="M'inscrire"
         />

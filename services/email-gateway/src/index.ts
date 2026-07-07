@@ -88,21 +88,27 @@ async function subscribeToListmonk(
   email: string,
   source: string
 ): Promise<"ok" | "exists" | "upstream_error"> {
-  const res = await fetch(`${env.LISTMONK_URL}/api/subscribers`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `token ${env.LISTMONK_API_USER}:${env.LISTMONK_API_TOKEN}`,
-    },
-    body: JSON.stringify({
-      email,
-      name: "",
-      status: "enabled",
-      lists: [Number(env.LISTMONK_LIST_ID)],
-      attribs: { source },
-      preconfirm_subscriptions: false,
-    }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${env.LISTMONK_URL}/api/subscribers`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `token ${env.LISTMONK_API_USER}:${env.LISTMONK_API_TOKEN}`,
+      },
+      body: JSON.stringify({
+        email,
+        name: "",
+        status: "enabled",
+        lists: [Number(env.LISTMONK_LIST_ID)],
+        attribs: { source },
+        preconfirm_subscriptions: false,
+      }),
+    });
+  } catch (err) {
+    console.error(`Listmonk injoignable: ${String(err)}`);
+    return "upstream_error";
+  }
 
   if (res.ok) return "ok";
 

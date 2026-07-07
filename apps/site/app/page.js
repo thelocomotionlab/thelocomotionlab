@@ -4,7 +4,7 @@ import Script from "next/script";
 import Image from "next/image";
 
 import FeedSection from "@/components/RecentActivity";
-import NewsletterSignup from "@/components/NewsletterSignup";
+import EmailCapture from "@/components/EmailCapture";
 import { getRecentArticles, getRecentProjects } from "@/lib/getRecentActivity";
 import { extractProjectNotes } from "@/lib/extractProjectNotes";
 
@@ -240,9 +240,10 @@ export default async function HomePage() {
               Recevoir les prochaines explorations
             </h4>
 
-            <NewsletterSignup
+            <EmailCapture
               title={null}         // ✅ only the title above
               description={null}    // ✅ no extra text
+              source="home"
               placeholder="Votre adresse e-mail"
               buttonLabel="M'inscrire"
             />

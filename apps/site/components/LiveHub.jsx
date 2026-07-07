@@ -9,7 +9,7 @@
 "use client";
 
 import LiveTracking from "./LiveTrackingLazy";
-import NewsletterSignup from "./NewsletterSignup";
+import EmailCapture from "./EmailCapture";
 import { useLiveTimer } from "@/lib/useLiveTimer";
 import { liveConfig } from "@/lib/liveConfig";
 
@@ -56,14 +56,14 @@ export default function LiveHub() {
         d&rsquo;envoi.
       </p>
 
-      {/* Capture email — composant actuel, source="live" en PR4. */}
       <div className="mt-8 max-w-2xl mx-auto">
         <h3 className="text-lg font-semibold text-brand-accent mb-3">
           Être prévenu·e du départ
         </h3>
-        <NewsletterSignup
+        <EmailCapture
           title={null}
           description={null}
+          source="live"
           placeholder="Votre adresse e-mail"
           buttonLabel="M'inscrire"
         />
