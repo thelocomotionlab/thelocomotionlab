@@ -1,0 +1,7 @@
+# live.thelocomotionlab.com est réservé au PUBLIC : redirection permanente vers la
+# page /live du site. (Le service du journal, lui, vit sur {$API_DOMAIN}/journal/ —
+# cf. api.caddy.) Nécessite un enregistrement DNS Cloudflare proxifié pour `live`.
+
+{$LIVE_DOMAIN} {
+	redir https://thelocomotionlab.com/live 301
+}

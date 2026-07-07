@@ -30,6 +30,10 @@ services:
       # service tracking-cache (volume partagé, lecture seule). Requis par
       # conf.d/tracking.caddy (root * /srv/live).
       - live_json:/srv/live:ro
+      # Journal de bord du live : Caddy sert journal.json + les médias produits
+      # par live-journal (lecture seule). Requis par conf.d/api.caddy
+      # (root * /srv/journal/public — seul le sous-arbre public/ est exposé).
+      - live_journal_data:/srv/journal:ro
       # Persiste certificats ACME + état (sinon re-émission à chaque redéploiement).
       - caddy_data:/data
       - caddy_config:/config
@@ -52,6 +56,33 @@ services:
     extra_hosts:
       # Joindre Traccar qui tourne sur l'HÔTE (127.0.0.1:8082), pas en conteneur.
       - "host.docker.internal:host-gateway"
+    networks:
+      - web
+
+  # Journal de bord du live (chantier 2) : reçoit le webhook Telegram (texte,
+  # photo, vocal, vidéo derrière drapeau), traite les médias (sharp + ffmpeg),
+  # écrit journal.json + media/ dans le volume `live_journal_data` que Caddy sert
+  # sur {$API_DOMAIN}/journal/* ; transmet les messages privés des visiteurs
+  # (POST /message → Telegram de Valentin, AUCUN stockage du contenu).
+  # Si le service tombe pendant l'aventure, la LECTURE reste servie par Caddy.
+  live-journal:
+    image: ${LIVE_JOURNAL_IMAGE:-ghcr.io/thelocomotionlab/live-journal:latest}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - DATA_DIR=/data
+    expose:
+      - "3000"
+    volumes:
+      - live_journal_data:/data
+    # Premier healthcheck applicatif de la stack (préfigure l'auto-surveillance
+    # de la PR5) : l'état est visible dans `docker compose ps`.
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/journal/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     networks:
       - web
 
@@ -147,6 +178,10 @@ volumes:
   caddy_config:
   # Fichiers live-*.json produits par tracking-cache et servis par Caddy (bascule).
   live_json:
+  # Journal de bord + médias de l'aventure en cours (public/) et état interne +
+  # sources originales (private/). PRÉCIEUX et irremplaçable pendant l'aventure :
+  # sauvegarde quotidienne requise (cf. README § Sauvegardes).
+  live_journal_data:
   # Données du moteur Twin : jobs.sqlite + sorties (PDF/figures). Archives brutes purgées.
   twin_engine_data:
   # Base Listmonk (liste email — données personnelles, à sauvegarder).

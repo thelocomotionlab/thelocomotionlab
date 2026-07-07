@@ -31,9 +31,13 @@ infra/
 └─ caddy/
    ├─ Dockerfile           # Caddy recompilé avec le plugin DNS Cloudflare (DNS-01)
    ├─ Caddyfile            # options globales (ACME DNS-01) + import de conf.d/*.caddy
-   └─ conf.d/              # UNE route par fichier
+   └─ conf.d/              # UNE route par fichier (un domaine = un fichier)
       ├─ template.caddy            # sous-domaine de test (ACTIF)
-      └─ tracking.caddy.disabled   # route Traccar (DRAFT, ignorée tant que « .disabled »)
+      ├─ tracking.caddy            # Traccar + live-*.json (ACTIF depuis la bascule)
+      ├─ liste.caddy               # Listmonk (liste email)
+      ├─ api.caddy                 # api.thelocomotionlab.com — /journal/* (live-journal)
+      ├─ live-redirect.caddy       # live.thelocomotionlab.com → 301 /live du site
+      └─ twin-engine.caddy.disabled # moteur Twin (DRAFT, ignoré tant que « .disabled »)
 ```
 
 > **Fichiers liés hors `infra/`** (ils ne *peuvent* pas vivre ici, par nature) :
@@ -87,7 +91,9 @@ Jamais dans le repo. `infra/.env` (git-ignoré) porte `CF_API_TOKEN` (DNS-01), `
 (`LISTMONK_DB_PASSWORD`, `LISTMONK_ADMIN_*`). Seul `infra/.env.example` (sans valeurs) est
 versionné. Voir [`docs/secrets.md`](../docs/secrets.md).
 
-## Sauvegardes (liste email)
+## Sauvegardes
+
+### Liste email (Listmonk)
 
 La base Listmonk (`listmonk_db`) contient la **liste email** — des données personnelles dont on est
 responsable et qu'on ne veut pas perdre. Sauvegarde simple (à lancer à la main après chaque campagne,
@@ -100,6 +106,35 @@ cd infra && docker compose exec -T listmonk-db pg_dump -U listmonk listmonk | gz
 
 Restauration : `gunzip -c fichier.sql.gz | docker compose exec -T listmonk-db psql -U listmonk listmonk`.
 Le snapshot OVH couvre aussi ce volume, mais un dump ciblé est plus simple à restaurer.
+
+### Journal du live (`live_journal_data`)
+
+Le volume `live_journal_data` porte le **journal de bord et les médias de l'aventure en cours**
+(y compris les sources originales dans `private/sources/`) : pendant l'aventure c'est un contenu
+**irremplaçable** — un vocal perdu est perdu pour toujours. Sauvegarde (quotidienne en cron
+**pendant l'aventure**, à la main pour le test 24 h ; le nom du volume est préfixé par le projet
+compose `locomotionlab`) :
+
+```bash
+docker run --rm -v locomotionlab_live_journal_data:/data:ro -v ~/backups:/out alpine \
+  tar czf /out/live-journal-$(date +%F).tar.gz -C /data .
+```
+
+Cron quotidien (à poser à J-1, à retirer au retour — cf. runbook du chantier 2, PR5) :
+
+```cron
+30 3 * * * docker run --rm -v locomotionlab_live_journal_data:/data:ro -v $HOME/backups:/out alpine tar czf /out/live-journal-$(date +\%F).tar.gz -C /data .
+```
+
+Restauration (service arrêté : `docker compose stop live-journal`) :
+
+```bash
+docker run --rm -v locomotionlab_live_journal_data:/data -v ~/backups:/in alpine \
+  sh -c "rm -rf /data/* && tar xzf /in/live-journal-YYYY-MM-DD.tar.gz -C /data"
+```
+
+Les messages privés des visiteurs ne sont **jamais** dans ce volume (aucun stockage, transmission
+directe vers Telegram) : la sauvegarde ne contient que le contenu publié par Valentin.
 
 ## Rollback express
 

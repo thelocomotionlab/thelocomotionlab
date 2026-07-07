@@ -1,0 +1,58 @@
+# Route API du VPS : {$API_DOMAIN} (api.thelocomotionlab.com) — UN préfixe par service.
+# Aujourd'hui : /journal/* → service live-journal (journal de bord du live, chantier 2).
+# Les futurs services s'ajoutent ICI avec leur propre préfixe (pas de nouveau fichier :
+# Caddy n'accepte qu'un bloc par adresse de site).
+#
+# Architecture voulue (validée au plan PR1) : Caddy sert DIRECTEMENT les fichiers
+# publics depuis le volume `live_journal_data` (montage /srv/journal:ro dans
+# infra/compose.yml) — Range, cache, compression. Le service Node ne reçoit que
+# l'API (webhook Telegram, message visiteur, healthcheck). Si le service tombe,
+# la LECTURE du journal et des médias reste en ligne.
+# Vérif config : `docker compose exec caddy caddy validate --config /etc/caddy/Caddyfile`.
+
+{$API_DOMAIN} {
+	encode zstd gzip
+
+	# === /journal — fichiers publics (volume, lecture seule stricte : GET only) ===
+	@journal_static_notget {
+		path /journal/journal.json /journal/media/*
+		not method GET
+	}
+	handle @journal_static_notget {
+		respond 403
+	}
+
+	# journal.json : cache court + CORS ouvert — même pattern que les live-*.json
+	# de tracking (le front sonde en polling avec cache-buster).
+	@journal_json path /journal/journal.json
+	handle @journal_json {
+		uri strip_prefix /journal
+		header Access-Control-Allow-Origin "*"
+		header Cache-Control "no-cache, no-store, must-revalidate"
+		root * /srv/journal/public
+		file_server
+	}
+
+	# Médias : noms non devinables et JAMAIS réécrits (une correction = un nouveau
+	# fichier) → cache long immuable. file_server gère les requêtes Range (audio iOS).
+	@journal_media path /journal/media/*
+	handle @journal_media {
+		uri strip_prefix /journal
+		header Access-Control-Allow-Origin "*"
+		header Cache-Control "public, max-age=31536000, immutable"
+		root * /srv/journal/public
+		file_server
+	}
+
+	# === /journal — API proxifiée vers le service ===
+	# Le CORS de /journal/message est géré PAR LE SERVICE (allowlist d'origines) ;
+	# le webhook est protégé par X-Telegram-Bot-Api-Secret-Token côté service.
+	@journal_api path /journal/telegram/webhook /journal/message /journal/healthz
+	handle @journal_api {
+		reverse_proxy live-journal:3000
+	}
+
+	handle {
+		respond 404
+	}
+}

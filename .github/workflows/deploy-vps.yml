@@ -10,6 +10,7 @@ on:
       - "apps/_template/**"
       - "services/tracking-cache/**"
       - "services/twin-engine/**"
+      - "services/live-journal/**"
       - "packages/ui/**"
       - "infra/**"
       - ".github/workflows/deploy-vps.yml"
@@ -37,6 +38,9 @@ jobs:
           # Moteur Locomotion Twin (Python/FastAPI + TeXLive).
           - image: twin-engine
             dockerfile: services/twin-engine/Dockerfile
+          # Journal de bord du live (webhook Telegram + médias + messages privés).
+          - image: live-journal
+            dockerfile: services/live-journal/Dockerfile
     steps:
       - uses: actions/checkout@v4
 
