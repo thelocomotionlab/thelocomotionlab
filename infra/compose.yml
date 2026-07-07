@@ -82,6 +82,62 @@ services:
     networks:
       - web
 
+  # Gestionnaire de liste email auto-hébergé (Listmonk) : contacts, double
+  # opt-in, campagnes, désinscription — LA liste vit ici, pas chez un
+  # prestataire. L'ENVOI est délégué à un relais SMTP (Brevo — configuré
+  # dans l'UI Listmonk, jamais dans le repo ; porte de sortie : Amazon SES,
+  # cf. docs/email-setup.md). Exposé par Caddy sur {$LISTE_DOMAIN}.
+  listmonk:
+    image: listmonk/listmonk:v6.2.0
+    restart: unless-stopped
+    # --install --idempotent : initialise le schéma au premier lancement
+    # seulement ; --upgrade : migre le schéma lors des montées de version.
+    command:
+      [
+        sh,
+        -c,
+        "./listmonk --install --idempotent --yes --config '' && ./listmonk --upgrade --yes --config '' && ./listmonk --config ''",
+      ]
+    environment:
+      - TZ=Europe/Paris
+      - LISTMONK_app__address=0.0.0.0:9000
+      - LISTMONK_db__host=listmonk-db
+      - LISTMONK_db__port=5432
+      - LISTMONK_db__user=listmonk
+      - LISTMONK_db__password=${LISTMONK_DB_PASSWORD}
+      - LISTMONK_db__database=listmonk
+      - LISTMONK_db__ssl_mode=disable
+      # Compte admin créé au premier --install (ensuite géré dans l'UI).
+      - LISTMONK_ADMIN_USER=${LISTMONK_ADMIN_USER}
+      - LISTMONK_ADMIN_PASSWORD=${LISTMONK_ADMIN_PASSWORD}
+    expose:
+      - "9000"
+    depends_on:
+      listmonk-db:
+        condition: service_healthy
+    networks:
+      - web
+
+  # Base PostgreSQL de Listmonk. INTERNE (aucun port hôte). Les contacts
+  # sont des données personnelles : sauvegarde requise (cf. infra/README.md
+  # § Sauvegardes).
+  listmonk-db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=listmonk
+      - POSTGRES_PASSWORD=${LISTMONK_DB_PASSWORD}
+      - POSTGRES_DB=listmonk
+    volumes:
+      - listmonk_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U listmonk"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    networks:
+      - web
+
 networks:
   web:
     driver: bridge
@@ -93,3 +149,5 @@ volumes:
   live_json:
   # Données du moteur Twin : jobs.sqlite + sorties (PDF/figures). Archives brutes purgées.
   twin_engine_data:
+  # Base Listmonk (liste email — données personnelles, à sauvegarder).
+  listmonk_db:

@@ -82,9 +82,24 @@ cp .env.example .env     # puis renseigner les valeurs (cf. docs/secrets.md / do
 
 ## Secrets
 
-Jamais dans le repo. `infra/.env` (git-ignoré) porte `CF_API_TOKEN` (DNS-01) et `TRACCAR_API_TOKEN`
-(injection Bearer Traccar, utile seulement à la bascule). Seul `infra/.env.example` (sans valeurs) est
+Jamais dans le repo. `infra/.env` (git-ignoré) porte `CF_API_TOKEN` (DNS-01), `TRACCAR_API_TOKEN`
+(injection Bearer Traccar, utile seulement à la bascule) et les identifiants Listmonk
+(`LISTMONK_DB_PASSWORD`, `LISTMONK_ADMIN_*`). Seul `infra/.env.example` (sans valeurs) est
 versionné. Voir [`docs/secrets.md`](../docs/secrets.md).
+
+## Sauvegardes (liste email)
+
+La base Listmonk (`listmonk_db`) contient la **liste email** — des données personnelles dont on est
+responsable et qu'on ne veut pas perdre. Sauvegarde simple (à lancer à la main après chaque campagne,
+ou en cron hebdomadaire sur le VPS) :
+
+```bash
+cd infra && docker compose exec -T listmonk-db pg_dump -U listmonk listmonk | gzip \
+  > ~/backups/listmonk-$(date +%F).sql.gz
+```
+
+Restauration : `gunzip -c fichier.sql.gz | docker compose exec -T listmonk-db psql -U listmonk listmonk`.
+Le snapshot OVH couvre aussi ce volume, mais un dump ciblé est plus simple à restaurer.
 
 ## Rollback express
 

@@ -1,0 +1,14 @@
+# Route Listmonk (gestionnaire de la liste email du Lab) — liste.thelocomotionlab.com.
+#
+# Sert à la fois :
+#   • les pages PUBLIQUES de Listmonk (confirmation double opt-in, désinscription,
+#     archives) sous /subscription/*, /link/*, etc. ;
+#   • l'ADMIN (/admin, protégé par le login Listmonk) ;
+#   • l'API (utilisée par services/email-gateway avec un token d'API dédié).
+#
+# Le conteneur `listmonk` n'est joignable que par Caddy, via le réseau interne `web`.
+# DNS : créer l'enregistrement liste.thelocomotionlab.com → VPS (cf. docs/email-setup.md).
+{$LISTE_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy listmonk:9000
+}
