@@ -22,6 +22,11 @@ export interface MediaConfig {
   maxDownloadBytes: number;
 }
 
+export interface OgConfig {
+  enabled: boolean;
+  intervalMinutes: number;
+}
+
 export interface SimulationConfig {
   enabled: boolean;
   gpxPath: string;
@@ -37,6 +42,11 @@ export interface Config {
   message: MessageConfig;
   media: MediaConfig;
   videoEnabled: boolean;
+  /** Cartes de partage (PR4). */
+  og: OgConfig;
+  /** Le site public (live-config.json, .track.json) et les artefacts tracking. */
+  siteBase: string;
+  trackingBase: string;
   telegram: {
     mode: TelegramMode;
     apiBase: string;
@@ -49,6 +59,9 @@ export interface Config {
 
 interface FileConfig {
   port?: number;
+  og?: Partial<OgConfig>;
+  siteBase?: string;
+  trackingBase?: string;
   publicPrefix?: string;
   allowedOrigins?: string[];
   message?: Partial<MessageConfig>;
@@ -135,6 +148,12 @@ export function loadConfig(): Config {
       maxDownloadBytes: envInt("MAX_DOWNLOAD_BYTES", file.media?.maxDownloadBytes ?? 20 * 1024 * 1024),
     },
     videoEnabled: envBool("VIDEO_ENABLED", file.videoEnabled ?? false),
+    og: {
+      enabled: envBool("OG_ENABLED", file.og?.enabled ?? true),
+      intervalMinutes: envInt("OG_INTERVAL_MINUTES", file.og?.intervalMinutes ?? 3),
+    },
+    siteBase: process.env.SITE_BASE || file.siteBase || "https://thelocomotionlab.com",
+    trackingBase: process.env.TRACKING_BASE || file.trackingBase || "https://tracking.thelocomotionlab.com",
     telegram: {
       mode,
       apiBase: process.env.TELEGRAM_API_BASE || "https://api.telegram.org",

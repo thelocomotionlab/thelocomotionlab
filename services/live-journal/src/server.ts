@@ -12,6 +12,11 @@ import type { Config } from "./config";
 import { counters as ingestCounters, handleUpdate, type IngestDeps } from "./journal/ingest";
 import type { JournalStore } from "./journal/store";
 import { createMessageModule, messageCounters } from "./message";
+import { IpRateLimiter } from "./ratelimit";
+import { storyCard } from "./og/cards";
+import { renderPng } from "./og/render";
+import type { OgDataSource } from "./og/data";
+import type { OgScheduler } from "./og/scheduler";
 import type { TelegramApi } from "./telegram/api";
 import type { TgUpdate } from "./telegram/types";
 
@@ -30,6 +35,8 @@ export interface ServerDeps {
   sim?: SimSnapshotProvider;
   /** Sert journal.json + médias depuis le volume (dev/simulation, pas de Caddy). */
   serveStatic?: boolean;
+  /** Cartes de partage (PR4) : source de données + planificateur de og.png. */
+  og?: { source: OgDataSource; scheduler: OgScheduler };
 }
 
 const MEDIA_TYPES: Record<string, string> = {
@@ -81,6 +88,38 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   app.options(`${prefix}/message`, (req, reply) => message.handleOptions(req, reply));
   app.post(`${prefix}/message`, (req, reply) => message.handlePost(req, reply));
 
+  // --- Story 1080×1920 à la demande (lien discret de /live, usage manuel) ---
+  if (deps.og) {
+    const og = deps.og;
+    // Garde-fou global : la rasterisation coûte ~1 s de CPU.
+    const storyLimiter = new IpRateLimiter(10, 100);
+    app.get(`${prefix}/story.png`, async (_req, reply) => {
+      if (!storyLimiter.allow("story")) {
+        reply.status(429).send({ ok: false, error: "trop_de_requetes" });
+        return;
+      }
+      const data = await og.source.collect();
+      const png = await renderPng(storyCard(data), 1080, 1920);
+      reply
+        .headers({ "Content-Type": "image/png", "Cache-Control": "no-store" })
+        .send(png);
+    });
+
+    // Dev/simulation : og.png est aussi servi ici (en prod, c'est Caddy).
+    if (deps.serveStatic) {
+      app.get(`${prefix}/og.png`, (_req, reply) => {
+        const filePath = path.join(store.publicDir, "og.png");
+        if (!fs.existsSync(filePath)) {
+          reply.status(404).send();
+          return;
+        }
+        reply
+          .headers({ "Content-Type": "image/png", "Cache-Control": "no-cache" })
+          .send(fs.readFileSync(filePath));
+      });
+    }
+  }
+
   // --- Healthcheck (compose + auto-surveillance PR5) ---
   app.get(`${prefix}/healthz`, async () => ({
     ok: true,
@@ -90,6 +129,9 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     videoEnabled: config.videoEnabled,
     entryCount: store.entryCount(),
     lastWriteAt: store.lastWriteAt,
+    og: deps.og
+      ? { lastGeneratedAt: deps.og.scheduler.lastGeneratedAt, variant: deps.og.scheduler.lastVariant }
+      : null,
     counters: { ingest: ingestCounters, message: messageCounters },
   }));
 

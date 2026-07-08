@@ -14,6 +14,8 @@ import { createTelegramApi, type TelegramApi } from "./telegram/api";
 import { startPolling } from "./telegram/polling";
 import { createSimTelegramApi, loadScenario, startScenario } from "./sim/journal";
 import { PositionsSimulator } from "./sim/positions";
+import { OgDataSource } from "./og/data";
+import { OgScheduler } from "./og/scheduler";
 
 async function main(): Promise<void> {
   const config = loadConfig();
@@ -49,12 +51,26 @@ async function main(): Promise<void> {
     cleanups.push(startScenario(scenario, ingest, chatId));
   }
 
+  // Cartes de partage : og.png régénérée périodiquement + story à la demande.
+  let og: { source: OgDataSource; scheduler: OgScheduler } | undefined;
+  if (config.og.enabled) {
+    const source = new OgDataSource({
+      siteBase: config.siteBase,
+      trackingBase: config.trackingBase,
+      sim,
+    });
+    const scheduler = new OgScheduler(source, store.publicDir, config.og.intervalMinutes * 60_000);
+    cleanups.push(scheduler.start());
+    og = { source, scheduler };
+  }
+
   const app = buildServer({
     config,
     store,
     telegram,
     ingest,
     sim,
+    og,
     // Pas de Caddy en local : le service sert lui-même journal.json + médias
     // hors production (simulation ou polling dev).
     serveStatic: config.simulation.enabled || config.telegram.mode === "polling",

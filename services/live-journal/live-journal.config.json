@@ -19,5 +19,11 @@
     "photoQuality": 80,
     "maxDownloadBytes": 20971520
   },
-  "videoEnabled": false
+  "videoEnabled": false,
+  "og": {
+    "enabled": true,
+    "intervalMinutes": 3
+  },
+  "siteBase": "https://thelocomotionlab.com",
+  "trackingBase": "https://tracking.thelocomotionlab.com"
 }
