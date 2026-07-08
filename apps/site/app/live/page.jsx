@@ -8,6 +8,13 @@
 import Link from "next/link";
 
 import LiveHub from "@/components/LiveHub";
+import { journalApiBase } from "@/lib/liveConfig";
+
+// Carte de partage dynamique (chantier 2, PR4) : URL stable régénérée côté VPS
+// (≤ 3 min), cache-buster PAR BUILD — chaque déploiement force les scrapers à
+// re-crawler ; entre deux, l'URL stable sert une image fraîche à tout nouveau
+// partage (limite du site 100 % statique, plan PR4 §2).
+const OG_IMAGE = `${journalApiBase}/journal/og.png?v=${Date.now()}`;
 
 export const metadata = {
   // [PROVISOIRE] Descriptions meta à affiner avec les textes définitifs (PR5).
@@ -25,7 +32,9 @@ export const metadata = {
     type: "website",
     images: [
       {
-        url: "https://thelocomotionlab.com/images/assets/og-image.jpg",
+        url: OG_IMAGE,
+        width: 1200,
+        height: 630,
       },
     ],
     locale: "fr_FR",
@@ -35,7 +44,7 @@ export const metadata = {
     title: "Live – The Locomotion Lab",
     description:
       "Suivi en direct des aventures du Locomotion Lab — ou le prochain départ.",
-    images: ["https://thelocomotionlab.com/images/assets/og-image.jpg"],
+    images: [OG_IMAGE],
   },
 };
 

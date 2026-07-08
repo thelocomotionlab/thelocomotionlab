@@ -44,10 +44,21 @@
 		file_server
 	}
 
+	# Carte de partage og.png (PR4) : URL STABLE régénérée par le service toutes
+	# les ~3 min sur le volume → cache court (les scrapers re-crawlent librement).
+	@journal_og path /journal/og.png
+	handle @journal_og {
+		uri strip_prefix /journal
+		header Cache-Control "no-cache"
+		root * /srv/journal/public
+		file_server
+	}
+
 	# === /journal — API proxifiée vers le service ===
 	# Le CORS de /journal/message est géré PAR LE SERVICE (allowlist d'origines) ;
-	# le webhook est protégé par X-Telegram-Bot-Api-Secret-Token côté service.
-	@journal_api path /journal/telegram/webhook /journal/message /journal/healthz
+	# le webhook est protégé par X-Telegram-Bot-Api-Secret-Token côté service ;
+	# story.png est générée à la demande (garde-fou de débit côté service).
+	@journal_api path /journal/telegram/webhook /journal/message /journal/healthz /journal/story.png
 	handle @journal_api {
 		reverse_proxy live-journal:3000
 	}

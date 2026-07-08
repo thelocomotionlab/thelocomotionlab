@@ -11,7 +11,7 @@
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 
-import { liveConfig } from "@/lib/liveConfig";
+import { journalApiBase, liveConfig } from "@/lib/liveConfig";
 import { freshnessState } from "@/lib/freshness";
 import { dayIndex } from "@/lib/liveTime";
 import { useJournal } from "@/lib/useJournal";
@@ -116,6 +116,18 @@ export default function LiveEnCours({ timer }) {
           <div className="order-5">
             <MessageCard />
           </div>
+
+          {/* Story de partage (PR4) — lien discret, usage manuel Instagram. */}
+          <p className="order-6 text-right">
+            <a
+              href={`${journalApiBase}/journal/story.png`}
+              target="_blank"
+              rel="noreferrer"
+              className="font-heading text-[11px] text-brand-text/45 underline-offset-2 hover:underline"
+            >
+              Télécharger la story
+            </a>
+          </p>
         </div>
       </div>
     </div>
