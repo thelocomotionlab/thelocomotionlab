@@ -9,7 +9,8 @@
     "dev": "pnpm build && TELEGRAM_MODE=polling node dist/index.js",
     "sim": "pnpm build && LIVE_JOURNAL_SIMULATION=1 node dist/index.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "export-archive": "node dist/export/cli.js"
   },
   "dependencies": {
     "fastify": "5.10.0",

@@ -58,14 +58,22 @@
   },
 
   // Journal de bord horodaté (chantier 2 : alimenté depuis Telegram).
-  // VIDE aujourd'hui. Chaque entrée a un type et un contenu.
+  // Chaque entrée a un type et un contenu. Depuis la PR3 du chantier 2,
+  // des champs OPTIONNELS ADDITIFS enrichissent l'entrée (un lecteur v1
+  // les ignore sans casser — schemaVersion reste 1) et le littéral "video"
+  // est admis (drapeau vidéo du chantier 2).
   "journal": [
     // {
     //   "time": "2026-08-21T11:42:00.000+00:00",
-    //   "type": "texte" | "photo" | "audio",
+    //   "type": "texte" | "photo" | "audio" | "video",
     //   "texte": "Col franchi, gros vent.",   // pour type "texte" (ou légende)
-    //   "media": "journal/img-0012.webp"      // chemin relatif à l'archive,
-    //                                         // pour "photo" / "audio"
+    //   "media": "journal/img-0012.webp",     // chemin relatif à l'archive,
+    //                                         // pour "photo" / "audio" / "video"
+    //   // — champs optionnels additifs (PR3) —
+    //   "id": "01J5ZK…",                      // id stable du journal vivant (ULID)
+    //   "duree": 102,                         // s — audio/vidéo (lecteur « une prise »)
+    //   "largeur": 1600, "hauteur": 1200,     // px — photo/vidéo
+    //   "edite": true                         // l'entrée a été corrigée du terrain
     // }
   ],
 
@@ -99,10 +107,17 @@ Le composant `Replay` de `packages/tracking` sait lire les deux
 schéma `archive.json` s'applique aux aventures à venir, à commencer par le
 Tour des Écrins 2026.
 
-## Producteur / consommateurs pressentis (chantier 2)
+## Producteur / consommateurs (chantier 2, PR3)
 
-- **Producteur** : `services/tracking-cache`, en fin d'aventure (gel du
-  live → écriture de l'archive), enrichi par le bot Telegram (journal) et
-  le mur (chat).
-- **Consommateurs** : la page `/live` (bascule direct → archive), les pages
-  projets (replays enrichis), d'éventuels exports.
+- **Producteur** : la commande **`export-archive`** de `services/live-journal`
+  (`pnpm -F @locomotionlab/live-journal export-archive -- --positions … --journal …`),
+  en fin d'aventure. Elle lit les artefacts officiels vivants
+  (`live-positions.json` de tracking-cache — profil complet déjà filtré/corrigé —
+  et `journal.json` + médias du live-journal), assemble l'archive, **valide le
+  contrat avant d'écrire** (une archive non conforme n'est jamais produite) et
+  copie les médias sous `journal/`. `chat` reste vide par construction : les
+  messages privés n'entrent JAMAIS dans l'archive publique.
+- **Consommateurs** : la page `/live`, état « Terminé » (rendu depuis l'archive
+  SEULE, l'infra vivante peut être éteinte), les pages projets (replays
+  enrichis), d'éventuels exports.
+- **Emplacement** : `apps/site/public/replays/<slug>/archive.json` + `journal/`.
