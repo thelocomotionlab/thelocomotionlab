@@ -4,7 +4,8 @@
 > La méthode scientifique (VC, exposant d'endurance, durabilité, Minetti, pacing) est dans
 > [`docs/twin-theory.md`](./twin-theory.md) — ce document-ci ne couvre que **l'usage**.
 >
-> Dernière mise à jour : ingestion multi-marques (Coros/Garmin `.fit`, Polar JSON, Strava bulk).
+> Dernière mise à jour (2026-07-08) : mode backtest `--until`, outils de registre,
+> lecture des deux bandes (intervalles conformes par défaut depuis le 2026-07-03).
 
 ## 1. À quoi ça sert
 
@@ -81,9 +82,14 @@ Le `preview` imprime un JSON (verdict, prédiction, jumeau, parcours) + un résu
 > `--race` par défaut : `examples/nice-100m.json` (course de référence). Pour une autre course, copie
 > ce fichier et adapte les champs (voir §6).
 
+**Mode backtest (`--until`, `preview` et `full`)** : `--until 2026-05-30` écarte toutes les
+activités postérieures (et non datées) — le moteur « remonte le temps » à la veille d'une course
+passée pour comparer sa prédiction au temps réel. C'est l'outil du registre de couverture (§7).
+
 ## 4. Utilisation via l'API (HTTP)
 
-L'API FastAPI est **interne** en prod (jointe par l'app `twin`). En local, on l'expose pour tester :
+L'API FastAPI est **interne** en prod (l'app `twin` qui la consommera n'existe pas encore —
+seul le teaser statique `/outils/twin` du site est en ligne). En local, on l'expose pour tester :
 
 ```bash
 docker compose -f services/twin-engine/compose.local.yml up --build
@@ -96,7 +102,7 @@ Endpoints :
 | Méthode & route | Rôle |
 |---|---|
 | `GET /health` | sonde de vie |
-| `POST /preview` | archive + GPX + spec de course → verdict + fourchette (synchrone, sans PDF) |
+| `POST /preview` | archive + GPX + spec de course → verdict + fourchette (synchrone, sans PDF). ⚠️ côté HTTP le champ `race` est **requis** (contrairement au CLI où `--race` est optionnel) |
 | `POST /jobs` | lance une analyse **complète** en tâche de fond → renvoie un `job_id` |
 | `GET /jobs/{id}` | état du job + résultat (quand prêt) |
 | `GET /jobs/{id}/report` | télécharge le **PDF** du rapport |
@@ -135,7 +141,20 @@ horaires réels. Tous les champs sont **optionnels** — ne mets que ce que tu v
 
 La **trace GPX du parcours** est fournie à part (`--course`) et n'est pas committée.
 
-## 7. Développement & tests
+## 7. Lire la fourchette : les deux bandes
+
+Depuis juillet 2026, les intervalles sont **conformes normalisés** par défaut (calibrés sur les
+erreurs de validation croisée de l'athlète) et le rapport affiche **deux bandes, deux usages** :
+
+- **Fourchette de course (25–75 %)** — la bande de PILOTAGE : c'est dans cette fenêtre qu'on
+  construit le pacing et qu'on juge « en avance / en retard » pendant la course.
+- **Bornes de sécurité (80 %)** — la bande LOGISTIQUE : barrières horaires, assistance,
+  récupération — « il est très improbable d'arriver hors de ça ».
+
+Si la dispersion est grande (> 0,35), le rapport ajoute une table de scénarios
+rapide / central / prudent. Ne jamais présenter la borne de sécurité comme un objectif.
+
+## 8. Développement & tests
 
 ```bash
 pytest services/twin-engine                 # suite complète
@@ -151,7 +170,20 @@ TWIN_NICE_ARCHIVE=/chemin/archive.zip TWIN_NICE_GPX=/chemin/parcours.gpx \
 Les fixtures d'ingestion (Garmin/Polar/Strava, anonymisées) sont committées dans
 `services/twin-engine/tests/fixtures/` et tournent en CI sans données réelles.
 
-## 8. Déploiement (rappel)
+**Outils d'évaluation** (depuis `services/twin-engine`) :
+
+```bash
+PYTHONPATH=src python -m tools.ab_montagnhard      # A/B σ/MAE/interp/extrap — preuve obligatoire avant merge
+PYTHONPATH=src python -m tools.backtest <manifest> # walk-forward --until : prédiction veille de course vs réel
+PYTHONPATH=src python -m tools.registre [--json]   # couverture des intervalles, biais, score de Winkler
+```
+
+Le registre vit dans `docs/twin-registre-couverture.md` (avec sa règle de décision
+pré-enregistrée : pas de recalibration avant 8–10 cas frais). **Tout changement du moteur suit le
+protocole de CLAUDE.md** : golden intact, comportement derrière flag, preuve A/B collée dans
+`services/twin-engine/DIAGNOSTIC.md` (le carnet de labo).
+
+## 9. Déploiement (rappel)
 
 L'infra est **du code** (`infra/`). Le service `twin-engine` est déjà décrit dans `infra/compose.yml`
 (interne, volume `twin_engine_data`, route Caddy publique en *draft* désactivée). L'image se
