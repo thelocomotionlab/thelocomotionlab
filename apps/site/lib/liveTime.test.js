@@ -7,6 +7,8 @@ import {
   dayIndex,
   formatAgo,
   formatClockDuration,
+  formatDateArrivee,
+  formatDureeHeures,
   formatElapsed,
   formatEntryTag,
   parisTimeLabel,
@@ -70,5 +72,17 @@ describe("durées et anciennetés", () => {
     expect(formatAgo(59)).toBe("il y a 59 min");
     expect(formatAgo(60)).toBe("il y a 1 h");
     expect(formatAgo(245)).toBe("il y a 4 h");
+  });
+});
+
+describe("bandeau Terminé (PR3)", () => {
+  it("date d'arrivée en heure de Paris : « 24 août 2026, 07 h 41 »", () => {
+    // 05:41 UTC en été = 07:41 à Paris.
+    expect(formatDateArrivee("2026-08-24T05:41:00Z")).toBe("24 août 2026, 07 h 41");
+  });
+
+  it("durée totale en heures cumulées : « 97 h 41 »", () => {
+    expect(formatDureeHeures(97 * 3600 + 41 * 60)).toBe("97 h 41");
+    expect(formatDureeHeures(3 * 3600 + 5 * 60)).toBe("3 h 05");
   });
 });

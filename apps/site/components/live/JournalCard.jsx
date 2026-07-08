@@ -30,18 +30,33 @@ function kindLabel(entry) {
   return null;
 }
 
-export default function JournalCard({ entries, dateDebut }) {
+export default function JournalCard({
+  entries,
+  dateDebut,
+  // Surcharges du mode archive (état Terminé) : médias servis par le site
+  // lui-même, titre « Journal complet », compteur « 23 entrées · J1 → J4 »,
+  // pied de carte (bouton « Dérouler »), pas de plafond de hauteur.
+  mediaBase = journalApiBase,
+  title = "Journal de bord",
+  counterLabel = null,
+  footer = null,
+  scrollable = true,
+}) {
   const visible = (entries ?? []).filter((e) => KNOWN_TYPES.has(e.type));
   const newestFirst = [...visible].reverse();
 
   return (
-    <section className="rounded-[18px] border border-brand-text/10 bg-white px-[18px] pb-2 pt-[18px] shadow-[0_6px_20px_rgba(51,51,51,0.06)] lg:max-h-[430px] lg:overflow-y-auto lg:px-5 lg:shadow-none">
+    <section
+      className={`rounded-[18px] border border-brand-text/10 bg-white px-[18px] pb-2 pt-[18px] shadow-[0_6px_20px_rgba(51,51,51,0.06)] lg:px-5 lg:shadow-none ${
+        scrollable ? "lg:max-h-[430px] lg:overflow-y-auto" : ""
+      }`}
+    >
       <div className="mb-4 flex items-center justify-between">
         <p className="font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-brand-deep-dark">
-          Journal de bord
+          {title}
         </p>
         <p className="font-heading text-[11px] text-brand-text/55">
-          {visible.length} entrée{visible.length > 1 ? "s" : ""}
+          {counterLabel ?? `${visible.length} entrée${visible.length > 1 ? "s" : ""}`}
         </p>
       </div>
 
@@ -83,7 +98,7 @@ export default function JournalCard({ entries, dateDebut }) {
                service (WebP ≤ 1600 px, EXIF retiré) + lazy-load natif. */
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={`${journalApiBase}${entry.media.url}`}
+              src={`${mediaBase}${entry.media.url}`}
               alt={entry.text || "Photo du terrain"}
               loading="lazy"
               decoding="async"
@@ -100,7 +115,7 @@ export default function JournalCard({ entries, dateDebut }) {
 
           {entry.type === "audio" && entry.media?.url && (
             <AudioPlayer
-              src={`${journalApiBase}${entry.media.url}`}
+              src={`${mediaBase}${entry.media.url}`}
               duration={entry.media.duration}
               seedId={entry.id}
             />
@@ -108,7 +123,7 @@ export default function JournalCard({ entries, dateDebut }) {
 
           {entry.type === "video" && entry.media?.url && (
             <VideoPlayer
-              src={`${journalApiBase}${entry.media.url}`}
+              src={`${mediaBase}${entry.media.url}`}
               width={entry.media.width}
               height={entry.media.height}
             />
@@ -123,6 +138,8 @@ export default function JournalCard({ entries, dateDebut }) {
           ) : null}
         </article>
       ))}
+
+      {footer}
     </section>
   );
 }

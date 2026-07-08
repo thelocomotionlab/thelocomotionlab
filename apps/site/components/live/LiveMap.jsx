@@ -107,20 +107,27 @@ function pushData(map, data) {
   map.getSource("done")?.setData(lineFeature(data.done));
 }
 
-function runnerElement() {
+// Marqueur des trois modes du design : halo pulsant + cœur.
+// live = #EFB159/#B67352 · depart (Avant) = #8CB9BD · arrivee (Terminé) = #6E9CA0.
+const MARKER_COLORS = {
+  live: { halo: "#EFB159", core: "#B67352" },
+  depart: { halo: "#8CB9BD", core: "#8CB9BD" },
+  arrivee: { halo: "#6E9CA0", core: "#6E9CA0" },
+};
+
+function runnerElement(mode) {
+  const colors = MARKER_COLORS[mode] ?? MARKER_COLORS.live;
   const el = document.createElement("div");
   el.style.cssText = "position:relative;width:18px;height:18px;";
   const halo = document.createElement("div");
-  halo.style.cssText =
-    "position:absolute;inset:0;border-radius:50%;background:#EFB159;animation:ll-pulse 2.4s ease-out infinite;";
+  halo.style.cssText = `position:absolute;inset:0;border-radius:50%;background:${colors.halo};animation:ll-pulse 2.4s ease-out infinite;`;
   const core = document.createElement("div");
-  core.style.cssText =
-    "position:absolute;inset:3px;border-radius:50%;background:#B67352;box-shadow:0 0 0 3px #FEFBF6,0 4px 12px rgba(0,0,0,0.35);";
+  core.style.cssText = `position:absolute;inset:3px;border-radius:50%;background:${colors.core};box-shadow:0 0 0 3px #FEFBF6,0 4px 12px rgba(0,0,0,0.35);`;
   el.append(halo, core);
   return el;
 }
 
-export default function LiveMap({ referenceCoords, doneCoords, mapStyle }) {
+export default function LiveMap({ referenceCoords, doneCoords, mapStyle, markerMode = "live" }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
@@ -192,21 +199,29 @@ export default function LiveMap({ referenceCoords, doneCoords, mapStyle }) {
         fittedRef.current = "done";
         map.fitBounds(boundsOf(done), { padding: 34, duration: 0 });
       }
-      const last = done.length > 0 ? done[done.length - 1] : null;
-      if (last) {
+      // Position du marqueur selon le mode : le coureur (dernier point vécu),
+      // le DÉPART (premier point de l'itinéraire, état Avant) ou l'ARRIVÉE
+      // (dernier point vécu, état Terminé).
+      const anchor =
+        markerMode === "depart"
+          ? (reference[0] ?? null)
+          : done.length > 0
+            ? done[done.length - 1]
+            : null;
+      if (anchor) {
         if (!markerRef.current) {
-          markerRef.current = new maplibregl.Marker({ element: runnerElement() })
-            .setLngLat(last)
+          markerRef.current = new maplibregl.Marker({ element: runnerElement(markerMode) })
+            .setLngLat(anchor)
             .addTo(map);
         } else {
-          markerRef.current.setLngLat(last);
+          markerRef.current.setLngLat(anchor);
         }
       }
     };
 
     if (map.isStyleLoaded()) apply();
     else map.once("load", apply);
-  }, [data]);
+  }, [data, markerMode]);
 
   // Style INLINE impératif : la CSS de maplibre pose `.maplibregl-map
   // { position: relative }` qui, selon l'ordre des feuilles, écrase la classe

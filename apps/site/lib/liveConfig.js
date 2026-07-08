@@ -16,6 +16,16 @@ export const liveConfig = {
     dates: "20–24 août 2026",
     distanceKm: 194,
     deniveleM: 12000,
+    // [PREMIER JET — à réécrire par Valentin] Intention de l'état « Avant »,
+    // en Lora italique (texte issu du design 2b).
+    intention:
+      "Une boucle intégrale autour du massif, seul et sans assistance, sur le fil du GR54. Le direct s'ouvrira ici au premier pas.",
+    // Bascule des trois états (plan PR3 §2) : "avant" | "termine".
+    // L'état « En cours » reste déclenché par le terrain (live-timer.running).
+    // Surchargeable au build : NEXT_PUBLIC_LIVE_STATUT (recette, bascule express).
+    statut: process.env.NEXT_PUBLIC_LIVE_STATUT || "avant",
+    // Archive consommée par l'état « Terminé » (produite par export-archive).
+    archivePath: "/replays/tour-des-ecrins-2026/archive.json",
   },
 
   // Paramètres de l'état « En cours » (design live-v2).
