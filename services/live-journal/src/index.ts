@@ -16,6 +16,7 @@ import { createSimTelegramApi, loadScenario, startScenario } from "./sim/journal
 import { PositionsSimulator } from "./sim/positions";
 import { OgDataSource } from "./og/data";
 import { OgScheduler } from "./og/scheduler";
+import { SelfCheck } from "./selfcheck";
 
 async function main(): Promise<void> {
   const config = loadConfig();
@@ -64,6 +65,13 @@ async function main(): Promise<void> {
     og = { source, scheduler };
   }
 
+  // Auto-surveillance (PR5) : prévient Valentin via le bot, HORS aventure.
+  let selfCheck: SelfCheck | undefined;
+  if (config.selfCheck.enabled && !config.simulation.enabled) {
+    selfCheck = new SelfCheck({ config, telegram, og: og?.scheduler, sim });
+    cleanups.push(selfCheck.start());
+  }
+
   const app = buildServer({
     config,
     store,
@@ -71,6 +79,7 @@ async function main(): Promise<void> {
     ingest,
     sim,
     og,
+    selfCheck,
     // Pas de Caddy en local : le service sert lui-même journal.json + médias
     // hors production (simulation ou polling dev).
     serveStatic: config.simulation.enabled || config.telegram.mode === "polling",

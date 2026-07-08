@@ -46,6 +46,9 @@ export function createSimTelegramApi(fixturesDir: string): TelegramApi {
     async getUpdates() {
       return [];
     },
+    async getWebhookInfo() {
+      return { url: "" };
+    },
   };
 }
 

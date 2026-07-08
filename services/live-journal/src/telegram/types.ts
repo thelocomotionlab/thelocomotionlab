@@ -82,3 +82,10 @@ export interface TgFile {
   file_size?: number;
   file_path?: string;
 }
+
+export interface TgWebhookInfo {
+  url: string;
+  pending_update_count?: number;
+  last_error_date?: number;
+  last_error_message?: string;
+}

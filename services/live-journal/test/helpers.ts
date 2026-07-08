@@ -28,6 +28,10 @@ export function makeConfig(overrides: Partial<Config> = {}): Config {
     },
     media: { photoMaxWidth: 1600, photoQuality: 80, maxDownloadBytes: 20 * 1024 * 1024 },
     videoEnabled: false,
+    og: { enabled: false, intervalMinutes: 3 },
+    selfCheck: { enabled: true, intervalMinutes: 30, diskMinMb: 500 },
+    siteBase: "http://site.test",
+    trackingBase: "http://tracking.test",
     telegram: {
       mode: "webhook",
       apiBase: "https://api.telegram.invalid",
@@ -73,6 +77,9 @@ export function makeTelegram(): RecordingTelegram {
     },
     async getUpdates() {
       return [];
+    },
+    async getWebhookInfo() {
+      return { url: "https://api.test/journal/telegram/webhook" };
     },
   };
   return api;

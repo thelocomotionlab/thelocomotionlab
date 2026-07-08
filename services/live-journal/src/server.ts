@@ -17,6 +17,7 @@ import { storyCard } from "./og/cards";
 import { renderPng } from "./og/render";
 import type { OgDataSource } from "./og/data";
 import type { OgScheduler } from "./og/scheduler";
+import type { SelfCheck } from "./selfcheck";
 import type { TelegramApi } from "./telegram/api";
 import type { TgUpdate } from "./telegram/types";
 
@@ -37,6 +38,8 @@ export interface ServerDeps {
   serveStatic?: boolean;
   /** Cartes de partage (PR4) : source de données + planificateur de og.png. */
   og?: { source: OgDataSource; scheduler: OgScheduler };
+  /** Auto-surveillance (PR5) — état exposé sur healthz. */
+  selfCheck?: SelfCheck;
 }
 
 const MEDIA_TYPES: Record<string, string> = {
@@ -132,6 +135,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     og: deps.og
       ? { lastGeneratedAt: deps.og.scheduler.lastGeneratedAt, variant: deps.og.scheduler.lastVariant }
       : null,
+    selfCheck: deps.selfCheck?.lastResult ?? null,
     counters: { ingest: ingestCounters, message: messageCounters },
   }));
 

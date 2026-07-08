@@ -27,6 +27,12 @@ export interface OgConfig {
   intervalMinutes: number;
 }
 
+export interface SelfCheckConfig {
+  enabled: boolean;
+  intervalMinutes: number;
+  diskMinMb: number;
+}
+
 export interface SimulationConfig {
   enabled: boolean;
   gpxPath: string;
@@ -44,6 +50,8 @@ export interface Config {
   videoEnabled: boolean;
   /** Cartes de partage (PR4). */
   og: OgConfig;
+  /** Auto-surveillance via le bot (PR5) — active hors aventure uniquement. */
+  selfCheck: SelfCheckConfig;
   /** Le site public (live-config.json, .track.json) et les artefacts tracking. */
   siteBase: string;
   trackingBase: string;
@@ -60,6 +68,7 @@ export interface Config {
 interface FileConfig {
   port?: number;
   og?: Partial<OgConfig>;
+  selfCheck?: Partial<SelfCheckConfig>;
   siteBase?: string;
   trackingBase?: string;
   publicPrefix?: string;
@@ -151,6 +160,11 @@ export function loadConfig(): Config {
     og: {
       enabled: envBool("OG_ENABLED", file.og?.enabled ?? true),
       intervalMinutes: envInt("OG_INTERVAL_MINUTES", file.og?.intervalMinutes ?? 3),
+    },
+    selfCheck: {
+      enabled: envBool("SELF_CHECK_ENABLED", file.selfCheck?.enabled ?? true),
+      intervalMinutes: envInt("SELF_CHECK_INTERVAL_MINUTES", file.selfCheck?.intervalMinutes ?? 30),
+      diskMinMb: envInt("SELF_CHECK_DISK_MIN_MB", file.selfCheck?.diskMinMb ?? 500),
     },
     siteBase: process.env.SITE_BASE || file.siteBase || "https://thelocomotionlab.com",
     trackingBase: process.env.TRACKING_BASE || file.trackingBase || "https://tracking.thelocomotionlab.com",

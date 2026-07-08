@@ -86,6 +86,17 @@ En dev/simulation le service sert lui-même `journal.json` et les médias (avec
 Range — l'audio iOS l'exige) ; **en production ces routes n'existent pas**, Caddy
 sert le volume (cf. `infra/caddy/conf.d/api.caddy`).
 
+## Auto-surveillance (PR5)
+
+Toutes les 30 min **hors aventure** (`live-timer.running === false` — donc à
+J-1 aussi), le service vérifie : disque, volume inscriptible, tracking et site
+joignables, webhook Telegram sain (`getWebhookInfo`), og.png générée — et
+**écrit à Valentin via le bot** en cas de problème (une fois par bascule,
+rappel max toutes les 6 h, message ✅ au rétablissement). **Pendant l'aventure :
+silence total** (personne n'agit — brief §8). État visible sur `/journal/healthz`
+(`selfCheck`). Config : `selfCheck` dans `live-journal.config.json`
+(`SELF_CHECK_*` en env).
+
 ## Déploiement
 
 Image construite par la CI (`.github/workflows/deploy-vps.yml`, contexte racine) →

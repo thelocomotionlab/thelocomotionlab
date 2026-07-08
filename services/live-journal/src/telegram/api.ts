@@ -1,7 +1,7 @@
 // Client minimal de l'API Bot Telegram (fetch natif Node 22).
 // Interface injectable : les tests et le simulateur fournissent leur propre stub.
 
-import type { TgFile, TgUpdate } from "./types";
+import type { TgFile, TgUpdate, TgWebhookInfo } from "./types";
 
 export interface TelegramApi {
   /** Envoie un message (confirmations au terrain, messages privés des visiteurs). */
@@ -12,6 +12,8 @@ export interface TelegramApi {
   downloadFile(filePath: string, maxBytes: number): Promise<Buffer>;
   /** Long-polling getUpdates (mode dev uniquement). */
   getUpdates(offset: number, timeoutSeconds: number): Promise<TgUpdate[]>;
+  /** État du webhook (auto-surveillance PR5). */
+  getWebhookInfo(): Promise<TgWebhookInfo>;
 }
 
 const CALL_TIMEOUT_MS = 30_000;
@@ -59,6 +61,10 @@ export function createTelegramApi(botToken: string, apiBase: string): TelegramAp
         throw new Error(`Fichier trop lourd (${buffer.byteLength} octets > ${maxBytes}).`);
       }
       return buffer;
+    },
+
+    async getWebhookInfo() {
+      return call<TgWebhookInfo>("getWebhookInfo", {});
     },
 
     async getUpdates(offset, timeoutSeconds) {
