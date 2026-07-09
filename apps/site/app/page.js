@@ -135,7 +135,7 @@ export default async function HomePage() {
               (robustesse physiologique) + ce qu'on trouve ici.] */}
           <p className="mt-4 text-base sm:text-lg text-white/90 leading-relaxed">
             <span className="hidden sm:inline">
-              Explorer, décortiquer, comprendre. La robustesse physiologique comme instrument de confiance, force et bien-être.
+              Explorer, la robustesse physiologique comme instrument de confiance, force et bien-être.
             </span>
           </p>
 
