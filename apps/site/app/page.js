@@ -126,24 +126,16 @@ export default async function HomePage() {
 
         <div className="relative z-10 px-4 sm:px-6 max-w-xl sm:max-w-2xl md:max-w-4xl mx-auto">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white drop-shadow-xl font-heading leading-tight">
-            Comprendre le corps comme un scientifique.
-            <br className="hidden sm:block" /> L&rsquo;utiliser comme un
+            Comprendre le corps comme un scientifique,
+            <br className="hidden sm:block" /> l&rsquo;utiliser comme un
             animal.
           </h1>
 
           {/* [Brief texte n°1 — 25-35 mots : une phrase sur la quête
               (robustesse physiologique) + ce qu'on trouve ici.] */}
           <p className="mt-4 text-base sm:text-lg text-white/90 leading-relaxed">
-            <span className="sm:hidden">
-              [PROVISOIRE — texte n°1] La science, le terrain et les
-              instruments de la robustesse physiologique.
-            </span>
             <span className="hidden sm:inline">
-              [PROVISOIRE — texte n°1] Le Locomotion Lab explore ce qui rend
-              un corps robuste — capable d&rsquo;encaisser, de s&rsquo;adapter
-              et de durer. Ici : la science qui l&rsquo;explique, le terrain
-              qui la met à l&rsquo;épreuve, et les instruments pour s&rsquo;y
-              frotter.
+              Explorer, décortiquer, comprendre. La robustesse physiologique comme instrument de confiance, force et bien-être.
             </span>
           </p>
 
@@ -152,7 +144,7 @@ export default async function HomePage() {
               href="/manifeste"
               className="inline-block bg-brand-accent text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-primary-dark transition"
             >
-              Lire le manifeste
+              La quête du labo
             </Link>
           </div>
         </div>
