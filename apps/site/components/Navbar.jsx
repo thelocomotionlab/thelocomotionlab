@@ -35,7 +35,7 @@ const NAV_ITEMS = [
     label: "Le Lab",
     Icon: FlaskConical,
     items: [
-      { href: "/manifeste", label: "Manifeste" },
+      { href: "/quete", label: "La quête" },
       { href: "/about", label: "À propos" },
       { href: "/soutenir", label: "Soutenir" },
       { href: "/contact", label: "Contact" },

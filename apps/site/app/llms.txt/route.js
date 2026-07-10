@@ -68,7 +68,7 @@ function buildLlmsTxt() {
   lines.push("");
   lines.push(`- [Accueil](${SITE_URL}/)`);
   lines.push(
-    `- [Manifeste](${SITE_URL}/manifeste): la quête du Lab — la robustesse physiologique`
+    `- [La quête](${SITE_URL}/quete): la quête du Lab — la robustesse physiologique`
   );
   lines.push(
     `- [Comprendre](${SITE_URL}/comprendre): la science — index des articles de fond`

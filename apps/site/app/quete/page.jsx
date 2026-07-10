@@ -1,26 +1,26 @@
-// app/manifeste/page.jsx
+// app/quete/page.jsx
 //
-// Le Manifeste : la quête du Lab — la robustesse physiologique. Page longue
-// en prose (mêmes classes typographiques que les corps d'articles), 5
-// sections structurées. Corps [PROVISOIRE — texte n°2] : plan visible,
-// textes provisoires, briefs en commentaires — Valentin écrira la version
-// définitive (1 200 – 1 800 mots).
+// La quête du Lab — la robustesse physiologique. Page longue en prose,
+// typographie Ubuntu alignée sur les pages À propos / Contact (Lora reste
+// réservé aux corps d'articles), 5 sections structurées. Corps [PROVISOIRE
+// — texte n°2] : plan visible, textes provisoires, briefs en commentaires —
+// Valentin écrira la version définitive (1 200 – 1 800 mots).
 import Link from "next/link";
 import EmailCapture from "@/components/EmailCapture";
 
 export const metadata = {
   // [PROVISOIRE] Descriptions meta à affiner avec les textes définitifs (PR5).
-  title: "Manifeste – La robustesse physiologique",
+  title: "La quête – La robustesse physiologique",
   description:
-    "La quête du Locomotion Lab : comprendre le corps comme un scientifique, l'utiliser comme un animal. Le manifeste de la robustesse physiologique.",
+    "La quête du Locomotion Lab : comprendre le corps comme un scientifique, l'utiliser comme un animal — la robustesse physiologique.",
   alternates: {
-    canonical: "https://thelocomotionlab.com/manifeste",
+    canonical: "https://thelocomotionlab.com/quete",
   },
   openGraph: {
-    title: "Manifeste – The Locomotion Lab",
+    title: "La quête – The Locomotion Lab",
     description:
       "La quête du Locomotion Lab : comprendre le corps comme un scientifique, l'utiliser comme un animal.",
-    url: "https://thelocomotionlab.com/manifeste",
+    url: "https://thelocomotionlab.com/quete",
     type: "website",
     images: [
       {
@@ -31,19 +31,19 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Manifeste – The Locomotion Lab",
+    title: "La quête – The Locomotion Lab",
     description:
       "La quête du Locomotion Lab : comprendre le corps comme un scientifique, l'utiliser comme un animal.",
     images: ["https://thelocomotionlab.com/images/assets/og-image.jpg"],
   },
 };
 
-export default function ManifestePage() {
+export default function QuetePage() {
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <header className="max-w-3xl mx-auto text-center mb-10">
         <h1 className="text-3xl md:text-4xl font-bold font-heading mb-3 text-brand-primary">
-          Manifeste
+          La quête
         </h1>
         <p className="text-lg text-gray-700">
           <em>

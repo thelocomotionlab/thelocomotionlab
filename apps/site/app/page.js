@@ -74,8 +74,8 @@ export default async function HomePage() {
       },
       {
         "@type": "SiteNavigationElement",
-        name: "Manifeste",
-        url: "https://thelocomotionlab.com/manifeste",
+        name: "La quête",
+        url: "https://thelocomotionlab.com/quete",
       },
     ],
   };
@@ -97,7 +97,7 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* HERO — la formule du Lab en titre, CTA vers le Manifeste */}
+      {/* HERO — la formule du Lab en titre, CTA vers La quête */}
       <section
         className="
           relative
@@ -141,7 +141,7 @@ export default async function HomePage() {
 
           <div className="mt-8 flex items-center justify-center">
             <Link
-              href="/manifeste"
+              href="/quete"
               className="inline-block bg-brand-accent text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-primary-dark transition"
             >
               La mission du labo

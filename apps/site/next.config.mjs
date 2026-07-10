@@ -119,8 +119,11 @@ export default function nextConfig(phase) {
         // Explorer. Générées au build depuis le frontmatter, par slug exact
         // (cf. lib/legacyRedirects.mjs).
         ...buildLegacyRedirects(),
-        // L'ancien hub /labo est remplacé par le Manifeste (PR2).
-        { source: "/labo", destination: "/manifeste", permanent: true },
+        // L'ancien hub /labo est remplacé par La quête (ex-« Manifeste »).
+        { source: "/labo", destination: "/quete", permanent: true },
+        // La page « Manifeste » a été renommée « La quête » : on préserve
+        // l'ancienne URL (liens externes, historique) par un 308.
+        { source: "/manifeste", destination: "/quete", permanent: true },
         // /live est désormais une vraie page (hub live permanent, PR3) :
         // l'ancienne redirection temporaire a été retirée.
       ];
