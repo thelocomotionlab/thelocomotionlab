@@ -3,7 +3,7 @@
 // Pilier « Comprendre » : la science de la robustesse physiologique.
 // Liste les contenus `type: "article"` publiés, plus les cartes « à
 // paraître » (published: false + teaser: true) : titre + teaserText +
-// badge « En écriture », SANS lien — leur corps n'est jamais rendu.
+// badge « À paraître », SANS lien — leur corps n'est jamais rendu.
 import Link from "next/link";
 import Image from "next/image";
 import EmailCapture from "@/components/EmailCapture";
@@ -135,7 +135,7 @@ function TeaserCard({ article }) {
         <div className="p-5 flex flex-col flex-1">
           <p className="mb-2">
             <span className="inline-block text-xs uppercase tracking-wide font-semibold text-brand-deep bg-brand-bg rounded-full px-3 py-1">
-              En écriture
+              À paraître
             </span>
           </p>
 
@@ -178,7 +178,7 @@ export default function ComprendrePage() {
         </div>
       ) : (
         <p className="text-center text-gray-600">
-          Les premiers articles sont en écriture.
+          Les premiers articles sont à paraître.
         </p>
       )}
 

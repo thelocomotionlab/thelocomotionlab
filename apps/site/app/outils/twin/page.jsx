@@ -60,9 +60,11 @@ export default function TwinTeaserPage() {
           [PROVISOIRE — texte n°6]
         </p>
 
-        <div className="prose prose-lg max-w-none font-lora text-gray-800 leading-relaxed">
-          <h2>Comment ça marche</h2>
-          <ol>
+        <div className="font-sans text-gray-800 leading-relaxed">
+          <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
+            Comment ça marche
+          </h2>
+          <ol className="list-decimal pl-5 space-y-2">
             <li>
               Tu déposes ton archive d&rsquo;entraînement (Garmin, Polar,
               Strava…) et la trace GPX de ta course cible.

@@ -61,62 +61,93 @@ export default function ManifestePage() {
           [PROVISOIRE — texte n°2]
         </p>
 
-        <div
-          className="
-            prose prose-lg max-w-none
-            font-lora text-gray-800 leading-relaxed
-            text-left md:text-justify
-          "
-        >
+        <div className="font-sans text-gray-800 leading-relaxed space-y-8">
           {/* ① Le constat : la discordance évolutive. */}
-          <h2>Le constat</h2>
-          <p>
-            Nos corps ont été façonnés par des millions d&rsquo;années de
-            marche, de course, de portage et d&rsquo;inconfort — et nous les
-            faisons vivre assis, au chaud, sur-nourris et sous-stimulés. Cette
-            discordance entre ce pour quoi nous sommes construits et ce que
-            nous vivons a un coût : des organismes fragiles, qui s&rsquo;usent
-            sans avoir servi.
-          </p>
+          <section>
+            <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
+              Le constat
+            </h2>
+            <p>
+              Nos corps ont été façonnés par des millions d&rsquo;années de
+              marche, de course, de portage et d&rsquo;inconfort — et nous les
+              faisons vivre assis, au chaud, sur-nourris et sous-stimulés. Cette
+              discordance entre ce pour quoi nous sommes construits et ce que
+              nous vivons a un coût : des organismes fragiles, qui s&rsquo;usent
+              sans avoir servi.
+            </p>
+          </section>
 
           {/* ② La réponse : la robustesse ≠ la performance maximale. */}
-          <h2>La réponse : la robustesse</h2>
-          <p>
-            La réponse du Lab n&rsquo;est pas la performance maximale — un
-            sommet étroit, coûteux et fragile — mais la robustesse
-            physiologique : un corps capable d&rsquo;encaisser, de
-            s&rsquo;adapter et de durer. Être robuste, c&rsquo;est élargir la
-            base plutôt que rehausser la pointe.
-          </p>
+          <section>
+            <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
+              La réponse : la robustesse
+            </h2>
+            <p>
+              La réponse du Lab n&rsquo;est pas la performance maximale — un
+              sommet étroit, coûteux et fragile — mais la robustesse
+              physiologique : un corps capable d&rsquo;encaisser, de
+              s&rsquo;adapter et de durer. Être robuste, c&rsquo;est élargir la
+              base plutôt que rehausser la pointe.
+            </p>
+          </section>
 
           {/* ③ La méthode : comprendre en scientifique, utiliser en animal. */}
-          <h2>La méthode</h2>
-          <p>
-            Deux gestes complémentaires. Comprendre le corps comme un
-            scientifique : lire les études, mesurer, douter, garder ce qui
-            résiste à l&rsquo;examen. L&rsquo;utiliser comme un animal :
-            marcher, courir, grimper, porter, avoir froid, avoir faim —
-            redonner au corps les stimulus pour lesquels il est fait.
-          </p>
+          <section>
+            <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
+              La méthode
+            </h2>
+            <p>
+              Deux gestes complémentaires. Comprendre le corps comme un
+              scientifique : lire les études, mesurer, douter, garder ce qui
+              résiste à l&rsquo;examen. L&rsquo;utiliser comme un animal :
+              marcher, courir, grimper, porter, avoir froid, avoir faim —
+              redonner au corps les stimulus pour lesquels il est fait.
+            </p>
+          </section>
 
           {/* ④ Le laboratoire : N=1 assumé, incertitude honnête. */}
-          <h2>Le laboratoire</h2>
-          <p>
-            Le Lab est un laboratoire vivant, avec un sujet principal : moi.
-            Ce N=1 est assumé — il ne prouve rien, il explore, il illustre, il
-            documente honnêtement ce qui marche et ce qui échoue.
-            L&rsquo;incertitude est affichée, jamais maquillée.
-          </p>
+          <section>
+            <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
+              Le laboratoire
+            </h2>
+            <p>
+              Le Lab est un laboratoire vivant, avec un sujet principal : moi.
+              Ce N=1 est assumé — il ne prouve rien, il explore, il illustre, il
+              documente honnêtement ce qui marche et ce qui échoue.
+              L&rsquo;incertitude est affichée, jamais maquillée.
+            </p>
+          </section>
 
           {/* ⑤ Par où commencer : les portes d'entrée du site. */}
-          <h2>Par où commencer</h2>
-          <p>
-            <Link href="/comprendre">Comprendre</Link> pour la science,{" "}
-            <Link href="/explorer">Explorer</Link> pour le terrain,{" "}
-            <Link href="/outils/twin">Locomotion Twin</Link> pour le premier
-            instrument du Lab. Et pour suivre ce qui paraît ici, laisse ton
-            email ci-dessous.
-          </p>
+          <section>
+            <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
+              Par où commencer
+            </h2>
+            <p>
+              <Link
+                href="/comprendre"
+                className="font-semibold text-brand-deep hover:underline"
+              >
+                Comprendre
+              </Link>{" "}
+              pour la science,{" "}
+              <Link
+                href="/explorer"
+                className="font-semibold text-brand-deep hover:underline"
+              >
+                Explorer
+              </Link>{" "}
+              pour le terrain,{" "}
+              <Link
+                href="/outils/twin"
+                className="font-semibold text-brand-deep hover:underline"
+              >
+                Locomotion Twin
+              </Link>{" "}
+              pour le premier instrument du Lab. Et pour suivre ce qui paraît
+              ici, laisse ton email ci-dessous.
+            </p>
+          </section>
         </div>
 
         <div className="mt-10 max-w-2xl mx-auto text-center">
