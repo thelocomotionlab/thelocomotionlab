@@ -6,8 +6,7 @@ import Link from "next/link";
 import { Gauge } from "lucide-react";
 
 export const metadata = {
-  // [PROVISOIRE] Descriptions meta à affiner avec les textes définitifs (PR5).
-  title: "Outils – Les instruments du Lab",
+  title: "Outils – Les instruments du labo",
   description:
     "Les instruments construits au Locomotion Lab, à commencer par le Locomotion Twin : une prédiction de temps de course calibrée sur tes propres données.",
   alternates: {

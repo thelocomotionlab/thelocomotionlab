@@ -9,16 +9,16 @@ import EmailCapture from "@/components/EmailCapture";
 
 export const metadata = {
   // [PROVISOIRE] Descriptions meta à affiner avec les textes définitifs (PR5).
-  title: "Locomotion Twin – Prédire ta course à partir de tes données",
+  title: "Locomotion Twin – Calculateur de plan de course",
   description:
-    "Le Locomotion Twin estime ton jumeau physiologique depuis ton archive d'entraînement et prédit ton temps de course, avec un plan de pacing par segment.",
+    "Le Locomotion Twin crée ton jumeau numérique à partir de tes données d'entraînement et construit un plan de pacing individualisé pour chacun de tes objectifs.",
   alternates: {
     canonical: "https://thelocomotionlab.com/outils/twin",
   },
   openGraph: {
     title: "Locomotion Twin – The Locomotion Lab",
     description:
-      "Une prédiction de temps de course calibrée sur tes propres données, validée sur tes propres courses.",
+      "Un plan de pacing calibré sur tes propres données d'entraînement et validé sur tes courses passées.",
     url: "https://thelocomotionlab.com/outils/twin",
     type: "website",
     images: [
@@ -32,7 +32,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Locomotion Twin – The Locomotion Lab",
     description:
-      "Une prédiction de temps de course calibrée sur tes propres données, validée sur tes propres courses.",
+      "Un plan de pacing calibré sur tes propres données d'entraînement et validé sur tes courses passées.",
     images: ["https://thelocomotionlab.com/images/assets/og-image.jpg"],
   },
 };
@@ -47,18 +47,12 @@ export default function TwinTeaserPage() {
         {/* Promesse en une phrase. */}
         <p className="text-lg text-gray-700">
           <em>
-            Une prédiction honnête de ton temps de course, calibrée sur tes
-            propres données — pas sur des moyennes.
+            Un calculateur de plan de pacing construit par data analyse approfondie de tes données d'entraînement
           </em>
         </p>
       </header>
 
       <div className="bg-white rounded-xl shadow-card p-4 sm:p-6 md:p-10">
-        {/* [Brief texte n°6 — 300-400 mots : structure du §4.3 du brief,
-            ton honnête et factuel. Textes courants PROVISOIRES.] */}
-        <p className="text-sm font-semibold text-brand-deep mb-6">
-          [PROVISOIRE — texte n°6]
-        </p>
 
         <div className="font-sans text-gray-800 leading-relaxed">
           <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
@@ -70,14 +64,12 @@ export default function TwinTeaserPage() {
               Strava…) et la trace GPX de ta course cible.
             </li>
             <li>
-              Le moteur estime ton jumeau physiologique — vitesse critique,
-              endurance, durabilité — et le confronte au relief réel du
-              parcours.
+              Le moteur construit ton jumeau physiologique et le confronte au relief réel du
+              parcours via un grand nombre de simulations numériques.
             </li>
             <li>
-              Tu reçois une prédiction de temps d&rsquo;arrivée validée sur
-              tes propres courses passées, avec un plan de pacing par segment
-              et des fenêtres horaires.
+              Tu reçois un rapport d'analyse complet incluant un plan de pacing segment par segment, 
+              et des fenêtres horaires construites sur tes propres courses passées.
             </li>
           </ol>
         </div>
@@ -85,17 +77,11 @@ export default function TwinTeaserPage() {
         {/* Statut de calibration honnête — valeurs factices À REMPLACER. */}
         <div className="mt-8 bg-brand-bg border border-gray-200 rounded-lg p-5">
           <h2 className="text-lg font-semibold text-brand-deep mb-2">
-            Statut de calibration
+            Statut de développement
           </h2>
           <p className="text-gray-700">
-            3 athlètes <span className="font-semibold">(À REMPLACER)</span> ·
-            27 courses <span className="font-semibold">(À REMPLACER)</span> ·
-            validation croisée sans fuite temporelle
-          </p>
-          <p className="mt-2 text-sm text-gray-600 italic">
-            Le Twin est en cours de calibration : les chiffres ci-dessus
-            grandissent avec la cohorte, et les marges d&rsquo;erreur sont
-            toujours affichées avec les prédictions.
+            L'outil est en cours de développement. Pour participer à son élaboration et recevoir ton plan de course
+            gratuit, inscris-toi dès maintenant à la cohorte de beta-testeur·euse·s !
           </p>
         </div>
 
@@ -105,13 +91,13 @@ export default function TwinTeaserPage() {
             href="/contact?sujet=twin"
             className="inline-block bg-brand-accent text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-primary-dark transition"
           >
-            Rejoindre la cohorte de calibration
+            Rejoindre la cohorte de test
           </Link>
         </div>
 
         <div className="mt-10 max-w-2xl mx-auto text-center">
           <h2 className="text-lg font-semibold text-brand-accent mb-3">
-            Être prévenu·e au lancement
+            Pour être prévenu·e au lancement officiel
           </h2>
           <EmailCapture
             title={null}

@@ -131,8 +131,6 @@ export default async function HomePage() {
             animal.
           </h1>
 
-          {/* [Brief texte n°1 — 25-35 mots : une phrase sur la quête
-              (robustesse physiologique) + ce qu'on trouve ici.] */}
           <p className="mt-4 text-base sm:text-lg text-white/90 leading-relaxed">
             <span className="hidden sm:inline">
               Explorer la robustesse physiologique comme instrument de confiance en soi, force et bien-être.
@@ -144,7 +142,7 @@ export default async function HomePage() {
               href="/quete"
               className="inline-block bg-brand-accent text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-primary-dark transition"
             >
-              La mission du labo
+              La quête du labo
             </Link>
           </div>
         </div>
