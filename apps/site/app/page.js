@@ -135,7 +135,7 @@ export default async function HomePage() {
               (robustesse physiologique) + ce qu'on trouve ici.] */}
           <p className="mt-4 text-base sm:text-lg text-white/90 leading-relaxed">
             <span className="hidden sm:inline">
-              Explorer, la robustesse physiologique comme instrument de confiance, force et bien-être.
+              Explorer la robustesse physiologique comme instrument de confiance en soi, force et bien-être.
             </span>
           </p>
 
@@ -144,7 +144,7 @@ export default async function HomePage() {
               href="/manifeste"
               className="inline-block bg-brand-accent text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-primary-dark transition"
             >
-              La quête du labo
+              La mission du labo
             </Link>
           </div>
         </div>

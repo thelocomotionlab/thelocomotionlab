@@ -17,7 +17,6 @@ import { journalApiBase } from "@/lib/liveConfig";
 const OG_IMAGE = `${journalApiBase}/journal/og.png?v=${Date.now()}`;
 
 export const metadata = {
-  // [PROVISOIRE] Descriptions meta à affiner avec les textes définitifs (PR5).
   title: "Live – Le direct des aventures du Lab",
   description:
     "Suivi en direct des aventures du Locomotion Lab — ou le prochain départ : Tour des Écrins en autonomie, 20–24 août 2026.",

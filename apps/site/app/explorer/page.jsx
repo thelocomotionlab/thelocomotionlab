@@ -12,7 +12,6 @@ import { listArticleEntries, listProjetEntries } from "@/lib/contentRoutes.mjs";
 import { extractProjectNotes } from "@/lib/extractProjectNotes";
 
 export const metadata = {
-  // [PROVISOIRE] Descriptions meta à affiner avec les textes définitifs (PR5).
   title: "Explorer – Récits et projets de terrain",
   description:
     "Le terrain du Locomotion Lab : récits d'aventures et projets au long cours — traversées en autonomie, saisons de trail, expérimentations.",
@@ -192,25 +191,8 @@ export default function ExplorerPage() {
       {/* Header */}
       <header className="max-w-3xl mx-auto text-center mb-10">
         <h1 className="text-3xl font-bold font-heading mb-2 text-brand-primary">
-          Explorer
+          Explorer : être son propre laboratoire
         </h1>
-        <p className="text-lg text-gray-700">
-          <em>Le terrain comme banc d&rsquo;essai</em>
-        </p>
-        {/* [Brief texte n°5 — 60-80 mots : le terrain comme banc d'essai
-            de la quête (robustesse physiologique).] */}
-        <p className="mt-4 text-base text-gray-700 leading-relaxed">
-          <span className="font-semibold text-brand-deep">
-            [PROVISOIRE — texte n°5]
-          </span>{" "}
-          Explorer, c&rsquo;est le terrain : récits d&rsquo;aventures et
-          projets au long cours qui servent de banc d&rsquo;essai à la quête
-          du Lab. Traversées en autonomie, saisons de trail, formations —
-          chaque expérience met à l&rsquo;épreuve ce que la science annonce,
-          et en rapporte des données, des sensations et des leçons. C&rsquo;est
-          ici que la robustesse se construit et se vérifie, une aventure à la
-          fois.
-        </p>
       </header>
 
       {/* Bloc Live compact : badge EN DIRECT / « Prochain départ »,

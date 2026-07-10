@@ -10,7 +10,6 @@ import EmailCapture from "@/components/EmailCapture";
 import { listArticleEntries } from "@/lib/contentRoutes.mjs";
 
 export const metadata = {
-  // [PROVISOIRE] Descriptions meta à affiner avec les textes définitifs (PR5).
   title: "Comprendre – La science de la robustesse physiologique",
   description:
     "Articles de fond sourcés et vulgarisés sur la robustesse physiologique : respiration, hormèse, endurance, mouvement.",
@@ -161,28 +160,10 @@ export default function ComprendrePage() {
   return (
     <section className="py-12 max-w-6xl mx-auto px-4 sm:px-6">
       {/* Header */}
-      <header className="max-w-3xl mx-auto text-center mb-10">
+      <header className="max-w-4xl mx-auto text-left mb-10">
         <h1 className="text-3xl font-bold font-heading mb-2 text-brand-primary">
-          Comprendre
+          Comprendre : décortiquer la science derrière les concepts
         </h1>
-        <p className="text-lg text-gray-700">
-          <em>La science de la robustesse physiologique</em>
-        </p>
-        {/* [Brief texte n°3 — 60-80 mots : le contrat de la section :
-            contenus sourcés, vulgarisés, reliés au terrain ; le
-            « à paraître » est assumé.] */}
-        <p className="mt-4 text-base text-gray-700 leading-relaxed">
-          <span className="font-semibold text-brand-deep">
-            [PROVISOIRE — texte n°3]
-          </span>{" "}
-          Comprendre, c&rsquo;est le versant scientifique du Lab : des articles
-          sourcés qui décortiquent la physiologie de la robustesse —
-          respiration, hormèse, endurance — et la traduisent en pratiques
-          concrètes. Chaque article est relié au terrain : ce qui est expliqué
-          ici est éprouvé dans les aventures racontées côté Explorer. La
-          section démarre, les premiers articles sont en écriture — tu peux
-          être prévenu·e de leur parution ci-dessous.
-        </p>
       </header>
 
       {/* Grille : articles publiés puis cartes « à paraître » */}
