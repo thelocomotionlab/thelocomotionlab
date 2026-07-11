@@ -32,7 +32,7 @@ export const metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="max-w-3xl mx-auto px-6 py-12 text-gray-800 font-sans">
+    <div className="max-w-3xl mx-auto px-6 py-12 text-gray-800 font-sans text-justify hyphens-auto">
       <PageHeader kicker="/ LE LABO" title="À propos" />
 
       {/* Vision */}

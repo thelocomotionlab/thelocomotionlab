@@ -41,22 +41,23 @@ export const metadata = {
 
 export default function QuetePage() {
   return (
-    <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <PageHeader
-        kicker="/ LE LABO"
-        title="La quête"
-        tagline="comprendre le corps comme un scientifique, l'utiliser comme un animal"
-      />
+    <article className="max-w-3xl mx-auto px-6 py-12 text-gray-800 font-sans">
+      <PageHeader kicker="/ LE LABO" title="La quête" />
 
-      <div className="bg-white rounded-xl shadow-card p-4 sm:p-6 md:p-10">
-        {/* [Brief texte n°2 — 1 200-1 800 mots : les 5 sections ci-dessous.
-            Les textes courants sont PROVISOIRES : ils posent le plan et le
-            ton, la version définitive est à écrire par Valentin.] */}
-        <p className="text-sm font-semibold text-brand-deep mb-8">
-          [PROVISOIRE — texte n°2]
-        </p>
+      {/* La formule du labo en exergue, comme une citation. */}
+      <blockquote className="mb-10 border-l-[3px] border-brand-accent pl-5 font-lora text-xl italic leading-relaxed text-brand-deep md:text-[22px]">
+        Comprendre le corps comme un scientifique, l&rsquo;utiliser comme un
+        animal.
+      </blockquote>
 
-        <div className="font-sans text-gray-800 leading-relaxed space-y-8">
+      {/* [Brief texte n°2 — 1 200-1 800 mots : les 5 sections ci-dessous.
+          Les textes courants sont PROVISOIRES : ils posent le plan et le
+          ton, la version définitive est à écrire par Valentin.] */}
+      <p className="text-sm font-semibold text-brand-deep mb-8">
+        [PROVISOIRE — texte n°2]
+      </p>
+
+      <div className="font-sans text-gray-800 leading-relaxed space-y-8 text-justify hyphens-auto">
           {/* ① Le constat : la discordance évolutive. */}
           <section>
             <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
@@ -143,20 +144,19 @@ export default function QuetePage() {
               ici, laisse ton email ci-dessous.
             </p>
           </section>
-        </div>
+      </div>
 
-        <div className="mt-10 max-w-2xl mx-auto text-center">
-          <h2 className="text-lg font-semibold text-brand-accent mb-3">
-            Recevoir les prochaines parutions
-          </h2>
-          <EmailCapture
-            title={null}
-            description={null}
-            source="manifeste"
-            placeholder="Votre adresse e-mail"
-            buttonLabel="M'inscrire"
-          />
-        </div>
+      <div className="mt-12 max-w-2xl mx-auto text-center">
+        <h2 className="text-lg font-semibold text-brand-accent mb-3">
+          Recevoir les prochaines parutions
+        </h2>
+        <EmailCapture
+          title={null}
+          description={null}
+          source="manifeste"
+          placeholder="Votre adresse e-mail"
+          buttonLabel="M'inscrire"
+        />
       </div>
     </article>
   );

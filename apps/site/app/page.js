@@ -12,7 +12,6 @@ import Image from "next/image";
 import EmailCapture, { MICRO_PROMESSE } from "@/components/EmailCapture";
 import ExplorerCarousel from "@/components/ExplorerCarousel";
 import ExplorerLiveIndicator from "@/components/ExplorerLiveIndicator";
-import RegistreScroller from "@/components/RegistreScroller";
 import { getExplorerCarouselItems } from "@/lib/carouselItems";
 import { listArticleEntries } from "@/lib/contentRoutes.mjs";
 
@@ -157,11 +156,13 @@ function RegistrePanel({ rows }) {
         </span>
       </div>
 
-      <RegistreScroller>
+      {/* Zone défilante : ~3 lignes visibles, fine barre bleue en
+          indicateur quand il y a plus d'articles. */}
+      <div className="ll-vscroll max-h-[248px] snap-y overflow-y-auto">
         {rows.map((row, i) => (
           <RegistreRow key={row.slug} row={row} isLast={i === rows.length - 1} />
         ))}
-      </RegistreScroller>
+      </div>
 
       <p className="mt-3 font-mono text-[11px] tracking-[0.16em]">
         <a

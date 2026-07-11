@@ -14,7 +14,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import CardMeta from "@/components/CardMeta";
-import ScrollCue from "@/components/ScrollCue";
 
 function Card({ item, tone }) {
   const shadow =
@@ -25,7 +24,9 @@ function Card({ item, tone }) {
   return (
     <Link
       href={item.href}
-      className={`group flex w-full shrink-0 snap-start items-center gap-3 overflow-hidden rounded-[10px] bg-white transition-transform duration-200 md:block md:w-[250px] md:rounded-[14px] md:hover:-translate-y-1.5 ${shadow}`}
+      // Hauteur fixe sur mobile : la fenêtre du carrousel affiche
+      // exactement 3 cartes (3 × 88px + 2 × 12px de gap = 288px).
+      className={`group flex h-[88px] w-full shrink-0 snap-start items-center gap-3 overflow-hidden rounded-[10px] bg-white transition-transform duration-200 md:block md:h-auto md:w-[250px] md:rounded-[14px] md:hover:-translate-y-1.5 ${shadow}`}
     >
       {/* Vignette : s'étire sur toute la hauteur de la ligne (titres sur
           2 lignes compris) ; bloc 130px plein cadre sur desktop. */}
@@ -45,7 +46,7 @@ function Card({ item, tone }) {
       </span>
       <span className="block min-w-0 flex-1 py-2 pr-3 md:px-4 md:pb-4 md:pt-3.5">
         <CardMeta kind={item.kindLabel} detail={item.detail} className="md:mb-1" />
-        <span className="block text-[15px] font-semibold leading-[1.3] text-brand-deep">
+        <span className="line-clamp-2 block text-[15px] font-semibold leading-[1.3] text-brand-deep md:line-clamp-none">
           {item.title}
         </span>
       </span>
@@ -83,15 +84,12 @@ export default function ExplorerCarousel({ items, actions = null, tone = "dark" 
   const scrollerRef = useRef(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
-  // Défilement vertical restant (carrousel mobile).
-  const [canDown, setCanDown] = useState(false);
 
   const update = useCallback(() => {
     const el = scrollerRef.current;
     if (!el) return;
     setCanPrev(el.scrollLeft > 4);
     setCanNext(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
-    setCanDown(el.scrollTop < el.scrollHeight - el.clientHeight - 4);
   }, []);
 
   useEffect(() => {
@@ -116,27 +114,17 @@ export default function ExplorerCarousel({ items, actions = null, tone = "dark" 
         ref={scrollerRef}
         role="region"
         aria-label="Récits et projets récents"
-        // Mobile : carrousel VERTICAL — fenêtre de 3 cartes, accroche
-        // snap-y, chevron indicateur en dessous. Desktop : défilement
-        // horizontal ; marges négatives compensant le padding qui évite de
-        // rogner les ombres et le hover surélevé.
-        className="no-scrollbar flex max-h-[252px] snap-y flex-col gap-3 overflow-y-auto md:-mx-1 md:-mb-6 md:-mt-3 md:max-h-none md:snap-x md:flex-row md:gap-5 md:overflow-x-auto md:overflow-y-visible md:px-1 md:pb-6 md:pt-3"
+        // Mobile : carrousel VERTICAL — fenêtre de 3 cartes exactement
+        // (hauteur fixe des cartes), accroche snap-y, fine barre bleue sur
+        // le côté comme indicateur. Desktop : défilement horizontal ; marges
+        // négatives compensant le padding qui évite de rogner les ombres et
+        // le hover surélevé.
+        className="ll-vscroll ll-vscroll-md-none flex max-h-[288px] snap-y flex-col gap-3 overflow-y-auto pr-2 md:-mx-1 md:-mb-6 md:-mt-3 md:max-h-none md:snap-x md:flex-row md:gap-5 md:overflow-x-auto md:overflow-y-visible md:px-1 md:pb-6 md:pt-3"
       >
         {items.map((item) => (
           <Card key={item.key} item={item} tone={tone} />
         ))}
       </div>
-
-      {canDown && (
-        <ScrollCue
-          tone={tone}
-          className="mt-3 md:hidden"
-          label="Faire défiler les parutions"
-          onClick={() =>
-            scrollerRef.current?.scrollBy({ top: 100, behavior: "smooth" })
-          }
-        />
-      )}
 
       <div className="mt-7 flex flex-wrap items-center gap-5 md:mt-[34px] md:gap-[22px]">
         {actions}

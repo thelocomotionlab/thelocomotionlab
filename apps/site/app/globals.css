@@ -616,6 +616,35 @@ html {
   display: none;
 }
 
+/* Barre de défilement fine bleu labo des listes verticales
+   (carrousels mobiles, registre des articles) */
+.ll-vscroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(110, 156, 160, 0.55) transparent;
+}
+.ll-vscroll::-webkit-scrollbar {
+  width: 4px;
+}
+.ll-vscroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ll-vscroll::-webkit-scrollbar-thumb {
+  background: rgba(110, 156, 160, 0.55);
+  border-radius: 999px;
+}
+
+/* Variante carrousels : plus de barre en desktop (défilement horizontal
+   piloté par les flèches) */
+@media (min-width: 768px) {
+  .ll-vscroll-md-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .ll-vscroll-md-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* Surlignage du terme recherché (cf. SearchHighlighter) */
 mark.search-highlight {
   background-color: var(--color-brand-accent-light);
