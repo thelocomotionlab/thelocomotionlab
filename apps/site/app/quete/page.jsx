@@ -44,68 +44,83 @@ export default function QuetePage() {
       </blockquote>
 
       <div className="font-sans text-gray-800 leading-relaxed space-y-8 text-justify hyphens-auto">
-          {/* ① Le constat : la discordance évolutive. */}
-          <section>
-            <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
-              Le constat
-            </h2>
-            <p>
-              Nos corps ont été façonnés par des millions d&rsquo;années de
-              marche, de course, de portage et d&rsquo;inconfort, et nous les
-              faisons vivre assis, au chaud l&rsquo;hiver, sous la clim&rsquo; l&rsquo;été, sur-nourris et sous-stimulés. Cette
-              discordance évolutive entre ce pour quoi nous sommes construits et ce que
-              nous vivons a un coût : des organismes fragiles, qui se retrouvent
-              usés avant même d&rsquo;avoir servi.
-            </p>
-          </section>
+        {/* ① Le constat : la discordance évolutive. */}
+        <section>
+          <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
+            Le constat
+          </h2>
+          <p>
+            Nos corps ont été façonnés par des millions d&rsquo;années de
+            marche, de course, de portage et d&rsquo;inconfort, et nous les
+            faisons vivre assis, au chaud l&rsquo;hiver, sous la clim
+            l&rsquo;été, suralimentés et sous-stimulés. Cette discordance
+            évolutive entre ce pour quoi nous sommes construits et ce que nous
+            vivons a un coût : des organismes fragiles, usés avant même
+            d&rsquo;avoir servi.
+          </p>
+        </section>
 
-          {/* ② La réponse : la robustesse ≠ la performance maximale. */}
-          <section>
-            <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
-              La robustesse
-            </h2>
-            <p>
-              L&rsquo;évolution des êtres vivants, végétaux ou animaux, s&rsquo;est toujours déroulée
-              dans des contextes incertains, ceux-ci devant régulièrement s&rsquo;adapter à de nouvelles
-              situations comme le manque de ressources, la présence de nouveaux prédateurs,
-              ou des températures inhabituelles. Cette instabilité continue a créé des organismes
-              complets, à la fois adaptés, adaptables, mais aussi profondément résilients. Cette
-              caractéristique a un nom, introduit par le biophysicien Olivier Hamant : la robustesse. 
-              Ce concept, appliqué à la physiologie humaine, est le cœur pulsant du labo. Il s&rsquo;oppose 
-              par essence à la notion de performance à tout prix qui vise l&rsquo;optimisation perpétuelle, ce 
-              principe qui régit le monde Humain moderne et le rend incapable de faire face à l&rsquo;incertitude.
-            </p>
-          </section>
+        {/* ② La réponse : la robustesse ≠ la performance maximale. */}
+        <section>
+          <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
+            La robustesse
+          </h2>
+          <p>
+            L&rsquo;évolution des êtres vivants, végétaux comme animaux,
+            s&rsquo;est toujours déroulée dans l&rsquo;incertitude : manque de
+            ressources, nouveaux prédateurs, températures inhabituelles, bactéries ou virus
+            mortels... Cette instabilité permanente a forgé des organismes à la fois adaptés,
+            adaptables et profondément résilients. Cette caractéristique a un
+            nom : la robustesse, un concept que le biologiste Olivier Hamant a
+            remis au cœur du débat (<em>Antidote au culte de la
+            performance</em>, 2023), et qui, appliqué à la physiologie humaine,
+            est le cœur battant du labo. Elle s&rsquo;oppose par essence à la
+            performance à tout prix, cette optimisation perpétuelle qui régit
+            le monde humain moderne et le rend incapable de faire face à
+            l&rsquo;incertitude. La robustesse n&rsquo;est pourtant pas l&rsquo;ennemie de la
+            performance. Le guépard vit en économie permanente mais reste
+            capable de pointes à plus de 100 km/h quand sa survie
+            l&rsquo;exige. Être robuste, c&rsquo;est exactement ça : savoir
+            être ponctuellement performant sans jamais hypothéquer le système.
+            Voilà pourquoi on trouvera ici aussi bien des protocoles
+            d&rsquo;exposition au froid que des plans d&rsquo;allure pour un
+            100 miles.
+          </p>
+        </section>
 
-          {/* ③ La méthode : comprendre en scientifique, utiliser en animal. */}
-          <section>
-            <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
-              La philosophie
-            </h2>
-            <p>
-              La robustesse se développe par essais-erreurs. Comprendre, explorer. Explorer, comprendre.
-              Une boucle de rétroaction permanente entre décortiquer les concepts, lire les études, expérimenter en 
-              situation réelle, douter, découvrir des pratiques de manière fortuite, les expliquer a posteriori...
-              C&rsquo;est la philosophie qui guide le développement de ce laboratoire théorico-expérimental, dans 
-              toutes ses dimensions.
-            </p>
-          </section>
+        {/* ③ La méthode : comprendre en scientifique, utiliser en animal. */}
+        <section>
+          <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
+            La philosophie
+          </h2>
+          <p>
+            La robustesse se développe par essai-erreur. Comprendre, explorer.
+            Explorer, comprendre. Une boucle de rétroaction permanente :
+            décortiquer les concepts, lire les études, expérimenter en
+            situation réelle, douter, découvrir des pratiques de manière
+            fortuite, les expliquer a posteriori… C&rsquo;est la philosophie
+            qui guide le développement de ce laboratoire théorico-expérimental,
+            dans toutes ses dimensions.
+          </p>
+        </section>
 
-          {/* ④ Le laboratoire : N=1 assumé, incertitude honnête. */}
-          <section>
-            <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
-              Un laboratoire accessible à tous·te·s
-            </h2>
-            <p>
-              La vocation du Locomotion Lab est d&rsquo;explorer et d&rsquo;ouvrir des voies méconnues mais profondément 
-              engrammées dans l&rsquo;ADN Humain, et de les rendre accessible à tous·te·s pour retrouver une certaine
-              concordance évolutive. La connaissance n&rsquo;a jamais été aussi abondante, et il convient plus que jamais
-              de se responsabiliser sur sa santé et son bien-être, pour faire face aux incertitudes de demain.
-              Redevenir robustes côte-à-côte, main la main. Car seul on va plus vite, mais ensemble on va plus loin.
-              Et c&rsquo;est peu dire que cet adage est profondément robuste.
-            </p>
-          </section>
-
+        {/* ④ Le laboratoire  */}
+        <section>
+          <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
+            Un laboratoire accessible à tou·te·s
+          </h2>
+          <p>
+            La vocation du Locomotion Lab est d&rsquo;explorer et
+            d&rsquo;ouvrir des voies méconnues mais profondément engrammées
+            dans l&rsquo;ADN humain, et de les rendre accessibles à tou·te·s
+            pour retrouver une certaine concordance évolutive. La connaissance
+            n&rsquo;a jamais été aussi abondante, et il convient plus que
+            jamais de se réapproprier sa santé et son bien-être pour faire face
+            aux incertitudes de demain. Redevenir robustes côte à côte, main dans la main. 
+            Car seul on va plus vite, mais ensemble on va plus loin. Et c&rsquo;est peu dire
+            que cet adage est profondément robuste.
+          </p>
+        </section>
           {/* ⑤ Par où commencer : les portes d'entrée du site. */}
 {/*          <section>
             <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
@@ -144,7 +159,7 @@ export default function QuetePage() {
         <EmailCapture
           title={null}
           description={null}
-          source="manifeste"
+          source="quete"
           placeholder="Votre adresse e-mail"
           buttonLabel="M'inscrire"
         />
