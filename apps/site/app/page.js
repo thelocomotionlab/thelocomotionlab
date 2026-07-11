@@ -10,6 +10,7 @@ import Script from "next/script";
 import Image from "next/image";
 
 import EmailCapture, { MICRO_PROMESSE } from "@/components/EmailCapture";
+import ExplorerCarousel from "@/components/ExplorerCarousel";
 import ExplorerLiveIndicator from "@/components/ExplorerLiveIndicator";
 import { getRecentExplorer } from "@/lib/getRecentActivity";
 import { listArticleEntries } from "@/lib/contentRoutes.mjs";
@@ -172,13 +173,12 @@ function RegistrePanel({ rows }) {
         />
       ))}
 
-      <p className="mt-3 font-mono text-[11px] tracking-[0.16em] text-gray-600">
-        + EN PRÉPARATION —{" "}
+      <p className="mt-3 font-mono text-[11px] tracking-[0.16em]">
         <a
           href="#email"
           className="text-brand-accent-dark underline underline-offset-[3px] hover:text-brand-deep"
         >
-          ÊTRE PRÉVENU·E
+          ÊTRE PRÉVENU·E DES PROCHAINES PARUTIONS
         </a>
       </p>
     </div>
@@ -189,62 +189,32 @@ function RegistrePanel({ rows }) {
    CARTES EXPLORER (feed récits + projets)
    ============================ */
 
-// Méta de carte : « Récit · 09/12/2025 » ou « Projet · En cours » /
-// « Projet · Terminé le 30/11/2025 » (mêmes règles que le pilier /explorer).
-function ExplorerCardMeta({ item }) {
-  const kindLabel = item.type === "Projet" ? "Projet" : "Récit";
+// Items du carrousel, pré-formatés en chaînes pour le composant client :
+// « Récit · 09/12/2025 » ou « Projet · En cours » / « Projet · Terminé le
+// 30/11/2025 » (mêmes règles que le pilier /explorer).
+function shapeCarouselItem(item) {
+  const isProjet = item.type === "Projet";
 
-  let detail = null;
-  if (item.type === "Projet") {
-    if (item.status === "En cours") {
-      detail = <span className="font-bold text-brand-accent-dark">En cours</span>;
-    } else if (item.status === "Terminé" && item.completedAt) {
-      detail = `Terminé le ${item.completedAt.toLocaleDateString("fr-FR")}`;
-    } else {
-      detail = item.status;
+  let meta = null;
+  if (isProjet) {
+    if (item.status === "Terminé" && item.completedAt) {
+      meta = `Terminé le ${item.completedAt.toLocaleDateString("fr-FR")}`;
+    } else if (item.status !== "En cours") {
+      meta = item.status;
     }
   } else if (item.date) {
-    detail = item.date.toLocaleDateString("fr-FR");
+    meta = item.date.toLocaleDateString("fr-FR");
   }
 
-  return (
-    <span className="block truncate text-[11px] font-medium uppercase tracking-[0.1em] text-gray-500 md:mb-1">
-      {kindLabel}
-      {detail ? <> · {detail}</> : null}
-    </span>
-  );
-}
-
-// Carte : bloc vertical 250px sur desktop, ligne compacte (vignette 78×62)
-// sur mobile — un seul markup, deux dispositions responsive.
-function ExplorerCard({ item }) {
-  return (
-    <Link
-      href={item.href}
-      className="group flex w-full items-center gap-3 overflow-hidden rounded-[10px] bg-white shadow-[0_16px_40px_rgba(0,0,0,0.35)] transition-transform duration-200 md:block md:w-[250px] md:rounded-[14px] md:hover:-translate-y-1.5"
-    >
-      <span className="relative block h-[62px] w-[78px] flex-none md:h-[130px] md:w-full">
-        {item.cover ? (
-          <Image
-            src={item.cover}
-            alt=""
-            fill
-            className="object-cover"
-            sizes="(min-width: 768px) 250px, 78px"
-            loading="lazy"
-          />
-        ) : (
-          <span className="absolute inset-0 bg-brand-bg" aria-hidden="true" />
-        )}
-      </span>
-      <span className="block min-w-0 flex-1 py-2 pr-3 md:px-4 md:pb-4 md:pt-3.5">
-        <ExplorerCardMeta item={item} />
-        <span className="block text-[15px] font-semibold leading-[1.3] text-brand-deep">
-          {item.title}
-        </span>
-      </span>
-    </Link>
-  );
+  return {
+    key: `${item.type}-${item.slug}`,
+    href: item.href,
+    cover: item.cover,
+    title: item.title,
+    kindLabel: isProjet ? "Projet" : "Récit",
+    enCours: isProjet && item.status === "En cours",
+    meta,
+  };
 }
 
 /* ============================
@@ -303,8 +273,8 @@ export default async function HomePage() {
   };
 
   const registreRows = getRegistreRows();
-  // Cartes Explorer : 3 dernières entrées du feed terrain (récits + projets).
-  const explorerItems = getRecentExplorer({ limit: 3 });
+  // Carrousel Explorer : dernières entrées du feed terrain (récits + projets).
+  const explorerItems = getRecentExplorer({ limit: 8 }).map(shapeCarouselItem);
 
   return (
     // -mb-12 : annule le mt-12 du Footer partagé pour que la bande email
@@ -391,7 +361,7 @@ export default async function HomePage() {
               href="/comprendre"
               className="mt-7 inline-block rounded-full bg-brand-accent px-[26px] py-3 text-[15.5px] font-semibold text-white shadow-[0_6px_18px_rgba(0,0,0,0.15)] transition hover:bg-brand-primary-dark"
             >
-              Ouvrir la section →
+              Voir tout
             </Link>
           </div>
 
@@ -437,26 +407,27 @@ export default async function HomePage() {
             la robustesse se construit et se vérifie, une aventure à la fois.
           </p>
 
-          <div className="mt-8 flex flex-col gap-3 md:mt-[38px] md:flex-row md:flex-wrap md:gap-5">
-            {explorerItems.map((item) => (
-              <ExplorerCard key={`${item.type}-${item.slug}`} item={item} />
-            ))}
-          </div>
-
-          <div className="mt-7 flex flex-wrap items-center gap-5 md:mt-[34px] md:gap-[22px]">
-            <Link
-              href="/explorer"
-              className="inline-block rounded-full border-[1.5px] border-white/70 px-[26px] py-3 text-[15.5px] font-semibold text-white transition hover:bg-white hover:text-brand-deep-dark"
-            >
-              Tous les récits &amp; projets →
-            </Link>
-            <ExplorerLiveIndicator />
+          <div className="mt-8 md:mt-[38px]">
+            <ExplorerCarousel
+              items={explorerItems}
+              actions={
+                <>
+                  <Link
+                    href="/explorer"
+                    className="inline-block rounded-full border-[1.5px] border-white/70 px-[26px] py-3 text-[15.5px] font-semibold text-white transition hover:bg-white hover:text-brand-deep-dark"
+                  >
+                    Voir tout
+                  </Link>
+                  <ExplorerLiveIndicator />
+                </>
+              }
+            />
           </div>
         </div>
       </section>
 
       {/* ── 03 · INVENTAIRE — que trouve-t-on dans ce labo ? ───────── */}
-      <section className="bg-brand-bg bg-lab-grid px-6 py-11 [background-size:28px_28px] md:px-16 md:pb-[76px] md:pt-[84px] md:[background-size:32px_32px]">
+      <section className="bg-brand-bg px-6 py-11 md:px-16 md:pb-[76px] md:pt-[84px]">
         <div className="mx-auto max-w-[1000px]">
           <h2 className="text-center font-heading text-[28px] font-bold text-brand-primary-dark md:text-[40px]">
             Que trouve-t-on dans ce labo&nbsp;?
