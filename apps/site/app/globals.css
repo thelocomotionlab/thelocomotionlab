@@ -67,14 +67,18 @@ select:focus-visible {
   outline: none;
 }
 
-/* Titres "hors prose" (Hero, etc.) */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-heading);
+/* Titres "hors prose" (Hero, etc.) — dans @layer base pour rester
+   surchargeable par les utilitaires (ex. font-lora sur le H2 Explorer) :
+   une règle hors layer écraserait toute classe Tailwind. */
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+  }
 }
 
 /* Bloc markdown .prose : césure automatique */
