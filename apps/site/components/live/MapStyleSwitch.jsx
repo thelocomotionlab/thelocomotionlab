@@ -1,11 +1,12 @@
 // components/live/MapStyleSwitch.jsx
 //
-// Sélecteur Topo / Satellite. Deux habillages : overlay sur la carte (mobile,
-// 2a) et pastille de header (desktop, 2d — fond gris, sans ombre).
+// Sélecteur Plan / Topo / Satellite. Deux habillages : overlay sur la carte
+// (mobile, 2a) et pastille de header (desktop, 2d — fond gris, sans ombre).
 
 "use client";
 
 const OPTIONS = [
+  { id: "osm", label: "Plan" },
   { id: "topo", label: "Topo" },
   { id: "sat", label: "Satellite" },
 ];

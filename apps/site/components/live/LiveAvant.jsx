@@ -11,7 +11,6 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 
 import { liveConfig } from "@/lib/liveConfig";
-import { dayIndex } from "@/lib/liveTime";
 import { useReferenceTrack } from "@/lib/useReferenceTrack";
 import Countdown from "./Countdown";
 import EmailCaptureCard from "./EmailCaptureCard";
@@ -23,34 +22,13 @@ const LiveMap = dynamic(() => import("./LiveMap"), {
   loading: () => <div className="absolute inset-0 animate-pulse bg-brand-primary/10" />,
 });
 
-/** Badge « J−44 » : jours calendaires français restants avant le départ. */
-function badgeJMoins(dateDebut) {
-  const days = Math.max(0, dayIndex(dateDebut, new Date().toISOString()) - 1);
-  return `J−${days}`;
-}
-
 export default function LiveAvant() {
   const { aventure, live } = liveConfig;
   const reference = useReferenceTrack(live.referenceTrack);
-  const [mapStyle, setMapStyle] = useState("topo");
+  const [mapStyle, setMapStyle] = useState("osm");
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-3.5">
-      {/* Ligne identité + badge J−x */}
-      <div className="flex items-center justify-between pt-1">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-[30px] w-[30px] items-center justify-center rounded-lg bg-brand-primary">
-            <span className="h-[13px] w-[13px] -rotate-[30deg] rounded-full border-[2.2px] border-brand-bg border-r-transparent" />
-          </span>
-          <span className="font-heading text-xs font-medium text-brand-text">
-            The Locomotion Lab
-          </span>
-        </div>
-        <span className="inline-flex items-center rounded-[20px] bg-brand-primary/22 px-[11px] py-[5px] font-mono text-[10.5px] font-bold tracking-[0.1em] text-brand-primary-dark">
-          {badgeJMoins(aventure.dateDebut)}
-        </span>
-      </div>
-
       {/* Hero */}
       <div>
         <p className="font-mono text-[12px] font-bold uppercase tracking-[0.25em] text-brand-slate">
@@ -84,8 +62,6 @@ export default function LiveAvant() {
 
       <Countdown dateDebut={aventure.dateDebut} />
 
-      <EmailCaptureCard title="Être prévenu·e du départ" />
-
       {/* Itinéraire prévisionnel */}
       <div>
         <div className="mb-[9px] flex items-center justify-between">
@@ -110,6 +86,8 @@ export default function LiveAvant() {
           waypoints={live.waypoints ?? []}
         />
       )}
+
+      <EmailCaptureCard title="Être prévenu·e du départ" />
     </div>
   );
 }

@@ -16,6 +16,21 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { simplifyTrack } from "@/lib/simplify";
 
 const RASTER_STYLES = {
+  // Fond « Plan » (OSM standard) : le même que les cartes des projets
+  // (packages/tracking) — fond par défaut.
+  osm: {
+    version: 8,
+    sources: {
+      raster: {
+        type: "raster",
+        tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+        tileSize: 256,
+        maxzoom: 19,
+        attribution: "© OpenStreetMap contributors",
+      },
+    },
+    layers: [{ id: "raster", type: "raster", source: "raster" }],
+  },
   topo: {
     version: 8,
     sources: {
@@ -63,8 +78,18 @@ function boundsOf(coords) {
   return bounds;
 }
 
-/** Les 4 couches du design (2 halos crème + pointillé brun + parcouru ambre). */
-function addTrackLayers(map) {
+// Couleurs des traces par fond : sur le Plan OSM (fond par défaut, coloré),
+// on reprend la paire éprouvée des cartes de projets — itinéraire bleu,
+// vécu orange ; sur Topo/Satellite, la palette du design live (brun/ambre).
+const TRACE_COLORS = {
+  osm: { reference: "#007bff", done: "#ff5500" },
+  topo: { reference: "#9A6044", done: "#EFB159" },
+  sat: { reference: "#9A6044", done: "#EFB159" },
+};
+
+/** Les 4 couches du design (2 halos crème + itinéraire pointillé + vécu). */
+function addTrackLayers(map, styleId) {
+  const colors = TRACE_COLORS[styleId] ?? TRACE_COLORS.osm;
   map.addSource("reference", { type: "geojson", data: lineFeature([]) });
   map.addSource("done", { type: "geojson", data: lineFeature([]) });
   map.addLayer({
@@ -80,10 +105,10 @@ function addTrackLayers(map) {
     source: "reference",
     layout: { "line-join": "round" },
     paint: {
-      "line-color": "#9A6044",
+      "line-color": colors.reference,
       "line-width": 2.4,
       "line-dasharray": [2, 1.6],
-      "line-opacity": 0.75,
+      "line-opacity": 0.8,
     },
   });
   map.addLayer({
@@ -98,7 +123,7 @@ function addTrackLayers(map) {
     type: "line",
     source: "done",
     layout: { "line-cap": "round", "line-join": "round" },
-    paint: { "line-color": "#EFB159", "line-width": 4.5 },
+    paint: { "line-color": colors.done, "line-width": 4.5 },
   });
 }
 
@@ -133,6 +158,8 @@ export default function LiveMap({ referenceCoords, doneCoords, mapStyle, markerM
   const markerRef = useRef(null);
   const fittedRef = useRef("none"); // "none" | "done" | "reference"
   const dataRef = useRef({ reference: [], done: [] });
+  // Fond initial figé pour l'init (l'effet ne tourne qu'une fois).
+  const initialStyleRef = useRef(mapStyle);
 
   // Données simplifiées ; la ref (synchronisée en effet) sert aux re-poses de
   // style, dont le callback vit plus longtemps qu'un rendu.
@@ -149,16 +176,17 @@ export default function LiveMap({ referenceCoords, doneCoords, mapStyle, markerM
 
   // Initialisation (une fois).
   useEffect(() => {
+    const styleId = initialStyleRef.current;
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: RASTER_STYLES.topo,
+      style: RASTER_STYLES[styleId] ?? RASTER_STYLES.osm,
       center: [6.27, 44.93],
       zoom: 8.6,
       attributionControl: { compact: true },
     });
     mapRef.current = map;
     map.on("load", () => {
-      addTrackLayers(map);
+      addTrackLayers(map, styleId);
       pushData(map, dataRef.current);
     });
     return () => {
@@ -173,9 +201,9 @@ export default function LiveMap({ referenceCoords, doneCoords, mapStyle, markerM
     const map = mapRef.current;
     if (!map) return;
     if (!map.isStyleLoaded()) return; // le premier fond est posé par "load"
-    map.setStyle(RASTER_STYLES[mapStyle] ?? RASTER_STYLES.topo);
+    map.setStyle(RASTER_STYLES[mapStyle] ?? RASTER_STYLES.osm);
     map.once("styledata", () => {
-      if (!map.getSource("reference")) addTrackLayers(map);
+      if (!map.getSource("reference")) addTrackLayers(map, mapStyle);
       pushData(map, dataRef.current);
     });
   }, [mapStyle]);

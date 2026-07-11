@@ -33,7 +33,7 @@ const LiveMap = dynamic(() => import("./LiveMap"), {
 
 export default function LiveEnCours({ timer }) {
   const { aventure, live } = liveConfig;
-  const [mapStyle, setMapStyle] = useState("topo");
+  const [mapStyle, setMapStyle] = useState("osm");
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const positions = useLivePositions({ pollMs: live.positionsPollMs });
