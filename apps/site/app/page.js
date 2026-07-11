@@ -12,6 +12,7 @@ import Image from "next/image";
 import EmailCapture, { MICRO_PROMESSE } from "@/components/EmailCapture";
 import ExplorerCarousel from "@/components/ExplorerCarousel";
 import ExplorerLiveIndicator from "@/components/ExplorerLiveIndicator";
+import RegistreScroller from "@/components/RegistreScroller";
 import { getExplorerCarouselItems } from "@/lib/carouselItems";
 import { listArticleEntries } from "@/lib/contentRoutes.mjs";
 
@@ -70,9 +71,10 @@ const REGISTRE_BADGES = {
   },
 };
 
-// Le panneau reste lisible avec 4 lignes maximum ; publiés d'abord, puis
-// « à paraître », puis « à venir », par date décroissante dans chaque groupe.
-const REGISTRE_MAX_ROWS = 4;
+// La zone du registre défile (RegistreScroller) : on borne large ; publiés
+// d'abord, puis « à paraître », puis « à venir », par date décroissante
+// dans chaque groupe.
+const REGISTRE_MAX_ROWS = 8;
 
 function getRegistreRows() {
   const entries = listArticleEntries().filter((e) => e.kind === "article");
@@ -104,17 +106,11 @@ function getRegistreRows() {
     }));
 }
 
-function RegistreRow({ row, index, isLast, rowCount }) {
+function RegistreRow({ row, isLast }) {
   const badge = REGISTRE_BADGES[row.status];
-  // Mobile : registre limité à 2 lignes (README du handoff) — la dernière
-  // ligne VISIBLE (mobile comme desktop) ne porte pas de séparateur.
-  const isLastMobile = index === Math.min(rowCount, 2) - 1;
   const rowClassName = [
-    index >= 2 ? "hidden md:flex" : "flex",
-    "items-center gap-3 px-1 py-[18px] md:gap-4",
-    "border-brand-primary-dark/25",
-    isLastMobile ? "" : "border-b",
-    isLast ? "md:border-b-0" : "md:border-b",
+    "flex snap-start items-center gap-3 px-1 py-[18px] md:gap-4",
+    isLast ? "" : "border-b border-brand-primary-dark/25",
     // Le prototype ne met pas de hover sur la ligne estompée « À VENIR »
     // (estompe adoucie à 65 % pour rester lisible).
     row.status === "aVenir"
@@ -153,22 +149,19 @@ function RegistreRow({ row, index, isLast, rowCount }) {
 
 function RegistrePanel({ rows }) {
   return (
-    <div className="rounded border border-brand-primary-dark/45 border-t-[3px] border-t-brand-primary-dark bg-white px-6 pb-6 pt-7 shadow-[0_6px_24px_rgba(0,0,0,0.1)] md:px-8 md:pb-[26px] md:pt-[30px]">
-      <div className="border-b-[1.5px] border-brand-primary-dark/40 pb-2.5">
+    <div className="rounded border border-brand-primary-dark/45 border-t-[3px] border-t-brand-primary-dark bg-white px-6 pb-6 shadow-[0_6px_24px_rgba(0,0,0,0.1)] md:px-8 md:pb-[26px]">
+      {/* En-tête centré verticalement entre le bord supérieur et le filet. */}
+      <div className="flex items-center border-b-[1.5px] border-brand-primary-dark/40 py-[18px] md:py-5">
         <span className="font-mono text-[12px] font-bold tracking-[0.2em] text-gray-600">
           DERNIERS ARTICLES
         </span>
       </div>
 
-      {rows.map((row, i) => (
-        <RegistreRow
-          key={row.slug}
-          row={row}
-          index={i}
-          isLast={i === rows.length - 1}
-          rowCount={rows.length}
-        />
-      ))}
+      <RegistreScroller>
+        {rows.map((row, i) => (
+          <RegistreRow key={row.slug} row={row} isLast={i === rows.length - 1} />
+        ))}
+      </RegistreScroller>
 
       <p className="mt-3 font-mono text-[11px] tracking-[0.16em]">
         <a

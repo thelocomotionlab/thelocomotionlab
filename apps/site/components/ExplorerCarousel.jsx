@@ -14,6 +14,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import CardMeta from "@/components/CardMeta";
+import ScrollCue from "@/components/ScrollCue";
 
 function Card({ item, tone }) {
   const shadow =
@@ -82,12 +83,15 @@ export default function ExplorerCarousel({ items, actions = null, tone = "dark" 
   const scrollerRef = useRef(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
+  // Défilement vertical restant (carrousel mobile).
+  const [canDown, setCanDown] = useState(false);
 
   const update = useCallback(() => {
     const el = scrollerRef.current;
     if (!el) return;
     setCanPrev(el.scrollLeft > 4);
     setCanNext(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+    setCanDown(el.scrollTop < el.scrollHeight - el.clientHeight - 4);
   }, []);
 
   useEffect(() => {
@@ -112,16 +116,27 @@ export default function ExplorerCarousel({ items, actions = null, tone = "dark" 
         ref={scrollerRef}
         role="region"
         aria-label="Récits et projets récents"
-        // Mobile : carrousel VERTICAL — ~3 cartes et demie visibles (la
-        // suivante dépasse pour inviter au geste), accroche snap-y.
-        // Desktop : défilement horizontal ; marges négatives compensant le
-        // padding qui évite de rogner les ombres et le hover surélevé.
-        className="no-scrollbar flex max-h-[312px] snap-y flex-col gap-3 overflow-y-auto md:-mx-1 md:-mb-6 md:-mt-3 md:max-h-none md:snap-x md:flex-row md:gap-5 md:overflow-x-auto md:overflow-y-visible md:px-1 md:pb-6 md:pt-3"
+        // Mobile : carrousel VERTICAL — fenêtre de 3 cartes, accroche
+        // snap-y, chevron indicateur en dessous. Desktop : défilement
+        // horizontal ; marges négatives compensant le padding qui évite de
+        // rogner les ombres et le hover surélevé.
+        className="no-scrollbar flex max-h-[252px] snap-y flex-col gap-3 overflow-y-auto md:-mx-1 md:-mb-6 md:-mt-3 md:max-h-none md:snap-x md:flex-row md:gap-5 md:overflow-x-auto md:overflow-y-visible md:px-1 md:pb-6 md:pt-3"
       >
         {items.map((item) => (
           <Card key={item.key} item={item} tone={tone} />
         ))}
       </div>
+
+      {canDown && (
+        <ScrollCue
+          tone={tone}
+          className="mt-3 md:hidden"
+          label="Faire défiler les parutions"
+          onClick={() =>
+            scrollerRef.current?.scrollBy({ top: 100, behavior: "smooth" })
+          }
+        />
+      )}
 
       <div className="mt-7 flex flex-wrap items-center gap-5 md:mt-[34px] md:gap-[22px]">
         {actions}
