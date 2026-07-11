@@ -99,30 +99,36 @@ export default function ProjetBody({
       )}
 
       <div className="bg-white rounded-xl shadow-card p-4 sm:p-6 md:p-10">
-        <h1 className="text-2xl text-brand-primary md:text-5xl font-sans font-bold mb-3 text-center">
+        {/* Titre à la convention des pages (bleu profond + liseré ocre),
+            centré ; date et auteur à gauche, en Lora italique. */}
+        <h1 className="text-3xl text-brand-slate-dark md:text-5xl font-heading font-bold mb-4 text-center">
           {project.title}
         </h1>
-
+        <div
+          className="mx-auto mb-5 h-[3px] w-16 rounded-full bg-brand-accent"
+          aria-hidden="true"
+        />
         {(project.date || project.author) && (
-          <div className="text-sm text-gray-500 mb-8 text-center">
+          <div className="mb-8 flex flex-wrap items-center gap-x-2 font-lora text-[17px] italic text-brand-deep">
             {project.author && (
-              <p>
+              <span>
                 Par{" "}
                 <Link
                   href="/about"
-                  className="font-bold text-brand-deep hover:text-brand-accent hover:underline"
+                  className="font-medium hover:text-brand-accent-dark hover:underline"
                 >
                   {project.author}
                 </Link>
-              </p>
+              </span>
             )}
+            {project.author && project.date && <span aria-hidden="true">·</span>}
             {project.date && (
-              <p>
-                Le{" "}
+              <span>
+                le{" "}
                 <time dateTime={new Date(project.date).toISOString()}>
                   {new Date(project.date).toLocaleDateString("fr-FR")}
                 </time>
-              </p>
+              </span>
             )}
           </div>
         )}

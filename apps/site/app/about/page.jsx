@@ -87,6 +87,10 @@ export default function AboutPage() {
         </p>
       </section>
 
+      {/* Signature */}
+      <p className="mt-10 text-right font-lora text-2xl italic text-brand-deep">
+        Valentin
+      </p>
     </div>
   );
 }

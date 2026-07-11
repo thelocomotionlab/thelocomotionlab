@@ -55,7 +55,7 @@ export default function QuetePage() {
               faisons vivre assis, au chaud, sur-nourris et sous-stimulés. Cette
               discordance évolutive entre ce pour quoi nous sommes construits et ce que
               nous vivons a un coût : des organismes fragiles, qui se retrouvent
-              usés  avant même d'avoir servi.
+              usés avant même d&rsquo;avoir servi.
             </p>
           </section>
 
@@ -65,15 +65,15 @@ export default function QuetePage() {
               La robustesse
             </h2>
             <p>
-              L'évolution des êtres vivants, végétaux ou animaux, s'est toujours déroulée
-              dans des contextes incertains, ceux-ci devant régulièrement s'adapter à de nouvelles
+              L&rsquo;évolution des êtres vivants, végétaux ou animaux, s&rsquo;est toujours déroulée
+              dans des contextes incertains, ceux-ci devant régulièrement s&rsquo;adapter à de nouvelles
               situations comme le manque de ressources, la présence de nouveaux prédateurs,
               ou des températures inhabituelles. Cette instabilité continue a créé des organismes
               complets, à la fois adaptés, adaptables, mais aussi profondément résilients. Cette
               caractéristique a un nom, introduit par le biophysicien Olivier Hamant : la robustesse. 
-              Ce concept, appliqué à la physiologie humaine, est le cœur pulsant du labo. Il s'oppose 
-              par essence à la notion de performance qui régit notre monde moderne, et visant l'optimisation
-              perpétuelle au prix de n'être plus capable de faire face à l'incertitude.
+              Ce concept, appliqué à la physiologie humaine, est le cœur pulsant du labo. Il s&rsquo;oppose 
+              par essence à la notion de performance qui régit notre monde moderne, et visant l&rsquo;optimisation
+              perpétuelle au prix de n&rsquo;être plus capable de faire face à l&rsquo;incertitude.
             </p>
           </section>
 
@@ -84,7 +84,7 @@ export default function QuetePage() {
             </h2>
             <p>
               Pour explorer cette robustesse physiologique, il faut comprendre, mais aussi explorer.
-              L'un ne va pas sans l'autre
+              L&rsquo;un ne va pas sans l&rsquo;autre.
               Deux gestes complémentaires. Comprendre le corps comme un
               scientifique : lire les études, mesurer, douter, garder ce qui
               résiste à l&rsquo;examen. L&rsquo;utiliser comme un animal :
