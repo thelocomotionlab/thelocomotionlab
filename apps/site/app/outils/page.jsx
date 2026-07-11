@@ -4,6 +4,7 @@
 // sur la suite. Rien de daté, rien de promis.
 import Link from "next/link";
 import { Gauge } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 
 export const metadata = {
   title: "Outils – Les instruments du labo",
@@ -37,14 +38,11 @@ export const metadata = {
 export default function OutilsPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
-      <header className="text-center mb-10">
-        <h1 className="text-3xl font-bold font-heading mb-2 text-brand-primary">
-          Outils
-        </h1>
-        <p className="text-lg text-gray-700">
-          <em>Les instruments du Lab</em>
-        </p>
-      </header>
+      <PageHeader
+        kicker="/ LES INSTRUMENTS"
+        title="Outils"
+        tagline="les instruments du Lab"
+      />
 
       <article className="bg-white rounded-2xl shadow-card p-6 flex flex-col transform transition duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1">
         <div className="flex items-center gap-3 mb-3">

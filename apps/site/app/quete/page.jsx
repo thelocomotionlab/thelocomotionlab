@@ -7,6 +7,7 @@
 // Valentin écrira la version définitive (1 200 – 1 800 mots).
 import Link from "next/link";
 import EmailCapture from "@/components/EmailCapture";
+import PageHeader from "@/components/PageHeader";
 
 export const metadata = {
   // [PROVISOIRE] Descriptions meta à affiner avec les textes définitifs (PR5).
@@ -41,17 +42,11 @@ export const metadata = {
 export default function QuetePage() {
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <header className="max-w-3xl mx-auto text-center mb-10">
-        <h1 className="text-3xl md:text-4xl font-bold font-heading mb-3 text-brand-primary">
-          La quête
-        </h1>
-        <p className="text-lg text-gray-700">
-          <em>
-            Comprendre le corps comme un scientifique, l&rsquo;utiliser comme
-            un animal.
-          </em>
-        </p>
-      </header>
+      <PageHeader
+        kicker="/ LE LAB"
+        title="La quête"
+        tagline="comprendre le corps comme un scientifique, l'utiliser comme un animal"
+      />
 
       <div className="bg-white rounded-xl shadow-card p-4 sm:p-6 md:p-10">
         {/* [Brief texte n°2 — 1 200-1 800 mots : les 5 sections ci-dessous.

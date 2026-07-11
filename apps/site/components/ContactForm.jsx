@@ -4,6 +4,7 @@
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button, Field } from "@locomotionlab/ui";
+import PageHeader from "@/components/PageHeader";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -125,9 +126,7 @@ function ContactFormInner({ initialMessage = "" }) {
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-12 text-gray-800 font-sans">
-      <h1 className="text-3xl font-sans font-bold mb-8 text-brand-primary">
-        Contact
-      </h1>
+      <PageHeader kicker="/ LE LAB" title="Contact" />
 
       <p className="mb-6">
         Une question, une idée, une envie de collaborer ? Écris-nous via ce

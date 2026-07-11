@@ -2,12 +2,12 @@
 //
 // Pilier « Explorer » : le terrain. Fusionne les récits (public/articles,
 // type: "recit") et les projets (public/projets), publiés uniquement, triés
-// par activityAt ?? date (décroissant). Étiquette discrète « Récit » /
-// « Projet » sur chaque carte ; les projets gardent leur statut et leurs
-// dernières notes comme sur l'ancien index /projets.
-import Link from "next/link";
-import Image from "next/image";
+// par activityAt ?? date (décroissant), présentés en deux sections
+// « Projets » / « Récits » (composant client ExplorerSections, avec filtre).
+// Les projets gardent leur statut et leurs dernières notes.
 import LiveStatusBlock from "@/components/LiveStatusBlock";
+import PageHeader from "@/components/PageHeader";
+import ExplorerSections from "@/components/ExplorerSections";
 import { listArticleEntries, listProjetEntries } from "@/lib/contentRoutes.mjs";
 import { extractProjectNotes } from "@/lib/extractProjectNotes";
 
@@ -58,7 +58,6 @@ function getExplorerItems() {
     return {
       slug: e.slug,
       kind: e.kind, // "recit" | "projet"
-      kindLabel: e.kind === "recit" ? "Récit" : "Projet",
       href: `/explorer/${e.slug}`,
       title: e.data.title || e.slug,
       description: e.data.description || "",
@@ -86,79 +85,6 @@ function statusLine(item) {
   return item.status;
 }
 
-function ExplorerCard({ item, notes = [] }) {
-  const lastNotes = notes.slice(0, 2);
-
-  return (
-    <div className="relative w-full max-w-[22rem] h-full">
-      <Link
-        href={item.href}
-        className="group bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col"
-      >
-        {item.cover ? (
-          <div className="relative w-full h-44">
-            <Image
-              src={item.cover}
-              alt={`Illustration : ${item.title}`}
-              fill
-              className="object-cover"
-              sizes="(min-width: 768px) 352px, 100vw"
-              loading="lazy"
-            />
-          </div>
-        ) : (
-          <div className="w-full h-44 bg-brand-bg" aria-hidden="true" />
-        )}
-
-        <div className="p-5 flex flex-col flex-1">
-          {/* Étiquette discrète Récit / Projet, complétée du statut projet */}
-          <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
-            {item.kindLabel}
-            {item.kind === "projet" && statusLine(item)
-              ? ` · ${statusLine(item)}`
-              : ""}
-          </p>
-
-          <h3 className="text-lg font-semibold text-brand-deep group-hover:underline mb-2">
-            {item.title}
-          </h3>
-
-          {/* Description en Lora italique, centrée verticalement entre le
-              titre et le bloc du bas (notes ou date). */}
-          <div className="flex flex-1 items-center py-1">
-            {item.description ? (
-              <p className="font-lora text-[15px] italic text-gray-700 line-clamp-3">
-                {item.description}
-              </p>
-            ) : null}
-          </div>
-
-          {item.kind === "projet" && lastNotes.length > 0 ? (
-            <div className="pt-3 border-t border-gray-200">
-              <p className="text-xs font-semibold text-gray-500 mb-1">
-                Dernières notes :
-              </p>
-              <ul className="space-y-1">
-                {lastNotes.map((note, i) => (
-                  <li key={i} className="text-xs text-gray-600">
-                    {note.date ? `${note.date} – ${note.title}` : note.title}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : (
-            <div className="pt-4 text-xs text-gray-500">
-              {item.kind === "recit" && item.date && (
-                <p>Publié le {item.date.toLocaleDateString("fr-FR")}</p>
-              )}
-            </div>
-          )}
-        </div>
-      </Link>
-    </div>
-  );
-}
-
 /**
  * Parse une date au format français "JJ/MM/AAAA" et renvoie un timestamp
  * pour trier les notes de projet (les plus récentes d'abord).
@@ -176,51 +102,49 @@ function frenchDateKey(str) {
 export default function ExplorerPage() {
   const items = getExplorerItems();
 
-  // Notes pré-calculées au build pour les projets, triées par date desc.
-  const notesMap = Object.fromEntries(
-    items
-      .filter((item) => item.kind === "projet")
-      .map((item) => [
-        item.slug,
-        [...extractProjectNotes(item.slug)].sort(
-          (a, b) => frenchDateKey(b.date) - frenchDateKey(a.date)
-        ),
-      ])
-  );
+  // Items sérialisables pour le composant client : méta, date et notes
+  // pré-formatées en chaînes.
+  const shapeForClient = (item) => ({
+    slug: item.slug,
+    href: item.href,
+    title: item.title,
+    description: item.description,
+    cover: item.cover,
+    meta:
+      item.kind === "projet"
+        ? `Projet${statusLine(item) ? ` · ${statusLine(item)}` : ""}`
+        : "Récit",
+    dateLabel:
+      item.kind === "recit" && item.date
+        ? `Publié le ${item.date.toLocaleDateString("fr-FR")}`
+        : null,
+    notes:
+      item.kind === "projet"
+        ? [...extractProjectNotes(item.slug)]
+            .sort((a, b) => frenchDateKey(b.date) - frenchDateKey(a.date))
+            .slice(0, 2)
+        : [],
+  });
+
+  const projets = items.filter((i) => i.kind === "projet").map(shapeForClient);
+  const recits = items.filter((i) => i.kind === "recit").map(shapeForClient);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
-      {/* Header — écho de la section Explorer de l'accueil : kicker mono,
-          titre en Lora italique terracotta, tagline Ubuntu, liseré ocre. */}
-      <header className="max-w-3xl mx-auto text-center mb-10">
-        <p className="mb-3 font-mono text-[13px] font-bold tracking-[0.25em] text-brand-accent-dark">
-          / LE TERRAIN
-        </p>
-        <h1 className="font-lora text-4xl font-semibold italic text-brand-deep md:text-5xl">
-          Explorer
-          <span className="mt-2 block font-heading text-[20px] font-medium not-italic text-brand-primary-dark md:text-[24px]">
-            être son propre laboratoire
-          </span>
-        </h1>
-        <div
-          className="mx-auto mt-5 h-[3px] w-16 rounded-full bg-brand-accent"
-          aria-hidden="true"
+      {/* lg:px-6 : cale l'en-tête et les titres de sections sur le bord
+          gauche des grilles de cartes (colonnes de 22rem). */}
+      <div className="lg:px-6">
+        <PageHeader
+          kicker="/ LE TERRAIN"
+          title="Explorer"
+          tagline="être son propre laboratoire"
         />
-      </header>
 
-      {/* Bloc Live compact : badge EN DIRECT / « Prochain départ »,
-          même source d'état que la page /live. */}
-      <LiveStatusBlock />
+        {/* Bloc Live compact : badge EN DIRECT / « Prochain départ »,
+            même source d'état que la page /live. */}
+        <LiveStatusBlock />
 
-      {/* Grille fusionnée récits + projets */}
-      <div className="grid gap-6 justify-center justify-items-center grid-cols-1 sm:grid-cols-2 lg:[grid-template-columns:repeat(3,22rem)]">
-        {items.map((item) => (
-          <ExplorerCard
-            key={item.slug}
-            item={item}
-            notes={notesMap[item.slug] || []}
-          />
-        ))}
+        <ExplorerSections projets={projets} recits={recits} />
       </div>
     </div>
   );

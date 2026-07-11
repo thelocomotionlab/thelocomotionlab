@@ -15,6 +15,7 @@ import {
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
 
 function normalize(s) {
   return (s || "").toString().toLowerCase();
@@ -150,9 +151,7 @@ function SearchClientInner() {
 
   return (
     <div className="container mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold font-heading mb-4 text-brand-primary">
-        Recherche
-      </h1>
+      <PageHeader title="Recherche" />
 
       <form onSubmit={onSubmit} className="mb-8">
         <input

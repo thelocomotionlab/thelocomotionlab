@@ -1,4 +1,5 @@
 // app/about/page.jsx
+import PageHeader from "@/components/PageHeader";
 
 export const metadata = {
   title: "À propos – The Locomotion Lab",
@@ -32,9 +33,7 @@ export const metadata = {
 export default function AboutPage() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-12 text-gray-800 font-sans">
-      <h1 className="text-3xl font-sans font-bold mb-8 text-brand-primary">
-        À propos
-      </h1>
+      <PageHeader kicker="/ LE LAB" title="À propos" />
 
       {/* Vision */}
       <section className="mb-10">

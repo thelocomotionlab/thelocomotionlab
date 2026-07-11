@@ -7,6 +7,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import EmailCapture from "@/components/EmailCapture";
+import PageHeader from "@/components/PageHeader";
 import { listArticleEntries } from "@/lib/contentRoutes.mjs";
 
 export const metadata = {
@@ -165,39 +166,31 @@ export default function ComprendrePage() {
 
   return (
     <section className="py-12 max-w-6xl mx-auto px-4 sm:px-6">
-      {/* Header — écho de la section Comprendre de l'accueil : kicker mono,
-          titre Ubuntu bleu profond, tagline en Lora italique, liseré ocre. */}
-      <header className="max-w-4xl mx-auto text-left mb-10">
-        <p className="mb-3 font-mono text-[13px] font-bold tracking-[0.25em] text-brand-slate">
-          / LA SCIENCE
-        </p>
-        <h1 className="font-heading text-4xl font-bold text-brand-slate-dark md:text-5xl">
-          Comprendre
-          <span className="mt-2 block font-lora text-[22px] font-medium italic text-brand-deep md:text-[26px]">
-            décortiquer la science derrière les concepts
-          </span>
-        </h1>
-        <div
-          className="mt-5 h-[3px] w-16 rounded-full bg-brand-accent"
-          aria-hidden="true"
+      {/* lg:px-6 : cale l'en-tête sur le bord gauche de la grille de
+          cartes (colonnes de 22rem). */}
+      <div className="lg:px-6">
+        <PageHeader
+          kicker="/ LA SCIENCE"
+          title="Comprendre"
+          tagline="décortiquer la science derrière les concepts"
         />
-      </header>
 
-      {/* Grille : articles publiés puis cartes « à paraître » */}
-      {articles.length > 0 || teasers.length > 0 ? (
-        <div className="grid gap-6 justify-center justify-items-center grid-cols-1 sm:grid-cols-2 lg:[grid-template-columns:repeat(3,22rem)]">
-          {articles.map((article) => (
-            <ArticleCard key={article.slug} article={article} />
-          ))}
-          {teasers.map((article) => (
-            <TeaserCard key={article.slug} article={article} />
-          ))}
-        </div>
-      ) : (
-        <p className="text-center text-gray-600">
-          Les premiers articles sont à paraître.
-        </p>
-      )}
+        {/* Grille : articles publiés puis cartes « à paraître » */}
+        {articles.length > 0 || teasers.length > 0 ? (
+          <div className="grid gap-6 justify-center justify-items-center grid-cols-1 sm:grid-cols-2 lg:justify-start lg:[grid-template-columns:repeat(3,22rem)]">
+            {articles.map((article) => (
+              <ArticleCard key={article.slug} article={article} />
+            ))}
+            {teasers.map((article) => (
+              <TeaserCard key={article.slug} article={article} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-gray-600">
+            Les premiers articles sont à paraître.
+          </p>
+        )}
+      </div>
 
       <div className="mt-14 max-w-3xl mx-auto text-center">
         <h2 className="text-lg font-semibold text-brand-accent mb-3">

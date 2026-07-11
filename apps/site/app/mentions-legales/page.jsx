@@ -1,4 +1,5 @@
 // app/mentions-legales/page.jsx
+import PageHeader from "@/components/PageHeader";
 
 export const metadata = {
   title: "Mentions légales – The Locomotion Lab",
@@ -32,9 +33,7 @@ export const metadata = {
 export default function MentionsPage() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-12 text-gray-800 font-sans">
-      <h1 className="text-3xl font-sans font-bold mb-6 text-brand-primary">
-        Mentions légales
-      </h1>
+      <PageHeader title="Mentions légales" />
 
       <section className="mb-8">
         <h2 className="text-xl font-sans font-semibold mb-2 text-brand-deep">

@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { Mail } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 
 export default function SoutenirSection() {
   const [email, setEmail] = useState("");
@@ -41,9 +42,9 @@ export default function SoutenirSection() {
 
   return (
     <section className="py-10 text-center">
-      <h2 className="text-3xl font-bold mb-6 text-brand-primary text-center">
-        Soutenir l&apos;Exploration
-      </h2>
+      <div className="mx-auto max-w-2xl px-4 text-left">
+        <PageHeader kicker="/ LE LAB" title="Soutenir l'exploration" />
+      </div>
 
       <p className="text-lg md:text-xl text-brand-text opacity-90 mb-8 max-w-2xl mx-auto px-4">
         Le{" "}

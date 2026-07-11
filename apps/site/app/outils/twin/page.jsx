@@ -6,6 +6,7 @@
 // marquées À REMPLACER) → CTA cohorte → capture email.
 import Link from "next/link";
 import EmailCapture from "@/components/EmailCapture";
+import PageHeader from "@/components/PageHeader";
 
 export const metadata = {
   // [PROVISOIRE] Descriptions meta à affiner avec les textes définitifs (PR5).
@@ -40,17 +41,11 @@ export const metadata = {
 export default function TwinTeaserPage() {
   return (
     <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
-      <header className="text-center mb-10">
-        <h1 className="text-3xl md:text-4xl font-bold font-heading mb-3 text-brand-primary">
-          Locomotion Twin
-        </h1>
-        {/* Promesse en une phrase. */}
-        <p className="text-lg text-gray-700">
-          <em>
-            Un calculateur de plan de pacing construit par data analyse approfondie de tes données d&rsquo;entraînement
-          </em>
-        </p>
-      </header>
+      <PageHeader
+        kicker="/ LES INSTRUMENTS"
+        title="Locomotion Twin"
+        tagline="un calculateur de plan de pacing construit par data analyse approfondie de tes données d'entraînement"
+      />
 
       <div className="bg-white rounded-xl shadow-card p-4 sm:p-6 md:p-10">
 
