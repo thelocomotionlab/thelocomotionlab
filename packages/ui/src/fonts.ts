@@ -19,6 +19,10 @@ export const ubuntu = Ubuntu({
 export const lora = Lora({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  // Les VRAIES italiques Lora (dessin calligraphique) : sans ce réglage,
+  // next/font ne charge que le style normal et le navigateur synthétise un
+  // faux italique penché, loin de la voix « cursive » du design.
+  style: ["normal", "italic"],
   variable: "--font-lora",
   display: "swap",
 });
