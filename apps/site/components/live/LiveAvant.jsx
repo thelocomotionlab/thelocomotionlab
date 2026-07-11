@@ -34,7 +34,7 @@ export default function LiveAvant() {
         <p className="font-mono text-[12px] font-bold uppercase tracking-[0.25em] text-brand-slate">
           / Prochain départ
         </p>
-        <h1 className="m-0 mt-1.5 font-heading text-[24px] font-bold leading-[1.15] text-brand-slate-dark sm:text-[28px]">
+        <h1 className="m-0 mt-1.5 font-heading text-4xl font-bold leading-[1.1] text-brand-slate-dark md:text-5xl">
           {aventure.nom}
         </h1>
         <div className="mt-[7px] flex flex-wrap gap-2.5 font-heading text-[12.5px] text-brand-text/70 sm:text-sm">

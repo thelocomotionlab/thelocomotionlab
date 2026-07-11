@@ -10,15 +10,16 @@ import { getRecentExplorer } from "./getRecentActivity";
 function shapeCarouselItem(item) {
   const isProjet = item.type === "Projet";
 
-  let meta = null;
+  // Le détail (après le « · ») est rendu en ocre par CardMeta.
+  let detail = null;
   if (isProjet) {
     if (item.status === "Terminé" && item.completedAt) {
-      meta = `Terminé le ${item.completedAt.toLocaleDateString("fr-FR")}`;
-    } else if (item.status !== "En cours") {
-      meta = item.status;
+      detail = `Terminé le ${item.completedAt.toLocaleDateString("fr-FR")}`;
+    } else {
+      detail = item.status || null;
     }
   } else if (item.date) {
-    meta = item.date.toLocaleDateString("fr-FR");
+    detail = item.date.toLocaleDateString("fr-FR");
   }
 
   return {
@@ -27,8 +28,7 @@ function shapeCarouselItem(item) {
     cover: item.cover,
     title: item.title,
     kindLabel: isProjet ? "Projet" : "Récit",
-    enCours: isProjet && item.status === "En cours",
-    meta,
+    detail,
   };
 }
 

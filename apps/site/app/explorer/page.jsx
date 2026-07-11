@@ -109,10 +109,8 @@ export default function ExplorerPage() {
     title: item.title,
     description: item.description,
     cover: item.cover,
-    meta:
-      item.kind === "projet"
-        ? `Projet${statusLine(item) ? ` · ${statusLine(item)}` : ""}`
-        : "Récit",
+    kind: item.kind === "projet" ? "Projet" : "Récit",
+    detail: item.kind === "projet" ? statusLine(item) : null,
     dateLabel:
       item.kind === "recit" && item.date
         ? `Publié le ${item.date.toLocaleDateString("fr-FR")}`

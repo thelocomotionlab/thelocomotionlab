@@ -6,6 +6,7 @@
 // badge « À paraître », SANS lien — leur corps n'est jamais rendu.
 import Link from "next/link";
 import Image from "next/image";
+import CardMeta from "@/components/CardMeta";
 import EmailCapture from "@/components/EmailCapture";
 import PageHeader from "@/components/PageHeader";
 import { listArticleEntries } from "@/lib/contentRoutes.mjs";
@@ -89,9 +90,7 @@ function ArticleCard({ article }) {
 
         <div className="p-5 flex flex-col flex-1">
           {/* Méta homogène avec les cartes du pilier Explorer. */}
-          <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
-            Article
-          </p>
+          <CardMeta kind="Article" className="mb-1" />
 
           <h3 className="text-lg font-semibold text-brand-deep group-hover:underline mb-2">
             {article.title}
@@ -140,9 +139,7 @@ function TeaserCard({ article }) {
 
         <div className="p-5 flex flex-col flex-1">
           {/* Méta homogène avec les cartes du pilier Explorer. */}
-          <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
-            Article · À paraître
-          </p>
+          <CardMeta kind="Article" detail="À paraître" className="mb-1" />
 
           <h3 className="text-lg font-semibold text-brand-deep mb-2">
             {article.title}

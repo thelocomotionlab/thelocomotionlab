@@ -13,11 +13,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import CardMeta from "@/components/CardMeta";
 
-// Nombre d'entrées de la liste compacte mobile (comme le design d'origine).
-const MOBILE_MAX_ITEMS = 3;
-
-function Card({ item, index, tone }) {
+function Card({ item, tone }) {
   const shadow =
     tone === "dark"
       ? "shadow-[0_16px_40px_rgba(0,0,0,0.35)]"
@@ -26,11 +24,11 @@ function Card({ item, index, tone }) {
   return (
     <Link
       href={item.href}
-      className={`group flex w-full items-center gap-3 overflow-hidden rounded-[10px] bg-white transition-transform duration-200 md:block md:w-[250px] md:shrink-0 md:snap-start md:rounded-[14px] md:hover:-translate-y-1.5 ${shadow} ${
-        index >= MOBILE_MAX_ITEMS ? "hidden md:block" : ""
-      }`}
+      className={`group flex w-full shrink-0 snap-start items-center gap-3 overflow-hidden rounded-[10px] bg-white transition-transform duration-200 md:block md:w-[250px] md:rounded-[14px] md:hover:-translate-y-1.5 ${shadow}`}
     >
-      <span className="relative block h-[62px] w-[78px] flex-none md:h-[130px] md:w-full">
+      {/* Vignette : s'étire sur toute la hauteur de la ligne (titres sur
+          2 lignes compris) ; bloc 130px plein cadre sur desktop. */}
+      <span className="relative block min-h-[62px] w-[78px] flex-none self-stretch md:h-[130px] md:w-full md:self-auto">
         {item.cover ? (
           <Image
             src={item.cover}
@@ -45,17 +43,7 @@ function Card({ item, index, tone }) {
         )}
       </span>
       <span className="block min-w-0 flex-1 py-2 pr-3 md:px-4 md:pb-4 md:pt-3.5">
-        <span className="block truncate text-[11px] font-medium uppercase tracking-[0.1em] text-gray-500 md:mb-1">
-          {item.kindLabel}
-          {item.enCours ? (
-            <>
-              {" "}
-              · <span className="font-bold text-brand-accent-dark">En cours</span>
-            </>
-          ) : item.meta ? (
-            <> · {item.meta}</>
-          ) : null}
-        </span>
+        <CardMeta kind={item.kindLabel} detail={item.detail} className="md:mb-1" />
         <span className="block text-[15px] font-semibold leading-[1.3] text-brand-deep">
           {item.title}
         </span>
@@ -124,13 +112,14 @@ export default function ExplorerCarousel({ items, actions = null, tone = "dark" 
         ref={scrollerRef}
         role="region"
         aria-label="Récits et projets récents"
-        // Desktop : marges négatives compensant le padding qui évite de
-        // rogner les ombres portées et le hover surélevé dans la zone
-        // scrollable. Mobile : simple pile verticale.
-        className="flex flex-col gap-3 md:no-scrollbar md:-mx-1 md:-mb-6 md:-mt-3 md:snap-x md:flex-row md:gap-5 md:overflow-x-auto md:px-1 md:pb-6 md:pt-3"
+        // Mobile : carrousel VERTICAL — ~3 cartes et demie visibles (la
+        // suivante dépasse pour inviter au geste), accroche snap-y.
+        // Desktop : défilement horizontal ; marges négatives compensant le
+        // padding qui évite de rogner les ombres et le hover surélevé.
+        className="no-scrollbar flex max-h-[312px] snap-y flex-col gap-3 overflow-y-auto md:-mx-1 md:-mb-6 md:-mt-3 md:max-h-none md:snap-x md:flex-row md:gap-5 md:overflow-x-auto md:overflow-y-visible md:px-1 md:pb-6 md:pt-3"
       >
-        {items.map((item, i) => (
-          <Card key={item.key} item={item} index={i} tone={tone} />
+        {items.map((item) => (
+          <Card key={item.key} item={item} tone={tone} />
         ))}
       </div>
 

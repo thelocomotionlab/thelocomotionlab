@@ -12,6 +12,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import CardMeta from "@/components/CardMeta";
 import ExplorerLiveIndicator from "@/components/ExplorerLiveIndicator";
 
 const FILTERS = [
@@ -57,9 +58,7 @@ function Card({ item }) {
         )}
 
         <div className="p-5 flex flex-col flex-1">
-          <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
-            {item.meta}
-          </p>
+          <CardMeta kind={item.kind} detail={item.detail} className="mb-1" />
 
           <h3 className="text-lg font-semibold text-brand-deep group-hover:underline mb-2">
             {item.title}
