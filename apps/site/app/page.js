@@ -154,12 +154,9 @@ function RegistreRow({ row, index, isLast, rowCount }) {
 function RegistrePanel({ rows }) {
   return (
     <div className="rounded border border-brand-primary-dark/45 border-t-[3px] border-t-brand-primary-dark bg-white px-6 pb-6 pt-7 shadow-[0_6px_24px_rgba(0,0,0,0.1)] md:px-8 md:pb-[26px] md:pt-[30px]">
-      <div className="flex items-baseline justify-between border-b-[1.5px] border-brand-primary-dark/40 pb-2.5">
+      <div className="border-b-[1.5px] border-brand-primary-dark/40 pb-2.5">
         <span className="font-mono text-[12px] font-bold tracking-[0.2em] text-gray-600">
-          REGISTRE DES ARTICLES
-        </span>
-        <span className="font-mono text-[12px] text-gray-600">
-          {new Date().getFullYear()}
+          DERNIERS ARTICLES
         </span>
       </div>
 
@@ -319,15 +316,26 @@ export default async function HomePage() {
               et de durer — puis le traduisent en pratiques concrètes,
               éprouvées sur le terrain.
             </p>
+            {/* Desktop : CTA dans la colonne texte ; mobile : sous le
+                registre (dupliqué ci-dessous). */}
             <Link
               href="/comprendre"
-              className="mt-7 inline-block rounded-full bg-brand-accent px-[26px] py-3 text-[15.5px] font-semibold text-white shadow-[0_6px_18px_rgba(0,0,0,0.15)] transition hover:bg-brand-primary-dark"
+              className="mt-7 hidden rounded-full bg-brand-accent px-[26px] py-3 text-[15.5px] font-semibold text-white shadow-[0_6px_18px_rgba(0,0,0,0.15)] transition hover:bg-brand-primary-dark md:inline-block"
             >
               Voir tout
             </Link>
           </div>
 
           <RegistrePanel rows={registreRows} />
+
+          <div className="-mt-4 md:hidden">
+            <Link
+              href="/comprendre"
+              className="inline-block rounded-full bg-brand-accent px-[26px] py-3 text-[15.5px] font-semibold text-white shadow-[0_6px_18px_rgba(0,0,0,0.15)] transition hover:bg-brand-primary-dark"
+            >
+              Voir tout
+            </Link>
+          </div>
         </div>
       </section>
 
