@@ -1,6 +1,6 @@
 import "./globals.css";
 import type { ReactNode } from "react";
-import { ubuntu, lora } from "@locomotionlab/ui/fonts";
+import { fontVariables } from "@locomotionlab/ui/fonts";
 
 export const metadata = {
   title: "Locomotion Lab — Template",
@@ -10,7 +10,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fr">
-      <body className={`${ubuntu.variable} ${lora.variable} font-sans`}>
+      <body className={`${fontVariables} font-sans`}>
         {children}
       </body>
     </html>
