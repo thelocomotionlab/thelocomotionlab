@@ -114,9 +114,10 @@ function RegistreRow({ row, index, isLast, rowCount }) {
     "border-brand-primary-dark/25",
     isLastMobile ? "" : "border-b",
     isLast ? "md:border-b-0" : "md:border-b",
-    // Le prototype ne met pas de hover sur la ligne estompée « À VENIR ».
+    // Le prototype ne met pas de hover sur la ligne estompée « À VENIR »
+    // (estompe adoucie à 65 % pour rester lisible).
     row.status === "aVenir"
-      ? "opacity-55"
+      ? "opacity-65"
       : "transition-colors hover:bg-brand-primary/8",
   ].join(" ");
 
@@ -127,7 +128,7 @@ function RegistreRow({ row, index, isLast, rowCount }) {
           {row.title}
         </span>
         {row.theme ? (
-          <span className="mt-[3px] block font-mono text-[11px] tracking-[0.12em] text-gray-400">
+          <span className="mt-[3px] block font-mono text-[11px] tracking-[0.12em] text-gray-500">
             {row.theme}
           </span>
         ) : null}
@@ -153,10 +154,10 @@ function RegistrePanel({ rows }) {
   return (
     <div className="rounded border border-brand-primary-dark/45 border-t-[3px] border-t-brand-primary-dark bg-white px-6 pb-6 pt-7 shadow-[0_6px_24px_rgba(0,0,0,0.1)] md:px-8 md:pb-[26px] md:pt-[30px]">
       <div className="flex items-baseline justify-between border-b-[1.5px] border-brand-primary-dark/40 pb-2.5">
-        <span className="font-mono text-[11.5px] tracking-[0.2em] text-gray-400">
+        <span className="font-mono text-[12px] font-bold tracking-[0.2em] text-gray-600">
           REGISTRE DES ARTICLES
         </span>
-        <span className="font-mono text-[11.5px] text-gray-400">
+        <span className="font-mono text-[12px] text-gray-600">
           {new Date().getFullYear()}
         </span>
       </div>
@@ -171,7 +172,7 @@ function RegistrePanel({ rows }) {
         />
       ))}
 
-      <p className="mt-3 font-mono text-[10.5px] tracking-[0.16em] text-gray-400">
+      <p className="mt-3 font-mono text-[11px] tracking-[0.16em] text-gray-600">
         + EN PRÉPARATION —{" "}
         <a
           href="#email"
@@ -207,7 +208,7 @@ function ExplorerCardMeta({ item }) {
   }
 
   return (
-    <span className="block truncate text-[10.5px] uppercase tracking-[0.1em] text-gray-400 md:mb-1">
+    <span className="block truncate text-[11px] font-medium uppercase tracking-[0.1em] text-gray-500 md:mb-1">
       {kindLabel}
       {detail ? <> · {detail}</> : null}
     </span>
@@ -357,10 +358,10 @@ export default async function HomePage() {
         </div>
 
         <div
-          className="absolute bottom-[22px] left-1/2 -translate-x-1/2 animate-[ll-blink_2.6s_ease-in-out_infinite] font-mono text-[11px] tracking-[0.25em] text-white/55"
+          className="absolute bottom-[22px] left-1/2 -translate-x-1/2 animate-[ll-blink_2.6s_ease-in-out_infinite] font-mono text-[11px] tracking-[0.25em] text-white/75"
           aria-hidden="true"
         >
-          ↓ 01 — COMPRENDRE
+          ↓ COMPRENDRE
         </div>
       </section>
 
@@ -371,8 +372,8 @@ export default async function HomePage() {
       >
         <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:gap-16">
           <div>
-            <p className="mb-3.5 font-mono text-[13px] tracking-[0.25em] text-brand-slate">
-              / 01 — LA SCIENCE
+            <p className="mb-3.5 font-mono text-[13px] font-bold tracking-[0.25em] text-brand-slate">
+              / LA SCIENCE
             </p>
             <h2 className="font-heading text-[40px] font-bold leading-none tracking-[-0.01em] text-brand-slate-dark md:text-[64px]">
               Comprendre
@@ -421,8 +422,8 @@ export default async function HomePage() {
         />
 
         <div className="relative z-[2] mx-auto max-w-6xl">
-          <p className="mb-3.5 font-mono text-[13px] tracking-[0.25em] text-brand-accent-light">
-            / 02 — LE TERRAIN
+          <p className="mb-3.5 font-mono text-[13px] font-bold tracking-[0.25em] text-brand-accent-light">
+            / LE TERRAIN
           </p>
           <h2 className="font-lora text-[40px] font-semibold italic leading-none text-white md:text-[64px]">
             Explorer
@@ -457,9 +458,6 @@ export default async function HomePage() {
       {/* ── 03 · INVENTAIRE — que trouve-t-on dans ce labo ? ───────── */}
       <section className="bg-brand-bg bg-lab-grid px-6 py-11 [background-size:28px_28px] md:px-16 md:pb-[76px] md:pt-[84px] md:[background-size:32px_32px]">
         <div className="mx-auto max-w-[1000px]">
-          <p className="mb-3 text-center font-mono text-xs tracking-[0.25em] text-gray-400">
-            / 03 — L&rsquo;INVENTAIRE
-          </p>
           <h2 className="text-center font-heading text-[28px] font-bold text-brand-primary-dark md:text-[40px]">
             Que trouve-t-on dans ce labo&nbsp;?
           </h2>
@@ -474,7 +472,7 @@ export default async function HomePage() {
                     : ""
                 }`}
               >
-                <p className="font-mono text-xs font-bold text-brand-accent">
+                <p className="font-mono text-xs font-bold text-brand-accent-dark">
                   {cell.num}
                 </p>
                 <h3 className="mt-2.5 font-heading text-[21px] font-bold text-brand-deep">
