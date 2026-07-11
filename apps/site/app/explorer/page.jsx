@@ -5,7 +5,6 @@
 // par activityAt ?? date (décroissant), présentés en deux sections
 // « Projets » / « Récits » (composant client ExplorerSections, avec filtre).
 // Les projets gardent leur statut et leurs dernières notes.
-import LiveStatusBlock from "@/components/LiveStatusBlock";
 import PageHeader from "@/components/PageHeader";
 import ExplorerSections from "@/components/ExplorerSections";
 import { listArticleEntries, listProjetEntries } from "@/lib/contentRoutes.mjs";
@@ -140,10 +139,8 @@ export default function ExplorerPage() {
           tagline="être son propre laboratoire"
         />
 
-        {/* Bloc Live compact : badge EN DIRECT / « Prochain départ »,
-            même source d'état que la page /live. */}
-        <LiveStatusBlock />
-
+        {/* L'indicateur live compact vit dans la rangée de filtres
+            d'ExplorerSections (même source d'état que la page /live). */}
         <ExplorerSections projets={projets} recits={recits} />
       </div>
     </div>

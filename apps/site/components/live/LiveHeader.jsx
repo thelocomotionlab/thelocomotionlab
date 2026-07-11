@@ -84,7 +84,7 @@ export default function LiveHeader({ aventure, jour, mapStyle, onMapStyle }) {
 function LiveBadge({ desktop = false }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-[20px] bg-brand-deep font-heading font-bold tracking-[0.1em] text-brand-bg ${
+      className={`inline-flex items-center gap-1.5 rounded-[20px] bg-brand-deep font-mono font-bold tracking-[0.1em] text-brand-bg ${
         desktop ? "px-3 py-[5px] text-[11px]" : "px-[11px] py-[5px] text-[10.5px]"
       }`}
     >

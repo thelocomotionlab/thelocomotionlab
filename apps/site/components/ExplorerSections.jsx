@@ -12,6 +12,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import ExplorerLiveIndicator from "@/components/ExplorerLiveIndicator";
 
 const FILTERS = [
   { key: "tout", label: "Tout" },
@@ -116,8 +117,10 @@ export default function ExplorerSections({ projets, recits }) {
 
   return (
     <div>
-      {/* Filtre discret : tout / projets / récits. */}
-      <div className="mb-6 flex justify-end">
+      {/* Rangée d'entrée : indicateur live discret à gauche, filtre
+          tout / projets / récits à droite — zéro hauteur ajoutée. */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+        <ExplorerLiveIndicator tone="light" />
         <div
           role="group"
           aria-label="Filtrer les contenus"

@@ -68,7 +68,7 @@ function buildLlmsTxt() {
   lines.push("");
   lines.push(`- [Accueil](${SITE_URL}/)`);
   lines.push(
-    `- [La quête](${SITE_URL}/quete): la quête du Lab — la robustesse physiologique`
+    `- [La quête](${SITE_URL}/quete): la quête du labo — la robustesse physiologique`
   );
   lines.push(
     `- [Comprendre](${SITE_URL}/comprendre): la science — index des articles de fond`
@@ -77,10 +77,10 @@ function buildLlmsTxt() {
     `- [Explorer](${SITE_URL}/explorer): le terrain — index des récits et projets`
   );
   lines.push(
-    `- [Live](${SITE_URL}/live): le direct des aventures du Lab, ou le prochain départ`
+    `- [Live](${SITE_URL}/live): le direct des aventures du labo, ou le prochain départ`
   );
   lines.push(
-    `- [Outils](${SITE_URL}/outils): les instruments construits au Lab`
+    `- [Outils](${SITE_URL}/outils): les outils construits au labo`
   );
   lines.push(
     `- [Locomotion Twin](${SITE_URL}/outils/twin): prédiction de temps de course calibrée sur les données de l'athlète (en construction)`

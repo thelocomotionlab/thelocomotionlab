@@ -12,7 +12,7 @@ import Image from "next/image";
 import EmailCapture, { MICRO_PROMESSE } from "@/components/EmailCapture";
 import ExplorerCarousel from "@/components/ExplorerCarousel";
 import ExplorerLiveIndicator from "@/components/ExplorerLiveIndicator";
-import { getRecentExplorer } from "@/lib/getRecentActivity";
+import { getExplorerCarouselItems } from "@/lib/carouselItems";
 import { listArticleEntries } from "@/lib/contentRoutes.mjs";
 
 export const metadata = {
@@ -25,7 +25,7 @@ export const metadata = {
   openGraph: {
     title: "The Locomotion Lab",
     description:
-      "Comprendre le corps comme un scientifique, l'utiliser comme un animal : science, terrain et instruments de la robustesse physiologique.",
+      "Comprendre le corps comme un scientifique, l'utiliser comme un animal : science, terrain et outils de la robustesse physiologique.",
     url: "https://thelocomotionlab.com/",
     type: "website",
   },
@@ -33,7 +33,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "The Locomotion Lab",
     description:
-      "Comprendre le corps comme un scientifique, l'utiliser comme un animal : science, terrain et instruments de la robustesse physiologique.",
+      "Comprendre le corps comme un scientifique, l'utiliser comme un animal : science, terrain et outils de la robustesse physiologique.",
   },
 };
 
@@ -186,38 +186,6 @@ function RegistrePanel({ rows }) {
 }
 
 /* ============================
-   CARTES EXPLORER (feed récits + projets)
-   ============================ */
-
-// Items du carrousel, pré-formatés en chaînes pour le composant client :
-// « Récit · 09/12/2025 » ou « Projet · En cours » / « Projet · Terminé le
-// 30/11/2025 » (mêmes règles que le pilier /explorer).
-function shapeCarouselItem(item) {
-  const isProjet = item.type === "Projet";
-
-  let meta = null;
-  if (isProjet) {
-    if (item.status === "Terminé" && item.completedAt) {
-      meta = `Terminé le ${item.completedAt.toLocaleDateString("fr-FR")}`;
-    } else if (item.status !== "En cours") {
-      meta = item.status;
-    }
-  } else if (item.date) {
-    meta = item.date.toLocaleDateString("fr-FR");
-  }
-
-  return {
-    key: `${item.type}-${item.slug}`,
-    href: item.href,
-    cover: item.cover,
-    title: item.title,
-    kindLabel: isProjet ? "Projet" : "Récit",
-    enCours: isProjet && item.status === "En cours",
-    meta,
-  };
-}
-
-/* ============================
    INVENTAIRE DU LABO
    ============================ */
 
@@ -225,14 +193,14 @@ const INVENTAIRE = [
   {
     num: "01",
     title: "La quête",
-    text: "Pourquoi la robustesse plutôt que la performance, et les règles du jeu du Lab.",
+    text: "Pourquoi la robustesse plutôt que la performance, et les règles du jeu du labo.",
     href: "/quete",
     cta: "Lire",
   },
   {
     num: "02",
     title: "Locomotion Twin",
-    text: "Le premier instrument : un plan de pacing individualisé, construit par analyse approfondie de tes données d'entraînement.",
+    text: "Le premier outil : un plan de pacing individualisé, construit par analyse approfondie de tes données d'entraînement.",
     href: "/outils/twin",
     cta: "Découvrir",
   },
@@ -274,7 +242,7 @@ export default async function HomePage() {
 
   const registreRows = getRegistreRows();
   // Carrousel Explorer : dernières entrées du feed terrain (récits + projets).
-  const explorerItems = getRecentExplorer({ limit: 8 }).map(shapeCarouselItem);
+  const explorerItems = getExplorerCarouselItems({ limit: 8 });
 
   return (
     // -mb-12 : annule le mt-12 du Footer partagé pour que la bande email

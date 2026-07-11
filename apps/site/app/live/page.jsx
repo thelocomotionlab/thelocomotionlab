@@ -8,6 +8,8 @@
 import Link from "next/link";
 
 import LiveHub from "@/components/LiveHub";
+import ExplorerCarousel from "@/components/ExplorerCarousel";
+import { getExplorerCarouselItems } from "@/lib/carouselItems";
 import { journalApiBase } from "@/lib/liveConfig";
 
 // Carte de partage dynamique (chantier 2, PR4) : URL stable régénérée côté VPS
@@ -17,7 +19,7 @@ import { journalApiBase } from "@/lib/liveConfig";
 const OG_IMAGE = `${journalApiBase}/journal/og.png?v=${Date.now()}`;
 
 export const metadata = {
-  title: "Live – Le direct des aventures du Lab",
+  title: "Live – Le direct des aventures du labo",
   description:
     "Suivi en direct des aventures du Locomotion Lab — ou le prochain départ : Tour des Écrins en autonomie, 20–24 août 2026.",
   alternates: {
@@ -47,27 +49,11 @@ export const metadata = {
   },
 };
 
-// Cross-links curés (§5.1 du brief) : le projet Journal d'aventures 2026,
-// le récit Réunion, le récit Vercors-Drôme.
-const CROSS_LINKS = [
-  {
-    href: "/explorer/saison-trail-2026",
-    kind: "Projet",
-    title: "Journal d'aventures 2026",
-  },
-  {
-    href: "/explorer/recit-reunion-2025",
-    kind: "Récit",
-    title: "L'île intense vous dites ?",
-  },
-  {
-    href: "/explorer/immersion-primale-entre-vercors-et-drome",
-    kind: "Récit",
-    title: "Immersion primale entre Vercors et Drôme",
-  },
-];
-
 export default function LivePage() {
+  // Dernières parutions du terrain (récits + projets) : mêmes cartes et
+  // même carrousel que la page d'accueil.
+  const carouselItems = getExplorerCarouselItems({ limit: 8 });
+
   return (
     <div className="px-4 sm:px-6 py-12">
       {/* L'en-tête de page vit dans LiveHub : l'état « En cours » (design
@@ -75,35 +61,24 @@ export default function LivePage() {
           garde l'en-tête du chantier 1. */}
       <LiveHub />
 
-      {/* Cross-links, dans les deux états */}
+      {/* Dernières parutions, dans tous les états — titre en Lora italique
+          + filet, comme les sections du pilier Explorer. */}
       <section className="mt-14 max-w-4xl mx-auto">
-        <h2 className="text-xl font-bold font-heading text-brand-deep text-center mb-6">
-          À lire en attendant, pour aller plus loin
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {CROSS_LINKS.map(({ href, kind, title }) => (
-            <Link
-              key={href}
-              href={href}
-              // prefetch coupé : Next préchargerait les IMAGES des pages cibles
-              // (~1,5 Mo) — mortel pour le budget « premier chargement » du live.
-              prefetch={false}
-              className="group bg-white rounded-2xl shadow-card p-5 hover:shadow-lg transition-shadow flex flex-col"
-            >
-              <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
-                {kind}
-              </p>
-              <p className="font-semibold text-brand-deep group-hover:underline">
-                {title}
-              </p>
-            </Link>
-          ))}
+        <div className="mb-6 flex items-center gap-4">
+          <h2 className="font-lora text-[24px] font-medium italic text-brand-deep md:text-[28px]">
+            À lire en attendant
+          </h2>
+          <div
+            className="h-px flex-1 translate-y-[2px] bg-gray-300/80"
+            aria-hidden="true"
+          />
         </div>
+        <ExplorerCarousel items={carouselItems} tone="light" />
       </section>
 
       {/* Phrase pack (texte n°9, fixe), discrète */}
       <p className="mt-12 max-w-4xl mx-auto text-center text-sm text-gray-600 italic">
-        Ce dispositif de suivi est conçu et développé au Lab. Il vous ferait
+        Ce dispositif de suivi est conçu et développé au labo. Il vous ferait
         envie pour vos propres aventures ?{" "}
         <Link href="/contact" className="underline hover:text-brand-accent">
           Écrivez-moi

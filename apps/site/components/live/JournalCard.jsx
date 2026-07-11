@@ -52,7 +52,7 @@ export default function JournalCard({
       }`}
     >
       <div className="mb-4 flex items-center justify-between">
-        <p className="font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-brand-deep-dark">
+        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-brand-deep-dark">
           {title}
         </p>
         <p className="font-heading text-[11px] text-brand-text/55">

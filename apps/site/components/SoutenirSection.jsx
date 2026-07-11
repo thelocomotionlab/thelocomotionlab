@@ -43,7 +43,7 @@ export default function SoutenirSection() {
   return (
     <section className="py-10 text-center">
       <div className="mx-auto max-w-2xl px-4 text-left">
-        <PageHeader kicker="/ LE LAB" title="Soutenir l'exploration" />
+        <PageHeader kicker="/ LE LABO" title="Soutenir l'exploration" />
       </div>
 
       <p className="text-lg md:text-xl text-brand-text opacity-90 mb-8 max-w-2xl mx-auto px-4">

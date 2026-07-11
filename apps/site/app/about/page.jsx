@@ -33,7 +33,7 @@ export const metadata = {
 export default function AboutPage() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-12 text-gray-800 font-sans">
-      <PageHeader kicker="/ LE LAB" title="À propos" />
+      <PageHeader kicker="/ LE LABO" title="À propos" />
 
       {/* Vision */}
       <section className="mb-10">

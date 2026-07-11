@@ -5,12 +5,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  BookOpen,
+  Brain,
   ChevronDown,
   Compass,
   FlaskConical,
   Menu,
-  Satellite,
+  SatelliteDish,
   Search,
   Wrench,
   X,
@@ -22,9 +22,9 @@ import { useEffect, useRef, useState } from "react";
 const SHOW_OUTILS = true;
 
 const NAV_ITEMS = [
-  { type: "link", href: "/comprendre", label: "Comprendre", Icon: BookOpen },
+  { type: "link", href: "/comprendre", label: "Comprendre", Icon: Brain },
   { type: "link", href: "/explorer", label: "Explorer", Icon: Compass },
-  { type: "link", href: "/live", label: "Live", Icon: Satellite },
+  { type: "link", href: "/live", label: "Live", Icon: SatelliteDish },
   {
     type: "menu",
     label: "Outils",
@@ -34,7 +34,7 @@ const NAV_ITEMS = [
   },
   {
     type: "menu",
-    label: "Le Lab",
+    label: "Le labo",
     Icon: FlaskConical,
     items: [
       { href: "/quete", label: "La quête" },

@@ -43,7 +43,7 @@ export default function QuetePage() {
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <PageHeader
-        kicker="/ LE LAB"
+        kicker="/ LE LABO"
         title="La quête"
         tagline="comprendre le corps comme un scientifique, l'utiliser comme un animal"
       />
@@ -78,7 +78,7 @@ export default function QuetePage() {
               La réponse : la robustesse
             </h2>
             <p>
-              La réponse du Lab n&rsquo;est pas la performance maximale — un
+              La réponse du labo n&rsquo;est pas la performance maximale — un
               sommet étroit, coûteux et fragile — mais la robustesse
               physiologique : un corps capable d&rsquo;encaisser, de
               s&rsquo;adapter et de durer. Être robuste, c&rsquo;est élargir la
@@ -139,7 +139,7 @@ export default function QuetePage() {
               >
                 Locomotion Twin
               </Link>{" "}
-              pour le premier instrument du Lab. Et pour suivre ce qui paraît
+              pour le premier outil du labo. Et pour suivre ce qui paraît
               ici, laisse ton email ci-dessous.
             </p>
           </section>

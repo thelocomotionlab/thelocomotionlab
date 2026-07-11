@@ -1,6 +1,6 @@
 // app/outils/twin/page.jsx
 //
-// Teaser du Locomotion Twin : texte seul, wordmark actuel du Lab, aucun
+// Teaser du Locomotion Twin : texte seul, wordmark actuel du labo, aucun
 // logo Twin (hors-scope explicite). Structure : promesse → comment ça
 // marche en trois pas → statut de calibration honnête (valeurs factices
 // marquées À REMPLACER) → CTA cohorte → capture email.
@@ -42,7 +42,7 @@ export default function TwinTeaserPage() {
   return (
     <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
       <PageHeader
-        kicker="/ LES INSTRUMENTS"
+        kicker="/ LES OUTILS"
         title="Locomotion Twin"
         tagline="un calculateur de plan de pacing construit par data analyse approfondie de tes données d'entraînement"
       />

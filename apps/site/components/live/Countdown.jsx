@@ -51,7 +51,7 @@ export default function Countdown({ dateDebut }) {
           >
             {values ? values[key] : "–"}
           </div>
-          <div className="mt-[5px] font-heading text-[9.5px] uppercase tracking-[0.12em] text-brand-text/55">
+          <div className="mt-[5px] font-mono text-[9.5px] uppercase tracking-[0.14em] text-brand-text/55">
             {label}
           </div>
         </div>

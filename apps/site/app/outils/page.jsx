@@ -1,6 +1,6 @@
 // app/outils/page.jsx
 //
-// Index sobre des instruments du Lab : une carte Locomotion Twin, une ligne
+// Index sobre des outils du labo : une carte Locomotion Twin, une ligne
 // sur la suite. Rien de daté, rien de promis.
 import Link from "next/link";
 import { Gauge } from "lucide-react";
@@ -9,14 +9,14 @@ import PageHeader from "@/components/PageHeader";
 export const metadata = {
   title: "Outils – Les instruments du labo",
   description:
-    "Les instruments construits au Locomotion Lab, à commencer par le Locomotion Twin : une prédiction de temps de course calibrée sur tes propres données.",
+    "Les outils construits au Locomotion Lab, à commencer par le Locomotion Twin : une prédiction de temps de course calibrée sur tes propres données.",
   alternates: {
     canonical: "https://thelocomotionlab.com/outils",
   },
   openGraph: {
     title: "Outils – The Locomotion Lab",
     description:
-      "Les instruments construits au Locomotion Lab, à commencer par le Locomotion Twin.",
+      "Les outils construits au Locomotion Lab, à commencer par le Locomotion Twin.",
     url: "https://thelocomotionlab.com/outils",
     type: "website",
     images: [
@@ -30,7 +30,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Outils – The Locomotion Lab",
     description:
-      "Les instruments construits au Locomotion Lab, à commencer par le Locomotion Twin.",
+      "Les outils construits au Locomotion Lab, à commencer par le Locomotion Twin.",
     images: ["https://thelocomotionlab.com/images/assets/og-image.jpg"],
   },
 };
@@ -39,9 +39,9 @@ export default function OutilsPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
       <PageHeader
-        kicker="/ LES INSTRUMENTS"
+        kicker="/ LES OUTILS"
         title="Outils"
-        tagline="les instruments du Lab"
+        tagline="les outils du labo"
       />
 
       <article className="bg-white rounded-2xl shadow-card p-6 flex flex-col transform transition duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1">
@@ -68,7 +68,7 @@ export default function OutilsPage() {
       </article>
 
       <p className="mt-10 text-center text-gray-600 italic">
-        D&rsquo;autres instruments sont en construction au Lab.
+        D&rsquo;autres outils sont en construction au labo.
       </p>
     </div>
   );

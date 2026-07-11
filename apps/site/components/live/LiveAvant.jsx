@@ -46,17 +46,17 @@ export default function LiveAvant() {
             The Locomotion Lab
           </span>
         </div>
-        <span className="inline-flex items-center rounded-[20px] bg-brand-primary/22 px-[11px] py-[5px] font-heading text-[10.5px] font-bold tracking-[0.1em] text-brand-primary-dark">
+        <span className="inline-flex items-center rounded-[20px] bg-brand-primary/22 px-[11px] py-[5px] font-mono text-[10.5px] font-bold tracking-[0.1em] text-brand-primary-dark">
           {badgeJMoins(aventure.dateDebut)}
         </span>
       </div>
 
       {/* Hero */}
       <div>
-        <p className="font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-brand-deep-dark">
-          Prochain départ
+        <p className="font-mono text-[12px] font-bold uppercase tracking-[0.25em] text-brand-slate">
+          / Prochain départ
         </p>
-        <h1 className="m-0 mt-1.5 font-heading text-[22px] font-bold leading-[1.15] text-brand-text sm:text-[26px]">
+        <h1 className="m-0 mt-1.5 font-heading text-[24px] font-bold leading-[1.15] text-brand-slate-dark sm:text-[28px]">
           {aventure.nom}
         </h1>
         <div className="mt-[7px] flex flex-wrap gap-2.5 font-heading text-[12.5px] text-brand-text/70 sm:text-sm">
@@ -76,6 +76,10 @@ export default function LiveAvant() {
         <p className="mt-3.5 font-lora text-[15px] italic leading-[1.65] text-brand-text/85 sm:text-base">
           {aventure.intention}
         </p>
+        <div
+          className="mt-4 h-[3px] w-16 rounded-full bg-brand-accent"
+          aria-hidden="true"
+        />
       </div>
 
       <Countdown dateDebut={aventure.dateDebut} />
@@ -85,7 +89,7 @@ export default function LiveAvant() {
       {/* Itinéraire prévisionnel */}
       <div>
         <div className="mb-[9px] flex items-center justify-between">
-          <p className="font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-brand-deep-dark">
+          <p className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-brand-deep-dark">
             Itinéraire prévu
           </p>
           <MapStyleSwitch value={mapStyle} onChange={setMapStyle} variant="header" />

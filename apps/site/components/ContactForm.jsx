@@ -126,7 +126,7 @@ function ContactFormInner({ initialMessage = "" }) {
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-12 text-gray-800 font-sans">
-      <PageHeader kicker="/ LE LAB" title="Contact" />
+      <PageHeader kicker="/ LE LABO" title="Contact" />
 
       <p className="mb-6">
         Une question, une idée, une envie de collaborer ? Écris-nous via ce

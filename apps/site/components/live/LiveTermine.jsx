@@ -89,7 +89,7 @@ export default function LiveTermine() {
             The Locomotion Lab
           </span>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-[20px] bg-brand-primary-dark/20 px-[11px] py-[5px] font-heading text-[10.5px] font-bold tracking-[0.1em] text-brand-primary-dark">
+        <span className="inline-flex items-center gap-1.5 rounded-[20px] bg-brand-primary-dark/20 px-[11px] py-[5px] font-mono text-[10.5px] font-bold tracking-[0.1em] text-brand-primary-dark">
           <svg width="10" height="8" viewBox="0 0 10 8" aria-hidden="true">
             <path
               d="M1 4 L3.7 6.8 L9 1"
@@ -106,7 +106,7 @@ export default function LiveTermine() {
 
       {/* Bandeau de clôture */}
       <section className="rounded-[18px] bg-brand-text px-[18px] py-5 text-brand-bg">
-        <p className="font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-brand-accent">
+        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-brand-accent">
           Aventure bouclée
         </p>
         <h1 className="m-0 mt-[7px] font-heading text-[21px] font-bold leading-[1.2] sm:text-2xl">
