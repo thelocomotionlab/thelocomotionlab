@@ -94,10 +94,8 @@ function getRegistreRows() {
         dateKey(b) - dateKey(a)
     )
     .slice(0, REGISTRE_MAX_ROWS)
-    .map((e, i) => ({
+    .map((e) => ({
       slug: e.slug,
-      // Référence décorative façon carnet de labo, dans l'ordre du registre.
-      ref: `LL-${String(i + 1).padStart(3, "0")}`,
       title: e.data.title || e.slug,
       theme:
         (e.data.tags || []).find((t) => t && t.trim())?.toUpperCase() ?? "",
@@ -124,9 +122,6 @@ function RegistreRow({ row, index, isLast, rowCount }) {
 
   const inner = (
     <>
-      <span className="w-11 flex-none whitespace-nowrap font-mono text-[11px] text-brand-accent-dark md:w-12 md:text-xs">
-        {row.ref}
-      </span>
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-semibold text-brand-text md:text-[16.5px]">
           {row.title}
@@ -320,8 +315,8 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* ── HERO pleine hauteur ─────────────────────────────────────── */}
-      <section className="relative flex h-[calc(100svh-80px)] min-h-[500px] flex-col items-center justify-center overflow-hidden text-center md:min-h-[560px]">
+      {/* ── HERO — même gabarit que l'ancienne accueil (70vh) ───────── */}
+      <section className="relative flex min-h-[70vh] flex-col items-center justify-center overflow-hidden pb-12 pt-10 text-center sm:min-h-[68vh] sm:pb-16 sm:pt-14 md:pb-20 md:pt-16">
         <Image
           src={hero.src}
           alt={hero.alt}
@@ -341,9 +336,6 @@ export default async function HomePage() {
         />
 
         <div className="relative z-10 mx-auto max-w-[1020px] px-5 sm:px-10 md:px-20">
-          <p className="mb-5 whitespace-nowrap font-mono text-[11px] tracking-[0.25em] text-white/65 sm:text-[13px] md:tracking-[0.3em]">
-            THE LOCOMOTION LAB — EST. 2020
-          </p>
           <h1 className="font-heading text-[29px] font-bold leading-[1.12] text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.4)] md:text-[56px]">
             Comprendre le corps comme un scientifique,
             <span className="mt-2.5 block font-lora text-[24px] font-medium italic leading-[1.15] text-brand-accent-light md:text-[46px]">
@@ -354,19 +346,13 @@ export default async function HomePage() {
             Explorer la robustesse physiologique comme instrument de confiance
             en soi, force et bien-être.
           </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+          <div className="mt-8 flex items-center justify-center">
             <Link
               href="/quete"
               className="inline-block rounded-full bg-brand-accent px-7 py-3 text-base font-semibold text-white shadow-cta transition hover:bg-brand-primary-dark"
             >
               La quête du labo
             </Link>
-            <a
-              href="#comprendre"
-              className="inline-block rounded-full border-[1.5px] border-white/60 px-[26px] py-3 text-base font-semibold text-white transition hover:border-brand-accent-light hover:text-brand-accent-light"
-            >
-              Entrer dans le labo
-            </a>
           </div>
         </div>
 
