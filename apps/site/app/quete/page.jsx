@@ -52,7 +52,7 @@ export default function QuetePage() {
             <p>
               Nos corps ont été façonnés par des millions d&rsquo;années de
               marche, de course, de portage et d&rsquo;inconfort, et nous les
-              faisons vivre assis, au chaud l'hiver, sous la clim' l'été, sur-nourris et sous-stimulés. Cette
+              faisons vivre assis, au chaud l&rsquo;hiver, sous la clim&rsquo; l&rsquo;été, sur-nourris et sous-stimulés. Cette
               discordance évolutive entre ce pour quoi nous sommes construits et ce que
               nous vivons a un coût : des organismes fragiles, qui se retrouvent
               usés avant même d&rsquo;avoir servi.
@@ -72,7 +72,7 @@ export default function QuetePage() {
               complets, à la fois adaptés, adaptables, mais aussi profondément résilients. Cette
               caractéristique a un nom, introduit par le biophysicien Olivier Hamant : la robustesse. 
               Ce concept, appliqué à la physiologie humaine, est le cœur pulsant du labo. Il s&rsquo;oppose 
-              par essence à la notion de performance à tout prix qui vise l'optimisation perpétuelle, ce 
+              par essence à la notion de performance à tout prix qui vise l&rsquo;optimisation perpétuelle, ce 
               principe qui régit le monde Humain moderne et le rend incapable de faire face à l&rsquo;incertitude.
             </p>
           </section>
@@ -86,7 +86,7 @@ export default function QuetePage() {
               La robustesse se développe par essais-erreurs. Comprendre, explorer. Explorer, comprendre.
               Une boucle de rétroaction permanente entre décortiquer les concepts, lire les études, expérimenter en 
               situation réelle, douter, découvrir des pratiques de manière fortuite, les expliquer a posteriori...
-              C'est la philosophie qui guide le développement de ce laboratoire théorico-expérimental, dans 
+              C&rsquo;est la philosophie qui guide le développement de ce laboratoire théorico-expérimental, dans 
               toutes ses dimensions.
             </p>
           </section>
@@ -97,12 +97,12 @@ export default function QuetePage() {
               Un laboratoire accessible à tous·te·s
             </h2>
             <p>
-              La vocation du Locomotion Lab est d'explorer et d'ouvrir des voies méconnues mais profondément 
-              engrammées dans l'ADN Humain, et de les rendre accessible à tous·te·s pour retrouver une certaine
-              concordance évolutive. La connaissance n'a jamais été aussi abondante, et il convient plus que jamais
+              La vocation du Locomotion Lab est d&rsquo;explorer et d&rsquo;ouvrir des voies méconnues mais profondément 
+              engrammées dans l&rsquo;ADN Humain, et de les rendre accessible à tous·te·s pour retrouver une certaine
+              concordance évolutive. La connaissance n&rsquo;a jamais été aussi abondante, et il convient plus que jamais
               de se responsabiliser sur sa santé et son bien-être, pour faire face aux incertitudes de demain.
               Redevenir robustes côte-à-côte, main la main. Car seul on va plus vite, mais ensemble on va plus loin.
-              Et c'est peu dire que cet adage est profondément robuste.
+              Et c&rsquo;est peu dire que cet adage est profondément robuste.
             </p>
           </section>
 
