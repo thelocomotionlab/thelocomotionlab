@@ -52,7 +52,7 @@ export default function QuetePage() {
             <p>
               Nos corps ont été façonnés par des millions d&rsquo;années de
               marche, de course, de portage et d&rsquo;inconfort, et nous les
-              faisons vivre assis, au chaud, sur-nourris et sous-stimulés. Cette
+              faisons vivre assis, au chaud l'hiver, sous la clim' l'été, sur-nourris et sous-stimulés. Cette
               discordance évolutive entre ce pour quoi nous sommes construits et ce que
               nous vivons a un coût : des organismes fragiles, qui se retrouvent
               usés avant même d&rsquo;avoir servi.
@@ -72,8 +72,8 @@ export default function QuetePage() {
               complets, à la fois adaptés, adaptables, mais aussi profondément résilients. Cette
               caractéristique a un nom, introduit par le biophysicien Olivier Hamant : la robustesse. 
               Ce concept, appliqué à la physiologie humaine, est le cœur pulsant du labo. Il s&rsquo;oppose 
-              par essence à la notion de performance qui régit notre monde moderne, et visant l&rsquo;optimisation
-              perpétuelle au prix de n&rsquo;être plus capable de faire face à l&rsquo;incertitude.
+              par essence à la notion de performance à tout prix qui vise l'optimisation perpétuelle, ce 
+              principe qui régit le monde Humain moderne et le rend incapable de faire face à l&rsquo;incertitude.
             </p>
           </section>
 
@@ -83,31 +83,31 @@ export default function QuetePage() {
               La philosophie
             </h2>
             <p>
-              Pour explorer cette robustesse physiologique, il faut comprendre, mais aussi explorer.
-              L&rsquo;un ne va pas sans l&rsquo;autre.
-              Deux gestes complémentaires. Comprendre le corps comme un
-              scientifique : lire les études, mesurer, douter, garder ce qui
-              résiste à l&rsquo;examen. L&rsquo;utiliser comme un animal :
-              marcher, courir, grimper, porter, avoir froid, avoir faim —
-              redonner au corps les stimulus pour lesquels il est fait.
+              La robustesse se développe par essais-erreurs. Comprendre, explorer. Explorer, comprendre.
+              Une boucle de rétroaction permanente entre décortiquer les concepts, lire les études, expérimenter en 
+              situation réelle, douter, découvrir des pratiques de manière fortuite, les expliquer a posteriori...
+              C'est la philosophie qui guide le développement de ce laboratoire théorico-expérimental, dans 
+              toutes ses dimensions.
             </p>
           </section>
 
           {/* ④ Le laboratoire : N=1 assumé, incertitude honnête. */}
           <section>
             <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
-              Le laboratoire
+              Un laboratoire accessible à tous·te·s
             </h2>
             <p>
-              Le Lab est un laboratoire vivant, avec un sujet principal : moi.
-              Ce N=1 est assumé — il ne prouve rien, il explore, il illustre, il
-              documente honnêtement ce qui marche et ce qui échoue.
-              L&rsquo;incertitude est affichée, jamais maquillée.
+              La vocation du Locomotion Lab est d'explorer et d'ouvrir des voies méconnues mais profondément 
+              engrammées dans l'ADN Humain, et de les rendre accessible à tous·te·s pour retrouver une certaine
+              concordance évolutive. La connaissance n'a jamais été aussi abondante, et il convient plus que jamais
+              de se responsabiliser sur sa santé et son bien-être, pour faire face aux incertitudes de demain.
+              Redevenir robustes côte-à-côte, main la main. Car seul on va plus vite, mais ensemble on va plus loin.
+              Et c'est peu dire que cet adage est profondément robuste.
             </p>
           </section>
 
           {/* ⑤ Par où commencer : les portes d'entrée du site. */}
-          <section>
+{/*          <section>
             <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
               Par où commencer
             </h2>
@@ -130,12 +130,11 @@ export default function QuetePage() {
                 href="/outils/twin"
                 className="font-semibold text-brand-deep hover:underline"
               >
-                Locomotion Twin
+                Accompagnement (à venir)
               </Link>{" "}
-              pour le premier outil du labo. Et pour suivre ce qui paraît
-              ici, laisse ton email ci-dessous.
+              ateliers, stages, retraites,{" "}
             </p>
-          </section>
+          </section>*/}
       </div>
 
       <div className="mt-12 max-w-2xl mx-auto text-center">
