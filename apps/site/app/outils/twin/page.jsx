@@ -11,7 +11,7 @@ export const metadata = {
   // [PROVISOIRE] Descriptions meta à affiner avec les textes définitifs (PR5).
   title: "Locomotion Twin – Calculateur de plan de course",
   description:
-    "Le Locomotion Twin crée ton jumeau numérique à partir de tes données d'entraînement et construit un plan de pacing individualisé pour chacun de tes objectifs.",
+    "Le Locomotion Twin crée ton jumeau numérique à partir de tes données d’entraînement et construit un plan de pacing individualisé pour chacun de tes objectifs.",
   alternates: {
     canonical: "https://thelocomotionlab.com/outils/twin",
   },
@@ -47,7 +47,7 @@ export default function TwinTeaserPage() {
         {/* Promesse en une phrase. */}
         <p className="text-lg text-gray-700">
           <em>
-            Un calculateur de plan de pacing construit par data analyse approfondie de tes données d'entraînement
+            Un calculateur de plan de pacing construit par data analyse approfondie de tes données d&rsquo;entraînement
           </em>
         </p>
       </header>
@@ -68,7 +68,7 @@ export default function TwinTeaserPage() {
               parcours via un grand nombre de simulations numériques.
             </li>
             <li>
-              Tu reçois un rapport d'analyse complet incluant un plan de pacing segment par segment, 
+              Tu reçois un rapport d&rsquo;analyse complet incluant un plan de pacing segment par segment, 
               et des fenêtres horaires construites sur tes propres courses passées.
             </li>
           </ol>
@@ -80,7 +80,7 @@ export default function TwinTeaserPage() {
             Statut de développement
           </h2>
           <p className="text-gray-700">
-            L'outil est en cours de développement. Pour participer à son élaboration et recevoir ton plan de course
+            L&rsquo;outil est en cours de développement. Pour participer à son élaboration et recevoir ton plan de course
             gratuit, inscris-toi dès maintenant à la cohorte de beta-testeur·euse·s !
           </p>
         </div>
