@@ -169,7 +169,7 @@ export default function ComprendrePage() {
         <PageHeader
           kicker="/ LA SCIENCE"
           title="Comprendre"
-          tagline="décortiquer la science derrière les concepts"
+          tagline="La science derrière les concepts."
         />
 
         {/* Grille : articles publiés puis cartes « à paraître » */}

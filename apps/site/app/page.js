@@ -302,12 +302,12 @@ export default async function HomePage() {
               Comprendre
             </h2>
             <p className="mt-3.5 font-lora text-xl italic text-brand-deep">
-              La science de la robustesse physiologique.
+              La science derrière les concepts.
             </p>
             <p className="mt-5 max-w-[460px] text-[16.5px] leading-[1.7] text-gray-700 text-pretty">
-              Des articles de fond, sourcés et vulgarisés, qui décortiquent ce
+              Des articles de fond, sourcés et accessibles, qui décortiquent ce
               qui rend un corps capable d&rsquo;encaisser, de s&rsquo;adapter
-              et de durer — puis le traduisent en pratiques concrètes,
+              et de durer, puis le traduisent en pratiques concrètes,
               éprouvées sur le terrain.
             </p>
             {/* Desktop : CTA dans la colonne texte ; mobile : sous le
@@ -363,12 +363,12 @@ export default async function HomePage() {
             Explorer
           </h2>
           <p className="mt-3.5 font-lora text-xl italic text-brand-accent-light">
-            Le terrain comme banc d&rsquo;essai.
+            Être son propre laboratoire.
           </p>
           <p className="mt-[18px] max-w-[520px] text-[16.5px] leading-[1.7] text-white/88 text-pretty">
-            Récits d&rsquo;aventures et projets au long cours — traversées en
+            Récits d&rsquo;aventures et projets au long cours : explorations en
             autonomie, saisons de trail, expérimentations. C&rsquo;est ici que
-            la robustesse se construit et se vérifie, une aventure à la fois.
+            la robustesse se développe, s&rsquo;éprouve et s&rsquo;affine.
           </p>
 
           <div className="mt-8 md:mt-[38px]">

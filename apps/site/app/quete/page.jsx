@@ -1,16 +1,9 @@
 // app/quete/page.jsx
-//
-// La quête du Lab — la robustesse physiologique. Page longue en prose,
-// typographie Ubuntu alignée sur les pages À propos / Contact (Lora reste
-// réservé aux corps d'articles), 5 sections structurées. Corps [PROVISOIRE
-// — texte n°2] : plan visible, textes provisoires, briefs en commentaires —
-// Valentin écrira la version définitive (1 200 – 1 800 mots).
 import Link from "next/link";
 import EmailCapture from "@/components/EmailCapture";
 import PageHeader from "@/components/PageHeader";
 
 export const metadata = {
-  // [PROVISOIRE] Descriptions meta à affiner avec les textes définitifs (PR5).
   title: "La quête – La robustesse physiologique",
   description:
     "La quête du Locomotion Lab : comprendre le corps comme un scientifique, l'utiliser comme un animal — la robustesse physiologique.",
@@ -50,13 +43,6 @@ export default function QuetePage() {
         animal.
       </blockquote>
 
-      {/* [Brief texte n°2 — 1 200-1 800 mots : les 5 sections ci-dessous.
-          Les textes courants sont PROVISOIRES : ils posent le plan et le
-          ton, la version définitive est à écrire par Valentin.] */}
-      <p className="text-sm font-semibold text-brand-deep mb-8">
-        [PROVISOIRE — texte n°2]
-      </p>
-
       <div className="font-sans text-gray-800 leading-relaxed space-y-8 text-justify hyphens-auto">
           {/* ① Le constat : la discordance évolutive. */}
           <section>
@@ -65,34 +51,40 @@ export default function QuetePage() {
             </h2>
             <p>
               Nos corps ont été façonnés par des millions d&rsquo;années de
-              marche, de course, de portage et d&rsquo;inconfort — et nous les
+              marche, de course, de portage et d&rsquo;inconfort, et nous les
               faisons vivre assis, au chaud, sur-nourris et sous-stimulés. Cette
-              discordance entre ce pour quoi nous sommes construits et ce que
-              nous vivons a un coût : des organismes fragiles, qui s&rsquo;usent
-              sans avoir servi.
+              discordance évolutive entre ce pour quoi nous sommes construits et ce que
+              nous vivons a un coût : des organismes fragiles, qui se retrouvent
+              usés  avant même d'avoir servi.
             </p>
           </section>
 
           {/* ② La réponse : la robustesse ≠ la performance maximale. */}
           <section>
             <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
-              La réponse : la robustesse
+              La robustesse
             </h2>
             <p>
-              La réponse du labo n&rsquo;est pas la performance maximale — un
-              sommet étroit, coûteux et fragile — mais la robustesse
-              physiologique : un corps capable d&rsquo;encaisser, de
-              s&rsquo;adapter et de durer. Être robuste, c&rsquo;est élargir la
-              base plutôt que rehausser la pointe.
+              L'évolution des êtres vivants, végétaux ou animaux, s'est toujours déroulée
+              dans des contextes incertains, ceux-ci devant régulièrement s'adapter à de nouvelles
+              situations comme le manque de ressources, la présence de nouveaux prédateurs,
+              ou des températures inhabituelles. Cette instabilité continue a créé des organismes
+              complets, à la fois adaptés, adaptables, mais aussi profondément résilients. Cette
+              caractéristique a un nom, introduit par le biophysicien Olivier Hamant : la robustesse. 
+              Ce concept, appliqué à la physiologie humaine, est le cœur pulsant du labo. Il s'oppose 
+              par essence à la notion de performance qui régit notre monde moderne, et visant l'optimisation
+              perpétuelle au prix de n'être plus capable de faire face à l'incertitude.
             </p>
           </section>
 
           {/* ③ La méthode : comprendre en scientifique, utiliser en animal. */}
           <section>
             <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
-              La méthode
+              La philosophie
             </h2>
             <p>
+              Pour explorer cette robustesse physiologique, il faut comprendre, mais aussi explorer.
+              L'un ne va pas sans l'autre
               Deux gestes complémentaires. Comprendre le corps comme un
               scientifique : lire les études, mesurer, douter, garder ce qui
               résiste à l&rsquo;examen. L&rsquo;utiliser comme un animal :

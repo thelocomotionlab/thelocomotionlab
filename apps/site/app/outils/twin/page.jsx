@@ -72,7 +72,7 @@ export default function TwinTeaserPage() {
         {/* Statut de calibration honnête — valeurs factices À REMPLACER. */}
         <div className="mt-8 bg-brand-bg border border-gray-200 rounded-lg p-5">
           <h2 className="text-lg font-semibold text-brand-deep mb-2">
-            Statut de développement
+            Statut
           </h2>
           <p className="text-gray-700">
             L&rsquo;outil est en cours de développement. Pour participer à son élaboration et recevoir ton plan de course

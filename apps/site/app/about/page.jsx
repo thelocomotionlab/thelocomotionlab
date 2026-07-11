@@ -35,30 +35,6 @@ export default function AboutPage() {
     <div className="max-w-3xl mx-auto px-6 py-12 text-gray-800 font-sans text-justify hyphens-auto">
       <PageHeader kicker="/ LE LABO" title="À propos" />
 
-      {/* Vision */}
-      <section className="mb-10">
-        <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
-          Vision
-        </h2>
-        <p className="mb-4">
-          Le <strong>Locomotion Lab </strong> est un espace d&apos;exploration de
-          la locomotion humaine primordiale sous toutes ses formes : trail
-          primal, déplacement dans les arbres, mouvement animal, natation, etc.
-          La liste est longue !
-        </p>
-        <p className="mb-4">
-          Mais aussi tout ce qui favorise la fluidité, l&apos;endurance et la
-          résilience dans le mouvement. Ceci allant de la préparation physique
-          générale, à la nutrition, la respiration, en passant par
-          l&apos;exploration du monde de l&apos;hormèse.
-        </p>
-        <p className="mb-4">
-          L’objectif : relier{" "}
-          <em>les science théoriques et expérimentales</em>, à une approche{" "}
-          <em>consciente et explorative</em> du mouvement Humain.
-        </p>
-      </section>
-
       {/* Parcours */}
       <section className="mb-10">
         <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
@@ -111,27 +87,6 @@ export default function AboutPage() {
         </p>
       </section>
 
-      {/* Organisation */}
-      <section>
-        <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
-          Organisation du labo
-        </h2>
-        <ul className="list-disc pl-5 space-y-2">
-          <li>
-            <strong>Carnets du Labo</strong> : la partie articles scientifiques
-            mêlés aux expérimentations personnelles. Approche cartésienne et
-            exploratoire.
-          </li>
-          <li>
-            <strong>Projets</strong> : détails au fil de l&apos;eau des
-            expériences et projets du labo passés, en cours et à venir.
-          </li>
-          <li>
-            <strong>Soutien</strong> : moyens d’aider le Labo à perdurer et
-            grandir.
-          </li>
-        </ul>
-      </section>
     </div>
   );
 }

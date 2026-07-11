@@ -134,7 +134,7 @@ export default function ExplorerPage() {
         <PageHeader
           kicker="/ LE TERRAIN"
           title="Explorer"
-          tagline="être son propre laboratoire"
+          tagline="Être son propre laboratoire."
         />
 
         {/* L'indicateur live compact vit dans la rangée de filtres
