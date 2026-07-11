@@ -87,19 +87,24 @@ function ArticleCard({ article }) {
         )}
 
         <div className="p-5 flex flex-col flex-1">
+          {/* Méta homogène avec les cartes du pilier Explorer. */}
+          <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
+            Article
+          </p>
+
           <h3 className="text-lg font-semibold text-brand-deep group-hover:underline mb-2">
             {article.title}
           </h3>
 
-          {article.description ? (
-            <p className="text-sm text-gray-700 italic line-clamp-3">
-              {article.description}
-            </p>
-          ) : (
-            <p className="text-sm text-gray-500">&nbsp;</p>
-          )}
+          <div className="flex flex-1 items-center py-1">
+            {article.description ? (
+              <p className="font-lora text-[15px] italic text-gray-700 line-clamp-3">
+                {article.description}
+              </p>
+            ) : null}
+          </div>
 
-          <div className="mt-auto pt-4 text-xs text-gray-500">
+          <div className="pt-4 text-xs text-gray-500">
             {article.date && (
               <p>Publié le {article.date.toLocaleDateString("fr-FR")}</p>
             )}
@@ -133,21 +138,22 @@ function TeaserCard({ article }) {
         )}
 
         <div className="p-5 flex flex-col flex-1">
-          <p className="mb-2">
-            <span className="inline-block text-xs uppercase tracking-wide font-semibold text-brand-deep bg-brand-bg rounded-full px-3 py-1">
-              À paraître
-            </span>
+          {/* Méta homogène avec les cartes du pilier Explorer. */}
+          <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
+            Article · À paraître
           </p>
 
           <h3 className="text-lg font-semibold text-brand-deep mb-2">
             {article.title}
           </h3>
 
-          {article.teaserText && (
-            <p className="text-sm text-gray-700 italic line-clamp-3">
-              {article.teaserText}
-            </p>
-          )}
+          <div className="flex flex-1 items-center py-1">
+            {article.teaserText ? (
+              <p className="font-lora text-[15px] italic text-gray-700 line-clamp-3">
+                {article.teaserText}
+              </p>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>
@@ -159,11 +165,22 @@ export default function ComprendrePage() {
 
   return (
     <section className="py-12 max-w-6xl mx-auto px-4 sm:px-6">
-      {/* Header */}
+      {/* Header — écho de la section Comprendre de l'accueil : kicker mono,
+          titre Ubuntu bleu profond, tagline en Lora italique, liseré ocre. */}
       <header className="max-w-4xl mx-auto text-left mb-10">
-        <h1 className="text-3xl font-bold font-heading mb-2 text-brand-primary">
-          Comprendre : décortiquer la science derrière les concepts
+        <p className="mb-3 font-mono text-[13px] font-bold tracking-[0.25em] text-brand-slate">
+          / LA SCIENCE
+        </p>
+        <h1 className="font-heading text-4xl font-bold text-brand-slate-dark md:text-5xl">
+          Comprendre
+          <span className="mt-2 block font-lora text-[22px] font-medium italic text-brand-deep md:text-[26px]">
+            décortiquer la science derrière les concepts
+          </span>
         </h1>
+        <div
+          className="mt-5 h-[3px] w-16 rounded-full bg-brand-accent"
+          aria-hidden="true"
+        />
       </header>
 
       {/* Grille : articles publiés puis cartes « à paraître » */}

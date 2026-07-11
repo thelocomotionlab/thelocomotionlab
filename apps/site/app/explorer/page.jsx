@@ -123,16 +123,18 @@ function ExplorerCard({ item, notes = [] }) {
             {item.title}
           </h3>
 
-          {item.description ? (
-            <p className="text-sm text-gray-700 italic line-clamp-3">
-              {item.description}
-            </p>
-          ) : (
-            <p className="text-sm text-gray-500">&nbsp;</p>
-          )}
+          {/* Description en Lora italique, centrée verticalement entre le
+              titre et le bloc du bas (notes ou date). */}
+          <div className="flex flex-1 items-center py-1">
+            {item.description ? (
+              <p className="font-lora text-[15px] italic text-gray-700 line-clamp-3">
+                {item.description}
+              </p>
+            ) : null}
+          </div>
 
           {item.kind === "projet" && lastNotes.length > 0 ? (
-            <div className="mt-auto pt-3 border-t border-gray-200">
+            <div className="pt-3 border-t border-gray-200">
               <p className="text-xs font-semibold text-gray-500 mb-1">
                 Dernières notes :
               </p>
@@ -145,7 +147,7 @@ function ExplorerCard({ item, notes = [] }) {
               </ul>
             </div>
           ) : (
-            <div className="mt-auto pt-4 text-xs text-gray-500">
+            <div className="pt-4 text-xs text-gray-500">
               {item.kind === "recit" && item.date && (
                 <p>Publié le {item.date.toLocaleDateString("fr-FR")}</p>
               )}
@@ -188,11 +190,22 @@ export default function ExplorerPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
-      {/* Header */}
+      {/* Header — écho de la section Explorer de l'accueil : kicker mono,
+          titre en Lora italique terracotta, tagline Ubuntu, liseré ocre. */}
       <header className="max-w-3xl mx-auto text-center mb-10">
-        <h1 className="text-3xl font-bold font-heading mb-2 text-brand-primary">
-          Explorer : être son propre laboratoire
+        <p className="mb-3 font-mono text-[13px] font-bold tracking-[0.25em] text-brand-accent-dark">
+          / LE TERRAIN
+        </p>
+        <h1 className="font-lora text-4xl font-semibold italic text-brand-deep md:text-5xl">
+          Explorer
+          <span className="mt-2 block font-heading text-[20px] font-medium not-italic text-brand-primary-dark md:text-[24px]">
+            être son propre laboratoire
+          </span>
         </h1>
+        <div
+          className="mx-auto mt-5 h-[3px] w-16 rounded-full bg-brand-accent"
+          aria-hidden="true"
+        />
       </header>
 
       {/* Bloc Live compact : badge EN DIRECT / « Prochain départ »,

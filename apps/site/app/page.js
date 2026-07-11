@@ -327,12 +327,6 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <div
-          className="absolute bottom-[22px] left-1/2 -translate-x-1/2 animate-[ll-blink_2.6s_ease-in-out_infinite] font-mono text-[11px] tracking-[0.25em] text-white/75"
-          aria-hidden="true"
-        >
-          ↓ COMPRENDRE
-        </div>
       </section>
 
       {/* ── 01 · COMPRENDRE — lavis bleu + registre des articles ───── */}

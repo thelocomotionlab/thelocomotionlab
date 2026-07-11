@@ -10,6 +10,7 @@ import {
   Compass,
   FlaskConical,
   Menu,
+  Satellite,
   Search,
   Wrench,
   X,
@@ -23,6 +24,7 @@ const SHOW_OUTILS = true;
 const NAV_ITEMS = [
   { type: "link", href: "/comprendre", label: "Comprendre", Icon: BookOpen },
   { type: "link", href: "/explorer", label: "Explorer", Icon: Compass },
+  { type: "link", href: "/live", label: "Live", Icon: Satellite },
   {
     type: "menu",
     label: "Outils",
