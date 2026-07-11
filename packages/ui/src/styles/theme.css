@@ -27,13 +27,6 @@
   --color-brand-slate: #5B8286;
   --color-brand-slate-dark: #4E767A;
 
-  /* Polices (liées à next/font via packages/ui/src/fonts.ts) */
-  --font-heading: var(--font-ubuntu), ui-sans-serif, system-ui;
-  --font-sans: var(--font-ubuntu), ui-sans-serif, system-ui;
-  --font-serif: "Ubuntu Serif", Georgia, serif;
-  --font-lora: var(--font-lora), serif;
-  --font-mono: var(--font-ubuntu-mono), ui-monospace, SFMono-Regular, monospace;
-
   /* Ombres & backgrounds */
   --shadow-card: 0 6px 24px rgba(0, 0, 0, 0.08);
   --shadow-cta: 0 10px 24px rgba(0, 0, 0, 0.2);
@@ -63,4 +56,19 @@
   --background-size-grid-lg: 32px 32px;
 
   --text-xxs: 0.625rem;
+}
+
+/* Polices (liées à next/font via packages/ui/src/fonts.ts).
+   ⚠ OBLIGATOIREMENT en @theme inline : les variables --font-ubuntu /
+   --font-lora / --font-ubuntu-mono sont posées par next/font sur <body>,
+   pas sur :root. Un @theme classique résout var(--font-ubuntu) SUR :root,
+   où elle n'existe pas → token invalide → toute la typo retombait en
+   police système (Roboto sur Android). `inline` recopie la chaîne var()
+   dans chaque utilitaire, qui se résout alors au niveau de l'élément. */
+@theme inline {
+  --font-heading: var(--font-ubuntu), ui-sans-serif, system-ui;
+  --font-sans: var(--font-ubuntu), ui-sans-serif, system-ui;
+  --font-serif: "Ubuntu Serif", Georgia, serif;
+  --font-lora: var(--font-lora), serif;
+  --font-mono: var(--font-ubuntu-mono), ui-monospace, SFMono-Regular, monospace;
 }
