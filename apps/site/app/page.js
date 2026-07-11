@@ -182,25 +182,26 @@ function RegistrePanel({ rows }) {
 
 const INVENTAIRE = [
   {
-    num: "01",
+    kicker: "/ LE POURQUOI",
     title: "La quête",
     text: "Pourquoi la robustesse plutôt que la performance, et les règles du jeu du labo.",
     href: "/quete",
     cta: "Lire",
   },
   {
-    num: "02",
-    title: "Locomotion Twin",
-    text: "Le premier outil : un plan de pacing individualisé, construit par analyse approfondie de tes données d'entraînement.",
-    href: "/outils/twin",
+    kicker: "/ LES INSTRUMENTS",
+    title: "Outils",
+    text: "Construits au labo, calibrés sur de vraies données d'athlètes. Le premier : Locomotion Twin, un plan d'allure individualisé. D'autres suivront.",
+    href: "/outils",
     cta: "Découvrir",
   },
   {
-    num: "03",
-    title: "Le direct",
-    text: "Pendant les grandes traversées : carte en direct, journal de bord et messages du terrain.",
-    href: "/live",
-    cta: "Suivre",
+    kicker: "/ ENSEMBLE",
+    title: "L'accompagnement",
+    text: "Le labo en vrai : ateliers de mouvement primal — bientôt, et gratuits pour commencer — puis accompagnement trail, stages et retraites.",
+    // Ancre vers la bande email, comme le lien du registre Comprendre.
+    href: "#email",
+    cta: "Être prévenu·e",
   },
 ];
 
@@ -398,32 +399,39 @@ export default async function HomePage() {
           </h2>
 
           <div className="mt-8 grid grid-cols-1 border-t border-black/12 md:mt-11 md:grid-cols-3">
-            {INVENTAIRE.map((cell, i) => (
-              <div
-                key={cell.num}
-                className={`px-[26px] pb-8 pt-[30px] transition-colors hover:bg-white ${
-                  i < INVENTAIRE.length - 1
-                    ? "border-b border-black/9 md:border-b-0 md:border-r md:border-r-black/9"
-                    : ""
-                }`}
-              >
-                <p className="font-mono text-xs font-bold text-brand-accent-dark">
-                  {cell.num}
-                </p>
-                <h3 className="mt-2.5 font-heading text-[21px] font-bold text-brand-deep">
-                  {cell.title}
-                </h3>
-                <p className="mt-2.5 text-[14.5px] leading-[1.6] text-gray-700">
-                  {cell.text}
-                </p>
-                <Link
-                  href={cell.href}
-                  className="mt-3.5 inline-block text-[14.5px] font-semibold text-brand-primary-dark transition hover:text-brand-accent-dark"
+            {INVENTAIRE.map((cell, i) => {
+              const ctaClass =
+                "mt-3.5 inline-block text-[14.5px] font-semibold text-brand-primary-dark transition hover:text-brand-accent-dark";
+              return (
+                <div
+                  key={cell.kicker}
+                  className={`px-[26px] pb-8 pt-[30px] transition-colors hover:bg-white ${
+                    i < INVENTAIRE.length - 1
+                      ? "border-b border-black/9 md:border-b-0 md:border-r md:border-r-black/9"
+                      : ""
+                  }`}
                 >
-                  {cell.cta} →
-                </Link>
-              </div>
-            ))}
+                  <p className="font-mono text-[11px] font-bold tracking-[0.2em] text-brand-slate">
+                    {cell.kicker}
+                  </p>
+                  <h3 className="mt-2.5 font-heading text-[21px] font-bold text-brand-deep">
+                    {cell.title}
+                  </h3>
+                  <p className="mt-2.5 text-[14.5px] leading-[1.6] text-gray-700">
+                    {cell.text}
+                  </p>
+                  {cell.href.startsWith("#") ? (
+                    <a href={cell.href} className={ctaClass}>
+                      {cell.cta} →
+                    </a>
+                  ) : (
+                    <Link href={cell.href} className={ctaClass}>
+                      {cell.cta} →
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
