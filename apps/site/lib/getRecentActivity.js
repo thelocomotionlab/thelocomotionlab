@@ -71,6 +71,14 @@ function readPublishedArticles() {
     .map((e) => shapeItem(e, "Carnet"));
 }
 
+// Récits de terrain uniquement (kind "recit") : exclut les articles
+// scientifiques, qui vivent dans le registre Comprendre.
+function readPublishedRecits() {
+  return listArticleEntries()
+    .filter((e) => e.published && e.kind === "recit")
+    .map((e) => shapeItem(e, "Carnet"));
+}
+
 function readPublishedProjects() {
   return listProjetEntries()
     .filter((e) => e.published)
@@ -169,6 +177,16 @@ export function getRecentProjects({ limit = 3 } = {}) {
  */
 export function getRecentActivity({ limit = 6 } = {}) {
   return [...readPublishedArticles(), ...readPublishedProjects()]
+    .sort(sortMixedActivity)
+    .slice(0, limit);
+}
+
+/**
+ * Feed « terrain » (cartes Explorer de l'accueil) : récits + projets
+ * uniquement, même tri métier que le feed mixte.
+ */
+export function getRecentExplorer({ limit = 3 } = {}) {
+  return [...readPublishedRecits(), ...readPublishedProjects()]
     .sort(sortMixedActivity)
     .slice(0, limit);
 }

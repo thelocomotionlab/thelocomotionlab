@@ -53,6 +53,8 @@ export const liveConfig = {
     denivele: "~12 000 m D+",
     // Version courte pour le bloc compact de /explorer.
     shortLabel: "Écrins · 20 août",
+    // Libellé de l'indicateur live de l'accueil (« Prochain départ — … »).
+    homeLabel: "Tour des Écrins",
   },
 
   // Props de l'ancien embed (LiveTrackingLazy → LiveTrackingMap). Encore utilisé

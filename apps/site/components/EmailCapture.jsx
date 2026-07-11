@@ -33,7 +33,12 @@ export default function EmailCapture({
   placeholder = "Votre adresse e-mail",
   buttonLabel = "M'inscrire",
   className = "",
+  // « band » : version bande orange de l'accueil — input blanc sans bordure,
+  // bouton terracotta, messages d'état en blanc. Le titre et la promesse
+  // sont rendus par le parent (passer title/description/promise à null).
+  variant = "default",
 }) {
+  const isBand = variant === "band";
   const [email, setEmail] = useState("");
   const [website, setWebsite] = useState(""); // honeypot
   const [status, setStatus] = useState("idle");
@@ -88,7 +93,11 @@ export default function EmailCapture({
 
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col sm:flex-row justify-center items-stretch gap-2 w-full max-w-md mx-auto"
+        className={
+          isBand
+            ? "flex flex-col sm:flex-row items-stretch gap-2 w-full"
+            : "flex flex-col sm:flex-row justify-center items-stretch gap-2 w-full max-w-md mx-auto"
+        }
       >
         <label htmlFor={emailId} className="sr-only">
           Adresse e-mail pour être prévenu·e des parutions
@@ -104,7 +113,11 @@ export default function EmailCapture({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder={placeholder}
-          className="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-accent focus:rounded-full transition-all"
+          className={
+            isBand
+              ? "flex-1 rounded-full bg-white px-[18px] py-3 text-[14.5px] text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-deep transition-all"
+              : "flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-accent focus:rounded-full transition-all"
+          }
         />
 
         {/* Honeypot anti-robots : invisible et hors tabulation. */}
@@ -124,11 +137,17 @@ export default function EmailCapture({
         <button
           type="submit"
           disabled={status === "sending"}
-          className={`bg-brand-accent text-white px-5 py-2 font-semibold flex items-center justify-center gap-2 transition-all duration-300 rounded-full cursor-pointer ${
+          className={`${
+            isBand
+              ? // focus-visible blanc : l'outline global brand-accent serait
+                // invisible sur la bande orange.
+                "bg-brand-deep text-white px-[22px] py-3 text-[14.5px] focus-visible:outline-white"
+              : "bg-brand-accent text-white px-5 py-2"
+          } font-semibold flex items-center justify-center gap-2 transition-all duration-300 rounded-full cursor-pointer ${
             status === "sending" ? "opacity-70 cursor-wait" : "hover:opacity-90"
           }`}
         >
-          <Mail size={18} aria-hidden="true" />
+          {!isBand && <Mail size={18} aria-hidden="true" />}
           {status === "sending" ? "Envoi..." : buttonLabel}
         </button>
       </form>
@@ -147,14 +166,22 @@ export default function EmailCapture({
         role="status"
       >
         {status === "success" && (
-          <p className="text-green-700 text-sm font-medium animate-fade-in leading-none">
+          <p
+            className={`${
+              isBand ? "text-white" : "text-green-700"
+            } text-sm font-medium animate-fade-in leading-none`}
+          >
             {IS_GATEWAY
               ? "Merci ! Un email de confirmation vient de t'être envoyé — pense à cliquer le lien."
               : "Merci ! Tu recevras bientôt les nouvelles explorations du labo."}
           </p>
         )}
         {status === "error" && (
-          <p className="text-red-700 text-sm font-medium animate-fade-in">
+          <p
+            className={`${
+              isBand ? "text-white underline underline-offset-2" : "text-red-700"
+            } text-sm font-medium animate-fade-in`}
+          >
             Une erreur est survenue. Vérifie ton adresse mail.
           </p>
         )}
