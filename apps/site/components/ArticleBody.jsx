@@ -65,39 +65,38 @@ export default function ArticleBody({
       )}
 
       <div className="bg-white rounded-xl shadow-card p-4 sm:p-6 md:p-10">
-        {/* Titre à la convention des pages (bleu profond + liseré ocre),
-            centré ; date et auteur à gauche, en Lora italique. */}
-        <h1 className="text-3xl text-brand-slate-dark md:text-5xl font-heading font-bold mb-4 text-center">
+        {/* Titre à la convention des pages (bleu profond), centré ; auteur
+            et date comme avant, juste dessous ; liseré ocre en séparateur. */}
+        <h1 className="text-3xl text-brand-slate-dark md:text-5xl font-heading font-bold mb-3 text-center">
           {article.title}
         </h1>
-        <div
-          className="mx-auto mb-5 h-[3px] w-16 rounded-full bg-brand-accent"
-          aria-hidden="true"
-        />
         {(article.date || article.author) && (
-          <div className="mb-8 flex flex-wrap items-center gap-x-2 font-lora text-[17px] italic text-brand-deep">
+          <div className="text-sm text-gray-500 mb-5 text-center">
             {article.author && (
-              <span>
+              <p>
                 Par{" "}
                 <Link
                   href="/about"
-                  className="font-medium hover:text-brand-accent-dark hover:underline"
+                  className="font-bold text-brand-deep hover:text-brand-accent hover:underline"
                 >
                   {article.author}
                 </Link>
-              </span>
+              </p>
             )}
-            {article.author && article.date && <span aria-hidden="true">·</span>}
             {article.date && (
-              <span>
-                le{" "}
+              <p>
+                Le{" "}
                 <time dateTime={new Date(article.date).toISOString()}>
                   {new Date(article.date).toLocaleDateString("fr-FR")}
                 </time>
-              </span>
+              </p>
             )}
           </div>
         )}
+        <div
+          className="mx-auto mb-8 h-[3px] w-16 rounded-full bg-brand-accent"
+          aria-hidden="true"
+        />
 
         <div
           className="
