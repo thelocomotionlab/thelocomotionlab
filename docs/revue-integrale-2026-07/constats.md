@@ -155,7 +155,7 @@
 - **Défaut** : Le marqueur [[MD_CAPTION|…]] émis par remarkLiveTracking et remarkPostLiveTracking n'a AUCUN consommateur : quand il se déclenche, le texte brut du marqueur s'affiche littéralement sur la page.
 - **Preuve** : grep 'MD_CAPTION' → seulement les 2 émetteurs (markdown/remarkLiveTracking.js:96, remarkPostLiveTracking.js:89, dont le commentaire ligne 34 dit « que ReactMarkdown saura convertir dans ProjetClient » — composant qui n'existe plus). Le renderer p de ProjetBody gère LIVE_TRACKING_BLOCK, POST_LIVE_TRACKING_BLOCK, PLOT_BLOCK mais pas MD_CAPTION. Actuellement masqué : toutes les directives publiées (ex. public/projets/traversee-reunion.md:341) sont multi-lignes → parsées comme HTML inline (le tag incomplet en 1re ligne ne satisfait pas le bloc HTML CommonMark type 7), donc parent.children[index+1] n'est jamais le paragraphe-légende. Une directive sur UNE ligne suivie d'une légende italique afficherait « [[MD_CAPTION|…]] » en clair.
 - **Action proposée** : Décision à prendre : soit implémenter le cas [[MD_CAPTION| dans le renderer p de ProjetBody (rendre <p class="md-caption"><em>…), soit retirer l'émission dans les deux plugins remark (le chemin case 5 « em only » couvre déjà les légendes). Ne rien changer sans tester sur le contenu publié.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 52cac3d)
 
 ### C025 — [medium/dead-code] `apps/site/components/RecentActivity.jsx` (l.50)
 - **Défaut** : RecentActivity (carrousel de cartes) n'est importé par aucune page ni aucun composant.
@@ -203,7 +203,7 @@
 - **Défaut** : Fuite d'écouteurs : la fonction de cleanup retournée par syncHeight() (removeEventListener 'load' sur l'image sœur) est jetée — syncHeight étant aussi le handler resize, un NOUVEAU listener 'load' est ajouté à chaque resize et jamais retiré.
 - **Preuve** : Dans l'effet lignes 90-127 : `siblingImg.addEventListener("load", setHeight); return () => siblingImg.removeEventListener(...)` — ce return est celui de la fonction interne syncHeight, pas de l'effet. Les deux appels (`syncHeight();` ligne 124 et `window.addEventListener("resize", syncHeight)` ligne 125) ignorent la valeur de retour ; le cleanup de l'effet ne retire que le listener resize. Chaque resize crée une nouvelle closure setHeight attachée à l'image.
 - **Action proposée** : Restructurer l'effet pour attacher le listener 'load' une seule fois et le retirer dans le cleanup de l'effet. Comportement visuel inchangé (les listeners dupliqués posent tous la même hauteur).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 52cac3d)
 
 ### C033 — [low/cleanup] `apps/site/components/MapEmbed.jsx` (l.204)
 - **Défaut** : Couleur de trace "#FF3B3B" dupliquée dans deux effets (chargement GPX et re-pose après changement de style) au lieu d'une constante module.
@@ -227,7 +227,7 @@
 - **Défaut** : ensureMathJax : si le script MathJax existe déjà mais a échoué (ou est déjà chargé sans exposer MathJax.Hub), la promesse n'est jamais résolue — Promise.all bloque et le graphique ne se rend jamais (même sans TeX).
 - **Preuve** : Lignes 32-36 : `const existing = document.getElementById(MATHJAX_SCRIPT_ID); if (existing) { existing.addEventListener("load", …) ; return; }` — pas d'écouteur 'error', et si l'événement load a déjà eu lieu, il ne se redéclenchera pas → resolve jamais appelé. Lignes 177-184 : Plotly.newPlot n'est appelé qu'après Promise.all([..., ensureMathJax()]). Scénario : CDN MathJax bloqué, deux blocs <plot> TeX sur la page → le second reste vide définitivement.
 - **Action proposée** : Ajouter l'écouteur 'error' et un test « déjà chargé » (window.MathJax?.Hub) dans la branche existing. Rendu nominal inchangé ; seul le cas réseau dégradé s'améliore.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 52cac3d)
 
 ### C037 — [low/doc-obsolete] `apps/site/components/PlotLazy.jsx` (l.4)
 - **Défaut** : Le commentaire affirme qu'un bloc <plot> peut être présent « dans un article ou un projet », mais seul le pipeline projets (ProjetBody) inclut remarkPlot — les articles (ArticleBody) ne supportent pas <plot>.
@@ -245,25 +245,25 @@
 - **Défaut** : Flash visuel au chargement : `.animate-fade-in { opacity: 1 }` (règle non-layerée de globals.css:605) écrase l'utilitaire layered `opacity-0`, et l'animationDelay de 0.3s n'a pas de fill backwards → le bouton est visible 0.3s, saute à opacity 0, puis re-fade-in.
 - **Preuve** : ShareButton baseClasses contient `opacity-0 animate-fade-in` + style={{ animationDelay: "0.3s" }} (lignes 137/148). globals.css:605 : `.animate-fade-in { opacity: 1; animation: fade-in 0.35s ease-out forwards; }` — règle hors @layer, donc prioritaire sur l'utilitaire Tailwind `.opacity-0` (layer utilities). Sans `animation-fill-mode: backwards`, pendant le delay l'animation n'applique rien → opacity calculée = 1.
 - **Action proposée** : Signalement : corriger (ex. fill-mode both, ou retirer opacity:1 de la classe) supprimerait un glitch mais CHANGE le comportement visible au chargement — à valider visuellement avant tout fix.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 52cac3d)
 
 ### C040 — [low/cleanup] `apps/site/components/Tooltip.jsx` (l.61)
 - **Défaut** : Classe Tailwind invalide `font-inherit` sur le bouton du tooltip : aucune règle CSS n'est générée (le preflight Tailwind pose déjà font: inherit sur button).
 - **Preuve** : Tooltip.jsx:61 className="inline bg-transparent border-0 p-0 m-0 text-inherit font-inherit cursor-pointer" — `font-inherit` n'est ni une utilité font-family ni font-weight valide en Tailwind v4 ; grep repo : aucune définition custom. text-inherit, lui, est valide.
 - **Action proposée** : Retirer la classe morte (aucun CSS associé → zéro changement de rendu).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 52cac3d)
 
 ### C041 — [low/inconsistency] `apps/site/components/Tooltip.jsx` (l.50) ⚠️ **risque affichage**
 - **Défaut** : HTML invalide : Citation rend un <a href="#ref-…"> comme enfant du <button> de Tooltip (contenu interactif imbriqué dans du contenu interactif) — problème de validité et d'accessibilité (double cible focusable/cliquable).
 - **Preuve** : Citation.jsx:36-50 : <Tooltip entry={entry}><a href={`#ref-${id}`}…>…</a></Tooltip> ; Tooltip.jsx:50-64 enveloppe children dans <button type="button" onClick={toggle}>. Résultat DOM : <button><a href>…</a></button>, interdit par la spec HTML (l'anchor navigue ET le button toggle).
 - **Action proposée** : Signalement seul : restructurer (ex. rendre le <a> porteur des handlers, ou role=button sur un <span>) modifierait le DOM rendu — à valider visuellement et au clavier.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 52cac3d)
 
 ### C042 — [low/inconsistency] `apps/site/components/live/LiveMap.jsx` (l.137)
 - **Défaut** : Les composants live dupliquent en dur les valeurs hex des tokens de packages/ui (#8CB9BD, #B67352, #EFB159, #9A6044, #6E9CA0, #D89A3D, #FEFBF6) : un changement de charte dans packages/ui ne se propagerait pas à ces endroits.
 - **Preuve** : LiveMap.jsx MARKER_COLORS/TRACE_COLORS/halos #FEFBF6 (l.84-153) ; JournalCard.jsx dotColor #8CB9BD/#B67352/#EFB159 (l.19-23) ; ProfileCard.jsx strokes #9A6044/#D89A3D/#B67352/#FEFBF6 (l.82-103) ; FreshnessPill.jsx stroke #9A6044 (l.20) ; LiveTermine.jsx strokes #6E9CA0/#9A6044 (l.97,137) ; MessageCard.jsx stroke #6E9CA0 (l.147) ; AudioPlayer.jsx fill #FEFBF6 (l.110-115). Tous identiques aux tokens de packages/ui/src/styles/theme.css:11-28. CLAUDE.md : « La charte vient de packages/ui et de nulle part ailleurs ».
 - **Action proposée** : Signalement : remplacer par var(--color-brand-*) (valide dans les attributs SVG et les styles inline/cssText) à valeur strictement identique. Rendu inchangé si fait à l'identique.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 52cac3d)
 
 ### C043 — [low/cleanup] `apps/site/package.json` (l.18)
 - **Défaut** : Sept dépendances déclarées ne sont importées nulle part dans le code du site : emailjs-com, framer-motion, marked, markdown-it, proj4, proj4leaflet, remark-breaks.
@@ -280,7 +280,7 @@
 - **Défaut** : Le token --font-serif pointe sur "Ubuntu Serif", une police qui n'existe pas (ni dans la famille Ubuntu ni chargée par fonts.ts), donc toute classe font-serif rend en réalité Georgia.
 - **Preuve** : theme.css:71 `--font-serif: "Ubuntu Serif", Georgia, serif;`. fonts.ts ne déclare que Ubuntu, Lora et Ubuntu Mono (aucune @font-face "Ubuntu Serif" dans le repo). Unique consommateur : apps/site/components/Tooltip.jsx:72 (`font-serif`) → rendu effectif = Georgia. La charte définit pourtant Lora comme serif d'accent (token --font-lora séparé, CLAUDE.md « Ubuntu + Lora »).
 - **Action proposée** : Signalement seul : décider si le rendu Georgia du Tooltip est voulu. Si oui, corriger la VALEUR est interdit (affichage) mais on peut ajouter un commentaire expliquant que le fallback Georgia est le rendu effectif ; si non, pointer le token vers var(--font-lora) — ce qui changerait la police du Tooltip.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 52cac3d (CHANGEMENT VISIBLE assumé : Tooltip Georgia→Lora))
 
 ### C045 — [medium/dead-code] `packages/ui/src/tailwind-preset.js` (l.12)
 - **Défaut** : La chaîne preset Tailwind est morte : aucun @config dans aucun CSS du repo, donc tailwind-preset.js, apps/site/tailwind.config.mjs et la dépendance @tailwindcss/typography ne sont jamais chargés par Tailwind v4.
@@ -399,7 +399,7 @@
 - **Défaut** : Replay code la charte en dur (`text-[#b66b47]`, `bg-[#EFB159]` ×10) là où LiveTrackingMap utilise les tokens (`text-brand-deep`, `bg-brand-accent`) — et #b66b47 n'est même pas la valeur du token brand-deep (#B67352).
 - **Preuve** : Replay.tsx:354 `text-[#b66b47]` ; :362, :371, :408, :420, :438, :459-460, :474-475, :489-490, :512 `[#EFB159]`. packages/ui/src/styles/theme.css:15 `--color-brand-accent: #EFB159` (valeur identique mais dupliquée) et :18 `--color-brand-deep: #B67352` ≠ #b66b47. LiveTrackingMap.tsx:433/442 utilise text-brand-deep/bg-brand-accent. Viole CLAUDE.md : « La charte vient de packages/ui et de nulle part ailleurs ». Conséquence actuelle : le titre du replay et celui du live n'ont pas exactement la même couleur.
 - **Action proposée** : Signalement seul : remplacer par les tokens changerait les classes du HTML rendu et la couleur du titre (#b66b47 → #B67352). À arbitrer ; en attendant, toute retouche de --color-brand-accent ne se propagera pas au Replay.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 52cac3d (CHANGEMENT VISIBLE assumé : titre replay #b66b47→#B67352))
 
 ### C064 — [low/cleanup] `packages/tracking/src/Replay.tsx` (l.375)
 - **Défaut** : Double formatage redondant : `Number(stats.distance).toFixed(2)` alors que stats.distance est déjà une string toFixed(2) par contrat.
@@ -671,13 +671,13 @@
 - **Défaut** : La docstring « Source unique pour tout le moteur (ingestion XML, spec de course, pacing) » est doublement inexacte : polar.py parse l'ISO directement via datetime.fromisoformat, et aucun module de pacing/ ne parse de dates ISO.
 - **Preuve** : polar.py:85 `return datetime.fromisoformat(src)` (sans passer par parse_iso : pas de gestion des fractions > 6 décimales, l.21 de _dt.py). Grep `parse_iso|fromisoformat` sur src/twin_engine/pacing/ et api/ : zéro résultat ; seuls course/spec.py:17 et ingest/_xml.py:12 importent parse_iso. Fonctionnellement quasi équivalent en Python 3.11 (fromisoformat gère « Z » et les millisecondes), mais la promesse « source unique » est fausse.
 - **Action proposée** : Signalement seul : soit corriger la docstring (fix sûr), soit faire passer polar._parse_start par parse_iso (micro-changement de comportement sur fractions > 6 décimales → protocole).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 ### C106 — [low/doc-obsolete] `services/twin-engine/src/twin_engine/ingest/__init__.py` (l.3)
 - **Défaut** : Docstring et exports du paquet en retard sur l'adaptateur Polar : formats annoncés « .fit/.tcx/.gpx » sans le .json Polar, parse_fit/parse_tcx/parse_gpx ré-exportés mais pas parse_polar ni NotActivityData.
 - **Preuve** : __init__.py l.3 « Adaptateurs PAR FORMAT (.fit/.tcx/.gpx, décompression .gz/.zip, bundle Strava) » ; __all__ l.31-33 liste parse_fit/parse_tcx/parse_gpx mais pas parse_polar. Grep repo entier : aucun consommateur externe n'importe parse_fit/tcx/gpx depuis le paquet racine (registry.py les importe des sous-modules) ; les tests importent parse_polar depuis twin_engine.ingest.polar et NotActivityData depuis twin_engine.ingest.canonical, faute de ré-export. registry.py:29 `_PARSERS = {..., "json": parse_polar}` confirme les 4 formats.
 - **Action proposée** : Fix sûr du docstring (mentionner Polar .json). Pour les exports : soit ajouter parse_polar/NotActivityData (additif, sans risque), soit signaler seulement — les retraits seraient un changement d'API publique.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 ### C107 — [low/bug] `services/twin-engine/src/twin_engine/ingest/canonical.py` (l.220)
 - **Défaut** : Une activité de durée sub-seconde (0 < te[-1] < 1) sans canal vitesse plante avec un IndexError numpy cryptique au lieu du ValueError « durée nulle » propre.
@@ -695,7 +695,7 @@
 - **Défaut** : Le commentaire du champ source_format énumère "fit" | "tcx" | "gpx" alors que l'adaptateur Polar produit "polar".
 - **Preuve** : canonical.py:130 `source_format: str  # "fit" | "tcx" | "gpx"` vs polar.py:158 `source_format="polar"`. Le test test_ingest_polar.py:54 vérifie d'ailleurs `a.source_format == "polar"`.
 - **Action proposée** : Fix sûr : ajouter | "polar" au commentaire (aucun impact runtime).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 ### C110 — [low/dead-code] `services/twin-engine/src/twin_engine/ingest/canonical.py` (l.28)
 - **Défaut** : CANONICAL_VERSION = 1 est défini et ré-exporté (canonical.__all__, ingest/__init__.__all__) mais jamais consommé nulle part dans le repo.
@@ -707,7 +707,7 @@
 - **Défaut** : Référence périmée « (commit 2) » dans le docstring du module : renvoie à une étape d'un plan de développement passé, plus à rien d'actuel.
 - **Preuve** : canonical.py:4 « sont normalisés par les adaptateurs (commit 2) vers UN seul schéma ». Les références à extract_all2 (l.183, fit.py:3) restent, elles, valides : services/twin-engine/_seed/analyse/extract_all2.py existe.
 - **Action proposée** : Fix sûr : supprimer « (commit 2) » du docstring.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 ### C112 — [low/bug] `services/twin-engine/src/twin_engine/ingest/fit.py` (l.71)
 - **Défaut** : Le repli enhanced_speed→speed (et enhanced_altitude→altitude) ne joue pas si la clé enhanced_* existe avec la valeur None (champ invalide fitdecode) : la valeur valide du champ non-enhanced est perdue.
@@ -749,7 +749,7 @@
 - **Défaut** : Dans test_iter_activities_streams_like_batch, la liste sk2 est collectée mais jamais assertée, et le commentaire « le flux signale les sports ignorés comme le lot » ne correspond pas au scénario exercé (NotActivityData silencieux, pas un skip de sport).
 - **Preuve** : test_ingest.py l.154-159 : `sk2: list[dict] = []` puis seule assertion `assert list(iter_activities(bad, running_only=True, skipped=sk2)) == []` — sk2 n'est jamais vérifiée ; meta.json (json non-session) lève NotActivityData → ignoré en silence, donc aucun « sport ignoré » n'est produit ni testé ici (la parité des skips running_only flux/lot est en fait couverte ailleurs, indirectement).
 - **Action proposée** : Signalement : ajouter `assert sk2 == []` (ou un vrai cas de sport ignoré) et corriger le commentaire — modification de test uniquement, sans toucher au moteur.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 
 ## services/twin-engine — science (course/twin/calibration/predict/sufficiency/pacing)
@@ -766,13 +766,13 @@
 - **Défaut** : course.default_segment_km (découpage auto en mode GPX-only) est la seule constante du moteur absente de twin.config.json — elle n'existe que comme défaut dans config.py.
 - **Preuve** : Comparaison clé par clé : toutes les autres dataclasses de config.py sont intégralement représentées dans twin.config.json ; le bloc course du JSON (lignes 4-9) n'a que grid_step_m, smooth_window_m, grade_clip, cr0. config.py:35 définit default_segment_km: float = 10.0, consommé par course/profile.py:165 et documenté dans docs/manuel-twin.md:124. Le _comment du JSON (ligne 2) annonce « Surcharge fine possible en éditant ces valeurs ».
 - **Action proposée** : Ajouter "default_segment_km": 10.0 au bloc course de twin.config.json — strictement neutre (valeur identique au défaut code), remet la constante dans la source déclarée par le protocole.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 ### C121 — [low/cleanup] `services/twin-engine/src/twin_engine/calibration.py` (l.521)
 - **Défaut** : __all__ de calibration.py omet recency_weights alors que la fonction est une API consommée hors module (tests) et que sa jumelle maximality_weights y figure.
 - **Preuve** : calibration.py:521-531 : __all__ contient maximality_weights mais pas recency_weights ; tests/test_predict.py:14 importe recency_weights directement (from twin_engine.calibration import … recency_weights).
 - **Action proposée** : Ajouter recency_weights à __all__ (neutre : __all__ n'affecte que import *, non utilisé dans le repo).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 ### C122 — [low/inconsistency] `services/twin-engine/src/twin_engine/config.py` (l.344)
 - **Défaut** : load_config accepte un data_dir venant de twin.config.json (raw.get("data_dir")) et un littéral "/data", alors que le _comment du JSON et la docstring du module affirment qu'aucun chemin ne vit dans le JSON ni en dur dans le code.
@@ -790,7 +790,7 @@
 - **Défaut** : Import mort : field importé de dataclasses mais jamais utilisé dans spec.py.
 - **Preuve** : pyflakes : « src/twin_engine/course/spec.py:12:1: 'dataclasses.field' imported but unused » ; aucun field( dans le fichier.
 - **Action proposée** : Supprimer field de l'import (neutre prouvé).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 ### C125 — [low/dead-code] `services/twin-engine/src/twin_engine/course/spec.py` (l.43)
 - **Défaut** : RaceSpec.official_dplus_m est parsé (from_dict ligne 79) mais jamais lu par aucun calcul du moteur.
@@ -802,7 +802,7 @@
 - **Défaut** : Deux variables mortes dans build_pacing : cum_move (lignes 138 et 143) est accumulée mais jamais lue, et cum_clock = np.zeros(n) (ligne 139) est écrasée inconditionnellement ligne 157.
 - **Preuve** : grep cum_move : seules occurrences dans plan.py aux lignes 138 (cum_move = 0.0) et 143 (cum_move += t_move_h[i]), jamais lue ensuite — vestige de _seed/analyse/pacing.py:74-90 qui exportait cum_move_h. cum_clock est réassignée ligne 157 (cum_clock = np.cumsum(t_move_h) + cum_stop_before) sans lecture entre les deux.
 - **Action proposée** : Suppression sûre des trois lignes mortes (aucun chemin ne les lit : neutralité prouvée, tests pacing verts).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 ### C127 — [low/refactor] `services/twin-engine/src/twin_engine/pacing/plan.py` (l.170)
 - **Défaut** : mult = mc / tpred est calculé avant le garde tpred > 0 et n'est utilisé que dans la branche else (repli percentiles MC) : calcul inutile quand plan_low/high_h sont servis, et division par zéro théorique si tpred == 0.
@@ -814,13 +814,13 @@
 - **Défaut** : Docstring du module périmée : « ``full`` (pacing + figures + rapport) est ajouté aux commits 8–9 » alors que analyze_full/run_full existent dans ce même fichier.
 - **Preuve** : pipeline.py:6 vs analyze_full (ligne 171) et run_full (ligne 223) implémentés et testés (test_report.py, cli).
 - **Action proposée** : Mettre à jour la docstring (commentaire uniquement).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 ### C129 — [low/doc-obsolete] `services/twin-engine/src/twin_engine/predict.py` (l.327)
 - **Défaut** : Commentaire trompeur : « chemin historique (défaut sigma_only ; replis blend/vc_e) » alors que le défaut livré de mc_mode est "predictive" depuis le 2026-07-02.
 - **Preuve** : predict.py:327 ; twin.config.json:69 "mc_mode": "predictive" ; test_config.py:26 assert cfg.prediction.mc_mode == "predictive" avec commentaire de bascule C3.
 - **Action proposée** : Correction de commentaire uniquement (ex. « ancien défaut sigma_only ») — zéro effet runtime.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 ### C130 — [low/inconsistency] `services/twin-engine/src/twin_engine/predict.py` (l.86) ⚠️ **risque affichage**
 - **Défaut** : Clés JSON interval_80_low_h/interval_80_high_h codent « 80 » en dur alors que la couverture vient de la config (interval_low/high_pct 10/90) : la clé mentirait si la config changeait.
@@ -838,7 +838,7 @@
 - **Défaut** : Commentaire périmé : « ``strict`` (défaut) : MAE brute » alors que le défaut livré est gate_policy="honest".
 - **Preuve** : sufficiency.py:192 dit « ``strict`` (défaut) » ; twin.config.json:98 "gate_policy": "honest" et config.py:268 gate_policy: str = "honest" avec commentaire « (DÉFAUT ACTIVÉ) ».
 - **Action proposée** : Correction de commentaire uniquement (retirer « (défaut) » de strict ou l'attribuer à honest) — zéro effet runtime.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 ### C133 — [low/inconsistency] `services/twin-engine/src/twin_engine/sufficiency.py` (l.222) ⚠️ **risque affichage**
 - **Défaut** : Textes servis codant en dur des valeurs de config : « intervalle 80% » (ligne 222) et « ≈ moitié de la cible » (ligne 152) resteraient faux si interval_low/high_pct ou long_effort_min_fraction changeaient.
@@ -856,19 +856,19 @@
 - **Défaut** : Import mort dans les tests : numpy importé mais jamais utilisé dans test_course.py.
 - **Preuve** : pyflakes : « tests/test_course.py:12:1: 'numpy as np' imported but unused » ; aucun np. dans le fichier (les profils synthétiques sont en math pur).
 - **Action proposée** : Supprimer l'import (neutre).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 ### C136 — [low/doc-obsolete] `services/twin-engine/tests/test_montagnhard_robustness.py` (l.123)
 - **Défaut** : Commentaires internes citant les valeurs pré-C1 (σ « 1,539 → ~0,5 », « 25,3 % → ~9–10 % ») alors que le fixture ré-épinglé post-C1 reproduit 1,528/24,8 % (assertions lignes 90 et 96).
 - **Preuve** : test_montagnhard_robustness.py:123 « σ ~divisée par 2–3 (1,539 → ~0,5) » et :125 « 25,3 % → ~9–10 % » vs l'en-tête (lignes 4-5) qui documente la recapture post-C1 (24,8 %, 1,528) et relègue 25,3/1,539 à l'historique git ; les assertions elles-mêmes utilisent bien les valeurs post-C1.
 - **Action proposée** : Mettre à jour les deux commentaires (aucune assertion ne change).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 ### C137 — [low/cleanup] `services/twin-engine/tests/test_pipeline.py` (l.75)
 - **Défaut** : Import mort local : timezone importé dans test_until_excludes_posterior_and_undated_and_anchors_freshness mais jamais utilisé (les dates passent par datetime.fromisoformat avec offset).
 - **Preuve** : pyflakes : « tests/test_pipeline.py:75:5: 'datetime.timezone' imported but unused » ; ligne 83 utilise datetime.fromisoformat(f"{iso}T08:00:00+00:00").
 - **Action proposée** : Supprimer timezone de l'import (neutre).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 
 ## services/twin-engine — report/api/cli/jobs
@@ -879,13 +879,13 @@
 - **Défaut** : CLAUDE.md décrit une app apps/twin (pages + api/eligibilite appelant /preview, checkout Stripe, webhook) qui n'existe pas dans le repo — apps/ ne contient que _template et site.
 - **Preuve** : ls apps/ → _template, site uniquement. CLAUDE.md arbre : « apps/twin … api/eligibilite/route.ts # appelle le moteur /preview … checkout/route.ts … webhook/route.ts ». docs/manuel-twin.md:91 le confirme : « l'app twin qui la consommera n'existe pas encore — seul le teaser statique /outils/twin du site est en ligne ». Les endpoints /preview, /jobs, /jobs/{id}, /jobs/{id}/report existent bien côté moteur (api/app.py) et sont testés (test_api.py) + documentés (manuel-twin.md §4) : ce n'est pas du code mort, c'est le contrat de la future app — mais la doc racine présente comme existant ce qui est un plan.
 - **Action proposée** : Corriger l'arborescence de CLAUDE.md (marquer apps/twin comme « à venir » ou la retirer), sans toucher au moteur.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit ff1b4fd)
 
 ### C139 — [medium/bug] `services/twin-engine/Dockerfile` (l.43)
 - **Défaut** : twin.config.json n'est jamais embarqué dans l'image Docker et TWIN_CONFIG_PATH n'est défini nulle part : en production le moteur tourne silencieusement sur les défauts codés en dur de config.py, et toute édition du JSON versionné est sans effet.
 - **Preuve** : pyproject.toml [tool.hatch.build.targets.wheel] packages=["src/twin_engine"] (le JSON est à la racine du service, hors wheel) ; le Dockerfile ne COPY que pyproject/README/src et installe le wheel ; grep TWIN_CONFIG_PATH → aucune occurrence dans Dockerfile, compose.local.yml, infra/compose.yml. Dans le conteneur, _default_config_path() = Path(__file__).resolve().parents[2]/"twin.config.json" = /usr/local/lib/python3.11/twin.config.json (inexistant) → load_config() retombe sur les défauts sans erreur. Le _comment du JSON promet pourtant « Surcharge fine possible en éditant ces valeurs ». Aujourd'hui le JSON est strictement identique aux défauts des dataclasses (diff manuel champ à champ, seul course.default_segment_km manque et vaut le défaut) : aucun écart de comportement actuel, mais piège de dérive garanti au premier réglage.
 - **Action proposée** : Embarquer twin.config.json dans l'image (COPY + ENV TWIN_CONFIG_PATH=/app/twin.config.json) ou l'inclure au wheel via force-include hatch. Neutre aujourd'hui (valeurs identiques aux défauts) ; à vérifier par pytest + golden avant merge, conformément au protocole moteur.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 ### C140 — [medium/refactor] `services/twin-engine/src/twin_engine/api/app.py` (l.108)
 - **Défaut** : POST /jobs et POST /preview chargent l'archive d'entraînement entière en mémoire (await training.read()) alors que le pipeline aval a été explicitement optimisé pour un flux O(1 activité) sur des archives de plusieurs Go.
@@ -897,7 +897,7 @@
 - **Défaut** : Le manuel affirme que --race vaut par défaut examples/nice-100m.json, alors que le CLI a default=None (mode GPX-only, découpage auto) — comportement radicalement différent de celui documenté.
 - **Preuve** : manuel-twin.md:82 « --race par défaut : examples/nice-100m.json (course de référence) » vs cli.py:71 sp.add_argument("--race", default=None, help="…sans, mode GPX-only…") et cli.py:96-98 : sans --race, RaceSpec(name=Path(args.course).stem).
 - **Action proposée** : Corriger le manuel (le défaut est le mode GPX-only, nice-100m.json n'est qu'un exemple).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 ### C142 — [low/dead-code] `services/twin-engine/examples/nice-100m.json` (l.16)
 - **Défaut** : Le champ official_dplus_m est parsé dans RaceSpec (spec.py:43,79) mais jamais lu par aucun calcul du moteur — donnée morte, ce que docs/manuel-twin.md admet d'ailleurs explicitement.
@@ -909,7 +909,7 @@
 - **Défaut** : scipy>=1.11 et pydantic>=2.6 sont déclarés en dépendances mais jamais importés nulle part dans le service (src, tests, tools) ; scipy alourdit l'image Docker pour rien, et CLAUDE.md le cite pourtant dans la stack du moteur.
 - **Preuve** : grep 'import scipy|from scipy|import pydantic|from pydantic' sur tout services/twin-engine → 0 match ; grep scipy sur tout le repo → seulement CLAUDE.md:20 et pyproject.toml:22. pydantic reste une dépendance transitive de FastAPI (le pin explicite est redondant mais pas dangereux).
 - **Action proposée** : Signalement : retirer scipy de pyproject (aucun import, image plus légère) et mettre à jour la mention dans CLAUDE.md ; pydantic peut rester comme pin de contrat FastAPI ou être retiré. Vérifier pytest + build Docker avant merge.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 ### C144 — [low/dead-code] `services/twin-engine/src/twin_engine/api/app.py` (l.79)
 - **Défaut** : Le champ Form « athlete » de POST /preview est accepté mais jamais utilisé dans le corps de l'endpoint (copier-coller de /jobs) ; même chose pour --athlete du sous-commande preview du CLI.
@@ -933,7 +933,7 @@
 - **Défaut** : Docstrings historiques périmées : pipeline.py annonce que « full … est ajouté aux commits 8-9 » alors que analyze_full/run_full sont implémentés dans ce même fichier ; pyproject.toml garde « implémenté au commit 11 » pour un CLI qui existe.
 - **Preuve** : pipeline.py:6 « ``full`` (pacing + figures + rapport) est ajouté aux commits 8–9 » vs analyze_full (ligne 171) et run_full (ligne 223) présents et testés ; pyproject.toml:36 « CLI qui rejoue le cas Nice 100M de bout en bout (implémenté au commit 11) » — cli.py existe et est couvert par test_cli.py.
 - **Action proposée** : Mettre à jour ces deux commentaires (changement de commentaires uniquement, neutre pour le moteur).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 ### C148 — [low/dead-code] `services/twin-engine/src/twin_engine/report/context.py` (l.332)
 - **Défaut** : 13 clés du contexte de rapport ne sont référencées ni par report.tex.j2 ni par aucun test : verdict, sellable, sufficiency_reasons, cv_rmse, cv_n, dprime, endurance_E, alpha, durability_pct, n_ultras, dplus_per_km, hr_majority, et figures — cette dernière avec un commentaire mensonger « (rempli par le moteur de rendu) » alors que rien ne la remplit jamais (le template code les chemins figures/*.png en dur).
@@ -957,13 +957,13 @@
 - **Défaut** : Dans test_job_lifecycle, le commentaire « archive d'entraînement purgée après parsing » précède une assertion qui ne vérifie pas du tout la purge (elle teste le verdict) : la suppression de jobs/<id>/upload dans le chemin nominal n'est couverte par aucun test (seul le chemin crash/orphelin l'est).
 - **Preuve** : test_api.py:79-80 : « # archive d'entraînement purgée après parsing » suivi de assert body["verdict"] in {…}. La purge nominale est faite par runner.py:99 (finally) mais seul test_startup_sweeps_orphan_jobs_and_previews (ligne 88) vérifie une suppression, et uniquement pour le chemin crash.
 - **Action proposée** : Ajouter dans test_job_lifecycle une assertion « not (data_dir/jobs/<id>/upload).exists() » (test seul, aucun code moteur touché) ou déplacer le commentaire.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 ### C152 — [low/cleanup] `services/twin-engine/tests/test_report.py` (l.143)
 - **Défaut** : Motif redondant et fragile dans test_implausible_vc_hidden_with_honest_note : dc_replace(...) if hasattr(...) else twin suivi d'une réassignation inconditionnelle twin_bad.critical_speed = bad — la branche else muterait l'objet partagé, et la ligne 144 rend la ligne 143 inutile.
 - **Preuve** : test_report.py:143-144 : « twin_bad = dc_replace(twin, critical_speed=bad) if hasattr(twin, "__dataclass_fields__") else twin » puis « twin_bad.critical_speed = bad ». Twin est toujours une dataclass non gelée : la garde hasattr est morte et la réassignation écrase le résultat du replace.
 - **Action proposée** : Simplifier en un seul dc_replace (test uniquement, aucun code moteur).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ appliqué (commit 8ef46d1)
 
 
 

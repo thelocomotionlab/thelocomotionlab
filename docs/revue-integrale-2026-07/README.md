@@ -26,17 +26,19 @@ et son état est tenu à jour ici et dans `constats.md`.
 - **Lignes de code (baseline)** : 30 850 lignes de code strict (ts/tsx/js/jsx/mjs/py/css,
   hors node_modules/.next/.venv/dist), + 11 252 lignes de configs/LaTeX/yml, + 8 789 lignes de markdown.
 
-## Bilan final (étape 12, session 3 — 2026-07-13)
+## Bilan final (après étapes 4 et 9, session 4 — 2026-07-13)
 
-- Vérification complète re-jouée après tous les correctifs : `pnpm build` ✅, `pnpm lint` ✅
-  (4 paquets couverts, warning du template résolu), `pnpm test` ✅, `pytest services/twin-engine`
-  ✅ **190 passed, 2 skipped — identique à la baseline** (aucun changement de comportement moteur).
-- **Lignes de code final : 30 250** (−600 lignes mortes). Détail : site 10 929, _template 110,
-  ui 338, tracking 2 321, tracking-cache 816, email-gateway 178, live-journal 4 512,
-  twin-engine 11 046. (+ ~10 300 configs/LaTeX/yml, ~8 900 markdown.)
-- 45 constats traités (✅ appliqués ou corrigés), 2 bugs high corrigés, 0 purge de doc
-  (convention archive respectée) ; le reste = signalements en attente de décision (étapes 4 et 9
-  notamment), tous consignés dans `constats.md`.
+- Vérification complète re-jouée après tous les correctifs : `pnpm build` ✅, `pnpm lint` ✅,
+  `pnpm test` ✅, `pytest services/twin-engine` ✅ **190 passed, 2 skipped — identique à la
+  baseline** (aucun changement de comportement moteur).
+- **Lignes de code final : 30 266** (baseline 30 850 ; −600 de code mort, +16 nets des correctifs
+  des étapes 4/9 : tokens JS, gardes, assertions de test). (+ ~10 300 configs/LaTeX/yml,
+  ~8 900 markdown.)
+- **76 constats traités** (✅ appliqués), dont les 2 bugs high, 9 fixes d'affichage validés
+  (2 changements visibles assumés) et 21 nettoyages neutres du moteur. Le reste = signalements
+  documentés dans `constats.md` : changements de comportement du moteur (protocole flag+A/B),
+  décisions éditoriales/design, et 3 purges candidates (notes_pratiques.txt, _seed/, chaîne
+  preset Tailwind).
 
 ## Ce qui a été fait (session 1 — 2026-07-13)
 
@@ -73,11 +75,17 @@ Cocher : ☐ à faire → ☑ validée par Valentin → ✅ faite (commit réfé
   getRecentActivity ; flag résolu SHOW_OUTILS (Navbar) ; commentaires trompeurs corrigés ;
   .env.example complété. Build 27/27 + lint + 21 tests verts. Les champs morts
   d'embed/nextDeparture (liveConfig) restent à valider (C002 partiel).
-- **Étape 4 — apps/site : correctifs À RISQUE AFFICHAGE (décision au cas par cas)** ☐ **(SEULE
-  ÉTAPE CODE RESTANTE — bloquée en attente de tes décisions)**
-  Fuite d'écouteurs MapEmbed, flash ShareButton, protocole `[[MD_CAPTION|…]]` sans consommateur,
-  promesse MathJax dans Plot, mélange articles/récits de getRelatedArticles. Chaque fix présenté
-  avec avant/après, appliqué seulement sur feu vert explicite.
+- **Étape 4 — apps/site : correctifs à risque affichage** ✅ (session 4, commit `52cac3d`,
+  validée par Valentin)
+  Appliqué : fuite d'écouteurs MapEmbed, promesse MathJax, émission `[[MD_CAPTION]]` retirée,
+  flash ShareButton (fill-mode `both`), Tooltip en `span[role=button]` (+ classe morte
+  font-inherit), constantes JS `brandColors` dans packages/ui consommées par les 7 composants
+  live (rendu identique), Replay en utilitaires brand. Deux changements visibles ASSUMÉS :
+  Tooltip Georgia→Lora (`--font-serif`, conforme charte) et titre replay #b66b47→#B67352 (token).
+  Restent en signalement : getRelatedArticles (C015, décision éditoriale), SoutenirSection→
+  EmailCapture (C026, change les textes), règle h1-h6 var(--font-heading) (C028), sélecteurs
+  md-split (C029), citation-ref (C030), compteur de figures (C038), défauts d'altitude (C059),
+  gardes de style Live/Replay (C060/C062), bounds spread (C061), icône flaticon (C069).
 - **Étape 5 — packages/ui + apps/_template** ✅ partiel (session 3, commit `0298778`)
   Appliqué : tokens --background-size-grid-* morts par construction, warning ESLint du template.
   En attente de décision : chaîne preset Tailwind (C045), `--font-serif: "Ubuntu Serif"` (C044,
@@ -95,10 +103,19 @@ Cocher : ☐ à faire → ☑ validée par Valentin → ✅ faite (commit réfé
   (session 3, commit `8eb1ecc`) : "quete" ajouté à l'allowlist SOURCES (manifeste/footer gardés
   par tolérance, README aligné) ; COPY des assets ajouté au Dockerfile live-journal. En attente :
   null body → 400 (C085 zone), borne du rate-limiter, constats live-journal restants (C093–C102).
-- **Étape 9 — twin-engine : signalements et nettoyages neutres (C103–C152)** ☐
-  Aucun changement de comportement appliqué (protocole). Les 50 constats moteur restent des
-  signalements à trier avec Valentin ; seuls des nettoyages de docstrings pourront être appliqués
-  après validation, pytest re-vérifié à chaque commit.
+- **Étape 9 — twin-engine : nettoyages neutres** ✅ (session 4, commit `8ef46d1`, validée par
+  Valentin — pytest identique : 190 passed, 2 skipped)
+  Appliqué : docstrings/commentaires périmés, code mort prouvé (import field, cum_move/cum_clock,
+  imports de tests), default_segment_km dans twin.config.json, __all__ calibration, Dockerfile
+  embarque enfin twin.config.json (TWIN_CONFIG_PATH — la prod tournait sur les défauts code),
+  scipy retiré (zéro import), tests renforcés (purge upload, sk2, dc_replace), manuel-twin
+  (--race). Restent en signalement (changements de COMPORTEMENT → protocole flag+A/B) :
+  C103 (garde finitude), C104 (interval_ms Polar), C107/C108 (gardes canonical), C112 (repli
+  enhanced_*), C113 (zip en RAM), C115 (zip corrompu silencieux), C119/C133 (textes servis),
+  C122 (data_dir du JSON), C125/C142 (official_dplus_m, réservé T8), C130 (clé interval_80),
+  C131 (plis LOO), C134 (speed_basis), C140 (upload en RAM), C144 (Form athlete), C145 (« 80% »
+  CLI), C146 (purge figures/tex), C148 (13 clés contexte), C149 (logo inutilisé — après
+  build_pdf de contrôle), C150 (paramètres morts).
 - **Étape 10 — Les 3 revues manquantes** ✅ (session 3, en lecture directe — voir fin de
   constats.md, entrées C153–C156)
   tools/ tous vivants ; _seed/ = candidat purge à arbitrer (C153) ; infra/CI cohérents ;
