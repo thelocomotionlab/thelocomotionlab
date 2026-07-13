@@ -51,13 +51,13 @@ export default function nextConfig(phase) {
       "10.0.0.*",
     ],
 
-    // Tree-shake les gros packages d'icônes / charts / animations :
+    // Tree-shake les gros packages d'icônes / charts :
     // Next n'embarquera dans le bundle client que ce qui est vraiment importé.
+    // (recharts arrive via packages/tracking, transpilé ci-dessus.)
     experimental: {
       optimizePackageImports: [
         "lucide-react",
         "recharts",
-        "framer-motion",
       ],
     },
 
