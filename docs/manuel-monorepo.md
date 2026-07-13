@@ -237,7 +237,7 @@ Ce que le gabarit branche **déjà** pour toi (rien à refaire) :
 | --- | --- |
 | `package.json` | dépend de `@locomotionlab/ui` en `workspace:*` (la charte, par symlink) |
 | `next.config.ts` | `transpilePackages: ["@locomotionlab/ui"]` — Next compile la charte (TS + `next/font`) |
-| `app/layout.tsx` | importe les polices de marque : `import { ubuntu, lora } from "@locomotionlab/ui/fonts"` |
+| `app/layout.tsx` | pose les polices de marque : `import { fontVariables } from "@locomotionlab/ui/fonts"` sur `<body>` (Ubuntu + Lora + Ubuntu Mono) |
 | `app/globals.css` | `@import "tailwindcss"` + `@import "@locomotionlab/ui/theme.css"` (les tokens) + `@source "../../../packages/ui/src"` (scanne la charte pour générer ses classes) |
 
 Conventions à respecter (cf. [`CLAUDE.md`](../CLAUDE.md)) :

@@ -113,8 +113,8 @@ curl -s https://tracking.thelocomotionlab.com/live-positions.json | head -40
 Voir [`docs/runbook-vps.md`](./runbook-vps.md) étape 4. En résumé :
 
 1. **Snapshot OVH** + sauvegarde Traccar (runbook étape 0).
-2. Activer la route Traccar dans Caddy : renommer `infra/caddy/conf.d/tracking.caddy.disabled`
-   → `tracking.caddy` (par commit), **décommenter** `live_json:/srv/live:ro` dans `infra/compose.yml`.
+2. Côté repo, c'est DÉJÀ committé : la route `infra/caddy/conf.d/tracking.caddy` est active et
+   le montage `live_json:/srv/live:ro` est en place dans `infra/compose.yml`. Rien à renommer.
 3. `git pull` sur le VPS, passer `HTTP_PORT=80 / HTTPS_PORT=443` dans `.env`, `sudo systemctl stop nginx && sudo systemctl disable nginx`, `./deploy.sh`.
 4. Vérifier : UI Traccar, `/api/public/*` + token, `live-positions.json` / `live-timer.json` (servis
    depuis le volume), CSP. **Le site continue de poller la MÊME URL** `tracking.thelocomotionlab.com/live-positions.json`
@@ -160,6 +160,7 @@ sudo systemctl disable --now live-cache.timer live-cache.service
 | `apiUrl` | `TRACCAR_API_URL` | `http://host.docker.internal:8082/api` | API Traccar (local par défaut). |
 | `intervalSeconds` | `INTERVAL_SECONDS` | `15` | Période de la boucle. |
 | `fetchWindowHours` | `FETCH_WINDOW_HOURS` | `50` | Plancher de la fenêtre de fetch (filet). |
+| `maxPointsPerFetch` | `MAX_POINTS_PER_FETCH` | `10000` | Plafond de points par requête Traccar. |
 | `samplingCorrection` | `SAMPLING_CORRECTION` | `1.03` | Correction distance (échantillonnage). |
 | `elevationPlusCorrection` / `elevationMinusCorrection` | `ELEVATION_PLUS/MINUS_CORRECTION` | `0.95` | Corrections D+/D−. |
 | `minDistanceThreshold` | `MIN_DISTANCE_THRESHOLD` | `8` | Anti-dérive GPS statique (m). |

@@ -28,22 +28,18 @@ développer chaque app sans casser les autres, tout en gardant une identité vis
 ```
 thelocomotionlab/
 ├─ apps/
+│  ├─ _template/             # app modèle (Next + TS + charte ui) — point de départ des
+│  │                         #   nouvelles apps ; image Docker de test de la chaîne CI→VPS
 │  ├─ site/                  # site public (Next + JS, App Router), CF Pages
 │  │  ├─ app/                     # IA refonte 2026 : comprendre (la science, type "article"),
 │  │  │                           #   explorer (le terrain : récits + projets fusionnés),
-│  │  │                           #   manifeste, outils/twin (teaser), live (hub direct),
+│  │  │                           #   quete (ex-manifeste), outils/twin (teaser), live (hub),
 │  │  │                           #   about, contact, soutenir, recherche ; /articles /projets
-│  │  │                           #   /labo → 301 (générées au build, lib/legacyRedirects.mjs)
+│  │  │                           #   → 308 (générées au build, lib/legacyRedirects.mjs) ;
+│  │  │                           #   /labo et /manifeste → 308 en dur dans next.config.mjs
 │  │  └─ lib/contentRoutes.mjs    # source unique slug/type→pilier + collision de slugs
-│  └─ twin/                  # Locomotion Twin (Next + TS) — app indépendante
-│     └─ app/
-│        ├─ page.tsx              # dépôt archive d'entraînement + champs course cible
-│        ├─ resultat/page.tsx     # verdict de suffisance/éligibilité
-│        ├─ offres/page.tsx       # formules / prix
-│        └─ api/
-│           ├─ eligibilite/route.ts   # appelle le moteur /preview
-│           ├─ checkout/route.ts      # crée la session Stripe
-│           └─ webhook/route.ts       # reçoit Stripe → demande un job au moteur
+│  └─ (twin/ — PRÉVU, n'existe pas encore : app Next + TS de vente/dépôt du
+│     Locomotion Twin ; appellera le moteur /preview, Stripe checkout/webhook)
 ├─ packages/
 │  ├─ ui/                    # LA charte partagée (tokens + preset + composants)
 │  │  └─ src/
@@ -55,6 +51,9 @@ thelocomotionlab/
 ├─ services/                # services backend conteneurisés (Docker → GHCR → VPS)
 │  ├─ tracking-cache/       # back live-tracking (Node/TS)
 │  ├─ email-gateway/        # Worker CF : formulaires site → Listmonk (double opt-in)
+│  ├─ live-journal/         # journal de bord du live (Node/TS + Fastify) : webhook Telegram
+│  │                        #   → journal.json + médias (volume servi par Caddy), messages
+│  │                        #   privés visiteurs, cartes OG, export archive.json
 │  └─ twin-engine/          # moteur Locomotion Twin (Python/FastAPI + TeXLive)
 │     ├─ src/twin_engine/        # ingest (multi-format → canonique), course, twin,
 │     │                          #   calibration, predict, sufficiency, pacing,
@@ -63,8 +62,9 @@ thelocomotionlab/
 │     ├─ examples/nice-100m.json # carnet de route de référence (golden test)
 │     ├─ Dockerfile              # Python + TeXLive (contexte de build = racine)
 │     └─ compose.local.yml       # lancement local pour tester l'API
-├─ infra/                    # docker-compose VPS (Caddy, tracking-cache, twin-engine,
-│                            #   Listmonk+Postgres = liste email auto-hébergée), déploiement
+├─ infra/                    # docker-compose VPS (Caddy, tracking-cache, live-journal,
+│                            #   twin-engine, Listmonk+Postgres = liste email auto-hébergée),
+│                            #   déploiement
 ├─ docs/                     # plans, ADR (décisions d'archi), runbooks
 ├─ pnpm-workspace.yaml
 └─ turbo.json
