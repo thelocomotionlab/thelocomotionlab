@@ -18,37 +18,37 @@
 - **Défaut** : Le commentaire du bloc `embed` (« Encore utilisé par LiveStatusBlock (title) ») est faux — LiveStatusBlock n'est monté nulle part ; le vrai consommateur d'embed.title est ExplorerLiveIndicator, et les 6 autres champs d'embed plus nextDeparture.{nom,dates,distance,denivele} sont morts.
 - **Preuve** : grep "liveConfig.embed" → LiveStatusBlock.jsx:33 (composant jamais importé : grep `from ".*LiveStatusBlock"` = 0) et ExplorerLiveIndicator.jsx:53 (embed.title uniquement). totalDistanceKm/elevationMin/elevationMax/referenceGpx/pollIntervalMs/initialMapStyle du bloc embed : 0 lecture. nextDeparture.nom/dates/distance/denivele : 0 lecture (LiveAvant lit aventure.*) ; shortLabel lu uniquement par le LiveStatusBlock orphelin.
 - **Action proposée** : Corriger le commentaire (consommateur réel = ExplorerLiveIndicator) ; proposer la suppression des champs morts d'embed et de nextDeparture après décision sur le sort de LiveStatusBlock.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ partiellement appliqué — e5059c8 (commentaire corrigé ; suppression des champs morts d'embed/nextDeparture : en attente de validation)
 
 ### C003 — [medium/cleanup] `apps/site/log.test` (l.1)
 - **Défaut** : Fichier parasite commité à la racine de l'app : la sortie brute de `systemctl list-unit-files` d'une machine Ubuntu (69 lignes de services système), sans aucun rapport avec le site.
 - **Preuve** : Contenu = « UNIT FILE STATE PRESET / accounts-daemon.service enabled… 65 unit files listed. » ; `git ls-files` confirme qu'il est tracké (commit aac5c4b). Aucune référence à « log.test » ailleurs dans le repo.
 - **Action proposée** : Supprimer le fichier (opération destructive → à valider par Valentin avant commit).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 881acc6)
 
 ### C004 — [medium/dead-code] `apps/site/package.json` (l.18)
 - **Défaut** : Huit dépendances runtime déclarées ne sont jamais importées par le code du site : emailjs-com, framer-motion, markdown-it, marked, proj4, proj4leaflet, remark-breaks, et recharts (fourni par packages/tracking qui le déclare dans ses propres dependencies).
 - **Preuve** : grep "from|require|import" sur app/, components/, lib/, markdown/, scripts/ → 0 occurrence pour chacun (emailjs-com:0, framer-motion:0, markdown-it:0, marked:0, proj4:0, proj4leaflet:0, remark-breaks:0, recharts:0). recharts n'est consommé que par packages/tracking/src/*.tsx, et packages/tracking/package.json le déclare déjà (ligne 16). docs/secrets.md confirme qu'EmailJS est débranché (« Si un envoi direct est réactivé… ») ; EmailCapture.jsx utilise fetch() vers un Worker, pas emailjs.
 - **Action proposée** : Supprimer ces 8 entrées de dependencies, puis vérifier `pnpm -F site build` + `pnpm -F site lint` avant merge.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 90062c2)
 
 ### C005 — [medium/dead-code] `apps/site/package.json` (l.56)
 - **Défaut** : devDependencies inutilisées : puppeteer (télécharge Chromium à chaque install), autoprefixer (postcss.config.mjs ne référence que @tailwindcss/postcss) et baseline-browser-mapping (aucune référence directe).
 - **Preuve** : grep repo entier hors node_modules : puppeteer 0 occurrence hors package.json ; autoprefixer 0 (postcss.config.mjs: plugins: ["@tailwindcss/postcss"]) ; baseline-browser-mapping 0. Aucun script ne les invoque (scripts = dev/build/start/lint/deploy:cf/test/build:track).
 - **Action proposée** : Supprimer puppeteer et autoprefixer ; pour baseline-browser-mapping, vérifier d'abord qu'il n'a pas été ajouté pour rafraîchir les données browserslist du build (retirer puis rebuild pour confirmer l'absence de warning).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 90062c2)
 
 ### C006 — [low/doc-obsolete] `apps/site/.env.example` (l.17)
 - **Défaut** : Le modèle .env.example ne documente pas deux variables NEXT_PUBLIC_ réellement lues par le code : NEXT_PUBLIC_LIVE_STATUT (bascule d'état /live) et NEXT_PUBLIC_JOURNAL_API (base API du journal).
 - **Preuve** : lib/liveConfig.js:26 `process.env.NEXT_PUBLIC_LIVE_STATUT || "avant"` (le commentaire dit « Surchargeable au build ») et :77-78 `process.env.NEXT_PUBLIC_JOURNAL_API || "https://api.thelocomotionlab.com"`. .env.example ne liste que NEXT_PUBLIC_TRACKING_PROXY et NEXT_PUBLIC_EMAIL_ENDPOINT.
 - **Action proposée** : Ajouter les deux variables (avec leurs valeurs par défaut et leur rôle) à .env.example.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit e5059c8)
 
 ### C007 — [low/dead-code] `apps/site/app/globals.css` (l.203)
 - **Défaut** : Classe CSS `.pulse-slow` définie mais utilisée nulle part ; `.pulse-fast` n'est utilisée que par components/LiveStatusBlock.jsx, lui-même jamais monté.
 - **Preuve** : grep pulse-slow hors globals.css : 0 occurrence dans app/, components/, lib/, markdown/, public/*.md. pulse-fast : 1 occurrence, LiveStatusBlock.jsx:26 (composant orphelin, aucun import).
 - **Action proposée** : Supprimer `.pulse-slow` ; garder `.pulse-fast` tant que le sort de LiveStatusBlock n'est pas tranché.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit e5059c8)
 
 ### C008 — [low/dead-code] `apps/site/app/labo/page.jsx` (l.10)
 - **Défaut** : La page /labo coexiste avec la redirection next.config.mjs (/labo → /quete) et est donc inatteignable : les redirects() Next sont évalués AVANT le système de fichiers.
@@ -72,7 +72,7 @@
 - **Défaut** : Import `Link` de next/link inutilisé : sa seule utilisation est dans le bloc JSX « Par où commencer » entièrement commenté (lignes 125-152).
 - **Preuve** : Ligne 2 `import Link from "next/link";` ; les seuls `<Link` du fichier sont à l'intérieur de `{/* <section> … </section> */}`, donc jamais évalués.
 - **Action proposée** : Supprimer l'import (ou le déplacer en commentaire à côté du bloc), sans toucher au bloc commenté qui semble être une réserve éditoriale.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit e5059c8)
 
 ### C012 — [low/cleanup] `apps/site/app/recherche/SearchClient.jsx` (l.133)
 - **Défaut** : Le filtre de compatibilité `i.type === "project"` (« ancien index encore en cache navigateur pendant la bascule ») est un shim de transition probablement expirable : le cache de /search-index.json est max-age=300 + SWR 1 jour, et la refonte date de plusieurs mois.
@@ -84,13 +84,13 @@
 - **Défaut** : Les exports getRecentActivity() (ligne 178) et formatRelativeDays() (ligne 198) ne sont importés par aucun fichier du repo.
 - **Preuve** : grep -rn "getRecentActivity\|formatRelativeDays" hors node_modules : seuls getRelated.js et carouselItems.js importent ce module, et uniquement getRecentArticles/getRecentProjects/getRecentExplorer. Le docstring de getRecentActivity l'assume : « Utilisé si un jour tu veux un journal global du Labo ». Le composant components/RecentActivity.jsx est lui-même orphelin (aucun import trouvé).
 - **Action proposée** : Supprimer les deux exports morts (et signaler l'orphelin components/RecentActivity.jsx à l'agent en charge des composants).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit e5059c8)
 
 ### C014 — [low/cleanup] `apps/site/lib/getRecentActivity.js` (l.145)
 - **Défaut** : Dans sortMixedActivity, le tie-breaker aSecond/bSecond utilise un ternaire dont les deux branches sont identiques (a.updatedAt dans les deux cas).
 - **Preuve** : Lignes 146-155 : `a.type === "Carnet" ? a.updatedAt?.getTime?.() ?? 0 : a.updatedAt?.getTime?.() ?? 0` — copier-coller, les deux branches sont le même code.
 - **Action proposée** : Simplifier en `const aSecond = a.updatedAt?.getTime?.() ?? 0;` (strictement iso-comportement).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit e5059c8)
 
 ### C015 — [low/inconsistency] `apps/site/lib/getRelated.js` (l.26) ⚠️ **risque affichage**
 - **Défaut** : getRelatedArticles puise dans readPublishedArticles qui mélange articles (type "article") ET récits (type "recit") sous le label hérité "Carnet" : la section « related » d'un article Comprendre peut pointer vers des récits /explorer et inversement.
@@ -102,7 +102,7 @@
 - **Défaut** : optimizePackageImports liste "framer-motion" qui n'est importé nulle part dans le repo (apps comme packages).
 - **Preuve** : grep -rn "framer-motion" hors node_modules : seules occurrences = apps/site/package.json:19 et next.config.mjs:60. Aucun import dans apps/site, packages/ui, packages/tracking.
 - **Action proposée** : Retirer "framer-motion" du tableau optimizePackageImports en même temps que la dépendance (cf. finding package.json).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 90062c2)
 
 ### C017 — [low/cleanup] `apps/site/notes_pratiques.txt` (l.14)
 - **Défaut** : Notes personnelles commitées à la racine de l'app, incluant une ancienne conf nginx/Traccar du VPS — en contradiction avec la règle CLAUDE.md « tout ce qui définit l'état du VPS vit dans infra/ » (aucun secret en clair toutefois : le token est un placeholder ${TRACCAR_API_TOKEN}).
@@ -114,7 +114,7 @@
 - **Défaut** : gray-matter est rangé en devDependencies alors qu'il est importé par lib/contentRoutes.mjs, code exécuté par les pages, le sitemap et next.config.mjs au build.
 - **Preuve** : lib/contentRoutes.mjs ligne 17 : `import matter from "gray-matter";` — module consommé par app/page.js, app/sitemap.js, app/llms.txt/route.js, next.config.mjs. Ça fonctionne car le build installe les devDeps, mais sémantiquement c'est une dépendance de build/prod.
 - **Action proposée** : Déplacer gray-matter de devDependencies vers dependencies.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 90062c2)
 
 ### C019 — [low/inconsistency] `apps/site/package.json` (l.53)
 - **Défaut** : eslint-config-next est épinglé en 16.0.3 (sans caret) alors que next est en ^16.1.1 : léger décalage de versions entre le framework et sa config lint.
@@ -143,13 +143,13 @@
 - **Défaut** : LiveStatusBlock n'est importé nulle part : son rôle (bloc live en tête de /explorer) est assuré par ExplorerLiveIndicator via ExplorerSections.
 - **Preuve** : grep repo-wide 'LiveStatusBlock' → seulement sa propre définition + 2 commentaires (ExplorerLiveIndicator.jsx:5, lib/liveConfig.js:61). /explorer (app/explorer/page.jsx) importe ExplorerSections qui rend ExplorerLiveIndicator, pas LiveStatusBlock. Note : le commentaire liveConfig.js:61 « Encore utilisé par LiveStatusBlock (title) » est doublement trompeur — LiveStatusBlock est mort ET ExplorerLiveIndicator.jsx:53 consomme aussi liveConfig.embed.title.
 - **Action proposée** : Supprimer le fichier (après validation) et corriger le commentaire de lib/liveConfig.js pour pointer ExplorerLiveIndicator comme consommateur de embed.title.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit e5059c8)
 
 ### C023 — [medium/dead-code] `apps/site/components/ProjectsGrid.jsx` (l.32)
 - **Défaut** : ProjectsGrid n'est importé nulle part et pointe encore vers les routes legacy /projets/<slug> (désormais des 301).
 - **Preuve** : grep repo-wide 'ProjectsGrid' → seulement sa définition et docs/archive/refonte-brief.md (doc archivée). Ligne 85 : href={`/projets/${p.slug}`} alors que CLAUDE.md indique que /projets → 301. Son rôle est repris par ExplorerSections (importé par app/explorer/page.jsx).
 - **Action proposée** : Supprimer le fichier (après validation).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit e5059c8)
 
 ### C024 — [medium/bug] `apps/site/components/ProjetBody.jsx` (l.198) ⚠️ **risque affichage**
 - **Défaut** : Le marqueur [[MD_CAPTION|…]] émis par remarkLiveTracking et remarkPostLiveTracking n'a AUCUN consommateur : quand il se déclenche, le texte brut du marqueur s'affiche littéralement sur la page.
@@ -161,7 +161,7 @@
 - **Défaut** : RecentActivity (carrousel de cartes) n'est importé par aucune page ni aucun composant.
 - **Preuve** : grep repo-wide 'RecentActivity' → seulement sa définition, docs/archive/* (docs archivées) et lib/getRecentActivity.js (lib homonyme, importée par getRelated.js et carouselItems.js — indépendante du composant). Les carrousels actuels sont ExplorerCarousel (accueil, /live). Il duplique aussi parseFrenchDate/pickLastNotes avec ProjectsGrid, lui aussi mort.
 - **Action proposée** : Supprimer le fichier (après validation). Attention à ne PAS toucher lib/getRecentActivity.js qui, lui, est vivant.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit e5059c8)
 
 ### C026 — [medium/inconsistency] `apps/site/components/SoutenirSection.jsx` (l.17) ⚠️ **risque affichage**
 - **Défaut** : SoutenirSection duplique le flux de capture email au lieu d'utiliser EmailCapture : endpoint legacy codé en dur, pas de honeypot, pas de champ source, pas de bascule NEXT_PUBLIC_EMAIL_ENDPOINT (double opt-in) — contredit l'en-tête d'EmailCapture (« formulaire de capture email unique du site »).
@@ -173,7 +173,7 @@
 - **Défaut** : Classes CSS orphelines : .pulse-slow n'est utilisée nulle part ; .pulse-fast et .no-scrollbar ne sont utilisées QUE par des composants eux-mêmes morts.
 - **Preuve** : grep repo-wide : '.pulse-slow' → 0 usage hors définition (globals.css:203) ; 'pulse-fast' → uniquement LiveStatusBlock.jsx:26 (composant mort) ; 'no-scrollbar' → uniquement RecentActivity.jsx:172 (composant mort). .ll-vscroll / .ll-vscroll-md-none sont vivants (page.js:161, ExplorerCarousel.jsx:122).
 - **Action proposée** : Supprimer .pulse-slow immédiatement ; supprimer .pulse-fast et .no-scrollbar en même temps que LiveStatusBlock et RecentActivity.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit e5059c8)
 
 ### C028 — [low/inconsistency] `apps/site/app/globals.css` (l.80) ⚠️ **risque affichage**
 - **Défaut** : La règle @layer base h1-h6 { font-family: var(--font-heading) } tombe très probablement dans le piège documenté par theme.css lui-même (var(--font-ubuntu) irrésoluble au niveau :root) → règle silencieusement inopérante, masquée parce que le body est déjà en Ubuntu.
@@ -215,13 +215,13 @@
 - **Défaut** : Feature flag résolu : SHOW_OUTILS = true depuis la PR2, la mécanique hidden/filter de NAV_ITEMS est du code mort.
 - **Preuve** : Navbar.jsx:20-22 : « Menu Outils livré masqué en PR1, activé en PR2 » + const SHOW_OUTILS = true ; ligne 32 hidden: !SHOW_OUTILS (toujours false) ; ligne 46 .filter((item) => !item.hidden) ne filtre plus rien.
 - **Action proposée** : Supprimer le flag, la propriété hidden et le .filter — NAV_ITEMS reste strictement identique, zéro changement de HTML rendu.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit e5059c8)
 
 ### C035 — [low/dead-code] `apps/site/components/NewsletterSignup.jsx` (l.5)
 - **Défaut** : Le réexport de compatibilité NewsletterSignup → EmailCapture n'a plus aucun importeur.
 - **Preuve** : grep repo-wide 'NewsletterSignup' → seulement le fichier lui-même, le commentaire d'EmailCapture.jsx:3 et docs/archive/* . Toutes les pages importent directement @/components/EmailCapture (quete, comprendre, outils/twin, page.js).
 - **Action proposée** : Supprimer le fichier (après validation) — la période de compatibilité est terminée.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit e5059c8)
 
 ### C036 — [low/bug] `apps/site/components/Plot.jsx` (l.32)
 - **Défaut** : ensureMathJax : si le script MathJax existe déjà mais a échoué (ou est déjà chargé sans exposer MathJax.Hub), la promesse n'est jamais résolue — Promise.all bloque et le graphique ne se rend jamais (même sans TeX).
@@ -233,7 +233,7 @@
 - **Défaut** : Le commentaire affirme qu'un bloc <plot> peut être présent « dans un article ou un projet », mais seul le pipeline projets (ProjetBody) inclut remarkPlot — les articles (ArticleBody) ne supportent pas <plot>.
 - **Preuve** : PlotLazy.jsx:4 « quand un bloc <plot> est présent dans un article ou un projet » ; ArticleBody.jsx:112-122 remarkPlugins = [remarkGfm, remarkImageOptions, remarkFootnotes, remarkCitations, remarkDirective, remarkSplit, remarkMath] (pas de remarkPlot) ; ProjetBody.jsx:185 inclut remarkPlot. PlotLazy n'est importé que par ProjetBody.
 - **Action proposée** : Corriger le commentaire (« dans un projet »). Zéro impact rendu.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit e5059c8)
 
 ### C038 — [low/inconsistency] `apps/site/components/ProjetBody.jsx` (l.67) ⚠️ **risque affichage**
 - **Défaut** : Deux compteurs de figures différents : ProjetBody numérote {{fig:nom}} en scannant le texte brut avec /<plot\b[^>]*>/gi (compte aussi les <plot> commentés ou dans des fences), tandis que remarkPlot numérote les nœuds mdast html — un <plot> commenté décalerait tous les liens {{fig:N}} par rapport aux ancres #fig-N réelles.
@@ -269,7 +269,7 @@
 - **Défaut** : Sept dépendances déclarées ne sont importées nulle part dans le code du site : emailjs-com, framer-motion, marked, markdown-it, proj4, proj4leaflet, remark-breaks.
 - **Preuve** : grep récursif sur app/, components/, lib/, markdown/, scripts/ (hors node_modules) : zéro import pour chacune ; framer-motion n'apparaît que dans next.config.mjs:60 (optimizePackageImports) sans aucun import réel. Découvert en vérifiant les dépendances des composants (MapEmbed→@tmcw/togeojson, Plot→plotly.js-dist-min : bien utilisées, elles).
 - **Action proposée** : Retirer ces dépendances de package.json (et l'entrée framer-motion d'optimizePackageImports), puis vérifier `pnpm build` du site avant merge. Aucun impact sur le rendu.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 90062c2)
 
 
 ## packages/ui + apps/_template

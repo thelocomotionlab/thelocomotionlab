@@ -46,18 +46,22 @@ et son état est tenu à jour ici et dans `constats.md`.
 
 Cocher : ☐ à faire → ☑ validée par Valentin → ✅ faite (commit référencé).
 
-- **Étape 1 — Hygiène triviale du repo** ☐
-  Fichiers parasites et nettoyages sans aucun risque : `apps/site/log.test` (sortie systemctl
-  committée par erreur), et équivalents relevés. Constats : C001–C021 (sous-ensemble trivial).
-  Un petit commit.
-- **Étape 2 — apps/site : dépendances mortes du package.json** ☐
-  ≈11 dépendances jamais importées (dont `puppeteer`, `framer-motion`…) : contre-vérif par grep
-  (imports dynamiques, scripts, remark) puis purge + `build` + `test`. Constats : C001–C021
-  (sous-ensemble deps).
-- **Étape 3 — apps/site : composants et lib morts** ☐
-  Composants jamais importés (LiveStatusBlock, ProjectsGrid, RecentActivity, réexport
-  NewsletterSignup) + classes CSS orphelines + exports morts de lib (getRecentActivity,
-  bloc `embed`/`nextDeparture` de liveConfig). Constats : C022–C043 + C001–C021 (sous-ensembles).
+- **Étape 1 — Hygiène triviale du repo** ✅ (session 2, commit `881acc6`)
+  `apps/site/log.test` supprimé (sortie systemctl, zéro référence — contre-vérifié).
+  Reste en attente de validation : `apps/site/notes_pratiques.txt` (C017, conf nginx périmée +
+  conventions d'images à déplacer ?) → traité à l'étape 11.
+- **Étape 2 — apps/site : dépendances mortes du package.json** ✅ (session 2, commit `90062c2`)
+  11 dépendances retirées après grep de contre-vérification (emailjs-com, framer-motion,
+  markdown-it, marked, proj4, proj4leaflet, remark-breaks, recharts, puppeteer, autoprefixer,
+  baseline-browser-mapping) ; gray-matter déplacé en dependencies ; framer-motion retiré
+  d'optimizePackageImports. Build + lint + tests verts. C019 (pin eslint-config-next) laissé en
+  signalement.
+- **Étape 3 — apps/site : composants et lib morts** ✅ (session 2, commit `e5059c8`)
+  LiveStatusBlock, ProjectsGrid, RecentActivity, NewsletterSignup supprimés (grep repo entier :
+  zéro import) ; .pulse-slow/.pulse-fast/.no-scrollbar purgées ; exports morts de
+  getRecentActivity ; flag résolu SHOW_OUTILS (Navbar) ; commentaires trompeurs corrigés ;
+  .env.example complété. Build 27/27 + lint + 21 tests verts. Les champs morts
+  d'embed/nextDeparture (liveConfig) restent à valider (C002 partiel).
 - **Étape 4 — apps/site : correctifs À RISQUE AFFICHAGE (décision au cas par cas)** ☐
   Fuite d'écouteurs MapEmbed, flash ShareButton, protocole `[[MD_CAPTION|…]]` sans consommateur,
   promesse MathJax dans Plot, mélange articles/récits de getRelatedArticles. Chaque fix présenté
