@@ -16,7 +16,8 @@ décrite dans [`docs/email-setup.md`](../../docs/email-setup.md).
 { "email": "personne@example.com", "source": "comprendre" }
 ```
 
-- `source` ∈ `comprendre · twin · live · footer · manifeste · home`.
+- `source` ∈ `quete · comprendre · twin · live · home` (+ `footer` et
+  `manifeste`, valeurs historiques tolérées).
 - Champ `website` = honeypot : doit rester vide (rempli par les robots →
   faux succès, rien n'est créé).
 - Réponses : `200 {"ok":true}` (aussi si l'adresse était déjà inscrite —
