@@ -246,8 +246,9 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* ── HERO — même gabarit que l'ancienne accueil (70vh) ───────── */}
-      <section className="relative flex min-h-[70vh] flex-col items-center justify-center overflow-hidden pb-12 pt-10 text-center sm:min-h-[68vh] sm:pb-16 sm:pt-14 md:pb-20 md:pt-16">
+      {/* ── HERO — même gabarit que l'ancienne accueil (70vh), contenu
+             centré verticalement (paddings symétriques) ─────────────── */}
+      <section className="relative flex min-h-[70vh] flex-col items-center justify-center overflow-hidden py-12 text-center sm:min-h-[68vh] sm:py-16 md:py-20">
         <Image
           src={hero.src}
           alt={hero.alt}
@@ -261,7 +262,7 @@ export default async function HomePage() {
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse at 50% 60%, rgba(15,20,20,0.55), rgba(15,20,20,0.75))",
+              "radial-gradient(ellipse at 50% 60%, rgba(15,20,20,0.35), rgba(15,20,20,0.55))",
           }}
           aria-hidden="true"
         />

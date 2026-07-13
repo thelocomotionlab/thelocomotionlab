@@ -16,15 +16,34 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { liveConfig } from "@/lib/liveConfig";
 
 // Menu « Outils » livré masqué en PR1, activé en PR2 avec la page
 // /outils/twin.
 const SHOW_OUTILS = true;
 
+// « Live » n'entre dans la navbar que 24 h avant le départ de l'aventure
+// (liveConfig.aventure.dateDebut) et en sort quand elle est terminée.
+// Quand il est là, il passe en tête et clignote doucement.
+const LIVE_NAV_ITEM = {
+  type: "link",
+  href: "/live",
+  label: "Live",
+  Icon: SatelliteDish,
+  live: true,
+};
+const LIVE_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+function liveWindowOpen() {
+  if (liveConfig.aventure.statut === "termine") return false;
+  const start = new Date(liveConfig.aventure.dateDebut).getTime();
+  if (Number.isNaN(start)) return false;
+  return Date.now() >= start - LIVE_WINDOW_MS;
+}
+
 const NAV_ITEMS = [
   { type: "link", href: "/comprendre", label: "Comprendre", Icon: Brain },
   { type: "link", href: "/explorer", label: "Explorer", Icon: Compass },
-  { type: "link", href: "/live", label: "Live", Icon: SatelliteDish },
   {
     type: "menu",
     label: "Outils",
@@ -182,6 +201,17 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Fenêtre live évaluée côté client (et réévaluée chaque minute) pour
+  // rester juste sur une page statique pré-rendue.
+  const [liveVisible, setLiveVisible] = useState(false);
+  useEffect(() => {
+    const check = () => setLiveVisible(liveWindowOpen());
+    check();
+    const id = setInterval(check, 60_000);
+    return () => clearInterval(id);
+  }, []);
+  const navItems = liveVisible ? [LIVE_NAV_ITEM, ...NAV_ITEMS] : NAV_ITEMS;
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
@@ -249,7 +279,7 @@ export default function Navbar() {
         className="hidden md:flex items-center space-x-8 font-medium absolute left-1/2 -translate-x-1/2"
         aria-label="Navigation principale"
       >
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           if (item.type === "menu") {
             return (
               <DesktopDropdown
@@ -264,6 +294,26 @@ export default function Navbar() {
 
           const { href, label, Icon } = item;
           const active = isActivePath(pathname, href);
+
+          // « Live » : point pulsé + clignotement doux, en tête de navbar.
+          if (item.live) {
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className="flex items-center gap-1.5 font-semibold text-brand-accent-dark animate-[ll-blink_2.6s_ease-in-out_infinite] hover:text-brand-deep"
+              >
+                <span className="relative h-2 w-2 flex-none" aria-hidden="true">
+                  <span className="absolute inset-0 rounded-full bg-brand-accent-dark" />
+                  <span className="absolute inset-0 rounded-full bg-brand-accent-dark animate-[ll-pulse_2.4s_ease-out_infinite]" />
+                </span>
+                <Icon size={18} aria-hidden="true" />
+                <span>{label}</span>
+              </Link>
+            );
+          }
+
           return (
             <Link
               key={href}
@@ -353,7 +403,7 @@ export default function Navbar() {
               Recherche
             </Link>
 
-            {NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               if (item.type === "menu") {
                 const sectionOpen = openSection === item.label;
                 const sectionId = `mobile-section-${item.label
@@ -408,8 +458,18 @@ export default function Navbar() {
                   href={href}
                   onClick={handleCloseMenu}
                   aria-current={active ? "page" : undefined}
-                  className="py-2"
+                  className={
+                    item.live
+                      ? "flex items-center gap-2 py-2 font-semibold text-brand-accent-dark animate-[ll-blink_2.6s_ease-in-out_infinite]"
+                      : "py-2"
+                  }
                 >
+                  {item.live ? (
+                    <span className="relative h-2 w-2 flex-none" aria-hidden="true">
+                      <span className="absolute inset-0 rounded-full bg-brand-accent-dark" />
+                      <span className="absolute inset-0 rounded-full bg-brand-accent-dark animate-[ll-pulse_2.4s_ease-out_infinite]" />
+                    </span>
+                  ) : null}
                   {label}
                 </Link>
               );
