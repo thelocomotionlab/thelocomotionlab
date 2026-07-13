@@ -23,7 +23,7 @@ const ENDPOINT = process.env.NEXT_PUBLIC_EMAIL_ENDPOINT || LEGACY_ENDPOINT;
 const IS_GATEWAY = ENDPOINT !== LEGACY_ENDPOINT;
 
 export const MICRO_PROMESSE =
-  "Un email quand quelque chose paraît ici.";
+  "Un email pour suivre les nouveautés du labo.";
 
 export default function EmailCapture({
   title = "Stay tuned !",

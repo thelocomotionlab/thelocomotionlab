@@ -44,7 +44,7 @@ export default function TwinTeaserPage() {
       <PageHeader
         kicker="/ LES OUTILS"
         title="Locomotion Twin"
-        tagline="un calculateur de plan de pacing construit par data analyse approfondie de tes données d'entraînement"
+        tagline="Un estimateur de temps de course de jumeau numérique"
       />
 
       <div className="bg-white rounded-xl shadow-card p-4 sm:p-6 md:p-10">

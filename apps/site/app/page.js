@@ -297,7 +297,7 @@ export default async function HomePage() {
         <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:gap-16">
           <div>
             <p className="mb-3.5 font-mono text-[13px] font-bold tracking-[0.25em] text-brand-slate">
-              / LA SCIENCE
+              / INTELLECT
             </p>
             <h2 className="font-heading text-[40px] font-bold leading-none tracking-[-0.01em] text-brand-slate-dark md:text-[64px]">
               Comprendre
@@ -358,7 +358,7 @@ export default async function HomePage() {
 
         <div className="relative z-[2] mx-auto max-w-6xl">
           <p className="mb-3.5 font-mono text-[13px] font-bold tracking-[0.25em] text-brand-accent-light">
-            / LE TERRAIN
+            / INSTINCT
           </p>
           <h2 className="font-lora text-[40px] font-semibold italic leading-none text-white md:text-[64px]">
             Explorer
@@ -440,8 +440,8 @@ export default async function HomePage() {
       <section
         id="email"
         className="scroll-mt-24 bg-brand-accent px-6 py-11 md:px-16"
-      >
-        <div className="mx-auto flex max-w-[1000px] flex-col gap-6 md:flex-row md:items-center md:justify-between md:gap-10">
+      
+>        <div className="mx-auto flex max-w-[1000px] flex-col gap-6 md:flex-row md:items-center md:justify-between md:gap-10">
           <div>
             <p className="text-[21px] font-bold text-white">
               Recevoir les prochaines explorations
