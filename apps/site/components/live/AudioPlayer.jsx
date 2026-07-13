@@ -8,6 +8,8 @@
 
 "use client";
 
+import { brandColors } from "@locomotionlab/ui";
+
 import { useEffect, useRef, useState } from "react";
 
 import { formatClockDuration } from "@/lib/liveTime";
@@ -107,12 +109,12 @@ export default function AudioPlayer({ src, duration, seedId }) {
       >
         {playing ? (
           <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
-            <rect x="1.5" y="1" width="3.2" height="10" rx="1" fill="#FEFBF6" />
-            <rect x="7.3" y="1" width="3.2" height="10" rx="1" fill="#FEFBF6" />
+            <rect x="1.5" y="1" width="3.2" height="10" rx="1" fill={brandColors.bg} />
+            <rect x="7.3" y="1" width="3.2" height="10" rx="1" fill={brandColors.bg} />
           </svg>
         ) : (
           <svg width="13" height="13" viewBox="0 0 13 13" className="ml-0.5" aria-hidden="true">
-            <path d="M2 1.5 L11.5 6.5 L2 11.5 Z" fill="#FEFBF6" />
+            <path d="M2 1.5 L11.5 6.5 L2 11.5 Z" fill={brandColors.bg} />
           </svg>
         )}
       </button>

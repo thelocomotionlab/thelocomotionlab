@@ -108,13 +108,8 @@ export default function MapEmbed({
 
       const siblingImg = siblingCol.querySelector("img");
       if (siblingImg) {
-        const setHeight = () => {
-          const h = siblingImg.getBoundingClientRect().height;
-          if (h > 0) setDynamicHeight(h);
-        };
-        setHeight();
-        siblingImg.addEventListener("load", setHeight);
-        return () => siblingImg.removeEventListener("load", setHeight);
+        const h = siblingImg.getBoundingClientRect().height;
+        if (h > 0) setDynamicHeight(h);
       } else {
         const h = siblingCol.getBoundingClientRect().height;
         setDynamicHeight(h > 0 ? h : defaultMinHeight);
@@ -123,7 +118,22 @@ export default function MapEmbed({
 
     syncHeight();
     window.addEventListener("resize", syncHeight);
-    return () => window.removeEventListener("resize", syncHeight);
+
+    // L'image sœur peut finir de charger après le montage : re-mesurer à son
+    // "load". Listener posé UNE seule fois et retiré au démontage — l'ancienne
+    // version en rajoutait un à chaque resize sans jamais les retirer.
+    const mapEl = mapContainer.current;
+    const parentSplit = mapEl?.closest(".md-split");
+    const siblingCol = parentSplit
+      ? Array.from(parentSplit.children).find((col) => col !== mapEl.parentElement)
+      : null;
+    const siblingImg = siblingCol?.querySelector("img") || null;
+    if (siblingImg) siblingImg.addEventListener("load", syncHeight);
+
+    return () => {
+      window.removeEventListener("resize", syncHeight);
+      if (siblingImg) siblingImg.removeEventListener("load", syncHeight);
+    };
   }, [defaultMinHeight]);
 
   // --- Création de la carte une seule fois

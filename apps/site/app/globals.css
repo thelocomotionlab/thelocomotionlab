@@ -597,7 +597,10 @@ html {
 
 .animate-fade-in {
   opacity: 1;
-  animation: fade-in 0.35s ease-out forwards;
+  /* `both` (et pas `forwards`) : pendant un éventuel animation-delay, la
+     frame `from` (opacity 0) s'applique — sinon le ShareButton flashait
+     visible 0,3 s avant son fade-in. Sans delay, identique à `forwards`. */
+  animation: fade-in 0.35s ease-out both;
 }
 
 /* Barre de défilement fine bleu labo des listes verticales

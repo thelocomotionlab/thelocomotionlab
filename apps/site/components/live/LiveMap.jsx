@@ -12,6 +12,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { brandColors } from "@locomotionlab/ui";
 
 import { simplifyTrack } from "@/lib/simplify";
 
@@ -82,10 +83,11 @@ function boundsOf(coords) {
 // Couleurs des traces par fond : sur le Plan OSM (fond par défaut, coloré),
 // on reprend la paire éprouvée des cartes de projets — itinéraire bleu,
 // vécu orange ; sur Topo/Satellite, la palette du design live (brun/ambre).
+// (Constantes JS de la charte : maplibre peint sur canvas, var() impossible.)
 const TRACE_COLORS = {
   osm: { reference: "#007bff", done: "#ff5500" },
-  topo: { reference: "#9A6044", done: "#EFB159" },
-  sat: { reference: "#9A6044", done: "#EFB159" },
+  topo: { reference: brandColors.deepDark, done: brandColors.accent },
+  sat: { reference: brandColors.deepDark, done: brandColors.accent },
 };
 
 /** Les 4 couches du design (2 halos crème + itinéraire pointillé + vécu). */
@@ -98,7 +100,7 @@ function addTrackLayers(map, styleId) {
     type: "line",
     source: "reference",
     layout: { "line-cap": "round", "line-join": "round" },
-    paint: { "line-color": "#FEFBF6", "line-width": 6, "line-opacity": 0.6 },
+    paint: { "line-color": brandColors.bg, "line-width": 6, "line-opacity": 0.6 },
   });
   map.addLayer({
     id: "rfl",
@@ -117,7 +119,7 @@ function addTrackLayers(map, styleId) {
     type: "line",
     source: "done",
     layout: { "line-cap": "round", "line-join": "round" },
-    paint: { "line-color": "#FEFBF6", "line-width": 8 },
+    paint: { "line-color": brandColors.bg, "line-width": 8 },
   });
   map.addLayer({
     id: "rdl",
@@ -134,11 +136,11 @@ function pushData(map, data) {
 }
 
 // Marqueur des trois modes du design : halo pulsant + cœur.
-// live = #EFB159/#B67352 · depart (Avant) = #8CB9BD · arrivee (Terminé) = #6E9CA0.
+// live = accent/deep · depart (Avant) = primary · arrivee (Terminé) = primary-dark.
 const MARKER_COLORS = {
-  live: { halo: "#EFB159", core: "#B67352" },
-  depart: { halo: "#8CB9BD", core: "#8CB9BD" },
-  arrivee: { halo: "#6E9CA0", core: "#6E9CA0" },
+  live: { halo: brandColors.accent, core: brandColors.deep },
+  depart: { halo: brandColors.primary, core: brandColors.primary },
+  arrivee: { halo: brandColors.primaryDark, core: brandColors.primaryDark },
 };
 
 function runnerElement(mode) {
@@ -148,7 +150,7 @@ function runnerElement(mode) {
   const halo = document.createElement("div");
   halo.style.cssText = `position:absolute;inset:0;border-radius:50%;background:${colors.halo};animation:ll-pulse 2.4s ease-out infinite;`;
   const core = document.createElement("div");
-  core.style.cssText = `position:absolute;inset:3px;border-radius:50%;background:${colors.core};box-shadow:0 0 0 3px #FEFBF6,0 4px 12px rgba(0,0,0,0.35);`;
+  core.style.cssText = `position:absolute;inset:3px;border-radius:50%;background:${colors.core};box-shadow:0 0 0 3px ${brandColors.bg},0 4px 12px rgba(0,0,0,0.35);`;
   el.append(halo, core);
   return el;
 }

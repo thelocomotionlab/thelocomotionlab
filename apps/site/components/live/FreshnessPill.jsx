@@ -7,6 +7,8 @@
 
 "use client";
 
+import { brandColors } from "@locomotionlab/ui";
+
 export default function FreshnessPill({ state }) {
   if (!state) return null;
 
@@ -17,7 +19,7 @@ export default function FreshnessPill({ state }) {
           <path
             d="M1 11 L5.5 3 L8 7 L10 4 L14 11 Z"
             fill="none"
-            stroke="#9A6044"
+            stroke={brandColors.deepDark}
             strokeWidth="1.4"
             strokeLinejoin="round"
           />
