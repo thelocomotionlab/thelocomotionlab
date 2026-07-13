@@ -15,7 +15,7 @@
 @source "../../../packages/ui/src/components/Field.tsx";
 
 /* Live-tracking : la carte et le replay vivent désormais dans
-   @locomotionlab/tracking (consommé inline par le site ET par apps/tracking).
+   @locomotionlab/tracking (consommé inline par le site).
    Tailwind v4 doit scanner ses sources pour régénérer les classes de marque
    utilisées par les composants (bg-brand-accent, text-brand-deep, text-xxs, …). */
 @source "../../../packages/tracking/src";

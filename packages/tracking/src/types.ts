@@ -6,7 +6,7 @@
 // présentation (carte + profil altimétrique).
 //
 // AUCUN secret, AUCUN token : ce package est bundlé dans le site (Cloudflare
-// Pages) ET dans apps/tracking (VPS). Les composants ne reçoivent que des URL.
+// Pages). Les composants ne reçoivent que des URL.
 
 import type { Map as MlMap, Marker as MlMarker } from "maplibre-gl";
 
@@ -15,9 +15,9 @@ export type LngLat = [number, number];
 
 /**
  * Feature GeoJSON « LineString » minimale (tracé). On évite volontairement de
- * dépendre du namespace global `GeoJSON` (@types/geojson) : ce package est
- * type-checké par DEUX apps distinctes (site + tracking) dont la résolution des
- * types ambiants diffère. On passe ces objets à maplibre via un cast `unknown`.
+ * dépendre du namespace global `GeoJSON` (@types/geojson) : la résolution des
+ * types ambiants varie selon le consommateur. On passe ces objets à maplibre
+ * via un cast `unknown`.
  */
 export type GeoLineFeature = {
   type: "Feature";
@@ -164,7 +164,6 @@ export type LiveTrackingMapProps = {
 export type ReplayProps = {
   /** URL d'un JSON statique (public/replays/*). Nouveau OU ancien format. */
   positionsUrl?: string;
-  statsUrl?: string;
   totalDistanceKm?: number | string;
   elevationMin?: number | string;
   elevationMax?: number | string;

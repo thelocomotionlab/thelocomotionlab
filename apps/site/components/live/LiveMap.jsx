@@ -16,8 +16,9 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { simplifyTrack } from "@/lib/simplify";
 
 const RASTER_STYLES = {
-  // Fond « Plan » (OSM standard) : le même que les cartes des projets
-  // (packages/tracking) — fond par défaut.
+  // Fond « Plan » (OSM standard) : mêmes tuiles que les cartes des projets
+  // (packages/tracking), mais via tile.openstreetmap.org — le package utilise
+  // encore les alias a/b/c.tile dépréciés. Fond par défaut.
   osm: {
     version: 8,
     sources: {

@@ -52,9 +52,6 @@
       rgba(91, 130, 134, 0.26) 1px,
       transparent 1px
     );
-  --background-size-grid-sm: 16px 16px;
-  --background-size-grid-lg: 32px 32px;
-
   --text-xxs: 0.625rem;
 }
 

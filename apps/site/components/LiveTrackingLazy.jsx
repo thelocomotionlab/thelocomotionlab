@@ -2,9 +2,8 @@
 //
 // Adaptateur fin du site vers @locomotionlab/tracking.
 //
-// La logique + l'UI du live-tracking vivent maintenant dans le package partagé
-// (consommé À LA FOIS par le site et par apps/tracking). Ce fichier ne fait plus
-// que deux choses :
+// La logique + l'UI du live-tracking vivent maintenant dans le package
+// @locomotionlab/tracking. Ce fichier ne fait plus que deux choses :
 //   1) préserver le lazy-load de maplibre-gl (~165KB gz) + recharts (~64KB gz)
 //      via next/dynamic({ ssr:false }) — chargé seulement quand un bloc
 //      <livetracking> est présent dans le markdown d'un projet ;

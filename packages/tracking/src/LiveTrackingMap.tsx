@@ -4,9 +4,9 @@
 // Porté de apps/site/components/LiveTracking.jsx, en séparant la couche DONNÉES
 // (useTrackingData — fetch/poll, AUCUN token) de la PRÉSENTATION (cette carte).
 //
-// Bundlé À LA FOIS dans le site (Cloudflare Pages) et apps/tracking (VPS) :
-// aucun secret, aucun code server-only. Le lazy-load de maplibre reste à la
-// charge du CONSOMMATEUR (next/dynamic ssr:false), pas du package.
+// Bundlé dans le site (Cloudflare Pages) : aucun secret, aucun code
+// server-only. Le lazy-load de maplibre reste à la charge du CONSOMMATEUR
+// (next/dynamic ssr:false), pas du package.
 
 "use client";
 
@@ -127,7 +127,6 @@ export default function LiveTrackingMap({
     elevationData,
     computedTotalDistance,
     lastUpdate,
-    timer,
     elapsed,
     connectionError,
     revision,

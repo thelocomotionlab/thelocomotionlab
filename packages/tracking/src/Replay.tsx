@@ -372,7 +372,7 @@ export default function Replay({
 
         <div className="flex justify-around text-sm sm:text-base font-medium text-gray-800">
           <div>
-            <span className="font-semibold">{Number(stats.distance).toFixed(2)} km</span>
+            <span className="font-semibold">{stats.distance} km</span>
             <div className="sm:text-xs text-xxs text-gray-500">Distance</div>
           </div>
           <div>
