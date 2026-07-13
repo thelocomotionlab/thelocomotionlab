@@ -12,7 +12,7 @@
 - **Défaut** : L'arborescence de CLAUDE.md décrit un état dépassé : la page « manifeste » a été renommée /quete (avec redirection 308 /manifeste → /quete), le service services/live-journal n'apparaît pas dans l'arbre services/, et la redirection /labo est attribuée à lib/legacyRedirects.mjs alors qu'elle est codée en dur dans next.config.mjs.
 - **Preuve** : CLAUDE.md liste « manifeste, outils/twin (teaser), live (hub direct)… /labo → 301 (générées au build, lib/legacyRedirects.mjs) » ; or app/quete/page.jsx existe (pas de app/manifeste), next.config.mjs:123-126 porte les règles /labo et /manifeste en dur (permanent:true = 308), et `ls services/` = email-gateway, live-journal, tracking-cache, twin-engine (live-journal absent de CLAUDE.md mais présent dans docs/live-brief.md et le runbook).
 - **Action proposée** : Mettre à jour CLAUDE.md : remplacer « manifeste » par « quete (ex-manifeste, 308) », ajouter services/live-journal à l'arbre, préciser que /labo et /manifeste sont des règles en dur de next.config.mjs (308).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit ff1b4fd)
 
 ### C002 — [medium/doc-obsolete] `apps/site/lib/liveConfig.js` (l.60)
 - **Défaut** : Le commentaire du bloc `embed` (« Encore utilisé par LiveStatusBlock (title) ») est faux — LiveStatusBlock n'est monté nulle part ; le vrai consommateur d'embed.title est ExplorerLiveIndicator, et les 6 autres champs d'embed plus nextDeparture.{nom,dates,distance,denivele} sont morts.
@@ -292,19 +292,19 @@
 - **Défaut** : L'arborescence de CLAUDE.md liste apps/twin qui n'existe pas dans l'arbre de travail et omet apps/_template, pourtant central aux conventions et buildé par le workflow deploy-vps.
 - **Preuve** : CLAUDE.md:38 « └─ twin/ # Locomotion Twin (Next + TS) » et lignes 39-46 (pages + api). `ls apps/` → uniquement `_template` et `site`. grep '_template' dans CLAUDE.md → 0 occurrence, alors que .github/workflows/deploy-vps.yml:10,34 build son image et que manuel-monorepo.md:225 en fait le point de départ des nouvelles apps. (Idem services/live-journal, présent sur disque et dans le workflow mais absent de l'arborescence CLAUDE.md.)
 - **Action proposée** : Mettre à jour l'arborescence de CLAUDE.md : ajouter apps/_template (et services/live-journal), et marquer apps/twin comme « à venir » ou le retirer tant qu'il n'existe pas. Doc uniquement.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit ff1b4fd)
 
 ### C047 — [low/cleanup] `apps/_template/postcss.config.mjs` (l.3)
 - **Défaut** : Export default anonyme dans postcss.config.mjs → warning ESLint import/no-anonymous-default-export à chaque lint du template, alors que le site assigne d'abord une variable.
 - **Preuve** : apps/_template/.turbo/turbo-lint.log : « postcss.config.mjs 3:1 warning Assign object to a variable before exporting as module default import/no-anonymous-default-export — 1 problem (0 errors, 1 warning) ». apps/site/postcss.config.mjs fait `const config = {...}; export default config;` sans warning.
 - **Action proposée** : Aligner sur le site : `const config = { plugins: ["@tailwindcss/postcss"] }; export default config;`. Config de build, aucun impact sur le rendu.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 0298778)
 
 ### C048 — [low/doc-obsolete] `docs/manuel-monorepo.md` (l.240)
 - **Défaut** : Le manuel décrit un import de polices (`import { ubuntu, lora }`) que le template n'utilise pas : apps/_template/app/layout.tsx importe `fontVariables`, et la charte inclut aussi ubuntuMono.
 - **Preuve** : manuel-monorepo.md:240 : « app/layout.tsx | importe les polices de marque : import { ubuntu, lora } from "@locomotionlab/ui/fonts" ». Réalité : apps/_template/app/layout.tsx:3 `import { fontVariables } from "@locomotionlab/ui/fonts";` posé sur <body> (l.13). Le site (apps/site/app/layout.js:7) importe lui { ubuntu, lora, ubuntuMono }.
 - **Action proposée** : Mettre à jour la ligne du tableau pour refléter fontVariables (et mentionner ubuntuMono). Doc uniquement, zéro impact rendu.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit ff1b4fd)
 
 ### C049 — [low/inconsistency] `packages/ui/src/components/Button.tsx` (l.36)
 - **Défaut** : L'API documentée « Pour les liens, passer as="a" » est inutilisable en TypeScript : ButtonProps n'expose que les props de <button> (pas de href) et la ref est figée en HTMLButtonElement.
@@ -328,7 +328,7 @@
 - **Défaut** : Les tokens --background-size-grid-sm/--background-size-grid-lg sont morts par construction : Tailwind v4 n'a pas de namespace --background-size-*, aucun utilitaire ne peut les consommer, et personne ne les référence.
 - **Preuve** : Vérifié dans node_modules/.pnpm/tailwindcss@4.3.1/.../dist/lib.js : l'utilitaire bg-* ne résout que ["--color"] et ["--background-image"] ; aucune occurrence d'un namespace --background-size. grep repo entier (hors node_modules) 'grid-sm|grid-lg' → 0 usage hors theme.css. Le seul endroit qui règle un background-size (apps/site/app/page.js:295) utilise des valeurs arbitraires [background-size:28px_28px]/[background-size:32px_32px] qui ne correspondent même pas au token grid-sm (16px 16px).
 - **Action proposée** : Suppression sûre des deux tokens (lignes 55-56) : seules deux variables :root inutilisées disparaissent du CSS émis, rendu strictement identique.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 0298778)
 
 ### C053 — [low/cleanup] `packages/ui/src/styles/theme.css` (l.22)
 - **Défaut** : Quatre tokens @theme ne sont consommés nulle part dans le repo : --color-brand-paper, --color-brand-primary-light, --color-brand-deep-light et --background-image-lab-grid (seule la variante -blue est utilisée).
@@ -345,7 +345,7 @@
 - **Défaut** : Aucun script lint/typecheck : rien dans le repo ne compile ni ne linte le TypeScript de ce package.
 - **Preuve** : package.json n'a AUCUN champ `scripts` → `turbo run lint/test/build` l'ignorent ; le tsconfig.json (noEmit) n'est invoqué par rien ; apps/site est en JS sans tsconfig (seulement jsconfig.json) donc `next build --webpack` transpile via transpilePackages SANS type-check ; l'eslint du site (apps/site/eslint.config.mjs) ne couvre que l'app ; .github/workflows/deploy-vps.yml ne concerne que les services. Vérifié : `./node_modules/.bin/tsc --noEmit` passe aujourd'hui (exit 0).
 - **Action proposée** : Ajouter `"scripts": { "lint": "tsc --noEmit" }` (ou `typecheck`) au package pour que `turbo run lint` le couvre — zéro impact runtime/affichage.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 0298778)
 
 ### C055 — [medium/bug] `packages/tracking/src/Replay.tsx` (l.344) ⚠️ **risque affichage**
 - **Défaut** : Replay ignore silencieusement l'attribut totalDistance des directives markdown : les valeurs string ne sont jamais parsées, contrairement à LiveTrackingMap.
@@ -357,19 +357,19 @@
 - **Défaut** : Les commentaires du package affirment qu'il est consommé « À LA FOIS par apps/site et apps/tracking (VPS) » — apps/tracking n'existe pas et n'a jamais existé dans le repo.
 - **Preuve** : `ls apps/` → `_template site` uniquement ; `git log --all --oneline -- apps/tracking` → vide. Références au consommateur fantôme : index.ts:4-5, types.ts:8-9, LiveTrackingMap.tsx:7, plus côté site apps/site/app/globals.css:18 et apps/site/components/LiveTrackingLazy.jsx:6. Le grep '@locomotionlab/tracking' montre un seul consommateur réel : apps/site (LiveTrackingLazy.jsx:23, PostLiveTrackingLazy.jsx:19). types.ts:19-20 prétend aussi que le package est « type-checké par DEUX apps distinctes » — faux (voir finding package.json).
 - **Action proposée** : Corriger les commentaires (fix de commentaires seuls, aucun code). Noter au passage que la convention CLAUDE.md « un packages/<x> n'est créé QUE quand au moins deux apps s'en servent réellement » n'est plus satisfaite — à trancher par Valentin, pas par un nettoyage automatique.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 0298778)
 
 ### C057 — [medium/dead-code] `packages/tracking/src/types.ts` (l.167)
 - **Défaut** : La prop `statsUrl` de ReplayProps est déclarée mais n'est consommée nulle part (ni par Replay.tsx ni par useTrackingData).
 - **Preuve** : grep 'statsUrl' sur tout le repo → 3 hits seulement : types.ts:167 (déclaration), remarkPostLiveTracking.js:28 (commentaire) et :58 (`statsUrl: attrs.stats || ""` — construit puis jamais lu). Replay.tsx ne destructure pas statsUrl ; UseTrackingDataOptions n'a pas de champ statsUrl. La directive `stats="/replays/traversee-reunion/live-stats.json"` (saison-trail-2026.md:472) est donc inerte ; idem `statsEndpoint`/`timerEndpoint` de la directive livetracking (md:460-461), que remarkLiveTracking.js n'extrait même pas.
 - **Action proposée** : Supprimer `statsUrl?: string` de ReplayProps (jamais consommé, aucun effet runtime) ; signaler côté site que le champ statsUrl du payload remark et les attributs stats/statsEndpoint des markdown sont morts (nettoyage hors périmètre package).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 0298778)
 
 ### C058 — [low/dead-code] `packages/tracking/src/LiveTrackingMap.tsx` (l.130)
 - **Défaut** : `timer` est destructuré depuis useTrackingData mais jamais utilisé dans LiveTrackingMap.
 - **Preuve** : grep 'timer' dans LiveTrackingMap.tsx → 3 hits : ligne 92 (prop timerEndpoint), ligne 130 (destructuration `timer,`), ligne 138 (passage de timerEndpoint au hook). La variable `timer` n'apparaît nulle part dans le corps ni le JSX ; seul `elapsed` (dérivé du timer dans le hook) est affiché via formatDuration(elapsed) lignes 441/447.
 - **Action proposée** : Supprimer `timer,` de la destructuration ligne 130 (le hook continue de le calculer ; aucun changement de rendu).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 0298778)
 
 ### C059 — [low/inconsistency] `packages/tracking/src/LiveTrackingMap.tsx` (l.94) ⚠️ **risque affichage**
 - **Défaut** : Défauts d'altitude contradictoires et fallbacks inatteignables : props par défaut elevationMin=0/elevationMax=10, fallbacks 400/860, doc annonce 400/860 — et via markdown les attributs omis donnent un domaine [0,0].
@@ -405,7 +405,7 @@
 - **Défaut** : Double formatage redondant : `Number(stats.distance).toFixed(2)` alors que stats.distance est déjà une string toFixed(2) par contrat.
 - **Preuve** : Replay.tsx:375 : `{Number(stats.distance).toFixed(2)} km` ; types.ts:90-92 documente DisplayStats.distance comme « déjà formatée (toFixed(2)) » ; useTrackingData.ts:305 produit `distance: distanceKmFinal.toFixed(2)`. LiveTrackingMap.tsx:455 affiche directement `{stats.distance} km`. Number("12.34").toFixed(2) === "12.34" → sortie strictement identique.
 - **Action proposée** : Aligner sur LiveTrackingMap (`{stats.distance} km`) — texte rendu prouvé identique pour toute valeur produite par le hook.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 0298778)
 
 ### C065 — [low/dead-code] `packages/tracking/src/index.ts` (l.13)
 - **Défaut** : La majorité de l'API publique du package n'a aucun consommateur externe : seuls LiveTrackingMap et Replay sont importés ; useTrackingData, normalizeReplayData, computeStatsFromPoints et tous les types ne le sont jamais.
@@ -417,13 +417,13 @@
 - **Défaut** : Le fond OSM du package utilise les sous-domaines a/b/c.tile.openstreetmap.org (dépréciés par OSMF) alors que la carte live du site utilise tile.openstreetmap.org — et le commentaire de LiveMap.jsx prétend que c'est « le même ».
 - **Preuve** : mapStyles.ts:34-36 : `a.tile.openstreetmap.org / b. / c.` ; apps/site/components/live/LiveMap.jsx:26 : `https://tile.openstreetmap.org/{z}/{x}/{y}.png` avec le commentaire :20-21 « le même que les cartes des projets (packages/tracking) » — les URL diffèrent (mêmes tuiles servies, les sous-domaines sont des alias en voie d'abandon côté OSM). Les fonds topo/satellite sont eux identiques entre les deux fichiers (duplication assumée par docs/archive/live-pr2-plan.md:15 « packages/tracking n'est PAS touché »).
 - **Action proposée** : Signalement : corriger le commentaire de LiveMap.jsx, et envisager (décision séparée) d'aligner le package sur tile.openstreetmap.org — imagerie identique, aucun changement de DOM, mais c'est un changement d'URL réseau à valider.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ partiellement appliqué — 0298778 (commentaire LiveMap corrigé ; alignement des URL de tuiles du package : décision en attente)
 
 ### C067 — [low/dead-code] `packages/tracking/src/replayData.ts` (l.24)
 - **Défaut** : Les champs distanceMeters/dplus/dminus de ComputedStats ne sont jamais lus et dupliquent exactement rawDistanceMeters/rawDplus/rawDminus.
 - **Preuve** : replayData.ts:140-148 : `distanceMeters: totalDist, dplus: totalDplus, dminus: totalDminus, ... rawDistanceMeters: totalDist, rawDplus: totalDplus, rawDminus: totalDminus` — mêmes variables assignées deux fois. grep 'distanceMeters|\.dplus|\.dminus' dans le package : seuls les raw* sont lus par normalizeReplayData (lignes 227-236). Aucun consommateur externe de computeStatsFromPoints (grep repo entier : seuls index.ts et replayData.ts).
 - **Action proposée** : Supprimer les trois champs non-raw de ComputedStats et des deux objets retournés (lignes 41-43 et 141-143) — comportement et affichage strictement identiques.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 0298778)
 
 ### C068 — [low/inconsistency] `packages/tracking/src/useTrackingData.ts` (l.203)
 - **Défaut** : Le poll du timer ne vérifie pas res.ok alors que le poll des positions le fait.
@@ -446,13 +446,13 @@
 - **Défaut** : La procédure « Phase 3 » demande de renommer infra/caddy/conf.d/tracking.caddy.disabled → tracking.caddy et de « décommenter » le montage live_json dans compose.yml, alors que ces deux étapes sont déjà faites dans le repo (fichier inexistant, montage déjà actif).
 - **Preuve** : docs/tracking-cache.md:116-117 vs état réel : infra/caddy/conf.d/tracking.caddy existe (en-tête ligne 1 : « Route Traccar … (ACTIVE) »), aucun tracking.caddy.disabled (glob infra/** ne liste que twin-engine.caddy.disabled), et infra/compose.yml:32 a `- live_json:/srv/live:ro` non commenté.
 - **Action proposée** : Mettre à jour la Phase 3 du doc : indiquer que la route et le montage sont déjà committés, il ne reste que les étapes VPS (ports 80/443, arrêt nginx, deploy).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit ff1b4fd)
 
 ### C071 — [medium/doc-obsolete] `infra/README.md` (l.56)
 - **Défaut** : infra/README.md et docs/runbook-vps.md (étape 4) décrivent l'ANCIEN design de la bascule : renommage de tracking.caddy.disabled, montage /opt/traccar:/srv/traccar:ro et « 3 live-*.json » servis dont live-stats.json — contredit par tracking.caddy et compose.yml actuels.
 - **Preuve** : infra/README.md:56-59 (« renommer conf.d/tracking.caddy.disabled … décommentant le montage /opt/traccar … 3 live-*.json ») ; docs/runbook-vps.md:354-357, 374-376, 385-388 (montage /opt/traccar) et 413-416 (validation `curl …/live-stats.json`). Or infra/caddy/conf.d/tracking.caddy:13 et 28-29 disent explicitement que live-stats.json n'est PLUS servi (2 fichiers seulement, root /srv/live) et infra/compose.yml:32 monte le volume live_json, pas /opt/traccar. Le curl de validation 4.4 sur live-stats.json tomberait sur le proxy Traccar (404), pas sur un fichier.
 - **Action proposée** : Rafraîchir infra/README.md § « Deux modes » et runbook-vps.md étape 4 : source = volume live_json produit par tracking-cache, 2 fichiers servis (live-positions.json, live-timer.json), supprimer la vérification live-stats.json.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit ff1b4fd)
 
 ### C072 — [medium/security] `infra/compose.yml` (l.51)
 - **Défaut** : Le conteneur tracking-cache reçoit TOUT infra/.env (env_file: .env) alors qu'il ne consomme que TRACCAR_API_TOKEN/TRACCAR_API_URL/DATA_DIR (+ overrides optionnels) — les secrets sans rapport (TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET, LISTMONK_DB_PASSWORD, LISTMONK_ADMIN_PASSWORD, CF_API_TOKEN) sont injectés dans son environnement.
@@ -464,13 +464,13 @@
 - **Défaut** : Les tableaux de configuration (docs/tracking-cache.md et docs/live-tracking-guide.md §5.1) omettent la clé `maxPointsPerFetch` / env `MAX_POINTS_PER_FETCH` pourtant présente dans tracking.config.json et lue par config.ts.
 - **Preuve** : tracking.config.json:8 `"maxPointsPerFetch": 10000` et config.ts:77 `num(process.env.MAX_POINTS_PER_FETCH, raw.maxPointsPerFetch ?? 10000)` — absents des deux tableaux (docs/tracking-cache.md:157-166, docs/live-tracking-guide.md:192-201). `TRACKING_CONFIG_PATH` (config.ts:59) est également non documentée.
 - **Action proposée** : Ajouter la ligne manquante aux deux tableaux (doc uniquement).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit ff1b4fd)
 
 ### C074 — [low/inconsistency] `infra/.env.example` (l.25)
 - **Défaut** : Les docs opérationnelles renvoient vers « infra/.env → DEVICE_ID=<n> » pour changer d'appareil, mais .env.example ne contient aucune entrée DEVICE_ID (ni aucune autre variable d'override du tracking) — l'opérateur qui part du modèle ne la trouvera pas.
 - **Preuve** : docs/live-tracking-guide.md:221 « ponctuel : infra/.env → DEVICE_ID=<n> puis ./deploy.sh » et docs/live-runbook-ecrins.md:65 « DEVICE_ID de infra/.env doit pointer sur le BON appareil » ; grep DEVICE_ID dans infra/.env.example : aucune occurrence.
 - **Action proposée** : Ajouter dans .env.example une ligne commentée `# DEVICE_ID=8` (override ponctuel du deviceId de tracking.config.json).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit ff1b4fd)
 
 ### C075 — [low/bug] `services/tracking-cache/src/compute.ts` (l.57) ⚠️ **risque affichage**
 - **Défaut** : Comparaisons de dates par ordre lexicographique entre deux formats ISO différents : les fixTime Traccar sont au format « …+00:00 » alors que windowStartIso (control.ts, toISOString) est en « …Z » — un point dont le fixTime est exactement égal à l'ouverture de fenêtre est exclu à tort, et tout repose sur l'invariant non documenté que Traccar émet toujours UTC avec millisecondes.
@@ -482,7 +482,7 @@
 - **Défaut** : loadDataDir() (utilisée par la CLI) ignore le fallback `raw.outputDir` que loadConfig() honore (ligne 75) : si `outputDir` était posé dans tracking.config.json sans DATA_DIR en env, le démon et la CLI opéreraient sur deux dossiers différents (`track start` n'aurait aucun effet) ; de plus la clé `outputDir` n'existe ni dans tracking.config.json ni dans les tableaux de config des docs.
 - **Preuve** : config.ts:75 `dataDir: process.env.DATA_DIR || raw.outputDir || "/data"` vs config.ts:106-108 `loadDataDir(): return process.env.DATA_DIR || "/data"`. Grep `outputDir` sur tout le repo : uniquement config.ts:26 et 75 — jamais dans tracking.config.json, docs/tracking-cache.md:157-166 ni docs/live-tracking-guide.md:192-201. Latent en pratique : DATA_DIR est toujours posé (Dockerfile:26 `ENV DATA_DIR=/data`, compose.yml:53).
 - **Action proposée** : Supprimer le fallback `raw.outputDir` (clé de config morte) ou aligner loadDataDir() sur la même résolution. Nettoyage back-only, sans effet sur l'affichage.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 3d07819)
 
 ### C077 — [low/inconsistency] `services/tracking-cache/src/config.ts` (l.76)
 - **Défaut** : Les valeurs de repli codées dans loadConfig() divergent des « défauts » documentés (= valeurs de tracking.config.json) : fetchWindowHours 48 vs 50, minDistanceThreshold 5 vs 8, minElevation ±2/2 vs 0/1, corrections 1.0 vs 1.03/0.95 — piège silencieux si une clé disparaissait du JSON.
@@ -500,13 +500,13 @@
 - **Défaut** : Bloc `if (fresh === null) { … }` vide dans la boucle principale : la valeur de retour de runTick n'est jamais exploitée, le bloc ne contient qu'un commentaire.
 - **Preuve** : index.ts:44-47 : `const fresh = await runTick(config, store); if (fresh === null) { // session inactive : rien à faire (mode idle) }` — corps vide, `fresh` inutilisé ailleurs.
 - **Action proposée** : Supprimer le bloc (garder le commentaire au-dessus de l'appel si souhaité) ou `await runTick(...)` sans affectation. Nettoyage neutre.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 3d07819)
 
 ### C080 — [low/cleanup] `services/tracking-cache/src/pipeline.ts` (l.52)
 - **Défaut** : Le cache brut est lu et parsé deux fois par tick : une fois pour computeFromIso (ligne 52) et une fois pour `cache` (ligne 55) — double lecture/parse du même fichier JSON à chaque intervalle.
 - **Preuve** : pipeline.ts:52 `computeFromIso(store.readRawCache(), …)` puis pipeline.ts:55 `const cache = store.readRawCache();` — aucune écriture entre les deux.
 - **Action proposée** : Lire une seule fois (`const cache = store.readRawCache()` avant computeFromIso et le passer en argument). Strictement équivalent, back-only.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 3d07819)
 
 ### C081 — [low/inconsistency] `services/tracking-cache/src/store.ts` (l.96)
 - **Défaut** : emptyLivePositions() écrit dans le bloc `debug` des paramètres de correction à 0 (samplingCorrection: 0, etc.) au lieu des valeurs de config réelles (1.03/0.95/8/0/1) — le fichier initial/reset prétend que les corrections sont nulles, information trompeuse au débogage.
@@ -529,13 +529,13 @@
 - **Défaut** : L'allowlist SOURCES ne contient pas "quete" alors que la page /quete du site envoie source="quete" : après bascule de NEXT_PUBLIC_EMAIL_ENDPOINT vers la passerelle, toute inscription depuis /quete recevra 400 source_invalide et l'utilisateur verra le message d'erreur.
 - **Preuve** : src/index.ts:29-36 : SOURCES = Set(["comprendre","twin","live","footer","manifeste","home"]) avec le commentaire « doit couvrir tous les formulaires du site ». Grep exhaustif des sources réellement émises par le site (source="…" dans apps/site) : quete (app/quete/page.jsx:162), comprendre (app/comprendre/page.jsx:199), twin (app/outils/twin/page.jsx:100), home (app/page.js:459), live (components/live/EmailCaptureCard.jsx:22). La page /manifeste n'existe plus : apps/site/next.config.mjs:126 = { source: "/manifeste", destination: "/quete", permanent: true } — la valeur "manifeste" du Set est le vestige d'avant le renommage. Aujourd'hui invisible car NEXT_PUBLIC_EMAIL_ENDPOINT est vide (apps/site/.env.example:23) donc EmailCapture.jsx:19-20 tape encore l'ancien Worker send-email qui ignore `source` ; le bug se déclenchera exactement au moment de la bascule documentée dans le README.
 - **Action proposée** : Ajouter "quete" au Set SOURCES du Worker (et décider du sort de "manifeste" : le retirer ou le garder par tolérance). Changement côté Worker uniquement, aucun HTML du site touché.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 8eb1ecc)
 
 ### C084 — [low/doc-obsolete] `services/email-gateway/README.md` (l.19)
 - **Défaut** : Le README documente `source ∈ comprendre · twin · live · footer · manifeste · home`, liste désynchronisée des formulaires réels du site ("quete" absent, "manifeste" et "footer" fantômes).
 - **Preuve** : README.md:19 vs sources réellement émises (grep apps/site) : quete/comprendre/twin/home/live. La page /manifeste est redirigée 301 vers /quete (apps/site/next.config.mjs:126).
 - **Action proposée** : Mettre à jour la liste du README en même temps que le Set SOURCES du Worker (fix du finding principal). Documentation uniquement.
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 8eb1ecc)
 
 ### C085 — [low/cleanup] `services/email-gateway/package.json` (l.11)
 - **Défaut** : `wrangler` n'est pas dans les devDependencies alors que les scripts dev/deploy (et le README, docs/email-setup.md) font `npx wrangler` : version non épinglée téléchargée à la volée → déploiements non reproductibles.
@@ -582,13 +582,13 @@
 - **Défaut** : L'image de production n'embarque pas assets/fonts : la génération de og.png et story.png échouera dans le conteneur (ENOENT sur Ubuntu-Regular.ttf).
 - **Preuve** : Runner stage : COPY --from=build /out/dist ./dist ; /out/node_modules ; /out/live-journal.config.json ; /out/sim — AUCUN COPY de /out/assets. Or src/og/render.ts:11 lit FONTS_DIR = path.resolve(__dirname, '..', '..', 'assets', 'fonts') → /app/assets/fonts au runtime (dist/og/render.js). Le Dockerfile date de la PR1 (git log : seul commit 351190f) alors que les fontes ont été ajoutées en PR4 (9447be0). Conséquence : OgScheduler.generate() logge une erreur à chaque cycle, /journal/story.png répond 500, et le selfcheck PR5 remontera « og : aucune carte générée ». docs/live-runbook-ecrins.md:47 exige pourtant que api.thelocomotionlab.com/journal/og.png existe, et apps/site/app/live/page.jsx:19 + components/live/LiveEnCours.jsx:123 consomment ces URLs. Latent (service pas encore déployé, checklist docs/live-reste-a-faire.md §1 non cochée) mais casse le premier déploiement.
 - **Action proposée** : Ajouter `COPY --from=build /out/assets ./assets` dans le stage runner du Dockerfile (fix d'infra, aucun changement de code).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit 8eb1ecc)
 
 ### C092 — [medium/doc-obsolete] `CLAUDE.md`
 - **Défaut** : services/live-journal est totalement absent de CLAUDE.md (arborescence et texte) alors que c'est un service actif, déployé et consommé par le site.
 - **Preuve** : grep -n 'live-journal' CLAUDE.md → aucune occurrence (exit 1). L'arborescence de CLAUDE.md liste sous services/ : tracking-cache, email-gateway, twin-engine. Le service est pourtant : construit par la CI (.github/workflows/deploy-vps.yml:42-43), lancé sur le VPS (infra/compose.yml:68, volume live_journal_data, healthcheck), routé par Caddy (infra/caddy/conf.d/api.caddy:61-64) et consommé par apps/site (lib/useJournal.js, components/live/MessageCard.jsx, LiveEnCours.jsx via NEXT_PUBLIC_JOURNAL_API).
 - **Action proposée** : Ajouter une ligne `live-journal/` dans l'arborescence services/ de CLAUDE.md (journal de bord du live : webhook Telegram → journal.json + médias sur volume servi par Caddy, messages privés, cartes OG, auto-surveillance).
-- **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
+- **Statut** : ✅ contre-vérifié et appliqué (commit ff1b4fd)
 
 ### C093 — [medium/bug] `services/live-journal/src/sim/journal.ts` (l.93)
 - **Défaut** : Relancer `pnpm sim` avec le même DATA_DIR ne rejoue JAMAIS le journal scripté : les update_id fixes (100_000+index) sont dédupliqués par le state.json persistant.
@@ -966,6 +966,28 @@
 - **Statut** : ☐ à contre-vérifier ☐ validé ☐ appliqué ☐ écarté
 
 
+
+## Étape 10 — revues manquantes, faites en lecture directe (session 3)
+
+### C153 — [low/cleanup] `services/twin-engine/_seed/` ⚠️ décision requise
+- **Défaut** : ~8 fichiers d'anciens scripts d'analyse (course.py, extract_all2.py, figs.py, gpx_parse.py, pacing.py, twin_fit.py, plan.json, segments.json), jamais importés par le moteur.
+- **Preuve** : grep `_seed` repo entier → uniquement des mentions historiques dans des docstrings (calibration.py:12, twin/record.py:9) et twin-theory.md:352. Aucun import, aucun outil ne les exécute.
+- **Action proposée** : purge possible (~valeur d'archive du carnet de labo à arbitrer par Valentin — les docstrings y font référence comme point de comparaison historique).
+- **Statut** : ☐ à valider (décision Valentin)
+
+### C154 — [info] `services/twin-engine/tools/` — tous vivants
+- ab_montagnhard (exigé par le protocole CLAUDE.md), backtest (consommé par test_backtest_tools + registre), diag_dplus (référencé config + twin-review-2026-07), regen_montagnhard_fixture (protocole fixture), registre (consommé). Rien à purger.
+- **Statut** : ✅ vérifié, aucun constat
+
+### C155 — [info] infra + CI — cohérents
+- deploy-vps.yml construit 4 images (template, tracking-cache, twin-engine, live-journal) = les 4 services GHCR du compose.yml ; Dockerfile du template présent ; caddy/conf.d cohérent (tracking.caddy actif, twin-engine.caddy.disabled en draft assumé). turbo lint couvre désormais site, _template, tracking, email-gateway.
+- **Statut** : ✅ vérifié — reste C072 (env_file complet injecté dans tracking-cache, moindre privilège) à valider
+
+### C156 — [info] docs/ — verdicts par document
+- **À jour / conservés** : cloudflare-vps, comprendre-infra-vps, deploy-cloudflare, secrets, email-setup, manuel-monorepo, manuel-twin, twin-theory, twin-registre-couverture, twin-review-2026-07, adr/0001, live-reste-a-faire, live-runbook-ecrins, live-tracking-guide, live-archive-schema, tracking-cache, archive/* (corrigés là où ils étaient périmés, commit ff1b4fd).
+- **Aucune purge** : live-brief.md reste en place conformément à docs/archive/README.md (« candidat futur : après le gel du chantier 2 »). Seule suppression candidate restante : apps/site/notes_pratiques.txt (C017, validation requise).
+- **Statut** : ✅ revue faite
+
 ---
 
-**Total : 152 constats.**
+**Total : 152 constats + 4 entrées d'étape 10.**

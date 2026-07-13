@@ -24,8 +24,19 @@ et son état est tenu à jour ici et dans `constats.md`.
 - `pnpm test` : ✅ OK (vitest site + 67 tests live-journal)
 - `pytest services/twin-engine` : ✅ **190 passed, 2 skipped**
 - **Lignes de code (baseline)** : 30 850 lignes de code strict (ts/tsx/js/jsx/mjs/py/css,
-  hors node_modules/.next/.venv), + 11 252 lignes de configs/LaTeX/yml, + 8 789 lignes de markdown.
-  Recompte prévu en fin de revue (étape 12).
+  hors node_modules/.next/.venv/dist), + 11 252 lignes de configs/LaTeX/yml, + 8 789 lignes de markdown.
+
+## Bilan final (étape 12, session 3 — 2026-07-13)
+
+- Vérification complète re-jouée après tous les correctifs : `pnpm build` ✅, `pnpm lint` ✅
+  (4 paquets couverts, warning du template résolu), `pnpm test` ✅, `pytest services/twin-engine`
+  ✅ **190 passed, 2 skipped — identique à la baseline** (aucun changement de comportement moteur).
+- **Lignes de code final : 30 250** (−600 lignes mortes). Détail : site 10 929, _template 110,
+  ui 338, tracking 2 321, tracking-cache 816, email-gateway 178, live-journal 4 512,
+  twin-engine 11 046. (+ ~10 300 configs/LaTeX/yml, ~8 900 markdown.)
+- 45 constats traités (✅ appliqués ou corrigés), 2 bugs high corrigés, 0 purge de doc
+  (convention archive respectée) ; le reste = signalements en attente de décision (étapes 4 et 9
+  notamment), tous consignés dans `constats.md`.
 
 ## Ce qui a été fait (session 1 — 2026-07-13)
 
@@ -62,43 +73,45 @@ Cocher : ☐ à faire → ☑ validée par Valentin → ✅ faite (commit réfé
   getRecentActivity ; flag résolu SHOW_OUTILS (Navbar) ; commentaires trompeurs corrigés ;
   .env.example complété. Build 27/27 + lint + 21 tests verts. Les champs morts
   d'embed/nextDeparture (liveConfig) restent à valider (C002 partiel).
-- **Étape 4 — apps/site : correctifs À RISQUE AFFICHAGE (décision au cas par cas)** ☐
+- **Étape 4 — apps/site : correctifs À RISQUE AFFICHAGE (décision au cas par cas)** ☐ **(SEULE
+  ÉTAPE CODE RESTANTE — bloquée en attente de tes décisions)**
   Fuite d'écouteurs MapEmbed, flash ShareButton, protocole `[[MD_CAPTION|…]]` sans consommateur,
   promesse MathJax dans Plot, mélange articles/récits de getRelatedArticles. Chaque fix présenté
   avec avant/après, appliqué seulement sur feu vert explicite.
-- **Étape 5 — packages/ui + apps/_template** ☐
-  Chaîne « preset Tailwind » morte (tailwind-preset.js, apps/site/tailwind.config.mjs,
-  @tailwindcss/typography jamais activés), tokens jamais consommés, token trompeur
-  `--font-serif: "Ubuntu Serif"` (police inexistante → Georgia dans le Tooltip : tout fix est un
-  changement d'affichage, décision requise), warning ESLint du template. Constats : C044–C053.
-- **Étape 6 — packages/tracking** ☐
-  Commentaires mensongers (« apps/tracking » n'a jamais existé), code mort (statsUrl, timer),
-  script typecheck manquant dans turbo/CI ; décision sur `totalDistance` inopérant dans Replay
-  (risque affichage). Constats : C054–C069.
-- **Étape 7 — services/tracking-cache** ☐
-  Nettoyages neutres (bloc if vide, fallback mort, double lecture du cache) + doc de bascule
-  obsolète ; décisions sur les fixes de robustesse (dates lexicographiques, délai SIGTERM).
-  Constats : C070–C082.
-- **Étape 8 — services/email-gateway + services/live-journal (2 bugs HIGH)** ☐
-  - C083 (high) : ajouter `"quete"` à l'allowlist SOURCES du Worker (sinon 400 à la bascule) ;
-    sort de `"manifeste"`/`"footer"` à décider.
-  - C091 (high) : `COPY --from=build /out/assets ./assets` manquant dans le Dockerfile de
-    live-journal → og.png/story.png en 500 au premier déploiement.
-  - - le reste des constats C084–C102 (null body → 400, borne du rate-limiter, sim, docs).
+- **Étape 5 — packages/ui + apps/_template** ✅ partiel (session 3, commit `0298778`)
+  Appliqué : tokens --background-size-grid-* morts par construction, warning ESLint du template.
+  En attente de décision : chaîne preset Tailwind (C045), `--font-serif: "Ubuntu Serif"` (C044,
+  affichage Tooltip), tokens de réserve de palette (C053), graisse Ubuntu 300 (C051).
+- **Étape 6 — packages/tracking** ✅ partiel (session 3, commit `0298778`)
+  Appliqué : script lint (tsc --noEmit) branché sur turbo, prop fantôme statsUrl, destructuration
+  timer, champs dupliqués de ComputedStats, double toFixed redondant, commentaires « apps/tracking »
+  corrigés. En attente de décision : totalDistance inopérant en replay (C055), défauts d'altitude
+  (C059), gardes de style (C060/C062), couleurs en dur du Replay (C063), icône flaticon (C069).
+- **Étape 7 — services/tracking-cache** ✅ partiel (session 3, commit `3d07819`)
+  Appliqué : bloc if vide, double lecture du cache, clé outputDir morte. En attente de décision :
+  env_file complet (C072, moindre privilège), dates lexicographiques (C075), replis de config
+  divergents (C077), SIGTERM vs délai de grâce (C078), debug à 0 (C081), slice avant sort (C082).
+- **Étape 8 — services/email-gateway + services/live-journal (2 bugs HIGH)** ✅ partiel
+  (session 3, commit `8eb1ecc`) : "quete" ajouté à l'allowlist SOURCES (manifeste/footer gardés
+  par tolérance, README aligné) ; COPY des assets ajouté au Dockerfile live-journal. En attente :
+  null body → 400 (C085 zone), borne du rate-limiter, constats live-journal restants (C093–C102).
 - **Étape 9 — twin-engine : signalements et nettoyages neutres (C103–C152)** ☐
-  Aucun changement de comportement. Docstrings/commentaires périmés, code mort prouvé,
-  incohérences twin.config.json ↔ config.py à SIGNALER. `pytest` re-vérifié après chaque commit.
-  Tout point touchant un calcul = décision de Valentin (protocole CLAUDE.md).
-- **Étape 10 — Les 3 revues manquantes** ☐
-  Relancer les relecteurs `docs/`, `twin tools/_seed`, `infra + CI` (workflow réutilisable :
-  reprise possible du run `wf_2f0d5be2-aac`). Ajouter leurs constats à `constats.md`.
-- **Étape 11 — Docs : mise à jour et purge (liste soumise à validation)** ☐
-  CLAUDE.md (apps/twin inexistant → à requalifier « prévu », ajouter live-journal, « manifeste »
-  → quete), README de services désynchronisés, docs live-* (état courant vs plans terminés),
-  doublons infra. Toute purge/archivage présenté en liste AVANT suppression.
-- **Étape 12 — Passe finale** ☐
-  Re-vérification complète (build site + lint + vitest + pytest + tsc packages), **comptage final
-  des lignes de code**, synthèse de la revue (constats appliqués / écartés / restants).
+  Aucun changement de comportement appliqué (protocole). Les 50 constats moteur restent des
+  signalements à trier avec Valentin ; seuls des nettoyages de docstrings pourront être appliqués
+  après validation, pytest re-vérifié à chaque commit.
+- **Étape 10 — Les 3 revues manquantes** ✅ (session 3, en lecture directe — voir fin de
+  constats.md, entrées C153–C156)
+  tools/ tous vivants ; _seed/ = candidat purge à arbitrer (C153) ; infra/CI cohérents ;
+  docs passées en revue une à une, corrections committées (ff1b4fd), aucune purge (convention
+  archive respectée).
+- **Étape 11 — Docs : mise à jour et purge** ✅ partiel (session 3, commit `ff1b4fd`)
+  CLAUDE.md aligné (apps/twin « prévu », live-journal + _template ajoutés, quete, redirections
+  308), runbooks/README/guides corrigés sur l'état réel. Purges restantes à valider :
+  apps/site/notes_pratiques.txt (C017), services/twin-engine/_seed/ (C153),
+  live-brief.md (à archiver seulement après gel du chantier 2).
+- **Étape 12 — Passe finale** ✅ (session 3)
+  Vérification complète re-jouée (build + lint + tests + pytest) et comptage final : voir
+  la synthèse en tête de ce fichier et le rapport de session.
 
 ## Méthode de comptage des lignes (reproductible)
 
