@@ -23,7 +23,6 @@ export type Config = {
 type RawConfig = Partial<{
   apiUrl: string;
   deviceId: number;
-  outputDir: string;
   fetchWindowHours: number;
   maxPointsPerFetch: number;
   intervalSeconds: number;
@@ -72,7 +71,7 @@ export function loadConfig(): Config {
     apiUrl: process.env.TRACCAR_API_URL || raw.apiUrl || "http://host.docker.internal:8082/api",
     deviceId: num(process.env.DEVICE_ID, raw.deviceId ?? 0),
     token,
-    dataDir: process.env.DATA_DIR || raw.outputDir || "/data",
+    dataDir: process.env.DATA_DIR || "/data",
     fetchWindowHours: num(process.env.FETCH_WINDOW_HOURS, raw.fetchWindowHours ?? 48),
     maxPointsPerFetch: num(process.env.MAX_POINTS_PER_FETCH, raw.maxPointsPerFetch ?? 10000),
     intervalSeconds: num(process.env.INTERVAL_SECONDS, raw.intervalSeconds ?? 15),
