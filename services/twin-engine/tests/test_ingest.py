@@ -151,12 +151,14 @@ def test_iter_activities_streams_like_batch(tmp_path):
     assert skipped == batch.skipped == []
     assert streamed[0].source_name == batch.activities[0].source_name
 
-    # running_only : le flux signale les sports ignorés comme le lot
+    # un JSON qui n'est pas une activité (NotActivityData) est ignoré EN SILENCE :
+    # ni activité produite, ni entrée skipped (même tolérance que le lot)
     import json as _json
     bad = tmp_path / "meta.json"
     bad.write_bytes(_json.dumps({"pas": "une activité"}).encode())
     sk2: list[dict] = []
     assert list(iter_activities(bad, running_only=True, skipped=sk2)) == []
+    assert sk2 == []
 
 
 def test_run_preview_streams_and_counts(tmp_path):

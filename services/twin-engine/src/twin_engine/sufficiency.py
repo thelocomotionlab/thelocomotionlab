@@ -189,8 +189,8 @@ def assess_sufficiency(
     )
 
     # 5) Erreur de validation croisée (indice de confiance)
-    # ``strict`` (défaut) : MAE brute — un seul pli d'extrapolation peut basculer le vendable.
-    # ``honest`` (§4.3) : MAE d'INTERPOLATION (le modèle jugé sur ce qu'il sait faire), l'extrapolation
+    # ``strict`` : MAE brute — un seul pli d'extrapolation peut basculer le vendable.
+    # ``honest`` (§4.3, DÉFAUT livré) : MAE d'INTERPOLATION (le modèle jugé sur ce qu'il sait faire), l'extrapolation
     #   étant rapportée comme incertitude assumée, pas comme un couperet.
     cv = prediction.cross_validation if prediction else None
     if cv is not None:

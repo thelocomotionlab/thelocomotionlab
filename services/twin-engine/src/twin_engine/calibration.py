@@ -523,6 +523,7 @@ __all__ = [
     "UltraCalibration",
     "select_genuine_ultras",
     "maximality_weights",
+    "recency_weights",
     "build_calibration",
     "REGIME_REGRESSION",
     "REGIME_BLEND",

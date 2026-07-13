@@ -9,8 +9,6 @@ from __future__ import annotations
 import math
 from pathlib import Path
 
-import numpy as np
-
 from twin_engine.config import load_config
 from twin_engine.course import RaceSpec, build_course
 from twin_engine.minetti import cost_of_running, grade_factor

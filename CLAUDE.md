@@ -17,7 +17,7 @@ développer chaque app sans casser les autres, tout en gardant une identité vis
 - **Charte** : Tailwind v4. Les tokens (couleurs, typo, radius, spacing) vivent **uniquement** dans
   `packages/ui` (source unique). **Police = Ubuntu** (sans + titres) et **Lora** (serif d'accent).
   ⚠️ **PAS Geist.**
-- **Moteur** : **Python + FastAPI**. Calcul scientifique (`numpy`, `scipy`, `matplotlib`,
+- **Moteur** : **Python + FastAPI**. Calcul scientifique (`numpy`, `matplotlib`,
   `fitdecode`) ; rendu du rapport en **LaTeX (XeLaTeX + biber)** dans un conteneur.
 - **Déploiement** :
   - le **site** → **Cloudflare Pages** (pour l'instant ; `@cloudflare/next-on-pages` + `wrangler`) ;

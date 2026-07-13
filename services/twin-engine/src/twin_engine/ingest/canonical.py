@@ -1,7 +1,7 @@
 """Schéma canonique d'activité — le contrat unique du moteur.
 
 Tous les formats sources (Garmin/Coros/Suunto ``.fit``, Strava bulk, Polar
-``.tcx``/``.gpx``…) sont normalisés par les adaptateurs (commit 2) vers UN seul
+``.tcx``/``.gpx``/``.json``…) sont normalisés par les adaptateurs vers UN seul
 schéma, échantillonné à **1 enregistrement/seconde** (twin-theory §2.1). À partir
 d'ici, **tout le reste du moteur ne consomme que ce schéma** — jamais « par marque ».
 
@@ -127,7 +127,7 @@ class CanonicalActivity:
     start_time: datetime | None
     sport: str | None
     sub_sport: str | None
-    source_format: str  # "fit" | "tcx" | "gpx"
+    source_format: str  # "fit" | "tcx" | "gpx" | "polar"
     source_name: str    # nom du fichier d'origine (jamais un chemin absolu)
 
     # --- canaux 1 Hz (longueur n) ---

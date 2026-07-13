@@ -120,9 +120,9 @@ def test_soft_weight_brings_mae_under_10pct():
     t = _twin()
     cal = build_calibration(t, cfg)
     assert cal.regime == "regression" and cal.n_genuine == 8
-    assert cal.sigma_kmh < 0.7                        # σ ~divisée par 2–3 (1,539 → ~0,5)
+    assert cal.sigma_kmh < 0.7                        # σ ~divisée par 2–3 (1,528 → ~0,5)
     cv = predict_finish(DEQ, DPK, t, cal, cfg).cross_validation
-    assert cv.mae_pct < 10.0                          # 25,3 % → ~9–10 %
+    assert cv.mae_pct < 10.0                          # 24,8 % → ~9–10 %
     assert cv.mae_interpolation_pct < 8.0             # ~7 %
 
 

@@ -324,7 +324,7 @@ def predict_finish(
         # loi prédictive complète : β-covariance (levier) + résidu + point fixe par tirage
         mc = _mc_predictive(deq_km, dplus_per_km, calibration, cfg, rng)
     else:
-        # chemin historique (défaut sigma_only ; replis blend/vc_e) — inchangé au bit près
+        # chemin historique (ancien défaut sigma_only ; replis blend/vc_e) — inchangé au bit près
         vp = v_point + rng.normal(0.0, calibration.sigma_kmh, cfg.prediction.mc_n)
         vp = np.maximum(vp, cfg.prediction.v_floor_kmh)
         mc = deq_km / vp

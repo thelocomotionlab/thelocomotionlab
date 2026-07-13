@@ -135,12 +135,9 @@ def build_pacing(
     start = race.start_time
     can_clock = start is not None and race.lat is not None and race.lon is not None
     clock = start
-    cum_move = 0.0
-    cum_clock = np.zeros(n)
     arr_clocks: list[str | None] = []
     nights: list[bool] = []
     for i in range(n):
-        cum_move += t_move_h[i]
         if can_clock:
             # heure d'ARRIVÉE au point de passage = mouvement seul ; l'arrêt du ravito
             # s'écoule ensuite (l'ancien calcul imprimait l'heure de DÉPART du ravito,

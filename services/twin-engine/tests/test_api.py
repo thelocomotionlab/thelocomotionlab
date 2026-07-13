@@ -65,7 +65,7 @@ def test_preview_rejects_bad_race_spec(client):
     assert r.status_code == 422
 
 
-def test_job_lifecycle(client):
+def test_job_lifecycle(client, tmp_path):
     # le job tourne en tâche de fond ; TestClient l'exécute avant de rendre la réponse
     r = client.post("/jobs", files=_files(), data={"athlete": "Test"})
     assert r.status_code == 200
@@ -76,8 +76,12 @@ def test_job_lifecycle(client):
     assert got.status_code == 200
     body = got.json()
     assert body["status"] in {"done", "error", "running"}
-    # archive d'entraînement purgée après parsing
     assert body["verdict"] in {"🟢", "🟠", "🔴", None}
+
+    # Exigence de confidentialité (CLAUDE.md) : l'archive d'entraînement brute
+    # est purgée dès la fin du job — upload/ ne doit plus exister.
+    if body["status"] in {"done", "error"}:
+        assert not (tmp_path / "data" / "jobs" / job_id / "upload").exists()
 
 
 def test_unknown_job_404(client):

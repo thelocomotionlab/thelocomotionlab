@@ -79,8 +79,9 @@ twin-engine full \
 Le `preview` imprime un JSON (verdict, prédiction, jumeau, parcours) + un résumé lisible. Le `full`
 écrit les figures et le PDF dans `--out`.
 
-> `--race` par défaut : `examples/nice-100m.json` (course de référence). Pour une autre course, copie
-> ce fichier et adapte les champs (voir §6).
+> `--race` est **optionnel** (défaut : aucun → mode GPX-only, distance issue de la trace et
+> découpage automatique en segments). `examples/nice-100m.json` est un exemple de spec : pour une
+> course avec carnet de route, copie ce fichier et adapte les champs (voir §6).
 
 **Mode backtest (`--until`, `preview` et `full`)** : `--until 2026-05-30` écarte toutes les
 activités postérieures (et non datées) — le moteur « remonte le temps » à la veille d'une course

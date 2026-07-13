@@ -140,8 +140,7 @@ def test_implausible_vc_hidden_with_honest_note():
 
     course, twin, cal, pred, plan, race, suf = _scenario()
     bad = CriticalSpeed(7.0, 0.5, 1500, 300, False, 6, plausible=False)
-    twin_bad = dc_replace(twin, critical_speed=bad) if hasattr(twin, "__dataclass_fields__") else twin
-    twin_bad.critical_speed = bad
+    twin_bad = dc_replace(twin, critical_speed=bad)
     pred_bad = predict_finish(course.deq_km, course.dplus_per_km, twin_bad, cal, CFG)
     ctx = build_report_context(course=course, twin=twin_bad, calibration=cal, prediction=pred_bad,
                                plan=plan, race=race, sufficiency=suf, cfg=CFG, athlete="A")

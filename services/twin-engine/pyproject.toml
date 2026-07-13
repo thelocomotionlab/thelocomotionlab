@@ -17,9 +17,10 @@ name = "twin-engine"
 version = "0.1.0"
 description = "Locomotion Twin — ingestion multi-format, jumeau physiologique, prédiction validée, rapport LaTeX."
 requires-python = ">=3.11"
+# scipy a été retiré : aucun import dans src/tests/tools (vérifié — revue 2026-07) ;
+# il alourdissait l'image Docker pour rien. pydantic reste comme pin du contrat FastAPI.
 dependencies = [
   "numpy>=1.26",
-  "scipy>=1.11",
   "matplotlib>=3.8",
   "fitdecode>=0.10",
   "fastapi>=0.110",
@@ -33,7 +34,7 @@ dependencies = [
 dev = ["pytest>=8", "httpx>=0.27"]
 
 [project.scripts]
-# CLI qui rejoue le cas Nice 100M de bout en bout (implémenté au commit 11).
+# CLI du moteur (preview / full / backtest — cf. docs/manuel-twin.md).
 twin-engine = "twin_engine.cli:main"
 
 [tool.hatch.build.targets.wheel]

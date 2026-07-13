@@ -72,7 +72,7 @@ def test_until_excludes_posterior_and_undated_and_anchors_freshness():
     """Coupure backtest (``until``) : les activités postérieures ET non datées sont écartées
     (anti-fuite — on ne peut pas certifier qu'une activité sans date est antérieure), et
     « aujourd'hui » (fraîcheur) devient la date de coupure, pas la date du replay."""
-    from datetime import date, datetime, timezone
+    from datetime import date, datetime
 
     def _dated_run(v, dur, iso):
         t = list(range(dur + 1))
