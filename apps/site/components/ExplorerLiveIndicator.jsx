@@ -1,8 +1,8 @@
 // components/ExplorerLiveIndicator.jsx
 //
 // Indicateur live compact : point pulsé + « Prochain départ — Tour des
-// Écrins → Live », ou « EN DIRECT » quand un direct est actif. Même source
-// d'état que LiveStatusBlock (live-timer.json), un seul fetch au montage.
+// Écrins → Live », ou « EN DIRECT » quand un direct est actif. Source
+// d'état : live-timer.json, un seul fetch au montage.
 // `tone` : "dark" (texte blanc, sur photo — accueil) ou "light" (texte
 // gris/brun, sur fond crème — pilier Explorer).
 

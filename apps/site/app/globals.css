@@ -197,13 +197,6 @@ a.data-footnote-backref,
 }
 
 /* ===========================
-   Pulse
-   =========================== */
-   
-.pulse-slow   { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-.pulse-fast   { animation: pulse 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-
-/* ===========================
    Titres markdown (dans .prose)
    =========================== */
 
@@ -605,15 +598,6 @@ html {
 .animate-fade-in {
   opacity: 1;
   animation: fade-in 0.35s ease-out forwards;
-}
-
-/* Scrollbar masquée pour les carrousels horizontaux */
-.no-scrollbar {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
 }
 
 /* Barre de défilement fine bleu labo des listes verticales

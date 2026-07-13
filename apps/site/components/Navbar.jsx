@@ -17,10 +17,6 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-// Menu « Outils » livré masqué en PR1, activé en PR2 avec la page
-// /outils/twin.
-const SHOW_OUTILS = true;
-
 const NAV_ITEMS = [
   { type: "link", href: "/comprendre", label: "Comprendre", Icon: Brain },
   { type: "link", href: "/explorer", label: "Explorer", Icon: Compass },
@@ -29,7 +25,6 @@ const NAV_ITEMS = [
     type: "menu",
     label: "Outils",
     Icon: Wrench,
-    hidden: !SHOW_OUTILS,
     items: [{ href: "/outils/twin", label: "Locomotion Twin" }],
   },
   {
@@ -43,7 +38,7 @@ const NAV_ITEMS = [
       { href: "/contact", label: "Contact" },
     ],
   },
-].filter((item) => !item.hidden);
+];
 
 function isActivePath(pathname, href) {
   if (!pathname) return false;
