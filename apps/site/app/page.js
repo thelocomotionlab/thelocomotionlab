@@ -246,9 +246,9 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* ── HERO — même gabarit que l'ancienne accueil (70vh), contenu
-             centré verticalement (paddings symétriques) ─────────────── */}
-      <section className="relative flex min-h-[70vh] flex-col items-center justify-center overflow-hidden py-12 text-center sm:min-h-[68vh] sm:py-16 md:py-20">
+      {/* ── HERO — gabarit et ton de l'ancienne accueil : overlay léger
+             uniforme, texte modeste, bloc calé vers le bas ───────────── */}
+      <section className="relative grid min-h-[70vh] place-items-end overflow-hidden pb-12 pt-10 text-center sm:min-h-[68vh] sm:pb-16 sm:pt-14 md:pb-20 md:pt-16">
         <Image
           src={hero.src}
           alt={hero.alt}
@@ -258,36 +258,28 @@ export default async function HomePage() {
           className="object-cover"
           style={{ objectPosition: hero.objectPosition }}
         />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse at 50% 60%, rgba(15,20,20,0.35), rgba(15,20,20,0.55))",
-          }}
-          aria-hidden="true"
-        />
+        <div className="absolute inset-0 bg-black/35" aria-hidden="true" />
 
-        <div className="relative z-10 mx-auto max-w-[1020px] px-5 sm:px-10 md:px-20">
-          <h1 className="font-heading text-[29px] font-bold leading-[1.12] text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.4)] md:text-[56px]">
+        <div className="relative z-10 mx-auto w-full max-w-4xl px-4 sm:px-6">
+          <h1 className="font-heading text-2xl font-bold leading-tight text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.4)] sm:text-3xl md:text-4xl">
             Comprendre le corps comme un scientifique,
-            <span className="mt-2.5 block font-lora text-[24px] font-medium italic leading-[1.15] text-brand-accent-light md:text-[46px]">
+            <span className="mt-1.5 block font-lora text-[21px] font-medium italic leading-snug text-brand-accent-light sm:text-[26px] md:text-[30px]">
               l&rsquo;utiliser comme un animal.
             </span>
           </h1>
-          <p className="mx-auto mt-7 max-w-[680px] text-base leading-relaxed text-white/88 text-pretty md:text-[18.5px]">
+          <p className="mx-auto mt-4 max-w-[680px] text-base leading-relaxed text-white/90 text-pretty sm:text-lg">
             Explorer la robustesse physiologique comme instrument de confiance
             en soi, force et bien-être.
           </p>
           <div className="mt-8 flex items-center justify-center">
             <Link
               href="/quete"
-              className="inline-block rounded-full bg-brand-accent px-7 py-3 text-base font-semibold text-white shadow-cta transition hover:bg-brand-primary-dark"
+              className="inline-block rounded-full bg-brand-accent px-6 py-3 font-semibold text-white shadow transition hover:bg-brand-primary-dark"
             >
               La quête du labo
             </Link>
           </div>
         </div>
-
       </section>
 
       {/* ── 01 · COMPRENDRE — lavis bleu + registre des articles ───── */}
