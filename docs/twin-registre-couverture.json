@@ -981,6 +981,228 @@
         "in_safety": true
       },
       "below_domain": false
+    },
+    {
+      "athlete": "Rapace",
+      "dev_set": false,
+      "race": "Maratour Orcieres 2024",
+      "date": "2024-08-04",
+      "until": "2024-08-03",
+      "dnf": false,
+      "official_time_h": 6.336,
+      "course": {
+        "length_km": 41.8,
+        "deq_km": 51.7,
+        "dplus_per_km": 60.8
+      },
+      "model": {
+        "verdict": "🔴",
+        "regime": "vc_e",
+        "n_genuine": 0,
+        "n_eff": 0.0,
+        "sigma_kmh": 0.8,
+        "n_activities_used": 134,
+        "n_excluded_until": 350
+      },
+      "prediction": {
+        "central_h": 25.863,
+        "plan_low_h": 22.854,
+        "plan_high_h": 25.863,
+        "safety_low_h": 18.848,
+        "safety_high_h": 25.863,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": 308.19,
+        "in_plan": false,
+        "in_safety": false
+      },
+      "below_domain": true
+    },
+    {
+      "athlete": "Rapace",
+      "dev_set": false,
+      "race": "Saintelyon 2024",
+      "date": "2024-11-30",
+      "until": "2024-11-29",
+      "dnf": false,
+      "official_time_h": 10.926,
+      "course": {
+        "length_km": 72.1,
+        "deq_km": 67.4,
+        "dplus_per_km": 6.3
+      },
+      "model": {
+        "verdict": "🔴",
+        "regime": "vc_e",
+        "n_genuine": 0,
+        "n_eff": 0.0,
+        "sigma_kmh": 0.8,
+        "n_activities_used": 184,
+        "n_excluded_until": 300
+      },
+      "prediction": {
+        "central_h": 19.759,
+        "plan_low_h": 17.108,
+        "plan_high_h": 23.545,
+        "safety_low_h": 15.246,
+        "safety_high_h": 28.407,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": 80.84,
+        "in_plan": false,
+        "in_safety": false
+      },
+      "below_domain": false
+    },
+    {
+      "athlete": "Rapace",
+      "dev_set": false,
+      "race": "Grand Tour Du Lac 2025",
+      "date": "2025-04-19",
+      "until": "2025-04-18",
+      "dnf": false,
+      "official_time_h": 6.007,
+      "course": {
+        "length_km": 51.4,
+        "deq_km": 56.2,
+        "dplus_per_km": 34.5
+      },
+      "model": {
+        "verdict": "🔴",
+        "regime": "vc_e",
+        "n_genuine": 0,
+        "n_eff": 0.0,
+        "sigma_kmh": 0.8,
+        "n_activities_used": 249,
+        "n_excluded_until": 235
+      },
+      "prediction": {
+        "central_h": 10.806,
+        "plan_low_h": 9.809,
+        "plan_high_h": 12.08,
+        "safety_low_h": 9.05,
+        "safety_high_h": 13.501,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": 79.89,
+        "in_plan": false,
+        "in_safety": false
+      },
+      "below_domain": true
+    },
+    {
+      "athlete": "Rapace",
+      "dev_set": false,
+      "race": "Coursieres 100k 2025",
+      "date": "2025-05-10",
+      "until": "2025-05-09",
+      "dnf": false,
+      "official_time_h": 14.992,
+      "course": {
+        "length_km": 105.7,
+        "deq_km": 116.9,
+        "dplus_per_km": 37.5
+      },
+      "model": {
+        "verdict": "🔴",
+        "regime": "vc_e",
+        "n_genuine": 0,
+        "n_eff": 0.0,
+        "sigma_kmh": 0.8,
+        "n_activities_used": 261,
+        "n_excluded_until": 223
+      },
+      "prediction": {
+        "central_h": 20.361,
+        "plan_low_h": 18.644,
+        "plan_high_h": 22.513,
+        "safety_low_h": 17.315,
+        "safety_high_h": 24.859,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": 35.82,
+        "in_plan": false,
+        "in_safety": false
+      },
+      "below_domain": false
+    },
+    {
+      "athlete": "Rapace",
+      "dev_set": false,
+      "race": "Utbv 80km 2025",
+      "date": "2025-10-11",
+      "until": "2025-10-10",
+      "dnf": false,
+      "official_time_h": 11.691,
+      "course": {
+        "length_km": 83.7,
+        "deq_km": 95.6,
+        "dplus_per_km": 45.0
+      },
+      "model": {
+        "verdict": "🔴",
+        "regime": "blend",
+        "n_genuine": 1,
+        "n_eff": 1.0,
+        "sigma_kmh": 0.45,
+        "n_activities_used": 333,
+        "n_excluded_until": 151
+      },
+      "prediction": {
+        "central_h": 11.81,
+        "plan_low_h": 11.391,
+        "plan_high_h": 12.278,
+        "safety_low_h": 11.036,
+        "safety_high_h": 12.728,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": 1.02,
+        "in_plan": true,
+        "in_safety": true
+      },
+      "below_domain": false
+    },
+    {
+      "athlete": "Rapace",
+      "dev_set": false,
+      "race": "Trail Nivolet Revard 2026",
+      "date": "2026-05-03",
+      "until": "2026-05-02",
+      "dnf": false,
+      "official_time_h": 7.427,
+      "course": {
+        "length_km": 54.4,
+        "deq_km": 67.0,
+        "dplus_per_km": 54.2
+      },
+      "model": {
+        "verdict": "🔴",
+        "regime": "blend",
+        "n_genuine": 3,
+        "n_eff": 2.87,
+        "sigma_kmh": 0.45,
+        "n_activities_used": 454,
+        "n_excluded_until": 30
+      },
+      "prediction": {
+        "central_h": 8.217,
+        "plan_low_h": 7.928,
+        "plan_high_h": 8.54,
+        "safety_low_h": 7.682,
+        "safety_high_h": 8.851,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": 10.64,
+        "in_plan": false,
+        "in_safety": false
+      },
+      "below_domain": true
     }
   ]
 }
