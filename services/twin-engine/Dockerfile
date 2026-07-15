@@ -48,6 +48,12 @@ WORKDIR /app
 COPY --from=build /dist/*.whl /tmp/
 RUN pip install /tmp/*.whl && rm -f /tmp/*.whl
 
+# Les constantes scientifiques versionnées : sans ce COPY + TWIN_CONFIG_PATH,
+# le wheel installé ne trouve pas twin.config.json (posé à la racine du
+# service, hors paquet) et le moteur tournerait sur les défauts de config.py.
+COPY services/twin-engine/twin.config.json /app/twin.config.json
+ENV TWIN_CONFIG_PATH=/app/twin.config.json
+
 # Utilisateur non-root + point de montage du volume de données (droits AVANT de dropper root).
 RUN useradd --create-home --uid 10001 app \
     && mkdir -p /data /tmp/matplotlib \

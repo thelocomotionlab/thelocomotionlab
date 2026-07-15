@@ -1,6 +1,7 @@
 """Parsing de dates ISO-8601, tolérant (``…Z`` / offset / fractions longues).
 
-Source unique pour tout le moteur (ingestion XML, spec de course, pacing).
+Utilisé par l'ingestion XML (``.tcx``/``.gpx``) et la spec de course.
+(L'adaptateur Polar parse ses dates directement via ``datetime.fromisoformat``.)
 """
 
 from __future__ import annotations

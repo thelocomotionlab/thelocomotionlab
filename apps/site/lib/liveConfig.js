@@ -57,8 +57,8 @@ export const liveConfig = {
     homeLabel: "Tour des Écrins",
   },
 
-  // Props de l'ancien embed (LiveTrackingLazy → LiveTrackingMap). Encore utilisé
-  // par LiveStatusBlock (title). L'état « En cours » v2 ne s'en sert plus.
+  // Props de l'ancien embed (LiveTrackingLazy → LiveTrackingMap). Seul `title`
+  // est encore lu (ExplorerLiveIndicator). L'état « En cours » v2 ne s'en sert plus.
   embed: {
     title: "Tour des Écrins en direct",
     totalDistanceKm: 194,

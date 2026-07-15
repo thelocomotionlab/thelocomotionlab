@@ -9,6 +9,8 @@
 
 "use client";
 
+import { brandColors } from "@locomotionlab/ui";
+
 import { useState } from "react";
 
 import { journalApiBase } from "@/lib/liveConfig";
@@ -144,8 +146,8 @@ export default function MessageCard() {
 
       <p className="mt-[11px] flex items-start gap-[7px] font-heading text-[11px] leading-normal text-brand-text/65 lg:mt-2 lg:text-[10.5px]">
         <svg width="12" height="14" viewBox="0 0 12 14" className="mt-px flex-none lg:hidden" aria-hidden="true">
-          <rect x="1" y="6" width="10" height="7" rx="2" fill="none" stroke="#6E9CA0" strokeWidth="1.3" />
-          <path d="M3.5 6 V4 a2.5 2.5 0 0 1 5 0 V6" fill="none" stroke="#6E9CA0" strokeWidth="1.3" />
+          <rect x="1" y="6" width="10" height="7" rx="2" fill="none" stroke={brandColors.primaryDark} strokeWidth="1.3" />
+          <path d="M3.5 6 V4 a2.5 2.5 0 0 1 5 0 V6" fill="none" stroke={brandColors.primaryDark} strokeWidth="1.3" />
         </svg>
         <span>Message privé — remis à Valentin le soir au bivouac. Rien n&rsquo;est publié.</span>
       </p>

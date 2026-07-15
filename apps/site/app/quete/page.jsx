@@ -1,5 +1,6 @@
 // app/quete/page.jsx
-import Link from "next/link";
+// NB : le bloc « Par où commencer » plus bas est commenté (réserve éditoriale) ;
+// le ré-activer demande de ré-importer Link depuis next/link.
 import EmailCapture from "@/components/EmailCapture";
 import PageHeader from "@/components/PageHeader";
 

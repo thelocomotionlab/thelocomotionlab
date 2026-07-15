@@ -8,6 +8,8 @@
 
 "use client";
 
+import { brandColors } from "@locomotionlab/ui";
+
 import { journalApiBase } from "@/lib/liveConfig";
 import { formatClockDuration, formatEntryTag } from "@/lib/liveTime";
 import AudioPlayer from "./AudioPlayer";
@@ -17,9 +19,9 @@ const KNOWN_TYPES = new Set(["text", "photo", "audio", "video"]);
 
 /** Pastille de timeline : départ sauge, dernières nouvelles terracotta, entre-deux ambre. */
 function dotColor(indexFromTop, total) {
-  if (indexFromTop >= total - 1) return "#8CB9BD"; // la toute première entrée (le départ)
-  if (indexFromTop <= 1) return "#B67352"; // les plus fraîches
-  return "#EFB159";
+  if (indexFromTop >= total - 1) return brandColors.primary; // la toute première entrée (le départ)
+  if (indexFromTop <= 1) return brandColors.deep; // les plus fraîches
+  return brandColors.accent;
 }
 
 function kindLabel(entry) {

@@ -2,9 +2,9 @@
 
 > Contrat de données préparé pendant le chantier 1 (refonte du site, PR3)
 > pour le **chantier 2** (journal Telegram, mur/chat, enrichissement des
-> replays). Aucun code ne le consomme encore : ce document fixe la cible
-> pour que le back (tracking-cache) et le front (site, page /live, replays)
-> convergent vers le même fichier.
+> replays). Consommé aujourd'hui par `services/live-journal/src/export/archive.ts`
+> (export de fin d'aventure) et `apps/site/lib/useArchive.js` (lecture des
+> archives statiques `public/replays/<slug>/archive.json`).
 
 ## Principes
 

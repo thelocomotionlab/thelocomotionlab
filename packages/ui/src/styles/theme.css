@@ -4,6 +4,8 @@
    Tailwind v4. Toute couleur / police / ombre / radius de la
    charte se change ICI et nulle part ailleurs. Les apps importent
    ce fichier : `@import "@locomotionlab/ui/theme.css";`
+   ⚠ Miroir JS pour SVG/maplibre/cssText : src/tokens.ts — à tenir
+   synchronisé si une couleur de marque change.
    ============================================================ */
 
 @theme {
@@ -52,9 +54,6 @@
       rgba(91, 130, 134, 0.26) 1px,
       transparent 1px
     );
-  --background-size-grid-sm: 16px 16px;
-  --background-size-grid-lg: 32px 32px;
-
   --text-xxs: 0.625rem;
 }
 
@@ -68,7 +67,9 @@
 @theme inline {
   --font-heading: var(--font-ubuntu), ui-sans-serif, system-ui;
   --font-sans: var(--font-ubuntu), ui-sans-serif, system-ui;
-  --font-serif: "Ubuntu Serif", Georgia, serif;
+  /* Serif d'accent de la charte = Lora. (Avant : "Ubuntu Serif", police qui
+     n'existe pas → les rares font-serif rendaient en Georgia.) */
+  --font-serif: var(--font-lora), Georgia, serif;
   --font-lora: var(--font-lora), serif;
   --font-mono: var(--font-ubuntu-mono), ui-monospace, SFMono-Regular, monospace;
 }

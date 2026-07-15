@@ -32,6 +32,8 @@ ENV DATA_DIR=/data
 COPY --from=build /out/dist ./dist
 COPY --from=build /out/node_modules ./node_modules
 COPY --from=build /out/live-journal.config.json ./live-journal.config.json
+# Fontes des cartes OG (src/og/render.ts lit /app/assets/fonts au runtime).
+COPY --from=build /out/assets ./assets
 # Fixtures du simulateur (mode dev/recette : LIVE_JOURNAL_SIMULATION=1).
 COPY --from=build /out/sim ./sim
 

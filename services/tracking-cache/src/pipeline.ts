@@ -49,10 +49,10 @@ export async function runTick(config: Config, store: Store): Promise<number | nu
 
   const control = store.readControl();
   const now = new Date();
-  const fromIso = computeFromIso(store.readRawCache(), control.windowStartIso, config.fetchWindowHours, now);
+  const cache = store.readRawCache();
+  const fromIso = computeFromIso(cache, control.windowStartIso, config.fetchWindowHours, now);
   const toIso = now.toISOString();
 
-  const cache = store.readRawCache();
   const fetched = await fetchPositions(config, fromIso, toIso);
 
   const cachedKeys = new Set(cache.map(makeKey));

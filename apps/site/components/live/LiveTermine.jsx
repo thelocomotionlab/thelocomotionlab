@@ -7,6 +7,8 @@
 
 "use client";
 
+import { brandColors } from "@locomotionlab/ui";
+
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 
@@ -94,7 +96,7 @@ export default function LiveTermine() {
             <path
               d="M1 4 L3.7 6.8 L9 1"
               fill="none"
-              stroke="#6E9CA0"
+              stroke={brandColors.primaryDark}
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -134,7 +136,7 @@ export default function LiveTermine() {
           <path
             d="M3 3 h10 a2 2 0 0 1 2 2 v12 l-3-2 -4 2 V5"
             fill="none"
-            stroke="#9A6044"
+            stroke={brandColors.deepDark}
             strokeWidth="1.5"
             strokeLinejoin="round"
           />

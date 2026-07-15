@@ -26,13 +26,17 @@ export interface Env {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Provenances acceptées — doit couvrir tous les formulaires du site.
+// Émises aujourd'hui : quete, comprendre, twin, live, home.
+// « manifeste » (ex-nom de /quete, 308) et « footer » sont gardés par
+// tolérance pour d'éventuelles pages en cache navigateur.
 const SOURCES = new Set([
+  "quete",
   "comprendre",
   "twin",
   "live",
+  "home",
   "footer",
   "manifeste",
-  "home",
 ]);
 
 // Limite de débit best-effort : N requêtes / fenêtre / IP, dans la mémoire

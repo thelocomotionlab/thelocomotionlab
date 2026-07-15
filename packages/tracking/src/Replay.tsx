@@ -351,7 +351,7 @@ export default function Replay({
     <div className="flex flex-col items-center w-full py-6 px-3 sm:px-6 gap-3">
       {/* Bloc stats */}
       <div className="bg-white/80 backdrop-blur-md shadow-md rounded-2xl p-4 w-full max-w-3xl text-center border border-gray-200">
-        <div className="flex justify-center items-center gap-2 font-semibold text-lg text-[#b66b47] sm:mb-1">
+        <div className="flex justify-center items-center gap-2 font-semibold text-lg text-brand-deep sm:mb-1">
           <SatelliteDish size={18} /> {title}
         </div>
 
@@ -359,7 +359,7 @@ export default function Replay({
           <div className="flex flex-col items-center sm:hidden">
             <span className="text-xxs">Durée de locomotion :</span>
             <span className="text-xs font-bold mb-1">{formatDuration(elapsed)}</span>
-            <div className="w-16 h-[2px] bg-[#EFB159] mt-1 mb-4 rounded-full mx-auto"></div>
+            <div className="w-16 h-[2px] bg-brand-accent mt-1 mb-4 rounded-full mx-auto"></div>
           </div>
 
           <div className="hidden sm:inline">
@@ -368,11 +368,11 @@ export default function Replay({
           </div>
         </div>
 
-        <div className="hidden sm:block w-24 h-[2px] bg-[#EFB159] mt-1 mb-1 rounded-full mx-auto"></div>
+        <div className="hidden sm:block w-24 h-[2px] bg-brand-accent mt-1 mb-1 rounded-full mx-auto"></div>
 
         <div className="flex justify-around text-sm sm:text-base font-medium text-gray-800">
           <div>
-            <span className="font-semibold">{Number(stats.distance).toFixed(2)} km</span>
+            <span className="font-semibold">{stats.distance} km</span>
             <div className="sm:text-xs text-xxs text-gray-500">Distance</div>
           </div>
           <div>
@@ -405,7 +405,7 @@ export default function Replay({
           type="button"
           onClick={recenterMap}
           aria-label="Recentrer la carte sur le parcours"
-          className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md text-sm px-3 py-1 hover:bg-[#EFB159]/80 hover:text-white text-gray-700 flex items-center gap-1 z-20"
+          className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md text-sm px-3 py-1 hover:bg-brand-accent/80 hover:text-white text-gray-700 flex items-center gap-1 z-20"
         >
           <Crosshair size={16} aria-hidden="true" />
           <span className="hidden sm:inline">Recentrer</span>
@@ -417,7 +417,7 @@ export default function Replay({
             href={referenceGpx}
             download
             aria-label="Télécharger la trace GPX de référence"
-            className="absolute top-[43px] left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md px-3 py-1 hover:bg-[#EFB159]/80 hover:text-white text-gray-700 z-20 flex items-center gap-1 transition no-underline"
+            className="absolute top-[43px] left-3 bg-white/90 backdrop-blur-sm rounded-md shadow-md px-3 py-1 hover:bg-brand-accent/80 hover:text-white text-gray-700 z-20 flex items-center gap-1 transition no-underline"
             title="Télécharger la trace GPX"
           >
             <Download size={16} aria-hidden="true" />
@@ -435,7 +435,7 @@ export default function Replay({
                 aria-label="Choisir le style de carte"
                 aria-haspopup="menu"
                 aria-expanded={showStyleMenu}
-                className="bg-white/90 backdrop-blur-sm border border-gray-300 shadow rounded-md p-[6px] hover:bg-[#EFB159]/80 hover:text-white transition flex items-center justify-center"
+                className="bg-white/90 backdrop-blur-sm border border-gray-300 shadow rounded-md p-[6px] hover:bg-brand-accent/80 hover:text-white transition flex items-center justify-center"
                 style={{ width: "32px", height: "32px" }}
               >
                 <MapIcon size={16} className="text-gray-700" aria-hidden="true" />
@@ -456,8 +456,8 @@ export default function Replay({
                     setMapStyle("osm");
                     setShowStyleMenu(false);
                   }}
-                  className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${
-                    mapStyle === "osm" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"
+                  className={`w-full h-8 flex items-center justify-center rounded hover:bg-brand-accent/80 transition ${
+                    mapStyle === "osm" ? "bg-brand-accent/90 text-white" : "text-gray-700"
                   }`}
                 >
                   <MapIcon size={14} aria-hidden="true" />
@@ -471,8 +471,8 @@ export default function Replay({
                     setMapStyle("topo");
                     setShowStyleMenu(false);
                   }}
-                  className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${
-                    mapStyle === "topo" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"
+                  className={`w-full h-8 flex items-center justify-center rounded hover:bg-brand-accent/80 transition ${
+                    mapStyle === "topo" ? "bg-brand-accent/90 text-white" : "text-gray-700"
                   }`}
                 >
                   <Mountain size={14} aria-hidden="true" />
@@ -486,8 +486,8 @@ export default function Replay({
                     setMapStyle("satellite");
                     setShowStyleMenu(false);
                   }}
-                  className={`w-full h-8 flex items-center justify-center rounded hover:bg-[#EFB159]/80 transition ${
-                    mapStyle === "satellite" ? "bg-[#EFB159]/90 text-white" : "text-gray-700"
+                  className={`w-full h-8 flex items-center justify-center rounded hover:bg-brand-accent/80 transition ${
+                    mapStyle === "satellite" ? "bg-brand-accent/90 text-white" : "text-gray-700"
                   }`}
                 >
                   <Globe2 size={14} aria-hidden="true" />
@@ -509,7 +509,7 @@ export default function Replay({
                   : "Afficher le profil altimétrique"
               }
               aria-expanded={showElevation}
-              className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-white shadow-md rounded-lg p-1.5 border border-gray-300 hover:bg-[#EFB159]/90 hover:text-white transition z-30"
+              className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-white shadow-md rounded-lg p-1.5 border border-gray-300 hover:bg-brand-accent/90 hover:text-white transition z-30"
             >
               {showElevation ? (
                 <ChevronDown size={24} className="text-gray-700" />

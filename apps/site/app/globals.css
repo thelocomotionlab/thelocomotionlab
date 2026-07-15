@@ -15,7 +15,7 @@
 @source "../../../packages/ui/src/components/Field.tsx";
 
 /* Live-tracking : la carte et le replay vivent désormais dans
-   @locomotionlab/tracking (consommé inline par le site ET par apps/tracking).
+   @locomotionlab/tracking (consommé inline par le site).
    Tailwind v4 doit scanner ses sources pour régénérer les classes de marque
    utilisées par les composants (bg-brand-accent, text-brand-deep, text-xxs, …). */
 @source "../../../packages/tracking/src";
@@ -195,13 +195,6 @@ a.data-footnote-backref,
 .animate-slideUp {
   animation: slideUp 0.3s ease-in forwards;
 }
-
-/* ===========================
-   Pulse
-   =========================== */
-   
-.pulse-slow   { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-.pulse-fast   { animation: pulse 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 
 /* ===========================
    Titres markdown (dans .prose)
@@ -604,16 +597,10 @@ html {
 
 .animate-fade-in {
   opacity: 1;
-  animation: fade-in 0.35s ease-out forwards;
-}
-
-/* Scrollbar masquée pour les carrousels horizontaux */
-.no-scrollbar {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+  /* `both` (et pas `forwards`) : pendant un éventuel animation-delay, la
+     frame `from` (opacity 0) s'applique — sinon le ShareButton flashait
+     visible 0,3 s avant son fade-in. Sans delay, identique à `forwards`. */
+  animation: fade-in 0.35s ease-out both;
 }
 
 /* Barre de défilement fine bleu labo des listes verticales

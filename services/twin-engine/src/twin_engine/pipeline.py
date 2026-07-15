@@ -3,8 +3,9 @@
 ``preview`` : ingestion + jumeau + calibration + prédiction + **suffisance + fourchette**
 (rapide, pas de PDF). C'est ce que renvoie POST /preview pour décider AVANT paiement.
 
-``full`` (pacing + figures + rapport) est ajouté aux commits 8–9. Ce module porte le
-chaînage commun et la suppression des archives brutes.
+``full`` : preview + pacing + figures + rapport PDF (analyze_full/run_full,
+ci-dessous). Ce module porte le chaînage commun et la suppression des archives
+brutes.
 """
 
 from __future__ import annotations

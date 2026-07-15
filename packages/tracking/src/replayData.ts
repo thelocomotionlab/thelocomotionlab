@@ -21,9 +21,6 @@ export type NormalizedReplay = {
 };
 
 type ComputedStats = {
-  distanceMeters: number;
-  dplus: number;
-  dminus: number;
   profile: ProfilePoint[];
   rawDistanceMeters: number;
   rawDplus: number;
@@ -38,9 +35,6 @@ type ComputedStats = {
 export function computeStatsFromPoints(points: RawTraccarPosition[]): ComputedStats {
   if (!Array.isArray(points) || points.length < 2) {
     return {
-      distanceMeters: 0,
-      dplus: 0,
-      dminus: 0,
       profile: [],
       rawDistanceMeters: 0,
       rawDplus: 0,
@@ -138,9 +132,6 @@ export function computeStatsFromPoints(points: RawTraccarPosition[]): ComputedSt
   }
 
   return {
-    distanceMeters: totalDist,
-    dplus: totalDplus,
-    dminus: totalDminus,
     profile,
     rawDistanceMeters: totalDist,
     rawDplus: totalDplus,

@@ -5,7 +5,8 @@
     "grid_step_m": 5.0,
     "smooth_window_m": 150.0,
     "grade_clip": 0.45,
-    "cr0": 3.6
+    "cr0": 3.6,
+    "default_segment_km": 10.0
   },
 
   "twin": {

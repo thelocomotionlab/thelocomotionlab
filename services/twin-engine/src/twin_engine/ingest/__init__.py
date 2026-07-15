@@ -1,8 +1,9 @@
 """Ingestion multi-format → schéma canonique.
 
-Adaptateurs PAR FORMAT (``.fit``/``.tcx``/``.gpx``, décompression ``.gz``/``.zip``,
-bundle Strava) normalisés vers :class:`CanonicalActivity`. Point d'entrée :
-:func:`ingest_path`. Tout l'aval ne consomme que le schéma canonique.
+Adaptateurs PAR FORMAT (``.fit``/``.tcx``/``.gpx``, export Polar ``.json``,
+décompression ``.gz``/``.zip``, bundle Strava) normalisés vers
+:class:`CanonicalActivity`. Point d'entrée : :func:`ingest_path`. Tout l'aval
+ne consomme que le schéma canonique.
 """
 
 from __future__ import annotations

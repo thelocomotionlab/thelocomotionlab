@@ -31,7 +31,16 @@ function ensureMathJax() {
   return new Promise((resolve) => {
     const existing = document.getElementById(MATHJAX_SCRIPT_ID);
     if (existing) {
+      // Le script est déjà dans le DOM (posé par un autre bloc <plot>).
+      // S'il a déjà fini de charger, "load" ne se redéclenchera pas : on
+      // tranche tout de suite ; sinon on écoute aussi "error" pour ne
+      // jamais laisser la promesse pendante (Plotly attendrait à l'infini).
+      if (window.MathJax && window.MathJax.Hub) {
+        resolve(true);
+        return;
+      }
       existing.addEventListener("load", () => resolve(true), { once: true });
+      existing.addEventListener("error", () => resolve(false), { once: true });
       return;
     }
     window.MathJax = {

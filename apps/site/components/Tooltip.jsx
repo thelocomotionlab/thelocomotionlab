@@ -47,8 +47,12 @@ export default function Tooltip({ entry, children }) {
       onMouseEnter={() => setVisible(true)}
       onMouseLeave={() => setVisible(false)}
     >
-      <button
-        type="button"
+      {/* span[role=button] et pas <button> : les citations passent un <a>
+          en enfant, et un lien DANS un bouton est du HTML invalide (contenu
+          interactif imbriqué). Le handler clavier couvre Enter/Espace. */}
+      <span
+        role="button"
+        tabIndex={0}
         onClick={toggle}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -58,10 +62,10 @@ export default function Tooltip({ entry, children }) {
         }}
         aria-describedby={visible ? tooltipId : undefined}
         aria-expanded={visible}
-        className="inline bg-transparent border-0 p-0 m-0 text-inherit font-inherit cursor-pointer"
+        className="inline bg-transparent border-0 p-0 m-0 text-inherit cursor-pointer"
       >
         {children}
-      </button>
+      </span>
       {visible && (
         <span
           id={tooltipId}

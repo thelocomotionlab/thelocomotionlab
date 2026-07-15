@@ -41,10 +41,8 @@ function log(...args: unknown[]) {
 
   while (!stopping) {
     try {
-      const fresh = await runTick(config, store);
-      if (fresh === null) {
-        // session inactive : rien à faire (mode idle)
-      }
+      // runTick renvoie null quand la session est inactive (mode idle).
+      await runTick(config, store);
     } catch (err) {
       console.error(new Date().toISOString(), "Erreur tick :", (err as Error).message);
     }

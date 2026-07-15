@@ -8,6 +8,8 @@
 
 "use client";
 
+import { brandColors } from "@locomotionlab/ui";
+
 import { useMemo } from "react";
 
 const W = 1000;
@@ -81,9 +83,9 @@ export default function ProfileCard({ profile, totalKm, doneKm, elevationMin, el
       >
         <path d={geometry.remainArea} fill="rgba(154,96,68,0.10)" />
         {geometry.coverArea && <path d={geometry.coverArea} fill="rgba(239,177,89,0.32)" />}
-        <path d={geometry.line} fill="none" stroke="#9A6044" strokeWidth="1.6" strokeLinejoin="round" />
+        <path d={geometry.line} fill="none" stroke={brandColors.deepDark} strokeWidth="1.6" strokeLinejoin="round" />
         {geometry.coverLine && (
-          <path d={geometry.coverLine} fill="none" stroke="#D89A3D" strokeWidth="2.8" strokeLinejoin="round" />
+          <path d={geometry.coverLine} fill="none" stroke={brandColors.accentDark} strokeWidth="2.8" strokeLinejoin="round" />
         )}
         {waypoints.map((w) => (
           <line
@@ -99,8 +101,8 @@ export default function ProfileCard({ profile, totalKm, doneKm, elevationMin, el
         ))}
         {showMarker && (
           <>
-            <line x1={geometry.markX} y1="0" x2={geometry.markX} y2={BASE_Y} stroke="#B67352" strokeWidth="1.6" />
-            <circle cx={geometry.markX} cy={geometry.markY} r="6" fill="#B67352" stroke="#FEFBF6" strokeWidth="2.5" />
+            <line x1={geometry.markX} y1="0" x2={geometry.markX} y2={BASE_Y} stroke={brandColors.deep} strokeWidth="1.6" />
+            <circle cx={geometry.markX} cy={geometry.markY} r="6" fill={brandColors.deep} stroke={brandColors.bg} strokeWidth="2.5" />
           </>
         )}
       </svg>

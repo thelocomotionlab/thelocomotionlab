@@ -195,6 +195,7 @@ Versionné, **sans secret**. Surchargeable par variables d'env (dans `infra/.env
 | `apiUrl` | `TRACCAR_API_URL` | `http://host.docker.internal:8082/api` | API Traccar (locale par défaut) |
 | `intervalSeconds` | `INTERVAL_SECONDS` | 15 | période de la boucle |
 | `fetchWindowHours` | `FETCH_WINDOW_HOURS` | 50 | plancher de la fenêtre de fetch (filet) |
+| `maxPointsPerFetch` | `MAX_POINTS_PER_FETCH` | 10000 | plafond de points par requête Traccar |
 | `samplingCorrection` | `SAMPLING_CORRECTION` | 1.03 | correction distance (sous-échantillonnage GPS) |
 | `elevationPlusCorrection` / `…MinusCorrection` | `ELEVATION_PLUS/MINUS_CORRECTION` | 0.95 | corrections D+/D− |
 | `minDistanceThreshold` | `MIN_DISTANCE_THRESHOLD` | 8 | anti-dérive GPS statique (m) |

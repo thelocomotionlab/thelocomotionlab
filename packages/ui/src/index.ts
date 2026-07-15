@@ -12,3 +12,6 @@ export type { FieldProps } from "./components/Field";
 
 export { default as PageShell } from "./components/PageShell";
 export type { PageShellProps } from "./components/PageShell";
+
+// Couleurs de marque en JS (SVG / maplibre / cssText — miroir de theme.css).
+export { brandColors } from "./tokens";

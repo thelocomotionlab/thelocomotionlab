@@ -1,7 +1,8 @@
 // components/PlotLazy.jsx
 //
 // Wrapper client qui charge Plot (et plotly.js-dist-min, ~1MB gz)
-// uniquement quand un bloc <plot> est présent dans un article ou un projet.
+// uniquement quand un bloc <plot> est présent dans un projet (seul le
+// pipeline ProjetBody inclut remarkPlot — pas ArticleBody).
 
 "use client";
 

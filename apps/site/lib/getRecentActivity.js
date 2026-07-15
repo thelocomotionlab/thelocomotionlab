@@ -142,15 +142,8 @@ function sortMixedActivity(a, b) {
   if (bKey !== aKey) return bKey - aKey;
 
   // Tie-breaker stable : second champ
-  const aSecond =
-    a.type === "Carnet"
-      ? a.updatedAt?.getTime?.() ?? 0
-      : a.updatedAt?.getTime?.() ?? 0;
-
-  const bSecond =
-    b.type === "Carnet"
-      ? b.updatedAt?.getTime?.() ?? 0
-      : b.updatedAt?.getTime?.() ?? 0;
+  const aSecond = a.updatedAt?.getTime?.() ?? 0;
+  const bSecond = b.updatedAt?.getTime?.() ?? 0;
 
   return bSecond - aSecond;
 }
@@ -172,16 +165,6 @@ export function getRecentProjects({ limit = 3 } = {}) {
 }
 
 /**
- * Feed mixte (optionnel)
- * Utilisé si un jour tu veux un journal global du Labo
- */
-export function getRecentActivity({ limit = 6 } = {}) {
-  return [...readPublishedArticles(), ...readPublishedProjects()]
-    .sort(sortMixedActivity)
-    .slice(0, limit);
-}
-
-/**
  * Feed « terrain » (cartes Explorer de l'accueil) : récits + projets
  * uniquement, même tri métier que le feed mixte.
  */
@@ -189,28 +172,4 @@ export function getRecentExplorer({ limit = 3 } = {}) {
   return [...readPublishedRecits(), ...readPublishedProjects()]
     .sort(sortMixedActivity)
     .slice(0, limit);
-}
-
-/* ============================
-   HELPERS UI
-   ============================ */
-
-export function formatRelativeDays(date) {
-  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
-
-  const now = new Date();
-  const msPerDay = 24 * 60 * 60 * 1000;
-  const diffDays = Math.floor((now.getTime() - date.getTime()) / msPerDay);
-
-  if (diffDays <= 0) return "aujourd’hui";
-  if (diffDays === 1) return "hier";
-  if (diffDays < 7) return `il y a ${diffDays} jours`;
-
-  const weeks = Math.floor(diffDays / 7);
-  if (weeks === 1) return "il y a 1 semaine";
-  if (weeks < 5) return `il y a ${weeks} semaines`;
-
-  const months = Math.floor(diffDays / 30);
-  if (months === 1) return "il y a 1 mois";
-  return `il y a ${months} mois`;
 }
