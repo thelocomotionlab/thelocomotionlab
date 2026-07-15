@@ -1,18 +1,19 @@
 {
   "athlete": "Val",
-  "archive": "_seed/cas_validation/Val/archives/data_training_coros.zip",
+  "archive": "cas_validation/Val/archives/data_training_strava.zip",
+  "dev_set": true,
   "races": [
     {"name": "Ecotrail 80k 2024", "date": "2024-03-16",
-     "official_time": "10:27:39", "gpx": "Val/traces/ecotrail-2024.gpx"},
+     "official_time": "10:27:39", "gpx": "cas_validation/Val/traces/ecotrail-2024.gpx"},
     {"name": "Coursieres 50k 2024", "date": "2024-05-18",
-     "official_time": "06:03:14", "gpx": "Val/traces/coursieres-50k-2024.gpx"},
+     "official_time": "06:03:14", "gpx": "cas_validation/Val/traces/coursieres-50k-2024.gpx"},
     {"name": "GRF 90k 2024", "date": "2024-09-14",
-     "official_time": "11:17:32", "gpx": "Val/traces/grf-90k-2024.gpx"},
+     "official_time": "11:17:32", "gpx": "cas_validation/Val/traces/grf-90k-2024.gpx"},
     {"name": "Saintélyon 2024", "date": "2024-11-30",
-     "official_time": "11:04:13", "gpx": "Val/traces/saintelyon-2024.gpx"},
+     "official_time": "11:04:13", "gpx": "cas_validation/Val/traces/saintelyon-2024.gpx"},
     {"name": "Chianti 2025", "date": "2025-03-22",
-     "official_time": "20:29:05", "gpx": "Val/traces/chianti-2025.gpx"},
+     "official_time": "20:29:05", "gpx": "cas_validation/Val/traces/chianti-2025.gpx"},
     {"name": "Lavaredo 2025", "date": "2025-06-27",
-     "official_time": "20:29:05", "gpx": "Val/traces/lavaredo-2025.gpx"},
+     "official_time": "21:14:34", "gpx": "cas_validation/Val/traces/lavaredo-2025.gpx"}
   ]
 }

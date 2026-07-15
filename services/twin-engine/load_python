@@ -1,0 +1,11 @@
+cd ../../
+
+# 2. environnement Python (une fois, depuis la RACINE du monorepo)
+python3 -m venv .venv && . .venv/bin/activate
+pip install -e "services/twin-engine[dev]"
+
+# 3. sanité
+pytest services/twin-engine -q        # attendu : 190 passed, 2 skipped
+
+# 4. le banc d'essai sur ton cas (après correction du manifeste)
+cd services/twin-engine
