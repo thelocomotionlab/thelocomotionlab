@@ -75,3 +75,11 @@ Règles :
 4. L'outil consigne : central, deux bandes, source (mc/conforme), sd prédictif relatif
    (normalisation de la future fenêtre groupée), temps réel, erreur signée, couvert ou non,
    n ultras et verdict à la coupure. Un refus de prédire (🔴) est consigné tel quel.
+5. **Quarantaine, jamais de suppression silencieuse** : une entrée aux données d'ENTRÉE
+   fausses (ex. trace de parcours corrompue) se met en quarantaine avec son motif —
+   `python -m tools.registre --quarantine "Athlète" "Course" "AAAA-MM-JJ" "motif"` — elle
+   sort des statistiques mais reste visible. Une relance du backtest avec les données
+   corrigées écrase l'entrée et lève la quarantaine d'elle-même.
+6. `tools/registre.py` sépare ce qui aurait été **VENDU** (verdict 🟢/🟠) du refusé (🔴) :
+   c'est la statistique commerciale — un raté refusé par le garde-fou ne coûte pas un
+   client, il valide le garde-fou.

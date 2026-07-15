@@ -42,18 +42,40 @@ def winkler(lo: float, hi: float, y: float, alpha: float) -> float:
 
 def _finished(entries: list[dict]) -> list[dict]:
     return [e for e in entries
-            if not e.get("dnf") and e.get("official_time_h") is not None
+            if not e.get("dnf") and not e.get("quarantine")
+            and e.get("official_time_h") is not None
             and e.get("prediction") is not None]
 
 
+def _verdict(e: dict) -> str | None:
+    return (e.get("model") or {}).get("verdict")
+
+
+def _sd_rel_of(e: dict) -> float | None:
+    """sd prédictif relatif de l'entrée : celui stocké (régression, β-covariance), sinon
+    REPLI σ/v reconstruit depuis les agrégats consignés (blend/vc_e n'ont pas de β-cov —
+    sans ce repli, la fenêtre groupée ne mangerait que les athlètes riches en données)."""
+    p = e.get("prediction") or {}
+    if p.get("sd_rel"):
+        return float(p["sd_rel"])
+    sigma = (e.get("model") or {}).get("sigma_kmh")
+    deq = (e.get("course") or {}).get("deq_km")
+    central = p.get("central_h")
+    if not sigma or not deq or not central:
+        return None
+    v = deq / central
+    return float(sigma / v) if v > 0 else None
+
+
 def pooled_scores(entries: list[dict]) -> tuple[np.ndarray, dict[str, list[float]]]:
-    """Scores normalisés |erreur relative| / sd_rel, groupés par athlète."""
+    """Scores normalisés |erreur relative| / sd_rel, groupés par athlète (repli σ/v inclus)."""
     per_athlete: dict[str, list[float]] = {}
     for e in _finished(entries):
         p = e["prediction"]
-        if p.get("err_pct") is None or not p.get("sd_rel"):
+        sd = _sd_rel_of(e)
+        if p.get("err_pct") is None or not sd:
             continue
-        score = abs(p["err_pct"]) / 100.0 / p["sd_rel"]
+        score = abs(p["err_pct"]) / 100.0 / sd
         per_athlete.setdefault(e["athlete"], []).append(score)
     flat = np.array([s for v in per_athlete.values() for s in v], dtype=float)
     return flat, per_athlete
@@ -72,9 +94,26 @@ def summarize(entries: list[dict]) -> dict:
     fin = _finished(entries)
     out: dict = {"n_total": len(entries), "n_finished": len(fin),
                  "n_dnf": sum(1 for e in entries if e.get("dnf")),
+                 "n_quarantine": sum(1 for e in entries if e.get("quarantine")),
                  "n_no_prediction": sum(1 for e in entries if e.get("prediction") is None)}
     if not fin:
         return out
+
+    # LA statistique commerciale : parmi les cas finis, qu'aurait donné ce qui aurait été
+    # VENDU (verdict 🟢/🟠) vs ce que le garde-fou a refusé (🔴) ? Un raté refusé ne coûte
+    # pas un client — il valide le garde-fou.
+    for key, keep in (("vendable", ("🟢", "🟠")), ("refuse", ("🔴",))):
+        rows = [e for e in fin if _verdict(e) in keep]
+        if not rows:
+            continue
+        errs_k = np.array([e["prediction"]["err_pct"] for e in rows], dtype=float)
+        in80 = [e["prediction"].get("in_safety") for e in rows
+                if e["prediction"].get("in_safety") is not None]
+        out[key] = {
+            "n": len(rows),
+            "mae_pct": round(float(np.abs(errs_k).mean()), 2),
+            "coverage80_pct": (round(100.0 * sum(in80) / len(in80), 1) if in80 else None),
+        }
     errs = np.array([e["prediction"]["err_pct"] for e in fin], dtype=float)
     out["bias_pct"] = round(float(errs.mean()), 2)          # >0 = prédit trop lent
     out["mae_pct"] = round(float(np.abs(errs).mean()), 2)
@@ -124,13 +163,29 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="registre", description=__doc__.split("\n")[0])
     ap.add_argument("registre", nargs="?", default=str(DEFAULT_REGISTRE))
     ap.add_argument("--json", action="store_true", help="sortie JSON brute")
+    ap.add_argument("--quarantine", nargs=4, metavar=("ATHLETE", "COURSE", "DATE", "MOTIF"),
+                    help="met une entrée en quarantaine (exclue des stats, conservée et "
+                         "visible avec son motif — jamais de suppression silencieuse)")
     args = ap.parse_args(argv)
 
     path = Path(args.registre)
     if not path.exists():
         print(f"Registre introuvable : {path} (lance d'abord tools/backtest.py)", file=sys.stderr)
         return 2
-    entries = json.loads(path.read_text(encoding="utf-8")).get("entries", [])
+    data = json.loads(path.read_text(encoding="utf-8"))
+    entries = data.get("entries", [])
+
+    if args.quarantine:
+        ath, race, date, motif = args.quarantine
+        hits = [e for e in entries
+                if e.get("athlete") == ath and e.get("race") == race and e.get("date") == date]
+        if not hits:
+            print(f"Entrée introuvable : {ath} / {race} / {date}", file=sys.stderr)
+            return 2
+        for e in hits:
+            e["quarantine"] = motif
+        path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(f"En quarantaine : {ath} / {race} / {date} — motif : {motif}", file=sys.stderr)
     groups = {
         "cas frais (décisionnels)": [e for e in entries if not e.get("dev_set")],
         "cas de développement (indicatifs — le modèle a été réglé dessus)":
@@ -145,11 +200,16 @@ def main(argv: list[str] | None = None) -> int:
         s = summarize(group)
         print(f"\n== {label} ==")
         print(f"  entrées : {s['n_total']} (finies {s['n_finished']}, dnf {s['n_dnf']}, "
-              f"sans prédiction {s['n_no_prediction']})")
+              f"quarantaine {s['n_quarantine']}, sans prédiction {s['n_no_prediction']})")
         if not s.get("n_finished"):
             continue
         print(f"  central : biais {s['bias_pct']:+.1f} % · MAE {s['mae_pct']:.1f} % · "
               f"médiane |err| {s['median_abs_err_pct']:.1f} %")
+        for key, label in (("vendable", "VENDU (🟢/🟠)"), ("refuse", "refusé (🔴)")):
+            if key in s:
+                b = s[key]
+                cov = "—" if b["coverage80_pct"] is None else f"{b['coverage80_pct']:.0f} %"
+                print(f"  {label} : n={b['n']} · MAE {b['mae_pct']:.1f} % · couv80 {cov}")
         if "below_domain" in s:
             bd = s["below_domain"]
             in_dom = (f" · MAE dans le domaine : {s['mae_in_domain_pct']:.1f} %"

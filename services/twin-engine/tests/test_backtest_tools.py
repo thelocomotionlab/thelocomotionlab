@@ -102,6 +102,32 @@ def test_summarize_coverage_bias_and_pooled_grouping():
     assert flat.max() == pytest.approx(0.20 / 0.10)      # 20 % d'erreur / sd_rel 0,10
 
 
+def test_quarantine_excluded_and_sellable_split_and_fallback_norm():
+    """Une entrée en quarantaine sort de TOUTES les stats (mais reste comptée) ; la synthèse
+    sépare ce qui aurait été VENDU (🟢/🟠) du refusé (🔴) ; les entrées sans β-covariance
+    (blend/vc_e) entrent dans la fenêtre groupée via le repli σ/v."""
+    ok = _entry("A", "vendue", +6.0)
+    ok["model"] = {"verdict": "🟠", "sigma_kmh": 0.45}
+    ok["course"] = {"deq_km": 100.0}
+    refused = _entry("A", "refusee", +40.0)
+    refused["model"] = {"verdict": "🔴", "sigma_kmh": 0.8}
+    refused["course"] = {"deq_km": 100.0}
+    poubelle = _entry("B", "corrompue", +300.0)
+    poubelle["quarantine"] = "trace aplatie"
+    s = summarize([ok, refused, poubelle])
+    assert s["n_quarantine"] == 1 and s["n_finished"] == 2      # la quarantaine ne compte plus
+    assert s["vendable"]["n"] == 1 and s["vendable"]["mae_pct"] == 6.0
+    assert s["refuse"]["n"] == 1 and s["refuse"]["mae_pct"] == 40.0
+    assert s["mae_pct"] == pytest.approx(23.0)                  # (6+40)/2 — sans la quarantaine
+    # repli σ/v : ok/refused n'ont PAS de sd_rel stocké → normalisés quand même
+    ok["prediction"]["sd_rel"] = None
+    refused["prediction"]["sd_rel"] = None
+    flat, per_ath = pooled_scores([ok, refused, poubelle])
+    assert len(flat) == 2 and "B" not in per_ath                # quarantaine exclue du pool
+    v = 100.0 / ok["prediction"]["central_h"]                   # σ/v = sd_rel de repli
+    assert min(flat) == pytest.approx(0.06 / (0.45 / v))
+
+
 def test_backtest_end_to_end_records_refusal(tmp_path, monkeypatch, capsys):
     """Bout-en-bout minimal : une « archive » d'une seule activité (fixture GPX) → le moteur
     refuse de prédire (🔴) ; l'entrée est consignée avec la coupure appliquée, sans crash,
