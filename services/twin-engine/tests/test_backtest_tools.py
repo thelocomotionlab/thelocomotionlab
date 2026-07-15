@@ -88,9 +88,13 @@ def test_summarize_coverage_bias_and_pooled_grouping():
         {"athlete": "C", "dev_set": False, "race": "dnf", "date": "d", "dnf": True,
          "official_time_h": None, "prediction": None},
     ]
+    entries[2]["below_domain"] = True                    # ex. un 50 km sous le seuil ultra
     s = summarize(entries)
     assert s["n_finished"] == 3 and s["n_dnf"] == 1
     assert s["bias_pct"] == pytest.approx((4 - 6 + 20) / 3, abs=0.01)
+    # le hors-domaine est compté À PART, la MAE « dans le domaine » l'exclut
+    assert s["below_domain"] == {"n": 1, "mae_pct": 20.0}
+    assert s["mae_in_domain_pct"] == pytest.approx(5.0)
     assert s["plan"]["coverage_pct"] == pytest.approx(100.0)
     assert s["safety"]["coverage_pct"] == pytest.approx(100.0)
     flat, per_ath = pooled_scores(entries)
@@ -132,3 +136,4 @@ def test_backtest_end_to_end_records_refusal(tmp_path, monkeypatch, capsys):
     assert e["athlete"] == "Testeur" and e["until"] == "2030-01-01"
     assert e["prediction"] is None                       # refus consigné, pas d'invention
     assert e["model"]["verdict"] == "🔴"
+    assert e["below_domain"] is False                    # cible 10 h = pile au seuil du domaine

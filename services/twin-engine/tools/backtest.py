@@ -123,6 +123,11 @@ def backtest_race(archive: Path, race_entry: dict, cfg, *, base: Path) -> dict:
         },
         "prediction": None,
     }
+    # cible SOUS le domaine de calibration (efforts ≥ genuine_min_hours) : la prédiction est
+    # une extrapolation vers le bas — consignée et analysée À PART (tools/registre)
+    ref_h = actual_h if actual_h is not None else (pred.finish_hours if pred else None)
+    entry["below_domain"] = (None if ref_h is None
+                             else bool(ref_h < cfg.calibration.genuine_min_hours))
     if pred is not None:
         cv = pred.cross_validation
         err_pct = (None if actual_h is None
@@ -176,10 +181,11 @@ def run_manifest(manifest_path: Path, cfg, registre: dict) -> list[dict]:
 
 
 def _fmt_row(athlete: str, e: dict) -> str:
+    dom = " ·hors-domaine" if e.get("below_domain") else ""
     p = e.get("prediction")
     if p is None:
         return (f"| {athlete:<10} | {e['race'][:28]:<28} | {e['model']['verdict']} "
-                f"| {'—':>7} | {'—':>7} | {'—':>6} | pas de prédiction ({e['model']['regime']}) |")
+                f"| {'—':>7} | {'—':>7} | {'—':>6} | pas de prédiction ({e['model']['regime']}){dom} |")
     actual = e["official_time_h"]
     err = "  dnf" if e["dnf"] else ("    —" if p["err_pct"] is None else f"{p['err_pct']:+5.1f}")
     flags = "" if p["in_plan"] is None else ("✓50 " if p["in_plan"] else "✗50 ")
@@ -187,7 +193,7 @@ def _fmt_row(athlete: str, e: dict) -> str:
     return (f"| {athlete:<10} | {e['race'][:28]:<28} | {e['model']['verdict']} "
             f"| {p['central_h']:7.2f} | {('—' if actual is None else f'{actual:7.2f}'):>7} "
             f"| {err:>6} | [{p['plan_low_h']:.1f}-{p['plan_high_h']:.1f}] "
-            f"[{p['safety_low_h']:.1f}-{p['safety_high_h']:.1f}] {flags} |")
+            f"[{p['safety_low_h']:.1f}-{p['safety_high_h']:.1f}] {flags}{dom} |")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -206,14 +212,19 @@ def main(argv: list[str] | None = None) -> int:
                                   "protocole : docs/twin-registre-couverture.md.",
                       "entries": []})
 
-    print("\n| athlète    | course                       | CV | prédit  | réel    | err %  | bandes [50] [80] |")
-    print("|------------|------------------------------|----|---------|---------|--------|------------------|")
+    # tout traiter d'abord (la progression file sur stderr), puis imprimer le tableau
+    # d'un bloc — sans lignes de progression intercalées entre l'en-tête et les lignes
+    all_rows: list[tuple[str, dict]] = []
     for m in args.manifests:
         mp = Path(m)
         man = json.loads(mp.read_text(encoding="utf-8"))
         entries = run_manifest(mp, cfg, registre)
-        for e in entries:
-            print(_fmt_row(man["athlete"], e))
+        all_rows += [(man["athlete"], e) for e in entries]
+
+    print("\n| athlète    | course                       | CV | prédit  | réel    | err %  | bandes [50] [80] |")
+    print("|------------|------------------------------|----|---------|---------|--------|------------------|")
+    for athlete, e in all_rows:
+        print(_fmt_row(athlete, e))
 
     if args.dry_run:
         print("\n(dry-run : registre non écrit)", file=sys.stderr)

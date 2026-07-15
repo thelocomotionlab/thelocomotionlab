@@ -80,6 +80,17 @@ def summarize(entries: list[dict]) -> dict:
     out["mae_pct"] = round(float(np.abs(errs).mean()), 2)
     out["median_abs_err_pct"] = round(float(np.median(np.abs(errs))), 2)
 
+    # cibles SOUS le domaine de calibration (< genuine_min_hours) : extrapolation vers le
+    # bas, comptée À PART — un raté sur un 50 km ne juge pas le cœur de métier ultra
+    below = [e for e in fin if e.get("below_domain")]
+    if below:
+        eb = np.array([e["prediction"]["err_pct"] for e in below], dtype=float)
+        ei = np.array([e["prediction"]["err_pct"] for e in fin if not e.get("below_domain")],
+                      dtype=float)
+        out["below_domain"] = {"n": len(below), "mae_pct": round(float(np.abs(eb).mean()), 2)}
+        if len(ei):
+            out["mae_in_domain_pct"] = round(float(np.abs(ei).mean()), 2)
+
     for band, alpha, lo_k, hi_k in (("plan", 0.5, "plan_low_h", "plan_high_h"),
                                     ("safety", 0.2, "safety_low_h", "safety_high_h")):
         rows = [e for e in fin if e["prediction"].get(lo_k) is not None]
@@ -139,6 +150,11 @@ def main(argv: list[str] | None = None) -> int:
             continue
         print(f"  central : biais {s['bias_pct']:+.1f} % · MAE {s['mae_pct']:.1f} % · "
               f"médiane |err| {s['median_abs_err_pct']:.1f} %")
+        if "below_domain" in s:
+            bd = s["below_domain"]
+            in_dom = (f" · MAE dans le domaine : {s['mae_in_domain_pct']:.1f} %"
+                      if "mae_in_domain_pct" in s else "")
+            print(f"  hors domaine (< seuil ultra) : n={bd['n']} · MAE {bd['mae_pct']:.1f} %{in_dom}")
         for band, nominal in (("plan", "50"), ("safety", "80")):
             if band in s:
                 b = s[band]
