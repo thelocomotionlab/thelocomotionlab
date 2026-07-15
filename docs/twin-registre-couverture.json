@@ -1,0 +1,221 @@
+{
+  "_comment": "Registre de couverture — agrégats uniquement (pas de PII). Alimenté par tools/backtest.py ; analyse par tools/registre.py ; protocole : docs/twin-registre-couverture.md.",
+  "entries": [
+    {
+      "athlete": "Val",
+      "dev_set": true,
+      "race": "Ecotrail 80k 2024",
+      "date": "2024-03-16",
+      "until": "2024-03-15",
+      "dnf": false,
+      "official_time_h": 10.461,
+      "course": {
+        "length_km": 82.9,
+        "deq_km": 83.8,
+        "dplus_per_km": 15.2
+      },
+      "model": {
+        "verdict": "🔴",
+        "regime": "vc_e",
+        "n_genuine": 0,
+        "n_eff": 0.0,
+        "sigma_kmh": 0.8,
+        "n_activities_used": 26,
+        "n_excluded_until": 496
+      },
+      "prediction": {
+        "central_h": 10.602,
+        "plan_low_h": 9.938,
+        "plan_high_h": 11.394,
+        "safety_low_h": 9.401,
+        "safety_high_h": 12.207,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": 1.35,
+        "in_plan": true,
+        "in_safety": true
+      }
+    },
+    {
+      "athlete": "Val",
+      "dev_set": true,
+      "race": "Coursieres 50k 2024",
+      "date": "2024-05-18",
+      "until": "2024-05-17",
+      "dnf": false,
+      "official_time_h": 6.054,
+      "course": {
+        "length_km": 51.0,
+        "deq_km": 55.4,
+        "dplus_per_km": 35.8
+      },
+      "model": {
+        "verdict": "🔴",
+        "regime": "vc_e",
+        "n_genuine": 0,
+        "n_eff": 0.0,
+        "sigma_kmh": 0.8,
+        "n_activities_used": 26,
+        "n_excluded_until": 496
+      },
+      "prediction": {
+        "central_h": 6.897,
+        "plan_low_h": 6.471,
+        "plan_high_h": 7.402,
+        "safety_low_h": 6.127,
+        "safety_high_h": 7.921,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": 13.92,
+        "in_plan": false,
+        "in_safety": false
+      }
+    },
+    {
+      "athlete": "Val",
+      "dev_set": true,
+      "race": "GRF 90k 2024",
+      "date": "2024-09-14",
+      "until": "2024-09-13",
+      "dnf": false,
+      "official_time_h": 11.292,
+      "course": {
+        "length_km": 90.6,
+        "deq_km": 94.0,
+        "dplus_per_km": 19.9
+      },
+      "model": {
+        "verdict": "🔴",
+        "regime": "vc_e",
+        "n_genuine": 0,
+        "n_eff": 0.0,
+        "sigma_kmh": 0.8,
+        "n_activities_used": 26,
+        "n_excluded_until": 496
+      },
+      "prediction": {
+        "central_h": 12.256,
+        "plan_low_h": 11.465,
+        "plan_high_h": 13.201,
+        "safety_low_h": 10.83,
+        "safety_high_h": 14.177,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": 8.54,
+        "in_plan": false,
+        "in_safety": true
+      }
+    },
+    {
+      "athlete": "Val",
+      "dev_set": true,
+      "race": "Saintélyon 2024",
+      "date": "2024-11-30",
+      "until": "2024-11-29",
+      "dnf": false,
+      "official_time_h": 11.07,
+      "course": {
+        "length_km": 84.1,
+        "deq_km": 87.6,
+        "dplus_per_km": 26.2
+      },
+      "model": {
+        "verdict": "🔴",
+        "regime": "blend",
+        "n_genuine": 1,
+        "n_eff": 1.0,
+        "sigma_kmh": 0.45,
+        "n_activities_used": 81,
+        "n_excluded_until": 441
+      },
+      "prediction": {
+        "central_h": 10.376,
+        "plan_low_h": 10.023,
+        "plan_high_h": 10.77,
+        "safety_low_h": 9.722,
+        "safety_high_h": 11.147,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": -6.27,
+        "in_plan": false,
+        "in_safety": true
+      }
+    },
+    {
+      "athlete": "Val",
+      "dev_set": true,
+      "race": "Chianti 2025",
+      "date": "2025-03-22",
+      "until": "2025-03-21",
+      "dnf": false,
+      "official_time_h": 20.485,
+      "course": {
+        "length_km": 122.8,
+        "deq_km": 136.5,
+        "dplus_per_km": 39.6
+      },
+      "model": {
+        "verdict": "🔴",
+        "regime": "blend",
+        "n_genuine": 3,
+        "n_eff": 2.84,
+        "sigma_kmh": 0.45,
+        "n_activities_used": 185,
+        "n_excluded_until": 337
+      },
+      "prediction": {
+        "central_h": 19.108,
+        "plan_low_h": 18.344,
+        "plan_high_h": 19.97,
+        "safety_low_h": 17.7,
+        "safety_high_h": 20.81,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": -6.72,
+        "in_plan": false,
+        "in_safety": true
+      }
+    },
+    {
+      "athlete": "Val",
+      "dev_set": true,
+      "race": "Lavaredo 2025",
+      "date": "2025-06-27",
+      "until": "2025-06-26",
+      "dnf": false,
+      "official_time_h": 21.243,
+      "course": {
+        "length_km": 120.1,
+        "deq_km": 139.5,
+        "dplus_per_km": 46.4
+      },
+      "model": {
+        "verdict": "🔴",
+        "regime": "regression",
+        "n_genuine": 4,
+        "n_eff": 3.82,
+        "sigma_kmh": 0.2,
+        "n_activities_used": 265,
+        "n_excluded_until": 257
+      },
+      "prediction": {
+        "central_h": 21.17,
+        "plan_low_h": 19.58,
+        "plan_high_h": 22.76,
+        "safety_low_h": 13.127,
+        "safety_high_h": 29.213,
+        "interval_source": "conformal_normalized",
+        "cv_mae_pct": 13.05,
+        "sd_rel": 0.048,
+        "err_pct": -0.34,
+        "in_plan": true,
+        "in_safety": true
+      }
+    }
+  ]
+}
