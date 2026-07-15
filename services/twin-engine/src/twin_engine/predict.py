@@ -259,6 +259,21 @@ def _weighted_quantile(scores: np.ndarray, weights: np.ndarray, q: float) -> flo
     return float(s[min(idx, n - 1)])
 
 
+def _sd_rel_target(
+    t_point: float, v_point: float | None, dpk: float, calibration: UltraCalibration
+) -> float | None:
+    """Écart-type prédictif RELATIF au point cible : levier complet x₀ᵀ(XᵀWX)⁻¹x₀ en
+    régression (β-covariance disponible), repli σ/v pour blend/vc_e — le MÊME normaliseur
+    que la fenêtre empirique groupée du registre (tools/registre)."""
+    if v_point is None or v_point <= 0:
+        return None
+    if calibration.beta_cov is not None:
+        x0 = np.array([1.0, np.log(t_point), dpk])
+        Sb = np.asarray(calibration.beta_cov, dtype=float)
+        return float(np.sqrt(max(calibration.sigma_kmh**2 + x0 @ Sb @ x0, 0.0)) / v_point)
+    return float(calibration.sigma_kmh / v_point)
+
+
 def _conformal_interval(
     t_point: float,
     v_point: float,
@@ -292,10 +307,11 @@ def _conformal_interval(
         return None
     scores = np.abs(err[ok]) / rel[ok]
     q = _weighted_quantile(scores, w[ok], coverage)
-    # sd prédictif relatif AU POINT CIBLE : même levier x₀ᵀ(XᵀWX)⁻¹x₀ que le MC prédictif
-    x0 = np.array([1.0, np.log(t_point), dpk])
-    Sb = np.asarray(calibration.beta_cov, dtype=float)
-    sd_rel = float(np.sqrt(max(calibration.sigma_kmh**2 + x0 @ Sb @ x0, 0.0)) / v_point)
+    # sd prédictif relatif AU POINT CIBLE : même levier que le MC prédictif (β-cov garanti
+    # non nul par le garde du haut de fonction)
+    sd_rel = _sd_rel_target(t_point, v_point, dpk, calibration)
+    if sd_rel is None:
+        return None
     half = q * sd_rel
     return t_point * (1.0 - half), t_point * (1.0 + half)
 
@@ -350,6 +366,18 @@ def predict_finish(
             # q(0,80) ≥ q(0,50) sur les mêmes scores ; le min/max blinde le cas dégénéré)
             low, high = min(ci[0], pi[0]), max(ci[1], pi[1])
             interval_source = "conformal_normalized"
+    elif cfg.prediction.interval_source == "pooled":
+        # fenêtre EMPIRIQUE groupée (§9.9) : quantiles appris du REGISTRE (conditions
+        # vendables, tous athlètes), à l'échelle du sd prédictif de la cible. Tant que les
+        # quantiles ne sont pas renseignés (jauge non atteinte), repli percentiles MC.
+        pq50, pq80 = cfg.prediction.pooled_q50, cfg.prediction.pooled_q80
+        sd_rel = _sd_rel_target(t_point, v_point, dplus_per_km, calibration)
+        if pq50 is not None and pq80 is not None and sd_rel is not None:
+            plan_low, plan_high = t_point * (1 - pq50 * sd_rel), t_point * (1 + pq50 * sd_rel)
+            lo_c, hi_c = t_point * (1 - pq80 * sd_rel), t_point * (1 + pq80 * sd_rel)
+            # emboîtement garanti même si q80 < q50 (mauvaise config) : min/max de blindage
+            low, high = min(lo_c, plan_low), max(hi_c, plan_high)
+            interval_source = "pooled"
 
     # % de VC seulement si la VC est plausible (sinon on n'affiche pas un ratio trompeur)
     cs = twin.critical_speed

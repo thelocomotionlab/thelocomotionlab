@@ -99,9 +99,19 @@ premiers registres réels (3 athlètes × 3-5 courses annoncés).
 5. purge éventuelle de l'historique git (PDF personnel d'out_nice) avant merge vers main ;
 6. PR vers main quand demandée.
 
+**Banc multi-athlètes (2026-07-15, DIAGNOSTIC §9.9)** : 33 cas, 4 athlètes. Le garde-fou
+d'honnêteté validé (refusés MAE 72,8 % vs vendus 10,2 % en frais) ; trou du filet corrigé —
+**`sufficiency.domain_gate=on` par défaut** (cibles sous le domaine ≥ 10 h : verdict 🔴 ;
+au banc, +59/+176 % vendus 🟠) ; sous-couverture des bandes vendues mesurée (couv80 = 40 %,
+n=5 → à la jauge) ; **plomberie `interval_source="pooled"`** prête (quantiles
+`pooled_q50/q80` appris du registre « conditions vendables », défaut None → repli mc).
+Outils : split vendu/refusé, quarantaine motivée, repli σ/v du normaliseur.
+
 **Backlog P2** (cf. §7) : T8, S1, S2b, T6, S3, S4, C9a (S5 : FAIT et activé, cf. ci-dessus) +
 garde-fou « part de tirages au plancher » sur le repli MC, `cutoff_h` (borner le scénario
-prudent à la barrière horaire), conforme groupé inter-athlètes à ≥ 8-10 entrées du registre.
+prudent à la barrière horaire), extrapolation loin du support (mélange enveloppe↔régression
+pondéré par le levier — hypothèse Chianti/Coursières), domaine « trails courts »
+(abaissement flaggé de `genuine_min_hours` + maximalité), priors population multi-athlètes.
 
 ---
 

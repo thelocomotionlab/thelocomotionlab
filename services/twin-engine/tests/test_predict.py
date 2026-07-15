@@ -253,3 +253,36 @@ def test_conformal_interval_calibrated_on_loo_with_guard_and_fallback():
     assert pred3_c.interval_high_h == pred3_m.interval_high_h
     assert pred3_c.plan_low_h == pred3_m.plan_low_h
     assert pred3_c.plan_high_h == pred3_m.plan_high_h
+
+
+def test_pooled_interval_source_scales_learned_quantiles_with_fallbacks():
+    """§9.9 : ``interval_source=pooled`` — bandes = central × (1 ± q·sd_rel(cible)), avec
+    le levier complet en régression et σ/v en repli (blend) ; quantiles absents → mc."""
+    import pytest
+
+    from twin_engine.predict import _sd_rel_target
+
+    pts = [(12, 50, 0.05), (20, 55, -0.08), (16, 45, 0.03), (24, 53, -0.02), (18, 52, 0.06)]
+    twin = _twin([_ultra(h, _plane(h, dpk) + p, dpk) for h, dpk, p in pts])
+    cfg_p = replace(CFG, prediction=replace(CFG.prediction, interval_source="pooled",
+                                            pooled_q50=0.7, pooled_q80=1.7))
+    cal = build_calibration(twin, cfg_p)
+    pred = predict_finish(200.0, 53.0, twin, cal, cfg_p)
+    assert pred.interval_source == "pooled"
+    sd = _sd_rel_target(pred.finish_hours, pred.v_kmh, 53.0, cal)
+    assert pred.plan_low_h == pytest.approx(pred.finish_hours * (1 - 0.7 * sd), rel=1e-6)
+    assert pred.interval_high_h == pytest.approx(pred.finish_hours * (1 + 1.7 * sd), rel=1e-6)
+    assert pred.interval_low_h <= pred.plan_low_h <= pred.plan_high_h <= pred.interval_high_h
+
+    # blend (1 ultra) : pas de β-covariance → normaliseur de repli σ/v, bandes finies
+    twin1 = _twin([_ultra(20, _plane(20, 52), 52)])
+    cal1 = build_calibration(twin1, cfg_p)
+    pred1 = predict_finish(150.0, 50.0, twin1, cal1, cfg_p)
+    assert pred1 is not None and pred1.interval_source == "pooled"
+    sd1 = cal1.sigma_kmh / pred1.v_kmh
+    assert pred1.plan_high_h == pytest.approx(pred1.finish_hours * (1 + 0.7 * sd1), rel=1e-6)
+
+    # quantiles non appris (défaut None) → repli percentiles MC, tracé honnêtement
+    cfg_none = replace(CFG, prediction=replace(CFG.prediction, interval_source="pooled"))
+    pred_none = predict_finish(200.0, 53.0, twin, build_calibration(twin, cfg_none), cfg_none)
+    assert pred_none.interval_source == "mc"

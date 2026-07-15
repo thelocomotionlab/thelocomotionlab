@@ -207,3 +207,33 @@ def test_quality_degrades_when_altitude_missing():
     suf_ok, _ = _assess(summaries_ok)
     crit_ok = next(c for c in suf_ok.criteria if "Qualité" in c.name)
     assert crit_ok.level == GREEN
+
+
+def test_domain_gate_caps_below_domain_targets():
+    """Garde-fou domaine (§9.9) : une cible sous le domaine de calibration (efforts ≥ 10 h)
+    plafonne le verdict à 🔴 — mesuré au banc : +59 à +308 % d'erreur sur cibles < 8 h,
+    dont deux VENDUES 🟠. Une cible ultra n'est pas touchée ; domain_gate=off restaure."""
+    from dataclasses import replace
+
+    summaries = [_run(i * 3, 3600) for i in range(120)] + [
+        _ultra(30, 12, 50), _ultra(120, 20, 55), _ultra(200, 16, 45), _ultra(300, 24, 53),
+    ]
+    twin = Twin(critical_speed=None, alpha=0.18, endurance_E=1.22, endurance_coef=4.2,
+                durability_pct=20.0, record=RecordCurve(np.array([]), np.array([]), np.array([]), []),
+                summaries=summaries)
+    cal = build_calibration(twin, CFG)
+
+    pred_short = predict_finish(45.0, 40.0, twin, cal, CFG)     # ≈ 6-7 h : sous le domaine
+    assert pred_short.finish_hours < CFG.calibration.genuine_min_hours
+    suf = assess_sufficiency(twin, cal, pred_short, CFG)
+    dom = [c for c in suf.criteria if c.name == "Domaine de calibration"]
+    assert dom and dom[0].level == RED
+    assert suf.verdict == RED and suf.sellable is False
+
+    pred_ultra = predict_finish(200.0, 53.0, twin, cal, CFG)    # ≈ 30 h : dans le domaine
+    suf_u = assess_sufficiency(twin, cal, pred_ultra, CFG)
+    assert not [c for c in suf_u.criteria if c.name == "Domaine de calibration"]
+
+    cfg_off = replace(CFG, sufficiency=replace(CFG.sufficiency, domain_gate="off"))
+    suf_off = assess_sufficiency(twin, cal, pred_short, cfg_off)
+    assert not [c for c in suf_off.criteria if c.name == "Domaine de calibration"]

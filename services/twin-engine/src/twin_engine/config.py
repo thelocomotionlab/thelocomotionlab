@@ -188,7 +188,16 @@ class PredictionParams:
     # plancher de vitesse ⇒ bornes hautes = plafond Deq/v_floor = 71,9 h pour un central 26 h).
     # Le conforme reste fini et calé sur les erreurs démontrées. Repli automatique des DEUX
     # bandes sur ``mc`` sans validation croisée (blend/vc_e) ou à moins de 4 plis. Rollback : mc.
-    interval_source: str = "conformal_normalized"        # {mc, conformal_normalized}
+    interval_source: str = "conformal_normalized"        # {mc, conformal_normalized, pooled}
+    # --- fenêtre EMPIRIQUE groupée (``pooled`` — plomberie prête, revue §9.9) ----------------
+    # Quantiles des scores normalisés |erreur|/sd_rel APPRIS DU REGISTRE (tools/registre,
+    # bloc « conditions vendables ») : bandes = central × (1 ± q·sd_rel(cible)), sd_rel =
+    # levier complet en régression, σ/v en repli (même normaliseur que le registre).
+    # None (défaut) = pas encore appris → ``pooled`` retombe sur les percentiles MC.
+    # À renseigner À LA JAUGE (≥ 8-10 cas frais vendables dans le domaine), jamais à
+    # l'intuition — règle pré-enregistrée de docs/twin-registre-couverture.md.
+    pooled_q50: float | None = None
+    pooled_q80: float | None = None
 
 
 @dataclass(frozen=True)
@@ -274,6 +283,13 @@ class SufficiencyParams:
     #   on prévient. ``ignore`` = ancien comportement (le critère absent n'entrait pas au verdict,
     #   un athlète sans AUCUNE validation pouvait sortir 🟢).
     cv_missing_policy: str = "cap_orange"                # {cap_orange, ignore}
+    # --- garde-fou DOMAINE (banc d'essai 2026-07, DIAGNOSTIC §9.9) --------------------------
+    # Le moteur est calibré sur les efforts ≥ calibration.genuine_min_hours ; une cible
+    # nettement plus courte est une extrapolation vers le bas HORS PÉRIMÈTRE. Mesuré au banc :
+    # erreurs +59 à +308 % sur des cibles < 8 h, dont deux VENDUES 🟠. ``on`` (défaut) ajoute
+    # un critère 🔴 quand la cible est sous le domaine → verdict plafonné, vente refusée,
+    # tant que le chantier « trails courts » n'est pas livré. Rollback : off.
+    domain_gate: str = "on"                              # {on, off}
     # --- fraîcheur des données (revue C8) -----------------------------------------------------
     # Jours entre la DERNIÈRE activité datée et la date d'analyse. Aucun critère ne portait le
     # garde-fou « forme du jour inconnue » (twin-theory §2.7/§9) : une archive s'arrêtant il y a

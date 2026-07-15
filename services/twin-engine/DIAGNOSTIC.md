@@ -479,3 +479,37 @@ Winkler, jamais sur un cas isolé).
 repli MC est servi (blend/vc_e — le conforme, lui, n'est plus exposé au plafond) ; champ
 `cutoff_h` du carnet de route pour borner le scénario « prudent » à la barrière horaire ;
 conforme GROUPÉ inter-athlètes quand le registre aura ≥ 8–10 entrées.
+
+### 9.9 Premier banc multi-athlètes (33 cas) : garde-fou domaine ACTIVÉ, fenêtre empirique prête
+
+**Matière (2026-07-15).** Registre à 33 entrées, 4 athlètes (Val + Crasse en développement ;
+Lolo + Rapace frais). Nouveaux outils de lecture : split « VENDU (🟢/🟠) vs refusé (🔴) »
+(la statistique commerciale), quarantaine motivée (1 entrée : trace Rapace/Saintélyon à
+l'altitude aplatie, D+/km lu 6,3 vs ~26 réel), repli σ/v pour normaliser les régimes sans
+β-covariance.
+
+**Ce que le banc a montré :**
+1. **Le garde-fou d'honnêteté fonctionne** : cas frais refusés (🔴) MAE 72,8 % vs vendus
+   10,2 % — les six cas Rapace (archive quasi vide avant mi-2025, jusqu'à +308 % d'erreur,
+   central au plancher Deq/v_floor) étaient TOUS refusés.
+2. **Trou du filet mesuré** : cibles COURTES (< domaine ≥ 10 h) en régime enveloppe —
+   +59 %/+176 % chez Crasse avec verdict 🟠, donc VENDABLES. → **`sufficiency.domain_gate=on`
+   PAR DÉFAUT** (nouveau critère 🔴 « Domaine de calibration » quand la cible prédite est
+   sous `genuine_min_hours` ; rollback off). Aucune cible ultra n'est affectée ; à retirer
+   quand le chantier « trails courts » livrera un domaine court calibré.
+3. **Sous-couverture des bandes vendues** : couverture 80 % = 40 % sur les cas frais vendus
+   (n=5 — direction claire, décision à la jauge). Renversement complet de l'intuition
+   initiale « fourchettes trop larges » (fondée sur les cas de développement).
+
+**Plomberie de la fenêtre EMPIRIQUE groupée (activation à la jauge, pas avant) :**
+`interval_source="pooled"` — bandes = central × (1 ± q·sd_rel(cible)), sd_rel = levier
+complet en régression, σ/v en repli (même normaliseur que le registre) ; quantiles
+`prediction.pooled_q50/q80` appris du bloc « conditions vendables » de `tools/registre`
+(frais actuels : q50 0,88 / q80 4,84 — n=5 sur 1 athlète, PAS de quoi apprendre).
+Défaut : None → repli percentiles MC. La bascule = renseigner deux nombres en config à
+≥ 8-10 cas frais vendables dans le domaine (règle pré-enregistrée), rien d'autre.
+
+**Jauge : 2 cas frais vendables dans le domaine / 8 requis.** Priorité : recruter des
+athlètes RICHES en données (≥ 18 mois d'historique continu, ≥ 3 courses ≥ 10 h finies,
+FC présente) — un athlète pauvre (Rapace) ne produit que des refus, informatifs mais non
+décisionnels.

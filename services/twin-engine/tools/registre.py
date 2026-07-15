@@ -156,6 +156,18 @@ def summarize(entries: list[dict]) -> dict:
             "q80": (lambda v: None if v is None else round(v, 3))(conformal_order_quantile(flat, 0.8)),
             "median_by_athlete": {a: round(float(np.median(v)), 3) for a, v in per_ath.items()},
         }
+        # le pool qui compte pour la CALIBRATION des bandes vendues : conditions VENDABLES
+        # uniquement (🟢/🟠) — les catastrophes refusées par le garde-fou ne doivent pas
+        # gonfler la fenêtre d'un produit qui ne les aurait jamais livrées
+        vend = [e for e in entries if _verdict(e) in ("🟢", "🟠")]
+        flat_v, per_v = pooled_scores(vend)
+        if len(flat_v):
+            out["pooled_vendable"] = {
+                "n_scores": int(len(flat_v)),
+                "n_athletes": len(per_v),
+                "q50": (lambda v: None if v is None else round(v, 3))(conformal_order_quantile(flat_v, 0.5)),
+                "q80": (lambda v: None if v is None else round(v, 3))(conformal_order_quantile(flat_v, 0.8)),
+            }
     return out
 
 
@@ -226,6 +238,11 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  scores groupés (fenêtre empirique) : n={p['n_scores']} sur "
                   f"{p['n_athletes']} athlète(s) · q50={p['q50']} · q80={p['q80']}")
             print(f"    médianes par athlète : {p['median_by_athlete']}")
+        if "pooled_vendable" in s:
+            pv = s["pooled_vendable"]
+            print(f"  scores groupés CONDITIONS VENDABLES (base de calibration des bandes) : "
+                  f"n={pv['n_scores']} sur {pv['n_athletes']} athlète(s) · "
+                  f"q50={pv['q50']} · q80={pv['q80']}")
     n_fresh_fin = summarize(groups["cas frais (décisionnels)"]).get("n_finished", 0)
     if n_fresh_fin < 8:
         print(f"\n⚠ {n_fresh_fin} cas frais finis < 8 : la règle pré-enregistrée INTERDIT toute "

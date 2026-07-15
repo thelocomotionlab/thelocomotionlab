@@ -30,6 +30,10 @@ def test_defaults_from_shipped_json():
     # Rollback : "mc".
     assert cfg.prediction.interval_source == "conformal_normalized"
     assert (cfg.pacing.plan_window_low_pct, cfg.pacing.plan_window_high_pct) == (25, 75)
+    # §9.9 : garde-fou domaine ACTIF (banc : +59 à +308 % sur cibles courtes, deux vendues 🟠) ;
+    # fenêtre empirique groupée = plomberie prête, quantiles PAS ENCORE appris (jauge)
+    assert cfg.sufficiency.domain_gate == "on"
+    assert cfg.prediction.pooled_q50 is None and cfg.prediction.pooled_q80 is None
 
 
 def test_env_overrides_data_dir(monkeypatch, tmp_path):

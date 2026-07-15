@@ -68,7 +68,9 @@
     "interval_high_pct": 90,
     "v_floor_kmh": 2.0,
     "mc_mode": "predictive",
-    "interval_source": "conformal_normalized"
+    "interval_source": "conformal_normalized",
+    "pooled_q50": null,
+    "pooled_q80": null
   },
 
   "pacing": {
@@ -102,7 +104,8 @@
     "cv_missing_policy": "cap_orange",
     "long_effort_min_ga_fraction": 0.5,
     "freshness_days_green": 30.0,
-    "freshness_days_orange": 90.0
+    "freshness_days_orange": 90.0,
+    "domain_gate": "on"
   },
 
   "narrative": {

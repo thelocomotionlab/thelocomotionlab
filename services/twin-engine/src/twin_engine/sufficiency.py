@@ -125,6 +125,25 @@ def assess_sufficiency(
             reasons.append("Fraîcheur inconnue (activités non datées) : recalcul recommandé "
                            "à l'approche de la course.")
 
+    # 1c) Domaine de calibration (banc d'essai 2026-07, DIAGNOSTIC §9.9) : le moteur est
+    #     calibré sur les efforts ≥ genuine_min_hours — une cible nettement plus courte est
+    #     une extrapolation vers le bas HORS PÉRIMÈTRE. Mesuré au banc : +59 à +308 %
+    #     d'erreur sur des cibles < 8 h, dont deux vendues 🟠. Verdict plafonné à 🔴 tant
+    #     que le chantier « trails courts » n'est pas livré (rollback : domain_gate=off).
+    if (s.domain_gate == "on" and prediction is not None
+            and prediction.finish_hours < cfg.calibration.genuine_min_hours):
+        criteria.append(
+            Criterion(
+                "Domaine de calibration", RED, round(prediction.finish_hours, 1),
+                f"cible ≈ {prediction.finish_hours:.1f} h : sous le domaine de calibration "
+                f"(efforts ≥ {cfg.calibration.genuine_min_hours:.0f} h) — hors périmètre actuel",
+            )
+        )
+        reasons.append(
+            "Cible plus courte que le domaine de calibration du moteur : prédiction non "
+            "fiable sur ce format à ce stade (chantier « trails courts » à venir)."
+        )
+
     # 2) Courses exploitables
     usable = len(summaries)
     criteria.append(
