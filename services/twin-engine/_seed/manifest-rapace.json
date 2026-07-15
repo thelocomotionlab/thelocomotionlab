@@ -1,0 +1,42 @@
+{
+  "athlete": "Rapace",
+  "archive": "cas_validation/Rapace/archives",
+  "races": [
+    {
+      "name": "Maratour Orcieres 2024",
+      "date": "2024-08-04",
+      "official_time": "06:20:10",
+      "gpx": "cas_validation/Rapace/traces/maratour-orcieres-2024.gpx"
+    },
+    {
+      "name": "Saintelyon 2024",
+      "date": "2024-11-30",
+      "official_time": "10:55:35",
+      "gpx": "cas_validation/Rapace/traces/saintelyon-2024.gpx"
+    },
+    {
+      "name": "Grand Tour Du Lac 2025",
+      "date": "2025-04-19",
+      "official_time": "06:00:25",
+      "gpx": "cas_validation/Rapace/traces/grand-tour-du-lac-2025.gpx"
+    },
+    {
+      "name": "Coursieres 100k 2025",
+      "date": "2025-05-10",
+      "official_time": "14:59:30",
+      "gpx": "cas_validation/Rapace/traces/coursieres-100k-2025.gpx"
+    },
+    {
+      "name": "Utbv 80km 2025",
+      "date": "2025-10-11",
+      "official_time": "11:41:26",
+      "gpx": "cas_validation/Rapace/traces/utbv-80km-2025.gpx"
+    },
+    {
+      "name": "Trail Nivolet Revard 2026",
+      "date": "2026-05-03",
+      "official_time": "07:25:38",
+      "gpx": "cas_validation/Rapace/traces/trail-nivolet-revard-2026.gpx"
+    }
+  ]
+}
