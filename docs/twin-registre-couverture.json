@@ -216,6 +216,771 @@
         "in_plan": true,
         "in_safety": true
       }
+    },
+    {
+      "athlete": "Crasse",
+      "dev_set": false,
+      "race": "Trace Montagnhard",
+      "date": "2026-07-01",
+      "until": "2026-06-30",
+      "dnf": false,
+      "official_time_h": 16.068,
+      "course": {
+        "length_km": 104.3,
+        "deq_km": 139.6,
+        "dplus_per_km": 72.0
+      },
+      "model": {
+        "verdict": "🟠",
+        "regime": "regression",
+        "n_genuine": 8,
+        "n_eff": 3.89,
+        "sigma_kmh": 0.532,
+        "n_activities_used": 1520,
+        "n_excluded_until": 0
+      },
+      "prediction": {
+        "central_h": 18.757,
+        "plan_low_h": 15.888,
+        "plan_high_h": 21.626,
+        "safety_low_h": 15.506,
+        "safety_high_h": 22.007,
+        "interval_source": "conformal_normalized",
+        "cv_mae_pct": 8.31,
+        "sd_rel": 0.1428,
+        "err_pct": 16.73,
+        "in_plan": true,
+        "in_safety": true
+      },
+      "below_domain": false
+    },
+    {
+      "athlete": "Crasse",
+      "dev_set": false,
+      "race": "Chota 2025",
+      "date": "2025-02-01",
+      "until": "2025-01-31",
+      "dnf": false,
+      "official_time_h": 4.93,
+      "course": {
+        "length_km": 35.0,
+        "deq_km": 45.2,
+        "dplus_per_km": 60.7
+      },
+      "model": {
+        "verdict": "🟢",
+        "regime": "regression",
+        "n_genuine": 5,
+        "n_eff": 3.96,
+        "sigma_kmh": 0.2,
+        "n_activities_used": 1242,
+        "n_excluded_until": 278
+      },
+      "prediction": {
+        "central_h": 4.43,
+        "plan_low_h": 4.189,
+        "plan_high_h": 4.671,
+        "safety_low_h": 4.047,
+        "safety_high_h": 4.813,
+        "interval_source": "conformal_normalized",
+        "cv_mae_pct": 3.44,
+        "sd_rel": 0.0608,
+        "err_pct": -10.14,
+        "in_plan": false,
+        "in_safety": false
+      },
+      "below_domain": true
+    },
+    {
+      "athlete": "Crasse",
+      "dev_set": false,
+      "race": "Coursieres 100k 2023",
+      "date": "2023-05-13",
+      "until": "2023-05-12",
+      "dnf": false,
+      "official_time_h": 15.32,
+      "course": {
+        "length_km": 113.8,
+        "deq_km": 127.0,
+        "dplus_per_km": 41.0
+      },
+      "model": {
+        "verdict": "🟠",
+        "regime": "blend",
+        "n_genuine": 1,
+        "n_eff": 1.0,
+        "sigma_kmh": 0.45,
+        "n_activities_used": 857,
+        "n_excluded_until": 663
+      },
+      "prediction": {
+        "central_h": 14.248,
+        "plan_low_h": 13.788,
+        "plan_high_h": 14.759,
+        "safety_low_h": 13.395,
+        "safety_high_h": 15.247,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": -7.0,
+        "in_plan": false,
+        "in_safety": false
+      },
+      "below_domain": false
+    },
+    {
+      "athlete": "Crasse",
+      "dev_set": false,
+      "race": "Coursieres 100k 2026",
+      "date": "2026-05-09",
+      "until": "2026-05-08",
+      "dnf": false,
+      "official_time_h": 13.292,
+      "course": {
+        "length_km": 106.5,
+        "deq_km": 118.1,
+        "dplus_per_km": 38.2
+      },
+      "model": {
+        "verdict": "🟢",
+        "regime": "regression",
+        "n_genuine": 7,
+        "n_eff": 3.69,
+        "sigma_kmh": 0.2,
+        "n_activities_used": 1499,
+        "n_excluded_until": 21
+      },
+      "prediction": {
+        "central_h": 14.414,
+        "plan_low_h": 13.899,
+        "plan_high_h": 14.929,
+        "safety_low_h": 13.85,
+        "safety_high_h": 14.979,
+        "interval_source": "conformal_normalized",
+        "cv_mae_pct": 2.51,
+        "sd_rel": 0.0373,
+        "err_pct": 8.44,
+        "in_plan": false,
+        "in_safety": false
+      },
+      "below_domain": false
+    },
+    {
+      "athlete": "Crasse",
+      "dev_set": false,
+      "race": "Grand Trail Du Lac 2025",
+      "date": "2025-10-19",
+      "until": "2025-10-18",
+      "dnf": false,
+      "official_time_h": 10.381,
+      "course": {
+        "length_km": 76.9,
+        "deq_km": 90.0,
+        "dplus_per_km": 45.8
+      },
+      "model": {
+        "verdict": "🟢",
+        "regime": "regression",
+        "n_genuine": 5,
+        "n_eff": 3.96,
+        "sigma_kmh": 0.2,
+        "n_activities_used": 1371,
+        "n_excluded_until": 149
+      },
+      "prediction": {
+        "central_h": 10.18,
+        "plan_low_h": 9.826,
+        "plan_high_h": 10.534,
+        "safety_low_h": 9.618,
+        "safety_high_h": 10.741,
+        "interval_source": "conformal_normalized",
+        "cv_mae_pct": 3.44,
+        "sd_rel": 0.0388,
+        "err_pct": -1.94,
+        "in_plan": true,
+        "in_safety": true
+      },
+      "below_domain": false
+    },
+    {
+      "athlete": "Crasse",
+      "dev_set": false,
+      "race": "Lut 20k 2021",
+      "date": "2021-11-06",
+      "until": "2021-11-05",
+      "dnf": false,
+      "official_time_h": 1.526,
+      "course": {
+        "length_km": 19.0,
+        "deq_km": 20.4,
+        "dplus_per_km": 29.0
+      },
+      "model": {
+        "verdict": "🟠",
+        "regime": "vc_e",
+        "n_genuine": 0,
+        "n_eff": 0.0,
+        "sigma_kmh": 0.8,
+        "n_activities_used": 598,
+        "n_excluded_until": 922
+      },
+      "prediction": {
+        "central_h": 2.43,
+        "plan_low_h": 2.286,
+        "plan_high_h": 2.599,
+        "safety_low_h": 2.169,
+        "safety_high_h": 2.772,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": 59.24,
+        "in_plan": false,
+        "in_safety": false
+      },
+      "below_domain": true
+    },
+    {
+      "athlete": "Crasse",
+      "dev_set": false,
+      "race": "Lut 36k 2021",
+      "date": "2021-11-07",
+      "until": "2021-11-06",
+      "dnf": false,
+      "official_time_h": 3.533,
+      "course": {
+        "length_km": 36.0,
+        "deq_km": 39.4,
+        "dplus_per_km": 32.9
+      },
+      "model": {
+        "verdict": "🟠",
+        "regime": "vc_e",
+        "n_genuine": 0,
+        "n_eff": 0.0,
+        "sigma_kmh": 0.8,
+        "n_activities_used": 599,
+        "n_excluded_until": 921
+      },
+      "prediction": {
+        "central_h": 9.764,
+        "plan_low_h": 8.633,
+        "plan_high_h": 11.301,
+        "safety_low_h": 7.81,
+        "safety_high_h": 13.149,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": 176.4,
+        "in_plan": false,
+        "in_safety": false
+      },
+      "below_domain": true
+    },
+    {
+      "athlete": "Crasse",
+      "dev_set": false,
+      "race": "Montagnhard 2023",
+      "date": "2023-07-01",
+      "until": "2023-06-30",
+      "dnf": false,
+      "official_time_h": 19.687,
+      "course": {
+        "length_km": 115.6,
+        "deq_km": 152.4,
+        "dplus_per_km": 70.7
+      },
+      "model": {
+        "verdict": "🟠",
+        "regime": "blend",
+        "n_genuine": 2,
+        "n_eff": 1.85,
+        "sigma_kmh": 0.45,
+        "n_activities_used": 887,
+        "n_excluded_until": 633
+      },
+      "prediction": {
+        "central_h": 20.08,
+        "plan_low_h": 19.323,
+        "plan_high_h": 20.932,
+        "safety_low_h": 18.682,
+        "safety_high_h": 21.756,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": 2.0,
+        "in_plan": true,
+        "in_safety": true
+      },
+      "below_domain": false
+    },
+    {
+      "athlete": "Crasse",
+      "dev_set": false,
+      "race": "Montagnhard 2026",
+      "date": "2023-07-04",
+      "until": "2023-07-03",
+      "dnf": false,
+      "official_time_h": 16.068,
+      "course": {
+        "length_km": 106.4,
+        "deq_km": 140.5,
+        "dplus_per_km": 71.5
+      },
+      "model": {
+        "verdict": "🟠",
+        "regime": "blend",
+        "n_genuine": 3,
+        "n_eff": 2.81,
+        "sigma_kmh": 0.45,
+        "n_activities_used": 888,
+        "n_excluded_until": 632
+      },
+      "prediction": {
+        "central_h": 18.293,
+        "plan_low_h": 17.611,
+        "plan_high_h": 19.059,
+        "safety_low_h": 17.033,
+        "safety_high_h": 19.799,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": 13.84,
+        "in_plan": false,
+        "in_safety": false
+      },
+      "below_domain": false
+    },
+    {
+      "athlete": "Crasse",
+      "dev_set": false,
+      "race": "Nice 100m 2024",
+      "date": "2024-10-04",
+      "until": "2024-10-03",
+      "dnf": false,
+      "official_time_h": 26.163,
+      "course": {
+        "length_km": 163.6,
+        "deq_km": 191.5,
+        "dplus_per_km": 49.7
+      },
+      "model": {
+        "verdict": "🟠",
+        "regime": "regression",
+        "n_genuine": 4,
+        "n_eff": 3.51,
+        "sigma_kmh": 0.2,
+        "n_activities_used": 1192,
+        "n_excluded_until": 328
+      },
+      "prediction": {
+        "central_h": 27.487,
+        "plan_low_h": 24.788,
+        "plan_high_h": 30.186,
+        "safety_low_h": 19.58,
+        "safety_high_h": 35.393,
+        "interval_source": "conformal_normalized",
+        "cv_mae_pct": 5.89,
+        "sd_rel": 0.0661,
+        "err_pct": 5.06,
+        "in_plan": true,
+        "in_safety": true
+      },
+      "below_domain": false
+    },
+    {
+      "athlete": "Crasse",
+      "dev_set": false,
+      "race": "Saintelyon 2021",
+      "date": "2021-11-27",
+      "until": "2021-11-26",
+      "dnf": false,
+      "official_time_h": 8.691,
+      "course": {
+        "length_km": 78.2,
+        "deq_km": 82.1,
+        "dplus_per_km": 27.2
+      },
+      "model": {
+        "verdict": "🔴",
+        "regime": "vc_e",
+        "n_genuine": 0,
+        "n_eff": 0.0,
+        "sigma_kmh": 0.8,
+        "n_activities_used": 613,
+        "n_excluded_until": 907
+      },
+      "prediction": {
+        "central_h": 41.048,
+        "plan_low_h": 33.548,
+        "plan_high_h": 41.048,
+        "safety_low_h": 28.036,
+        "safety_high_h": 41.048,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": 372.33,
+        "in_plan": false,
+        "in_safety": false
+      },
+      "below_domain": true
+    },
+    {
+      "athlete": "Crasse",
+      "dev_set": false,
+      "race": "Tour Des 8 Refuges 2022",
+      "date": "2022-07-10",
+      "until": "2022-07-09",
+      "dnf": false,
+      "official_time_h": 10.345,
+      "course": {
+        "length_km": 68.5,
+        "deq_km": 88.3,
+        "dplus_per_km": 66.8
+      },
+      "model": {
+        "verdict": "🔴",
+        "regime": "vc_e",
+        "n_genuine": 0,
+        "n_eff": 0.0,
+        "sigma_kmh": 0.8,
+        "n_activities_used": 719,
+        "n_excluded_until": 801
+      },
+      "prediction": {
+        "central_h": 20.38,
+        "plan_low_h": 18.163,
+        "plan_high_h": 23.336,
+        "safety_low_h": 16.527,
+        "safety_high_h": 26.81,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": 97.0,
+        "in_plan": false,
+        "in_safety": false
+      },
+      "below_domain": false
+    },
+    {
+      "athlete": "Crasse",
+      "dev_set": false,
+      "race": "Trace Des Maquisards 2024",
+      "date": "2024-02-17",
+      "until": "2024-02-16",
+      "dnf": false,
+      "official_time_h": 14.196,
+      "course": {
+        "length_km": 102.4,
+        "deq_km": 116.1,
+        "dplus_per_km": 41.0
+      },
+      "model": {
+        "verdict": "🟠",
+        "regime": "blend",
+        "n_genuine": 3,
+        "n_eff": 2.81,
+        "sigma_kmh": 0.45,
+        "n_activities_used": 1032,
+        "n_excluded_until": 488
+      },
+      "prediction": {
+        "central_h": 13.395,
+        "plan_low_h": 12.951,
+        "plan_high_h": 13.89,
+        "safety_low_h": 12.571,
+        "safety_high_h": 14.364,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": -5.64,
+        "in_plan": false,
+        "in_safety": true
+      },
+      "below_domain": false
+    },
+    {
+      "athlete": "Crasse",
+      "dev_set": false,
+      "race": "Trail Du Belier 2023",
+      "date": "2023-08-26",
+      "until": "2023-08-25",
+      "dnf": false,
+      "official_time_h": 2.541,
+      "course": {
+        "length_km": 27.3,
+        "deq_km": 31.0,
+        "dplus_per_km": 42.2
+      },
+      "model": {
+        "verdict": "🟠",
+        "regime": "blend",
+        "n_genuine": 3,
+        "n_eff": 2.81,
+        "sigma_kmh": 0.45,
+        "n_activities_used": 909,
+        "n_excluded_until": 611
+      },
+      "prediction": {
+        "central_h": 2.718,
+        "plan_low_h": 2.649,
+        "plan_high_h": 2.794,
+        "safety_low_h": 2.589,
+        "safety_high_h": 2.865,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": 6.96,
+        "in_plan": false,
+        "in_safety": false
+      },
+      "below_domain": true
+    },
+    {
+      "athlete": "Lolo",
+      "dev_set": false,
+      "race": "Coursieres Hivernal 2023",
+      "date": "2023-01-08",
+      "until": "2023-01-07",
+      "dnf": false,
+      "official_time_h": 3.93,
+      "course": {
+        "length_km": 32.1,
+        "deq_km": 35.5,
+        "dplus_per_km": 37.8
+      },
+      "model": {
+        "verdict": "🟠",
+        "regime": "blend",
+        "n_genuine": 2,
+        "n_eff": 2.0,
+        "sigma_kmh": 0.45,
+        "n_activities_used": 334,
+        "n_excluded_until": 766
+      },
+      "prediction": {
+        "central_h": 3.167,
+        "plan_low_h": 3.085,
+        "plan_high_h": 3.257,
+        "safety_low_h": 3.014,
+        "safety_high_h": 3.341,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": -19.42,
+        "in_plan": false,
+        "in_safety": false
+      },
+      "below_domain": true
+    },
+    {
+      "athlete": "Lolo",
+      "dev_set": false,
+      "race": "Miut 2026",
+      "date": "2026-04-25",
+      "until": "2026-04-24",
+      "dnf": false,
+      "official_time_h": 25.82,
+      "course": {
+        "length_km": 109.9,
+        "deq_km": 143.8,
+        "dplus_per_km": 61.7
+      },
+      "model": {
+        "verdict": "🔴",
+        "regime": "regression",
+        "n_genuine": 10,
+        "n_eff": 6.39,
+        "sigma_kmh": 0.723,
+        "n_activities_used": 1064,
+        "n_excluded_until": 36
+      },
+      "prediction": {
+        "central_h": 26.211,
+        "plan_low_h": 17.604,
+        "plan_high_h": 34.817,
+        "safety_low_h": 11.853,
+        "safety_high_h": 40.568,
+        "interval_source": "conformal_normalized",
+        "cv_mae_pct": 10.2,
+        "sd_rel": 0.3959,
+        "err_pct": 1.51,
+        "in_plan": true,
+        "in_safety": true
+      },
+      "below_domain": false
+    },
+    {
+      "athlete": "Lolo",
+      "dev_set": false,
+      "race": "Nice 50k 2023",
+      "date": "2023-09-30",
+      "until": "2023-09-29",
+      "dnf": false,
+      "official_time_h": 12.477,
+      "course": {
+        "length_km": 62.4,
+        "deq_km": 76.9,
+        "dplus_per_km": 54.7
+      },
+      "model": {
+        "verdict": "🟢",
+        "regime": "regression",
+        "n_genuine": 4,
+        "n_eff": 3.92,
+        "sigma_kmh": 0.2,
+        "n_activities_used": 436,
+        "n_excluded_until": 664
+      },
+      "prediction": {
+        "central_h": 10.6,
+        "plan_low_h": 10.6,
+        "plan_high_h": 10.6,
+        "safety_low_h": 10.6,
+        "safety_high_h": 10.6,
+        "interval_source": "conformal_normalized",
+        "cv_mae_pct": 0.0,
+        "sd_rel": 0.1002,
+        "err_pct": -15.04,
+        "in_plan": false,
+        "in_safety": false
+      },
+      "below_domain": false
+    },
+    {
+      "athlete": "Lolo",
+      "dev_set": false,
+      "race": "Saintelyon 2022",
+      "date": "2022-12-03",
+      "until": "2022-12-02",
+      "dnf": false,
+      "official_time_h": 11.451,
+      "course": {
+        "length_km": 78.2,
+        "deq_km": 82.5,
+        "dplus_per_km": 27.5
+      },
+      "model": {
+        "verdict": "🔴",
+        "regime": "vc_e",
+        "n_genuine": 0,
+        "n_eff": 0.0,
+        "sigma_kmh": 0.8,
+        "n_activities_used": 326,
+        "n_excluded_until": 774
+      },
+      "prediction": null,
+      "below_domain": false
+    },
+    {
+      "athlete": "Lolo",
+      "dev_set": false,
+      "race": "t2r 2023",
+      "date": "2023-06-25",
+      "until": "2023-06-24",
+      "dnf": false,
+      "official_time_h": 6.834,
+      "course": {
+        "length_km": 45.4,
+        "deq_km": 51.7,
+        "dplus_per_km": 44.2
+      },
+      "model": {
+        "verdict": "🟢",
+        "regime": "regression",
+        "n_genuine": 4,
+        "n_eff": 3.92,
+        "sigma_kmh": 0.2,
+        "n_activities_used": 398,
+        "n_excluded_until": 702
+      },
+      "prediction": {
+        "central_h": 6.189,
+        "plan_low_h": 6.189,
+        "plan_high_h": 6.189,
+        "safety_low_h": 6.189,
+        "safety_high_h": 6.189,
+        "interval_source": "conformal_normalized",
+        "cv_mae_pct": 0.0,
+        "sd_rel": 0.1078,
+        "err_pct": -9.44,
+        "in_plan": false,
+        "in_safety": false
+      },
+      "below_domain": true
+    },
+    {
+      "athlete": "Lolo",
+      "dev_set": false,
+      "race": "Ultra Trilho Dos Reis 2024",
+      "date": "2024-01-14",
+      "until": "2024-01-13",
+      "dnf": false,
+      "official_time_h": 7.191,
+      "course": {
+        "length_km": 47.5,
+        "deq_km": 54.4,
+        "dplus_per_km": 43.3
+      },
+      "model": {
+        "verdict": "🟢",
+        "regime": "regression",
+        "n_genuine": 6,
+        "n_eff": 5.8,
+        "sigma_kmh": 0.2,
+        "n_activities_used": 502,
+        "n_excluded_until": 598
+      },
+      "prediction": {
+        "central_h": 7.102,
+        "plan_low_h": 7.024,
+        "plan_high_h": 7.181,
+        "safety_low_h": 7.001,
+        "safety_high_h": 7.204,
+        "interval_source": "conformal_normalized",
+        "cv_mae_pct": 0.68,
+        "sd_rel": 0.0471,
+        "err_pct": -1.23,
+        "in_plan": false,
+        "in_safety": true
+      },
+      "below_domain": true
+    },
+    {
+      "athlete": "Lolo",
+      "dev_set": false,
+      "race": "Utsm 2023",
+      "date": "2023-05-05",
+      "until": "2023-05-04",
+      "dnf": false,
+      "official_time_h": 21.314,
+      "course": {
+        "length_km": 108.8,
+        "deq_km": 123.0,
+        "dplus_per_km": 41.8
+      },
+      "model": {
+        "verdict": "🟠",
+        "regime": "blend",
+        "n_genuine": 2,
+        "n_eff": 2.0,
+        "sigma_kmh": 0.45,
+        "n_activities_used": 392,
+        "n_excluded_until": 708
+      },
+      "prediction": {
+        "central_h": 20.02,
+        "plan_low_h": 19.095,
+        "plan_high_h": 21.079,
+        "safety_low_h": 18.325,
+        "safety_high_h": 22.125,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": -6.07,
+        "in_plan": false,
+        "in_safety": true
+      },
+      "below_domain": false
     }
   ]
 }

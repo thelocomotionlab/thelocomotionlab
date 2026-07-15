@@ -1,18 +1,91 @@
 {
   "athlete": "Crasse",
-  "archive": "cas_validation/Val/archives/data_training_garmin.zip",
+  "archive": "cas_validation/Crasse/archives",
+  "dev_set": false,
   "races": [
-    {"name": "Ecotrail 80k 2024", "date": "2024-03-16",
-     "official_time": "10:27:39", "gpx": "cas_validation/Val/traces/ecotrail-2024.gpx"},
-    {"name": "Coursieres 50k 2024", "date": "2024-05-18",
-     "official_time": "06:03:14", "gpx": "cas_validation/Val/traces/coursieres-50k-2024.gpx"},
-    {"name": "GRF 90k 2024", "date": "2024-09-14",
-     "official_time": "11:17:32", "gpx": "cas_validation/Val/traces/grf-90k-2024.gpx"},
-    {"name": "Saintélyon 2024", "date": "2024-11-30",
-     "official_time": "11:04:13", "gpx": "cas_validation/Val/traces/saintelyon-2024.gpx"},
-    {"name": "Chianti 2025", "date": "2025-03-22",
-     "official_time": "20:29:05", "gpx": "cas_validation/Val/traces/chianti-2025.gpx"},
-    {"name": "Lavaredo 2025", "date": "2025-06-27",
-     "official_time": "21:14:34", "gpx": "cas_validation/Val/traces/lavaredo-2025.gpx"}
+    {
+      "name": "Trace Montagnhard",
+      "date": "2026-07-01",
+      "official_time": "16:04:06",
+      "gpx": "cas_validation/Crasse/traces/trace_montagnhard.gpx"
+    },
+    {
+      "name": "Chota 2025",
+      "date": "2025-02-01",
+      "official_time": "04:55:49",
+      "gpx": "cas_validation/Crasse/traces/chota-2025.gpx"
+    },
+    {
+      "name": "Coursieres 100k 2023",
+      "date": "2023-05-13",
+      "official_time": "15:19:12",
+      "gpx": "cas_validation/Crasse/traces/coursieres-100k-2023.gpx"
+    },
+    {
+      "name": "Coursieres 100k 2026",
+      "date": "2026-05-09",
+      "official_time": "13:17:31",
+      "gpx": "cas_validation/Crasse/traces/coursieres-100k-2026.gpx"
+    },
+    {
+      "name": "Grand Trail Du Lac 2025",
+      "date": "2025-10-19",
+      "official_time": "10:22:53",
+      "gpx": "cas_validation/Crasse/traces/grand-trail-du-lac-2025.gpx"
+    },
+    {
+      "name": "Lut 20k 2021",
+      "date": "2021-11-06",
+      "official_time": "01:31:33",
+      "gpx": "cas_validation/Crasse/traces/lut-20k-2021.gpx"
+    },
+    {
+      "name": "Lut 36k 2021",
+      "date": "2021-11-07",
+      "official_time": "03:31:58",
+      "gpx": "cas_validation/Crasse/traces/lut-36k-2021.gpx"
+    },
+    {
+      "name": "Montagnhard 2023",
+      "date": "2023-07-01",
+      "official_time": "19:41:12",
+      "gpx": "cas_validation/Crasse/traces/montagnhard-2023.gpx"
+    },
+    {
+      "name": "Montagnhard 2026",
+      "date": "2023-07-04",
+      "official_time": "16:04:06",
+      "gpx": "cas_validation/Crasse/traces/montagnhard-2026.gpx"
+    },
+    {
+      "name": "Nice 100m 2024",
+      "date": "2024-10-04",
+      "official_time": "26:09:48",
+      "gpx": "cas_validation/Crasse/traces/nice-100m-2024.gpx"
+    },
+    {
+      "name": "Saintelyon 2021",
+      "date": "2021-11-27",
+      "official_time": "08:41:26",
+      "gpx": "cas_validation/Crasse/traces/saintelyon-2021.gpx"
+    },
+    {
+      "name": "Tour Des 8 Refuges 2022",
+      "date": "2022-07-10",
+      "official_time": "10:20:42",
+      "gpx": "cas_validation/Crasse/traces/tour-des-8-refuges-2022.gpx"
+    },
+    {
+      "name": "Trace Des Maquisards 2024",
+      "date": "2024-02-17",
+      "official_time": "14:11:44",
+      "gpx": "cas_validation/Crasse/traces/trace-des-maquisards-2024.gpx"
+    },
+    {
+      "name": "Trail Du Belier 2023",
+      "date": "2023-08-26",
+      "official_time": "02:32:28",
+      "gpx": "cas_validation/Crasse/traces/trail-du-belier-2023.gpx"
+    }
   ]
 }

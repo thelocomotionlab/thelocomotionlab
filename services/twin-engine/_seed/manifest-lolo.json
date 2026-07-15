@@ -1,0 +1,49 @@
+{
+  "athlete": "Lolo",
+  "archive": "cas_validation/Lolo/archives",
+  "dev_set": false,
+  "races": [
+    {
+      "name": "Coursieres Hivernal 2023",
+      "date": "2023-01-08",
+      "official_time": "03:55:49",
+      "gpx": "cas_validation/Lolo/traces/coursieres-hivernal-2023.gpx"
+    },
+    {
+      "name": "Miut 2026",
+      "date": "2026-04-25",
+      "official_time": "25:49:11",
+      "gpx": "cas_validation/Lolo/traces/miut-2026.gpx"
+    },
+    {
+      "name": "Nice 50k 2023",
+      "date": "2023-09-30",
+      "official_time": "12:28:36",
+      "gpx": "cas_validation/Lolo/traces/nice-50k-2023.gpx"
+    },
+    {
+      "name": "Saintelyon 2022",
+      "date": "2022-12-03",
+      "official_time": "11:27:05",
+      "gpx": "cas_validation/Lolo/traces/saintelyon-2022.gpx"
+    },
+    {
+      "name": "t2r 2023",
+      "date": "2023-06-25",
+      "official_time": "06:50:03",
+      "gpx": "cas_validation/Lolo/traces/t2r-2023.gpx"
+    },
+    {
+      "name": "Ultra Trilho Dos Reis 2024",
+      "date": "2024-01-14",
+      "official_time": "07:11:26",
+      "gpx": "cas_validation/Lolo/traces/ultra-trilho-dos-reis-2024.gpx"
+    },
+    {
+      "name": "Utsm 2023",
+      "date": "2023-05-05",
+      "official_time": "21:18:49",
+      "gpx": "cas_validation/Lolo/traces/utsm-2023.gpx"
+    }
+  ]
+}
