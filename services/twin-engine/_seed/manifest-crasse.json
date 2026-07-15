@@ -1,7 +1,7 @@
 {
   "athlete": "Crasse",
   "archive": "cas_validation/Crasse/archives",
-  "dev_set": false,
+  "dev_set": true,
   "races": [
     {
       "name": "Trace Montagnhard",

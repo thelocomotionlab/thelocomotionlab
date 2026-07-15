@@ -219,7 +219,7 @@
     },
     {
       "athlete": "Crasse",
-      "dev_set": false,
+      "dev_set": true,
       "race": "Trace Montagnhard",
       "date": "2026-07-01",
       "until": "2026-06-30",
@@ -256,7 +256,7 @@
     },
     {
       "athlete": "Crasse",
-      "dev_set": false,
+      "dev_set": true,
       "race": "Chota 2025",
       "date": "2025-02-01",
       "until": "2025-01-31",
@@ -293,7 +293,7 @@
     },
     {
       "athlete": "Crasse",
-      "dev_set": false,
+      "dev_set": true,
       "race": "Coursieres 100k 2023",
       "date": "2023-05-13",
       "until": "2023-05-12",
@@ -330,7 +330,7 @@
     },
     {
       "athlete": "Crasse",
-      "dev_set": false,
+      "dev_set": true,
       "race": "Coursieres 100k 2026",
       "date": "2026-05-09",
       "until": "2026-05-08",
@@ -367,7 +367,7 @@
     },
     {
       "athlete": "Crasse",
-      "dev_set": false,
+      "dev_set": true,
       "race": "Grand Trail Du Lac 2025",
       "date": "2025-10-19",
       "until": "2025-10-18",
@@ -404,7 +404,7 @@
     },
     {
       "athlete": "Crasse",
-      "dev_set": false,
+      "dev_set": true,
       "race": "Lut 20k 2021",
       "date": "2021-11-06",
       "until": "2021-11-05",
@@ -441,7 +441,7 @@
     },
     {
       "athlete": "Crasse",
-      "dev_set": false,
+      "dev_set": true,
       "race": "Lut 36k 2021",
       "date": "2021-11-07",
       "until": "2021-11-06",
@@ -478,7 +478,7 @@
     },
     {
       "athlete": "Crasse",
-      "dev_set": false,
+      "dev_set": true,
       "race": "Montagnhard 2023",
       "date": "2023-07-01",
       "until": "2023-06-30",
@@ -515,7 +515,7 @@
     },
     {
       "athlete": "Crasse",
-      "dev_set": false,
+      "dev_set": true,
       "race": "Montagnhard 2026",
       "date": "2023-07-04",
       "until": "2023-07-03",
@@ -552,7 +552,7 @@
     },
     {
       "athlete": "Crasse",
-      "dev_set": false,
+      "dev_set": true,
       "race": "Nice 100m 2024",
       "date": "2024-10-04",
       "until": "2024-10-03",
@@ -589,7 +589,7 @@
     },
     {
       "athlete": "Crasse",
-      "dev_set": false,
+      "dev_set": true,
       "race": "Saintelyon 2021",
       "date": "2021-11-27",
       "until": "2021-11-26",
@@ -626,7 +626,7 @@
     },
     {
       "athlete": "Crasse",
-      "dev_set": false,
+      "dev_set": true,
       "race": "Tour Des 8 Refuges 2022",
       "date": "2022-07-10",
       "until": "2022-07-09",
@@ -663,7 +663,7 @@
     },
     {
       "athlete": "Crasse",
-      "dev_set": false,
+      "dev_set": true,
       "race": "Trace Des Maquisards 2024",
       "date": "2024-02-17",
       "until": "2024-02-16",
@@ -700,7 +700,7 @@
     },
     {
       "athlete": "Crasse",
-      "dev_set": false,
+      "dev_set": true,
       "race": "Trail Du Belier 2023",
       "date": "2023-08-26",
       "until": "2023-08-25",
