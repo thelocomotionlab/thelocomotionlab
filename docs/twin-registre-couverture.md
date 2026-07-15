@@ -24,6 +24,14 @@
 | 1 | 2026-04-26 | Lolo | MIUT 2026 (109 km, 6 775 m D+) | 26 h 04 | 18 h 58 – 71 h 55 | 16 h 36 – 71 h 55 | mc (dégénéré : bornes hautes = plafond Deq/v_floor) | 25 h 49 | **−1,0 %** | oui | oui |
 | 2 | *(à courir)* | Thomas D. | La Crasse Montagnhard | 19 h 14 *(rapport du 2026-07-03, bandes MC)* | 16 h 50 – 22 h 30 | — | mc | — | — | — | — |
 
+**Notes d'étiquetage (2026-07-15).**
+- **Crasse = cas de DÉVELOPPEMENT** (`dev_set: true`) : c'est l'athlète Montagnhard — le
+  filtre de maximalité et plusieurs réglages ont été mis au point sur son fixture. Ses
+  backtests sont indicatifs, jamais décisionnels.
+- **Lolo reste « frais » pour les erreurs du CENTRAL**, mais son cas MIUT a motivé la
+  bascule `interval_source=conformal_normalized` : pour les décisions de COUVERTURE des
+  bandes, le compter avec prudence (à part si le doute pèse sur une décision).
+
 **Notes.**
 - Entrée 1 : données tronquées au 20/04/2026 (6 jours avant course) ; central excellent, bandes
   MC dégénérées (voir DIAGNOSTIC §9.8 — c'est ce cas qui a motivé la bascule des bandes vers le
