@@ -120,6 +120,7 @@ def backtest_race(archive: Path, race_entry: dict, cfg, *, base: Path) -> dict:
             "sigma_kmh": round(result.calibration.sigma_kmh, 3),
             "n_activities_used": result.n_ingested,
             "n_excluded_until": result.n_excluded_until,
+            "n_skipped_ingest": result.n_skipped,
         },
         "prediction": None,
     }

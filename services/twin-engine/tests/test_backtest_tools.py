@@ -163,3 +163,26 @@ def test_backtest_end_to_end_records_refusal(tmp_path, monkeypatch, capsys):
     assert e["prediction"] is None                       # refus consigné, pas d'invention
     assert e["model"]["verdict"] == "🔴"
     assert e["below_domain"] is False                    # cible 10 h = pile au seuil du domaine
+
+
+def test_diag_archive_xray_counts_and_long_efforts(tmp_path, capsys):
+    """Radiographie d'archive : mêmes parseurs que le produit — par année/format, sports,
+    rejets motivés, liste des efforts longs (l'outil qui tranche « course absente de
+    l'archive vs course écartée »)."""
+    from tools.diag_archive import main as diag_main
+
+    d = tmp_path / "archive"
+    d.mkdir()
+    for f in ("sample.fit", "sample.tcx", "sample.gpx"):
+        (d / f).write_bytes((FIX / f).read_bytes())
+    (d / "notes.txt").write_bytes(b"pas une activite")
+
+    rc = diag_main([str(d), "--min-hours", "0.01"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "Fichiers dans l'archive : 4" in out and ".txt" in out
+    assert "PARSÉES : 3" in out
+    # le .txt n'est ni parsé ni « rejeté » (le marcheur l'ignore en silence) → signalé
+    assert "1 fichier(s) ni parsé(s) ni rejeté(s)" in out
+    assert "Efforts ≥ 0 h (3)" in out          # les 3 fixtures dépassent 36 s
+    assert "running" in out
