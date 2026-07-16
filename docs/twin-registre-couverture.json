@@ -548,7 +548,8 @@
         "in_plan": false,
         "in_safety": false
       },
-      "below_domain": false
+      "below_domain": false,
+      "quarantine": "doublon de « Trace Montagnhard » (même course, même temps 16:04:06) avec date erronée 2023 → coupure absurde"
     },
     {
       "athlete": "Crasse",

@@ -22,7 +22,7 @@
 | # | Date course | Athlète (pseudo) | Course | Central | Fourchette (50 %) | Sécurité (80 %) | Source bandes | Réel | Erreur centrale | Dans 50 % ? | Dans 80 % ? |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | 1 | 2026-04-26 | Lolo | MIUT 2026 (109 km, 6 775 m D+) | 26 h 04 | 18 h 58 – 71 h 55 | 16 h 36 – 71 h 55 | mc (dégénéré : bornes hautes = plafond Deq/v_floor) | 25 h 49 | **−1,0 %** | oui | oui |
-| 2 | *(à courir)* | Thomas D. | La Crasse Montagnhard | 19 h 14 *(rapport du 2026-07-03, bandes MC)* | 16 h 50 – 22 h 30 | — | mc | — | — | — | — |
+| 2 | 2026-07-?? | Thomas D. (Crasse) | La Crasse Montagnhard 2026 | 19 h 14 *(rapport du 2026-07-03, bandes MC de l'époque)* | 16 h 50 – 22 h 30 | — | mc | **16 h 04** | **+19,7 %** (central trop lent) | **non** (sous la borne basse) | — |
 
 **Notes d'étiquetage (2026-07-15).**
 - **Crasse = cas de DÉVELOPPEMENT** (`dev_set: true`) : c'est l'athlète Montagnhard — le
@@ -37,8 +37,20 @@
   MC dégénérées (voir DIAGNOSTIC §9.8 — c'est ce cas qui a motivé la bascule des bandes vers le
   conforme normalisé). À re-scorer aussi contre les bandes conformes recalculées a posteriori
   si utile.
-- Entrée 2 : à compléter avec le temps officiel après la course ; si le rapport est régénéré
-  avec les bandes conformes avant la course, mettre à jour les bandes consignées.
+- Entrée 2 — SCORÉE (2026-07) : réel 16 h 04, SOUS la borne basse du rapport de juillet
+  (bandes MC de l'époque, avant la bascule conforme). Rejouée au banc avec le moteur ACTUEL
+  (coupure 2026-06-30, « Trace Montagnhard ») : central 18 h 45 (+16,7 % — biais de
+  PROGRESSION, cf. ci-dessous), mais fourchette de course conforme [15 h 53 – 21 h 38] et
+  sécurité [15 h 30 – 22 h 00] : les DEUX bandes actuelles couvrent le réel. Le raté de
+  juillet est exactement le défaut que la bascule conforme a corrigé.
+- **Biais de progression (signal n° 3 du banc)** : sur Crasse, athlète en forte progression
+  (2021 : premiers trails → 2026 : 16 h 04 sur la Montagnhard), le central prédit
+  systématiquement TROP LENT en régime riche (+16,7 / +8,4 / +5,1 / +13,8 % ; −1,9 % sur la
+  seule course « stable ») alors qu'il était juste en 2023 (+2,0 %) quand sa forme l'était.
+  Mécanisme suspecté : demi-vie de récence 365 j trop longue + régression sans terme de
+  tendance (les anciennes courses ancrent le niveau passé). Hypothèses à trancher AU BANC
+  (A/B via TWIN_CONFIG_PATH) : demi-vie plus courte ; ancrage de la calibration sur
+  l'enveloppe COURANTE. Décision sur les 4 athlètes, jamais sur ce seul cas.
 
 ## Protocole de backtest rétrospectif (alimentation accélérée du registre)
 
