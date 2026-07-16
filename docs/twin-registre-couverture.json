@@ -1003,7 +1003,8 @@
         "n_eff": 0.0,
         "sigma_kmh": 0.8,
         "n_activities_used": 134,
-        "n_excluded_until": 350
+        "n_excluded_until": 350,
+        "n_skipped_ingest": 205
       },
       "prediction": {
         "central_h": 25.863,
@@ -1040,7 +1041,8 @@
         "n_eff": 0.0,
         "sigma_kmh": 0.8,
         "n_activities_used": 184,
-        "n_excluded_until": 300
+        "n_excluded_until": 300,
+        "n_skipped_ingest": 205
       },
       "prediction": {
         "central_h": 19.759,
@@ -1055,8 +1057,7 @@
         "in_plan": false,
         "in_safety": false
       },
-      "below_domain": false,
-      "quarantine": "trace FIT→GPX à l'altitude aplatie (D+/km 6,3 lu vs ~26 réel sur cette course) — parcours inutilisable"
+      "below_domain": false
     },
     {
       "athlete": "Rapace",
@@ -1073,23 +1074,24 @@
       },
       "model": {
         "verdict": "🔴",
-        "regime": "vc_e",
-        "n_genuine": 0,
-        "n_eff": 0.0,
-        "sigma_kmh": 0.8,
+        "regime": "blend",
+        "n_genuine": 1,
+        "n_eff": 1.0,
+        "sigma_kmh": 0.45,
         "n_activities_used": 249,
-        "n_excluded_until": 235
+        "n_excluded_until": 235,
+        "n_skipped_ingest": 205
       },
       "prediction": {
-        "central_h": 10.806,
-        "plan_low_h": 9.809,
-        "plan_high_h": 12.08,
-        "safety_low_h": 9.05,
-        "safety_high_h": 13.501,
+        "central_h": 8.895,
+        "plan_low_h": 8.496,
+        "plan_high_h": 9.352,
+        "safety_low_h": 8.162,
+        "safety_high_h": 9.801,
         "interval_source": "mc",
         "cv_mae_pct": null,
         "sd_rel": null,
-        "err_pct": 79.89,
+        "err_pct": 48.09,
         "in_plan": false,
         "in_safety": false
       },
@@ -1110,23 +1112,24 @@
       },
       "model": {
         "verdict": "🔴",
-        "regime": "vc_e",
-        "n_genuine": 0,
-        "n_eff": 0.0,
-        "sigma_kmh": 0.8,
+        "regime": "blend",
+        "n_genuine": 1,
+        "n_eff": 1.0,
+        "sigma_kmh": 0.45,
         "n_activities_used": 261,
-        "n_excluded_until": 223
+        "n_excluded_until": 223,
+        "n_skipped_ingest": 205
       },
       "prediction": {
-        "central_h": 20.361,
-        "plan_low_h": 18.644,
-        "plan_high_h": 22.513,
-        "safety_low_h": 17.315,
-        "safety_high_h": 24.859,
+        "central_h": 24.028,
+        "plan_low_h": 22.643,
+        "plan_high_h": 25.655,
+        "safety_low_h": 21.515,
+        "safety_high_h": 27.308,
         "interval_source": "mc",
         "cv_mae_pct": null,
         "sd_rel": null,
-        "err_pct": 35.82,
+        "err_pct": 60.28,
         "in_plan": false,
         "in_safety": false
       },
@@ -1148,24 +1151,25 @@
       "model": {
         "verdict": "🔴",
         "regime": "blend",
-        "n_genuine": 1,
-        "n_eff": 1.0,
+        "n_genuine": 2,
+        "n_eff": 1.68,
         "sigma_kmh": 0.45,
         "n_activities_used": 333,
-        "n_excluded_until": 151
+        "n_excluded_until": 151,
+        "n_skipped_ingest": 205
       },
       "prediction": {
-        "central_h": 11.81,
-        "plan_low_h": 11.391,
-        "plan_high_h": 12.278,
-        "safety_low_h": 11.036,
-        "safety_high_h": 12.728,
+        "central_h": 13.143,
+        "plan_low_h": 12.627,
+        "plan_high_h": 13.726,
+        "safety_low_h": 12.191,
+        "safety_high_h": 14.291,
         "interval_source": "mc",
         "cv_mae_pct": null,
         "sd_rel": null,
-        "err_pct": 1.02,
-        "in_plan": true,
-        "in_safety": true
+        "err_pct": 12.43,
+        "in_plan": false,
+        "in_safety": false
       },
       "below_domain": false
     },
@@ -1184,25 +1188,26 @@
       },
       "model": {
         "verdict": "🔴",
-        "regime": "blend",
-        "n_genuine": 3,
-        "n_eff": 2.87,
-        "sigma_kmh": 0.45,
+        "regime": "regression",
+        "n_genuine": 4,
+        "n_eff": 3.47,
+        "sigma_kmh": 1.52,
         "n_activities_used": 454,
-        "n_excluded_until": 30
+        "n_excluded_until": 30,
+        "n_skipped_ingest": 205
       },
       "prediction": {
-        "central_h": 8.217,
-        "plan_low_h": 7.928,
-        "plan_high_h": 8.54,
-        "safety_low_h": 7.682,
-        "safety_high_h": 8.851,
+        "central_h": 8.868,
+        "plan_low_h": 7.233,
+        "plan_high_h": 12.954,
+        "safety_low_h": 4.196,
+        "safety_high_h": 33.505,
         "interval_source": "mc",
-        "cv_mae_pct": null,
-        "sd_rel": null,
-        "err_pct": 10.64,
-        "in_plan": false,
-        "in_safety": false
+        "cv_mae_pct": 25.27,
+        "sd_rel": 0.5741,
+        "err_pct": 19.4,
+        "in_plan": true,
+        "in_safety": true
       },
       "below_domain": true
     }
