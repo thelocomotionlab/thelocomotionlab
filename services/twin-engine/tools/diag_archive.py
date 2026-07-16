@@ -20,7 +20,34 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
+from twin_engine.calibration import _basis_hours
+from twin_engine.config import load_config
 from twin_engine.ingest import iter_activities
+from twin_engine.twin.record import process_activity
+
+
+def _genuine_audit(act, cfg) -> str:
+    """Audit du filtre « vrais ultras » (calibration) pour UN effort ≥ genuine_min_hours :
+    dit pourquoi il serait retenu ou écarté — critère par critère, chiffres à l'appui."""
+    if act.sport != "running":
+        return (f"INVISIBLE du moteur : sport « {act.sport or 'inconnu'} » "
+                "(l'ingestion produit ne garde que la course à pied)")
+    c = cfg.calibration
+    summary, _, _ = process_activity(act, cfg)
+    hours = _basis_hours(summary, cfg)
+    vga = summary.ga_km / hours if hours > 0 else 0.0
+    fails = []
+    if summary.duration_s < c.genuine_min_hours * 3600:
+        fails.append(f"durée {summary.duration_s / 3600:.1f} h < {c.genuine_min_hours:.0f} h")
+    if vga < c.genuine_min_ga_kmh:
+        fails.append(f"vga {vga:.2f} < {c.genuine_min_ga_kmh} km/h")
+    if summary.decouple_pct is not None and summary.decouple_pct > c.genuine_max_decouple_pct:
+        fails.append(f"découplage {summary.decouple_pct:.1f} % > {c.genuine_max_decouple_pct:.0f} %")
+    detail = (f"vga {vga:.2f} km/h · découplage "
+              f"{'n/a (pas de FC)' if summary.decouple_pct is None else f'{summary.decouple_pct:.1f} %'}")
+    if fails:
+        return f"ÉCARTÉ du filtre vrais ultras : {' ; '.join(fails)} ({detail})"
+    return f"VRAI ULTRA retenu ({detail})"
 
 
 def _inventory(path: Path) -> Counter:
@@ -54,6 +81,7 @@ def _inventory(path: Path) -> Counter:
 
 def analyze(path: Path, min_hours: float = 8.0) -> dict:
     """Balaye l'archive en flux et ne garde que des agrégats (mémoire O(1 activité))."""
+    cfg = load_config()
     skipped: list[dict] = []
     per_year: dict[object, Counter] = defaultdict(Counter)
     sports: Counter = Counter()
@@ -76,6 +104,9 @@ def analyze(path: Path, min_hours: float = 8.0) -> dict:
                 "km": round(float(act.dist_m[-1]) / 1000.0, 1) if len(act.dist_m) else None,
                 "sport": sport,
                 "format": act.source_format,
+                # audit calibration : seulement pour les efforts dans le domaine ultra
+                "audit": (_genuine_audit(act, cfg)
+                          if dur_h >= cfg.calibration.genuine_min_hours else None),
             })
     long_efforts.sort(key=lambda e: e["date"])
     return {
@@ -121,6 +152,8 @@ def report(r: dict) -> None:
     for e in r["long_efforts"]:
         km = "—" if e["km"] is None else f"{e['km']:.0f} km"
         print(f"  {e['date']}  {e['hours']:>5.1f} h  {km:>8}  {e['sport']:<10} ({e['format']})")
+        if e.get("audit"):
+            print(f"        → {e['audit']}")
     if not r["long_efforts"]:
         print("  (aucun)")
 

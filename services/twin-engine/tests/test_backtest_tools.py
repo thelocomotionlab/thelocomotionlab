@@ -186,3 +186,39 @@ def test_diag_archive_xray_counts_and_long_efforts(tmp_path, capsys):
     assert "1 fichier(s) ni parsé(s) ni rejeté(s)" in out
     assert "Efforts ≥ 0 h (3)" in out          # les 3 fixtures dépassent 36 s
     assert "running" in out
+
+
+def test_diag_archive_audits_genuine_filter(tmp_path, capsys):
+    """L'audit « vrais ultras » dit POURQUOI un effort ≥ 10 h serait retenu, écarté
+    (critère chiffré) ou carrément invisible (sport non running) — le trou
+    d'observabilité du cas Rapace/Saintélyon."""
+    import numpy as np
+
+    from twin_engine.ingest.canonical import CanonicalActivity
+    from tools.diag_archive import _genuine_audit
+    from twin_engine.config import load_config
+
+    cfg = load_config()
+    n = 10 * 3600 + 1800                       # 10 h 30
+    t = list(range(0, n, 10))                  # échantillons 0,1 Hz (interpolés à 1 Hz)
+    dist = [1.9 * s for s in t]                # 6,84 km/h à plat → vga ≥ 5,5
+
+    run = CanonicalActivity.from_samples(
+        timestamps=t, dist_m=dist, speed_ms=[1.9] * len(t), alt_m=[500.0] * len(t),
+        sport="running", source_format="fit", source_name="ultra",
+    )
+    assert "VRAI ULTRA retenu" in _genuine_audit(run, cfg)
+    assert "n/a (pas de FC)" in _genuine_audit(run, cfg)
+
+    slow = CanonicalActivity.from_samples(
+        timestamps=t, dist_m=[1.2 * s for s in t], speed_ms=[1.2] * len(t),
+        alt_m=[500.0] * len(t), sport="running", source_format="fit", source_name="rando",
+    )
+    out = _genuine_audit(slow, cfg)
+    assert "ÉCARTÉ" in out and "vga" in out     # 4,3 km/h < 5,5
+
+    ghost = CanonicalActivity.from_samples(
+        timestamps=t, dist_m=dist, speed_ms=[1.9] * len(t), alt_m=[500.0] * len(t),
+        sport=None, source_format="gpx", source_name="mystere",
+    )
+    assert "INVISIBLE du moteur" in _genuine_audit(ghost, cfg)
