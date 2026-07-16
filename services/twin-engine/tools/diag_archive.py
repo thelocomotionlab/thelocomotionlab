@@ -43,8 +43,13 @@ def _genuine_audit(act, cfg) -> str:
         fails.append(f"vga {vga:.2f} < {c.genuine_min_ga_kmh} km/h")
     if summary.decouple_pct is not None and summary.decouple_pct > c.genuine_max_decouple_pct:
         fails.append(f"découplage {summary.decouple_pct:.1f} % > {c.genuine_max_decouple_pct:.0f} %")
-    detail = (f"vga {vga:.2f} km/h · découplage "
+    raw_km = float(act.dist_m[-1]) / 1000.0 if len(act.dist_m) else 0.0
+    detail = (f"brut {raw_km:.1f} km · dé-spiké {summary.dist_km:.1f} km · ga {summary.ga_km:.1f} km "
+              f"· vga {vga:.2f} km/h · découplage "
               f"{'n/a (pas de FC)' if summary.decouple_pct is None else f'{summary.decouple_pct:.1f} %'}")
+    if summary.dist_km < 0.8 * raw_km > 0:
+        fails.append(f"⚠ canal distance suspect : l'écrêtage anti-spikes perd "
+                     f"{100 * (1 - summary.dist_km / raw_km):.0f} % de la distance brute")
     if fails:
         return f"ÉCARTÉ du filtre vrais ultras : {' ; '.join(fails)} ({detail})"
     return f"VRAI ULTRA retenu ({detail})"
