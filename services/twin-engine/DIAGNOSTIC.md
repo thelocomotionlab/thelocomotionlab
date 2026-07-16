@@ -667,6 +667,17 @@ l'humilité sur vga (recommandée) ; **(b)** flag « point sauvé hors calibrati
 (GTDL +79,9 %) ; **(c)** statu quo — pessimisme assumé sur les régimes faibles, que le
 gate refuse de toute façon.
 
+**(a) IMPLÉMENTÉE (2026-07-16, validée par Valentin) :
+`twin.despike_rescue_dplus_basis="time"` ("zero" = rollback).** Un canal sauvé dont
+l'altitude n'est pas elle-même condamnée (§9.10) récupère ses D± en base TEMPS
+(`np.diff(alts)`, somme des montées du canal altitude seul — indépendante de l'alignement) ;
+ga reste = brut (f=1, l'humilité sur la vga demeure). Deux approximations assumées et
+bornées : échelle time_5s ≈ +15 % vs distance_150m (§9.6) sur CE point uniquement, et vga
+toujours sous-estimée (~0,7 km/h sur la Saintélyon). Effet attendu, à lire sur le rerun
+Rapace contre le tableau ci-dessus : dpk ≈ 24 restitué → ancre du blend remontée de
+|−0,017|·24 ≈ 0,4 km/h → Coursières/UTBV/Nivolet se rapprochent de l'« avant » sans
+re-perdre le gain GTDL. Si le rerun contredit, rollback en une valeur de config.
+
 
 ### 9.12 Re-fusion du registre : la quarantaine ne survivait pas (CORRIGÉ)
 

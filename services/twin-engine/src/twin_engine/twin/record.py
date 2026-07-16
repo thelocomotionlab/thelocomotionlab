@@ -239,6 +239,13 @@ def process_activity(act: CanonicalActivity, cfg: Config):
         da = np.diff(alts)
     if slope_unusable:
         da = np.zeros(0)   # D± issus d'un couple altitude↔distance cassé : on n'invente pas
+        # §9.11 (a) : le TOTAL du D± ne dépend que du canal altitude — sur un canal DISTANCE
+        # haché dont l'altitude n'est pas elle-même condamnée (§9.10), on le récupère en base
+        # TEMPS (échelle time_5s, ≈ +15 % vs distance_150m — §9.6 : biais d'échelle borné,
+        # très supérieur à dpk=0 qui faussait l'ancre du blend et la régression).
+        if (distance_rescued and not alt_unusable and act.has_altitude
+                and cfg.twin.despike_rescue_dplus_basis == "time"):
+            da = np.diff(alts)
     dur = float(tg[-1])
 
     # masque « en mouvement » sur les incréments de distance (partagé par moving_time et le

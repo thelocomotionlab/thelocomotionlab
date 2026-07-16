@@ -43,6 +43,8 @@ def test_defaults_from_shipped_json():
     assert cfg.twin.despike_rescue_floor == 0.8
     assert cfg.twin.despike_rescue_max_raw_kmh == 12.0
     assert cfg.twin.despike_rescue_min_bursts == 3
+    # §9.11 (a) : D± d'un canal sauvé récupérés en base temps (dpk=0 faussait l'ancre blend)
+    assert cfg.twin.despike_rescue_dplus_basis == "time"
 
 
 def test_env_overrides_data_dir(monkeypatch, tmp_path):

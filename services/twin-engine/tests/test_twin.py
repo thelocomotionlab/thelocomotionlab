@@ -410,12 +410,20 @@ def test_despike_rescue_recovers_bursty_distance_channel():
     assert s.dist_km == pytest.approx(36.0, rel=0.02)          # distance brute conservée
     assert not np.isfinite(vga).any() and not np.isfinite(vraw).any()   # hors courbe record
     # pente par-seconde d'un canal haché = bruit (cas réel : ga ×2,10) → mêmes replis que
-    # §9.10 : équivalent plat = distance brute (f=1), D± nuls, altitude non fiable
+    # §9.10 : équivalent plat = distance brute (f=1), altitude non fiable… mais le TOTAL du
+    # D± ne dépend que du canal altitude → récupéré en base temps (§9.11 a : dpk=0 faussait
+    # l'ancre du blend). Ici : montée continue de 10 % de 36 km → D+ ≈ 3 600 m, D− = 0.
     assert s.ga_km == pytest.approx(s.dist_km, rel=0.01)
-    assert s.dplus_m == 0 and s.dminus_m == 0
+    assert s.dplus_m == pytest.approx(0.10 * 36000, rel=0.02)
+    assert s.dminus_m == 0
     assert s.has_altitude is False
     st = despike_stats(_bursty(5.0, 20.0), CFG)
     assert st["rescued"] and st["n_bursts"] > 1000              # rafales nombreuses et DISTINCTES
+
+    # rollback du D± récupéré : base "zero" → D± nuls (comportement du matin du 2026-07-16)
+    cfg_zero = replace(CFG, twin=replace(CFG.twin, despike_rescue_dplus_basis="zero"))
+    s_zero, _, _ = process_activity(_bursty(5.0, 20.0), cfg_zero)
+    assert s_zero.dplus_m == 0 and s_zero.ga_km == pytest.approx(s_zero.dist_km, rel=0.01)
 
     # total brut IMPLAUSIBLE pour de la course (15 km/h sur 5 h) → pas de sauvetage
     s_fast, _, _ = process_activity(_bursty(5.0, 42.0), CFG)

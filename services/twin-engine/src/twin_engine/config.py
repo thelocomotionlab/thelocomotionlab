@@ -124,6 +124,11 @@ class TwinParams:
     # casse réelle peut être en BLOCS de minutes, pas en rafales par-seconde — un seuil
     # « nombreuses rafales » (20) refusait le cas réel qu'il devait servir.
     despike_rescue_min_bursts: int = 3
+    # D± d'un canal sauvé : le TOTAL du D± ne dépend que du canal altitude (somme des
+    # montées, base temps) — récupérable même quand l'alignement altitude↔distance est
+    # cassé, alors que dpk=0 faussait l'ancre du blend et la régression (impact banc
+    # §9.11 : −0,017 km/h par m/km manquant). "zero" = rollback (D± nuls).
+    despike_rescue_dplus_basis: str = "time"
 
 
 @dataclass(frozen=True)
