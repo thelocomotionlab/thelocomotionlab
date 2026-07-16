@@ -51,6 +51,12 @@
   tendance (les anciennes courses ancrent le niveau passé). Hypothèses à trancher AU BANC
   (A/B via TWIN_CONFIG_PATH) : demi-vie plus courte ; ancrage de la calibration sur
   l'enveloppe COURANTE. Décision sur les 4 athlètes, jamais sur ce seul cas.
+  *Premier A/B (fixture, 2026-07-16, DIAGNOSTIC moteur §9.13)* : demi-vie plus courte
+  **démonte le régime** (240 j → blend chez Crasse) ; terme de tendance ridgé
+  (`calibration.trend_term`, câblé, défaut off) mesuré **quasi nul** (β3 ≈ +0,01 km/h/an
+  même à poids plats) — le biais ressemble à un **saut** de forme récent, pas à une pente.
+  Reste à trancher en walk-forward réel ; l'« ancrage sur l'enveloppe courante » (mécanisme
+  à saut) devient la piste prioritaire.
 
 ## Protocole de backtest rétrospectif (alimentation accélérée du registre)
 

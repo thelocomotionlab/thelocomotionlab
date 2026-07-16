@@ -148,6 +148,14 @@ l'archive complète de l'athlète, ce sont les mêmes 8 ultras qui pilotent la C
   Le bon critère est la **maximalité**, pas le Deq.
 - ❌ **Pondération par noyau en ln(T) comme levier principal.** Neutre, largeur de noyau instable à
   n = 8. Tolérée seulement en raffinement secondaire.
+- ❌ **Demi-vie de récence < 365 j comme défaut (P1a, §9.13).** Dès 240 j, la calibration Crasse
+  est DÉMOTÉE hors régression (n_eff 3,9 → 2,8 → blend, plus de LOO) : pas un réglage de biais,
+  un changement de régime. Ne pas re-balayer sur ce fixture.
+- ❌ **Terme de tendance temporelle LINÉAIRE pour fermer le biais de progression du fixture
+  Crasse (P1b, §9.13).** β3 ≈ +0,01 km/h/an même à poids plats — le biais y est un SAUT de
+  forme récent, pas une pente ; relâcher le ridge ne fait que dégrader (MAE 8,3 → 9,6 %).
+  Ne pas re-tenter sur ce fixture ; seule réouverture : l'A/B walk-forward réel (4 athlètes,
+  flag `calibration.trend_term` resté câblé, défaut off).
 
 ## 6. Limite assumée du proxy d'enveloppe
 
@@ -721,3 +729,80 @@ quarantaine 1, finies 11, VENDU intact (n=5, MAE 10,2 %).
 (conversion IA, altitude aplatie) — pas l'archive de l'athlète, dont le canal distance est
 réparé par §9.11. La course redeviendra scorable quand une vraie trace GPX du parcours
 remplacera la conversion IA (à demander à Rapace).
+
+### 9.13 Biais de progression (P1) : demi-vie et terme de tendance MESURÉS — hypothèse infirmée sur le fixture (flag câblé, OFF)
+
+**Constat (registre, 2026-07-15).** Sur Crasse (athlète en forte progression), le central
+prédit systématiquement TROP LENT en régime régression : +16,7 / +8,4 / +5,1 % (+13,8 % en
+quarantaine parcours), −1,9 % sur la seule course à forme stable. Deux mécanismes suspectés
+dans la note du registre : demi-vie de récence 365 j trop longue (P1a) ; régression sans
+terme de tendance (P1b). Hypothèse pré-enregistrée (prompt exploratoire 2026-07) : sur le
+dev-set Crasse, le biais signé positif se réduit et la MAE d'interpolation ne se dégrade pas.
+
+**Implémenté — P1b derrière `calibration.trend_term` (défaut `off`, no-op golden par
+construction).** En `ridge` : la régression gagne `β3·(années relatives au dernier vrai
+ultra)`, ridgé vers 0 (`trend_ridge_lambda`, pseudo-observation comme `terrain_term=
+prior_shrunk`) ; la prédiction sert la forme PROJETÉE à tendance nulle (date du dernier
+vrai ultra — jamais extrapolée au-delà) ; la LOO ré-ajuste β3 dans chaque pli, l'axe
+re-référencé à la date de l'ultra RETIRÉ (= projection au jour de « sa » course,
+`predict.leave_one_out`) ; covariance servie = bloc marginal 3×3 (exact au point servi,
+l'incertitude de β3 gonfle celle de β0) ; σ compte 4 paramètres quand le terme est actif
+(conservateur) ; exige tous les ultras datés et ≥ 2 dates distinctes, sinon no-op signalé ;
+replis blend/vc_e intouchés. Verrous : récupération exacte d'une progression linéaire
+synthétique (β3 → 0,40 km/h/an posé), ridge → ∞ = no-op, dates inexploitables = no-op signalé,
+LOO ferme le biais sur dérive linéaire exacte (`test_loo_applies_trend_at_each_fold_date`).
+`tools/ab_montagnhard` gagne la colonne « biais » (moyenne SIGNÉE pondérée des erreurs LOO,
+positif = trop lent), les tableaux P1a/P1b séparés (base = défaut livré) et le détail par pli.
+
+**Preuve A/B (fixture, 2026-07-16, base = DÉFAUT LIVRÉ — pas la baseline §4) :**
+
+| Configuration | sigma | i80 | biais | MAE | interp | extrap | CV |
+|---|---|---|---|---|---|---|---|
+| **[DÉFAUT livré]** demi-vie 365 j, sans tendance | 0,532 | 0,38 | **+0,1** | 8,3 | 7,1 | 9,3 | 🟠 |
+| P1a — demi-vie 240 j | 0,450 | 0,15 | — | — | — | — | ⚠ **blend** (n_eff = 2,8) |
+| P1a — demi-vie 180 j | 0,450 | 0,15 | — | — | — | — | ⚠ **blend** (n_eff = 2,2) |
+| P1a — demi-vie 120 j | 0,450 | 0,15 | — | — | — | — | ⚠ **blend** (n_eff = 1,7) |
+| P1b — tendance ridge λ=50 | 0,530 | 0,38 | +0,1 | 8,3 | 7,1 | 9,4 | 🟠 |
+| P1b — tendance ridge λ=10 | 0,525 | 0,41 | +0,2 | 8,4 | 7,0 | 9,6 | 🟠 |
+| P1b — tendance ridge λ=2 | 0,513 | 0,48 | +0,4 | 8,7 | 7,0 | 10,2 | 🟠 |
+| P1b — tendance libre λ=0 | 0,504 | 0,61 | **+1,0** | **9,6** | 7,4 | 11,5 | 🟠 |
+
+Détail décisif par pli (défaut livré) : le pli le plus RÉCENT — 2026-05-09, l'analogue LOO
+du +8,4 % Coursières du banc — sort à **+9,0 %** (trop lent) ; avec la tendance il ne bouge
+pas (+9,3 % à λ=10). β3 ajusté : **+0,015 km/h/an** (λ=10) — quasi nul. Diagnostic
+« affamement par la récence » (poids plats, script jetable, PAS un candidat) : à demi-vie 0
+(axe 2022→2026 entier disponible) β3 = +0,010/an et le pli récent reste à +8,7/+9,7 % ; à
+demi-vie 730 j, β3 = +0,015/an. (À poids plats la MAE LOO tombe à 4,4 % — lecture
+fixture-interne : la LOO donne du FUTUR aux plis anciens, rien à voir avec le walk-forward ;
+non décisionnel.)
+
+**Verdict vs hypothèse pré-enregistrée : INFIRMÉE sur ce fixture, dans les deux branches.**
+1. **P1a** : toute demi-vie < 365 j DÉMONTE le régime régression de Crasse (n_eff passe sous
+   3) avant d'apporter le moindre gain de biais — ce n'est pas un réglage fin, c'est un
+   changement de régime (même famille de fragilité que le point dur Nivolet, §9.11).
+2. **P1b** : il n'y a PAS de pente linéaire identifiable dans les vrais ultras du fixture,
+   ni sous les poids servis ni à poids plats — β3 ≈ +0,01–0,02 km/h/an ; le biais ne se
+   réduit pas (pli récent +9,0 → +9,3 %) et la MAE se DÉGRADE en relâchant le ridge
+   (8,3 → 9,6 % à λ=0). La hausse de σ (0,291 → 0,334 à poids plats) est le comptage à
+   4 ddl, pas un pire ajustement.
+
+**Lecture mécanique** : le « biais de progression » du banc ressemble à un **SAUT de forme
+récent** (Coursières 2026 à +9 % au-dessus de tout ce que le modèle voit avant), pas à une
+droite — sous les poids de récence, les points lourds d'un pli récent sont tous à ~6 mois
+(l'axe temporel effectif s'effondre, β3 sans support, le ridge refuse à raison d'inventer une
+pente) ; et même l'axe complet ne porte pas de droite. Un terme linéaire NE PEUT PAS fermer
+un saut. La 3ᵉ hypothèse de la note du registre — **ancrage de la calibration sur l'enveloppe
+COURANTE** (mécanisme à saut, pas à pente) — devient la piste prioritaire du chantier
+progression ; elle n'est PAS implémentée ici (conception à part entière).
+
+**Portée honnête** : Crasse est un cas de DEV et la LOO du fixture n'est PAS le walk-forward
+du banc (coupures veille-de-course) — l'infirmation vaut pour ce fixture ; le flag reste
+câblé (défaut off) précisément pour l'A/B walk-forward réel chez Valentin, seul décisionnel
+(règle jauge, §9.9) :
+
+```
+# chez Valentin — A/B walk-forward par athlète (config candidate = défaut + trend_term=ridge)
+TWIN_CONFIG_PATH=<candidat.json> PYTHONPATH=src python -m tools.backtest _seed/manifest-<x>.json --dry-run
+```
+
+Rollback : `trend_term="off"` (défaut inchangé — le flag ON n'est le défaut nulle part).
