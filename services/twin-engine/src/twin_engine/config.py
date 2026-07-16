@@ -178,6 +178,18 @@ class CalibrationParams:
     # cas de référence (son β2 libre ≈ le prior, qu'il définit). Rollback : ``free``.
     terrain_term: str = "prior_shrunk"                   # {free, none, prior_shrunk}
     terrain_shrink_lambda: float = 50.0                  # force du ridge (n. de pseudo-obs vers le prior)
+    # --- terme de tendance temporelle β3 (P1b — biais de progression, DIAGNOSTIC §9.13) -----
+    # Le registre mesure un central systématiquement TROP LENT sur athlète en progression
+    # (+16,7/+8,4/+5,1 % chez Crasse) : les anciennes courses ancrent le niveau passé.
+    # ``off`` (défaut) : comportement actuel. ``ridge`` : la régression gagne un terme
+    # β3·(années relatives au dernier vrai ultra), ridgé vers 0 (prior « pas de tendance »,
+    # force = pseudo-obs, même mécanique que terrain_shrink_lambda). La prédiction sert la
+    # forme PROJETÉE à la date du dernier vrai ultra (β3 n'est jamais extrapolé au-delà —
+    # prudence) ; la LOO projette chaque pli à SA propre date (traitement identique,
+    # predict.leave_one_out). Exige tous les ultras datés et ≥ 2 dates distinctes, sinon
+    # no-op signalé. Ne touche pas les replis blend/vc_e.
+    trend_term: str = "off"                              # {off, ridge}
+    trend_ridge_lambda: float = 10.0                     # force du ridge de β3 vers 0
     # repli « peu d'ultras » (twin-theory §3). Prior population (β2) = β2 du cas de référence,
     # RECAPTURÉ le 2026-07-02 sur l'échelle D+ « distance 150 m » (C1) — l'ancien −0.0148
     # datait de l'échelle 5 s (rapport ×1,149 = exactement l'écart d'échelle mesuré).

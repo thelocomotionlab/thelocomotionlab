@@ -70,6 +70,12 @@ class UltraCalibration:
     # filtre de maximalité (§4.1) : mode appliqué + poids de maximalité seul (pour transparence/rapport)
     maximality_mode: str = "off"
     maximality_weights: tuple[float, ...] | None = None
+    # terme de tendance temporelle (P1b, §9.13) : β3 ajusté (km/h par an, ridgé vers 0) quand
+    # ``calibration.trend_term=ridge`` et l'axe temporel est établissable — None sinon. La
+    # prédiction servie est PROJETÉE à tendance nulle (date du dernier vrai ultra) : β3 ne
+    # figure donc pas dans ``beta``, il est stocké ici pour transparence et pour que la LOO
+    # sache que le terme était actif (traitement identique par pli).
+    trend_kmh_per_year: float | None = None
 
     @property
     def n_genuine(self) -> int:
@@ -109,6 +115,8 @@ class UltraCalibration:
             "maximality_mode": self.maximality_mode,
             "sigma_kmh": round(self.sigma_kmh, 3),
             "beta": None if self.beta is None else [round(b, 5) for b in self.beta],
+            "trend_kmh_per_year": (None if self.trend_kmh_per_year is None
+                                   else round(self.trend_kmh_per_year, 4)),
             "notes": self.notes,
             "genuine": [g.to_dict() for g in self.genuine],
         }
@@ -196,6 +204,42 @@ def recency_weights(genuine: list[GenuineUltra], cfg: Config) -> np.ndarray:
         if d is None:
             w[i] = fill
     return w
+
+
+def trend_axis_years(genuine: list[GenuineUltra]) -> np.ndarray | None:
+    """Axe temporel du terme de tendance (P1b) : années SIGNÉES relatives au plus récent
+    vrai ultra — négatives dans le passé, 0 à la référence (année = 365,25 j).
+
+    Rend ``None`` (tendance non identifiable → pas de colonne, no-op) si un ultra n'est
+    pas daté ou s'il y a moins de deux dates DISTINCTES : on n'ajuste jamais une tendance
+    sur un axe temporel qu'on ne peut pas établir — contrairement à la récence (qui peut
+    remplir prudemment les non-datés), une date inventée ici fabriquerait une pente.
+
+    Le décalage d'origine est sans effet sur β3 (absorbé par β0) : la LOO re-référence le
+    même axe à la date de chaque pli par simple soustraction (predict.leave_one_out)."""
+    if not genuine:
+        return None
+    from datetime import date as _date
+
+    parsed: list[_date] = []
+    for g in genuine:
+        if not g.date:
+            return None
+        try:
+            parsed.append(_date.fromisoformat(g.date))
+        except ValueError:
+            return None
+    if len(set(parsed)) < 2:
+        return None
+    ref = max(parsed)
+    return np.array([-(ref - d).days / 365.25 for d in parsed])
+
+
+def _trend_axis(genuine: list[GenuineUltra], cfg: Config | None) -> np.ndarray | None:
+    """Axe temporel SEULEMENT si le flag ``calibration.trend_term=ridge`` est actif."""
+    if cfg is None or cfg.calibration.trend_term != "ridge":
+        return None
+    return trend_axis_years(genuine)
 
 
 def _effective_n(weights: np.ndarray) -> float:
@@ -293,37 +337,62 @@ def maximality_weights(
 
 
 def _regression_beta(
-    h: np.ndarray, v: np.ndarray, dpk: np.ndarray, weights: np.ndarray, cfg: Config | None
+    h: np.ndarray, v: np.ndarray, dpk: np.ndarray, weights: np.ndarray, cfg: Config | None,
+    trend_years: np.ndarray | None = None,
 ) -> np.ndarray:
-    """β pondéré de ``v ~ 1 + ln(T) + β2·D+/km`` selon le mode de terrain (§4.2).
+    """β pondéré de ``v ~ 1 + ln(T) + β2·D+/km [+ β3·années]`` selon le mode de terrain (§4.2).
 
     * ``free`` : β2 libre (défaut historique, jusqu'au 2026-07-03).
     * ``none`` : β2 = 0 (la vga est **déjà** ajustée à la pente → pas de double-comptage).
     * ``prior_shrunk`` (défaut) : ridge de β2 vers le prior population via une pseudo-observation
       pondérée ``λ`` (atténue les points de levier terrain, ex. un ultra à D+/km extrême).
 
+    ``trend_years`` non nul (P1b, §9.13) ajoute la colonne temporelle : β3 (km/h par an) est
+    ridgé vers 0 (prior « pas de tendance », ``trend_ridge_lambda``, même mécanique de
+    pseudo-observation que le terrain). Le vecteur rendu a alors 4 composantes — la prédiction
+    servie n'utilise que les 3 premières (projection à tendance nulle). L'appelant fournit un
+    axe déjà gâté par le flag (``_trend_axis``) ; ``None`` ⇒ comportement actuel à l'identique.
+
     ``cfg`` absent ⇒ ``free`` (rétro-compatibilité du golden)."""
     term = cfg.calibration.terrain_term if cfg is not None else "free"
     lt = np.log(h)
     sw = np.sqrt(np.asarray(weights, dtype=float))
-    if term == "none":
-        X = np.vstack([np.ones_like(h), lt]).T
-        b, *_ = np.linalg.lstsq(X * sw[:, None], v * sw, rcond=None)
-        return np.array([float(b[0]), float(b[1]), 0.0])
-    X = np.vstack([np.ones_like(h), lt, dpk]).T
+    cols = ([np.ones_like(h), lt] if term == "none"
+            else [np.ones_like(h), lt, dpk])
+    if trend_years is not None:
+        cols.append(np.asarray(trend_years, dtype=float))
+    X = np.vstack(cols).T
     Xw = X * sw[:, None]
     yw = v * sw
+    ridge_rows: list[np.ndarray] = []
+    ridge_targets: list[float] = []
     if term == "prior_shrunk":
         prior = cfg.calibration.default_dplus_penalty_kmh_per_dpkm
         lam = math.sqrt(max(cfg.calibration.terrain_shrink_lambda, 0.0))
-        Xw = np.vstack([Xw, np.array([0.0, 0.0, lam])])
-        yw = np.concatenate([yw, np.array([lam * prior])])
+        row = np.zeros(X.shape[1])
+        row[2] = lam
+        ridge_rows.append(row)
+        ridge_targets.append(lam * prior)
+    if trend_years is not None:
+        lam_t = math.sqrt(max(cfg.calibration.trend_ridge_lambda, 0.0))
+        row = np.zeros(X.shape[1])
+        row[-1] = lam_t
+        ridge_rows.append(row)
+        ridge_targets.append(0.0)
+    if ridge_rows:
+        Xw = np.vstack([Xw, np.vstack(ridge_rows)])
+        yw = np.concatenate([yw, np.asarray(ridge_targets)])
     b, *_ = np.linalg.lstsq(Xw, yw, rcond=None)
-    return np.asarray(b, dtype=float)
+    b = np.asarray(b, dtype=float)
+    if term == "none":
+        # réinsère β2 = 0 pour conserver la forme (β0, β1, β2[, β3])
+        b = np.concatenate([b[:2], [0.0], b[2:]])
+    return b
 
 
 def _beta_covariance(
-    genuine: list[GenuineUltra], weights: np.ndarray, sigma: float, cfg: Config | None
+    genuine: list[GenuineUltra], weights: np.ndarray, sigma: float, cfg: Config | None,
+    trend_years: np.ndarray | None = None,
 ) -> np.ndarray:
     """Covariance des coefficients : σ²(XᵀWX)⁻¹ (3×3), cohérente avec le mode de terrain.
 
@@ -333,37 +402,61 @@ def _beta_covariance(
 
     * ``none`` : β2 fixé à 0 → bloc 2×2 (β0, β1), ligne/colonne β2 nulles ;
     * ``prior_shrunk`` : la pseudo-observation ridge entre dans XᵀWX (comme dans le fit) ;
+    * ``trend_years`` non nul (P1b) : la colonne temporelle et SA pseudo-observation ridge
+      entrent dans XᵀWX (comme dans le fit), puis on rend le BLOC MARGINAL des coefficients
+      servis — exact au point servi, car la prédiction est projetée à tendance nulle
+      (x₀ = [1, ln T, D+/km, 0] ⇒ Var = bloc 3×3 marginal, l'incertitude de β3 gonflant
+      celle de β0 via leur covariance) ;
     * ``pinv`` (pas ``inv``) : design mal conditionné → covariance large, jamais NaN.
     """
     h = np.array([g.hours for g in genuine])
     dpk = np.array([g.dplus_per_km for g in genuine])
     sw = np.sqrt(np.asarray(weights, dtype=float))
     term = cfg.calibration.terrain_term if cfg is not None else "free"
-    if term == "none":
-        X = np.vstack([np.ones_like(h), np.log(h)]).T * sw[:, None]
-        cov = np.zeros((3, 3))
-        cov[:2, :2] = sigma**2 * np.linalg.pinv(X.T @ X)
-        return cov
-    X = np.vstack([np.ones_like(h), np.log(h), dpk]).T * sw[:, None]
+    cols = ([np.ones_like(h), np.log(h)] if term == "none"
+            else [np.ones_like(h), np.log(h), dpk])
+    n_base = len(cols)  # nb de coefficients SERVIS présents dans le design (2 ou 3)
+    if trend_years is not None:
+        cols.append(np.asarray(trend_years, dtype=float))
+    X = np.vstack(cols).T * sw[:, None]
+    ridge_rows: list[np.ndarray] = []
     if term == "prior_shrunk":
         lam = math.sqrt(max(cfg.calibration.terrain_shrink_lambda, 0.0))
-        X = np.vstack([X, np.array([[0.0, 0.0, lam]])])
-    return sigma**2 * np.linalg.pinv(X.T @ X)
+        row = np.zeros(X.shape[1])
+        row[2] = lam
+        ridge_rows.append(row)
+    if trend_years is not None:
+        lam_t = math.sqrt(max(cfg.calibration.trend_ridge_lambda, 0.0))
+        row = np.zeros(X.shape[1])
+        row[-1] = lam_t
+        ridge_rows.append(row)
+    if ridge_rows:
+        X = np.vstack([X, np.vstack(ridge_rows)])
+    full = sigma**2 * np.linalg.pinv(X.T @ X)
+    cov = np.zeros((3, 3))
+    cov[:n_base, :n_base] = full[:n_base, :n_base]
+    return cov
 
 
 def _fit_regression(
-    genuine: list[GenuineUltra], weights: np.ndarray | None = None, cfg: Config | None = None
+    genuine: list[GenuineUltra], weights: np.ndarray | None = None, cfg: Config | None = None,
+    trend_years: np.ndarray | None = None,
 ):
-    """β = lstsq **pondéré** (v ~ 1 + ln(T) + D+/km). Renvoie (beta, residuals).
+    """β = lstsq **pondéré** (v ~ 1 + ln(T) + D+/km [+ années]). Renvoie (beta, residuals).
 
     Poids ``None`` ou égaux ⇒ moindres carrés ordinaires (le golden reste identique). Le mode de
-    terrain (``cfg.calibration.terrain_term``) est appliqué ici ET dans la LOO à l'identique."""
+    terrain (``cfg.calibration.terrain_term``) et le terme de tendance (P1b) sont appliqués ici
+    ET dans la LOO à l'identique. Les résidus sont ceux du design COMPLET (tendance incluse
+    quand elle est active) : c'est le bruit autour du modèle réellement ajusté qui nourrit σ."""
     h = np.array([g.hours for g in genuine])
     v = np.array([g.vga_kmh for g in genuine])
     dpk = np.array([g.dplus_per_km for g in genuine])
     w = np.ones_like(h) if weights is None else np.asarray(weights, dtype=float)
-    beta = _regression_beta(h, v, dpk, w, cfg)
-    X = np.vstack([np.ones_like(h), np.log(h), dpk]).T
+    beta = _regression_beta(h, v, dpk, w, cfg, trend_years)
+    cols = [np.ones_like(h), np.log(h), dpk]
+    if beta.shape[0] == 4:
+        cols.append(np.asarray(trend_years, dtype=float))
+    X = np.vstack(cols).T
     resid = v - X @ beta
     return beta, resid
 
@@ -411,19 +504,37 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
     # sûre d'elle sur trop peu d'ultras effectifs (surconfiance) : dans ce cas on bascule
     # dans le repli « peu d'ultras » (incertitude élargie) ci-dessous.
     if n >= c.min_ultras_regression and n_eff >= c.min_ultras_regression:
-        beta, resid = _fit_regression(genuine, weights, cfg)
+        # Terme de tendance (P1b, §9.13) : axe temporel gâté par le flag ; None si un ultra
+        # n'est pas daté ou dates non distinctes (no-op signalé — jamais de pente inventée).
+        t_years = _trend_axis(genuine, cfg)
+        if c.trend_term == "ridge" and t_years is None:
+            notes.append(
+                "Terme de tendance demandé mais axe temporel non établissable "
+                "(ultra non daté ou dates identiques) : régression sans tendance."
+            )
+        beta, resid = _fit_regression(genuine, weights, cfg, t_years)
+        trend = float(beta[3]) if beta.shape[0] == 4 else None
         # σ pondérée : variance résiduelle pondérée corrigée par le nb effectif de degrés de
-        # liberté. Se réduit EXACTEMENT à √(Σr²/(n−3)) quand les poids sont égaux (golden intact).
+        # liberté. Se réduit EXACTEMENT à √(Σr²/(n−3)) quand les poids sont égaux (golden
+        # intact). Tendance active ⇒ 4 paramètres ajustés (comptés pleins bien que ridgés :
+        # σ légèrement conservatrice, jamais optimiste).
         sw = float(weights.sum())
         wmse = float(np.sum(weights * resid**2) / sw) if sw > 0 else 0.0
-        dof_eff = max(n_eff - 3.0, 1.0)
+        n_params = 4.0 if trend is not None else 3.0
+        dof_eff = max(n_eff - n_params, 1.0)
         sigma = float(np.sqrt(wmse * n_eff / dof_eff))
         sigma = max(sigma, c.regression_min_sigma_kmh)
-        beta_cov = _beta_covariance(genuine, weights, sigma, cfg)
+        beta_cov = _beta_covariance(genuine, weights, sigma, cfg, t_years)
         notes.append(
             f"Régression personnelle pondérée par récence sur {n} vrais ultras "
             f"(≈ {n_eff:.1f} effectifs, demi-vie {c.recency_halflife_days:.0f} j)."
         )
+        if trend is not None:
+            notes.append(
+                f"Tendance de forme (§9.13) : {trend:+.2f} km/h par an "
+                f"(ridge λ={c.trend_ridge_lambda:g}), prédiction projetée à la date du "
+                "dernier vrai ultra."
+            )
         return UltraCalibration(
             regime=REGIME_REGRESSION,
             genuine=genuine,
@@ -436,6 +547,7 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
             recency_halflife_days=c.recency_halflife_days,
             maximality_mode=c.maximality_mode,
             maximality_weights=max_w_tuple,
+            trend_kmh_per_year=trend,
         )
 
     # ---------- replis VC+E (nécessitent l'enveloppe d'endurance) ----------
@@ -524,6 +636,7 @@ __all__ = [
     "select_genuine_ultras",
     "maximality_weights",
     "recency_weights",
+    "trend_axis_years",
     "build_calibration",
     "REGIME_REGRESSION",
     "REGIME_BLEND",

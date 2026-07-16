@@ -202,6 +202,42 @@ def test_recency_weighting_reduces_loo_and_tracks_recent_form():
     assert pred_w.finish_hours < pred_u.finish_hours
 
 
+def test_loo_applies_trend_at_each_fold_date():
+    """P1b (§9.13) : chaque pli LOO ré-ajuste le terme de tendance, l'axe re-référencé à la
+    date de l'ultra RETIRÉ (= projeté au jour de « sa » course). Sur une dérive exactement
+    linéaire dans le temps (0,15 km/h / 135 j), l'erreur hors-échantillon devient quasi
+    nulle avec la tendance ; sans elle, le pli le plus récent est prédit trop lent (le
+    biais de progression mesuré au registre)."""
+    twin = _twin(_nonstationary_ultras())
+    base = replace(CFG, calibration=replace(CFG.calibration, terrain_term="free",
+                                            recency_halflife_days=0.0))
+    cfg_on = replace(base, calibration=replace(base.calibration, trend_term="ridge",
+                                               trend_ridge_lambda=1e-6))
+    cal_on = build_calibration(twin, cfg_on)
+    cal_off = build_calibration(twin, base)
+    slope = 0.15 * 365.25 / 135.0                 # km/h par an, exacte par construction
+    assert cal_on.trend_kmh_per_year is not None
+    assert abs(cal_on.trend_kmh_per_year - slope) < 0.02
+    assert cal_off.trend_kmh_per_year is None
+
+    cv_on = leave_one_out(cal_on, cfg_on)
+    cv_off = leave_one_out(cal_off, base)
+    assert cv_on is not None and cv_off is not None and cv_on.n == cv_off.n == 9
+    assert cv_on.mae_pct < 0.5 < cv_off.mae_pct   # la tendance ferme le biais hors-échantillon
+    # sans tendance, l'ultra le plus RÉCENT (dernier de la liste) est prédit trop lent (> 0) ;
+    # avec, l'erreur de ce pli s'annule — c'est la projection à la date du pli qui la ferme
+    assert cv_off.errors_pct[-1] > 1.0
+    assert abs(cv_on.errors_pct[-1]) < 0.5
+    # le central se rapproche de la forme récente : plus rapide, temps plus court. Cible en
+    # INTERPOLATION de durée (~16-18 h, dans l'enveloppe des ultras) : hors enveloppe, la
+    # dérive temporelle se confond avec ln T (durées corrélées aux dates dans ce jeu) et la
+    # comparaison ne mesurerait plus la tendance mais la fragilité d'extrapolation (cf. P4).
+    pred_on = predict_finish(130.0, 50.0, twin, cal_on, cfg_on)
+    pred_off = predict_finish(130.0, 50.0, twin, cal_off, base)
+    assert pred_on.v_kmh > pred_off.v_kmh
+    assert pred_on.finish_hours < pred_off.finish_hours
+
+
 def test_equal_dates_weighting_is_neutral():
     """Dates identiques → poids tous égaux → régression == non pondérée (blinde le golden)."""
     twin = _twin([_ultra(h, _plane(h, dpk), dpk) for h, dpk in [(12, 50), (20, 55), (15, 45), (24, 53)]])

@@ -45,6 +45,11 @@ def test_defaults_from_shipped_json():
     assert cfg.twin.despike_rescue_min_bursts == 3
     # §9.11 (a) : D± d'un canal sauvé récupérés en base temps (dpk=0 faussait l'ancre blend)
     assert cfg.twin.despike_rescue_dplus_basis == "time"
+    # §9.13 (P1b) : terme de tendance temporelle CÂBLÉ mais OFF par défaut (biais de
+    # progression mesuré au registre — l'activation est une décision de généralisation,
+    # suspendue à la jauge). Rollback : off.
+    assert cfg.calibration.trend_term == "off"
+    assert cfg.calibration.trend_ridge_lambda == 10.0
 
 
 def test_env_overrides_data_dir(monkeypatch, tmp_path):

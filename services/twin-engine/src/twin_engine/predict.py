@@ -14,7 +14,12 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from .calibration import REGIME_REGRESSION, UltraCalibration, _regression_beta
+from .calibration import (
+    REGIME_REGRESSION,
+    UltraCalibration,
+    _regression_beta,
+    trend_axis_years,
+)
 from .config import Config
 from .twin.model import Twin
 
@@ -184,6 +189,14 @@ def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation
     Sb = np.asarray(calibration.beta_cov, dtype=float) if calibration.beta_cov is not None else None
     sig = calibration.sigma_kmh
 
+    # Terme de tendance (P1b, §9.13) appliqué À L'IDENTIQUE : quand le modèle servi porte
+    # une tendance, chaque pli la ré-ajuste, l'axe temporel re-référencé à la date de l'ultra
+    # RETIRÉ (soustraire years[i] décale l'origine sans changer β3) — le pli prédit donc la
+    # forme projetée au jour de SA course, comme le fit servi la projette au dernier ultra.
+    years = (trend_axis_years(g)
+             if cfg.calibration.trend_term == "ridge" and calibration.trend_kmh_per_year is not None
+             else None)
+
     def _rel_sd(i: int) -> float:
         if Sb is None or V[i] <= 0:
             return float("nan")
@@ -197,8 +210,11 @@ def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation
     extrap: list[bool] = []
     for i in range(n):
         keep = [j for j in range(n) if j != i]
-        # β du pli : MÊME pondération (récence × maximalité) ET MÊME mode de terrain que le fit servi
-        beta = _regression_beta(H[keep], V[keep], dpk[keep], w[keep], cfg)
+        # β du pli : MÊME pondération (récence × maximalité), MÊME mode de terrain et MÊME
+        # terme de tendance que le fit servi ; vfunc n'utilise que (β0, β1, β2) = projection
+        # à tendance nulle, c.-à-d. à la date de l'ultra retiré.
+        ty = None if years is None else years[keep] - years[i]
+        beta = _regression_beta(H[keep], V[keep], dpk[keep], w[keep], cfg, ty)
         vfunc = lambda T, d, b=beta: b[0] + b[1] * np.log(T) + b[2] * d
         tp = _solve_fixed_point(deq_each[i], dpk[i], vfunc, cfg)
         if tp is None:

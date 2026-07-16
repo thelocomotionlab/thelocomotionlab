@@ -62,6 +62,8 @@
     "maximality_self_quantile": 0.90,
     "terrain_term": "prior_shrunk",
     "terrain_shrink_lambda": 50.0,
+    "trend_term": "off",
+    "trend_ridge_lambda": 10.0,
     "default_dplus_penalty_kmh_per_dpkm": -0.0170,
     "regression_min_sigma_kmh": 0.20,
     "blend_sigma_kmh": 0.45,
