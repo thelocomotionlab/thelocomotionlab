@@ -81,6 +81,61 @@ def _distance_smoothed_altitude(dmono: np.ndarray, alt_f: np.ndarray, window_m: 
     return (cs[hi] - cs[lo]) / np.maximum(hi - lo, 1)
 
 
+def despike_stats(act: CanonicalActivity, cfg: Config) -> dict:
+    """Variables de décision du sauvetage §9.11 pour UNE activité — source unique.
+
+    Utilisée par le moteur (:func:`_adjusted_distance`) pour DÉCIDER, et par l'outillage
+    (``tools/diag_archive``) pour AFFICHER pourquoi un sauvetage a eu lieu ou a été refusé :
+    on calibre les seuils sur des mesures, pas sur des suppositions. Clés :
+    ``raw_km``/``despiked_km``/``kept_ratio``, ``n_bursts`` (fronts montants écrêtés),
+    ``clipped_s`` (secondes écrêtées), ``max_block_loss_share`` (part de la perte portée
+    par le plus gros bloc contigu — une téléportation ≈ 1.0), ``rescued``, ``refus``
+    (raison humaine si le sauvetage était envisageable mais refusé, sinon None)."""
+    tw = cfg.twin
+    dmono = act.dist_m
+    n = act.n
+    dd_raw = np.diff(dmono)
+    dd = np.clip(dd_raw, 0.0, tw.v_max_ms)
+    raw_total = float(dmono[-1] - dmono[0]) if n else 0.0
+    despiked = float(dd.sum())
+    dur_s = float(act.t[-1]) if n else 0.0
+
+    clip_mask = dd_raw > tw.v_max_ms
+    edges = np.diff(clip_mask.astype(np.int8), prepend=0)
+    starts = np.flatnonzero(edges == 1)
+    ends = np.flatnonzero(edges == -1)
+    if ends.size < starts.size:                      # masque se terminant écrêté
+        ends = np.append(ends, dd_raw.size)
+    loss = np.where(clip_mask, dd_raw - tw.v_max_ms, 0.0)
+    total_loss = float(loss.sum())
+    max_block = max((float(loss[a:b].sum()) for a, b in zip(starts, ends)), default=0.0)
+
+    kept = despiked / raw_total if raw_total > 0 else 1.0
+    raw_kmh = raw_total / dur_s * 3.6 if dur_s > 0 else 0.0
+    rescued, refus = False, None
+    if tw.despike_rescue_floor <= 0 or raw_total <= 0 or kept >= tw.despike_rescue_floor:
+        pass                                          # rien à sauver (ou flag off)
+    elif dur_s < tw.despike_rescue_min_hours * 3600:
+        refus = f"durée < {tw.despike_rescue_min_hours:g} h"
+    elif raw_kmh > tw.despike_rescue_max_raw_kmh:
+        refus = (f"total brut {raw_kmh:.1f} km/h > {tw.despike_rescue_max_raw_kmh:g} "
+                 "(pas de la course)")
+    elif int(starts.size) < tw.despike_rescue_min_bursts:
+        refus = f"{starts.size} bloc(s) écrêté(s) < {tw.despike_rescue_min_bursts}"
+    else:
+        rescued = True
+    return {
+        "raw_km": raw_total / 1000.0,
+        "despiked_km": despiked / 1000.0,
+        "kept_ratio": kept,
+        "n_bursts": int(starts.size),
+        "clipped_s": int(np.count_nonzero(clip_mask)),
+        "max_block_loss_share": (max_block / total_loss) if total_loss > 0 else 0.0,
+        "rescued": rescued,
+        "refus": refus,
+    }
+
+
 def _adjusted_distance(act: CanonicalActivity, cfg: Config):
     """Distance ajustée à la pente (cumulée) + distance brute dé-spikée + altitude lissée."""
     dmono = act.dist_m  # déjà monotone (schéma canonique)
@@ -96,30 +151,18 @@ def _adjusted_distance(act: CanonicalActivity, cfg: Config):
     # rafales (paquets de distance), pas la distance qui est fausse. Repli : distance brute
     # non écrêtée ; l'appelant EXCLUT alors l'activité de la courbe record (les fenêtres de
     # vitesse par-seconde d'un canal haché n'ont plus de sens), le résumé est conservé.
-    rescued = False
-    tw = cfg.twin
-    raw_total = float(dmono[-1] - dmono[0]) if n else 0.0
-    dur_s = float(act.t[-1]) if n else 0.0
-    if (tw.despike_rescue_floor > 0 and dur_s >= tw.despike_rescue_min_hours * 3600
-            and raw_total > 0 and draw[-1] / raw_total < tw.despike_rescue_floor
-            and raw_total / dur_s * 3.6 <= tw.despike_rescue_max_raw_kmh):
-        # discriminant rafales / téléportation : une montre en pause pendant un déplacement
-        # (voiture…) produit UN bloc écrêté contigu — même interpolé sur un trou d'horodatage —
-        # et sa distance est FAUSSE ; un canal en rafales écrête des centaines de fronts
-        # DISTINCTS. On ne sauve que le second (fronts montants ≥ min_bursts).
-        clip_mask = dd_raw > tw.v_max_ms
-        n_bursts = int(np.count_nonzero(np.diff(clip_mask.astype(np.int8), prepend=0) == 1))
-        if n_bursts >= tw.despike_rescue_min_bursts:
-            rescued = True
-            clipped_total = float(draw[-1])
-            dd = dd_raw
-            draw = np.concatenate([[0.0], np.cumsum(dd)])
-            logger.info(
-                "canal distance haché sauvé (§9.11, %s) : brut %.1f km conservé "
-                "(écrêté %.1f km, %d rafales) — hors courbe record",
-                act.start_time.date().isoformat() if act.start_time else "date inconnue",
-                raw_total / 1000, clipped_total / 1000, n_bursts,
-            )
+    # Discriminant téléportation (min_bursts) et décision : voir :func:`despike_stats`.
+    stats = despike_stats(act, cfg)
+    rescued = bool(stats["rescued"])
+    if rescued:
+        dd = dd_raw
+        draw = np.concatenate([[0.0], np.cumsum(dd)])
+        logger.info(
+            "canal distance haché sauvé (§9.11, %s) : brut %.1f km conservé "
+            "(écrêté %.1f km, %d bloc(s) écrêté(s)) — hors courbe record",
+            act.start_time.date().isoformat() if act.start_time else "date inconnue",
+            stats["raw_km"], stats["despiked_km"], stats["n_bursts"],
+        )
 
     # altitude : remplissage médian si trous, léger lissage (règle fixe : alt_smooth_s).
     # Sans aucun point d'altitude (activité écartée en amont de la courbe record), on évite
@@ -357,4 +400,5 @@ def build_record_curve(
     )
 
 
-__all__ = ["ActivitySummary", "RecordPoint", "RecordCurve", "process_activity", "build_record_curve"]
+__all__ = ["ActivitySummary", "RecordPoint", "RecordCurve", "despike_stats",
+           "process_activity", "build_record_curve"]

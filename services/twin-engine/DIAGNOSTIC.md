@@ -598,3 +598,21 @@ Vercors) — le plancher a donc eu RAISON (dormir casse la relation T→v du mod
 écoulé). Le chantier « plancher dépendant de la durée » redescend au backlog, lié à
 `speed_basis=moving` (qui neutraliserait le sommeil) et à surveiller au premier vrai
 30 h+ couru (l'Échappée Belle de Crasse : vga attendue ~6,2, au-dessus du plancher — OK).
+
+**CORRECTION (2026-07-16, retour terrain immédiat) : `min_bursts` 20 → 3.** Le rerun de
+l'audit chez Valentin après merge montre que le sauvetage **n'a PAS tiré** sur la Saintélyon
+(toujours vga 2,99) : les trois premiers verrous passent manifestement (perte 60 %, 10,9 h,
+6,6 km/h) — par élimination, le fichier compte **moins de 20 blocs écrêtés distincts**. Mon
+hypothèse « rafales par-seconde nombreuses » était une supposition, pas une mesure : la
+casse réelle peut être en BLOCS de l'échelle de la minute (horodatage partiellement gelé
+puis rattrapé — fichier converti par IA), que l'interpolation 1 Hz fusionne en quelques
+plages contiguës. Le seuil calibré sur la supposition refusait le cas réel qu'il devait
+servir. Recalibrage : le discriminant ne refuse plus QUE la signature téléportation
+(1-2 blocs contigus = montre en pause pendant un déplacement, test : 2 × 10 km de voiture
+→ refusé) ; et pour ne plus jamais calibrer à l'aveugle, `despike_stats()` (record.py)
+devient la source unique de décision et `tools/diag_archive` **affiche les variables
+mesurées** (nb de blocs, secondes écrêtées, part de la perte du plus gros bloc) sur tout
+canal suspect — sauvé ou refusé, avec la raison. Si le prochain rerun refuse encore, la
+sortie dira exactement pourquoi, et on tranchera sur chiffres. Dommage résiduel d'un faux
+sauvetage borné par construction : activité hors courbe record, résumé seulement — et il
+faudrait encore ≥ 10 h et vga ≥ 5,5 pour atteindre la régression ultra.

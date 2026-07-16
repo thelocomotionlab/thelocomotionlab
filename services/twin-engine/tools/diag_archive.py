@@ -23,7 +23,7 @@ from pathlib import Path
 from twin_engine.calibration import _basis_hours
 from twin_engine.config import load_config
 from twin_engine.ingest import iter_activities
-from twin_engine.twin.record import process_activity
+from twin_engine.twin.record import despike_stats, process_activity
 
 
 def _genuine_audit(act, cfg) -> str:
@@ -47,9 +47,19 @@ def _genuine_audit(act, cfg) -> str:
     detail = (f"brut {raw_km:.1f} km · dé-spiké {summary.dist_km:.1f} km · ga {summary.ga_km:.1f} km "
               f"· vga {vga:.2f} km/h · découplage "
               f"{'n/a (pas de FC)' if summary.decouple_pct is None else f'{summary.decouple_pct:.1f} %'}")
-    if summary.dist_km < 0.8 * raw_km > 0:
-        fails.append(f"⚠ canal distance suspect : l'écrêtage anti-spikes perd "
-                     f"{100 * (1 - summary.dist_km / raw_km):.0f} % de la distance brute")
+    # canal distance : variables de décision du sauvetage §9.11 (mesurées, pas supposées)
+    st = despike_stats(act, cfg)
+    if st["rescued"]:
+        detail += (f" · canal distance haché SAUVÉ §9.11 : distance brute conservée, hors "
+                   f"courbe record ({st['n_bursts']} blocs écrêtés ; l'écrêtage aurait gardé "
+                   f"{st['despiked_km']:.1f} km)")
+    elif st["kept_ratio"] < 0.8:
+        why = f" — sauvetage §9.11 REFUSÉ : {st['refus']}" if st["refus"] else ""
+        fails.append(
+            f"⚠ canal distance suspect : l'écrêtage anti-spikes perd "
+            f"{100 * (1 - st['kept_ratio']):.0f} % de la distance brute{why} "
+            f"[{st['n_bursts']} bloc(s) écrêté(s) · {st['clipped_s']} s écrêtées · plus gros "
+            f"bloc = {100 * st['max_block_loss_share']:.0f} % de la perte]")
     if fails:
         return f"ÉCARTÉ du filtre vrais ultras : {' ; '.join(fails)} ({detail})"
     return f"VRAI ULTRA retenu ({detail})"

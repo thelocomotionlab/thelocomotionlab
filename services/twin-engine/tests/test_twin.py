@@ -390,7 +390,7 @@ def test_despike_rescue_recovers_bursty_distance_channel():
 
     from twin_engine.config import load_config
     from twin_engine.ingest.canonical import CanonicalActivity
-    from twin_engine.twin.record import process_activity
+    from twin_engine.twin.record import despike_stats, process_activity
 
     CFG = load_config()
 
@@ -407,22 +407,29 @@ def test_despike_rescue_recovers_bursty_distance_channel():
     s, vga, vraw = process_activity(_bursty(5.0, 20.0), CFG)
     assert s.dist_km == pytest.approx(36.0, rel=0.02)          # distance brute conservée
     assert not np.isfinite(vga).any() and not np.isfinite(vraw).any()   # hors courbe record
+    st = despike_stats(_bursty(5.0, 20.0), CFG)
+    assert st["rescued"] and st["n_bursts"] > 1000              # rafales nombreuses et DISTINCTES
 
     # total brut IMPLAUSIBLE pour de la course (15 km/h sur 5 h) → pas de sauvetage
     s_fast, _, _ = process_activity(_bursty(5.0, 42.0), CFG)
     assert s_fast.dist_km == pytest.approx(75.6 * 7 / 42, rel=0.05)   # écrêté : 7 m gardés par rafale de 42
 
-    # TÉLÉPORTATION unique (montre en pause pendant 20 km de voiture) : total plausible
-    # (52,4 km / 6 h = 8,7 km/h), perte > 20 %… mais UN SEUL front écrêté → PAS de sauvetage
-    # (la distance brute est FAUSSE ici : l'écrêtage historique reste le bon comportement).
+    # TÉLÉPORTATIONS (montre en pause pendant 2 × 10 km de voiture) : total plausible
+    # (52,4 km / 6 h = 8,7 km/h), perte > 20 %… mais 2 blocs écrêtés < min_bursts → PAS de
+    # sauvetage (la distance brute est FAUSSE ici : l'écrêtage historique reste le bon
+    # comportement). C'est LA signature que min_bursts refuse — et la seule.
     n_tp = 6 * 3600
-    dist_tp = [1.5 * s + (20000.0 if s > n_tp // 2 else 0.0) for s in range(n_tp)]
+    dist_tp = [1.5 * s + 10000.0 * ((s > n_tp // 3) + (s > 2 * n_tp // 3)) for s in range(n_tp)]
     teleport = CanonicalActivity.from_samples(
         timestamps=list(range(n_tp)), dist_m=dist_tp, alt_m=[500.0] * n_tp,
         sport="running", source_format="fit", source_name="teleport",
     )
     s_tp, _, _ = process_activity(teleport, CFG)
-    assert s_tp.dist_km == pytest.approx(1.5 * n_tp / 1000, rel=0.02)   # écrêté : le bond saute
+    assert s_tp.dist_km == pytest.approx(1.5 * n_tp / 1000, rel=0.02)   # écrêté : les bonds sautent
+    st_tp = despike_stats(teleport, CFG)
+    assert not st_tp["rescued"] and st_tp["n_bursts"] == 2
+    assert "bloc" in st_tp["refus"]
+    assert st_tp["max_block_loss_share"] == pytest.approx(0.5, abs=0.05)
 
     # flag désactivé → ancien comportement (écrêté)
     cfg_off = replace(CFG, twin=replace(CFG.twin, despike_rescue_floor=0.0))

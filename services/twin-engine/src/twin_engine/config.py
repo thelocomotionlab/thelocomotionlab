@@ -117,11 +117,13 @@ class TwinParams:
     despike_rescue_floor: float = 0.8
     despike_rescue_min_hours: float = 4.0
     despike_rescue_max_raw_kmh: float = 12.0
-    # Discriminant rafales / téléportation : une montre mise en pause pendant un déplacement
-    # (voiture, télécabine) produit UN bloc écrêté contigu (même interpolé sur un trou
-    # d'horodatage) dont la distance est FAUSSE — la sauver gonflerait la calibration. Un
-    # canal en rafales écrête des centaines de fronts DISTINCTS. On exige min_bursts fronts.
-    despike_rescue_min_bursts: int = 20
+    # Discriminant téléportation : une montre mise en pause pendant un déplacement (voiture,
+    # télécabine) produit 1-2 blocs écrêtés contigus (même interpolés sur un trou
+    # d'horodatage) dont la distance est FAUSSE — la sauver gonflerait la calibration. On
+    # refuse UNIQUEMENT cette signature (< min_bursts blocs). Retour terrain (§9.11) : la
+    # casse réelle peut être en BLOCS de minutes, pas en rafales par-seconde — un seuil
+    # « nombreuses rafales » (20) refusait le cas réel qu'il devait servir.
+    despike_rescue_min_bursts: int = 3
 
 
 @dataclass(frozen=True)
