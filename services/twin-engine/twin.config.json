@@ -37,7 +37,9 @@
     "decouple_basis": "elapsed",
     "decouple_skip_start_s": 0,
     "dplus_basis": "distance_150m",
-    "dplus_smooth_window_m": 150.0
+    "dplus_smooth_window_m": 150.0,
+    "ga_plausibility_floor": 0.7,
+    "ga_plausibility_min_hours": 4.0
   },
 
   "calibration": {

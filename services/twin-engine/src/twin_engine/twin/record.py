@@ -120,6 +120,19 @@ def process_activity(act: CanonicalActivity, cfg: Config):
     tg = act.t
     n = act.n
 
+    # --- plausibilité du ratio ga/brut (§9.10) : une activité LONGUE dont l'équivalent
+    # plat s'effondre sous floor × distance brute est physiquement impossible (il faudrait
+    # descendre raide pendant des heures) — altitude corrompue. Repli : f=1 (l'équivalent
+    # plat redevient la distance brute), D± nuls, activité marquée sans altitude fiable.
+    # Symétrique du plafond f_cap (anti-bruit vers le haut) ; 0 = désactivé.
+    alt_unusable = False
+    tw = cfg.twin
+    if (act.has_altitude and tw.ga_plausibility_floor > 0 and n
+            and float(tg[-1]) >= tw.ga_plausibility_min_hours * 3600
+            and draw[-1] > 0 and dga[-1] / draw[-1] < tw.ga_plausibility_floor):
+        alt_unusable = True
+        dga = draw
+
     vga = np.full(len(durs), np.nan)
     vraw = np.full(len(durs), np.nan)
     for j, T in enumerate(durs):
@@ -136,6 +149,8 @@ def process_activity(act: CanonicalActivity, cfg: Config):
         da = np.diff(_distance_smoothed_altitude(act.dist_m, alt_f, cfg.twin.dplus_smooth_window_m))
     else:
         da = np.diff(alts)
+    if alt_unusable:
+        da = np.zeros(0)   # D± issus d'une altitude corrompue : on n'invente pas
     dur = float(tg[-1])
 
     # masque « en mouvement » sur les incréments de distance (partagé par moving_time et le
@@ -188,7 +203,7 @@ def process_activity(act: CanonicalActivity, cfg: Config):
         decouple_pct=None if decouple is None else round(decouple, 2),
         has_hr=has_hr,
         moving_time_s=moving_time_s,
-        has_altitude=act.has_altitude,
+        has_altitude=act.has_altitude and not alt_unusable,
     )
     return summary, vga, vraw
 

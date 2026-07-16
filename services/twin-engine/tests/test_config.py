@@ -34,6 +34,9 @@ def test_defaults_from_shipped_json():
     # fenêtre empirique groupée = plomberie prête, quantiles PAS ENCORE appris (jauge)
     assert cfg.sufficiency.domain_gate == "on"
     assert cfg.prediction.pooled_q50 is None and cfg.prediction.pooled_q80 is None
+    # §9.10 : garde-fou d'altitude corrompue (cas réel : course prise pour une rando lente)
+    assert cfg.twin.ga_plausibility_floor == 0.7
+    assert cfg.twin.ga_plausibility_min_hours == 4.0
 
 
 def test_env_overrides_data_dir(monkeypatch, tmp_path):

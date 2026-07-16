@@ -513,3 +513,37 @@ Défaut : None → repli percentiles MC. La bascule = renseigner deux nombres en
 athlètes RICHES en données (≥ 18 mois d'historique continu, ≥ 3 courses ≥ 10 h finies,
 FC présente) — un athlète pauvre (Rapace) ne produit que des refus, informatifs mais non
 décisionnels.
+
+### 9.10 Altitude corrompue : une course prise pour une rando lente (garde-fou ga/brut, ACTIVÉ)
+
+**Découverte (radiographie + audit, 2026-07-16, athlète Rapace).** Sa Saintélyon 2024
+(72 km, 10 h 56, FIT) était PRÉSENTE dans l'archive mais écartée du filtre « vrais ultras »
+pour **vga 2,99 km/h** alors que sa vitesse brute vaut 6,6 km/h. Ratio équivalent-plat/brut
+= 0,45 : physiquement impossible (il faudrait descendre à ~−10 % pendant 11 h — le minimum
+de Minetti est ~0,5 et une course n'est jamais une descente continue). L'altitude de CE
+fichier est corrompue (effondrement continu) → l'ajustement de pente a divisé son équivalent
+plat par deux → la course est passée sous `genuine_min_ga_kmh` et a disparu de la
+calibration. Le moteur plafonnait le facteur de pente vers le HAUT (`f_cap`, anti-bruit)
+mais rien ne le protégeait vers le bas.
+
+**Correctif : `twin.ga_plausibility_floor=0.7` / `ga_plausibility_min_hours=4.0` (ACTIVÉ,
+0 = rollback).** Toute activité ≥ 4 h dont l'équivalent plat < 0,7 × distance brute :
+altitude déclarée inutilisable → f=1 (équivalent plat = distance brute), D± mis à zéro (on
+n'invente pas un dénivelé depuis une altitude fausse), `has_altitude=False` (exclue de la
+courbe record comme les activités sans altitude). Une descente raide COURTE (< 4 h) reste
+comptée normalement. Sans effet sur données saines (ratios réels ≈ 1,0-1,3) : golden
+déterministe inchangé (199 tests), golden réel à re-vérifier par acquit.
+
+**Effet attendu chez les athlètes du banc** : la Saintélyon 2024 de Rapace redevient un
+vrai ultra (vga 6,6) à toutes les coupures postérieures — ses régimes/backtests changent ;
+le GRF 2024 de Val (écarté sans explication au n_gen=1 de novembre 2024) est soupçonné du
+même mal — l'audit `tools/diag_archive` le dira. Relancer les backtests (idempotent) et
+recommitter le registre.
+
+**Au passage, l'audit a aussi montré** : (a) le 83 km GPX du 15/11/2024 de Rapace reste
+invisible (sport « inconnu » — politique `running_only` sur GPX sans étiquette : décision à
+prendre, cf. backlog) ; (b) tous les ultras de Rapace sont SANS FC → découplage et
+garde-fou FC de maximalité inertes pour lui (le filtre travaille au seul ratio r) ; (c) sa
+sortie longue du 14/03/2026 (12 h 42, vga 6,28) est retenue comme vrai ultra — c'est le
+CAS D'ÉCOLE du filtre de maximalité : une sortie d'entraînement sous le plafond sera
+down-pondérée par r, pas par une exclusion binaire.

@@ -344,3 +344,39 @@ def test_fast_contaminant_does_not_corrupt_endurance_exponent():
     twin_dirty = build_twin(clean + [_run(6.4, 9000)], CFG)
     assert twin_dirty.endurance_E is None or twin_dirty.endurance_E >= 1.0
     assert abs(twin_dirty.endurance_E - twin_clean.endurance_E) < 0.05
+
+
+def test_ga_plausibility_guard_recovers_corrupted_altitude():
+    """§9.10 : une activité LONGUE dont l'équivalent plat s'effondre (altitude corrompue,
+    ex. FIT à −10 % de pente continue pendant 5 h) est récupérée en f=1 — vga = vitesse
+    brute, D± nuls, altitude marquée non fiable. Courte : intacte. Flag à 0 : intact."""
+    from dataclasses import replace
+
+    from twin_engine.config import load_config
+    from twin_engine.ingest.canonical import CanonicalActivity
+    from twin_engine.twin.record import process_activity
+
+    CFG = load_config()
+
+    def _falling(hours):
+        n = int(hours * 3600)
+        t = list(range(0, n, 10))
+        dist = [1.9 * s for s in t]                       # 6,84 km/h brut
+        alt = [4000.0 - 0.10 * 1.9 * s for s in t]        # −10 % en continu (impossible longtemps)
+        return CanonicalActivity.from_samples(
+            timestamps=t, dist_m=dist, speed_ms=[1.9] * len(t), alt_m=alt,
+            sport="running", source_format="fit", source_name="corrompue",
+        )
+
+    s5, _, _ = process_activity(_falling(5.0), CFG)       # ≥ 4 h → garde-fou
+    assert s5.ga_km == pytest.approx(s5.dist_km, rel=0.01)
+    assert s5.dplus_m == 0 and s5.dminus_m == 0
+    assert s5.has_altitude is False
+
+    s1, _, _ = process_activity(_falling(1.0), CFG)       # 1 h : descente raide LÉGITIME
+    assert s1.ga_km < 0.75 * s1.dist_km                    # l'ajustement de pente s'applique
+    assert s1.has_altitude is True
+
+    cfg_off = replace(CFG, twin=replace(CFG.twin, ga_plausibility_floor=0.0))
+    s_off, _, _ = process_activity(_falling(5.0), cfg_off)
+    assert s_off.ga_km < 0.75 * s_off.dist_km              # ancien comportement restauré

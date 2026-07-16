@@ -98,6 +98,14 @@ class TwinParams:
     # Montagnhard : tools/regen_montagnhard_fixture (archive réelle requise).
     dplus_basis: str = "distance_150m"        # {time_5s, distance_150m}
     dplus_smooth_window_m: float = 150.0
+    # --- plausibilité du ratio équivalent-plat / distance brute (banc 2026-07, §9.10) -----
+    # Personne ne descend à −10 % pendant des heures : une activité LONGUE dont l'équivalent
+    # plat vaut moins de ``floor`` × la distance brute trahit une altitude corrompue (cas
+    # réel : FIT à l'altitude effondrée → vga 2,99 km/h pour 6,6 réels → course prise pour
+    # une rando et écartée de la calibration). Repli : altitude déclarée inutilisable —
+    # équivalent plat = distance brute (f=1), D± nuls, has_altitude=False. 0 = désactivé.
+    ga_plausibility_floor: float = 0.7
+    ga_plausibility_min_hours: float = 4.0
 
 
 @dataclass(frozen=True)
