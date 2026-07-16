@@ -86,8 +86,40 @@ def _adjusted_distance(act: CanonicalActivity, cfg: Config):
     dmono = act.dist_m  # déjà monotone (schéma canonique)
     n = act.n
     # écrêtage de la vitesse brute par seconde (pas dt = 1 s)
-    dd = np.clip(np.diff(dmono), 0.0, cfg.twin.v_max_ms)
+    dd_raw = np.diff(dmono)
+    dd = np.clip(dd_raw, 0.0, cfg.twin.v_max_ms)
     draw = np.concatenate([[0.0], np.cumsum(dd)])
+
+    # --- sauvetage du canal distance haché (§9.11) : l'écrêtage est prévu pour quelques
+    # artefacts — quand il ampute une grande part de la distance d'une activité LONGUE dont
+    # le total brut reste plausible pour de la course, c'est l'ENREGISTREMENT qui est en
+    # rafales (paquets de distance), pas la distance qui est fausse. Repli : distance brute
+    # non écrêtée ; l'appelant EXCLUT alors l'activité de la courbe record (les fenêtres de
+    # vitesse par-seconde d'un canal haché n'ont plus de sens), le résumé est conservé.
+    rescued = False
+    tw = cfg.twin
+    raw_total = float(dmono[-1] - dmono[0]) if n else 0.0
+    dur_s = float(act.t[-1]) if n else 0.0
+    if (tw.despike_rescue_floor > 0 and dur_s >= tw.despike_rescue_min_hours * 3600
+            and raw_total > 0 and draw[-1] / raw_total < tw.despike_rescue_floor
+            and raw_total / dur_s * 3.6 <= tw.despike_rescue_max_raw_kmh):
+        # discriminant rafales / téléportation : une montre en pause pendant un déplacement
+        # (voiture…) produit UN bloc écrêté contigu — même interpolé sur un trou d'horodatage —
+        # et sa distance est FAUSSE ; un canal en rafales écrête des centaines de fronts
+        # DISTINCTS. On ne sauve que le second (fronts montants ≥ min_bursts).
+        clip_mask = dd_raw > tw.v_max_ms
+        n_bursts = int(np.count_nonzero(np.diff(clip_mask.astype(np.int8), prepend=0) == 1))
+        if n_bursts >= tw.despike_rescue_min_bursts:
+            rescued = True
+            clipped_total = float(draw[-1])
+            dd = dd_raw
+            draw = np.concatenate([[0.0], np.cumsum(dd)])
+            logger.info(
+                "canal distance haché sauvé (§9.11, %s) : brut %.1f km conservé "
+                "(écrêté %.1f km, %d rafales) — hors courbe record",
+                act.start_time.date().isoformat() if act.start_time else "date inconnue",
+                raw_total / 1000, clipped_total / 1000, n_bursts,
+            )
 
     # altitude : remplissage médian si trous, léger lissage (règle fixe : alt_smooth_s).
     # Sans aucun point d'altitude (activité écartée en amont de la courbe record), on évite
@@ -110,13 +142,13 @@ def _adjusted_distance(act: CanonicalActivity, cfg: Config):
     grad = np.clip(grad, -cfg.course.grade_clip, cfg.course.grade_clip)
     f = grade_factor(grad, cfg.course.cr0, cap=cfg.twin.f_cap)
     dga = np.concatenate([[0.0], np.cumsum(f[:-1] * dd)])
-    return draw, dga, alts, alt_f
+    return draw, dga, alts, alt_f, rescued
 
 
 def process_activity(act: CanonicalActivity, cfg: Config):
     """→ (:class:`ActivitySummary`, vga_par_durée, vraw_par_durée)."""
     durs = np.asarray(cfg.twin.record_durations_s, dtype=float)
-    draw, dga, alts, alt_f = _adjusted_distance(act, cfg)
+    draw, dga, alts, alt_f, distance_rescued = _adjusted_distance(act, cfg)
     tg = act.t
     n = act.n
 
@@ -135,12 +167,16 @@ def process_activity(act: CanonicalActivity, cfg: Config):
 
     vga = np.full(len(durs), np.nan)
     vraw = np.full(len(durs), np.nan)
-    for j, T in enumerate(durs):
-        T = int(T)
-        if n <= T:
-            break
-        vga[j] = np.nanmax((dga[T:] - dga[:-T]) / T)
-        vraw[j] = np.nanmax((draw[T:] - draw[:-T]) / T)
+    # canal distance sauvé (§9.11) : les fenêtres de vitesse par-seconde d'un canal en
+    # rafales sont des artefacts → aucune contribution à la courbe record (vga/vraw NaN),
+    # le résumé (distance totale, vga moyenne, D±) reste servi à la calibration.
+    if not distance_rescued:
+        for j, T in enumerate(durs):
+            T = int(T)
+            if n <= T:
+                break
+            vga[j] = np.nanmax((dga[T:] - dga[:-T]) / T)
+            vraw[j] = np.nanmax((draw[T:] - draw[:-T]) / T)
 
     # D+ / D− : sur l'altitude lissée 5 s (historique) ou sur base de DISTANCE 150 m —
     # cohérente avec le D+ du parcours, cf. C1 (le D+ étant une variation totale, l'échelle

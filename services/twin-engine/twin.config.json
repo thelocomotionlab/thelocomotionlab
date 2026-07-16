@@ -39,7 +39,11 @@
     "dplus_basis": "distance_150m",
     "dplus_smooth_window_m": 150.0,
     "ga_plausibility_floor": 0.7,
-    "ga_plausibility_min_hours": 4.0
+    "ga_plausibility_min_hours": 4.0,
+    "despike_rescue_floor": 0.8,
+    "despike_rescue_min_hours": 4.0,
+    "despike_rescue_max_raw_kmh": 12.0,
+    "despike_rescue_min_bursts": 20
   },
 
   "calibration": {

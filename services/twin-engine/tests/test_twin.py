@@ -380,3 +380,51 @@ def test_ga_plausibility_guard_recovers_corrupted_altitude():
     cfg_off = replace(CFG, twin=replace(CFG.twin, ga_plausibility_floor=0.0))
     s_off, _, _ = process_activity(_falling(5.0), cfg_off)
     assert s_off.ga_km < 0.75 * s_off.dist_km              # ancien comportement restauré
+
+
+def test_despike_rescue_recovers_bursty_distance_channel():
+    """§9.11 : canal distance en RAFALES (cas réel : course 71,5 km réduite à 28,6 km par
+    l'écrêtage) — repli sur la distance brute quand le total reste plausible pour de la
+    course, et EXCLUSION de la courbe record (fenêtres par-seconde non fiables)."""
+    from dataclasses import replace
+
+    from twin_engine.config import load_config
+    from twin_engine.ingest.canonical import CanonicalActivity
+    from twin_engine.twin.record import process_activity
+
+    CFG = load_config()
+
+    def _bursty(hours, step_m):
+        n = int(hours * 3600)
+        t = list(range(n))
+        dist = [step_m * (s // 10) for s in t]     # +step_m tous les 10 s, plat entre
+        return CanonicalActivity.from_samples(
+            timestamps=t, dist_m=dist, alt_m=[500.0] * n,
+            sport="running", source_format="fit", source_name="rafales",
+        )
+
+    # 5 h, +20 m/10 s → brut 36 km (7,2 km/h, plausible), pics 20 m/s → écrêtage garderait 7/20
+    s, vga, vraw = process_activity(_bursty(5.0, 20.0), CFG)
+    assert s.dist_km == pytest.approx(36.0, rel=0.02)          # distance brute conservée
+    assert not np.isfinite(vga).any() and not np.isfinite(vraw).any()   # hors courbe record
+
+    # total brut IMPLAUSIBLE pour de la course (15 km/h sur 5 h) → pas de sauvetage
+    s_fast, _, _ = process_activity(_bursty(5.0, 42.0), CFG)
+    assert s_fast.dist_km == pytest.approx(75.6 * 7 / 42, rel=0.05)   # écrêté : 7 m gardés par rafale de 42
+
+    # TÉLÉPORTATION unique (montre en pause pendant 20 km de voiture) : total plausible
+    # (52,4 km / 6 h = 8,7 km/h), perte > 20 %… mais UN SEUL front écrêté → PAS de sauvetage
+    # (la distance brute est FAUSSE ici : l'écrêtage historique reste le bon comportement).
+    n_tp = 6 * 3600
+    dist_tp = [1.5 * s + (20000.0 if s > n_tp // 2 else 0.0) for s in range(n_tp)]
+    teleport = CanonicalActivity.from_samples(
+        timestamps=list(range(n_tp)), dist_m=dist_tp, alt_m=[500.0] * n_tp,
+        sport="running", source_format="fit", source_name="teleport",
+    )
+    s_tp, _, _ = process_activity(teleport, CFG)
+    assert s_tp.dist_km == pytest.approx(1.5 * n_tp / 1000, rel=0.02)   # écrêté : le bond saute
+
+    # flag désactivé → ancien comportement (écrêté)
+    cfg_off = replace(CFG, twin=replace(CFG.twin, despike_rescue_floor=0.0))
+    s_off, _, _ = process_activity(_bursty(5.0, 20.0), cfg_off)
+    assert s_off.dist_km == pytest.approx(0.35 * 36.0, rel=0.05)    # 7 m gardés sur 20

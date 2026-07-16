@@ -37,6 +37,11 @@ def test_defaults_from_shipped_json():
     # §9.10 : garde-fou d'altitude corrompue (cas réel : course prise pour une rando lente)
     assert cfg.twin.ga_plausibility_floor == 0.7
     assert cfg.twin.ga_plausibility_min_hours == 4.0
+    # §9.11 : sauvetage du canal distance haché (l'écrêtage n'ampute plus une course entière) ;
+    # min_bursts = discriminant rafales / téléportation (un bond unique n'est PAS sauvé)
+    assert cfg.twin.despike_rescue_floor == 0.8
+    assert cfg.twin.despike_rescue_max_raw_kmh == 12.0
+    assert cfg.twin.despike_rescue_min_bursts == 20
 
 
 def test_env_overrides_data_dir(monkeypatch, tmp_path):

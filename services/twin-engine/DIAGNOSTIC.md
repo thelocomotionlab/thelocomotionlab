@@ -540,6 +540,12 @@ le GRF 2024 de Val (écarté sans explication au n_gen=1 de novembre 2024) est s
 même mal — l'audit `tools/diag_archive` le dira. Relancer les backtests (idempotent) et
 recommitter le registre.
 
+**CORRECTION (2026-07-16, audit étendu « trois distances »)** : la Saintélyon 2024 de
+Rapace relève en réalité du canal DISTANCE (§9.11 — brut 71,5 km, dé-spiké 28,6 km), PAS de
+l'altitude : le ratio ga/dé-spiké y est normal, c'est le dé-spikeur qui ampute. Le garde-fou
+ga/brut de CE paragraphe reste actif (il protège d'un vrai mode de défaillance — altitude en
+chute continue — simplement pas de celui-ci) ; aucune victime connue à ce jour dans le banc.
+
 **Au passage, l'audit a aussi montré** : (a) le 83 km GPX du 15/11/2024 de Rapace reste
 invisible (sport « inconnu » — politique `running_only` sur GPX sans étiquette : décision à
 prendre, cf. backlog) ; (b) tous les ultras de Rapace sont SANS FC → découplage et
@@ -547,3 +553,48 @@ garde-fou FC de maximalité inertes pour lui (le filtre travaille au seul ratio 
 sortie longue du 14/03/2026 (12 h 42, vga 6,28) est retenue comme vrai ultra — c'est le
 CAS D'ÉCOLE du filtre de maximalité : une sortie d'entraînement sous le plafond sera
 down-pondérée par r, pas par une exclusion binaire.
+
+
+### 9.11 Canal distance « en rafales » : l'écrêtage anti-spikes amputait une course entière (ACTIVÉ)
+
+**Preuve (audit trois distances, 2026-07-16, Saintélyon 2024 de Rapace)** : brut **71,5 km**,
+dé-spiké **28,6 km** (−60 %), ga 32,7 → vga 2,99 km/h → écartée du filtre vrais ultras pour
+lenteur. Le FIT enregistre la distance PAR PAQUETS (rafales dépassant ``v_max_ms`` à l'échelle
+de la seconde) ; l'écrêtage par-seconde, prévu pour quelques artefacts GPS, jette ici la
+majorité de la distance d'une course réelle dont le TOTAL est parfaitement plausible
+(71,5 km / 10,9 h = 6,6 km/h).
+
+**Correctif : `twin.despike_rescue_floor=0.8` / `despike_rescue_min_hours=4.0` /
+`despike_rescue_max_raw_kmh=12.0` / `despike_rescue_min_bursts=20` (ACTIVÉ, floor=0 =
+rollback).** Une activité LONGUE qui perd plus de 20 % de sa distance brute à l'écrêtage,
+avec un total brut plausible pour de la course (≤ 12 km/h), garde sa distance brute NON
+écrêtée — et est **exclue de la courbe record** (vga/vraw NaN : les fenêtres de vitesse
+par-seconde d'un canal haché sont des artefacts ; seule la N-ième meilleure d'un tel canal
+pourrait polluer VC/E). Le résumé (distance, vga moyenne, D±, durabilité) reste servi à la
+calibration. Le double verrou durée × total-plausible empêche de « sauver » un vélo mal
+étiqueté ou un vrai fichier à distance gonflée (total > 12 km/h → écrêtage historique
+conservé).
+
+**Troisième verrou (revue adversariale avant merge) : rafales vs téléportation.** Une montre
+mise en PAUSE pendant un déplacement (20 km de voiture puis reprise) satisfait les deux
+premiers verrous sur une sortie ≥ 4 h lente : perte > 20 %, total ≤ 12 km/h — mais sa
+distance brute est FAUSSE et la sauver gonflerait la calibration. Signature discriminante :
+la téléportation forme **UN bloc écrêté contigu** (même interpolée à 1 Hz sur un trou
+d'horodatage — d'où compter les FRONTS MONTANTS, pas les secondes écrêtées), alors qu'un
+canal en rafales en compte des centaines (Saintélyon : 1 paquet/quelques secondes sur 10,9 h).
+Le sauvetage exige ≥ `min_bursts` (20) fronts distincts ; en deçà, écrêtage historique
+conservé (test : bond unique de 20 km sur 6 h à 5,4 km/h → PAS sauvé). Chaque sauvetage est
+tracé en log (date, brut/écrêté, nb rafales).
+
+**Effet attendu** : la Saintélyon 2024 de Rapace redevient un vrai ultra (vga ≈ 7,4) ;
+l'audit `tools/diag_archive` le reflète immédiatement ; relancer les backtests Rapace
+(idempotent) — ses coupures post-nov-2024 changent de régime. Golden : aucun fichier sain
+touché (le déclencheur exige −20 % d'écrêtage sur ≥ 4 h — jamais observé sur données
+propres) ; à re-vérifier chez Valentin par acquit.
+
+**Reclassement au passage (précision de Valentin)** : les 26,9 h et 38,3 h de Val écartées
+par le plancher `genuine_min_ga_kmh` sont des OFF en autonomie AVEC SOMMEIL (Réunion,
+Vercors) — le plancher a donc eu RAISON (dormir casse la relation T→v du modèle en temps
+écoulé). Le chantier « plancher dépendant de la durée » redescend au backlog, lié à
+`speed_basis=moving` (qui neutraliserait le sommeil) et à surveiller au premier vrai
+30 h+ couru (l'Échappée Belle de Crasse : vga attendue ~6,2, au-dessus du plancher — OK).

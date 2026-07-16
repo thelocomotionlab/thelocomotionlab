@@ -106,6 +106,22 @@ class TwinParams:
     # équivalent plat = distance brute (f=1), D± nuls, has_altitude=False. 0 = désactivé.
     ga_plausibility_floor: float = 0.7
     ga_plausibility_min_hours: float = 4.0
+    # --- sauvetage du canal distance haché (banc 2026-07, §9.11) ---------------------------
+    # L'écrêtage anti-spikes par seconde (v_max_ms) est prévu pour QUELQUES artefacts ; sur
+    # un enregistrement « en rafales » (canal distance par paquets), il ampute la distance
+    # entière — cas réel : course de 71,5 km réduite à 28,6 km (−60 %) puis écartée de la
+    # calibration pour lenteur. Si une activité LONGUE perd plus de (1−floor) de sa distance
+    # brute À TOTAL PLAUSIBLE pour de la course (≤ max_raw_kmh), on garde la distance brute
+    # non écrêtée et on EXCLUT l'activité de la courbe record (fenêtres par-seconde non
+    # fiables) — le résumé (calibration/durabilité) est conservé. 0 = désactivé.
+    despike_rescue_floor: float = 0.8
+    despike_rescue_min_hours: float = 4.0
+    despike_rescue_max_raw_kmh: float = 12.0
+    # Discriminant rafales / téléportation : une montre mise en pause pendant un déplacement
+    # (voiture, télécabine) produit UN bloc écrêté contigu (même interpolé sur un trou
+    # d'horodatage) dont la distance est FAUSSE — la sauver gonflerait la calibration. Un
+    # canal en rafales écrête des centaines de fronts DISTINCTS. On exige min_bursts fronts.
+    despike_rescue_min_bursts: int = 20
 
 
 @dataclass(frozen=True)
