@@ -678,6 +678,29 @@ Rapace contre le tableau ci-dessus : dpk ≈ 24 restitué → ancre du blend rem
 |−0,017|·24 ≈ 0,4 km/h → Coursières/UTBV/Nivolet se rapprochent de l'« avant » sans
 re-perdre le gain GTDL. Si le rerun contredit, rollback en une valeur de config.
 
+**(a) ADOPTÉE — A/B final (2026-07-16, rerun Rapace, grille de lecture pré-enregistrée)** :
+
+| coupure (réel)               | sans le point | dpk=0     | dpk réel (a) | régime (a)       |
+|------------------------------|---------------|-----------|--------------|-------------------|
+| Maratour 24 (6,3 h)          | +308,2 %      | +308,2 %  | +308,2 %     | invariant contrôle ✓ |
+| Saintélyon 24 (10,9 h)       | +80,8 %       | +80,8 %   | +80,8 %      | invariant contrôle ✓ |
+| GTDL 25 (6,0 h)              | +79,9 %       | +48,1 %   | **+29,3 %**  | 1/blend — gain accru |
+| Coursières 25 (15,0 h)       | +35,8 %       | +60,3 %   | **+35,7 %**  | 1/blend — retour à l'avant |
+| UTBV 25 (11,7 h)             | +1,0 %        | +12,4 %   | **+9,0 %**   | 2/blend — résidu = vga sous-estimée (~0,7 km/h, attendu) |
+| Nivolet 26 (7,4 h)           | +10,6 %       | +19,4 %   | **+26,3 %**  | 4/régression σ 1,50 — DÉGRADÉ |
+
+Verdict selon la grille : **adoptée**. Sur les régimes BLEND — là où l'ancre agit — (a)
+fait strictement mieux que dpk=0 partout, et mieux que « sans le point » sur les coupures
+pauvres (GTDL 79,9 → 29,3). Stats fraîches globales : MAE refusés 75,0 → 68,3 %, biais
+central +36,2 → +32,6 %, médiane groupée Rapace 6,52 → 4,56. **Point dur restant, à ne pas
+maquiller** : Nivolet — le point sauvé (récence ~0,37, approximatif) fait franchir n_eff
+≥ 3 et DÉBLOQUE une bascule blend→régression à 4 points qui se sait mauvaise (σ 1,50,
+bandes énormes, cv 25 % → 🔴 refusée par le gate ; zéro surface commerciale). Piste NOTÉE,
+non implémentée (1 seul cas) : un point sauvé ne devrait peut-être pas pouvoir déclencher
+SEUL la bascule de régime (l'exclure du comptage n_eff de la bascule, pas du fit) — à
+re-examiner si un deuxième cas apparaît. NB : la quarantaine Saintélyon a survécu à cette
+re-fusion — première épreuve réelle du correctif §9.12, passée.
+
 
 ### 9.12 Re-fusion du registre : la quarantaine ne survivait pas (CORRIGÉ)
 
