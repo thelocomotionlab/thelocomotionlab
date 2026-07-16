@@ -639,3 +639,51 @@ dé-spiké 71,5 · ga 71,5 · **vga 6,56** · canal distance haché SAUVÉ §9.1
 écrêtés) » — conforme à la prédiction au centième. Rapace passe de 3 à 4 vrais ultras ;
 ses backtests aux coupures post-nov-2024 sont à relancer (idempotent) et le registre à
 recommitter. Chantier clos.
+
+**IMPACT BANC (2026-07-16, mesuré — diff du registre avant/après re-fusion Rapace)** :
+
+| coupure la veille de (réel)     | avant     | après     | n_gen / régime                      |
+|---------------------------------|-----------|-----------|-------------------------------------|
+| Maratour Orcières 24 (6,3 h)    | +308,2 %  | +308,2 %  | 0/vc_e (coupure avant la Saintélyon)|
+| Saintélyon 24 (10,9 h)          | +80,8 %   | +80,8 %   | 0/vc_e (anti-fuite : pas d'elle-même)|
+| Grand Tour du Lac 25 (6,0 h)    | +79,9 %   | +48,1 %   | 0/vc_e → 1/blend — **amélioré**     |
+| Coursières 100k 25 (15,0 h)     | +35,8 %   | +60,3 %   | 0/vc_e → 1/blend — **dégradé**      |
+| UTBV 80 km 25 (11,7 h)          | +1,0 %    | +12,4 %   | 1 → 2/blend — **dégradé**           |
+| Nivolet-Revard 26 (7,4 h)       | +10,6 %   | +19,4 %   | 3 (n_eff 2,87)/blend → 4 (3,47)/régression, σ 0,45→1,52 — **dégradé** |
+
+Bilan : 1 amélioré, 3 dégradés, 2 invariants (attendus). Tous 🔴 avant comme après
+(3 hors-domaine, les autres sans CV possible) → **l'ensemble VENDU est intact** (n=5,
+MAE 10,2 %) : signal de développement, aucune conséquence commerciale. Mécanisme (lu dans
+calibration.py) : le point sauvé entre à vga 6,56 (f=1 sous-estime l'équivalent plat réel
+~7,3 d'une course qui grimpe) ET dpk=0 ; or l'offset du blend = vga − (v_env + penalty·dpk)
+— dpk=0 supprime le rabais D+ de la base et la vga sous-estimée en retire autant : ancre
+doublement pessimiste, propagée aux coupures suivantes (UTBV +11 % plus lent). Dans la
+régression (Nivolet), le point débloque n_eff ≥ 3 mais gonfle σ (0,45 → 1,52). Pistes, à
+trancher sur A/B de ces mêmes coupures (protocole : pas de décision sur 1 athlète ×
+4 coupures) : **(a)** D± réels base TEMPS pour un canal sauvé — le total du D+ ne dépend
+pas de l'alignement altitude↔distance ; répare la moitié « dpk=0 » du biais, garde
+l'humilité sur vga (recommandée) ; **(b)** flag « point sauvé hors calibration » — revient
+à l'avant : meilleur ici sur 3/4, mais re-crée le trou n_gen=0 des coupures précoces
+(GTDL +79,9 %) ; **(c)** statu quo — pessimisme assumé sur les régimes faibles, que le
+gate refuse de toute façon.
+
+
+### 9.12 Re-fusion du registre : la quarantaine ne survivait pas (CORRIGÉ)
+
+**Preuve (2026-07-16, diff du registre)** : la re-fusion Rapace (mise à jour idempotente
+sur (athlète, course, date)) remplaçait la ligne ENTIÈRE — la quarantaine de la Saintélyon
+(« trace FIT→GPX à l'altitude aplatie (D+/km 6,3 lu vs ~26 réel) — parcours inutilisable »)
+a disparu silencieusement, et la course (+80,8 %) est re-rentrée dans les stats fraîches
+(quarantaine 1 → 0, MAE refusés et médiane groupée Rapace faussés). Violation directe du
+protocole « une quarantaine ne disparaît jamais silencieusement ».
+
+**Correctif** : `merge_registre` (tools/backtest.py) préserve désormais les champs de
+CURATION portés par l'ancienne ligne et que la machine ne régénère pas (`quarantine`,
+annotations futures) ; la quarantaine Saintélyon est restaurée dans le registre committé ;
+verrou : `test_merge_registre_preserves_manual_curation`. Stats fraîches corrigées :
+quarantaine 1, finies 11, VENDU intact (n=5, MAE 10,2 %).
+
+**À ne pas confondre** : cette quarantaine concerne la trace de PARCOURS du manifeste
+(conversion IA, altitude aplatie) — pas l'archive de l'athlète, dont le canal distance est
+réparé par §9.11. La course redeviendra scorable quand une vraie trace GPX du parcours
+remplacera la conversion IA (à demander à Rapace).

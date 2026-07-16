@@ -81,6 +81,20 @@ def test_merge_registre_is_idempotent_on_key():
     assert reg["entries"][0]["official_time_h"] == 26.0
 
 
+def test_merge_registre_preserves_manual_curation():
+    """Une quarantaine (ou toute annotation manuelle) SURVIT à la re-fusion — cas réel :
+    la re-fusion Rapace avait fait re-rentrer dans les stats une course quarantainée
+    pour parcours inutilisable (protocole : jamais de disparition silencieuse)."""
+    reg = {"entries": []}
+    e1 = {k: v for k, v in _entry("A", "Course X", 5.0).items()
+          if k not in ("athlete", "dev_set")}
+    merge_registre(reg, "A", False, [e1])
+    reg["entries"][0]["quarantine"] = "parcours inutilisable (test)"    # curation manuelle
+    merge_registre(reg, "A", False, [dict(e1, official_time_h=26.0)])   # re-fusion machine
+    assert reg["entries"][0]["official_time_h"] == 26.0                 # màj machine appliquée
+    assert reg["entries"][0]["quarantine"] == "parcours inutilisable (test)"
+
+
 def test_summarize_coverage_bias_and_pooled_grouping():
     entries = [
         _entry("A", "r1", +4.0), _entry("A", "r2", -6.0),

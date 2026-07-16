@@ -1057,7 +1057,8 @@
         "in_plan": false,
         "in_safety": false
       },
-      "below_domain": false
+      "below_domain": false,
+      "quarantine": "trace FIT→GPX à l'altitude aplatie (D+/km 6,3 lu vs ~26 réel sur cette course) — parcours inutilisable"
     },
     {
       "athlete": "Rapace",

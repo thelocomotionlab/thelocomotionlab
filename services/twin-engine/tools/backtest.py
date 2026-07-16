@@ -153,14 +153,21 @@ def backtest_race(archive: Path, race_entry: dict, cfg, *, base: Path) -> dict:
 
 
 def merge_registre(registre: dict, athlete: str, dev_set: bool, entries: list[dict]) -> dict:
-    """Fusion idempotente : la clé (athlete, race, date) met à jour l'entrée existante."""
+    """Fusion idempotente : la clé (athlete, race, date) met à jour l'entrée existante.
+
+    Les champs de CURATION portés par l'ancienne ligne et que la machine ne régénère pas
+    (``quarantine``, annotations futures) SURVIVENT à la re-fusion : une quarantaine ne
+    disparaît jamais silencieusement (protocole du registre — leçon du 2026-07-16, où une
+    re-fusion avait fait re-rentrer dans les stats une course au parcours inutilisable)."""
     rows = registre.setdefault("entries", [])
     index = {(r.get("athlete"), r.get("race"), r.get("date")): i for i, r in enumerate(rows)}
     for e in entries:
         row = {"athlete": athlete, "dev_set": bool(dev_set), **e}
         key = (athlete, e["race"], e["date"])
         if key in index:
-            rows[index[key]] = row
+            old = rows[index[key]]
+            extras = {k: v for k, v in old.items() if k not in row}
+            rows[index[key]] = {**row, **extras}
         else:
             index[key] = len(rows)
             rows.append(row)
