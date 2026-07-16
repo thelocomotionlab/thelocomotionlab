@@ -208,6 +208,15 @@ def process_activity(act: CanonicalActivity, cfg: Config):
         alt_unusable = True
         dga = draw
 
+    # canal distance sauvé (§9.11) : l'alignement altitude↔distance par seconde est cassé —
+    # la pente échantillonnée pendant les blocs de rattrapage est du bruit, et l'ajustement
+    # Minetti pondéré par ces incréments a produit un équivalent plat ×2,10 MESURÉ sur le
+    # cas réel (ga 150,5 km pour 71,5 brut). Mêmes replis que §9.10 : f=1, D± nuls,
+    # altitude marquée non fiable. Seuls le TOTAL et la durée d'un canal haché sont sûrs.
+    slope_unusable = alt_unusable or distance_rescued
+    if distance_rescued:
+        dga = draw
+
     vga = np.full(len(durs), np.nan)
     vraw = np.full(len(durs), np.nan)
     # canal distance sauvé (§9.11) : les fenêtres de vitesse par-seconde d'un canal en
@@ -228,8 +237,8 @@ def process_activity(act: CanonicalActivity, cfg: Config):
         da = np.diff(_distance_smoothed_altitude(act.dist_m, alt_f, cfg.twin.dplus_smooth_window_m))
     else:
         da = np.diff(alts)
-    if alt_unusable:
-        da = np.zeros(0)   # D± issus d'une altitude corrompue : on n'invente pas
+    if slope_unusable:
+        da = np.zeros(0)   # D± issus d'un couple altitude↔distance cassé : on n'invente pas
     dur = float(tg[-1])
 
     # masque « en mouvement » sur les incréments de distance (partagé par moving_time et le
@@ -282,7 +291,7 @@ def process_activity(act: CanonicalActivity, cfg: Config):
         decouple_pct=None if decouple is None else round(decouple, 2),
         has_hr=has_hr,
         moving_time_s=moving_time_s,
-        has_altitude=act.has_altitude and not alt_unusable,
+        has_altitude=act.has_altitude and not slope_unusable,
     )
     return summary, vga, vraw
 

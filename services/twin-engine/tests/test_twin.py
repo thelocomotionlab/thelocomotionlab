@@ -398,8 +398,10 @@ def test_despike_rescue_recovers_bursty_distance_channel():
         n = int(hours * 3600)
         t = list(range(n))
         dist = [step_m * (s // 10) for s in t]     # +step_m tous les 10 s, plat entre
+        # altitude qui GRIMPE (+10 % de la distance) : sans le repli f=1, l'ajustement
+        # Minetti pondéré par les incréments en rafales gonflerait l'équivalent plat
         return CanonicalActivity.from_samples(
-            timestamps=t, dist_m=dist, alt_m=[500.0] * n,
+            timestamps=t, dist_m=dist, alt_m=[500.0 + 0.10 * d for d in dist],
             sport="running", source_format="fit", source_name="rafales",
         )
 
@@ -407,6 +409,11 @@ def test_despike_rescue_recovers_bursty_distance_channel():
     s, vga, vraw = process_activity(_bursty(5.0, 20.0), CFG)
     assert s.dist_km == pytest.approx(36.0, rel=0.02)          # distance brute conservée
     assert not np.isfinite(vga).any() and not np.isfinite(vraw).any()   # hors courbe record
+    # pente par-seconde d'un canal haché = bruit (cas réel : ga ×2,10) → mêmes replis que
+    # §9.10 : équivalent plat = distance brute (f=1), D± nuls, altitude non fiable
+    assert s.ga_km == pytest.approx(s.dist_km, rel=0.01)
+    assert s.dplus_m == 0 and s.dminus_m == 0
+    assert s.has_altitude is False
     st = despike_stats(_bursty(5.0, 20.0), CFG)
     assert st["rescued"] and st["n_bursts"] > 1000              # rafales nombreuses et DISTINCTES
 

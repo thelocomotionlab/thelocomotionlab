@@ -616,3 +616,20 @@ canal suspect — sauvé ou refusé, avec la raison. Si le prochain rerun refuse
 sortie dira exactement pourquoi, et on tranchera sur chiffres. Dommage résiduel d'un faux
 sauvetage borné par construction : activité hors courbe record, résumé seulement — et il
 faudrait encore ≥ 10 h et vga ≥ 5,5 pour atteindre la régression ultra.
+
+**CORRECTION 2 (2026-07-16, rerun post-recalibrage) : un canal sauvé subit les MÊMES replis
+que §9.10 (f=1, D± nuls, has_altitude=False).** Le sauvetage a tiré — **7 blocs mesurés**
+(le seuil 3 est validé ; l'hypothèse « centaines de rafales » doublement invalidée) — mais
+a produit un point EMPOISONNÉ : **ga 150,5 km pour 71,5 brut (×2,10** ; sain : ×1,12-1,18
+sur les autres ultras de Rapace**), vga 13,80 km/h** — un 10,9 h « élite » qui aurait tiré
+la calibration vers l'optimisme, pire que l'exclusion de départ. Cause : l'ajustement
+Minetti pondère f par les incréments de distance, or sur un canal haché la pente
+échantillonnée PENDANT les blocs de rattrapage est du bruit (altitude et distance gelées
+puis rattrapées ensemble → pentes fictives raides, et f_cap ne borne que par échantillon,
+pas le total). Le garde-fou §9.10 ne voit rien : il ne surveille que l'effondrement
+(ga/brut < 0,7), pas l'explosion. Repli : sur un canal sauvé, seuls le TOTAL et la durée
+sont dignes de confiance → équivalent plat = distance brute (f=1), D± nuls,
+has_altitude=False (l'exclusion de la courbe record était déjà acquise). Prix assumé,
+identique à §9.10 : son D+/km entre à 0 dans la régression — biais pessimiste léger et
+honnête, préférable à un ga fictif ×2,1. vga attendue au prochain rerun : 71,5/10,9 ≈
+**6,6** — au-dessus du plancher 5,5 : la course entre enfin en calibration.
