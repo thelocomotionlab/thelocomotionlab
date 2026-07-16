@@ -633,3 +633,9 @@ has_altitude=False (l'exclusion de la courbe record était déjà acquise). Prix
 identique à §9.10 : son D+/km entre à 0 dans la régression — biais pessimiste léger et
 honnête, préférable à un ga fictif ×2,1. vga attendue au prochain rerun : 71,5/10,9 ≈
 **6,6** — au-dessus du plancher 5,5 : la course entre enfin en calibration.
+
+**VÉRIFIÉ (2026-07-16, rerun final chez Valentin)** : « VRAI ULTRA retenu (brut 71,5 ·
+dé-spiké 71,5 · ga 71,5 · **vga 6,56** · canal distance haché SAUVÉ §9.11, 7 blocs
+écrêtés) » — conforme à la prédiction au centième. Rapace passe de 3 à 4 vrais ultras ;
+ses backtests aux coupures post-nov-2024 sont à relancer (idempotent) et le registre à
+recommitter. Chantier clos.
