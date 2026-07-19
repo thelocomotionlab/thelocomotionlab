@@ -34,12 +34,12 @@
 3. **Admin → Users** : créer un utilisateur **API** dédié (ex.
    `email-gateway`), rôle limité à la gestion des abonnés. Copier le token
    généré (il ne s'affiche qu'une fois).
-4. **Campaigns → Templates** : adapter le modèle d'email d'opt-in en
-   français. Texte suggéré :
-   > **Objet** : Confirme ton inscription au Locomotion Lab
-   > Salut ! Tu as demandé à être prévenu·e quand quelque chose paraît au
-   > Locomotion Lab. Clique ce bouton pour confirmer — et c'est tout :
-   > pas de newsletter, un email quand quelque chose paraît.
+4. **Email d'opt-in** : il n'apparaît PAS dans Campaigns → Templates (cette
+   page ne liste que des modèles de campagne). C'est un modèle **système**,
+   déjà en français dès que la langue de l'installation est FR — le vérifier
+   en conditions réelles au test de bout en bout (§4). Pour personnaliser le
+   texte un jour : surcharger `static/email-templates/subscriber-optin.html`
+   par un montage dans `infra/compose.yml` (pas d'édition possible dans l'UI).
 5. **Settings → Media / Privacy** : rien à changer aujourd'hui.
 
 ## 3. Créer le compte Brevo (relais d'envoi, ≈ 10 min, gratuit)
@@ -83,9 +83,12 @@ Brevo dans le DNS Cloudflare (Brevo → Senders & Domains → Domains). Sans
 
 ## 7. La bascule (quand les tests sont concluants)
 
-1. Dans Cloudflare Pages (projet du site) : ajouter la variable de build
-   `NEXT_PUBLIC_EMAIL_ENDPOINT=https://email-gateway.<compte>.workers.dev/subscribe`
-   puis redéployer le site. (C'est un changement d'env, pas de code.)
+1. Poser `NEXT_PUBLIC_EMAIL_ENDPOINT=https://email-gateway.<compte>.workers.dev/subscribe`
+   dans l'environnement du **build local** du site (`apps/site/.env.production`,
+   git-ignoré) puis `pnpm -F site deploy:cf`. (Depuis la désactivation des
+   déploiements automatiques Cloudflare Pages — juillet 2026 — le build est
+   local : une variable posée dans le dashboard Pages n'affecterait que des
+   builds git qui ne tournent plus.)
 2. Vérifier une inscription réelle depuis le site en production.
 3. **Mettre l'Apps Script à la retraite** (le Google Sheet ne reçoit plus
    rien) et archiver l'ancien Worker send-email quand plus rien ne l'utilise
