@@ -28,6 +28,16 @@ if [ ! -d static-dist ]; then
 fi
 
 echo ">> Application des surcharges du Lab…"
+# Email de double opt-in (couleurs + texte du Lab).
 cp email-templates/subscriber-optin.html static-dist/email-templates/subscriber-optin.html
+# Pages publiques (confirmation, gestion d'abonnement…) : CSS du Lab +
+# Ubuntu auto-hébergée (fontes déjà versionnées pour les cartes OG, UFL).
+cp public-static/style.css static-dist/public/static/style.css
+mkdir -p static-dist/public/static/fonts
+cp ../../services/live-journal/assets/fonts/Ubuntu-Regular.ttf \
+   ../../services/live-journal/assets/fonts/Ubuntu-Medium.ttf \
+   ../../services/live-journal/assets/fonts/Ubuntu-Bold.ttf \
+   ../../services/live-journal/assets/fonts/UFL.txt \
+   static-dist/public/static/fonts/
 
 echo "OK : infra/listmonk/static-dist prêt (monté sur /listmonk/static par compose)."

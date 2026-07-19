@@ -1,0 +1,277 @@
+/*
+ * Pages publiques listmonk aux couleurs du Lab (confirmation d'opt-in,
+ * gestion d'abonnement, archives…). REMPLACE static/public/static/style.css
+ * de la version épinglée via build-static.sh : fichier dérivé de l'original
+ * v6.2.0 (tous les sélecteurs conservés), seuls les jetons changent —
+ * couleurs/typo/radius = tokens de packages/ui. À re-dériver si la version
+ * de listmonk bouge (cf. build-static.sh).
+ *
+ * Ubuntu est auto-hébergée : les .ttf sont copiés par build-static.sh depuis
+ * services/live-journal/assets/fonts (licence UFL incluse) — aucun appel à
+ * Google Fonts. Le logo listmonk du gabarit est masqué et remplacé par un
+ * wordmark texte (même choix que l'email d'opt-in).
+ */
+
+@font-face {
+  font-family: "Ubuntu";
+  src: url("/public/static/fonts/Ubuntu-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Ubuntu";
+  src: url("/public/static/fonts/Ubuntu-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Ubuntu";
+  src: url("/public/static/fonts/Ubuntu-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
+  box-sizing: border-box;
+}
+html, body {
+  padding: 0;
+  margin: 0;
+  min-width: 320px;
+}
+body {
+  background: #FEFBF6;
+  font-family: "Ubuntu", "Helvetica Neue", "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 26px;
+  color: #333;
+}
+a {
+  color: #6E9CA0;
+  text-decoration-color: #8CB9BD;
+}
+a:hover {
+  color: #333;
+}
+label {
+  cursor: pointer;
+  color: #444;
+}
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 500;
+}
+.section {
+  margin-bottom: 45px;
+}
+
+input[type="text"], input[type="email"], input[type="password"], select {
+  padding: 10px 15px;
+  border-radius: 10px;
+  width: 100%;
+  border: 1px solid #E5DDD0;
+  background: #fff;
+  font-size: 1em;
+  font-family: inherit;
+}
+  input:focus {
+    border-color: #8CB9BD;
+    outline: none;
+  }
+
+input:focus::placeholder {
+  color: transparent;
+}
+
+input[disabled] {
+  opacity: 0.5;
+}
+
+.center {
+  text-align: center;
+}
+.right {
+  text-align: right;
+}
+.small {
+  font-size: 0.875em;
+}
+.error {
+  color: #B67352;
+}
+.button {
+  background: #EFB159;
+  padding: 14px 30px;
+  border-radius: 10px;
+  border: 0;
+  cursor: pointer;
+  text-decoration: none;
+  color: #333;
+  font-weight: 700;
+  font-family: inherit;
+  display: inline-block;
+  min-width: 150px;
+  font-size: 1.05em;
+  text-align: center;
+}
+.button:hover {
+  background: #D89A3D;
+  color: #333;
+}
+.button.button-outline {
+  background: #fff;
+  border: 1px solid #6E9CA0;
+  color: #6E9CA0;
+}
+.button.button-outline:hover {
+  border-color: #333;
+  background-color: #333;
+  color: #fff;
+}
+
+.container {
+  margin: 60px auto 15px auto;
+  max-width: 550px;
+}
+
+.wrap {
+  background: #fff;
+  padding: 40px;
+  border: 1px solid #F0E9DD;
+  border-radius: 14px;
+}
+
+.header {
+  border-bottom: 3px solid #8CB9BD;
+  padding-bottom: 15px;
+  margin-bottom: 30px;
+}
+.header .logo img {
+  display: none;
+}
+.header .logo a {
+  text-decoration: none;
+}
+.header .logo a::before {
+  content: "The Locomotion Lab";
+  font-family: "Lora", Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #333;
+}
+
+.unsub-all {
+  margin-top: 30px;
+  padding-top: 30px;
+  border-top: 1px solid #F0E9DD;
+}
+
+.row {
+  margin-bottom: 20px;
+}
+.lists {
+  list-style-type: none;
+  padding: 0;
+}
+  .lists li {
+    margin: 0 0 5px 0;
+  }
+  .lists .description {
+    margin: 0 0 15px 0;
+    font-size: 0.875em;
+    line-height: 1.3rem;
+    color: #888;
+    margin-left: 25px;
+  }
+  .form .nonce {
+    display: none;
+  }
+  .form .captcha {
+    margin-top: 30px;
+  }
+
+.archive {
+  list-style-type: none;
+  margin: 25px 0 0 0;
+  padding: 0;
+}
+  .archive .date {
+    display: block;
+    color: #666;
+    font-size: 0.875em;
+  }
+  .archive li {
+    margin-bottom: 15px;
+  }
+  .feed {
+    margin-right: 15px;
+  }
+
+.home-options {
+  margin-top: 30px;
+}
+  .home-options a {
+    margin: 0 7px;
+  }
+
+.pagination {
+  margin-top: 30px;
+  text-align: center;
+}
+  .pg-page {
+    display: inline-block;
+    padding: 0 10px;
+    text-decoration: none;
+  }
+  .pg-page.pg-selected {
+    text-decoration: underline;
+    font-weight: bold;
+  }
+
+.login .submit {
+  margin-top: 20px;
+}
+  .login button {
+    width: 100%;
+    vertical-align: middle;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .login button img {
+    max-width: 24px;
+    margin-right: 10px;
+  }
+  .login input[name=totp_code] {
+    font-size: 2em;
+    letter-spacing: 5px;
+    text-align: center;
+  }
+
+footer.container {
+  text-align: center;
+  color: #aaa;
+  font-size: 0.775em;
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+  footer a {
+    color: #aaa;
+    text-decoration: none;
+  }
+  footer a:hover {
+    color: #333;
+  }
+
+@media screen and (max-width: 650px) {
+  .wrap {
+    margin: 0;
+    padding: 30px;
+    max-width: none;
+  }
+}
