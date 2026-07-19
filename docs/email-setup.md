@@ -41,11 +41,14 @@
    `email-gateway`) portant **ces deux rôles**. Copier le token généré
    (il ne s'affiche qu'une fois).
 4. **Email d'opt-in** : il n'apparaît PAS dans Campaigns → Templates (cette
-   page ne liste que des modèles de campagne). C'est un modèle **système**,
-   déjà en français dès que la langue de l'installation est FR — le vérifier
-   en conditions réelles au test de bout en bout (§4). Pour personnaliser le
-   texte un jour : surcharger `static/email-templates/subscriber-optin.html`
-   par un montage dans `infra/compose.yml` (pas d'édition possible dans l'UI).
+   page ne liste que des modèles de campagne) et ne s'édite pas dans l'UI.
+   C'est un modèle **système**, surchargé par le fichier versionné
+   [`infra/listmonk/email-templates/subscriber-optin.html`](../infra/listmonk/email-templates/subscriber-optin.html)
+   (couleurs du Lab, texte validé), monté dans le conteneur par
+   `infra/compose.yml`. Pour le modifier : éditer le fichier, `git pull` sur
+   le VPS, `docker compose up -d listmonk` (les modèles sont chargés au
+   démarrage). L'**objet** de l'email vient de la traduction système FR de
+   listmonk (non surchargé — acceptable).
 5. **Settings → Media / Privacy** : rien à changer aujourd'hui.
 
 ## 3. Créer le compte Brevo (relais d'envoi, ≈ 10 min, gratuit)

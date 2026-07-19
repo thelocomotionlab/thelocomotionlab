@@ -1,0 +1,47 @@
+{{ define "subscriber-optin" }}
+<!doctype html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+        <base target="_blank">
+        <style>
+            @media screen and (max-width: 600px) {
+                .ll-wrap { padding: 24px 18px !important; }
+                .ll-gutter { padding: 12px !important; }
+            }
+        </style>
+    </head>
+    <!-- Email de confirmation (double opt-in), surcharge du modèle système de
+         listmonk. Autoporté (n'utilise pas base.html) : tout est en styles
+         inline — la seule mise en page fiable en email. Couleurs = tokens de
+         packages/ui (brand-bg #FEFBF6, brand-primary #8CB9BD, accent #EFB159,
+         texte #333). Wordmark en TEXTE (pas d'image : les clients mail les
+         bloquent par défaut). Texte validé par Valentin (recette 2026-07-19).
+         Variables listmonk disponibles : .Subscriber, .Lists, .OptinURL,
+         .UnsubURL — le prénom est volontairement omis (listmonk le déduit de
+         l'adresse email, ça donne des « Salut Jean.dupont »). -->
+    <body style="margin:0; padding:0; background-color:#FEFBF6; font-family:Ubuntu,'Helvetica Neue','Segoe UI',Helvetica,Arial,sans-serif; font-size:16px; line-height:1.6; color:#333333;">
+        <div class="ll-gutter" style="padding:28px;">&nbsp;</div>
+        <div class="ll-wrap" style="background-color:#ffffff; max-width:520px; margin:0 auto; padding:36px 40px; border-radius:14px; border:1px solid #F0E9DD;">
+            <div style="padding-bottom:18px; margin-bottom:24px; border-bottom:3px solid #8CB9BD;">
+                <span style="font-family:Lora,Georgia,'Times New Roman',serif; font-size:22px; font-weight:700; color:#333333;">The Locomotion Lab</span>
+            </div>
+            <p style="margin:0 0 16px;">Salut,</p>
+            <p style="margin:0 0 24px;">Tu t'es inscrit·e pour recevoir les nouvelles du labo&nbsp;👣
+                Un clic pour confirmer que c'est bien toi — et c'est tout&nbsp;:
+                pas de newsletter, un email quand quelque chose paraît.</p>
+            <p style="margin:0 0 28px; text-align:center;">
+                <a href="{{ .OptinURL }}" style="background-color:#EFB159; color:#333333; display:inline-block; border-radius:10px; padding:13px 30px; text-align:center; text-decoration:none; font-weight:700;">Je confirme mon inscription</a>
+            </p>
+            <p style="margin:0 0 6px;">Un grand merci pour ton soutien&nbsp;🚀</p>
+            <p style="margin:0;">/Le Lab</p>
+        </div>
+        <div style="text-align:center; font-size:12px; color:#888888; padding:20px 12px;">
+            <p style="margin:0 0 4px;">The Locomotion Lab · <a href="https://thelocomotionlab.com" style="color:#888888;">thelocomotionlab.com</a></p>
+            <p style="margin:0;">Pas toi&nbsp;? Ignore simplement cet email, ou <a href="{{ .UnsubURL }}?manage=true" style="color:#888888;">désinscris-toi</a>.</p>
+        </div>
+        <div class="ll-gutter" style="padding:28px;">&nbsp;</div>
+    </body>
+</html>
+{{ end }}
