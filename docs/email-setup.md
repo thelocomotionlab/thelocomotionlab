@@ -31,9 +31,15 @@
    **double**. Noter son **ID numérique** (visible dans le tableau) → le
    reporter dans `services/email-gateway/wrangler.toml`
    (`LISTMONK_LIST_ID`) s'il diffère de `1`.
-3. **Admin → Users** : créer un utilisateur **API** dédié (ex.
-   `email-gateway`), rôle limité à la gestion des abonnés. Copier le token
-   généré (il ne s'affiche qu'une fois).
+3. **Admin → Roles** — les rôles Listmonk ont DEUX volets :
+   - onglet *User roles* : rôle `email-gateway` limité à
+     `subscribers:get` + `subscribers:manage` ;
+   - onglet **List roles** : rôle `email-gateway-listes` donnant
+     **« Le Lab » en *Manage*** — sans lui, l'API répond
+     `Permission denied: lists` à la création d'un abonné.
+   **Admin → Users** : créer un utilisateur **API** dédié (ex.
+   `email-gateway`) portant **ces deux rôles**. Copier le token généré
+   (il ne s'affiche qu'une fois).
 4. **Email d'opt-in** : il n'apparaît PAS dans Campaigns → Templates (cette
    page ne liste que des modèles de campagne). C'est un modèle **système**,
    déjà en français dès que la langue de l'installation est FR — le vérifier
