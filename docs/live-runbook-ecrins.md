@@ -59,9 +59,12 @@ Dans l'ordre — chaque étape se vérifie avant la suivante.
 - [ ] **SIM M2M multi-opérateurs** insérée, data vérifiée en itinérance
       (tester loin de chez toi, pas seulement au salon).
 - [ ] **Appareil déclaré dans Traccar** (uniqueid = IMEI) et **port du
-      protocole Queclink ouvert** dans ufw sur le VPS — à vérifier : le port
-      5055 actuel est celui du protocole OsmAnd (téléphone), le GL320M parle
-      le protocole Queclink (port Traccar dédié, généralement 5023).
+      protocole Queclink ouvert** dans ufw sur le VPS — le port 5055 actuel
+      est celui du protocole OsmAnd (téléphone) ; le GL320M parle le
+      protocole **Queclink @Track** (« gl200 » dans Traccar, port **5004**
+      par défaut, TCP). Ouvrir 5004/tcp dans ufw et configurer le tracker
+      sur `tracking.thelocomotionlab.com:5004` (domaine DNS-only : la
+      connexion TCP arrive en direct, c'est voulu).
       `DEVICE_ID` de `infra/.env` doit pointer sur le BON appareil.
 - [ ] **Tracker en HAUT du sac**, rien au-dessus (ciel dégagé).
 - [ ] **Autonomie réellement testée sur 24 h** : sortie longue, intervalle

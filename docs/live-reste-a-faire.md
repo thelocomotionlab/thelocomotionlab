@@ -39,9 +39,10 @@
 - [ ] Store & forward **activé** · intervalle 30–60 s (adaptatif si dispo).
 - [ ] SIM M2M multi-opérateurs, data testée **en itinérance**.
 - [ ] ⚠️ **Traccar** : déclarer l'appareil (IMEI) ; le port 5055 actuel est
-      celui du protocole OsmAnd (téléphone) — le GL320M parle **Queclink**
-      (port Traccar dédié, généralement 5023) : ouvrir le port dans ufw et
-      vérifier `DEVICE_ID` dans `.env`.
+      celui du protocole OsmAnd (téléphone) — le GL320M parle **Queclink
+      @Track** (« gl200 » dans Traccar, port **5004** par défaut) : ouvrir
+      5004/tcp dans ufw, pointer le tracker sur
+      `tracking.thelocomotionlab.com:5004` et vérifier `DEVICE_ID` dans `.env`.
 - [ ] **Autonomie mesurée sur 24 h réelles** ; tracker en haut du sac.
 - [ ] Une sortie d'essai complète : `./track start` → positions sur /live.
 
