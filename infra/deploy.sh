@@ -28,6 +28,9 @@ if [[ -n "${GHCR_TOKEN:-}" && -n "${GHCR_USER:-}" ]]; then
   echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 fi
 
+echo ">> Modèles listmonk (arbre static + surcharges du Lab)…"
+./listmonk/build-static.sh
+
 echo ">> (Re)build du reverse-proxy Caddy (plugin cloudflare)…"
 "${DC[@]}" build caddy
 

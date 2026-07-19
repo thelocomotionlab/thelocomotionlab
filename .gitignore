@@ -64,3 +64,7 @@ services/twin-engine/_seed/cas_validation/
 # est une donnée client, l'historique en a déjà porté un par erreur, retiré le 2026-07-02)
 /out_nice/
 /out-*/
+
+# arbre static listmonk assemblé par infra/listmonk/build-static.sh
+# (officiel épinglé + surcharges) — artefact de déploiement, jamais committé
+/infra/listmonk/static-dist/

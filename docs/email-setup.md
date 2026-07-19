@@ -41,14 +41,18 @@
    `email-gateway`) portant **ces deux rôles**. Copier le token généré
    (il ne s'affiche qu'une fois).
 4. **Email d'opt-in** : il n'apparaît PAS dans Campaigns → Templates (cette
-   page ne liste que des modèles de campagne) et ne s'édite pas dans l'UI.
-   C'est un modèle **système**, surchargé par le fichier versionné
-   [`infra/listmonk/email-templates/subscriber-optin.html`](../infra/listmonk/email-templates/subscriber-optin.html)
-   (couleurs du Lab, texte validé), monté dans le conteneur par
-   `infra/compose.yml`. Pour le modifier : éditer le fichier, `git pull` sur
-   le VPS, `docker compose up -d listmonk` (les modèles sont chargés au
-   démarrage). L'**objet** de l'email vient de la traduction système FR de
-   listmonk (non surchargé — acceptable).
+   page ne liste que des modèles de campagne) et ne s'édite pas dans l'UI :
+   les modèles système sont **embarqués dans le binaire** listmonk. La
+   surcharge du Lab (couleurs, texte validé) est versionnée dans
+   [`infra/listmonk/email-templates/subscriber-optin.html`](../infra/listmonk/email-templates/subscriber-optin.html) ;
+   [`infra/listmonk/build-static.sh`](../infra/listmonk/build-static.sh)
+   (appelé par `deploy.sh`) assemble l'arbre static **complet** de la version
+   épinglée + nos surcharges dans `static-dist/` (git-ignoré), que compose
+   monte et déclare via `--static-dir`. Pour modifier l'email : éditer le
+   fichier versionné, puis sur le VPS `git pull && cd infra &&
+   ./listmonk/build-static.sh && docker compose up -d listmonk` (modèles
+   chargés au démarrage). L'**objet** de l'email vient de la traduction
+   système FR (non surchargé — acceptable).
 5. **Settings → Media / Privacy** : rien à changer aujourd'hui.
 
 ## 3. Créer le compte Brevo (relais d'envoi, ≈ 10 min, gratuit)

@@ -123,11 +123,14 @@ services:
     restart: unless-stopped
     # --install --idempotent : initialise le schéma au premier lancement
     # seulement ; --upgrade : migre le schéma lors des montées de version.
+    # --static-dir : modèles système (email d'opt-in…) servis depuis l'arbre
+    # monté ci-dessous — sans cette option, listmonk utilise les modèles
+    # EMBARQUÉS dans son binaire et ignore tout montage.
     command:
       [
         sh,
         -c,
-        "./listmonk --install --idempotent --yes --config '' && ./listmonk --upgrade --yes --config '' && ./listmonk --config ''",
+        "./listmonk --install --idempotent --yes --config '' && ./listmonk --upgrade --yes --config '' && ./listmonk --config '' --static-dir=/listmonk/static",
       ]
     environment:
       - TZ=Europe/Paris
@@ -142,10 +145,12 @@ services:
       - LISTMONK_ADMIN_USER=${LISTMONK_ADMIN_USER}
       - LISTMONK_ADMIN_PASSWORD=${LISTMONK_ADMIN_PASSWORD}
     volumes:
-      # Email de double opt-in aux couleurs du Lab : surcharge du modèle
-      # système (les modèles sont chargés au démarrage → recréer le conteneur
-      # après modification). Fichier versionné : l'infra est du code.
-      - ./listmonk/email-templates/subscriber-optin.html:/listmonk/static/email-templates/subscriber-optin.html:ro
+      # Arbre static complet (modèles système + pages publiques), assemblé par
+      # infra/listmonk/build-static.sh : officiel v6.2.0 + surcharges du Lab
+      # (email de double opt-in). Chargé au démarrage → recréer le conteneur
+      # après modification. Nos surcharges sont versionnées ; l'arbre assemblé
+      # (static-dist) est un artefact git-ignoré.
+      - ./listmonk/static-dist:/listmonk/static:ro
     expose:
       - "9000"
     depends_on:
