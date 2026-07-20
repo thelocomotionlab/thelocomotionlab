@@ -2,7 +2,8 @@
 //
 // Page d'accueil en cinq actes : hero pleine hauteur → Comprendre (lavis
 // bleu + registre des articles) → Explorer (photo Dolomites + cartes du
-// terrain) → philosophie du labo (4 colonnes) → bande de capture email.
+// terrain) → philosophie du labo (fil en quinconce, courbe au scroll) →
+// bande de capture email.
 // Les textes et valeurs (couleurs, tailles) viennent du handoff, validés
 // par Valentin ; les données (registre, cartes) du contenu Markdown.
 import Link from "next/link";
@@ -12,6 +13,7 @@ import Image from "next/image";
 import EmailCapture, { MICRO_PROMESSE } from "@/components/EmailCapture";
 import ExplorerCarousel from "@/components/ExplorerCarousel";
 import ExplorerLiveIndicator from "@/components/ExplorerLiveIndicator";
+import PhilosophieFil from "@/components/PhilosophieFil";
 import { getExplorerCarouselItems } from "@/lib/carouselItems";
 import { listArticleEntries } from "@/lib/contentRoutes.mjs";
 
@@ -180,23 +182,13 @@ function RegistrePanel({ rows }) {
    PHILOSOPHIE DU LABO
    ============================ */
 
+// Les quatre verbes + leur complément (design « fil » : chaque paire se lit
+// comme une phrase — « Douter des normes établies. », etc.).
 const PHILOSOPHIE = [
-  {
-    title: "Douter",
-    text: "Pas de dogme, pas de gourou. Chaque conviction du labo reste une hypothèse, qu’une meilleure preuve peut renverser.",
-  },
-  {
-    title: "Éprouver",
-    text: "Les idées passent par le corps : protocoles, mesures, terrain. Ce qui survit à l’épreuve est gardé, le reste est consigné puis écarté.",
-  },
-  {
-    title: "Jouer",
-    text: "Le mouvement est d’abord un jeu. Grimper, courir, porter, ramper — la curiosité est un moteur plus fiable que la discipline.",
-  },
-  {
-    title: "Partager",
-    text: "Méthodes, données, réussites comme échecs : tout est documenté et laissé en accès libre. Le labo avance parce qu’il est ouvert.",
-  },
+  { verb: "Douter", tagline: "des normes établies." },
+  { verb: "Éprouver", tagline: "plutôt que croire." },
+  { verb: "Jouer", tagline: "pour durer." },
+  { verb: "Partager", tagline: "pour apprendre deux fois." },
 ];
 
 export default async function HomePage() {
@@ -378,32 +370,17 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 03 · PHILOSOPHIE — les quatre verbes du labo ────────────── */}
+      {/* ── 03 · PHILOSOPHIE — le fil des quatre verbes (courbe scrollée) ── */}
       <section className="bg-brand-bg px-6 py-11 md:px-16 md:pb-[76px] md:pt-[84px]">
         <div className="mx-auto max-w-[1080px]">
-          <h2 className="text-center font-heading text-[28px] font-bold text-brand-primary-dark md:text-[40px]">
-            Philosophie
+          <p className="text-center font-mono text-[11px] font-bold tracking-[0.2em] text-brand-slate">
+            / LE LABO
+          </p>
+          <h2 className="mt-2.5 text-center font-heading text-[28px] font-bold text-brand-primary-dark md:text-[40px]">
+            La philosophie
           </h2>
 
-          <div className="mt-8 grid grid-cols-1 border-t border-black/12 md:mt-11 lg:grid-cols-4">
-            {PHILOSOPHIE.map((cell, i) => (
-              <div
-                key={cell.title}
-                className={`px-[26px] pb-8 pt-[30px] transition-colors hover:bg-white ${
-                  i < PHILOSOPHIE.length - 1
-                    ? "border-b border-black/9 lg:border-b-0 lg:border-r lg:border-r-black/9"
-                    : ""
-                }`}
-              >
-                <h3 className="font-heading text-[21px] font-bold text-brand-deep">
-                  {cell.title}
-                </h3>
-                <p className="mt-2.5 text-[14.5px] leading-[1.6] text-gray-700">
-                  {cell.text}
-                </p>
-              </div>
-            ))}
-          </div>
+          <PhilosophieFil items={PHILOSOPHIE} />
         </div>
       </section>
 
