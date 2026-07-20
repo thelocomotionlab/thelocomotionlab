@@ -150,7 +150,9 @@ function DesktopDropdown({ label, Icon, items, pathname }) {
       >
         <Icon
           size={18}
-          className="text-gray-700 group-hover:text-brand-accent"
+          className={`group-hover:text-brand-accent ${
+            active ? "text-brand-accent" : "text-gray-700"
+          }`}
           aria-hidden="true"
         />
         <span>{label}</span>
@@ -175,7 +177,9 @@ function DesktopDropdown({ label, Icon, items, pathname }) {
                 role="menuitem"
                 aria-current={isActivePath(pathname, href) ? "page" : undefined}
                 onClick={() => setOpen(false)}
-                className="block px-4 py-2 hover:bg-brand-bg hover:text-brand-accent whitespace-nowrap"
+                className={`block px-4 py-2 hover:bg-brand-bg hover:text-brand-accent whitespace-nowrap ${
+                  isActivePath(pathname, href) ? "text-brand-accent" : ""
+                }`}
               >
                 {itemLabel}
               </Link>
@@ -319,11 +323,15 @@ export default function Navbar() {
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
-              className="hover:text-brand-accent flex items-center gap-1 group"
+              className={`hover:text-brand-accent flex items-center gap-1 group ${
+                active ? "text-brand-accent" : ""
+              }`}
             >
               <Icon
                 size={18}
-                className="text-gray-700 group-hover:text-brand-accent"
+                className={`group-hover:text-brand-accent ${
+                  active ? "text-brand-accent" : "text-gray-700"
+                }`}
                 aria-hidden="true"
               />
               <span>{label}</span>
@@ -406,6 +414,9 @@ export default function Navbar() {
             {navItems.map((item) => {
               if (item.type === "menu") {
                 const sectionOpen = openSection === item.label;
+                const sectionActive = item.items.some(({ href }) =>
+                  isActivePath(pathname, href)
+                );
                 const sectionId = `mobile-section-${item.label
                   .toLowerCase()
                   .replace(/\s+/g, "-")}`;
@@ -418,7 +429,9 @@ export default function Navbar() {
                       onClick={() =>
                         setOpenSection(sectionOpen ? null : item.label)
                       }
-                      className="w-full flex items-center justify-between py-2 cursor-pointer"
+                      className={`w-full flex items-center justify-between py-2 cursor-pointer ${
+                        sectionActive ? "text-brand-accent" : ""
+                      }`}
                     >
                       <span>{item.label}</span>
                       <ChevronDown
@@ -439,7 +452,11 @@ export default function Navbar() {
                             aria-current={
                               isActivePath(pathname, href) ? "page" : undefined
                             }
-                            className="py-2"
+                            className={`py-2 ${
+                              isActivePath(pathname, href)
+                                ? "font-medium text-brand-accent"
+                                : ""
+                            }`}
                           >
                             {label}
                           </Link>
@@ -461,7 +478,7 @@ export default function Navbar() {
                   className={
                     item.live
                       ? "flex items-center gap-2 py-2 font-semibold text-brand-accent-dark animate-[ll-blink_2.6s_ease-in-out_infinite]"
-                      : "py-2"
+                      : `py-2 ${active ? "font-medium text-brand-accent" : ""}`
                   }
                 >
                   {item.live ? (
