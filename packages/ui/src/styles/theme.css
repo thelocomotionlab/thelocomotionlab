@@ -58,18 +58,22 @@
 }
 
 /* Polices (liées à next/font via packages/ui/src/fonts.ts).
-   ⚠ OBLIGATOIREMENT en @theme inline : les variables --font-ubuntu /
-   --font-lora / --font-ubuntu-mono sont posées par next/font sur <body>,
-   pas sur :root. Un @theme classique résout var(--font-ubuntu) SUR :root,
-   où elle n'existe pas → token invalide → toute la typo retombait en
-   police système (Roboto sur Android). `inline` recopie la chaîne var()
-   dans chaque utilitaire, qui se résout alors au niveau de l'élément. */
+   Deux impératifs, appris à la dure :
+   ⚠ 1) OBLIGATOIREMENT en @theme inline : les variables --next-font-* sont
+   posées par next/font sur <body>, pas sur :root. Un @theme classique résout
+   var() SUR :root, où elles n'existent pas → token invalide → toute la typo
+   retombait en police système (Roboto sur Android). `inline` recopie la
+   chaîne var() dans chaque utilitaire, qui se résout alors au niveau de
+   l'élément.
+   ⚠ 2) Noms DISTINCTS des tokens : les variables next/font s'appellent
+   --next-font-* (fonts.ts), jamais --font-*. Sinon le token --font-lora
+   référencerait var(--font-lora) — auto-référence dont la résolution dépend
+   de l'implémentation (Tailwind/navigateur). */
 @theme inline {
-  --font-heading: var(--font-ubuntu), ui-sans-serif, system-ui;
-  --font-sans: var(--font-ubuntu), ui-sans-serif, system-ui;
-  /* Serif d'accent de la charte = Lora. (Avant : "Ubuntu Serif", police qui
-     n'existe pas → les rares font-serif rendaient en Georgia.) */
-  --font-serif: var(--font-lora), Georgia, serif;
-  --font-lora: var(--font-lora), serif;
-  --font-mono: var(--font-ubuntu-mono), ui-monospace, SFMono-Regular, monospace;
+  --font-heading: var(--next-font-ubuntu), ui-sans-serif, system-ui;
+  --font-sans: var(--next-font-ubuntu), ui-sans-serif, system-ui;
+  /* Serif d'accent de la charte = Lora, vraies italiques (fonts.ts). */
+  --font-serif: var(--next-font-lora), Georgia, serif;
+  --font-lora: var(--next-font-lora), Georgia, serif;
+  --font-mono: var(--next-font-ubuntu-mono), ui-monospace, SFMono-Regular, monospace;
 }

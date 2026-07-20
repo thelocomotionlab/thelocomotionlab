@@ -8,8 +8,10 @@
 // qui échouait silencieusement (police de secours déployée sans erreur).
 // Les apps Next consomment ces objets et posent `ubuntu.variable` /
 // `lora.variable` / `ubuntuMono.variable` sur <body> ; les variables CSS
-// --font-ubuntu / --font-lora / --font-ubuntu-mono sont ensuite référencées
-// par les tokens @theme.
+// --next-font-* sont ensuite référencées par les tokens @theme (theme.css).
+// ⚠ Ces variables ne doivent JAMAIS s'appeler --font-* : ce nom entrerait en
+// collision avec les tokens Tailwind (--font-lora: var(--font-lora)… est une
+// auto-référence dont la résolution dépend de l'implémentation).
 
 import localFont from "next/font/local";
 
@@ -20,7 +22,7 @@ export const ubuntu = localFont({
     { path: "./fonts/ubuntu-500-normal.woff2", weight: "500", style: "normal" },
     { path: "./fonts/ubuntu-700-normal.woff2", weight: "700", style: "normal" },
   ],
-  variable: "--font-ubuntu",
+  variable: "--next-font-ubuntu",
   display: "swap",
 });
 
@@ -30,7 +32,7 @@ export const lora = localFont({
     { path: "./fonts/lora-400-700-normal.woff2", weight: "400 700", style: "normal" },
     { path: "./fonts/lora-400-700-italic.woff2", weight: "400 700", style: "italic" },
   ],
-  variable: "--font-lora",
+  variable: "--next-font-lora",
   display: "swap",
 });
 
@@ -39,7 +41,7 @@ export const ubuntuMono = localFont({
     { path: "./fonts/ubuntu-mono-400-normal.woff2", weight: "400", style: "normal" },
     { path: "./fonts/ubuntu-mono-700-normal.woff2", weight: "700", style: "normal" },
   ],
-  variable: "--font-ubuntu-mono",
+  variable: "--next-font-ubuntu-mono",
   display: "swap",
 });
 

@@ -207,7 +207,7 @@ a.data-footnote-backref,
 .prose h4,
 .prose h5,
 .prose h6 {
-  font-family: var(--font-ubuntu), ui-sans-serif, system-ui;
+  font-family: var(--next-font-ubuntu), ui-sans-serif, system-ui;
   font-weight: 700;
 }
 
@@ -505,7 +505,7 @@ a.data-footnote-backref,
   line-height: 1.5;
   font-size: 1rem;
   color: var(--color-brand-text);
-  font-family: var(--font-lora);
+  font-family: var(--next-font-lora), Georgia, serif;
 }
 
 .prose ul li,
@@ -570,7 +570,7 @@ html {
 .article-body p {
   font-size: 1.18rem;
   line-height: 1.7;
-  font-family: var(--font-lora);
+  font-family: var(--next-font-lora), Georgia, serif;
   margin-top: 1.25rem;
   margin-bottom: 1.25rem;
 }
