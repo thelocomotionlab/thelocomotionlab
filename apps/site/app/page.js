@@ -37,7 +37,7 @@ export const metadata = {
   },
 };
 
-// ✅ TEMP: single hero only (keep structure for later)
+// TEMP: single hero only (keep structure for later)
 const HEROES = [
   {
     src: "/images/heroes/hero-01.webp",

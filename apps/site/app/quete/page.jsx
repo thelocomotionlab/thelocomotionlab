@@ -80,12 +80,13 @@ export default function QuetePage() {
             le monde humain moderne et le rend incapable de faire face à
             l&rsquo;incertitude. La robustesse n&rsquo;est pourtant pas l&rsquo;ennemie de la
             performance. Le guépard vit en économie permanente mais reste
-            capable de pointes à plus de 100 km/h quand sa survie
-            l&rsquo;exige. Être robuste, c&rsquo;est exactement ça : savoir
-            être ponctuellement performant sans jamais hypothéquer le système.
-            Voilà pourquoi on trouvera ici aussi bien des protocoles
-            d&rsquo;exposition au froid que des plans d&rsquo;allure pour un
-            100 miles.
+            capable de pointes à plus de 100 km/h pour chasser quand sa survie
+            l&rsquo;exige. L'Humain peut élever sa température corporelle à plus de 40°C
+            anihiler infection ou virus. Mais perdurer trop longtemps dans ces modes de performance 
+            conduit à la mort, par hyperthermie pour le guépard, et par dénaturation des enzymes pour l'Humain.
+            Voici l'essence de la robustesse : construire un système solide, où chaque qualité est
+            entretenue, et où la performance peut s'exprimer ponctuellement, sans jamais hypothéquer 
+            la globalité du système.
           </p>
         </section>
 
@@ -155,7 +156,7 @@ export default function QuetePage() {
 
       <div className="mt-12 max-w-2xl mx-auto text-center">
         <h2 className="text-lg font-semibold text-brand-accent mb-3">
-          Recevoir les prochaines parutions
+          Recevoir les prochaines parutions ou collaborer avec le labo
         </h2>
         <EmailCapture
           title={null}
