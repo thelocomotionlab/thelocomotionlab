@@ -81,11 +81,11 @@ export default function QuetePage() {
             l&rsquo;incertitude. La robustesse n&rsquo;est pourtant pas l&rsquo;ennemie de la
             performance. Le guépard vit en économie permanente mais reste
             capable de pointes à plus de 100 km/h pour chasser quand sa survie
-            l&rsquo;exige. L'Humain peut élever sa température corporelle à plus de 40°C
-            anihiler infection ou virus. Mais perdurer trop longtemps dans ces modes de performance 
-            conduit à la mort, par hyperthermie pour le guépard, et par dénaturation des enzymes pour l'Humain.
-            Voici l'essence de la robustesse : construire un système solide, où chaque qualité est
-            entretenue, et où la performance peut s'exprimer ponctuellement, sans jamais hypothéquer 
+            l&rsquo;exige. L&rsquo;Humain peut élever sa température corporelle à plus de 40°C
+            anihiler infection ou virus. Mais perdurer trop longtemps dans ces modes de performance
+            conduit à la mort, par hyperthermie pour le guépard, et par dénaturation des enzymes pour l&rsquo;Humain.
+            Voici l&rsquo;essence de la robustesse : construire un système solide, où chaque qualité est
+            entretenue, et où la performance peut s&rsquo;exprimer ponctuellement, sans jamais hypothéquer
             la globalité du système.
           </p>
         </section>
