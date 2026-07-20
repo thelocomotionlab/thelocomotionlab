@@ -1,16 +1,19 @@
 // components/PhilosophieSection.jsx
 //
-// Section « La philosophie » de l'accueil (design_handoff_labo v3, 9a) :
-// les 4 piliers du labo entre la section Explorer et la bande email.
-// - Desktop (≥ md) : grille 4 colonnes (verbe + suite italique + texte
-//   d'appui), filets chauds, hover blanc.
-// - Mobile (< md) : accordéon — punchline sur UNE ligne (« Questionner
-//   les normes établies. », taille fluide clamp() calibrée pour ne pas
-//   replier la plus longue), « + » cerclé qui tourne en « × », déroulé
-//   animé par grid-template-rows 0fr → 1fr (items indépendants).
-// Client component uniquement pour l'état de l'accordéon ; le rendu
-// desktop et mobile sont deux DOM séparés (comme la référence HTML),
-// masqués l'un l'autre par les variantes md:.
+// Section « La philosophie » de l'accueil (design_handoff_labo v3, 9a +
+// itération « textes déroulants partout ») : les 4 piliers du labo entre la
+// section Explorer et la bande email.
+// - Desktop (≥ md) : grille 4 colonnes — verbe + suite italique visibles,
+//   texte d'appui DÉROULANT sous un « + » cerclé (même langage que mobile).
+// - Mobile (< md) : accordéon — punchline sur UNE ligne (« Questionner les
+//   normes établies. », taille fluide clamp() calibrée pour ne pas replier
+//   la plus longue de 320 à 430px), « + » à droite de la rangée.
+// UN SEUL DOM pour les deux rendus (variantes md:), donc un seul état
+// open/fermé par pilier, conservé quand la fenêtre change de taille.
+// Déroulé animé par grid-template-rows 0fr → 1fr (cross-browser), « + »
+// qui tourne en « × » ; motion-reduce → bascule instantanée. Accordéon
+// APG : <h3><button aria-expanded aria-controls>…</button></h3> +
+// role="region". Items indépendants. Client component pour ce seul état.
 
 "use client";
 
@@ -18,7 +21,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 // Contenu final du handoff (ne pas reformuler). Suite SANS point final :
-// le point n'apparaît que sur la punchline mobile.
+// le point n'apparaît que sur la punchline mobile (en ligne).
 const PILIERS = [
   {
     verb: "Questionner",
@@ -56,49 +59,60 @@ const FOOT_LINKS = [
 const FOOT_LINK_CLASS =
   "text-[14px] font-semibold tracking-[0.01em] text-brand-primary-dark transition hover:text-brand-accent-dark md:text-[14.5px]";
 
-/** Un rang de l'accordéon mobile (état indépendant par item). */
-function AccordeonItem({ verb, suite, texte }) {
-  const [open, setOpen] = useState(false);
-  const id = `philo-${verb.toLowerCase().replace(/[^a-z]+/g, "-")}`;
+function slugify(verb) {
+  return verb
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z]+/g, "-");
+}
+
+/** Un pilier : punchline cliquable + texte d'appui déroulant (tous écrans). */
+function Pilier({ verb, suite, texte, open, onToggle }) {
+  const id = `philo-${slugify(verb)}`;
 
   return (
-    <div className="border-b border-brand-deep-dark/18">
-      <button
-        type="button"
-        id={`${id}-bouton`}
-        aria-expanded={open}
-        aria-controls={id}
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full cursor-pointer items-center gap-3.5 px-0.5 py-[22px] text-left"
-      >
-        {/* Punchline UNE ligne : taille fluide calibrée pour que la plus
-            longue (« Questionner les normes établies. ») tienne sans replier
-            de 320px à 430px — vérifié au pixel (Puppeteer). */}
-        <span className="block flex-1 text-[clamp(13.5px,6.2vw-5px,22px)] font-bold leading-[1.25] tracking-[-0.01em] text-brand-deep-dark">
-          {verb}{" "}
-          <em className="font-lora font-medium italic text-brand-accent">
-            {suite}.
-          </em>
-        </span>
-        <span
-          aria-hidden="true"
-          className={`grid h-[26px] w-[26px] flex-none place-items-center rounded-full border-[1.5px] border-brand-deep-dark/35 text-[16px] font-medium leading-none text-brand-deep-dark transition-transform duration-[350ms] ease-[cubic-bezier(.4,0,.2,1)] ${
-            open ? "rotate-45" : ""
-          }`}
+    <div className="border-b border-brand-deep-dark/18 transition-colors md:border-b-0 md:border-r md:border-brand-deep-dark/14 md:px-6 md:pb-8 md:pt-[34px] md:last:border-r-0 md:hover:bg-white">
+      <h3>
+        <button
+          type="button"
+          id={`${id}-bouton`}
+          aria-expanded={open}
+          aria-controls={id}
+          onClick={onToggle}
+          className="flex w-full cursor-pointer items-center gap-3.5 px-0.5 py-[22px] text-left md:block md:p-0"
         >
-          +
-        </span>
-      </button>
+          {/* Punchline : UNE ligne en mobile — taille fluide calibrée pour
+              que la plus longue (« Questionner les normes établies. »)
+              tienne sans replier de 320 à 430px, vérifié au pixel. En
+              desktop, verbe et suite passent sur deux lignes (md:block). */}
+          <span className="block flex-1 text-[clamp(13.5px,6.2vw-5px,22px)] font-bold leading-[1.25] tracking-[-0.01em] text-brand-deep-dark md:text-[28px] md:leading-[1.1]">
+            {verb}{" "}
+            <em className="font-lora font-medium italic text-brand-accent md:mt-1.5 md:block md:text-[17px] md:leading-[1.35] md:[text-wrap:balance]">
+              {suite}
+              <span className="md:hidden">.</span>
+            </em>
+          </span>
+          <span
+            aria-hidden="true"
+            className={`grid h-[26px] w-[26px] flex-none place-items-center rounded-full border-[1.5px] border-brand-deep-dark/35 text-[16px] font-medium leading-none text-brand-deep-dark transition-transform duration-[350ms] ease-[cubic-bezier(.4,0,.2,1)] motion-reduce:transition-none md:mt-4 ${
+            open ? "rotate-45" : ""
+            }`}
+          >
+            +
+          </span>
+        </button>
+      </h3>
       <div
         id={id}
         role="region"
         aria-labelledby={`${id}-bouton`}
-        className={`grid transition-[grid-template-rows] duration-[450ms] ease-[cubic-bezier(.4,0,.2,1)] ${
+        className={`grid transition-[grid-template-rows] duration-[450ms] ease-[cubic-bezier(.4,0,.2,1)] motion-reduce:transition-none ${
           open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
         }`}
       >
         <div className="overflow-hidden">
-          <p className="pb-5 pl-0.5 pr-10 text-[14px] leading-[1.65] text-gray-600 [text-wrap:pretty]">
+          <p className="pb-5 pl-0.5 pr-10 text-[14px] leading-[1.65] text-gray-600 [text-wrap:pretty] md:pb-1 md:pl-0 md:pr-0 md:pt-4">
             {texte}
           </p>
         </div>
@@ -108,6 +122,11 @@ function AccordeonItem({ verb, suite, texte }) {
 }
 
 export default function PhilosophieSection() {
+  // Piliers ouverts, par verbe. Un seul état pour mobile ET desktop
+  // (même DOM) : l'ouverture survit à un changement de largeur.
+  const [open, setOpen] = useState({});
+  const toggle = (verb) => setOpen((o) => ({ ...o, [verb]: !o[verb] }));
+
   return (
     <section className="bg-brand-bg px-[26px] pb-12 pt-14 md:px-16 md:pb-[84px] md:pt-24">
       <div className="mx-auto max-w-[1152px]">
@@ -118,30 +137,15 @@ export default function PhilosophieSection() {
           La philosophie
         </h2>
 
-        {/* Desktop ≥ md : grille 4 colonnes */}
-        <div className="mt-12 hidden border-t border-brand-deep-dark/18 md:grid md:grid-cols-4">
+        {/* Liste mobile / grille desktop : un seul DOM, variantes md:. */}
+        <div className="mt-[30px] border-t border-brand-deep-dark/18 md:mt-12 md:grid md:grid-cols-4">
           {PILIERS.map((p) => (
-            <div
+            <Pilier
               key={p.verb}
-              className="border-r border-brand-deep-dark/14 px-6 pb-9 pt-[34px] transition-colors last:border-r-0 hover:bg-white"
-            >
-              <h3 className="text-[28px] font-bold leading-[1.1] tracking-[-0.01em] text-brand-deep-dark">
-                {p.verb}
-              </h3>
-              <p className="mt-1.5 font-lora text-[17px] font-medium italic leading-[1.35] text-brand-accent [text-wrap:balance]">
-                {p.suite}
-              </p>
-              <p className="mt-3.5 text-[14px] leading-[1.65] text-gray-600 [text-wrap:pretty]">
-                {p.texte}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* Mobile < md : accordéon */}
-        <div className="mt-[30px] border-t border-brand-deep-dark/18 md:hidden">
-          {PILIERS.map((p) => (
-            <AccordeonItem key={p.verb} {...p} />
+              {...p}
+              open={!!open[p.verb]}
+              onToggle={() => toggle(p.verb)}
+            />
           ))}
         </div>
 
