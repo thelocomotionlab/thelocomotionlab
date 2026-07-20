@@ -2,8 +2,7 @@
 //
 // Page d'accueil en cinq actes : hero pleine hauteur → Comprendre (lavis
 // bleu + registre des articles) → Explorer (photo Dolomites + cartes du
-// terrain) → philosophie du labo (fil en quinconce, courbe au scroll) →
-// bande de capture email.
+// terrain) → manifeste du labo (registre 4 lignes) → bande de capture email.
 // Les textes et valeurs (couleurs, tailles) viennent du handoff, validés
 // par Valentin ; les données (registre, cartes) du contenu Markdown.
 import Link from "next/link";
@@ -13,7 +12,6 @@ import Image from "next/image";
 import EmailCapture, { MICRO_PROMESSE } from "@/components/EmailCapture";
 import ExplorerCarousel from "@/components/ExplorerCarousel";
 import ExplorerLiveIndicator from "@/components/ExplorerLiveIndicator";
-import PhilosophieFil from "@/components/PhilosophieFil";
 import { getExplorerCarouselItems } from "@/lib/carouselItems";
 import { listArticleEntries } from "@/lib/contentRoutes.mjs";
 
@@ -179,17 +177,41 @@ function RegistrePanel({ rows }) {
 }
 
 /* ============================
-   PHILOSOPHIE DU LABO
+   MANIFESTE DU LABO
    ============================ */
 
-// Les quatre verbes + leur complément (design « fil » : chaque paire se lit
-// comme une phrase — « Douter des normes établies. », etc.).
-const PHILOSOPHIE = [
-  { verb: "Douter", tagline: "des normes établies." },
-  { verb: "Éprouver", tagline: "plutôt que croire." },
-  { verb: "Jouer", tagline: "pour durer." },
-  { verb: "Partager", tagline: "pour apprendre deux fois." },
+// « Ce qui anime ce labo » : 4 piliers en registre pleine largeur
+// (design_handoff_labo). Textes finaux, validés.
+const MANIFESTE = [
+  {
+    verb: "Douter",
+    suite: "des normes établies.",
+    texte:
+      "Relire les dogmes de l’entraînement et de la santé à la lumière des études — et de millions d’années d’évolution.",
+  },
+  {
+    verb: "Éprouver",
+    suite: "par soi-même.",
+    texte:
+      "Être son propre laboratoire : tester en conditions réelles, se tromper, recommencer. La connaissance qui reste est celle qui est vécue.",
+  },
+  {
+    verb: "Jouer",
+    suite: "pour prendre du plaisir et durer.",
+    texte:
+      "Le jeu est le moteur le plus durable : bouger comme un animal, rester curieux, faire de la pratique une récréation plutôt qu’une discipline.",
+  },
+  {
+    verb: "Partager",
+    suite: "pour ancrer et transmettre.",
+    texte:
+      "Écrire, raconter, accompagner : ce qui est partagé s’ancre plus profondément — et fait avancer les autres.",
+  },
 ];
+
+// Style commun des liens du pied de section (« cette philosophie en action »).
+const MANIFESTE_LINK_CLASS =
+  "text-[14.5px] font-semibold text-brand-primary-dark transition hover:text-brand-accent-dark";
 
 export default async function HomePage() {
   const hero = HEROES[0];
@@ -370,17 +392,49 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 03 · PHILOSOPHIE — le fil des quatre verbes (courbe scrollée) ── */}
+      {/* ── 03 · LE LABO — manifeste en registre (design_handoff_labo) ── */}
       <section className="bg-brand-bg px-6 py-11 md:px-16 md:pb-[76px] md:pt-[84px]">
-        <div className="mx-auto max-w-[1080px]">
-          <p className="text-center font-mono text-[11px] font-bold tracking-[0.2em] text-brand-slate">
+        <div className="mx-auto max-w-[1100px]">
+          <p className="text-center font-mono text-[13px] font-bold tracking-[0.25em] text-brand-slate">
             / LE LABO
           </p>
-          <h2 className="mt-2.5 text-center font-heading text-[28px] font-bold text-brand-primary-dark md:text-[40px]">
-            La philosophie
+          <h2 className="mt-3 text-center font-heading text-[28px] font-bold text-brand-primary-dark md:text-[40px]">
+            Ce qui anime ce labo
           </h2>
 
-          <PhilosophieFil items={PHILOSOPHIE} />
+          <div className="mt-8 border-t border-black/12 md:mt-11">
+            {MANIFESTE.map((row) => (
+              <div
+                key={row.verb}
+                className="grid grid-cols-1 gap-2.5 border-b border-black/9 px-1 py-[22px] transition-colors hover:bg-white md:grid-cols-[minmax(0,1fr)_380px] md:items-center md:gap-7 md:px-2.5 md:py-[30px]"
+              >
+                <p className="text-[24px] font-bold leading-[1.15] text-brand-slate-dark md:text-[34px]">
+                  {row.verb}{" "}
+                  <span className="font-lora font-medium italic text-brand-deep">
+                    {row.suite}
+                  </span>
+                </p>
+                <p className="text-[14.5px] leading-[1.6] text-gray-700 [text-wrap:pretty]">
+                  {row.texte}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-[30px] flex flex-wrap items-baseline justify-center gap-x-[26px] gap-y-3">
+            <span className="font-mono text-[11px] font-bold tracking-[0.2em] text-gray-400">
+              CETTE PHILOSOPHIE EN ACTION —
+            </span>
+            <Link href="/quete" className={MANIFESTE_LINK_CLASS}>
+              La quête →
+            </Link>
+            <Link href="/outils" className={MANIFESTE_LINK_CLASS}>
+              Les outils →
+            </Link>
+            <a href="#email" className={MANIFESTE_LINK_CLASS}>
+              L&rsquo;accompagnement →
+            </a>
+          </div>
         </div>
       </section>
 
