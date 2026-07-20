@@ -2,7 +2,7 @@
 //
 // Page d'accueil en cinq actes : hero pleine hauteur → Comprendre (lavis
 // bleu + registre des articles) → Explorer (photo Dolomites + cartes du
-// terrain) → inventaire du labo (3 colonnes) → bande de capture email.
+// terrain) → philosophie du labo (4 colonnes) → bande de capture email.
 // Les textes et valeurs (couleurs, tailles) viennent du handoff, validés
 // par Valentin ; les données (registre, cartes) du contenu Markdown.
 import Link from "next/link";
@@ -177,31 +177,25 @@ function RegistrePanel({ rows }) {
 }
 
 /* ============================
-   INVENTAIRE DU LABO
+   PHILOSOPHIE DU LABO
    ============================ */
 
-const INVENTAIRE = [
+const PHILOSOPHIE = [
   {
-    kicker: "/ LE POURQUOI",
-    title: "La quête",
-    text: "Pourquoi la robustesse plutôt que la performance, et les règles du jeu du labo.",
-    href: "/quete",
-    cta: "Lire",
+    title: "Douter",
+    text: "Pas de dogme, pas de gourou. Chaque conviction du labo reste une hypothèse, qu’une meilleure preuve peut renverser.",
   },
   {
-    kicker: "/ LES INSTRUMENTS",
-    title: "Outils",
-    text: "Construits au labo, calibrés sur de vraies données d'athlètes. Le premier : Locomotion Twin, un plan d'allure individualisé. D'autres suivront.",
-    href: "/outils",
-    cta: "Découvrir",
+    title: "Éprouver",
+    text: "Les idées passent par le corps : protocoles, mesures, terrain. Ce qui survit à l’épreuve est gardé, le reste est consigné puis écarté.",
   },
   {
-    kicker: "/ ENSEMBLE",
-    title: "L'accompagnement",
-    text: "Le labo en vrai : ateliers de mouvement primal — bientôt, et gratuits pour commencer — puis accompagnement trail, stages et retraites.",
-    // Ancre vers la bande email, comme le lien du registre Comprendre.
-    href: "#email",
-    cta: "Être prévenu·e",
+    title: "Jouer",
+    text: "Le mouvement est d’abord un jeu. Grimper, courir, porter, ramper — la curiosité est un moteur plus fiable que la discipline.",
+  },
+  {
+    title: "Partager",
+    text: "Méthodes, données, réussites comme échecs : tout est documenté et laissé en accès libre. Le labo avance parce qu’il est ouvert.",
   },
 ];
 
@@ -384,47 +378,31 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 03 · INVENTAIRE — que trouve-t-on dans ce labo ? ───────── */}
+      {/* ── 03 · PHILOSOPHIE — les quatre verbes du labo ────────────── */}
       <section className="bg-brand-bg px-6 py-11 md:px-16 md:pb-[76px] md:pt-[84px]">
-        <div className="mx-auto max-w-[1000px]">
+        <div className="mx-auto max-w-[1080px]">
           <h2 className="text-center font-heading text-[28px] font-bold text-brand-primary-dark md:text-[40px]">
-            Que trouve-t-on dans ce labo&nbsp;?
+            Philosophie
           </h2>
 
-          <div className="mt-8 grid grid-cols-1 border-t border-black/12 md:mt-11 md:grid-cols-3">
-            {INVENTAIRE.map((cell, i) => {
-              const ctaClass =
-                "mt-3.5 inline-block text-[14.5px] font-semibold text-brand-primary-dark transition hover:text-brand-accent-dark";
-              return (
-                <div
-                  key={cell.kicker}
-                  className={`px-[26px] pb-8 pt-[30px] transition-colors hover:bg-white ${
-                    i < INVENTAIRE.length - 1
-                      ? "border-b border-black/9 md:border-b-0 md:border-r md:border-r-black/9"
-                      : ""
-                  }`}
-                >
-                  <p className="font-mono text-[11px] font-bold tracking-[0.2em] text-brand-slate">
-                    {cell.kicker}
-                  </p>
-                  <h3 className="mt-2.5 font-heading text-[21px] font-bold text-brand-deep">
-                    {cell.title}
-                  </h3>
-                  <p className="mt-2.5 text-[14.5px] leading-[1.6] text-gray-700">
-                    {cell.text}
-                  </p>
-                  {cell.href.startsWith("#") ? (
-                    <a href={cell.href} className={ctaClass}>
-                      {cell.cta} →
-                    </a>
-                  ) : (
-                    <Link href={cell.href} className={ctaClass}>
-                      {cell.cta} →
-                    </Link>
-                  )}
-                </div>
-              );
-            })}
+          <div className="mt-8 grid grid-cols-1 border-t border-black/12 md:mt-11 lg:grid-cols-4">
+            {PHILOSOPHIE.map((cell, i) => (
+              <div
+                key={cell.title}
+                className={`px-[26px] pb-8 pt-[30px] transition-colors hover:bg-white ${
+                  i < PHILOSOPHIE.length - 1
+                    ? "border-b border-black/9 lg:border-b-0 lg:border-r lg:border-r-black/9"
+                    : ""
+                }`}
+              >
+                <h3 className="font-heading text-[21px] font-bold text-brand-deep">
+                  {cell.title}
+                </h3>
+                <p className="mt-2.5 text-[14.5px] leading-[1.6] text-gray-700">
+                  {cell.text}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
