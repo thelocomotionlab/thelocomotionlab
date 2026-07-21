@@ -43,7 +43,7 @@ const SEANCE_STEPS = [
 // Les photos des CARTES ateliers se règlent dans lib/ateliers.mjs (cover).
 const PHOTOS = {
   // Illustration « Le mouvement primal, c'est quoi ? » — paysage, ~1200×800.
-  pedagogie: { src: "", alt: "Mouvement primal en extérieur — squat et suspension" },
+  pedagogie: { src: "/images/pratiquer/quadru_demo.webp", alt: "Mouvement primal en extérieur" },
   // Portrait rond « Qui anime ? » — cadré carré, ~500×500.
   portrait: { src: "/images/pratiquer/portrait_val.webp", alt: "Portrait de Valentin, fondateur du Locomotion Lab" },
 };
@@ -97,9 +97,9 @@ export default function PratiquerPage() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
       <PageHeader
-        kicker="/ LA PRATIQUE"
+        kicker="/ LE JEU"
         title="Pratiquer"
-        tagline="Éprouver par soi-même, ensemble."
+        tagline="Éprouver par soi-même."
         className="mb-0"
       />
       <p className="mt-7 max-w-[640px] text-base leading-[1.7] text-gray-600 md:text-lg">
@@ -127,7 +127,7 @@ export default function PratiquerPage() {
       <section className="mt-11 md:mt-[72px] md:grid md:grid-cols-[1.15fr_1fr] md:items-center md:gap-12">
         <div>
           <SectionHeading className="mb-4 md:mb-[18px]">
-            Se réapproprier et faire tribu
+            La motricité primale
           </SectionHeading>
           <PhotoSlot
             src={PHOTOS.pedagogie.src}
@@ -180,8 +180,8 @@ export default function PratiquerPage() {
             <div>
               <p className="mb-2.5 text-[15px] leading-[1.65] text-gray-600 md:mb-4 md:text-base md:leading-[1.7]">
                 Valentin, fondateur du Locomotion Lab. Coureur minimaliste, grimpeur
-                d&rsquo;arbres et expérimentateur. Les ateliers sont un moyen de transmettre
-                et apprendre en situation réelle.
+                d&rsquo;arbres et expérimentateur. Les ateliers sont pour lui un moyen 
+                de transmettre ses connaissances et de faire tribu en situation réelle.
               </p>
               <div className="border-l-2 border-brand-accent pl-3 md:pl-4">
                 <p className="mb-1 font-mono text-[10px] font-bold tracking-[0.2em] text-brand-primary md:text-[11px]">
@@ -202,13 +202,12 @@ export default function PratiquerPage() {
             Foire aux questions
           </h2>
           <div className="flex flex-col">
-            <details className="border-t border-brand-hairline py-3 md:py-[13px]" open>
+            <details className="border-t border-brand-hairline py-3 md:py-[13px]">
               <summary className="cursor-pointer text-[15px] font-bold text-brand-deep md:text-base">
                 Y a-t-il un niveau sportif prérequis ?
               </summary>
               <p className="mt-2 text-[14.5px] leading-[1.65] text-gray-600 md:text-[15px]">
-                Aucun. Les mouvements se déclinent en progressions : chacun
-                explore à son niveau, du grand débutant au traileur aguerri.
+                Aucun. Sauf mention contraire, les ateliers sont ouverts à tous·te·s.
               </p>
             </details>
             <details className="border-t border-brand-hairline py-3 md:py-[13px]">
