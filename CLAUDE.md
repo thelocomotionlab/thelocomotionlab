@@ -33,6 +33,7 @@ thelocomotionlab/
 │  ├─ site/                  # site public (Next + JS, App Router), CF Pages
 │  │  ├─ app/                     # IA refonte 2026 : comprendre (la science, type "article"),
 │  │  │                           #   explorer (le terrain : récits + projets fusionnés),
+│  │  │                           #   pratiquer (ateliers mouvement primal, lib/ateliers.mjs),
 │  │  │                           #   quete (ex-manifeste), outils/twin (teaser), live (hub),
 │  │  │                           #   about, contact, soutenir, recherche ; /articles /projets
 │  │  │                           #   → 308 (générées au build, lib/legacyRedirects.mjs) ;

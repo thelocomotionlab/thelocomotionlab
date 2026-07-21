@@ -9,6 +9,7 @@ import {
   ChevronDown,
   Compass,
   FlaskConical,
+  Footprints,
   Menu,
   SatelliteDish,
   Search,
@@ -44,6 +45,9 @@ function liveWindowOpen() {
 const NAV_ITEMS = [
   { type: "link", href: "/comprendre", label: "Comprendre", Icon: Brain },
   { type: "link", href: "/explorer", label: "Explorer", Icon: Compass },
+  // Évolutif : quand l'accompagnement trail ouvrira (2027), cette entrée
+  // passera en `type: "menu"` (Ateliers / Accompagnement trail).
+  { type: "link", href: "/pratiquer", label: "Pratiquer", Icon: Footprints },
   {
     type: "menu",
     label: "Outils",
