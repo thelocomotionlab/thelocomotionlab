@@ -1,19 +1,16 @@
 // components/PhilosophieSection.jsx
 //
-// Section « La philosophie » de l'accueil (design_handoff_labo v3, 9a +
-// itération « textes déroulants partout ») : les 4 piliers du labo entre la
-// section Explorer et la bande email.
-// - Desktop (≥ md) : grille 4 colonnes — verbe + suite italique visibles,
-//   texte d'appui DÉROULANT sous un « + » cerclé (même langage que mobile).
+// Section « La philosophie » de l'accueil (design_handoff_labo v3, 9a) :
+// les 4 piliers du labo entre la section Explorer et la bande email.
+// - Desktop (≥ md) : grille 4 colonnes STATIQUE — verbe + suite italique +
+//   texte d'appui justifié, toujours visibles ; filets chauds, hover blanc.
 // - Mobile (< md) : accordéon — punchline sur UNE ligne (« Questionner les
 //   normes établies. », taille fluide clamp() calibrée pour ne pas replier
-//   la plus longue de 320 à 430px), « + » à droite de la rangée.
-// UN SEUL DOM pour les deux rendus (variantes md:), donc un seul état
-// open/fermé par pilier, conservé quand la fenêtre change de taille.
-// Déroulé animé par grid-template-rows 0fr → 1fr (cross-browser), « + »
-// qui tourne en « × » ; motion-reduce → bascule instantanée. Accordéon
-// APG : <h3><button aria-expanded aria-controls>…</button></h3> +
-// role="region". Items indépendants. Client component pour ce seul état.
+//   la plus longue de 320 à 430px), bouton cerclé « + » qui devient « − »
+//   une fois déplié, déroulé animé par grid-template-rows 0fr → 1fr,
+//   motion-reduce → bascule instantanée. Accordéon APG (h3 > button
+//   aria-expanded/aria-controls + role="region"), items indépendants.
+// Client component pour le seul état de l'accordéon mobile.
 
 "use client";
 
@@ -33,19 +30,19 @@ const PILIERS = [
     verb: "Éprouver",
     suite: "par soi-même",
     texte:
-      "Être son propre laboratoire : tester en conditions réelles, se tromper, recommencer. La connaissance qui reste est celle qui est vécue.",
+      "Être son propre laboratoire : tester en conditions réelles, se tromper, recommencer. La connaissance qui reste est celle qui est vécue.",
   },
   {
     verb: "Jouer",
     suite: "pour durer",
     texte:
-      "Le jeu est le moteur le plus durable : bouger comme un animal, rester curieux, faire de la pratique une récréation plutôt qu’une discipline.",
+      "Le jeu est le moteur le plus durable : bouger comme un animal, rester curieux, faire de la pratique une récréation plutôt qu’une discipline.",
   },
   {
     verb: "Partager",
     suite: "pour ancrer",
     texte:
-      "Écrire, raconter, accompagner : ce qui est partagé s’ancre plus profondément — et fait avancer les autres.",
+      "Écrire, raconter, accompagner : ce qui est partagé s’ancre plus profondément — et fait avancer les autres.",
   },
 ];
 
@@ -67,39 +64,36 @@ function slugify(verb) {
     .replace(/[^a-z]+/g, "-");
 }
 
-/** Un pilier : punchline cliquable + texte d'appui déroulant (tous écrans). */
-function Pilier({ verb, suite, texte, open, onToggle }) {
+/** Un rang de l'accordéon mobile (état indépendant par item). */
+function AccordeonItem({ verb, suite, texte }) {
+  const [open, setOpen] = useState(false);
   const id = `philo-${slugify(verb)}`;
 
   return (
-    <div className="border-b border-brand-deep-dark/18 transition-colors md:border-b-0 md:border-r md:border-brand-deep-dark/14 md:px-6 md:pb-8 md:pt-[34px] md:last:border-r-0 md:hover:bg-white">
+    <div className="border-b border-brand-deep-dark/18">
       <h3>
         <button
           type="button"
           id={`${id}-bouton`}
           aria-expanded={open}
           aria-controls={id}
-          onClick={onToggle}
-          className="flex w-full cursor-pointer items-center gap-3.5 px-0.5 py-[22px] text-left md:block md:p-0"
+          onClick={() => setOpen((v) => !v)}
+          className="flex w-full cursor-pointer items-center gap-3.5 px-0.5 py-[22px] text-left"
         >
-          {/* Punchline : UNE ligne en mobile — taille fluide calibrée pour
-              que la plus longue (« Questionner les normes établies. »)
-              tienne sans replier de 320 à 430px, vérifié au pixel. En
-              desktop, verbe et suite passent sur deux lignes (md:block). */}
-          <span className="block flex-1 text-[clamp(13.5px,6.2vw-5px,22px)] font-bold leading-[1.25] tracking-[-0.01em] text-brand-deep-dark md:text-[28px] md:leading-[1.1]">
+          {/* Punchline UNE ligne : taille fluide calibrée pour que la plus
+              longue (« Questionner les normes établies. ») tienne sans
+              replier de 320 à 430px — vérifié au pixel (Puppeteer). */}
+          <span className="block flex-1 text-[clamp(13.5px,6.2vw-5px,22px)] font-bold leading-[1.25] tracking-[-0.01em] text-brand-deep-dark">
             {verb}{" "}
-            <em className="font-lora font-medium italic text-brand-accent md:mt-1.5 md:block md:text-[17px] md:leading-[1.35] md:[text-wrap:balance]">
-              {suite}
-              <span className="md:hidden">.</span>
+            <em className="font-lora font-medium italic text-brand-accent">
+              {suite}.
             </em>
           </span>
           <span
             aria-hidden="true"
-            className={`grid h-[26px] w-[26px] flex-none place-items-center rounded-full border-[1.5px] border-brand-deep-dark/35 text-[16px] font-medium leading-none text-brand-deep-dark transition-transform duration-[350ms] ease-[cubic-bezier(.4,0,.2,1)] motion-reduce:transition-none md:mt-4 ${
-            open ? "rotate-45" : ""
-            }`}
+            className="grid h-[26px] w-[26px] flex-none place-items-center rounded-full border-[1.5px] border-brand-deep-dark/35 text-[16px] font-medium leading-none text-brand-deep-dark"
           >
-            +
+            {open ? "−" : "+"}
           </span>
         </button>
       </h3>
@@ -112,7 +106,7 @@ function Pilier({ verb, suite, texte, open, onToggle }) {
         }`}
       >
         <div className="overflow-hidden">
-          <p className="pb-5 pl-0.5 pr-10 text-[14px] leading-[1.65] text-gray-600 [text-wrap:pretty] md:pb-1 md:pl-0 md:pr-0 md:pt-4">
+          <p className="pb-5 pl-0.5 pr-10 text-[14px] leading-[1.65] text-gray-600 [text-wrap:pretty]">
             {texte}
           </p>
         </div>
@@ -122,11 +116,6 @@ function Pilier({ verb, suite, texte, open, onToggle }) {
 }
 
 export default function PhilosophieSection() {
-  // Piliers ouverts, par verbe. Un seul état pour mobile ET desktop
-  // (même DOM) : l'ouverture survit à un changement de largeur.
-  const [open, setOpen] = useState({});
-  const toggle = (verb) => setOpen((o) => ({ ...o, [verb]: !o[verb] }));
-
   return (
     <section className="bg-brand-bg px-[26px] pb-12 pt-14 md:px-16 md:pb-[84px] md:pt-24">
       <div className="mx-auto max-w-[1152px]">
@@ -137,15 +126,30 @@ export default function PhilosophieSection() {
           La philosophie
         </h2>
 
-        {/* Liste mobile / grille desktop : un seul DOM, variantes md:. */}
-        <div className="mt-[30px] border-t border-brand-deep-dark/18 md:mt-12 md:grid md:grid-cols-4">
+        {/* Desktop ≥ md : grille 4 colonnes, textes justifiés */}
+        <div className="mt-12 hidden border-t border-brand-deep-dark/18 md:grid md:grid-cols-4">
           {PILIERS.map((p) => (
-            <Pilier
+            <div
               key={p.verb}
-              {...p}
-              open={!!open[p.verb]}
-              onToggle={() => toggle(p.verb)}
-            />
+              className="border-r border-brand-deep-dark/14 px-6 pb-9 pt-[34px] transition-colors last:border-r-0 hover:bg-white"
+            >
+              <h3 className="text-[28px] font-bold leading-[1.1] tracking-[-0.01em] text-brand-deep-dark">
+                {p.verb}
+              </h3>
+              <p className="mt-1.5 font-lora text-[17px] font-medium italic leading-[1.35] text-brand-accent [text-wrap:balance]">
+                {p.suite}
+              </p>
+              <p className="mt-3.5 hyphens-auto text-justify text-[14px] leading-[1.65] text-gray-600">
+                {p.texte}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Mobile < md : accordéon */}
+        <div className="mt-[30px] border-t border-brand-deep-dark/18 md:hidden">
+          {PILIERS.map((p) => (
+            <AccordeonItem key={p.verb} {...p} />
           ))}
         </div>
 
