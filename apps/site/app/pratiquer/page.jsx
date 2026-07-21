@@ -10,8 +10,31 @@
 import AteliersGrid from "@/components/AteliersGrid";
 import PageHeader from "@/components/PageHeader";
 import PhotoSlot from "@/components/PhotoSlot";
+import SeanceFrise from "@/components/SeanceFrise";
 import TrailNotify from "@/components/TrailNotify";
 import { listAteliers } from "@/lib/ateliers.mjs";
+
+// ── DÉROULÉ D'UNE SÉANCE ─────────────────────────────────────────────────
+// Étapes de la frise (composant SeanceFrise) : la frise tient sur UNE ligne
+// en desktop quel que soit le nombre d'étapes — ajouter/retirer une entrée
+// ici suffit. `heart: true` = cœur de la séance (point terracotta, colonne
+// un peu plus large) ; `kicker` et `chips` restent disponibles si besoin.
+// En desktop les textes sont repliés derrière un « + » ; en mobile ils
+// restent visibles.
+const SEANCE_STEPS = [
+  { title: "Ouverture", text: "Accueil des participant·e·s." },
+  { title: "Éveil", text: "Aligner corps et esprit pour la séance." },
+  {
+    title: "Exploration",
+    heart: true,
+    text: "Quadrupédie, brachiation, mouvements dans les arbres ; inspiré des grands primates et selon la thématique du jour.",
+  },
+  {
+    title: "Intégration collective",
+    text: "Jeux à plusieurs pour consolider l’apprentissage.",
+  },
+  { title: "Clôture", text: "Partager ou non son expérience." },
+];
 
 // ── PHOTOS DE LA PAGE ────────────────────────────────────────────────────
 // Déposer les fichiers dans apps/site/public/images/pratiquer/ puis
@@ -68,47 +91,6 @@ function SectionHeading({ children, className = "" }) {
   );
 }
 
-// Étape de la frise « séance type » : point sur le fil (ligne horizontale en
-// desktop, fil vertical à gauche en mobile).
-function FriseStep({ heart = false, kicker = null, title, children, chips = null, last = false }) {
-  const dotColor = heart
-    ? "bg-brand-deep shadow-[0_0_0_1.5px_var(--color-brand-deep)]"
-    : "bg-brand-accent shadow-[0_0_0_1.5px_var(--color-brand-accent)]";
-  return (
-    <li className={`relative pl-8 md:pl-0 ${last ? "" : "md:pr-[18px]"}`}>
-      <span
-        className={`absolute left-0 top-0.5 z-[2] block h-4 w-4 rounded-full border-[3px] border-white md:relative md:left-auto md:top-auto ${dotColor}`}
-        aria-hidden="true"
-      />
-      {kicker ? (
-        <p className="mb-[3px] mt-0 font-mono text-[10.5px] font-bold tracking-[0.16em] text-brand-deep md:mb-1 md:mt-4 md:text-[11px]">
-          {kicker}
-        </p>
-      ) : null}
-      <p
-        className={`mb-1 text-base font-bold leading-[1.3] text-brand-slate-dark md:mb-1.5 md:text-[16.5px] ${
-          kicker ? "" : "md:mt-4"
-        }`}
-      >
-        {title}
-      </p>
-      <p className="text-[13.5px] leading-[1.55] text-gray-500">{children}</p>
-      {chips ? (
-        <div className="mt-2 flex flex-wrap gap-1.5 md:mt-2.5 md:gap-2">
-          {chips.map((chip) => (
-            <span
-              key={chip}
-              className="rounded-full border border-brand-wash-line px-[9px] py-[3px] font-mono text-[10px] font-bold tracking-[0.08em] text-brand-slate md:px-2.5 md:text-[11px]"
-            >
-              {chip}
-            </span>
-          ))}
-        </div>
-      ) : null}
-    </li>
-  );
-}
-
 export default function PratiquerPage() {
   const ateliers = listAteliers();
 
@@ -121,8 +103,8 @@ export default function PratiquerPage() {
         className="mb-0"
       />
       <p className="mt-7 max-w-[640px] text-base leading-[1.7] text-gray-600 md:text-lg">
-        Propositions d'ateliers de motricité primale, en extérieur, pour réincarner
-        l'animal qui sommeille en toi. Gratuits pendant la phase de lancement du
+        Propositions d&rsquo;ateliers de motricité primale, en extérieur, pour réincarner
+        l&rsquo;animal qui sommeille en toi. Gratuits pendant la phase de lancement du
         labo.
       </p>
 
@@ -178,40 +160,7 @@ export default function PratiquerPage() {
       <section className="mt-11 md:mt-[72px]">
         <SectionHeading>Une séance type</SectionHeading>
         <div className="mt-5 rounded-2xl bg-white bg-lab-grid p-6 shadow-card [background-size:28px_28px] md:mt-6 md:px-10 md:pb-8 md:pt-9 md:[background-size:32px_32px]">
-          <div className="relative">
-            {/* Le fil : ligne horizontale en desktop, verticale en mobile,
-                qui s'estompe vers la fin. */}
-            <div
-              className="absolute inset-x-0 top-[7px] hidden h-0.5 bg-[linear-gradient(90deg,var(--color-brand-accent)_0%,var(--color-brand-accent)_82%,color-mix(in_srgb,var(--color-brand-accent)_25%,transparent)_100%)] md:block"
-              aria-hidden="true"
-            />
-            <div
-              className="absolute bottom-3.5 left-[7px] top-2 w-0.5 bg-[linear-gradient(180deg,var(--color-brand-accent)_0%,var(--color-brand-accent)_80%,color-mix(in_srgb,var(--color-brand-accent)_25%,transparent)_100%)] md:hidden"
-              aria-hidden="true"
-            />
-            <ol className="flex list-none flex-col gap-[22px] md:grid md:grid-cols-[1fr_1fr_1.4fr_1fr] md:gap-0">
-              <FriseStep title="Ouverture">
-                Accueil des participant·e·s.
-              </FriseStep>
-              <FriseStep title="Éveil">
-                Aligner corps et esprit pour la séance.
-              </FriseStep>
-              <FriseStep
-                heart
-                title="Exploration"
-/*                chips={["QUADRUPÉDIE", "ÉQUILIBRE", "SUSPENSION"]}*/
-              >
-                Quadrupédie, brachiation, mouvements dans les arbres ; inspiré
-                des grands primates et selon la thématique du jour.
-              </FriseStep>
-              <FriseStep title="Intégration collective">
-                Jeux à plusieurs pour consolider l'apprentissage.
-              </FriseStep>
-              <FriseStep last title="Clôture">
-                Partager ou non son expérience.
-              </FriseStep>              
-            </ol>
-          </div>
+          <SeanceFrise steps={SEANCE_STEPS} />
         </div>
       </section>
 
@@ -267,17 +216,17 @@ export default function PratiquerPage() {
                 Quelle tenue prévoir ?
               </summary>
               <p className="mt-2 text-[14.5px] leading-[1.65] text-gray-600 md:text-[15px]">
-                Des vêtements souples qui ne craignent pas d'être salis. La pratique se fait
+                Des vêtements souples qui ne craignent pas d&rsquo;être salis. La pratique se fait
                 pieds nus.
               </p>
             </details>
             <details className="border-t border-brand-hairline py-3 md:py-[13px]">
               <summary className="cursor-pointer text-[15px] font-bold text-brand-deep md:text-base">
-                J'ai le vertige, ces ateliers sont-ils pour moi ?
+                J&rsquo;ai le vertige, ces ateliers sont-ils pour moi ?
               </summary>
               <p className="mt-2 text-[14.5px] leading-[1.65] text-gray-600 md:text-[15px]">
-                Oui car il s'agit d'ateliers d'initiation. On ne monte jamais plus haut que 50 cm - 1 m,
-                et même dans ce cas, rien n'est imposé et des exercices alternatifs peuvent toujours être 
+                Oui car il s&rsquo;agit d&rsquo;ateliers d&rsquo;initiation. On ne monte jamais plus haut que 50 cm - 1 m,
+                et même dans ce cas, rien n&rsquo;est imposé et des exercices alternatifs peuvent toujours être
                 proposés.
               </p>
             </details>
@@ -295,7 +244,7 @@ export default function PratiquerPage() {
                 Les mineurs peuvent-ils participer ?
               </summary>
               <p className="mt-2 text-[14.5px] leading-[1.65] text-gray-600 md:text-[15px]">
-                Oui, à condition d'être accompagnés durant toute la durée de la séance par un parent ou un·e
+                Oui, à condition d&rsquo;être accompagnés durant toute la durée de la séance par un parent ou un·e
                 tuteur·ice légal·e.
               </p>
             </details>
