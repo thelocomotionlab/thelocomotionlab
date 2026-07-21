@@ -63,6 +63,15 @@
 		reverse_proxy live-journal:3000
 	}
 
+	# === /ateliers — inscriptions aux ateliers (page Pratiquer du site) ===
+	# CORS géré PAR LE SERVICE : GET /ateliers/places ouvert (décompte public),
+	# POST /ateliers/inscriptions restreint aux origines du site ; les routes
+	# admin (listing/purge) exigent le Bearer ATELIER_ADMIN_TOKEN côté service.
+	@ateliers path /ateliers/places /ateliers/inscriptions /ateliers/healthz
+	handle @ateliers {
+		reverse_proxy atelier-api:3000
+	}
+
 	handle {
 		respond 404
 	}

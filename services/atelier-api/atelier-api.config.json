@@ -1,0 +1,14 @@
+{
+  "_comment": "Catalogue CÔTÉ API : capacité + statut par atelier — la SOURCE du décompte une fois l'API branchée. ⚠ Les id doivent rester en phase avec apps/site/lib/ateliers.mjs (contenu/SEO côté site). status: open | full (force complet) | past (inscriptions closes).",
+  "allowedOrigins": [
+    "https://thelocomotionlab.com",
+    "https://www.thelocomotionlab.com",
+    "http://localhost:3000"
+  ],
+  "ratePerMinute": 5,
+  "ratePerHour": 30,
+  "ateliers": [
+    { "id": "eveil-primal-2026-09-12", "capacity": 10, "status": "open" },
+    { "id": "sol-suspension-2026-10-04", "capacity": 10, "status": "open" }
+  ]
+}

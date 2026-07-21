@@ -13,6 +13,7 @@
 | `TELEGRAM_BOT_TOKEN` | `services/live-journal` (webhook du journal, envoi des messages privés, script `set-webhook.sh`) | Token du bot Telegram du journal de bord, créé via **BotFather**. Donne le contrôle TOTAL du bot : à régénérer chez BotFather (`/revoke`) au moindre doute. | **`infra/.env`** (non versionné). |
 | `TELEGRAM_WEBHOOK_SECRET` | `services/live-journal` (vérification de l'en-tête `X-Telegram-Bot-Api-Secret-Token`) | Secret d'authentification du webhook — seule preuve que l'appel vient bien de Telegram. À inventer : `openssl rand -hex 32`. | **`infra/.env`** (non versionné), déclaré à Telegram par `services/live-journal/scripts/set-webhook.sh`. |
 | `VALENTIN_CHAT_ID` | `services/live-journal` (filtre « seul Valentin alimente le journal » + destinataire des messages privés) | `chat_id` Telegram personnel de Valentin (le bot `@userinfobot` le donne). Pas un secret cryptographique, mais on le traite comme tel : il désigne la boîte de réception privée. | **`infra/.env`** (non versionné). |
+| `ATELIER_ADMIN_TOKEN` | `services/atelier-api` (routes admin : listing + purge des inscriptions aux ateliers) | Bearer token des routes admin — donne accès aux prénoms/emails des inscrits. À inventer : `openssl rand -hex 24`. Vide → routes admin désactivées. | **`infra/.env`** (non versionné). |
 
 ### Pas de secret côté app web
 

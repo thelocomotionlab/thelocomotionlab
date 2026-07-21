@@ -11,6 +11,7 @@ on:
       - "services/tracking-cache/**"
       - "services/twin-engine/**"
       - "services/live-journal/**"
+      - "services/atelier-api/**"
       - "packages/ui/**"
       - "infra/**"
       - ".github/workflows/deploy-vps.yml"
@@ -41,6 +42,9 @@ jobs:
           # Journal de bord du live (webhook Telegram + médias + messages privés).
           - image: live-journal
             dockerfile: services/live-journal/Dockerfile
+          # Inscriptions aux ateliers (page Pratiquer) : décompte des places.
+          - image: atelier-api
+            dockerfile: services/atelier-api/Dockerfile
     steps:
       - uses: actions/checkout@v4
 

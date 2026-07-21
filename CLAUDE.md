@@ -50,6 +50,8 @@ thelocomotionlab/
 │  │     └─ components/           # Button, Field, PageShell
 │  └─ tracking/              # live-tracking partagé (carte, replay, useTrackingData)
 ├─ services/                # services backend conteneurisés (Docker → GHCR → VPS)
+│  ├─ atelier-api/          # inscriptions aux ateliers (page Pratiquer) : décompte des
+│  │                        #   places, liste d'attente, purge admin (Node/TS + Fastify)
 │  ├─ tracking-cache/       # back live-tracking (Node/TS)
 │  ├─ email-gateway/        # Worker CF : formulaires site → Listmonk (double opt-in)
 │  ├─ live-journal/         # journal de bord du live (Node/TS + Fastify) : webhook Telegram
