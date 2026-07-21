@@ -13,25 +13,25 @@
 //            coverAlt, status: "open" | "full" | "past" }
 
 const ATELIERS = [
-/*  {
-    id: "eveil-primal-2026-09-12",
-    slug: "eveil-primal",
-    title: "Éveil primal — marche, quadrupédie, jeu",
+  {
+    id: "atelier-test-2026-XX-XX",
+    slug: "atelier-test",
+    title: "Atelier test",
     date: "2026-09-12",
-    heureDebut: "9h30",
-    heureFin: "11h30",
-    lieu: "Parc Paul Mistral, Grenoble",
-    capacity: 10,
+    heureDebut: "18h",
+    heureFin: "19h30",
+    lieu: "Parc la Poya, Fontaine",
+    capacity: 8,
     registered: 0,
     price: 0,
     // Photo : déposer le fichier dans public/images/pratiquer/ puis mettre
     // son chemin ici (ex. "/images/pratiquer/eveil-primal.webp"). Tant que
     // `cover` est vide, PhotoSlot rend un placeholder charte.
-    cover: "",
+    cover: "/images/pratiquer/atelier-test.webp",
     coverAlt: "Atelier en extérieur — quadrupédie en groupe",
     status: "open",
   },
-  {
+/*  {
     id: "sol-suspension-2026-10-04",
     slug: "sol-suspension",
     title: "Sol & suspension — ramper, se suspendre",
