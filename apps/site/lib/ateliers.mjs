@@ -13,7 +13,7 @@
 //            coverAlt, status: "open" | "full" | "past" }
 
 const ATELIERS = [
-  {
+/*  {
     id: "eveil-primal-2026-09-12",
     slug: "eveil-primal",
     title: "Éveil primal — marche, quadrupédie, jeu",
@@ -45,7 +45,7 @@ const ATELIERS = [
     cover: "",
     coverAlt: "Équilibre et grimpe sur tronc",
     status: "open",
-  },
+  },*/
 ];
 
 /** « 2026-09-12 » → « Samedi 12 septembre 2026 » (déterministe au build). */

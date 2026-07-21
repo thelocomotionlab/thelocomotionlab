@@ -22,7 +22,7 @@ const PHOTOS = {
   // Illustration « Le mouvement primal, c'est quoi ? » — paysage, ~1200×800.
   pedagogie: { src: "", alt: "Mouvement primal en extérieur — squat et suspension" },
   // Portrait rond « Qui anime ? » — cadré carré, ~500×500.
-  portrait: { src: "", alt: "Portrait de Valentin, fondateur du Locomotion Lab" },
+  portrait: { src: "/images/pratiquer/portrait_val.webp", alt: "Portrait de Valentin, fondateur du Locomotion Lab" },
 };
 
 export const metadata = {
@@ -121,9 +121,8 @@ export default function PratiquerPage() {
         className="mb-0"
       />
       <p className="mt-7 max-w-[640px] text-base leading-[1.7] text-gray-600 md:text-lg">
-        Des ateliers de mouvement primal, en extérieur, pour retrouver les
-        schémas moteurs pour lesquels nos corps sont construits — marcher,
-        ramper, grimper, jouer. Gratuits pendant la phase de lancement du
+        Propositions d'ateliers de motricité primale, en extérieur, pour réincarner
+        l'animal qui sommeille en toi. Gratuits pendant la phase de lancement du
         labo.
       </p>
 
@@ -136,8 +135,8 @@ export default function PratiquerPage() {
           <AteliersGrid ateliers={ateliers} />
         ) : (
           <p className="italic text-gray-500">
-            Les prochaines dates sont en préparation — reviens bientôt, ou
-            écris-nous via la page contact pour être prévenu·e.
+            De nouvelles dates arrivent très bientôt. 
+            Écris-nous via la page contact pour être prévenu·e.
           </p>
         )}
       </section>
@@ -146,7 +145,7 @@ export default function PratiquerPage() {
       <section className="mt-11 md:mt-[72px] md:grid md:grid-cols-[1.15fr_1fr] md:items-center md:gap-12">
         <div>
           <SectionHeading className="mb-4 md:mb-[18px]">
-            Le mouvement primal, c&rsquo;est quoi ?
+            Se réapproprier et faire tribu
           </SectionHeading>
           <PhotoSlot
             src={PHOTOS.pedagogie.src}
@@ -179,10 +178,6 @@ export default function PratiquerPage() {
       <section className="mt-11 md:mt-[72px]">
         <SectionHeading>Une séance type</SectionHeading>
         <div className="mt-5 rounded-2xl bg-white bg-lab-grid p-6 shadow-card [background-size:28px_28px] md:mt-6 md:px-10 md:pb-8 md:pt-9 md:[background-size:32px_32px]">
-          <p className="mb-[22px] text-[14.5px] italic text-gray-500 md:mb-7 md:text-base">
-            Pas de chronomètre, pas de programme figé — chaque séance suit le
-            même fil, au rythme du groupe et du terrain.
-          </p>
           <div className="relative">
             {/* Le fil : ligne horizontale en desktop, verticale en mobile,
                 qui s'estompe vers la fin. */}
@@ -195,29 +190,28 @@ export default function PratiquerPage() {
               aria-hidden="true"
             />
             <ol className="flex list-none flex-col gap-[22px] md:grid md:grid-cols-[1fr_1fr_1.4fr_1fr] md:gap-0">
-              <FriseStep title="Arrivée & intentions">
-                On pose le cadre : jouer, pas performer.
+              <FriseStep title="Ouverture">
+                Accueil des participant·e·s.
               </FriseStep>
-              <FriseStep title="Éveil exploratoire">
-                Pieds, hanches, épaules — en explorant le terrain.
+              <FriseStep title="Éveil">
+                Aligner corps et esprit pour la séance.
               </FriseStep>
               <FriseStep
                 heart
-                kicker="LE CŒUR DE LA SÉANCE"
-                title="Ateliers de mouvement"
-                chips={["QUADRUPÉDIE", "ÉQUILIBRE", "SUSPENSION"]}
+                title="Exploration"
+/*                chips={["QUADRUPÉDIE", "ÉQUILIBRE", "SUSPENSION"]}*/
               >
-                Quadrupédie, équilibre, suspension : des progressions pour
-                chaque corps, du grand débutant au traileur.
+                Quadrupédie, brachiation, mouvements dans les arbres ; inspiré
+                des grands primates et selon la thématique du jour.
               </FriseStep>
-              <FriseStep last title="Jeu collectif & retours">
-                Un jeu pour ancrer, un échange pour repartir.
+              <FriseStep title="Intégration collective">
+                Jeux à plusieurs pour consolider l'apprentissage.
               </FriseStep>
+              <FriseStep last title="Clôture">
+                Partager ou non son expérience.
+              </FriseStep>              
             </ol>
           </div>
-          <p className="mt-5 text-right text-[13px] italic text-gray-400 md:mt-[26px] md:text-sm">
-            Et retour au monde des chaises — un peu moins docile.
-          </p>
         </div>
       </section>
 
@@ -236,19 +230,18 @@ export default function PratiquerPage() {
             />
             <div>
               <p className="mb-2.5 text-[15px] leading-[1.65] text-gray-600 md:mb-4 md:text-base md:leading-[1.7]">
-                Valentin — fondateur du Locomotion Lab. Coureur, grimpeur
-                d&rsquo;arbres et expérimentateur : tout ce qui est proposé
-                en atelier a d&rsquo;abord été éprouvé sur le terrain, des
-                traversées en autonomie aux protocoles du labo.
+                Valentin, fondateur du Locomotion Lab. Coureur minimaliste, grimpeur
+                d&rsquo;arbres et expérimentateur. Les ateliers sont un moyen de transmettre
+                et apprendre en situation réelle.
               </p>
               <div className="border-l-2 border-brand-accent pl-3 md:pl-4">
                 <p className="mb-1 font-mono text-[10px] font-bold tracking-[0.2em] text-brand-primary md:text-[11px]">
                   EN FORMATION
                 </p>
                 <p className="text-[13.5px] italic leading-[1.6] text-brand-slate md:text-[15px]">
-                  Licence STAPS — diplôme en préparation
+                  Licence STAPS mention Entraînement Sportif (2028)
                   <br />
-                  Certification coach Tarzan Movement — en cours
+                  Certification coach Tarzan Movement (2027)
                 </p>
               </div>
             </div>
@@ -257,12 +250,12 @@ export default function PratiquerPage() {
 
         <div className="mt-10 md:mt-0">
           <h2 className="mb-2.5 font-lora text-[23px] font-medium italic text-brand-deep md:mb-3.5 md:text-2xl">
-            Questions fréquentes
+            Foire aux questions
           </h2>
           <div className="flex flex-col">
             <details className="border-t border-brand-hairline py-3 md:py-[13px]" open>
               <summary className="cursor-pointer text-[15px] font-bold text-brand-deep md:text-base">
-                Quel niveau faut-il ?
+                Y a-t-il un niveau sportif prérequis ?
               </summary>
               <p className="mt-2 text-[14.5px] leading-[1.65] text-gray-600 md:text-[15px]">
                 Aucun. Les mouvements se déclinent en progressions : chacun
@@ -274,27 +267,36 @@ export default function PratiquerPage() {
                 Quelle tenue prévoir ?
               </summary>
               <p className="mt-2 text-[14.5px] leading-[1.65] text-gray-600 md:text-[15px]">
-                Des vêtements souples qui ne craignent pas la terre. Pieds
-                nus ou chaussures minimalistes bienvenus.
+                Des vêtements souples qui ne craignent pas d'être salis. La pratique se fait
+                pieds nus.
               </p>
             </details>
             <details className="border-t border-brand-hairline py-3 md:py-[13px]">
               <summary className="cursor-pointer text-[15px] font-bold text-brand-deep md:text-base">
-                Et s&rsquo;il pleut ?
+                J'ai le vertige, ces ateliers sont-ils pour moi ?
               </summary>
               <p className="mt-2 text-[14.5px] leading-[1.65] text-gray-600 md:text-[15px]">
-                On pratique sous une pluie légère (c&rsquo;est même
-                intéressant). En cas de météo dangereuse, l&rsquo;atelier est
-                reporté et tu es prévenu·e par email.
+                Oui car il s'agit d'ateliers d'initiation. On ne monte jamais plus haut que 50 cm - 1 m,
+                et même dans ce cas, rien n'est imposé et des exercices alternatifs peuvent toujours être 
+                proposés.
               </p>
             </details>
             <details className="border-b border-t border-brand-hairline py-3 md:py-[13px]">
               <summary className="cursor-pointer text-[15px] font-bold text-brand-deep md:text-base">
-                Je peux venir seul·e ?
+                Je peux venir accompagné·e ?
               </summary>
               <p className="mt-2 text-[14.5px] leading-[1.65] text-gray-600 md:text-[15px]">
-                Bien sûr — la plupart des participants viennent seuls. Le jeu
-                collectif fait le reste.
+                Oui, dans la limite des places disponibles. Dans ce cas, il faut réaliser une inscription
+                par personne participante.
+              </p>
+            </details>
+            <details className="border-b border-t border-brand-hairline py-3 md:py-[13px]">
+              <summary className="cursor-pointer text-[15px] font-bold text-brand-deep md:text-base">
+                Les mineurs peuvent-ils participer ?
+              </summary>
+              <p className="mt-2 text-[14.5px] leading-[1.65] text-gray-600 md:text-[15px]">
+                Oui, à condition d'être accompagnés durant toute la durée de la séance par un parent ou un·e
+                tuteur·ice légal·e.
               </p>
             </details>
           </div>
