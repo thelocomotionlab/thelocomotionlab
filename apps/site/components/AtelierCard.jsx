@@ -6,33 +6,36 @@
 // badge COMPLET, jauge grise, bouton « liste d'attente » qui révèle le même
 // formulaire (flag waitlist).
 //
-// Inscription : POST { atelierId, atelier, prenom, email, waitlist, source }
-// vers NEXT_PUBLIC_ATELIER_ENDPOINT (l'API de décompte des places, à venir).
-// En attendant, repli sur le flux email existant — passerelle Listmonk
-// (NEXT_PUBLIC_EMAIL_ENDPOINT) ou ancien Worker send-email — dont le payload
-// est un sur-ensemble compris par les deux (subject/message pour l'ancien,
-// email/source/website pour la passerelle). Honeypot `website` comme
-// EmailCapture. La jauge est décrémentée en optimiste au succès.
+// Composant CONTRÔLÉ par AteliersGrid : les compteurs (registered/capacity/
+// status) arrivent par props, déjà fusionnés avec l'API ; après une
+// inscription la carte remonte les nouveaux compteurs via `onPlaces`.
+//
+// Inscription : POST {NEXT_PUBLIC_ATELIER_API}/inscriptions (service
+// services/atelier-api) — un 409 « complet » bascule la carte en état complet
+// et ouvre la liste d'attente. Sans API configurée : repli sur le flux email
+// existant (passerelle Listmonk ou ancien Worker send-email, payload
+// sur-ensemble compris par les deux). Honeypot `website` comme EmailCapture.
 
 "use client";
 
 import { useId, useState } from "react";
 import PhotoSlot from "@/components/PhotoSlot";
 
+const API_BASE = process.env.NEXT_PUBLIC_ATELIER_API || "";
 const LEGACY_ENDPOINT = "https://send-email.thelocomotionlab.workers.dev/";
-const ENDPOINT =
-  process.env.NEXT_PUBLIC_ATELIER_ENDPOINT ||
-  process.env.NEXT_PUBLIC_EMAIL_ENDPOINT ||
-  LEGACY_ENDPOINT;
+const EMAIL_ENDPOINT = process.env.NEXT_PUBLIC_EMAIL_ENDPOINT || LEGACY_ENDPOINT;
 
 const INPUT_CLASSES =
   "min-w-0 rounded-full border border-brand-field bg-white px-4 py-3 text-[15px] text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-accent sm:py-2.5 sm:text-[14.5px]";
 
-export default function AtelierCard({ atelier }) {
+const SUBMIT_CLASSES =
+  "cursor-pointer rounded-full bg-brand-accent py-3 text-[15px] font-bold text-white transition-all duration-300";
+
+export default function AtelierCard({ atelier, onPlaces = () => {} }) {
   const { id, title, dateLabel, lieu, capacity, priceLabel, cover, coverAlt } =
     atelier;
+  const registered = atelier.registered;
 
-  const [registered, setRegistered] = useState(atelier.registered);
   const [prenom, setPrenom] = useState("");
   const [email, setEmail] = useState("");
   const [website, setWebsite] = useState(""); // honeypot
@@ -47,13 +50,47 @@ export default function AtelierCard({ atelier }) {
   const isFull = atelier.status === "full" || registered >= capacity;
   const remaining = Math.max(0, capacity - registered);
   const pct = Math.min(100, Math.round((registered / capacity) * 100));
+  const done = status === "success" || status === "success-waitlist";
 
   async function handleSubmit(e) {
     e.preventDefault();
     setStatus("sending");
 
     try {
-      const res = await fetch(ENDPOINT, {
+      if (API_BASE) {
+        const res = await fetch(`${API_BASE}/inscriptions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            atelierId: id,
+            prenom,
+            email,
+            website,
+            waitlist: isFull,
+          }),
+        });
+        const data = await res.json().catch(() => null);
+
+        if (res.ok && data?.ok) {
+          if (data.places) onPlaces(id, data.places);
+          setStatus(data.waitlist ? "success-waitlist" : "success");
+          setPrenom("");
+          setEmail("");
+        } else if (res.status === 409 && data?.places) {
+          // Complet entre-temps : on bascule la carte et on garde les champs
+          // remplis pour que la liste d'attente parte en un clic.
+          onPlaces(id, data.places);
+          setWaitlistOpen(true);
+          setStatus("fullnow");
+        } else {
+          console.error("Erreur :", data);
+          setStatus("error");
+        }
+        return;
+      }
+
+      // Repli sans API : flux email existant.
+      const res = await fetch(EMAIL_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -73,8 +110,8 @@ export default function AtelierCard({ atelier }) {
       });
 
       if (res.ok) {
+        if (!isFull) onPlaces(id, { registered: registered + 1 });
         setStatus(isFull ? "success-waitlist" : "success");
-        if (!isFull) setRegistered((r) => Math.min(capacity, r + 1));
         setPrenom("");
         setEmail("");
       } else {
@@ -138,32 +175,6 @@ export default function AtelierCard({ atelier }) {
         value={website}
         onChange={(e) => setWebsite(e.target.value)}
       />
-    </div>
-  );
-
-  const statusZone = (
-    <div
-      id={statusId}
-      className="min-h-5 text-center"
-      aria-live="polite"
-      aria-atomic="true"
-      role="status"
-    >
-      {status === "success" && (
-        <p className="animate-fade-in text-[13px] font-medium text-green-700">
-          Merci ! Un email de confirmation vient de t&rsquo;être envoyé.
-        </p>
-      )}
-      {status === "success-waitlist" && (
-        <p className="animate-fade-in text-[13px] font-medium text-green-700">
-          C&rsquo;est noté ! On te prévient dès qu&rsquo;une place se libère.
-        </p>
-      )}
-      {status === "error" && (
-        <p className="animate-fade-in text-[13px] font-medium text-red-700">
-          Une erreur est survenue. Vérifie ton adresse mail.
-        </p>
-      )}
     </div>
   );
 
@@ -238,32 +249,34 @@ export default function AtelierCard({ atelier }) {
           </span>
         </div>
 
-        {!isFull ? (
-          <form
-            onSubmit={handleSubmit}
-            className="flex flex-col gap-2.5 border-t border-brand-gauge pt-3.5 md:pt-4"
-          >
-            {fields}
-            {honeypot}
-            <button
-              type="submit"
-              disabled={status === "sending"}
-              className={`cursor-pointer rounded-full bg-brand-accent py-3 text-[15px] font-bold text-white transition-all duration-300 ${
-                status === "sending"
-                  ? "cursor-wait opacity-70"
-                  : "hover:bg-brand-accent-dark"
-              }`}
-            >
-              {status === "sending" ? "Envoi..." : "Je réserve ma place"}
-            </button>
-            <p className="text-center text-xs italic text-gray-400">
-              Confirmation immédiate par email. Désinscription en un clic.
-            </p>
-            {statusZone}
-          </form>
-        ) : (
-          <div className="mt-auto border-t border-brand-gauge pt-4">
-            {!waitlistOpen ? (
+        <div
+          className={`flex flex-col gap-2.5 border-t border-brand-gauge pt-3.5 md:pt-4 ${
+            isFull && !done ? "mt-auto" : ""
+          }`}
+        >
+          {!done && !isFull ? (
+            <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
+              {fields}
+              {honeypot}
+              <button
+                type="submit"
+                disabled={status === "sending"}
+                className={`${SUBMIT_CLASSES} ${
+                  status === "sending"
+                    ? "cursor-wait opacity-70"
+                    : "hover:bg-brand-accent-dark"
+                }`}
+              >
+                {status === "sending" ? "Envoi..." : "Je réserve ma place"}
+              </button>
+              <p className="text-center text-xs italic text-gray-400">
+                Confirmation immédiate. Désinscription en un clic.
+              </p>
+            </form>
+          ) : null}
+
+          {!done && isFull ? (
+            !waitlistOpen ? (
               <button
                 type="button"
                 aria-expanded={waitlistOpen}
@@ -279,7 +292,7 @@ export default function AtelierCard({ atelier }) {
                 <button
                   type="submit"
                   disabled={status === "sending"}
-                  className={`cursor-pointer rounded-full bg-brand-accent py-3 text-[15px] font-bold text-white transition-all duration-300 ${
+                  className={`${SUBMIT_CLASSES} ${
                     status === "sending"
                       ? "cursor-wait opacity-70"
                       : "hover:bg-brand-accent-dark"
@@ -292,11 +305,42 @@ export default function AtelierCard({ atelier }) {
                 <p className="text-center text-xs italic text-gray-400">
                   On te prévient si une place se libère.
                 </p>
-                {statusZone}
               </form>
+            )
+          ) : null}
+
+          {/* Zone d'état stable (aria-live) : succès, erreur, complet entre-temps. */}
+          <div
+            id={statusId}
+            className="min-h-5 text-center"
+            aria-live="polite"
+            aria-atomic="true"
+            role="status"
+          >
+            {status === "success" && (
+              <p className="animate-fade-in text-[13px] font-medium text-green-700">
+                Merci ! Ta place est réservée.
+              </p>
+            )}
+            {status === "success-waitlist" && (
+              <p className="animate-fade-in text-[13px] font-medium text-green-700">
+                C&rsquo;est noté ! On te prévient dès qu&rsquo;une place se
+                libère.
+              </p>
+            )}
+            {status === "fullnow" && (
+              <p className="animate-fade-in text-[13px] font-medium text-brand-accent-dark">
+                Complet entre-temps&hellip; Renvoie le formulaire pour
+                rejoindre la liste d&rsquo;attente.
+              </p>
+            )}
+            {status === "error" && (
+              <p className="animate-fade-in text-[13px] font-medium text-red-700">
+                Une erreur est survenue. Vérifie ton adresse mail.
+              </p>
             )}
           </div>
-        )}
+        </div>
       </div>
     </article>
   );

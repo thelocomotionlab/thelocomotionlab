@@ -1,10 +1,12 @@
 // lib/ateliers.mjs
 //
-// Source unique des ateliers de la page Pratiquer. Les ateliers sont des
-// DONNÉES (modèle du handoff design) : chaque atelier définit ses propres
-// date/lieu/durée/capacité/prix. Quand l'API de décompte des places
-// arrivera (backend VPS), cette liste sera servie par elle — le modèle ne
-// change pas, seule la provenance.
+// Catalogue des ateliers de la page Pratiquer : le CONTENU (titres, dates,
+// lieux, prix, photos) rendu au build. Les COMPTEURS vivants (inscrits,
+// complet) viennent du service atelier-api quand NEXT_PUBLIC_ATELIER_API est
+// configurée (AteliersGrid) ; les valeurs `registered`/`status` d'ici ne sont
+// que l'état affiché sans API / avant la réponse de l'API.
+// ⚠ Les `id` et capacités restent en phase avec
+// services/atelier-api/atelier-api.config.json (la source du décompte).
 //
 // Modèle : { id, slug, title, date (ISO), heureDebut, heureFin, lieu,
 //            capacity, registered, price (centimes, 0 = gratuit), cover,
@@ -20,10 +22,11 @@ const ATELIERS = [
     heureFin: "11h30",
     lieu: "Parc Paul Mistral, Grenoble",
     capacity: 10,
-    registered: 7,
+    registered: 0,
     price: 0,
-    // Photos fournies par Valentin plus tard — PhotoSlot rend un
-    // placeholder charte tant que `cover` est vide.
+    // Photo : déposer le fichier dans public/images/pratiquer/ puis mettre
+    // son chemin ici (ex. "/images/pratiquer/eveil-primal.webp"). Tant que
+    // `cover` est vide, PhotoSlot rend un placeholder charte.
     cover: "",
     coverAlt: "Atelier en extérieur — quadrupédie en groupe",
     status: "open",
@@ -37,11 +40,11 @@ const ATELIERS = [
     heureFin: "12h",
     lieu: "Forêt de Prémol, Vercors",
     capacity: 10,
-    registered: 10,
+    registered: 0,
     price: 0,
     cover: "",
     coverAlt: "Équilibre et grimpe sur tronc",
-    status: "full",
+    status: "open",
   },
 ];
 
