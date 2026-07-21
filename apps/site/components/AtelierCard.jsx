@@ -1,10 +1,10 @@
 // components/AtelierCard.jsx
 //
-// Carte atelier de la page Pratiquer (même gabarit que les cartes du pilier
-// Comprendre) : photo, méta ATELIER · prix, date/lieu, jauge de places en
-// barre, et formulaire d'inscription inline (prénom + email). État complet :
-// badge COMPLET, jauge grise, bouton « liste d'attente » qui révèle le même
-// formulaire (flag waitlist).
+// Carte atelier de la page Pratiquer, au gabarit compact des cartes du
+// pilier Comprendre (22rem max) : photo, méta ATELIER · prix, date/lieu,
+// jauge de places en barre, et bouton « Je réserve ma place » qui révèle le
+// formulaire prénom + email au clic (même mécanique pour la liste d'attente
+// quand l'atelier est complet : badge COMPLET, jauge grise).
 //
 // Composant CONTRÔLÉ par AteliersGrid : les compteurs (registered/capacity/
 // status) arrivent par props, déjà fusionnés avec l'API ; après une
@@ -40,6 +40,7 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
   const [email, setEmail] = useState("");
   const [website, setWebsite] = useState(""); // honeypot
   const [status, setStatus] = useState("idle");
+  const [formOpen, setFormOpen] = useState(false);
   const [waitlistOpen, setWaitlistOpen] = useState(false);
 
   const prenomId = useId();
@@ -125,7 +126,7 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
   }
 
   const fields = (
-    <div className="flex flex-col gap-2.5 sm:flex-row">
+    <div className="flex flex-col gap-2.5">
       <label htmlFor={prenomId} className="sr-only">
         Prénom
       </label>
@@ -139,7 +140,7 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
         value={prenom}
         onChange={(e) => setPrenom(e.target.value)}
         placeholder="Prénom"
-        className={`${INPUT_CLASSES} sm:flex-1`}
+        className={INPUT_CLASSES}
       />
       <label htmlFor={emailId} className="sr-only">
         Adresse e-mail
@@ -155,7 +156,7 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="Email"
-        className={`${INPUT_CLASSES} sm:flex-[1.4]`}
+        className={INPUT_CLASSES}
       />
     </div>
   );
@@ -179,36 +180,36 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
   );
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-card">
-      <div className="relative h-[160px] flex-none md:h-[190px]">
+    <article className="flex h-full w-full max-w-[22rem] flex-col overflow-hidden rounded-2xl bg-white shadow-card">
+      <div className="relative h-[160px] flex-none md:h-44">
         <PhotoSlot
           src={cover}
           alt={coverAlt}
-          sizes="(min-width: 768px) 546px, 100vw"
+          sizes="(min-width: 1024px) 352px, (min-width: 640px) 50vw, 100vw"
           className="h-full w-full"
         />
         {isFull ? (
-          <span className="absolute right-3.5 top-3.5 rounded-full bg-brand-slate-dark px-3 py-[5px] font-mono text-[11px] font-bold tracking-[0.14em] text-brand-bg md:text-xs">
+          <span className="absolute right-3.5 top-3.5 rounded-full bg-brand-slate-dark px-3 py-[5px] font-mono text-[11px] font-bold tracking-[0.14em] text-brand-bg">
             COMPLET
           </span>
         ) : null}
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 p-5 md:gap-3.5 md:px-[26px] md:pb-[26px] md:pt-6">
-        <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-brand-primary md:text-xs">
+      <div className="flex flex-1 flex-col gap-3 p-5">
+        <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-brand-primary">
           ATELIER <span className="text-brand-accent-dark">· {priceLabel}</span>
         </p>
 
-        <h3 className="text-[18.5px] font-bold leading-[1.3] text-brand-slate-dark md:text-[21px]">
+        <h3 className="text-[18px] font-bold leading-[1.3] text-brand-slate-dark md:text-[18.5px]">
           {title}
         </h3>
 
-        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-[5px] text-sm text-gray-600 md:gap-x-4 md:gap-y-1.5 md:text-[15px]">
-          <span className="self-center font-mono text-[11px] font-bold tracking-[0.12em] text-gray-400 md:text-xs">
+        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-[5px] text-sm text-gray-600">
+          <span className="self-center font-mono text-[11px] font-bold tracking-[0.12em] text-gray-400">
             DATE
           </span>
           <span>{dateLabel}</span>
-          <span className="self-center font-mono text-[11px] font-bold tracking-[0.12em] text-gray-400 md:text-xs">
+          <span className="self-center font-mono text-[11px] font-bold tracking-[0.12em] text-gray-400">
             LIEU
           </span>
           <span>{lieu}</span>
@@ -237,7 +238,7 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
             {registered}/{capacity}
           </span>
           <span
-            className={`w-full text-[13.5px] font-bold sm:w-auto sm:text-sm ${
+            className={`text-[13.5px] font-bold ${
               isFull ? "text-gray-400" : "text-brand-accent-dark"
             }`}
           >
@@ -249,30 +250,34 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
           </span>
         </div>
 
-        <div
-          className={`flex flex-col gap-2.5 border-t border-brand-gauge pt-3.5 md:pt-4 ${
-            isFull && !done ? "mt-auto" : ""
-          }`}
-        >
+        <div className="mt-auto flex flex-col gap-2.5 border-t border-brand-gauge pt-3.5">
           {!done && !isFull ? (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
-              {fields}
-              {honeypot}
+            !formOpen ? (
               <button
-                type="submit"
-                disabled={status === "sending"}
-                className={`${SUBMIT_CLASSES} ${
-                  status === "sending"
-                    ? "cursor-wait opacity-70"
-                    : "hover:bg-brand-accent-dark"
-                }`}
+                type="button"
+                aria-expanded={formOpen}
+                onClick={() => setFormOpen(true)}
+                className={`${SUBMIT_CLASSES} hover:bg-brand-accent-dark`}
               >
-                {status === "sending" ? "Envoi..." : "Je réserve ma place"}
+                Je réserve ma place
               </button>
-              <p className="text-center text-xs italic text-gray-400">
-                Confirmation immédiate. Désinscription en un clic.
-              </p>
-            </form>
+            ) : (
+              <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
+                {fields}
+                {honeypot}
+                <button
+                  type="submit"
+                  disabled={status === "sending"}
+                  className={`${SUBMIT_CLASSES} ${
+                    status === "sending"
+                      ? "cursor-wait opacity-70"
+                      : "hover:bg-brand-accent-dark"
+                  }`}
+                >
+                  {status === "sending" ? "Envoi..." : "Je réserve ma place"}
+                </button>
+              </form>
+            )
           ) : null}
 
           {!done && isFull ? (

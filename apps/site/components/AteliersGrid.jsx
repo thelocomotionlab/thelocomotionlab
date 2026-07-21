@@ -57,7 +57,8 @@ export default function AteliersGrid({ ateliers }) {
     .filter((atelier) => atelier.status !== "past");
 
   return (
-    <div className="grid gap-[18px] md:grid-cols-2 md:gap-7">
+    // Gabarit du pilier Comprendre : colonnes de 22rem, cartes compactes.
+    <div className="grid grid-cols-1 justify-center justify-items-center gap-[18px] sm:grid-cols-2 md:gap-6 lg:justify-start lg:[grid-template-columns:repeat(3,22rem)]">
       {merged.map((atelier) => (
         <AtelierCard key={atelier.id} atelier={atelier} onPlaces={handlePlaces} />
       ))}

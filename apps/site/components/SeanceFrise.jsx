@@ -1,28 +1,15 @@
 // components/SeanceFrise.jsx
 //
 // Frise « une séance type » de la page Pratiquer. Les étapes sont des
-// DONNÉES (tableau SEANCE_STEPS dans app/pratiquer/page.jsx) :
-// - desktop : UNE seule ligne quel que soit le nombre d'étapes — les
-//   colonnes de la grille sont générées depuis les données (l'étape
-//   `heart: true`, cœur de la séance, est un peu plus large : 1.4fr) ;
-//   les descriptions sont repliées derrière un bouton « + » (aria-expanded),
-//   remasquables avec « − » ;
-// - mobile : fil vertical, descriptions toujours visibles (pas de bouton).
+// DONNÉES (tableau SEANCE_STEPS dans app/pratiquer/page.jsx) : les colonnes
+// de la grille desktop sont générées depuis les étapes — la frise tient sur
+// UNE ligne quel que soit leur nombre (l'étape `heart: true`, cœur de la
+// séance, garde une colonne un peu plus large). Mobile : fil vertical.
+// Les descriptions sont toujours visibles, sur les deux formats.
 //
 // Étape : { title, text, heart?, kicker?, chips? }.
 
-"use client";
-
-import { useId, useState } from "react";
-import { Minus, Plus } from "lucide-react";
-
 export default function SeanceFrise({ steps }) {
-  const [open, setOpen] = useState(() => steps.map(() => false));
-  const baseId = useId();
-
-  const toggle = (i) =>
-    setOpen((prev) => prev.map((v, j) => (j === i ? !v : v)));
-
   // Une colonne par étape — la frise tient sur une ligne par construction.
   const gridTemplateColumns = steps
     .map((s) => (s.heart ? "1.4fr" : "1fr"))
@@ -46,13 +33,6 @@ export default function SeanceFrise({ steps }) {
       >
         {steps.map((step, i) => {
           const isLast = i === steps.length - 1;
-          const expanded = open[i];
-          const panelId = `${baseId}-etape-${i}`;
-          // Le bouton +/− reste collé au dernier mot du titre (bloc
-          // insécable) : il ne passe jamais seul à la ligne.
-          const words = step.title.split(" ");
-          const lastWord = words.pop();
-          const leadWords = words.length ? `${words.join(" ")} ` : "";
           return (
             <li
               key={step.title}
@@ -76,45 +56,23 @@ export default function SeanceFrise({ steps }) {
                   step.kicker ? "" : "md:mt-4"
                 }`}
               >
-                {leadWords}
-                <span className="whitespace-nowrap">
-                  {lastWord}
-                  {/* Desktop uniquement : déplier / replier la description. */}
-                  <button
-                    type="button"
-                    aria-expanded={expanded}
-                    aria-controls={panelId}
-                    aria-label={`${expanded ? "Masquer" : "Afficher"} le détail de l'étape ${step.title}`}
-                    onClick={() => toggle(i)}
-                    className="ml-2 hidden h-[18px] w-[18px] -translate-y-px cursor-pointer items-center justify-center rounded-full border-[1.5px] border-brand-accent align-middle text-brand-accent-dark transition-all duration-300 hover:bg-brand-accent hover:text-white md:inline-flex"
-                  >
-                    {expanded ? (
-                      <Minus size={11} strokeWidth={2.5} aria-hidden="true" />
-                    ) : (
-                      <Plus size={11} strokeWidth={2.5} aria-hidden="true" />
-                    )}
-                  </button>
-                </span>
+                {step.title}
               </p>
-              {/* Toujours visible en mobile ; replié en desktop tant que
-                  le bouton n'est pas activé. */}
-              <div id={panelId} className={expanded ? "" : "md:hidden"}>
-                <p className="text-[13.5px] leading-[1.55] text-gray-500">
-                  {step.text}
-                </p>
-                {step.chips?.length ? (
-                  <div className="mt-2 flex flex-wrap gap-1.5 md:mt-2.5 md:gap-2">
-                    {step.chips.map((chip) => (
-                      <span
-                        key={chip}
-                        className="rounded-full border border-brand-wash-line px-[9px] py-[3px] font-mono text-[10px] font-bold tracking-[0.08em] text-brand-slate md:px-2.5 md:text-[11px]"
-                      >
-                        {chip}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
+              <p className="text-[13.5px] leading-[1.55] text-gray-500">
+                {step.text}
+              </p>
+              {step.chips?.length ? (
+                <div className="mt-2 flex flex-wrap gap-1.5 md:mt-2.5 md:gap-2">
+                  {step.chips.map((chip) => (
+                    <span
+                      key={chip}
+                      className="rounded-full border border-brand-wash-line px-[9px] py-[3px] font-mono text-[10px] font-bold tracking-[0.08em] text-brand-slate md:px-2.5 md:text-[11px]"
+                    >
+                      {chip}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </li>
           );
         })}

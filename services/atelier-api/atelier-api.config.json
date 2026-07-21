@@ -8,7 +8,6 @@
   "ratePerMinute": 5,
   "ratePerHour": 30,
   "ateliers": [
-    { "id": "eveil-primal-2026-09-12", "capacity": 10, "status": "open" },
-    { "id": "sol-suspension-2026-10-04", "capacity": 10, "status": "open" }
+    { "id": "atelier-test-2026-XX-XX", "capacity": 8, "status": "open" }
   ]
 }
