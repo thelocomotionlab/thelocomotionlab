@@ -102,14 +102,14 @@ export default function PratiquerPage() {
         tagline="Éprouver par soi-même."
         className="mb-0"
       />
-      <p className="mt-7 max-w-[640px] text-base leading-[1.7] text-gray-600 md:text-lg">
+      <p className="mt-4 max-w-[640px] text-base leading-[1.7] text-gray-600 md:text-lg">
         Propositions d&rsquo;ateliers de motricité primale, en extérieur, pour réincarner
         l&rsquo;animal qui sommeille en toi. Gratuits pendant la phase de lancement du
         labo.
       </p>
 
       {/* ── Prochains ateliers ─────────────────────────────────────── */}
-      <section className="mt-10 md:mt-14" aria-labelledby="ateliers">
+      <section className="mt-8 md:mt-10" aria-labelledby="ateliers">
         <SectionHeading className="mb-[18px] md:mb-6">
           <span id="ateliers">Prochains ateliers</span>
         </SectionHeading>

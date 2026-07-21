@@ -2,23 +2,24 @@
 //
 // Carte atelier de la page Pratiquer, au gabarit compact des cartes du
 // pilier Comprendre (22rem max) : photo, méta ATELIER · prix, date/lieu,
-// jauge de places en barre, et bouton « Je réserve ma place » qui révèle le
-// formulaire prénom + email au clic (même mécanique pour la liste d'attente
-// quand l'atelier est complet : badge COMPLET, jauge grise).
+// jauge de places en barre. « Je réserve ma place » mène à la page
+// d'inscription complète (/pratiquer/inscription/[slug]) ; atelier complet :
+// badge COMPLET, jauge grise, bouton « liste d'attente » qui révèle le
+// mini-formulaire prénom + email sur place.
 //
 // Composant CONTRÔLÉ par AteliersGrid : les compteurs (registered/capacity/
 // status) arrivent par props, déjà fusionnés avec l'API ; après une
-// inscription la carte remonte les nouveaux compteurs via `onPlaces`.
+// inscription en liste d'attente la carte remonte l'info via `onPlaces`.
 //
-// Inscription : POST {NEXT_PUBLIC_ATELIER_API}/inscriptions (service
-// services/atelier-api) — un 409 « complet » bascule la carte en état complet
-// et ouvre la liste d'attente. Sans API configurée : repli sur le flux email
-// existant (passerelle Listmonk ou ancien Worker send-email, payload
-// sur-ensemble compris par les deux). Honeypot `website` comme EmailCapture.
+// Liste d'attente : POST {NEXT_PUBLIC_ATELIER_API}/inscriptions
+// (waitlist: true). Sans API configurée : repli sur le flux email existant
+// (passerelle Listmonk ou ancien Worker send-email, payload sur-ensemble
+// compris par les deux). Honeypot `website` comme EmailCapture.
 
 "use client";
 
 import { useId, useState } from "react";
+import Link from "next/link";
 import PhotoSlot from "@/components/PhotoSlot";
 
 const API_BASE = process.env.NEXT_PUBLIC_ATELIER_API || "";
@@ -40,7 +41,6 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
   const [email, setEmail] = useState("");
   const [website, setWebsite] = useState(""); // honeypot
   const [status, setStatus] = useState("idle");
-  const [formOpen, setFormOpen] = useState(false);
   const [waitlistOpen, setWaitlistOpen] = useState(false);
 
   const prenomId = useId();
@@ -77,12 +77,6 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
           setStatus(data.waitlist ? "success-waitlist" : "success");
           setPrenom("");
           setEmail("");
-        } else if (res.status === 409 && data?.places) {
-          // Complet entre-temps : on bascule la carte et on garde les champs
-          // remplis pour que la liste d'attente parte en un clic.
-          onPlaces(id, data.places);
-          setWaitlistOpen(true);
-          setStatus("fullnow");
         } else {
           console.error("Erreur :", data);
           setStatus("error");
@@ -252,32 +246,12 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
 
         <div className="mt-auto flex flex-col gap-2.5 border-t border-brand-gauge pt-3.5">
           {!done && !isFull ? (
-            !formOpen ? (
-              <button
-                type="button"
-                aria-expanded={formOpen}
-                onClick={() => setFormOpen(true)}
-                className={`${SUBMIT_CLASSES} hover:bg-brand-accent-dark`}
-              >
-                Je réserve ma place
-              </button>
-            ) : (
-              <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
-                {fields}
-                {honeypot}
-                <button
-                  type="submit"
-                  disabled={status === "sending"}
-                  className={`${SUBMIT_CLASSES} ${
-                    status === "sending"
-                      ? "cursor-wait opacity-70"
-                      : "hover:bg-brand-accent-dark"
-                  }`}
-                >
-                  {status === "sending" ? "Envoi..." : "Je réserve ma place"}
-                </button>
-              </form>
-            )
+            <Link
+              href={`/pratiquer/inscription/${atelier.slug}`}
+              className={`${SUBMIT_CLASSES} block text-center hover:bg-brand-accent-dark`}
+            >
+              Je réserve ma place
+            </Link>
           ) : null}
 
           {!done && isFull ? (
@@ -331,12 +305,6 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
               <p className="animate-fade-in text-[13px] font-medium text-green-700">
                 C&rsquo;est noté ! On te prévient dès qu&rsquo;une place se
                 libère.
-              </p>
-            )}
-            {status === "fullnow" && (
-              <p className="animate-fade-in text-[13px] font-medium text-brand-accent-dark">
-                Complet entre-temps&hellip; Renvoie le formulaire pour
-                rejoindre la liste d&rsquo;attente.
               </p>
             )}
             {status === "error" && (

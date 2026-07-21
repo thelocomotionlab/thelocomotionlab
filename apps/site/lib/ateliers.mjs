@@ -10,7 +10,9 @@
 //
 // Modèle : { id, slug, title, date (ISO), heureDebut, heureFin, lieu,
 //            capacity, registered, price (centimes, 0 = gratuit), cover,
-//            coverAlt, status: "open" | "full" | "past" }
+//            coverAlt, status: "open" | "full" | "past",
+//            rendezVous? (point de RDV précis, affiché sur la confirmation
+//            d'inscription — sinon texte générique) }
 
 const ATELIERS = [
   {
