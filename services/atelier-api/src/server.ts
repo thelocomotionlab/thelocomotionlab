@@ -3,6 +3,15 @@
 // (infra/caddy/conf.d/api.caddy) ; trustProxy lit l'IP réelle dans
 // X-Forwarded-For posé par Caddy.
 //
+// Deux chemins d'inscription :
+//   * liste d'attente (waitlist: true) — prénom + email, comme avant ;
+//   * inscription complète — payload `fiche` (page /pratiquer/inscription) :
+//     validation serveur des coches obligatoires, référence de dossier,
+//     horodatage Paris + IP + empreinte SHA-256, rendu PDF par twin-engine
+//     (réseau interne) puis email récapitulatif (SMTP Brevo). PDF et email
+//     sont BEST-EFFORT : leur échec n'annule jamais l'inscription (statut
+//     remonté dans la réponse + logs pour rattrapage manuel).
+//
 // Garde-fous (pattern email-gateway) : CORS restreint aux origines du site
 // pour le POST, honeypot `website` (robot → faux succès), limite de débit
 // par IP, réponse identique inscription nouvelle / déjà connue (pas
@@ -13,6 +22,8 @@ import crypto from "node:crypto";
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
 
 import type { AtelierDef, Config } from "./config";
+import { empreinte, horodatageParis, payloadFiche, validerFiche } from "./fiche";
+import { createTransport, envoyerFiche, mailEnv, type FicheMail } from "./mailer";
 import { IpRateLimiter } from "./ratelimit";
 import type { InscriptionStore } from "./store";
 
@@ -25,6 +36,10 @@ export interface ServerDeps {
   store: InscriptionStore;
   limiter?: IpRateLimiter;
   logger?: boolean;
+  /** Rendu PDF de la fiche — injectable en test. null = désactivé. */
+  renderFiche?: ((payload: Record<string, unknown>) => Promise<Buffer>) | null;
+  /** Envoi de l'email récapitulatif — injectable en test. null = non configuré. */
+  envoyerEmail?: ((mail: FicheMail) => Promise<void>) | null;
 }
 
 export interface Places {
@@ -52,10 +67,38 @@ function safeEqual(a: string, b: string): boolean {
   return ab.length === bb.length && crypto.timingSafeEqual(ab, bb);
 }
 
+async function renderViaTwin(baseUrl: string, payload: Record<string, unknown>): Promise<Buffer> {
+  const res = await fetch(`${baseUrl}/fiche`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const detail = (await res.text().catch(() => "")).slice(0, 300);
+    throw new Error(`twin-engine ${res.status}: ${detail}`);
+  }
+  return Buffer.from(await res.arrayBuffer());
+}
+
 export function buildServer(deps: ServerDeps): FastifyInstance {
   const { config, store } = deps;
   const limiter = deps.limiter ?? new IpRateLimiter(config.ratePerMinute, config.ratePerHour);
   const app = Fastify({ logger: deps.logger ?? true, trustProxy: true });
+
+  const renderFiche =
+    deps.renderFiche !== undefined
+      ? deps.renderFiche
+      : config.twinEngineUrl
+        ? (payload: Record<string, unknown>) => renderViaTwin(config.twinEngineUrl, payload)
+        : null;
+
+  const smtp = mailEnv();
+  const envoyerEmail =
+    deps.envoyerEmail !== undefined
+      ? deps.envoyerEmail
+      : smtp
+        ? (mail: FicheMail) => envoyerFiche(createTransport(smtp), smtp.from, mail)
+        : null;
 
   const allPlaces = (): Record<string, Places> =>
     Object.fromEntries(config.ateliers.map((a) => [a.id, placesOf(store, a)]));
@@ -87,6 +130,8 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     ok: true,
     ateliers: config.ateliers.length,
     inscriptions: store.count(),
+    pdf: renderFiche ? "actif" : "desactive",
+    email: envoyerEmail ? "actif" : "non_configure",
   }));
 
   // Décompte public des places — données agrégées, CORS ouvert, jamais caché
@@ -112,6 +157,8 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     email?: unknown;
     website?: unknown;
     waitlist?: unknown;
+    fiche?: unknown;
+    contenu?: unknown;
   }
 
   app.post("/ateliers/inscriptions", async (req, reply) => {
@@ -134,42 +181,107 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     if (!atelier) {
       return reply.code(400).send({ ok: false, error: "atelier_inconnu" });
     }
-
-    const prenom = typeof body.prenom === "string" ? body.prenom.trim() : "";
-    if (!prenom || prenom.length > MAX_PRENOM_LENGTH) {
-      return reply.code(400).send({ ok: false, error: "prenom_invalide" });
-    }
-
-    const email = typeof body.email === "string" ? body.email.trim() : "";
-    if (!EMAIL_REGEX.test(email) || email.length > MAX_EMAIL_LENGTH) {
-      return reply.code(400).send({ ok: false, error: "email_invalide" });
-    }
-
     if (atelier.status === "past") {
       return reply.code(410).send({ ok: false, error: "atelier_passe" });
     }
 
-    // Déjà inscrit·e (même email) → même réponse qu'une création : idempotent
-    // et sans énumération d'emails.
-    const existing = store.find(atelier.id, email);
-    if (existing) {
-      return { ok: true, waitlist: existing.waitlist, places: placesOf(store, atelier) };
+    // ── Liste d'attente : prénom + email, comme avant. ──────────────────
+    if (body.waitlist === true) {
+      const prenom = typeof body.prenom === "string" ? body.prenom.trim() : "";
+      if (!prenom || prenom.length > MAX_PRENOM_LENGTH) {
+        return reply.code(400).send({ ok: false, error: "prenom_invalide" });
+      }
+      const email = typeof body.email === "string" ? body.email.trim() : "";
+      if (!EMAIL_REGEX.test(email) || email.length > MAX_EMAIL_LENGTH) {
+        return reply.code(400).send({ ok: false, error: "email_invalide" });
+      }
+      const existing = store.find(atelier.id, email);
+      if (existing) {
+        return { ok: true, waitlist: existing.waitlist, places: placesOf(store, atelier) };
+      }
+      store.add(atelier.id, prenom, email, true);
+      return { ok: true, waitlist: true, places: placesOf(store, atelier) };
+    }
+
+    // ── Inscription complète (page /pratiquer/inscription). ─────────────
+    const { fiche, contenu, champs } = validerFiche(body.fiche, body.contenu);
+    if (champs.length) {
+      return reply.code(400).send({ ok: false, error: "fiche_incomplete", champs });
     }
 
     const { full } = placesOf(store, atelier);
-    if (full && body.waitlist !== true) {
-      // Le front bascule la carte en état complet et propose la liste d'attente.
+    if (full) {
+      // La page propose de revenir aux ateliers pour la liste d'attente.
       return reply.code(409).send({ ok: false, error: "complet", places: placesOf(store, atelier) });
     }
 
-    const inscription = store.add(atelier.id, prenom, email, full);
-    // TODO (chantier emails) : déclencher ici la confirmation Listmonk/Brevo —
-    // cf. README § Emails.
-    req.log.info(
-      { atelierId: atelier.id, waitlist: inscription.waitlist },
-      "inscription enregistrée",
-    );
-    return { ok: true, waitlist: inscription.waitlist, places: placesOf(store, atelier) };
+    const email = fiche.participant.email;
+    const existing = store.find(atelier.id, email);
+    if (existing) {
+      // Idempotent (pas d'énumération) : même réponse qu'une création, sans
+      // nouvel envoi d'email.
+      return {
+        ok: true,
+        waitlist: existing.waitlist,
+        places: placesOf(store, atelier),
+        reference: existing.reference ?? null,
+        horodatage: null,
+        fiche: "deja_inscrit",
+      };
+    }
+
+    const reference = store.nextReference();
+    const horodatage = horodatageParis();
+    const payload = payloadFiche(config, atelier, fiche, contenu, {
+      reference,
+      horodatage,
+      ip: req.ip,
+    });
+    store.add(atelier.id, fiche.participant.prenom, email, false, {
+      nom: fiche.participant.nom,
+      telephone: fiche.participant.telephone,
+      reference,
+      empreinte: empreinte(payload),
+      fiche: payload,
+    });
+
+    // PDF puis email — best-effort : l'inscription est déjà acquise.
+    let pdf: Buffer | null = null;
+    if (renderFiche) {
+      try {
+        pdf = await renderFiche(payload);
+      } catch (err) {
+        req.log.error({ err, reference }, "rendu de la fiche PDF impossible");
+      }
+    }
+    let ficheStatus: string;
+    if (!envoyerEmail) {
+      ficheStatus = "email_non_configure";
+    } else {
+      try {
+        await envoyerEmail({
+          to: email,
+          prenom: fiche.participant.prenom,
+          atelier: { title: atelier.title, dateLabel: atelier.dateLabel, lieu: atelier.lieu },
+          reference,
+          pdf,
+        });
+        ficheStatus = pdf ? "envoyee" : "envoyee_sans_pdf";
+      } catch (err) {
+        req.log.error({ err, reference }, "envoi de l'email récapitulatif impossible");
+        ficheStatus = "email_echec";
+      }
+    }
+
+    req.log.info({ atelierId: atelier.id, reference, ficheStatus }, "inscription enregistrée");
+    return {
+      ok: true,
+      waitlist: false,
+      places: placesOf(store, atelier),
+      reference,
+      horodatage,
+      fiche: ficheStatus,
+    };
   });
 
   // === Routes admin (jeton ATELIER_ADMIN_TOKEN) : préparer l'atelier, puis

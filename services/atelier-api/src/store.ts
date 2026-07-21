@@ -5,8 +5,9 @@
 // séquence « vérifier la capacité puis insérer » est synchrone, donc sans
 // course possible.
 //
-// Données personnelles (prénom + email) : conservées le temps d'organiser
-// l'atelier, purgées ensuite par la route admin DELETE (cf. README).
+// Une inscription complète porte sa FICHE (payload de rendu du PDF, preuve de
+// consentement conservée 10 ans — cf. README § Données personnelles) et sa
+// référence de dossier, tirée d'un compteur persistant jamais réutilisé.
 
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -20,15 +21,26 @@ export interface Inscription {
   email: string;
   waitlist: boolean;
   createdAt: string;
+  nom?: string;
+  telephone?: string;
+  /** Référence de dossier (LL-ATL-<année>-<seq>) des inscriptions complètes. */
+  reference?: string;
+  /** Empreinte SHA-256 des données soumises (celle portée par le PDF). */
+  empreinte?: string;
+  /** Payload de rendu de la fiche (copie fidèle de ce qui a été validé). */
+  fiche?: Record<string, unknown>;
 }
 
 interface FileShape {
   version: 1;
+  /** Compteur de références — persistant, jamais décrémenté (survit aux purges). */
+  seq?: number;
   inscriptions: Inscription[];
 }
 
 export class InscriptionStore {
   private inscriptions: Inscription[] = [];
+  private seq = 0;
   private readonly file: string;
 
   constructor(
@@ -40,6 +52,7 @@ export class InscriptionStore {
     if (fs.existsSync(this.file)) {
       const raw = JSON.parse(fs.readFileSync(this.file, "utf8")) as FileShape;
       this.inscriptions = raw.inscriptions ?? [];
+      this.seq = raw.seq ?? this.inscriptions.length;
     }
   }
 
@@ -68,7 +81,21 @@ export class InscriptionStore {
     return this.inscriptions.length;
   }
 
-  add(atelierId: string, prenom: string, email: string, waitlist: boolean): Inscription {
+  /** Référence de dossier suivante — compteur incrémenté et persisté aussitôt. */
+  nextReference(): string {
+    this.seq += 1;
+    this.persist();
+    const annee = this.now().getFullYear();
+    return `LL-ATL-${annee}-${String(this.seq).padStart(4, "0")}`;
+  }
+
+  add(
+    atelierId: string,
+    prenom: string,
+    email: string,
+    waitlist: boolean,
+    extra: Partial<Inscription> = {},
+  ): Inscription {
     const inscription: Inscription = {
       id: crypto.randomBytes(6).toString("hex"),
       atelierId,
@@ -76,6 +103,7 @@ export class InscriptionStore {
       email: email.toLowerCase(),
       waitlist,
       createdAt: this.now().toISOString(),
+      ...extra,
     };
     this.inscriptions.push(inscription);
     this.persist();
@@ -92,7 +120,11 @@ export class InscriptionStore {
   }
 
   private persist(): void {
-    const payload: FileShape = { version: 1, inscriptions: this.inscriptions };
+    const payload: FileShape = {
+      version: 1,
+      seq: this.seq,
+      inscriptions: this.inscriptions,
+    };
     const tmp = `${this.file}.tmp`;
     fs.writeFileSync(tmp, JSON.stringify(payload, null, 2));
     fs.renameSync(tmp, this.file);

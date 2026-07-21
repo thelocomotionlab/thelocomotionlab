@@ -1,5 +1,5 @@
 {
-  "_comment": "Catalogue CÔTÉ API : capacité + statut par atelier — la SOURCE du décompte une fois l'API branchée. ⚠ Les id doivent rester en phase avec apps/site/lib/ateliers.mjs (contenu/SEO côté site). status: open | full (force complet) | past (inscriptions closes).",
+  "_comment": "Catalogue CÔTÉ API : capacité + statut par atelier — la SOURCE du décompte une fois l'API branchée. ⚠ id/title/dateLabel/lieu restent en phase avec apps/site/lib/ateliers.mjs (contenu/SEO côté site) ; title/dateLabel/lieu sont portés sur la fiche PDF. status: open | full (force complet) | past (inscriptions closes). La section `fiche` porte les constantes du PDF (rien de secret).",
   "allowedOrigins": [
     "https://thelocomotionlab.com",
     "https://www.thelocomotionlab.com",
@@ -8,6 +8,26 @@
   "ratePerMinute": 5,
   "ratePerHour": 30,
   "ateliers": [
-    { "id": "atelier-test-2026-XX-XX", "capacity": 8, "status": "open" }
-  ]
+    {
+      "id": "atelier-test-2026-XX-XX",
+      "capacity": 8,
+      "status": "open",
+      "title": "Atelier test",
+      "dateLabel": "Samedi 12 septembre 2026 · 18h – 19h30",
+      "lieu": "Parc la Poya, Fontaine"
+    }
+  ],
+  "fiche": {
+    "responsable": { "nom": "Valentin Fer", "email": "contact@thelocomotionlab.com" },
+    "assurance": { "assureur": "à compléter", "numero": "à compléter" },
+    "image": {
+      "supports": "le site thelocomotionlab.com et les réseaux sociaux du Locomotion Lab",
+      "duree": "3 ans"
+    },
+    "atelier": {
+      "duree": "1 h 30",
+      "contexte": "en extérieur, sur terrain naturel (herbe, arbres, dénivelé léger)",
+      "encadrant": "Valentin Fer"
+    }
+  }
 }

@@ -53,6 +53,18 @@ describe("InscriptionStore", () => {
     expect(reloaded.find("a", "ana@test.fr")?.prenom).toBe("Ana");
   });
 
+  it("références séquentielles, persistantes, jamais réutilisées après purge", () => {
+    const dir = makeDir();
+    const store = new InscriptionStore(dir, () => new Date("2026-07-21T10:00:00Z"));
+    expect(store.nextReference()).toBe("LL-ATL-2026-0001");
+    expect(store.nextReference()).toBe("LL-ATL-2026-0002");
+    store.add("a", "Ana", "ana@test.fr", false, { reference: "LL-ATL-2026-0002" });
+    store.purge("a");
+
+    const reloaded = new InscriptionStore(dir, () => new Date("2026-07-21T10:00:00Z"));
+    expect(reloaded.nextReference()).toBe("LL-ATL-2026-0003");
+  });
+
   it("purge un atelier sans toucher les autres", () => {
     const dir = makeDir();
     const store = new InscriptionStore(dir);
