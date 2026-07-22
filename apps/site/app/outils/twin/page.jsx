@@ -1,9 +1,9 @@
 // app/outils/twin/page.jsx
 //
-// Teaser du Locomotion Twin : texte seul, wordmark actuel du labo, aucun
-// logo Twin (hors-scope explicite). Structure : promesse → comment ça
-// marche en trois pas → statut de calibration honnête (valeurs factices
-// marquées À REMPLACER) → CTA cohorte → capture email.
+// Teaser du Locomotion Twin (maquette « Recrutement cohorte », 07/2026) :
+// promesse → comment ça marche en trois pas numérotés → statut honnête
+// (l'outil se calibre sur les archives de la cohorte) → CTA vers la page
+// de dépôt /outils/twin/cohorte → capture email.
 import Link from "next/link";
 import EmailCapture from "@/components/EmailCapture";
 import PageHeader from "@/components/PageHeader";
@@ -39,6 +39,27 @@ export const metadata = {
   },
 };
 
+const ETAPES = [
+  {
+    numero: "01",
+    titre: "Tu déposes tes données.",
+    texte:
+      "Ton archive d’entraînement (Garmin, Polar, Strava, Coros, Suunto) et la trace GPX de ta course cible.",
+  },
+  {
+    numero: "02",
+    titre: "Le moteur construit ton jumeau.",
+    texte:
+      "Ton profil physiologique est confronté au coût réel de la pente le long du parcours, via un grand nombre de simulations numériques.",
+  },
+  {
+    numero: "03",
+    titre: "Tu reçois ton rapport.",
+    texte:
+      "Un plan de pacing segment par segment, avec des fenêtres horaires construites sur tes propres courses passées.",
+  },
+];
+
 export default function TwinTeaserPage() {
   return (
     <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
@@ -49,49 +70,64 @@ export default function TwinTeaserPage() {
       />
 
       <div className="bg-white rounded-2xl shadow-card p-4 sm:p-6 md:p-10">
+        <p className="mb-8 text-[17px] leading-[1.65] text-brand-text">
+          À partir de ton archive d&rsquo;entraînement et de la trace GPX de ta
+          course cible, le Twin construit ton{" "}
+          <strong className="text-brand-slate-dark">jumeau physiologique</strong>{" "}
+          — vitesse critique, endurance, durabilité — le confronte au relief
+          réel du parcours, et t&rsquo;en déduit un plan de pacing{" "}
+          <em className="font-lora text-brand-deep">
+            validé sur tes propres courses passées
+          </em>
+          .
+        </p>
 
-        <div className="font-sans leading-relaxed">
-          <SectionHeading className="mb-3">Comment ça marche</SectionHeading>
-          <ol className="list-decimal pl-5 space-y-2">
-            <li>
-              Tu déposes ton archive d&rsquo;entraînement (Garmin, Polar,
-              Strava…) et la trace GPX de ta course cible.
-            </li>
-            <li>
-              Le moteur construit ton jumeau physiologique et le confronte au relief réel du
-              parcours via un grand nombre de simulations numériques.
-            </li>
-            <li>
-              Tu reçois un rapport d&rsquo;analyse complet incluant un plan de pacing segment par segment, 
-              et des fenêtres horaires construites sur tes propres courses passées.
-            </li>
-          </ol>
+        <SectionHeading className="mb-6">Comment ça marche</SectionHeading>
+
+        <div className="grid gap-5">
+          {ETAPES.map((etape) => (
+            <div
+              key={etape.numero}
+              className="grid grid-cols-[44px_1fr] items-start gap-4"
+            >
+              <span className="pt-px font-mono text-[22px] font-bold text-brand-accent">
+                {etape.numero}
+              </span>
+              <p className="text-[15.5px] leading-relaxed text-gray-700">
+                <strong className="text-brand-text">{etape.titre}</strong>{" "}
+                {etape.texte}
+              </p>
+            </div>
+          ))}
         </div>
 
-        {/* Statut de calibration honnête — valeurs factices À REMPLACER. */}
-        {/* Encadré : étiquette mono comme les encadrés de la refonte 2026
-            (INFORMATIONS PRATIQUES de l'inscription, labels du live). */}
+        {/* Statut honnête : l'outil se calibre sur les archives de la cohorte. */}
         <div className="mt-8 bg-brand-bg border border-gray-200 rounded-xl p-5">
           <h2 className="mb-2 font-mono text-[11px] font-bold tracking-[0.18em] text-brand-slate-dark">
             STATUT
           </h2>
           <p className="text-gray-700">
-            L&rsquo;outil est en cours de développement. Pour participer à son élaboration et recevoir ton plan de course
-            gratuit, inscris-toi dès maintenant à la cohorte de beta-testeur·euse·s !
+            L&rsquo;outil est en cours de développement. Pour participer à son
+            élaboration et recevoir ton plan de course gratuit, rejoins dès
+            maintenant la cohorte de calibration : ton archive
+            d&rsquo;entraînement sert à valider le moteur sur des données
+            réelles.
           </p>
         </div>
 
-        {/* CTA cohorte : message pré-rempli via ?sujet=twin sur /contact. */}
         <div className="mt-8 text-center">
           <Link
-            href="/contact?sujet=twin"
-            className="inline-block bg-brand-accent text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-accent-dark transition"
+            href="/outils/twin/cohorte"
+            className="inline-block bg-brand-accent text-white font-semibold px-6 py-3 rounded-full shadow-cta hover:bg-brand-accent-dark transition"
           >
             Rejoindre la cohorte de test
           </Link>
+          <p className="mt-2.5 text-[13px] text-gray-500">
+            5 minutes, ton archive d&rsquo;entraînement, et c&rsquo;est tout.
+          </p>
         </div>
 
-        <div className="mt-10 max-w-2xl mx-auto text-center">
+        <div className="mt-11 border-t-[1.5px] border-brand-grid pt-8 max-w-2xl mx-auto text-center">
           <h2 className="text-lg font-semibold text-brand-accent-ink mb-3">
             Pour être prévenu·e au lancement officiel
           </h2>
