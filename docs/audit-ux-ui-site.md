@@ -4,6 +4,15 @@
 > Périmètre : incohérences graphiques (UI), ergonomie & accessibilité (UX), responsive.
 > Les ratios de contraste cités sont calculés selon la formule WCAG 2.x à partir des
 > couleurs réelles du code (script : voir §Méthode en fin de document).
+>
+> **Statut (22/07/2026) : corrections appliquées** sur cette même branche
+> (option A pour C1 : texte foncé sur orange). Vérifié : `next build` (29 pages),
+> `eslint`, `vitest` (21/21), `tsc` de email-gateway. Choix faits en appliquant :
+> m13 → option « retirer le drag » du ShareButton ; M10 non appliqué à
+> PhilosophieSection (texte justifié spécifié par le handoff, grille desktop
+> uniquement). Restent en suivi : m1 (échelle typographique — décision de design),
+> et quelques survols orange hors périmètre de l'audit (Breadcrumb, ArticleNav,
+> lien « Écrivez-moi » de /live, indicateur live).
 
 ---
 
