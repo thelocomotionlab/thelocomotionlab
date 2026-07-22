@@ -1,0 +1,24 @@
+{
+  "name": "@locomotionlab/twin-depot",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Dépôt d'archives d'entraînement de la cohorte Locomotion Twin (page /outils/twin/cohorte) : upload multipart streamé sur volume, métadonnées JSON, honeypot + limite de débit, notification email best-effort, listing/téléchargement/purge admin par jeton.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "dev": "pnpm build && node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@fastify/multipart": "9.4.0",
+    "fastify": "5.10.0",
+    "nodemailer": "7.0.11"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.0",
+    "@types/nodemailer": "7.0.5",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  }
+}

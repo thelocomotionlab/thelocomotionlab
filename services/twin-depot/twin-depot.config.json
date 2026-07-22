@@ -1,0 +1,12 @@
+{
+  "_comment": "Constantes NON secrètes du service (versionnées). ⚠ `montres` reste en phase avec apps/site/lib/twinCohorte.mjs (le service refuse une montre inconnue) ; `maxArchiveMo` reste en phase avec MAX_ARCHIVE_MO côté site ET la borne request_body de infra/caddy/conf.d/depot.caddy. Le jeton admin, le SMTP et le destinataire des notifications ne viennent QUE de l'environnement (infra/.env).",
+  "allowedOrigins": [
+    "https://thelocomotionlab.com",
+    "https://www.thelocomotionlab.com",
+    "http://localhost:3000"
+  ],
+  "ratePerMinute": 4,
+  "ratePerHour": 12,
+  "maxArchiveMo": 2048,
+  "montres": ["garmin", "polar", "strava", "coros", "suunto"]
+}
