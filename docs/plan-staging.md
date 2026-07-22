@@ -388,12 +388,21 @@ Deux options :
   contact (et les fallbacks si `NEXT_PUBLIC_EMAIL_ENDPOINT` manquait). Zéro risque, mais
   une dépendance hors-repo de plus à ne pas oublier.
 
-### C6 — Durcissements de la passerelle (optionnel, 30 min, non bloquant)
+### C6 — Durcissements (passerelle + services) — optionnel, non bloquant
 
 La revue de juillet a laissé 5 constats ouverts sur `email-gateway` (C085–C090 dans
 `revue-integrale-2026-07/constats.md`) : wrangler non épinglé, body `null` → 500 au lieu
 de 400, borne mémoire du rate-limiter mal placée, sources fantômes `footer`/`manifeste`,
 regex avant test de longueur. À grouper dans un petit commit quand on touche au Worker (C5).
+
+Constaté le 2026-07-22 en conditions réelles : derrière le proxy Cloudflare (hôtes
+orange : `api.*`), l'IP vue par atelier-api et live-journal est celle du **bord
+Cloudflare** (ex. `172.70.x.x` dans la `preuve.ip` d'une fiche), pas celle du visiteur —
+`trustProxy` remonte au dernier saut. Conséquences : preuve d'IP affaiblie sur la fiche,
+et rate-limit par IP qui agrège des visiteurs différents derrière quelques IP Cloudflare.
+Correctif simple à faire : lire `CF-Connecting-IP` (posé par Cloudflare) dans ces deux
+services. Non concernés : la passerelle Worker (utilise déjà `CF-Connecting-IP`) et
+twin-depot (`depot.*` en DNS gris → IP réelle déjà vue).
 
 ### C7 — Modalités transverses (à savoir, rien à faire)
 
