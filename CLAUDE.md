@@ -34,7 +34,8 @@ thelocomotionlab/
 │  │  ├─ app/                     # IA refonte 2026 : comprendre (la science, type "article"),
 │  │  │                           #   explorer (le terrain : récits + projets fusionnés),
 │  │  │                           #   pratiquer (ateliers mouvement primal, lib/ateliers.mjs),
-│  │  │                           #   quete (ex-manifeste), outils/twin (teaser), live (hub),
+│  │  │                           #   quete (ex-manifeste), outils/twin (teaser + cohorte :
+│  │  │                           #   dépôt d'archives → services/twin-depot), live (hub),
 │  │  │                           #   about, contact, soutenir, recherche ; /articles /projets
 │  │  │                           #   → 308 (générées au build, lib/legacyRedirects.mjs) ;
 │  │  │                           #   /labo et /manifeste → 308 en dur dans next.config.mjs
@@ -57,6 +58,10 @@ thelocomotionlab/
 │  ├─ live-journal/         # journal de bord du live (Node/TS + Fastify) : webhook Telegram
 │  │                        #   → journal.json + médias (volume servi par Caddy), messages
 │  │                        #   privés visiteurs, cartes OG, export archive.json
+│  ├─ twin-depot/           # dépôt d'archives de la cohorte Twin (page /outils/twin/cohorte) :
+│  │                        #   upload streamé sur volume + métadonnées, notification email,
+│  │                        #   purge admin après analyse (Node/TS + Fastify, sous-domaine
+│  │                        #   depot.* en DNS gris — le proxy CF plafonne à ~100 Mo)
 │  └─ twin-engine/          # moteur Locomotion Twin (Python/FastAPI + TeXLive)
 │     ├─ src/twin_engine/        # ingest (multi-format → canonique), course, twin,
 │     │                          #   calibration, predict, sufficiency, pacing,

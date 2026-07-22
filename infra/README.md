@@ -36,6 +36,7 @@ infra/
       ├─ tracking.caddy            # Traccar + live-*.json (ACTIF depuis la bascule)
       ├─ liste.caddy               # Listmonk (liste email)
       ├─ api.caddy                 # api.thelocomotionlab.com — /journal/* (live-journal)
+      ├─ depot.caddy               # depot.thelocomotionlab.com — /twin/* (twin-depot, DNS gris)
       ├─ live-redirect.caddy       # live.thelocomotionlab.com → 301 /live du site
       └─ twin-engine.caddy.disabled # moteur Twin (DRAFT, ignoré tant que « .disabled »)
 ```

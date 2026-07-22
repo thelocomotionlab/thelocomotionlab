@@ -12,6 +12,7 @@ on:
       - "services/twin-engine/**"
       - "services/live-journal/**"
       - "services/atelier-api/**"
+      - "services/twin-depot/**"
       - "packages/ui/**"
       - "infra/**"
       - ".github/workflows/deploy-vps.yml"
@@ -45,6 +46,9 @@ jobs:
           # Inscriptions aux ateliers (page Pratiquer) : décompte des places.
           - image: atelier-api
             dockerfile: services/atelier-api/Dockerfile
+          # Dépôt d'archives de la cohorte Twin (page /outils/twin/cohorte).
+          - image: twin-depot
+            dockerfile: services/twin-depot/Dockerfile
     steps:
       - uses: actions/checkout@v4
 

@@ -1,0 +1,30 @@
+# Route dépôt cohorte Twin : {$DEPOT_DOMAIN} (depot.thelocomotionlab.com) → service twin-depot
+# (archives d'entraînement des athlètes test de la page /outils/twin/cohorte).
+#
+# ⚠ DNS Cloudflare en « DNS only » (nuage GRIS), PAS proxifié — exception assumée à la règle
+# docs/cloudflare-vps.md : le proxy Cloudflare plafonne les corps de requête à ~100 Mo, une
+# archive d'entraînement en fait couramment plusieurs centaines. Le certificat reste émis par
+# Caddy en DNS-01 (Caddyfile), qui fonctionne aussi hors proxy.
+#
+# CORS géré PAR LE SERVICE (POST restreint aux origines du site) ; les routes admin
+# (listing/téléchargement/purge) exigent le Bearer TWIN_DEPOT_ADMIN_TOKEN côté service.
+# Vérif config : `docker compose exec caddy caddy validate --config /etc/caddy/Caddyfile`.
+
+{$DEPOT_DOMAIN} {
+	encode zstd gzip
+
+	# Borne dure côté proxy, en phase avec maxArchiveMo du service (2 Go) —
+	# en dessous, le service répond un 413 JSON plus parlant pour la page.
+	request_body {
+		max_size 2GB
+	}
+
+	@twin path /twin/healthz /twin/depots /twin/depots/*
+	handle @twin {
+		reverse_proxy twin-depot:3000
+	}
+
+	handle {
+		respond 404
+	}
+}

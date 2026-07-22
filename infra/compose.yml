@@ -137,6 +137,31 @@ services:
     networks:
       - web
 
+  # Dépôt d'archives de la cohorte Locomotion Twin (page /outils/twin/cohorte
+  # du site) : reçoit l'archive d'entraînement + le formulaire des athlètes
+  # test (streaming sur volume, jamais en mémoire), notifie Valentin par email
+  # (best-effort, SMTP_*), listing/téléchargement/purge admin par jeton
+  # (TWIN_DEPOT_ADMIN_TOKEN). Exposé par Caddy sur {$DEPOT_DOMAIN}/twin/*
+  # (sous-domaine DNS-only : le proxy Cloudflare plafonne les uploads à ~100 Mo).
+  twin-depot:
+    image: ${TWIN_DEPOT_IMAGE:-ghcr.io/thelocomotionlab/twin-depot:latest}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - DATA_DIR=/data
+    expose:
+      - "3000"
+    volumes:
+      - twin_depot_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/twin/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - web
+
   # Gestionnaire de liste email auto-hébergé (Listmonk) : contacts, double
   # opt-in, campagnes, désinscription — LA liste vit ici, pas chez un
   # prestataire. L'ENVOI est délégué à un relais SMTP (Brevo — configuré
@@ -218,6 +243,11 @@ volumes:
   live_journal_data:
   # Données du moteur Twin : jobs.sqlite + sorties (PDF/figures). Archives brutes purgées.
   twin_engine_data:
+  # Dépôts de la cohorte Twin : archives d'entraînement (données perso VOLUMINEUSES,
+  # positions GPS + FC) en attente d'analyse + depots.json. Purgé dépôt par dépôt
+  # via la route admin dès l'analyse faite — jamais de sauvegarde, mais espace
+  # disque à surveiller tant que des dépôts attendent.
+  twin_depot_data:
   # Inscriptions aux ateliers (prénom + email) : données perso minimales,
   # purgées après chaque atelier via la route admin — pas de sauvegarde longue.
   atelier_data:
