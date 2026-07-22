@@ -100,11 +100,21 @@ interdit ». Deux sorties, au choix :
 
 ### 1.3 Visibilité de la préversion
 
-- L'URL de staging n'est liée nulle part : personne ne la trouvera par hasard, et elle
-  se partage librement (WhatsApp, testeurs).
-- **Ne PAS activer Cloudflare Access dessus** pendant les tests : les scrapers
+- **Oui, l'URL de staging est publique** : quiconque possède le lien peut l'ouvrir (pas
+  d'authentification). Mais elle n'est liée nulle part, absente des moteurs (aucun lien
+  entrant), donc en pratique seuls les gens à qui tu la donnes la voient. Et le site ne
+  contient aucun secret côté client (uniquement des URL publiques) : au pire, quelqu'un
+  découvre la refonte en avance.
+- **Ne PAS activer Cloudflare Access dessus** pendant la phase de tests : les scrapers
   WhatsApp/Meta (test des cartes OG du live) doivent pouvoir lire la page sans
-  authentification. Une protection par Access se fait APRÈS l'aventure si besoin.
+  authentification.
+- **Au lancement, on ne la supprime PAS : on la verrouille et on la garde.** Elle devient
+  la préversion permanente (le réflexe sain : `deploy:staging` pour vérifier, PUIS
+  `deploy:cf`). Le verrou : dashboard → **Workers & Pages → thelocomotionlab-website →
+  Settings → General → Access policy → Enable** — cela protège les URL `*.pages.dev` du
+  projet (previews) derrière un code à usage unique envoyé par email, SANS toucher au
+  domaine de production. En complément, le retrait des origines staging des allowlists
+  CORS (§7.3) neutralise de toute façon les formulaires depuis la préversion.
 - Si l'indexation t'inquiète (quelques semaines seulement), on pourra ajouter un en-tête
   `X-Robots-Tag: noindex` conditionné au staging — dis-le-moi, petit chantier de 10 lignes.
 
@@ -353,11 +363,11 @@ listing/téléchargement/purge, notification « nouveau dépôt » à toi). Rest
    `deploy:staging` → la page `/outils/twin/cohorte` passe de « dépôt pas encore ouvert »
    au vrai formulaire. Test : déposer une archive réelle de quelques centaines de Mo
    (c'est LE test du DNS gris), suivre la barre de progression, vérifier la notification.
-3. **Dev manquant (je m'en charge quand tu valides)** : l'email de **confirmation au
-   déposant** — aujourd'hui l'écran de succès promet « je te recontacte à {email} » mais
-   rien ne part. Petit chantier propre : même pattern best-effort que l'email atelier
-   (nodemailer, texte sobre : « ton archive est bien arrivée, référence LL-TWIN-…,
-   elle sera supprimée après analyse, réponse sous X jours »). ~40 lignes + tests.
+3. ✅ **Fait (2026-07-22)** : l'email de **confirmation au déposant** est codé —
+   même pattern best-effort que la notification (nodemailer → Brevo), texte reprenant
+   mot pour mot les promesses de l'écran de succès (archive bien arrivée, référence
+   `LL-TWIN-…`, suppression après analyse). Il s'active dès que `SMTP_HOST` est posé
+   (aucune variable en plus) ; `healthz` expose `confirmation: active|non_configuree`.
 
 ### C5 — Le formulaire de contact : une décision à prendre
 
@@ -415,7 +425,7 @@ L'inventaire complet :
 | 1 | **Double opt-in** (confirmation d'inscription à la liste) | Listmonk (auto) | `infra/listmonk/email-templates/subscriber-optin.html` (surcharge versionnée, montée via `--static-dir`) | ✅ fait, aux couleurs du Lab |
 | 2 | **Confirmation d'inscription atelier + fiche PDF** | atelier-api → nodemailer → Brevo | texte dans `services/atelier-api/src/mailer.ts` ; PDF `fiche_participant.tex.j2` (twin-engine) | ✅ fait (option : version HTML brandée plus tard) |
 | 3 | **Notification « nouveau dépôt Twin »** (pour toi) | twin-depot → nodemailer → Brevo | `services/twin-depot/src/mailer.ts` | ✅ fait |
-| 4 | **Confirmation de dépôt au déposant** | twin-depot (à ajouter) | à créer dans `src/mailer.ts` | ❌ **à coder (C4.3)** |
+| 4 | **Confirmation de dépôt au déposant** | twin-depot → nodemailer → Brevo | `services/twin-depot/src/mailer.ts` | ✅ fait (2026-07-22) |
 | 5 | **Relai du formulaire de contact** | Worker legacy hors-repo → à rapatrier | décision C5 | ⚠️ décision |
 | 6 | **Template de campagne « Le Lab »** (annonce Écrins, parutions) | Listmonk (manuel) | `infra/listmonk/campaign-templates/` à créer + UI Listmonk | ❌ à créer ensemble |
 | 7 | **Liste d'attente atelier « une place s'est libérée »** | manuel aujourd'hui | — | 💤 chantier futur, optionnel |

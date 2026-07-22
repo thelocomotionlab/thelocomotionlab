@@ -36,7 +36,7 @@ function makeApp(overrides: Partial<Config> = {}, deps: Partial<ServerDeps> = {}
     ...overrides,
   };
   const store = new DepotStore(config.dataDir);
-  const app = buildServer({ config, store, logger: false, notifier: null, ...deps });
+  const app = buildServer({ config, store, logger: false, notifier: null, confirmer: null, ...deps });
   cleanups.push(async () => {
     await app.close();
     fs.rmSync(dir, { recursive: true, force: true });
@@ -117,7 +117,12 @@ describe("healthz", () => {
     const { app } = makeApp();
     const res = await app.inject({ method: "GET", url: "/twin/healthz" });
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ ok: true, depots: 0, notification: "non_configuree" });
+    expect(res.json()).toEqual({
+      ok: true,
+      depots: 0,
+      notification: "non_configuree",
+      confirmation: "non_configuree",
+    });
   });
 });
 
@@ -250,6 +255,37 @@ describe("POST /twin/depots", () => {
     expect(res.statusCode).toBe(200);
     expect(store2.count()).toBe(1);
     expect(enEchec).toHaveBeenCalledOnce();
+  });
+
+  it("confirme au déposant (best-effort : l'échec n'annule pas le dépôt)", async () => {
+    const confirme: Depot[] = [];
+    const { app } = makeApp({}, { confirmer: async (d) => void confirme.push(d) });
+    await deposer(app, champsValides(), PETITE_ARCHIVE);
+    expect(confirme).toHaveLength(1);
+    expect(confirme[0].email).toBe("chloe@test.fr");
+    expect(confirme[0].reference).toMatch(/^LL-TWIN-\d{4}-\d{4}$/);
+
+    const enEchec = vi.fn().mockRejectedValue(new Error("smtp cassé"));
+    const { app: app2, store: store2 } = makeApp({}, { confirmer: enEchec });
+    const res = await deposer(app2, champsValides(), PETITE_ARCHIVE);
+    expect(res.statusCode).toBe(200);
+    expect(store2.count()).toBe(1);
+    expect(enEchec).toHaveBeenCalledOnce();
+  });
+
+  it("dépôt refusé (honeypot) → aucun email ne part", async () => {
+    const appels: string[] = [];
+    const { app, store } = makeApp(
+      {},
+      {
+        notifier: async () => void appels.push("notification"),
+        confirmer: async () => void appels.push("confirmation"),
+      },
+    );
+    const res = await deposer(app, champsValides({ website: "spam" }), PETITE_ARCHIVE);
+    expect(res.statusCode).toBe(200); // faux succès pour le robot
+    expect(store.count()).toBe(0);
+    expect(appels).toEqual([]);
   });
 });
 

@@ -35,7 +35,7 @@ analyse (calibration du moteur Twin) puis leur **purge**. Conteneurisé
 
 | Méthode | Route | Rôle |
 | --- | --- | --- |
-| GET | `/twin/healthz` | Vivacité (compose healthcheck) + état notification. |
+| GET | `/twin/healthz` | Vivacité (compose healthcheck) + état des emails (notification, confirmation). |
 | POST | `/twin/depots` | Dépôt multipart `{ prenom*, nom, email*, montre*, objectifs, consent*="oui", website (honeypot), archive* (fichier) }` → `{ ok, reference }`. Trop gros → **413**, formulaire incomplet → **400** `{ error }`, débit → **429**. CORS restreint aux origines du site. |
 | GET | `/twin/depots` | **Admin** (`Authorization: Bearer $TWIN_DEPOT_ADMIN_TOKEN`) : listing des dépôts (métadonnées). |
 | GET | `/twin/depots/:id/archive` | **Admin** : téléchargement de l'archive (stream). |
@@ -46,10 +46,14 @@ Garde-fous (pattern `atelier-api`/`email-gateway`) : honeypot `website`
 (basse : les uploads sont lourds), montre validée contre la config, nom de
 fichier nettoyé (pas de traversée de chemin).
 
-À chaque dépôt, une **notification email** part vers
-`TWIN_DEPOT_NOTIFY_EMAIL` (même relais SMTP Brevo que le reste, variables
-`SMTP_*` d'`infra/.env`) — **best-effort** : son échec n'annule jamais le
-dépôt (logs pour rattrapage via le listing admin).
+À chaque dépôt, **deux emails** partent (même relais SMTP Brevo que le reste,
+variables `SMTP_*` d'`infra/.env`) — chacun **best-effort** : un échec
+n'annule jamais le dépôt (logs pour rattrapage via le listing admin) :
+1. la **notification** vers `TWIN_DEPOT_NOTIFY_EMAIL` (métadonnées + rappel
+   de la procédure admin) ;
+2. la **confirmation au déposant** (adresse du formulaire) : archive bien
+   reçue, référence `LL-TWIN-…`, rappel de la suppression après analyse —
+   c'est la trace écrite de la promesse de l'écran de succès du site.
 
 ## Données personnelles (règle du labo)
 

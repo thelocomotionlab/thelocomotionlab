@@ -12,8 +12,9 @@
 // Garde-fous (pattern atelier-api) : CORS restreint aux origines du site pour
 // le POST, honeypot `website` (robot → faux succès, rien d'écrit), limite de
 // débit par IP (les uploads sont lourds : borne basse), taille maximale
-// d'archive (413), montre validée contre la config. Notification email à
-// Valentin best-effort : son échec n'annule jamais le dépôt.
+// d'archive (413), montre validée contre la config. Deux emails best-effort
+// après enregistrement (leur échec n'annule jamais le dépôt) : notification à
+// Valentin + confirmation au déposant (mailer.ts).
 
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -23,7 +24,7 @@ import multipart from "@fastify/multipart";
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
 
 import type { Config } from "./config";
-import { createTransport, envoyerNotification, mailEnv } from "./mailer";
+import { createTransport, envoyerConfirmation, envoyerNotification, mailEnv } from "./mailer";
 import { IpRateLimiter } from "./ratelimit";
 import { nettoyerNomFichier, type Depot, type DepotStore } from "./store";
 
@@ -40,6 +41,8 @@ export interface ServerDeps {
   logger?: boolean;
   /** Notification « nouveau dépôt » — injectable en test. null = désactivée. */
   notifier?: ((depot: Depot) => Promise<void>) | null;
+  /** Confirmation au déposant — injectable en test. null = désactivée. */
+  confirmer?: ((depot: Depot) => Promise<void>) | null;
 }
 
 function safeEqual(a: string, b: string): boolean {
@@ -75,6 +78,13 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
         ? (depot: Depot) =>
             envoyerNotification(createTransport(smtp), smtp.from, config.notifyEmail, depot)
         : null;
+  // La confirmation ne dépend que du SMTP : le destinataire est le déposant.
+  const confirmer =
+    deps.confirmer !== undefined
+      ? deps.confirmer
+      : smtp
+        ? (depot: Depot) => envoyerConfirmation(createTransport(smtp), smtp.from, depot)
+        : null;
 
   /** ACAO uniquement pour les origines du site ; sans Origin (curl, tests) on
    *  traite quand même — le CORS ne protège que le navigateur. */
@@ -103,6 +113,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     ok: true,
     depots: store.count(),
     notification: notifier ? "active" : "non_configuree",
+    confirmation: confirmer ? "active" : "non_configuree",
   }));
 
   app.options("/twin/depots", async (req, reply) => {
@@ -238,7 +249,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
         );
         archive = null; // le tmp n'existe plus (rename) : plus rien à purger
 
-        // Notification best-effort : le dépôt est déjà acquis.
+        // Emails best-effort : le dépôt est déjà acquis quoi qu'il arrive.
         let notification = "non_configuree";
         if (notifier) {
           try {
@@ -249,9 +260,22 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
             notification = "echec";
           }
         }
+        let confirmation = "non_configuree";
+        if (confirmer) {
+          try {
+            await confirmer(depot);
+            confirmation = "envoyee";
+          } catch (err) {
+            req.log.error(
+              { err, reference: depot.reference },
+              "email de confirmation au déposant impossible",
+            );
+            confirmation = "echec";
+          }
+        }
 
         req.log.info(
-          { reference: depot.reference, montre, taille: depot.taille, notification },
+          { reference: depot.reference, montre, taille: depot.taille, notification, confirmation },
           "dépôt enregistré",
         );
         return { ok: true, reference: depot.reference };
