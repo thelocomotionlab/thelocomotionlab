@@ -13,7 +13,7 @@ export default function CardMeta({ kind, detail = null, className = "" }) {
       {detail ? (
         <>
           {" "}
-          · <span className="font-bold text-brand-accent-dark">{detail}</span>
+          · <span className="font-bold text-brand-accent-ink">{detail}</span>
         </>
       ) : null}
     </span>

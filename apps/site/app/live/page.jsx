@@ -9,6 +9,7 @@ import Link from "next/link";
 
 import LiveHub from "@/components/LiveHub";
 import ExplorerCarousel from "@/components/ExplorerCarousel";
+import SectionHeading from "@/components/SectionHeading";
 import { getExplorerCarouselItems } from "@/lib/carouselItems";
 import { journalApiBase } from "@/lib/liveConfig";
 
@@ -64,15 +65,7 @@ export default function LivePage() {
       {/* Dernières parutions, dans tous les états — titre en Lora italique
           + filet, comme les sections du pilier Explorer. */}
       <section className="mt-14 max-w-4xl mx-auto">
-        <div className="mb-6 flex items-center gap-4">
-          <h2 className="font-lora text-[24px] font-medium italic text-brand-deep md:text-[28px]">
-            À lire en attendant
-          </h2>
-          <div
-            className="h-px flex-1 translate-y-[2px] bg-gray-300/80"
-            aria-hidden="true"
-          />
-        </div>
+        <SectionHeading className="mb-6">À lire en attendant</SectionHeading>
         <ExplorerCarousel items={carouselItems} tone="light" />
       </section>
 

@@ -33,7 +33,7 @@ export default function ArticleNav({ items = [], kind = "article" }) {
           <li key={item.slug}>
             <Link
               href={item.href}
-              className="group flex h-full flex-col overflow-hidden rounded-xl bg-white shadow-card transition hover:shadow-lg no-underline"
+              className="group flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-card transition hover:shadow-lg no-underline"
             >
               {item.cover ? (
                 <div className="relative h-32 w-full overflow-hidden">

@@ -179,7 +179,7 @@ function Stat({ value, label }) {
   return (
     <div>
       <div className="font-heading text-[21px] font-bold leading-none">{value}</div>
-      <div className="mt-1 font-heading text-[9px] uppercase tracking-[0.1em] text-brand-bg/60">
+      <div className="mt-1 font-heading text-xxs uppercase tracking-[0.1em] text-brand-bg/60">
         {label}
       </div>
     </div>

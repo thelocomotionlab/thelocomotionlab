@@ -98,7 +98,7 @@ export default function ProjetBody({
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-card p-4 sm:p-6 md:p-10">
+      <div className="bg-white rounded-2xl shadow-card p-4 sm:p-6 md:p-10">
         {/* Titre à la convention des pages (bleu profond), centré ; auteur
             et date comme avant, juste dessous ; liseré ocre en séparateur. */}
         <h1 className="text-3xl text-brand-slate-dark md:text-5xl font-heading font-bold mb-3 text-center">
@@ -153,7 +153,7 @@ export default function ProjetBody({
                   <a
                     href={`#${item.id}`}
                     className={`hover:underline ${
-                      item.level === 2 ? "text-brand-accent" : "text-gray-600"
+                      item.level === 2 ? "text-brand-accent-ink" : "text-gray-600"
                     }`}
                   >
                     {item.text}
@@ -164,14 +164,13 @@ export default function ProjetBody({
           </div>
         )}
 
+        {/* NB : le plugin typography n'est pas chargé (cf. tailwind.config.mjs) —
+            les styles .prose (titres, listes, blockquotes…) vivent dans globals.css. */}
         <div
           className="
-            prose prose-lg max-w-none
+            prose max-w-none
             font-lora text-gray-800 leading-relaxed
             text-left md:text-justify
-            prose-img:shadow-md prose-img:mx-auto
-            prose-blockquote:italic prose-blockquote:text-gray-600
-            prose-blockquote:border-l-4 prose-blockquote:border-brand-primary prose-blockquote:pl-4
             article-body
           "
         >
@@ -327,7 +326,8 @@ export default function ProjetBody({
                   <a
                     href={href}
                     {...props}
-                    className="font-semibold hover:underline cursor-pointer"
+                    // Lien identifiable sans survol (WCAG 1.4.1), cf. ArticleBody.
+                    className="font-semibold text-brand-deep-dark underline underline-offset-2 decoration-brand-accent-dark/60 hover:decoration-brand-accent-dark cursor-pointer"
                     target={isExternal ? "_blank" : undefined}
                     rel={isExternal ? "noopener noreferrer" : undefined}
                   >
@@ -380,7 +380,7 @@ export default function ProjetBody({
         <div className="mt-12 text-center">
           <Link
             href="/explorer"
-            className="inline-block bg-brand-accent text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-primary-dark transition"
+            className="inline-block bg-brand-accent text-brand-text font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-accent-light transition"
           >
             Retour à Explorer
           </Link>

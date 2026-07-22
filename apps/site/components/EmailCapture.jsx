@@ -26,7 +26,7 @@ export const MICRO_PROMESSE =
   "Un email pour suivre les nouveautés du labo.";
 
 export default function EmailCapture({
-  title = "Stay tuned !",
+  title = "Restez à l'écoute !",
   description = null,
   promise = MICRO_PROMESSE,
   source = "home",
@@ -80,7 +80,7 @@ export default function EmailCapture({
   return (
     <div className={className}>
       {title ? (
-        <h4 className="text-lg font-semibold mb-2 text-brand-accent text-center">
+        <h4 className="text-lg font-semibold mb-2 text-brand-accent-ink text-center">
           {title}
         </h4>
       ) : null}
@@ -115,7 +115,7 @@ export default function EmailCapture({
           placeholder={placeholder}
           className={
             isBand
-              ? "flex-1 rounded-full bg-white px-[18px] py-3 text-[14.5px] text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-deep transition-all"
+              ? "flex-1 rounded-full bg-white px-[18px] py-3 text-[14.5px] text-gray-700 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-deep transition-all"
               : "flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-accent focus:rounded-full transition-all"
           }
         />
@@ -140,11 +140,11 @@ export default function EmailCapture({
           className={`${
             isBand
               ? // focus-visible blanc : l'outline global brand-accent serait
-                // invisible sur la bande orange.
-                "bg-brand-deep text-white px-[22px] py-3 text-[14.5px] focus-visible:outline-white"
-              : "bg-brand-accent text-white px-5 py-2"
+                // invisible sur la bande orange. deep-dark : blanc lisible (5,1:1).
+                "bg-brand-deep-dark text-white px-[22px] py-3 text-[14.5px] focus-visible:outline-white hover:bg-brand-deep"
+              : "bg-brand-accent text-brand-text px-5 py-2 hover:bg-brand-accent-light"
           } font-semibold flex items-center justify-center gap-2 transition-all duration-300 rounded-full cursor-pointer ${
-            status === "sending" ? "opacity-70 cursor-wait" : "hover:opacity-90"
+            status === "sending" ? "opacity-70 cursor-wait" : ""
           }`}
         >
           {!isBand && <Mail size={18} aria-hidden="true" />}
@@ -160,7 +160,7 @@ export default function EmailCapture({
 
       <div
         id={statusId}
-        className="h-6 mt-2 text-center"
+        className="min-h-6 mt-2 text-center"
         aria-live="polite"
         aria-atomic="true"
         role="status"
@@ -168,8 +168,8 @@ export default function EmailCapture({
         {status === "success" && (
           <p
             className={`${
-              isBand ? "text-white" : "text-green-700"
-            } text-sm font-medium animate-fade-in leading-none`}
+              isBand ? "text-brand-text" : "text-green-700"
+            } text-sm font-medium animate-fade-in leading-snug`}
           >
             {IS_GATEWAY
               ? "Merci ! Un email de confirmation vient de t'être envoyé — pense à cliquer le lien."
@@ -179,10 +179,12 @@ export default function EmailCapture({
         {status === "error" && (
           <p
             className={`${
-              isBand ? "text-white underline underline-offset-2" : "text-red-700"
+              isBand
+                ? "text-brand-text underline underline-offset-2"
+                : "text-red-700"
             } text-sm font-medium animate-fade-in`}
           >
-            Une erreur est survenue. Vérifie ton adresse mail.
+            L&rsquo;envoi a échoué. Vérifie ta connexion et réessaie.
           </p>
         )}
       </div>

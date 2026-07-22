@@ -27,7 +27,7 @@
 body {
   margin: 0;
   background: var(--color-brand-bg);
-  color: #374151; /* gray-700 */
+  color: var(--color-brand-text); /* source unique : packages/ui (brand-text) */
   /* La famille de police est appliquée via la classe `font-sans` (var(--font-sans))
      posée sur le body dans app/layout.js. Une seule source de vérité = @theme. */
 }
@@ -86,6 +86,24 @@ select:focus-visible {
   hyphens: auto;
 }
 
+/* Citations (blockquote markdown) : le plugin typography n'est pas chargé
+   (choix historique, cf. tailwind.config.mjs) — le style vit donc ici. */
+.prose blockquote {
+  margin: 1.5rem 0;
+  border-left: 4px solid var(--color-brand-primary);
+  padding-left: 1rem;
+  font-style: italic;
+  color: var(--color-gray-600, #4b5563);
+}
+
+/* Formules KaTeX : défilement interne plutôt que débordement de la page
+   (sinon un bloc plus large que l'écran force un scroll horizontal global). */
+.prose .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.25rem;
+}
+
 /* ===========================
    Footnotes / Références
    =========================== */
@@ -104,7 +122,7 @@ select:focus-visible {
   font-weight: 700;
   font-size: 1.25rem;
   margin-bottom: 0.75rem;
-  color: var(--color-brand-accent);
+  color: var(--color-brand-accent-ink);
   font-family: var(--font-heading);
 }
 
@@ -207,13 +225,14 @@ a.data-footnote-backref,
 .prose h4,
 .prose h5,
 .prose h6 {
-  font-family: var(--next-font-ubuntu), ui-sans-serif, system-ui;
+  font-family: var(--font-heading);
   font-weight: 700;
 }
 
-/* Couleurs */
+/* Couleurs — versions lisibles sur fond blanc (contraste AA) :
+   slate-dark comme les h1 de pages, accent-ink pour l'ocre en texte. */
 .prose h1 {
-  color: var(--color-brand-primary);
+  color: var(--color-brand-slate-dark);
 }
 
 .prose h2 {
@@ -221,13 +240,13 @@ a.data-footnote-backref,
 }
 
 .prose h3 {
-  color: var(--color-brand-accent);
+  color: var(--color-brand-accent-ink);
 }
 
 .prose h4,
 .prose h5,
 .prose h6 {
-  color: var(--color-brand-accent);
+  color: var(--color-brand-accent-ink);
 }
 
 /* Tailles + espacements verticaux des titres markdown */
@@ -512,6 +531,14 @@ a.data-footnote-backref,
 .prose ol li {
   margin-top: 0.1rem;
   margin-bottom: 0.1rem;
+}
+
+/* Dans un article, les listes suivent la taille des paragraphes
+   (.article-body p : 1.18rem / 1.7) au lieu de paraître « rétrécies ». */
+.article-body ul,
+.article-body ol {
+  font-size: 1.18rem;
+  line-height: 1.7;
 }
 
 .prose ul li::marker {

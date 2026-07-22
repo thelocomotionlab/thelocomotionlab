@@ -64,7 +64,7 @@ export default function ArticleBody({
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-card p-4 sm:p-6 md:p-10">
+      <div className="bg-white rounded-2xl shadow-card p-4 sm:p-6 md:p-10">
         {/* Titre à la convention des pages (bleu profond), centré ; auteur
             et date comme avant, juste dessous ; liseré ocre en séparateur. */}
         <h1 className="text-3xl text-brand-slate-dark md:text-5xl font-heading font-bold mb-3 text-center">
@@ -98,14 +98,13 @@ export default function ArticleBody({
           aria-hidden="true"
         />
 
+        {/* NB : le plugin typography n'est pas chargé (cf. tailwind.config.mjs) —
+            les styles .prose (titres, listes, blockquotes…) vivent dans globals.css. */}
         <div
           className="
-            prose prose-lg max-w-none
+            prose max-w-none
             font-lora text-gray-800 leading-relaxed
             text-left md:text-justify
-            prose-img:rounded-lg prose-img:shadow-md prose-img:mx-auto prose-img:my-6
-            prose-blockquote:italic prose-blockquote:text-gray-600
-            prose-blockquote:border-l-4 prose-blockquote:border-brand-primary prose-blockquote:pl-4
             article-body
           "
         >
@@ -123,12 +122,13 @@ export default function ArticleBody({
             components={{
               citation: Citation,
               a: ({ node, ...props }) => {
+                // Lien identifiable sans survol (WCAG 1.4.1) : souligné en
+                // permanence + couleur de la charte lisible sur blanc.
+                const linkClasses =
+                  "font-semibold text-brand-deep-dark underline underline-offset-2 decoration-brand-accent-dark/60 hover:decoration-brand-accent-dark";
                 if (props.href && props.href.startsWith("#")) {
                   return (
-                    <a
-                      {...props}
-                      className="font-semibold hover:underline cursor-pointer"
-                    />
+                    <a {...props} className={`${linkClasses} cursor-pointer`} />
                   );
                 }
                 return (
@@ -136,7 +136,7 @@ export default function ArticleBody({
                     {...props}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-semibold hover:underline"
+                    className={linkClasses}
                   />
                 );
               },
@@ -153,7 +153,7 @@ export default function ArticleBody({
         <div className="mt-12 text-center">
           <Link
             href={backHref}
-            className="inline-block bg-brand-accent text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-primary-dark transition"
+            className="inline-block bg-brand-accent text-brand-text font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-accent-light transition"
           >
             {backLabel}
           </Link>

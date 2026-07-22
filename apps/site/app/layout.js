@@ -48,7 +48,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="fr" data-scroll-behavior="smooth">
       <body
-        className={`${ubuntu.variable} ${lora.variable} ${ubuntuMono.variable} font-sans text-gray-700 relative min-h-screen`}
+        className={`${ubuntu.variable} ${lora.variable} ${ubuntuMono.variable} font-sans text-brand-text relative min-h-screen`}
       >
         <a href="#main-content" className="skip-link">
           Aller au contenu principal

@@ -54,7 +54,7 @@ const FOOT_LINKS = [
 ];
 
 const FOOT_LINK_CLASS =
-  "text-[14px] font-semibold tracking-[0.01em] text-brand-primary-dark transition hover:text-brand-accent-dark md:text-[14.5px]";
+  "text-[14px] font-semibold tracking-[0.01em] text-brand-slate-dark transition hover:text-brand-accent-ink md:text-[14.5px]";
 
 function slugify(verb) {
   return verb
@@ -85,7 +85,7 @@ function AccordeonItem({ verb, suite, texte }) {
               replier de 320 à 430px — vérifié au pixel (Puppeteer). */}
           <span className="block flex-1 text-[clamp(13.5px,6.2vw-5px,22px)] font-bold leading-[1.25] tracking-[-0.01em] text-brand-deep-dark">
             {verb}{" "}
-            <em className="font-lora font-medium italic text-brand-accent">
+            <em className="font-lora font-medium italic text-brand-accent-ink">
               {suite}.
             </em>
           </span>
@@ -136,7 +136,7 @@ export default function PhilosophieSection() {
               <h3 className="text-[28px] font-bold leading-[1.1] tracking-[-0.01em] text-brand-deep-dark">
                 {p.verb}
               </h3>
-              <p className="mt-1.5 font-lora text-[17px] font-medium italic leading-[1.35] text-brand-accent [text-wrap:balance]">
+              <p className="mt-1.5 font-lora text-[17px] font-medium italic leading-[1.35] text-brand-accent-ink [text-wrap:balance]">
                 {p.suite}
               </p>
               <p className="mt-3.5 hyphens-auto text-justify text-[14px] leading-[1.65] text-gray-600">

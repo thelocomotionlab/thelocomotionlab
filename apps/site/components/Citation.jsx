@@ -36,7 +36,7 @@ export function createCitation(usedCitations = []) {
       <Tooltip entry={entry}>
         <a
           href={`#ref-${id}`}
-          className="font-semibold text-gray-800 hover:underline"
+          className="font-semibold text-brand-deep-dark underline underline-offset-2 decoration-brand-accent-dark/60 hover:decoration-brand-accent-dark"
         >
           {children ? (
             <>

@@ -15,6 +15,7 @@ import {
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { Search } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 
 function normalize(s) {
@@ -52,10 +53,8 @@ function highlight(text, q) {
   const safe = escapeHtml(text);
   if (!q) return safe;
   const regex = new RegExp(`(${escapeRegExp(q)})`, "gi");
-  return safe.replace(
-    regex,
-    `<strong class="text-gray-700 font-semibold">$1</strong>`
-  );
+  // Même surlignage que dans les articles (mark.search-highlight, globals.css)
+  return safe.replace(regex, `<mark class="search-highlight">$1</mark>`);
 }
 
 export default function SearchClient() {
@@ -153,16 +152,26 @@ function SearchClientInner() {
     <div className="container mx-auto px-4 py-10">
       <PageHeader title="Recherche" />
 
-      <form onSubmit={onSubmit} className="mb-8">
+      <form
+        onSubmit={onSubmit}
+        className="mb-8 flex w-full max-w-2xl items-center gap-2"
+      >
         <input
           ref={inputRef}
           name="q"
           type="search"
           defaultValue={q}
           placeholder="Tape un mot-clé (ex. respiration, sandales, froid)…"
-          className="w-full max-w-2xl px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent"
+          className="min-w-0 flex-1 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent"
           aria-label="Rechercher sur le site"
         />
+        <button
+          type="submit"
+          aria-label="Lancer la recherche"
+          className="flex-none cursor-pointer rounded-full border border-gray-300 bg-white p-2 text-gray-700 transition hover:text-brand-accent-ink"
+        >
+          <Search size={20} aria-hidden="true" />
+        </button>
       </form>
 
       {!q && (
@@ -192,7 +201,7 @@ function SearchClientInner() {
                 scroll={false}
                 className="group block bg-white rounded-2xl shadow-card p-6 hover:shadow-lg transition-shadow"
               >
-                <h3 className="text-xl font-semibold mb-2 text-brand-accent group-hover:underline">
+                <h3 className="text-xl font-semibold mb-2 text-brand-accent-ink group-hover:underline">
                   {a.title}
                 </h3>
                 {a.snippet && (
@@ -225,7 +234,7 @@ function SearchClientInner() {
                 <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
                   {p.type === "recit" ? "Récit" : "Projet"}
                 </p>
-                <h3 className="text-xl font-semibold mb-2 text-brand-accent group-hover:underline">
+                <h3 className="text-xl font-semibold mb-2 text-brand-accent-ink group-hover:underline">
                   {p.title}
                 </h3>
                 {p.snippet && (

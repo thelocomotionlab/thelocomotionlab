@@ -112,7 +112,7 @@ export default function ProfileCard({ profile, totalKm, doneKm, elevationMin, el
           {waypoints.map((w) => (
             <span
               key={w.nom}
-              className="absolute top-0 -translate-x-1/2 whitespace-nowrap font-heading text-[9px] text-brand-text/55 lg:text-[10px]"
+              className="absolute top-0 -translate-x-1/2 whitespace-nowrap font-heading text-xxs text-brand-text/55"
               style={{ left: `${(w.km / totalKm) * 100}%` }}
             >
               {w.nom}

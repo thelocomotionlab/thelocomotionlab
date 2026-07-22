@@ -32,7 +32,7 @@ export const metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="max-w-3xl mx-auto px-6 py-12 text-gray-800 font-sans text-justify hyphens-auto">
+    <div className="max-w-3xl mx-auto px-6 py-12 font-sans text-left md:text-justify hyphens-auto">
       <PageHeader kicker="/ LE LABO" title="À propos" />
 
       {/* Parcours */}
@@ -47,7 +47,7 @@ export default function AboutPage() {
             href="https://artsetmetiers.hal.science/tel-04041476/"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-semibold text-gray-800 hover:underline"
+            className="font-semibold text-brand-deep-dark underline underline-offset-2 decoration-brand-accent-dark/60 hover:decoration-brand-accent-dark"
           >
             la consulter ici
           </a>

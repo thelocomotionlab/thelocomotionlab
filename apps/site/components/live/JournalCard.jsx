@@ -82,7 +82,7 @@ export default function JournalCard({
               {formatEntryTag(entry.ts, dateDebut)}
             </span>
             {kindLabel(entry) && (
-              <span className="rounded-[10px] bg-brand-primary/16 px-[7px] py-0.5 font-heading text-[9px] font-medium uppercase tracking-[0.08em] text-brand-primary-dark">
+              <span className="rounded-[10px] bg-brand-primary/16 px-[7px] py-0.5 font-heading text-xxs font-medium uppercase tracking-[0.08em] text-brand-primary-dark">
                 {kindLabel(entry)}
               </span>
             )}

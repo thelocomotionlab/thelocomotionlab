@@ -47,9 +47,9 @@ export default function TwinTeaserPage() {
         tagline="Un estimateur de temps de course de jumeau numérique"
       />
 
-      <div className="bg-white rounded-xl shadow-card p-4 sm:p-6 md:p-10">
+      <div className="bg-white rounded-2xl shadow-card p-4 sm:p-6 md:p-10">
 
-        <div className="font-sans text-gray-800 leading-relaxed">
+        <div className="font-sans leading-relaxed">
           <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
             Comment ça marche
           </h2>
@@ -84,14 +84,14 @@ export default function TwinTeaserPage() {
         <div className="mt-8 text-center">
           <Link
             href="/contact?sujet=twin"
-            className="inline-block bg-brand-accent text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-primary-dark transition"
+            className="inline-block bg-brand-accent text-brand-text font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-accent-light transition"
           >
             Rejoindre la cohorte de test
           </Link>
         </div>
 
         <div className="mt-10 max-w-2xl mx-auto text-center">
-          <h2 className="text-lg font-semibold text-brand-accent mb-3">
+          <h2 className="text-lg font-semibold text-brand-accent-ink mb-3">
             Pour être prévenu·e au lancement officiel
           </h2>
           <EmailCapture

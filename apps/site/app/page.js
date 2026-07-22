@@ -59,16 +59,16 @@ const REGISTRE_BADGES = {
   publie: {
     label: "PUBLIÉ",
     className:
-      "border-brand-primary-dark/55 bg-brand-primary/14 text-brand-primary-dark",
+      "border-brand-primary-dark/55 bg-brand-primary/14 text-brand-slate-dark",
   },
   aParaitre: {
     label: "À PARAÎTRE",
     className:
-      "border-brand-accent-dark/55 bg-brand-accent-light/14 text-brand-accent-dark",
+      "border-brand-accent-dark/55 bg-brand-accent-light/14 text-brand-accent-ink",
   },
   aVenir: {
     label: "À VENIR",
-    className: "border-black/25 text-gray-500",
+    className: "border-black/25 text-gray-600",
   },
 };
 
@@ -115,7 +115,7 @@ function RegistreRow({ row, isLast }) {
     // Le prototype ne met pas de hover sur la ligne estompée « À VENIR »
     // (estompe adoucie à 65 % pour rester lisible).
     row.status === "aVenir"
-      ? "opacity-65"
+      ? "opacity-80"
       : "transition-colors hover:bg-brand-primary/8",
   ].join(" ");
 
@@ -150,7 +150,7 @@ function RegistreRow({ row, isLast }) {
 
 function RegistrePanel({ rows }) {
   return (
-    <div className="rounded border border-brand-primary-dark/45 border-t-[3px] border-t-brand-primary-dark bg-white px-6 pb-6 shadow-[0_6px_24px_rgba(0,0,0,0.1)] md:px-8 md:pb-[26px]">
+    <div className="rounded border border-brand-primary-dark/45 border-t-[3px] border-t-brand-primary-dark bg-white px-6 pb-6 shadow-card md:px-8 md:pb-[26px]">
       {/* En-tête centré verticalement entre le bord supérieur et le filet. */}
       <div className="flex items-center border-b-[1.5px] border-brand-primary-dark/40 py-[18px] md:py-5">
         <span className="font-mono text-[12px] font-bold tracking-[0.2em] text-gray-600">
@@ -169,7 +169,7 @@ function RegistrePanel({ rows }) {
       <p className="mt-3 font-mono text-[11px] tracking-[0.16em]">
         <a
           href="#email"
-          className="text-brand-accent-dark underline underline-offset-[3px] hover:text-brand-deep"
+          className="text-brand-accent-ink underline underline-offset-[3px] hover:text-brand-deep-dark"
         >
           ÊTRE PRÉVENU·E DES PROCHAINES PARUTIONS
         </a>
@@ -247,7 +247,7 @@ export default async function HomePage() {
           <div className="mt-8 flex items-center justify-center">
             <Link
               href="/quete"
-              className="inline-block rounded-full bg-brand-accent px-6 py-3 font-semibold text-white shadow transition hover:bg-brand-primary-dark"
+              className="inline-block rounded-full bg-brand-accent px-6 py-3 font-semibold text-brand-text shadow transition hover:bg-brand-accent-light"
             >
               La quête du labo
             </Link>
@@ -281,7 +281,7 @@ export default async function HomePage() {
                 registre (dupliqué ci-dessous). */}
             <Link
               href="/comprendre"
-              className="mt-7 hidden rounded-full bg-brand-accent px-[26px] py-3 text-[15.5px] font-semibold text-white shadow-[0_6px_18px_rgba(0,0,0,0.15)] transition hover:bg-brand-primary-dark md:inline-block"
+              className="mt-7 hidden rounded-full bg-brand-accent px-[26px] py-3 text-[15.5px] font-semibold text-brand-text shadow-cta transition hover:bg-brand-accent-light md:inline-block"
             >
               Voir tout
             </Link>
@@ -292,7 +292,7 @@ export default async function HomePage() {
           <div className="-mt-4 md:hidden">
             <Link
               href="/comprendre"
-              className="inline-block rounded-full bg-brand-accent px-[26px] py-3 text-[15.5px] font-semibold text-white shadow-[0_6px_18px_rgba(0,0,0,0.15)] transition hover:bg-brand-primary-dark"
+              className="inline-block rounded-full bg-brand-accent px-[26px] py-3 text-[15.5px] font-semibold text-brand-text shadow-cta transition hover:bg-brand-accent-light"
             >
               Voir tout
             </Link>
@@ -367,10 +367,10 @@ export default async function HomePage() {
       
 >        <div className="mx-auto flex max-w-[1000px] flex-col gap-6 md:flex-row md:items-center md:justify-between md:gap-10">
           <div>
-            <p className="text-[21px] font-bold text-white">
+            <p className="text-[21px] font-bold text-brand-text">
               Recevoir les prochaines explorations
             </p>
-            <p className="mt-1 text-[13px] italic text-white/85">
+            <p className="mt-1 text-[13px] italic text-brand-text/85">
               {MICRO_PROMESSE}
             </p>
           </div>

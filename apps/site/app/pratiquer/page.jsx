@@ -11,6 +11,7 @@ import AteliersGrid from "@/components/AteliersGrid";
 import PageHeader from "@/components/PageHeader";
 import PhotoSlot from "@/components/PhotoSlot";
 import SeanceFrise from "@/components/SeanceFrise";
+import SectionHeading from "@/components/SectionHeading";
 import TrailNotify from "@/components/TrailNotify";
 import { listAteliers } from "@/lib/ateliers.mjs";
 
@@ -76,20 +77,6 @@ export const metadata = {
     images: ["https://thelocomotionlab.com/images/assets/og-image.jpg"],
   },
 };
-
-// En-tête de section commun de la page : Lora italique terracotta + filet
-// aligné baseline à droite du titre (les titres gardent la serif d'accent,
-// les textes courants sont en Ubuntu comme partout sur le site).
-function SectionHeading({ children, className = "" }) {
-  return (
-    <div className={`flex items-baseline gap-3.5 md:gap-5 ${className}`}>
-      <h2 className="flex-none font-lora text-[23px] font-medium italic text-brand-deep md:text-[28px]">
-        {children}
-      </h2>
-      <div className="h-px flex-1 bg-brand-hairline" aria-hidden="true" />
-    </div>
-  );
-}
 
 export default function PratiquerPage() {
   const ateliers = listAteliers();
@@ -184,7 +171,7 @@ export default function PratiquerPage() {
                 de transmettre ses connaissances et de faire tribu en situation réelle.
               </p>
               <div className="border-l-2 border-brand-accent pl-3 md:pl-4">
-                <p className="mb-1 font-mono text-[10px] font-bold tracking-[0.2em] text-brand-primary md:text-[11px]">
+                <p className="mb-1 font-mono text-[10px] font-bold tracking-[0.2em] text-brand-slate-dark md:text-[11px]">
                   EN FORMATION
                 </p>
                 <p className="text-[13.5px] italic leading-[1.6] text-brand-slate md:text-[15px]">
@@ -229,7 +216,7 @@ export default function PratiquerPage() {
                 proposés.
               </p>
             </details>
-            <details className="border-b border-t border-brand-hairline py-3 md:py-[13px]">
+            <details className="border-t border-brand-hairline py-3 md:py-[13px]">
               <summary className="cursor-pointer text-[15px] font-bold text-brand-deep md:text-base">
                 Je peux venir accompagné·e ?
               </summary>

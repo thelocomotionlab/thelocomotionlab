@@ -41,7 +41,7 @@ export default function OutilsPage() {
       <PageHeader
         kicker="/ LES OUTILS"
         title="Outils"
-        tagline="les outils du labo"
+        tagline="Les instruments du labo."
       />
 
       <article className="bg-white rounded-2xl shadow-card p-6 flex flex-col transform transition duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1">
@@ -60,7 +60,7 @@ export default function OutilsPage() {
         <div>
           <Link
             href="/outils/twin"
-            className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-brand-accent text-white font-semibold shadow-cta shadow-lg hover:opacity-90 focus-visible:outline-none"
+            className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-brand-accent text-brand-text font-semibold shadow-cta hover:bg-brand-accent-light"
           >
             Découvrir
           </Link>

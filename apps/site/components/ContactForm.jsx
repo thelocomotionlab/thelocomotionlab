@@ -3,7 +3,7 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Button, Field } from "@locomotionlab/ui";
+import { Button, Field, brandColors } from "@locomotionlab/ui";
 import PageHeader from "@/components/PageHeader";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -80,18 +80,19 @@ function ContactFormInner({ initialMessage = "" }) {
     setStatus("sending");
 
     try {
+      // Couleur d'accent depuis la charte (packages/ui) — pas de valeur en dur.
       const htmlMessage = `
         <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-          <h2 style="color: #EFB159; margin-bottom: 12px;">Nouveau message de contact</h2>
+          <h2 style="color: ${brandColors.accent}; margin-bottom: 12px;">Nouveau message de contact</h2>
           <p><strong>Nom :</strong> ${formData.name}</p>
           <p><strong>Email :</strong> <a href="mailto:${formData.email}">${formData.email}</a></p>
           <p><strong>Message :</strong></p>
-          <div style="border-left: 3px solid #EFB159; padding-left: 10px; margin-top: 6px; color: #555;">
+          <div style="border-left: 3px solid ${brandColors.accent}; padding-left: 10px; margin-top: 6px; color: #555;">
             ${formData.message.replace(/\n/g, "<br/>")}
           </div>
           <hr style="margin-top: 20px; border: none; border-top: 1px solid #eee;" />
           <p style="font-size: 13px; color: #aaa;">
-            Ce message a été envoyé depuis le formulaire de contact du site <a href="https://thelocomotionlab.com" style="color:#EFB159; text-decoration:none;">thelocomotionlab.com</a>.
+            Ce message a été envoyé depuis le formulaire de contact du site <a href="https://thelocomotionlab.com" style="color:${brandColors.accent}; text-decoration:none;">thelocomotionlab.com</a>.
           </p>
         </div>
       `;
@@ -133,7 +134,7 @@ function ContactFormInner({ initialMessage = "" }) {
         formulaire ou directement par mail à{" "}
         <a
           href="mailto:thelocomotionlab@gmail.com"
-          className="font-semibold text-gray-800 hover:underline"
+          className="font-semibold text-brand-deep-dark underline underline-offset-2 decoration-brand-accent-dark/60 hover:decoration-brand-accent-dark"
         >
           thelocomotionlab@gmail.com
         </a>

@@ -14,26 +14,13 @@ import Link from "next/link";
 import Image from "next/image";
 import CardMeta from "@/components/CardMeta";
 import ExplorerLiveIndicator from "@/components/ExplorerLiveIndicator";
+import SectionHeading from "@/components/SectionHeading";
 
 const FILTERS = [
   { key: "tout", label: "Tout" },
   { key: "projets", label: "Projets" },
   { key: "recits", label: "Récits" },
 ];
-
-function SectionHeading({ children }) {
-  return (
-    <div className="mb-6 flex items-center gap-4">
-      <h2 className="font-lora text-[24px] font-medium italic text-brand-deep md:text-[28px]">
-        {children}
-      </h2>
-      <div
-        className="h-px flex-1 translate-y-[2px] bg-gray-300/80"
-        aria-hidden="true"
-      />
-    </div>
-  );
-}
 
 function Card({ item }) {
   return (
@@ -145,14 +132,14 @@ export default function ExplorerSections({ projets, recits }) {
 
       {showProjets && (
         <section className="mb-12">
-          <SectionHeading>Projets</SectionHeading>
+          <SectionHeading className="mb-6">Projets</SectionHeading>
           <CardGrid items={projets} />
         </section>
       )}
 
       {showRecits && (
         <section>
-          <SectionHeading>Récits</SectionHeading>
+          <SectionHeading className="mb-6">Récits</SectionHeading>
           <CardGrid items={recits} />
         </section>
       )}

@@ -172,7 +172,9 @@ export default function ComprendrePage() {
           tagline="La science derrière les concepts."
         />
 
-        {/* Grille : articles publiés puis cartes « à paraître » */}
+        {/* Grille : articles publiés puis cartes « à paraître ».
+            h2 invisible : évite le saut h1 → h3 pour les lecteurs d'écran. */}
+        <h2 className="sr-only">Tous les articles</h2>
         {articles.length > 0 || teasers.length > 0 ? (
           <div className="grid gap-6 justify-center justify-items-center grid-cols-1 sm:grid-cols-2 lg:justify-start lg:[grid-template-columns:repeat(3,22rem)]">
             {articles.map((article) => (
@@ -190,7 +192,7 @@ export default function ComprendrePage() {
       </div>
 
       <div className="mt-14 max-w-3xl mx-auto text-center">
-        <h2 className="text-lg font-semibold text-brand-accent mb-3">
+        <h2 className="text-lg font-semibold text-brand-accent-ink mb-3">
           Être prévenu·e des parutions
         </h2>
         <EmailCapture

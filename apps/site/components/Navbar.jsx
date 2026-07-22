@@ -148,14 +148,14 @@ function DesktopDropdown({ label, Icon, items, pathname }) {
         aria-haspopup="menu"
         aria-controls={menuId}
         onClick={() => setOpen((v) => !v)}
-        className={`hover:text-brand-accent flex items-center gap-1 group cursor-pointer font-medium ${
-          active ? "text-brand-accent" : ""
+        className={`hover:text-brand-accent-ink flex items-center gap-1 group cursor-pointer font-medium ${
+          active ? "text-brand-accent-ink" : ""
         }`}
       >
         <Icon
           size={18}
-          className={`group-hover:text-brand-accent ${
-            active ? "text-brand-accent" : "text-gray-700"
+          className={`group-hover:text-brand-accent-ink ${
+            active ? "text-brand-accent-ink" : "text-gray-700"
           }`}
           aria-hidden="true"
         />
@@ -181,8 +181,8 @@ function DesktopDropdown({ label, Icon, items, pathname }) {
                 role="menuitem"
                 aria-current={isActivePath(pathname, href) ? "page" : undefined}
                 onClick={() => setOpen(false)}
-                className={`block px-4 py-2 hover:bg-brand-bg hover:text-brand-accent whitespace-nowrap ${
-                  isActivePath(pathname, href) ? "text-brand-accent" : ""
+                className={`block px-4 py-2 hover:bg-brand-bg hover:text-brand-accent-ink whitespace-nowrap ${
+                  isActivePath(pathname, href) ? "text-brand-accent-ink" : ""
                 }`}
               >
                 {itemLabel}
@@ -327,14 +327,14 @@ export default function Navbar() {
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
-              className={`hover:text-brand-accent flex items-center gap-1 group ${
-                active ? "text-brand-accent" : ""
+              className={`hover:text-brand-accent-ink flex items-center gap-1 group ${
+                active ? "text-brand-accent-ink" : ""
               }`}
             >
               <Icon
                 size={18}
-                className={`group-hover:text-brand-accent ${
-                  active ? "text-brand-accent" : "text-gray-700"
+                className={`group-hover:text-brand-accent-ink ${
+                  active ? "text-brand-accent-ink" : "text-gray-700"
                 }`}
                 aria-hidden="true"
               />
@@ -349,7 +349,7 @@ export default function Navbar() {
         {!searchOpen ? (
           <button
             onClick={() => setSearchOpen(true)}
-            className="p-2 hover:text-brand-accent cursor-pointer"
+            className="p-2 hover:text-brand-accent-ink cursor-pointer"
             aria-label="Ouvrir la recherche"
           >
             <Search size={22} className="text-gray-700" />
@@ -370,6 +370,13 @@ export default function Navbar() {
               aria-label="Rechercher sur le site"
               className="px-3 py-1 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent"
             />
+            <button
+              type="submit"
+              className="ml-2 cursor-pointer hover:text-brand-accent-ink"
+              aria-label="Lancer la recherche"
+            >
+              <Search size={20} className="text-gray-700" />
+            </button>
             <button
               type="button"
               onClick={handleCloseSearch}
@@ -434,7 +441,7 @@ export default function Navbar() {
                         setOpenSection(sectionOpen ? null : item.label)
                       }
                       className={`w-full flex items-center justify-between py-2 cursor-pointer ${
-                        sectionActive ? "text-brand-accent" : ""
+                        sectionActive ? "text-brand-accent-ink" : ""
                       }`}
                     >
                       <span>{item.label}</span>
@@ -458,7 +465,7 @@ export default function Navbar() {
                             }
                             className={`py-2 ${
                               isActivePath(pathname, href)
-                                ? "font-medium text-brand-accent"
+                                ? "font-medium text-brand-accent-ink"
                                 : ""
                             }`}
                           >
@@ -482,7 +489,7 @@ export default function Navbar() {
                   className={
                     item.live
                       ? "flex items-center gap-2 py-2 font-semibold text-brand-accent-dark animate-[ll-blink_2.6s_ease-in-out_infinite]"
-                      : `py-2 ${active ? "font-medium text-brand-accent" : ""}`
+                      : `py-2 ${active ? "font-medium text-brand-accent-ink" : ""}`
                   }
                 >
                   {item.live ? (

@@ -37,23 +37,23 @@ const LEGACY_ENDPOINT = "https://send-email.thelocomotionlab.workers.dev/";
 const EMAIL_ENDPOINT = process.env.NEXT_PUBLIC_EMAIL_ENDPOINT || LEGACY_ENDPOINT;
 
 const INPUT_CLASSES =
-  "w-full rounded-xl border border-brand-field bg-white px-4 py-[13px] text-base text-brand-text placeholder:text-[#A8A29A] focus:border-brand-primary focus:outline-2 focus:outline-offset-1 focus:outline-brand-primary/45";
+  "w-full rounded-xl border border-brand-field bg-white px-4 py-[13px] text-base text-brand-text placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-accent";
 
 const CHECKBOX_CLASSES =
-  "mt-px h-[22px] w-[22px] flex-none cursor-pointer accent-[#D89A2E]";
+  "mt-px h-[22px] w-[22px] flex-none cursor-pointer accent-brand-accent-dark";
 
 // En-tête de bloc : eyebrow doré « / 0x » + titre Lora italique + filet.
 function BlocTitre({ numero, children }) {
   return (
     <div>
-      <p className="mb-1.5 font-mono text-[11.5px] font-bold tracking-[0.22em] text-[#D89A2E]">
+      <p className="mb-1.5 font-mono text-[11.5px] font-bold tracking-[0.22em] text-brand-accent-ink">
         / {numero}
       </p>
       <div className="mb-4 flex items-baseline gap-4">
         <h2 className="flex-none font-lora text-2xl font-medium italic text-brand-deep">
           {children}
         </h2>
-        <div className="h-px flex-1 bg-[#DCE7E8]" aria-hidden="true" />
+        <div className="h-px flex-1 bg-brand-wash-line" aria-hidden="true" />
       </div>
     </div>
   );
@@ -314,14 +314,14 @@ export default function InscriptionForm({ atelier }) {
   const pct = Math.min(100, Math.round((places.registered / places.capacity) * 100));
 
   const recapAtelier = (
-    <div className="rounded-2xl bg-white p-5 shadow-[0_6px_24px_rgba(0,0,0,0.06)] md:px-[22px]">
+    <div className="rounded-2xl bg-white p-5 shadow-card md:px-[22px]">
       <p className="mb-2 font-mono text-[11px] font-bold tracking-[0.18em] text-brand-primary">
         {confirmation ? "TON ATELIER" : "ATELIER"}
         {atelier.priceLabel ? (
-          <span className="text-[#D89A2E]"> · {atelier.priceLabel}</span>
+          <span className="text-brand-accent-ink"> · {atelier.priceLabel}</span>
         ) : null}
       </p>
-      <p className="mb-2.5 text-lg font-bold leading-[1.3] text-[#2F6F73]">{atelier.title}</p>
+      <p className="mb-2.5 text-lg font-bold leading-[1.3] text-brand-slate-dark">{atelier.title}</p>
       <div className="grid grid-cols-[auto_1fr] gap-x-3.5 gap-y-[5px] text-[14.5px] text-gray-600">
         <span className="self-center font-mono text-[11px] font-bold tracking-[0.1em] text-gray-400">
           DATE
@@ -343,7 +343,7 @@ export default function InscriptionForm({ atelier }) {
           <span className="flex-none font-mono text-[13px] font-bold text-brand-slate-dark">
             {places.registered}/{places.capacity}
           </span>
-          <span className="text-sm font-bold text-[#D89A2E]">
+          <span className="text-sm font-bold text-brand-accent-ink">
             {remaining} place{remaining > 1 ? "s" : ""} restante{remaining > 1 ? "s" : ""}
           </span>
         </div>
@@ -357,13 +357,13 @@ export default function InscriptionForm({ atelier }) {
     return (
       <div className="mx-auto flex max-w-[660px] flex-col gap-7 px-5 pb-16 pt-10">
         <div className="text-center">
-          <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-[#3F8F5B]/10">
+          <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-brand-success/10 text-brand-success">
             <svg
               width="30"
               height="30"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#3F8F5B"
+              stroke="currentColor"
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -372,7 +372,7 @@ export default function InscriptionForm({ atelier }) {
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </span>
-          <h1 className="mb-1.5 mt-4 text-[28px] font-bold text-[#2F6F73]">
+          <h1 className="mb-1.5 mt-4 text-[28px] font-bold text-brand-slate-dark">
             Ta place est réservée
           </h1>
           <p className="font-lora text-[17px] italic text-brand-deep">
@@ -388,19 +388,19 @@ export default function InscriptionForm({ atelier }) {
           </p>
           <div className="flex flex-col gap-2.5 text-[14.5px] leading-[1.65] text-brand-text">
             <p>
-              <strong className="text-[#2F6F73]">Rendez-vous :</strong>{" "}
+              <strong className="text-brand-slate-dark">Rendez-vous :</strong>{" "}
               {atelier.rendezVous || INFOS_PRATIQUES.rendezVousDefaut}
             </p>
             <p>
-              <strong className="text-[#2F6F73]">À apporter :</strong> {INFOS_PRATIQUES.apporter}
+              <strong className="text-brand-slate-dark">À apporter :</strong> {INFOS_PRATIQUES.apporter}
             </p>
             <p>
-              <strong className="text-[#2F6F73]">Météo :</strong> {INFOS_PRATIQUES.meteo}
+              <strong className="text-brand-slate-dark">Météo :</strong> {INFOS_PRATIQUES.meteo}
             </p>
             <p>
-              <strong className="text-[#2F6F73]">Contact :</strong>{" "}
+              <strong className="text-brand-slate-dark">Contact :</strong>{" "}
               <a
-                className="font-medium text-[#D89A2E] hover:text-brand-deep hover:underline"
+                className="font-medium text-brand-accent-ink hover:text-brand-deep hover:underline"
                 href={`mailto:${INFOS_PRATIQUES.contact}`}
               >
                 {INFOS_PRATIQUES.contact}
@@ -413,12 +413,12 @@ export default function InscriptionForm({ atelier }) {
           <p className="text-[14.5px] leading-[1.65] text-brand-text">
             {pdfEnvoye ? (
               <>
-                Un <strong className="text-[#2F6F73]">PDF</strong> récapitulatif t&rsquo;a été
+                Un <strong className="text-brand-slate-dark">PDF</strong> récapitulatif t&rsquo;a été
                 envoyé par email.
               </>
             ) : (
               <>
-                Un <strong className="text-[#2F6F73]">PDF</strong> récapitulatif te sera envoyé
+                Un <strong className="text-brand-slate-dark">PDF</strong> récapitulatif te sera envoyé
                 par email.
               </>
             )}
@@ -431,7 +431,7 @@ export default function InscriptionForm({ atelier }) {
           </p>
           <Link
             href="/pratiquer"
-            className="inline-flex items-center justify-center rounded-full bg-brand-accent px-8 py-3 text-[15.5px] font-bold text-white transition-all duration-300 hover:bg-brand-accent-dark"
+            className="inline-flex items-center justify-center rounded-full bg-brand-accent px-8 py-3 text-[15.5px] font-bold text-brand-text transition-all duration-300 hover:bg-brand-accent-light"
           >
             Revenir aux ateliers
           </Link>
@@ -457,7 +457,7 @@ export default function InscriptionForm({ atelier }) {
             ← REVENIR AUX ATELIERS
           </Link>
         </div>
-        <h1 className="mb-1.5 text-[30px] font-bold text-[#2F6F73]">
+        <h1 className="mb-1.5 text-[30px] font-bold text-brand-slate-dark">
           Ta place à l&rsquo;atelier
         </h1>
         <p className="mb-5 font-lora text-lg italic text-brand-deep">
@@ -480,7 +480,7 @@ export default function InscriptionForm({ atelier }) {
               aria-pressed={mode === value}
               onClick={() => setMode(value)}
               className={`cursor-pointer rounded-full px-[18px] py-2.5 text-sm font-bold transition-colors ${
-                mode === value ? "bg-[#2F6F73] text-white" : "text-gray-600 hover:text-[#2F6F73]"
+                mode === value ? "bg-brand-slate-dark text-white" : "text-gray-600 hover:text-brand-slate-dark"
               }`}
             >
               {label}
@@ -491,7 +491,7 @@ export default function InscriptionForm({ atelier }) {
         {isMineur ? (
           <div className="mb-5 rounded-r-xl border-l-[3px] border-brand-primary bg-brand-primary/[0.14] px-[18px] py-4">
             <p className="text-[14.5px] leading-[1.6] text-brand-text">
-              <strong className="text-[#2F6F73]">
+              <strong className="text-brand-slate-dark">
                 Les mineurs sont accueillis à partir de 12 ans, uniquement accompagnés de leur
                 représentant légal, qui participe à l&rsquo;atelier.
               </strong>{" "}
@@ -542,7 +542,7 @@ export default function InscriptionForm({ atelier }) {
 
         {/* Contact d'urgence, détaché */}
         <div className="mt-5 rounded-2xl border-[1.5px] border-brand-accent bg-white p-5 md:px-[22px]">
-          <p className="mb-1 font-mono text-[11px] font-bold tracking-[0.2em] text-[#D89A2E]">
+          <p className="mb-1 font-mono text-[11px] font-bold tracking-[0.2em] text-brand-accent-ink">
             CONTACT D&rsquo;URGENCE
           </p>
           <p className="mb-3.5 text-sm leading-[1.55] text-gray-500">
@@ -592,7 +592,7 @@ export default function InscriptionForm({ atelier }) {
         <div className="rounded-r-xl border-l-[3px] border-brand-primary bg-brand-primary/[0.14] px-5 py-[18px]">
           <p className="text-[14.5px] leading-[1.7] text-brand-text">
             Ces ateliers sont animés à titre{" "}
-            <strong className="text-[#2F6F73]">bénévole et gratuit</strong>. Valentin n&rsquo;est
+            <strong className="text-brand-slate-dark">bénévole et gratuit</strong>. Valentin n&rsquo;est
             pas titulaire d&rsquo;un diplôme d&rsquo;État d&rsquo;éducateur sportif et
             n&rsquo;exerce pas cette activité contre rémunération. L&rsquo;encadrement bénévole
             n&rsquo;exige aucune qualification, mais tu dois le savoir avant de t&rsquo;inscrire.
@@ -614,19 +614,19 @@ export default function InscriptionForm({ atelier }) {
             {CONSIGNES.map((consigne, i) => (
               <li key={consigne.titre} className="flex gap-4">
                 <span
-                  className="w-[30px] flex-none text-right font-lora text-[22px] font-semibold italic text-[#D89A2E]"
+                  className="w-[30px] flex-none text-right font-lora text-[22px] font-semibold italic text-brand-accent-ink"
                   aria-hidden="true"
                 >
                   {i + 1}
                 </span>
                 <p className="text-[15px] leading-[1.65] text-brand-text">
-                  <strong className="text-[#2F6F73]">{consigne.titre}</strong> {consigne.texte}
+                  <strong className="text-brand-slate-dark">{consigne.titre}</strong> {consigne.texte}
                 </p>
               </li>
             ))}
           </ol>
           {isMineur ? (
-            <div className="mt-5 border-t border-dashed border-[#D9CDB8] pt-3.5">
+            <div className="mt-5 border-t border-dashed border-brand-hairline pt-3.5">
               <p className="text-[14.5px] leading-[1.6] text-brand-text">
                 <strong className="text-brand-deep">Participant mineur :</strong>{" "}
                 {CONSIGNES_MINEUR}
@@ -645,7 +645,7 @@ export default function InscriptionForm({ atelier }) {
         <BlocTitre numero="04">Déclaration de santé</BlocTitre>
         <p className="mb-1.5 text-[15.5px] leading-[1.7] text-brand-text">
           Aucun certificat médical n&rsquo;est demandé. Réponds aux questions suivantes{" "}
-          <strong className="text-[#2F6F73]">pour toi-même</strong> : tes réponses ne sont ni
+          <strong className="text-brand-slate-dark">pour toi-même</strong> : tes réponses ne sont ni
           collectées ni conservées.
         </p>
         {isMineur ? (
@@ -654,7 +654,7 @@ export default function InscriptionForm({ atelier }) {
             propos du mineur.
           </p>
         ) : null}
-        <div className="mt-3 rounded-2xl bg-white p-5 shadow-[0_6px_24px_rgba(0,0,0,0.06)] md:px-6">
+        <div className="mt-3 rounded-2xl bg-white p-5 shadow-card md:px-6">
           <ol className="flex list-none flex-col gap-3">
             {SANTE_QUESTIONS.map((question, i) => (
               // items-baseline : le numéro mono (12px) s'aligne sur la
@@ -673,7 +673,7 @@ export default function InscriptionForm({ atelier }) {
         </div>
         <div className="mt-3.5 rounded-r-xl border-l-[3px] border-brand-accent bg-brand-accent/[0.13] px-[18px] py-4">
           <p className="text-[14.5px] leading-[1.65] text-brand-text">
-            Si tu as répondu <strong className="text-[#D89A2E]">oui</strong> à au moins une
+            Si tu as répondu <strong className="text-brand-accent-ink">oui</strong> à au moins une
             question, consulte un médecin avant de venir. Tu pourras participer ensuite —
             c&rsquo;est un avis médical, pas une exclusion.
           </p>
@@ -682,7 +682,7 @@ export default function InscriptionForm({ atelier }) {
           <input type="checkbox" name="sante" checked={c.sante} onChange={onCheck} className={CHECKBOX_CLASSES} />
           <span className="text-[15px] leading-[1.6] text-brand-text">
             J&rsquo;ai passé ces questions en revue et j&rsquo;en ai tenu compte pour ma
-            participation. <span className="font-bold text-[#D89A2E]">*</span>
+            participation. <span className="font-bold text-brand-accent-ink">*</span>
           </span>
         </label>
         <Champ
@@ -706,54 +706,78 @@ export default function InscriptionForm({ atelier }) {
           Des photos peuvent être prises pendant l&rsquo;atelier pour le site et les réseaux
           sociaux du Locomotion Lab, pour une durée de 3 ans. Tu peux retirer ton autorisation à
           tout moment par simple email.{" "}
-          <strong className="text-[#2F6F73]">Un refus ne change rien à ta participation.</strong>
+          <strong className="text-brand-slate-dark">Un refus ne change rien à ta participation.</strong>
         </p>
         {isMineur ? (
           <p className="mb-3.5 text-sm italic text-brand-deep">
             Ce choix est fait par le représentant légal, pour le mineur.
           </p>
         ) : null}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Droit à l'image">
-          <button
-            type="button"
-            role="radio"
-            aria-checked={image === true}
-            onClick={() => setImage(true)}
-            className={`flex cursor-pointer items-center gap-3 rounded-[14px] border-2 bg-white px-[18px] py-4 text-left transition-colors ${
-              image === true ? "border-[#D89A2E]" : "border-brand-field hover:border-[#D89A2E]/60"
-            }`}
-          >
-            <span className="inline-flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full border-2 border-[#D89A2E]">
-              <span
-                className={`h-[9px] w-[9px] rounded-full ${image === true ? "bg-[#D89A2E]" : "bg-transparent"}`}
+        {/* Vrais <input type="radio"> (masqués sr-only) : navigation aux
+            flèches, annonce et groupement natifs — le visuel reste la carte.
+            L'anneau de focus est reporté sur la carte via has-[:focus-visible]. */}
+        <fieldset className="m-0 min-w-0 border-0 p-0">
+          <legend className="sr-only">Droit à l&rsquo;image</legend>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label
+              className={`flex cursor-pointer items-center gap-3 rounded-[14px] border-2 bg-white px-[18px] py-4 text-left transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-accent-dark ${
+                image === true
+                  ? "border-brand-accent-dark"
+                  : "border-brand-field hover:border-brand-accent-dark/60"
+              }`}
+            >
+              <input
+                type="radio"
+                name="image"
+                value="oui"
+                checked={image === true}
+                onChange={() => setImage(true)}
+                className="sr-only"
               />
-            </span>
-            <span className="text-[15px] font-bold text-brand-text">J&rsquo;autorise les photos</span>
-          </button>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={image === false}
-            onClick={() => setImage(false)}
-            className={`flex cursor-pointer items-center gap-3 rounded-[14px] border-2 bg-white px-[18px] py-4 text-left transition-colors ${
-              image === false ? "border-[#2F6F73]" : "border-brand-field hover:border-[#2F6F73]/60"
-            }`}
-          >
-            <span className="inline-flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full border-2 border-[#2F6F73]">
               <span
-                className={`h-[9px] w-[9px] rounded-full ${image === false ? "bg-[#2F6F73]" : "bg-transparent"}`}
+                className="inline-flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full border-2 border-brand-accent-dark"
+                aria-hidden="true"
+              >
+                <span
+                  className={`h-[9px] w-[9px] rounded-full ${image === true ? "bg-brand-accent-dark" : "bg-transparent"}`}
+                />
+              </span>
+              <span className="text-[15px] font-bold text-brand-text">J&rsquo;autorise les photos</span>
+            </label>
+            <label
+              className={`flex cursor-pointer items-center gap-3 rounded-[14px] border-2 bg-white px-[18px] py-4 text-left transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-slate-dark ${
+                image === false
+                  ? "border-brand-slate-dark"
+                  : "border-brand-field hover:border-brand-slate-dark/60"
+              }`}
+            >
+              <input
+                type="radio"
+                name="image"
+                value="non"
+                checked={image === false}
+                onChange={() => setImage(false)}
+                className="sr-only"
               />
-            </span>
-            <span className="text-[15px] font-bold text-brand-text">Je n&rsquo;autorise pas</span>
-          </button>
-        </div>
+              <span
+                className="inline-flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full border-2 border-brand-slate-dark"
+                aria-hidden="true"
+              >
+                <span
+                  className={`h-[9px] w-[9px] rounded-full ${image === false ? "bg-brand-slate-dark" : "bg-transparent"}`}
+                />
+              </span>
+              <span className="text-[15px] font-bold text-brand-text">Je n&rsquo;autorise pas</span>
+            </label>
+          </div>
+        </fieldset>
       </section>
 
       {/* BLOC 6 — données */}
       <section aria-label="Tes données">
         <BlocTitre numero="06">Tes données</BlocTitre>
         <details className="group rounded-[14px] bg-brand-grid px-5 py-4">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[15px] font-bold text-[#2F6F73] [&::-webkit-details-marker]:hidden">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[15px] font-bold text-brand-slate-dark [&::-webkit-details-marker]:hidden">
             Ce qu&rsquo;on garde, combien de temps, et tes droits
             <svg
               className="flex-none transition-transform group-open:rotate-90 motion-reduce:transition-none"
@@ -761,7 +785,7 @@ export default function InscriptionForm({ atelier }) {
               height="18"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#2F6F73"
+              stroke="currentColor"
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -793,20 +817,20 @@ export default function InscriptionForm({ atelier }) {
       {/* BLOC 7 — validation */}
       <section aria-label="Validation">
         <BlocTitre numero="07">Validation</BlocTitre>
-        <div className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-[0_6px_24px_rgba(0,0,0,0.06)] md:px-6">
+        <div className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-card md:px-6">
           <label className="flex cursor-pointer items-start gap-3">
             <input type="checkbox" name="consignes" checked={c.consignes} onChange={onCheck} className={CHECKBOX_CLASSES} />
             <span className="text-[15px] leading-[1.6] text-brand-text">
               J&rsquo;ai lu et compris la description de l&rsquo;activité et les consignes de
               sécurité. Je m&rsquo;engage à les respecter.{" "}
-              <span className="font-bold text-[#D89A2E]">*</span>
+              <span className="font-bold text-brand-accent-ink">*</span>
             </span>
           </label>
           {!isMineur ? (
             <label className="flex cursor-pointer items-start gap-3">
               <input type="checkbox" name="majeur" checked={c.majeur} onChange={onCheck} className={CHECKBOX_CLASSES} />
               <span className="text-[15px] leading-[1.6] text-brand-text">
-                Je certifie être majeur·e. <span className="font-bold text-[#D89A2E]">*</span>
+                Je certifie être majeur·e. <span className="font-bold text-brand-accent-ink">*</span>
               </span>
             </label>
           ) : (
@@ -816,14 +840,14 @@ export default function InscriptionForm({ atelier }) {
                 <span className="text-[15px] leading-[1.6] text-brand-text">
                   Je suis titulaire de l&rsquo;autorité parentale et j&rsquo;atteste que
                   l&rsquo;autre titulaire est informé et d&rsquo;accord.{" "}
-                  <span className="font-bold text-[#D89A2E]">*</span>
+                  <span className="font-bold text-brand-accent-ink">*</span>
                 </span>
               </label>
               <label className="flex cursor-pointer items-start gap-3">
                 <input type="checkbox" name="soins" checked={c.soins} onChange={onCheck} className={CHECKBOX_CLASSES} />
                 <span className="text-[15px] leading-[1.6] text-brand-text">
                   J&rsquo;autorise le recours aux secours et aux soins d&rsquo;urgence si
-                  nécessaire. <span className="font-bold text-[#D89A2E]">*</span>
+                  nécessaire. <span className="font-bold text-brand-accent-ink">*</span>
                 </span>
               </label>
             </>
@@ -832,7 +856,7 @@ export default function InscriptionForm({ atelier }) {
             <input type="checkbox" name="exactitude" checked={c.exactitude} onChange={onCheck} className={CHECKBOX_CLASSES} />
             <span className="text-[15px] leading-[1.6] text-brand-text">
               Je certifie l&rsquo;exactitude des informations renseignées.{" "}
-              <span className="font-bold text-[#D89A2E]">*</span>
+              <span className="font-bold text-brand-accent-ink">*</span>
             </span>
           </label>
 
@@ -874,12 +898,12 @@ export default function InscriptionForm({ atelier }) {
               type="button"
               onClick={submit}
               disabled={submitLocked || sending}
-              className={`mx-auto w-full max-w-[340px] rounded-full px-8 py-3.5 text-[16.5px] font-bold text-white transition-all duration-300 ${
+              className={`mx-auto w-full max-w-[340px] rounded-full px-8 py-3.5 text-[16.5px] font-bold transition-all duration-300 ${
                 submitLocked
-                  ? "cursor-not-allowed bg-[#E3DACA]"
+                  ? "cursor-not-allowed bg-brand-gauge-full text-brand-text/50"
                   : sending
-                    ? "cursor-wait bg-brand-accent opacity-70"
-                    : "cursor-pointer bg-brand-accent hover:bg-brand-accent-dark"
+                    ? "cursor-wait bg-brand-accent text-brand-text opacity-70"
+                    : "cursor-pointer bg-brand-accent text-brand-text hover:bg-brand-accent-light"
               }`}
             >
               {sending ? "Envoi en cours…" : "Je valide mon inscription"}

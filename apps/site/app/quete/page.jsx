@@ -35,7 +35,7 @@ export const metadata = {
 
 export default function QuetePage() {
   return (
-    <article className="max-w-3xl mx-auto px-6 py-12 text-gray-800 font-sans">
+    <article className="max-w-3xl mx-auto px-6 py-12 font-sans">
       <PageHeader kicker="/ LE LABO" title="La quête" />
 
       {/* La formule du labo en exergue, comme une citation. */}
@@ -44,7 +44,7 @@ export default function QuetePage() {
         animal.
       </blockquote>
 
-      <div className="font-sans text-gray-800 leading-relaxed space-y-8 text-justify hyphens-auto">
+      <div className="font-sans leading-relaxed space-y-8 text-left md:text-justify hyphens-auto">
         {/* ① Le constat : la discordance évolutive. */}
         <section>
           <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
@@ -155,7 +155,7 @@ export default function QuetePage() {
       </div>
 
       <div className="mt-12 max-w-2xl mx-auto text-center">
-        <h2 className="text-lg font-semibold text-brand-accent mb-3">
+        <h2 className="text-lg font-semibold text-brand-accent-ink mb-3">
           Recevoir les prochaines parutions ou collaborer avec le labo
         </h2>
         <EmailCapture

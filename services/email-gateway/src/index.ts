@@ -27,7 +27,8 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Provenances acceptées — doit couvrir tous les formulaires du site.
 // Émises aujourd'hui : quete, comprendre, twin, live, home, pratiquer
-// (bande email + formulaire d'inscription des ateliers en repli).
+// (bande email + formulaire d'inscription des ateliers en repli),
+// soutenir (page Soutenir, via EmailCapture).
 // « pratiquer-trail » est réservé au teaser accompagnement trail 2027.
 // « manifeste » (ex-nom de /quete, 308) et « footer » sont gardés par
 // tolérance pour d'éventuelles pages en cache navigateur.
@@ -39,6 +40,7 @@ const SOURCES = new Set([
   "home",
   "pratiquer",
   "pratiquer-trail",
+  "soutenir",
   "footer",
   "manifeste",
 ]);

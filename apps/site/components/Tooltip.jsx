@@ -72,7 +72,7 @@ export default function Tooltip({ entry, children }) {
           role="tooltip"
           className="
             absolute z-50 bg-white border border-gray-200 shadow-xl rounded-lg
-            p-4 w-80 max-w-xs top-7 left-1/2 -translate-x-1/2
+            p-4 w-80 max-w-[min(20rem,calc(100vw-2rem))] top-7 left-1/2 -translate-x-1/2
             text-gray-800 text-sm leading-snug font-serif
           "
           style={{
@@ -98,7 +98,7 @@ export default function Tooltip({ entry, children }) {
               href={link}
               target="_blank"
               rel="noopener noreferrer"
-              className="block text-brand-primary font-semibold mt-2 hover:underline"
+              className="block text-brand-slate-dark font-semibold mt-2 hover:underline"
             >
               Voir la référence
             </a>

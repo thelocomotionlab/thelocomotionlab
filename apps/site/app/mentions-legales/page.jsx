@@ -32,7 +32,7 @@ export const metadata = {
 
 export default function MentionsPage() {
   return (
-    <div className="max-w-3xl mx-auto px-6 py-12 text-gray-800 font-sans text-justify hyphens-auto">
+    <div className="max-w-3xl mx-auto px-6 py-12 font-sans text-left md:text-justify hyphens-auto">
       <PageHeader title="Mentions légales" />
 
       <section className="mb-8">
@@ -45,7 +45,7 @@ export default function MentionsPage() {
           Contact :{" "}
           <a
             href="mailto:thelocomotionlab@gmail.com"
-            className="font-semibold text-gray-800 hover:underline"
+            className="font-semibold text-brand-deep-dark underline underline-offset-2 decoration-brand-accent-dark/60 hover:decoration-brand-accent-dark"
           >
             thelocomotionlab@gmail.com
           </a>
@@ -87,7 +87,7 @@ export default function MentionsPage() {
           Pour toute demande de contact ou de collaboration éventuelle :{" "}
           <a
             href="mailto:caroline.fer69@gmail.com"
-            className="font-semibold text-gray-800 hover:underline"
+            className="font-semibold text-brand-deep-dark underline underline-offset-2 decoration-brand-accent-dark/60 hover:decoration-brand-accent-dark"
           >
             caroline.fer69@gmail.com
           </a>

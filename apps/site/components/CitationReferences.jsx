@@ -11,7 +11,7 @@ export default function CitationReferences({ ids = [] }) {
 
   return (
     <section className="mt-12">
-      <h2 className="text-2xl font-bold text-brand-accent mb-4">Références</h2>
+      <h2 className="text-2xl font-bold text-brand-accent-ink mb-4">Références</h2>
       <ol className="list-decimal list-inside space-y-2 text-gray-700 font-lora">
         {ids.map((id) => {
           const entry = bibliography[id];

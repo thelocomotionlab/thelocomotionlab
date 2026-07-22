@@ -27,10 +27,11 @@ const LEGACY_ENDPOINT = "https://send-email.thelocomotionlab.workers.dev/";
 const EMAIL_ENDPOINT = process.env.NEXT_PUBLIC_EMAIL_ENDPOINT || LEGACY_ENDPOINT;
 
 const INPUT_CLASSES =
-  "min-w-0 rounded-full border border-brand-field bg-white px-4 py-3 text-[15px] text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-accent sm:py-2.5 sm:text-[14.5px]";
+  "min-w-0 rounded-full border border-brand-field bg-white px-4 py-3 text-[15px] text-gray-700 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-accent sm:py-2.5 sm:text-[14.5px]";
 
+// Texte foncé sur l'orange accent (contraste AA), hover dans la même famille.
 const SUBMIT_CLASSES =
-  "cursor-pointer rounded-full bg-brand-accent py-3 text-[15px] font-bold text-white transition-all duration-300";
+  "cursor-pointer rounded-full bg-brand-accent py-3 text-[15px] font-bold text-brand-text transition-all duration-300";
 
 export default function AtelierCard({ atelier, onPlaces = () => {} }) {
   const { id, title, dateLabel, lieu, capacity, priceLabel, cover, coverAlt } =
@@ -190,8 +191,8 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-5">
-        <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-brand-primary">
-          ATELIER <span className="text-brand-accent-dark">· {priceLabel}</span>
+        <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-brand-slate-dark">
+          ATELIER <span className="text-brand-accent-ink">· {priceLabel}</span>
         </p>
 
         <h3 className="text-[18px] font-bold leading-[1.3] text-brand-slate-dark md:text-[18.5px]">
@@ -233,7 +234,7 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
           </span>
           <span
             className={`text-[13.5px] font-bold ${
-              isFull ? "text-gray-400" : "text-brand-accent-dark"
+              isFull ? "text-gray-400" : "text-brand-accent-ink"
             }`}
           >
             {isFull
@@ -248,7 +249,7 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
           {!done && !isFull ? (
             <Link
               href={`/pratiquer/inscription/${atelier.slug}`}
-              className={`${SUBMIT_CLASSES} block text-center hover:bg-brand-accent-dark`}
+              className={`${SUBMIT_CLASSES} block text-center hover:bg-brand-accent-light`}
             >
               Je réserve ma place
             </Link>
@@ -260,7 +261,7 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
                 type="button"
                 aria-expanded={waitlistOpen}
                 onClick={() => setWaitlistOpen(true)}
-                className="w-full cursor-pointer rounded-full border-[1.5px] border-brand-accent py-3 text-[15px] font-bold text-brand-accent-dark transition-all duration-300 hover:bg-brand-accent hover:text-white"
+                className="w-full cursor-pointer rounded-full border-[1.5px] border-brand-accent-dark py-3 text-[15px] font-bold text-brand-accent-ink transition-all duration-300 hover:bg-brand-accent hover:text-brand-text"
               >
                 Rejoindre la liste d&rsquo;attente
               </button>
@@ -274,7 +275,7 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
                   className={`${SUBMIT_CLASSES} ${
                     status === "sending"
                       ? "cursor-wait opacity-70"
-                      : "hover:bg-brand-accent-dark"
+                      : "hover:bg-brand-accent-light"
                   }`}
                 >
                   {status === "sending"
@@ -309,7 +310,7 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
             )}
             {status === "error" && (
               <p className="animate-fade-in text-[13px] font-medium text-red-700">
-                Une erreur est survenue. Vérifie ton adresse mail.
+                L&rsquo;envoi a échoué. Vérifie ta connexion et réessaie.
               </p>
             )}
           </div>
