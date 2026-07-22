@@ -29,9 +29,9 @@ const EMAIL_ENDPOINT = process.env.NEXT_PUBLIC_EMAIL_ENDPOINT || LEGACY_ENDPOINT
 const INPUT_CLASSES =
   "min-w-0 rounded-full border border-brand-field bg-white px-4 py-3 text-[15px] text-gray-700 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-accent sm:py-2.5 sm:text-[14.5px]";
 
-// Texte foncé sur l'orange accent (contraste AA), hover dans la même famille.
+// CTA plein : terracotta foncé + blanc (contraste AA 5,1:1), hover deep.
 const SUBMIT_CLASSES =
-  "cursor-pointer rounded-full bg-brand-accent py-3 text-[15px] font-bold text-brand-text transition-all duration-300";
+  "cursor-pointer rounded-full bg-brand-deep-dark py-3 text-[15px] font-bold text-white transition-all duration-300";
 
 export default function AtelierCard({ atelier, onPlaces = () => {} }) {
   const { id, title, dateLabel, lieu, capacity, priceLabel, cover, coverAlt } =
@@ -249,7 +249,7 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
           {!done && !isFull ? (
             <Link
               href={`/pratiquer/inscription/${atelier.slug}`}
-              className={`${SUBMIT_CLASSES} block text-center hover:bg-brand-accent-light`}
+              className={`${SUBMIT_CLASSES} block text-center hover:bg-brand-deep`}
             >
               Je réserve ma place
             </Link>
@@ -275,7 +275,7 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
                   className={`${SUBMIT_CLASSES} ${
                     status === "sending"
                       ? "cursor-wait opacity-70"
-                      : "hover:bg-brand-accent-light"
+                      : "hover:bg-brand-deep"
                   }`}
                 >
                   {status === "sending"

@@ -84,7 +84,7 @@ export default function TwinTeaserPage() {
         <div className="mt-8 text-center">
           <Link
             href="/contact?sujet=twin"
-            className="inline-block bg-brand-accent text-brand-text font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-accent-light transition"
+            className="inline-block bg-brand-deep-dark text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-deep transition"
           >
             Rejoindre la cohorte de test
           </Link>

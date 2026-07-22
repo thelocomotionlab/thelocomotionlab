@@ -247,7 +247,7 @@ export default async function HomePage() {
           <div className="mt-8 flex items-center justify-center">
             <Link
               href="/quete"
-              className="inline-block rounded-full bg-brand-accent px-6 py-3 font-semibold text-brand-text shadow transition hover:bg-brand-accent-light"
+              className="inline-block rounded-full bg-brand-deep-dark px-6 py-3 font-semibold text-white shadow transition hover:bg-brand-deep"
             >
               La quête du labo
             </Link>
@@ -281,7 +281,7 @@ export default async function HomePage() {
                 registre (dupliqué ci-dessous). */}
             <Link
               href="/comprendre"
-              className="mt-7 hidden rounded-full bg-brand-accent px-[26px] py-3 text-[15.5px] font-semibold text-brand-text shadow-cta transition hover:bg-brand-accent-light md:inline-block"
+              className="mt-7 hidden rounded-full bg-brand-deep-dark px-[26px] py-3 text-[15.5px] font-semibold text-white shadow-cta transition hover:bg-brand-deep md:inline-block"
             >
               Voir tout
             </Link>
@@ -292,7 +292,7 @@ export default async function HomePage() {
           <div className="-mt-4 md:hidden">
             <Link
               href="/comprendre"
-              className="inline-block rounded-full bg-brand-accent px-[26px] py-3 text-[15.5px] font-semibold text-brand-text shadow-cta transition hover:bg-brand-accent-light"
+              className="inline-block rounded-full bg-brand-deep-dark px-[26px] py-3 text-[15.5px] font-semibold text-white shadow-cta transition hover:bg-brand-deep"
             >
               Voir tout
             </Link>

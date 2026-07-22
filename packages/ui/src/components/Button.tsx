@@ -11,10 +11,12 @@
 import { forwardRef } from "react";
 import type { ComponentPropsWithoutRef, ElementType, Ref, ReactNode } from "react";
 
-// Contraste (WCAG AA) : le texte sur l'orange accent est FONCÉ (brand-text,
-// 6,7:1) — jamais blanc (1,9:1). Le hover reste dans la famille accent.
+// Contraste (WCAG AA) : les CTA pleins sont terracotta foncé avec texte
+// blanc (deep-dark, 5,1:1) — jamais blanc sur l'orange accent (1,9:1).
+// L'orange reste pour les contours/fonds décoratifs. Hover dans la même
+// famille (deep).
 const VARIANTS = {
-  primary: "bg-brand-accent text-brand-text shadow hover:bg-brand-accent-light",
+  primary: "bg-brand-deep-dark text-white shadow hover:bg-brand-deep",
   secondary:
     "bg-transparent border border-brand-accent-dark text-brand-accent-ink hover:bg-brand-accent hover:text-brand-text",
   ghost: "bg-transparent text-brand-deep hover:bg-brand-accent/10",

@@ -142,7 +142,7 @@ export default function EmailCapture({
               ? // focus-visible blanc : l'outline global brand-accent serait
                 // invisible sur la bande orange. deep-dark : blanc lisible (5,1:1).
                 "bg-brand-deep-dark text-white px-[22px] py-3 text-[14.5px] focus-visible:outline-white hover:bg-brand-deep"
-              : "bg-brand-accent text-brand-text px-5 py-2 hover:bg-brand-accent-light"
+              : "bg-brand-deep-dark text-white px-5 py-2 hover:bg-brand-deep"
           } font-semibold flex items-center justify-center gap-2 transition-all duration-300 rounded-full cursor-pointer ${
             status === "sending" ? "opacity-70 cursor-wait" : ""
           }`}

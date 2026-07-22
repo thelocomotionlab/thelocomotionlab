@@ -380,7 +380,7 @@ export default function ProjetBody({
         <div className="mt-12 text-center">
           <Link
             href="/explorer"
-            className="inline-block bg-brand-accent text-brand-text font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-accent-light transition"
+            className="inline-block bg-brand-deep-dark text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-brand-deep transition"
           >
             Retour à Explorer
           </Link>

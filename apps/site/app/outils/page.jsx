@@ -60,7 +60,7 @@ export default function OutilsPage() {
         <div>
           <Link
             href="/outils/twin"
-            className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-brand-accent text-brand-text font-semibold shadow-cta hover:bg-brand-accent-light"
+            className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-brand-deep-dark text-white font-semibold shadow-cta hover:bg-brand-deep"
           >
             Découvrir
           </Link>

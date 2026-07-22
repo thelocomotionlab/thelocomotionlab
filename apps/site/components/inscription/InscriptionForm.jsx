@@ -431,7 +431,7 @@ export default function InscriptionForm({ atelier }) {
           </p>
           <Link
             href="/pratiquer"
-            className="inline-flex items-center justify-center rounded-full bg-brand-accent px-8 py-3 text-[15.5px] font-bold text-brand-text transition-all duration-300 hover:bg-brand-accent-light"
+            className="inline-flex items-center justify-center rounded-full bg-brand-deep-dark px-8 py-3 text-[15.5px] font-bold text-white transition-all duration-300 hover:bg-brand-deep"
           >
             Revenir aux ateliers
           </Link>
@@ -902,8 +902,8 @@ export default function InscriptionForm({ atelier }) {
                 submitLocked
                   ? "cursor-not-allowed bg-brand-gauge-full text-brand-text/50"
                   : sending
-                    ? "cursor-wait bg-brand-accent text-brand-text opacity-70"
-                    : "cursor-pointer bg-brand-accent text-brand-text hover:bg-brand-accent-light"
+                    ? "cursor-wait bg-brand-deep-dark text-white opacity-70"
+                    : "cursor-pointer bg-brand-deep-dark text-white hover:bg-brand-deep"
               }`}
             >
               {sending ? "Envoi en cours…" : "Je valide mon inscription"}

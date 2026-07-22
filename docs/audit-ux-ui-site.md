@@ -6,7 +6,9 @@
 > couleurs réelles du code (script : voir §Méthode en fin de document).
 >
 > **Statut (22/07/2026) : corrections appliquées** sur cette même branche
-> (option A pour C1 : texte foncé sur orange). Vérifié : `next build` (29 pages),
+> (C1 : option **B** retenue — CTA pleins en `brand-deep-dark` + texte blanc,
+> 5,1:1 ; l'option A « texte foncé sur orange », essayée d'abord, a été jugée
+> trop agressive visuellement). Vérifié : `next build` (29 pages),
 > `eslint`, `vitest` (21/21), `tsc` de email-gateway. Choix faits en appliquant :
 > m13 → option « retirer le drag » du ShareButton ; M10 non appliqué à
 > PhilosophieSection (texte justifié spécifié par le handoff, grille desktop
