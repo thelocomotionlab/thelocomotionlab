@@ -227,7 +227,7 @@ export default function CohorteForm() {
                   setMarque(x.id);
                   effacerErreur();
                 }}
-                className={`rounded-full border-[1.5px] px-[22px] py-2.5 text-[15px] font-semibold transition hover:border-brand-accent-dark ${
+                className={`cursor-pointer rounded-full border-[1.5px] px-[22px] py-2.5 text-[15px] font-semibold transition hover:border-brand-accent-dark ${
                   actif
                     ? "border-brand-accent-dark bg-brand-accent text-white"
                     : "border-brand-hairline bg-white text-gray-600"

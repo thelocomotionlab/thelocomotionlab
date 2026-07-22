@@ -10,7 +10,6 @@ import PageHeader from "@/components/PageHeader";
 import SectionHeading from "@/components/SectionHeading";
 
 export const metadata = {
-  // [PROVISOIRE] Descriptions meta à affiner avec les textes définitifs (PR5).
   title: "Locomotion Twin – Calculateur de plan de course",
   description:
     "Le Locomotion Twin crée ton jumeau numérique à partir de tes données d’entraînement et construit un plan de pacing individualisé pour chacun de tes objectifs.",

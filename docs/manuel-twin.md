@@ -90,7 +90,9 @@ passée pour comparer sa prédiction au temps réel. C'est l'outil du registre d
 ## 4. Utilisation via l'API (HTTP)
 
 L'API FastAPI est **interne** en prod (l'app `twin` qui la consommera n'existe pas encore —
-seul le teaser statique `/outils/twin` du site est en ligne). En local, on l'expose pour tester :
+côté site, seuls le teaser `/outils/twin` et la page de dépôt de la cohorte
+`/outils/twin/cohorte` sont en ligne ; les archives déposées arrivent sur le VPS via le
+service `twin-depot`, pas par cette API). En local, on l'expose pour tester :
 
 ```bash
 docker compose -f services/twin-engine/compose.local.yml up --build
