@@ -11,10 +11,12 @@
 import { forwardRef } from "react";
 import type { ComponentPropsWithoutRef, ElementType, Ref, ReactNode } from "react";
 
+// Contraste (WCAG AA) : le texte sur l'orange accent est FONCÉ (brand-text,
+// 6,7:1) — jamais blanc (1,9:1). Le hover reste dans la famille accent.
 const VARIANTS = {
-  primary: "bg-brand-accent text-white shadow hover:bg-brand-primary-dark",
+  primary: "bg-brand-accent text-brand-text shadow hover:bg-brand-accent-light",
   secondary:
-    "bg-transparent border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white",
+    "bg-transparent border border-brand-accent-dark text-brand-accent-ink hover:bg-brand-accent hover:text-brand-text",
   ghost: "bg-transparent text-brand-deep hover:bg-brand-accent/10",
 } as const;
 

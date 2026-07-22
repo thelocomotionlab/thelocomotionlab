@@ -17,12 +17,17 @@
   --color-brand-accent: #EFB159;
   --color-brand-accent-light: #F4C480;
   --color-brand-accent-dark: #D89A3D;
+  /* Accent utilisable en TEXTE sur fond clair (≥ 4,5:1 sur blanc et crème).
+     accent/accent-dark restent réservés aux fonds, bordures et filets. */
+  --color-brand-accent-ink: #99610D;
   --color-brand-deep: #B67352;
   --color-brand-deep-light: #C68F76;
   --color-brand-deep-dark: #9A6044;
   --color-brand-text: #333333;
   --color-brand-paper: #FFFFFF;
   --color-brand-grid: #F3EEE6;
+  /* États (confirmation d'inscription atelier, etc.) */
+  --color-brand-success: #3F8F5B;
 
   /* Accueil 2026 — section Comprendre : lavis bleu + bleus profonds */
   --color-brand-wash: #D3E2E3;
@@ -38,7 +43,7 @@
 
   /* Ombres & backgrounds */
   --shadow-card: 0 6px 24px rgba(0, 0, 0, 0.08);
-  --shadow-cta: 0 10px 24px rgba(0, 0, 0, 0.2);
+  --shadow-cta: 0 6px 18px rgba(0, 0, 0, 0.15);
 
   --background-image-lab-grid: linear-gradient(
       to right,
