@@ -140,9 +140,9 @@ export default function EmailCapture({
           className={`${
             isBand
               ? // focus-visible blanc : l'outline global brand-accent serait
-                // invisible sur la bande orange. deep-dark : blanc lisible (5,1:1).
-                "bg-brand-deep-dark text-white px-[22px] py-3 text-[14.5px] focus-visible:outline-white hover:bg-brand-deep"
-              : "bg-brand-deep-dark text-white px-5 py-2 hover:bg-brand-deep"
+                // invisible sur la bande orange.
+                "bg-brand-deep text-white px-[22px] py-3 text-[14.5px] focus-visible:outline-white hover:bg-brand-deep-dark"
+              : "bg-brand-accent text-white px-5 py-2 hover:bg-brand-accent-dark"
           } font-semibold flex items-center justify-center gap-2 transition-all duration-300 rounded-full cursor-pointer ${
             status === "sending" ? "opacity-70 cursor-wait" : ""
           }`}
@@ -168,7 +168,7 @@ export default function EmailCapture({
         {status === "success" && (
           <p
             className={`${
-              isBand ? "text-brand-text" : "text-green-700"
+              isBand ? "text-white" : "text-green-700"
             } text-sm font-medium animate-fade-in leading-snug`}
           >
             {IS_GATEWAY
@@ -180,7 +180,7 @@ export default function EmailCapture({
           <p
             className={`${
               isBand
-                ? "text-brand-text underline underline-offset-2"
+                ? "text-white underline underline-offset-2"
                 : "text-red-700"
             } text-sm font-medium animate-fade-in`}
           >

@@ -85,7 +85,9 @@ function AccordeonItem({ verb, suite, texte }) {
               replier de 320 à 430px — vérifié au pixel (Puppeteer). */}
           <span className="block flex-1 text-[clamp(13.5px,6.2vw-5px,22px)] font-bold leading-[1.25] tracking-[-0.01em] text-brand-deep-dark">
             {verb}{" "}
-            <em className="font-lora font-medium italic text-brand-accent-ink">
+            {/* Ocre doré (~3,2:1, choix assumé) : la graisse semibold sert
+                d'indice de lecture complémentaire à la couleur. */}
+            <em className="font-lora font-semibold italic text-brand-accent-ink">
               {suite}.
             </em>
           </span>
@@ -136,7 +138,8 @@ export default function PhilosophieSection() {
               <h3 className="text-[28px] font-bold leading-[1.1] tracking-[-0.01em] text-brand-deep-dark">
                 {p.verb}
               </h3>
-              <p className="mt-1.5 font-lora text-[17px] font-medium italic leading-[1.35] text-brand-accent-ink [text-wrap:balance]">
+              {/* Ocre doré (~3,2:1, choix assumé) : semibold en compensation. */}
+              <p className="mt-1.5 font-lora text-[17px] font-semibold italic leading-[1.35] text-brand-accent-ink [text-wrap:balance]">
                 {p.suite}
               </p>
               <p className="mt-3.5 hyphens-auto text-justify text-[14px] leading-[1.65] text-gray-600">

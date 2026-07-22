@@ -17,9 +17,12 @@
   --color-brand-accent: #EFB159;
   --color-brand-accent-light: #F4C480;
   --color-brand-accent-dark: #D89A3D;
-  /* Accent utilisable en TEXTE sur fond clair (≥ 4,5:1 sur blanc et crème).
-     accent/accent-dark restent réservés aux fonds, bordures et filets. */
-  --color-brand-accent-ink: #99610D;
+  /* Accent utilisable en TEXTE sur fond clair. Compromis assumé (choix
+     Valentin, 07/2026) : ocre doré au plus près de l'orange de marque qui
+     tient ≥ 3:1 (seuil AA « grand texte ») sur blanc ET crème — pas 4,5:1.
+     En petit corps, compenser par la graisse (bold/semibold) ou un
+     soulignement. accent/accent-dark restent pour fonds, bordures, filets. */
+  --color-brand-accent-ink: #C08327;
   --color-brand-deep: #B67352;
   --color-brand-deep-light: #C68F76;
   --color-brand-deep-dark: #9A6044;

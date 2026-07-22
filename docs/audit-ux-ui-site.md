@@ -5,10 +5,16 @@
 > Les ratios de contraste cités sont calculés selon la formule WCAG 2.x à partir des
 > couleurs réelles du code (script : voir §Méthode en fin de document).
 >
-> **Statut (22/07/2026) : corrections appliquées** sur cette même branche
-> (C1 : option **B** retenue — CTA pleins en `brand-deep-dark` + texte blanc,
-> 5,1:1 ; l'option A « texte foncé sur orange », essayée d'abord, a été jugée
-> trop agressive visuellement). Vérifié : `next build` (29 pages),
+> **Statut (22/07/2026) : corrections appliquées** sur cette même branche.
+> **C1 — décision finale de Valentin après essai des options A puis B :
+> retour aux CTA d'origine (orange accent + texte blanc, ~1,9:1).**
+> Non-conformité AA assumée sur ces boutons, au titre de l'identité visuelle ;
+> les hovers restent unifiés dans la famille orange (accent-dark). Ne pas
+> « re-corriger » sans son accord. **C2 — le token `--color-brand-accent-ink`
+> a été ajusté de `#99610D` (jugé trop brun) à `#C08327`** : ocre doré au plus
+> près de l'orange de marque qui tient ≥ 3:1 sur blanc et crème (seuil AA
+> « grand texte » ; pas 4,5:1 — compromis assumé), renforcé par la graisse
+> (semibold) sur les suites de « La philosophie ». Vérifié : `next build` (29 pages),
 > `eslint`, `vitest` (21/21), `tsc` de email-gateway. Choix faits en appliquant :
 > m13 → option « retirer le drag » du ShareButton ; M10 non appliqué à
 > PhilosophieSection (texte justifié spécifié par le handoff, grille desktop

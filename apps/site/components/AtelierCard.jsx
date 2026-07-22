@@ -29,9 +29,10 @@ const EMAIL_ENDPOINT = process.env.NEXT_PUBLIC_EMAIL_ENDPOINT || LEGACY_ENDPOINT
 const INPUT_CLASSES =
   "min-w-0 rounded-full border border-brand-field bg-white px-4 py-3 text-[15px] text-gray-700 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-accent sm:py-2.5 sm:text-[14.5px]";
 
-// CTA plein : terracotta foncé + blanc (contraste AA 5,1:1), hover deep.
+// CTA plein : orange accent + blanc (identité assumée, cf. audit C1),
+// hover orange foncé — même famille.
 const SUBMIT_CLASSES =
-  "cursor-pointer rounded-full bg-brand-deep-dark py-3 text-[15px] font-bold text-white transition-all duration-300";
+  "cursor-pointer rounded-full bg-brand-accent py-3 text-[15px] font-bold text-white transition-all duration-300";
 
 export default function AtelierCard({ atelier, onPlaces = () => {} }) {
   const { id, title, dateLabel, lieu, capacity, priceLabel, cover, coverAlt } =
@@ -249,7 +250,7 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
           {!done && !isFull ? (
             <Link
               href={`/pratiquer/inscription/${atelier.slug}`}
-              className={`${SUBMIT_CLASSES} block text-center hover:bg-brand-deep`}
+              className={`${SUBMIT_CLASSES} block text-center hover:bg-brand-accent-dark`}
             >
               Je réserve ma place
             </Link>
@@ -261,7 +262,7 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
                 type="button"
                 aria-expanded={waitlistOpen}
                 onClick={() => setWaitlistOpen(true)}
-                className="w-full cursor-pointer rounded-full border-[1.5px] border-brand-accent-dark py-3 text-[15px] font-bold text-brand-accent-ink transition-all duration-300 hover:bg-brand-accent hover:text-brand-text"
+                className="w-full cursor-pointer rounded-full border-[1.5px] border-brand-accent py-3 text-[15px] font-bold text-brand-accent-ink transition-all duration-300 hover:bg-brand-accent hover:text-white"
               >
                 Rejoindre la liste d&rsquo;attente
               </button>
@@ -275,7 +276,7 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
                   className={`${SUBMIT_CLASSES} ${
                     status === "sending"
                       ? "cursor-wait opacity-70"
-                      : "hover:bg-brand-deep"
+                      : "hover:bg-brand-accent-dark"
                   }`}
                 >
                   {status === "sending"

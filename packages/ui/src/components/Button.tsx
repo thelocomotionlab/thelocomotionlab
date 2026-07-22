@@ -11,14 +11,14 @@
 import { forwardRef } from "react";
 import type { ComponentPropsWithoutRef, ElementType, Ref, ReactNode } from "react";
 
-// Contraste (WCAG AA) : les CTA pleins sont terracotta foncé avec texte
-// blanc (deep-dark, 5,1:1) — jamais blanc sur l'orange accent (1,9:1).
-// L'orange reste pour les contours/fonds décoratifs. Hover dans la même
-// famille (deep).
+// CTA = orange accent + texte blanc : choix d'identité ASSUMÉ (Valentin,
+// 07/2026) malgré un contraste ~1,9:1 (< AA) — les libellés restent gras.
+// Ne pas « corriger » sans son accord (audit UX/UI, C1). Hover : orange
+// foncé, même famille (plus de bascule vers le bleu-vert).
 const VARIANTS = {
-  primary: "bg-brand-deep-dark text-white shadow hover:bg-brand-deep",
+  primary: "bg-brand-accent text-white shadow hover:bg-brand-accent-dark",
   secondary:
-    "bg-transparent border border-brand-accent-dark text-brand-accent-ink hover:bg-brand-accent hover:text-brand-text",
+    "bg-transparent border border-brand-accent text-brand-accent-ink hover:bg-brand-accent hover:text-white",
   ghost: "bg-transparent text-brand-deep hover:bg-brand-accent/10",
 } as const;
 

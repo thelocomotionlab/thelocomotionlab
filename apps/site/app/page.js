@@ -247,7 +247,7 @@ export default async function HomePage() {
           <div className="mt-8 flex items-center justify-center">
             <Link
               href="/quete"
-              className="inline-block rounded-full bg-brand-deep-dark px-6 py-3 font-semibold text-white shadow transition hover:bg-brand-deep"
+              className="inline-block rounded-full bg-brand-accent px-6 py-3 font-semibold text-white shadow transition hover:bg-brand-accent-dark"
             >
               La quête du labo
             </Link>
@@ -281,7 +281,7 @@ export default async function HomePage() {
                 registre (dupliqué ci-dessous). */}
             <Link
               href="/comprendre"
-              className="mt-7 hidden rounded-full bg-brand-deep-dark px-[26px] py-3 text-[15.5px] font-semibold text-white shadow-cta transition hover:bg-brand-deep md:inline-block"
+              className="mt-7 hidden rounded-full bg-brand-accent px-[26px] py-3 text-[15.5px] font-semibold text-white shadow-cta transition hover:bg-brand-accent-dark md:inline-block"
             >
               Voir tout
             </Link>
@@ -292,7 +292,7 @@ export default async function HomePage() {
           <div className="-mt-4 md:hidden">
             <Link
               href="/comprendre"
-              className="inline-block rounded-full bg-brand-deep-dark px-[26px] py-3 text-[15.5px] font-semibold text-white shadow-cta transition hover:bg-brand-deep"
+              className="inline-block rounded-full bg-brand-accent px-[26px] py-3 text-[15.5px] font-semibold text-white shadow-cta transition hover:bg-brand-accent-dark"
             >
               Voir tout
             </Link>
@@ -367,10 +367,10 @@ export default async function HomePage() {
       
 >        <div className="mx-auto flex max-w-[1000px] flex-col gap-6 md:flex-row md:items-center md:justify-between md:gap-10">
           <div>
-            <p className="text-[21px] font-bold text-brand-text">
+            <p className="text-[21px] font-bold text-white">
               Recevoir les prochaines explorations
             </p>
-            <p className="mt-1 text-[13px] italic text-brand-text/85">
+            <p className="mt-1 text-[13px] italic text-white/85">
               {MICRO_PROMESSE}
             </p>
           </div>
