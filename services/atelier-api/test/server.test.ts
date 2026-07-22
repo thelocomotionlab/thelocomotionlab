@@ -386,6 +386,45 @@ describe("routes admin", () => {
     expect(purge.json()).toEqual({ ok: true, supprimees: 1 });
   });
 
+  it("désistement individuel : DELETE /:id libère la place, 404 si inconnu", async () => {
+    const app = makeApp();
+    await inscrire(app);
+
+    const listing = await app.inject({
+      method: "GET",
+      url: "/ateliers/inscriptions?atelier=ouvert",
+      headers: { authorization: "Bearer jeton-test" },
+    });
+    const [inscription] = listing.json().inscriptions;
+
+    const sans = await app.inject({
+      method: "DELETE",
+      url: `/ateliers/inscriptions/${inscription.id}`,
+    });
+    expect(sans.statusCode).toBe(401);
+
+    const res = await app.inject({
+      method: "DELETE",
+      url: `/ateliers/inscriptions/${inscription.id}`,
+      headers: { authorization: "Bearer jeton-test" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({
+      ok: true,
+      supprimee: inscription.reference,
+      atelierId: "ouvert",
+      places: { registered: 0, remaining: 2 },
+    });
+
+    const encore = await app.inject({
+      method: "DELETE",
+      url: `/ateliers/inscriptions/${inscription.id}`,
+      headers: { authorization: "Bearer jeton-test" },
+    });
+    expect(encore.statusCode).toBe(404);
+    expect(encore.json()).toEqual({ ok: false, error: "inscription_inconnue" });
+  });
+
   it("jeton non configuré → 404 (routes admin désactivées)", async () => {
     const app = makeApp({ adminToken: "" });
     const res = await app.inject({

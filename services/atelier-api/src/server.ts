@@ -302,5 +302,28 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     return { ok: true, supprimees: store.purge(atelierId) };
   });
 
+  // Désistement INDIVIDUEL : retire une seule inscription (l'id vient du
+  // listing admin). La référence de dossier n'est jamais réutilisée ; la
+  // relance d'un éventuel inscrit en liste d'attente reste un geste manuel.
+  app.delete("/ateliers/inscriptions/:id", async (req, reply) => {
+    if (!requireAdmin(req, reply)) return reply;
+    const { id } = req.params as { id: string };
+    const removed = store.remove(id);
+    if (!removed) {
+      return reply.code(404).send({ ok: false, error: "inscription_inconnue" });
+    }
+    req.log.info(
+      { id, atelierId: removed.atelierId, reference: removed.reference },
+      "inscription retirée (désistement)",
+    );
+    const atelier = config.ateliers.find((a) => a.id === removed.atelierId);
+    return {
+      ok: true,
+      supprimee: removed.reference ?? removed.id,
+      atelierId: removed.atelierId,
+      ...(atelier ? { places: placesOf(store, atelier) } : {}),
+    };
+  });
+
   return app;
 }

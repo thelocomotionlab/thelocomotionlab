@@ -351,6 +351,10 @@ Reste :
 Écart fonctionnel assumé (chantier futur, pas bloquant) : **aucun email automatique de
 liste d'attente** — quand une place se libère, tu préviens à la main (listing admin).
 
+Les gestes du quotidien (lister les inscrits, ajouter/retirer quelqu'un — désistement
+individuel par `DELETE /ateliers/inscriptions/<id>` —, purger après l'atelier) sont
+détaillés dans [`docs/runbook-ateliers.md`](./runbook-ateliers.md).
+
 ### C4 — Dépôt Twin (cohorte) : config + UN petit dev à faire
 
 Le service est complet (upload streamé 2 Go, honeypot, rate-limit, admin

@@ -110,6 +110,16 @@ export class InscriptionStore {
     return inscription;
   }
 
+  /** Retrait d'UNE inscription (désistement individuel) — la place se libère,
+   *  le compteur de /places se recalcule seul. Retourne l'inscription, ou null. */
+  remove(id: string): Inscription | null {
+    const idx = this.inscriptions.findIndex((i) => i.id === id);
+    if (idx === -1) return null;
+    const [removed] = this.inscriptions.splice(idx, 1);
+    this.persist();
+    return removed;
+  }
+
   /** Purge d'un atelier terminé (données perso). Retourne le nombre supprimé. */
   purge(atelierId: string): number {
     const before = this.inscriptions.length;

@@ -25,7 +25,11 @@ enregistre les **inscriptions** (et la liste d'attente) de la page
 | GET | `/ateliers/places` | Décompte public `{ places: { [id]: { capacity, registered, remaining, full, status } } }` — CORS `*`, `no-store`. |
 | POST | `/ateliers/inscriptions` | **Liste d'attente** : `{ atelierId, prenom, email, website, waitlist: true }`. **Inscription complète** (page `/pratiquer/inscription/[slug]`) : `{ atelierId, website, fiche, contenu }` — validation serveur des coches obligatoires (→ **400** `{ error: "fiche_incomplete", champs }`), complet → **409**, passé → **410**, même email → idempotent (`fiche: "deja_inscrit"`, pas de renvoi d'email). CORS restreint aux origines du site. |
 | GET | `/ateliers/inscriptions?atelier=<id>` | **Admin** (`Authorization: Bearer $ATELIER_ADMIN_TOKEN`) : listing (avec fiches) pour préparer l'atelier. |
+| DELETE | `/ateliers/inscriptions/<id>` | **Admin** : **désistement individuel** — retire UNE inscription (l'`id` vient du listing), la place se libère aussitôt. 404 si inconnue. La relance d'un inscrit en liste d'attente reste manuelle. |
 | DELETE | `/ateliers/inscriptions?atelier=<id>` | **Admin** : purge des données perso après l'atelier. |
+
+> Gestes du quotidien (lister, ajouter/retirer quelqu'un, purger) :
+> [`docs/runbook-ateliers.md`](../../docs/runbook-ateliers.md).
 
 Garde-fous (pattern `email-gateway`) : honeypot `website` (robot → faux
 succès), limite de débit par IP en mémoire, validation email/prénom.
