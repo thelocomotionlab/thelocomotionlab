@@ -447,17 +447,19 @@ export default function InscriptionForm({ atelier }) {
   const submitLocked = !consignesSeen;
   return (
     <div className="mx-auto flex max-w-[660px] flex-col gap-9 px-5 pb-16 pt-8">
-      {/* En-tête */}
+      {/* En-tête : eyebrow à gauche, retour aux ateliers à droite. */}
       <div>
-        <Link
-          href="/pratiquer"
-          className="mb-5 inline-flex items-center gap-1.5 font-mono text-[12.5px] font-bold tracking-[0.12em] text-brand-slate transition-colors hover:text-brand-accent-dark"
-        >
-          ← REVENIR AUX ATELIERS
-        </Link>
-        <p className="mb-2.5 font-mono text-xs font-bold tracking-[0.25em] text-brand-slate">
-          / INSCRIPTION
-        </p>
+        <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1.5">
+          <p className="font-mono text-xs font-bold tracking-[0.25em] text-brand-slate">
+            / INSCRIPTION
+          </p>
+          <Link
+            href="/pratiquer"
+            className="inline-flex items-center gap-1.5 font-mono text-[12.5px] font-bold tracking-[0.12em] text-brand-slate transition-colors hover:text-brand-accent-dark"
+          >
+            ← REVENIR AUX ATELIERS
+          </Link>
+        </div>
         <h1 className="mb-1.5 text-[30px] font-bold text-[#2F6F73]">
           Ta place à l&rsquo;atelier
         </h1>
@@ -518,7 +520,7 @@ export default function InscriptionForm({ atelier }) {
               <input type="email" name="email" autoComplete="email" value={f.email} onChange={onField} className={INPUT_CLASSES} />
             </Champ>
             <Champ label="Téléphone">
-              <input type="tel" name="telephone" autoComplete="tel" placeholder="06 …" value={f.telephone} onChange={onField} className={INPUT_CLASSES} />
+              <input type="tel" name="telephone" autoComplete="tel" value={f.telephone} onChange={onField} className={INPUT_CLASSES} />
             </Champ>
           </div>
           {isMineur ? (
@@ -658,7 +660,9 @@ export default function InscriptionForm({ atelier }) {
         <div className="mt-3 rounded-2xl bg-white p-5 shadow-[0_6px_24px_rgba(0,0,0,0.06)] md:px-6">
           <ol className="flex list-none flex-col gap-3">
             {SANTE_QUESTIONS.map((question, i) => (
-              <li key={question} className="flex gap-3.5">
+              // items-baseline : le numéro mono (12px) s'aligne sur la
+              // première ligne de la question, pas sur le haut de la boîte.
+              <li key={question} className="flex items-baseline gap-3.5">
                 <span
                   className="w-[22px] flex-none text-right font-mono text-xs font-bold text-brand-primary"
                   aria-hidden="true"
@@ -873,7 +877,7 @@ export default function InscriptionForm({ atelier }) {
               type="button"
               onClick={submit}
               disabled={submitLocked || sending}
-              className={`w-full rounded-full py-4 text-[17px] font-bold text-white transition-all duration-300 ${
+              className={`mx-auto w-full max-w-[340px] rounded-full px-8 py-3.5 text-[16.5px] font-bold text-white transition-all duration-300 ${
                 submitLocked
                   ? "cursor-not-allowed bg-[#E3DACA]"
                   : sending
