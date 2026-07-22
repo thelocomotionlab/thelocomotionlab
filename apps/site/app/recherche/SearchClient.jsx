@@ -17,6 +17,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
+import SectionHeading from "@/components/SectionHeading";
 
 function normalize(s) {
   return (s || "").toString().toLowerCase();
@@ -149,7 +150,7 @@ function SearchClientInner() {
     q && index !== null && results.arts.length === 0 && results.pros.length === 0;
 
   return (
-    <div className="container mx-auto px-4 py-10">
+    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-12">
       <PageHeader title="Recherche" />
 
       <form
@@ -190,9 +191,7 @@ function SearchClientInner() {
 
       {results.arts.length > 0 && (
         <section className="mb-12">
-          <h2 className="text-2xl font-heading font-bold mb-4 text-brand-deep">
-            Comprendre
-          </h2>
+          <SectionHeading className="mb-6">Comprendre</SectionHeading>
           <div className="grid md:grid-cols-2 gap-6">
             {results.arts.map((a) => (
               <Link
@@ -220,9 +219,7 @@ function SearchClientInner() {
 
       {results.pros.length > 0 && (
         <section>
-          <h2 className="text-2xl font-heading font-bold mb-4 text-brand-deep">
-            Explorer
-          </h2>
+          <SectionHeading className="mb-6">Explorer</SectionHeading>
           <div className="grid md:grid-cols-2 gap-6">
             {results.pros.map((p) => (
               <Link

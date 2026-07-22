@@ -3,6 +3,7 @@
 // le ré-activer demande de ré-importer Link depuis next/link.
 import EmailCapture from "@/components/EmailCapture";
 import PageHeader from "@/components/PageHeader";
+import SectionHeading from "@/components/SectionHeading";
 
 export const metadata = {
   title: "La quête – La robustesse physiologique",
@@ -47,9 +48,7 @@ export default function QuetePage() {
       <div className="font-sans leading-relaxed space-y-8 text-left md:text-justify hyphens-auto">
         {/* ① Le constat : la discordance évolutive. */}
         <section>
-          <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
-            Le constat
-          </h2>
+          <SectionHeading className="mb-3">Le constat</SectionHeading>
           <p>
             Nos corps ont été façonnés par des millions d&rsquo;années de
             marche, de course, de portage et d&rsquo;inconfort, et nous les
@@ -63,9 +62,7 @@ export default function QuetePage() {
 
         {/* ② La réponse : la robustesse ≠ la performance maximale. */}
         <section>
-          <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
-            La robustesse
-          </h2>
+          <SectionHeading className="mb-3">La robustesse</SectionHeading>
           <p>
             L&rsquo;évolution des êtres vivants, végétaux comme animaux,
             s&rsquo;est toujours déroulée dans l&rsquo;incertitude : manque de
@@ -92,9 +89,7 @@ export default function QuetePage() {
 
         {/* ③ La méthode : comprendre en scientifique, utiliser en animal. */}
         <section>
-          <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
-            La philosophie
-          </h2>
+          <SectionHeading className="mb-3">La philosophie</SectionHeading>
           <p>
             La robustesse se développe par essai-erreur. Comprendre, explorer.
             Explorer, comprendre. Une boucle de rétroaction permanente :
@@ -108,9 +103,9 @@ export default function QuetePage() {
 
         {/* ④ Le laboratoire  */}
         <section>
-          <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
+          <SectionHeading className="mb-3">
             Un laboratoire accessible à tou·te·s
-          </h2>
+          </SectionHeading>
           <p>
             La vocation du Locomotion Lab est d&rsquo;explorer et
             d&rsquo;ouvrir des voies méconnues mais profondément engrammées

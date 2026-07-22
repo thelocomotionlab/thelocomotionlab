@@ -82,7 +82,9 @@ export default function PratiquerPage() {
   const ateliers = listAteliers();
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+    // lg:px-12 : même largeur utile que Comprendre / Explorer (px-6 externe
+    // + retrait interne lg:px-6 chez eux = 48 px au total).
+    <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-12">
       <PageHeader
         kicker="/ LE JEU"
         title="Pratiquer"

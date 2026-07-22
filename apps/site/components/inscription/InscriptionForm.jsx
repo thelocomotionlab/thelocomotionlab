@@ -42,11 +42,29 @@ const INPUT_CLASSES =
 const CHECKBOX_CLASSES =
   "mt-px h-[22px] w-[22px] flex-none cursor-pointer accent-brand-accent-dark";
 
+// Encadré sémantique UNIQUE de la page (resserrage audit UX/UI) : liseré
+// 3 px + fond teinté + arrondi xl, trois tons — info (bleu labo),
+// attention (ocre), erreur (terracotta). Les boîtes d'erreurs réutilisent
+// les mêmes constantes en <div> direct (besoin de ref / role="alert").
+const CALLOUT_BASE = "rounded-r-xl border-l-[3px] px-[18px] py-4";
+const CALLOUT_TONES = {
+  info: "border-brand-primary bg-brand-primary/[0.14]",
+  attention: "border-brand-accent bg-brand-accent/[0.13]",
+  erreur: "border-brand-deep bg-brand-deep/10",
+};
+function Callout({ tone = "info", className = "", children }) {
+  return (
+    <div className={`${CALLOUT_BASE} ${CALLOUT_TONES[tone]} ${className}`}>
+      {children}
+    </div>
+  );
+}
+
 // En-tête de bloc : eyebrow doré « / 0x » + titre Lora italique + filet.
 function BlocTitre({ numero, children }) {
   return (
     <div>
-      <p className="mb-1.5 font-mono text-[11.5px] font-bold tracking-[0.22em] text-brand-accent-ink">
+      <p className="mb-1.5 font-mono text-[11px] font-bold tracking-[0.22em] text-brand-accent-ink">
         / {numero}
       </p>
       <div className="mb-4 flex items-baseline gap-4">
@@ -323,11 +341,11 @@ export default function InscriptionForm({ atelier }) {
       </p>
       <p className="mb-2.5 text-lg font-bold leading-[1.3] text-brand-slate-dark">{atelier.title}</p>
       <div className="grid grid-cols-[auto_1fr] gap-x-3.5 gap-y-[5px] text-[14.5px] text-gray-600">
-        <span className="self-center font-mono text-[11px] font-bold tracking-[0.1em] text-gray-400">
+        <span className="self-center font-mono text-[11px] font-bold tracking-[0.1em] text-gray-500">
           DATE
         </span>
         <span>{atelier.dateLabel}</span>
-        <span className="self-center font-mono text-[11px] font-bold tracking-[0.1em] text-gray-400">
+        <span className="self-center font-mono text-[11px] font-bold tracking-[0.1em] text-gray-500">
           LIEU
         </span>
         <span>{atelier.lieu}</span>
@@ -409,7 +427,7 @@ export default function InscriptionForm({ atelier }) {
           </div>
         </div>
 
-        <div className="rounded-r-xl border-l-[3px] border-brand-primary bg-brand-primary/[0.14] px-[18px] py-4">
+        <Callout tone="info">
           <p className="text-[14.5px] leading-[1.65] text-brand-text">
             {pdfEnvoye ? (
               <>
@@ -423,7 +441,7 @@ export default function InscriptionForm({ atelier }) {
               </>
             )}
           </p>
-        </div>
+        </Callout>
 
         <div className="text-center">
           <p className="mb-5 font-mono text-[12.5px] uppercase text-gray-400">
@@ -489,7 +507,7 @@ export default function InscriptionForm({ atelier }) {
         </div>
 
         {isMineur ? (
-          <div className="mb-5 rounded-r-xl border-l-[3px] border-brand-primary bg-brand-primary/[0.14] px-[18px] py-4">
+          <Callout tone="info" className="mb-5">
             <p className="text-[14.5px] leading-[1.6] text-brand-text">
               <strong className="text-brand-slate-dark">
                 Les mineurs sont accueillis à partir de 12 ans, uniquement accompagnés de leur
@@ -497,7 +515,7 @@ export default function InscriptionForm({ atelier }) {
               </strong>{" "}
               Il n&rsquo;est pas possible de déposer un mineur.
             </p>
-          </div>
+          </Callout>
         ) : null}
 
         <div className="flex flex-col gap-3.5">
@@ -577,19 +595,19 @@ export default function InscriptionForm({ atelier }) {
       {/* BLOC 2 — ce que tu vas faire */}
       <section aria-label="Ce que tu vas faire">
         <BlocTitre numero="02">Ce que tu vas faire</BlocTitre>
-        <p className="mb-3 text-[15.5px] leading-[1.7] text-brand-text">
+        <p className="mb-3 text-[15px] leading-[1.7] text-brand-text">
           La séance alterne déplacements quadrupédiques, suspensions, franchissements,
           équilibres, sauts et réceptions, et travail au sol. Elle sollicite réellement les
           épaules, coudes et poignets, les genoux, chevilles et le rachis, ainsi que le système
           cardio-respiratoire.
         </p>
-        <p className="mb-[18px] text-[15.5px] leading-[1.7] text-brand-text">
+        <p className="mb-[18px] text-[15px] leading-[1.7] text-brand-text">
           Comme toute pratique physique en extérieur, elle comporte des risques inhérents
           qu&rsquo;il faut nommer : chute de faible hauteur, entorse, lésion musculaire ou
           tendineuse, contusion, abrasion — plus rarement, fracture. Les consignes du bloc
           suivant existent pour les réduire.
         </p>
-        <div className="rounded-r-xl border-l-[3px] border-brand-primary bg-brand-primary/[0.14] px-5 py-[18px]">
+        <Callout tone="info">
           <p className="text-[14.5px] leading-[1.7] text-brand-text">
             Ces ateliers sont animés à titre{" "}
             <strong className="text-brand-slate-dark">bénévole et gratuit</strong>. Valentin n&rsquo;est
@@ -599,7 +617,7 @@ export default function InscriptionForm({ atelier }) {
             Une assurance en responsabilité civile couvrant l&rsquo;encadrement d&rsquo;activités
             physiques a été souscrite.
           </p>
-        </div>
+        </Callout>
       </section>
 
       {/* BLOC 3 — consignes de sécurité (élément signature) */}
@@ -634,7 +652,7 @@ export default function InscriptionForm({ atelier }) {
             </div>
           ) : null}
           {/* Sentinel de la détection de lecture — NE PAS déplacer. */}
-          <p ref={sentinelRef} className="mt-5 text-[13px] italic text-gray-400">
+          <p ref={sentinelRef} className="mt-5 text-[13.5px] italic text-gray-400">
             Ces consignes te seront rappelées oralement sur place avant de commencer.
           </p>
         </div>
@@ -643,7 +661,7 @@ export default function InscriptionForm({ atelier }) {
       {/* BLOC 4 — déclaration de santé */}
       <section aria-label="Déclaration de santé">
         <BlocTitre numero="04">Déclaration de santé</BlocTitre>
-        <p className="mb-1.5 text-[15.5px] leading-[1.7] text-brand-text">
+        <p className="mb-1.5 text-[15px] leading-[1.7] text-brand-text">
           Aucun certificat médical n&rsquo;est demandé. Réponds aux questions suivantes{" "}
           <strong className="text-brand-slate-dark">pour toi-même</strong> : tes réponses ne sont ni
           collectées ni conservées.
@@ -671,13 +689,13 @@ export default function InscriptionForm({ atelier }) {
             ))}
           </ol>
         </div>
-        <div className="mt-3.5 rounded-r-xl border-l-[3px] border-brand-accent bg-brand-accent/[0.13] px-[18px] py-4">
+        <Callout tone="attention" className="mt-3.5">
           <p className="text-[14.5px] leading-[1.65] text-brand-text">
             Si tu as répondu <strong className="text-brand-accent-ink">oui</strong> à au moins une
             question, consulte un médecin avant de venir. Tu pourras participer ensuite —
             c&rsquo;est un avis médical, pas une exclusion.
           </p>
-        </div>
+        </Callout>
         <label className="mt-[18px] flex cursor-pointer items-start gap-3">
           <input type="checkbox" name="sante" checked={c.sante} onChange={onCheck} className={CHECKBOX_CLASSES} />
           <span className="text-[15px] leading-[1.6] text-brand-text">
@@ -720,7 +738,7 @@ export default function InscriptionForm({ atelier }) {
           <legend className="sr-only">Droit à l&rsquo;image</legend>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label
-              className={`flex cursor-pointer items-center gap-3 rounded-[14px] border-2 bg-white px-[18px] py-4 text-left transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-accent-dark ${
+              className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 bg-white px-[18px] py-4 text-left transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-accent-dark ${
                 image === true
                   ? "border-brand-accent-dark"
                   : "border-brand-field hover:border-brand-accent-dark/60"
@@ -745,7 +763,7 @@ export default function InscriptionForm({ atelier }) {
               <span className="text-[15px] font-bold text-brand-text">J&rsquo;autorise les photos</span>
             </label>
             <label
-              className={`flex cursor-pointer items-center gap-3 rounded-[14px] border-2 bg-white px-[18px] py-4 text-left transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-slate-dark ${
+              className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 bg-white px-[18px] py-4 text-left transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-slate-dark ${
                 image === false
                   ? "border-brand-slate-dark"
                   : "border-brand-field hover:border-brand-slate-dark/60"
@@ -776,7 +794,7 @@ export default function InscriptionForm({ atelier }) {
       {/* BLOC 6 — données */}
       <section aria-label="Tes données">
         <BlocTitre numero="06">Tes données</BlocTitre>
-        <details className="group rounded-[14px] bg-brand-grid px-5 py-4">
+        <details className="group rounded-xl bg-brand-grid px-5 py-4">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[15px] font-bold text-brand-slate-dark [&::-webkit-details-marker]:hidden">
             Ce qu&rsquo;on garde, combien de temps, et tes droits
             <svg
@@ -866,18 +884,18 @@ export default function InscriptionForm({ atelier }) {
                 ref={alertRef}
                 role="alert"
                 tabIndex={-1}
-                className="rounded-r-[10px] border-l-[3px] border-brand-deep bg-brand-deep/10 px-4 py-3"
+                className={`${CALLOUT_BASE} ${CALLOUT_TONES.erreur}`}
               >
                 {errors.map((err) => (
-                  <p key={err} className="my-0.5 text-sm leading-[1.55] text-brand-deep-dark">
+                  <p key={err} className="my-0.5 text-[14.5px] leading-[1.55] text-brand-deep-dark">
                     {err}
                   </p>
                 ))}
               </div>
             ) : null}
             {serverError === "complet" ? (
-              <div role="alert" className="rounded-r-[10px] border-l-[3px] border-brand-deep bg-brand-deep/10 px-4 py-3">
-                <p className="text-sm leading-[1.55] text-brand-deep-dark">
+              <div role="alert" className={`${CALLOUT_BASE} ${CALLOUT_TONES.erreur}`}>
+                <p className="text-[14.5px] leading-[1.55] text-brand-deep-dark">
                   L&rsquo;atelier s&rsquo;est rempli entre-temps&hellip;{" "}
                   <Link href="/pratiquer" className="font-bold underline">
                     Reviens aux ateliers
@@ -887,8 +905,8 @@ export default function InscriptionForm({ atelier }) {
               </div>
             ) : null}
             {serverError === "erreur" ? (
-              <div role="alert" className="rounded-r-[10px] border-l-[3px] border-brand-deep bg-brand-deep/10 px-4 py-3">
-                <p className="text-sm leading-[1.55] text-brand-deep-dark">
+              <div role="alert" className={`${CALLOUT_BASE} ${CALLOUT_TONES.erreur}`}>
+                <p className="text-[14.5px] leading-[1.55] text-brand-deep-dark">
                   L&rsquo;envoi a échoué — vérifie ta connexion et réessaie. Si ça persiste,
                   écris-nous via la page contact.
                 </p>
@@ -913,7 +931,7 @@ export default function InscriptionForm({ atelier }) {
                 Lis les consignes de sécurité (bloc 3) pour continuer.
               </p>
             ) : null}
-            <p className="text-center text-[13px] italic text-gray-400">
+            <p className="text-center text-[13.5px] italic text-gray-400">
               Tu recevras une copie de cette page en PDF par email.
             </p>
           </div>

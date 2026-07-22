@@ -1,5 +1,6 @@
 // app/about/page.jsx
 import PageHeader from "@/components/PageHeader";
+import SectionHeading from "@/components/SectionHeading";
 
 export const metadata = {
   title: "À propos – The Locomotion Lab",
@@ -37,9 +38,7 @@ export default function AboutPage() {
 
       {/* Parcours */}
       <section className="mb-10">
-        <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
-          Qui suis-je ?
-        </h2>
+        <SectionHeading className="mb-3">Qui suis-je ?</SectionHeading>
         <p className="mb-4">
           Ingénieur et docteur en mécanique des fluides, je pratique la course à
           pieds minimaliste depuis 2020. À l&apos;issue de ma thèse début 2023 (

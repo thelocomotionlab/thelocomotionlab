@@ -1,5 +1,6 @@
 // app/mentions-legales/page.jsx
 import PageHeader from "@/components/PageHeader";
+import SectionHeading from "@/components/SectionHeading";
 
 export const metadata = {
   title: "Mentions légales – The Locomotion Lab",
@@ -36,9 +37,7 @@ export default function MentionsPage() {
       <PageHeader title="Mentions légales" />
 
       <section className="mb-8">
-        <h2 className="text-xl font-sans font-semibold mb-2 text-brand-deep">
-          Éditeur du site
-        </h2>
+        <SectionHeading className="mb-3">Éditeur du site</SectionHeading>
         <p>
           Ce site est développé et édité par <strong>Valentin Fer</strong>.
           <br />
@@ -53,9 +52,7 @@ export default function MentionsPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="text-xl font-sans font-semibold mb-2 text-brand-deep">
-          Hébergement
-        </h2>
+        <SectionHeading className="mb-3">Hébergement</SectionHeading>
         <p>
           Le site est hébergé par <strong>Cloudflare, Inc.</strong>
           <br />
@@ -66,9 +63,7 @@ export default function MentionsPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="text-xl font-sans font-semibold mb-2 text-brand-deep">
-          Propriété intellectuelle
-        </h2>
+        <SectionHeading className="mb-3">Propriété intellectuelle</SectionHeading>
         <p>
           Sauf mention contraire, l’ensemble des contenus (textes, images,
           codes) de ce site sont la propriété exclusive de l’éditeur et ne
@@ -77,9 +72,7 @@ export default function MentionsPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="text-xl font-sans font-semibold mb-2 text-brand-deep">
-          Crédits photographiques
-        </h2>
+        <SectionHeading className="mb-3">Crédits photographiques</SectionHeading>
         <p>
           La photo présente en page d&apos;accueil est une œuvre originale
           réalisée par <strong>Caroline Fer</strong>.

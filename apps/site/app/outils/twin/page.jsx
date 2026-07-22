@@ -7,6 +7,7 @@
 import Link from "next/link";
 import EmailCapture from "@/components/EmailCapture";
 import PageHeader from "@/components/PageHeader";
+import SectionHeading from "@/components/SectionHeading";
 
 export const metadata = {
   // [PROVISOIRE] Descriptions meta à affiner avec les textes définitifs (PR5).
@@ -50,9 +51,7 @@ export default function TwinTeaserPage() {
       <div className="bg-white rounded-2xl shadow-card p-4 sm:p-6 md:p-10">
 
         <div className="font-sans leading-relaxed">
-          <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
-            Comment ça marche
-          </h2>
+          <SectionHeading className="mb-3">Comment ça marche</SectionHeading>
           <ol className="list-decimal pl-5 space-y-2">
             <li>
               Tu déposes ton archive d&rsquo;entraînement (Garmin, Polar,
@@ -70,9 +69,11 @@ export default function TwinTeaserPage() {
         </div>
 
         {/* Statut de calibration honnête — valeurs factices À REMPLACER. */}
-        <div className="mt-8 bg-brand-bg border border-gray-200 rounded-lg p-5">
-          <h2 className="text-lg font-semibold text-brand-deep mb-2">
-            Statut
+        {/* Encadré : étiquette mono comme les encadrés de la refonte 2026
+            (INFORMATIONS PRATIQUES de l'inscription, labels du live). */}
+        <div className="mt-8 bg-brand-bg border border-gray-200 rounded-xl p-5">
+          <h2 className="mb-2 font-mono text-[11px] font-bold tracking-[0.18em] text-brand-slate-dark">
+            STATUT
           </h2>
           <p className="text-gray-700">
             L&rsquo;outil est en cours de développement. Pour participer à son élaboration et recevoir ton plan de course

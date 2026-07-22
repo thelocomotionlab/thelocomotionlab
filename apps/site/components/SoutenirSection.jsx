@@ -1,20 +1,21 @@
 // components/SoutenirSection.jsx
 //
-// Page Soutenir. La capture email passe par le composant EmailCapture
-// partagé (honeypot, aria-live, messages d'état harmonisés) avec la
-// source « soutenir » — plus de formulaire recodé à la main ici.
+// Page Soutenir, au gabarit des pages de lecture (Quête / À propos) :
+// colonne max-w-3xl alignée à gauche, sections en SectionHeading (Lora
+// italique + filet). Seul le bloc email final reste centré — c'est le
+// motif commun à Comprendre / Quête / Twin. La capture email passe par le
+// composant EmailCapture partagé (honeypot, aria-live, source « soutenir »).
 
 import EmailCapture from "@/components/EmailCapture";
 import PageHeader from "@/components/PageHeader";
+import SectionHeading from "@/components/SectionHeading";
 
 export default function SoutenirSection() {
   return (
-    <section className="py-10 text-center">
-      <div className="mx-auto max-w-2xl px-4 text-left">
-        <PageHeader kicker="/ LE LABO" title="Soutenir l'exploration" />
-      </div>
+    <div className="max-w-3xl mx-auto px-6 py-12 font-sans">
+      <PageHeader kicker="/ LE LABO" title="Soutenir l'exploration" />
 
-      <p className="text-lg md:text-xl text-brand-text opacity-90 mb-8 max-w-2xl mx-auto px-4">
+      <p className="mb-10 text-lg text-brand-text/90">
         Le{" "}
         <strong className="font-semibold text-brand-deep">
           Locomotion Lab
@@ -23,29 +24,26 @@ export default function SoutenirSection() {
         connaissances.
       </p>
 
-      <div className="bg-white rounded-2xl shadow-card p-6 md:p-8 max-w-lg mx-auto mb-8">
-        <h2 className="text-xl font-semibold mb-3 text-brand-deep">
-          Comment soutenir ?
-        </h2>
-        <p className="text-brand-text mb-4">
+      <section className="mb-10">
+        <SectionHeading className="mb-3">Comment soutenir ?</SectionHeading>
+        <p className="mb-4">
           Plusieurs manières de contribuer au fonctionnement du Labo arrivent
           bientôt.
         </p>
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-gray-600">
           Ton futur soutien aidera à financer les expérimentations, le matériel,
           la création de contenu et l’entretien du site web.
         </p>
-      </div>
+      </section>
 
-      <div className="max-w-lg mx-auto px-4">
+      <div className="mt-12 max-w-2xl mx-auto text-center">
         <h2 className="text-lg font-semibold mb-3 text-brand-accent-ink">
           Restez à l&rsquo;écoute !
         </h2>
-        <p className="text-brand-text opacity-80 mb-4">
+        <p className="text-brand-text/80 mb-4">
           Si ce projet te parle et que tu souhaites rester informé·e des futures
           explorations ou soutenir le labo à terme, laisse ton mail ci-dessous.
         </p>
-
         <EmailCapture
           title={null}
           description={null}
@@ -54,6 +52,6 @@ export default function SoutenirSection() {
           buttonLabel="M'inscrire"
         />
       </div>
-    </section>
+    </div>
   );
 }

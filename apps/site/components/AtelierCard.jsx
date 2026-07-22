@@ -20,6 +20,7 @@
 
 import { useId, useState } from "react";
 import Link from "next/link";
+import CardMeta from "@/components/CardMeta";
 import PhotoSlot from "@/components/PhotoSlot";
 
 const API_BASE = process.env.NEXT_PUBLIC_ATELIER_API || "";
@@ -177,7 +178,8 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
 
   return (
     <article className="flex h-full w-full max-w-[22rem] flex-col overflow-hidden rounded-2xl bg-white shadow-card">
-      <div className="relative h-[160px] flex-none md:h-44">
+      {/* Même hauteur d'image que les cartes Comprendre/Explorer. */}
+      <div className="relative h-44 flex-none">
         <PhotoSlot
           src={cover}
           alt={coverAlt}
@@ -192,20 +194,20 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-5">
-        <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-brand-slate-dark">
-          ATELIER <span className="text-brand-accent-ink">· {priceLabel}</span>
-        </p>
+        {/* Méta et titre au gabarit des cartes Comprendre/Explorer
+            (CardMeta + titre terracotta). */}
+        <CardMeta kind="Atelier" detail={priceLabel} />
 
-        <h3 className="text-[18px] font-bold leading-[1.3] text-brand-slate-dark md:text-[18.5px]">
+        <h3 className="text-lg font-semibold text-brand-deep">
           {title}
         </h3>
 
         <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-[5px] text-sm text-gray-600">
-          <span className="self-center font-mono text-[11px] font-bold tracking-[0.12em] text-gray-400">
+          <span className="self-center font-mono text-[11px] font-bold tracking-[0.12em] text-gray-500">
             DATE
           </span>
           <span>{dateLabel}</span>
-          <span className="self-center font-mono text-[11px] font-bold tracking-[0.12em] text-gray-400">
+          <span className="self-center font-mono text-[11px] font-bold tracking-[0.12em] text-gray-500">
             LIEU
           </span>
           <span>{lieu}</span>

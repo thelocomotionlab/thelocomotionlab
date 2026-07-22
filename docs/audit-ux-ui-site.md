@@ -14,7 +14,17 @@
 > a été ajusté de `#99610D` (jugé trop brun) à `#C08327`** : ocre doré au plus
 > près de l'orange de marque qui tient ≥ 3:1 sur blanc et crème (seuil AA
 > « grand texte » ; pas 4,5:1 — compromis assumé), renforcé par la graisse
-> (semibold) sur les suites de « La philosophie ». Vérifié : `next build` (29 pages),
+> (semibold) sur les suites de « La philosophie ».
+> **Harmonisation complémentaire (même session)** : anciennes pages (Quête,
+> À propos, Mentions, Twin, Recherche, Soutenir) passées au motif
+> `SectionHeading` (Lora italique + filet) ; Soutenir aligné à gauche sur le
+> gabarit de lecture 3xl ; cartes Ateliers alignées sur les cartes
+> Comprendre/Explorer (CardMeta, titre terracotta, image h-44, gap-6) ;
+> largeur utile de Pratiquer et Recherche alignée sur Comprendre/Explorer
+> (`lg:px-12` ≡ px-6 + retrait interne) ; page Inscription resserrée — un
+> seul encadré sémantique (info/attention/erreur), arrondis réduits à
+> full/xl/2xl, corps de texte 15 / 14,5 / étiquettes 11.
+> Vérifié : `next build` (29 pages),
 > `eslint`, `vitest` (21/21), `tsc` de email-gateway. Choix faits en appliquant :
 > m13 → option « retirer le drag » du ShareButton ; M10 non appliqué à
 > PhilosophieSection (texte justifié spécifié par le handoff, grille desktop
