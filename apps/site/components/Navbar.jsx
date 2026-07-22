@@ -10,12 +10,12 @@ import {
   Compass,
   FlaskConical,
   Menu,
+  PawPrint,
   SatelliteDish,
   Search,
   Wrench,
   X,
 } from "lucide-react";
-import BareFeet from "@/components/icons/BareFeet";
 import { useEffect, useRef, useState } from "react";
 import { liveConfig } from "@/lib/liveConfig";
 
@@ -47,7 +47,7 @@ const NAV_ITEMS = [
   { type: "link", href: "/explorer", label: "Explorer", Icon: Compass },
   // Évolutif : quand l'accompagnement trail ouvrira (2027), cette entrée
   // passera en `type: "menu"` (Ateliers / Accompagnement trail).
-  { type: "link", href: "/pratiquer", label: "Pratiquer", Icon: BareFeet },
+  { type: "link", href: "/pratiquer", label: "Pratiquer", Icon: PawPrint },
   {
     type: "menu",
     label: "Outils",
