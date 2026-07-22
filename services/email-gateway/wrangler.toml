@@ -21,4 +21,6 @@ LISTMONK_URL = "https://liste.thelocomotionlab.com"
 # visible dans l'UI Listmonk → Lists). Liste créée le 2026-07-19 : id 3.
 LISTMONK_LIST_ID = "3"
 # Origines autorisées à appeler la passerelle (CORS), séparées par des virgules.
-ALLOWED_ORIGINS = "https://thelocomotionlab.com,https://www.thelocomotionlab.com,http://localhost:3000"
+# Les deux origines *.pages.dev couvrent la PHASE STAGING (alias de branche du
+# projet Pages existant, ou projet dédié) — à retirer au lancement officiel.
+ALLOWED_ORIGINS = "https://thelocomotionlab.com,https://www.thelocomotionlab.com,https://staging.thelocomotionlab-website.pages.dev,https://thelocomotionlab-staging.pages.dev,http://localhost:3000"

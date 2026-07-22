@@ -3,6 +3,8 @@
   "allowedOrigins": [
     "https://thelocomotionlab.com",
     "https://www.thelocomotionlab.com",
+    "https://staging.thelocomotionlab-website.pages.dev",
+    "https://thelocomotionlab-staging.pages.dev",
     "http://localhost:3000"
   ],
   "ratePerMinute": 4,

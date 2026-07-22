@@ -14,7 +14,8 @@
     "dev:site": "pnpm -F site dev",
     "build:site": "pnpm -F site build",
     "lint:site": "pnpm -F site lint",
-    "deploy:site": "pnpm -F site deploy:cf"
+    "deploy:site": "pnpm -F site deploy:cf",
+    "deploy:site:staging": "pnpm -F site deploy:staging"
   },
   "devDependencies": {
     "turbo": "^2.5.0"
