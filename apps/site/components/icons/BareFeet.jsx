@@ -1,33 +1,33 @@
 // components/icons/BareFeet.jsx
 //
-// Deux empreintes de pieds nus, dessinées d'après le pied du logo Locomotion
-// Lab : plante en CONTOUR (avant-pied large, voûte creusée, talon rond) +
-// cinq orteils décroissants, paire gauche/droite en quinconce de marche
-// (gros orteils vers l'intérieur). Même signature que les icônes lucide
-// (size, className, currentColor) pour rester interchangeable dans la Navbar.
+// Deux empreintes de pieds nus en foulée (pied gauche un pas devant, gros
+// orteils vers l'intérieur), redessinées d'après une empreinte à l'encre :
+// plante en contour — avant-pied large et légèrement asymétrique (plus haut
+// côté gros orteil), voûte creusée, talon rond — + quatre orteils pleins
+// décroissants qui épousent la courbe du bol. Grammaire lucide stricte
+// (24×24, trait 2, bouts ronds, currentColor) et même signature (size,
+// className) pour rester interchangeable dans la Navbar. Itérée sur rendu
+// réel à 18 px pour rester nette à la taille de la navbar.
 
-// Pied DROIT, orteils vers le haut, gros orteil à gauche ; le pied gauche est
-// le même tracé en miroir (scale(-…)). La paire remplit la boîte 24×24 comme
-// les glyphes lucide (~20×20 utiles) pour un poids visuel homogène en navbar.
+// Pied DROIT, orteils vers le haut, gros orteil à gauche ; le gauche est le
+// même tracé en miroir (scale(-1 1)).
 const SOLE =
-  "M 0 0 C 2.2 0 3.7 1.2 3.9 3.0 C 4.1 5.2 3.0 6.6 3.0 8.4 C 3.0 10.2 3.3 11.4 3.2 13.0 C 3.1 15.2 1.9 16.6 0.2 16.6 C -1.5 16.6 -2.7 15.2 -2.6 13.4 C -2.5 11.6 -1.2 10.6 -1.3 8.6 C -1.4 6.6 -3.8 5.2 -4.0 3.0 C -4.2 1.0 -2.2 0 0 0 Z";
+  "M -3.1 -0.6 C -3.3 0.6 -2.45 1.55 -1.7 2.55 C -1.0 3.5 -1.35 4.35 -1.8 5.35 C -2.35 6.9 -1.3 7.8 0.1 7.8 C 1.5 7.8 2.35 6.85 2.2 5.5 C 2.05 4.2 1.75 3.3 1.95 2.1 C 2.15 0.9 3.0 0.25 3.05 -0.95 C 3.1 -2.2 2.0 -3.05 0.35 -3.2 C -1.5 -3.4 -2.85 -2.0 -3.1 -0.6 Z";
 
-// Orteils [cx, cy, rx, ry] : ovales allongés dans l'axe du pied, blottis
-// contre le bol, gros orteil dominant puis décroissance vers le petit.
+// Orteils [cx, cy, r] : gros orteil dominant puis décroissance en arc.
 const TOES = [
-  [-3.15, -2.1, 1.35, 1.6],
-  [-1.35, -2.85, 0.88, 1.05],
-  [0.25, -3.0, 0.78, 0.95],
-  [1.8, -2.7, 0.7, 0.85],
-  [3.1, -2.0, 0.62, 0.75],
+  [-2.15, -5.25, 1.1],
+  [-0.5, -5.7, 0.72],
+  [1.05, -5.35, 0.62],
+  [2.4, -4.55, 0.54],
 ];
 
 function Foot({ transform }) {
   return (
-    <g transform={transform} strokeWidth="2.55">
+    <g transform={transform}>
       <path d={SOLE} fill="none" />
-      {TOES.map(([cx, cy, rx, ry]) => (
-        <ellipse key={cx} cx={cx} cy={cy} rx={rx} ry={ry} fill="currentColor" stroke="none" />
+      {TOES.map(([cx, cy, r]) => (
+        <circle key={cx} cx={cx} cy={cy} r={r} fill="currentColor" stroke="none" />
       ))}
     </g>
   );
@@ -42,17 +42,15 @@ export default function BareFeet({ size = 24, className = "", ...props }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
+      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
       {...props}
     >
-      {/* Foulée : pied droit un pas devant, les deux légèrement ouverts vers
-          l'extérieur, comme de vraies traces de marche. (Le tracé étant en
-          miroir pour le pied gauche, son angle « ouvert » est positif.) */}
-      <Foot transform="translate(7.6 10.4) rotate(9) scale(-0.78 0.78)" />
-      <Foot transform="translate(16.2 4.2) rotate(-9) scale(0.78 0.78)" />
+      <Foot transform="translate(7.2 7.3) rotate(-10) scale(-1 1)" />
+      <Foot transform="translate(16.8 13.9) rotate(10)" />
     </svg>
   );
 }
