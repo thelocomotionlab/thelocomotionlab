@@ -82,7 +82,7 @@ export const INFOS_PRATIQUES = {
     "De l'eau, une tenue souple qui ne craint pas la terre, une couche chaude pour la fin de séance. Pieds nus ou chaussures minimalistes bienvenus.",
   meteo:
     "On pratique sous pluie légère ; en cas de météo dangereuse, l'atelier est reporté et tu es prévenu·e par email.",
-  contact: "contact@thelocomotionlab.com",
+  contact: "thelocomotionlab@gmail.com",
 };
 
 /** Le contenu tel qu'il part dans le payload d'inscription (et dans le PDF). */

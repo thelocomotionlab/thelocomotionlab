@@ -382,7 +382,7 @@ export default function InscriptionForm({ atelier }) {
 
         {recapAtelier}
 
-        <div className="rounded-2xl bg-brand-grid p-5 md:px-[22px]">
+        <div className="rounded-2xl border-[1.5px] border-brand-hairline p-5 md:px-[22px]">
           <p className="mb-3 font-mono text-[11px] font-bold tracking-[0.18em] text-brand-deep">
             INFORMATIONS PRATIQUES
           </p>
@@ -413,30 +413,27 @@ export default function InscriptionForm({ atelier }) {
           <p className="text-[14.5px] leading-[1.65] text-brand-text">
             {pdfEnvoye ? (
               <>
-                Une copie fidèle de la page que tu viens de valider t&rsquo;a été envoyée en{" "}
-                <strong className="text-[#2F6F73]">PDF</strong> à l&rsquo;adresse indiquée.
+                Un <strong className="text-[#2F6F73]">PDF</strong> récapitulatif t&rsquo;a été
+                envoyé par email.
               </>
             ) : (
               <>
-                Une copie fidèle de la page que tu viens de valider te sera transmise en{" "}
-                <strong className="text-[#2F6F73]">PDF</strong> par email.
+                Un <strong className="text-[#2F6F73]">PDF</strong> récapitulatif te sera envoyé
+                par email.
               </>
             )}
           </p>
         </div>
 
         <div className="text-center">
-          <p className="mb-1 font-mono text-[12.5px] uppercase text-gray-400">
+          <p className="mb-5 font-mono text-[12.5px] uppercase text-gray-400">
             Validé le {confirmation.horodatage}
-          </p>
-          <p className="mb-4 font-mono text-[12.5px] text-gray-400">
-            RÉFÉRENCE DOSSIER : {confirmation.reference}
           </p>
           <Link
             href="/pratiquer"
-            className="text-sm font-medium text-[#D89A2E] hover:text-brand-deep hover:underline"
+            className="inline-flex items-center justify-center rounded-full bg-brand-accent px-8 py-3 text-[15.5px] font-bold text-white transition-all duration-300 hover:bg-brand-accent-dark"
           >
-            ← Revenir aux ateliers
+            Revenir aux ateliers
           </Link>
         </div>
       </div>
