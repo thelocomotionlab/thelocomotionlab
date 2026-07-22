@@ -86,6 +86,30 @@ services:
     networks:
       - web
 
+  # Inscriptions aux ateliers de la page Pratiquer : décompte des places,
+  # liste d'attente, listing/purge admin par jeton (ATELIER_ADMIN_TOKEN dans
+  # .env). Stockage JSON minimal (prénom + email) sur le volume atelier_data,
+  # purgé après chaque atelier — cf. services/atelier-api/README.md.
+  # Exposé par Caddy sur {$API_DOMAIN}/ateliers/*.
+  atelier-api:
+    image: ${ATELIER_API_IMAGE:-ghcr.io/thelocomotionlab/atelier-api:latest}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - DATA_DIR=/data
+    expose:
+      - "3000"
+    volumes:
+      - atelier_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/ateliers/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - web
+
   # App de test, construite par la CI et poussée sur GHCR (cf. .github/workflows/deploy-vps.yml).
   # Non exposée à l'hôte : seul Caddy la joint, par le réseau interne `web`.
   template:
@@ -194,5 +218,8 @@ volumes:
   live_journal_data:
   # Données du moteur Twin : jobs.sqlite + sorties (PDF/figures). Archives brutes purgées.
   twin_engine_data:
+  # Inscriptions aux ateliers (prénom + email) : données perso minimales,
+  # purgées après chaque atelier via la route admin — pas de sauvegarde longue.
+  atelier_data:
   # Base Listmonk (liste email — données personnelles, à sauvegarder).
   listmonk_db:

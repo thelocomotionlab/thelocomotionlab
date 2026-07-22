@@ -1,0 +1,23 @@
+{
+  "name": "@locomotionlab/atelier-api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Inscriptions aux ateliers de la page Pratiquer : décompte des places, liste d'attente, honeypot + limite de débit, stockage JSON sur volume. GET /ateliers/places public, POST /ateliers/inscriptions restreint aux origines du site, listing + purge admin par jeton.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "dev": "pnpm build && node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "fastify": "5.10.0",
+    "nodemailer": "7.0.11"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.0",
+    "@types/nodemailer": "7.0.5",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  }
+}

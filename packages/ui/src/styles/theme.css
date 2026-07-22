@@ -29,6 +29,13 @@
   --color-brand-slate: #5B8286;
   --color-brand-slate-dark: #4E767A;
 
+  /* Pratiquer 2026 — neutres chauds (filets, champs, jauges) + liseré wash */
+  --color-brand-hairline: #E5DFD3;
+  --color-brand-field: #E2DCD0;
+  --color-brand-gauge: #F0EAE0;
+  --color-brand-gauge-full: #D6D0C4;
+  --color-brand-wash-line: #C9D8D9;
+
   /* Ombres & backgrounds */
   --shadow-card: 0 6px 24px rgba(0, 0, 0, 0.08);
   --shadow-cta: 0 10px 24px rgba(0, 0, 0, 0.2);

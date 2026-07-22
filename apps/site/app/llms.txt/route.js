@@ -77,6 +77,9 @@ function buildLlmsTxt() {
     `- [Explorer](${SITE_URL}/explorer): le terrain — index des récits et projets`
   );
   lines.push(
+    `- [Pratiquer](${SITE_URL}/pratiquer): les ateliers de mouvement primal — dates et inscription`
+  );
+  lines.push(
     `- [Live](${SITE_URL}/live): le direct des aventures du labo, ou le prochain départ`
   );
   lines.push(

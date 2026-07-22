@@ -1,0 +1,271 @@
+% =============================================================================
+%  Fiche participant·e — Ateliers (page Pratiquer)
+%  Template Jinja2 -> XeLaTeX, classe « locomotionreport » (Locomotion Lab)
+%
+%  Rendu : twin_engine.fiche.build_pdf(payload) — endpoint POST /fiche.
+%  Délimiteurs Jinja préfixés d'une contre-oblique (\VAR, \BLOCK) : jamais de
+%  collision avec LaTeX. Toute variable est échappée par défaut (finalize).
+%
+%  ⚠ SOURCE UNIQUE DU CONTENU : les consignes de sécurité et les questions de
+%  santé arrivent DANS le payload (consignes.liste, sante.questions), émises
+%  par la page d'inscription du site (apps/site/lib/inscriptionContent.mjs).
+%  Modifier la page suffit — ce template les boucle telles quelles.
+% =============================================================================
+\documentclass[11pt]{locomotionreport}
+
+\renewcommand{\LLHeaderLogoPath}{assets/logo_full_white}
+\renewcommand{\LLCoverLogoPath}{assets/logo_primary_deep}
+
+\title{Fiche d'information et de consentement}
+\author{Le Locomotion Lab}
+\date{\VAR{atelier.date}}
+\reporttype{Atelier d'initiation}
+\reportref{\VAR{dossier.reference}}
+
+% --- Cases a cocher (TikZ : independant de la police) -------------------------
+\newcommand{\LLvide}{%
+  \tikz[baseline=-0.18em]{%
+    \draw[rounded corners=0.4pt,LLMetaLabel,line width=0.6pt]
+      (0,0) rectangle (2.7mm,2.7mm);}\hspace{0.35em}}
+\newcommand{\LLcoche}{%
+  \tikz[baseline=-0.18em]{%
+    \draw[rounded corners=0.4pt,LLPrimary,line width=0.6pt]
+      (0,0) rectangle (2.7mm,2.7mm);
+    \draw[LLDeep,line width=0.9pt,line cap=round,line join=round]
+      (0.6mm,1.45mm) -- (1.15mm,0.65mm) -- (2.15mm,2.15mm);}\hspace{0.35em}}
+
+% --- Champ de donnee saisie ---------------------------------------------------
+\newcommand{\LLchamp}[1]{{\LLmono\color{LLMetaVal}#1}}
+\newcommand{\LLlabel}[1]{{\footnotesize\LLtracked{\MakeUppercase{#1}}\color{LLMetaLabel}}}
+
+% --- Bloc d'identite en tete de page 1 ---------------------------------------
+\newcommand{\LLidentite}{%
+  \begin{tcolorbox}[enhanced,sharp corners=all,boxrule=0pt,
+    left=5mm,right=5mm,top=4mm,bottom=4mm,
+    colback=LLGrid,colframe=LLGrid,
+    borderline west={1.6pt}{0pt}{LLPrimary}]
+  \setlength{\tabcolsep}{0pt}%
+  \begin{tabular}{@{}p{0.30\linewidth}p{0.70\linewidth}@{}}
+    \LLlabel{Participant·e} & \LLchamp{\VAR{participant.prenom} \VAR{participant.nom}} \\[1.6mm]
+\BLOCK{if mineur.actif}
+    \LLlabel{Mineur participant} & \LLchamp{\VAR{mineur.prenom} \VAR{mineur.nom} — né·e le \VAR{mineur.date_naissance}} \\[1.6mm]
+\BLOCK{endif}
+    \LLlabel{Courriel}      & \LLchamp{\VAR{participant.email}} \\[1.6mm]
+    \LLlabel{Téléphone}     & \LLchamp{\VAR{participant.telephone}} \\[1.6mm]
+    \LLlabel{Contact d'urgence} & \LLchamp{\VAR{urgence.nom} — \VAR{urgence.telephone}} \\[1.6mm]
+    \LLlabel{Atelier}       & \LLchamp{\VAR{atelier.intitule}} \\[1.6mm]
+    \LLlabel{Date et lieu}  & \LLchamp{\VAR{atelier.date} — \VAR{atelier.lieu}} \\[1.6mm]
+    \LLlabel{Encadrant}     & \LLchamp{\VAR{atelier.encadrant}} \\
+  \end{tabular}
+  \end{tcolorbox}}
+
+\begin{document}
+
+\thispagestyle{fancy}
+
+{\LLtracked{\footnotesize\color{LLDeep}\MakeUppercase{Atelier d'initiation au mouvement primal}}}\\[1mm]
+{\Large\bfseries\color{LLText} Fiche d'information et de consentement}\\[1mm]
+{\small\color{LLCoverSub} À lire intégralement avant de valider. Un exemplaire vous est
+envoyé par courriel après validation.}
+
+\vspace{4mm}
+\LLidentite
+\vspace{2mm}
+
+% =============================================================================
+\section{Ce que vous allez faire}
+
+L'atelier est une initiation au \emph{mouvement primal} : déplacements
+quadrupédiques au sol, suspensions et déplacements suspendus, franchissements,
+équilibres, sauts et réceptions, port et manipulation de charges naturelles.
+La séance dure environ \VAR{atelier.duree} et se déroule
+\VAR{atelier.contexte}.
+
+Ces mouvements sollicitent de façon marquée : les \textbf{épaules, coudes et
+poignets} (suspensions, appuis au sol), les \textbf{genoux, chevilles et le
+rachis} (sauts, réceptions, franchissements), et le \textbf{système
+cardio-respiratoire}. Les risques inhérents à cette pratique sont
+principalement : chute de faible hauteur, entorse, lésion musculaire ou
+tendineuse, contusion, abrasion cutanée, et — plus rarement — fracture.
+
+\begin{llnote}[Cadre de l'atelier]
+Cet atelier est animé \textbf{à titre bénévole et gratuit}.
+\VAR{atelier.encadrant} n'est pas titulaire d'un diplôme d'État d'éducateur
+sportif et n'exerce pas cette activité contre rémunération. L'encadrement
+bénévole d'une activité physique n'est soumis à aucune obligation de
+qualification, mais vous devez le savoir avant de vous inscrire.
+Une assurance en responsabilité civile couvrant l'encadrement d'activités
+physiques et sportives a été souscrite : \VAR{assurance.assureur},
+contrat n° \VAR{assurance.numero}.
+\end{llnote}
+
+% =============================================================================
+\section{Consignes de sécurité}
+
+\begin{enumerate}[leftmargin=*,itemsep=1.1mm,topsep=1mm]
+\BLOCK{for consigne in consignes.liste}
+  \item \textbf{\VAR{consigne.titre}} \VAR{consigne.texte}
+\BLOCK{endfor}
+\end{enumerate}
+
+\BLOCK{if mineur.actif}
+\noindent\textbf{Participant mineur :} \VAR{consignes.mineur}
+
+\BLOCK{endif}
+\begin{llattention}
+Ces consignes vous seront rappelées oralement sur place avant le début de la
+séance. La présente fiche ne s'y substitue pas : elle les documente.
+\end{llattention}
+
+% =============================================================================
+\section{Déclaration de santé}
+
+Aucun certificat médical n'est exigé. Répondez aux questions ci-dessous
+\textbf{pour vous-même} : vos réponses ne sont ni collectées ni conservées.
+\BLOCK{if mineur.actif}
+Pour un mineur, ces questions sont passées en revue par le représentant
+légal, à propos du mineur.
+\BLOCK{endif}
+
+\begin{enumerate}[label=\alph*.,leftmargin=*,itemsep=0.7mm,topsep=1mm,font=\LLmono]
+\BLOCK{for question in sante.questions}
+  \item \VAR{question}
+\BLOCK{endfor}
+\end{enumerate}
+
+\vspace{1.5mm}
+\begin{llattention}[Si vous avez répondu « oui » à au moins une question]
+Consultez un médecin avant de participer. Vous pouvez tout à fait participer
+ensuite : il s'agit d'un avis médical, pas d'une exclusion.
+\end{llattention}
+
+\vspace{2mm}
+\noindent\VAR{coche(sante.attestation)}\,\begin{minipage}[t]{0.92\linewidth}
+J'ai passé ces questions en revue et j'en ai tenu compte pour ma
+participation. Je certifie l'exactitude de cette déclaration.
+\end{minipage}
+
+\vspace{2mm}
+\noindent\LLlabel{Information que vous souhaitez communiquer (facultatif)}\\[1mm]
+\LLchamp{\VAR{sante.commentaire_libre}}
+
+% =============================================================================
+\section{Droit à l'image}
+
+\begin{llnote}[Sans effet sur votre participation]
+Votre réponse ci-dessous est libre. Un refus n'empêche en rien votre
+participation à l'atelier et n'entraîne aucune conséquence.
+\end{llnote}
+
+\noindent\VAR{coche(image.autorise)}\,\begin{minipage}[t]{0.92\linewidth}
+\textbf{J'autorise} \VAR{responsable.nom} à me photographier ou me filmer
+pendant l'atelier et à diffuser ces images sur \VAR{image.supports},
+pour une durée de \VAR{image.duree}, à des fins de présentation de l'activité,
+sans contrepartie financière.
+\BLOCK{if mineur.actif}
+Ce choix est exprimé par le représentant légal, pour le mineur.
+\BLOCK{endif}
+\end{minipage}
+
+\vspace{1.5mm}
+\noindent\VAR{coche(image.refuse)}\,\begin{minipage}[t]{0.92\linewidth}
+\textbf{Je n'autorise pas} la diffusion de mon image.
+\end{minipage}
+
+\vspace{1.5mm}
+\noindent{\small\color{LLCaption} Vous pouvez retirer cette autorisation à tout
+moment en écrivant à \VAR{responsable.email}, sans avoir à motiver votre
+demande.}
+
+% =============================================================================
+\section{Vos données personnelles}
+
+\textbf{Responsable de traitement :} \VAR{responsable.nom},
+\VAR{responsable.email}.
+
+\textbf{Finalités et bases légales.} Organisation de l'atelier et sécurité des
+participant·e·s, sur la base de l'intérêt légitime du responsable ; diffusion de
+votre image, sur la base de votre consentement.
+
+\textbf{Données collectées.} Nom, prénom, courriel, téléphone, contact
+d'urgence, attestation de santé (sans le détail de vos réponses), choix relatif
+au droit à l'image, horodatage de validation.
+
+\textbf{Durées de conservation.}
+
+\begin{table}[h]
+  \centering
+  \LLzebra
+  \renewcommand{\arraystretch}{1.35}
+  \begin{tabular}{@{}p{0.42\linewidth}p{0.24\linewidth}p{0.28\linewidth}@{}}
+    \LLheaderrow
+    \LLthead{Donnée} & \LLthead{Durée} & \LLthead{Motif} \\
+    Fiche signée (information, consignes, attestation de santé)
+      & \LLnum{10 ans} & Prescription en dommage corporel \\
+    Coordonnées de contact courant
+      & \LLnum{12 mois} & Après le dernier atelier \\
+    Autorisation d'image
+      & \LLnum{Durée de diffusion} & Puis suppression \\
+    Commentaire libre de santé
+      & \LLnum{Fin de l'atelier} & Suppression immédiate \\
+  \end{tabular}
+\end{table}
+
+\textbf{Destinataires.} Aucun. Vos données ne sont ni transmises ni revendues.
+
+\textbf{Vos droits.} Accès, rectification, effacement, limitation, opposition,
+portabilité — par simple courriel à \VAR{responsable.email}. Vous pouvez
+introduire une réclamation auprès de la CNIL.
+
+% =============================================================================
+\section{Validation}
+
+\noindent\VAR{coche(consentement.consignes)}\,\begin{minipage}[t]{0.92\linewidth}
+J'ai lu et compris la description de l'activité (§1) et l'intégralité des
+consignes de sécurité (§2). Je m'engage à les respecter.
+\end{minipage}
+
+\BLOCK{if mineur.actif}
+\vspace{1.5mm}
+\noindent\VAR{coche(consentement.autorite_parentale)}\,\begin{minipage}[t]{0.92\linewidth}
+Je suis titulaire de l'autorité parentale sur le mineur inscrit et j'atteste
+que l'autre titulaire est informé et d'accord.
+\end{minipage}
+
+\vspace{1.5mm}
+\noindent\VAR{coche(consentement.soins_urgence)}\,\begin{minipage}[t]{0.92\linewidth}
+J'autorise le recours aux secours et aux soins d'urgence si nécessaire.
+\end{minipage}
+\BLOCK{else}
+\vspace{1.5mm}
+\noindent\VAR{coche(consentement.majeur)}\,\begin{minipage}[t]{0.92\linewidth}
+Je certifie être majeur·e.
+\end{minipage}
+\BLOCK{endif}
+
+\vspace{1.5mm}
+\noindent\VAR{coche(consentement.exactitude)}\,\begin{minipage}[t]{0.92\linewidth}
+Je certifie l'exactitude de l'ensemble des informations que j'ai renseignées.
+\end{minipage}
+
+\vspace{5mm}
+\begin{tcolorbox}[enhanced,sharp corners=all,boxrule=0pt,
+  left=5mm,right=5mm,top=3.5mm,bottom=3.5mm,
+  colback=LLGrid,colframe=LLGrid,
+  borderline west={1.6pt}{0pt}{LLAccent}]
+\setlength{\tabcolsep}{0pt}%
+\begin{tabular}{@{}p{0.30\linewidth}p{0.70\linewidth}@{}}
+  \LLlabel{Validé le}        & \LLchamp{\VAR{preuve.horodatage}} \\[1.4mm]
+  \LLlabel{Adresse IP}       & \LLchamp{\VAR{preuve.ip}} \\[1.4mm]
+  \LLlabel{Référence}        & \LLchamp{\VAR{dossier.reference}} \\[1.4mm]
+  \LLlabel{Empreinte SHA-256}& \LLchamp{\VAR{preuve.empreinte}} \\
+\end{tabular}
+\end{tcolorbox}
+
+\vspace{2mm}
+\noindent{\small\color{LLCaption} Document généré automatiquement après
+validation du formulaire en ligne et transmis par courriel à
+\VAR{participant.email}. L'empreinte ci-dessus permet de vérifier qu'il n'a pas
+été modifié depuis.}
+
+\end{document}

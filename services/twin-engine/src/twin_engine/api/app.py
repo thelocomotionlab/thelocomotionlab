@@ -19,10 +19,12 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
 from ..config import Config, load_config
 from ..course import RaceSpec
+from ..fiche import build_pdf as build_fiche_pdf
+from ..fiche import empreinte as fiche_empreinte
 from ..jobs import JobStore, run_job
 from ..pipeline import run_preview
 
@@ -134,6 +136,33 @@ def create_app(cfg: Config | None = None) -> FastAPI:
         if not pdf or not Path(pdf).exists():
             raise HTTPException(status_code=404, detail="rapport non disponible (job non terminé ou 🔴)")
         return FileResponse(pdf, media_type="application/pdf", filename="rapport-locomotion-twin.pdf")
+
+    @app.post("/fiche")
+    def fiche(payload: dict) -> Response:
+        """Fiche participant·e des ateliers (appelé en interne par atelier-api).
+
+        Payload : cf. ``twin_engine.fiche`` — le contenu volatil (consignes,
+        questions de santé) arrive dedans, la page du site étant la source
+        unique. Rien n'est stocké ici : la fiche est rendue puis renvoyée ;
+        atelier-api garde l'enregistrement et envoie l'email.
+        """
+        for champ in ("participant", "atelier", "dossier", "consignes", "sante"):
+            if not isinstance(payload.get(champ), dict):
+                raise HTTPException(status_code=422, detail=f"payload.{champ} manquant")
+        with tempfile.TemporaryDirectory(dir=cfg.data_dir, prefix="fiche-") as out:
+            try:
+                pdf_path = build_fiche_pdf(payload, out)
+            except Exception as exc:  # rendu/compilation — détail utile côté appelant
+                raise HTTPException(status_code=500, detail=f"rendu fiche: {exc}") from exc
+            data = pdf_path.read_bytes()
+        return Response(
+            content=data,
+            media_type="application/pdf",
+            headers={
+                "X-Fiche-Reference": str(payload.get("dossier", {}).get("reference", "")),
+                "X-Fiche-Empreinte": fiche_empreinte(payload),
+            },
+        )
 
     return app
 

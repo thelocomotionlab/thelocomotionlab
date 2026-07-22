@@ -33,6 +33,7 @@ thelocomotionlab/
 │  ├─ site/                  # site public (Next + JS, App Router), CF Pages
 │  │  ├─ app/                     # IA refonte 2026 : comprendre (la science, type "article"),
 │  │  │                           #   explorer (le terrain : récits + projets fusionnés),
+│  │  │                           #   pratiquer (ateliers mouvement primal, lib/ateliers.mjs),
 │  │  │                           #   quete (ex-manifeste), outils/twin (teaser), live (hub),
 │  │  │                           #   about, contact, soutenir, recherche ; /articles /projets
 │  │  │                           #   → 308 (générées au build, lib/legacyRedirects.mjs) ;
@@ -49,6 +50,8 @@ thelocomotionlab/
 │  │     └─ components/           # Button, Field, PageShell
 │  └─ tracking/              # live-tracking partagé (carte, replay, useTrackingData)
 ├─ services/                # services backend conteneurisés (Docker → GHCR → VPS)
+│  ├─ atelier-api/          # inscriptions aux ateliers (page Pratiquer) : décompte des
+│  │                        #   places, liste d'attente, purge admin (Node/TS + Fastify)
 │  ├─ tracking-cache/       # back live-tracking (Node/TS)
 │  ├─ email-gateway/        # Worker CF : formulaires site → Listmonk (double opt-in)
 │  ├─ live-journal/         # journal de bord du live (Node/TS + Fastify) : webhook Telegram
