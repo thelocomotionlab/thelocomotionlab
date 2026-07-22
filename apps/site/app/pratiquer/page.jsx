@@ -27,7 +27,6 @@ const SEANCE_STEPS = [
   { title: "Éveil", text: "Aligner corps et esprit pour la séance." },
   {
     title: "Exploration",
-    heart: true,
     text: "Quadrupédie, brachiation, mouvements dans les arbres ; inspiré des grands primates et selon la thématique du jour.",
   },
   {
@@ -141,7 +140,7 @@ export default function PratiquerPage() {
           src={PHOTOS.pedagogie.src}
           alt={PHOTOS.pedagogie.alt}
           sizes="(min-width: 768px) 480px, 100vw"
-          className="hidden h-[300px] rounded-2xl md:block"
+          className="hidden h-[300px] md:block"
         />
       </section>
 
