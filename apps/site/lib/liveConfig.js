@@ -17,20 +17,20 @@
 export const liveConfig = {
   aventure: {
     // Nom affiché en grand.
-    nom: "Reconnaissance aux Vouillants",
+    nom: "Les 4x2000m de Chartreuse",
 
     // Départ : date + heure + fuseau (+02:00 l'été). Pilote le compte à
     // rebours et le numéro du jour du journal.
-    dateDebut: "2026-07-24T16:00:00+02:00",
+    dateDebut: "2026-07-24T08:30:00+02:00",
 
     // Période affichée sur la carte de partage.
-    dates: "23 juillet 2026",
+    dates: "24 juillet 2026",
 
     // Phrase d'intention, en italique sous le titre.
-    intention: "Une boucle d'essai dans les Vouillants pour éprouver le direct.",
+    intention: "Boucle qui relie les 4 sommets de plus 2 000 m de Chartreuse.",
 
     // Trace prévue : le .track.json généré au geste 2.
-    trace: "/tracks/vouillands.track.json",
+    trace: "/tracks/4x2000m-chartreuse.track.json",
 
     // Repères de cols sur le profil : [{ nom: "Col Vert", km: 6 }, …].
     // Laisse [] pour n'en afficher aucun.
@@ -43,13 +43,13 @@ export const liveConfig = {
     statut: process.env.NEXT_PUBLIC_LIVE_STATUT || "avant",
 
     // Dossier du replay, créé à l'arrivée par la commande export-archive.
-    archive: "/replays/tour-des-ecrins-2026/archive.json",
+    archive: "/replays/4x2000m-chartreuse/archive.json",
   },
 
   // Libellés affichés AILLEURS que sur /live (accueil, tête de la page Explorer).
   indicateur: {
-    enDirect: "Les Vouillants en direct",
-    prochainDepart: "Les Vouillants",
+    enDirect: "Les 4x2000m de Chartreuse",
+    prochainDepart: "Le tour des Écrins",
   },
 };
 
