@@ -110,18 +110,59 @@ const coords = simplifyTrack(
   MAP_TOLERANCE,
 ).map(([lng, lat]) => [Number(lng.toFixed(5)), Number(lat.toFixed(5))]);
 
+// D+/D− cumulés avec hystérésis 5 m : l'altitude GPX est bruitée, sans seuil
+// le D+ gonfle de 20-30 %. Le cumul est porté par chaque point du profil →
+// l'encart de survol peut afficher « D+ accumulé à ce point ».
+const HYSTERESIS_M = 5;
+let dPlus = 0;
+let dMinus = 0;
+let refAlt = full[0].alt;
+const cumul = new Array(full.length);
+let elevMin = Infinity;
+let elevMax = -Infinity;
+for (let i = 0; i < full.length; i++) {
+  const delta = full[i].alt - refAlt;
+  if (delta >= HYSTERESIS_M) {
+    dPlus += delta;
+    refAlt = full[i].alt;
+  } else if (delta <= -HYSTERESIS_M) {
+    dMinus -= delta;
+    refAlt = full[i].alt;
+  }
+  cumul[i] = { dp: dPlus, dm: dMinus };
+  if (full[i].alt < elevMin) elevMin = full[i].alt;
+  if (full[i].alt > elevMax) elevMax = full[i].alt;
+}
+
 const step = Math.max(1, full.length / PROFILE_POINTS);
 const profile = [];
+const pushProfilePoint = (i) => {
+  const p = full[i];
+  // lat/lng par point : le survol du profil pose un point synchronisé sur la carte.
+  profile.push({
+    km: Number(p.km.toFixed(2)),
+    alt: Math.round(p.alt),
+    lat: Number(p.lat.toFixed(5)),
+    lng: Number(p.lng.toFixed(5)),
+    dp: Math.round(cumul[i].dp),
+    dm: Math.round(cumul[i].dm),
+  });
+};
 for (let i = 0; i < PROFILE_POINTS && Math.floor(i * step) < full.length; i++) {
-  const p = full[Math.floor(i * step)];
-  profile.push({ km: Number(p.km.toFixed(2)), alt: Math.round(p.alt) });
+  pushProfilePoint(Math.floor(i * step));
 }
-profile.push({ km: Number(totalKm.toFixed(2)), alt: Math.round(full[full.length - 1].alt) });
+pushProfilePoint(full.length - 1);
 
 const output = {
   schemaVersion: 1,
   source: path.basename(input),
   totalKm: Number(totalKm.toFixed(2)),
+  // Stats CALCULÉES depuis le GPX — la page les préfère aux valeurs saisies
+  // de liveConfig (aucune discordance possible entre le .json et le terrain).
+  dPlusM: Math.round(dPlus),
+  dMinusM: Math.round(dMinus),
+  elevMinM: Math.round(elevMin),
+  elevMaxM: Math.round(elevMax),
   coords,
   profile,
 };
@@ -130,5 +171,5 @@ const outPath = input.replace(/\.gpx$/i, ".track.json");
 fs.writeFileSync(outPath, JSON.stringify(output));
 const kb = (fs.statSync(outPath).size / 1024).toFixed(0);
 console.log(
-  `${outPath} : ${coords.length} pts carte (sur ${raw.length}), ${profile.length} pts profil, ${totalKm.toFixed(1)} km, ${kb} Ko`,
+  `${outPath} : ${coords.length} pts carte (sur ${raw.length}), ${profile.length} pts profil, ${totalKm.toFixed(1)} km, D+ ${Math.round(dPlus)} m / D− ${Math.round(dMinus)} m, alt ${Math.round(elevMin)}–${Math.round(elevMax)} m, ${kb} Ko`,
 );
