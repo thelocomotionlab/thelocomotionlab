@@ -26,8 +26,8 @@ export const liveConfig = {
     dates: "20–24 août 2026",
     // REPLI d'affichage avant le chargement de la trace (la page et l'OG
     // préfèrent totalKm/dPlusM calculés du GPX).
-    distanceKm: 194,
-    deniveleM: 12000,
+/*    distanceKm: 194,
+    deniveleM: 12000,*/
     // [PREMIER JET — à réécrire par Valentin] Intention de l'état « Avant ».
     intention:
       "Une boucle intégrale autour du massif, sans assistance, sur le fil du GR54.",
@@ -53,7 +53,7 @@ export const liveConfig = {
 
   // Libellés des indicateurs HORS /live (accueil + tête de /explorer).
   indicateur: {
-    enDirect: "Tour des Écrins en direct",
+    enDirect: "Les 4x2000 m de Chartreuse",
     prochainDepart: "Tour des Écrins",
   },
 };
