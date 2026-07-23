@@ -21,7 +21,6 @@ const ERREUR = "Le message n'est pas parti — réessaie dans un instant.";
 export default function MessageCard() {
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
-  const [email, setEmail] = useState("");
   const [website, setWebsite] = useState(""); // honeypot
   const [status, setStatus] = useState("idle"); // idle | sending | sent | error
 
@@ -36,7 +35,6 @@ export default function MessageCard() {
         body: JSON.stringify({
           message: message.trim(),
           prenom: prenom.trim(),
-          email: email.trim(),
           website,
         }),
       });
@@ -77,26 +75,13 @@ export default function MessageCard() {
               required
               className={`mt-3 min-h-[84px] w-full resize-y ${fieldClass} text-sm`}
             />
-            <div className="mt-2 flex gap-2">
-              <input
-                value={prenom}
-                onChange={(e) => setPrenom(e.target.value)}
-                placeholder="Prénom (facultatif)"
-                maxLength={50}
-                className={`min-w-0 flex-1 ${fieldClass}`}
-              />
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email (facultatif)"
-                type="email"
-                maxLength={254}
-                className={`min-w-0 flex-[1.2] ${fieldClass}`}
-              />
-            </div>
-            <p className="mt-1.5 font-heading text-[11px] text-brand-text/60">
-              Email : si tu veux une réponse après l&rsquo;aventure.
-            </p>
+            <input
+              value={prenom}
+              onChange={(e) => setPrenom(e.target.value)}
+              placeholder="Prénom"
+              maxLength={50}
+              className={`mt-2 w-full ${fieldClass}`}
+            />
             <button
               type="submit"
               disabled={status === "sending"}
@@ -106,7 +91,8 @@ export default function MessageCard() {
             </button>
           </div>
 
-          {/* 2d : variante compacte (une ligne) — même état, même envoi */}
+          {/* 2d : variante desktop (pleine largeur sous carte + journal) —
+              message + prénom + envoyer, même état, même envoi. */}
           <div className="mt-2.5 hidden gap-2 lg:flex">
             <input
               value={message}
@@ -115,6 +101,13 @@ export default function MessageCard() {
               maxLength={1000}
               required
               className={`min-w-0 flex-1 rounded-[11px] ${fieldClass}`}
+            />
+            <input
+              value={prenom}
+              onChange={(e) => setPrenom(e.target.value)}
+              placeholder="Prénom"
+              maxLength={50}
+              className={`w-[180px] flex-none rounded-[11px] ${fieldClass}`}
             />
             <button
               type="submit"

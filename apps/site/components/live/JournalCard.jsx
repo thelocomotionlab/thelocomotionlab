@@ -43,15 +43,22 @@ export default function JournalCard({
   counterLabel = null,
   footer = null,
   scrollable = true,
+  // `fill` : la carte remplit la hauteur de sa colonne flex (état En cours,
+  // desktop) et scrolle en interne — au lieu d'un plafond fixe.
+  fill = false,
 }) {
   const visible = (entries ?? []).filter((e) => KNOWN_TYPES.has(e.type));
   const newestFirst = [...visible].reverse();
 
+  const heightClass = fill
+    ? "lg:h-full lg:min-h-0 lg:overflow-y-auto"
+    : scrollable
+      ? "lg:max-h-[430px] lg:overflow-y-auto"
+      : "";
+
   return (
     <section
-      className={`rounded-[18px] border border-brand-text/10 bg-white px-[18px] pb-2 pt-[18px] shadow-[0_6px_20px_rgba(51,51,51,0.06)] lg:px-5 lg:shadow-none ${
-        scrollable ? "lg:max-h-[430px] lg:overflow-y-auto" : ""
-      }`}
+      className={`rounded-[18px] border border-brand-text/10 bg-white px-[18px] pb-2 pt-[18px] shadow-[0_6px_20px_rgba(51,51,51,0.06)] lg:px-5 lg:shadow-none ${heightClass}`}
     >
       <div className="mb-4 flex items-center justify-between">
         <p className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-brand-deep-dark">

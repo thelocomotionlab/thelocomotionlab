@@ -11,7 +11,7 @@
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 
-import { journalApiBase, liveConfig, liveReglages } from "@/lib/liveConfig";
+import { liveConfig, liveReglages } from "@/lib/liveConfig";
 import { freshnessState } from "@/lib/freshness";
 import { dayIndex } from "@/lib/liveTime";
 import { useJournal } from "@/lib/useJournal";
@@ -24,6 +24,7 @@ import MapStyleSwitch from "./MapStyleSwitch";
 import MessageCard from "./MessageCard";
 import ProfileCard from "./ProfileCard";
 import ProgressionCard from "./ProgressionCard";
+import ShareButton from "./ShareButton";
 
 // maplibre ne se charge que quand le direct est actif (budget premier chargement).
 const LiveMap = dynamic(() => import("./LiveMap"), {
@@ -94,10 +95,13 @@ export default function LiveEnCours({ timer }) {
         onMapStyle={setMapStyle}
       />
 
-      <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[1fr_460px] lg:items-start lg:gap-5">
-        {/* Colonne gauche desktop : carte + profil. */}
+      {/* Grille : mobile 1 colonne (ordre du design), desktop 2 colonnes de
+          MÊME hauteur. Carte + profil gardent leurs dimensions (flex-none) ;
+          SEUL le journal s'étire pour aligner sa base sur celle du profil. */}
+      <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[1fr_460px] lg:items-stretch lg:gap-5">
+        {/* Gauche : carte + profil (tailles inchangées). */}
         <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-4">
-          <div className="relative order-1 h-[380px] max-lg:-mx-4 sm:max-lg:-mx-6 lg:h-[520px] lg:overflow-hidden lg:border lg:border-brand-text/10">
+          <div className="relative order-1 h-[380px] max-lg:-mx-4 sm:max-lg:-mx-6 lg:order-none lg:h-[520px] lg:flex-none lg:overflow-hidden lg:border lg:border-brand-text/10">
             <LiveMap
               referenceCoords={reference?.coords}
               doneCoords={doneCoords}
@@ -110,7 +114,7 @@ export default function LiveEnCours({ timer }) {
             <FreshnessPill state={freshness} />
           </div>
 
-          <div className="order-3">
+          <div className="order-3 lg:order-none lg:flex-none">
             <ProfileCard
               profile={reference?.profile}
               totalKm={reference?.totalKm}
@@ -123,34 +127,27 @@ export default function LiveEnCours({ timer }) {
           </div>
         </div>
 
-        {/* Colonne droite desktop : progression + journal + message. */}
-        <div className="contents lg:flex lg:flex-col lg:gap-4">
-          <div className="order-2">
+        {/* Droite : progression (taille fixe) + journal (remplit le reste). */}
+        <div className="contents lg:flex lg:min-h-0 lg:flex-col lg:gap-4">
+          <div className="order-2 lg:order-none lg:flex-none">
             <ProgressionCard
               stats={stats}
               totalKm={reference?.totalKm}
               elapsedSeconds={elapsedSeconds}
             />
           </div>
-          <div className="order-4">
-            <JournalCard entries={journal?.entries} dateDebut={aventure.dateDebut} />
+          <div className="order-4 lg:order-none lg:min-h-0 lg:flex-1">
+            <JournalCard entries={journal?.entries} dateDebut={aventure.dateDebut} fill />
           </div>
-          <div className="order-5">
-            <MessageCard />
-          </div>
-
-          {/* Story de partage (PR4) — lien discret, usage manuel Instagram. */}
-          <p className="order-6 text-right">
-            <a
-              href={`${journalApiBase}/journal/story.png`}
-              target="_blank"
-              rel="noreferrer"
-              className="font-heading text-[11px] text-brand-text/45 underline-offset-2 hover:underline"
-            >
-              Télécharger la story
-            </a>
-          </p>
         </div>
+      </div>
+
+      {/* Sous la grille, PLEINE LARGEUR : partage + « Laisse un mot ». */}
+      <div className="mt-3.5 lg:mt-5">
+        <div className="mb-3 flex justify-end">
+          <ShareButton />
+        </div>
+        <MessageCard />
       </div>
     </div>
   );

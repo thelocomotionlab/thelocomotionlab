@@ -7,9 +7,12 @@
 //     --journal   https://api.thelocomotionlab.com/journal/journal.json \
 //     --media-base https://api.thelocomotionlab.com \
 //     --out apps/site/public/replays/tour-des-ecrins-2026 \
-//     --slug tour-des-ecrins-2026 --nom "Tour des Écrins en autonomie" \
-//     --date-debut 2026-08-20 --date-fin 2026-08-24 \
-//     --distance-km 194 --denivele-m 12000
+//     --slug tour-des-ecrins-2026 --nom "Tour des Écrins en autonomie"
+//
+// Distance, D+ et dates sont DÉDUITS des données (stats + horodatage des
+// positions) — plus besoin de les saisir. On peut toutefois les forcer avec
+// --distance-km / --denivele-m / --date-debut / --date-fin (une valeur donnée
+// l'emporte sur la déduction).
 //
 // L'archive NON CONFORME au contrat n'est jamais écrite (validation bloquante).
 // `chat` reste vide par construction.
@@ -19,7 +22,10 @@ import path from "node:path";
 
 import { buildArchive, validateArchive, type ArchiveMeta } from "./archive";
 
-function parseArgs(argv: string[]): Map<string, string> {
+function parseArgs(rawArgv: string[]): Map<string, string> {
+  // pnpm transmet parfois un « -- » nu en tête (`pnpm … export-archive -- …`) :
+  // on l'ignore pour que la commande documentée fonctionne telle quelle.
+  const argv = rawArgv[0] === "--" ? rawArgv.slice(1) : rawArgv;
   const args = new Map<string, string>();
   for (let i = 0; i < argv.length; i += 2) {
     const key = argv[i];
@@ -65,17 +71,17 @@ async function readMedia(mediaBase: string, fromUrl: string): Promise<Buffer> {
   return fs.readFileSync(local);
 }
 
+/** Date « AAAA-MM-JJ » (fuseau Europe/Paris) d'un horodatage ISO, ou null. */
+function parisDate(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const t = new Date(iso);
+  if (Number.isNaN(t.getTime())) return null;
+  return t.toLocaleDateString("fr-CA", { timeZone: "Europe/Paris" }); // → 2026-07-24
+}
+
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
 
-  const meta: ArchiveMeta = {
-    slug: required(args, "slug"),
-    nom: required(args, "nom"),
-    dateDebut: required(args, "date-debut"),
-    dateFin: required(args, "date-fin"),
-    distanceKm: Number(required(args, "distance-km")),
-    denivelePositifM: Number(required(args, "denivele-m")),
-  };
   const outDir = required(args, "out");
   const mediaBase = required(args, "media-base");
 
@@ -83,6 +89,34 @@ async function main(): Promise<void> {
     readJson(required(args, "positions")),
     readJson(required(args, "journal")),
   ]);
+
+  // Déduction depuis les données (surchargée par un argument s'il est fourni).
+  const lp = livePositions as {
+    stats?: { distance?: number; dplus?: number; lastFixTime?: string | null };
+    profile?: Array<{ fixTime?: string | null }>;
+  };
+  const profile = lp.profile ?? [];
+  const premierFix = profile.find((p) => p.fixTime)?.fixTime ?? null;
+  const dernierFix =
+    lp.stats?.lastFixTime ?? [...profile].reverse().find((p) => p.fixTime)?.fixTime ?? null;
+
+  const dateDebut = args.get("date-debut") ?? parisDate(premierFix);
+  const dateFin = args.get("date-fin") ?? parisDate(dernierFix);
+  if (!dateDebut) fail("date de début introuvable (positions non datées) — précise --date-debut");
+  if (!dateFin) fail("date de fin introuvable (positions non datées) — précise --date-fin");
+
+  const meta: ArchiveMeta = {
+    slug: required(args, "slug"),
+    nom: required(args, "nom"),
+    dateDebut,
+    dateFin,
+    distanceKm: args.has("distance-km")
+      ? Number(args.get("distance-km"))
+      : Math.round(((lp.stats?.distance ?? 0) / 1000) * 10) / 10,
+    denivelePositifM: args.has("denivele-m")
+      ? Number(args.get("denivele-m"))
+      : Math.round(lp.stats?.dplus ?? 0),
+  };
 
   const { archive, media } = buildArchive({
     meta,
