@@ -25,7 +25,16 @@ const LiveMap = dynamic(() => import("./LiveMap"), {
 export default function LiveAvant() {
   const { aventure, live } = liveConfig;
   const reference = useReferenceTrack(live.referenceTrack);
-  const [mapStyle, setMapStyle] = useState("osm");
+  const [mapStyle, setMapStyle] = useState("topo");
+  const [hoverPoint, setHoverPoint] = useState(null);
+
+  // Stats CALCULÉES depuis la trace GPX quand elle est chargée (aucune
+  // discordance possible avec le terrain) ; les valeurs saisies de liveConfig
+  // ne servent que de repli d'affichage avant le fetch.
+  const distanceKm = reference?.totalKm ?? aventure.distanceKm;
+  const deniveleM = reference?.dPlusM ?? aventure.deniveleM;
+  const elevationMin = reference?.elevMinM ?? live.elevationMin;
+  const elevationMax = reference?.elevMaxM ?? live.elevationMax;
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-3.5">
@@ -41,12 +50,12 @@ export default function LiveAvant() {
           <span>{aventure.dates}</span>
           <span className="text-brand-text/30">·</span>
           <span>
-            <strong className="font-bold text-brand-text">{aventure.distanceKm}</strong> km
+            <strong className="font-bold text-brand-text">{Math.round(distanceKm)}</strong> km
           </span>
           <span className="text-brand-text/30">·</span>
           <span>
             <strong className="font-bold text-brand-text">
-              ~{aventure.deniveleM.toLocaleString("fr-FR")}
+              ~{Math.round(deniveleM).toLocaleString("fr-FR")}
             </strong>{" "}
             m D+
           </span>
@@ -71,19 +80,27 @@ export default function LiveAvant() {
           <MapStyleSwitch value={mapStyle} onChange={setMapStyle} variant="header" />
         </div>
         <div className="relative h-[280px] overflow-hidden rounded-[18px] border border-brand-text/10 sm:h-[380px]">
-          <LiveMap referenceCoords={reference?.coords} doneCoords={[]} mapStyle={mapStyle} markerMode="depart" />
+          <LiveMap
+            referenceCoords={reference?.coords}
+            doneCoords={[]}
+            mapStyle={mapStyle}
+            markerMode="depart"
+            hoverPoint={hoverPoint}
+          />
         </div>
       </div>
 
-      {/* Profil altimétrique : doneKm=0 → ligne brune seule, pas de marqueur */}
+      {/* Profil altimétrique : doneKm=0 → ligne brune seule, pas de marqueur.
+          Le survol pose son point jumeau sur la carte (hoverPoint). */}
       {reference?.profile && (
         <ProfileCard
           profile={reference.profile}
           totalKm={reference.totalKm}
           doneKm={0}
-          elevationMin={live.elevationMin}
-          elevationMax={live.elevationMax}
+          elevationMin={elevationMin}
+          elevationMax={elevationMax}
           waypoints={live.waypoints ?? []}
+          onHoverPoint={setHoverPoint}
         />
       )}
 

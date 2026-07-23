@@ -33,7 +33,8 @@ const LiveMap = dynamic(() => import("./LiveMap"), {
 
 export default function LiveEnCours({ timer }) {
   const { aventure, live } = liveConfig;
-  const [mapStyle, setMapStyle] = useState("osm");
+  const [mapStyle, setMapStyle] = useState("topo");
+  const [hoverPoint, setHoverPoint] = useState(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const positions = useLivePositions({ pollMs: live.positionsPollMs });
@@ -82,7 +83,12 @@ export default function LiveEnCours({ timer }) {
         {/* Colonne gauche desktop : carte + profil. */}
         <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-4">
           <div className="relative order-1 h-[380px] max-lg:-mx-4 sm:max-lg:-mx-6 lg:h-[520px] lg:overflow-hidden lg:rounded-[18px] lg:border lg:border-brand-text/10">
-            <LiveMap referenceCoords={reference?.coords} doneCoords={doneCoords} mapStyle={mapStyle} />
+            <LiveMap
+              referenceCoords={reference?.coords}
+              doneCoords={doneCoords}
+              mapStyle={mapStyle}
+              hoverPoint={hoverPoint}
+            />
             <div className="absolute right-3 top-3 z-[5] lg:hidden">
               <MapStyleSwitch value={mapStyle} onChange={setMapStyle} />
             </div>
@@ -94,9 +100,10 @@ export default function LiveEnCours({ timer }) {
               profile={reference?.profile}
               totalKm={reference?.totalKm ?? aventure.distanceKm}
               doneKm={(stats?.distance ?? 0) / 1000}
-              elevationMin={live.elevationMin}
-              elevationMax={live.elevationMax}
+              elevationMin={reference?.elevMinM ?? live.elevationMin}
+              elevationMax={reference?.elevMaxM ?? live.elevationMax}
               waypoints={live.waypoints ?? []}
+              onHoverPoint={setHoverPoint}
             />
           </div>
         </div>
@@ -106,7 +113,7 @@ export default function LiveEnCours({ timer }) {
           <div className="order-2">
             <ProgressionCard
               stats={stats}
-              totalKm={aventure.distanceKm}
+              totalKm={reference?.totalKm ?? aventure.distanceKm}
               elapsedSeconds={elapsedSeconds}
             />
           </div>

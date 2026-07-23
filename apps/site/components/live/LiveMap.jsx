@@ -1,10 +1,13 @@
 // components/live/LiveMap.jsx
 //
-// La carte de l'état « En cours » (design 2a/2d) — composant du SITE :
+// La carte des états du live (design 2a/2d) — composant du SITE :
 // packages/tracking (replays des projets) n'est pas touché. maplibre-gl en
-// import direct, chargé dynamiquement par LiveEnCours (ssr:false).
-// Style : trace prévisionnelle pointillée brun sur liseré crème, trace vécue
-// ambre sur liseré crème, marqueur coureur à halo pulsant. Les deux traces
+// import direct, chargé dynamiquement (ssr:false).
+// Style (recette 2026-07-24) : itinéraire prévisionnel en TIRETS FINS et
+// trace vécue en trait PLEIN ÉPAIS, même teinte fuchsia (lib/liveTraceColors)
+// sur liseré blanc — lisible sur les trois fonds. Fond « Topo » = Esri World
+// Topo (relief ombré). Marqueur coureur à halo pulsant ; `hoverPoint` pose le
+// point synchronisé avec le survol du profil altimétrique. Les deux traces
 // sont SIMPLIFIÉES (Douglas-Peucker) avant affichage.
 
 "use client";
@@ -15,6 +18,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { brandColors } from "@locomotionlab/ui";
 
 import { simplifyTrack } from "@/lib/simplify";
+import { traceColors } from "@/lib/liveTraceColors";
 
 const RASTER_STYLES = {
   // Fond « Plan » (OSM standard) : mêmes tuiles que les cartes des projets
@@ -33,19 +37,19 @@ const RASTER_STYLES = {
     },
     layers: [{ id: "raster", type: "raster", source: "raster" }],
   },
+  // Fond « Topo » PAR DÉFAUT : Esri World Topo — relief ombré très lisible
+  // (recette 2026-07-24 : OpenTopoMap jugé illisible, remplacé).
   topo: {
     version: 8,
     sources: {
       raster: {
         type: "raster",
         tiles: [
-          "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
-          "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
-          "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
+          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
         ],
         tileSize: 256,
-        maxzoom: 17,
-        attribution: "© OpenTopoMap",
+        maxzoom: 19,
+        attribution: "Tiles © Esri — Esri, HERE, Garmin, FAO, NOAA, USGS",
       },
     },
     layers: [{ id: "raster", type: "raster", source: "raster" }],
@@ -80,19 +84,10 @@ function boundsOf(coords) {
   return bounds;
 }
 
-// Couleurs des traces par fond : sur le Plan OSM (fond par défaut, coloré),
-// on reprend la paire éprouvée des cartes de projets — itinéraire bleu,
-// vécu orange ; sur Topo/Satellite, la palette du design live (brun/ambre).
-// (Constantes JS de la charte : maplibre peint sur canvas, var() impossible.)
-const TRACE_COLORS = {
-  osm: { reference: "#007bff", done: "#ff5500" },
-  topo: { reference: brandColors.deepDark, done: brandColors.accent },
-  sat: { reference: brandColors.deepDark, done: brandColors.accent },
-};
-
-/** Les 4 couches du design (2 halos crème + itinéraire pointillé + vécu). */
-function addTrackLayers(map, styleId) {
-  const colors = TRACE_COLORS[styleId] ?? TRACE_COLORS.osm;
+/** Les 4 couches du design : itinéraire en TIRETS FINS, vécu en PLEIN ÉPAIS,
+ *  même teinte (traceColors.line), chacun sur son liseré blanc — la paire
+ *  reste discernable et contrastée sur les trois fonds. */
+function addTrackLayers(map) {
   map.addSource("reference", { type: "geojson", data: lineFeature([]) });
   map.addSource("done", { type: "geojson", data: lineFeature([]) });
   map.addLayer({
@@ -100,7 +95,7 @@ function addTrackLayers(map, styleId) {
     type: "line",
     source: "reference",
     layout: { "line-cap": "round", "line-join": "round" },
-    paint: { "line-color": brandColors.bg, "line-width": 6, "line-opacity": 0.6 },
+    paint: { "line-color": traceColors.casing, "line-width": 4.5, "line-opacity": 0.9 },
   });
   map.addLayer({
     id: "rfl",
@@ -108,10 +103,10 @@ function addTrackLayers(map, styleId) {
     source: "reference",
     layout: { "line-join": "round" },
     paint: {
-      "line-color": colors.reference,
-      "line-width": 2.4,
-      "line-dasharray": [2, 1.6],
-      "line-opacity": 0.8,
+      "line-color": traceColors.line,
+      "line-width": 1.8,
+      "line-dasharray": [1.5, 2.2],
+      "line-opacity": 0.95,
     },
   });
   map.addLayer({
@@ -119,14 +114,14 @@ function addTrackLayers(map, styleId) {
     type: "line",
     source: "done",
     layout: { "line-cap": "round", "line-join": "round" },
-    paint: { "line-color": brandColors.bg, "line-width": 8 },
+    paint: { "line-color": traceColors.casing, "line-width": 8, "line-opacity": 0.95 },
   });
   map.addLayer({
     id: "rdl",
     type: "line",
     source: "done",
     layout: { "line-cap": "round", "line-join": "round" },
-    paint: { "line-color": colors.done, "line-width": 4.5 },
+    paint: { "line-color": traceColors.line, "line-width": 4.5 },
   });
 }
 
@@ -155,10 +150,17 @@ function runnerElement(mode) {
   return el;
 }
 
-export default function LiveMap({ referenceCoords, doneCoords, mapStyle, markerMode = "live" }) {
+export default function LiveMap({
+  referenceCoords,
+  doneCoords,
+  mapStyle,
+  markerMode = "live",
+  hoverPoint = null,
+}) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
+  const hoverRef = useRef(null);
   const fittedRef = useRef("none"); // "none" | "done" | "reference"
   const dataRef = useRef({ reference: [], done: [] });
   // Fond initial figé pour l'init (l'effet ne tourne qu'une fois).
@@ -189,11 +191,13 @@ export default function LiveMap({ referenceCoords, doneCoords, mapStyle, markerM
     });
     mapRef.current = map;
     map.on("load", () => {
-      addTrackLayers(map, styleId);
+      addTrackLayers(map);
       pushData(map, dataRef.current);
     });
     return () => {
       markerRef.current?.remove();
+      hoverRef.current?.remove();
+      hoverRef.current = null;
       map.remove();
       mapRef.current = null;
     };
@@ -206,10 +210,29 @@ export default function LiveMap({ referenceCoords, doneCoords, mapStyle, markerM
     if (!map.isStyleLoaded()) return; // le premier fond est posé par "load"
     map.setStyle(RASTER_STYLES[mapStyle] ?? RASTER_STYLES.osm);
     map.once("styledata", () => {
-      if (!map.getSource("reference")) addTrackLayers(map, mapStyle);
+      if (!map.getSource("reference")) addTrackLayers(map);
       pushData(map, dataRef.current);
     });
   }, [mapStyle]);
+
+  // Point de survol du profil altimétrique : petit disque fuchsia à liseré
+  // blanc, posé/déplacé au fil du survol, retiré quand la souris sort.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (!hoverPoint) {
+      hoverRef.current?.remove();
+      hoverRef.current = null;
+      return;
+    }
+    if (!hoverRef.current) {
+      const el = document.createElement("div");
+      el.style.cssText = `width:13px;height:13px;border-radius:50%;background:${traceColors.line};border:2.5px solid ${traceColors.casing};box-shadow:0 1px 6px rgba(0,0,0,0.35);pointer-events:none;`;
+      hoverRef.current = new maplibregl.Marker({ element: el }).setLngLat(hoverPoint).addTo(map);
+    } else {
+      hoverRef.current.setLngLat(hoverPoint);
+    }
+  }, [hoverPoint]);
 
   // Mise à jour des traces + marqueur + cadrage initial.
   useEffect(() => {
