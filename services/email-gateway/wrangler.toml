@@ -1,12 +1,16 @@
-# services/email-gateway — Worker Cloudflare de capture email.
+# services/email-gateway — Worker Cloudflare des formulaires email du site.
 #
-# Reçoit les inscriptions des formulaires du site (POST /subscribe) et crée
-# le contact dans Listmonk (auto-hébergé sur le VPS) avec son attribut
-# `source` ; Listmonk envoie l'email de confirmation (double opt-in).
+# POST /subscribe : inscriptions des encarts email → contact créé dans
+#   Listmonk (auto-hébergé sur le VPS) avec son attribut `source` ;
+#   Listmonk envoie l'email de confirmation (double opt-in).
+# POST /contact : formulaire de contact → relayé vers CONTACT_TO via l'API
+#   transactionnelle Brevo, Reply-To = le visiteur.
 #
 # Secrets (JAMAIS ici — `npx wrangler secret put <NOM>`) :
 #   LISTMONK_API_USER   — nom de l'utilisateur d'API créé dans Listmonk
 #   LISTMONK_API_TOKEN  — son token
+#   BREVO_API_KEY       — clé API v3 Brevo (Settings → SMTP & API → API Keys ;
+#                         ce n'est PAS la clé SMTP)
 #
 # Dev local : `npx wrangler dev` (cf. README.md).
 
@@ -24,3 +28,8 @@ LISTMONK_LIST_ID = "3"
 # Les deux origines *.pages.dev couvrent la PHASE STAGING (alias de branche du
 # projet Pages existant, ou projet dédié) — à retirer au lancement officiel.
 ALLOWED_ORIGINS = "https://thelocomotionlab.com,https://www.thelocomotionlab.com,https://staging.thelocomotionlab-website.pages.dev,https://thelocomotionlab-staging.pages.dev,http://localhost:3000"
+# Formulaire de contact : destinataire et expéditeur du relai (pas des secrets).
+# CONTACT_TO est routé par Cloudflare Email Routing vers la boîte de Valentin ;
+# CONTACT_FROM doit appartenir au domaine authentifié chez Brevo (DKIM).
+CONTACT_TO = "contact@thelocomotionlab.com"
+CONTACT_FROM = "contact@thelocomotionlab.com"

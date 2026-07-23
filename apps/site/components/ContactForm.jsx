@@ -1,4 +1,11 @@
 // components/ContactForm.jsx
+//
+// Deux chemins d'envoi :
+//  - NEXT_PUBLIC_CONTACT_ENDPOINT défini → passerelle du repo
+//    (services/email-gateway, POST /contact : relai Brevo, Reply-To = le
+//    visiteur, honeypot) ;
+//  - sinon → repli sur l'ANCIEN Worker send-email (hors repo), flux
+//    historique inchangé.
 "use client";
 
 import { Suspense, useState } from "react";
@@ -7,6 +14,8 @@ import { Button, Field, brandColors } from "@locomotionlab/ui";
 import PageHeader from "@/components/PageHeader";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const CONTACT_ENDPOINT = process.env.NEXT_PUBLIC_CONTACT_ENDPOINT || "";
+const LEGACY_ENDPOINT = "https://send-email.thelocomotionlab.workers.dev/";
 
 // Messages pré-remplis via /contact?sujet=… (le formulaire n'a pas de champ
 // sujet : on amorce le message, l'utilisateur reste libre de l'éditer).
@@ -48,6 +57,7 @@ function ContactFormInner({ initialMessage = "" }) {
     email: "",
     message: initialMessage,
   });
+  const [website, setWebsite] = useState(""); // honeypot (passerelle)
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [status, setStatus] = useState("idle");
@@ -79,6 +89,36 @@ function ContactFormInner({ initialMessage = "" }) {
 
     setStatus("sending");
 
+    // Chemin passerelle (repo) : payload structuré, le Worker compose l'email.
+    if (CONTACT_ENDPOINT) {
+      try {
+        const res = await fetch(CONTACT_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: formData.name.trim(),
+            email: formData.email.trim(),
+            message: formData.message.trim(),
+            website,
+          }),
+        });
+        if (res.ok) {
+          setStatus("success");
+          setFormData({ name: "", email: "", message: "" });
+          setWebsite("");
+          setErrors({});
+          setTouched({});
+        } else {
+          console.error("Erreur lors de l’envoi :", await res.text());
+          setStatus("error");
+        }
+      } catch (err) {
+        console.error("Erreur réseau :", err);
+        setStatus("error");
+      }
+      return;
+    }
+
     try {
       // Couleur d'accent depuis la charte (packages/ui) — pas de valeur en dur.
       const htmlMessage = `
@@ -98,7 +138,7 @@ function ContactFormInner({ initialMessage = "" }) {
       `;
 
       const res = await fetch(
-        "https://send-email.thelocomotionlab.workers.dev/",
+        LEGACY_ENDPOINT,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -179,6 +219,21 @@ function ContactFormInner({ initialMessage = "" }) {
           onBlur={handleBlur}
           error={errors.message}
         />
+
+        {/* Honeypot anti-robots : invisible et hors tabulation (même pattern
+            qu'EmailCapture). Lu par la passerelle ; ignoré par l'ancien flux. */}
+        <div className="absolute -left-[9999px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+          <label htmlFor="contact-website">Ne pas remplir ce champ</label>
+          <input
+            id="contact-website"
+            type="text"
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+          />
+        </div>
 
         <Button type="submit" loading={status === "sending"}>
           {status === "sending" ? "Envoi..." : "Envoyer"}
