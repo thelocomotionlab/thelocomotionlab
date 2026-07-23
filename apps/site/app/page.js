@@ -368,7 +368,7 @@ export default async function HomePage() {
 >        <div className="mx-auto flex max-w-[1000px] flex-col gap-6 md:flex-row md:items-center md:justify-between md:gap-10">
           <div>
             <p className="text-[21px] font-bold text-white">
-              Recevoir les prochaines explorations
+              Recevoir les nouveautés du labo
             </p>
             <p className="mt-1 text-[13px] italic text-white/85">
               {MICRO_PROMESSE}
