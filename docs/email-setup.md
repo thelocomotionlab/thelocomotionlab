@@ -54,6 +54,13 @@
    chargés au démarrage). L'**objet** de l'email vient de la traduction
    système FR (non surchargé — acceptable).
 5. **Settings → Media / Privacy** : rien à changer aujourd'hui.
+6. **Gabarit de campagne « Le Lab »** (annonces, parutions) : la source de
+   vérité est versionnée dans
+   [`infra/listmonk/campaign-templates/le-lab.html`](../infra/listmonk/campaign-templates/le-lab.html)
+   (procédure d'installation en tête du fichier : Campaigns → Templates →
+   New → coller → Set as default). Contrairement à l'opt-in, les templates
+   de campagne vivent en base — l'UI est le lieu d'installation, le repo la
+   référence.
 
 ## 3. Créer le compte Brevo (relais d'envoi, ≈ 10 min, gratuit)
 

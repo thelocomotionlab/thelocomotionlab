@@ -67,6 +67,18 @@ function safeEqual(a: string, b: string): boolean {
   return ab.length === bb.length && crypto.timingSafeEqual(ab, bb);
 }
 
+/** IP réelle du visiteur (même helper que live-journal) : api.* est derrière
+ *  le proxy Cloudflare, où req.ip remonte au bord CF — seule CF-Connecting-IP
+ *  est fiable pour le rate-limit et la preuve portée par la fiche. Repli
+ *  X-Forwarded-For puis req.ip en accès direct (dev, tests). */
+function clientIp(req: FastifyRequest): string {
+  const cf = req.headers["cf-connecting-ip"];
+  if (typeof cf === "string" && cf.length > 0) return cf;
+  const xff = req.headers["x-forwarded-for"];
+  if (typeof xff === "string" && xff.length > 0) return xff.split(",")[0].trim();
+  return req.ip || "unknown";
+}
+
 async function renderViaTwin(baseUrl: string, payload: Record<string, unknown>): Promise<Buffer> {
   const res = await fetch(`${baseUrl}/fiche`, {
     method: "POST",
@@ -164,7 +176,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   app.post("/ateliers/inscriptions", async (req, reply) => {
     void reply.headers(corsFor(req));
 
-    if (!limiter.allow(req.ip)) {
+    if (!limiter.allow(clientIp(req))) {
       return reply.code(429).send({ ok: false, error: "trop_de_requetes" });
     }
 
@@ -235,7 +247,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     const payload = payloadFiche(config, atelier, fiche, contenu, {
       reference,
       horodatage,
-      ip: req.ip,
+      ip: clientIp(req),
     });
     store.add(atelier.id, fiche.participant.prenom, email, false, {
       nom: fiche.participant.nom,
