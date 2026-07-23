@@ -13,6 +13,8 @@ export interface MessageConfig {
   maxEmailLength: number;
   ratePerMinute: number;
   ratePerHour: number;
+  /** Taille max d'une pièce jointe visiteur (photo/vidéo/vocal), en octets. */
+  maxUploadBytes: number;
 }
 
 export interface MediaConfig {
@@ -150,6 +152,10 @@ export function loadConfig(): Config {
       maxEmailLength: envInt("EMAIL_MAX_LENGTH", file.message?.maxEmailLength ?? 254),
       ratePerMinute: envInt("MESSAGE_RATE_PER_MINUTE", file.message?.ratePerMinute ?? 5),
       ratePerHour: envInt("MESSAGE_RATE_PER_HOUR", file.message?.ratePerHour ?? 30),
+      maxUploadBytes: envInt(
+        "MESSAGE_MAX_UPLOAD_BYTES",
+        file.message?.maxUploadBytes ?? 20 * 1024 * 1024,
+      ),
     },
     media: {
       photoMaxWidth: envInt("PHOTO_MAX_WIDTH", file.media?.photoMaxWidth ?? 1600),

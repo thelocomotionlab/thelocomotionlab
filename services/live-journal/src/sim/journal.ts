@@ -37,6 +37,9 @@ export function createSimTelegramApi(fixturesDir: string): TelegramApi {
     async sendMessage(_chatId, text) {
       console.log(new Date().toISOString(), `[sim] réponse bot : ${text.split("\n")[0]}`);
     },
+    async sendMedia(_chatId, media) {
+      console.log(new Date().toISOString(), `[sim] média visiteur : ${media.method} (${media.mimeType})`);
+    },
     async getFile(fileId) {
       return { file_id: fileId, file_path: fileId.replace(/^sim:/, "") };
     },

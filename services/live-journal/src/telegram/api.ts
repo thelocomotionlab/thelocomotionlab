@@ -3,9 +3,24 @@
 
 import type { TgFile, TgUpdate, TgWebhookInfo } from "./types";
 
+export type TgMediaMethod = "sendPhoto" | "sendVideo" | "sendAudio" | "sendDocument";
+
+export interface TgMediaUpload {
+  /** Méthode Telegram + nom du champ multipart (photo/video/audio/document). */
+  method: TgMediaMethod;
+  field: "photo" | "video" | "audio" | "document";
+  buffer: Buffer;
+  filename: string;
+  mimeType: string;
+  /** Légende (≤ 1024 car. côté Telegram). */
+  caption?: string;
+}
+
 export interface TelegramApi {
   /** Envoie un message (confirmations au terrain, messages privés des visiteurs). */
   sendMessage(chatId: number | string, text: string, replyToMessageId?: number): Promise<void>;
+  /** Envoie un média (photo/vidéo/audio/document) en upload multipart. */
+  sendMedia(chatId: number | string, media: TgMediaUpload): Promise<void>;
   /** Résout un file_id en chemin de téléchargement. */
   getFile(fileId: string): Promise<TgFile>;
   /** Télécharge un fichier (borné : maxBytes, sinon erreur). */
@@ -18,6 +33,7 @@ export interface TelegramApi {
 
 const CALL_TIMEOUT_MS = 30_000;
 const DOWNLOAD_TIMEOUT_MS = 120_000;
+const UPLOAD_TIMEOUT_MS = 120_000;
 
 export function createTelegramApi(botToken: string, apiBase: string): TelegramApi {
   const base = apiBase.replace(/\/$/, "");
@@ -45,6 +61,29 @@ export function createTelegramApi(botToken: string, apiBase: string): TelegramAp
         payload.reply_parameters = { message_id: replyToMessageId };
       }
       await call("sendMessage", payload);
+    },
+
+    async sendMedia(chatId, media) {
+      // Upload multipart (le fichier n'est jamais stocké côté service : il
+      // transite en mémoire depuis la requête visiteur vers Telegram).
+      const form = new FormData();
+      form.append("chat_id", String(chatId));
+      if (media.caption) form.append("caption", media.caption);
+      form.append(
+        media.field,
+        new Blob([media.buffer], { type: media.mimeType }),
+        media.filename,
+      );
+      const res = await fetch(methodUrl(media.method), {
+        method: "POST",
+        body: form,
+        signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS),
+      });
+      const body = (await res.json()) as { ok: boolean; description?: string };
+      if (!res.ok || !body.ok) {
+        // Jamais le contenu dans les logs : statut + description seulement.
+        throw new Error(`Telegram ${media.method} → ${res.status} ${body.description ?? ""}`.trim());
+      }
     },
 
     async getFile(fileId) {
