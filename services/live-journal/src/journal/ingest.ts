@@ -38,12 +38,17 @@ const REPLIES = {
   deleted: "🗑 Supprimé",
   deleteUsage: "Réponds à l'entrée à supprimer avec /supprimer",
   deleteNotFound: "Je ne retrouve pas cette entrée.",
+  purgeConfirm:
+    "⚠️ /purger efface TOUT le carnet de bord (irréversible). Pour confirmer, envoie : /purger confirmer",
+  purgeEmpty: "Le carnet est déjà vide.",
+  purged: (n: number) => `🧹 Carnet vidé — ${n} entrée${n > 1 ? "s" : ""} supprimée${n > 1 ? "s" : ""}.`,
   unknownType: "Type non géré — rien n'a été publié",
   help: [
     "Journal de bord du live — envoie simplement :",
     "• un texte, une photo (légende possible), un vocal ou une vidéo (≤ 20 Mo) ;",
     "• corrige une entrée en éditant ton message ;",
-    "• supprime-la en lui répondant /supprimer.",
+    "• supprime-la en lui répondant /supprimer ;",
+    "• vide TOUT le carnet avec /purger confirmer.",
   ].join("\n"),
 } as const;
 
@@ -125,6 +130,8 @@ export async function handleUpdate(update: TgUpdate, deps: IngestDeps): Promise<
       const command = text.split(/\s/)[0].toLowerCase();
       if (command === "/supprimer") {
         await handleDelete(message, deps, reply);
+      } else if (command === "/purger") {
+        await handlePurge(message, deps, reply);
       } else {
         await reply(REPLIES.help);
       }
@@ -326,4 +333,22 @@ async function handleDelete(
   counters.deleted += 1;
   log("entrée supprimée (/supprimer)");
   await reply(REPLIES.deleted);
+}
+
+/** /purger — vide TOUT le carnet (utile après un test). Garde-fou : exige
+ *  « /purger confirmer » pour éviter l'effacement accidentel. */
+async function handlePurge(
+  message: TgMessage,
+  deps: IngestDeps,
+  reply: (text: string) => Promise<void>,
+): Promise<void> {
+  const arg = (message.text ?? "").trim().split(/\s+/)[1]?.toLowerCase();
+  if (arg !== "confirmer") {
+    await reply(REPLIES.purgeConfirm);
+    return;
+  }
+  const removed = deps.store.purgeAll();
+  counters.deleted += removed;
+  log(`carnet purgé (${removed} entrées, /purger)`);
+  await reply(removed > 0 ? REPLIES.purged(removed) : REPLIES.purgeEmpty);
 }

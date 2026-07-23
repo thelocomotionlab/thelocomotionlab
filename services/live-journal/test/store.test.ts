@@ -50,6 +50,22 @@ describe("JournalStore", () => {
     expect(readJournal(config).count).toBe(0);
   });
 
+  it("purgeAll : vide toutes les entrées d'un coup, journal.json reprojeté vide", () => {
+    const { config, store } = makeRawStore();
+    store.append({ kind: "created", entry: entry({ id: "a", ts: "2026-08-20T10:00:00.000Z", text: "1" }) });
+    store.append({ kind: "created", entry: entry({ id: "b", ts: "2026-08-20T11:00:00.000Z", text: "2" }) });
+    expect(store.entryCount()).toBe(2);
+
+    const removed = store.purgeAll();
+    expect(removed).toBe(2);
+    expect(store.entryCount()).toBe(0);
+    expect(readJournal(config)).toMatchObject({ count: 0, entries: [] });
+
+    // Un nouveau message repart de zéro proprement.
+    store.append({ kind: "created", entry: entry({ id: "c", ts: "2026-08-20T12:00:00.000Z", text: "3" }) });
+    expect(readJournal(config).entries.map((e) => e.id)).toEqual(["c"]);
+  });
+
   it("état rechargé depuis state.json : événements et dédup survivent au redémarrage", () => {
     const { config, store } = makeRawStore();
     store.append({

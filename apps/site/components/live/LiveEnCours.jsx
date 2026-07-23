@@ -55,6 +55,7 @@ export default function LiveEnCours({ timer }) {
     [positions],
   );
 
+  const running = timer?.running === true;
   const stats = positions?.stats;
   // Pas de pastille tant que la PREMIÈRE réponse des positions n'est pas là :
   // sinon « premier signal » clignote à chaque chargement en pleine course.
@@ -62,15 +63,18 @@ export default function LiveEnCours({ timer }) {
     positions === null
       ? null
       : freshnessState({
-          running: timer?.running === true,
+          running,
           lastFixTime: stats?.lastFixTime ?? null,
           nowMs,
           zoneBlancheMinutes: liveReglages.zoneBlancheMinutes,
         });
 
+  // Chrono : court tant que ça tourne, FIGÉ à l'heure d'arrêt une fois stoppé.
   const startMs = timer?.startTime ? Date.parse(timer.startTime) : NaN;
+  const stopMs = timer?.stopTime ? Date.parse(timer.stopTime) : NaN;
+  const endMs = running ? nowMs : Number.isFinite(stopMs) ? stopMs : nowMs;
   const elapsedSeconds = Number.isFinite(startMs)
-    ? Math.max(0, (nowMs - startMs) / 1000)
+    ? Math.max(0, (endMs - startMs) / 1000)
     : (stats?.durationSeconds ?? 0);
 
   const jour = dayIndex(new Date(nowMs).toISOString(), aventure.dateDebut);
@@ -85,6 +89,7 @@ export default function LiveEnCours({ timer }) {
         distanceKm={distanceKm}
         deniveleM={deniveleM}
         jour={jour}
+        running={running}
         mapStyle={mapStyle}
         onMapStyle={setMapStyle}
       />

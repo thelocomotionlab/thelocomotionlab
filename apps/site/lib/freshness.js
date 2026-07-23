@@ -31,6 +31,17 @@ export function freshnessState({ running, lastFixTime, nowMs, zoneBlancheMinutes
   if (!Number.isFinite(parsed)) return null;
   const ageMinutes = Math.max(0, Math.floor((nowMs - parsed) / 60_000));
 
+  // Session arrêtée (./track stop) : le parcours est FIGÉ, pas en zone blanche.
+  // Point neutre, aucune alerte — la page reste consultable telle quelle.
+  if (!running) {
+    return {
+      regime: "fige",
+      ageMinutes,
+      strong: "Parcours figé",
+      rest: " — suivi arrêté.",
+    };
+  }
+
   if (ageMinutes >= zoneBlancheMinutes) {
     // Texte exact du design (2e) — seul « Zone blanche probable » est en gras.
     return {

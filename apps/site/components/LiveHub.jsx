@@ -1,11 +1,12 @@
 // components/LiveHub.jsx
 //
-// Cœur client de la page /live : la bascule des TROIS états (chantier 2, PR3).
-//   - aventure.statut === "termine" → état « Terminé » (archive.json seul) ;
-//   - live-timer.running            → état « En cours » (design 2a/2d, PR2) ;
-//   - sinon                         → état « Avant » (design 2b).
-// Le statut vient de liveConfig (surchargeable au build : NEXT_PUBLIC_LIVE_STATUT) ;
-// le direct reste déclenché par le terrain (track start → live-timer.json).
+// Cœur client de la page /live : la bascule des états.
+//   - aventure.statut === "termine"  → « Terminé » (archive.json seul) ;
+//   - le tracker a démarré (startTime) → « En cours », qu'il tourne encore
+//     (`./track start`) OU qu'il soit à l'arrêt (`./track stop`, page FIGÉE) ;
+//   - sinon (jamais démarré, ou `./track reset`) → « Avant ».
+// Autrement dit : `./track stop` fige le « pendant » (il ne revient PAS à
+// « avant ») ; pour passer à « Terminé », voir la note en bas de liveConfig.js.
 
 "use client";
 
@@ -22,6 +23,8 @@ export default function LiveHub() {
   const timer = useLiveTimer({ pollMs: termine ? 0 : 30000 });
 
   if (termine) return <LiveTermine />;
-  if (timer?.running === true) return <LiveEnCours timer={timer} />;
+  // startTime présent = une session a été lancée (et pas encore `reset`) :
+  // « En cours » vivant si running, figé sinon.
+  if (timer && (timer.running === true || timer.startTime)) return <LiveEnCours timer={timer} />;
   return <LiveAvant />;
 }

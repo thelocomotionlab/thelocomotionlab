@@ -1,12 +1,10 @@
 // components/live/Countdown.jsx
 //
-// Compte à rebours de l'état « Avant » — redessiné (recette 2026-07-24) :
-// une SEULE carte, kicker « Départ dans », chiffres en grand (tabular-nums :
-// aucun tremblement au tick), unités discrètes en mono, secondes en
-// terracotta (le battement de la page). Les jours disparaissent à J-0, un
-// zéro de tête cale min/sec. À échéance : « Le départ est imminent… »
-// Tick 1 s côté client, calé sur la date de départ de liveConfig. Rendu SSR
-// neutre (tirets) pour éviter tout écart d'hydratation.
+// Compte à rebours de l'état « Avant » : kicker « Départ le <jour mois>, dans »,
+// puis une rangée d'unités jour/heure/min/sec — grand chiffre NOIR (tabular-nums,
+// même échelle que le % de la page « pendant »), petite unité dessous. Les jours
+// disparaissent à J-0. À échéance : « Le départ est imminent… ». Tick 1 s côté
+// client ; rendu SSR neutre (tirets) pour éviter tout écart d'hydratation.
 
 "use client";
 
@@ -27,12 +25,6 @@ const pad = (n) => String(n).padStart(2, "0");
 
 export default function Countdown({ dateDebut }) {
   const [values, setValues] = useState(null); // null au SSR
-  // « Départ le 20 août, dans » — la date vient de liveConfig, le kicker la
-  // passe en capitales.
-  const quand = new Date(Date.parse(dateDebut)).toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "long",
-  });
 
   useEffect(() => {
     const tick = () => setValues(remaining(dateDebut, Date.now()));
@@ -41,24 +33,29 @@ export default function Countdown({ dateDebut }) {
     return () => clearInterval(id);
   }, [dateDebut]);
 
+  const quand = new Date(Date.parse(dateDebut)).toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "long",
+  });
+
   const imminent = values && values.d === 0 && values.h === 0 && values.m === 0 && values.s === 0;
   const units = values
     ? [
-        ...(values.d > 0 ? [{ v: String(values.d), label: values.d > 1 ? "jours" : "jour" }] : []),
-        { v: values.d > 0 ? pad(values.h) : String(values.h), label: values.h > 1 ? "heures" : "heure" },
-        { v: pad(values.m), label: "min" },
-        { v: pad(values.s), label: "sec", accent: true },
+        ...(values.d > 0 ? [{ key: "d", v: String(values.d), label: values.d > 1 ? "jours" : "jour" }] : []),
+        { key: "h", v: values.d > 0 ? pad(values.h) : String(values.h), label: "h" },
+        { key: "m", v: pad(values.m), label: "min" },
+        { key: "s", v: pad(values.s), label: "sec" },
       ]
     : [
-        { v: "–", label: "jours" },
-        { v: "–", label: "heures" },
-        { v: "–", label: "min" },
-        { v: "–", label: "sec", accent: true },
+        { key: "d", v: "–", label: "jours" },
+        { key: "h", v: "–", label: "h" },
+        { key: "m", v: "–", label: "min" },
+        { key: "s", v: "–", label: "sec" },
       ];
 
   return (
     <div className="rounded-[18px] border border-brand-text/10 bg-white px-4 py-4 text-center sm:py-[18px]">
-      <p className="m-0 font-mono text-[10.5px] font-bold uppercase tracking-[0.22em] text-brand-deep-dark">
+      <p className="m-0 font-mono text-[10.5px] font-bold uppercase tracking-[0.2em] text-brand-deep-dark">
         Départ le {quand}, dans
       </p>
       {imminent ? (
@@ -66,30 +63,16 @@ export default function Countdown({ dateDebut }) {
           Le départ est imminent…
         </p>
       ) : (
-        <div className="mt-2.5 flex items-baseline justify-center">
-          {units.map((u, i) => (
-            <span key={u.label} className="flex items-baseline">
-              {i > 0 && (
-                <span
-                  aria-hidden="true"
-                  className="mx-2 select-none font-heading text-[20px] font-light text-brand-text/20 sm:mx-3"
-                >
-                  ·
-                </span>
-              )}
-              <span className="flex items-baseline gap-[5px]">
-                <span
-                  className={`font-heading text-[32px] font-bold leading-none tabular-nums sm:text-[38px] ${
-                    u.accent ? "text-brand-deep" : "text-brand-primary-dark"
-                  }`}
-                >
-                  {u.v}
-                </span>
-                <span className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-brand-text/45">
-                  {u.label}
-                </span>
+        <div className="mt-2 flex items-end justify-center gap-3 sm:gap-6">
+          {units.map((u) => (
+            <div key={u.key} className="flex min-w-0 flex-col items-center">
+              <span className="font-heading text-[34px] font-bold leading-none tabular-nums text-brand-text sm:text-[40px]">
+                {u.v}
               </span>
-            </span>
+              <span className="mt-1 font-mono text-[9px] uppercase tracking-[0.1em] text-brand-text/45 sm:text-[9.5px]">
+                {u.label}
+              </span>
+            </div>
           ))}
         </div>
       )}

@@ -127,6 +127,18 @@ export class JournalStore {
     return this.reduceEntries().length;
   }
 
+  /** Purge TOTALE du carnet (commande /purger) : vide toutes les entrées d'un
+   *  coup. Le log d'événements est remis à zéro (l'anti-rejeu des updates
+   *  Telegram est conservé) ; journal.json est reprojeté vide. Les médias déjà
+   *  écrits sur le volume ne sont plus référencés (nettoyage disque à part). */
+  purgeAll(): number {
+    const removed = this.reduceEntries().length;
+    this.events = [];
+    this.persistState();
+    this.project();
+    return removed;
+  }
+
   private persistState(): void {
     const state: StateFile = {
       schemaVersion: 1,
