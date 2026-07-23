@@ -79,7 +79,21 @@ export default function ProfileCard({
       if (p.km > markKm) break;
       markAlt = p.alt;
     }
-    return { line, remainArea, coverLine, coverArea, markX: x(markKm), markY: y(markAlt), pts };
+
+    // Grille légère d'arrière-plan : pas « ronds » choisis pour ~4 lignes
+    // horizontales (altitude) et ~5 verticales (km). L'aire du profil la
+    // recouvre (masque blanc opaque sous l'aire translucide).
+    const niceStep = (raw, steps) => steps.find((s) => raw <= s) ?? steps[steps.length - 1];
+    const altStep = niceStep((elevationMax - elevationMin) / 4, [50, 100, 200, 250, 500, 1000, 2000]);
+    const kmStep = niceStep(totalKm / 6, [1, 2, 5, 10, 20, 25, 50, 100]);
+    const gridY = [];
+    for (let a = Math.ceil(elevationMin / altStep) * altStep; a < elevationMax; a += altStep) {
+      gridY.push(y(a));
+    }
+    const gridX = [];
+    for (let k = kmStep; k < totalKm; k += kmStep) gridX.push(x(k));
+
+    return { line, remainArea, coverLine, coverArea, markX: x(markKm), markY: y(markAlt), pts, gridX, gridY };
   }, [profile, totalKm, doneKm, elevationMin, elevationMax]);
 
   if (!geometry) return null;
@@ -108,13 +122,9 @@ export default function ProfileCard({
 
   return (
     <section className="rounded-[18px] border border-brand-text/10 bg-white px-4 pb-2.5 pt-4 shadow-[0_6px_20px_rgba(51,51,51,0.06)] lg:px-[22px] lg:shadow-none">
-      <div className="mb-2 flex items-baseline justify-between">
+      <div className="mb-2">
         <p className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-brand-deep-dark">
           Profil altimétrique
-        </p>
-        <p className="font-heading text-[10.5px] text-brand-text/55 lg:text-[11px]">
-          <span className="max-lg:hidden">0 → {Math.round(totalKm)} km · </span>
-          {elevationMin.toLocaleString("fr-FR")} → {elevationMax.toLocaleString("fr-FR")} m
         </p>
       </div>
 
@@ -130,6 +140,34 @@ export default function ProfileCard({
           className="block h-[110px] w-full overflow-visible"
           aria-hidden="true"
         >
+          {/* Grille d'arrière-plan (très légère), recouverte par l'aire. */}
+          {geometry.gridY.map((gy) => (
+            <line
+              key={`gy-${gy}`}
+              x1="0"
+              y1={gy}
+              x2={W}
+              y2={gy}
+              stroke="rgba(51,51,51,0.08)"
+              strokeWidth="1"
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
+          {geometry.gridX.map((gx) => (
+            <line
+              key={`gx-${gx}`}
+              x1={gx}
+              y1={TOP}
+              x2={gx}
+              y2={BASE_Y}
+              stroke="rgba(51,51,51,0.08)"
+              strokeWidth="1"
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
+          {/* Masque blanc opaque sous l'aire translucide : la grille disparaît
+              dans l'aire du profil sans changer sa couleur perçue. */}
+          <path d={geometry.remainArea} fill="#ffffff" />
           <path d={geometry.remainArea} fill="rgba(154,96,68,0.10)" />
           {geometry.coverArea && <path d={geometry.coverArea} fill="rgba(239,177,89,0.32)" />}
           <path d={geometry.line} fill="none" stroke={brandColors.deepDark} strokeWidth="1.6" strokeLinejoin="round" />

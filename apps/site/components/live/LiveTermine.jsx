@@ -126,8 +126,8 @@ export default function LiveTermine() {
       </section>
 
       {/* Trace vécue */}
-      <div className="relative h-[280px] overflow-hidden rounded-[18px] border border-brand-text/10 sm:h-[380px]">
-        <LiveMap referenceCoords={[]} doneCoords={coords} mapStyle="topo" markerMode="arrivee" />
+      <div className="relative h-[280px] overflow-hidden border border-brand-text/10 sm:h-[380px]">
+        <LiveMap referenceCoords={[]} doneCoords={coords} mapStyle="relief" markerMode="arrivee" />
       </div>
 
       {/* Récit à paraître */}

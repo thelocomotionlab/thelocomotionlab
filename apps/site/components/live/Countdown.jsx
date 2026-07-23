@@ -27,6 +27,12 @@ const pad = (n) => String(n).padStart(2, "0");
 
 export default function Countdown({ dateDebut }) {
   const [values, setValues] = useState(null); // null au SSR
+  // « Départ le 20 août, dans » — la date vient de liveConfig, le kicker la
+  // passe en capitales.
+  const quand = new Date(Date.parse(dateDebut)).toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "long",
+  });
 
   useEffect(() => {
     const tick = () => setValues(remaining(dateDebut, Date.now()));
@@ -53,7 +59,7 @@ export default function Countdown({ dateDebut }) {
   return (
     <div className="rounded-[18px] border border-brand-text/10 bg-white px-4 py-4 text-center sm:py-[18px]">
       <p className="m-0 font-mono text-[10.5px] font-bold uppercase tracking-[0.22em] text-brand-deep-dark">
-        Départ dans
+        Départ le {quand}, dans
       </p>
       {imminent ? (
         <p className="m-0 mt-2.5 font-lora text-lg italic text-brand-text">
@@ -74,7 +80,7 @@ export default function Countdown({ dateDebut }) {
               <span className="flex items-baseline gap-[5px]">
                 <span
                   className={`font-heading text-[32px] font-bold leading-none tabular-nums sm:text-[38px] ${
-                    u.accent ? "text-brand-deep" : "text-brand-text"
+                    u.accent ? "text-brand-deep" : "text-brand-primary-dark"
                   }`}
                 >
                   {u.v}
