@@ -68,9 +68,10 @@ export async function envoyerNotification(
     "",
     depot.objectifs ? `Courses passées / objectif :\n${depot.objectifs}` : "(Pas d'objectifs renseignés.)",
     "",
-    "Récupération : GET /twin/depots (listing) puis /twin/depots/<id>/archive",
-    "avec le Bearer TWIN_DEPOT_ADMIN_TOKEN — et DELETE /twin/depots/<id> une",
-    "fois l'analyse terminée (règle du labo : purge immédiate après analyse).",
+    "Récupération en une commande (télécharge, vérifie le SHA-256, purge) :",
+    "  TWIN_DEPOT_ADMIN_TOKEN=… services/twin-depot/scripts/rapatrier-depots.py",
+    "(ou à la main : GET /twin/depots, GET /twin/depots/<id>/archive,",
+    "DELETE /twin/depots/<id> — règle du labo : purge immédiate après analyse).",
   ].join("\n");
 
   await transporter.sendMail({
