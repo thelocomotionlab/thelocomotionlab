@@ -51,7 +51,7 @@ export default function JournalCard({
   const newestFirst = [...visible].reverse();
 
   const heightClass = fill
-    ? "lg:h-full lg:min-h-0 lg:overflow-y-auto"
+    ? "lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
     : scrollable
       ? "lg:max-h-[430px] lg:overflow-y-auto"
       : "";

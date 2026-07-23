@@ -6,6 +6,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import multipart from "@fastify/multipart";
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
 
 import type { Config } from "./config";
@@ -63,6 +64,21 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     trustProxy: true,
   });
 
+  // Pièces jointes des messages visiteurs (photo/vidéo/vocal) : parseur
+  // multipart, borné à une seule pièce et à la taille max configurée. Le
+  // fichier est streamé (jamais stocké) puis transmis à Telegram.
+  void app.register(multipart, {
+    // À la limite, busboy TRONQUE le flux (file.truncated) au lieu de jeter :
+    // on répond alors un 413 propre (même pattern que twin-depot).
+    throwFileSizeLimit: false,
+    limits: {
+      files: 1,
+      fileSize: config.message.maxUploadBytes,
+      fields: 10,
+      fieldSize: config.message.maxMessageLength + 1024,
+    },
+  });
+
   // Erreurs JSON → codes français, pattern email-gateway.
   app.setErrorHandler((err: { statusCode?: number }, _req, reply) => {
     const status = err.statusCode && err.statusCode >= 400 && err.statusCode < 500 ? 400 : 500;
@@ -104,7 +120,13 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
       const data = await og.source.collect();
       const png = await renderPng(storyCard(data), 1080, 1920);
       reply
-        .headers({ "Content-Type": "image/png", "Cache-Control": "no-store" })
+        .headers({
+          "Content-Type": "image/png",
+          "Cache-Control": "no-store",
+          // CORS ouvert : le bouton « Partager l'aventure » du site récupère
+          // l'image en fetch (cross-origin) pour le partage natif.
+          "Access-Control-Allow-Origin": "*",
+        })
         .send(png);
     });
 

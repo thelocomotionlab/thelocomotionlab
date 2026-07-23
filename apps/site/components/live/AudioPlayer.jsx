@@ -119,7 +119,10 @@ export default function AudioPlayer({ src, duration, seedId }) {
         )}
       </button>
 
-      <div className="flex h-[30px] flex-1 items-center gap-[2.5px] lg:h-6" aria-hidden="true">
+      <div
+        className="flex h-[30px] min-w-0 flex-1 items-center gap-[2.5px] overflow-hidden lg:h-6"
+        aria-hidden="true"
+      >
         {bars.map((height, i) => (
           <span
             key={i}
@@ -137,7 +140,7 @@ export default function AudioPlayer({ src, duration, seedId }) {
         ))}
       </div>
 
-      <span className="flex-none font-mono text-[11.5px] text-brand-text/65 lg:text-[11px]">
+      <span className="flex-none whitespace-nowrap font-mono text-[11.5px] tabular-nums text-brand-text/65 lg:text-[11px]">
         {playing || elapsed > 0 ? `${formatClockDuration(elapsed)} / ` : ""}
         {formatClockDuration(totalSeconds)}
       </span>

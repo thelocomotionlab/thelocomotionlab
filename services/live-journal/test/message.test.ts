@@ -49,6 +49,42 @@ function postMessage(payload: unknown, headers: Record<string, string> = {}) {
   });
 }
 
+/** Corps multipart construit à la main (champs texte + une pièce jointe). */
+function multipartBody(
+  fields: Record<string, string>,
+  file?: { field: string; filename: string; mimeType: string; content: Buffer },
+) {
+  const boundary = "----ljtestboundary9f2a";
+  const parts: Buffer[] = [];
+  for (const [k, v] of Object.entries(fields)) {
+    parts.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${k}"\r\n\r\n${v}\r\n`));
+  }
+  if (file) {
+    parts.push(
+      Buffer.from(
+        `--${boundary}\r\nContent-Disposition: form-data; name="${file.field}"; filename="${file.filename}"\r\nContent-Type: ${file.mimeType}\r\n\r\n`,
+      ),
+    );
+    parts.push(file.content, Buffer.from("\r\n"));
+  }
+  parts.push(Buffer.from(`--${boundary}--\r\n`));
+  return { body: Buffer.concat(parts), contentType: `multipart/form-data; boundary=${boundary}` };
+}
+
+function postMultipart(
+  fields: Record<string, string>,
+  file?: { field: string; filename: string; mimeType: string; content: Buffer },
+  headers: Record<string, string> = {},
+) {
+  const { body, contentType } = multipartBody(fields, file);
+  return app.inject({
+    method: "POST",
+    url: "/journal/message",
+    headers: { "content-type": contentType, origin: ORIGIN, ...headers },
+    payload: body,
+  });
+}
+
 describe("POST /journal/message", () => {
   it("message valide → 200 + transmission directe (prénom et email inclus)", async () => {
     const res = await postMessage({ message: "Allez Valentin !", prenom: "Jean", email: "jean@example.com" });
@@ -136,6 +172,95 @@ describe("POST /journal/message", () => {
     const res = await postMessage({ message: "perdu ?" });
     expect(res.statusCode).toBe(502);
     expect(res.json().error).toBe("service_indisponible");
+  });
+});
+
+describe("POST /journal/message — pièces jointes (multipart)", () => {
+  const PIXEL = Buffer.from("89504e470d0a1a0a", "hex"); // en-tête PNG factice
+
+  it("photo → 200, sendPhoto avec la légende (prénom + message)", async () => {
+    const res = await postMultipart(
+      { message: "Regarde ça", prenom: "Chloé", website: "" },
+      { field: "fichier", filename: "vue.jpg", mimeType: "image/jpeg", content: PIXEL },
+    );
+    expect(res.statusCode).toBe(200);
+    expect(telegram.media).toHaveLength(1);
+    expect(telegram.media[0]).toMatchObject({ method: "sendPhoto", field: "photo", mimeType: "image/jpeg" });
+    expect(telegram.media[0].caption).toContain("Chloé");
+    expect(telegram.media[0].caption).toContain("Regarde ça");
+    expect(telegram.sent).toHaveLength(0); // rien en texte
+  });
+
+  it("vocal enregistré (audio/*) → sendAudio ; vidéo → sendVideo", async () => {
+    await postMultipart(
+      { message: "", prenom: "", website: "" },
+      { field: "fichier", filename: "vocal.webm", mimeType: "audio/webm", content: PIXEL },
+    );
+    expect(telegram.media[0]).toMatchObject({ method: "sendAudio", field: "audio" });
+
+    await postMultipart(
+      { website: "" },
+      { field: "fichier", filename: "clip.mp4", mimeType: "video/mp4", content: PIXEL },
+    );
+    expect(telegram.media[1]).toMatchObject({ method: "sendVideo", field: "video" });
+  });
+
+  it("pièce jointe SANS texte → 200 (le texte est facultatif quand il y a un média)", async () => {
+    const res = await postMultipart(
+      { website: "" },
+      { field: "fichier", filename: "photo.jpg", mimeType: "image/jpeg", content: PIXEL },
+    );
+    expect(res.statusCode).toBe(200);
+    expect(telegram.media).toHaveLength(1);
+  });
+
+  it("type non supporté (pdf, exécutable…) → 400 type_non_supporte, rien n'est transmis", async () => {
+    const res = await postMultipart(
+      { website: "" },
+      { field: "fichier", filename: "virus.pdf", mimeType: "application/pdf", content: PIXEL },
+    );
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error).toBe("type_non_supporte");
+    expect(telegram.media).toHaveLength(0);
+  });
+
+  it("fichier plus lourd que la limite → 413 fichier_trop_gros", async () => {
+    makeApp({
+      message: {
+        maxMessageLength: 1000,
+        maxPrenomLength: 50,
+        maxEmailLength: 254,
+        ratePerMinute: 5,
+        ratePerHour: 30,
+        maxUploadBytes: 64,
+      },
+    });
+    const res = await postMultipart(
+      { website: "" },
+      { field: "fichier", filename: "gros.jpg", mimeType: "image/jpeg", content: Buffer.alloc(500, 1) },
+    );
+    expect(res.statusCode).toBe(413);
+    expect(res.json().error).toBe("fichier_trop_gros");
+    expect(telegram.media).toHaveLength(0);
+  });
+
+  it("honeypot rempli en multipart → faux succès, rien n'est transmis", async () => {
+    const res = await postMultipart(
+      { message: "spam", website: "rempli-par-un-robot" },
+      { field: "fichier", filename: "x.jpg", mimeType: "image/jpeg", content: PIXEL },
+    );
+    expect(res.statusCode).toBe(200);
+    expect(telegram.media).toHaveLength(0);
+    expect(telegram.sent).toHaveLength(0);
+  });
+
+  it("Telegram indisponible sur un média → 502", async () => {
+    telegram.failNextSend = true;
+    const res = await postMultipart(
+      { website: "" },
+      { field: "fichier", filename: "photo.jpg", mimeType: "image/jpeg", content: PIXEL },
+    );
+    expect(res.statusCode).toBe(502);
   });
 });
 

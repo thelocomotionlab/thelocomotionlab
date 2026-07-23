@@ -25,6 +25,7 @@ export function makeConfig(overrides: Partial<Config> = {}): Config {
       maxEmailLength: 254,
       ratePerMinute: 5,
       ratePerHour: 30,
+      maxUploadBytes: 20 * 1024 * 1024,
     },
     media: { photoMaxWidth: 1600, photoQuality: 80, maxDownloadBytes: 20 * 1024 * 1024 },
     videoEnabled: false,
@@ -54,13 +55,15 @@ export function makeStore(config: Config): JournalStore {
 
 export interface RecordingTelegram extends TelegramApi {
   sent: Array<{ chatId: number | string; text: string; replyTo?: number }>;
-  /** Fait échouer le prochain sendMessage (test du 502 de /message). */
+  media: Array<{ chatId: number | string; method: string; field: string; mimeType: string; size: number; caption?: string }>;
+  /** Fait échouer le prochain sendMessage/sendMedia (test du 502 de /message). */
   failNextSend: boolean;
 }
 
 export function makeTelegram(): RecordingTelegram {
   const api: RecordingTelegram = {
     sent: [],
+    media: [],
     failNextSend: false,
     async sendMessage(chatId, text, replyToMessageId) {
       if (api.failNextSend) {
@@ -68,6 +71,20 @@ export function makeTelegram(): RecordingTelegram {
         throw new Error("Telegram indisponible (test)");
       }
       api.sent.push({ chatId, text, replyTo: replyToMessageId });
+    },
+    async sendMedia(chatId, m) {
+      if (api.failNextSend) {
+        api.failNextSend = false;
+        throw new Error("Telegram indisponible (test)");
+      }
+      api.media.push({
+        chatId,
+        method: m.method,
+        field: m.field,
+        mimeType: m.mimeType,
+        size: m.buffer.byteLength,
+        caption: m.caption,
+      });
     },
     async getFile(fileId): Promise<TgFile> {
       return { file_id: fileId, file_path: `files/${fileId}.bin` };

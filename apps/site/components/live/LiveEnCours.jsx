@@ -127,27 +127,33 @@ export default function LiveEnCours({ timer }) {
           </div>
         </div>
 
-        {/* Droite : progression (taille fixe) + journal (remplit le reste). */}
-        <div className="contents lg:flex lg:min-h-0 lg:flex-col lg:gap-4">
-          <div className="order-2 lg:order-none lg:flex-none">
-            <ProgressionCard
-              stats={stats}
-              totalKm={reference?.totalKm}
-              elapsedSeconds={elapsedSeconds}
-            />
-          </div>
-          <div className="order-4 lg:order-none lg:min-h-0 lg:flex-1">
-            <JournalCard entries={journal?.entries} dateDebut={aventure.dateDebut} fill />
+        {/* Droite : progression + journal. Sur desktop, le contenu est en
+            position ABSOLUE (inset-0) : la colonne n'a donc pas de hauteur
+            propre → c'est carte+profil (à gauche) qui fixe la hauteur de la
+            ligne, et le journal (flex-1) se cale dessus en scrollant. */}
+        <div className="contents lg:relative lg:block lg:min-h-0">
+          <div className="contents lg:absolute lg:inset-0 lg:flex lg:flex-col lg:gap-4">
+            <div className="order-2 lg:order-none lg:flex-none">
+              <ProgressionCard
+                stats={stats}
+                totalKm={reference?.totalKm}
+                elapsedSeconds={elapsedSeconds}
+              />
+            </div>
+            <div className="order-4 lg:order-none lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
+              <JournalCard entries={journal?.entries} dateDebut={aventure.dateDebut} fill />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Sous la grille, PLEINE LARGEUR : partage + « Laisse un mot ». */}
+      {/* Sous la grille, PLEINE LARGEUR : « Laisse un mot », puis le partage
+          en dessous à gauche. */}
       <div className="mt-3.5 lg:mt-5">
-        <div className="mb-3 flex justify-end">
+        <MessageCard />
+        <div className="mt-3 flex justify-start">
           <ShareButton />
         </div>
-        <MessageCard />
       </div>
     </div>
   );

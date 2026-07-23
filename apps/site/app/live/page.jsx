@@ -65,7 +65,7 @@ export default function LivePage() {
       {/* Dernières parutions, dans tous les états — titre en Lora italique
           + filet, comme les sections du pilier Explorer. */}
       <section className="mt-14 max-w-4xl mx-auto">
-        <SectionHeading className="mb-6">À lire en attendant</SectionHeading>
+        <SectionHeading className="mb-6">À lire également</SectionHeading>
         <ExplorerCarousel items={carouselItems} tone="light" />
       </section>
 

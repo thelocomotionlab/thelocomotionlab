@@ -19,28 +19,37 @@ export default function ShareButton({ label = "Partager l'aventure" }) {
   async function partager() {
     if (busy) return;
     setBusy(true);
+    const url = `${journalApiBase}/journal/story.png?t=${Date.now()}`;
     try {
-      const res = await fetch(`${journalApiBase}/journal/story.png?t=${Date.now()}`);
-      if (!res.ok) throw new Error(String(res.status));
-      const blob = await res.blob();
-      const file = new File([blob], "locomotion-live.png", {
-        type: blob.type || "image/png",
-      });
-
-      // Partage natif si le navigateur sait partager un FICHIER (mobiles récents).
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "Le direct — The Locomotion Lab" });
-      } else {
-        // Repli : télécharger l'image (desktop / navigateurs sans partage fichier).
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "locomotion-live.png";
-        a.click();
-        URL.revokeObjectURL(url);
+      // 1) Partage natif avec FICHIER (mobiles) — nécessite le CORS sur
+      //    story.png ; on récupère le fichier AVANT de partager.
+      let file = null;
+      if (navigator.canShare) {
+        try {
+          const res = await fetch(url);
+          if (res.ok) {
+            const blob = await res.blob();
+            const f = new File([blob], "locomotion-live.png", {
+              type: blob.type || "image/png",
+            });
+            if (navigator.canShare({ files: [f] })) file = f;
+          }
+        } catch {
+          // CORS/réseau : on bascule sur l'ouverture directe ci-dessous.
+        }
       }
-    } catch {
-      // Partage annulé par l'utilisateur ou échec réseau : silencieux.
+
+      if (file) {
+        try {
+          await navigator.share({ files: [file], title: "Le direct — The Locomotion Lab" });
+        } catch {
+          // Partage annulé par l'utilisateur : ne rien faire.
+        }
+      } else {
+        // 2) Repli universel (desktop, ou partage fichier indisponible) :
+        //    ouvrir l'image de partage — l'utilisateur l'enregistre/partage.
+        window.open(url, "_blank", "noopener");
+      }
     } finally {
       setBusy(false);
     }
