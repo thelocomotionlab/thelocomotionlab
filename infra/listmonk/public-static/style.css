@@ -253,20 +253,11 @@ input[disabled] {
     text-align: center;
   }
 
+/* Pied « Powered by listmonk » des pages publiques : masqué (le wordmark du
+ * Lab est déjà l'identité de la page ; l'attribution reste dans le repo). */
 footer.container {
-  text-align: center;
-  color: #aaa;
-  font-size: 0.775em;
-  margin-top: 30px;
-  margin-bottom: 30px;
+  display: none;
 }
-  footer a {
-    color: #aaa;
-    text-decoration: none;
-  }
-  footer a:hover {
-    color: #333;
-  }
 
 @media screen and (max-width: 650px) {
   .wrap {
