@@ -106,7 +106,8 @@ export default function MessageCard() {
             </button>
           </div>
 
-          {/* 2d : variante compacte (une ligne) — même état, même envoi */}
+          {/* 2d : variante desktop (pleine largeur sous carte + journal) —
+              message + prénom + email + envoyer, même état, même envoi. */}
           <div className="mt-2.5 hidden gap-2 lg:flex">
             <input
               value={message}
@@ -115,6 +116,21 @@ export default function MessageCard() {
               maxLength={1000}
               required
               className={`min-w-0 flex-1 rounded-[11px] ${fieldClass}`}
+            />
+            <input
+              value={prenom}
+              onChange={(e) => setPrenom(e.target.value)}
+              placeholder="Prénom"
+              maxLength={50}
+              className={`w-[130px] flex-none rounded-[11px] ${fieldClass}`}
+            />
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email (facultatif)"
+              type="email"
+              maxLength={254}
+              className={`w-[190px] flex-none rounded-[11px] ${fieldClass}`}
             />
             <button
               type="submit"

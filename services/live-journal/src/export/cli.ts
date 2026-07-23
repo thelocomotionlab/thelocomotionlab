@@ -19,7 +19,10 @@ import path from "node:path";
 
 import { buildArchive, validateArchive, type ArchiveMeta } from "./archive";
 
-function parseArgs(argv: string[]): Map<string, string> {
+function parseArgs(rawArgv: string[]): Map<string, string> {
+  // pnpm transmet parfois un « -- » nu en tête (`pnpm … export-archive -- …`) :
+  // on l'ignore pour que la commande documentée fonctionne telle quelle.
+  const argv = rawArgv[0] === "--" ? rawArgv.slice(1) : rawArgv;
   const args = new Map<string, string>();
   for (let i = 0; i < argv.length; i += 2) {
     const key = argv[i];
