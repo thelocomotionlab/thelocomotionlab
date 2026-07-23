@@ -33,8 +33,6 @@ export default function LiveAvant() {
   // ne servent que de repli d'affichage avant le fetch.
   const distanceKm = reference?.totalKm ?? aventure.distanceKm;
   const deniveleM = reference?.dPlusM ?? aventure.deniveleM;
-  const elevationMin = reference?.elevMinM ?? live.elevationMin;
-  const elevationMax = reference?.elevMaxM ?? live.elevationMax;
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-3.5">
@@ -89,8 +87,8 @@ export default function LiveAvant() {
           profile={reference.profile}
           totalKm={reference.totalKm}
           doneKm={0}
-          elevationMin={elevationMin}
-          elevationMax={elevationMax}
+          elevationMin={reference.elevMinM}
+          elevationMax={reference.elevMaxM}
           waypoints={live.waypoints ?? []}
           onHoverPoint={setHoverPoint}
         />

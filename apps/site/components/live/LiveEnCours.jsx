@@ -74,10 +74,20 @@ export default function LiveEnCours({ timer }) {
     : (stats?.durationSeconds ?? 0);
 
   const jour = dayIndex(new Date(nowMs).toISOString(), aventure.dateDebut);
+  // Stats de la trace calculées du GPX (repli : valeurs saisies de liveConfig).
+  const distanceKm = reference?.totalKm ?? aventure.distanceKm;
+  const deniveleM = reference?.dPlusM ?? aventure.deniveleM;
 
   return (
     <div className="mx-auto max-w-6xl">
-      <LiveHeader aventure={aventure} jour={jour} mapStyle={mapStyle} onMapStyle={setMapStyle} />
+      <LiveHeader
+        aventure={aventure}
+        distanceKm={distanceKm}
+        deniveleM={deniveleM}
+        jour={jour}
+        mapStyle={mapStyle}
+        onMapStyle={setMapStyle}
+      />
 
       <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[1fr_460px] lg:items-start lg:gap-5">
         {/* Colonne gauche desktop : carte + profil. */}
@@ -100,8 +110,8 @@ export default function LiveEnCours({ timer }) {
               profile={reference?.profile}
               totalKm={reference?.totalKm ?? aventure.distanceKm}
               doneKm={(stats?.distance ?? 0) / 1000}
-              elevationMin={reference?.elevMinM ?? live.elevationMin}
-              elevationMax={reference?.elevMaxM ?? live.elevationMax}
+              elevationMin={reference?.elevMinM}
+              elevationMax={reference?.elevMaxM}
               waypoints={live.waypoints ?? []}
               onHoverPoint={setHoverPoint}
             />

@@ -12,8 +12,8 @@ function Dot() {
   return <span className="text-brand-text/30">·</span>;
 }
 
-export default function LiveHeader({ aventure, jour, mapStyle, onMapStyle }) {
-  const dPlus = aventure.deniveleM.toLocaleString("fr-FR");
+export default function LiveHeader({ aventure, distanceKm, deniveleM, jour, mapStyle, onMapStyle }) {
+  const dPlus = Math.round(deniveleM).toLocaleString("fr-FR");
 
   return (
     <div className="flex flex-col gap-2.5 pt-1 pb-3.5 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
@@ -44,7 +44,7 @@ export default function LiveHeader({ aventure, jour, mapStyle, onMapStyle }) {
             <span>The Locomotion Lab</span>
             <Dot />
             <span>
-              <strong className="font-bold text-brand-text">{aventure.distanceKm}</strong> km
+              <strong className="font-bold text-brand-text">{Math.round(distanceKm)}</strong> km
             </span>
             <Dot />
             <span>
@@ -62,7 +62,7 @@ export default function LiveHeader({ aventure, jour, mapStyle, onMapStyle }) {
         </h1>
         <div className="mt-1.5 flex gap-3 font-heading text-[12.5px] text-brand-text/65">
           <span>
-            <strong className="font-bold text-brand-text">{aventure.distanceKm}</strong> km
+            <strong className="font-bold text-brand-text">{Math.round(distanceKm)}</strong> km
           </span>
           <Dot />
           <span>

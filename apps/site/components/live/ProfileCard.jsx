@@ -46,17 +46,23 @@ export default function ProfileCard({
   const frameRef = useRef(null);
   const [hover, setHover] = useState(null); // { km, alt, dp?, dm?, x, y, frac }
 
-  // Formules d'échelle partagées entre la géométrie mémoïsée et le survol.
-  const xOf = (km) => (km / totalKm) * W;
-  const yOf = (alt) =>
-    TOP + (1 - (alt - elevationMin) / Math.max(1, elevationMax - elevationMin)) * (H - TOP - BOT);
-
   const geometry = useMemo(() => {
     if (!profile || profile.length < 2 || !(totalKm > 0)) return null;
     const pts = decimate(profile);
+    // Bornes altimétriques : celles passées en props (calculées du GPX par
+    // build:track), sinon dérivées du profil lui-même (vieux .track.json).
+    let emin = elevationMin;
+    let emax = elevationMax;
+    if (!Number.isFinite(emin) || !Number.isFinite(emax)) {
+      emin = Infinity;
+      emax = -Infinity;
+      for (const p of pts) {
+        if (p.alt < emin) emin = p.alt;
+        if (p.alt > emax) emax = p.alt;
+      }
+    }
     const x = (km) => (km / totalKm) * W;
-    const y = (alt) =>
-      TOP + (1 - (alt - elevationMin) / Math.max(1, elevationMax - elevationMin)) * (H - TOP - BOT);
+    const y = (alt) => TOP + (1 - (alt - emin) / Math.max(1, emax - emin)) * (H - TOP - BOT);
 
     const all = pts.map((p) => `${x(p.km).toFixed(1)} ${y(p.alt).toFixed(1)}`);
     const covered = pts.filter((p) => p.km <= doneKm);
@@ -84,16 +90,28 @@ export default function ProfileCard({
     // horizontales (altitude) et ~5 verticales (km). L'aire du profil la
     // recouvre (masque blanc opaque sous l'aire translucide).
     const niceStep = (raw, steps) => steps.find((s) => raw <= s) ?? steps[steps.length - 1];
-    const altStep = niceStep((elevationMax - elevationMin) / 4, [50, 100, 200, 250, 500, 1000, 2000]);
+    const altStep = niceStep((emax - emin) / 4, [50, 100, 200, 250, 500, 1000, 2000]);
     const kmStep = niceStep(totalKm / 6, [1, 2, 5, 10, 20, 25, 50, 100]);
     const gridY = [];
-    for (let a = Math.ceil(elevationMin / altStep) * altStep; a < elevationMax; a += altStep) {
+    for (let a = Math.ceil(emin / altStep) * altStep; a < emax; a += altStep) {
       gridY.push(y(a));
     }
     const gridX = [];
     for (let k = kmStep; k < totalKm; k += kmStep) gridX.push(x(k));
 
-    return { line, remainArea, coverLine, coverArea, markX: x(markKm), markY: y(markAlt), pts, gridX, gridY };
+    return {
+      line,
+      remainArea,
+      coverLine,
+      coverArea,
+      markX: x(markKm),
+      markY: y(markAlt),
+      pts,
+      gridX,
+      gridY,
+      emin,
+      emax,
+    };
   }, [profile, totalKm, doneKm, elevationMin, elevationMax]);
 
   if (!geometry) return null;
@@ -110,7 +128,12 @@ export default function ProfileCard({
     for (const p of geometry.pts) {
       if (Math.abs(p.km - km) < Math.abs(best.km - km)) best = p;
     }
-    setHover({ ...best, x: xOf(best.km), y: yOf(best.alt), frac });
+    const x = (best.km / totalKm) * W;
+    const y =
+      TOP +
+      (1 - (best.alt - geometry.emin) / Math.max(1, geometry.emax - geometry.emin)) *
+        (H - TOP - BOT);
+    setHover({ ...best, x, y, frac });
     onHoverPoint?.(
       Number.isFinite(best.lat) && Number.isFinite(best.lng) ? [best.lng, best.lat] : null,
     );
