@@ -24,9 +24,9 @@ export default function FreshnessPill({ state }) {
             strokeLinejoin="round"
           />
         </svg>
-      ) : state.regime === "fige" ? (
-        // Parcours figé (après ./track stop) : carré plein, statique, neutre.
-        <span className="h-[9px] w-[9px] flex-none rounded-[2px] bg-brand-text/45" />
+      ) : state.regime === "termine" ? (
+        // Aventure terminée (après ./track stop) : pastille pleine, statique.
+        <span className="h-[9px] w-[9px] flex-none rounded-full bg-brand-primary-dark" />
       ) : (
         <span className="relative h-[9px] w-[9px] flex-none">
           <span

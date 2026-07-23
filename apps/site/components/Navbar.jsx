@@ -36,7 +36,9 @@ const LIVE_NAV_ITEM = {
 const LIVE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 function liveWindowOpen() {
-  if (liveConfig.aventure.statut === "termine") return false;
+  const { statut } = liveConfig.aventure;
+  // Ni pendant un « terminé » (récit à part), ni au « repos » (rien à suivre).
+  if (statut === "termine" || statut === "repos") return false;
   const start = new Date(liveConfig.aventure.dateDebut).getTime();
   if (Number.isNaN(start)) return false;
   return Date.now() >= start - LIVE_WINDOW_MS;

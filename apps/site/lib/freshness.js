@@ -12,7 +12,7 @@ import { formatAgo } from "./liveTime";
  * @param {string|null} p.lastFixTime ISO de la dernière position (ou null)
  * @param {number} p.nowMs           horloge injectée (testabilité)
  * @param {number} p.zoneBlancheMinutes seuil (liveConfig, défaut 60)
- * @returns {{regime: "premier-signal"|"normal"|"zone-blanche", ageMinutes: number|null, strong: string, rest: string}|null}
+ * @returns {{regime: "premier-signal"|"normal"|"zone-blanche"|"termine", ageMinutes: number|null, strong: string, rest: string}|null}
  *          null si rien à afficher (pas de direct).
  */
 export function freshnessState({ running, lastFixTime, nowMs, zoneBlancheMinutes }) {
@@ -31,14 +31,14 @@ export function freshnessState({ running, lastFixTime, nowMs, zoneBlancheMinutes
   if (!Number.isFinite(parsed)) return null;
   const ageMinutes = Math.max(0, Math.floor((nowMs - parsed) / 60_000));
 
-  // Session arrêtée (./track stop) : le parcours est FIGÉ, pas en zone blanche.
-  // Point neutre, aucune alerte — la page reste consultable telle quelle.
+  // Session arrêtée (./track stop) = aventure terminée. Aucune alerte : la
+  // page reste consultable telle quelle jusqu'à l'archivage définitif.
   if (!running) {
     return {
-      regime: "fige",
+      regime: "termine",
       ageMinutes,
-      strong: "Parcours figé",
-      rest: " — suivi arrêté.",
+      strong: "Aventure terminée",
+      rest: "",
     };
   }
 

@@ -79,19 +79,16 @@ export default function LiveHeader({
 
 function LiveBadge({ desktop = false, running = true }) {
   // Figé en marron (pas de clignotement) : « EN DIRECT » tant que le tracker
-  // tourne, « PARCOURS FIGÉ » une fois `./track stop` passé (page consultable).
+  // tourne, « TERMINÉ » dès `./track stop` (la page reste consultable telle
+  // quelle, jusqu'à l'archivage définitif depuis un ordinateur).
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-[20px] font-mono font-bold tracking-[0.1em] ${
-        running ? "bg-brand-deep text-brand-bg" : "bg-brand-text/10 text-brand-text/70"
+        running ? "bg-brand-deep text-brand-bg" : "bg-brand-primary-dark text-brand-bg"
       } ${desktop ? "px-3 py-[5px] text-[11px]" : "px-[11px] py-[5px] text-[10.5px]"}`}
     >
-      <span
-        className={`inline-block h-[7px] w-[7px] rounded-full ${
-          running ? "bg-brand-bg" : "bg-brand-text/40"
-        }`}
-      />
-      {running ? "EN DIRECT" : "PARCOURS FIGÉ"}
+      <span className="inline-block h-[7px] w-[7px] rounded-full bg-brand-bg" />
+      {running ? "EN DIRECT" : "TERMINÉ"}
     </span>
   );
 }

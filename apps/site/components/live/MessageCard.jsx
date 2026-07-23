@@ -78,7 +78,7 @@ export default function MessageCard() {
             <input
               value={prenom}
               onChange={(e) => setPrenom(e.target.value)}
-              placeholder="Prénom (facultatif)"
+              placeholder="Prénom"
               maxLength={50}
               className={`mt-2 w-full ${fieldClass}`}
             />
@@ -92,7 +92,7 @@ export default function MessageCard() {
           </div>
 
           {/* 2d : variante desktop (pleine largeur sous carte + journal) —
-              message + prénom + email + envoyer, même état, même envoi. */}
+              message + prénom + envoyer, même état, même envoi. */}
           <div className="mt-2.5 hidden gap-2 lg:flex">
             <input
               value={message}
@@ -105,7 +105,7 @@ export default function MessageCard() {
             <input
               value={prenom}
               onChange={(e) => setPrenom(e.target.value)}
-              placeholder="Prénom (facultatif)"
+              placeholder="Prénom"
               maxLength={50}
               className={`w-[180px] flex-none rounded-[11px] ${fieldClass}`}
             />
