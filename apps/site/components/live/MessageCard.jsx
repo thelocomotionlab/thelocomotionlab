@@ -10,6 +10,7 @@
 "use client";
 
 import { brandColors } from "@locomotionlab/ui";
+import { Send } from "lucide-react";
 
 import { useState } from "react";
 
@@ -50,8 +51,14 @@ export default function MessageCard() {
     }
   }
 
+  // Champs + anneau de focus ocre, comme les formulaires du site. Le rayon
+  // (pilule pour les champs d'une ligne, arrondi pour le textarea) est posé
+  // par chaque champ.
   const fieldClass =
-    "rounded-xl border border-brand-text/15 bg-brand-bg px-[13px] py-[11px] font-heading text-[13px] text-brand-text outline-none placeholder:text-brand-text/40";
+    "border border-brand-text/15 bg-white px-[15px] py-[11px] font-heading text-[13px] text-brand-text outline-none transition placeholder:text-brand-text/40 focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/40";
+  // CTA identique aux autres formulaires (ocre, pilule, semi-gras).
+  const buttonClass =
+    "flex flex-none cursor-pointer items-center justify-center gap-2 rounded-full border-none bg-brand-accent font-heading font-semibold text-white transition hover:bg-brand-accent-dark disabled:opacity-70";
 
   return (
     <section className="rounded-[18px] border border-brand-primary/30 bg-brand-primary/12 px-[18px] py-5 lg:px-5 lg:py-4">
@@ -73,21 +80,21 @@ export default function MessageCard() {
               placeholder="Ton message…"
               maxLength={1000}
               required
-              className={`mt-3 min-h-[84px] w-full resize-y ${fieldClass} text-sm`}
+              className={`mt-3 min-h-[84px] w-full resize-y rounded-[20px] ${fieldClass} text-sm`}
             />
             <input
               value={prenom}
               onChange={(e) => setPrenom(e.target.value)}
               placeholder="Prénom"
               maxLength={50}
-              className={`mt-2 w-full ${fieldClass}`}
+              className={`mt-2 w-full rounded-full ${fieldClass}`}
             />
             <button
               type="submit"
               disabled={status === "sending"}
-              className="mt-3 w-full cursor-pointer rounded-xl border-none bg-brand-deep px-4 py-[13px] font-heading text-sm font-bold text-brand-bg shadow-[0_6px_16px_rgba(182,115,82,0.3)] disabled:opacity-70"
+              className={`mt-3 w-full px-4 py-[13px] text-sm ${buttonClass}`}
             >
-              {status === "sending" ? "Envoi…" : "Envoyer"}
+              {status === "sending" ? "Envoi…" : <>Envoyer <Send size={15} aria-hidden="true" /></>}
             </button>
           </div>
 
@@ -100,21 +107,21 @@ export default function MessageCard() {
               placeholder="Ton message…"
               maxLength={1000}
               required
-              className={`min-w-0 flex-1 rounded-[11px] ${fieldClass}`}
+              className={`min-w-0 flex-1 rounded-full ${fieldClass}`}
             />
             <input
               value={prenom}
               onChange={(e) => setPrenom(e.target.value)}
               placeholder="Prénom"
               maxLength={50}
-              className={`w-[180px] flex-none rounded-[11px] ${fieldClass}`}
+              className={`w-[180px] flex-none rounded-full ${fieldClass}`}
             />
             <button
               type="submit"
               disabled={status === "sending"}
-              className="flex-none cursor-pointer rounded-[11px] border-none bg-brand-deep px-4 py-[11px] font-heading text-[13px] font-bold text-brand-bg disabled:opacity-70"
+              className={`px-5 py-[11px] text-[13px] ${buttonClass}`}
             >
-              {status === "sending" ? "Envoi…" : "Envoyer"}
+              {status === "sending" ? "Envoi…" : <>Envoyer <Send size={15} aria-hidden="true" /></>}
             </button>
           </div>
 

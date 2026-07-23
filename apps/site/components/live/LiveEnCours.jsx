@@ -147,12 +147,13 @@ export default function LiveEnCours({ timer }) {
         </div>
       </div>
 
-      {/* Sous la grille, PLEINE LARGEUR : partage + « Laisse un mot ». */}
+      {/* Sous la grille, PLEINE LARGEUR : « Laisse un mot », puis le partage
+          en dessous à gauche. */}
       <div className="mt-3.5 lg:mt-5">
-        <div className="mb-3 flex justify-end">
+        <MessageCard />
+        <div className="mt-3 flex justify-start">
           <ShareButton />
         </div>
-        <MessageCard />
       </div>
     </div>
   );

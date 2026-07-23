@@ -104,7 +104,13 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
       const data = await og.source.collect();
       const png = await renderPng(storyCard(data), 1080, 1920);
       reply
-        .headers({ "Content-Type": "image/png", "Cache-Control": "no-store" })
+        .headers({
+          "Content-Type": "image/png",
+          "Cache-Control": "no-store",
+          // CORS ouvert : le bouton « Partager l'aventure » du site récupère
+          // l'image en fetch (cross-origin) pour le partage natif.
+          "Access-Control-Allow-Origin": "*",
+        })
         .send(png);
     });
 
