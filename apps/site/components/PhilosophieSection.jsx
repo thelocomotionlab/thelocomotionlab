@@ -49,8 +49,8 @@ const PILIERS = [
 const FOOT_LINKS = [
   { label: "Science", href: "/comprendre" },
   { label: "Explorations", href: "/explorer" },
+  { label: "Accompagnements", href: "/pratiquer" },
   { label: "Outils", href: "/outils" },
-  { label: "Accompagnements", href: "#email" },
 ];
 
 const FOOT_LINK_CLASS =
@@ -158,9 +158,9 @@ export default function PhilosophieSection() {
 
         {/* Pied : « cette philosophie en action » + 4 liens à points médians */}
         <div className="mt-[26px] flex flex-col items-center gap-y-3.5 md:mt-8 md:flex-row md:flex-wrap md:items-baseline md:justify-center md:gap-x-[18px] md:border-t md:border-brand-deep-dark/14 md:pt-[26px]">
-          <span className="font-mono text-[10px] font-bold tracking-[0.2em] text-gray-400 md:text-[11px]">
+{/*          <span className="font-mono text-[10px] font-bold tracking-[0.2em] text-gray-400 md:text-[11px]">
             CETTE PHILOSOPHIE EN ACTION
-          </span>
+          </span>*/}
           <span className="inline-flex flex-wrap items-baseline justify-center gap-[18px]">
             {FOOT_LINKS.map((l, i) => (
               <span
