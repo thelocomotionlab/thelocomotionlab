@@ -3,7 +3,7 @@
 > ⚠️ **INSTANTANÉ DATÉ, PARTIELLEMENT PÉRIMÉ** (constaté au chantier 2, 2026-07) :
 > ce document décrit l'infra d'AVANT Listmonk, twin-engine et live-journal. La
 > référence de l'état CIBLE est le code : `infra/compose.yml`, `infra/caddy/conf.d/`,
-> `infra/.env.example`. Pour l'exploitation du live : `docs/live-runbook-ecrins.md`.
+> `infra/.env.example`. Pour l'exploitation du live : `docs/live-tracking.md`.
 > Conservé comme trace ; à re-snapshotter ou à archiver (décision Valentin).
 
 > **But de ce fichier** : qu'une nouvelle session (humaine ou IA) comprenne **précisément** l'état

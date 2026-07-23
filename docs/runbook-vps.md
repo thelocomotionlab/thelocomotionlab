@@ -361,7 +361,7 @@ curl -s https://tracking.thelocomotionlab.com/api/public/server | head   # API p
 - [ ] Fenêtre calme choisie (courte coupure possible de l'UI/API tracking pendant le `up`).
 
 > **La chaîne live-tracking est conteneurisée.** Le service `tracking-cache` (conteneur, cf.
-> `docs/tracking-cache.md`) écrit `live-positions.json` + `live-timer.json` dans le volume
+> `docs/live-tracking.md` §10) écrit `live-positions.json` + `live-timer.json` dans le volume
 > `live_json`, que Caddy sert en lecture seule. L'ancienne chaîne hôte (`live-cache.mjs` +
 > `live-cache.timer` + `/opt/traccar/live-*.json`) est remplacée — à arrêter après la bascule
 > (cf. 4.6).

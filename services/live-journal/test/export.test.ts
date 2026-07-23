@@ -1,4 +1,4 @@
-// Export d'archive : conformité au contrat docs/live-archive-schema.md
+// Export d'archive : conformité au contrat docs/live-tracking.md §15
 // (option A : littéraux français + champs additifs optionnels), chat[] vide
 // par construction, validation bloquante.
 

@@ -1,5 +1,5 @@
 // Conversion des artefacts vivants (live-positions.json + journal.json) vers le
-// contrat d'archive `archive.json` v1 (docs/live-archive-schema.md) — option A
+// contrat d'archive `archive.json` v1 (docs/live-tracking.md §15) — option A
 // validée au plan PR3 : littéraux FRANÇAIS du contrat + champs OPTIONNELS
 // additifs (id, duree, largeur, hauteur, edite), schemaVersion 1 conservé.
 // RÈGLE ABSOLUE : `chat` reste vide — les messages privés n'entrent JAMAIS

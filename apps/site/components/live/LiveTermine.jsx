@@ -3,7 +3,7 @@
 // L'état « Terminé » de /live (design 2c) : bandeau de clôture sombre, carte de
 // la trace vécue, « Récit à paraître », journal complet consultable (replié),
 // capture email du récit. Rendu depuis archive.json SEUL (contrat
-// docs/live-archive-schema.md) — aucune dépendance à l'infra vivante.
+// docs/live-tracking.md §15) — aucune dépendance à l'infra vivante.
 
 "use client";
 
