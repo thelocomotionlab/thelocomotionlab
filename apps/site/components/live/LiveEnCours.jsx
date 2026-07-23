@@ -11,7 +11,7 @@
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 
-import { journalApiBase, liveConfig } from "@/lib/liveConfig";
+import { journalApiBase, liveConfig, liveReglages } from "@/lib/liveConfig";
 import { freshnessState } from "@/lib/freshness";
 import { dayIndex } from "@/lib/liveTime";
 import { useJournal } from "@/lib/useJournal";
@@ -32,14 +32,14 @@ const LiveMap = dynamic(() => import("./LiveMap"), {
 });
 
 export default function LiveEnCours({ timer }) {
-  const { aventure, live } = liveConfig;
+  const { aventure } = liveConfig;
   const [mapStyle, setMapStyle] = useState("relief");
   const [hoverPoint, setHoverPoint] = useState(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
-  const positions = useLivePositions({ pollMs: live.positionsPollMs });
-  const journal = useJournal({ pollMs: live.journalPollMs });
-  const reference = useReferenceTrack(live.referenceTrack);
+  const positions = useLivePositions({ pollMs: liveReglages.positionsPollMs });
+  const journal = useJournal({ pollMs: liveReglages.journalPollMs });
+  const reference = useReferenceTrack(aventure.trace);
 
   // Horloge 30 s : fait vieillir la fraîcheur et avancer le chrono sans polling.
   useEffect(() => {
@@ -65,7 +65,7 @@ export default function LiveEnCours({ timer }) {
           running: timer?.running === true,
           lastFixTime: stats?.lastFixTime ?? null,
           nowMs,
-          zoneBlancheMinutes: live.zoneBlancheMinutes,
+          zoneBlancheMinutes: liveReglages.zoneBlancheMinutes,
         });
 
   const startMs = timer?.startTime ? Date.parse(timer.startTime) : NaN;
@@ -74,9 +74,9 @@ export default function LiveEnCours({ timer }) {
     : (stats?.durationSeconds ?? 0);
 
   const jour = dayIndex(new Date(nowMs).toISOString(), aventure.dateDebut);
-  // Stats de la trace calculées du GPX (repli : valeurs saisies de liveConfig).
-  const distanceKm = reference?.totalKm ?? aventure.distanceKm;
-  const deniveleM = reference?.dPlusM ?? aventure.deniveleM;
+  // Stats de la trace, calculées du GPX (undefined tant que la trace charge).
+  const distanceKm = reference?.totalKm;
+  const deniveleM = reference?.dPlusM;
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -108,11 +108,11 @@ export default function LiveEnCours({ timer }) {
           <div className="order-3">
             <ProfileCard
               profile={reference?.profile}
-              totalKm={reference?.totalKm ?? aventure.distanceKm}
+              totalKm={reference?.totalKm}
               doneKm={(stats?.distance ?? 0) / 1000}
               elevationMin={reference?.elevMinM}
               elevationMax={reference?.elevMaxM}
-              waypoints={live.waypoints ?? []}
+              waypoints={aventure.waypoints ?? []}
               onHoverPoint={setHoverPoint}
             />
           </div>
@@ -123,7 +123,7 @@ export default function LiveEnCours({ timer }) {
           <div className="order-2">
             <ProgressionCard
               stats={stats}
-              totalKm={reference?.totalKm ?? aventure.distanceKm}
+              totalKm={reference?.totalKm}
               elapsedSeconds={elapsedSeconds}
             />
           </div>

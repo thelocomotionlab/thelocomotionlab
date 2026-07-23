@@ -23,16 +23,10 @@ const LiveMap = dynamic(() => import("./LiveMap"), {
 });
 
 export default function LiveAvant() {
-  const { aventure, live } = liveConfig;
-  const reference = useReferenceTrack(live.referenceTrack);
+  const { aventure } = liveConfig;
+  const reference = useReferenceTrack(aventure.trace);
   const [mapStyle, setMapStyle] = useState("relief");
   const [hoverPoint, setHoverPoint] = useState(null);
-
-  // Stats CALCULÉES depuis la trace GPX quand elle est chargée (aucune
-  // discordance possible avec le terrain) ; les valeurs saisies de liveConfig
-  // ne servent que de repli d'affichage avant le fetch.
-  const distanceKm = reference?.totalKm ?? aventure.distanceKm;
-  const deniveleM = reference?.dPlusM ?? aventure.deniveleM;
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-3.5">
@@ -63,9 +57,12 @@ export default function LiveAvant() {
         <div className="mb-[9px] flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5">
           <p className="m-0 flex flex-wrap items-baseline gap-x-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-brand-deep-dark">
             Itinéraire
-            <span className="font-heading text-[11.5px] font-medium normal-case tracking-normal text-brand-text/60">
-              {Math.round(distanceKm)} km · D+ {Math.round(deniveleM).toLocaleString("fr-FR")} m
-            </span>
+            {reference && (
+              <span className="font-heading text-[11.5px] font-medium normal-case tracking-normal text-brand-text/60">
+                {Math.round(reference.totalKm)} km · D+{" "}
+                {Math.round(reference.dPlusM).toLocaleString("fr-FR")} m
+              </span>
+            )}
           </p>
           <MapStyleSwitch value={mapStyle} onChange={setMapStyle} variant="header" />
         </div>
@@ -89,7 +86,7 @@ export default function LiveAvant() {
           doneKm={0}
           elevationMin={reference.elevMinM}
           elevationMax={reference.elevMaxM}
-          waypoints={live.waypoints ?? []}
+          waypoints={aventure.waypoints ?? []}
           onHoverPoint={setHoverPoint}
         />
       )}

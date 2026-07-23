@@ -47,11 +47,11 @@ function archiveEntryToLive(entry, mediaDir, index) {
 
 export default function LiveTermine() {
   const { aventure } = liveConfig;
-  const archive = useArchive(aventure.archivePath);
+  const archive = useArchive(aventure.archive);
   const [deplie, setDeplie] = useState(false);
 
   // Dossier des médias de l'archive : à côté de archive.json.
-  const mediaDir = aventure.archivePath.replace(/\/archive\.json$/, "");
+  const mediaDir = aventure.archive.replace(/\/archive\.json$/, "");
 
   const entries = useMemo(
     () => (archive?.journal ?? []).map((e, i) => archiveEntryToLive(e, mediaDir, i)),

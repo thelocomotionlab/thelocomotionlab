@@ -1,65 +1,67 @@
 // lib/liveConfig.js
 //
-// Configuration de l'aventure courante du hub /live : LE seul endroit à
-// éditer quand une nouvelle aventure se prépare. Consommé par la page /live,
-// la Navbar (lien Live), le bloc compact de /explorer et la route
-// /live-config.json (lue par live-journal pour les cartes OG).
+// La page /live : le SEUL fichier à éditer pour lancer une aventure.
 //
-// Nettoyé (recette 2026-07-24) : les stats de la trace (distance, D+, bornes
-// altimétriques) sont CALCULÉES depuis le GPX par build:track — la page et la
-// carte OG les préfèrent toujours ; `distanceKm`/`deniveleM` ci-dessous ne
-// sont qu'un repli d'affichage avant chargement.
+// Changer d'aventure, en 3 gestes :
+//   1. Dépose ta trace GPX dans  apps/site/public/tracks/   (ex. mon-tour.gpx)
+//   2. Génère la trace légère :   pnpm -F site build:track public/tracks/mon-tour.gpx
+//      → distance, D+, altitudes et profil sont CALCULÉS depuis le GPX :
+//        tu n'as rien à recopier à la main.
+//   3. Renseigne les champs ci-dessous, puis déploie.
 //
-// Check-list « nouvelle aventure » : slug · nom · dateDebut · dates ·
-// intention · referenceTrack (`pnpm -F site build:track public/tracks/<x>.gpx`)
-// · waypoints — puis, après l'export d'archive : statut "termine" + archivePath.
+// Les 3 états de la page :
+//   • avant    — compte à rebours, tant que le tracker n'a pas démarré.
+//   • en cours — AUTOMATIQUE dès  ./track start  sur le VPS (rien à toucher ici).
+//   • terminé  — quand tu passes  statut  à "termine" (note tout en bas).
 
 export const liveConfig = {
   aventure: {
-    slug: "tour-des-ecrins-2026",
-    nom: "Tour des Écrins en autonomie",
-    // HEURE DE DÉPART réelle avec offset : pilote le compte à rebours, le
-    // J-index du journal (frontière de jour à minuit heure française) et le
-    // cas « premier signal ».
-    dateDebut: "2026-08-20T06:00:00+02:00", // À AFFINER : heure de départ réelle
-    // Période affichée par la carte OG de partage.
-    dates: "20–24 août 2026",
-    // REPLI d'affichage avant le chargement de la trace (la page et l'OG
-    // préfèrent totalKm/dPlusM calculés du GPX).
-/*    distanceKm: 194,
-    deniveleM: 12000,*/
-    // [PREMIER JET — à réécrire par Valentin] Intention de l'état « Avant ».
-    intention:
-      "Une boucle intégrale autour du massif, sans assistance, sur le fil du GR54.",
-    // Bascule des trois états : "avant" | "termine" — l'état « En cours »
-    // reste déclenché par le terrain (live-timer.running). Surchargeable au
-    // build : NEXT_PUBLIC_LIVE_STATUT (recette, bascule express).
-    statut: process.env.NEXT_PUBLIC_LIVE_STATUT || "avant",
-    // Archive consommée par l'état « Terminé » (produite par export-archive).
-    archivePath: "/replays/tour-des-ecrins-2026/archive.json",
-  },
+    // Nom affiché en grand.
+    nom: "Reconnaissance aux Vouillants",
 
-  // Paramètres de l'état « En cours ».
-  live: {
-    positionsPollMs: 10000, // sonde live-positions.json
-    journalPollMs: 30000, // sonde journal.json
-    zoneBlancheMinutes: 60, // seuil du régime « zone blanche probable »
-    // Trace prévisionnelle LÉGÈRE précalculée (carte + profil + stats).
-    // TEMPORAIRE : trace de travail — régénérer depuis le GPX définitif.
-    referenceTrack: "/tracks/tour-des-ecrins_temp.track.json",
-    // Repères du profil { nom, km } — vide tant que la liste n'est pas fournie.
+    // Départ : date + heure + fuseau (+02:00 l'été). Pilote le compte à
+    // rebours et le numéro du jour du journal.
+    dateDebut: "2026-07-23T09:00:00+02:00",
+
+    // Période affichée sur la carte de partage.
+    dates: "23 juillet 2026",
+
+    // Phrase d'intention, en italique sous le titre.
+    intention: "Une boucle d'essai dans les Vouillants pour éprouver le direct.",
+
+    // Trace prévue : le .track.json généré au geste 2.
+    trace: "/tracks/vouillands.track.json",
+
+    // Repères de cols sur le profil : [{ nom: "Col Vert", km: 6 }, …].
+    // Laisse [] pour n'en afficher aucun.
     waypoints: [],
+
+    // ——— Fin d'aventure seulement ———
+    // "avant" pendant toute la prépa ET le direct ; "termine" une fois le
+    // replay publié. (Astuce recette : NEXT_PUBLIC_LIVE_STATUT=termine au
+    // build force l'aperçu « terminé » sans éditer ce fichier.)
+    statut: process.env.NEXT_PUBLIC_LIVE_STATUT || "avant",
+
+    // Dossier du replay, créé à l'arrivée par la commande export-archive.
+    archive: "/replays/tour-des-ecrins-2026/archive.json",
   },
 
-  // Libellés des indicateurs HORS /live (accueil + tête de /explorer).
+  // Libellés affichés AILLEURS que sur /live (accueil, tête de la page Explorer).
   indicateur: {
-    enDirect: "Les 4x2000 m de Chartreuse",
-    prochainDepart: "Tour des Écrins",
+    enDirect: "Les Vouillants en direct",
+    prochainDepart: "Les Vouillants",
   },
 };
 
-// Bases d'API, résolues au build (variables NEXT_PUBLIC_*). En dev avec le
-// simulateur du chantier 2, pointer LES DEUX sur http://localhost:3999.
+// Réglages techniques — tu n'as pas besoin d'y toucher.
+export const liveReglages = {
+  positionsPollMs: 10000, // rafraîchissement de la carte (ms)
+  journalPollMs: 30000, // rafraîchissement du journal (ms)
+  zoneBlancheMinutes: 60, // minutes sans position avant l'alerte « zone blanche »
+};
+
+// Adresses des services (fixées au build par les variables NEXT_PUBLIC_*).
+// En test local avec le simulateur, pointe les deux sur http://localhost:3999.
 export const trackingApiBase =
   process.env.NEXT_PUBLIC_TRACKING_PROXY || "https://tracking.thelocomotionlab.com";
 export const journalApiBase =
