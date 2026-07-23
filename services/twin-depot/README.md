@@ -46,6 +46,22 @@ Garde-fous (pattern `atelier-api`/`email-gateway`) : honeypot `website`
 (basse : les uploads sont lourds), montre validée contre la config, nom de
 fichier nettoyé (pas de traversée de chemin).
 
+## Rapatrier les dépôts en local (et dépouiller le VPS)
+
+Le geste du quotidien — tout en un : lister, télécharger, **vérifier le
+SHA-256** (celui calculé par le service au dépôt), écrire les métadonnées
+dans `<référence>/depot.json`, puis **purger le VPS** (uniquement après
+vérification). Depuis ton poste :
+
+```bash
+TWIN_DEPOT_ADMIN_TOKEN=<jeton> services/twin-depot/scripts/rapatrier-depots.py
+# destination par défaut : ~/LocomotionLab/depots-twin (sinon : … rapatrier-depots.py /chemin)
+```
+
+Python 3 standard, aucune dépendance. En cas d'échec (réseau, SHA différent),
+rien n'est purgé — relancer suffit. Les archives ne vivent alors QUE sur ton
+poste : à supprimer là-bas aussi après analyse (règle du labo).
+
 À chaque dépôt, **deux emails** partent (même relais SMTP Brevo que le reste,
 variables `SMTP_*` d'`infra/.env`) — chacun **best-effort** : un échec
 n'annule jamais le dépôt (logs pour rattrapage via le listing admin) :
