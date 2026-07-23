@@ -386,6 +386,24 @@ describe("routes admin", () => {
     expect(purge.json()).toEqual({ ok: true, supprimees: 1 });
   });
 
+  it("derrière Cloudflare, la preuve de la fiche porte CF-Connecting-IP (pas le bord)", async () => {
+    const app = makeApp();
+    await app.inject({
+      method: "POST",
+      url: "/ateliers/inscriptions",
+      headers: { origin: ORIGIN, "cf-connecting-ip": "203.0.113.7" },
+      payload: { atelierId: "ouvert", website: "", fiche: ficheValide(), contenu: CONTENU },
+    });
+
+    const listing = await app.inject({
+      method: "GET",
+      url: "/ateliers/inscriptions?atelier=ouvert",
+      headers: { authorization: "Bearer jeton-test" },
+    });
+    const [inscription] = listing.json().inscriptions;
+    expect(inscription.fiche.preuve.ip).toBe("203.0.113.7");
+  });
+
   it("désistement individuel : DELETE /:id libère la place, 404 si inconnu", async () => {
     const app = makeApp();
     await inscrire(app);

@@ -405,13 +405,13 @@ tolérées volontairement) et C089 (restriction d'origine = CORS seul, par desig
 honeypot + double opt-in en aval).
 
 Constaté le 2026-07-22 en conditions réelles : derrière le proxy Cloudflare (hôtes
-orange : `api.*`), l'IP vue par atelier-api et live-journal est celle du **bord
-Cloudflare** (ex. `172.70.x.x` dans la `preuve.ip` d'une fiche), pas celle du visiteur —
-`trustProxy` remonte au dernier saut. Conséquences : preuve d'IP affaiblie sur la fiche,
-et rate-limit par IP qui agrège des visiteurs différents derrière quelques IP Cloudflare.
-Correctif simple à faire : lire `CF-Connecting-IP` (posé par Cloudflare) dans ces deux
-services. Non concernés : la passerelle Worker (utilise déjà `CF-Connecting-IP`) et
-twin-depot (`depot.*` en DNS gris → IP réelle déjà vue).
+orange : `api.*`), l'IP vue par les services est celle du **bord Cloudflare**
+(ex. `172.70.x.x` dans la `preuve.ip` d'une fiche), pas celle du visiteur.
+✅ **Corrigé le 2026-07-23** : atelier-api lit désormais `CF-Connecting-IP` (repli
+X-Forwarded-For puis req.ip), pour le rate-limit ET la preuve de la fiche — même
+helper que live-journal, qui l'avait déjà. Non concernés : la passerelle Worker
+(utilisait déjà `CF-Connecting-IP`), twin-depot (`depot.*` en DNS gris → IP réelle
+déjà vue), et `story.png` (seau de débit global volontairement sans IP).
 
 ### C7 — Modalités transverses (à savoir, rien à faire)
 
@@ -449,7 +449,7 @@ L'inventaire complet :
 | 3 | **Notification « nouveau dépôt Twin »** (pour toi) | twin-depot → nodemailer → Brevo | `services/twin-depot/src/mailer.ts` | ✅ fait |
 | 4 | **Confirmation de dépôt au déposant** | twin-depot → nodemailer → Brevo | `services/twin-depot/src/mailer.ts` | ✅ fait (2026-07-22) |
 | 5 | **Relai du formulaire de contact** | email-gateway `/contact` → API Brevo (Reply-To = visiteur) | `services/email-gateway/src/index.ts` | ✅ fait (2026-07-23) — reste la mise en service (C5) |
-| 6 | **Template de campagne « Le Lab »** (annonce Écrins, parutions) | Listmonk (manuel) | `infra/listmonk/campaign-templates/` à créer + UI Listmonk | ❌ à créer ensemble |
+| 6 | **Template de campagne « Le Lab »** (annonce Écrins, parutions) | Listmonk (manuel) | `infra/listmonk/campaign-templates/le-lab.html` (source) + UI Listmonk | ✅ gabarit prêt (2026-07-23) — à coller dans l'UI (procédure en tête du fichier) |
 | 7 | **Liste d'attente atelier « une place s'est libérée »** | manuel aujourd'hui | — | 💤 chantier futur, optionnel |
 | 8 | **Rapport Twin prêt** (quand le produit payant existera, `apps/twin`) | futur | — | 💤 hors périmètre actuel |
 
