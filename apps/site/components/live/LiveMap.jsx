@@ -16,6 +16,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { Locate } from "lucide-react";
 import { brandColors } from "@locomotionlab/ui";
 
 import { simplifyTrack } from "@/lib/simplify";
@@ -279,9 +280,31 @@ export default function LiveMap({
     else map.once("load", apply);
   }, [data, markerMode]);
 
+  // Recentre sur l'itinéraire complet (ou, à défaut, la trace vécue).
+  const recenter = () => {
+    const map = mapRef.current;
+    if (!map) return;
+    const { reference, done } = dataRef.current;
+    const coords = reference.length > 1 ? reference : done;
+    if (coords.length > 0) map.fitBounds(boundsOf(coords), { padding: 34, duration: 500 });
+  };
+
   // Style INLINE impératif : la CSS de maplibre pose `.maplibregl-map
   // { position: relative }` qui, selon l'ordre des feuilles, écrase la classe
   // Tailwind `absolute` — et un conteneur non dimensionné donne un canvas
   // fantôme de 300 px. L'inline gagne toujours.
-  return <div ref={containerRef} className="live-map" style={{ position: "absolute", inset: 0 }} />;
+  return (
+    <div className="live-map" style={{ position: "absolute", inset: 0 }}>
+      <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />
+      <button
+        type="button"
+        onClick={recenter}
+        aria-label="Recentrer la carte"
+        title="Recentrer"
+        className="absolute right-3 top-14 z-[5] flex h-9 w-9 items-center justify-center rounded-lg border border-brand-text/10 bg-brand-bg/95 text-brand-text/70 shadow-[0_4px_14px_rgba(51,51,51,0.18)] transition hover:text-brand-text lg:right-3.5 lg:top-3.5"
+      >
+        <Locate size={17} strokeWidth={2} aria-hidden="true" />
+      </button>
+    </div>
+  );
 }

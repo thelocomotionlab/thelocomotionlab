@@ -96,11 +96,12 @@ export default function LiveEnCours({ timer }) {
       />
 
       {/* Grille : mobile 1 colonne (ordre du design), desktop 2 colonnes de
-          MÊME hauteur (items-stretch) — le journal remplit sa colonne. */}
+          MÊME hauteur. Carte + profil gardent leurs dimensions (flex-none) ;
+          SEUL le journal s'étire pour aligner sa base sur celle du profil. */}
       <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[1fr_460px] lg:items-stretch lg:gap-5">
-        {/* Gauche : carte + profil. */}
+        {/* Gauche : carte + profil (tailles inchangées). */}
         <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-4">
-          <div className="relative order-1 h-[380px] max-lg:-mx-4 sm:max-lg:-mx-6 lg:h-[520px] lg:overflow-hidden lg:border lg:border-brand-text/10">
+          <div className="relative order-1 h-[380px] max-lg:-mx-4 sm:max-lg:-mx-6 lg:h-[520px] lg:flex-none lg:overflow-hidden lg:border lg:border-brand-text/10">
             <LiveMap
               referenceCoords={reference?.coords}
               doneCoords={doneCoords}
@@ -113,7 +114,7 @@ export default function LiveEnCours({ timer }) {
             <FreshnessPill state={freshness} />
           </div>
 
-          <div className="order-3 lg:order-none">
+          <div className="order-3 lg:order-none lg:flex-none">
             <ProfileCard
               profile={reference?.profile}
               totalKm={reference?.totalKm}
@@ -126,9 +127,9 @@ export default function LiveEnCours({ timer }) {
           </div>
         </div>
 
-        {/* Droite : progression + journal (le journal remplit la hauteur). */}
+        {/* Droite : progression (taille fixe) + journal (remplit le reste). */}
         <div className="contents lg:flex lg:min-h-0 lg:flex-col lg:gap-4">
-          <div className="order-2 lg:order-none">
+          <div className="order-2 lg:order-none lg:flex-none">
             <ProgressionCard
               stats={stats}
               totalKm={reference?.totalKm}
