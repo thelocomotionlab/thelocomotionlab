@@ -1,6 +1,6 @@
 // Contrat public de journal.json + état interne du store.
 // journal.json est consommé par la page /live (polling client, PR2) : ne rien
-// changer ici sans répercuter côté front. Cohérence avec docs/live-archive-schema.md :
+// changer ici sans répercuter côté front. Cohérence avec docs/live-tracking.md §15 :
 // le mapping vers archive.json (littéraux français, champs réduits) se fait à
 // l'export en PR3 — cf. docs/live-pr1-plan.md §4.
 

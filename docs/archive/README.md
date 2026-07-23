@@ -12,4 +12,8 @@ Documents **terminés ou périmés**, conservés pour la trace (rien n'est suppr
   (purgés de docs/ à la livraison ; les décisions validées y restent
   consultables, notamment PR1 §13 et les textes actés).
 
-Candidat futur : `live-brief.md` (après le gel du chantier 2).
+- `live-brief.md` — le brief du chantier 2 (le direct / live v2), livré.
+  L'exploitation courante vit désormais dans `docs/live-tracking.md` (doc
+  unique), qui a remplacé les anciens `live-runbook-ecrins.md`,
+  `live-tracking-guide.md`, `live-reste-a-faire.md`, `tracking-cache.md` et
+  `live-archive-schema.md`.

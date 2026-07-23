@@ -2,7 +2,7 @@
 //
 // Charge l'archive d'aventure (une fois) pour l'état « Terminé » : un fichier
 // STATIQUE du site (public/replays/<slug>/archive.json, contrat
-// docs/live-archive-schema.md) — aucune dépendance à l'infra vivante.
+// docs/live-tracking.md §15) — aucune dépendance à l'infra vivante.
 
 "use client";
 

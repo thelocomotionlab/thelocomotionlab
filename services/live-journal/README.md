@@ -3,7 +3,7 @@
 Journal de bord du live (chantier 2) : Valentin alimente la page `/live` **depuis le
 terrain via Telegram** (texte, photo, vocal — vidéo derrière drapeau), les visiteurs
 lui laissent un **mot privé** (jamais public, jamais stocké). Plan et décisions :
-[`docs/archive/live-pr1-plan.md`](../../docs/archive/live-pr1-plan.md) · brief : [`docs/live-brief.md`](../../docs/live-brief.md).
+[`docs/archive/live-pr1-plan.md`](../../docs/archive/live-pr1-plan.md) · brief : [`docs/archive/live-brief.md`](../../docs/archive/live-brief.md). Exploitation : [`docs/live-tracking.md`](../../docs/live-tracking.md).
 
 ## Architecture (décision validée au plan)
 

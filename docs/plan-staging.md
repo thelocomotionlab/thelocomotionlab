@@ -7,7 +7,7 @@
 > réel de chacun ; **(3)** la stratégie pour les templates d'email.
 >
 > Procédures détaillées existantes (ce plan les référence, il ne les remplace pas) :
-> [`live-runbook-ecrins.md`](./live-runbook-ecrins.md) · [`runbook-vps.md`](./runbook-vps.md) ·
+> [`live-tracking.md`](./live-tracking.md) · [`runbook-vps.md`](./runbook-vps.md) ·
 > [`email-setup.md`](./email-setup.md) · [`cloudflare-vps.md`](./cloudflare-vps.md) ·
 > [`deploy-cloudflare.md`](./deploy-cloudflare.md).
 
@@ -217,7 +217,7 @@ partiellement configuré (§C2 en tient compte).
 
 > Objectif : la chaîne **GL320M/téléphone → Traccar → tracking-cache → /live (staging)**
 > ET **Telegram → live-journal → /live (staging)**, testée de bout en bout.
-> Réfs : `live-runbook-ecrins.md` §1-2, `live-reste-a-faire.md`, `tracking-cache.md`.
+> Réfs : [`live-tracking.md`](./live-tracking.md) (§12 mise en service, §13 recette).
 
 État du code : **terminé et mergé dans `main`** (PR1→PR5, 89 tests verts). Tout ce qui
 reste est de la mise en service. Dans l'ordre :
@@ -278,7 +278,7 @@ Deux options pour ton test de J+2 :
 ```bash
 ssh vps "cd /opt/locomotionlab && ./track reset && ./track start"
 ```
-puis check-list (runbook §1.6 + §7) : positions sur `/live` en < 1 min ; texte + photo +
+puis check-list (`live-tracking.md` §13) : positions sur `/live` en < 1 min ; texte + photo +
 vocal au bot → publiés (vocal lisible iOS ET Android) ; « Laisse un mot » depuis la page
 staging → arrive sur Telegram ; partage WhatsApp de l'URL staging → aperçu = carte OG
 avec la progression ; `./track stop` au retour. Ensuite `./track reset` pour repartir
@@ -287,7 +287,7 @@ propre (ou exporte la trace d'essai avant si tu veux la garder).
 **Contenus qui restent à fournir par toi** (bloquent le réalisme, pas le test) :
 GPX définitif des Écrins (`pnpm -F site build:track …` + `referenceTrack` dans
 `lib/liveConfig.js`), waypoints, bornes altimétriques (`700/3200 À REMPLACER`),
-vraie `dateDebut`, texte d'intention (`[PREMIER JET]`) — cf. `live-reste-a-faire.md` §2.
+vraie `dateDebut`, texte d'intention (`[PREMIER JET]`) — cf. `live-tracking.md` §3.
 
 ---
 
@@ -468,7 +468,7 @@ L'objet de l'email d'opt-in vient de la traduction système FR de Listmonk (choi
 | **J+2** | 🎯 **ton test tracking en conditions réelles** (C1.d) | §3 |
 | ensuite | C2 (socle email) → C3 (ateliers) → C4 (dépôt Twin + dev confirmation) | §4 |
 | ensuite | C5 (contact, décision) + C6 (durcissements) + templates de campagne (§5.6) | §4-5 |
-| fin juillet | test 24 h du live (runbook §7) → gel | runbook |
+| fin juillet | test de bout en bout du live (`live-tracking.md` §13) → gel | live-tracking.md |
 | **jour J du lancement** | §7 ci-dessous | §7 |
 
 ---
