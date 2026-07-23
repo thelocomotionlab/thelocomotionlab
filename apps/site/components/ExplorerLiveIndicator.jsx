@@ -50,13 +50,13 @@ export default function ExplorerLiveIndicator({ tone = "dark" }) {
           <strong className={`font-bold uppercase tracking-wide ${t.strong}`}>
             En direct
           </strong>{" "}
-          — {liveConfig.embed.title}
+          — {liveConfig.indicateur.enDirect}
         </span>
       ) : (
         <span>
           Prochain départ —{" "}
           <strong className={`font-semibold ${t.strong}`}>
-            {liveConfig.nextDeparture.homeLabel}
+            {liveConfig.indicateur.prochainDepart}
           </strong>
         </span>
       )}

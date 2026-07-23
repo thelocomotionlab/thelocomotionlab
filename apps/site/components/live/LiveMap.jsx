@@ -5,8 +5,9 @@
 // import direct, chargé dynamiquement (ssr:false).
 // Style (recette 2026-07-24) : itinéraire prévisionnel en TIRETS FINS et
 // trace vécue en trait PLEIN ÉPAIS, même teinte fuchsia (lib/liveTraceColors)
-// sur liseré blanc — lisible sur les trois fonds. Fond « Topo » = Esri World
-// Topo (relief ombré). Marqueur coureur à halo pulsant ; `hoverPoint` pose le
+// sur liseré blanc — lisible sur les trois fonds. Fonds : « Relief » = Esri
+// World Topo (défaut), « Topo » = OpenTopoMap, « Satellite » = Esri Imagery.
+// Marqueur coureur à halo pulsant ; `hoverPoint` pose le
 // point synchronisé avec le survol du profil altimétrique. Les deux traces
 // sont SIMPLIFIÉES (Douglas-Peucker) avant affichage.
 
@@ -21,25 +22,9 @@ import { simplifyTrack } from "@/lib/simplify";
 import { traceColors } from "@/lib/liveTraceColors";
 
 const RASTER_STYLES = {
-  // Fond « Plan » (OSM standard) : mêmes tuiles que les cartes des projets
-  // (packages/tracking), mais via tile.openstreetmap.org — le package utilise
-  // encore les alias a/b/c.tile dépréciés. Fond par défaut.
-  osm: {
-    version: 8,
-    sources: {
-      raster: {
-        type: "raster",
-        tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-        tileSize: 256,
-        maxzoom: 19,
-        attribution: "© OpenStreetMap contributors",
-      },
-    },
-    layers: [{ id: "raster", type: "raster", source: "raster" }],
-  },
-  // Fond « Topo » PAR DÉFAUT : Esri World Topo — relief ombré très lisible
-  // (recette 2026-07-24 : OpenTopoMap jugé illisible, remplacé).
-  topo: {
+  // Fond « Relief » PAR DÉFAUT : Esri World Topo — relief ombré très lisible
+  // (recette 2026-07-24 : remplace le « Plan » OSM ; OpenTopoMap conservé).
+  relief: {
     version: 8,
     sources: {
       raster: {
@@ -50,6 +35,23 @@ const RASTER_STYLES = {
         tileSize: 256,
         maxzoom: 19,
         attribution: "Tiles © Esri — Esri, HERE, Garmin, FAO, NOAA, USGS",
+      },
+    },
+    layers: [{ id: "raster", type: "raster", source: "raster" }],
+  },
+  topo: {
+    version: 8,
+    sources: {
+      raster: {
+        type: "raster",
+        tiles: [
+          "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
+          "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
+          "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
+        ],
+        tileSize: 256,
+        maxzoom: 17,
+        attribution: "© OpenTopoMap",
       },
     },
     layers: [{ id: "raster", type: "raster", source: "raster" }],
@@ -184,7 +186,7 @@ export default function LiveMap({
     const styleId = initialStyleRef.current;
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: RASTER_STYLES[styleId] ?? RASTER_STYLES.osm,
+      style: RASTER_STYLES[styleId] ?? RASTER_STYLES.relief,
       center: [6.27, 44.93],
       zoom: 8.6,
       attributionControl: { compact: true },
@@ -208,7 +210,7 @@ export default function LiveMap({
     const map = mapRef.current;
     if (!map) return;
     if (!map.isStyleLoaded()) return; // le premier fond est posé par "load"
-    map.setStyle(RASTER_STYLES[mapStyle] ?? RASTER_STYLES.osm);
+    map.setStyle(RASTER_STYLES[mapStyle] ?? RASTER_STYLES.relief);
     map.once("styledata", () => {
       if (!map.getSource("reference")) addTrackLayers(map);
       pushData(map, dataRef.current);

@@ -1,12 +1,13 @@
 // components/live/MapStyleSwitch.jsx
 //
-// Sélecteur Plan / Topo / Satellite. Deux habillages : overlay sur la carte
-// (mobile, 2a) et pastille de header (desktop, 2d — fond gris, sans ombre).
+// Sélecteur Relief / Topo / Satellite (recette 2026-07-24 : « Plan » OSM
+// remplacé par le relief ombré Esri, OpenTopoMap conservé). Deux habillages :
+// overlay sur la carte (mobile, 2a) et pastille de header (desktop, 2d).
 
 "use client";
 
 const OPTIONS = [
-  { id: "osm", label: "Plan" },
+  { id: "relief", label: "Relief" },
   { id: "topo", label: "Topo" },
   { id: "sat", label: "Satellite" },
 ];

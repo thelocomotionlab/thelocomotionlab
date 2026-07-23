@@ -303,14 +303,14 @@ export default function Navbar() {
           const { href, label, Icon } = item;
           const active = isActivePath(pathname, href);
 
-          // « Live » : point pulsé + clignotement doux, en tête de navbar.
+          // « Live » : figé en marron, seul le point pulse (pas de clignotement).
           if (item.live) {
             return (
               <Link
                 key={href}
                 href={href}
                 aria-current={active ? "page" : undefined}
-                className="flex items-center gap-1.5 font-semibold text-brand-accent-dark animate-[ll-blink_2.6s_ease-in-out_infinite] hover:text-brand-deep"
+                className="flex items-center gap-1.5 font-semibold text-brand-accent-dark hover:text-brand-deep"
               >
                 <span className="relative h-2 w-2 flex-none" aria-hidden="true">
                   <span className="absolute inset-0 rounded-full bg-brand-accent-dark" />
@@ -488,7 +488,7 @@ export default function Navbar() {
                   aria-current={active ? "page" : undefined}
                   className={
                     item.live
-                      ? "flex items-center gap-2 py-2 font-semibold text-brand-accent-dark animate-[ll-blink_2.6s_ease-in-out_infinite]"
+                      ? "flex items-center gap-2 py-2 font-semibold text-brand-accent-dark"
                       : `py-2 ${active ? "font-medium text-brand-accent-ink" : ""}`
                   }
                 >

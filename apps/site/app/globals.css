@@ -735,11 +735,21 @@ mark.search-highlight {
   }
 }
 
-/* Attribution maplibre discrète, aux couleurs de la charte (design 2a). */
+/* Attribution maplibre masquée par défaut (recette 2026-07-24 : desktop comme
+ * mobile, avant/pendant/après). Le logo « ⓘ » cliquable reste, lui, présent :
+ * un clic déplie l'attribution (crédits toujours accessibles, jamais imposés). */
+.live-map .maplibregl-ctrl-attrib:not(.maplibregl-compact-show) .maplibregl-ctrl-attrib-inner {
+  display: none;
+}
 .live-map .maplibregl-ctrl-attrib {
   font-family: var(--font-sans);
   font-size: 9px;
-  background: rgba(254, 251, 246, 0.7);
+  background: transparent;
+  box-shadow: none;
+  min-height: 20px;
+}
+.live-map .maplibregl-ctrl-attrib.maplibregl-compact-show {
+  background: rgba(254, 251, 246, 0.85);
 }
 .live-map .maplibregl-ctrl-attrib a {
   color: var(--color-brand-primary-dark);

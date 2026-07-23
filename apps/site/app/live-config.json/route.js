@@ -1,34 +1,52 @@
 // app/live-config.json/route.js
 //
-// Publie les paramètres PUBLICS de l'aventure courante, générés AU BUILD depuis
-// lib/liveConfig.js — LA source unique reste liveConfig (décision PR4 §2) : le
-// service live-journal lit ce fichier pour composer les cartes de partage sans
-// dupliquer la config dans l'environnement du VPS. Statique (aucun secret,
-// aucune donnée personnelle).
+// Publie les paramètres PUBLICS de l'aventure, générés AU BUILD depuis
+// lib/liveConfig.js. Le service live-journal (VPS) lit ce fichier pour composer
+// les cartes de partage : sa FORME est un contrat stable (aventure.distanceKm,
+// aventure.deniveleM, live.referenceTrack, live.waypoints) — on la conserve même
+// si la config source, elle, est plus simple. distanceKm/deniveleM sont calculés
+// depuis le .track.json (lecture disque au build ; route force-static).
 
-import { liveConfig } from "@/lib/liveConfig";
+import fs from "node:fs";
+import path from "node:path";
+
+import { liveConfig, liveReglages } from "@/lib/liveConfig";
 
 export const dynamic = "force-static";
 
+function statsDeLaTrace(trace) {
+  try {
+    const fichier = path.join(process.cwd(), "public", trace.replace(/^\//, ""));
+    const t = JSON.parse(fs.readFileSync(fichier, "utf8"));
+    if (t?.schemaVersion === 1 && Number.isFinite(t.totalKm)) {
+      return {
+        distanceKm: Math.round(t.totalKm),
+        deniveleM: Number.isFinite(t.dPlusM) ? t.dPlusM : null,
+      };
+    }
+  } catch {
+    // trace absente ou illisible → champs nuls (l'OG retombe sur ses défauts)
+  }
+  return { distanceKm: null, deniveleM: null };
+}
+
 export function GET() {
-  const { aventure, live } = liveConfig;
+  const { aventure } = liveConfig;
+  const stats = statsDeLaTrace(aventure.trace);
   return Response.json({
     schemaVersion: 1,
     aventure: {
-      slug: aventure.slug,
       nom: aventure.nom,
       dates: aventure.dates,
       dateDebut: aventure.dateDebut,
-      distanceKm: aventure.distanceKm,
-      deniveleM: aventure.deniveleM,
+      distanceKm: stats.distanceKm,
+      deniveleM: stats.deniveleM,
       statut: aventure.statut,
     },
     live: {
-      referenceTrack: live.referenceTrack,
-      waypoints: live.waypoints ?? [],
-      elevationMin: live.elevationMin,
-      elevationMax: live.elevationMax,
-      zoneBlancheMinutes: live.zoneBlancheMinutes,
+      referenceTrack: aventure.trace,
+      waypoints: aventure.waypoints ?? [],
+      zoneBlancheMinutes: liveReglages.zoneBlancheMinutes,
     },
   });
 }

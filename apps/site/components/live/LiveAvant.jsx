@@ -23,18 +23,10 @@ const LiveMap = dynamic(() => import("./LiveMap"), {
 });
 
 export default function LiveAvant() {
-  const { aventure, live } = liveConfig;
-  const reference = useReferenceTrack(live.referenceTrack);
-  const [mapStyle, setMapStyle] = useState("topo");
+  const { aventure } = liveConfig;
+  const reference = useReferenceTrack(aventure.trace);
+  const [mapStyle, setMapStyle] = useState("relief");
   const [hoverPoint, setHoverPoint] = useState(null);
-
-  // Stats CALCULÉES depuis la trace GPX quand elle est chargée (aucune
-  // discordance possible avec le terrain) ; les valeurs saisies de liveConfig
-  // ne servent que de repli d'affichage avant le fetch.
-  const distanceKm = reference?.totalKm ?? aventure.distanceKm;
-  const deniveleM = reference?.dPlusM ?? aventure.deniveleM;
-  const elevationMin = reference?.elevMinM ?? live.elevationMin;
-  const elevationMax = reference?.elevMaxM ?? live.elevationMax;
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-3.5">
@@ -46,21 +38,9 @@ export default function LiveAvant() {
         <h1 className="m-0 mt-1.5 font-heading text-4xl font-bold leading-[1.1] text-brand-slate-dark md:text-5xl">
           {aventure.nom}
         </h1>
-        <div className="mt-[7px] flex flex-wrap gap-2.5 font-heading text-[12.5px] text-brand-text/70 sm:text-sm">
-          <span>{aventure.dates}</span>
-          <span className="text-brand-text/30">·</span>
-          <span>
-            <strong className="font-bold text-brand-text">{Math.round(distanceKm)}</strong> km
-          </span>
-          <span className="text-brand-text/30">·</span>
-          <span>
-            <strong className="font-bold text-brand-text">
-              ~{Math.round(deniveleM).toLocaleString("fr-FR")}
-            </strong>{" "}
-            m D+
-          </span>
-        </div>
-        <p className="mt-3.5 font-lora text-[15px] italic leading-[1.65] text-brand-text/85 sm:text-base">
+        {/* Intention : la voix éditoriale du site (Lora italique terracotta,
+            même gabarit que les exergues des autres pages). */}
+        <p className="mt-3.5 font-lora text-xl italic leading-relaxed text-brand-deep md:text-[22px]">
           {aventure.intention}
         </p>
         <div
@@ -71,15 +51,22 @@ export default function LiveAvant() {
 
       <Countdown dateDebut={aventure.dateDebut} />
 
-      {/* Itinéraire prévisionnel */}
+      {/* Itinéraire prévisionnel — les stats de la trace (calculées du GPX)
+          vivent sur la ligne du label depuis le retrait de la ligne du hero. */}
       <div>
-        <div className="mb-[9px] flex items-center justify-between">
-          <p className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-brand-deep-dark">
-            Itinéraire prévu
+        <div className="mb-[9px] flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5">
+          <p className="m-0 flex flex-wrap items-baseline gap-x-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-brand-deep-dark">
+            Itinéraire
+            {reference && (
+              <span className="font-heading text-[11.5px] font-medium normal-case tracking-normal text-brand-text/60">
+                {Math.round(reference.totalKm)} km · D+{" "}
+                {Math.round(reference.dPlusM).toLocaleString("fr-FR")} m
+              </span>
+            )}
           </p>
           <MapStyleSwitch value={mapStyle} onChange={setMapStyle} variant="header" />
         </div>
-        <div className="relative h-[280px] overflow-hidden rounded-[18px] border border-brand-text/10 sm:h-[380px]">
+        <div className="relative h-[280px] overflow-hidden border border-brand-text/10 sm:h-[380px]">
           <LiveMap
             referenceCoords={reference?.coords}
             doneCoords={[]}
@@ -97,9 +84,9 @@ export default function LiveAvant() {
           profile={reference.profile}
           totalKm={reference.totalKm}
           doneKm={0}
-          elevationMin={elevationMin}
-          elevationMax={elevationMax}
-          waypoints={live.waypoints ?? []}
+          elevationMin={reference.elevMinM}
+          elevationMax={reference.elevMaxM}
+          waypoints={aventure.waypoints ?? []}
           onHoverPoint={setHoverPoint}
         />
       )}

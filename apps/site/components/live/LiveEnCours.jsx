@@ -11,7 +11,7 @@
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 
-import { journalApiBase, liveConfig } from "@/lib/liveConfig";
+import { journalApiBase, liveConfig, liveReglages } from "@/lib/liveConfig";
 import { freshnessState } from "@/lib/freshness";
 import { dayIndex } from "@/lib/liveTime";
 import { useJournal } from "@/lib/useJournal";
@@ -32,14 +32,14 @@ const LiveMap = dynamic(() => import("./LiveMap"), {
 });
 
 export default function LiveEnCours({ timer }) {
-  const { aventure, live } = liveConfig;
-  const [mapStyle, setMapStyle] = useState("topo");
+  const { aventure } = liveConfig;
+  const [mapStyle, setMapStyle] = useState("relief");
   const [hoverPoint, setHoverPoint] = useState(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
-  const positions = useLivePositions({ pollMs: live.positionsPollMs });
-  const journal = useJournal({ pollMs: live.journalPollMs });
-  const reference = useReferenceTrack(live.referenceTrack);
+  const positions = useLivePositions({ pollMs: liveReglages.positionsPollMs });
+  const journal = useJournal({ pollMs: liveReglages.journalPollMs });
+  const reference = useReferenceTrack(aventure.trace);
 
   // Horloge 30 s : fait vieillir la fraîcheur et avancer le chrono sans polling.
   useEffect(() => {
@@ -55,6 +55,7 @@ export default function LiveEnCours({ timer }) {
     [positions],
   );
 
+  const running = timer?.running === true;
   const stats = positions?.stats;
   // Pas de pastille tant que la PREMIÈRE réponse des positions n'est pas là :
   // sinon « premier signal » clignote à chaque chargement en pleine course.
@@ -62,27 +63,41 @@ export default function LiveEnCours({ timer }) {
     positions === null
       ? null
       : freshnessState({
-          running: timer?.running === true,
+          running,
           lastFixTime: stats?.lastFixTime ?? null,
           nowMs,
-          zoneBlancheMinutes: live.zoneBlancheMinutes,
+          zoneBlancheMinutes: liveReglages.zoneBlancheMinutes,
         });
 
+  // Chrono : court tant que ça tourne, FIGÉ à l'heure d'arrêt une fois stoppé.
   const startMs = timer?.startTime ? Date.parse(timer.startTime) : NaN;
+  const stopMs = timer?.stopTime ? Date.parse(timer.stopTime) : NaN;
+  const endMs = running ? nowMs : Number.isFinite(stopMs) ? stopMs : nowMs;
   const elapsedSeconds = Number.isFinite(startMs)
-    ? Math.max(0, (nowMs - startMs) / 1000)
+    ? Math.max(0, (endMs - startMs) / 1000)
     : (stats?.durationSeconds ?? 0);
 
   const jour = dayIndex(new Date(nowMs).toISOString(), aventure.dateDebut);
+  // Stats de la trace, calculées du GPX (undefined tant que la trace charge).
+  const distanceKm = reference?.totalKm;
+  const deniveleM = reference?.dPlusM;
 
   return (
     <div className="mx-auto max-w-6xl">
-      <LiveHeader aventure={aventure} jour={jour} mapStyle={mapStyle} onMapStyle={setMapStyle} />
+      <LiveHeader
+        aventure={aventure}
+        distanceKm={distanceKm}
+        deniveleM={deniveleM}
+        jour={jour}
+        running={running}
+        mapStyle={mapStyle}
+        onMapStyle={setMapStyle}
+      />
 
       <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[1fr_460px] lg:items-start lg:gap-5">
         {/* Colonne gauche desktop : carte + profil. */}
         <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-4">
-          <div className="relative order-1 h-[380px] max-lg:-mx-4 sm:max-lg:-mx-6 lg:h-[520px] lg:overflow-hidden lg:rounded-[18px] lg:border lg:border-brand-text/10">
+          <div className="relative order-1 h-[380px] max-lg:-mx-4 sm:max-lg:-mx-6 lg:h-[520px] lg:overflow-hidden lg:border lg:border-brand-text/10">
             <LiveMap
               referenceCoords={reference?.coords}
               doneCoords={doneCoords}
@@ -98,11 +113,11 @@ export default function LiveEnCours({ timer }) {
           <div className="order-3">
             <ProfileCard
               profile={reference?.profile}
-              totalKm={reference?.totalKm ?? aventure.distanceKm}
+              totalKm={reference?.totalKm}
               doneKm={(stats?.distance ?? 0) / 1000}
-              elevationMin={reference?.elevMinM ?? live.elevationMin}
-              elevationMax={reference?.elevMaxM ?? live.elevationMax}
-              waypoints={live.waypoints ?? []}
+              elevationMin={reference?.elevMinM}
+              elevationMax={reference?.elevMaxM}
+              waypoints={aventure.waypoints ?? []}
               onHoverPoint={setHoverPoint}
             />
           </div>
@@ -113,7 +128,7 @@ export default function LiveEnCours({ timer }) {
           <div className="order-2">
             <ProgressionCard
               stats={stats}
-              totalKm={reference?.totalKm ?? aventure.distanceKm}
+              totalKm={reference?.totalKm}
               elapsedSeconds={elapsedSeconds}
             />
           </div>

@@ -12,8 +12,18 @@ function Dot() {
   return <span className="text-brand-text/30">·</span>;
 }
 
-export default function LiveHeader({ aventure, jour, mapStyle, onMapStyle }) {
-  const dPlus = aventure.deniveleM.toLocaleString("fr-FR");
+export default function LiveHeader({
+  aventure,
+  distanceKm,
+  deniveleM,
+  jour,
+  running = true,
+  mapStyle,
+  onMapStyle,
+}) {
+  // Stats de la trace : « — » le temps (bref) que le .track.json se charge.
+  const km = Number.isFinite(distanceKm) ? Math.round(distanceKm) : "—";
+  const dPlus = Number.isFinite(deniveleM) ? Math.round(deniveleM).toLocaleString("fr-FR") : "—";
 
   return (
     <div className="flex flex-col gap-2.5 pt-1 pb-3.5 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
@@ -26,7 +36,7 @@ export default function LiveHeader({ aventure, jour, mapStyle, onMapStyle }) {
             The Locomotion Lab
           </span>
         </div>
-        <LiveBadge />
+        <LiveBadge running={running} />
       </div>
 
       <div className="flex items-center gap-3 max-lg:hidden">
@@ -38,13 +48,13 @@ export default function LiveHeader({ aventure, jour, mapStyle, onMapStyle }) {
             <h1 className="m-0 font-heading text-[23px] font-bold text-brand-text">
               {aventure.nom}
             </h1>
-            <LiveBadge desktop />
+            <LiveBadge desktop running={running} />
           </div>
           <div className="mt-1 flex gap-3.5 font-heading text-[13px] text-brand-text/65">
             <span>The Locomotion Lab</span>
             <Dot />
             <span>
-              <strong className="font-bold text-brand-text">{aventure.distanceKm}</strong> km
+              <strong className="font-bold text-brand-text">{km}</strong> km
             </span>
             <Dot />
             <span>
@@ -62,7 +72,7 @@ export default function LiveHeader({ aventure, jour, mapStyle, onMapStyle }) {
         </h1>
         <div className="mt-1.5 flex gap-3 font-heading text-[12.5px] text-brand-text/65">
           <span>
-            <strong className="font-bold text-brand-text">{aventure.distanceKm}</strong> km
+            <strong className="font-bold text-brand-text">{km}</strong> km
           </span>
           <Dot />
           <span>
@@ -81,15 +91,21 @@ export default function LiveHeader({ aventure, jour, mapStyle, onMapStyle }) {
   );
 }
 
-function LiveBadge({ desktop = false }) {
+function LiveBadge({ desktop = false, running = true }) {
+  // Figé en marron (pas de clignotement) : « EN DIRECT » tant que le tracker
+  // tourne, « PARCOURS FIGÉ » une fois `./track stop` passé (page consultable).
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-[20px] bg-brand-deep font-mono font-bold tracking-[0.1em] text-brand-bg ${
-        desktop ? "px-3 py-[5px] text-[11px]" : "px-[11px] py-[5px] text-[10.5px]"
-      }`}
+      className={`inline-flex items-center gap-1.5 rounded-[20px] font-mono font-bold tracking-[0.1em] ${
+        running ? "bg-brand-deep text-brand-bg" : "bg-brand-text/10 text-brand-text/70"
+      } ${desktop ? "px-3 py-[5px] text-[11px]" : "px-[11px] py-[5px] text-[10.5px]"}`}
     >
-      <span className="inline-block h-[7px] w-[7px] animate-[ll-blink_1.1s_ease-in-out_infinite] rounded-full bg-brand-bg" />
-      EN DIRECT
+      <span
+        className={`inline-block h-[7px] w-[7px] rounded-full ${
+          running ? "bg-brand-bg" : "bg-brand-text/40"
+        }`}
+      />
+      {running ? "EN DIRECT" : "PARCOURS FIGÉ"}
     </span>
   );
 }

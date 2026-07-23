@@ -14,7 +14,7 @@ const PCT = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 1, maximumFr
 export default function ProgressionCard({ stats, totalKm, elapsedSeconds }) {
   const doneKm = (stats?.distance ?? 0) / 1000;
   const percent = Math.min(100, totalKm > 0 ? (doneKm / totalKm) * 100 : 0);
-  const remainingKm = Math.max(0, totalKm - doneKm);
+  const remainingKm = totalKm > 0 ? Math.max(0, totalKm - doneKm) : 0;
   const dplus = Math.round(stats?.dplus ?? 0).toLocaleString("fr-FR");
 
   return (
