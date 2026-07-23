@@ -373,27 +373,36 @@ listing/téléchargement/purge, notification « nouveau dépôt » à toi). Rest
    `LL-TWIN-…`, suppression après analyse). Il s'active dès que `SMTP_HOST` est posé
    (aucune variable en plus) ; `healthz` expose `confirmation: active|non_configuree`.
 
-### C5 — Le formulaire de contact : une décision à prendre
+### C5 — Le formulaire de contact : ✅ rapatrié dans la passerelle (2026-07-23)
 
-`ContactForm.jsx` poste **en dur** vers l'ancien Worker `send-email.thelocomotionlab.workers.dev`
-(dont le code n'est PAS dans ce repo). Il fonctionne, mais c'est le dernier fil qui pend.
-Deux options :
+`ContactForm.jsx` postait **en dur** vers l'ancien Worker `send-email` (hors repo).
+Fait : endpoint `POST /contact` dans `services/email-gateway` (relai via l'**API
+transactionnelle Brevo**, `Reply-To` = le visiteur, honeypot, mêmes CORS/rate-limit),
+et `ContactForm` bascule dessus quand `NEXT_PUBLIC_CONTACT_ENDPOINT` est défini
+(sinon : repli sur l'ancien flux, comportement historique intact).
 
-- **Option 1 (recommandée) : rapatrier.** Ajouter un endpoint `POST /contact` à
-  `services/email-gateway` (même Worker, versionné ici) qui relaie le message vers
-  `contact@thelocomotionlab.com` via l'API SMTP de Brevo, et brancher `ContactForm` sur
-  `NEXT_PUBLIC_EMAIL_ENDPOINT`. L'ancien Worker + Google Sheet part à la retraite
-  (`email-setup.md` §7.3). ~1 h de dev, je m'en charge.
-- **Option 2 : ne rien faire pour l'instant.** L'ancien Worker continue de servir le
-  contact (et les fallbacks si `NEXT_PUBLIC_EMAIL_ENDPOINT` manquait). Zéro risque, mais
-  une dépendance hors-repo de plus à ne pas oublier.
+Mise en service :
+1. Brevo → **Settings → SMTP & API → onglet API Keys** → *Generate a new API key*
+   (nom : `email-gateway`) — ⚠️ c'est une clé **API v3**, distincte de la clé SMTP.
+2. `git pull` puis `cd services/email-gateway && npx wrangler secret put BREVO_API_KEY
+   && npx wrangler deploy`.
+3. `apps/site/.env.production` :
+   `NEXT_PUBLIC_CONTACT_ENDPOINT=https://email-gateway.thelocomotionlab.workers.dev/contact`
+   → `pnpm -F site deploy:staging`.
+4. Test : page contact du staging → le message arrive sur `contact@` (routé vers la
+   boîte Gmail) → « Répondre » écrit directement au visiteur (Reply-To).
+5. Quand tout est basculé (subscribe + contact) et le lancement fait : mettre l'ancien
+   Worker send-email et l'Apps Script Google Sheet à la retraite (`email-setup.md` §7.3).
 
 ### C6 — Durcissements (passerelle + services) — optionnel, non bloquant
 
-La revue de juillet a laissé 5 constats ouverts sur `email-gateway` (C085–C090 dans
-`revue-integrale-2026-07/constats.md`) : wrangler non épinglé, body `null` → 500 au lieu
-de 400, borne mémoire du rate-limiter mal placée, sources fantômes `footer`/`manifeste`,
-regex avant test de longueur. À grouper dans un petit commit quand on touche au Worker (C5).
+La revue de juillet avait laissé 5 constats ouverts sur `email-gateway` (C085–C090 dans
+`revue-integrale-2026-07/constats.md`). ✅ Traités avec C5 (2026-07-23) : C085 (wrangler
+épinglé en devDependency), C086 (body `null`/non-objet → 400 `corps_invalide`), C087
+(borne mémoire du rate-limiter déplacée sur la branche qui fait grossir la Map), C090
+(longueur testée avant la regex). Restent assumés : C088 (sources `footer`/`manifeste`
+tolérées volontairement) et C089 (restriction d'origine = CORS seul, par design —
+honeypot + double opt-in en aval).
 
 Constaté le 2026-07-22 en conditions réelles : derrière le proxy Cloudflare (hôtes
 orange : `api.*`), l'IP vue par atelier-api et live-journal est celle du **bord
@@ -439,7 +448,7 @@ L'inventaire complet :
 | 2 | **Confirmation d'inscription atelier + fiche PDF** | atelier-api → nodemailer → Brevo | texte dans `services/atelier-api/src/mailer.ts` ; PDF `fiche_participant.tex.j2` (twin-engine) | ✅ fait (option : version HTML brandée plus tard) |
 | 3 | **Notification « nouveau dépôt Twin »** (pour toi) | twin-depot → nodemailer → Brevo | `services/twin-depot/src/mailer.ts` | ✅ fait |
 | 4 | **Confirmation de dépôt au déposant** | twin-depot → nodemailer → Brevo | `services/twin-depot/src/mailer.ts` | ✅ fait (2026-07-22) |
-| 5 | **Relai du formulaire de contact** | Worker legacy hors-repo → à rapatrier | décision C5 | ⚠️ décision |
+| 5 | **Relai du formulaire de contact** | email-gateway `/contact` → API Brevo (Reply-To = visiteur) | `services/email-gateway/src/index.ts` | ✅ fait (2026-07-23) — reste la mise en service (C5) |
 | 6 | **Template de campagne « Le Lab »** (annonce Écrins, parutions) | Listmonk (manuel) | `infra/listmonk/campaign-templates/` à créer + UI Listmonk | ❌ à créer ensemble |
 | 7 | **Liste d'attente atelier « une place s'est libérée »** | manuel aujourd'hui | — | 💤 chantier futur, optionnel |
 | 8 | **Rapport Twin prêt** (quand le produit payant existera, `apps/twin`) | futur | — | 💤 hors périmètre actuel |
