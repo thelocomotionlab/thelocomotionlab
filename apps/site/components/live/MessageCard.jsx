@@ -304,7 +304,7 @@ export default function MessageCard() {
           <rect x="1" y="6" width="10" height="7" rx="2" fill="none" stroke={brandColors.primaryDark} strokeWidth="1.3" />
           <path d="M3.5 6 V4 a2.5 2.5 0 0 1 5 0 V6" fill="none" stroke={brandColors.primaryDark} strokeWidth="1.3" />
         </svg>
-        <span>Message privé — remis à Valentin le soir au bivouac. Rien n&rsquo;est publié.</span>
+        <span>Un petit message privé pour me soutenir dans l'aventure.</span>
       </p>
     </section>
   );
