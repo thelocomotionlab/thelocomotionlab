@@ -40,10 +40,10 @@ export const liveConfig = {
     // "avant" pendant toute la prépa ET le direct ; "termine" une fois le
     // replay publié. (Astuce recette : NEXT_PUBLIC_LIVE_STATUT=termine au
     // build force l'aperçu « terminé » sans éditer ce fichier.)
-    statut: process.env.NEXT_PUBLIC_LIVE_STATUT || "avant",
+    statut: process.env.NEXT_PUBLIC_LIVE_STATUT || "termine",
 
     // Dossier du replay, créé à l'arrivée par la commande export-archive.
-    archive: "/replays/4x2000m-chartreuse/archive.json",
+    archive: "/replays/chartreuse-4x2000/archive.json",
   },
 
   // Libellés affichés AILLEURS que sur /live (accueil, tête de la page Explorer).
