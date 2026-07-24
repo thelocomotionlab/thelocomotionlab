@@ -24,25 +24,25 @@ const PILIERS = [
     verb: "Questionner",
     suite: "les normes établies",
     texte:
-      "Relire les dogmes de l’entraînement et de la santé à la lumière des études — et de millions d’années d’évolution.",
+      "Relire les dogmes de l’entraînement et de la santé à la lumière des études et de millions d’années d’évolution.",
   },
   {
     verb: "Éprouver",
     suite: "par soi-même",
     texte:
-      "Être son propre laboratoire : tester en conditions réelles, se tromper, recommencer. La connaissance qui reste est celle qui est vécue.",
+      "Être son propre laboratoire : tester en conditions réelles, se tromper, recommencer. Ne jamais se contenter des récits des autres.",
   },
   {
     verb: "Jouer",
     suite: "pour durer",
     texte:
-      "Le jeu est le moteur le plus durable : bouger comme un animal, rester curieux, faire de la pratique une récréation plutôt qu’une discipline.",
+      "Appréhender la vie comme un jeu, bouger comme un animal, rester curieux et faire de la pratique une récréation plutôt qu’une discipline.",
   },
   {
     verb: "Partager",
     suite: "pour ancrer",
     texte:
-      "Écrire, raconter, accompagner : ce qui est partagé s’ancre plus profondément — et fait avancer les autres.",
+      "Écrire, raconter, accompagner. Pour fixer les connaissances et faire perdurer le mouvement.",
   },
 ];
 
