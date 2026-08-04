@@ -273,6 +273,57 @@ AT+GTSRI=gl320m,3,,2,tracking.thelocomotionlab.com,5004,,0,,5,0,1,0,60,,FFFF$
   décodé, c'est une portion de trace perdue. On garde `0` tant que ce n'est pas
   testé.
 
+#### `AT+GTFRI` — les 21 champs, VÉRIFIÉS
+
+Même source, §3.2.2.10 « Fixed Report Information ». C'est **la commande qui fait
+émettre le tracker à intervalle régulier** : sans elle (Mode = 0 par défaut),
+l'appareil ne parle que sur événement — d'où une carte quasi vide et de la data
+consommée surtout aux allumages/extinctions.
+
+```
+AT+GTFRI=gl320m,1,1,,,0000,0000,30,30,30,30,,1000,1000,0,5,50,5,0,00000000,FFFF$
+```
+
+21 champs, 80 octets (limite SMS : 160).
+
+| # | Paramètre | Notre valeur | Pourquoi |
+| --- | --- | --- | --- |
+| 2 | Mode | `1` | rapport à intervalle de temps fixe |
+| 3 | **Discard No Fix** | **`1`** | **ne rien envoyer sans fix GPS** (cf. ci-dessous) |
+| 6-7 | Begin / End Time | `0000` / `0000` | égaux = actif 24 h/24 (règle du §3.2.2.10) |
+| 8-9 | Check / Send Interval | `30` / `30` s | un point toutes les 30 s |
+| 10-11 | Ignition Check / Send | `30` / `30` s | pas d'entrée ignition ici : mêmes valeurs, comportement identique quel que soit l'état supposé |
+| 13-14 | Distance / Mileage | `1000` | inutilisés en Mode 1, laissés au défaut |
+| 15 | Movement Detection | `0` | désactivé pour la mise au point (cf. ci-dessous) |
+| 19 | Corner | `0` | pas de rapport supplémentaire dans les lacets |
+| 20 | ERI Mask | `00000000` | on veut des `+RESP:GTFRI`, pas des `GTERI` |
+
+**`Discard No Fix = 1` — le réglage qui nettoie la trace.** À `0` (« report last
+known GPS position if there is no GPS fix »), l'appareil rejoue sa dernière
+position connue quand il ne voit pas le ciel : Traccar les stocke en
+`valid: false`, et la carte montre un coureur **figé** au lieu d'un trou. À `1`,
+il se tait — et le trou est justement ce que la page sait afficher (« zone
+blanche »). C'est la cause des positions `valid: false` observées le 4 août.
+
+**Deux contraintes du PDF à ne pas violer :**
+
+- **ratio `Send Interval` / `Check Interval` ≤ 15**, sinon « the command will be
+  discarded and the previous settings will be kept unchanged » — un refus
+  silencieux. Ici 30/30 = 1.
+- **`Check Interval` < 60 s ⇒ la puce GPS ne s'éteint jamais.** C'est ce qu'on
+  veut pour une trace fine, mais **c'est le premier poste de consommation
+  batterie**. Pour une sortie de plusieurs jours, mesurer l'autonomie réelle à
+  30 s (§6) avant de décider ; passer à `60`/`60` éteint la puce entre deux fix.
+
+**Deux options pour la vraie aventure** (laissées désactivées pour la mise au point) :
+
+- **`Movement Detection = 1` (champ 15)** : à l'arrêt, l'appareil n'envoie que
+  `Movement Send Number` rapports puis se tait jusqu'au prochain mouvement.
+  Vraie économie de batterie **pendant les nuits au bivouac**.
+- **`Corner = 30` à `45` (champ 19)** : ajoute un point quand le cap change de
+  plus de N degrés — capte les lacets qu'un rapport purement temporel coupe en
+  ligne droite. Coût : plus de points, donc plus de data et de batterie.
+
 #### Ce qui est CONFIRMÉ sur notre appareil (IMEI 860201069202698)
 
 Relevé en conditions réelles le 4 août 2026, par SMS via le tableau de bord Simbase :
@@ -286,8 +337,13 @@ Relevé en conditions réelles le 4 août 2026, par SMS via le tableau de bord S
   peut avoir un ordre de champs différent.
 - **`GTBSI` (APN) et `GTSRI` (serveur) sont acceptés** dans la forme envoyée : le
   tracker a joint Traccar et y a déposé des positions.
-- **`GTFRI` a été REFUSÉ** dans la forme essayée (`ERROR` sur le port série, aucun
-  ACK par SMS) → l'ordre des champs de CETTE commande reste à corriger.
+- **`GTFRI` a été REFUSÉ** dans la forme essayée — cause trouvée : la commande
+  envoyée n'avait que **15 champs au lieu de 21**, et les valeurs étaient décalées
+  (l'intervalle de 30 s tombait dans `End Time`). Forme correcte ci-dessus.
+- **`GTBSI` (APN) : `Network Mode = 0` + `LTE Mode = 2`** donne l'ordre de
+  recherche **M1 → 2G**, sans NB-IoT (table §3.2.1.1 du PDF) — c'est bien ce qu'on
+  veut pour un appareil en mouvement (cf. §1). En revanche le **GPRS APN
+  (champ 5) est resté vide** : à vérifier si le repli 2G doit fonctionner.
 
 > **Le port USB n'est pas le bon canal.** Sur `/dev/ttyUSB2`, `AT+CSQ` et `AT+CCLK`
 > répondent normalement mais `AT+GTFRI` renvoie `ERROR` : on parle à l'interface AT
