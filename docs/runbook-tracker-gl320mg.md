@@ -395,6 +395,128 @@ BUFFER_LOOKBACK_MINUTES=720     # 12 h
 
 ---
 
+### 3.5 La configuration optimisée — les quatre commandes
+
+Les réglages de §3.2 font *fonctionner* le tracker. Ceux-ci le font **bien
+suivre** : trace fine en mouvement, pas de dérive à l'arrêt, batterie ménagée.
+Toutes vérifiées champ par champ contre le PDF officiel.
+
+> ⚠️ **L'ordre compte.** `GTCFG` d'abord : il pose `GPS On Need`, dont dépendent
+> le mode 6 et le report d'angle de `GTFRI`. Chaque commande doit renvoyer un
+> `+ACK:` — sans ACK, elle n'est pas passée.
+
+```
+1. AT+GTCFG=gl320m,gl320m,gl320m,0,0.0,2,10,001F,,,0FFF,0,1,1,300,2,0,20491231235959,1,0000,0,20,1,,FFFF$
+2. AT+GTFRI=gl320m,6,1,,,0000,0000,30,30,30,30,,1000,50,1,1,20,5,45,00000000,FFFF$
+3. AT+GTNMD=gl320m,E,10,3,2,300,300,2,3,0,0,2,,,FFFF$
+4. AT+GTFKS=gl320m,1,1,5,1,1,3,2,8,4,3,FFFF$
+```
+
+#### Ce que chaque réglage apporte
+
+**`GTCFG` (25 champs) — la qualité du fix.**
+
+| # | Paramètre | Valeur | Effet |
+| --- | --- | --- | --- |
+| 6 | GPS On Need | **`2`** | GPS allumé **en mouvement**, éteint **au repos**. Le meilleur des deux : précision quand ça compte, batterie économisée au bivouac. Exigé par le mode 6 et le report d'angle. |
+| 7 | GPS Fix Delay | **`10`** s | le PDF prévient que « la position obtenue immédiatement après le fix peut être inexacte » : on attend 10 s au lieu de 5 avant de lire. |
+| 19 | AGPS Mode | **`1`** | **désactivé par défaut !** Améliore le taux d'accroche et raccourcit le temps de fix — décisif en fond de vallée et au démarrage à froid. |
+| 23 | **Walking Mode** | **`1`** | *« aide l'appareil à obtenir de meilleures informations d'azimut et de vitesse pendant la marche »*. Littéralement fait pour ton usage — et désactivé d'usine. |
+| 22 | Battery Low % | **`20`** | alerte `+RESP:GTBPL` à 20 % au lieu de 10 : de la marge pour réagir. |
+| 14-15 | Info Report | `1` / `300` s | le rapport d'état qui porte **la batterie** (§3.7). |
+| 8 | Report Item Mask | `001F` | garde l'**altitude** (bit 2) — sans elle, pas de D+. |
+
+> `GSM Report` (champ 20) reste à `0000` : le PDF précise que `+RESP:GTGSM`
+> n'est envoyé qu'en **TCP short-connection**, or on est en long-connection.
+> Ça ne servirait à rien ici.
+>
+> ⚠️ Le champ 2 est **New Password** : on y remet `gl320m` pour le laisser
+> inchangé. Ne le laisse jamais vide au hasard.
+
+**`GTFRI` (21 champs) — la densité de points.**
+
+| # | Paramètre | Valeur | Effet |
+| --- | --- | --- | --- |
+| 2 | Mode | **`6`** | « Fixed Time **ou** Mileage » : un point tous les **30 s OU tous les 50 m**, au premier des deux atteint. C'est le réglage que tu demandais. |
+| 14 | Mileage | **`50`** m | la distance qui déclenche un point hors délai. |
+| 19 | **Corner** | **`45`°** | ajoute un point dès que le cap change de plus de 45° : **capte les lacets** qu'un rapport purement temporel coupe en ligne droite. Descendre à `30` densifie encore, au prix de data et de batterie. |
+| 15-18 | Movement Detection | `1`, `1` km/h, `20` m, `5` | **le remède direct à la dérive à l'arrêt** : sous 1 km/h ET moins de 20 m de déplacement, l'appareil se tait après 5 rapports. Les deux conditions sont cumulatives — une montée raide à 1,5 km/h reste « en mouvement » grâce au critère de vitesse (que Walking Mode rend justement fiable). |
+| 3 | Discard No Fix | `1` | rien n'est envoyé sans fix : un trou plutôt qu'un coureur figé. |
+
+**`GTNMD` (15 champs) — l'économie au repos.** Détection par **accéléromètre**,
+complémentaire de celle de `GTFRI` (qui, elle, est basée sur le GPS).
+
+- `Mode = E` (bits 1+2+3) : signale les transitions arrêt/reprise **et** bascule
+  les intervalles sur les valeurs de repos.
+- `Non-movement Duration = 10` (×14 s ≈ **2 min 20**) : une pause photo ou un
+  ravitaillement ne fait pas basculer en « arrêt ». Le défaut (28 s) est bien trop
+  nerveux pour un coureur.
+- `Fix/Send Interval at Rest = 300` s : au bivouac, un point toutes les 5 min au
+  lieu de toutes les 30 s.
+
+> **Effet combiné à connaître** : à l'arrêt prolongé, `GTNMD` ralentit à 5 min
+> **et** la détection de `GTFRI` finit par couper les rapports. Après ~25 min
+> d'immobilité, le tracker se tait jusqu'au prochain mouvement. C'est voulu
+> (batterie), mais au-delà de 60 min la page `/live` affichera « zone blanche » —
+> ce qui, une nuit au bivouac, est sémantiquement correct. Pour l'éviter, mettre
+> le champ 15 de `GTFRI` à `0` et ne garder que `GTNMD`.
+
+---
+
+### 3.6 Les boutons — ce qu'ils font, et comment les régler
+
+Le GL320MG a **deux boutons** : la **touche marche/arrêt** (power key) et la
+**touche de fonction** (function key). Le comportement des deux se configure par
+`AT+GTFKS`.
+
+| Réglage | Valeur posée | Ce que ça donne |
+| --- | --- | --- |
+| Power Key Mode | `1` (défaut) | appui long = extinction |
+| Full Power On | `1` | branché sur le chargeur, l'appareil démarre **complètement** (il ne fait pas que charger) |
+| **Function Key Mode** | **`5`** — mode mixte | **deux actions sur un seul bouton**, selon la durée d'appui |
+| First Trigger | **`2` s → événement `4`** | **appui 2 s = envoie ta position immédiatement** (`+RESP:GTLOC`). Parfait pour marquer un point ou tester la chaîne à la demande. |
+| Second Trigger | **`8` s → événement `3`** | **appui 8 s = SOS**. Le défaut usine (3 s / 4 s) est bien trop serré : une seconde d'écart entre « position » et « SOS ». |
+| **Vibration** (champs 5-6) | **`1` / `1`** | **désactivée d'usine.** L'appareil vibre pour confirmer l'appui — indispensable avec des gants, ou sac fermé. |
+| SOS Report Mode | `3` | envoie la dernière position connue **tout de suite**, puis tente un fix frais et renvoie. Le bon compromis en urgence. |
+
+> **Option à considérer pour l'aventure** : `Power Key Mode = 0` empêche
+> l'extinction par le bouton — utile contre un appui accidentel au fond du sac.
+> **Mais** l'extinction ne serait alors plus possible qu'à distance, et la
+> commande correspondante n'est pas dans l'extrait de PDF dont on dispose : ne
+> pose ce réglage qu'après avoir vérifié comment revenir en arrière.
+
+---
+
+### 3.7 Surveiller la batterie
+
+**Il n'y a rien à demander au tracker** : `Info Report` (champs 14-15 de `GTCFG`,
+posés ci-dessus) lui fait publier un `+RESP:GTINF` toutes les 5 min, qui porte
+l'état de charge, la puissance du signal, l'ICCID et l'heure du dernier fix.
+Traccar range ça dans les **attributs** de la position.
+
+**En une commande, depuis n'importe où :**
+
+```bash
+curl -s https://tracking.thelocomotionlab.com/api/public/positions \
+  | jq '.[] | select(.deviceId==92) | {fixTime, attributes}'
+```
+
+(Sans paramètres, `/positions` renvoie la **dernière position connue** de chaque
+appareil — donc l'état courant.)
+
+**Ou automatiquement**, dans le diagnostic : `check-tracker.sh` affiche
+`🔋 batterie rapportée : N` à l'étape 3. S'il ne trouve rien, c'est que le rapport
+d'état est désactivé — reposer `GTCFG`.
+
+**L'alerte automatique** est déjà armée : `Battery Low Percentage = 20` +
+`Event Mask = 0FFF` (bit 5) font émettre un `+RESP:GTBPL` dès que la charge passe
+sous 20 %.
+
+> ⚠️ Aucun de ces chiffres ne remplace la **mesure d'autonomie réelle** en sortie
+> (§6). Avec un intervalle de 30 s, c'est ton premier poste de consommation.
+
+---
+
 ## 4. Étape ④ — Vérifier que les positions arrivent
 
 Tracker allumé, dehors, configuré :
@@ -521,6 +643,9 @@ partage) est dans [`live-tracking.md`](./live-tracking.md) §13.
 | Traccar a des positions, `./track status` affiche **0 point** | la fenêtre a été ouverte **après** le dernier fix : `track start` ne collecte qu'à partir de son instant d'ouverture, jamais rétroactivement | obtenir des positions **fraîches**, puis `./track reset && ./track start` |
 | Des positions arrivent mais **rien sur la carte** | le tracker émet **sans fix GPS** : Traccar stocke des points invalides ou à (0,0) | le sortir dehors, ciel dégagé, 15 min immobile. Le script compte les fix réellement valides (§4) |
 | Data consommée surtout à l'**extinction** du tracker | pas d'intervalle de report fixe actif : l'appareil ne parle que sur événement, et vide son buffer à l'arrêt | faire accepter `GTFRI` (§3.2) |
+| Trace qui **gigote sur place** alors que le tracker ne bouge pas (distance et D+ qui montent à l'arrêt) | dérive GPS statique : chaque fix tombe à quelques mètres du précédent | détection de mouvement de `GTFRI` (champs 15-18) + `GTNMD` — cf. §3.5 |
+| Lacets coupés en ligne droite sur la carte | rapport purement temporel : entre deux points de 30 s, le virage n'existe pas | `Corner` (champ 19 de `GTFRI`) à `45`, voire `30` — §3.5 |
+| Pas de batterie affichée | rapport d'état désactivé | `GTCFG` champs 14-15 — §3.7 |
 | Trous dans la trace qui ne se remplissent jamais | buffer désactivé, ou coupure plus longue que le lookback | §3.4 : buffer ON + `BUFFER_LOOKBACK_MINUTES` |
 | Ça marchait, plus rien depuis une heure | zone blanche (≠ panne) | attendre ; `./track status` ; puis §4 |
 | Batterie vide bien avant l'heure annoncée | intervalle trop rapide, froid, recherche réseau permanente | allonger l'intervalle (60 s), batterie externe pour l'ultra |

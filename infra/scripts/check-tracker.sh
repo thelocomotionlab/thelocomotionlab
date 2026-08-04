@@ -201,6 +201,28 @@ print(sum(1 for p in d
           echo "      ↳ le lien réseau est bon (les points arrivent) — c'est le GPS qui n'accroche pas."
           fix "le sortir DEHORS, ciel dégagé, immobile 15 min (premier fix à froid). En intérieur, il peut ne jamais accrocher."
         fi
+
+        # Batterie : le tracker la publie dans +RESP:GTINF (piloté par Info Report
+        # Enable/Interval de GTCFG) ; Traccar la range dans les attributs de la
+        # position. Le nom du champ varie selon la version, d'où le balayage.
+        BATT="$(echo "$POS" | json_get \
+          '[.[] | .attributes // {} | (.batteryLevel // .battery // .batteryPercentage // empty)] | last // empty' \
+          '
+import json,sys
+val = None
+for p in json.load(sys.stdin):
+    a = p.get("attributes") or {}
+    for k in ("batteryLevel", "battery", "batteryPercentage"):
+        if a.get(k) is not None:
+            val = a[k]
+print(val if val is not None else "")
+')"
+        if [ -n "${BATT:-}" ]; then
+          echo "  🔋 batterie rapportée : $BATT"
+        else
+          warn "aucune donnée de batterie dans les positions"
+          echo "      ↳ le rapport d'état (+RESP:GTINF) est-il activé ? AT+GTCFG champs 14/15."
+        fi
       else
         warn "aucune position sur les dernières 24 h"
         echo "      ↳ si le tracker émet depuis moins longtemps que ça, c'est normal ; sinon la chaîne s'arrête ICI (tracker/SIM/réseau), pas plus loin."
