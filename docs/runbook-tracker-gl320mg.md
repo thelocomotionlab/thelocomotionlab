@@ -181,12 +181,17 @@ endroit qui fait foi.
 Le GL320MG sort d'usine **sans savoir où envoyer ses positions**. Il faut lui
 donner l'APN (§1) et l'adresse du serveur (§2).
 
-| Chemin | Quand | Risque |
+| Chemin | Quand | Statut |
 | --- | --- | --- |
-| **A. Outil Queclink par USB** ✅ recommandé | première mise en service | faible : des champs nommés, pas de virgules à compter |
-| **B. Commandes @Track par SMS** | tracker déjà sur le terrain | réel : l'ordre des paramètres varie selon le modèle ET la version de firmware |
+| **B. Commandes @Track par SMS** ✅ **la voie éprouvée ici** | toujours, y compris tracker déjà sur le terrain | **validé le 4 août 2026** : les trois commandes ci-dessous ont été ACK et les positions ont suivi |
+| **A. Outil Queclink par USB** | si tu obtiens l'outil un jour | non testé — et attention, `/dev/ttyUSB2` est le port AT du **modem**, pas le canal @Track (§« Ce qui est confirmé ») |
 
-#### Chemin A — l'outil de configuration (recommandé)
+> **Va directement au chemin B.** Les commandes exactes de notre appareil sont
+> écrites plus bas, vérifiées champ par champ contre le PDF officiel et
+> confirmées par les ACK reçus. Le chemin A n'a plus d'intérêt ici : il servait à
+> éviter de compter les virgules, or elles sont désormais comptées.
+
+#### Chemin A — l'outil de configuration
 
 Récupère l'outil de configuration Queclink (« Configuration Tool » / QCT) et le
 **@Track Air Interface Protocol du GL320M Series** auprès de ton revendeur ou du
@@ -523,16 +528,32 @@ partage) est dans [`live-tracking.md`](./live-tracking.md) §13.
 
 ---
 
-## 8. Ce qu'il reste à confirmer sur ton matériel
+## 8. État de la mise en service
 
-Honnêtement, trois points de ce runbook viennent des conventions Queclink et non
-de la doc de **ton** GL320MG, que Queclink ne diffuse pas publiquement :
+**Chaîne matérielle bouclée le 4 août 2026, 22 h 06.** Les deux commandes de
+configuration ont été acquittées et les positions ont suivi immédiatement :
 
-1. **Le mot de passe d'usine** (`gl320m` supposé, par la convention « nom du
-   modèle en minuscules »).
-2. **L'ordre exact des paramètres** de `AT+GTQSS` / `AT+GTSRI` / `AT+GTFRI` (§3.2).
-3. **Le détail des LED** et la durée d'appui exacte du bouton (§3.1).
+```
++ACK:GTSRI,C30303,860201069202698,,FFFF,20260804200548,00B2$
++ACK:GTFRI,C30303,860201069202698,,FFFF,20260804200617,00B4$
+→ positions valid:true à 20:06:55 puis 20:07:17 (≈ 30 s d'écart, conforme)
+```
 
-Les trois se lisent dans le **user manual** + le **@Track Air Interface Protocol**
-de ta version. Le chemin A (outil USB, §3.2) contourne les points 1 et 2
-entièrement — c'est pour ça qu'il est recommandé.
+Ce qui était supposé au premier jet et qui est **désormais vérifié** :
+
+- **Mot de passe d'usine `gl320m`** — confirmé par les ACK.
+- **Ordre des champs de `GTSRI` (16) et `GTFRI` (21)** — lu dans le PDF officiel
+  `QSZTRACGL320MAN0303`, recompté, et validé sur l'appareil.
+- **Le SMS est le bon canal** ; `/dev/ttyUSB2` est le port AT du modem cellulaire,
+  qui ignore les commandes `AT+GT*`.
+
+**Ce qui reste ouvert :**
+
+1. **Le détail des LED** et la durée d'appui exacte du bouton (§3.1) — cosmétique,
+   se lit dans le *user manual*.
+2. **Le repli 2G** : le champ 5 de `GTBSI` (GPRS APN) est vide. À remplir avec
+   `simbase` si le repli doit vraiment fonctionner (§« Ce qui est confirmé »).
+3. **L'autonomie réelle à 30 s d'intervalle**, GPS jamais éteint — la seule mesure
+   qui compte avant une sortie de plusieurs jours (§6).
+4. **`Multi-packet Sending`** (champ 13 de `GTSRI`) non testé contre le décodeur
+   `gl200` de Traccar — laissé à `0`.
