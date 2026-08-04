@@ -86,12 +86,32 @@ Interface Traccar (`https://tracking.thelocomotionlab.com`, compte admin) :
 1. **Paramètres → Appareils → +**
    - **Nom** : `GL320MG Écrins` (ou ce que tu veux, c'est cosmétique) ;
    - **Identifiant** : **l'IMEI, chiffres seuls**, sans espace ni préfixe.
-2. Ouvre la fiche de l'appareil créé et **note son `id` numérique** (visible dans
-   l'URL ou la colonne ID) — c'est le `DEVICE_ID` du back, à ne pas confondre avec
-   l'IMEI.
-3. **Partage l'appareil au compte `public`** (Paramètres → Utilisateurs → `public`
+2. **Partage l'appareil au compte `public`** (Paramètres → Utilisateurs → `public`
    → Appareils → cocher le nouveau). Sans ce partage, le token de `.env` lit
    `/positions` et reçoit une liste vide — panne silencieuse et déroutante.
+3. **Relève son `id` numérique** — c'est le `DEVICE_ID` du back, à ne pas confondre
+   avec l'IMEI (voir l'encadré ci-dessous).
+
+> ### Où est passé le `deviceId` ?
+>
+> **Il existe dès la création de la fiche** : c'est la clé primaire en base,
+> attribuée par Traccar sur-le-champ. Un appareil « Hors ligne » / « jamais
+> connecté » **a déjà son id** — inutile d'attendre qu'il émette. Simplement,
+> l'interface ne l'affiche nulle part. Trois façons de le lire :
+>
+> 1. **Par l'API publique** (la plus simple — et elle vérifie *en même temps* que
+>    le partage au compte `public` de l'étape 2 est bien fait) :
+>    ```bash
+>    curl -s https://tracking.thelocomotionlab.com/api/public/devices | jq '.[] | {id, name, uniqueId, status}'
+>    ```
+>    Caddy injecte le token côté serveur : ni login ni secret à manipuler. Le
+>    champ `id` est ton `DEVICE_ID`. **Liste vide → l'appareil n'est pas partagé
+>    au compte `public`.**
+> 2. **Par l'URL de l'UI** : clique l'icône **crayon** (modifier) sur la fiche de
+>    l'appareil → l'adresse devient `…/settings/device/<id>`. Le nombre final est
+>    l'id.
+> 3. **Par le script**, si `DEVICE_ID` est encore faux ou absent : `check-tracker.sh`
+>    (§2.5) liste tous les appareils visibles avec leur `#id`.
 
 ### 2.3 Ouvrir le port balise 5004
 

@@ -130,7 +130,20 @@ for d in json.load(sys.stdin):
 ")"
     if [ -z "$LINE" ]; then
       ko "aucun appareil d'id $DEVICE dans Traccar (ou non partagé au compte du token)"
-      fix "UI Traccar → Paramètres → Appareils : créer l'appareil (uniqueId = IMEI du GL320MG), le PARTAGER au compte \`public\`, puis poser DEVICE_ID=<id> dans infra/.env"
+      # Cas typique de la mise en service : l'appareil vient d'être créé dans
+      # l'UI, qui n'affiche NULLE PART son id numérique. On le donne ici — il
+      # existe dès la création, sans attendre la moindre émission.
+      echo "      ↳ appareils visibles par le token (le # est le DEVICE_ID à poser) :"
+      echo "$DEVICES" | json_get \
+        '.[] | "        #\(.id) · \(.name) · uniqueId=\(.uniqueId) · \(.status // "jamais connecté")"' \
+        '
+import json,sys
+for d in json.load(sys.stdin):
+    print("        #%s · %s · uniqueId=%s · %s"
+          % (d.get("id"), d.get("name"), d.get("uniqueId"), d.get("status") or "jamais connecté"))
+'
+      echo "        (liste vide = appareil non PARTAGÉ au compte du token, cf. runbook §2.2)"
+      fix "poser DEVICE_ID=<le # ci-dessus> dans infra/.env, puis ./deploy.sh"
     else
       IFS='|' read -r D_NAME D_UID D_STATUS D_LAST <<<"$LINE"
       ok "appareil #$DEVICE trouvé : « $D_NAME » · uniqueId=$D_UID"
