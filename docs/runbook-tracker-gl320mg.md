@@ -226,6 +226,28 @@ AT+GTFRI=<mdp>,…,30,…$                                   ← l'intervalle
   série (`FFFF` convient).
 - L'appareil répond par un ACK (`+ACK:GTBSI,…`) : **pas d'ACK = commande non prise**.
 
+#### Ce qui est CONFIRMÉ sur notre appareil (IMEI 860201069202698)
+
+Relevé en conditions réelles le 4 août 2026, par SMS via le tableau de bord Simbase :
+
+- **Le mot de passe d'usine est bien `gl320m`.** L'ACK reçu le prouve :
+  `+ACK:GTSRI,C30303,860201069202698,,FFFF,20260804162604,0000$` — un mot de passe
+  refusé ne produit aucun ACK.
+- **Le numéro de série `FFFF` fonctionne.**
+- **La version de protocole est `C30303`** (2ᵉ champ de l'ACK) : c'est elle qui
+  désigne le PDF applicable. Un @Track Air Interface Protocol d'une autre version
+  peut avoir un ordre de champs différent.
+- **`GTBSI` (APN) et `GTSRI` (serveur) sont acceptés** dans la forme envoyée : le
+  tracker a joint Traccar et y a déposé des positions.
+- **`GTFRI` a été REFUSÉ** dans la forme essayée (`ERROR` sur le port série, aucun
+  ACK par SMS) → l'ordre des champs de CETTE commande reste à corriger.
+
+> **Le port USB n'est pas le bon canal.** Sur `/dev/ttyUSB2`, `AT+CSQ` et `AT+CCLK`
+> répondent normalement mais `AT+GTFRI` renvoie `ERROR` : on parle à l'interface AT
+> **du modem cellulaire**, qui ignore les commandes propriétaires Queclink. C'est
+> cohérent — un port @Track refuserait au contraire `AT+CSQ`. **Passe par SMS**,
+> qui est démontré fonctionnel ici (l'ACK GTSRI ci-dessus).
+
 > ⛔ **Le point que je ne peux pas trancher à ta place.** Le **nombre exact de
 > virgules** et la position de chaque paramètre dans `GTQSS` / `GTSRI` / `GTFRI`
 > **changent d'un modèle Queclink à l'autre et d'une version de firmware à
@@ -388,6 +410,9 @@ partage) est dans [`live-tracking.md`](./live-tracking.md) §13.
 | Traccar dit **unknown**, jamais de position | IMEI mal saisi, ou serveur/port faux dans le tracker | §2.2 (IMEI = chiffres seuls) et §3.2 |
 | Le tracker se connecte, Traccar ne stocke rien | appareil non déclaré : Traccar refuse une session inconnue | §2.2, puis vérifier le log `tracker-server.log` (§4) |
 | `check-tracker.sh` : positions OK mais `/live` vide | pas de session ouverte, **ou** page en `statut: "termine"` | `./track start` (§5.1) **et** §5.2 |
+| Traccar a des positions, `./track status` affiche **0 point** | la fenêtre a été ouverte **après** le dernier fix : `track start` ne collecte qu'à partir de son instant d'ouverture, jamais rétroactivement | obtenir des positions **fraîches**, puis `./track reset && ./track start` |
+| Des positions arrivent mais **rien sur la carte** | le tracker émet **sans fix GPS** : Traccar stocke des points invalides ou à (0,0) | le sortir dehors, ciel dégagé, 15 min immobile. Le script compte les fix réellement valides (§4) |
+| Data consommée surtout à l'**extinction** du tracker | pas d'intervalle de report fixe actif : l'appareil ne parle que sur événement, et vide son buffer à l'arrêt | faire accepter `GTFRI` (§3.2) |
 | Trous dans la trace qui ne se remplissent jamais | buffer désactivé, ou coupure plus longue que le lookback | §3.4 : buffer ON + `BUFFER_LOOKBACK_MINUTES` |
 | Ça marchait, plus rien depuis une heure | zone blanche (≠ panne) | attendre ; `./track status` ; puis §4 |
 | Batterie vide bien avant l'heure annoncée | intervalle trop rapide, froid, recherche réseau permanente | allonger l'intervalle (60 s), batterie externe pour l'ultra |
