@@ -85,13 +85,13 @@ export default function PratiquerPage() {
     // + retrait interne lg:px-6 chez eux = 48 px au total).
     <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-12">
       <PageHeader
-        kicker="/ LE JEU"
+        kicker="/ JOUER"
         title="Pratiquer"
         tagline="Éprouver par soi-même."
         className="mb-0"
       />
       <p className="mt-4 max-w-[640px] text-base leading-[1.7] text-gray-600 md:text-lg">
-        Propositions d&rsquo;ateliers de motricité primale, en extérieur, pour réincarner
+        Propositions d&rsquo;ateliers de motricité primale en extérieur, pour réincarner
         l&rsquo;animal qui sommeille en toi. Gratuits pendant la phase de lancement du
         labo.
       </p>
@@ -126,14 +126,13 @@ export default function PratiquerPage() {
           <p className="mb-3 text-base leading-[1.75] text-gray-600 md:mb-3.5 md:text-[17px]">
             Nos corps ont été façonnés par des millions d&rsquo;années de
             marche, de course, de portage et de jeu au sol. Le mouvement
-            primal, c&rsquo;est revenir à ces schémas fondamentaux :
-            quadrupédie, squat profond, suspension, équilibre — non pas
-            comme une discipline, mais comme une récréation.
+            primal, c'est utiliser le jeu pour renouer avec nos racines primates
+            pour développer un corps robuste et fonctionnel.
           </p>
           <p className="text-base leading-[1.75] text-gray-600 md:text-[17px]">
-            Pas de machine, pas de chrono, pas de niveau requis. Un terrain,
-            un groupe, et la curiosité de redécouvrir ce que ton corps sait
-            déjà faire.
+            Il s'agit d'une pratique profondément transformatrice, tant sur le plan  mental
+            que physique. Pratiquée au poids du corps, elle s'oppose à la culture de la performance
+            et est accessible à tous·te·s. 
           </p>
         </div>
         <PhotoSlot
@@ -250,8 +249,7 @@ export default function PratiquerPage() {
               Accompagnement trail & course minimaliste
             </h2>
             <p className="text-[14.5px] text-gray-500 md:text-[15px]">
-              Suivi individuel à distance, retraites et immersions. Ouverture
-              après le diplôme STAPS.
+              Suivi individuel à distance, retraites et immersions.
             </p>
           </div>
           <TrailNotify />

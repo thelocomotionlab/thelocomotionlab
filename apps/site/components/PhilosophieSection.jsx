@@ -30,19 +30,19 @@ const PILIERS = [
     verb: "Éprouver",
     suite: "par soi-même",
     texte:
-      "Être son propre laboratoire : tester en conditions réelles, se tromper, recommencer. Ne jamais se contenter des récits des autres.",
+      "Pour expérimenter les concepts en conditions réelles et se les approprier par le corps et l'esprit.",
   },
   {
     verb: "Jouer",
     suite: "pour durer",
     texte:
-      "Appréhender la vie comme un jeu, bouger comme un animal, rester curieux et faire de la pratique une récréation plutôt qu’une discipline.",
+      "Appréhender chaque pratique comme un jeu, pour ne jamais se lasser et progresser sans limite.",
   },
   {
     verb: "Partager",
     suite: "pour ancrer",
     texte:
-      "Écrire, raconter, accompagner. Pour fixer les connaissances et faire perdurer le mouvement.",
+      "Écrire pour raconter, expliquer pour fixer et enrichir les connaissances, accompagner pour transmettre et amplifier le mouvement.",
   },
 ];
 
@@ -125,7 +125,7 @@ export default function PhilosophieSection() {
           / LE LABO
         </p>
         <h2 className="mt-3 text-center font-heading text-[28px] font-bold text-brand-primary-dark md:text-[40px]">
-          La philosophie
+          La philosophie du lab
         </h2>
 
         {/* Desktop ≥ md : grille 4 colonnes, textes justifiés */}

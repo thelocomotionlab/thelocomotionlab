@@ -472,14 +472,14 @@ export default function InscriptionForm({ atelier }) {
             href="/pratiquer"
             className="inline-flex items-center gap-1.5 font-mono text-[12.5px] font-bold tracking-[0.12em] text-brand-slate transition-colors hover:text-brand-accent-dark"
           >
-            ← REVENIR AUX ATELIERS
+            REVENIR AUX ATELIERS
           </Link>
         </div>
         <h1 className="mb-1.5 text-[30px] font-bold text-brand-slate-dark">
           Ta place à l&rsquo;atelier
         </h1>
         <p className="mb-5 font-lora text-lg italic text-brand-deep">
-          Cinq minutes de lecture — c&rsquo;est important, alors c&rsquo;est court.
+          À parcourir avant de t'inscrire.
         </p>
         {recapAtelier}
       </div>
@@ -511,9 +511,8 @@ export default function InscriptionForm({ atelier }) {
             <p className="text-[14.5px] leading-[1.6] text-brand-text">
               <strong className="text-brand-slate-dark">
                 Les mineurs sont accueillis à partir de 12 ans, uniquement accompagnés de leur
-                représentant légal, qui participe à l&rsquo;atelier.
-              </strong>{" "}
-              Il n&rsquo;est pas possible de déposer un mineur.
+                représentant légal, qui participe également à l&rsquo;atelier.
+              </strong>
             </p>
           </Callout>
         ) : null}
@@ -562,10 +561,6 @@ export default function InscriptionForm({ atelier }) {
         <div className="mt-5 rounded-2xl border-[1.5px] border-brand-accent bg-white p-5 md:px-[22px]">
           <p className="mb-1 font-mono text-[11px] font-bold tracking-[0.2em] text-brand-accent-ink">
             CONTACT D&rsquo;URGENCE
-          </p>
-          <p className="mb-3.5 text-sm leading-[1.55] text-gray-500">
-            La personne à prévenir s&rsquo;il t&rsquo;arrive quelque chose. C&rsquo;est le champ
-            le plus utile de cette page.
           </p>
           <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
             <Champ label="Nom">

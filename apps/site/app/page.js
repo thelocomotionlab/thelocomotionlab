@@ -263,7 +263,7 @@ export default async function HomePage() {
         <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:gap-16">
           <div>
             <p className="mb-3.5 font-mono text-[13px] font-bold tracking-[0.25em] text-brand-slate">
-              / INTELLECT
+              / SCIENCE
             </p>
             <h2 className="font-heading text-[40px] font-bold leading-none tracking-[-0.01em] text-brand-slate-dark md:text-[64px]">
               Comprendre
@@ -324,7 +324,7 @@ export default async function HomePage() {
 
         <div className="relative z-[2] mx-auto max-w-6xl">
           <p className="mb-3.5 font-mono text-[13px] font-bold tracking-[0.25em] text-brand-accent-light">
-            / INSTINCT
+            / PRIMAL
           </p>
           <h2 className="font-lora text-[40px] font-semibold italic leading-none text-white md:text-[64px]">
             Explorer
@@ -334,7 +334,7 @@ export default async function HomePage() {
           </p>
           <p className="mt-[18px] max-w-[520px] text-[16.5px] leading-[1.7] text-white/88 text-pretty">
             Récits d&rsquo;aventures et projets au long cours : explorations en
-            autonomie, saisons de trail, expérimentations. C&rsquo;est ici que
+            autonomie, saisons de trail, expérimentations. Ici,
             la robustesse se développe, s&rsquo;éprouve et s&rsquo;affine.
           </p>
 
