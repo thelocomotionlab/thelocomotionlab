@@ -28,6 +28,9 @@ infra/
 ├─ compose.yml             # la stack : service `caddy` (proxy) + service `template` (app de test)
 ├─ .env.example            # modèle de variables/secrets → copier en .env (NON versionné)
 ├─ deploy.sh               # pull des images + (re)up des services (lancé sur le VPS)
+├─ scripts/
+│  └─ check-tracker.sh     # diagnostic de la chaîne de positions (tracker → Traccar →
+│                          #   tracking-cache → Caddy → /live) — LECTURE SEULE
 └─ caddy/
    ├─ Dockerfile           # Caddy recompilé avec le plugin DNS Cloudflare (DNS-01)
    ├─ Caddyfile            # options globales (ACME DNS-01) + import de conf.d/*.caddy
@@ -67,6 +70,19 @@ cd infra
 cp .env.example .env     # puis renseigner les valeurs (cf. docs/secrets.md / docs/cloudflare-vps.md)
 ./deploy.sh              # build caddy + pull des images + up -d
 ```
+
+## Diagnostiquer le live-tracking
+
+```bash
+cd /opt/locomotionlab && ./infra/scripts/check-tracker.sh
+```
+
+Teste **les 5 maillons dans l'ordre** — ports balises Traccar (5004 Queclink / 5055 OsmAnd),
+pare-feu, appareil déclaré + dernières positions, conteneur `tracking-cache` + chrono, fichiers
+servis par Caddy avec leur CORS — et s'arrête sur un verdict par maillon. Le **premier ❌** désigne
+le coupable : au lieu de « la carte est vide », on sait si c'est le tracker, le réseau, Traccar, le
+back ou le proxy. **Lecture seule** : ne modifie ni conteneur, ni pare-feu, ni chrono, donc lançable
+en pleine aventure. Mise en service du tracker : [`docs/runbook-tracker-gl320mg.md`](../docs/runbook-tracker-gl320mg.md).
 
 ## Ajouter un futur sous-domaine d'app (ex. `twin`, `api`/moteur)
 

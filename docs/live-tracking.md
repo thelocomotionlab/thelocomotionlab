@@ -11,7 +11,8 @@
 > `services/live-journal/` (journal + messages) · `infra/` (déploiement VPS).
 >
 > Voisins : [`plan-staging.md`](./plan-staging.md) (mise en service d'ensemble) ·
-> [`runbook-vps.md`](./runbook-vps.md) (opérations VPS) ·
+> [`runbook-tracker-gl320mg.md`](./runbook-tracker-gl320mg.md) (première mise en
+> service du tracker + SIM) · [`runbook-vps.md`](./runbook-vps.md) (opérations VPS) ·
 > [`../infra/README.md`](../infra/README.md).
 
 ---
@@ -125,16 +126,23 @@ Application officielle Android/iOS, parle le **protocole OsmAnd** sur le
 | **Frequency** | 20–30 s |
 | **Distance / Angle** | ex. 25 m + angle pour capter les virages |
 
-### Option tracker GL320M — Queclink @Track (la vraie répétition matériel)
-Le GL320M parle le protocole **Queclink** (« gl200 » dans Traccar), port
-**5004** par défaut (TCP), **pas** le 5055 du téléphone. À faire :
-- déclarer l'appareil dans Traccar (`uniqueid` = IMEI) ;
+### Option tracker GL320MG — Queclink @Track (la vraie répétition matériel)
+Le GL320MG parle le protocole **Queclink** (« gl200 » dans Traccar), port
+**5004** par défaut (TCP), **pas** le 5055 du téléphone. En résumé :
+- déclarer l'appareil dans Traccar (`uniqueid` = IMEI) et le **partager au compte
+  `public`** ;
 - ouvrir le port : `sudo ufw allow 5004/tcp` (+ pare-feu OVH Manager si actif) ;
 - pointer le tracker sur `tracking.thelocomotionlab.com:5004` ;
 - **store & forward ON** (bufferise hors réseau, renvoie tout au retour du
   signal), intervalle 30–60 s, tracker en haut du sac (ciel dégagé) ;
 - vérifier `DEVICE_ID` dans `infra/.env` (§10.3) ;
 - **autonomie testée sur une vraie sortie longue** (pas la fiche constructeur).
+
+> 📓 **Première mise en service (SIM Simbase incluse) : le pas-à-pas complet est
+> dans [`runbook-tracker-gl320mg.md`](./runbook-tracker-gl320mg.md)** — activation
+> de la SIM, config @Track du tracker, ordre de montage, recette de sortie
+> d'essai, pannes probables. Diagnostic en une commande, sur le VPS :
+> `./infra/scripts/check-tracker.sh` (teste les 5 maillons et désigne le coupable).
 
 > **Pourquoi `:5055`/`:5004` et pas le HTTPS du site ?** Ce sont les ports
 > « balises » de Traccar, pas du web. C'est aussi pourquoi le DNS `tracking`
@@ -299,6 +307,7 @@ elles dériveraient) ; les leviers :
 | `apiUrl` | `TRACCAR_API_URL` | API Traccar (locale par défaut). |
 | `intervalSeconds` | `INTERVAL_SECONDS` | période de la boucle. |
 | `fetchWindowHours` | `FETCH_WINDOW_HOURS` | plancher de la fenêtre de fetch. |
+| `bufferLookbackMinutes` | `BUFFER_LOOKBACK_MINUTES` | recul de la borne basse, pour rattraper les points **bufferisés** (store & forward) renvoyés en retard par le tracker. À monter si tu attends des coupures réseau plus longues. |
 | `maxPointsPerFetch` | `MAX_POINTS_PER_FETCH` | plafond de points par requête. |
 | `samplingCorrection` | `SAMPLING_CORRECTION` | correction distance. |
 | `elevationPlusCorrection` / `…MinusCorrection` | `ELEVATION_PLUS/MINUS_CORRECTION` | corrections D+/D−. |
@@ -420,9 +429,14 @@ Détails de la stratégie staging : [`plan-staging.md`](./plan-staging.md).
 
 ## 14. Pannes probables & remèdes
 
+> **Réflexe n°1 pour tout ce qui touche aux positions** : sur le VPS,
+> `./infra/scripts/check-tracker.sh` teste les 5 maillons dans l'ordre et désigne
+> le coupable (lecture seule, sans risque, même en pleine aventure).
+
 | Symptôme | Diagnostic | Remède |
 | --- | --- | --- |
-| Plus de positions sur `/live` | tracker (batterie/ciel) → Traccar → tracking-cache | attendre d'abord (zone blanche ≠ panne) ; UI Traccar (dernière position ?) ; `./track status` ; `./track logs` (cherche `HTTP 401/403` = token) |
+| Plus de positions sur `/live` | tracker (batterie/ciel) → Traccar → tracking-cache | attendre d'abord (zone blanche ≠ panne) ; `./infra/scripts/check-tracker.sh` ; `./track status` ; `./track logs` (cherche `HTTP 401/403` = token) |
+| Trous dans la trace qui ne se comblent jamais | points bufferisés par le tracker renvoyés hors de la fenêtre de rattrapage | `BUFFER_LOOKBACK_MINUTES` plus large que la coupure attendue (§10.1) ; store & forward bien activé côté tracker |
 | `/live` reste sur « Avant » au départ | `track start` non lancé, ou timer KO | `./track start` ; `curl …/live-timer.json` |
 | Carnet muet (pas de « ✓ Publié ») | webhook / service / Telegram | `curl …/journal/healthz` ; relancer `set-webhook.sh` ; `docker compose logs live-journal` ; Telegram down → repart seul (retries) |
 | « ✗ Trop lourd pour l'API » | vidéo/fichier > 20 Mo (limite Bot API) | renvoyer plus court / compressé |
