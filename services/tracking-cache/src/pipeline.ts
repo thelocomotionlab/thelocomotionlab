@@ -23,20 +23,47 @@ function makeKey(p: TraccarPosition): string {
   return p.id != null ? `id:${p.id}` : `t:${p.fixTime}|${p.latitude}|${p.longitude}`;
 }
 
-/** Borne basse du fetch : la plus récente de (dernier point en cache, fenêtre, plancher). */
-function computeFromIso(
+/** Millisecondes d'une date ISO, ou null si absente/illisible. */
+function msOf(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  const ms = new Date(iso).getTime();
+  return Number.isFinite(ms) ? ms : null;
+}
+
+/**
+ * Borne basse du fetch : la plus récente de (dernier point en cache RECULÉ du
+ * lookback, ouverture de la fenêtre, plancher `fetchWindowHours`).
+ *
+ * Le RECUL (`bufferLookbackMinutes`) existe pour le **store & forward** des
+ * trackers type Queclink GL320MG : hors réseau, l'appareil bufferise ; au retour
+ * du signal, rien ne garantit qu'il vide son buffer AVANT d'envoyer sa position
+ * courante. Sans recul, ce point courant ferait avancer la borne basse au
+ * présent et les points bufferisés (fixTime plus anciens), arrivés juste après,
+ * ne seraient JAMAIS relus — trou définitif dans la trace.
+ *
+ * Re-balayer cette zone est sans risque : `runTick` dédoublonne par clé stable
+ * (id Traccar), donc un point déjà connu n'est jamais compté deux fois. Le seul
+ * coût est quelques points relus par tick, sur un Traccar local.
+ */
+export function computeFromIso(
   cache: TraccarPosition[],
   windowStartIso: string | null,
   fetchWindowHours: number,
+  bufferLookbackMinutes: number,
   now: Date
 ): string {
-  const candidates: string[] = [];
-  const lastFix = cache.at(-1)?.fixTime;
-  if (lastFix) candidates.push(lastFix);
-  if (windowStartIso) candidates.push(windowStartIso);
-  candidates.push(new Date(now.getTime() - fetchWindowHours * 3_600_000).toISOString());
-  // La plus récente borne = le plus petit fetch sans manquer de points.
-  return candidates.sort().at(-1) as string;
+  // Plancher dur : on ne remonte jamais plus loin, quoi qu'il arrive.
+  const candidates: number[] = [now.getTime() - fetchWindowHours * 3_600_000];
+
+  const lastFixMs = msOf(cache.at(-1)?.fixTime);
+  if (lastFixMs !== null) {
+    candidates.push(lastFixMs - Math.max(0, bufferLookbackMinutes) * 60_000);
+  }
+  // L'ouverture de session prime : jamais de collecte avant `track start`.
+  const windowStartMs = msOf(windowStartIso);
+  if (windowStartMs !== null) candidates.push(windowStartMs);
+
+  return new Date(Math.max(...candidates)).toISOString();
 }
 
 /**
@@ -50,7 +77,13 @@ export async function runTick(config: Config, store: Store): Promise<number | nu
   const control = store.readControl();
   const now = new Date();
   const cache = store.readRawCache();
-  const fromIso = computeFromIso(cache, control.windowStartIso, config.fetchWindowHours, now);
+  const fromIso = computeFromIso(
+    cache,
+    control.windowStartIso,
+    config.fetchWindowHours,
+    config.bufferLookbackMinutes,
+    now
+  );
   const toIso = now.toISOString();
 
   const fetched = await fetchPositions(config, fromIso, toIso);

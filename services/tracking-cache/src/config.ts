@@ -17,6 +17,7 @@ export type Config = {
   fetchWindowHours: number;
   maxPointsPerFetch: number;
   intervalSeconds: number;
+  bufferLookbackMinutes: number;
   compute: ComputeParams;
 };
 
@@ -26,6 +27,7 @@ type RawConfig = Partial<{
   fetchWindowHours: number;
   maxPointsPerFetch: number;
   intervalSeconds: number;
+  bufferLookbackMinutes: number;
   minDistanceThreshold: number;
   minElevationPlusThreshold: number;
   minElevationMinusThreshold: number;
@@ -75,6 +77,10 @@ export function loadConfig(): Config {
     fetchWindowHours: num(process.env.FETCH_WINDOW_HOURS, raw.fetchWindowHours ?? 48),
     maxPointsPerFetch: num(process.env.MAX_POINTS_PER_FETCH, raw.maxPointsPerFetch ?? 10000),
     intervalSeconds: num(process.env.INTERVAL_SECONDS, raw.intervalSeconds ?? 15),
+    bufferLookbackMinutes: num(
+      process.env.BUFFER_LOOKBACK_MINUTES,
+      raw.bufferLookbackMinutes ?? 180
+    ),
     compute: {
       samplingCorrection: num(process.env.SAMPLING_CORRECTION, raw.samplingCorrection ?? 1.0),
       elevationPlusCorrection: num(

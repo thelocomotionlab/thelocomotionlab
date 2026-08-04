@@ -23,6 +23,8 @@ dist/
 
 # testing
 coverage/
+# sortie de compilation des tests (services/tracking-cache/tsconfig.test.json)
+dist-test/
 
 # cloudflare pages / vercel / wrangler
 .vercel

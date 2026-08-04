@@ -8,6 +8,9 @@
   "maxPointsPerFetch": 10000,
   "intervalSeconds": 15,
 
+  "_bufferLookbackMinutes": "Recul appliqué à la borne basse du fetch, pour rattraper les points BUFFERISÉS que le tracker (store & forward, ex. GL320MG) renvoie APRÈS sa position courante au retour du réseau. Doit couvrir la plus longue coupure réseau attendue. Sans effet sur la trace : le dédoublonnage rend le re-balayage gratuit.",
+  "bufferLookbackMinutes": 180,
+
   "minDistanceThreshold": 8,
   "minElevationPlusThreshold": 0,
   "minElevationMinusThreshold": 1,

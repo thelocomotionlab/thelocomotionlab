@@ -16,5 +16,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  // Les tests sont compilés à part (tsconfig.test.json) : l'image Docker ne
+  // transporte que le code de production.
+  "exclude": ["src/**/*.test.ts"]
 }

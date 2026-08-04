@@ -1,0 +1,15 @@
+{
+  // Compilation des TESTS uniquement (sortie séparée, git-ignorée) : le build de
+  // production (`tsconfig.json`) exclut les `*.test.ts` pour que l'image Docker
+  // ne contienne que le code qui tourne.
+  //   pnpm -F @locomotionlab/tracking-cache test
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist-test",
+    "noEmit": false
+  },
+  // `exclude` est hérité de tsconfig.json (qui écarte les tests) : on le remet à
+  // vide, sinon ce projet-ci ne compilerait aucun test.
+  "include": ["src"],
+  "exclude": []
+}
