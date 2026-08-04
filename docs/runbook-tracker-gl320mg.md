@@ -278,9 +278,14 @@ L'étape **3** du diagnostic est celle qui compte maintenant :
 | Ce que dit le script | Ce que ça veut dire |
 | --- | --- |
 | statut **online** + positions sur 24 h | ✅ la chaîne matérielle est bonne, passe au §5 |
-| statut **unknown**, jamais de contact | le tracker n'a **jamais** joint Traccar : IMEI, APN/SIM, ou serveur/port mal réglés |
-| statut **offline** avec un dernier contact ancien | il a déjà parlé → config OK ; c'est du réseau ou de la batterie |
+| **JAMAIS connecté** | le tracker n'a **jamais** joint Traccar : IMEI, APN/SIM, ou serveur/port mal réglés |
+| **dernier contact** daté (même ancien) | il a déjà parlé → **la config du tracker est bonne** ; c'est du réseau ou de la batterie |
 | appareil introuvable | l'IMEI saisi dans Traccar ne correspond pas, ou l'appareil n'est pas partagé au compte `public` |
+
+> Le tri se fait sur **`lastUpdate`, pas sur le libellé de statut** : selon la
+> version, Traccar affiche « Hors ligne » (et non « Inconnu ») pour un appareil qui
+> n'a jamais émis une seule fois. Les deux cas envoient pourtant chercher à des
+> endroits opposés — réglages du tracker d'un côté, réseau/batterie de l'autre.
 
 Le **journal de Traccar** est l'endroit où l'on voit les connexions brutes arriver —
 utile quand le script dit « jamais de contact » :

@@ -147,13 +147,27 @@ for d in json.load(sys.stdin):
     else
       IFS='|' read -r D_NAME D_UID D_STATUS D_LAST <<<"$LINE"
       ok "appareil #$DEVICE trouvé : « $D_NAME » · uniqueId=$D_UID"
-      case "$D_STATUS" in
-        online)  ok "statut Traccar : online · dernier contact $D_LAST" ;;
-        offline) warn "statut Traccar : offline · dernier contact ${D_LAST:-jamais}"
-                 echo "      ↳ normal hors session ou en zone blanche. Si le tracker est ALLUMÉ et censé émettre : voir §Pannes du runbook." ;;
-        *)       warn "statut Traccar : ${D_STATUS:-inconnu} · dernier contact ${D_LAST:-jamais}"
-                 echo "      ↳ « unknown » = l'appareil n'a JAMAIS établi de connexion : IMEI erroné, APN/SIM, ou serveur mal renseigné dans le tracker." ;;
+      # Le signal QUI COMPTE est `lastUpdate`, pas la chaîne `status` : selon la
+      # version, Traccar affiche « offline » (et non « unknown ») pour un appareil
+      # qui n'a JAMAIS émis. Or les deux cas envoient chercher à des endroits
+      # opposés — d'où ce tri sur « a-t-il déjà parlé une fois ? ».
+      case "${D_LAST:-}" in
+        "" | null | None | undefined) JAMAIS=1 ;;
+        *) JAMAIS=0 ;;
       esac
+      if [ "$JAMAIS" = 1 ]; then
+        warn "statut Traccar : ${D_STATUS:-inconnu} · JAMAIS connecté (aucun contact enregistré)"
+        echo "      ↳ attendu tant que le tracker n'est pas allumé ET configuré."
+        echo "        S'il est allumé et censé émettre, la chaîne s'arrête ICI : IMEI,"
+        echo "        APN/SIM, ou serveur:port du tracker (runbook §3)."
+      else
+        case "$D_STATUS" in
+          online) ok "statut Traccar : online · dernier contact $D_LAST" ;;
+          *)      warn "statut Traccar : ${D_STATUS:-inconnu} · dernier contact $D_LAST"
+                  echo "      ↳ il a DÉJÀ parlé au moins une fois → la config du tracker est BONNE."
+                  echo "        Cherche du côté réseau (zone blanche) ou batterie, pas du côté réglages." ;;
+        esac
+      fi
     fi
 
     # Positions des dernières 24 h : c'est LA preuve que des points arrivent.
@@ -208,9 +222,14 @@ step "5. Caddy sert-il les fichiers que la page /live consomme ?"
 # =====================================================================
 for f in live-timer.json live-positions.json; do
   URL="https://$TRACKING_DOMAIN/$f"
-  CODE="$(curl -s -o /tmp/check-tracker.$$ -w '%{http_code}' -m 15 "$URL" 2>/dev/null)"
+  # UN SEUL GET, dont on garde les en-têtes (-D -) et on jette le corps.
+  # ⚠ Surtout PAS `curl -I` ici : ça enverrait un HEAD, que tracking.caddy
+  # refuse volontairement en 403 (`not method GET`) — donc sans en-tête CORS.
+  # On croirait à une CORS manquante alors que le GET du navigateur, lui, va bien.
+  HEADERS="$(curl -s -m 15 -D - -o /dev/null "$URL" 2>/dev/null)"
+  CODE="$(printf '%s' "$HEADERS" | awk 'NR==1{print $2}')"
   if [ "$CODE" = "200" ]; then
-    CORS="$(curl -sI -m 15 "$URL" 2>/dev/null | grep -ci 'access-control-allow-origin')"
+    CORS="$(printf '%s' "$HEADERS" | grep -ci 'access-control-allow-origin')"
     if [ "${CORS:-0}" -gt 0 ]; then
       ok "$URL → 200, CORS présent"
     else
@@ -221,7 +240,6 @@ for f in live-timer.json live-positions.json; do
     ko "$URL → HTTP ${CODE:-échec}"
     fix "Caddy tourne-t-il en 80/443 (HTTP_PORT/HTTPS_PORT dans .env) ? Le DNS \`tracking\` doit rester DNS-only (nuage GRIS)."
   fi
-  rm -f /tmp/check-tracker.$$
 done
 
 # =====================================================================
