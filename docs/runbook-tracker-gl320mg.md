@@ -226,6 +226,53 @@ AT+GTFRI=<mdp>,…,30,…$                                   ← l'intervalle
   série (`FFFF` convient).
 - L'appareil répond par un ACK (`+ACK:GTBSI,…`) : **pas d'ACK = commande non prise**.
 
+#### `AT+GTSRI` — les 16 champs, VÉRIFIÉS
+
+Relevés dans le PDF officiel **`GL320M Series @Track Air Interface Protocol`,
+réf. `QSZTRACGL320MAN0303`** §3.2.1.2 — c'est bien la version `C30303` que notre
+appareil annonce dans ses ACK.
+
+| # | Paramètre | Plage | Notre valeur |
+| --- | --- | --- | --- |
+| 1 | Password | 4-20 car. | `gl320m` |
+| 2 | Report Mode | 0-7 | `3` = TCP long-connection |
+| 3 | *Reserved* | — | vide |
+| 4 | Buffer Mode | 0\|1\|2 | **`2`** (cf. ci-dessous) |
+| 5 | Main Server IP/Domain | ≤60 | `tracking.thelocomotionlab.com` |
+| 6 | Main Server Port | 0-65535 | `5004` |
+| 7 | Backup Server IP/Domain | ≤60 | vide |
+| 8 | Backup Server Port | 0-65535 | `0` |
+| 9 | SMS Gateway | ≤20 | vide |
+| 10 | Heartbeat Interval | 0\|5-360 min | `5` |
+| 11 | **SACK Enable** | 0\|1\|2 | **`0`** (cf. ci-dessous) |
+| 12 | SMS ACK Enable | 0\|1 | `1` (ACK par SMS des commandes) |
+| 13 | Multi-packet Sending | 0\|1 | `0` (prudence, cf. ci-dessous) |
+| 14 | DNS Lookup Interval | 0-1440 min | `60` |
+| 15 | *Reserved* | — | vide |
+| 16 | Serial Number | 4 HEX | `FFFF` |
+
+```
+AT+GTSRI=gl320m,3,,2,tracking.thelocomotionlab.com,5004,,0,,5,0,1,0,60,,FFFF$
+```
+
+**Les trois choix qui comptent :**
+
+- **`SACK Enable = 0` (champ 11).** À `1`, l'appareil attend un `+SACK:` du serveur
+  après *chaque* message. Traccar répond aux battements de cœur (`GTHBD`) mais
+  n'acquitte pas chaque rapport de position : le tracker attend un accusé qui ne
+  vient pas et **retransmet**. Symptôme observé le 4 août : des positions
+  strictement identiques (même `fixTime`, mêmes coordonnées) empilées dans
+  Traccar, et de la data consommée pour rien.
+- **`Buffer Mode = 2` (champ 4).** Le mode 2 (« high priority ») envoie **tous les
+  messages bufferisés AVANT les messages temps réel**. C'est exactement la garantie
+  d'ordre qui manquait : elle supprime à la source le cas que
+  `bufferLookbackMinutes` rattrape côté serveur (§3.4). Ceinture et bretelles.
+- **`Multi-packet Sending = 0` (champ 13).** À `1`, l'appareil groupe plusieurs
+  rapports bufferisés dans un seul paquet. Plus économe, mais on ne l'a pas
+  vérifié contre le décodeur `gl200` de Traccar — et un vidage de buffer mal
+  décodé, c'est une portion de trace perdue. On garde `0` tant que ce n'est pas
+  testé.
+
 #### Ce qui est CONFIRMÉ sur notre appareil (IMEI 860201069202698)
 
 Relevé en conditions réelles le 4 août 2026, par SMS via le tableau de bord Simbase :
