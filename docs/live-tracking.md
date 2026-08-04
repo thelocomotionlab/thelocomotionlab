@@ -106,7 +106,33 @@ avant l'affichage « zone blanche »).
 
 Les endpoints (`trackingApiBase`, `journalApiBase`) sont fixés au build par
 `NEXT_PUBLIC_TRACKING_PROXY` / `NEXT_PUBLIC_JOURNAL_API` (défaut : domaines de
-prod). En test local avec le simulateur, pointe les deux sur `http://<IP>:3999`.
+prod).
+
+### 3.1 Voir les cinq états en local — `live:preview`
+
+Pour retravailler les pages sans toucher au VPS (ni abîmer une vraie session) :
+
+```bash
+pnpm -F site live:preview -- --etat encours     # avant | encours | fige
+```
+
+Le simulateur sert les **mêmes fichiers que la prod** (`live-timer.json`,
+`live-positions.json`, `journal.json`), fabriqués dans l'état demandé à partir de
+la trace réellement configurée — et affiche la commande à lancer dans un second
+terminal. Options : `--avance <%>` (où placer le coureur), `--sans-journal`,
+`--port`. Il répond aussi au `POST /journal/message` du formulaire « Laisse un
+mot » (contenu jeté), pour pouvoir travailler ses états succès/erreur.
+
+| État de `/live` | Simulateur | Variable de build |
+| --- | --- | --- |
+| **Avant** (compte à rebours) | `--etat avant` | `NEXT_PUBLIC_LIVE_STATUT=avant` |
+| **En cours** (direct) | `--etat encours` | `NEXT_PUBLIC_LIVE_STATUT=avant` |
+| **En cours figé** (badge TERMINÉ) | `--etat fige` | `NEXT_PUBLIC_LIVE_STATUT=avant` |
+| **Terminé** (définitif) | inutile — lit `archive.json` | `NEXT_PUBLIC_LIVE_STATUT=termine` |
+| **Repos** | inutile | `NEXT_PUBLIC_LIVE_STATUT=repos` |
+
+> ⚠️ `.env.local` est lu par `next build` et **gagne** sur ces variables : s'il y
+> définit `NEXT_PUBLIC_LIVE_STATUT`, même vide, c'est lui qui s'applique.
 
 ---
 
@@ -317,6 +343,27 @@ elles dériveraient) ; les leviers :
 Changement **permanent** : éditer le JSON → commit → merge `main` → CI rebuild
 → `./deploy.sh`. Changement **ponctuel** : poser la variable d'env dans
 `infra/.env` → `./deploy.sh`.
+
+> ### Recaler les stats sur la montre, EN COURS d'aventure
+>
+> Oui, et c'est **rétroactif** : le cache brut ne contient que les positions
+> Traccar telles quelles ; corrections et filtres sont **recalculés depuis ce
+> brut à chaque tick** (`compute.ts`), jamais figés. Changer un coefficient
+> corrige donc **toute la trace depuis le départ**, pas seulement la suite.
+>
+> ```bash
+> # infra/.env, puis ./deploy.sh — effet en moins de 15 s
+> SAMPLING_CORRECTION=1.05          # distance
+> ELEVATION_PLUS_CORRECTION=0.92    # D+
+> ELEVATION_MINUS_CORRECTION=0.92   # D−
+> ```
+>
+> Méthode : comparer `./track status` à la montre au même instant, puis
+> multiplier le coefficient courant par `montre / affiché`. Exemple : affiché
+> 47,0 km pour 49,3 km à la montre, coefficient courant 1,03 →
+> `1,03 × 49,3 / 47,0 ≈ 1,08`.
+>
+> ⚠️ `./track reset` **efface le cache brut** : après lui, plus rien à recaler.
 
 ### 10.2 Le token Traccar
 - Vit **uniquement** dans `infra/.env` → `TRACCAR_API_TOKEN`. **Jamais** dans le

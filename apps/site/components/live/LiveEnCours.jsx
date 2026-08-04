@@ -14,6 +14,7 @@ import dynamic from "next/dynamic";
 import { liveConfig, liveReglages } from "@/lib/liveConfig";
 import { freshnessState } from "@/lib/freshness";
 import { dayIndex } from "@/lib/liveTime";
+import { avancementSurTrace } from "@/lib/progression";
 import { useJournal } from "@/lib/useJournal";
 import { useLivePositions } from "@/lib/useLivePositions";
 import { useReferenceTrack } from "@/lib/useReferenceTrack";
@@ -55,6 +56,23 @@ export default function LiveEnCours({ timer }) {
         .map((p) => [p.longitude, p.latitude]),
     [positions],
   );
+
+  // Avancement LE LONG du parcours (≠ distance parcourue) : c'est lui qui pilote
+  // le pourcentage et le curseur du profil, pour qu'un détour ne les fasse pas
+  // courir devant. On lui passe le profil BRUT (et pas doneCoords) : il porte les
+  // `fixTime`, dont la projection a besoin pour son plafond de vitesse.
+  // Recalculé à chaque arrivée de positions (10 s) — ~0,5 ms sur une trace réelle.
+  const avancement = useMemo(
+    () => avancementSurTrace(reference?.coords, positions?.profile),
+    [reference, positions],
+  );
+  // ⚠️ Conversion d'échelle indispensable : `metresParcourus` est mesuré sur la
+  // polyligne SIMPLIFIÉE, alors que `totalKm` vient du GPX complet (plus long).
+  // On repasse donc par le pourcentage, seule grandeur commune aux deux.
+  const avanceKm =
+    avancement && Number.isFinite(reference?.totalKm)
+      ? (avancement.pourcent / 100) * reference.totalKm
+      : null;
 
   const running = timer?.running === true;
   const stats = positions?.stats;
@@ -118,7 +136,7 @@ export default function LiveEnCours({ timer }) {
             <ProfileCard
               profile={reference?.profile}
               totalKm={reference?.totalKm}
-              doneKm={(stats?.distance ?? 0) / 1000}
+              doneKm={avanceKm ?? (stats?.distance ?? 0) / 1000}
               elevationMin={reference?.elevMinM}
               elevationMax={reference?.elevMaxM}
               waypoints={aventure.waypoints ?? []}
@@ -138,6 +156,7 @@ export default function LiveEnCours({ timer }) {
                 stats={stats}
                 totalKm={reference?.totalKm}
                 elapsedSeconds={elapsedSeconds}
+                avanceKm={avanceKm}
               />
             </div>
             <div className="order-4 lg:order-none lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">

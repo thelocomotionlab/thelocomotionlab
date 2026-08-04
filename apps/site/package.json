@@ -11,7 +11,8 @@
     "deploy:staging": "npx @cloudflare/next-on-pages && npx wrangler pages deploy .vercel/output/static --project-name=thelocomotionlab-website --branch=staging",
     "test": "vitest run",
     "build:track": "node scripts/build-reference-track.mjs",
-    "live:terminer": "node scripts/live-terminer.mjs"
+    "live:terminer": "node scripts/live-terminer.mjs",
+    "live:preview": "node scripts/live-preview.mjs"
   },
   "dependencies": {
     "@locomotionlab/tracking": "workspace:*",

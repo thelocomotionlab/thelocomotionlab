@@ -19,11 +19,14 @@ export const liveConfig = {
     // Nom affiché en grand.
     nom: "Les 4x2000m de Chartreuse",
 
-    // Départ : date + heure + fuseau (+02:00 l'été). Pilote le compte à
-    // rebours et le numéro du jour du journal.
+    // Départ : date + heure + fuseau (+02:00 l'été). Format MACHINE — pilote le
+    // compte à rebours (LiveAvant) et le numéro du jour du journal (J1, J2…).
     dateDebut: "2026-07-24T08:30:00+02:00",
 
-    // Période affichée sur la carte de partage.
+    // Période affichée, format HUMAIN. Ce n'est PAS un doublon de dateDebut :
+    // celui-ci ne porte qu'un instant, alors qu'une aventure de plusieurs jours
+    // s'annonce « du 20 au 24 août 2026 » — une fin qu'aucun calcul ne devine.
+    // Sert uniquement à la carte de partage (via /live-config.json).
     dates: "24 juillet 2026",
 
     // Phrase d'intention, en italique sous le titre.
