@@ -17,20 +17,20 @@
 export const liveConfig = {
   aventure: {
     // Nom affiché en grand.
-    nom: "Sortie aux Vouillands",
+    nom: "Croix de Belledonne",
 
     // Départ : date + heure + fuseau (+02:00 l'été). Pilote le compte à
     // rebours et le numéro du jour du journal.
-    dateDebut: "2026-08-05T11:00:00+02:00",
+    dateDebut: "2026-08-05T08:30:00+02:00",
 
     // Période affichée sur la carte de partage.
-    dates: "5 août 2026",
+    dates: "6 août 2026",
 
     // Phrase d'intention, en italique sous le titre.
     intention: "Sortie test pour valider le tracking.",
 
     // Trace prévue : le .track.json généré au geste 2.
-    trace: "/tracks/vouillands_test.track.json",
+    trace: "/tracks/croix_de_belledonne.track.json",
 
     // Repères de cols sur le profil : [{ nom: "Col Vert", km: 6 }, …].
     // Laisse [] pour n'en afficher aucun.
@@ -47,7 +47,7 @@ export const liveConfig = {
 
   // Libellés affichés AILLEURS que sur /live (accueil, tête de la page Explorer).
   indicateur: {
-    enDirect: "Sortie test Vouillands",
+    enDirect: "Croix de Belledonne",
     prochainDepart: "Le tour des Écrins",
   },
 };
