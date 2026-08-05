@@ -14,6 +14,7 @@ import { liveConfig } from "@/lib/liveConfig";
 import { useReferenceTrack } from "@/lib/useReferenceTrack";
 import Countdown from "./Countdown";
 import EmailCaptureCard from "./EmailCaptureCard";
+import ItineraireLine from "./ItineraireLine";
 import MapStyleSwitch from "./MapStyleSwitch";
 import ProfileCard from "./ProfileCard";
 
@@ -32,7 +33,7 @@ export default function LiveAvant() {
     <div className="mx-auto flex max-w-3xl flex-col gap-3.5">
       {/* Hero */}
       <div>
-        <p className="font-mono text-[12px] font-bold uppercase tracking-[0.25em] text-brand-slate">
+        <p className="font-heading text-[12px] font-bold uppercase tracking-[0.25em] text-brand-slate">
           / Prochain départ
         </p>
         <h1 className="m-0 mt-1.5 font-heading text-4xl font-bold leading-[1.1] text-brand-slate-dark md:text-5xl">
@@ -55,15 +56,7 @@ export default function LiveAvant() {
           vivent sur la ligne du label depuis le retrait de la ligne du hero. */}
       <div>
         <div className="mb-[9px] flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5">
-          <p className="m-0 flex flex-wrap items-baseline gap-x-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-brand-deep-dark">
-            Itinéraire
-            {reference && (
-              <span className="font-heading text-[11.5px] font-medium normal-case tracking-normal text-brand-text/60">
-                {Math.round(reference.totalKm)} km · {" "}
-                {Math.round(reference.dPlusM).toLocaleString("fr-FR")} m D+
-              </span>
-            )}
-          </p>
+          <ItineraireLine reference={reference} />
           <MapStyleSwitch value={mapStyle} onChange={setMapStyle} variant="header" />
         </div>
         <div className="relative h-[280px] overflow-hidden border border-brand-text/10 sm:h-[380px]">

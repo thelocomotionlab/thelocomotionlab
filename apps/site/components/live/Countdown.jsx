@@ -55,7 +55,7 @@ export default function Countdown({ dateDebut }) {
 
   return (
     <div className="rounded-[18px] border border-brand-text/10 bg-white px-4 py-4 text-center sm:py-[18px]">
-      <p className="m-0 font-mono text-[10.5px] font-bold uppercase tracking-[0.2em] text-brand-deep-dark">
+      <p className="m-0 font-heading text-[10.5px] font-bold uppercase tracking-[0.2em] text-brand-deep-dark">
         Départ le {quand}
       </p>
       {imminent ? (
@@ -69,7 +69,7 @@ export default function Countdown({ dateDebut }) {
               <span className="font-heading text-[34px] font-bold leading-none tabular-nums text-brand-text sm:text-[40px]">
                 {u.v}
               </span>
-              <span className="mt-1 font-mono text-[9px] uppercase tracking-[0.1em] text-brand-text/45 sm:text-[9.5px]">
+              <span className="mt-1 font-heading text-[9px] uppercase tracking-[0.1em] text-brand-text/45 sm:text-[9.5px]">
                 {u.label}
               </span>
             </div>

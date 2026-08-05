@@ -64,7 +64,7 @@ function Callout({ tone = "info", className = "", children }) {
 function BlocTitre({ numero, children }) {
   return (
     <div>
-      <p className="mb-1.5 font-mono text-[11px] font-bold tracking-[0.22em] text-brand-accent-ink">
+      <p className="mb-1.5 font-heading text-[11px] font-bold tracking-[0.22em] text-brand-accent-ink">
         / {numero}
       </p>
       <div className="mb-4 flex items-baseline gap-4">
@@ -333,7 +333,7 @@ export default function InscriptionForm({ atelier }) {
 
   const recapAtelier = (
     <div className="rounded-2xl bg-white p-5 shadow-card md:px-[22px]">
-      <p className="mb-2 font-mono text-[11px] font-bold tracking-[0.18em] text-brand-primary">
+      <p className="mb-2 font-heading text-[11px] font-bold tracking-[0.18em] text-brand-primary">
         {confirmation ? "TON ATELIER" : "ATELIER"}
         {atelier.priceLabel ? (
           <span className="text-brand-accent-ink"> · {atelier.priceLabel}</span>
@@ -341,11 +341,11 @@ export default function InscriptionForm({ atelier }) {
       </p>
       <p className="mb-2.5 text-lg font-bold leading-[1.3] text-brand-slate-dark">{atelier.title}</p>
       <div className="grid grid-cols-[auto_1fr] gap-x-3.5 gap-y-[5px] text-[14.5px] text-gray-600">
-        <span className="self-center font-mono text-[11px] font-bold tracking-[0.1em] text-gray-500">
+        <span className="self-center font-heading text-[11px] font-bold tracking-[0.1em] text-gray-500">
           DATE
         </span>
         <span>{atelier.dateLabel}</span>
-        <span className="self-center font-mono text-[11px] font-bold tracking-[0.1em] text-gray-500">
+        <span className="self-center font-heading text-[11px] font-bold tracking-[0.1em] text-gray-500">
           LIEU
         </span>
         <span>{atelier.lieu}</span>
@@ -358,7 +358,7 @@ export default function InscriptionForm({ atelier }) {
               style={{ width: `${pct}%` }}
             />
           </div>
-          <span className="flex-none font-mono text-[13px] font-bold text-brand-slate-dark">
+          <span className="flex-none font-heading text-[13px] font-bold text-brand-slate-dark">
             {places.registered}/{places.capacity}
           </span>
           <span className="text-sm font-bold text-brand-accent-ink">
@@ -401,7 +401,7 @@ export default function InscriptionForm({ atelier }) {
         {recapAtelier}
 
         <div className="rounded-2xl border-[1.5px] border-brand-hairline p-5 md:px-[22px]">
-          <p className="mb-3 font-mono text-[11px] font-bold tracking-[0.18em] text-brand-deep">
+          <p className="mb-3 font-heading text-[11px] font-bold tracking-[0.18em] text-brand-deep">
             INFORMATIONS PRATIQUES
           </p>
           <div className="flex flex-col gap-2.5 text-[14.5px] leading-[1.65] text-brand-text">
@@ -444,7 +444,7 @@ export default function InscriptionForm({ atelier }) {
         </Callout>
 
         <div className="text-center">
-          <p className="mb-5 font-mono text-[12.5px] uppercase text-gray-400">
+          <p className="mb-5 font-heading text-[12.5px] uppercase text-gray-400">
             Validé le {confirmation.horodatage}
           </p>
           <Link
@@ -465,12 +465,12 @@ export default function InscriptionForm({ atelier }) {
       {/* En-tête : eyebrow à gauche, retour aux ateliers à droite. */}
       <div>
         <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1.5">
-          <p className="font-mono text-xs font-bold tracking-[0.25em] text-brand-slate">
+          <p className="font-heading text-xs font-bold tracking-[0.25em] text-brand-slate">
             / INSCRIPTION
           </p>
           <Link
             href="/pratiquer"
-            className="inline-flex items-center gap-1.5 font-mono text-[12.5px] font-bold tracking-[0.12em] text-brand-slate transition-colors hover:text-brand-accent-dark"
+            className="inline-flex items-center gap-1.5 font-heading text-[12.5px] font-bold tracking-[0.12em] text-brand-slate transition-colors hover:text-brand-accent-dark"
           >
             REVENIR AUX ATELIERS
           </Link>
@@ -519,7 +519,7 @@ export default function InscriptionForm({ atelier }) {
 
         <div className="flex flex-col gap-3.5">
           {isMineur ? (
-            <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-brand-primary">
+            <p className="font-heading text-[11px] font-bold tracking-[0.16em] text-brand-primary">
               L&rsquo;ADULTE ACCOMPAGNANT
             </p>
           ) : null}
@@ -539,7 +539,7 @@ export default function InscriptionForm({ atelier }) {
           </div>
           {isMineur ? (
             <div className="mt-1.5 flex flex-col gap-3.5">
-              <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-brand-primary">
+              <p className="font-heading text-[11px] font-bold tracking-[0.16em] text-brand-primary">
                 LE MINEUR
               </p>
               <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
@@ -559,7 +559,7 @@ export default function InscriptionForm({ atelier }) {
 
         {/* Contact d'urgence, détaché */}
         <div className="mt-5 rounded-2xl border-[1.5px] border-brand-accent bg-white p-5 md:px-[22px]">
-          <p className="mb-1 font-mono text-[11px] font-bold tracking-[0.2em] text-brand-accent-ink">
+          <p className="mb-1 font-heading text-[11px] font-bold tracking-[0.2em] text-brand-accent-ink">
             CONTACT D&rsquo;URGENCE
           </p>
           <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
@@ -674,7 +674,7 @@ export default function InscriptionForm({ atelier }) {
               // première ligne de la question, pas sur le haut de la boîte.
               <li key={question} className="flex items-baseline gap-3.5">
                 <span
-                  className="w-[22px] flex-none text-right font-mono text-xs font-bold text-brand-primary"
+                  className="w-[22px] flex-none text-right font-heading text-xs font-bold text-brand-primary"
                   aria-hidden="true"
                 >
                   {String(i + 1).padStart(2, "0")}

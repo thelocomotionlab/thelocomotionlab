@@ -47,7 +47,7 @@ export default function SeanceFrise({ steps }) {
                 aria-hidden="true"
               />
               {step.kicker ? (
-                <p className="mb-[3px] mt-0 font-mono text-[10.5px] font-bold tracking-[0.16em] text-brand-deep md:mb-1 md:mt-4 md:text-[11px]">
+                <p className="mb-[3px] mt-0 font-heading text-[10.5px] font-bold tracking-[0.16em] text-brand-deep md:mb-1 md:mt-4 md:text-[11px]">
                   {step.kicker}
                 </p>
               ) : null}
@@ -66,7 +66,7 @@ export default function SeanceFrise({ steps }) {
                   {step.chips.map((chip) => (
                     <span
                       key={chip}
-                      className="rounded-full border border-brand-wash-line px-[9px] py-[3px] font-mono text-[10px] font-bold tracking-[0.08em] text-brand-slate md:px-2.5 md:text-[11px]"
+                      className="rounded-full border border-brand-wash-line px-[9px] py-[3px] font-heading text-[10px] font-bold tracking-[0.08em] text-brand-slate md:px-2.5 md:text-[11px]"
                     >
                       {chip}
                     </span>

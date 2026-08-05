@@ -13,7 +13,7 @@ import EmailCapture from "../EmailCapture";
 export default function EmailCaptureCard({ title }) {
   return (
     <section className="rounded-2xl bg-white p-5 shadow-card sm:p-6">
-      <h2 className="m-0 mb-3 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-brand-deep-dark">
+      <h2 className="m-0 mb-3 font-heading text-[11px] font-bold uppercase tracking-[0.18em] text-brand-deep-dark">
         {title}
       </h2>
       <EmailCapture

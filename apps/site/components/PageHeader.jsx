@@ -13,7 +13,7 @@ export default function PageHeader({
   return (
     <header className={`mb-10 ${className}`}>
       {kicker ? (
-        <p className="mb-3 font-mono text-[13px] font-bold tracking-[0.25em] text-brand-slate">
+        <p className="mb-3 font-heading text-[13px] font-bold tracking-[0.25em] text-brand-slate">
           {kicker}
         </p>
       ) : null}

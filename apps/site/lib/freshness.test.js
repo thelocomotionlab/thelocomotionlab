@@ -11,9 +11,9 @@ describe("freshnessState", () => {
   it("premier signal : timer démarré, aucune position — texte validé", () => {
     const state = freshnessState({ ...base, lastFixTime: null });
     expect(state.regime).toBe("premier-signal");
-    expect(state.strong + state.rest).toBe(
-      "En attente du premier signal — le départ est imminent.",
-    );
+    // La queue de phrase (« — le départ est imminent. ») a été retirée : elle
+    // devenait fausse dès qu'un direct traînait avant son premier fix.
+    expect(state.strong + state.rest).toBe("En attente du premier signal");
   });
 
   it("rien à afficher hors direct sans position", () => {

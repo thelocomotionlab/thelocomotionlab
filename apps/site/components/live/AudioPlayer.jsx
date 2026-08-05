@@ -140,7 +140,7 @@ export default function AudioPlayer({ src, duration, seedId }) {
         ))}
       </div>
 
-      <span className="flex-none whitespace-nowrap font-mono text-[11.5px] tabular-nums text-brand-text/65 lg:text-[11px]">
+      <span className="flex-none whitespace-nowrap font-heading text-[11.5px] tabular-nums text-brand-text/65 lg:text-[11px]">
         {playing || elapsed > 0 ? `${formatClockDuration(elapsed)} / ` : ""}
         {formatClockDuration(totalSeconds)}
       </span>

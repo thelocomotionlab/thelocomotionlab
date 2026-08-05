@@ -61,7 +61,7 @@ export default function JournalCard({
       className={`rounded-[18px] border border-brand-text/10 bg-white px-[18px] pb-2 pt-[18px] shadow-[0_6px_20px_rgba(51,51,51,0.06)] lg:px-5 lg:shadow-none ${heightClass}`}
     >
       <div className="mb-4 flex items-center justify-between">
-        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-brand-deep-dark">
+        <p className="font-heading text-[11px] font-bold uppercase tracking-[0.18em] text-brand-deep-dark">
           {title}
         </p>
         <p className="font-heading text-[11px] text-brand-text/55">

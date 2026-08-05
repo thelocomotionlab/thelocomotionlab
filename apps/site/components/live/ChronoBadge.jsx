@@ -1,12 +1,13 @@
 // components/live/ChronoBadge.jsx
 //
-// Le temps écoulé, posé sur la carte. Il était dans la carte Progression, figé
-// à la minute : l'horloge de LiveEnCours ne bat que toutes les 30 s (elle sert
-// à faire vieillir la fraîcheur, pas à animer un chrono). Un temps qui ne bouge
-// pas sur une page « en direct » donne l'impression que tout est gelé.
+// Le temps écoulé, sur la ligne d'en-tête de la carte — à droite de
+// l'itinéraire. Il était posé EN SURIMPRESSION sur la carte : ça masquait le
+// terrain et ça ne ressemblait à rien d'autre sur la page.
 //
-// Il tient donc son propre battement, à la seconde, et s'arrête net quand le
-// chrono s'arrête — là, plus rien à animer.
+// Il tient son propre battement, à la seconde. L'horloge de LiveEnCours, elle,
+// ne bat que toutes les 30 s (elle sert à faire vieillir la fraîcheur) : un
+// chrono branché dessus restait figé, ce qui sur une page « en direct » donne
+// l'impression que tout est gelé.
 
 "use client";
 
@@ -24,7 +25,7 @@ function formatChrono(totalSecondes) {
   return jours > 0 ? `${jours} j ${horloge}` : horloge;
 }
 
-export default function ChronoBadge({ startTime, stopTime, running }) {
+export default function ChronoBadge({ startTime, stopTime, running, className = "" }) {
   const debutMs = startTime ? Date.parse(startTime) : NaN;
   const finMs = stopTime ? Date.parse(stopTime) : NaN;
 
@@ -48,13 +49,14 @@ export default function ChronoBadge({ startTime, stopTime, running }) {
   if (!Number.isFinite(debutMs)) return null;
 
   return (
-    <div className="pointer-events-none absolute left-3 top-3 z-[5] rounded-full bg-brand-text/75 px-3 py-1.5 backdrop-blur-sm">
-      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-white/70">
+    <p className={`m-0 flex items-baseline gap-2 ${className}`}>
+      <span className="font-heading text-[11px] font-bold uppercase tracking-[0.16em] text-brand-deep-dark">
         {running ? "Depuis" : "Durée"}
-      </span>{" "}
-      <span className="font-mono text-[13px] font-bold tabular-nums text-white">
+      </span>
+      {/* Chiffres en chasse fixe : sans ça, la ligne tressaute à chaque seconde. */}
+      <span className="font-mono text-[13px] font-bold tabular-nums text-brand-text">
         {formatChrono(secondes)}
       </span>
-    </div>
+    </p>
   );
 }

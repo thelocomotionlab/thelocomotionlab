@@ -102,7 +102,7 @@ export default function TwinTeaserPage() {
 
         {/* Statut honnête : l'outil se calibre sur les archives de la cohorte. */}
         <div className="mt-8 bg-brand-bg border border-gray-200 rounded-xl p-5">
-          <h2 className="mb-2 font-mono text-[11px] font-bold tracking-[0.18em] text-brand-slate-dark">
+          <h2 className="mb-2 font-heading text-[11px] font-bold tracking-[0.18em] text-brand-slate-dark">
             STATUT
           </h2>
           <p className="text-gray-700">

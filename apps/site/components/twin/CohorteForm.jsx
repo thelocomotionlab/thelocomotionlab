@@ -40,7 +40,7 @@ const INPUT_CLASSES =
 function EtapeCard({ numero, titre, children }) {
   return (
     <section className="bg-white rounded-2xl shadow-card p-5 sm:px-9 sm:py-8">
-      <p className="mb-1.5 font-mono text-[11px] font-bold tracking-[0.18em] text-brand-slate-dark">
+      <p className="mb-1.5 font-heading text-[11px] font-bold tracking-[0.18em] text-brand-slate-dark">
         ÉTAPE {numero}
       </p>
       <SectionHeading className="mb-5">{titre}</SectionHeading>
@@ -241,7 +241,7 @@ export default function CohorteForm() {
 
         {m ? (
           <div className="mt-6 rounded-xl border border-brand-hairline bg-brand-bg p-5 sm:p-6 animate-fade-in">
-            <h3 className="mb-4 font-mono text-[11px] font-bold tracking-[0.18em] text-brand-accent-ink">
+            <h3 className="mb-4 font-heading text-[11px] font-bold tracking-[0.18em] text-brand-accent-ink">
               EXTRAIRE TON ARCHIVE {m.label.toUpperCase()}
             </h3>
             <ol className="grid list-none gap-3 p-0">

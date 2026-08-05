@@ -127,13 +127,13 @@ function RegistreRow({ row, isLast }) {
           {row.title}
         </span>
         {row.theme ? (
-          <span className="mt-[3px] block font-mono text-[11px] tracking-[0.12em] text-gray-500">
+          <span className="mt-[3px] block font-heading text-[11px] tracking-[0.12em] text-gray-500">
             {row.theme}
           </span>
         ) : null}
       </span>
       <span
-        className={`flex-none whitespace-nowrap rounded-[3px] border px-2 py-1 font-mono text-[10px] tracking-[0.1em] md:px-2.5 md:text-[11px] ${badge.className}`}
+        className={`flex-none whitespace-nowrap rounded-[3px] border px-2 py-1 font-heading text-[10px] tracking-[0.1em] md:px-2.5 md:text-[11px] ${badge.className}`}
       >
         {badge.label}
       </span>
@@ -154,7 +154,7 @@ function RegistrePanel({ rows }) {
     <div className="rounded border border-brand-primary-dark/45 border-t-[3px] border-t-brand-primary-dark bg-white px-6 pb-6 shadow-card md:px-8 md:pb-[26px]">
       {/* En-tête centré verticalement entre le bord supérieur et le filet. */}
       <div className="flex items-center border-b-[1.5px] border-brand-primary-dark/40 py-[18px] md:py-5">
-        <span className="font-mono text-[12px] font-bold tracking-[0.2em] text-gray-600">
+        <span className="font-heading text-[12px] font-bold tracking-[0.2em] text-gray-600">
           DERNIERS ARTICLES
         </span>
       </div>
@@ -167,7 +167,7 @@ function RegistrePanel({ rows }) {
         ))}
       </div>
 
-      <p className="mt-3 font-mono text-[11px] tracking-[0.16em]">
+      <p className="mt-3 font-heading text-[11px] tracking-[0.16em]">
         <a
           href="#email"
           className="text-brand-accent-ink underline underline-offset-[3px] hover:text-brand-deep-dark"
@@ -266,7 +266,7 @@ export default async function HomePage() {
       >
         <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:gap-16">
           <div>
-            <p className="mb-3.5 font-mono text-[13px] font-bold tracking-[0.25em] text-brand-slate">
+            <p className="mb-3.5 font-heading text-[13px] font-bold tracking-[0.25em] text-brand-slate">
               / SCIENCE
             </p>
             <h2 className="font-heading text-[40px] font-bold leading-none tracking-[-0.01em] text-brand-slate-dark md:text-[64px]">
@@ -327,7 +327,7 @@ export default async function HomePage() {
         />
 
         <div className="relative z-[2] mx-auto max-w-6xl">
-          <p className="mb-3.5 font-mono text-[13px] font-bold tracking-[0.25em] text-brand-accent-light">
+          <p className="mb-3.5 font-heading text-[13px] font-bold tracking-[0.25em] text-brand-accent-light">
             / PRIMAL
           </p>
           <h2 className="font-lora text-[40px] font-semibold italic leading-none text-white md:text-[64px]">

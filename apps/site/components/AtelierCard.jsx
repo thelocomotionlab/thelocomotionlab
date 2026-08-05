@@ -187,7 +187,7 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
           className="h-full w-full"
         />
         {isFull ? (
-          <span className="absolute right-3.5 top-3.5 rounded-full bg-brand-slate-dark px-3 py-[5px] font-mono text-[11px] font-bold tracking-[0.14em] text-brand-bg">
+          <span className="absolute right-3.5 top-3.5 rounded-full bg-brand-slate-dark px-3 py-[5px] font-heading text-[11px] font-bold tracking-[0.14em] text-brand-bg">
             COMPLET
           </span>
         ) : null}
@@ -203,11 +203,11 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
         </h3>
 
         <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-[5px] text-sm text-gray-600">
-          <span className="self-center font-mono text-[11px] font-bold tracking-[0.12em] text-gray-500">
+          <span className="self-center font-heading text-[11px] font-bold tracking-[0.12em] text-gray-500">
             DATE
           </span>
           <span>{dateLabel}</span>
-          <span className="self-center font-mono text-[11px] font-bold tracking-[0.12em] text-gray-500">
+          <span className="self-center font-heading text-[11px] font-bold tracking-[0.12em] text-gray-500">
             LIEU
           </span>
           <span>{lieu}</span>

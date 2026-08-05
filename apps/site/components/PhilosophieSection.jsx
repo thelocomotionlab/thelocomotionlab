@@ -127,7 +127,7 @@ export default function PhilosophieSection() {
   return (
     <section className="bg-brand-bg px-[26px] pb-12 pt-14 md:px-16 md:pb-[84px] md:pt-24">
       <div className="mx-auto max-w-[1152px]">
-        <p className="text-center font-mono text-[11px] font-bold tracking-[0.22em] text-brand-slate md:text-[13px] md:tracking-[0.25em]">
+        <p className="text-center font-heading text-[11px] font-bold tracking-[0.22em] text-brand-slate md:text-[13px] md:tracking-[0.25em]">
           / LE LABO
         </p>
         <h2 className="mt-3 text-center font-heading text-[28px] font-bold text-brand-primary-dark md:text-[40px]">
@@ -164,7 +164,7 @@ export default function PhilosophieSection() {
 
         {/* Pied : « cette philosophie en action » + 4 liens à points médians */}
         <div className="mt-[26px] flex flex-col items-center gap-y-3.5 md:mt-8 md:flex-row md:flex-wrap md:items-baseline md:justify-center md:gap-x-[18px] md:border-t md:border-brand-deep-dark/14 md:pt-[26px]">
-{/*          <span className="font-mono text-[10px] font-bold tracking-[0.2em] text-gray-400 md:text-[11px]">
+{/*          <span className="font-heading text-[10px] font-bold tracking-[0.2em] text-gray-400 md:text-[11px]">
             CETTE PHILOSOPHIE EN ACTION
           </span>*/}
           <span className="inline-flex flex-wrap items-baseline justify-center gap-[18px]">

@@ -1,48 +1,30 @@
 // components/live/LiveHeader.jsx
 //
-// En-tête de l'état « En cours ». Titre bleu (comme le reste du site), ligne
-// de stats dessous en Lora italique marron (km · D+ · Jour), badge figé
-// (EN DIRECT / PARCOURS FIGÉ). En desktop, le sélecteur de fond de carte
-// vient s'y loger. Ni logo ni « The Locomotion Lab » (recette 2026-07-24).
+// En-tête de l'état « En cours ». Titre bleu (comme le reste du site), jour
+// de l'aventure dessous, badge figé (EN DIRECT / PARCOURS FIGÉ). En desktop,
+// le sélecteur de fond de carte vient s'y loger. Ni logo ni « The Locomotion
+// Lab » (recette 2026-07-24).
+//
+// Les kilomètres et le dénivelé du PARCOURS ne sont plus ici : ils ont rejoint
+// la ligne au-dessus de la carte (ItineraireLine), partagée avec l'état Avant.
+// Ils y étaient en Lora italique, une typographie qui ne servait qu'ici.
 
 "use client";
 
 import MapStyleSwitch from "./MapStyleSwitch";
 
-function Dot() {
-  return <span className="not-italic text-brand-deep/40">·</span>;
-}
-
-/** Ligne de stats sous le titre : Lora italique marron, chiffres en gras. */
-function Stats({ km, dPlus, jour, className }) {
+/** Jour de l'aventure, sous le titre. */
+function Jour({ jour, className }) {
   return (
-    <p className={`flex gap-3.5 font-lora italic text-brand-deep ${className}`}>
-      <span>
-        <strong className="font-bold">{km}</strong> km
-      </span>
-      <Dot />
-      <span>
-        <strong className="font-bold">{dPlus}</strong> m D+
-      </span>
-      <Dot />
-      <span>Jour {jour}</span>
+    <p
+      className={`m-0 font-heading font-bold uppercase tracking-[0.16em] text-brand-deep-dark ${className}`}
+    >
+      Jour {jour}
     </p>
   );
 }
 
-export default function LiveHeader({
-  aventure,
-  distanceKm,
-  deniveleM,
-  jour,
-  running = true,
-  mapStyle,
-  onMapStyle,
-}) {
-  // Stats de la trace : « — » le temps (bref) que le .track.json se charge.
-  const km = Number.isFinite(distanceKm) ? Math.round(distanceKm) : "—";
-  const dPlus = Number.isFinite(deniveleM) ? Math.round(deniveleM).toLocaleString("fr-FR") : "—";
-
+export default function LiveHeader({ aventure, jour, running = true, mapStyle, onMapStyle }) {
   return (
     <div className="flex flex-col gap-2.5 pt-1 pb-3.5 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
       {/* Mobile : badge seul en tête (l'ancien logo + wordmark est retiré). */}
@@ -58,7 +40,7 @@ export default function LiveHeader({
           </h1>
           <LiveBadge desktop running={running} />
         </div>
-        <Stats km={km} dPlus={dPlus} jour={jour} className="mt-1 text-[13px]" />
+        <Jour jour={jour} className="mt-1.5 text-[11px]" />
       </div>
 
       {/* Mobile : titre + stats. */}
@@ -66,7 +48,7 @@ export default function LiveHeader({
         <h1 className="m-0 font-heading text-[21px] font-bold leading-[1.15] text-brand-slate-dark">
           {aventure.nom}
         </h1>
-        <Stats km={km} dPlus={dPlus} jour={jour} className="mt-1 text-[12.5px]" />
+        <Jour jour={jour} className="mt-1.5 text-[10.5px]" />
       </div>
 
       {/* Le sélecteur de fond de carte quitte la carte pour le header (desktop). */}
@@ -83,7 +65,7 @@ function LiveBadge({ desktop = false, running = true }) {
   // quelle, jusqu'à l'archivage définitif depuis un ordinateur).
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-[20px] font-mono font-bold tracking-[0.1em] ${
+      className={`inline-flex items-center gap-1.5 rounded-[20px] font-heading font-bold tracking-[0.1em] ${
         running ? "bg-brand-deep text-brand-bg" : "bg-brand-primary-dark text-brand-bg"
       } ${desktop ? "px-3 py-[5px] text-[11px]" : "px-[11px] py-[5px] text-[10.5px]"}`}
     >

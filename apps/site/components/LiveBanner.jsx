@@ -36,7 +36,7 @@ export default function LiveBanner() {
           <span className="absolute inset-0 animate-[ll-pulse_2.4s_ease-out_infinite] rounded-full bg-red-600" />
         </span>
 
-        <span className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-brand-text">
+        <span className="font-heading text-[11px] font-bold uppercase tracking-[0.18em] text-brand-text">
           En direct
         </span>
 

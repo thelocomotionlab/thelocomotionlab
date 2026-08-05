@@ -20,6 +20,7 @@ import { useLivePositions } from "@/lib/useLivePositions";
 import { useReferenceTrack } from "@/lib/useReferenceTrack";
 import ChronoBadge from "./ChronoBadge";
 import FreshnessPill from "./FreshnessPill";
+import ItineraireLine from "./ItineraireLine";
 import JournalCard from "./JournalCard";
 import LiveHeader from "./LiveHeader";
 import MapStyleSwitch from "./MapStyleSwitch";
@@ -91,16 +92,11 @@ export default function LiveEnCours({ timer }) {
 
   // Le chrono vit sur la carte (ChronoBadge) : il y bat la seconde.
   const jour = dayIndex(new Date(nowMs).toISOString(), aventure.dateDebut);
-  // Stats de la trace, calculées du GPX (undefined tant que la trace charge).
-  const distanceKm = reference?.totalKm;
-  const deniveleM = reference?.dPlusM;
 
   return (
     <div className="mx-auto max-w-6xl">
       <LiveHeader
         aventure={aventure}
-        distanceKm={distanceKm}
-        deniveleM={deniveleM}
         jour={jour}
         running={running}
         mapStyle={mapStyle}
@@ -113,6 +109,18 @@ export default function LiveEnCours({ timer }) {
       <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[1fr_460px] lg:items-stretch lg:gap-5">
         {/* Gauche : carte + profil (tailles inchangées). */}
         <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-4">
+          {/* Ligne d'en-tête de la carte : le parcours prévu à gauche, le temps
+              écoulé à droite. Même gabarit que l'état Avant (ItineraireLine),
+              pour qu'on ne sente pas la couture en passant de l'un à l'autre. */}
+          <div className="order-1 mb-[9px] flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1.5 lg:order-none lg:mb-0">
+            <ItineraireLine reference={reference} />
+            <ChronoBadge
+              startTime={timer?.startTime}
+              stopTime={timer?.stopTime}
+              running={running}
+            />
+          </div>
+
           <div className="relative order-1 h-[380px] max-lg:-mx-4 sm:max-lg:-mx-6 lg:order-none lg:h-[520px] lg:flex-none lg:overflow-hidden lg:border lg:border-brand-text/10">
             <LiveMap
               referenceCoords={reference?.coords}
@@ -123,11 +131,6 @@ export default function LiveEnCours({ timer }) {
             <div className="absolute right-3 top-3 z-[5] lg:hidden">
               <MapStyleSwitch value={mapStyle} onChange={setMapStyle} />
             </div>
-            <ChronoBadge
-              startTime={timer?.startTime}
-              stopTime={timer?.stopTime}
-              running={running}
-            />
             <FreshnessPill state={freshness} />
           </div>
 

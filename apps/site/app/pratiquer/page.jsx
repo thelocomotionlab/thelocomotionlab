@@ -171,7 +171,7 @@ export default function PratiquerPage() {
                 de transmettre ses connaissances et de faire tribu en situation réelle.
               </p>
               <div className="border-l-2 border-brand-accent pl-3 md:pl-4">
-                <p className="mb-1 font-mono text-[10px] font-bold tracking-[0.2em] text-brand-slate-dark md:text-[11px]">
+                <p className="mb-1 font-heading text-[10px] font-bold tracking-[0.2em] text-brand-slate-dark md:text-[11px]">
                   EN FORMATION
                 </p>
                 <p className="text-[13.5px] italic leading-[1.6] text-brand-slate md:text-[15px]">
@@ -242,7 +242,7 @@ export default function PratiquerPage() {
       <section className="mt-9 md:mt-[72px]">
         <div className="rounded-2xl border-[1.5px] border-dashed border-brand-wash-line p-[22px] md:flex md:items-center md:justify-between md:gap-8 md:px-8 md:py-7">
           <div>
-            <p className="mb-2 font-mono text-[11px] font-bold tracking-[0.18em] text-brand-primary md:text-xs">
+            <p className="mb-2 font-heading text-[11px] font-bold tracking-[0.18em] text-brand-primary md:text-xs">
               EN PRÉPARATION · 2027
             </p>
             <h2 className="mb-1.5 text-[17.5px] font-bold leading-[1.35] text-brand-slate-dark md:text-xl">
