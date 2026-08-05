@@ -21,10 +21,10 @@ export const liveConfig = {
 
     // Départ : date + heure + fuseau (+02:00 l'été). Pilote le compte à
     // rebours et le numéro du jour du journal.
-    dateDebut: "2026-07-24T08:30:00+02:00",
+    dateDebut: "2026-08-04T20:30:00+02:00",
 
     // Période affichée sur la carte de partage.
-    dates: "24 juillet 2026",
+    dates: "4 août 2026",
 
     // Phrase d'intention, en italique sous le titre.
     intention: "Boucle qui relie les 4 sommets de plus 2 000 m de Chartreuse.",
@@ -40,7 +40,7 @@ export const liveConfig = {
     // "avant" pendant toute la prépa ET le direct ; "termine" une fois le
     // replay publié. (Astuce recette : NEXT_PUBLIC_LIVE_STATUT=termine au
     // build force l'aperçu « terminé » sans éditer ce fichier.)
-    statut: process.env.NEXT_PUBLIC_LIVE_STATUT || "termine",
+    statut: process.env.NEXT_PUBLIC_LIVE_STATUT || "terminé",
 
     // Dossier du replay, créé à l'arrivée par la commande export-archive.
     archive: "/replays/chartreuse-4x2000/archive.json",
