@@ -193,7 +193,7 @@ export default function ComprendrePage() {
 
       <div className="mt-14 max-w-3xl mx-auto text-center">
         <h2 className="text-lg font-semibold text-brand-accent-ink mb-3">
-          Être prévenu·e des parutions
+          Être prévenu·e des prochaines parutions
         </h2>
         <EmailCapture
           title={null}

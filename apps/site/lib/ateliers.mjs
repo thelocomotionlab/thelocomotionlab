@@ -15,7 +15,7 @@
 //            d'inscription — sinon texte générique) }
 
 const ATELIERS = [
-  {
+/*  {
     id: "atelier-test-2026-XX-XX",
     slug: "atelier-test",
     title: "Atelier test",
@@ -32,7 +32,7 @@ const ATELIERS = [
     cover: "/images/pratiquer/atelier-test.webp",
     coverAlt: "Atelier en extérieur — quadrupédie en groupe",
     status: "open",
-  },
+  },*/
 /*  {
     id: "sol-suspension-2026-10-04",
     slug: "sol-suspension",

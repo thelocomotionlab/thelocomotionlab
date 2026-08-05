@@ -64,7 +64,7 @@ export default function ExplorerLiveIndicator({ tone = "dark" }) {
         href="/live"
         className={`underline underline-offset-[3px] transition ${t.link}`}
       >
-        → Live
+        LIVE
       </Link>
     </span>
   );

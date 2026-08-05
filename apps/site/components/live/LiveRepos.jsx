@@ -16,15 +16,14 @@ export default function LiveRepos() {
           / Le direct
         </p>
         <h1 className="m-0 mt-2 font-heading text-3xl font-bold leading-[1.15] text-brand-slate-dark md:text-4xl">
-          Pas de direct en ce moment
+          Pas de live en ce moment
         </h1>
         <p className="mx-auto mt-3.5 max-w-md font-lora text-lg italic leading-relaxed text-brand-deep">
-          La prochaine aventure s&rsquo;ouvrira ici même, en temps réel. En
-          attendant, tout est calme au camp de base.
+          Mais de nouvelles aventures arrivent très vite !
         </p>
       </div>
 
-      <EmailCaptureCard title="Être prévenu·e du prochain direct" />
+      <EmailCaptureCard title="Être prévenu·e du prochain live" />
     </div>
   );
 }

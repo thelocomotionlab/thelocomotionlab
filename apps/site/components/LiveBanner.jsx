@@ -14,6 +14,7 @@
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { SatelliteDish } from "lucide-react";
 
 import { liveConfig } from "@/lib/liveConfig";
 import { useLiveTimer } from "@/lib/useLiveTimer";
@@ -40,13 +41,12 @@ export default function LiveBanner() {
         </span>
 
         <span className="text-[14.5px] text-white/90">
-          {liveConfig.indicateur.enDirect} — c&rsquo;est en cours, en ce moment
-          même.
+          {liveConfig.indicateur.enDirect}
         </span>
 
         <span className="inline-flex items-center gap-1 text-[14.5px] font-semibold text-brand-accent-light underline underline-offset-[3px] transition group-hover:text-white">
           Suivre
-          <ArrowRight
+          <SatelliteDish
             size={15}
             aria-hidden="true"
             className="transition-transform group-hover:translate-x-0.5"
