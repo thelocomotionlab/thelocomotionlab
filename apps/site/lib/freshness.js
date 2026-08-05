@@ -23,7 +23,7 @@ export function freshnessState({ running, lastFixTime, nowMs, zoneBlancheMinutes
       regime: "premier-signal",
       ageMinutes: null,
       strong: "En attente du premier signal",
-      rest: " — le départ est imminent.",
+      rest: "",
     };
   }
 
