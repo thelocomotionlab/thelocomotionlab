@@ -13,11 +13,18 @@
 // Une icône maskable doit aussi être OPAQUE : le lanceur ne comble pas la
 // transparence de façon prévisible.
 //
-// On produit donc deux familles, et le manifeste déclare les deux :
-//   • « any »      — logo presque pleine largeur, fond transparent. Servie
-//                    telle quelle par les navigateurs qui ne masquent pas.
+// On produit deux familles, et le manifeste déclare les deux :
 //   • « maskable » — logo à 66 % sur fond opaque. Sous n'importe quel masque,
 //                    le logo reste entier et respire.
+//   • « any »      — logo à 80 %, fond opaque lui aussi.
+//
+// Pourquoi « any » est PADDÉE elle aussi, alors qu'aucun masque ne s'y applique :
+// rien ne garantit quel variant un lanceur retiendra. Chrome privilégie la
+// maskable, d'autres prennent la plus grande, ou celle listée en premier. Une
+// « any » pleine largeur suffisait à reproduire le bug d'origine chez qui ne
+// suit pas la préférence. Avec les deux marges posées, le rendu est correct
+// quel que soit le chemin choisi. Les favicons (favicon.ico, favicon-96x96),
+// elles, restent pleine largeur — c'est leur usage.
 //
 // Le rendu se vérifie à l'œil avec https://maskable.app/editor (déposer le PNG).
 
@@ -75,9 +82,9 @@ if (!fs.existsSync(SOURCE)) {
 
 console.log("\n▶ Icônes de l'app installée\n");
 
-// « any » : presque pleine largeur — aucun masque ne s'y applique.
-await icone("web-app-manifest-192x192.png", 192, 0.94, false);
-await icone("web-app-manifest-512x512.png", 512, 0.94, false);
+// « any » : 80 %, opaque — marge nette même si un lanceur la préfère.
+await icone("web-app-manifest-192x192.png", 192, 0.8, true);
+await icone("web-app-manifest-512x512.png", 512, 0.8, true);
 
 // « maskable » : 66 %, bien à l'intérieur de la zone sûre (80 %), fond opaque.
 await icone("web-app-manifest-maskable-192x192.png", 192, 0.66, true);
