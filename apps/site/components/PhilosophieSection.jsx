@@ -16,6 +16,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { ChevronRight } from "lucide-react";
 
 // Contenu final du handoff (ne pas reformuler). Suite SANS point final :
 // le point n'apparaît que sur la punchline mobile (en ligne).
@@ -91,12 +92,17 @@ function AccordeonItem({ verb, suite, texte }) {
               {suite}.
             </em>
           </span>
-          <span
+          {/* Chevron : à droite au repos, il pivote vers le bas au dépliage.
+              Un signe qui TOURNE dit le mouvement mieux qu'un + qui devient −.
+              (Mobile seulement : le bloc entier est en md:hidden.) */}
+          <ChevronRight
             aria-hidden="true"
-            className="grid h-[26px] w-[26px] flex-none place-items-center rounded-full border-[1.5px] border-brand-deep-dark/35 text-[16px] font-medium leading-none text-brand-deep-dark"
-          >
-            {open ? "−" : "+"}
-          </span>
+            size={22}
+            strokeWidth={2}
+            className={`flex-none text-brand-deep-dark/70 transition-transform duration-300 ease-[cubic-bezier(.4,0,.2,1)] motion-reduce:transition-none ${
+              open ? "rotate-90" : ""
+            }`}
+          />
         </button>
       </h3>
       <div
