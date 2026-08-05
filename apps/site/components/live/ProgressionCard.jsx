@@ -11,10 +11,18 @@ import { formatElapsed } from "@/lib/liveTime";
 const KM = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const PCT = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
-export default function ProgressionCard({ stats, totalKm, elapsedSeconds }) {
-  const doneKm = (stats?.distance ?? 0) / 1000;
-  const percent = Math.min(100, totalKm > 0 ? (doneKm / totalKm) * 100 : 0);
-  const remainingKm = totalKm > 0 ? Math.max(0, totalKm - doneKm) : 0;
+export default function ProgressionCard({ stats, totalKm, elapsedSeconds, avanceKm = null }) {
+  // Deux grandeurs DIFFÉRENTES, et c'est voulu :
+  //   • parcouruKm  = ce que les jambes ont fait (détours compris) — le chiffre
+  //     qui doit coller à la montre ;
+  //   • avanceKm    = où on en est SUR LE PARCOURS (projection, lib/progression).
+  // Le pourcentage et le « restants » suivent le second : un aller-retour au
+  // ravito ne fait pas avancer d'un mètre vers l'arrivée. Quand les deux
+  // divergent, « parcourus + restants ≠ total » — c'est exact, pas un bug.
+  const parcouruKm = (stats?.distance ?? 0) / 1000;
+  const surTraceKm = Number.isFinite(avanceKm) ? avanceKm : parcouruKm;
+  const percent = Math.min(100, totalKm > 0 ? (surTraceKm / totalKm) * 100 : 0);
+  const remainingKm = totalKm > 0 ? Math.max(0, totalKm - surTraceKm) : 0;
   const dplus = Math.round(stats?.dplus ?? 0).toLocaleString("fr-FR");
 
   return (
@@ -39,7 +47,7 @@ export default function ProgressionCard({ stats, totalKm, elapsedSeconds }) {
         />
       </div>
       <div className="mt-[7px] flex justify-between font-heading text-[11.5px] text-brand-text/65">
-        <span>{KM.format(doneKm)} km parcourus</span>
+        <span>{KM.format(parcouruKm)} km parcourus</span>
         <span>{KM.format(remainingKm)} km restants</span>
       </div>
 

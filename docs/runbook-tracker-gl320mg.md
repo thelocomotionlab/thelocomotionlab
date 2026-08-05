@@ -181,12 +181,17 @@ endroit qui fait foi.
 Le GL320MG sort d'usine **sans savoir où envoyer ses positions**. Il faut lui
 donner l'APN (§1) et l'adresse du serveur (§2).
 
-| Chemin | Quand | Risque |
+| Chemin | Quand | Statut |
 | --- | --- | --- |
-| **A. Outil Queclink par USB** ✅ recommandé | première mise en service | faible : des champs nommés, pas de virgules à compter |
-| **B. Commandes @Track par SMS** | tracker déjà sur le terrain | réel : l'ordre des paramètres varie selon le modèle ET la version de firmware |
+| **B. Commandes @Track par SMS** ✅ **la voie éprouvée ici** | toujours, y compris tracker déjà sur le terrain | **validé le 4 août 2026** : les trois commandes ci-dessous ont été ACK et les positions ont suivi |
+| **A. Outil Queclink par USB** | si tu obtiens l'outil un jour | non testé — et attention, `/dev/ttyUSB2` est le port AT du **modem**, pas le canal @Track (§« Ce qui est confirmé ») |
 
-#### Chemin A — l'outil de configuration (recommandé)
+> **Va directement au chemin B.** Les commandes exactes de notre appareil sont
+> écrites plus bas, vérifiées champ par champ contre le PDF officiel et
+> confirmées par les ACK reçus. Le chemin A n'a plus d'intérêt ici : il servait à
+> éviter de compter les virgules, or elles sont désormais comptées.
+
+#### Chemin A — l'outil de configuration
 
 Récupère l'outil de configuration Queclink (« Configuration Tool » / QCT) et le
 **@Track Air Interface Protocol du GL320M Series** auprès de ton revendeur ou du
@@ -226,6 +231,131 @@ AT+GTFRI=<mdp>,…,30,…$                                   ← l'intervalle
   série (`FFFF` convient).
 - L'appareil répond par un ACK (`+ACK:GTBSI,…`) : **pas d'ACK = commande non prise**.
 
+#### `AT+GTSRI` — les 16 champs, VÉRIFIÉS
+
+Relevés dans le PDF officiel **`GL320M Series @Track Air Interface Protocol`,
+réf. `QSZTRACGL320MAN0303`** §3.2.1.2 — c'est bien la version `C30303` que notre
+appareil annonce dans ses ACK.
+
+| # | Paramètre | Plage | Notre valeur |
+| --- | --- | --- | --- |
+| 1 | Password | 4-20 car. | `gl320m` |
+| 2 | Report Mode | 0-7 | `3` = TCP long-connection |
+| 3 | *Reserved* | — | vide |
+| 4 | Buffer Mode | 0\|1\|2 | **`2`** (cf. ci-dessous) |
+| 5 | Main Server IP/Domain | ≤60 | `tracking.thelocomotionlab.com` |
+| 6 | Main Server Port | 0-65535 | `5004` |
+| 7 | Backup Server IP/Domain | ≤60 | vide |
+| 8 | Backup Server Port | 0-65535 | `0` |
+| 9 | SMS Gateway | ≤20 | vide |
+| 10 | Heartbeat Interval | 0\|5-360 min | `5` |
+| 11 | **SACK Enable** | 0\|1\|2 | **`0`** (cf. ci-dessous) |
+| 12 | SMS ACK Enable | 0\|1 | `1` (ACK par SMS des commandes) |
+| 13 | Multi-packet Sending | 0\|1 | `0` (prudence, cf. ci-dessous) |
+| 14 | DNS Lookup Interval | 0-1440 min | `60` |
+| 15 | *Reserved* | — | vide |
+| 16 | Serial Number | 4 HEX | `FFFF` |
+
+```
+AT+GTSRI=gl320m,3,,2,tracking.thelocomotionlab.com,5004,,0,,5,0,1,0,60,,FFFF$
+```
+
+**Les trois choix qui comptent :**
+
+- **`SACK Enable = 0` (champ 11).** À `1`, l'appareil attend un `+SACK:` du serveur
+  après *chaque* message. Traccar répond aux battements de cœur (`GTHBD`) mais
+  n'acquitte pas chaque rapport de position : le tracker attend un accusé qui ne
+  vient pas et **retransmet**. Symptôme observé le 4 août : des positions
+  strictement identiques (même `fixTime`, mêmes coordonnées) empilées dans
+  Traccar, et de la data consommée pour rien.
+- **`Buffer Mode = 2` (champ 4).** Le mode 2 (« high priority ») envoie **tous les
+  messages bufferisés AVANT les messages temps réel**. C'est exactement la garantie
+  d'ordre qui manquait : elle supprime à la source le cas que
+  `bufferLookbackMinutes` rattrape côté serveur (§3.4). Ceinture et bretelles.
+- **`Multi-packet Sending = 0` (champ 13).** À `1`, l'appareil groupe plusieurs
+  rapports bufferisés dans un seul paquet. Plus économe, mais on ne l'a pas
+  vérifié contre le décodeur `gl200` de Traccar — et un vidage de buffer mal
+  décodé, c'est une portion de trace perdue. On garde `0` tant que ce n'est pas
+  testé.
+
+#### `AT+GTFRI` — les 21 champs, VÉRIFIÉS
+
+Même source, §3.2.2.10 « Fixed Report Information ». C'est **la commande qui fait
+émettre le tracker à intervalle régulier** : sans elle (Mode = 0 par défaut),
+l'appareil ne parle que sur événement — d'où une carte quasi vide et de la data
+consommée surtout aux allumages/extinctions.
+
+```
+AT+GTFRI=gl320m,1,1,,,0000,0000,30,30,30,30,,1000,1000,0,5,50,5,0,00000000,FFFF$
+```
+
+21 champs, 80 octets (limite SMS : 160).
+
+| # | Paramètre | Notre valeur | Pourquoi |
+| --- | --- | --- | --- |
+| 2 | Mode | `1` | rapport à intervalle de temps fixe |
+| 3 | **Discard No Fix** | **`1`** | **ne rien envoyer sans fix GPS** (cf. ci-dessous) |
+| 6-7 | Begin / End Time | `0000` / `0000` | égaux = actif 24 h/24 (règle du §3.2.2.10) |
+| 8-9 | Check / Send Interval | `30` / `30` s | un point toutes les 30 s |
+| 10-11 | Ignition Check / Send | `30` / `30` s | pas d'entrée ignition ici : mêmes valeurs, comportement identique quel que soit l'état supposé |
+| 13-14 | Distance / Mileage | `1000` | inutilisés en Mode 1, laissés au défaut |
+| 15 | Movement Detection | `0` | désactivé pour la mise au point (cf. ci-dessous) |
+| 19 | Corner | `0` | pas de rapport supplémentaire dans les lacets |
+| 20 | ERI Mask | `00000000` | on veut des `+RESP:GTFRI`, pas des `GTERI` |
+
+**`Discard No Fix = 1` — le réglage qui nettoie la trace.** À `0` (« report last
+known GPS position if there is no GPS fix »), l'appareil rejoue sa dernière
+position connue quand il ne voit pas le ciel : Traccar les stocke en
+`valid: false`, et la carte montre un coureur **figé** au lieu d'un trou. À `1`,
+il se tait — et le trou est justement ce que la page sait afficher (« zone
+blanche »). C'est la cause des positions `valid: false` observées le 4 août.
+
+**Deux contraintes du PDF à ne pas violer :**
+
+- **ratio `Send Interval` / `Check Interval` ≤ 15**, sinon « the command will be
+  discarded and the previous settings will be kept unchanged » — un refus
+  silencieux. Ici 30/30 = 1.
+- **`Check Interval` < 60 s ⇒ la puce GPS ne s'éteint jamais.** C'est ce qu'on
+  veut pour une trace fine, mais **c'est le premier poste de consommation
+  batterie**. Pour une sortie de plusieurs jours, mesurer l'autonomie réelle à
+  30 s (§6) avant de décider ; passer à `60`/`60` éteint la puce entre deux fix.
+
+**Deux options pour la vraie aventure** (laissées désactivées pour la mise au point) :
+
+- **`Movement Detection = 1` (champ 15)** : à l'arrêt, l'appareil n'envoie que
+  `Movement Send Number` rapports puis se tait jusqu'au prochain mouvement.
+  Vraie économie de batterie **pendant les nuits au bivouac**.
+- **`Corner = 30` à `45` (champ 19)** : ajoute un point quand le cap change de
+  plus de N degrés — capte les lacets qu'un rapport purement temporel coupe en
+  ligne droite. Coût : plus de points, donc plus de data et de batterie.
+
+#### Ce qui est CONFIRMÉ sur notre appareil (IMEI 860201069202698)
+
+Relevé en conditions réelles le 4 août 2026, par SMS via le tableau de bord Simbase :
+
+- **Le mot de passe d'usine est bien `gl320m`.** L'ACK reçu le prouve :
+  `+ACK:GTSRI,C30303,860201069202698,,FFFF,20260804162604,0000$` — un mot de passe
+  refusé ne produit aucun ACK.
+- **Le numéro de série `FFFF` fonctionne.**
+- **La version de protocole est `C30303`** (2ᵉ champ de l'ACK) : c'est elle qui
+  désigne le PDF applicable. Un @Track Air Interface Protocol d'une autre version
+  peut avoir un ordre de champs différent.
+- **`GTBSI` (APN) et `GTSRI` (serveur) sont acceptés** dans la forme envoyée : le
+  tracker a joint Traccar et y a déposé des positions.
+- **`GTFRI` a été REFUSÉ** dans la forme essayée — cause trouvée : la commande
+  envoyée n'avait que **15 champs au lieu de 21**, et les valeurs étaient décalées
+  (l'intervalle de 30 s tombait dans `End Time`). Forme correcte ci-dessus.
+- **`GTBSI` (APN) : `Network Mode = 0` + `LTE Mode = 2`** donne l'ordre de
+  recherche **M1 → 2G**, sans NB-IoT (table §3.2.1.1 du PDF) — c'est bien ce qu'on
+  veut pour un appareil en mouvement (cf. §1). En revanche le **GPRS APN
+  (champ 5) est resté vide** : à vérifier si le repli 2G doit fonctionner.
+
+> **Le port USB n'est pas le bon canal.** Sur `/dev/ttyUSB2`, `AT+CSQ` et `AT+CCLK`
+> répondent normalement mais `AT+GTFRI` renvoie `ERROR` : on parle à l'interface AT
+> **du modem cellulaire**, qui ignore les commandes propriétaires Queclink. C'est
+> cohérent — un port @Track refuserait au contraire `AT+CSQ`. **Passe par SMS**,
+> qui est démontré fonctionnel ici (l'ACK GTSRI ci-dessus).
+
 > ⛔ **Le point que je ne peux pas trancher à ta place.** Le **nombre exact de
 > virgules** et la position de chaque paramètre dans `GTQSS` / `GTSRI` / `GTFRI`
 > **changent d'un modèle Queclink à l'autre et d'une version de firmware à
@@ -262,6 +392,128 @@ BUFFER_LOOKBACK_MINUTES=720     # 12 h
 ```
 
 (Aucun risque de doublon : le back dédoublonne par identifiant Traccar.)
+
+---
+
+### 3.5 La configuration optimisée — les quatre commandes
+
+Les réglages de §3.2 font *fonctionner* le tracker. Ceux-ci le font **bien
+suivre** : trace fine en mouvement, pas de dérive à l'arrêt, batterie ménagée.
+Toutes vérifiées champ par champ contre le PDF officiel.
+
+> ⚠️ **L'ordre compte.** `GTCFG` d'abord : il pose `GPS On Need`, dont dépendent
+> le mode 6 et le report d'angle de `GTFRI`. Chaque commande doit renvoyer un
+> `+ACK:` — sans ACK, elle n'est pas passée.
+
+```
+1. AT+GTCFG=gl320m,gl320m,gl320m,0,0.0,2,10,001F,,,0FFF,0,1,1,300,2,0,20491231235959,1,0000,0,20,1,,FFFF$
+2. AT+GTFRI=gl320m,6,1,,,0000,0000,30,30,30,30,,1000,50,1,1,20,5,45,00000000,FFFF$
+3. AT+GTNMD=gl320m,E,10,3,2,300,300,2,3,0,0,2,,,FFFF$
+4. AT+GTFKS=gl320m,1,1,5,1,1,3,2,8,4,3,FFFF$
+```
+
+#### Ce que chaque réglage apporte
+
+**`GTCFG` (25 champs) — la qualité du fix.**
+
+| # | Paramètre | Valeur | Effet |
+| --- | --- | --- | --- |
+| 6 | GPS On Need | **`2`** | GPS allumé **en mouvement**, éteint **au repos**. Le meilleur des deux : précision quand ça compte, batterie économisée au bivouac. Exigé par le mode 6 et le report d'angle. |
+| 7 | GPS Fix Delay | **`10`** s | le PDF prévient que « la position obtenue immédiatement après le fix peut être inexacte » : on attend 10 s au lieu de 5 avant de lire. |
+| 19 | AGPS Mode | **`1`** | **désactivé par défaut !** Améliore le taux d'accroche et raccourcit le temps de fix — décisif en fond de vallée et au démarrage à froid. |
+| 23 | **Walking Mode** | **`1`** | *« aide l'appareil à obtenir de meilleures informations d'azimut et de vitesse pendant la marche »*. Littéralement fait pour ton usage — et désactivé d'usine. |
+| 22 | Battery Low % | **`20`** | alerte `+RESP:GTBPL` à 20 % au lieu de 10 : de la marge pour réagir. |
+| 14-15 | Info Report | `1` / `300` s | le rapport d'état qui porte **la batterie** (§3.7). |
+| 8 | Report Item Mask | `001F` | garde l'**altitude** (bit 2) — sans elle, pas de D+. |
+
+> `GSM Report` (champ 20) reste à `0000` : le PDF précise que `+RESP:GTGSM`
+> n'est envoyé qu'en **TCP short-connection**, or on est en long-connection.
+> Ça ne servirait à rien ici.
+>
+> ⚠️ Le champ 2 est **New Password** : on y remet `gl320m` pour le laisser
+> inchangé. Ne le laisse jamais vide au hasard.
+
+**`GTFRI` (21 champs) — la densité de points.**
+
+| # | Paramètre | Valeur | Effet |
+| --- | --- | --- | --- |
+| 2 | Mode | **`6`** | « Fixed Time **ou** Mileage » : un point tous les **30 s OU tous les 50 m**, au premier des deux atteint. C'est le réglage que tu demandais. |
+| 14 | Mileage | **`50`** m | la distance qui déclenche un point hors délai. |
+| 19 | **Corner** | **`45`°** | ajoute un point dès que le cap change de plus de 45° : **capte les lacets** qu'un rapport purement temporel coupe en ligne droite. Descendre à `30` densifie encore, au prix de data et de batterie. |
+| 15-18 | Movement Detection | `1`, `1` km/h, `20` m, `5` | **le remède direct à la dérive à l'arrêt** : sous 1 km/h ET moins de 20 m de déplacement, l'appareil se tait après 5 rapports. Les deux conditions sont cumulatives — une montée raide à 1,5 km/h reste « en mouvement » grâce au critère de vitesse (que Walking Mode rend justement fiable). |
+| 3 | Discard No Fix | `1` | rien n'est envoyé sans fix : un trou plutôt qu'un coureur figé. |
+
+**`GTNMD` (15 champs) — l'économie au repos.** Détection par **accéléromètre**,
+complémentaire de celle de `GTFRI` (qui, elle, est basée sur le GPS).
+
+- `Mode = E` (bits 1+2+3) : signale les transitions arrêt/reprise **et** bascule
+  les intervalles sur les valeurs de repos.
+- `Non-movement Duration = 10` (×14 s ≈ **2 min 20**) : une pause photo ou un
+  ravitaillement ne fait pas basculer en « arrêt ». Le défaut (28 s) est bien trop
+  nerveux pour un coureur.
+- `Fix/Send Interval at Rest = 300` s : au bivouac, un point toutes les 5 min au
+  lieu de toutes les 30 s.
+
+> **Effet combiné à connaître** : à l'arrêt prolongé, `GTNMD` ralentit à 5 min
+> **et** la détection de `GTFRI` finit par couper les rapports. Après ~25 min
+> d'immobilité, le tracker se tait jusqu'au prochain mouvement. C'est voulu
+> (batterie), mais au-delà de 60 min la page `/live` affichera « zone blanche » —
+> ce qui, une nuit au bivouac, est sémantiquement correct. Pour l'éviter, mettre
+> le champ 15 de `GTFRI` à `0` et ne garder que `GTNMD`.
+
+---
+
+### 3.6 Les boutons — ce qu'ils font, et comment les régler
+
+Le GL320MG a **deux boutons** : la **touche marche/arrêt** (power key) et la
+**touche de fonction** (function key). Le comportement des deux se configure par
+`AT+GTFKS`.
+
+| Réglage | Valeur posée | Ce que ça donne |
+| --- | --- | --- |
+| Power Key Mode | `1` (défaut) | appui long = extinction |
+| Full Power On | `1` | branché sur le chargeur, l'appareil démarre **complètement** (il ne fait pas que charger) |
+| **Function Key Mode** | **`5`** — mode mixte | **deux actions sur un seul bouton**, selon la durée d'appui |
+| First Trigger | **`2` s → événement `4`** | **appui 2 s = envoie ta position immédiatement** (`+RESP:GTLOC`). Parfait pour marquer un point ou tester la chaîne à la demande. |
+| Second Trigger | **`8` s → événement `3`** | **appui 8 s = SOS**. Le défaut usine (3 s / 4 s) est bien trop serré : une seconde d'écart entre « position » et « SOS ». |
+| **Vibration** (champs 5-6) | **`1` / `1`** | **désactivée d'usine.** L'appareil vibre pour confirmer l'appui — indispensable avec des gants, ou sac fermé. |
+| SOS Report Mode | `3` | envoie la dernière position connue **tout de suite**, puis tente un fix frais et renvoie. Le bon compromis en urgence. |
+
+> **Option à considérer pour l'aventure** : `Power Key Mode = 0` empêche
+> l'extinction par le bouton — utile contre un appui accidentel au fond du sac.
+> **Mais** l'extinction ne serait alors plus possible qu'à distance, et la
+> commande correspondante n'est pas dans l'extrait de PDF dont on dispose : ne
+> pose ce réglage qu'après avoir vérifié comment revenir en arrière.
+
+---
+
+### 3.7 Surveiller la batterie
+
+**Il n'y a rien à demander au tracker** : `Info Report` (champs 14-15 de `GTCFG`,
+posés ci-dessus) lui fait publier un `+RESP:GTINF` toutes les 5 min, qui porte
+l'état de charge, la puissance du signal, l'ICCID et l'heure du dernier fix.
+Traccar range ça dans les **attributs** de la position.
+
+**En une commande, depuis n'importe où :**
+
+```bash
+curl -s https://tracking.thelocomotionlab.com/api/public/positions \
+  | jq '.[] | select(.deviceId==92) | {fixTime, attributes}'
+```
+
+(Sans paramètres, `/positions` renvoie la **dernière position connue** de chaque
+appareil — donc l'état courant.)
+
+**Ou automatiquement**, dans le diagnostic : `check-tracker.sh` affiche
+`🔋 batterie rapportée : N` à l'étape 3. S'il ne trouve rien, c'est que le rapport
+d'état est désactivé — reposer `GTCFG`.
+
+**L'alerte automatique** est déjà armée : `Battery Low Percentage = 20` +
+`Event Mask = 0FFF` (bit 5) font émettre un `+RESP:GTBPL` dès que la charge passe
+sous 20 %.
+
+> ⚠️ Aucun de ces chiffres ne remplace la **mesure d'autonomie réelle** en sortie
+> (§6). Avec un intervalle de 30 s, c'est ton premier poste de consommation.
 
 ---
 
@@ -388,6 +640,12 @@ partage) est dans [`live-tracking.md`](./live-tracking.md) §13.
 | Traccar dit **unknown**, jamais de position | IMEI mal saisi, ou serveur/port faux dans le tracker | §2.2 (IMEI = chiffres seuls) et §3.2 |
 | Le tracker se connecte, Traccar ne stocke rien | appareil non déclaré : Traccar refuse une session inconnue | §2.2, puis vérifier le log `tracker-server.log` (§4) |
 | `check-tracker.sh` : positions OK mais `/live` vide | pas de session ouverte, **ou** page en `statut: "termine"` | `./track start` (§5.1) **et** §5.2 |
+| Traccar a des positions, `./track status` affiche **0 point** | la fenêtre a été ouverte **après** le dernier fix : `track start` ne collecte qu'à partir de son instant d'ouverture, jamais rétroactivement | obtenir des positions **fraîches**, puis `./track reset && ./track start` |
+| Des positions arrivent mais **rien sur la carte** | le tracker émet **sans fix GPS** : Traccar stocke des points invalides ou à (0,0) | le sortir dehors, ciel dégagé, 15 min immobile. Le script compte les fix réellement valides (§4) |
+| Data consommée surtout à l'**extinction** du tracker | pas d'intervalle de report fixe actif : l'appareil ne parle que sur événement, et vide son buffer à l'arrêt | faire accepter `GTFRI` (§3.2) |
+| Trace qui **gigote sur place** alors que le tracker ne bouge pas (distance et D+ qui montent à l'arrêt) | dérive GPS statique : chaque fix tombe à quelques mètres du précédent | détection de mouvement de `GTFRI` (champs 15-18) + `GTNMD` — cf. §3.5 |
+| Lacets coupés en ligne droite sur la carte | rapport purement temporel : entre deux points de 30 s, le virage n'existe pas | `Corner` (champ 19 de `GTFRI`) à `45`, voire `30` — §3.5 |
+| Pas de batterie affichée | rapport d'état désactivé | `GTCFG` champs 14-15 — §3.7 |
 | Trous dans la trace qui ne se remplissent jamais | buffer désactivé, ou coupure plus longue que le lookback | §3.4 : buffer ON + `BUFFER_LOOKBACK_MINUTES` |
 | Ça marchait, plus rien depuis une heure | zone blanche (≠ panne) | attendre ; `./track status` ; puis §4 |
 | Batterie vide bien avant l'heure annoncée | intervalle trop rapide, froid, recherche réseau permanente | allonger l'intervalle (60 s), batterie externe pour l'ultra |
@@ -395,16 +653,32 @@ partage) est dans [`live-tracking.md`](./live-tracking.md) §13.
 
 ---
 
-## 8. Ce qu'il reste à confirmer sur ton matériel
+## 8. État de la mise en service
 
-Honnêtement, trois points de ce runbook viennent des conventions Queclink et non
-de la doc de **ton** GL320MG, que Queclink ne diffuse pas publiquement :
+**Chaîne matérielle bouclée le 4 août 2026, 22 h 06.** Les deux commandes de
+configuration ont été acquittées et les positions ont suivi immédiatement :
 
-1. **Le mot de passe d'usine** (`gl320m` supposé, par la convention « nom du
-   modèle en minuscules »).
-2. **L'ordre exact des paramètres** de `AT+GTQSS` / `AT+GTSRI` / `AT+GTFRI` (§3.2).
-3. **Le détail des LED** et la durée d'appui exacte du bouton (§3.1).
+```
++ACK:GTSRI,C30303,860201069202698,,FFFF,20260804200548,00B2$
++ACK:GTFRI,C30303,860201069202698,,FFFF,20260804200617,00B4$
+→ positions valid:true à 20:06:55 puis 20:07:17 (≈ 30 s d'écart, conforme)
+```
 
-Les trois se lisent dans le **user manual** + le **@Track Air Interface Protocol**
-de ta version. Le chemin A (outil USB, §3.2) contourne les points 1 et 2
-entièrement — c'est pour ça qu'il est recommandé.
+Ce qui était supposé au premier jet et qui est **désormais vérifié** :
+
+- **Mot de passe d'usine `gl320m`** — confirmé par les ACK.
+- **Ordre des champs de `GTSRI` (16) et `GTFRI` (21)** — lu dans le PDF officiel
+  `QSZTRACGL320MAN0303`, recompté, et validé sur l'appareil.
+- **Le SMS est le bon canal** ; `/dev/ttyUSB2` est le port AT du modem cellulaire,
+  qui ignore les commandes `AT+GT*`.
+
+**Ce qui reste ouvert :**
+
+1. **Le détail des LED** et la durée d'appui exacte du bouton (§3.1) — cosmétique,
+   se lit dans le *user manual*.
+2. **Le repli 2G** : le champ 5 de `GTBSI` (GPRS APN) est vide. À remplir avec
+   `simbase` si le repli doit vraiment fonctionner (§« Ce qui est confirmé »).
+3. **L'autonomie réelle à 30 s d'intervalle**, GPS jamais éteint — la seule mesure
+   qui compte avant une sortie de plusieurs jours (§6).
+4. **`Multi-packet Sending`** (champ 13 de `GTSRI`) non testé contre le décodeur
+   `gl200` de Traccar — laissé à `0`.

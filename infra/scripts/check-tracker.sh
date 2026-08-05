@@ -178,9 +178,51 @@ for d in json.load(sys.stdin):
         "$API/positions?deviceId=$DEVICE&from=$FROM&to=$TO" 2>/dev/null)"
       NB="$(echo "$POS" | json_get 'length' 'import json,sys; print(len(json.load(sys.stdin)))')"
       if [ "${NB:-0}" -gt 0 ] 2>/dev/null; then
-        LASTFIX="$(echo "$POS" | json_get '.[-1].fixTime' \
+        TRACCAR_LASTFIX="$(echo "$POS" | json_get '.[-1].fixTime' \
           'import json,sys; d=json.load(sys.stdin); print(d[-1].get("fixTime"))')"
-        ok "$NB position(s) sur les dernières 24 h · dernier fix $LASTFIX"
+        ok "$NB position(s) sur les dernières 24 h · dernier fix $TRACCAR_LASTFIX"
+
+        # ⚠ « des positions » ≠ « des positions EXPLOITABLES ». Un tracker qui n'a
+        # pas vu le ciel émet quand même : Traccar stocke des points invalides ou
+        # à (0,0). Sans ce tri, on croit la chaîne bonne et on cherche la panne
+        # au mauvais endroit pendant des heures.
+        NBVALID="$(echo "$POS" | json_get \
+          '[.[] | select(.valid == true and ((.latitude // 0) != 0 or (.longitude // 0) != 0))] | length' \
+          '
+import json,sys
+d = json.load(sys.stdin)
+print(sum(1 for p in d
+          if p.get("valid") is True and ((p.get("latitude") or 0) != 0 or (p.get("longitude") or 0) != 0)))
+')"
+        if [ "${NBVALID:-0}" -gt 0 ] 2>/dev/null; then
+          ok "dont $NBVALID avec un vrai fix GPS (valid, coordonnées non nulles)"
+        else
+          ko "AUCUNE n'a de fix GPS valide : le tracker émet, mais sans position"
+          echo "      ↳ le lien réseau est bon (les points arrivent) — c'est le GPS qui n'accroche pas."
+          fix "le sortir DEHORS, ciel dégagé, immobile 15 min (premier fix à froid). En intérieur, il peut ne jamais accrocher."
+        fi
+
+        # Batterie : le tracker la publie dans +RESP:GTINF (piloté par Info Report
+        # Enable/Interval de GTCFG) ; Traccar la range dans les attributs de la
+        # position. Le nom du champ varie selon la version, d'où le balayage.
+        BATT="$(echo "$POS" | json_get \
+          '[.[] | .attributes // {} | (.batteryLevel // .battery // .batteryPercentage // empty)] | last // empty' \
+          '
+import json,sys
+val = None
+for p in json.load(sys.stdin):
+    a = p.get("attributes") or {}
+    for k in ("batteryLevel", "battery", "batteryPercentage"):
+        if a.get(k) is not None:
+            val = a[k]
+print(val if val is not None else "")
+')"
+        if [ -n "${BATT:-}" ]; then
+          echo "  🔋 batterie rapportée : $BATT"
+        else
+          warn "aucune donnée de batterie dans les positions"
+          echo "      ↳ le rapport d'état (+RESP:GTINF) est-il activé ? AT+GTCFG champs 14/15."
+        fi
       else
         warn "aucune position sur les dernières 24 h"
         echo "      ↳ si le tracker émet depuis moins longtemps que ça, c'est normal ; sinon la chaîne s'arrête ICI (tracker/SIM/réseau), pas plus loin."
@@ -210,6 +252,30 @@ else
     if ! echo "$TRACK_STATUS" | grep -q "EN COURS"; then
       warn "aucune session ouverte → le back est en IDLE, il ne collecte RIEN (c'est voulu)"
       echo "      ↳ pour collecter : ./track start"
+    else
+      # Session ouverte mais 0 point alors que Traccar en a : le piège classique de
+      # la mise en service. `track start` n'ouvre la fenêtre qu'à partir de
+      # MAINTENANT — les positions ANTÉRIEURES sont volontairement ignorées. Si le
+      # dernier fix est plus vieux que l'ouverture, il n'y a rien à collecter et le
+      # back a raison de ne rien remonter.
+      PTS="$(echo "$TRACK_STATUS" | sed -n 's/^Points *: *\([0-9]\+\).*/\1/p' | head -1)"
+      # Premier jeton non blanc : l'horodatage ISO, ou « — » si pas de session
+      # (auquel cas `date -d` échouera et le diagnostic sera simplement sauté).
+      WSTART="$(echo "$TRACK_STATUS" | sed -n 's/^Début *: *\([^[:space:]]\{1,\}\).*/\1/p' | head -1)"
+      if [ "${PTS:-0}" = "0" ] && [ -n "${TRACCAR_LASTFIX:-}" ] && [ -n "$WSTART" ]; then
+        FIX_MS="$(date -d "$TRACCAR_LASTFIX" +%s 2>/dev/null)"
+        WIN_MS="$(date -d "$WSTART" +%s 2>/dev/null)"
+        if [ -n "$FIX_MS" ] && [ -n "$WIN_MS" ] && [ "$FIX_MS" -lt "$WIN_MS" ]; then
+          ko "0 point collecté alors que Traccar en a : la FENÊTRE a été ouverte APRÈS le dernier fix"
+          echo "      ↳ ouverture $WSTART · dernier fix $TRACCAR_LASTFIX"
+          echo "        \`track start\` ne collecte qu'à partir de son instant d'ouverture :"
+          echo "        tout ce qui précède est ignoré, par construction."
+          fix "obtenir d'abord des positions FRAÎCHES (tracker dehors), PUIS ./track reset && ./track start"
+        else
+          warn "session ouverte mais 0 point collecté, sans cause évidente"
+          echo "      ↳ regarder ./track logs (HTTP 401/403 = token ; sinon appareil ou fenêtre)"
+        fi
+      fi
     fi
   else
     ko "conteneur tracking-cache absent ou arrêté (${STATE:-introuvable})"
