@@ -99,6 +99,35 @@ describe("avancementSurTrace", () => {
   });
 });
 
+describe("sens de parcours", () => {
+  // Boucle fermée, comme la trace des Vouillands : départ et arrivée confondus.
+  const BOUCLE = [
+    ...Array.from({ length: 11 }, (_, i) => [5.7 + i * 0.01, 45.2]),
+    ...Array.from({ length: 11 }, (_, i) => [5.8, 45.2 + i * 0.005]),
+    ...Array.from({ length: 11 }, (_, i) => [5.8 - i * 0.01, 45.25]),
+    ...Array.from({ length: 11 }, (_, i) => [5.7, 45.25 - i * 0.005]),
+  ];
+
+  it("boucle parcourue DANS LE SENS du GPX → 100 %", () => {
+    expect(avancementSurTrace(BOUCLE, BOUCLE).pourcent).toBeGreaterThan(95);
+  });
+
+  it("LE CAS DES VOUILLANDS : boucle parcourue À CONTRESENS → 100 % aussi", () => {
+    // Le GPX enregistré dans un sens, la sortie faite dans l'autre : une chance
+    // sur deux sur une boucle. La recherche ne va que vers l'avant, donc sans
+    // essai des deux orientations le curseur reste bloqué au départ (1,4 %).
+    const aContresens = [...BOUCLE].reverse();
+    expect(avancementSurTrace(BOUCLE, aContresens).pourcent).toBeGreaterThan(95);
+  });
+
+  it("à mi-parcours à contresens, on est bien à ~50 %", () => {
+    const moitieInverse = [...BOUCLE].reverse().slice(0, Math.floor(BOUCLE.length / 2));
+    const p = avancementSurTrace(BOUCLE, moitieInverse).pourcent;
+    expect(p).toBeGreaterThan(40);
+    expect(p).toBeLessThan(60);
+  });
+});
+
 describe("plafond de vitesse (points horodatés)", () => {
   /** Point du profil, `secondes` après le départ. */
   const pt = (n, secondes) => ({

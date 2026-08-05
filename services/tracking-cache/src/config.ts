@@ -29,8 +29,8 @@ type RawConfig = Partial<{
   intervalSeconds: number;
   bufferLookbackMinutes: number;
   minDistanceThreshold: number;
-  minElevationPlusThreshold: number;
-  minElevationMinusThreshold: number;
+  elevationSmoothingWindow: number;
+  elevationHysteresisM: number;
   samplingCorrection: number;
   elevationPlusCorrection: number;
   elevationMinusCorrection: number;
@@ -92,13 +92,13 @@ export function loadConfig(): Config {
         raw.elevationMinusCorrection ?? 1.0
       ),
       minDistanceThreshold: num(process.env.MIN_DISTANCE_THRESHOLD, raw.minDistanceThreshold ?? 5),
-      minElevationPlusThreshold: num(
-        process.env.MIN_ELEVATION_PLUS_THRESHOLD,
-        raw.minElevationPlusThreshold ?? 2
+      elevationSmoothingWindow: num(
+        process.env.ELEVATION_SMOOTHING_WINDOW,
+        raw.elevationSmoothingWindow ?? 5
       ),
-      minElevationMinusThreshold: num(
-        process.env.MIN_ELEVATION_MINUS_THRESHOLD,
-        raw.minElevationMinusThreshold ?? 2
+      elevationHysteresisM: num(
+        process.env.ELEVATION_HYSTERESIS_M,
+        raw.elevationHysteresisM ?? 5
       ),
     },
   };

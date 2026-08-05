@@ -47,8 +47,8 @@ export type LivePositions = {
     elevationPlusCorrection: number;
     elevationMinusCorrection: number;
     minDistanceThreshold: number;
-    minElevationPlusThreshold: number;
-    minElevationMinusThreshold: number;
+    elevationSmoothingWindow: number;
+    elevationHysteresisM: number;
     windowStart: string | null;
   };
 };
@@ -75,6 +75,6 @@ export type ComputeParams = {
   elevationPlusCorrection: number;
   elevationMinusCorrection: number;
   minDistanceThreshold: number;
-  minElevationPlusThreshold: number;
-  minElevationMinusThreshold: number;
+  elevationSmoothingWindow: number;
+  elevationHysteresisM: number;
 };

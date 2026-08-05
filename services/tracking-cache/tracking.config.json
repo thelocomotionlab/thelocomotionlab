@@ -12,10 +12,13 @@
   "bufferLookbackMinutes": 180,
 
   "minDistanceThreshold": 8,
-  "minElevationPlusThreshold": 0,
-  "minElevationMinusThreshold": 1,
 
+  "_denivele": "L'altitude GNSS oscille en permanence : additionner chaque variation positive produit des centaines de mètres de D+ imaginaire (1431 m mesurés pour 419 m réels aux Vouillands, 05/08/2026). On lisse la série sur `elevationSmoothingWindow` points, puis on n'accumule qu'au-delà de `elevationHysteresisM` mètres d'écart à la référence. Réglages calibrés sur cette trace : à ±5 %, du bruit faible au bruit fort.",
+  "elevationSmoothingWindow": 5,
+  "elevationHysteresisM": 5,
+
+  "_corrections": "Coefficients d'ajustement final, à recaler sur la montre (docs/live-tracking.md §10.1). Les coefficients de dénivelé sont à 1.0 : ils compensaient la dérive de l'ancien calcul, qui n'existe plus.",
   "samplingCorrection": 1.03,
-  "elevationPlusCorrection": 0.95,
-  "elevationMinusCorrection": 0.95
+  "elevationPlusCorrection": 1.0,
+  "elevationMinusCorrection": 1.0
 }

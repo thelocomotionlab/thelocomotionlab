@@ -87,6 +87,61 @@ export function cumulDistances(coords) {
  *   calcul (distance parcourue), qui vaut mieux que rien.
  */
 export function avancementSurTrace(referenceCoords, vecu, options = {}) {
+  if (!Array.isArray(referenceCoords) || referenceCoords.length < 2) return null;
+
+  // Le GPX peut avoir été enregistré dans l'autre sens que celui parcouru — sur
+  // une BOUCLE, c'est même une chance sur deux. La recherche ne va que vers
+  // l'avant : à contresens, le curseur ne trouve plus rien et reste au départ
+  // (constaté aux Vouillands le 5 août 2026 : 1,4 % affichés pour une boucle
+  // pourtant bouclée).
+  //
+  // On DÉTERMINE donc le sens avant de projeter, plutôt que d'essayer les deux
+  // et de garder le meilleur score : sur un parcours qui repasse près de
+  // lui-même, l'orientation inverse peut accrocher le départ à l'arrivée et
+  // annoncer 100 % sans que personne n'ait bougé.
+  const sens = sensDeParcours(referenceCoords, vecu);
+  return projeter(sens < 0 ? [...referenceCoords].reverse() : referenceCoords, vecu, options);
+}
+
+/**
+ * Sens de parcours du vécu par rapport au GPX : +1 dans le sens du fichier,
+ * −1 à contresens.
+ *
+ * On projette un ÉCHANTILLON de positions sur le sommet le plus proche, sans
+ * aucune contrainte, et on regarde si la suite des indices monte ou descend.
+ * C'est la seule question à trancher ici, et elle se lit directement dans la
+ * donnée. L'échantillonnage rend la recherche exhaustive abordable (quelques
+ * dizaines de points × la longueur du tracé).
+ */
+function sensDeParcours(referenceCoords, vecu, echantillons = 60) {
+  const pas = Math.max(1, Math.ceil(vecu.length / echantillons));
+  const indices = [];
+  for (let i = 0; i < vecu.length; i += pas) {
+    const p = normaliser(vecu[i]);
+    if (!p) continue;
+    let meilleur = 0;
+    let meilleurEcart = Infinity;
+    for (let j = 0; j < referenceCoords.length; j += 1) {
+      const e = ecart2(p.lonlat, referenceCoords[j]);
+      if (e < meilleurEcart) {
+        meilleurEcart = e;
+        meilleur = j;
+      }
+    }
+    indices.push(meilleur);
+  }
+
+  let montees = 0;
+  let descentes = 0;
+  for (let i = 1; i < indices.length; i += 1) {
+    if (indices[i] > indices[i - 1]) montees += 1;
+    else if (indices[i] < indices[i - 1]) descentes += 1;
+  }
+  // Égalité ou données trop maigres : on garde le sens du fichier.
+  return descentes > montees ? -1 : 1;
+}
+
+function projeter(referenceCoords, vecu, options = {}) {
   const {
     // 150 m : mesuré comme le meilleur compromis sur la trace de Chartreuse.
     // Au-dessus (400 m), un détour qui longe une portion ultérieure du tracé y

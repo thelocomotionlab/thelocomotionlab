@@ -340,7 +340,32 @@ elles dériveraient) ; les leviers :
 | `samplingCorrection` | `SAMPLING_CORRECTION` | correction distance. |
 | `elevationPlusCorrection` / `…MinusCorrection` | `ELEVATION_PLUS/MINUS_CORRECTION` | corrections D+/D−. |
 | `minDistanceThreshold` | `MIN_DISTANCE_THRESHOLD` | anti-dérive GPS statique (m). |
-| `minElevationPlusThreshold` / `…MinusThreshold` | `MIN_ELEVATION_PLUS/MINUS_THRESHOLD` | anti-bruit altimétrique (m). |
+| `elevationSmoothingWindow` | `ELEVATION_SMOOTHING_WINDOW` | points de la moyenne glissante sur les altitudes (écrête les pics GNSS). |
+| `elevationHysteresisM` | `ELEVATION_HYSTERESIS_M` | écart minimal (m) avant de compter du dénivelé. **C'est LE réglage anti-dérive** (cf. encadré). |
+
+> ### Pourquoi le D+ dérivait, et ce qui le tient maintenant
+>
+> L'altitude GNSS oscille de quelques mètres en permanence, même à l'arrêt. Le
+> calcul additionnait **chaque** variation positive entre deux points : sur des
+> centaines de points, ce bruit devenait des centaines de mètres. Mesuré sur la
+> sortie des Vouillands (5 août 2026) : **1 431 m affichés pour 419 m réels**.
+> Un seuil par segment n'y pouvait rien — il laisse passer la moitié du bruit à
+> chaque pas, et le total croît avec le nombre de points.
+>
+> Le calcul lisse désormais la série d'altitudes, puis n'accumule qu'au-delà de
+> `elevationHysteresisM` d'écart à une référence mobile. Un bruit qui reste sous
+> le seuil ne s'accumule **jamais**, quel que soit le nombre de points.
+>
+> Vérifié en rejouant la trace réelle des Vouillands avec trois niveaux de bruit :
+>
+> | Bruit d'altitude | Ancien calcul | Nouveau |
+> | --- | --- | --- |
+> | ±2 m | +66 % | **−5 %** |
+> | ±3 m | +109 % | **−2 %** |
+> | ±5 m | +200 % | **+5 %** |
+>
+> Les coefficients `elevationPlus/MinusCorrection` sont repassés à **1.0** : ils
+> compensaient la dérive de l'ancien calcul, qui n'existe plus.
 
 Changement **permanent** : éditer le JSON → commit → merge `main` → CI rebuild
 → `./deploy.sh`. Changement **ponctuel** : poser la variable d'env dans

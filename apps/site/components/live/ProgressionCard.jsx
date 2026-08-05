@@ -1,17 +1,36 @@
 // components/live/ProgressionCard.jsx
 //
-// Bloc Progression (design 2a/2d) : pourcentage, barre en dégradé ambre,
-// parcourus/restants, D+, temps écoulé. L'encart « Arrivée estimée » de la
-// maquette est OMIS : le pronostic d'arrivée est hors-scope strict (brief §12).
+// Bloc Progression : les TROIS chiffres du terrain (distance, D+, D−) sur une
+// seule ligne, lisible d'un coup d'œil y compris en mobile ; le pourcentage et
+// la barre en dessous, en retrait. C'est l'inverse de la première maquette, où
+// le pourcentage occupait tout et où le dénivelé se cherchait — or en course,
+// « où j'en suis » se lit dans les kilomètres et le dénivelé, pas dans un ratio.
+//
+// Le temps écoulé n'est PLUS ici : il vit sur la carte (ChronoBadge), où il
+// bat la seconde.
 
 "use client";
 
-import { formatElapsed } from "@/lib/liveTime";
-
 const KM = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const PCT = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const M = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 });
 
-export default function ProgressionCard({ stats, totalKm, elapsedSeconds, avanceKm = null }) {
+/** Une des trois mesures de la ligne du haut. */
+function Mesure({ label, valeur, unite }) {
+  return (
+    <div className="min-w-0 flex-1">
+      <p className="font-heading text-[9.5px] font-medium uppercase tracking-[0.08em] text-brand-text/55 lg:text-[10px]">
+        {label}
+      </p>
+      <p className="mt-0.5 whitespace-nowrap font-heading text-[22px] font-bold leading-none text-brand-text lg:text-[24px]">
+        {valeur}
+        <span className="text-[11px] font-normal text-brand-text/55"> {unite}</span>
+      </p>
+    </div>
+  );
+}
+
+export default function ProgressionCard({ stats, totalKm, avanceKm = null }) {
   // Deux grandeurs DIFFÉRENTES, et c'est voulu :
   //   • parcouruKm  = ce que les jambes ont fait (détours compris) — le chiffre
   //     qui doit coller à la montre ;
@@ -23,53 +42,39 @@ export default function ProgressionCard({ stats, totalKm, elapsedSeconds, avance
   const surTraceKm = Number.isFinite(avanceKm) ? avanceKm : parcouruKm;
   const percent = Math.min(100, totalKm > 0 ? (surTraceKm / totalKm) * 100 : 0);
   const remainingKm = totalKm > 0 ? Math.max(0, totalKm - surTraceKm) : 0;
-  const dplus = Math.round(stats?.dplus ?? 0).toLocaleString("fr-FR");
 
   return (
-    <section className="rounded-[18px] border border-brand-text/10 bg-white px-[18px] pb-5 pt-[18px] shadow-[0_6px_20px_rgba(51,51,51,0.06)] lg:px-5 lg:shadow-none">
+    <section className="rounded-[18px] border border-brand-text/10 bg-white px-[18px] pb-[18px] pt-[18px] shadow-[0_6px_20px_rgba(51,51,51,0.06)] lg:px-5 lg:shadow-none">
       <p className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-brand-deep-dark">
         Progression
       </p>
 
-      <div className="mt-2 flex items-baseline gap-[7px]">
-        <span className="font-heading text-[40px] font-bold leading-[0.9] text-brand-text lg:text-[38px]">
-          {PCT.format(percent)}
+      {/* Les trois chiffres, sur UNE ligne à toutes les tailles. Les libellés
+          sont courts et les valeurs en `whitespace-nowrap` pour qu'un « 12 345 »
+          ne casse jamais la ligne sur un petit écran. */}
+      <div className="mt-3 flex items-start gap-2.5">
+        <Mesure label="Distance" valeur={KM.format(parcouruKm)} unite="km" />
+        <div className="mt-1 h-7 w-px flex-none bg-brand-text/10" aria-hidden="true" />
+        <Mesure label="Dénivelé +" valeur={M.format(Math.round(stats?.dplus ?? 0))} unite="m" />
+        <div className="mt-1 h-7 w-px flex-none bg-brand-text/10" aria-hidden="true" />
+        <Mesure label="Dénivelé −" valeur={M.format(Math.round(stats?.dminus ?? 0))} unite="m" />
+      </div>
+
+      {/* Le pourcentage passe au second plan : petit, sur la ligne de la barre. */}
+      <div className="mt-4 flex items-baseline justify-between gap-3">
+        <span className="font-heading text-[12px] text-brand-text/65">
+          <span className="font-bold text-brand-text">{PCT.format(percent)} %</span> du parcours
         </span>
-        <span className="font-heading text-lg font-medium text-brand-deep-dark lg:text-[17px]">
-          %
+        <span className="font-heading text-[11.5px] text-brand-text/55">
+          {KM.format(remainingKm)} km restants
         </span>
       </div>
 
-      <div className="mt-3 h-2.5 overflow-hidden rounded-[10px] bg-brand-text/10">
+      <div className="mt-1.5 h-2 overflow-hidden rounded-[10px] bg-brand-text/10">
         <div
           className="h-full rounded-[10px] bg-gradient-to-r from-brand-accent to-brand-accent-dark"
           style={{ width: `${percent}%` }}
         />
-      </div>
-      <div className="mt-[7px] flex justify-between font-heading text-[11.5px] text-brand-text/65">
-        <span>{KM.format(parcouruKm)} km parcourus</span>
-        <span>{KM.format(remainingKm)} km restants</span>
-      </div>
-
-      <div className="my-[15px] h-px bg-brand-text/10 lg:hidden" />
-      <div className="grid grid-cols-2 gap-3.5 lg:mt-4">
-        <div>
-          <p className="font-heading text-[10px] font-medium uppercase tracking-[0.1em] text-brand-text/55">
-            Dénivelé +
-          </p>
-          <p className="mt-0.5 font-heading text-[19px] font-bold text-brand-text lg:text-lg">
-            {dplus}
-            <span className="text-xs font-normal text-brand-text/55"> m</span>
-          </p>
-        </div>
-        <div>
-          <p className="font-heading text-[10px] font-medium uppercase tracking-[0.1em] text-brand-text/55">
-            Temps écoulé
-          </p>
-          <p className="mt-0.5 font-heading text-[19px] font-bold text-brand-text lg:text-lg">
-            {formatElapsed(elapsedSeconds)}
-          </p>
-        </div>
       </div>
     </section>
   );

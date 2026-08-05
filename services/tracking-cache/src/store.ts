@@ -97,8 +97,8 @@ export function emptyLivePositions(windowStart: string | null): LivePositions {
       elevationPlusCorrection: 0,
       elevationMinusCorrection: 0,
       minDistanceThreshold: 0,
-      minElevationPlusThreshold: 0,
-      minElevationMinusThreshold: 0,
+      elevationSmoothingWindow: 0,
+      elevationHysteresisM: 0,
       windowStart,
     },
   };

@@ -26,6 +26,78 @@ function haversine(a: TraccarPosition, b: TraccarPosition): number {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
+/**
+ * Moyenne glissante centrée sur la série d'altitudes. Écrête les pics isolés
+ * du GNSS sans déplacer les vraies montées (elles durent bien plus longtemps
+ * que la fenêtre). `window <= 1` renvoie la série intacte.
+ */
+export function moyenneGlissante(valeurs: number[], window: number): number[] {
+  if (window <= 1 || valeurs.length === 0) return valeurs.slice();
+  const demi = Math.floor(window / 2);
+  return valeurs.map((_, i) => {
+    const debut = Math.max(0, i - demi);
+    const fin = Math.min(valeurs.length, i + demi + 1);
+    let somme = 0;
+    for (let j = debut; j < fin; j++) somme += valeurs[j];
+    return somme / (fin - debut);
+  });
+}
+
+/**
+ * Dénivelés CUMULÉS point par point, par hystérésis.
+ *
+ * On garde une altitude de référence et un sens courant. Un dénivelé n'est
+ * compté que lorsque l'écart à la référence dépasse `seuil` — la référence se
+ * déplace alors. Tant que l'altitude oscille sous le seuil, rien ne s'accumule :
+ * c'est la propriété qui manquait au filtre par segment, où un bruit de ±3 m
+ * finissait par produire des centaines de mètres sur une longue trace.
+ *
+ * Renvoie deux tableaux de MÊME longueur que l'entrée (valeurs cumulées à
+ * chaque index), pour alimenter directement le profil.
+ */
+export function denivelesCumules(
+  altitudes: number[],
+  seuil: number
+): { dPlusCumule: number[]; dMinusCumule: number[] } {
+  const n = altitudes.length;
+  const dPlusCumule = new Array<number>(n).fill(0);
+  const dMinusCumule = new Array<number>(n).fill(0);
+  if (n === 0) return { dPlusCumule, dMinusCumule };
+
+  const seuilEffectif = Math.max(0, seuil);
+  let dPlus = 0;
+  let dMinus = 0;
+  let reference = altitudes[0];
+  // 0 = indéterminé, 1 = on monte, -1 = on descend.
+  let sens = 0;
+
+  for (let i = 1; i < n; i++) {
+    const ecart = altitudes[i] - reference;
+    if (ecart >= seuilEffectif && sens >= 0) {
+      dPlus += ecart;
+      reference = altitudes[i];
+      sens = 1;
+    } else if (-ecart >= seuilEffectif && sens <= 0) {
+      dMinus += -ecart;
+      reference = altitudes[i];
+      sens = -1;
+    } else if (sens > 0 && -ecart >= seuilEffectif) {
+      // Retournement : on montait, on redescend franchement.
+      dMinus += -ecart;
+      reference = altitudes[i];
+      sens = -1;
+    } else if (sens < 0 && ecart >= seuilEffectif) {
+      dPlus += ecart;
+      reference = altitudes[i];
+      sens = 1;
+    }
+    dPlusCumule[i] = dPlus;
+    dMinusCumule[i] = dMinus;
+  }
+
+  return { dPlusCumule, dMinusCumule };
+}
+
 export function computeLiveData(
   allPoints: TraccarPosition[],
   params: ComputeParams,
@@ -36,8 +108,8 @@ export function computeLiveData(
     elevationPlusCorrection,
     elevationMinusCorrection,
     minDistanceThreshold,
-    minElevationPlusThreshold,
-    minElevationMinusThreshold,
+    elevationSmoothingWindow,
+    elevationHysteresisM,
   } = params;
 
   const debugMeta = {
@@ -45,8 +117,8 @@ export function computeLiveData(
     elevationPlusCorrection,
     elevationMinusCorrection,
     minDistanceThreshold,
-    minElevationPlusThreshold,
-    minElevationMinusThreshold,
+    elevationSmoothingWindow,
+    elevationHysteresisM,
     windowStart: windowStartIso,
   };
 
@@ -98,17 +170,33 @@ export function computeLiveData(
     }
   }
 
-  // --- Phase 1 : haversine brute par segment + filtrage altimétrique ---
-  type Seg = { d: number; dz: number; a: TraccarPosition; b: TraccarPosition; idx: number };
+  // --- Phase 1 : haversine brute par segment ---
+  type Seg = { d: number; a: TraccarPosition; b: TraccarPosition; idx: number };
   const segs: Seg[] = [];
   for (let i = 1; i < filteredPoints.length; i++) {
-    const a = filteredPoints[i - 1];
-    const b = filteredPoints[i];
-    let dz = (b.altitude ?? 0) - (a.altitude ?? 0);
-    if (dz > 0 && dz < minElevationPlusThreshold) dz = 0;
-    if (dz < 0 && -dz < minElevationMinusThreshold) dz = 0;
-    segs.push({ d: haversine(a, b), dz, a, b, idx: i });
+    segs.push({ d: haversine(filteredPoints[i - 1], filteredPoints[i]), a: filteredPoints[i - 1], b: filteredPoints[i], idx: i });
   }
+
+  // --- Phase 1 bis : dénivelé, lissage puis hystérésis ---
+  // Le calcul segment par segment (l'ancien) additionnait CHAQUE variation
+  // d'altitude positive. Or l'altitude GNSS oscille de quelques mètres en
+  // permanence, même à l'arrêt : sur des centaines de points, ce bruit
+  // s'accumulait en centaines de mètres de D+ imaginaire. Mesuré sur la sortie
+  // des Vouillands du 5 août 2026 : 1 431 m affichés pour 419 m réels.
+  //
+  // Deux étapes, dans cet ordre :
+  //   1. moyenne glissante sur la série d'altitudes — écrête les pics isolés ;
+  //   2. accumulation à HYSTÉRÉSIS — on ne compte un dénivelé qu'une fois
+  //      l'écart au dernier point de référence dépassé (`elevationHysteresisM`),
+  //      et on déplace alors la référence. Un bruit qui reste sous le seuil ne
+  //      s'accumule JAMAIS, quel que soit le nombre de points : c'est ce qui
+  //      manquait à un simple seuil par segment, qui laissait passer la moitié
+  //      du bruit à chaque pas.
+  const altitudesLissees = moyenneGlissante(
+    filteredPoints.map((p) => p.altitude ?? 0),
+    elevationSmoothingWindow
+  );
+  const { dPlusCumule, dMinusCumule } = denivelesCumules(altitudesLissees, elevationHysteresisM);
 
   // --- Phase 2 : correction locale de courbure ---
   const correctedSegs: Seg[] = segs.map((curr, i) => {
@@ -152,8 +240,10 @@ export function computeLiveData(
 
   for (const s of correctedSegs) {
     rawDist += s.d;
-    if (s.dz > 0) rawDplus += s.dz;
-    else if (s.dz < 0) rawDminus -= s.dz;
+    // Le dénivelé n'est plus cumulé segment par segment : il est déjà calculé
+    // sur toute la série (hystérésis), on ne fait que le lire au bon index.
+    rawDplus = dPlusCumule[s.idx];
+    rawDminus = dMinusCumule[s.idx];
 
     const corrDist = rawDist * samplingCorrection;
     const corrDplus = rawDplus * elevationPlusCorrection;

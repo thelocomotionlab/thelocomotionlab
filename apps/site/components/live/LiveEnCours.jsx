@@ -18,6 +18,7 @@ import { avancementSurTrace } from "@/lib/progression";
 import { useJournal } from "@/lib/useJournal";
 import { useLivePositions } from "@/lib/useLivePositions";
 import { useReferenceTrack } from "@/lib/useReferenceTrack";
+import ChronoBadge from "./ChronoBadge";
 import FreshnessPill from "./FreshnessPill";
 import JournalCard from "./JournalCard";
 import LiveHeader from "./LiveHeader";
@@ -88,14 +89,7 @@ export default function LiveEnCours({ timer }) {
           zoneBlancheMinutes: liveReglages.zoneBlancheMinutes,
         });
 
-  // Chrono : court tant que ça tourne, FIGÉ à l'heure d'arrêt une fois stoppé.
-  const startMs = timer?.startTime ? Date.parse(timer.startTime) : NaN;
-  const stopMs = timer?.stopTime ? Date.parse(timer.stopTime) : NaN;
-  const endMs = running ? nowMs : Number.isFinite(stopMs) ? stopMs : nowMs;
-  const elapsedSeconds = Number.isFinite(startMs)
-    ? Math.max(0, (endMs - startMs) / 1000)
-    : (stats?.durationSeconds ?? 0);
-
+  // Le chrono vit sur la carte (ChronoBadge) : il y bat la seconde.
   const jour = dayIndex(new Date(nowMs).toISOString(), aventure.dateDebut);
   // Stats de la trace, calculées du GPX (undefined tant que la trace charge).
   const distanceKm = reference?.totalKm;
@@ -129,6 +123,11 @@ export default function LiveEnCours({ timer }) {
             <div className="absolute right-3 top-3 z-[5] lg:hidden">
               <MapStyleSwitch value={mapStyle} onChange={setMapStyle} />
             </div>
+            <ChronoBadge
+              startTime={timer?.startTime}
+              stopTime={timer?.stopTime}
+              running={running}
+            />
             <FreshnessPill state={freshness} />
           </div>
 
@@ -155,7 +154,6 @@ export default function LiveEnCours({ timer }) {
               <ProgressionCard
                 stats={stats}
                 totalKm={reference?.totalKm}
-                elapsedSeconds={elapsedSeconds}
                 avanceKm={avanceKm}
               />
             </div>
