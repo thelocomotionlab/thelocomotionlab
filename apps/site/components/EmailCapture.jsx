@@ -79,7 +79,9 @@ export default function EmailCapture({
   }
 
   return (
-    <div className={className}>
+    // `relative` en variante bande : la zone de statut y est sortie du flux
+    // (voir plus bas), et il lui faut un ancrage.
+    <div className={`${isBand ? "relative" : ""} ${className}`}>
       {title ? (
         <h4 className="text-lg font-semibold mb-2 text-brand-accent-ink text-center">
           {title}
@@ -159,9 +161,18 @@ export default function EmailCapture({
         </p>
       ) : null}
 
+      {/* Zone de statut. En variante BANDE, elle est réservée en permanence
+          (min-h-6) mais reste VIDE la plupart du temps : dans le flux, ces
+          ~32 px sous le champ rendaient la colonne plus haute que le champ
+          lui-même, et l'alignement `items-center` de la bande décalait alors
+          l'intitulé vers le haut par rapport à la barre de saisie. On la sort
+          donc du flux à partir de `md` (là où la bande passe en ligne) : le
+          message s'affiche sous la barre sans peser sur la hauteur. */}
       <div
         id={statusId}
-        className="min-h-6 mt-2 text-center"
+        className={`min-h-6 mt-2 text-center ${
+          isBand ? "md:absolute md:inset-x-0 md:top-full md:mt-1.5" : ""
+        }`}
         aria-live="polite"
         aria-atomic="true"
         role="status"
