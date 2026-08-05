@@ -10,9 +10,10 @@ import Link from "next/link";
 import Script from "next/script";
 import Image from "next/image";
 
-import EmailCapture, { MICRO_PROMESSE } from "@/components/EmailCapture";
+import EmailCapture from "@/components/EmailCapture";
 import ExplorerCarousel from "@/components/ExplorerCarousel";
 import ExplorerLiveIndicator from "@/components/ExplorerLiveIndicator";
+import LiveBanner from "@/components/LiveBanner";
 import PhilosophieSection from "@/components/PhilosophieSection";
 import { getExplorerCarouselItems } from "@/lib/carouselItems";
 import { listArticleEntries } from "@/lib/contentRoutes.mjs";
@@ -255,6 +256,9 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ── Bandeau du direct — n'apparaît QUE pendant un live ─────── */}
+      <LiveBanner />
+
       {/* ── 01 · COMPRENDRE — lavis bleu + registre des articles ───── */}
       <section
         id="comprendre"
@@ -369,9 +373,6 @@ export default async function HomePage() {
           <div>
             <p className="text-[21px] font-bold text-white">
               Recevoir les nouveautés du labo
-            </p>
-            <p className="mt-1 text-[13px] italic text-white/85">
-              {MICRO_PROMESSE}
             </p>
           </div>
           <div className="w-full flex-none md:max-w-[420px]">
