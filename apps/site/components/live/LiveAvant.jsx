@@ -59,8 +59,8 @@ export default function LiveAvant() {
             Itinéraire
             {reference && (
               <span className="font-heading text-[11.5px] font-medium normal-case tracking-normal text-brand-text/60">
-                {Math.round(reference.totalKm)} km · D+{" "}
-                {Math.round(reference.dPlusM).toLocaleString("fr-FR")} m
+                {Math.round(reference.totalKm)} km · {" "}
+                {Math.round(reference.dPlusM).toLocaleString("fr-FR")} m D+
               </span>
             )}
           </p>

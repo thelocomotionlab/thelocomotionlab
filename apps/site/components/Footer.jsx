@@ -35,10 +35,10 @@ export default function Footer() {
               Mentions légales
             </Link>
             <a
-              href="https://www.instagram.com/thelocomotionlab"
+              href="https://www.instagram.com/valent1.fer"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Suivre The Locomotion Lab sur Instagram (nouvel onglet)"
+              aria-label="Suivre Valentin Fer sur Instagram (nouvel onglet)"
               className="hover:text-brand-accent"
             >
               <svg

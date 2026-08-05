@@ -15,7 +15,7 @@ import { useRef, useState } from "react";
 
 import { journalApiBase } from "@/lib/liveConfig";
 
-const CONFIRMATION = "Remis. Il le lira ce soir au bivouac.";
+const CONFIRMATION = "Message envoyé !";
 const MAX_MO = 20;
 const MAX_BYTES = MAX_MO * 1024 * 1024;
 const REC_MAX_SECONDS = 300; // garde-fou : 5 min d'enregistrement max
@@ -183,7 +183,7 @@ export default function MessageCard() {
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Ton message… (ou joins juste une photo / un vocal)"
+            placeholder="Ton message…"
             maxLength={1000}
             className={`min-h-[76px] w-full resize-y rounded-[20px] ${fieldClass} text-sm`}
           />
@@ -299,13 +299,6 @@ export default function MessageCard() {
         </form>
       )}
 
-      <p className="mt-3 flex items-start gap-[7px] font-heading text-[11px] leading-normal text-brand-text/65 lg:text-[10.5px]">
-        <svg width="12" height="14" viewBox="0 0 12 14" className="mt-px flex-none" aria-hidden="true">
-          <rect x="1" y="6" width="10" height="7" rx="2" fill="none" stroke={brandColors.primaryDark} strokeWidth="1.3" />
-          <path d="M3.5 6 V4 a2.5 2.5 0 0 1 5 0 V6" fill="none" stroke={brandColors.primaryDark} strokeWidth="1.3" />
-        </svg>
-        <span>Un petit message privé pour me soutenir dans l'aventure.</span>
-      </p>
     </section>
   );
 }
