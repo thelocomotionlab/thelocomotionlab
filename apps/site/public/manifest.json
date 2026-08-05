@@ -3,27 +3,33 @@
   "short_name": "LocomotionLab",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#f97316",
+  "background_color": "#FEFBF6",
+  "theme_color": "#EFB159",
   "description": "Explorations en trail minimaliste, parkour primal, respiration et hormèse avec une approche carnet de terrain × rigueur scientifique.",
   "icons": [
     {
       "src": "/images/assets/web-app-manifest-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any"
     },
     {
       "src": "/images/assets/web-app-manifest-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/assets/web-app-manifest-maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/images/assets/apple-touch-icon.png",
-      "sizes": "180x180",
+      "src": "/images/assets/web-app-manifest-maskable-512x512.png",
+      "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "maskable"
     }
   ]
 }
