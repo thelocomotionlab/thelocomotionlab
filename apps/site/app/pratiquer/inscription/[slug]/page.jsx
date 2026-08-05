@@ -7,12 +7,14 @@
 // Hors sitemap et noindex : page fonctionnelle, pas une page de contenu.
 import { notFound } from "next/navigation";
 import InscriptionForm from "@/components/inscription/InscriptionForm";
-import { listAteliers } from "@/lib/ateliers.mjs";
+import { atelierSlugParams, listAteliers } from "@/lib/ateliers.mjs";
 
 export const dynamicParams = false;
 
+// Jamais de liste vide ici — le « pourquoi » est dans lib/ateliers.mjs, avec
+// le garde-fou et son test.
 export async function generateStaticParams() {
-  return listAteliers().map((a) => ({ slug: a.slug }));
+  return atelierSlugParams();
 }
 
 export async function generateMetadata({ params }) {

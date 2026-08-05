@@ -80,3 +80,25 @@ export function listAteliers() {
     priceLabel: priceLabel(a.price),
   }));
 }
+
+/**
+ * Slug servi quand le catalogue est VIDE (aucun atelier programmé, ou tous
+ * commentés ici). La page d'inscription y répond par un 404.
+ */
+export const SLUG_AUCUN_ATELIER = "aucun-atelier";
+
+/**
+ * Paramètres statiques de /pratiquer/inscription/[slug].
+ *
+ * ⚠️ NE DOIT JAMAIS RENVOYER UN TABLEAU VIDE. Sans chemin à prérendre, Next
+ * garde la route dynamique et lui émet une fonction Node ; or
+ * `@cloudflare/next-on-pages` refuse toute route non statique qui n'est pas en
+ * runtime edge, et le déploiement casse sur un message qui accuse la route
+ * (« not configured to run with the Edge Runtime ») sans jamais mentionner la
+ * vraie cause — un catalogue vide. Le slug bouchon coûte un 404 statique et
+ * évite ce piège, qui s'était refermé le 5 août 2026.
+ */
+export function atelierSlugParams() {
+  const slugs = listAteliers().map((a) => ({ slug: a.slug }));
+  return slugs.length > 0 ? slugs : [{ slug: SLUG_AUCUN_ATELIER }];
+}
