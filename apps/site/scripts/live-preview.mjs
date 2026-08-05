@@ -14,9 +14,8 @@
 //
 // Il affiche la commande exacte à lancer dans un second terminal.
 //
-// ⚠️ Les états « terminé » et « repos » ne passent PAS par ici : ils sont
-// décidés au build par NEXT_PUBLIC_LIVE_STATUT (le simulateur n'est même pas
-// nécessaire — cf. l'aide affichée au démarrage).
+// ⚠️ L'état « repos » ne passe PAS par ici : il est décidé au build par
+// NEXT_PUBLIC_LIVE_STATUT (le simulateur n'est même pas nécessaire).
 
 import fs from "node:fs";
 import http from "node:http";
@@ -215,11 +214,10 @@ Dans un AUTRE terminal, lance le site branché dessus :
 
 puis ouvre http://localhost:3000/live
 
-Les CINQ états, un par un :
+Les QUATRE états, un par un :
   • avant    → --etat avant                   (+ NEXT_PUBLIC_LIVE_STATUT=avant)
   • pendant  → --etat encours                 (+ NEXT_PUBLIC_LIVE_STATUT=avant)
   • figé     → --etat fige                    (+ NEXT_PUBLIC_LIVE_STATUT=avant)
-  • terminé  → simulateur INUTILE             (NEXT_PUBLIC_LIVE_STATUT=termine)
   • repos    → simulateur INUTILE             (NEXT_PUBLIC_LIVE_STATUT=repos)
 
 ⚠️ .env.local est lu par Next et GAGNE sur ces variables : s'il y définit

@@ -1,16 +1,25 @@
-// scripts/live-terminer.mjs
+// scripts/live-archiver.mjs
 //
-// Termine une aventure EN UNE COMMANDE (depuis un ordinateur) :
-//   pnpm -F site live:terminer -- --slug vouillands
+// MET À L'ABRI les données d'une aventure, EN UNE COMMANDE (depuis un
+// ordinateur) :
+//   pnpm -F site live:archiver -- --slug vouillands
 //
 // Enchaîne :
 //   1. build du service live-journal (pour disposer de l'export) ;
-//   2. export de l'archive depuis les données encore servies par le VPS
-//      (positions + journal + médias) → apps/site/public/replays/<slug>/ ;
-//      distance, D+ et dates sont DÉDUITS des données ;
-//   3. bascule liveConfig.js en « terminé » + pointe l'archive sur <slug> ;
-//   4. affiche les deux dernières commandes à lancer toi-même
-//      (git commit + déploiement) — publier reste ton geste délibéré.
+//   2. export depuis les données encore servies par le VPS → positions brutes
+//      + journal + médias, dans apps/site/public/replays/<slug>/ ;
+//   3. affiche les gestes de publication à lancer toi-même — publier reste
+//      délibéré.
+//
+// Ce script ne TOUCHE PLUS à liveConfig.js : l'état « Terminé » de /live a été
+// retiré (une aventure finie reste affichée figée). Il ne fait qu'une chose,
+// mais celle qui est irremplaçable : sauver les données AVANT `./track reset`
+// et `/purger`, qui les effacent pour de bon.
+//
+// La sortie sert ensuite au replay d'une page projet :
+//   <postlivetracking positions="/replays/<slug>/live-positions.json" … />
+// (docs/live-tracking.md §11), et le journal + les médias sont la matière
+// première pour écrire le récit.
 //
 // Pré-requis : `./track stop` a déjà été fait (le VPS sert les données figées).
 // Options : --nom "…" (défaut : le nom courant de liveConfig) ;
@@ -43,7 +52,7 @@ function parseArgs(argv) {
 }
 
 function fail(message) {
-  console.error(`\n✗ live:terminer — ${message}\n`);
+  console.error(`\n✗ live:archiver — ${message}\n`);
   process.exit(1);
 }
 
@@ -62,18 +71,19 @@ async function main() {
   const nom = args.get("nom") ?? liveConfig.aventure.nom;
   const outDir = path.join("apps", "site", "public", "replays", slug);
 
-  console.log(`\n▶ Terminer l'aventure « ${nom} » (slug: ${slug})\n`);
+  console.log(`\n▶ Archiver l'aventure « ${nom} » (slug: ${slug})\n`);
 
   // 1. Build du service (idempotent, ~2 s) pour garantir dist/export/cli.js.
   console.log("① build du service live-journal…");
   run("pnpm", ["-F", "@locomotionlab/live-journal", "build"]);
   if (!fs.existsSync(EXPORT_CLI)) fail(`export introuvable après build : ${EXPORT_CLI}`);
 
-  // 2. Export de l'archive (distance/D+/dates déduits des données du VPS).
-  console.log("\n② export de l'archive depuis le VPS…");
+  // 2. Export (journal + médias + archive.json, matière première du récit).
+  const positionsUrl = args.get("positions") ?? DEFAULTS.positions;
+  console.log("\n② export du journal et des médias depuis le VPS…");
   run("node", [
     EXPORT_CLI,
-    "--positions", args.get("positions") ?? DEFAULTS.positions,
+    "--positions", positionsUrl,
     "--journal", args.get("journal") ?? DEFAULTS.journal,
     "--media-base", args.get("media-base") ?? DEFAULTS["media-base"],
     "--out", outDir,
@@ -81,30 +91,31 @@ async function main() {
     "--nom", nom,
   ]);
 
-  // 3. Bascule liveConfig.js en « terminé » + archive sur ce slug.
-  console.log("\n③ mise à jour de liveConfig.js…");
-  let src = fs.readFileSync(LIVE_CONFIG, "utf8");
-  const before = src;
-  src = src.replace(/(NEXT_PUBLIC_LIVE_STATUT\s*\|\|\s*")[^"]*(")/, `$1termine$2`);
-  src = src.replace(/(\barchive:\s*")[^"]*(")/, `$1/replays/${slug}/archive.json$2`);
-  if (src === before) {
-    fail(
-      "liveConfig.js n'a pas pu être mis à jour automatiquement.\n" +
-        `  → mets à la main : statut par défaut « termine » et archive: "/replays/${slug}/archive.json"`,
-    );
-  }
-  fs.writeFileSync(LIVE_CONFIG, src);
-  console.log(`   statut → "termine", archive → /replays/${slug}/archive.json`);
+  // 3. Les positions BRUTES, telles que la balise <postlivetracking> les lit.
+  //    L'export ne produit qu'archive.json ; sans cette copie il fallait aller
+  //    curler le fichier à la main (docs/live-tracking.md §11) — un geste facile
+  //    à oublier, et impossible à rattraper après un `./track reset`.
+  console.log("\n③ copie des positions brutes (live-positions.json)…");
+  const positionsOut = path.join(REPO_ROOT, outDir, "live-positions.json");
+  const reponse = await fetch(positionsUrl);
+  if (!reponse.ok) fail(`positions injoignables (HTTP ${reponse.status}) : ${positionsUrl}`);
+  const positions = await reponse.text();
+  fs.mkdirSync(path.dirname(positionsOut), { recursive: true });
+  fs.writeFileSync(positionsOut, positions);
+  console.log(`   → ${outDir}/live-positions.json`);
 
-  // 4. Les deux derniers gestes, délibérés.
+  // 4. Les derniers gestes, délibérés.
   console.log(
     [
-      "\n✓ Archive prête et page basculée en « Terminé ».",
+      "\n✓ Données mises à l'abri. Tu peux maintenant faire `./track reset` sans rien perdre.",
       "",
       "Il te reste à publier (tes gestes) :",
-      `  git add apps/site/public/replays/${slug} apps/site/lib/liveConfig.js`,
+      `  git add apps/site/public/replays/${slug}`,
       `  git commit -m "live: archive de « ${nom} »"`,
       "  pnpm -F site deploy:cf        # (ou deploy:staging pour vérifier d'abord)",
+      "",
+      "Pour en faire un replay, pose la balise dans la page projet :",
+      `  <postlivetracking positions="/replays/${slug}/live-positions.json" />`,
       "",
     ].join("\n"),
   );

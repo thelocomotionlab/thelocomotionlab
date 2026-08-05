@@ -57,17 +57,21 @@ posé par `./track`.
 
 | État affiché | Condition | D'où il vient |
 | --- | --- | --- |
-| **Terminé** (définitif) | `statut === "termine"` | tu l'as basculé après l'aventure (commande `live:terminer`, §9). Autoporté par `archive.json` — l'infra live peut être éteinte. |
 | **Repos** | `statut === "repos"` | tu l'as posé à la main quand **aucune aventure n'est prévue**. « Pas de direct en ce moment ». |
-| **En cours** | `statut` normal **et** le chrono a un `startTime` | `./track start` l'a posé. **Vivant** tant que le tracker tourne ; **figé avec le badge TERMINÉ** dès `./track stop` (état « juste rentré », avant l'archive). |
+| **En cours** | `statut === "avant"` **et** le chrono a un `startTime` | `./track start` l'a posé. **Vivant** tant que le tracker tourne ; **figé avec le badge TERMINÉ** dès `./track stop` — et il le reste. |
 | **Avant** | tout le reste | jamais démarré, ou après `./track reset`. Compte à rebours vers `dateDebut`. |
 
-> ⚠️ **Deux « terminé » à ne pas confondre :**
-> - `./track stop` → la page passe en **En cours figé** (badge TERMINÉ). Elle lit
->   **encore les données vivantes** du VPS (journal + positions gelés). Un
->   `./track reset` les effacerait.
-> - `statut: "termine"` (via `live:terminer`, §9) → le **Terminé DÉFINITIF**,
->   rendu depuis `archive.json` committé. Plus aucune dépendance au VPS.
+> ### Il n'y a plus d'état « Terminé »
+>
+> Une aventure finie **reste affichée figée** (En cours + badge TERMINÉ), jusqu'à
+> ce qu'un `./track reset` prépare la suivante. Quand tu décides de la raconter,
+> elle devient un **replay dans une page projet** (balise `<postlivetracking>`,
+> §11) — ce qui rendait la page « Terminé » redondante : deux façons de raconter
+> la même sortie, c'était une de trop.
+>
+> Retiré avec elle : `LiveTermine.jsx`, `lib/useArchive.js`, le champ `archive`
+> de `liveConfig`, et deux formateurs de `liveTime.js` sans autre appelant.
+> `statut` ne prend plus que **`avant`** ou **`repos`**.
 
 ---
 
@@ -97,8 +101,7 @@ Les champs de `aventure` :
 | `intention` | phrase en Lora italique sous le titre. |
 | `trace` | le `.track.json` généré au geste 2. |
 | `waypoints` | repères de cols sur le profil : `[{ nom, km }]`. `[]` pour aucun. |
-| `statut` | `avant` en temps normal ; `termine`/`repos` selon §2. Surchargé au build par `NEXT_PUBLIC_LIVE_STATUT` (recette : forcer un aperçu sans éditer). |
-| `archive` | dossier du replay, écrit **automatiquement** par `live:terminer` (§9). |
+| `statut` | `avant` en temps normal (y compris pendant et après le direct) ; `repos` quand aucune aventure n'est prévue. Surchargé au build par `NEXT_PUBLIC_LIVE_STATUT`. |
 
 Réglages techniques (`liveReglages`, rarement touchés) : `positionsPollMs`
 (10 s), `journalPollMs` (30 s), `zoneBlancheMinutes` (60 — délai sans position
@@ -128,7 +131,6 @@ mot » (contenu jeté), pour pouvoir travailler ses états succès/erreur.
 | **Avant** (compte à rebours) | `--etat avant` | `NEXT_PUBLIC_LIVE_STATUT=avant` |
 | **En cours** (direct) | `--etat encours` | `NEXT_PUBLIC_LIVE_STATUT=avant` |
 | **En cours figé** (badge TERMINÉ) | `--etat fige` | `NEXT_PUBLIC_LIVE_STATUT=avant` |
-| **Terminé** (définitif) | inutile — lit `archive.json` | `NEXT_PUBLIC_LIVE_STATUT=termine` |
 | **Repos** | inutile | `NEXT_PUBLIC_LIVE_STATUT=repos` |
 
 > ⚠️ `.env.local` est lu par `next build` et **gagne** sur ces variables : s'il y
@@ -284,35 +286,35 @@ vivant de l'aventure :
 
 ---
 
-## 9. Terminer & archiver une aventure
+## 9. Archiver une aventure
 
-Une commande, depuis un **ordinateur** (pas le VPS), une fois `./track stop`
-fait et le VPS encore en ligne :
+La page `/live` **ne se bascule plus** : elle reste figée sur les dernières
+données. Ce qui reste à faire est de **sauver ces données avant qu'un
+`./track reset` ne les efface**. Une commande, depuis un **ordinateur** (pas le
+VPS), une fois `./track stop` fait et le VPS encore en ligne :
 
 ```bash
-pnpm -F site live:terminer -- --slug mon-tour
+pnpm -F site live:archiver -- --slug mon-tour
 # option : --nom "Mon Grand Tour"   (défaut : le nom courant de liveConfig)
 ```
 
-Elle enchaîne : ① build du service → ② **export de l'archive** depuis les
-données encore servies par le VPS (positions + journal + médias) vers
-`apps/site/public/replays/<slug>/` — **distance, D+ et dates sont déduits**
-des données, tu n'as rien à saisir → ③ bascule `liveConfig.js` en
-`statut: "termine"` et pointe `archive` sur `<slug>` → ④ affiche les **deux
-derniers gestes** (git commit + déploiement), que tu lances toi-même.
+Elle enchaîne : ① build du service → ② **export** du journal, des médias et de
+`archive.json` vers `apps/site/public/replays/<slug>/` → ③ copie des
+**positions brutes** (`live-positions.json`, celles que lit la balise de replay)
+→ ④ affiche les gestes de publication, que tu lances toi-même.
 
-L'archive respecte le contrat `archive.json` (§15) : `chat[]` reste **vide par
-construction** (les messages privés n'entrent JAMAIS dans une archive publique).
+`chat[]` reste **vide par construction** : les messages privés n'entrent JAMAIS
+dans une archive publique.
 
 > ### ⚠️ L'ordre SÛR à la fin d'une aventure
 > 1. `./track stop` (le VPS gèle et sert encore les données) ;
-> 2. **`pnpm -F site live:terminer -- --slug …`** puis commit + `deploy:cf` ;
+> 2. **`pnpm -F site live:archiver -- --slug …`** puis commit + `deploy:cf` ;
 > 3. **seulement ensuite** : `./track reset` et/ou `/purger confirmer` pour
->    repartir propre. `live:terminer` **lit** les positions et **copie** les
->    médias depuis le VPS : purger ou reset AVANT effacerait ce qu'il archive.
+>    repartir propre. La commande **lit** les positions et **copie** les médias
+>    depuis le VPS : purger ou reset AVANT effacerait ce qu'elle archive.
 
-Après ça, `/live` est en « Terminé » définitif, autoporté par `archive.json` :
-le service live peut être éteint sans rien perdre.
+Le récit, lui, se publie quand tu le décides : une page projet + la balise
+`<postlivetracking positions="/replays/<slug>/live-positions.json" />` (§11).
 
 ---
 
@@ -408,7 +410,7 @@ vieux replays au format brut, les correcteurs `distanceFactor`/`ascentFactor`/
 `descentFactor` (à **1** ou absents pour le format tracking-cache, déjà corrigé).
 Un paragraphe en *italique* juste après la balise devient sa légende.
 
-> Pour fabriquer un replay à la main sans passer par `live:terminer` : récupérer
+> Pour fabriquer un replay à la main sans passer par `live:archiver` : récupérer
 > `curl -s https://tracking.thelocomotionlab.com/live-positions.json` **avant**
 > tout `reset`, le déposer en `public/replays/<slug>/live-positions.json`, poser
 > la balise, committer, déployer.
@@ -498,9 +500,11 @@ Détails de la stratégie staging : [`plan-staging.md`](./plan-staging.md).
 
 ## 15. Contrat d'archive — `archive.json` (v1)
 
-Produit par `export-archive` (via `live:terminer`, §9), consommé par la page
-`/live` en état « Terminé » (`apps/site/lib/useArchive.js`,
-`components/live/LiveTermine.jsx`). Une aventure = **un fichier autoportant**.
+Produit par `export-archive` (via `live:archiver`, §9). **Plus aucune page ne le
+rend** depuis le retrait de l'état « Terminé » : c'est désormais un fichier de
+travail — l'index autoportant du journal et des médias d'une aventure, la
+matière première pour en écrire le récit. Le replay d'une page projet, lui, lit
+`live-positions.json` (§11).
 
 **Principes :** `schemaVersion` obligatoire (un lecteur refuse poliment une
 version inconnue) ; champs optionnels **vides plutôt qu'absents** ; `chat`

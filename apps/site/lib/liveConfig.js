@@ -12,7 +12,7 @@
 // Les 3 états de la page :
 //   • avant    — compte à rebours, tant que le tracker n'a pas démarré.
 //   • en cours — AUTOMATIQUE dès  ./track start  sur le VPS (rien à toucher ici).
-//   • terminé  — quand tu passes  statut  à "termine" (note tout en bas).
+//     Elle reste affichée, FIGÉE, après  ./track stop  : c'est l'état de fin.
 
 export const liveConfig = {
   aventure: {
@@ -36,14 +36,13 @@ export const liveConfig = {
     // Laisse [] pour n'en afficher aucun.
     waypoints: [],
 
-    // ——— Fin d'aventure seulement ———
-    // "avant" pendant toute la prépa ET le direct ; "termine" une fois le
-    // replay publié. (Astuce recette : NEXT_PUBLIC_LIVE_STATUT=termine au
-    // build force l'aperçu « terminé » sans éditer ce fichier.)
+    // Deux valeurs seulement :
+    //   • "avant" — en toutes circonstances (prépa, direct, et après : la page
+    //     reste figée sur les dernières données jusqu'au prochain `track reset`) ;
+    //   • "repos" — quand AUCUNE aventure n'est prévue.
+    // (Astuce recette : NEXT_PUBLIC_LIVE_STATUT=repos au build force l'aperçu
+    // sans éditer ce fichier.)
     statut: process.env.NEXT_PUBLIC_LIVE_STATUT || "avant",
-
-    // Dossier du replay, créé à l'arrivée par la commande export-archive.
-    archive: "/replays/chartreuse-4x2000/archive.json",
   },
 
   // Libellés affichés AILLEURS que sur /live (accueil, tête de la page Explorer).

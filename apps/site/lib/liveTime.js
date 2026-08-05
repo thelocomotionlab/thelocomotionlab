@@ -79,22 +79,5 @@ export function formatAgo(minutes) {
   return `il y a ${Math.floor(min / 60)} h`;
 }
 
-const arriveeFormatter = new Intl.DateTimeFormat("fr-FR", {
-  timeZone: PARIS_TZ,
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-});
-
-/** Date d'arrivée du bandeau « Terminé » : « 24 août 2026, 07 h 41 » (heure de Paris). */
-export function formatDateArrivee(tsISO) {
-  return `${arriveeFormatter.format(new Date(tsISO))}, ${parisTimeLabel(tsISO)}`;
-}
-
-/** Durée totale du bandeau « Terminé » : « 97 h 41 » (heures cumulées, minutes zéro-paddées). */
-export function formatDureeHeures(seconds) {
-  const s = Math.max(0, Math.floor(seconds || 0));
-  const hours = Math.floor(s / 3_600);
-  const minutes = String(Math.floor((s % 3_600) / 60)).padStart(2, "0");
-  return `${hours} h ${minutes}`;
-}
+// formatDateArrivee / formatDureeHeures ont été retirés avec l'état « Terminé »
+// (LiveTermine) : ils n'avaient pas d'autre appelant.

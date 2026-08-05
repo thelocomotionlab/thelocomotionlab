@@ -24,7 +24,7 @@ import { liveConfig } from "@/lib/liveConfig";
 const SHOW_OUTILS = true;
 
 // « Live » n'entre dans la navbar que 24 h avant le départ de l'aventure
-// (liveConfig.aventure.dateDebut) et en sort quand elle est terminée.
+// (liveConfig.aventure.dateDebut) et en sort au passage en « repos ».
 // Quand il est là, il passe en tête et clignote doucement.
 const LIVE_NAV_ITEM = {
   type: "link",
@@ -37,8 +37,8 @@ const LIVE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 function liveWindowOpen() {
   const { statut } = liveConfig.aventure;
-  // Ni pendant un « terminé » (récit à part), ni au « repos » (rien à suivre).
-  if (statut === "termine" || statut === "repos") return false;
+  // Pas d'entrée « Live » au « repos » : il n'y a rien à suivre.
+  if (statut === "repos") return false;
   const start = new Date(liveConfig.aventure.dateDebut).getTime();
   if (Number.isNaN(start)) return false;
   return Date.now() >= start - LIVE_WINDOW_MS;
