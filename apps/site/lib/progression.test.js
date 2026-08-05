@@ -36,6 +36,18 @@ describe("avancementSurTrace", () => {
     expect(avancementSurTrace(REFERENCE, [])).toBeNull();
   });
 
+  it("ENTRÉES ABSENTES : ne plante pas avant le chargement des données", () => {
+    // Au premier rendu de /live, les positions ne sont pas encore arrivées :
+    // `positions?.profile` vaut `undefined`. La suite ne testait que le tableau
+    // VIDE, et un `undefined` a fait tomber la page entière (05/08/2026).
+    expect(avancementSurTrace(REFERENCE, undefined)).toBeNull();
+    expect(avancementSurTrace(REFERENCE, null)).toBeNull();
+    expect(avancementSurTrace(undefined, undefined)).toBeNull();
+    expect(avancementSurTrace(null, null)).toBeNull();
+    expect(avancementSurTrace(REFERENCE, "pas un tableau")).toBeNull();
+    expect(avancementSurTrace({}, [])).toBeNull();
+  });
+
   it("à mi-parcours, annonce ~50 %", () => {
     const vecu = [surTrace(0), surTrace(2), surTrace(4), surTrace(5)];
     const a = avancementSurTrace(REFERENCE, vecu);

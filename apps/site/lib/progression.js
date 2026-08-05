@@ -87,7 +87,12 @@ export function cumulDistances(coords) {
  *   calcul (distance parcourue), qui vaut mieux que rien.
  */
 export function avancementSurTrace(referenceCoords, vecu, options = {}) {
+  // Les DEUX entrées se valident ici, avant tout calcul. `projeter` refait ces
+  // contrôles pour son propre compte, mais `sensDeParcours` tourne avant lui :
+  // au premier rendu de /live, les positions ne sont pas encore chargées et
+  // `vecu` vaut `undefined` — il faut sortir dès maintenant.
   if (!Array.isArray(referenceCoords) || referenceCoords.length < 2) return null;
+  if (!Array.isArray(vecu) || vecu.length === 0) return null;
 
   // Le GPX peut avoir été enregistré dans l'autre sens que celui parcouru — sur
   // une BOUCLE, c'est même une chance sur deux. La recherche ne va que vers
