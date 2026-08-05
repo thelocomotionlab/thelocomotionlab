@@ -3,7 +3,8 @@
 // Formulaire de capture email unique du site (ex-NewsletterSignup).
 // - `source` : provenance de l'inscription (comprendre · twin · live ·
 //   footer · manifeste · home), enregistrée par la passerelle email-gateway.
-// - `promise` : la micro-promesse, identique partout (texte n°8, fixe).
+// - `promise` : phrase facultative sous le formulaire, seulement là où elle
+//   apporte une information (ex. TrailNotify). Aucune par défaut.
 // - Endpoint via NEXT_PUBLIC_EMAIL_ENDPOINT ; par défaut l'ANCIEN Worker
 //   (send-email) tant que la bascule n'est pas validée — le payload est un
 //   sur-ensemble compris par les deux (l'ancien lit email/subject/message,
@@ -22,13 +23,13 @@ const ENDPOINT = process.env.NEXT_PUBLIC_EMAIL_ENDPOINT || LEGACY_ENDPOINT;
 // de confirmation ; sur l'ancien flux, l'ancien message.
 const IS_GATEWAY = ENDPOINT !== LEGACY_ENDPOINT;
 
-export const MICRO_PROMESSE =
-  "Un email pour suivre les nouveautés du labo.";
-
 export default function EmailCapture({
   title = "Restez à l'écoute !",
   description = null,
-  promise = MICRO_PROMESSE,
+  // Aucune micro-promesse par défaut : « Un email pour suivre les nouveautés du
+  // labo » n'apprenait rien à personne. Reste possible au cas par cas, quand la
+  // phrase dit quelque chose de précis (cf. TrailNotify).
+  promise = null,
   source = "home",
   placeholder = "Votre adresse e-mail",
   buttonLabel = "M'inscrire",
