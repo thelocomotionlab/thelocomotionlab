@@ -205,14 +205,17 @@ print(sum(1 for p in d
         # Batterie : le tracker la publie dans +RESP:GTINF (piloté par Info Report
         # Enable/Interval de GTCFG) ; Traccar la range dans les attributs de la
         # position. Le nom du champ varie selon la version, d'où le balayage.
+        # `battery` est EXCLU : chez Traccar c'est une tension en volts, pas un
+        # pourcentage. Et on remonte la trace, car les messages d'événement
+        # (extinction…) ne portent pas la charge.
         BATT="$(echo "$POS" | json_get \
-          '[.[] | .attributes // {} | (.batteryLevel // .battery // .batteryPercentage // empty)] | last // empty' \
+          '[.[] | .attributes // {} | (.batteryLevel // .batteryPercentage // empty)] | last // empty' \
           '
 import json,sys
 val = None
 for p in json.load(sys.stdin):
     a = p.get("attributes") or {}
-    for k in ("batteryLevel", "battery", "batteryPercentage"):
+    for k in ("batteryLevel", "batteryPercentage"):
         if a.get(k) is not None:
             val = a[k]
 print(val if val is not None else "")

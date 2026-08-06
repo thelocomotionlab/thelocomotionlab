@@ -15,21 +15,45 @@ import type { ComputeParams, LivePositions, ProfilePoint, TraccarPosition } from
 const R = 6_371_000;
 const toRad = (deg: number) => (deg * Math.PI) / 180;
 
-/**
- * Charge en % lue dans les attributs Traccar d'une position.
- *
- * Le nom du champ dépend du modèle et de la version du décodeur : on balaie les
- * candidats connus plutôt que d'en supposer un. Tout ce qui n'est pas un
- * pourcentage plausible est ignoré — `battery` porte parfois des VOLTS (4,1),
- * qu'il ne faudrait surtout pas afficher comme « 4 % ».
- */
-export function batterieDepuisAttributs(position: TraccarPosition | undefined): number | null {
+/** Charge en % dans les attributs d'UNE position, ou null. */
+function batterieDeLaPosition(position: TraccarPosition | undefined): number | null {
   const attrs = (position?.attributes ?? {}) as Record<string, unknown>;
-  for (const cle of ["batteryLevel", "batteryPercentage", "battery"]) {
+  // UNIQUEMENT les clés qui désignent un POURCENTAGE. `battery` est exclu à
+  // dessein : chez Traccar c'est une TENSION (KEY_BATTERY, en volts), quand
+  // KEY_BATTERY_LEVEL porte le pourcentage. Une borne « entre 1 et 100 » ne
+  // protège pas — 4,1 V tombe dedans et s'afficherait « 4 % », soit une fausse
+  // alerte de batterie vide au pire moment.
+  for (const cle of ["batteryLevel", "batteryPercentage"]) {
     const v = attrs[cle];
     if (typeof v === "number" && Number.isFinite(v) && v > 1 && v <= 100) {
       return Math.round(v);
     }
+  }
+  return null;
+}
+
+/**
+ * Dernière charge CONNUE de la trace, en remontant depuis la fin.
+ *
+ * Toutes les positions n'en portent pas : le tracker intercale des messages
+ * d'ÉVÉNEMENT (extinction, alarme, mise sous tension) qui n'ont pas de champ
+ * batterie. Ne regarder que la dernière position revient à afficher « rien »
+ * dès qu'un tel message clôt la trace — c'est exactement ce qui arrive à
+ * l'arrêt du tracker, avec le `+RESP:GTPFA` de l'extinction, donc pile au
+ * moment où on consulte le bilan de la sortie.
+ *
+ * On borne la remontée : au-delà, la valeur serait trop vieille pour informer.
+ */
+export function batterieDepuisAttributs(
+  positions: TraccarPosition[] | TraccarPosition | undefined,
+  maxRemontee = 50
+): number | null {
+  if (!positions) return null;
+  if (!Array.isArray(positions)) return batterieDeLaPosition(positions);
+  const debut = Math.max(0, positions.length - maxRemontee);
+  for (let i = positions.length - 1; i >= debut; i -= 1) {
+    const v = batterieDeLaPosition(positions[i]);
+    if (v !== null) return v;
   }
   return null;
 }
@@ -301,7 +325,7 @@ export function computeLiveData(
       dminus: lastPoint.dMinus,
       durationSeconds,
       lastFixTime: lastRaw?.fixTime ?? null,
-      batteryPercent: batterieDepuisAttributs(lastRaw),
+      batteryPercent: batterieDepuisAttributs(points),
     },
     profile,
     debug: { rawDistance: rawDist, rawDplus, rawDminus, ...debugMeta },
