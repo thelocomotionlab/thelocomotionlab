@@ -37,6 +37,12 @@ export type LivePositions = {
     dminus: number;
     durationSeconds: number;
     lastFixTime: string | null;
+    /**
+     * Charge du tracker en %, telle que Traccar l'a relevée sur la DERNIÈRE
+     * position. `null` si l'appareil ne la publie pas (le champ dépend du
+     * modèle et de la version du décodeur) — le front n'affiche alors rien.
+     */
+    batteryPercent: number | null;
   };
   profile: ProfilePoint[];
   debug: {

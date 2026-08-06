@@ -343,6 +343,13 @@ elles dériveraient) ; les leviers :
 | `elevationSmoothingWindow` | `ELEVATION_SMOOTHING_WINDOW` | points de la moyenne glissante sur les altitudes (écrête les pics GNSS). |
 | `elevationHysteresisM` | `ELEVATION_HYSTERESIS_M` | écart minimal (m) avant de compter du dénivelé. **C'est LE réglage anti-dérive** (cf. encadré). |
 
+> **Batterie du tracker.** `live-positions.json` porte `stats.batteryPercent`,
+> lu dans les attributs Traccar de la dernière position (le nom du champ varie
+> selon le décodeur : on balaie `batteryLevel`, `batteryPercentage`, `battery`).
+> Une valeur hors de 1-100 est ignorée — `battery` porte parfois des VOLTS. La
+> page `/live` l'affiche en tout petit dans un coin de la carte, et seulement si
+> l'appareil la publie.
+
 > ### Pourquoi le D+ dérivait, et ce qui le tient maintenant
 >
 > L'altitude GNSS oscille de quelques mètres en permanence, même à l'arrêt. Le

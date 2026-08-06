@@ -182,26 +182,41 @@ function projeter(referenceCoords, vecu, options = {}) {
 
   let refIdx = 0;
   let metresParcourus = 0;
-  let precedentTMs = NaN;
+  // Instant du dernier AVANCEMENT du curseur — et non du dernier point examiné.
+  // La nuance est tout : voir le commentaire du budget ci-dessous.
+  let tMsDerniereAvance = NaN;
   let premier = true;
 
   const examiner = ({ lonlat, tMs }) => {
-    // Budget d'avancement depuis le point précédent. Sans horodatage
-    // exploitable, pas de plafond (on se repose sur la tolérance et le sens
-    // unique de la recherche).
+    // Budget d'avancement, compté depuis la dernière fois que le curseur a
+    // BOUGÉ. S'il est calculé depuis le point précédent, un curseur qui décroche
+    // ne rattrape JAMAIS : son budget reste celui d'un intervalle (~270 m à
+    // 30 s) alors que son retard, lui, grandit. Constaté à la Croix de
+    // Belledonne (6 août 2026) : bloqué à 40 % sur un parcours terminé, le
+    // curseur 1 km derrière le coureur avec 267 m de budget.
+    //
+    // Compté depuis la dernière avance, le budget grandit tant que le curseur
+    // patine : après une minute de décrochage il vaut ~430 m, après dix minutes
+    // ~3,4 km. Le curseur peut donc se raccrocher — et ça reste physiquement
+    // borné, personne ne court à plus de 20 km/h.
     let avanceMax = Infinity;
-    if (!premier && Number.isFinite(tMs) && Number.isFinite(precedentTMs)) {
-      const dtSec = Math.max(0, (tMs - precedentTMs) / 1000);
+    if (!premier && Number.isFinite(tMs) && Number.isFinite(tMsDerniereAvance)) {
+      const dtSec = Math.max(0, (tMs - tMsDerniereAvance) / 1000);
       avanceMax = cum[refIdx] + dtSec * vitesseMaxMS + plancherAvanceM;
     }
+    if (premier || !Number.isFinite(tMsDerniereAvance)) tMsDerniereAvance = tMs;
     premier = false;
-    if (Number.isFinite(tMs)) precedentTMs = tMs;
 
     let meilleurIdx = refIdx;
     let meilleurEcart = ecart2(lonlat, referenceCoords[refIdx]);
     const limite = Math.min(referenceCoords.length - 1, refIdx + lookahead);
     for (let j = refIdx + 1; j <= limite; j += 1) {
-      if (cum[j] > avanceMax) break; // au-delà, l'avancée serait impossible
+      // Le sommet SUIVANT est toujours examinable, quel que soit le budget : la
+      // polyligne de référence est simplifiée, et elle compte des sauts de plus
+      // de 300 m (4 sur la trace de Belledonne). Un budget plus court que le
+      // saut faisait un mur infranchissable, sur lequel le curseur s'arrêtait
+      // définitivement — alors qu'avancer d'un cran n'est jamais absurde.
+      if (j > refIdx + 1 && cum[j] > avanceMax) break;
       const e = ecart2(lonlat, referenceCoords[j]);
       if (e < meilleurEcart) {
         meilleurEcart = e;
@@ -210,6 +225,7 @@ function projeter(referenceCoords, vecu, options = {}) {
     }
     // Hors tolérance = hors trace : on ne bouge pas le curseur.
     if (meilleurEcart > tolerance2) return;
+    if (meilleurIdx !== refIdx && Number.isFinite(tMs)) tMsDerniereAvance = tMs;
     refIdx = meilleurIdx;
     if (cum[meilleurIdx] > metresParcourus) metresParcourus = cum[meilleurIdx];
   };

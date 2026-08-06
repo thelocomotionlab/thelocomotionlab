@@ -15,6 +15,49 @@ import type { ComputeParams, LivePositions, ProfilePoint, TraccarPosition } from
 const R = 6_371_000;
 const toRad = (deg: number) => (deg * Math.PI) / 180;
 
+/** Charge en % dans les attributs d'UNE position, ou null. */
+function batterieDeLaPosition(position: TraccarPosition | undefined): number | null {
+  const attrs = (position?.attributes ?? {}) as Record<string, unknown>;
+  // UNIQUEMENT les clés qui désignent un POURCENTAGE. `battery` est exclu à
+  // dessein : chez Traccar c'est une TENSION (KEY_BATTERY, en volts), quand
+  // KEY_BATTERY_LEVEL porte le pourcentage. Une borne « entre 1 et 100 » ne
+  // protège pas — 4,1 V tombe dedans et s'afficherait « 4 % », soit une fausse
+  // alerte de batterie vide au pire moment.
+  for (const cle of ["batteryLevel", "batteryPercentage"]) {
+    const v = attrs[cle];
+    if (typeof v === "number" && Number.isFinite(v) && v > 1 && v <= 100) {
+      return Math.round(v);
+    }
+  }
+  return null;
+}
+
+/**
+ * Dernière charge CONNUE de la trace, en remontant depuis la fin.
+ *
+ * Toutes les positions n'en portent pas : le tracker intercale des messages
+ * d'ÉVÉNEMENT (extinction, alarme, mise sous tension) qui n'ont pas de champ
+ * batterie. Ne regarder que la dernière position revient à afficher « rien »
+ * dès qu'un tel message clôt la trace — c'est exactement ce qui arrive à
+ * l'arrêt du tracker, avec le `+RESP:GTPFA` de l'extinction, donc pile au
+ * moment où on consulte le bilan de la sortie.
+ *
+ * On borne la remontée : au-delà, la valeur serait trop vieille pour informer.
+ */
+export function batterieDepuisAttributs(
+  positions: TraccarPosition[] | TraccarPosition | undefined,
+  maxRemontee = 50
+): number | null {
+  if (!positions) return null;
+  if (!Array.isArray(positions)) return batterieDeLaPosition(positions);
+  const debut = Math.max(0, positions.length - maxRemontee);
+  for (let i = positions.length - 1; i >= debut; i -= 1) {
+    const v = batterieDeLaPosition(positions[i]);
+    if (v !== null) return v;
+  }
+  return null;
+}
+
 function haversine(a: TraccarPosition, b: TraccarPosition): number {
   const dLat = toRad((b.latitude ?? 0) - (a.latitude ?? 0));
   const dLon = toRad((b.longitude ?? 0) - (a.longitude ?? 0));
@@ -132,7 +175,7 @@ export function computeLiveData(
   if (!Array.isArray(points) || points.length === 0) {
     return {
       meta: { pointCount: 0, updatedAt: new Date().toISOString() },
-      stats: { distance: 0, dplus: 0, dminus: 0, durationSeconds: 0, lastFixTime: null },
+      stats: { distance: 0, dplus: 0, dminus: 0, durationSeconds: 0, lastFixTime: null, batteryPercent: null },
       profile: [],
       debug: { rawDistance: 0, rawDplus: 0, rawDminus: 0, ...debugMeta },
     };
@@ -142,7 +185,7 @@ export function computeLiveData(
     const p = points[0];
     return {
       meta: { pointCount: 1, updatedAt: new Date().toISOString() },
-      stats: { distance: 0, dplus: 0, dminus: 0, durationSeconds: 0, lastFixTime: p.fixTime ?? null },
+      stats: { distance: 0, dplus: 0, dminus: 0, durationSeconds: 0, lastFixTime: p.fixTime ?? null, batteryPercent: batterieDepuisAttributs(p) },
       profile: [
         {
           idx: 0,
@@ -282,6 +325,7 @@ export function computeLiveData(
       dminus: lastPoint.dMinus,
       durationSeconds,
       lastFixTime: lastRaw?.fixTime ?? null,
+      batteryPercent: batterieDepuisAttributs(points),
     },
     profile,
     debug: { rawDistance: rawDist, rawDplus, rawDminus, ...debugMeta },

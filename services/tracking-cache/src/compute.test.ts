@@ -8,7 +8,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { denivelesCumules, moyenneGlissante } from "./compute";
+import { batterieDepuisAttributs, denivelesCumules, moyenneGlissante } from "./compute";
 
 test("moyenneGlissante : fenêtre <= 1 ne touche à rien", () => {
   const v = [1, 5, 2, 8];
@@ -80,4 +80,39 @@ test("seuil à 0 : comportement historique (tout est compté)", () => {
   const alt = [100, 101, 100, 101];
   const { dPlusCumule } = denivelesCumules(alt, 0);
   assert.equal(dPlusCumule.at(-1), 2);
+});
+
+test("batterie : lue dans les attributs, arrondie", () => {
+  assert.equal(batterieDepuisAttributs({ attributes: { batteryLevel: 87.4 } }), 87);
+  assert.equal(batterieDepuisAttributs({ attributes: { batteryPercentage: 42 } }), 42);
+});
+
+test("batterie : des VOLTS ne doivent jamais passer pour des pour-cent", () => {
+  // Traccar range parfois une tension (4,1 V) sous la clé `battery` : l'afficher
+  // en « 4 % » déclencherait une fausse alerte de batterie faible.
+  assert.equal(batterieDepuisAttributs({ attributes: { battery: 4.1 } }), null);
+  assert.equal(batterieDepuisAttributs({ attributes: { battery: 137 } }), null);
+});
+
+test("LE CAS DE L'EXTINCTION : on remonte au dernier message qui la porte", () => {
+  // Le tracker clôt la trace par un événement d'extinction (+RESP:GTPFA) qui
+  // n'a pas de champ batterie. Regarder la seule dernière position ferait
+  // disparaître l'indicateur au moment précis du bilan de sortie.
+  const trace = [
+    { attributes: { batteryLevel: 90 } },
+    { attributes: { batteryLevel: 64 } },
+    { attributes: { alarm: "powerOff", type: "PFA" } },
+  ];
+  assert.equal(batterieDepuisAttributs(trace), 64);
+});
+
+test("batterie : absente partout → null (aucune pastille affichée)", () => {
+  assert.equal(batterieDepuisAttributs([{ attributes: {} }, { attributes: { motion: true } }]), null);
+  assert.equal(batterieDepuisAttributs([]), null);
+  assert.equal(batterieDepuisAttributs(undefined), null);
+});
+
+test("batterie : la remontée est bornée (une valeur trop vieille n'informe plus)", () => {
+  const vieille = [{ attributes: { batteryLevel: 55 } }, ...Array.from({ length: 60 }, () => ({ attributes: {} }))];
+  assert.equal(batterieDepuisAttributs(vieille), null);
 });

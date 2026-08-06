@@ -17,8 +17,8 @@
   "elevationSmoothingWindow": 5,
   "elevationHysteresisM": 5,
 
-  "_corrections": "Coefficients d'ajustement final, à recaler sur la montre (docs/live-tracking.md §10.1). Les coefficients de dénivelé sont à 1.0 : ils compensaient la dérive de l'ancien calcul, qui n'existe plus.",
-  "samplingCorrection": 1.03,
-  "elevationPlusCorrection": 1.0,
-  "elevationMinusCorrection": 1.0
+  "_corrections": "Coefficients d'ajustement final, RECALÉS sur la montre à la Croix de Belledonne (06/08/2026) : montre 24,26 km / 2700 m D+ / 2700 m D− contre 22,3 / 2445 / 2465 mesurés, soit -8 à -9 % de sous-estimation homogène. Méthode et remise à jour : docs/live-tracking.md §10.1.",
+  "samplingCorrection": 1.12,
+  "elevationPlusCorrection": 1.10,
+  "elevationMinusCorrection": 1.10
 }
