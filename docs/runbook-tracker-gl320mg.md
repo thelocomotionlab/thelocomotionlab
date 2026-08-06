@@ -625,6 +625,33 @@ placé comme il le sera en course — **en haut du sac, ciel dégagé**.
 - [ ] **Autonomie** : note le niveau de batterie au départ et à l'arrivée, et
       extrapole. La fiche constructeur suppose un intervalle bien plus lent que
       30 s — **seule ta mesure compte**.
+
+> ### Autonomie MESURÉE — Croix de Belledonne, 6 août 2026
+>
+> **95 % → 59 % en 7 h 52**, soit **4,58 %/h** à un intervalle de 30 s, GPS jamais
+> éteint (`Check Interval` < 60 s). Relevé depuis les attributs Traccar :
+>
+> ```bash
+> curl -s "https://tracking.thelocomotionlab.com/api/public/positions?deviceId=92&from=<départ>&to=<arrivée>" \
+>   | jq '[.[] | select(.attributes.batteryLevel != null)] | {premier: .[0].attributes.batteryLevel, dernier: .[-1].attributes.batteryLevel}'
+> ```
+>
+> → **21,9 h** de 100 à 0 %, **19,7 h** exploitables (100 → 10 %).
+>
+> **Conséquence pour une aventure de plusieurs jours.** Les Écrins (5 jours,
+> 120 h) demandent **6,1 charges** en continu, **4,5** en éteignant au bivouac.
+> Une **batterie externe est indispensable** — c'est un plan d'alimentation à
+> prévoir, pas un réglage à optimiser.
+>
+> Éteindre le tracker la nuit économise ~1,6 charge et bat n'importe quel réglage
+> d'économie d'énergie (0 % contre « moins »). Deux réflexes : rallumer **15 min
+> avant de repartir** (accrochage à froid), et **ne jamais faire `./track reset`**
+> entre-temps — le chrono et la trace repartiraient de zéro. L'extinction du
+> tracker, elle, n'affecte pas la session côté serveur.
+>
+> Le seul levier de réglage qui puisse changer l'ordre de grandeur est
+> `Check Interval` à **60 s** : en dessous, le PDF est formel, la puce GPS ne
+> s'éteint jamais — et c'est le premier poste de consommation. Non mesuré.
 - [ ] `./track stop` puis `./track reset` pour repartir propre.
 
 La recette complète du live (carnet Telegram, messages visiteurs, cartes de
@@ -678,7 +705,6 @@ Ce qui était supposé au premier jet et qui est **désormais vérifié** :
    se lit dans le *user manual*.
 2. **Le repli 2G** : le champ 5 de `GTBSI` (GPRS APN) est vide. À remplir avec
    `simbase` si le repli doit vraiment fonctionner (§« Ce qui est confirmé »).
-3. **L'autonomie réelle à 30 s d'intervalle**, GPS jamais éteint — la seule mesure
-   qui compte avant une sortie de plusieurs jours (§6).
+3. ~~L'autonomie réelle~~ — **MESURÉE** le 6 août 2026, cf. encadré ci-dessous.
 4. **`Multi-packet Sending`** (champ 13 de `GTSRI`) non testé contre le décodeur
    `gl200` de Traccar — laissé à `0`.
