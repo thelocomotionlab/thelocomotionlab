@@ -85,7 +85,7 @@ export default function PratiquerPage() {
     // + retrait interne lg:px-6 chez eux = 48 px au total).
     <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-12">
       <PageHeader
-        kicker="/ JOUER"
+        kicker="/ PRIMAL"
         title="Pratiquer"
         tagline="Éprouver par soi-même."
         className="mb-0"

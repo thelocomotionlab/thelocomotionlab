@@ -37,12 +37,11 @@ export const metadata = {
 export default function QuetePage() {
   return (
     <article className="max-w-3xl mx-auto px-6 py-12 font-sans">
-      <PageHeader kicker="/ LE LABO" title="La quête" />
+      <PageHeader kicker="/ ORIGINE" title="La quête" />
 
       {/* La formule du labo en exergue, comme une citation. */}
       <blockquote className="mb-10 border-l-[3px] border-brand-accent pl-5 font-lora text-xl italic leading-relaxed text-brand-deep md:text-[22px]">
-        Comprendre le corps comme un scientifique, l&rsquo;utiliser comme un
-        animal.
+        Pourquoi la robustesse plutôt que la performance.
       </blockquote>
 
       <div className="font-sans leading-relaxed space-y-8 text-left md:text-justify hyphens-auto">

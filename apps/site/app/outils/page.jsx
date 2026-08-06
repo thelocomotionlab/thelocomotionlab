@@ -54,8 +54,8 @@ export default function OutilsPage() {
           </Link>
         </div>
         <p className="text-gray-700 mb-6 flex-1">
-          Une prédiction honnête de ton temps de course, calibrée sur tes
-          propres données d&rsquo;entraînement — pas sur des moyennes.
+          Un calculateur de plan de course de trail basé sur la data analyse de 
+          tes propres données d&rsquo;entraînement.
         </p>
         <div>
           <Link
@@ -67,9 +67,6 @@ export default function OutilsPage() {
         </div>
       </article>
 
-      <p className="mt-10 text-center text-gray-600 italic">
-        D&rsquo;autres outils sont en construction au labo.
-      </p>
     </div>
   );
 }
