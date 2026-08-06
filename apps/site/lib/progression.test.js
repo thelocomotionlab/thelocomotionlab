@@ -140,6 +140,60 @@ describe("sens de parcours", () => {
   });
 });
 
+describe("rattrapage après décrochage — LE CAS DE BELLEDONNE", () => {
+  /** Point du profil, `secondes` après le départ. */
+  const pt = (n, secondes) => ({
+    longitude: 5.7 + n * 0.01,
+    latitude: 45.2,
+    fixTime: new Date(Date.UTC(2026, 7, 20, 6, 0, 0) + secondes * 1000).toISOString(),
+  });
+
+  it("un saut de sommets plus long que le budget n'est pas un mur", () => {
+    // Trace de référence VOLONTAIREMENT irrégulière : un trou de ~4 km entre
+    // deux sommets, comme la simplification en produit (4 sauts > 267 m sur la
+    // trace de Belledonne). Le curseur doit pouvoir franchir le saut, sans quoi
+    // il s'arrête là définitivement.
+    const referenceTrouee = [
+      [5.7, 45.2],
+      [5.75, 45.2], // ~3,9 km d'un coup
+      [5.76, 45.2],
+      [5.77, 45.2],
+    ];
+    const vecu = [pt(0, 0), pt(5, 1800), pt(6, 2400), pt(7, 3000)];
+    expect(avancementSurTrace(referenceTrouee, vecu).pourcent).toBeGreaterThan(95);
+  });
+
+  it("le curseur rattrape son retard après une perte de trace", () => {
+    // Le coureur s'écarte franchement (hors tolérance) pendant un long moment,
+    // puis revient sur le tracé, bien plus loin. Avec un budget compté depuis le
+    // point précédent, il resterait bloqué là où il a décroché — c'est ce qui
+    // affichait 40 % sur un parcours terminé.
+    const vecu = [
+      pt(0, 0),
+      pt(1, 600),
+      // Écart de ~5 km au nord : rien ne peut s'accrocher.
+      { longitude: 5.72, latitude: 45.25, fixTime: pt(0, 1200).fixTime },
+      { longitude: 5.73, latitude: 45.25, fixTime: pt(0, 1800).fixTime },
+      // Retour sur le tracé, très en avant.
+      pt(9, 3600),
+      pt(10, 4200),
+    ];
+    expect(avancementSurTrace(REFERENCE, vecu).pourcent).toBeGreaterThan(90);
+  });
+
+  it("le rattrapage reste borné : pas de téléportation en quelques secondes", () => {
+    // Même décrochage, mais tout se joue en 90 s : aucun humain ne couvre 8 km
+    // dans cet intervalle, le curseur ne doit pas suivre.
+    const vecu = [
+      pt(0, 0),
+      { longitude: 5.72, latitude: 45.25, fixTime: pt(0, 30).fixTime },
+      { longitude: 5.73, latitude: 45.25, fixTime: pt(0, 60).fixTime },
+      pt(9, 90),
+    ];
+    expect(avancementSurTrace(REFERENCE, vecu).pourcent).toBeLessThan(30);
+  });
+});
+
 describe("plafond de vitesse (points horodatés)", () => {
   /** Point du profil, `secondes` après le départ. */
   const pt = (n, secondes) => ({

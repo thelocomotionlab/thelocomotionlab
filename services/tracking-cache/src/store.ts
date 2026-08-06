@@ -87,7 +87,7 @@ export class Store {
 export function emptyLivePositions(windowStart: string | null): LivePositions {
   return {
     meta: { pointCount: 0, updatedAt: new Date().toISOString() },
-    stats: { distance: 0, dplus: 0, dminus: 0, durationSeconds: 0, lastFixTime: null },
+    stats: { distance: 0, dplus: 0, dminus: 0, durationSeconds: 0, lastFixTime: null, batteryPercent: null },
     profile: [],
     debug: {
       rawDistance: 0,

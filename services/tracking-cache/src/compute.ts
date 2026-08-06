@@ -15,6 +15,25 @@ import type { ComputeParams, LivePositions, ProfilePoint, TraccarPosition } from
 const R = 6_371_000;
 const toRad = (deg: number) => (deg * Math.PI) / 180;
 
+/**
+ * Charge en % lue dans les attributs Traccar d'une position.
+ *
+ * Le nom du champ dépend du modèle et de la version du décodeur : on balaie les
+ * candidats connus plutôt que d'en supposer un. Tout ce qui n'est pas un
+ * pourcentage plausible est ignoré — `battery` porte parfois des VOLTS (4,1),
+ * qu'il ne faudrait surtout pas afficher comme « 4 % ».
+ */
+export function batterieDepuisAttributs(position: TraccarPosition | undefined): number | null {
+  const attrs = (position?.attributes ?? {}) as Record<string, unknown>;
+  for (const cle of ["batteryLevel", "batteryPercentage", "battery"]) {
+    const v = attrs[cle];
+    if (typeof v === "number" && Number.isFinite(v) && v > 1 && v <= 100) {
+      return Math.round(v);
+    }
+  }
+  return null;
+}
+
 function haversine(a: TraccarPosition, b: TraccarPosition): number {
   const dLat = toRad((b.latitude ?? 0) - (a.latitude ?? 0));
   const dLon = toRad((b.longitude ?? 0) - (a.longitude ?? 0));
@@ -132,7 +151,7 @@ export function computeLiveData(
   if (!Array.isArray(points) || points.length === 0) {
     return {
       meta: { pointCount: 0, updatedAt: new Date().toISOString() },
-      stats: { distance: 0, dplus: 0, dminus: 0, durationSeconds: 0, lastFixTime: null },
+      stats: { distance: 0, dplus: 0, dminus: 0, durationSeconds: 0, lastFixTime: null, batteryPercent: null },
       profile: [],
       debug: { rawDistance: 0, rawDplus: 0, rawDminus: 0, ...debugMeta },
     };
@@ -142,7 +161,7 @@ export function computeLiveData(
     const p = points[0];
     return {
       meta: { pointCount: 1, updatedAt: new Date().toISOString() },
-      stats: { distance: 0, dplus: 0, dminus: 0, durationSeconds: 0, lastFixTime: p.fixTime ?? null },
+      stats: { distance: 0, dplus: 0, dminus: 0, durationSeconds: 0, lastFixTime: p.fixTime ?? null, batteryPercent: batterieDepuisAttributs(p) },
       profile: [
         {
           idx: 0,
@@ -282,6 +301,7 @@ export function computeLiveData(
       dminus: lastPoint.dMinus,
       durationSeconds,
       lastFixTime: lastRaw?.fixTime ?? null,
+      batteryPercent: batterieDepuisAttributs(lastRaw),
     },
     profile,
     debug: { rawDistance: rawDist, rawDplus, rawDminus, ...debugMeta },

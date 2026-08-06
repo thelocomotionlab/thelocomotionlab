@@ -18,6 +18,7 @@ import { avancementSurTrace } from "@/lib/progression";
 import { useJournal } from "@/lib/useJournal";
 import { useLivePositions } from "@/lib/useLivePositions";
 import { useReferenceTrack } from "@/lib/useReferenceTrack";
+import BatteriePill from "./BatteriePill";
 import ChronoBadge from "./ChronoBadge";
 import FreshnessPill from "./FreshnessPill";
 import ItineraireLine from "./ItineraireLine";
@@ -132,6 +133,7 @@ export default function LiveEnCours({ timer }) {
               <MapStyleSwitch value={mapStyle} onChange={setMapStyle} />
             </div>
             <FreshnessPill state={freshness} />
+            <BatteriePill percent={stats?.batteryPercent} />
           </div>
 
           <div className="order-3 lg:order-none lg:flex-none">
