@@ -13,7 +13,9 @@
 // variante mobile, chacune masquée par média-query mais toutes deux présentes)
 // — audit des titres, 08/2026. Le titre et le jour sont désormais rendus une
 // fois, et c'est la MISE EN PAGE qui change entre mobile et desktop.
-// L'intention de l'aventure suit le titre, comme dans l'état Avant.
+//
+// PAS de phrase d'intention ici : elle appartient à l'état Avant. En direct,
+// l'en-tête ne porte que le titre, le jour et le badge.
 
 "use client";
 
@@ -39,8 +41,8 @@ export default function LiveHeader({ aventure, jour, running = true, mapStyle, o
         <LiveBadge running={running} />
       </div>
 
-      {/* Titre + jour + intention : rendus UNE fois, taille et disposition
-          ajustées par média-query (cf. l'avertissement en tête de fichier). */}
+      {/* Titre + jour : rendus UNE fois, taille et disposition ajustées par
+          média-query (cf. l'avertissement en tête de fichier). */}
       <div className="min-w-0">
         <div className="flex items-center gap-3">
           <h1 className="m-0 font-heading text-[21px] font-bold leading-[1.15] text-brand-slate-dark lg:text-[23px]">
@@ -51,15 +53,6 @@ export default function LiveHeader({ aventure, jour, running = true, mapStyle, o
           </span>
         </div>
         <Jour jour={jour} className="mt-1.5 text-[10.5px] lg:text-[11px]" />
-        {/* Intention : le direct avait perdu son sous-titre en route. En
-            Ubuntu, PAS en Lora italique — l'état « En cours » n'utilise pas
-            cette typographie (c'est déjà pour ça que les stats du parcours
-            avaient quitté cet en-tête), contrairement à l'état Avant. */}
-        {aventure.intention ? (
-          <p className="mt-2 text-[15px] leading-relaxed text-brand-text/70 lg:text-[15.5px]">
-            {aventure.intention}
-          </p>
-        ) : null}
       </div>
 
       {/* Le sélecteur de fond de carte quitte la carte pour le header (desktop). */}
