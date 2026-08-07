@@ -55,11 +55,38 @@ function num(envVal: string | undefined, fallback: number): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
+function configPath(): string {
+  return process.env.TRACKING_CONFIG_PATH || path.join(__dirname, "..", "tracking.config.json");
+}
+
+/**
+ * Paramètres de calcul seuls — SANS exiger le token Traccar. La CLI de contrôle
+ * les affiche pour que `./track status` réponde à « mon image est-elle bien à
+ * jour ? » ; lui imposer le token pour ça la casserait hors conteneur.
+ */
+export function loadComputeParams(): ComputeParams {
+  const raw = readJsonFile(configPath());
+  return {
+    samplingCorrection: num(process.env.SAMPLING_CORRECTION, raw.samplingCorrection ?? 1.0),
+    elevationPlusCorrection: num(
+      process.env.ELEVATION_PLUS_CORRECTION,
+      raw.elevationPlusCorrection ?? 1.0
+    ),
+    elevationMinusCorrection: num(
+      process.env.ELEVATION_MINUS_CORRECTION,
+      raw.elevationMinusCorrection ?? 1.0
+    ),
+    minDistanceThreshold: num(process.env.MIN_DISTANCE_THRESHOLD, raw.minDistanceThreshold ?? 5),
+    elevationSmoothingWindow: num(
+      process.env.ELEVATION_SMOOTHING_WINDOW,
+      raw.elevationSmoothingWindow ?? 5
+    ),
+    elevationHysteresisM: num(process.env.ELEVATION_HYSTERESIS_M, raw.elevationHysteresisM ?? 5),
+  };
+}
+
 export function loadConfig(): Config {
-  const configPath =
-    process.env.TRACKING_CONFIG_PATH ||
-    path.join(__dirname, "..", "tracking.config.json");
-  const raw = readJsonFile(configPath);
+  const raw = readJsonFile(configPath());
 
   const token = process.env.TRACCAR_API_TOKEN || "";
   if (!token) {
@@ -81,26 +108,10 @@ export function loadConfig(): Config {
       process.env.BUFFER_LOOKBACK_MINUTES,
       raw.bufferLookbackMinutes ?? 180
     ),
-    compute: {
-      samplingCorrection: num(process.env.SAMPLING_CORRECTION, raw.samplingCorrection ?? 1.0),
-      elevationPlusCorrection: num(
-        process.env.ELEVATION_PLUS_CORRECTION,
-        raw.elevationPlusCorrection ?? 1.0
-      ),
-      elevationMinusCorrection: num(
-        process.env.ELEVATION_MINUS_CORRECTION,
-        raw.elevationMinusCorrection ?? 1.0
-      ),
-      minDistanceThreshold: num(process.env.MIN_DISTANCE_THRESHOLD, raw.minDistanceThreshold ?? 5),
-      elevationSmoothingWindow: num(
-        process.env.ELEVATION_SMOOTHING_WINDOW,
-        raw.elevationSmoothingWindow ?? 5
-      ),
-      elevationHysteresisM: num(
-        process.env.ELEVATION_HYSTERESIS_M,
-        raw.elevationHysteresisM ?? 5
-      ),
-    },
+    // Une seule lecture des paramètres de calcul, partagée avec la CLI : deux
+    // copies auraient fini par diverger, et c'est justement ce que `status`
+    // sert à vérifier.
+    compute: loadComputeParams(),
   };
 }
 

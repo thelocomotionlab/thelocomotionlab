@@ -332,6 +332,10 @@ téléphone) ou « Enregistrer ».
   (`<gpxdata:distance>` chez Coros) : elle ne coïncide pas avec la géométrie du
   tracé (24,26 km annoncés pour 22,86 km de segments sur la Croix de
   Belledonne), et c'est bien le chiffre affiché au poignet qui doit être publié.
+- **Les HEIC de l'iPhone sont acceptés** : décodage natif d'abord (Safari sait le
+  faire, iOS convertit souvent en JPEG à la volée), décodeur de secours (1,3 Mo)
+  chargé **à la demande** seulement si ça échoue — il ne pèse sur aucune autre
+  page du site.
 - **Les trois chiffres sont modifiables** : le D+ recalculé depuis les altitudes
   du fichier reste ~10 % sous celui qu'affiche la montre. On part du fichier, le
   dernier mot revient à l'auteur.

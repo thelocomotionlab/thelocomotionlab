@@ -20,6 +20,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Download, ImageUp, Route, Share2 } from "lucide-react";
 
 import { statsDeGpx } from "@/lib/gpxStats";
+import { chargerImage } from "@/lib/imageFile";
 import { dessinerHabillage, STORY } from "@/lib/habillage";
 
 const CHAMP =
@@ -67,14 +68,19 @@ export default function HabillagePhoto() {
     if (!file) return;
     setEtat({ occupe: true, message: "Lecture de la photo…" });
     try {
-      // `imageOrientation: "from-image"` applique l'EXIF : sans lui, une photo
-      // prise en portrait ressort couchée sur le canvas.
-      const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+      // HEIC compris : décodage natif d'abord, décodeur de secours chargé à la
+      // demande seulement s'il le faut (cf. lib/imageFile.js).
+      const bitmap = await chargerImage(file);
       setImage(bitmap);
       setNomPhoto(file.name);
       setEtat({ occupe: false, message: "" });
-    } catch {
-      setEtat({ occupe: false, message: "Photo illisible — essaie un JPEG ou un PNG." });
+    } catch (err) {
+      setEtat({
+        occupe: false,
+        message: err?.message?.startsWith("Ce HEIC")
+          ? err.message
+          : "Photo illisible — essaie un JPEG, un PNG ou un HEIC.",
+      });
     }
   }, []);
 
@@ -192,7 +198,12 @@ export default function HabillagePhoto() {
           <label className={`${BOUTON_SECOND} cursor-pointer`}>
             <ImageUp size={16} strokeWidth={2} aria-hidden="true" />
             {image ? "Changer la photo" : "Choisir une photo"}
-            <input type="file" accept="image/*" onChange={chargerPhoto} className="sr-only" />
+            <input
+              type="file"
+              accept="image/*,.heic,.heif"
+              onChange={chargerPhoto}
+              className="sr-only"
+            />
           </label>
           {nomPhoto && (
             <p className="truncate font-heading text-[12px] text-brand-text/55">{nomPhoto}</p>

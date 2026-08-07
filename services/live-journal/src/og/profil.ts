@@ -5,8 +5,16 @@
 // satori ne sait pas dessiner, il sait afficher une image.
 
 const AMBRE = "#EFB159";
-const AMBRE_SOMBRE = "#D89A3D";
-const CLAIR = "rgba(254,251,246,0.62)";
+const CLAIR = "rgba(254,251,246,0.58)";
+
+// Opacités RELEVÉES sur la maquette (Claude Design), pas choisies : l'aire est
+// à demi transparente et la carte se lit à travers — c'est ce qui l'empêche de
+// faire une tache posée sur le relief. Mesuré en comparant les pixels de l'aire
+// au fond voilé voisin : 0,44 à 0,49 selon l'endroit. La ligne de crête, elle,
+// est de l'ambre PRESQUE PLEIN (0,86 à 0,90) — pas un trait plus foncé, ce que
+// j'avais supposé au premier jet.
+const AIRE_OPACITE = 0.46;
+const CRETE_OPACITE = 0.9;
 
 export interface ProfilPoint {
   km: number;
@@ -53,8 +61,8 @@ export function profilDataUri(profile: ProfilPoint[], options: ProfilOptions): s
     const cov = parcourus.map((p) => `${x(p.km)} ${y(p.alt)}`);
     const finX = x(parcourus[parcourus.length - 1].km);
     parts.push(
-      `<path d="M 0 ${BASE} L ${cov.join(" L ")} L ${finX} ${BASE} Z" fill="${AMBRE}" fill-opacity="0.85"/>`,
-      `<path d="M ${cov.join(" L ")}" fill="none" stroke="${AMBRE_SOMBRE}" stroke-width="2.5" stroke-linejoin="round"/>`,
+      `<path d="M 0 ${BASE} L ${cov.join(" L ")} L ${finX} ${BASE} Z" fill="${AMBRE}" fill-opacity="${AIRE_OPACITE}"/>`,
+      `<path d="M ${cov.join(" L ")}" fill="none" stroke="${AMBRE}" stroke-opacity="${CRETE_OPACITE}" stroke-width="4" stroke-linejoin="round"/>`,
     );
     if (options.curseur !== false && doneKm < totalKm) {
       parts.push(

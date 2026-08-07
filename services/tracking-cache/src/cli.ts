@@ -6,7 +6,7 @@
 //
 //   node dist/cli.js start|stop|reset|status
 
-import { loadDataDir } from "./config";
+import { loadComputeParams, loadDataDir } from "./config";
 import { Store } from "./store";
 import { reset, start, status, stop, type StatusReport } from "./control";
 
@@ -29,6 +29,13 @@ function printStatus(r: StatusReport): void {
   console.log(`D+ / D-     : ${r.dplus} m / ${r.dminus} m`);
   console.log(`Dernier fix : ${r.lastFixTime ?? "—"}`);
   console.log(`Maj fichier : ${r.updatedAt ?? "—"}`);
+  if (r.corrections) {
+    const c = r.corrections;
+    console.log(
+      `Coefficients: distance ×${c.distance} · D+ ×${c.dPlus} · D− ×${c.dMinus}` +
+        `   (ceux de l'image qui tourne — si ce n'est pas ce que tu attends, l'image n'est pas à jour)`,
+    );
+  }
 }
 
 function main(): void {
@@ -52,7 +59,7 @@ function main(): void {
       break;
     }
     case "status": {
-      printStatus(status(store));
+      printStatus(status(store, loadComputeParams()));
       break;
     }
     default: {

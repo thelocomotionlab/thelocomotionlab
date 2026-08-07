@@ -472,6 +472,16 @@ Changement **permanent** : éditer le JSON → commit → merge `main` → CI re
 > 47,0 km pour 49,3 km à la montre, coefficient courant 1,03 →
 > `1,03 × 49,3 / 47,0 ≈ 1,08`.
 >
+> **Quelle image tourne vraiment ?** `./track status` affiche en dernière ligne
+> les coefficients **effectivement appliqués par le conteneur**. Un chiffre qui
+> ne bouge pas après un `./deploy.sh` vient neuf fois sur dix d'une image restée
+> en arrière — pas du calcul. Rappel : la CI ne construit les images que sur
+> **`main`**. Un `./deploy.sh` sans merge préalable retire la même image.
+>
+> ```
+> Coefficients: distance x1.12 - D+ x1.1 - D- x1.1
+> ```
+>
 > **Ça marche aussi APRÈS `./track stop`** — et c'est même là qu'on le fait, une
 > fois la montre consultée. Session arrêtée, le service ne sollicite plus
 > Traccar mais **recalcule depuis le cache brut** à chaque tick : le nouveau
@@ -600,8 +610,8 @@ Détails de la stratégie staging : [`plan-staging.md`](./plan-staging.md).
 | Symptôme | Diagnostic | Remède |
 | --- | --- | --- |
 | Plus de positions sur `/live` | tracker (batterie/ciel) → Traccar → tracking-cache | attendre d'abord (zone blanche ≠ panne) ; `./infra/scripts/check-tracker.sh` ; `./track status` ; `./track logs` (cherche `HTTP 401/403` = token) |
-| Chiffres figés après `./track stop`, insensibles à un changement de coefficient | image `tracking-cache` antérieure au correctif de recalcul à l'arrêt | `cd infra && ./deploy.sh` ; vérifier `curl -s …/live-positions.json \| jq .debug.samplingCorrection` |
-| Carte de partage « PROCHAIN DÉPART » sur une sortie terminée | image `live-journal` antérieure au correctif de variante | `cd infra && ./deploy.sh` |
+| Chiffres figés après `./track stop`, insensibles à un changement de coefficient | image `tracking-cache` en arrière (la CI ne construit que sur `main`) | merger sur `main`, attendre la CI, puis `cd infra && ./deploy.sh` ; **vérifier avec `./track status`** (dernière ligne = coefficients réellement appliqués) |
+| Carte de partage « PROCHAIN DÉPART » sur une sortie terminée | image `live-journal` en arrière | même chose ; la carte doit alors afficher « TERMINÉ » et les km parcourus |
 | Trous dans la trace qui ne se comblent jamais | points bufferisés par le tracker renvoyés hors de la fenêtre de rattrapage | `BUFFER_LOOKBACK_MINUTES` plus large que la coupure attendue (§10.1) ; store & forward bien activé côté tracker |
 | `/live` reste sur « Avant » au départ | `track start` non lancé, ou timer KO | `./track start` ; `curl …/live-timer.json` |
 | Carnet muet (pas de « ✓ Publié ») | webhook / service / Telegram | `curl …/journal/healthz` ; relancer `set-webhook.sh` ; `docker compose logs live-journal` ; Telegram down → repart seul (retries) |

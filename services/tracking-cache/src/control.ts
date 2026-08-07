@@ -6,7 +6,7 @@
 // date en dur + le hack `sed` sur le source de l'ancien live-cache.mjs.
 
 import { EMPTY_CONTROL, NEUTRAL_TIMER, Store } from "./store";
-import type { LiveTimer } from "./types";
+import type { ComputeParams, LiveTimer } from "./types";
 
 export type StatusReport = {
   running: boolean;
@@ -20,6 +20,14 @@ export type StatusReport = {
   dplus: number;
   dminus: number;
   updatedAt: string | null;
+  /**
+   * Coefficients EFFECTIVEMENT appliqués par le conteneur qui tourne. Ils sont
+   * là pour répondre à une question qui, sinon, ne se répond que par
+   * supposition : « est-ce que ma nouvelle image est bien déployée ? » Un
+   * chiffre qui ne bouge pas après un `./deploy.sh` vient neuf fois sur dix
+   * d'un conteneur resté sur l'ancienne version, pas du calcul.
+   */
+  corrections: { distance: number; dPlus: number; dMinus: number } | null;
 };
 
 function nowIso(): string {
@@ -55,7 +63,7 @@ export function reset(store: Store): void {
 }
 
 /** Photographie de l'état courant (pour `track status`). */
-export function status(store: Store): StatusReport {
+export function status(store: Store, compute?: ComputeParams): StatusReport {
   const timer = store.readTimer();
   const control = store.readControl();
   const live = store.readLivePositions();
@@ -79,5 +87,12 @@ export function status(store: Store): StatusReport {
     dplus: live?.stats.dplus ?? 0,
     dminus: live?.stats.dminus ?? 0,
     updatedAt: live?.meta.updatedAt ?? null,
+    corrections: compute
+      ? {
+          distance: compute.samplingCorrection,
+          dPlus: compute.elevationPlusCorrection,
+          dMinus: compute.elevationMinusCorrection,
+        }
+      : null,
   };
 }
