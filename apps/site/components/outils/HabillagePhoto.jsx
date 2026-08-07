@@ -30,11 +30,19 @@ const BOUTON_PRINCIPAL =
 const BOUTON_SECOND =
   "inline-flex items-center justify-center gap-2 rounded-full border border-brand-primary/45 bg-brand-primary/12 px-5 py-2.5 font-heading text-[14px] font-medium text-brand-primary-dark transition-colors hover:border-brand-primary-dark hover:bg-brand-primary/30 hover:text-brand-text disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none";
 
-/** Famille de police réellement chargée par next/font (nom généré au build). */
+/**
+ * Famille de police à donner au canvas.
+ *
+ * On lit la `font-family` RÉSOLUE du body, pas la variable `--next-font-ubuntu`
+ * : next/font pose cette variable sur `<body>` (app/layout.js), et l'interroger
+ * sur `documentElement` renvoyait une chaîne vide — le canvas dessinait alors
+ * en police système sans que rien ne le signale. La valeur résolue porte de
+ * toute façon le nom généré au build, qui est exactement ce dont on a besoin.
+ */
 function policeUbuntu() {
-  if (typeof window === "undefined") return "sans-serif";
-  const v = getComputedStyle(document.documentElement).getPropertyValue("--next-font-ubuntu").trim();
-  return v ? `${v}, sans-serif` : "sans-serif";
+  if (typeof document === "undefined") return "sans-serif";
+  const famille = getComputedStyle(document.body).fontFamily;
+  return famille && famille !== "" ? famille : "sans-serif";
 }
 
 export default function HabillagePhoto() {

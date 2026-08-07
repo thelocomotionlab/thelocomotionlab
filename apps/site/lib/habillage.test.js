@@ -3,11 +3,13 @@ import { describe, expect, it } from "vitest";
 import {
   cadrageCouverture,
   cheminDuProfil,
+  dessinerFleche,
   dessinerTexteEspace,
   formatEntier,
   formatKm,
   GABARIT,
   ligneDeStats,
+  segmentsDeStats,
   STORY,
   ZONE_SURE,
 } from "./habillage";
@@ -151,14 +153,14 @@ describe("zone sûre Instagram", () => {
   });
 
   it("les éléments s'empilent sans se chevaucher", () => {
-    const basDuProfil = GABARIT.profil.y + GABARIT.profil.height + GABARIT.sol.ecart + GABARIT.sol.hauteur;
+    const basDuProfil = GABARIT.profil.y + GABARIT.profil.height;
     expect(basDuProfil).toBeLessThan(GABARIT.stats.baseline - GABARIT.stats.taille);
     expect(GABARIT.stats.baseline).toBeLessThan(GABARIT.marque.baseline);
   });
 
-  it("les marges latérales sont symétriques", () => {
-    expect(GABARIT.profil.x).toBe(GABARIT.pad);
-    expect(GABARIT.profil.x + GABARIT.profil.width).toBe(STORY.width - GABARIT.pad);
+  it("le profil est PLEINE LARGEUR (silhouette Coros, pas un encart)", () => {
+    expect(GABARIT.profil.x).toBe(0);
+    expect(GABARIT.profil.width).toBe(STORY.width);
   });
 });
 
@@ -195,5 +197,74 @@ describe("dessinerTexteEspace", () => {
     const ctx = fauxCtx(12); // majuscules Ubuntu ≈ 0,58 em à 21 px
     const largeur = dessinerTexteEspace(ctx, "THE LOCOMOTION LAB", 0, 0, GABARIT.marque.taille, GABARIT.marque.espacement);
     expect(largeur).toBeLessThan(STORY.width - 2 * GABARIT.pad);
+  });
+});
+
+describe("segmentsDeStats", () => {
+  it("porte le sens de la flèche sur chaque dénivelé, et rien sur la distance", () => {
+    expect(segmentsDeStats({ distanceKm: 24.26, dPlusM: 2400, dMinusM: 2509 })).toEqual([
+      { texte: "24,3 km", fleche: null },
+      { texte: "2 400 m D+", fleche: "haut" },
+      { texte: "2 509 m D−", fleche: "bas" },
+    ]);
+  });
+
+  it("un dénivelé absent emporte sa flèche", () => {
+    expect(segmentsDeStats({ distanceKm: 12, dPlusM: 0, dMinusM: NaN })).toEqual([
+      { texte: "12,0 km", fleche: null },
+    ]);
+    expect(segmentsDeStats({})).toEqual([]);
+  });
+
+  it("le texte assemblé reste celui de ligneDeStats", () => {
+    const v = { distanceKm: 24.26, dPlusM: 2400, dMinusM: 2509 };
+    expect(segmentsDeStats(v).map((s) => s.texte).join("  ·  ")).toBe(ligneDeStats(v));
+  });
+});
+
+describe("dessinerFleche", () => {
+  function fauxCtx() {
+    const ordres = [];
+    return {
+      ordres,
+      beginPath: () => ordres.push(["beginPath"]),
+      moveTo: (x, y) => ordres.push(["moveTo", x, y]),
+      lineTo: (x, y) => ordres.push(["lineTo", x, y]),
+      stroke: () => ordres.push(["stroke"]),
+    };
+  }
+
+  it("LA FLÈCHE EST TRACÉE, jamais écrite", () => {
+    // Les fontes du site sont des sous-ensembles latins : U+2191/U+2193 n'y
+    // sont pas, un caractère de flèche sortirait en carré blanc.
+    const ctx = fauxCtx();
+    dessinerFleche(ctx, 100, 500, 44, "haut");
+    expect(ctx.ordres.some(([o]) => o === "stroke")).toBe(true);
+    expect(ctx.ordres.filter(([o]) => o === "lineTo").length).toBe(3);
+  });
+
+  it("« haut » pointe vers le haut, « bas » vers le bas", () => {
+    // Les deux flèches occupent la MÊME hauteur (même hampe) : ce qui les
+    // distingue est l'endroit où se pose le chevron. On regarde donc la pointe,
+    // pas l'encombrement — première version du test, qui comparait des minima
+    // identiques et ne prouvait rien.
+    const pointe = (sens) => {
+      const ctx = fauxCtx();
+      dessinerFleche(ctx, 0, 500, 44, sens);
+      // beginPath, moveTo(talon), lineTo(pointe), moveTo(aile), lineTo(pointe)…
+      return ctx.ordres[2][2];
+    };
+    expect(pointe("haut")).toBeLessThan(pointe("bas"));
+    // Et rien ne descend sous la ligne de base du texte.
+    for (const sens of ["haut", "bas"]) {
+      const ctx = fauxCtx();
+      dessinerFleche(ctx, 0, 500, 44, sens);
+      const ys = ctx.ordres.filter(([o]) => o !== "beginPath" && o !== "stroke").map(([, , y]) => y);
+      expect(Math.max(...ys)).toBeLessThanOrEqual(500);
+    }
+  });
+
+  it("renvoie la largeur occupée, pour que le curseur avance", () => {
+    expect(dessinerFleche(fauxCtx(), 0, 500, 44, "haut")).toBeCloseTo(44 * 0.34, 6);
   });
 });

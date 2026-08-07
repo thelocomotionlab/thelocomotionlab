@@ -42,13 +42,21 @@ export const GABARIT = {
   pad: 72,
   /** Le voile part bien au-dessus du texte : une coupure franche se verrait. */
   voileDebut: 980,
-  profil: { x: 72, y: 1275, width: 936, height: 175 },
-  /** Filet qui sert de sol au profil — écho de la barre des cartes de partage. */
-  sol: { hauteur: 4, ecart: 14 },
-  stats: { taille: 44, baseline: 1538 },
+  // PLEINE LARGEUR, sans marge : le profil fait partie de l'image, il n'est pas
+  // un encart posé dessus. C'est la silhouette de l'ancien habillage Coros.
+  profil: { x: 0, y: 1205, width: STORY.width, height: 215 },
+  /**
+   * Le remplissage s'efface sur le dernier tiers, au lieu de s'arrêter net sur
+   * une base plate. Chez Coros la base tombait hors du cadre, donc invisible ;
+   * ici elle doit rester dans la zone sûre — un aplat s'y terminerait par une
+   * barre horizontale en travers de la photo, exactement le trait dont on ne
+   * veut pas.
+   */
+  fondu: 0.34,
+  stats: { taille: 44, baseline: 1505 },
   // Le bloc descend jusqu'à la limite basse de la zone sûre : plus haut, il
   // laissait 380 px de photo vide sous lui à l'export.
-  marque: { taille: 21, baseline: 1596, espacement: 0.3 },
+  marque: { taille: 21, baseline: 1566, espacement: 0.3 },
 };
 
 // La fonte Ubuntu n'a pas l'espace fine insécable (U+202F) que produit Intl
@@ -61,13 +69,61 @@ const entierFmt = new Intl.NumberFormat("fr-FR");
 export const formatKm = (n) => sansFines(kmFmt.format(Number.isFinite(n) ? n : 0));
 export const formatEntier = (n) => sansFines(entierFmt.format(Math.round(Number.isFinite(n) ? n : 0)));
 
-/** « 24,3 km · 2 400 m D+ · 2 509 m D− » — un séparateur seulement si utile. */
-export function ligneDeStats({ distanceKm, dPlusM, dMinusM }) {
-  const morceaux = [];
-  if (Number.isFinite(distanceKm) && distanceKm > 0) morceaux.push(`${formatKm(distanceKm)} km`);
-  if (Number.isFinite(dPlusM) && dPlusM > 0) morceaux.push(`${formatEntier(dPlusM)} m D+`);
-  if (Number.isFinite(dMinusM) && dMinusM > 0) morceaux.push(`${formatEntier(dMinusM)} m D−`);
-  return morceaux.join("  ·  ");
+export const SEPARATEUR = "  ·  ";
+
+/**
+ * La ligne de chiffres, DÉCOUPÉE : chaque morceau porte son texte et, pour le
+ * dénivelé, le sens de sa flèche.
+ *
+ * Les flèches sont DESSINÉES, pas écrites : les fontes du site sont des
+ * sous-ensembles latins (packages/ui/src/fonts.ts) et ne contiennent pas
+ * U+2191/U+2193 — un caractère de flèche sortirait en carré blanc.
+ */
+export function segmentsDeStats({ distanceKm, dPlusM, dMinusM }) {
+  const out = [];
+  if (Number.isFinite(distanceKm) && distanceKm > 0) {
+    out.push({ texte: `${formatKm(distanceKm)} km`, fleche: null });
+  }
+  if (Number.isFinite(dPlusM) && dPlusM > 0) {
+    out.push({ texte: `${formatEntier(dPlusM)} m D+`, fleche: "haut" });
+  }
+  if (Number.isFinite(dMinusM) && dMinusM > 0) {
+    out.push({ texte: `${formatEntier(dMinusM)} m D−`, fleche: "bas" });
+  }
+  return out;
+}
+
+/** « 24,3 km · 2 400 m D+ · 2 509 m D− » — le texte seul, flèches exclues. */
+export function ligneDeStats(valeurs) {
+  return segmentsDeStats(valeurs)
+    .map((s) => s.texte)
+    .join(SEPARATEUR);
+}
+
+/**
+ * Petite flèche verticale, tracée à la main. `x` est son bord gauche, `baseline`
+ * la ligne de base du texte qu'elle accompagne.
+ */
+export function dessinerFleche(ctx, x, baseline, taille, sens) {
+  const h = taille * 0.78;
+  const l = taille * 0.34;
+  const cx = x + l / 2;
+  const haut = baseline - h;
+  const bas = baseline - taille * 0.06;
+  const pointe = sens === "bas" ? bas : haut;
+  const talon = sens === "bas" ? haut : bas;
+
+  ctx.beginPath();
+  ctx.moveTo(cx, talon);
+  ctx.lineTo(cx, pointe);
+  ctx.moveTo(cx - l / 2, pointe + (sens === "bas" ? -l / 2 : l / 2));
+  ctx.lineTo(cx, pointe);
+  ctx.lineTo(cx + l / 2, pointe + (sens === "bas" ? -l / 2 : l / 2));
+  ctx.lineWidth = Math.max(2, taille * 0.075);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.stroke();
+  return l;
 }
 
 /**
@@ -102,7 +158,7 @@ export function cadrageCouverture(source, cadre, ancrage = 0.5) {
 }
 
 /**
- * Points du profil PROJETÉS dans une boîte, plus la ligne de sol. L'altitude
+ * Points du profil PROJETÉS dans une boîte, plus l'ordonnée de base. L'altitude
  * est étirée sur toute la hauteur : ce n'est pas une échelle, c'est une
  * silhouette — la même convention que le profil des cartes de partage.
  */
@@ -186,10 +242,14 @@ export function dessinerHabillage(ctx, options) {
     for (const [x, y] of chemin.points) ctx.lineTo(x, y);
     ctx.lineTo(chemin.points[chemin.points.length - 1][0], chemin.base);
     ctx.closePath();
-    ctx.fillStyle = COULEURS.ambre;
-    ctx.globalAlpha = PROFIL_OPACITE.aire;
+    // Remplissage qui s'efface vers le bas : aucune barre horizontale ne vient
+    // fermer la silhouette (cf. GABARIT.fondu).
+    const degrade = ctx.createLinearGradient(0, g.profil.y, 0, chemin.base);
+    degrade.addColorStop(0, `rgba(239, 177, 89, ${PROFIL_OPACITE.aire})`);
+    degrade.addColorStop(1 - g.fondu, `rgba(239, 177, 89, ${PROFIL_OPACITE.aire})`);
+    degrade.addColorStop(1, "rgba(239, 177, 89, 0)");
+    ctx.fillStyle = degrade;
     ctx.fill();
-    ctx.globalAlpha = 1;
 
     ctx.beginPath();
     ctx.moveTo(chemin.points[0][0], chemin.points[0][1]);
@@ -198,14 +258,9 @@ export function dessinerHabillage(ctx, options) {
     ctx.globalAlpha = PROFIL_OPACITE.crete;
     ctx.lineWidth = 4;
     ctx.lineJoin = "round";
+    ctx.lineCap = "round";
     ctx.stroke();
     ctx.globalAlpha = 1;
-
-    // Le sol : filet plein sous la silhouette, comme la barre des cartes.
-    ctx.fillStyle = COULEURS.ambre;
-    ctx.beginPath();
-    ctx.roundRect(g.profil.x, chemin.base + g.sol.ecart, g.profil.width, g.sol.hauteur, g.sol.hauteur);
-    ctx.fill();
   }
 
   ctx.textBaseline = "alphabetic";
@@ -213,7 +268,22 @@ export function dessinerHabillage(ctx, options) {
 
   ctx.font = `500 ${g.stats.taille}px ${police}`;
   ctx.fillStyle = COULEURS.creme;
-  ctx.fillText(ligneDeStats({ distanceKm, dPlusM, dMinusM }), g.pad, g.stats.baseline);
+  ctx.strokeStyle = COULEURS.creme;
+  let curseur = g.pad;
+  for (const [i, seg] of segmentsDeStats({ distanceKm, dPlusM, dMinusM }).entries()) {
+    if (i > 0) {
+      ctx.fillText(SEPARATEUR, curseur, g.stats.baseline);
+      curseur += ctx.measureText(SEPARATEUR).width;
+    }
+    ctx.fillText(seg.texte, curseur, g.stats.baseline);
+    curseur += ctx.measureText(seg.texte).width;
+    if (seg.fleche) {
+      // La flèche respire : collée au « + », elle se lisait comme un caractère
+      // de plus dans le nombre.
+      curseur += g.stats.taille * 0.26;
+      curseur += dessinerFleche(ctx, curseur, g.stats.baseline, g.stats.taille, seg.fleche);
+    }
+  }
 
   ctx.font = `500 ${g.marque.taille}px ${police}`;
   ctx.fillStyle = "rgba(254, 251, 246, 0.68)";

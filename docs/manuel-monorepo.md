@@ -320,10 +320,18 @@ régression :
 ## 8 bis. Habiller une photo de sortie (`/outils/habillage`)
 
 Une page de l'app, **entièrement côté navigateur** : on choisit une photo et le
-GPX de la sortie, le profil altimétrique ambré + `distance · D+ · D−` + la
-signature du labo se posent en bas de l'image, au format story 1080×1920, dans
-la bande qu'Instagram ne recouvre pas. Puis « Partager » (partage natif du
+GPX de la sortie, la silhouette altimétrique ambrée + `distance · D+ ↑ · D− ↓` +
+la signature du labo se posent en bas de l'image, au format story 1080×1920,
+dans la bande qu'Instagram ne recouvre pas. Puis « Partager » (partage natif du
 téléphone) ou « Enregistrer ».
+
+Le profil reprend le modèle de l'ancien habillage Coros : **pleine largeur,
+aucun filet sous la courbe**, un remplissage translucide surmonté d'une crête
+franche. Le remplissage s'efface vers le bas plutôt que de s'arrêter sur une
+base plate — chez Coros elle tombait hors du cadre donc invisible, ici elle
+doit rester dans la zone sûre et un aplat s'y terminerait par une barre en
+travers de la photo. Les flèches ↑ ↓ sont **tracées**, pas écrites : les fontes
+du site sont des sous-ensembles latins et n'ont pas U+2191/U+2193.
 
 - **Rien ne sort du téléphone** : pas de serveur, donc rien à stocker ni à
   purger, et ça marche hors réseau une fois la page en cache — elle fait partie
