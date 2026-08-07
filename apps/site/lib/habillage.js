@@ -24,11 +24,19 @@ export const ZONE_SURE = { top: 250, bottom: 1600 };
 
 export const COULEURS = {
   ambre: "#EFB159",
-  ambreSombre: "#D89A3D",
   creme: "#FEFBF6",
   /** Composantes du voile, à composer avec l'opacité voulue. */
   ombre: "16, 18, 14",
 };
+
+/**
+ * L'aire du profil est PLUS TRANSPARENTE ici que sur les cartes de partage
+ * (0,46 là-bas, relevé sur la maquette). Le fond n'est pas le même : une carte
+ * topo voilée supporte un aplat ; une photo, non — elle porte le sujet, et le
+ * profil doit se lire par-dessus sans l'effacer. La ligne de crête reste
+ * presque pleine : c'est elle qui donne la forme, l'aire ne fait que l'asseoir.
+ */
+export const PROFIL_OPACITE = { aire: 0.3, crete: 0.92 };
 
 export const GABARIT = {
   pad: 72,
@@ -178,16 +186,20 @@ export function dessinerHabillage(ctx, options) {
     for (const [x, y] of chemin.points) ctx.lineTo(x, y);
     ctx.lineTo(chemin.points[chemin.points.length - 1][0], chemin.base);
     ctx.closePath();
-    ctx.fillStyle = "rgba(239, 177, 89, 0.85)";
+    ctx.fillStyle = COULEURS.ambre;
+    ctx.globalAlpha = PROFIL_OPACITE.aire;
     ctx.fill();
+    ctx.globalAlpha = 1;
 
     ctx.beginPath();
     ctx.moveTo(chemin.points[0][0], chemin.points[0][1]);
     for (const [x, y] of chemin.points) ctx.lineTo(x, y);
-    ctx.strokeStyle = COULEURS.ambreSombre;
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = COULEURS.ambre;
+    ctx.globalAlpha = PROFIL_OPACITE.crete;
+    ctx.lineWidth = 4;
     ctx.lineJoin = "round";
     ctx.stroke();
+    ctx.globalAlpha = 1;
 
     // Le sol : filet plein sous la silhouette, comme la barre des cartes.
     ctx.fillStyle = COULEURS.ambre;
