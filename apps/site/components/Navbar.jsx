@@ -10,7 +10,7 @@ import {
   Compass,
   FlaskConical,
   Menu,
-  PawPrint,
+  Play,
   SatelliteDish,
   Search,
   Wrench,
@@ -49,7 +49,7 @@ const NAV_ITEMS = [
   { type: "link", href: "/explorer", label: "Explorer", Icon: Compass },
   // Évolutif : quand l'accompagnement trail ouvrira (2027), cette entrée
   // passera en `type: "menu"` (Ateliers / Accompagnement trail).
-  { type: "link", href: "/pratiquer", label: "Pratiquer", Icon: PawPrint },
+  { type: "link", href: "/pratiquer", label: "Pratiquer", Icon: Play },
   {
     type: "menu",
     label: "Outils",
