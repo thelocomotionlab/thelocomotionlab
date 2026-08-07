@@ -12,7 +12,7 @@ import type { Config } from "./config";
 import { computeLiveData } from "./compute";
 import { fetchPositions } from "./traccar";
 import { Store } from "./store";
-import type { TraccarPosition } from "./types";
+import type { LivePositions, TraccarPosition } from "./types";
 
 function log(...args: unknown[]) {
   console.log(new Date().toISOString(), ...args);
@@ -67,14 +67,47 @@ export function computeFromIso(
 }
 
 /**
- * Exécute un tick. Renvoie le nombre de points frais ajoutés (ou null si la
- * session n'est pas active — rien n'est fait, c'est le mode « idle »).
+ * Vrai si le recalcul produit autre chose que ce qui est déjà sur le disque.
+ * `meta.updatedAt` est EXCLU : il change à chaque tick par construction, et le
+ * comparer ferait réécrire le fichier toutes les 15 s pour rien.
+ */
+function aChange(avant: LivePositions | null, apres: LivePositions): boolean {
+  if (!avant) return true;
+  if (avant.meta?.pointCount !== apres.meta.pointCount) return true;
+  return JSON.stringify(avant.stats) !== JSON.stringify(apres.stats);
+}
+
+/**
+ * Exécute un tick. Renvoie le nombre de points frais ajoutés, ou `null` quand
+ * rien n'a été collecté (session arrêtée).
+ *
+ * SESSION ARRÊTÉE ≠ RIEN À FAIRE. On ne sollicite plus Traccar — c'est le sens
+ * du mode « idle » — mais on RECALCULE depuis le cache brut. Sans ça,
+ * `live-positions.json` reste figé sur les chiffres calculés avant l'arrêt, et
+ * un changement de coefficient n'a aucun effet : exactement ce qui s'est passé
+ * à la Croix de Belledonne, où la page affichait encore 22,3 km (coefficient
+ * 1,03) plusieurs jours après le passage à 1,12. Or c'est précisément APRÈS la
+ * sortie qu'on compare à la montre et qu'on recale (docs §10.1), et la page
+ * `/live` reste affichée, figée, sur ce fichier.
+ *
+ * `./track reset` vide le cache brut : après lui, il n'y a plus rien à
+ * recalculer et le mode idle redevient un vrai repos.
  */
 export async function runTick(config: Config, store: Store): Promise<number | null> {
   const timer = store.readTimer();
-  if (!timer.running) return null; // idle : aucune collecte tant que `track start` n'a pas été lancé
-
   const control = store.readControl();
+
+  if (!timer.running) {
+    const cache = store.readRawCache();
+    if (cache.length === 0) return null;
+    const live = computeLiveData(cache, config.compute, control.windowStartIso);
+    if (aChange(store.readLivePositions(), live)) {
+      store.writeLivePositions(live);
+      log("session arrêtée — recalcul depuis le cache brut, stats=", live.stats);
+    }
+    return null;
+  }
+
   const now = new Date();
   const cache = store.readRawCache();
   const fromIso = computeFromIso(

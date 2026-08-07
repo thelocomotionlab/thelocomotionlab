@@ -162,7 +162,11 @@ async function main() {
     waypoints,
   };
 
-  const live = positions ? liveFromArtefacts(positions, { running: false }, track?.coords ?? []) : null;
+  // `startTime` fourni : une carte fabriquée après coup décrit une sortie qui a
+  // bien eu lieu, jamais un « prochain départ ».
+  const live = positions
+    ? liveFromArtefacts(positions, { running: false, startTime: dateDebut }, track?.coords ?? [])
+    : null;
   const data: OgData = {
     variant: aventure.statut === "termine" ? "termine" : "avant",
     aventure,

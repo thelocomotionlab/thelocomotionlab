@@ -42,6 +42,14 @@ export interface OgTrack {
 
 export interface OgLive {
   running: boolean;
+  /**
+   * Une session a été lancée et arrêtée : l'aventure est BOUCLÉE. C'est le
+   * même critère que `LiveHub.jsx` (`timer.running || timer.startTime`) — sans
+   * lui, la carte de partage d'une sortie terminée annonçait « PROCHAIN DÉPART
+   * · 22 km à parcourir », constaté sur la Croix de Belledonne le 7 août 2026.
+   * `./track reset` remet `startTime` à null et rend la page à l'état « avant ».
+   */
+  termine: boolean;
   /** Distance réellement parcourue (≠ avancement sur l'itinéraire). */
   doneKm: number;
   dplus: number;
@@ -170,8 +178,11 @@ export function liveFromArtefacts(
       ? avancementSurTrace(referenceCoords, points)
       : null;
 
+  const t = timer as { running?: boolean; startTime?: string | null } | null;
+  const running = t?.running === true;
   return {
-    running: (timer as { running?: boolean } | null)?.running === true,
+    running,
+    termine: !running && typeof t?.startTime === "string" && t.startTime !== "",
     doneKm: (p.stats?.distance ?? 0) / 1000,
     dplus: p.stats?.dplus ?? 0,
     dminus: p.stats?.dminus ?? 0,
@@ -273,7 +284,11 @@ export class OgDataSource {
     const live = await this.liveSnapshot(track?.coords ?? []);
 
     const variant: OgVariant =
-      aventure.statut === "termine" ? "termine" : live?.running ? "live" : "avant";
+      aventure.statut === "termine" || live?.termine
+        ? "termine"
+        : live?.running
+          ? "live"
+          : "avant";
 
     return {
       variant,

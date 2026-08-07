@@ -130,10 +130,26 @@ describe("OgDataSource", () => {
     expect(png.subarray(1, 4).toString()).toBe("PNG");
   }, 30_000);
 
-  it("variante avant quand le timer est arrêté ; termine quand le statut le dit", async () => {
-    const avant = await makeSource({ "/live-timer.json": { running: false } }).collect();
+  it("variante avant seulement si AUCUNE session n'a été lancée", async () => {
+    const avant = await makeSource({ "/live-timer.json": { running: false, startTime: null } }).collect();
     expect(avant.variant).toBe("avant");
+  });
 
+  it("LE CAS DE BELLEDONNE : sortie terminée ≠ « prochain départ »", async () => {
+    // Le chrono arrêté APRÈS un départ décrit une aventure bouclée : la page
+    // /live reste figée dessus (LiveHub : `running || startTime`). La carte
+    // annonçait pourtant « PROCHAIN DÉPART · 22 km à parcourir » — le badge de
+    // l'aventure qu'on venait de terminer.
+    const data = await makeSource({
+      "/live-timer.json": { running: false, startTime: "2026-08-06T06:23:00+02:00", stopTime: "2026-08-06T16:09:00+02:00" },
+    }).collect();
+    expect(data.live?.termine).toBe(true);
+    expect(data.variant).toBe("termine");
+    // Et le grand chiffre devient ce qui a été PARCOURU, pas la longueur du parcours.
+    expect(data.live?.doneKm).toBeCloseTo(96.4);
+  });
+
+  it("le statut de liveConfig force encore « terminé »", async () => {
     const termine = await makeSource({
       "/live-config.json": {
         ...LIVE_CONFIG,

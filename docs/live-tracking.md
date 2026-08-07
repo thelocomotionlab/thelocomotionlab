@@ -443,8 +443,11 @@ elles dériveraient) ; les leviers :
 > | ±3 m | +109 % | **−2 %** |
 > | ±5 m | +200 % | **+5 %** |
 >
-> Les coefficients `elevationPlus/MinusCorrection` sont repassés à **1.0** : ils
-> compensaient la dérive de l'ancien calcul, qui n'existe plus.
+> Les coefficients `elevationPlus/MinusCorrection` avaient d'abord été repassés
+> à **1.0** (ils compensaient la dérive de l'ancien calcul). Ils valent
+> aujourd'hui **1.10**, non plus pour corriger une dérive mais pour **coller à
+> la montre** : le tracker échantillonne toutes les 30 s là où la montre lit à
+> la seconde. Valeurs à jour et justification : le champ `_corrections` du JSON.
 
 Changement **permanent** : éditer le JSON → commit → merge `main` → CI rebuild
 → `./deploy.sh`. Changement **ponctuel** : poser la variable d'env dans
@@ -468,6 +471,14 @@ Changement **permanent** : éditer le JSON → commit → merge `main` → CI re
 > multiplier le coefficient courant par `montre / affiché`. Exemple : affiché
 > 47,0 km pour 49,3 km à la montre, coefficient courant 1,03 →
 > `1,03 × 49,3 / 47,0 ≈ 1,08`.
+>
+> **Ça marche aussi APRÈS `./track stop`** — et c'est même là qu'on le fait, une
+> fois la montre consultée. Session arrêtée, le service ne sollicite plus
+> Traccar mais **recalcule depuis le cache brut** à chaque tick : le nouveau
+> coefficient s'applique à toute la trace, et la page figée se met à jour dans
+> les 15 s. (Ça n'a pas toujours été le cas : le mode idle ne recalculait rien,
+> et `/live` est resté à 22,3 km — coefficient 1,03 — plusieurs jours après le
+> passage à 1,12.)
 >
 > ⚠️ `./track reset` **efface le cache brut** : après lui, plus rien à recaler.
 
@@ -589,6 +600,8 @@ Détails de la stratégie staging : [`plan-staging.md`](./plan-staging.md).
 | Symptôme | Diagnostic | Remède |
 | --- | --- | --- |
 | Plus de positions sur `/live` | tracker (batterie/ciel) → Traccar → tracking-cache | attendre d'abord (zone blanche ≠ panne) ; `./infra/scripts/check-tracker.sh` ; `./track status` ; `./track logs` (cherche `HTTP 401/403` = token) |
+| Chiffres figés après `./track stop`, insensibles à un changement de coefficient | image `tracking-cache` antérieure au correctif de recalcul à l'arrêt | `cd infra && ./deploy.sh` ; vérifier `curl -s …/live-positions.json \| jq .debug.samplingCorrection` |
+| Carte de partage « PROCHAIN DÉPART » sur une sortie terminée | image `live-journal` antérieure au correctif de variante | `cd infra && ./deploy.sh` |
 | Trous dans la trace qui ne se comblent jamais | points bufferisés par le tracker renvoyés hors de la fenêtre de rattrapage | `BUFFER_LOOKBACK_MINUTES` plus large que la coupure attendue (§10.1) ; store & forward bien activé côté tracker |
 | `/live` reste sur « Avant » au départ | `track start` non lancé, ou timer KO | `./track start` ; `curl …/live-timer.json` |
 | Carnet muet (pas de « ✓ Publié ») | webhook / service / Telegram | `curl …/journal/healthz` ; relancer `set-webhook.sh` ; `docker compose logs live-journal` ; Telegram down → repart seul (retries) |

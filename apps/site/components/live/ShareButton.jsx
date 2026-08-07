@@ -55,14 +55,23 @@ export default function ShareButton({ label = "Partager l'aventure" }) {
     }
   }
 
+  // Le survol ne changeait qu'un fond déjà pâle (12 % → 20 % d'opacité) : à
+  // peine perceptible, donc rien ne disait que le bouton était cliquable. Il
+  // remplit maintenant la pastille, fonce le liseré et fait glisser l'icône —
+  // même grammaire que les autres boutons du site.
   return (
     <button
       type="button"
       onClick={partager}
       disabled={busy}
-      className="inline-flex items-center gap-2 rounded-full border border-brand-primary/40 bg-brand-primary/12 px-[15px] py-2 font-heading text-[12.5px] font-medium text-brand-primary-dark transition hover:bg-brand-primary/20 disabled:opacity-60"
+      className="group inline-flex cursor-pointer items-center gap-2 rounded-full border border-brand-primary/40 bg-brand-primary/12 px-[15px] py-2 font-heading text-[12.5px] font-medium text-brand-primary-dark transition-colors duration-200 hover:border-brand-primary-dark hover:bg-brand-primary/35 hover:text-brand-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary-dark disabled:cursor-wait disabled:opacity-60 motion-reduce:transition-none"
     >
-      <Share2 size={15} strokeWidth={2} aria-hidden="true" />
+      <Share2
+        size={15}
+        strokeWidth={2}
+        aria-hidden="true"
+        className="transition-transform duration-200 group-hover:-translate-y-px group-hover:scale-110 motion-reduce:transition-none"
+      />
       {busy ? "Préparation…" : label}
     </button>
   );

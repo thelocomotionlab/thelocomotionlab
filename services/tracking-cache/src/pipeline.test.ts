@@ -99,3 +99,109 @@ test("fixTime illisible ou absent : on ignore le point, pas de NaN dans la borne
   assert.ok(!from.includes("NaN"));
   assert.equal(from, "2026-08-20T00:00:00.000Z");
 });
+
+// --- Recalcul quand la session est ARRÊTÉE ---------------------------------
+//
+// Le mode « idle » ne collectait rien ET ne recalculait rien : live-positions.json
+// restait figé sur les chiffres d'avant l'arrêt. Résultat à la Croix de
+// Belledonne — la page affichait encore 22,3 km (coefficient 1,03) longtemps
+// après le passage à 1,12, parce qu'aucun tick ne repassait sur le cache brut.
+// Or recaler sur la montre se fait justement APRÈS la sortie.
+
+import { runTick } from "./pipeline";
+import type { Config } from "./config";
+import type { LivePositions, LiveTimer } from "./types";
+
+class FauxStore {
+  timer: LiveTimer = { running: false, startTime: null, stopTime: null };
+  control = { windowStartIso: null as string | null };
+  cache: TraccarPosition[] = [];
+  live: LivePositions | null = null;
+  ecritures = 0;
+
+  readTimer() {
+    return this.timer;
+  }
+  readControl() {
+    return this.control;
+  }
+  readRawCache() {
+    return this.cache;
+  }
+  readLivePositions() {
+    return this.live;
+  }
+  writeLivePositions(v: LivePositions) {
+    this.live = v;
+    this.ecritures += 1;
+  }
+  writeRawCache() {
+    throw new Error("aucune écriture du cache brut attendue à l'arrêt");
+  }
+}
+
+const CONFIG = (samplingCorrection: number): Config =>
+  ({
+    compute: {
+      samplingCorrection,
+      elevationPlusCorrection: 1,
+      elevationMinusCorrection: 1,
+      minDistanceThreshold: 8,
+      elevationSmoothingWindow: 5,
+      elevationHysteresisM: 5,
+    },
+  }) as Config;
+
+/** Ligne droite de ~1 km vers le nord, une position toutes les 30 s. */
+const TRACE: TraccarPosition[] = Array.from({ length: 40 }, (_, i) => ({
+  id: i,
+  fixTime: new Date(Date.UTC(2026, 7, 6, 6, 0, i * 30)).toISOString(),
+  latitude: 45.2 + i * 0.00025,
+  longitude: 5.94,
+  altitude: 1000 + i * 5,
+}));
+
+test("session arrêtée : on recalcule depuis le cache brut (sans toucher à Traccar)", async () => {
+  const store = new FauxStore();
+  store.cache = TRACE;
+  const fresh = await runTick(CONFIG(1.0), store as never);
+
+  assert.equal(fresh, null, "aucune collecte quand la session est arrêtée");
+  assert.ok(store.live, "live-positions.json doit tout de même être écrit");
+  assert.ok(store.live!.stats.distance > 0);
+});
+
+test("LE CAS DE BELLEDONNE : changer un coefficient recale la trace après l'arrêt", async () => {
+  const store = new FauxStore();
+  store.cache = TRACE;
+  await runTick(CONFIG(1.03), store as never);
+  const avant = store.live!.stats.distance;
+
+  await runTick(CONFIG(1.12), store as never);
+  const apres = store.live!.stats.distance;
+
+  assert.ok(apres > avant, `le recalage doit s'appliquer (${avant} → ${apres})`);
+  assert.ok(
+    Math.abs(apres / avant - 1.12 / 1.03) < 0.01,
+    `rapport attendu ≈ ${(1.12 / 1.03).toFixed(3)}, obtenu ${(apres / avant).toFixed(3)}`
+  );
+});
+
+test("à coefficients constants, le fichier n'est PAS réécrit à chaque tick", async () => {
+  // Le tick tourne toutes les 15 s : réécrire un fichier identique en boucle
+  // userait le disque et invaliderait les caches HTTP pour rien.
+  const store = new FauxStore();
+  store.cache = TRACE;
+  await runTick(CONFIG(1.12), store as never);
+  assert.equal(store.ecritures, 1);
+  await runTick(CONFIG(1.12), store as never);
+  await runTick(CONFIG(1.12), store as never);
+  assert.equal(store.ecritures, 1, "aucune réécriture tant que rien ne change");
+});
+
+test("après `track reset` (cache vide), le mode idle reste un vrai repos", async () => {
+  const store = new FauxStore();
+  assert.equal(await runTick(CONFIG(1.12), store as never), null);
+  assert.equal(store.live, null, "rien ne doit être écrit après un reset");
+  assert.equal(store.ecritures, 0);
+});
