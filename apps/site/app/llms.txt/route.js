@@ -88,7 +88,7 @@ function buildLlmsTxt() {
   lines.push(
     `- [Locomotion Twin](${SITE_URL}/outils/twin): prédiction de temps de course calibrée sur les données de l'athlète (en construction)`
   );
-  lines.push(`- [À propos](${SITE_URL}/about): qui est derrière le site`);
+  lines.push(`- [À propos](${SITE_URL}/a-propos): qui est derrière le site`);
   lines.push(
     `- [Soutenir](${SITE_URL}/soutenir): comment soutenir le projet`
   );

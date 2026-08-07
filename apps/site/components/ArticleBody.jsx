@@ -76,7 +76,7 @@ export default function ArticleBody({
               <p>
                 Par{" "}
                 <Link
-                  href="/about"
+                  href="/a-propos"
                   className="font-bold text-brand-deep hover:text-brand-accent hover:underline"
                 >
                   {article.author}

@@ -63,7 +63,7 @@ const NAV_ITEMS = [
     Icon: FlaskConical,
     items: [
       { href: "/quete", label: "La quête" },
-      { href: "/about", label: "À propos" },
+      { href: "/a-propos", label: "À propos" },
       { href: "/soutenir", label: "Soutenir" },
       { href: "/contact", label: "Contact" },
     ],

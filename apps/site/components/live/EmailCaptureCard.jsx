@@ -20,7 +20,7 @@ export default function EmailCaptureCard({ title }) {
         title={null}
         description={null}
         source="live"
-        placeholder="Votre adresse e-mail"
+        placeholder="Ton adresse e-mail"
         buttonLabel="M'inscrire"
       />
     </section>

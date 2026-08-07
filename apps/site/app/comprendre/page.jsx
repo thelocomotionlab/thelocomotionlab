@@ -198,7 +198,7 @@ export default function ComprendrePage() {
           title={null}
           description={null}
           source="comprendre"
-          placeholder="Votre adresse e-mail"
+          placeholder="Ton adresse e-mail"
           buttonLabel="M'inscrire"
         />
       </div>

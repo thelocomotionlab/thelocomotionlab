@@ -18,7 +18,7 @@ export default function Footer() {
           >
             <Link
               className="underline-offset-4 hover:underline"
-              href="/about"
+              href="/a-propos"
             >
               À propos
             </Link>

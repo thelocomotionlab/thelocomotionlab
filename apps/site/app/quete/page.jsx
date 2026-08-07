@@ -86,9 +86,12 @@ export default function QuetePage() {
           </p>
         </section>
 
-        {/* ③ La méthode : comprendre en scientifique, utiliser en animal. */}
+        {/* ③ La méthode : comprendre en scientifique, utiliser en animal.
+            Ce titre s'appelait « La philosophie », comme la section des quatre
+            verbes sur l'accueil : même étiquette, deux contenus différents
+            (audit des titres, 08/2026). Celui-ci décrit une méthode. */}
         <section>
-          <SectionHeading className="mb-3">La philosophie</SectionHeading>
+          <SectionHeading className="mb-3">La méthode</SectionHeading>
           <p>
             La robustesse se développe par essai-erreur. Comprendre, explorer.
             Explorer, comprendre. Une boucle de rétroaction permanente :
@@ -156,7 +159,7 @@ export default function QuetePage() {
           title={null}
           description={null}
           source="quete"
-          placeholder="Votre adresse e-mail"
+          placeholder="Ton adresse e-mail"
           buttonLabel="M'inscrire"
         />
       </div>

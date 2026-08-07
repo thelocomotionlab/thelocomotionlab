@@ -110,7 +110,7 @@ export default function ProjetBody({
               <p>
                 Par{" "}
                 <Link
-                  href="/about"
+                  href="/a-propos"
                   className="font-bold text-brand-deep hover:text-brand-accent hover:underline"
                 >
                   {project.author}

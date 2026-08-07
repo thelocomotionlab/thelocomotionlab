@@ -5,6 +5,7 @@
 // par activityAt ?? date (décroissant), présentés en deux sections
 // « Projets » / « Récits » (composant client ExplorerSections, avec filtre).
 // Les projets gardent leur statut et leurs dernières notes.
+import EmailCapture from "@/components/EmailCapture";
 import PageHeader from "@/components/PageHeader";
 import ExplorerSections from "@/components/ExplorerSections";
 import { listArticleEntries, listProjetEntries } from "@/lib/contentRoutes.mjs";
@@ -139,6 +140,21 @@ export default function ExplorerPage() {
         {/* L'indicateur live compact vit dans la rangée de filtres
             d'ExplorerSections (même source d'état que la page /live). */}
         <ExplorerSections projets={projets} recits={recits} />
+
+        {/* Capture email : le pilier terrain n'en avait aucune, alors que les
+            trois autres en ont une (audit des titres, 08/2026). */}
+        <div className="mt-14 max-w-3xl mx-auto text-center">
+          <h2 className="mb-3 text-lg font-semibold text-brand-accent-ink">
+            Être prévenu·e des prochaines explorations
+          </h2>
+          <EmailCapture
+            title={null}
+            description={null}
+            source="explorer"
+            placeholder="Ton adresse e-mail"
+            buttonLabel="M'inscrire"
+          />
+        </div>
       </div>
     </div>
   );

@@ -38,7 +38,7 @@ export default function SoutenirSection() {
 
       <div className="mt-12 max-w-2xl mx-auto text-center">
         <h2 className="text-lg font-semibold mb-3 text-brand-accent-ink">
-          Restez à l&rsquo;écoute !
+          Reste à l&rsquo;écoute !
         </h2>
         <p className="text-brand-text/80 mb-4">
           Si ce projet te parle et que tu souhaites rester informé·e des futures
@@ -48,7 +48,7 @@ export default function SoutenirSection() {
           title={null}
           description={null}
           source="soutenir"
-          placeholder="Votre adresse e-mail"
+          placeholder="Ton adresse e-mail"
           buttonLabel="M'inscrire"
         />
       </div>

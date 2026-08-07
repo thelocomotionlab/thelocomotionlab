@@ -24,14 +24,14 @@ const ENDPOINT = process.env.NEXT_PUBLIC_EMAIL_ENDPOINT || LEGACY_ENDPOINT;
 const IS_GATEWAY = ENDPOINT !== LEGACY_ENDPOINT;
 
 export default function EmailCapture({
-  title = "Restez à l'écoute !",
+  title = "Reste à l'écoute !",
   description = null,
   // Aucune micro-promesse par défaut : « Un email pour suivre les nouveautés du
   // labo » n'apprenait rien à personne. Reste possible au cas par cas, quand la
   // phrase dit quelque chose de précis (cf. TrailNotify).
   promise = null,
   source = "home",
-  placeholder = "Votre adresse e-mail",
+  placeholder = "Ton adresse e-mail",
   buttonLabel = "M'inscrire",
   className = "",
   // « band » : version bande orange de l'accueil — input blanc sans bordure,

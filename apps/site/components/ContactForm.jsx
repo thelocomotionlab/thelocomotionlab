@@ -170,7 +170,7 @@ function ContactFormInner({ initialMessage = "" }) {
       <PageHeader title="Contact" />
 
       <p className="mb-6">
-        Une question, une idée, une envie de collaborer ? Écris-nous via ce
+        Une question, une idée, une envie de collaborer ? Écris-moi via ce
         formulaire ou directement par mail à{" "}
         <a
           href="mailto:thelocomotionlab@gmail.com"

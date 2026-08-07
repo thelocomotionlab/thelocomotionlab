@@ -1,4 +1,10 @@
-// app/about/page.jsx
+// app/a-propos/page.jsx
+//
+// Ex-/about : la seule URL en anglais parmi les piliers du site (audit des
+// titres, 08/2026). Le 308 depuis /about vit dans next.config.mjs.
+import Link from "next/link";
+
+import EmailCapture from "@/components/EmailCapture";
 import PageHeader from "@/components/PageHeader";
 import SectionHeading from "@/components/SectionHeading";
 
@@ -7,13 +13,13 @@ export const metadata = {
   description:
     "Découvre la vision du Locomotion Lab : un espace d’exploration de la locomotion humaine.",
   alternates: {
-    canonical: "https://thelocomotionlab.com/about",
+    canonical: "https://thelocomotionlab.com/a-propos",
   },
   openGraph: {
     title: "À propos – The Locomotion Lab",
     description:
       "Découvre la vision du Locomotion Lab : un espace d’exploration de la locomotion humaine.",
-    url: "https://thelocomotionlab.com/about",
+    url: "https://thelocomotionlab.com/a-propos",
     type: "website",
     locale: "fr_FR",
     images: [
@@ -90,6 +96,36 @@ export default function AboutPage() {
       <p className="mt-10 text-right font-lora text-2xl italic text-brand-deep">
         Valentin
       </p>
+
+      {/* Pont vers l'autre biographie du site : « Qui anime ? » sur Pratiquer
+          racontait la même personne sans qu'aucun lien ne les relie (audit des
+          titres, 08/2026). */}
+      <p className="mt-8 text-left text-[15px] text-gray-600">
+        Je transmets aussi en vrai, sur le terrain :{" "}
+        <Link
+          href="/pratiquer"
+          className="font-semibold text-brand-deep-dark underline underline-offset-2 decoration-brand-accent-dark/60 hover:decoration-brand-accent-dark"
+        >
+          les ateliers de mouvement primal
+        </Link>
+        .
+      </p>
+
+      {/* Capture email : une page à forte intention — qui la lit en entier est
+          le meilleur prospect du labo — et elle n'avait aucun moyen de garder
+          le lien (audit des titres, 08/2026). */}
+      <div className="mt-12 max-w-2xl mx-auto text-center">
+        <h2 className="mb-3 text-lg font-semibold text-brand-accent-ink">
+          Suivre les explorations du labo
+        </h2>
+        <EmailCapture
+          title={null}
+          description={null}
+          source="a-propos"
+          placeholder="Ton adresse e-mail"
+          buttonLabel="M'inscrire"
+        />
+      </div>
     </div>
   );
 }

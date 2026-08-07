@@ -96,11 +96,13 @@ export default function TwinTeaserPage() {
           ))}
         </div>
 
-        {/* Statut honnête : l'outil se calibre sur les archives de la cohorte. */}
+        {/* Statut honnête : l'outil se calibre sur les archives de la cohorte.
+            « STATUT » est un BADGE, pas un titre : il était en <h2> et cassait
+            la hiérarchie sémantique de la page (audit des titres, 08/2026). */}
         <div className="mt-8 bg-brand-bg border border-gray-200 rounded-xl p-5">
-          <h2 className="mb-2 font-heading text-[11px] font-bold tracking-[0.18em] text-brand-slate-dark">
+          <p className="mb-2 font-heading text-[11px] font-bold tracking-[0.18em] text-brand-slate-dark">
             STATUT
-          </h2>
+          </p>
           <p className="text-gray-700">
             L&rsquo;outil est en cours de développement. Pour participer à son
             élaboration et recevoir ton plan de course gratuit, rejoins dès
@@ -126,7 +128,7 @@ export default function TwinTeaserPage() {
             title={null}
             description={null}
             source="twin"
-            placeholder="Votre adresse e-mail"
+            placeholder="Ton adresse e-mail"
             buttonLabel="M'inscrire"
           />
         </div>

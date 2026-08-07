@@ -7,7 +7,10 @@
 // principes sans timing — fil vertical en mobile), qui anime + FAQ, teaser
 // accompagnement trail 2027 (inscription inline, source `pratiquer-trail`).
 // Le catalogue des ateliers vit dans lib/ateliers.mjs.
+import Link from "next/link";
+
 import AteliersGrid from "@/components/AteliersGrid";
+import EmailCapture from "@/components/EmailCapture";
 import PageHeader from "@/components/PageHeader";
 import PhotoSlot from "@/components/PhotoSlot";
 import SeanceFrise from "@/components/SeanceFrise";
@@ -103,10 +106,24 @@ export default function PratiquerPage() {
         {ateliers.length ? (
           <AteliersGrid ateliers={ateliers} />
         ) : (
-          <p className="italic text-gray-500">
-            De nouvelles dates arrivent très bientôt. 
-            Écris-nous via la page contact pour être prévenu·e.
-          </p>
+          // État vide : il renvoyait vers /contact — et même pas par un lien,
+          // c'était du texte brut. Une fuite d'entonnoir sur la seule page où
+          // l'intention est explicite (audit des titres, 08/2026).
+          <div className="rounded-2xl border-[1.5px] border-dashed border-brand-wash-line p-[22px] md:px-8 md:py-7">
+            <p className="mb-4 max-w-[520px] text-base italic leading-[1.7] text-gray-600">
+              De nouvelles dates arrivent très bientôt. Laisse ton adresse pour
+              être prévenu·e de l&rsquo;ouverture des inscriptions.
+            </p>
+            <div className="max-w-[420px]">
+              <EmailCapture
+                title={null}
+                description={null}
+                source="pratiquer-ateliers"
+                placeholder="Ton adresse e-mail"
+                buttonLabel="Me prévenir"
+              />
+            </div>
+          </div>
         )}
       </section>
 
@@ -164,10 +181,20 @@ export default function PratiquerPage() {
               className="h-[76px] w-[76px] flex-none rounded-full md:h-[120px] md:w-[120px]"
             />
             <div>
+              {/* Bio courte. La bio longue vit sur /a-propos : les deux
+                  racontaient la même personne sans aucun lien entre elles
+                  (audit des titres, 08/2026). */}
               <p className="mb-2.5 text-[15px] leading-[1.65] text-gray-600 md:mb-4 md:text-base md:leading-[1.7]">
                 Valentin, fondateur du Locomotion Lab. Coureur minimaliste, grimpeur
-                d&rsquo;arbres et expérimentateur. Les ateliers sont pour lui un moyen 
-                de transmettre ses connaissances et de faire tribu en situation réelle.
+                d&rsquo;arbres et expérimentateur. Les ateliers sont pour lui un moyen
+                de transmettre ses connaissances et de faire tribu en situation réelle.{" "}
+                <Link
+                  href="/a-propos"
+                  className="font-semibold text-brand-deep-dark underline underline-offset-2 decoration-brand-accent-dark/60 hover:decoration-brand-accent-dark"
+                >
+                  Son parcours en entier
+                </Link>
+                .
               </p>
               <div className="border-l-2 border-brand-accent pl-3 md:pl-4">
                 <p className="mb-1 font-heading text-[10px] font-bold tracking-[0.2em] text-brand-slate-dark md:text-[11px]">

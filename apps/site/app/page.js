@@ -380,7 +380,7 @@ export default async function HomePage() {
               description={null}
               promise={null}
               source="home"
-              placeholder="Votre adresse e-mail"
+              placeholder="Ton adresse e-mail"
               buttonLabel="M'inscrire"
             />
           </div>

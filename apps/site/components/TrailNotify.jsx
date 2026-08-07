@@ -33,7 +33,7 @@ export default function TrailNotify() {
         description={null}
         promise="Un email à l'ouverture de l'offre, rien d'autre."
         source="pratiquer-trail"
-        placeholder="Votre adresse e-mail"
+        placeholder="Ton adresse e-mail"
         buttonLabel="Être prévenu·e"
       />
     </div>
