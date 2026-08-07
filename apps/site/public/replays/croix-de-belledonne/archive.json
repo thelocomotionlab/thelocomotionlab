@@ -1,0 +1,5993 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "slug": "croix-de-belledonne",
+    "nom": "Croix de Belledonne",
+    "dateDebut": "2026-08-06",
+    "dateFin": "2026-08-06",
+    "distanceKm": 24.3,
+    "denivelePositifM": 2690
+  },
+  "positions": [
+    {
+      "idx": 0,
+      "fixTime": "2026-08-06T06:22:13.000+00:00",
+      "latitude": 45.204267,
+      "longitude": 5.946958,
+      "altitude": 907.9,
+      "distance": 0
+    },
+    {
+      "idx": 1,
+      "fixTime": "2026-08-06T06:22:55.000+00:00",
+      "latitude": 45.20424,
+      "longitude": 5.946597,
+      "altitude": 905.8,
+      "distance": 32
+    },
+    {
+      "idx": 2,
+      "fixTime": "2026-08-06T06:23:23.000+00:00",
+      "latitude": 45.204364,
+      "longitude": 5.946209,
+      "altitude": 913.3,
+      "distance": 70
+    },
+    {
+      "idx": 3,
+      "fixTime": "2026-08-06T06:23:34.000+00:00",
+      "latitude": 45.204471,
+      "longitude": 5.946029,
+      "altitude": 920,
+      "distance": 91
+    },
+    {
+      "idx": 4,
+      "fixTime": "2026-08-06T06:23:44.000+00:00",
+      "latitude": 45.204493,
+      "longitude": 5.945829,
+      "altitude": 925.5,
+      "distance": 110
+    },
+    {
+      "idx": 5,
+      "fixTime": "2026-08-06T06:23:53.000+00:00",
+      "latitude": 45.204485,
+      "longitude": 5.945594,
+      "altitude": 924.6,
+      "distance": 131
+    },
+    {
+      "idx": 6,
+      "fixTime": "2026-08-06T06:24:08.000+00:00",
+      "latitude": 45.204475,
+      "longitude": 5.945283,
+      "altitude": 929.9,
+      "distance": 158
+    },
+    {
+      "idx": 7,
+      "fixTime": "2026-08-06T06:25:33.000+00:00",
+      "latitude": 45.204118,
+      "longitude": 5.945772,
+      "altitude": 957.8,
+      "distance": 232
+    },
+    {
+      "idx": 8,
+      "fixTime": "2026-08-06T06:25:48.000+00:00",
+      "latitude": 45.203946,
+      "longitude": 5.945932,
+      "altitude": 955.3,
+      "distance": 258
+    },
+    {
+      "idx": 9,
+      "fixTime": "2026-08-06T06:25:53.000+00:00",
+      "latitude": 45.203901,
+      "longitude": 5.946022,
+      "altitude": 952.7,
+      "distance": 268
+    },
+    {
+      "idx": 10,
+      "fixTime": "2026-08-06T06:26:00.000+00:00",
+      "latitude": 45.203785,
+      "longitude": 5.946103,
+      "altitude": 944.2,
+      "distance": 285
+    },
+    {
+      "idx": 11,
+      "fixTime": "2026-08-06T06:26:23.000+00:00",
+      "latitude": 45.203546,
+      "longitude": 5.946414,
+      "altitude": 949.8,
+      "distance": 326
+    },
+    {
+      "idx": 12,
+      "fixTime": "2026-08-06T06:26:45.000+00:00",
+      "latitude": 45.203389,
+      "longitude": 5.946675,
+      "altitude": 954.3,
+      "distance": 356
+    },
+    {
+      "idx": 13,
+      "fixTime": "2026-08-06T06:26:50.000+00:00",
+      "latitude": 45.203316,
+      "longitude": 5.946727,
+      "altitude": 949.9,
+      "distance": 367
+    },
+    {
+      "idx": 14,
+      "fixTime": "2026-08-06T06:28:23.000+00:00",
+      "latitude": 45.202483,
+      "longitude": 5.947526,
+      "altitude": 971.6,
+      "distance": 494
+    },
+    {
+      "idx": 15,
+      "fixTime": "2026-08-06T06:28:53.000+00:00",
+      "latitude": 45.202321,
+      "longitude": 5.947743,
+      "altitude": 985.5,
+      "distance": 522
+    },
+    {
+      "idx": 16,
+      "fixTime": "2026-08-06T06:31:20.000+00:00",
+      "latitude": 45.201234,
+      "longitude": 5.948427,
+      "altitude": 1021.5,
+      "distance": 674
+    },
+    {
+      "idx": 17,
+      "fixTime": "2026-08-06T06:33:53.000+00:00",
+      "latitude": 45.20095,
+      "longitude": 5.949892,
+      "altitude": 1074,
+      "distance": 816
+    },
+    {
+      "idx": 18,
+      "fixTime": "2026-08-06T06:34:53.000+00:00",
+      "latitude": 45.200854,
+      "longitude": 5.950636,
+      "altitude": 1088,
+      "distance": 883
+    },
+    {
+      "idx": 19,
+      "fixTime": "2026-08-06T06:35:13.000+00:00",
+      "latitude": 45.200889,
+      "longitude": 5.950834,
+      "altitude": 1105.3,
+      "distance": 901
+    },
+    {
+      "idx": 20,
+      "fixTime": "2026-08-06T06:35:23.000+00:00",
+      "latitude": 45.200888,
+      "longitude": 5.950968,
+      "altitude": 1108.4,
+      "distance": 913
+    },
+    {
+      "idx": 21,
+      "fixTime": "2026-08-06T06:35:43.000+00:00",
+      "latitude": 45.200769,
+      "longitude": 5.951206,
+      "altitude": 1097.6,
+      "distance": 940
+    },
+    {
+      "idx": 22,
+      "fixTime": "2026-08-06T06:36:21.000+00:00",
+      "latitude": 45.200439,
+      "longitude": 5.951171,
+      "altitude": 1094.7,
+      "distance": 985
+    },
+    {
+      "idx": 23,
+      "fixTime": "2026-08-06T06:37:22.000+00:00",
+      "latitude": 45.200179,
+      "longitude": 5.9509,
+      "altitude": 1123.8,
+      "distance": 1027
+    },
+    {
+      "idx": 24,
+      "fixTime": "2026-08-06T06:39:53.000+00:00",
+      "latitude": 45.199866,
+      "longitude": 5.951706,
+      "altitude": 1154,
+      "distance": 1121
+    },
+    {
+      "idx": 25,
+      "fixTime": "2026-08-06T06:42:23.000+00:00",
+      "latitude": 45.199212,
+      "longitude": 5.952551,
+      "altitude": 1186.9,
+      "distance": 1234
+    },
+    {
+      "idx": 26,
+      "fixTime": "2026-08-06T06:42:40.000+00:00",
+      "latitude": 45.199133,
+      "longitude": 5.952676,
+      "altitude": 1198.3,
+      "distance": 1248
+    },
+    {
+      "idx": 27,
+      "fixTime": "2026-08-06T06:43:11.000+00:00",
+      "latitude": 45.198885,
+      "longitude": 5.952936,
+      "altitude": 1182.5,
+      "distance": 1287
+    },
+    {
+      "idx": 28,
+      "fixTime": "2026-08-06T06:43:20.000+00:00",
+      "latitude": 45.198824,
+      "longitude": 5.953063,
+      "altitude": 1175.9,
+      "distance": 1301
+    },
+    {
+      "idx": 29,
+      "fixTime": "2026-08-06T06:43:29.000+00:00",
+      "latitude": 45.198846,
+      "longitude": 5.953328,
+      "altitude": 1173.7,
+      "distance": 1326
+    },
+    {
+      "idx": 30,
+      "fixTime": "2026-08-06T06:43:34.000+00:00",
+      "latitude": 45.198809,
+      "longitude": 5.953433,
+      "altitude": 1173.3,
+      "distance": 1336
+    },
+    {
+      "idx": 31,
+      "fixTime": "2026-08-06T06:43:44.000+00:00",
+      "latitude": 45.198706,
+      "longitude": 5.95372,
+      "altitude": 1170.6,
+      "distance": 1365
+    },
+    {
+      "idx": 32,
+      "fixTime": "2026-08-06T06:43:49.000+00:00",
+      "latitude": 45.198674,
+      "longitude": 5.953813,
+      "altitude": 1176.5,
+      "distance": 1374
+    },
+    {
+      "idx": 33,
+      "fixTime": "2026-08-06T06:43:53.000+00:00",
+      "latitude": 45.19861,
+      "longitude": 5.953866,
+      "altitude": 1171.7,
+      "distance": 1383
+    },
+    {
+      "idx": 34,
+      "fixTime": "2026-08-06T06:44:23.000+00:00",
+      "latitude": 45.198427,
+      "longitude": 5.954205,
+      "altitude": 1167.4,
+      "distance": 1422
+    },
+    {
+      "idx": 35,
+      "fixTime": "2026-08-06T06:44:37.000+00:00",
+      "latitude": 45.198323,
+      "longitude": 5.954292,
+      "altitude": 1169.2,
+      "distance": 1437
+    },
+    {
+      "idx": 36,
+      "fixTime": "2026-08-06T06:44:51.000+00:00",
+      "latitude": 45.198236,
+      "longitude": 5.9544,
+      "altitude": 1171.2,
+      "distance": 1452
+    },
+    {
+      "idx": 37,
+      "fixTime": "2026-08-06T06:45:31.000+00:00",
+      "latitude": 45.198245,
+      "longitude": 5.954808,
+      "altitude": 1196.6,
+      "distance": 1490
+    },
+    {
+      "idx": 38,
+      "fixTime": "2026-08-06T06:45:52.000+00:00",
+      "latitude": 45.198098,
+      "longitude": 5.954883,
+      "altitude": 1204.9,
+      "distance": 1511
+    },
+    {
+      "idx": 39,
+      "fixTime": "2026-08-06T06:46:10.000+00:00",
+      "latitude": 45.197956,
+      "longitude": 5.954965,
+      "altitude": 1211.3,
+      "distance": 1530
+    },
+    {
+      "idx": 40,
+      "fixTime": "2026-08-06T06:46:52.000+00:00",
+      "latitude": 45.198002,
+      "longitude": 5.955108,
+      "altitude": 1231.4,
+      "distance": 1545
+    },
+    {
+      "idx": 41,
+      "fixTime": "2026-08-06T06:47:28.000+00:00",
+      "latitude": 45.197852,
+      "longitude": 5.955202,
+      "altitude": 1243.4,
+      "distance": 1568
+    },
+    {
+      "idx": 42,
+      "fixTime": "2026-08-06T06:48:22.000+00:00",
+      "latitude": 45.197434,
+      "longitude": 5.955293,
+      "altitude": 1249.9,
+      "distance": 1622
+    },
+    {
+      "idx": 43,
+      "fixTime": "2026-08-06T06:49:52.000+00:00",
+      "latitude": 45.196922,
+      "longitude": 5.955711,
+      "altitude": 1248.3,
+      "distance": 1698
+    },
+    {
+      "idx": 44,
+      "fixTime": "2026-08-06T06:50:52.000+00:00",
+      "latitude": 45.196719,
+      "longitude": 5.955882,
+      "altitude": 1253.7,
+      "distance": 1728
+    },
+    {
+      "idx": 45,
+      "fixTime": "2026-08-06T06:51:45.000+00:00",
+      "latitude": 45.196465,
+      "longitude": 5.956104,
+      "altitude": 1271,
+      "distance": 1765
+    },
+    {
+      "idx": 46,
+      "fixTime": "2026-08-06T06:52:22.000+00:00",
+      "latitude": 45.196101,
+      "longitude": 5.956098,
+      "altitude": 1286,
+      "distance": 1813
+    },
+    {
+      "idx": 47,
+      "fixTime": "2026-08-06T06:52:31.000+00:00",
+      "latitude": 45.195991,
+      "longitude": 5.956118,
+      "altitude": 1291,
+      "distance": 1827
+    },
+    {
+      "idx": 48,
+      "fixTime": "2026-08-06T06:52:44.000+00:00",
+      "latitude": 45.195872,
+      "longitude": 5.956217,
+      "altitude": 1297.5,
+      "distance": 1845
+    },
+    {
+      "idx": 49,
+      "fixTime": "2026-08-06T06:52:52.000+00:00",
+      "latitude": 45.19581,
+      "longitude": 5.956145,
+      "altitude": 1298.3,
+      "distance": 1856
+    },
+    {
+      "idx": 50,
+      "fixTime": "2026-08-06T06:53:36.000+00:00",
+      "latitude": 45.195487,
+      "longitude": 5.956141,
+      "altitude": 1323.6,
+      "distance": 1899
+    },
+    {
+      "idx": 51,
+      "fixTime": "2026-08-06T06:55:37.000+00:00",
+      "latitude": 45.194791,
+      "longitude": 5.956659,
+      "altitude": 1330,
+      "distance": 2002
+    },
+    {
+      "idx": 52,
+      "fixTime": "2026-08-06T06:56:24.000+00:00",
+      "latitude": 45.194418,
+      "longitude": 5.956707,
+      "altitude": 1328.8,
+      "distance": 2051
+    },
+    {
+      "idx": 53,
+      "fixTime": "2026-08-06T06:56:52.000+00:00",
+      "latitude": 45.194232,
+      "longitude": 5.956663,
+      "altitude": 1332.5,
+      "distance": 2075
+    },
+    {
+      "idx": 54,
+      "fixTime": "2026-08-06T06:57:22.000+00:00",
+      "latitude": 45.194002,
+      "longitude": 5.956706,
+      "altitude": 1327.9,
+      "distance": 2105
+    },
+    {
+      "idx": 55,
+      "fixTime": "2026-08-06T06:57:29.000+00:00",
+      "latitude": 45.193935,
+      "longitude": 5.956744,
+      "altitude": 1329.3,
+      "distance": 2114
+    },
+    {
+      "idx": 56,
+      "fixTime": "2026-08-06T06:58:52.000+00:00",
+      "latitude": 45.19335,
+      "longitude": 5.957002,
+      "altitude": 1338.9,
+      "distance": 2191
+    },
+    {
+      "idx": 57,
+      "fixTime": "2026-08-06T06:59:12.000+00:00",
+      "latitude": 45.193135,
+      "longitude": 5.956836,
+      "altitude": 1345.1,
+      "distance": 2224
+    },
+    {
+      "idx": 58,
+      "fixTime": "2026-08-06T06:59:22.000+00:00",
+      "latitude": 45.193076,
+      "longitude": 5.956766,
+      "altitude": 1346.1,
+      "distance": 2234
+    },
+    {
+      "idx": 59,
+      "fixTime": "2026-08-06T06:59:53.000+00:00",
+      "latitude": 45.192749,
+      "longitude": 5.956685,
+      "altitude": 1348.9,
+      "distance": 2277
+    },
+    {
+      "idx": 60,
+      "fixTime": "2026-08-06T07:00:17.000+00:00",
+      "latitude": 45.192645,
+      "longitude": 5.956649,
+      "altitude": 1359,
+      "distance": 2290
+    },
+    {
+      "idx": 61,
+      "fixTime": "2026-08-06T07:00:52.000+00:00",
+      "latitude": 45.192426,
+      "longitude": 5.956785,
+      "altitude": 1370.6,
+      "distance": 2322
+    },
+    {
+      "idx": 62,
+      "fixTime": "2026-08-06T07:01:03.000+00:00",
+      "latitude": 45.192344,
+      "longitude": 5.956855,
+      "altitude": 1371.3,
+      "distance": 2334
+    },
+    {
+      "idx": 63,
+      "fixTime": "2026-08-06T07:01:22.000+00:00",
+      "latitude": 45.192228,
+      "longitude": 5.957127,
+      "altitude": 1372.3,
+      "distance": 2363
+    },
+    {
+      "idx": 64,
+      "fixTime": "2026-08-06T07:02:07.000+00:00",
+      "latitude": 45.191858,
+      "longitude": 5.957257,
+      "altitude": 1385.2,
+      "distance": 2414
+    },
+    {
+      "idx": 65,
+      "fixTime": "2026-08-06T07:02:26.000+00:00",
+      "latitude": 45.191723,
+      "longitude": 5.957318,
+      "altitude": 1386.5,
+      "distance": 2432
+    },
+    {
+      "idx": 66,
+      "fixTime": "2026-08-06T07:02:45.000+00:00",
+      "latitude": 45.191574,
+      "longitude": 5.957357,
+      "altitude": 1391.4,
+      "distance": 2451
+    },
+    {
+      "idx": 67,
+      "fixTime": "2026-08-06T07:02:53.000+00:00",
+      "latitude": 45.191501,
+      "longitude": 5.957386,
+      "altitude": 1391.6,
+      "distance": 2460
+    },
+    {
+      "idx": 68,
+      "fixTime": "2026-08-06T07:03:01.000+00:00",
+      "latitude": 45.191424,
+      "longitude": 5.957407,
+      "altitude": 1394.4,
+      "distance": 2470
+    },
+    {
+      "idx": 69,
+      "fixTime": "2026-08-06T07:03:53.000+00:00",
+      "latitude": 45.191072,
+      "longitude": 5.957496,
+      "altitude": 1407.7,
+      "distance": 2515
+    },
+    {
+      "idx": 70,
+      "fixTime": "2026-08-06T07:04:53.000+00:00",
+      "latitude": 45.190749,
+      "longitude": 5.957454,
+      "altitude": 1436.2,
+      "distance": 2556
+    },
+    {
+      "idx": 71,
+      "fixTime": "2026-08-06T07:04:58.000+00:00",
+      "latitude": 45.190774,
+      "longitude": 5.957352,
+      "altitude": 1438.9,
+      "distance": 2567
+    },
+    {
+      "idx": 72,
+      "fixTime": "2026-08-06T07:05:30.000+00:00",
+      "latitude": 45.190651,
+      "longitude": 5.957328,
+      "altitude": 1446.4,
+      "distance": 2585
+    },
+    {
+      "idx": 73,
+      "fixTime": "2026-08-06T07:05:45.000+00:00",
+      "latitude": 45.190646,
+      "longitude": 5.957196,
+      "altitude": 1451,
+      "distance": 2597
+    },
+    {
+      "idx": 74,
+      "fixTime": "2026-08-06T07:06:10.000+00:00",
+      "latitude": 45.190623,
+      "longitude": 5.956997,
+      "altitude": 1451.4,
+      "distance": 2615
+    },
+    {
+      "idx": 75,
+      "fixTime": "2026-08-06T07:06:53.000+00:00",
+      "latitude": 45.190493,
+      "longitude": 5.956825,
+      "altitude": 1465.5,
+      "distance": 2638
+    },
+    {
+      "idx": 76,
+      "fixTime": "2026-08-06T07:08:23.000+00:00",
+      "latitude": 45.190361,
+      "longitude": 5.956374,
+      "altitude": 1479.9,
+      "distance": 2682
+    },
+    {
+      "idx": 77,
+      "fixTime": "2026-08-06T07:11:23.000+00:00",
+      "latitude": 45.189778,
+      "longitude": 5.956142,
+      "altitude": 1523.3,
+      "distance": 2763
+    },
+    {
+      "idx": 78,
+      "fixTime": "2026-08-06T07:12:41.000+00:00",
+      "latitude": 45.189329,
+      "longitude": 5.956336,
+      "altitude": 1537.9,
+      "distance": 2825
+    },
+    {
+      "idx": 79,
+      "fixTime": "2026-08-06T07:13:07.000+00:00",
+      "latitude": 45.189193,
+      "longitude": 5.956496,
+      "altitude": 1548.7,
+      "distance": 2848
+    },
+    {
+      "idx": 80,
+      "fixTime": "2026-08-06T07:13:59.000+00:00",
+      "latitude": 45.188903,
+      "longitude": 5.956693,
+      "altitude": 1556.7,
+      "distance": 2889
+    },
+    {
+      "idx": 81,
+      "fixTime": "2026-08-06T07:14:53.000+00:00",
+      "latitude": 45.188559,
+      "longitude": 5.957184,
+      "altitude": 1580.6,
+      "distance": 2952
+    },
+    {
+      "idx": 82,
+      "fixTime": "2026-08-06T07:15:23.000+00:00",
+      "latitude": 45.188355,
+      "longitude": 5.957368,
+      "altitude": 1582.6,
+      "distance": 2982
+    },
+    {
+      "idx": 83,
+      "fixTime": "2026-08-06T07:16:27.000+00:00",
+      "latitude": 45.188289,
+      "longitude": 5.957895,
+      "altitude": 1587.1,
+      "distance": 3032
+    },
+    {
+      "idx": 84,
+      "fixTime": "2026-08-06T07:16:53.000+00:00",
+      "latitude": 45.188245,
+      "longitude": 5.958118,
+      "altitude": 1593.7,
+      "distance": 3052
+    },
+    {
+      "idx": 85,
+      "fixTime": "2026-08-06T07:17:23.000+00:00",
+      "latitude": 45.188149,
+      "longitude": 5.958241,
+      "altitude": 1596.4,
+      "distance": 3069
+    },
+    {
+      "idx": 86,
+      "fixTime": "2026-08-06T07:19:53.000+00:00",
+      "latitude": 45.187692,
+      "longitude": 5.958737,
+      "altitude": 1634.6,
+      "distance": 3141
+    },
+    {
+      "idx": 87,
+      "fixTime": "2026-08-06T07:20:11.000+00:00",
+      "latitude": 45.187608,
+      "longitude": 5.958914,
+      "altitude": 1635.3,
+      "distance": 3160
+    },
+    {
+      "idx": 88,
+      "fixTime": "2026-08-06T07:20:23.000+00:00",
+      "latitude": 45.187583,
+      "longitude": 5.959026,
+      "altitude": 1635.1,
+      "distance": 3171
+    },
+    {
+      "idx": 89,
+      "fixTime": "2026-08-06T07:21:03.000+00:00",
+      "latitude": 45.187371,
+      "longitude": 5.959391,
+      "altitude": 1640.9,
+      "distance": 3213
+    },
+    {
+      "idx": 90,
+      "fixTime": "2026-08-06T07:21:38.000+00:00",
+      "latitude": 45.187275,
+      "longitude": 5.959775,
+      "altitude": 1651.8,
+      "distance": 3250
+    },
+    {
+      "idx": 91,
+      "fixTime": "2026-08-06T07:22:22.000+00:00",
+      "latitude": 45.187233,
+      "longitude": 5.960276,
+      "altitude": 1656.9,
+      "distance": 3295
+    },
+    {
+      "idx": 92,
+      "fixTime": "2026-08-06T07:22:49.000+00:00",
+      "latitude": 45.187173,
+      "longitude": 5.960547,
+      "altitude": 1661,
+      "distance": 3320
+    },
+    {
+      "idx": 93,
+      "fixTime": "2026-08-06T07:23:22.000+00:00",
+      "latitude": 45.187047,
+      "longitude": 5.96085,
+      "altitude": 1668.5,
+      "distance": 3351
+    },
+    {
+      "idx": 94,
+      "fixTime": "2026-08-06T07:23:52.000+00:00",
+      "latitude": 45.186877,
+      "longitude": 5.961099,
+      "altitude": 1673.8,
+      "distance": 3382
+    },
+    {
+      "idx": 95,
+      "fixTime": "2026-08-06T07:24:22.000+00:00",
+      "latitude": 45.186692,
+      "longitude": 5.961283,
+      "altitude": 1674.4,
+      "distance": 3411
+    },
+    {
+      "idx": 96,
+      "fixTime": "2026-08-06T07:24:56.000+00:00",
+      "latitude": 45.186701,
+      "longitude": 5.961522,
+      "altitude": 1678.8,
+      "distance": 3433
+    },
+    {
+      "idx": 97,
+      "fixTime": "2026-08-06T07:29:52.000+00:00",
+      "latitude": 45.186875,
+      "longitude": 5.961621,
+      "altitude": 1682.6,
+      "distance": 3458
+    },
+    {
+      "idx": 98,
+      "fixTime": "2026-08-06T07:30:28.000+00:00",
+      "latitude": 45.187186,
+      "longitude": 5.961568,
+      "altitude": 1677.6,
+      "distance": 3500
+    },
+    {
+      "idx": 99,
+      "fixTime": "2026-08-06T07:32:03.000+00:00",
+      "latitude": 45.186629,
+      "longitude": 5.961975,
+      "altitude": 1684.7,
+      "distance": 3594
+    },
+    {
+      "idx": 100,
+      "fixTime": "2026-08-06T07:32:44.000+00:00",
+      "latitude": 45.18665,
+      "longitude": 5.96247,
+      "altitude": 1692.6,
+      "distance": 3641
+    },
+    {
+      "idx": 101,
+      "fixTime": "2026-08-06T07:33:23.000+00:00",
+      "latitude": 45.186761,
+      "longitude": 5.962784,
+      "altitude": 1703.7,
+      "distance": 3673
+    },
+    {
+      "idx": 102,
+      "fixTime": "2026-08-06T07:33:38.000+00:00",
+      "latitude": 45.186801,
+      "longitude": 5.962873,
+      "altitude": 1708.3,
+      "distance": 3682
+    },
+    {
+      "idx": 103,
+      "fixTime": "2026-08-06T07:35:22.000+00:00",
+      "latitude": 45.186793,
+      "longitude": 5.963417,
+      "altitude": 1726,
+      "distance": 3731
+    },
+    {
+      "idx": 104,
+      "fixTime": "2026-08-06T07:38:53.000+00:00",
+      "latitude": 45.186811,
+      "longitude": 5.964141,
+      "altitude": 1767.8,
+      "distance": 3795
+    },
+    {
+      "idx": 105,
+      "fixTime": "2026-08-06T07:40:06.000+00:00",
+      "latitude": 45.186429,
+      "longitude": 5.964695,
+      "altitude": 1779.8,
+      "distance": 3867
+    },
+    {
+      "idx": 106,
+      "fixTime": "2026-08-06T07:41:23.000+00:00",
+      "latitude": 45.186126,
+      "longitude": 5.965114,
+      "altitude": 1795.8,
+      "distance": 3919
+    },
+    {
+      "idx": 107,
+      "fixTime": "2026-08-06T07:41:53.000+00:00",
+      "latitude": 45.186053,
+      "longitude": 5.965275,
+      "altitude": 1806.9,
+      "distance": 3937
+    },
+    {
+      "idx": 108,
+      "fixTime": "2026-08-06T07:43:24.000+00:00",
+      "latitude": 45.185838,
+      "longitude": 5.965552,
+      "altitude": 1826.5,
+      "distance": 3973
+    },
+    {
+      "idx": 109,
+      "fixTime": "2026-08-06T07:44:23.000+00:00",
+      "latitude": 45.185851,
+      "longitude": 5.965822,
+      "altitude": 1837.3,
+      "distance": 3998
+    },
+    {
+      "idx": 110,
+      "fixTime": "2026-08-06T07:44:53.000+00:00",
+      "latitude": 45.185809,
+      "longitude": 5.966051,
+      "altitude": 1840.8,
+      "distance": 4020
+    },
+    {
+      "idx": 111,
+      "fixTime": "2026-08-06T07:45:53.000+00:00",
+      "latitude": 45.185708,
+      "longitude": 5.966376,
+      "altitude": 1854.7,
+      "distance": 4051
+    },
+    {
+      "idx": 112,
+      "fixTime": "2026-08-06T07:48:23.000+00:00",
+      "latitude": 45.18493,
+      "longitude": 5.966877,
+      "altitude": 1879.8,
+      "distance": 4163
+    },
+    {
+      "idx": 113,
+      "fixTime": "2026-08-06T07:49:53.000+00:00",
+      "latitude": 45.184313,
+      "longitude": 5.967066,
+      "altitude": 1894.2,
+      "distance": 4244
+    },
+    {
+      "idx": 114,
+      "fixTime": "2026-08-06T07:51:04.000+00:00",
+      "latitude": 45.183982,
+      "longitude": 5.96689,
+      "altitude": 1909.1,
+      "distance": 4291
+    },
+    {
+      "idx": 115,
+      "fixTime": "2026-08-06T07:51:27.000+00:00",
+      "latitude": 45.183907,
+      "longitude": 5.966839,
+      "altitude": 1915.5,
+      "distance": 4301
+    },
+    {
+      "idx": 116,
+      "fixTime": "2026-08-06T07:52:01.000+00:00",
+      "latitude": 45.18363,
+      "longitude": 5.96678,
+      "altitude": 1929.2,
+      "distance": 4337
+    },
+    {
+      "idx": 117,
+      "fixTime": "2026-08-06T07:52:23.000+00:00",
+      "latitude": 45.183431,
+      "longitude": 5.966688,
+      "altitude": 1933.7,
+      "distance": 4363
+    },
+    {
+      "idx": 118,
+      "fixTime": "2026-08-06T07:52:51.000+00:00",
+      "latitude": 45.183234,
+      "longitude": 5.96655,
+      "altitude": 1937.6,
+      "distance": 4391
+    },
+    {
+      "idx": 119,
+      "fixTime": "2026-08-06T07:53:20.000+00:00",
+      "latitude": 45.182968,
+      "longitude": 5.966286,
+      "altitude": 1936.7,
+      "distance": 4432
+    },
+    {
+      "idx": 120,
+      "fixTime": "2026-08-06T07:53:53.000+00:00",
+      "latitude": 45.182632,
+      "longitude": 5.966231,
+      "altitude": 1946.7,
+      "distance": 4476
+    },
+    {
+      "idx": 121,
+      "fixTime": "2026-08-06T07:55:56.000+00:00",
+      "latitude": 45.182571,
+      "longitude": 5.966592,
+      "altitude": 1967.1,
+      "distance": 4513
+    },
+    {
+      "idx": 122,
+      "fixTime": "2026-08-06T07:56:53.000+00:00",
+      "latitude": 45.182617,
+      "longitude": 5.966869,
+      "altitude": 1975.8,
+      "distance": 4539
+    },
+    {
+      "idx": 123,
+      "fixTime": "2026-08-06T07:58:53.000+00:00",
+      "latitude": 45.182296,
+      "longitude": 5.967028,
+      "altitude": 1996.8,
+      "distance": 4585
+    },
+    {
+      "idx": 124,
+      "fixTime": "2026-08-06T07:59:53.000+00:00",
+      "latitude": 45.182033,
+      "longitude": 5.966484,
+      "altitude": 2005.4,
+      "distance": 4650
+    },
+    {
+      "idx": 125,
+      "fixTime": "2026-08-06T08:02:17.000+00:00",
+      "latitude": 45.181388,
+      "longitude": 5.966432,
+      "altitude": 2039.6,
+      "distance": 4738
+    },
+    {
+      "idx": 126,
+      "fixTime": "2026-08-06T08:02:38.000+00:00",
+      "latitude": 45.181278,
+      "longitude": 5.966367,
+      "altitude": 2046.8,
+      "distance": 4753
+    },
+    {
+      "idx": 127,
+      "fixTime": "2026-08-06T08:03:23.000+00:00",
+      "latitude": 45.180988,
+      "longitude": 5.96626,
+      "altitude": 2052.7,
+      "distance": 4791
+    },
+    {
+      "idx": 128,
+      "fixTime": "2026-08-06T08:04:23.000+00:00",
+      "latitude": 45.180877,
+      "longitude": 5.966418,
+      "altitude": 2066.2,
+      "distance": 4812
+    },
+    {
+      "idx": 129,
+      "fixTime": "2026-08-06T08:04:53.000+00:00",
+      "latitude": 45.180762,
+      "longitude": 5.966454,
+      "altitude": 2075.1,
+      "distance": 4828
+    },
+    {
+      "idx": 130,
+      "fixTime": "2026-08-06T08:05:47.000+00:00",
+      "latitude": 45.180822,
+      "longitude": 5.966641,
+      "altitude": 2087.1,
+      "distance": 4848
+    },
+    {
+      "idx": 131,
+      "fixTime": "2026-08-06T08:06:17.000+00:00",
+      "latitude": 45.181018,
+      "longitude": 5.966828,
+      "altitude": 2092.1,
+      "distance": 4879
+    },
+    {
+      "idx": 132,
+      "fixTime": "2026-08-06T08:07:51.000+00:00",
+      "latitude": 45.181489,
+      "longitude": 5.967911,
+      "altitude": 2102,
+      "distance": 4994
+    },
+    {
+      "idx": 133,
+      "fixTime": "2026-08-06T08:08:23.000+00:00",
+      "latitude": 45.181665,
+      "longitude": 5.968336,
+      "altitude": 2107.1,
+      "distance": 5037
+    },
+    {
+      "idx": 134,
+      "fixTime": "2026-08-06T08:08:53.000+00:00",
+      "latitude": 45.181812,
+      "longitude": 5.968537,
+      "altitude": 2111.7,
+      "distance": 5063
+    },
+    {
+      "idx": 135,
+      "fixTime": "2026-08-06T08:11:23.000+00:00",
+      "latitude": 45.181638,
+      "longitude": 5.969392,
+      "altitude": 2135.5,
+      "distance": 5147
+    },
+    {
+      "idx": 136,
+      "fixTime": "2026-08-06T08:11:45.000+00:00",
+      "latitude": 45.181575,
+      "longitude": 5.969459,
+      "altitude": 2141.5,
+      "distance": 5157
+    },
+    {
+      "idx": 137,
+      "fixTime": "2026-08-06T08:13:26.000+00:00",
+      "latitude": 45.181025,
+      "longitude": 5.969847,
+      "altitude": 2150.2,
+      "distance": 5235
+    },
+    {
+      "idx": 138,
+      "fixTime": "2026-08-06T08:14:01.000+00:00",
+      "latitude": 45.180733,
+      "longitude": 5.969799,
+      "altitude": 2164,
+      "distance": 5273
+    },
+    {
+      "idx": 139,
+      "fixTime": "2026-08-06T08:14:28.000+00:00",
+      "latitude": 45.180528,
+      "longitude": 5.969684,
+      "altitude": 2173.5,
+      "distance": 5302
+    },
+    {
+      "idx": 140,
+      "fixTime": "2026-08-06T08:15:21.000+00:00",
+      "latitude": 45.180316,
+      "longitude": 5.97011,
+      "altitude": 2185.8,
+      "distance": 5353
+    },
+    {
+      "idx": 141,
+      "fixTime": "2026-08-06T08:16:23.000+00:00",
+      "latitude": 45.180352,
+      "longitude": 5.970589,
+      "altitude": 2197.5,
+      "distance": 5397
+    },
+    {
+      "idx": 142,
+      "fixTime": "2026-08-06T08:17:23.000+00:00",
+      "latitude": 45.180283,
+      "longitude": 5.971194,
+      "altitude": 2203.7,
+      "distance": 5452
+    },
+    {
+      "idx": 143,
+      "fixTime": "2026-08-06T08:17:53.000+00:00",
+      "latitude": 45.180069,
+      "longitude": 5.971262,
+      "altitude": 2205.7,
+      "distance": 5482
+    },
+    {
+      "idx": 144,
+      "fixTime": "2026-08-06T08:28:51.000+00:00",
+      "latitude": 45.180182,
+      "longitude": 5.971259,
+      "altitude": 2211.2,
+      "distance": 5499
+    },
+    {
+      "idx": 145,
+      "fixTime": "2026-08-06T08:29:23.000+00:00",
+      "latitude": 45.180177,
+      "longitude": 5.971704,
+      "altitude": 2213.7,
+      "distance": 5543
+    },
+    {
+      "idx": 146,
+      "fixTime": "2026-08-06T08:29:53.000+00:00",
+      "latitude": 45.180211,
+      "longitude": 5.972056,
+      "altitude": 2219.3,
+      "distance": 5575
+    },
+    {
+      "idx": 147,
+      "fixTime": "2026-08-06T08:30:23.000+00:00",
+      "latitude": 45.180352,
+      "longitude": 5.97256,
+      "altitude": 2209.4,
+      "distance": 5623
+    },
+    {
+      "idx": 148,
+      "fixTime": "2026-08-06T08:30:38.000+00:00",
+      "latitude": 45.180321,
+      "longitude": 5.972843,
+      "altitude": 2204.5,
+      "distance": 5649
+    },
+    {
+      "idx": 149,
+      "fixTime": "2026-08-06T08:30:53.000+00:00",
+      "latitude": 45.180235,
+      "longitude": 5.973068,
+      "altitude": 2205.2,
+      "distance": 5672
+    },
+    {
+      "idx": 150,
+      "fixTime": "2026-08-06T08:31:01.000+00:00",
+      "latitude": 45.180234,
+      "longitude": 5.973199,
+      "altitude": 2203.9,
+      "distance": 5684
+    },
+    {
+      "idx": 151,
+      "fixTime": "2026-08-06T08:31:18.000+00:00",
+      "latitude": 45.180209,
+      "longitude": 5.973694,
+      "altitude": 2201.5,
+      "distance": 5727
+    },
+    {
+      "idx": 152,
+      "fixTime": "2026-08-06T08:31:23.000+00:00",
+      "latitude": 45.180248,
+      "longitude": 5.973821,
+      "altitude": 2203.9,
+      "distance": 5740
+    },
+    {
+      "idx": 153,
+      "fixTime": "2026-08-06T08:31:51.000+00:00",
+      "latitude": 45.180331,
+      "longitude": 5.974392,
+      "altitude": 2203.9,
+      "distance": 5792
+    },
+    {
+      "idx": 154,
+      "fixTime": "2026-08-06T08:32:23.000+00:00",
+      "latitude": 45.180488,
+      "longitude": 5.974871,
+      "altitude": 2207.1,
+      "distance": 5839
+    },
+    {
+      "idx": 155,
+      "fixTime": "2026-08-06T08:32:53.000+00:00",
+      "latitude": 45.180406,
+      "longitude": 5.975439,
+      "altitude": 2208.5,
+      "distance": 5891
+    },
+    {
+      "idx": 156,
+      "fixTime": "2026-08-06T08:33:23.000+00:00",
+      "latitude": 45.180307,
+      "longitude": 5.975987,
+      "altitude": 2205.3,
+      "distance": 5941
+    },
+    {
+      "idx": 157,
+      "fixTime": "2026-08-06T08:33:43.000+00:00",
+      "latitude": 45.180272,
+      "longitude": 5.976313,
+      "altitude": 2208.5,
+      "distance": 5970
+    },
+    {
+      "idx": 158,
+      "fixTime": "2026-08-06T08:33:51.000+00:00",
+      "latitude": 45.180284,
+      "longitude": 5.976453,
+      "altitude": 2209.2,
+      "distance": 5983
+    },
+    {
+      "idx": 159,
+      "fixTime": "2026-08-06T08:34:18.000+00:00",
+      "latitude": 45.180064,
+      "longitude": 5.976407,
+      "altitude": 2209.5,
+      "distance": 6015
+    },
+    {
+      "idx": 160,
+      "fixTime": "2026-08-06T08:34:39.000+00:00",
+      "latitude": 45.179933,
+      "longitude": 5.97655,
+      "altitude": 2213.9,
+      "distance": 6037
+    },
+    {
+      "idx": 161,
+      "fixTime": "2026-08-06T08:36:36.000+00:00",
+      "latitude": 45.17937,
+      "longitude": 5.976867,
+      "altitude": 2233.6,
+      "distance": 6114
+    },
+    {
+      "idx": 162,
+      "fixTime": "2026-08-06T08:37:53.000+00:00",
+      "latitude": 45.17895,
+      "longitude": 5.977648,
+      "altitude": 2243.5,
+      "distance": 6204
+    },
+    {
+      "idx": 163,
+      "fixTime": "2026-08-06T08:38:23.000+00:00",
+      "latitude": 45.178719,
+      "longitude": 5.977815,
+      "altitude": 2250.2,
+      "distance": 6238
+    },
+    {
+      "idx": 164,
+      "fixTime": "2026-08-06T08:38:42.000+00:00",
+      "latitude": 45.1786,
+      "longitude": 5.977905,
+      "altitude": 2253.8,
+      "distance": 6255
+    },
+    {
+      "idx": 165,
+      "fixTime": "2026-08-06T08:39:23.000+00:00",
+      "latitude": 45.178231,
+      "longitude": 5.978001,
+      "altitude": 2250.6,
+      "distance": 6303
+    },
+    {
+      "idx": 166,
+      "fixTime": "2026-08-06T08:39:53.000+00:00",
+      "latitude": 45.177984,
+      "longitude": 5.978046,
+      "altitude": 2257.1,
+      "distance": 6334
+    },
+    {
+      "idx": 167,
+      "fixTime": "2026-08-06T08:40:53.000+00:00",
+      "latitude": 45.177545,
+      "longitude": 5.978102,
+      "altitude": 2270.6,
+      "distance": 6389
+    },
+    {
+      "idx": 168,
+      "fixTime": "2026-08-06T08:42:48.000+00:00",
+      "latitude": 45.177368,
+      "longitude": 5.978102,
+      "altitude": 2269.8,
+      "distance": 6411
+    },
+    {
+      "idx": 169,
+      "fixTime": "2026-08-06T08:43:39.000+00:00",
+      "latitude": 45.176967,
+      "longitude": 5.9785,
+      "altitude": 2275.8,
+      "distance": 6476
+    },
+    {
+      "idx": 170,
+      "fixTime": "2026-08-06T08:43:47.000+00:00",
+      "latitude": 45.17689,
+      "longitude": 5.978584,
+      "altitude": 2276.6,
+      "distance": 6488
+    },
+    {
+      "idx": 171,
+      "fixTime": "2026-08-06T08:44:23.000+00:00",
+      "latitude": 45.176592,
+      "longitude": 5.978768,
+      "altitude": 2276.2,
+      "distance": 6530
+    },
+    {
+      "idx": 172,
+      "fixTime": "2026-08-06T08:44:38.000+00:00",
+      "latitude": 45.176499,
+      "longitude": 5.978757,
+      "altitude": 2276.9,
+      "distance": 6542
+    },
+    {
+      "idx": 173,
+      "fixTime": "2026-08-06T08:45:00.000+00:00",
+      "latitude": 45.176408,
+      "longitude": 5.97883,
+      "altitude": 2278.2,
+      "distance": 6556
+    },
+    {
+      "idx": 174,
+      "fixTime": "2026-08-06T08:45:23.000+00:00",
+      "latitude": 45.17634,
+      "longitude": 5.978978,
+      "altitude": 2279.9,
+      "distance": 6572
+    },
+    {
+      "idx": 175,
+      "fixTime": "2026-08-06T08:45:43.000+00:00",
+      "latitude": 45.176143,
+      "longitude": 5.979076,
+      "altitude": 2283.4,
+      "distance": 6599
+    },
+    {
+      "idx": 176,
+      "fixTime": "2026-08-06T08:45:53.000+00:00",
+      "latitude": 45.176059,
+      "longitude": 5.979099,
+      "altitude": 2286.1,
+      "distance": 6610
+    },
+    {
+      "idx": 177,
+      "fixTime": "2026-08-06T08:46:03.000+00:00",
+      "latitude": 45.176,
+      "longitude": 5.979178,
+      "altitude": 2291.5,
+      "distance": 6621
+    },
+    {
+      "idx": 178,
+      "fixTime": "2026-08-06T08:46:40.000+00:00",
+      "latitude": 45.175726,
+      "longitude": 5.979332,
+      "altitude": 2299.6,
+      "distance": 6659
+    },
+    {
+      "idx": 179,
+      "fixTime": "2026-08-06T08:47:02.000+00:00",
+      "latitude": 45.175552,
+      "longitude": 5.979465,
+      "altitude": 2303.1,
+      "distance": 6683
+    },
+    {
+      "idx": 180,
+      "fixTime": "2026-08-06T08:47:53.000+00:00",
+      "latitude": 45.175277,
+      "longitude": 5.979835,
+      "altitude": 2315.1,
+      "distance": 6732
+    },
+    {
+      "idx": 181,
+      "fixTime": "2026-08-06T08:48:19.000+00:00",
+      "latitude": 45.175133,
+      "longitude": 5.979976,
+      "altitude": 2321.6,
+      "distance": 6754
+    },
+    {
+      "idx": 182,
+      "fixTime": "2026-08-06T08:48:53.000+00:00",
+      "latitude": 45.174993,
+      "longitude": 5.980047,
+      "altitude": 2330,
+      "distance": 6773
+    },
+    {
+      "idx": 183,
+      "fixTime": "2026-08-06T08:49:53.000+00:00",
+      "latitude": 45.174878,
+      "longitude": 5.980384,
+      "altitude": 2347.1,
+      "distance": 6808
+    },
+    {
+      "idx": 184,
+      "fixTime": "2026-08-06T08:50:53.000+00:00",
+      "latitude": 45.17472,
+      "longitude": 5.980337,
+      "altitude": 2360.4,
+      "distance": 6830
+    },
+    {
+      "idx": 185,
+      "fixTime": "2026-08-06T08:52:54.000+00:00",
+      "latitude": 45.174521,
+      "longitude": 5.980435,
+      "altitude": 2372,
+      "distance": 6858
+    },
+    {
+      "idx": 186,
+      "fixTime": "2026-08-06T08:54:53.000+00:00",
+      "latitude": 45.173984,
+      "longitude": 5.980691,
+      "altitude": 2397.3,
+      "distance": 6929
+    },
+    {
+      "idx": 187,
+      "fixTime": "2026-08-06T08:55:23.000+00:00",
+      "latitude": 45.173842,
+      "longitude": 5.980768,
+      "altitude": 2402,
+      "distance": 6948
+    },
+    {
+      "idx": 188,
+      "fixTime": "2026-08-06T08:57:18.000+00:00",
+      "latitude": 45.17351,
+      "longitude": 5.980402,
+      "altitude": 2426.1,
+      "distance": 7006
+    },
+    {
+      "idx": 189,
+      "fixTime": "2026-08-06T08:57:53.000+00:00",
+      "latitude": 45.173382,
+      "longitude": 5.980182,
+      "altitude": 2431.7,
+      "distance": 7031
+    },
+    {
+      "idx": 190,
+      "fixTime": "2026-08-06T09:00:23.000+00:00",
+      "latitude": 45.172953,
+      "longitude": 5.979877,
+      "altitude": 2464.3,
+      "distance": 7093
+    },
+    {
+      "idx": 191,
+      "fixTime": "2026-08-06T09:05:23.000+00:00",
+      "latitude": 45.17258,
+      "longitude": 5.980043,
+      "altitude": 2492.5,
+      "distance": 7145
+    },
+    {
+      "idx": 192,
+      "fixTime": "2026-08-06T09:06:52.000+00:00",
+      "latitude": 45.172324,
+      "longitude": 5.980016,
+      "altitude": 2502.6,
+      "distance": 7179
+    },
+    {
+      "idx": 193,
+      "fixTime": "2026-08-06T09:07:23.000+00:00",
+      "latitude": 45.172179,
+      "longitude": 5.979971,
+      "altitude": 2507.5,
+      "distance": 7198
+    },
+    {
+      "idx": 194,
+      "fixTime": "2026-08-06T09:07:50.000+00:00",
+      "latitude": 45.172004,
+      "longitude": 5.979959,
+      "altitude": 2515,
+      "distance": 7220
+    },
+    {
+      "idx": 195,
+      "fixTime": "2026-08-06T09:09:22.000+00:00",
+      "latitude": 45.171526,
+      "longitude": 5.979981,
+      "altitude": 2531.9,
+      "distance": 7280
+    },
+    {
+      "idx": 196,
+      "fixTime": "2026-08-06T09:10:24.000+00:00",
+      "latitude": 45.171324,
+      "longitude": 5.979772,
+      "altitude": 2548.1,
+      "distance": 7313
+    },
+    {
+      "idx": 197,
+      "fixTime": "2026-08-06T09:11:23.000+00:00",
+      "latitude": 45.171091,
+      "longitude": 5.979827,
+      "altitude": 2559.3,
+      "distance": 7345
+    },
+    {
+      "idx": 198,
+      "fixTime": "2026-08-06T09:11:52.000+00:00",
+      "latitude": 45.171088,
+      "longitude": 5.979571,
+      "altitude": 2565.6,
+      "distance": 7371
+    },
+    {
+      "idx": 199,
+      "fixTime": "2026-08-06T09:12:28.000+00:00",
+      "latitude": 45.171036,
+      "longitude": 5.979405,
+      "altitude": 2572.9,
+      "distance": 7387
+    },
+    {
+      "idx": 200,
+      "fixTime": "2026-08-06T09:13:52.000+00:00",
+      "latitude": 45.17081,
+      "longitude": 5.979297,
+      "altitude": 2586.8,
+      "distance": 7419
+    },
+    {
+      "idx": 201,
+      "fixTime": "2026-08-06T09:15:05.000+00:00",
+      "latitude": 45.17063,
+      "longitude": 5.979288,
+      "altitude": 2603.8,
+      "distance": 7442
+    },
+    {
+      "idx": 202,
+      "fixTime": "2026-08-06T09:15:53.000+00:00",
+      "latitude": 45.170477,
+      "longitude": 5.979199,
+      "altitude": 2612.6,
+      "distance": 7463
+    },
+    {
+      "idx": 203,
+      "fixTime": "2026-08-06T09:18:35.000+00:00",
+      "latitude": 45.170226,
+      "longitude": 5.978901,
+      "altitude": 2630.3,
+      "distance": 7505
+    },
+    {
+      "idx": 204,
+      "fixTime": "2026-08-06T09:18:53.000+00:00",
+      "latitude": 45.170126,
+      "longitude": 5.978768,
+      "altitude": 2631.4,
+      "distance": 7522
+    },
+    {
+      "idx": 205,
+      "fixTime": "2026-08-06T09:19:10.000+00:00",
+      "latitude": 45.170037,
+      "longitude": 5.978634,
+      "altitude": 2630.2,
+      "distance": 7538
+    },
+    {
+      "idx": 206,
+      "fixTime": "2026-08-06T09:19:53.000+00:00",
+      "latitude": 45.169727,
+      "longitude": 5.978402,
+      "altitude": 2636.2,
+      "distance": 7583
+    },
+    {
+      "idx": 207,
+      "fixTime": "2026-08-06T09:20:36.000+00:00",
+      "latitude": 45.169526,
+      "longitude": 5.978144,
+      "altitude": 2643.6,
+      "distance": 7618
+    },
+    {
+      "idx": 208,
+      "fixTime": "2026-08-06T09:21:06.000+00:00",
+      "latitude": 45.169409,
+      "longitude": 5.977963,
+      "altitude": 2650.5,
+      "distance": 7639
+    },
+    {
+      "idx": 209,
+      "fixTime": "2026-08-06T09:21:38.000+00:00",
+      "latitude": 45.169399,
+      "longitude": 5.977792,
+      "altitude": 2649,
+      "distance": 7655
+    },
+    {
+      "idx": 210,
+      "fixTime": "2026-08-06T09:21:53.000+00:00",
+      "latitude": 45.16941,
+      "longitude": 5.977573,
+      "altitude": 2648.3,
+      "distance": 7675
+    },
+    {
+      "idx": 211,
+      "fixTime": "2026-08-06T09:22:22.000+00:00",
+      "latitude": 45.169287,
+      "longitude": 5.977136,
+      "altitude": 2651.4,
+      "distance": 7717
+    },
+    {
+      "idx": 212,
+      "fixTime": "2026-08-06T09:24:03.000+00:00",
+      "latitude": 45.16913,
+      "longitude": 5.976945,
+      "altitude": 2654.4,
+      "distance": 7744
+    },
+    {
+      "idx": 213,
+      "fixTime": "2026-08-06T09:24:57.000+00:00",
+      "latitude": 45.169011,
+      "longitude": 5.976823,
+      "altitude": 2645.1,
+      "distance": 7762
+    },
+    {
+      "idx": 214,
+      "fixTime": "2026-08-06T09:25:07.000+00:00",
+      "latitude": 45.16893,
+      "longitude": 5.976874,
+      "altitude": 2641.7,
+      "distance": 7774
+    },
+    {
+      "idx": 215,
+      "fixTime": "2026-08-06T09:25:23.000+00:00",
+      "latitude": 45.168815,
+      "longitude": 5.976835,
+      "altitude": 2640.3,
+      "distance": 7790
+    },
+    {
+      "idx": 216,
+      "fixTime": "2026-08-06T09:25:52.000+00:00",
+      "latitude": 45.168592,
+      "longitude": 5.976776,
+      "altitude": 2636.1,
+      "distance": 7818
+    },
+    {
+      "idx": 217,
+      "fixTime": "2026-08-06T09:26:22.000+00:00",
+      "latitude": 45.168322,
+      "longitude": 5.976761,
+      "altitude": 2627.8,
+      "distance": 7853
+    },
+    {
+      "idx": 218,
+      "fixTime": "2026-08-06T09:27:23.000+00:00",
+      "latitude": 45.167543,
+      "longitude": 5.976293,
+      "altitude": 2618.8,
+      "distance": 7962
+    },
+    {
+      "idx": 219,
+      "fixTime": "2026-08-06T09:28:22.000+00:00",
+      "latitude": 45.167107,
+      "longitude": 5.975959,
+      "altitude": 2626.9,
+      "distance": 8024
+    },
+    {
+      "idx": 220,
+      "fixTime": "2026-08-06T09:33:55.000+00:00",
+      "latitude": 45.166845,
+      "longitude": 5.975697,
+      "altitude": 2639.4,
+      "distance": 8065
+    },
+    {
+      "idx": 221,
+      "fixTime": "2026-08-06T09:34:28.000+00:00",
+      "latitude": 45.166742,
+      "longitude": 5.975639,
+      "altitude": 2640.4,
+      "distance": 8079
+    },
+    {
+      "idx": 222,
+      "fixTime": "2026-08-06T09:34:53.000+00:00",
+      "latitude": 45.166523,
+      "longitude": 5.975521,
+      "altitude": 2644.8,
+      "distance": 8108
+    },
+    {
+      "idx": 223,
+      "fixTime": "2026-08-06T09:35:23.000+00:00",
+      "latitude": 45.166232,
+      "longitude": 5.975331,
+      "altitude": 2646.6,
+      "distance": 8148
+    },
+    {
+      "idx": 224,
+      "fixTime": "2026-08-06T09:35:53.000+00:00",
+      "latitude": 45.165801,
+      "longitude": 5.97517,
+      "altitude": 2642.7,
+      "distance": 8205
+    },
+    {
+      "idx": 225,
+      "fixTime": "2026-08-06T09:36:23.000+00:00",
+      "latitude": 45.165439,
+      "longitude": 5.975114,
+      "altitude": 2641.6,
+      "distance": 8251
+    },
+    {
+      "idx": 226,
+      "fixTime": "2026-08-06T09:36:44.000+00:00",
+      "latitude": 45.165306,
+      "longitude": 5.975237,
+      "altitude": 2645.7,
+      "distance": 8272
+    },
+    {
+      "idx": 227,
+      "fixTime": "2026-08-06T09:37:05.000+00:00",
+      "latitude": 45.165309,
+      "longitude": 5.975505,
+      "altitude": 2647.8,
+      "distance": 8297
+    },
+    {
+      "idx": 228,
+      "fixTime": "2026-08-06T09:40:23.000+00:00",
+      "latitude": 45.165475,
+      "longitude": 5.977269,
+      "altitude": 2694.2,
+      "distance": 8454
+    },
+    {
+      "idx": 229,
+      "fixTime": "2026-08-06T09:41:48.000+00:00",
+      "latitude": 45.165538,
+      "longitude": 5.978334,
+      "altitude": 2705.7,
+      "distance": 8548
+    },
+    {
+      "idx": 230,
+      "fixTime": "2026-08-06T09:42:15.000+00:00",
+      "latitude": 45.165492,
+      "longitude": 5.978596,
+      "altitude": 2711.8,
+      "distance": 8572
+    },
+    {
+      "idx": 231,
+      "fixTime": "2026-08-06T09:42:31.000+00:00",
+      "latitude": 45.165588,
+      "longitude": 5.978692,
+      "altitude": 2714.4,
+      "distance": 8588
+    },
+    {
+      "idx": 232,
+      "fixTime": "2026-08-06T09:42:53.000+00:00",
+      "latitude": 45.165591,
+      "longitude": 5.978866,
+      "altitude": 2721.6,
+      "distance": 8604
+    },
+    {
+      "idx": 233,
+      "fixTime": "2026-08-06T09:44:29.000+00:00",
+      "latitude": 45.16584,
+      "longitude": 5.979247,
+      "altitude": 2734,
+      "distance": 8652
+    },
+    {
+      "idx": 234,
+      "fixTime": "2026-08-06T09:45:33.000+00:00",
+      "latitude": 45.166081,
+      "longitude": 5.979746,
+      "altitude": 2745.7,
+      "distance": 8706
+    },
+    {
+      "idx": 235,
+      "fixTime": "2026-08-06T09:47:05.000+00:00",
+      "latitude": 45.166488,
+      "longitude": 5.979997,
+      "altitude": 2768.5,
+      "distance": 8763
+    },
+    {
+      "idx": 236,
+      "fixTime": "2026-08-06T09:48:49.000+00:00",
+      "latitude": 45.166901,
+      "longitude": 5.980553,
+      "altitude": 2788.5,
+      "distance": 8837
+    },
+    {
+      "idx": 237,
+      "fixTime": "2026-08-06T09:49:06.000+00:00",
+      "latitude": 45.167007,
+      "longitude": 5.980642,
+      "altitude": 2792.7,
+      "distance": 8852
+    },
+    {
+      "idx": 238,
+      "fixTime": "2026-08-06T09:49:23.000+00:00",
+      "latitude": 45.167114,
+      "longitude": 5.980743,
+      "altitude": 2796,
+      "distance": 8868
+    },
+    {
+      "idx": 239,
+      "fixTime": "2026-08-06T09:49:40.000+00:00",
+      "latitude": 45.167135,
+      "longitude": 5.980915,
+      "altitude": 2797.4,
+      "distance": 8884
+    },
+    {
+      "idx": 240,
+      "fixTime": "2026-08-06T09:50:08.000+00:00",
+      "latitude": 45.167185,
+      "longitude": 5.981211,
+      "altitude": 2804.5,
+      "distance": 8911
+    },
+    {
+      "idx": 241,
+      "fixTime": "2026-08-06T09:50:38.000+00:00",
+      "latitude": 45.16722,
+      "longitude": 5.981349,
+      "altitude": 2807,
+      "distance": 8924
+    },
+    {
+      "idx": 242,
+      "fixTime": "2026-08-06T09:50:58.000+00:00",
+      "latitude": 45.167217,
+      "longitude": 5.98154,
+      "altitude": 2809.7,
+      "distance": 8941
+    },
+    {
+      "idx": 243,
+      "fixTime": "2026-08-06T09:56:12.000+00:00",
+      "latitude": 45.167017,
+      "longitude": 5.981669,
+      "altitude": 2813.1,
+      "distance": 8971
+    },
+    {
+      "idx": 244,
+      "fixTime": "2026-08-06T09:56:23.000+00:00",
+      "latitude": 45.166932,
+      "longitude": 5.981701,
+      "altitude": 2813.4,
+      "distance": 8982
+    },
+    {
+      "idx": 245,
+      "fixTime": "2026-08-06T09:56:40.000+00:00",
+      "latitude": 45.166771,
+      "longitude": 5.981828,
+      "altitude": 2807,
+      "distance": 9005
+    },
+    {
+      "idx": 246,
+      "fixTime": "2026-08-06T09:56:53.000+00:00",
+      "latitude": 45.166699,
+      "longitude": 5.981924,
+      "altitude": 2806.5,
+      "distance": 9018
+    },
+    {
+      "idx": 247,
+      "fixTime": "2026-08-06T09:57:28.000+00:00",
+      "latitude": 45.166745,
+      "longitude": 5.98222,
+      "altitude": 2806.4,
+      "distance": 9046
+    },
+    {
+      "idx": 248,
+      "fixTime": "2026-08-06T09:57:53.000+00:00",
+      "latitude": 45.16677,
+      "longitude": 5.982512,
+      "altitude": 2806.7,
+      "distance": 9072
+    },
+    {
+      "idx": 249,
+      "fixTime": "2026-08-06T09:58:35.000+00:00",
+      "latitude": 45.166931,
+      "longitude": 5.982856,
+      "altitude": 2807.3,
+      "distance": 9110
+    },
+    {
+      "idx": 250,
+      "fixTime": "2026-08-06T09:59:23.000+00:00",
+      "latitude": 45.166868,
+      "longitude": 5.983097,
+      "altitude": 2801.4,
+      "distance": 9133
+    },
+    {
+      "idx": 251,
+      "fixTime": "2026-08-06T09:59:53.000+00:00",
+      "latitude": 45.166842,
+      "longitude": 5.983443,
+      "altitude": 2795.2,
+      "distance": 9164
+    },
+    {
+      "idx": 252,
+      "fixTime": "2026-08-06T10:00:03.000+00:00",
+      "latitude": 45.166865,
+      "longitude": 5.983549,
+      "altitude": 2794.4,
+      "distance": 9174
+    },
+    {
+      "idx": 253,
+      "fixTime": "2026-08-06T10:00:53.000+00:00",
+      "latitude": 45.166995,
+      "longitude": 5.984137,
+      "altitude": 2798.7,
+      "distance": 9228
+    },
+    {
+      "idx": 254,
+      "fixTime": "2026-08-06T10:01:23.000+00:00",
+      "latitude": 45.167035,
+      "longitude": 5.984492,
+      "altitude": 2803.4,
+      "distance": 9260
+    },
+    {
+      "idx": 255,
+      "fixTime": "2026-08-06T10:03:19.000+00:00",
+      "latitude": 45.167252,
+      "longitude": 5.985429,
+      "altitude": 2826,
+      "distance": 9348
+    },
+    {
+      "idx": 256,
+      "fixTime": "2026-08-06T10:03:35.000+00:00",
+      "latitude": 45.167232,
+      "longitude": 5.985624,
+      "altitude": 2827.7,
+      "distance": 9365
+    },
+    {
+      "idx": 257,
+      "fixTime": "2026-08-06T10:03:53.000+00:00",
+      "latitude": 45.167238,
+      "longitude": 5.985812,
+      "altitude": 2832.7,
+      "distance": 9382
+    },
+    {
+      "idx": 258,
+      "fixTime": "2026-08-06T10:04:13.000+00:00",
+      "latitude": 45.167239,
+      "longitude": 5.986028,
+      "altitude": 2835.7,
+      "distance": 9401
+    },
+    {
+      "idx": 259,
+      "fixTime": "2026-08-06T10:05:22.000+00:00",
+      "latitude": 45.167342,
+      "longitude": 5.986485,
+      "altitude": 2846.8,
+      "distance": 9444
+    },
+    {
+      "idx": 260,
+      "fixTime": "2026-08-06T10:06:22.000+00:00",
+      "latitude": 45.167521,
+      "longitude": 5.986742,
+      "altitude": 2857.3,
+      "distance": 9477
+    },
+    {
+      "idx": 261,
+      "fixTime": "2026-08-06T10:09:22.000+00:00",
+      "latitude": 45.16798,
+      "longitude": 5.987675,
+      "altitude": 2894.7,
+      "distance": 9578
+    },
+    {
+      "idx": 262,
+      "fixTime": "2026-08-06T10:10:53.000+00:00",
+      "latitude": 45.168263,
+      "longitude": 5.988004,
+      "altitude": 2911.3,
+      "distance": 9624
+    },
+    {
+      "idx": 263,
+      "fixTime": "2026-08-06T10:11:53.000+00:00",
+      "latitude": 45.168439,
+      "longitude": 5.988095,
+      "altitude": 2922.2,
+      "distance": 9648
+    },
+    {
+      "idx": 264,
+      "fixTime": "2026-08-06T10:19:20.000+00:00",
+      "latitude": 45.168621,
+      "longitude": 5.988215,
+      "altitude": 2929.4,
+      "distance": 9674
+    },
+    {
+      "idx": 265,
+      "fixTime": "2026-08-06T10:27:34.000+00:00",
+      "latitude": 45.16856,
+      "longitude": 5.988102,
+      "altitude": 2929.8,
+      "distance": 9689
+    },
+    {
+      "idx": 266,
+      "fixTime": "2026-08-06T10:28:28.000+00:00",
+      "latitude": 45.168342,
+      "longitude": 5.98806,
+      "altitude": 2921.3,
+      "distance": 9718
+    },
+    {
+      "idx": 267,
+      "fixTime": "2026-08-06T10:28:58.000+00:00",
+      "latitude": 45.168111,
+      "longitude": 5.98801,
+      "altitude": 2911.9,
+      "distance": 9747
+    },
+    {
+      "idx": 268,
+      "fixTime": "2026-08-06T10:29:20.000+00:00",
+      "latitude": 45.167848,
+      "longitude": 5.987939,
+      "altitude": 2901.8,
+      "distance": 9781
+    },
+    {
+      "idx": 269,
+      "fixTime": "2026-08-06T10:29:28.000+00:00",
+      "latitude": 45.167722,
+      "longitude": 5.987983,
+      "altitude": 2898,
+      "distance": 9798
+    },
+    {
+      "idx": 270,
+      "fixTime": "2026-08-06T10:29:35.000+00:00",
+      "latitude": 45.167593,
+      "longitude": 5.987988,
+      "altitude": 2892.9,
+      "distance": 9814
+    },
+    {
+      "idx": 271,
+      "fixTime": "2026-08-06T10:29:58.000+00:00",
+      "latitude": 45.167402,
+      "longitude": 5.987861,
+      "altitude": 2883.4,
+      "distance": 9842
+    },
+    {
+      "idx": 272,
+      "fixTime": "2026-08-06T10:30:58.000+00:00",
+      "latitude": 45.167232,
+      "longitude": 5.98775,
+      "altitude": 2879.4,
+      "distance": 9865
+    },
+    {
+      "idx": 273,
+      "fixTime": "2026-08-06T10:31:17.000+00:00",
+      "latitude": 45.167021,
+      "longitude": 5.987662,
+      "altitude": 2871.6,
+      "distance": 9893
+    },
+    {
+      "idx": 274,
+      "fixTime": "2026-08-06T10:31:26.000+00:00",
+      "latitude": 45.167003,
+      "longitude": 5.987541,
+      "altitude": 2867.6,
+      "distance": 9904
+    },
+    {
+      "idx": 275,
+      "fixTime": "2026-08-06T10:31:36.000+00:00",
+      "latitude": 45.166951,
+      "longitude": 5.987441,
+      "altitude": 2863.7,
+      "distance": 9916
+    },
+    {
+      "idx": 276,
+      "fixTime": "2026-08-06T10:31:58.000+00:00",
+      "latitude": 45.166819,
+      "longitude": 5.98712,
+      "altitude": 2855.5,
+      "distance": 9949
+    },
+    {
+      "idx": 277,
+      "fixTime": "2026-08-06T10:32:24.000+00:00",
+      "latitude": 45.166581,
+      "longitude": 5.986696,
+      "altitude": 2848.8,
+      "distance": 9997
+    },
+    {
+      "idx": 278,
+      "fixTime": "2026-08-06T10:32:49.000+00:00",
+      "latitude": 45.166705,
+      "longitude": 5.986069,
+      "altitude": 2837.6,
+      "distance": 10057
+    },
+    {
+      "idx": 279,
+      "fixTime": "2026-08-06T10:32:58.000+00:00",
+      "latitude": 45.166667,
+      "longitude": 5.985835,
+      "altitude": 2833.6,
+      "distance": 10079
+    },
+    {
+      "idx": 280,
+      "fixTime": "2026-08-06T10:33:04.000+00:00",
+      "latitude": 45.166694,
+      "longitude": 5.985705,
+      "altitude": 2830.5,
+      "distance": 10091
+    },
+    {
+      "idx": 281,
+      "fixTime": "2026-08-06T10:34:23.000+00:00",
+      "latitude": 45.166522,
+      "longitude": 5.985573,
+      "altitude": 2821.8,
+      "distance": 10117
+    },
+    {
+      "idx": 282,
+      "fixTime": "2026-08-06T10:34:43.000+00:00",
+      "latitude": 45.166475,
+      "longitude": 5.985366,
+      "altitude": 2817.9,
+      "distance": 10138
+    },
+    {
+      "idx": 283,
+      "fixTime": "2026-08-06T10:35:15.000+00:00",
+      "latitude": 45.166384,
+      "longitude": 5.985061,
+      "altitude": 2811,
+      "distance": 10167
+    },
+    {
+      "idx": 284,
+      "fixTime": "2026-08-06T10:35:28.000+00:00",
+      "latitude": 45.166323,
+      "longitude": 5.984847,
+      "altitude": 2806.1,
+      "distance": 10187
+    },
+    {
+      "idx": 285,
+      "fixTime": "2026-08-06T10:35:39.000+00:00",
+      "latitude": 45.16631,
+      "longitude": 5.98472,
+      "altitude": 2800.3,
+      "distance": 10198
+    },
+    {
+      "idx": 286,
+      "fixTime": "2026-08-06T10:35:53.000+00:00",
+      "latitude": 45.166145,
+      "longitude": 5.984624,
+      "altitude": 2793.6,
+      "distance": 10222
+    },
+    {
+      "idx": 287,
+      "fixTime": "2026-08-06T10:36:19.000+00:00",
+      "latitude": 45.166053,
+      "longitude": 5.984605,
+      "altitude": 2793.9,
+      "distance": 10234
+    },
+    {
+      "idx": 288,
+      "fixTime": "2026-08-06T10:36:38.000+00:00",
+      "latitude": 45.165969,
+      "longitude": 5.98443,
+      "altitude": 2789.7,
+      "distance": 10254
+    },
+    {
+      "idx": 289,
+      "fixTime": "2026-08-06T10:36:55.000+00:00",
+      "latitude": 45.165697,
+      "longitude": 5.984201,
+      "altitude": 2784.6,
+      "distance": 10295
+    },
+    {
+      "idx": 290,
+      "fixTime": "2026-08-06T10:37:05.000+00:00",
+      "latitude": 45.165631,
+      "longitude": 5.984089,
+      "altitude": 2785.5,
+      "distance": 10308
+    },
+    {
+      "idx": 291,
+      "fixTime": "2026-08-06T10:37:16.000+00:00",
+      "latitude": 45.165606,
+      "longitude": 5.983927,
+      "altitude": 2783.1,
+      "distance": 10323
+    },
+    {
+      "idx": 292,
+      "fixTime": "2026-08-06T10:37:28.000+00:00",
+      "latitude": 45.165617,
+      "longitude": 5.983713,
+      "altitude": 2779.3,
+      "distance": 10342
+    },
+    {
+      "idx": 293,
+      "fixTime": "2026-08-06T10:37:36.000+00:00",
+      "latitude": 45.165592,
+      "longitude": 5.983538,
+      "altitude": 2775.3,
+      "distance": 10358
+    },
+    {
+      "idx": 294,
+      "fixTime": "2026-08-06T10:37:45.000+00:00",
+      "latitude": 45.165488,
+      "longitude": 5.983329,
+      "altitude": 2772.8,
+      "distance": 10381
+    },
+    {
+      "idx": 295,
+      "fixTime": "2026-08-06T10:37:56.000+00:00",
+      "latitude": 45.165442,
+      "longitude": 5.983107,
+      "altitude": 2771.5,
+      "distance": 10402
+    },
+    {
+      "idx": 296,
+      "fixTime": "2026-08-06T10:38:12.000+00:00",
+      "latitude": 45.165373,
+      "longitude": 5.982716,
+      "altitude": 2770.3,
+      "distance": 10437
+    },
+    {
+      "idx": 297,
+      "fixTime": "2026-08-06T10:38:28.000+00:00",
+      "latitude": 45.165375,
+      "longitude": 5.982473,
+      "altitude": 2766.7,
+      "distance": 10459
+    },
+    {
+      "idx": 298,
+      "fixTime": "2026-08-06T10:38:51.000+00:00",
+      "latitude": 45.165349,
+      "longitude": 5.982038,
+      "altitude": 2759.1,
+      "distance": 10498
+    },
+    {
+      "idx": 299,
+      "fixTime": "2026-08-06T10:38:58.000+00:00",
+      "latitude": 45.165402,
+      "longitude": 5.981953,
+      "altitude": 2758.8,
+      "distance": 10508
+    },
+    {
+      "idx": 300,
+      "fixTime": "2026-08-06T10:39:08.000+00:00",
+      "latitude": 45.165404,
+      "longitude": 5.981779,
+      "altitude": 2758.6,
+      "distance": 10524
+    },
+    {
+      "idx": 301,
+      "fixTime": "2026-08-06T10:39:27.000+00:00",
+      "latitude": 45.165321,
+      "longitude": 5.981393,
+      "altitude": 2751.9,
+      "distance": 10560
+    },
+    {
+      "idx": 302,
+      "fixTime": "2026-08-06T10:40:50.000+00:00",
+      "latitude": 45.165324,
+      "longitude": 5.9811,
+      "altitude": 2740,
+      "distance": 10586
+    },
+    {
+      "idx": 303,
+      "fixTime": "2026-08-06T10:41:28.000+00:00",
+      "latitude": 45.165405,
+      "longitude": 5.980641,
+      "altitude": 2731.1,
+      "distance": 10628
+    },
+    {
+      "idx": 304,
+      "fixTime": "2026-08-06T10:41:39.000+00:00",
+      "latitude": 45.165482,
+      "longitude": 5.980363,
+      "altitude": 2723.3,
+      "distance": 10655
+    },
+    {
+      "idx": 305,
+      "fixTime": "2026-08-06T10:41:58.000+00:00",
+      "latitude": 45.165481,
+      "longitude": 5.980065,
+      "altitude": 2726.6,
+      "distance": 10681
+    },
+    {
+      "idx": 306,
+      "fixTime": "2026-08-06T10:42:25.000+00:00",
+      "latitude": 45.16537,
+      "longitude": 5.979407,
+      "altitude": 2723.7,
+      "distance": 10742
+    },
+    {
+      "idx": 307,
+      "fixTime": "2026-08-06T10:42:53.000+00:00",
+      "latitude": 45.165426,
+      "longitude": 5.978658,
+      "altitude": 2715,
+      "distance": 10809
+    },
+    {
+      "idx": 308,
+      "fixTime": "2026-08-06T10:43:23.000+00:00",
+      "latitude": 45.16554,
+      "longitude": 5.977991,
+      "altitude": 2709.6,
+      "distance": 10870
+    },
+    {
+      "idx": 309,
+      "fixTime": "2026-08-06T10:43:28.000+00:00",
+      "latitude": 45.165541,
+      "longitude": 5.977868,
+      "altitude": 2704.8,
+      "distance": 10881
+    },
+    {
+      "idx": 310,
+      "fixTime": "2026-08-06T10:43:58.000+00:00",
+      "latitude": 45.165497,
+      "longitude": 5.977276,
+      "altitude": 2693.3,
+      "distance": 10933
+    },
+    {
+      "idx": 311,
+      "fixTime": "2026-08-06T10:44:58.000+00:00",
+      "latitude": 45.165397,
+      "longitude": 5.976584,
+      "altitude": 2671.4,
+      "distance": 10996
+    },
+    {
+      "idx": 312,
+      "fixTime": "2026-08-06T10:45:17.000+00:00",
+      "latitude": 45.165412,
+      "longitude": 5.976472,
+      "altitude": 2666.3,
+      "distance": 11006
+    },
+    {
+      "idx": 313,
+      "fixTime": "2026-08-06T10:45:26.000+00:00",
+      "latitude": 45.165464,
+      "longitude": 5.976388,
+      "altitude": 2662.7,
+      "distance": 11016
+    },
+    {
+      "idx": 314,
+      "fixTime": "2026-08-06T10:45:37.000+00:00",
+      "latitude": 45.16547,
+      "longitude": 5.976234,
+      "altitude": 2657.4,
+      "distance": 11030
+    },
+    {
+      "idx": 315,
+      "fixTime": "2026-08-06T10:45:48.000+00:00",
+      "latitude": 45.165435,
+      "longitude": 5.975995,
+      "altitude": 2651.4,
+      "distance": 11052
+    },
+    {
+      "idx": 316,
+      "fixTime": "2026-08-06T10:45:58.000+00:00",
+      "latitude": 45.165374,
+      "longitude": 5.975843,
+      "altitude": 2646.7,
+      "distance": 11068
+    },
+    {
+      "idx": 317,
+      "fixTime": "2026-08-06T10:46:26.000+00:00",
+      "latitude": 45.165294,
+      "longitude": 5.975328,
+      "altitude": 2638.7,
+      "distance": 11115
+    },
+    {
+      "idx": 318,
+      "fixTime": "2026-08-06T10:46:36.000+00:00",
+      "latitude": 45.165248,
+      "longitude": 5.975214,
+      "altitude": 2637.1,
+      "distance": 11126
+    },
+    {
+      "idx": 319,
+      "fixTime": "2026-08-06T10:46:47.000+00:00",
+      "latitude": 45.165159,
+      "longitude": 5.975175,
+      "altitude": 2633.3,
+      "distance": 11139
+    },
+    {
+      "idx": 320,
+      "fixTime": "2026-08-06T10:47:05.000+00:00",
+      "latitude": 45.165059,
+      "longitude": 5.975216,
+      "altitude": 2626.4,
+      "distance": 11153
+    },
+    {
+      "idx": 321,
+      "fixTime": "2026-08-06T10:47:28.000+00:00",
+      "latitude": 45.164918,
+      "longitude": 5.974888,
+      "altitude": 2619.2,
+      "distance": 11190
+    },
+    {
+      "idx": 322,
+      "fixTime": "2026-08-06T10:47:58.000+00:00",
+      "latitude": 45.164779,
+      "longitude": 5.97438,
+      "altitude": 2615.6,
+      "distance": 11239
+    },
+    {
+      "idx": 323,
+      "fixTime": "2026-08-06T10:48:07.000+00:00",
+      "latitude": 45.16485,
+      "longitude": 5.97426,
+      "altitude": 2612.5,
+      "distance": 11253
+    },
+    {
+      "idx": 324,
+      "fixTime": "2026-08-06T10:48:27.000+00:00",
+      "latitude": 45.164858,
+      "longitude": 5.974143,
+      "altitude": 2609.4,
+      "distance": 11264
+    },
+    {
+      "idx": 325,
+      "fixTime": "2026-08-06T10:48:38.000+00:00",
+      "latitude": 45.164757,
+      "longitude": 5.974005,
+      "altitude": 2604.8,
+      "distance": 11283
+    },
+    {
+      "idx": 326,
+      "fixTime": "2026-08-06T10:48:55.000+00:00",
+      "latitude": 45.164645,
+      "longitude": 5.973796,
+      "altitude": 2600.4,
+      "distance": 11306
+    },
+    {
+      "idx": 327,
+      "fixTime": "2026-08-06T10:49:14.000+00:00",
+      "latitude": 45.164768,
+      "longitude": 5.97358,
+      "altitude": 2597.1,
+      "distance": 11332
+    },
+    {
+      "idx": 328,
+      "fixTime": "2026-08-06T10:49:28.000+00:00",
+      "latitude": 45.164645,
+      "longitude": 5.973453,
+      "altitude": 2595.6,
+      "distance": 11353
+    },
+    {
+      "idx": 329,
+      "fixTime": "2026-08-06T10:49:33.000+00:00",
+      "latitude": 45.164601,
+      "longitude": 5.973347,
+      "altitude": 2593.5,
+      "distance": 11364
+    },
+    {
+      "idx": 330,
+      "fixTime": "2026-08-06T10:49:41.000+00:00",
+      "latitude": 45.164585,
+      "longitude": 5.973217,
+      "altitude": 2590.5,
+      "distance": 11376
+    },
+    {
+      "idx": 331,
+      "fixTime": "2026-08-06T10:49:48.000+00:00",
+      "latitude": 45.164635,
+      "longitude": 5.973103,
+      "altitude": 2587.2,
+      "distance": 11388
+    },
+    {
+      "idx": 332,
+      "fixTime": "2026-08-06T10:49:57.000+00:00",
+      "latitude": 45.164644,
+      "longitude": 5.972833,
+      "altitude": 2585.1,
+      "distance": 11413
+    },
+    {
+      "idx": 333,
+      "fixTime": "2026-08-06T10:50:03.000+00:00",
+      "latitude": 45.164722,
+      "longitude": 5.972757,
+      "altitude": 2582.8,
+      "distance": 11425
+    },
+    {
+      "idx": 334,
+      "fixTime": "2026-08-06T10:50:13.000+00:00",
+      "latitude": 45.164767,
+      "longitude": 5.972593,
+      "altitude": 2579.3,
+      "distance": 11441
+    },
+    {
+      "idx": 335,
+      "fixTime": "2026-08-06T10:51:24.000+00:00",
+      "latitude": 45.164928,
+      "longitude": 5.972517,
+      "altitude": 2568.1,
+      "distance": 11464
+    },
+    {
+      "idx": 336,
+      "fixTime": "2026-08-06T10:51:57.000+00:00",
+      "latitude": 45.165049,
+      "longitude": 5.972327,
+      "altitude": 2557.7,
+      "distance": 11488
+    },
+    {
+      "idx": 337,
+      "fixTime": "2026-08-06T10:52:15.000+00:00",
+      "latitude": 45.165116,
+      "longitude": 5.97237,
+      "altitude": 2553.6,
+      "distance": 11498
+    },
+    {
+      "idx": 338,
+      "fixTime": "2026-08-06T10:53:56.000+00:00",
+      "latitude": 45.165493,
+      "longitude": 5.972325,
+      "altitude": 2529.4,
+      "distance": 11548
+    },
+    {
+      "idx": 339,
+      "fixTime": "2026-08-06T10:54:05.000+00:00",
+      "latitude": 45.16557,
+      "longitude": 5.97236,
+      "altitude": 2528.4,
+      "distance": 11558
+    },
+    {
+      "idx": 340,
+      "fixTime": "2026-08-06T10:54:28.000+00:00",
+      "latitude": 45.165655,
+      "longitude": 5.972257,
+      "altitude": 2521.4,
+      "distance": 11573
+    },
+    {
+      "idx": 341,
+      "fixTime": "2026-08-06T10:55:14.000+00:00",
+      "latitude": 45.165801,
+      "longitude": 5.972051,
+      "altitude": 2509.6,
+      "distance": 11599
+    },
+    {
+      "idx": 342,
+      "fixTime": "2026-08-06T10:56:28.000+00:00",
+      "latitude": 45.165985,
+      "longitude": 5.971763,
+      "altitude": 2492.7,
+      "distance": 11633
+    },
+    {
+      "idx": 343,
+      "fixTime": "2026-08-06T10:57:50.000+00:00",
+      "latitude": 45.166398,
+      "longitude": 5.970982,
+      "altitude": 2475.8,
+      "distance": 11720
+    },
+    {
+      "idx": 344,
+      "fixTime": "2026-08-06T10:57:58.000+00:00",
+      "latitude": 45.166443,
+      "longitude": 5.970835,
+      "altitude": 2476.7,
+      "distance": 11734
+    },
+    {
+      "idx": 345,
+      "fixTime": "2026-08-06T10:58:17.000+00:00",
+      "latitude": 45.166653,
+      "longitude": 5.970783,
+      "altitude": 2475.3,
+      "distance": 11763
+    },
+    {
+      "idx": 346,
+      "fixTime": "2026-08-06T10:58:28.000+00:00",
+      "latitude": 45.166704,
+      "longitude": 5.970558,
+      "altitude": 2470.3,
+      "distance": 11785
+    },
+    {
+      "idx": 347,
+      "fixTime": "2026-08-06T10:58:50.000+00:00",
+      "latitude": 45.166585,
+      "longitude": 5.969943,
+      "altitude": 2465.1,
+      "distance": 11843
+    },
+    {
+      "idx": 348,
+      "fixTime": "2026-08-06T10:58:58.000+00:00",
+      "latitude": 45.166547,
+      "longitude": 5.969771,
+      "altitude": 2461.8,
+      "distance": 11859
+    },
+    {
+      "idx": 349,
+      "fixTime": "2026-08-06T10:59:07.000+00:00",
+      "latitude": 45.166579,
+      "longitude": 5.969581,
+      "altitude": 2459.5,
+      "distance": 11877
+    },
+    {
+      "idx": 350,
+      "fixTime": "2026-08-06T10:59:25.000+00:00",
+      "latitude": 45.166671,
+      "longitude": 5.969184,
+      "altitude": 2456.5,
+      "distance": 11914
+    },
+    {
+      "idx": 351,
+      "fixTime": "2026-08-06T10:59:33.000+00:00",
+      "latitude": 45.166667,
+      "longitude": 5.968958,
+      "altitude": 2452.9,
+      "distance": 11934
+    },
+    {
+      "idx": 352,
+      "fixTime": "2026-08-06T10:59:52.000+00:00",
+      "latitude": 45.166575,
+      "longitude": 5.968402,
+      "altitude": 2445,
+      "distance": 11985
+    },
+    {
+      "idx": 353,
+      "fixTime": "2026-08-06T10:59:58.000+00:00",
+      "latitude": 45.166528,
+      "longitude": 5.968228,
+      "altitude": 2445,
+      "distance": 12001
+    },
+    {
+      "idx": 354,
+      "fixTime": "2026-08-06T11:00:10.000+00:00",
+      "latitude": 45.166423,
+      "longitude": 5.967958,
+      "altitude": 2441.2,
+      "distance": 12028
+    },
+    {
+      "idx": 355,
+      "fixTime": "2026-08-06T11:00:18.000+00:00",
+      "latitude": 45.166364,
+      "longitude": 5.967763,
+      "altitude": 2436.8,
+      "distance": 12047
+    },
+    {
+      "idx": 356,
+      "fixTime": "2026-08-06T11:00:21.000+00:00",
+      "latitude": 45.166343,
+      "longitude": 5.967665,
+      "altitude": 2436.2,
+      "distance": 12056
+    },
+    {
+      "idx": 357,
+      "fixTime": "2026-08-06T11:00:28.000+00:00",
+      "latitude": 45.166265,
+      "longitude": 5.967458,
+      "altitude": 2434.2,
+      "distance": 12077
+    },
+    {
+      "idx": 358,
+      "fixTime": "2026-08-06T11:00:49.000+00:00",
+      "latitude": 45.16612,
+      "longitude": 5.966891,
+      "altitude": 2427.1,
+      "distance": 12130
+    },
+    {
+      "idx": 359,
+      "fixTime": "2026-08-06T11:00:58.000+00:00",
+      "latitude": 45.166042,
+      "longitude": 5.9666,
+      "altitude": 2424.9,
+      "distance": 12158
+    },
+    {
+      "idx": 360,
+      "fixTime": "2026-08-06T11:01:16.000+00:00",
+      "latitude": 45.165912,
+      "longitude": 5.965992,
+      "altitude": 2424.3,
+      "distance": 12214
+    },
+    {
+      "idx": 361,
+      "fixTime": "2026-08-06T11:01:28.000+00:00",
+      "latitude": 45.165907,
+      "longitude": 5.965546,
+      "altitude": 2426.6,
+      "distance": 12254
+    },
+    {
+      "idx": 362,
+      "fixTime": "2026-08-06T11:01:58.000+00:00",
+      "latitude": 45.16577,
+      "longitude": 5.965047,
+      "altitude": 2420.3,
+      "distance": 12302
+    },
+    {
+      "idx": 363,
+      "fixTime": "2026-08-06T11:02:11.000+00:00",
+      "latitude": 45.165646,
+      "longitude": 5.964743,
+      "altitude": 2416.9,
+      "distance": 12333
+    },
+    {
+      "idx": 364,
+      "fixTime": "2026-08-06T11:02:21.000+00:00",
+      "latitude": 45.165662,
+      "longitude": 5.964438,
+      "altitude": 2412.2,
+      "distance": 12361
+    },
+    {
+      "idx": 365,
+      "fixTime": "2026-08-06T11:02:28.000+00:00",
+      "latitude": 45.165624,
+      "longitude": 5.964242,
+      "altitude": 2409.4,
+      "distance": 12379
+    },
+    {
+      "idx": 366,
+      "fixTime": "2026-08-06T11:02:34.000+00:00",
+      "latitude": 45.165572,
+      "longitude": 5.964081,
+      "altitude": 2407.6,
+      "distance": 12394
+    },
+    {
+      "idx": 367,
+      "fixTime": "2026-08-06T11:02:48.000+00:00",
+      "latitude": 45.165406,
+      "longitude": 5.963953,
+      "altitude": 2408.5,
+      "distance": 12419
+    },
+    {
+      "idx": 368,
+      "fixTime": "2026-08-06T11:02:55.000+00:00",
+      "latitude": 45.16533,
+      "longitude": 5.963926,
+      "altitude": 2406.7,
+      "distance": 12429
+    },
+    {
+      "idx": 369,
+      "fixTime": "2026-08-06T11:03:06.000+00:00",
+      "latitude": 45.165181,
+      "longitude": 5.963854,
+      "altitude": 2404.8,
+      "distance": 12449
+    },
+    {
+      "idx": 370,
+      "fixTime": "2026-08-06T11:03:18.000+00:00",
+      "latitude": 45.165093,
+      "longitude": 5.963716,
+      "altitude": 2403.7,
+      "distance": 12466
+    },
+    {
+      "idx": 371,
+      "fixTime": "2026-08-06T11:03:27.000+00:00",
+      "latitude": 45.164993,
+      "longitude": 5.963627,
+      "altitude": 2404.3,
+      "distance": 12481
+    },
+    {
+      "idx": 372,
+      "fixTime": "2026-08-06T11:04:28.000+00:00",
+      "latitude": 45.164957,
+      "longitude": 5.963389,
+      "altitude": 2407.1,
+      "distance": 12503
+    },
+    {
+      "idx": 373,
+      "fixTime": "2026-08-06T11:04:53.000+00:00",
+      "latitude": 45.164829,
+      "longitude": 5.962991,
+      "altitude": 2407.1,
+      "distance": 12542
+    },
+    {
+      "idx": 374,
+      "fixTime": "2026-08-06T11:05:20.000+00:00",
+      "latitude": 45.164583,
+      "longitude": 5.962616,
+      "altitude": 2408.5,
+      "distance": 12588
+    },
+    {
+      "idx": 375,
+      "fixTime": "2026-08-06T11:05:28.000+00:00",
+      "latitude": 45.164539,
+      "longitude": 5.962414,
+      "altitude": 2409.1,
+      "distance": 12607
+    },
+    {
+      "idx": 376,
+      "fixTime": "2026-08-06T11:05:57.000+00:00",
+      "latitude": 45.164318,
+      "longitude": 5.961913,
+      "altitude": 2409,
+      "distance": 12660
+    },
+    {
+      "idx": 377,
+      "fixTime": "2026-08-06T11:06:19.000+00:00",
+      "latitude": 45.164112,
+      "longitude": 5.961277,
+      "altitude": 2405.5,
+      "distance": 12722
+    },
+    {
+      "idx": 378,
+      "fixTime": "2026-08-06T11:06:28.000+00:00",
+      "latitude": 45.163981,
+      "longitude": 5.961026,
+      "altitude": 2401.3,
+      "distance": 12750
+    },
+    {
+      "idx": 379,
+      "fixTime": "2026-08-06T11:06:46.000+00:00",
+      "latitude": 45.163745,
+      "longitude": 5.96047,
+      "altitude": 2396.1,
+      "distance": 12807
+    },
+    {
+      "idx": 380,
+      "fixTime": "2026-08-06T11:06:58.000+00:00",
+      "latitude": 45.163632,
+      "longitude": 5.960089,
+      "altitude": 2396.9,
+      "distance": 12844
+    },
+    {
+      "idx": 381,
+      "fixTime": "2026-08-06T11:07:17.000+00:00",
+      "latitude": 45.163541,
+      "longitude": 5.95942,
+      "altitude": 2396.8,
+      "distance": 12904
+    },
+    {
+      "idx": 382,
+      "fixTime": "2026-08-06T11:07:28.000+00:00",
+      "latitude": 45.163447,
+      "longitude": 5.959025,
+      "altitude": 2392,
+      "distance": 12941
+    },
+    {
+      "idx": 383,
+      "fixTime": "2026-08-06T11:08:40.000+00:00",
+      "latitude": 45.163482,
+      "longitude": 5.958509,
+      "altitude": 2383.8,
+      "distance": 12988
+    },
+    {
+      "idx": 384,
+      "fixTime": "2026-08-06T11:08:52.000+00:00",
+      "latitude": 45.163522,
+      "longitude": 5.958327,
+      "altitude": 2381.9,
+      "distance": 13005
+    },
+    {
+      "idx": 385,
+      "fixTime": "2026-08-06T11:08:58.000+00:00",
+      "latitude": 45.163576,
+      "longitude": 5.95825,
+      "altitude": 2380.4,
+      "distance": 13015
+    },
+    {
+      "idx": 386,
+      "fixTime": "2026-08-06T11:09:22.000+00:00",
+      "latitude": 45.163854,
+      "longitude": 5.957794,
+      "altitude": 2377.9,
+      "distance": 13068
+    },
+    {
+      "idx": 387,
+      "fixTime": "2026-08-06T11:09:28.000+00:00",
+      "latitude": 45.163971,
+      "longitude": 5.957674,
+      "altitude": 2378.5,
+      "distance": 13086
+    },
+    {
+      "idx": 388,
+      "fixTime": "2026-08-06T11:09:46.000+00:00",
+      "latitude": 45.164298,
+      "longitude": 5.957275,
+      "altitude": 2374.4,
+      "distance": 13140
+    },
+    {
+      "idx": 389,
+      "fixTime": "2026-08-06T11:09:58.000+00:00",
+      "latitude": 45.164399,
+      "longitude": 5.956839,
+      "altitude": 2375.1,
+      "distance": 13182
+    },
+    {
+      "idx": 390,
+      "fixTime": "2026-08-06T11:10:11.000+00:00",
+      "latitude": 45.164511,
+      "longitude": 5.956481,
+      "altitude": 2374,
+      "distance": 13217
+    },
+    {
+      "idx": 391,
+      "fixTime": "2026-08-06T11:10:23.000+00:00",
+      "latitude": 45.16451,
+      "longitude": 5.956245,
+      "altitude": 2374.2,
+      "distance": 13238
+    },
+    {
+      "idx": 392,
+      "fixTime": "2026-08-06T11:10:28.000+00:00",
+      "latitude": 45.16452,
+      "longitude": 5.956138,
+      "altitude": 2374,
+      "distance": 13247
+    },
+    {
+      "idx": 393,
+      "fixTime": "2026-08-06T11:10:58.000+00:00",
+      "latitude": 45.16453,
+      "longitude": 5.955587,
+      "altitude": 2376,
+      "distance": 13296
+    },
+    {
+      "idx": 394,
+      "fixTime": "2026-08-06T11:11:10.000+00:00",
+      "latitude": 45.164567,
+      "longitude": 5.955416,
+      "altitude": 2374.8,
+      "distance": 13312
+    },
+    {
+      "idx": 395,
+      "fixTime": "2026-08-06T11:11:28.000+00:00",
+      "latitude": 45.164585,
+      "longitude": 5.95526,
+      "altitude": 2375.5,
+      "distance": 13326
+    },
+    {
+      "idx": 396,
+      "fixTime": "2026-08-06T11:11:39.000+00:00",
+      "latitude": 45.164646,
+      "longitude": 5.955127,
+      "altitude": 2374.8,
+      "distance": 13340
+    },
+    {
+      "idx": 397,
+      "fixTime": "2026-08-06T11:11:48.000+00:00",
+      "latitude": 45.164712,
+      "longitude": 5.955044,
+      "altitude": 2374.3,
+      "distance": 13352
+    },
+    {
+      "idx": 398,
+      "fixTime": "2026-08-06T11:11:58.000+00:00",
+      "latitude": 45.164752,
+      "longitude": 5.954863,
+      "altitude": 2372,
+      "distance": 13369
+    },
+    {
+      "idx": 399,
+      "fixTime": "2026-08-06T11:12:17.000+00:00",
+      "latitude": 45.164895,
+      "longitude": 5.954413,
+      "altitude": 2369.7,
+      "distance": 13412
+    },
+    {
+      "idx": 400,
+      "fixTime": "2026-08-06T11:13:22.000+00:00",
+      "latitude": 45.165018,
+      "longitude": 5.954316,
+      "altitude": 2368.1,
+      "distance": 13431
+    },
+    {
+      "idx": 401,
+      "fixTime": "2026-08-06T11:13:28.000+00:00",
+      "latitude": 45.165098,
+      "longitude": 5.954281,
+      "altitude": 2367.5,
+      "distance": 13441
+    },
+    {
+      "idx": 402,
+      "fixTime": "2026-08-06T11:13:40.000+00:00",
+      "latitude": 45.165224,
+      "longitude": 5.954143,
+      "altitude": 2367.1,
+      "distance": 13462
+    },
+    {
+      "idx": 403,
+      "fixTime": "2026-08-06T11:14:11.000+00:00",
+      "latitude": 45.165387,
+      "longitude": 5.953951,
+      "altitude": 2366,
+      "distance": 13488
+    },
+    {
+      "idx": 404,
+      "fixTime": "2026-08-06T11:14:28.000+00:00",
+      "latitude": 45.165559,
+      "longitude": 5.953879,
+      "altitude": 2363.8,
+      "distance": 13512
+    },
+    {
+      "idx": 405,
+      "fixTime": "2026-08-06T11:14:55.000+00:00",
+      "latitude": 45.165735,
+      "longitude": 5.9539,
+      "altitude": 2360.1,
+      "distance": 13534
+    },
+    {
+      "idx": 406,
+      "fixTime": "2026-08-06T11:15:14.000+00:00",
+      "latitude": 45.165795,
+      "longitude": 5.953959,
+      "altitude": 2360.4,
+      "distance": 13544
+    },
+    {
+      "idx": 407,
+      "fixTime": "2026-08-06T11:15:43.000+00:00",
+      "latitude": 45.165867,
+      "longitude": 5.953981,
+      "altitude": 2360.5,
+      "distance": 13554
+    },
+    {
+      "idx": 408,
+      "fixTime": "2026-08-06T11:15:58.000+00:00",
+      "latitude": 45.165988,
+      "longitude": 5.953888,
+      "altitude": 2359.7,
+      "distance": 13572
+    },
+    {
+      "idx": 409,
+      "fixTime": "2026-08-06T11:16:24.000+00:00",
+      "latitude": 45.166168,
+      "longitude": 5.953871,
+      "altitude": 2352.8,
+      "distance": 13595
+    },
+    {
+      "idx": 410,
+      "fixTime": "2026-08-06T11:19:43.000+00:00",
+      "latitude": 45.166154,
+      "longitude": 5.953156,
+      "altitude": 2317.6,
+      "distance": 13666
+    },
+    {
+      "idx": 411,
+      "fixTime": "2026-08-06T11:20:08.000+00:00",
+      "latitude": 45.166151,
+      "longitude": 5.953053,
+      "altitude": 2312.6,
+      "distance": 13675
+    },
+    {
+      "idx": 412,
+      "fixTime": "2026-08-06T11:20:27.000+00:00",
+      "latitude": 45.166187,
+      "longitude": 5.952935,
+      "altitude": 2308.3,
+      "distance": 13686
+    },
+    {
+      "idx": 413,
+      "fixTime": "2026-08-06T11:21:00.000+00:00",
+      "latitude": 45.166341,
+      "longitude": 5.9528,
+      "altitude": 2302.9,
+      "distance": 13710
+    },
+    {
+      "idx": 414,
+      "fixTime": "2026-08-06T11:21:19.000+00:00",
+      "latitude": 45.166483,
+      "longitude": 5.952804,
+      "altitude": 2300.5,
+      "distance": 13729
+    },
+    {
+      "idx": 415,
+      "fixTime": "2026-08-06T11:22:28.000+00:00",
+      "latitude": 45.166511,
+      "longitude": 5.952486,
+      "altitude": 2290.5,
+      "distance": 13760
+    },
+    {
+      "idx": 416,
+      "fixTime": "2026-08-06T11:22:43.000+00:00",
+      "latitude": 45.166585,
+      "longitude": 5.952317,
+      "altitude": 2286.1,
+      "distance": 13778
+    },
+    {
+      "idx": 417,
+      "fixTime": "2026-08-06T11:23:58.000+00:00",
+      "latitude": 45.166345,
+      "longitude": 5.951375,
+      "altitude": 2268.4,
+      "distance": 13871
+    },
+    {
+      "idx": 418,
+      "fixTime": "2026-08-06T11:24:28.000+00:00",
+      "latitude": 45.166222,
+      "longitude": 5.951034,
+      "altitude": 2264.5,
+      "distance": 13905
+    },
+    {
+      "idx": 419,
+      "fixTime": "2026-08-06T11:24:40.000+00:00",
+      "latitude": 45.16623,
+      "longitude": 5.950827,
+      "altitude": 2264,
+      "distance": 13923
+    },
+    {
+      "idx": 420,
+      "fixTime": "2026-08-06T11:24:58.000+00:00",
+      "latitude": 45.166145,
+      "longitude": 5.950568,
+      "altitude": 2259.1,
+      "distance": 13949
+    },
+    {
+      "idx": 421,
+      "fixTime": "2026-08-06T11:25:16.000+00:00",
+      "latitude": 45.166055,
+      "longitude": 5.950328,
+      "altitude": 2257.5,
+      "distance": 13973
+    },
+    {
+      "idx": 422,
+      "fixTime": "2026-08-06T11:25:28.000+00:00",
+      "latitude": 45.166062,
+      "longitude": 5.950134,
+      "altitude": 2256.7,
+      "distance": 13991
+    },
+    {
+      "idx": 423,
+      "fixTime": "2026-08-06T11:25:58.000+00:00",
+      "latitude": 45.166027,
+      "longitude": 5.949619,
+      "altitude": 2256.6,
+      "distance": 14036
+    },
+    {
+      "idx": 424,
+      "fixTime": "2026-08-06T11:26:24.000+00:00",
+      "latitude": 45.165987,
+      "longitude": 5.94932,
+      "altitude": 2258.9,
+      "distance": 14063
+    },
+    {
+      "idx": 425,
+      "fixTime": "2026-08-06T11:26:39.000+00:00",
+      "latitude": 45.165956,
+      "longitude": 5.949135,
+      "altitude": 2261.3,
+      "distance": 14080
+    },
+    {
+      "idx": 426,
+      "fixTime": "2026-08-06T11:27:01.000+00:00",
+      "latitude": 45.165925,
+      "longitude": 5.948893,
+      "altitude": 2263,
+      "distance": 14102
+    },
+    {
+      "idx": 427,
+      "fixTime": "2026-08-06T11:27:40.000+00:00",
+      "latitude": 45.166022,
+      "longitude": 5.94871,
+      "altitude": 2260.7,
+      "distance": 14123
+    },
+    {
+      "idx": 428,
+      "fixTime": "2026-08-06T11:28:02.000+00:00",
+      "latitude": 45.166091,
+      "longitude": 5.948503,
+      "altitude": 2256.6,
+      "distance": 14143
+    },
+    {
+      "idx": 429,
+      "fixTime": "2026-08-06T11:28:11.000+00:00",
+      "latitude": 45.166128,
+      "longitude": 5.948362,
+      "altitude": 2252.4,
+      "distance": 14156
+    },
+    {
+      "idx": 430,
+      "fixTime": "2026-08-06T11:28:25.000+00:00",
+      "latitude": 45.166068,
+      "longitude": 5.948302,
+      "altitude": 2249.4,
+      "distance": 14166
+    },
+    {
+      "idx": 431,
+      "fixTime": "2026-08-06T11:28:42.000+00:00",
+      "latitude": 45.165961,
+      "longitude": 5.948319,
+      "altitude": 2247,
+      "distance": 14181
+    },
+    {
+      "idx": 432,
+      "fixTime": "2026-08-06T11:28:52.000+00:00",
+      "latitude": 45.165886,
+      "longitude": 5.948263,
+      "altitude": 2241.9,
+      "distance": 14192
+    },
+    {
+      "idx": 433,
+      "fixTime": "2026-08-06T11:29:04.000+00:00",
+      "latitude": 45.165874,
+      "longitude": 5.948126,
+      "altitude": 2235,
+      "distance": 14205
+    },
+    {
+      "idx": 434,
+      "fixTime": "2026-08-06T11:29:28.000+00:00",
+      "latitude": 45.165789,
+      "longitude": 5.948035,
+      "altitude": 2227.7,
+      "distance": 14219
+    },
+    {
+      "idx": 435,
+      "fixTime": "2026-08-06T11:30:01.000+00:00",
+      "latitude": 45.1657,
+      "longitude": 5.947862,
+      "altitude": 2218.7,
+      "distance": 14238
+    },
+    {
+      "idx": 436,
+      "fixTime": "2026-08-06T11:30:09.000+00:00",
+      "latitude": 45.165602,
+      "longitude": 5.947727,
+      "altitude": 2210.7,
+      "distance": 14255
+    },
+    {
+      "idx": 437,
+      "fixTime": "2026-08-06T11:30:23.000+00:00",
+      "latitude": 45.165464,
+      "longitude": 5.947366,
+      "altitude": 2207.3,
+      "distance": 14292
+    },
+    {
+      "idx": 438,
+      "fixTime": "2026-08-06T11:30:34.000+00:00",
+      "latitude": 45.165342,
+      "longitude": 5.947321,
+      "altitude": 2204,
+      "distance": 14309
+    },
+    {
+      "idx": 439,
+      "fixTime": "2026-08-06T11:30:39.000+00:00",
+      "latitude": 45.1653,
+      "longitude": 5.947235,
+      "altitude": 2203.3,
+      "distance": 14319
+    },
+    {
+      "idx": 440,
+      "fixTime": "2026-08-06T11:30:50.000+00:00",
+      "latitude": 45.165046,
+      "longitude": 5.947125,
+      "altitude": 2200.5,
+      "distance": 14354
+    },
+    {
+      "idx": 441,
+      "fixTime": "2026-08-06T11:30:57.000+00:00",
+      "latitude": 45.164938,
+      "longitude": 5.947106,
+      "altitude": 2199.3,
+      "distance": 14367
+    },
+    {
+      "idx": 442,
+      "fixTime": "2026-08-06T11:31:16.000+00:00",
+      "latitude": 45.164564,
+      "longitude": 5.946707,
+      "altitude": 2199,
+      "distance": 14429
+    },
+    {
+      "idx": 443,
+      "fixTime": "2026-08-06T11:31:26.000+00:00",
+      "latitude": 45.164443,
+      "longitude": 5.94647,
+      "altitude": 2196.8,
+      "distance": 14455
+    },
+    {
+      "idx": 444,
+      "fixTime": "2026-08-06T11:31:35.000+00:00",
+      "latitude": 45.164435,
+      "longitude": 5.946252,
+      "altitude": 2194.9,
+      "distance": 14475
+    },
+    {
+      "idx": 445,
+      "fixTime": "2026-08-06T11:31:42.000+00:00",
+      "latitude": 45.164536,
+      "longitude": 5.94621,
+      "altitude": 2193.7,
+      "distance": 14489
+    },
+    {
+      "idx": 446,
+      "fixTime": "2026-08-06T11:31:58.000+00:00",
+      "latitude": 45.164367,
+      "longitude": 5.946081,
+      "altitude": 2190.4,
+      "distance": 14517
+    },
+    {
+      "idx": 447,
+      "fixTime": "2026-08-06T11:32:33.000+00:00",
+      "latitude": 45.164127,
+      "longitude": 5.945999,
+      "altitude": 2185.9,
+      "distance": 14549
+    },
+    {
+      "idx": 448,
+      "fixTime": "2026-08-06T11:32:50.000+00:00",
+      "latitude": 45.163982,
+      "longitude": 5.945873,
+      "altitude": 2180,
+      "distance": 14570
+    },
+    {
+      "idx": 449,
+      "fixTime": "2026-08-06T11:32:58.000+00:00",
+      "latitude": 45.163915,
+      "longitude": 5.945825,
+      "altitude": 2177.8,
+      "distance": 14580
+    },
+    {
+      "idx": 450,
+      "fixTime": "2026-08-06T11:33:44.000+00:00",
+      "latitude": 45.163679,
+      "longitude": 5.945401,
+      "altitude": 2174.5,
+      "distance": 14629
+    },
+    {
+      "idx": 451,
+      "fixTime": "2026-08-06T11:35:07.000+00:00",
+      "latitude": 45.163745,
+      "longitude": 5.945265,
+      "altitude": 2169,
+      "distance": 14645
+    },
+    {
+      "idx": 452,
+      "fixTime": "2026-08-06T11:35:18.000+00:00",
+      "latitude": 45.163778,
+      "longitude": 5.945173,
+      "altitude": 2164.8,
+      "distance": 14654
+    },
+    {
+      "idx": 453,
+      "fixTime": "2026-08-06T11:35:28.000+00:00",
+      "latitude": 45.163749,
+      "longitude": 5.944961,
+      "altitude": 2160.5,
+      "distance": 14673
+    },
+    {
+      "idx": 454,
+      "fixTime": "2026-08-06T11:35:44.000+00:00",
+      "latitude": 45.163707,
+      "longitude": 5.944539,
+      "altitude": 2151.3,
+      "distance": 14711
+    },
+    {
+      "idx": 455,
+      "fixTime": "2026-08-06T11:35:51.000+00:00",
+      "latitude": 45.163801,
+      "longitude": 5.944632,
+      "altitude": 2147.7,
+      "distance": 14728
+    },
+    {
+      "idx": 456,
+      "fixTime": "2026-08-06T11:35:58.000+00:00",
+      "latitude": 45.16392,
+      "longitude": 5.944654,
+      "altitude": 2145.8,
+      "distance": 14744
+    },
+    {
+      "idx": 457,
+      "fixTime": "2026-08-06T11:36:10.000+00:00",
+      "latitude": 45.164,
+      "longitude": 5.944481,
+      "altitude": 2141.6,
+      "distance": 14764
+    },
+    {
+      "idx": 458,
+      "fixTime": "2026-08-06T11:36:28.000+00:00",
+      "latitude": 45.163941,
+      "longitude": 5.944104,
+      "altitude": 2133.5,
+      "distance": 14799
+    },
+    {
+      "idx": 459,
+      "fixTime": "2026-08-06T11:36:46.000+00:00",
+      "latitude": 45.16395,
+      "longitude": 5.943802,
+      "altitude": 2128.5,
+      "distance": 14826
+    },
+    {
+      "idx": 460,
+      "fixTime": "2026-08-06T11:36:58.000+00:00",
+      "latitude": 45.164077,
+      "longitude": 5.943904,
+      "altitude": 2124,
+      "distance": 14848
+    },
+    {
+      "idx": 461,
+      "fixTime": "2026-08-06T11:37:07.000+00:00",
+      "latitude": 45.16415,
+      "longitude": 5.943895,
+      "altitude": 2122.2,
+      "distance": 14857
+    },
+    {
+      "idx": 462,
+      "fixTime": "2026-08-06T11:37:15.000+00:00",
+      "latitude": 45.164155,
+      "longitude": 5.943749,
+      "altitude": 2118.6,
+      "distance": 14872
+    },
+    {
+      "idx": 463,
+      "fixTime": "2026-08-06T11:37:20.000+00:00",
+      "latitude": 45.164148,
+      "longitude": 5.943631,
+      "altitude": 2118.9,
+      "distance": 14882
+    },
+    {
+      "idx": 464,
+      "fixTime": "2026-08-06T11:37:28.000+00:00",
+      "latitude": 45.164132,
+      "longitude": 5.943487,
+      "altitude": 2117.7,
+      "distance": 14895
+    },
+    {
+      "idx": 465,
+      "fixTime": "2026-08-06T11:37:49.000+00:00",
+      "latitude": 45.164254,
+      "longitude": 5.943561,
+      "altitude": 2111.6,
+      "distance": 14914
+    },
+    {
+      "idx": 466,
+      "fixTime": "2026-08-06T11:37:56.000+00:00",
+      "latitude": 45.16428,
+      "longitude": 5.943462,
+      "altitude": 2110.5,
+      "distance": 14925
+    },
+    {
+      "idx": 467,
+      "fixTime": "2026-08-06T11:38:05.000+00:00",
+      "latitude": 45.164271,
+      "longitude": 5.943349,
+      "altitude": 2109.5,
+      "distance": 14935
+    },
+    {
+      "idx": 468,
+      "fixTime": "2026-08-06T11:38:19.000+00:00",
+      "latitude": 45.164262,
+      "longitude": 5.943203,
+      "altitude": 2104.4,
+      "distance": 14948
+    },
+    {
+      "idx": 469,
+      "fixTime": "2026-08-06T11:38:28.000+00:00",
+      "latitude": 45.164316,
+      "longitude": 5.943304,
+      "altitude": 2102.7,
+      "distance": 14962
+    },
+    {
+      "idx": 470,
+      "fixTime": "2026-08-06T11:38:42.000+00:00",
+      "latitude": 45.164464,
+      "longitude": 5.943394,
+      "altitude": 2100.6,
+      "distance": 14983
+    },
+    {
+      "idx": 471,
+      "fixTime": "2026-08-06T11:38:55.000+00:00",
+      "latitude": 45.164543,
+      "longitude": 5.943268,
+      "altitude": 2098.5,
+      "distance": 14999
+    },
+    {
+      "idx": 472,
+      "fixTime": "2026-08-06T11:39:10.000+00:00",
+      "latitude": 45.164661,
+      "longitude": 5.943219,
+      "altitude": 2097.3,
+      "distance": 15015
+    },
+    {
+      "idx": 473,
+      "fixTime": "2026-08-06T11:39:28.000+00:00",
+      "latitude": 45.164836,
+      "longitude": 5.942931,
+      "altitude": 2096.8,
+      "distance": 15050
+    },
+    {
+      "idx": 474,
+      "fixTime": "2026-08-06T11:39:55.000+00:00",
+      "latitude": 45.165096,
+      "longitude": 5.942444,
+      "altitude": 2080.2,
+      "distance": 15104
+    },
+    {
+      "idx": 475,
+      "fixTime": "2026-08-06T11:40:19.000+00:00",
+      "latitude": 45.16539,
+      "longitude": 5.942379,
+      "altitude": 2076.2,
+      "distance": 15144
+    },
+    {
+      "idx": 476,
+      "fixTime": "2026-08-06T11:40:28.000+00:00",
+      "latitude": 45.165457,
+      "longitude": 5.942251,
+      "altitude": 2076.3,
+      "distance": 15159
+    },
+    {
+      "idx": 477,
+      "fixTime": "2026-08-06T11:40:54.000+00:00",
+      "latitude": 45.165741,
+      "longitude": 5.941684,
+      "altitude": 2073.9,
+      "distance": 15220
+    },
+    {
+      "idx": 478,
+      "fixTime": "2026-08-06T11:40:58.000+00:00",
+      "latitude": 45.1658,
+      "longitude": 5.941582,
+      "altitude": 2073.3,
+      "distance": 15232
+    },
+    {
+      "idx": 479,
+      "fixTime": "2026-08-06T11:41:18.000+00:00",
+      "latitude": 45.166219,
+      "longitude": 5.941719,
+      "altitude": 2069.4,
+      "distance": 15291
+    },
+    {
+      "idx": 480,
+      "fixTime": "2026-08-06T11:41:28.000+00:00",
+      "latitude": 45.166378,
+      "longitude": 5.941742,
+      "altitude": 2068.1,
+      "distance": 15311
+    },
+    {
+      "idx": 481,
+      "fixTime": "2026-08-06T11:41:46.000+00:00",
+      "latitude": 45.166532,
+      "longitude": 5.941701,
+      "altitude": 2064.6,
+      "distance": 15331
+    },
+    {
+      "idx": 482,
+      "fixTime": "2026-08-06T11:41:58.000+00:00",
+      "latitude": 45.166722,
+      "longitude": 5.941521,
+      "altitude": 2064.7,
+      "distance": 15361
+    },
+    {
+      "idx": 483,
+      "fixTime": "2026-08-06T11:42:14.000+00:00",
+      "latitude": 45.166949,
+      "longitude": 5.941205,
+      "altitude": 2062.6,
+      "distance": 15401
+    },
+    {
+      "idx": 484,
+      "fixTime": "2026-08-06T11:42:23.000+00:00",
+      "latitude": 45.167002,
+      "longitude": 5.941078,
+      "altitude": 2060.9,
+      "distance": 15414
+    },
+    {
+      "idx": 485,
+      "fixTime": "2026-08-06T11:42:37.000+00:00",
+      "latitude": 45.166985,
+      "longitude": 5.94075,
+      "altitude": 2057.9,
+      "distance": 15444
+    },
+    {
+      "idx": 486,
+      "fixTime": "2026-08-06T11:42:44.000+00:00",
+      "latitude": 45.166957,
+      "longitude": 5.940546,
+      "altitude": 2057.9,
+      "distance": 15462
+    },
+    {
+      "idx": 487,
+      "fixTime": "2026-08-06T11:42:52.000+00:00",
+      "latitude": 45.167062,
+      "longitude": 5.94041,
+      "altitude": 2054.9,
+      "distance": 15481
+    },
+    {
+      "idx": 488,
+      "fixTime": "2026-08-06T11:42:58.000+00:00",
+      "latitude": 45.167171,
+      "longitude": 5.940492,
+      "altitude": 2053.3,
+      "distance": 15499
+    },
+    {
+      "idx": 489,
+      "fixTime": "2026-08-06T11:43:06.000+00:00",
+      "latitude": 45.167268,
+      "longitude": 5.940425,
+      "altitude": 2052,
+      "distance": 15513
+    },
+    {
+      "idx": 490,
+      "fixTime": "2026-08-06T11:43:23.000+00:00",
+      "latitude": 45.167503,
+      "longitude": 5.940076,
+      "altitude": 2047.6,
+      "distance": 15557
+    },
+    {
+      "idx": 491,
+      "fixTime": "2026-08-06T11:43:28.000+00:00",
+      "latitude": 45.167519,
+      "longitude": 5.939933,
+      "altitude": 2047.2,
+      "distance": 15570
+    },
+    {
+      "idx": 492,
+      "fixTime": "2026-08-06T11:43:54.000+00:00",
+      "latitude": 45.167629,
+      "longitude": 5.939352,
+      "altitude": 2043,
+      "distance": 15623
+    },
+    {
+      "idx": 493,
+      "fixTime": "2026-08-06T11:44:18.000+00:00",
+      "latitude": 45.167729,
+      "longitude": 5.939092,
+      "altitude": 2038.9,
+      "distance": 15650
+    },
+    {
+      "idx": 494,
+      "fixTime": "2026-08-06T11:44:28.000+00:00",
+      "latitude": 45.16784,
+      "longitude": 5.939096,
+      "altitude": 2034.8,
+      "distance": 15665
+    },
+    {
+      "idx": 495,
+      "fixTime": "2026-08-06T11:44:39.000+00:00",
+      "latitude": 45.167912,
+      "longitude": 5.939038,
+      "altitude": 2033.2,
+      "distance": 15676
+    },
+    {
+      "idx": 496,
+      "fixTime": "2026-08-06T11:44:47.000+00:00",
+      "latitude": 45.167924,
+      "longitude": 5.938921,
+      "altitude": 2031.2,
+      "distance": 15687
+    },
+    {
+      "idx": 497,
+      "fixTime": "2026-08-06T11:44:58.000+00:00",
+      "latitude": 45.16802,
+      "longitude": 5.938941,
+      "altitude": 2027.8,
+      "distance": 15700
+    },
+    {
+      "idx": 498,
+      "fixTime": "2026-08-06T11:45:33.000+00:00",
+      "latitude": 45.168389,
+      "longitude": 5.939039,
+      "altitude": 2020.7,
+      "distance": 15747
+    },
+    {
+      "idx": 499,
+      "fixTime": "2026-08-06T11:45:49.000+00:00",
+      "latitude": 45.168541,
+      "longitude": 5.938956,
+      "altitude": 2015.9,
+      "distance": 15769
+    },
+    {
+      "idx": 500,
+      "fixTime": "2026-08-06T11:46:28.000+00:00",
+      "latitude": 45.168782,
+      "longitude": 5.938772,
+      "altitude": 2016.4,
+      "distance": 15803
+    },
+    {
+      "idx": 501,
+      "fixTime": "2026-08-06T11:47:28.000+00:00",
+      "latitude": 45.169258,
+      "longitude": 5.938007,
+      "altitude": 2012.4,
+      "distance": 15896
+    },
+    {
+      "idx": 502,
+      "fixTime": "2026-08-06T11:47:58.000+00:00",
+      "latitude": 45.169505,
+      "longitude": 5.937703,
+      "altitude": 2005.8,
+      "distance": 15937
+    },
+    {
+      "idx": 503,
+      "fixTime": "2026-08-06T11:48:27.000+00:00",
+      "latitude": 45.16972,
+      "longitude": 5.937514,
+      "altitude": 1999.8,
+      "distance": 15969
+    },
+    {
+      "idx": 504,
+      "fixTime": "2026-08-06T11:48:58.000+00:00",
+      "latitude": 45.169953,
+      "longitude": 5.937342,
+      "altitude": 1995.8,
+      "distance": 16002
+    },
+    {
+      "idx": 505,
+      "fixTime": "2026-08-06T11:49:25.000+00:00",
+      "latitude": 45.170402,
+      "longitude": 5.937249,
+      "altitude": 1988,
+      "distance": 16060
+    },
+    {
+      "idx": 506,
+      "fixTime": "2026-08-06T11:49:31.000+00:00",
+      "latitude": 45.170525,
+      "longitude": 5.937372,
+      "altitude": 1983,
+      "distance": 16080
+    },
+    {
+      "idx": 507,
+      "fixTime": "2026-08-06T11:49:50.000+00:00",
+      "latitude": 45.170677,
+      "longitude": 5.937261,
+      "altitude": 1986.6,
+      "distance": 16104
+    },
+    {
+      "idx": 508,
+      "fixTime": "2026-08-06T11:50:28.000+00:00",
+      "latitude": 45.170996,
+      "longitude": 5.936712,
+      "altitude": 1981.4,
+      "distance": 16168
+    },
+    {
+      "idx": 509,
+      "fixTime": "2026-08-06T11:50:58.000+00:00",
+      "latitude": 45.171197,
+      "longitude": 5.936256,
+      "altitude": 1989.2,
+      "distance": 16216
+    },
+    {
+      "idx": 510,
+      "fixTime": "2026-08-06T11:51:17.000+00:00",
+      "latitude": 45.171381,
+      "longitude": 5.936142,
+      "altitude": 1988.4,
+      "distance": 16242
+    },
+    {
+      "idx": 511,
+      "fixTime": "2026-08-06T11:51:35.000+00:00",
+      "latitude": 45.171526,
+      "longitude": 5.936129,
+      "altitude": 1986.4,
+      "distance": 16261
+    },
+    {
+      "idx": 512,
+      "fixTime": "2026-08-06T11:51:43.000+00:00",
+      "latitude": 45.171542,
+      "longitude": 5.935993,
+      "altitude": 1987.3,
+      "distance": 16275
+    },
+    {
+      "idx": 513,
+      "fixTime": "2026-08-06T12:02:23.000+00:00",
+      "latitude": 45.171321,
+      "longitude": 5.936706,
+      "altitude": 1984.3,
+      "distance": 16359
+    },
+    {
+      "idx": 514,
+      "fixTime": "2026-08-06T12:02:43.000+00:00",
+      "latitude": 45.171398,
+      "longitude": 5.936716,
+      "altitude": 1990.2,
+      "distance": 16370
+    },
+    {
+      "idx": 515,
+      "fixTime": "2026-08-06T12:02:57.000+00:00",
+      "latitude": 45.171517,
+      "longitude": 5.936745,
+      "altitude": 1995.3,
+      "distance": 16385
+    },
+    {
+      "idx": 516,
+      "fixTime": "2026-08-06T12:03:38.000+00:00",
+      "latitude": 45.171563,
+      "longitude": 5.937066,
+      "altitude": 2008.9,
+      "distance": 16417
+    },
+    {
+      "idx": 517,
+      "fixTime": "2026-08-06T12:05:35.000+00:00",
+      "latitude": 45.171882,
+      "longitude": 5.937618,
+      "altitude": 2035.4,
+      "distance": 16481
+    },
+    {
+      "idx": 518,
+      "fixTime": "2026-08-06T12:05:58.000+00:00",
+      "latitude": 45.171892,
+      "longitude": 5.937751,
+      "altitude": 2039.1,
+      "distance": 16493
+    },
+    {
+      "idx": 519,
+      "fixTime": "2026-08-06T12:06:55.000+00:00",
+      "latitude": 45.172071,
+      "longitude": 5.937752,
+      "altitude": 2053.6,
+      "distance": 16518
+    },
+    {
+      "idx": 520,
+      "fixTime": "2026-08-06T12:08:14.000+00:00",
+      "latitude": 45.172354,
+      "longitude": 5.938193,
+      "altitude": 2068.6,
+      "distance": 16575
+    },
+    {
+      "idx": 521,
+      "fixTime": "2026-08-06T12:08:33.000+00:00",
+      "latitude": 45.172403,
+      "longitude": 5.938083,
+      "altitude": 2072.1,
+      "distance": 16588
+    },
+    {
+      "idx": 522,
+      "fixTime": "2026-08-06T12:08:58.000+00:00",
+      "latitude": 45.172612,
+      "longitude": 5.938091,
+      "altitude": 2078.5,
+      "distance": 16617
+    },
+    {
+      "idx": 523,
+      "fixTime": "2026-08-06T12:09:28.000+00:00",
+      "latitude": 45.172824,
+      "longitude": 5.938262,
+      "altitude": 2085.5,
+      "distance": 16649
+    },
+    {
+      "idx": 524,
+      "fixTime": "2026-08-06T12:10:28.000+00:00",
+      "latitude": 45.173129,
+      "longitude": 5.938722,
+      "altitude": 2094.8,
+      "distance": 16705
+    },
+    {
+      "idx": 525,
+      "fixTime": "2026-08-06T12:10:58.000+00:00",
+      "latitude": 45.173374,
+      "longitude": 5.938928,
+      "altitude": 2101.9,
+      "distance": 16742
+    },
+    {
+      "idx": 526,
+      "fixTime": "2026-08-06T12:11:28.000+00:00",
+      "latitude": 45.173554,
+      "longitude": 5.93914,
+      "altitude": 2108.7,
+      "distance": 16771
+    },
+    {
+      "idx": 527,
+      "fixTime": "2026-08-06T12:11:58.000+00:00",
+      "latitude": 45.173672,
+      "longitude": 5.939419,
+      "altitude": 2115.4,
+      "distance": 16800
+    },
+    {
+      "idx": 528,
+      "fixTime": "2026-08-06T12:12:13.000+00:00",
+      "latitude": 45.17366,
+      "longitude": 5.93959,
+      "altitude": 2119,
+      "distance": 16816
+    },
+    {
+      "idx": 529,
+      "fixTime": "2026-08-06T12:13:28.000+00:00",
+      "latitude": 45.17377,
+      "longitude": 5.940515,
+      "altitude": 2132.9,
+      "distance": 16900
+    },
+    {
+      "idx": 530,
+      "fixTime": "2026-08-06T12:13:58.000+00:00",
+      "latitude": 45.173825,
+      "longitude": 5.94082,
+      "altitude": 2139.2,
+      "distance": 16927
+    },
+    {
+      "idx": 531,
+      "fixTime": "2026-08-06T12:17:57.000+00:00",
+      "latitude": 45.173848,
+      "longitude": 5.942737,
+      "altitude": 2172.9,
+      "distance": 17098
+    },
+    {
+      "idx": 532,
+      "fixTime": "2026-08-06T12:18:21.000+00:00",
+      "latitude": 45.173861,
+      "longitude": 5.942915,
+      "altitude": 2178.2,
+      "distance": 17114
+    },
+    {
+      "idx": 533,
+      "fixTime": "2026-08-06T12:18:58.000+00:00",
+      "latitude": 45.173901,
+      "longitude": 5.943313,
+      "altitude": 2184.6,
+      "distance": 17149
+    },
+    {
+      "idx": 534,
+      "fixTime": "2026-08-06T12:19:58.000+00:00",
+      "latitude": 45.173913,
+      "longitude": 5.944059,
+      "altitude": 2186,
+      "distance": 17215
+    },
+    {
+      "idx": 535,
+      "fixTime": "2026-08-06T12:20:28.000+00:00",
+      "latitude": 45.173573,
+      "longitude": 5.943975,
+      "altitude": 2203.2,
+      "distance": 17264
+    },
+    {
+      "idx": 536,
+      "fixTime": "2026-08-06T12:20:55.000+00:00",
+      "latitude": 45.173342,
+      "longitude": 5.944061,
+      "altitude": 2196,
+      "distance": 17296
+    },
+    {
+      "idx": 537,
+      "fixTime": "2026-08-06T12:21:28.000+00:00",
+      "latitude": 45.173137,
+      "longitude": 5.94381,
+      "altitude": 2214.7,
+      "distance": 17333
+    },
+    {
+      "idx": 538,
+      "fixTime": "2026-08-06T12:21:58.000+00:00",
+      "latitude": 45.172994,
+      "longitude": 5.943633,
+      "altitude": 2220.5,
+      "distance": 17356
+    },
+    {
+      "idx": 539,
+      "fixTime": "2026-08-06T12:22:36.000+00:00",
+      "latitude": 45.17279,
+      "longitude": 5.943422,
+      "altitude": 2228.3,
+      "distance": 17388
+    },
+    {
+      "idx": 540,
+      "fixTime": "2026-08-06T12:22:55.000+00:00",
+      "latitude": 45.172775,
+      "longitude": 5.943551,
+      "altitude": 2232.2,
+      "distance": 17401
+    },
+    {
+      "idx": 541,
+      "fixTime": "2026-08-06T12:23:19.000+00:00",
+      "latitude": 45.172635,
+      "longitude": 5.943796,
+      "altitude": 2238.8,
+      "distance": 17430
+    },
+    {
+      "idx": 542,
+      "fixTime": "2026-08-06T12:23:28.000+00:00",
+      "latitude": 45.172603,
+      "longitude": 5.943903,
+      "altitude": 2241.3,
+      "distance": 17440
+    },
+    {
+      "idx": 543,
+      "fixTime": "2026-08-06T12:23:37.000+00:00",
+      "latitude": 45.172549,
+      "longitude": 5.943979,
+      "altitude": 2244.8,
+      "distance": 17450
+    },
+    {
+      "idx": 544,
+      "fixTime": "2026-08-06T12:24:58.000+00:00",
+      "latitude": 45.172191,
+      "longitude": 5.944502,
+      "altitude": 2250.3,
+      "distance": 17514
+    },
+    {
+      "idx": 545,
+      "fixTime": "2026-08-06T12:25:10.000+00:00",
+      "latitude": 45.172236,
+      "longitude": 5.944591,
+      "altitude": 2252.1,
+      "distance": 17525
+    },
+    {
+      "idx": 546,
+      "fixTime": "2026-08-06T12:25:21.000+00:00",
+      "latitude": 45.172341,
+      "longitude": 5.944662,
+      "altitude": 2254.7,
+      "distance": 17540
+    },
+    {
+      "idx": 547,
+      "fixTime": "2026-08-06T12:25:28.000+00:00",
+      "latitude": 45.172399,
+      "longitude": 5.944744,
+      "altitude": 2256,
+      "distance": 17550
+    },
+    {
+      "idx": 548,
+      "fixTime": "2026-08-06T12:25:54.000+00:00",
+      "latitude": 45.172663,
+      "longitude": 5.945309,
+      "altitude": 2258,
+      "distance": 17611
+    },
+    {
+      "idx": 549,
+      "fixTime": "2026-08-06T12:27:40.000+00:00",
+      "latitude": 45.173075,
+      "longitude": 5.946093,
+      "altitude": 2282.4,
+      "distance": 17697
+    },
+    {
+      "idx": 550,
+      "fixTime": "2026-08-06T12:28:16.000+00:00",
+      "latitude": 45.173232,
+      "longitude": 5.946271,
+      "altitude": 2292,
+      "distance": 17722
+    },
+    {
+      "idx": 551,
+      "fixTime": "2026-08-06T12:30:39.000+00:00",
+      "latitude": 45.173497,
+      "longitude": 5.946857,
+      "altitude": 2323.9,
+      "distance": 17785
+    },
+    {
+      "idx": 552,
+      "fixTime": "2026-08-06T12:32:20.000+00:00",
+      "latitude": 45.173766,
+      "longitude": 5.947365,
+      "altitude": 2350,
+      "distance": 17841
+    },
+    {
+      "idx": 553,
+      "fixTime": "2026-08-06T12:32:46.000+00:00",
+      "latitude": 45.173825,
+      "longitude": 5.947646,
+      "altitude": 2361.2,
+      "distance": 17867
+    },
+    {
+      "idx": 554,
+      "fixTime": "2026-08-06T12:32:58.000+00:00",
+      "latitude": 45.173826,
+      "longitude": 5.947757,
+      "altitude": 2364.8,
+      "distance": 17877
+    },
+    {
+      "idx": 555,
+      "fixTime": "2026-08-06T12:37:45.000+00:00",
+      "latitude": 45.173826,
+      "longitude": 5.948059,
+      "altitude": 2368.1,
+      "distance": 17904
+    },
+    {
+      "idx": 556,
+      "fixTime": "2026-08-06T12:37:58.000+00:00",
+      "latitude": 45.174007,
+      "longitude": 5.948161,
+      "altitude": 2363.9,
+      "distance": 17930
+    },
+    {
+      "idx": 557,
+      "fixTime": "2026-08-06T12:38:24.000+00:00",
+      "latitude": 45.174352,
+      "longitude": 5.948604,
+      "altitude": 2352.3,
+      "distance": 17990
+    },
+    {
+      "idx": 558,
+      "fixTime": "2026-08-06T12:38:51.000+00:00",
+      "latitude": 45.174384,
+      "longitude": 5.948742,
+      "altitude": 2346.3,
+      "distance": 18003
+    },
+    {
+      "idx": 559,
+      "fixTime": "2026-08-06T12:39:06.000+00:00",
+      "latitude": 45.174283,
+      "longitude": 5.948828,
+      "altitude": 2341.4,
+      "distance": 18019
+    },
+    {
+      "idx": 560,
+      "fixTime": "2026-08-06T12:39:23.000+00:00",
+      "latitude": 45.174168,
+      "longitude": 5.948907,
+      "altitude": 2336.1,
+      "distance": 18035
+    },
+    {
+      "idx": 561,
+      "fixTime": "2026-08-06T12:39:45.000+00:00",
+      "latitude": 45.174132,
+      "longitude": 5.949201,
+      "altitude": 2335.3,
+      "distance": 18063
+    },
+    {
+      "idx": 562,
+      "fixTime": "2026-08-06T12:39:56.000+00:00",
+      "latitude": 45.174209,
+      "longitude": 5.94945,
+      "altitude": 2327.7,
+      "distance": 18088
+    },
+    {
+      "idx": 563,
+      "fixTime": "2026-08-06T12:40:05.000+00:00",
+      "latitude": 45.174302,
+      "longitude": 5.949554,
+      "altitude": 2320.6,
+      "distance": 18103
+    },
+    {
+      "idx": 564,
+      "fixTime": "2026-08-06T12:40:42.000+00:00",
+      "latitude": 45.174369,
+      "longitude": 5.950033,
+      "altitude": 2311.1,
+      "distance": 18148
+    },
+    {
+      "idx": 565,
+      "fixTime": "2026-08-06T12:40:58.000+00:00",
+      "latitude": 45.174439,
+      "longitude": 5.950161,
+      "altitude": 2307.1,
+      "distance": 18162
+    },
+    {
+      "idx": 566,
+      "fixTime": "2026-08-06T12:41:23.000+00:00",
+      "latitude": 45.174535,
+      "longitude": 5.950416,
+      "altitude": 2297.1,
+      "distance": 18188
+    },
+    {
+      "idx": 567,
+      "fixTime": "2026-08-06T12:41:58.000+00:00",
+      "latitude": 45.174631,
+      "longitude": 5.950831,
+      "altitude": 2293.6,
+      "distance": 18227
+    },
+    {
+      "idx": 568,
+      "fixTime": "2026-08-06T12:42:28.000+00:00",
+      "latitude": 45.174753,
+      "longitude": 5.951051,
+      "altitude": 2292.8,
+      "distance": 18252
+    },
+    {
+      "idx": 569,
+      "fixTime": "2026-08-06T12:42:53.000+00:00",
+      "latitude": 45.174902,
+      "longitude": 5.951214,
+      "altitude": 2285.9,
+      "distance": 18276
+    },
+    {
+      "idx": 570,
+      "fixTime": "2026-08-06T12:43:08.000+00:00",
+      "latitude": 45.174995,
+      "longitude": 5.951294,
+      "altitude": 2282.8,
+      "distance": 18289
+    },
+    {
+      "idx": 571,
+      "fixTime": "2026-08-06T12:43:28.000+00:00",
+      "latitude": 45.175181,
+      "longitude": 5.951443,
+      "altitude": 2279.2,
+      "distance": 18316
+    },
+    {
+      "idx": 572,
+      "fixTime": "2026-08-06T12:44:15.000+00:00",
+      "latitude": 45.175418,
+      "longitude": 5.951613,
+      "altitude": 2269,
+      "distance": 18349
+    },
+    {
+      "idx": 573,
+      "fixTime": "2026-08-06T12:44:27.000+00:00",
+      "latitude": 45.175519,
+      "longitude": 5.951606,
+      "altitude": 2266.9,
+      "distance": 18363
+    },
+    {
+      "idx": 574,
+      "fixTime": "2026-08-06T12:44:38.000+00:00",
+      "latitude": 45.175596,
+      "longitude": 5.951596,
+      "altitude": 2260.8,
+      "distance": 18372
+    },
+    {
+      "idx": 575,
+      "fixTime": "2026-08-06T12:45:28.000+00:00",
+      "latitude": 45.176038,
+      "longitude": 5.952089,
+      "altitude": 2250.3,
+      "distance": 18448
+    },
+    {
+      "idx": 576,
+      "fixTime": "2026-08-06T12:45:50.000+00:00",
+      "latitude": 45.17641,
+      "longitude": 5.952456,
+      "altitude": 2239.2,
+      "distance": 18504
+    },
+    {
+      "idx": 577,
+      "fixTime": "2026-08-06T12:45:58.000+00:00",
+      "latitude": 45.176521,
+      "longitude": 5.952613,
+      "altitude": 2237.2,
+      "distance": 18524
+    },
+    {
+      "idx": 578,
+      "fixTime": "2026-08-06T12:46:38.000+00:00",
+      "latitude": 45.176791,
+      "longitude": 5.953003,
+      "altitude": 2226.5,
+      "distance": 18572
+    },
+    {
+      "idx": 579,
+      "fixTime": "2026-08-06T12:46:50.000+00:00",
+      "latitude": 45.176911,
+      "longitude": 5.95314,
+      "altitude": 2221.4,
+      "distance": 18592
+    },
+    {
+      "idx": 580,
+      "fixTime": "2026-08-06T12:48:04.000+00:00",
+      "latitude": 45.177269,
+      "longitude": 5.953362,
+      "altitude": 2214.4,
+      "distance": 18641
+    },
+    {
+      "idx": 581,
+      "fixTime": "2026-08-06T12:48:24.000+00:00",
+      "latitude": 45.177415,
+      "longitude": 5.953476,
+      "altitude": 2211.8,
+      "distance": 18662
+    },
+    {
+      "idx": 582,
+      "fixTime": "2026-08-06T12:48:58.000+00:00",
+      "latitude": 45.177906,
+      "longitude": 5.953391,
+      "altitude": 2206,
+      "distance": 18728
+    },
+    {
+      "idx": 583,
+      "fixTime": "2026-08-06T12:49:26.000+00:00",
+      "latitude": 45.178347,
+      "longitude": 5.953501,
+      "altitude": 2190.7,
+      "distance": 18786
+    },
+    {
+      "idx": 584,
+      "fixTime": "2026-08-06T12:49:51.000+00:00",
+      "latitude": 45.178879,
+      "longitude": 5.953536,
+      "altitude": 2182.4,
+      "distance": 18853
+    },
+    {
+      "idx": 585,
+      "fixTime": "2026-08-06T12:49:58.000+00:00",
+      "latitude": 45.179034,
+      "longitude": 5.953446,
+      "altitude": 2182,
+      "distance": 18875
+    },
+    {
+      "idx": 586,
+      "fixTime": "2026-08-06T12:50:18.000+00:00",
+      "latitude": 45.17927,
+      "longitude": 5.953247,
+      "altitude": 2170.1,
+      "distance": 18909
+    },
+    {
+      "idx": 587,
+      "fixTime": "2026-08-06T12:50:28.000+00:00",
+      "latitude": 45.179354,
+      "longitude": 5.953127,
+      "altitude": 2164.5,
+      "distance": 18924
+    },
+    {
+      "idx": 588,
+      "fixTime": "2026-08-06T12:50:58.000+00:00",
+      "latitude": 45.179679,
+      "longitude": 5.952798,
+      "altitude": 2160,
+      "distance": 18975
+    },
+    {
+      "idx": 589,
+      "fixTime": "2026-08-06T12:51:28.000+00:00",
+      "latitude": 45.179941,
+      "longitude": 5.952454,
+      "altitude": 2161.4,
+      "distance": 19020
+    },
+    {
+      "idx": 590,
+      "fixTime": "2026-08-06T12:51:57.000+00:00",
+      "latitude": 45.180197,
+      "longitude": 5.951969,
+      "altitude": 2162.7,
+      "distance": 19074
+    },
+    {
+      "idx": 591,
+      "fixTime": "2026-08-06T12:52:28.000+00:00",
+      "latitude": 45.18059,
+      "longitude": 5.951661,
+      "altitude": 2156.2,
+      "distance": 19131
+    },
+    {
+      "idx": 592,
+      "fixTime": "2026-08-06T12:52:46.000+00:00",
+      "latitude": 45.180849,
+      "longitude": 5.951595,
+      "altitude": 2153.4,
+      "distance": 19165
+    },
+    {
+      "idx": 593,
+      "fixTime": "2026-08-06T12:52:58.000+00:00",
+      "latitude": 45.180994,
+      "longitude": 5.951685,
+      "altitude": 2144.6,
+      "distance": 19186
+    },
+    {
+      "idx": 594,
+      "fixTime": "2026-08-06T12:53:39.000+00:00",
+      "latitude": 45.181126,
+      "longitude": 5.951728,
+      "altitude": 2135.7,
+      "distance": 19203
+    },
+    {
+      "idx": 595,
+      "fixTime": "2026-08-06T12:53:58.000+00:00",
+      "latitude": 45.181202,
+      "longitude": 5.951572,
+      "altitude": 2135.4,
+      "distance": 19222
+    },
+    {
+      "idx": 596,
+      "fixTime": "2026-08-06T12:54:28.000+00:00",
+      "latitude": 45.181397,
+      "longitude": 5.951401,
+      "altitude": 2130.2,
+      "distance": 19251
+    },
+    {
+      "idx": 597,
+      "fixTime": "2026-08-06T12:54:57.000+00:00",
+      "latitude": 45.181735,
+      "longitude": 5.950949,
+      "altitude": 2123.5,
+      "distance": 19310
+    },
+    {
+      "idx": 598,
+      "fixTime": "2026-08-06T12:55:14.000+00:00",
+      "latitude": 45.181898,
+      "longitude": 5.950784,
+      "altitude": 2125.4,
+      "distance": 19336
+    },
+    {
+      "idx": 599,
+      "fixTime": "2026-08-06T12:55:58.000+00:00",
+      "latitude": 45.182286,
+      "longitude": 5.950605,
+      "altitude": 2138.7,
+      "distance": 19388
+    },
+    {
+      "idx": 600,
+      "fixTime": "2026-08-06T12:56:28.000+00:00",
+      "latitude": 45.182422,
+      "longitude": 5.950423,
+      "altitude": 2145.7,
+      "distance": 19412
+    },
+    {
+      "idx": 601,
+      "fixTime": "2026-08-06T12:57:23.000+00:00",
+      "latitude": 45.182547,
+      "longitude": 5.950617,
+      "altitude": 2153.2,
+      "distance": 19439
+    },
+    {
+      "idx": 602,
+      "fixTime": "2026-08-06T12:57:28.000+00:00",
+      "latitude": 45.182564,
+      "longitude": 5.950718,
+      "altitude": 2153.4,
+      "distance": 19448
+    },
+    {
+      "idx": 603,
+      "fixTime": "2026-08-06T13:01:58.000+00:00",
+      "latitude": 45.182616,
+      "longitude": 5.950927,
+      "altitude": 2150.1,
+      "distance": 19468
+    },
+    {
+      "idx": 604,
+      "fixTime": "2026-08-06T13:03:28.000+00:00",
+      "latitude": 45.182628,
+      "longitude": 5.95123,
+      "altitude": 2126.2,
+      "distance": 19495
+    },
+    {
+      "idx": 605,
+      "fixTime": "2026-08-06T13:03:55.000+00:00",
+      "latitude": 45.182475,
+      "longitude": 5.951366,
+      "altitude": 2118.6,
+      "distance": 19519
+    },
+    {
+      "idx": 606,
+      "fixTime": "2026-08-06T13:05:22.000+00:00",
+      "latitude": 45.182447,
+      "longitude": 5.95182,
+      "altitude": 2089.1,
+      "distance": 19561
+    },
+    {
+      "idx": 607,
+      "fixTime": "2026-08-06T13:06:19.000+00:00",
+      "latitude": 45.182484,
+      "longitude": 5.952136,
+      "altitude": 2079.3,
+      "distance": 19590
+    },
+    {
+      "idx": 608,
+      "fixTime": "2026-08-06T13:06:49.000+00:00",
+      "latitude": 45.182533,
+      "longitude": 5.952293,
+      "altitude": 2072,
+      "distance": 19605
+    },
+    {
+      "idx": 609,
+      "fixTime": "2026-08-06T13:07:35.000+00:00",
+      "latitude": 45.182523,
+      "longitude": 5.952468,
+      "altitude": 2056.3,
+      "distance": 19621
+    },
+    {
+      "idx": 610,
+      "fixTime": "2026-08-06T13:08:28.000+00:00",
+      "latitude": 45.182632,
+      "longitude": 5.952746,
+      "altitude": 2041.7,
+      "distance": 19650
+    },
+    {
+      "idx": 611,
+      "fixTime": "2026-08-06T13:09:04.000+00:00",
+      "latitude": 45.182716,
+      "longitude": 5.952944,
+      "altitude": 2032.1,
+      "distance": 19670
+    },
+    {
+      "idx": 612,
+      "fixTime": "2026-08-06T13:10:01.000+00:00",
+      "latitude": 45.182789,
+      "longitude": 5.9533,
+      "altitude": 2014.8,
+      "distance": 19703
+    },
+    {
+      "idx": 613,
+      "fixTime": "2026-08-06T13:10:29.000+00:00",
+      "latitude": 45.182851,
+      "longitude": 5.953527,
+      "altitude": 2004.8,
+      "distance": 19725
+    },
+    {
+      "idx": 614,
+      "fixTime": "2026-08-06T13:10:46.000+00:00",
+      "latitude": 45.182819,
+      "longitude": 5.953686,
+      "altitude": 2000.2,
+      "distance": 19740
+    },
+    {
+      "idx": 615,
+      "fixTime": "2026-08-06T13:12:28.000+00:00",
+      "latitude": 45.18269,
+      "longitude": 5.954446,
+      "altitude": 1978.2,
+      "distance": 19808
+    },
+    {
+      "idx": 616,
+      "fixTime": "2026-08-06T13:12:58.000+00:00",
+      "latitude": 45.182779,
+      "longitude": 5.954608,
+      "altitude": 1969.6,
+      "distance": 19827
+    },
+    {
+      "idx": 617,
+      "fixTime": "2026-08-06T13:14:56.000+00:00",
+      "latitude": 45.183185,
+      "longitude": 5.955367,
+      "altitude": 1940.5,
+      "distance": 19911
+    },
+    {
+      "idx": 618,
+      "fixTime": "2026-08-06T13:15:45.000+00:00",
+      "latitude": 45.183236,
+      "longitude": 5.955715,
+      "altitude": 1928.7,
+      "distance": 19943
+    },
+    {
+      "idx": 619,
+      "fixTime": "2026-08-06T13:16:35.000+00:00",
+      "latitude": 45.182947,
+      "longitude": 5.955972,
+      "altitude": 1913.4,
+      "distance": 19989
+    },
+    {
+      "idx": 620,
+      "fixTime": "2026-08-06T13:17:18.000+00:00",
+      "latitude": 45.183025,
+      "longitude": 5.956413,
+      "altitude": 1899.1,
+      "distance": 20032
+    },
+    {
+      "idx": 621,
+      "fixTime": "2026-08-06T13:17:28.000+00:00",
+      "latitude": 45.183058,
+      "longitude": 5.956559,
+      "altitude": 1893.4,
+      "distance": 20046
+    },
+    {
+      "idx": 622,
+      "fixTime": "2026-08-06T13:17:39.000+00:00",
+      "latitude": 45.183037,
+      "longitude": 5.956708,
+      "altitude": 1890.8,
+      "distance": 20059
+    },
+    {
+      "idx": 623,
+      "fixTime": "2026-08-06T13:17:47.000+00:00",
+      "latitude": 45.18303,
+      "longitude": 5.956845,
+      "altitude": 1887.6,
+      "distance": 20072
+    },
+    {
+      "idx": 624,
+      "fixTime": "2026-08-06T13:17:58.000+00:00",
+      "latitude": 45.183005,
+      "longitude": 5.957024,
+      "altitude": 1881,
+      "distance": 20088
+    },
+    {
+      "idx": 625,
+      "fixTime": "2026-08-06T13:18:22.000+00:00",
+      "latitude": 45.182908,
+      "longitude": 5.957331,
+      "altitude": 1872.8,
+      "distance": 20118
+    },
+    {
+      "idx": 626,
+      "fixTime": "2026-08-06T13:18:58.000+00:00",
+      "latitude": 45.182664,
+      "longitude": 5.957601,
+      "altitude": 1860.2,
+      "distance": 20157
+    },
+    {
+      "idx": 627,
+      "fixTime": "2026-08-06T13:19:44.000+00:00",
+      "latitude": 45.182326,
+      "longitude": 5.957921,
+      "altitude": 1845.1,
+      "distance": 20208
+    },
+    {
+      "idx": 628,
+      "fixTime": "2026-08-06T13:19:58.000+00:00",
+      "latitude": 45.182256,
+      "longitude": 5.958134,
+      "altitude": 1842.6,
+      "distance": 20230
+    },
+    {
+      "idx": 629,
+      "fixTime": "2026-08-06T13:20:28.000+00:00",
+      "latitude": 45.182093,
+      "longitude": 5.95869,
+      "altitude": 1830.3,
+      "distance": 20283
+    },
+    {
+      "idx": 630,
+      "fixTime": "2026-08-06T13:20:50.000+00:00",
+      "latitude": 45.182125,
+      "longitude": 5.958832,
+      "altitude": 1825.3,
+      "distance": 20296
+    },
+    {
+      "idx": 631,
+      "fixTime": "2026-08-06T13:22:58.000+00:00",
+      "latitude": 45.182781,
+      "longitude": 5.958993,
+      "altitude": 1785.3,
+      "distance": 20387
+    },
+    {
+      "idx": 632,
+      "fixTime": "2026-08-06T13:23:28.000+00:00",
+      "latitude": 45.182943,
+      "longitude": 5.958891,
+      "altitude": 1776.6,
+      "distance": 20410
+    },
+    {
+      "idx": 633,
+      "fixTime": "2026-08-06T13:23:58.000+00:00",
+      "latitude": 45.183121,
+      "longitude": 5.958735,
+      "altitude": 1773.5,
+      "distance": 20437
+    },
+    {
+      "idx": 634,
+      "fixTime": "2026-08-06T13:24:56.000+00:00",
+      "latitude": 45.183819,
+      "longitude": 5.958593,
+      "altitude": 1754.8,
+      "distance": 20528
+    },
+    {
+      "idx": 635,
+      "fixTime": "2026-08-06T13:25:28.000+00:00",
+      "latitude": 45.184207,
+      "longitude": 5.958468,
+      "altitude": 1741.6,
+      "distance": 20578
+    },
+    {
+      "idx": 636,
+      "fixTime": "2026-08-06T13:25:57.000+00:00",
+      "latitude": 45.184582,
+      "longitude": 5.958202,
+      "altitude": 1726.9,
+      "distance": 20631
+    },
+    {
+      "idx": 637,
+      "fixTime": "2026-08-06T13:26:08.000+00:00",
+      "latitude": 45.184574,
+      "longitude": 5.958324,
+      "altitude": 1723.6,
+      "distance": 20644
+    },
+    {
+      "idx": 638,
+      "fixTime": "2026-08-06T13:26:28.000+00:00",
+      "latitude": 45.184561,
+      "longitude": 5.958606,
+      "altitude": 1721.6,
+      "distance": 20669
+    },
+    {
+      "idx": 639,
+      "fixTime": "2026-08-06T13:26:53.000+00:00",
+      "latitude": 45.184818,
+      "longitude": 5.958893,
+      "altitude": 1725.1,
+      "distance": 20712
+    },
+    {
+      "idx": 640,
+      "fixTime": "2026-08-06T13:27:13.000+00:00",
+      "latitude": 45.18503,
+      "longitude": 5.959076,
+      "altitude": 1726.9,
+      "distance": 20743
+    },
+    {
+      "idx": 641,
+      "fixTime": "2026-08-06T13:27:28.000+00:00",
+      "latitude": 45.185126,
+      "longitude": 5.959305,
+      "altitude": 1728.3,
+      "distance": 20768
+    },
+    {
+      "idx": 642,
+      "fixTime": "2026-08-06T13:27:58.000+00:00",
+      "latitude": 45.18543,
+      "longitude": 5.959708,
+      "altitude": 1728.1,
+      "distance": 20821
+    },
+    {
+      "idx": 643,
+      "fixTime": "2026-08-06T13:28:38.000+00:00",
+      "latitude": 45.185609,
+      "longitude": 5.960131,
+      "altitude": 1714.8,
+      "distance": 20865
+    },
+    {
+      "idx": 644,
+      "fixTime": "2026-08-06T13:28:58.000+00:00",
+      "latitude": 45.185767,
+      "longitude": 5.960267,
+      "altitude": 1708.2,
+      "distance": 20889
+    },
+    {
+      "idx": 645,
+      "fixTime": "2026-08-06T13:29:58.000+00:00",
+      "latitude": 45.186162,
+      "longitude": 5.960792,
+      "altitude": 1691.4,
+      "distance": 20957
+    },
+    {
+      "idx": 646,
+      "fixTime": "2026-08-06T13:32:40.000+00:00",
+      "latitude": 45.186585,
+      "longitude": 5.961293,
+      "altitude": 1680.6,
+      "distance": 21026
+    },
+    {
+      "idx": 647,
+      "fixTime": "2026-08-06T13:33:16.000+00:00",
+      "latitude": 45.186677,
+      "longitude": 5.961319,
+      "altitude": 1678.2,
+      "distance": 21038
+    },
+    {
+      "idx": 648,
+      "fixTime": "2026-08-06T13:33:28.000+00:00",
+      "latitude": 45.186725,
+      "longitude": 5.961197,
+      "altitude": 1676.4,
+      "distance": 21052
+    },
+    {
+      "idx": 649,
+      "fixTime": "2026-08-06T13:33:39.000+00:00",
+      "latitude": 45.186848,
+      "longitude": 5.96108,
+      "altitude": 1673.2,
+      "distance": 21071
+    },
+    {
+      "idx": 650,
+      "fixTime": "2026-08-06T13:33:58.000+00:00",
+      "latitude": 45.187035,
+      "longitude": 5.960851,
+      "altitude": 1666.6,
+      "distance": 21102
+    },
+    {
+      "idx": 651,
+      "fixTime": "2026-08-06T13:34:16.000+00:00",
+      "latitude": 45.187157,
+      "longitude": 5.960536,
+      "altitude": 1660.7,
+      "distance": 21134
+    },
+    {
+      "idx": 652,
+      "fixTime": "2026-08-06T13:34:28.000+00:00",
+      "latitude": 45.187224,
+      "longitude": 5.960385,
+      "altitude": 1657.6,
+      "distance": 21150
+    },
+    {
+      "idx": 653,
+      "fixTime": "2026-08-06T13:35:10.000+00:00",
+      "latitude": 45.187274,
+      "longitude": 5.959638,
+      "altitude": 1642.5,
+      "distance": 21218
+    },
+    {
+      "idx": 654,
+      "fixTime": "2026-08-06T13:35:28.000+00:00",
+      "latitude": 45.187387,
+      "longitude": 5.959381,
+      "altitude": 1637.4,
+      "distance": 21245
+    },
+    {
+      "idx": 655,
+      "fixTime": "2026-08-06T13:35:50.000+00:00",
+      "latitude": 45.187524,
+      "longitude": 5.95918,
+      "altitude": 1631.3,
+      "distance": 21270
+    },
+    {
+      "idx": 656,
+      "fixTime": "2026-08-06T13:35:58.000+00:00",
+      "latitude": 45.187582,
+      "longitude": 5.95907,
+      "altitude": 1630.2,
+      "distance": 21282
+    },
+    {
+      "idx": 657,
+      "fixTime": "2026-08-06T13:36:28.000+00:00",
+      "latitude": 45.187672,
+      "longitude": 5.958715,
+      "altitude": 1625.1,
+      "distance": 21316
+    },
+    {
+      "idx": 658,
+      "fixTime": "2026-08-06T13:36:48.000+00:00",
+      "latitude": 45.18779,
+      "longitude": 5.958634,
+      "altitude": 1612.6,
+      "distance": 21333
+    },
+    {
+      "idx": 659,
+      "fixTime": "2026-08-06T13:37:10.000+00:00",
+      "latitude": 45.187901,
+      "longitude": 5.958538,
+      "altitude": 1602,
+      "distance": 21350
+    },
+    {
+      "idx": 660,
+      "fixTime": "2026-08-06T13:37:27.000+00:00",
+      "latitude": 45.188012,
+      "longitude": 5.958443,
+      "altitude": 1597.7,
+      "distance": 21366
+    },
+    {
+      "idx": 661,
+      "fixTime": "2026-08-06T13:38:43.000+00:00",
+      "latitude": 45.188243,
+      "longitude": 5.957924,
+      "altitude": 1579.1,
+      "distance": 21422
+    },
+    {
+      "idx": 662,
+      "fixTime": "2026-08-06T13:38:58.000+00:00",
+      "latitude": 45.188274,
+      "longitude": 5.957568,
+      "altitude": 1564.3,
+      "distance": 21454
+    },
+    {
+      "idx": 663,
+      "fixTime": "2026-08-06T13:39:09.000+00:00",
+      "latitude": 45.188361,
+      "longitude": 5.957369,
+      "altitude": 1566,
+      "distance": 21475
+    },
+    {
+      "idx": 664,
+      "fixTime": "2026-08-06T13:39:28.000+00:00",
+      "latitude": 45.188566,
+      "longitude": 5.957168,
+      "altitude": 1563.2,
+      "distance": 21507
+    },
+    {
+      "idx": 665,
+      "fixTime": "2026-08-06T13:40:58.000+00:00",
+      "latitude": 45.189335,
+      "longitude": 5.956341,
+      "altitude": 1540.4,
+      "distance": 21628
+    },
+    {
+      "idx": 666,
+      "fixTime": "2026-08-06T13:43:22.000+00:00",
+      "latitude": 45.190303,
+      "longitude": 5.95629,
+      "altitude": 1493.4,
+      "distance": 21756
+    },
+    {
+      "idx": 667,
+      "fixTime": "2026-08-06T13:43:56.000+00:00",
+      "latitude": 45.190435,
+      "longitude": 5.956486,
+      "altitude": 1465.1,
+      "distance": 21781
+    },
+    {
+      "idx": 668,
+      "fixTime": "2026-08-06T13:44:28.000+00:00",
+      "latitude": 45.190539,
+      "longitude": 5.956706,
+      "altitude": 1442.1,
+      "distance": 21805
+    },
+    {
+      "idx": 669,
+      "fixTime": "2026-08-06T13:44:57.000+00:00",
+      "latitude": 45.19061,
+      "longitude": 5.957009,
+      "altitude": 1412.8,
+      "distance": 21833
+    },
+    {
+      "idx": 670,
+      "fixTime": "2026-08-06T13:45:08.000+00:00",
+      "latitude": 45.190664,
+      "longitude": 5.957124,
+      "altitude": 1418.1,
+      "distance": 21846
+    },
+    {
+      "idx": 671,
+      "fixTime": "2026-08-06T13:45:28.000+00:00",
+      "latitude": 45.190823,
+      "longitude": 5.957286,
+      "altitude": 1425.9,
+      "distance": 21871
+    },
+    {
+      "idx": 672,
+      "fixTime": "2026-08-06T13:45:41.000+00:00",
+      "latitude": 45.190867,
+      "longitude": 5.957373,
+      "altitude": 1417.3,
+      "distance": 21880
+    },
+    {
+      "idx": 673,
+      "fixTime": "2026-08-06T13:46:55.000+00:00",
+      "latitude": 45.191106,
+      "longitude": 5.957462,
+      "altitude": 1423.3,
+      "distance": 21913
+    },
+    {
+      "idx": 674,
+      "fixTime": "2026-08-06T13:47:04.000+00:00",
+      "latitude": 45.191226,
+      "longitude": 5.957503,
+      "altitude": 1416.9,
+      "distance": 21928
+    },
+    {
+      "idx": 675,
+      "fixTime": "2026-08-06T13:47:28.000+00:00",
+      "latitude": 45.191524,
+      "longitude": 5.957483,
+      "altitude": 1401,
+      "distance": 21967
+    },
+    {
+      "idx": 676,
+      "fixTime": "2026-08-06T13:47:57.000+00:00",
+      "latitude": 45.191941,
+      "longitude": 5.957392,
+      "altitude": 1385.6,
+      "distance": 22020
+    },
+    {
+      "idx": 677,
+      "fixTime": "2026-08-06T13:48:26.000+00:00",
+      "latitude": 45.192317,
+      "longitude": 5.957174,
+      "altitude": 1374.8,
+      "distance": 22072
+    },
+    {
+      "idx": 678,
+      "fixTime": "2026-08-06T13:49:13.000+00:00",
+      "latitude": 45.192572,
+      "longitude": 5.956775,
+      "altitude": 1366.3,
+      "distance": 22121
+    },
+    {
+      "idx": 679,
+      "fixTime": "2026-08-06T13:49:35.000+00:00",
+      "latitude": 45.192712,
+      "longitude": 5.956686,
+      "altitude": 1354.2,
+      "distance": 22140
+    },
+    {
+      "idx": 680,
+      "fixTime": "2026-08-06T13:49:41.000+00:00",
+      "latitude": 45.192828,
+      "longitude": 5.956779,
+      "altitude": 1348.8,
+      "distance": 22159
+    },
+    {
+      "idx": 681,
+      "fixTime": "2026-08-06T13:49:55.000+00:00",
+      "latitude": 45.193108,
+      "longitude": 5.956842,
+      "altitude": 1348.8,
+      "distance": 22195
+    },
+    {
+      "idx": 682,
+      "fixTime": "2026-08-06T13:50:23.000+00:00",
+      "latitude": 45.193547,
+      "longitude": 5.957096,
+      "altitude": 1345.5,
+      "distance": 22256
+    },
+    {
+      "idx": 683,
+      "fixTime": "2026-08-06T13:51:24.000+00:00",
+      "latitude": 45.19415,
+      "longitude": 5.956671,
+      "altitude": 1344.5,
+      "distance": 22347
+    },
+    {
+      "idx": 684,
+      "fixTime": "2026-08-06T13:51:54.000+00:00",
+      "latitude": 45.194677,
+      "longitude": 5.956607,
+      "altitude": 1357.6,
+      "distance": 22416
+    },
+    {
+      "idx": 685,
+      "fixTime": "2026-08-06T13:52:38.000+00:00",
+      "latitude": 45.195059,
+      "longitude": 5.95662,
+      "altitude": 1371.4,
+      "distance": 22464
+    },
+    {
+      "idx": 686,
+      "fixTime": "2026-08-06T13:52:58.000+00:00",
+      "latitude": 45.195337,
+      "longitude": 5.956474,
+      "altitude": 1375,
+      "distance": 22502
+    },
+    {
+      "idx": 687,
+      "fixTime": "2026-08-06T13:53:28.000+00:00",
+      "latitude": 45.195656,
+      "longitude": 5.956163,
+      "altitude": 1361.6,
+      "distance": 22552
+    },
+    {
+      "idx": 688,
+      "fixTime": "2026-08-06T13:53:58.000+00:00",
+      "latitude": 45.195822,
+      "longitude": 5.95589,
+      "altitude": 1344.4,
+      "distance": 22584
+    },
+    {
+      "idx": 689,
+      "fixTime": "2026-08-06T13:54:28.000+00:00",
+      "latitude": 45.196073,
+      "longitude": 5.955822,
+      "altitude": 1332.7,
+      "distance": 22618
+    },
+    {
+      "idx": 690,
+      "fixTime": "2026-08-06T13:54:42.000+00:00",
+      "latitude": 45.196269,
+      "longitude": 5.955833,
+      "altitude": 1327.5,
+      "distance": 22643
+    },
+    {
+      "idx": 691,
+      "fixTime": "2026-08-06T13:54:58.000+00:00",
+      "latitude": 45.196495,
+      "longitude": 5.955803,
+      "altitude": 1316.2,
+      "distance": 22671
+    },
+    {
+      "idx": 692,
+      "fixTime": "2026-08-06T13:55:54.000+00:00",
+      "latitude": 45.196994,
+      "longitude": 5.955391,
+      "altitude": 1248.2,
+      "distance": 22746
+    },
+    {
+      "idx": 693,
+      "fixTime": "2026-08-06T13:56:28.000+00:00",
+      "latitude": 45.197141,
+      "longitude": 5.955254,
+      "altitude": 1234.2,
+      "distance": 22768
+    },
+    {
+      "idx": 694,
+      "fixTime": "2026-08-06T13:58:21.000+00:00",
+      "latitude": 45.197656,
+      "longitude": 5.954542,
+      "altitude": 1200.2,
+      "distance": 22859
+    },
+    {
+      "idx": 695,
+      "fixTime": "2026-08-06T13:58:54.000+00:00",
+      "latitude": 45.197762,
+      "longitude": 5.954452,
+      "altitude": 1199.6,
+      "distance": 22875
+    },
+    {
+      "idx": 696,
+      "fixTime": "2026-08-06T13:59:01.000+00:00",
+      "latitude": 45.197855,
+      "longitude": 5.954393,
+      "altitude": 1196.1,
+      "distance": 22888
+    },
+    {
+      "idx": 697,
+      "fixTime": "2026-08-06T13:59:28.000+00:00",
+      "latitude": 45.198041,
+      "longitude": 5.954208,
+      "altitude": 1184.6,
+      "distance": 22917
+    },
+    {
+      "idx": 698,
+      "fixTime": "2026-08-06T13:59:58.000+00:00",
+      "latitude": 45.198304,
+      "longitude": 5.954116,
+      "altitude": 1177,
+      "distance": 22952
+    },
+    {
+      "idx": 699,
+      "fixTime": "2026-08-06T14:00:12.000+00:00",
+      "latitude": 45.198443,
+      "longitude": 5.953972,
+      "altitude": 1169.4,
+      "distance": 22974
+    },
+    {
+      "idx": 700,
+      "fixTime": "2026-08-06T14:00:27.000+00:00",
+      "latitude": 45.198505,
+      "longitude": 5.95387,
+      "altitude": 1161.2,
+      "distance": 22986
+    },
+    {
+      "idx": 701,
+      "fixTime": "2026-08-06T14:00:35.000+00:00",
+      "latitude": 45.198559,
+      "longitude": 5.953784,
+      "altitude": 1158.4,
+      "distance": 22996
+    },
+    {
+      "idx": 702,
+      "fixTime": "2026-08-06T14:01:15.000+00:00",
+      "latitude": 45.198702,
+      "longitude": 5.953328,
+      "altitude": 1149.3,
+      "distance": 23041
+    },
+    {
+      "idx": 703,
+      "fixTime": "2026-08-06T14:01:28.000+00:00",
+      "latitude": 45.198701,
+      "longitude": 5.953037,
+      "altitude": 1149.7,
+      "distance": 23067
+    },
+    {
+      "idx": 704,
+      "fixTime": "2026-08-06T14:01:52.000+00:00",
+      "latitude": 45.198908,
+      "longitude": 5.952956,
+      "altitude": 1164.5,
+      "distance": 23096
+    },
+    {
+      "idx": 705,
+      "fixTime": "2026-08-06T14:02:07.000+00:00",
+      "latitude": 45.199057,
+      "longitude": 5.952759,
+      "altitude": 1171.3,
+      "distance": 23123
+    },
+    {
+      "idx": 706,
+      "fixTime": "2026-08-06T14:02:17.000+00:00",
+      "latitude": 45.199173,
+      "longitude": 5.952597,
+      "altitude": 1170.6,
+      "distance": 23143
+    },
+    {
+      "idx": 707,
+      "fixTime": "2026-08-06T14:02:25.000+00:00",
+      "latitude": 45.199287,
+      "longitude": 5.952444,
+      "altitude": 1167.9,
+      "distance": 23162
+    },
+    {
+      "idx": 708,
+      "fixTime": "2026-08-06T14:02:52.000+00:00",
+      "latitude": 45.199632,
+      "longitude": 5.951884,
+      "altitude": 1153.7,
+      "distance": 23228
+    },
+    {
+      "idx": 709,
+      "fixTime": "2026-08-06T14:02:58.000+00:00",
+      "latitude": 45.199712,
+      "longitude": 5.951759,
+      "altitude": 1151.4,
+      "distance": 23243
+    },
+    {
+      "idx": 710,
+      "fixTime": "2026-08-06T14:03:22.000+00:00",
+      "latitude": 45.200012,
+      "longitude": 5.951301,
+      "altitude": 1139.4,
+      "distance": 23298
+    },
+    {
+      "idx": 711,
+      "fixTime": "2026-08-06T14:03:26.000+00:00",
+      "latitude": 45.200075,
+      "longitude": 5.951194,
+      "altitude": 1134.4,
+      "distance": 23310
+    },
+    {
+      "idx": 712,
+      "fixTime": "2026-08-06T14:03:37.000+00:00",
+      "latitude": 45.200145,
+      "longitude": 5.950952,
+      "altitude": 1125.2,
+      "distance": 23334
+    },
+    {
+      "idx": 713,
+      "fixTime": "2026-08-06T14:03:58.000+00:00",
+      "latitude": 45.200198,
+      "longitude": 5.951042,
+      "altitude": 1102,
+      "distance": 23346
+    },
+    {
+      "idx": 714,
+      "fixTime": "2026-08-06T14:04:06.000+00:00",
+      "latitude": 45.200286,
+      "longitude": 5.951115,
+      "altitude": 1092.4,
+      "distance": 23359
+    },
+    {
+      "idx": 715,
+      "fixTime": "2026-08-06T14:04:12.000+00:00",
+      "latitude": 45.200342,
+      "longitude": 5.951213,
+      "altitude": 1084,
+      "distance": 23370
+    },
+    {
+      "idx": 716,
+      "fixTime": "2026-08-06T14:04:19.000+00:00",
+      "latitude": 45.200434,
+      "longitude": 5.951204,
+      "altitude": 1079.2,
+      "distance": 23383
+    },
+    {
+      "idx": 717,
+      "fixTime": "2026-08-06T14:04:28.000+00:00",
+      "latitude": 45.200493,
+      "longitude": 5.951059,
+      "altitude": 1075.4,
+      "distance": 23399
+    },
+    {
+      "idx": 718,
+      "fixTime": "2026-08-06T14:04:46.000+00:00",
+      "latitude": 45.20067,
+      "longitude": 5.950528,
+      "altitude": 1050.9,
+      "distance": 23451
+    },
+    {
+      "idx": 719,
+      "fixTime": "2026-08-06T14:04:58.000+00:00",
+      "latitude": 45.200707,
+      "longitude": 5.950054,
+      "altitude": 1046.8,
+      "distance": 23493
+    },
+    {
+      "idx": 720,
+      "fixTime": "2026-08-06T14:05:18.000+00:00",
+      "latitude": 45.200867,
+      "longitude": 5.949455,
+      "altitude": 1034,
+      "distance": 23550
+    },
+    {
+      "idx": 721,
+      "fixTime": "2026-08-06T14:05:28.000+00:00",
+      "latitude": 45.200938,
+      "longitude": 5.949207,
+      "altitude": 1033.5,
+      "distance": 23574
+    },
+    {
+      "idx": 722,
+      "fixTime": "2026-08-06T14:05:45.000+00:00",
+      "latitude": 45.201087,
+      "longitude": 5.948789,
+      "altitude": 1025.2,
+      "distance": 23615
+    },
+    {
+      "idx": 723,
+      "fixTime": "2026-08-06T14:05:51.000+00:00",
+      "latitude": 45.201155,
+      "longitude": 5.948656,
+      "altitude": 1017.8,
+      "distance": 23630
+    },
+    {
+      "idx": 724,
+      "fixTime": "2026-08-06T14:05:58.000+00:00",
+      "latitude": 45.201228,
+      "longitude": 5.948489,
+      "altitude": 1012.8,
+      "distance": 23647
+    },
+    {
+      "idx": 725,
+      "fixTime": "2026-08-06T14:06:21.000+00:00",
+      "latitude": 45.201651,
+      "longitude": 5.948179,
+      "altitude": 1003.4,
+      "distance": 23709
+    },
+    {
+      "idx": 726,
+      "fixTime": "2026-08-06T14:06:28.000+00:00",
+      "latitude": 45.201787,
+      "longitude": 5.948116,
+      "altitude": 1004.3,
+      "distance": 23727
+    },
+    {
+      "idx": 727,
+      "fixTime": "2026-08-06T14:06:46.000+00:00",
+      "latitude": 45.202188,
+      "longitude": 5.947837,
+      "altitude": 993.8,
+      "distance": 23783
+    },
+    {
+      "idx": 728,
+      "fixTime": "2026-08-06T14:06:58.000+00:00",
+      "latitude": 45.202506,
+      "longitude": 5.947595,
+      "altitude": 979.2,
+      "distance": 23828
+    },
+    {
+      "idx": 729,
+      "fixTime": "2026-08-06T14:07:14.000+00:00",
+      "latitude": 45.202963,
+      "longitude": 5.947324,
+      "altitude": 955.3,
+      "distance": 23891
+    },
+    {
+      "idx": 730,
+      "fixTime": "2026-08-06T14:07:27.000+00:00",
+      "latitude": 45.203329,
+      "longitude": 5.946938,
+      "altitude": 948.5,
+      "distance": 23949
+    },
+    {
+      "idx": 731,
+      "fixTime": "2026-08-06T14:07:41.000+00:00",
+      "latitude": 45.203677,
+      "longitude": 5.946474,
+      "altitude": 946.7,
+      "distance": 24009
+    },
+    {
+      "idx": 732,
+      "fixTime": "2026-08-06T14:07:51.000+00:00",
+      "latitude": 45.203828,
+      "longitude": 5.946179,
+      "altitude": 942.2,
+      "distance": 24041
+    },
+    {
+      "idx": 733,
+      "fixTime": "2026-08-06T14:07:58.000+00:00",
+      "latitude": 45.20396,
+      "longitude": 5.945954,
+      "altitude": 941.3,
+      "distance": 24067
+    },
+    {
+      "idx": 734,
+      "fixTime": "2026-08-06T14:08:09.000+00:00",
+      "latitude": 45.204176,
+      "longitude": 5.945662,
+      "altitude": 933.1,
+      "distance": 24104
+    },
+    {
+      "idx": 735,
+      "fixTime": "2026-08-06T14:08:15.000+00:00",
+      "latitude": 45.204298,
+      "longitude": 5.945526,
+      "altitude": 930.1,
+      "distance": 24124
+    },
+    {
+      "idx": 736,
+      "fixTime": "2026-08-06T14:08:23.000+00:00",
+      "latitude": 45.204458,
+      "longitude": 5.945358,
+      "altitude": 925,
+      "distance": 24149
+    },
+    {
+      "idx": 737,
+      "fixTime": "2026-08-06T14:08:34.000+00:00",
+      "latitude": 45.204421,
+      "longitude": 5.945558,
+      "altitude": 917.2,
+      "distance": 24171
+    },
+    {
+      "idx": 738,
+      "fixTime": "2026-08-06T14:08:46.000+00:00",
+      "latitude": 45.204418,
+      "longitude": 5.945728,
+      "altitude": 901.5,
+      "distance": 24186
+    },
+    {
+      "idx": 739,
+      "fixTime": "2026-08-06T14:08:54.000+00:00",
+      "latitude": 45.204369,
+      "longitude": 5.945989,
+      "altitude": 887.3,
+      "distance": 24210
+    },
+    {
+      "idx": 740,
+      "fixTime": "2026-08-06T14:08:58.000+00:00",
+      "latitude": 45.204347,
+      "longitude": 5.946092,
+      "altitude": 883,
+      "distance": 24219
+    },
+    {
+      "idx": 741,
+      "fixTime": "2026-08-06T14:09:48.000+00:00",
+      "latitude": 45.204178,
+      "longitude": 5.946459,
+      "altitude": 897.1,
+      "distance": 24258
+    }
+  ],
+  "stats": {
+    "distance": 24258,
+    "dplus": 2690,
+    "dminus": 2712,
+    "durationSeconds": 28055,
+    "lastFixTime": "2026-08-06T14:09:48.000+00:00"
+  },
+  "journal": [
+    {
+      "time": "2026-08-06T09:04:04.000Z",
+      "type": "photo",
+      "id": "01KZB51GWTZTKRJ8FPE6PNNA1P",
+      "texte": "Lac bleu",
+      "media": "journal/ph-6a2b17c32b28.webp",
+      "largeur": 1280,
+      "hauteur": 591
+    },
+    {
+      "time": "2026-08-06T09:04:22.000Z",
+      "type": "photo",
+      "id": "01KZB5225HXW7TZ12GX37BWHKN",
+      "texte": "Magnifique",
+      "media": "journal/ph-4a5b88ffa2ee.webp",
+      "largeur": 1280,
+      "hauteur": 591
+    },
+    {
+      "time": "2026-08-06T10:17:56.000Z",
+      "type": "photo",
+      "id": "01KZB98S2S12BF4HV58ZGTBNCD",
+      "media": "journal/ph-91c0d8926d1d.webp",
+      "largeur": 806,
+      "hauteur": 1280
+    },
+    {
+      "time": "2026-08-06T10:18:02.000Z",
+      "type": "photo",
+      "id": "01KZB98XW5RGE7PPHRT4EC15ZN",
+      "media": "journal/ph-1bf84e0e8639.webp",
+      "largeur": 1280,
+      "hauteur": 591
+    }
+  ],
+  "chat": []
+}
