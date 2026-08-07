@@ -14,8 +14,7 @@ import { counters as ingestCounters, handleUpdate, type IngestDeps } from "./jou
 import type { JournalStore } from "./journal/store";
 import { createMessageModule, messageCounters } from "./message";
 import { IpRateLimiter } from "./ratelimit";
-import { storyCard } from "./og/cards";
-import { renderPng } from "./og/render";
+import { rendreCarte } from "./og/cards";
 import type { OgDataSource } from "./og/data";
 import type { OgScheduler } from "./og/scheduler";
 import type { SelfCheck } from "./selfcheck";
@@ -39,6 +38,8 @@ export interface ServerDeps {
   serveStatic?: boolean;
   /** Cartes de partage (PR4) : source de données + planificateur de og.png. */
   og?: { source: OgDataSource; scheduler: OgScheduler };
+  /** Cache disque du fond de carte (tuiles Esri) — partagé avec le planificateur. */
+  ogCacheDir?: string | null;
   /** Auto-surveillance (PR5) — état exposé sur healthz. */
   selfCheck?: SelfCheck;
 }
@@ -118,7 +119,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
         return;
       }
       const data = await og.source.collect();
-      const png = await renderPng(storyCard(data), 1080, 1920);
+      const png = await rendreCarte(data, { format: "story", basemap: { cacheDir: deps.ogCacheDir } });
       reply
         .headers({
           "Content-Type": "image/png",

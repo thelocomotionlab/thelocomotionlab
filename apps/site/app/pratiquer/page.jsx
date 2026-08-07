@@ -126,12 +126,12 @@ export default function PratiquerPage() {
           <p className="mb-3 text-base leading-[1.75] text-gray-600 md:mb-3.5 md:text-[17px]">
             Nos corps ont été façonnés par des millions d&rsquo;années de
             marche, de course, de portage et de jeu au sol. Le mouvement
-            primal, c'est utiliser le jeu pour renouer avec nos racines primates
+            primal, c&rsquo;est utiliser le jeu pour renouer avec nos racines primates
             pour développer un corps robuste et fonctionnel.
           </p>
           <p className="text-base leading-[1.75] text-gray-600 md:text-[17px]">
-            Il s'agit d'une pratique profondément transformatrice, tant sur le plan  mental
-            que physique. Pratiquée au poids du corps, elle s'oppose à la culture de la performance
+            Il s&rsquo;agit d&rsquo;une pratique profondément transformatrice, tant sur le plan  mental
+            que physique. Pratiquée au poids du corps, elle s&rsquo;oppose à la culture de la performance
             et est accessible à tous·te·s. 
           </p>
         </div>

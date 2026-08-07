@@ -54,13 +54,22 @@ async function main(): Promise<void> {
 
   // Cartes de partage : og.png régénérée périodiquement + story à la demande.
   let og: { source: OgDataSource; scheduler: OgScheduler } | undefined;
+  // Le fond de carte (~50 tuiles Esri) est cadré sur l'itinéraire, donc
+  // identique de bout en bout : on le garde sur le volume plutôt que de le
+  // redemander toutes les 3 minutes pendant cinq jours.
+  const ogCacheDir = path.join(config.dataDir, "private", "basemap");
   if (config.og.enabled) {
     const source = new OgDataSource({
       siteBase: config.siteBase,
       trackingBase: config.trackingBase,
       sim,
     });
-    const scheduler = new OgScheduler(source, store.publicDir, config.og.intervalMinutes * 60_000);
+    const scheduler = new OgScheduler(
+      source,
+      store.publicDir,
+      config.og.intervalMinutes * 60_000,
+      ogCacheDir,
+    );
     cleanups.push(scheduler.start());
     og = { source, scheduler };
   }
@@ -79,6 +88,7 @@ async function main(): Promise<void> {
     ingest,
     sim,
     og,
+    ogCacheDir,
     selfCheck,
     // Pas de Caddy en local : le service sert lui-même journal.json + médias
     // hors production (simulation ou polling dev).

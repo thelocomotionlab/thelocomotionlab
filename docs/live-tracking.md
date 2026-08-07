@@ -43,7 +43,8 @@ CARTE (positions)
 CARNET (journal + messages)
   Valentin, dans Telegram ──▶ webhook ──▶ services/live-journal (conteneur)
                                             ├─▶ journal.json + /media/*  ──▶ /live (poll 30 s)
-                                            ├─▶ og.png / story.png       ──▶ aperçus de partage
+                                            ├─▶ og.png / story.png       ──▶ cartes de partage
+                                            │     (fond Esri en cache + trace)
                                             └─◀ POST /journal/message (visiteur) ─▶ Telegram de Valentin (privé)
 ```
 
@@ -265,16 +266,35 @@ d'attente.
 
 ---
 
-## 8. Les cartes de partage (OG + story)
+## 8. Les cartes de partage
 
-`live-journal` régénère périodiquement une image d'aperçu qui montre l'état
-vivant de l'aventure :
+Trois formats, **un seul design** : la carte topo en pleine page (tuiles Esri
+World Topo, itinéraire en pointillés fuchsia, trace vécue en trait plein — la
+grammaire de la carte de `/live`), un voile sombre dégradé, et le texte en
+crème par-dessus.
 
-- **`og.png`** (1200×630) : l'aperçu quand tu partages `/live` sur WhatsApp,
-  Messenger, etc. `og:image` de la page pointe dessus avec un cache-buster.
-- **`story.png`** (1080×1920) : le bouton **« Partager l'aventure »** sous
-  l'encart message. Il utilise l'**API Web Share** : sur mobile, il ouvre le
-  partage natif (Instagram, etc.) avec l'image ; sinon il l'ouvre dans un
+| Format | Taille | D'où il vient | Quand |
+|---|---|---|---|
+| `og.png` | 1200×630 | `live-journal`, toutes les 3 min | aperçu des liens (WhatsApp, Messenger, X…) |
+| `story.png` | 1080×1920 | `live-journal`, à la demande | bouton **« Partager l'aventure »** de `/live` |
+| carrousel | 1080×1350 | **commande locale** (§ 8.2) | publication a posteriori, avec un encart de texte |
+
+### 8.1 Ce que porte chaque carte
+
+Le **pourcentage** et le curseur du profil viennent de la **projection sur
+l'itinéraire** (`avancementSurTrace`), jamais du rapport « distance parcourue /
+distance prévue » — sinon un aller-retour au ravitaillement ferait dépasser
+100 % (Croix de Belledonne : 24,26 km courus sur un parcours de 22,02 km).
+
+Le **fond de carte est cadré sur l'itinéraire de référence**, donc identique du
+départ à l'arrivée : il est téléchargé UNE fois puis relu dans un cache disque
+(`$DATA_DIR/private/basemap` sur le VPS, `cartes/.fonds` en local). Sans lui, on
+redemanderait une cinquantaine de tuiles à Esri toutes les 3 minutes pendant
+cinq jours. Si les tuiles sont injoignables, la carte sort quand même sur un
+aplat sombre — et l'attribution disparaît avec le fond.
+
+- **`story.png`** utilise l'**API Web Share** : sur mobile, elle ouvre le
+  partage natif (Instagram, etc.) avec l'image ; sinon elle s'ouvre dans un
   onglet.
 - Pour que l'aperçu montre la **vraie progression** en phase staging, poser
   `SITE_BASE=https://staging.thelocomotionlab-website.pages.dev` dans
@@ -283,6 +303,45 @@ vivant de l'aventure :
 
 > Vieil aperçu qui colle après partage ? Passer l'URL dans le **Sharing
 > Debugger** de Meta → « Scrape again ».
+
+### 8.2 Le carrousel a posteriori
+
+Il ne sort **pas** du VPS : le service peut être éteint quand tu prépares une
+publication, le texte de l'encart est éditorial, et un carrousel c'est
+plusieurs images choisies — pas un fichier réécrit en boucle. C'est donc une
+commande locale, sur le **même moteur de rendu** que la story (donc exactement
+le même langage visuel) :
+
+```bash
+# après pnpm -F site live:archiver -- --slug belledonne
+pnpm -F site carte:partage -- --slug belledonne \
+  --texte "Parti à 6 h 22 sous la pluie. Le col dans le brouillard, la lumière au sommet."
+```
+
+La carte sort dans **`cartes/`** à la racine — dossier ignoré par git : en
+fabriquer une ne salit jamais le dépôt et ne publie rien.
+
+| Option | Effet |
+|---|---|
+| `--slug <s>` | dossier `public/replays/<s>/` à lire (**obligatoire**) |
+| `--texte "…"` | l'encart éditorial, **280 caractères max** (au-delà, la commande refuse plutôt que de couper tes mots) |
+| `--jour N` | carte de la seule journée N : les **chiffres** sont ceux du jour, la carte et le profil montrent l'avancement **cumulé** à la fin de ce jour |
+| `--format` | `carrousel` (défaut) · `story` · `og` |
+| `--nom` `--dates` `--date-debut` `--trace` | forcent les valeurs, quand `liveConfig` est déjà passé à l'aventure suivante |
+| `--out <fichier>` | chemin de sortie |
+| `--sans-fond 1` | saute le téléchargement des tuiles (hors ligne) |
+
+L'identité de l'aventure est déduite de `replays/<slug>/archive.json` d'abord
+(il décrit **cette** aventure-là), de `liveConfig` ensuite.
+
+Pour une aventure de plusieurs jours, un carrousel se fabrique en une boucle —
+le fond de carte n'est téléchargé qu'à la première image :
+
+```bash
+for j in 1 2 3 4 5; do
+  pnpm -F site carte:partage -- --slug ecrins --jour $j --texte "…"
+done
+```
 
 ---
 
@@ -315,6 +374,10 @@ dans une archive publique.
 
 Le récit, lui, se publie quand tu le décides : une page projet + la balise
 `<postlivetracking positions="/replays/<slug>/live-positions.json" />` (§11).
+
+Une fois l'archive en place, les **cartes du carrousel** se fabriquent depuis
+ce même dossier : `pnpm -F site carte:partage -- --slug <slug> --texte "…"`
+(§8.2).
 
 ---
 

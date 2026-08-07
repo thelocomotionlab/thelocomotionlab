@@ -70,3 +70,7 @@ services/twin-engine/_seed/cas_validation/
 # arbre static listmonk assemblé par infra/listmonk/build-static.sh
 # (officiel épinglé + surcharges) — artefact de déploiement, jamais committé
 /infra/listmonk/static-dist/
+
+# cartes de partage fabriquées en local (pnpm -F site carte:partage)
+# — images de publication + cache des fonds de carte, jamais committées
+/cartes/

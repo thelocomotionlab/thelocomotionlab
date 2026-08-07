@@ -71,7 +71,7 @@ export default function JournalCard({
 
       {newestFirst.length === 0 && (
         <p className="pb-4 font-lora text-sm italic leading-[1.55] text-brand-text/60">
-          Fil d'actualité de l'aventure alimenté selon le réseau mobile.
+          Fil d&rsquo;actualité de l&rsquo;aventure alimenté selon le réseau mobile.
         </p>
       )}
 

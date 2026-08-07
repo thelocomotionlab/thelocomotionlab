@@ -1,12 +1,17 @@
 // Collecte des données des cartes de partage. Sources :
 //   - paramètres d'aventure : {SITE_BASE}/live-config.json — publié AU BUILD par
 //     le site depuis lib/liveConfig.js (la source unique reste liveConfig) ;
-//   - silhouette du profil : le .track.json public du site ;
+//   - itinéraire (coordonnées + silhouette) : le .track.json public du site ;
 //   - positions + timer : les artefacts publics de tracking (ou le simulateur).
 // Tout est en cache (1 h pour la config/trace) et tolérant : une source
 // injoignable dégrade la carte, elle ne la casse jamais.
+//
+// Les mêmes lecteurs (`trackFromJson`, `liveFromArtefacts`) servent au service
+// ET à la commande locale du carrousel, qui lit des FICHIERS au lieu d'URLs —
+// une seule interprétation de la donnée, deux points d'entrée.
 
 import type { SimSnapshotProvider } from "../server";
+import { avancementSurTrace, type LonLat } from "./progression";
 
 export type OgVariant = "live" | "avant" | "termine";
 
@@ -29,12 +34,24 @@ export interface OgAventure {
 export interface OgTrack {
   profile: Array<{ km: number; alt: number }>;
   totalKm: number;
+  /** Polyligne [lon, lat] de l'itinéraire — le fond de carte se cadre dessus. */
+  coords: LonLat[];
+  dPlusM: number;
+  dMinusM: number;
 }
 
 export interface OgLive {
   running: boolean;
+  /** Distance réellement parcourue (≠ avancement sur l'itinéraire). */
   doneKm: number;
   dplus: number;
+  dminus: number;
+  durationSeconds: number;
+  /** Trace vécue [lon, lat], pour le trait plein de la carte. */
+  coords: LonLat[];
+  /** Kilomètre atteint SUR L'ITINÉRAIRE (projection), null si incalculable. */
+  avancementKm: number | null;
+  pourcent: number | null;
 }
 
 export interface OgData {
@@ -44,6 +61,8 @@ export interface OgData {
   live: OgLive | null;
   jour: number | null;
   lastWaypoint: OgWaypoint | null;
+  /** Encart éditorial du carrousel a posteriori (jamais en direct). */
+  note?: string | null;
 }
 
 const CONFIG_TTL_MS = 3_600_000;
@@ -59,6 +78,13 @@ const FALLBACK_AVENTURE: OgAventure = {
   statut: "avant",
   waypoints: [],
 };
+
+/** Kilomètre de référence pour situer le coureur : l'avancement projeté quand
+ *  il existe, la distance parcourue sinon (mieux que rien, faux sur détour). */
+export function kmSurItineraire(live: OgLive | null): number {
+  if (!live) return 0;
+  return live.avancementKm ?? live.doneKm;
+}
 
 /** Dernier waypoint dépassé — « Dernière étape franchie » de la maquette 2f. */
 export function lastWaypointPassed(doneKm: number, waypoints: OgWaypoint[]): OgWaypoint | null {
@@ -89,6 +115,71 @@ export function jourParis(nowISO: string, dateDebutISO: string): number {
     return Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day)) / 86_400_000;
   };
   return Math.max(1, dayNumber(nowISO) - dayNumber(dateDebutISO) + 1);
+}
+
+/** Lecture d'un .track.json (schemaVersion 1) — `null` si inexploitable. */
+export function trackFromJson(raw: unknown): OgTrack | null {
+  const t = raw as {
+    schemaVersion?: number;
+    profile?: Array<{ km: number; alt: number }>;
+    coords?: LonLat[];
+    totalKm?: number;
+    dPlusM?: number;
+    dMinusM?: number;
+  } | null;
+  if (t?.schemaVersion !== 1 || !Array.isArray(t.profile) || t.profile.length < 2) return null;
+  return {
+    profile: t.profile,
+    totalKm: t.totalKm ?? t.profile[t.profile.length - 1].km,
+    coords: Array.isArray(t.coords) ? t.coords : [],
+    dPlusM: Math.round(t.dPlusM ?? 0),
+    dMinusM: Math.round(t.dMinusM ?? 0),
+  };
+}
+
+interface PositionsShape {
+  stats?: {
+    distance?: number;
+    dplus?: number;
+    dminus?: number;
+    durationSeconds?: number;
+  };
+  profile?: Array<{ latitude?: number | null; longitude?: number | null; fixTime?: string | null }>;
+}
+
+/**
+ * Assemble l'instantané du direct à partir des artefacts de tracking. La
+ * PROJECTION sur l'itinéraire se fait ici, une fois : c'est elle qui donne le
+ * pourcentage de la carte et la position du curseur du profil.
+ */
+export function liveFromArtefacts(
+  positions: unknown,
+  timer: unknown,
+  referenceCoords: LonLat[],
+): OgLive {
+  const p = (positions ?? {}) as PositionsShape;
+  const points = Array.isArray(p.profile) ? p.profile : [];
+  const coords: LonLat[] = [];
+  for (const pt of points) {
+    if (Number.isFinite(pt?.longitude) && Number.isFinite(pt?.latitude)) {
+      coords.push([pt.longitude as number, pt.latitude as number]);
+    }
+  }
+  const avancement =
+    referenceCoords.length > 1 && points.length > 0
+      ? avancementSurTrace(referenceCoords, points)
+      : null;
+
+  return {
+    running: (timer as { running?: boolean } | null)?.running === true,
+    doneKm: (p.stats?.distance ?? 0) / 1000,
+    dplus: p.stats?.dplus ?? 0,
+    dminus: p.stats?.dminus ?? 0,
+    durationSeconds: p.stats?.durationSeconds ?? 0,
+    coords,
+    avancementKm: avancement ? avancement.metresParcourus / 1000 : null,
+    pourcent: avancement ? avancement.pourcent : null,
+  };
 }
 
 export interface OgDataSourceOptions {
@@ -157,49 +248,29 @@ export class OgDataSource {
     if (this.trackCache && this.now() - this.trackCache.at < CONFIG_TTL_MS) {
       return this.trackCache.value;
     }
-    let value: OgTrack | null = null;
-    if (trackPath) {
-      const raw = (await this.fetchJson(`${this.opts.siteBase}${trackPath}`)) as {
-        schemaVersion?: number;
-        profile?: Array<{ km: number; alt: number }>;
-        totalKm?: number;
-      } | null;
-      if (raw?.schemaVersion === 1 && Array.isArray(raw.profile) && raw.profile.length > 1) {
-        value = { profile: raw.profile, totalKm: raw.totalKm ?? raw.profile[raw.profile.length - 1].km };
-      }
-    }
+    const value = trackPath
+      ? trackFromJson(await this.fetchJson(`${this.opts.siteBase}${trackPath}`))
+      : null;
     this.trackCache = { value, at: this.now() };
     return value;
   }
 
-  private async liveSnapshot(): Promise<OgLive | null> {
+  private async liveSnapshot(referenceCoords: LonLat[]): Promise<OgLive | null> {
     if (this.opts.sim) {
-      const positions = this.opts.sim.getPositions() as {
-        stats?: { distance?: number; dplus?: number };
-      };
-      const timer = this.opts.sim.getTimer() as { running?: boolean };
-      return {
-        running: timer.running === true,
-        doneKm: (positions.stats?.distance ?? 0) / 1000,
-        dplus: positions.stats?.dplus ?? 0,
-      };
+      return liveFromArtefacts(this.opts.sim.getPositions(), this.opts.sim.getTimer(), referenceCoords);
     }
     const [positions, timer] = await Promise.all([
       this.fetchJson(`${this.opts.trackingBase}/live-positions.json?cacheBust=${this.now()}`),
       this.fetchJson(`${this.opts.trackingBase}/live-timer.json?cacheBust=${this.now()}`),
     ]);
     if (!timer) return null;
-    const stats = (positions as { stats?: { distance?: number; dplus?: number } } | null)?.stats;
-    return {
-      running: (timer as { running?: boolean }).running === true,
-      doneKm: (stats?.distance ?? 0) / 1000,
-      dplus: stats?.dplus ?? 0,
-    };
+    return liveFromArtefacts(positions, timer, referenceCoords);
   }
 
   async collect(): Promise<OgData> {
     const { value: aventure, trackPath } = await this.aventure();
-    const [track, live] = await Promise.all([this.track(trackPath), this.liveSnapshot()]);
+    const track = await this.track(trackPath);
+    const live = await this.liveSnapshot(track?.coords ?? []);
 
     const variant: OgVariant =
       aventure.statut === "termine" ? "termine" : live?.running ? "live" : "avant";
@@ -213,7 +284,7 @@ export class OgDataSource {
         variant === "live"
           ? jourParis(new Date(this.now()).toISOString(), aventure.dateDebut)
           : null,
-      lastWaypoint: live ? lastWaypointPassed(live.doneKm, aventure.waypoints) : null,
+      lastWaypoint: live ? lastWaypointPassed(kmSurItineraire(live), aventure.waypoints) : null,
     };
   }
 }

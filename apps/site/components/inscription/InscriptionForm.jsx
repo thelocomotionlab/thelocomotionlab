@@ -479,7 +479,7 @@ export default function InscriptionForm({ atelier }) {
           Ta place à l&rsquo;atelier
         </h1>
         <p className="mb-5 font-lora text-lg italic text-brand-deep">
-          À parcourir avant de t'inscrire.
+          À parcourir avant de t&rsquo;inscrire.
         </p>
         {recapAtelier}
       </div>

@@ -10,7 +10,8 @@
     "sim": "pnpm build && LIVE_JOURNAL_SIMULATION=1 node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "export-archive": "node dist/export/cli.js"
+    "export-archive": "node dist/export/cli.js",
+    "carte": "node dist/og/cli.js"
   },
   "dependencies": {
     "@fastify/multipart": "9.4.0",
