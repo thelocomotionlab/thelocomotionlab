@@ -51,10 +51,12 @@ export default function LiveHeader({ aventure, jour, running = true, mapStyle, o
           </span>
         </div>
         <Jour jour={jour} className="mt-1.5 text-[10.5px] lg:text-[11px]" />
-        {/* Intention : même voix éditoriale que l'état Avant (Lora italique
-            terracotta) — le direct avait perdu le sous-titre en route. */}
+        {/* Intention : le direct avait perdu son sous-titre en route. En
+            Ubuntu, PAS en Lora italique — l'état « En cours » n'utilise pas
+            cette typographie (c'est déjà pour ça que les stats du parcours
+            avaient quitté cet en-tête), contrairement à l'état Avant. */}
         {aventure.intention ? (
-          <p className="mt-2 font-lora text-[17px] italic leading-relaxed text-brand-deep lg:text-lg">
+          <p className="mt-2 text-[15px] leading-relaxed text-brand-text/70 lg:text-[15.5px]">
             {aventure.intention}
           </p>
         ) : null}
