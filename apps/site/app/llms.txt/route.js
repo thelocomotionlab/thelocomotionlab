@@ -57,7 +57,7 @@ function buildLlmsTxt() {
   lines.push("# The Locomotion Lab");
   lines.push("");
   lines.push(
-    "> Espace d'exploration de la locomotion humaine, entre rigueur scientifique et expériences personnelles : trail primal, ultra-endurance, minimalisme, hormèse."
+    "> Espace d'exploration de la robustesse physiologique : mouvement primal, ultra-endurance, minimalisme, hormèse."
   );
   lines.push("");
   lines.push(
