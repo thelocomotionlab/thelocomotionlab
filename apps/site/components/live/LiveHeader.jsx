@@ -8,6 +8,12 @@
 // Les kilomètres et le dénivelé du PARCOURS ne sont plus ici : ils ont rejoint
 // la ligne au-dessus de la carte (ItineraireLine), partagée avec l'état Avant.
 // Ils y étaient en Lora italique, une typographie qui ne servait qu'ici.
+//
+// ⚠️ UN SEUL <h1> dans le DOM. Il y en avait deux (une variante desktop et une
+// variante mobile, chacune masquée par média-query mais toutes deux présentes)
+// — audit des titres, 08/2026. Le titre et le jour sont désormais rendus une
+// fois, et c'est la MISE EN PAGE qui change entre mobile et desktop.
+// L'intention de l'aventure suit le titre, comme dans l'état Avant.
 
 "use client";
 
@@ -26,33 +32,36 @@ function Jour({ jour, className }) {
 
 export default function LiveHeader({ aventure, jour, running = true, mapStyle, onMapStyle }) {
   return (
-    <div className="flex flex-col gap-2.5 pt-1 pb-3.5 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
-      {/* Mobile : badge seul en tête (l'ancien logo + wordmark est retiré). */}
+    <div className="flex flex-col gap-2.5 pt-1 pb-3.5 lg:flex-row lg:items-start lg:justify-between lg:gap-4">
+      {/* Mobile : badge seul en tête (l'ancien logo + wordmark est retiré).
+          En desktop il repasse à côté du titre, dans le bloc ci-dessous. */}
       <div className="flex justify-end lg:hidden">
         <LiveBadge running={running} />
       </div>
 
-      {/* Desktop : titre + badge, stats dessous. */}
-      <div className="max-lg:hidden">
+      {/* Titre + jour + intention : rendus UNE fois, taille et disposition
+          ajustées par média-query (cf. l'avertissement en tête de fichier). */}
+      <div className="min-w-0">
         <div className="flex items-center gap-3">
-          <h1 className="m-0 font-heading text-[23px] font-bold text-brand-slate-dark">
+          <h1 className="m-0 font-heading text-[21px] font-bold leading-[1.15] text-brand-slate-dark lg:text-[23px]">
             {aventure.nom}
           </h1>
-          <LiveBadge desktop running={running} />
+          <span className="max-lg:hidden">
+            <LiveBadge desktop running={running} />
+          </span>
         </div>
-        <Jour jour={jour} className="mt-1.5 text-[11px]" />
-      </div>
-
-      {/* Mobile : titre + stats. */}
-      <div className="lg:hidden">
-        <h1 className="m-0 font-heading text-[21px] font-bold leading-[1.15] text-brand-slate-dark">
-          {aventure.nom}
-        </h1>
-        <Jour jour={jour} className="mt-1.5 text-[10.5px]" />
+        <Jour jour={jour} className="mt-1.5 text-[10.5px] lg:text-[11px]" />
+        {/* Intention : même voix éditoriale que l'état Avant (Lora italique
+            terracotta) — le direct avait perdu le sous-titre en route. */}
+        {aventure.intention ? (
+          <p className="mt-2 font-lora text-[17px] italic leading-relaxed text-brand-deep lg:text-lg">
+            {aventure.intention}
+          </p>
+        ) : null}
       </div>
 
       {/* Le sélecteur de fond de carte quitte la carte pour le header (desktop). */}
-      <div className="max-lg:hidden">
+      <div className="max-lg:hidden lg:flex-none lg:pt-0.5">
         <MapStyleSwitch value={mapStyle} onChange={onMapStyle} variant="header" />
       </div>
     </div>

@@ -58,26 +58,73 @@ function highlight(text, q) {
   return safe.replace(regex, `<mark class="search-highlight">$1</mark>`);
 }
 
+/**
+ * Champ de recherche + bouton. Autonome (il porte son propre `useRouter` et
+ * son focus initial) pour pouvoir être rendu DES DEUX CÔTÉS de la frontière
+ * Suspense : en repli pré-rendu (requête vide) et une fois la requête connue.
+ */
+function SearchForm({ defaultQuery = "" }) {
+  const router = useRouter();
+  const inputRef = useRef(null);
+
+  // Focus initial sur l'input quand pas de requête
+  useEffect(() => {
+    if (!defaultQuery && inputRef.current) inputRef.current.focus();
+  }, [defaultQuery]);
+
+  function onSubmit(e) {
+    e.preventDefault();
+    const value = e.currentTarget.q.value.trim();
+    router.push(value ? `/recherche?q=${encodeURIComponent(value)}` : "/recherche");
+  }
+
+  return (
+    <form
+      onSubmit={onSubmit}
+      className="mb-8 flex w-full max-w-2xl items-center gap-2"
+    >
+      <input
+        ref={inputRef}
+        name="q"
+        type="search"
+        defaultValue={defaultQuery}
+        placeholder="Tape un mot-clé (ex. respiration, sandales, froid)…"
+        className="min-w-0 flex-1 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent"
+        aria-label="Rechercher sur le site"
+      />
+      <button
+        type="submit"
+        aria-label="Lancer la recherche"
+        className="flex-none cursor-pointer rounded-full border border-gray-300 bg-white p-2 text-gray-700 transition hover:text-brand-accent-ink"
+      >
+        <Search size={20} aria-hidden="true" />
+      </button>
+    </form>
+  );
+}
+
 export default function SearchClient() {
   return (
-    <Suspense fallback={null}>
-      <SearchClientInner />
-    </Suspense>
+    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-12">
+      <PageHeader title="Recherche" />
+
+      {/* `useSearchParams` fait basculer tout son sous-arbre en rendu client :
+          seule la partie qui DÉPEND de la requête vit derrière la frontière.
+          Avant, la page entière y était avec `fallback={null}` — le HTML
+          pré-rendu ne contenait que la navbar et le footer, sans le moindre
+          titre (audit des titres, 08/2026). */}
+      <Suspense fallback={<SearchForm />}>
+        <SearchClientInner />
+      </Suspense>
+    </div>
   );
 }
 
 function SearchClientInner() {
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   const q = searchParams.get("q") || "";
   const [index, setIndex] = useState(null); // null = loading, [] = vide
-  const inputRef = useRef(null);
-
-  // Focus initial sur l'input quand pas de requête
-  useEffect(() => {
-    if (!q && inputRef.current) inputRef.current.focus();
-  }, [q]);
 
   // Chargement unique de l'index (mis en cache navigateur grâce au header)
   useEffect(() => {
@@ -135,45 +182,13 @@ function SearchClientInner() {
     };
   }, [q, index]);
 
-  function onSubmit(e) {
-    e.preventDefault();
-    const value = e.currentTarget.q.value.trim();
-    if (value) {
-      router.push(`/recherche?q=${encodeURIComponent(value)}`);
-    } else {
-      router.push("/recherche");
-    }
-  }
-
   const isLoading = q && index === null;
   const noResults =
     q && index !== null && results.arts.length === 0 && results.pros.length === 0;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-12">
-      <PageHeader title="Recherche" />
-
-      <form
-        onSubmit={onSubmit}
-        className="mb-8 flex w-full max-w-2xl items-center gap-2"
-      >
-        <input
-          ref={inputRef}
-          name="q"
-          type="search"
-          defaultValue={q}
-          placeholder="Tape un mot-clé (ex. respiration, sandales, froid)…"
-          className="min-w-0 flex-1 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent"
-          aria-label="Rechercher sur le site"
-        />
-        <button
-          type="submit"
-          aria-label="Lancer la recherche"
-          className="flex-none cursor-pointer rounded-full border border-gray-300 bg-white p-2 text-gray-700 transition hover:text-brand-accent-ink"
-        >
-          <Search size={20} aria-hidden="true" />
-        </button>
-      </form>
+    <>
+      <SearchForm defaultQuery={q} />
 
       {!q && (
         <p className="text-gray-600">
@@ -247,6 +262,6 @@ function SearchClientInner() {
           </div>
         </section>
       )}
-    </div>
+    </>
   );
 }

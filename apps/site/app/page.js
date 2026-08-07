@@ -236,7 +236,11 @@ export default async function HomePage() {
 
         <div className="relative z-10 mx-auto w-full max-w-4xl px-4 sm:px-6">
           <h1 className="font-heading text-2xl font-bold leading-tight text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.4)] sm:text-3xl md:text-4xl">
-            Comprendre le corps comme un scientifique,
+            {/* Une SEULE phrase, coupée en deux lignes : le <span> est donc
+                légitime ici (contrairement aux taglines de PageHeader). Le
+                {" "} explicite est indispensable — sans lui, le H1 extrait
+                vaut « …scientifique,l'utiliser… » (audit des titres, 08/2026). */}
+            Comprendre le corps comme un scientifique,{" "}
             <span className="mt-1.5 block font-lora text-[21px] font-medium italic leading-snug text-brand-accent-light sm:text-[26px] md:text-[30px]">
               l&rsquo;utiliser comme un animal.
             </span>

@@ -20,6 +20,7 @@ import { useLivePositions } from "@/lib/useLivePositions";
 import { useReferenceTrack } from "@/lib/useReferenceTrack";
 import BatteriePill from "./BatteriePill";
 import ChronoBadge from "./ChronoBadge";
+import EmailCaptureCard from "./EmailCaptureCard";
 import FreshnessPill from "./FreshnessPill";
 import ItineraireLine from "./ItineraireLine";
 import JournalCard from "./JournalCard";
@@ -170,11 +171,16 @@ export default function LiveEnCours({ timer }) {
       </div>
 
       {/* Sous la grille, PLEINE LARGEUR : « Laisse un mot », puis le partage
-          en dessous à gauche. */}
+          en dessous à gauche, puis la capture email. C'est la page la plus
+          fréquentée du site pendant un direct : elle n'avait aucun moyen de
+          garder les gens qui la découvrent (audit des titres, 08/2026). */}
       <div className="mt-3.5 lg:mt-5">
         <MessageCard />
         <div className="mt-3 flex justify-start">
           <ShareButton />
+        </div>
+        <div className="mt-3.5 lg:mt-5">
+          <EmailCaptureCard title="Suivre les prochaines aventures" />
         </div>
       </div>
     </div>
