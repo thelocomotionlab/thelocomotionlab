@@ -735,6 +735,37 @@ mark.search-highlight {
   }
 }
 
+/* Visionneuse plein écran du journal (MediaLightbox) : le fond se pose, le
+ * média arrive d'un demi-pas. En CSS et non en JS, pour que le bloc
+ * prefers-reduced-motion ci-dessus la neutralise sans condition à écrire. */
+@keyframes ll-lightbox-fond {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ll-lightbox-entree {
+  from {
+    opacity: 0;
+    transform: scale(0.965);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.ll-lightbox {
+  animation: ll-lightbox-fond 180ms ease-out both;
+}
+
+.ll-lightbox-media {
+  animation: ll-lightbox-entree 240ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
 /* Attribution maplibre MASQUÉE sur les cartes du live (recette 2026-07-24 :
  * desktop comme mobile, avant/pendant/après). Les crédits Esri/OSM peuvent
  * vivre ailleurs (mentions légales) si besoin ; ils n'encombrent pas la carte. */

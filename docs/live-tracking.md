@@ -244,6 +244,15 @@ Depuis le terrain, dans Telegram, tu envoies simplement :
 > Envoie `/aide` (ou n'importe quelle commande inconnue) pour recevoir ce
 > mémo directement dans Telegram.
 
+**Côté page**, photos et vidéos s'ouvrent **en plein écran** au clic
+(`components/live/MediaLightbox.jsx`) : légende sous l'image, flèches ← → (et
+boutons à l'écran) pour passer d'un média à l'autre en boucle, `Échap` ou un
+clic à côté pour refermer. Une vidéo n'est PAS lue dans la colonne — la
+vignette ouvre la visionneuse, où elle se lit avec les contrôles système ; un
+lecteur en ligne avalait le clic, et une vidéo verticale dans 300 px de large
+ne montre rien. Le simulateur (`live:preview`) sert de fausses photos pour
+travailler tout ça sans toucher au VPS.
+
 ---
 
 ## 7. Les messages des visiteurs — « Laisse un mot à Valentin »

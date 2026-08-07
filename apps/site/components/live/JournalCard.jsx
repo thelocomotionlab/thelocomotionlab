@@ -5,14 +5,22 @@
 // en Europe/Paris (lib/liveTime) ; photos réelles en lazy-load ; vocaux via le
 // lecteur « une prise » ; types inconnus ignorés en silence (tolérance aux
 // évolutions du service).
+//
+// Photos et vidéos s'ouvrent en PLEIN ÉCRAN (MediaLightbox) : dans une colonne
+// de 300 px, une photo de crête ne montre rien. La liste parcourable est
+// calculée par lib/journalMedias, dans le MÊME ordre que l'affichage — sinon
+// la flèche « suivant » sauterait au mauvais média.
 
 "use client";
 
+import { useState } from "react";
 import { brandColors } from "@locomotionlab/ui";
 
 import { journalApiBase } from "@/lib/liveConfig";
+import { indexDuMedia, mediasDuJournal } from "@/lib/journalMedias";
 import { formatClockDuration, formatEntryTag } from "@/lib/liveTime";
 import AudioPlayer from "./AudioPlayer";
+import MediaLightbox from "./MediaLightbox";
 import VideoPlayer from "./VideoPlayer";
 
 const KNOWN_TYPES = new Set(["text", "photo", "audio", "video"]);
@@ -49,6 +57,12 @@ export default function JournalCard({
 }) {
   const visible = (entries ?? []).filter((e) => KNOWN_TYPES.has(e.type));
   const newestFirst = [...visible].reverse();
+  const medias = mediasDuJournal(newestFirst, mediaBase);
+  const [ouvert, setOuvert] = useState(null);
+  const ouvrir = (id) => () => {
+    const i = indexDuMedia(medias, id);
+    if (i >= 0) setOuvert(i);
+  };
 
   const heightClass = fill
     ? "lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
@@ -102,24 +116,31 @@ export default function JournalCard({
           )}
 
           {entry.type === "photo" && entry.media?.url && (
-            /* Pas de next/image : le site est un export statique (CF Pages,
-               pas d'optimiseur) et les photos sont DÉJÀ optimisées côté
-               service (WebP ≤ 1600 px, EXIF retiré) + lazy-load natif. */
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={`${mediaBase}${entry.media.url}`}
-              alt={entry.text || "Photo du terrain"}
-              loading="lazy"
-              decoding="async"
-              width={entry.media.width}
-              height={entry.media.height}
-              className="mt-2.5 w-full rounded-xl border border-brand-text/10 object-cover lg:mt-[9px] lg:rounded-[11px]"
-              style={
-                entry.media.width && entry.media.height
-                  ? { aspectRatio: `${entry.media.width} / ${entry.media.height}`, height: "auto" }
-                  : undefined
-              }
-            />
+            <button
+              type="button"
+              onClick={ouvrir(entry.id)}
+              aria-label={entry.text ? `Agrandir : ${entry.text}` : "Agrandir la photo"}
+              className="mt-2.5 block w-full cursor-zoom-in overflow-hidden rounded-xl border border-brand-text/10 lg:mt-[9px] lg:rounded-[11px]"
+            >
+              {/* Pas de next/image : le site est un export statique (CF Pages,
+                  pas d'optimiseur) et les photos sont DÉJÀ optimisées côté
+                  service (WebP ≤ 1600 px, EXIF retiré) + lazy-load natif. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`${mediaBase}${entry.media.url}`}
+                alt={entry.text || "Photo du terrain"}
+                loading="lazy"
+                decoding="async"
+                width={entry.media.width}
+                height={entry.media.height}
+                className="w-full object-cover transition-transform duration-300 ease-[cubic-bezier(.4,0,.2,1)] hover:scale-[1.015] motion-reduce:transition-none"
+                style={
+                  entry.media.width && entry.media.height
+                    ? { aspectRatio: `${entry.media.width} / ${entry.media.height}`, height: "auto" }
+                    : undefined
+                }
+              />
+            </button>
           )}
 
           {entry.type === "audio" && entry.media?.url && (
@@ -135,6 +156,8 @@ export default function JournalCard({
               src={`${mediaBase}${entry.media.url}`}
               width={entry.media.width}
               height={entry.media.height}
+              duration={entry.media.duration}
+              onOpen={ouvrir(entry.id)}
             />
           )}
 
@@ -149,6 +172,15 @@ export default function JournalCard({
       ))}
 
       {footer}
+
+      {ouvert !== null && (
+        <MediaLightbox
+          medias={medias}
+          index={ouvert}
+          onIndex={setOuvert}
+          onClose={() => setOuvert(null)}
+        />
+      )}
     </section>
   );
 }

@@ -16,6 +16,11 @@
 //
 // ⚠️ L'état « repos » ne passe PAS par ici : il est décidé au build par
 // NEXT_PUBLIC_LIVE_STATUT (le simulateur n'est même pas nécessaire).
+//
+// ⚠️ Le journal simulé contient du texte et des PHOTOS (de quoi exercer la
+// visionneuse plein écran), mais pas de vidéo : il faudrait committer un vrai
+// MP4 pour ça, et la publication de vidéos est de toute façon derrière un
+// drapeau côté service (VIDEO_ENABLED).
 
 import fs from "node:fs";
 import http from "node:http";
@@ -138,6 +143,33 @@ function fabriquerTimer() {
   return { running: true, startTime: start, stopTime: null };
 }
 
+// Fausses photos : un SVG de relief, teinte et cadrage variables selon l'index.
+// SVG et non WebP pour ne dépendre d'AUCUN binaire — et des formats DIFFÉRENTS
+// (paysage, portrait, carré) parce que c'est là que la visionneuse plein écran
+// se casse quand elle est mal faite.
+const PHOTOS = [
+  { w: 1600, h: 1067, teinte: 196 },
+  { w: 1080, h: 1440, teinte: 28 },
+  { w: 1200, h: 1200, teinte: 96 },
+];
+
+function fabriquerPhoto(i) {
+  const { w, h, teinte } = PHOTOS[i % PHOTOS.length];
+  const crete = Array.from({ length: 14 }, (_, k) => {
+    const x = (k / 13) * w;
+    const y = h * (0.52 + 0.22 * Math.sin(k * 1.3 + i) * Math.cos(k * 0.7));
+    return `${x.toFixed(0)} ${y.toFixed(0)}`;
+  }).join(" L ");
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <rect width="${w}" height="${h}" fill="hsl(${teinte} 32% 78%)"/>
+    <circle cx="${w * 0.78}" cy="${h * 0.2}" r="${Math.min(w, h) * 0.09}" fill="hsl(${teinte} 60% 92%)"/>
+    <path d="M 0 ${h} L ${crete} L ${w} ${h} Z" fill="hsl(${teinte} 26% 42%)"/>
+    <path d="M 0 ${h} L ${crete} L ${w} ${h} Z" fill="hsl(${teinte} 22% 26%)" transform="translate(0 ${h * 0.16})"/>
+    <text x="${w / 2}" y="${h * 0.92}" font-family="sans-serif" font-size="${Math.min(w, h) * 0.06}"
+          fill="hsl(${teinte} 20% 92%)" text-anchor="middle">photo simulée ${i + 1}</text>
+  </svg>`;
+}
+
 function fabriquerJournal() {
   if (sansJournal || etat === "avant") return { schemaVersion: 1, entries: [], count: 0 };
   const textes = [
@@ -148,12 +180,23 @@ function fabriquerJournal() {
     "Nuit courte. Bivouac à l'abri d'un bloc, ciel dégagé, aucune lumière en bas.",
     "Deuxième jour. Les cuisses parlent, la tête écoute à peine.",
   ];
-  const entries = textes.map((text, i) => ({
-    id: `sim-${String(i).padStart(4, "0")}`,
-    ts: new Date(DEPART_MS + ((i + 1) / (textes.length + 1)) * 26 * 3600_000).toISOString(),
-    type: "text",
-    text,
-  }));
+  // Une entrée sur deux porte une photo : de quoi tester la visionneuse plein
+  // écran (ouverture, flèches, légendes) sans toucher au VPS.
+  let photo = 0;
+  const entries = textes.map((text, i) => {
+    const base = {
+      id: `sim-${String(i).padStart(4, "0")}`,
+      ts: new Date(DEPART_MS + ((i + 1) / (textes.length + 1)) * 26 * 3600_000).toISOString(),
+      text,
+    };
+    if (i % 2 === 1) {
+      const { w, h } = PHOTOS[photo % PHOTOS.length];
+      const media = { url: `/journal/media/sim-photo-${photo}.svg`, width: w, height: h };
+      photo += 1;
+      return { ...base, type: "photo", media };
+    }
+    return { ...base, type: "text" };
+  });
   return { schemaVersion: 1, entries, count: entries.length };
 }
 
@@ -177,6 +220,17 @@ const serveur = http.createServer((req, res) => {
 
   // Le formulaire « Laisse un mot » doit répondre en local, sinon impossible de
   // travailler ses états succès/erreur. Rien n'est envoyé nulle part.
+  const photo = url.pathname.match(/^\/journal\/media\/sim-photo-(\d+)\.svg$/);
+  if (photo) {
+    res.writeHead(200, {
+      "Content-Type": "image/svg+xml",
+      "Access-Control-Allow-Origin": "*",
+      "Cache-Control": "no-store",
+    });
+    res.end(fabriquerPhoto(Number(photo[1])));
+    return;
+  }
+
   if (req.method === "POST" && url.pathname === "/journal/message") {
     req.resume();
     return req.on("end", () => {
