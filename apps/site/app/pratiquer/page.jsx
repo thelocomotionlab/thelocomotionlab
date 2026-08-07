@@ -173,30 +173,40 @@ export default function PratiquerPage() {
           <h2 className="mb-3.5 font-lora text-[23px] font-medium italic text-brand-deep md:text-2xl">
             Qui anime ?
           </h2>
-          <div className="flex items-start gap-4 md:gap-6">
+          {/* Photo au-dessus en mobile, à côté à partir de sm : à 76 px de
+              photo, la colonne de texte tombait à ~235 px et la citation
+              devenait un pavé. Un seul rendu, pas de variante dupliquée. */}
+          <div className="flex flex-col items-start gap-4 sm:flex-row sm:gap-5 md:gap-6">
             <PhotoSlot
               src={PHOTOS.portrait.src}
               alt={PHOTOS.portrait.alt}
               sizes="120px"
-              className="h-[76px] w-[76px] flex-none rounded-full md:h-[120px] md:w-[120px]"
+              className="h-[88px] w-[88px] flex-none rounded-full sm:h-[76px] sm:w-[76px] md:h-[120px] md:w-[120px]"
             />
-            <div>
-              {/* Bio courte. La bio longue vit sur /a-propos : les deux
-                  racontaient la même personne sans aucun lien entre elles
-                  (audit des titres, 08/2026). */}
-              <p className="mb-2.5 text-[15px] leading-[1.65] text-gray-600 md:mb-4 md:text-base md:leading-[1.7]">
-                Valentin, fondateur du Locomotion Lab. Coureur minimaliste, grimpeur
-                d&rsquo;arbres et expérimentateur. Les ateliers sont pour lui un moyen
-                de transmettre ses connaissances et de faire tribu en situation réelle.{" "}
-                <Link
-                  href="/a-propos"
-                  className="font-semibold text-brand-deep-dark underline underline-offset-2 decoration-brand-accent-dark/60 hover:decoration-brand-accent-dark"
-                >
-                  Son parcours en entier
-                </Link>
-                .
+            <div className="min-w-0">
+              {/* Bio courte, en trois temps aérés : qui, sa voix, le lien vers
+                  la bio longue. Elle vit sur /a-propos — les deux racontaient
+                  la même personne sans aucun lien entre elles (audit des
+                  titres, 08/2026). */}
+              <p className="text-[15px] font-semibold leading-[1.5] text-brand-slate-dark md:text-base">
+                Valentin, fondateur du Locomotion Lab
               </p>
-              <div className="border-l-2 border-brand-accent pl-3 md:pl-4">
+
+              <blockquote className="mt-2.5 border-l-2 border-brand-hairline pl-3.5 font-lora text-[15px] italic leading-[1.7] text-gray-600 md:mt-3.5 md:pl-4 md:text-[16.5px] md:leading-[1.75]">
+                &laquo;&nbsp;Coureur minimaliste, grimpeur d&rsquo;arbres et
+                expérimentateur, les ateliers sont pour moi un moyen de
+                transmettre mes connaissances et de faire tribu en situation
+                réelle.&nbsp;&raquo;
+              </blockquote>
+
+              <Link
+                href="/a-propos"
+                className="mt-3 inline-block text-[14.5px] font-semibold text-brand-deep-dark underline underline-offset-2 decoration-brand-accent-dark/60 hover:decoration-brand-accent-dark md:mt-4 md:text-[15px]"
+              >
+                Voir mon parcours
+              </Link>
+
+              <div className="mt-5 border-l-2 border-brand-accent pl-3 md:mt-6 md:pl-4">
                 <p className="mb-1 font-heading text-[10px] font-bold tracking-[0.2em] text-brand-slate-dark md:text-[11px]">
                   EN FORMATION
                 </p>
@@ -207,7 +217,7 @@ export default function PratiquerPage() {
                 </p>
               </div>
             </div>
-          </div>
+          </div>        
         </div>
 
         <div className="mt-10 md:mt-0">

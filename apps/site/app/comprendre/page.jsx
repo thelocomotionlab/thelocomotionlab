@@ -168,7 +168,7 @@ export default function ComprendrePage() {
       <div className="lg:px-6">
         <PageHeader
           title="Comprendre"
-          tagline="La science derrière les concepts."
+          tagline="Creuser la science derrière les concepts."
         />
 
         {/* Grille : articles publiés puis cartes « à paraître ».

@@ -274,7 +274,7 @@ export default async function HomePage() {
               Comprendre
             </h2>
             <p className="mt-3.5 font-lora text-xl italic text-brand-deep">
-              La science derrière les concepts.
+              Creuser la science derrière les concepts.
             </p>
             <p className="mt-5 max-w-[460px] text-[16.5px] leading-[1.7] text-gray-700 text-pretty">
               Des articles de fond, sourcés et accessibles, qui décortiquent ce

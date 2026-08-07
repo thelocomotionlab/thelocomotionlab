@@ -97,20 +97,6 @@ export default function AboutPage() {
         Valentin
       </p>
 
-      {/* Pont vers l'autre biographie du site : « Qui anime ? » sur Pratiquer
-          racontait la même personne sans qu'aucun lien ne les relie (audit des
-          titres, 08/2026). */}
-      <p className="mt-8 text-left text-[15px] text-gray-600">
-        Je transmets aussi en vrai, sur le terrain :{" "}
-        <Link
-          href="/pratiquer"
-          className="font-semibold text-brand-deep-dark underline underline-offset-2 decoration-brand-accent-dark/60 hover:decoration-brand-accent-dark"
-        >
-          les ateliers de mouvement primal
-        </Link>
-        .
-      </p>
-
       {/* Capture email : une page à forte intention — qui la lit en entier est
           le meilleur prospect du labo — et elle n'avait aucun moyen de garder
           le lien (audit des titres, 08/2026). */}
