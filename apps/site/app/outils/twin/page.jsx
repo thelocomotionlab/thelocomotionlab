@@ -63,7 +63,6 @@ export default function TwinTeaserPage() {
   return (
     <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
       <PageHeader
-        kicker="/ OUTILS"
         title="Locomotion Twin"
         tagline="Modélisateur de plan de course de trail par jumeau numérique"
       />

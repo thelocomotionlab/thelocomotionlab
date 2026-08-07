@@ -132,7 +132,6 @@ export default function ExplorerPage() {
           gauche des grilles de cartes (colonnes de 22rem). */}
       <div className="lg:px-6">
         <PageHeader
-          kicker="/ TERRAIN"
           title="Explorer"
           tagline="Être son propre laboratoire."
         />

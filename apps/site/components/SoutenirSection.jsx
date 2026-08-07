@@ -13,7 +13,7 @@ import SectionHeading from "@/components/SectionHeading";
 export default function SoutenirSection() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-12 font-sans">
-      <PageHeader kicker="/ LE LABO" title="Soutenir l'exploration" />
+      <PageHeader title="Soutenir l'exploration" />
 
       <p className="mb-10 text-lg text-brand-text/90">
         Le{" "}

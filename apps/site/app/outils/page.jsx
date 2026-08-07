@@ -39,7 +39,6 @@ export default function OutilsPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
       <PageHeader
-        kicker="/ LES OUTILS"
         title="Outils"
         tagline="Les instruments du labo."
       />

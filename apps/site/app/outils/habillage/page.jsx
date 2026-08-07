@@ -24,7 +24,6 @@ export default function HabillagePage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
       <PageHeader
-        kicker="/ ATELIER"
         title="Habiller une photo"
         tagline="Le relief de la sortie, posé sur l'image."
       />

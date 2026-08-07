@@ -1,22 +1,16 @@
 // components/PageHeader.jsx
 //
-// En-tête de page commun (identité refonte 2026) : kicker Ubuntu Mono,
-// titre Ubuntu gras bleu profond, tagline en Lora italique terracotta,
-// court liseré ocre. Aligné à gauche par défaut.
+// En-tête de page commun (identité refonte 2026) : titre Ubuntu gras bleu
+// profond, tagline en Lora italique terracotta, court liseré ocre. Aligné à
+// gauche par défaut.
+//
+// Les kickers « / SCIENCE », « / TERRAIN »… ont été retirés du site (audit
+// des titres, 08/2026) : ils répétaient le pilier déjà porté par le titre et
+// par la navigation. Ne pas les réintroduire ici.
 
-export default function PageHeader({
-  kicker = null,
-  title,
-  tagline = null,
-  className = "",
-}) {
+export default function PageHeader({ title, tagline = null, className = "" }) {
   return (
     <header className={`mb-10 ${className}`}>
-      {kicker ? (
-        <p className="mb-3 font-heading text-[13px] font-bold tracking-[0.25em] text-brand-slate">
-          {kicker}
-        </p>
-      ) : null}
       <h1 className="font-heading text-4xl font-bold text-brand-slate-dark md:text-5xl">
         {title}
         {tagline ? (

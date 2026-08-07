@@ -34,7 +34,7 @@ export const metadata = {
 export default function AboutPage() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-12 font-sans text-left md:text-justify hyphens-auto">
-      <PageHeader kicker="/ PARCOURS" title="À propos" />
+      <PageHeader title="À propos" />
 
       {/* Parcours */}
       <section className="mb-10">

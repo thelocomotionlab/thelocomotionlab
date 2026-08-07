@@ -167,7 +167,6 @@ export default function ComprendrePage() {
           cartes (colonnes de 22rem). */}
       <div className="lg:px-6">
         <PageHeader
-          kicker="/ SCIENCE"
           title="Comprendre"
           tagline="La science derrière les concepts."
         />

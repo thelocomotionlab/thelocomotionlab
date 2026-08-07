@@ -33,10 +33,7 @@ export default function LiveAvant() {
     <div className="mx-auto flex max-w-3xl flex-col gap-3.5">
       {/* Hero */}
       <div>
-        <p className="font-heading text-[12px] font-bold uppercase tracking-[0.25em] text-brand-slate">
-          / TERRAIN
-        </p>
-        <h1 className="m-0 mt-1.5 font-heading text-4xl font-bold leading-[1.1] text-brand-slate-dark md:text-5xl">
+        <h1 className="m-0 font-heading text-4xl font-bold leading-[1.1] text-brand-slate-dark md:text-5xl">
           {aventure.nom}
         </h1>
         {/* Intention : la voix éditoriale du site (Lora italique terracotta,

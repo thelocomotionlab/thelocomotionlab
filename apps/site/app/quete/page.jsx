@@ -37,7 +37,7 @@ export const metadata = {
 export default function QuetePage() {
   return (
     <article className="max-w-3xl mx-auto px-6 py-12 font-sans">
-      <PageHeader kicker="/ ORIGINE" title="La quête" />
+      <PageHeader title="La quête" />
 
       {/* La formule du labo en exergue, comme une citation. */}
       <blockquote className="mb-10 border-l-[3px] border-brand-accent pl-5 font-lora text-xl italic leading-relaxed text-brand-deep md:text-[22px]">

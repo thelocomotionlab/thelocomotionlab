@@ -42,7 +42,6 @@ export default function CohortePage() {
   return (
     <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
       <PageHeader
-        kicker="/ LOCOMOTION TWIN"
         title="Rejoindre la cohorte"
         tagline="Tes courses passées font avancer l'outil"
       />

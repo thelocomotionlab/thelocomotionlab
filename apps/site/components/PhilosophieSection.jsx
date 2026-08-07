@@ -127,10 +127,7 @@ export default function PhilosophieSection() {
   return (
     <section className="bg-brand-bg px-[26px] pb-12 pt-14 md:px-16 md:pb-[84px] md:pt-24">
       <div className="mx-auto max-w-[1152px]">
-        <p className="text-center font-heading text-[11px] font-bold tracking-[0.22em] text-brand-slate md:text-[13px] md:tracking-[0.25em]">
-          / LE LABO
-        </p>
-        <h2 className="mt-3 text-center font-heading text-[28px] font-bold text-brand-primary-dark md:text-[40px]">
+        <h2 className="text-center font-heading text-[28px] font-bold text-brand-primary-dark md:text-[40px]">
           La philosophie du lab
         </h2>
 
