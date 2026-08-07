@@ -63,22 +63,19 @@ export default function TwinTeaserPage() {
   return (
     <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
       <PageHeader
-        kicker="/ LES OUTILS"
+        kicker="/ OUTILS"
         title="Locomotion Twin"
-        tagline="Un estimateur de temps de course de jumeau numérique"
+        tagline="Modélisateur de plan de course de trail par jumeau numérique"
       />
 
       <div className="bg-white rounded-2xl shadow-card p-4 sm:p-6 md:p-10">
         <p className="mb-8 text-[17px] leading-[1.65] text-brand-text">
           À partir de ton archive d&rsquo;entraînement et de la trace GPX de ta
           course cible, le Twin construit ton{" "}
-          <strong className="text-brand-slate-dark">jumeau physiologique</strong>{" "}
-          — vitesse critique, endurance, durabilité — le confronte au relief
-          réel du parcours, et t&rsquo;en déduit un plan de pacing{" "}
-          <em className="font-lora text-brand-deep">
-            validé sur tes propres courses passées
-          </em>
-          .
+          <strong >jumeau physiologique</strong>, et modélise des paramètres
+          comme ta vitesse critique, ton endurance, ta durabilité, etc. Ceux-ci sont
+          ensuite confrontés au tracé réel du parcours pour en déduire un plan de pacing{" "}
+          ultra personnalisé.
         </p>
 
         <SectionHeading className="mb-6">Comment ça marche</SectionHeading>
@@ -121,11 +118,7 @@ export default function TwinTeaserPage() {
           >
             Rejoindre la cohorte de test
           </Link>
-          <p className="mt-2.5 text-[13px] text-gray-500">
-            5 minutes, ton archive d&rsquo;entraînement, et c&rsquo;est tout.
-          </p>
         </div>
-
         <div className="mt-11 border-t-[1.5px] border-brand-grid pt-8 max-w-2xl mx-auto text-center">
           <h2 className="text-lg font-semibold text-brand-accent-ink mb-3">
             Pour être prévenu·e au lancement officiel

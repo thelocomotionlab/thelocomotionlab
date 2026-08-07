@@ -21,7 +21,7 @@ export const liveConfig = {
 
     // Départ : date + heure + fuseau (+02:00 l'été). Pilote le compte à
     // rebours et le numéro du jour du journal.
-    dateDebut: "2026-08-05T08:30:00+02:00",
+    dateDebut: "2026-08-06T08:30:00+02:00",
 
     // Période affichée sur la carte de partage.
     dates: "6 août 2026",
