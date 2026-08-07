@@ -317,6 +317,33 @@ régression :
 
 ---
 
+## 8 bis. Habiller une photo de sortie (`/outils/habillage`)
+
+Une page de l'app, **entièrement côté navigateur** : on choisit une photo et le
+GPX de la sortie, le profil altimétrique ambré + `distance · D+ · D−` + la
+signature du labo se posent en bas de l'image, au format story 1080×1920, dans
+la bande qu'Instagram ne recouvre pas. Puis « Partager » (partage natif du
+téléphone) ou « Enregistrer ».
+
+- **Rien ne sort du téléphone** : pas de serveur, donc rien à stocker ni à
+  purger, et ça marche hors réseau une fois la page en cache — elle fait partie
+  de la PWA installée.
+- **La distance vient de la montre** quand le fichier la porte
+  (`<gpxdata:distance>` chez Coros) : elle ne coïncide pas avec la géométrie du
+  tracé (24,26 km annoncés pour 22,86 km de segments sur la Croix de
+  Belledonne), et c'est bien le chiffre affiché au poignet qui doit être publié.
+- **Les trois chiffres sont modifiables** : le D+ recalculé depuis les altitudes
+  du fichier reste ~10 % sous celui qu'affiche la montre. On part du fichier, le
+  dernier mot revient à l'auteur.
+- La page est en `noindex` et n'est pas listée dans `/outils` : c'est un outil
+  d'atelier. Le raccourci se pose depuis l'app installée.
+
+Le calcul (lecture du GPX, D+/D− par lissage + hystérésis) vit dans
+`apps/site/lib/gpxStats.js`, la mise en page dans `apps/site/lib/habillage.js`
+— les deux sont testés (`pnpm -F site test`).
+
+---
+
 ## 9. Aide-mémoire « je veux… → je tape »
 
 | Je veux… | Commande |
@@ -331,3 +358,5 @@ régression :
 | Ajouter une dépendance à une app | `pnpm --filter <app> add <paquet>` |
 | Modifier la charte (couleur/police/composant) | éditer `packages/ui/`, **puis** rebuild le site et les apps concernées |
 | Tout compiler / linter (CI, vérif globale) | `pnpm build` / `pnpm lint` |
+| Habiller une photo de sortie | ouvrir `/outils/habillage` (§8 bis) — rien à taper |
+| Fabriquer une carte de partage a posteriori | `pnpm -F site carte:partage -- --slug <slug> --texte "…"` |
