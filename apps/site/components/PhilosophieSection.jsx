@@ -145,7 +145,12 @@ export default function PhilosophieSection() {
               <p className="mt-1.5 font-lora text-[17px] font-semibold italic leading-[1.35] text-brand-accent-ink [text-wrap:balance]">
                 {p.suite}
               </p>
-              <p className="mt-3.5 hyphens-auto text-justify text-[14px] leading-[1.65] text-gray-600">
+              {/* PAS de text-justify ici : la colonne fait 240 px à 14 px, soit
+                  ~34 caractères par ligne — trop étroit pour justifier sans
+                  ouvrir des blancs inter-mots visibles, même avec césure. La
+                  règle du site : justifié à partir de md ET sur une colonne de
+                  lecture large (audit des titres, 08/2026). */}
+              <p className="mt-3.5 text-[14px] leading-[1.65] text-gray-600 text-pretty">
                 {p.texte}
               </p>
             </div>

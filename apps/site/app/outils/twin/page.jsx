@@ -67,8 +67,13 @@ export default function TwinTeaserPage() {
         tagline="Modélisateur de plan de course de trail par jumeau numérique"
       />
 
+      {/* Colonne de lecture large (max-w-3xl) → paragraphes justifiés à partir
+          de md, comme /quete, /a-propos et les articles. La justification est
+          posée sur les PARAGRAPHES, pas sur la carte : les titres, le badge et
+          les blocs centrés en dessous n'ont rien à y gagner (audit des titres,
+          08/2026). */}
       <div className="bg-white rounded-2xl shadow-card p-4 sm:p-6 md:p-10">
-        <p className="mb-8 text-[17px] leading-[1.65] text-brand-text">
+        <p className="mb-8 text-[17px] leading-[1.65] text-brand-text text-left hyphens-auto md:text-justify">
           À partir de ton archive d&rsquo;entraînement et de la trace GPX de ta
           course cible, le Twin construit ton{" "}
           <strong >jumeau physiologique</strong>, et modélise des paramètres
@@ -88,7 +93,7 @@ export default function TwinTeaserPage() {
               <span className="pt-px font-mono text-[22px] font-bold text-brand-accent">
                 {etape.numero}
               </span>
-              <p className="text-[15.5px] leading-relaxed text-gray-700">
+              <p className="text-[15.5px] leading-relaxed text-gray-700 text-left hyphens-auto md:text-justify">
                 <strong className="text-brand-text">{etape.titre}</strong>{" "}
                 {etape.texte}
               </p>
@@ -103,7 +108,7 @@ export default function TwinTeaserPage() {
           <p className="mb-2 font-heading text-[11px] font-bold tracking-[0.18em] text-brand-slate-dark">
             STATUT
           </p>
-          <p className="text-gray-700">
+          <p className="text-gray-700 text-left hyphens-auto md:text-justify">
             L&rsquo;outil est en cours de développement. Pour participer à son
             élaboration et recevoir ton plan de course gratuit, rejoins dès
             maintenant la cohorte de calibration : ton archive

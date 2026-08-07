@@ -15,7 +15,10 @@ export default function SoutenirSection() {
     <div className="max-w-3xl mx-auto px-6 py-12 font-sans">
       <PageHeader title="Soutenir l'exploration" />
 
-      <p className="mb-10 text-lg text-brand-text/90">
+      {/* Colonne de lecture large (max-w-3xl) → justifié à partir de md, comme
+          /quete et /a-propos, dont cette page reprend déjà le gabarit (audit
+          des titres, 08/2026). */}
+      <p className="mb-10 text-lg text-brand-text/90 text-left hyphens-auto md:text-justify">
         Le{" "}
         <strong className="font-semibold text-brand-deep">
           Locomotion Lab
@@ -24,7 +27,7 @@ export default function SoutenirSection() {
         connaissances.
       </p>
 
-      <section className="mb-10">
+      <section className="mb-10 text-left hyphens-auto md:text-justify">
         <SectionHeading className="mb-3">Comment soutenir ?</SectionHeading>
         <p className="mb-4">
           Plusieurs manières de contribuer au fonctionnement du Labo arrivent

@@ -65,13 +65,17 @@ export default function ArticleBody({
       )}
 
       <div className="bg-white rounded-2xl shadow-card p-4 sm:p-6 md:p-10">
-        {/* Titre à la convention des pages (bleu profond), centré ; auteur
-            et date comme avant, juste dessous ; liseré ocre en séparateur. */}
-        <h1 className="text-3xl text-brand-slate-dark md:text-5xl font-heading font-bold mb-3 text-center">
+        {/* Titre à la convention des pages (bleu profond), auteur et date
+            juste dessous, liseré ocre en séparateur — le tout FERRÉ À GAUCHE,
+            comme PageHeader. Titre, méta et liseré étaient centrés : c'était
+            la seule grammaire d'en-tête différente du site, précisément sur
+            les pages d'atterrissage depuis Google et les réseaux (audit des
+            titres, 08/2026). */}
+        <h1 className="text-3xl text-brand-slate-dark md:text-5xl font-heading font-bold mb-3">
           {article.title}
         </h1>
         {(article.date || article.author) && (
-          <div className="text-sm text-gray-500 mb-5 text-center">
+          <div className="text-sm text-gray-500 mb-5">
             {article.author && (
               <p>
                 Par{" "}
@@ -94,7 +98,7 @@ export default function ArticleBody({
           </div>
         )}
         <div
-          className="mx-auto mb-8 h-[3px] w-16 rounded-full bg-brand-accent"
+          className="mb-8 h-[3px] w-16 rounded-full bg-brand-accent"
           aria-hidden="true"
         />
 

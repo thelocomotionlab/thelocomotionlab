@@ -184,9 +184,24 @@ export default function ComprendrePage() {
             ))}
           </div>
         ) : (
-          <p className="text-center text-gray-600">
-            Les premiers articles sont à paraître.
-          </p>
+          // État vide : il était centré, seul élément centré d'une page ferrée
+          // à gauche, et sans issue. Même encadré pointillé + capture email que
+          // l'état vide de /pratiquer (audit des titres, 08/2026).
+          <div className="rounded-2xl border-[1.5px] border-dashed border-brand-wash-line p-[22px] md:px-8 md:py-7">
+            <p className="mb-4 max-w-[520px] text-base italic leading-[1.7] text-gray-600">
+              Les premiers articles sont à paraître. Laisse ton adresse pour
+              être prévenu·e de leur publication.
+            </p>
+            <div className="max-w-[420px]">
+              <EmailCapture
+                title={null}
+                description={null}
+                source="comprendre-vide"
+                placeholder="Ton adresse e-mail"
+                buttonLabel="Me prévenir"
+              />
+            </div>
+          </div>
         )}
       </div>
 
