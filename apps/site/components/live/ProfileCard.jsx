@@ -7,8 +7,16 @@
 // encart affiche km / altitude / D+ / D− accumulés à ce point, et le parent
 // reçoit lat/lng (onHoverPoint) pour poser le point jumeau sur la carte —
 // reprise de la philosophie des anciens live-trackings.
-// Les repères de cols (waypoints) viennent de liveConfig — placeholder propre
-// (aucun repère) tant que Valentin n'a pas fourni la liste (brief §10.3).
+// Les repères (waypoints) viennent de liveConfig, déjà résolus par le parent
+// (lib/liveWaypoints) : un pointillé vertical, et l'ICÔNE choisie dans la
+// config en haut de ce pointillé. Les noms en toutes lettres sous le profil
+// ont été retirés — ils se chevauchaient dès que deux repères étaient proches,
+// et l'icône dit la même chose sans occuper de largeur. Le nom reste lisible
+// au survol (title) et pour les lecteurs d'écran.
+//
+// Les icônes sont posées en HTML au-dessus du SVG, pas dedans : le graphe est
+// en `preserveAspectRatio="none"` (il s'étire en largeur), ce qui déformerait
+// n'importe quelle icône dessinée à l'intérieur.
 
 "use client";
 
@@ -151,9 +159,12 @@ export default function ProfileCard({
         </p>
       </div>
 
+      {/* pt-[22px] : la bande où se posent les icônes des repères, au-dessus du
+          graphe. Le padding est vertical — le calcul du survol n'utilise que
+          `rect.left` et `rect.width`, il n'est pas affecté. */}
       <div
         ref={frameRef}
-        className="relative cursor-crosshair touch-pan-y"
+        className="relative cursor-crosshair touch-pan-y pt-[22px]"
         onPointerMove={handleMove}
         onPointerLeave={handleLeave}
       >
@@ -197,16 +208,19 @@ export default function ProfileCard({
           {geometry.coverLine && (
             <path d={geometry.coverLine} fill="none" stroke={brandColors.accentDark} strokeWidth="2.8" strokeLinejoin="round" />
           )}
+          {/* Pointillé du repère : il monte jusqu'au bord haut du graphe, où
+              l'icône vient s'y poser (rendue en HTML, juste après le SVG). */}
           {waypoints.map((w) => (
             <line
-              key={w.nom}
-              x1={(w.km / totalKm) * W}
+              key={w.cle}
+              x1={w.frac * W}
               y1={TOP}
-              x2={(w.km / totalKm) * W}
+              x2={w.frac * W}
               y2={BASE_Y}
-              stroke="rgba(51,51,51,0.15)"
+              stroke="rgba(51,51,51,0.28)"
               strokeWidth="1"
               strokeDasharray="2 3"
+              vectorEffect="non-scaling-stroke"
             />
           ))}
           {showMarker && (
@@ -238,6 +252,21 @@ export default function ProfileCard({
           )}
         </svg>
 
+        {/* Icônes des repères, en haut de leur pointillé. `clamp` garde les
+            icônes des extrémités (départ, arrivée) entièrement dans la carte
+            au lieu de les laisser déborder à moitié. */}
+        {waypoints.map((w) => (
+          <span
+            key={w.cle}
+            title={w.nom || undefined}
+            className="pointer-events-none absolute top-0 z-[3] flex h-[22px] w-[22px] -translate-x-1/2 items-center justify-center rounded-full border border-brand-text/15 bg-white text-brand-deep-dark shadow-[0_1px_4px_rgba(51,51,51,0.16)]"
+            style={{ left: `clamp(11px, ${w.frac * 100}%, calc(100% - 11px))` }}
+          >
+            <w.Icone size={12} strokeWidth={2.2} aria-hidden="true" />
+            {w.nom ? <span className="sr-only">{w.nom}</span> : null}
+          </span>
+        ))}
+
         {/* Encart du point survolé : km / alt, et D+ / D− accumulés quand la
             trace les porte (tracks régénérés par build-reference-track). */}
         {hover && (
@@ -257,19 +286,6 @@ export default function ProfileCard({
         )}
       </div>
 
-      {waypoints.length > 0 && (
-        <div className="relative mt-0.5 h-[15px] lg:h-4">
-          {waypoints.map((w) => (
-            <span
-              key={w.nom}
-              className="absolute top-0 -translate-x-1/2 whitespace-nowrap font-heading text-xxs text-brand-text/55"
-              style={{ left: `${(w.km / totalKm) * 100}%` }}
-            >
-              {w.nom}
-            </span>
-          ))}
-        </div>
-      )}
     </section>
   );
 }

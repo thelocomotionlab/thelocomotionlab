@@ -10,10 +10,13 @@
 // Marqueur coureur à halo pulsant ; `hoverPoint` pose le
 // point synchronisé avec le survol du profil altimétrique. Les deux traces
 // sont SIMPLIFIÉES (Douglas-Peucker) avant affichage.
+// `waypoints` (repères de liveConfig, résolus par lib/liveWaypoints) pose une
+// pastille par repère, avec l'icône lucide choisie dans la config.
 
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Locate } from "lucide-react";
@@ -153,17 +156,59 @@ function runnerElement(mode) {
   return el;
 }
 
+/** Pastille d'un repère : cercle blanc cerclé de bleu profond, icône dedans.
+ *  Même grammaire de cercle que le marqueur coureur, sans le halo — un repère
+ *  est fixe, il ne doit pas attirer l'œil autant que la position en direct. */
+function WaypointPin({ Icone, nom }) {
+  return (
+    // `role="img"` + `aria-label` : sur un <span> sans rôle, aria-label n'est
+    // pas un nom accessible valide et la plupart des lecteurs d'écran
+    // l'ignorent. Sans nom, le repère est purement décoratif.
+    <span
+      title={nom || undefined}
+      role={nom ? "img" : undefined}
+      aria-label={nom || undefined}
+      aria-hidden={nom ? undefined : "true"}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 26,
+        height: 26,
+        borderRadius: "50%",
+        background: brandColors.bg,
+        border: `2px solid ${brandColors.deep}`,
+        color: brandColors.deepDark,
+        boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+      }}
+    >
+      <Icone size={14} strokeWidth={2.2} aria-hidden="true" />
+    </span>
+  );
+}
+
 export default function LiveMap({
   referenceCoords,
   doneCoords,
   mapStyle,
   markerMode = "live",
   hoverPoint = null,
+  waypoints = [],
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
   const hoverRef = useRef(null);
+  // Hôtes DOM des repères : maplibre veut un élément, React veut rendre dedans
+  // — on crée l'élément ici et on y porte l'icône par createPortal, plutôt que
+  // de sérialiser du SVG à la main. Créés au rendu (et pas dans l'effet, qui
+  // aurait dû passer par un setState en cascade) : ce sont des nœuds détachés,
+  // rien n'est inséré dans le document avant que maplibre ne les positionne.
+  // Le composant est chargé en `ssr: false` — `document` existe toujours ici.
+  const waypointHotes = useMemo(
+    () => waypoints.map((repere) => ({ repere, el: document.createElement("div") })),
+    [waypoints],
+  );
   const fittedRef = useRef("none"); // "none" | "done" | "reference"
   const dataRef = useRef({ reference: [], done: [] });
   // Fond initial figé pour l'init (l'effet ne tourne qu'une fois).
@@ -237,6 +282,22 @@ export default function LiveMap({
     }
   }, [hoverPoint]);
 
+  // Repères de liveConfig : une pastille par repère. Les marqueurs sont des
+  // surcouches DOM, pas des couches de style — un changement de fond de carte
+  // ne les efface donc pas (contrairement aux traces, cf. `setStyle` ci-dessus).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return undefined;
+    const marqueurs = waypointHotes.map(({ repere, el }) =>
+      new maplibregl.Marker({ element: el, anchor: "center" })
+        .setLngLat([repere.lng, repere.lat])
+        .addTo(map),
+    );
+    return () => {
+      for (const m of marqueurs) m.remove();
+    };
+  }, [waypointHotes]);
+
   // Mise à jour des traces + marqueur + cadrage initial.
   useEffect(() => {
     const map = mapRef.current;
@@ -296,6 +357,10 @@ export default function LiveMap({
   return (
     <div className="live-map" style={{ position: "absolute", inset: 0 }}>
       <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />
+      {/* Icônes des repères, portées dans les éléments que maplibre positionne. */}
+      {waypointHotes.map(({ el, repere }) =>
+        createPortal(<WaypointPin Icone={repere.Icone} nom={repere.nom} />, el, repere.cle),
+      )}
       <button
         type="button"
         onClick={recenter}

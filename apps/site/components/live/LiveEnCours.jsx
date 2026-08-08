@@ -14,6 +14,7 @@ import dynamic from "next/dynamic";
 import { liveConfig, liveReglages } from "@/lib/liveConfig";
 import { freshnessState } from "@/lib/freshness";
 import { dayIndex } from "@/lib/liveTime";
+import { reperesSurCarte, reperesSurProfil } from "@/lib/liveWaypoints";
 import { avancementSurTrace } from "@/lib/progression";
 import { useJournal } from "@/lib/useJournal";
 import { useLivePositions } from "@/lib/useLivePositions";
@@ -46,6 +47,18 @@ export default function LiveEnCours({ timer }) {
   const positions = useLivePositions({ pollMs: liveReglages.positionsPollMs });
   const journal = useJournal({ pollMs: liveReglages.journalPollMs });
   const reference = useReferenceTrack(aventure.trace);
+
+  // Repères de liveConfig, résolus une fois (cf. lib/liveWaypoints) : la carte
+  // veut des coordonnées, le profil une abscisse. Mémoïsés — l'effet qui pose
+  // les marqueurs maplibre se rejoue à chaque nouvelle identité de tableau.
+  const reperesCarte = useMemo(
+    () => reperesSurCarte(aventure.waypoints, reference),
+    [aventure.waypoints, reference],
+  );
+  const reperesProfil = useMemo(
+    () => reperesSurProfil(aventure.waypoints, reference),
+    [aventure.waypoints, reference],
+  );
 
   // Horloge 30 s : fait vieillir la fraîcheur et avancer le chrono sans polling.
   useEffect(() => {
@@ -129,6 +142,7 @@ export default function LiveEnCours({ timer }) {
               doneCoords={doneCoords}
               mapStyle={mapStyle}
               hoverPoint={hoverPoint}
+              waypoints={reperesCarte}
             />
             <div className="absolute right-3 top-3 z-[5] lg:hidden">
               <MapStyleSwitch value={mapStyle} onChange={setMapStyle} />
@@ -144,7 +158,7 @@ export default function LiveEnCours({ timer }) {
               doneKm={avanceKm ?? (stats?.distance ?? 0) / 1000}
               elevationMin={reference?.elevMinM}
               elevationMax={reference?.elevMaxM}
-              waypoints={aventure.waypoints ?? []}
+              waypoints={reperesProfil}
               onHoverPoint={setHoverPoint}
             />
           </div>

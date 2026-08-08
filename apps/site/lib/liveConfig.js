@@ -32,8 +32,28 @@ export const liveConfig = {
     // Trace prévue : le .track.json généré au geste 2.
     trace: "/tracks/tour-des-ecrins.track.json",
 
-    // Repères de cols sur le profil : [{ nom: "Col Vert", km: 6 }, …].
-    // Laisse [] pour n'en afficher aucun.
+    // Repères du parcours. Chacun pose DEUX choses, à partir du seul km :
+    //   • sur la CARTE  : une pastille avec l'icône choisie ;
+    //   • sur le PROFIL : un pointillé vertical, l'icône en haut.
+    // Le nom ne s'affiche plus en toutes lettres (les libellés se marchaient
+    // dessus dès que deux repères étaient proches) : il apparaît au survol et
+    // le lisent les lecteurs d'écran. Garde-le court et parlant quand même.
+    //
+    //   waypoints: [
+    //     { nom: "Col Vert",     km: 6,    icone: "col" },
+    //     { nom: "Bivouac lac",  km: 23.5, icone: "bivouac" },
+    //     { nom: "Source",       km: 31,   icone: "eau" },
+    //   ],
+    //
+    // `icone` : une clé de lib/liveWaypointIcons.js — sommet, col, neige,
+    // bivouac, refuge, eau, ravitaillement, commerce, village, route,
+    // recharge, depart, arrivee, sentier, velo, foret, riviere, lever-soleil,
+    // coucher-soleil, nuit, pluie, vent, photo, danger, secours, repere.
+    // Il en manque une ? Ajoute-la dans ce fichier (le mode d'emploi y est).
+    // Une clé absente ou mal orthographiée retombe sur le repère générique :
+    // ça ne casse jamais la page en plein direct.
+    //
+    // Le km peut être décimal. Laisse [] pour n'afficher aucun repère.
     waypoints: [],
 
     // Deux valeurs seulement :

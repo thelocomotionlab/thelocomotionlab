@@ -71,9 +71,10 @@ export default function LivePage() {
 
       {/* Phrase pack (texte n°9, fixe), discrète */}
       <p className="mt-12 max-w-4xl mx-auto text-center text-sm text-gray-600 italic">
-        Ce dispositif de suivi est déployable sur une grande variété d'aventures.{" "}
+        Ce dispositif de suivi est déployable sur une grande variété
+        d&rsquo;aventures.{" "}
         <Link href="/contact" className="underline hover:text-brand-accent">
-          Écris-moi s&rsquo;il t&rsquo;intéresse.
+          Écris-moi s&rsquo;il t&rsquo;intéresse
         </Link>
         .
       </p>

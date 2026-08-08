@@ -7,10 +7,11 @@
 
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 
 import { liveConfig } from "@/lib/liveConfig";
+import { reperesSurCarte, reperesSurProfil } from "@/lib/liveWaypoints";
 import { useReferenceTrack } from "@/lib/useReferenceTrack";
 import Countdown from "./Countdown";
 import EmailCaptureCard from "./EmailCaptureCard";
@@ -28,6 +29,18 @@ export default function LiveAvant() {
   const reference = useReferenceTrack(aventure.trace);
   const [mapStyle, setMapStyle] = useState("relief");
   const [hoverPoint, setHoverPoint] = useState(null);
+
+  // Repères de liveConfig, résolus une fois : la carte a besoin de coordonnées
+  // (retrouvées sur la trace), le profil d'une abscisse. Mémoïsés — l'effet qui
+  // pose les marqueurs maplibre se rejoue à chaque nouvelle identité de tableau.
+  const reperesCarte = useMemo(
+    () => reperesSurCarte(aventure.waypoints, reference),
+    [aventure.waypoints, reference],
+  );
+  const reperesProfil = useMemo(
+    () => reperesSurProfil(aventure.waypoints, reference),
+    [aventure.waypoints, reference],
+  );
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-3.5">
@@ -63,6 +76,7 @@ export default function LiveAvant() {
             mapStyle={mapStyle}
             markerMode="depart"
             hoverPoint={hoverPoint}
+            waypoints={reperesCarte}
           />
         </div>
       </div>
@@ -76,7 +90,7 @@ export default function LiveAvant() {
           doneKm={0}
           elevationMin={reference.elevMinM}
           elevationMax={reference.elevMaxM}
-          waypoints={aventure.waypoints ?? []}
+          waypoints={reperesProfil}
           onHoverPoint={setHoverPoint}
         />
       )}
