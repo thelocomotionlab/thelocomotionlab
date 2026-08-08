@@ -17,7 +17,7 @@
 export const liveConfig = {
   aventure: {
     // Nom affiché en grand.
-    nom: "Croix de Belledonne",
+    nom: "Tour des Écrins",
 
     // Départ : date + heure + fuseau (+02:00 l'été). Pilote le compte à
     // rebours et le numéro du jour du journal.
@@ -27,7 +27,7 @@ export const liveConfig = {
     dates: "20 août 2026",
 
     // Phrase d'intention, en italique sous le titre.
-    intention: "Tour des Écrins en autonomie complète.",
+    intention: "En autonomie complète sur 4 jours.",
 
     // Trace prévue : le .track.json généré au geste 2.
     trace: "/tracks/tour-des-ecrins.track.json",
@@ -54,8 +54,12 @@ export const liveConfig = {
     // ça ne casse jamais la page en plein direct.
     //
     // Le km peut être décimal. Laisse [] pour n'afficher aucun repère.
-    waypoints: [],
-
+/*    waypoints: [],*/
+    waypoints: [
+      { nom: "Arsine",     km: 42.,    icone: "bivouac" },
+      { nom: "Vallouise",  km: 80., icone: "bivouac" },
+      { nom: "Valgaudémar",       km: 130.6,   icone: "bivouac" },
+    ],
     // Deux valeurs seulement :
     //   • "avant" — en toutes circonstances (prépa, direct, et après : la page
     //     reste figée sur les dernières données jusqu'au prochain `track reset`) ;
