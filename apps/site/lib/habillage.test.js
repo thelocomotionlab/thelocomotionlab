@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  boiteDuLogo,
   cadrageCouverture,
   cheminDuProfil,
   dessinerFleche,
@@ -161,6 +162,47 @@ describe("zone sûre Instagram", () => {
   it("le profil est PLEINE LARGEUR (silhouette Coros, pas un encart)", () => {
     expect(GABARIT.profil.x).toBe(0);
     expect(GABARIT.profil.width).toBe(STORY.width);
+  });
+
+  it("LE LOGO AUSSI tient dans la bande visible, haut et bas", () => {
+    // La marque descend plus bas que la ligne de base du nom : c'est elle, et
+    // non le texte, qui touche en premier l'interface d'Instagram.
+    const b = boiteDuLogo();
+    expect(b.y).toBeGreaterThanOrEqual(ZONE_SURE.top);
+    expect(b.y + b.taille).toBeLessThanOrEqual(ZONE_SURE.bottom);
+  });
+
+  it("le logo ne mord ni sur les chiffres au-dessus, ni sur le bord gauche", () => {
+    const b = boiteDuLogo();
+    expect(b.y).toBeGreaterThan(GABARIT.stats.baseline);
+    expect(b.x).toBeGreaterThanOrEqual(GABARIT.pad);
+  });
+
+  it("la signature entière (logo + nom) reste dans la colonne", () => {
+    const { taille, ecart } = GABARIT.marque.logo;
+    // Majuscules Ubuntu ≈ 0,58 em, plus l'interlettrage imposé.
+    const largeurNom =
+      "THE LOCOMOTION LAB".length * (GABARIT.marque.taille * 0.58 + GABARIT.marque.espacement * GABARIT.marque.taille);
+    expect(GABARIT.pad + taille + ecart + largeurNom).toBeLessThan(STORY.width - GABARIT.pad);
+  });
+});
+
+describe("boiteDuLogo", () => {
+  it("centre la marque sur le centre optique des capitales, pas sur leur pied", () => {
+    const b = boiteDuLogo();
+    const centre = b.y + b.taille / 2;
+    // Au-dessus de la ligne de base : sinon la marque paraît décrochée vers le bas.
+    expect(centre).toBeLessThan(GABARIT.marque.baseline);
+    expect(GABARIT.marque.baseline - centre).toBeLessThan(GABARIT.marque.taille);
+  });
+
+  it("se cale sur l'abscisse demandée", () => {
+    expect(boiteDuLogo(200).x).toBe(200);
+    expect(boiteDuLogo().x).toBe(GABARIT.pad);
+  });
+
+  it("reste DISCRÈTE : plus petite que les chiffres, qui portent l'information", () => {
+    expect(GABARIT.marque.logo.taille).toBeLessThan(GABARIT.stats.taille);
   });
 });
 

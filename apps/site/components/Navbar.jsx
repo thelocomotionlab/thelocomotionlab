@@ -55,7 +55,10 @@ const NAV_ITEMS = [
     label: "Outils",
     Icon: Wrench,
     hidden: !SHOW_OUTILS,
-    items: [{ href: "/outils/twin", label: "Locomotion Twin" }],
+    items: [
+      { href: "/outils/twin", label: "Locomotion Twin" },
+      { href: "/outils/habillage", label: "Habiller une photo" },
+    ],
   },
   {
     type: "menu",

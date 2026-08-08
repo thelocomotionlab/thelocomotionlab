@@ -21,7 +21,11 @@ import { Download, ImageUp, Route, Share2 } from "lucide-react";
 
 import { statsDeGpx } from "@/lib/gpxStats";
 import { chargerImage } from "@/lib/imageFile";
-import { dessinerHabillage, STORY } from "@/lib/habillage";
+import { COULEURS, dessinerHabillage, STORY } from "@/lib/habillage";
+
+// La marque du labo, fond transparent, produite depuis le logo source par
+// `pnpm -F site build:icons` (scripts/build-icons.mjs).
+const LOGO_MARQUE = "/images/assets/logo-mark-512.png";
 
 const CHAMP =
   "w-full rounded-xl border border-brand-field bg-brand-paper px-3 py-2 font-heading text-[15px] text-brand-text focus:border-brand-primary-dark focus:outline-none";
@@ -45,6 +49,35 @@ function policeUbuntu() {
   return famille && famille !== "" ? famille : "sans-serif";
 }
 
+/**
+ * La marque du labo, RECOLORÉE en crème.
+ *
+ * Le logo source est terracotta — sa couleur sur fond clair. Posé tel quel sur
+ * le voile sombre du bas de la story, il vire au marron boueux et se perd. On
+ * le reteinte donc à l'encre du nom : on dessine la marque dans un canevas
+ * hors écran, puis `source-in` ne garde la couleur QUE là où il y a des pixels
+ * — les traits deviennent crème, la transparence le reste.
+ *
+ * Une seule fois au chargement : l'aperçu est redessiné à chaque frappe et à
+ * chaque mouvement du curseur de cadrage.
+ */
+async function chargerMarqueTeintee() {
+  const img = new Image();
+  img.decoding = "async";
+  img.src = LOGO_MARQUE;
+  await img.decode();
+
+  const c = document.createElement("canvas");
+  c.width = img.naturalWidth;
+  c.height = img.naturalHeight;
+  const ctx = c.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+  ctx.globalCompositeOperation = "source-in";
+  ctx.fillStyle = COULEURS.creme;
+  ctx.fillRect(0, 0, c.width, c.height);
+  return c;
+}
+
 export default function HabillagePhoto() {
   const canvasRef = useRef(null);
   const [image, setImage] = useState(null);
@@ -54,6 +87,7 @@ export default function HabillagePhoto() {
   const [champs, setChamps] = useState({ distanceKm: "", dPlusM: "", dMinusM: "" });
   const [etat, setEtat] = useState({ occupe: false, message: "" });
   const [policePrete, setPolicePrete] = useState(false);
+  const [marque, setMarque] = useState(null);
 
   // Le canvas dessine avec la vraie fonte du site : sans cette attente, le
   // premier rendu part en police système et le texte saute ensuite.
@@ -66,6 +100,19 @@ export default function HabillagePhoto() {
     ])
       .catch(() => {})
       .then(() => vivant && setPolicePrete(true));
+    return () => {
+      vivant = false;
+    };
+  }, []);
+
+  // La marque, teintée une fois pour toutes. Si elle ne charge pas, l'habillage
+  // se contente du nom : le tampon du labo ne doit jamais empêcher d'exporter
+  // sa photo.
+  useEffect(() => {
+    let vivant = true;
+    chargerMarqueTeintee()
+      .then((c) => vivant && setMarque(c))
+      .catch(() => {});
     return () => {
       vivant = false;
     };
@@ -138,8 +185,9 @@ export default function HabillagePhoto() {
       dMinusM: valeurs.dMinusM,
       ancrage,
       police: policeUbuntu(),
+      logo: marque,
     });
-  }, [image, trace, valeurs, ancrage, policePrete]);
+  }, [image, trace, valeurs, ancrage, policePrete, marque]);
 
   const fichierFinal = useCallback(
     () =>

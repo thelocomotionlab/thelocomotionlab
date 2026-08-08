@@ -94,4 +94,11 @@ await icone("web-app-manifest-maskable-512x512.png", 512, 0.66, true);
 // pas la transparence : un peu plus grand, sur fond opaque.
 await icone("apple-touch-icon.png", 180, 0.8, true);
 
+// Marque seule, pleine largeur et sur fond TRANSPARENT : elle n'est pas une
+// icône d'app mais l'asset servi à l'atelier d'habillage, qui la teinte en
+// crème et la pose sur la photo (lib/habillage.js). Elle sort d'ici pour que
+// le logo n'ait toujours qu'UNE source — changer logo-source-512.png et
+// relancer ce script met tout à jour d'un coup.
+await icone("logo-mark-512.png", 512, 1, false);
+
 console.log("\n✓ Terminé. Vérifier le rendu masqué : https://maskable.app/editor\n");

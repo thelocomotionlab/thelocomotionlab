@@ -56,8 +56,25 @@ export const GABARIT = {
   stats: { taille: 44, baseline: 1505 },
   // Le bloc descend jusqu'à la limite basse de la zone sûre : plus haut, il
   // laissait 380 px de photo vide sous lui à l'export.
-  marque: { taille: 21, baseline: 1566, espacement: 0.3 },
+  //
+  // `logo` : la marque du labo, à GAUCHE du nom, en verrou avec lui.
+  //   • taille — côté du carré. 38 px pour un nom à 21 px : la marque se
+  //              remarque sans prendre le pas sur les chiffres, qui restent
+  //              l'information de l'image.
+  //   • ecart  — blanc entre la marque et la première lettre.
+  marque: { taille: 21, baseline: 1566, espacement: 0.3, logo: { taille: 38, ecart: 16 } },
 };
+
+/**
+ * Part de la taille du texte séparant la ligne de base du CENTRE OPTIQUE des
+ * capitales. La hauteur de capitale d'Ubuntu vaut ~0,70 em ; son milieu est
+ * donc à ~0,35 em au-dessus de la ligne de base. Aligner la marque sur la
+ * ligne de base elle-même la ferait pendre sous le nom.
+ */
+export const CENTRE_CAPITALES = 0.35;
+
+/** Le logo est teinté à la couleur du nom : même encre, même présence. */
+export const MARQUE_OPACITE = 0.68;
 
 // La fonte Ubuntu n'a pas l'espace fine insécable (U+202F) que produit Intl
 // fr-FR : le canvas dessinerait un carré blanc. Même normalisation que les
@@ -208,11 +225,33 @@ export function dessinerTexteEspace(ctx, texte, x, y, taille, espacementEm) {
 }
 
 /**
+ * Boîte du carré du logo, pour une ligne de base de nom donnée. Isolée pour
+ * être vérifiable sans canvas : c'est elle qui garantit que la marque ne
+ * déborde pas sous l'interface d'Instagram.
+ */
+export function boiteDuLogo(x = GABARIT.pad) {
+  const { taille } = GABARIT.marque.logo;
+  const centre = GABARIT.marque.baseline - GABARIT.marque.taille * CENTRE_CAPITALES;
+  return { x, y: centre - taille / 2, taille };
+}
+
+/**
  * Compose l'habillage sur un contexte 2D déjà dimensionné en 1080×1920.
  * `police` est la famille CSS à utiliser (celle de next/font, lue sur le DOM).
+ * `logo` est la marque DÉJÀ TEINTÉE (cf. HabillagePhoto) ; absente, le nom
+ * seul est dessiné, comme avant — l'habillage ne dépend pas de son chargement.
  */
 export function dessinerHabillage(ctx, options) {
-  const { image, profil, distanceKm, dPlusM, dMinusM, ancrage = 0.5, police = "sans-serif" } = options;
+  const {
+    image,
+    profil,
+    distanceKm,
+    dPlusM,
+    dMinusM,
+    ancrage = 0.5,
+    police = "sans-serif",
+    logo = null,
+  } = options;
   const g = GABARIT;
 
   ctx.clearRect(0, 0, STORY.width, STORY.height);
@@ -285,12 +324,24 @@ export function dessinerHabillage(ctx, options) {
     }
   }
 
+  // Signature : la marque puis le nom, en verrou. Le logo est posé à la même
+  // opacité que le texte — une empreinte plus contrastée que son propre nom
+  // tirerait l'œil vers le coin de l'image au lieu des chiffres.
+  let marqueX = g.pad;
+  if (logo) {
+    const boite = boiteDuLogo(g.pad);
+    ctx.globalAlpha = MARQUE_OPACITE;
+    ctx.drawImage(logo, boite.x, boite.y, boite.taille, boite.taille);
+    ctx.globalAlpha = 1;
+    marqueX = boite.x + boite.taille + g.marque.logo.ecart;
+  }
+
   ctx.font = `500 ${g.marque.taille}px ${police}`;
-  ctx.fillStyle = "rgba(254, 251, 246, 0.68)";
+  ctx.fillStyle = `rgba(254, 251, 246, ${MARQUE_OPACITE})`;
   dessinerTexteEspace(
     ctx,
     "THE LOCOMOTION LAB",
-    g.pad,
+    marqueX,
     g.marque.baseline,
     g.marque.taille,
     g.marque.espacement,
