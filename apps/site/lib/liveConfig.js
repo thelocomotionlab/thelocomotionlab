@@ -21,7 +21,7 @@ export const liveConfig = {
 
     // Départ : date + heure + fuseau (+02:00 l'été). Pilote le compte à
     // rebours et le numéro du jour du journal.
-    dateDebut: "2026-08-20T10:00:00+02:00",
+    dateDebut: "2026-08-09T10:00:00+02:00",
 
     // Période affichée sur la carte de partage.
     dates: "20 août 2026",
@@ -30,7 +30,8 @@ export const liveConfig = {
     intention: "En autonomie complète sur 4 jours.",
 
     // Trace prévue : le .track.json généré au geste 2.
-    trace: "/tracks/tour-des-ecrins.track.json",
+/*    trace: "/tracks/tour-des-ecrins.track.json",*/
+    trace: "/tracks/sortie-longue-vercors.track.json",
 
     // Repères du parcours. Chacun pose DEUX choses, à partir du seul km :
     //   • sur la CARTE  : une pastille avec l'icône choisie ;
@@ -54,12 +55,14 @@ export const liveConfig = {
     // ça ne casse jamais la page en plein direct.
     //
     // Le km peut être décimal. Laisse [] pour n'afficher aucun repère.
+
 /*    waypoints: [],*/
-    waypoints: [
+/*    waypoints: [
       { nom: "Arsine",     km: 42.,    icone: "bivouac" },
       { nom: "Vallouise",  km: 80., icone: "bivouac" },
       { nom: "Valgaudémar",       km: 130.6,   icone: "bivouac" },
     ],
+    */
     // Deux valeurs seulement :
     //   • "avant" — en toutes circonstances (prépa, direct, et après : la page
     //     reste figée sur les dernières données jusqu'au prochain `track reset`) ;
