@@ -30,7 +30,7 @@ export default function HabillagePage() {
 
       <p className="mb-8 max-w-2xl text-base leading-[1.75] text-gray-600 md:text-[17px]">
         Partage ta dernière sortie sur les réseaux aux couleurs du labo. Fournis ta photo et le GPX
-        de ta sortie. Les deux sont lues qui purgés, rien n'est stocké sur nos serveurs.{" "}
+        de ta sortie. Les deux sont lus puis purgés, rien n&rsquo;est stocké sur nos serveurs.
       </p>
 
       <HabillagePhoto />
