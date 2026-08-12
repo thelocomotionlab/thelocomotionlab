@@ -29,12 +29,8 @@ export default function HabillagePage() {
       />
 
       <p className="mb-8 max-w-2xl text-base leading-[1.75] text-gray-600 md:text-[17px]">
-        Choisis une photo et le GPX de la sortie : le profil altimétrique, la distance et le
-        dénivelé se posent au bas de l&rsquo;image, dans la bande qu&rsquo;Instagram laisse
-        visible.{" "}
-        <strong className="font-medium text-brand-text">Rien ne quitte ton téléphone</strong>{" "}
-        — la photo et la trace sont lues sur place, il n&rsquo;y a pas de serveur derrière cette
-        page.
+        Partage ta dernière sortie sur les réseaux aux couleurs du labo. Fournis ta photo et le GPX
+        de ta sortie. Les deux sont lues qui purgés, rien n'est stocké sur nos serveurs.{" "}
       </p>
 
       <HabillagePhoto />

@@ -65,7 +65,7 @@ const NAV_ITEMS = [
     hidden: !SHOW_OUTILS,
     items: [
       { href: "/outils/twin", label: "Locomotion Twin" },
-      { href: "/outils/habillage", label: "Habiller une photo" },
+      { href: "/outils/habillage", label: "Filtre de partage" },
     ],
   },
   {
