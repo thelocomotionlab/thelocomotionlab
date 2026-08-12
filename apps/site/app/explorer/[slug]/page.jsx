@@ -21,6 +21,8 @@ import {
   assertNoSlugCollision,
 } from "@/lib/contentRoutes.mjs";
 
+import { imageDePartage, LOGO_SIZE, LOGO_URL } from "@/lib/seo";
+
 const SITE_URL = "https://thelocomotionlab.com";
 
 function toDate(value) {
@@ -111,9 +113,7 @@ export async function generateMetadata({ params }) {
   const { kind, item } = data;
 
   const url = `${SITE_URL}/explorer/${item.slug}`;
-  const ogImage = item.cover
-    ? `${SITE_URL}${item.cover}`
-    : `${SITE_URL}/images/assets/og-image.jpg`;
+  const ogImage = imageDePartage(item.cover);
 
   const description =
     item.description ||
@@ -219,9 +219,7 @@ export default async function ExplorerEntryPage({ params }) {
  */
 function buildRecitJsonLd(article) {
   const url = `${SITE_URL}/explorer/${article.slug}`;
-  const imageUrl = article.cover
-    ? `${SITE_URL}${article.cover}`
-    : `${SITE_URL}/images/assets/og-image.jpg`;
+  const imageUrl = imageDePartage(article.cover);
 
   const datePublished = article.date
     ? new Date(article.date).toISOString()
@@ -247,9 +245,9 @@ function buildRecitJsonLd(article) {
       url: SITE_URL,
       logo: {
         "@type": "ImageObject",
-        url: `${SITE_URL}/images/assets/og-image.jpg`,
-        width: 1200,
-        height: 630,
+        url: LOGO_URL,
+        width: LOGO_SIZE,
+        height: LOGO_SIZE,
       },
     },
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
@@ -268,9 +266,7 @@ function buildRecitJsonLd(article) {
  */
 function buildProjectJsonLd(project) {
   const url = `${SITE_URL}/explorer/${project.slug}`;
-  const imageUrl = project.cover
-    ? `${SITE_URL}${project.cover}`
-    : `${SITE_URL}/images/assets/og-image.jpg`;
+  const imageUrl = imageDePartage(project.cover);
 
   const datePublished = toIsoString(project.date);
   const dateModified =
@@ -300,9 +296,9 @@ function buildProjectJsonLd(project) {
       url: SITE_URL,
       logo: {
         "@type": "ImageObject",
-        url: `${SITE_URL}/images/assets/og-image.jpg`,
-        width: 1200,
-        height: 630,
+        url: LOGO_URL,
+        width: LOGO_SIZE,
+        height: LOGO_SIZE,
       },
     },
     mainEntityOfPage: { "@type": "WebPage", "@id": url },

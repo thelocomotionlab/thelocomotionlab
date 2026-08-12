@@ -1,6 +1,7 @@
 // app/mentions-legales/page.jsx
 import PageHeader from "@/components/PageHeader";
 import SectionHeading from "@/components/SectionHeading";
+import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
 export const metadata = {
   title: "Mentions légales – The Locomotion Lab",
@@ -16,18 +17,14 @@ export const metadata = {
     url: "https://thelocomotionlab.com/mentions-legales",
     type: "website",
     locale: "fr_FR",
-    images: [
-      {
-        url: "https://thelocomotionlab.com/images/assets/og-image.jpg",
-      },
-    ],
+    images: OG_IMAGES,
   },
   twitter: {
     card: "summary_large_image",
     title: "Mentions légales – The Locomotion Lab",
     description:
       "Informations légales du site thelocomotionlab.com : éditeur, hébergeur, propriété intellectuelle et contact du Locomotion Lab.",
-    images: ["https://thelocomotionlab.com/images/assets/og-image.jpg"],
+    images: [OG_IMAGE],
   },
 };
 

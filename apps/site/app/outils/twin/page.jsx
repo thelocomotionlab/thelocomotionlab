@@ -8,6 +8,7 @@ import Link from "next/link";
 import EmailCapture from "@/components/EmailCapture";
 import PageHeader from "@/components/PageHeader";
 import SectionHeading from "@/components/SectionHeading";
+import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
 export const metadata = {
   title: "Locomotion Twin – Calculateur de plan de course",
@@ -22,11 +23,7 @@ export const metadata = {
       "Un plan de pacing calibré sur tes propres données d'entraînement et validé sur tes courses passées.",
     url: "https://thelocomotionlab.com/outils/twin",
     type: "website",
-    images: [
-      {
-        url: "https://thelocomotionlab.com/images/assets/og-image.jpg",
-      },
-    ],
+    images: OG_IMAGES,
     locale: "fr_FR",
   },
   twitter: {
@@ -34,7 +31,7 @@ export const metadata = {
     title: "Locomotion Twin – The Locomotion Lab",
     description:
       "Un plan de pacing calibré sur tes propres données d'entraînement et validé sur tes courses passées.",
-    images: ["https://thelocomotionlab.com/images/assets/og-image.jpg"],
+    images: [OG_IMAGE],
   },
 };
 

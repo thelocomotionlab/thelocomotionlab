@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ubuntu, lora, ubuntuMono } from "@locomotionlab/ui/fonts";
 import ShareButton from "@/components/ShareButton";
+import { OG_IMAGE, OG_IMAGE_ALT, OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH } from "@/lib/seo";
 
 export const metadata = {
   title: {
@@ -33,10 +34,10 @@ export const metadata = {
     siteName: "The Locomotion Lab",
     images: [
       {
-        url: "/images/assets/og-image.jpg", // Ton image existante
-        width: 1200,
-        height: 630,
-        alt: "The Locomotion Lab - Explorations",
+        url: OG_IMAGE,
+        width: OG_IMAGE_WIDTH,
+        height: OG_IMAGE_HEIGHT,
+        alt: OG_IMAGE_ALT,
       },
     ],
     locale: "fr_FR",

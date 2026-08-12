@@ -13,6 +13,8 @@ import SearchHighlighter from "@/components/SearchHighlighter";
 import { getRelatedArticles } from "@/lib/getRelated";
 import { listArticleEntries, findComprendreEntry } from "@/lib/contentRoutes.mjs";
 
+import { imageDePartage, LOGO_SIZE, LOGO_URL } from "@/lib/seo";
+
 const SITE_URL = "https://thelocomotionlab.com";
 
 /**
@@ -73,9 +75,7 @@ export async function generateMetadata({ params }) {
   const { article } = data;
 
   const url = `${SITE_URL}/comprendre/${article.slug}`;
-  const ogImage = article.cover
-    ? `${SITE_URL}${article.cover}`
-    : `${SITE_URL}/images/assets/og-image.jpg`;
+  const ogImage = imageDePartage(article.cover);
 
   const description =
     article.description ||
@@ -153,9 +153,7 @@ export default async function ArticlePage({ params }) {
  */
 function buildArticleJsonLd(article) {
   const url = `${SITE_URL}/comprendre/${article.slug}`;
-  const imageUrl = article.cover
-    ? `${SITE_URL}${article.cover}`
-    : `${SITE_URL}/images/assets/og-image.jpg`;
+  const imageUrl = imageDePartage(article.cover);
 
   const datePublished = article.date
     ? new Date(article.date).toISOString()
@@ -181,9 +179,9 @@ function buildArticleJsonLd(article) {
       url: SITE_URL,
       logo: {
         "@type": "ImageObject",
-        url: `${SITE_URL}/images/assets/og-image.jpg`,
-        width: 1200,
-        height: 630,
+        url: LOGO_URL,
+        width: LOGO_SIZE,
+        height: LOGO_SIZE,
       },
     },
     mainEntityOfPage: { "@type": "WebPage", "@id": url },

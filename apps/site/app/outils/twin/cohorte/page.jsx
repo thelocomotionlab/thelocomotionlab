@@ -8,6 +8,7 @@
 // vit dans components/twin/CohorteForm.jsx.
 import PageHeader from "@/components/PageHeader";
 import CohorteForm from "@/components/twin/CohorteForm";
+import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
 export const metadata = {
   title: "Rejoindre la cohorte – Locomotion Twin",
@@ -22,11 +23,7 @@ export const metadata = {
       "Tes courses passées font avancer l'outil : dépose ton archive d'entraînement, elle calibre le moteur puis est supprimée — ton plan de course gratuit en échange.",
     url: "https://thelocomotionlab.com/outils/twin/cohorte",
     type: "website",
-    images: [
-      {
-        url: "https://thelocomotionlab.com/images/assets/og-image.jpg",
-      },
-    ],
+    images: OG_IMAGES,
     locale: "fr_FR",
   },
   twitter: {
@@ -34,7 +31,7 @@ export const metadata = {
     title: "Rejoindre la cohorte du Locomotion Twin – The Locomotion Lab",
     description:
       "Tes courses passées font avancer l'outil : dépose ton archive d'entraînement, elle calibre le moteur puis est supprimée — ton plan de course gratuit en échange.",
-    images: ["https://thelocomotionlab.com/images/assets/og-image.jpg"],
+    images: [OG_IMAGE],
   },
 };
 

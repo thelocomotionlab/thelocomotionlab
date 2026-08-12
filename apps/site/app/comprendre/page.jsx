@@ -10,6 +10,7 @@ import CardMeta from "@/components/CardMeta";
 import EmailCapture from "@/components/EmailCapture";
 import PageHeader from "@/components/PageHeader";
 import { listArticleEntries } from "@/lib/contentRoutes.mjs";
+import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
 export const metadata = {
   title: "Comprendre – La science de la robustesse physiologique",
@@ -24,11 +25,7 @@ export const metadata = {
       "Articles de fond sourcés et vulgarisés sur la robustesse physiologique : respiration, hormèse, endurance, mouvement.",
     url: "https://thelocomotionlab.com/comprendre",
     type: "website",
-    images: [
-      {
-        url: "https://thelocomotionlab.com/images/assets/og-image.jpg",
-      },
-    ],
+    images: OG_IMAGES,
     locale: "fr_FR",
   },
   twitter: {
@@ -36,7 +33,7 @@ export const metadata = {
     title: "Comprendre – The Locomotion Lab",
     description:
       "Articles de fond sourcés et vulgarisés sur la robustesse physiologique : respiration, hormèse, endurance, mouvement.",
-    images: ["https://thelocomotionlab.com/images/assets/og-image.jpg"],
+    images: [OG_IMAGE],
   },
 };
 

@@ -4,6 +4,7 @@
 import EmailCapture from "@/components/EmailCapture";
 import PageHeader from "@/components/PageHeader";
 import SectionHeading from "@/components/SectionHeading";
+import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
 export const metadata = {
   title: "La quête – La robustesse physiologique",
@@ -18,11 +19,7 @@ export const metadata = {
       "La quête du Locomotion Lab : comprendre le corps comme un scientifique, l'utiliser comme un animal.",
     url: "https://thelocomotionlab.com/quete",
     type: "website",
-    images: [
-      {
-        url: "https://thelocomotionlab.com/images/assets/og-image.jpg",
-      },
-    ],
+    images: OG_IMAGES,
     locale: "fr_FR",
   },
   twitter: {
@@ -30,7 +27,7 @@ export const metadata = {
     title: "La quête – The Locomotion Lab",
     description:
       "La quête du Locomotion Lab : comprendre le corps comme un scientifique, l'utiliser comme un animal.",
-    images: ["https://thelocomotionlab.com/images/assets/og-image.jpg"],
+    images: [OG_IMAGE],
   },
 };
 

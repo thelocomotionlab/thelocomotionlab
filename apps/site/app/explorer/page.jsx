@@ -10,6 +10,7 @@ import PageHeader from "@/components/PageHeader";
 import ExplorerSections from "@/components/ExplorerSections";
 import { listArticleEntries, listProjetEntries } from "@/lib/contentRoutes.mjs";
 import { extractProjectNotes } from "@/lib/extractProjectNotes";
+import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
 export const metadata = {
   title: "Explorer – Récits et projets de terrain",
@@ -24,11 +25,7 @@ export const metadata = {
       "Le terrain du Locomotion Lab : récits d'aventures et projets au long cours — traversées en autonomie, saisons de trail, expérimentations.",
     url: "https://thelocomotionlab.com/explorer",
     type: "website",
-    images: [
-      {
-        url: "https://thelocomotionlab.com/images/assets/og-image.jpg",
-      },
-    ],
+    images: OG_IMAGES,
     locale: "fr_FR",
   },
   twitter: {
@@ -36,7 +33,7 @@ export const metadata = {
     title: "Explorer – The Locomotion Lab",
     description:
       "Récits d'aventures et projets de terrain du Locomotion Lab.",
-    images: ["https://thelocomotionlab.com/images/assets/og-image.jpg"],
+    images: [OG_IMAGE],
   },
 };
 

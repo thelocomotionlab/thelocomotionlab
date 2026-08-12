@@ -5,6 +5,7 @@
 import Link from "next/link";
 import { Gauge } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
+import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
 export const metadata = {
   title: "Outils – Les instruments du labo",
@@ -19,11 +20,7 @@ export const metadata = {
       "Les outils construits au Locomotion Lab, à commencer par le Locomotion Twin.",
     url: "https://thelocomotionlab.com/outils",
     type: "website",
-    images: [
-      {
-        url: "https://thelocomotionlab.com/images/assets/og-image.jpg",
-      },
-    ],
+    images: OG_IMAGES,
     locale: "fr_FR",
   },
   twitter: {
@@ -31,7 +28,7 @@ export const metadata = {
     title: "Outils – The Locomotion Lab",
     description:
       "Les outils construits au Locomotion Lab, à commencer par le Locomotion Twin.",
-    images: ["https://thelocomotionlab.com/images/assets/og-image.jpg"],
+    images: [OG_IMAGE],
   },
 };
 

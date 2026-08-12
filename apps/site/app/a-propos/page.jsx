@@ -7,6 +7,7 @@ import Link from "next/link";
 import EmailCapture from "@/components/EmailCapture";
 import PageHeader from "@/components/PageHeader";
 import SectionHeading from "@/components/SectionHeading";
+import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
 export const metadata = {
   title: "À propos – The Locomotion Lab",
@@ -22,18 +23,14 @@ export const metadata = {
     url: "https://thelocomotionlab.com/a-propos",
     type: "website",
     locale: "fr_FR",
-    images: [
-      {
-        url: "https://thelocomotionlab.com/images/assets/og-image.jpg",
-      },
-    ],
+    images: OG_IMAGES,
   },
   twitter: {
     card: "summary_large_image",
     title: "À propos – The Locomotion Lab",
     description:
       "Découvre la vision du Locomotion Lab : un espace d’exploration de la locomotion humaine.",
-    images: ["https://thelocomotionlab.com/images/assets/og-image.jpg"],
+    images: [OG_IMAGE],
   },
 };
 

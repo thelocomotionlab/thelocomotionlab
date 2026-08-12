@@ -17,6 +17,7 @@ import SeanceFrise from "@/components/SeanceFrise";
 import SectionHeading from "@/components/SectionHeading";
 import TrailNotify from "@/components/TrailNotify";
 import { listAteliers } from "@/lib/ateliers.mjs";
+import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
 // ── DÉROULÉ D'UNE SÉANCE ─────────────────────────────────────────────────
 // Étapes de la frise (composant SeanceFrise) : la frise tient sur UNE ligne
@@ -64,11 +65,7 @@ export const metadata = {
       "Des ateliers de mouvement primal en extérieur — marcher, ramper, grimper, jouer. Gratuits pendant la phase de lancement du labo.",
     url: "https://thelocomotionlab.com/pratiquer",
     type: "website",
-    images: [
-      {
-        url: "https://thelocomotionlab.com/images/assets/og-image.jpg",
-      },
-    ],
+    images: OG_IMAGES,
     locale: "fr_FR",
   },
   twitter: {
@@ -76,7 +73,7 @@ export const metadata = {
     title: "Pratiquer – The Locomotion Lab",
     description:
       "Des ateliers de mouvement primal en extérieur — marcher, ramper, grimper, jouer. Gratuits pendant la phase de lancement du labo.",
-    images: ["https://thelocomotionlab.com/images/assets/og-image.jpg"],
+    images: [OG_IMAGE],
   },
 };
 

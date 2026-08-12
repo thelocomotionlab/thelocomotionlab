@@ -17,6 +17,7 @@ import LiveBanner from "@/components/LiveBanner";
 import PhilosophieSection from "@/components/PhilosophieSection";
 import { getExplorerCarouselItems } from "@/lib/carouselItems";
 import { listArticleEntries } from "@/lib/contentRoutes.mjs";
+import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
 export const metadata = {
   title: "The Locomotion Lab",
@@ -31,12 +32,17 @@ export const metadata = {
       "Comprendre le corps comme un scientifique, l'utiliser comme un animal : science, terrain et outils de la robustesse physiologique.",
     url: "https://thelocomotionlab.com/",
     type: "website",
+    // Une page qui déclare `openGraph` REMPLACE celui du layout, elle n'y
+    // ajoute pas : sans cette ligne, l'accueil — la page la plus partagée du
+    // site — sortait sans la moindre image.
+    images: OG_IMAGES,
   },
   twitter: {
     card: "summary_large_image",
     title: "The Locomotion Lab",
     description:
       "Comprendre le corps comme un scientifique, l'utiliser comme un animal : science, terrain et outils de la robustesse physiologique.",
+    images: [OG_IMAGE],
   },
 };
 
