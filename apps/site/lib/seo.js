@@ -28,9 +28,8 @@ export const OG_IMAGE_WIDTH = 1200;
 export const OG_IMAGE_HEIGHT = 630;
 
 // Décrit le hero, puisque c'est lui l'image. À réécrire si `build:og` change
-// de source (cf. app/page.js, où le même texte sert à la balise <Image>).
-export const OG_IMAGE_ALT =
-  "Pied nu en appui contre un tronc d'arbre, une pratique du Locomotion Lab";
+// de source (cf. app/page.js, qui décrit la même photo).
+export const OG_IMAGE_ALT = "Un pied nu prend appui sur un tronc d'arbre.";
 
 // Le LOGO de l'organisation (JSON-LD). Rien à voir avec l'image de partage :
 // les deux pointaient sur le même fichier, si bien que le logo déclaré à Google

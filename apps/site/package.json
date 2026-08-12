@@ -15,7 +15,8 @@
     "live:archiver": "node scripts/live-archiver.mjs",
     "live:preview": "node scripts/live-preview.mjs",
     "carte:partage": "node scripts/carte-partage.mjs",
-    "build:og": "node scripts/build-og-image.mjs"
+    "build:og": "node scripts/build-og-image.mjs",
+    "photos": "node scripts/photos.mjs"
   },
   "dependencies": {
     "@locomotionlab/tracking": "workspace:*",
