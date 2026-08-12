@@ -27,7 +27,10 @@ export const OG_IMAGE = `${SITE_URL}/images/assets/og-hero.jpg`;
 export const OG_IMAGE_WIDTH = 1200;
 export const OG_IMAGE_HEIGHT = 630;
 
-export const OG_IMAGE_ALT = "The Locomotion Lab — explorer la robustesse physiologique";
+// Décrit le hero, puisque c'est lui l'image. À réécrire si `build:og` change
+// de source (cf. app/page.js, où le même texte sert à la balise <Image>).
+export const OG_IMAGE_ALT =
+  "Pied nu en appui contre un tronc d'arbre, une pratique du Locomotion Lab";
 
 // Le LOGO de l'organisation (JSON-LD). Rien à voir avec l'image de partage :
 // les deux pointaient sur le même fichier, si bien que le logo déclaré à Google

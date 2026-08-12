@@ -50,7 +50,11 @@ export const metadata = {
 const HEROES = [
   {
     src: "/images/heroes/hero-01.webp",
-    alt: "Coureur en trail dans une forêt baignée par la lumière du soir, illustration éditoriale du Locomotion Lab.",
+    // L'alt DÉCRIT LA PHOTO EN PLACE. Il a longtemps annoncé « Coureur en
+    // trail dans une forêt baignée par la lumière du soir » alors que le hero
+    // avait été remplacé : un lecteur d'écran entendait une image qui n'était
+    // plus là. À réécrire en même temps que `src`, jamais après.
+    alt: "Pied nu en appui contre un tronc et main agrippée à une branche : grimpe pieds nus sous un ciel d'hiver, illustration éditoriale du Locomotion Lab.",
     objectPosition: "50% 50%",
   },
 ];
