@@ -1,21 +1,20 @@
 // components/TwinCohorteTeaser.jsx
 //
-// L'appel à la cohorte de calibration du Locomotion Twin, posé à trois endroits
-// du site : bas de l'accueil, fin des récits et projets d'Explorer, et bas de
-// la page /live.
+// L'appel à la cohorte de calibration du Locomotion Twin, posé en fin des
+// récits et des projets d'Explorer, et en bas de la page /live.
 //
-// UN SEUL FICHIER pour les trois. La formulation d'un appel se retouche souvent
+// Il a aussi été essayé en bas de l'ACCUEIL, en bande bleue pleine largeur
+// puis sous cette forme : retiré dans les deux cas, il n'y rendait pas bien.
+// Ne pas l'y remettre sans repenser le bloc.
+//
+// UN SEUL FICHIER pour les deux. La formulation d'un appel se retouche souvent
 // (et vieillit d'un coup, le jour où l'outil sort de calibration) : elle ne doit
 // pas être à réécrire en trois endroits, avec le risque que le troisième soit
 // oublié. Le texte vit dans les constantes ci-dessous.
 //
-// UNE SEULE forme aux trois endroits : le panneau à lavis bleu et grille de
-// labo, qui reprend la grammaire du registre des articles de l'accueil (filet
-// bleu épais en tête, ombre douce, bouton terracotta).
-//
-// Une variante « bande pleine largeur » a existé pour l'accueil, calquée sur la
-// bande de capture email. Écartée : le panneau tient aussi bien en bas de
-// l'accueil, et une seule forme vaut mieux que deux à maintenir en parallèle.
+// La forme : un panneau à lavis bleu et grille de labo, qui reprend la
+// grammaire du registre des articles de l'accueil (filet bleu épais en tête,
+// ombre douce, bouton terracotta).
 
 import Link from "next/link";
 import { Gauge } from "lucide-react";
