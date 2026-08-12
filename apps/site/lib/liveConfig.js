@@ -30,8 +30,7 @@ export const liveConfig = {
     intention: "En autonomie complète sur 4 jours.",
 
     // Trace prévue : le .track.json généré au geste 2.
-/*    trace: "/tracks/tour-des-ecrins.track.json",*/
-    trace: "/tracks/sortie-longue-vercors.track.json",
+    trace: "/tracks/tour-des-ecrins.track.json",
 
     // Repères du parcours. Chacun pose DEUX choses, à partir du seul km :
     //   • sur la CARTE  : une pastille avec l'icône choisie ;
