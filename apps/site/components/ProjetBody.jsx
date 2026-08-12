@@ -38,6 +38,7 @@ import Plot from "./PlotLazy";
 import { extractToc } from "@/lib/extractToc";
 import ProjetClientFx from "./ProjetClientFx";
 import ArticleNav from "./ArticleNav";
+import TwinCohorteTeaser from "./TwinCohorteTeaser";
 
 export default function ProjetBody({
   project,
@@ -375,6 +376,11 @@ export default function ProjetBody({
         </div>
 
         <CitationReferences ids={usedCitations} />
+
+        {/* L'appel à la cohorte se place APRÈS le texte et AVANT les autres
+            parutions : qui vient de lire un récit de trail en entier est la
+            personne à qui la question se pose vraiment. */}
+        <TwinCohorteTeaser className="mt-12" />
 
         <ArticleNav items={related} kind="projet" />
 

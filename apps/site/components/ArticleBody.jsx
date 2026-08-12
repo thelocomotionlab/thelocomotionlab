@@ -26,6 +26,7 @@ import { getUsedCitations } from "@/lib/getUsedCitations";
 import { createCitation } from "./Citation";
 import CitationReferences from "./CitationReferences";
 import ArticleNav from "./ArticleNav";
+import TwinCohorteTeaser from "./TwinCohorteTeaser";
 
 export default function ArticleBody({
   article,
@@ -151,6 +152,11 @@ export default function ArticleBody({
         </div>
 
         <CitationReferences ids={usedCitations} />
+
+        {/* L'appel à la cohorte se place APRÈS le texte et AVANT les autres
+            parutions : qui vient de lire un récit de trail en entier est la
+            personne à qui la question se pose vraiment. */}
+        <TwinCohorteTeaser className="mt-12" />
 
         <ArticleNav items={related} kind="article" />
 

@@ -9,6 +9,7 @@ import Link from "next/link";
 
 import LiveHub from "@/components/LiveHub";
 import ExplorerCarousel from "@/components/ExplorerCarousel";
+import TwinCohorteTeaser from "@/components/TwinCohorteTeaser";
 import SectionHeading from "@/components/SectionHeading";
 import { getExplorerCarouselItems } from "@/lib/carouselItems";
 import { journalApiBase } from "@/lib/liveConfig";
@@ -68,6 +69,9 @@ export default function LivePage() {
         <SectionHeading className="mb-6">À lire également</SectionHeading>
         <ExplorerCarousel items={carouselItems} tone="light" />
       </section>
+
+      {/* Appel à la cohorte du Twin, au-dessus de la phrase pack. */}
+      <TwinCohorteTeaser className="mt-12 max-w-4xl mx-auto" />
 
       {/* Phrase pack (texte n°9, fixe), discrète */}
       <p className="mt-12 max-w-4xl mx-auto text-center text-sm text-gray-600 italic">

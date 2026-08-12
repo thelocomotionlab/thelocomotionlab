@@ -3,7 +3,8 @@
 // Page d'accueil en cinq actes : hero pleine hauteur → Comprendre (lavis
 // bleu + registre des articles) → Explorer (photo Dolomites + cartes du
 // terrain) → La philosophie (grille 4 piliers / accordéon mobile,
-// composant PhilosophieSection) → bande de capture email.
+// composant PhilosophieSection) → appel à la cohorte du Twin → bande de
+// capture email.
 // Les textes et valeurs (couleurs, tailles) viennent du handoff, validés
 // par Valentin ; les données (registre, cartes) du contenu Markdown.
 import Link from "next/link";
@@ -15,6 +16,7 @@ import ExplorerCarousel from "@/components/ExplorerCarousel";
 import ExplorerLiveIndicator from "@/components/ExplorerLiveIndicator";
 import LiveBanner from "@/components/LiveBanner";
 import PhilosophieSection from "@/components/PhilosophieSection";
+import TwinCohorteTeaser from "@/components/TwinCohorteTeaser";
 import { getExplorerCarouselItems } from "@/lib/carouselItems";
 import { listArticleEntries } from "@/lib/contentRoutes.mjs";
 
@@ -361,6 +363,13 @@ export default async function HomePage() {
 
       {/* ── 03 · LA PHILOSOPHIE — grille 4 piliers / accordéon mobile ── */}
       <PhilosophieSection />
+
+      {/* ── Appel à la cohorte du Twin — avant la bande email ────────── */}
+      <section className="bg-brand-bg px-6 pb-12 md:px-16 md:pb-[84px]">
+        <div className="mx-auto max-w-[1000px]">
+          <TwinCohorteTeaser />
+        </div>
+      </section>
 
       {/* ── Capture email — bande accent ────────────────────────────── */}
       <section
