@@ -57,12 +57,12 @@ export const liveConfig = {
     // Le km peut être décimal. Laisse [] pour n'afficher aucun repère.
 
 /*    waypoints: [],*/
-/*    waypoints: [
+    waypoints: [
       { nom: "Arsine",     km: 42.,    icone: "bivouac" },
-      { nom: "Vallouise",  km: 80., icone: "bivouac" },
+      { nom: "Vallouise",  km: 84., icone: "bivouac" },
       { nom: "Valgaudémar",       km: 130.6,   icone: "bivouac" },
     ],
-    */
+    
     // Deux valeurs seulement :
     //   • "avant" — en toutes circonstances (prépa, direct, et après : la page
     //     reste figée sur les dernières données jusqu'au prochain `track reset`) ;
