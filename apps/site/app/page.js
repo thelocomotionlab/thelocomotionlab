@@ -364,12 +364,9 @@ export default async function HomePage() {
       {/* ── 03 · LA PHILOSOPHIE — grille 4 piliers / accordéon mobile ── */}
       <PhilosophieSection />
 
-      {/* ── Appel à la cohorte du Twin — avant la bande email ────────── */}
-      <section className="bg-brand-bg px-6 pb-12 md:px-16 md:pb-[84px]">
-        <div className="mx-auto max-w-[1000px]">
-          <TwinCohorteTeaser />
-        </div>
-      </section>
+      {/* ── Appel à la cohorte du Twin — bande bleue, juste au-dessus de
+             la bande email dont elle reprend le gabarit ──────────────── */}
+      <TwinCohorteTeaser variant="bande" />
 
       {/* ── Capture email — bande accent ────────────────────────────── */}
       <section

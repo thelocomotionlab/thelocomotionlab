@@ -33,7 +33,14 @@ const LIVE_NAV_ITEM = {
   Icon: SatelliteDish,
   live: true,
 };
-const LIVE_WINDOW_MS = 24 * 60 * 60 * 1000;
+const LIVE_AVANT_MS = 24 * 60 * 60 * 1000;
+// FILET DE SÉCURITÉ, pas une durée d'aventure. La fenêtre n'avait pas de borne
+// haute : une fois `dateDebut` passée, l'entrée « Live » restait épinglée dans
+// la navbar POUR TOUJOURS, même sans direct — il fallait penser à repasser
+// `statut` à « repos ». C'est ce qui s'est produit après la sortie du Vercors.
+// Sept jours couvrent largement une aventure du labo ; au-delà, c'est que la
+// config n'a pas été remise à jour, et l'entrée s'efface d'elle-même.
+const LIVE_APRES_MS = 7 * 24 * 60 * 60 * 1000;
 
 function liveWindowOpen() {
   const { statut } = liveConfig.aventure;
@@ -41,7 +48,8 @@ function liveWindowOpen() {
   if (statut === "repos") return false;
   const start = new Date(liveConfig.aventure.dateDebut).getTime();
   if (Number.isNaN(start)) return false;
-  return Date.now() >= start - LIVE_WINDOW_MS;
+  const now = Date.now();
+  return now >= start - LIVE_AVANT_MS && now <= start + LIVE_APRES_MS;
 }
 
 const NAV_ITEMS = [
