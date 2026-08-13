@@ -61,14 +61,39 @@ et le minimum de métadonnées. Pas de sauvegarde du volume — il ne doit
 jamais rien contenir de durable — mais **surveiller l'espace disque** tant
 que des dépôts attendent l'analyse.
 
-## Analyse d'un dépôt (côté Valentin)
+## Rapatrier un dépôt (côté Valentin)
+
+**La voie normale**, depuis ton poste — ni jeton ni URL à manipuler (SSH + docker,
+le jeton de purge est lu dans `infra/.env` sur le VPS et n'en sort jamais) :
+
+```bash
+services/twin-depot/scripts/depots.sh                 # ce qui attend
+services/twin-depot/scripts/depots.sh get Crasse \
+  services/twin-engine/_seed/cas_validation/Crasse/archives
+# … analyse (DIAGNOSTIC §8 / golden réel), puis :
+services/twin-depot/scripts/depots.sh purge <id>
+```
+
+`get` accepte un id **ou** un prénom, résout le nom de fichier tout seul, vérifie le
+SHA-256 après transfert (et supprime la copie si elle diffère). Hôte et chemin
+surchargeables par `LAB_VPS` / `LAB_INFRA`.
+
+> ⚠ **`get` refuse un dossier de destination non vide**, et c'est volontaire :
+> `twin_engine.ingest` déballe tout le dossier **sans dédoublonner** — deux exports
+> qui se recouvrent = activités comptées deux fois, courbe record et durabilité
+> faussées en silence. Un athlète = une archive à la fois.
+
+Où vivent les données, si tu dois y aller à la main : volume Docker
+`locomotionlab_twin_depot_data`, soit `/data/depots.json` (index) et
+`/data/archives/<id>/<nomFichier>` vus du conteneur.
+
+**Voie de secours** (depuis n'importe où, sans SSH) — l'API admin :
 
 ```bash
 TOKEN=...   # TWIN_DEPOT_ADMIN_TOKEN d'infra/.env
 BASE=https://depot.thelocomotionlab.com/twin
 curl -s -H "Authorization: Bearer $TOKEN" $BASE/depots | jq
 curl -H "Authorization: Bearer $TOKEN" -OJ $BASE/depots/<id>/archive
-# … analyse (DIAGNOSTIC §8 / golden réel), puis purge :
 curl -X DELETE -H "Authorization: Bearer $TOKEN" $BASE/depots/<id>
 ```
 
