@@ -115,6 +115,12 @@
     "domain_gate": "on"
   },
 
+  "target": {
+    "_comment": "Mode OBJECTIF (ADR 0002) : plan ancré sur la cible de l'athlète, jamais en remplacement de la prédiction. tolerance_pct est la demi-largeur de la FENÊTRE DE PASSAGE (tolérance d'exécution) — sans rapport avec les bandes de probabilité de pacing.plan_window_*. Valeur provisoire, à recaler sur l'écart réel plan/passages quand la cohorte l'aura fourni.",
+    "tolerance_pct": 2.5,
+    "refuse_outside_safety": true
+  },
+
   "narrative": {
     "_comment": "Seuils de PRÉSENTATION (choix des mots du rapport, pas de la science).",
     "e_diesel": 1.12,

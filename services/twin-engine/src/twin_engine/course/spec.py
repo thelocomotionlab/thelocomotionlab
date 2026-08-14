@@ -14,7 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .._dt import parse_iso
+from .._dt import parse_duration_h, parse_iso
 
 
 @dataclass(frozen=True)
@@ -30,6 +30,10 @@ class RaceSpec:
     Champs de logistique (module pacing) : ``start_time``, ``lat``, ``lon``,
     ``tz_offset_h``, ``major_base_indices`` (segments dont la FIN est une base majeure,
     arrêt rallongé).
+    Champ d'INTENTION (mode objectif, ADR 0002) : ``target_hours`` — la durée VISÉE par
+    l'athlète. Optionnel ; absent, le moteur se comporte exactement comme avant. Présent,
+    il n'écrase jamais la prédiction : il ouvre un second rendu (plan ancré sur la cible +
+    verdict de faisabilité, cf. ``twin_engine.feasibility``).
     """
 
     name: str = "Course"
@@ -41,10 +45,13 @@ class RaceSpec:
     tz_offset_h: float = 0.0
     major_base_indices: tuple[int, ...] = ()
     official_dplus_m: float | None = None
+    target_hours: float | None = None
 
     def __post_init__(self) -> None:
         if len(self.aid_km) != len(self.aid_names):
             raise ValueError("aid_km et aid_names doivent avoir la même longueur")
+        if self.target_hours is not None and self.target_hours <= 0:
+            raise ValueError("target_hours doit être strictement positif")
         if self.aid_km:  # ravitaillements fournis → validés ; vide = mode GPX-only (auto)
             if len(self.aid_km) < 2:
                 raise ValueError("au moins le départ et l'arrivée sont requis")
@@ -77,6 +84,9 @@ class RaceSpec:
             tz_offset_h=float(d.get("tz_offset_h", 0.0)),
             major_base_indices=tuple(int(i) for i in d.get("major_base_indices", ())),
             official_dplus_m=d.get("official_dplus_m"),
+            # "31h", "31h30", "31:00:00" ou un nombre d'heures (illisible → ValueError :
+            # mieux vaut refuser que caler un plan sur la mauvaise durée)
+            target_hours=parse_duration_h(d.get("target_hours")),
         )
 
     @classmethod
