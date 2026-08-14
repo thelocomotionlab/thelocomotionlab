@@ -149,14 +149,20 @@ athlète en progression doit être présenté avec cette réserve explicite.
 | Lot | Contenu | État |
 |---|---|---|
 | 1 | Moteur : `RaceSpec.target_hours`, `build_pacing(anchor_hours=…)`, `feasibility.py`, constantes de config, tests (dont l'invariance) | **fait** |
-| 2 | Rapport : contexte, template LaTeX, narratif, cible tracée sur la figure de pacing ; câblage `pipeline.analyze_full` | à faire |
+| 2 | Rapport : contexte, template LaTeX, narratif, rappel de la prédiction sur la figure de cumul ; câblage `pipeline.analyze_full` | **fait** |
 | 3 | CLI (`--target`) + champ optionnel de l'API (`/preview`, `/jobs`) | à faire |
 | 4 | Champ structuré dans le formulaire du site (aujourd'hui : `objectifs` en texte libre dans `twin-depot`) | à faire |
 
-**Le lot 1 ne branche volontairement pas la cible dans `pipeline.analyze_full`.** Ancrer le
-plan sur la cible pendant que le rapport parle encore de « fourchette de course » produirait
-exactement le mélange de vocabulaire que cet ADR interdit. Les primitives existent et sont
-testées ; c'est le lot 2 qui les met en service, avec les mots qui vont avec.
+Depuis le lot 2, le mode s'active en posant `target_hours` dans la spec de course (`--race`) :
+`pipeline.analyze_full` calcule le verdict, n'ancre le plan que si `plan_ok`, et passe le tout au
+rapport. Le lot 3 n'ajoute que des **portes d'entrée** (drapeau CLI, champ HTTP), pas de
+comportement.
+
+**Vérification du rendu LaTeX.** La compilation PDF réelle n'est exercée qu'avec XeLaTeX présent
+(image Docker) ; en CI le test est *skippé*. Le mode objectif ajoutant des blocs conditionnels au
+template, un test statique compare le **solde d'accolades et les environnements** du rendu aux
+mêmes compteurs du mode prédiction, qui compile en production — il a effectivement attrapé une
+accolade en trop (continuation de chaîne non préfixée `f` dans `caption_cumul`) avant tout PDF.
 
 ## Alternatives écartées
 

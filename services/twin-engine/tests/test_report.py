@@ -268,3 +268,129 @@ def test_pdf_compiles(tmp_path):
     generate_figures(course, twin, cal, pred, plan, race, fig_dir)
     pdf = build_pdf(_context(), fig_dir, tmp_path / "tex")
     assert pdf.exists() and pdf.stat().st_size > 20_000  # un vrai PDF non vide
+
+
+# --------------------------------------------------------------------------- #
+# Mode OBJECTIF (ADR 0002) : le rapport change de VOCABULAIRE, pas seulement de chiffres.
+def _target_context(target_hours, cfg=None):
+    """Contexte rendu comme le fait le pipeline : verdict d'abord, ancre seulement si permis.
+
+    Le parcours de test fait 10 km : toute cible y est sous le domaine de calibration et le
+    garde-fou §9.9 primerait sur tout le reste. On le désactive ici pour tester ce que ces
+    tests testent — le VOCABULAIRE du rapport ; le garde-fou lui-même est couvert par
+    test_feasibility."""
+    from dataclasses import replace
+
+    from twin_engine.feasibility import assess_target
+
+    cfg = cfg or replace(CFG, sufficiency=replace(CFG.sufficiency, domain_gate="off"))
+    course, twin, cal, pred, _plan, race, suf = _scenario(cfg)
+    race = RaceSpec(
+        race.name, race.aid_km, race.aid_names, start_time=race.start_time, lat=race.lat,
+        lon=race.lon, tz_offset_h=race.tz_offset_h, major_base_indices=race.major_base_indices,
+        target_hours=target_hours,
+    )
+    target = assess_target(target_hours, course, twin, pred, cfg)
+    plan = build_pacing(course, pred, race, cfg, durability_pct=twin.durability_pct,
+                        anchor_hours=target_hours if target.plan_ok else None)
+    ctx = build_report_context(course=course, twin=twin, calibration=cal, prediction=pred,
+                               plan=plan, race=race, sufficiency=suf, cfg=cfg,
+                               athlete="Thomas", target=target)
+    return ctx, target, pred, plan
+
+
+def _nominal_target(pred):
+    """Cible DANS la fourchette de course, dérivée des bandes réelles (elles sont très
+    serrées sur ce scénario synthétique : un facteur en dur tomberait hors sécurité)."""
+    return 0.5 * (pred.plan_low_h + pred.finish_hours)
+
+
+def test_target_mode_switches_the_vocabulary_and_never_hides_the_prediction():
+    course, twin, cal, pred, _p, _r, _s = _scenario()
+    ctx, target, _pred, plan = _target_context(_nominal_target(pred))
+    tex = render_tex(ctx)
+
+    assert ctx["target_mode"] and ctx["target_plan_ok"]
+    assert plan.anchor == "target"
+    for token in ("<<", ">>", "<%", "%>"):
+        assert token not in tex
+    # le mot juste : tolérance d'exécution, jamais une probabilité
+    assert "fen\\^etre de passage" in tex
+    assert "tol\\'erance d'ex\\'ecution" in tex
+    # la PRÉDICTION reste affichée — c'est le garde-fou central de l'ADR
+    assert ctx["pred_central"] in tex
+    assert "le mod\\`ele te situe" in tex
+    # et la limite obligatoire est là
+    assert "il ne le rend pas tenable" in tex
+
+
+def test_refused_target_serves_the_gap_not_a_plan():
+    """Cible hors bornes de sécurité : section objectif servie, plan ancré sur la prédiction."""
+    course, twin, cal, pred, _p, _r, _s = _scenario()
+    ctx, target, _pred, plan = _target_context(pred.interval_low_h * 0.80)
+    tex = render_tex(ctx)
+
+    assert target.regime == "hors_portee" and not target.plan_ok
+    assert ctx["target_requested"] and not ctx["target_mode"]
+    assert plan.anchor == "prediction"          # le plan reste celui du moteur
+    assert "Pas de plan sur cet objectif" in tex
+    assert "objectif d'entra\\^inement" in tex
+    # le vocabulaire du plan n'a PAS basculé : c'est bien la fourchette de course qui pilote
+    assert "fen\\^etre de passage" not in tex
+
+
+def test_target_mode_neutralises_scenarios():
+    """Les scénarios déclinent la dispersion PRÉDICTIVE : hors sujet autour d'une cible."""
+    course, twin, cal, pred, _p, _r, _s = _scenario()
+    ctx, _t, _pred, _plan = _target_context(_nominal_target(pred))
+    assert ctx["scenario_mode"] is False
+    # ... même en forçant une dispersion énorme, qui l'aurait déclenché en mode prédiction
+    forced = {**ctx, "scenario_mode": True}
+    assert "sc\\'enarios de course" in render_tex(forced)   # le bloc existe toujours
+    assert "sc\\'enarios de course" not in render_tex(ctx)  # simplement pas servi ici
+
+
+def test_no_target_renders_exactly_as_before():
+    """Sans cible, le rapport est celui d'avant : aucune section, aucun mot en plus."""
+    tex = render_tex(_context())
+    assert "Ton objectif" not in tex
+    assert "fen\\^etre de passage" not in tex
+    assert "il ne le rend pas tenable" not in tex
+
+
+def test_cumul_figure_caption_follows_the_anchor():
+    """La figure a la même géométrie dans les deux modes : sa légende doit trancher."""
+    ctx_pred = _context()
+    ctx_target, _t, pred, _plan = _target_context(_nominal_target(_scenario()[3]))
+    assert "fourchette de course" in ctx_pred["caption_cumul"]
+    assert "fen\\^etre de passage" in ctx_target["caption_cumul"]
+    assert "pr\\'ediction du moteur" in ctx_target["caption_cumul"]
+
+
+def test_latex_environments_balanced_in_both_modes():
+    """Filet anti-régression du mode objectif : la compilation PDF réelle n'est validée que
+    dans l'image Docker (XeLaTeX absent en CI), donc on vérifie ici, sans LaTeX, que les
+    branches conditionnelles n'ont pas déséquilibré un \\begin/\\end ou une accolade."""
+    import re
+    from collections import Counter
+
+    def _audit(tex):
+        begins = Counter(re.findall(r"\\begin\{([^}]+)\}", tex))
+        ends = Counter(re.findall(r"\\end\{([^}]+)\}", tex))
+        assert begins == ends, f"environnements déséquilibrés : {begins - ends} / {ends - begins}"
+        # Le solde d'accolades du template n'est pas nul (commentaires LaTeX, macros) : on le
+        # compare donc au mode PRÉDICTION, qui compile en production. Tout écart = un bloc
+        # conditionnel du mode objectif qui a ouvert sans refermer.
+        naked = re.sub(r"\\[{}]", "", tex)
+        return begins, naked.count("{") - naked.count("}")
+
+    course, twin, cal, pred, _p, _r, _s = _scenario()
+    ref_envs, ref_delta = _audit(render_tex(_context()))
+    on_target, _t, _pred, _plan = _target_context(_nominal_target(pred))
+    refused, _t2, _pred2, _plan2 = _target_context(pred.interval_low_h * 0.80)
+    for label, ctx in (("ancré sur la cible", on_target), ("cible refusée", refused)):
+        envs, delta = _audit(render_tex(ctx))
+        assert delta == ref_delta, f"solde d'accolades modifié ({label})"
+        # le mode objectif AJOUTE des blocs, il n'en retire aucun du squelette
+        for env in ("document", "llnote"):
+            assert envs[env] >= ref_envs[env], f"environnement {env} perdu ({label})"

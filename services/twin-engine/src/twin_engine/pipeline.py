@@ -19,6 +19,7 @@ from typing import Iterable
 from .calibration import UltraCalibration, build_calibration
 from .config import Config
 from .course import CourseProfile, RaceSpec, build_course
+from .feasibility import TargetAssessment, assess_target
 from .ingest import CanonicalActivity, iter_activities, purge_path
 from .pacing import PacingPlan, build_pacing
 from .predict import Prediction, predict_race
@@ -160,12 +161,16 @@ class FullResult:
     plan: PacingPlan
     pdf_path: Path | None
     figures: dict
+    # mode OBJECTIF (ADR 0002) : présent dès qu'une cible a été demandée, y compris quand
+    # elle est REFUSÉE (le refus est un livrable). None = rapport en mode prédiction.
+    target: TargetAssessment | None = None
 
     def to_dict(self) -> dict:
         d = self.preview.to_dict()
         d["plan"] = self.plan.to_dict()
         d["pdf"] = str(self.pdf_path) if self.pdf_path else None
         d["figures"] = self.figures
+        d["target"] = None if self.target is None else self.target.to_dict()
         return d
 
 
@@ -195,8 +200,18 @@ def analyze_full(
     if preview.prediction is None:
         return FullResult(preview=preview, plan=None, pdf_path=None, figures={})  # type: ignore[arg-type]
 
+    # MODE OBJECTIF (ADR 0002) : une cible dans la spec de course ouvre un second rendu.
+    # Elle n'ancre le plan que si le verdict de faisabilité l'autorise — un objectif hors
+    # des bornes de sécurité se rend en ÉCART chiffré, pas en plan de course. Dans les deux
+    # cas la prédiction reste calculée, affichée et consignée : le mode s'ajoute, il ne
+    # remplace pas.
+    target: TargetAssessment | None = None
+    if race.target_hours is not None:
+        target = assess_target(race.target_hours, course, preview.twin, preview.prediction, cfg)
+
     plan = build_pacing(
-        course, preview.prediction, race, cfg, durability_pct=preview.twin.durability_pct
+        course, preview.prediction, race, cfg, durability_pct=preview.twin.durability_pct,
+        anchor_hours=race.target_hours if (target is not None and target.plan_ok) else None,
     )
 
     out_dir = Path(out_dir)
@@ -214,11 +229,12 @@ def analyze_full(
             course=course, twin=preview.twin, calibration=preview.calibration,
             prediction=preview.prediction, plan=plan, race=race, sufficiency=preview.sufficiency,
             cfg=cfg, athlete=athlete, report_ref=report_ref, report_version=report_version,
-            report_date=report_date,
+            report_date=report_date, target=target,
         )
         pdf_path = build_pdf(context, fig_dir, out_dir / "tex")
 
-    return FullResult(preview=preview, plan=plan, pdf_path=pdf_path, figures=figures)
+    return FullResult(preview=preview, plan=plan, pdf_path=pdf_path, figures=figures,
+                      target=target)
 
 
 def run_full(

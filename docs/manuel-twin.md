@@ -157,14 +157,26 @@ erreurs de validation croisée de l'athlète) et le rapport affiche **deux bande
 Si la dispersion est grande (> 0,35), le rapport ajoute une table de scénarios
 rapide / central / prudent. Ne jamais présenter la borne de sécurité comme un objectif.
 
-### Mode objectif (chantier en cours — [ADR 0002](./adr/0002-mode-objectif-plan-sur-cible.md))
+### Mode objectif ([ADR 0002](./adr/0002-mode-objectif-plan-sur-cible.md))
 
-À la demande de la cohorte (« je vise 31 h, donne-moi le plan »), le moteur sait aussi ancrer le
-plan sur une **durée visée** au lieu du temps prédit. Les **primitives sont livrées et testées**
-(`RaceSpec.target_hours`, `build_pacing(anchor_hours=…)`, `twin_engine.feasibility.assess_target`,
-section `target` de `twin.config.json`), mais **pas encore câblées** au CLI, à l'API ni au rapport :
-c'est volontaire, un plan ancré sur une cible avec le vocabulaire actuel (« fourchette de course »)
-serait trompeur. À retenir dès maintenant :
+À la demande de la cohorte (« je vise 31 h, donne-moi le plan »), le moteur sait ancrer le plan sur
+une **durée visée** au lieu du temps prédit. **Utilisable dès maintenant** : ajoute `target_hours`
+à la spec de course et lance un `full` normal.
+
+```json
+{ "name": "L'Échappée Belle", "target_hours": "31h", "start_time": "…", "aid_km": [ … ] }
+```
+
+```bash
+twin-engine full --training <archive> --course <parcours.gpx> --race <spec.json> --out ./out
+```
+
+Accepte `"31h"`, `"31h30"`, `"31:00:00"` ou un nombre d'heures. Le rapport gagne alors une section
+**« Ton objectif face à ton jumeau »**, le plan est réparti sur la cible, et le vocabulaire des
+fenêtres change (voir ci-dessous). Sans `target_hours`, le rapport est **exactement** celui d'avant.
+(Le drapeau `--target` en ligne de commande et le champ côté API arrivent au lot 3.)
+
+À retenir :
 
 - la **prédiction n'est jamais remplacée** — le mode objectif s'ajoute à côté d'elle, et le registre
   de couverture continue de ne consigner que la prédiction ;
