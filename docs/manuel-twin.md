@@ -157,6 +157,23 @@ erreurs de validation croisée de l'athlète) et le rapport affiche **deux bande
 Si la dispersion est grande (> 0,35), le rapport ajoute une table de scénarios
 rapide / central / prudent. Ne jamais présenter la borne de sécurité comme un objectif.
 
+### Mode objectif (chantier en cours — [ADR 0002](./adr/0002-mode-objectif-plan-sur-cible.md))
+
+À la demande de la cohorte (« je vise 31 h, donne-moi le plan »), le moteur sait aussi ancrer le
+plan sur une **durée visée** au lieu du temps prédit. Les **primitives sont livrées et testées**
+(`RaceSpec.target_hours`, `build_pacing(anchor_hours=…)`, `twin_engine.feasibility.assess_target`,
+section `target` de `twin.config.json`), mais **pas encore câblées** au CLI, à l'API ni au rapport :
+c'est volontaire, un plan ancré sur une cible avec le vocabulaire actuel (« fourchette de course »)
+serait trompeur. À retenir dès maintenant :
+
+- la **prédiction n'est jamais remplacée** — le mode objectif s'ajoute à côté d'elle, et le registre
+  de couverture continue de ne consigner que la prédiction ;
+- les fenêtres par segment changent de nature : **fenêtre de passage** (tolérance d'exécution fixe,
+  `target.tolerance_pct`), plus une bande de probabilité — donc jamais de « 50 % » ni « 80 % » à
+  leur sujet ;
+- une cible plus rapide que la borne de sécurité basse ne donne **pas** de plan mais un écart chiffré
+  (objectif d'entraînement), et `sufficiency.domain_gate` reste prioritaire sur toute cible.
+
 ## 8. Développement & tests
 
 ```bash
