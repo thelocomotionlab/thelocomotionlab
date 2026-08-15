@@ -322,9 +322,14 @@ class SufficiencyParams:
     # punir deux fois le même risque. Le banc l'a confirmé : « Qualité » est le 1er motif de refus
     # (11 cas sur 4 athlètes) et bloque des cas dont le central tombe à ±15 % — dont Val, 6/6
     # refusé pour ~6 % de MAE, le meilleur central du banc.
-    # ``cap_orange`` (DÉFAUT) : la qualité plafonne le verdict à 🟠 — on vend en prévenant.
-    # ``red`` : ancien comportement, la qualité peut refuser à elle seule (rollback).
-    quality_policy: str = "cap_orange"                   # {cap_orange, red}
+    # Mais elle bloquait AUSSI, par accident, les archives réellement trop pauvres : au banc,
+    # la rendre inoffensive a fait passer vendable une course à +35,7 % (Rapace, archive quasi
+    # vide avant la coupure). La qualité est donc un signal de REPLI : elle ne dit rien quand
+    # la validation croisée existe déjà — celle-ci prouve directement que le modèle marche sur
+    # CET athlète — et elle redevient un garde-fou légitime quand il n'y a rien d'autre.
+    # ``cv_gated`` (DÉFAUT) : non bloquante SI une validation croisée existe, bloquante sinon.
+    # ``cap_orange`` : jamais bloquante.  ``red`` : ancien comportement (rollback).
+    quality_policy: str = "cv_gated"                     # {cv_gated, cap_orange, red}
     # --- garde-fou DOMAINE (banc d'essai 2026-07, DIAGNOSTIC §9.9) --------------------------
     # Le moteur est calibré sur les efforts ≥ calibration.genuine_min_hours ; une cible
     # nettement plus courte est une extrapolation vers le bas HORS PÉRIMÈTRE. Mesuré au banc :

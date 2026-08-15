@@ -266,11 +266,42 @@ def test_low_channel_coverage_warns_but_does_not_refuse():
     suf, _ = _assess(_low_quality_summaries())
     qualite = next(c for c in suf.criteria if c.name.startswith("Qualité"))
     assert qualite.level == ORANGE                      # signalé…
-    assert "pas bloquant" in qualite.detail             # … et dit comme tel
+    assert "pas bloquant" in qualite.detail             # … et dit comme tel (CV disponible)
     assert suf.verdict != RED or all(
         c.level != RED or not c.name.startswith("Qualité") for c in suf.criteria
     )
     assert any("non bloquant" in r for r in suf.reasons)
+
+
+def test_quality_blocks_again_when_no_cross_validation():
+    """``cv_gated`` : la qualité s'efface devant une PREUVE (la validation croisée sur les
+    propres courses de l'athlète) et redevient garde-fou quand cette preuve manque.
+
+    Au banc, la rendre inoffensive en toutes circonstances a fait passer vendable une course
+    à +35,7 % chez un athlète à l'archive quasi vide — c'est ce cas que ce test verrouille."""
+    from dataclasses import replace as dc_replace
+
+    # UN SEUL vrai ultra → pas de validation croisée possible → la qualité bloque
+    from dataclasses import replace as dc_replace2
+
+    summaries = [dc_replace2(_run(i, 3600 * 2), has_hr=False, avg_hr=None,
+                             decouple_pct=None, has_altitude=False) for i in range(60)]
+    summaries[0] = dc_replace2(_run(0, 3600 * 12), has_hr=False, avg_hr=None,
+                               decouple_pct=None, has_altitude=False)
+    twin = _twin(summaries)
+    cal = build_calibration(twin, CFG)
+    pred = predict_finish(200.0, 53.0, twin, cal, CFG)
+    assert pred is None or pred.cross_validation is None      # prérequis du cas testé
+    suf = assess_sufficiency(twin, cal, pred, CFG)
+    qualite = next(c for c in suf.criteria if c.name.startswith("Qualité"))
+    assert qualite.level == RED and not suf.sellable
+
+    # ... et jamais bloquante sous cap_orange (rollback permissif)
+    cfg_open = dc_replace(CFG, sufficiency=dc_replace(CFG.sufficiency,
+                                                      quality_policy="cap_orange"))
+    suf_open = assess_sufficiency(twin, cal, pred, cfg_open)
+    q_open = next(c for c in suf_open.criteria if c.name.startswith("Qualité"))
+    assert q_open.level == ORANGE
 
 
 def test_quality_policy_red_restores_the_hard_refusal():

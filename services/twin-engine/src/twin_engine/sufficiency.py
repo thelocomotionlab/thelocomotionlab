@@ -207,13 +207,19 @@ def assess_sufficiency(
     # (activité sans altitude exclue de la courbe record, ultra sans FC conservé et signalé,
     # durabilité « non chiffrée »). Un 🔴 ici punirait une seconde fois le même risque et
     # coûterait des clients dont la prédiction est bonne — mesuré au banc. Rollback : "red".
-    if s.quality_policy == "cap_orange" and quality_level == RED:
+    # ``cv_gated`` : la qualité s'efface DEVANT une preuve directe (la validation croisée sur
+    # les propres courses de l'athlète) et reste un garde-fou quand cette preuve manque.
+    cv_exists = prediction is not None and prediction.cross_validation is not None
+    quality_blocks = (s.quality_policy == "red"
+                      or (s.quality_policy == "cv_gated" and not cv_exists))
+    if quality_level == RED and not quality_blocks:
         quality_level = ORANGE
-        quality_detail += " — signalé, pas bloquant (canaux manquants déjà neutralisés en amont)"
+        quality_detail += " — signalé, pas bloquant (validation croisée disponible)"
         reasons.append(
             "Couverture FC/altitude faible sur l'archive : la durabilité et l'ajustement de "
             "pente reposent sur moins d'activités. Signalé, mais non bloquant — les activités "
-            "sans altitude sont déjà écartées de la courbe record."
+            "sans altitude sont déjà écartées de la courbe record, et la validation croisée "
+            "sur tes propres courses mesure directement ce que vaut la prédiction."
         )
     criteria.append(
         Criterion("Qualité (FC / altitude / distance)", quality_level, quality_value, quality_detail)
