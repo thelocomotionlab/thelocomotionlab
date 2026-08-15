@@ -517,3 +517,29 @@ def test_ab_recency_honours_the_quarantine(tmp_path):
         {"athlete": "Test", "race": "Course B", "date": "2025-08-01"},
     ]}), encoding="utf-8")
     assert quarantined(reg) == {("Test", "Course A", "2026-03-01")}
+
+
+def test_summarize_counts_refusal_motives_and_false_negatives():
+    """Un 🔴 sans motif est un mur : on voit que la vente est bloquée, jamais par quoi.
+    Et un refus alors que le central était juste est un client perdu pour rien."""
+    from tools.registre import summarize
+
+    def _e(err, verdict, blocking=None):
+        return {"athlete": "T", "race": f"C{err}", "date": "2026-01-01", "dnf": False,
+                "official_time_h": 20.0,
+                "model": {"verdict": verdict, "blocking": blocking or []},
+                "prediction": {"central_h": 20 * (1 + err / 100), "err_pct": err,
+                               "safety_low_h": 18.0, "safety_high_h": 22.0,
+                               "plan_low_h": 19.0, "plan_high_h": 21.0}}
+
+    s = summarize([
+        _e(2.0, "🟢"),
+        _e(4.0, "🔴", ["Domaine de calibration"]),
+        _e(90.0, "🔴", ["Domaine de calibration", "Courses exploitables"]),
+        _e(-8.0, "🔴", ["Fraîcheur des données"]),
+    ])
+    motifs = dict(s["blocking"])
+    assert motifs["Domaine de calibration"] == 2
+    assert motifs["Fraîcheur des données"] == 1
+    # deux refus à ±15 % d'erreur (+4 % et −8 %) : faux négatifs potentiels
+    assert s["refuses_pourtant_justes"] == 2

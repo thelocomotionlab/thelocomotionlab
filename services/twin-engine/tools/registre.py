@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -114,6 +115,20 @@ def summarize(entries: list[dict]) -> dict:
             "mae_pct": round(float(np.abs(errs_k).mean()), 2),
             "coverage80_pct": (round(100.0 * sum(in80) / len(in80), 1) if in80 else None),
         }
+    # POURQUOI on refuse : le décompte des critères bloquants sur les cas REFUSÉS, trié.
+    # Un garde-fou qui refuse des cas où le central est juste est un faux négatif coûteux
+    # (client perdu sans raison) — invisible tant qu'on ne compte pas les motifs.
+    blocking: Counter = Counter()
+    for e in fin:
+        if _verdict(e) == "🔴":
+            blocking.update((e.get("model") or {}).get("blocking") or ["(motif non consigné)"])
+    if blocking:
+        out["blocking"] = blocking.most_common()
+        # le cas qui doit alerter : refusé ALORS QUE le central était bon
+        rates = [e for e in fin if _verdict(e) == "🔴"
+                 and abs(e["prediction"]["err_pct"]) <= 15.0]
+        out["refuses_pourtant_justes"] = len(rates)
+
     errs = np.array([e["prediction"]["err_pct"] for e in fin], dtype=float)
     out["bias_pct"] = round(float(errs.mean()), 2)          # >0 = prédit trop lent
     out["mae_pct"] = round(float(np.abs(errs).mean()), 2)
@@ -327,6 +342,14 @@ def main(argv: list[str] | None = None) -> int:
                 b = s[key]
                 cov = "—" if b["coverage80_pct"] is None else f"{b['coverage80_pct']:.0f} %"
                 print(f"  {label} : n={b['n']} · MAE {b['mae_pct']:.1f} % · couv80 {cov}")
+        if "blocking" in s:
+            motifs = " · ".join(f"{nom} ×{n}" for nom, n in s["blocking"])
+            print(f"  motifs de REFUS : {motifs}")
+            justes = s.get("refuses_pourtant_justes", 0)
+            if justes:
+                print(f"  ⚠ {justes} refus alors que le central tombait à ±15 % — "
+                      "faux négatifs potentiels (client perdu sans raison) : vérifier le "
+                      "critère bloquant avant de durcir quoi que ce soit.")
         if "below_domain" in s:
             bd = s["below_domain"]
             in_dom = (f" · MAE dans le domaine : {s['mae_in_domain_pct']:.1f} %"
