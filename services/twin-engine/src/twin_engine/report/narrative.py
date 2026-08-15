@@ -419,9 +419,22 @@ def _plan_band_pct(cfg) -> str:
     return fr(pace.plan_window_high_pct - pace.plan_window_low_pct, 0)
 
 
-def caption_cumul(cfg=None) -> str:
+def caption_cumul(cfg=None, plan=None) -> str:
     # honnêteté : la bande vient d'un facteur d'échelle GLOBAL sur le scénario (un scénario lent
     # l'est de bout en bout) — pas d'une accumulation d'erreurs indépendantes segment par segment.
+    # MODE OBJECTIF (ADR 0002) : même bande à l'écran, sens radicalement différent — la légende
+    # doit changer avec, sinon on fait passer une consigne d'exécution pour une probabilité.
+    if plan is not None and getattr(plan, "anchor", "prediction") == "target":
+        tol = getattr(plan, "window_tolerance_pct", None)
+        marge = "" if tol is None else f" ($\\pm$\\,{fr(tol, 1)}\\,{PCT})"
+        return (
+            f"\\`A lire : ton heure de passage cumul\\'ee \\textbf{{sur ton objectif}}. La bande "
+            f"est la \\textbf{{fen\\^etre de passage}}{marge} — une \\emph{{tol\\'erance "
+            # ⚠ ligne SANS préfixe f : les accolades ne se doublent pas ici
+            "d'ex\\'ecution}, pas une probabilit\\'e d'arriv\\'ee. En tirets, la "
+            "\\textbf{pr\\'ediction du moteur} : l'\\'ecart entre les deux, c'est ce que ton "
+            "objectif te demande d'aller chercher."
+        )
     return (
         f"\\`A lire : ton heure de passage cumul\\'ee. La bande est la \\textbf{{fourchette de "
         f"course}} ({_plan_band_pct(cfg)}\\,{PCT} central) : elle s'\\'elargit avec les heures "
@@ -517,7 +530,7 @@ def build_narrative(course, twin, calibration, prediction, plan, race, cfg) -> d
         "caption_record": caption_record(twin, calibration, cfg),
         "caption_validation": caption_validation(prediction, cfg) if prediction else None,
         "caption_pacing": caption_pacing(),
-        "caption_cumul": caption_cumul(cfg),
+        "caption_cumul": caption_cumul(cfg, plan),
         "glossary": GLOSSARY,
         "profile_word": _profile_word(twin, cfg),
         "durability_word": _durability_word(twin, cfg),

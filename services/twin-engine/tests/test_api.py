@@ -139,3 +139,36 @@ def test_report_served_when_pdf_present(client, tmp_path):
     assert r.content.startswith(b"%PDF")
     # le job expose bien l'URL de rapport
     assert client.get(f"/jobs/{job_id}").json()["report_url"] == f"/jobs/{job_id}/report"
+
+
+# --------------------------------------------------------------------------- #
+# Mode OBJECTIF (ADR 0002) : champ de formulaire optionnel sur /preview et /jobs.
+def test_preview_accepts_target_hours(client):
+    r = client.post("/preview", files=_files(), data={"athlete": "T", "target_hours": "31h"})
+    assert r.status_code == 200
+    target = r.json()["target"]
+    assert target is not None and target["target_hours"] == 31.0
+    assert "regime" in target and "plan_ok" in target
+    # la prédiction reste servie à côté — le mode s'ajoute, il ne remplace pas
+    assert "prediction" in r.json() and "verdict" in r.json()
+
+
+def test_preview_without_target_is_unchanged(client):
+    r = client.post("/preview", files=_files(), data={"athlete": "T"})
+    assert r.status_code == 200 and r.json()["target"] is None
+
+
+def test_form_target_overrides_the_posted_race_spec(client):
+    """Le client envoie une spec de course figée + l'objectif saisi à part."""
+    files = {**_files(), "race": ("race.json", json.dumps(
+        {"name": "C", "aid_km": [0.0, 5.0, 10.0], "aid_names": ["d", "s", "a"],
+         "target_hours": "20h"}).encode(), "application/json")}
+    assert client.post("/preview", files=files).json()["target"]["target_hours"] == 20.0
+    r = client.post("/preview", files=files, data={"target_hours": "14:45"})
+    assert r.json()["target"]["target_hours"] == pytest.approx(14.75)
+
+
+def test_unreadable_target_is_a_422(client):
+    r = client.post("/preview", files=_files(), data={"target_hours": "bientôt"})
+    assert r.status_code == 422
+    assert "spec de course invalide" in r.json()["detail"]

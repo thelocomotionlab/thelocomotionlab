@@ -8,7 +8,7 @@ import type { FastifyInstance } from "fastify";
 
 import type { Config } from "../src/config";
 import { IpRateLimiter } from "../src/ratelimit";
-import { buildServer, type ServerDeps } from "../src/server";
+import { buildServer, parseDureeHeures, type ServerDeps } from "../src/server";
 import { DepotStore, type Depot } from "../src/store";
 
 const ORIGIN = "https://ok.test";
@@ -359,5 +359,53 @@ describe("routes admin", () => {
       (await app.inject({ method: "DELETE", url: `/twin/depots/${depot.id}`, headers: auth }))
         .statusCode,
     ).toBe(404);
+  });
+});
+
+describe("objectif chiffré (mode objectif du moteur)", () => {
+  it("parse les formes qu'un humain écrit et les stocke en heures", async () => {
+    for (const [saisie, heures] of [
+      ["31h", 31],
+      ["31h30", 31.5],
+      ["31:00:00", 31],
+      ["31:30", 31.5],
+      ["31,5", 31.5],
+    ] as const) {
+      expect(parseDureeHeures(saisie)).toBeCloseTo(heures, 6);
+    }
+    expect(parseDureeHeures("")).toBeNull();
+    expect(parseDureeHeures("   ")).toBeNull();
+    // illisible ou absurde → undefined = refus (pas de plan sur une durée devinée)
+    for (const mauvais of ["bientôt", "vite", "-3", "0", "999"]) {
+      expect(parseDureeHeures(mauvais)).toBeUndefined();
+    }
+  });
+
+  it("accepte un dépôt SANS objectif chiffré (champ facultatif)", async () => {
+    const { app, store } = makeApp();
+    const rep = await deposer(app, champsValides(), PETITE_ARCHIVE);
+    expect(rep.statusCode).toBe(200);
+    const depot = store.list()[0];
+    expect(depot.objectifCible).toBe("");
+    expect(depot.objectifHeures).toBeNull();
+  });
+
+  it("stocke l'objectif chiffré à côté du texte libre", async () => {
+    const { app, store } = makeApp();
+    const rep = await deposer(app, champsValides({ objectifCible: "31h30" }), PETITE_ARCHIVE);
+    expect(rep.statusCode).toBe(200);
+    const depot = store.list()[0];
+    expect(depot.objectifCible).toBe("31h30");
+    expect(depot.objectifHeures).toBeCloseTo(31.5, 6);
+    expect(depot.objectifs).toContain("Lavaredo");   // le récit reste, à côté du nombre
+  });
+
+  it("refuse une saisie illisible plutôt que de la deviner", async () => {
+    const { app, store } = makeApp();
+    const rep = await deposer(app, champsValides({ objectifCible: "le plus vite possible" }),
+                              PETITE_ARCHIVE);
+    expect(rep.statusCode).toBe(400);
+    expect(rep.json().error).toBe("objectif_invalide");
+    expect(store.list()).toHaveLength(0);            // rien d'écrit sur le volume
   });
 });

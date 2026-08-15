@@ -157,6 +157,42 @@ erreurs de validation croisée de l'athlète) et le rapport affiche **deux bande
 Si la dispersion est grande (> 0,35), le rapport ajoute une table de scénarios
 rapide / central / prudent. Ne jamais présenter la borne de sécurité comme un objectif.
 
+### Mode objectif ([ADR 0002](./adr/0002-mode-objectif-plan-sur-cible.md))
+
+À la demande de la cohorte (« je vise 31 h, donne-moi le plan »), le moteur sait ancrer le plan sur
+une **durée visée** au lieu du temps prédit. **Utilisable dès maintenant** : ajoute `target_hours`
+à la spec de course et lance un `full` normal.
+
+```json
+{ "name": "L'Échappée Belle", "target_hours": "31h", "start_time": "…", "aid_km": [ … ] }
+```
+
+…ou, sans toucher au JSON, avec **`--target`** (qui prime sur la spec) :
+
+```bash
+twin-engine preview --training <archive> --course <parcours.gpx> --target 31h     # verdict seul
+twin-engine full    --training <archive> --course <parcours.gpx> --race <spec.json> \
+                    --target 31h --out ./out                                       # + rapport
+```
+
+Côté **API**, `target_hours` est un champ de formulaire optionnel de `POST /preview` et
+`POST /jobs` (prioritaire sur la spec postée) — un objectif illisible renvoie **422**.
+
+Toutes les saisies acceptent `31h`, `31h30`, `31:00:00` ou un nombre d'heures. Le `preview` rend le
+**verdict de faisabilité sans PDF** (c'est la réponse à donner avant paiement) ; le `full` ajoute la
+section **« Ton objectif face à ton jumeau »**, répartit le plan sur la cible et change le
+vocabulaire des fenêtres (voir ci-dessous). Sans objectif, tout est **exactement** comme avant.
+
+À retenir :
+
+- la **prédiction n'est jamais remplacée** — le mode objectif s'ajoute à côté d'elle, et le registre
+  de couverture continue de ne consigner que la prédiction ;
+- les fenêtres par segment changent de nature : **fenêtre de passage** (tolérance d'exécution fixe,
+  `target.tolerance_pct`), plus une bande de probabilité — donc jamais de « 50 % » ni « 80 % » à
+  leur sujet ;
+- une cible plus rapide que la borne de sécurité basse ne donne **pas** de plan mais un écart chiffré
+  (objectif d'entraînement), et `sufficiency.domain_gate` reste prioritaire sur toute cible.
+
 ## 8. Développement & tests
 
 ```bash
@@ -179,7 +215,18 @@ Les fixtures d'ingestion (Garmin/Polar/Strava, anonymisées) sont committées da
 PYTHONPATH=src python -m tools.ab_montagnhard      # A/B σ/MAE/interp/extrap — preuve obligatoire avant merge
 PYTHONPATH=src python -m tools.backtest <manifest> # walk-forward --until : prédiction veille de course vs réel
 PYTHONPATH=src python -m tools.registre [--json]   # couverture des intervalles, biais, score de Winkler
+PYTHONPATH=src python -m tools.ab_recency <manifests…>  # balaye la demi-vie de récence (biais de progression)
+PYTHONPATH=src python -m tools.registre --frontiere # jusqu'où resserrer les bandes sans perdre la couverture
 ```
+
+> ⚠️ Ne **jamais** enchaîner `--dry-run` puis le run réel : le dry-run fait 100 % du calcul et
+> ne saute que l'écriture du registre — c'est deux fois le travail. Pour vérifier un manifeste
+> douteux, fais le dry-run sur un manifeste réduit à UNE course.
+>
+> Le banc décode l'archive **une seule fois par manifeste** (`ArchiveCache`) puis rejoue chaque
+> coupure sur les agrégats : mesuré ×3,2 (5 activités) à ×12,0 (120) sur 15 coupures — le gain
+> tend vers le nombre de courses. `tools/ab_recency` exploite le même cache pour balayer une
+> grille de demi-vies au prix d'un seul décodage.
 
 Le registre vit dans `docs/twin-registre-couverture.md` (avec sa règle de décision
 pré-enregistrée : pas de recalibration avant 8–10 cas frais). **Tout changement du moteur suit le

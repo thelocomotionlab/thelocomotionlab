@@ -338,6 +338,28 @@ class SufficiencyParams:
 
 
 @dataclass(frozen=True)
+class TargetParams:
+    """Mode OBJECTIF (ADR 0002) : le plan est ancré sur la cible de l'athlète.
+
+    Le mode ne remplace jamais la prédiction (toujours calculée, affichée et consignée) : il
+    ajoute un second rendu du même jumeau. Les fenêtres par segment cessent alors d'être une
+    bande de probabilité pour devenir une **fenêtre de passage** (tolérance d'exécution) —
+    d'où une constante propre, sans rapport avec ``pacing.plan_window_*``.
+    """
+
+    # Demi-largeur de la fenêtre de passage, en % du temps CUMULÉ. Valeur PROVISOIRE, choisie
+    # à défaut de mesure : la bonne source est l'écart réel entre plan et passages aux
+    # ravitaillements, qu'on n'a pas encore (ADR 0002, « ce qui reste ouvert »). Appliquée au
+    # cumul, elle élargit la fenêtre avec la course (±18 min à mi-parcours d'un 31 h, ±46 min
+    # à l'arrivée) — comportement voulu.
+    tolerance_pct: float = 2.5
+    # Cible plus rapide que la borne de sécurité basse → aucun plan servi, on rend l'écart
+    # chiffré (objectif d'entraînement). Un plan pour un objectif hors d'atteinte est un plan
+    # pour un abandon. Rollback explicite : false.
+    refuse_outside_safety: bool = True
+
+
+@dataclass(frozen=True)
 class Config:
     data_dir: Path
     course: CourseParams = field(default_factory=CourseParams)
@@ -347,6 +369,7 @@ class Config:
     pacing: PacingParams = field(default_factory=PacingParams)
     sufficiency: SufficiencyParams = field(default_factory=SufficiencyParams)
     narrative: NarrativeParams = field(default_factory=NarrativeParams)
+    target: TargetParams = field(default_factory=TargetParams)
 
 
 # --------------------------------------------------------------------------- #
@@ -399,6 +422,7 @@ def load_config(config_path: str | os.PathLike[str] | None = None) -> Config:
         pacing=_build(PacingParams, raw.get("pacing")),
         sufficiency=_build(SufficiencyParams, raw.get("sufficiency")),
         narrative=_build(NarrativeParams, raw.get("narrative")),
+        target=_build(TargetParams, raw.get("target")),
     )
 
 
@@ -411,5 +435,6 @@ __all__ = [
     "PacingParams",
     "SufficiencyParams",
     "NarrativeParams",
+    "TargetParams",
     "load_config",
 ]

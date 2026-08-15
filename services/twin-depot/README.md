@@ -29,14 +29,19 @@ analyse (calibration du moteur Twin) puis leur **purge**. Conteneurisé
   formulaire validé ; tout échec purge le temporaire, et les tmp orphelins
   d'un crash sont purgés au démarrage. Un dépôt =
   `{ id, reference (LL-TWIN-<année>-<seq>), prenom, nom, email, montre,
-  objectifs, consent, nomFichier, taille, sha256, createdAt, ip }`.
+  objectifs, objectifCible, objectifHeures, consent, nomFichier, taille, sha256,
+  createdAt, ip }`. **`objectifCible`/`objectifHeures`** portent l'objectif CHIFFRÉ
+  (facultatif, « 31h », « 31h30 », « 31:00:00 » ou un nombre — illisible → **400**
+  `objectif_invalide`) : c'est ce que consomme le `--target` du moteur (mode objectif,
+  [ADR 0002](../../docs/adr/0002-mode-objectif-plan-sur-cible.md)). Le texte libre
+  `objectifs` reste à côté : il porte le récit, l'autre porte le nombre.
 
 ## Endpoints
 
 | Méthode | Route | Rôle |
 | --- | --- | --- |
 | GET | `/twin/healthz` | Vivacité (compose healthcheck) + état des emails (notification, confirmation). |
-| POST | `/twin/depots` | Dépôt multipart `{ prenom*, nom, email*, montre*, objectifs, consent*="oui", website (honeypot), archive* (fichier) }` → `{ ok, reference }`. Trop gros → **413**, formulaire incomplet → **400** `{ error }`, débit → **429**. CORS restreint aux origines du site. |
+| POST | `/twin/depots` | Dépôt multipart `{ prenom*, nom, email*, montre*, objectifs, objectifCible, consent*="oui", website (honeypot), archive* (fichier) }` → `{ ok, reference }`. Trop gros → **413**, formulaire incomplet → **400** `{ error }`, débit → **429**. CORS restreint aux origines du site. |
 | GET | `/twin/depots` | **Admin** (`Authorization: Bearer $TWIN_DEPOT_ADMIN_TOKEN`) : listing des dépôts (métadonnées). |
 | GET | `/twin/depots/:id/archive` | **Admin** : téléchargement de l'archive (stream). |
 | DELETE | `/twin/depots/:id` | **Admin** : purge du dépôt analysé (archive + métadonnées). |

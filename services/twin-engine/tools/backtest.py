@@ -42,8 +42,11 @@ from pathlib import Path
 import numpy as np
 
 from twin_engine.config import load_config
-from twin_engine.course import RaceSpec
-from twin_engine.pipeline import run_preview
+from twin_engine.course import RaceSpec, build_course
+from twin_engine.ingest import iter_activities
+from twin_engine.pipeline import analyze_preview_from_twin
+from twin_engine.twin.model import build_twin_from_contributions
+from twin_engine.twin.record import iter_contributions
 
 # registre par défaut : docs/ à la racine du monorepo (surchargable par --registre)
 DEFAULT_REGISTRE = Path(__file__).resolve().parents[3] / "docs" / "twin-registre-couverture.json"
@@ -78,7 +81,52 @@ def _sd_rel(calibration, prediction) -> float | None:
     return float(np.sqrt(max(var, 0.0)) / prediction.v_kmh)
 
 
-def backtest_race(archive: Path, race_entry: dict, cfg, *, base: Path) -> dict:
+class ArchiveCache:
+    """L'archive décodée UNE fois, rejouable à N coupures temporelles.
+
+    Le décodage (FIT/TCX/GPX + ``process_activity``) domine tout le reste ; une coupure ne
+    fait que RETIRER des activités. Rejouer 13 courses coûtait donc 13 décodages complets
+    de l'archive — une nuit sur une archive Coros fournie. Ici : un seul décodage, puis un
+    filtre par date et une ré-agrégation instantanée par course.
+
+    Les résultats sont identiques au chemin direct (mêmes agrégats, même ordre, donc mêmes
+    départages à égalité) — c'est ce que vérifie ``test_backtest_tools``.
+    """
+
+    def __init__(self, archive: Path, cfg) -> None:
+        self.cfg = cfg
+        skipped: list[dict] = []
+        stream = iter_activities(archive, running_only=True, skipped=skipped,
+                                 progress=self._progress)
+        # on ne garde QUE des agrégats : aucun tableau 1 Hz ne survit à cette ligne
+        self.contributions = list(iter_contributions(stream, cfg))
+        self.n_skipped = len(skipped)
+        print(f"\r  archive décodée : {len(self.contributions)} activités "
+              f"({self.n_skipped} écartées à l'ingestion) — rejouable sans re-décodage.",
+              file=sys.stderr, flush=True)
+
+    @staticmethod
+    def _progress(n: int, name: str) -> None:
+        if n % 100 == 0:
+            print(f"\r  décodage de l'archive : {n} fichiers…", end="", file=sys.stderr,
+                  flush=True)
+
+    def preview_at(self, course, until: date, target_hours=None):
+        """Jumeau + prédiction « ce que le moteur savait au soir du ``until`` ».
+
+        Anti-fuite identique au chemin direct : postérieures ET non datées écartées.
+        """
+        kept = [c for c in self.contributions
+                if c.start_date is not None and c.start_date <= until]
+        n_excluded = len(self.contributions) - len(kept)
+        twin = build_twin_from_contributions(kept, self.cfg)
+        return analyze_preview_from_twin(
+            twin, course, self.cfg, n_ingested=len(kept), n_skipped=self.n_skipped,
+            n_excluded_until=n_excluded, analysis_date=until, target_hours=target_hours,
+        )
+
+
+def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path) -> dict:
     """Rejoue UNE course passée : coupure la veille (ou ``until`` du manifeste) → entrée
     de registre. Une prédiction impossible (🔴) est consignée telle quelle : le refus du
     moteur est une information, pas un échec du banc."""
@@ -94,10 +142,8 @@ def backtest_race(archive: Path, race_entry: dict, cfg, *, base: Path) -> dict:
     else:
         race = RaceSpec(name=race_entry["name"])
 
-    result = run_preview(
-        training_path=archive, course_gpx=gpx_path.read_bytes(), race=race, cfg=cfg,
-        purge_source=False, until=until,
-    )
+    course = build_course(gpx_path.read_bytes(), race, cfg)
+    result = cache.preview_at(course, until, target_hours=race.target_hours)
     pred = result.prediction
     actual_h = None if race_entry.get("dnf") else parse_time_h(race_entry.get("official_time"))
 
@@ -179,11 +225,14 @@ def run_manifest(manifest_path: Path, cfg, registre: dict) -> list[dict]:
     man = json.loads(manifest_path.read_text(encoding="utf-8"))
     athlete = man["athlete"]
     archive = (base / man["archive"]).resolve()
+    # UN décodage pour tout le manifeste, puis une coupure par course (cf. ArchiveCache)
+    print(f"  {athlete} : décodage de l'archive (une seule fois)…", file=sys.stderr, flush=True)
+    cache = ArchiveCache(archive, cfg)
     entries: list[dict] = []
     for r in man["races"]:
         print(f"  {athlete} · {r['name']} ({r['date']}) — coupure la veille…",
               file=sys.stderr, flush=True)
-        entries.append(backtest_race(archive, r, cfg, base=base))
+        entries.append(backtest_race(cache, r, cfg, base=base))
     merge_registre(registre, athlete, man.get("dev_set", False), entries)
     return entries
 

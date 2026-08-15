@@ -54,7 +54,15 @@ sur une extrapolation (confiance r\'eduite, cf. limites).<% endif %>
 << opening >>
 
 \begin{llnote}[L'essentiel]
-\textbf{Temps d'arriv\'ee pr\'edit : << pred_central >>}<% if start_time %>, d\'epart << start_time >><% endif %>.
+<% if target_mode %>\textbf{Ton objectif : << target_hm >>}<% if start_time %>, d\'epart << start_time >><% endif %> --- << target_regime_label >>.\\[2pt]
+Ce plan r\'epartit \textbf{ta cible}, pas la pr\'ediction. Pour m\'emoire, le mod\`ele te situe \`a
+\textbf{<< pred_central >>}<% if plan_low %> (fourchette de course << plan_band_pct >>\,\% :
+<< plan_low >> -- << plan_high >>)<% endif %> ; bornes de s\'ecurit\'e (<< interval_pct >>\,\%) :
+<< interval_low >> -- << interval_high >> --- pour la logistique, pas pour l'allure.
+<% if arrival_window %>\\[2pt]
+\textbf{Arriv\'ee vis\'ee : << arrival_clock >>}, fen\^etre de passage : \textbf{<< arrival_window >>}<% if arrival_safety_window %> ;
+s\'ecurit\'e (pr\'ediction) : << arrival_safety_window >><% endif %>.<% endif %>
+<% else %>\textbf{Temps d'arriv\'ee pr\'edit : << pred_central >>}<% if start_time %>, d\'epart << start_time >><% endif %>.
 <% if plan_low %>\textbf{Fourchette de course} (<< plan_band_pct >>\,\% central) : \textbf{<< plan_low >> -- << plan_high >>}
 --- c'est elle qui pilote le plan. Bornes de s\'ecurit\'e (<< interval_pct >>\,\%) :
 << interval_low >> -- << interval_high >> --- pour la logistique, pas pour l'allure.
@@ -62,6 +70,7 @@ sur une extrapolation (confiance r\'eduite, cf. limites).<% endif %>
 <% endif %><% if arrival_window %>\\[2pt]
 \textbf{Arriv\'ee : << arrival_clock >>}, fourchette de course : \textbf{<< arrival_window >>}<% if arrival_safety_window %> ;
 s\'ecurit\'e : << arrival_safety_window >><% endif %>.<% endif %>
+<% endif %>
 <% if vc_fraction_pct %>\\[2pt]
 \textbf{Intensit\'e cible : $\approx$\,<< vc_fraction_pct >>\,\% de ta vitesse critique}, soutenue
 avec une d\'erive ma\^itris\'ee.<% if vc_low %> \`A cette intensit\'e, le facteur limitant n'est pas la
@@ -257,6 +266,43 @@ une extrapolation (<< regime_label >>). \`A prendre comme un ordre de grandeur, 
 <% endif %>
 
 % =====================================================================
+<% if target_requested %>\section{Ton objectif face \`a ton jumeau}\label{sec:objectif}
+
+Tu as demand\'e un plan pour \textbf{<< target_hm >>}. Cette section confronte cette dur\'ee \`a ce que
+\emph{tes} donn\'ees montrent --- avant de r\'epartir quoi que ce soit. Le verdict :
+\textbf{<< target_regime_label >>}.
+
+\begin{table}[H]
+  \centering \small \setlength{\tabcolsep}{7pt}
+  \LLzebra \renewcommand{\arraystretch}{1.28}
+  \begin{tabular}{@{}lr@{}}
+    \LLheaderrow
+    \LLthead{Ce que l'objectif exige} & \LLthead{valeur} \\
+    Vitesse ajust\'ee moyenne \`a tenir & \LLnum{<< target_required_v >>}\,km/h \\
+<% if target_vc_pct %>    Intensit\'e correspondante & \LLnum{<< target_vc_pct >>}\,\% de ta vitesse critique \\
+<% endif %><% if target_envelope_pct %>    Part de ton enveloppe d'endurance \`a cette dur\'ee & \LLnum{<< target_envelope_pct >>}\,\% \\
+<% endif %><% if target_gap_pct %>    \'Ecart avec la pr\'ediction (<< pred_central >>) & << target_gap_pct >>\,\% plus <% if target_faster_than_central %>rapide<% else %>lent<% endif %> \\
+<% endif %><% if target_speed_gain_pct %>    Vitesse \`a <% if target_faster_than_central %>gagner<% else %>c\'eder<% endif %> vs ton niveau actuel & << target_speed_gain_pct >>\,\% \\
+<% endif %>  \end{tabular}
+  \caption{L'objectif traduit en exigences physiologiques. La vitesse ajust\'ee est \`a la m\^eme
+  \'echelle que celle de la pr\'ediction : les deux se comparent terme \`a terme.}
+  \label{tab:objectif}
+\end{table}
+
+<% if target_reasons %>\begin{itemize}[leftmargin=1.4em]
+<% for r in target_reasons %>\item << r >>
+<% endfor %>\end{itemize}
+<% endif %>
+<% if not target_plan_ok %>\begin{llattention}[Pas de plan sur cet objectif]
+Nous ne construisons \textbf{pas} de plan de course pour cette cible : elle sort de ce que tes
+donn\'ees actuelles permettent de soutenir. Un plan cal\'e sur un objectif hors d'atteinte n'est pas
+un plan de course, c'est un plan d'abandon --- il ferait partir trop vite et co\^uterait la fin de
+course. Le plan ci-dessous reste donc ancr\'e sur la \textbf{pr\'ediction}, et l'\'ecart chiffr\'e
+ci-dessus est \`a lire comme un \textbf{objectif d'entra\^inement} pour la saison.
+\end{llattention}
+<% endif %>
+<% endif %>
+% =====================================================================
 \section{Le plan de pacing}
 
 \textbf{Effort ajust\'e constant.} On vise une \textbf{vitesse ajust\'ee \`a la pente} (\'equivalent
@@ -264,21 +310,31 @@ plat) constante, et non une allure r\'eelle constante : courir au m\^eme \emph{c
 impose de ralentir en mont\'ee et d'acc\'el\'erer en descente. \textbf{Fade de durabilit\'e.} Comme la
 durabilit\'e d\'ecline avec les heures, on autorise une l\'eg\`ere \textbf{d\'erive} --- une baisse
 progressive de cette vitesse du d\'ebut \`a la fin (\(\approx -<< fade_pct >>\,\%\)) : partir un peu
-au-dessus de la moyenne, finir un peu en dessous. Les \textbf{fen\^etres} donnent par segment ta
+au-dessus de la moyenne, finir un peu en dessous.
+<% if target_mode %>\textbf{Fen\^etres de passage.} Le temps r\'eparti ici est \textbf{ton objectif}
+(<< target_hm >>) : les fen\^etres ne sont donc PAS une probabilit\'e d'arriv\'ee mais une
+\textbf{tol\'erance d'ex\'ecution} de \(\pm\)<< target_tolerance_pct >>\,\% sur le temps cumul\'e ---
+sortir de la fen\^etre ne veut pas dire \og~tu vas \'echouer~\fg, mais \og~tu n'es plus sur ton
+plan~\fg. En valeur absolue elle s'\'elargit avec la course : quelques minutes au d\'ebut, davantage
+\`a l'arriv\'ee.
+<% else %>Les \textbf{fen\^etres} donnent par segment ta
 \textbf{fourchette de course} (<< plan_band_pct >>\,\% central, bandes Monte-Carlo) : une \emph{plage}
 d'arriv\'ee, pas une valeur unique.
+<% endif %>
 
 \begin{table}[H]
   \centering \scriptsize \setlength{\tabcolsep}{3.8pt}
   \LLzebra \renewcommand{\arraystretch}{1.28}
   \begin{tabular}{@{}clrrrrlrc@{}}
     \LLheaderrow
-    \LLthead{\#} & \LLthead{Vers} & \LLthead{km} & \LLthead{$\Deq$} & \LLthead{v.aj.} & \LLthead{allure} & \LLthead{arriv\'ee} & \LLthead{fen\^etre d'arriv\'ee} & \LLthead{nuit} \\
-     & & & \scriptsize(km) & \scriptsize(km/h) & \scriptsize(/km) & & \scriptsize(<< plan_band_pct >>\,\%) & \\
+    \LLthead{\#} & \LLthead{Vers} & \LLthead{km} & \LLthead{$\Deq$} & \LLthead{v.aj.} & \LLthead{allure} & \LLthead{arriv\'ee} & \LLthead{<% if target_mode %>fen\^etre de passage<% else %>fen\^etre d'arriv\'ee<% endif %>} & \LLthead{nuit} \\
+     & & & \scriptsize(km) & \scriptsize(km/h) & \scriptsize(/km) & & \scriptsize(<% if target_mode %>$\pm$<< target_tolerance_pct >>\,\%<% else %><< plan_band_pct >>\,\%<% endif %>) & \\
 <% for s in plan_rows %>    << s.idx >> & << s.to >> & \LLnum{<< s.off1 >>} & \LLnum{<< s.deq >>} & \LLnum{<< s.vga >>} & \LLnum{<< s.pace >>} & << s.arr >> & \LLnum{<< s.window >>} & <% if s.night %>$\bullet$<% endif %> \\
 <% endfor %>  \end{tabular}
   \caption{Plan par segment : vitesse ajust\'ee cible, allure r\'eelle terrain, heure de passage et
-  fen\^etre d'arriv\'ee (fourchette de course, << plan_band_pct >>\,\% central). $\bullet$ = section de nuit.}
+  <% if target_mode %>fen\^etre de passage (tol\'erance d'ex\'ecution, $\pm$<< target_tolerance_pct >>\,\%
+  du temps cumul\'e --- pas une probabilit\'e)<% else %>fen\^etre d'arriv\'ee (fourchette de course,
+  << plan_band_pct >>\,\% central)<% endif %>. $\bullet$ = section de nuit.}
   \label{tab:plan}
 \end{table}
 
@@ -337,6 +393,10 @@ forme du moment et doit \^etre recalcul\'ee \`a l'approche.
 du GPX) peut imposer plus lent.
 \item \textbf{Minetti} perd en validit\'e au-del\`a de \(\pm\)25--30\,\% \textbf{de pente} (marche active).
 \item \textbf{M\'et\'eo} et \textbf{nutrition} ne sont pas mod\'elis\'ees.
+<% if target_mode %>\item \textbf{Ce plan suppose ton objectif tenable ; il ne le rend pas tenable.} Il r\'epartit au
+mieux la dur\'ee que tu as choisie, en respectant ta courbe de fatigue --- il ne d\'eplace pas ton
+plafond physiologique. La r\'ef\'erence de ce qui est \emph{probable} reste la pr\'ediction et ses
+bornes de s\'ecurit\'e, section~\ref{sec:pred}.<% endif %>
 <% if not durability_known %>\item \textbf{Durabilit\'e non chiffr\'ee} : la FC manque sur la majorit\'e de
 tes sorties --- l'usure progressive est donc moins bien contrainte.<% endif %>
 <% if regime != "regression" %>\item \textbf{Peu d'ultras} : << regime_label >> --- l'incertitude est

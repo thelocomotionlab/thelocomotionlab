@@ -24,6 +24,18 @@ export interface Depot {
   /** Id de marque (garmin, polar…) — validé contre config.montres. */
   montre: string;
   objectifs: string;
+  /**
+   * Objectif chiffré, tel que TAPÉ par l'athlète (« 31h », « 31:00:00 »… ou "" si non
+   * renseigné). Le texte libre `objectifs` reste à côté : il porte le récit, celui-ci
+   * porte le nombre.
+   */
+  objectifCible: string;
+  /**
+   * Le même objectif en HEURES décimales (null si non renseigné). C'est ce que consomme
+   * le moteur (`--target`, mode objectif, ADR 0002) : on parse à la saisie plutôt que de
+   * relire de la prose au moment de l'analyse.
+   */
+  objectifHeures: number | null;
   /** Preuve du consentement coché (texte affiché versionné côté site). */
   consent: boolean;
   /** Nom de fichier nettoyé, tel que stocké dans archives/<id>/. */

@@ -236,3 +236,260 @@ def test_diag_archive_audits_genuine_filter(tmp_path, capsys):
         sport=None, source_format="gpx", source_name="mystere",
     )
     assert "INVISIBLE du moteur" in _genuine_audit(ghost, cfg)
+
+
+# --------------------------------------------------------------------------- #
+# Cache d'archive : UN décodage, N coupures — et des résultats IDENTIQUES au chemin direct.
+def _activity_gpx(day: str, *, minutes: int, v_ms: float, climb_m: float = 40.0) -> bytes:
+    """Une activité datée, à 1 Hz, avec altitude et FC (donc exploitable par la courbe record)."""
+    import math as _m
+
+    n = minutes * 60
+    lat0, lon0 = 43.70, 7.26
+    rows = []
+    for i in range(n + 1):
+        x = v_ms * i
+        ele = 100.0 + climb_m * (i / n if i <= n / 2 else (n - i) / n) * 2
+        dlon = x / (111_320.0 * _m.cos(_m.radians(lat0)))
+        hh, mm, ss = 8 + i // 3600, (i % 3600) // 60, i % 60
+        rows.append(
+            f'<trkpt lat="{lat0:.6f}" lon="{lon0 + dlon:.6f}"><ele>{ele:.1f}</ele>'
+            f'<time>{day}T{hh:02d}:{mm:02d}:{ss:02d}Z</time><extensions>'
+            f'<gpxtpx:TrackPointExtension><gpxtpx:hr>140</gpxtpx:hr>'
+            f'</gpxtpx:TrackPointExtension></extensions></trkpt>'
+        )
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<gpx version="1.1" creator="test" xmlns="http://www.topografix.com/GPX/1/1" '
+        'xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1">'
+        f'<trk><type>running</type><trkseg>{"".join(rows)}</trkseg></trk></gpx>'
+    ).encode()
+
+
+def _archive(tmp_path):
+    d = tmp_path / "archives"
+    d.mkdir()
+    for i, (day, minutes, v) in enumerate([
+        ("2025-03-15", 40, 3.1), ("2025-06-10", 70, 2.9), ("2025-09-02", 55, 3.0),
+        ("2026-01-20", 90, 2.8), ("2026-04-05", 45, 3.2),
+    ]):
+        (d / f"act{i}.gpx").write_bytes(_activity_gpx(day, minutes=minutes, v_ms=v))
+    return d
+
+
+def _course_gpx():
+    import math as _m
+
+    lat0, lon0 = 43.70, 7.26
+    rows = []
+    for i in range(201):
+        x = 10000.0 * i / 200
+        ele = 1000.0 * (x / 5000.0) if x <= 5000 else 1000.0 * (2 - x / 5000.0)
+        dlon = x / (111_320.0 * _m.cos(_m.radians(lat0)))
+        rows.append(f'<trkpt lat="{lat0:.6f}" lon="{lon0 + dlon:.6f}"><ele>{ele:.1f}</ele></trkpt>')
+    return ('<?xml version="1.0"?><gpx xmlns="http://www.topografix.com/GPX/1/1">'
+            f'<trk><trkseg>{"".join(rows)}</trkseg></trk></gpx>').encode()
+
+
+@pytest.mark.parametrize("cutoff", ["2025-12-31", "2026-06-01", "2025-05-01"])
+def test_archive_cache_matches_the_direct_path(tmp_path, cutoff):
+    """LE test du cache : décoder une fois puis filtrer doit être indiscernable de décoder
+    l'archive coupée. Même arithmétique, même ordre — donc mêmes départages à égalité."""
+    from datetime import date as _date
+
+    from twin_engine.config import load_config
+    from twin_engine.course import RaceSpec, build_course
+    from twin_engine.pipeline import run_preview
+
+    from tools.backtest import ArchiveCache
+
+    cfg = load_config()
+    archive, gpx = _archive(tmp_path), _course_gpx()
+    race = RaceSpec(name="T")
+    until = _date.fromisoformat(cutoff)
+
+    direct = run_preview(training_path=archive, course_gpx=gpx, race=race, cfg=cfg,
+                         purge_source=False, until=until)
+    cached = ArchiveCache(archive, cfg).preview_at(build_course(gpx, race, cfg), until)
+
+    assert cached.to_dict() == direct.to_dict()
+
+
+def test_archive_cache_decodes_only_once(tmp_path, monkeypatch):
+    """Le gain est là ou il n'est pas : N coupures ne doivent coûter qu'UN décodage."""
+    from twin_engine.config import load_config
+    from twin_engine.course import RaceSpec, build_course
+    from twin_engine.twin import record as record_mod
+
+    from tools.backtest import ArchiveCache
+
+    cfg = load_config()
+    calls = {"n": 0}
+    real = record_mod.process_activity
+
+    def _counting(act, c):
+        calls["n"] += 1
+        return real(act, c)
+
+    monkeypatch.setattr(record_mod, "process_activity", _counting)
+
+    cache = ArchiveCache(_archive(tmp_path), cfg)
+    after_load = calls["n"]
+    assert after_load == 5                      # une passe sur les 5 activités
+
+    course = build_course(_course_gpx(), RaceSpec(name="T"), cfg)
+    from datetime import date as _date
+
+    for day in ("2025-12-31", "2026-06-01", "2025-05-01"):
+        cache.preview_at(course, _date.fromisoformat(day))
+    assert calls["n"] == after_load             # ... et plus AUCUN décodage ensuite
+
+
+# --------------------------------------------------------------------------- #
+# Balayage de la demi-vie de récence (tools/ab_recency) — l'instrument du biais de progression.
+def _manifest(tmp_path):
+    """Un manifeste minimal pointant sur l'archive et la trace synthétiques."""
+    archive = _archive(tmp_path)
+    (tmp_path / "trace.gpx").write_bytes(_course_gpx())
+    man = tmp_path / "manifest-test.json"
+    man.write_text(json.dumps({
+        "athlete": "Test", "archive": archive.name, "dev_set": False,
+        "races": [
+            {"name": "Course A", "date": "2026-03-01", "official_time": "12:00:00",
+             "gpx": "trace.gpx"},
+            {"name": "Course B", "date": "2025-08-01", "official_time": "13:30:00",
+             "gpx": "trace.gpx"},
+        ],
+    }), encoding="utf-8")
+    return man
+
+
+def test_ab_recency_sweeps_without_redecoding(tmp_path, monkeypatch, capsys):
+    """Le balayage doit coûter UN décodage par athlète, pas un par variante."""
+    from twin_engine.config import load_config
+    from twin_engine.twin import record as record_mod
+
+    from tools.ab_recency import evaluate, report
+
+    calls = {"n": 0}
+    real = record_mod.process_activity
+
+    def _counting(act, c):
+        calls["n"] += 1
+        return real(act, c)
+
+    monkeypatch.setattr(record_mod, "process_activity", _counting)
+
+    grid = (90.0, 365.0, 730.0)
+    rows = evaluate([_manifest(tmp_path)], grid, load_config())
+
+    assert calls["n"] == 5                      # 5 activités décodées, UNE fois
+    assert len(rows) == 2 * len(grid)           # 2 courses × 3 variantes
+    assert {r["halflife"] for r in rows} == set(grid)
+    report(rows, grid)                          # le rendu ne doit pas exploser
+    out = capsys.readouterr().out
+    assert "cas FRAIS" in out and "←défaut" in out
+
+
+def test_ab_recency_only_touches_calibration(tmp_path):
+    """Garde-fou du cache : la demi-vie ne doit RIEN changer en amont du jumeau.
+
+    Si une variante modifiait les agrégats par activité, réutiliser un décodage unique
+    serait faux — c'est l'hypothèse sur laquelle repose tout l'outil.
+    """
+    from dataclasses import fields
+
+    from twin_engine.config import load_config
+
+    from tools.ab_recency import _cfg_with_halflife
+
+    cfg = load_config()
+    variante = _cfg_with_halflife(cfg, 90.0)
+    for f in fields(cfg):
+        if f.name != "calibration":
+            assert getattr(variante, f.name) == getattr(cfg, f.name), f"{f.name} modifié"
+    assert variante.calibration.recency_halflife_days == 90.0
+
+
+# --------------------------------------------------------------------------- #
+# Frontière finesse/calibration (tools/registre --frontiere).
+def _entree(err_pct, demi_largeur_pct, *, verdict="🟢", central=20.0, dev=False):
+    """Une entrée de registre synthétique : erreur du central et largeur de bande choisies."""
+    actual = central / (1 + err_pct / 100.0)
+    demi = central * demi_largeur_pct / 100.0
+    return {
+        "athlete": "T", "race": f"C{err_pct}", "date": "2026-01-01", "dev_set": dev,
+        "dnf": False, "official_time_h": actual,
+        "model": {"verdict": verdict},
+        "prediction": {
+            "central_h": central,
+            "safety_low_h": central - demi, "safety_high_h": central + demi,
+            "plan_low_h": central - demi / 2, "plan_high_h": central + demi / 2,
+            "err_pct": err_pct,
+        },
+    }
+
+
+def test_frontiere_widens_and_scores():
+    from tools.registre import frontiere
+
+    # bande beaucoup trop étroite (±1 %) face à des erreurs de ±10 % : élargir doit payer
+    entries = [_entree(e, 1.0) for e in (-10, -5, 0, 5, 10)]
+    rows = frontiere(entries, alpha=0.2, band="safety")
+    widths = [r["width_rel_pct"] for r in rows]
+    assert widths == sorted(widths)                       # la largeur croît avec k
+    covs = [r["coverage_pct"] for r in rows]
+    assert covs == sorted(covs)                           # la couverture aussi
+    best = min(rows, key=lambda r: r["winkler_rel"])
+    assert best["k"] > 1.0                                # ... et l'optimum est à ÉLARGIR
+
+
+def test_frontiere_detects_room_to_tighten():
+    """Bande absurdement large face à des erreurs minuscules : le score doit dire « resserre »."""
+    from tools.registre import frontiere
+
+    entries = [_entree(e, 40.0) for e in (-1, -0.5, 0, 0.5, 1)]
+    best = min(frontiere(entries, alpha=0.2, band="safety"),
+               key=lambda r: r["winkler_rel"])
+    assert best["k"] < 1.0
+
+
+def test_frontiere_ignores_refused_cases_by_default():
+    """La question est « jusqu'où resserrer ce que je VENDS » : les 🔴 n'en font pas partie."""
+    from tools.registre import frontiere
+
+    entries = [_entree(e, 5.0) for e in (-3, 0, 3)]
+    entries.append(_entree(300.0, 5.0, verdict="🔴"))     # refus catastrophique
+    vendus = frontiere(entries, alpha=0.2, band="safety")
+    tous = frontiere(entries, alpha=0.2, band="safety", sellable_only=False)
+    assert vendus[0]["n"] == 3 and tous[0]["n"] == 4
+    # le refus, s'il comptait, ferait exploser le score à toute largeur
+    assert min(r["winkler_rel"] for r in vendus) < min(r["winkler_rel"] for r in tous)
+
+
+def test_frontiere_survives_an_empty_set():
+    from tools.registre import frontiere
+
+    assert frontiere([], alpha=0.2, band="safety") == []
+    assert frontiere([_entree(0, 5.0, verdict="🔴")], alpha=0.2, band="safety") == []
+
+
+def test_ab_recency_reports_the_hidden_cost_of_a_short_halflife(tmp_path, capsys):
+    """Une demi-vie courte réduit N_eff : le tableau doit le montrer, sinon on choisit à
+    l'aveugle une valeur qui corrige le biais en dégradant le régime."""
+    from twin_engine.config import load_config
+
+    from tools.ab_recency import evaluate, report
+
+    grid = (30.0, 365.0, 3650.0)
+    rows = evaluate([_manifest(tmp_path)], grid, load_config())
+    report(rows, grid)
+    out = capsys.readouterr().out
+    assert "N_eff" in out and "régr." in out and "Winkler" in out
+
+    def _neff(hl):
+        vals = [r["n_eff"] for r in rows if r["halflife"] == hl]
+        return sum(vals) / len(vals)
+
+    # 30 j écrase le passé, 3650 j garde tout : N_eff doit croître avec la demi-vie
+    assert _neff(30.0) <= _neff(365.0) <= _neff(3650.0)

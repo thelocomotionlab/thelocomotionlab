@@ -33,6 +33,31 @@ const MAX_EMAIL_LENGTH = 254;
 const MAX_PRENOM_LENGTH = 80;
 const MAX_NOM_LENGTH = 80;
 const MAX_OBJECTIFS_LENGTH = 4000;
+const MAX_OBJECTIF_CIBLE_LENGTH = 20;
+
+/**
+ * Durée visée telle qu'un humain l'écrit → heures décimales. `null` = champ vide,
+ * `undefined` = saisie illisible (refusée : mieux vaut un 400 qu'un plan de course calé
+ * sur la mauvaise durée). Même grammaire que `parse_duration_h` du moteur — « 31h »,
+ * « 31h30 », « 31:00:00 », « 31:30 » ou un nombre d'heures.
+ */
+export function parseDureeHeures(brut: string): number | null | undefined {
+  const s = brut.trim().toLowerCase().replace(/\s+/g, "");
+  if (s === "") return null;
+  let heures: number;
+  let m = /^(\d+):(\d{1,2})(?::(\d{1,2}))?$/.exec(s);
+  if (m) {
+    heures = Number(m[1]) + Number(m[2]) / 60 + Number(m[3] ?? 0) / 3600;
+  } else if ((m = /^(\d+(?:[.,]\d+)?)h(\d{1,2})?$/.exec(s))) {
+    heures = Number(m[1].replace(",", ".")) + Number(m[2] ?? 0) / 60;
+  } else if ((m = /^(\d+(?:[.,]\d+)?)$/.exec(s))) {
+    heures = Number(m[1].replace(",", "."));
+  } else {
+    return undefined;
+  }
+  if (!Number.isFinite(heures) || heures <= 0 || heures > 240) return undefined;
+  return heures;
+}
 
 export interface ServerDeps {
   config: Config;
@@ -215,6 +240,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
         const email = (champs.get("email") ?? "").trim();
         const montre = (champs.get("montre") ?? "").trim();
         const objectifs = (champs.get("objectifs") ?? "").trim();
+        const objectifCible = (champs.get("objectifCible") ?? "").trim();
 
         const invalide = (code: string) => {
           purgerTmp();
@@ -229,6 +255,10 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
         }
         if (!config.montres.includes(montre)) return invalide("montre_invalide");
         if (objectifs.length > MAX_OBJECTIFS_LENGTH) return invalide("objectifs_trop_longs");
+        if (objectifCible.length > MAX_OBJECTIF_CIBLE_LENGTH) return invalide("objectif_invalide");
+        // Champ OPTIONNEL, mais illisible = refus : le moteur exige un nombre, pas de la prose.
+        const objectifHeures = parseDureeHeures(objectifCible);
+        if (objectifHeures === undefined) return invalide("objectif_invalide");
         if (champs.get("consent") !== "oui") return invalide("consentement_requis");
 
         const fini: { tmp: string; nomFichier: string; taille: number; sha256: string } = archive;
@@ -239,6 +269,8 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
             email,
             montre,
             objectifs,
+            objectifCible,
+            objectifHeures,
             consent: true,
             nomFichier: fini.nomFichier,
             taille: fini.taille,

@@ -38,8 +38,13 @@ class SegmentPlan:
     cum_clock_h: float       # temps cumulé à l'ARRIVÉE du segment (arrêt de CE ravito exclu)
     arr_clock: str | None    # heure de passage (ex. "sam. 19:23") si départ connu
     night: bool
-    lo_h: float              # borne basse de la FOURCHETTE DE COURSE (cumul, bande de planification)
-    hi_h: float              # borne haute
+    # Bornes basse/haute du cumul. Leur NATURE dépend de l'ancre du plan (cf. PacingPlan.anchor) :
+    #   * ancre « prediction » : FOURCHETTE DE COURSE — bande de probabilité (une course sur
+    #     deux s'y joue) issue de la prédiction ;
+    #   * ancre « target » (ADR 0002) : FENÊTRE DE PASSAGE — tolérance d'exécution autour de
+    #     l'objectif choisi, SANS contenu probabiliste. Le rapport doit changer de mots avec.
+    lo_h: float
+    hi_h: float
     arr_lo_clock: str | None = None   # borne basse en HEURE DE PASSAGE (ex. "sam. 18:55")
     arr_hi_clock: str | None = None   # borne haute — None si départ/position inconnus
 
@@ -57,9 +62,17 @@ class PacingPlan:
     sun: dict = field(default_factory=dict)
     fade_delta_used: float = 0.085   # Δ réellement servi (traçabilité : le rapport en dérive le %)
     # bornes de SÉCURITÉ de l'arrivée (intervalle de la prédiction, ex. 80 %) en heure de
-    # passage — distinctes de la fourchette de course des segments (bande de planification)
+    # passage — distinctes de la fourchette de course des segments (bande de planification).
+    # Servies AUSSI en mode objectif : c'est le rappel du réel à côté de la cible choisie.
     safety_lo_clock: str | None = None
     safety_hi_clock: str | None = None
+    # --- ancre du plan (ADR 0002) : d'où vient le temps total réparti ------------------------
+    # "prediction" (défaut, comportement historique) ou "target" (objectif de l'athlète).
+    # Le rapport LIT ce champ pour choisir son vocabulaire : les fenêtres des segments ne
+    # veulent pas dire la même chose dans les deux cas.
+    anchor: str = "prediction"
+    anchor_hours: float | None = None        # temps réellement réparti (= la cible si ancre cible)
+    window_tolerance_pct: float | None = None  # demi-largeur servie, mode objectif seulement
 
     def to_dict(self) -> dict:
         return {
@@ -70,6 +83,9 @@ class PacingPlan:
             "sun": self.sun,
             "safety_lo_clock": self.safety_lo_clock,
             "safety_hi_clock": self.safety_hi_clock,
+            "anchor": self.anchor,
+            "anchor_hours": None if self.anchor_hours is None else round(self.anchor_hours, 3),
+            "window_tolerance_pct": self.window_tolerance_pct,
             "segments": [s.to_dict() for s in self.segments],
         }
 
@@ -101,7 +117,21 @@ def build_pacing(
     cfg: Config,
     *,
     durability_pct: float | None = None,
+    anchor_hours: float | None = None,
 ) -> PacingPlan:
+    """Répartit un temps total sur le parcours (effort ajusté constant + fade).
+
+    ``anchor_hours`` (ADR 0002, mode objectif) remplace le temps PRÉDIT par la durée visée
+    par l'athlète. Seules deux choses changent alors : le temps réparti, et la nature des
+    fenêtres par segment — qui cessent d'être une bande de probabilité (fourchette de course,
+    issue de la dispersion prédictive) pour devenir une **fenêtre de passage** (tolérance
+    d'exécution fixe, ``cfg.target.tolerance_pct``). Le fade, les arrêts, l'horloge, la nuit
+    et les bornes de sécurité sont identiques dans les deux modes — les bornes de sécurité
+    restant, elles, issues de la prédiction : c'est le rappel du réel.
+
+    La faisabilité de la cible ne se juge PAS ici (``twin_engine.feasibility``) : cette
+    fonction répartit, elle ne valide pas.
+    """
     seg = course.segments
     n = len(seg)
     deq = np.array([s.deq_km for s in seg])
@@ -121,8 +151,12 @@ def build_pacing(
     stops_min[-1] = 0.0
     t_stops_h = float(stops_min.sum() / 60.0)
 
-    tpred = prediction.finish_hours
-    t_move = max(tpred - t_stops_h, 0.5 * tpred)  # garde-fou si arrêts > prédiction
+    # temps total à répartir : la prédiction, ou la CIBLE de l'athlète (mode objectif)
+    on_target = anchor_hours is not None
+    if on_target and anchor_hours <= 0:
+        raise ValueError("anchor_hours doit être strictement positif")
+    tpred = float(anchor_hours) if on_target else prediction.finish_hours
+    t_move = max(tpred - t_stops_h, 0.5 * tpred)  # garde-fou si arrêts > temps réparti
 
     # --- normalisation : Σ deq_i / v_i = t_move ---
     scale = float(np.sum(deq / g) / t_move)
@@ -163,15 +197,23 @@ def build_pacing(
     # se décline en multiplicateurs de scénario global : un jour lent l'est de bout en bout.
     # Repli (objets sans plan_low/high_h) : percentiles Monte-Carlo — comportement historique
     # (le multiplicateur commute exactement avec le percentile, cum > 0).
-    mc = prediction.mc_samples
-    mult = mc / tpred
-    b_lo, b_hi = cfg.pacing.plan_window_low_pct, cfg.pacing.plan_window_high_pct
-    if prediction.plan_low_h is not None and prediction.plan_high_h is not None and tpred > 0:
-        m_lo = prediction.plan_low_h / tpred
-        m_hi = prediction.plan_high_h / tpred
+    # MODE OBJECTIF (ADR 0002) : la bande prédictive n'a plus de sens autour d'une durée
+    # CHOISIE — on sert une tolérance d'exécution fixe. Appliquée au cumul, elle élargit
+    # naturellement la fenêtre avec la course.
+    tol_pct: float | None = None
+    if on_target:
+        tol_pct = float(cfg.target.tolerance_pct)
+        m_lo, m_hi = 1.0 - tol_pct / 100.0, 1.0 + tol_pct / 100.0
     else:
-        m_lo = float(np.percentile(mult, b_lo))
-        m_hi = float(np.percentile(mult, b_hi))
+        mc = prediction.mc_samples
+        mult = mc / tpred
+        b_lo, b_hi = cfg.pacing.plan_window_low_pct, cfg.pacing.plan_window_high_pct
+        if prediction.plan_low_h is not None and prediction.plan_high_h is not None and tpred > 0:
+            m_lo = prediction.plan_low_h / tpred
+            m_hi = prediction.plan_high_h / tpred
+        else:
+            m_lo = float(np.percentile(mult, b_lo))
+            m_hi = float(np.percentile(mult, b_hi))
     if cfg.pacing.scale_stops:
         # historique : tout le cumul (arrêts compris) est mis à l'échelle
         lo = cum_clock * m_lo
@@ -239,6 +281,9 @@ def build_pacing(
         fade_delta_used=float(delta),
         safety_lo_clock=safety_lo,
         safety_hi_clock=safety_hi,
+        anchor="target" if on_target else "prediction",
+        anchor_hours=float(tpred),
+        window_tolerance_pct=tol_pct,
     )
 
 

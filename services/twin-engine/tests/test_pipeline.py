@@ -109,3 +109,52 @@ def test_until_excludes_posterior_and_undated_and_anchors_freshness():
     # sans coupure : tout passe (comportement historique inchangé)
     res_all = analyze_preview(acts, _course(), CFG)
     assert res_all.n_ingested == 5 and res_all.n_excluded_until == 0
+
+
+# --------------------------------------------------------------------------- #
+# Mode OBJECTIF (ADR 0002) : câblage bout en bout dans analyze_full.
+def _ultras():
+    """Quatre efforts longs synthétiques : de quoi obtenir une prédiction."""
+    return [_flat_run(2.6, 11 * 3600), _flat_run(2.5, 12 * 3600),
+            _flat_run(2.4, 14 * 3600), _flat_run(2.7, 10 * 3600 + 600)]
+
+
+def _full(target_hours, tmp_path):
+    from twin_engine.pipeline import analyze_full
+
+    race = RaceSpec("T", (0.0, 5.0, 10.0), ("d", "s", "a"), target_hours=target_hours)
+    course = build_course(_triangle_gpx(), race, CFG)
+    return analyze_full(_ultras(), course, race, CFG, out_dir=tmp_path, athlete="X",
+                        render_pdf=False)
+
+
+def test_target_in_race_spec_anchors_the_plan(tmp_path):
+    result = _full(13.0, tmp_path)
+    assert result.preview.prediction is not None
+    assert result.target is not None and result.target.plan_ok
+    assert result.plan.anchor == "target" and result.plan.anchor_hours == 13.0
+    # la PRÉDICTION reste calculée et exposée : le mode s'ajoute, il ne remplace pas
+    d = result.to_dict()
+    assert d["prediction"] is not None
+    assert d["target"]["regime"] == result.target.regime
+
+
+def test_refused_target_leaves_the_plan_on_the_prediction(tmp_path):
+    """Cible sous le domaine de calibration : le garde-fou §9.9 interdit l'ancrage."""
+    result = _full(2.0, tmp_path)
+    assert result.target is not None and result.target.plan_ok is False
+    assert result.target.regime == "hors_domaine"
+    assert result.plan.anchor == "prediction"      # le refus n'ampute pas le rapport
+    assert result.to_dict()["target"]["plan_ok"] is False
+
+
+def test_no_target_leaves_everything_untouched(tmp_path):
+    race = RaceSpec("T", (0.0, 5.0, 10.0), ("d", "s", "a"))
+    course = build_course(_triangle_gpx(), race, CFG)
+    from twin_engine.pipeline import analyze_full
+
+    result = analyze_full(_ultras(), course, race, CFG, out_dir=tmp_path, athlete="X",
+                          render_pdf=False)
+    assert result.target is None
+    assert result.plan.anchor == "prediction"
+    assert result.to_dict()["target"] is None

@@ -168,17 +168,32 @@ def _fig_cumul(plan, prediction, race, ax, interval_label: str = "50") -> None:
     offs = [s.off1 for s in segs]
     cum = [s.cum_clock_h for s in segs]
     # lo_h/hi_h = FOURCHETTE DE COURSE des segments (bande de planification, défaut
-    # interquartile) — le libellé doit venir des percentiles de pacing, pas de la prédiction
+    # interquartile) — le libellé doit venir des percentiles de pacing, pas de la prédiction.
+    # MODE OBJECTIF (ADR 0002) : même géométrie, tout autre sens — tolérance d'exécution
+    # autour d'une durée CHOISIE. La légende doit le dire, sinon la figure ment.
+    on_target = getattr(plan, "anchor", "prediction") == "target"
+    tol = getattr(plan, "window_tolerance_pct", None)
     lo = [s.lo_h for s in segs]
     hi = [s.hi_h for s in segs]
-    ax.fill_between(offs, lo, hi, color=SAGE, alpha=0.30, lw=0,
-                    label=f"fourchette de course ({interval_label} %)")
-    ax.plot(offs, cum, "-o", color=TERRA, lw=1.6, ms=3.5, label="temps cumulé (médian)")
+    band_label = (f"fenêtre de passage (±{tol:.1f} %)".replace(".", ",")
+                  if on_target and tol is not None else
+                  f"fourchette de course ({interval_label} %)")
+    ax.fill_between(offs, lo, hi, color=SAGE, alpha=0.30, lw=0, label=band_label)
+    ax.plot(offs, cum, "-o", color=TERRA, lw=1.6, ms=3.5,
+            label="plan sur objectif" if on_target else "temps cumulé (médian)")
+    # En mode objectif, on RAPPELLE la prédiction sur la même figure : l'athlète doit voir
+    # d'un coup d'œil l'écart entre ce qu'il vise et ce que ses données disent.
+    if on_target and prediction is not None:
+        ax.axhline(prediction.finish_hours, color=DEEPGRID, lw=1.2, ls=(0, (5, 3)),
+                   label="prédiction du moteur")
     ax.set_xlabel("distance officielle (km)")
     ax.set_ylabel("temps depuis le départ (h)")
     ax.legend(fontsize=8, loc="upper left", edgecolor=GRID)
-    ax.set_title("Temps de passage cumulé et incertitude", fontsize=10, color=TERRA,
-                 weight="bold", loc="left")
+    ax.set_title(
+        "Temps de passage cumulé sur ton objectif" if on_target
+        else "Temps de passage cumulé et incertitude",
+        fontsize=10, color=TERRA, weight="bold", loc="left",
+    )
 
 
 def _fig_validation(prediction, ax, band_pct: float = 5.0) -> bool:

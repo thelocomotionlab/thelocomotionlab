@@ -219,3 +219,100 @@ def test_pacing_without_logistics_still_produces_paces():
     plan = build_pacing(course, _prediction(course), race, CFG)
     assert all(s.arr_clock is None and s.night is False for s in plan.segments)
     assert all(s.v_ga_kmh > 0 for s in plan.segments)
+
+
+# --------------------------------------------------------------------------- #
+# Mode OBJECTIF (ADR 0002) : le plan s'ancre sur la cible de l'athlète.
+_WINDOW_FIELDS = {"lo_h", "hi_h", "arr_lo_clock", "arr_hi_clock"}
+
+
+def test_anchor_on_prediction_time_is_invariant():
+    """LE garde-fou du lot : ancré sur le temps PRÉDIT, le mode objectif redonne exactement
+    le plan historique — sauf les fenêtres, qui changent de nature par décision (bande de
+    probabilité → tolérance d'exécution). C'est ce qui prouve qu'on n'a rien cassé sans
+    toucher au golden."""
+    course = build_course(_triangle_gpx(), _race(), CFG)
+    pred = _prediction(course, finish=10.0)
+    ref = build_pacing(course, pred, _race(), CFG)
+    same = build_pacing(course, pred, _race(), CFG, anchor_hours=pred.finish_hours)
+
+    assert (ref.t_move_h, ref.t_stops_h, ref.t_clock_h) == (
+        same.t_move_h, same.t_stops_h, same.t_clock_h)
+    assert ref.fade_delta_used == same.fade_delta_used
+    # bornes de sécurité inchangées : elles viennent de la prédiction dans les DEUX modes
+    assert (ref.safety_lo_clock, ref.safety_hi_clock) == (same.safety_lo_clock, same.safety_hi_clock)
+    for a, b in zip(ref.segments, same.segments):
+        da, db = a.to_dict(), b.to_dict()
+        for k in da:
+            if k not in _WINDOW_FIELDS:
+                assert da[k] == db[k], f"champ {k} modifié par l'ancrage"
+    # ... et l'ancre est tracée, pour que le rapport choisisse ses mots
+    assert ref.anchor == "prediction" and ref.window_tolerance_pct is None
+    assert same.anchor == "target" and same.window_tolerance_pct == CFG.target.tolerance_pct
+
+
+def test_target_anchor_distributes_the_requested_time():
+    """Un objectif de 12 h est réparti en 12 h d'horloge, fade et arrêts compris."""
+    course = build_course(_triangle_gpx(), _race(), CFG)
+    pred = _prediction(course, finish=10.0)
+    plan = build_pacing(course, pred, _race(), CFG, anchor_hours=12.0)
+
+    assert abs(plan.t_clock_h - 12.0) < 0.02
+    assert abs((plan.t_move_h + plan.t_stops_h) - plan.t_clock_h) < 1e-6
+    assert plan.anchor_hours == 12.0
+    # cible plus lente que la prédiction → plan plus lent de bout en bout
+    ref = build_pacing(course, pred, _race(), CFG)
+    assert plan.segments[0].v_ga_kmh < ref.segments[0].v_ga_kmh
+    # le fade reste celui de l'athlète : la cible change le rythme, pas la forme du plan
+    assert plan.fade_delta_used == ref.fade_delta_used
+
+
+def test_target_windows_are_a_fixed_execution_tolerance():
+    """Les fenêtres cessent d'être une bande de probabilité : demi-largeur fixe (en % du
+    cumul), donc croissante en valeur absolue le long de la course."""
+    from dataclasses import replace
+
+    course = build_course(_triangle_gpx(), _race(), CFG)
+    pred = _prediction(course, finish=10.0)
+    tol = CFG.target.tolerance_pct / 100.0
+    plan = build_pacing(course, pred, _race(), CFG, anchor_hours=12.0)
+
+    for s in plan.segments:
+        assert s.lo_h <= s.cum_clock_h <= s.hi_h
+        # les champs servis sont arrondis au centième d'heure → tolérance de comparaison
+        assert abs(s.lo_h - s.cum_clock_h * (1 - tol)) < 0.02
+        assert abs(s.hi_h - s.cum_clock_h * (1 + tol)) < 0.02
+    # fenêtre absolue croissante : ±quelques minutes au début, davantage à l'arrivée
+    assert (plan.segments[-1].hi_h - plan.segments[-1].lo_h) > (
+        plan.segments[0].hi_h - plan.segments[0].lo_h)
+
+    # la tolérance est une constante de config, pas un chiffre en dur
+    cfg_wide = replace(CFG, target=replace(CFG.target, tolerance_pct=10.0))
+    wide = build_pacing(course, pred, _race(), cfg_wide, anchor_hours=12.0)
+    assert (wide.segments[0].hi_h - wide.segments[0].lo_h) > (
+        plan.segments[0].hi_h - plan.segments[0].lo_h)
+
+
+def test_target_windows_ignore_prediction_dispersion():
+    """Deux prédictions de dispersions très différentes, même cible → mêmes fenêtres.
+    C'est la preuve que la bande statistique ne fuit plus dans la consigne d'exécution."""
+    course = build_course(_triangle_gpx(), _race(), CFG)
+    tight = _prediction(course, finish=10.0)
+    loose = Prediction(
+        finish_hours=10.0, v_kmh=course.deq_km / 10.0, deq_km=course.deq_km,
+        dplus_per_km=course.dplus_per_km, interval_low_h=5.0, interval_high_h=20.0,
+        mc_samples=tight.mc_samples * 3.0, regime="blend", sigma_kmh=1.4,
+        vc_fraction=0.62, cross_validation=None, plan_low_h=7.0, plan_high_h=15.0,
+    )
+    a = build_pacing(course, tight, _race(), CFG, anchor_hours=12.0)
+    b = build_pacing(course, loose, _race(), CFG, anchor_hours=12.0)
+    for sa, sb in zip(a.segments, b.segments):
+        assert (sa.lo_h, sa.hi_h) == (sb.lo_h, sb.hi_h)
+
+
+def test_target_anchor_rejects_nonsense():
+    import pytest
+
+    course = build_course(_triangle_gpx(), _race(), CFG)
+    with pytest.raises(ValueError):
+        build_pacing(course, _prediction(course), _race(), CFG, anchor_hours=0.0)

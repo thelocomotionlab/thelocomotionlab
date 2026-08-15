@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 
 from ..calibration import REGIME_BLEND, REGIME_REGRESSION, REGIME_VC_E
+from ..feasibility import AMBITIEUX, CONFORTABLE, HORS_DOMAINE, HORS_PORTEE, INDECIDABLE, NOMINAL
 from ._format import fr, french_datetime, fr_thousands, hm, tex_escape
 from .narrative import build_narrative, vc_frac_band
 
@@ -16,6 +17,17 @@ _REGIME_LABELS = {
     REGIME_REGRESSION: "régression personnelle sur tes vrais ultras",
     REGIME_BLEND: "mélange VC+E recalé (peu d'ultras, confiance réduite)",
     REGIME_VC_E: "extrapolation VC+E seule (aucun ultra proche, confiance faible)",
+}
+
+# Mode objectif (ADR 0002) : le mot montré à l'athlète pour chaque régime de faisabilité.
+# La science est dans feasibility.py ; ici on ne choisit que le vocabulaire.
+_TARGET_REGIME_LABELS = {
+    CONFORTABLE: "objectif prudent — tu as de la marge",
+    NOMINAL: "objectif réaliste — c'est un plan de pilotage",
+    AMBITIEUX: "objectif ambitieux — tenable dans un bon jour, sans marge d'erreur",
+    HORS_PORTEE: "objectif hors de portée au vu de tes données actuelles",
+    HORS_DOMAINE: "objectif hors du domaine de calibration du moteur",
+    INDECIDABLE: "objectif non jugeable — données insuffisantes",
 }
 
 
@@ -115,6 +127,7 @@ def build_report_context(
     report_ref: str = "LL-TWIN",
     report_version: str = "v1.0",
     report_date: datetime | None = None,
+    target=None,
 ) -> dict:
     # contrat : le rapport complet n'est construit que pour une prédiction existante
     # (analyze_full s'arrête au preview si prediction is None) — on le rend explicite.
@@ -202,7 +215,11 @@ def build_report_context(
         (prediction.interval_high_h - prediction.interval_low_h) / prediction.finish_hours
         if prediction.finish_hours > 0 else 0.0
     )
-    scenario_mode = bool(rel_width > cfg.pacing.scenario_rel_width)
+    # MODE OBJECTIF (ADR 0002) : les scénarios déclinent la dispersion PRÉDICTIVE — hors sujet
+    # quand le plan est ancré sur une durée choisie. On les neutralise plutôt que de laisser
+    # trois colonnes probabilistes cohabiter avec une consigne d'exécution.
+    on_target = getattr(plan, "anchor", "prediction") == "target"
+    scenario_mode = bool(rel_width > cfg.pacing.scenario_rel_width) and not on_target
 
     def _clock_or_h(clock: str | None, hours: float) -> str:
         return tex_escape(clock) if clock else f"{fr(hours, 1)}\\,h"
@@ -310,6 +327,50 @@ def build_report_context(
         "arrival_safety_window": arrival_safety_window,
         "scenario_mode": scenario_mode,
         "scenario_rows": scenario_rows,
+        # --- mode OBJECTIF (ADR 0002) ------------------------------------------------------
+        # « demandé » ≠ « servi » : une cible refusée reste affichée (avec l'écart chiffré),
+        # seul target_mode dit que le PLAN est ancré dessus. Les fenêtres des segments ne
+        # veulent alors plus dire « une course sur deux » mais « tolérance d'exécution » :
+        # le template DOIT lire target_mode avant de choisir ses mots.
+        "target_requested": target is not None,
+        "target_mode": on_target,
+        "target_hm": hm(target.target_hours) if target else None,
+        "target_regime": target.regime if target else None,
+        "target_regime_label": (
+            tex_escape(_TARGET_REGIME_LABELS.get(target.regime, target.regime))
+            if target else None
+        ),
+        "target_plan_ok": bool(target.plan_ok) if target else False,
+        "target_reasons": [tex_escape(r) for r in target.reasons] if target else [],
+        # écart signé vs le central prédit : < 0 = l'objectif est plus rapide que la prédiction
+        "target_gap_pct": (
+            fr(abs(target.gap_vs_central_pct), 1)
+            if target and target.gap_vs_central_pct is not None else None
+        ),
+        "target_faster_than_central": bool(
+            target and target.gap_vs_central_pct is not None and target.gap_vs_central_pct < 0
+        ),
+        "target_speed_gain_pct": (
+            fr(abs(target.speed_gain_pct), 1)
+            if target and target.speed_gain_pct is not None else None
+        ),
+        "target_required_v": fr(target.required_v_kmh, 2) if target else None,
+        "target_envelope_pct": (
+            fr(target.envelope_fraction * 100, 0)
+            if target and target.envelope_fraction is not None else None
+        ),
+        "target_over_envelope": bool(
+            target and target.envelope_fraction is not None and target.envelope_fraction > 1.0
+        ),
+        "target_vc_pct": (
+            fr(target.vc_fraction * 100, 0)
+            if target and target.vc_fraction is not None else None
+        ),
+        # demi-largeur RÉELLEMENT servie par le plan (jamais un chiffre en dur dans le texte)
+        "target_tolerance_pct": (
+            fr(plan.window_tolerance_pct, 1)
+            if on_target and plan.window_tolerance_pct is not None else None
+        ),
         "start_time": french_datetime(plan.start_time) if plan.start_time else None,
         "sun": plan.sun,
         "night_from_km": fr(night[0], 0) if night else None,

@@ -45,6 +45,10 @@ def test_defaults_from_shipped_json():
     assert cfg.twin.despike_rescue_min_bursts == 3
     # §9.11 (a) : D± d'un canal sauvé récupérés en base temps (dpk=0 faussait l'ancre blend)
     assert cfg.twin.despike_rescue_dplus_basis == "time"
+    # ADR 0002 : mode objectif — tolérance d'EXÉCUTION (sans rapport avec les bandes de
+    # probabilité de pacing.plan_window_*), et refus de servir un plan hors bornes de sécurité
+    assert cfg.target.tolerance_pct == 2.5
+    assert cfg.target.refuse_outside_safety is True
 
 
 def test_env_overrides_data_dir(monkeypatch, tmp_path):

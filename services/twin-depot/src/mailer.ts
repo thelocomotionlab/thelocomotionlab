@@ -66,6 +66,9 @@ export async function envoyerNotification(
     `SHA-256   : ${depot.sha256}`,
     `Déposé le : ${depot.createdAt}`,
     "",
+    depot.objectifHeures !== null
+      ? `Objectif chiffré : ${depot.objectifCible} (${depot.objectifHeures.toFixed(2)} h) — twin-engine --target ${depot.objectifCible}`
+      : "(Pas d'objectif chiffré.)",
     depot.objectifs ? `Courses passées / objectif :\n${depot.objectifs}` : "(Pas d'objectifs renseignés.)",
     "",
     "Récupération en une commande (télécharge, vérifie le SHA-256, purge) :",

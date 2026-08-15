@@ -103,6 +103,31 @@ def test_spec_validation_rejects_mismatch():
         RaceSpec("bad", (0.0, 5.0, 3.0), ("a", "b", "c"))  # non croissant
 
 
+def test_target_hours_is_optional_and_tolerant(tmp_path):
+    """ADR 0002 : l'objectif est OPTIONNEL (absent = comportement historique) et se saisit
+    comme un humain l'écrit. Illisible → refus : mieux vaut ça qu'un plan calé sur la
+    mauvaise durée."""
+    import json
+
+    import pytest
+
+    assert RaceSpec(name="Sans objectif").target_hours is None
+    assert RaceSpec.from_dict({"name": "x"}).target_hours is None
+
+    for saisie, attendu in [("31h", 31.0), ("31h30", 31.5), ("31:00:00", 31.0),
+                            ("31:30", 31.5), (31.5, 31.5), ("31,5", 31.5)]:
+        assert RaceSpec.from_dict({"target_hours": saisie}).target_hours == pytest.approx(attendu)
+
+    with pytest.raises(ValueError):
+        RaceSpec.from_dict({"target_hours": "bientôt"})
+    with pytest.raises(ValueError):
+        RaceSpec(name="x", target_hours=-3.0)
+
+    p = tmp_path / "race.json"
+    p.write_text(json.dumps({"name": "Échappée Belle", "target_hours": "31h"}), encoding="utf-8")
+    assert RaceSpec.from_json(p).target_hours == 31.0
+
+
 # --------------------------------------------------------------------------- #
 # Mode GPX-only : aucun ravitaillement → distance depuis la trace + découpage auto.
 def test_empty_spec_is_gpx_only():

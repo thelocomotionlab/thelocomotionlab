@@ -15,12 +15,14 @@ from __future__ import annotations
 import json
 import shutil
 import tempfile
+from dataclasses import replace
 from pathlib import Path
 from uuid import uuid4
 
 from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, Response
 
+from .._dt import parse_duration_h
 from ..config import Config, load_config
 from ..course import RaceSpec
 from ..fiche import build_pdf as build_fiche_pdf
@@ -39,9 +41,16 @@ def _safe_name(filename: str | None, default: str) -> str:
     return Path(filename or default).name or default
 
 
-def _parse_race(raw: bytes) -> RaceSpec:
+def _parse_race(raw: bytes, target_hours: str | None = None) -> RaceSpec:
+    """Spec de course + surcharge éventuelle de l'objectif (mode cible, ADR 0002).
+
+    ``target_hours`` posté en formulaire prime sur le champ du JSON : le client (app twin)
+    envoie une spec de course figée et l'objectif saisi par l'athlète à part."""
     try:
-        return RaceSpec.from_dict(json.loads(raw))
+        spec = RaceSpec.from_dict(json.loads(raw))
+        if target_hours is not None and target_hours.strip() != "":
+            spec = replace(spec, target_hours=parse_duration_h(target_hours))
+        return spec
     except (ValueError, KeyError, json.JSONDecodeError) as exc:
         raise HTTPException(status_code=422, detail=f"spec de course invalide: {exc}") from exc
 
@@ -79,8 +88,9 @@ def create_app(cfg: Config | None = None) -> FastAPI:
         course_gpx: UploadFile = File(...),
         race: UploadFile = File(...),
         athlete: str = Form("athlète"),
+        target_hours: str | None = Form(None),
     ) -> dict:
-        race_spec = _parse_race(await race.read())
+        race_spec = _parse_race(await race.read(), target_hours)
         gpx = await course_gpx.read()
         tmp = Path(tempfile.mkdtemp(dir=cfg.data_dir, prefix="preview-"))
         try:
@@ -100,8 +110,9 @@ def create_app(cfg: Config | None = None) -> FastAPI:
         course_gpx: UploadFile = File(...),
         race: UploadFile = File(...),
         athlete: str = Form("athlète"),
+        target_hours: str | None = Form(None),
     ) -> dict:
-        race_spec = _parse_race(await race.read())
+        race_spec = _parse_race(await race.read(), target_hours)
         gpx = await course_gpx.read()
         job_id = uuid4().hex
         job_dir = jobs_root / job_id

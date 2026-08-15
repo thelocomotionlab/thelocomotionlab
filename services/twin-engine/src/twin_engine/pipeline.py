@@ -19,6 +19,7 @@ from typing import Iterable
 from .calibration import UltraCalibration, build_calibration
 from .config import Config
 from .course import CourseProfile, RaceSpec, build_course
+from .feasibility import TargetAssessment, assess_target
 from .ingest import CanonicalActivity, iter_activities, purge_path
 from .pacing import PacingPlan, build_pacing
 from .predict import Prediction, predict_race
@@ -36,6 +37,9 @@ class PreviewResult:
     n_ingested: int
     n_skipped: int
     n_excluded_until: int = 0   # activités écartées par la coupure temporelle (mode backtest)
+    # mode OBJECTIF (ADR 0002) : verdict de faisabilité, calculé dès le preview pour que la
+    # question « mon objectif tient-il ? » ait une réponse AVANT paiement, sans PDF.
+    target: TargetAssessment | None = None
 
     def to_dict(self) -> dict:
         pred = self.prediction
@@ -59,6 +63,7 @@ class PreviewResult:
                 "skipped": self.n_skipped,
                 "excluded_after_until": self.n_excluded_until,
             },
+            "target": None if self.target is None else self.target.to_dict(),
         }
 
 
@@ -70,6 +75,7 @@ def analyze_preview(
     n_skipped: int = 0,
     analysis_date: date | None = None,
     until: date | None = None,
+    target_hours: float | None = None,
 ) -> PreviewResult:
     """Chaîne numérique complète (sans figures/PDF) → verdict + fourchette.
 
@@ -107,20 +113,51 @@ def analyze_preview(
         analysis_date = until
 
     twin = build_twin(_counting(stream), cfg)
+    return analyze_preview_from_twin(
+        twin, course, cfg, n_ingested=n_seen, n_skipped=n_skipped,
+        n_excluded_until=n_excluded, analysis_date=analysis_date, target_hours=target_hours,
+    )
+
+
+def analyze_preview_from_twin(
+    twin: Twin,
+    course: CourseProfile,
+    cfg: Config,
+    *,
+    n_ingested: int,
+    n_skipped: int = 0,
+    n_excluded_until: int = 0,
+    analysis_date: date | None = None,
+    target_hours: float | None = None,
+) -> PreviewResult:
+    """Aval du jumeau : calibration → prédiction → suffisance (+ verdict d'objectif).
+
+    Séparé d':func:`analyze_preview` pour le banc walk-forward, qui construit N jumeaux
+    (une coupure par course) à partir d'un SEUL décodage d'archive — tout ce qui suit ne
+    coûte rien, c'est le décodage qui coûte. Un seul chemin de calcul pour les deux usages.
+    """
     calibration = build_calibration(twin, cfg)
     prediction = predict_race(course, twin, calibration, cfg)
     sufficiency = assess_sufficiency(
         twin, calibration, prediction, cfg, analysis_date=analysis_date or date.today()
     )
+    # mode OBJECTIF (ADR 0002) : le verdict se calcule ICI, pas plus loin — c'est la réponse
+    # à « mon objectif tient-il ? », et elle doit exister sans PDF (décision avant paiement).
+    target = (
+        assess_target(target_hours, course, twin, prediction, cfg)
+        if target_hours is not None else None
+    )
+
     return PreviewResult(
         sufficiency=sufficiency,
         prediction=prediction,
         twin=twin,
         calibration=calibration,
         course=course,
-        n_ingested=n_seen,
+        n_ingested=n_ingested,
         n_skipped=n_skipped,
-        n_excluded_until=n_excluded,
+        n_excluded_until=n_excluded_until,
+        target=target,
     )
 
 
@@ -146,7 +183,8 @@ def run_preview(
     )
     course = build_course(course_gpx, race, cfg)
     try:
-        result = analyze_preview(stream, course, cfg, analysis_date=analysis_date, until=until)
+        result = analyze_preview(stream, course, cfg, analysis_date=analysis_date, until=until,
+                                 target_hours=race.target_hours)
     finally:
         if purge_source:
             purge_path(training_path)
@@ -160,12 +198,16 @@ class FullResult:
     plan: PacingPlan
     pdf_path: Path | None
     figures: dict
+    # mode OBJECTIF (ADR 0002) : présent dès qu'une cible a été demandée, y compris quand
+    # elle est REFUSÉE (le refus est un livrable). None = rapport en mode prédiction.
+    target: TargetAssessment | None = None
 
     def to_dict(self) -> dict:
         d = self.preview.to_dict()
         d["plan"] = self.plan.to_dict()
         d["pdf"] = str(self.pdf_path) if self.pdf_path else None
         d["figures"] = self.figures
+        d["target"] = None if self.target is None else self.target.to_dict()
         return d
 
 
@@ -191,12 +233,21 @@ def analyze_full(
     charge pas. Si la prédiction est impossible (🔴), on s'arrête au preview sans PDF.
     """
     preview = analyze_preview(activities, course, cfg, n_skipped=n_skipped,
-                              analysis_date=analysis_date, until=until)
+                              analysis_date=analysis_date, until=until,
+                              target_hours=race.target_hours)
     if preview.prediction is None:
-        return FullResult(preview=preview, plan=None, pdf_path=None, figures={})  # type: ignore[arg-type]
+        return FullResult(preview=preview, plan=None, pdf_path=None, figures={},  # type: ignore[arg-type]
+                          target=preview.target)
+
+    # MODE OBJECTIF (ADR 0002) : la cible n'ancre le plan que si le verdict de faisabilité
+    # (calculé au preview) l'autorise — un objectif hors des bornes de sécurité se rend en
+    # ÉCART chiffré, pas en plan de course. Dans les deux cas la prédiction reste calculée,
+    # affichée et consignée : le mode s'ajoute, il ne remplace pas.
+    target = preview.target
 
     plan = build_pacing(
-        course, preview.prediction, race, cfg, durability_pct=preview.twin.durability_pct
+        course, preview.prediction, race, cfg, durability_pct=preview.twin.durability_pct,
+        anchor_hours=race.target_hours if (target is not None and target.plan_ok) else None,
     )
 
     out_dir = Path(out_dir)
@@ -214,11 +265,12 @@ def analyze_full(
             course=course, twin=preview.twin, calibration=preview.calibration,
             prediction=preview.prediction, plan=plan, race=race, sufficiency=preview.sufficiency,
             cfg=cfg, athlete=athlete, report_ref=report_ref, report_version=report_version,
-            report_date=report_date,
+            report_date=report_date, target=target,
         )
         pdf_path = build_pdf(context, fig_dir, out_dir / "tex")
 
-    return FullResult(preview=preview, plan=plan, pdf_path=pdf_path, figures=figures)
+    return FullResult(preview=preview, plan=plan, pdf_path=pdf_path, figures=figures,
+                      target=target)
 
 
 def run_full(
@@ -257,4 +309,5 @@ def run_full(
     return full
 
 
-__all__ = ["PreviewResult", "FullResult", "analyze_preview", "analyze_full", "run_preview", "run_full"]
+__all__ = ["PreviewResult", "FullResult", "analyze_preview", "analyze_preview_from_twin",
+           "analyze_full", "run_preview", "run_full"]
