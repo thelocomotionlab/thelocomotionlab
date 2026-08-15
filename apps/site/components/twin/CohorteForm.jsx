@@ -68,7 +68,7 @@ export default function CohorteForm() {
   const [drag, setDrag] = useState(false);
   const [statut, setStatut] = useState("idle"); // idle | envoi | succes | erreur
   const [progression, setProgression] = useState(0);
-  const [f, setF] = useState({ prenom: "", nom: "", email: "", objectifs: "" });
+  const [f, setF] = useState({ prenom: "", nom: "", email: "", objectifs: "", objectifCible: "" });
   const [consent, setConsent] = useState(false);
   const [website, setWebsite] = useState(""); // honeypot
   const [erreur, setErreur] = useState(null);
@@ -144,6 +144,9 @@ export default function CohorteForm() {
     data.append("nom", f.nom.trim());
     data.append("email", f.email.trim());
     data.append("objectifs", f.objectifs.trim());
+    // Objectif CHIFFRÉ, à part du texte libre : c'est lui que le moteur consomme
+    // directement (mode objectif — plan de course ancré sur la durée visée).
+    data.append("objectifCible", f.objectifCible.trim());
     data.append("montre", marque);
     data.append("consent", "oui");
     data.append("website", website);
@@ -409,6 +412,28 @@ export default function CohorteForm() {
             placeholder="Ex. : Lavaredo 2025 en 18 h 40, objectif Diagonale des Fous 2026…"
             className={`${INPUT_CLASSES} resize-y leading-relaxed`}
           />
+        </label>
+
+        {/* Objectif CHIFFRÉ, à part du récit : le moteur sait construire un plan de course
+            ancré sur une durée visée, mais il lui faut un nombre, pas de la prose. */}
+        <label className="mt-4 flex flex-col gap-1.5 text-[13.5px] font-medium text-brand-slate-dark sm:max-w-xs">
+          <span>
+            Un temps visé sur cette course ?{" "}
+            <span className="font-normal text-gray-500">(facultatif)</span>
+          </span>
+          <input
+            type="text"
+            inputMode="text"
+            value={f.objectifCible}
+            onChange={(e) => setF({ ...f, objectifCible: e.target.value })}
+            placeholder="Ex. : 31h, 31h30 ou 31:00:00"
+            className={INPUT_CLASSES}
+          />
+          <span className="text-[12.5px] font-normal leading-relaxed text-gray-500">
+            Si tu le renseignes, ton rapport comparera cet objectif à ce que disent tes
+            données et te donnera le plan de course correspondant — ou t&apos;expliquera
+            ce qu&apos;il te manque pour y arriver.
+          </span>
         </label>
 
         {/* Honeypot anti-robots : invisible et hors tabulation. */}

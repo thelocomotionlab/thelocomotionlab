@@ -25,6 +25,8 @@ function metaDe(over: Partial<Parameters<DepotStore["add"]>[0]> = {}) {
     email: "Chloe@Test.FR",
     montre: "garmin",
     objectifs: "Diagonale des Fous 2026",
+    objectifCible: "",
+    objectifHeures: null,
     consent: true as const,
     nomFichier: "export-garmin.zip",
     taille: 12,
