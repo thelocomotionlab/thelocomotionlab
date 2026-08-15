@@ -4,12 +4,6 @@
   "dev_set": true,
   "races": [
     {
-      "name": "Trace Montagnhard",
-      "date": "2026-07-01",
-      "official_time": "16:04:06",
-      "gpx": "cas_validation/Crasse/traces/trace_montagnhard.gpx"
-    },
-    {
       "name": "Chota 2025",
       "date": "2025-02-01",
       "official_time": "04:55:49",
@@ -50,6 +44,12 @@
       "date": "2023-07-01",
       "official_time": "19:41:12",
       "gpx": "cas_validation/Crasse/traces/montagnhard-2023.gpx"
+    },
+    {
+      "name": "Montagnhard 2026",
+      "date": "2026-07-04",
+      "official_time": "16:04:06",
+      "gpx": "cas_validation/Crasse/traces/montagnhard-2026.gpx"
     },
     {
       "name": "Nice 100m 2024",
