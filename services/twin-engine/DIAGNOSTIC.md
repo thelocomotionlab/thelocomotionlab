@@ -149,6 +149,44 @@ l'archive complète de l'athlète, ce sont les mêmes 8 ultras qui pilotent la C
 - ❌ **Pondération par noyau en ln(T) comme levier principal.** Neutre, largeur de noyau instable à
   n = 8. Tolérée seulement en raffinement secondaire.
 
+### 5.x Demi-vie de récence plus courte — TESTÉE AU BANC, REJETÉE (2026-08-15)
+
+**Hypothèse** (signal n° 3 du registre) : le biais de progression de Crasse (+17,4 % sur la
+Montagnhard 2026) viendrait de `recency_halflife_days = 365`, qui pondère encore à ~50 % des
+courses vieilles d'un an et ancre donc le niveau passé.
+
+**Protocole** : `tools/ab_recency`, grille 90/180/270/365/548/730 j, 4 athlètes, 32 courses,
+un décodage d'archive par athlète.
+
+**Résultat — l'hypothèse ne tient pas.**
+
+| demi-vie | biais frais | MAE vendus frais | Winkler frais | N_eff | cas en régression (dev) |
+|---|---|---|---|---|---|
+| 90 | +38,5 % | 18,4 % | 1,285 | 1,9 | 1 |
+| 180 | +35,9 % | 10,6 % | 0,841 | 2,2 | 1 |
+| 365 (défaut) | +36,6 % | 10,6 % | 0,841 | 2,6 | 6 |
+| 730 | +36,8 % | 10,6 % | 0,841 | 2,8 | 6 |
+
+1. **Le biais ne bouge pas** : 0,7 point d'écart entre 180 et 365 j, et il EMPIRE à 90 j.
+2. **De 180 à 730 j, rien ne change** sur les cas frais vendus : MAE et Winkler strictement
+   identiques. Le levier est inerte.
+3. **Sur Crasse lui-même** — l'athlète du biais — la MAE est plate : 58,5 à 59,2 % sur toute
+   la grille. Le mécanisme ne le touche pas.
+4. **Raccourcir coûte cher** : à 90-180 j, les cas de développement en régime régression
+   tombent de 6 à 1 — le moteur bascule dans le repli, plus flou. Biais inchangé, produit
+   dégradé.
+
+**Mécanisme du non-effet.** `N_eff` vaut déjà 2,6 à 365 j et seulement 2,8 à 730 j, pour un
+`min_ultras_regression` de 3. Les poids sont **déjà** concentrés sur les courses récentes :
+raccourcir n'ajoute pas de discrimination, ça ne fait que détruire de la taille d'échantillon.
+Le biais résiduel n'est donc pas un artefact de pondération mais un **artefact de petit
+échantillon** — 3 à 8 vrais ultras ne suffisent pas à suivre une progression.
+
+**Conséquence** : `recency_halflife_days` reste à **365**. Ne pas re-tenter ce levier seul.
+Le terme de tendance explicite est écarté pour la même raison (un 4ᵉ paramètre sur 3 points).
+La voie qui reste est l'augmentation du nombre de cas (cohorte) et la fenêtre groupée, pas un
+réglage supplémentaire sur les données existantes.
+
 ## 6. Limite assumée du proxy d'enveloppe
 
 `r_i` repose sur `envelope_vga_ms`, ajustée sur la courbe record **≤ 6 h** (`endurance_window_s`) puis

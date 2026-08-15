@@ -39,7 +39,7 @@ import numpy as np
 from twin_engine.config import load_config
 from twin_engine.course import RaceSpec, build_course
 
-from tools.backtest import ArchiveCache, parse_time_h
+from tools.backtest import DEFAULT_REGISTRE, ArchiveCache, parse_time_h
 from tools.registre import winkler
 
 DEFAULT_GRID = (90.0, 180.0, 270.0, 365.0, 548.0, 730.0)
@@ -55,9 +55,28 @@ def _cfg_with_halflife(cfg, halflife_days: float):
                                             recency_halflife_days=float(halflife_days)))
 
 
-def evaluate(manifests: list[Path], grid: tuple[float, ...], cfg) -> list[dict]:
+def quarantined(registre_path: Path | None = None) -> set[tuple[str, str, str]]:
+    """Clés (athlète, course, date) mises en quarantaine dans le registre.
+
+    Le balayage part des MANIFESTES, qui ignorent tout de la curation : sans ce filtre il
+    re-score des entrées écartées pour données d'ENTRÉE fausses (ex. trace de parcours à
+    l'altitude aplatie) et pollue les agrégats — exactement ce que la quarantaine existe
+    pour empêcher.
+    """
+    path = registre_path or DEFAULT_REGISTRE
+    if not Path(path).exists():
+        return set()
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    return {(e.get("athlete"), e.get("race"), e.get("date"))
+            for e in data.get("entries", []) if e.get("quarantine")}
+
+
+def evaluate(manifests: list[Path], grid: tuple[float, ...], cfg,
+             exclude: set[tuple[str, str, str]] | None = None) -> list[dict]:
     """Rejoue chaque course sous chaque demi-vie → une ligne par (athlète, course, variante)."""
+    exclude = exclude if exclude is not None else set()
     rows: list[dict] = []
+    ignores: list[str] = []
     for mp in manifests:
         base = mp.resolve().parent
         man = json.loads(mp.read_text(encoding="utf-8"))
@@ -73,6 +92,9 @@ def evaluate(manifests: list[Path], grid: tuple[float, ...], cfg) -> list[dict]:
             race = (RaceSpec.from_json((base / r["race_json"]).resolve())
                     if r.get("race_json") else RaceSpec(name=r["name"]))
             course = build_course((base / r["gpx"]).resolve().read_bytes(), race, cfg)
+            if (athlete, r["name"], r["date"]) in exclude:
+                ignores.append(f"{athlete} · {r['name']} ({r['date']})")
+                continue  # en quarantaine au registre : données d'entrée fausses
             actual = None if r.get("dnf") else parse_time_h(r.get("official_time"))
             if actual is None:
                 continue  # abandon / temps manquant : rien à scorer
@@ -102,6 +124,9 @@ def evaluate(manifests: list[Path], grid: tuple[float, ...], cfg) -> list[dict]:
                                     winkler(pred.interval_low_h, pred.interval_high_h,
                                             actual, 0.2) / actual),
                 })
+    if ignores:
+        print(f"  {len(ignores)} entrée(s) en quarantaine ignorée(s) : "
+              + ", ".join(ignores), file=sys.stderr)
     return rows
 
 
@@ -194,7 +219,7 @@ def main(argv: list[str] | None = None) -> int:
 
     cfg = load_config()
     grid = tuple(args.halflife)
-    rows = evaluate([Path(m) for m in args.manifests], grid, cfg)
+    rows = evaluate([Path(m) for m in args.manifests], grid, cfg, exclude=quarantined())
     if args.json:
         print(json.dumps(rows, ensure_ascii=False, indent=2))
         return 0

@@ -493,3 +493,27 @@ def test_ab_recency_reports_the_hidden_cost_of_a_short_halflife(tmp_path, capsys
 
     # 30 j écrase le passé, 3650 j garde tout : N_eff doit croître avec la demi-vie
     assert _neff(30.0) <= _neff(365.0) <= _neff(3650.0)
+
+
+def test_ab_recency_honours_the_quarantine(tmp_path):
+    """Le balayage part des manifestes, qui ignorent la curation : sans filtre il re-scorerait
+    une entrée écartée pour données d'entrée fausses."""
+    from twin_engine.config import load_config
+
+    from tools.ab_recency import evaluate, quarantined
+
+    man = _manifest(tmp_path)
+    cfg = load_config()
+    grid = (365.0,)
+    complet = evaluate([man], grid, cfg)
+    filtre = evaluate([man], grid, cfg, exclude={("Test", "Course A", "2026-03-01")})
+    assert len(complet) == 2 and len(filtre) == 1
+    assert {r["race"] for r in filtre} == {"Course B"}
+
+    # la liste se lit dans le registre committé, pas dans le manifeste
+    reg = tmp_path / "registre.json"
+    reg.write_text(json.dumps({"entries": [
+        {"athlete": "Test", "race": "Course A", "date": "2026-03-01", "quarantine": "motif"},
+        {"athlete": "Test", "race": "Course B", "date": "2025-08-01"},
+    ]}), encoding="utf-8")
+    assert quarantined(reg) == {("Test", "Course A", "2026-03-01")}
