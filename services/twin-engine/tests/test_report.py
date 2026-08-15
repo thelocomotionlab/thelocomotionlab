@@ -394,3 +394,23 @@ def test_latex_environments_balanced_in_both_modes():
         # le mode objectif AJOUTE des blocs, il n'en retire aucun du squelette
         for env in ("document", "llnote"):
             assert envs[env] >= ref_envs[env], f"environnement {env} perdu ({label})"
+
+
+@pytest.mark.skipif(shutil.which("xelatex") is None or shutil.which("biber") is None,
+                    reason="XeLaTeX/biber absents (validés dans l'image Docker)")
+@pytest.mark.parametrize("cas", ["ancre", "refuse"])
+def test_pdf_compiles_in_target_mode(tmp_path, cas):
+    """Le mode objectif ajoute une section, une table et un encadré au template : tant que
+    ce PDF-là n'a pas été compilé, la mise en page n'est pas vérifiée (le rendu Jinja passe
+    sur du LaTeX qui ne compile pas)."""
+    from twin_engine.report import build_pdf
+
+    course, twin, cal, pred, _p, _r, _s = _scenario()
+    hours = _nominal_target(pred) if cas == "ancre" else pred.interval_low_h * 0.80
+    ctx, target, _pred, plan = _target_context(hours)
+    assert (target.plan_ok, plan.anchor == "target") == (cas == "ancre",) * 2
+
+    fig_dir = tmp_path / "figures"
+    generate_figures(course, twin, cal, pred, plan, _r, fig_dir)
+    pdf = build_pdf(ctx, fig_dir, tmp_path / "tex")
+    assert pdf.exists() and pdf.stat().st_size > 20_000

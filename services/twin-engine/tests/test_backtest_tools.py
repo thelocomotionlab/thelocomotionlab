@@ -343,3 +343,69 @@ def test_archive_cache_decodes_only_once(tmp_path, monkeypatch):
     for day in ("2025-12-31", "2026-06-01", "2025-05-01"):
         cache.preview_at(course, _date.fromisoformat(day))
     assert calls["n"] == after_load             # ... et plus AUCUN décodage ensuite
+
+
+# --------------------------------------------------------------------------- #
+# Balayage de la demi-vie de récence (tools/ab_recency) — l'instrument du biais de progression.
+def _manifest(tmp_path):
+    """Un manifeste minimal pointant sur l'archive et la trace synthétiques."""
+    archive = _archive(tmp_path)
+    (tmp_path / "trace.gpx").write_bytes(_course_gpx())
+    man = tmp_path / "manifest-test.json"
+    man.write_text(json.dumps({
+        "athlete": "Test", "archive": archive.name, "dev_set": False,
+        "races": [
+            {"name": "Course A", "date": "2026-03-01", "official_time": "12:00:00",
+             "gpx": "trace.gpx"},
+            {"name": "Course B", "date": "2025-08-01", "official_time": "13:30:00",
+             "gpx": "trace.gpx"},
+        ],
+    }), encoding="utf-8")
+    return man
+
+
+def test_ab_recency_sweeps_without_redecoding(tmp_path, monkeypatch, capsys):
+    """Le balayage doit coûter UN décodage par athlète, pas un par variante."""
+    from twin_engine.config import load_config
+    from twin_engine.twin import record as record_mod
+
+    from tools.ab_recency import evaluate, report
+
+    calls = {"n": 0}
+    real = record_mod.process_activity
+
+    def _counting(act, c):
+        calls["n"] += 1
+        return real(act, c)
+
+    monkeypatch.setattr(record_mod, "process_activity", _counting)
+
+    grid = (90.0, 365.0, 730.0)
+    rows = evaluate([_manifest(tmp_path)], grid, load_config())
+
+    assert calls["n"] == 5                      # 5 activités décodées, UNE fois
+    assert len(rows) == 2 * len(grid)           # 2 courses × 3 variantes
+    assert {r["halflife"] for r in rows} == set(grid)
+    report(rows, grid)                          # le rendu ne doit pas exploser
+    out = capsys.readouterr().out
+    assert "cas FRAIS" in out and "←défaut" in out
+
+
+def test_ab_recency_only_touches_calibration(tmp_path):
+    """Garde-fou du cache : la demi-vie ne doit RIEN changer en amont du jumeau.
+
+    Si une variante modifiait les agrégats par activité, réutiliser un décodage unique
+    serait faux — c'est l'hypothèse sur laquelle repose tout l'outil.
+    """
+    from dataclasses import fields
+
+    from twin_engine.config import load_config
+
+    from tools.ab_recency import _cfg_with_halflife
+
+    cfg = load_config()
+    variante = _cfg_with_halflife(cfg, 90.0)
+    for f in fields(cfg):
+        if f.name != "calibration":
+            assert getattr(variante, f.name) == getattr(cfg, f.name), f"{f.name} modifié"
+    assert variante.calibration.recency_halflife_days == 90.0

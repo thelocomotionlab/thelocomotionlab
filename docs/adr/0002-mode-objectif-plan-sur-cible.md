@@ -151,7 +151,7 @@ athlète en progression doit être présenté avec cette réserve explicite.
 | 1 | Moteur : `RaceSpec.target_hours`, `build_pacing(anchor_hours=…)`, `feasibility.py`, constantes de config, tests (dont l'invariance) | **fait** |
 | 2 | Rapport : contexte, template LaTeX, narratif, rappel de la prédiction sur la figure de cumul ; câblage `pipeline.analyze_full` | **fait** |
 | 3 | CLI (`--target`) + champ optionnel de l'API (`/preview`, `/jobs`) | **fait** |
-| 4 | Champ structuré dans le formulaire du site (aujourd'hui : `objectifs` en texte libre dans `twin-depot`) | à faire |
+| 4 | Champ structuré dans le formulaire du site (`objectifCible`/`objectifHeures` dans `twin-depot`, à côté du texte libre `objectifs` qui reste) | **fait** |
 
 Le mode s'active de trois façons, par priorité croissante : `target_hours` dans la spec de course,
 `--target` en ligne de commande, `target_hours` en champ de formulaire HTTP (le client envoie une
@@ -161,11 +161,13 @@ spec figée et l'objectif de l'athlète à part).
 question « mon objectif tient-il ? » doit avoir une réponse **avant paiement**, sans PDF. C'est
 `analyze_full` qui lit ensuite `preview.target` — un seul point de calcul.
 
-**Vérification du rendu LaTeX.** La compilation PDF réelle n'est exercée qu'avec XeLaTeX présent
-(image Docker) ; en CI le test est *skippé*. Le mode objectif ajoutant des blocs conditionnels au
-template, un test statique compare le **solde d'accolades et les environnements** du rendu aux
-mêmes compteurs du mode prédiction, qui compile en production — il a effectivement attrapé une
-accolade en trop (continuation de chaîne non préfixée `f` dans `caption_cumul`) avant tout PDF.
+**Vérification du rendu LaTeX.** Deux filets. (1) Un test statique compare le **solde d'accolades
+et les environnements** du rendu à ceux du mode prédiction, qui compile en production — il tourne
+sans LaTeX, donc en CI, et il a effectivement attrapé une accolade en trop (continuation de chaîne
+non préfixée `f` dans `caption_cumul`) avant tout PDF. (2) `test_pdf_compiles_in_target_mode`
+compile un **vrai PDF** dans les deux cas (cible ancrée, cible refusée) dès que XeLaTeX et biber
+sont présents — la mise en page de la nouvelle section et de l'encadré de refus est donc vérifiée,
+plus seulement le rendu du gabarit.
 
 ## Alternatives écartées
 

@@ -215,7 +215,17 @@ Les fixtures d'ingestion (Garmin/Polar/Strava, anonymisées) sont committées da
 PYTHONPATH=src python -m tools.ab_montagnhard      # A/B σ/MAE/interp/extrap — preuve obligatoire avant merge
 PYTHONPATH=src python -m tools.backtest <manifest> # walk-forward --until : prédiction veille de course vs réel
 PYTHONPATH=src python -m tools.registre [--json]   # couverture des intervalles, biais, score de Winkler
+PYTHONPATH=src python -m tools.ab_recency <manifests…>  # balaye la demi-vie de récence (biais de progression)
 ```
+
+> ⚠️ Ne **jamais** enchaîner `--dry-run` puis le run réel : le dry-run fait 100 % du calcul et
+> ne saute que l'écriture du registre — c'est deux fois le travail. Pour vérifier un manifeste
+> douteux, fais le dry-run sur un manifeste réduit à UNE course.
+>
+> Le banc décode l'archive **une seule fois par manifeste** (`ArchiveCache`) puis rejoue chaque
+> coupure sur les agrégats : mesuré ×3,2 (5 activités) à ×12,0 (120) sur 15 coupures — le gain
+> tend vers le nombre de courses. `tools/ab_recency` exploite le même cache pour balayer une
+> grille de demi-vies au prix d'un seul décodage.
 
 Le registre vit dans `docs/twin-registre-couverture.md` (avec sa règle de décision
 pré-enregistrée : pas de recalibration avant 8–10 cas frais). **Tout changement du moteur suit le
