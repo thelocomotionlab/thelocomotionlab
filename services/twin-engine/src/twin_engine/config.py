@@ -314,6 +314,17 @@ class SufficiencyParams:
     #   on prévient. ``ignore`` = ancien comportement (le critère absent n'entrait pas au verdict,
     #   un athlète sans AUCUNE validation pouvait sortir 🟢).
     cv_missing_policy: str = "cap_orange"                # {cap_orange, ignore}
+    # --- qualité des canaux : PRÉVENIR, pas REFUSER (banc 2026-08-15) ------------------------
+    # La fraction d'activités avec FC/altitude décrit l'ARCHIVE ENTIÈRE, pas la prédiction — et
+    # le moteur gère déjà l'absence de ces canaux LÀ OÙ ELLE COMPTE : une activité sans altitude
+    # est exclue de la courbe record (donc ne corrompt ni VC ni E), un ultra sans FC est conservé
+    # mais signalé, la durabilité dégrade proprement en « non chiffrée ». Refuser en plus, c'est
+    # punir deux fois le même risque. Le banc l'a confirmé : « Qualité » est le 1er motif de refus
+    # (11 cas sur 4 athlètes) et bloque des cas dont le central tombe à ±15 % — dont Val, 6/6
+    # refusé pour ~6 % de MAE, le meilleur central du banc.
+    # ``cap_orange`` (DÉFAUT) : la qualité plafonne le verdict à 🟠 — on vend en prévenant.
+    # ``red`` : ancien comportement, la qualité peut refuser à elle seule (rollback).
+    quality_policy: str = "cap_orange"                   # {cap_orange, red}
     # --- garde-fou DOMAINE (banc d'essai 2026-07, DIAGNOSTIC §9.9) --------------------------
     # Le moteur est calibré sur les efforts ≥ calibration.genuine_min_hours ; une cible
     # nettement plus courte est une extrapolation vers le bas HORS PÉRIMÈTRE. Mesuré au banc :

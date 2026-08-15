@@ -187,6 +187,41 @@ Le terme de tendance explicite est écarté pour la même raison (un 4ᵉ param�
 La voie qui reste est l'augmentation du nombre de cas (cohorte) et la fenêtre groupée, pas un
 réglage supplémentaire sur les données existantes.
 
+### 5.y Le critère « Qualité » refusait les meilleurs cas — PRÉVENIR au lieu de REFUSER (2026-08-15)
+
+**Découverte (banc homogène, 4 athlètes, 32 courses).** Une fois tous les athlètes rejoués
+sous la MÊME config, le motif de refus n°1 est « Qualité (FC / altitude / distance) » :
+11 occurrences (6 en dev, 5 en frais), devant le garde-fou domaine. Et le cas qui alerte :
+
+> **Val est refusé 6 fois sur 6** avec des erreurs de **+1,4 / +13,9 / +8,5 / −6,3 / −6,7 /
+> −0,3 %** — le meilleur central du banc (~6 % de MAE), invendable.
+
+Au total, **12 refus sur 21 portaient un central à ±15 %** : le garde-fou ne protégeait plus
+le client, il le perdait.
+
+**Cause.** La qualité mesure la fraction de l'ARCHIVE ENTIÈRE portant FC et altitude. C'est
+une propriété de l'export (Strava sans FC, activités anciennes sans altitude), pas de la
+prédiction. Or le moteur neutralise DÉJÀ ces manques là où ils comptent :
+
+* une activité sans altitude est **exclue de la courbe record** (`build_record_curve`,
+  motif `no_altitude`) → elle ne peut corrompre ni VC ni E ;
+* un vrai ultra sans FC est **conservé et signalé** (`select_genuine_ultras` : « FC absente →
+  on ne peut pas vérifier (on garde, signalé) ») ;
+* la durabilité dégrade proprement en « non chiffrée », et le rapport le dit.
+
+Refuser en plus, c'est punir deux fois le même risque — sur un signal qui, au banc, ne prédit
+pas l'erreur.
+
+**Correctif (`sufficiency.quality_policy`, DÉFAUT `cap_orange`).** La qualité plafonne le
+verdict à 🟠 au lieu de forcer 🔴 : on vend en prévenant, avec le détail chiffré conservé et
+une raison explicite (« signalé, pas bloquant — les activités sans altitude sont déjà écartées
+de la courbe record »). Rollback : `quality_policy="red"`.
+
+**Preuves.** Suite committée 266 passed / 1 skipped ; `tools.ab_montagnhard` reproduit le
+tableau §4 à l'identique (le correctif ne touche que le VERDICT, aucun chiffre du modèle).
+Vérification terrain attendue au prochain banc : Val doit passer de 6/6 refusé à vendable,
+et le motif « Qualité » doit disparaître du décompte des refus.
+
 ## 6. Limite assumée du proxy d'enveloppe
 
 `r_i` repose sur `envelope_vga_ms`, ajustée sur la courbe record **≤ 6 h** (`endurance_window_s`) puis

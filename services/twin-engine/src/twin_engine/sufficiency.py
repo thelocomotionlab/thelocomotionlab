@@ -203,6 +203,18 @@ def assess_sufficiency(
             f"{frac_hr * 100:.0f}% des activités avec FC · "
             f"{frac_alt * 100:.0f}% avec altitude (ajustement pente)"
         )
+    # PRÉVENIR plutôt que REFUSER : les canaux manquants sont déjà neutralisés en amont
+    # (activité sans altitude exclue de la courbe record, ultra sans FC conservé et signalé,
+    # durabilité « non chiffrée »). Un 🔴 ici punirait une seconde fois le même risque et
+    # coûterait des clients dont la prédiction est bonne — mesuré au banc. Rollback : "red".
+    if s.quality_policy == "cap_orange" and quality_level == RED:
+        quality_level = ORANGE
+        quality_detail += " — signalé, pas bloquant (canaux manquants déjà neutralisés en amont)"
+        reasons.append(
+            "Couverture FC/altitude faible sur l'archive : la durabilité et l'ajustement de "
+            "pente reposent sur moins d'activités. Signalé, mais non bloquant — les activités "
+            "sans altitude sont déjà écartées de la courbe record."
+        )
     criteria.append(
         Criterion("Qualité (FC / altitude / distance)", quality_level, quality_value, quality_detail)
     )
