@@ -46,11 +46,12 @@ def _twin(summaries):
                 durability_pct=20.0, record=rec, summaries=summaries)
 
 
-def _assess(summaries):
+def _assess(summaries, cfg=None):
+    cfg = cfg or CFG
     twin = _twin(summaries)
-    cal = build_calibration(twin, CFG)
-    pred = predict_finish(200.0, 53.0, twin, cal, CFG)
-    return assess_sufficiency(twin, cal, pred, CFG), pred
+    cal = build_calibration(twin, cfg)
+    pred = predict_finish(200.0, 53.0, twin, cal, cfg)
+    return assess_sufficiency(twin, cal, pred, cfg), pred
 
 
 def test_green_when_everything_strong():
@@ -191,14 +192,19 @@ def test_quality_degrades_when_altitude_missing():
             decouple_pct=15, has_hr=True, has_altitude=has_altitude,
         )
 
-    # 90 % des activités SANS altitude → qualité 🔴 malgré la FC partout
+    # 90 % des activités SANS altitude → la DÉTECTION reste 🔴 (rollback quality_policy=red)
+    from dataclasses import replace as dc_replace
+
     summaries = [_run_alt(i, i % 10 == 0) for i in range(60)]
     summaries += [_ultra(d, h, dpk) for d, (h, dpk) in
                   zip((20, 80, 140, 200), [(12, 50), (20, 55), (16, 45), (24, 53)])]
-    suf, _ = _assess(summaries)
-    crit = next(c for c in suf.criteria if "Qualité" in c.name)
+    cfg_red = dc_replace(CFG, sufficiency=dc_replace(CFG.sufficiency, quality_policy="red"))
+    crit = next(c for c in _assess(summaries, cfg_red)[0].criteria if "Qualité" in c.name)
     assert crit.level == RED
     assert "altitude" in crit.detail
+    # ... mais sous le DÉFAUT livré, elle prévient sans bloquer (banc 2026-08-15)
+    crit_def = next(c for c in _assess(summaries)[0].criteria if "Qualité" in c.name)
+    assert crit_def.level == ORANGE and "pas bloquant" in crit_def.detail
 
     # altitude partout → 🟢 (et le détail l'affiche)
     summaries_ok = [_run_alt(i, True) for i in range(60)]
@@ -237,3 +243,41 @@ def test_domain_gate_caps_below_domain_targets():
     cfg_off = replace(CFG, sufficiency=replace(CFG.sufficiency, domain_gate="off"))
     suf_off = assess_sufficiency(twin, cal, pred_short, cfg_off)
     assert not [c for c in suf_off.criteria if c.name == "Domaine de calibration"]
+
+
+# --------------------------------------------------------------------------- #
+# Qualité des canaux : PRÉVENIR, pas REFUSER (banc 2026-08-15).
+def _low_quality_summaries(n=200):  # noqa: D401
+    """Archive riche et longue, mais pauvre en FC/altitude — cas Strava typique."""
+    from dataclasses import replace as dc_replace
+
+    out = []
+    for i in range(n):
+        a = _run(i, 3600 * (12 if i % 10 == 0 else 2))
+        out.append(dc_replace(a, has_hr=False, avg_hr=None, decouple_pct=None,
+                              has_altitude=False))
+    return out
+
+
+def test_low_channel_coverage_warns_but_does_not_refuse():
+    """Une couverture FC/altitude faible décrit l'ARCHIVE, pas la prédiction : les canaux
+    manquants sont déjà neutralisés en amont (activité sans altitude exclue de la courbe
+    record, ultra sans FC conservé et signalé). Refuser en plus punit deux fois."""
+    suf, _ = _assess(_low_quality_summaries())
+    qualite = next(c for c in suf.criteria if c.name.startswith("Qualité"))
+    assert qualite.level == ORANGE                      # signalé…
+    assert "pas bloquant" in qualite.detail             # … et dit comme tel
+    assert suf.verdict != RED or all(
+        c.level != RED or not c.name.startswith("Qualité") for c in suf.criteria
+    )
+    assert any("non bloquant" in r for r in suf.reasons)
+
+
+def test_quality_policy_red_restores_the_hard_refusal():
+    """Rollback explicite : la qualité peut de nouveau refuser à elle seule."""
+    from dataclasses import replace as dc_replace
+
+    cfg = dc_replace(CFG, sufficiency=dc_replace(CFG.sufficiency, quality_policy="red"))
+    suf, _ = _assess(_low_quality_summaries(), cfg=cfg)
+    qualite = next(c for c in suf.criteria if c.name.startswith("Qualité"))
+    assert qualite.level == RED and suf.verdict == RED and not suf.sellable
