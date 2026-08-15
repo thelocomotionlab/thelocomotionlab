@@ -137,9 +137,25 @@ horaires réels. Tous les champs sont **optionnels** — ne mets que ce que tu v
 | `start_time` | départ (ISO 8601 avec fuseau) | pas d'horaires ni de calcul jour/nuit |
 | `lat`, `lon`, `tz_offset_h` | point de départ + décalage horaire (soleil/nuit) | idem |
 | `major_base_indices` | indices des bases-vie majeures (arrêts longs) | aucune base majeure |
+| `technicity_pct` | **majoration de coût déclarée** pour la technicité du terrain (%) | 0 — le moteur ne devine pas |
+
+### Technicité du terrain (`technicity_pct` / `--technicity`)
+
+Le GPX ne porte que la **géométrie**. Minetti traduit la **pente** en coût métabolique en
+supposant un sol roulant : à D+/km égal, une piste et une arête chaotique sont traitées
+identiquement. Sur un parcours très technique (pierriers, chaos, mains courantes), les temps
+réels sont donc **plus lents que prédit**.
+
+`--technicity 13` déclare que ce parcours coûte ~13 % de plus, à pente égale, que les courses
+de référence de l'athlète : toute la distance équivalente est majorée d'autant. C'est une
+**hypothèse d'entrée assumée**, jamais une mesure — le rapport l'affiche comme telle, dans un
+encadré dédié et dans les limites. Sans déclaration (défaut 0), le rapport avertit au contraire
+que la technicité n'est pas prise en compte.
+
+Ordre de grandeur : un écart de X % sur le temps visé correspond à ~X % de majoration.
 
 > ⚠️ Ce qui vient **toujours du GPX** (jamais du JSON) : le **D+/D-**, le profil, la pente,
-> le Deq. Fournir `aid_km` **recale** seulement la distance totale sur le km officiel et
+> le Deq (avant majoration). Fournir `aid_km` **recale** seulement la distance totale sur le km officiel et
 > nomme les segments. (`official_dplus_m` n'est pas utilisé par le moteur.)
 
 La **trace GPX du parcours** est fournie à part (`--course`) et n'est pas committée.

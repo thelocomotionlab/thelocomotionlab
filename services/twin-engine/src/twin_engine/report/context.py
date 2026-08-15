@@ -300,6 +300,10 @@ def build_report_context(
         "dminus_m": fr_thousands(course.dminus_m, 0),
         "deq_km": fr_thousands(course.deq_km, 1),
         "dplus_per_km": fr(course.dplus_per_km, 0),
+        # TERRAIN DÉCLARÉ : le Deq affiché est majoré — le rapport doit le dire, sinon il
+        # présente une hypothèse d'entrée comme une mesure du moteur.
+        "technicity_pct": (fr(course.technicity_pct, 0)
+                           if getattr(course, "technicity_pct", 0) else None),
         "n_segments": len(course.segments),
         "demande_rows": demande_rows,
         # jumeau — la VC n'est affichée que plausible (sinon note d'honnêteté via vc_implausible)

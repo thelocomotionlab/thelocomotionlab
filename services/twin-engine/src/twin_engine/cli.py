@@ -57,6 +57,14 @@ def _print_summary(preview, out=None) -> None:
         )
         if pred.cross_validation:
             print(f"  Validation croisée : MAE {pred.cross_validation.mae_pct:.1f}%", file=out)
+    else:
+        print("\n  Prédiction indisponible (données insuffisantes).", file=out)
+
+    # Terrain DÉCLARÉ : afficher la majoration servie, sinon un chiffre change sans explication.
+    tech = getattr(preview.course, "technicity_pct", None)
+    if tech:
+        print(f"\n  Technicité déclarée : +{tech:.0f} % de coût (majoration d'entrée, "
+              "non mesurée par le moteur)", file=out)
 
     # mode OBJECTIF : le verdict s'affiche À CÔTÉ de la prédiction, jamais à sa place
     tgt = getattr(preview, "target", None)
@@ -65,8 +73,6 @@ def _print_summary(preview, out=None) -> None:
         print(f"\n  Objectif demandé : {tgt.target_hours:.2f} h → {tgt.regime} ({servi})", file=out)
         for r in tgt.reasons:
             print(f"    · {r}", file=out)
-    else:
-        print("\n  Prédiction indisponible (données insuffisantes).", file=out)
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -86,6 +92,12 @@ def _build_parser() -> argparse.ArgumentParser:
                              "réparti sur cette cible (si le verdict de faisabilité l'autorise) "
                              "et le rapport gagne la section « Ton objectif face à ton jumeau ». "
                              "Prioritaire sur le champ target_hours de --race.")
+        sp.add_argument("--technicity", type=float, default=None, metavar="PCT",
+                        help="majoration de coût DÉCLARÉE pour la technicité du terrain, en %% "
+                             "(pierriers, chaos, mains courantes — invisibles du GPX). Ex. 13 "
+                             "pour un parcours ~13 %% plus coûteux, à pente égale, que les "
+                             "courses de référence de l'athlète. Défaut 0 : le moteur ne "
+                             "devine pas. Prioritaire sur le champ technicity_pct de --race.")
         sp.add_argument("--until", default=None, metavar="AAAA-MM-JJ",
                         help="mode BACKTEST : écarte toute activité postérieure à cette date "
                              "(et les non datées — anti-fuite) ; la fraîcheur est jugée à "
@@ -113,15 +125,22 @@ def main(argv: list[str] | None = None) -> int:
 
     # --target prime sur le champ target_hours de la spec (on tape une cible à la volée sans
     # rééditer le JSON). Saisie illisible → sortie propre, jamais un plan sur la mauvaise durée.
-    if args.target is not None:
+    if args.target is not None or args.technicity is not None:
         from dataclasses import replace
 
         from ._dt import parse_duration_h
 
         try:
-            race = replace(race, target_hours=parse_duration_h(args.target))
+            if args.target is not None:
+                race = replace(race, target_hours=parse_duration_h(args.target))
         except ValueError as exc:
             print(f"--target : {exc}", file=sys.stderr)
+            return 2
+        try:
+            if args.technicity is not None:
+                race = replace(race, technicity_pct=float(args.technicity))
+        except ValueError as exc:
+            print(f"--technicity : {exc}", file=sys.stderr)
             return 2
 
     course_gpx = Path(args.course).read_bytes()

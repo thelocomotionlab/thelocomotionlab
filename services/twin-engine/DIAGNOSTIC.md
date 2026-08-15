@@ -231,8 +231,29 @@ Rollbacks : `cap_orange` (jamais bloquante) et `red` (comportement d'origine).
 
 **Preuves.** Suite committée 267 passed / 1 skipped ; `tools.ab_montagnhard` reproduit le
 tableau §4 à l'identique (le correctif ne touche que le VERDICT, aucun chiffre du modèle).
-Vérification terrain au prochain banc : Val vendable, Rapace toujours refusé, « Qualité »
-absente des motifs, et les cas frais qui REVIENNENT à MAE ≈ 10 % / couverture 50 %.
+
+**MESURE TERRAIN (banc du 2026-08-15, 4 athlètes).** Résultat conforme sur le garde-fou,
+PARTIEL sur le gain :
+
+| | avant tout correctif | `cap_orange` | `cv_gated` (retenu) |
+|---|---|---|---|
+| frais — vendus / MAE / couv80 | 2 / 10,6 % / 50 % | 4 / **16,4 %** / **25 %** | 2 / 10,6 % / 50 % |
+| dev — vendus / MAE / couv80 | 7 / 6,8 % / 71 % | 10 / 6,1 % / 80 % | **8 / 6,0 % / 75 %** |
+| Rapace Coursières (+35,7 %) | refusé | **VENDU** | refusé |
+| Val (4 cas à ±14 %) | refusé | vendu | **refusé** |
+
+Bilan honnête : `cv_gated` protège correctement contre le faux positif de Rapace et gagne un
+cas vendable (Lavaredo) avec une MAE légèrement meilleure, mais **il ne récupère pas les
+quatre cas justes de Val** (+1,4 / +8,5 / −6,3 / −6,7 %). Aux coupures concernées, Val n'a ni
+validation croisée ni couverture de canaux : du point de vue du moteur, **son cas est
+indiscernable de celui de Rapace** — mêmes signaux d'évidence faible, erreurs réelles opposées.
+
+**Conclusion de la piste (à ne pas re-tenter à 4 athlètes).** Le taux de faux négatifs ne se
+règle pas en recâblant les critères entre eux : toute règle testée soit laisse passer Rapace
+(+35,7 %), soit bloque Val (+1,4 %). Ce qui les sépare n'est pas observable *au moment de la
+prédiction* — seulement après coup. Il faut soit un signal d'évidence NOUVEAU (pas une
+recombinaison des existants), soit assez de cas frais pour apprendre le seuil. La deuxième
+voie est la seule ouverte aujourd'hui : elle passe par la cohorte.
 
 ## 6. Limite assumée du proxy d'enveloppe
 

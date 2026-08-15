@@ -414,3 +414,26 @@ def test_pdf_compiles_in_target_mode(tmp_path, cas):
     generate_figures(course, twin, cal, pred, plan, _r, fig_dir)
     pdf = build_pdf(ctx, fig_dir, tmp_path / "tex")
     assert pdf.exists() and pdf.stat().st_size > 20_000
+
+
+def test_declared_technicity_is_disclosed_in_the_report():
+    """Un Deq majoré sans explication ferait passer une hypothèse d'entrée pour une mesure."""
+    from dataclasses import replace as dc_replace
+
+    course, twin, cal, pred, plan, race, suf = _scenario()
+    race_t = dc_replace(race, technicity_pct=13.0)
+    course_t = build_course(_triangle_gpx(), race_t, CFG)
+    pred_t = predict_finish(course_t.deq_km, course_t.dplus_per_km, twin, cal, CFG)
+    plan_t = build_pacing(course_t, pred_t, race_t, CFG)
+    ctx = build_report_context(course=course_t, twin=twin, calibration=cal, prediction=pred_t,
+                               plan=plan_t, race=race_t, sufficiency=suf, cfg=CFG, athlete="A")
+    tex = render_tex(ctx)
+    assert ctx["technicity_pct"] == "13"
+    assert "Technicit\\'e d\\'eclar\\'ee" in tex
+    assert "hypoth\\`ese assum\\'ee" in tex          # jamais présentée comme une mesure
+    assert "d\\'eclar\\'es}, pas mesur\\'es" in tex   # ... et rappelée dans les limites
+
+    # sans déclaration : l'encadré disparaît, la limite devient l'avertissement inverse
+    tex0 = render_tex(_context())
+    assert "Technicit\\'e d\\'eclar\\'ee" not in tex0
+    assert "Technicit\\'e du terrain non prise en compte" in tex0

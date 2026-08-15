@@ -61,6 +61,9 @@ class CourseProfile:
     dplus_m: float
     dminus_m: float
     deq_km: float
+    # majoration de technicité RÉELLEMENT servie (%) — 0 = aucune. Portée par le profil pour
+    # que le rapport ne puisse pas afficher un Deq majoré sans en donner la raison.
+    technicity_pct: float = 0.0
 
     @property
     def dplus_per_km(self) -> float:
@@ -75,6 +78,7 @@ class CourseProfile:
             "dminus_m": self.dminus_m,
             "deq_km": self.deq_km,
             "dplus_per_km": self.dplus_per_km,
+            "technicity_pct": self.technicity_pct,
             "segments": [s.to_dict() for s in self.segments],
         }
 
@@ -152,7 +156,12 @@ def build_course(gpx_data: bytes, race: RaceSpec, cfg: Config) -> CourseProfile:
     # --- pente écrêtée + Minetti + Deq ---
     grad = np.clip(np.gradient(es, step), -cfg.course.grade_clip, cfg.course.grade_clip)
     f = grade_factor(grad, cfg.course.cr0)        # pas de plafond : pente déjà écrêtée à ±0,45
-    deq_grid = np.cumsum(f * step)
+    # TECHNICITÉ (déclarée, jamais devinée) : Minetti traduit la PENTE en coût, en supposant un
+    # sol roulant. Un pierrier, un chaos d'arête ou une main courante coûtent davantage à pente
+    # égale — et rien de tout cela n'est dans le GPX. La majoration s'applique uniformément au
+    # coût par mètre : « ce parcours se comporte comme (1+τ) fois sa distance équivalente ».
+    # τ=0 (défaut) → aucun effet, le Deq est celui d'avant à l'octet près.
+    deq_grid = np.cumsum(f * step) * (1.0 + race.technicity_pct / 100.0)
 
     dist3d_grid = np.interp(xg, cum, dist3d)
     off_km_grid = dist3d_grid * scale / 1000.0
@@ -208,6 +217,7 @@ def build_course(gpx_data: bytes, race: RaceSpec, cfg: Config) -> CourseProfile:
         dplus_m=float(deg[deg > 0].sum()),
         dminus_m=float(-deg[deg < 0].sum()),
         deq_km=float(deq_grid[-1] / 1000.0),
+        technicity_pct=float(race.technicity_pct),
     )
 
 

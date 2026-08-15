@@ -265,6 +265,16 @@ une extrapolation (<< regime_label >>). \`A prendre comme un ordre de grandeur, 
 \end{llattention}
 <% endif %>
 
+<% if technicity_pct %>\begin{llattention}[Technicit\'e d\'eclar\'ee : +<< technicity_pct >>\,\%]
+Le GPX ne porte que la \textbf{g\'eom\'etrie} du parcours. Minetti traduit la \textbf{pente} en
+co\^ut m\'etabolique, mais suppose un sol roulant : un pierrier, un chaos d'ar\^ete ou une main
+courante co\^utent davantage \`a pente \'egale, et rien de tout cela n'est mesurable dans la trace.
+Une majoration de \textbf{+<< technicity_pct >>\,\%} a donc \'et\'e \textbf{d\'eclar\'ee} en entr\'ee :
+toute la distance \'equivalente de ce rapport en tient compte. Ce n'est pas une mesure du moteur
+mais une \textbf{hypoth\`ese assum\'ee} --- si le terrain s'av\`ere plus roulant que pr\'evu, les temps
+seront meilleurs que pr\'edit.
+\end{llattention}
+<% endif %>
 % =====================================================================
 <% if target_requested %>\section{Ton objectif face \`a ton jumeau}\label{sec:objectif}
 
@@ -393,6 +403,11 @@ forme du moment et doit \^etre recalcul\'ee \`a l'approche.
 du GPX) peut imposer plus lent.
 \item \textbf{Minetti} perd en validit\'e au-del\`a de \(\pm\)25--30\,\% \textbf{de pente} (marche active).
 \item \textbf{M\'et\'eo} et \textbf{nutrition} ne sont pas mod\'elis\'ees.
+<% if technicity_pct %>\item \textbf{Technicit\'e : +<< technicity_pct >>\,\% d\'eclar\'es}, pas mesur\'es. Le moteur ne sait
+pas distinguer une piste d'une ar\^ete \`a D+/km \'egal ; ce chiffre vient de la connaissance du
+parcours, et c'est lui qui porte l'\'ecart si le terrain surprend.<% else %>\item \textbf{Technicit\'e du terrain non prise en compte} : \`a D+/km \'egal, le moteur traite une
+piste roulante et une ar\^ete chaotique de la m\^eme fa\c{c}on. Sur un parcours tr\`es technique, les
+temps r\'eels sont plus lents que pr\'edit.<% endif %>
 <% if target_mode %>\item \textbf{Ce plan suppose ton objectif tenable ; il ne le rend pas tenable.} Il r\'epartit au
 mieux la dur\'ee que tu as choisie, en respectant ta courbe de fatigue --- il ne d\'eplace pas ton
 plafond physiologique. La r\'ef\'erence de ce qui est \emph{probable} reste la pr\'ediction et ses

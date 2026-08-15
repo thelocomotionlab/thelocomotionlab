@@ -176,3 +176,36 @@ def test_custom_segment_length_is_configurable():
     cfg5 = dataclasses.replace(cfg, course=dataclasses.replace(cfg.course, default_segment_km=5.0))
     course = build_course(_triangle_gpx(climb_m=1000.0, half_km=16.0), RaceSpec(name="C"), cfg5)
     assert len(course.segments) == 7            # ~32 km / 5 → 0,5,…,30,arrivée
+
+
+def test_technicity_scales_the_equivalent_distance():
+    """Le GPX ne porte que la géométrie : la technicité est une hypothèse DÉCLARÉE, appliquée
+    uniformément au coût par mètre, et jamais devinée."""
+    import pytest
+
+    from twin_engine.config import load_config
+
+    cfg = load_config()
+    gpx = _triangle_gpx(climb_m=1000.0, half_km=16.0)
+    plat = build_course(gpx, RaceSpec(name="roulant"), cfg)
+    tech = build_course(gpx, RaceSpec(name="technique", technicity_pct=13.0), cfg)
+
+    # +13 % de coût → +13 % de distance équivalente, exactement, sur le total ET les segments
+    assert tech.deq_km == pytest.approx(plat.deq_km * 1.13, rel=1e-9)
+    for a, b in zip(plat.segments, tech.segments):
+        assert b.deq_km == pytest.approx(a.deq_km * 1.13, rel=1e-6)
+    # la GÉOMÉTRIE ne bouge pas : distance, D+ et D+/km sont ceux de la trace
+    assert tech.length_km == plat.length_km
+    assert tech.dplus_m == plat.dplus_m
+    assert tech.dplus_per_km == plat.dplus_per_km
+    # le profil PORTE la majoration servie (le rapport ne peut pas l'afficher sans la dire)
+    assert tech.technicity_pct == 13.0 and plat.technicity_pct == 0.0
+    assert tech.to_dict()["technicity_pct"] == 13.0
+
+    # défaut = 0 → aucun effet
+    assert build_course(gpx, RaceSpec(name="x"), cfg).deq_km == plat.deq_km
+    with pytest.raises(ValueError):
+        RaceSpec(name="x", technicity_pct=-1.0)
+    with pytest.raises(ValueError):
+        RaceSpec(name="x", technicity_pct=150.0)
+    assert RaceSpec.from_dict({"technicity_pct": 13}).technicity_pct == 13.0

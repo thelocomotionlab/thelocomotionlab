@@ -30,6 +30,13 @@ class RaceSpec:
     Champs de logistique (module pacing) : ``start_time``, ``lat``, ``lon``,
     ``tz_offset_h``, ``major_base_indices`` (segments dont la FIN est une base majeure,
     arrêt rallongé).
+    Champ de TERRAIN : ``technicity_pct`` — majoration de coût DÉCLARÉE pour la technicité
+    (pierriers, chaos, mains courantes, single technique). Le moteur ne la mesure pas : le GPX
+    ne porte que la géométrie, et Minetti convertit la PENTE en coût métabolique en supposant
+    un sol roulant. Deux parcours de même D+/km ne se courent pas à la même vitesse si l'un
+    est une piste et l'autre une arête. 0 = terrain comparable aux courses de référence de
+    l'athlète (défaut : le moteur se tait plutôt que de deviner).
+
     Champ d'INTENTION (mode objectif, ADR 0002) : ``target_hours`` — la durée VISÉE par
     l'athlète. Optionnel ; absent, le moteur se comporte exactement comme avant. Présent,
     il n'écrase jamais la prédiction : il ouvre un second rendu (plan ancré sur la cible +
@@ -46,12 +53,15 @@ class RaceSpec:
     major_base_indices: tuple[int, ...] = ()
     official_dplus_m: float | None = None
     target_hours: float | None = None
+    technicity_pct: float = 0.0
 
     def __post_init__(self) -> None:
         if len(self.aid_km) != len(self.aid_names):
             raise ValueError("aid_km et aid_names doivent avoir la même longueur")
         if self.target_hours is not None and self.target_hours <= 0:
             raise ValueError("target_hours doit être strictement positif")
+        if not 0.0 <= self.technicity_pct <= 100.0:
+            raise ValueError("technicity_pct doit être entre 0 et 100 (majoration en %)")
         if self.aid_km:  # ravitaillements fournis → validés ; vide = mode GPX-only (auto)
             if len(self.aid_km) < 2:
                 raise ValueError("au moins le départ et l'arrivée sont requis")
@@ -87,6 +97,7 @@ class RaceSpec:
             # "31h", "31h30", "31:00:00" ou un nombre d'heures (illisible → ValueError :
             # mieux vaut refuser que caler un plan sur la mauvaise durée)
             target_hours=parse_duration_h(d.get("target_hours")),
+            technicity_pct=float(d.get("technicity_pct") or 0.0),
         )
 
     @classmethod
