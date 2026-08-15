@@ -16,12 +16,20 @@
       },
       "model": {
         "verdict": "🔴",
+        "blocking": [
+          "Historique",
+          "Fraîcheur des données",
+          "Courses exploitables",
+          "Efforts longs proches de la cible",
+          "Qualité (FC / altitude / distance)"
+        ],
         "regime": "vc_e",
         "n_genuine": 0,
         "n_eff": 0.0,
         "sigma_kmh": 0.8,
         "n_activities_used": 26,
-        "n_excluded_until": 496
+        "n_excluded_until": 496,
+        "n_skipped_ingest": 38
       },
       "prediction": {
         "central_h": 10.602,
@@ -35,7 +43,8 @@
         "err_pct": 1.35,
         "in_plan": true,
         "in_safety": true
-      }
+      },
+      "below_domain": false
     },
     {
       "athlete": "Val",
@@ -52,12 +61,20 @@
       },
       "model": {
         "verdict": "🔴",
+        "blocking": [
+          "Historique",
+          "Fraîcheur des données",
+          "Domaine de calibration",
+          "Courses exploitables",
+          "Qualité (FC / altitude / distance)"
+        ],
         "regime": "vc_e",
         "n_genuine": 0,
         "n_eff": 0.0,
         "sigma_kmh": 0.8,
         "n_activities_used": 26,
-        "n_excluded_until": 496
+        "n_excluded_until": 496,
+        "n_skipped_ingest": 38
       },
       "prediction": {
         "central_h": 6.897,
@@ -71,7 +88,8 @@
         "err_pct": 13.92,
         "in_plan": false,
         "in_safety": false
-      }
+      },
+      "below_domain": true
     },
     {
       "athlete": "Val",
@@ -88,12 +106,20 @@
       },
       "model": {
         "verdict": "🔴",
+        "blocking": [
+          "Historique",
+          "Fraîcheur des données",
+          "Courses exploitables",
+          "Efforts longs proches de la cible",
+          "Qualité (FC / altitude / distance)"
+        ],
         "regime": "vc_e",
         "n_genuine": 0,
         "n_eff": 0.0,
         "sigma_kmh": 0.8,
         "n_activities_used": 26,
-        "n_excluded_until": 496
+        "n_excluded_until": 496,
+        "n_skipped_ingest": 38
       },
       "prediction": {
         "central_h": 12.256,
@@ -107,7 +133,8 @@
         "err_pct": 8.54,
         "in_plan": false,
         "in_safety": true
-      }
+      },
+      "below_domain": false
     },
     {
       "athlete": "Val",
@@ -124,12 +151,16 @@
       },
       "model": {
         "verdict": "🔴",
+        "blocking": [
+          "Qualité (FC / altitude / distance)"
+        ],
         "regime": "blend",
         "n_genuine": 1,
         "n_eff": 1.0,
         "sigma_kmh": 0.45,
         "n_activities_used": 81,
-        "n_excluded_until": 441
+        "n_excluded_until": 441,
+        "n_skipped_ingest": 38
       },
       "prediction": {
         "central_h": 10.376,
@@ -143,7 +174,8 @@
         "err_pct": -6.27,
         "in_plan": false,
         "in_safety": true
-      }
+      },
+      "below_domain": false
     },
     {
       "athlete": "Val",
@@ -160,12 +192,16 @@
       },
       "model": {
         "verdict": "🔴",
+        "blocking": [
+          "Qualité (FC / altitude / distance)"
+        ],
         "regime": "blend",
         "n_genuine": 3,
         "n_eff": 2.84,
         "sigma_kmh": 0.45,
         "n_activities_used": 185,
-        "n_excluded_until": 337
+        "n_excluded_until": 337,
+        "n_skipped_ingest": 38
       },
       "prediction": {
         "central_h": 19.108,
@@ -179,7 +215,8 @@
         "err_pct": -6.72,
         "in_plan": false,
         "in_safety": true
-      }
+      },
+      "below_domain": false
     },
     {
       "athlete": "Val",
@@ -195,13 +232,15 @@
         "dplus_per_km": 46.4
       },
       "model": {
-        "verdict": "🔴",
+        "verdict": "🟠",
+        "blocking": [],
         "regime": "regression",
         "n_genuine": 4,
         "n_eff": 3.82,
         "sigma_kmh": 0.2,
         "n_activities_used": 265,
-        "n_excluded_until": 257
+        "n_excluded_until": 257,
+        "n_skipped_ingest": 38
       },
       "prediction": {
         "central_h": 21.17,
@@ -215,7 +254,8 @@
         "err_pct": -0.34,
         "in_plan": true,
         "in_safety": true
-      }
+      },
+      "below_domain": false
     },
     {
       "athlete": "Crasse",
@@ -252,7 +292,8 @@
         "in_plan": true,
         "in_safety": true
       },
-      "below_domain": false
+      "below_domain": false,
+      "quarantine": "doublon de « Montagnhard 2026 » (même course, même temps 16:04:06) — date corrigée au 04/07"
     },
     {
       "athlete": "Crasse",
@@ -268,13 +309,17 @@
         "dplus_per_km": 60.7
       },
       "model": {
-        "verdict": "🟢",
+        "verdict": "🔴",
+        "blocking": [
+          "Domaine de calibration"
+        ],
         "regime": "regression",
         "n_genuine": 5,
         "n_eff": 3.96,
         "sigma_kmh": 0.2,
         "n_activities_used": 1242,
-        "n_excluded_until": 278
+        "n_excluded_until": 299,
+        "n_skipped_ingest": 10779
       },
       "prediction": {
         "central_h": 4.43,
@@ -306,12 +351,14 @@
       },
       "model": {
         "verdict": "🟠",
+        "blocking": [],
         "regime": "blend",
         "n_genuine": 1,
         "n_eff": 1.0,
         "sigma_kmh": 0.45,
         "n_activities_used": 857,
-        "n_excluded_until": 663
+        "n_excluded_until": 684,
+        "n_skipped_ingest": 10779
       },
       "prediction": {
         "central_h": 14.248,
@@ -343,12 +390,14 @@
       },
       "model": {
         "verdict": "🟢",
+        "blocking": [],
         "regime": "regression",
         "n_genuine": 7,
         "n_eff": 3.69,
         "sigma_kmh": 0.2,
         "n_activities_used": 1499,
-        "n_excluded_until": 21
+        "n_excluded_until": 42,
+        "n_skipped_ingest": 10779
       },
       "prediction": {
         "central_h": 14.414,
@@ -380,12 +429,14 @@
       },
       "model": {
         "verdict": "🟢",
+        "blocking": [],
         "regime": "regression",
         "n_genuine": 5,
         "n_eff": 3.96,
         "sigma_kmh": 0.2,
         "n_activities_used": 1371,
-        "n_excluded_until": 149
+        "n_excluded_until": 170,
+        "n_skipped_ingest": 10779
       },
       "prediction": {
         "central_h": 10.18,
@@ -416,13 +467,17 @@
         "dplus_per_km": 29.0
       },
       "model": {
-        "verdict": "🟠",
+        "verdict": "🔴",
+        "blocking": [
+          "Domaine de calibration"
+        ],
         "regime": "vc_e",
         "n_genuine": 0,
         "n_eff": 0.0,
         "sigma_kmh": 0.8,
         "n_activities_used": 598,
-        "n_excluded_until": 922
+        "n_excluded_until": 943,
+        "n_skipped_ingest": 10779
       },
       "prediction": {
         "central_h": 2.43,
@@ -453,13 +508,17 @@
         "dplus_per_km": 32.9
       },
       "model": {
-        "verdict": "🟠",
+        "verdict": "🔴",
+        "blocking": [
+          "Domaine de calibration"
+        ],
         "regime": "vc_e",
         "n_genuine": 0,
         "n_eff": 0.0,
         "sigma_kmh": 0.8,
         "n_activities_used": 599,
-        "n_excluded_until": 921
+        "n_excluded_until": 942,
+        "n_skipped_ingest": 10779
       },
       "prediction": {
         "central_h": 9.764,
@@ -491,12 +550,14 @@
       },
       "model": {
         "verdict": "🟠",
+        "blocking": [],
         "regime": "blend",
         "n_genuine": 2,
         "n_eff": 1.85,
         "sigma_kmh": 0.45,
         "n_activities_used": 887,
-        "n_excluded_until": 633
+        "n_excluded_until": 654,
+        "n_skipped_ingest": 10779
       },
       "prediction": {
         "central_h": 20.08,
@@ -566,12 +627,14 @@
       },
       "model": {
         "verdict": "🟠",
+        "blocking": [],
         "regime": "regression",
         "n_genuine": 4,
         "n_eff": 3.51,
         "sigma_kmh": 0.2,
         "n_activities_used": 1192,
-        "n_excluded_until": 328
+        "n_excluded_until": 349,
+        "n_skipped_ingest": 10779
       },
       "prediction": {
         "central_h": 27.487,
@@ -603,12 +666,16 @@
       },
       "model": {
         "verdict": "🔴",
+        "blocking": [
+          "Efforts longs proches de la cible"
+        ],
         "regime": "vc_e",
         "n_genuine": 0,
         "n_eff": 0.0,
         "sigma_kmh": 0.8,
         "n_activities_used": 613,
-        "n_excluded_until": 907
+        "n_excluded_until": 928,
+        "n_skipped_ingest": 10779
       },
       "prediction": {
         "central_h": 41.048,
@@ -640,12 +707,16 @@
       },
       "model": {
         "verdict": "🔴",
+        "blocking": [
+          "Efforts longs proches de la cible"
+        ],
         "regime": "vc_e",
         "n_genuine": 0,
         "n_eff": 0.0,
         "sigma_kmh": 0.8,
         "n_activities_used": 719,
-        "n_excluded_until": 801
+        "n_excluded_until": 822,
+        "n_skipped_ingest": 10779
       },
       "prediction": {
         "central_h": 20.38,
@@ -677,12 +748,14 @@
       },
       "model": {
         "verdict": "🟠",
+        "blocking": [],
         "regime": "blend",
         "n_genuine": 3,
         "n_eff": 2.81,
         "sigma_kmh": 0.45,
         "n_activities_used": 1032,
-        "n_excluded_until": 488
+        "n_excluded_until": 509,
+        "n_skipped_ingest": 10779
       },
       "prediction": {
         "central_h": 13.395,
@@ -713,13 +786,17 @@
         "dplus_per_km": 42.2
       },
       "model": {
-        "verdict": "🟠",
+        "verdict": "🔴",
+        "blocking": [
+          "Domaine de calibration"
+        ],
         "regime": "blend",
         "n_genuine": 3,
         "n_eff": 2.81,
         "sigma_kmh": 0.45,
         "n_activities_used": 909,
-        "n_excluded_until": 611
+        "n_excluded_until": 632,
+        "n_skipped_ingest": 10779
       },
       "prediction": {
         "central_h": 2.718,
@@ -750,13 +827,17 @@
         "dplus_per_km": 37.8
       },
       "model": {
-        "verdict": "🟠",
+        "verdict": "🔴",
+        "blocking": [
+          "Domaine de calibration"
+        ],
         "regime": "blend",
         "n_genuine": 2,
         "n_eff": 2.0,
         "sigma_kmh": 0.45,
         "n_activities_used": 334,
-        "n_excluded_until": 766
+        "n_excluded_until": 766,
+        "n_skipped_ingest": 5748
       },
       "prediction": {
         "central_h": 3.167,
@@ -788,12 +869,17 @@
       },
       "model": {
         "verdict": "🔴",
+        "blocking": [
+          "Erreur validation croisée",
+          "Largeur d'intervalle"
+        ],
         "regime": "regression",
         "n_genuine": 10,
         "n_eff": 6.39,
         "sigma_kmh": 0.723,
         "n_activities_used": 1064,
-        "n_excluded_until": 36
+        "n_excluded_until": 36,
+        "n_skipped_ingest": 5748
       },
       "prediction": {
         "central_h": 26.211,
@@ -825,12 +911,14 @@
       },
       "model": {
         "verdict": "🟢",
+        "blocking": [],
         "regime": "regression",
         "n_genuine": 4,
         "n_eff": 3.92,
         "sigma_kmh": 0.2,
         "n_activities_used": 436,
-        "n_excluded_until": 664
+        "n_excluded_until": 664,
+        "n_skipped_ingest": 5748
       },
       "prediction": {
         "central_h": 10.6,
@@ -862,12 +950,16 @@
       },
       "model": {
         "verdict": "🔴",
+        "blocking": [
+          "Efforts longs proches de la cible"
+        ],
         "regime": "vc_e",
         "n_genuine": 0,
         "n_eff": 0.0,
         "sigma_kmh": 0.8,
         "n_activities_used": 326,
-        "n_excluded_until": 774
+        "n_excluded_until": 774,
+        "n_skipped_ingest": 5748
       },
       "prediction": null,
       "below_domain": false
@@ -886,13 +978,17 @@
         "dplus_per_km": 44.2
       },
       "model": {
-        "verdict": "🟢",
+        "verdict": "🔴",
+        "blocking": [
+          "Domaine de calibration"
+        ],
         "regime": "regression",
         "n_genuine": 4,
         "n_eff": 3.92,
         "sigma_kmh": 0.2,
         "n_activities_used": 398,
-        "n_excluded_until": 702
+        "n_excluded_until": 702,
+        "n_skipped_ingest": 5748
       },
       "prediction": {
         "central_h": 6.189,
@@ -923,13 +1019,17 @@
         "dplus_per_km": 43.3
       },
       "model": {
-        "verdict": "🟢",
+        "verdict": "🔴",
+        "blocking": [
+          "Domaine de calibration"
+        ],
         "regime": "regression",
         "n_genuine": 6,
         "n_eff": 5.8,
         "sigma_kmh": 0.2,
         "n_activities_used": 502,
-        "n_excluded_until": 598
+        "n_excluded_until": 598,
+        "n_skipped_ingest": 5748
       },
       "prediction": {
         "central_h": 7.102,
@@ -961,12 +1061,14 @@
       },
       "model": {
         "verdict": "🟠",
+        "blocking": [],
         "regime": "blend",
         "n_genuine": 2,
         "n_eff": 2.0,
         "sigma_kmh": 0.45,
         "n_activities_used": 392,
-        "n_excluded_until": 708
+        "n_excluded_until": 708,
+        "n_skipped_ingest": 5748
       },
       "prediction": {
         "central_h": 20.02,
@@ -998,6 +1100,10 @@
       },
       "model": {
         "verdict": "🔴",
+        "blocking": [
+          "Efforts longs proches de la cible",
+          "Qualité (FC / altitude / distance)"
+        ],
         "regime": "vc_e",
         "n_genuine": 0,
         "n_eff": 0.0,
@@ -1036,6 +1142,10 @@
       },
       "model": {
         "verdict": "🔴",
+        "blocking": [
+          "Efforts longs proches de la cible",
+          "Qualité (FC / altitude / distance)"
+        ],
         "regime": "vc_e",
         "n_genuine": 0,
         "n_eff": 0.0,
@@ -1075,6 +1185,10 @@
       },
       "model": {
         "verdict": "🔴",
+        "blocking": [
+          "Domaine de calibration",
+          "Qualité (FC / altitude / distance)"
+        ],
         "regime": "blend",
         "n_genuine": 1,
         "n_eff": 1.0,
@@ -1113,6 +1227,9 @@
       },
       "model": {
         "verdict": "🔴",
+        "blocking": [
+          "Qualité (FC / altitude / distance)"
+        ],
         "regime": "blend",
         "n_genuine": 1,
         "n_eff": 1.0,
@@ -1151,6 +1268,9 @@
       },
       "model": {
         "verdict": "🔴",
+        "blocking": [
+          "Qualité (FC / altitude / distance)"
+        ],
         "regime": "blend",
         "n_genuine": 2,
         "n_eff": 1.68,
@@ -1189,6 +1309,11 @@
       },
       "model": {
         "verdict": "🔴",
+        "blocking": [
+          "Domaine de calibration",
+          "Erreur validation croisée",
+          "Largeur d'intervalle"
+        ],
         "regime": "regression",
         "n_genuine": 4,
         "n_eff": 3.47,
@@ -1211,6 +1336,45 @@
         "in_safety": true
       },
       "below_domain": true
+    },
+    {
+      "athlete": "Crasse",
+      "dev_set": true,
+      "race": "Montagnhard 2026",
+      "date": "2026-07-04",
+      "until": "2026-07-03",
+      "dnf": false,
+      "official_time_h": 16.068,
+      "course": {
+        "length_km": 106.4,
+        "deq_km": 140.5,
+        "dplus_per_km": 71.5
+      },
+      "model": {
+        "verdict": "🟠",
+        "blocking": [],
+        "regime": "regression",
+        "n_genuine": 8,
+        "n_eff": 3.89,
+        "sigma_kmh": 0.532,
+        "n_activities_used": 1521,
+        "n_excluded_until": 20,
+        "n_skipped_ingest": 10779
+      },
+      "prediction": {
+        "central_h": 18.868,
+        "plan_low_h": 16.011,
+        "plan_high_h": 21.725,
+        "safety_low_h": 15.631,
+        "safety_high_h": 22.105,
+        "interval_source": "conformal_normalized",
+        "cv_mae_pct": 8.31,
+        "sd_rel": 0.1413,
+        "err_pct": 17.42,
+        "in_plan": true,
+        "in_safety": true
+      },
+      "below_domain": false
     }
   ]
 }
