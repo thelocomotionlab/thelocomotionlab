@@ -113,6 +113,29 @@ def analyze_preview(
         analysis_date = until
 
     twin = build_twin(_counting(stream), cfg)
+    return analyze_preview_from_twin(
+        twin, course, cfg, n_ingested=n_seen, n_skipped=n_skipped,
+        n_excluded_until=n_excluded, analysis_date=analysis_date, target_hours=target_hours,
+    )
+
+
+def analyze_preview_from_twin(
+    twin: Twin,
+    course: CourseProfile,
+    cfg: Config,
+    *,
+    n_ingested: int,
+    n_skipped: int = 0,
+    n_excluded_until: int = 0,
+    analysis_date: date | None = None,
+    target_hours: float | None = None,
+) -> PreviewResult:
+    """Aval du jumeau : calibration → prédiction → suffisance (+ verdict d'objectif).
+
+    Séparé d':func:`analyze_preview` pour le banc walk-forward, qui construit N jumeaux
+    (une coupure par course) à partir d'un SEUL décodage d'archive — tout ce qui suit ne
+    coûte rien, c'est le décodage qui coûte. Un seul chemin de calcul pour les deux usages.
+    """
     calibration = build_calibration(twin, cfg)
     prediction = predict_race(course, twin, calibration, cfg)
     sufficiency = assess_sufficiency(
@@ -131,9 +154,9 @@ def analyze_preview(
         twin=twin,
         calibration=calibration,
         course=course,
-        n_ingested=n_seen,
+        n_ingested=n_ingested,
         n_skipped=n_skipped,
-        n_excluded_until=n_excluded,
+        n_excluded_until=n_excluded_until,
         target=target,
     )
 
@@ -286,4 +309,5 @@ def run_full(
     return full
 
 
-__all__ = ["PreviewResult", "FullResult", "analyze_preview", "analyze_full", "run_preview", "run_full"]
+__all__ = ["PreviewResult", "FullResult", "analyze_preview", "analyze_preview_from_twin",
+           "analyze_full", "run_preview", "run_full"]

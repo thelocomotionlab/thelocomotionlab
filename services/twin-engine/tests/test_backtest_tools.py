@@ -236,3 +236,110 @@ def test_diag_archive_audits_genuine_filter(tmp_path, capsys):
         sport=None, source_format="gpx", source_name="mystere",
     )
     assert "INVISIBLE du moteur" in _genuine_audit(ghost, cfg)
+
+
+# --------------------------------------------------------------------------- #
+# Cache d'archive : UN décodage, N coupures — et des résultats IDENTIQUES au chemin direct.
+def _activity_gpx(day: str, *, minutes: int, v_ms: float, climb_m: float = 40.0) -> bytes:
+    """Une activité datée, à 1 Hz, avec altitude et FC (donc exploitable par la courbe record)."""
+    import math as _m
+
+    n = minutes * 60
+    lat0, lon0 = 43.70, 7.26
+    rows = []
+    for i in range(n + 1):
+        x = v_ms * i
+        ele = 100.0 + climb_m * (i / n if i <= n / 2 else (n - i) / n) * 2
+        dlon = x / (111_320.0 * _m.cos(_m.radians(lat0)))
+        hh, mm, ss = 8 + i // 3600, (i % 3600) // 60, i % 60
+        rows.append(
+            f'<trkpt lat="{lat0:.6f}" lon="{lon0 + dlon:.6f}"><ele>{ele:.1f}</ele>'
+            f'<time>{day}T{hh:02d}:{mm:02d}:{ss:02d}Z</time><extensions>'
+            f'<gpxtpx:TrackPointExtension><gpxtpx:hr>140</gpxtpx:hr>'
+            f'</gpxtpx:TrackPointExtension></extensions></trkpt>'
+        )
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<gpx version="1.1" creator="test" xmlns="http://www.topografix.com/GPX/1/1" '
+        'xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1">'
+        f'<trk><type>running</type><trkseg>{"".join(rows)}</trkseg></trk></gpx>'
+    ).encode()
+
+
+def _archive(tmp_path):
+    d = tmp_path / "archives"
+    d.mkdir()
+    for i, (day, minutes, v) in enumerate([
+        ("2025-03-15", 40, 3.1), ("2025-06-10", 70, 2.9), ("2025-09-02", 55, 3.0),
+        ("2026-01-20", 90, 2.8), ("2026-04-05", 45, 3.2),
+    ]):
+        (d / f"act{i}.gpx").write_bytes(_activity_gpx(day, minutes=minutes, v_ms=v))
+    return d
+
+
+def _course_gpx():
+    import math as _m
+
+    lat0, lon0 = 43.70, 7.26
+    rows = []
+    for i in range(201):
+        x = 10000.0 * i / 200
+        ele = 1000.0 * (x / 5000.0) if x <= 5000 else 1000.0 * (2 - x / 5000.0)
+        dlon = x / (111_320.0 * _m.cos(_m.radians(lat0)))
+        rows.append(f'<trkpt lat="{lat0:.6f}" lon="{lon0 + dlon:.6f}"><ele>{ele:.1f}</ele></trkpt>')
+    return ('<?xml version="1.0"?><gpx xmlns="http://www.topografix.com/GPX/1/1">'
+            f'<trk><trkseg>{"".join(rows)}</trkseg></trk></gpx>').encode()
+
+
+@pytest.mark.parametrize("cutoff", ["2025-12-31", "2026-06-01", "2025-05-01"])
+def test_archive_cache_matches_the_direct_path(tmp_path, cutoff):
+    """LE test du cache : décoder une fois puis filtrer doit être indiscernable de décoder
+    l'archive coupée. Même arithmétique, même ordre — donc mêmes départages à égalité."""
+    from datetime import date as _date
+
+    from twin_engine.config import load_config
+    from twin_engine.course import RaceSpec, build_course
+    from twin_engine.pipeline import run_preview
+
+    from tools.backtest import ArchiveCache
+
+    cfg = load_config()
+    archive, gpx = _archive(tmp_path), _course_gpx()
+    race = RaceSpec(name="T")
+    until = _date.fromisoformat(cutoff)
+
+    direct = run_preview(training_path=archive, course_gpx=gpx, race=race, cfg=cfg,
+                         purge_source=False, until=until)
+    cached = ArchiveCache(archive, cfg).preview_at(build_course(gpx, race, cfg), until)
+
+    assert cached.to_dict() == direct.to_dict()
+
+
+def test_archive_cache_decodes_only_once(tmp_path, monkeypatch):
+    """Le gain est là ou il n'est pas : N coupures ne doivent coûter qu'UN décodage."""
+    from twin_engine.config import load_config
+    from twin_engine.course import RaceSpec, build_course
+    from twin_engine.twin import record as record_mod
+
+    from tools.backtest import ArchiveCache
+
+    cfg = load_config()
+    calls = {"n": 0}
+    real = record_mod.process_activity
+
+    def _counting(act, c):
+        calls["n"] += 1
+        return real(act, c)
+
+    monkeypatch.setattr(record_mod, "process_activity", _counting)
+
+    cache = ArchiveCache(_archive(tmp_path), cfg)
+    after_load = calls["n"]
+    assert after_load == 5                      # une passe sur les 5 activités
+
+    course = build_course(_course_gpx(), RaceSpec(name="T"), cfg)
+    from datetime import date as _date
+
+    for day in ("2025-12-31", "2026-06-01", "2025-05-01"):
+        cache.preview_at(course, _date.fromisoformat(day))
+    assert calls["n"] == after_load             # ... et plus AUCUN décodage ensuite

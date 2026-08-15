@@ -17,6 +17,8 @@ from __future__ import annotations
 import logging
 from collections import Counter
 from dataclasses import asdict, dataclass, field
+from datetime import date as dt_date
+from typing import Iterable, Iterator
 
 import numpy as np
 
@@ -317,19 +319,68 @@ def _windowed_speed_reject(vraw: np.ndarray, durs: np.ndarray, cfg: Config) -> b
     return bool(np.any(np.isfinite(vr) & (vr > ceil)))
 
 
-def build_record_curve(
-    activities: list[CanonicalActivity], cfg: Config
-) -> tuple[RecordCurve, list[ActivitySummary]]:
-    """Agrège les activités de course → courbe record ajustée robuste + résumés par activité.
+@dataclass(frozen=True)
+class ActivityContribution:
+    """Ce qu'UNE activité apporte au jumeau, une fois le 1 Hz digéré : des agrégats.
 
-    Durcissement (twin-theory §2.3, Problème A) contre les VC/exposants aberrants :
-      * une activité **sans altitude** ne peut pas être ajustée à la pente → exclue de la
-        courbe record (mais conservée dans les résumés pour la calibration/durabilité) ;
-      * une activité à **vitesse soutenue impossible** (fenêtre ≥ seuil) est écartée ;
-      * l'enveloppe est **robuste** : par durée, on retient la ``record_min_support``-ième
-        meilleure vitesse (repli sur la meilleure disponible aux durées rares), si bien
-        qu'**une seule** activité ne peut plus fixer VC ni l'exposant.
+    Sépare le coût (décodage + ``process_activity``, qui domine tout) de l'agrégation
+    (maximum par durée, instantanée). Une coupure temporelle ne fait que **retirer** des
+    activités : elle ne change pas ce que chacune apporte. Le banc walk-forward peut donc
+    décoder l'archive **une seule fois** et rejouer N coupures dessus — cf.
+    :func:`record_from_contributions`.
+
+    Ne porte AUCUN tableau 1 Hz : la mémoire reste O(1 activité) en flux, et une liste de
+    contributions pèse quelques Ko par activité.
     """
+
+    start_date: dt_date | None            # date de l'activité (coupure) ; None = non datée
+    summary: ActivitySummary | None       # None = pré-filtrée (non course / < 60 s) ou en erreur
+    vga: np.ndarray | None                # None = hors courbe record (cf. ``skipped``)
+    vraw: np.ndarray | None
+    skipped: dict | None = None           # {"date", "reason"} si écartée de la courbe record
+
+
+def iter_contributions(
+    activities: Iterable[CanonicalActivity], cfg: Config
+) -> Iterator[ActivityContribution]:
+    """Phase COÛTEUSE : une contribution par activité du flux (ordre préservé).
+
+    L'ordre compte : à égalité de vitesse ajustée, c'est lui qui décide quelle activité
+    fournit le point record. Filtrer une liste de contributions préserve cet ordre, donc
+    les résultats sont identiques à un décodage direct.
+    """
+    durs = np.asarray(cfg.twin.record_durations_s, dtype=float)
+    for act in activities:
+        day = act.start_time.date() if act.start_time else None
+        if not act.is_running or act.duration_s < 60:
+            yield ActivityContribution(day, None, None, None)
+            continue
+        try:
+            summary, vga, vraw = process_activity(act, cfg)
+        except Exception as exc:  # noqa: BLE001 — une activité brouillonne n'arrête pas l'agrégat
+            # ... mais elle doit être COMPTÉE : un diagnostic d'archive qui tait la casse ment.
+            yield ActivityContribution(day, None, None, None, skipped={
+                "date": day.isoformat() if day else None,
+                "reason": f"processing_error: {type(exc).__name__}",
+            })
+            continue
+        # sans altitude : impossible d'ajuster à la pente → hors courbe record (résumé conservé)
+        if not act.has_altitude:
+            yield ActivityContribution(day, summary, None, None,
+                                       skipped={"date": summary.date, "reason": "no_altitude"})
+            continue
+        # vitesse soutenue impossible pour de la course (vélo/artefact) → écartée
+        if _windowed_speed_reject(vraw, durs, cfg):
+            yield ActivityContribution(day, summary, None, None,
+                                       skipped={"date": summary.date, "reason": "sustained_speed"})
+            continue
+        yield ActivityContribution(day, summary, vga, vraw)
+
+
+def record_from_contributions(
+    contributions: Iterable[ActivityContribution], cfg: Config
+) -> tuple[RecordCurve, list[ActivitySummary]]:
+    """Phase INSTANTANÉE : agrège des contributions déjà calculées en courbe record."""
     durs = np.asarray(cfg.twin.record_durations_s, dtype=float)
     ndur = len(durs)
     # contributions éligibles par durée : (vga, vraw, date)
@@ -337,33 +388,18 @@ def build_record_curve(
     summaries: list[ActivitySummary] = []
     skipped: list[dict] = []
 
-    for act in activities:
-        if not act.is_running or act.duration_s < 60:
+    for c in contributions:
+        if c.summary is not None:
+            summaries.append(c.summary)
+        if c.skipped is not None:
+            skipped.append(c.skipped)
+        if c.vga is None:
             continue
-        try:
-            summary, vga, vraw = process_activity(act, cfg)
-        except Exception as exc:  # noqa: BLE001 — une activité brouillonne n'arrête pas l'agrégat
-            # ... mais elle doit être COMPTÉE : un diagnostic d'archive qui tait la casse ment.
-            skipped.append({
-                "date": act.start_time.date().isoformat() if act.start_time else None,
-                "reason": f"processing_error: {type(exc).__name__}",
-            })
-            continue
-        summaries.append(summary)
-
-        # sans altitude : impossible d'ajuster à la pente → hors courbe record (résumé conservé)
-        if not act.has_altitude:
-            skipped.append({"date": summary.date, "reason": "no_altitude"})
-            continue
-        # vitesse soutenue impossible pour de la course (vélo/artefact) → écartée
-        if _windowed_speed_reject(vraw, durs, cfg):
-            skipped.append({"date": summary.date, "reason": "sustained_speed"})
-            continue
-
+        vga, vraw = c.vga, c.vraw
         for j in range(ndur):
             if np.isfinite(vga[j]) and vga[j] > 0:
                 vr = float(vraw[j]) if np.isfinite(vraw[j]) else float("nan")
-                contrib[j].append((float(vga[j]), vr, summary.date))
+                contrib[j].append((float(vga[j]), vr, c.summary.date))
 
     if skipped:
         by_reason = Counter(s["reason"] for s in skipped)
@@ -416,5 +452,25 @@ def build_record_curve(
     )
 
 
-__all__ = ["ActivitySummary", "RecordPoint", "RecordCurve", "despike_stats",
-           "process_activity", "build_record_curve"]
+def build_record_curve(
+    activities: Iterable[CanonicalActivity], cfg: Config
+) -> tuple[RecordCurve, list[ActivitySummary]]:
+    """Agrège les activités de course → courbe record ajustée robuste + résumés par activité.
+
+    Durcissement (twin-theory §2.3, Problème A) contre les VC/exposants aberrants :
+      * une activité **sans altitude** ne peut pas être ajustée à la pente → exclue de la
+        courbe record (mais conservée dans les résumés pour la calibration/durabilité) ;
+      * une activité à **vitesse soutenue impossible** (fenêtre ≥ seuil) est écartée ;
+      * l'enveloppe est **robuste** : par durée, on retient la ``record_min_support``-ième
+        meilleure vitesse (repli sur la meilleure disponible aux durées rares), si bien
+        qu'**une seule** activité ne peut plus fixer VC ni l'exposant.
+
+    Composition des deux phases ci-dessus, en FLUX (générateur consommé paresseusement) :
+    la mémoire reste O(1 activité), comme avant la séparation.
+    """
+    return record_from_contributions(iter_contributions(activities, cfg), cfg)
+
+
+__all__ = ["ActivitySummary", "ActivityContribution", "RecordPoint", "RecordCurve",
+           "despike_stats", "process_activity", "build_record_curve",
+           "iter_contributions", "record_from_contributions"]

@@ -14,7 +14,8 @@ import numpy as np
 
 from ..config import Config
 from ..ingest.canonical import CanonicalActivity
-from .record import ActivitySummary, RecordCurve, build_record_curve
+from .record import (ActivitySummary, RecordCurve, build_record_curve,
+                     record_from_contributions)
 
 
 @dataclass(frozen=True)
@@ -175,9 +176,24 @@ def estimate_durability(summaries: list[ActivitySummary], cfg: Config) -> float 
     return float(np.median(vals)) if vals else None
 
 
+def build_twin_from_contributions(contributions, cfg: Config) -> Twin:
+    """Jumeau à partir de contributions DÉJÀ calculées (banc walk-forward).
+
+    Même arithmétique que :func:`build_twin` — seule la provenance des agrégats change.
+    Permet de décoder une archive une fois et d'en tirer N jumeaux (une coupure temporelle
+    par course rejouée) au lieu de N décodages : cf. ``ActivityContribution``.
+    """
+    record, summaries = record_from_contributions(contributions, cfg)
+    return _twin_from_record(record, summaries, cfg)
+
+
 def build_twin(activities: list[CanonicalActivity], cfg: Config) -> Twin:
     """Pipeline jumeau complet : courbe record → VC, E, durabilité."""
     record, summaries = build_record_curve(activities, cfg)
+    return _twin_from_record(record, summaries, cfg)
+
+
+def _twin_from_record(record, summaries, cfg: Config) -> Twin:
     cs = fit_critical_speed(record, cfg)
     alpha, E, coef = fit_endurance_exponent(record, cfg)
     dur = estimate_durability(summaries, cfg)
@@ -195,6 +211,7 @@ def build_twin(activities: list[CanonicalActivity], cfg: Config) -> Twin:
 __all__ = [
     "CriticalSpeed",
     "Twin",
+    "build_twin_from_contributions",
     "fit_critical_speed",
     "fit_endurance_exponent",
     "estimate_durability",
