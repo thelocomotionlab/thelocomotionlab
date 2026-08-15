@@ -57,6 +57,14 @@ def _print_summary(preview, out=None) -> None:
         )
         if pred.cross_validation:
             print(f"  Validation croisée : MAE {pred.cross_validation.mae_pct:.1f}%", file=out)
+
+    # mode OBJECTIF : le verdict s'affiche À CÔTÉ de la prédiction, jamais à sa place
+    tgt = getattr(preview, "target", None)
+    if tgt is not None:
+        servi = "plan ancré sur la cible" if tgt.plan_ok else "PAS de plan sur cette cible"
+        print(f"\n  Objectif demandé : {tgt.target_hours:.2f} h → {tgt.regime} ({servi})", file=out)
+        for r in tgt.reasons:
+            print(f"    · {r}", file=out)
     else:
         print("\n  Prédiction indisponible (données insuffisantes).", file=out)
 
@@ -72,6 +80,12 @@ def _build_parser() -> argparse.ArgumentParser:
                         "GPX-only — distance issue de la trace, découpage auto tous les N km)")
         sp.add_argument("--athlete", default="athlète")
         sp.add_argument("--purge", action="store_true", help="supprimer l'archive après parsing")
+        sp.add_argument("--target", default=None, metavar="DURÉE",
+                        help="mode OBJECTIF (ADR 0002) : durée VISÉE par l'athlète — « 31h », "
+                             "« 31h30 », « 31:00:00 » ou un nombre d'heures. Le plan est alors "
+                             "réparti sur cette cible (si le verdict de faisabilité l'autorise) "
+                             "et le rapport gagne la section « Ton objectif face à ton jumeau ». "
+                             "Prioritaire sur le champ target_hours de --race.")
         sp.add_argument("--until", default=None, metavar="AAAA-MM-JJ",
                         help="mode BACKTEST : écarte toute activité postérieure à cette date "
                              "(et les non datées — anti-fuite) ; la fraîcheur est jugée à "
@@ -96,6 +110,20 @@ def main(argv: list[str] | None = None) -> int:
     else:
         # Mode GPX-only : aucun ravitaillement → distance depuis la trace, découpage auto.
         race = RaceSpec(name=Path(args.course).stem)
+
+    # --target prime sur le champ target_hours de la spec (on tape une cible à la volée sans
+    # rééditer le JSON). Saisie illisible → sortie propre, jamais un plan sur la mauvaise durée.
+    if args.target is not None:
+        from dataclasses import replace
+
+        from ._dt import parse_duration_h
+
+        try:
+            race = replace(race, target_hours=parse_duration_h(args.target))
+        except ValueError as exc:
+            print(f"--target : {exc}", file=sys.stderr)
+            return 2
+
     course_gpx = Path(args.course).read_bytes()
 
     until = None

@@ -37,6 +37,9 @@ class PreviewResult:
     n_ingested: int
     n_skipped: int
     n_excluded_until: int = 0   # activités écartées par la coupure temporelle (mode backtest)
+    # mode OBJECTIF (ADR 0002) : verdict de faisabilité, calculé dès le preview pour que la
+    # question « mon objectif tient-il ? » ait une réponse AVANT paiement, sans PDF.
+    target: TargetAssessment | None = None
 
     def to_dict(self) -> dict:
         pred = self.prediction
@@ -60,6 +63,7 @@ class PreviewResult:
                 "skipped": self.n_skipped,
                 "excluded_after_until": self.n_excluded_until,
             },
+            "target": None if self.target is None else self.target.to_dict(),
         }
 
 
@@ -71,6 +75,7 @@ def analyze_preview(
     n_skipped: int = 0,
     analysis_date: date | None = None,
     until: date | None = None,
+    target_hours: float | None = None,
 ) -> PreviewResult:
     """Chaîne numérique complète (sans figures/PDF) → verdict + fourchette.
 
@@ -113,6 +118,13 @@ def analyze_preview(
     sufficiency = assess_sufficiency(
         twin, calibration, prediction, cfg, analysis_date=analysis_date or date.today()
     )
+    # mode OBJECTIF (ADR 0002) : le verdict se calcule ICI, pas plus loin — c'est la réponse
+    # à « mon objectif tient-il ? », et elle doit exister sans PDF (décision avant paiement).
+    target = (
+        assess_target(target_hours, course, twin, prediction, cfg)
+        if target_hours is not None else None
+    )
+
     return PreviewResult(
         sufficiency=sufficiency,
         prediction=prediction,
@@ -122,6 +134,7 @@ def analyze_preview(
         n_ingested=n_seen,
         n_skipped=n_skipped,
         n_excluded_until=n_excluded,
+        target=target,
     )
 
 
@@ -147,7 +160,8 @@ def run_preview(
     )
     course = build_course(course_gpx, race, cfg)
     try:
-        result = analyze_preview(stream, course, cfg, analysis_date=analysis_date, until=until)
+        result = analyze_preview(stream, course, cfg, analysis_date=analysis_date, until=until,
+                                 target_hours=race.target_hours)
     finally:
         if purge_source:
             purge_path(training_path)
@@ -196,18 +210,17 @@ def analyze_full(
     charge pas. Si la prédiction est impossible (🔴), on s'arrête au preview sans PDF.
     """
     preview = analyze_preview(activities, course, cfg, n_skipped=n_skipped,
-                              analysis_date=analysis_date, until=until)
+                              analysis_date=analysis_date, until=until,
+                              target_hours=race.target_hours)
     if preview.prediction is None:
-        return FullResult(preview=preview, plan=None, pdf_path=None, figures={})  # type: ignore[arg-type]
+        return FullResult(preview=preview, plan=None, pdf_path=None, figures={},  # type: ignore[arg-type]
+                          target=preview.target)
 
-    # MODE OBJECTIF (ADR 0002) : une cible dans la spec de course ouvre un second rendu.
-    # Elle n'ancre le plan que si le verdict de faisabilité l'autorise — un objectif hors
-    # des bornes de sécurité se rend en ÉCART chiffré, pas en plan de course. Dans les deux
-    # cas la prédiction reste calculée, affichée et consignée : le mode s'ajoute, il ne
-    # remplace pas.
-    target: TargetAssessment | None = None
-    if race.target_hours is not None:
-        target = assess_target(race.target_hours, course, preview.twin, preview.prediction, cfg)
+    # MODE OBJECTIF (ADR 0002) : la cible n'ancre le plan que si le verdict de faisabilité
+    # (calculé au preview) l'autorise — un objectif hors des bornes de sécurité se rend en
+    # ÉCART chiffré, pas en plan de course. Dans les deux cas la prédiction reste calculée,
+    # affichée et consignée : le mode s'ajoute, il ne remplace pas.
+    target = preview.target
 
     plan = build_pacing(
         course, preview.prediction, race, cfg, durability_pct=preview.twin.durability_pct,

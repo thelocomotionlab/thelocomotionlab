@@ -150,13 +150,16 @@ athlète en progression doit être présenté avec cette réserve explicite.
 |---|---|---|
 | 1 | Moteur : `RaceSpec.target_hours`, `build_pacing(anchor_hours=…)`, `feasibility.py`, constantes de config, tests (dont l'invariance) | **fait** |
 | 2 | Rapport : contexte, template LaTeX, narratif, rappel de la prédiction sur la figure de cumul ; câblage `pipeline.analyze_full` | **fait** |
-| 3 | CLI (`--target`) + champ optionnel de l'API (`/preview`, `/jobs`) | à faire |
+| 3 | CLI (`--target`) + champ optionnel de l'API (`/preview`, `/jobs`) | **fait** |
 | 4 | Champ structuré dans le formulaire du site (aujourd'hui : `objectifs` en texte libre dans `twin-depot`) | à faire |
 
-Depuis le lot 2, le mode s'active en posant `target_hours` dans la spec de course (`--race`) :
-`pipeline.analyze_full` calcule le verdict, n'ancre le plan que si `plan_ok`, et passe le tout au
-rapport. Le lot 3 n'ajoute que des **portes d'entrée** (drapeau CLI, champ HTTP), pas de
-comportement.
+Le mode s'active de trois façons, par priorité croissante : `target_hours` dans la spec de course,
+`--target` en ligne de commande, `target_hours` en champ de formulaire HTTP (le client envoie une
+spec figée et l'objectif de l'athlète à part).
+
+**Le verdict est calculé dès le `preview`** (`analyze_preview`), pas seulement au rapport : la
+question « mon objectif tient-il ? » doit avoir une réponse **avant paiement**, sans PDF. C'est
+`analyze_full` qui lit ensuite `preview.target` — un seul point de calcul.
 
 **Vérification du rendu LaTeX.** La compilation PDF réelle n'est exercée qu'avec XeLaTeX présent
 (image Docker) ; en CI le test est *skippé*. Le mode objectif ajoutant des blocs conditionnels au

@@ -167,14 +167,21 @@ une **durée visée** au lieu du temps prédit. **Utilisable dès maintenant** :
 { "name": "L'Échappée Belle", "target_hours": "31h", "start_time": "…", "aid_km": [ … ] }
 ```
 
+…ou, sans toucher au JSON, avec **`--target`** (qui prime sur la spec) :
+
 ```bash
-twin-engine full --training <archive> --course <parcours.gpx> --race <spec.json> --out ./out
+twin-engine preview --training <archive> --course <parcours.gpx> --target 31h     # verdict seul
+twin-engine full    --training <archive> --course <parcours.gpx> --race <spec.json> \
+                    --target 31h --out ./out                                       # + rapport
 ```
 
-Accepte `"31h"`, `"31h30"`, `"31:00:00"` ou un nombre d'heures. Le rapport gagne alors une section
-**« Ton objectif face à ton jumeau »**, le plan est réparti sur la cible, et le vocabulaire des
-fenêtres change (voir ci-dessous). Sans `target_hours`, le rapport est **exactement** celui d'avant.
-(Le drapeau `--target` en ligne de commande et le champ côté API arrivent au lot 3.)
+Côté **API**, `target_hours` est un champ de formulaire optionnel de `POST /preview` et
+`POST /jobs` (prioritaire sur la spec postée) — un objectif illisible renvoie **422**.
+
+Toutes les saisies acceptent `31h`, `31h30`, `31:00:00` ou un nombre d'heures. Le `preview` rend le
+**verdict de faisabilité sans PDF** (c'est la réponse à donner avant paiement) ; le `full` ajoute la
+section **« Ton objectif face à ton jumeau »**, répartit le plan sur la cible et change le
+vocabulaire des fenêtres (voir ci-dessous). Sans objectif, tout est **exactement** comme avant.
 
 À retenir :
 

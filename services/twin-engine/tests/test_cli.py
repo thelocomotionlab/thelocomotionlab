@@ -74,3 +74,59 @@ def test_cli_until_filters_and_rejects_bad_date(tmp_path, capsys, monkeypatch):
     assert payload["verdict"] == "🔴"
     assert payload["ingestion"]["excluded_after_until"] >= 1
     assert "écartée" in out.err
+
+
+# --------------------------------------------------------------------------- #
+# Mode OBJECTIF (ADR 0002) : --target, porte d'entrée du CLI.
+def _case(tmp_path, race_extra=None):
+    course = tmp_path / "course.gpx"
+    course.write_bytes(_triangle())
+    race = tmp_path / "race.json"
+    race.write_text(json.dumps({"name": "T", "aid_km": [0, 6, 12],
+                                "aid_names": ["d", "s", "a"], **(race_extra or {})}))
+    training = tmp_path / "perso.gpx"
+    training.write_bytes((FIX / "sample.gpx").read_bytes())
+    return str(training), str(course), str(race)
+
+
+def test_cli_target_flag_is_served_in_preview(tmp_path, capsys, monkeypatch):
+    monkeypatch.setenv("DATA_DIR", str(tmp_path / "data"))
+    training, course, race = _case(tmp_path)
+    rc = main(["preview", "--training", training, "--course", course, "--race", race,
+               "--target", "31h30"])
+    assert rc == 0
+    out = capsys.readouterr()
+    payload = json.loads(out.out)
+    assert payload["target"]["target_hours"] == 31.5
+    assert payload["target"]["regime"]                     # un verdict est toujours rendu
+    assert "Objectif demandé" in out.err                   # ... et résumé pour l'humain
+
+
+def test_cli_target_overrides_the_race_spec(tmp_path, capsys, monkeypatch):
+    """--target prime sur target_hours du JSON (cible à la volée sans rééditer la spec)."""
+    monkeypatch.setenv("DATA_DIR", str(tmp_path / "data"))
+    training, course, race = _case(tmp_path, {"target_hours": "20h"})
+    assert main(["preview", "--training", training, "--course", course, "--race", race]) == 0
+    assert json.loads(capsys.readouterr().out)["target"]["target_hours"] == 20.0
+
+    assert main(["preview", "--training", training, "--course", course, "--race", race,
+                 "--target", "12:30:00"]) == 0
+    assert json.loads(capsys.readouterr().out)["target"]["target_hours"] == 12.5
+
+
+def test_cli_rejects_unreadable_target(tmp_path, capsys, monkeypatch):
+    monkeypatch.setenv("DATA_DIR", str(tmp_path / "data"))
+    training, course, race = _case(tmp_path)
+    rc = main(["preview", "--training", training, "--course", course, "--race", race,
+               "--target", "bientôt"])
+    assert rc == 2                                          # sortie propre, pas de trace
+    assert "--target" in capsys.readouterr().err
+
+
+def test_cli_without_target_is_unchanged(tmp_path, capsys, monkeypatch):
+    monkeypatch.setenv("DATA_DIR", str(tmp_path / "data"))
+    training, course, race = _case(tmp_path)
+    assert main(["preview", "--training", training, "--course", course, "--race", race]) == 0
+    out = capsys.readouterr()
+    assert json.loads(out.out)["target"] is None
+    assert "Objectif demandé" not in out.err
