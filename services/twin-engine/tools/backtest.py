@@ -160,6 +160,10 @@ def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path) -
         },
         "model": {
             "verdict": result.sufficiency.verdict,
+            # POURQUOI le moteur refuse : sans ce champ, un 🔴 est un mur — on voit que la
+            # vente est bloquée, jamais par quel critère. C'est la différence entre « le
+            # garde-fou marche » et « le garde-fou refuse mes meilleurs cas ».
+            "blocking": [c.name for c in result.sufficiency.criteria if c.level == "🔴"],
             "regime": result.calibration.regime,
             "n_genuine": result.calibration.n_genuine,
             "n_eff": round(result.calibration.n_eff, 2),
