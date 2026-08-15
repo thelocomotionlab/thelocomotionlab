@@ -472,3 +472,24 @@ def test_frontiere_survives_an_empty_set():
 
     assert frontiere([], alpha=0.2, band="safety") == []
     assert frontiere([_entree(0, 5.0, verdict="🔴")], alpha=0.2, band="safety") == []
+
+
+def test_ab_recency_reports_the_hidden_cost_of_a_short_halflife(tmp_path, capsys):
+    """Une demi-vie courte réduit N_eff : le tableau doit le montrer, sinon on choisit à
+    l'aveugle une valeur qui corrige le biais en dégradant le régime."""
+    from twin_engine.config import load_config
+
+    from tools.ab_recency import evaluate, report
+
+    grid = (30.0, 365.0, 3650.0)
+    rows = evaluate([_manifest(tmp_path)], grid, load_config())
+    report(rows, grid)
+    out = capsys.readouterr().out
+    assert "N_eff" in out and "régr." in out and "Winkler" in out
+
+    def _neff(hl):
+        vals = [r["n_eff"] for r in rows if r["halflife"] == hl]
+        return sum(vals) / len(vals)
+
+    # 30 j écrase le passé, 3650 j garde tout : N_eff doit croître avec la demi-vie
+    assert _neff(30.0) <= _neff(365.0) <= _neff(3650.0)

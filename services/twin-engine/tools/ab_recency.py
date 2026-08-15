@@ -40,6 +40,7 @@ from twin_engine.config import load_config
 from twin_engine.course import RaceSpec, build_course
 
 from tools.backtest import ArchiveCache, parse_time_h
+from tools.registre import winkler
 
 DEFAULT_GRID = (90.0, 180.0, 270.0, 365.0, 548.0, 730.0)
 
@@ -95,6 +96,11 @@ def evaluate(manifests: list[Path], grid: tuple[float, ...], cfg) -> list[dict]:
                     "in_safety": (None if pred is None
                                   else bool(pred.interval_low_h <= actual
                                             <= pred.interval_high_h)),
+                    # score de Winkler NORMALISÉ par le réel : arbitre unique
+                    # finesse/calibration, comparable entre courses de durées inégales
+                    "winkler_rel": (None if pred is None else
+                                    winkler(pred.interval_low_h, pred.interval_high_h,
+                                            actual, 0.2) / actual),
                 })
     return rows
 
@@ -121,6 +127,7 @@ def _stats(rows: list[dict]) -> dict:
 
     errs = np.array([r["err_pct"] for r in scored], float)
     sold_errs = np.array([r["err_pct"] for r in sold], float) if sold else np.zeros(0)
+    wk = [r["winkler_rel"] for r in sold if r["winkler_rel"] is not None]
     return {
         "n": len(scored),
         "biais": float(errs.mean()),
@@ -130,12 +137,20 @@ def _stats(rows: list[dict]) -> dict:
         "mae_sold": None if not sold else float(np.abs(sold_errs).mean()),
         "cov50": _cov(scored, "in_plan"),
         "cov80": _cov(scored, "in_safety"),
+        # LE COÛT CACHÉ d'une demi-vie courte : elle réduit le nombre EFFECTIF d'ultras
+        # (N_eff de Kish). Sous calibration.min_ultras_regression, le moteur quitte le régime
+        # régression pour le repli « peu d'ultras » — moins biaisé, mais beaucoup plus flou,
+        # voire refusé. Un gain de biais payé en régimes dégradés n'est pas un gain.
+        "n_eff": float(np.mean([r["n_eff"] for r in scored])),
+        "n_regression": sum(1 for r in scored if r["regime"] == "regression"),
+        "winkler": None if not wk else float(np.mean(wk)),
     }
 
 
 
 def report(rows: list[dict], grid: tuple[float, ...]) -> None:
-    header = ("| demi-vie |  n | biais % |  MAE % | méd % | vendus | MAE vendus | couv50 | couv80 |")
+    header = ("| demi-vie |  n | biais % |  MAE % | vendus | MAE vendus | couv80 | "
+              "N_eff | régr. | Winkler |")
     sep = "|" + "-" * (len(header) - 2) + "|"
     for label, subset in (("cas FRAIS (décisionnels)", [r for r in rows if not r["dev_set"]]),
                           ("cas de DÉVELOPPEMENT (indicatifs)", [r for r in rows if r["dev_set"]])):
@@ -149,11 +164,12 @@ def report(rows: list[dict], grid: tuple[float, ...]) -> None:
             if not s["n"]:
                 continue
             mae_sold = "     —" if s["mae_sold"] is None else f"{s['mae_sold']:6.1f}"
-            cov50 = "     —" if s["cov50"] is None else f"{s['cov50']:6.0f}"
             cov80 = "     —" if s["cov80"] is None else f"{s['cov80']:6.0f}"
+            wk = "      —" if s["winkler"] is None else f"{s['winkler']:7.3f}"
             marque = " ←défaut" if hl == 365.0 else ""
             print(f"| {hl:8.0f} | {s['n']:2d} | {s['biais']:+7.1f} | {s['mae']:6.1f} | "
-                  f"{s['med']:5.1f} | {s['n_sold']:6d} | {mae_sold} | {cov50} | {cov80} |{marque}")
+                  f"{s['n_sold']:6d} | {mae_sold} | {cov80} | {s['n_eff']:5.1f} | "
+                  f"{s['n_regression']:5d} | {wk} |{marque}")
 
         # par athlète : un gain global qui vient d'un seul athlète n'est pas un gain
         athletes = sorted({r["athlete"] for r in subset})
@@ -183,7 +199,15 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(rows, ensure_ascii=False, indent=2))
         return 0
     report(rows, grid)
-    print("\nRappel : aucune recalibration sous 8-10 cas frais, décision au score, jamais sur "
+    print("\nComment lire : le BIAIS doit tendre vers 0 et le WINKLER baisser (il arbitre "
+          "finesse et couverture d'un seul nombre). Surveille N_eff et la colonne « régr. » : "
+          "une demi-vie courte réduit le nombre effectif d'ultras et peut faire quitter le "
+          "régime régression — biais corrigé, mais prédiction plus floue. Un gain de biais "
+          "payé en régimes dégradés n'est pas un gain.", file=sys.stderr)
+    print("Pour appliquer une valeur retenue : calibration.recency_halflife_days dans "
+          "twin.config.json, puis pytest + tools.ab_montagnhard + entrée DIAGNOSTIC "
+          "(protocole CLAUDE.md).", file=sys.stderr)
+    print("Rappel : aucune recalibration sous 8-10 cas frais, décision au score, jamais sur "
           "un athlète isolé (docs/twin-registre-couverture.md).", file=sys.stderr)
     return 0
 
