@@ -216,6 +216,7 @@ PYTHONPATH=src python -m tools.ab_montagnhard      # A/B σ/MAE/interp/extrap �
 PYTHONPATH=src python -m tools.backtest <manifest> # walk-forward --until : prédiction veille de course vs réel
 PYTHONPATH=src python -m tools.registre [--json]   # couverture des intervalles, biais, score de Winkler
 PYTHONPATH=src python -m tools.ab_recency <manifests…>  # balaye la demi-vie de récence (biais de progression)
+PYTHONPATH=src python -m tools.registre --frontiere # jusqu'où resserrer les bandes sans perdre la couverture
 ```
 
 > ⚠️ Ne **jamais** enchaîner `--dry-run` puis le run réel : le dry-run fait 100 % du calcul et

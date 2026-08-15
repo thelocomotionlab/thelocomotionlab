@@ -409,3 +409,66 @@ def test_ab_recency_only_touches_calibration(tmp_path):
         if f.name != "calibration":
             assert getattr(variante, f.name) == getattr(cfg, f.name), f"{f.name} modifié"
     assert variante.calibration.recency_halflife_days == 90.0
+
+
+# --------------------------------------------------------------------------- #
+# Frontière finesse/calibration (tools/registre --frontiere).
+def _entree(err_pct, demi_largeur_pct, *, verdict="🟢", central=20.0, dev=False):
+    """Une entrée de registre synthétique : erreur du central et largeur de bande choisies."""
+    actual = central / (1 + err_pct / 100.0)
+    demi = central * demi_largeur_pct / 100.0
+    return {
+        "athlete": "T", "race": f"C{err_pct}", "date": "2026-01-01", "dev_set": dev,
+        "dnf": False, "official_time_h": actual,
+        "model": {"verdict": verdict},
+        "prediction": {
+            "central_h": central,
+            "safety_low_h": central - demi, "safety_high_h": central + demi,
+            "plan_low_h": central - demi / 2, "plan_high_h": central + demi / 2,
+            "err_pct": err_pct,
+        },
+    }
+
+
+def test_frontiere_widens_and_scores():
+    from tools.registre import frontiere
+
+    # bande beaucoup trop étroite (±1 %) face à des erreurs de ±10 % : élargir doit payer
+    entries = [_entree(e, 1.0) for e in (-10, -5, 0, 5, 10)]
+    rows = frontiere(entries, alpha=0.2, band="safety")
+    widths = [r["width_rel_pct"] for r in rows]
+    assert widths == sorted(widths)                       # la largeur croît avec k
+    covs = [r["coverage_pct"] for r in rows]
+    assert covs == sorted(covs)                           # la couverture aussi
+    best = min(rows, key=lambda r: r["winkler_rel"])
+    assert best["k"] > 1.0                                # ... et l'optimum est à ÉLARGIR
+
+
+def test_frontiere_detects_room_to_tighten():
+    """Bande absurdement large face à des erreurs minuscules : le score doit dire « resserre »."""
+    from tools.registre import frontiere
+
+    entries = [_entree(e, 40.0) for e in (-1, -0.5, 0, 0.5, 1)]
+    best = min(frontiere(entries, alpha=0.2, band="safety"),
+               key=lambda r: r["winkler_rel"])
+    assert best["k"] < 1.0
+
+
+def test_frontiere_ignores_refused_cases_by_default():
+    """La question est « jusqu'où resserrer ce que je VENDS » : les 🔴 n'en font pas partie."""
+    from tools.registre import frontiere
+
+    entries = [_entree(e, 5.0) for e in (-3, 0, 3)]
+    entries.append(_entree(300.0, 5.0, verdict="🔴"))     # refus catastrophique
+    vendus = frontiere(entries, alpha=0.2, band="safety")
+    tous = frontiere(entries, alpha=0.2, band="safety", sellable_only=False)
+    assert vendus[0]["n"] == 3 and tous[0]["n"] == 4
+    # le refus, s'il comptait, ferait exploser le score à toute largeur
+    assert min(r["winkler_rel"] for r in vendus) < min(r["winkler_rel"] for r in tous)
+
+
+def test_frontiere_survives_an_empty_set():
+    from tools.registre import frontiere
+
+    assert frontiere([], alpha=0.2, band="safety") == []
+    assert frontiere([_entree(0, 5.0, verdict="🔴")], alpha=0.2, band="safety") == []

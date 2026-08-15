@@ -62,6 +62,8 @@ agrégats seulement) ; `tools/registre.py` calcule couverture, biais, score de W
 quantiles groupés.
 
 ```
+# 0. « jusqu'où puis-je resserrer sans mentir ? » — frontière finesse/calibration :
+PYTHONPATH=src python -m tools.registre --frontiere
 # 1. un manifeste par athlète (cf. docstring de tools/backtest.py pour le format) :
 #    { "athlete": "Pseudo", "archive": "export.zip",
 #      "races": [{"name": "…", "date": "2025-06-14", "official_time": "26:30:00",

@@ -171,10 +171,99 @@ def summarize(entries: list[dict]) -> dict:
     return out
 
 
+def frontiere(entries: list[dict], *, alpha: float = 0.2, band: str = "safety",
+              sellable_only: bool = True,
+              grid=(0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0, 4.0, 5.0)) -> list[dict]:
+    """Frontière FINESSE / CALIBRATION : que donnerait la bande servie, élargie ou resserrée ?
+
+    Une bande large est toujours « juste » et ne vaut rien : l'objectif est la finesse SOUS
+    CONTRAINTE de calibration (Gneiting & Raftery 2007). Le juge est le score de Winkler
+    — largeur + (2/α)·dépassement — qui punit les deux travers d'un seul nombre.
+
+    Pour chaque facteur ``k``, la bande est dilatée AUTOUR DU CENTRAL (``central ± k·demi-
+    largeur``, asymétrie préservée) puis re-scorée sur les cas réellement courus. On lit
+    d'un coup : le ``k`` qui atteint la couverture nominale, et le ``k`` qui minimise
+    Winkler. S'ils diffèrent, c'est le second qui a raison — il intègre le coût de la
+    largeur, pas seulement celui des ratés.
+
+    ⚠ Le ``k`` optimal se lit sur les cas FRAIS et n'a de sens qu'à partir de 8-10 d'entre
+    eux (règle pré-enregistrée). En dessous, c'est un thermomètre, pas une décision.
+    """
+    lo_key, hi_key = (("safety_low_h", "safety_high_h") if band == "safety"
+                      else ("plan_low_h", "plan_high_h"))
+    # Par défaut, seuls les cas VENDABLES (🟢/🟠) comptent : la question est « jusqu'où
+    # puis-je resserrer ce que je VENDS ». Mêler les refus (🔴), dont les erreurs vont
+    # jusqu'à +372 %, ferait croire qu'aucune largeur ne suffit — alors que le garde-fou
+    # les a précisément écartés du produit.
+    rows = [e for e in _finished(entries)
+            if e["prediction"].get(lo_key) is not None
+            and e["prediction"].get(hi_key) is not None
+            and (not sellable_only or _verdict(e) in ("🟢", "🟠"))]
+    out: list[dict] = []
+    if not rows:
+        return out
+    for k in grid:
+        widths, scores, covered = [], [], 0
+        for e in rows:
+            p, y = e["prediction"], e["official_time_h"]
+            c = p["central_h"]
+            lo = c - k * (c - p[lo_key])
+            hi = c + k * (p[hi_key] - c)
+            widths.append((hi - lo) / c)
+            scores.append(winkler(lo, hi, y, alpha) / c)   # normalisé : cas de durées inégales
+            covered += int(lo <= y <= hi)
+        out.append({
+            "k": k, "n": len(rows),
+            "coverage_pct": 100.0 * covered / len(rows),
+            "width_rel_pct": 100.0 * float(np.mean(widths)),
+            "winkler_rel": float(np.mean(scores)),
+        })
+    return out
+
+
+def _print_frontiere(label: str, entries: list[dict], *, alpha: float, band: str,
+                     nominal_pct: float, sellable_only: bool = True) -> None:
+    rows = frontiere(entries, alpha=alpha, band=band, sellable_only=sellable_only)
+    if not rows:
+        print(f"\n== frontière finesse/calibration — {label} : aucun cas exploitable ==")
+        return
+    best = min(rows, key=lambda r: r["winkler_rel"])
+    # plus petit k atteignant la couverture nominale (None si aucun de la grille n'y arrive)
+    atteint = next((r for r in rows if r["coverage_pct"] >= nominal_pct), None)
+    perim = "VENDUS seulement" if sellable_only else "tous cas finis"
+    print(f"\n== frontière finesse/calibration — {label} "
+          f"(bande {band}, nominal {nominal_pct:.0f} %, {perim}, n={rows[0]['n']}) ==")
+    print("  facteur | couverture | largeur moy. | Winkler (plus BAS = mieux)")
+    for r in rows:
+        marques = []
+        if r is best:
+            marques.append("← meilleur score")
+        if atteint is not None and r is atteint:
+            marques.append("← 1er à couvrir")
+        if abs(r["k"] - 1.0) < 1e-9:
+            marques.append("← servi aujourd'hui")
+        print(f"  ×{r['k']:5.2f} | {r['coverage_pct']:8.0f} % | {r['width_rel_pct']:10.1f} % | "
+              f"{r['winkler_rel']:8.3f}  {' '.join(marques)}")
+    if atteint is None:
+        print(f"  ⚠ aucun facteur de la grille n'atteint {nominal_pct:.0f} % de couverture : "
+              "le problème n'est pas la largeur mais l'ERREUR DU CENTRAL — élargir ne suffira "
+              "pas, il faut réduire le biais (cf. tools/ab_recency).")
+    elif best["k"] < 1.0:
+        print(f"  → marge de resserrement : ×{best['k']:.2f} minimise le score tout en "
+              f"couvrant {best['coverage_pct']:.0f} %.")
+    else:
+        print(f"  → pas de marge de resserrement : l'optimum est à ×{best['k']:.2f} "
+              "(les bandes servies sont trop étroites pour ce qu'elles promettent).")
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="registre", description=__doc__.split("\n")[0])
     ap.add_argument("registre", nargs="?", default=str(DEFAULT_REGISTRE))
     ap.add_argument("--json", action="store_true", help="sortie JSON brute")
+    ap.add_argument("--frontiere", action="store_true",
+                    help="trace la frontière finesse/calibration : couverture et score de "
+                         "Winkler pour une grille de facteurs d'échelle sur les bandes "
+                         "servies — dit de COMBIEN on peut resserrer sans mentir")
     ap.add_argument("--quarantine", nargs=4, metavar=("ATHLETE", "COURSE", "DATE", "MOTIF"),
                     help="met une entrée en quarantaine (exclue des stats, conservée et "
                          "visible avec son motif — jamais de suppression silencieuse)")
@@ -204,8 +293,24 @@ def main(argv: list[str] | None = None) -> int:
             [e for e in entries if e.get("dev_set")],
     }
     if args.json:
-        print(json.dumps({k: summarize(v) for k, v in groups.items()},
-                         ensure_ascii=False, indent=2))
+        payload = {k: summarize(v) for k, v in groups.items()}
+        if args.frontiere:
+            payload["frontiere"] = {
+                k: {"safety": frontiere(v, alpha=0.2, band="safety"),
+                    "plan": frontiere(v, alpha=0.5, band="plan"),
+                    "safety_tous_cas": frontiere(v, alpha=0.2, band="safety",
+                                                 sellable_only=False)}
+                for k, v in groups.items()
+            }
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.frontiere:
+        for label, group in groups.items():
+            _print_frontiere(label, group, alpha=0.2, band="safety", nominal_pct=80.0)
+            _print_frontiere(label, group, alpha=0.5, band="plan", nominal_pct=50.0)
+        print("\nRappel : le facteur optimal ne se décide QUE sur les cas frais, et pas avant "
+              "8-10 d'entre eux (docs/twin-registre-couverture.md).", file=sys.stderr)
         return 0
 
     for label, group in groups.items():
