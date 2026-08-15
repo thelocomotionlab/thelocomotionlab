@@ -212,15 +212,27 @@ prédiction. Or le moteur neutralise DÉJÀ ces manques là où ils comptent :
 Refuser en plus, c'est punir deux fois le même risque — sur un signal qui, au banc, ne prédit
 pas l'erreur.
 
-**Correctif (`sufficiency.quality_policy`, DÉFAUT `cap_orange`).** La qualité plafonne le
-verdict à 🟠 au lieu de forcer 🔴 : on vend en prévenant, avec le détail chiffré conservé et
-une raison explicite (« signalé, pas bloquant — les activités sans altitude sont déjà écartées
-de la courbe record »). Rollback : `quality_policy="red"`.
+**Premier correctif tenté — `cap_orange` (qualité jamais bloquante) : MESURÉ, INSUFFISANT.**
+Le banc a tranché en une passe. Gains réels : Val passe de 0 à 3 cas vendables (−6,3 / −6,7 /
+−0,3 %), « Qualité » disparaît des motifs de refus, et le bloc développement atteint ses
+meilleurs chiffres (MAE vendus **6,1 %**, couverture 80 %, n=10). **Mais les cas FRAIS —
+les seuls décisionnels — se dégradent** : MAE vendus 10,6 → **16,4 %**, couverture 50 →
+**25 %**. Cause : la course Coursières 100k 2025 de Rapace (archive quasi vide avant la
+coupure) devient vendable avec **+35,7 %** d'erreur. La qualité bloquait Val à tort ET Rapace
+à raison — par accident.
 
-**Preuves.** Suite committée 266 passed / 1 skipped ; `tools.ab_montagnhard` reproduit le
+**Correctif retenu — `quality_policy="cv_gated"` (DÉFAUT).** La qualité est un signal de
+REPLI : elle ne dit rien quand la **validation croisée** existe (celle-ci mesure directement
+ce que vaut le modèle sur CET athlète, ce qu'aucune fraction de canaux ne saura faire), et
+elle redevient un garde-fou légitime quand cette preuve manque. Concrètement : non bloquante
+si `prediction.cross_validation` existe, bloquante sinon. Val (validé) reste vendable ;
+Rapace (aucune validation possible, moins de 3 vrais ultras aux coupures) reste refusé.
+Rollbacks : `cap_orange` (jamais bloquante) et `red` (comportement d'origine).
+
+**Preuves.** Suite committée 267 passed / 1 skipped ; `tools.ab_montagnhard` reproduit le
 tableau §4 à l'identique (le correctif ne touche que le VERDICT, aucun chiffre du modèle).
-Vérification terrain attendue au prochain banc : Val doit passer de 6/6 refusé à vendable,
-et le motif « Qualité » doit disparaître du décompte des refus.
+Vérification terrain au prochain banc : Val vendable, Rapace toujours refusé, « Qualité »
+absente des motifs, et les cas frais qui REVIENNENT à MAE ≈ 10 % / couverture 50 %.
 
 ## 6. Limite assumée du proxy d'enveloppe
 
