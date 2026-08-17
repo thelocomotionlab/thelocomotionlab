@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   analyserRiche,
+  encreDe,
   fonteDe,
   largeurLigne,
   lignesRiches,
@@ -130,5 +131,34 @@ describe("paragraphesRiches", () => {
 
   it("ignore les paragraphes vides", () => {
     expect(paragraphesRiches(ctxFactice(), "\n\n  \n\n", 900, BASE)).toEqual([]);
+  });
+});
+
+describe("couleurs nommées", () => {
+  it("reconnaît un préfixe de couleur connu", () => {
+    expect(analyserRiche("[bleu: froid]")).toEqual([
+      { texte: "froid", accent: true, couleur: "bleu" },
+    ]);
+  });
+
+  it("accepte les accents et les majuscules du nom", () => {
+    expect(analyserRiche("[Fuchsia: x]")[0].couleur).toBe("fuchsia");
+  });
+
+  it("laisse [texte] sur l'ambre du thème", () => {
+    expect(analyserRiche("[chaud]")).toEqual([{ texte: "chaud", accent: true }]);
+  });
+
+  it("ne mange pas un préfixe INCONNU", () => {
+    // « note: » n'est pas une couleur : c'est du texte, il doit rester écrit.
+    expect(analyserRiche("[note: à voir]")).toEqual([{ texte: "note: à voir", accent: true }]);
+  });
+
+  it("résout l'ambre par le thème, les autres par la charte", () => {
+    const base = { accent: "#C08327", couleur: "#222" };
+    expect(encreDe({ accent: true }, base)).toBe("#C08327");
+    expect(encreDe({ accent: true, couleur: "ambre" }, base)).toBe("#C08327");
+    expect(encreDe({ accent: true, couleur: "bleu" }, base)).toBe("#8CB9BD");
+    expect(encreDe({}, base)).toBe("#222");
   });
 });

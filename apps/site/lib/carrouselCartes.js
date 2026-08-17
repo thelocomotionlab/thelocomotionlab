@@ -774,10 +774,24 @@ function ligneFactuelle(trace, bilan) {
  * qu'on attrape à la souris.
  */
 function dessinerCarte(ctx, format, o) {
-  const { carte, trace, segments, police, logo, fond, m, th, index, total } = o;
+  const { carte, trace, police, logo, fond, m, th, index, total } = o;
   const boites = [];
   const fenetre = fenetreCarte(format);
-  const view = trace?.coords?.length ? vueDeLaCarte(trace.coords, format.cle) : null;
+
+  /* LA TRACE DE CADRAGE n'est pas forcément celle qu'on dessine.
+     Une série qui révèle l'itinéraire jour après jour (J1, puis J1+J2…) doit
+     garder LE MÊME cadre d'une planche à l'autre : sinon la carte saute à
+     chaque image et la série ne se lit plus comme un tout. On cadre donc sur
+     la trace de référence — l'itinéraire complet, jamais tracé — et on ne
+     dessine que ce que la carte demande. Même chose pour le profil : son
+     domaine (les kilomètres en abscisse, les altitudes en ordonnée) vient de
+     la référence, la couleur ne remplit que ce qui est acquis. */
+  const cadre = o.traceCadre ?? trace;
+  const view = cadre?.coords?.length ? vueDeLaCarte(cadre.coords, format.cle) : null;
+
+  // `jusquA` : n'afficher que les n premières journées. `null` = tout.
+  const segments =
+    carte.jusquA == null ? (o.segments ?? []) : (o.segments ?? []).slice(0, carte.jusquA + 1);
 
   if (view && fond && carte.afficherFond !== false) {
     ctx.drawImage(
@@ -806,13 +820,13 @@ function dessinerCarte(ctx, format, o) {
 
   const couleurs = couleursDesJours(carte, segments);
 
-  if (view) {
+  if (view && cadre?.coords?.length) {
     const epaisseur = Math.max(3, 7.5 * m.k);
     // L'itinéraire ENTIER, en sourdine : il tient la forme du parcours même là
     // où aucune journée n'est mise en avant.
     polyligne(
       ctx,
-      decimerPixels(trace.coords.map((c) => view.project(c))),
+      decimerPixels(cadre.coords.map((c) => view.project(c))),
       th.cle === "clair" ? "rgba(34, 36, 30, 0.28)" : "rgba(254, 251, 246, 0.24)",
       epaisseur * 0.62,
       false,
@@ -843,6 +857,7 @@ function dessinerCarte(ctx, format, o) {
     accent: carte.enteteAccent,
     logo,
     marque: carte.marque,
+    filet: carte.filetEntete !== false,
     opacite: carte.enteteOpacite,
   });
 
@@ -873,7 +888,7 @@ function dessinerCarte(ctx, format, o) {
     y -= m.surtitre * 2.1;
   }
 
-  if (carte.afficherProfil !== false && trace?.profil?.length > 1) {
+  if (carte.afficherProfil !== false && cadre?.profil?.length > 1) {
     const boite = {
       x: m.pad,
       y: y - m.profilH,
@@ -881,11 +896,11 @@ function dessinerCarte(ctx, format, o) {
       height: m.profilH,
     };
     dessinerProfil(ctx, boite, th, {
-      profil: trace.profil,
-      totalKm: trace.totalKm,
+      profil: cadre.profil,
+      totalKm: cadre.totalKm,
       segments: segments.length > 1 ? segments : null,
       couleurs,
-      doneKm: carte.bilan ? trace.totalKm : 0,
+      doneKm: carte.jusquA != null ? (segments[segments.length - 1]?.kmFin ?? 0) : carte.bilan ? trace.totalKm : 0,
     });
   }
 
@@ -895,6 +910,7 @@ function dessinerCarte(ctx, format, o) {
     centre: carte.piedCentre,
     droite: carte.piedDroite,
     fleche: carte.piedFleche,
+    filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
   });
   if (view && fond && carte.afficherFond !== false) attributionVerticale(ctx, format, m, th, police);
@@ -957,7 +973,7 @@ function dessinerPhoto(ctx, format, o) {
     accent: carte.enteteAccent,
     logo,
     marque: carte.marque,
-    filet: !carte.image,
+    filet: carte.filetEntete !== false && !carte.image,
     opacite: carte.enteteOpacite,
   });
 
@@ -999,6 +1015,7 @@ function dessinerPhoto(ctx, format, o) {
     centre: carte.piedCentre,
     droite: carte.piedDroite,
     fleche: carte.piedFleche,
+    filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
   });
   return [];
@@ -1012,6 +1029,7 @@ function dessinerTexte(ctx, format, o) {
     accent: carte.enteteAccent,
     logo,
     marque: carte.marque,
+    filet: carte.filetEntete !== false,
     opacite: carte.enteteOpacite,
   });
 
@@ -1031,6 +1049,7 @@ function dessinerTexte(ctx, format, o) {
     centre: carte.piedCentre,
     droite: carte.piedDroite,
     fleche: carte.piedFleche,
+    filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
   });
   return [];
@@ -1077,6 +1096,7 @@ function dessinerChiffres(ctx, format, o) {
     accent: carte.enteteAccent,
     logo,
     marque: carte.marque,
+    filet: carte.filetEntete !== false,
     opacite: carte.enteteOpacite,
   });
 
@@ -1151,6 +1171,7 @@ function dessinerChiffres(ctx, format, o) {
     centre: carte.piedCentre,
     droite: carte.piedDroite,
     fleche: carte.piedFleche,
+    filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
   });
   return [];
@@ -1207,7 +1228,7 @@ function dessinerBandeau(ctx, format, o) {
     accent: carte.enteteAccent,
     logo,
     marque: carte.marque,
-    filet: !carte.image,
+    filet: carte.filetEntete !== false && !carte.image,
     opacite: carte.enteteOpacite,
   });
 
@@ -1226,6 +1247,7 @@ function dessinerBandeau(ctx, format, o) {
     centre: carte.piedCentre,
     droite: carte.piedDroite,
     fleche: carte.piedFleche,
+    filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
   });
   return [];
@@ -1249,6 +1271,7 @@ function dessinerFiche(ctx, format, o) {
     accent: carte.enteteAccent,
     logo,
     marque: carte.marque,
+    filet: carte.filetEntete !== false,
     opacite: carte.enteteOpacite,
   });
 
@@ -1303,6 +1326,7 @@ function dessinerFiche(ctx, format, o) {
     centre: carte.piedCentre,
     droite: carte.piedDroite,
     fleche: carte.piedFleche,
+    filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
   });
   return [];
@@ -1401,7 +1425,7 @@ function dessinerCloture(ctx, format, o) {
     accent: carte.enteteAccent,
     logo,
     marque: carte.marque ?? "rien", // la marque est déjà au centre, en grand
-    filet: false,
+    filet: carte.filetEntete === true,
     opacite: carte.enteteOpacite,
   });
   bandePied(ctx, format, m, th, police, {
@@ -1410,7 +1434,7 @@ function dessinerCloture(ctx, format, o) {
     centre: carte.piedCentre,
     droite: carte.piedDroite,
     fleche: carte.piedFleche ?? "jamais", // c'est la fin : il n'y a plus rien à glisser
-    filet: false,
+    filet: carte.filetPied === true,
     opacite: carte.piedOpacite,
   });
   return [];

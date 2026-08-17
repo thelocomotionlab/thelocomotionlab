@@ -214,11 +214,17 @@ function ficheParDefaut(trace, segments) {
   ];
 }
 
-let compteur = 0;
-function carteNeuve(gabarit, trace, segments, bilan = false) {
-  compteur += 1;
+/**
+ * `id` est fourni par l'appelant, JAMAIS tiré d'un compteur de module.
+ *
+ * Un compteur au niveau du module survit d'une requête à l'autre côté serveur :
+ * le rendu SSR pouvait sortir « c7 » là où le client, module frais, sortait
+ * « c1 ». Des `key` différentes, et React refusait d'hydrater l'arbre — avec un
+ * message qui accusait le bouton « Avancer cette carte », très loin de la cause.
+ */
+function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0") {
   return {
-    id: `c${compteur}`,
+    id,
     gabarit,
     /* --- contenu --- */
     entete: "",
@@ -252,6 +258,11 @@ function carteNeuve(gabarit, trace, segments, bilan = false) {
     /** auto | toujours | jamais */
     piedFleche: "auto",
     centrer: false,
+    /** Les filets sous l'en-tête et au-dessus du pied. */
+    filetEntete: gabarit !== "cloture",
+    filetPied: gabarit !== "cloture",
+    /** N'afficher que les n+1 premières journées. `null` = tout. */
+    jusquA: null,
     /* --- propres aux gabarits --- */
     etiquettes: [],
     afficherFond: true,
@@ -287,7 +298,11 @@ function clotureParDefaut(bilan) {
   };
   return bilan
     ? {
-        ...commun, surtitre: "c'est fini", titre: "Merci d'avoir suivi.", texte: "Le récit complet arrive sur le site." }
+        ...commun,
+        surtitre: "c'est fini",
+        titre: "Merci d'avoir suivi.",
+        texte: "Le récit complet arrive sur le site.",
+      }
     : {
         ...commun,
         surtitre: "à suivre en direct",
@@ -313,6 +328,12 @@ export default function CarrouselAtelier() {
   const canvasRef = useRef(null);
   const boitesRef = useRef([]);
   const glisseRef = useRef(null);
+  /** Les identifiants de cartes, propres à CETTE instance (cf. carteNeuve). */
+  const idRef = useRef(0);
+  const idNeuf = useCallback(() => {
+    idRef.current += 1;
+    return `c${idRef.current}`;
+  }, []);
 
   const [trace, setTrace] = useState(null);
   const [formatCle, setFormatCle] = useState("carrousel");
@@ -321,8 +342,12 @@ export default function CarrouselAtelier() {
   // Un carrousel annonce une aventure ou la raconte — jamais les deux.
   const [bilan, setBilan] = useState(false);
   const [coupures, setCoupures] = useState([]);
+  /** L'itinéraire COMPLET, jamais dessiné : il ne sert qu'à figer le cadrage. */
+  const [traceCadre, setTraceCadre] = useState(null);
   // L'atelier démarre sur une carte de texte : utilisable sans rien charger.
-  const [cartes, setCartes] = useState(() => [carteNeuve("texte", null, [], false)]);
+  const [cartes, setCartes] = useState(() => [
+    carteNeuve("texte", null, [], false, "c0"),
+  ]);
   const [active, setActive] = useState(0);
   const [fond, setFond] = useState(null);
   const [marque, setMarque] = useState(null);
@@ -358,7 +383,9 @@ export default function CarrouselAtelier() {
   // clair, et l'inverse sur un fond sombre.
   useEffect(() => {
     let vivant = true;
-    chargerMarqueTeintee(carte?.couleurLogo || carte?.couleurTitre || theme.encre)
+    chargerMarqueTeintee(
+      carte?.couleurLogo || carte?.couleurTitre || theme.encre,
+    )
       .then((c) => vivant && setMarque(c))
       .catch(() => {});
     return () => {
@@ -375,13 +402,13 @@ export default function CarrouselAtelier() {
     // `chargerFond` l'absorbe. Tout passe donc par la promesse — un setState
     // posé directement dans le corps de l'effet déclencherait un rendu en
     // cascade (et le lint le refuse, à raison).
-    chargerFond(vueDeLaCarte(trace?.coords ?? [], formatCle))
+    chargerFond(vueDeLaCarte((traceCadre ?? trace)?.coords ?? [], formatCle))
       .then((f) => vivant && setFond(f))
       .catch(() => vivant && setFond(null));
     return () => {
       vivant = false;
     };
-  }, [trace, formatCle]);
+  }, [trace, traceCadre, formatCle]);
 
   /**
    * @param {object|null} t
@@ -397,35 +424,38 @@ export default function CarrouselAtelier() {
     jonctionsRef.current = km;
   }, []);
 
-  const appliquerTrace = useCallback((t, deLAventure = false) => {
-    if (!t) {
-      setEtat({
-        occupe: false,
-        message: "Fichier illisible — attendu un .gpx ou un .track.json.",
-      });
-      return;
-    }
-    setTrace(t);
-    setBilan(Boolean(t.vecue));
-    // Une sortie DÉJÀ FAITE est d'un seul tenant par défaut : elle se raconte,
-    // elle ne se planifie plus. Un itinéraire prévu, lui, se découpe.
-    const auto = deLAventure
-      ? coupuresDepuisWaypoints(liveConfig.aventure.waypoints, t.totalKm)
-      : [];
-    setCoupures(
-      auto.length ? auto : t.vecue ? [] : coupuresRegulieres(t.totalKm, 2),
-    );
+  const appliquerTrace = useCallback(
+    (t, deLAventure = false) => {
+      if (!t) {
+        setEtat({
+          occupe: false,
+          message: "Fichier illisible — attendu un .gpx ou un .track.json.",
+        });
+        return;
+      }
+      setTrace(t);
+      setBilan(Boolean(t.vecue));
+      // Une sortie DÉJÀ FAITE est d'un seul tenant par défaut : elle se raconte,
+      // elle ne se planifie plus. Un itinéraire prévu, lui, se découpe.
+      const auto = deLAventure
+        ? coupuresDepuisWaypoints(liveConfig.aventure.waypoints, t.totalKm)
+        : [];
+      setCoupures(
+        auto.length ? auto : t.vecue ? [] : coupuresRegulieres(t.totalKm, 2),
+      );
 
-    // On ne jette JAMAIS un texte déjà écrit : la carte de l'itinéraire remplace
-    // une planche vierge, et s'ajoute derrière les autres.
-    setCartes((cs) => {
-      const neuve = carteNeuve("carte", t, [], Boolean(t.vecue));
-      if (cs.every(estVierge)) return [neuve];
-      setActive(cs.length);
-      return [...cs, neuve];
-    });
-    setEtat({ occupe: false, message: "" });
-  }, []);
+      // On ne jette JAMAIS un texte déjà écrit : la carte de l'itinéraire remplace
+      // une planche vierge, et s'ajoute derrière les autres.
+      setCartes((cs) => {
+        const neuve = carteNeuve("carte", t, [], Boolean(t.vecue), idNeuf());
+        if (cs.every(estVierge)) return [neuve];
+        setActive(cs.length);
+        return [...cs, neuve];
+      });
+      setEtat({ occupe: false, message: "" });
+    },
+    [idNeuf],
+  );
 
   /**
    * Un fichier, ou PLUSIEURS recollés bout à bout.
@@ -439,11 +469,16 @@ export default function CarrouselAtelier() {
    */
   const chargerFichierTrace = useCallback(
     async (e) => {
-      const fichiers = [...(e.target.files ?? [])].sort((a, b) => a.name.localeCompare(b.name, "fr"));
+      const fichiers = [...(e.target.files ?? [])].sort((a, b) =>
+        a.name.localeCompare(b.name, "fr"),
+      );
       if (fichiers.length === 0) return;
       setEtat({
         occupe: true,
-        message: fichiers.length > 1 ? `Lecture de ${fichiers.length} traces…` : "Lecture de la trace…",
+        message:
+          fichiers.length > 1
+            ? `Lecture de ${fichiers.length} traces…`
+            : "Lecture de la trace…",
       });
       try {
         const traces = [];
@@ -466,6 +501,32 @@ export default function CarrouselAtelier() {
     },
     [appliquerTrace, setCoupuresApresFusion],
   );
+
+  /** La référence ne remplace RIEN : elle se pose à côté, et fige le cadre. */
+  const chargerReference = useCallback(async (e) => {
+    const fichiers = [...(e.target.files ?? [])].sort((a, b) =>
+      a.name.localeCompare(b.name, "fr"),
+    );
+    if (fichiers.length === 0) return;
+    setEtat({ occupe: true, message: "Lecture de la référence…" });
+    try {
+      const traces = [];
+      for (const file of fichiers) {
+        const texte = await file.text();
+        const t = file.name.endsWith(".json")
+          ? traceDepuisTrackJson(JSON.parse(texte))
+          : traceDepuisGpx(texte);
+        if (t) traces.push(t);
+      }
+      setTraceCadre(fusionnerTraces(traces));
+      setEtat({ occupe: false, message: "" });
+    } catch {
+      setEtat({
+        occupe: false,
+        message: "Référence illisible — attendu un .gpx ou un .track.json.",
+      });
+    }
+  }, []);
 
   const chargerAventure = useCallback(async () => {
     setEtat({ occupe: true, message: "Chargement de l'itinéraire…" });
@@ -520,10 +581,13 @@ export default function CarrouselAtelier() {
   // veut voir. Son index est la longueur ACTUELLE de la liste.
   const ajouterCarte = useCallback(
     (gabarit) => {
-      setCartes((cs) => [...cs, carteNeuve(gabarit, trace, segments, bilan)]);
+      setCartes((cs) => [
+        ...cs,
+        carteNeuve(gabarit, trace, segments, bilan, idNeuf()),
+      ]);
       setActive(cartes.length);
     },
-    [trace, segments, bilan, cartes.length],
+    [trace, segments, bilan, cartes.length, idNeuf],
   );
 
   const supprimerCarte = useCallback((i) => {
@@ -575,13 +639,23 @@ export default function CarrouselAtelier() {
       format: formatCle,
       theme: themeCle,
       trace,
+      traceCadre,
       segments,
       police: policeUbuntu(),
       logo: marque,
       fond,
       total: cartes.length,
     }),
-    [formatCle, themeCle, trace, segments, marque, fond, cartes.length],
+    [
+      formatCle,
+      themeCle,
+      trace,
+      traceCadre,
+      segments,
+      marque,
+      fond,
+      cartes.length,
+    ],
   );
 
   useEffect(() => {
@@ -842,7 +916,10 @@ export default function CarrouselAtelier() {
           />
 
           <label className={LEGENDE} htmlFor="titre">
-            Titre <span className="font-normal opacity-60">— le balisage marche aussi ici</span>
+            Titre{" "}
+            <span className="font-normal opacity-60">
+              — le balisage marche aussi ici
+            </span>
           </label>
           <input
             id="titre"
@@ -858,7 +935,9 @@ export default function CarrouselAtelier() {
               — une ligne vide sépare deux paragraphes
             </span>
           </label>
-          <p className="mb-1 font-mono text-[12px] text-brand-text/50">{AIDE_BALISAGE}</p>
+          <p className="mb-1 font-mono text-[12px] text-brand-text/50">
+            {AIDE_BALISAGE}
+          </p>
           <textarea
             id="texte"
             rows={4}
@@ -866,6 +945,25 @@ export default function CarrouselAtelier() {
             onChange={(e) => majCarte({ texte: e.target.value })}
             className={`${CHAMP} mb-3 resize-y`}
           />
+
+          <div className="mb-3 flex flex-col gap-1.5">
+            <label className={CASE}>
+              <input
+                type="checkbox"
+                checked={carte?.filetEntete !== false}
+                onChange={(e) => majCarte({ filetEntete: e.target.checked })}
+              />
+              Ligne sous l&rsquo;en-tête
+            </label>
+            <label className={CASE}>
+              <input
+                type="checkbox"
+                checked={carte?.filetPied !== false}
+                onChange={(e) => majCarte({ filetPied: e.target.checked })}
+              />
+              Ligne au-dessus du pied
+            </label>
+          </div>
 
           <p className={LEGENDE}>Pied de page</p>
           <select
@@ -993,7 +1091,9 @@ export default function CarrouselAtelier() {
               max={260}
               step={2}
               value={carte.tailleCercle ?? 128}
-              onChange={(e) => majCarte({ tailleCercle: Number(e.target.value) })}
+              onChange={(e) =>
+                majCarte({ tailleCercle: Number(e.target.value) })
+              }
               className="mb-3 w-full accent-brand-primary-dark"
             />
             <label className={LEGENDE} htmlFor="cercle-trait">
@@ -1006,13 +1106,16 @@ export default function CarrouselAtelier() {
               max={16}
               step={1}
               value={carte.epaisseurCercle ?? 4}
-              onChange={(e) => majCarte({ epaisseurCercle: Number(e.target.value) })}
+              onChange={(e) =>
+                majCarte({ epaisseurCercle: Number(e.target.value) })
+              }
               className="mb-3 w-full accent-brand-primary-dark"
             />
             {carte.image && (
               <>
                 <label className={LEGENDE} htmlFor="cloture-voile">
-                  Voile sur la photo — {Math.round((carte.voileCloture ?? 0.62) * 100)} %
+                  Voile sur la photo —{" "}
+                  {Math.round((carte.voileCloture ?? 0.62) * 100)} %
                 </label>
                 <input
                   id="cloture-voile"
@@ -1021,7 +1124,9 @@ export default function CarrouselAtelier() {
                   max={1}
                   step={0.02}
                   value={carte.voileCloture ?? 0.62}
-                  onChange={(e) => majCarte({ voileCloture: Number(e.target.value) })}
+                  onChange={(e) =>
+                    majCarte({ voileCloture: Number(e.target.value) })
+                  }
                   className="mb-3 w-full accent-brand-primary-dark"
                 />
               </>
@@ -1148,6 +1253,36 @@ export default function CarrouselAtelier() {
               />
               Profil altimétrique
             </label>
+
+            {segments.length > 1 && (
+              <>
+                <label className={LEGENDE} htmlFor="jusqu-a">
+                  Afficher
+                </label>
+                <select
+                  id="jusqu-a"
+                  value={carte.jusquA ?? ""}
+                  onChange={(e) =>
+                    majCarte({
+                      jusquA:
+                        e.target.value === "" ? null : Number(e.target.value),
+                    })
+                  }
+                  className={`${CHAMP} mb-1`}
+                >
+                  <option value="">Tout l&rsquo;itinéraire</option>
+                  {segments.map((sg, i) => (
+                    <option key={`jusqua-${sg.kmDebut}`} value={i}>
+                      Jusqu&rsquo;à la journée {i + 1}
+                    </option>
+                  ))}
+                </select>
+                <p className="mb-3 font-heading text-[12px] text-brand-text/45">
+                  Une carte par valeur, et la série révèle l&rsquo;itinéraire
+                  jour après jour. Le cadre, lui, ne bouge pas.
+                </p>
+              </>
+            )}
 
             <label className={LEGENDE} htmlFor="nb-jours">
               Nombre de journées
@@ -1463,6 +1598,37 @@ export default function CarrouselAtelier() {
               />
             </label>
           </div>
+          {/* LE CADRAGE, séparément. Elle n'est jamais dessinée : elle sert à
+              figer la carte et le profil pendant qu'on révèle l'itinéraire. */}
+          <p className={`${LEGENDE} mt-4`}>Trace de référence (cadrage)</p>
+          <label className={`${BOUTON_SECOND} w-full cursor-pointer`}>
+            <Route size={16} aria-hidden />
+            {traceCadre
+              ? `${Math.round(traceCadre.totalKm)} km — cadre figé`
+              : "Aucune"}
+            <input
+              type="file"
+              multiple
+              accept=".gpx,.json,application/gpx+xml,application/json"
+              onChange={chargerReference}
+              className="sr-only"
+            />
+          </label>
+          {traceCadre && (
+            <button
+              type="button"
+              onClick={() => setTraceCadre(null)}
+              className="mt-1 font-heading text-[12px] text-brand-text/50 underline"
+            >
+              retirer la référence
+            </button>
+          )}
+          <p className="mt-1 font-heading text-[12px] text-brand-text/45">
+            Jamais dessinée. Elle fixe le cadre de la carte et l&rsquo;échelle
+            du profil, pour qu&rsquo;une série J1, J1+J2, J1+J2+J3… ne saute pas
+            d&rsquo;une planche à l&rsquo;autre.
+          </p>
+
           {trace ? (
             <>
               <p className="mt-3 font-heading text-[13px] text-brand-text/60">
@@ -1501,9 +1667,10 @@ export default function CarrouselAtelier() {
             </>
           ) : (
             <p className="mt-3 font-heading text-[13px] text-brand-text/55">
-              Facultatif — seul le gabarit « Carte » en a besoin. Plusieurs fichiers d&rsquo;un coup
-              sont recollés bout à bout, dans l&rsquo;ordre de leur nom, et chaque jonction devient
-              une fin de journée.
+              Facultatif — seul le gabarit « Carte » en a besoin. Plusieurs
+              fichiers d&rsquo;un coup sont recollés bout à bout, dans
+              l&rsquo;ordre de leur nom, et chaque jonction devient une fin de
+              journée.
             </p>
           )}
         </Section>
