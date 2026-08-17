@@ -16,8 +16,6 @@
 //   • un titre en Ubuntu Bold, deux lignes maximum ;
 //   • un corps en régulier, aéré, jamais d'italique ni de gras ;
 //   • un pied paginé « 05 / 10 » et un « GLISSE → » tant qu'il reste une carte.
-// Des rayures diagonales très faibles donnent du grain au fond, pour qu'un
-// aplat ne soit jamais tout à fait mort.
 //
 // L'APERÇU EST L'IMAGE FINALE : le canvas est dimensionné en pixels de sortie
 // et seulement réduit en CSS. Ce qu'on voit est ce qu'on exporte, au pixel près.
@@ -70,7 +68,6 @@ export const THEMES = {
     filet: "rgba(254, 251, 246, 0.15)",
     accent: "#EFB159",
     accentAire: "239, 177, 89",
-    rayure: "rgba(254, 251, 246, 0.030)",
     /** Voile posé sur les tuiles : elles sont claires et très bavardes. */
     voileCarte: "rgba(16, 18, 14, 0.34)",
     voileTexte: "16, 18, 14",
@@ -86,7 +83,6 @@ export const THEMES = {
     filet: "rgba(34, 36, 30, 0.14)",
     accent: "#C08327",
     accentAire: "192, 131, 39",
-    rayure: "rgba(34, 36, 30, 0.026)",
     voileCarte: "rgba(254, 251, 246, 0.30)",
     voileTexte: "254, 251, 246",
     profilRestant: "rgba(34, 36, 30, 0.38)",
@@ -95,9 +91,11 @@ export const THEMES = {
 
 export const GABARITS = [
   { cle: "carte", label: "Carte", aide: "L'itinéraire et son profil, découpés en journées." },
+  { cle: "bandeau", label: "Bandeau", aide: "Une photo en bandeau haut, le texte dessous." },
   { cle: "photo", label: "Photo", aide: "Une photo plein cadre." },
   { cle: "texte", label: "Texte", aide: "Un surtitre, un titre, un paragraphe." },
-  { cle: "chiffres", label: "Chiffres", aide: "Les statistiques en grand." },
+  { cle: "fiche", label: "Fiche", aide: "Des libellés à gauche, des valeurs en gros à droite." },
+  { cle: "chiffres", label: "Chiffres", aide: "Une statistique en très grand." },
 ];
 
 /**
@@ -254,22 +252,6 @@ export async function chargerFond(view, options = {}) {
 
 /* ------------------------------------------------------------------ chrome commun */
 
-/** Rayures diagonales très faibles : du grain, pas un motif. Elles se voient
- *  sur un aplat et disparaissent sous une photo — c'est voulu. */
-function rayures(ctx, format, th) {
-  ctx.save();
-  ctx.strokeStyle = th.rayure;
-  ctx.lineWidth = Math.max(1, 9 * (format.width / 1080));
-  const pas = 26 * (format.width / 1080);
-  ctx.beginPath();
-  for (let x = -format.height; x < format.width + format.height; x += pas) {
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x + format.height, format.height);
-  }
-  ctx.stroke();
-  ctx.restore();
-}
-
 function voileTexte(ctx, format, th, depuis) {
   const g = ctx.createLinearGradient(0, depuis, 0, format.height);
   g.addColorStop(0, `rgba(${th.voileTexte}, 0)`);
@@ -285,7 +267,7 @@ function voileTexte(ctx, format, th, depuis) {
  * droite, un filet dessous. C'est la ligne qui dit « c'est une planche du
  * labo » sans avoir à occuper le titre.
  */
-function bandeEntete(ctx, format, m, th, police, { texte, logo }) {
+function bandeEntete(ctx, format, m, th, police, { texte, accent, logo, filet = true }) {
   const base = m.bandeH - Math.round(46 * m.k);
 
   let x = m.pad;
@@ -302,17 +284,34 @@ function bandeEntete(ctx, format, m, th, police, { texte, logo }) {
   dessinerTexteEspace(ctx, MARQUE, x, base, m.entete, 0.28);
 
   if (texte) {
-    ctx.font = `400 ${m.entete}px ${police}`;
-    ctx.fillStyle = th.encreFaible;
-    const mots = String(texte).toUpperCase();
-    // Mesure à la main : l'interlettrage n'est pas dans `measureText`.
-    let largeur = 0;
-    for (const l of mots) largeur += ctx.measureText(l).width + 0.28 * m.entete;
-    dessinerTexteEspace(ctx, mots, format.width - m.pad - largeur + 0.28 * m.entete, base, m.entete, 0.28);
+    ctx.font = `${accent ? 500 : 400} ${m.entete}px ${police}`;
+    ctx.fillStyle = accent ? th.accent : th.encreFaible;
+    dessinerTexteEspace(
+      ctx,
+      String(texte).toUpperCase(),
+      format.width - m.pad - largeurEspacee(ctx, String(texte).toUpperCase(), m.entete, 0.28),
+      base,
+      m.entete,
+      0.28,
+    );
   }
 
-  ctx.fillStyle = th.filet;
-  ctx.fillRect(m.pad, m.bandeH, format.width - m.pad * 2, Math.max(1, 1.5 * m.k));
+  if (filet) {
+    ctx.fillStyle = th.filet;
+    ctx.fillRect(m.pad, m.bandeH, format.width - m.pad * 2, Math.max(1, 1.5 * m.k));
+  }
+}
+
+/**
+ * Largeur d'un texte à interlettrage imposé. `measureText` ignore l'écart
+ * ajouté entre les lettres : sans ce calcul, tout ce qui est aligné à DROITE
+ * déborde de la marge d'autant de fois l'écart qu'il y a de caractères.
+ * Le dernier écart ne compte pas — il n'y a pas de lettre après.
+ */
+function largeurEspacee(ctx, texte, taille, espacementEm) {
+  let largeur = 0;
+  for (const l of texte) largeur += ctx.measureText(l).width + espacementEm * taille;
+  return Math.max(0, largeur - espacementEm * taille);
 }
 
 /**
@@ -369,39 +368,59 @@ function paragraphes(ctx, texte, largeurMax) {
  * reste une carte derrière. La flèche est DESSINÉE — les fontes du site sont
  * des sous-ensembles latins et n'ont pas U+2192 (elle sortirait en carré).
  */
-function bandePied(ctx, format, m, th, police, { index, total }) {
-  ctx.fillStyle = th.filet;
-  ctx.fillRect(m.pad, m.piedFilet, format.width - m.pad * 2, Math.max(1, 1.5 * m.k));
+function bandePied(ctx, format, m, th, police, { index, total, centre, droite, filet = true }) {
+  if (filet) {
+    ctx.fillStyle = th.filet;
+    ctx.fillRect(m.pad, m.piedFilet, format.width - m.pad * 2, Math.max(1, 1.5 * m.k));
+  }
 
   ctx.font = `400 ${m.piedTexte}px ${police}`;
   ctx.fillStyle = th.encreFaible;
   const numero = `${String(index + 1).padStart(2, "0")} / ${String(total).padStart(2, "0")}`;
   dessinerTexteEspace(ctx, numero, m.pad, m.piedBase, m.piedTexte, 0.24);
 
-  if (index < total - 1) {
-    const mot = "GLISSE";
-    let largeur = 0;
-    for (const l of mot) largeur += ctx.measureText(l).width + 0.24 * m.piedTexte;
-    const fleche = m.piedTexte * 1.5;
-    const x = format.width - m.pad - largeur - fleche;
-    dessinerTexteEspace(ctx, mot, x, m.piedBase, m.piedTexte, 0.24);
-
-    // Flèche horizontale, tracée à la main.
-    const y = m.piedBase - m.piedTexte * 0.32;
-    const x0 = format.width - m.pad - fleche * 0.9;
-    const x1 = format.width - m.pad;
-    ctx.strokeStyle = th.encreFaible;
-    ctx.lineWidth = Math.max(1.5, 1.8 * m.k);
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.beginPath();
-    ctx.moveTo(x0, y);
-    ctx.lineTo(x1, y);
-    ctx.moveTo(x1 - m.piedTexte * 0.34, y - m.piedTexte * 0.3);
-    ctx.lineTo(x1, y);
-    ctx.lineTo(x1 - m.piedTexte * 0.34, y + m.piedTexte * 0.3);
-    ctx.stroke();
+  if (centre) {
+    const mot = String(centre).toUpperCase();
+    const largeur = largeurEspacee(ctx, mot, m.piedTexte, 0.24);
+    dessinerTexteEspace(ctx, mot, (format.width - largeur) / 2, m.piedBase, m.piedTexte, 0.24);
   }
+
+  // À droite : le texte qu'on a écrit, ou « GLISSE → » par défaut tant qu'il
+  // reste une carte derrière. Un texte explicite l'emporte toujours — c'est le
+  // seul moyen de signer la DERNIÈRE carte (« merci », « lien en bio »…).
+  const motDroite = droite ? String(droite).toUpperCase() : index < total - 1 ? "GLISSE" : null;
+  if (!motDroite) return;
+
+  const avecFleche = !droite && index < total - 1;
+  const fleche = avecFleche ? m.piedTexte * 1.5 : 0;
+  const largeur = largeurEspacee(ctx, motDroite, m.piedTexte, 0.24);
+  dessinerTexteEspace(
+    ctx,
+    motDroite,
+    format.width - m.pad - largeur - fleche,
+    m.piedBase,
+    m.piedTexte,
+    0.24,
+  );
+
+  if (!avecFleche) return;
+  // Flèche horizontale, tracée à la main. Le canvas SAIT afficher U+2192 — il
+  // retombe sur une fonte système — mais justement : la flèche arriverait dans
+  // un dessin qui n'est pas celui d'Ubuntu, et changerait d'un appareil à
+  // l'autre. On la trace pour qu'elle soit la même partout.
+  const y = m.piedBase - m.piedTexte * 0.32;
+  const x1 = format.width - m.pad;
+  ctx.strokeStyle = th.encreFaible;
+  ctx.lineWidth = Math.max(1.5, 1.8 * m.k);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(x1 - fleche * 0.9, y);
+  ctx.lineTo(x1, y);
+  ctx.moveTo(x1 - m.piedTexte * 0.34, y - m.piedTexte * 0.3);
+  ctx.lineTo(x1, y);
+  ctx.lineTo(x1 - m.piedTexte * 0.34, y + m.piedTexte * 0.3);
+  ctx.stroke();
 }
 
 /* ------------------------------------------------------------------ le profil */
@@ -420,7 +439,8 @@ function bandePied(ctx, format, m, th, police, { index, total }) {
 const AIRE_OPACITE = 0.46;
 const CRETE_OPACITE = 0.9;
 
-function dessinerProfil(ctx, boite, th, { profil, totalKm, segments, couleurs, doneKm }) {
+function dessinerProfil(ctx, boite, th, options) {
+  const { profil, totalKm, segments, couleurs, doneKm } = options;
   const points = (profil ?? []).filter((p) => Number.isFinite(p?.km) && Number.isFinite(p?.alt));
   if (points.length < 2) return;
   const total = totalKm > 0 ? totalKm : points[points.length - 1].km;
@@ -428,8 +448,28 @@ function dessinerProfil(ctx, boite, th, { profil, totalKm, segments, couleurs, d
 
   const alts = points.map((p) => p.alt);
   const min = Math.min(...alts);
-  const amplitude = Math.max(1, Math.max(...alts) - min);
-  const X = (km) => boite.x + (Math.max(0, Math.min(total, km)) / total) * boite.width;
+  const max = Math.max(...alts);
+  const amplitude = Math.max(1, max - min);
+
+  /* Les altitudes se posent dans une GOUTTIÈRE réservée à droite, pas par-dessus
+     le relief : sur une boucle, l'arrivée redescend au niveau du départ et le
+     « 900 m » tombait pile sur la fin du tracé. La silhouette est donc tracée
+     un peu plus étroite — c'est la même convention qu'un axe de graphique. */
+  const tailleAlt = Math.max(11, boite.height * 0.115);
+  let gouttiere = 0;
+  if (options.altitudes !== false) {
+    ctx.save();
+    ctx.font = `400 ${tailleAlt}px ${options.police ?? "sans-serif"}`;
+    gouttiere =
+      Math.max(
+        ctx.measureText(`${formatEntier(max)} m`).width,
+        ctx.measureText(`${formatEntier(min)} m`).width,
+      ) + tailleAlt * 0.7;
+    ctx.restore();
+  }
+  const largeurTrace = Math.max(boite.width * 0.5, boite.width - gouttiere);
+
+  const X = (km) => boite.x + (Math.max(0, Math.min(total, km)) / total) * largeurTrace;
   const Y = (alt) => boite.y + (1 - (alt - min) / amplitude) * boite.height;
   const base = boite.y + boite.height;
 
@@ -496,6 +536,33 @@ function dessinerProfil(ctx, boite, th, { profil, totalKm, segments, couleurs, d
       ctx.stroke();
     }
     ctx.restore();
+  }
+
+  /* Les deux altitudes qui bornent la silhouette. Discrètes par construction :
+     ce sont des REPÈRES, pas une échelle — le profil reste une silhouette
+     étirée sur toute la hauteur, comme celui de /live. Le maximum se pose au ras
+     du plafond, le minimum sur la ligne de base, avec un tiret de rappel. */
+  if (options.altitudes !== false) {
+    ctx.font = `400 ${tailleAlt}px ${options.police ?? "sans-serif"}`;
+    ctx.fillStyle = th.encreFaible;
+    ctx.textAlign = "right";
+    const x = boite.x + boite.width;
+    const yMax = boite.y + tailleAlt * 0.9;
+    const yMin = base - tailleAlt * 0.14;
+    ctx.fillText(`${formatEntier(max)} m`, x, yMax);
+    ctx.fillText(`${formatEntier(min)} m`, x, yMin);
+    ctx.textAlign = "left";
+
+    // Deux tirets fins relient le chiffre au niveau qu'il désigne — sans eux,
+    // les nombres flottent et rien ne dit qu'ils bornent la silhouette.
+    ctx.strokeStyle = th.filet;
+    ctx.lineWidth = Math.max(1, boite.height * 0.008);
+    for (const y of [yMax - tailleAlt * 0.32, yMin - tailleAlt * 0.32]) {
+      ctx.beginPath();
+      ctx.moveTo(boite.x + largeurTrace + tailleAlt * 0.2, y);
+      ctx.lineTo(boite.x + boite.width - gouttiere + tailleAlt * 0.45, y);
+      ctx.stroke();
+    }
   }
 }
 
@@ -645,7 +712,6 @@ function dessinerCarte(ctx, format, o) {
     ctx.fillStyle = th.voileCarte;
     ctx.fillRect(0, 0, format.width, format.height);
   }
-  rayures(ctx, format, th);
   voileTexte(ctx, format, th, fenetre.y + fenetre.height);
   // La bande d'en-tête doit rester lisible par-dessus les tuiles.
   if (view && fond && carte.afficherFond !== false) {
@@ -690,7 +756,11 @@ function dessinerCarte(ctx, format, o) {
     });
   }
 
-  bandeEntete(ctx, format, m, th, police, { texte: carte.entete, logo });
+  bandeEntete(ctx, format, m, th, police, {
+    texte: carte.entete,
+    accent: carte.enteteAccent,
+    logo,
+  });
 
   /* Bloc du bas : profil, surtitre, titre, ligne factuelle. Construit de bas en
      haut pour que le titre pousse le profil, jamais l'inverse. */
@@ -732,10 +802,17 @@ function dessinerCarte(ctx, format, o) {
       segments: segments.length > 1 ? segments : null,
       couleurs,
       doneKm: carte.bilan ? trace.totalKm : 0,
+      altitudes: carte.afficherAltitudes !== false,
+      police,
     });
   }
 
-  bandePied(ctx, format, m, th, police, { index, total });
+  bandePied(ctx, format, m, th, police, {
+    index,
+    total,
+    centre: carte.piedCentre,
+    droite: carte.piedDroite,
+  });
   if (view && fond && carte.afficherFond !== false) {
     ctx.font = `400 ${Math.round(m.piedTexte * 0.86)}px ${police}`;
     ctx.fillStyle = th.encreFaible;
@@ -746,9 +823,16 @@ function dessinerCarte(ctx, format, o) {
   return boites;
 }
 
-/** LA PHOTO — plein cadre, le texte posé dessus. */
+/**
+ * LA PHOTO — plein cadre, le texte posé dessus.
+ *
+ * Les deux dégradés se règlent SÉPARÉMENT : une photo dont le ciel est déjà
+ * sombre n'a pas besoin d'être assombrie en haut, et une photo dont on veut
+ * garder le premier plan intact n'a pas besoin de l'être en bas. Sans dégradé,
+ * le texte reste écrit — c'est à l'auteur de vérifier qu'il se lit.
+ */
 function dessinerPhoto(ctx, format, o) {
-  const { carte, trace, police, logo, m, th, index, total } = o;
+  const { carte, police, logo, m, th, index, total } = o;
 
   if (carte.image) {
     const c = cadrageCouverture(
@@ -757,17 +841,22 @@ function dessinerPhoto(ctx, format, o) {
       carte.ancrage ?? 0.5,
     );
     if (c) ctx.drawImage(carte.image, c.sx, c.sy, c.sw, c.sh, c.dx, c.dy, c.dw, c.dh);
-  } else {
-    rayures(ctx, format, th);
   }
-  voileTexte(ctx, format, th, format.height * 0.42);
-  const g = ctx.createLinearGradient(0, 0, 0, m.bandeH * 1.5);
-  g.addColorStop(0, `rgba(${th.voileTexte}, ${carte.image ? 0.72 : 0})`);
-  g.addColorStop(1, `rgba(${th.voileTexte}, 0)`);
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, format.width, m.bandeH * 1.5);
+  if (carte.degradeBas !== false) voileTexte(ctx, format, th, format.height * 0.42);
+  if (carte.degradeHaut !== false && carte.image) {
+    const g = ctx.createLinearGradient(0, 0, 0, m.bandeH * 1.5);
+    g.addColorStop(0, `rgba(${th.voileTexte}, 0.72)`);
+    g.addColorStop(1, `rgba(${th.voileTexte}, 0)`);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, format.width, m.bandeH * 1.5);
+  }
 
-  bandeEntete(ctx, format, m, th, police, { texte: carte.entete, logo });
+  bandeEntete(ctx, format, m, th, police, {
+    texte: carte.entete,
+    accent: carte.enteteAccent,
+    logo,
+    filet: !carte.image,
+  });
 
   let y = m.piedFilet - Math.round(34 * m.k);
   const factuelle = carte.pied ?? "";
@@ -802,15 +891,23 @@ function dessinerPhoto(ctx, format, o) {
   }
   if (carte.surtitre) surtitre(ctx, m, th, police, carte.surtitre, m.pad, y);
 
-  bandePied(ctx, format, m, th, police, { index, total });
+  bandePied(ctx, format, m, th, police, {
+    index,
+    total,
+    centre: carte.piedCentre,
+    droite: carte.piedDroite,
+  });
   return [];
 }
 
 /** LE TEXTE — surtitre, titre, paragraphes. La respiration du carrousel. */
 function dessinerTexte(ctx, format, o) {
   const { carte, police, logo, m, th, index, total } = o;
-  rayures(ctx, format, th);
-  bandeEntete(ctx, format, m, th, police, { texte: carte.entete, logo });
+  bandeEntete(ctx, format, m, th, police, {
+    texte: carte.entete,
+    accent: carte.enteteAccent,
+    logo,
+  });
 
   const largeur = format.width - m.pad * 2;
   let y = m.bandeH + Math.round(112 * m.k);
@@ -822,7 +919,12 @@ function dessinerTexte(ctx, format, o) {
   }
   y = blocTitreEtCorps(ctx, format, m, th, police, carte, y, largeur);
 
-  bandePied(ctx, format, m, th, police, { index, total });
+  bandePied(ctx, format, m, th, police, {
+    index,
+    total,
+    centre: carte.piedCentre,
+    droite: carte.piedDroite,
+  });
   return [];
 }
 
@@ -872,8 +974,11 @@ function blocTitreEtCorps(ctx, format, m, th, police, carte, yDepart, largeur, e
  *  seule journée. */
 function dessinerChiffres(ctx, format, o) {
   const { carte, trace, segments, police, logo, m, th, index, total } = o;
-  rayures(ctx, format, th);
-  bandeEntete(ctx, format, m, th, police, { texte: carte.entete, logo });
+  bandeEntete(ctx, format, m, th, police, {
+    texte: carte.entete,
+    accent: carte.enteteAccent,
+    logo,
+  });
 
   const seg = carte.segment != null ? segments[carte.segment] : null;
   const distanceKm = Number.isFinite(carte.distanceKm)
@@ -951,16 +1056,165 @@ function dessinerChiffres(ctx, format, o) {
     }
   }
 
-  bandePied(ctx, format, m, th, police, { index, total });
+  bandePied(ctx, format, m, th, police, {
+    index,
+    total,
+    centre: carte.piedCentre,
+    droite: carte.piedDroite,
+  });
   return [];
 }
 
 /* ------------------------------------------------------------------ dispatcheur */
 
+/**
+ * LE BANDEAU — une photo en haut, le texte dessous, sur le fond du thème.
+ *
+ * La différence avec le gabarit Photo n'est pas cosmétique : ici l'image ne
+ * porte PAS le texte, elle l'annonce. Le texte revient sur l'aplat du thème, où
+ * il se lit toujours, quelle que soit la photo. C'est la mise en page qui
+ * supporte le plus de photos différentes sans réglage.
+ *
+ * Le bas du bandeau se fond dans le fond de page : une coupure franche
+ * ressemblerait à une image collée, pas à une planche composée.
+ */
+function dessinerBandeau(ctx, format, o) {
+  const { carte, police, logo, m, th, index, total } = o;
+  const hauteur = Math.round(format.height * (carte.bandeauPart ?? 0.42));
+
+  if (carte.image) {
+    const c = cadrageCouverture(
+      { width: carte.image.width, height: carte.image.height },
+      { width: format.width, height: hauteur },
+      carte.ancrage ?? 0.5,
+    );
+    if (c) ctx.drawImage(carte.image, c.sx, c.sy, c.sw, c.sh, 0, 0, format.width, hauteur);
+
+    if (carte.degradeBas !== false) {
+      const fondu = Math.round(hauteur * 0.42);
+      const g = ctx.createLinearGradient(0, hauteur - fondu, 0, hauteur);
+      g.addColorStop(0, `rgba(${th.voileTexte}, 0)`);
+      g.addColorStop(0.55, `rgba(${th.voileTexte}, 0.55)`);
+      g.addColorStop(1, `rgba(${th.voileTexte}, 1)`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, hauteur - fondu, format.width, fondu);
+    }
+    if (carte.degradeHaut !== false) {
+      const g = ctx.createLinearGradient(0, 0, 0, m.bandeH * 1.4);
+      g.addColorStop(0, `rgba(${th.voileTexte}, 0.74)`);
+      g.addColorStop(1, `rgba(${th.voileTexte}, 0)`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, format.width, m.bandeH * 1.4);
+    }
+  } else {
+    ctx.fillStyle = th.filet;
+    ctx.fillRect(0, 0, format.width, hauteur);
+  }
+
+  bandeEntete(ctx, format, m, th, police, {
+    texte: carte.entete,
+    accent: carte.enteteAccent,
+    logo,
+    filet: !carte.image,
+  });
+
+  const largeur = format.width - m.pad * 2;
+  let y = hauteur + Math.round(74 * m.k);
+  if (carte.surtitre) {
+    ctx.fillStyle = th.accent;
+    surtitre(ctx, m, th, police, carte.surtitre, m.pad, y);
+    y += m.surtitre * 1.3;
+  }
+  blocTitreEtCorps(ctx, format, m, th, police, carte, y, largeur);
+
+  bandePied(ctx, format, m, th, police, {
+    index,
+    total,
+    centre: carte.piedCentre,
+    droite: carte.piedDroite,
+  });
+  return [];
+}
+
+/**
+ * LA FICHE — un libellé à gauche, une valeur en gros à droite, une ligne par
+ * donnée.
+ *
+ * C'est le gabarit qui détaille des chiffres sans les mettre en très grand :
+ * là où « Chiffres » assène UNE valeur, la fiche en aligne cinq et les rend
+ * comparables. Les valeurs sont du TEXTE LIBRE — « 4 jours », « 6,2 kg »,
+ * « aucun » : l'atelier ne sait pas ce que pèse ton sac, et n'a pas à le
+ * deviner.
+ */
+function dessinerFiche(ctx, format, o) {
+  const { carte, police, logo, m, th, index, total } = o;
+
+  bandeEntete(ctx, format, m, th, police, {
+    texte: carte.entete,
+    accent: carte.enteteAccent,
+    logo,
+  });
+
+  let y = m.bandeH + Math.round(118 * m.k);
+  if (carte.surtitre) {
+    ctx.fillStyle = th.accent;
+    surtitre(ctx, m, th, police, carte.surtitre, m.pad, y);
+    y += m.surtitre * 1.3;
+  }
+  if (carte.titre) {
+    const taille = Math.round(m.titre * 0.86);
+    ctx.font = `700 ${taille}px ${police}`;
+    ctx.fillStyle = th.encre;
+    y += taille * 0.86;
+    ctx.fillText(carte.titre, m.pad, y);
+    y += Math.round(30 * m.k);
+    // Le filet ambre sous le titre : le même geste que le surtitre, à l'autre
+    // bout du bloc — il ferme le titre au lieu de l'ouvrir.
+    ctx.fillStyle = th.accent;
+    ctx.fillRect(m.pad, y, Math.round(96 * m.k), Math.max(2, 2.5 * m.k));
+    y += Math.round(46 * m.k);
+  }
+
+  const lignesFiche = (carte.fiche ?? []).filter((l) => l && (l.label || l.valeur));
+  const libelle = Math.round(16 * m.k);
+  const valeur = Math.round(46 * m.k);
+  const pasLigne = Math.round(96 * m.k);
+
+  for (const [i, l] of lignesFiche.entries()) {
+    if (i > 0) {
+      ctx.fillStyle = th.filet;
+      ctx.fillRect(m.pad, y, format.width - m.pad * 2, Math.max(1, 1.2 * m.k));
+    }
+    const base = y + pasLigne * 0.66;
+
+    ctx.font = `400 ${libelle}px ${police}`;
+    ctx.fillStyle = th.encreFaible;
+    dessinerTexteEspace(ctx, String(l.label ?? "").toUpperCase(), m.pad, base, libelle, 0.26);
+
+    ctx.font = `700 ${valeur}px ${police}`;
+    ctx.fillStyle = l.accent ? th.accent : th.encre;
+    ctx.textAlign = "right";
+    ctx.fillText(String(l.valeur ?? ""), format.width - m.pad, base + valeur * 0.1);
+    ctx.textAlign = "left";
+
+    y += pasLigne;
+  }
+
+  bandePied(ctx, format, m, th, police, {
+    index,
+    total,
+    centre: carte.piedCentre,
+    droite: carte.piedDroite,
+  });
+  return [];
+}
+
 const RENDUS = {
   carte: dessinerCarte,
+  bandeau: dessinerBandeau,
   photo: dessinerPhoto,
   texte: dessinerTexte,
+  fiche: dessinerFiche,
   chiffres: dessinerChiffres,
 };
 

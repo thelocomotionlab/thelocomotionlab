@@ -25,6 +25,7 @@ import {
   THEMES,
   chargerFond,
   dessinerCartePartage,
+  dureeCourte,
   vueDeLaCarte,
 } from "@/lib/carrouselCartes";
 import {
@@ -69,27 +70,51 @@ function telecharger(blob, nom) {
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
+/** La fiche d'une aventure, pré-remplie avec ce que la trace sait déjà. Les
+ *  deux dernières lignes, l'atelier ne peut pas les deviner : elles sont là
+ *  pour être remplies, pas pour être justes. */
+function ficheParDefaut(trace, segments) {
+  return [
+    { label: "Distance", valeur: trace ? `${Math.round(trace.totalKm)} km` : "", accent: false },
+    { label: "Dénivelé", valeur: trace ? `${trace.dPlusM.toLocaleString("fr-FR")} m` : "", accent: false },
+    {
+      label: "Durée visée",
+      valeur: segments?.length > 1 ? `${segments.length} jours` : "",
+      accent: false,
+    },
+    { label: "Sac de départ", valeur: "", accent: false },
+    { label: "Ravitaillement", valeur: "aucun", accent: true },
+  ];
+}
+
 let compteur = 0;
-function carteNeuve(gabarit, trace) {
+function carteNeuve(gabarit, trace, segments) {
   compteur += 1;
   return {
     id: `c${compteur}`,
     gabarit,
     /** L'intitulé de la bande d'en-tête, à droite de la marque. */
     entete: "",
+    enteteAccent: false,
     /** Le surtitre en capitales, précédé du filet ambre. */
     surtitre: gabarit === "carte" ? (trace?.vecue ? "La sortie" : "L'itinéraire") : "",
     titre: gabarit === "carte" ? (trace?.nom ?? liveConfig.aventure.nom) : "",
     texte: "",
     pied: null,
-    // Une trace horodatée vient d'une montre : la carte parle au passé.
-    bilan: Boolean(trace?.vecue),
+    /** Le pied de page : au milieu, et à droite (à défaut « GLISSE → »). */
+    piedCentre: "",
+    piedDroite: "",
     etiquettes: [],
     afficherFond: true,
     afficherProfil: true,
+    afficherAltitudes: true,
     image: null,
     nomImage: "",
     ancrage: 0.5,
+    degradeHaut: true,
+    degradeBas: true,
+    bandeauPart: 0.42,
+    fiche: gabarit === "fiche" ? ficheParDefaut(trace, segments) : [],
     segment: null,
   };
 }
@@ -102,6 +127,9 @@ export default function CarrouselAtelier() {
   const [trace, setTrace] = useState(null);
   const [formatCle, setFormatCle] = useState("carrousel");
   const [themeCle, setThemeCle] = useState("sombre");
+  // AVANT ou APRÈS : c'est une propriété du CARROUSEL, pas d'une carte.
+  // Un carrousel annonce une aventure ou la raconte — jamais les deux.
+  const [bilan, setBilan] = useState(false);
   const [coupures, setCoupures] = useState([]);
   const [cartes, setCartes] = useState([]);
   const [active, setActive] = useState(0);
@@ -177,7 +205,8 @@ export default function CarrouselAtelier() {
     // elle ne se planifie plus. Un itinéraire prévu, lui, se découpe.
     const auto = deLAventure ? coupuresDepuisWaypoints(liveConfig.aventure.waypoints, t.totalKm) : [];
     setCoupures(auto.length ? auto : t.vecue ? [] : coupuresRegulieres(t.totalKm, 2));
-    setCartes([carteNeuve("carte", t)]);
+    setBilan(Boolean(t.vecue));
+    setCartes([carteNeuve("carte", t, [])]);
     setActive(0);
     setEtat({ occupe: false, message: "" });
   }, []);
@@ -232,12 +261,25 @@ export default function CarrouselAtelier() {
 
   // La nouvelle carte devient l'active : on vient de la créer, c'est elle qu'on
   // veut voir. Son index est la longueur ACTUELLE de la liste.
+  const majFiche = useCallback(
+    (i, patch) =>
+      setCartes((cs) =>
+        cs.map((c, k) => {
+          if (k !== active) return c;
+          const fiche = [...(c.fiche ?? [])];
+          fiche[i] = { ...(fiche[i] ?? {}), ...patch };
+          return { ...c, fiche };
+        }),
+      ),
+    [active],
+  );
+
   const ajouterCarte = useCallback(
     (gabarit) => {
-      setCartes((cs) => [...cs, carteNeuve(gabarit, trace)]);
+      setCartes((cs) => [...cs, carteNeuve(gabarit, trace, segments)]);
       setActive(cartes.length);
     },
-    [trace, cartes.length],
+    [trace, segments, cartes.length],
   );
 
   const supprimerCarte = useCallback((i) => {
@@ -304,8 +346,9 @@ export default function CarrouselAtelier() {
     canvas.height = format.height;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    boitesRef.current = dessinerCartePartage(ctx, { ...options, carte, index: active }) ?? [];
-  }, [carte, options, format, policePrete, active]);
+    boitesRef.current =
+      dessinerCartePartage(ctx, { ...options, carte: { ...carte, bilan }, index: active }) ?? [];
+  }, [carte, options, format, policePrete, active, bilan]);
 
   /* ------------------------------------------- glisser-déposer des étiquettes */
 
@@ -372,7 +415,7 @@ export default function CarrouselAtelier() {
       for (const i of indices) {
         // `index` reste celui de la carte DANS LE CARROUSEL : la pagination du
         // pied doit dire « 03 / 10 » même si on n'exporte que cette carte-là.
-        dessinerCartePartage(ctx, { ...options, carte: cartes[i], index: i });
+        dessinerCartePartage(ctx, { ...options, carte: { ...cartes[i], bilan }, index: i });
         const blob = await new Promise((r) => hors.toBlob(r, "image/jpeg", 0.92));
         if (blob) {
           const numero = String(indices.indexOf(i) + 1).padStart(2, "0");
@@ -382,7 +425,7 @@ export default function CarrouselAtelier() {
       }
       setEtat({ occupe: false, message: "" });
     },
-    [cartes, options, format],
+    [cartes, options, format, bilan],
   );
 
   /* --------------------------------------------------------------------- vues */
@@ -461,10 +504,42 @@ export default function CarrouselAtelier() {
             </label>
           </div>
           {trace && (
-            <p className="mt-3 font-heading text-[13px] text-brand-text/60">
-              {trace.totalKm.toFixed(1).replace(".", ",")} km · {trace.dPlusM} m D+
-              {trace.coords.length === 0 && " · sans coordonnées (gabarit Carte indisponible)"}
-            </p>
+            <>
+              <p className="mt-3 font-heading text-[13px] text-brand-text/60">
+                {trace.totalKm.toFixed(1).replace(".", ",")} km · {trace.dPlusM} m D+
+                {trace.coords.length === 0 && " · sans coordonnées (gabarit Carte indisponible)"}
+              </p>
+
+              {/* AVANT ou APRÈS : le réglage qui change les MOTS de tout le
+                  carrousel — « km à parcourir » ou « km parcourus », profil
+                  vide ou rempli, durée affichée ou non. */}
+              <p className={`${LEGENDE} mt-4`}>Ce carrousel raconte</p>
+              <div className="flex gap-2">
+                {[
+                  { v: false, l: "Avant le départ" },
+                  { v: true, l: "Après l'aventure" },
+                ].map((o) => (
+                  <button
+                    key={o.l}
+                    type="button"
+                    onClick={() => setBilan(o.v)}
+                    className={`flex-1 rounded-full border px-3 py-2 font-heading text-[13px] transition-colors ${
+                      bilan === o.v
+                        ? "border-brand-primary-dark bg-brand-primary/25 text-brand-text"
+                        : "border-brand-field bg-brand-paper text-brand-text/65 hover:border-brand-primary/60"
+                    }`}
+                  >
+                    {o.l}
+                  </button>
+                ))}
+              </div>
+              {trace.vecue && (
+                <p className="mt-2 font-heading text-[12px] text-brand-text/45">
+                  Trace horodatée ({dureeCourte(trace.dureeSecondes)}) — l&rsquo;atelier a supposé
+                  « après ».
+                </p>
+              )}
+            </>
           )}
           {etat.message && (
             <p className="mt-3 font-heading text-[13px] text-brand-primary-dark">{etat.message}</p>
@@ -610,8 +685,16 @@ export default function CarrouselAtelier() {
               value={carte.entete}
               placeholder="bande photo — détail / matériel"
               onChange={(e) => majCarte({ entete: e.target.value })}
-              className={`${CHAMP} mb-3`}
+              className={CHAMP}
             />
+            <label className="mb-3 mt-1 flex items-center gap-2 font-heading text-[13px] text-brand-text/70">
+              <input
+                type="checkbox"
+                checked={Boolean(carte.enteteAccent)}
+                onChange={(e) => majCarte({ enteteAccent: e.target.checked })}
+              />
+              en ambre
+            </label>
 
             <label className={LEGENDE} htmlFor="surtitre">
               Surtitre <span className="font-normal opacity-60">— après le filet ambre</span>
@@ -660,13 +743,22 @@ export default function CarrouselAtelier() {
                     <span className="text-brand-text/45">(indisponible hors ligne)</span>
                   )}
                 </label>
-                <label className="mb-3 flex items-center gap-2 font-heading text-[14px] text-brand-text/75">
+                <label className="mb-2 flex items-center gap-2 font-heading text-[14px] text-brand-text/75">
                   <input
                     type="checkbox"
                     checked={carte.afficherProfil !== false}
                     onChange={(e) => majCarte({ afficherProfil: e.target.checked })}
                   />
                   Profil altimétrique
+                </label>
+                <label className="mb-3 flex items-center gap-2 pl-6 font-heading text-[13px] text-brand-text/70">
+                  <input
+                    type="checkbox"
+                    checked={carte.afficherAltitudes !== false}
+                    disabled={carte.afficherProfil === false}
+                    onChange={(e) => majCarte({ afficherAltitudes: e.target.checked })}
+                  />
+                  altitudes min / max
                 </label>
 
                 <p className={LEGENDE}>Étiquettes</p>
@@ -709,7 +801,7 @@ export default function CarrouselAtelier() {
               </>
             )}
 
-            {carte.gabarit === "photo" && (
+            {(carte.gabarit === "photo" || carte.gabarit === "bandeau") && (
               <>
                 <label className={`${BOUTON_SECOND} mb-3 cursor-pointer`}>
                   <ImageUp size={16} aria-hidden />
@@ -729,6 +821,106 @@ export default function CarrouselAtelier() {
                   onChange={(e) => majCarte({ ancrage: Number(e.target.value) })}
                   className="mb-3 w-full accent-brand-primary-dark"
                 />
+
+                {carte.gabarit === "bandeau" && (
+                  <>
+                    <label className={LEGENDE} htmlFor="bandeau-part">
+                      Hauteur du bandeau — {Math.round(carte.bandeauPart * 100)} %
+                    </label>
+                    <input
+                      id="bandeau-part"
+                      type="range"
+                      min={0.2}
+                      max={0.7}
+                      step={0.01}
+                      value={carte.bandeauPart}
+                      onChange={(e) => majCarte({ bandeauPart: Number(e.target.value) })}
+                      className="mb-3 w-full accent-brand-primary-dark"
+                    />
+                  </>
+                )}
+
+                {/* Les deux dégradés se règlent séparément : une photo au ciel
+                    déjà sombre n'a pas besoin d'être assombrie en haut. */}
+                <p className={LEGENDE}>Dégradés</p>
+                <div className="mb-1 flex flex-col gap-1.5">
+                  <label className="flex items-center gap-2 font-heading text-[14px] text-brand-text/75">
+                    <input
+                      type="checkbox"
+                      checked={carte.degradeHaut !== false}
+                      onChange={(e) => majCarte({ degradeHaut: e.target.checked })}
+                    />
+                    en-tête
+                  </label>
+                  <label className="flex items-center gap-2 font-heading text-[14px] text-brand-text/75">
+                    <input
+                      type="checkbox"
+                      checked={carte.degradeBas !== false}
+                      onChange={(e) => majCarte({ degradeBas: e.target.checked })}
+                    />
+                    {carte.gabarit === "bandeau" ? "bas du bandeau" : "pied de page"}
+                  </label>
+                </div>
+                <div className="mb-3" />
+              </>
+            )}
+
+            {carte.gabarit === "fiche" && (
+              <>
+                <p className={LEGENDE}>Lignes</p>
+                <div className="mb-2 flex flex-col gap-2">
+                  {(carte.fiche ?? []).map((l, i) => (
+                    <div key={`fiche-${i}`} className="flex items-center gap-1.5">
+                      <input
+                        type="text"
+                        value={l.label}
+                        placeholder="libellé"
+                        onChange={(e) => majFiche(i, { label: e.target.value })}
+                        className={`${CHAMP} flex-1`}
+                        aria-label={`Libellé de la ligne ${i + 1}`}
+                      />
+                      <input
+                        type="text"
+                        value={l.valeur}
+                        placeholder="valeur"
+                        onChange={(e) => majFiche(i, { valeur: e.target.value })}
+                        className={`${CHAMP} flex-1`}
+                        aria-label={`Valeur de la ligne ${i + 1}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => majFiche(i, { accent: !l.accent })}
+                        className={`rounded-lg border px-2 py-1.5 font-heading text-[13px] ${
+                          l.accent
+                            ? "border-brand-accent-dark bg-brand-accent/25 text-brand-accent-ink"
+                            : "border-brand-field text-brand-text/40"
+                        }`}
+                        title="Mettre la valeur en ambre"
+                        aria-label={`Valeur en ambre, ligne ${i + 1}`}
+                      >
+                        A
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => majCarte({ fiche: carte.fiche.filter((_, k) => k !== i) })}
+                        className="rounded-full p-1.5 text-brand-text/40 hover:bg-brand-primary/15 hover:text-brand-primary-dark"
+                        aria-label={`Supprimer la ligne ${i + 1}`}
+                      >
+                        <Trash2 size={15} aria-hidden />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  className={`${BOUTON_SECOND} mb-3`}
+                  onClick={() =>
+                    majCarte({ fiche: [...(carte.fiche ?? []), { label: "", valeur: "", accent: false }] })
+                  }
+                >
+                  <Plus size={15} aria-hidden />
+                  Une ligne de plus
+                </button>
               </>
             )}
 
@@ -755,17 +947,25 @@ export default function CarrouselAtelier() {
               </>
             )}
 
-            {(carte.gabarit === "carte" || carte.gabarit === "chiffres") && (
-              <label className="flex items-center gap-2 font-heading text-[14px] text-brand-text/75">
-                <input
-                  type="checkbox"
-                  checked={Boolean(carte.bilan)}
-                  onChange={(e) => majCarte({ bilan: e.target.checked })}
-                />
-                Bilan (sortie faite)
-                {trace?.vecue && <span className="text-brand-text/45">— trace horodatée</span>}
-              </label>
-            )}
+            <p className={LEGENDE}>Pied de page</p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={carte.piedCentre}
+                placeholder="au milieu"
+                onChange={(e) => majCarte({ piedCentre: e.target.value })}
+                className={CHAMP}
+                aria-label="Pied de page, au milieu"
+              />
+              <input
+                type="text"
+                value={carte.piedDroite}
+                placeholder="à droite (défaut : glisse →)"
+                onChange={(e) => majCarte({ piedDroite: e.target.value })}
+                className={CHAMP}
+                aria-label="Pied de page, à droite"
+              />
+            </div>
           </section>
         )}
 
