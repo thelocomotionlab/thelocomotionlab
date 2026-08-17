@@ -12,12 +12,19 @@
 // partout pareil, se relit dans le champ, et se copie-colle sans rien perdre.
 //
 // LA SYNTAXE, volontairement minuscule :
-//   *gras*        _italique_        ~souligné~        [en ambre]
+//   *gras*   _italique_   ~souligné~   [en ambre]   [bleu: mot]   :col:
 // Elle s'imbrique (*_gras italique_*), et `\` échappe un caractère qu'on veut
 // écrire tel quel (`\*` donne une étoile).
 //
+// `:col:` pose une ICÔNE dans la phrase — celles des repères de /live, tracées
+// au canvas depuis leur géométrie (cf. lib/carrouselIcones.js). Elle se
+// comporte comme un mot : elle prend la couleur qui l'entoure et passe à la
+// ligne avec elle.
+//
 // Ce module ne dessine rien de la charte : il découpe, il mesure, il pose. Les
 // couleurs et les corps lui sont donnés par l'appelant.
+
+import { dessinerIcone, iconeConnue } from "./carrouselIcones";
 
 /** Les quatre marqueurs. `accent` porte la couleur, pas une graisse. */
 const MARQUEURS = [
@@ -44,7 +51,13 @@ export const COULEURS_TEXTE = {
   fuchsia: "#D6246E",
 };
 
-export const AIDE_BALISAGE = "*gras*  _italique_  ~souligné~  [en ambre]  [bleu: mot]";
+export const AIDE_BALISAGE =
+  "*gras*  _italique_  ~souligné~  [en ambre]  [bleu: mot]  :col: (icône)";
+
+/** Une icône entre deux-points. Bornée à des minuscules sans espace, et
+ *  vérifiée contre le vocabulaire : « Départ : 6 h » n'en est pas une, et
+ *  `:inconnu:` reste du texte plutôt que de disparaître. */
+const ICONE = /^:([a-z-]{2,24}):/;
 
 /** Le préfixe `nom:` d'un `[…]`, s'il désigne une couleur connue. */
 const PREFIXE_COULEUR = /^\s*([a-zà-ÿ]+)\s*:\s*/i;
@@ -88,6 +101,15 @@ export function analyserRiche(texte, style = {}) {
 
   for (let i = 0; i < source.length; i += 1) {
     const c = source[i];
+    if (c === ":") {
+      const m = ICONE.exec(source.slice(i));
+      if (m && iconeConnue(m[1])) {
+        pousser();
+        out.push({ ...style, texte: "", icone: m[1] });
+        i += m[0].length - 1;
+        continue;
+      }
+    }
     if (c === "\\" && i + 1 < source.length) {
       tampon += source[i + 1];
       i += 1;
@@ -151,6 +173,17 @@ export function encreDe(morceau, base) {
 const EST_ESPACE = /^\s+$/;
 
 /**
+ * Part de la taille du texte séparant la ligne de base du CENTRE OPTIQUE des
+ * capitales — même valeur que `lib/habillage.js`, pour la même raison.
+ */
+const CENTRE_CAPITALES = 0.35;
+
+/** L'encombrement d'une icône : un carré, plus un souffle de chaque côté. */
+export function largeurIcone(base) {
+  return base.taille * 1.24;
+}
+
+/**
  * Répartit des morceaux sur des lignes d'au plus `largeurMax`.
  *
  * Les espaces sont des morceaux comme les autres : c'est ce qui permet à un mot
@@ -162,6 +195,12 @@ const EST_ESPACE = /^\s+$/;
 export function lignesRiches(ctx, morceaux, largeurMax, base) {
   const mots = [];
   for (const m of morceaux) {
+    // Une icône est un mot à elle seule : elle ne se coupe pas, et elle ne se
+    // découpe pas sur les espaces (son texte est vide).
+    if (m.icone) {
+      mots.push(m);
+      continue;
+    }
     for (const bout of m.texte.split(/(\s+)/)) {
       if (bout !== "") mots.push({ ...m, texte: bout });
     }
@@ -173,13 +212,17 @@ export function lignesRiches(ctx, morceaux, largeurMax, base) {
 
   for (const mot of mots) {
     ctx.font = fonteDe(mot, base);
-    const w = ctx.measureText(mot.texte).width;
-    const espace = EST_ESPACE.test(mot.texte);
+    const w = mot.icone ? largeurIcone(base) : ctx.measureText(mot.texte).width;
+    const espace = !mot.icone && EST_ESPACE.test(mot.texte);
 
     if (!espace && ligne.length > 0 && largeur + w > largeurMax) {
       // Les blancs de fin de ligne ne comptent pas : ils décaleraient un texte
       // centré, et allongeraient un soulignement dans le vide.
-      while (ligne.length && EST_ESPACE.test(ligne[ligne.length - 1].texte)) {
+      while (
+        ligne.length &&
+        !ligne[ligne.length - 1].icone &&
+        EST_ESPACE.test(ligne[ligne.length - 1].texte)
+      ) {
         largeur -= ligne.pop().largeur;
       }
       lignes.push(ligne);
@@ -208,6 +251,21 @@ export function largeurLigne(ligne) {
 export function dessinerLigneRiche(ctx, ligne, x, y, base) {
   let curseur = x;
   for (const morceau of ligne) {
+    if (morceau.icone) {
+      // Centrée sur le milieu optique des capitales, pas sur la ligne de base :
+      // posée sur la ligne de base elle pendrait sous le mot voisin.
+      const cote = base.taille * 0.98;
+      dessinerIcone(
+        ctx,
+        morceau.icone,
+        curseur + (morceau.largeur - cote) / 2,
+        y - base.taille * CENTRE_CAPITALES - cote / 2,
+        cote,
+        encreDe(morceau, base),
+      );
+      curseur += morceau.largeur;
+      continue;
+    }
     ctx.font = fonteDe(morceau, base);
     ctx.fillStyle = encreDe(morceau, base);
     ctx.fillText(morceau.texte, curseur, y);

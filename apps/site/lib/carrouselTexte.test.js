@@ -13,6 +13,7 @@ import {
   lignesRiches,
   paragraphesRiches,
   texteNu,
+  largeurIcone,
 } from "./carrouselTexte";
 
 /** Un contexte 2D de comptoir : une lettre = 10 px, quelle que soit la fonte. */
@@ -160,5 +161,45 @@ describe("couleurs nommées", () => {
     expect(encreDe({ accent: true, couleur: "ambre" }, base)).toBe("#C08327");
     expect(encreDe({ accent: true, couleur: "bleu" }, base)).toBe("#8CB9BD");
     expect(encreDe({}, base)).toBe("#222");
+  });
+});
+
+describe("icônes dans le texte", () => {
+  it("reconnaît une clé du vocabulaire des repères", () => {
+    expect(analyserRiche("au :col: puis au :bivouac:")).toEqual([
+      { texte: "au " },
+      { texte: "", icone: "col" },
+      { texte: " puis au " },
+      { texte: "", icone: "bivouac" },
+    ]);
+  });
+
+  it("laisse un deux-points ordinaire tranquille", () => {
+    // « Départ : 6 h » ne doit surtout pas devenir une icône.
+    expect(analyserRiche("Départ : 6 h")).toEqual([{ texte: "Départ : 6 h" }]);
+  });
+
+  it("laisse une clé INCONNUE écrite plutôt que de l'avaler", () => {
+    expect(analyserRiche(":licorne:")).toEqual([{ texte: ":licorne:" }]);
+  });
+
+  it("hérite du style et de la couleur qui l'entourent", () => {
+    expect(analyserRiche("[bleu: froid :neige:]")).toEqual([
+      { texte: "froid ", accent: true, couleur: "bleu" },
+      { texte: "", accent: true, couleur: "bleu", icone: "neige" },
+    ]);
+  });
+
+  it("compte comme un mot insécable à la mise en lignes", () => {
+    const ctx = ctxFactice();
+    const [ligne] = lignesRiches(ctx, analyserRiche(":col:"), 500, BASE);
+    expect(ligne).toHaveLength(1);
+    expect(ligne[0].largeur).toBe(largeurIcone(BASE));
+  });
+
+  it("n'est pas confondue avec un blanc de fin de ligne", () => {
+    const ctx = ctxFactice();
+    const lignes = lignesRiches(ctx, analyserRiche("aaaa :col:"), 60, BASE);
+    expect(lignes[lignes.length - 1].some((m) => m.icone === "col")).toBe(true);
   });
 });

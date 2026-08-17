@@ -60,6 +60,7 @@ import {
   traceDepuisTrackJson,
 } from "@/lib/carrouselTrace";
 import { AIDE_BALISAGE } from "@/lib/carrouselTexte";
+import { CLES_ICONES } from "@/lib/carrouselIcones";
 import { chargerImage } from "@/lib/imageFile";
 import { chargerMarqueTeintee } from "@/lib/marque";
 import { liveConfig } from "@/lib/liveConfig";
@@ -328,6 +329,7 @@ export default function CarrouselAtelier() {
   const canvasRef = useRef(null);
   const boitesRef = useRef([]);
   const glisseRef = useRef(null);
+  const texteRef = useRef(null);
   /** Les identifiants de cartes, propres à CETTE instance (cf. carteNeuve). */
   const idRef = useRef(0);
   const idNeuf = useCallback(() => {
@@ -562,6 +564,28 @@ export default function CarrouselAtelier() {
         }),
       ),
     [active],
+  );
+
+  /**
+   * Insère une balise LÀ OÙ EST LE CURSEUR, pas à la fin du champ.
+   *
+   * Ajouter en bout de texte oblige à couper-coller derrière : autant taper la
+   * balise à la main. On repose donc le curseur juste après l'insertion, et on
+   * rend le focus au champ — la frappe continue sans rien toucher à la souris.
+   */
+  const insererDansTexte = useCallback(
+    (balise) => {
+      const champ = texteRef.current;
+      const actuel = carte?.texte ?? "";
+      const debut = champ?.selectionStart ?? actuel.length;
+      const fin = champ?.selectionEnd ?? actuel.length;
+      majCarte({ texte: actuel.slice(0, debut) + balise + actuel.slice(fin) });
+      requestAnimationFrame(() => {
+        champ?.focus();
+        champ?.setSelectionRange(debut + balise.length, debut + balise.length);
+      });
+    },
+    [carte?.texte, majCarte],
   );
 
   const majFiche = useCallback(
@@ -939,12 +963,32 @@ export default function CarrouselAtelier() {
             {AIDE_BALISAGE}
           </p>
           <textarea
+            ref={texteRef}
             id="texte"
             rows={4}
             value={carte?.texte ?? ""}
             onChange={(e) => majCarte({ texte: e.target.value })}
-            className={`${CHAMP} mb-3 resize-y`}
+            className={`${CHAMP} resize-y`}
           />
+
+          <details className="mb-3 mt-1">
+            <summary className="cursor-pointer font-heading text-[12px] text-brand-text/55">
+              Icônes — les mêmes que les repères de /live
+            </summary>
+            <div className="mt-2 flex flex-wrap gap-1">
+              {CLES_ICONES.map((cle) => (
+                <button
+                  key={cle}
+                  type="button"
+                  onClick={() => insererDansTexte(`:${cle}:`)}
+                  className="rounded-lg border border-brand-field bg-brand-paper px-2 py-1 font-mono text-[11px] text-brand-text/70 hover:border-brand-primary-dark hover:text-brand-text"
+                  title={`Insérer :${cle}:`}
+                >
+                  {cle}
+                </button>
+              ))}
+            </div>
+          </details>
 
           <div className="mb-3 flex flex-col gap-1.5">
             <label className={CASE}>
