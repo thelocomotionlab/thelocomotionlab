@@ -8,21 +8,24 @@
 // le VPS. Ici on veut un aperçu qui se redessine à chaque frappe et des
 // étiquettes qu'on attrape à la souris — c'est le terrain du canvas, et c'est
 // déjà celui de `lib/habillage.js`, dont ce fichier reprend les primitives
-// (couleurs, silhouette de profil, flèches dessinées, signature du labo).
+// (couleurs, flèches dessinées, cadrage de photo, signature du labo).
 //
-// La conséquence assumée : DEUX moteurs coexistent, un par usage. Ce qu'ils
-// doivent finir par partager, c'est le VOCABULAIRE (tokens, formateurs,
-// géométrie), pas la composition — cf. l'en-tête de `carrouselGeo.js`.
+// LA GRAMMAIRE, elle, est celle du compte Instagram du labo :
+//   • une bande d'en-tête, en capitales très espacées, discrète ;
+//   • un SURTITRE précédé d'un filet ambre — le point d'entrée du regard ;
+//   • un titre en Ubuntu Bold, deux lignes maximum ;
+//   • un corps en régulier, aéré, jamais d'italique ni de gras ;
+//   • un pied paginé « 05 / 10 » et un « GLISSE → » tant qu'il reste une carte.
+// Des rayures diagonales très faibles donnent du grain au fond, pour qu'un
+// aplat ne soit jamais tout à fait mort.
 //
 // L'APERÇU EST L'IMAGE FINALE : le canvas est dimensionné en pixels de sortie
 // et seulement réduit en CSS. Ce qu'on voit est ce qu'on exporte, au pixel près.
 
 import {
   CENTRE_CAPITALES,
-  COULEURS,
   MARQUE_OPACITE,
   cadrageCouverture,
-  cheminDuProfil,
   dessinerFleche,
   dessinerTexteEspace,
   formatEntier,
@@ -48,10 +51,52 @@ export const FORMATS = {
   carre: { cle: "carre", label: "Carré · 1080×1080", width: 1080, height: 1080, zoneSure: null },
 };
 
+/**
+ * Les deux encres.
+ *
+ * L'ambre `#EFB159` de la charte est fait pour un fond sombre ; sur le crème du
+ * labo il perd tout contraste. Le thème clair prend donc `--color-brand-accent-ink`
+ * (#C08327), le token que la charte réserve exactement à ce cas — pas une
+ * teinte inventée ici.
+ */
+export const THEMES = {
+  sombre: {
+    cle: "sombre",
+    label: "Sombre",
+    fond: "#1A1C18",
+    encre: "#FEFBF6",
+    encreDouce: "rgba(254, 251, 246, 0.74)",
+    encreFaible: "rgba(254, 251, 246, 0.44)",
+    filet: "rgba(254, 251, 246, 0.15)",
+    accent: "#EFB159",
+    accentAire: "239, 177, 89",
+    rayure: "rgba(254, 251, 246, 0.030)",
+    /** Voile posé sur les tuiles : elles sont claires et très bavardes. */
+    voileCarte: "rgba(16, 18, 14, 0.34)",
+    voileTexte: "16, 18, 14",
+    profilRestant: "rgba(254, 251, 246, 0.55)",
+  },
+  clair: {
+    cle: "clair",
+    label: "Clair",
+    fond: "#FEFBF6",
+    encre: "#22241E",
+    encreDouce: "rgba(34, 36, 30, 0.76)",
+    encreFaible: "rgba(34, 36, 30, 0.46)",
+    filet: "rgba(34, 36, 30, 0.14)",
+    accent: "#C08327",
+    accentAire: "192, 131, 39",
+    rayure: "rgba(34, 36, 30, 0.026)",
+    voileCarte: "rgba(254, 251, 246, 0.30)",
+    voileTexte: "254, 251, 246",
+    profilRestant: "rgba(34, 36, 30, 0.38)",
+  },
+};
+
 export const GABARITS = [
-  { cle: "carte", label: "Carte", aide: "L'itinéraire, découpé en journées." },
-  { cle: "photo", label: "Photo", aide: "Une photo plein cadre et le profil." },
-  { cle: "texte", label: "Texte", aide: "Un titre et un paragraphe." },
+  { cle: "carte", label: "Carte", aide: "L'itinéraire et son profil, découpés en journées." },
+  { cle: "photo", label: "Photo", aide: "Une photo plein cadre." },
+  { cle: "texte", label: "Texte", aide: "Un surtitre, un titre, un paragraphe." },
   { cle: "chiffres", label: "Chiffres", aide: "Les statistiques en grand." },
 ];
 
@@ -60,15 +105,13 @@ export const GABARITS = [
  *
  * Le fuchsia vient en tête : c'est la teinte des traces du live, choisie parce
  * qu'elle est absente de TOUS les fonds topo (cf. lib/liveTraceColors.js). Les
- * trois suivantes sont celles du labo — lisibles ici parce que la carte est
- * voilée, là où elles se fondraient dans un relief nu.
+ * suivantes sont celles de la charte.
  *
- * PAS DE CRÈME dans cette liste, alors que c'est la couleur d'encre du labo :
- * l'itinéraire complet est déjà tracé en crème atténuée sous les journées, et
- * une journée de la même teinte se lisait comme « la portion non coloriée ».
- * Le bleu de la charte (`--color-brand-primary`) tient ce quatrième rang.
+ * PAS DE CRÈME : l'itinéraire complet est déjà tracé en encre atténuée sous les
+ * journées, et une journée de la même teinte se lisait comme « la portion non
+ * coloriée ».
  */
-export const PALETTE_JOURS = [traceColors.line, COULEURS.ambre, "#B67352", "#8CB9BD"];
+export const PALETTE_JOURS = [traceColors.line, "#EFB159", "#B67352", "#8CB9BD", "#6E9CA0", "#9A6044"];
 
 export const TILE_URL =
   "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}";
@@ -76,8 +119,14 @@ export const ATTRIBUTION = "Fond de carte · Esri World Topo";
 
 const MARQUE = "THE LOCOMOTION LAB";
 
-/** Le fond quand il n'y a pas d'image — même valeur que les cartes du service. */
-const SOMBRE = "#22241E";
+/** « 7 h 45 » — la durée telle qu'on la dit, pas telle qu'un chrono l'affiche.
+ *  Même règle que `dureeCourte` des cartes du service. */
+export function dureeCourte(seconds) {
+  const total = Math.max(0, Math.round(seconds / 60));
+  const heures = Math.floor(total / 60);
+  const minutes = total % 60;
+  return heures > 0 ? `${heures} h ${String(minutes).padStart(2, "0")}` : `${minutes} min`;
+}
 
 /* ------------------------------------------------------------------ métriques */
 
@@ -85,30 +134,41 @@ const SOMBRE = "#22241E";
  *  paraîtrait deux fois plus fin d'un format à l'autre. */
 function metriques(format) {
   const k = format.width / 1080;
-  const hautTexte = format.height * (format.cle === "story" ? 0.3 : 0.34);
+  const haut = format.zoneSure?.top ?? 0;
+  const bas = format.zoneSure?.bottom ?? format.height;
   return {
     k,
-    pad: Math.round(72 * k),
-    marque: Math.round(22 * k),
-    titre: Math.round((format.cle === "carre" ? 64 : 76) * k),
-    corps: Math.round(34 * k),
-    chiffre: Math.round(112 * k),
-    unite: Math.round(36 * k),
-    pied: Math.round(26 * k),
-    credit: Math.round(18 * k),
-    etiquette: Math.round(30 * k),
-    // Le bloc de texte occupe le bas ; la carte se cadre au-dessus.
-    texteTop: format.height - hautTexte,
-    headerTop: Math.round((format.zoneSure?.top ?? 0) + 104 * k),
-    basSur: format.zoneSure ? format.zoneSure.bottom : format.height - Math.round(92 * k),
+    pad: Math.round(64 * k),
+    // La bande d'en-tête : sa ligne de base, et le filet qui la ferme.
+    bandeH: Math.round(haut + 116 * k),
+    entete: Math.round(17 * k),
+    surtitre: Math.round(19 * k),
+    titre: Math.round((format.cle === "carre" ? 58 : 66) * k),
+    corps: Math.round(31 * k),
+    chiffre: Math.round(132 * k),
+    unite: Math.round(34 * k),
+    stat: Math.round(38 * k),
+    piedTexte: Math.round(17 * k),
+    etiquette: Math.round(29 * k),
+    profilH: Math.round(150 * k),
+    /** Ligne de base du pied, et filet juste au-dessus. */
+    piedBase: Math.round(bas - 46 * k),
+    piedFilet: Math.round(bas - 92 * k),
   };
 }
 
-/** Fenêtre de cadrage de l'itinéraire — entre l'en-tête et le bloc de texte. */
+/** Fenêtre de cadrage de l'itinéraire — entre la bande d'en-tête et le profil. */
 function fenetreCarte(format) {
   const m = metriques(format);
-  const y = m.headerTop + Math.round(48 * m.k);
-  return { x: m.pad, y, width: format.width - m.pad * 2, height: Math.max(200, m.texteTop - y - 24 * m.k) };
+  const y = m.bandeH + Math.round(40 * m.k);
+  // Le bas réservé : profil + surtitre + titre + pied.
+  const reserve = m.profilH + m.surtitre * 2.4 + m.titre * 1.5 + (m.piedBase - m.piedFilet) + 56 * m.k;
+  return {
+    x: m.pad,
+    y,
+    width: format.width - m.pad * 2,
+    height: Math.max(240 * m.k, m.piedFilet - reserve - y),
+  };
 }
 
 /**
@@ -117,7 +177,6 @@ function fenetreCarte(format) {
  * Le fond de tuiles est téléchargé bien avant le rendu (c'est du réseau), mais
  * les deux DOIVENT partager exactement le même cadrage : une mosaïque calculée
  * sur une autre fenêtre se dessine décalée sous une trace qui, elle, est juste.
- * D'où cette fonction, appelée par l'atelier ET par le rendu.
  */
 export function vueDeLaCarte(coords, formatCle) {
   const format = FORMATS[formatCle] ?? FORMATS.carrousel;
@@ -163,8 +222,8 @@ function chargerTuile(url) {
 
 /**
  * Mosaïque de tuiles couvrant la vue. `null` si AUCUNE tuile n'arrive — la
- * carte reste alors lisible sur son aplat sombre. Une carte ne doit jamais
- * échouer à cause du réseau.
+ * carte reste alors lisible sur son aplat. Une carte ne doit jamais échouer à
+ * cause du réseau.
  */
 export async function chargerFond(view, options = {}) {
   if (typeof document === "undefined" || !view) return null;
@@ -180,10 +239,8 @@ export async function chargerFond(view, options = {}) {
   const demandes = [];
   for (let dy = 0; dy < w.rows; dy += 1) {
     for (let dx = 0; dx < w.cols; dx += 1) {
-      const tx = w.tx0 + dx;
-      const ty = w.ty0 + dy;
       demandes.push(
-        chargerTuile(urlTuile(tileUrl, w.zoom, tx, ty)).then((img) => {
+        chargerTuile(urlTuile(tileUrl, w.zoom, w.tx0 + dx, w.ty0 + dy)).then((img) => {
           if (img) ctx.drawImage(img, dx * TILE_SIZE, dy * TILE_SIZE, TILE_SIZE, TILE_SIZE);
           return Boolean(img);
         }),
@@ -197,30 +254,87 @@ export async function chargerFond(view, options = {}) {
 
 /* ------------------------------------------------------------------ chrome commun */
 
-function voile(ctx, format, depuis) {
+/** Rayures diagonales très faibles : du grain, pas un motif. Elles se voient
+ *  sur un aplat et disparaissent sous une photo — c'est voulu. */
+function rayures(ctx, format, th) {
+  ctx.save();
+  ctx.strokeStyle = th.rayure;
+  ctx.lineWidth = Math.max(1, 9 * (format.width / 1080));
+  const pas = 26 * (format.width / 1080);
+  ctx.beginPath();
+  for (let x = -format.height; x < format.width + format.height; x += pas) {
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x + format.height, format.height);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function voileTexte(ctx, format, th, depuis) {
   const g = ctx.createLinearGradient(0, depuis, 0, format.height);
-  g.addColorStop(0, `rgba(${COULEURS.ombre}, 0)`);
-  g.addColorStop(0.35, `rgba(${COULEURS.ombre}, 0.42)`);
-  g.addColorStop(0.7, `rgba(${COULEURS.ombre}, 0.74)`);
-  g.addColorStop(1, `rgba(${COULEURS.ombre}, 0.86)`);
+  g.addColorStop(0, `rgba(${th.voileTexte}, 0)`);
+  g.addColorStop(0.4, `rgba(${th.voileTexte}, 0.5)`);
+  g.addColorStop(0.75, `rgba(${th.voileTexte}, 0.82)`);
+  g.addColorStop(1, `rgba(${th.voileTexte}, 0.92)`);
   ctx.fillStyle = g;
   ctx.fillRect(0, depuis, format.width, format.height - depuis);
 }
 
-/** La signature du labo, en haut à gauche. Le logo est déjà teinté par l'appelant. */
-function signature(ctx, format, m, police, logo) {
+/**
+ * La bande d'en-tête : la marque du labo à gauche, l'intitulé de section à
+ * droite, un filet dessous. C'est la ligne qui dit « c'est une planche du
+ * labo » sans avoir à occuper le titre.
+ */
+function bandeEntete(ctx, format, m, th, police, { texte, logo }) {
+  const base = m.bandeH - Math.round(46 * m.k);
+
   let x = m.pad;
   if (logo) {
-    const taille = Math.round(m.marque * 1.8);
-    const centre = m.headerTop - m.marque * CENTRE_CAPITALES;
+    const taille = Math.round(m.entete * 1.9);
+    const centre = base - m.entete * CENTRE_CAPITALES;
     ctx.globalAlpha = MARQUE_OPACITE;
     ctx.drawImage(logo, x, centre - taille / 2, taille, taille);
     ctx.globalAlpha = 1;
-    x += taille + Math.round(m.marque * 0.72);
+    x += taille + Math.round(m.entete * 0.66);
   }
-  ctx.font = `500 ${m.marque}px ${police}`;
-  ctx.fillStyle = `rgba(254, 251, 246, ${MARQUE_OPACITE})`;
-  dessinerTexteEspace(ctx, MARQUE, x, m.headerTop, m.marque, 0.3);
+  ctx.font = `500 ${m.entete}px ${police}`;
+  ctx.fillStyle = th.encreDouce;
+  dessinerTexteEspace(ctx, MARQUE, x, base, m.entete, 0.28);
+
+  if (texte) {
+    ctx.font = `400 ${m.entete}px ${police}`;
+    ctx.fillStyle = th.encreFaible;
+    const mots = String(texte).toUpperCase();
+    // Mesure à la main : l'interlettrage n'est pas dans `measureText`.
+    let largeur = 0;
+    for (const l of mots) largeur += ctx.measureText(l).width + 0.28 * m.entete;
+    dessinerTexteEspace(ctx, mots, format.width - m.pad - largeur + 0.28 * m.entete, base, m.entete, 0.28);
+  }
+
+  ctx.fillStyle = th.filet;
+  ctx.fillRect(m.pad, m.bandeH, format.width - m.pad * 2, Math.max(1, 1.5 * m.k));
+}
+
+/**
+ * Le surtitre : un filet ambre, puis des capitales espacées.
+ * Renvoie l'ordonnée de la ligne de base du titre qui suit.
+ */
+function surtitre(ctx, m, th, police, texte, x, base) {
+  if (!texte) return base;
+  const filetL = Math.round(m.surtitre * 2.4);
+  ctx.fillStyle = th.accent;
+  ctx.fillRect(x, base - m.surtitre * 0.34, filetL, Math.max(2, 2.5 * m.k));
+
+  ctx.font = `500 ${m.surtitre}px ${police}`;
+  dessinerTexteEspace(
+    ctx,
+    String(texte).toUpperCase(),
+    x + filetL + m.surtitre * 0.9,
+    base,
+    m.surtitre,
+    0.22,
+  );
+  return base;
 }
 
 /** Découpe un texte à la largeur donnée. Renvoie les lignes. */
@@ -241,43 +355,148 @@ export function lignes(ctx, texte, largeurMax) {
   return out;
 }
 
-function blocTitre(ctx, format, m, police, { titre, sousTitre, pied }) {
-  let y = m.basSur;
+/** Les paragraphes du corps, séparés par une ligne vide dans la saisie. */
+function paragraphes(ctx, texte, largeurMax) {
+  return String(texte ?? "")
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => lignes(ctx, p.replace(/\n/g, " "), largeurMax));
+}
 
-  if (pied) {
-    ctx.font = `400 ${m.pied}px ${police}`;
-    ctx.fillStyle = `rgba(254, 251, 246, 0.72)`;
-    ctx.fillText(pied, m.pad, y);
-    y -= m.pied * 2.1;
-  }
-  if (sousTitre) {
-    ctx.font = `400 ${m.corps}px ${police}`;
-    ctx.fillStyle = `rgba(254, 251, 246, 0.86)`;
-    const ls = lignes(ctx, sousTitre, format.width - m.pad * 2);
-    for (let i = ls.length - 1; i >= 0; i -= 1) {
-      ctx.fillText(ls[i], m.pad, y);
-      y -= m.corps * 1.42;
-    }
-    y -= m.corps * 0.35;
-  }
-  if (titre) {
-    ctx.font = `700 ${m.titre}px ${police}`;
-    ctx.fillStyle = COULEURS.creme;
-    const ls = lignes(ctx, titre, format.width - m.pad * 2);
-    for (let i = ls.length - 1; i >= 0; i -= 1) {
-      ctx.fillText(ls[i], m.pad, y);
-      y -= m.titre * 1.1;
-    }
+/**
+ * Le pied : un filet, la pagination à gauche, « GLISSE → » à droite tant qu'il
+ * reste une carte derrière. La flèche est DESSINÉE — les fontes du site sont
+ * des sous-ensembles latins et n'ont pas U+2192 (elle sortirait en carré).
+ */
+function bandePied(ctx, format, m, th, police, { index, total }) {
+  ctx.fillStyle = th.filet;
+  ctx.fillRect(m.pad, m.piedFilet, format.width - m.pad * 2, Math.max(1, 1.5 * m.k));
+
+  ctx.font = `400 ${m.piedTexte}px ${police}`;
+  ctx.fillStyle = th.encreFaible;
+  const numero = `${String(index + 1).padStart(2, "0")} / ${String(total).padStart(2, "0")}`;
+  dessinerTexteEspace(ctx, numero, m.pad, m.piedBase, m.piedTexte, 0.24);
+
+  if (index < total - 1) {
+    const mot = "GLISSE";
+    let largeur = 0;
+    for (const l of mot) largeur += ctx.measureText(l).width + 0.24 * m.piedTexte;
+    const fleche = m.piedTexte * 1.5;
+    const x = format.width - m.pad - largeur - fleche;
+    dessinerTexteEspace(ctx, mot, x, m.piedBase, m.piedTexte, 0.24);
+
+    // Flèche horizontale, tracée à la main.
+    const y = m.piedBase - m.piedTexte * 0.32;
+    const x0 = format.width - m.pad - fleche * 0.9;
+    const x1 = format.width - m.pad;
+    ctx.strokeStyle = th.encreFaible;
+    ctx.lineWidth = Math.max(1.5, 1.8 * m.k);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.moveTo(x0, y);
+    ctx.lineTo(x1, y);
+    ctx.moveTo(x1 - m.piedTexte * 0.34, y - m.piedTexte * 0.3);
+    ctx.lineTo(x1, y);
+    ctx.lineTo(x1 - m.piedTexte * 0.34, y + m.piedTexte * 0.3);
+    ctx.stroke();
   }
 }
 
-function credit(ctx, format, m, police, texte) {
-  if (!texte) return;
-  ctx.font = `400 ${m.credit}px ${police}`;
-  ctx.fillStyle = "rgba(254, 251, 246, 0.5)";
-  ctx.textAlign = "right";
-  ctx.fillText(texte, format.width - m.pad, m.basSur + m.credit * 2.2);
-  ctx.textAlign = "left";
+/* ------------------------------------------------------------------ le profil */
+
+/**
+ * LA SILHOUETTE ALTIMÉTRIQUE, dans le style de l'export a posteriori
+ * (services/live-journal/src/og/profil.ts) : le relief complet en filet clair,
+ * la portion acquise en aire à demi transparente surmontée d'une crête presque
+ * pleine. Les opacités viennent de là — elles ont été RELEVÉES sur la maquette,
+ * pas choisies, et on ne les redécide pas ici.
+ *
+ * Une seule chose change : quand l'itinéraire est découpé en journées, l'aire
+ * prend LA COULEUR DE SA JOURNÉE. C'est ce qui fait que le profil et la carte
+ * se lisent ensemble au lieu de répéter la même information deux fois.
+ */
+const AIRE_OPACITE = 0.46;
+const CRETE_OPACITE = 0.9;
+
+function dessinerProfil(ctx, boite, th, { profil, totalKm, segments, couleurs, doneKm }) {
+  const points = (profil ?? []).filter((p) => Number.isFinite(p?.km) && Number.isFinite(p?.alt));
+  if (points.length < 2) return;
+  const total = totalKm > 0 ? totalKm : points[points.length - 1].km;
+  if (!(total > 0)) return;
+
+  const alts = points.map((p) => p.alt);
+  const min = Math.min(...alts);
+  const amplitude = Math.max(1, Math.max(...alts) - min);
+  const X = (km) => boite.x + (Math.max(0, Math.min(total, km)) / total) * boite.width;
+  const Y = (alt) => boite.y + (1 - (alt - min) / amplitude) * boite.height;
+  const base = boite.y + boite.height;
+
+  // Le relief entier : filet clair, jamais rempli — il n'est pas encore acquis.
+  ctx.beginPath();
+  ctx.moveTo(X(points[0].km), Y(points[0].alt));
+  for (const p of points) ctx.lineTo(X(p.km), Y(p.alt));
+  ctx.strokeStyle = th.profilRestant;
+  ctx.lineWidth = Math.max(2, boite.height * 0.017);
+  ctx.lineJoin = "round";
+  ctx.stroke();
+
+  /** Une aire + sa crête, sur l'intervalle [kmA, kmB]. */
+  const aire = (kmA, kmB, couleur) => {
+    const dedans = points.filter((p) => p.km >= kmA && p.km <= kmB);
+    if (dedans.length < 2) return;
+    ctx.beginPath();
+    ctx.moveTo(X(dedans[0].km), base);
+    for (const p of dedans) ctx.lineTo(X(p.km), Y(p.alt));
+    ctx.lineTo(X(dedans[dedans.length - 1].km), base);
+    ctx.closePath();
+    ctx.globalAlpha = AIRE_OPACITE;
+    ctx.fillStyle = couleur;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(X(dedans[0].km), Y(dedans[0].alt));
+    for (const p of dedans) ctx.lineTo(X(p.km), Y(p.alt));
+    ctx.globalAlpha = CRETE_OPACITE;
+    ctx.strokeStyle = couleur;
+    ctx.lineWidth = Math.max(3, boite.height * 0.027);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  };
+
+  if (segments?.length > 1) {
+    segments.forEach((s, i) => aire(s.kmDebut, s.kmFin, couleurs[i] ?? th.accent));
+  } else if (doneKm > 0) {
+    aire(0, doneKm, th.accent);
+    if (doneKm < total) {
+      const x = X(doneKm);
+      ctx.save();
+      ctx.setLineDash([7 * (boite.height / 150), 7 * (boite.height / 150)]);
+      ctx.strokeStyle = th.accent;
+      ctx.lineWidth = Math.max(2, boite.height * 0.02);
+      ctx.beginPath();
+      ctx.moveTo(x, boite.y - boite.height * 0.04);
+      ctx.lineTo(x, base);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  // Les bornes de journée, en pointillés discrets : c'est là qu'on dort.
+  if (segments?.length > 1) {
+    ctx.save();
+    ctx.setLineDash([4 * (boite.height / 150), 6 * (boite.height / 150)]);
+    ctx.strokeStyle = th.filet;
+    ctx.lineWidth = Math.max(1, boite.height * 0.012);
+    for (const s of segments.slice(1)) {
+      ctx.beginPath();
+      ctx.moveTo(X(s.kmDebut), boite.y);
+      ctx.lineTo(X(s.kmDebut), base);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
 }
 
 /* ------------------------------------------------------------------ étiquettes */
@@ -314,13 +533,12 @@ const borne = (v, min, max) => Math.min(Math.max(v, min), Math.max(min, max));
  * Ramène une étiquette AUTOMATIQUE dans la zone de la carte.
  *
  * Sans ça, la journée dont le point le plus haut frôle le bord supérieur pose
- * son étiquette par-dessus la signature du labo — vu du premier coup sur le
- * Tour des Écrins, où J1 recouvrait « THE LOCOMOTION LAB ». On la cale donc
- * entre l'en-tête et le bloc de texte, avant que le décalage manuel s'applique.
+ * son étiquette par-dessus la bande d'en-tête — vu du premier coup sur le Tour
+ * des Écrins, où J1 recouvrait « THE LOCOMOTION LAB ».
  */
-function calerEtiquette(boite, format, m) {
+function calerEtiquette(boite, format, m, fenetre) {
   boite.x = borne(boite.x, m.pad, format.width - m.pad - boite.width);
-  boite.y = borne(boite.y, m.headerTop + m.marque * 1.4, m.texteTop - boite.height);
+  boite.y = borne(boite.y, m.bandeH + m.etiquette * 0.5, fenetre.y + fenetre.height - boite.height);
   return boite;
 }
 
@@ -332,14 +550,14 @@ function dansLeCadre(boite, format) {
   return boite;
 }
 
-function dessinerEtiquette(ctx, texte, boite, couleur, m, police) {
+function dessinerEtiquette(ctx, texte, boite, couleur, m, th, police) {
   ctx.save();
   rectArrondi(ctx, boite.x, boite.y, boite.width, boite.height, boite.height / 2);
-  ctx.fillStyle = `rgba(${COULEURS.ombre}, 0.82)`;
+  ctx.fillStyle = th.cle === "clair" ? "rgba(254, 251, 246, 0.9)" : "rgba(16, 18, 14, 0.84)";
   ctx.fill();
-  ctx.strokeStyle = `${couleur}`;
+  ctx.strokeStyle = couleur;
   ctx.lineWidth = Math.max(1.5, m.k * 2);
-  ctx.globalAlpha = 0.85;
+  ctx.globalAlpha = 0.9;
   ctx.stroke();
   ctx.globalAlpha = 1;
 
@@ -350,7 +568,7 @@ function dessinerEtiquette(ctx, texte, boite, couleur, m, police) {
   ctx.fill();
 
   ctx.font = `500 ${m.etiquette}px ${police}`;
-  ctx.fillStyle = COULEURS.creme;
+  ctx.fillStyle = th.encre;
   ctx.textBaseline = "middle";
   ctx.fillText(texte, boite.x + boite.padX + boite.pastille + m.etiquette * 0.4, cy + m.etiquette * 0.04);
   ctx.textBaseline = "alphabetic";
@@ -382,22 +600,37 @@ function polyligne(ctx, points, couleur, epaisseur, liseré) {
   ctx.stroke();
 }
 
+function couleursDesJours(carte, segments) {
+  return segments.map(
+    (_, i) => carte.etiquettes?.[i]?.couleur ?? PALETTE_JOURS[i % PALETTE_JOURS.length],
+  );
+}
+
+/** Le pied de page factuel d'une carte : les chiffres de l'itinéraire, ou ceux
+ *  de la sortie quand la trace a été vécue. */
+function ligneFactuelle(trace, bilan) {
+  if (!trace) return "";
+  const bouts = [
+    trace.totalKm > 0 ? `${formatEntier(trace.totalKm)} km` : "",
+    trace.dPlusM > 0 ? `${formatEntier(trace.dPlusM)} m D+` : "",
+  ];
+  if (bilan && trace.dureeSecondes > 0) bouts.push(dureeCourte(trace.dureeSecondes));
+  return bouts.filter(Boolean).join("   ·   ");
+}
+
 /**
- * LA CARTE — l'itinéraire découpé en journées, chacune de sa couleur, chacune
- * avec son étiquette posée au-dessus de sa portion.
+ * LA CARTE — l'itinéraire, son profil, découpés en journées.
  *
  * Renvoie les boîtes des étiquettes : l'atelier en a besoin pour savoir ce
  * qu'on attrape à la souris.
  */
-function dessinerCarte(ctx, format, ctx2) {
-  const { carte, trace, segments, police, logo, fond, m } = ctx2;
+function dessinerCarte(ctx, format, o) {
+  const { carte, trace, segments, police, logo, fond, m, th, index, total } = o;
   const boites = [];
-  if (!trace || !trace.coords.length) return boites;
+  const fenetre = fenetreCarte(format);
+  const view = trace?.coords?.length ? vueDeLaCarte(trace.coords, format.cle) : null;
 
-  const view = vueDeLaCarte(trace.coords, format.cle);
-  if (!view) return boites;
-
-  if (fond && carte.afficherFond !== false) {
+  if (view && fond && carte.afficherFond !== false) {
     ctx.drawImage(
       fond.mosaique,
       fond.cropX,
@@ -409,76 +642,113 @@ function dessinerCarte(ctx, format, ctx2) {
       format.width,
       format.height,
     );
-    // Voile GÉNÉRAL léger : un fond topo est clair et très bavard, le tracé s'y
-    // noie. On l'assombrit partout, puis le dégradé du bas porte le texte.
-    ctx.fillStyle = `rgba(${COULEURS.ombre}, 0.28)`;
+    ctx.fillStyle = th.voileCarte;
     ctx.fillRect(0, 0, format.width, format.height);
   }
-  // Le voile démarre SOUS la fenêtre de cadrage : plus haut, il assombrissait
-  // le tiers bas de l'itinéraire, et la dernière journée paraissait éteinte
-  // alors qu'elle a la même couleur que les autres.
-  voile(ctx, format, m.texteTop - format.height * 0.04);
+  rayures(ctx, format, th);
+  voileTexte(ctx, format, th, fenetre.y + fenetre.height);
+  // La bande d'en-tête doit rester lisible par-dessus les tuiles.
+  if (view && fond && carte.afficherFond !== false) {
+    const g = ctx.createLinearGradient(0, 0, 0, m.bandeH * 1.4);
+    g.addColorStop(0, `rgba(${th.voileTexte}, 0.8)`);
+    g.addColorStop(1, `rgba(${th.voileTexte}, 0)`);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, format.width, m.bandeH * 1.4);
+  }
 
-  const epaisseur = Math.max(3, 7.5 * m.k);
+  const couleurs = couleursDesJours(carte, segments);
 
-  // L'itinéraire ENTIER, en sourdine : il tient la forme du parcours même là où
-  // aucune journée n'est mise en avant. Discret par construction — il ne doit
-  // pas pouvoir se confondre avec une journée coloriée.
-  polyligne(
-    ctx,
-    decimerPixels(trace.coords.map((c) => view.project(c))),
-    "rgba(254, 251, 246, 0.22)",
-    epaisseur * 0.62,
-    false,
-  );
+  if (view) {
+    const epaisseur = Math.max(3, 7.5 * m.k);
+    // L'itinéraire ENTIER, en sourdine : il tient la forme du parcours même là
+    // où aucune journée n'est mise en avant.
+    polyligne(
+      ctx,
+      decimerPixels(trace.coords.map((c) => view.project(c))),
+      th.cle === "clair" ? "rgba(34, 36, 30, 0.28)" : "rgba(254, 251, 246, 0.24)",
+      epaisseur * 0.62,
+      false,
+    );
+    segments.forEach((seg, i) => {
+      polyligne(ctx, decimerPixels(seg.coords.map((c) => view.project(c))), couleurs[i], epaisseur, true);
+    });
 
-  segments.forEach((seg, i) => {
-    const etq = carte.etiquettes?.[i] ?? {};
-    const couleur = etq.couleur ?? PALETTE_JOURS[i % PALETTE_JOURS.length];
-    polyligne(ctx, decimerPixels(seg.coords.map((c) => view.project(c))), couleur, epaisseur, true);
-  });
+    // Étiquettes en DERNIER : sur tous les tracés, jamais dessous.
+    segments.forEach((seg, i) => {
+      const etq = carte.etiquettes?.[i] ?? {};
+      if (etq.masquee) return;
+      const texte = etq.texte ?? `J${i + 1}`;
+      if (!texte.trim()) return;
+      const ancre = ancreDuSegment(seg, view.project);
+      if (!ancre) return;
+      const boite = calerEtiquette(boiteEtiquette(ctx, texte, ancre, m, police), format, m, fenetre);
+      boite.x += etq.dx ?? 0;
+      boite.y += etq.dy ?? 0;
+      dansLeCadre(boite, format);
+      dessinerEtiquette(ctx, texte, boite, couleurs[i], m, th, police);
+      boites.push({ index: i, ...boite });
+    });
+  }
 
-  // Étiquettes en DERNIER : sur tous les tracés, jamais dessous.
-  segments.forEach((seg, i) => {
-    const etq = carte.etiquettes?.[i] ?? {};
-    if (etq.masquee) return;
-    const texte = etq.texte ?? `J${i + 1}`;
-    if (!texte.trim()) return;
-    const ancre = ancreDuSegment(seg, view.project);
-    if (!ancre) return;
-    const couleur = etq.couleur ?? PALETTE_JOURS[i % PALETTE_JOURS.length];
-    const boite = calerEtiquette(boiteEtiquette(ctx, texte, ancre, m, police), format, m);
-    boite.x += etq.dx ?? 0;
-    boite.y += etq.dy ?? 0;
-    dansLeCadre(boite, format);
-    dessinerEtiquette(ctx, texte, boite, couleur, m, police);
-    boites.push({ index: i, ...boite });
-  });
+  bandeEntete(ctx, format, m, th, police, { texte: carte.entete, logo });
 
-  signature(ctx, format, m, police, logo);
-  blocTitre(ctx, format, m, police, {
-    titre: carte.titre,
-    sousTitre: carte.texte,
-    pied: carte.pied ?? piedItineraire(trace),
-  });
-  credit(ctx, format, m, police, fond && carte.afficherFond !== false ? ATTRIBUTION : null);
+  /* Bloc du bas : profil, surtitre, titre, ligne factuelle. Construit de bas en
+     haut pour que le titre pousse le profil, jamais l'inverse. */
+  let y = m.piedFilet - Math.round(34 * m.k);
+
+  const factuelle = carte.pied ?? ligneFactuelle(trace, carte.bilan);
+  if (factuelle) {
+    ctx.font = `400 ${m.corps}px ${police}`;
+    ctx.fillStyle = th.encreDouce;
+    ctx.fillText(factuelle, m.pad, y);
+    y -= m.corps * 1.9;
+  }
+  if (carte.titre) {
+    ctx.font = `700 ${m.titre}px ${police}`;
+    ctx.fillStyle = th.encre;
+    const ls = lignes(ctx, carte.titre, format.width - m.pad * 2);
+    for (let i = ls.length - 1; i >= 0; i -= 1) {
+      ctx.fillText(ls[i], m.pad, y);
+      y -= m.titre * 1.12;
+    }
+    y -= m.surtitre * 0.5;
+  }
+  if (carte.surtitre) {
+    ctx.fillStyle = th.accent;
+    surtitre(ctx, m, th, police, carte.surtitre, m.pad, y);
+    y -= m.surtitre * 2.1;
+  }
+
+  if (carte.afficherProfil !== false && trace?.profil?.length > 1) {
+    const boite = {
+      x: m.pad,
+      y: y - m.profilH,
+      width: format.width - m.pad * 2,
+      height: m.profilH,
+    };
+    dessinerProfil(ctx, boite, th, {
+      profil: trace.profil,
+      totalKm: trace.totalKm,
+      segments: segments.length > 1 ? segments : null,
+      couleurs,
+      doneKm: carte.bilan ? trace.totalKm : 0,
+    });
+  }
+
+  bandePied(ctx, format, m, th, police, { index, total });
+  if (view && fond && carte.afficherFond !== false) {
+    ctx.font = `400 ${Math.round(m.piedTexte * 0.86)}px ${police}`;
+    ctx.fillStyle = th.encreFaible;
+    ctx.textAlign = "right";
+    ctx.fillText(ATTRIBUTION, format.width - m.pad, m.bandeH - Math.round(14 * m.k));
+    ctx.textAlign = "left";
+  }
   return boites;
 }
 
-function piedItineraire(trace) {
-  if (!trace) return "";
-  return [
-    trace.totalKm > 0 ? `${formatEntier(trace.totalKm)} km` : "",
-    trace.dPlusM > 0 ? `${formatEntier(trace.dPlusM)} m D+` : "",
-  ]
-    .filter(Boolean)
-    .join("  ·  ");
-}
-
-/** LA PHOTO — plein cadre, profil ambré, chiffres. Le gabarit de l'habillage,
- *  porté aux autres formats. */
-function dessinerPhoto(ctx, format, ctx2) {
-  const { carte, trace, police, logo, m } = ctx2;
+/** LA PHOTO — plein cadre, le texte posé dessus. */
+function dessinerPhoto(ctx, format, o) {
+  const { carte, trace, police, logo, m, th, index, total } = o;
 
   if (carte.image) {
     const c = cadrageCouverture(
@@ -487,108 +757,123 @@ function dessinerPhoto(ctx, format, ctx2) {
       carte.ancrage ?? 0.5,
     );
     if (c) ctx.drawImage(carte.image, c.sx, c.sy, c.sw, c.sh, c.dx, c.dy, c.dw, c.dh);
+  } else {
+    rayures(ctx, format, th);
   }
-  voile(ctx, format, m.texteTop - format.height * 0.22);
+  voileTexte(ctx, format, th, format.height * 0.42);
+  const g = ctx.createLinearGradient(0, 0, 0, m.bandeH * 1.5);
+  g.addColorStop(0, `rgba(${th.voileTexte}, ${carte.image ? 0.72 : 0})`);
+  g.addColorStop(1, `rgba(${th.voileTexte}, 0)`);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, format.width, m.bandeH * 1.5);
 
-  const profil = carte.segmentProfil != null ? ctx2.segments[carte.segmentProfil]?.profil : trace?.profil;
-  const boite = {
-    x: 0,
-    y: m.basSur - m.pied * 2.1 - m.corps * 1.4 - 215 * m.k,
-    width: format.width,
-    height: 215 * m.k,
-  };
-  const chemin = cheminDuProfil(profil ?? [], boite);
-  if (chemin) {
-    ctx.beginPath();
-    ctx.moveTo(chemin.points[0][0], chemin.base);
-    for (const [x, y] of chemin.points) ctx.lineTo(x, y);
-    ctx.lineTo(chemin.points[chemin.points.length - 1][0], chemin.base);
-    ctx.closePath();
-    const g = ctx.createLinearGradient(0, boite.y, 0, chemin.base);
-    g.addColorStop(0, "rgba(239, 177, 89, 0.3)");
-    g.addColorStop(0.66, "rgba(239, 177, 89, 0.3)");
-    g.addColorStop(1, "rgba(239, 177, 89, 0)");
-    ctx.fillStyle = g;
-    ctx.fill();
+  bandeEntete(ctx, format, m, th, police, { texte: carte.entete, logo });
 
-    ctx.beginPath();
-    ctx.moveTo(chemin.points[0][0], chemin.points[0][1]);
-    for (const [x, y] of chemin.points) ctx.lineTo(x, y);
-    ctx.strokeStyle = COULEURS.ambre;
-    ctx.globalAlpha = 0.92;
-    ctx.lineWidth = 4 * m.k;
-    ctx.lineJoin = "round";
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-  }
-
-  signature(ctx, format, m, police, logo);
-  blocTitre(ctx, format, m, police, {
-    titre: carte.titre,
-    sousTitre: carte.texte,
-    pied: carte.pied ?? piedItineraire(trace),
-  });
-  return [];
-}
-
-/** LE TEXTE — un titre, un paragraphe. Rien d'autre : c'est la respiration du
- *  carrousel, la carte qu'on met entre deux images. */
-function dessinerTexte(ctx, format, ctx2) {
-  const { carte, police, logo, m } = ctx2;
-
-  ctx.fillStyle = SOMBRE;
-  ctx.fillRect(0, 0, format.width, format.height);
-  // Halo chaud, pour qu'un aplat ne soit pas mort : très large, très faible.
-  const halo = ctx.createRadialGradient(
-    format.width * 0.24,
-    format.height * 0.2,
-    0,
-    format.width * 0.24,
-    format.height * 0.2,
-    format.width,
-  );
-  halo.addColorStop(0, "rgba(239, 177, 89, 0.16)");
-  halo.addColorStop(1, "rgba(239, 177, 89, 0)");
-  ctx.fillStyle = halo;
-  ctx.fillRect(0, 0, format.width, format.height);
-
-  const largeur = format.width - m.pad * 2;
-  let y = (format.zoneSure?.top ?? 0) + format.height * 0.3;
-
-  if (carte.titre) {
-    ctx.font = `700 ${m.titre}px ${police}`;
-    ctx.fillStyle = COULEURS.creme;
-    for (const l of lignes(ctx, carte.titre, largeur)) {
-      ctx.fillText(l, m.pad, y);
-      y += m.titre * 1.14;
-    }
-    y += m.corps * 0.7;
+  let y = m.piedFilet - Math.round(34 * m.k);
+  const factuelle = carte.pied ?? "";
+  if (factuelle) {
+    ctx.font = `400 ${m.corps}px ${police}`;
+    ctx.fillStyle = th.encreDouce;
+    ctx.fillText(factuelle, m.pad, y);
+    y -= m.corps * 1.9;
   }
   if (carte.texte) {
     ctx.font = `400 ${m.corps}px ${police}`;
-    ctx.fillStyle = "rgba(254, 251, 246, 0.88)";
-    for (const l of lignes(ctx, carte.texte, largeur)) {
-      ctx.fillText(l, m.pad, y);
-      y += m.corps * 1.5;
+    ctx.fillStyle = th.encreDouce;
+    const blocs = paragraphes(ctx, carte.texte, format.width - m.pad * 2);
+    for (let b = blocs.length - 1; b >= 0; b -= 1) {
+      for (let i = blocs[b].length - 1; i >= 0; i -= 1) {
+        ctx.fillText(blocs[b][i], m.pad, y);
+        y -= m.corps * 1.52;
+      }
+      y -= m.corps * 0.5;
     }
+    y -= m.corps * 0.2;
   }
+  if (carte.titre) {
+    ctx.font = `700 ${m.titre}px ${police}`;
+    ctx.fillStyle = th.encre;
+    const ls = lignes(ctx, carte.titre, format.width - m.pad * 2);
+    for (let i = ls.length - 1; i >= 0; i -= 1) {
+      ctx.fillText(ls[i], m.pad, y);
+      y -= m.titre * 1.12;
+    }
+    y -= m.surtitre * 0.5;
+  }
+  if (carte.surtitre) surtitre(ctx, m, th, police, carte.surtitre, m.pad, y);
 
-  signature(ctx, format, m, police, logo);
+  bandePied(ctx, format, m, th, police, { index, total });
   return [];
 }
 
-/** LES CHIFFRES — les statistiques en très grand. Par défaut celles de la trace
- *  entière, ou celles d'une journée si on en désigne une. */
-function dessinerChiffres(ctx, format, ctx2) {
-  const { carte, trace, segments, police, logo, m } = ctx2;
+/** LE TEXTE — surtitre, titre, paragraphes. La respiration du carrousel. */
+function dessinerTexte(ctx, format, o) {
+  const { carte, police, logo, m, th, index, total } = o;
+  rayures(ctx, format, th);
+  bandeEntete(ctx, format, m, th, police, { texte: carte.entete, logo });
 
-  ctx.fillStyle = SOMBRE;
-  ctx.fillRect(0, 0, format.width, format.height);
-  const g = ctx.createLinearGradient(0, 0, format.width, format.height);
-  g.addColorStop(0, "rgba(182, 115, 82, 0.22)");
-  g.addColorStop(1, "rgba(239, 177, 89, 0.06)");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, format.width, format.height);
+  const largeur = format.width - m.pad * 2;
+  let y = m.bandeH + Math.round(112 * m.k);
+
+  if (carte.surtitre) {
+    ctx.fillStyle = th.accent;
+    surtitre(ctx, m, th, police, carte.surtitre, m.pad, y);
+    y += m.surtitre * 1.3;
+  }
+  y = blocTitreEtCorps(ctx, format, m, th, police, carte, y, largeur);
+
+  bandePied(ctx, format, m, th, police, { index, total });
+  return [];
+}
+
+/**
+ * Le titre puis les paragraphes, de haut en bas, à partir de `y`.
+ *
+ * `y` est le BAS de ce qui précède, pas la ligne de base du titre : on descend
+ * d'abord de la hampe du titre (~0,86 em). Sans ça, un titre de 66 px posé
+ * directement sur `y` remonte ses capitales par-dessus le surtitre — c'est
+ * exactement ce qui est arrivé à « Un massif, une boucle, aucune assistance. »
+ */
+function blocTitreEtCorps(ctx, format, m, th, police, carte, yDepart, largeur, echelleTitre = 1) {
+  let y = yDepart;
+  const tailleTitre = Math.round(m.titre * echelleTitre);
+
+  if (carte.titre) {
+    ctx.font = `700 ${tailleTitre}px ${police}`;
+    ctx.fillStyle = th.encre;
+    const ls = lignes(ctx, carte.titre, largeur);
+    y += tailleTitre * 0.86;
+    ls.forEach((l, i) => {
+      if (i > 0) y += tailleTitre * 1.16;
+      ctx.fillText(l, m.pad, y);
+    });
+    // 2,2 corps et pas 1,7 : la jambe du titre descend sous sa ligne de base et
+    // la hampe du corps remonte — l'écart utile est bien plus petit que l'écart
+    // nominal, et « assistance. » collait à « Quatre jours ».
+    y += m.corps * 2.2;
+  }
+  if (carte.texte) {
+    ctx.font = `400 ${m.corps}px ${police}`;
+    ctx.fillStyle = th.encreDouce;
+    if (!carte.titre) y += m.corps;
+    const blocs = paragraphes(ctx, carte.texte, largeur);
+    blocs.forEach((bloc, b) => {
+      if (b > 0) y += m.corps * 0.8;
+      bloc.forEach((l, i) => {
+        if (i > 0 || b > 0) y += m.corps * 1.55;
+        ctx.fillText(l, m.pad, y);
+      });
+    });
+  }
+  return y;
+}
+
+/** LES CHIFFRES — la statistique en très grand. Tout l'itinéraire, ou une
+ *  seule journée. */
+function dessinerChiffres(ctx, format, o) {
+  const { carte, trace, segments, police, logo, m, th, index, total } = o;
+  rayures(ctx, format, th);
+  bandeEntete(ctx, format, m, th, police, { texte: carte.entete, logo });
 
   const seg = carte.segment != null ? segments[carte.segment] : null;
   const distanceKm = Number.isFinite(carte.distanceKm)
@@ -597,53 +882,76 @@ function dessinerChiffres(ctx, format, ctx2) {
   const dPlusM = Number.isFinite(carte.dPlusM) ? carte.dPlusM : (seg?.dPlusM ?? trace?.dPlusM ?? 0);
   const dMinusM = Number.isFinite(carte.dMinusM) ? carte.dMinusM : (seg ? 0 : (trace?.dMinusM ?? 0));
 
-  let y = (format.zoneSure?.top ?? 0) + format.height * 0.34;
+  let y = m.bandeH + Math.round(150 * m.k);
+
+  if (carte.surtitre) {
+    ctx.fillStyle = th.accent;
+    surtitre(ctx, m, th, police, carte.surtitre, m.pad, y);
+    y += m.surtitre * 1.3;
+  }
   if (carte.titre) {
-    ctx.font = `700 ${Math.round(m.titre * 0.7)}px ${police}`;
-    ctx.fillStyle = `rgba(254, 251, 246, 0.8)`;
-    ctx.fillText(carte.titre, m.pad, y);
-    y += m.titre * 0.95;
+    const tailleTitre = Math.round(m.titre * 0.82);
+    ctx.font = `700 ${tailleTitre}px ${police}`;
+    ctx.fillStyle = th.encre;
+    const ls = lignes(ctx, carte.titre, format.width - m.pad * 2);
+    y += tailleTitre * 0.86;
+    ls.forEach((l, i) => {
+      if (i > 0) y += tailleTitre * 1.16;
+      ctx.fillText(l, m.pad, y);
+    });
   }
 
+  // Le grand chiffre, et son unité posée sur la même ligne de base. Le pas est
+  // celui de la HAUTEUR DU CHIFFRE, pas du titre : c'est lui qui occupe la
+  // place, et un pas trop court le collait au titre.
+  y += m.chiffre * 1.1;
   ctx.font = `700 ${m.chiffre}px ${police}`;
-  ctx.fillStyle = COULEURS.ambre;
-  const grand = `${formatKm(distanceKm)}`;
+  ctx.fillStyle = th.accent;
+  const grand = formatKm(distanceKm);
   ctx.fillText(grand, m.pad, y);
   const largeurGrand = ctx.measureText(grand).width;
   ctx.font = `400 ${m.unite}px ${police}`;
-  ctx.fillStyle = "rgba(254, 251, 246, 0.7)";
-  ctx.fillText("km", m.pad + largeurGrand + m.unite * 0.4, y);
-  y += m.chiffre * 0.62;
+  ctx.fillStyle = th.encreFaible;
+  ctx.fillText(carte.bilan ? "km parcourus" : "km", m.pad + largeurGrand + m.unite * 0.5, y);
+  y += m.chiffre * 0.3 + m.stat;
 
-  ctx.font = `500 ${Math.round(m.corps * 1.3)}px ${police}`;
-  ctx.fillStyle = COULEURS.creme;
-  ctx.strokeStyle = COULEURS.creme;
+  ctx.font = `500 ${m.stat}px ${police}`;
+  ctx.fillStyle = th.encre;
+  ctx.strokeStyle = th.encre;
   let curseur = m.pad;
-  const taille = Math.round(m.corps * 1.3);
   for (const [i, s] of segmentsDeStats({ distanceKm: NaN, dPlusM, dMinusM }).entries()) {
     if (i > 0) {
-      ctx.fillText("  ·  ", curseur, y);
-      curseur += ctx.measureText("  ·  ").width;
+      ctx.fillText("   ·   ", curseur, y);
+      curseur += ctx.measureText("   ·   ").width;
     }
     ctx.fillText(s.texte, curseur, y);
     curseur += ctx.measureText(s.texte).width;
     if (s.fleche) {
-      curseur += taille * 0.26;
-      curseur += dessinerFleche(ctx, curseur, y, taille, s.fleche);
+      curseur += m.stat * 0.26;
+      curseur += dessinerFleche(ctx, curseur, y, m.stat, s.fleche);
     }
+  }
+  if (carte.bilan && trace?.dureeSecondes > 0) {
+    y += m.stat * 1.5;
+    ctx.font = `400 ${m.stat}px ${police}`;
+    ctx.fillStyle = th.encreDouce;
+    ctx.fillText(dureeCourte(trace.dureeSecondes), m.pad, y);
   }
 
   if (carte.texte) {
     ctx.font = `400 ${m.corps}px ${police}`;
-    ctx.fillStyle = "rgba(254, 251, 246, 0.82)";
-    let yy = y + m.corps * 2.2;
-    for (const l of lignes(ctx, carte.texte, format.width - m.pad * 2)) {
-      ctx.fillText(l, m.pad, yy);
-      yy += m.corps * 1.5;
+    ctx.fillStyle = th.encreDouce;
+    let yy = y + m.corps * 2.4;
+    for (const bloc of paragraphes(ctx, carte.texte, format.width - m.pad * 2)) {
+      for (const l of bloc) {
+        ctx.fillText(l, m.pad, yy);
+        yy += m.corps * 1.55;
+      }
+      yy += m.corps * 0.75;
     }
   }
 
-  signature(ctx, format, m, police, logo);
+  bandePied(ctx, format, m, th, police, { index, total });
   return [];
 }
 
@@ -662,15 +970,24 @@ const RENDUS = {
  */
 export function dessinerCartePartage(ctx, options) {
   const format = FORMATS[options.format] ?? FORMATS.carrousel;
+  const th = THEMES[options.theme] ?? THEMES.sombre;
   const m = metriques(format);
   const police = options.police ?? "sans-serif";
 
   ctx.clearRect(0, 0, format.width, format.height);
-  ctx.fillStyle = "#22241E";
+  ctx.fillStyle = th.fond;
   ctx.fillRect(0, 0, format.width, format.height);
   ctx.textBaseline = "alphabetic";
   ctx.textAlign = "left";
 
   const rendu = RENDUS[options.carte?.gabarit] ?? dessinerTexte;
-  return rendu(ctx, format, { ...options, police, m });
+  return rendu(ctx, format, {
+    ...options,
+    police,
+    m,
+    th,
+    segments: options.segments ?? [],
+    index: options.index ?? 0,
+    total: options.total ?? 1,
+  });
 }

@@ -22,6 +22,7 @@ import {
   FORMATS,
   GABARITS,
   PALETTE_JOURS,
+  THEMES,
   chargerFond,
   dessinerCartePartage,
   vueDeLaCarte,
@@ -74,16 +75,22 @@ function carteNeuve(gabarit, trace) {
   return {
     id: `c${compteur}`,
     gabarit,
+    /** L'intitulé de la bande d'en-tête, à droite de la marque. */
+    entete: "",
+    /** Le surtitre en capitales, précédé du filet ambre. */
+    surtitre: gabarit === "carte" ? (trace?.vecue ? "La sortie" : "L'itinéraire") : "",
     titre: gabarit === "carte" ? (trace?.nom ?? liveConfig.aventure.nom) : "",
     texte: "",
     pied: null,
+    // Une trace horodatée vient d'une montre : la carte parle au passé.
+    bilan: Boolean(trace?.vecue),
     etiquettes: [],
     afficherFond: true,
+    afficherProfil: true,
     image: null,
     nomImage: "",
     ancrage: 0.5,
     segment: null,
-    segmentProfil: null,
   };
 }
 
@@ -94,6 +101,7 @@ export default function CarrouselAtelier() {
 
   const [trace, setTrace] = useState(null);
   const [formatCle, setFormatCle] = useState("carrousel");
+  const [themeCle, setThemeCle] = useState("sombre");
   const [coupures, setCoupures] = useState([]);
   const [cartes, setCartes] = useState([]);
   const [active, setActive] = useState(0);
@@ -123,15 +131,17 @@ export default function CarrouselAtelier() {
     };
   }, []);
 
+  // La marque suit le thème : teintée crème elle disparaîtrait sur un fond
+  // clair, et l'inverse sur un fond sombre.
   useEffect(() => {
     let vivant = true;
-    chargerMarqueTeintee()
+    chargerMarqueTeintee(THEMES[themeCle].encre)
       .then((c) => vivant && setMarque(c))
       .catch(() => {});
     return () => {
       vivant = false;
     };
-  }, []);
+  }, [themeCle]);
 
   // Le fond de carte suit la trace ET le format (le cadrage change avec le
   // rapport de l'image). Un chargement plus ancien qui reviendrait après un
@@ -150,16 +160,23 @@ export default function CarrouselAtelier() {
     };
   }, [trace, formatCle]);
 
-  const appliquerTrace = useCallback((t) => {
+  /**
+   * @param {object|null} t
+   * @param {boolean} deLAventure - vrai seulement pour l'itinéraire de
+   *   `liveConfig`. Les waypoints (Arsine 42, Vallouise 84, Valgaudémar 130,6)
+   *   ne décrivent QUE cette aventure : les appliquer à un GPX importé
+   *   découperait une sortie de 60 km à des kilomètres qui n'ont aucun sens.
+   */
+  const appliquerTrace = useCallback((t, deLAventure = false) => {
     if (!t) {
       setEtat({ occupe: false, message: "Fichier illisible — attendu un .gpx ou un .track.json." });
       return;
     }
     setTrace(t);
-    // Les waypoints de l'aventure ferment naturellement les journées (un
-    // bivouac = une fin d'étape) ; à défaut, découpage régulier en 2.
-    const auto = coupuresDepuisWaypoints(liveConfig.aventure.waypoints, t.totalKm);
-    setCoupures(auto.length ? auto : coupuresRegulieres(t.totalKm, 2));
+    // Une sortie DÉJÀ FAITE est d'un seul tenant par défaut : elle se raconte,
+    // elle ne se planifie plus. Un itinéraire prévu, lui, se découpe.
+    const auto = deLAventure ? coupuresDepuisWaypoints(liveConfig.aventure.waypoints, t.totalKm) : [];
+    setCoupures(auto.length ? auto : t.vecue ? [] : coupuresRegulieres(t.totalKm, 2));
     setCartes([carteNeuve("carte", t)]);
     setActive(0);
     setEtat({ occupe: false, message: "" });
@@ -187,7 +204,7 @@ export default function CarrouselAtelier() {
     setEtat({ occupe: true, message: "Chargement de l'itinéraire…" });
     try {
       const res = await fetch(liveConfig.aventure.trace);
-      appliquerTrace(traceDepuisTrackJson(await res.json()));
+      appliquerTrace(traceDepuisTrackJson(await res.json()), true);
     } catch {
       setEtat({ occupe: false, message: "Itinéraire de l'aventure introuvable." });
     }
@@ -267,8 +284,17 @@ export default function CarrouselAtelier() {
   /* -------------------------------------------------------------------- rendu */
 
   const options = useMemo(
-    () => ({ format: formatCle, trace, segments, police: policeUbuntu(), logo: marque, fond }),
-    [formatCle, trace, segments, marque, fond],
+    () => ({
+      format: formatCle,
+      theme: themeCle,
+      trace,
+      segments,
+      police: policeUbuntu(),
+      logo: marque,
+      fond,
+      total: cartes.length,
+    }),
+    [formatCle, themeCle, trace, segments, marque, fond, cartes.length],
   );
 
   useEffect(() => {
@@ -278,8 +304,8 @@ export default function CarrouselAtelier() {
     canvas.height = format.height;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    boitesRef.current = dessinerCartePartage(ctx, { ...options, carte }) ?? [];
-  }, [carte, options, format, policePrete]);
+    boitesRef.current = dessinerCartePartage(ctx, { ...options, carte, index: active }) ?? [];
+  }, [carte, options, format, policePrete, active]);
 
   /* ------------------------------------------- glisser-déposer des étiquettes */
 
@@ -344,7 +370,9 @@ export default function CarrouselAtelier() {
       const horodatage = Date.now();
 
       for (const i of indices) {
-        dessinerCartePartage(ctx, { ...options, carte: cartes[i] });
+        // `index` reste celui de la carte DANS LE CARROUSEL : la pagination du
+        // pied doit dire « 03 / 10 » même si on n'exporte que cette carte-là.
+        dessinerCartePartage(ctx, { ...options, carte: cartes[i], index: i });
         const blob = await new Promise((r) => hors.toBlob(r, "image/jpeg", 0.92));
         if (blob) {
           const numero = String(indices.indexOf(i) + 1).padStart(2, "0");
@@ -573,6 +601,30 @@ export default function CarrouselAtelier() {
               ))}
             </select>
 
+            <label className={LEGENDE} htmlFor="entete">
+              En-tête <span className="font-normal opacity-60">— à droite de la marque</span>
+            </label>
+            <input
+              id="entete"
+              type="text"
+              value={carte.entete}
+              placeholder="bande photo — détail / matériel"
+              onChange={(e) => majCarte({ entete: e.target.value })}
+              className={`${CHAMP} mb-3`}
+            />
+
+            <label className={LEGENDE} htmlFor="surtitre">
+              Surtitre <span className="font-normal opacity-60">— après le filet ambre</span>
+            </label>
+            <input
+              id="surtitre"
+              type="text"
+              value={carte.surtitre}
+              placeholder="pourquoi ce tour"
+              onChange={(e) => majCarte({ surtitre: e.target.value })}
+              className={`${CHAMP} mb-3`}
+            />
+
             <label className={LEGENDE} htmlFor="titre">
               Titre
             </label>
@@ -585,11 +637,11 @@ export default function CarrouselAtelier() {
             />
 
             <label className={LEGENDE} htmlFor="texte">
-              Texte
+              Texte <span className="font-normal opacity-60">— une ligne vide sépare deux paragraphes</span>
             </label>
             <textarea
               id="texte"
-              rows={3}
+              rows={4}
               value={carte.texte}
               onChange={(e) => majCarte({ texte: e.target.value })}
               className={`${CHAMP} mb-3 resize-y`}
@@ -597,7 +649,7 @@ export default function CarrouselAtelier() {
 
             {carte.gabarit === "carte" && (
               <>
-                <label className="mb-3 flex items-center gap-2 font-heading text-[14px] text-brand-text/75">
+                <label className="mb-2 flex items-center gap-2 font-heading text-[14px] text-brand-text/75">
                   <input
                     type="checkbox"
                     checked={carte.afficherFond !== false}
@@ -607,6 +659,14 @@ export default function CarrouselAtelier() {
                   {!fond && trace?.coords?.length > 0 && (
                     <span className="text-brand-text/45">(indisponible hors ligne)</span>
                   )}
+                </label>
+                <label className="mb-3 flex items-center gap-2 font-heading text-[14px] text-brand-text/75">
+                  <input
+                    type="checkbox"
+                    checked={carte.afficherProfil !== false}
+                    onChange={(e) => majCarte({ afficherProfil: e.target.checked })}
+                  />
+                  Profil altimétrique
                 </label>
 
                 <p className={LEGENDE}>Étiquettes</p>
@@ -669,24 +729,6 @@ export default function CarrouselAtelier() {
                   onChange={(e) => majCarte({ ancrage: Number(e.target.value) })}
                   className="mb-3 w-full accent-brand-primary-dark"
                 />
-                <label className={LEGENDE} htmlFor="profil-jour">
-                  Profil affiché
-                </label>
-                <select
-                  id="profil-jour"
-                  value={carte.segmentProfil ?? ""}
-                  onChange={(e) =>
-                    majCarte({ segmentProfil: e.target.value === "" ? null : Number(e.target.value) })
-                  }
-                  className={CHAMP}
-                >
-                  <option value="">Tout l&rsquo;itinéraire</option>
-                  {segments.map((s, i) => (
-                    <option key={`profil-${s.kmDebut}`} value={i}>
-                      Journée {i + 1}
-                    </option>
-                  ))}
-                </select>
               </>
             )}
 
@@ -701,7 +743,7 @@ export default function CarrouselAtelier() {
                   onChange={(e) =>
                     majCarte({ segment: e.target.value === "" ? null : Number(e.target.value) })
                   }
-                  className={CHAMP}
+                  className={`${CHAMP} mb-3`}
                 >
                   <option value="">Tout l&rsquo;itinéraire</option>
                   {segments.map((s, i) => (
@@ -711,6 +753,18 @@ export default function CarrouselAtelier() {
                   ))}
                 </select>
               </>
+            )}
+
+            {(carte.gabarit === "carte" || carte.gabarit === "chiffres") && (
+              <label className="flex items-center gap-2 font-heading text-[14px] text-brand-text/75">
+                <input
+                  type="checkbox"
+                  checked={Boolean(carte.bilan)}
+                  onChange={(e) => majCarte({ bilan: e.target.checked })}
+                />
+                Bilan (sortie faite)
+                {trace?.vecue && <span className="text-brand-text/45">— trace horodatée</span>}
+              </label>
             )}
           </section>
         )}
@@ -740,7 +794,7 @@ export default function CarrouselAtelier() {
               id="format"
               value={formatCle}
               onChange={(e) => setFormatCle(e.target.value)}
-              className={`${CHAMP} mb-4`}
+              className={`${CHAMP} mb-3`}
             >
               {Object.values(FORMATS).map((f) => (
                 <option key={f.cle} value={f.cle}>
@@ -748,6 +802,24 @@ export default function CarrouselAtelier() {
                 </option>
               ))}
             </select>
+
+            <p className={LEGENDE}>Thème</p>
+            <div className="mb-4 flex gap-2">
+              {Object.values(THEMES).map((t) => (
+                <button
+                  key={t.cle}
+                  type="button"
+                  onClick={() => setThemeCle(t.cle)}
+                  className={`flex-1 rounded-full border px-3 py-2 font-heading text-[14px] transition-colors ${
+                    themeCle === t.cle
+                      ? "border-brand-primary-dark bg-brand-primary/25 text-brand-text"
+                      : "border-brand-field bg-brand-paper text-brand-text/65 hover:border-brand-primary/60"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
 
             <div className="flex flex-col gap-2">
               <button

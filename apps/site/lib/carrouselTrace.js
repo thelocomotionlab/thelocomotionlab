@@ -72,11 +72,22 @@ export function traceDepuisTrackJson(raw) {
     profil: t.profile,
     coords,
     cumul: cumulKm(coords, totalKm),
+    dureeSecondes: null,
+    // Un .track.json est un itinéraire PRÉVU : `build:track` ne conserve aucun
+    // horodatage. Il ne peut donc jamais servir de bilan.
+    vecue: false,
     source: "track.json",
   };
 }
 
-/** Lecture d'un GPX brut. `null` si le fichier ne porte pas de trace. */
+/**
+ * Lecture d'un GPX brut. `null` si le fichier ne porte pas de trace.
+ *
+ * `vecue` distingue une SORTIE d'un ITINÉRAIRE : un GPX horodaté vient d'une
+ * montre, il raconte quelque chose qui a eu lieu — l'atelier bascule alors ses
+ * mots sur le bilan (« km parcourus », durée, profil rempli). Un GPX tracé sur
+ * Komoot, lui, n'a pas d'heure : c'est un projet, il s'annonce.
+ */
 export function traceDepuisGpx(xml) {
   const stats = statsDeGpx(xml);
   if (!stats) return null;
@@ -92,6 +103,8 @@ export function traceDepuisGpx(xml) {
     profil: stats.profil,
     coords,
     cumul: cumulKm(coords, stats.distanceKm),
+    dureeSecondes: stats.dureeSecondes,
+    vecue: stats.dureeSecondes !== null,
     source: "gpx",
   };
 }

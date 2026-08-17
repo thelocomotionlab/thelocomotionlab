@@ -7,6 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 
+import { dureeCourte } from "./carrouselCartes";
 import { fitView, decimerPixels, normX, normY } from "./carrouselGeo";
 import {
   ancreDuSegment,
@@ -14,6 +15,7 @@ import {
   coupuresRegulieres,
   cumulKm,
   decouperTrace,
+  traceDepuisGpx,
   traceDepuisTrackJson,
 } from "./carrouselTrace";
 
@@ -59,6 +61,52 @@ describe("traceDepuisTrackJson", () => {
   it("refuse poliment un schéma inconnu", () => {
     expect(traceDepuisTrackJson({ schemaVersion: 2, profile: [] })).toBeNull();
     expect(traceDepuisTrackJson(null)).toBeNull();
+  });
+});
+
+/** Un GPX minimal, avec ou sans horodatage — c'est LUI qui décide si la trace
+ *  est une sortie vécue ou un itinéraire prévu. */
+function gpx({ avecTemps }) {
+  const pts = [
+    [6.0, 44.9, 1000, "2026-08-20T08:00:00Z"],
+    [6.01, 44.91, 1400, "2026-08-20T09:00:00Z"],
+    [6.02, 44.92, 1200, "2026-08-20T10:30:00Z"],
+  ];
+  const corps = pts
+    .map(
+      ([lon, lat, ele, t]) =>
+        `<trkpt lat="${lat}" lon="${lon}"><ele>${ele}</ele>${avecTemps ? `<time>${t}</time>` : ""}</trkpt>`,
+    )
+    .join("");
+  return `<gpx><trk><name>Sortie d'essai</name><trkseg>${corps}</trkseg></trk></gpx>`;
+}
+
+describe("vécue ou prévue", () => {
+  it("un GPX horodaté est une sortie vécue, et porte sa durée", () => {
+    const t = traceDepuisGpx(gpx({ avecTemps: true }));
+    expect(t.vecue).toBe(true);
+    expect(t.dureeSecondes).toBe(9000); // 2 h 30
+  });
+
+  it("un GPX sans heure est un itinéraire prévu", () => {
+    const t = traceDepuisGpx(gpx({ avecTemps: false }));
+    expect(t.vecue).toBe(false);
+    expect(t.dureeSecondes).toBeNull();
+  });
+
+  it("un .track.json n'est JAMAIS une sortie vécue", () => {
+    // `build:track` ne conserve aucun horodatage : il ne peut décrire qu'un
+    // itinéraire. Le mode bilan ne doit pas pouvoir s'y activer tout seul.
+    expect(traceDepuisTrackJson(traceDroite()).vecue).toBe(false);
+  });
+});
+
+describe("dureeCourte", () => {
+  it("dit la durée comme on la dit", () => {
+    expect(dureeCourte(9000)).toBe("2 h 30");
+    expect(dureeCourte(3660)).toBe("1 h 01");
+    expect(dureeCourte(1500)).toBe("25 min");
+    expect(dureeCourte(0)).toBe("0 min");
   });
 });
 
