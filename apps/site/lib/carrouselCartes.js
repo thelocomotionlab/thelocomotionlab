@@ -128,6 +128,23 @@ export function dureeCourte(seconds) {
 
 /* ------------------------------------------------------------------ métriques */
 
+/**
+ * Les corps de référence, en pixels d'une planche de 1080 de large.
+ *
+ * Ce sont les valeurs relevées sur les aperçus de reel du labo : titre 65,
+ * sous-titre (le corps) 38, filet ambre 10 d'épaisseur. Les autres s'y accordent
+ * — l'en-tête et le pied étaient à 17, illisibles une fois la planche postée,
+ * ils montent à 22. Chaque carte peut les redéfinir (cf. `mesuresDeLaCarte`).
+ */
+export const CORPS = {
+  entete: 22,
+  surtitre: 22,
+  titre: 65,
+  corps: 38,
+  pied: 22,
+  filet: 10,
+};
+
 /** Tout est proportionnel à 1080 px de large : un trait fixé en pixels
  *  paraîtrait deux fois plus fin d'un format à l'autre. */
 function metriques(format) {
@@ -138,21 +155,52 @@ function metriques(format) {
     k,
     pad: Math.round(64 * k),
     // La bande d'en-tête : sa ligne de base, et le filet qui la ferme.
-    bandeH: Math.round(haut + 116 * k),
-    entete: Math.round(17 * k),
-    surtitre: Math.round(19 * k),
-    titre: Math.round((format.cle === "carre" ? 58 : 66) * k),
-    corps: Math.round(31 * k),
+    bandeH: Math.round(haut + 128 * k),
+    entete: Math.round(CORPS.entete * k),
+    surtitre: Math.round(CORPS.surtitre * k),
+    filetSurtitre: Math.round(CORPS.filet * k),
+    titre: Math.round((format.cle === "carre" ? CORPS.titre * 0.88 : CORPS.titre) * k),
+    corps: Math.round(CORPS.corps * k),
     chiffre: Math.round(132 * k),
     unite: Math.round(34 * k),
-    stat: Math.round(38 * k),
-    piedTexte: Math.round(17 * k),
+    stat: Math.round(42 * k),
+    piedTexte: Math.round(CORPS.pied * k),
     etiquette: Math.round(29 * k),
     profilH: Math.round(150 * k),
     /** Ligne de base du pied, et filet juste au-dessus. */
     piedBase: Math.round(bas - 46 * k),
-    piedFilet: Math.round(bas - 92 * k),
+    piedFilet: Math.round(bas - 96 * k),
   };
+}
+
+/**
+ * Les mesures et les encres EFFECTIVES d'une carte : celles du format et du
+ * thème, écrasées par ce que la carte redéfinit.
+ *
+ * Tout est réglable, mais rien n'est obligatoire : une carte qui ne dit rien
+ * prend les valeurs de la charte, et deux planches faites à six mois d'écart se
+ * ressemblent encore. C'est la différence entre « personnalisable » et Canva.
+ */
+function mesuresDeLaCarte(carte, m, th) {
+  const px = (valeur, defaut) =>
+    Math.round((Number.isFinite(valeur) && valeur > 0 ? valeur : defaut) * m.k);
+  return [
+    {
+      ...m,
+      entete: px(carte?.tailleEntete, CORPS.entete),
+      surtitre: px(carte?.tailleSurtitre, CORPS.surtitre),
+      filetSurtitre: px(carte?.epaisseurFilet, CORPS.filet),
+      titre: px(carte?.tailleTitre, m.titre / m.k),
+      corps: px(carte?.tailleCorps, CORPS.corps),
+      piedTexte: px(carte?.taillePied, CORPS.pied),
+    },
+    {
+      ...th,
+      encre: carte?.couleurTitre || th.encre,
+      encreDouce: carte?.couleurCorps || th.encreDouce,
+      accent: carte?.couleurAccent || th.accent,
+    },
+  ];
 }
 
 /** Fenêtre de cadrage de l'itinéraire — entre la bande d'en-tête et le profil. */
@@ -267,8 +315,10 @@ function voileTexte(ctx, format, th, depuis) {
  * droite, un filet dessous. C'est la ligne qui dit « c'est une planche du
  * labo » sans avoir à occuper le titre.
  */
-function bandeEntete(ctx, format, m, th, police, { texte, accent, logo, filet = true }) {
-  const base = m.bandeH - Math.round(46 * m.k);
+function bandeEntete(ctx, format, m, th, police, { texte, accent, logo, filet = true, opacite = 1 }) {
+  const base = m.bandeH - Math.round(48 * m.k);
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, Math.max(0, opacite));
 
   let x = m.pad;
   if (logo) {
@@ -300,6 +350,7 @@ function bandeEntete(ctx, format, m, th, police, { texte, accent, logo, filet = 
     ctx.fillStyle = th.filet;
     ctx.fillRect(m.pad, m.bandeH, format.width - m.pad * 2, Math.max(1, 1.5 * m.k));
   }
+  ctx.restore();
 }
 
 /**
@@ -320,9 +371,13 @@ function largeurEspacee(ctx, texte, taille, espacementEm) {
  */
 function surtitre(ctx, m, th, police, texte, x, base) {
   if (!texte) return base;
-  const filetL = Math.round(m.surtitre * 2.4);
+  const filetL = Math.round(m.surtitre * 2.6);
+  const epaisseur = Math.max(2, m.filetSurtitre);
   ctx.fillStyle = th.accent;
-  ctx.fillRect(x, base - m.surtitre * 0.34, filetL, Math.max(2, 2.5 * m.k));
+  // Le filet est ÉPAIS (10 px de référence) : c'est lui le point d'entrée du
+  // regard, pas le petit texte qui le suit. Centré sur la hauteur de capitale
+  // du surtitre, sinon il pend sous la ligne dès qu'il s'épaissit.
+  ctx.fillRect(x, base - m.surtitre * CENTRE_CAPITALES - epaisseur / 2, filetL, epaisseur);
 
   ctx.font = `500 ${m.surtitre}px ${police}`;
   dessinerTexteEspace(
@@ -368,7 +423,9 @@ function paragraphes(ctx, texte, largeurMax) {
  * reste une carte derrière. La flèche est DESSINÉE — les fontes du site sont
  * des sous-ensembles latins et n'ont pas U+2192 (elle sortirait en carré).
  */
-function bandePied(ctx, format, m, th, police, { index, total, centre, droite, filet = true }) {
+function bandePied(ctx, format, m, th, police, { index, total, centre, droite, filet = true, opacite = 1 }) {
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, Math.max(0, opacite));
   if (filet) {
     ctx.fillStyle = th.filet;
     ctx.fillRect(m.pad, m.piedFilet, format.width - m.pad * 2, Math.max(1, 1.5 * m.k));
@@ -389,7 +446,10 @@ function bandePied(ctx, format, m, th, police, { index, total, centre, droite, f
   // reste une carte derrière. Un texte explicite l'emporte toujours — c'est le
   // seul moyen de signer la DERNIÈRE carte (« merci », « lien en bio »…).
   const motDroite = droite ? String(droite).toUpperCase() : index < total - 1 ? "GLISSE" : null;
-  if (!motDroite) return;
+  if (!motDroite) {
+    ctx.restore();
+    return;
+  }
 
   const avecFleche = !droite && index < total - 1;
   const fleche = avecFleche ? m.piedTexte * 1.5 : 0;
@@ -403,7 +463,10 @@ function bandePied(ctx, format, m, th, police, { index, total, centre, droite, f
     0.24,
   );
 
-  if (!avecFleche) return;
+  if (!avecFleche) {
+    ctx.restore();
+    return;
+  }
   // Flèche horizontale, tracée à la main. Le canvas SAIT afficher U+2192 — il
   // retombe sur une fonte système — mais justement : la flèche arriverait dans
   // un dessin qui n'est pas celui d'Ubuntu, et changerait d'un appareil à
@@ -421,6 +484,7 @@ function bandePied(ctx, format, m, th, police, { index, total, centre, droite, f
   ctx.lineTo(x1, y);
   ctx.lineTo(x1 - m.piedTexte * 0.34, y + m.piedTexte * 0.3);
   ctx.stroke();
+  ctx.restore();
 }
 
 /* ------------------------------------------------------------------ le profil */
@@ -448,28 +512,9 @@ function dessinerProfil(ctx, boite, th, options) {
 
   const alts = points.map((p) => p.alt);
   const min = Math.min(...alts);
-  const max = Math.max(...alts);
-  const amplitude = Math.max(1, max - min);
+  const amplitude = Math.max(1, Math.max(...alts) - min);
 
-  /* Les altitudes se posent dans une GOUTTIÈRE réservée à droite, pas par-dessus
-     le relief : sur une boucle, l'arrivée redescend au niveau du départ et le
-     « 900 m » tombait pile sur la fin du tracé. La silhouette est donc tracée
-     un peu plus étroite — c'est la même convention qu'un axe de graphique. */
-  const tailleAlt = Math.max(11, boite.height * 0.115);
-  let gouttiere = 0;
-  if (options.altitudes !== false) {
-    ctx.save();
-    ctx.font = `400 ${tailleAlt}px ${options.police ?? "sans-serif"}`;
-    gouttiere =
-      Math.max(
-        ctx.measureText(`${formatEntier(max)} m`).width,
-        ctx.measureText(`${formatEntier(min)} m`).width,
-      ) + tailleAlt * 0.7;
-    ctx.restore();
-  }
-  const largeurTrace = Math.max(boite.width * 0.5, boite.width - gouttiere);
-
-  const X = (km) => boite.x + (Math.max(0, Math.min(total, km)) / total) * largeurTrace;
+  const X = (km) => boite.x + (Math.max(0, Math.min(total, km)) / total) * boite.width;
   const Y = (alt) => boite.y + (1 - (alt - min) / amplitude) * boite.height;
   const base = boite.y + boite.height;
 
@@ -538,32 +583,6 @@ function dessinerProfil(ctx, boite, th, options) {
     ctx.restore();
   }
 
-  /* Les deux altitudes qui bornent la silhouette. Discrètes par construction :
-     ce sont des REPÈRES, pas une échelle — le profil reste une silhouette
-     étirée sur toute la hauteur, comme celui de /live. Le maximum se pose au ras
-     du plafond, le minimum sur la ligne de base, avec un tiret de rappel. */
-  if (options.altitudes !== false) {
-    ctx.font = `400 ${tailleAlt}px ${options.police ?? "sans-serif"}`;
-    ctx.fillStyle = th.encreFaible;
-    ctx.textAlign = "right";
-    const x = boite.x + boite.width;
-    const yMax = boite.y + tailleAlt * 0.9;
-    const yMin = base - tailleAlt * 0.14;
-    ctx.fillText(`${formatEntier(max)} m`, x, yMax);
-    ctx.fillText(`${formatEntier(min)} m`, x, yMin);
-    ctx.textAlign = "left";
-
-    // Deux tirets fins relient le chiffre au niveau qu'il désigne — sans eux,
-    // les nombres flottent et rien ne dit qu'ils bornent la silhouette.
-    ctx.strokeStyle = th.filet;
-    ctx.lineWidth = Math.max(1, boite.height * 0.008);
-    for (const y of [yMax - tailleAlt * 0.32, yMin - tailleAlt * 0.32]) {
-      ctx.beginPath();
-      ctx.moveTo(boite.x + largeurTrace + tailleAlt * 0.2, y);
-      ctx.lineTo(boite.x + boite.width - gouttiere + tailleAlt * 0.45, y);
-      ctx.stroke();
-    }
-  }
 }
 
 /* ------------------------------------------------------------------ étiquettes */
@@ -760,6 +779,7 @@ function dessinerCarte(ctx, format, o) {
     texte: carte.entete,
     accent: carte.enteteAccent,
     logo,
+    opacite: carte.enteteOpacite,
   });
 
   /* Bloc du bas : profil, surtitre, titre, ligne factuelle. Construit de bas en
@@ -802,8 +822,6 @@ function dessinerCarte(ctx, format, o) {
       segments: segments.length > 1 ? segments : null,
       couleurs,
       doneKm: carte.bilan ? trace.totalKm : 0,
-      altitudes: carte.afficherAltitudes !== false,
-      police,
     });
   }
 
@@ -812,15 +830,33 @@ function dessinerCarte(ctx, format, o) {
     total,
     centre: carte.piedCentre,
     droite: carte.piedDroite,
+    opacite: carte.piedOpacite,
   });
-  if (view && fond && carte.afficherFond !== false) {
-    ctx.font = `400 ${Math.round(m.piedTexte * 0.86)}px ${police}`;
-    ctx.fillStyle = th.encreFaible;
-    ctx.textAlign = "right";
-    ctx.fillText(ATTRIBUTION, format.width - m.pad, m.bandeH - Math.round(14 * m.k));
-    ctx.textAlign = "left";
-  }
+  if (view && fond && carte.afficherFond !== false) attributionVerticale(ctx, format, m, th, police);
   return boites;
+}
+
+/**
+ * L'attribution des tuiles, à la VERTICALE contre le bord droit.
+ *
+ * À l'horizontale elle prenait une ligne entière sous l'en-tête et se lisait
+ * comme une information de la planche — alors que c'est une mention légale.
+ * Debout dans la marge, elle est là, elle reste lisible de près, et elle
+ * n'entre pas en concurrence avec le contenu. C'est la convention des cartes
+ * papier.
+ */
+function attributionVerticale(ctx, format, m, th, police) {
+  const taille = Math.round(m.piedTexte * 0.68);
+  ctx.save();
+  ctx.font = `400 ${taille}px ${police}`;
+  ctx.fillStyle = th.encreFaible;
+  ctx.globalAlpha = 0.75;
+  // Rotation d'un quart de tour à gauche : le texte se lit de bas en haut,
+  // sa ligne de base tournée vers l'extérieur de la planche.
+  ctx.translate(format.width - Math.round(m.pad * 0.42), m.bandeH + Math.round(28 * m.k));
+  ctx.rotate(Math.PI / 2);
+  ctx.fillText(ATTRIBUTION, 0, 0);
+  ctx.restore();
 }
 
 /**
@@ -856,6 +892,7 @@ function dessinerPhoto(ctx, format, o) {
     accent: carte.enteteAccent,
     logo,
     filet: !carte.image,
+    opacite: carte.enteteOpacite,
   });
 
   let y = m.piedFilet - Math.round(34 * m.k);
@@ -896,6 +933,7 @@ function dessinerPhoto(ctx, format, o) {
     total,
     centre: carte.piedCentre,
     droite: carte.piedDroite,
+    opacite: carte.piedOpacite,
   });
   return [];
 }
@@ -907,6 +945,7 @@ function dessinerTexte(ctx, format, o) {
     texte: carte.entete,
     accent: carte.enteteAccent,
     logo,
+    opacite: carte.enteteOpacite,
   });
 
   const largeur = format.width - m.pad * 2;
@@ -924,6 +963,7 @@ function dessinerTexte(ctx, format, o) {
     total,
     centre: carte.piedCentre,
     droite: carte.piedDroite,
+    opacite: carte.piedOpacite,
   });
   return [];
 }
@@ -978,6 +1018,7 @@ function dessinerChiffres(ctx, format, o) {
     texte: carte.entete,
     accent: carte.enteteAccent,
     logo,
+    opacite: carte.enteteOpacite,
   });
 
   const seg = carte.segment != null ? segments[carte.segment] : null;
@@ -1061,6 +1102,7 @@ function dessinerChiffres(ctx, format, o) {
     total,
     centre: carte.piedCentre,
     droite: carte.piedDroite,
+    opacite: carte.piedOpacite,
   });
   return [];
 }
@@ -1116,6 +1158,7 @@ function dessinerBandeau(ctx, format, o) {
     accent: carte.enteteAccent,
     logo,
     filet: !carte.image,
+    opacite: carte.enteteOpacite,
   });
 
   const largeur = format.width - m.pad * 2;
@@ -1132,6 +1175,7 @@ function dessinerBandeau(ctx, format, o) {
     total,
     centre: carte.piedCentre,
     droite: carte.piedDroite,
+    opacite: carte.piedOpacite,
   });
   return [];
 }
@@ -1153,6 +1197,7 @@ function dessinerFiche(ctx, format, o) {
     texte: carte.entete,
     accent: carte.enteteAccent,
     logo,
+    opacite: carte.enteteOpacite,
   });
 
   let y = m.bandeH + Math.round(118 * m.k);
@@ -1205,6 +1250,7 @@ function dessinerFiche(ctx, format, o) {
     total,
     centre: carte.piedCentre,
     droite: carte.piedDroite,
+    opacite: carte.piedOpacite,
   });
   return [];
 }
@@ -1224,12 +1270,14 @@ const RENDUS = {
  */
 export function dessinerCartePartage(ctx, options) {
   const format = FORMATS[options.format] ?? FORMATS.carrousel;
-  const th = THEMES[options.theme] ?? THEMES.sombre;
-  const m = metriques(format);
+  const theme = THEMES[options.theme] ?? THEMES.sombre;
+  const [m, th] = mesuresDeLaCarte(options.carte, metriques(format), theme);
   const police = options.police ?? "sans-serif";
 
   ctx.clearRect(0, 0, format.width, format.height);
-  ctx.fillStyle = th.fond;
+  // Le FOND reste celui du thème même si l'encre est redéfinie : une couleur de
+  // titre ne doit pas pouvoir repeindre la planche.
+  ctx.fillStyle = options.carte?.couleurFond || theme.fond;
   ctx.fillRect(0, 0, format.width, format.height);
   ctx.textBaseline = "alphabetic";
   ctx.textAlign = "left";
