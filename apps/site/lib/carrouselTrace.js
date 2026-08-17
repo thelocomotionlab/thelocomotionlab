@@ -109,6 +109,65 @@ export function traceDepuisGpx(xml) {
   };
 }
 
+/**
+ * BOUT À BOUT plusieurs traces, dans l'ordre donné.
+ *
+ * Le cas qui l'exige : une aventure de plusieurs jours enregistrée en une
+ * sortie par jour — la montre s'arrête au bivouac. Recoller les fichiers à la
+ * main est pénible, et aucun outil grand public ne le fait proprement.
+ *
+ * CE QUI SE RECOLLE ET CE QUI NE SE RECOLLE PAS :
+ *   • les kilomètres du profil sont DÉCALÉS du cumul des traces précédentes,
+ *     sinon chaque jour repartirait de 0 et le profil se replierait sur
+ *     lui-même ;
+ *   • les distances et dénivelés s'additionnent ;
+ *   • la durée n'est SOMMÉE que si toutes les traces en portent une — sinon on
+ *     annoncerait un temps de course amputé des jours sans horodatage, ce qui
+ *     est pire que pas de temps du tout ;
+ *   • les nuits entre deux traces ne comptent nulle part : c'est du temps en
+ *     mouvement qu'on additionne, pas un temps écoulé.
+ *
+ * L'ordre est celui des fichiers : c'est à l'appelant de les trier (par nom, ou
+ * par première date connue) avant d'appeler.
+ */
+export function fusionnerTraces(traces) {
+  const valides = (Array.isArray(traces) ? traces : []).filter((t) => t && t.totalKm > 0);
+  if (valides.length === 0) return null;
+  if (valides.length === 1) return valides[0];
+
+  const coords = [];
+  const profil = [];
+  let totalKm = 0;
+  let dPlusM = 0;
+  let dMinusM = 0;
+
+  for (const t of valides) {
+    coords.push(...t.coords);
+    for (const p of t.profil) profil.push({ km: totalKm + p.km, alt: p.alt });
+    totalKm += t.totalKm;
+    dPlusM += t.dPlusM;
+    dMinusM += t.dMinusM;
+  }
+
+  const toutesHorodatees = valides.every((t) => t.dureeSecondes > 0);
+  return {
+    nom: valides[0].nom,
+    totalKm,
+    dPlusM,
+    dMinusM,
+    profil,
+    coords,
+    cumul: cumulKm(coords, totalKm),
+    dureeSecondes: toutesHorodatees ? valides.reduce((s, t) => s + t.dureeSecondes, 0) : null,
+    vecue: toutesHorodatees,
+    source: "fusion",
+    /** Les kilomètres de RACCORD : les coupures de journée naturelles. */
+    jonctions: valides.slice(0, -1).map((_, i) =>
+      valides.slice(0, i + 1).reduce((s, t) => s + t.totalKm, 0),
+    ),
+  };
+}
+
 /** Coupures régulières : `n` journées de longueur égale. */
 export function coupuresRegulieres(totalKm, n) {
   const jours = Math.max(1, Math.min(12, Math.round(n) || 1));

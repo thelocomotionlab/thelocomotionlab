@@ -15,6 +15,7 @@ import {
   coupuresRegulieres,
   cumulKm,
   decouperTrace,
+  fusionnerTraces,
   traceDepuisGpx,
   traceDepuisTrackJson,
 } from "./carrouselTrace";
@@ -107,6 +108,45 @@ describe("dureeCourte", () => {
     expect(dureeCourte(3660)).toBe("1 h 01");
     expect(dureeCourte(1500)).toBe("25 min");
     expect(dureeCourte(0)).toBe("0 min");
+  });
+});
+
+describe("fusionnerTraces", () => {
+  const a = traceDepuisTrackJson(traceDroite(51, 40));
+  const b = traceDepuisTrackJson(traceDroite(51, 60));
+
+  it("additionne les distances et les dénivelés", () => {
+    const f = fusionnerTraces([a, b]);
+    expect(f.totalKm).toBe(100);
+    expect(f.dPlusM).toBe(a.dPlusM + b.dPlusM);
+  });
+
+  it("DÉCALE les kilomètres du profil de la trace suivante", () => {
+    // Sans décalage, chaque jour repartirait de 0 et le profil se replierait
+    // sur lui-même — c'est LE piège de la fusion.
+    const f = fusionnerTraces([a, b]);
+    const kms = f.profil.map((p) => p.km);
+    expect(Math.max(...kms)).toBeCloseTo(100, 6);
+    for (let i = 1; i < kms.length; i += 1) expect(kms[i]).toBeGreaterThanOrEqual(kms[i - 1]);
+  });
+
+  it("expose les jonctions, qui deviennent les fins de journée", () => {
+    expect(fusionnerTraces([a, b]).jonctions).toEqual([40]);
+  });
+
+  it("ne somme la durée QUE si toutes les traces en portent une", () => {
+    const vecue = { ...a, dureeSecondes: 3600, vecue: true };
+    expect(fusionnerTraces([vecue, { ...b, dureeSecondes: 1800, vecue: true }]).dureeSecondes).toBe(5400);
+    // Une seule trace sans heure, et on n'annonce plus de temps du tout :
+    // un temps amputé serait pire que pas de temps.
+    expect(fusionnerTraces([vecue, b]).dureeSecondes).toBeNull();
+    expect(fusionnerTraces([vecue, b]).vecue).toBe(false);
+  });
+
+  it("rend la trace telle quelle s'il n'y en a qu'une, et null s'il n'y en a aucune", () => {
+    expect(fusionnerTraces([a])).toBe(a);
+    expect(fusionnerTraces([])).toBeNull();
+    expect(fusionnerTraces(null)).toBeNull();
   });
 });
 

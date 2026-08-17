@@ -39,8 +39,10 @@ import {
 
 import {
   CORPS,
+  FLECHES,
   FORMATS,
   GABARITS,
+  MARQUES,
   PALETTE_JOURS,
   THEMES,
   chargerFond,
@@ -53,9 +55,11 @@ import {
   coupuresRegulieres,
   decouperTrace,
   etiquetteParDefaut,
+  fusionnerTraces,
   traceDepuisGpx,
   traceDepuisTrackJson,
 } from "@/lib/carrouselTrace";
+import { AIDE_BALISAGE } from "@/lib/carrouselTexte";
 import { chargerImage } from "@/lib/imageFile";
 import { chargerMarqueTeintee } from "@/lib/marque";
 import { liveConfig } from "@/lib/liveConfig";
@@ -211,7 +215,7 @@ function ficheParDefaut(trace, segments) {
 }
 
 let compteur = 0;
-function carteNeuve(gabarit, trace, segments) {
+function carteNeuve(gabarit, trace, segments, bilan = false) {
   compteur += 1;
   return {
     id: `c${compteur}`,
@@ -233,12 +237,21 @@ function carteNeuve(gabarit, trace, segments) {
     tailleEntete: null,
     taillePied: null,
     epaisseurFilet: null,
+    tailleFicheLabel: null,
+    tailleFicheValeur: null,
+    tailleLogo: null,
     couleurTitre: "",
     couleurCorps: "",
     couleurAccent: "",
     couleurFond: "",
     enteteOpacite: 1,
     piedOpacite: 1,
+    /** Ce que porte la bande d'en-tête : "" (logo + nom), sans-nom, sans-logo, rien. */
+    marque: "",
+    couleurLogo: "",
+    /** auto | toujours | jamais */
+    piedFleche: "auto",
+    centrer: false,
     /* --- propres aux gabarits --- */
     etiquettes: [],
     afficherFond: true,
@@ -251,7 +264,36 @@ function carteNeuve(gabarit, trace, segments) {
     bandeauPart: 0.42,
     fiche: gabarit === "fiche" ? ficheParDefaut(trace, segments) : [],
     segment: null,
+    /* --- clôture --- */
+    tailleCercle: 128,
+    epaisseurCercle: 4,
+    couleurCercle: "",
+    voileCloture: 0.62,
+    ...(gabarit === "cloture" ? clotureParDefaut(bilan) : null),
   };
+}
+
+/**
+ * Le mot de la fin, pré-rempli selon ce que le carrousel raconte : avant le
+ * départ on renvoie vers le direct, après on remercie. C'est du texte, il se
+ * réécrit — mais partir d'une page blanche pour la dernière planche est
+ * exactement le moment où on abandonne.
+ */
+function clotureParDefaut(bilan) {
+  const commun = {
+    // La marque est déjà au centre, en grand : la répéter en haut fait doublon.
+    marque: "rien",
+    cercleVisible: false,
+  };
+  return bilan
+    ? {
+        ...commun, surtitre: "c'est fini", titre: "Merci d'avoir suivi.", texte: "Le récit complet arrive sur le site." }
+    : {
+        ...commun,
+        surtitre: "à suivre en direct",
+        titre: "Position, carnet de bord, messages.",
+        texte: "thelocomotionlab.com/live",
+      };
 }
 
 /** Une carte sur laquelle personne n'a encore rien écrit — on peut la
@@ -280,7 +322,7 @@ export default function CarrouselAtelier() {
   const [bilan, setBilan] = useState(false);
   const [coupures, setCoupures] = useState([]);
   // L'atelier démarre sur une carte de texte : utilisable sans rien charger.
-  const [cartes, setCartes] = useState(() => [carteNeuve("texte", null, [])]);
+  const [cartes, setCartes] = useState(() => [carteNeuve("texte", null, [], false)]);
   const [active, setActive] = useState(0);
   const [fond, setFond] = useState(null);
   const [marque, setMarque] = useState(null);
@@ -316,13 +358,13 @@ export default function CarrouselAtelier() {
   // clair, et l'inverse sur un fond sombre.
   useEffect(() => {
     let vivant = true;
-    chargerMarqueTeintee(carte?.couleurTitre || theme.encre)
+    chargerMarqueTeintee(carte?.couleurLogo || carte?.couleurTitre || theme.encre)
       .then((c) => vivant && setMarque(c))
       .catch(() => {});
     return () => {
       vivant = false;
     };
-  }, [theme.encre, carte?.couleurTitre]);
+  }, [theme.encre, carte?.couleurTitre, carte?.couleurLogo]);
 
   // Le fond de carte suit la trace ET le format (le cadrage change avec le
   // rapport de l'image). Un chargement plus ancien qui reviendrait après un
@@ -348,6 +390,13 @@ export default function CarrouselAtelier() {
    *   ne décrivent QUE cette aventure : les appliquer à un GPX importé
    *   découperait une sortie de 60 km à des kilomètres qui n'ont aucun sens.
    */
+  // Les jonctions d'une fusion l'emportent sur le découpage automatique : ce
+  // sont de vraies fins d'étape, pas une estimation.
+  const jonctionsRef = useRef(null);
+  const setCoupuresApresFusion = useCallback((km) => {
+    jonctionsRef.current = km;
+  }, []);
+
   const appliquerTrace = useCallback((t, deLAventure = false) => {
     if (!t) {
       setEtat({
@@ -370,7 +419,7 @@ export default function CarrouselAtelier() {
     // On ne jette JAMAIS un texte déjà écrit : la carte de l'itinéraire remplace
     // une planche vierge, et s'ajoute derrière les autres.
     setCartes((cs) => {
-      const neuve = carteNeuve("carte", t, []);
+      const neuve = carteNeuve("carte", t, [], Boolean(t.vecue));
       if (cs.every(estVierge)) return [neuve];
       setActive(cs.length);
       return [...cs, neuve];
@@ -378,17 +427,36 @@ export default function CarrouselAtelier() {
     setEtat({ occupe: false, message: "" });
   }, []);
 
+  /**
+   * Un fichier, ou PLUSIEURS recollés bout à bout.
+   *
+   * Le cas qui l'exige : une aventure de quatre jours enregistrée en quatre
+   * sorties, parce que la montre s'arrête au bivouac. Les fichiers sont pris
+   * dans l'ordre ALPHABÉTIQUE de leur nom — c'est celui des exports de montre
+   * (horodatés), et c'est le seul ordre qu'on peut deviner sans se tromper.
+   * Les jonctions deviennent les coupures de journée : elles sont exactes, ce
+   * sont de vraies fins d'étape.
+   */
   const chargerFichierTrace = useCallback(
     async (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      setEtat({ occupe: true, message: "Lecture de la trace…" });
+      const fichiers = [...(e.target.files ?? [])].sort((a, b) => a.name.localeCompare(b.name, "fr"));
+      if (fichiers.length === 0) return;
+      setEtat({
+        occupe: true,
+        message: fichiers.length > 1 ? `Lecture de ${fichiers.length} traces…` : "Lecture de la trace…",
+      });
       try {
-        const texte = await file.text();
-        const t = file.name.endsWith(".json")
-          ? traceDepuisTrackJson(JSON.parse(texte))
-          : traceDepuisGpx(texte);
-        appliquerTrace(t);
+        const traces = [];
+        for (const file of fichiers) {
+          const texte = await file.text();
+          const t = file.name.endsWith(".json")
+            ? traceDepuisTrackJson(JSON.parse(texte))
+            : traceDepuisGpx(texte);
+          if (t) traces.push(t);
+        }
+        const fusion = fusionnerTraces(traces);
+        if (fusion?.jonctions?.length) setCoupuresApresFusion(fusion.jonctions);
+        appliquerTrace(fusion);
       } catch {
         setEtat({
           occupe: false,
@@ -396,7 +464,7 @@ export default function CarrouselAtelier() {
         });
       }
     },
-    [appliquerTrace],
+    [appliquerTrace, setCoupuresApresFusion],
   );
 
   const chargerAventure = useCallback(async () => {
@@ -452,10 +520,10 @@ export default function CarrouselAtelier() {
   // veut voir. Son index est la longueur ACTUELLE de la liste.
   const ajouterCarte = useCallback(
     (gabarit) => {
-      setCartes((cs) => [...cs, carteNeuve(gabarit, trace, segments)]);
+      setCartes((cs) => [...cs, carteNeuve(gabarit, trace, segments, bilan)]);
       setActive(cartes.length);
     },
-    [trace, segments, cartes.length],
+    [trace, segments, bilan, cartes.length],
   );
 
   const supprimerCarte = useCallback((i) => {
@@ -617,7 +685,7 @@ export default function CarrouselAtelier() {
 
   /* --------------------------------------------------------------------- vues */
 
-  const aPhoto = carte?.gabarit === "photo" || carte?.gabarit === "bandeau";
+  const aPhoto = ["photo", "bandeau", "cloture"].includes(carte?.gabarit);
 
   return (
     // PAS de `items-start` sur cette grille : il réduirait chaque colonne à la
@@ -774,7 +842,7 @@ export default function CarrouselAtelier() {
           />
 
           <label className={LEGENDE} htmlFor="titre">
-            Titre
+            Titre <span className="font-normal opacity-60">— le balisage marche aussi ici</span>
           </label>
           <input
             id="titre"
@@ -790,6 +858,7 @@ export default function CarrouselAtelier() {
               — une ligne vide sépare deux paragraphes
             </span>
           </label>
+          <p className="mb-1 font-mono text-[12px] text-brand-text/50">{AIDE_BALISAGE}</p>
           <textarea
             id="texte"
             rows={4}
@@ -799,6 +868,18 @@ export default function CarrouselAtelier() {
           />
 
           <p className={LEGENDE}>Pied de page</p>
+          <select
+            value={carte?.piedFleche ?? "auto"}
+            onChange={(e) => majCarte({ piedFleche: e.target.value })}
+            className={`${CHAMP} mb-2`}
+            aria-label="Flèche de swipe"
+          >
+            {FLECHES.map((f) => (
+              <option key={f.cle} value={f.cle}>
+                Flèche de swipe — {f.label}
+              </option>
+            ))}
+          </select>
           <div className="flex gap-2">
             <input
               type="text"
@@ -889,6 +970,68 @@ export default function CarrouselAtelier() {
                   : "pied de page"}
               </label>
             </div>
+          </Section>
+        )}
+
+        {carte?.gabarit === "cloture" && (
+          <Section titre="Le cercle de clôture" ouvert>
+            <label className={`${CASE} mb-3`}>
+              <input
+                type="checkbox"
+                checked={Boolean(carte.cercleVisible)}
+                onChange={(e) => majCarte({ cercleVisible: e.target.checked })}
+              />
+              Anneau autour du logo
+            </label>
+            <label className={LEGENDE} htmlFor="cercle-taille">
+              Rayon — {carte.tailleCercle ?? 128} px
+            </label>
+            <input
+              id="cercle-taille"
+              type="range"
+              min={60}
+              max={260}
+              step={2}
+              value={carte.tailleCercle ?? 128}
+              onChange={(e) => majCarte({ tailleCercle: Number(e.target.value) })}
+              className="mb-3 w-full accent-brand-primary-dark"
+            />
+            <label className={LEGENDE} htmlFor="cercle-trait">
+              Épaisseur du trait — {carte.epaisseurCercle ?? 4} px
+            </label>
+            <input
+              id="cercle-trait"
+              type="range"
+              min={1}
+              max={16}
+              step={1}
+              value={carte.epaisseurCercle ?? 4}
+              onChange={(e) => majCarte({ epaisseurCercle: Number(e.target.value) })}
+              className="mb-3 w-full accent-brand-primary-dark"
+            />
+            {carte.image && (
+              <>
+                <label className={LEGENDE} htmlFor="cloture-voile">
+                  Voile sur la photo — {Math.round((carte.voileCloture ?? 0.62) * 100)} %
+                </label>
+                <input
+                  id="cloture-voile"
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.02}
+                  value={carte.voileCloture ?? 0.62}
+                  onChange={(e) => majCarte({ voileCloture: Number(e.target.value) })}
+                  className="mb-3 w-full accent-brand-primary-dark"
+                />
+              </>
+            )}
+            <Couleur
+              label="Couleur du cercle"
+              valeur={carte.couleurCercle}
+              defaut={theme.encre}
+              onChange={(v) => majCarte({ couleurCercle: v })}
+            />
           </Section>
         )}
 
@@ -1196,7 +1339,57 @@ export default function CarrouselAtelier() {
               defaut={CORPS.pied}
               onChange={(v) => majCarte({ taillePied: v })}
             />
+            <Taille
+              id="t-logo"
+              label="Logo"
+              valeur={carte?.tailleLogo}
+              defaut={CORPS.logo}
+              onChange={(v) => majCarte({ tailleLogo: v })}
+            />
+            {carte?.gabarit === "fiche" && (
+              <>
+                <Taille
+                  id="t-fiche-l"
+                  label="Fiche · libellés"
+                  valeur={carte?.tailleFicheLabel}
+                  defaut={CORPS.ficheLabel}
+                  onChange={(v) => majCarte({ tailleFicheLabel: v })}
+                />
+                <Taille
+                  id="t-fiche-v"
+                  label="Fiche · valeurs"
+                  valeur={carte?.tailleFicheValeur}
+                  defaut={CORPS.ficheValeur}
+                  onChange={(v) => majCarte({ tailleFicheValeur: v })}
+                />
+              </>
+            )}
           </div>
+
+          <label className={LEGENDE} htmlFor="marque">
+            Bande d&rsquo;en-tête
+          </label>
+          <select
+            id="marque"
+            value={carte?.marque ?? ""}
+            onChange={(e) => majCarte({ marque: e.target.value })}
+            className={`${CHAMP} mb-3`}
+          >
+            {MARQUES.map((mq) => (
+              <option key={mq.cle} value={mq.cle}>
+                {mq.label}
+              </option>
+            ))}
+          </select>
+
+          <label className={`${CASE} mb-3`}>
+            <input
+              type="checkbox"
+              checked={Boolean(carte?.centrer)}
+              onChange={(e) => majCarte({ centrer: e.target.checked })}
+            />
+            Centrer le titre et le texte
+          </label>
 
           <div className="mb-3 grid grid-cols-2 gap-3">
             <Opacite
@@ -1238,6 +1431,12 @@ export default function CarrouselAtelier() {
               defaut={theme.fond}
               onChange={(v) => majCarte({ couleurFond: v })}
             />
+            <Couleur
+              label="Logo"
+              valeur={carte?.couleurLogo}
+              defaut={theme.encre}
+              onChange={(v) => majCarte({ couleurLogo: v })}
+            />
           </div>
         </Section>
 
@@ -1254,9 +1453,10 @@ export default function CarrouselAtelier() {
             </button>
             <label className={`${BOUTON_SECOND} cursor-pointer`}>
               <Route size={16} aria-hidden />
-              Un .gpx ou un .track.json
+              Un ou plusieurs .gpx
               <input
                 type="file"
+                multiple
                 accept=".gpx,.json,application/gpx+xml,application/json"
                 onChange={chargerFichierTrace}
                 className="sr-only"
@@ -1301,7 +1501,9 @@ export default function CarrouselAtelier() {
             </>
           ) : (
             <p className="mt-3 font-heading text-[13px] text-brand-text/55">
-              Facultatif — seul le gabarit « Carte » en a besoin.
+              Facultatif — seul le gabarit « Carte » en a besoin. Plusieurs fichiers d&rsquo;un coup
+              sont recollés bout à bout, dans l&rsquo;ordre de leur nom, et chaque jonction devient
+              une fin de journée.
             </p>
           )}
         </Section>

@@ -32,6 +32,13 @@ import {
 } from "./habillage";
 import { decimerPixels, fitView, tileWindow, TILE_SIZE } from "./carrouselGeo";
 import { ancreDuSegment } from "./carrouselTrace";
+import {
+  analyserRiche,
+  dessinerLigneRiche,
+  largeurLigne,
+  lignesRiches,
+  paragraphesRiches,
+} from "./carrouselTexte";
 import { traceColors } from "./liveTraceColors";
 
 /**
@@ -96,6 +103,22 @@ export const GABARITS = [
   { cle: "texte", label: "Texte", aide: "Un surtitre, un titre, un paragraphe." },
   { cle: "fiche", label: "Fiche", aide: "Des libellés à gauche, des valeurs en gros à droite." },
   { cle: "chiffres", label: "Chiffres", aide: "Une statistique en très grand." },
+  { cle: "cloture", label: "Clôture", aide: "La marque cerclée, et le mot de la fin." },
+];
+
+/** Ce que porte la bande d'en-tête : le logo, le nom, les deux, ou rien. */
+export const MARQUES = [
+  { cle: "", label: "Logo + nom" },
+  { cle: "sans-nom", label: "Logo seul" },
+  { cle: "sans-logo", label: "Nom seul" },
+  { cle: "rien", label: "Rien" },
+];
+
+/** Ce que fait la flèche du pied de page. */
+export const FLECHES = [
+  { cle: "auto", label: "Auto (sauf dernière)" },
+  { cle: "toujours", label: "Toujours" },
+  { cle: "jamais", label: "Jamais" },
 ];
 
 /**
@@ -143,6 +166,11 @@ export const CORPS = {
   corps: 38,
   pied: 22,
   filet: 10,
+  /** La fiche : le libellé à gauche, la valeur en gros à droite. */
+  ficheLabel: 16,
+  ficheValeur: 46,
+  /** Le côté du carré du logo, dans la bande d'en-tête. */
+  logo: 42,
 };
 
 /** Tout est proportionnel à 1080 px de large : un trait fixé en pixels
@@ -166,6 +194,9 @@ function metriques(format) {
     stat: Math.round(42 * k),
     piedTexte: Math.round(CORPS.pied * k),
     etiquette: Math.round(29 * k),
+    ficheLabel: Math.round(CORPS.ficheLabel * k),
+    ficheValeur: Math.round(CORPS.ficheValeur * k),
+    logo: Math.round(CORPS.logo * k),
     profilH: Math.round(150 * k),
     /** Ligne de base du pied, et filet juste au-dessus. */
     piedBase: Math.round(bas - 46 * k),
@@ -193,6 +224,9 @@ function mesuresDeLaCarte(carte, m, th) {
       titre: px(carte?.tailleTitre, m.titre / m.k),
       corps: px(carte?.tailleCorps, CORPS.corps),
       piedTexte: px(carte?.taillePied, CORPS.pied),
+      ficheLabel: px(carte?.tailleFicheLabel, CORPS.ficheLabel),
+      ficheValeur: px(carte?.tailleFicheValeur, CORPS.ficheValeur),
+      logo: px(carte?.tailleLogo, CORPS.logo),
     },
     {
       ...th,
@@ -315,23 +349,24 @@ function voileTexte(ctx, format, th, depuis) {
  * droite, un filet dessous. C'est la ligne qui dit « c'est une planche du
  * labo » sans avoir à occuper le titre.
  */
-function bandeEntete(ctx, format, m, th, police, { texte, accent, logo, filet = true, opacite = 1 }) {
+function bandeEntete(ctx, format, m, th, police, { texte, accent, logo, marque, filet = true, opacite = 1 }) {
   const base = m.bandeH - Math.round(48 * m.k);
   ctx.save();
   ctx.globalAlpha = Math.min(1, Math.max(0, opacite));
 
   let x = m.pad;
-  if (logo) {
-    const taille = Math.round(m.entete * 1.9);
+  if (logo && marque !== "sans-logo" && marque !== "rien") {
     const centre = base - m.entete * CENTRE_CAPITALES;
     ctx.globalAlpha = MARQUE_OPACITE;
-    ctx.drawImage(logo, x, centre - taille / 2, taille, taille);
+    ctx.drawImage(logo, x, centre - m.logo / 2, m.logo, m.logo);
     ctx.globalAlpha = 1;
-    x += taille + Math.round(m.entete * 0.66);
+    x += m.logo + Math.round(m.entete * 0.5);
   }
-  ctx.font = `500 ${m.entete}px ${police}`;
-  ctx.fillStyle = th.encreDouce;
-  dessinerTexteEspace(ctx, MARQUE, x, base, m.entete, 0.28);
+  if (marque !== "sans-nom" && marque !== "rien") {
+    ctx.font = `500 ${m.entete}px ${police}`;
+    ctx.fillStyle = th.encreDouce;
+    dessinerTexteEspace(ctx, MARQUE, x, base, m.entete, 0.28);
+  }
 
   if (texte) {
     ctx.font = `${accent ? 500 : 400} ${m.entete}px ${police}`;
@@ -409,21 +444,42 @@ export function lignes(ctx, texte, largeurMax) {
   return out;
 }
 
-/** Les paragraphes du corps, séparés par une ligne vide dans la saisie. */
-function paragraphes(ctx, texte, largeurMax) {
-  return String(texte ?? "")
-    .split(/\n\s*\n/)
-    .map((p) => p.trim())
-    .filter(Boolean)
-    .map((p) => lignes(ctx, p.replace(/\n/g, " "), largeurMax));
-}
-
 /**
  * Le pied : un filet, la pagination à gauche, « GLISSE → » à droite tant qu'il
  * reste une carte derrière. La flèche est DESSINÉE — les fontes du site sont
  * des sous-ensembles latins et n'ont pas U+2192 (elle sortirait en carré).
  */
-function bandePied(ctx, format, m, th, police, { index, total, centre, droite, filet = true, opacite = 1 }) {
+/** Le style de base d'un titre et d'un corps — ce sur quoi le balisage vient
+ *  poser ses variantes (cf. lib/carrouselTexte.js). */
+function baseTitre(m, th, police, echelle = 1) {
+  return {
+    police,
+    taille: Math.round(m.titre * echelle),
+    graisse: 700,
+    couleur: th.encre,
+    accent: th.accent,
+  };
+}
+function baseCorps(m, th, police) {
+  return { police, taille: m.corps, graisse: 400, couleur: th.encreDouce, accent: th.accent };
+}
+
+/**
+ * Pose des lignes déjà mises en page, de haut en bas, et rend l'ordonnée de la
+ * DERNIÈRE ligne de base — pas celle d'après : c'est à l'appelant de décider de
+ * l'espace qui suit, il est le seul à savoir ce qui vient.
+ */
+function poserLignes(ctx, lignes, x, y, base, { centre = null, interligne = 1.16 } = {}) {
+  let ligneBase = y;
+  lignes.forEach((ligne, i) => {
+    if (i > 0) ligneBase += base.taille * interligne;
+    const gauche = centre === null ? x : centre - largeurLigne(ligne) / 2;
+    dessinerLigneRiche(ctx, ligne, gauche, ligneBase, base);
+  });
+  return ligneBase;
+}
+
+function bandePied(ctx, format, m, th, police, { index, total, centre, droite, fleche = "auto", filet = true, opacite = 1 }) {
   ctx.save();
   ctx.globalAlpha = Math.min(1, Math.max(0, opacite));
   if (filet) {
@@ -445,23 +501,30 @@ function bandePied(ctx, format, m, th, police, { index, total, centre, droite, f
   // À droite : le texte qu'on a écrit, ou « GLISSE → » par défaut tant qu'il
   // reste une carte derrière. Un texte explicite l'emporte toujours — c'est le
   // seul moyen de signer la DERNIÈRE carte (« merci », « lien en bio »…).
-  const motDroite = droite ? String(droite).toUpperCase() : index < total - 1 ? "GLISSE" : null;
-  if (!motDroite) {
+  // « auto » : le mot par défaut et sa flèche tant qu'il reste une carte
+  // derrière. « toujours » / « jamais » forcent la flèche — la première sert à
+  // signer une dernière carte qui renvoie ailleurs (« lien en bio → »), la
+  // seconde à laisser un pied nu.
+  const resteUneCarte = index < total - 1;
+  const motDroite = droite ? String(droite).toUpperCase() : resteUneCarte ? "GLISSE" : null;
+  const avecFleche =
+    fleche === "toujours" ? true : fleche === "jamais" ? false : !droite && resteUneCarte;
+  if (!motDroite && !avecFleche) {
     ctx.restore();
     return;
   }
-
-  const avecFleche = !droite && index < total - 1;
-  const fleche = avecFleche ? m.piedTexte * 1.5 : 0;
-  const largeur = largeurEspacee(ctx, motDroite, m.piedTexte, 0.24);
-  dessinerTexteEspace(
-    ctx,
-    motDroite,
-    format.width - m.pad - largeur - fleche,
-    m.piedBase,
-    m.piedTexte,
-    0.24,
-  );
+  const ecartFleche = avecFleche ? m.piedTexte * 1.5 : 0;
+  const largeur = motDroite ? largeurEspacee(ctx, motDroite, m.piedTexte, 0.24) : 0;
+  if (motDroite) {
+    dessinerTexteEspace(
+      ctx,
+      motDroite,
+      format.width - m.pad - largeur - ecartFleche,
+      m.piedBase,
+      m.piedTexte,
+      0.24,
+    );
+  }
 
   if (!avecFleche) {
     ctx.restore();
@@ -478,7 +541,7 @@ function bandePied(ctx, format, m, th, police, { index, total, centre, droite, f
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.beginPath();
-  ctx.moveTo(x1 - fleche * 0.9, y);
+  ctx.moveTo(x1 - ecartFleche * 0.9, y);
   ctx.lineTo(x1, y);
   ctx.moveTo(x1 - m.piedTexte * 0.34, y - m.piedTexte * 0.3);
   ctx.lineTo(x1, y);
@@ -779,6 +842,7 @@ function dessinerCarte(ctx, format, o) {
     texte: carte.entete,
     accent: carte.enteteAccent,
     logo,
+    marque: carte.marque,
     opacite: carte.enteteOpacite,
   });
 
@@ -787,6 +851,7 @@ function dessinerCarte(ctx, format, o) {
   let y = m.piedFilet - Math.round(34 * m.k);
 
   const factuelle = carte.pied ?? ligneFactuelle(trace, carte.bilan);
+  const largeurTexte = format.width - m.pad * 2;
   if (factuelle) {
     ctx.font = `400 ${m.corps}px ${police}`;
     ctx.fillStyle = th.encreDouce;
@@ -794,12 +859,11 @@ function dessinerCarte(ctx, format, o) {
     y -= m.corps * 1.9;
   }
   if (carte.titre) {
-    ctx.font = `700 ${m.titre}px ${police}`;
-    ctx.fillStyle = th.encre;
-    const ls = lignes(ctx, carte.titre, format.width - m.pad * 2);
+    const bt = baseTitre(m, th, police);
+    const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeurTexte, bt);
     for (let i = ls.length - 1; i >= 0; i -= 1) {
-      ctx.fillText(ls[i], m.pad, y);
-      y -= m.titre * 1.12;
+      dessinerLigneRiche(ctx, ls[i], m.pad, y, bt);
+      y -= bt.taille * 1.12;
     }
     y -= m.surtitre * 0.5;
   }
@@ -830,6 +894,7 @@ function dessinerCarte(ctx, format, o) {
     total,
     centre: carte.piedCentre,
     droite: carte.piedDroite,
+    fleche: carte.piedFleche,
     opacite: carte.piedOpacite,
   });
   if (view && fond && carte.afficherFond !== false) attributionVerticale(ctx, format, m, th, police);
@@ -891,6 +956,7 @@ function dessinerPhoto(ctx, format, o) {
     texte: carte.entete,
     accent: carte.enteteAccent,
     logo,
+    marque: carte.marque,
     filet: !carte.image,
     opacite: carte.enteteOpacite,
   });
@@ -903,13 +969,13 @@ function dessinerPhoto(ctx, format, o) {
     ctx.fillText(factuelle, m.pad, y);
     y -= m.corps * 1.9;
   }
+  const largeurTexte = format.width - m.pad * 2;
   if (carte.texte) {
-    ctx.font = `400 ${m.corps}px ${police}`;
-    ctx.fillStyle = th.encreDouce;
-    const blocs = paragraphes(ctx, carte.texte, format.width - m.pad * 2);
+    const bc = baseCorps(m, th, police);
+    const blocs = paragraphesRiches(ctx, carte.texte, largeurTexte, bc);
     for (let b = blocs.length - 1; b >= 0; b -= 1) {
       for (let i = blocs[b].length - 1; i >= 0; i -= 1) {
-        ctx.fillText(blocs[b][i], m.pad, y);
+        dessinerLigneRiche(ctx, blocs[b][i], m.pad, y, bc);
         y -= m.corps * 1.52;
       }
       y -= m.corps * 0.5;
@@ -917,12 +983,11 @@ function dessinerPhoto(ctx, format, o) {
     y -= m.corps * 0.2;
   }
   if (carte.titre) {
-    ctx.font = `700 ${m.titre}px ${police}`;
-    ctx.fillStyle = th.encre;
-    const ls = lignes(ctx, carte.titre, format.width - m.pad * 2);
+    const bt = baseTitre(m, th, police);
+    const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeurTexte, bt);
     for (let i = ls.length - 1; i >= 0; i -= 1) {
-      ctx.fillText(ls[i], m.pad, y);
-      y -= m.titre * 1.12;
+      dessinerLigneRiche(ctx, ls[i], m.pad, y, bt);
+      y -= bt.taille * 1.12;
     }
     y -= m.surtitre * 0.5;
   }
@@ -933,6 +998,7 @@ function dessinerPhoto(ctx, format, o) {
     total,
     centre: carte.piedCentre,
     droite: carte.piedDroite,
+    fleche: carte.piedFleche,
     opacite: carte.piedOpacite,
   });
   return [];
@@ -945,6 +1011,7 @@ function dessinerTexte(ctx, format, o) {
     texte: carte.entete,
     accent: carte.enteteAccent,
     logo,
+    marque: carte.marque,
     opacite: carte.enteteOpacite,
   });
 
@@ -963,6 +1030,7 @@ function dessinerTexte(ctx, format, o) {
     total,
     centre: carte.piedCentre,
     droite: carte.piedDroite,
+    fleche: carte.piedFleche,
     opacite: carte.piedOpacite,
   });
   return [];
@@ -978,33 +1046,23 @@ function dessinerTexte(ctx, format, o) {
  */
 function blocTitreEtCorps(ctx, format, m, th, police, carte, yDepart, largeur, echelleTitre = 1) {
   let y = yDepart;
-  const tailleTitre = Math.round(m.titre * echelleTitre);
+  const bt = baseTitre(m, th, police, echelleTitre);
+  const bc = baseCorps(m, th, police);
+  const centre = carte.centrer ? m.pad + largeur / 2 : null;
 
   if (carte.titre) {
-    ctx.font = `700 ${tailleTitre}px ${police}`;
-    ctx.fillStyle = th.encre;
-    const ls = lignes(ctx, carte.titre, largeur);
-    y += tailleTitre * 0.86;
-    ls.forEach((l, i) => {
-      if (i > 0) y += tailleTitre * 1.16;
-      ctx.fillText(l, m.pad, y);
-    });
+    const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeur, bt);
+    y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.86, bt, { centre });
     // 2,2 corps et pas 1,7 : la jambe du titre descend sous sa ligne de base et
     // la hampe du corps remonte — l'écart utile est bien plus petit que l'écart
     // nominal, et « assistance. » collait à « Quatre jours ».
     y += m.corps * 2.2;
   }
   if (carte.texte) {
-    ctx.font = `400 ${m.corps}px ${police}`;
-    ctx.fillStyle = th.encreDouce;
     if (!carte.titre) y += m.corps;
-    const blocs = paragraphes(ctx, carte.texte, largeur);
-    blocs.forEach((bloc, b) => {
-      if (b > 0) y += m.corps * 0.8;
-      bloc.forEach((l, i) => {
-        if (i > 0 || b > 0) y += m.corps * 1.55;
-        ctx.fillText(l, m.pad, y);
-      });
+    paragraphesRiches(ctx, carte.texte, largeur, bc).forEach((bloc, b) => {
+      if (b > 0) y += m.corps * 2.35;
+      y = poserLignes(ctx, bloc, m.pad, y, bc, { centre, interligne: 1.55 });
     });
   }
   return y;
@@ -1018,6 +1076,7 @@ function dessinerChiffres(ctx, format, o) {
     texte: carte.entete,
     accent: carte.enteteAccent,
     logo,
+    marque: carte.marque,
     opacite: carte.enteteOpacite,
   });
 
@@ -1036,15 +1095,9 @@ function dessinerChiffres(ctx, format, o) {
     y += m.surtitre * 1.3;
   }
   if (carte.titre) {
-    const tailleTitre = Math.round(m.titre * 0.82);
-    ctx.font = `700 ${tailleTitre}px ${police}`;
-    ctx.fillStyle = th.encre;
-    const ls = lignes(ctx, carte.titre, format.width - m.pad * 2);
-    y += tailleTitre * 0.86;
-    ls.forEach((l, i) => {
-      if (i > 0) y += tailleTitre * 1.16;
-      ctx.fillText(l, m.pad, y);
-    });
+    const bt = baseTitre(m, th, police, 0.82);
+    const ls = lignesRiches(ctx, analyserRiche(carte.titre), format.width - m.pad * 2, bt);
+    y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.86, bt);
   }
 
   // Le grand chiffre, et son unité posée sur la même ligne de base. Le pas est
@@ -1085,15 +1138,10 @@ function dessinerChiffres(ctx, format, o) {
   }
 
   if (carte.texte) {
-    ctx.font = `400 ${m.corps}px ${police}`;
-    ctx.fillStyle = th.encreDouce;
+    const bc = baseCorps(m, th, police);
     let yy = y + m.corps * 2.4;
-    for (const bloc of paragraphes(ctx, carte.texte, format.width - m.pad * 2)) {
-      for (const l of bloc) {
-        ctx.fillText(l, m.pad, yy);
-        yy += m.corps * 1.55;
-      }
-      yy += m.corps * 0.75;
+    for (const bloc of paragraphesRiches(ctx, carte.texte, format.width - m.pad * 2, bc)) {
+      yy = poserLignes(ctx, bloc, m.pad, yy, bc, { interligne: 1.55 }) + m.corps * 2.35;
     }
   }
 
@@ -1102,6 +1150,7 @@ function dessinerChiffres(ctx, format, o) {
     total,
     centre: carte.piedCentre,
     droite: carte.piedDroite,
+    fleche: carte.piedFleche,
     opacite: carte.piedOpacite,
   });
   return [];
@@ -1157,6 +1206,7 @@ function dessinerBandeau(ctx, format, o) {
     texte: carte.entete,
     accent: carte.enteteAccent,
     logo,
+    marque: carte.marque,
     filet: !carte.image,
     opacite: carte.enteteOpacite,
   });
@@ -1175,6 +1225,7 @@ function dessinerBandeau(ctx, format, o) {
     total,
     centre: carte.piedCentre,
     droite: carte.piedDroite,
+    fleche: carte.piedFleche,
     opacite: carte.piedOpacite,
   });
   return [];
@@ -1197,6 +1248,7 @@ function dessinerFiche(ctx, format, o) {
     texte: carte.entete,
     accent: carte.enteteAccent,
     logo,
+    marque: carte.marque,
     opacite: carte.enteteOpacite,
   });
 
@@ -1207,11 +1259,9 @@ function dessinerFiche(ctx, format, o) {
     y += m.surtitre * 1.3;
   }
   if (carte.titre) {
-    const taille = Math.round(m.titre * 0.86);
-    ctx.font = `700 ${taille}px ${police}`;
-    ctx.fillStyle = th.encre;
-    y += taille * 0.86;
-    ctx.fillText(carte.titre, m.pad, y);
+    const bt = baseTitre(m, th, police, 0.86);
+    const ls = lignesRiches(ctx, analyserRiche(carte.titre), format.width - m.pad * 2, bt);
+    y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.86, bt);
     y += Math.round(30 * m.k);
     // Le filet ambre sous le titre : le même geste que le surtitre, à l'autre
     // bout du bloc — il ferme le titre au lieu de l'ouvrir.
@@ -1221,9 +1271,11 @@ function dessinerFiche(ctx, format, o) {
   }
 
   const lignesFiche = (carte.fiche ?? []).filter((l) => l && (l.label || l.valeur));
-  const libelle = Math.round(16 * m.k);
-  const valeur = Math.round(46 * m.k);
-  const pasLigne = Math.round(96 * m.k);
+  // Les corps de la fiche se règlent : une fiche à trois lignes respire d'un
+  // tout autre calibre qu'une fiche à huit.
+  const libelle = m.ficheLabel;
+  const valeur = m.ficheValeur;
+  const pasLigne = Math.round(valeur * 2.1);
 
   for (const [i, l] of lignesFiche.entries()) {
     if (i > 0) {
@@ -1250,6 +1302,115 @@ function dessinerFiche(ctx, format, o) {
     total,
     centre: carte.piedCentre,
     droite: carte.piedDroite,
+    fleche: carte.piedFleche,
+    opacite: carte.piedOpacite,
+  });
+  return [];
+}
+
+/**
+ * LA CLÔTURE — la dernière planche : la marque du labo dans un cercle, et un
+ * mot.
+ *
+ * C'est la seule carte où le logo quitte la bande d'en-tête pour devenir le
+ * SUJET. Cerclé et centré, il se lit comme une signature, pas comme un
+ * filigrane : on ferme le carrousel sur qui l'a fait.
+ *
+ * Deux usages, une seule mise en page — la différence est dans le contenu, et
+ * l'atelier la pré-remplit à la création :
+ *   • en AMONT, on renvoie vers le direct (aplat, texte centré) ;
+ *   • en AVAL, une photo termine, et le cercle se pose dessus.
+ * D'où l'image facultative : c'est le même gabarit dans les deux cas.
+ */
+function dessinerCloture(ctx, format, o) {
+  const { carte, police, logo, m, th, index, total } = o;
+
+  if (carte.image) {
+    const c = cadrageCouverture(
+      { width: carte.image.width, height: carte.image.height },
+      format,
+      carte.ancrage ?? 0.5,
+    );
+    if (c) ctx.drawImage(carte.image, c.sx, c.sy, c.sw, c.sh, c.dx, c.dy, c.dw, c.dh);
+    // Voile PLEIN, pas dégradé : le texte est au centre, il n'a pas de bord où
+    // s'appuyer. Réglable, comme partout ailleurs.
+    ctx.fillStyle = `rgba(${th.voileTexte}, ${carte.voileCloture ?? 0.62})`;
+    ctx.fillRect(0, 0, format.width, format.height);
+  }
+
+  const centreX = format.width / 2;
+  const rayon = Math.round((carte.tailleCercle ?? 128) * m.k);
+  const hautZone = format.zoneSure?.top ?? 0;
+  // Le bloc entier (cercle + textes) est centré dans la zone utile, pas dans la
+  // planche : en story, l'interface d'Instagram mange le haut et le bas.
+  const basZone = m.piedFilet;
+  let y = hautZone + (basZone - hautZone) * (carte.image ? 0.4 : 0.42);
+
+  ctx.save();
+  // LA MARQUE PORTE DÉJÀ SON ROND : le fichier source, c'est le pied DANS un
+  // cercle. En tracer un second par-dessus faisait une cible. L'anneau
+  // extérieur existe donc, mais éteint par défaut — il sert quand on veut un
+  // halo, pas pour « entourer » quelque chose qui l'est déjà.
+  if (carte.cercleVisible) {
+    ctx.beginPath();
+    ctx.arc(centreX, y, rayon, 0, Math.PI * 2);
+    ctx.strokeStyle = carte.couleurCercle || th.encre;
+    ctx.globalAlpha = 0.9;
+    ctx.lineWidth = Math.max(1, (carte.epaisseurCercle ?? 4) * m.k);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  if (logo) {
+    // Sans anneau extérieur, le pied occupe tout le diamètre : c'est LUI le
+    // cercle. Avec, il se range dedans.
+    const cote = rayon * (carte.cercleVisible ? 1.16 : 2);
+    ctx.globalAlpha = 0.94;
+    ctx.drawImage(logo, centreX - cote / 2, y - cote / 2, cote, cote);
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+
+  y += rayon + Math.round(84 * m.k);
+
+  const largeur = format.width - m.pad * 2;
+  if (carte.surtitre) {
+    // Centré, le surtitre n'a pas son filet : celui-ci ouvre une ligne, il ne
+    // sait pas ouvrir un axe de symétrie.
+    ctx.font = `500 ${m.surtitre}px ${police}`;
+    ctx.fillStyle = th.accent;
+    const mot = String(carte.surtitre).toUpperCase();
+    const l = largeurEspacee(ctx, mot, m.surtitre, 0.22);
+    dessinerTexteEspace(ctx, mot, centreX - l / 2, y, m.surtitre, 0.22);
+    y += m.surtitre * 2.2;
+  }
+  if (carte.titre) {
+    const bt = baseTitre(m, th, police);
+    const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeur, bt);
+    y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.7, bt, { centre: centreX }) + m.corps * 2.2;
+  }
+  if (carte.texte) {
+    const bc = baseCorps(m, th, police);
+    paragraphesRiches(ctx, carte.texte, largeur, bc).forEach((bloc, b) => {
+      if (b > 0) y += m.corps * 2.35;
+      y = poserLignes(ctx, bloc, m.pad, y, bc, { centre: centreX, interligne: 1.55 });
+    });
+  }
+
+  bandeEntete(ctx, format, m, th, police, {
+    texte: carte.entete,
+    accent: carte.enteteAccent,
+    logo,
+    marque: carte.marque ?? "rien", // la marque est déjà au centre, en grand
+    filet: false,
+    opacite: carte.enteteOpacite,
+  });
+  bandePied(ctx, format, m, th, police, {
+    index,
+    total,
+    centre: carte.piedCentre,
+    droite: carte.piedDroite,
+    fleche: carte.piedFleche ?? "jamais", // c'est la fin : il n'y a plus rien à glisser
+    filet: false,
     opacite: carte.piedOpacite,
   });
   return [];
@@ -1262,6 +1423,7 @@ const RENDUS = {
   texte: dessinerTexte,
   fiche: dessinerFiche,
   chiffres: dessinerChiffres,
+  cloture: dessinerCloture,
 };
 
 /**
