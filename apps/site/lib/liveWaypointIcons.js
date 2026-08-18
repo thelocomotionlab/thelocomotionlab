@@ -48,6 +48,7 @@ import {
   Sunrise,
   Sunset,
   Tent,
+  Timer,
   Trees,
   TriangleAlert,
   Utensils,
@@ -56,6 +57,8 @@ import {
   Wind,
   Zap,
 } from "lucide-react";
+
+import { Sandale } from "./iconesMaison";
 
 /** Clé écrite dans liveConfig → composant lucide-react. */
 export const WAYPOINT_ICONES = {
@@ -93,9 +96,14 @@ export const WAYPOINT_ICONES = {
   depart: Flag,
   arrivee: FlagTriangleRight,
   sentier: Footprints,
+  // La sandale n'existe pas chez lucide : elle est dessinée à la maison, au même
+  // trait que les autres (cf. lib/iconesMaison.js).
+  sandales: Sandale,
   velo: Bike,
   foret: Trees,
   riviere: Waves,
+  // Le temps qui passe
+  chrono: Timer,
   // Moments et conditions
   "lever-soleil": Sunrise,
   "coucher-soleil": Sunset,

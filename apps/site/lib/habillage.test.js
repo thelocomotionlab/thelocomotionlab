@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  FORMATS_HABILLAGE,
+  STYLES_HABILLAGE,
   boiteDuLogo,
   cadrageCouverture,
   cheminDuProfil,
@@ -9,6 +11,9 @@ import {
   formatEntier,
   formatKm,
   GABARIT,
+  gabaritChiffres,
+  gabaritDe,
+  formatHabillage,
   ligneDeStats,
   segmentsDeStats,
   STORY,
@@ -308,5 +313,58 @@ describe("dessinerFleche", () => {
 
   it("renvoie la largeur occupée, pour que le curseur avance", () => {
     expect(dessinerFleche(fauxCtx(), 0, 500, 44, "haut")).toBeCloseTo(44 * 0.34, 6);
+  });
+});
+
+describe("les deux formats", () => {
+  it("résout un format par sa clé, un objet, ou rien", () => {
+    expect(formatHabillage("publication").height).toBe(1350);
+    expect(formatHabillage({ width: 800, height: 800 }).width).toBe(800);
+    expect(formatHabillage("licorne").cle).toBe("story");
+    expect(formatHabillage(undefined).cle).toBe("story");
+  });
+
+  it("redonne EXACTEMENT le gabarit d'origine sur la story", () => {
+    // Ces valeurs ont été réglées à l'œil sur la story : les régénérer depuis la
+    // zone sûre ne doit rien avoir bougé.
+    const g = gabaritDe("story");
+    expect(g.profil.y).toBe(1205);
+    expect(g.voileDebut).toBe(980);
+    expect(g.stats.baseline).toBe(1505);
+    expect(g.marque.baseline).toBe(1566);
+  });
+
+  it.each(Object.keys(FORMATS_HABILLAGE))(
+    "garde tout le bloc dans la zone sûre en « %s »",
+    (cle) => {
+      const f = FORMATS_HABILLAGE[cle];
+      const g = gabaritDe(f);
+      expect(g.profil.y).toBeGreaterThanOrEqual(f.zoneSure.top);
+      expect(g.marque.baseline).toBeLessThanOrEqual(f.zoneSure.bottom);
+      expect(g.profil.y + g.profil.height).toBeLessThan(g.stats.baseline - g.stats.taille);
+      expect(g.stats.baseline).toBeLessThan(g.marque.baseline);
+      // Pleine largeur : le profil fait partie de l'image, pas un encart.
+      expect(g.profil.x).toBe(0);
+      expect(g.profil.width).toBe(f.width);
+    },
+  );
+
+  it.each(Object.keys(FORMATS_HABILLAGE))(
+    "empile l'habillage « Chiffres » dans le bon ordre en « %s »",
+    (cle) => {
+      const f = FORMATS_HABILLAGE[cle];
+      const g = gabaritChiffres(f);
+      expect(g.entete.baseline).toBeGreaterThan(f.zoneSure.top);
+      expect(g.entete.baseline).toBeLessThan(g.distance.baseline);
+      expect(g.distance.baseline).toBeLessThan(g.mesures.baseline);
+      expect(g.mesures.baseline).toBeLessThanOrEqual(f.zoneSure.bottom);
+      // Le voile du bas commence AU-DESSUS de la distance, sinon la ligne est
+      // posée sur une coupure franche.
+      expect(g.voileDebut).toBeLessThan(g.distance.baseline - g.distance.taille);
+    },
+  );
+
+  it("propose deux styles, dont celui d'origine", () => {
+    expect(STYLES_HABILLAGE.map((s) => s.cle)).toEqual(["silhouette", "chiffres"]);
   });
 });

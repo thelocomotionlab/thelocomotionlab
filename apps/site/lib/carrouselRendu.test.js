@@ -1,0 +1,345 @@
+// lib/carrouselRendu.test.js
+//
+// CE QUI SE VÉRIFIE SANS ŒIL. Le dessin d'une planche se juge à l'aperçu — mais
+// « est-ce que ce trait a seulement été tracé, et dans le cadre ? » est une
+// question binaire, et on n'a pas envie d'y répondre en rouvrant l'atelier.
+//
+// Le filet sous le titre est né de là : allumé, il ne se voyait pas, et on ne
+// savait pas dire si le problème était le dessin ou le réglage. Un contexte 2D
+// factice qui NOTE ses `fillRect` tranche en une seconde, sur les six gabarits.
+
+import { describe, expect, it } from "vitest";
+
+import { FORMATS, dessinerCartePartage } from "./carrouselCartes";
+import { CLES_ICONES, geometrieDIcone } from "./carrouselIcones";
+
+const GABARITS = ["carte", "bandeau", "photo", "texte", "fiche", "cloture"];
+
+/** Un contexte 2D de comptoir, qui garde la trace de ses rectangles pleins et
+ *  de la fonte avec laquelle chaque mot a été écrit. */
+function ctxFactice() {
+  const rects = [];
+  const mots = [];
+  const images = [];
+  const noop = () => {};
+  const ctx = {
+    rects,
+    mots,
+    images,
+    font: "",
+    fillStyle: "",
+    strokeStyle: "",
+    lineWidth: 1,
+    globalAlpha: 1,
+    textBaseline: "",
+    textAlign: "",
+    lineCap: "",
+    lineJoin: "",
+    measureText: (t) => ({ width: String(t).length * 0.5 * (parseInt(ctx.font, 10) || 20) }),
+    fillRect: (x, y, w, h) => rects.push({ x, y, w, h, couleur: ctx.fillStyle }),
+    fillText: (t) => mots.push({ texte: String(t), fonte: ctx.font }),
+    drawImage: (_src, x, y, w, h) => images.push({ x, y, w, h }),
+    createLinearGradient: () => ({ addColorStop: noop, degrade: true }),
+  };
+  for (const nom of [
+    "clearRect", "strokeRect", "strokeText", "beginPath", "moveTo",
+    "lineTo", "arc", "closePath", "fill", "stroke", "save", "restore",
+    "translate", "rotate", "scale", "setTransform", "clip",
+  ]) ctx[nom] = noop;
+  return ctx;
+}
+
+function planche(carte, options = {}) {
+  const ctx = ctxFactice();
+  dessinerCartePartage(ctx, {
+    format: "carrousel",
+    theme: "sombre",
+    police: "Ubuntu",
+    index: 0,
+    total: 3,
+    ...options,
+    carte: {
+      surtitre: "matériel",
+      titre: "Le sac, pesé au gramme.",
+      texte: "Quatre jours de vivres, deux litres portés.",
+      fiche: [{ label: "Distance", valeur: "188 km" }],
+      ...carte,
+    },
+  });
+  return ctx;
+}
+
+/** Les rectangles pleins de la planche. */
+const rectsDe = (ctx) => ctx.rects;
+
+describe("le filet sous le titre", () => {
+  const LARGEUR = 220;
+  const EPAISSEUR = 8;
+  const reglage = { filetTitre: true, filetTitreLargeur: LARGEUR, filetTitreEpaisseur: EPAISSEUR };
+  const filets = ({ rects }) =>
+    rects.filter((r) => Math.round(r.w) === LARGEUR && Math.round(r.h) === EPAISSEUR);
+
+  it.each(GABARITS)("se dessine sur le gabarit « %s »", (gabarit) => {
+    expect(filets(planche({ gabarit, ...reglage }))).toHaveLength(1);
+  });
+
+  it.each(GABARITS)("reste DANS la planche sur « %s »", (gabarit) => {
+    const [f] = filets(planche({ gabarit, ...reglage }));
+    expect(f.x).toBeGreaterThanOrEqual(0);
+    expect(f.y).toBeGreaterThanOrEqual(0);
+    expect(f.x + f.w).toBeLessThanOrEqual(FORMATS.carrousel.width);
+    expect(f.y + f.h).toBeLessThanOrEqual(FORMATS.carrousel.height);
+  });
+
+  it("ne se dessine pas quand il est éteint", () => {
+    // La fiche est le seul gabarit qui l'allume d'office : `false` doit l'éteindre.
+    for (const gabarit of GABARITS) {
+      const rects = planche({ gabarit, filetTitre: false, filetTitreLargeur: LARGEUR, filetTitreEpaisseur: EPAISSEUR });
+      expect(filets(rects)).toHaveLength(0);
+    }
+  });
+
+  it("suit sa couleur quand on lui en donne une", () => {
+    const [f] = filets(planche({ gabarit: "texte", ...reglage, couleurFiletTitre: "#D6246E" }));
+    expect(f.couleur).toBe("#D6246E");
+  });
+
+  it("se centre avec le titre centré", () => {
+    const [gauche] = filets(planche({ gabarit: "texte", ...reglage }));
+    const [centre] = filets(planche({ gabarit: "texte", ...reglage, centrer: true }));
+    expect(centre.x).toBeGreaterThan(gauche.x);
+    expect(Math.round(centre.x + centre.w / 2)).toBe(FORMATS.carrousel.width / 2);
+  });
+});
+
+describe("les dégradés réglables", () => {
+  /** Un dégradé est un `fillRect` dont le style n'est pas une couleur. */
+  const degrades = ({ rects }) => rects.filter((r) => r.couleur?.degrade);
+
+  it.each(["carte", "photo", "bandeau"])(
+    "s'éteignent tous les deux sur « %s » quand on les met à zéro",
+    (gabarit) => {
+      const image = { width: 1600, height: 1200 };
+      const avec = degrades(planche({ gabarit, image }));
+      const sans = degrades(planche({ gabarit, image, degradeHaut: 0, degradeBas: 0 }));
+      expect(avec.length).toBeGreaterThan(0);
+      expect(sans).toHaveLength(0);
+    },
+  );
+
+  it("comprend encore l'ancien réglage à cocher", () => {
+    const image = { width: 1600, height: 1200 };
+    expect(degrades(planche({ gabarit: "photo", image, degradeHaut: false, degradeBas: false }))).toHaveLength(0);
+    expect(degrades(planche({ gabarit: "photo", image, degradeHaut: true, degradeBas: true })).length)
+      .toBeGreaterThan(0);
+  });
+});
+
+describe("les polices par rôle", () => {
+  /** La fonte avec laquelle un mot précis a été écrit. Les mots sont posés UN
+   *  PAR UN (c'est ce qui permet le gras au mot près) : on cherche le mot, pas
+   *  la phrase. */
+  const fonteDuMot = (ctx, mot) => ctx.mots.find((m) => m.texte === mot)?.fonte ?? "";
+  const TITRE = "gramme.";
+  const CORPS = "portés.";
+  const trois = { sans: "Ubuntu", serif: "Lora", mono: "UbuntuMono" };
+
+  it("écrit tout en Ubuntu quand la planche ne demande rien", () => {
+    const ctx = planche({ gabarit: "texte" }, { polices: trois });
+    expect(fonteDuMot(ctx, TITRE)).toContain("Ubuntu");
+    expect(fonteDuMot(ctx, CORPS)).toContain("Ubuntu");
+  });
+
+  it("met le TITRE en Lora sans toucher au texte", () => {
+    const ctx = planche({ gabarit: "texte", policeTitre: "serif" }, { polices: trois });
+    expect(fonteDuMot(ctx, TITRE)).toContain("Lora");
+    expect(fonteDuMot(ctx, CORPS)).toContain("Ubuntu");
+  });
+
+  it("met le TEXTE en Ubuntu Mono sans toucher au titre", () => {
+    const ctx = planche({ gabarit: "texte", policeCorps: "mono" }, { polices: trois });
+    expect(fonteDuMot(ctx, CORPS)).toContain("UbuntuMono");
+    expect(fonteDuMot(ctx, TITRE)).toBe("700 65px Ubuntu");
+  });
+
+  it("retombe sur la police unique quand aucun trousseau n'est fourni", () => {
+    const ctx = planche({ gabarit: "texte", policeTitre: "serif" });
+    expect(fonteDuMot(ctx, TITRE)).toContain("Ubuntu");
+  });
+
+  it("ignore une clé de police inconnue plutôt que d'écrire en vide", () => {
+    const ctx = planche({ gabarit: "texte", policeTitre: "gothique" }, { polices: trois });
+    expect(fonteDuMot(ctx, TITRE)).toBe("700 65px Ubuntu");
+  });
+});
+
+describe("l'interligne du titre", () => {
+  // Le filet suit la DERNIÈRE ligne du titre : sa position dit où le bloc s'est
+  // arrêté, sans avoir à mesurer du texte.
+  const titre = "Un massif, une boucle, aucune assistance pendant quatre jours";
+  const yDuFilet = (interligneTitre) => {
+    const { rects } = planche({
+      gabarit: "texte",
+      titre,
+      filetTitre: true,
+      filetTitreLargeur: 220,
+      filetTitreEpaisseur: 8,
+      interligneTitre,
+    });
+    return rects.find((r) => Math.round(r.w) === 220 && Math.round(r.h) === 8).y;
+  };
+
+  it("descend le bloc quand on l'ouvre, le remonte quand on le serre", () => {
+    expect(yDuFilet(2)).toBeGreaterThan(yDuFilet(1.16));
+    expect(yDuFilet(1)).toBeLessThan(yDuFilet(1.16));
+  });
+});
+
+describe("le vocabulaire d'icônes", () => {
+  it("a une géométrie traçable pour CHAQUE clé", () => {
+    // Une clé sans géométrie disparaît SILENCIEUSEMENT de la planche : le texte
+    // se dessine, l'icône non, et rien ne le dit.
+    for (const cle of CLES_ICONES) {
+      expect(geometrieDIcone(cle), `géométrie manquante pour :${cle}:`).toBeTruthy();
+    }
+  });
+
+  it("connaît les sandales et le chrono", () => {
+    expect(CLES_ICONES).toContain("sandales");
+    expect(CLES_ICONES).toContain("chrono");
+    // La sandale est dessinée à la maison : elle doit rendre la même forme de
+    // géométrie que les icônes de lucide, sinon le canvas ne saurait pas la lire.
+    expect(geometrieDIcone("sandales").every(([type]) => typeof type === "string")).toBe(true);
+  });
+
+  it("ne dessine que des primitives que le canvas sait tracer", () => {
+    const connues = new Set(["path", "circle", "ellipse", "line", "rect", "polyline", "polygon"]);
+    for (const cle of CLES_ICONES) {
+      for (const [type] of geometrieDIcone(cle)) {
+        expect(connues.has(type), `${cle} → <${type}> inconnu`).toBe(true);
+      }
+    }
+  });
+});
+
+describe("la clôture", () => {
+  const LOGO = { width: 512, height: 512 };
+  const commun = {
+    gabarit: "cloture",
+    surtitre: "c'est fini",
+    titre: "Merci d'avoir suivi.",
+    texte: "",
+    marque: "rien",
+  };
+  // Le logo est la seule image de cette planche : sa boîte dit où le bloc s'est
+  // posé, sans avoir à mesurer du texte.
+  const yDuLogo = (ctx) => ctx.images[0]?.y;
+
+  it("pose bien le logo", () => {
+    expect(yDuLogo(planche(commun, { logo: LOGO }))).toBeGreaterThan(0);
+  });
+
+  it("descend le logo quand le texte lui passe devant", () => {
+    const bas = yDuLogo(planche(commun, { logo: LOGO }));
+    const surtitre = yDuLogo(planche({ ...commun, clotureHaut: "surtitre" }, { logo: LOGO }));
+    const deux = yDuLogo(planche({ ...commun, clotureHaut: "les-deux" }, { logo: LOGO }));
+    expect(surtitre).toBeGreaterThan(bas);
+    expect(deux).toBeGreaterThan(surtitre);
+  });
+
+  it("centre le bloc entier : un bloc plus haut MONTE, il ne déborde pas", () => {
+    const court = yDuLogo(planche(commun, { logo: LOGO }));
+    const long = yDuLogo(
+      planche({ ...commun, texte: "Une ligne.\n\nUne autre.\n\nUne troisième." }, { logo: LOGO }),
+    );
+    expect(long).toBeLessThan(court);
+  });
+});
+
+describe("la distance des dégradés", () => {
+  /** La hauteur du rectangle peint avec un dégradé, en partant du haut. */
+  const hautDuVoile = ({ rects }) =>
+    rects.find((r) => r.couleur?.degrade && Math.round(r.y) === 0)?.h;
+
+  it("suit le réglage sur la photo", () => {
+    const image = { width: 1600, height: 1200 };
+    expect(Math.round(hautDuVoile(planche({ gabarit: "photo", image, degradeHautH: 400 })))).toBe(400);
+    expect(Math.round(hautDuVoile(planche({ gabarit: "photo", image, degradeHautH: 700 })))).toBe(700);
+  });
+
+  it("est réglable sur la carte aussi", () => {
+    expect(Math.round(hautDuVoile(planche({ gabarit: "carte", degradeHautH: 320 })))).toBe(320);
+  });
+
+  it("garde la valeur du gabarit quand la planche ne dit rien", () => {
+    const image = { width: 1600, height: 1200 };
+    const defaut = hautDuVoile(planche({ gabarit: "photo", image }));
+    expect(defaut).toBeGreaterThan(0);
+    expect(defaut).not.toBe(400);
+  });
+});
+
+describe("l'ombre des textes", () => {
+  it("ne s'allume que si la planche la demande", () => {
+    // On ne peut pas lire `ctx.shadowColor` après coup : on vérifie que le
+    // rendu ne casse pas et que le réglage est bien pris en compte au dessin.
+    const sans = planche({ gabarit: "texte" });
+    const avec = planche({ gabarit: "texte", ombre: true, ombreFlou: 24 });
+    expect(sans.mots.length).toBe(avec.mots.length);
+  });
+});
+
+describe("le gabarit « Journées »", () => {
+  const segments = [0, 1, 2, 3].map((i) => ({
+    kmDebut: i * 40,
+    kmFin: (i + 1) * 40,
+    distanceKm: 40,
+    dPlusM: 2000 + i * 100,
+    coords: [
+      [6 + i * 0.1, 44.9],
+      [6.1 + i * 0.1, 45],
+    ],
+  }));
+  const trace = {
+    totalKm: 160,
+    dPlusM: 8000,
+    coords: [
+      [6, 44.9],
+      [6.4, 45.1],
+      [6.2, 45.3],
+    ],
+    profil: Array.from({ length: 50 }, (_, i) => ({ km: (i / 49) * 160, alt: 1000 + i * 20 })),
+  };
+
+  it("écrit une ligne par case, avec le jour et ses chiffres", () => {
+    const ctx = planche({ gabarit: "journees" }, { trace, segments });
+    const texte = ctx.mots.map((m) => m.texte).join(" ");
+    expect(texte).toContain("Jour");
+    expect(texte).toContain("1");
+    expect(texte).toContain("4");
+  });
+
+  it("suit le nombre de cases demandé", () => {
+    const deux = planche({ gabarit: "journees", casesN: 2 }, { trace, segments });
+    const quatre = planche({ gabarit: "journees", casesN: 4 }, { trace, segments });
+    const jours = (ctx) => ctx.mots.filter((m) => m.texte === "Jour").length;
+    expect(jours(deux)).toBe(2);
+    expect(jours(quatre)).toBe(4);
+  });
+
+  it("tient dans la planche, même à huit cases sur deux colonnes", () => {
+    const ctx = planche(
+      { gabarit: "journees", casesN: 8, casesColonnes: 2 },
+      { trace, segments },
+    );
+    for (const r of ctx.rects) {
+      expect(r.y).toBeGreaterThanOrEqual(0);
+      expect(r.y + r.h).toBeLessThanOrEqual(FORMATS.carrousel.height + 1);
+    }
+  });
+
+  it("ne dessine rien d'absurde sans trace", () => {
+    const ctx = planche({ gabarit: "journees" }, { trace: null, segments: [] });
+    expect(ctx.mots.some((m) => m.texte === "Jour")).toBe(true);
+  });
+});

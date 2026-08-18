@@ -138,7 +138,9 @@ export default function Studio() {
       <div hidden={actif !== "carrousel"}>
         <CarrouselAtelier />
       </div>
-      <div hidden={actif !== "habillage"}>
+      {/* L'habillage garde la colonne de lecture : c'est un outil à un seul
+          réglage à la fois, l'étirer sur 1600 px l'aurait rendu illisible. */}
+      <div hidden={actif !== "habillage"} className="mx-auto max-w-6xl">
         <HabillagePhoto />
       </div>
     </div>

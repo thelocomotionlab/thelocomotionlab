@@ -1,15 +1,23 @@
 // components/outils/HabillagePhoto.jsx
 //
-// L'atelier d'habillage : une photo + un GPX → une story prête à publier.
+// L'atelier d'habillage : une photo + un GPX → une image prête à publier.
 //
 // TOUT SE PASSE DANS LE TÉLÉPHONE. Ni photo ni trace ne quittent l'appareil :
 // pas de serveur, donc rien à stocker, rien à purger. C'est aussi ce qui permet
 // de traiter un GPX de 6 Mo sans se demander qui paie la bande passante.
 //
 // HORS LIGNE : oui, mais seulement servi depuis /studio, qui installe le service
-// worker (public/sw.js). Cet en-tête promettait le hors-ligne « parce que c'est
-// une PWA » alors qu'aucun service worker n'existait — un manifeste seul ne met
-// rien en cache.
+// worker (public/sw.js). Un manifeste seul ne met rien en cache.
+//
+// MÊME POSTE DE TRAVAIL QUE LE CARROUSEL — barre en haut, rail à gauche,
+// panneau, image au centre. Ce n'est pas de la cosmétique : les deux ateliers
+// s'utilisent dans la même demi-heure, et deux ergonomies différentes pour deux
+// canvas identiques obligeaient à réapprendre à chaque bascule.
+//
+// DEUX HABILLAGES, DEUX FORMATS (cf. lib/habillage.js). « Silhouette » pose le
+// relief en bandeau ; « Chiffres » met la distance en très grand, à la manière
+// d'un écran de montre — mais à la charte du labo, et avec le D+ à côté de la
+// distance, que les montres relèguent toujours au second écran.
 //
 // Les chiffres sont MODIFIABLES. Une montre n'affiche pas ce que son propre
 // fichier contient : sur la Croix de Belledonne, le GPX Coros donne 22,86 km de
@@ -21,19 +29,37 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Download, ImageUp, Route, Share2 } from "lucide-react";
+import { Download, Hash, ImageUp, Route, Share2 } from "lucide-react";
 
 import { statsDeGpx } from "@/lib/gpxStats";
 import { chargerImage } from "@/lib/imageFile";
-import { COULEURS, dessinerHabillage, STORY } from "@/lib/habillage";
+import {
+  COULEURS,
+  FORMATS_HABILLAGE,
+  STYLES_HABILLAGE,
+  dessinerHabillage,
+  formatEntier,
+  formatHabillage,
+} from "@/lib/habillage";
+import { CLES_ICONES } from "@/lib/carrouselIcones";
 import { chargerMarqueTeintee } from "@/lib/marque";
+import {
+  AIDE,
+  BOUTON_PRINCIPAL,
+  BOUTON_SECOND,
+  CHAMP,
+  Curseur,
+  Groupe,
+  ICONES_PAR_CLE,
+  LEGENDE,
+  Puce,
+} from "@/components/outils/champsAtelier";
 
-const CHAMP =
-  "w-full rounded-xl border border-brand-field bg-brand-paper px-3 py-2 font-heading text-[15px] text-brand-text focus:border-brand-primary-dark focus:outline-none";
-const BOUTON_PRINCIPAL =
-  "inline-flex items-center justify-center gap-2 rounded-full bg-brand-deep px-5 py-2.5 font-heading text-[14px] font-medium text-brand-bg transition-colors hover:bg-brand-deep-dark disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none";
-const BOUTON_SECOND =
-  "inline-flex items-center justify-center gap-2 rounded-full border border-brand-primary/45 bg-brand-primary/12 px-5 py-2.5 font-heading text-[14px] font-medium text-brand-primary-dark transition-colors hover:border-brand-primary-dark hover:bg-brand-primary/30 hover:text-brand-text disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none";
+const ONGLETS = [
+  { cle: "photo", label: "Photo", Icone: ImageUp },
+  { cle: "trace", label: "Trace", Icone: Route },
+  { cle: "chiffres", label: "Chiffres", Icone: Hash },
+];
 
 /**
  * Famille de police à donner au canvas.
@@ -41,13 +67,77 @@ const BOUTON_SECOND =
  * On lit la `font-family` RÉSOLUE du body, pas la variable `--next-font-ubuntu`
  * : next/font pose cette variable sur `<body>` (app/layout.js), et l'interroger
  * sur `documentElement` renvoyait une chaîne vide — le canvas dessinait alors
- * en police système sans que rien ne le signale. La valeur résolue porte de
- * toute façon le nom généré au build, qui est exactement ce dont on a besoin.
+ * en police système sans que rien ne le signale.
  */
 function policeUbuntu() {
   if (typeof document === "undefined") return "sans-serif";
   const famille = getComputedStyle(document.body).fontFamily;
   return famille && famille !== "" ? famille : "sans-serif";
+}
+
+/** « 21:15:08 » — le chrono tel qu'une montre l'affiche, pas tel qu'on le dit. */
+function formatChrono(secondes) {
+  if (!(secondes > 0)) return "";
+  const h = Math.floor(secondes / 3600);
+  const m = Math.floor((secondes % 3600) / 60);
+  const s = Math.round(secondes % 60);
+  return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+/** « 10'31"/km ». L'allure d'un ultra se lit à la seconde près, pas au dixième. */
+function formatAllure(secondes, km) {
+  if (!(secondes > 0) || !(km > 0)) return "";
+  const parKm = secondes / km;
+  const m = Math.floor(parKm / 60);
+  const s = Math.round(parKm % 60);
+  return `${m}'${String(s).padStart(2, "0")}"/km`;
+}
+
+/** « 27 juin 2025, 23:05 » — l'en-tête d'un écran de montre. */
+function formatDate(ms) {
+  if (!Number.isFinite(ms)) return "";
+  const d = new Date(ms);
+  const jour = new Intl.DateTimeFormat("fr-FR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(d);
+  const heure = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" }).format(d);
+  // Les espaces fines insécables d'Intl sortiraient en carré : la fonte du site
+  // est un sous-ensemble latin (cf. lib/habillage.js).
+  return `${jour}, ${heure}`.replace(/[   ]/g, " ");
+}
+
+/** Les trois mesures de l'habillage « Chiffres », vides. */
+function mesuresVides() {
+  return [
+    { icone: "chrono", texte: "" },
+    { icone: "sommet", texte: "" },
+    { icone: "sandales", texte: "" },
+  ];
+}
+
+/** Le sélecteur d'icône d'une mesure — la même liste que les planches. */
+function ChoixIcone({ valeur, onChange, label }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-brand-field bg-brand-paper text-brand-accent-ink">
+        <Puce cle={valeur} Icone={ICONES_PAR_CLE[valeur]} />
+      </span>
+      <select
+        value={valeur}
+        onChange={(e) => onChange(e.target.value)}
+        className={`${CHAMP} w-auto py-1.5 text-[13px]`}
+        aria-label={label}
+      >
+        {CLES_ICONES.map((cle) => (
+          <option key={cle} value={cle}>
+            {cle}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
 }
 
 export default function HabillagePhoto() {
@@ -56,10 +146,22 @@ export default function HabillagePhoto() {
   const [nomPhoto, setNomPhoto] = useState("");
   const [trace, setTrace] = useState(null);
   const [ancrage, setAncrage] = useState(0.5);
-  const [champs, setChamps] = useState({ distanceKm: "", dPlusM: "", dMinusM: "" });
+  const [formatCle, setFormatCle] = useState("story");
+  const [style, setStyle] = useState("silhouette");
+  const [onglet, setOnglet] = useState("photo");
+  const [champs, setChamps] = useState({
+    distanceKm: "",
+    dPlusM: "",
+    dMinusM: "",
+    entete: "",
+    activite: "sentier",
+    mesures: mesuresVides(),
+  });
   const [etat, setEtat] = useState({ occupe: false, message: "" });
   const [policePrete, setPolicePrete] = useState(false);
   const [marque, setMarque] = useState(null);
+
+  const format = formatHabillage(formatCle);
 
   // Le canvas dessine avec la vraie fonte du site : sans cette attente, le
   // premier rendu part en police système et le texte saute ensuite.
@@ -67,6 +169,7 @@ export default function HabillagePhoto() {
     let vivant = true;
     const famille = policeUbuntu();
     Promise.all([
+      document.fonts.load(`700 118px ${famille}`),
       document.fonts.load(`500 44px ${famille}`),
       document.fonts.load(`500 21px ${famille}`),
     ])
@@ -122,16 +225,35 @@ export default function HabillagePhoto() {
         return;
       }
       setTrace(stats);
-      setChamps({
+      // Tout ce que le fichier sait déjà de lui-même est pré-rempli — y compris
+      // le chrono et l'allure, qu'on retaperait sinon à la main en les lisant
+      // sur la montre.
+      setChamps((c) => ({
+        ...c,
         distanceKm: stats.distanceKm.toFixed(1).replace(".", ","),
         dPlusM: String(stats.dPlusM),
         dMinusM: String(stats.dMinusM),
-      });
+        entete: formatDate(stats.debutMs),
+        mesures: [
+          { icone: "chrono", texte: formatChrono(stats.dureeSecondes) },
+          { icone: "sommet", texte: stats.dMinusM > 0 ? `${formatEntier(stats.dMinusM)} m D−` : "" },
+          { icone: "sandales", texte: formatAllure(stats.dureeSecondes, stats.distanceKm) },
+        ],
+      }));
       setEtat({ occupe: false, message: "" });
     } catch {
       setEtat({ occupe: false, message: "Fichier illisible — attendu : un .gpx." });
     }
   }, []);
+
+  const majMesure = useCallback(
+    (i, patch) =>
+      setChamps((c) => {
+        const mesures = c.mesures.map((m, k) => (k === i ? { ...m, ...patch } : m));
+        return { ...c, mesures };
+      }),
+    [],
+  );
 
   const valeurs = useMemo(
     () => ({
@@ -147,19 +269,26 @@ export default function HabillagePhoto() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    canvas.width = format.width;
+    canvas.height = format.height;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     dessinerHabillage(ctx, {
+      format,
+      style,
       image,
       profil: trace?.profil ?? [],
       distanceKm: valeurs.distanceKm,
       dPlusM: valeurs.dPlusM,
       dMinusM: valeurs.dMinusM,
+      entete: champs.entete,
+      activite: champs.activite,
+      mesures: champs.mesures,
       ancrage,
       police: policeUbuntu(),
       logo: marque,
     });
-  }, [image, trace, valeurs, ancrage, policePrete, marque]);
+  }, [image, trace, valeurs, champs, ancrage, policePrete, marque, format, style]);
 
   const fichierFinal = useCallback(
     () =>
@@ -167,9 +296,7 @@ export default function HabillagePhoto() {
         canvasRef.current?.toBlob(
           (blob) =>
             resolve(
-              blob
-                ? new File([blob], `locomotion-${Date.now()}.jpg`, { type: "image/jpeg" })
-                : null,
+              blob ? new File([blob], `locomotion-${Date.now()}.jpg`, { type: "image/jpeg" }) : null,
             ),
           "image/jpeg",
           0.92,
@@ -200,132 +327,260 @@ export default function HabillagePhoto() {
 
   const pret = Boolean(image && trace);
 
-  // ORDRE DE LECTURE. Sur téléphone, tout s'empile : on choisit les fichiers,
-  // on VOIT le résultat, puis on ajuste et on partage — l'aperçu ne peut pas
-  // être sous le bouton « Partager ». Sur grand écran il passe à gauche, en
-  // vis-à-vis des réglages, d'où les placements explicites de grille.
-  //
-  // L'APERÇU EST COLLÉ, comme dans l'atelier carrousel : on règle le cadrage et
-  // les chiffres en REGARDANT la photo, pas en remontant à chaque coup d'œil.
-  // Deux boîtes sont nécessaires — la colonne de grille doit rester haute (donc
-  // pas d'`items-start` ici) et c'est la boîte intérieure qui colle, à 84 px
-  // pour passer sous la navbar du site (`sticky top-0`, 80 px de haut).
   return (
-    <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8">
-      {/* `row-span-3` : les réglages occupent trois rangées de la grille. Sans
-          lui, la colonne de l'aperçu ne couvre que la PREMIÈRE, et le collage
-          n'a presque aucune course — l'aperçu remontait hors de l'écran au bout
-          de 150 px de défilement. */}
-      <div className="contents lg:block lg:col-start-1 lg:row-span-3 lg:row-start-1">
-        <div className="order-2 sticky top-[var(--apercu-top,84px)] z-20 lg:order-none -mx-4 bg-brand-bg/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:mx-0 lg:bg-transparent lg:px-0 lg:py-2 lg:backdrop-blur-none">
-          <canvas
-            ref={canvasRef}
-            width={STORY.width}
-            height={STORY.height}
-            className="mx-auto block h-auto max-h-[42vh] w-auto max-w-full rounded-2xl bg-brand-text/10 shadow-card lg:max-h-[74vh]"
-            aria-label="Aperçu de la story habillée"
-          />
-          <p className="mx-auto mt-3 max-w-[340px] text-center font-heading text-[12px] leading-[1.5] text-brand-text/55">
-            Aperçu à l&rsquo;échelle exacte du fichier exporté (1080 × 1920). Le profil et les
-            chiffres sont posés dans la zone qu&rsquo;Instagram ne recouvre pas.
-          </p>
+    <div
+      className={
+        "flex flex-col rounded-2xl border border-brand-field bg-brand-paper/35 " +
+        "lg:h-[calc(100dvh-var(--apercu-top,140px)-1.5rem)] lg:min-h-[560px] lg:overflow-hidden"
+      }
+    >
+      {/* ---------------------------------------------------------- barre haute */}
+      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-brand-field/70 bg-brand-paper/70 px-3 py-2">
+        <select
+          value={formatCle}
+          onChange={(e) => setFormatCle(e.target.value)}
+          className="rounded-lg border border-brand-field bg-brand-paper px-2 py-1.5 font-heading text-[13px] text-brand-text focus:border-brand-primary-dark focus:outline-none"
+          aria-label="Format"
+        >
+          {Object.values(FORMATS_HABILLAGE).map((f) => (
+            <option key={f.cle} value={f.cle}>
+              {f.label}
+            </option>
+          ))}
+        </select>
+        <div className="flex rounded-full border border-brand-field bg-brand-paper p-0.5">
+          {STYLES_HABILLAGE.map((st) => (
+            <button
+              key={st.cle}
+              type="button"
+              onClick={() => setStyle(st.cle)}
+              aria-pressed={style === st.cle}
+              title={st.aide}
+              className={`rounded-full px-3 py-1 font-heading text-[13px] transition-colors motion-reduce:transition-none ${
+                style === st.cle
+                  ? "bg-brand-deep text-brand-bg"
+                  : "text-brand-text/60 hover:text-brand-text"
+              }`}
+            >
+              {st.label}
+            </button>
+          ))}
         </div>
-      </div>
-
-      <div className="order-1 flex flex-col gap-3 lg:order-none lg:col-start-2 lg:row-start-1">
-          <label className={`${BOUTON_SECOND} cursor-pointer`}>
-            <ImageUp size={16} strokeWidth={2} aria-hidden="true" />
-            {image ? "Changer la photo" : "Choisir une photo"}
-            <input
-              type="file"
-              accept="image/*,.heic,.heif"
-              onChange={chargerPhoto}
-              className="sr-only"
-            />
-          </label>
-          {nomPhoto && (
-            <p className="truncate font-heading text-[12px] text-brand-text/55">{nomPhoto}</p>
-          )}
-
-          <label className={`${BOUTON_SECOND} cursor-pointer`}>
-            <Route size={16} strokeWidth={2} aria-hidden="true" />
-            {trace ? "Changer la trace" : "Choisir la trace (.gpx)"}
-            <input type="file" accept=".gpx,application/gpx+xml,text/xml" onChange={chargerTrace} className="sr-only" />
-          </label>
-          {trace && (
-            <p className="font-heading text-[12px] leading-[1.5] text-brand-text/55">
-              {trace.nom ? `${trace.nom} — ` : ""}
-              {trace.profil.length} points de profil
-              {trace.distanceSource === "montre" && " · distance lue dans le fichier de la montre"}
-            </p>
-          )}
-
-        {etat.message && (
-          <p className="rounded-xl bg-brand-deep/10 px-3 py-2 font-heading text-[13px] text-brand-deep-dark" role="status">
-            {etat.message}
-          </p>
-        )}
-      </div>
-
-      <div className="order-3 flex flex-col gap-5 lg:order-none lg:col-start-2 lg:row-start-2">
-        {image && (
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="ancrage" className="font-heading text-[12px] uppercase tracking-[0.14em] text-brand-text/55">
-              Cadrage
-            </label>
-            <input
-              id="ancrage"
-              type="range"
-              min="0"
-              max="1"
-              step="0.01"
-              value={ancrage}
-              onChange={(e) => setAncrage(Number.parseFloat(e.target.value))}
-              className="w-full accent-brand-deep"
-            />
-          </div>
-        )}
-
-        {trace && (
-          <fieldset className="flex flex-col gap-3 rounded-2xl border border-brand-hairline bg-brand-paper p-4">
-            <legend className="px-1 font-heading text-[12px] uppercase tracking-[0.14em] text-brand-text/55">
-              Les chiffres
-            </legend>
-            <p className="font-heading text-[12px] leading-[1.5] text-brand-text/60">
-              Calculés depuis le fichier. Corrige-les si ta montre affiche autre chose — c&rsquo;est
-              elle que tes lecteurs connaissent.
-            </p>
-            {[
-              ["distanceKm", "Distance (km)"],
-              ["dPlusM", "D+ (m)"],
-              ["dMinusM", "D− (m)"],
-            ].map(([cle, libelle]) => (
-              <label key={cle} className="flex flex-col gap-1">
-                <span className="font-heading text-[12.5px] text-brand-text/70">{libelle}</span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={champs[cle]}
-                  onChange={(e) => setChamps((c) => ({ ...c, [cle]: e.target.value }))}
-                  className={CHAMP}
-                />
-              </label>
-            ))}
-          </fieldset>
-        )}
-
-      </div>
-
-      <div className="order-4 lg:order-none lg:col-start-2 lg:row-start-3">
-        <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={partager} disabled={!pret || etat.occupe} className={BOUTON_PRINCIPAL}>
-            <Share2 size={16} strokeWidth={2} aria-hidden="true" />
+        <div className="ml-auto flex gap-2">
+          <button
+            type="button"
+            onClick={enregistrer}
+            disabled={!pret || etat.occupe}
+            className={BOUTON_SECOND}
+          >
+            <Download size={15} aria-hidden />
+            <span className="hidden sm:inline">Enregistrer</span>
+          </button>
+          <button
+            type="button"
+            onClick={partager}
+            disabled={!pret || etat.occupe}
+            className={BOUTON_PRINCIPAL}
+          >
+            <Share2 size={16} aria-hidden />
             Partager
           </button>
-          <button type="button" onClick={enregistrer} disabled={!pret || etat.occupe} className={BOUTON_SECOND}>
-            <Download size={16} strokeWidth={2} aria-hidden="true" />
-            Enregistrer
-          </button>
+        </div>
+      </header>
+
+      {etat.message && (
+        <p
+          className="shrink-0 border-b border-brand-field/60 bg-brand-primary/12 px-4 py-2 font-heading text-[13px] text-brand-primary-dark"
+          role="status"
+        >
+          {etat.message}
+        </p>
+      )}
+
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        {/* `contents` en petit écran : gardée, cette boîte n'envelopperait que
+            l'image, et le collage n'aurait aucune course (cf. l'atelier
+            carrousel, où le même piège s'est refermé trois fois). */}
+        <section className="contents lg:order-2 lg:flex lg:min-h-0 lg:min-w-0 lg:flex-1 lg:flex-col">
+          <div className="order-1 sticky top-[var(--apercu-top,84px)] z-20 flex min-h-0 flex-col gap-2 bg-brand-bg/95 px-3 py-3 backdrop-blur lg:static lg:order-none lg:flex-1 lg:bg-transparent lg:backdrop-blur-none">
+            <div className="flex min-h-0 flex-1 items-center justify-center lg:rounded-xl lg:bg-brand-text/5 lg:p-4">
+              <canvas
+                ref={canvasRef}
+                className="block h-auto max-h-[40vh] w-auto max-w-full rounded-xl bg-brand-text/10 shadow-card lg:max-h-full"
+                aria-label="Aperçu de l'image habillée"
+              />
+            </div>
+            <p className={`${AIDE} shrink-0 text-center`}>
+              Aperçu à l&rsquo;échelle exacte du fichier exporté ({format.width} × {format.height}).
+              {formatCle === "story"
+                ? " Tout est posé dans la bande qu’Instagram ne recouvre pas."
+                : " Une publication n’est recouverte de rien : le cadre entier sert."}
+            </p>
+          </div>
+        </section>
+
+        <div className="order-2 flex min-h-0 shrink-0 flex-col lg:order-1 lg:w-[404px] lg:flex-row lg:border-r lg:border-brand-field/70">
+          <nav
+            aria-label="Réglages"
+            className="flex shrink-0 gap-1 overflow-x-auto border-y border-brand-field/70 bg-brand-paper/60 px-2 py-1.5 lg:w-[80px] lg:flex-col lg:overflow-x-visible lg:overflow-y-auto lg:border-y-0 lg:border-r lg:py-2"
+          >
+            {ONGLETS.map(({ cle, label, Icone }) => (
+              <button
+                key={cle}
+                type="button"
+                onClick={() => setOnglet(cle)}
+                aria-current={onglet === cle ? "page" : undefined}
+                className={`flex shrink-0 flex-col items-center gap-1 rounded-xl px-3 py-2 font-heading text-[11px] transition-colors motion-reduce:transition-none lg:w-full ${
+                  onglet === cle
+                    ? "bg-brand-primary/25 text-brand-text"
+                    : "text-brand-text/55 hover:bg-brand-primary/10 hover:text-brand-text"
+                }`}
+              >
+                <Icone size={19} aria-hidden />
+                {label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="min-h-0 flex-1 overflow-y-auto lg:w-[324px]">
+            {onglet === "photo" && (
+              <Groupe titre="La photo">
+                <label className={`${BOUTON_SECOND} mb-3 w-full cursor-pointer`}>
+                  <ImageUp size={16} aria-hidden />
+                  <span className="truncate">{image ? "Changer la photo" : "Choisir une photo"}</span>
+                  <input
+                    type="file"
+                    accept="image/*,.heic,.heif"
+                    onChange={chargerPhoto}
+                    className="sr-only"
+                  />
+                </label>
+                {nomPhoto && <p className={`${AIDE} mb-3 truncate`}>{nomPhoto}</p>}
+                <Curseur
+                  id="ancrage"
+                  label="Cadrage"
+                  valeur={ancrage}
+                  defaut={0.5}
+                  min={0}
+                  max={1}
+                  pas={0.01}
+                  format={(v) => `${Math.round(v * 100)} %`}
+                  onChange={(v) => setAncrage(v ?? 0.5)}
+                />
+              </Groupe>
+            )}
+
+            {onglet === "trace" && (
+              <Groupe
+                titre="La trace"
+                aide="Le fichier de la montre. C'est lui qui donne le relief, la distance, le chrono et l'allure."
+              >
+                <label className={`${BOUTON_SECOND} w-full cursor-pointer`}>
+                  <Route size={16} aria-hidden />
+                  {trace ? "Changer la trace" : "Choisir la trace (.gpx)"}
+                  <input
+                    type="file"
+                    accept=".gpx,application/gpx+xml,text/xml"
+                    onChange={chargerTrace}
+                    className="sr-only"
+                  />
+                </label>
+                {trace && (
+                  <p className={`${AIDE} mt-2`}>
+                    {trace.nom ? `${trace.nom} — ` : ""}
+                    {trace.profil.length} points de profil
+                    {trace.distanceSource === "montre" &&
+                      " · distance lue dans le fichier de la montre"}
+                  </p>
+                )}
+              </Groupe>
+            )}
+
+            {onglet === "chiffres" && (
+              <>
+                <Groupe
+                  titre="Les chiffres"
+                  aide="Calculés depuis le fichier. Corrige-les si ta montre affiche autre chose — c'est elle que tes lecteurs connaissent."
+                >
+                  {[
+                    ["distanceKm", "Distance (km)"],
+                    ["dPlusM", "D+ (m)"],
+                    ["dMinusM", "D− (m)"],
+                  ].map(([cle, libelle]) => (
+                    <label key={cle} className="mb-2 flex flex-col gap-1">
+                      <span className={LEGENDE}>{libelle}</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={champs[cle]}
+                        onChange={(e) => setChamps((c) => ({ ...c, [cle]: e.target.value }))}
+                        className={CHAMP}
+                      />
+                    </label>
+                  ))}
+                  {style === "silhouette" && (
+                    <p className={AIDE}>
+                      Le D− n&rsquo;apparaît que sur l&rsquo;habillage « Silhouette ». Sur
+                      « Chiffres », mets-le dans une mesure si tu le veux.
+                    </p>
+                  )}
+                </Groupe>
+
+                {style === "chiffres" && (
+                  <>
+                    <Groupe
+                      titre="L'en-tête"
+                      aide="Ce que porte le haut de l'image : l'activité, et quand elle a eu lieu."
+                    >
+                      <span className={LEGENDE}>Icône de l&rsquo;activité</span>
+                      <div className="mb-3">
+                        <ChoixIcone
+                          valeur={champs.activite}
+                          onChange={(v) => setChamps((c) => ({ ...c, activite: v }))}
+                          label="Icône de l'activité"
+                        />
+                      </div>
+                      <label className="flex flex-col gap-1">
+                        <span className={LEGENDE}>Date et heure</span>
+                        <input
+                          type="text"
+                          value={champs.entete}
+                          placeholder="27 juin 2025, 23:05"
+                          onChange={(e) => setChamps((c) => ({ ...c, entete: e.target.value }))}
+                          className={CHAMP}
+                        />
+                      </label>
+                    </Groupe>
+
+                    <Groupe
+                      titre="La ligne de mesures"
+                      aide="Trois mesures libres, sous la distance. Vide = absente. L'icône se choisit dans le même vocabulaire que les planches."
+                    >
+                      <div className="flex flex-col gap-3">
+                        {champs.mesures.map((mes, i) => (
+                          <div key={`mesure-${i}`} className="flex flex-col gap-1.5">
+                            <ChoixIcone
+                              valeur={mes.icone}
+                              onChange={(v) => majMesure(i, { icone: v })}
+                              label={`Icône de la mesure ${i + 1}`}
+                            />
+                            <input
+                              type="text"
+                              value={mes.texte}
+                              placeholder={i === 0 ? "21:15:08" : i === 1 ? "4 700 m D−" : "10'31\"/km"}
+                              onChange={(e) => majMesure(i, { texte: e.target.value })}
+                              className={CHAMP}
+                              aria-label={`Texte de la mesure ${i + 1}`}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </Groupe>
+                  </>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

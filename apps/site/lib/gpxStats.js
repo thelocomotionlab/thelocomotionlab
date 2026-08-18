@@ -127,7 +127,8 @@ export function decimerProfil(profil, cible = 400) {
  *
  * @returns {{
  *   nom: string|null, distanceKm: number, dPlusM: number, dMinusM: number,
- *   dureeSecondes: number|null, profil: Array<{km:number,alt:number}>,
+ *   dureeSecondes: number|null, debutMs: number|null,
+ *   profil: Array<{km:number,alt:number}>,
  *   distanceSource: "montre"|"geometrie"
  * } | null} — `null` si le fichier n'est pas une trace exploitable.
  */
@@ -178,6 +179,10 @@ export function statsDeGpx(xml, options = {}) {
     dPlusM: Math.round(dPlus),
     dMinusM: Math.round(dMinus),
     dureeSecondes: t0 !== null && t1 !== null && t1 > t0 ? Math.round((t1 - t0) / 1000) : null,
+    // L'instant du DÉPART, pour l'en-tête de l'habillage « Chiffres » : c'est
+    // la première chose qu'affiche une montre, et la seule qu'on ne peut pas
+    // retrouver ailleurs une fois la photo choisie.
+    debutMs: t0,
     profil,
     distanceSource,
   };
