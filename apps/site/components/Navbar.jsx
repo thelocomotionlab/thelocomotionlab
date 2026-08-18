@@ -65,7 +65,8 @@ const NAV_ITEMS = [
     hidden: !SHOW_OUTILS,
     items: [
       { href: "/outils/twin", label: "Locomotion Twin" },
-      { href: "/outils/habillage", label: "Filtre de partage" },
+      // Le studio (/studio) n'est PAS listé : c'est l'atelier interne des
+      // visuels, il n'a rien à faire dans la navigation publique.
     ],
   },
   {

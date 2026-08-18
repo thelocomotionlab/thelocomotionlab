@@ -2,7 +2,7 @@
 //
 // Lecture d'un GPX de MONTRE (export Coros, Garmin…) et statistiques de la
 // sortie : distance, D+, D−, silhouette du profil. Sert à l'outil d'habillage
-// de photos (/outils/habillage), entièrement côté navigateur.
+// de photos (/studio), entièrement côté navigateur.
 //
 // POURQUOI UN PARSEUR MAISON plutôt que `@tmcw/togeojson` (déjà dans le dépôt) :
 // togeojson ne rend que la géométrie, or le fichier porte une donnée qu'on ne

@@ -45,15 +45,21 @@ const SOURCE = path.join(SITE_DIR, "scripts", "assets", "logo-source-512.png");
 const FOND = { r: 0xfe, g: 0xfb, b: 0xf6, alpha: 1 };
 const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 };
 
+// Le STUDIO (l'espace de création, /studio) a ses propres icônes : sombres,
+// pour qu'il ne se confonde pas avec l'app du site sur l'écran d'accueil. Deux
+// icônes identiques côte à côte, c'est un vrai problème d'usage.
+const FOND_STUDIO = { r: 0x1a, g: 0x1c, b: 0x18, alpha: 1 };
+const ENCRE_STUDIO = { r: 0xfe, g: 0xfb, b: 0xf6, alpha: 1 };
+
 /**
  * @param {string} sortie      nom du fichier produit
  * @param {number} taille      côté du canevas, en pixels
  * @param {number} proportion  part de la largeur occupée par le logo (0-1)
  * @param {boolean} opaque     fond de la charte plutôt que transparent
  */
-async function icone(sortie, taille, proportion, opaque) {
+async function icone(sortie, taille, proportion, opaque, studio = false) {
   const logoPx = Math.round(taille * proportion);
-  const logo = await sharp(SOURCE)
+  let logo = await sharp(SOURCE)
     // Le logo source est livré sur un carré BLANC opaque. Sans ça, le réduire
     // pour ménager la zone sûre collerait un carré blanc au milieu du fond.
     // `unflatten` rend transparent le blanc pur : ne restent que les traits.
@@ -61,8 +67,26 @@ async function icone(sortie, taille, proportion, opaque) {
     .resize(logoPx, logoPx, { fit: "contain", background: TRANSPARENT })
     .toBuffer();
 
+  if (studio) {
+    // RETEINTER, pas éclaircir : `tint` préserve la luminance, donc des traits
+    // terracotta resteraient sombres sur fond sombre. On repeint donc à travers
+    // la FORME du logo — `dest-in` ne garde la couleur que là où il y a des
+    // pixels, exactement le geste de `chargerMarqueTeintee` côté navigateur.
+    logo = await sharp({
+      create: { width: logoPx, height: logoPx, channels: 4, background: ENCRE_STUDIO },
+    })
+      .composite([{ input: logo, blend: "dest-in" }])
+      .png()
+      .toBuffer();
+  }
+
   await sharp({
-    create: { width: taille, height: taille, channels: 4, background: opaque ? FOND : TRANSPARENT },
+    create: {
+      width: taille,
+      height: taille,
+      channels: 4,
+      background: studio ? FOND_STUDIO : opaque ? FOND : TRANSPARENT,
+    },
   })
     .composite([{ input: logo, gravity: "center" }])
     .png({ compressionLevel: 9 })
@@ -71,7 +95,7 @@ async function icone(sortie, taille, proportion, opaque) {
   const ko = (fs.statSync(path.join(ASSETS, sortie)).size / 1024).toFixed(1);
   console.log(
     `  ${sortie.padEnd(34)} ${String(taille).padStart(3)}px · logo ${Math.round(proportion * 100)}%` +
-      ` · ${opaque ? "fond charte" : "transparent"} · ${ko} Ko`,
+      ` · ${studio ? "fond studio" : opaque ? "fond charte" : "transparent"} · ${ko} Ko`,
   );
 }
 
@@ -93,6 +117,14 @@ await icone("web-app-manifest-maskable-512x512.png", 512, 0.66, true);
 // iOS n'applique pas la règle des 80 % (coins arrondis modérés) et n'accepte
 // pas la transparence : un peu plus grand, sur fond opaque.
 await icone("apple-touch-icon.png", 180, 0.8, true);
+
+// Les icônes du studio (public/studio.webmanifest) : mêmes règles, fond sombre.
+console.log("\n▶ Icônes du studio\n");
+await icone("studio-192x192.png", 192, 0.8, true, true);
+await icone("studio-512x512.png", 512, 0.8, true, true);
+await icone("studio-maskable-192x192.png", 192, 0.66, true, true);
+await icone("studio-maskable-512x512.png", 512, 0.66, true, true);
+await icone("studio-apple-touch-icon.png", 180, 0.8, true, true);
 
 // Marque seule, pleine largeur et sur fond TRANSPARENT : elle n'est pas une
 // icône d'app mais l'asset servi à l'atelier d'habillage, qui la teinte en

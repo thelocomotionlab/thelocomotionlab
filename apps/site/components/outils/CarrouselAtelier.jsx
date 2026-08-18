@@ -801,8 +801,12 @@ export default function CarrouselAtelier() {
           L'intérieure est ce qui colle, à 84 px : la navbar du site est
           `sticky top-0` et fait 80 px (Navbar.jsx, `p-4`). `z-20` garde
           l'aperçu SOUS elle (z-50), pas devant. */}
-      <div className="lg:col-start-1 lg:row-start-1">
-        <div className="sticky top-[84px] z-20 -mx-4 mb-5 bg-brand-bg/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:mx-0 lg:mb-0 lg:bg-transparent lg:px-0 lg:py-2 lg:backdrop-blur-none">
+      {/* `contents` sur mobile : cette boîte n'existe que pour la GRILLE du grand
+          écran. Gardée en petit écran, elle n'enveloppe QUE l'aperçu — donc le
+          collage n'a aucune course et la planche défile hors de l'écran, ce qui
+          est exactement l'inverse du but sur un téléphone. */}
+      <div className="contents lg:block lg:col-start-1 lg:row-start-1">
+        <div className="sticky top-[var(--apercu-top,84px)] z-20 -mx-4 mb-5 bg-brand-bg/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:mx-0 lg:mb-0 lg:bg-transparent lg:px-0 lg:py-2 lg:backdrop-blur-none">
           {carte && (
             <canvas
               ref={canvasRef}

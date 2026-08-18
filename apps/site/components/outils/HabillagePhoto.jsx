@@ -3,9 +3,13 @@
 // L'atelier d'habillage : une photo + un GPX → une story prête à publier.
 //
 // TOUT SE PASSE DANS LE TÉLÉPHONE. Ni photo ni trace ne quittent l'appareil :
-// pas de serveur, donc rien à stocker, rien à purger, et ça marche hors réseau
-// une fois la page en cache (elle fait partie de la PWA). C'est aussi ce qui
-// permet de traiter un GPX de 6 Mo sans se demander qui paie la bande passante.
+// pas de serveur, donc rien à stocker, rien à purger. C'est aussi ce qui permet
+// de traiter un GPX de 6 Mo sans se demander qui paie la bande passante.
+//
+// HORS LIGNE : oui, mais seulement servi depuis /studio, qui installe le service
+// worker (public/sw.js). Cet en-tête promettait le hors-ligne « parce que c'est
+// une PWA » alors qu'aucun service worker n'existait — un manifeste seul ne met
+// rien en cache.
 //
 // Les chiffres sont MODIFIABLES. Une montre n'affiche pas ce que son propre
 // fichier contient : sur la Croix de Belledonne, le GPX Coros donne 22,86 km de
@@ -212,8 +216,8 @@ export default function HabillagePhoto() {
           lui, la colonne de l'aperçu ne couvre que la PREMIÈRE, et le collage
           n'a presque aucune course — l'aperçu remontait hors de l'écran au bout
           de 150 px de défilement. */}
-      <div className="order-2 lg:order-none lg:col-start-1 lg:row-span-3 lg:row-start-1">
-        <div className="sticky top-[84px] z-20 -mx-4 bg-brand-bg/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:mx-0 lg:bg-transparent lg:px-0 lg:py-2 lg:backdrop-blur-none">
+      <div className="contents lg:block lg:col-start-1 lg:row-span-3 lg:row-start-1">
+        <div className="order-2 sticky top-[var(--apercu-top,84px)] z-20 lg:order-none -mx-4 bg-brand-bg/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:mx-0 lg:bg-transparent lg:px-0 lg:py-2 lg:backdrop-blur-none">
           <canvas
             ref={canvasRef}
             width={STORY.width}

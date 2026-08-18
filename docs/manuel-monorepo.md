@@ -317,7 +317,7 @@ régression :
 
 ---
 
-## 8 bis. Habiller une photo de sortie (`/outils/habillage`)
+## 8 bis. Habiller une photo de sortie (studio, onglet « Habillage photo »)
 
 Une page de l'app, **entièrement côté navigateur** : on choisit une photo et le
 GPX de la sortie, la silhouette altimétrique ambrée + `distance · D+ ↑ · D− ↓` +
@@ -334,8 +334,9 @@ travers de la photo. Les flèches ↑ ↓ sont **tracées**, pas écrites : les 
 du site sont des sous-ensembles latins et n'ont pas U+2191/U+2193.
 
 - **Rien ne sort du téléphone** : pas de serveur, donc rien à stocker ni à
-  purger, et ça marche hors réseau une fois la page en cache — elle fait partie
-  de la PWA installée.
+  purger. Le hors-ligne vient du service worker du studio (§8 ter) — un
+  manifeste seul ne met rien en cache, ce que cette page a longtemps promis à
+  tort.
 - **La distance vient de la montre** quand le fichier la porte
   (`<gpxdata:distance>` chez Coros) : elle ne coïncide pas avec la géométrie du
   tracé (24,26 km annoncés pour 22,86 km de segments sur la Croix de
@@ -347,12 +348,45 @@ du site sont des sous-ensembles latins et n'ont pas U+2191/U+2193.
 - **Les trois chiffres sont modifiables** : le D+ recalculé depuis les altitudes
   du fichier reste ~10 % sous celui qu'affiche la montre. On part du fichier, le
   dernier mot revient à l'auteur.
-- La page est en `noindex` et n'est pas listée dans `/outils` : c'est un outil
-  d'atelier. Le raccourci se pose depuis l'app installée.
-
 Le calcul (lecture du GPX, D+/D− par lissage + hystérésis) vit dans
 `apps/site/lib/gpxStats.js`, la mise en page dans `apps/site/lib/habillage.js`
 — les deux sont testés (`pnpm -F site test`).
+
+---
+
+## 8 ter. Le studio (`/studio`)
+
+**L'espace de création des visuels du labo pour les réseaux.** Deux ateliers,
+une seule page, deux onglets : **Carrousel** (l'itinéraire découpé en journées,
+la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
+`/outils/habillage` et `/outils/carrousel` redirigent ici en 308.
+
+- **Changer d'onglet ne perd rien** : les deux ateliers restent montés, celui
+  qu'on ne regarde pas est simplement caché. Recharger un GPX de 6 Mo sur un
+  téléphone n'est pas une broutille.
+- **Sur le téléphone** : ouvrir `/studio`, puis « Ajouter à l'écran d'accueil ».
+  Le studio a **son propre manifeste** (`public/studio.webmanifest`) et ses
+  **icônes sombres** : ça pose une icône SÉPARÉE de celle du site, qui ouvre
+  directement l'espace de création en plein écran. Deux icônes identiques
+  seraient un problème d'usage — d'où `pnpm -F site build:icons`, qui produit
+  désormais les deux familles.
+- **Hors ligne** : `public/sw.js`, enregistré avec `scope: "/studio"` et
+  seulement en production. Réseau d'abord pour les navigations (sinon un
+  déploiement ne serait jamais vu), cache d'abord pour les assets hachés. Il
+  n'intercepte **que** les pages du studio : un bug là-dedans ne peut pas
+  servir une version périmée du site public. Les tuiles du fond de carte (autre
+  origine) ne sont jamais mises en cache — le studio marche au bivouac, la
+  carte topo non, et c'est annoncé dans l'interface.
+- **Accès** : `noindex, nofollow` sur toute la branche, et **aucun lien** du
+  site n'y mène (l'entrée « Filtre de partage » a quitté la navbar). Ce n'est
+  **pas** un contrôle d'accès : qui a l'URL entre. Décision assumée — les deux
+  ateliers ne portent ni donnée, ni secret, ni appel serveur. Si ça devait
+  changer un jour, la bonne réponse est une règle **Cloudflare Access** sur
+  `/studio*` (gratuit, zéro code, zéro secret dans le repo), pas un mot de
+  passe dans le code.
+- ⚠️ **On n'écrit pas `Disallow: /studio` dans `robots.txt`** : ce fichier est
+  public et lu en premier par qui cherche les coins discrets d'un site. L'y
+  mettre publierait le chemin au lieu de le cacher.
 
 ---
 
@@ -370,5 +404,6 @@ Le calcul (lecture du GPX, D+/D− par lissage + hystérésis) vit dans
 | Ajouter une dépendance à une app | `pnpm --filter <app> add <paquet>` |
 | Modifier la charte (couleur/police/composant) | éditer `packages/ui/`, **puis** rebuild le site et les apps concernées |
 | Tout compiler / linter (CI, vérif globale) | `pnpm build` / `pnpm lint` |
-| Habiller une photo de sortie | ouvrir `/outils/habillage` (§8 bis) — rien à taper |
+| Habiller une photo de sortie | ouvrir `/studio` (§8 bis, §8 ter) — rien à taper |
+| Fabriquer un carrousel | ouvrir `/studio` (§8 ter) — rien à taper |
 | Fabriquer une carte de partage a posteriori | `pnpm -F site carte:partage -- --slug <slug> --texte "…"` |
