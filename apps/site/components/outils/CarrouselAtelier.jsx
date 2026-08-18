@@ -26,6 +26,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ArrowLeft,
+  ArrowRight,
   ChevronDown,
   Download,
   ImageUp,
@@ -856,19 +858,19 @@ export default function CarrouselAtelier() {
               type="button"
               onClick={() => deplacerCarte(active, -1)}
               disabled={active === 0}
-              className="rounded-full px-2 py-1 font-heading text-[13px] text-brand-text/50 hover:bg-brand-primary/15 disabled:opacity-30"
+              className="rounded-full p-1.5 text-brand-text/50 hover:bg-brand-primary/15 disabled:opacity-30"
               aria-label="Reculer cette carte"
             >
-              ←
+              <ArrowLeft size={15} aria-hidden />
             </button>
             <button
               type="button"
               onClick={() => deplacerCarte(active, 1)}
               disabled={active === cartes.length - 1}
-              className="rounded-full px-2 py-1 font-heading text-[13px] text-brand-text/50 hover:bg-brand-primary/15 disabled:opacity-30"
+              className="rounded-full p-1.5 text-brand-text/50 hover:bg-brand-primary/15 disabled:opacity-30"
               aria-label="Avancer cette carte"
             >
-              →
+              <ArrowRight size={15} aria-hidden />
             </button>
             <button
               type="button"
