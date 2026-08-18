@@ -36,8 +36,10 @@ import {
   analyserRiche,
   dessinerLigneRiche,
   largeurLigne,
+  blocsDeTexte,
+  hauteurBlocs,
   lignesRiches,
-  paragraphesRiches,
+  poserBlocs,
 } from "./carrouselTexte";
 import { traceColors } from "./liveTraceColors";
 
@@ -102,7 +104,6 @@ export const GABARITS = [
   { cle: "photo", label: "Photo", aide: "Une photo plein cadre." },
   { cle: "texte", label: "Texte", aide: "Un surtitre, un titre, un paragraphe." },
   { cle: "fiche", label: "Fiche", aide: "Des libellés à gauche, des valeurs en gros à droite." },
-  { cle: "chiffres", label: "Chiffres", aide: "Une statistique en très grand." },
   { cle: "cloture", label: "Clôture", aide: "La marque cerclée, et le mot de la fin." },
 ];
 
@@ -987,16 +988,14 @@ function dessinerPhoto(ctx, format, o) {
   }
   const largeurTexte = format.width - m.pad * 2;
   if (carte.texte) {
+    // Ce gabarit se construit du BAS vers le haut. Avec des listes et des
+    // respirations, empiler à reculons devient illisible : on mesure le bloc
+    // entier, on remonte d'autant, et on le pose dans le sens normal.
     const bc = baseCorps(m, th, police);
-    const blocs = paragraphesRiches(ctx, carte.texte, largeurTexte, bc);
-    for (let b = blocs.length - 1; b >= 0; b -= 1) {
-      for (let i = blocs[b].length - 1; i >= 0; i -= 1) {
-        dessinerLigneRiche(ctx, blocs[b][i], m.pad, y, bc);
-        y -= m.corps * 1.52;
-      }
-      y -= m.corps * 0.5;
-    }
-    y -= m.corps * 0.2;
+    const blocs = blocsDeTexte(ctx, carte.texte, largeurTexte, bc);
+    const hauteur = hauteurBlocs(blocs, bc);
+    poserBlocs(ctx, blocs, m.pad, y - hauteur + m.corps * 0.2, bc, { puce: carte.puce });
+    y -= hauteur + m.corps * 0.5;
   }
   if (carte.titre) {
     const bt = baseTitre(m, th, police);
@@ -1078,106 +1077,14 @@ function blocTitreEtCorps(ctx, format, m, th, police, carte, yDepart, largeur, e
     y += m.corps * 2.2;
   }
   if (carte.texte) {
-    if (!carte.titre) y += m.corps;
-    paragraphesRiches(ctx, carte.texte, largeur, bc).forEach((bloc, b) => {
-      if (b > 0) y += m.corps * 2.35;
-      y = poserLignes(ctx, bloc, m.pad, y, bc, { centre, interligne: 1.55 });
+    if (!carte.titre) y += m.corps * 0.4;
+    y = poserBlocs(ctx, blocsDeTexte(ctx, carte.texte, largeur, bc), m.pad, y, bc, {
+      centre,
+      puce: carte.puce,
     });
   }
   return y;
 }
-
-/** LES CHIFFRES — la statistique en très grand. Tout l'itinéraire, ou une
- *  seule journée. */
-function dessinerChiffres(ctx, format, o) {
-  const { carte, trace, segments, police, logo, m, th, index, total } = o;
-  bandeEntete(ctx, format, m, th, police, {
-    texte: carte.entete,
-    accent: carte.enteteAccent,
-    logo,
-    marque: carte.marque,
-    filet: carte.filetEntete !== false,
-    opacite: carte.enteteOpacite,
-  });
-
-  const seg = carte.segment != null ? segments[carte.segment] : null;
-  const distanceKm = Number.isFinite(carte.distanceKm)
-    ? carte.distanceKm
-    : (seg?.distanceKm ?? trace?.totalKm ?? 0);
-  const dPlusM = Number.isFinite(carte.dPlusM) ? carte.dPlusM : (seg?.dPlusM ?? trace?.dPlusM ?? 0);
-  const dMinusM = Number.isFinite(carte.dMinusM) ? carte.dMinusM : (seg ? 0 : (trace?.dMinusM ?? 0));
-
-  let y = m.bandeH + Math.round(150 * m.k);
-
-  if (carte.surtitre) {
-    ctx.fillStyle = th.accent;
-    surtitre(ctx, m, th, police, carte.surtitre, m.pad, y);
-    y += m.surtitre * 1.3;
-  }
-  if (carte.titre) {
-    const bt = baseTitre(m, th, police, 0.82);
-    const ls = lignesRiches(ctx, analyserRiche(carte.titre), format.width - m.pad * 2, bt);
-    y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.86, bt);
-  }
-
-  // Le grand chiffre, et son unité posée sur la même ligne de base. Le pas est
-  // celui de la HAUTEUR DU CHIFFRE, pas du titre : c'est lui qui occupe la
-  // place, et un pas trop court le collait au titre.
-  y += m.chiffre * 1.1;
-  ctx.font = `700 ${m.chiffre}px ${police}`;
-  ctx.fillStyle = th.accent;
-  const grand = formatKm(distanceKm);
-  ctx.fillText(grand, m.pad, y);
-  const largeurGrand = ctx.measureText(grand).width;
-  ctx.font = `400 ${m.unite}px ${police}`;
-  ctx.fillStyle = th.encreFaible;
-  ctx.fillText(carte.bilan ? "km parcourus" : "km", m.pad + largeurGrand + m.unite * 0.5, y);
-  y += m.chiffre * 0.3 + m.stat;
-
-  ctx.font = `500 ${m.stat}px ${police}`;
-  ctx.fillStyle = th.encre;
-  ctx.strokeStyle = th.encre;
-  let curseur = m.pad;
-  for (const [i, s] of segmentsDeStats({ distanceKm: NaN, dPlusM, dMinusM }).entries()) {
-    if (i > 0) {
-      ctx.fillText("   ·   ", curseur, y);
-      curseur += ctx.measureText("   ·   ").width;
-    }
-    ctx.fillText(s.texte, curseur, y);
-    curseur += ctx.measureText(s.texte).width;
-    if (s.fleche) {
-      curseur += m.stat * 0.26;
-      curseur += dessinerFleche(ctx, curseur, y, m.stat, s.fleche);
-    }
-  }
-  if (carte.bilan && trace?.dureeSecondes > 0) {
-    y += m.stat * 1.5;
-    ctx.font = `400 ${m.stat}px ${police}`;
-    ctx.fillStyle = th.encreDouce;
-    ctx.fillText(dureeCourte(trace.dureeSecondes), m.pad, y);
-  }
-
-  if (carte.texte) {
-    const bc = baseCorps(m, th, police);
-    let yy = y + m.corps * 2.4;
-    for (const bloc of paragraphesRiches(ctx, carte.texte, format.width - m.pad * 2, bc)) {
-      yy = poserLignes(ctx, bloc, m.pad, yy, bc, { interligne: 1.55 }) + m.corps * 2.35;
-    }
-  }
-
-  bandePied(ctx, format, m, th, police, {
-    index,
-    total,
-    centre: carte.piedCentre,
-    droite: carte.piedDroite,
-    fleche: carte.piedFleche,
-    filet: carte.filetPied !== false,
-    opacite: carte.piedOpacite,
-  });
-  return [];
-}
-
-/* ------------------------------------------------------------------ dispatcheur */
 
 /**
  * LE BANDEAU — une photo en haut, le texte dessous, sur le fond du thème.
@@ -1414,9 +1321,9 @@ function dessinerCloture(ctx, format, o) {
   }
   if (carte.texte) {
     const bc = baseCorps(m, th, police);
-    paragraphesRiches(ctx, carte.texte, largeur, bc).forEach((bloc, b) => {
-      if (b > 0) y += m.corps * 2.35;
-      y = poserLignes(ctx, bloc, m.pad, y, bc, { centre: centreX, interligne: 1.55 });
+    poserBlocs(ctx, blocsDeTexte(ctx, carte.texte, largeur, bc), m.pad, y - bc.taille * 0.78, bc, {
+      centre: centreX,
+      puce: carte.puce,
     });
   }
 
@@ -1446,7 +1353,6 @@ const RENDUS = {
   photo: dessinerPhoto,
   texte: dessinerTexte,
   fiche: dessinerFiche,
-  chiffres: dessinerChiffres,
   cloture: dessinerCloture,
 };
 

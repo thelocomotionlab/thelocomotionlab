@@ -63,6 +63,8 @@ import {
 } from "@/lib/carrouselTrace";
 import { AIDE_BALISAGE } from "@/lib/carrouselTexte";
 import { CLES_ICONES } from "@/lib/carrouselIcones";
+import { PUCES_SIMPLES } from "@/lib/carrouselTexte";
+import { iconeDuRepere } from "@/lib/liveWaypointIcons";
 import { chargerImage } from "@/lib/imageFile";
 import { chargerMarqueTeintee } from "@/lib/marque";
 import { liveConfig } from "@/lib/liveConfig";
@@ -99,6 +101,24 @@ function Section({ titre, ouvert = false, children }) {
       </div>
     </details>
   );
+}
+
+/**
+ * Les icônes de la palette, RÉSOLUES UNE FOIS au chargement du module.
+ *
+ * C'est le motif déjà en place dans `lib/liveWaypoints.js` : le composant est
+ * résolu hors du rendu et voyage comme une donnée (`{ cle, Icone }`). Le
+ * chercher pendant le rendu en referait un type à chaque passe — React
+ * remonterait le sous-arbre, et le lint le refuse.
+ */
+const ICONES_PALETTE = CLES_ICONES.map((cle) => ({ cle, Icone: iconeDuRepere(cle) }));
+const ICONES_PAR_CLE = Object.fromEntries(ICONES_PALETTE.map(({ cle, Icone }) => [cle, Icone]));
+
+/** L'aperçu d'une puce de liste. Le composant arrive en PROP, jamais résolu ici. */
+function Puce({ cle, Icone, size = 16 }) {
+  if (!cle || cle === "point") return <span className="leading-none">•</span>;
+  if (cle === "tiret") return <span className="leading-none">–</span>;
+  return Icone ? <Icone size={size} aria-hidden /> : null;
 }
 
 /** Un réglage numérique en pixels de planche (référence : 1080 de large). */
@@ -266,6 +286,8 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0") {
     filetPied: gabarit !== "cloture",
     /** N'afficher que les n+1 premières journées. `null` = tout. */
     jusquA: null,
+    /** La puce des listes : "point", "tiret", ou une clé d'icône. */
+    puce: "point",
     /* --- propres aux gabarits --- */
     etiquettes: [],
     afficherFond: true,
@@ -277,7 +299,6 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0") {
     degradeBas: true,
     bandeauPart: 0.42,
     fiche: gabarit === "fiche" ? ficheParDefaut(trace, segments) : [],
-    segment: null,
     /* --- clôture --- */
     tailleCercle: 128,
     epaisseurCercle: 4,
@@ -977,24 +998,75 @@ export default function CarrouselAtelier() {
             className={`${CHAMP} resize-y`}
           />
 
-          <details className="mb-3 mt-1">
+          <div className="mb-2 mt-1 flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={() => insererDansTexte("\n- ")}
+              className="rounded-lg border border-brand-field bg-brand-paper px-2.5 py-1 font-heading text-[12px] text-brand-text/70 hover:border-brand-primary-dark hover:text-brand-text"
+            >
+              + point de liste
+            </button>
+            <button
+              type="button"
+              onClick={() => insererDansTexte("\n\n\n")}
+              className="rounded-lg border border-brand-field bg-brand-paper px-2.5 py-1 font-heading text-[12px] text-brand-text/70 hover:border-brand-primary-dark hover:text-brand-text"
+              title="Une ligne vide de plus = une respiration de plus"
+            >
+              + respiration
+            </button>
+          </div>
+
+          {/* LA PALETTE EST VISUELLE. Une liste de clés (`col`, `neige`,
+              `riviere`…) demandait de se souvenir de ce que chaque mot dessine ;
+              on cherchait un pictogramme dans un glossaire. On montre donc le
+              dessin, et le mot dessous — c'est l'icône qu'on choisit. */}
+          <details className="mb-3">
             <summary className="cursor-pointer font-heading text-[12px] text-brand-text/55">
               Icônes — les mêmes que les repères de /live
             </summary>
-            <div className="mt-2 flex flex-wrap gap-1">
-              {CLES_ICONES.map((cle) => (
+            <div className="mt-2 grid grid-cols-4 gap-1 sm:grid-cols-6">
+              {ICONES_PALETTE.map(({ cle, Icone }) => (
                 <button
                   key={cle}
                   type="button"
                   onClick={() => insererDansTexte(`:${cle}:`)}
-                  className="rounded-lg border border-brand-field bg-brand-paper px-2 py-1 font-mono text-[11px] text-brand-text/70 hover:border-brand-primary-dark hover:text-brand-text"
+                  className="flex flex-col items-center gap-1 rounded-lg border border-brand-field bg-brand-paper px-1 py-2 text-brand-text/70 transition-colors hover:border-brand-primary-dark hover:text-brand-text"
                   title={`Insérer :${cle}:`}
                 >
-                  {cle}
+                  <Icone size={20} aria-hidden />
+                  <span className="w-full truncate text-center font-heading text-[10px] leading-none opacity-70">
+                    {cle}
+                  </span>
                 </button>
               ))}
             </div>
           </details>
+
+          <label className={LEGENDE} htmlFor="puce">
+            Puce des listes
+          </label>
+          <div className="mb-3 flex items-center gap-2">
+            <select
+              id="puce"
+              value={carte?.puce ?? "point"}
+              onChange={(e) => majCarte({ puce: e.target.value })}
+              className={CHAMP}
+            >
+              {PUCES_SIMPLES.map((pc) => (
+                <option key={pc.cle} value={pc.cle}>
+                  {pc.label}
+                </option>
+              ))}
+              {CLES_ICONES.map((cle) => (
+                <option key={cle} value={cle}>
+                  Icône · {cle}
+                </option>
+              ))}
+            </select>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-brand-field bg-brand-paper text-brand-accent-ink">
+              <Puce cle={carte?.puce ?? "point"} Icone={ICONES_PAR_CLE[carte?.puce]} />
+            </span>
+          </div>
 
           <div className="mb-3 flex flex-col gap-1.5">
             <label className={CASE}>
@@ -1251,32 +1323,6 @@ export default function CarrouselAtelier() {
               <Plus size={15} aria-hidden />
               Une ligne de plus
             </button>
-          </Section>
-        )}
-
-        {carte?.gabarit === "chiffres" && trace && (
-          <Section titre="Le chiffre" ouvert>
-            <label className={LEGENDE} htmlFor="chiffres-jour">
-              Chiffres de
-            </label>
-            <select
-              id="chiffres-jour"
-              value={carte.segment ?? ""}
-              onChange={(e) =>
-                majCarte({
-                  segment:
-                    e.target.value === "" ? null : Number(e.target.value),
-                })
-              }
-              className={CHAMP}
-            >
-              <option value="">Tout l&rsquo;itinéraire</option>
-              {segments.map((s, i) => (
-                <option key={`chiffres-${s.kmDebut}`} value={i}>
-                  Journée {i + 1}
-                </option>
-              ))}
-            </select>
           </Section>
         )}
 

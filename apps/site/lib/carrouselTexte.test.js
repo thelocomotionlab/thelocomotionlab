@@ -7,11 +7,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   analyserRiche,
+  blocsDeTexte,
+  hauteurBlocs,
   encreDe,
   fonteDe,
   largeurLigne,
   lignesRiches,
-  paragraphesRiches,
   texteNu,
   largeurIcone,
 } from "./carrouselTexte";
@@ -123,18 +124,6 @@ describe("lignesRiches", () => {
   });
 });
 
-describe("paragraphesRiches", () => {
-  it("sépare sur une ligne vide, et une seule", () => {
-    const p = paragraphesRiches(ctxFactice(), "un\ndeux\n\ntrois", 900, BASE);
-    expect(p).toHaveLength(2);
-    expect(p[0][0].map((m) => m.texte).join("")).toBe("un deux");
-  });
-
-  it("ignore les paragraphes vides", () => {
-    expect(paragraphesRiches(ctxFactice(), "\n\n  \n\n", 900, BASE)).toEqual([]);
-  });
-});
-
 describe("couleurs nommées", () => {
   it("reconnaît un préfixe de couleur connu", () => {
     expect(analyserRiche("[bleu: froid]")).toEqual([
@@ -201,5 +190,62 @@ describe("icônes dans le texte", () => {
     const ctx = ctxFactice();
     const lignes = lignesRiches(ctx, analyserRiche("aaaa :col:"), 60, BASE);
     expect(lignes[lignes.length - 1].some((m) => m.icone === "col")).toBe(true);
+  });
+});
+
+describe("blocs : listes, paragraphes, respirations", () => {
+  const ctx = ctxFactice();
+  const blocs = (t, l = 500) => blocsDeTexte(ctx, t, l, BASE);
+
+  it("fait un paragraphe des lignes consécutives", () => {
+    const b = blocs("un\ndeux");
+    expect(b).toHaveLength(1);
+    expect(b[0].type).toBe("paragraphe");
+    expect(b[0].lignes[0].map((m) => m.texte).join("")).toBe("un deux");
+  });
+
+  it("reconnaît une liste sur les lignes qui commencent par un tiret", () => {
+    const b = blocs("- eau\n- bois\n- feu");
+    expect(b).toHaveLength(1);
+    expect(b[0].type).toBe("liste");
+    expect(b[0].items).toHaveLength(3);
+  });
+
+  it("sépare une liste du paragraphe qui la précède", () => {
+    const b = blocs("Dans le sac :\n- eau\n- bois");
+    expect(b.map((x) => x.type)).toEqual(["paragraphe", "liste"]);
+  });
+
+  it("UNE ligne vide sépare, CHAQUE ligne vide en plus aère", () => {
+    // Le geste naturel : appuyer plusieurs fois sur Entrée donne plus d'air.
+    expect(blocs("un\n\ndeux").map((x) => x.type)).toEqual(["paragraphe", "paragraphe"]);
+    const trois = blocs("un\n\n\ndeux");
+    expect(trois.map((x) => x.type)).toEqual(["paragraphe", "espace", "paragraphe"]);
+    expect(trois[1].n).toBe(1);
+    expect(blocs("un\n\n\n\ndeux")[1].n).toBe(2);
+  });
+
+  it("n'ouvre pas sur une respiration", () => {
+    // Des lignes vides en tête ne doivent pas décaler tout le bloc.
+    expect(blocs("\n\n\nun").map((x) => x.type)).toEqual(["paragraphe"]);
+  });
+
+  it("garde le balisage à l'intérieur d'un item", () => {
+    const [b] = blocs("- de l'[bleu: eau] :eau:");
+    expect(b.items[0][0].some((m) => m.couleur === "bleu")).toBe(true);
+    expect(b.items[0][0].some((m) => m.icone === "eau")).toBe(true);
+  });
+
+  it("mesure une hauteur qui croît avec le contenu", () => {
+    const court = hauteurBlocs(blocs("un"), BASE);
+    const long = hauteurBlocs(blocs("un\n\ndeux"), BASE);
+    const aere = hauteurBlocs(blocs("un\n\n\ndeux"), BASE);
+    expect(long).toBeGreaterThan(court);
+    expect(aere).toBeGreaterThan(long);
+  });
+
+  it("rend une liste vide sur un texte vide", () => {
+    expect(blocs("")).toEqual([]);
+    expect(blocs(null)).toEqual([]);
   });
 });
