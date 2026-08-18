@@ -14,6 +14,7 @@
 // LA SYNTAXE, volontairement minuscule :
 //   *gras*   _italique_   ~souligné~   [en ambre]   [bleu: mot]   :col:
 //   - un point de liste (puce réglable, cf. `blocsDeTexte`)
+//   > un paragraphe entier décalé — une note, une citation
 // Elle s'imbrique (*_gras italique_*), et `\` échappe un caractère qu'on veut
 // écrire tel quel (`\*` donne une étoile).
 //
@@ -53,7 +54,7 @@ export const COULEURS_TEXTE = {
 };
 
 export const AIDE_BALISAGE =
-  "*gras*  _italique_  ~souligné~  [en ambre]  [bleu: mot]  :col: (icône)  - liste";
+  "*gras*  _italique_  ~souligné~  [en ambre]  [bleu: mot]  :col: (icône)  - liste  > retrait";
 
 /** Une icône entre deux-points. Bornée à des minuscules sans espace, et
  *  vérifiée contre le vocabulaire : « Départ : 6 h » n'en est pas une, et
@@ -193,7 +194,7 @@ export function largeurIcone(base) {
  *
  * @returns {Array<Array<{texte:string, largeur:number}>>}
  */
-export function lignesRiches(ctx, morceaux, largeurMax, base) {
+export function lignesRiches(ctx, morceaux, largeurMax, base, { retrait = 0 } = {}) {
   const mots = [];
   for (const m of morceaux) {
     // Une icône est un mot à elle seule : elle ne se coupe pas, et elle ne se
@@ -216,7 +217,11 @@ export function lignesRiches(ctx, morceaux, largeurMax, base) {
     const w = mot.icone ? largeurIcone(base) : ctx.measureText(mot.texte).width;
     const espace = !mot.icone && EST_ESPACE.test(mot.texte);
 
-    if (!espace && ligne.length > 0 && largeur + w > largeurMax) {
+    // L'ALINÉA rétrécit la PREMIÈRE ligne, pas les suivantes : c'est ce qui
+    // fait qu'un retrait de première ligne reste un retrait et ne devient pas
+    // une marge. Les lignes d'après retrouvent toute la justification.
+    const maxCourant = lignes.length === 0 ? Math.max(base.taille, largeurMax - retrait) : largeurMax;
+    if (!espace && ligne.length > 0 && largeur + w > maxCourant) {
       // Les blancs de fin de ligne ne comptent pas : ils décaleraient un texte
       // centré, et allongeraient un soulignement dans le vide.
       while (
@@ -298,35 +303,75 @@ export function dessinerLigneRiche(ctx, ligne, x, y, base) {
  *     façon, autant qu'il fasse ce qu'on attend.
  */
 
-/** Interligne d'un corps de texte, en parts de sa taille. */
-const INTERLIGNE = 1.55;
-/** Espace entre deux blocs, et hauteur d'une respiration. */
-const ENTRE_BLOCS = 0.85;
-const RESPIRATION = 1.1;
-/** Retrait du texte d'une liste, qui laisse la place à la puce. */
-export const RETRAIT_LISTE = 1.6;
+/**
+ * LES ESPACEMENTS, en parts du corps du texte.
+ *
+ * Ce sont des DÉFAUTS, pas des constantes : chaque planche peut les redéfinir
+ * (cf. `baseCorps` dans carrouselCartes.js, qui lit les réglages de la carte).
+ * On les garde ici parce que c'est ici qu'on mesure et qu'on pose — mesure et
+ * pose DOIVENT lire la même valeur, sinon un texte se dessine ailleurs qu'où on
+ * l'a mesuré, et les gabarits qui construisent du bas vers le haut débordent.
+ */
+export const ESPACEMENT = {
+  /** Interligne d'un corps de texte. */
+  interligne: 1.55,
+  /** Espace entre deux blocs (paragraphe, liste). */
+  entreBlocs: 0.85,
+  /** Hauteur d'UNE ligne sautée en plus — la « respiration ». */
+  respiration: 1.1,
+  /** Espace entre deux points d'une même liste. */
+  entreItems: 0.35,
+  /** Retrait du texte d'une liste, qui laisse la place à la puce. */
+  retraitListe: 1.6,
+  /** Retrait de la PREMIÈRE ligne d'un paragraphe. Zéro = pas d'alinéa. */
+  alinea: 0,
+};
+
+/** La valeur réglée sur la planche, sinon celle de la charte. */
+function esp(base, cle) {
+  const v = base?.[cle];
+  return Number.isFinite(v) && v >= 0 ? v : ESPACEMENT[cle];
+}
+
+/** Conservé pour l'historique : la valeur par défaut du retrait de liste. */
+export const RETRAIT_LISTE = ESPACEMENT.retraitListe;
 
 const EST_ITEM = /^\s*-\s+(.*)$/;
+/** Un paragraphe DÉCALÉ en entier — une citation, une note. */
+const EST_RETRAIT = /^\s*>\s?(.*)$/;
 
 /**
  * Découpe un texte en blocs déjà mis en page.
  *
- * @returns {Array<{type:"paragraphe"|"liste"|"espace", lignes?:Array, items?:Array, n?:number}>}
+ * @returns {Array<{type:"paragraphe"|"liste"|"espace", lignes?:Array,
+ *   items?:Array, n?:number, retrait?:number, alinea?:number}>}
  */
 export function blocsDeTexte(ctx, texte, largeurMax, base) {
   const brut = String(texte ?? "").split("\n");
   const blocs = [];
   let paragraphe = []; // lignes brutes en attente
+  let paraRetrait = false; // …et si elles sont décalées (« > »)
   let items = null; // items de liste en attente
   let vides = 0;
 
   const viderParagraphe = () => {
     if (paragraphe.length) {
+      const retrait = paraRetrait ? base.taille * esp(base, "retraitListe") : 0;
+      const alinea = base.taille * esp(base, "alinea");
       blocs.push({
         type: "paragraphe",
-        lignes: lignesRiches(ctx, analyserRiche(paragraphe.join(" ")), largeurMax, base),
+        retrait,
+        alinea,
+        lignes: lignesRiches(
+          ctx,
+          analyserRiche(paragraphe.join(" ")),
+          largeurMax - retrait,
+          base,
+          { retrait: alinea },
+        ),
       });
       paragraphe = [];
+      paraRetrait = false;
     }
   };
   const viderListe = () => {
@@ -334,7 +379,12 @@ export function blocsDeTexte(ctx, texte, largeurMax, base) {
       blocs.push({
         type: "liste",
         items: items.map((t) =>
-          lignesRiches(ctx, analyserRiche(t), largeurMax - base.taille * RETRAIT_LISTE, base),
+          lignesRiches(
+            ctx,
+            analyserRiche(t),
+            largeurMax - base.taille * esp(base, "retraitListe"),
+            base,
+          ),
         ),
       });
       items = null;
@@ -361,10 +411,15 @@ export function blocsDeTexte(ctx, texte, largeurMax, base) {
     if (item) {
       viderParagraphe();
       (items ??= []).push(item[1]);
-    } else {
-      viderListe();
-      paragraphe.push(ligne.trim());
+      continue;
     }
+    viderListe();
+    const cite = EST_RETRAIT.exec(ligne);
+    // Un changement de décalage FERME le paragraphe : « > » ouvre un bloc à
+    // part, il ne se mélange pas à celui qu'on était en train d'écrire.
+    if (paragraphe.length && Boolean(cite) !== paraRetrait) viderParagraphe();
+    paraRetrait = Boolean(cite);
+    paragraphe.push((cite ? cite[1] : ligne).trim());
   }
   vider();
   return blocs;
@@ -372,14 +427,15 @@ export function blocsDeTexte(ctx, texte, largeurMax, base) {
 
 /** Hauteur totale d'une suite de blocs — mesurée sans rien dessiner. */
 export function hauteurBlocs(blocs, base) {
+  const interligne = esp(base, "interligne");
   let h = 0;
   blocs.forEach((bloc, i) => {
-    if (i > 0) h += base.taille * ENTRE_BLOCS;
-    if (bloc.type === "espace") h += base.taille * RESPIRATION * bloc.n;
+    if (i > 0) h += base.taille * esp(base, "entreBlocs");
+    if (bloc.type === "espace") h += base.taille * esp(base, "respiration") * bloc.n;
     else if (bloc.type === "liste") {
-      h += bloc.items.reduce((s, lignes) => s + lignes.length * base.taille * INTERLIGNE, 0);
-      h += Math.max(0, bloc.items.length - 1) * base.taille * 0.35;
-    } else h += bloc.lignes.length * base.taille * INTERLIGNE;
+      h += bloc.items.reduce((s, lignes) => s + lignes.length * base.taille * interligne, 0);
+      h += Math.max(0, bloc.items.length - 1) * base.taille * esp(base, "entreItems");
+    } else h += bloc.lignes.length * base.taille * interligne;
   });
   return h;
 }
@@ -481,39 +537,45 @@ function dessinerPuce(ctx, puce, x, baseLigne, base) {
  * chacune à une abscisse différente, ce qui ne se lit plus comme une liste.
  */
 export function poserBlocs(ctx, blocs, x, haut, base, { centre = null, largeur = 0, puce } = {}) {
+  const interligne = esp(base, "interligne");
+  const retraitListe = esp(base, "retraitListe");
   let y = haut;
   blocs.forEach((bloc, i) => {
-    if (i > 0) y += base.taille * ENTRE_BLOCS;
+    if (i > 0) y += base.taille * esp(base, "entreBlocs");
 
     if (bloc.type === "espace") {
-      y += base.taille * RESPIRATION * bloc.n;
+      y += base.taille * esp(base, "respiration") * bloc.n;
       return;
     }
 
     if (bloc.type === "liste") {
       bloc.items.forEach((lignes, k) => {
-        if (k > 0) y += base.taille * 0.35;
+        if (k > 0) y += base.taille * esp(base, "entreItems");
         lignes.forEach((ligne, j) => {
-          const baseLigne = y + base.taille * 0.78 + j * base.taille * INTERLIGNE;
+          const baseLigne = y + base.taille * 0.78 + j * base.taille * interligne;
           const l = largeurLigne(ligne);
           const gauche =
             centre === null
-              ? x + base.taille * RETRAIT_LISTE
-              : centre - l / 2 + base.taille * (RETRAIT_LISTE / 2);
-          if (j === 0) dessinerPuce(ctx, puce, gauche - base.taille * RETRAIT_LISTE, baseLigne, base);
+              ? x + base.taille * retraitListe
+              : centre - l / 2 + base.taille * (retraitListe / 2);
+          if (j === 0) dessinerPuce(ctx, puce, gauche - base.taille * retraitListe, baseLigne, base);
           dessinerLigneRiche(ctx, ligne, gauche, baseLigne, base);
         });
-        y += lignes.length * base.taille * INTERLIGNE;
+        y += lignes.length * base.taille * interligne;
       });
       return;
     }
 
     bloc.lignes.forEach((ligne, j) => {
-      const baseLigne = y + base.taille * 0.78 + j * base.taille * INTERLIGNE;
-      const gauche = centre === null ? x : centre - largeurLigne(ligne) / 2;
+      const baseLigne = y + base.taille * 0.78 + j * base.taille * interligne;
+      // L'alinéa ne concerne QUE la première ligne, et n'a aucun sens centré :
+      // un texte centré n'a pas de bord gauche sur lequel décaler.
+      const decale = (bloc.retrait ?? 0) + (j === 0 && centre === null ? (bloc.alinea ?? 0) : 0);
+      const gauche =
+        centre === null ? x + decale : centre - largeurLigne(ligne) / 2;
       dessinerLigneRiche(ctx, ligne, gauche, baseLigne, base);
     });
-    y += bloc.lignes.length * base.taille * INTERLIGNE;
+    y += bloc.lignes.length * base.taille * interligne;
   });
   return y;
 }

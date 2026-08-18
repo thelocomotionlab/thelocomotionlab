@@ -1,26 +1,25 @@
 // components/outils/CarrouselAtelier.jsx
 //
-// L'ATELIER CARROUSEL : des cartes → un lot d'images à publier.
+// L'ATELIER CARROUSEL : des planches → un lot d'images à publier.
 //
 // TOUT SE PASSE DANS LE NAVIGATEUR, comme l'habillage de photo : ni la trace ni
 // les photos ne quittent l'appareil, il n'y a donc rien à stocker et rien à
 // purger. C'est aussi ce qui permet d'ouvrir l'outil sur le téléphone, au
 // bivouac, sans réseau — sauf pour le fond de carte, qui dégrade proprement.
 //
-// L'OUTIL S'OUVRE SUR UNE CARTE VIERGE. La trace est une OPTION, pas un péage :
-// seul le gabarit « Carte » en a besoin, et on écrit très bien un carrousel de
-// texte et de photos sans jamais charger de GPX.
+// L'ESPACE DE TRAVAIL, emprunté à Canva : une barre en haut (le projet, le
+// format, l'export), un rail d'onglets à gauche, le panneau du réglage choisi
+// à côté, la planche au centre, et la bande des vignettes dessous. Rien ne
+// défile SAUF le panneau — c'est tout l'intérêt : on ne règle plus à l'aveugle,
+// et on ne cherche plus un réglage dans un accordéon replié. C'était le défaut
+// des deux versions précédentes, et c'est ce qui a fait croire que le filet
+// sous le titre « ne marchait pas » : il marchait, sa case était pliée.
 //
-// L'APERÇU NE BOUGE PAS. Il est collé en haut de l'écran pendant qu'on
-// descend dans les réglages — sinon on règle à l'aveugle, ce qui était le
-// principal défaut de la première version. Les réglages, eux, sont repliés par
-// sections : on n'ouvre que celle dont on a besoin.
-//
-// CE QUE L'OUTIL N'EST PAS : un Canva. On ne pose pas n'importe quoi n'importe
-// où. On remplit DES GABARITS. Tout est réglable À L'INTÉRIEUR de la mise en
-// page — corps, couleurs, opacités, découpage, étiquettes — mais la mise en
-// page, elle, tient. C'est ce qui fait que deux carrousels publiés à six mois
-// d'écart se ressemblent encore.
+// CE QUI RESTE DE CANVA S'ARRÊTE À L'ERGONOMIE. On ne pose pas n'importe quoi
+// n'importe où : on remplit DES GABARITS. Tout est réglable À L'INTÉRIEUR de la
+// mise en page — corps, polices, espacements, couleurs, dégradés, découpage,
+// étiquettes — mais la mise en page, elle, tient. C'est ce qui fait que deux
+// carrousels publiés à six mois d'écart se ressemblent encore.
 
 "use client";
 
@@ -28,16 +27,20 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
-  ChevronDown,
+  CopyPlus,
   Download,
+  FolderOpen,
   ImageUp,
+  LayoutTemplate,
   Loader2,
   Map as MapIcon,
+  Palette,
   Plus,
   RotateCcw,
   Route,
   Save,
   Trash2,
+  Type,
   Upload,
 } from "lucide-react";
 
@@ -48,6 +51,7 @@ import {
   GABARITS,
   MARQUES,
   PALETTE_JOURS,
+  POLICES,
   THEMES,
   chargerFond,
   dessinerCartePartage,
@@ -63,9 +67,8 @@ import {
   traceDepuisGpx,
   traceDepuisTrackJson,
 } from "@/lib/carrouselTrace";
-import { AIDE_BALISAGE } from "@/lib/carrouselTexte";
+import { AIDE_BALISAGE, ESPACEMENT, PUCES_SIMPLES } from "@/lib/carrouselTexte";
 import { CLES_ICONES } from "@/lib/carrouselIcones";
-import { PUCES_SIMPLES } from "@/lib/carrouselTexte";
 import {
   chargerEnCours,
   chargerProjet,
@@ -76,144 +79,66 @@ import {
   listerProjets,
   supprimerProjet,
 } from "@/lib/carrouselProjet";
-import { iconeDuRepere } from "@/lib/liveWaypointIcons";
 import { chargerImage } from "@/lib/imageFile";
 import { chargerMarqueTeintee } from "@/lib/marque";
 import { liveConfig } from "@/lib/liveConfig";
-
-const CHAMP =
-  "w-full rounded-xl border border-brand-field bg-brand-paper px-3 py-2 font-heading text-[15px] text-brand-text focus:border-brand-primary-dark focus:outline-none";
-const BOUTON_PRINCIPAL =
-  "inline-flex items-center justify-center gap-2 rounded-full bg-brand-deep px-5 py-2.5 font-heading text-[14px] font-medium text-brand-bg transition-colors hover:bg-brand-deep-dark disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none";
-const BOUTON_SECOND =
-  "inline-flex items-center justify-center gap-2 rounded-full border border-brand-primary/45 bg-brand-primary/12 px-4 py-2 font-heading text-[14px] font-medium text-brand-primary-dark transition-colors hover:border-brand-primary-dark hover:bg-brand-primary/30 hover:text-brand-text disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none";
-const LEGENDE =
-  "mb-1 block font-heading text-[13px] font-medium text-brand-text/70";
-const CASE =
-  "flex items-center gap-2 font-heading text-[14px] text-brand-text/75";
-
-/** Une section repliable. Native `<details>` : le clavier et les lecteurs
- *  d'écran la connaissent déjà, il n'y a rien à réimplémenter. */
-function Section({ titre, ouvert = false, children }) {
-  return (
-    <details
-      open={ouvert}
-      className="group rounded-2xl border border-brand-field bg-brand-paper/60"
-    >
-      <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 font-heading text-[15px] font-medium text-brand-text marker:content-['']">
-        {titre}
-        <ChevronDown
-          size={17}
-          aria-hidden
-          className="text-brand-text/45 transition-transform group-open:rotate-180 motion-reduce:transition-none"
-        />
-      </summary>
-      <div className="border-t border-brand-field/70 px-4 pb-4 pt-3">
-        {children}
-      </div>
-    </details>
-  );
-}
+import {
+  AIDE,
+  BOUTON_DISCRET,
+  BOUTON_PRINCIPAL,
+  BOUTON_SECOND,
+  CHAMP,
+  Case,
+  Choix,
+  Couleur,
+  Curseur,
+  Groupe,
+  ICONES_PALETTE,
+  ICONES_PAR_CLE,
+  LEGENDE,
+  Opacite,
+  Puce,
+  Taille,
+} from "@/components/outils/champsAtelier";
 
 /**
- * Les icônes de la palette, RÉSOLUES UNE FOIS au chargement du module.
+ * LE RAIL — l'ordre dans lequel on compose une planche, pas un classement.
  *
- * C'est le motif déjà en place dans `lib/liveWaypoints.js` : le composant est
- * résolu hors du rendu et voyage comme une donnée (`{ cle, Icone }`). Le
- * chercher pendant le rendu en referait un type à chaque passe — React
- * remonterait le sous-arbre, et le lint le refuse.
+ * On choisit un gabarit, on écrit, on met une photo, on découpe la trace, on
+ * règle l'allure, on enregistre. Les composants d'icône sont résolus ICI, une
+ * fois : les chercher pendant le rendu en referait un type à chaque passe.
  */
-const ICONES_PALETTE = CLES_ICONES.map((cle) => ({
-  cle,
-  Icone: iconeDuRepere(cle),
-}));
-const ICONES_PAR_CLE = Object.fromEntries(
-  ICONES_PALETTE.map(({ cle, Icone }) => [cle, Icone]),
-);
+const ONGLETS = [
+  { cle: "planche", label: "Planche", Icone: LayoutTemplate },
+  { cle: "texte", label: "Texte", Icone: Type },
+  { cle: "photo", label: "Photo", Icone: ImageUp },
+  { cle: "trace", label: "Trace", Icone: Route },
+  { cle: "style", label: "Allure", Icone: Palette },
+  { cle: "projet", label: "Projet", Icone: FolderOpen },
+];
 
-/** L'aperçu d'une puce de liste. Le composant arrive en PROP, jamais résolu ici. */
-function Puce({ cle, Icone, size = 16 }) {
-  if (!cle || cle === "point") return <span className="leading-none">•</span>;
-  if (cle === "tiret") return <span className="leading-none">–</span>;
-  return Icone ? <Icone size={size} aria-hidden /> : null;
-}
+/** Les gabarits qui portent une photo. */
+const AVEC_PHOTO = ["photo", "bandeau", "cloture"];
 
-/** Un réglage numérique en pixels de planche (référence : 1080 de large). */
-function Taille({ id, label, valeur, defaut, onChange }) {
-  return (
-    <div>
-      <label className={LEGENDE} htmlFor={id}>
-        {label}
-      </label>
-      <input
-        id={id}
-        type="number"
-        min={8}
-        max={260}
-        value={valeur ?? defaut}
-        onChange={(e) => onChange(Number(e.target.value) || defaut)}
-        className={CHAMP}
-      />
-    </div>
-  );
-}
-
-/** Une couleur, avec le moyen de revenir à celle du thème. */
-function Couleur({ label, valeur, defaut, onChange }) {
-  return (
-    <div>
-      <span className={LEGENDE}>{label}</span>
-      <div className="flex items-center gap-1.5">
-        <input
-          type="color"
-          value={valeur || defaut}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-9 w-full cursor-pointer rounded-lg border border-brand-field bg-transparent"
-          aria-label={label}
-        />
-        <button
-          type="button"
-          onClick={() => onChange("")}
-          disabled={!valeur}
-          className="rounded-full p-1.5 text-brand-text/40 hover:bg-brand-primary/15 hover:text-brand-primary-dark disabled:opacity-25"
-          title="Revenir à la couleur du thème"
-          aria-label={`${label} — revenir au thème`}
-        >
-          <RotateCcw size={14} aria-hidden />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function Opacite({ id, label, valeur, onChange }) {
-  const v = valeur ?? 1;
-  return (
-    <div>
-      <label className={LEGENDE} htmlFor={id}>
-        {label} — {Math.round(v * 100)} %
-      </label>
-      <input
-        id={id}
-        type="range"
-        min={0}
-        max={1}
-        step={0.05}
-        value={v}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-brand-primary-dark"
-      />
-    </div>
-  );
-}
-
-/** Même lecture que l'habillage : la font-family RÉSOLUE du body, pas la
- *  variable next/font (vide sur documentElement — le canvas partait alors en
- *  police système sans que rien ne le signale). */
-function policeUbuntu() {
-  if (typeof document === "undefined") return "sans-serif";
-  const famille = getComputedStyle(document.body).fontFamily;
-  return famille && famille !== "" ? famille : "sans-serif";
+/**
+ * LES TROIS FAMILLES DE LA CHARTE, lues sur le document.
+ *
+ * Même lecture que l'habillage : la font-family RÉSOLUE, pas la variable
+ * next/font (vide sur documentElement — le canvas partait alors en police
+ * système sans que rien ne le signale). Les deux autres viennent des tokens
+ * `--font-serif` / `--font-mono`, qui SONT la charte (packages/ui/theme.css) :
+ * on ne redéclare aucune police ici.
+ */
+function policesDuSite() {
+  if (typeof document === "undefined")
+    return { sans: "sans-serif", serif: "serif", mono: "monospace" };
+  const st = getComputedStyle(document.body);
+  const token = (nom, secours) => st.getPropertyValue(nom).trim() || secours;
+  return {
+    sans: st.fontFamily || "sans-serif",
+    serif: token("--font-serif", "Georgia, serif"),
+    mono: token("--font-mono", "ui-monospace, monospace"),
+  };
 }
 
 function telecharger(blob, nom) {
@@ -234,11 +159,7 @@ function telecharger(blob, nom) {
  *  pour être remplies, pas pour être justes. */
 function ficheParDefaut(trace, segments) {
   return [
-    {
-      label: "Distance",
-      valeur: trace ? `${Math.round(trace.totalKm)} km` : "",
-      accent: false,
-    },
+    { label: "Distance", valeur: trace ? `${Math.round(trace.totalKm)} km` : "", accent: false },
     {
       label: "Dénivelé",
       valeur: trace ? `${trace.dPlusM.toLocaleString("fr-FR")} m` : "",
@@ -262,22 +183,14 @@ function ficheParDefaut(trace, segments) {
  * « c1 ». Des `key` différentes, et React refusait d'hydrater l'arbre — avec un
  * message qui accusait le bouton « Avancer cette carte », très loin de la cause.
  */
-function carteNeuve(
-  gabarit,
-  trace,
-  segments,
-  bilan = false,
-  id = "c0",
-  style = null,
-) {
+function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0", style = null) {
   return {
     id,
     gabarit,
     /* --- contenu --- */
     entete: "",
     enteteAccent: false,
-    surtitre:
-      gabarit === "carte" ? (trace?.vecue ? "La sortie" : "L'itinéraire") : "",
+    surtitre: gabarit === "carte" ? (trace?.vecue ? "La sortie" : "L'itinéraire") : "",
     titre: gabarit === "carte" ? (trace?.nom ?? liveConfig.aventure.nom) : "",
     texte: "",
     pied: null,
@@ -293,6 +206,18 @@ function carteNeuve(
     tailleFicheLabel: null,
     tailleFicheValeur: null,
     tailleLogo: null,
+    /** Les trois rôles de texte, et leur police (cf. POLICES). */
+    policeTitre: "sans",
+    policeSurtitre: "sans",
+    policeCorps: "sans",
+    /** Les espacements. `null` = la valeur de la charte (cf. ESPACEMENT). */
+    interligneTitre: null,
+    interligne: null,
+    entreBlocs: null,
+    respiration: null,
+    entreItems: null,
+    retraitListe: null,
+    alinea: null,
     couleurTitre: "",
     couleurCorps: "",
     couleurAccent: "",
@@ -305,7 +230,7 @@ function carteNeuve(
      *  par défaut, pas à l'encre du texte. */
     couleurLogo: "",
     /** auto | toujours | jamais. « toujours » par défaut : la flèche de swipe
-     *  doit être là, y compris sur un carrousel encore à une seule carte. */
+     *  doit être là, y compris sur un carrousel encore à une seule planche. */
     piedFleche: gabarit === "cloture" ? "jamais" : "toujours",
     centrer: false,
     /** Les filets sous l'en-tête et au-dessus du pied. */
@@ -327,8 +252,9 @@ function carteNeuve(
     image: null,
     nomImage: "",
     ancrage: 0.5,
-    degradeHaut: true,
-    degradeBas: true,
+    /** `null` = l'intensité propre au gabarit (cf. `intensite`). */
+    degradeHaut: null,
+    degradeBas: null,
     bandeauPart: 0.42,
     fiche: gabarit === "fiche" ? ficheParDefaut(trace, segments) : [],
     /* --- clôture --- */
@@ -337,7 +263,7 @@ function carteNeuve(
     couleurCercle: "",
     voileCloture: 0.62,
     ...(gabarit === "cloture" ? clotureParDefaut(bilan) : null),
-    // Le style de la carte courante EN DERNIER : on continue sur la même mise
+    // Le style de la planche courante EN DERNIER : on continue sur la même mise
     // en forme au lieu de repartir de la charte à chaque ajout.
     ...(style ?? null),
   };
@@ -371,11 +297,11 @@ function clotureParDefaut(bilan) {
 }
 
 /**
- * Les réglages de FORME — ceux qu'une nouvelle carte hérite de celle qu'on
+ * Les réglages de FORME — ceux qu'une nouvelle planche hérite de celle qu'on
  * vient de régler, et que le bouton « appliquer à toutes » recopie.
  *
  * Le contenu (titre, texte, photo, étiquettes, fiche) n'en fait évidemment pas
- * partie : on hérite d'un LOOK, pas des mots de la carte précédente.
+ * partie : on hérite d'un LOOK, pas des mots de la planche précédente.
  */
 export const CHAMPS_DE_STYLE = [
   "tailleTitre",
@@ -387,6 +313,16 @@ export const CHAMPS_DE_STYLE = [
   "tailleFicheLabel",
   "tailleFicheValeur",
   "epaisseurFilet",
+  "policeTitre",
+  "policeSurtitre",
+  "policeCorps",
+  "interligneTitre",
+  "interligne",
+  "entreBlocs",
+  "respiration",
+  "entreItems",
+  "retraitListe",
+  "alinea",
   "couleurTitre",
   "couleurCorps",
   "couleurAccent",
@@ -394,6 +330,8 @@ export const CHAMPS_DE_STYLE = [
   "couleurLogo",
   "enteteOpacite",
   "piedOpacite",
+  "degradeHaut",
+  "degradeBas",
   "marque",
   "enteteAccent",
   "piedFleche",
@@ -409,22 +347,37 @@ export const CHAMPS_DE_STYLE = [
 
 function styleDe(carte) {
   if (!carte) return null;
-  return Object.fromEntries(
-    CHAMPS_DE_STYLE.filter((c) => c in carte).map((c) => [c, carte[c]]),
-  );
+  return Object.fromEntries(CHAMPS_DE_STYLE.filter((c) => c in carte).map((c) => [c, carte[c]]));
 }
 
-/** Une carte sur laquelle personne n'a encore rien écrit — on peut la
+/** Une planche sur laquelle personne n'a encore rien écrit — on peut la
  *  remplacer sans rien perdre quand une trace arrive. */
 function estVierge(c) {
-  return (
-    !c.titre &&
-    !c.texte &&
-    !c.entete &&
-    !c.surtitre &&
-    !c.image &&
-    !c.fiche?.length
-  );
+  return !c.titre && !c.texte && !c.entete && !c.surtitre && !c.image && !c.fiche?.length;
+}
+
+/**
+ * LA VIGNETTE d'une planche : la planche elle-même, en petit.
+ *
+ * Le même dessin, à l'échelle — pas une approximation en HTML. Toutes les
+ * coordonnées du rendu sont exprimées dans le format de la planche : une
+ * transformation suffit, et la vignette ne peut pas mentir sur ce qu'on
+ * exportera.
+ */
+function Vignette({ carte, options, format, index, bilan }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    const echelle = 132 / format.width;
+    canvas.width = Math.round(format.width * echelle);
+    canvas.height = Math.round(format.height * echelle);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.setTransform(echelle, 0, 0, echelle, 0, 0);
+    dessinerCartePartage(ctx, { ...options, carte: { ...carte, bilan }, index });
+  }, [carte, options, format, index, bilan]);
+  return <canvas ref={ref} className="block h-auto w-full rounded-md" />;
 }
 
 export default function CarrouselAtelier() {
@@ -432,7 +385,7 @@ export default function CarrouselAtelier() {
   const boitesRef = useRef([]);
   const glisseRef = useRef(null);
   const texteRef = useRef(null);
-  /** Les identifiants de cartes, propres à CETTE instance (cf. carteNeuve). */
+  /** Les identifiants de planches, propres à CETTE instance (cf. carteNeuve). */
   const idRef = useRef(0);
   const idNeuf = useCallback(() => {
     idRef.current += 1;
@@ -442,17 +395,16 @@ export default function CarrouselAtelier() {
   const [trace, setTrace] = useState(null);
   const [formatCle, setFormatCle] = useState("carrousel");
   const [themeCle, setThemeCle] = useState("sombre");
-  // AVANT ou APRÈS : c'est une propriété du CARROUSEL, pas d'une carte.
+  // AVANT ou APRÈS : c'est une propriété du CARROUSEL, pas d'une planche.
   // Un carrousel annonce une aventure ou la raconte — jamais les deux.
   const [bilan, setBilan] = useState(false);
   const [coupures, setCoupures] = useState([]);
   /** L'itinéraire COMPLET, jamais dessiné : il ne sert qu'à figer le cadrage. */
   const [traceCadre, setTraceCadre] = useState(null);
-  // L'atelier démarre sur une carte de texte : utilisable sans rien charger.
-  const [cartes, setCartes] = useState(() => [
-    carteNeuve("texte", null, [], false, "c0"),
-  ]);
+  // L'atelier démarre sur une planche de texte : utilisable sans rien charger.
+  const [cartes, setCartes] = useState(() => [carteNeuve("texte", null, [], false, "c0")]);
   const [active, setActive] = useState(0);
+  const [onglet, setOnglet] = useState("texte");
   const [fond, setFond] = useState(null);
   const [marque, setMarque] = useState(null);
   const [policePrete, setPolicePrete] = useState(false);
@@ -460,27 +412,28 @@ export default function CarrouselAtelier() {
   const [nomProjet, setNomProjet] = useState("");
   const [projets, setProjets] = useState([]);
   /** L'autosauvegarde n'écrit qu'une fois le projet RESTAURÉ : sans ce
-   *  verrou, la carte vierge du premier rendu écraserait le travail
+   *  verrou, la planche vierge du premier rendu écraserait le travail
    *  enregistré avant même qu'il ait été relu. */
   const pretRef = useRef(false);
 
   const format = FORMATS[formatCle];
   const theme = THEMES[themeCle];
-  const segments = useMemo(
-    () => decouperTrace(trace, coupures),
-    [trace, coupures],
-  );
+  const segments = useMemo(() => decouperTrace(trace, coupures), [trace, coupures]);
   const carte = cartes[active] ?? null;
 
   /* --------------------------------------------------------------- chargements */
 
   useEffect(() => {
     let vivant = true;
-    const famille = policeUbuntu();
+    const { sans, serif, mono } = policesDuSite();
     Promise.all([
-      document.fonts.load(`700 65px ${famille}`),
-      document.fonts.load(`500 22px ${famille}`),
-      document.fonts.load(`400 38px ${famille}`),
+      document.fonts.load(`700 65px ${sans}`),
+      document.fonts.load(`500 22px ${sans}`),
+      document.fonts.load(`400 38px ${sans}`),
+      document.fonts.load(`700 65px ${serif}`),
+      document.fonts.load(`400 38px ${serif}`),
+      document.fonts.load(`700 65px ${mono}`),
+      document.fonts.load(`400 38px ${mono}`),
     ])
       .catch(() => {})
       .then(() => vivant && setPolicePrete(true));
@@ -490,7 +443,7 @@ export default function CarrouselAtelier() {
   }, []);
 
   // Le logo est AMBRE par défaut — c'est la couleur de marque, pas l'encre du
-  // texte. Une carte peut le redéfinir, et il suit alors ce choix.
+  // texte. Une planche peut le redéfinir, et il suit alors ce choix.
   useEffect(() => {
     let vivant = true;
     chargerMarqueTeintee(carte?.couleurLogo || theme.accent)
@@ -519,15 +472,7 @@ export default function CarrouselAtelier() {
   }, [trace, traceCadre, formatCle]);
 
   const instantane = useCallback(
-    () => ({
-      format: formatCle,
-      theme: themeCle,
-      bilan,
-      coupures,
-      trace,
-      traceCadre,
-      cartes,
-    }),
+    () => ({ format: formatCle, theme: themeCle, bilan, coupures, trace, traceCadre, cartes }),
     [formatCle, themeCle, bilan, coupures, trace, traceCadre, cartes],
   );
 
@@ -543,7 +488,7 @@ export default function CarrouselAtelier() {
       setCartes(p.cartes);
       setActive(0);
       // Les identifiants repartent au-dessus de ceux restaurés, sinon deux
-      // cartes finiraient par porter la même clé React.
+      // planches finiraient par porter la même clé React.
       idRef.current = p.cartes.length;
     }
   }, []);
@@ -576,13 +521,6 @@ export default function CarrouselAtelier() {
     return () => clearTimeout(t);
   }, [instantane]);
 
-  /**
-   * @param {object|null} t
-   * @param {boolean} deLAventure - vrai seulement pour l'itinéraire de
-   *   `liveConfig`. Les waypoints (Arsine 42, Vallouise 84, Valgaudémar 130,6)
-   *   ne décrivent QUE cette aventure : les appliquer à un GPX importé
-   *   découperait une sortie de 60 km à des kilomètres qui n'ont aucun sens.
-   */
   // Les jonctions d'une fusion l'emportent sur le découpage automatique : ce
   // sont de vraies fins d'étape, pas une estimation.
   const jonctionsRef = useRef(null);
@@ -590,13 +528,17 @@ export default function CarrouselAtelier() {
     jonctionsRef.current = km;
   }, []);
 
+  /**
+   * @param {object|null} t
+   * @param {boolean} deLAventure - vrai seulement pour l'itinéraire de
+   *   `liveConfig`. Les waypoints (Arsine 42, Vallouise 84, Valgaudémar 130,6)
+   *   ne décrivent QUE cette aventure : les appliquer à un GPX importé
+   *   découperait une sortie de 60 km à des kilomètres qui n'ont aucun sens.
+   */
   const appliquerTrace = useCallback(
     (t, deLAventure = false) => {
       if (!t) {
-        setEtat({
-          occupe: false,
-          message: "Fichier illisible — attendu un .gpx ou un .track.json.",
-        });
+        setEtat({ occupe: false, message: "Fichier illisible — attendu un .gpx ou un .track.json." });
         return;
       }
       setTrace(t);
@@ -606,12 +548,10 @@ export default function CarrouselAtelier() {
       const auto = deLAventure
         ? coupuresDepuisWaypoints(liveConfig.aventure.waypoints, t.totalKm)
         : [];
-      setCoupures(
-        auto.length ? auto : t.vecue ? [] : coupuresRegulieres(t.totalKm, 2),
-      );
+      setCoupures(auto.length ? auto : t.vecue ? [] : coupuresRegulieres(t.totalKm, 2));
 
-      // On ne jette JAMAIS un texte déjà écrit : la carte de l'itinéraire remplace
-      // une planche vierge, et s'ajoute derrière les autres.
+      // On ne jette JAMAIS un texte déjà écrit : la planche de l'itinéraire
+      // remplace une planche vierge, et s'ajoute derrière les autres.
       setCartes((cs) => {
         const neuve = carteNeuve("carte", t, [], Boolean(t.vecue), idNeuf());
         if (cs.every(estVierge)) return [neuve];
@@ -635,16 +575,11 @@ export default function CarrouselAtelier() {
    */
   const chargerFichierTrace = useCallback(
     async (e) => {
-      const fichiers = [...(e.target.files ?? [])].sort((a, b) =>
-        a.name.localeCompare(b.name, "fr"),
-      );
+      const fichiers = [...(e.target.files ?? [])].sort((a, b) => a.name.localeCompare(b.name, "fr"));
       if (fichiers.length === 0) return;
       setEtat({
         occupe: true,
-        message:
-          fichiers.length > 1
-            ? `Lecture de ${fichiers.length} traces…`
-            : "Lecture de la trace…",
+        message: fichiers.length > 1 ? `Lecture de ${fichiers.length} traces…` : "Lecture de la trace…",
       });
       try {
         const traces = [];
@@ -659,10 +594,7 @@ export default function CarrouselAtelier() {
         if (fusion?.jonctions?.length) setCoupuresApresFusion(fusion.jonctions);
         appliquerTrace(fusion);
       } catch {
-        setEtat({
-          occupe: false,
-          message: "Fichier illisible — attendu un .gpx ou un .track.json.",
-        });
+        setEtat({ occupe: false, message: "Fichier illisible — attendu un .gpx ou un .track.json." });
       }
     },
     [appliquerTrace, setCoupuresApresFusion],
@@ -670,9 +602,7 @@ export default function CarrouselAtelier() {
 
   /** La référence ne remplace RIEN : elle se pose à côté, et fige le cadre. */
   const chargerReference = useCallback(async (e) => {
-    const fichiers = [...(e.target.files ?? [])].sort((a, b) =>
-      a.name.localeCompare(b.name, "fr"),
-    );
+    const fichiers = [...(e.target.files ?? [])].sort((a, b) => a.name.localeCompare(b.name, "fr"));
     if (fichiers.length === 0) return;
     setEtat({ occupe: true, message: "Lecture de la référence…" });
     try {
@@ -687,10 +617,7 @@ export default function CarrouselAtelier() {
       setTraceCadre(fusionnerTraces(traces));
       setEtat({ occupe: false, message: "" });
     } catch {
-      setEtat({
-        occupe: false,
-        message: "Référence illisible — attendu un .gpx ou un .track.json.",
-      });
+      setEtat({ occupe: false, message: "Référence illisible — attendu un .gpx ou un .track.json." });
     }
   }, []);
 
@@ -700,20 +627,14 @@ export default function CarrouselAtelier() {
       const res = await fetch(liveConfig.aventure.trace);
       appliquerTrace(traceDepuisTrackJson(await res.json()), true);
     } catch {
-      setEtat({
-        occupe: false,
-        message: "Itinéraire de l'aventure introuvable.",
-      });
+      setEtat({ occupe: false, message: "Itinéraire de l'aventure introuvable." });
     }
   }, [appliquerTrace]);
 
   /* ------------------------------------------------------------------- édition */
 
   const majCarte = useCallback(
-    (patch) =>
-      setCartes((cs) =>
-        cs.map((c, i) => (i === active ? { ...c, ...patch } : c)),
-      ),
+    (patch) => setCartes((cs) => cs.map((c, i) => (i === active ? { ...c, ...patch } : c))),
     [active],
   );
 
@@ -765,26 +686,29 @@ export default function CarrouselAtelier() {
     [active],
   );
 
-  // La nouvelle carte devient l'active : on vient de la créer, c'est elle qu'on
-  // veut voir. Son index est la longueur ACTUELLE de la liste.
+  // La nouvelle planche devient l'active : on vient de la créer, c'est elle
+  // qu'on veut voir. Son index est la longueur ACTUELLE de la liste.
   const ajouterCarte = useCallback(
     (gabarit) => {
-      // Le style de la carte courante est repris : on continue sur la même
+      // Le style de la planche courante est repris : on continue sur la même
       // mise en forme au lieu de repartir de la charte à chaque ajout.
       setCartes((cs) => [
         ...cs,
-        carteNeuve(
-          gabarit,
-          trace,
-          segments,
-          bilan,
-          idNeuf(),
-          styleDe(cs[active]),
-        ),
+        carteNeuve(gabarit, trace, segments, bilan, idNeuf(), styleDe(cs[active])),
       ]);
       setActive(cartes.length);
     },
     [trace, segments, bilan, cartes.length, active, idNeuf],
+  );
+
+  /** Dupliquer : le geste le plus fréquent d'une série (J1, J1+J2, J1+J2+J3…). */
+  const dupliquerCarte = useCallback(
+    (i) => {
+      const id = idNeuf();
+      setCartes((cs) => [...cs.slice(0, i + 1), { ...cs[i], id }, ...cs.slice(i + 1)]);
+      setActive(i + 1);
+    },
+    [idNeuf],
   );
 
   const supprimerCarte = useCallback((i) => {
@@ -802,10 +726,9 @@ export default function CarrouselAtelier() {
       [out[i], out[j]] = [out[j], out[i]];
       return out;
     });
-    // L'active SUIT la carte, dans les deux sens de l'échange : sans le second
-    // cas, déplacer une carte par-dessus l'active faisait sauter l'aperçu.
-    if (bouge)
-      setActive((a) => (a === i ? i + delta : a === i + delta ? i : a));
+    // L'active SUIT la planche, dans les deux sens de l'échange : sans le second
+    // cas, déplacer une planche par-dessus l'active faisait sauter l'aperçu.
+    if (bouge) setActive((a) => (a === i ? i + delta : a === i + delta ? i : a));
   }, []);
 
   const chargerPhoto = useCallback(
@@ -848,10 +771,7 @@ export default function CarrouselAtelier() {
       await rafraichirProjets();
       setEtat({ occupe: false, message: `« ${nom} » enregistré.` });
     } catch {
-      setEtat({
-        occupe: false,
-        message: "Enregistrement impossible sur cet appareil.",
-      });
+      setEtat({ occupe: false, message: "Enregistrement impossible sur cet appareil." });
     }
   }, [nomProjet, instantane, rafraichirProjets]);
 
@@ -871,10 +791,7 @@ export default function CarrouselAtelier() {
 
   const telechargerProjet = useCallback(async () => {
     const blob = await exporterProjet(instantane());
-    telecharger(
-      blob,
-      `${(nomProjet.trim() || "carrousel").replace(/[^\w-]+/g, "-")}.json`,
-    );
+    telecharger(blob, `${(nomProjet.trim() || "carrousel").replace(/[^\w-]+/g, "-")}.json`);
   }, [instantane, nomProjet]);
 
   const importer = useCallback(
@@ -893,7 +810,7 @@ export default function CarrouselAtelier() {
     [appliquerProjet],
   );
 
-  /** Recopie la mise en forme de la carte courante sur TOUTES les autres. */
+  /** Recopie la mise en forme de la planche courante sur TOUTES les autres. */
   const diffuserStyle = useCallback(() => {
     const style = styleDe(cartes[active]);
     if (style) setCartes((cs) => cs.map((c) => ({ ...c, ...style })));
@@ -908,21 +825,17 @@ export default function CarrouselAtelier() {
       trace,
       traceCadre,
       segments,
-      police: policeUbuntu(),
+      police: policesDuSite().sans,
+      polices: policesDuSite(),
       logo: marque,
       fond,
       total: cartes.length,
+      // `policePrete` ne sert à rien au dessin : il est là pour que l'aperçu se
+      // REFASSE une fois les fontes chargées, sinon la première planche reste
+      // mesurée à la police système.
+      policePrete,
     }),
-    [
-      formatCle,
-      themeCle,
-      trace,
-      traceCadre,
-      segments,
-      marque,
-      fond,
-      cartes.length,
-    ],
+    [formatCle, themeCle, trace, traceCadre, segments, marque, fond, cartes.length, policePrete],
   );
 
   useEffect(() => {
@@ -933,12 +846,8 @@ export default function CarrouselAtelier() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     boitesRef.current =
-      dessinerCartePartage(ctx, {
-        ...options,
-        carte: { ...carte, bilan },
-        index: active,
-      }) ?? [];
-  }, [carte, options, format, policePrete, active, bilan]);
+      dessinerCartePartage(ctx, { ...options, carte: { ...carte, bilan }, index: active }) ?? [];
+  }, [carte, options, format, active, bilan]);
 
   /* ------------------------------------------- glisser-déposer des étiquettes */
 
@@ -962,13 +871,7 @@ export default function CarrouselAtelier() {
         const b = boites[i];
         if (x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height) {
           const etq = carte.etiquettes?.[b.index] ?? {};
-          glisseRef.current = {
-            index: b.index,
-            x0: x,
-            y0: y,
-            dx0: etq.dx ?? 0,
-            dy0: etq.dy ?? 0,
-          };
+          glisseRef.current = { index: b.index, x0: x, y0: y, dx0: etq.dx ?? 0, dy0: etq.dy ?? 0 };
           e.currentTarget.setPointerCapture?.(e.pointerId);
           return;
         }
@@ -1003,16 +906,10 @@ export default function CarrouselAtelier() {
       const horodatage = Date.now();
 
       for (const i of indices) {
-        // `index` reste celui de la carte DANS LE CARROUSEL : la pagination du
-        // pied doit dire « 03 / 10 » même si on n'exporte que cette carte-là.
-        dessinerCartePartage(ctx, {
-          ...options,
-          carte: { ...cartes[i], bilan },
-          index: i,
-        });
-        const blob = await new Promise((r) =>
-          hors.toBlob(r, "image/jpeg", 0.92),
-        );
+        // `index` reste celui de la planche DANS LE CARROUSEL : la pagination du
+        // pied doit dire « 03 / 10 » même si on n'exporte que celle-là.
+        dessinerCartePartage(ctx, { ...options, carte: { ...cartes[i], bilan }, index: i });
+        const blob = await new Promise((r) => hors.toBlob(r, "image/jpeg", 0.92));
         if (blob) {
           const numero = String(indices.indexOf(i) + 1).padStart(2, "0");
           telecharger(blob, `carrousel-${horodatage}-${numero}.jpg`);
@@ -1026,1176 +923,1335 @@ export default function CarrouselAtelier() {
 
   /* --------------------------------------------------------------------- vues */
 
-  const aPhoto = ["photo", "bandeau", "cloture"].includes(carte?.gabarit);
+  const aPhoto = AVEC_PHOTO.includes(carte?.gabarit);
+  const gabarit = GABARITS.find((g) => g.cle === carte?.gabarit);
 
   return (
-    // PAS de `items-start` sur cette grille : il réduirait chaque colonne à la
-    // hauteur de son contenu, et la colonne de l'aperçu n'aurait alors aucune
-    // course pour coller. C'est l'étirement par défaut qui donne au `sticky`
-    // toute la hauteur des réglages pour travailler.
-    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8">
-      {/* ---------------------------------------------------------- aperçu collé */}
-      {/* DEUX BOÎTES, et il en faut deux.
-          L'extérieure est la colonne de la grille : elle doit rester HAUTE (pas
-          de `self-start`, qui la réduirait à la taille de l'aperçu et laisserait
-          au collage une course nulle — l'aperçu remontait alors sous la navbar).
-          L'intérieure est ce qui colle, à 84 px : la navbar du site est
-          `sticky top-0` et fait 80 px (Navbar.jsx, `p-4`). `z-20` garde
-          l'aperçu SOUS elle (z-50), pas devant. */}
-      {/* `contents` sur mobile : cette boîte n'existe que pour la GRILLE du grand
-          écran. Gardée en petit écran, elle n'enveloppe QUE l'aperçu — donc le
-          collage n'a aucune course et la planche défile hors de l'écran, ce qui
-          est exactement l'inverse du but sur un téléphone. */}
-      <div className="contents lg:block lg:col-start-1 lg:row-start-1">
-        <div className="sticky top-[var(--apercu-top,84px)] z-20 -mx-4 mb-5 bg-brand-bg/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:mx-0 lg:mb-0 lg:bg-transparent lg:px-0 lg:py-2 lg:backdrop-blur-none">
-          {carte && (
-            <canvas
-              ref={canvasRef}
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              onPointerCancel={onPointerUp}
-              className="mx-auto block h-auto max-h-[38vh] w-auto max-w-full touch-none rounded-2xl bg-brand-text/10 shadow-card lg:max-h-[72vh]"
-            />
+    <div
+      className={
+        // La hauteur du poste de travail : tout l'écran sous la barre du studio.
+        // Rien ne défile sauf le panneau — c'est ce qui fait qu'on voit toujours
+        // la planche pendant qu'on la règle.
+        "flex flex-col rounded-2xl border border-brand-field bg-brand-paper/35 " +
+        "lg:h-[calc(100dvh-var(--apercu-top,140px)-1.5rem)] lg:min-h-[560px] lg:overflow-hidden"
+      }
+    >
+      {/* ---------------------------------------------------------- barre haute */}
+      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-brand-field/70 bg-brand-paper/70 px-3 py-2">
+        <input
+          type="text"
+          value={nomProjet}
+          placeholder="carrousel sans nom"
+          onChange={(e) => setNomProjet(e.target.value)}
+          className="min-w-0 flex-1 basis-40 rounded-lg border border-transparent bg-transparent px-2 py-1.5 font-heading text-[15px] font-medium text-brand-text hover:border-brand-field focus:border-brand-primary-dark focus:outline-none"
+          aria-label="Nom du projet"
+        />
+        <select
+          value={formatCle}
+          onChange={(e) => setFormatCle(e.target.value)}
+          className="rounded-lg border border-brand-field bg-brand-paper px-2 py-1.5 font-heading text-[13px] text-brand-text focus:border-brand-primary-dark focus:outline-none"
+          aria-label="Format"
+        >
+          {Object.values(FORMATS).map((f) => (
+            <option key={f.cle} value={f.cle}>
+              {f.label}
+            </option>
+          ))}
+        </select>
+        <div className="flex rounded-full border border-brand-field bg-brand-paper p-0.5">
+          {Object.values(THEMES).map((t) => (
+            <button
+              key={t.cle}
+              type="button"
+              onClick={() => setThemeCle(t.cle)}
+              aria-pressed={themeCle === t.cle}
+              className={`rounded-full px-3 py-1 font-heading text-[13px] transition-colors motion-reduce:transition-none ${
+                themeCle === t.cle
+                  ? "bg-brand-deep text-brand-bg"
+                  : "text-brand-text/60 hover:text-brand-text"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={enregistrer}
+          disabled={!nomProjet.trim() || etat.occupe}
+          className={BOUTON_SECOND}
+        >
+          <Save size={15} aria-hidden />
+          <span className="hidden sm:inline">Enregistrer</span>
+        </button>
+        <button
+          type="button"
+          className={BOUTON_PRINCIPAL}
+          disabled={etat.occupe}
+          onClick={() => exporter(cartes.map((_, i) => i))}
+        >
+          {etat.occupe ? (
+            <Loader2 size={16} className="animate-spin" aria-hidden />
+          ) : (
+            <Download size={16} aria-hidden />
           )}
+          Exporter ({cartes.length})
+        </button>
+      </header>
 
-          {/* La bande des cartes voyage avec l'aperçu : changer de planche ne doit
-            pas demander de remonter. */}
-          <div className="mx-auto mt-3 flex max-w-[520px] flex-wrap items-center justify-center gap-1.5">
-            {cartes.map((c, i) => (
+      {etat.message && (
+        <p className="shrink-0 border-b border-brand-field/60 bg-brand-primary/12 px-4 py-2 font-heading text-[13px] text-brand-primary-dark">
+          {etat.message}
+        </p>
+      )}
+
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        {/* ------------------------------------------------------------- scène */}
+        {/* En grand écran elle ne défile pas : elle occupe la place qui reste.
+            Sur un téléphone, la page défile — la planche se colle alors sous la
+            barre du studio pour qu'on la voie pendant qu'on règle. */}
+        {/* `contents` en petit écran, et il en faut : gardée, cette boîte
+            n'enveloppe QUE la planche — le collage n'a alors aucune course et
+            la planche défile hors de l'écran, exactement l'inverse du but sur
+            un téléphone. En `contents`, ce qui colle devient un enfant direct
+            de la colonne haute (planche + panneau) et retrouve sa course. */}
+        <section className="contents lg:order-2 lg:flex lg:min-h-0 lg:min-w-0 lg:flex-1 lg:flex-col">
+          <div className="order-1 sticky top-[var(--apercu-top,84px)] z-20 flex min-h-0 flex-col gap-3 bg-brand-bg/95 px-3 py-3 backdrop-blur lg:static lg:order-none lg:flex-1 lg:bg-transparent lg:backdrop-blur-none">
+            {/* Le plan de travail : un aplat neutre derrière la planche, pour
+                qu'un fond clair ne se confonde pas avec la page. */}
+            <div className="flex min-h-0 flex-1 items-center justify-center lg:rounded-xl lg:bg-brand-text/5 lg:p-4">
+              {carte && (
+                <canvas
+                  ref={canvasRef}
+                  onPointerDown={onPointerDown}
+                  onPointerMove={onPointerMove}
+                  onPointerUp={onPointerUp}
+                  onPointerCancel={onPointerUp}
+                  className="block h-auto max-h-[40vh] w-auto max-w-full touch-none rounded-xl bg-brand-text/10 shadow-card lg:max-h-full"
+                />
+              )}
+            </div>
+            {carte?.gabarit === "carte" && segments.length > 0 && (
+              <p className={`${AIDE} shrink-0 text-center`}>
+                Attrape une étiquette sur la planche pour la déplacer.
+              </p>
+            )}
+
+            {/* --------------------------------------- la bande des vignettes */}
+            <div className="shrink-0 border-t border-brand-field/60 pt-3">
+              <div className="flex items-end gap-2 overflow-x-auto pb-1">
+                {cartes.map((c, i) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setActive(i)}
+                    aria-current={i === active ? "true" : undefined}
+                    className={`w-[76px] shrink-0 rounded-lg border p-1 text-left transition-colors motion-reduce:transition-none ${
+                      i === active
+                        ? "border-brand-primary-dark bg-brand-primary/20"
+                        : "border-brand-field bg-brand-paper hover:border-brand-primary/60"
+                    }`}
+                  >
+                    <Vignette
+                      carte={c}
+                      options={options}
+                      format={format}
+                      index={i}
+                      bilan={bilan}
+                    />
+                    <span className="mt-1 block truncate font-heading text-[10px] leading-tight text-brand-text/55">
+                      {i + 1}. {GABARITS.find((g) => g.cle === c.gabarit)?.label}
+                    </span>
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => ajouterCarte(carte?.gabarit ?? "texte")}
+                  className="flex h-[95px] w-[76px] shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-brand-field text-brand-text/50 hover:border-brand-primary-dark hover:text-brand-text"
+                  aria-label="Ajouter une planche"
+                >
+                  <Plus size={18} aria-hidden />
+                  <span className="font-heading text-[11px]">Ajouter</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* --------------------------------------------------- rail + panneau */}
+        <div className="order-2 flex min-h-0 shrink-0 flex-col lg:order-1 lg:w-[404px] lg:flex-row lg:border-r lg:border-brand-field/70">
+          <nav
+            aria-label="Réglages"
+            className="flex shrink-0 gap-1 overflow-x-auto border-y border-brand-field/70 bg-brand-paper/60 px-2 py-1.5 lg:w-[80px] lg:flex-col lg:overflow-x-visible lg:overflow-y-auto lg:border-y-0 lg:border-r lg:py-2"
+          >
+            {ONGLETS.map(({ cle, label, Icone }) => (
               <button
-                key={c.id}
+                key={cle}
                 type="button"
-                onClick={() => setActive(i)}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-heading text-[12px] transition-colors ${
-                  i === active
-                    ? "border-brand-primary-dark bg-brand-primary/25 text-brand-text"
-                    : "border-brand-field bg-brand-paper text-brand-text/60 hover:border-brand-primary/60"
+                onClick={() => setOnglet(cle)}
+                aria-current={onglet === cle ? "page" : undefined}
+                className={`flex shrink-0 flex-col items-center gap-1 rounded-xl px-3 py-2 font-heading text-[11px] transition-colors motion-reduce:transition-none lg:w-full ${
+                  onglet === cle
+                    ? "bg-brand-primary/25 text-brand-text"
+                    : "text-brand-text/55 hover:bg-brand-primary/10 hover:text-brand-text"
                 }`}
               >
-                <span className="tabular-nums">{i + 1}</span>
-                <span className="opacity-70">
-                  {GABARITS.find((g) => g.cle === c.gabarit)?.label}
-                </span>
+                <Icone size={19} aria-hidden />
+                {label}
               </button>
             ))}
-          </div>
-          {carte?.gabarit === "carte" && segments.length > 0 && (
-            <p className="mt-2 text-center font-heading text-[12px] text-brand-text/50">
-              Attrape une étiquette pour la déplacer.
-            </p>
-          )}
-        </div>
-      </div>
+          </nav>
 
-      {/* -------------------------------------------------------------- réglages */}
-      <div className="flex flex-col gap-3 lg:col-start-2 lg:row-start-1">
-        {etat.message && (
-          <p className="rounded-xl bg-brand-primary/12 px-3 py-2 font-heading text-[13px] text-brand-primary-dark">
-            {etat.message}
-          </p>
-        )}
+          <div className="min-h-0 flex-1 overflow-y-auto lg:w-[324px]">
+            {/* ==================================================== PLANCHE */}
+            {onglet === "planche" && (
+              <>
+                <Groupe titre={`Planche ${active + 1} sur ${cartes.length}`} aide={gabarit?.aide}>
+                  <div className="mb-3 grid grid-cols-2 gap-1.5">
+                    {GABARITS.map((g) => (
+                      <button
+                        key={g.cle}
+                        type="button"
+                        onClick={() => majCarte({ gabarit: g.cle })}
+                        aria-pressed={carte?.gabarit === g.cle}
+                        className={`rounded-xl border px-3 py-2 text-left font-heading text-[14px] transition-colors motion-reduce:transition-none ${
+                          carte?.gabarit === g.cle
+                            ? "border-brand-primary-dark bg-brand-primary/20 text-brand-text"
+                            : "border-brand-field bg-brand-paper text-brand-text/70 hover:border-brand-primary/60"
+                        }`}
+                      >
+                        {g.label}
+                      </button>
+                    ))}
+                  </div>
+                  {carte?.gabarit === "carte" && !trace && (
+                    <p className={`${AIDE} mb-3`}>
+                      Ce gabarit a besoin d&rsquo;une trace — onglet « Trace ».
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => deplacerCarte(active, -1)}
+                      disabled={active === 0}
+                      className={BOUTON_DISCRET}
+                    >
+                      <ArrowLeft size={14} aria-hidden />
+                      Reculer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deplacerCarte(active, 1)}
+                      disabled={active === cartes.length - 1}
+                      className={BOUTON_DISCRET}
+                    >
+                      <ArrowRight size={14} aria-hidden />
+                      Avancer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => dupliquerCarte(active)}
+                      className={BOUTON_DISCRET}
+                    >
+                      <CopyPlus size={14} aria-hidden />
+                      Dupliquer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => supprimerCarte(active)}
+                      disabled={cartes.length <= 1}
+                      className={BOUTON_DISCRET}
+                    >
+                      <Trash2 size={14} aria-hidden />
+                      Supprimer
+                    </button>
+                  </div>
+                </Groupe>
 
-        {/* ---- contenu de la carte affichée ---- */}
-        <Section titre={`Carte ${active + 1} — contenu`} ouvert>
-          <div className="mb-3 flex items-center justify-end gap-1">
-            <button
-              type="button"
-              onClick={() => deplacerCarte(active, -1)}
-              disabled={active === 0}
-              className="rounded-full p-1.5 text-brand-text/50 hover:bg-brand-primary/15 disabled:opacity-30"
-              aria-label="Reculer cette carte"
-            >
-              <ArrowLeft size={15} aria-hidden />
-            </button>
-            <button
-              type="button"
-              onClick={() => deplacerCarte(active, 1)}
-              disabled={active === cartes.length - 1}
-              className="rounded-full p-1.5 text-brand-text/50 hover:bg-brand-primary/15 disabled:opacity-30"
-              aria-label="Avancer cette carte"
-            >
-              <ArrowRight size={15} aria-hidden />
-            </button>
-            <button
-              type="button"
-              onClick={() => supprimerCarte(active)}
-              disabled={cartes.length <= 1}
-              className="rounded-full p-1.5 text-brand-text/40 hover:bg-brand-primary/15 hover:text-brand-primary-dark disabled:opacity-30"
-              aria-label="Supprimer cette carte"
-            >
-              <Trash2 size={15} aria-hidden />
-            </button>
-          </div>
+                <Groupe titre="Ajouter une planche">
+                  <div className="flex flex-wrap gap-1.5">
+                    {GABARITS.map((g) => (
+                      <button
+                        key={g.cle}
+                        type="button"
+                        onClick={() => ajouterCarte(g.cle)}
+                        className={BOUTON_DISCRET}
+                      >
+                        <Plus size={13} aria-hidden />
+                        {g.label}
+                      </button>
+                    ))}
+                  </div>
+                </Groupe>
 
-          <label className={LEGENDE} htmlFor="gabarit">
-            Gabarit
-          </label>
-          <select
-            id="gabarit"
-            value={carte?.gabarit ?? "texte"}
-            onChange={(e) => majCarte({ gabarit: e.target.value })}
-            className={`${CHAMP} mb-3`}
-          >
-            {GABARITS.map((g) => (
-              <option key={g.cle} value={g.cle}>
-                {g.label} — {g.aide}
-              </option>
-            ))}
-          </select>
-          {carte?.gabarit === "carte" && !trace && (
-            <p className="mb-3 font-heading text-[13px] text-brand-text/55">
-              Ce gabarit a besoin d&rsquo;une trace — ouvre « La trace » plus
-              bas.
-            </p>
-          )}
-
-          <label className={LEGENDE} htmlFor="entete">
-            En-tête{" "}
-            <span className="font-normal opacity-60">— coin haut droit</span>
-          </label>
-          <input
-            id="entete"
-            type="text"
-            value={carte?.entete ?? ""}
-            placeholder="bande photo — détail / matériel"
-            onChange={(e) => majCarte({ entete: e.target.value })}
-            className={CHAMP}
-          />
-          <label className={`${CASE} mb-3 mt-1 text-[13px]`}>
-            <input
-              type="checkbox"
-              checked={Boolean(carte?.enteteAccent)}
-              onChange={(e) => majCarte({ enteteAccent: e.target.checked })}
-            />
-            en ambre
-          </label>
-
-          <label className={LEGENDE} htmlFor="surtitre">
-            Surtitre{" "}
-            <span className="font-normal opacity-60">
-              — après le filet ambre
-            </span>
-          </label>
-          <input
-            id="surtitre"
-            type="text"
-            value={carte?.surtitre ?? ""}
-            placeholder="pourquoi ce tour"
-            onChange={(e) => majCarte({ surtitre: e.target.value })}
-            className={`${CHAMP} mb-3`}
-          />
-
-          <label className={LEGENDE} htmlFor="titre">
-            Titre{" "}
-            <span className="font-normal opacity-60">
-              — le balisage marche aussi ici
-            </span>
-          </label>
-          <input
-            id="titre"
-            type="text"
-            value={carte?.titre ?? ""}
-            onChange={(e) => majCarte({ titre: e.target.value })}
-            className={`${CHAMP} mb-3`}
-          />
-
-          <label className={LEGENDE} htmlFor="texte">
-            Texte{" "}
-            <span className="font-normal opacity-60">
-              — une ligne vide sépare deux paragraphes
-            </span>
-          </label>
-          <p className="mb-1 font-mono text-[12px] text-brand-text/50">
-            {AIDE_BALISAGE}
-          </p>
-          <textarea
-            ref={texteRef}
-            id="texte"
-            rows={4}
-            value={carte?.texte ?? ""}
-            onChange={(e) => majCarte({ texte: e.target.value })}
-            className={`${CHAMP} resize-y`}
-          />
-
-          <div className="mb-2 mt-1 flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              onClick={() => insererDansTexte("\n- ")}
-              className="rounded-lg border border-brand-field bg-brand-paper px-2.5 py-1 font-heading text-[12px] text-brand-text/70 hover:border-brand-primary-dark hover:text-brand-text"
-            >
-              + point de liste
-            </button>
-            <button
-              type="button"
-              onClick={() => insererDansTexte("\n\n\n")}
-              className="rounded-lg border border-brand-field bg-brand-paper px-2.5 py-1 font-heading text-[12px] text-brand-text/70 hover:border-brand-primary-dark hover:text-brand-text"
-              title="Une ligne vide de plus = une respiration de plus"
-            >
-              + respiration
-            </button>
-          </div>
-
-          {/* LA PALETTE EST VISUELLE. Une liste de clés (`col`, `neige`,
-              `riviere`…) demandait de se souvenir de ce que chaque mot dessine ;
-              on cherchait un pictogramme dans un glossaire. On montre donc le
-              dessin, et le mot dessous — c'est l'icône qu'on choisit. */}
-          <details className="mb-3">
-            <summary className="cursor-pointer font-heading text-[12px] text-brand-text/55">
-              Icônes — les mêmes que les repères de /live
-            </summary>
-            <div className="mt-2 grid grid-cols-4 gap-1 sm:grid-cols-6">
-              {ICONES_PALETTE.map(({ cle, Icone }) => (
-                <button
-                  key={cle}
-                  type="button"
-                  onClick={() => insererDansTexte(`:${cle}:`)}
-                  className="flex flex-col items-center gap-1 rounded-lg border border-brand-field bg-brand-paper px-1 py-2 text-brand-text/70 transition-colors hover:border-brand-primary-dark hover:text-brand-text"
-                  title={`Insérer :${cle}:`}
+                <Groupe
+                  titre="Exporter"
+                  aide="Un JPEG par planche, dans l'ordre du carrousel. La pagination du pied reste celle du lot."
                 >
-                  <Icone size={20} aria-hidden />
-                  <span className="w-full truncate text-center font-heading text-[10px] leading-none opacity-70">
-                    {cle}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </details>
-
-          <label className={LEGENDE} htmlFor="puce">
-            Puce des listes
-          </label>
-          <div className="mb-3 flex items-center gap-2">
-            <select
-              id="puce"
-              value={carte?.puce ?? "point"}
-              onChange={(e) => majCarte({ puce: e.target.value })}
-              className={CHAMP}
-            >
-              {PUCES_SIMPLES.map((pc) => (
-                <option key={pc.cle} value={pc.cle}>
-                  {pc.label}
-                </option>
-              ))}
-              {CLES_ICONES.map((cle) => (
-                <option key={cle} value={cle}>
-                  Icône · {cle}
-                </option>
-              ))}
-            </select>
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-brand-field bg-brand-paper text-brand-accent-ink">
-              <Puce
-                cle={carte?.puce ?? "point"}
-                Icone={ICONES_PAR_CLE[carte?.puce]}
-              />
-            </span>
-          </div>
-
-          <div className="mb-3 flex flex-col gap-1.5">
-            <label className={CASE}>
-              <input
-                type="checkbox"
-                checked={carte?.filetEntete !== false}
-                onChange={(e) => majCarte({ filetEntete: e.target.checked })}
-              />
-              Ligne sous l&rsquo;en-tête
-            </label>
-            <label className={CASE}>
-              <input
-                type="checkbox"
-                checked={carte?.filetPied !== false}
-                onChange={(e) => majCarte({ filetPied: e.target.checked })}
-              />
-              Ligne au-dessus du pied
-            </label>
-          </div>
-
-          <p className={LEGENDE}>Pied de page</p>
-          <select
-            value={carte?.piedFleche ?? "auto"}
-            onChange={(e) => majCarte({ piedFleche: e.target.value })}
-            className={`${CHAMP} mb-2`}
-            aria-label="Flèche de swipe"
-          >
-            {FLECHES.map((f) => (
-              <option key={f.cle} value={f.cle}>
-                Flèche de swipe — {f.label}
-              </option>
-            ))}
-          </select>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={carte?.piedCentre ?? ""}
-              placeholder="au milieu"
-              onChange={(e) => majCarte({ piedCentre: e.target.value })}
-              className={CHAMP}
-              aria-label="Pied de page, au milieu"
-            />
-            <input
-              type="text"
-              value={carte?.piedDroite ?? ""}
-              placeholder="à droite (défaut : glisse →)"
-              onChange={(e) => majCarte({ piedDroite: e.target.value })}
-              className={CHAMP}
-              aria-label="Pied de page, à droite"
-            />
-          </div>
-        </Section>
-
-        {/* ---- ce qui dépend du gabarit ---- */}
-        {aPhoto && (
-          <Section titre="La photo" ouvert>
-            <label className={`${BOUTON_SECOND} mb-3 cursor-pointer`}>
-              <ImageUp size={16} aria-hidden />
-              {carte.nomImage || "Choisir une photo"}
-              <input
-                type="file"
-                accept="image/*,.heic"
-                onChange={chargerPhoto}
-                className="sr-only"
-              />
-            </label>
-            <label className={LEGENDE} htmlFor="ancrage">
-              Cadrage
-            </label>
-            <input
-              id="ancrage"
-              type="range"
-              min={0}
-              max={1}
-              step={0.01}
-              value={carte.ancrage}
-              onChange={(e) => majCarte({ ancrage: Number(e.target.value) })}
-              className="mb-3 w-full accent-brand-primary-dark"
-            />
-
-            {carte.gabarit === "bandeau" && (
-              <>
-                <label className={LEGENDE} htmlFor="bandeau-part">
-                  Hauteur du bandeau — {Math.round(carte.bandeauPart * 100)} %
-                </label>
-                <input
-                  id="bandeau-part"
-                  type="range"
-                  min={0.2}
-                  max={0.7}
-                  step={0.01}
-                  value={carte.bandeauPart}
-                  onChange={(e) =>
-                    majCarte({ bandeauPart: Number(e.target.value) })
-                  }
-                  className="mb-3 w-full accent-brand-primary-dark"
-                />
+                  <button
+                    type="button"
+                    className={`${BOUTON_SECOND} w-full`}
+                    disabled={etat.occupe || !carte}
+                    onClick={() => exporter([active])}
+                  >
+                    <Download size={15} aria-hidden />
+                    Cette planche seulement
+                  </button>
+                </Groupe>
               </>
             )}
 
-            {/* Réglés séparément : une photo au ciel déjà sombre n'a pas besoin
-                d'être assombrie sous l'en-tête. */}
-            <p className={LEGENDE}>Dégradés</p>
-            <div className="flex flex-col gap-1.5">
-              <label className={CASE}>
-                <input
-                  type="checkbox"
-                  checked={carte.degradeHaut !== false}
-                  onChange={(e) => majCarte({ degradeHaut: e.target.checked })}
-                />
-                en-tête
-              </label>
-              <label className={CASE}>
-                <input
-                  type="checkbox"
-                  checked={carte.degradeBas !== false}
-                  onChange={(e) => majCarte({ degradeBas: e.target.checked })}
-                />
-                {carte.gabarit === "bandeau"
-                  ? "bas du bandeau"
-                  : "pied de page"}
-              </label>
-            </div>
-          </Section>
-        )}
-
-        {carte?.gabarit === "cloture" && (
-          <Section titre="Le cercle de clôture" ouvert>
-            <label className={`${CASE} mb-3`}>
-              <input
-                type="checkbox"
-                checked={Boolean(carte.cercleVisible)}
-                onChange={(e) => majCarte({ cercleVisible: e.target.checked })}
-              />
-              Anneau autour du logo
-            </label>
-            <label className={LEGENDE} htmlFor="cercle-taille">
-              Rayon — {carte.tailleCercle ?? 128} px
-            </label>
-            <input
-              id="cercle-taille"
-              type="range"
-              min={60}
-              max={260}
-              step={2}
-              value={carte.tailleCercle ?? 128}
-              onChange={(e) =>
-                majCarte({ tailleCercle: Number(e.target.value) })
-              }
-              className="mb-3 w-full accent-brand-primary-dark"
-            />
-            <label className={LEGENDE} htmlFor="cercle-trait">
-              Épaisseur du trait — {carte.epaisseurCercle ?? 4} px
-            </label>
-            <input
-              id="cercle-trait"
-              type="range"
-              min={1}
-              max={16}
-              step={1}
-              value={carte.epaisseurCercle ?? 4}
-              onChange={(e) =>
-                majCarte({ epaisseurCercle: Number(e.target.value) })
-              }
-              className="mb-3 w-full accent-brand-primary-dark"
-            />
-            {carte.image && (
+            {/* ====================================================== TEXTE */}
+            {onglet === "texte" && (
               <>
-                <label className={LEGENDE} htmlFor="cloture-voile">
-                  Voile sur la photo —{" "}
-                  {Math.round((carte.voileCloture ?? 0.62) * 100)} %
-                </label>
-                <input
-                  id="cloture-voile"
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.02}
-                  value={carte.voileCloture ?? 0.62}
-                  onChange={(e) =>
-                    majCarte({ voileCloture: Number(e.target.value) })
-                  }
-                  className="mb-3 w-full accent-brand-primary-dark"
-                />
-              </>
-            )}
-            <Couleur
-              label="Couleur du cercle"
-              valeur={carte.couleurCercle}
-              defaut={theme.encre}
-              onChange={(v) => majCarte({ couleurCercle: v })}
-            />
-          </Section>
-        )}
-
-        {carte?.gabarit === "fiche" && (
-          <Section titre="Les lignes de la fiche" ouvert>
-            <div className="mb-2 flex flex-col gap-2">
-              {(carte.fiche ?? []).map((l, i) => (
-                <div key={`fiche-${i}`} className="flex items-center gap-1.5">
+                <Groupe titre="En-tête et surtitre">
+                  <label className={LEGENDE} htmlFor="entete">
+                    En-tête <span className="font-normal opacity-60">— coin haut droit</span>
+                  </label>
                   <input
+                    id="entete"
                     type="text"
-                    value={l.label}
-                    placeholder="libellé"
-                    onChange={(e) => majFiche(i, { label: e.target.value })}
-                    className={`${CHAMP} flex-1`}
-                    aria-label={`Libellé de la ligne ${i + 1}`}
+                    value={carte?.entete ?? ""}
+                    placeholder="matériel — détail"
+                    onChange={(e) => majCarte({ entete: e.target.value })}
+                    className={CHAMP}
                   />
+                  <Case
+                    classe="mb-3 mt-1 text-[13px]"
+                    label="en ambre"
+                    coche={carte?.enteteAccent}
+                    onChange={(v) => majCarte({ enteteAccent: v })}
+                  />
+                  <label className={LEGENDE} htmlFor="surtitre">
+                    Surtitre <span className="font-normal opacity-60">— après le filet ambre</span>
+                  </label>
                   <input
+                    id="surtitre"
                     type="text"
-                    value={l.valeur}
-                    placeholder="valeur"
-                    onChange={(e) => majFiche(i, { valeur: e.target.value })}
-                    className={`${CHAMP} flex-1`}
-                    aria-label={`Valeur de la ligne ${i + 1}`}
+                    value={carte?.surtitre ?? ""}
+                    placeholder="pourquoi ce tour"
+                    onChange={(e) => majCarte({ surtitre: e.target.value })}
+                    className={CHAMP}
                   />
-                  <button
-                    type="button"
-                    onClick={() => majFiche(i, { accent: !l.accent })}
-                    className={`rounded-lg border px-2 py-1.5 font-heading text-[13px] ${
-                      l.accent
-                        ? "border-brand-accent-dark bg-brand-accent/25 text-brand-accent-ink"
-                        : "border-brand-field text-brand-text/40"
-                    }`}
-                    aria-label={`Valeur en ambre, ligne ${i + 1}`}
-                  >
-                    A
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      majCarte({ fiche: carte.fiche.filter((_, k) => k !== i) })
-                    }
-                    className="rounded-full p-1.5 text-brand-text/40 hover:bg-brand-primary/15 hover:text-brand-primary-dark"
-                    aria-label={`Supprimer la ligne ${i + 1}`}
-                  >
-                    <Trash2 size={15} aria-hidden />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <button
-              type="button"
-              className={BOUTON_SECOND}
-              onClick={() =>
-                majCarte({
-                  fiche: [
-                    ...(carte.fiche ?? []),
-                    { label: "", valeur: "", accent: false },
-                  ],
-                })
-              }
-            >
-              <Plus size={15} aria-hidden />
-              Une ligne de plus
-            </button>
-          </Section>
-        )}
+                </Groupe>
 
-        {carte?.gabarit === "carte" && trace && (
-          <Section titre="L'itinéraire et les journées" ouvert>
-            <label className={`${CASE} mb-2`}>
-              <input
-                type="checkbox"
-                checked={carte.afficherFond !== false}
-                onChange={(e) => majCarte({ afficherFond: e.target.checked })}
-              />
-              Fond de carte topo
-              {!fond && trace.coords.length > 0 && (
-                <span className="text-brand-text/45">
-                  (indisponible hors ligne)
-                </span>
-              )}
-            </label>
-            <label className={`${CASE} mb-3`}>
-              <input
-                type="checkbox"
-                checked={carte.afficherProfil !== false}
-                onChange={(e) => majCarte({ afficherProfil: e.target.checked })}
-              />
-              Profil altimétrique
-            </label>
+                <Groupe titre="Titre">
+                  <input
+                    id="titre"
+                    type="text"
+                    value={carte?.titre ?? ""}
+                    placeholder="le titre de la planche"
+                    onChange={(e) => majCarte({ titre: e.target.value })}
+                    className={`${CHAMP} mb-2`}
+                    aria-label="Titre"
+                  />
+                  <p className={`${AIDE} mb-3`}>Le balisage marche aussi ici.</p>
+                  {/* LE FILET, EN PLEINE VUE. Il existait déjà, replié au fond
+                      d'un accordéon de mise en forme : personne ne l'a jamais
+                      trouvé, et on a cru qu'il ne se dessinait pas. */}
+                  <Case
+                    classe="mb-2"
+                    label="Filet sous le titre"
+                    coche={carte?.filetTitre}
+                    onChange={(v) => majCarte({ filetTitre: v })}
+                  />
+                  {carte?.filetTitre && (
+                    <div className="mb-3 grid grid-cols-2 gap-2 pl-6">
+                      <Taille
+                        id="ft-largeur"
+                        label="Longueur"
+                        valeur={carte.filetTitreLargeur}
+                        defaut={96}
+                        max={900}
+                        onChange={(v) => majCarte({ filetTitreLargeur: v })}
+                      />
+                      <Taille
+                        id="ft-epaisseur"
+                        label="Épaisseur"
+                        valeur={carte.filetTitreEpaisseur}
+                        defaut={4}
+                        min={1}
+                        max={40}
+                        onChange={(v) => majCarte({ filetTitreEpaisseur: v })}
+                      />
+                      <div className="col-span-2">
+                        <Couleur
+                          label="Couleur du filet"
+                          valeur={carte?.couleurFiletTitre}
+                          defaut={theme.accent}
+                          onChange={(v) => majCarte({ couleurFiletTitre: v })}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <Case
+                    label="Centrer le titre et le texte"
+                    coche={carte?.centrer}
+                    onChange={(v) => majCarte({ centrer: v })}
+                  />
+                </Groupe>
 
-            {segments.length > 1 && (
-              <>
-                <label className={LEGENDE} htmlFor="jusqu-a">
-                  Afficher
-                </label>
-                <select
-                  id="jusqu-a"
-                  value={carte.jusquA ?? ""}
-                  onChange={(e) =>
-                    majCarte({
-                      jusquA:
-                        e.target.value === "" ? null : Number(e.target.value),
-                    })
-                  }
-                  className={`${CHAMP} mb-1`}
+                <Groupe
+                  titre="Texte"
+                  aide="Une ligne vide sépare deux paragraphes ; chaque ligne vide en plus aère. « > » décale un paragraphe entier."
                 >
-                  <option value="">Tout l&rsquo;itinéraire</option>
-                  {segments.map((sg, i) => (
-                    <option key={`jusqua-${sg.kmDebut}`} value={i}>
-                      Jusqu&rsquo;à la journée {i + 1}
-                    </option>
-                  ))}
-                </select>
-                <p className="mb-3 font-heading text-[12px] text-brand-text/45">
-                  Une carte par valeur, et la série révèle l&rsquo;itinéraire
-                  jour après jour. Le cadre, lui, ne bouge pas.
-                </p>
-              </>
-            )}
-
-            <label className={LEGENDE} htmlFor="nb-jours">
-              Nombre de journées
-            </label>
-            <div className="mb-3 flex items-center gap-2">
-              <input
-                id="nb-jours"
-                type="number"
-                min={1}
-                max={12}
-                value={segments.length}
-                onChange={(e) =>
-                  setCoupures(
-                    coupuresRegulieres(trace.totalKm, Number(e.target.value)),
-                  )
-                }
-                className={`${CHAMP} w-24`}
-              />
-              <button
-                type="button"
-                className={BOUTON_SECOND}
-                onClick={() =>
-                  setCoupures(
-                    coupuresDepuisWaypoints(
-                      liveConfig.aventure.waypoints,
-                      trace.totalKm,
-                    ),
-                  )
-                }
-              >
-                Depuis les bivouacs
-              </button>
-            </div>
-
-            <p className={LEGENDE}>Fin de chaque journée, en kilomètres</p>
-            <div className="mb-3 flex flex-col gap-2">
-              {coupures.map((km, i) => (
-                <div key={`coupure-${i}`} className="flex items-center gap-2">
-                  <span className="w-10 font-heading text-[13px] text-brand-text/55">
-                    J{i + 1} →
-                  </span>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={Number(km.toFixed(1))}
-                    onChange={(e) => {
-                      const v = Number(e.target.value);
-                      setCoupures((cs) =>
-                        cs
-                          .map((c, k) => (k === i ? v : c))
-                          .sort((a, b) => a - b),
-                      );
-                    }}
-                    className={`${CHAMP} w-28`}
+                  <p className="mb-1 font-mono text-[12px] leading-snug text-brand-text/50">
+                    {AIDE_BALISAGE}
+                  </p>
+                  <textarea
+                    ref={texteRef}
+                    id="texte"
+                    rows={6}
+                    value={carte?.texte ?? ""}
+                    onChange={(e) => majCarte({ texte: e.target.value })}
+                    className={`${CHAMP} resize-y`}
                   />
-                  <span className="font-heading text-[13px] text-brand-text/45">
-                    km
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCoupures((cs) => cs.filter((_, k) => k !== i))
-                    }
-                    className="ml-auto rounded-full p-1.5 text-brand-text/40 hover:bg-brand-primary/15 hover:text-brand-primary-dark"
-                    aria-label={`Supprimer la coupure J${i + 1}`}
-                  >
-                    <Trash2 size={15} aria-hidden />
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                className={BOUTON_SECOND}
-                onClick={() =>
-                  setCoupures((cs) =>
-                    [
-                      ...cs,
-                      Math.min(
-                        trace.totalKm - 1,
-                        (cs[cs.length - 1] ?? 0) + trace.totalKm / 4,
-                      ),
-                    ].sort((a, b) => a - b),
-                  )
-                }
-              >
-                <Plus size={15} aria-hidden />
-                Une journée de plus
-              </button>
-            </div>
+                  <div className="mb-3 mt-1.5 flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => insererDansTexte("\n- ")}
+                      className={BOUTON_DISCRET}
+                    >
+                      + point de liste
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insererDansTexte("\n\n\n")}
+                      className={BOUTON_DISCRET}
+                      title="Une ligne vide de plus = une respiration de plus"
+                    >
+                      + respiration
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insererDansTexte("\n> ")}
+                      className={BOUTON_DISCRET}
+                      title="Un paragraphe décalé — une note, une citation"
+                    >
+                      + retrait
+                    </button>
+                  </div>
 
-            <p className={LEGENDE}>Étiquettes</p>
-            <div className="flex flex-col gap-2">
-              {segments.map((seg, i) => {
-                const etq = carte.etiquettes?.[i] ?? {};
-                return (
-                  <div
-                    key={`etq-${seg.kmDebut}`}
-                    className="flex items-center gap-2"
+                  {/* LA PALETTE EST VISUELLE. Une liste de clés (`col`, `neige`,
+                      `riviere`…) demandait de se souvenir de ce que chaque mot
+                      dessine ; on cherchait un pictogramme dans un glossaire. On
+                      montre donc le dessin, et le mot dessous. */}
+                  <p className={LEGENDE}>Icônes — les mêmes que les repères de /live</p>
+                  <div className="grid max-h-52 grid-cols-4 gap-1 overflow-y-auto rounded-xl border border-brand-field/70 p-1.5 sm:grid-cols-5">
+                    {ICONES_PALETTE.map(({ cle, Icone }) => (
+                      <button
+                        key={cle}
+                        type="button"
+                        onClick={() => insererDansTexte(`:${cle}:`)}
+                        className="flex flex-col items-center gap-1 rounded-lg border border-brand-field bg-brand-paper px-1 py-2 text-brand-text/70 transition-colors hover:border-brand-primary-dark hover:text-brand-text motion-reduce:transition-none"
+                        title={`Insérer :${cle}:`}
+                      >
+                        <Icone size={18} aria-hidden />
+                        <span className="w-full truncate text-center font-heading text-[10px] leading-none opacity-70">
+                          {cle}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </Groupe>
+
+                <Groupe titre="Listes">
+                  <label className={LEGENDE} htmlFor="puce">
+                    Puce
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <select
+                      id="puce"
+                      value={carte?.puce ?? "point"}
+                      onChange={(e) => majCarte({ puce: e.target.value })}
+                      className={CHAMP}
+                    >
+                      {PUCES_SIMPLES.map((pc) => (
+                        <option key={pc.cle} value={pc.cle}>
+                          {pc.label}
+                        </option>
+                      ))}
+                      {CLES_ICONES.map((cle) => (
+                        <option key={cle} value={cle}>
+                          Icône · {cle}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-brand-field bg-brand-paper text-brand-accent-ink">
+                      <Puce cle={carte?.puce ?? "point"} Icone={ICONES_PAR_CLE[carte?.puce]} />
+                    </span>
+                  </div>
+                </Groupe>
+
+                {carte?.gabarit === "fiche" && (
+                  <Groupe
+                    titre="Les lignes de la fiche"
+                    aide="Un libellé à gauche, une valeur en gros à droite. Les valeurs sont du texte libre."
                   >
+                    <div className="mb-2 flex flex-col gap-2">
+                      {(carte.fiche ?? []).map((l, i) => (
+                        <div key={`fiche-${i}`} className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            value={l.label}
+                            placeholder="libellé"
+                            onChange={(e) => majFiche(i, { label: e.target.value })}
+                            className={`${CHAMP} flex-1`}
+                            aria-label={`Libellé de la ligne ${i + 1}`}
+                          />
+                          <input
+                            type="text"
+                            value={l.valeur}
+                            placeholder="valeur"
+                            onChange={(e) => majFiche(i, { valeur: e.target.value })}
+                            className={`${CHAMP} flex-1`}
+                            aria-label={`Valeur de la ligne ${i + 1}`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => majFiche(i, { accent: !l.accent })}
+                            className={`rounded-lg border px-2 py-1.5 font-heading text-[13px] ${
+                              l.accent
+                                ? "border-brand-accent-dark bg-brand-accent/25 text-brand-accent-ink"
+                                : "border-brand-field text-brand-text/40"
+                            }`}
+                            aria-label={`Valeur en ambre, ligne ${i + 1}`}
+                          >
+                            A
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => majCarte({ fiche: carte.fiche.filter((_, k) => k !== i) })}
+                            className="rounded-full p-1.5 text-brand-text/40 hover:bg-brand-primary/15 hover:text-brand-primary-dark"
+                            aria-label={`Supprimer la ligne ${i + 1}`}
+                          >
+                            <Trash2 size={15} aria-hidden />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      className={BOUTON_SECOND}
+                      onClick={() =>
+                        majCarte({
+                          fiche: [...(carte.fiche ?? []), { label: "", valeur: "", accent: false }],
+                        })
+                      }
+                    >
+                      <Plus size={15} aria-hidden />
+                      Une ligne de plus
+                    </button>
+                  </Groupe>
+                )}
+
+                <Groupe titre="Pied de page">
+                  <label className={LEGENDE} htmlFor="fleche">
+                    Flèche de swipe
+                  </label>
+                  <select
+                    id="fleche"
+                    value={carte?.piedFleche ?? "auto"}
+                    onChange={(e) => majCarte({ piedFleche: e.target.value })}
+                    className={`${CHAMP} mb-2`}
+                    aria-label="Flèche de swipe"
+                  >
+                    {FLECHES.map((f) => (
+                      <option key={f.cle} value={f.cle}>
+                        {f.label}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="flex gap-2">
                     <input
                       type="text"
-                      value={etq.texte ?? etiquetteParDefaut(i)}
-                      onChange={(e) =>
-                        majEtiquette(i, { texte: e.target.value })
-                      }
-                      className={`${CHAMP} flex-1`}
-                      aria-label={`Étiquette de la journée ${i + 1}`}
+                      value={carte?.piedCentre ?? ""}
+                      placeholder="au milieu"
+                      onChange={(e) => majCarte({ piedCentre: e.target.value })}
+                      className={CHAMP}
+                      aria-label="Pied de page, au milieu"
                     />
                     <input
-                      type="color"
-                      value={
-                        etq.couleur ?? PALETTE_JOURS[i % PALETTE_JOURS.length]
-                      }
-                      onChange={(e) =>
-                        majEtiquette(i, { couleur: e.target.value })
-                      }
-                      className="h-9 w-9 cursor-pointer rounded-lg border border-brand-field bg-transparent"
-                      aria-label={`Couleur de la journée ${i + 1}`}
+                      type="text"
+                      value={carte?.piedDroite ?? ""}
+                      placeholder="à droite (défaut : glisse →)"
+                      onChange={(e) => majCarte({ piedDroite: e.target.value })}
+                      className={CHAMP}
+                      aria-label="Pied de page, à droite"
+                    />
+                  </div>
+                </Groupe>
+              </>
+            )}
+
+            {/* ====================================================== PHOTO */}
+            {onglet === "photo" && (
+              <>
+                {!aPhoto && (
+                  <Groupe titre="Photo">
+                    <p className={AIDE}>
+                      Les gabarits « Photo », « Bandeau » et « Clôture » portent une image.
+                      Change de gabarit dans l&rsquo;onglet « Planche ».
+                    </p>
+                  </Groupe>
+                )}
+                {aPhoto && (
+                  <Groupe titre="L'image">
+                    <label className={`${BOUTON_SECOND} mb-3 w-full cursor-pointer`}>
+                      <ImageUp size={16} aria-hidden />
+                      <span className="truncate">{carte.nomImage || "Choisir une photo"}</span>
+                      <input
+                        type="file"
+                        accept="image/*,.heic"
+                        onChange={chargerPhoto}
+                        className="sr-only"
+                      />
+                    </label>
+                    <Curseur
+                      id="ancrage"
+                      label="Cadrage"
+                      valeur={carte.ancrage}
+                      defaut={0.5}
+                      min={0}
+                      max={1}
+                      pas={0.01}
+                      format={(v) => `${Math.round(v * 100)} %`}
+                      onChange={(v) => majCarte({ ancrage: v ?? 0.5 })}
+                    />
+                    {carte.gabarit === "bandeau" && (
+                      <div className="mt-3">
+                        <Curseur
+                          id="bandeau-part"
+                          label="Hauteur du bandeau"
+                          valeur={carte.bandeauPart}
+                          defaut={0.42}
+                          min={0.2}
+                          max={0.7}
+                          pas={0.01}
+                          format={(v) => `${Math.round(v * 100)} %`}
+                          onChange={(v) => majCarte({ bandeauPart: v ?? 0.42 })}
+                        />
+                      </div>
+                    )}
+                    {carte.gabarit === "cloture" && carte.image && (
+                      <div className="mt-3">
+                        <Curseur
+                          id="cloture-voile"
+                          label="Voile sur la photo"
+                          valeur={carte.voileCloture}
+                          defaut={0.62}
+                          min={0}
+                          max={1}
+                          pas={0.02}
+                          format={(v) => `${Math.round(v * 100)} %`}
+                          onChange={(v) => majCarte({ voileCloture: v ?? 0.62 })}
+                        />
+                      </div>
+                    )}
+                  </Groupe>
+                )}
+
+                {carte?.gabarit === "cloture" && (
+                  <Groupe
+                    titre="Le cercle de clôture"
+                    aide="La marque porte déjà son rond : l'anneau extérieur sert à faire un halo, pas à entourer."
+                  >
+                    <Case
+                      classe="mb-3"
+                      label="Anneau autour du logo"
+                      coche={carte.cercleVisible}
+                      onChange={(v) => majCarte({ cercleVisible: v })}
+                    />
+                    <div className="mb-3">
+                      <Curseur
+                        id="cercle-taille"
+                        label="Rayon"
+                        valeur={carte.tailleCercle}
+                        defaut={128}
+                        min={60}
+                        max={260}
+                        pas={2}
+                        format={(v) => `${Math.round(v)} px`}
+                        onChange={(v) => majCarte({ tailleCercle: v ?? 128 })}
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <Curseur
+                        id="cercle-trait"
+                        label="Épaisseur du trait"
+                        valeur={carte.epaisseurCercle}
+                        defaut={4}
+                        min={1}
+                        max={16}
+                        pas={1}
+                        format={(v) => `${Math.round(v)} px`}
+                        onChange={(v) => majCarte({ epaisseurCercle: v ?? 4 })}
+                      />
+                    </div>
+                    <Couleur
+                      label="Couleur du cercle"
+                      valeur={carte.couleurCercle}
+                      defaut={theme.encre}
+                      onChange={(v) => majCarte({ couleurCercle: v })}
+                    />
+                    <div className="mt-3 flex flex-col gap-1.5">
+                      <Case
+                        label="Ligne sous l'en-tête"
+                        coche={carte.filetEntete === true}
+                        onChange={(v) => majCarte({ filetEntete: v })}
+                      />
+                      <Case
+                        label="Ligne au-dessus du pied"
+                        coche={carte.filetPied === true}
+                        onChange={(v) => majCarte({ filetPied: v })}
+                      />
+                    </div>
+                  </Groupe>
+                )}
+              </>
+            )}
+
+            {/* ====================================================== TRACE */}
+            {onglet === "trace" && (
+              <>
+                <Groupe
+                  titre="Charger une trace"
+                  aide="Facultatif — seul le gabarit « Carte » en a besoin. Plusieurs fichiers d'un coup sont recollés bout à bout, dans l'ordre de leur nom, et chaque jonction devient une fin de journée."
+                >
+                  <div className="flex flex-col gap-2">
+                    <button type="button" onClick={chargerAventure} className={BOUTON_SECOND}>
+                      <MapIcon size={16} aria-hidden />
+                      {liveConfig.aventure.nom}
+                    </button>
+                    <label className={`${BOUTON_SECOND} cursor-pointer`}>
+                      <Route size={16} aria-hidden />
+                      Un ou plusieurs .gpx
+                      <input
+                        type="file"
+                        multiple
+                        accept=".gpx,.json,application/gpx+xml,application/json"
+                        onChange={chargerFichierTrace}
+                        className="sr-only"
+                      />
+                    </label>
+                  </div>
+                  {trace && (
+                    <p className="mt-3 font-heading text-[13px] text-brand-text/60">
+                      {trace.totalKm.toFixed(1).replace(".", ",")} km · {trace.dPlusM} m D+
+                      {trace.coords.length === 0 && " · sans coordonnées (gabarit Carte indisponible)"}
+                    </p>
+                  )}
+                </Groupe>
+
+                <Groupe
+                  titre="Trace de référence (cadrage)"
+                  aide="Jamais dessinée. Elle fixe le cadre de la carte et l'échelle du profil, pour qu'une série J1, J1+J2, J1+J2+J3… ne saute pas d'une planche à l'autre."
+                >
+                  <label className={`${BOUTON_SECOND} w-full cursor-pointer`}>
+                    <Route size={16} aria-hidden />
+                    {traceCadre ? `${Math.round(traceCadre.totalKm)} km — cadre figé` : "Aucune"}
+                    <input
+                      type="file"
+                      multiple
+                      accept=".gpx,.json,application/gpx+xml,application/json"
+                      onChange={chargerReference}
+                      className="sr-only"
+                    />
+                  </label>
+                  {traceCadre && (
+                    <button
+                      type="button"
+                      onClick={() => setTraceCadre(null)}
+                      className="mt-1 font-heading text-[12px] text-brand-text/50 underline"
+                    >
+                      retirer la référence
+                    </button>
+                  )}
+                </Groupe>
+
+                {trace && (
+                  <Groupe
+                    titre="Ce carrousel raconte"
+                    aide={
+                      trace.vecue
+                        ? `Trace horodatée (${dureeCourte(trace.dureeSecondes)}) — l'atelier a supposé « après ».`
+                        : undefined
+                    }
+                  >
+                    <Choix
+                      valeur={bilan}
+                      options={[
+                        { cle: false, label: "Avant le départ" },
+                        { cle: true, label: "Après l'aventure" },
+                      ]}
+                      onChange={setBilan}
+                    />
+                  </Groupe>
+                )}
+
+                {carte?.gabarit === "carte" && trace && (
+                  <>
+                    <Groupe titre="La carte">
+                      <div className="mb-3 flex flex-col gap-1.5">
+                        <Case
+                          label={
+                            <>
+                              Fond de carte topo
+                              {!fond && trace.coords.length > 0 && (
+                                <span className="text-brand-text/45"> (indisponible hors ligne)</span>
+                              )}
+                            </>
+                          }
+                          coche={carte.afficherFond !== false}
+                          onChange={(v) => majCarte({ afficherFond: v })}
+                        />
+                        <Case
+                          label="Profil altimétrique"
+                          coche={carte.afficherProfil !== false}
+                          onChange={(v) => majCarte({ afficherProfil: v })}
+                        />
+                      </div>
+                      {segments.length > 1 && (
+                        <>
+                          <label className={LEGENDE} htmlFor="jusqu-a">
+                            Afficher
+                          </label>
+                          <select
+                            id="jusqu-a"
+                            value={carte.jusquA ?? ""}
+                            onChange={(e) =>
+                              majCarte({
+                                jusquA: e.target.value === "" ? null : Number(e.target.value),
+                              })
+                            }
+                            className={`${CHAMP} mb-1`}
+                          >
+                            <option value="">Tout l&rsquo;itinéraire</option>
+                            {segments.map((sg, i) => (
+                              <option key={`jusqua-${sg.kmDebut}`} value={i}>
+                                Jusqu&rsquo;à la journée {i + 1}
+                              </option>
+                            ))}
+                          </select>
+                          <p className={AIDE}>
+                            Une planche par valeur, et la série révèle l&rsquo;itinéraire jour après
+                            jour. Le cadre, lui, ne bouge pas.
+                          </p>
+                        </>
+                      )}
+                    </Groupe>
+
+                    <Groupe titre="Les journées">
+                      <label className={LEGENDE} htmlFor="nb-jours">
+                        Nombre de journées
+                      </label>
+                      <div className="mb-3 flex items-center gap-2">
+                        <input
+                          id="nb-jours"
+                          type="number"
+                          min={1}
+                          max={12}
+                          value={segments.length}
+                          onChange={(e) =>
+                            setCoupures(coupuresRegulieres(trace.totalKm, Number(e.target.value)))
+                          }
+                          className={`${CHAMP} w-24`}
+                        />
+                        <button
+                          type="button"
+                          className={BOUTON_SECOND}
+                          onClick={() =>
+                            setCoupures(
+                              coupuresDepuisWaypoints(liveConfig.aventure.waypoints, trace.totalKm),
+                            )
+                          }
+                        >
+                          Depuis les bivouacs
+                        </button>
+                      </div>
+
+                      <p className={LEGENDE}>Fin de chaque journée, en kilomètres</p>
+                      <div className="mb-3 flex flex-col gap-2">
+                        {coupures.map((km, i) => (
+                          <div key={`coupure-${i}`} className="flex items-center gap-2">
+                            <span className="w-10 font-heading text-[13px] text-brand-text/55">
+                              J{i + 1} →
+                            </span>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={Number(km.toFixed(1))}
+                              onChange={(e) => {
+                                const v = Number(e.target.value);
+                                setCoupures((cs) =>
+                                  cs.map((c, k) => (k === i ? v : c)).sort((a, b) => a - b),
+                                );
+                              }}
+                              className={`${CHAMP} w-28`}
+                            />
+                            <span className="font-heading text-[13px] text-brand-text/45">km</span>
+                            <button
+                              type="button"
+                              onClick={() => setCoupures((cs) => cs.filter((_, k) => k !== i))}
+                              className="ml-auto rounded-full p-1.5 text-brand-text/40 hover:bg-brand-primary/15 hover:text-brand-primary-dark"
+                              aria-label={`Supprimer la coupure J${i + 1}`}
+                            >
+                              <Trash2 size={15} aria-hidden />
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          className={BOUTON_SECOND}
+                          onClick={() =>
+                            setCoupures((cs) =>
+                              [
+                                ...cs,
+                                Math.min(
+                                  trace.totalKm - 1,
+                                  (cs[cs.length - 1] ?? 0) + trace.totalKm / 4,
+                                ),
+                              ].sort((a, b) => a - b),
+                            )
+                          }
+                        >
+                          <Plus size={15} aria-hidden />
+                          Une journée de plus
+                        </button>
+                      </div>
+
+                      <p className={LEGENDE}>Étiquettes</p>
+                      <div className="flex flex-col gap-2">
+                        {segments.map((seg, i) => {
+                          const etq = carte.etiquettes?.[i] ?? {};
+                          return (
+                            <div key={`etq-${seg.kmDebut}`} className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={etq.texte ?? etiquetteParDefaut(i)}
+                                onChange={(e) => majEtiquette(i, { texte: e.target.value })}
+                                className={`${CHAMP} flex-1`}
+                                aria-label={`Étiquette de la journée ${i + 1}`}
+                              />
+                              <input
+                                type="color"
+                                value={etq.couleur ?? PALETTE_JOURS[i % PALETTE_JOURS.length]}
+                                onChange={(e) => majEtiquette(i, { couleur: e.target.value })}
+                                className="h-9 w-9 cursor-pointer rounded-lg border border-brand-field bg-transparent"
+                                aria-label={`Couleur de la journée ${i + 1}`}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => majEtiquette(i, { dx: 0, dy: 0 })}
+                                className="rounded-full p-1.5 text-brand-text/45 hover:bg-brand-primary/15"
+                                aria-label={`Replacer l'étiquette ${i + 1}`}
+                              >
+                                <RotateCcw size={14} aria-hidden />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <p className={`${AIDE} mt-2`}>
+                        {segments
+                          .map((s, i) => `J${i + 1} ${s.distanceKm.toFixed(1)} km / ${s.dPlusM} m D+`)
+                          .join("  ·  ")}
+                      </p>
+                    </Groupe>
+                  </>
+                )}
+              </>
+            )}
+
+            {/* ====================================================== ALLURE */}
+            {onglet === "style" && (
+              <>
+                <Groupe
+                  titre="Polices"
+                  aide="Les trois familles de la charte. Le titre, le surtitre et le texte se règlent séparément."
+                >
+                  <div className="flex flex-col gap-3">
+                    {[
+                      { champ: "policeTitre", label: "Titre" },
+                      { champ: "policeSurtitre", label: "Surtitre et libellés" },
+                      { champ: "policeCorps", label: "Texte" },
+                    ].map(({ champ, label }) => (
+                      <Choix
+                        key={champ}
+                        label={label}
+                        valeur={carte?.[champ] ?? "sans"}
+                        options={POLICES.map((p) => ({ cle: p.cle, label: p.label.split(" —")[0] }))}
+                        onChange={(v) => majCarte({ [champ]: v })}
+                      />
+                    ))}
+                  </div>
+                </Groupe>
+
+                <Groupe
+                  titre="Corps"
+                  aide="En pixels d'une planche de 1080 de large. Les valeurs de la charte : titre 65, texte 38, filet ambre 10."
+                >
+                  <div className="grid grid-cols-2 gap-2">
+                    <Taille
+                      id="t-titre"
+                      label="Titre"
+                      valeur={carte?.tailleTitre}
+                      defaut={CORPS.titre}
+                      onChange={(v) => majCarte({ tailleTitre: v })}
+                    />
+                    <Taille
+                      id="t-corps"
+                      label="Texte"
+                      valeur={carte?.tailleCorps}
+                      defaut={CORPS.corps}
+                      onChange={(v) => majCarte({ tailleCorps: v })}
+                    />
+                    <Taille
+                      id="t-surtitre"
+                      label="Surtitre"
+                      valeur={carte?.tailleSurtitre}
+                      defaut={CORPS.surtitre}
+                      onChange={(v) => majCarte({ tailleSurtitre: v })}
+                    />
+                    <Taille
+                      id="t-filet"
+                      label="Filet ambre"
+                      valeur={carte?.epaisseurFilet}
+                      defaut={CORPS.filet}
+                      onChange={(v) => majCarte({ epaisseurFilet: v })}
+                    />
+                    <Taille
+                      id="t-entete"
+                      label="En-tête"
+                      valeur={carte?.tailleEntete}
+                      defaut={CORPS.entete}
+                      onChange={(v) => majCarte({ tailleEntete: v })}
+                    />
+                    <Taille
+                      id="t-pied"
+                      label="Pied"
+                      valeur={carte?.taillePied}
+                      defaut={CORPS.pied}
+                      onChange={(v) => majCarte({ taillePied: v })}
+                    />
+                    <Taille
+                      id="t-logo"
+                      label="Logo"
+                      valeur={carte?.tailleLogo}
+                      defaut={CORPS.logo}
+                      onChange={(v) => majCarte({ tailleLogo: v })}
+                    />
+                    {carte?.gabarit === "fiche" && (
+                      <>
+                        <Taille
+                          id="t-fiche-l"
+                          label="Fiche · libellés"
+                          valeur={carte?.tailleFicheLabel}
+                          defaut={CORPS.ficheLabel}
+                          onChange={(v) => majCarte({ tailleFicheLabel: v })}
+                        />
+                        <Taille
+                          id="t-fiche-v"
+                          label="Fiche · valeurs"
+                          valeur={carte?.tailleFicheValeur}
+                          defaut={CORPS.ficheValeur}
+                          onChange={(v) => majCarte({ tailleFicheValeur: v })}
+                        />
+                      </>
+                    )}
+                  </div>
+                </Groupe>
+
+                <Groupe
+                  titre="Espacements"
+                  aide="En parts du corps du texte. La respiration est la hauteur d'une ligne sautée en plus ; l'alinéa décale la première ligne de chaque paragraphe."
+                >
+                  <div className="flex flex-col gap-3">
+                    <Curseur
+                      id="e-titre"
+                      label="Interligne du titre"
+                      valeur={carte?.interligneTitre}
+                      defaut={1.16}
+                      min={0.85}
+                      max={2}
+                      pas={0.02}
+                      onChange={(v) => majCarte({ interligneTitre: v })}
+                    />
+                    <Curseur
+                      id="e-interligne"
+                      label="Interligne du texte"
+                      valeur={carte?.interligne}
+                      defaut={ESPACEMENT.interligne}
+                      min={1}
+                      max={2.6}
+                      pas={0.05}
+                      onChange={(v) => majCarte({ interligne: v })}
+                    />
+                    <Curseur
+                      id="e-blocs"
+                      label="Entre deux paragraphes"
+                      valeur={carte?.entreBlocs}
+                      defaut={ESPACEMENT.entreBlocs}
+                      min={0}
+                      max={3}
+                      pas={0.05}
+                      onChange={(v) => majCarte({ entreBlocs: v })}
+                    />
+                    <Curseur
+                      id="e-respiration"
+                      label="Respiration (ligne sautée)"
+                      valeur={carte?.respiration}
+                      defaut={ESPACEMENT.respiration}
+                      min={0}
+                      max={4}
+                      pas={0.05}
+                      onChange={(v) => majCarte({ respiration: v })}
+                    />
+                    <Curseur
+                      id="e-items"
+                      label="Entre deux points de liste"
+                      valeur={carte?.entreItems}
+                      defaut={ESPACEMENT.entreItems}
+                      min={0}
+                      max={2}
+                      pas={0.05}
+                      onChange={(v) => majCarte({ entreItems: v })}
+                    />
+                    <Curseur
+                      id="e-retrait"
+                      label="Retrait des listes"
+                      valeur={carte?.retraitListe}
+                      defaut={ESPACEMENT.retraitListe}
+                      min={0.4}
+                      max={4}
+                      pas={0.1}
+                      onChange={(v) => majCarte({ retraitListe: v })}
+                    />
+                    <Curseur
+                      id="e-alinea"
+                      label="Alinéa (1re ligne)"
+                      valeur={carte?.alinea}
+                      defaut={ESPACEMENT.alinea}
+                      min={0}
+                      max={4}
+                      pas={0.1}
+                      onChange={(v) => majCarte({ alinea: v })}
+                    />
+                  </div>
+                </Groupe>
+
+                <Groupe
+                  titre="Dégradés et voiles"
+                  aide="1 = le voile de la charte, 0 l'éteint. La carte les a aussi : un fond topo enneigé n'a pas la densité d'un fond de forêt."
+                >
+                  <div className="flex flex-col gap-3">
+                    <Curseur
+                      id="d-haut"
+                      label="Dégradé de l'en-tête"
+                      valeur={carte?.degradeHaut === false ? 0 : carte?.degradeHaut}
+                      defaut={carte?.gabarit === "carte" ? 0.8 : carte?.gabarit === "bandeau" ? 0.74 : 0.72}
+                      min={0}
+                      max={1}
+                      pas={0.02}
+                      format={(v) => `${Math.round(v * 100)} %`}
+                      onChange={(v) => majCarte({ degradeHaut: v })}
+                    />
+                    <Curseur
+                      id="d-bas"
+                      label={carte?.gabarit === "bandeau" ? "Fondu du bandeau" : "Voile du pied"}
+                      valeur={carte?.degradeBas === false ? 0 : carte?.degradeBas}
+                      defaut={1}
+                      min={0}
+                      max={1}
+                      pas={0.02}
+                      format={(v) => `${Math.round(v * 100)} %`}
+                      onChange={(v) => majCarte({ degradeBas: v })}
+                    />
+                    <Opacite
+                      id="o-entete"
+                      label="Opacité de l'en-tête"
+                      valeur={carte?.enteteOpacite}
+                      onChange={(v) => majCarte({ enteteOpacite: v })}
+                    />
+                    <Opacite
+                      id="o-pied"
+                      label="Opacité du pied"
+                      valeur={carte?.piedOpacite}
+                      onChange={(v) => majCarte({ piedOpacite: v })}
+                    />
+                  </div>
+                </Groupe>
+
+                <Groupe titre="Bande d'en-tête">
+                  <label className={LEGENDE} htmlFor="marque">
+                    Ce qu&rsquo;elle porte
+                  </label>
+                  <select
+                    id="marque"
+                    value={carte?.marque ?? ""}
+                    onChange={(e) => majCarte({ marque: e.target.value })}
+                    className={`${CHAMP} mb-3`}
+                  >
+                    {MARQUES.map((mq) => (
+                      <option key={mq.cle} value={mq.cle}>
+                        {mq.label}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="flex flex-col gap-1.5">
+                    <Case
+                      label="Ligne sous l'en-tête"
+                      coche={carte?.filetEntete !== false}
+                      onChange={(v) => majCarte({ filetEntete: v })}
+                    />
+                    <Case
+                      label="Ligne au-dessus du pied"
+                      coche={carte?.filetPied !== false}
+                      onChange={(v) => majCarte({ filetPied: v })}
+                    />
+                  </div>
+                </Groupe>
+
+                <Groupe titre="Couleurs">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Couleur
+                      label="Titre"
+                      valeur={carte?.couleurTitre}
+                      defaut={theme.encre}
+                      onChange={(v) => majCarte({ couleurTitre: v })}
+                    />
+                    <Couleur
+                      label="Texte"
+                      valeur={carte?.couleurCorps}
+                      defaut="#BBBBBB"
+                      onChange={(v) => majCarte({ couleurCorps: v })}
+                    />
+                    <Couleur
+                      label="Ambre"
+                      valeur={carte?.couleurAccent}
+                      defaut={theme.accent}
+                      onChange={(v) => majCarte({ couleurAccent: v })}
+                    />
+                    <Couleur
+                      label="Fond"
+                      valeur={carte?.couleurFond}
+                      defaut={theme.fond}
+                      onChange={(v) => majCarte({ couleurFond: v })}
+                    />
+                    <Couleur
+                      label="Logo"
+                      valeur={carte?.couleurLogo}
+                      defaut={theme.accent}
+                      onChange={(v) => majCarte({ couleurLogo: v })}
+                    />
+                    <Couleur
+                      label="Filet du titre"
+                      valeur={carte?.couleurFiletTitre}
+                      defaut={theme.accent}
+                      onChange={(v) => majCarte({ couleurFiletTitre: v })}
+                    />
+                  </div>
+                </Groupe>
+
+                <Groupe
+                  titre="Propager"
+                  aide="Une NOUVELLE planche hérite déjà de cette allure. Ce bouton sert à l'autre cas : avoir changé d'avis alors que les planches existent déjà."
+                >
+                  <button
+                    type="button"
+                    onClick={diffuserStyle}
+                    disabled={cartes.length < 2}
+                    className={`${BOUTON_SECOND} w-full`}
+                  >
+                    Appliquer cette allure aux {Math.max(0, cartes.length - 1)} autres
+                  </button>
+                </Groupe>
+              </>
+            )}
+
+            {/* ====================================================== PROJET */}
+            {onglet === "projet" && (
+              <>
+                <Groupe
+                  titre="Projets"
+                  aide="Le travail en cours est gardé tout seul sur cet appareil — fermer l'onglet ne coûte rien. Un projet NOMMÉ, lui, ne bouge que quand tu l'enregistres."
+                >
+                  <div className="mb-3 flex gap-2">
+                    <input
+                      type="text"
+                      value={nomProjet}
+                      placeholder="nom du projet"
+                      onChange={(e) => setNomProjet(e.target.value)}
+                      className={CHAMP}
+                      aria-label="Nom du projet, panneau"
                     />
                     <button
                       type="button"
-                      onClick={() => majEtiquette(i, { dx: 0, dy: 0 })}
-                      className="rounded-full p-1.5 text-brand-text/45 hover:bg-brand-primary/15"
-                      aria-label={`Replacer l'étiquette ${i + 1}`}
+                      onClick={enregistrer}
+                      disabled={!nomProjet.trim() || etat.occupe}
+                      className={BOUTON_SECOND}
                     >
-                      <RotateCcw size={14} aria-hidden />
+                      <Save size={15} aria-hidden />
+                      Enregistrer
                     </button>
                   </div>
-                );
-              })}
-            </div>
-            <p className="mt-2 font-heading text-[12px] text-brand-text/45">
-              {segments
-                .map(
-                  (s, i) =>
-                    `J${i + 1} ${s.distanceKm.toFixed(1)} km / ${s.dPlusM} m D+`,
-                )
-                .join("  ·  ")}
-            </p>
-          </Section>
-        )}
+                  {projets.length > 0 && (
+                    <div className="flex flex-col gap-1.5">
+                      {projets.map((pr) => (
+                        <div key={pr.nom} className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => ouvrirProjet(pr.nom)}
+                            className="flex-1 rounded-lg border border-brand-field bg-brand-paper px-3 py-2 text-left font-heading text-[14px] text-brand-text hover:border-brand-primary-dark"
+                          >
+                            {pr.nom}
+                            <span className="ml-2 text-[12px] text-brand-text/45">
+                              {pr.cartes} carte{pr.cartes > 1 ? "s" : ""}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => supprimerProjet(pr.nom).then(rafraichirProjets)}
+                            className="rounded-full p-1.5 text-brand-text/40 hover:bg-brand-primary/15 hover:text-brand-primary-dark"
+                            aria-label={`Supprimer le projet ${pr.nom}`}
+                          >
+                            <Trash2 size={15} aria-hidden />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Groupe>
 
-        {/* ---- mise en forme ---- */}
-        <Section titre="Mise en forme">
-          <p className="mb-3 font-heading text-[12px] text-brand-text/50">
-            Corps en pixels d&rsquo;une planche de 1080 de large. Vide ou remis
-            à zéro = la valeur de la charte.
-          </p>
-          <div className="mb-3 grid grid-cols-2 gap-2">
-            <Taille
-              id="t-titre"
-              label="Titre"
-              valeur={carte?.tailleTitre}
-              defaut={CORPS.titre}
-              onChange={(v) => majCarte({ tailleTitre: v })}
-            />
-            <Taille
-              id="t-corps"
-              label="Texte"
-              valeur={carte?.tailleCorps}
-              defaut={CORPS.corps}
-              onChange={(v) => majCarte({ tailleCorps: v })}
-            />
-            <Taille
-              id="t-surtitre"
-              label="Surtitre"
-              valeur={carte?.tailleSurtitre}
-              defaut={CORPS.surtitre}
-              onChange={(v) => majCarte({ tailleSurtitre: v })}
-            />
-            <Taille
-              id="t-filet"
-              label="Filet ambre"
-              valeur={carte?.epaisseurFilet}
-              defaut={CORPS.filet}
-              onChange={(v) => majCarte({ epaisseurFilet: v })}
-            />
-            <Taille
-              id="t-entete"
-              label="En-tête"
-              valeur={carte?.tailleEntete}
-              defaut={CORPS.entete}
-              onChange={(v) => majCarte({ tailleEntete: v })}
-            />
-            <Taille
-              id="t-pied"
-              label="Pied"
-              valeur={carte?.taillePied}
-              defaut={CORPS.pied}
-              onChange={(v) => majCarte({ taillePied: v })}
-            />
-            <Taille
-              id="t-logo"
-              label="Logo"
-              valeur={carte?.tailleLogo}
-              defaut={CORPS.logo}
-              onChange={(v) => majCarte({ tailleLogo: v })}
-            />
-            {carte?.gabarit === "fiche" && (
-              <>
-                <Taille
-                  id="t-fiche-l"
-                  label="Fiche · libellés"
-                  valeur={carte?.tailleFicheLabel}
-                  defaut={CORPS.ficheLabel}
-                  onChange={(v) => majCarte({ tailleFicheLabel: v })}
-                />
-                <Taille
-                  id="t-fiche-v"
-                  label="Fiche · valeurs"
-                  valeur={carte?.tailleFicheValeur}
-                  defaut={CORPS.ficheValeur}
-                  onChange={(v) => majCarte({ tailleFicheValeur: v })}
-                />
+                <Groupe
+                  titre="Fichier de secours"
+                  aide="IndexedDB vit dans CE navigateur : un « effacer les données du site » emporte tout."
+                >
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={telechargerProjet}
+                      className={`${BOUTON_SECOND} flex-1`}
+                    >
+                      <Download size={15} aria-hidden />
+                      Exporter
+                    </button>
+                    <label className={`${BOUTON_SECOND} flex-1 cursor-pointer`}>
+                      <Upload size={15} aria-hidden />
+                      Importer
+                      <input
+                        type="file"
+                        accept=".json,application/json"
+                        onChange={importer}
+                        className="sr-only"
+                      />
+                    </label>
+                  </div>
+                </Groupe>
               </>
             )}
           </div>
-
-          <label className={LEGENDE} htmlFor="marque">
-            Bande d&rsquo;en-tête
-          </label>
-          <select
-            id="marque"
-            value={carte?.marque ?? ""}
-            onChange={(e) => majCarte({ marque: e.target.value })}
-            className={`${CHAMP} mb-3`}
-          >
-            {MARQUES.map((mq) => (
-              <option key={mq.cle} value={mq.cle}>
-                {mq.label}
-              </option>
-            ))}
-          </select>
-
-          <label className={`${CASE} mb-3`}>
-            <input
-              type="checkbox"
-              checked={Boolean(carte?.centrer)}
-              onChange={(e) => majCarte({ centrer: e.target.checked })}
-            />
-            Centrer le titre et le texte
-          </label>
-
-          <label className={`${CASE} mb-2`}>
-            <input
-              type="checkbox"
-              checked={Boolean(carte?.filetTitre)}
-              onChange={(e) => majCarte({ filetTitre: e.target.checked })}
-            />
-            Filet sous le titre
-          </label>
-          {carte?.filetTitre && (
-            <div className="mb-3 grid grid-cols-2 gap-2 pl-6">
-              <Taille
-                id="ft-largeur"
-                label="Longueur"
-                valeur={carte.filetTitreLargeur}
-                defaut={96}
-                onChange={(v) => majCarte({ filetTitreLargeur: v })}
-              />
-              <Taille
-                id="ft-epaisseur"
-                label="Épaisseur"
-                valeur={carte.filetTitreEpaisseur}
-                defaut={4}
-                onChange={(v) => majCarte({ filetTitreEpaisseur: v })}
-              />
-            </div>
-          )}
-
-          <div className="mb-3 grid grid-cols-2 gap-3">
-            <Opacite
-              id="o-entete"
-              label="Opacité en-tête"
-              valeur={carte?.enteteOpacite}
-              onChange={(v) => majCarte({ enteteOpacite: v })}
-            />
-            <Opacite
-              id="o-pied"
-              label="Opacité pied"
-              valeur={carte?.piedOpacite}
-              onChange={(v) => majCarte({ piedOpacite: v })}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Couleur
-              label="Titre"
-              valeur={carte?.couleurTitre}
-              defaut={theme.encre}
-              onChange={(v) => majCarte({ couleurTitre: v })}
-            />
-            <Couleur
-              label="Texte"
-              valeur={carte?.couleurCorps}
-              defaut="#BBBBBB"
-              onChange={(v) => majCarte({ couleurCorps: v })}
-            />
-            <Couleur
-              label="Ambre"
-              valeur={carte?.couleurAccent}
-              defaut={theme.accent}
-              onChange={(v) => majCarte({ couleurAccent: v })}
-            />
-            <Couleur
-              label="Fond"
-              valeur={carte?.couleurFond}
-              defaut={theme.fond}
-              onChange={(v) => majCarte({ couleurFond: v })}
-            />
-            <Couleur
-              label="Logo"
-              valeur={carte?.couleurLogo}
-              defaut={theme.accent}
-              onChange={(v) => majCarte({ couleurLogo: v })}
-            />
-            <Couleur
-              label="Filet du titre"
-              valeur={carte?.couleurFiletTitre}
-              defaut={theme.accent}
-              onChange={(v) => majCarte({ couleurFiletTitre: v })}
-            />
-          </div>
-
-          {/* Une NOUVELLE carte hérite déjà de ce réglage. Ce bouton sert à
-              l'autre cas : avoir changé d'avis alors que les cartes existent
-              déjà. Explicite, parce qu'une diffusion silencieuse écraserait les
-              ajustements faits carte par carte. */}
-          <button
-            type="button"
-            onClick={diffuserStyle}
-            disabled={cartes.length < 2}
-            className={`${BOUTON_SECOND} mt-4 w-full`}
-          >
-            Appliquer cette mise en forme aux {cartes.length - 1} autres
-          </button>
-        </Section>
-
-        {/* ---- la trace (optionnelle) ---- */}
-        <Section titre="La trace" ouvert={!trace}>
-          <div className="flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={chargerAventure}
-              className={BOUTON_SECOND}
-            >
-              <MapIcon size={16} aria-hidden />
-              {liveConfig.aventure.nom}
-            </button>
-            <label className={`${BOUTON_SECOND} cursor-pointer`}>
-              <Route size={16} aria-hidden />
-              Un ou plusieurs .gpx
-              <input
-                type="file"
-                multiple
-                accept=".gpx,.json,application/gpx+xml,application/json"
-                onChange={chargerFichierTrace}
-                className="sr-only"
-              />
-            </label>
-          </div>
-          {/* LE CADRAGE, séparément. Elle n'est jamais dessinée : elle sert à
-              figer la carte et le profil pendant qu'on révèle l'itinéraire. */}
-          <p className={`${LEGENDE} mt-4`}>Trace de référence (cadrage)</p>
-          <label className={`${BOUTON_SECOND} w-full cursor-pointer`}>
-            <Route size={16} aria-hidden />
-            {traceCadre
-              ? `${Math.round(traceCadre.totalKm)} km — cadre figé`
-              : "Aucune"}
-            <input
-              type="file"
-              multiple
-              accept=".gpx,.json,application/gpx+xml,application/json"
-              onChange={chargerReference}
-              className="sr-only"
-            />
-          </label>
-          {traceCadre && (
-            <button
-              type="button"
-              onClick={() => setTraceCadre(null)}
-              className="mt-1 font-heading text-[12px] text-brand-text/50 underline"
-            >
-              retirer la référence
-            </button>
-          )}
-          <p className="mt-1 font-heading text-[12px] text-brand-text/45">
-            Jamais dessinée. Elle fixe le cadre de la carte et l&rsquo;échelle
-            du profil, pour qu&rsquo;une série J1, J1+J2, J1+J2+J3… ne saute pas
-            d&rsquo;une planche à l&rsquo;autre.
-          </p>
-
-          {trace ? (
-            <>
-              <p className="mt-3 font-heading text-[13px] text-brand-text/60">
-                {trace.totalKm.toFixed(1).replace(".", ",")} km · {trace.dPlusM}{" "}
-                m D+
-                {trace.coords.length === 0 &&
-                  " · sans coordonnées (gabarit Carte indisponible)"}
-              </p>
-              {/* Ce réglage change les MOTS de tout le carrousel. */}
-              <p className={`${LEGENDE} mt-4`}>Ce carrousel raconte</p>
-              <div className="flex gap-2">
-                {[
-                  { v: false, l: "Avant le départ" },
-                  { v: true, l: "Après l'aventure" },
-                ].map((o) => (
-                  <button
-                    key={o.l}
-                    type="button"
-                    onClick={() => setBilan(o.v)}
-                    className={`flex-1 rounded-full border px-3 py-2 font-heading text-[13px] transition-colors ${
-                      bilan === o.v
-                        ? "border-brand-primary-dark bg-brand-primary/25 text-brand-text"
-                        : "border-brand-field bg-brand-paper text-brand-text/65 hover:border-brand-primary/60"
-                    }`}
-                  >
-                    {o.l}
-                  </button>
-                ))}
-              </div>
-              {trace.vecue && (
-                <p className="mt-2 font-heading text-[12px] text-brand-text/45">
-                  Trace horodatée ({dureeCourte(trace.dureeSecondes)}) —
-                  l&rsquo;atelier a supposé « après ».
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="mt-3 font-heading text-[13px] text-brand-text/55">
-              Facultatif — seul le gabarit « Carte » en a besoin. Plusieurs
-              fichiers d&rsquo;un coup sont recollés bout à bout, dans
-              l&rsquo;ordre de leur nom, et chaque jonction devient une fin de
-              journée.
-            </p>
-          )}
-        </Section>
-
-        {/* ---- les projets ---- */}
-        <Section titre="Projet">
-          <p className="mb-3 font-heading text-[12px] text-brand-text/50">
-            Le travail en cours est gardé tout seul sur cet appareil — fermer
-            l&rsquo;onglet ne coûte rien. Un projet NOMMÉ, lui, ne bouge que
-            quand tu l&rsquo;enregistres.
-          </p>
-          <div className="mb-3 flex gap-2">
-            <input
-              type="text"
-              value={nomProjet}
-              placeholder="nom du projet"
-              onChange={(e) => setNomProjet(e.target.value)}
-              className={CHAMP}
-              aria-label="Nom du projet"
-            />
-            <button
-              type="button"
-              onClick={enregistrer}
-              disabled={!nomProjet.trim() || etat.occupe}
-              className={BOUTON_SECOND}
-            >
-              <Save size={15} aria-hidden />
-              Enregistrer
-            </button>
-          </div>
-
-          {projets.length > 0 && (
-            <div className="mb-3 flex flex-col gap-1.5">
-              {projets.map((pr) => (
-                <div key={pr.nom} className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => ouvrirProjet(pr.nom)}
-                    className="flex-1 rounded-lg border border-brand-field bg-brand-paper px-3 py-2 text-left font-heading text-[14px] text-brand-text hover:border-brand-primary-dark"
-                  >
-                    {pr.nom}
-                    <span className="ml-2 text-[12px] text-brand-text/45">
-                      {pr.cartes} carte{pr.cartes > 1 ? "s" : ""}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      supprimerProjet(pr.nom).then(rafraichirProjets)
-                    }
-                    className="rounded-full p-1.5 text-brand-text/40 hover:bg-brand-primary/15 hover:text-brand-primary-dark"
-                    aria-label={`Supprimer le projet ${pr.nom}`}
-                  >
-                    <Trash2 size={15} aria-hidden />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Le fichier de secours : IndexedDB vit dans CE navigateur, un
-              « effacer les données du site » emporte tout. */}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={telechargerProjet}
-              className={`${BOUTON_SECOND} flex-1`}
-            >
-              <Download size={15} aria-hidden />
-              Exporter
-            </button>
-            <label className={`${BOUTON_SECOND} flex-1 cursor-pointer`}>
-              <Upload size={15} aria-hidden />
-              Importer
-              <input
-                type="file"
-                accept=".json,application/json"
-                onChange={importer}
-                className="sr-only"
-              />
-            </label>
-          </div>
-        </Section>
-
-        {/* ---- le carrousel ---- */}
-        <Section titre="Le carrousel" ouvert>
-          <p className={LEGENDE}>Ajouter une carte</p>
-          <div className="mb-4 flex flex-wrap gap-2">
-            {GABARITS.map((g) => (
-              <button
-                key={g.cle}
-                type="button"
-                onClick={() => ajouterCarte(g.cle)}
-                className={BOUTON_SECOND}
-              >
-                <Plus size={15} aria-hidden />
-                {g.label}
-              </button>
-            ))}
-          </div>
-
-          <label className={LEGENDE} htmlFor="format">
-            Format
-          </label>
-          <select
-            id="format"
-            value={formatCle}
-            onChange={(e) => setFormatCle(e.target.value)}
-            className={`${CHAMP} mb-3`}
-          >
-            {Object.values(FORMATS).map((f) => (
-              <option key={f.cle} value={f.cle}>
-                {f.label}
-              </option>
-            ))}
-          </select>
-
-          <p className={LEGENDE}>Thème</p>
-          <div className="mb-4 flex gap-2">
-            {Object.values(THEMES).map((t) => (
-              <button
-                key={t.cle}
-                type="button"
-                onClick={() => setThemeCle(t.cle)}
-                className={`flex-1 rounded-full border px-3 py-2 font-heading text-[14px] transition-colors ${
-                  themeCle === t.cle
-                    ? "border-brand-primary-dark bg-brand-primary/25 text-brand-text"
-                    : "border-brand-field bg-brand-paper text-brand-text/65 hover:border-brand-primary/60"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <button
-              type="button"
-              className={BOUTON_PRINCIPAL}
-              disabled={etat.occupe}
-              onClick={() => exporter(cartes.map((_, i) => i))}
-            >
-              {etat.occupe ? (
-                <Loader2 size={16} className="animate-spin" aria-hidden />
-              ) : (
-                <Download size={16} aria-hidden />
-              )}
-              Tout exporter ({cartes.length})
-            </button>
-            <button
-              type="button"
-              className={BOUTON_SECOND}
-              disabled={etat.occupe || !carte}
-              onClick={() => exporter([active])}
-            >
-              <Download size={15} aria-hidden />
-              Cette carte seulement
-            </button>
-          </div>
-        </Section>
+        </div>
       </div>
     </div>
   );

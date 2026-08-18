@@ -23,8 +23,12 @@ export const metadata = {
 };
 
 export default function StudioPage() {
+  // LARGE, et peu de marge : l'atelier carrousel est un poste de travail (barre
+  // du haut, rail, panneau, scène) et il lui faut la place d'un écran, pas la
+  // colonne de lecture du site. Chaque atelier se re-cadre lui-même s'il en a
+  // besoin (cf. components/studio/Studio.jsx).
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-12 pt-6 sm:px-6">
+    <div className="mx-auto max-w-[1600px] px-3 pb-6 pt-4 sm:px-5">
       <Studio />
     </div>
   );

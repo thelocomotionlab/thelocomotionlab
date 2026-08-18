@@ -364,6 +364,29 @@ la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
 - **Changer d'onglet ne perd rien** : les deux ateliers restent montés, celui
   qu'on ne regarde pas est simplement caché. Recharger un GPX de 6 Mo sur un
   téléphone n'est pas une broutille.
+- **Le poste de travail du carrousel** (repris de Canva) : une **barre en haut**
+  (nom du projet, format, thème, enregistrer, exporter), un **rail** d'onglets à
+  gauche — Planche, Texte, Photo, Trace, Allure, Projet —, le **panneau** du
+  réglage choisi à côté, la **planche** au centre et la **bande des vignettes**
+  dessous. *Seul le panneau défile* : on voit toujours ce qu'on règle. Sur un
+  téléphone la planche se colle sous la barre du studio, le rail passe en bande
+  horizontale, et le panneau défile dessous.
+  Chaque réglage n'existe **qu'à un seul endroit** : un accordéon replié cache
+  un réglage aussi bien qu'une absence de réglage — c'est ce qui a fait croire
+  que le filet sous le titre ne se dessinait pas alors que sa case était pliée
+  (`lib/carrouselRendu.test.js` le vérifie maintenant sur les six gabarits).
+- **Ce qui se règle sur une planche** : les corps (titre 65, texte 38, filet
+  ambre 10 — les valeurs des aperçus de reel), la **police de chaque rôle**
+  (titre / surtitre / texte, parmi les trois familles de la charte : Ubuntu,
+  Lora, Ubuntu Mono), les **espacements** (interligne, entre paragraphes,
+  respiration d'une ligne sautée, entre points de liste, retrait de liste,
+  **alinéa** de première ligne), les **dégradés** (en-tête et pied, y compris
+  sur le gabarit Carte — `1` = le voile de la charte, `0` l'éteint), les
+  couleurs, le filet sous le titre et les opacités. Une planche qui ne dit rien
+  suit la charte ; le bouton « Appliquer cette allure aux N autres » diffuse.
+- **Le balisage du texte** : `*gras*`, `_italique_`, `~souligné~`, `[en ambre]`,
+  `[bleu: mot]`, `:col:` (icône), `- ` (point de liste), `> ` (paragraphe
+  décalé). Une ligne vide sépare, chaque ligne vide en plus aère.
 - **Sur le téléphone** : ouvrir `/studio`, puis « Ajouter à l'écran d'accueil ».
   Le studio a **son propre manifeste** (`public/studio.webmanifest`) et ses
   **icônes sombres** : ça pose une icône SÉPARÉE de celle du site, qui ouvre

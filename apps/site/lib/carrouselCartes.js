@@ -33,10 +33,11 @@ import {
 import { decimerPixels, fitView, tileWindow, TILE_SIZE } from "./carrouselGeo";
 import { ancreDuSegment } from "./carrouselTrace";
 import {
+  ESPACEMENT,
   analyserRiche,
+  blocsDeTexte,
   dessinerLigneRiche,
   largeurLigne,
-  blocsDeTexte,
   hauteurBlocs,
   lignesRiches,
   poserBlocs,
@@ -116,6 +117,26 @@ export const MARQUES = [
 ];
 
 /** Ce que fait la flèche du pied de page. */
+/**
+ * LES POLICES DISPONIBLES — celles de la charte, et rien d'autre.
+ *
+ * Ubuntu porte la voix courante, Lora l'accent (vraies italiques), Ubuntu Mono
+ * la voix « instrument » (chiffres, références). Chaque planche choisit la
+ * sienne pour le titre, le surtitre et le corps SÉPARÉMENT : c'est le réglage
+ * qui change le plus le ton d'une image, et il ne coûte rien puisque les trois
+ * fontes sont déjà chargées par le site (packages/ui/src/fonts.ts).
+ *
+ * La VALEUR est une clé, jamais une famille CSS : l'atelier résout les trois
+ * familles au moment du rendu et les passe en bloc (`polices`). Écrire
+ * « Ubuntu » dans une carte enregistrée l'aurait figée sur un nom de fonte qui
+ * ne veut rien dire hors de ce navigateur.
+ */
+export const POLICES = [
+  { cle: "sans", label: "Ubuntu — la police du labo" },
+  { cle: "serif", label: "Lora — serif d'accent" },
+  { cle: "mono", label: "Ubuntu Mono — instrument" },
+];
+
 export const FLECHES = [
   { cle: "auto", label: "Auto (sauf dernière)" },
   { cle: "toujours", label: "Toujours" },
@@ -335,14 +356,50 @@ export async function chargerFond(view, options = {}) {
 
 /* ------------------------------------------------------------------ chrome commun */
 
-function voileTexte(ctx, format, th, depuis) {
+/**
+ * L'INTENSITÉ D'UN DÉGRADÉ, en une seule lecture.
+ *
+ * Les planches d'avant réglaient les voiles par une case à cocher : `false` =
+ * éteint, tout le reste = la valeur du gabarit. On garde ces deux cas — les
+ * projets déjà enregistrés les portent — et on accepte en plus un NOMBRE, qui
+ * est l'opacité du bord le plus dense. Une photo au ciel déjà sombre n'a plus à
+ * choisir entre « rien » et « tout ».
+ */
+function intensite(v, defaut) {
+  if (v === false) return 0;
+  if (v === true || v == null || v === "") return defaut;
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : defaut;
+}
+
+/**
+ * Le voile du bas, qui rend le texte lisible sur une image.
+ *
+ * `force` MULTIPLIE le dégradé de référence — 1 est exactement le voile des
+ * planches d'avant, 0 l'éteint. C'est volontaire : le réglage doit pouvoir
+ * s'ouvrir sans redessiner les carrousels déjà publiés.
+ */
+function voileTexte(ctx, format, th, depuis, force = 1) {
+  if (!(force > 0)) return;
+  const a = (v) => `rgba(${th.voileTexte}, ${(v * force).toFixed(3)})`;
   const g = ctx.createLinearGradient(0, depuis, 0, format.height);
   g.addColorStop(0, `rgba(${th.voileTexte}, 0)`);
-  g.addColorStop(0.4, `rgba(${th.voileTexte}, 0.5)`);
-  g.addColorStop(0.75, `rgba(${th.voileTexte}, 0.82)`);
-  g.addColorStop(1, `rgba(${th.voileTexte}, 0.92)`);
+  g.addColorStop(0.4, a(0.5));
+  g.addColorStop(0.75, a(0.82));
+  g.addColorStop(1, a(0.92));
   ctx.fillStyle = g;
   ctx.fillRect(0, depuis, format.width, format.height - depuis);
+}
+
+/** Le voile du haut, sous la bande d'en-tête. Même contrat que `voileTexte`. */
+function voileEntete(ctx, format, m, th, force, jusqu = 1.4) {
+  if (!(force > 0)) return;
+  const bas = m.bandeH * jusqu;
+  const g = ctx.createLinearGradient(0, 0, 0, bas);
+  g.addColorStop(0, `rgba(${th.voileTexte}, ${force.toFixed(3)})`);
+  g.addColorStop(1, `rgba(${th.voileTexte}, 0)`);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, format.width, bas);
 }
 
 /**
@@ -450,19 +507,57 @@ export function lignes(ctx, texte, largeurMax) {
  * reste une carte derrière. La flèche est DESSINÉE — les fontes du site sont
  * des sous-ensembles latins et n'ont pas U+2192 (elle sortirait en carré).
  */
+/** Interligne d'un titre, en parts de son corps. */
+const INTERLIGNE_TITRE = 1.16;
+
+/** Un réglage numérique de la planche, sinon la valeur de la charte. */
+function nombre(v, defaut) {
+  return Number.isFinite(v) && v >= 0 ? v : defaut;
+}
+
+/** La famille RÉSOLUE d'un des trois rôles de texte (cf. `POLICES`). */
+function policeDe(carte, champ, polices) {
+  return polices[carte?.[champ]] ?? polices.sans;
+}
+
 /** Le style de base d'un titre et d'un corps — ce sur quoi le balisage vient
  *  poser ses variantes (cf. lib/carrouselTexte.js). */
-function baseTitre(m, th, police, echelle = 1) {
+function baseTitre(m, th, polices, carte, echelle = 1) {
   return {
-    police,
+    police: policeDe(carte, "policeTitre", polices),
     taille: Math.round(m.titre * echelle),
     graisse: 700,
     couleur: th.encre,
     accent: th.accent,
+    // L'interligne du titre : un seul défaut pour TOUS les gabarits. Les
+    // chemins « du bas vers le haut » en avaient un autre (1,12) — ce n'était
+    // pas une décision, c'était une divergence.
+    interligne: nombre(carte?.interligneTitre, INTERLIGNE_TITRE),
   };
 }
-function baseCorps(m, th, police) {
-  return { police, taille: m.corps, graisse: 400, couleur: th.encreDouce, accent: th.accent };
+
+/**
+ * Le corps de texte — et, avec lui, TOUS les espacements de la planche.
+ *
+ * Ils voyagent DANS le style plutôt qu'en argument : mesure (`hauteurBlocs`) et
+ * pose (`poserBlocs`) lisent alors forcément les mêmes valeurs. Un paramètre de
+ * plus à passer, c'est un appelant qui l'oubliera — et un texte qui se dessine
+ * ailleurs qu'où on l'a mesuré.
+ */
+function baseCorps(m, th, polices, carte) {
+  return {
+    police: policeDe(carte, "policeCorps", polices),
+    taille: m.corps,
+    graisse: 400,
+    couleur: th.encreDouce,
+    accent: th.accent,
+    interligne: nombre(carte?.interligne, ESPACEMENT.interligne),
+    entreBlocs: nombre(carte?.entreBlocs, ESPACEMENT.entreBlocs),
+    respiration: nombre(carte?.respiration, ESPACEMENT.respiration),
+    entreItems: nombre(carte?.entreItems, ESPACEMENT.entreItems),
+    retraitListe: nombre(carte?.retraitListe, ESPACEMENT.retraitListe),
+    alinea: nombre(carte?.alinea, ESPACEMENT.alinea),
+  };
 }
 
 /**
@@ -476,11 +571,23 @@ function baseCorps(m, th, police) {
  * Rend la nouvelle ordonnée — zéro si le filet est éteint, donc l'appelant peut
  * toujours chaîner.
  */
+/** L'écart entre la ligne de base du titre et le filet. */
+const AVANT_FILET_TITRE = 28;
+
+/** La place que prend le filet sous le titre — c'est elle qu'on réserve dans
+ *  les gabarits qui empilent du bas vers le haut. */
+function hauteurFiletTitre(m, carte) {
+  return (
+    Math.round(AVANT_FILET_TITRE * m.k) +
+    Math.max(1, Math.round(nombre(carte?.filetTitreEpaisseur, 4) * m.k))
+  );
+}
+
 function filetSousTitre(ctx, m, th, carte, y, centre = null) {
   if (!carte.filetTitre) return y;
-  const largeur = Math.round((carte.filetTitreLargeur ?? 96) * m.k);
-  const epaisseur = Math.max(1, Math.round((carte.filetTitreEpaisseur ?? 4) * m.k));
-  const yTrait = y + Math.round(28 * m.k);
+  const largeur = Math.round(nombre(carte.filetTitreLargeur, 96) * m.k);
+  const epaisseur = Math.max(1, Math.round(nombre(carte.filetTitreEpaisseur, 4) * m.k));
+  const yTrait = y + Math.round(AVANT_FILET_TITRE * m.k);
   ctx.fillStyle = carte.couleurFiletTitre || th.accent;
   ctx.fillRect(centre === null ? m.pad : centre - largeur / 2, yTrait, largeur, epaisseur);
   return yTrait + epaisseur;
@@ -491,7 +598,8 @@ function filetSousTitre(ctx, m, th, carte, y, centre = null) {
  * DERNIÈRE ligne de base — pas celle d'après : c'est à l'appelant de décider de
  * l'espace qui suit, il est le seul à savoir ce qui vient.
  */
-function poserLignes(ctx, lignes, x, y, base, { centre = null, interligne = 1.16 } = {}) {
+function poserLignes(ctx, lignes, x, y, base, { centre = null } = {}) {
+  const interligne = base.interligne ?? INTERLIGNE_TITRE;
   let ligneBase = y;
   lignes.forEach((ligne, i) => {
     if (i > 0) ligneBase += base.taille * interligne;
@@ -796,7 +904,7 @@ function ligneFactuelle(trace, bilan) {
  * qu'on attrape à la souris.
  */
 function dessinerCarte(ctx, format, o) {
-  const { carte, trace, police, logo, fond, m, th, index, total } = o;
+  const { carte, trace, police, polices, logo, fond, m, th, index, total } = o;
   const boites = [];
   const fenetre = fenetreCarte(format);
 
@@ -830,15 +938,12 @@ function dessinerCarte(ctx, format, o) {
     ctx.fillStyle = th.voileCarte;
     ctx.fillRect(0, 0, format.width, format.height);
   }
-  voileTexte(ctx, format, th, fenetre.y + fenetre.height);
+  // LES DEUX DÉGRADÉS DE LA CARTE, réglables comme ceux des photos : le fond
+  // topo est une image comme une autre, et sa densité change du tout au tout
+  // entre une haute vallée enneigée et un fond de forêt.
+  voileTexte(ctx, format, th, fenetre.y + fenetre.height, intensite(carte.degradeBas, 1));
   // La bande d'en-tête doit rester lisible par-dessus les tuiles.
-  if (view && fond && carte.afficherFond !== false) {
-    const g = ctx.createLinearGradient(0, 0, 0, m.bandeH * 1.4);
-    g.addColorStop(0, `rgba(${th.voileTexte}, 0.8)`);
-    g.addColorStop(1, `rgba(${th.voileTexte}, 0)`);
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, format.width, m.bandeH * 1.4);
-  }
+  voileEntete(ctx, format, m, th, intensite(carte.degradeHaut, 0.8));
 
   const couleurs = couleursDesJours(carte, segments);
 
@@ -896,22 +1001,22 @@ function dessinerCarte(ctx, format, o) {
     y -= m.corps * 1.9;
   }
   if (carte.titre) {
-    const bt = baseTitre(m, th, police);
+    const bt = baseTitre(m, th, polices, carte);
     const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeurTexte, bt);
     // Bloc construit du bas vers le haut : on réserve la place du filet AVANT
     // d'empiler le titre, puis on le pose une fois la dernière ligne connue.
-    if (carte.filetTitre) y -= Math.round(30 * m.k) + Math.max(1, (carte.filetTitreEpaisseur ?? 4) * m.k);
+    if (carte.filetTitre) y -= hauteurFiletTitre(m, carte);
     const basTitre = y;
     for (let i = ls.length - 1; i >= 0; i -= 1) {
       dessinerLigneRiche(ctx, ls[i], m.pad, y, bt);
-      y -= bt.taille * 1.12;
+      y -= bt.taille * bt.interligne;
     }
     filetSousTitre(ctx, m, th, carte, basTitre);
     y -= m.surtitre * 0.5;
   }
   if (carte.surtitre) {
     ctx.fillStyle = th.accent;
-    surtitre(ctx, m, th, police, carte.surtitre, m.pad, y);
+    surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, y);
     y -= m.surtitre * 2.1;
   }
 
@@ -976,7 +1081,7 @@ function attributionVerticale(ctx, format, m, th, police) {
  * le texte reste écrit — c'est à l'auteur de vérifier qu'il se lit.
  */
 function dessinerPhoto(ctx, format, o) {
-  const { carte, police, logo, m, th, index, total } = o;
+  const { carte, police, polices, logo, m, th, index, total } = o;
 
   if (carte.image) {
     const c = cadrageCouverture(
@@ -986,14 +1091,8 @@ function dessinerPhoto(ctx, format, o) {
     );
     if (c) ctx.drawImage(carte.image, c.sx, c.sy, c.sw, c.sh, c.dx, c.dy, c.dw, c.dh);
   }
-  if (carte.degradeBas !== false) voileTexte(ctx, format, th, format.height * 0.42);
-  if (carte.degradeHaut !== false && carte.image) {
-    const g = ctx.createLinearGradient(0, 0, 0, m.bandeH * 1.5);
-    g.addColorStop(0, `rgba(${th.voileTexte}, 0.72)`);
-    g.addColorStop(1, `rgba(${th.voileTexte}, 0)`);
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, format.width, m.bandeH * 1.5);
-  }
+  voileTexte(ctx, format, th, format.height * 0.42, intensite(carte.degradeBas, 1));
+  if (carte.image) voileEntete(ctx, format, m, th, intensite(carte.degradeHaut, 0.72), 1.5);
 
   bandeEntete(ctx, format, m, th, police, {
     texte: carte.entete,
@@ -1017,27 +1116,28 @@ function dessinerPhoto(ctx, format, o) {
     // Ce gabarit se construit du BAS vers le haut. Avec des listes et des
     // respirations, empiler à reculons devient illisible : on mesure le bloc
     // entier, on remonte d'autant, et on le pose dans le sens normal.
-    const bc = baseCorps(m, th, police);
+    const bc = baseCorps(m, th, polices, carte);
     const blocs = blocsDeTexte(ctx, carte.texte, largeurTexte, bc);
     const hauteur = hauteurBlocs(blocs, bc);
     poserBlocs(ctx, blocs, m.pad, y - hauteur + m.corps * 0.2, bc, { puce: carte.puce });
     y -= hauteur + m.corps * 0.5;
   }
   if (carte.titre) {
-    const bt = baseTitre(m, th, police);
+    const bt = baseTitre(m, th, polices, carte);
     const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeurTexte, bt);
     // Bloc construit du bas vers le haut : on réserve la place du filet AVANT
     // d'empiler le titre, puis on le pose une fois la dernière ligne connue.
-    if (carte.filetTitre) y -= Math.round(30 * m.k) + Math.max(1, (carte.filetTitreEpaisseur ?? 4) * m.k);
+    if (carte.filetTitre) y -= hauteurFiletTitre(m, carte);
     const basTitre = y;
     for (let i = ls.length - 1; i >= 0; i -= 1) {
       dessinerLigneRiche(ctx, ls[i], m.pad, y, bt);
-      y -= bt.taille * 1.12;
+      y -= bt.taille * bt.interligne;
     }
     filetSousTitre(ctx, m, th, carte, basTitre);
     y -= m.surtitre * 0.5;
   }
-  if (carte.surtitre) surtitre(ctx, m, th, police, carte.surtitre, m.pad, y);
+  if (carte.surtitre)
+    surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, y);
 
   bandePied(ctx, format, m, th, police, {
     index,
@@ -1053,7 +1153,7 @@ function dessinerPhoto(ctx, format, o) {
 
 /** LE TEXTE — surtitre, titre, paragraphes. La respiration du carrousel. */
 function dessinerTexte(ctx, format, o) {
-  const { carte, police, logo, m, th, index, total } = o;
+  const { carte, police, polices, logo, m, th, index, total } = o;
   bandeEntete(ctx, format, m, th, police, {
     texte: carte.entete,
     accent: carte.enteteAccent,
@@ -1068,10 +1168,10 @@ function dessinerTexte(ctx, format, o) {
 
   if (carte.surtitre) {
     ctx.fillStyle = th.accent;
-    surtitre(ctx, m, th, police, carte.surtitre, m.pad, y);
+    surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, y);
     y += m.surtitre * 1.3;
   }
-  y = blocTitreEtCorps(ctx, format, m, th, police, carte, y, largeur);
+  y = blocTitreEtCorps(ctx, format, m, th, polices, carte, y, largeur);
 
   bandePied(ctx, format, m, th, police, {
     index,
@@ -1093,10 +1193,10 @@ function dessinerTexte(ctx, format, o) {
  * directement sur `y` remonte ses capitales par-dessus le surtitre — c'est
  * exactement ce qui est arrivé à « Un massif, une boucle, aucune assistance. »
  */
-function blocTitreEtCorps(ctx, format, m, th, police, carte, yDepart, largeur, echelleTitre = 1) {
+function blocTitreEtCorps(ctx, format, m, th, polices, carte, yDepart, largeur, echelleTitre = 1) {
   let y = yDepart;
-  const bt = baseTitre(m, th, police, echelleTitre);
-  const bc = baseCorps(m, th, police);
+  const bt = baseTitre(m, th, polices, carte, echelleTitre);
+  const bc = baseCorps(m, th, polices, carte);
   const centre = carte.centrer ? m.pad + largeur / 2 : null;
 
   if (carte.titre) {
@@ -1130,7 +1230,7 @@ function blocTitreEtCorps(ctx, format, m, th, police, carte, yDepart, largeur, e
  * ressemblerait à une image collée, pas à une planche composée.
  */
 function dessinerBandeau(ctx, format, o) {
-  const { carte, police, logo, m, th, index, total } = o;
+  const { carte, police, polices, logo, m, th, index, total } = o;
   const hauteur = Math.round(format.height * (carte.bandeauPart ?? 0.42));
 
   if (carte.image) {
@@ -1141,22 +1241,17 @@ function dessinerBandeau(ctx, format, o) {
     );
     if (c) ctx.drawImage(carte.image, c.sx, c.sy, c.sw, c.sh, 0, 0, format.width, hauteur);
 
-    if (carte.degradeBas !== false) {
+    const bas = intensite(carte.degradeBas, 1);
+    if (bas > 0) {
       const fondu = Math.round(hauteur * 0.42);
       const g = ctx.createLinearGradient(0, hauteur - fondu, 0, hauteur);
       g.addColorStop(0, `rgba(${th.voileTexte}, 0)`);
-      g.addColorStop(0.55, `rgba(${th.voileTexte}, 0.55)`);
-      g.addColorStop(1, `rgba(${th.voileTexte}, 1)`);
+      g.addColorStop(0.55, `rgba(${th.voileTexte}, ${(0.55 * bas).toFixed(3)})`);
+      g.addColorStop(1, `rgba(${th.voileTexte}, ${bas.toFixed(3)})`);
       ctx.fillStyle = g;
       ctx.fillRect(0, hauteur - fondu, format.width, fondu);
     }
-    if (carte.degradeHaut !== false) {
-      const g = ctx.createLinearGradient(0, 0, 0, m.bandeH * 1.4);
-      g.addColorStop(0, `rgba(${th.voileTexte}, 0.74)`);
-      g.addColorStop(1, `rgba(${th.voileTexte}, 0)`);
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, format.width, m.bandeH * 1.4);
-    }
+    voileEntete(ctx, format, m, th, intensite(carte.degradeHaut, 0.74));
   } else {
     ctx.fillStyle = th.filet;
     ctx.fillRect(0, 0, format.width, hauteur);
@@ -1175,10 +1270,10 @@ function dessinerBandeau(ctx, format, o) {
   let y = hauteur + Math.round(74 * m.k);
   if (carte.surtitre) {
     ctx.fillStyle = th.accent;
-    surtitre(ctx, m, th, police, carte.surtitre, m.pad, y);
+    surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, y);
     y += m.surtitre * 1.3;
   }
-  blocTitreEtCorps(ctx, format, m, th, police, carte, y, largeur);
+  blocTitreEtCorps(ctx, format, m, th, polices, carte, y, largeur);
 
   bandePied(ctx, format, m, th, police, {
     index,
@@ -1203,7 +1298,7 @@ function dessinerBandeau(ctx, format, o) {
  * deviner.
  */
 function dessinerFiche(ctx, format, o) {
-  const { carte, police, logo, m, th, index, total } = o;
+  const { carte, police, polices, logo, m, th, index, total } = o;
 
   bandeEntete(ctx, format, m, th, police, {
     texte: carte.entete,
@@ -1217,11 +1312,11 @@ function dessinerFiche(ctx, format, o) {
   let y = m.bandeH + Math.round(118 * m.k);
   if (carte.surtitre) {
     ctx.fillStyle = th.accent;
-    surtitre(ctx, m, th, police, carte.surtitre, m.pad, y);
+    surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, y);
     y += m.surtitre * 1.3;
   }
   if (carte.titre) {
-    const bt = baseTitre(m, th, police, 0.86);
+    const bt = baseTitre(m, th, polices, carte, 0.86);
     const ls = lignesRiches(ctx, analyserRiche(carte.titre), format.width - m.pad * 2, bt);
     y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.86, bt);
     // La fiche l'allume par défaut : c'est ce trait qui la faisait tenir.
@@ -1243,11 +1338,11 @@ function dessinerFiche(ctx, format, o) {
     }
     const base = y + pasLigne * 0.66;
 
-    ctx.font = `400 ${libelle}px ${police}`;
+    ctx.font = `400 ${libelle}px ${policeDe(carte, "policeSurtitre", polices)}`;
     ctx.fillStyle = th.encreFaible;
     dessinerTexteEspace(ctx, String(l.label ?? "").toUpperCase(), m.pad, base, libelle, 0.26);
 
-    ctx.font = `700 ${valeur}px ${police}`;
+    ctx.font = `700 ${valeur}px ${policeDe(carte, "policeTitre", polices)}`;
     ctx.fillStyle = l.accent ? th.accent : th.encre;
     ctx.textAlign = "right";
     ctx.fillText(String(l.valeur ?? ""), format.width - m.pad, base + valeur * 0.1);
@@ -1283,7 +1378,7 @@ function dessinerFiche(ctx, format, o) {
  * D'où l'image facultative : c'est le même gabarit dans les deux cas.
  */
 function dessinerCloture(ctx, format, o) {
-  const { carte, police, logo, m, th, index, total } = o;
+  const { carte, police, polices, logo, m, th, index, total } = o;
 
   if (carte.image) {
     const c = cadrageCouverture(
@@ -1336,7 +1431,7 @@ function dessinerCloture(ctx, format, o) {
   if (carte.surtitre) {
     // Centré, le surtitre n'a pas son filet : celui-ci ouvre une ligne, il ne
     // sait pas ouvrir un axe de symétrie.
-    ctx.font = `500 ${m.surtitre}px ${police}`;
+    ctx.font = `500 ${m.surtitre}px ${policeDe(carte, "policeSurtitre", polices)}`;
     ctx.fillStyle = th.accent;
     const mot = String(carte.surtitre).toUpperCase();
     const l = largeurEspacee(ctx, mot, m.surtitre, 0.22);
@@ -1344,13 +1439,13 @@ function dessinerCloture(ctx, format, o) {
     y += m.surtitre * 2.2;
   }
   if (carte.titre) {
-    const bt = baseTitre(m, th, police);
+    const bt = baseTitre(m, th, polices, carte);
     const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeur, bt);
     y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.7, bt, { centre: centreX });
     y = filetSousTitre(ctx, m, th, carte, y, centreX) + m.corps * 2.2;
   }
   if (carte.texte) {
-    const bc = baseCorps(m, th, police);
+    const bc = baseCorps(m, th, polices, carte);
     poserBlocs(ctx, blocsDeTexte(ctx, carte.texte, largeur, bc), m.pad, y - bc.taille * 0.78, bc, {
       centre: centreX,
       puce: carte.puce,
@@ -1394,7 +1489,16 @@ export function dessinerCartePartage(ctx, options) {
   const format = FORMATS[options.format] ?? FORMATS.carrousel;
   const theme = THEMES[options.theme] ?? THEMES.sombre;
   const [m, th] = mesuresDeLaCarte(options.carte, metriques(format), theme);
+  // LES TROIS FAMILLES, résolues par l'appelant (l'atelier lit les tokens de la
+  // charte sur le document). Sans trousseau, tout retombe sur `police` : une
+  // planche rendue hors du navigateur reste correcte, en Ubuntu partout.
   const police = options.police ?? "sans-serif";
+  const polices = {
+    sans: police,
+    serif: police,
+    mono: police,
+    ...(options.polices ?? null),
+  };
 
   ctx.clearRect(0, 0, format.width, format.height);
   // Le FOND reste celui du thème même si l'encre est redéfinie : une couleur de
@@ -1408,6 +1512,7 @@ export function dessinerCartePartage(ctx, options) {
   return rendu(ctx, format, {
     ...options,
     police,
+    polices,
     m,
     th,
     segments: options.segments ?? [],

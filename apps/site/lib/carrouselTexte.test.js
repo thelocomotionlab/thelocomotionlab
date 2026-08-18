@@ -6,6 +6,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ESPACEMENT,
   analyserRiche,
   blocsDeTexte,
   hauteurBlocs,
@@ -247,5 +248,66 @@ describe("blocs : listes, paragraphes, respirations", () => {
   it("rend une liste vide sur un texte vide", () => {
     expect(blocs("")).toEqual([]);
     expect(blocs(null)).toEqual([]);
+  });
+});
+
+describe("espacements réglables, alinéa et retrait", () => {
+  const ctx = ctxFactice();
+  const blocs = (t, base = BASE, l = 500) => blocsDeTexte(ctx, t, l, base);
+
+  it("respecte l'interligne de la planche, pas celui de la charte", () => {
+    const charte = hauteurBlocs(blocs("un\ndeux\ntrois", { ...BASE }), BASE);
+    const serre = { ...BASE, interligne: 1 };
+    expect(hauteurBlocs(blocs("un\ndeux\ntrois", serre), serre)).toBeLessThan(charte);
+  });
+
+  it("respecte la respiration de la planche", () => {
+    const aere = { ...BASE, respiration: 3 };
+    const t = "un\n\n\ndeux";
+    expect(hauteurBlocs(blocs(t, aere), aere)).toBeGreaterThan(hauteurBlocs(blocs(t), BASE));
+  });
+
+  it("retombe sur la charte quand la planche ne dit rien", () => {
+    // Une valeur absurde (négative, NaN) ne doit pas écraser la charte.
+    const cassee = { ...BASE, interligne: -2, respiration: Number.NaN };
+    expect(hauteurBlocs(blocs("un\n\n\ndeux", cassee), cassee)).toBe(
+      hauteurBlocs(blocs("un\n\n\ndeux"), BASE),
+    );
+    expect(ESPACEMENT.interligne).toBeGreaterThan(1);
+  });
+
+  it("RÉTRÉCIT la première ligne d'un alinéa, pas les suivantes", () => {
+    // Sans alinéa « aaa bbb » tient sur une ligne de 70 ; avec, la première
+    // ligne n'a plus la place et le mot passe en dessous.
+    const sans = lignesRiches(ctx, analyserRiche("aaa bbb"), 70, BASE);
+    const avec = lignesRiches(ctx, analyserRiche("aaa bbb"), 70, BASE, { retrait: 40 });
+    expect(sans).toHaveLength(1);
+    expect(avec).toHaveLength(2);
+  });
+
+  it("porte l'alinéa sur le bloc, en pixels", () => {
+    const [b] = blocs("un paragraphe", { ...BASE, alinea: 2 });
+    expect(b.alinea).toBe(BASE.taille * 2);
+    expect(blocs("un paragraphe")[0].alinea).toBe(0);
+  });
+
+  it("décale un paragraphe entier avec « > »", () => {
+    const [b] = blocs("> une note à part");
+    expect(b.type).toBe("paragraphe");
+    expect(b.retrait).toBeGreaterThan(0);
+    expect(b.lignes[0].map((m) => m.texte).join("")).toBe("une note à part");
+  });
+
+  it("sépare un paragraphe décalé de celui qui le précède", () => {
+    const b = blocs("du texte\n> une note");
+    expect(b).toHaveLength(2);
+    expect(b[0].retrait).toBe(0);
+    expect(b[1].retrait).toBeGreaterThan(0);
+  });
+
+  it("garde le balisage à l'intérieur d'un retrait", () => {
+    const [b] = blocs("> une *note* :col:");
+    expect(b.lignes[0].some((m) => m.gras)).toBe(true);
+    expect(b.lignes[0].some((m) => m.icone === "col")).toBe(true);
   });
 });
