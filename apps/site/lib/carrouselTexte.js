@@ -394,20 +394,83 @@ export function hauteurBlocs(blocs, base) {
 function dessinerPuce(ctx, puce, x, baseLigne, base) {
   const couleur = base.accent;
   const t = base.taille;
-  if (!puce || puce === "point") {
-    ctx.beginPath();
-    ctx.arc(x + t * 0.28, baseLigne - t * 0.3, t * 0.13, 0, Math.PI * 2);
-    ctx.fillStyle = couleur;
-    ctx.fill();
-    return;
+  const cy = baseLigne - t * CENTRE_CAPITALES; // centre optique des capitales
+  const trait = Math.max(1.5, t * 0.06);
+
+  ctx.save();
+  ctx.fillStyle = couleur;
+  ctx.strokeStyle = couleur;
+  ctx.lineWidth = trait;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  switch (puce || "point") {
+    case "point":
+      ctx.beginPath();
+      ctx.arc(x + t * 0.28, cy, t * 0.13, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    case "cercle":
+      ctx.beginPath();
+      ctx.arc(x + t * 0.28, cy, t * 0.15, 0, Math.PI * 2);
+      ctx.stroke();
+      break;
+    case "carre":
+      ctx.fillRect(x + t * 0.14, cy - t * 0.13, t * 0.26, t * 0.26);
+      break;
+    case "carre-vide":
+      ctx.strokeRect(x + t * 0.14, cy - t * 0.13, t * 0.26, t * 0.26);
+      break;
+    case "losange":
+      ctx.beginPath();
+      ctx.moveTo(x + t * 0.28, cy - t * 0.19);
+      ctx.lineTo(x + t * 0.47, cy);
+      ctx.lineTo(x + t * 0.28, cy + t * 0.19);
+      ctx.lineTo(x + t * 0.09, cy);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    case "tiret":
+      ctx.fillRect(x, cy - trait / 2, t * 0.56, trait);
+      break;
+    case "tiret-long":
+      ctx.fillRect(x, cy - trait / 2, t * 0.9, trait);
+      break;
+    case "fleche":
+      ctx.beginPath();
+      ctx.moveTo(x + t * 0.04, cy);
+      ctx.lineTo(x + t * 0.5, cy);
+      ctx.moveTo(x + t * 0.32, cy - t * 0.16);
+      ctx.lineTo(x + t * 0.5, cy);
+      ctx.lineTo(x + t * 0.32, cy + t * 0.16);
+      ctx.stroke();
+      break;
+    case "chevron":
+      ctx.beginPath();
+      ctx.moveTo(x + t * 0.16, cy - t * 0.18);
+      ctx.lineTo(x + t * 0.4, cy);
+      ctx.lineTo(x + t * 0.16, cy + t * 0.18);
+      ctx.stroke();
+      break;
+    case "croix":
+      ctx.beginPath();
+      ctx.moveTo(x + t * 0.12, cy - t * 0.15);
+      ctx.lineTo(x + t * 0.44, cy + t * 0.15);
+      ctx.moveTo(x + t * 0.44, cy - t * 0.15);
+      ctx.lineTo(x + t * 0.12, cy + t * 0.15);
+      ctx.stroke();
+      break;
+    case "aucune":
+      break;
+    default: {
+      // Toute autre valeur est une clé du vocabulaire des repères.
+      const cote = t * 0.92;
+      ctx.restore();
+      dessinerIcone(ctx, puce, x, cy - cote / 2, cote, couleur);
+      return;
+    }
   }
-  if (puce === "tiret") {
-    ctx.fillStyle = couleur;
-    ctx.fillRect(x, baseLigne - t * 0.34, t * 0.56, Math.max(2, t * 0.075));
-    return;
-  }
-  const cote = t * 0.92;
-  dessinerIcone(ctx, puce, x, baseLigne - t * CENTRE_CAPITALES - cote / 2, cote, couleur);
+  ctx.restore();
 }
 
 /**
@@ -455,8 +518,20 @@ export function poserBlocs(ctx, blocs, x, haut, base, { centre = null, largeur =
   return y;
 }
 
-/** Les puces proposées : deux formes tracées, puis tout le vocabulaire d'icônes. */
+/**
+ * Les puces TRACÉES — celles dont la forme est trop simple pour valoir une
+ * icône. Au-delà, toute clé du vocabulaire des repères fait une puce.
+ */
 export const PUCES_SIMPLES = [
-  { cle: "point", label: "Point" },
+  { cle: "point", label: "Point plein" },
+  { cle: "cercle", label: "Cercle vide" },
+  { cle: "carre", label: "Carré plein" },
+  { cle: "carre-vide", label: "Carré vide" },
+  { cle: "losange", label: "Losange" },
   { cle: "tiret", label: "Tiret" },
+  { cle: "tiret-long", label: "Tiret long" },
+  { cle: "fleche", label: "Flèche" },
+  { cle: "chevron", label: "Chevron" },
+  { cle: "croix", label: "Croix" },
+  { cle: "aucune", label: "Aucune (retrait seul)" },
 ];

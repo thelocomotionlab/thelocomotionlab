@@ -466,6 +466,27 @@ function baseCorps(m, th, police) {
 }
 
 /**
+ * LE FILET SOUS LE TITRE — un trait court qui ferme le bloc, à l'inverse du
+ * filet du surtitre qui l'ouvre.
+ *
+ * Longueur et épaisseur se règlent : sous un titre de deux lignes en 80 px, un
+ * trait de 96 × 2,5 ne pèse plus rien. Il suit le centrage du titre, sinon il
+ * pendrait à gauche d'un bloc centré.
+ *
+ * Rend la nouvelle ordonnée — zéro si le filet est éteint, donc l'appelant peut
+ * toujours chaîner.
+ */
+function filetSousTitre(ctx, m, th, carte, y, centre = null) {
+  if (!carte.filetTitre) return y;
+  const largeur = Math.round((carte.filetTitreLargeur ?? 96) * m.k);
+  const epaisseur = Math.max(1, Math.round((carte.filetTitreEpaisseur ?? 4) * m.k));
+  const yTrait = y + Math.round(28 * m.k);
+  ctx.fillStyle = carte.couleurFiletTitre || th.accent;
+  ctx.fillRect(centre === null ? m.pad : centre - largeur / 2, yTrait, largeur, epaisseur);
+  return yTrait + epaisseur;
+}
+
+/**
  * Pose des lignes déjà mises en page, de haut en bas, et rend l'ordonnée de la
  * DERNIÈRE ligne de base — pas celle d'après : c'est à l'appelant de décider de
  * l'espace qui suit, il est le seul à savoir ce qui vient.
@@ -877,10 +898,15 @@ function dessinerCarte(ctx, format, o) {
   if (carte.titre) {
     const bt = baseTitre(m, th, police);
     const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeurTexte, bt);
+    // Bloc construit du bas vers le haut : on réserve la place du filet AVANT
+    // d'empiler le titre, puis on le pose une fois la dernière ligne connue.
+    if (carte.filetTitre) y -= Math.round(30 * m.k) + Math.max(1, (carte.filetTitreEpaisseur ?? 4) * m.k);
+    const basTitre = y;
     for (let i = ls.length - 1; i >= 0; i -= 1) {
       dessinerLigneRiche(ctx, ls[i], m.pad, y, bt);
       y -= bt.taille * 1.12;
     }
+    filetSousTitre(ctx, m, th, carte, basTitre);
     y -= m.surtitre * 0.5;
   }
   if (carte.surtitre) {
@@ -1000,10 +1026,15 @@ function dessinerPhoto(ctx, format, o) {
   if (carte.titre) {
     const bt = baseTitre(m, th, police);
     const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeurTexte, bt);
+    // Bloc construit du bas vers le haut : on réserve la place du filet AVANT
+    // d'empiler le titre, puis on le pose une fois la dernière ligne connue.
+    if (carte.filetTitre) y -= Math.round(30 * m.k) + Math.max(1, (carte.filetTitreEpaisseur ?? 4) * m.k);
+    const basTitre = y;
     for (let i = ls.length - 1; i >= 0; i -= 1) {
       dessinerLigneRiche(ctx, ls[i], m.pad, y, bt);
       y -= bt.taille * 1.12;
     }
+    filetSousTitre(ctx, m, th, carte, basTitre);
     y -= m.surtitre * 0.5;
   }
   if (carte.surtitre) surtitre(ctx, m, th, police, carte.surtitre, m.pad, y);
@@ -1071,6 +1102,7 @@ function blocTitreEtCorps(ctx, format, m, th, police, carte, yDepart, largeur, e
   if (carte.titre) {
     const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeur, bt);
     y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.86, bt, { centre });
+    y = filetSousTitre(ctx, m, th, carte, y, centre);
     // 2,2 corps et pas 1,7 : la jambe du titre descend sous sa ligne de base et
     // la hampe du corps remonte — l'écart utile est bien plus petit que l'écart
     // nominal, et « assistance. » collait à « Quatre jours ».
@@ -1192,11 +1224,8 @@ function dessinerFiche(ctx, format, o) {
     const bt = baseTitre(m, th, police, 0.86);
     const ls = lignesRiches(ctx, analyserRiche(carte.titre), format.width - m.pad * 2, bt);
     y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.86, bt);
-    y += Math.round(30 * m.k);
-    // Le filet ambre sous le titre : le même geste que le surtitre, à l'autre
-    // bout du bloc — il ferme le titre au lieu de l'ouvrir.
-    ctx.fillStyle = th.accent;
-    ctx.fillRect(m.pad, y, Math.round(96 * m.k), Math.max(2, 2.5 * m.k));
+    // La fiche l'allume par défaut : c'est ce trait qui la faisait tenir.
+    y = filetSousTitre(ctx, m, th, { ...carte, filetTitre: carte.filetTitre !== false }, y);
     y += Math.round(46 * m.k);
   }
 
@@ -1317,7 +1346,8 @@ function dessinerCloture(ctx, format, o) {
   if (carte.titre) {
     const bt = baseTitre(m, th, police);
     const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeur, bt);
-    y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.7, bt, { centre: centreX }) + m.corps * 2.2;
+    y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.7, bt, { centre: centreX });
+    y = filetSousTitre(ctx, m, th, carte, y, centreX) + m.corps * 2.2;
   }
   if (carte.texte) {
     const bc = baseCorps(m, th, police);
