@@ -53,9 +53,11 @@ import {
   PALETTE_JOURS,
   POLICES,
   THEMES,
+  casesEffectives,
   chargerFond,
   dessinerCartePartage,
   dureeCourte,
+  texteDeJournee,
   vueDeLaCarte,
 } from "@/lib/carrouselCartes";
 import {
@@ -240,6 +242,14 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0", style = 
     jusquA: null,
     /** La puce des listes : une forme tracée, ou une clé d'icône. */
     puce: "point",
+    /** L'ombre portée des textes — ce qui rend un titre clair lisible sur une
+     *  photo claire, sans repeindre la photo. */
+    ombre: false,
+    ombreFlou: 18,
+    ombreDx: 0,
+    ombreDy: 6,
+    ombreOpacite: 0.5,
+    ombreCouleur: "",
     /** Le filet court sous le titre — allumé d'office sur la fiche. */
     filetTitre: gabarit === "fiche",
     filetTitreLargeur: 96,
@@ -255,9 +265,22 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0", style = 
     /** `null` = l'intensité propre au gabarit (cf. `intensite`). */
     degradeHaut: null,
     degradeBas: null,
+    /** …et la DISTANCE sur laquelle chacun s'éteint, en pixels de planche. */
+    degradeHautH: null,
+    degradeBasH: null,
     bandeauPart: 0.42,
     fiche: gabarit === "fiche" ? ficheParDefaut(trace, segments) : [],
+    /* --- journées : l'espace découpé en cases --- */
+    casesN: null,
+    casesColonnes: 1,
+    cases: [],
+    tailleCase: 30,
+    caseCarte: true,
+    caseProfil: true,
+    caseFilet: true,
     /* --- clôture --- */
+    /** Ce qui passe AU-DESSUS du logo : non | surtitre | titre | les-deux. */
+    clotureHaut: "non",
     tailleCercle: 128,
     epaisseurCercle: 4,
     couleurCercle: "",
@@ -343,6 +366,19 @@ export const CHAMPS_DE_STYLE = [
   "filetTitreLargeur",
   "filetTitreEpaisseur",
   "couleurFiletTitre",
+  "degradeHautH",
+  "degradeBasH",
+  "ombre",
+  "ombreFlou",
+  "ombreDx",
+  "ombreDy",
+  "ombreOpacite",
+  "ombreCouleur",
+  "tailleCase",
+  "casesColonnes",
+  "caseCarte",
+  "caseProfil",
+  "caseFilet",
 ];
 
 function styleDe(carte) {
@@ -420,6 +456,8 @@ export default function CarrouselAtelier() {
   const theme = THEMES[themeCle];
   const segments = useMemo(() => decouperTrace(trace, coupures), [trace, coupures]);
   const carte = cartes[active] ?? null;
+  /** Les cases de la grille, complétées par les journées de la trace. */
+  const cases = useMemo(() => casesEffectives(carte, segments), [carte, segments]);
 
   /* --------------------------------------------------------------- chargements */
 
@@ -684,6 +722,42 @@ export default function CarrouselAtelier() {
         }),
       ),
     [active],
+  );
+
+  const majCase = useCallback(
+    (i, patch) =>
+      setCartes((cs) =>
+        cs.map((c, k) => {
+          if (k !== active) return c;
+          // On PARTIALISE la liste effective, pas la liste écrite : sans ça,
+          // toucher la case 3 d'une grille jamais éditée en effacerait les deux
+          // premières (elles n'existent que par défaut).
+          const cases = casesEffectives(c, segments).map((x) => ({ ...x }));
+          cases[i] = { ...(cases[i] ?? {}), ...patch };
+          return { ...c, cases };
+        }),
+      ),
+    [active, segments],
+  );
+
+  /** Réécrit toutes les cases depuis les journées de la trace. */
+  const regenererCases = useCallback(
+    () =>
+      setCartes((cs) =>
+        cs.map((c, k) =>
+          k === active
+            ? {
+                ...c,
+                casesN: segments.length || c.casesN,
+                cases: (segments.length ? segments : []).map((seg, i) => ({
+                  jour: i,
+                  texte: texteDeJournee(i, seg),
+                })),
+              }
+            : c,
+        ),
+      ),
+    [active, segments],
   );
 
   // La nouvelle planche devient l'active : on vient de la créer, c'est elle
@@ -1383,6 +1457,102 @@ export default function CarrouselAtelier() {
                   </div>
                 </Groupe>
 
+                {carte?.gabarit === "journees" && (
+                  <Groupe
+                    titre="Les cases"
+                    aide="Une case par journée. Chaque case porte sa portion de trace, sa portion de profil et son texte — le balisage marche ici aussi, les sauts de ligne compris."
+                  >
+                    <div className="mb-3 grid grid-cols-2 gap-2">
+                      <Taille
+                        id="cases-n"
+                        label="Nombre de cases"
+                        valeur={carte.casesN ?? cases.length}
+                        defaut={cases.length}
+                        min={1}
+                        max={10}
+                        onChange={(v) => majCarte({ casesN: v })}
+                      />
+                      <div>
+                        <span className={LEGENDE}>Colonnes</span>
+                        <Choix
+                          valeur={carte.casesColonnes ?? 1}
+                          options={[
+                            { cle: 1, label: "1" },
+                            { cle: 2, label: "2" },
+                          ]}
+                          onChange={(v) => majCarte({ casesColonnes: v })}
+                        />
+                      </div>
+                    </div>
+                    <div className="mb-3 flex flex-col gap-1.5">
+                      <Case
+                        label="Portion de trace"
+                        coche={carte.caseCarte !== false}
+                        onChange={(v) => majCarte({ caseCarte: v })}
+                      />
+                      <Case
+                        label="Portion de profil"
+                        coche={carte.caseProfil !== false}
+                        onChange={(v) => majCarte({ caseProfil: v })}
+                      />
+                      <Case
+                        label="Filet entre les rangées"
+                        coche={carte.caseFilet !== false}
+                        onChange={(v) => majCarte({ caseFilet: v })}
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <Taille
+                        id="t-case"
+                        label="Corps du texte des cases"
+                        valeur={carte.tailleCase}
+                        defaut={30}
+                        onChange={(v) => majCarte({ tailleCase: v })}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-3">
+                      {cases.map((c, i) => (
+                        <div key={`case-${i}`} className="rounded-xl border border-brand-field/70 p-2">
+                          <div className="mb-1.5 flex items-center gap-2">
+                            <span className="font-heading text-[12px] font-medium text-brand-text/55">
+                              Case {i + 1}
+                            </span>
+                            <select
+                              value={c.jour}
+                              onChange={(e) => majCase(i, { jour: Number(e.target.value) })}
+                              className={`${CHAMP} ml-auto w-auto py-1 text-[13px]`}
+                              aria-label={`Journée de la case ${i + 1}`}
+                            >
+                              {segments.length === 0 && <option value={i}>aucune trace</option>}
+                              {segments.map((sg, k) => (
+                                <option key={`c${i}-j${sg.kmDebut}`} value={k}>
+                                  Journée {k + 1}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <textarea
+                            rows={2}
+                            value={c.texte}
+                            onChange={(e) => majCase(i, { texte: e.target.value })}
+                            className={`${CHAMP} resize-y`}
+                            aria-label={`Texte de la case ${i + 1}`}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={regenererCases}
+                      disabled={segments.length === 0}
+                      className={`${BOUTON_SECOND} mt-3 w-full`}
+                    >
+                      <RotateCcw size={14} aria-hidden />
+                      Réécrire depuis les journées
+                    </button>
+                  </Groupe>
+                )}
+
                 {carte?.gabarit === "fiche" && (
                   <Groupe
                     titre="Les lignes de la fiche"
@@ -1562,6 +1732,21 @@ export default function CarrouselAtelier() {
                       coche={carte.cercleVisible}
                       onChange={(v) => majCarte({ cercleVisible: v })}
                     />
+                    {/* « Merci d'avoir suivi » ANNONCÉ puis signé se lit comme
+                        une fin ; signé puis annoncé se lit comme un en-tête. */}
+                    <div className="mb-3">
+                      <Choix
+                        label="Au-dessus du logo"
+                        valeur={carte.clotureHaut ?? "non"}
+                        options={[
+                          { cle: "non", label: "Rien" },
+                          { cle: "surtitre", label: "Surtitre" },
+                          { cle: "titre", label: "Titre" },
+                          { cle: "les-deux", label: "Les deux" },
+                        ]}
+                        onChange={(v) => majCarte({ clotureHaut: v })}
+                      />
+                    </div>
                     <div className="mb-3">
                       <Curseur
                         id="cercle-taille"
@@ -1689,6 +1874,8 @@ export default function CarrouselAtelier() {
                   </Groupe>
                 )}
 
+                {/* Le découpage en journées sert AUX DEUX gabarits qui en
+                    parlent : la carte le colorie, la grille en fait ses cases. */}
                 {carte?.gabarit === "carte" && trace && (
                   <>
                     <Groupe titre="La carte">
@@ -1741,6 +1928,11 @@ export default function CarrouselAtelier() {
                       )}
                     </Groupe>
 
+                  </>
+                )}
+
+                {["carte", "journees"].includes(carte?.gabarit) && trace && (
+                  <>
                     <Groupe titre="Les journées">
                       <label className={LEGENDE} htmlFor="nb-jours">
                         Nombre de journées
@@ -1820,7 +2012,10 @@ export default function CarrouselAtelier() {
                         </button>
                       </div>
 
-                      <p className={LEGENDE}>Étiquettes</p>
+                      {/* La COULEUR de chaque journée sert aux deux gabarits :
+                          elle colore la trace sur la carte, et la portion mise
+                          en avant dans chaque case de la grille. */}
+                      <p className={LEGENDE}>Étiquettes et couleurs des journées</p>
                       <div className="flex flex-col gap-2">
                         {segments.map((seg, i) => {
                           const etq = carte.etiquettes?.[i] ?? {};
@@ -2057,6 +2252,17 @@ export default function CarrouselAtelier() {
                       onChange={(v) => majCarte({ degradeHaut: v })}
                     />
                     <Curseur
+                      id="d-haut-h"
+                      label="Distance du dégradé (haut)"
+                      valeur={carte?.degradeHautH}
+                      defaut={carte?.gabarit === "photo" ? 240 : 224}
+                      min={40}
+                      max={1000}
+                      pas={10}
+                      format={(v) => `${Math.round(v)} px`}
+                      onChange={(v) => majCarte({ degradeHautH: v })}
+                    />
+                    <Curseur
                       id="d-bas"
                       label={carte?.gabarit === "bandeau" ? "Fondu du bandeau" : "Voile du pied"}
                       valeur={carte?.degradeBas === false ? 0 : carte?.degradeBas}
@@ -2066,6 +2272,17 @@ export default function CarrouselAtelier() {
                       pas={0.02}
                       format={(v) => `${Math.round(v * 100)} %`}
                       onChange={(v) => majCarte({ degradeBas: v })}
+                    />
+                    <Curseur
+                      id="d-bas-h"
+                      label="Distance du dégradé (bas)"
+                      valeur={carte?.degradeBasH}
+                      defaut={carte?.gabarit === "bandeau" ? 238 : 783}
+                      min={40}
+                      max={1350}
+                      pas={10}
+                      format={(v) => `${Math.round(v)} px`}
+                      onChange={(v) => majCarte({ degradeBasH: v })}
                     />
                     <Opacite
                       id="o-entete"
@@ -2080,6 +2297,68 @@ export default function CarrouselAtelier() {
                       onChange={(v) => majCarte({ piedOpacite: v })}
                     />
                   </div>
+                </Groupe>
+
+                <Groupe
+                  titre="Ombre des textes"
+                  aide="Elle ne décore pas : elle fait le contraste SOUS les lettres, là où un voile assombrirait toute la photo. C'est ce qui rend un titre clair lisible sur un névé."
+                >
+                  <Case
+                    classe="mb-3"
+                    label="Ombre portée sur les textes"
+                    coche={carte?.ombre}
+                    onChange={(v) => majCarte({ ombre: v })}
+                  />
+                  {carte?.ombre && (
+                    <div className="flex flex-col gap-3">
+                      <Curseur
+                        id="omb-flou"
+                        label="Flou"
+                        valeur={carte.ombreFlou}
+                        defaut={18}
+                        min={0}
+                        max={80}
+                        pas={1}
+                        format={(v) => `${Math.round(v)} px`}
+                        onChange={(v) => majCarte({ ombreFlou: v })}
+                      />
+                      <Curseur
+                        id="omb-dy"
+                        label="Décalage vertical"
+                        valeur={carte.ombreDy}
+                        defaut={6}
+                        min={-40}
+                        max={40}
+                        pas={1}
+                        format={(v) => `${Math.round(v)} px`}
+                        onChange={(v) => majCarte({ ombreDy: v })}
+                      />
+                      <Curseur
+                        id="omb-dx"
+                        label="Décalage horizontal"
+                        valeur={carte.ombreDx}
+                        defaut={0}
+                        min={-40}
+                        max={40}
+                        pas={1}
+                        format={(v) => `${Math.round(v)} px`}
+                        onChange={(v) => majCarte({ ombreDx: v })}
+                      />
+                      <Opacite
+                        id="omb-op"
+                        label="Densité"
+                        valeur={carte.ombreOpacite}
+                        defaut={0.5}
+                        onChange={(v) => majCarte({ ombreOpacite: v })}
+                      />
+                      <Couleur
+                        label="Couleur de l'ombre"
+                        valeur={carte.ombreCouleur}
+                        defaut="#000000"
+                        onChange={(v) => majCarte({ ombreCouleur: v })}
+                      />
+                    </div>
+                  )}
                 </Groupe>
 
                 <Groupe titre="Bande d'en-tête">

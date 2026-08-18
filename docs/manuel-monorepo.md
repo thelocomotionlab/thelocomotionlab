@@ -320,12 +320,28 @@ régression :
 ## 8 bis. Habiller une photo de sortie (studio, onglet « Habillage photo »)
 
 Une page de l'app, **entièrement côté navigateur** : on choisit une photo et le
-GPX de la sortie, la silhouette altimétrique ambrée + `distance · D+ ↑ · D− ↓` +
-la signature du labo se posent en bas de l'image, au format story 1080×1920,
-dans la bande qu'Instagram ne recouvre pas. Puis « Partager » (partage natif du
-téléphone) ou « Enregistrer ».
+GPX de la sortie, l'habillage se pose sur l'image, puis « Partager » (partage
+natif du téléphone) ou « Enregistrer ». Même poste de travail que le carrousel
+(barre en haut, rail à gauche, panneau, image au centre) : les deux ateliers
+s'utilisent dans la même demi-heure, deux ergonomies auraient obligé à
+réapprendre à chaque bascule.
 
-Le profil reprend le modèle de l'ancien habillage Coros : **pleine largeur,
+**Deux habillages, deux formats**, au choix dans la barre du haut :
+
+| | Silhouette | Chiffres |
+| --- | --- | --- |
+| Ce qu'on voit | le relief en bandeau pleine largeur, `distance · D+ ↑ · D− ↓` dessous | la distance en très grand, le D+ en ambre à côté, une ligne de trois mesures |
+| Pour quoi | une sortie qu'on raconte par son relief | une sortie qu'on raconte par ses chiffres (la grammaire des écrans de montre, à la charte du labo) |
+
+Les formats sont **Story 1080×1920** et **Publication 1080×1350**. La mise en
+page est **ancrée sur le bas de la zone sûre** : changer de format ne redécide
+rien, il déplace le point d'ancrage — donc rien ne peut passer sous l'interface
+d'Instagram en story, et rien ne gâche de place en publication (une publication
+n'est recouverte de rien). Les trois mesures de l'habillage « Chiffres » sont du
+**texte libre avec une icône au choix** (le même vocabulaire que les planches) ;
+chrono, D− et allure sont pré-remplis depuis le fichier.
+
+Le profil de « Silhouette » reprend le modèle de l'ancien habillage Coros : **pleine largeur,
 aucun filet sous la courbe**, un remplissage translucide surmonté d'une crête
 franche. Le remplissage s'efface vers le bas plutôt que de s'arrêter sur une
 base plate — chez Coros elle tombait hors du cadre donc invisible, ici elle
@@ -380,13 +396,33 @@ la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
   (titre / surtitre / texte, parmi les trois familles de la charte : Ubuntu,
   Lora, Ubuntu Mono), les **espacements** (interligne, entre paragraphes,
   respiration d'une ligne sautée, entre points de liste, retrait de liste,
-  **alinéa** de première ligne), les **dégradés** (en-tête et pied, y compris
-  sur le gabarit Carte — `1` = le voile de la charte, `0` l'éteint), les
-  couleurs, le filet sous le titre et les opacités. Une planche qui ne dit rien
-  suit la charte ; le bouton « Appliquer cette allure aux N autres » diffuse.
+  **alinéa** de première ligne), les **dégradés** — intensité ET **distance**,
+  en-tête et pied, y compris sur le gabarit Carte (`1` = le voile de la charte,
+  `0` l'éteint) —, l'**ombre portée des textes** (flou, décalage, densité,
+  couleur : elle fait le contraste sous les lettres au lieu d'assombrir toute
+  la photo), les couleurs, le filet sous le titre et les opacités. Une planche
+  qui ne dit rien suit la charte ; le bouton « Appliquer cette allure aux N
+  autres » diffuse.
+- **Les gabarits** : Carte, Journées, Bandeau, Photo, Texte, Fiche, Clôture.
+  - **Journées** découpe l'espace en N cases (1 ou 2 colonnes) : chaque case
+    porte sa portion de trace, sa portion de profil et sa légende. La boucle
+    entière et la silhouette entière reviennent dans CHAQUE case, en sourdine,
+    avec la seule journée en couleur — c'est ce déplacement qui fait lire une
+    progression, là où quatre vues recadrées se ressembleraient toutes.
+  - **Clôture** peut faire passer le titre et/ou le surtitre **au-dessus** du
+    logo : annoncé puis signé, ça se lit comme une fin ; l'inverse se lit comme
+    un en-tête. Le bloc entier est mesuré avant d'être posé, donc il reste
+    centré quel que soit l'ordre.
 - **Le balisage du texte** : `*gras*`, `_italique_`, `~souligné~`, `[en ambre]`,
   `[bleu: mot]`, `:col:` (icône), `- ` (point de liste), `> ` (paragraphe
-  décalé). Une ligne vide sépare, chaque ligne vide en plus aère.
+  décalé). Une ligne vide sépare, chaque ligne vide en plus aère. Dans les cases
+  du gabarit Journées, chaque ligne tapée reste une ligne (une légende n'est pas
+  un texte suivi).
+- **Ajouter une icône** au vocabulaire : `apps/site/lib/liveWaypointIcons.js`
+  (une clé → un composant lucide). Ce que lucide n'a pas se dessine à la maison,
+  au même trait, dans `apps/site/lib/iconesMaison.js` — c'est le cas de la
+  sandale. Une clé sans géométrie disparaîtrait SILENCIEUSEMENT d'une planche :
+  `lib/carrouselRendu.test.js` vérifie que chacune est traçable.
 - **Sur le téléphone** : ouvrir `/studio`, puis « Ajouter à l'écran d'accueil ».
   Le studio a **son propre manifeste** (`public/studio.webmanifest`) et ses
   **icônes sombres** : ça pose une icône SÉPARÉE de celle du site, qui ouvre

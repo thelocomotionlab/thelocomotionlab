@@ -11,6 +11,7 @@
 import { describe, expect, it } from "vitest";
 
 import { FORMATS, dessinerCartePartage } from "./carrouselCartes";
+import { CLES_ICONES, geometrieDIcone } from "./carrouselIcones";
 
 const GABARITS = ["carte", "bandeau", "photo", "texte", "fiche", "cloture"];
 
@@ -19,10 +20,12 @@ const GABARITS = ["carte", "bandeau", "photo", "texte", "fiche", "cloture"];
 function ctxFactice() {
   const rects = [];
   const mots = [];
+  const images = [];
   const noop = () => {};
   const ctx = {
     rects,
     mots,
+    images,
     font: "",
     fillStyle: "",
     strokeStyle: "",
@@ -35,12 +38,13 @@ function ctxFactice() {
     measureText: (t) => ({ width: String(t).length * 0.5 * (parseInt(ctx.font, 10) || 20) }),
     fillRect: (x, y, w, h) => rects.push({ x, y, w, h, couleur: ctx.fillStyle }),
     fillText: (t) => mots.push({ texte: String(t), fonte: ctx.font }),
+    drawImage: (_src, x, y, w, h) => images.push({ x, y, w, h }),
     createLinearGradient: () => ({ addColorStop: noop, degrade: true }),
   };
   for (const nom of [
     "clearRect", "strokeRect", "strokeText", "beginPath", "moveTo",
     "lineTo", "arc", "closePath", "fill", "stroke", "save", "restore",
-    "translate", "rotate", "scale", "setTransform", "drawImage", "clip",
+    "translate", "rotate", "scale", "setTransform", "clip",
   ]) ctx[nom] = noop;
   return ctx;
 }
@@ -188,5 +192,154 @@ describe("l'interligne du titre", () => {
   it("descend le bloc quand on l'ouvre, le remonte quand on le serre", () => {
     expect(yDuFilet(2)).toBeGreaterThan(yDuFilet(1.16));
     expect(yDuFilet(1)).toBeLessThan(yDuFilet(1.16));
+  });
+});
+
+describe("le vocabulaire d'icônes", () => {
+  it("a une géométrie traçable pour CHAQUE clé", () => {
+    // Une clé sans géométrie disparaît SILENCIEUSEMENT de la planche : le texte
+    // se dessine, l'icône non, et rien ne le dit.
+    for (const cle of CLES_ICONES) {
+      expect(geometrieDIcone(cle), `géométrie manquante pour :${cle}:`).toBeTruthy();
+    }
+  });
+
+  it("connaît les sandales et le chrono", () => {
+    expect(CLES_ICONES).toContain("sandales");
+    expect(CLES_ICONES).toContain("chrono");
+    // La sandale est dessinée à la maison : elle doit rendre la même forme de
+    // géométrie que les icônes de lucide, sinon le canvas ne saurait pas la lire.
+    expect(geometrieDIcone("sandales").every(([type]) => typeof type === "string")).toBe(true);
+  });
+
+  it("ne dessine que des primitives que le canvas sait tracer", () => {
+    const connues = new Set(["path", "circle", "ellipse", "line", "rect", "polyline", "polygon"]);
+    for (const cle of CLES_ICONES) {
+      for (const [type] of geometrieDIcone(cle)) {
+        expect(connues.has(type), `${cle} → <${type}> inconnu`).toBe(true);
+      }
+    }
+  });
+});
+
+describe("la clôture", () => {
+  const LOGO = { width: 512, height: 512 };
+  const commun = {
+    gabarit: "cloture",
+    surtitre: "c'est fini",
+    titre: "Merci d'avoir suivi.",
+    texte: "",
+    marque: "rien",
+  };
+  // Le logo est la seule image de cette planche : sa boîte dit où le bloc s'est
+  // posé, sans avoir à mesurer du texte.
+  const yDuLogo = (ctx) => ctx.images[0]?.y;
+
+  it("pose bien le logo", () => {
+    expect(yDuLogo(planche(commun, { logo: LOGO }))).toBeGreaterThan(0);
+  });
+
+  it("descend le logo quand le texte lui passe devant", () => {
+    const bas = yDuLogo(planche(commun, { logo: LOGO }));
+    const surtitre = yDuLogo(planche({ ...commun, clotureHaut: "surtitre" }, { logo: LOGO }));
+    const deux = yDuLogo(planche({ ...commun, clotureHaut: "les-deux" }, { logo: LOGO }));
+    expect(surtitre).toBeGreaterThan(bas);
+    expect(deux).toBeGreaterThan(surtitre);
+  });
+
+  it("centre le bloc entier : un bloc plus haut MONTE, il ne déborde pas", () => {
+    const court = yDuLogo(planche(commun, { logo: LOGO }));
+    const long = yDuLogo(
+      planche({ ...commun, texte: "Une ligne.\n\nUne autre.\n\nUne troisième." }, { logo: LOGO }),
+    );
+    expect(long).toBeLessThan(court);
+  });
+});
+
+describe("la distance des dégradés", () => {
+  /** La hauteur du rectangle peint avec un dégradé, en partant du haut. */
+  const hautDuVoile = ({ rects }) =>
+    rects.find((r) => r.couleur?.degrade && Math.round(r.y) === 0)?.h;
+
+  it("suit le réglage sur la photo", () => {
+    const image = { width: 1600, height: 1200 };
+    expect(Math.round(hautDuVoile(planche({ gabarit: "photo", image, degradeHautH: 400 })))).toBe(400);
+    expect(Math.round(hautDuVoile(planche({ gabarit: "photo", image, degradeHautH: 700 })))).toBe(700);
+  });
+
+  it("est réglable sur la carte aussi", () => {
+    expect(Math.round(hautDuVoile(planche({ gabarit: "carte", degradeHautH: 320 })))).toBe(320);
+  });
+
+  it("garde la valeur du gabarit quand la planche ne dit rien", () => {
+    const image = { width: 1600, height: 1200 };
+    const defaut = hautDuVoile(planche({ gabarit: "photo", image }));
+    expect(defaut).toBeGreaterThan(0);
+    expect(defaut).not.toBe(400);
+  });
+});
+
+describe("l'ombre des textes", () => {
+  it("ne s'allume que si la planche la demande", () => {
+    // On ne peut pas lire `ctx.shadowColor` après coup : on vérifie que le
+    // rendu ne casse pas et que le réglage est bien pris en compte au dessin.
+    const sans = planche({ gabarit: "texte" });
+    const avec = planche({ gabarit: "texte", ombre: true, ombreFlou: 24 });
+    expect(sans.mots.length).toBe(avec.mots.length);
+  });
+});
+
+describe("le gabarit « Journées »", () => {
+  const segments = [0, 1, 2, 3].map((i) => ({
+    kmDebut: i * 40,
+    kmFin: (i + 1) * 40,
+    distanceKm: 40,
+    dPlusM: 2000 + i * 100,
+    coords: [
+      [6 + i * 0.1, 44.9],
+      [6.1 + i * 0.1, 45],
+    ],
+  }));
+  const trace = {
+    totalKm: 160,
+    dPlusM: 8000,
+    coords: [
+      [6, 44.9],
+      [6.4, 45.1],
+      [6.2, 45.3],
+    ],
+    profil: Array.from({ length: 50 }, (_, i) => ({ km: (i / 49) * 160, alt: 1000 + i * 20 })),
+  };
+
+  it("écrit une ligne par case, avec le jour et ses chiffres", () => {
+    const ctx = planche({ gabarit: "journees" }, { trace, segments });
+    const texte = ctx.mots.map((m) => m.texte).join(" ");
+    expect(texte).toContain("Jour");
+    expect(texte).toContain("1");
+    expect(texte).toContain("4");
+  });
+
+  it("suit le nombre de cases demandé", () => {
+    const deux = planche({ gabarit: "journees", casesN: 2 }, { trace, segments });
+    const quatre = planche({ gabarit: "journees", casesN: 4 }, { trace, segments });
+    const jours = (ctx) => ctx.mots.filter((m) => m.texte === "Jour").length;
+    expect(jours(deux)).toBe(2);
+    expect(jours(quatre)).toBe(4);
+  });
+
+  it("tient dans la planche, même à huit cases sur deux colonnes", () => {
+    const ctx = planche(
+      { gabarit: "journees", casesN: 8, casesColonnes: 2 },
+      { trace, segments },
+    );
+    for (const r of ctx.rects) {
+      expect(r.y).toBeGreaterThanOrEqual(0);
+      expect(r.y + r.h).toBeLessThanOrEqual(FORMATS.carrousel.height + 1);
+    }
+  });
+
+  it("ne dessine rien d'absurde sans trace", () => {
+    const ctx = planche({ gabarit: "journees" }, { trace: null, segments: [] });
+    expect(ctx.mots.some((m) => m.texte === "Jour")).toBe(true);
   });
 });

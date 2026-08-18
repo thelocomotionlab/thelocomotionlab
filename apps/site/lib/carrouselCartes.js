@@ -105,6 +105,11 @@ export const GABARITS = [
   { cle: "photo", label: "Photo", aide: "Une photo plein cadre." },
   { cle: "texte", label: "Texte", aide: "Un surtitre, un titre, un paragraphe." },
   { cle: "fiche", label: "Fiche", aide: "Des libellés à gauche, des valeurs en gros à droite." },
+  {
+    cle: "journees",
+    label: "Journées",
+    aide: "L'espace découpé en cases : une journée par case, sa portion de trace et de profil.",
+  },
   { cle: "cloture", label: "Clôture", aide: "La marque cerclée, et le mot de la fin." },
 ];
 
@@ -391,10 +396,18 @@ function voileTexte(ctx, format, th, depuis, force = 1) {
   ctx.fillRect(0, depuis, format.width, format.height - depuis);
 }
 
-/** Le voile du haut, sous la bande d'en-tête. Même contrat que `voileTexte`. */
-function voileEntete(ctx, format, m, th, force, jusqu = 1.4) {
-  if (!(force > 0)) return;
-  const bas = m.bandeH * jusqu;
+/**
+ * Le voile du haut, sous la bande d'en-tête.
+ *
+ * `force` est son opacité au bord haut, `hauteur` la DISTANCE sur laquelle il
+ * s'éteint. Les deux se règlent : sur une photo dont le ciel occupe le tiers
+ * supérieur, un voile court et dense mange le ciel ; un voile long et léger le
+ * garde tout en rendant l'en-tête lisible. C'est le même réglage que celui
+ * qu'on ferait à la main dans un dégradé.
+ */
+function voileEntete(ctx, format, m, th, force, hauteur) {
+  if (!(force > 0) || !(hauteur > 0)) return;
+  const bas = hauteur;
   const g = ctx.createLinearGradient(0, 0, 0, bas);
   g.addColorStop(0, `rgba(${th.voileTexte}, ${force.toFixed(3)})`);
   g.addColorStop(1, `rgba(${th.voileTexte}, 0)`);
@@ -510,9 +523,77 @@ export function lignes(ctx, texte, largeurMax) {
 /** Interligne d'un titre, en parts de son corps. */
 const INTERLIGNE_TITRE = 1.16;
 
+/* ------------------------------------------------------------------ ombres */
+
+/**
+ * L'OMBRE PORTÉE DES TEXTES.
+ *
+ * Elle ne sert pas à décorer : elle sert à poser du texte clair sur une photo
+ * claire. Un voile assombrit TOUTE la zone (et donc la photo) ; une ombre ne
+ * fait un contraste QUE sous les lettres. Sur une crête enneigée à midi, c'est
+ * la seule chose qui rende un titre lisible sans repeindre l'image.
+ *
+ * Elle est portée par le contexte (`ctx.shadow*`), donc elle s'applique à TOUT
+ * ce qu'on dessine ensuite : on la pose avant les textes et on l'enlève avant
+ * les images, les voiles et le profil — un profil altimétrique doublé d'une
+ * ombre devient une bouillie.
+ */
+const OMBRE = { flou: 18, dx: 0, dy: 6, opacite: 0.5, couleur: "#000000" };
+
+/** #RRGGBB (ou #RGB) → « r, g, b ». Toute autre écriture est rendue telle
+ *  quelle : une couleur déjà en `rgb()` doit continuer de marcher. */
+function composantes(hex) {
+  const brut = String(hex ?? "").trim();
+  const court = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(brut);
+  const long = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(brut);
+  if (court) return court.slice(1).map((c) => parseInt(c + c, 16)).join(", ");
+  if (long) return long.slice(1).map((c) => parseInt(c, 16)).join(", ");
+  return null;
+}
+
+function ombreDe(carte, m) {
+  if (!carte?.ombre) return null;
+  const rgb = composantes(carte.ombreCouleur || OMBRE.couleur) ?? "0, 0, 0";
+  const opacite = Math.min(1, Math.max(0, nombre(carte.ombreOpacite, OMBRE.opacite)));
+  return {
+    couleur: `rgba(${rgb}, ${opacite})`,
+    flou: Math.max(0, nombre(carte.ombreFlou, OMBRE.flou)) * m.k,
+    dx: (Number.isFinite(carte.ombreDx) ? carte.ombreDx : OMBRE.dx) * m.k,
+    dy: (Number.isFinite(carte.ombreDy) ? carte.ombreDy : OMBRE.dy) * m.k,
+  };
+}
+
+/** Ce qui suit est du TEXTE : il porte l'ombre de la planche. */
+function poserOmbre(ctx, ombre) {
+  if (!ombre) return;
+  ctx.shadowColor = ombre.couleur;
+  ctx.shadowBlur = ombre.flou;
+  ctx.shadowOffsetX = ombre.dx;
+  ctx.shadowOffsetY = ombre.dy;
+}
+
+/** Ce qui suit n'en est pas. */
+function sansOmbre(ctx) {
+  ctx.shadowColor = "rgba(0, 0, 0, 0)";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+}
+
 /** Un réglage numérique de la planche, sinon la valeur de la charte. */
 function nombre(v, defaut) {
   return Number.isFinite(v) && v >= 0 ? v : defaut;
+}
+
+/**
+ * La DISTANCE d'un dégradé, en pixels d'une planche de 1080 de large.
+ *
+ * Réglée, elle est mise à l'échelle du format comme tout le reste ; absente,
+ * on garde la distance calculée par le gabarit (qui, elle, est déjà en pixels
+ * du format — d'où les deux chemins).
+ */
+function portee(reglee, defautDejaEchelle, m) {
+  return Number.isFinite(reglee) && reglee >= 0 ? reglee * m.k : defautDejaEchelle;
 }
 
 /** La famille RÉSOLUE d'un des trois rôles de texte (cf. `POLICES`). */
@@ -557,6 +638,7 @@ function baseCorps(m, th, polices, carte) {
     entreItems: nombre(carte?.entreItems, ESPACEMENT.entreItems),
     retraitListe: nombre(carte?.retraitListe, ESPACEMENT.retraitListe),
     alinea: nombre(carte?.alinea, ESPACEMENT.alinea),
+    lignesDures: Boolean(carte?.lignesDures),
   };
 }
 
@@ -904,7 +986,7 @@ function ligneFactuelle(trace, bilan) {
  * qu'on attrape à la souris.
  */
 function dessinerCarte(ctx, format, o) {
-  const { carte, trace, police, polices, logo, fond, m, th, index, total } = o;
+  const { carte, trace, police, polices, logo, fond, m, th, ombre, index, total } = o;
   const boites = [];
   const fenetre = fenetreCarte(format);
 
@@ -941,9 +1023,15 @@ function dessinerCarte(ctx, format, o) {
   // LES DEUX DÉGRADÉS DE LA CARTE, réglables comme ceux des photos : le fond
   // topo est une image comme une autre, et sa densité change du tout au tout
   // entre une haute vallée enneigée et un fond de forêt.
-  voileTexte(ctx, format, th, fenetre.y + fenetre.height, intensite(carte.degradeBas, 1));
+  voileTexte(
+    ctx,
+    format,
+    th,
+    format.height - portee(carte.degradeBasH, format.height - (fenetre.y + fenetre.height), m),
+    intensite(carte.degradeBas, 1),
+  );
   // La bande d'en-tête doit rester lisible par-dessus les tuiles.
-  voileEntete(ctx, format, m, th, intensite(carte.degradeHaut, 0.8));
+  voileEntete(ctx, format, m, th, intensite(carte.degradeHaut, 0.8), portee(carte.degradeHautH, m.bandeH * 1.4, m));
 
   const couleurs = couleursDesJours(carte, segments);
 
@@ -963,6 +1051,7 @@ function dessinerCarte(ctx, format, o) {
     });
 
     // Étiquettes en DERNIER : sur tous les tracés, jamais dessous.
+    poserOmbre(ctx, ombre);
     segments.forEach((seg, i) => {
       const etq = carte.etiquettes?.[i] ?? {};
       if (etq.masquee) return;
@@ -977,7 +1066,10 @@ function dessinerCarte(ctx, format, o) {
       dessinerEtiquette(ctx, texte, boite, couleurs[i], m, th, police);
       boites.push({ index: i, ...boite });
     });
+    sansOmbre(ctx);
   }
+
+  poserOmbre(ctx, ombre);
 
   bandeEntete(ctx, format, m, th, police, {
     texte: carte.entete,
@@ -1020,6 +1112,9 @@ function dessinerCarte(ctx, format, o) {
     y -= m.surtitre * 2.1;
   }
 
+  // Le profil n'est pas du texte : une silhouette doublée d'une ombre portée
+  // devient illisible.
+  sansOmbre(ctx);
   if (carte.afficherProfil !== false && cadre?.profil?.length > 1) {
     const boite = {
       x: m.pad,
@@ -1036,6 +1131,7 @@ function dessinerCarte(ctx, format, o) {
     });
   }
 
+  poserOmbre(ctx, ombre);
   bandePied(ctx, format, m, th, police, {
     index,
     total,
@@ -1045,6 +1141,7 @@ function dessinerCarte(ctx, format, o) {
     filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
   });
+  sansOmbre(ctx);
   if (view && fond && carte.afficherFond !== false) attributionVerticale(ctx, format, m, th, police);
   return boites;
 }
@@ -1081,7 +1178,7 @@ function attributionVerticale(ctx, format, m, th, police) {
  * le texte reste écrit — c'est à l'auteur de vérifier qu'il se lit.
  */
 function dessinerPhoto(ctx, format, o) {
-  const { carte, police, polices, logo, m, th, index, total } = o;
+  const { carte, police, polices, logo, m, th, ombre, index, total } = o;
 
   if (carte.image) {
     const c = cadrageCouverture(
@@ -1091,8 +1188,16 @@ function dessinerPhoto(ctx, format, o) {
     );
     if (c) ctx.drawImage(carte.image, c.sx, c.sy, c.sw, c.sh, c.dx, c.dy, c.dw, c.dh);
   }
-  voileTexte(ctx, format, th, format.height * 0.42, intensite(carte.degradeBas, 1));
-  if (carte.image) voileEntete(ctx, format, m, th, intensite(carte.degradeHaut, 0.72), 1.5);
+  voileTexte(
+    ctx,
+    format,
+    th,
+    format.height - portee(carte.degradeBasH, format.height * 0.58, m),
+    intensite(carte.degradeBas, 1),
+  );
+  if (carte.image)
+    voileEntete(ctx, format, m, th, intensite(carte.degradeHaut, 0.72), portee(carte.degradeHautH, m.bandeH * 1.5, m));
+  poserOmbre(ctx, ombre);
 
   bandeEntete(ctx, format, m, th, police, {
     texte: carte.entete,
@@ -1148,12 +1253,14 @@ function dessinerPhoto(ctx, format, o) {
     filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
   });
+  sansOmbre(ctx);
   return [];
 }
 
 /** LE TEXTE — surtitre, titre, paragraphes. La respiration du carrousel. */
 function dessinerTexte(ctx, format, o) {
-  const { carte, police, polices, logo, m, th, index, total } = o;
+  const { carte, police, polices, logo, m, th, ombre, index, total } = o;
+  poserOmbre(ctx, ombre);
   bandeEntete(ctx, format, m, th, police, {
     texte: carte.entete,
     accent: carte.enteteAccent,
@@ -1182,6 +1289,7 @@ function dessinerTexte(ctx, format, o) {
     filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
   });
+  sansOmbre(ctx);
   return [];
 }
 
@@ -1230,7 +1338,7 @@ function blocTitreEtCorps(ctx, format, m, th, polices, carte, yDepart, largeur, 
  * ressemblerait à une image collée, pas à une planche composée.
  */
 function dessinerBandeau(ctx, format, o) {
-  const { carte, police, polices, logo, m, th, index, total } = o;
+  const { carte, police, polices, logo, m, th, ombre, index, total } = o;
   const hauteur = Math.round(format.height * (carte.bandeauPart ?? 0.42));
 
   if (carte.image) {
@@ -1243,7 +1351,7 @@ function dessinerBandeau(ctx, format, o) {
 
     const bas = intensite(carte.degradeBas, 1);
     if (bas > 0) {
-      const fondu = Math.round(hauteur * 0.42);
+      const fondu = Math.round(portee(carte.degradeBasH, hauteur * 0.42, m));
       const g = ctx.createLinearGradient(0, hauteur - fondu, 0, hauteur);
       g.addColorStop(0, `rgba(${th.voileTexte}, 0)`);
       g.addColorStop(0.55, `rgba(${th.voileTexte}, ${(0.55 * bas).toFixed(3)})`);
@@ -1251,12 +1359,20 @@ function dessinerBandeau(ctx, format, o) {
       ctx.fillStyle = g;
       ctx.fillRect(0, hauteur - fondu, format.width, fondu);
     }
-    voileEntete(ctx, format, m, th, intensite(carte.degradeHaut, 0.74));
+    voileEntete(
+      ctx,
+      format,
+      m,
+      th,
+      intensite(carte.degradeHaut, 0.74),
+      portee(carte.degradeHautH, m.bandeH * 1.4, m),
+    );
   } else {
     ctx.fillStyle = th.filet;
     ctx.fillRect(0, 0, format.width, hauteur);
   }
 
+  poserOmbre(ctx, ombre);
   bandeEntete(ctx, format, m, th, police, {
     texte: carte.entete,
     accent: carte.enteteAccent,
@@ -1284,6 +1400,7 @@ function dessinerBandeau(ctx, format, o) {
     filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
   });
+  sansOmbre(ctx);
   return [];
 }
 
@@ -1298,8 +1415,9 @@ function dessinerBandeau(ctx, format, o) {
  * deviner.
  */
 function dessinerFiche(ctx, format, o) {
-  const { carte, police, polices, logo, m, th, index, total } = o;
+  const { carte, police, polices, logo, m, th, ombre, index, total } = o;
 
+  poserOmbre(ctx, ombre);
   bandeEntete(ctx, format, m, th, police, {
     texte: carte.entete,
     accent: carte.enteteAccent,
@@ -1360,6 +1478,7 @@ function dessinerFiche(ctx, format, o) {
     filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
   });
+  sansOmbre(ctx);
   return [];
 }
 
@@ -1378,7 +1497,7 @@ function dessinerFiche(ctx, format, o) {
  * D'où l'image facultative : c'est le même gabarit dans les deux cas.
  */
 function dessinerCloture(ctx, format, o) {
-  const { carte, police, polices, logo, m, th, index, total } = o;
+  const { carte, police, polices, logo, m, th, ombre, index, total } = o;
 
   if (carte.image) {
     const c = cadrageCouverture(
@@ -1393,63 +1512,108 @@ function dessinerCloture(ctx, format, o) {
     ctx.fillRect(0, 0, format.width, format.height);
   }
 
+  poserOmbre(ctx, ombre);
+
+  /* LE BLOC DE CLÔTURE, MESURÉ AVANT D'ÊTRE POSÉ.
+     Le surtitre et le titre peuvent passer AU-DESSUS du logo (`clotureHaut`) :
+     « Merci d'avoir suivi » annoncé, puis la signature dessous, se lit comme
+     une fin ; l'inverse se lit comme un en-tête. Pour que les deux soient
+     centrés, il faut connaître la hauteur totale du bloc avant d'écrire la
+     première ligne — d'où la mesure, puis la pose. */
   const centreX = format.width / 2;
-  const rayon = Math.round((carte.tailleCercle ?? 128) * m.k);
-  const hautZone = format.zoneSure?.top ?? 0;
-  // Le bloc entier (cercle + textes) est centré dans la zone utile, pas dans la
-  // planche : en story, l'interface d'Instagram mange le haut et le bas.
-  const basZone = m.piedFilet;
-  let y = hautZone + (basZone - hautZone) * (carte.image ? 0.4 : 0.42);
-
-  ctx.save();
-  // LA MARQUE PORTE DÉJÀ SON ROND : le fichier source, c'est le pied DANS un
-  // cercle. En tracer un second par-dessus faisait une cible. L'anneau
-  // extérieur existe donc, mais éteint par défaut — il sert quand on veut un
-  // halo, pas pour « entourer » quelque chose qui l'est déjà.
-  if (carte.cercleVisible) {
-    ctx.beginPath();
-    ctx.arc(centreX, y, rayon, 0, Math.PI * 2);
-    ctx.strokeStyle = carte.couleurCercle || th.encre;
-    ctx.globalAlpha = 0.9;
-    ctx.lineWidth = Math.max(1, (carte.epaisseurCercle ?? 4) * m.k);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-  }
-  if (logo) {
-    // Sans anneau extérieur, le pied occupe tout le diamètre : c'est LUI le
-    // cercle. Avec, il se range dedans.
-    const cote = rayon * (carte.cercleVisible ? 1.16 : 2);
-    ctx.globalAlpha = 0.94;
-    ctx.drawImage(logo, centreX - cote / 2, y - cote / 2, cote, cote);
-    ctx.globalAlpha = 1;
-  }
-  ctx.restore();
-
-  y += rayon + Math.round(84 * m.k);
-
+  const rayon = Math.round(nombre(carte.tailleCercle, 128) * m.k);
   const largeur = format.width - m.pad * 2;
-  if (carte.surtitre) {
-    // Centré, le surtitre n'a pas son filet : celui-ci ouvre une ligne, il ne
-    // sait pas ouvrir un axe de symétrie.
-    ctx.font = `500 ${m.surtitre}px ${policeDe(carte, "policeSurtitre", polices)}`;
-    ctx.fillStyle = th.accent;
-    const mot = String(carte.surtitre).toUpperCase();
-    const l = largeurEspacee(ctx, mot, m.surtitre, 0.22);
-    dessinerTexteEspace(ctx, mot, centreX - l / 2, y, m.surtitre, 0.22);
-    y += m.surtitre * 2.2;
-  }
-  if (carte.titre) {
-    const bt = baseTitre(m, th, polices, carte);
-    const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeur, bt);
-    y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.7, bt, { centre: centreX });
-    y = filetSousTitre(ctx, m, th, carte, y, centreX) + m.corps * 2.2;
-  }
-  if (carte.texte) {
-    const bc = baseCorps(m, th, polices, carte);
-    poserBlocs(ctx, blocsDeTexte(ctx, carte.texte, largeur, bc), m.pad, y - bc.taille * 0.78, bc, {
-      centre: centreX,
-      puce: carte.puce,
-    });
+  const bt = baseTitre(m, th, polices, carte);
+  const bc = baseCorps(m, th, polices, carte);
+
+  const haut = carte.clotureHaut ?? "non";
+  const surtitreEnHaut = haut === "surtitre" || haut === "les-deux";
+  const titreEnHaut = haut === "titre" || haut === "les-deux";
+
+  const lignesTitre = carte.titre
+    ? lignesRiches(ctx, analyserRiche(carte.titre), largeur, bt)
+    : [];
+  const blocsTexte = carte.texte ? blocsDeTexte(ctx, carte.texte, largeur, bc) : [];
+
+  /** Les pièces du bloc, dans l'ordre où elles se posent. */
+  const morceaux = [];
+  const pieceSurtitre = carte.surtitre
+    ? { type: "surtitre", hauteur: m.surtitre * 1.9 }
+    : null;
+  const pieceTitre = lignesTitre.length
+    ? {
+        type: "titre",
+        hauteur:
+          bt.taille * 0.7 +
+          (lignesTitre.length - 1) * bt.taille * bt.interligne +
+          (carte.filetTitre ? hauteurFiletTitre(m, carte) : 0) +
+          bt.taille * 0.3,
+      }
+    : null;
+  const pieceTexte = blocsTexte.length
+    ? { type: "texte", hauteur: hauteurBlocs(blocsTexte, bc) }
+    : null;
+  const pieceLogo = { type: "logo", hauteur: rayon * 2 };
+
+  const ecart = Math.round(72 * m.k);
+  if (surtitreEnHaut && pieceSurtitre) morceaux.push(pieceSurtitre);
+  if (titreEnHaut && pieceTitre) morceaux.push(pieceTitre);
+  morceaux.push(pieceLogo);
+  if (!surtitreEnHaut && pieceSurtitre) morceaux.push(pieceSurtitre);
+  if (!titreEnHaut && pieceTitre) morceaux.push(pieceTitre);
+  if (pieceTexte) morceaux.push(pieceTexte);
+
+  const hautZone = format.zoneSure?.top ?? m.bandeH;
+  // Le bloc est centré dans la zone UTILE, pas dans la planche : en story,
+  // l'interface d'Instagram mange le haut et le bas.
+  const basZone = m.piedFilet;
+  const total_h =
+    morceaux.reduce((somme, p) => somme + p.hauteur, 0) +
+    Math.max(0, morceaux.length - 1) * ecart;
+  let y = hautZone + (basZone - hautZone - total_h) / 2;
+
+  for (const [i, piece] of morceaux.entries()) {
+    if (i > 0) y += ecart;
+    if (piece.type === "logo") {
+      const cy = y + rayon;
+      ctx.save();
+      // LA MARQUE PORTE DÉJÀ SON ROND : le fichier source, c'est le pied DANS
+      // un cercle. En tracer un second par-dessus faisait une cible. L'anneau
+      // extérieur existe donc, mais éteint par défaut — il sert quand on veut
+      // un halo, pas pour « entourer » quelque chose qui l'est déjà.
+      if (carte.cercleVisible) {
+        ctx.beginPath();
+        ctx.arc(centreX, cy, rayon, 0, Math.PI * 2);
+        ctx.strokeStyle = carte.couleurCercle || th.encre;
+        ctx.globalAlpha = 0.9;
+        ctx.lineWidth = Math.max(1, nombre(carte.epaisseurCercle, 4) * m.k);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+      if (logo) {
+        // Sans anneau extérieur, le pied occupe tout le diamètre : c'est LUI le
+        // cercle. Avec, il se range dedans.
+        const cote = rayon * (carte.cercleVisible ? 1.16 : 2);
+        ctx.globalAlpha = 0.94;
+        ctx.drawImage(logo, centreX - cote / 2, cy - cote / 2, cote, cote);
+        ctx.globalAlpha = 1;
+      }
+      ctx.restore();
+    } else if (piece.type === "surtitre") {
+      // Centré, le surtitre n'a pas son filet : celui-ci ouvre une ligne, il ne
+      // sait pas ouvrir un axe de symétrie.
+      ctx.font = `500 ${m.surtitre}px ${policeDe(carte, "policeSurtitre", polices)}`;
+      ctx.fillStyle = th.accent;
+      const mot = String(carte.surtitre).toUpperCase();
+      const l = largeurEspacee(ctx, mot, m.surtitre, 0.22);
+      dessinerTexteEspace(ctx, mot, centreX - l / 2, y + m.surtitre, m.surtitre, 0.22);
+    } else if (piece.type === "titre") {
+      const bas = poserLignes(ctx, lignesTitre, m.pad, y + bt.taille * 0.7, bt, { centre: centreX });
+      filetSousTitre(ctx, m, th, carte, bas, centreX);
+    } else if (piece.type === "texte") {
+      poserBlocs(ctx, blocsTexte, m.pad, y, bc, { centre: centreX, puce: carte.puce });
+    }
+    y += piece.hauteur;
   }
 
   bandeEntete(ctx, format, m, th, police, {
@@ -1469,11 +1633,268 @@ function dessinerCloture(ctx, format, o) {
     filet: carte.filetPied === true,
     opacite: carte.piedOpacite,
   });
+  sansOmbre(ctx);
+  return [];
+}
+
+/* ------------------------------------------------------------- les journées */
+
+/**
+ * LE PROFIL D'UNE CASE : la silhouette entière en filet, la journée remplie.
+ *
+ * Ce n'est pas `dessinerProfil` en petit. Celui-là raconte UNE course découpée
+ * en journées ; celui-ci raconte UNE journée SITUÉE dans la course. La même
+ * silhouette revient donc dans les quatre cases, et seule la portion colorée se
+ * déplace — c'est ce déplacement qui fait lire la progression, bien mieux que
+ * quatre profils recadrés qui se ressembleraient tous.
+ */
+function dessinerProfilCase(ctx, boite, th, { profil, totalKm, kmDebut, kmFin, couleur }) {
+  const points = (profil ?? []).filter((p) => Number.isFinite(p?.km) && Number.isFinite(p?.alt));
+  if (points.length < 2) return;
+  const total = totalKm > 0 ? totalKm : points[points.length - 1].km;
+  if (!(total > 0)) return;
+
+  const alts = points.map((p) => p.alt);
+  const min = Math.min(...alts);
+  const amplitude = Math.max(1, Math.max(...alts) - min);
+  const X = (km) => boite.x + (Math.max(0, Math.min(total, km)) / total) * boite.width;
+  const Y = (alt) => boite.y + (1 - (alt - min) / amplitude) * boite.height;
+  const base = boite.y + boite.height;
+
+  ctx.beginPath();
+  ctx.moveTo(X(points[0].km), Y(points[0].alt));
+  for (const p of points) ctx.lineTo(X(p.km), Y(p.alt));
+  ctx.strokeStyle = th.profilRestant;
+  ctx.lineWidth = Math.max(1, boite.height * 0.022);
+  ctx.lineJoin = "round";
+  ctx.stroke();
+
+  const dedans = points.filter((p) => p.km >= kmDebut && p.km <= kmFin);
+  if (dedans.length < 2) return;
+  ctx.beginPath();
+  ctx.moveTo(X(dedans[0].km), base);
+  for (const p of dedans) ctx.lineTo(X(p.km), Y(p.alt));
+  ctx.lineTo(X(dedans[dedans.length - 1].km), base);
+  ctx.closePath();
+  ctx.globalAlpha = AIRE_OPACITE;
+  ctx.fillStyle = couleur;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(X(dedans[0].km), Y(dedans[0].alt));
+  for (const p of dedans) ctx.lineTo(X(p.km), Y(p.alt));
+  ctx.globalAlpha = CRETE_OPACITE;
+  ctx.strokeStyle = couleur;
+  ctx.lineWidth = Math.max(2, boite.height * 0.038);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+/** La vignette d'itinéraire d'une case : la boucle entière en sourdine, la
+ *  journée par-dessus. Le cadrage vient de la trace COMPLÈTE, donc la boucle
+ *  occupe exactement la même place dans toutes les cases. */
+function dessinerCarteCase(ctx, boite, th, { coords, segment, couleur }) {
+  const marge = Math.round(Math.min(boite.width, boite.height) * 0.08);
+  const vue = fitView(coords, {
+    width: boite.width,
+    height: boite.height,
+    fit: {
+      x: marge,
+      y: marge,
+      width: boite.width - marge * 2,
+      height: boite.height - marge * 2,
+    },
+  });
+  if (!vue) return;
+  const projeter = ([lon, lat]) => {
+    const [x, y] = vue.project([lon, lat]);
+    return [boite.x + x, boite.y + y];
+  };
+  const epaisseur = Math.max(1.5, boite.width * 0.022);
+  polyligne(
+    ctx,
+    decimerPixels(coords.map(projeter)),
+    th.cle === "clair" ? "rgba(34, 36, 30, 0.24)" : "rgba(254, 251, 246, 0.22)",
+    epaisseur * 0.7,
+    false,
+  );
+  if (segment?.coords?.length > 1) {
+    polyligne(ctx, decimerPixels(segment.coords.map(projeter)), couleur, epaisseur, true);
+  }
+}
+
+/** Le texte d'une case, quand personne ne l'a écrit. On part de ce que la
+ *  journée sait déjà d'elle-même — le reste (« × Rapace ») s'ajoute à la main. */
+export function texteDeJournee(i, seg) {
+  const titre = `*Jour ${i + 1}*`;
+  if (!seg) return titre;
+  return `${titre}\n${formatKm(seg.distanceKm)} km · ${formatEntier(seg.dPlusM)} m D+`;
+}
+
+/** Les cases EFFECTIVES : celles de la planche, complétées par les journées
+ *  de la trace. Une trace chargée après coup remplit ainsi la grille toute
+ *  seule, au lieu de laisser quatre cases vides. */
+export function casesEffectives(carte, segments) {
+  const voulues = Math.max(
+    1,
+    Math.round(nombre(carte?.casesN, segments.length || 4)),
+  );
+  const ecrites = Array.isArray(carte?.cases) ? carte.cases : [];
+  const out = [];
+  for (let i = 0; i < voulues; i += 1) {
+    const c = ecrites[i] ?? {};
+    const jour = Number.isInteger(c.jour) ? c.jour : i;
+    out.push({
+      jour,
+      texte: typeof c.texte === "string" && c.texte !== "" ? c.texte : texteDeJournee(i, segments[jour]),
+    });
+  }
+  return out;
+}
+
+/**
+ * LES JOURNÉES — la planche qui raconte une aventure en une seule image.
+ *
+ * L'espace utile se découpe en N cases (une par jour, mais rien n'y oblige), et
+ * chaque case porte trois choses : où l'on était, le relief qu'on a pris, et ce
+ * qu'on en dit. La boucle entière et la silhouette entière reviennent dans
+ * CHAQUE case, en sourdine, avec la seule journée en couleur — c'est ce qui
+ * fait qu'on lit une progression et non quatre images sans rapport.
+ */
+function dessinerJournees(ctx, format, o) {
+  const { carte, trace, police, polices, logo, m, th, ombre, index, total } = o;
+  const segments = o.segments ?? [];
+  const cadre = o.traceCadre ?? trace;
+  const couleurs = couleursDesJours(carte, segments);
+  const cases = casesEffectives(carte, segments);
+
+  poserOmbre(ctx, ombre);
+  bandeEntete(ctx, format, m, th, police, {
+    texte: carte.entete,
+    accent: carte.enteteAccent,
+    logo,
+    marque: carte.marque,
+    filet: carte.filetEntete !== false,
+    opacite: carte.enteteOpacite,
+  });
+
+  const largeurTexte = format.width - m.pad * 2;
+  let yHaut = m.bandeH + Math.round(60 * m.k);
+  if (carte.surtitre) {
+    ctx.fillStyle = th.accent;
+    surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, yHaut);
+    yHaut += m.surtitre * 1.4;
+  }
+  if (carte.titre) {
+    // Le titre d'une grille est plus court que celui d'une planche de texte :
+    // il annonce, il ne porte pas. D'où l'échelle — sinon deux lignes de 65 px
+    // mangeaient une case entière.
+    const bt = baseTitre(m, th, polices, carte, 0.72);
+    const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeurTexte, bt);
+    const bas = poserLignes(ctx, ls, m.pad, yHaut + bt.taille * 0.86, bt);
+    yHaut = filetSousTitre(ctx, m, th, carte, bas) + Math.round(34 * m.k);
+  }
+
+  const yBas = m.piedFilet - Math.round(30 * m.k);
+  const colonnes = Math.min(2, Math.max(1, Math.round(nombre(carte.casesColonnes, 1))));
+  const rangees = Math.ceil(cases.length / colonnes);
+  const gouttiereX = Math.round(34 * m.k);
+  const gouttiereY = Math.round(22 * m.k);
+  const caseW = (largeurTexte - (colonnes - 1) * gouttiereX) / colonnes;
+  const caseH = (yBas - yHaut - (rangees - 1) * gouttiereY) / rangees;
+  if (!(caseH > 0)) {
+    sansOmbre(ctx);
+    return [];
+  }
+
+  const bc = baseCorps(m, th, polices, carte);
+  // Une légende de case n'est pas un texte suivi : chaque ligne tapée reste une
+  // ligne (« Jour 1 × Rapace » puis « 57 km · 4 700 m D+ »).
+  const bcCase = {
+    ...bc,
+    taille: Math.round(nombre(carte.tailleCase, 30) * m.k),
+    lignesDures: carte.caseLignesDures !== false,
+  };
+
+  cases.forEach((c, i) => {
+    const col = i % colonnes;
+    const rang = Math.floor(i / colonnes);
+    const x = m.pad + col * (caseW + gouttiereX);
+    const y = yHaut + rang * (caseH + gouttiereY);
+    const couleur = couleurs[c.jour] ?? th.accent;
+    const seg = segments[c.jour] ?? null;
+
+    // Le filet de séparation, au-dessus de chaque rangée sauf la première :
+    // c'est lui qui fait une GRILLE et non quatre blocs posés au hasard.
+    if (carte.caseFilet !== false && rang > 0 && col === 0) {
+      sansOmbre(ctx);
+      ctx.fillStyle = th.filet;
+      ctx.fillRect(m.pad, y - gouttiereY / 2, largeurTexte, Math.max(1, 1.5 * m.k));
+      poserOmbre(ctx, ombre);
+    }
+
+    const avecCarte = carte.caseCarte !== false && cadre?.coords?.length > 1;
+    const cote = avecCarte ? Math.min(caseH, caseW * 0.34) : 0;
+    if (avecCarte) {
+      sansOmbre(ctx);
+      dessinerCarteCase(
+        ctx,
+        { x, y: y + (caseH - cote) / 2, width: cote, height: cote },
+        th,
+        { coords: cadre.coords, segment: seg, couleur },
+      );
+      poserOmbre(ctx, ombre);
+    }
+
+    const xTexte = x + (avecCarte ? cote + Math.round(26 * m.k) : 0);
+    const wTexte = caseW - (avecCarte ? cote + Math.round(26 * m.k) : 0);
+
+    const avecProfil = carte.caseProfil !== false && cadre?.profil?.length > 1 && seg;
+    const hProfil = avecProfil ? Math.min(caseH * 0.42, Math.round(96 * m.k)) : 0;
+
+    const blocs = blocsDeTexte(ctx, c.texte, wTexte, bcCase);
+    const hTexte = hauteurBlocs(blocs, bcCase);
+    // Texte et profil se partagent la case : le texte se cale en haut de ce qui
+    // reste, le profil garde toujours sa place en bas.
+    const dispo = caseH - hProfil;
+    poserBlocs(ctx, blocs, xTexte, y + Math.max(0, (dispo - hTexte) / 2), bcCase, {
+      puce: carte.puce,
+    });
+
+    if (avecProfil) {
+      sansOmbre(ctx);
+      dessinerProfilCase(
+        ctx,
+        { x: xTexte, y: y + caseH - hProfil, width: wTexte, height: hProfil },
+        th,
+        {
+          profil: cadre.profil,
+          totalKm: cadre.totalKm,
+          kmDebut: seg.kmDebut,
+          kmFin: seg.kmFin,
+          couleur,
+        },
+      );
+      poserOmbre(ctx, ombre);
+    }
+  });
+
+  bandePied(ctx, format, m, th, police, {
+    index,
+    total,
+    centre: carte.piedCentre,
+    droite: carte.piedDroite,
+    fleche: carte.piedFleche,
+    filet: carte.filetPied !== false,
+    opacite: carte.piedOpacite,
+  });
+  sansOmbre(ctx);
   return [];
 }
 
 const RENDUS = {
   carte: dessinerCarte,
+  journees: dessinerJournees,
   bandeau: dessinerBandeau,
   photo: dessinerPhoto,
   texte: dessinerTexte,
@@ -1513,6 +1934,7 @@ export function dessinerCartePartage(ctx, options) {
     ...options,
     police,
     polices,
+    ombre: ombreDe(options.carte, m),
     m,
     th,
     segments: options.segments ?? [],

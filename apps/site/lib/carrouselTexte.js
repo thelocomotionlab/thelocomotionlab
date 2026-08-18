@@ -327,6 +327,22 @@ export const ESPACEMENT = {
   alinea: 0,
 };
 
+/**
+ * LES RETOURS À LA LIGNE DURS.
+ *
+ * Par défaut, des lignes consécutives forment UN paragraphe : c'est ce qu'on
+ * veut d'un texte suivi, où la coupure dépend de la largeur, pas de la façon
+ * dont on a tapé. Mais une LÉGENDE n'est pas un texte suivi — « Jour 1 ×
+ * Rapace » puis « 57 km · 4 700 m D+ » sont deux lignes, pas une phrase qui
+ * déborde. Là, chaque ligne tapée reste une ligne.
+ *
+ * Le réglage voyage dans le style (comme les espacements) : mesure et pose ne
+ * peuvent donc pas en avoir deux avis différents.
+ */
+function lignesDures(base) {
+  return Boolean(base?.lignesDures);
+}
+
 /** La valeur réglée sur la planche, sinon celle de la charte. */
 function esp(base, cle) {
   const v = base?.[cle];
@@ -358,18 +374,13 @@ export function blocsDeTexte(ctx, texte, largeurMax, base) {
     if (paragraphe.length) {
       const retrait = paraRetrait ? base.taille * esp(base, "retraitListe") : 0;
       const alinea = base.taille * esp(base, "alinea");
-      blocs.push({
-        type: "paragraphe",
-        retrait,
-        alinea,
-        lignes: lignesRiches(
-          ctx,
-          analyserRiche(paragraphe.join(" ")),
-          largeurMax - retrait,
-          base,
-          { retrait: alinea },
-        ),
-      });
+      const large = largeurMax - retrait;
+      const lignes = lignesDures(base)
+        ? paragraphe.flatMap((ligne, i) =>
+            lignesRiches(ctx, analyserRiche(ligne), large, base, { retrait: i === 0 ? alinea : 0 }),
+          )
+        : lignesRiches(ctx, analyserRiche(paragraphe.join(" ")), large, base, { retrait: alinea });
+      blocs.push({ type: "paragraphe", retrait, alinea, lignes });
       paragraphe = [];
       paraRetrait = false;
     }

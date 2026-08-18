@@ -311,3 +311,28 @@ describe("espacements réglables, alinéa et retrait", () => {
     expect(b.lignes[0].some((m) => m.icone === "col")).toBe(true);
   });
 });
+
+describe("retours à la ligne durs", () => {
+  const ctx = ctxFactice();
+  const DUR = { ...BASE, lignesDures: true };
+
+  it("garde chaque ligne tapée quand la planche le demande", () => {
+    const [souple] = blocsDeTexte(ctx, "Jour 1\n42 km", 500, BASE);
+    const [dur] = blocsDeTexte(ctx, "Jour 1\n42 km", 500, DUR);
+    expect(souple.lignes).toHaveLength(1);
+    expect(dur.lignes).toHaveLength(2);
+    expect(dur.lignes[0].map((m) => m.texte).join("")).toBe("Jour 1");
+  });
+
+  it("coupe quand même une ligne trop longue", () => {
+    const [dur] = blocsDeTexte(ctx, "aaa bbb ccc", 40, DUR);
+    expect(dur.lignes.length).toBeGreaterThan(1);
+  });
+
+  it("n'applique l'alinéa qu'à la toute première ligne", () => {
+    const large = blocsDeTexte(ctx, "aaa bbb\naaa bbb", 70, DUR);
+    const avec = blocsDeTexte(ctx, "aaa bbb\naaa bbb", 70, { ...DUR, alinea: 1.4 });
+    // La première ligne perd la place de l'alinéa et se coupe ; la seconde non.
+    expect(avec[0].lignes.length).toBeGreaterThan(large[0].lignes.length);
+  });
+});
