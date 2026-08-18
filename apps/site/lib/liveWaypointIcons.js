@@ -31,6 +31,7 @@ import {
   Moon,
   Mountain,
   MountainSnow,
+  SatelliteDish,
   Snowflake,
   Store,
   Sunrise,
@@ -59,6 +60,8 @@ export const WAYPOINT_ICONES = {
   village: House,
   route: Car,
   recharge: Zap,
+  // La balise GPS du live — c'est le mot de la maison (docs/live-tracking.md).
+  balise: SatelliteDish,
   // Parcours
   depart: Flag,
   arrivee: FlagTriangleRight,

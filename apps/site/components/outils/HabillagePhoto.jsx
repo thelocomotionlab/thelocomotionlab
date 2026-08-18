@@ -22,10 +22,7 @@ import { Download, ImageUp, Route, Share2 } from "lucide-react";
 import { statsDeGpx } from "@/lib/gpxStats";
 import { chargerImage } from "@/lib/imageFile";
 import { COULEURS, dessinerHabillage, STORY } from "@/lib/habillage";
-
-// La marque du labo, fond transparent, produite depuis le logo source par
-// `pnpm -F site build:icons` (scripts/build-icons.mjs).
-const LOGO_MARQUE = "/images/assets/logo-mark-512.png";
+import { chargerMarqueTeintee } from "@/lib/marque";
 
 const CHAMP =
   "w-full rounded-xl border border-brand-field bg-brand-paper px-3 py-2 font-heading text-[15px] text-brand-text focus:border-brand-primary-dark focus:outline-none";
@@ -47,35 +44,6 @@ function policeUbuntu() {
   if (typeof document === "undefined") return "sans-serif";
   const famille = getComputedStyle(document.body).fontFamily;
   return famille && famille !== "" ? famille : "sans-serif";
-}
-
-/**
- * La marque du labo, RECOLORÉE en crème.
- *
- * Le logo source est terracotta — sa couleur sur fond clair. Posé tel quel sur
- * le voile sombre du bas de la story, il vire au marron boueux et se perd. On
- * le reteinte donc à l'encre du nom : on dessine la marque dans un canevas
- * hors écran, puis `source-in` ne garde la couleur QUE là où il y a des pixels
- * — les traits deviennent crème, la transparence le reste.
- *
- * Une seule fois au chargement : l'aperçu est redessiné à chaque frappe et à
- * chaque mouvement du curseur de cadrage.
- */
-async function chargerMarqueTeintee() {
-  const img = new Image();
-  img.decoding = "async";
-  img.src = LOGO_MARQUE;
-  await img.decode();
-
-  const c = document.createElement("canvas");
-  c.width = img.naturalWidth;
-  c.height = img.naturalHeight;
-  const ctx = c.getContext("2d");
-  ctx.drawImage(img, 0, 0);
-  ctx.globalCompositeOperation = "source-in";
-  ctx.fillStyle = COULEURS.creme;
-  ctx.fillRect(0, 0, c.width, c.height);
-  return c;
 }
 
 export default function HabillagePhoto() {
@@ -110,7 +78,7 @@ export default function HabillagePhoto() {
   // sa photo.
   useEffect(() => {
     let vivant = true;
-    chargerMarqueTeintee()
+    chargerMarqueTeintee(COULEURS.creme)
       .then((c) => vivant && setMarque(c))
       .catch(() => {});
     return () => {
@@ -232,22 +200,32 @@ export default function HabillagePhoto() {
   // on VOIT le résultat, puis on ajuste et on partage — l'aperçu ne peut pas
   // être sous le bouton « Partager ». Sur grand écran il passe à gauche, en
   // vis-à-vis des réglages, d'où les placements explicites de grille.
+  //
+  // L'APERÇU EST COLLÉ, comme dans l'atelier carrousel : on règle le cadrage et
+  // les chiffres en REGARDANT la photo, pas en remontant à chaque coup d'œil.
+  // Deux boîtes sont nécessaires — la colonne de grille doit rester haute (donc
+  // pas d'`items-start` ici) et c'est la boîte intérieure qui colle, à 84 px
+  // pour passer sous la navbar du site (`sticky top-0`, 80 px de haut).
   return (
-    <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-8">
-      <div className="order-2 lg:order-none lg:col-start-1 lg:row-start-1 lg:row-span-3">
-        <div className="mx-auto w-full max-w-[320px] overflow-hidden rounded-2xl bg-brand-text/10 shadow-card">
+    <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8">
+      {/* `row-span-3` : les réglages occupent trois rangées de la grille. Sans
+          lui, la colonne de l'aperçu ne couvre que la PREMIÈRE, et le collage
+          n'a presque aucune course — l'aperçu remontait hors de l'écran au bout
+          de 150 px de défilement. */}
+      <div className="order-2 lg:order-none lg:col-start-1 lg:row-span-3 lg:row-start-1">
+        <div className="sticky top-[84px] z-20 -mx-4 bg-brand-bg/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:mx-0 lg:bg-transparent lg:px-0 lg:py-2 lg:backdrop-blur-none">
           <canvas
             ref={canvasRef}
             width={STORY.width}
             height={STORY.height}
-            className="block h-auto w-full"
+            className="mx-auto block h-auto max-h-[42vh] w-auto max-w-full rounded-2xl bg-brand-text/10 shadow-card lg:max-h-[74vh]"
             aria-label="Aperçu de la story habillée"
           />
+          <p className="mx-auto mt-3 max-w-[340px] text-center font-heading text-[12px] leading-[1.5] text-brand-text/55">
+            Aperçu à l&rsquo;échelle exacte du fichier exporté (1080 × 1920). Le profil et les
+            chiffres sont posés dans la zone qu&rsquo;Instagram ne recouvre pas.
+          </p>
         </div>
-        <p className="mx-auto mt-3 max-w-[320px] text-center font-heading text-[12px] leading-[1.5] text-brand-text/55">
-          Aperçu à l&rsquo;échelle exacte du fichier exporté (1080 × 1920). Le profil et les
-          chiffres sont posés dans la zone qu&rsquo;Instagram ne recouvre pas.
-        </p>
       </div>
 
       <div className="order-1 flex flex-col gap-3 lg:order-none lg:col-start-2 lg:row-start-1">
