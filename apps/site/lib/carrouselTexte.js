@@ -13,6 +13,7 @@
 //
 // LA SYNTAXE, volontairement minuscule :
 //   *gras*   _italique_   ~souligné~   [en ambre]   [bleu: mot]   :col:
+//   - un point de liste (puce réglable, cf. `blocsDeTexte`)
 // Elle s'imbrique (*_gras italique_*), et `\` échappe un caractère qu'on veut
 // écrire tel quel (`\*` donne une étoile).
 //
@@ -52,7 +53,7 @@ export const COULEURS_TEXTE = {
 };
 
 export const AIDE_BALISAGE =
-  "*gras*  _italique_  ~souligné~  [en ambre]  [bleu: mot]  :col: (icône)";
+  "*gras*  _italique_  ~souligné~  [en ambre]  [bleu: mot]  :col: (icône)  - liste";
 
 /** Une icône entre deux-points. Bornée à des minuscules sans espace, et
  *  vérifiée contre le vocabulaire : « Départ : 6 h » n'en est pas une, et
@@ -281,16 +282,181 @@ export function dessinerLigneRiche(ctx, ligne, x, y, base) {
   return curseur - x;
 }
 
+/* ------------------------------------------------------------------- blocs */
+
 /**
- * Un bloc complet : les paragraphes d'un texte balisé, déjà mis en page.
- * Une ligne vide dans la saisie sépare deux paragraphes.
+ * LE MODÈLE DE BLOCS. Un texte n'est pas qu'une suite de paragraphes : il a des
+ * listes, et il a des respirations. Les trois se mesurent et se posent de la
+ * même façon, ce qui permet de calculer la hauteur d'un texte AVANT de le
+ * dessiner — indispensable aux gabarits qui construisent du bas vers le haut.
  *
- * @returns {Array<Array<Array<object>>>} paragraphes → lignes → morceaux
+ * LA SYNTAXE NE S'APPREND PAS, elle se tape :
+ *   • une ligne qui commence par « - » est un point de liste ;
+ *   • UNE ligne vide sépare deux paragraphes, comme partout ;
+ *   • CHAQUE ligne vide en plus ajoute une respiration. Appuyer trois fois sur
+ *     Entrée donne plus d'air que deux — c'est le geste qu'on ferait de toute
+ *     façon, autant qu'il fasse ce qu'on attend.
  */
-export function paragraphesRiches(ctx, texte, largeurMax, base) {
-  return String(texte ?? "")
-    .split(/\n\s*\n/)
-    .map((p) => p.trim())
-    .filter(Boolean)
-    .map((p) => lignesRiches(ctx, analyserRiche(p.replace(/\n/g, " ")), largeurMax, base));
+
+/** Interligne d'un corps de texte, en parts de sa taille. */
+const INTERLIGNE = 1.55;
+/** Espace entre deux blocs, et hauteur d'une respiration. */
+const ENTRE_BLOCS = 0.85;
+const RESPIRATION = 1.1;
+/** Retrait du texte d'une liste, qui laisse la place à la puce. */
+export const RETRAIT_LISTE = 1.6;
+
+const EST_ITEM = /^\s*-\s+(.*)$/;
+
+/**
+ * Découpe un texte en blocs déjà mis en page.
+ *
+ * @returns {Array<{type:"paragraphe"|"liste"|"espace", lignes?:Array, items?:Array, n?:number}>}
+ */
+export function blocsDeTexte(ctx, texte, largeurMax, base) {
+  const brut = String(texte ?? "").split("\n");
+  const blocs = [];
+  let paragraphe = []; // lignes brutes en attente
+  let items = null; // items de liste en attente
+  let vides = 0;
+
+  const viderParagraphe = () => {
+    if (paragraphe.length) {
+      blocs.push({
+        type: "paragraphe",
+        lignes: lignesRiches(ctx, analyserRiche(paragraphe.join(" ")), largeurMax, base),
+      });
+      paragraphe = [];
+    }
+  };
+  const viderListe = () => {
+    if (items?.length) {
+      blocs.push({
+        type: "liste",
+        items: items.map((t) =>
+          lignesRiches(ctx, analyserRiche(t), largeurMax - base.taille * RETRAIT_LISTE, base),
+        ),
+      });
+      items = null;
+    }
+  };
+  const vider = () => {
+    viderParagraphe();
+    viderListe();
+  };
+
+  for (const ligne of brut) {
+    if (ligne.trim() === "") {
+      vides += 1;
+      continue;
+    }
+    // Les lignes vides accumulées : la première sépare, les suivantes aèrent.
+    if (vides > 0) {
+      vider();
+      if (vides > 1 && blocs.length) blocs.push({ type: "espace", n: vides - 1 });
+      vides = 0;
+    }
+
+    const item = EST_ITEM.exec(ligne);
+    if (item) {
+      viderParagraphe();
+      (items ??= []).push(item[1]);
+    } else {
+      viderListe();
+      paragraphe.push(ligne.trim());
+    }
+  }
+  vider();
+  return blocs;
 }
+
+/** Hauteur totale d'une suite de blocs — mesurée sans rien dessiner. */
+export function hauteurBlocs(blocs, base) {
+  let h = 0;
+  blocs.forEach((bloc, i) => {
+    if (i > 0) h += base.taille * ENTRE_BLOCS;
+    if (bloc.type === "espace") h += base.taille * RESPIRATION * bloc.n;
+    else if (bloc.type === "liste") {
+      h += bloc.items.reduce((s, lignes) => s + lignes.length * base.taille * INTERLIGNE, 0);
+      h += Math.max(0, bloc.items.length - 1) * base.taille * 0.35;
+    } else h += bloc.lignes.length * base.taille * INTERLIGNE;
+  });
+  return h;
+}
+
+/**
+ * Dessine la puce d'un item.
+ *
+ * `point` et `tiret` sont tracés — deux formes trop simples pour valoir une
+ * icône. Toute autre valeur est une clé du vocabulaire des repères, ce qui rend
+ * les puces personnalisables sans inventer un second jeu de pictogrammes.
+ */
+function dessinerPuce(ctx, puce, x, baseLigne, base) {
+  const couleur = base.accent;
+  const t = base.taille;
+  if (!puce || puce === "point") {
+    ctx.beginPath();
+    ctx.arc(x + t * 0.28, baseLigne - t * 0.3, t * 0.13, 0, Math.PI * 2);
+    ctx.fillStyle = couleur;
+    ctx.fill();
+    return;
+  }
+  if (puce === "tiret") {
+    ctx.fillStyle = couleur;
+    ctx.fillRect(x, baseLigne - t * 0.34, t * 0.56, Math.max(2, t * 0.075));
+    return;
+  }
+  const cote = t * 0.92;
+  dessinerIcone(ctx, puce, x, baseLigne - t * CENTRE_CAPITALES - cote / 2, cote, couleur);
+}
+
+/**
+ * Pose des blocs de haut en bas depuis `haut`, et rend l'ordonnée du BAS.
+ *
+ * `centre` centre paragraphes et items ; une liste centrée garde sa puce collée
+ * au texte plutôt qu'alignée sur une marge — sinon les puces flotteraient
+ * chacune à une abscisse différente, ce qui ne se lit plus comme une liste.
+ */
+export function poserBlocs(ctx, blocs, x, haut, base, { centre = null, largeur = 0, puce } = {}) {
+  let y = haut;
+  blocs.forEach((bloc, i) => {
+    if (i > 0) y += base.taille * ENTRE_BLOCS;
+
+    if (bloc.type === "espace") {
+      y += base.taille * RESPIRATION * bloc.n;
+      return;
+    }
+
+    if (bloc.type === "liste") {
+      bloc.items.forEach((lignes, k) => {
+        if (k > 0) y += base.taille * 0.35;
+        lignes.forEach((ligne, j) => {
+          const baseLigne = y + base.taille * 0.78 + j * base.taille * INTERLIGNE;
+          const l = largeurLigne(ligne);
+          const gauche =
+            centre === null
+              ? x + base.taille * RETRAIT_LISTE
+              : centre - l / 2 + base.taille * (RETRAIT_LISTE / 2);
+          if (j === 0) dessinerPuce(ctx, puce, gauche - base.taille * RETRAIT_LISTE, baseLigne, base);
+          dessinerLigneRiche(ctx, ligne, gauche, baseLigne, base);
+        });
+        y += lignes.length * base.taille * INTERLIGNE;
+      });
+      return;
+    }
+
+    bloc.lignes.forEach((ligne, j) => {
+      const baseLigne = y + base.taille * 0.78 + j * base.taille * INTERLIGNE;
+      const gauche = centre === null ? x : centre - largeurLigne(ligne) / 2;
+      dessinerLigneRiche(ctx, ligne, gauche, baseLigne, base);
+    });
+    y += bloc.lignes.length * base.taille * INTERLIGNE;
+  });
+  return y;
+}
+
+/** Les puces proposées : deux formes tracées, puis tout le vocabulaire d'icônes. */
+export const PUCES_SIMPLES = [
+  { cle: "point", label: "Point" },
+  { cle: "tiret", label: "Tiret" },
+];

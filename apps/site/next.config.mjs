@@ -129,6 +129,11 @@ export default function nextConfig(phase) {
         { source: "/manifeste", destination: "/quete", permanent: true },
         // /live est désormais une vraie page (hub live permanent, PR3) :
         // l'ancienne redirection temporaire a été retirée.
+        // Les deux ateliers de visuels sont réunis dans /studio. Un serveur ne
+        // peut pas poser de fragment : on atterrit sur l'onglet par défaut, et
+        // le studio n'en a que deux.
+        { source: "/outils/habillage", destination: "/studio", permanent: true },
+        { source: "/outils/carrousel", destination: "/studio", permanent: true },
       ];
     },
   };
