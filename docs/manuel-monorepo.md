@@ -377,6 +377,12 @@ la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
   servir une version périmée du site public. Les tuiles du fond de carte (autre
   origine) ne sont jamais mises en cache — le studio marche au bivouac, la
   carte topo non, et c'est annoncé dans l'interface.
+- **Les projets** : le travail en cours est gardé tout seul dans **IndexedDB**
+  (pas `localStorage`, qui plafonne vers 5 Mo et ne stocke que du texte — une
+  photo de téléphone en base64 le remplirait). Fermer l'onglet ne coûte rien.
+  Un projet **nommé** ne bouge, lui, que quand on l'enregistre. Photos comprises,
+  en Blob. **Exporter** produit un `.json` autoportant : IndexedDB vit dans CE
+  navigateur, et un « effacer les données du site » emporte tout.
 - **Accès** : `noindex, nofollow` sur toute la branche, et **aucun lien** du
   site n'y mène (l'entrée « Filtre de partage » a quitté la navbar). Ce n'est
   **pas** un contrôle d'accès : qui a l'URL entre. Décision assumée — les deux

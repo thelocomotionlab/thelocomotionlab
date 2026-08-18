@@ -36,7 +36,9 @@ import {
   Plus,
   RotateCcw,
   Route,
+  Save,
   Trash2,
+  Upload,
 } from "lucide-react";
 
 import {
@@ -64,6 +66,16 @@ import {
 import { AIDE_BALISAGE } from "@/lib/carrouselTexte";
 import { CLES_ICONES } from "@/lib/carrouselIcones";
 import { PUCES_SIMPLES } from "@/lib/carrouselTexte";
+import {
+  chargerEnCours,
+  chargerProjet,
+  enregistrerEnCours,
+  enregistrerProjet,
+  exporterProjet,
+  importerProjet,
+  listerProjets,
+  supprimerProjet,
+} from "@/lib/carrouselProjet";
 import { iconeDuRepere } from "@/lib/liveWaypointIcons";
 import { chargerImage } from "@/lib/imageFile";
 import { chargerMarqueTeintee } from "@/lib/marque";
@@ -111,8 +123,13 @@ function Section({ titre, ouvert = false, children }) {
  * chercher pendant le rendu en referait un type à chaque passe — React
  * remonterait le sous-arbre, et le lint le refuse.
  */
-const ICONES_PALETTE = CLES_ICONES.map((cle) => ({ cle, Icone: iconeDuRepere(cle) }));
-const ICONES_PAR_CLE = Object.fromEntries(ICONES_PALETTE.map(({ cle, Icone }) => [cle, Icone]));
+const ICONES_PALETTE = CLES_ICONES.map((cle) => ({
+  cle,
+  Icone: iconeDuRepere(cle),
+}));
+const ICONES_PAR_CLE = Object.fromEntries(
+  ICONES_PALETTE.map(({ cle, Icone }) => [cle, Icone]),
+);
 
 /** L'aperçu d'une puce de liste. Le composant arrive en PROP, jamais résolu ici. */
 function Puce({ cle, Icone, size = 16 }) {
@@ -245,7 +262,14 @@ function ficheParDefaut(trace, segments) {
  * « c1 ». Des `key` différentes, et React refusait d'hydrater l'arbre — avec un
  * message qui accusait le bouton « Avancer cette carte », très loin de la cause.
  */
-function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0") {
+function carteNeuve(
+  gabarit,
+  trace,
+  segments,
+  bilan = false,
+  id = "c0",
+  style = null,
+) {
   return {
     id,
     gabarit,
@@ -277,17 +301,25 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0") {
     piedOpacite: 1,
     /** Ce que porte la bande d'en-tête : "" (logo + nom), sans-nom, sans-logo, rien. */
     marque: "",
+    /** Vide = l'ambre du thème (cf. l'effet de teinture) : le logo est ambre
+     *  par défaut, pas à l'encre du texte. */
     couleurLogo: "",
-    /** auto | toujours | jamais */
-    piedFleche: "auto",
+    /** auto | toujours | jamais. « toujours » par défaut : la flèche de swipe
+     *  doit être là, y compris sur un carrousel encore à une seule carte. */
+    piedFleche: gabarit === "cloture" ? "jamais" : "toujours",
     centrer: false,
     /** Les filets sous l'en-tête et au-dessus du pied. */
     filetEntete: gabarit !== "cloture",
     filetPied: gabarit !== "cloture",
     /** N'afficher que les n+1 premières journées. `null` = tout. */
     jusquA: null,
-    /** La puce des listes : "point", "tiret", ou une clé d'icône. */
+    /** La puce des listes : une forme tracée, ou une clé d'icône. */
     puce: "point",
+    /** Le filet court sous le titre — allumé d'office sur la fiche. */
+    filetTitre: gabarit === "fiche",
+    filetTitreLargeur: 96,
+    filetTitreEpaisseur: 4,
+    couleurFiletTitre: "",
     /* --- propres aux gabarits --- */
     etiquettes: [],
     afficherFond: true,
@@ -305,6 +337,9 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0") {
     couleurCercle: "",
     voileCloture: 0.62,
     ...(gabarit === "cloture" ? clotureParDefaut(bilan) : null),
+    // Le style de la carte courante EN DERNIER : on continue sur la même mise
+    // en forme au lieu de repartir de la charte à chaque ajout.
+    ...(style ?? null),
   };
 }
 
@@ -333,6 +368,50 @@ function clotureParDefaut(bilan) {
         titre: "Position, carnet de bord, messages.",
         texte: "thelocomotionlab.com/live",
       };
+}
+
+/**
+ * Les réglages de FORME — ceux qu'une nouvelle carte hérite de celle qu'on
+ * vient de régler, et que le bouton « appliquer à toutes » recopie.
+ *
+ * Le contenu (titre, texte, photo, étiquettes, fiche) n'en fait évidemment pas
+ * partie : on hérite d'un LOOK, pas des mots de la carte précédente.
+ */
+export const CHAMPS_DE_STYLE = [
+  "tailleTitre",
+  "tailleCorps",
+  "tailleSurtitre",
+  "tailleEntete",
+  "taillePied",
+  "tailleLogo",
+  "tailleFicheLabel",
+  "tailleFicheValeur",
+  "epaisseurFilet",
+  "couleurTitre",
+  "couleurCorps",
+  "couleurAccent",
+  "couleurFond",
+  "couleurLogo",
+  "enteteOpacite",
+  "piedOpacite",
+  "marque",
+  "enteteAccent",
+  "piedFleche",
+  "filetEntete",
+  "filetPied",
+  "centrer",
+  "puce",
+  "filetTitre",
+  "filetTitreLargeur",
+  "filetTitreEpaisseur",
+  "couleurFiletTitre",
+];
+
+function styleDe(carte) {
+  if (!carte) return null;
+  return Object.fromEntries(
+    CHAMPS_DE_STYLE.filter((c) => c in carte).map((c) => [c, carte[c]]),
+  );
 }
 
 /** Une carte sur laquelle personne n'a encore rien écrit — on peut la
@@ -378,6 +457,12 @@ export default function CarrouselAtelier() {
   const [marque, setMarque] = useState(null);
   const [policePrete, setPolicePrete] = useState(false);
   const [etat, setEtat] = useState({ occupe: false, message: "" });
+  const [nomProjet, setNomProjet] = useState("");
+  const [projets, setProjets] = useState([]);
+  /** L'autosauvegarde n'écrit qu'une fois le projet RESTAURÉ : sans ce
+   *  verrou, la carte vierge du premier rendu écraserait le travail
+   *  enregistré avant même qu'il ait été relu. */
+  const pretRef = useRef(false);
 
   const format = FORMATS[formatCle];
   const theme = THEMES[themeCle];
@@ -404,19 +489,17 @@ export default function CarrouselAtelier() {
     };
   }, []);
 
-  // La marque suit le thème : teintée crème elle disparaîtrait sur un fond
-  // clair, et l'inverse sur un fond sombre.
+  // Le logo est AMBRE par défaut — c'est la couleur de marque, pas l'encre du
+  // texte. Une carte peut le redéfinir, et il suit alors ce choix.
   useEffect(() => {
     let vivant = true;
-    chargerMarqueTeintee(
-      carte?.couleurLogo || carte?.couleurTitre || theme.encre,
-    )
+    chargerMarqueTeintee(carte?.couleurLogo || theme.accent)
       .then((c) => vivant && setMarque(c))
       .catch(() => {});
     return () => {
       vivant = false;
     };
-  }, [theme.encre, carte?.couleurTitre, carte?.couleurLogo]);
+  }, [theme.accent, carte?.couleurLogo]);
 
   // Le fond de carte suit la trace ET le format (le cadrage change avec le
   // rapport de l'image). Un chargement plus ancien qui reviendrait après un
@@ -434,6 +517,64 @@ export default function CarrouselAtelier() {
       vivant = false;
     };
   }, [trace, traceCadre, formatCle]);
+
+  const instantane = useCallback(
+    () => ({
+      format: formatCle,
+      theme: themeCle,
+      bilan,
+      coupures,
+      trace,
+      traceCadre,
+      cartes,
+    }),
+    [formatCle, themeCle, bilan, coupures, trace, traceCadre, cartes],
+  );
+
+  const appliquerProjet = useCallback((p) => {
+    if (!p) return;
+    setFormatCle(p.format);
+    setThemeCle(p.theme);
+    setBilan(p.bilan);
+    setCoupures(p.coupures);
+    setTrace(p.trace);
+    setTraceCadre(p.traceCadre);
+    if (p.cartes.length) {
+      setCartes(p.cartes);
+      setActive(0);
+      // Les identifiants repartent au-dessus de ceux restaurés, sinon deux
+      // cartes finiraient par porter la même clé React.
+      idRef.current = p.cartes.length;
+    }
+  }, []);
+
+  // Reprise du travail en cours : on relit AVANT d'autoriser l'autosauvegarde.
+  useEffect(() => {
+    let vivant = true;
+    chargerEnCours()
+      .then((p) => {
+        if (vivant && p) appliquerProjet(p);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (vivant) pretRef.current = true;
+      });
+    listerProjets()
+      .then((l) => vivant && setProjets(l))
+      .catch(() => {});
+    return () => {
+      vivant = false;
+    };
+  }, [appliquerProjet]);
+
+  // Autosauvegarde, différée : on n'écrit pas à chaque frappe.
+  useEffect(() => {
+    if (!pretRef.current) return undefined;
+    const t = setTimeout(() => {
+      enregistrerEnCours(instantane()).catch(() => {});
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [instantane]);
 
   /**
    * @param {object|null} t
@@ -628,13 +769,22 @@ export default function CarrouselAtelier() {
   // veut voir. Son index est la longueur ACTUELLE de la liste.
   const ajouterCarte = useCallback(
     (gabarit) => {
+      // Le style de la carte courante est repris : on continue sur la même
+      // mise en forme au lieu de repartir de la charte à chaque ajout.
       setCartes((cs) => [
         ...cs,
-        carteNeuve(gabarit, trace, segments, bilan, idNeuf()),
+        carteNeuve(
+          gabarit,
+          trace,
+          segments,
+          bilan,
+          idNeuf(),
+          styleDe(cs[active]),
+        ),
       ]);
       setActive(cartes.length);
     },
-    [trace, segments, bilan, cartes.length, idNeuf],
+    [trace, segments, bilan, cartes.length, active, idNeuf],
   );
 
   const supprimerCarte = useCallback((i) => {
@@ -678,6 +828,76 @@ export default function CarrouselAtelier() {
     },
     [majCarte],
   );
+
+  /* ------------------------------------------------------------------ projets */
+
+  const rafraichirProjets = useCallback(
+    () =>
+      listerProjets()
+        .then(setProjets)
+        .catch(() => {}),
+    [],
+  );
+
+  const enregistrer = useCallback(async () => {
+    const nom = nomProjet.trim();
+    if (!nom) return;
+    setEtat({ occupe: true, message: "Enregistrement…" });
+    try {
+      await enregistrerProjet(nom, instantane());
+      await rafraichirProjets();
+      setEtat({ occupe: false, message: `« ${nom} » enregistré.` });
+    } catch {
+      setEtat({
+        occupe: false,
+        message: "Enregistrement impossible sur cet appareil.",
+      });
+    }
+  }, [nomProjet, instantane, rafraichirProjets]);
+
+  const ouvrirProjet = useCallback(
+    async (nom) => {
+      setEtat({ occupe: true, message: "Ouverture…" });
+      try {
+        appliquerProjet(await chargerProjet(nom));
+        setNomProjet(nom);
+        setEtat({ occupe: false, message: "" });
+      } catch {
+        setEtat({ occupe: false, message: "Projet illisible." });
+      }
+    },
+    [appliquerProjet],
+  );
+
+  const telechargerProjet = useCallback(async () => {
+    const blob = await exporterProjet(instantane());
+    telecharger(
+      blob,
+      `${(nomProjet.trim() || "carrousel").replace(/[^\w-]+/g, "-")}.json`,
+    );
+  }, [instantane, nomProjet]);
+
+  const importer = useCallback(
+    async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      setEtat({ occupe: true, message: "Import…" });
+      try {
+        appliquerProjet(await importerProjet(await file.text()));
+        setNomProjet(file.name.replace(/\.json$/i, ""));
+        setEtat({ occupe: false, message: "" });
+      } catch {
+        setEtat({ occupe: false, message: "Fichier de projet illisible." });
+      }
+    },
+    [appliquerProjet],
+  );
+
+  /** Recopie la mise en forme de la carte courante sur TOUTES les autres. */
+  const diffuserStyle = useCallback(() => {
+    const style = styleDe(cartes[active]);
+    if (style) setCartes((cs) => cs.map((c) => ({ ...c, ...style })));
+  }, [cartes, active]);
 
   /* -------------------------------------------------------------------- rendu */
 
@@ -1064,7 +1284,10 @@ export default function CarrouselAtelier() {
               ))}
             </select>
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-brand-field bg-brand-paper text-brand-accent-ink">
-              <Puce cle={carte?.puce ?? "point"} Icone={ICONES_PAR_CLE[carte?.puce]} />
+              <Puce
+                cle={carte?.puce ?? "point"}
+                Icone={ICONES_PAR_CLE[carte?.puce]}
+              />
             </span>
           </div>
 
@@ -1622,6 +1845,33 @@ export default function CarrouselAtelier() {
             Centrer le titre et le texte
           </label>
 
+          <label className={`${CASE} mb-2`}>
+            <input
+              type="checkbox"
+              checked={Boolean(carte?.filetTitre)}
+              onChange={(e) => majCarte({ filetTitre: e.target.checked })}
+            />
+            Filet sous le titre
+          </label>
+          {carte?.filetTitre && (
+            <div className="mb-3 grid grid-cols-2 gap-2 pl-6">
+              <Taille
+                id="ft-largeur"
+                label="Longueur"
+                valeur={carte.filetTitreLargeur}
+                defaut={96}
+                onChange={(v) => majCarte({ filetTitreLargeur: v })}
+              />
+              <Taille
+                id="ft-epaisseur"
+                label="Épaisseur"
+                valeur={carte.filetTitreEpaisseur}
+                defaut={4}
+                onChange={(v) => majCarte({ filetTitreEpaisseur: v })}
+              />
+            </div>
+          )}
+
           <div className="mb-3 grid grid-cols-2 gap-3">
             <Opacite
               id="o-entete"
@@ -1665,10 +1915,29 @@ export default function CarrouselAtelier() {
             <Couleur
               label="Logo"
               valeur={carte?.couleurLogo}
-              defaut={theme.encre}
+              defaut={theme.accent}
               onChange={(v) => majCarte({ couleurLogo: v })}
             />
+            <Couleur
+              label="Filet du titre"
+              valeur={carte?.couleurFiletTitre}
+              defaut={theme.accent}
+              onChange={(v) => majCarte({ couleurFiletTitre: v })}
+            />
           </div>
+
+          {/* Une NOUVELLE carte hérite déjà de ce réglage. Ce bouton sert à
+              l'autre cas : avoir changé d'avis alors que les cartes existent
+              déjà. Explicite, parce qu'une diffusion silencieuse écraserait les
+              ajustements faits carte par carte. */}
+          <button
+            type="button"
+            onClick={diffuserStyle}
+            disabled={cartes.length < 2}
+            className={`${BOUTON_SECOND} mt-4 w-full`}
+          >
+            Appliquer cette mise en forme aux {cartes.length - 1} autres
+          </button>
         </Section>
 
         {/* ---- la trace (optionnelle) ---- */}
@@ -1769,6 +2038,86 @@ export default function CarrouselAtelier() {
               journée.
             </p>
           )}
+        </Section>
+
+        {/* ---- les projets ---- */}
+        <Section titre="Projet">
+          <p className="mb-3 font-heading text-[12px] text-brand-text/50">
+            Le travail en cours est gardé tout seul sur cet appareil — fermer
+            l&rsquo;onglet ne coûte rien. Un projet NOMMÉ, lui, ne bouge que
+            quand tu l&rsquo;enregistres.
+          </p>
+          <div className="mb-3 flex gap-2">
+            <input
+              type="text"
+              value={nomProjet}
+              placeholder="nom du projet"
+              onChange={(e) => setNomProjet(e.target.value)}
+              className={CHAMP}
+              aria-label="Nom du projet"
+            />
+            <button
+              type="button"
+              onClick={enregistrer}
+              disabled={!nomProjet.trim() || etat.occupe}
+              className={BOUTON_SECOND}
+            >
+              <Save size={15} aria-hidden />
+              Enregistrer
+            </button>
+          </div>
+
+          {projets.length > 0 && (
+            <div className="mb-3 flex flex-col gap-1.5">
+              {projets.map((pr) => (
+                <div key={pr.nom} className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => ouvrirProjet(pr.nom)}
+                    className="flex-1 rounded-lg border border-brand-field bg-brand-paper px-3 py-2 text-left font-heading text-[14px] text-brand-text hover:border-brand-primary-dark"
+                  >
+                    {pr.nom}
+                    <span className="ml-2 text-[12px] text-brand-text/45">
+                      {pr.cartes} carte{pr.cartes > 1 ? "s" : ""}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      supprimerProjet(pr.nom).then(rafraichirProjets)
+                    }
+                    className="rounded-full p-1.5 text-brand-text/40 hover:bg-brand-primary/15 hover:text-brand-primary-dark"
+                    aria-label={`Supprimer le projet ${pr.nom}`}
+                  >
+                    <Trash2 size={15} aria-hidden />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Le fichier de secours : IndexedDB vit dans CE navigateur, un
+              « effacer les données du site » emporte tout. */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={telechargerProjet}
+              className={`${BOUTON_SECOND} flex-1`}
+            >
+              <Download size={15} aria-hidden />
+              Exporter
+            </button>
+            <label className={`${BOUTON_SECOND} flex-1 cursor-pointer`}>
+              <Upload size={15} aria-hidden />
+              Importer
+              <input
+                type="file"
+                accept=".json,application/json"
+                onChange={importer}
+                className="sr-only"
+              />
+            </label>
+          </div>
         </Section>
 
         {/* ---- le carrousel ---- */}
