@@ -15,6 +15,18 @@ import { CLES_ICONES, geometrieDIcone } from "./carrouselIcones";
 
 const GABARITS = ["carte", "bandeau", "photo", "texte", "fiche", "cloture"];
 
+/**
+ * `Path2D` n'existe pas sous Node, et `dessinerIcone` s'en sert pour tracer la
+ * géométrie lucide. Sans ce bouchon, la moindre icône dans un texte faisait
+ * échouer le rendu ENTIER — ce qui est aussi un vrai risque en production sur
+ * un navigateur trop vieux, mais ici c'est le test qu'il empêchait d'exister.
+ */
+globalThis.Path2D ??= class Path2D {
+  constructor(d) {
+    this.d = d;
+  }
+};
+
 /** Un contexte 2D de comptoir, qui garde la trace de ses rectangles pleins et
  *  de la fonte avec laquelle chaque mot a été écrit. */
 function ctxFactice() {
@@ -539,5 +551,78 @@ describe("les zones cliquables", () => {
         expect(z.height, `${gabarit}/${z.champ}`).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+describe("les icônes dans les petites capitales", () => {
+  // `dessinerIcone` trace ses chemins avec Path2D, absent de Node : on ne
+  // vérifie pas le DESSIN mais la MISE EN PAGE — qu'une icône soit comptée
+  // comme un signe, et que le texte qui l'entoure reste écrit.
+  const mots = (ctx) => ctx.mots.map((m) => m.texte).join("");
+
+  it("laisse le texte du surtitre intact autour de l'icône", () => {
+    const ctx = planche({ gabarit: "texte", surtitre: "en direct", titre: "" });
+    expect(mots(ctx)).toContain("EN DIRECT");
+  });
+
+  it("met les capitales du pied et de l'en-tête", () => {
+    const ctx = planche({ gabarit: "texte", entete: "matériel", piedCentre: "jour 1" });
+    expect(mots(ctx)).toContain("MATÉRIEL");
+    expect(mots(ctx)).toContain("JOUR 1");
+  });
+
+  it("n'écrit PAS la clé d'une icône dans le surtitre", () => {
+    // Sans balisage, « :balise: » sortait tel quel, en capitales.
+    const ctx = planche({ gabarit: "texte", surtitre: ":balise: en direct", titre: "" });
+    expect(mots(ctx)).not.toContain("BALISE");
+    expect(mots(ctx)).toContain("EN DIRECT");
+  });
+
+  it("laisse une clé INCONNUE écrite, comme partout ailleurs", () => {
+    const ctx = planche({ gabarit: "texte", surtitre: ":licorne: en direct", titre: "" });
+    expect(mots(ctx)).toContain(":LICORNE:");
+  });
+
+  it("garde le surtitre aligné : l'icône compte dans sa largeur", () => {
+    // Le filet ambre précède le texte : centré, il se déplace si — et seulement
+    // si — la largeur mesurée tient compte de l'icône.
+    const filet = (surtitre) =>
+      planche({ gabarit: "texte", surtitre, alignement: "centre" }).rects.find(
+        (r) => Math.round(r.h) === 10 && Math.round(r.w) === 57,
+      ).x;
+    expect(filet(":balise: en direct")).toBeLessThan(filet("en direct"));
+  });
+});
+
+describe("la ligne de chiffres", () => {
+  const trace = { totalKm: 188.2, dPlusM: 12279, dMinusM: 12279, coords: [], profil: [] };
+  const mots = (ctx) => ctx.mots.map((m) => m.texte).join("");
+
+  it("annonce les chiffres de la trace quand la planche ne dit rien", () => {
+    const ctx = planche({ gabarit: "carte", pied: undefined }, { trace });
+    expect(mots(ctx)).toContain("188 km");
+    expect(mots(ctx)).toContain("12 279");
+  });
+
+  it("se remplace par le texte qu'on écrit", () => {
+    const ctx = planche({ gabarit: "carte", pied: "Quatre jours, aucun ravitaillement" }, { trace });
+    expect(mots(ctx)).toContain("ravitaillement");
+    expect(mots(ctx)).not.toContain("188 km");
+  });
+
+  it("disparaît quand on la vide", () => {
+    const ctx = planche({ gabarit: "carte", pied: "" }, { trace });
+    expect(mots(ctx)).not.toContain("188 km");
+  });
+
+  it("accepte le balisage, et donc les icônes", () => {
+    const ctx = planche({ gabarit: "carte", pied: "*188 km* :col:" }, { trace });
+    const gras = ctx.mots.find((m) => m.texte === "km");
+    expect(gras.fonte).toMatch(/^700 /);
+  });
+
+  it("ouvre son propre réglage au clic", () => {
+    const ctx = planche({ gabarit: "carte", pied: "Quatre jours" }, { trace });
+    expect(ctx.zones.some((z) => z.champ === "factuelle")).toBe(true);
   });
 });
