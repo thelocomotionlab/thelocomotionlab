@@ -391,6 +391,14 @@ la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
   un réglage aussi bien qu'une absence de réglage — c'est ce qui a fait croire
   que le filet sous le titre ne se dessinait pas alors que sa case était pliée
   (`lib/carrouselRendu.test.js` le vérifie maintenant sur les six gabarits).
+  **Zoom** sous la planche (boutons, ou Ctrl/⌘ + molette) : « Ajuster » montre
+  la composition, 100 % montre les pixels réels de l'export — un corps de 22 px
+  ne se juge pas sur une vignette. Le plan de travail défile quand on zoome.
+- **La composition** (onglet Texte) : **alignement** du texte — à gauche, centré,
+  à droite : le filet ambre du surtitre et le filet sous le titre suivent, tout
+  passe par le même calcul — et **inversion du titre et du surtitre**. Par
+  défaut le surtitre ouvre (un filet, une catégorie, puis le titre) ; inversé,
+  le titre devient l'accroche et le surtitre la range en dessous.
 - **Ce qui se règle sur une planche** : les corps (titre 65, texte 38, filet
   ambre 10 — les valeurs des aperçus de reel), la **police de chaque rôle**
   (titre / surtitre / texte, parmi les trois familles de la charte : Ubuntu,
@@ -400,7 +408,10 @@ la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
   en-tête et pied, y compris sur le gabarit Carte (`1` = le voile de la charte,
   `0` l'éteint) —, l'**ombre portée des textes** (flou, décalage, densité,
   couleur : elle fait le contraste sous les lettres au lieu d'assombrir toute
-  la photo), les couleurs, le filet sous le titre et les opacités. Une planche
+  la photo — et **sur quels textes** : titre, surtitre, texte, en-tête, pied,
+  séparément ; un titre en très gros veut une ombre franche, la pagination du
+  pied en 22 px n'en veut aucune), les couleurs, le filet sous le titre et les
+  opacités. Une planche
   qui ne dit rien suit la charte ; le bouton « Appliquer cette allure aux N
   autres » diffuse.
 - **Les gabarits** : Carte, Journées, Bandeau, Photo, Texte, Fiche, Clôture.
@@ -410,9 +421,9 @@ la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
     avec la seule journée en couleur — c'est ce déplacement qui fait lire une
     progression, là où quatre vues recadrées se ressembleraient toutes.
   - **Clôture** peut faire passer le titre et/ou le surtitre **au-dessus** du
-    logo : annoncé puis signé, ça se lit comme une fin ; l'inverse se lit comme
-    un en-tête. Le bloc entier est mesuré avant d'être posé, donc il reste
-    centré quel que soit l'ordre.
+    logo (onglet **Texte**, groupe « La clôture ») : annoncé puis signé, ça se
+    lit comme une fin ; l'inverse se lit comme un en-tête. Le bloc entier est
+    mesuré avant d'être posé, donc il reste centré quel que soit l'ordre.
 - **Le balisage du texte** : `*gras*`, `_italique_`, `~souligné~`, `[en ambre]`,
   `[bleu: mot]`, `:col:` (icône), `- ` (point de liste), `> ` (paragraphe
   décalé). Une ligne vide sépare, chaque ligne vide en plus aère. Dans les cases

@@ -251,6 +251,27 @@ export function largeurLigne(ligne) {
 }
 
 /**
+ * LES TROIS ALIGNEMENTS, en un seul calcul : de combien décaler une ligne dans
+ * sa boîte.
+ *
+ * Tout passe par ici — titres, paragraphes, listes, filets. Un alignement
+ * calculé à deux endroits finit par diverger d'un demi-pixel, et c'est
+ * exactement ce qui se voit sur un titre centré au-dessus d'un filet qui ne
+ * l'est pas tout à fait.
+ */
+export const ALIGNEMENTS = [
+  { cle: "gauche", label: "À gauche" },
+  { cle: "centre", label: "Centré" },
+  { cle: "droite", label: "À droite" },
+];
+
+export function decalageAlignement(align, largeurBoite, largeur) {
+  if (align === "centre") return Math.max(0, (largeurBoite - largeur) / 2);
+  if (align === "droite") return Math.max(0, largeurBoite - largeur);
+  return 0;
+}
+
+/**
  * Pose une ligne. `x` est son bord GAUCHE — c'est à l'appelant de le calculer
  * s'il centre (cf. `largeurLigne`), parce que lui seul sait dans quelle boîte.
  */
@@ -543,11 +564,18 @@ function dessinerPuce(ctx, puce, x, baseLigne, base) {
 /**
  * Pose des blocs de haut en bas depuis `haut`, et rend l'ordonnée du BAS.
  *
- * `centre` centre paragraphes et items ; une liste centrée garde sa puce collée
- * au texte plutôt qu'alignée sur une marge — sinon les puces flotteraient
- * chacune à une abscisse différente, ce qui ne se lit plus comme une liste.
+ * `align` vaut « gauche », « centre » ou « droite », et `largeur` est la boîte
+ * dans laquelle aligner — les deux vont ensemble : sans largeur, il n'y a rien
+ * à centrer.
  */
-export function poserBlocs(ctx, blocs, x, haut, base, { centre = null, largeur = 0, puce } = {}) {
+export function poserBlocs(
+  ctx,
+  blocs,
+  x,
+  haut,
+  base,
+  { align = "gauche", largeur = 0, puce } = {},
+) {
   const interligne = esp(base, "interligne");
   const retraitListe = esp(base, "retraitListe");
   let y = haut;
@@ -564,12 +592,15 @@ export function poserBlocs(ctx, blocs, x, haut, base, { centre = null, largeur =
         if (k > 0) y += base.taille * esp(base, "entreItems");
         lignes.forEach((ligne, j) => {
           const baseLigne = y + base.taille * 0.78 + j * base.taille * interligne;
-          const l = largeurLigne(ligne);
+          const retrait = base.taille * retraitListe;
+          // Une liste alignée autrement qu'à gauche garde sa puce COLLÉE au
+          // texte plutôt qu'à une marge : sinon chaque puce flotte à une
+          // abscisse différente, et ça ne se lit plus comme une liste.
           const gauche =
-            centre === null
-              ? x + base.taille * retraitListe
-              : centre - l / 2 + base.taille * (retraitListe / 2);
-          if (j === 0) dessinerPuce(ctx, puce, gauche - base.taille * retraitListe, baseLigne, base);
+            align === "gauche"
+              ? x + retrait
+              : x + decalageAlignement(align, largeur, largeurLigne(ligne) + retrait) + retrait;
+          if (j === 0) dessinerPuce(ctx, puce, gauche - retrait, baseLigne, base);
           dessinerLigneRiche(ctx, ligne, gauche, baseLigne, base);
         });
         y += lignes.length * base.taille * interligne;
@@ -579,11 +610,13 @@ export function poserBlocs(ctx, blocs, x, haut, base, { centre = null, largeur =
 
     bloc.lignes.forEach((ligne, j) => {
       const baseLigne = y + base.taille * 0.78 + j * base.taille * interligne;
-      // L'alinéa ne concerne QUE la première ligne, et n'a aucun sens centré :
-      // un texte centré n'a pas de bord gauche sur lequel décaler.
-      const decale = (bloc.retrait ?? 0) + (j === 0 && centre === null ? (bloc.alinea ?? 0) : 0);
+      // L'alinéa ne concerne QUE la première ligne, et n'a aucun sens hors de
+      // l'alignement à gauche : un texte centré n'a pas de bord sur lequel
+      // décaler.
+      const decale =
+        (bloc.retrait ?? 0) + (j === 0 && align === "gauche" ? (bloc.alinea ?? 0) : 0);
       const gauche =
-        centre === null ? x + decale : centre - largeurLigne(ligne) / 2;
+        x + decale + decalageAlignement(align, largeur - decale, largeurLigne(ligne));
       dessinerLigneRiche(ctx, ligne, gauche, baseLigne, base);
     });
     y += bloc.lignes.length * base.taille * interligne;

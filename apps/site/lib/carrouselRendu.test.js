@@ -35,7 +35,13 @@ function ctxFactice() {
     textAlign: "",
     lineCap: "",
     lineJoin: "",
-    measureText: (t) => ({ width: String(t).length * 0.5 * (parseInt(ctx.font, 10) || 20) }),
+    // La TAILLE se lit sur `…px`, jamais avec `parseInt` : le navigateur
+    // renormalise `ctx.font` en « 500 22px … » et `parseInt` en tire 500, la
+    // GRAISSE. C'est le bug qui faisait déborder le nom du labo de la story ;
+    // le contexte factice doit reproduire la fonte, pas le piège.
+    measureText: (t) => ({
+      width: String(t).length * 0.5 * (Number(/([\d.]+)px/.exec(ctx.font)?.[1]) || 20),
+    }),
     fillRect: (x, y, w, h) => rects.push({ x, y, w, h, couleur: ctx.fillStyle }),
     fillText: (t) => mots.push({ texte: String(t), fonte: ctx.font }),
     drawImage: (_src, x, y, w, h) => images.push({ x, y, w, h }),
@@ -341,5 +347,89 @@ describe("le gabarit « Journées »", () => {
   it("ne dessine rien d'absurde sans trace", () => {
     const ctx = planche({ gabarit: "journees" }, { trace: null, segments: [] });
     expect(ctx.mots.some((m) => m.texte === "Jour")).toBe(true);
+  });
+});
+
+describe("l'alignement du texte", () => {
+  const commun = { gabarit: "texte", titre: "Un titre", texte: "Un paragraphe court." };
+  const LARGEUR = 200;
+  const filet = ({ rects }) => rects.find((r) => Math.round(r.w) === LARGEUR);
+  const avecFilet = (align) =>
+    filet(
+      planche({
+        ...commun,
+        alignement: align,
+        filetTitre: true,
+        filetTitreLargeur: LARGEUR,
+        filetTitreEpaisseur: 6,
+      }),
+    );
+
+  it("pousse le filet du titre vers la droite quand on centre puis aligne à droite", () => {
+    const g = avecFilet("gauche").x;
+    const c = avecFilet("centre").x;
+    const d = avecFilet("droite").x;
+    expect(g).toBeLessThan(c);
+    expect(c).toBeLessThan(d);
+    expect(Math.round(c + LARGEUR / 2)).toBe(FORMATS.carrousel.width / 2);
+    // Aligné à droite, le filet finit sur la marge droite.
+    expect(Math.round(d + LARGEUR)).toBe(FORMATS.carrousel.width - Math.round(64));
+  });
+
+  it("comprend encore l'ancien booléen « centrer »", () => {
+    expect(avecFilet(undefined)).toBeDefined();
+    const centre = filet(
+      planche({
+        ...commun,
+        centrer: true,
+        filetTitre: true,
+        filetTitreLargeur: LARGEUR,
+        filetTitreEpaisseur: 6,
+      }),
+    );
+    expect(Math.round(centre.x + LARGEUR / 2)).toBe(FORMATS.carrousel.width / 2);
+  });
+
+  it("aligne aussi le filet ambre du surtitre", () => {
+    // Le filet du surtitre fait 2,6 × son corps : on le repère par sa hauteur.
+    const trouve = (align) => {
+      const { rects } = planche({ ...commun, surtitre: "matériel", alignement: align });
+      return rects.find((r) => Math.round(r.h) === 10 && Math.round(r.w) === 57);
+    };
+    expect(trouve("centre").x).toBeGreaterThan(trouve("gauche").x);
+    expect(trouve("droite").x).toBeGreaterThan(trouve("centre").x);
+  });
+});
+
+describe("l'ordre du titre et du surtitre", () => {
+  const commun = {
+    gabarit: "texte",
+    surtitre: "matériel",
+    titre: "Le sac",
+    filetTitre: true,
+    filetTitreLargeur: 200,
+    filetTitreEpaisseur: 6,
+  };
+  const yFiletTitre = (carte) =>
+    planche(carte).rects.find((r) => Math.round(r.w) === 200 && Math.round(r.h) === 6).y;
+  const yFiletSurtitre = (carte) =>
+    planche(carte).rects.find((r) => Math.round(r.h) === 10 && Math.round(r.w) === 57).y;
+
+  it("met le surtitre AVANT le titre par défaut", () => {
+    expect(yFiletSurtitre(commun)).toBeLessThan(yFiletTitre(commun));
+  });
+
+  it("les échange sur demande", () => {
+    const inverse = { ...commun, titreDevant: true };
+    expect(yFiletSurtitre(inverse)).toBeGreaterThan(yFiletTitre(inverse));
+  });
+
+  it("échange aussi sur les gabarits construits du bas vers le haut", () => {
+    for (const gabarit of ["carte", "photo"]) {
+      const normal = { ...commun, gabarit };
+      const inverse = { ...normal, titreDevant: true };
+      expect(yFiletSurtitre(normal)).toBeLessThan(yFiletTitre(normal));
+      expect(yFiletSurtitre(inverse)).toBeGreaterThan(yFiletTitre(inverse));
+    }
   });
 });

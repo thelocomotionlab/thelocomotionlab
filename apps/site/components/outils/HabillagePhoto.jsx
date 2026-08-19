@@ -53,6 +53,7 @@ import {
   ICONES_PAR_CLE,
   LEGENDE,
   Puce,
+  Zoom,
 } from "@/components/outils/champsAtelier";
 
 const ONGLETS = [
@@ -149,6 +150,9 @@ export default function HabillagePhoto() {
   const [formatCle, setFormatCle] = useState("story");
   const [style, setStyle] = useState("silhouette");
   const [onglet, setOnglet] = useState("photo");
+  /** `null` = ajusté à la fenêtre ; un nombre = le facteur sur la largeur du
+   *  format (100 % = un pixel d'export pour un pixel d'écran). */
+  const [zoom, setZoom] = useState(null);
   const [champs, setChamps] = useState({
     distanceKm: "",
     dPlusM: "",
@@ -325,6 +329,24 @@ export default function HabillagePhoto() {
     if (file) telecharger(file);
   }, [fichierFinal]);
 
+  /** Le zoom EFFECTIF de l'aperçu, mesuré sur le canvas. */
+  const zoomAffiche = useCallback(() => {
+    const canvas = canvasRef.current;
+    return canvas?.clientWidth ? canvas.clientWidth / format.width : null;
+  }, [format.width]);
+
+  /** Ctrl/⌘ + molette : le geste de zoom de tous les éditeurs. */
+  const molette = useCallback(
+    (e) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      const actuel = zoom ?? zoomAffiche() ?? 0.4;
+      const suivant = Math.min(3, Math.max(0.1, actuel * (e.deltaY > 0 ? 0.9 : 1.1)));
+      setZoom(Math.round(suivant * 100) / 100);
+    },
+    [zoom, zoomAffiche],
+  );
+
   const pret = Boolean(image && trace);
 
   return (
@@ -403,12 +425,23 @@ export default function HabillagePhoto() {
             carrousel, où le même piège s'est refermé trois fois). */}
         <section className="contents lg:order-2 lg:flex lg:min-h-0 lg:min-w-0 lg:flex-1 lg:flex-col">
           <div className="order-1 sticky top-[var(--apercu-top,84px)] z-20 flex min-h-0 flex-col gap-2 bg-brand-bg/95 px-3 py-3 backdrop-blur lg:static lg:order-none lg:flex-1 lg:bg-transparent lg:backdrop-blur-none">
-            <div className="flex min-h-0 flex-1 items-center justify-center lg:rounded-xl lg:bg-brand-text/5 lg:p-4">
+            <div
+              onWheel={molette}
+              className="flex min-h-0 flex-1 items-center justify-center overflow-auto lg:rounded-xl lg:bg-brand-text/5 lg:p-4"
+            >
               <canvas
                 ref={canvasRef}
-                className="block h-auto max-h-[40vh] w-auto max-w-full rounded-xl bg-brand-text/10 shadow-card lg:max-h-full"
+                style={zoom == null ? undefined : { width: `${format.width * zoom}px` }}
+                className={
+                  zoom == null
+                    ? "block h-auto max-h-[40vh] w-auto max-w-full rounded-xl bg-brand-text/10 shadow-card lg:max-h-full"
+                    : "block h-auto max-w-none shrink-0 rounded-xl bg-brand-text/10 shadow-card"
+                }
                 aria-label="Aperçu de l'image habillée"
               />
+            </div>
+            <div className="flex shrink-0 items-center justify-center gap-2">
+              <Zoom valeur={zoom} onChange={setZoom} mesurer={zoomAffiche} />
             </div>
             <p className={`${AIDE} shrink-0 text-center`}>
               Aperçu à l&rsquo;échelle exacte du fichier exporté ({format.width} × {format.height}).
