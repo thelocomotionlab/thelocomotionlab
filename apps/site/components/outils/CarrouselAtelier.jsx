@@ -128,6 +128,14 @@ const ONGLETS = [
 /** Les gabarits qui portent une photo. */
 const AVEC_PHOTO = ["photo", "bandeau", "cloture"];
 
+/** Pour chercher une icône sans se soucier des accents ni de la casse. */
+const sansAccent = (s) =>
+  String(s ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+
 /**
  * CLIQUER DANS L'IMAGE OUVRE LE RÉGLAGE.
  *
@@ -515,6 +523,9 @@ export default function CarrouselAtelier() {
   /** La bande des vignettes se rabat : sur un petit écran, elle prend la place
    *  de la planche, et on ne change pas de planche à chaque geste. */
   const [bandeOuverte, setBandeOuverte] = useState(true);
+  /** Le filtre de la palette d'icônes. À quatre-vingt-dix pictogrammes, la
+   *  grille ne se parcourt plus à l'œil : on tape ce qu'on cherche. */
+  const [filtreIcones, setFiltreIcones] = useState("");
   const [fond, setFond] = useState(null);
   const [marque, setMarque] = useState(null);
   const [policePrete, setPolicePrete] = useState(false);
@@ -532,6 +543,11 @@ export default function CarrouselAtelier() {
   const carte = cartes[active] ?? null;
   /** Les cases de la grille, complétées par les journées de la trace. */
   const cases = useMemo(() => casesEffectives(carte, segments), [carte, segments]);
+  /** La palette filtrée. Sans accent ni casse : on tape « eclair », on trouve. */
+  const icones = useMemo(() => {
+    const q = sansAccent(filtreIcones);
+    return q ? ICONES_PALETTE.filter(({ cle }) => sansAccent(cle).includes(q)) : ICONES_PALETTE;
+  }, [filtreIcones]);
 
   /* --------------------------------------------------------------- chargements */
 
@@ -1850,8 +1866,16 @@ export default function CarrouselAtelier() {
                       dessine ; on cherchait un pictogramme dans un glossaire. On
                       montre donc le dessin, et le mot dessous. */}
                   <p className={LEGENDE}>Icônes — les mêmes que les repères de /live</p>
+                  <input
+                    type="search"
+                    value={filtreIcones}
+                    placeholder="chercher — loupe, col, sac…"
+                    onChange={(e) => setFiltreIcones(e.target.value)}
+                    className={`${CHAMP} mb-1.5`}
+                    aria-label="Chercher une icône"
+                  />
                   <div className="grid max-h-52 grid-cols-4 gap-1 overflow-y-auto rounded-xl border border-brand-field/70 p-1.5 sm:grid-cols-5">
-                    {ICONES_PALETTE.map(({ cle, Icone }) => (
+                    {icones.map(({ cle, Icone }) => (
                       <button
                         key={cle}
                         type="button"
@@ -1865,6 +1889,11 @@ export default function CarrouselAtelier() {
                         </span>
                       </button>
                     ))}
+                    {icones.length === 0 && (
+                      <p className={`${AIDE} col-span-full px-1 py-2`}>
+                        Aucune icône ne porte ce nom.
+                      </p>
+                    )}
                   </div>
                 </Groupe>
 
