@@ -438,12 +438,26 @@ la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
   - **Clôture** peut faire passer le titre et/ou le surtitre **au-dessus** du
     logo (onglet **Texte**, groupe « La clôture ») : annoncé puis signé, ça se
     lit comme une fin ; l'inverse se lit comme un en-tête. Le bloc entier est
-    mesuré avant d'être posé, donc il reste centré quel que soit l'ordre.
+    mesuré avant d'être posé, donc il reste centré quel que soit l'ordre. Passer
+    une planche EN clôture la centre : c'est le seul gabarit dont la mise en
+    page est symétrique, et y arriver avec un texte aligné à gauche donnait une
+    planche visiblement cassée alors que personne n'avait fait ce choix.
 - **Le balisage du texte** : `*gras*`, `_italique_`, `~souligné~`, `[en ambre]`,
   `[bleu: mot]`, `:col:` (icône), `- ` (point de liste), `> ` (paragraphe
   décalé). Une ligne vide sépare, chaque ligne vide en plus aère. Dans les cases
   du gabarit Journées, chaque ligne tapée reste une ligne (une légende n'est pas
   un texte suivi).
+  Il marche dans **tous** les textes, y compris les petites capitales — surtitre,
+  en-tête, pied de page, libellés de fiche. C'étaient les seules à ne pas
+  l'accepter : on pouvait poser `:balise:` dans un titre mais pas dans le
+  surtitre juste au-dessus, ce qui se découvre en tapant et n'a aucune raison
+  d'être. Une icône y compte comme une lettre, alignée sur le centre optique des
+  capitales.
+- **La ligne de chiffres** des gabarits Carte et Photo (sous le titre) est un
+  TEXTE LIBRE. Vide, une carte affiche ce que la trace sait dire d'elle-même
+  (« 188 km · 12 279 m D+ ») ; écris ce que tu veux à la place, ou un espace
+  pour la faire disparaître — la distance n'est pas toujours ce qu'on a envie
+  d'annoncer.
 - **Ajouter une icône** au vocabulaire : `apps/site/lib/liveWaypointIcons.js`
   (une clé → un composant lucide). Ce que lucide n'a pas se dessine à la maison,
   au même trait, dans `apps/site/lib/iconesMaison.js` — c'est le cas de la

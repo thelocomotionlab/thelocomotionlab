@@ -60,6 +60,7 @@ import {
   chargerFond,
   dessinerCartePartage,
   dureeCourte,
+  ligneFactuelle,
   texteDeJournee,
   vueDeLaCarte,
 } from "@/lib/carrouselCartes";
@@ -140,6 +141,7 @@ const ZONES = {
   surtitre: { onglet: "texte", champ: () => "surtitre" },
   titre: { onglet: "texte", champ: () => "titre" },
   texte: { onglet: "texte", champ: () => "texte" },
+  factuelle: { onglet: "texte", champ: () => "ligne-chiffres" },
   pied: { onglet: "texte", champ: () => "pied-centre" },
   fiche: { onglet: "texte", champ: () => "fiche-0" },
   case: { onglet: "texte", champ: (z) => `case-${z.index ?? 0}` },
@@ -726,6 +728,24 @@ export default function CarrouselAtelier() {
   const majCarte = useCallback(
     (patch) => setCartes((cs) => cs.map((c, i) => (i === active ? { ...c, ...patch } : c))),
     [active],
+  );
+
+  /**
+   * Changer de gabarit, en gardant le contenu.
+   *
+   * La clôture est le seul gabarit dont la mise en page est SYMÉTRIQUE : un
+   * bloc autour du logo. Y arriver avec un texte aligné à gauche donne une
+   * planche visiblement cassée, alors que personne n'a fait ce choix — il a été
+   * hérité. On centre donc en y entrant. Les mots, eux, ne bougent pas.
+   */
+  const changerGabarit = useCallback(
+    (gabarit) =>
+      majCarte(
+        gabarit === "cloture"
+          ? { gabarit, alignement: "centre", centrer: true, marque: "rien" }
+          : { gabarit },
+      ),
+    [majCarte],
   );
 
   const majEtiquette = useCallback(
@@ -1333,7 +1353,7 @@ export default function CarrouselAtelier() {
                       <button
                         key={g.cle}
                         type="button"
-                        onClick={() => majCarte({ gabarit: g.cle })}
+                        onClick={() => changerGabarit(g.cle)}
                         aria-pressed={carte?.gabarit === g.cle}
                         className={`rounded-xl border px-3 py-2 text-left font-heading text-[14px] transition-colors motion-reduce:transition-none ${
                           carte?.gabarit === g.cle
@@ -1474,6 +1494,40 @@ export default function CarrouselAtelier() {
                     onChange={(v) => majCarte({ titreDevant: v })}
                   />
                 </Groupe>
+
+                {["carte", "photo"].includes(carte?.gabarit) && (
+                  <Groupe
+                    titre="Ligne de chiffres"
+                    aide="Sous le titre. Vide sur une carte, elle affiche ce que la trace sait dire ; écris ce que tu veux à la place, ou un espace pour la faire disparaître. Le balisage marche ici aussi."
+                  >
+                    <input
+                      id="ligne-chiffres"
+                      type="text"
+                      value={carte.pied ?? ""}
+                      placeholder={
+                        carte.gabarit === "carte" && trace
+                          ? ligneFactuelle(trace, bilan)
+                          : "188 km · 12 279 m D+"
+                      }
+                      onChange={(e) =>
+                        // Le champ VIDÉ rend la main à la trace (`null`), pas au
+                        // silence : c'est ce qu'on attend d'un placeholder.
+                        majCarte({ pied: e.target.value === "" ? null : e.target.value })
+                      }
+                      className={CHAMP}
+                      aria-label="Ligne de chiffres"
+                    />
+                    {carte.pied != null && (
+                      <button
+                        type="button"
+                        onClick={() => majCarte({ pied: null })}
+                        className="mt-1 font-heading text-[12px] text-brand-text/50 underline"
+                      >
+                        revenir aux chiffres de la trace
+                      </button>
+                    )}
+                  </Groupe>
+                )}
 
                 {carte?.gabarit === "cloture" && (
                   <Groupe

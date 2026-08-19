@@ -31,6 +31,7 @@ import {
   segmentsDeStats,
 } from "./habillage";
 import { decimerPixels, fitView, tileWindow, TILE_SIZE } from "./carrouselGeo";
+import { dessinerIcone } from "./carrouselIcones";
 import { ancreDuSegment } from "./carrouselTrace";
 import {
   ALIGNEMENTS,
@@ -39,6 +40,7 @@ import {
   decalageAlignement,
   blocsDeTexte,
   dessinerLigneRiche,
+  encreDe,
   largeurLigne,
   hauteurBlocs,
   lignesRiches,
@@ -452,13 +454,15 @@ function bandeEntete(
   if (texte) {
     ctx.font = `${accent ? 500 : 400} ${m.entete}px ${police}`;
     ctx.fillStyle = accent ? th.accent : th.encreFaible;
-    dessinerTexteEspace(
+    const mots = morceauxCapitales(texte);
+    dessinerCapitales(
       ctx,
-      String(texte).toUpperCase(),
-      format.width - m.pad - largeurEspacee(ctx, String(texte).toUpperCase(), m.entete, 0.28),
+      mots,
+      format.width - m.pad - largeurCapitales(ctx, mots, m.entete, 0.28),
       base,
       m.entete,
       0.28,
+      th.accent,
     );
   }
 
@@ -481,6 +485,67 @@ function largeurEspacee(ctx, texte, taille, espacementEm) {
   return Math.max(0, largeur - espacementEm * taille);
 }
 
+/* ------------------------------------------- capitales espacées, avec icônes */
+
+/**
+ * LES PETITES CAPITALES DE LA CHARTE — surtitre, en-tête, pied, libellés de
+ * fiche — ACCEPTENT LE BALISAGE.
+ *
+ * Elles étaient les seuls textes de l'atelier à ne pas le faire : elles
+ * passaient par `dessinerTexteEspace`, qui prend une chaîne et rien d'autre. On
+ * pouvait donc écrire `:balise:` dans un titre mais pas dans le surtitre juste
+ * au-dessus, ce qui n'a aucune raison d'être — et se découvre en tapant.
+ *
+ * Une icône y compte comme une lettre : même écart avant et après, alignée sur
+ * le centre optique des capitales. Les couleurs nommées marchent aussi
+ * (`[bleu: mot]`), l'ambre du surtitre restant la couleur par défaut.
+ */
+function morceauxCapitales(texte) {
+  return analyserRiche(texte).map((mo) =>
+    mo.icone ? mo : { ...mo, texte: String(mo.texte).toUpperCase() },
+  );
+}
+
+/** Le côté d'une icône dans une ligne de capitales. */
+const ICONE_CAPITALES = 1.05;
+
+function largeurCapitales(ctx, morceaux, taille, espacementEm) {
+  const ecart = espacementEm * taille;
+  let largeur = 0;
+  for (const mo of morceaux) {
+    if (mo.icone) {
+      largeur += taille * ICONE_CAPITALES + ecart;
+      continue;
+    }
+    for (const l of mo.texte) largeur += ctx.measureText(l).width + ecart;
+  }
+  return Math.max(0, largeur - ecart);
+}
+
+/** Pose la ligne. `ctx.font` et `ctx.fillStyle` sont déjà réglés par l'appelant
+ *  — sauf pour un morceau qui porte sa propre couleur. */
+function dessinerCapitales(ctx, morceaux, x, base, taille, espacementEm, encre) {
+  const ecart = espacementEm * taille;
+  const parDefaut = ctx.fillStyle;
+  let curseur = x;
+  for (const mo of morceaux) {
+    const couleur = mo.couleur ? encreDe(mo, { couleur: parDefaut, accent: encre }) : parDefaut;
+    if (mo.icone) {
+      const cote = taille * ICONE_CAPITALES;
+      dessinerIcone(ctx, mo.icone, curseur, base - taille * CENTRE_CAPITALES - cote / 2, cote, couleur);
+      curseur += cote + ecart;
+      continue;
+    }
+    ctx.fillStyle = couleur;
+    for (const l of mo.texte) {
+      ctx.fillText(l, curseur, base);
+      curseur += ctx.measureText(l).width + ecart;
+    }
+  }
+  ctx.fillStyle = parDefaut;
+  return Math.max(0, curseur - x - ecart);
+}
+
 /**
  * Le surtitre : un filet ambre, puis des capitales espacées.
  *
@@ -494,10 +559,10 @@ function surtitre(ctx, m, th, police, texte, x, base, { align = "gauche", largeu
   const filetL = Math.round(m.surtitre * 2.6);
   const ecart = m.surtitre * 0.9;
   const epaisseur = Math.max(2, m.filetSurtitre);
-  const mot = String(texte).toUpperCase();
+  const mots = morceauxCapitales(texte);
 
   ctx.font = `500 ${m.surtitre}px ${police}`;
-  const total = filetL + ecart + largeurEspacee(ctx, mot, m.surtitre, 0.22);
+  const total = filetL + ecart + largeurCapitales(ctx, mots, m.surtitre, 0.22);
   const gauche = x + decalageAlignement(align, largeur, total);
 
   ctx.fillStyle = th.accent;
@@ -505,7 +570,7 @@ function surtitre(ctx, m, th, police, texte, x, base, { align = "gauche", largeu
   // regard, pas le petit texte qui le suit. Centré sur la hauteur de capitale
   // du surtitre, sinon il pend sous la ligne dès qu'il s'épaissit.
   ctx.fillRect(gauche, base - m.surtitre * CENTRE_CAPITALES - epaisseur / 2, filetL, epaisseur);
-  dessinerTexteEspace(ctx, mot, gauche + filetL + ecart, base, m.surtitre, 0.22);
+  dessinerCapitales(ctx, mots, gauche + filetL + ecart, base, m.surtitre, 0.22, th.accent);
   return base;
 }
 
@@ -852,9 +917,17 @@ function bandePied(
   dessinerTexteEspace(ctx, numero, m.pad, m.piedBase, m.piedTexte, 0.24);
 
   if (centre) {
-    const mot = String(centre).toUpperCase();
-    const largeur = largeurEspacee(ctx, mot, m.piedTexte, 0.24);
-    dessinerTexteEspace(ctx, mot, (format.width - largeur) / 2, m.piedBase, m.piedTexte, 0.24);
+    const mots = morceauxCapitales(centre);
+    const largeur = largeurCapitales(ctx, mots, m.piedTexte, 0.24);
+    dessinerCapitales(
+      ctx,
+      mots,
+      (format.width - largeur) / 2,
+      m.piedBase,
+      m.piedTexte,
+      0.24,
+      th.accent,
+    );
   }
 
   // À droite : le texte qu'on a écrit, ou « GLISSE → » par défaut tant qu'il
@@ -865,7 +938,11 @@ function bandePied(
   // signer une dernière carte qui renvoie ailleurs (« lien en bio → »), la
   // seconde à laisser un pied nu.
   const resteUneCarte = index < total - 1;
-  const motDroite = droite ? String(droite).toUpperCase() : resteUneCarte ? "GLISSE" : null;
+  const motDroite = droite
+    ? morceauxCapitales(droite)
+    : resteUneCarte
+      ? morceauxCapitales("Glisse")
+      : null;
   const avecFleche =
     fleche === "toujours" ? true : fleche === "jamais" ? false : !droite && resteUneCarte;
   if (!motDroite && !avecFleche) {
@@ -873,15 +950,16 @@ function bandePied(
     return;
   }
   const ecartFleche = avecFleche ? m.piedTexte * 1.5 : 0;
-  const largeur = motDroite ? largeurEspacee(ctx, motDroite, m.piedTexte, 0.24) : 0;
+  const largeur = motDroite ? largeurCapitales(ctx, motDroite, m.piedTexte, 0.24) : 0;
   if (motDroite) {
-    dessinerTexteEspace(
+    dessinerCapitales(
       ctx,
       motDroite,
       format.width - m.pad - largeur - ecartFleche,
       m.piedBase,
       m.piedTexte,
       0.24,
+      th.accent,
     );
   }
 
@@ -1116,7 +1194,7 @@ function couleursDesJours(carte, segments) {
 
 /** Le pied de page factuel d'une carte : les chiffres de l'itinéraire, ou ceux
  *  de la sortie quand la trace a été vécue. */
-function ligneFactuelle(trace, bilan) {
+export function ligneFactuelle(trace, bilan) {
   if (!trace) return "";
   const bouts = [
     trace.totalKm > 0 ? `${formatEntier(trace.totalKm)} km` : "",
@@ -1132,6 +1210,42 @@ function ligneFactuelle(trace, bilan) {
  * Renvoie les boîtes des étiquettes : l'atelier en a besoin pour savoir ce
  * qu'on attrape à la souris.
  */
+/**
+ * LA LIGNE DE CHIFFRES, sous le titre des gabarits Carte et Photo.
+ *
+ * Par défaut, celle que la trace sait dire d'elle-même (« 188 km · 12 279 m
+ * D+ »). Mais c'est un TEXTE, avec tout le balisage : on peut y écrire une
+ * date, un nom de col, une phrase, mettre un mot en ambre ou poser une icône —
+ * et la vider quand la distance n'est pas ce qu'on a envie d'annoncer.
+ *
+ * Posée du BAS vers le haut, comme le bloc qui la contient : la dernière ligne
+ * tombe sur `y`. Rend la nouvelle ordonnée.
+ */
+function ligneDeChiffres(ctx, format, m, th, polices, carte, y, o) {
+  const { texte, align, largeur, ombre, zones } = o;
+  if (!texte) return y;
+  poserOmbre(ctx, ombre, "corps");
+  const base = { ...baseCorps(m, th, polices, carte), graisse: 400 };
+  const ls = lignesRiches(ctx, analyserRiche(texte), largeur, base);
+  if (ls.length === 0) return y;
+
+  let ligne = y;
+  for (let i = ls.length - 1; i >= 0; i -= 1) {
+    dessinerLigneRiche(
+      ctx,
+      ls[i],
+      m.pad + decalageAlignement(align, largeur, largeurLigne(ls[i])),
+      ligne,
+      base,
+    );
+    if (i > 0) ligne -= base.taille * base.interligne;
+  }
+  zoneTexte(zones, "factuelle", m, m.pad, largeur, ligne - m.corps, y + m.corps * 0.3);
+  // Une seule ligne retombe EXACTEMENT sur l'écart d'avant (1,9 corps) : ouvrir
+  // le texte ne doit pas déplacer les planches déjà composées.
+  return ligne - m.corps * 1.9;
+}
+
 function dessinerCarte(ctx, format, o) {
   const { carte, trace, police, polices, logo, fond, m, th, ombre, zones, index, total } = o;
   const boites = [];
@@ -1235,20 +1349,14 @@ function dessinerCarte(ctx, format, o) {
   let y = m.piedFilet - Math.round(34 * m.k);
 
   const align = alignementDe(carte);
-  const factuelle = carte.pied ?? ligneFactuelle(trace, carte.bilan);
   const largeurTexte = format.width - m.pad * 2;
-  if (factuelle) {
-    poserOmbre(ctx, ombre, "corps");
-    ctx.font = `400 ${m.corps}px ${police}`;
-    ctx.fillStyle = th.encreDouce;
-    ctx.fillText(
-      factuelle,
-      m.pad + decalageAlignement(align, largeurTexte, ctx.measureText(factuelle).width),
-      y,
-    );
-    zoneTexte(zones, "texte", m, m.pad, largeurTexte, y - m.corps, y + m.corps * 0.3);
-    y -= m.corps * 1.9;
-  }
+  y = ligneDeChiffres(ctx, format, m, th, polices, carte, y, {
+    texte: carte.pied ?? ligneFactuelle(trace, carte.bilan),
+    align,
+    largeur: largeurTexte,
+    ombre,
+    zones,
+  });
 
   // Titre et surtitre peuvent s'échanger : ici on construit du bas vers le
   // haut, donc « inverser » revient à poser le surtitre en premier.
@@ -1393,19 +1501,13 @@ function dessinerPhoto(ctx, format, o) {
   let y = m.piedFilet - Math.round(34 * m.k);
   const align = alignementDe(carte);
   const largeurTexte = format.width - m.pad * 2;
-  const factuelle = carte.pied ?? "";
-  if (factuelle) {
-    poserOmbre(ctx, ombre, "corps");
-    ctx.font = `400 ${m.corps}px ${police}`;
-    ctx.fillStyle = th.encreDouce;
-    ctx.fillText(
-      factuelle,
-      m.pad + decalageAlignement(align, largeurTexte, ctx.measureText(factuelle).width),
-      y,
-    );
-    zoneTexte(zones, "texte", m, m.pad, largeurTexte, y - m.corps, y + m.corps * 0.3);
-    y -= m.corps * 1.9;
-  }
+  y = ligneDeChiffres(ctx, format, m, th, polices, carte, y, {
+    texte: carte.pied ?? "",
+    align,
+    largeur: largeurTexte,
+    ombre,
+    zones,
+  });
   if (carte.texte) {
     // Ce gabarit se construit du BAS vers le haut. Avec des listes et des
     // respirations, empiler à reculons devient illisible : on mesure le bloc
@@ -1735,7 +1837,7 @@ function dessinerFiche(ctx, format, o) {
     poserOmbre(ctx, ombre, "surtitre");
     ctx.font = `400 ${libelle}px ${policeDe(carte, "policeSurtitre", polices)}`;
     ctx.fillStyle = th.encreFaible;
-    dessinerTexteEspace(ctx, String(l.label ?? "").toUpperCase(), m.pad, base, libelle, 0.26);
+    dessinerCapitales(ctx, morceauxCapitales(l.label ?? ""), m.pad, base, libelle, 0.26, th.accent);
 
     poserOmbre(ctx, ombre, "titre");
     ctx.font = `700 ${valeur}px ${policeDe(carte, "policeTitre", polices)}`;
