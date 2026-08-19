@@ -21,10 +21,10 @@ export const liveConfig = {
 
     // Départ : date + heure + fuseau (+02:00 l'été). Pilote le compte à
     // rebours et le numéro du jour du journal.
-    dateDebut: "2026-08-20T10:00:00+02:00",
+    dateDebut: "2026-08-22T08:00:00+02:00",
 
     // Période affichée sur la carte de partage.
-    dates: "20 août 2026",
+    dates: "22 août 2026",
 
     // Phrase d'intention, en italique sous le titre.
     intention: "En autonomie complète sur 4 jours.",
@@ -57,9 +57,9 @@ export const liveConfig = {
 
 /*    waypoints: [],*/
     waypoints: [
-      { nom: "Arsine",     km: 42.,    icone: "bivouac" },
-      { nom: "Vallouise",  km: 84., icone: "bivouac" },
-      { nom: "Valgaudémar",       km: 130.6,   icone: "bivouac" },
+      { nom: "Valgaudémar",       km: 57.47,   icone: "bivouac" },
+      { nom: "Vallouise",     km: 108.7,    icone: "bivouac" },
+      { nom: "Arsine",  km: 146.3, icone: "bivouac" },
     ],
     
     // Deux valeurs seulement :
