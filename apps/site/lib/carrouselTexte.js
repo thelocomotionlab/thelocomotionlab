@@ -54,7 +54,8 @@ export const COULEURS_TEXTE = {
 };
 
 export const AIDE_BALISAGE =
-  "*gras*  _italique_  ~souligné~  [en ambre]  [bleu: mot]  :col: (icône)  - liste  > retrait";
+  "*gras*  _italique_  ~souligné~  [en ambre]  [bleu: mot]  :col: (icône)  - liste  > retrait\n" +
+  "en début de ligne :  | centré   |> à droite   |< à gauche   -- plus petit   ++ plus grand";
 
 /** Une icône entre deux-points. Bornée à des minuscules sans espace, et
  *  vérifiée contre le vocabulaire : « Départ : 6 h » n'en est pas une, et
@@ -378,6 +379,50 @@ const EST_ITEM = /^\s*-\s+(.*)$/;
 const EST_RETRAIT = /^\s*>\s?(.*)$/;
 
 /**
+ * L'ALIGNEMENT ET LE CORPS, LIGNE PAR LIGNE.
+ *
+ * La planche a un alignement et un corps ; c'est ce qui la tient. Mais UNE
+ * ligne veut parfois s'en écarter — une phrase centrée au milieu d'un bloc à
+ * gauche, une précision en plus petit sous une déclaration. Le faire au réglage
+ * de la planche l'imposerait à tout le reste.
+ *
+ * Une famille de préfixes, un seul caractère à retenir :
+ *   `|` centré, `|>` à droite, `|<` à gauche — la barre est l'axe, le chevron
+ *   donne le sens ;
+ *   `--` plus petit, `++` plus grand — répétables, et ils se cumulent avec
+ *   l'alignement (`|-- une note`, ou `-- |>` avec une espace, au choix).
+ * Le préfixe doit être suivi d'une ESPACE ET de quelque chose : `----` seul
+ * reste du texte, et `- eau` reste un point de liste.
+ */
+const MARQUEUR_LIGNE = "\\|[<>]?|\\+\\+|--";
+const PREFIXE_LIGNE = new RegExp(
+  `^((?:${MARQUEUR_LIGNE})(?:[ \\t]*(?:${MARQUEUR_LIGNE}))*)[ \\t]+(.+)$`,
+);
+const PAS_DE_CORPS = 1.25;
+
+function styleDeLigne(ligne) {
+  const m = PREFIXE_LIGNE.exec(ligne);
+  if (!m) return { align: null, echelle: 1, reste: ligne };
+  let align = null;
+  let pas = 0;
+  for (const t of m[1].match(new RegExp(MARQUEUR_LIGNE, "g")) ?? []) {
+    if (t === "|") align = "centre";
+    else if (t === "|>") align = "droite";
+    else if (t === "|<") align = "gauche";
+    else if (t === "++") pas += 1;
+    else pas -= 1;
+  }
+  const echelle = Math.min(2.5, Math.max(0.4, PAS_DE_CORPS ** pas));
+  return { align, echelle, reste: m[2] };
+}
+
+/** Le style d'un bloc, à l'échelle demandée. `null` quand rien ne change —
+ *  le bloc suit alors celui de la planche, sans copie inutile. */
+function baseEchelle(base, echelle) {
+  return echelle === 1 ? null : { ...base, taille: Math.max(6, Math.round(base.taille * echelle)) };
+}
+
+/**
  * Découpe un texte en blocs déjà mis en page.
  *
  * @returns {Array<{type:"paragraphe"|"liste"|"espace", lignes?:Array,
@@ -388,44 +433,55 @@ export function blocsDeTexte(ctx, texte, largeurMax, base) {
   const blocs = [];
   let paragraphe = []; // lignes brutes en attente
   let paraRetrait = false; // …et si elles sont décalées (« > »)
+  let paraStyle = { align: null, echelle: 1 }; // …et leur alignement / corps
   let items = null; // items de liste en attente
+  let itemsStyle = { align: null, echelle: 1 };
   let vides = 0;
 
   const viderParagraphe = () => {
     if (paragraphe.length) {
-      const retrait = paraRetrait ? base.taille * esp(base, "retraitListe") : 0;
-      const alinea = base.taille * esp(base, "alinea");
+      const b = baseEchelle(base, paraStyle.echelle) ?? base;
+      const retrait = paraRetrait ? b.taille * esp(b, "retraitListe") : 0;
+      const alinea = b.taille * esp(b, "alinea");
       const large = largeurMax - retrait;
-      const lignes = lignesDures(base)
+      const lignes = lignesDures(b)
         ? paragraphe.flatMap((ligne, i) =>
-            lignesRiches(ctx, analyserRiche(ligne), large, base, { retrait: i === 0 ? alinea : 0 }),
+            lignesRiches(ctx, analyserRiche(ligne), large, b, { retrait: i === 0 ? alinea : 0 }),
           )
-        : lignesRiches(ctx, analyserRiche(paragraphe.join(" ")), large, base, { retrait: alinea });
-      blocs.push({ type: "paragraphe", retrait, alinea, lignes });
+        : lignesRiches(ctx, analyserRiche(paragraphe.join(" ")), large, b, { retrait: alinea });
+      blocs.push({
+        type: "paragraphe",
+        retrait,
+        alinea,
+        lignes,
+        align: paraStyle.align,
+        base: baseEchelle(base, paraStyle.echelle),
+      });
       paragraphe = [];
       paraRetrait = false;
+      paraStyle = { align: null, echelle: 1 };
     }
   };
   const viderListe = () => {
     if (items?.length) {
+      const b = baseEchelle(base, itemsStyle.echelle) ?? base;
       blocs.push({
         type: "liste",
+        align: itemsStyle.align,
+        base: baseEchelle(base, itemsStyle.echelle),
         items: items.map((t) =>
-          lignesRiches(
-            ctx,
-            analyserRiche(t),
-            largeurMax - base.taille * esp(base, "retraitListe"),
-            base,
-          ),
+          lignesRiches(ctx, analyserRiche(t), largeurMax - b.taille * esp(b, "retraitListe"), b),
         ),
       });
       items = null;
+      itemsStyle = { align: null, echelle: 1 };
     }
   };
   const vider = () => {
     viderParagraphe();
     viderListe();
   };
+  const memeStyle = (a, b) => a.align === b.align && a.echelle === b.echelle;
 
   for (const ligne of brut) {
     if (ligne.trim() === "") {
@@ -439,35 +495,54 @@ export function blocsDeTexte(ctx, texte, largeurMax, base) {
       vides = 0;
     }
 
-    const item = EST_ITEM.exec(ligne);
+    // Le décalage puis le style de ligne se lisent AVANT tout le reste : c'est
+    // ce qui permet d'écrire « | - un point de liste centré ».
+    const cite = EST_RETRAIT.exec(ligne);
+    const { align, echelle, reste } = styleDeLigne((cite ? cite[1] : ligne).trim());
+    const style = { align, echelle };
+
+    const item = EST_ITEM.exec(reste);
     if (item) {
       viderParagraphe();
+      // Un changement d'alignement ou de corps ouvre une NOUVELLE liste : une
+      // seule liste ne peut pas avoir deux mises en page.
+      if (items?.length && !memeStyle(itemsStyle, style)) viderListe();
+      itemsStyle = style;
       (items ??= []).push(item[1]);
       continue;
     }
     viderListe();
-    const cite = EST_RETRAIT.exec(ligne);
-    // Un changement de décalage FERME le paragraphe : « > » ouvre un bloc à
-    // part, il ne se mélange pas à celui qu'on était en train d'écrire.
-    if (paragraphe.length && Boolean(cite) !== paraRetrait) viderParagraphe();
+    // Un changement de décalage ou de style FERME le paragraphe : « > » ouvre
+    // un bloc à part, il ne se mélange pas à celui qu'on était en train
+    // d'écrire — et une ligne centrée ne se fond pas dans un bloc à gauche.
+    if (paragraphe.length && (Boolean(cite) !== paraRetrait || !memeStyle(paraStyle, style))) {
+      viderParagraphe();
+    }
     paraRetrait = Boolean(cite);
-    paragraphe.push((cite ? cite[1] : ligne).trim());
+    paraStyle = style;
+    paragraphe.push(reste.trim());
   }
   vider();
   return blocs;
 }
 
-/** Hauteur totale d'une suite de blocs — mesurée sans rien dessiner. */
+/**
+ * Hauteur totale d'une suite de blocs — mesurée sans rien dessiner.
+ *
+ * Chaque bloc peut porter SON corps (`bloc.base`, posé par un préfixe `--` ou
+ * `++`) : mesure et pose lisent donc le même, sinon un bloc réduit serait
+ * dessiné là où on avait réservé la place du grand.
+ */
 export function hauteurBlocs(blocs, base) {
-  const interligne = esp(base, "interligne");
   let h = 0;
   blocs.forEach((bloc, i) => {
-    if (i > 0) h += base.taille * esp(base, "entreBlocs");
-    if (bloc.type === "espace") h += base.taille * esp(base, "respiration") * bloc.n;
+    const b = bloc.base ?? base;
+    if (i > 0) h += b.taille * esp(b, "entreBlocs");
+    if (bloc.type === "espace") h += b.taille * esp(b, "respiration") * bloc.n;
     else if (bloc.type === "liste") {
-      h += bloc.items.reduce((s, lignes) => s + lignes.length * base.taille * interligne, 0);
-      h += Math.max(0, bloc.items.length - 1) * base.taille * esp(base, "entreItems");
-    } else h += bloc.lignes.length * base.taille * interligne;
+      h += bloc.items.reduce((s, lignes) => s + lignes.length * b.taille * esp(b, "interligne"), 0);
+      h += Math.max(0, bloc.items.length - 1) * b.taille * esp(b, "entreItems");
+    } else h += bloc.lignes.length * b.taille * esp(b, "interligne");
   });
   return h;
 }
@@ -576,50 +651,51 @@ export function poserBlocs(
   base,
   { align = "gauche", largeur = 0, puce } = {},
 ) {
-  const interligne = esp(base, "interligne");
-  const retraitListe = esp(base, "retraitListe");
   let y = haut;
   blocs.forEach((bloc, i) => {
-    if (i > 0) y += base.taille * esp(base, "entreBlocs");
+    // Le bloc peut avoir SON corps et SON alignement (préfixes `--`, `++`,
+    // `|`) ; sinon il suit ceux de la planche.
+    const b = bloc.base ?? base;
+    const al = bloc.align ?? align;
+    const interligne = esp(b, "interligne");
+    if (i > 0) y += b.taille * esp(b, "entreBlocs");
 
     if (bloc.type === "espace") {
-      y += base.taille * esp(base, "respiration") * bloc.n;
+      y += b.taille * esp(b, "respiration") * bloc.n;
       return;
     }
 
     if (bloc.type === "liste") {
+      const retrait = b.taille * esp(b, "retraitListe");
       bloc.items.forEach((lignes, k) => {
-        if (k > 0) y += base.taille * esp(base, "entreItems");
+        if (k > 0) y += b.taille * esp(b, "entreItems");
         lignes.forEach((ligne, j) => {
-          const baseLigne = y + base.taille * 0.78 + j * base.taille * interligne;
-          const retrait = base.taille * retraitListe;
+          const baseLigne = y + b.taille * 0.78 + j * b.taille * interligne;
           // Une liste alignée autrement qu'à gauche garde sa puce COLLÉE au
           // texte plutôt qu'à une marge : sinon chaque puce flotte à une
           // abscisse différente, et ça ne se lit plus comme une liste.
           const gauche =
-            align === "gauche"
+            al === "gauche"
               ? x + retrait
-              : x + decalageAlignement(align, largeur, largeurLigne(ligne) + retrait) + retrait;
-          if (j === 0) dessinerPuce(ctx, puce, gauche - retrait, baseLigne, base);
-          dessinerLigneRiche(ctx, ligne, gauche, baseLigne, base);
+              : x + decalageAlignement(al, largeur, largeurLigne(ligne) + retrait) + retrait;
+          if (j === 0) dessinerPuce(ctx, puce, gauche - retrait, baseLigne, b);
+          dessinerLigneRiche(ctx, ligne, gauche, baseLigne, b);
         });
-        y += lignes.length * base.taille * interligne;
+        y += lignes.length * b.taille * interligne;
       });
       return;
     }
 
     bloc.lignes.forEach((ligne, j) => {
-      const baseLigne = y + base.taille * 0.78 + j * base.taille * interligne;
+      const baseLigne = y + b.taille * 0.78 + j * b.taille * interligne;
       // L'alinéa ne concerne QUE la première ligne, et n'a aucun sens hors de
       // l'alignement à gauche : un texte centré n'a pas de bord sur lequel
       // décaler.
-      const decale =
-        (bloc.retrait ?? 0) + (j === 0 && align === "gauche" ? (bloc.alinea ?? 0) : 0);
-      const gauche =
-        x + decale + decalageAlignement(align, largeur - decale, largeurLigne(ligne));
-      dessinerLigneRiche(ctx, ligne, gauche, baseLigne, base);
+      const decale = (bloc.retrait ?? 0) + (j === 0 && al === "gauche" ? (bloc.alinea ?? 0) : 0);
+      const gauche = x + decale + decalageAlignement(al, largeur - decale, largeurLigne(ligne));
+      dessinerLigneRiche(ctx, ligne, gauche, baseLigne, b);
     });
-    y += bloc.lignes.length * base.taille * interligne;
+    y += bloc.lignes.length * b.taille * interligne;
   });
   return y;
 }

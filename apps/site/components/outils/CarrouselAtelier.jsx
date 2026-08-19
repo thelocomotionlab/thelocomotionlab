@@ -1787,9 +1787,9 @@ export default function CarrouselAtelier() {
 
                 <Groupe
                   titre="Texte"
-                  aide="Une ligne vide sépare deux paragraphes ; chaque ligne vide en plus aère. « > » décale un paragraphe entier."
+                  aide="Une ligne vide sépare deux paragraphes ; chaque ligne vide en plus aère. « > » décale un paragraphe entier. En début de ligne, « | » centre et « -- » réduit — pour CETTE ligne seulement."
                 >
-                  <p className="mb-1 font-mono text-[12px] leading-snug text-brand-text/50">
+                  <p className="mb-1 whitespace-pre-line font-mono text-[12px] leading-snug text-brand-text/50">
                     {AIDE_BALISAGE}
                   </p>
                   <textarea
@@ -1823,6 +1823,25 @@ export default function CarrouselAtelier() {
                       title="Un paragraphe décalé — une note, une citation"
                     >
                       + retrait
+                    </button>
+                    {/* LOCAL, pas global : ces préfixes ne valent que pour la
+                        ligne où on les met. L'alignement et le corps de la
+                        planche, eux, restent dans « Composition » et « Allure ». */}
+                    <button
+                      type="button"
+                      onClick={() => insererDansTexte("\n| ")}
+                      className={BOUTON_DISCRET}
+                      title="Centrer CETTE ligne seulement (|> à droite, |< à gauche)"
+                    >
+                      + ligne centrée
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insererDansTexte("\n-- ")}
+                      className={BOUTON_DISCRET}
+                      title="Réduire CETTE ligne seulement (++ pour agrandir, répétables)"
+                    >
+                      + ligne plus petite
                     </button>
                   </div>
 

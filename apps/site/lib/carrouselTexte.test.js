@@ -336,3 +336,73 @@ describe("retours à la ligne durs", () => {
     expect(avec[0].lignes.length).toBeGreaterThan(large[0].lignes.length);
   });
 });
+
+describe("alignement et corps, ligne par ligne", () => {
+  const ctx = ctxFactice();
+  const blocs = (t, base = BASE, l = 500) => blocsDeTexte(ctx, t, l, base);
+
+  it("centre une ligne sans toucher aux autres", () => {
+    const b = blocs("À gauche.\n| Au milieu.\nÀ gauche encore.");
+    expect(b).toHaveLength(3);
+    expect(b.map((x) => x.align)).toEqual([null, "centre", null]);
+    // Le préfixe ne doit PAS rester écrit.
+    expect(b[1].lignes[0].map((m) => m.texte).join("")).toBe("Au milieu.");
+  });
+
+  it("connaît les trois directions", () => {
+    expect(blocs("| a")[0].align).toBe("centre");
+    expect(blocs("|> a")[0].align).toBe("droite");
+    expect(blocs("|< a")[0].align).toBe("gauche");
+  });
+
+  it("réduit et agrandit le corps, par pas", () => {
+    const petit = blocs("-- a")[0].base.taille;
+    const tresPetit = blocs("---- a")[0].base.taille;
+    const grand = blocs("++ a")[0].base.taille;
+    expect(petit).toBeLessThan(BASE.taille);
+    expect(tresPetit).toBeLessThan(petit);
+    expect(grand).toBeGreaterThan(BASE.taille);
+    expect(blocs("a")[0].base).toBeNull();
+  });
+
+  it("cumule alignement et corps, collés ou séparés", () => {
+    for (const prefixe of ["|--", "-- |", "|  --"]) {
+      const [b] = blocs(`${prefixe} une note`);
+      expect(b.align, prefixe).toBe("centre");
+      expect(b.base.taille, prefixe).toBeLessThan(BASE.taille);
+      expect(b.lignes[0].map((m) => m.texte).join(""), prefixe).toBe("une note");
+    }
+  });
+
+  it("mesure le bloc réduit à SON corps, pas à celui de la planche", () => {
+    const normal = hauteurBlocs(blocs("une ligne"), BASE);
+    const reduit = hauteurBlocs(blocs("-- une ligne"), BASE);
+    expect(reduit).toBeLessThan(normal);
+  });
+
+  it("s'applique aussi à une liste, et n'en mélange pas deux", () => {
+    const b = blocs("- eau\n| - bois");
+    expect(b).toHaveLength(2);
+    expect(b[0].align).toBeNull();
+    expect(b[1].align).toBe("centre");
+    expect(b[1].items[0][0].map((m) => m.texte).join("")).toBe("bois");
+  });
+
+  it("se combine avec le retrait « > »", () => {
+    const [b] = blocs("> |> une note à droite");
+    expect(b.retrait).toBeGreaterThan(0);
+    expect(b.align).toBe("droite");
+  });
+
+  it("laisse tranquille ce qui n'est pas un préfixe", () => {
+    // Rien derrière le préfixe : c'est du texte, pas un réglage — une rangée de
+    // tirets reste une rangée de tirets. Un point de liste reste un point de
+    // liste. Et une soustraction s'écrit encore.
+    const nu = (t) => blocs(t)[0].lignes[0].map((m) => m.texte).join("");
+    expect(nu("---- ")).toBe("----");
+    expect(nu("----x")).toBe("----x");
+    expect(blocs("----")[0].base).toBeNull();
+    expect(blocs("- eau")[0].type).toBe("liste");
+    expect(nu("12 - 4 = 8")).toBe("12 - 4 = 8");
+  });
+});
