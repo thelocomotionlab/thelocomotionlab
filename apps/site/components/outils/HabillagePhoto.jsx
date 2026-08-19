@@ -352,8 +352,10 @@ export default function HabillagePhoto() {
   return (
     <div
       className={
-        "flex flex-col rounded-2xl border border-brand-field bg-brand-paper/35 " +
-        "lg:h-[calc(100dvh-var(--apercu-top,140px)-1.5rem)] lg:min-h-[560px] lg:overflow-hidden"
+        // Enfant direct de la coque du studio (display:contents) : il prend
+        // toute la hauteur qui reste sous la barre. Sur un téléphone, la page
+        // défile et c'est l'aperçu qui se colle.
+        "flex flex-col bg-brand-paper/35 lg:min-h-0 lg:flex-1 lg:overflow-hidden"
       }
     >
       {/* ---------------------------------------------------------- barre haute */}

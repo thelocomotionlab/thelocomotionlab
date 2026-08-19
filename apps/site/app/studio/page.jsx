@@ -23,13 +23,9 @@ export const metadata = {
 };
 
 export default function StudioPage() {
-  // LARGE, et peu de marge : l'atelier carrousel est un poste de travail (barre
-  // du haut, rail, panneau, scène) et il lui faut la place d'un écran, pas la
-  // colonne de lecture du site. Chaque atelier se re-cadre lui-même s'il en a
-  // besoin (cf. components/studio/Studio.jsx).
-  return (
-    <div className="mx-auto max-w-[1600px] px-3 pb-6 pt-4 sm:px-5">
-      <Studio />
-    </div>
-  );
+  // PLEIN ÉCRAN, sans marge et sans largeur maximale : le studio est un poste de
+  // travail, pas une page de lecture. La navbar et le pied du site sont retirés
+  // de cette route (components/ChromeDuSite.jsx) et remplacés par la marque
+  // cliquable de la barre du studio.
+  return <Studio />;
 }

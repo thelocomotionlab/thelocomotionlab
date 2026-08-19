@@ -57,7 +57,7 @@ function ctxFactice() {
 
 function planche(carte, options = {}) {
   const ctx = ctxFactice();
-  dessinerCartePartage(ctx, {
+  const rendu = dessinerCartePartage(ctx, {
     format: "carrousel",
     theme: "sombre",
     police: "Ubuntu",
@@ -72,6 +72,10 @@ function planche(carte, options = {}) {
       ...carte,
     },
   });
+  // Le rendu voyage AVEC le contexte : les tests interrogent l'un ou l'autre
+  // (« qu'a-t-il dessiné ? » et « où peut-on cliquer ? ») sans deux helpers.
+  ctx.zones = rendu.zones;
+  ctx.boites = rendu.boites;
   return ctx;
 }
 
@@ -430,6 +434,110 @@ describe("l'ordre du titre et du surtitre", () => {
       const inverse = { ...normal, titreDevant: true };
       expect(yFiletSurtitre(normal)).toBeLessThan(yFiletTitre(normal));
       expect(yFiletSurtitre(inverse)).toBeGreaterThan(yFiletTitre(inverse));
+    }
+  });
+});
+
+describe("les zones cliquables", () => {
+  /** La zone du dessus à ce point — c'est celle qu'on croit cliquer. */
+  const zoneAu = (ctx, x, y) => {
+    const z = ctx.zones;
+    for (let i = z.length - 1; i >= 0; i -= 1) {
+      const r = z[i];
+      if (x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height) return r;
+    }
+    return null;
+  };
+  const F = FORMATS.carrousel;
+
+  it("rend une zone d'en-tête et une de pied sur tous les gabarits", () => {
+    for (const gabarit of GABARITS) {
+      const ctx = planche({ gabarit });
+      const champs = ctx.zones.map((z) => z.champ);
+      expect(champs, gabarit).toContain("entete");
+      expect(champs, gabarit).toContain("pied");
+    }
+  });
+
+  it("ouvre le titre quand on clique sur le titre", () => {
+    const ctx = planche({ gabarit: "texte", surtitre: "matériel", titre: "Le sac" });
+    const titre = ctx.zones.find((z) => z.champ === "titre");
+    expect(titre).toBeDefined();
+    expect(zoneAu(ctx, F.width / 2, titre.y + titre.height / 2).champ).toBe("titre");
+  });
+
+  it("distingue le surtitre du titre", () => {
+    const ctx = planche({ gabarit: "texte", surtitre: "matériel", titre: "Le sac" });
+    const sur = ctx.zones.find((z) => z.champ === "surtitre");
+    const tit = ctx.zones.find((z) => z.champ === "titre");
+    expect(sur.y).toBeLessThan(tit.y);
+    expect(zoneAu(ctx, 100, sur.y + 2).champ).toBe("surtitre");
+  });
+
+  it("met la photo DESSOUS : un clic sur le titre ne l'ouvre pas", () => {
+    const ctx = planche({
+      gabarit: "photo",
+      image: { width: 1600, height: 1200 },
+      titre: "Le sac",
+    });
+    expect(ctx.zones[0].champ).toBe("photo");
+    const titre = ctx.zones.find((z) => z.champ === "titre");
+    expect(zoneAu(ctx, 100, titre.y + titre.height / 2).champ).toBe("titre");
+    // Le haut de l'image, lui, reste la photo (sous la bande d'en-tête).
+    expect(zoneAu(ctx, 540, F.height * 0.4).champ).toBe("photo");
+  });
+
+  it("donne une zone par case du gabarit Journées, numérotée", () => {
+    const segments = [0, 1, 2].map((i) => ({
+      kmDebut: i * 40,
+      kmFin: (i + 1) * 40,
+      distanceKm: 40,
+      dPlusM: 2000,
+      coords: [[6, 44.9], [6.1, 45]],
+    }));
+    const trace = {
+      totalKm: 120,
+      coords: [[6, 44.9], [6.4, 45.1]],
+      profil: [{ km: 0, alt: 1000 }, { km: 120, alt: 2000 }],
+    };
+    const ctx = planche({ gabarit: "journees", casesN: 3 }, { trace, segments });
+    const cases = ctx.zones.filter((z) => z.champ === "case");
+    expect(cases).toHaveLength(3);
+    expect(cases.map((c) => c.index)).toEqual([0, 1, 2]);
+    expect(zoneAu(ctx, 540, cases[1].y + 10).index).toBe(1);
+  });
+
+  it("ne laisse AUCUN blanc entre les blocs de texte", () => {
+    // Un clic entre le titre et son paragraphe doit ouvrir quelque chose :
+    // n'ouvrir rien fait croire que le clic ne marche pas.
+    const ctx = planche({ gabarit: "texte", surtitre: "matériel", titre: "Le sac", texte: "Deux mots." });
+    const textes = ctx.zones
+      .filter((z) => ["surtitre", "titre", "texte"].includes(z.champ) && !z.repli)
+      .sort((a, b) => a.y - b.y);
+    expect(textes).toHaveLength(3);
+    for (const [i, z] of textes.entries()) {
+      if (i === 0) continue;
+      expect(Math.round(textes[i - 1].y + textes[i - 1].height)).toBe(Math.round(z.y));
+    }
+  });
+
+  it("répond partout : aucun point de la planche n'est mort", () => {
+    // Une planche de texte à moitié vide laissait sa moitié basse sans réponse,
+    // ce qui se lit comme un outil cassé. La zone de repli est là pour ça.
+    for (const gabarit of GABARITS) {
+      const ctx = planche({ gabarit });
+      for (const y of [0.05, 0.3, 0.55, 0.8, 0.97]) {
+        expect(zoneAu(ctx, F.width / 2, F.height * y), `${gabarit} @${y}`).not.toBeNull();
+      }
+    }
+  });
+
+  it("ne déclare jamais de zone vide ou renversée", () => {
+    for (const gabarit of GABARITS) {
+      for (const z of planche({ gabarit }).zones) {
+        expect(z.width, `${gabarit}/${z.champ}`).toBeGreaterThan(0);
+        expect(z.height, `${gabarit}/${z.champ}`).toBeGreaterThan(0);
+      }
     }
   });
 });

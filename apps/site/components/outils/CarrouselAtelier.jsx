@@ -27,6 +27,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
+  ChevronDown,
   CopyPlus,
   Download,
   FolderOpen,
@@ -124,6 +125,28 @@ const ONGLETS = [
 
 /** Les gabarits qui portent une photo. */
 const AVEC_PHOTO = ["photo", "bandeau", "cloture"];
+
+/**
+ * CLIQUER DANS L'IMAGE OUVRE LE RÉGLAGE.
+ *
+ * Le rendu déclare où il a posé chaque chose (cf. `zones` dans
+ * lib/carrouselCartes.js) ; il ne reste qu'à dire, pour chaque zone, quel
+ * onglet ouvrir et quel champ prendre le focus. C'est le geste de tous les
+ * éditeurs, et c'est surtout ce qui évite de chercher dans quel panneau vit le
+ * texte qu'on a sous les yeux.
+ */
+const ZONES = {
+  entete: { onglet: "texte", champ: () => "entete" },
+  surtitre: { onglet: "texte", champ: () => "surtitre" },
+  titre: { onglet: "texte", champ: () => "titre" },
+  texte: { onglet: "texte", champ: () => "texte" },
+  pied: { onglet: "texte", champ: () => "pied-centre" },
+  fiche: { onglet: "texte", champ: () => "fiche-0" },
+  case: { onglet: "texte", champ: (z) => `case-${z.index ?? 0}` },
+  cloture: { onglet: "texte", champ: () => "cercle-taille" },
+  photo: { onglet: "photo", champ: () => "ancrage" },
+  carte: { onglet: "trace", champ: () => "nb-jours" },
+};
 
 /**
  * LES TROIS FAMILLES DE LA CHARTE, lues sur le document.
@@ -438,7 +461,11 @@ function Vignette({ carte, options, format, index, bilan }) {
 export default function CarrouselAtelier() {
   const canvasRef = useRef(null);
   const boitesRef = useRef([]);
+  const zonesRef = useRef([]);
   const glisseRef = useRef(null);
+  /** Un déplacement d'étiquette finit par un `click` : sans ce drapeau, lâcher
+   *  une étiquette ouvrirait le panneau de ce qu'il y a dessous. */
+  const aGlisseRef = useRef(false);
   const texteRef = useRef(null);
   /** Les identifiants de planches, propres à CETTE instance (cf. carteNeuve). */
   const idRef = useRef(0);
@@ -463,6 +490,9 @@ export default function CarrouselAtelier() {
   /** `null` = ajusté à la fenêtre ; un nombre = le facteur sur les 1080 px du
    *  format (100 % = un pixel d'export pour un pixel d'écran). */
   const [zoom, setZoom] = useState(null);
+  /** La bande des vignettes se rabat : sur un petit écran, elle prend la place
+   *  de la planche, et on ne change pas de planche à chaque geste. */
+  const [bandeOuverte, setBandeOuverte] = useState(true);
   const [fond, setFond] = useState(null);
   const [marque, setMarque] = useState(null);
   const [policePrete, setPolicePrete] = useState(false);
@@ -941,8 +971,13 @@ export default function CarrouselAtelier() {
     canvas.height = format.height;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    boitesRef.current =
-      dessinerCartePartage(ctx, { ...options, carte: { ...carte, bilan }, index: active }) ?? [];
+    const rendu = dessinerCartePartage(ctx, {
+      ...options,
+      carte: { ...carte, bilan },
+      index: active,
+    });
+    boitesRef.current = rendu?.boites ?? [];
+    zonesRef.current = rendu?.zones ?? [];
   }, [carte, options, format, active, bilan]);
 
   /* ------------------------------------------- glisser-déposer des étiquettes */
@@ -968,6 +1003,7 @@ export default function CarrouselAtelier() {
         if (x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height) {
           const etq = carte.etiquettes?.[b.index] ?? {};
           glisseRef.current = { index: b.index, x0: x, y0: y, dx0: etq.dx ?? 0, dy0: etq.dy ?? 0 };
+          aGlisseRef.current = false;
           e.currentTarget.setPointerCapture?.(e.pointerId);
           return;
         }
@@ -981,6 +1017,7 @@ export default function CarrouselAtelier() {
       const g = glisseRef.current;
       if (!g) return;
       const [x, y] = pointCanvas(e);
+      if (Math.abs(x - g.x0) > 2 || Math.abs(y - g.y0) > 2) aGlisseRef.current = true;
       majEtiquette(g.index, { dx: g.dx0 + (x - g.x0), dy: g.dy0 + (y - g.y0) });
     },
     [pointCanvas, majEtiquette],
@@ -989,6 +1026,42 @@ export default function CarrouselAtelier() {
   const onPointerUp = useCallback(() => {
     glisseRef.current = null;
   }, []);
+
+  /**
+   * Un clic dans la planche ouvre le réglage de ce qu'on a cliqué.
+   *
+   * Les zones sont testées de la DERNIÈRE à la première : la dernière dessinée
+   * est celle du dessus, donc celle qu'on voit et qu'on croit cliquer.
+   */
+  const onClick = useCallback(
+    (e) => {
+      if (aGlisseRef.current) {
+        aGlisseRef.current = false;
+        return;
+      }
+      const [x, y] = pointCanvas(e);
+      const zones = zonesRef.current;
+      for (let i = zones.length - 1; i >= 0; i -= 1) {
+        const z = zones[i];
+        if (x < z.x || x > z.x + z.width || y < z.y || y > z.y + z.height) continue;
+        const regle = ZONES[z.champ];
+        if (!regle) return;
+        setOnglet(regle.onglet);
+        const id = regle.champ(z);
+        // Deux images : la première monte le panneau, la seconde le trouve.
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.scrollIntoView({ block: "center", behavior: "smooth" });
+            el.focus({ preventScroll: true });
+          }),
+        );
+        return;
+      }
+    },
+    [pointCanvas],
+  );
 
   /** Le zoom EFFECTIF de l'aperçu, mesuré sur le canvas — c'est de là que
    *  repart le premier « + » quand on était encore en « Ajuster ». */
@@ -1048,8 +1121,10 @@ export default function CarrouselAtelier() {
         // La hauteur du poste de travail : tout l'écran sous la barre du studio.
         // Rien ne défile sauf le panneau — c'est ce qui fait qu'on voit toujours
         // la planche pendant qu'on la règle.
-        "flex flex-col rounded-2xl border border-brand-field bg-brand-paper/35 " +
-        "lg:h-[calc(100dvh-var(--apercu-top,140px)-1.5rem)] lg:min-h-[560px] lg:overflow-hidden"
+        // Enfant direct de la coque du studio (display:contents) : il prend
+        // toute la hauteur qui reste sous la barre. Sur un téléphone, la page
+        // défile et c'est l'aperçu qui se colle.
+        "flex flex-col bg-brand-paper/35 lg:min-h-0 lg:flex-1 lg:overflow-hidden"
       }
     >
       {/* ---------------------------------------------------------- barre haute */}
@@ -1148,11 +1223,12 @@ export default function CarrouselAtelier() {
                   onPointerMove={onPointerMove}
                   onPointerUp={onPointerUp}
                   onPointerCancel={onPointerUp}
+                  onClick={onClick}
                   style={zoom == null ? undefined : { width: `${format.width * zoom}px` }}
                   className={
                     zoom == null
-                      ? "block h-auto max-h-[40vh] w-auto max-w-full touch-none rounded-xl bg-brand-text/10 shadow-card lg:max-h-full"
-                      : "block h-auto max-w-none shrink-0 touch-none rounded-xl bg-brand-text/10 shadow-card"
+                      ? "block h-auto max-h-[40vh] w-auto max-w-full cursor-pointer touch-none rounded-xl bg-brand-text/10 shadow-card lg:max-h-full"
+                      : "block h-auto max-w-none shrink-0 cursor-pointer touch-none rounded-xl bg-brand-text/10 shadow-card"
                   }
                 />
               )}
@@ -1160,15 +1236,31 @@ export default function CarrouselAtelier() {
             <div className="flex shrink-0 items-center justify-center gap-2">
               <Zoom valeur={zoom} onChange={setZoom} mesurer={zoomAffiche} />
             </div>
-            {carte?.gabarit === "carte" && segments.length > 0 && (
-              <p className={`${AIDE} shrink-0 text-center`}>
-                Attrape une étiquette sur la planche pour la déplacer.
-              </p>
-            )}
+            <p className={`${AIDE} shrink-0 text-center`}>
+              Clique dans la planche pour ouvrir le réglage correspondant.
+              {carte?.gabarit === "carte" &&
+                segments.length > 0 &&
+                " Attrape une étiquette pour la déplacer."}
+            </p>
 
             {/* --------------------------------------- la bande des vignettes */}
-            <div className="shrink-0 border-t border-brand-field/60 pt-3">
-              <div className="flex items-end gap-2 overflow-x-auto pb-1">
+            <div className="shrink-0 border-t border-brand-field/60 pt-2">
+              <button
+                type="button"
+                onClick={() => setBandeOuverte((v) => !v)}
+                aria-expanded={bandeOuverte}
+                className="mb-1 flex w-full items-center justify-center gap-1.5 rounded-lg py-0.5 font-heading text-[11px] text-brand-text/50 hover:bg-brand-primary/10 hover:text-brand-text"
+              >
+                <ChevronDown
+                  size={14}
+                  aria-hidden
+                  className={`transition-transform motion-reduce:transition-none ${
+                    bandeOuverte ? "" : "-rotate-180"
+                  }`}
+                />
+                {cartes.length} planche{cartes.length > 1 ? "s" : ""}
+              </button>
+              <div className={`flex items-end gap-2 overflow-x-auto pb-1 ${bandeOuverte ? "" : "hidden"}`}>
                 {cartes.map((c, i) => (
                   <button
                     key={c.id}
@@ -1674,6 +1766,7 @@ export default function CarrouselAtelier() {
                             </select>
                           </div>
                           <textarea
+                            id={`case-${i}`}
                             rows={2}
                             value={c.texte}
                             onChange={(e) => majCase(i, { texte: e.target.value })}
@@ -1704,6 +1797,7 @@ export default function CarrouselAtelier() {
                       {(carte.fiche ?? []).map((l, i) => (
                         <div key={`fiche-${i}`} className="flex items-center gap-1.5">
                           <input
+                            id={`fiche-${i}`}
                             type="text"
                             value={l.label}
                             placeholder="libellé"
@@ -1776,6 +1870,7 @@ export default function CarrouselAtelier() {
                   </select>
                   <div className="flex gap-2">
                     <input
+                      id="pied-centre"
                       type="text"
                       value={carte?.piedCentre ?? ""}
                       placeholder="au milieu"
@@ -1784,6 +1879,7 @@ export default function CarrouselAtelier() {
                       aria-label="Pied de page, au milieu"
                     />
                     <input
+                      id="pied-droite"
                       type="text"
                       value={carte?.piedDroite ?? ""}
                       placeholder="à droite (défaut : glisse →)"

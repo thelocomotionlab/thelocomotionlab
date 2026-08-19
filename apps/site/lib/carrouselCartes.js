@@ -422,7 +422,15 @@ function voileEntete(ctx, format, m, th, force, hauteur) {
  * droite, un filet dessous. C'est la ligne qui dit « c'est une planche du
  * labo » sans avoir à occuper le titre.
  */
-function bandeEntete(ctx, format, m, th, police, { texte, accent, logo, marque, filet = true, opacite = 1 }) {
+function bandeEntete(
+  ctx,
+  format,
+  m,
+  th,
+  police,
+  { texte, accent, logo, marque, filet = true, opacite = 1, zones = null },
+) {
+  zone(zones, "entete", 0, 0, format.width, m.bandeH);
   const base = m.bandeH - Math.round(48 * m.k);
   ctx.save();
   ctx.globalAlpha = Math.min(1, Math.max(0, opacite));
@@ -526,6 +534,67 @@ export function lignes(ctx, texte, largeurMax) {
  */
 /** Interligne d'un titre, en parts de son corps. */
 const INTERLIGNE_TITRE = 1.16;
+
+/* ------------------------------------------------------- zones cliquables */
+
+/**
+ * LES ZONES DE LA PLANCHE — de quoi cliquer DANS l'image pour ouvrir le
+ * réglage correspondant.
+ *
+ * C'est le geste de tous les éditeurs : on clique sur le titre, le champ du
+ * titre s'ouvre. Rien à inventer côté rendu — il sait déjà où il a posé chaque
+ * chose, il suffit qu'il le DISE au lieu de le jeter. Chaque renderer déclare
+ * ses zones au fil du dessin ; l'atelier les teste de la dernière à la
+ * première, donc la plus récemment dessinée (celle du dessus) gagne.
+ */
+function zone(zones, champ, x, y, width, height, extra = null) {
+  if (!zones || !(width > 0) || !(height > 0)) return;
+  zones.push({ champ, x, y, width, height, ...(extra ?? null) });
+}
+
+/** La zone d'un bloc de texte : toute la colonne, sur la hauteur écrite. */
+function zoneTexte(zones, champ, m, x, largeur, yHaut, yBas, marge = 0) {
+  zone(zones, champ, x, yHaut - marge, largeur, yBas - yHaut + marge * 2);
+}
+
+/**
+ * LA ZONE DE REPLI d'un gabarit : tout l'espace entre les deux bandes.
+ *
+ * Déclarée EN PREMIER, donc perdante face à tout ce qui se dessine ensuite.
+ * Elle existe pour qu'un clic dans le grand blanc du bas ouvre quand même
+ * quelque chose — sur une planche de texte à moitié vide, la moitié inférieure
+ * ne répondait à rien, ce qui se lit comme un outil cassé.
+ */
+function zoneDeRepli(zones, format, m, champ) {
+  zone(zones, champ, 0, m.bandeH, format.width, m.piedFilet - m.bandeH, { repli: true });
+}
+
+/** Les champs qui se partagent les blancs de la colonne de texte. */
+const ZONES_DE_TEXTE = new Set(["surtitre", "titre", "texte", "fiche"]);
+
+/**
+ * LES BLANCS APPARTIENNENT AU BLOC DU DESSUS.
+ *
+ * Mesurées au plus juste, les zones de texte laissent entre elles l'écart que
+ * la mise en page a voulu — 2,2 corps entre un titre et son paragraphe. Cliquer
+ * là n'ouvrait RIEN, et rien est le pire résultat possible : on croit que le
+ * clic ne marche pas. Chaque bloc s'étend donc jusqu'au suivant, plafonné à sa
+ * propre hauteur pour qu'un blanc énorme (une planche presque vide) ne devienne
+ * pas une zone de clic absurde.
+ */
+function comblerLesBlancs(zones) {
+  // Les zones de repli s'étendent déjà partout : les faire participer au
+  // partage des blancs n'aurait aucun sens (et écraserait les vraies).
+  const textes = zones
+    .filter((z) => ZONES_DE_TEXTE.has(z.champ) && !z.repli)
+    .sort((a, b) => a.y - b.y);
+  for (const [i, z] of textes.entries()) {
+    const bas = z.y + z.height;
+    const suivant = textes[i + 1];
+    if (!suivant || suivant.y <= bas) continue;
+    z.height += Math.min(suivant.y - bas, z.height * 1.6 + 24);
+  }
+}
 
 /** Les trois alignements, re-exportés pour l'atelier (ils vivent dans le
  *  module de texte, qui est le seul à savoir décaler une ligne). */
@@ -761,7 +830,15 @@ function poserLignes(ctx, lignes, x, y, base, { align = "gauche", largeur = 0 } 
   return ligneBase;
 }
 
-function bandePied(ctx, format, m, th, police, { index, total, centre, droite, fleche = "auto", filet = true, opacite = 1 }) {
+function bandePied(
+  ctx,
+  format,
+  m,
+  th,
+  police,
+  { index, total, centre, droite, fleche = "auto", filet = true, opacite = 1, zones = null },
+) {
+  zone(zones, "pied", 0, m.piedFilet, format.width, format.height - m.piedFilet);
   ctx.save();
   ctx.globalAlpha = Math.min(1, Math.max(0, opacite));
   if (filet) {
@@ -1056,7 +1133,7 @@ function ligneFactuelle(trace, bilan) {
  * qu'on attrape à la souris.
  */
 function dessinerCarte(ctx, format, o) {
-  const { carte, trace, police, polices, logo, fond, m, th, ombre, index, total } = o;
+  const { carte, trace, police, polices, logo, fond, m, th, ombre, zones, index, total } = o;
   const boites = [];
   const fenetre = fenetreCarte(format);
 
@@ -1103,6 +1180,9 @@ function dessinerCarte(ctx, format, o) {
   // La bande d'en-tête doit rester lisible par-dessus les tuiles.
   voileEntete(ctx, format, m, th, intensite(carte.degradeHaut, 0.8), portee(carte.degradeHautH, m.bandeH * 1.4, m));
 
+  // Cliquer n'importe où hors des textes ouvre les réglages de trace.
+  zoneDeRepli(zones, format, m, "carte");
+
   const couleurs = couleursDesJours(carte, segments);
 
   if (view && cadre?.coords?.length) {
@@ -1147,6 +1227,7 @@ function dessinerCarte(ctx, format, o) {
     marque: carte.marque,
     filet: carte.filetEntete !== false,
     opacite: carte.enteteOpacite,
+    zones,
   });
 
   /* Bloc du bas : profil, surtitre, titre, ligne factuelle. Construit de bas en
@@ -1165,6 +1246,7 @@ function dessinerCarte(ctx, format, o) {
       m.pad + decalageAlignement(align, largeurTexte, ctx.measureText(factuelle).width),
       y,
     );
+    zoneTexte(zones, "texte", m, m.pad, largeurTexte, y - m.corps, y + m.corps * 0.3);
     y -= m.corps * 1.9;
   }
 
@@ -1189,6 +1271,7 @@ function dessinerCarte(ctx, format, o) {
       y -= bt.taille * bt.interligne;
     }
     filetSousTitre(ctx, m, th, carte, basTitre, { align, x: m.pad, largeur: largeurTexte });
+    zoneTexte(zones, "titre", m, m.pad, largeurTexte, y, basTitre + hauteurFiletTitre(m, carte));
     y -= m.surtitre * 0.5;
   };
   const poserSurtitre = () => {
@@ -1198,6 +1281,7 @@ function dessinerCarte(ctx, format, o) {
       align,
       largeur: largeurTexte,
     });
+    zoneTexte(zones, "surtitre", m, m.pad, largeurTexte, y - m.surtitre, y + m.surtitre * 0.3);
     y -= m.surtitre * 2.1;
   };
   for (const quoi of ordreDuTitre(carte, true)) {
@@ -1233,6 +1317,7 @@ function dessinerCarte(ctx, format, o) {
     fleche: carte.piedFleche,
     filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
+    zones,
   });
   sansOmbre(ctx);
   if (view && fond && carte.afficherFond !== false) attributionVerticale(ctx, format, m, th, police);
@@ -1271,7 +1356,10 @@ function attributionVerticale(ctx, format, m, th, police) {
  * le texte reste écrit — c'est à l'auteur de vérifier qu'il se lit.
  */
 function dessinerPhoto(ctx, format, o) {
-  const { carte, police, polices, logo, m, th, ombre, index, total } = o;
+  const { carte, police, polices, logo, m, th, ombre, zones, index, total } = o;
+  // Toute la planche EST la photo : c'est la zone de repli, donc la première
+  // déclarée — les textes se posent par-dessus et gagnent au clic.
+  zone(zones, "photo", 0, 0, format.width, format.height);
 
   if (carte.image) {
     const c = cadrageCouverture(
@@ -1299,6 +1387,7 @@ function dessinerPhoto(ctx, format, o) {
     marque: carte.marque,
     filet: carte.filetEntete !== false && !carte.image,
     opacite: carte.enteteOpacite,
+    zones,
   });
 
   let y = m.piedFilet - Math.round(34 * m.k);
@@ -1314,6 +1403,7 @@ function dessinerPhoto(ctx, format, o) {
       m.pad + decalageAlignement(align, largeurTexte, ctx.measureText(factuelle).width),
       y,
     );
+    zoneTexte(zones, "texte", m, m.pad, largeurTexte, y - m.corps, y + m.corps * 0.3);
     y -= m.corps * 1.9;
   }
   if (carte.texte) {
@@ -1329,6 +1419,7 @@ function dessinerPhoto(ctx, format, o) {
       largeur: largeurTexte,
       puce: carte.puce,
     });
+    zoneTexte(zones, "texte", m, m.pad, largeurTexte, y - hauteur, y);
     y -= hauteur + m.corps * 0.5;
   }
   const poserTitre = () => {
@@ -1348,6 +1439,7 @@ function dessinerPhoto(ctx, format, o) {
       y -= bt.taille * bt.interligne;
     }
     filetSousTitre(ctx, m, th, carte, basTitre, { align, x: m.pad, largeur: largeurTexte });
+    zoneTexte(zones, "titre", m, m.pad, largeurTexte, y, basTitre + hauteurFiletTitre(m, carte));
     y -= m.surtitre * 0.5;
   };
   const poserSurtitre = () => {
@@ -1356,6 +1448,7 @@ function dessinerPhoto(ctx, format, o) {
       align,
       largeur: largeurTexte,
     });
+    zoneTexte(zones, "surtitre", m, m.pad, largeurTexte, y - m.surtitre, y + m.surtitre * 0.3);
     y -= m.surtitre * 2.1;
   };
   for (const quoi of ordreDuTitre(carte, true)) {
@@ -1372,6 +1465,7 @@ function dessinerPhoto(ctx, format, o) {
     fleche: carte.piedFleche,
     filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
+    zones,
   });
   sansOmbre(ctx);
   return [];
@@ -1379,7 +1473,8 @@ function dessinerPhoto(ctx, format, o) {
 
 /** LE TEXTE — surtitre, titre, paragraphes. La respiration du carrousel. */
 function dessinerTexte(ctx, format, o) {
-  const { carte, police, polices, logo, m, th, ombre, index, total } = o;
+  const { carte, police, polices, logo, m, th, ombre, zones, index, total } = o;
+  zoneDeRepli(zones, format, m, "texte");
   poserOmbre(ctx, ombre, "entete");
   bandeEntete(ctx, format, m, th, police, {
     texte: carte.entete,
@@ -1388,11 +1483,12 @@ function dessinerTexte(ctx, format, o) {
     marque: carte.marque,
     filet: carte.filetEntete !== false,
     opacite: carte.enteteOpacite,
+    zones,
   });
 
   const largeur = format.width - m.pad * 2;
   const y = m.bandeH + Math.round(112 * m.k);
-  blocTitreEtCorps(ctx, format, m, th, polices, carte, y, largeur, { ombre });
+  blocTitreEtCorps(ctx, format, m, th, polices, carte, y, largeur, { ombre, zones });
 
   poserOmbre(ctx, ombre, "pied");
   bandePied(ctx, format, m, th, police, {
@@ -1403,6 +1499,7 @@ function dessinerTexte(ctx, format, o) {
     fleche: carte.piedFleche,
     filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
+    zones,
   });
   sansOmbre(ctx);
   return [];
@@ -1425,7 +1522,7 @@ function blocTitreEtCorps(
   carte,
   yDepart,
   largeur,
-  { echelleTitre = 1, ombre = null } = {},
+  { echelleTitre = 1, ombre = null, zones = null } = {},
 ) {
   let y = yDepart;
   const align = alignementDe(carte);
@@ -1443,6 +1540,7 @@ function blocTitreEtCorps(
       align,
       largeur,
     });
+    zoneTexte(zones, "surtitre", m, m.pad, largeur, base - m.surtitre, base + m.surtitre * 0.3);
     // Passé DERRIÈRE le titre, le surtitre devient la ligne qui introduit le
     // corps : il lui faut le même souffle qu'à un titre, pas l'écart serré d'un
     // surtitre qui ouvre.
@@ -1450,9 +1548,11 @@ function blocTitreEtCorps(
   };
   const poserTitre = () => {
     poserOmbre(ctx, ombre, "titre");
+    const haut = y;
     const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeur, bt);
     y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.86, bt, { align, largeur });
     y = filetSousTitre(ctx, m, th, carte, y, { align, x: m.pad, largeur });
+    zoneTexte(zones, "titre", m, m.pad, largeur, haut, y);
     // 2,2 corps et pas 1,7 : la jambe du titre descend sous sa ligne de base et
     // la hampe du corps remonte — l'écart utile est bien plus petit que l'écart
     // nominal, et « assistance. » collait à « Quatre jours ».
@@ -1466,11 +1566,13 @@ function blocTitreEtCorps(
   if (carte.texte) {
     poserOmbre(ctx, ombre, "corps");
     if (!carte.titre) y += m.corps * 0.4;
+    const haut = y;
     y = poserBlocs(ctx, blocsDeTexte(ctx, carte.texte, largeur, bc), m.pad, y, bc, {
       align,
       largeur,
       puce: carte.puce,
     });
+    zoneTexte(zones, "texte", m, m.pad, largeur, haut, y);
   }
   return y;
 }
@@ -1487,8 +1589,10 @@ function blocTitreEtCorps(
  * ressemblerait à une image collée, pas à une planche composée.
  */
 function dessinerBandeau(ctx, format, o) {
-  const { carte, police, polices, logo, m, th, ombre, index, total } = o;
+  const { carte, police, polices, logo, m, th, ombre, zones, index, total } = o;
   const hauteur = Math.round(format.height * (carte.bandeauPart ?? 0.42));
+  zoneDeRepli(zones, format, m, "texte");
+  zone(zones, "photo", 0, 0, format.width, hauteur);
 
   if (carte.image) {
     const c = cadrageCouverture(
@@ -1529,11 +1633,12 @@ function dessinerBandeau(ctx, format, o) {
     marque: carte.marque,
     filet: carte.filetEntete !== false && !carte.image,
     opacite: carte.enteteOpacite,
+    zones,
   });
 
   const largeur = format.width - m.pad * 2;
   const y = hauteur + Math.round(74 * m.k);
-  blocTitreEtCorps(ctx, format, m, th, polices, carte, y, largeur, { ombre });
+  blocTitreEtCorps(ctx, format, m, th, polices, carte, y, largeur, { ombre, zones });
 
   poserOmbre(ctx, ombre, "pied");
   bandePied(ctx, format, m, th, police, {
@@ -1544,6 +1649,7 @@ function dessinerBandeau(ctx, format, o) {
     fleche: carte.piedFleche,
     filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
+    zones,
   });
   sansOmbre(ctx);
   return [];
@@ -1560,7 +1666,8 @@ function dessinerBandeau(ctx, format, o) {
  * deviner.
  */
 function dessinerFiche(ctx, format, o) {
-  const { carte, police, polices, logo, m, th, ombre, index, total } = o;
+  const { carte, police, polices, logo, m, th, ombre, zones, index, total } = o;
+  zoneDeRepli(zones, format, m, "fiche");
 
   poserOmbre(ctx, ombre, "entete");
   bandeEntete(ctx, format, m, th, police, {
@@ -1570,6 +1677,7 @@ function dessinerFiche(ctx, format, o) {
     marque: carte.marque,
     filet: carte.filetEntete !== false,
     opacite: carte.enteteOpacite,
+    zones,
   });
 
   const align = alignementDe(carte);
@@ -1583,10 +1691,12 @@ function dessinerFiche(ctx, format, o) {
       align,
       largeur: largeurTexte,
     });
+    zoneTexte(zones, "surtitre", m, m.pad, largeurTexte, base - m.surtitre, base + m.surtitre * 0.3);
     y = base + m.surtitre * 1.3;
   };
   const poserTitre = () => {
     poserOmbre(ctx, ombre, "titre");
+    const haut = y;
     const bt = baseTitre(m, th, polices, carte, 0.86);
     const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeurTexte, bt);
     y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.86, bt, { align, largeur: largeurTexte });
@@ -1596,6 +1706,7 @@ function dessinerFiche(ctx, format, o) {
       x: m.pad,
       largeur: largeurTexte,
     });
+    zoneTexte(zones, "titre", m, m.pad, largeurTexte, haut, y);
     y += Math.round(46 * m.k);
   };
   for (const [i, quoi] of ordreDuTitre(carte).entries()) {
@@ -1604,6 +1715,7 @@ function dessinerFiche(ctx, format, o) {
   }
 
   const lignesFiche = (carte.fiche ?? []).filter((l) => l && (l.label || l.valeur));
+  const hautFiche = y;
   // Les corps de la fiche se règlent : une fiche à trois lignes respire d'un
   // tout autre calibre qu'une fiche à huit.
   const libelle = m.ficheLabel;
@@ -1634,6 +1746,7 @@ function dessinerFiche(ctx, format, o) {
 
     y += pasLigne;
   }
+  zoneTexte(zones, "fiche", m, m.pad, format.width - m.pad * 2, hautFiche, y);
 
   poserOmbre(ctx, ombre, "pied");
   bandePied(ctx, format, m, th, police, {
@@ -1644,6 +1757,7 @@ function dessinerFiche(ctx, format, o) {
     fleche: carte.piedFleche,
     filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
+    zones,
   });
   sansOmbre(ctx);
   return [];
@@ -1664,8 +1778,9 @@ function dessinerFiche(ctx, format, o) {
  * D'où l'image facultative : c'est le même gabarit dans les deux cas.
  */
 function dessinerCloture(ctx, format, o) {
-  const { carte, police, polices, logo, m, th, ombre, index, total } = o;
+  const { carte, police, polices, logo, m, th, ombre, zones, index, total } = o;
 
+  zone(zones, "photo", 0, 0, format.width, format.height);
   if (carte.image) {
     const c = cadrageCouverture(
       { width: carte.image.width, height: carte.image.height },
@@ -1749,6 +1864,7 @@ function dessinerCloture(ctx, format, o) {
     if (piece.type === "logo") {
       sansOmbre(ctx);
       const cy = y + rayon;
+      zone(zones, "cloture", centreX - rayon, y, rayon * 2, rayon * 2);
       ctx.save();
       // LA MARQUE PORTE DÉJÀ SON ROND : le fichier source, c'est le pied DANS
       // un cercle. En tracer un second par-dessus faisait une cible. L'anneau
@@ -1788,13 +1904,16 @@ function dessinerCloture(ctx, format, o) {
         y + m.surtitre,
         { align, largeur },
       );
+      zoneTexte(zones, "surtitre", m, m.pad, largeur, y, y + piece.hauteur);
     } else if (piece.type === "titre") {
       poserOmbre(ctx, ombre, "titre");
       const bas = poserLignes(ctx, lignesTitre, m.pad, y + bt.taille * 0.7, bt, { align, largeur });
       filetSousTitre(ctx, m, th, carte, bas, { align, x: m.pad, largeur });
+      zoneTexte(zones, "titre", m, m.pad, largeur, y, y + piece.hauteur);
     } else if (piece.type === "texte") {
       poserOmbre(ctx, ombre, "corps");
       poserBlocs(ctx, blocsTexte, m.pad, y, bc, { align, largeur, puce: carte.puce });
+      zoneTexte(zones, "texte", m, m.pad, largeur, y, y + piece.hauteur);
     }
     y += piece.hauteur;
   }
@@ -1807,6 +1926,7 @@ function dessinerCloture(ctx, format, o) {
     marque: carte.marque ?? "rien", // la marque est déjà au centre, en grand
     filet: carte.filetEntete === true,
     opacite: carte.enteteOpacite,
+    zones,
   });
   poserOmbre(ctx, ombre, "pied");
   bandePied(ctx, format, m, th, police, {
@@ -1817,6 +1937,7 @@ function dessinerCloture(ctx, format, o) {
     fleche: carte.piedFleche ?? "jamais", // c'est la fin : il n'y a plus rien à glisser
     filet: carte.filetPied === true,
     opacite: carte.piedOpacite,
+    zones,
   });
   sansOmbre(ctx);
   return [];
@@ -1947,7 +2068,7 @@ export function casesEffectives(carte, segments) {
  * fait qu'on lit une progression et non quatre images sans rapport.
  */
 function dessinerJournees(ctx, format, o) {
-  const { carte, trace, police, polices, logo, m, th, ombre, index, total } = o;
+  const { carte, trace, police, polices, logo, m, th, ombre, zones, index, total } = o;
   const segments = o.segments ?? [];
   const cadre = o.traceCadre ?? trace;
   const couleurs = couleursDesJours(carte, segments);
@@ -1961,6 +2082,7 @@ function dessinerJournees(ctx, format, o) {
     marque: carte.marque,
     filet: carte.filetEntete !== false,
     opacite: carte.enteteOpacite,
+    zones,
   });
 
   const align = alignementDe(carte);
@@ -1974,6 +2096,7 @@ function dessinerJournees(ctx, format, o) {
       align,
       largeur: largeurTexte,
     });
+    zoneTexte(zones, "surtitre", m, m.pad, largeurTexte, base - m.surtitre, base + m.surtitre * 0.3);
     yHaut = base + m.surtitre * 1.4;
   };
   const poserTitre = () => {
@@ -1981,6 +2104,7 @@ function dessinerJournees(ctx, format, o) {
     // il annonce, il ne porte pas. D'où l'échelle — sinon deux lignes de 65 px
     // mangeaient une case entière.
     poserOmbre(ctx, ombre, "titre");
+    const haut = yHaut;
     const bt = baseTitre(m, th, polices, carte, 0.72);
     const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeurTexte, bt);
     const bas = poserLignes(ctx, ls, m.pad, yHaut + bt.taille * 0.86, bt, {
@@ -1990,6 +2114,7 @@ function dessinerJournees(ctx, format, o) {
     yHaut =
       filetSousTitre(ctx, m, th, carte, bas, { align, x: m.pad, largeur: largeurTexte }) +
       Math.round(34 * m.k);
+    zoneTexte(zones, "titre", m, m.pad, largeurTexte, haut, yHaut);
   };
   for (const [i, quoi] of ordreDuTitre(carte).entries()) {
     if (quoi === "surtitre" && carte.surtitre) poserSurtitre(i === 0);
@@ -2024,6 +2149,7 @@ function dessinerJournees(ctx, format, o) {
     const y = yHaut + rang * (caseH + gouttiereY);
     const couleur = couleurs[c.jour] ?? th.accent;
     const seg = segments[c.jour] ?? null;
+    zone(zones, "case", x, y, caseW, caseH, { index: i });
 
     // Le filet de séparation, au-dessus de chaque rangée sauf la première :
     // c'est lui qui fait une GRILLE et non quatre blocs posés au hasard.
@@ -2089,6 +2215,7 @@ function dessinerJournees(ctx, format, o) {
     fleche: carte.piedFleche,
     filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
+    zones,
   });
   sansOmbre(ctx);
   return [];
@@ -2105,8 +2232,12 @@ const RENDUS = {
 };
 
 /**
- * Dessine UNE carte du carrousel. Renvoie les boîtes des étiquettes déplaçables
- * (vide pour les gabarits qui n'en ont pas).
+ * Dessine UNE planche du carrousel.
+ *
+ * @returns {{boites: Array, zones: Array}} — `boites` : les étiquettes
+ *   déplaçables (vide pour les gabarits qui n'en ont pas) ; `zones` : où
+ *   cliquer dans l'image pour ouvrir le réglage correspondant, de la plus
+ *   ancienne à la plus récemment dessinée (donc à tester à l'envers).
  */
 export function dessinerCartePartage(ctx, options) {
   const format = FORMATS[options.format] ?? FORMATS.carrousel;
@@ -2131,9 +2262,11 @@ export function dessinerCartePartage(ctx, options) {
   ctx.textBaseline = "alphabetic";
   ctx.textAlign = "left";
 
+  const zones = [];
   const rendu = RENDUS[options.carte?.gabarit] ?? dessinerTexte;
-  return rendu(ctx, format, {
+  const boites = rendu(ctx, format, {
     ...options,
+    zones,
     police,
     polices,
     ombre: ombreDe(options.carte, m),
@@ -2143,4 +2276,8 @@ export function dessinerCartePartage(ctx, options) {
     index: options.index ?? 0,
     total: options.total ?? 1,
   });
+  comblerLesBlancs(zones);
+  // `boites` : les étiquettes déplaçables (vide pour les gabarits qui n'en ont
+  // pas). `zones` : où cliquer pour ouvrir quel réglage.
+  return { boites: boites ?? [], zones };
 }

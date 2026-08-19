@@ -377,6 +377,11 @@ une seule page, deux onglets : **Carrousel** (l'itinéraire découpé en journé
 la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
 `/outils/habillage` et `/outils/carrousel` redirigent ici en 308.
 
+- **Plein écran** : la navbar et le pied du SITE ne s'affichent pas sur
+  `/studio` (`components/ChromeDuSite.jsx`, un garde d'une ligne sur le chemin —
+  plutôt que deux layouts racines à tenir en phase). À leur place, la barre du
+  studio : la **marque du labo, cliquable**, qui ramène au site, et les deux
+  ateliers. C'est le geste de Canva — une icône pour sortir, rien d'autre.
 - **Changer d'onglet ne perd rien** : les deux ateliers restent montés, celui
   qu'on ne regarde pas est simplement caché. Recharger un GPX de 6 Mo sur un
   téléphone n'est pas une broutille.
@@ -393,7 +398,17 @@ la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
   (`lib/carrouselRendu.test.js` le vérifie maintenant sur les six gabarits).
   **Zoom** sous la planche (boutons, ou Ctrl/⌘ + molette) : « Ajuster » montre
   la composition, 100 % montre les pixels réels de l'export — un corps de 22 px
-  ne se juge pas sur une vignette. Le plan de travail défile quand on zoome.
+  ne se juge pas sur une vignette. Le plan de travail défile quand on zoome. La
+  **bande des vignettes se rabat** (le bouton « N planches » sous la scène).
+- **Cliquer DANS la planche ouvre le réglage** de ce qu'on a cliqué : le titre
+  ouvre le champ du titre, le pied ouvre le pied, une case de la grille ouvre sa
+  légende. Le rendu déclare ses **zones** au fil du dessin (`dessinerCartePartage`
+  rend `{ boites, zones }`) et l'atelier les teste de la dernière à la première
+  — la dernière dessinée est celle du dessus, donc celle qu'on croit cliquer.
+  Deux règles qui évitent le « ça ne marche pas » : les **blancs entre blocs
+  appartiennent au bloc du dessus** (cliquer entre un titre et son paragraphe
+  ouvre le titre), et chaque gabarit a une **zone de repli** qui couvre tout
+  l'espace utile — aucun point de la planche ne reste muet.
 - **La composition** (onglet Texte) : **alignement** du texte — à gauche, centré,
   à droite : le filet ambre du surtitre et le filet sous le titre suivent, tout
   passe par le même calcul — et **inversion du titre et du surtitre**. Par
