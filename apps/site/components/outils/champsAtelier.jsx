@@ -14,6 +14,7 @@
 
 "use client";
 
+import { useState } from "react";
 import { Maximize2, Minus, Plus, RotateCcw } from "lucide-react";
 
 import { CLES_ICONES } from "@/lib/carrouselIcones";
@@ -70,6 +71,53 @@ export function Puce({ cle, Icone, size = 16 }) {
   return Icone ? <Icone size={size} aria-hidden /> : null;
 }
 
+/**
+ * UN CHAMP DE NOMBRE QU'ON PEUT VIDER.
+ *
+ * `<input type="number">` rend `""` quand on efface, et `Number("")` vaut 0 :
+ * remonter cette valeur au parent à chaque frappe faisait sauter le champ à
+ * zéro (ou au défaut) dès qu'on essayait de retaper un nombre. On garde donc
+ * une copie LOCALE de ce qui est tapé, et on ne remonte que ce qui est un
+ * nombre — le champ peut rester vide le temps de la frappe.
+ *
+ * Au `blur`, la copie locale est jetée : le champ réaffiche la valeur réelle,
+ * donc une saisie abandonnée à vide ne laisse pas un trou.
+ */
+export function Nombre({
+  id,
+  valeur,
+  defaut,
+  onChange,
+  min,
+  max,
+  pas,
+  classe = CHAMP,
+  ...reste
+}) {
+  const [brut, setBrut] = useState(null);
+  const affiche = brut ?? (valeur ?? defaut ?? "");
+  return (
+    <input
+      id={id}
+      type="number"
+      inputMode="decimal"
+      min={min}
+      max={max}
+      step={pas}
+      value={affiche}
+      onChange={(e) => {
+        const texte = e.target.value;
+        setBrut(texte);
+        const n = Number(texte);
+        if (texte !== "" && Number.isFinite(n)) onChange(n);
+      }}
+      onBlur={() => setBrut(null)}
+      className={classe}
+      {...reste}
+    />
+  );
+}
+
 /** Un réglage numérique en pixels de planche (référence : 1080 de large). */
 export function Taille({ id, label, valeur, defaut, onChange, min = 8, max = 400 }) {
   return (
@@ -77,15 +125,7 @@ export function Taille({ id, label, valeur, defaut, onChange, min = 8, max = 400
       <label className={LEGENDE} htmlFor={id}>
         {label}
       </label>
-      <input
-        id={id}
-        type="number"
-        min={min}
-        max={max}
-        value={valeur ?? defaut}
-        onChange={(e) => onChange(Number(e.target.value) || defaut)}
-        className={CHAMP}
-      />
+      <Nombre id={id} valeur={valeur} defaut={defaut} min={min} max={max} onChange={onChange} />
     </div>
   );
 }

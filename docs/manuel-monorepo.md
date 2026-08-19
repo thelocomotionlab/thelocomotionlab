@@ -399,7 +399,10 @@ la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
   **Zoom** sous la planche (boutons, ou Ctrl/⌘ + molette) : « Ajuster » montre
   la composition, 100 % montre les pixels réels de l'export — un corps de 22 px
   ne se juge pas sur une vignette. Le plan de travail défile quand on zoome. La
-  **bande des vignettes se rabat** (le bouton « N planches » sous la scène).
+  **bande des vignettes se rabat** (le bouton « N planches » sous la scène) et
+  les planches s'y **réordonnent au glissement** — à la souris dès le premier
+  mouvement, au doigt après un appui maintenu (sans ce délai, la bande ne
+  pourrait plus défiler latéralement). La sélection suit la planche déplacée.
 - **Cliquer DANS la planche ouvre le réglage** de ce qu'on a cliqué : le titre
   ouvre le champ du titre, le pied ouvre le pied, une case de la grille ouvre sa
   légende. Le rendu déclare ses **zones** au fil du dessin (`dessinerCartePartage`
