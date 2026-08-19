@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ubuntu, lora, ubuntuMono } from "@locomotionlab/ui/fonts";
 import ShareButton from "@/components/ShareButton";
+import ChromeDuSite from "@/components/ChromeDuSite";
 import { OG_IMAGE, OG_IMAGE_ALT, OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH } from "@/lib/seo";
 
 export const metadata = {
@@ -54,14 +55,19 @@ export default function RootLayout({ children }) {
         <a href="#main-content" className="skip-link">
           Aller au contenu principal
         </a>
-        <Navbar />
+        {/* Navbar, pied et bouton de partage disparaissent sur les routes en
+            plein écran (le studio) : cf. components/ChromeDuSite.jsx */}
+        <ChromeDuSite>
+          <Navbar />
+        </ChromeDuSite>
         <main id="main-content">
           {children}
         </main>
-        <Footer />
-
-        {/* Bouton de partage global, par-dessus le reste */}
-        <ShareButton />
+        <ChromeDuSite>
+          <Footer />
+          {/* Bouton de partage global, par-dessus le reste */}
+          <ShareButton />
+        </ChromeDuSite>
       </body>
     </html>
   );
