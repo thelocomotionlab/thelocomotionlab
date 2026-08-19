@@ -472,11 +472,16 @@ la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
   (« 188 km · 12 279 m D+ ») ; écris ce que tu veux à la place, ou un espace
   pour la faire disparaître — la distance n'est pas toujours ce qu'on a envie
   d'annoncer.
-- **Ajouter une icône** au vocabulaire : `apps/site/lib/liveWaypointIcons.js`
-  (une clé → un composant lucide). Ce que lucide n'a pas se dessine à la maison,
-  au même trait, dans `apps/site/lib/iconesMaison.js` — c'est le cas de la
-  sandale. Une clé sans géométrie disparaîtrait SILENCIEUSEMENT d'une planche :
-  `lib/carrouselRendu.test.js` vérifie que chacune est traçable.
+- **Les icônes** : ~90 clés, partagées entre les repères de /live et le texte
+  des planches. La palette de l'atelier se **filtre** (« loupe », « col »,
+  « sac »… sans accent ni casse) — au-delà d'une quarantaine, une grille ne se
+  parcourt plus à l'œil.
+  **Ajouter une icône** : `apps/site/lib/liveWaypointIcons.js` (une clé → un
+  composant lucide, importé NOMMÉMENT — `import { icons }` embarquerait les
+  ~1 500 icônes de la bibliothèque). Ce que lucide n'a pas se dessine à la
+  maison, au même trait, dans `apps/site/lib/iconesMaison.js` — c'est le cas de
+  la sandale. Une clé sans géométrie disparaîtrait SILENCIEUSEMENT d'une
+  planche : `lib/carrouselRendu.test.js` vérifie que chacune est traçable.
 - **Sur le téléphone** : ouvrir `/studio`, puis « Ajouter à l'écran d'accueil ».
   Le studio a **son propre manifeste** (`public/studio.webmanifest`) et ses
   **icônes sombres** : ça pose une icône SÉPARÉE de celle du site, qui ouvre
