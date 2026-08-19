@@ -554,10 +554,22 @@ function dessinerCapitales(ctx, morceaux, x, base, taille, espacementEm, encre) 
  * n'a plus rien d'un surtitre, juste un trait perdu. Rend l'ordonnée de la
  * ligne de base.
  */
-function surtitre(ctx, m, th, police, texte, x, base, { align = "gauche", largeur = 0 } = {}) {
+function surtitre(
+  ctx,
+  m,
+  th,
+  police,
+  texte,
+  x,
+  base,
+  { align = "gauche", largeur = 0, filet = true } = {},
+) {
   if (!texte) return base;
-  const filetL = Math.round(m.surtitre * 2.6);
-  const ecart = m.surtitre * 0.9;
+  // Sans filet, le surtitre n'est plus qu'une ligne de capitales ambrées : la
+  // place du trait ET son écart disparaissent, sinon il resterait un retrait
+  // fantôme que personne ne saurait expliquer.
+  const filetL = filet ? Math.round(m.surtitre * 2.6) : 0;
+  const ecart = filet ? m.surtitre * 0.9 : 0;
   const epaisseur = Math.max(2, m.filetSurtitre);
   const mots = morceauxCapitales(texte);
 
@@ -569,7 +581,9 @@ function surtitre(ctx, m, th, police, texte, x, base, { align = "gauche", largeu
   // Le filet est ÉPAIS (10 px de référence) : c'est lui le point d'entrée du
   // regard, pas le petit texte qui le suit. Centré sur la hauteur de capitale
   // du surtitre, sinon il pend sous la ligne dès qu'il s'épaissit.
-  ctx.fillRect(gauche, base - m.surtitre * CENTRE_CAPITALES - epaisseur / 2, filetL, epaisseur);
+  if (filet) {
+    ctx.fillRect(gauche, base - m.surtitre * CENTRE_CAPITALES - epaisseur / 2, filetL, epaisseur);
+  }
   dessinerCapitales(ctx, mots, gauche + filetL + ecart, base, m.surtitre, 0.22, th.accent);
   return base;
 }
@@ -1387,6 +1401,7 @@ function dessinerCarte(ctx, format, o) {
     ctx.fillStyle = th.accent;
     surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, y, {
       align,
+      filet: carte.surtitreFilet !== false,
       largeur: largeurTexte,
     });
     zoneTexte(zones, "surtitre", m, m.pad, largeurTexte, y - m.surtitre, y + m.surtitre * 0.3);
@@ -1548,6 +1563,7 @@ function dessinerPhoto(ctx, format, o) {
     poserOmbre(ctx, ombre, "surtitre");
     surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, y, {
       align,
+      filet: carte.surtitreFilet !== false,
       largeur: largeurTexte,
     });
     zoneTexte(zones, "surtitre", m, m.pad, largeurTexte, y - m.surtitre, y + m.surtitre * 0.3);
@@ -1640,6 +1656,7 @@ function blocTitreEtCorps(
     const base = premier ? y : y + m.surtitre;
     surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, base, {
       align,
+      filet: carte.surtitreFilet !== false,
       largeur,
     });
     zoneTexte(zones, "surtitre", m, m.pad, largeur, base - m.surtitre, base + m.surtitre * 0.3);
@@ -1791,6 +1808,7 @@ function dessinerFiche(ctx, format, o) {
     const base = premier ? y : y + m.surtitre;
     surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, base, {
       align,
+      filet: carte.surtitreFilet !== false,
       largeur: largeurTexte,
     });
     zoneTexte(zones, "surtitre", m, m.pad, largeurTexte, base - m.surtitre, base + m.surtitre * 0.3);
@@ -1911,9 +1929,19 @@ function dessinerCloture(ctx, format, o) {
   const bc = baseCorps(m, th, polices, carte);
 
   const align = alignementDe(carte, "centre");
-  const haut = carte.clotureHaut ?? "non";
-  const surtitreEnHaut = haut === "surtitre" || haut === "les-deux";
-  const titreEnHaut = haut === "titre" || haut === "les-deux";
+  /**
+   * CE QUI PASSE AU-DESSUS DU LOGO, pièce par pièce.
+   *
+   * Trois cases indépendantes plutôt qu'un menu à quatre entrées : avec le
+   * texte, un menu aurait eu huit combinaisons à nommer. `clotureHaut` était ce
+   * menu — les planches déjà enregistrées le portent, on le lit donc en secours.
+   */
+  const ancien = carte.clotureHaut ?? "non";
+  const enHaut = (quoi) => {
+    const choisi = carte[`clotureHaut_${quoi}`];
+    if (typeof choisi === "boolean") return choisi;
+    return quoi !== "texte" && (ancien === quoi || ancien === "les-deux");
+  };
 
   const lignesTitre = carte.titre
     ? lignesRiches(ctx, analyserRiche(carte.titre), largeur, bt)
@@ -1941,16 +1969,16 @@ function dessinerCloture(ctx, format, o) {
   const pieceLogo = { type: "logo", hauteur: rayon * 2 };
 
   const ecart = Math.round(72 * m.k);
-  // L'ordre titre/surtitre est celui de la planche (`titreDevant`) ; le passage
-  // au-dessus du logo est un réglage à part, qui déplace la pièce sans changer
-  // leur ordre entre elles.
-  const paire = ordreDuTitre(carte).map((quoi) =>
-    quoi === "surtitre" ? [pieceSurtitre, surtitreEnHaut] : [pieceTitre, titreEnHaut],
-  );
-  for (const [piece, enHaut] of paire) if (piece && enHaut) morceaux.push(piece);
+  // L'ordre titre/surtitre est celui de la planche (`titreDevant`) et le texte
+  // ferme ; passer au-dessus du logo est un réglage à part, qui DÉPLACE une
+  // pièce sans changer l'ordre des autres entre elles.
+  const suite = [
+    ...ordreDuTitre(carte).map((quoi) => (quoi === "surtitre" ? pieceSurtitre : pieceTitre)),
+    pieceTexte,
+  ].filter(Boolean);
+  for (const piece of suite) if (enHaut(piece.type)) morceaux.push(piece);
   morceaux.push(pieceLogo);
-  for (const [piece, enHaut] of paire) if (piece && !enHaut) morceaux.push(piece);
-  if (pieceTexte) morceaux.push(pieceTexte);
+  for (const piece of suite) if (!enHaut(piece.type)) morceaux.push(piece);
 
   const hautZone = format.zoneSure?.top ?? m.bandeH;
   // Le bloc est centré dans la zone UTILE, pas dans la planche : en story,
@@ -2196,6 +2224,7 @@ function dessinerJournees(ctx, format, o) {
     const base = premier ? yHaut : yHaut + m.surtitre;
     surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, base, {
       align,
+      filet: carte.surtitreFilet !== false,
       largeur: largeurTexte,
     });
     zoneTexte(zones, "surtitre", m, m.pad, largeurTexte, base - m.surtitre, base + m.surtitre * 0.3);

@@ -55,7 +55,7 @@ function ctxFactice() {
       width: String(t).length * 0.5 * (Number(/([\d.]+)px/.exec(ctx.font)?.[1]) || 20),
     }),
     fillRect: (x, y, w, h) => rects.push({ x, y, w, h, couleur: ctx.fillStyle }),
-    fillText: (t) => mots.push({ texte: String(t), fonte: ctx.font }),
+    fillText: (t, x, y) => mots.push({ texte: String(t), fonte: ctx.font, x, y }),
     drawImage: (_src, x, y, w, h) => images.push({ x, y, w, h }),
     createLinearGradient: () => ({ addColorStop: noop, degrade: true }),
   };
@@ -624,5 +624,58 @@ describe("la ligne de chiffres", () => {
   it("ouvre son propre réglage au clic", () => {
     const ctx = planche({ gabarit: "carte", pied: "Quatre jours" }, { trace });
     expect(ctx.zones.some((z) => z.champ === "factuelle")).toBe(true);
+  });
+});
+
+describe("le filet du surtitre", () => {
+  // Il fait 2,6 × le corps du surtitre (57 px pour 22) et 10 px d'épaisseur.
+  const filet = ({ rects }) => rects.find((r) => Math.round(r.h) === 10 && Math.round(r.w) === 57);
+  const base = { gabarit: "texte", surtitre: "matériel", titre: "Le sac" };
+
+  it("est là par défaut", () => {
+    expect(filet(planche(base))).toBeDefined();
+  });
+
+  it("s'enlève sur demande", () => {
+    expect(filet(planche({ ...base, surtitreFilet: false }))).toBeUndefined();
+  });
+
+  it("rend sa place au texte, sans laisser de retrait fantôme", () => {
+    // Sans filet, les capitales repartent de la marge : un retrait résiduel
+    // serait invisible à écrire mais visible à l'œil. On repère « É », qui
+    // n'existe que dans MATÉRIEL — « M » se trouve aussi dans LOCOMOTION.
+    const x = (carte) => planche(carte).mots.find((mo) => mo.texte === "É").x;
+    expect(x({ ...base, surtitreFilet: false })).toBeLessThan(x(base));
+  });
+});
+
+describe("la clôture : ce qui passe au-dessus du logo", () => {
+  const LOGO = { width: 512, height: 512 };
+  const commun = {
+    gabarit: "cloture",
+    surtitre: "c'est fini",
+    titre: "Merci d'avoir suivi.",
+    texte: "Le récit complet arrive sur le site.",
+    marque: "rien",
+  };
+  const yDuLogo = (carte) => planche(carte, { logo: LOGO }).images[0]?.y;
+
+  it("descend le logo pour chaque pièce qu'on fait passer devant", () => {
+    const rien = yDuLogo(commun);
+    const texte = yDuLogo({ ...commun, clotureHaut_texte: true });
+    const tout = yDuLogo({
+      ...commun,
+      clotureHaut_surtitre: true,
+      clotureHaut_titre: true,
+      clotureHaut_texte: true,
+    });
+    expect(texte).toBeGreaterThan(rien);
+    expect(tout).toBeGreaterThan(texte);
+  });
+
+  it("comprend encore l'ancien réglage à quatre entrées", () => {
+    const rien = yDuLogo(commun);
+    expect(yDuLogo({ ...commun, clotureHaut: "les-deux" })).toBeGreaterThan(rien);
+    expect(yDuLogo({ ...commun, clotureHaut: "non" })).toBe(rien);
   });
 });
