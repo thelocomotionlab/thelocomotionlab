@@ -399,7 +399,10 @@ la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
   **Zoom** sous la planche (boutons, ou Ctrl/⌘ + molette) : « Ajuster » montre
   la composition, 100 % montre les pixels réels de l'export — un corps de 22 px
   ne se juge pas sur une vignette. Le plan de travail défile quand on zoome. La
-  **bande des vignettes se rabat** (le bouton « N planches » sous la scène).
+  **bande des vignettes se rabat** (le bouton « N planches » sous la scène) et
+  les planches s'y **réordonnent au glissement** — à la souris dès le premier
+  mouvement, au doigt après un appui maintenu (sans ce délai, la bande ne
+  pourrait plus défiler latéralement). La sélection suit la planche déplacée.
 - **Cliquer DANS la planche ouvre le réglage** de ce qu'on a cliqué : le titre
   ouvre le champ du titre, le pied ouvre le pied, une case de la grille ouvre sa
   légende. Le rendu déclare ses **zones** au fil du dessin (`dessinerCartePartage`
@@ -450,6 +453,14 @@ la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
   décalé). Une ligne vide sépare, chaque ligne vide en plus aère. Dans les cases
   du gabarit Journées, chaque ligne tapée reste une ligne (une légende n'est pas
   un texte suivi).
+- **L'alignement et le corps, LIGNE PAR LIGNE**, en préfixe de ligne : `|`
+  centre, `|>` aligne à droite, `|<` à gauche ; `--` réduit et `++` agrandit
+  (répétables, un pas de 1,25 ×). Ils se cumulent (`|-- une note centrée et plus
+  petite`, ou `-- |>` avec une espace). Ça ne touche QUE la ligne où on le met —
+  l'alignement et le corps de la planche restent dans « Composition » et
+  « Allure ». Le préfixe doit être suivi d'une espace **et** de quelque chose :
+  une rangée de tirets reste une rangée de tirets, et `- eau` reste un point de
+  liste.
   Il marche dans **tous** les textes, y compris les petites capitales — surtitre,
   en-tête, pied de page, libellés de fiche. C'étaient les seules à ne pas
   l'accepter : on pouvait poser `:balise:` dans un titre mais pas dans le

@@ -2020,9 +2020,9 @@ function dessinerCloture(ctx, format, o) {
       ctx.restore();
     } else if (piece.type === "surtitre") {
       poserOmbre(ctx, ombre, "surtitre");
-      // Le surtitre de la clôture garde son filet ambre comme partout ailleurs :
-      // c'est `surtitre()` qui aligne le bloc entier (filet + capitales), donc
-      // centré il ne pend plus à gauche.
+      // Le surtitre de la clôture suit les MÊMES réglages que partout ailleurs
+      // — son filet compris : c'est `surtitre()` qui aligne le bloc entier
+      // (filet + capitales), donc centré il ne pend plus à gauche.
       ctx.fillStyle = th.accent;
       surtitre(
         ctx,
@@ -2032,7 +2032,7 @@ function dessinerCloture(ctx, format, o) {
         carte.surtitre,
         m.pad,
         y + m.surtitre,
-        { align, largeur },
+        { align, largeur, filet: carte.surtitreFilet !== false },
       );
       zoneTexte(zones, "surtitre", m, m.pad, largeur, y, y + piece.hauteur);
     } else if (piece.type === "titre") {

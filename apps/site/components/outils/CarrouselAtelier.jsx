@@ -102,6 +102,7 @@ import {
   ICONES_PALETTE,
   ICONES_PAR_CLE,
   LEGENDE,
+  Nombre,
   Opacite,
   Puce,
   Taille,
@@ -881,20 +882,113 @@ export default function CarrouselAtelier() {
     setActive((a) => Math.max(0, a >= i ? a - 1 : a));
   }, []);
 
-  const deplacerCarte = useCallback((i, delta) => {
-    let bouge = false;
-    setCartes((cs) => {
-      const j = i + delta;
-      if (j < 0 || j >= cs.length) return cs;
-      bouge = true;
-      const out = [...cs];
-      [out[i], out[j]] = [out[j], out[i]];
-      return out;
-    });
-    // L'active SUIT la planche, dans les deux sens de l'échange : sans le second
-    // cas, déplacer une planche par-dessus l'active faisait sauter l'aperçu.
-    if (bouge) setActive((a) => (a === i ? i + delta : a === i + delta ? i : a));
+  /**
+   * Déplace une planche à la position `vers`, et GARDE LA SÉLECTION DESSUS.
+   *
+   * L'ancienne version décidait de bouger l'index actif d'après un drapeau posé
+   * DANS l'updater de `setCartes` — qui ne s'exécute pas au moment où on le
+   * lit. Le drapeau était donc toujours faux : la sélection ne suivait jamais,
+   * et c'est la planche qui venait de prendre la place qui paraissait
+   * sélectionnée. On borne donc ici, avec la longueur qu'on connaît déjà.
+   */
+  const deplacerVers = useCallback(
+    (depuis, vers) => {
+      const cible = Math.min(Math.max(vers, 0), cartes.length - 1);
+      if (cible === depuis) return;
+      setCartes((cs) => {
+        const out = [...cs];
+        out.splice(cible, 0, ...out.splice(depuis, 1));
+        return out;
+      });
+      setActive(cible);
+    },
+    [cartes.length],
+  );
+
+  const deplacerCarte = useCallback(
+    (i, delta) => deplacerVers(i, i + delta),
+    [deplacerVers],
+  );
+
+  /* ------------------------------------------- glisser-déposer des vignettes */
+
+  /**
+   * RÉORDONNER À LA MAIN.
+   *
+   * À la souris, le glissement part au premier mouvement. Au DOIGT, il part
+   * après un appui maintenu : sans ce délai, la bande ne pourrait plus défiler
+   * latéralement — le geste est le même, et c'est celui qu'on fait le plus
+   * souvent. C'est la convention de toutes les listes réordonnables mobiles.
+   */
+  const bougeRef = useRef(null);
+  const [glissee, setGlissee] = useState(null);
+
+  const finGlissement = useCallback(() => {
+    const g = bougeRef.current;
+    if (g?.minuterie) clearTimeout(g.minuterie);
+    bougeRef.current = null;
+    setGlissee(null);
   }, []);
+
+  const debutGlissement = useCallback((e, i) => {
+    // Le bouton droit ou un second doigt n'ouvrent rien.
+    if (e.button != null && e.button !== 0) return;
+    const cible = e.currentTarget;
+    const g = { index: i, x0: e.clientX, y0: e.clientY, actif: false, minuterie: null, cible };
+    bougeRef.current = g;
+    if (e.pointerType === "touch") {
+      g.minuterie = setTimeout(() => {
+        if (bougeRef.current !== g) return;
+        g.actif = true;
+        cible.setPointerCapture?.(e.pointerId);
+        setGlissee(g.index);
+      }, 240);
+    }
+  }, []);
+
+  const pendantGlissement = useCallback(
+    (e) => {
+      const g = bougeRef.current;
+      if (!g) return;
+      const bouge = Math.hypot(e.clientX - g.x0, e.clientY - g.y0);
+      if (!g.actif) {
+        // Au doigt, un vrai mouvement AVANT la fin du délai est un défilement :
+        // on rend la main à la bande.
+        if (e.pointerType === "touch") {
+          if (bouge > 10) finGlissement();
+          return;
+        }
+        if (bouge < 6) return;
+        g.actif = true;
+        g.cible.setPointerCapture?.(e.pointerId);
+        setGlissee(g.index);
+      }
+      // La vignette SOUS le doigt donne la position visée : on suit le DOM,
+      // pas une arithmétique de largeurs qui se désaccorderait au premier
+      // changement de style.
+      const sous = document
+        .elementFromPoint(e.clientX, e.clientY)
+        ?.closest("[data-vignette]");
+      const vers = sous ? Number(sous.dataset.vignette) : null;
+      if (vers != null && Number.isInteger(vers) && vers !== g.index) {
+        deplacerVers(g.index, vers);
+        g.index = vers;
+        setGlissee(vers);
+      }
+    },
+    [deplacerVers, finGlissement],
+  );
+
+  const finDuGeste = useCallback(
+    (i) => {
+      const g = bougeRef.current;
+      const aGlisse = Boolean(g?.actif);
+      finGlissement();
+      // Un simple appui SÉLECTIONNE ; un glissement a déjà tout fait.
+      if (!aGlisse) setActive(i);
+    },
+    [finGlissement],
+  );
 
   const chargerPhoto = useCallback(
     async (e) => {
@@ -1298,15 +1392,24 @@ export default function CarrouselAtelier() {
                   }`}
                 />
                 {cartes.length} planche{cartes.length > 1 ? "s" : ""}
+                {cartes.length > 1 && (
+                  <span className="hidden opacity-70 sm:inline">— glisse pour réordonner</span>
+                )}
               </button>
               <div className={`flex items-end gap-2 overflow-x-auto pb-1 ${bandeOuverte ? "" : "hidden"}`}>
                 {cartes.map((c, i) => (
                   <button
                     key={c.id}
                     type="button"
-                    onClick={() => setActive(i)}
+                    data-vignette={i}
+                    onPointerDown={(e) => debutGlissement(e, i)}
+                    onPointerMove={pendantGlissement}
+                    onPointerUp={() => finDuGeste(i)}
+                    onPointerCancel={finGlissement}
                     aria-current={i === active ? "true" : undefined}
-                    className={`w-[76px] shrink-0 rounded-lg border p-1 text-left transition-colors motion-reduce:transition-none ${
+                    className={`w-[76px] shrink-0 cursor-grab rounded-lg border p-1 text-left transition-colors select-none motion-reduce:transition-none ${
+                      glissee === i ? "cursor-grabbing opacity-60 ring-2 ring-brand-primary-dark" : ""
+                    } ${
                       i === active
                         ? "border-brand-primary-dark bg-brand-primary/20"
                         : "border-brand-field bg-brand-paper hover:border-brand-primary/60"
@@ -1684,9 +1787,9 @@ export default function CarrouselAtelier() {
 
                 <Groupe
                   titre="Texte"
-                  aide="Une ligne vide sépare deux paragraphes ; chaque ligne vide en plus aère. « > » décale un paragraphe entier."
+                  aide="Une ligne vide sépare deux paragraphes ; chaque ligne vide en plus aère. « > » décale un paragraphe entier. En début de ligne, « | » centre et « -- » réduit — pour CETTE ligne seulement."
                 >
-                  <p className="mb-1 font-mono text-[12px] leading-snug text-brand-text/50">
+                  <p className="mb-1 whitespace-pre-line font-mono text-[12px] leading-snug text-brand-text/50">
                     {AIDE_BALISAGE}
                   </p>
                   <textarea
@@ -1720,6 +1823,25 @@ export default function CarrouselAtelier() {
                       title="Un paragraphe décalé — une note, une citation"
                     >
                       + retrait
+                    </button>
+                    {/* LOCAL, pas global : ces préfixes ne valent que pour la
+                        ligne où on les met. L'alignement et le corps de la
+                        planche, eux, restent dans « Composition » et « Allure ». */}
+                    <button
+                      type="button"
+                      onClick={() => insererDansTexte("\n| ")}
+                      className={BOUTON_DISCRET}
+                      title="Centrer CETTE ligne seulement (|> à droite, |< à gauche)"
+                    >
+                      + ligne centrée
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insererDansTexte("\n-- ")}
+                      className={BOUTON_DISCRET}
+                      title="Réduire CETTE ligne seulement (++ pour agrandir, répétables)"
+                    >
+                      + ligne plus petite
                     </button>
                   </div>
 
@@ -2187,16 +2309,15 @@ export default function CarrouselAtelier() {
                         Nombre de journées
                       </label>
                       <div className="mb-3 flex items-center gap-2">
-                        <input
+                        <Nombre
                           id="nb-jours"
-                          type="number"
                           min={1}
                           max={12}
-                          value={segments.length}
-                          onChange={(e) =>
-                            setCoupures(coupuresRegulieres(trace.totalKm, Number(e.target.value)))
+                          valeur={segments.length}
+                          onChange={(v) =>
+                            setCoupures(coupuresRegulieres(trace.totalKm, Math.round(v)))
                           }
-                          className={`${CHAMP} w-24`}
+                          classe={`${CHAMP} w-24`}
                         />
                         <button
                           type="button"
@@ -2218,17 +2339,16 @@ export default function CarrouselAtelier() {
                             <span className="w-10 font-heading text-[13px] text-brand-text/55">
                               J{i + 1} →
                             </span>
-                            <input
-                              type="number"
-                              step="0.1"
-                              value={Number(km.toFixed(1))}
-                              onChange={(e) => {
-                                const v = Number(e.target.value);
+                            <Nombre
+                              pas="0.1"
+                              valeur={Number(km.toFixed(1))}
+                              onChange={(v) =>
                                 setCoupures((cs) =>
                                   cs.map((c, k) => (k === i ? v : c)).sort((a, b) => a - b),
-                                );
-                              }}
-                              className={`${CHAMP} w-28`}
+                                )
+                              }
+                              classe={`${CHAMP} w-28`}
+                              aria-label={`Fin de la journée ${i + 1}, en kilomètres`}
                             />
                             <span className="font-heading text-[13px] text-brand-text/45">km</span>
                             <button

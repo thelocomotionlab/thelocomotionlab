@@ -636,8 +636,11 @@ describe("le filet du surtitre", () => {
     expect(filet(planche(base))).toBeDefined();
   });
 
-  it("s'enlève sur demande", () => {
-    expect(filet(planche({ ...base, surtitreFilet: false }))).toBeUndefined();
+  it.each(GABARITS)("s'enlève sur demande, sur « %s »", (gabarit) => {
+    // Il y a SIX endroits qui dessinent un surtitre. Un seul oublié — c'était
+    // la clôture — et le réglage passe pour cassé.
+    expect(filet(planche({ ...base, gabarit }))).toBeDefined();
+    expect(filet(planche({ ...base, gabarit, surtitreFilet: false }))).toBeUndefined();
   });
 
   it("rend sa place au texte, sans laisser de retrait fantôme", () => {
