@@ -45,6 +45,7 @@ import {
 } from "lucide-react";
 
 import {
+  ALIGNEMENTS,
   CORPS,
   FLECHES,
   FORMATS,
@@ -52,6 +53,7 @@ import {
   MARQUES,
   PALETTE_JOURS,
   POLICES,
+  TEXTES_OMBRABLES,
   THEMES,
   casesEffectives,
   chargerFond,
@@ -101,6 +103,7 @@ import {
   Opacite,
   Puce,
   Taille,
+  Zoom,
 } from "@/components/outils/champsAtelier";
 
 /**
@@ -234,7 +237,11 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0", style = 
     /** auto | toujours | jamais. « toujours » par défaut : la flèche de swipe
      *  doit être là, y compris sur un carrousel encore à une seule planche. */
     piedFleche: gabarit === "cloture" ? "jamais" : "toujours",
-    centrer: false,
+    /** gauche | centre | droite. La clôture est centrée d'office : c'est un
+     *  bloc symétrique autour du logo. */
+    alignement: gabarit === "cloture" ? "centre" : "gauche",
+    /** Inverse l'ordre du surtitre et du titre. */
+    titreDevant: false,
     /** Les filets sous l'en-tête et au-dessus du pied. */
     filetEntete: gabarit !== "cloture",
     filetPied: gabarit !== "cloture",
@@ -250,6 +257,12 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0", style = 
     ombreDy: 6,
     ombreOpacite: 0.5,
     ombreCouleur: "",
+    /** …et sur QUOI elle porte, texte par texte (cf. TEXTES_OMBRABLES). */
+    ombre_titre: true,
+    ombre_surtitre: true,
+    ombre_corps: true,
+    ombre_entete: true,
+    ombre_pied: true,
     /** Le filet court sous le titre — allumé d'office sur la fiche. */
     filetTitre: gabarit === "fiche",
     filetTitreLargeur: 96,
@@ -360,7 +373,8 @@ export const CHAMPS_DE_STYLE = [
   "piedFleche",
   "filetEntete",
   "filetPied",
-  "centrer",
+  "alignement",
+  "titreDevant",
   "puce",
   "filetTitre",
   "filetTitreLargeur",
@@ -374,6 +388,11 @@ export const CHAMPS_DE_STYLE = [
   "ombreDy",
   "ombreOpacite",
   "ombreCouleur",
+  "ombre_titre",
+  "ombre_surtitre",
+  "ombre_corps",
+  "ombre_entete",
+  "ombre_pied",
   "tailleCase",
   "casesColonnes",
   "caseCarte",
@@ -441,6 +460,9 @@ export default function CarrouselAtelier() {
   const [cartes, setCartes] = useState(() => [carteNeuve("texte", null, [], false, "c0")]);
   const [active, setActive] = useState(0);
   const [onglet, setOnglet] = useState("texte");
+  /** `null` = ajusté à la fenêtre ; un nombre = le facteur sur les 1080 px du
+   *  format (100 % = un pixel d'export pour un pixel d'écran). */
+  const [zoom, setZoom] = useState(null);
   const [fond, setFond] = useState(null);
   const [marque, setMarque] = useState(null);
   const [policePrete, setPolicePrete] = useState(false);
@@ -968,6 +990,26 @@ export default function CarrouselAtelier() {
     glisseRef.current = null;
   }, []);
 
+  /** Le zoom EFFECTIF de l'aperçu, mesuré sur le canvas — c'est de là que
+   *  repart le premier « + » quand on était encore en « Ajuster ». */
+  const zoomAffiche = useCallback(() => {
+    const canvas = canvasRef.current;
+    return canvas?.clientWidth ? canvas.clientWidth / format.width : null;
+  }, [format.width]);
+
+  /** Ctrl/⌘ + molette : le geste de zoom de tous les éditeurs. Sans la touche,
+   *  la molette fait ce qu'elle doit faire — défiler. */
+  const molette = useCallback(
+    (e) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      const actuel = zoom ?? zoomAffiche() ?? 0.4;
+      const suivant = Math.min(3, Math.max(0.1, actuel * (e.deltaY > 0 ? 0.9 : 1.1)));
+      setZoom(Math.round(suivant * 100) / 100);
+    },
+    [zoom, zoomAffiche],
+  );
+
   /* ------------------------------------------------------------------- export */
 
   const exporter = useCallback(
@@ -1092,8 +1134,13 @@ export default function CarrouselAtelier() {
         <section className="contents lg:order-2 lg:flex lg:min-h-0 lg:min-w-0 lg:flex-1 lg:flex-col">
           <div className="order-1 sticky top-[var(--apercu-top,84px)] z-20 flex min-h-0 flex-col gap-3 bg-brand-bg/95 px-3 py-3 backdrop-blur lg:static lg:order-none lg:flex-1 lg:bg-transparent lg:backdrop-blur-none">
             {/* Le plan de travail : un aplat neutre derrière la planche, pour
-                qu'un fond clair ne se confonde pas avec la page. */}
-            <div className="flex min-h-0 flex-1 items-center justify-center lg:rounded-xl lg:bg-brand-text/5 lg:p-4">
+                qu'un fond clair ne se confonde pas avec la page. Il DÉFILE dès
+                qu'on zoome — sinon agrandir couperait la planche au lieu de
+                permettre d'en regarder un coin. */}
+            <div
+              onWheel={molette}
+              className="flex min-h-0 flex-1 items-center justify-center overflow-auto lg:rounded-xl lg:bg-brand-text/5 lg:p-4"
+            >
               {carte && (
                 <canvas
                   ref={canvasRef}
@@ -1101,9 +1148,17 @@ export default function CarrouselAtelier() {
                   onPointerMove={onPointerMove}
                   onPointerUp={onPointerUp}
                   onPointerCancel={onPointerUp}
-                  className="block h-auto max-h-[40vh] w-auto max-w-full touch-none rounded-xl bg-brand-text/10 shadow-card lg:max-h-full"
+                  style={zoom == null ? undefined : { width: `${format.width * zoom}px` }}
+                  className={
+                    zoom == null
+                      ? "block h-auto max-h-[40vh] w-auto max-w-full touch-none rounded-xl bg-brand-text/10 shadow-card lg:max-h-full"
+                      : "block h-auto max-w-none shrink-0 touch-none rounded-xl bg-brand-text/10 shadow-card"
+                  }
                 />
               )}
+            </div>
+            <div className="flex shrink-0 items-center justify-center gap-2">
+              <Zoom valeur={zoom} onChange={setZoom} mesurer={zoomAffiche} />
             </div>
             {carte?.gabarit === "carte" && segments.length > 0 && (
               <p className={`${AIDE} shrink-0 text-center`}>
@@ -1309,6 +1364,98 @@ export default function CarrouselAtelier() {
                   />
                 </Groupe>
 
+                <Groupe titre="Composition">
+                  <div className="mb-3">
+                    <Choix
+                      label="Alignement du texte"
+                      valeur={carte?.alignement ?? (carte?.centrer ? "centre" : "gauche")}
+                      options={ALIGNEMENTS.map((a) => ({ cle: a.cle, label: a.label }))}
+                      onChange={(v) => majCarte({ alignement: v, centrer: v === "centre" })}
+                    />
+                  </div>
+                  {/* Le surtitre ouvre le bloc par défaut : un filet, une
+                      catégorie, puis le titre. Inversé, le titre devient
+                      l'accroche et le surtitre la range en dessous. */}
+                  <Case
+                    label="Titre avant le surtitre"
+                    coche={carte?.titreDevant}
+                    onChange={(v) => majCarte({ titreDevant: v })}
+                  />
+                </Groupe>
+
+                {carte?.gabarit === "cloture" && (
+                  <Groupe
+                    titre="La clôture"
+                    aide="La marque porte déjà son rond : l'anneau extérieur sert à faire un halo, pas à entourer."
+                  >
+                    <Case
+                      classe="mb-3"
+                      label="Anneau autour du logo"
+                      coche={carte.cercleVisible}
+                      onChange={(v) => majCarte({ cercleVisible: v })}
+                    />
+                    {/* « Merci d'avoir suivi » ANNONCÉ puis signé se lit comme
+                        une fin ; signé puis annoncé se lit comme un en-tête. */}
+                    <div className="mb-3">
+                      <Choix
+                        label="Au-dessus du logo"
+                        valeur={carte.clotureHaut ?? "non"}
+                        options={[
+                          { cle: "non", label: "Rien" },
+                          { cle: "surtitre", label: "Surtitre" },
+                          { cle: "titre", label: "Titre" },
+                          { cle: "les-deux", label: "Les deux" },
+                        ]}
+                        onChange={(v) => majCarte({ clotureHaut: v })}
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <Curseur
+                        id="cercle-taille"
+                        label="Rayon"
+                        valeur={carte.tailleCercle}
+                        defaut={128}
+                        min={60}
+                        max={260}
+                        pas={2}
+                        format={(v) => `${Math.round(v)} px`}
+                        onChange={(v) => majCarte({ tailleCercle: v ?? 128 })}
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <Curseur
+                        id="cercle-trait"
+                        label="Épaisseur du trait"
+                        valeur={carte.epaisseurCercle}
+                        defaut={4}
+                        min={1}
+                        max={16}
+                        pas={1}
+                        format={(v) => `${Math.round(v)} px`}
+                        onChange={(v) => majCarte({ epaisseurCercle: v ?? 4 })}
+                      />
+                    </div>
+                    <Couleur
+                      label="Couleur du cercle"
+                      valeur={carte.couleurCercle}
+                      defaut={theme.encre}
+                      onChange={(v) => majCarte({ couleurCercle: v })}
+                    />
+                    <div className="mt-3 flex flex-col gap-1.5">
+                      <Case
+                        label="Ligne sous l'en-tête"
+                        coche={carte.filetEntete === true}
+                        onChange={(v) => majCarte({ filetEntete: v })}
+                      />
+                      <Case
+                        label="Ligne au-dessus du pied"
+                        coche={carte.filetPied === true}
+                        onChange={(v) => majCarte({ filetPied: v })}
+                      />
+                    </div>
+                  </Groupe>
+                )}
+
                 <Groupe titre="Titre">
                   <input
                     id="titre"
@@ -1358,11 +1505,6 @@ export default function CarrouselAtelier() {
                       </div>
                     </div>
                   )}
-                  <Case
-                    label="Centrer le titre et le texte"
-                    coche={carte?.centrer}
-                    onChange={(v) => majCarte({ centrer: v })}
-                  />
                 </Groupe>
 
                 <Groupe
@@ -1721,78 +1863,6 @@ export default function CarrouselAtelier() {
                   </Groupe>
                 )}
 
-                {carte?.gabarit === "cloture" && (
-                  <Groupe
-                    titre="Le cercle de clôture"
-                    aide="La marque porte déjà son rond : l'anneau extérieur sert à faire un halo, pas à entourer."
-                  >
-                    <Case
-                      classe="mb-3"
-                      label="Anneau autour du logo"
-                      coche={carte.cercleVisible}
-                      onChange={(v) => majCarte({ cercleVisible: v })}
-                    />
-                    {/* « Merci d'avoir suivi » ANNONCÉ puis signé se lit comme
-                        une fin ; signé puis annoncé se lit comme un en-tête. */}
-                    <div className="mb-3">
-                      <Choix
-                        label="Au-dessus du logo"
-                        valeur={carte.clotureHaut ?? "non"}
-                        options={[
-                          { cle: "non", label: "Rien" },
-                          { cle: "surtitre", label: "Surtitre" },
-                          { cle: "titre", label: "Titre" },
-                          { cle: "les-deux", label: "Les deux" },
-                        ]}
-                        onChange={(v) => majCarte({ clotureHaut: v })}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <Curseur
-                        id="cercle-taille"
-                        label="Rayon"
-                        valeur={carte.tailleCercle}
-                        defaut={128}
-                        min={60}
-                        max={260}
-                        pas={2}
-                        format={(v) => `${Math.round(v)} px`}
-                        onChange={(v) => majCarte({ tailleCercle: v ?? 128 })}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <Curseur
-                        id="cercle-trait"
-                        label="Épaisseur du trait"
-                        valeur={carte.epaisseurCercle}
-                        defaut={4}
-                        min={1}
-                        max={16}
-                        pas={1}
-                        format={(v) => `${Math.round(v)} px`}
-                        onChange={(v) => majCarte({ epaisseurCercle: v ?? 4 })}
-                      />
-                    </div>
-                    <Couleur
-                      label="Couleur du cercle"
-                      valeur={carte.couleurCercle}
-                      defaut={theme.encre}
-                      onChange={(v) => majCarte({ couleurCercle: v })}
-                    />
-                    <div className="mt-3 flex flex-col gap-1.5">
-                      <Case
-                        label="Ligne sous l'en-tête"
-                        coche={carte.filetEntete === true}
-                        onChange={(v) => majCarte({ filetEntete: v })}
-                      />
-                      <Case
-                        label="Ligne au-dessus du pied"
-                        coche={carte.filetPied === true}
-                        onChange={(v) => majCarte({ filetPied: v })}
-                      />
-                    </div>
-                  </Groupe>
-                )}
               </>
             )}
 
@@ -2357,6 +2427,23 @@ export default function CarrouselAtelier() {
                         defaut="#000000"
                         onChange={(v) => majCarte({ ombreCouleur: v })}
                       />
+                      {/* Séparément : un titre en très gros sur une photo veut
+                          une ombre franche ; la pagination du pied, en 22 px,
+                          n'en veut aucune — une ombre l'épaissit jusqu'à la
+                          rendre sale. */}
+                      <div>
+                        <span className={LEGENDE}>Sur quels textes</span>
+                        <div className="flex flex-col gap-1.5">
+                          {TEXTES_OMBRABLES.map(({ cle, label }) => (
+                            <Case
+                              key={cle}
+                              label={label}
+                              coche={carte[`ombre_${cle}`] !== false}
+                              onChange={(v) => majCarte({ [`ombre_${cle}`]: v })}
+                            />
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </Groupe>

@@ -14,7 +14,7 @@
 
 "use client";
 
-import { RotateCcw } from "lucide-react";
+import { Maximize2, Minus, Plus, RotateCcw } from "lucide-react";
 
 import { CLES_ICONES } from "@/lib/carrouselIcones";
 import { iconeDuRepere } from "@/lib/liveWaypointIcons";
@@ -223,6 +223,61 @@ export function Choix({ label, valeur, options, onChange }) {
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+/**
+ * LE ZOOM DE LA SCÈNE.
+ *
+ * « Ajuster » (l'état par défaut, `null`) fait tenir la planche dans la place
+ * disponible — pratique pour juger la composition, inutile pour vérifier qu'un
+ * corps de 22 px se lit. D'où le zoom : il donne la taille RÉELLE des pixels de
+ * l'export, et il faut pouvoir y aller sans quitter l'atelier.
+ *
+ * Le zoom est un facteur sur la largeur du format (1080), pas sur la taille
+ * affichée : 100 % = un pixel de planche pour un pixel d'écran, ce qui est la
+ * seule référence qui ne bouge pas avec la fenêtre.
+ */
+export function Zoom({ valeur, onChange, mesurer }) {
+  const pas = (delta) => {
+    const actuel = valeur ?? mesurer?.() ?? 0.4;
+    const suivant = Math.min(3, Math.max(0.1, Math.round((actuel + delta) * 20) / 20));
+    onChange(suivant);
+  };
+  return (
+    <div className="flex shrink-0 items-center gap-1 rounded-full border border-brand-field bg-brand-paper px-1 py-0.5">
+      <button
+        type="button"
+        onClick={() => pas(-0.1)}
+        className="rounded-full p-1.5 text-brand-text/60 hover:bg-brand-primary/15 hover:text-brand-text"
+        aria-label="Réduire"
+      >
+        <Minus size={14} aria-hidden />
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange(null)}
+        className="min-w-[64px] rounded-full px-2 py-1 font-heading text-[12px] tabular-nums text-brand-text/70 hover:bg-brand-primary/15 hover:text-brand-text"
+        title="Ajuster à la fenêtre"
+      >
+        {valeur == null ? (
+          <span className="inline-flex items-center gap-1">
+            <Maximize2 size={12} aria-hidden />
+            Ajuster
+          </span>
+        ) : (
+          `${Math.round(valeur * 100)} %`
+        )}
+      </button>
+      <button
+        type="button"
+        onClick={() => pas(0.1)}
+        className="rounded-full p-1.5 text-brand-text/60 hover:bg-brand-primary/15 hover:text-brand-text"
+        aria-label="Agrandir"
+      >
+        <Plus size={14} aria-hidden />
+      </button>
     </div>
   );
 }
