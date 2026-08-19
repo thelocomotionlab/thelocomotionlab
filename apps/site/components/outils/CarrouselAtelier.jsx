@@ -267,6 +267,8 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0", style = 
     alignement: gabarit === "cloture" ? "centre" : "gauche",
     /** Inverse l'ordre du surtitre et du titre. */
     titreDevant: false,
+    /** Le filet ambre qui ouvre le surtitre. */
+    surtitreFilet: true,
     /** Les filets sous l'en-tête et au-dessus du pied. */
     filetEntete: gabarit !== "cloture",
     filetPied: gabarit !== "cloture",
@@ -317,8 +319,10 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0", style = 
     caseProfil: true,
     caseFilet: true,
     /* --- clôture --- */
-    /** Ce qui passe AU-DESSUS du logo : non | surtitre | titre | les-deux. */
-    clotureHaut: "non",
+    /** Ce qui passe AU-DESSUS du logo, pièce par pièce. */
+    clotureHaut_surtitre: false,
+    clotureHaut_titre: false,
+    clotureHaut_texte: false,
     tailleCercle: 128,
     epaisseurCercle: 4,
     couleurCercle: "",
@@ -400,6 +404,7 @@ export const CHAMPS_DE_STYLE = [
   "filetPied",
   "alignement",
   "titreDevant",
+  "surtitreFilet",
   "puce",
   "filetTitre",
   "filetTitreLargeur",
@@ -428,6 +433,20 @@ export const CHAMPS_DE_STYLE = [
 function styleDe(carte) {
   if (!carte) return null;
   return Object.fromEntries(CHAMPS_DE_STYLE.filter((c) => c in carte).map((c) => [c, carte[c]]));
+}
+
+/**
+ * Ce qui passe au-dessus du logo sur une clôture.
+ *
+ * `clotureHaut` était un menu à quatre entrées ; il est remplacé par trois
+ * cases (le texte s'y ajoute, et huit combinaisons ne se nomment pas). Les
+ * projets enregistrés portent encore l'ancien réglage : on le lit en secours.
+ */
+function estAuDessusDuLogo(carte, quoi) {
+  const choisi = carte?.[`clotureHaut_${quoi}`];
+  if (typeof choisi === "boolean") return choisi;
+  const ancien = carte?.clotureHaut ?? "non";
+  return quoi !== "texte" && (ancien === quoi || ancien === "les-deux");
 }
 
 /** Une planche sur laquelle personne n'a encore rien écrit — on peut la
@@ -1474,6 +1493,12 @@ export default function CarrouselAtelier() {
                     onChange={(e) => majCarte({ surtitre: e.target.value })}
                     className={CHAMP}
                   />
+                  <Case
+                    classe="mt-2"
+                    label="Filet ambre devant le surtitre"
+                    coche={carte?.surtitreFilet !== false}
+                    onChange={(v) => majCarte({ surtitreFilet: v })}
+                  />
                 </Groupe>
 
                 <Groupe titre="Composition">
@@ -1543,17 +1568,21 @@ export default function CarrouselAtelier() {
                     {/* « Merci d'avoir suivi » ANNONCÉ puis signé se lit comme
                         une fin ; signé puis annoncé se lit comme un en-tête. */}
                     <div className="mb-3">
-                      <Choix
-                        label="Au-dessus du logo"
-                        valeur={carte.clotureHaut ?? "non"}
-                        options={[
-                          { cle: "non", label: "Rien" },
-                          { cle: "surtitre", label: "Surtitre" },
-                          { cle: "titre", label: "Titre" },
-                          { cle: "les-deux", label: "Les deux" },
-                        ]}
-                        onChange={(v) => majCarte({ clotureHaut: v })}
-                      />
+                      <span className={LEGENDE}>Au-dessus du logo</span>
+                      <div className="flex flex-col gap-1.5">
+                        {[
+                          ["surtitre", "Surtitre"],
+                          ["titre", "Titre"],
+                          ["texte", "Texte"],
+                        ].map(([cle, label]) => (
+                          <Case
+                            key={cle}
+                            label={label}
+                            coche={estAuDessusDuLogo(carte, cle)}
+                            onChange={(v) => majCarte({ [`clotureHaut_${cle}`]: v })}
+                          />
+                        ))}
+                      </div>
                     </div>
                     <div className="mb-3">
                       <Curseur

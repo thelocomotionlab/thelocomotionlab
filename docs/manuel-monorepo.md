@@ -413,7 +413,9 @@ la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
   à droite : le filet ambre du surtitre et le filet sous le titre suivent, tout
   passe par le même calcul — et **inversion du titre et du surtitre**. Par
   défaut le surtitre ouvre (un filet, une catégorie, puis le titre) ; inversé,
-  le titre devient l'accroche et le surtitre la range en dessous.
+  le titre devient l'accroche et le surtitre la range en dessous. Le **filet
+  ambre du surtitre s'enlève** : sans lui, les capitales repartent de la marge,
+  sans retrait fantôme.
 - **Ce qui se règle sur une planche** : les corps (titre 65, texte 38, filet
   ambre 10 — les valeurs des aperçus de reel), la **police de chaque rôle**
   (titre / surtitre / texte, parmi les trois familles de la charte : Ubuntu,
@@ -435,13 +437,14 @@ la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
     entière et la silhouette entière reviennent dans CHAQUE case, en sourdine,
     avec la seule journée en couleur — c'est ce déplacement qui fait lire une
     progression, là où quatre vues recadrées se ressembleraient toutes.
-  - **Clôture** peut faire passer le titre et/ou le surtitre **au-dessus** du
-    logo (onglet **Texte**, groupe « La clôture ») : annoncé puis signé, ça se
-    lit comme une fin ; l'inverse se lit comme un en-tête. Le bloc entier est
-    mesuré avant d'être posé, donc il reste centré quel que soit l'ordre. Passer
-    une planche EN clôture la centre : c'est le seul gabarit dont la mise en
-    page est symétrique, et y arriver avec un texte aligné à gauche donnait une
-    planche visiblement cassée alors que personne n'avait fait ce choix.
+  - **Clôture** : le surtitre, le titre et le texte passent **au-dessus** du
+    logo, chacun indépendamment (onglet **Texte**, groupe « La clôture »).
+    Annoncé puis signé, ça se lit comme une fin ; l'inverse se lit comme un
+    en-tête. Le bloc entier est mesuré avant d'être posé, donc il reste centré
+    quel que soit l'ordre. Passer une planche EN clôture la centre : c'est le
+    seul gabarit dont la mise en page est symétrique, et y arriver avec un texte
+    aligné à gauche donnait une planche visiblement cassée alors que personne
+    n'avait fait ce choix.
 - **Le balisage du texte** : `*gras*`, `_italique_`, `~souligné~`, `[en ambre]`,
   `[bleu: mot]`, `:col:` (icône), `- ` (point de liste), `> ` (paragraphe
   décalé). Une ligne vide sépare, chaque ligne vide en plus aère. Dans les cases
