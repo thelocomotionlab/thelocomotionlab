@@ -33,11 +33,13 @@ function ctxFactice() {
   const rects = [];
   const mots = [];
   const images = [];
+  const appels = [];
   const noop = () => {};
   const ctx = {
     rects,
     mots,
     images,
+    appels,
     font: "",
     fillStyle: "",
     strokeStyle: "",
@@ -63,7 +65,8 @@ function ctxFactice() {
     "clearRect", "strokeRect", "strokeText", "beginPath", "moveTo",
     "lineTo", "arc", "closePath", "fill", "stroke", "save", "restore",
     "translate", "rotate", "scale", "setTransform", "clip",
-  ]) ctx[nom] = noop;
+    "quadraticCurveTo", "bezierCurveTo", "ellipse", "rect",
+  ]) ctx[nom] = (...a) => appels.push(nom, ...(nom === "fill" ? [] : []));
   return ctx;
 }
 
@@ -680,5 +683,107 @@ describe("la clôture : ce qui passe au-dessus du logo", () => {
     const rien = yDuLogo(commun);
     expect(yDuLogo({ ...commun, clotureHaut: "les-deux" })).toBeGreaterThan(rien);
     expect(yDuLogo({ ...commun, clotureHaut: "non" })).toBe(rien);
+  });
+});
+
+describe("la plaque sous le texte", () => {
+  // Surtitre vide : on compte les plaques du TITRE et du TEXTE, sans celle du
+  // surtitre qui viendrait brouiller le compte.
+  const base = {
+    gabarit: "photo",
+    image: { width: 1600, height: 1200 },
+    titre: "Le sac",
+    surtitre: "",
+  };
+  /** La plaque est un chemin rempli, pas un `fillRect` : on la repère au
+   *  `fill()` — le seul du gabarit photo une fois les dégradés écartés. */
+  const remplissages = (ctx) => ctx.appels.filter((a) => a === "fill").length;
+
+  it("ne pose rien quand on ne la demande pas", () => {
+    expect(remplissages(planche(base))).toBe(0);
+  });
+
+  it("pose une plaque PAR LIGNE de texte", () => {
+    const une = planche({ ...base, plaque: true, texte: "" });
+    const deux = planche({ ...base, plaque: true, texte: "Deux mots." });
+    expect(remplissages(une)).toBe(1);
+    expect(remplissages(deux)).toBe(2);
+  });
+
+  it("garde le texte ENTIÈREMENT couvert quand elle se dégrade", () => {
+    // Le fondu se prend sur une rallonge au-delà du texte : à droite, la plaque
+    // doit donc s'étendre PLUS LOIN que sans dégradé — pas se rétrécir sous le
+    // dernier mot.
+    const bord = (carte) => {
+      const ctx = ctxFactice();
+      let droite = 0;
+      const vrai = ctx.lineTo;
+      ctx.lineTo = (x) => {
+        if (x > droite) droite = x;
+        vrai(x);
+      };
+      dessinerCartePartage(ctx, {
+        format: "carrousel",
+        theme: "sombre",
+        police: "Ubuntu",
+        index: 0,
+        total: 1,
+        carte: { ...base, plaque: true, texte: "", ...carte },
+      });
+      return droite;
+    };
+    expect(bord({ plaqueDegrade: "droite" })).toBeGreaterThan(bord({}));
+  });
+
+  it("se limite aux textes cochés", () => {
+    const tout = planche({ ...base, plaque: true, texte: "Deux mots." });
+    const sansTitre = planche({ ...base, plaque: true, texte: "Deux mots.", plaque_titre: false });
+    expect(remplissages(sansTitre)).toBe(remplissages(tout) - 1);
+  });
+});
+
+describe("les zones libres", () => {
+  const base = { gabarit: "photo", image: { width: 1600, height: 1200 }, titre: "" };
+  const mots = (ctx) => ctx.mots.map((m) => m.texte).join("");
+
+  it("écrit son texte et rend une boîte déplaçable", () => {
+    const ctx = planche({ ...base, libres: [{ texte: "Ici.", x: 0.2, y: 0.3 }] });
+    expect(mots(ctx)).toContain("Ici.");
+    const b = ctx.boites.find((x) => x.type === "libre");
+    expect(b).toBeDefined();
+    expect(Math.round(b.x)).toBe(Math.round(0.2 * FORMATS.carrousel.width));
+    expect(Math.round(b.y)).toBe(Math.round(0.3 * FORMATS.carrousel.height));
+  });
+
+  it("place la zone au même endroit RELATIF quel que soit le format", () => {
+    const ou = (format) => {
+      const ctx = ctxFactice();
+      const r = dessinerCartePartage(ctx, {
+        format,
+        theme: "sombre",
+        police: "Ubuntu",
+        index: 0,
+        total: 1,
+        carte: { ...base, libres: [{ texte: "Ici.", x: 0.25, y: 0.5 }] },
+      });
+      const b = r.boites.find((x) => x.type === "libre");
+      return [b.x / FORMATS[format].width, b.y / FORMATS[format].height];
+    };
+    expect(ou("story")).toEqual(ou("carrousel"));
+    expect(ou("carre")).toEqual(ou("carrousel"));
+  });
+
+  it("s'ouvre au clic, et gagne sur ce qu'il y a dessous", () => {
+    const ctx = planche({ ...base, libres: [{ texte: "Ici.", x: 0.2, y: 0.3 }] });
+    const z = ctx.zones.filter((x) => x.champ === "libre");
+    expect(z).toHaveLength(1);
+    // Déclarée en DERNIER : au clic, elle passe devant la photo et les textes.
+    expect(ctx.zones[ctx.zones.length - 1].champ).toBe("libre");
+  });
+
+  it("se masque sans se perdre", () => {
+    const ctx = planche({ ...base, libres: [{ texte: "Ici.", masquee: true }] });
+    expect(mots(ctx)).not.toContain("Ici.");
+    expect(ctx.boites.some((x) => x.type === "libre")).toBe(false);
   });
 });

@@ -35,6 +35,7 @@ import { dessinerIcone } from "./carrouselIcones";
 import { ancreDuSegment } from "./carrouselTrace";
 import {
   ALIGNEMENTS,
+  DEGRADES_PLAQUE,
   ESPACEMENT,
   analyserRiche,
   decalageAlignement,
@@ -44,6 +45,7 @@ import {
   largeurLigne,
   hauteurBlocs,
   lignesRiches,
+  plaqueDeLigne,
   poserBlocs,
 } from "./carrouselTexte";
 import { traceColors } from "./liveTraceColors";
@@ -562,7 +564,7 @@ function surtitre(
   texte,
   x,
   base,
-  { align = "gauche", largeur = 0, filet = true } = {},
+  { align = "gauche", largeur = 0, filet = true, plaque = null } = {},
 ) {
   if (!texte) return base;
   // Sans filet, le surtitre n'est plus qu'une ligne de capitales ambrées : la
@@ -577,6 +579,14 @@ function surtitre(
   const total = filetL + ecart + largeurCapitales(ctx, mots, m.surtitre, 0.22);
   const gauche = x + decalageAlignement(align, largeur, total);
 
+  // La plaque passe SOUS le filet comme sous les lettres : c'est le bloc
+  // entier qu'on rend lisible, pas seulement son texte.
+  if (plaque) {
+    plaqueDeLigne(ctx, [{ largeur: total }], gauche, base, {
+      taille: m.surtitre,
+      plaque,
+    });
+  }
   ctx.fillStyle = th.accent;
   // Le filet est ÉPAIS (10 px de référence) : c'est lui le point d'entrée du
   // regard, pas le petit texte qui le suit. Centré sur la hauteur de capitale
@@ -675,9 +685,9 @@ function comblerLesBlancs(zones) {
   }
 }
 
-/** Les trois alignements, re-exportés pour l'atelier (ils vivent dans le
- *  module de texte, qui est le seul à savoir décaler une ligne). */
-export { ALIGNEMENTS };
+/** Re-exportés pour l'atelier : ils vivent dans le module de texte, seul à
+ *  savoir décaler une ligne et à peindre le fond qui la porte. */
+export { ALIGNEMENTS, DEGRADES_PLAQUE };
 
 /**
  * L'alignement d'une planche.
@@ -734,6 +744,40 @@ const OMBRE = { flou: 18, dx: 0, dy: 6, opacite: 0.5, couleur: "#000000" };
  * jusqu'à la rendre sale. Un seul interrupteur pour tout obligeait à choisir le
  * moins mauvais compromis.
  */
+/**
+ * LA PLAQUE — l'aplat posé SOUS le texte.
+ *
+ * L'autre façon de rendre un titre lisible sur une photo : le dégradé assombrit
+ * toute l'image, la plaque ne couvre que les lettres. On garde la photo, et le
+ * texte tient quand même. Elle se pose LIGNE PAR LIGNE (cf. `plaqueDeLigne`).
+ */
+const PLAQUE = { opacite: 0.88, padX: 0.3, padY: 0.24, rayon: 0.18, fondu: 0.4 };
+
+/** Les textes qui peuvent en porter une. L'en-tête et le pied vivent dans des
+ *  bandes qui ont déjà leur propre opacité : ils n'en ont pas besoin. */
+export const TEXTES_PLAQUABLES = [
+  { cle: "titre", label: "Titre" },
+  { cle: "surtitre", label: "Surtitre" },
+  { cle: "corps", label: "Texte" },
+];
+
+function plaqueDe(carte, th, quoi) {
+  if (!carte?.plaque || carte[`plaque_${quoi}`] === false) return null;
+  // Par défaut, le FOND DU THÈME : sur le sombre l'encre est crème, il faut un
+  // aplat sombre ; sur le clair, l'inverse. Une couleur au choix reste possible.
+  const rgb = composantes(carte.plaqueCouleur || th.fond) ?? "255, 255, 255";
+  return {
+    rgb,
+    alpha: Math.min(1, Math.max(0, nombre(carte.plaqueOpacite, PLAQUE.opacite))),
+    padX: nombre(carte.plaquePadX, PLAQUE.padX),
+    padY: nombre(carte.plaquePadY, PLAQUE.padY),
+    rayon: nombre(carte.plaqueRayon, PLAQUE.rayon),
+    // L'aplat s'arrête net ; le fondu le dissout dans la photo.
+    degrade: carte.plaqueDegrade ?? "aucun",
+    fondu: nombre(carte.plaqueFondu, PLAQUE.fondu),
+  };
+}
+
 export const TEXTES_OMBRABLES = [
   { cle: "titre", label: "Titre" },
   { cle: "surtitre", label: "Surtitre" },
@@ -823,6 +867,7 @@ function baseTitre(m, th, polices, carte, echelle = 1) {
     graisse: 700,
     couleur: th.encre,
     accent: th.accent,
+    plaque: plaqueDe(carte, th, "titre"),
     // L'interligne du titre : un seul défaut pour TOUS les gabarits. Les
     // chemins « du bas vers le haut » en avaient un autre (1,12) — ce n'était
     // pas une décision, c'était une divergence.
@@ -845,6 +890,7 @@ function baseCorps(m, th, polices, carte) {
     graisse: 400,
     couleur: th.encreDouce,
     accent: th.accent,
+    plaque: plaqueDe(carte, th, "corps"),
     interligne: nombre(carte?.interligne, ESPACEMENT.interligne),
     entreBlocs: nombre(carte?.entreBlocs, ESPACEMENT.entreBlocs),
     respiration: nombre(carte?.respiration, ESPACEMENT.respiration),
@@ -1402,6 +1448,7 @@ function dessinerCarte(ctx, format, o) {
     surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, y, {
       align,
       filet: carte.surtitreFilet !== false,
+      plaque: plaqueDe(carte, th, "surtitre"),
       largeur: largeurTexte,
     });
     zoneTexte(zones, "surtitre", m, m.pad, largeurTexte, y - m.surtitre, y + m.surtitre * 0.3);
@@ -1564,6 +1611,7 @@ function dessinerPhoto(ctx, format, o) {
     surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, y, {
       align,
       filet: carte.surtitreFilet !== false,
+      plaque: plaqueDe(carte, th, "surtitre"),
       largeur: largeurTexte,
     });
     zoneTexte(zones, "surtitre", m, m.pad, largeurTexte, y - m.surtitre, y + m.surtitre * 0.3);
@@ -1657,6 +1705,7 @@ function blocTitreEtCorps(
     surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, base, {
       align,
       filet: carte.surtitreFilet !== false,
+      plaque: plaqueDe(carte, th, "surtitre"),
       largeur,
     });
     zoneTexte(zones, "surtitre", m, m.pad, largeur, base - m.surtitre, base + m.surtitre * 0.3);
@@ -1809,6 +1858,7 @@ function dessinerFiche(ctx, format, o) {
     surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, base, {
       align,
       filet: carte.surtitreFilet !== false,
+      plaque: plaqueDe(carte, th, "surtitre"),
       largeur: largeurTexte,
     });
     zoneTexte(zones, "surtitre", m, m.pad, largeurTexte, base - m.surtitre, base + m.surtitre * 0.3);
@@ -2032,7 +2082,7 @@ function dessinerCloture(ctx, format, o) {
         carte.surtitre,
         m.pad,
         y + m.surtitre,
-        { align, largeur, filet: carte.surtitreFilet !== false },
+        { align, largeur, filet: carte.surtitreFilet !== false, plaque: plaqueDe(carte, th, "surtitre") },
       );
       zoneTexte(zones, "surtitre", m, m.pad, largeur, y, y + piece.hauteur);
     } else if (piece.type === "titre") {
@@ -2225,6 +2275,7 @@ function dessinerJournees(ctx, format, o) {
     surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, base, {
       align,
       filet: carte.surtitreFilet !== false,
+      plaque: plaqueDe(carte, th, "surtitre"),
       largeur: largeurTexte,
     });
     zoneTexte(zones, "surtitre", m, m.pad, largeurTexte, base - m.surtitre, base + m.surtitre * 0.3);
@@ -2352,6 +2403,53 @@ function dessinerJournees(ctx, format, o) {
   return [];
 }
 
+/* ------------------------------------------------------- les zones libres */
+
+/**
+ * LES ZONES LIBRES — du texte posé OÙ ON VEUT, à la souris.
+ *
+ * C'est l'échappatoire assumée des gabarits : tout le reste de l'atelier
+ * remplit une mise en page qui tient, et c'est ce qui fait que deux carrousels
+ * publiés à six mois d'écart se ressemblent. Mais une photo a parfois UN
+ * endroit, et un seul, où le texte doit aller — un creux de rocher, un bout de
+ * ciel. Aucune grille ne peut le deviner.
+ *
+ * La position est RELATIVE au format (0 à 1) : la même zone tombe au même
+ * endroit qu'on exporte en carrousel, en story ou en carré.
+ *
+ * Elles sont dessinées EN DERNIER, par-dessus tout le reste — sinon elles ne
+ * serviraient à rien sur les gabarits qui posent une image après leur texte.
+ */
+function dessinerLibres(ctx, format, o) {
+  const { carte, polices, m, th, ombre, zones, boites } = o;
+  const libres = Array.isArray(carte.libres) ? carte.libres : [];
+  for (const [i, z] of libres.entries()) {
+    if (!z || z.masquee) continue;
+    const largeur = Math.max(60, (nombre(z.largeur, 0.62) || 0.62) * format.width);
+    const x = (Number.isFinite(z.x) ? z.x : 0.1) * format.width;
+    const y = (Number.isFinite(z.y) ? z.y : 0.5) * format.height;
+    const base = {
+      ...baseCorps(m, th, polices, carte),
+      taille: Math.round(nombre(z.taille, CORPS.corps) * m.k),
+      graisse: z.gras ? 700 : 400,
+      couleur: z.couleur || th.encre,
+      plaque: z.plaque ? plaqueDe({ ...carte, plaque: true, plaque_corps: true }, th, "corps") : null,
+    };
+    poserOmbre(ctx, ombre, "corps");
+    const blocs = blocsDeTexte(ctx, z.texte ?? "", largeur, base);
+    const hauteur = Math.max(base.taille, hauteurBlocs(blocs, base));
+    poserBlocs(ctx, blocs, x, y, base, {
+      align: z.align ?? "gauche",
+      largeur,
+      puce: carte.puce,
+    });
+    // La boîte sert au glisser-déposer ; la zone, au clic qui ouvre le réglage.
+    boites?.push({ type: "libre", index: i, x, y, width: largeur, height: hauteur });
+    zone(zones, "libre", x, y, largeur, hauteur, { index: i });
+  }
+  sansOmbre(ctx);
+}
+
 const RENDUS = {
   carte: dessinerCarte,
   journees: dessinerJournees,
@@ -2394,6 +2492,7 @@ export function dessinerCartePartage(ctx, options) {
   ctx.textAlign = "left";
 
   const zones = [];
+  const boitesLibres = [];
   const rendu = RENDUS[options.carte?.gabarit] ?? dessinerTexte;
   const boites = rendu(ctx, format, {
     ...options,
@@ -2408,7 +2507,18 @@ export function dessinerCartePartage(ctx, options) {
     total: options.total ?? 1,
   });
   comblerLesBlancs(zones);
+  // Les zones libres passent APRÈS : par-dessus le dessin, et au-dessus de
+  // toutes les autres zones au moment du clic.
+  dessinerLibres(ctx, format, {
+    ...options,
+    polices,
+    ombre: ombreDe(options.carte, m),
+    m,
+    th,
+    zones,
+    boites: boitesLibres,
+  });
   // `boites` : les étiquettes déplaçables (vide pour les gabarits qui n'en ont
   // pas). `zones` : où cliquer pour ouvrir quel réglage.
-  return { boites: boites ?? [], zones };
+  return { boites: [...(boites ?? []), ...boitesLibres], zones };
 }
