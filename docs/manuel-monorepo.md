@@ -430,8 +430,8 @@ la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
   couleur : elle fait le contraste sous les lettres au lieu d'assombrir toute
   la photo — et **sur quels textes** : titre, surtitre, texte, en-tête, pied,
   séparément ; un titre en très gros veut une ombre franche, la pagination du
-  pied en 22 px n'en veut aucune), les couleurs, le filet sous le titre et les
-  opacités. Une planche
+  pied en 22 px n'en veut aucune), le **fond sous le texte** (voir plus bas),
+  les couleurs, le filet sous le titre et les opacités. Une planche
   qui ne dit rien suit la charte ; le bouton « Appliquer cette allure aux N
   autres » diffuse.
 - **Les gabarits** : Carte, Journées, Bandeau, Photo, Texte, Fiche, Clôture.
@@ -467,6 +467,21 @@ la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
   surtitre juste au-dessus, ce qui se découvre en tapant et n'a aucune raison
   d'être. Une icône y compte comme une lettre, alignée sur le centre optique des
   capitales.
+- **Le fond sous le texte** (« la plaque ») : un aplat posé SOUS les lettres,
+  **ligne par ligne**, à la largeur de chaque ligne. C'est la troisième façon de
+  rendre un texte lisible sur une photo, après le dégradé (qui assombrit toute
+  l'image) et l'ombre (qui ne contraste que le contour) : ici la photo reste
+  entière et le texte tient quand même. Couleur (par défaut le fond du thème,
+  puisque c'est lui qui s'accorde à l'encre), opacité, marges, coins arrondis,
+  et sur quels textes — titre, surtitre, texte. Un rectangle unique autour d'un
+  bloc laisserait de grands vides à droite des lignes courtes et se lirait comme
+  un encart collé : d'où le découpage par ligne.
+- **Les zones libres** (onglet Texte) : du texte posé **où on veut**, attrapé à
+  la souris sur la planche. C'est l'échappatoire assumée des gabarits — une
+  photo a parfois UN endroit, et un seul, où le texte doit aller, et aucune
+  grille ne peut le deviner. Chaque zone a son corps, sa largeur, son
+  alignement, sa couleur, son gras et son fond. La position est **relative** au
+  cadre : la même zone tombe au même endroit en carrousel, en story ou en carré.
 - **La ligne de chiffres** des gabarits Carte et Photo (sous le titre) est un
   TEXTE LIBRE. Vide, une carte affiche ce que la trace sait dire d'elle-même
   (« 188 km · 12 279 m D+ ») ; écris ce que tu veux à la place, ou un espace
