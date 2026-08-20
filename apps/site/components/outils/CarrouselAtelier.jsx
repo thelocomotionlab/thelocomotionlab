@@ -55,6 +55,7 @@ import {
   PALETTE_JOURS,
   POLICES,
   TEXTES_OMBRABLES,
+  TEXTES_PLAQUABLES,
   THEMES,
   casesEffectives,
   chargerFond,
@@ -151,6 +152,7 @@ const ZONES = {
   titre: { onglet: "texte", champ: () => "titre" },
   texte: { onglet: "texte", champ: () => "texte" },
   factuelle: { onglet: "texte", champ: () => "ligne-chiffres" },
+  libre: { onglet: "texte", champ: (z) => `libre-${z.index ?? 0}` },
   pied: { onglet: "texte", champ: () => "pied-centre" },
   fiche: { onglet: "texte", champ: () => "fiche-0" },
   case: { onglet: "texte", champ: (z) => `case-${z.index ?? 0}` },
@@ -278,6 +280,19 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0", style = 
     titreDevant: false,
     /** Le filet ambre qui ouvre le surtitre. */
     surtitreFilet: true,
+    /** LA PLAQUE : un aplat sous les lettres, ligne par ligne. L'autre façon de
+     *  rendre un texte lisible sur une photo — sans assombrir toute l'image. */
+    plaque: false,
+    plaque_titre: true,
+    plaque_surtitre: true,
+    plaque_corps: true,
+    plaqueCouleur: "",
+    plaqueOpacite: 0.88,
+    plaquePadX: 0.3,
+    plaquePadY: 0.24,
+    plaqueRayon: 0.18,
+    /** Les zones de texte posées à la main sur la planche. */
+    libres: [],
     /** Les filets sous l'en-tête et au-dessus du pied. */
     filetEntete: gabarit !== "cloture",
     filetPied: gabarit !== "cloture",
@@ -432,6 +447,15 @@ export const CHAMPS_DE_STYLE = [
   "ombre_corps",
   "ombre_entete",
   "ombre_pied",
+  "plaque",
+  "plaque_titre",
+  "plaque_surtitre",
+  "plaque_corps",
+  "plaqueCouleur",
+  "plaqueOpacite",
+  "plaquePadX",
+  "plaquePadY",
+  "plaqueRayon",
   "tailleCase",
   "casesColonnes",
   "caseCarte",
@@ -492,6 +516,10 @@ export default function CarrouselAtelier() {
   const canvasRef = useRef(null);
   const boitesRef = useRef([]);
   const zonesRef = useRef([]);
+  /** Le panneau des réglages : le clic dans la planche y cherche SON champ,
+   *  pas le premier du document — les deux ateliers du studio sont montés
+   *  ensemble, et un `id` n'est unique que par accident. */
+  const panneauRef = useRef(null);
   const glisseRef = useRef(null);
   /** Un déplacement d'étiquette finit par un `click` : sans ce drapeau, lâcher
    *  une étiquette ouvrirait le panneau de ce qu'il y a dessous. */
@@ -782,6 +810,32 @@ export default function CarrouselAtelier() {
           : { gabarit },
       ),
     [majCarte],
+  );
+
+  const majLibre = useCallback(
+    (i, patch) =>
+      setCartes((cs) =>
+        cs.map((c, k) => {
+          if (k !== active) return c;
+          const libres = [...(c.libres ?? [])];
+          libres[i] = { ...(libres[i] ?? {}), ...patch };
+          return { ...c, libres };
+        }),
+      ),
+    [active],
+  );
+
+  /** Une zone neuve se pose au milieu, où on la voit tout de suite : on la
+   *  déplace ensuite à la souris, c'est tout l'intérêt. */
+  const ajouterLibre = useCallback(
+    () =>
+      majCarte({
+        libres: [
+          ...(cartes[active]?.libres ?? []),
+          { texte: "Un mot ici.", x: 0.12, y: 0.44, largeur: 0.62, taille: 44, align: "gauche" },
+        ],
+      }),
+    [majCarte, cartes, active],
   );
 
   const majEtiquette = useCallback(
@@ -1142,20 +1196,40 @@ export default function CarrouselAtelier() {
 
   const onPointerDown = useCallback(
     (e) => {
-      if (carte?.gabarit !== "carte") return;
       const [x, y] = pointCanvas(e);
-      // Du dernier au premier : c'est l'étiquette DESSUS qu'on attrape quand
-      // deux se recouvrent, celle qu'on voit.
+      // Du dernier au premier : c'est la boîte DESSUS qu'on attrape quand deux
+      // se recouvrent, celle qu'on voit. Les zones libres sont poussées en
+      // dernier, donc elles gagnent — ce qui est bien ce qu'on veut d'un
+      // calque posé par-dessus.
       const boites = boitesRef.current;
       for (let i = boites.length - 1; i >= 0; i -= 1) {
         const b = boites[i];
-        if (x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height) {
+        if (x < b.x || x > b.x + b.width || y < b.y || y > b.y + b.height) continue;
+        if (b.type === "libre") {
+          const z = carte?.libres?.[b.index] ?? {};
+          glisseRef.current = {
+            type: "libre",
+            index: b.index,
+            x0: x,
+            y0: y,
+            dx0: Number.isFinite(z.x) ? z.x : 0.1,
+            dy0: Number.isFinite(z.y) ? z.y : 0.5,
+          };
+        } else {
+          if (carte?.gabarit !== "carte") continue;
           const etq = carte.etiquettes?.[b.index] ?? {};
-          glisseRef.current = { index: b.index, x0: x, y0: y, dx0: etq.dx ?? 0, dy0: etq.dy ?? 0 };
-          aGlisseRef.current = false;
-          e.currentTarget.setPointerCapture?.(e.pointerId);
-          return;
+          glisseRef.current = {
+            type: "etiquette",
+            index: b.index,
+            x0: x,
+            y0: y,
+            dx0: etq.dx ?? 0,
+            dy0: etq.dy ?? 0,
+          };
         }
+        aGlisseRef.current = false;
+        e.currentTarget.setPointerCapture?.(e.pointerId);
+        return;
       }
     },
     [carte, pointCanvas],
@@ -1165,11 +1239,22 @@ export default function CarrouselAtelier() {
     (e) => {
       const g = glisseRef.current;
       if (!g) return;
+      const canvas = canvasRef.current;
       const [x, y] = pointCanvas(e);
       if (Math.abs(x - g.x0) > 2 || Math.abs(y - g.y0) > 2) aGlisseRef.current = true;
+      if (g.type === "libre") {
+        // La position d'une zone libre est RELATIVE : elle reste au même
+        // endroit quel que soit le format d'export.
+        const borne = (v) => Math.min(0.98, Math.max(-0.02, v));
+        majLibre(g.index, {
+          x: borne(g.dx0 + (x - g.x0) / canvas.width),
+          y: borne(g.dy0 + (y - g.y0) / canvas.height),
+        });
+        return;
+      }
       majEtiquette(g.index, { dx: g.dx0 + (x - g.x0), dy: g.dy0 + (y - g.y0) });
     },
-    [pointCanvas, majEtiquette],
+    [pointCanvas, majEtiquette, majLibre],
   );
 
   const onPointerUp = useCallback(() => {
@@ -1200,7 +1285,7 @@ export default function CarrouselAtelier() {
         // Deux images : la première monte le panneau, la seconde le trouve.
         requestAnimationFrame(() =>
           requestAnimationFrame(() => {
-            const el = document.getElementById(id);
+            const el = panneauRef.current?.querySelector(`#${CSS.escape(id)}`);
             if (!el) return;
             el.scrollIntoView({ block: "center", behavior: "smooth" });
             el.focus({ preventScroll: true });
@@ -1387,6 +1472,7 @@ export default function CarrouselAtelier() {
             </div>
             <p className={`${AIDE} shrink-0 text-center`}>
               Clique dans la planche pour ouvrir le réglage correspondant.
+              {carte?.libres?.length > 0 && " Attrape une zone libre pour la placer."}
               {carte?.gabarit === "carte" &&
                 segments.length > 0 &&
                 " Attrape une étiquette pour la déplacer."}
@@ -1481,7 +1567,7 @@ export default function CarrouselAtelier() {
             ))}
           </nav>
 
-          <div className="min-h-0 flex-1 overflow-y-auto lg:w-[324px]">
+          <div ref={panneauRef} className="min-h-0 flex-1 overflow-y-auto lg:w-[324px]">
             {/* ==================================================== PLANCHE */}
             {onglet === "planche" && (
               <>
@@ -1895,6 +1981,106 @@ export default function CarrouselAtelier() {
                       </p>
                     )}
                   </div>
+                </Groupe>
+
+                <Groupe
+                  titre="Zones libres"
+                  aide="Du texte posé OÙ TU VEUX : ajoute-le, puis attrape-le sur la planche pour le placer. La position est relative au cadre, donc la même zone tombe au même endroit en carrousel, en story ou en carré."
+                >
+                  <div className="flex flex-col gap-3">
+                    {(carte?.libres ?? []).map((z, i) => (
+                      <div key={`libre-bloc-${i}`} className="rounded-xl border border-brand-field/70 p-2">
+                        <div className="mb-1.5 flex items-center gap-2">
+                          <span className="font-heading text-[12px] font-medium text-brand-text/55">
+                            Zone {i + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => majLibre(i, { masquee: !z.masquee })}
+                            className={`${BOUTON_DISCRET} ml-auto`}
+                          >
+                            {z.masquee ? "Afficher" : "Masquer"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              majCarte({ libres: carte.libres.filter((_, k) => k !== i) })
+                            }
+                            className="rounded-full p-1.5 text-brand-text/40 hover:bg-brand-primary/15 hover:text-brand-primary-dark"
+                            aria-label={`Supprimer la zone ${i + 1}`}
+                          >
+                            <Trash2 size={15} aria-hidden />
+                          </button>
+                        </div>
+                        <textarea
+                          id={`libre-${i}`}
+                          rows={2}
+                          value={z.texte ?? ""}
+                          onChange={(e) => majLibre(i, { texte: e.target.value })}
+                          className={`${CHAMP} mb-2 resize-y`}
+                          aria-label={`Texte de la zone ${i + 1}`}
+                        />
+                        <div className="mb-2 grid grid-cols-2 gap-2">
+                          <Taille
+                            id={`libre-t-${i}`}
+                            label="Corps"
+                            valeur={z.taille}
+                            defaut={CORPS.corps}
+                            onChange={(v) => majLibre(i, { taille: v })}
+                          />
+                          <div>
+                            <span className={LEGENDE}>Couleur</span>
+                            <Couleur
+                              label={`Couleur de la zone ${i + 1}`}
+                              valeur={z.couleur}
+                              defaut={theme.encre}
+                              onChange={(v) => majLibre(i, { couleur: v })}
+                            />
+                          </div>
+                        </div>
+                        <div className="mb-2">
+                          <Curseur
+                            id={`libre-l-${i}`}
+                            label="Largeur"
+                            valeur={z.largeur}
+                            defaut={0.62}
+                            min={0.15}
+                            max={1}
+                            pas={0.02}
+                            format={(v) => `${Math.round(v * 100)} %`}
+                            onChange={(v) => majLibre(i, { largeur: v ?? 0.62 })}
+                          />
+                        </div>
+                        <div className="mb-2">
+                          <Choix
+                            valeur={z.align ?? "gauche"}
+                            options={ALIGNEMENTS.map((a) => ({ cle: a.cle, label: a.label }))}
+                            onChange={(v) => majLibre(i, { align: v })}
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <Case
+                            label="En gras"
+                            coche={z.gras}
+                            onChange={(v) => majLibre(i, { gras: v })}
+                          />
+                          <Case
+                            label="Fond sous le texte"
+                            coche={z.plaque}
+                            onChange={(v) => majLibre(i, { plaque: v })}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={ajouterLibre}
+                    className={`${BOUTON_SECOND} mt-3 w-full`}
+                  >
+                    <Plus size={15} aria-hidden />
+                    Une zone de plus
+                  </button>
                 </Groupe>
 
                 <Groupe titre="Listes">
@@ -2695,6 +2881,78 @@ export default function CarrouselAtelier() {
                       onChange={(v) => majCarte({ piedOpacite: v })}
                     />
                   </div>
+                </Groupe>
+
+                <Groupe
+                  titre="Fond sous le texte"
+                  aide="L'autre façon de rendre un texte lisible sur une photo : au lieu d'assombrir toute l'image d'un dégradé, on pose un aplat SOUS les lettres, ligne par ligne. La photo reste entière."
+                >
+                  <Case
+                    classe="mb-3"
+                    label="Poser un fond sous les lettres"
+                    coche={carte?.plaque}
+                    onChange={(v) => majCarte({ plaque: v })}
+                  />
+                  {carte?.plaque && (
+                    <div className="flex flex-col gap-3">
+                      <Couleur
+                        label="Couleur du fond"
+                        valeur={carte.plaqueCouleur}
+                        defaut={theme.fond}
+                        onChange={(v) => majCarte({ plaqueCouleur: v })}
+                      />
+                      <Opacite
+                        id="plq-op"
+                        label="Opacité"
+                        valeur={carte.plaqueOpacite}
+                        defaut={0.88}
+                        onChange={(v) => majCarte({ plaqueOpacite: v })}
+                      />
+                      <Curseur
+                        id="plq-px"
+                        label="Marge latérale"
+                        valeur={carte.plaquePadX}
+                        defaut={0.3}
+                        min={0}
+                        max={1.2}
+                        pas={0.02}
+                        onChange={(v) => majCarte({ plaquePadX: v })}
+                      />
+                      <Curseur
+                        id="plq-py"
+                        label="Marge verticale"
+                        valeur={carte.plaquePadY}
+                        defaut={0.24}
+                        min={0}
+                        max={1}
+                        pas={0.02}
+                        onChange={(v) => majCarte({ plaquePadY: v })}
+                      />
+                      <Curseur
+                        id="plq-r"
+                        label="Coins arrondis"
+                        valeur={carte.plaqueRayon}
+                        defaut={0.18}
+                        min={0}
+                        max={0.6}
+                        pas={0.02}
+                        onChange={(v) => majCarte({ plaqueRayon: v })}
+                      />
+                      <div>
+                        <span className={LEGENDE}>Sur quels textes</span>
+                        <div className="flex flex-col gap-1.5">
+                          {TEXTES_PLAQUABLES.map(({ cle, label }) => (
+                            <Case
+                              key={cle}
+                              label={label}
+                              coche={carte[`plaque_${cle}`] !== false}
+                              onChange={(v) => majCarte({ [`plaque_${cle}`]: v })}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </Groupe>
 
                 <Groupe

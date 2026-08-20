@@ -273,10 +273,66 @@ export function decalageAlignement(align, largeurBoite, largeur) {
 }
 
 /**
+ * LE FOND POSÉ SOUS UNE LIGNE — la plaque.
+ *
+ * C'est l'autre façon de rendre un texte lisible sur une photo : au lieu
+ * d'assombrir toute l'image d'un dégradé, on pose un aplat SOUS les lettres, et
+ * rien qu'en-dessous. La photo reste entière ; c'est le geste des titres de
+ * presse posés sur une couverture.
+ *
+ * Une plaque PAR LIGNE, à la largeur de la ligne : un rectangle unique autour
+ * d'un bloc laisserait de grands vides à droite des lignes courtes, et se
+ * lirait comme un encart collé sur l'image.
+ */
+export function plaqueDeLigne(ctx, ligne, x, y, base) {
+  const p = base?.plaque;
+  const largeur = p ? largeurLigne(ligne) : 0;
+  if (!p?.couleur || !(largeur > 0)) return;
+
+  const padX = base.taille * (p.padX ?? 0.3);
+  const padY = base.taille * (p.padY ?? 0.24);
+  // La boîte d'une ligne : la hampe au-dessus de la ligne de base, le jambage
+  // en-dessous. Les deux sont des parts du corps, donc la plaque suit le texte
+  // quand on change de taille.
+  const haut = y - base.taille * 0.78 - padY;
+  const hauteur = base.taille * 1 + padY * 2;
+  const gauche = x - padX;
+  const large = largeur + padX * 2;
+  const r = Math.min((p.rayon ?? 0.18) * base.taille, hauteur / 2, large / 2);
+
+  // L'ombre du texte ne doit pas se doubler sous la plaque : deux ombres
+  // superposées font une tache.
+  const ombre = [ctx.shadowColor, ctx.shadowBlur, ctx.shadowOffsetX, ctx.shadowOffsetY];
+  ctx.shadowColor = "rgba(0, 0, 0, 0)";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+
+  ctx.beginPath();
+  ctx.moveTo(gauche + r, haut);
+  ctx.lineTo(gauche + large - r, haut);
+  ctx.quadraticCurveTo(gauche + large, haut, gauche + large, haut + r);
+  ctx.lineTo(gauche + large, haut + hauteur - r);
+  ctx.quadraticCurveTo(gauche + large, haut + hauteur, gauche + large - r, haut + hauteur);
+  ctx.lineTo(gauche + r, haut + hauteur);
+  ctx.quadraticCurveTo(gauche, haut + hauteur, gauche, haut + hauteur - r);
+  ctx.lineTo(gauche, haut + r);
+  ctx.quadraticCurveTo(gauche, haut, gauche + r, haut);
+  ctx.closePath();
+  const encre = ctx.fillStyle;
+  ctx.fillStyle = p.couleur;
+  ctx.fill();
+  ctx.fillStyle = encre;
+
+  [ctx.shadowColor, ctx.shadowBlur, ctx.shadowOffsetX, ctx.shadowOffsetY] = ombre;
+}
+
+/**
  * Pose une ligne. `x` est son bord GAUCHE — c'est à l'appelant de le calculer
  * s'il centre (cf. `largeurLigne`), parce que lui seul sait dans quelle boîte.
  */
 export function dessinerLigneRiche(ctx, ligne, x, y, base) {
+  plaqueDeLigne(ctx, ligne, x, y, base);
   let curseur = x;
   for (const morceau of ligne) {
     if (morceau.icone) {

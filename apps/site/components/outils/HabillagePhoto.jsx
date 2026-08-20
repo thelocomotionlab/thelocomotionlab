@@ -492,7 +492,10 @@ export default function HabillagePhoto() {
                 </label>
                 {nomPhoto && <p className={`${AIDE} mb-3 truncate`}>{nomPhoto}</p>}
                 <Curseur
-                  id="ancrage"
+                  // Préfixé : les deux ateliers sont montés en même temps
+                  // dans le studio, et deux `id` identiques dans un document
+                  // ne font pas deux éléments — elles en font un seul trouvable.
+                  id="hab-ancrage"
                   label="Cadrage"
                   valeur={ancrage}
                   defaut={0.5}
