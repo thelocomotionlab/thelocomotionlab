@@ -476,6 +476,11 @@ la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
   et sur quels textes — titre, surtitre, texte. Un rectangle unique autour d'un
   bloc laisserait de grands vides à droite des lignes courtes et se lirait comme
   un encart collé : d'où le découpage par ligne.
+  **Elle peut se dégrader** (à droite, à gauche, des deux côtés) : l'aplat tient
+  sous les lettres puis se dissout dans la photo au lieu de s'arrêter net, ce
+  qui est ce qui la sauve du côté « étiquette ». Le fondu se prend sur une
+  RALLONGE au-delà du texte, jamais sous lui — sinon le dernier mot perdrait son
+  fond, exactement l'inverse du but.
 - **Les zones libres** (onglet Texte) : du texte posé **où on veut**, attrapé à
   la souris sur la planche. C'est l'échappatoire assumée des gabarits — une
   photo a parfois UN endroit, et un seul, où le texte doit aller, et aucune

@@ -48,6 +48,7 @@ import {
 import {
   ALIGNEMENTS,
   CORPS,
+  DEGRADES_PLAQUE,
   FLECHES,
   FORMATS,
   GABARITS,
@@ -291,6 +292,9 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0", style = 
     plaquePadX: 0.3,
     plaquePadY: 0.24,
     plaqueRayon: 0.18,
+    /** aucun | droite | gauche | bords — l'aplat s'arrête net ou se dissout. */
+    plaqueDegrade: "aucun",
+    plaqueFondu: 0.4,
     /** Les zones de texte posées à la main sur la planche. */
     libres: [],
     /** Les filets sous l'en-tête et au-dessus du pied. */
@@ -456,6 +460,8 @@ export const CHAMPS_DE_STYLE = [
   "plaquePadX",
   "plaquePadY",
   "plaqueRayon",
+  "plaqueDegrade",
+  "plaqueFondu",
   "tailleCase",
   "casesColonnes",
   "caseCarte",
@@ -2938,6 +2944,28 @@ export default function CarrouselAtelier() {
                         pas={0.02}
                         onChange={(v) => majCarte({ plaqueRayon: v })}
                       />
+                      {/* Un aplat s'arrête net et se lit comme une étiquette ;
+                          le fondu le dissout dans la photo. La rallonge se
+                          prend AU-DELÀ du texte, jamais dessous. */}
+                      <Choix
+                        label="Bord du fond"
+                        valeur={carte.plaqueDegrade ?? "aucun"}
+                        options={DEGRADES_PLAQUE.map((d) => ({ cle: d.cle, label: d.label }))}
+                        onChange={(v) => majCarte({ plaqueDegrade: v })}
+                      />
+                      {(carte.plaqueDegrade ?? "aucun") !== "aucun" && (
+                        <Curseur
+                          id="plq-f"
+                          label="Longueur du fondu"
+                          valeur={carte.plaqueFondu}
+                          defaut={0.4}
+                          min={0.05}
+                          max={1.2}
+                          pas={0.05}
+                          format={(v) => `${Math.round(v * 100)} %`}
+                          onChange={(v) => majCarte({ plaqueFondu: v })}
+                        />
+                      )}
                       <div>
                         <span className={LEGENDE}>Sur quels textes</span>
                         <div className="flex flex-col gap-1.5">

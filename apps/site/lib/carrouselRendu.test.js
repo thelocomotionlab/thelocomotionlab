@@ -710,6 +710,31 @@ describe("la plaque sous le texte", () => {
     expect(remplissages(deux)).toBe(2);
   });
 
+  it("garde le texte ENTIÈREMENT couvert quand elle se dégrade", () => {
+    // Le fondu se prend sur une rallonge au-delà du texte : à droite, la plaque
+    // doit donc s'étendre PLUS LOIN que sans dégradé — pas se rétrécir sous le
+    // dernier mot.
+    const bord = (carte) => {
+      const ctx = ctxFactice();
+      let droite = 0;
+      const vrai = ctx.lineTo;
+      ctx.lineTo = (x) => {
+        if (x > droite) droite = x;
+        vrai(x);
+      };
+      dessinerCartePartage(ctx, {
+        format: "carrousel",
+        theme: "sombre",
+        police: "Ubuntu",
+        index: 0,
+        total: 1,
+        carte: { ...base, plaque: true, texte: "", ...carte },
+      });
+      return droite;
+    };
+    expect(bord({ plaqueDegrade: "droite" })).toBeGreaterThan(bord({}));
+  });
+
   it("se limite aux textes cochés", () => {
     const tout = planche({ ...base, plaque: true, texte: "Deux mots." });
     const sansTitre = planche({ ...base, plaque: true, texte: "Deux mots.", plaque_titre: false });

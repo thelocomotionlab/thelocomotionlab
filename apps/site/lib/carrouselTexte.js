@@ -283,11 +283,50 @@ export function decalageAlignement(align, largeurBoite, largeur) {
  * Une plaque PAR LIGNE, à la largeur de la ligne : un rectangle unique autour
  * d'un bloc laisserait de grands vides à droite des lignes courtes, et se
  * lirait comme un encart collé sur l'image.
+ *
+ * ELLE PEUT SE DÉGRADER, et c'est ce qui la sauve du côté « étiquette » :
+ * l'aplat tient sous les lettres, puis se dissout dans la photo au lieu de
+ * s'arrêter net sur un bord. Le fondu se fait sur une RALLONGE au-delà du
+ * texte, jamais sous lui — sinon le dernier mot perdrait son fond, ce qui est
+ * exactement l'inverse du but.
  */
+export const DEGRADES_PLAQUE = [
+  { cle: "aucun", label: "Aplat" },
+  { cle: "droite", label: "Fondu à droite" },
+  { cle: "gauche", label: "Fondu à gauche" },
+  { cle: "bords", label: "Fondu des deux côtés" },
+];
+
+/** Le remplissage de la plaque : un aplat, ou un dégradé qui s'éteint. */
+function encreDeLaPlaque(ctx, p, gauche, large) {
+  const a = (v) => `rgba(${p.rgb}, ${(p.alpha * v).toFixed(3)})`;
+  if (!p.ext || p.degrade === "aucun" || !p.degrade) return a(1);
+  const g = ctx.createLinearGradient(gauche, 0, gauche + large, 0);
+  if (p.degrade === "bords") {
+    const part = p.ext / large;
+    g.addColorStop(0, a(0));
+    g.addColorStop(Math.min(0.5, part), a(1));
+    g.addColorStop(Math.max(0.5, 1 - part), a(1));
+    g.addColorStop(1, a(0));
+    return g;
+  }
+  const part = Math.max(0, Math.min(1, 1 - p.ext / large));
+  if (p.degrade === "gauche") {
+    g.addColorStop(0, a(0));
+    g.addColorStop(1 - part, a(1));
+    g.addColorStop(1, a(1));
+  } else {
+    g.addColorStop(0, a(1));
+    g.addColorStop(part, a(1));
+    g.addColorStop(1, a(0));
+  }
+  return g;
+}
+
 export function plaqueDeLigne(ctx, ligne, x, y, base) {
   const p = base?.plaque;
   const largeur = p ? largeurLigne(ligne) : 0;
-  if (!p?.couleur || !(largeur > 0)) return;
+  if (!p?.rgb || !(largeur > 0)) return;
 
   const padX = base.taille * (p.padX ?? 0.3);
   const padY = base.taille * (p.padY ?? 0.24);
@@ -296,8 +335,12 @@ export function plaqueDeLigne(ctx, ligne, x, y, base) {
   // quand on change de taille.
   const haut = y - base.taille * 0.78 - padY;
   const hauteur = base.taille * 1 + padY * 2;
-  const gauche = x - padX;
-  const large = largeur + padX * 2;
+  const boite = largeur + padX * 2;
+  // La rallonge du fondu : ajoutée AUTOUR du texte, jamais prise dessus.
+  const cotes = p.degrade === "bords" ? 2 : p.degrade && p.degrade !== "aucun" ? 1 : 0;
+  const ext = cotes ? Math.max(0, p.fondu ?? 0.4) * boite : 0;
+  const gauche = x - padX - (p.degrade === "gauche" || p.degrade === "bords" ? ext : 0);
+  const large = boite + ext * cotes;
   const r = Math.min((p.rayon ?? 0.18) * base.taille, hauteur / 2, large / 2);
 
   // L'ombre du texte ne doit pas se doubler sous la plaque : deux ombres
@@ -320,7 +363,7 @@ export function plaqueDeLigne(ctx, ligne, x, y, base) {
   ctx.quadraticCurveTo(gauche, haut, gauche + r, haut);
   ctx.closePath();
   const encre = ctx.fillStyle;
-  ctx.fillStyle = p.couleur;
+  ctx.fillStyle = encreDeLaPlaque(ctx, { ...p, ext }, gauche, large);
   ctx.fill();
   ctx.fillStyle = encre;
 

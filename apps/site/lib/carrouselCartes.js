@@ -35,6 +35,7 @@ import { dessinerIcone } from "./carrouselIcones";
 import { ancreDuSegment } from "./carrouselTrace";
 import {
   ALIGNEMENTS,
+  DEGRADES_PLAQUE,
   ESPACEMENT,
   analyserRiche,
   decalageAlignement,
@@ -684,9 +685,9 @@ function comblerLesBlancs(zones) {
   }
 }
 
-/** Les trois alignements, re-exportés pour l'atelier (ils vivent dans le
- *  module de texte, qui est le seul à savoir décaler une ligne). */
-export { ALIGNEMENTS };
+/** Re-exportés pour l'atelier : ils vivent dans le module de texte, seul à
+ *  savoir décaler une ligne et à peindre le fond qui la porte. */
+export { ALIGNEMENTS, DEGRADES_PLAQUE };
 
 /**
  * L'alignement d'une planche.
@@ -750,7 +751,7 @@ const OMBRE = { flou: 18, dx: 0, dy: 6, opacite: 0.5, couleur: "#000000" };
  * toute l'image, la plaque ne couvre que les lettres. On garde la photo, et le
  * texte tient quand même. Elle se pose LIGNE PAR LIGNE (cf. `plaqueDeLigne`).
  */
-const PLAQUE = { opacite: 0.88, padX: 0.3, padY: 0.24, rayon: 0.18 };
+const PLAQUE = { opacite: 0.88, padX: 0.3, padY: 0.24, rayon: 0.18, fondu: 0.4 };
 
 /** Les textes qui peuvent en porter une. L'en-tête et le pied vivent dans des
  *  bandes qui ont déjà leur propre opacité : ils n'en ont pas besoin. */
@@ -766,10 +767,14 @@ function plaqueDe(carte, th, quoi) {
   // aplat sombre ; sur le clair, l'inverse. Une couleur au choix reste possible.
   const rgb = composantes(carte.plaqueCouleur || th.fond) ?? "255, 255, 255";
   return {
-    couleur: `rgba(${rgb}, ${Math.min(1, Math.max(0, nombre(carte.plaqueOpacite, PLAQUE.opacite)))})`,
+    rgb,
+    alpha: Math.min(1, Math.max(0, nombre(carte.plaqueOpacite, PLAQUE.opacite))),
     padX: nombre(carte.plaquePadX, PLAQUE.padX),
     padY: nombre(carte.plaquePadY, PLAQUE.padY),
     rayon: nombre(carte.plaqueRayon, PLAQUE.rayon),
+    // L'aplat s'arrête net ; le fondu le dissout dans la photo.
+    degrade: carte.plaqueDegrade ?? "aucun",
+    fondu: nombre(carte.plaqueFondu, PLAQUE.fondu),
   };
 }
 
