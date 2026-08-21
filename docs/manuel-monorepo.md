@@ -453,6 +453,12 @@ la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
   décalé). Une ligne vide sépare, chaque ligne vide en plus aère. Dans les cases
   du gabarit Journées, chaque ligne tapée reste une ligne (une légende n'est pas
   un texte suivi).
+- **La puce, POINT PAR POINT** : le premier `:clé:` d'un point de liste EST sa
+  puce, avec ou sans espace après le tiret — `- :sac: sac 30 L` met le sac en
+  puce et l'ôte du texte. La clé est une icône du vocabulaire ou une forme
+  tracée (`losange`, `tiret`, `aucune`…), les mêmes que le réglage de la
+  planche. Pour garder la puce de la planche ET commencer par une icône, on
+  nomme les deux : `- :point: :sac: sac 30 L`.
 - **L'alignement et le corps, LIGNE PAR LIGNE**, en préfixe de ligne : `|`
   centre, `|>` aligne à droite, `|<` à gauche ; `--` réduit et `++` agrandit
   (répétables, un pas de 1,25 ×). Ils se cumulent (`|-- une note centrée et plus

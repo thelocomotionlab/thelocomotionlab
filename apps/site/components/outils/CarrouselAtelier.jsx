@@ -1918,6 +1918,14 @@ export default function CarrouselAtelier() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => insererDansTexte("\n- :")}
+                      className={BOUTON_DISCRET}
+                      title="Un point dont la puce est l'icône qu'on nomme : « - :sac: sac 30 L »"
+                    >
+                      + point à icône
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => insererDansTexte("\n\n\n")}
                       className={BOUTON_DISCRET}
                       title="Une ligne vide de plus = une respiration de plus"
@@ -2089,9 +2097,12 @@ export default function CarrouselAtelier() {
                   </button>
                 </Groupe>
 
-                <Groupe titre="Listes">
+                <Groupe
+                  titre="Listes"
+                  aide="La puce de la planche vaut pour tous les points. Pour en changer UN seul, nomme-la en tête du point : « - :sac: sac 30 L » met le sac en puce. Ça marche avec les icônes comme avec les formes tracées."
+                >
                   <label className={LEGENDE} htmlFor="puce">
-                    Puce
+                    Puce par défaut
                   </label>
                   <div className="flex items-center gap-2">
                     <select

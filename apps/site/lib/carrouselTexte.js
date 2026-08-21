@@ -54,7 +54,8 @@ export const COULEURS_TEXTE = {
 };
 
 export const AIDE_BALISAGE =
-  "*gras*  _italique_  ~souligné~  [en ambre]  [bleu: mot]  :col: (icône)  - liste  > retrait\n" +
+  "*gras*  _italique_  ~souligné~  [en ambre]  [bleu: mot]  :col: (icône)  > retrait\n" +
+  "- point de liste — « - :sac: » met CETTE icône en puce\n" +
   "en début de ligne :  | centré   |> à droite   |< à gauche   -- plus petit   ++ plus grand";
 
 /** Une icône entre deux-points. Bornée à des minuscules sans espace, et
@@ -473,7 +474,27 @@ function esp(base, cle) {
 /** Conservé pour l'historique : la valeur par défaut du retrait de liste. */
 export const RETRAIT_LISTE = ESPACEMENT.retraitListe;
 
-const EST_ITEM = /^\s*-\s+(.*)$/;
+// Le tiret doit être suivi d'une ESPACE ou de la clé d'une puce : sans cette
+// condition, une rangée de tirets (« ---- ») devenait un point de liste.
+const EST_ITEM = /^\s*-(?=[\s:])\s*(.*)$/;
+
+/**
+ * LA PUCE D'UN POINT DE LISTE, point par point.
+ *
+ * La planche a une puce ; c'est elle qui donne son allure à la liste. Mais une
+ * liste dit parfois trois choses de nature différente — le sac, les vivres,
+ * l'eau — et là, c'est le PICTOGRAMME qui porte le sens, pas un rond répété.
+ *
+ * La règle tient en une phrase : le PREMIER `:clé:` d'un point de liste EST sa
+ * puce. Avec ou sans espace après le tiret, parce que les deux se tapent :
+ *   - :sac: sac 30 L        -:repas: quatre jours de vivres
+ * La clé est une icône du vocabulaire, ou une des formes tracées
+ * (`losange`, `tiret`, `aucune`…) — les mêmes que le réglage de la planche.
+ *
+ * Pour garder la puce de la planche ET commencer par une icône, on nomme les
+ * deux : `- :point: :sac: sac 30 L`.
+ */
+const PUCE_DITE = /^:([a-z-]{2,24}):\s*/;
 /** Un paragraphe DÉCALÉ en entier — une citation, une note. */
 const EST_RETRAIT = /^\s*>\s?(.*)$/;
 
@@ -568,9 +589,15 @@ export function blocsDeTexte(ctx, texte, largeurMax, base) {
         type: "liste",
         align: itemsStyle.align,
         base: baseEchelle(base, itemsStyle.echelle),
-        items: items.map((t) =>
-          lignesRiches(ctx, analyserRiche(t), largeurMax - b.taille * esp(b, "retraitListe"), b),
-        ),
+        items: items.map(({ texte, puce }) => ({
+          puce,
+          lignes: lignesRiches(
+            ctx,
+            analyserRiche(texte),
+            largeurMax - b.taille * esp(b, "retraitListe"),
+            b,
+          ),
+        })),
       });
       items = null;
       itemsStyle = { align: null, echelle: 1 };
@@ -607,7 +634,10 @@ export function blocsDeTexte(ctx, texte, largeurMax, base) {
       // seule liste ne peut pas avoir deux mises en page.
       if (items?.length && !memeStyle(itemsStyle, style)) viderListe();
       itemsStyle = style;
-      (items ??= []).push(item[1]);
+      // Le premier `:clé:` du point, s'il en nomme une, EST sa puce.
+      const dite = PUCE_DITE.exec(item[1]);
+      const puce = dite && (iconeConnue(dite[1]) || estPuceTracee(dite[1])) ? dite[1] : null;
+      (items ??= []).push({ texte: puce ? item[1].slice(dite[0].length) : item[1], puce });
       continue;
     }
     viderListe();
@@ -639,7 +669,10 @@ export function hauteurBlocs(blocs, base) {
     if (i > 0) h += b.taille * esp(b, "entreBlocs");
     if (bloc.type === "espace") h += b.taille * esp(b, "respiration") * bloc.n;
     else if (bloc.type === "liste") {
-      h += bloc.items.reduce((s, lignes) => s + lignes.length * b.taille * esp(b, "interligne"), 0);
+      h += bloc.items.reduce(
+        (somme, it) => somme + it.lignes.length * b.taille * esp(b, "interligne"),
+        0,
+      );
       h += Math.max(0, bloc.items.length - 1) * b.taille * esp(b, "entreItems");
     } else h += bloc.lignes.length * b.taille * esp(b, "interligne");
   });
@@ -766,7 +799,8 @@ export function poserBlocs(
 
     if (bloc.type === "liste") {
       const retrait = b.taille * esp(b, "retraitListe");
-      bloc.items.forEach((lignes, k) => {
+      bloc.items.forEach((item, k) => {
+        const { lignes } = item;
         if (k > 0) y += b.taille * esp(b, "entreItems");
         lignes.forEach((ligne, j) => {
           const baseLigne = y + b.taille * 0.78 + j * b.taille * interligne;
@@ -777,7 +811,8 @@ export function poserBlocs(
             al === "gauche"
               ? x + retrait
               : x + decalageAlignement(al, largeur, largeurLigne(ligne) + retrait) + retrait;
-          if (j === 0) dessinerPuce(ctx, puce, gauche - retrait, baseLigne, b);
+          // La puce du POINT l'emporte sur celle de la planche.
+          if (j === 0) dessinerPuce(ctx, item.puce ?? puce, gauche - retrait, baseLigne, b);
           dessinerLigneRiche(ctx, ligne, gauche, baseLigne, b);
         });
         y += lignes.length * b.taille * interligne;
@@ -803,6 +838,11 @@ export function poserBlocs(
  * Les puces TRACÉES — celles dont la forme est trop simple pour valoir une
  * icône. Au-delà, toute clé du vocabulaire des repères fait une puce.
  */
+/** Les clés qui nomment une forme tracée plutôt qu'une icône. */
+export function estPuceTracee(cle) {
+  return PUCES_SIMPLES.some((p) => p.cle === cle);
+}
+
 export const PUCES_SIMPLES = [
   { cle: "point", label: "Point plein" },
   { cle: "cercle", label: "Cercle vide" },
