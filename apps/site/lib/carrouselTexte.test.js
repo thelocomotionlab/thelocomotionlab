@@ -233,8 +233,8 @@ describe("blocs : listes, paragraphes, respirations", () => {
 
   it("garde le balisage à l'intérieur d'un item", () => {
     const [b] = blocs("- de l'[bleu: eau] :eau:");
-    expect(b.items[0][0].some((m) => m.couleur === "bleu")).toBe(true);
-    expect(b.items[0][0].some((m) => m.icone === "eau")).toBe(true);
+    expect(b.items[0].lignes[0].some((m) => m.couleur === "bleu")).toBe(true);
+    expect(b.items[0].lignes[0].some((m) => m.icone === "eau")).toBe(true);
   });
 
   it("mesure une hauteur qui croît avec le contenu", () => {
@@ -385,7 +385,7 @@ describe("alignement et corps, ligne par ligne", () => {
     expect(b).toHaveLength(2);
     expect(b[0].align).toBeNull();
     expect(b[1].align).toBe("centre");
-    expect(b[1].items[0][0].map((m) => m.texte).join("")).toBe("bois");
+    expect(b[1].items[0].lignes[0].map((m) => m.texte).join("")).toBe("bois");
   });
 
   it("se combine avec le retrait « > »", () => {
@@ -404,5 +404,50 @@ describe("alignement et corps, ligne par ligne", () => {
     expect(blocs("----")[0].base).toBeNull();
     expect(blocs("- eau")[0].type).toBe("liste");
     expect(nu("12 - 4 = 8")).toBe("12 - 4 = 8");
+  });
+});
+
+describe("une puce par point de liste", () => {
+  const ctx = ctxFactice();
+  const blocs = (t) => blocsDeTexte(ctx, t, 500, BASE);
+  const mots = (item) => item.lignes[0].map((m) => m.texte).join("");
+
+  it("prend le PREMIER :clé: du point comme puce, et l'ôte du texte", () => {
+    const [b] = blocs("- :sac: sac 30 L");
+    expect(b.items[0].puce).toBe("sac");
+    expect(mots(b.items[0])).toBe("sac 30 L");
+  });
+
+  it("marche avec ou sans espace après le tiret", () => {
+    expect(blocs("-:repas: vivres")[0].items[0].puce).toBe("repas");
+    expect(blocs("- :repas: vivres")[0].items[0].puce).toBe("repas");
+  });
+
+  it("accepte aussi les formes tracées", () => {
+    const [b] = blocs("- :losange: un point\n- :aucune: un autre");
+    expect(b.items.map((i) => i.puce)).toEqual(["losange", "aucune"]);
+  });
+
+  it("laisse les points SANS clé suivre la puce de la planche", () => {
+    const [b] = blocs("- :sac: avec\n- sans");
+    expect(b.items.map((i) => i.puce)).toEqual(["sac", null]);
+  });
+
+  it("ne mange pas une clé INCONNUE : elle reste écrite", () => {
+    const [b] = blocs("- :licorne: un point");
+    expect(b.items[0].puce).toBeNull();
+    expect(mots(b.items[0])).toBe(":licorne: un point");
+  });
+
+  it("garde la puce de la planche quand on la nomme d'abord", () => {
+    // `- :point: :sac: …` : la puce reste le point, l'icône entre dans le texte.
+    const [b] = blocs("- :point: :sac: sac 30 L");
+    expect(b.items[0].puce).toBe("point");
+    expect(b.items[0].lignes[0].some((m) => m.icone === "sac")).toBe(true);
+  });
+
+  it("ne confond toujours pas une rangée de tirets avec une liste", () => {
+    expect(blocs("----")[0].type).toBe("paragraphe");
+    expect(blocs("- eau")[0].type).toBe("liste");
   });
 });
