@@ -18,7 +18,7 @@
   "elevationHysteresisM": 5,
 
   "_corrections": "Coefficients d'ajustement final, RECALÉS sur la montre à la Croix de Belledonne (06/08/2026) : montre 24,26 km / 2700 m D+ / 2700 m D− contre 22,3 / 2445 / 2465 mesurés, soit -8 à -9 % de sous-estimation homogène. Méthode et remise à jour : docs/live-tracking.md §10.1.",
-  "samplingCorrection": 1.05,
-  "elevationPlusCorrection": 1.05,
-  "elevationMinusCorrection": 1.05
+  "samplingCorrection": 1.12,
+  "elevationPlusCorrection": 1.1,
+  "elevationMinusCorrection": 1.1
 }
