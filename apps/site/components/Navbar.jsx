@@ -216,6 +216,9 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+
   const burgerRef = useRef(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -266,38 +269,30 @@ export default function Navbar() {
     }
   };
 
+  const logoActive = hovered || focused;
+
   return (
     <header className="flex items-center justify-between p-4 shadow-md bg-white/90 backdrop-blur sticky top-0 z-50 text-gray-700">
-      {/* Logo à gauche — la signature des planches Instagram : la marque
-          cerclée, puis le nom en capitales espacées (mêmes proportions que
-          `bandeEntete` : côté du logo ≈ 1,9 × le corps du nom, écart = 0,5 em). */}
+      {/* Logo à gauche */}
       <div className="flex items-center">
         <Link
           href="/"
-          className="group inline-flex items-center gap-2 md:gap-2.5"
-          aria-label="The Locomotion Lab — retour à l'accueil"
+          className="inline-flex items-center"
+          aria-label="Accueil"
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
         >
           <Image
-            src="/images/assets/logo-mark-512.png"
-            alt=""
-            width={512}
-            height={512}
+            src={logoActive ? "/logo_deep_primary.webp" : "/logo_primary_deep.webp"}
+            alt="Logo The Locomotion Lab — retour à l'accueil"
+            width={296}
+            height={96}
             priority
-            sizes="32px"
-            className="h-7 w-7 md:h-9 md:w-9 xl:h-8 xl:w-8 transition-opacity duration-300 group-hover:opacity-80"
+            sizes="148px"
+            className="h-12 w-auto transition duration-300"
           />
-          {/* Le nom disparaît entre `md` et `xl` : c'est la bande où la
-              navigation centrée (absolue) descend le plus bas, et le verrou
-              complet (246 px) la percutait dès 1100 px. En dessous de `md` il
-              n'y a que le burger, la place est libre.
-              L'interlettrage CSS s'applique AUSSI après la dernière lettre :
-              la marge négative la reprend, sinon le bloc paraît décalé. */}
-          <span
-            aria-hidden="true"
-            className="inline md:hidden xl:inline text-brand-deep group-hover:text-brand-accent-ink transition-colors duration-300 font-medium uppercase whitespace-nowrap text-[0.6875rem] tracking-[0.24em] -mr-[0.24em] xl:text-[0.8125rem] xl:tracking-[0.28em] xl:-mr-[0.28em]"
-          >
-            The Locomotion Lab
-          </span>
         </Link>
       </div>
 
