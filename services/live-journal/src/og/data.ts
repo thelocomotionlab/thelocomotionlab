@@ -10,6 +10,9 @@
 // ET à la commande locale du carrousel, qui lit des FICHIERS au lieu d'URLs —
 // une seule interprétation de la donnée, deux points d'entrée.
 
+import fs from "node:fs";
+import path from "node:path";
+
 import type { SimSnapshotProvider } from "../server";
 import { avancementSurTrace, type LonLat } from "./progression";
 
@@ -74,6 +77,8 @@ export interface OgData {
 }
 
 const CONFIG_TTL_MS = 3_600_000;
+/** Intervalle minimal entre deux alertes « aucune position lue ». */
+const ALERTE_TTL_MS = 900_000;
 
 // Aventure neutre si live-config.json est injoignable (dev isolé) : la carte
 // reste générable, avec un avertissement en logs.
@@ -196,6 +201,15 @@ export function liveFromArtefacts(
 export interface OgDataSourceOptions {
   siteBase: string;
   trackingBase: string;
+  /**
+   * Dossier LOCAL des artefacts de tracking (`live-positions.json`,
+   * `live-timer.json`), quand le volume `live_json` est monté dans le
+   * conteneur. Les lire sur le disque plutôt que par `trackingBase` évite un
+   * aller-retour par l'internet public pour des fichiers qui sont sur la MÊME
+   * machine — et c'est ce trajet-là qui casse la carte de partage quand il
+   * échoue. Absent (ou fichier illisible) : on retombe sur HTTP.
+   */
+  trackingDir?: string | null;
   sim?: SimSnapshotProvider;
   fetcher?: typeof fetch;
   now?: () => number;
@@ -206,6 +220,7 @@ export class OgDataSource {
   private readonly fetcher: typeof fetch;
   private aventureCache: { value: OgAventure; trackPath: string | null; at: number } | null = null;
   private trackCache: { value: OgTrack | null; at: number } | null = null;
+  private derniereAlerte: number | null = null;
 
   constructor(opts: OgDataSourceOptions) {
     this.opts = opts;
@@ -266,16 +281,52 @@ export class OgDataSource {
     return value;
   }
 
+  /** Artefact lu sur le volume s'il y est, sinon par `trackingBase`. */
+  private async artefact(nom: string): Promise<unknown | null> {
+    const dir = this.opts.trackingDir;
+    if (dir) {
+      try {
+        return JSON.parse(fs.readFileSync(path.join(dir, nom), "utf8"));
+      } catch {
+        // Volume absent, fichier pas encore écrit, JSON tronqué en cours
+        // d'écriture : on tente le réseau plutôt que de rendre une carte vide.
+      }
+    }
+    return this.fetchJson(`${this.opts.trackingBase}/${nom}?cacheBust=${this.now()}`);
+  }
+
   private async liveSnapshot(referenceCoords: LonLat[]): Promise<OgLive | null> {
     if (this.opts.sim) {
       return liveFromArtefacts(this.opts.sim.getPositions(), this.opts.sim.getTimer(), referenceCoords);
     }
     const [positions, timer] = await Promise.all([
-      this.fetchJson(`${this.opts.trackingBase}/live-positions.json?cacheBust=${this.now()}`),
-      this.fetchJson(`${this.opts.trackingBase}/live-timer.json?cacheBust=${this.now()}`),
+      this.artefact("live-positions.json"),
+      this.artefact("live-timer.json"),
     ]);
     if (!timer) return null;
-    return liveFromArtefacts(positions, timer, referenceCoords);
+    const live = liveFromArtefacts(positions, timer, referenceCoords);
+    // ÉCHEC SILENCIEUX, sinon. Une carte de partage sans trace vécue ni
+    // kilomètres se lit « il ne s'est rien passé », alors que la donnée est là
+    // et que c'est le CHEMIN d'accès qui a lâché. Rien dans les logs ne le
+    // disait : c'est ce qui a laissé passer le problème en plein direct.
+    if (live.running && live.coords.length === 0) {
+      this.plaindreArtefacts();
+    }
+    return live;
+  }
+
+  /** Un cri par quart d'heure : la boucle og tourne toutes les 3 minutes. */
+  private plaindreArtefacts(): void {
+    const now = this.now();
+    if (this.derniereAlerte !== null && now - this.derniereAlerte < ALERTE_TTL_MS) return;
+    this.derniereAlerte = now;
+    console.warn(
+      new Date(now).toISOString(),
+      "[og] direct en cours mais AUCUNE position lue —",
+      this.opts.trackingDir
+        ? `ni ${this.opts.trackingDir}/live-positions.json ni ${this.opts.trackingBase}`
+        : `${this.opts.trackingBase}/live-positions.json injoignable (TRACKING_DIR non configuré)`,
+    );
   }
 
   async collect(): Promise<OgData> {

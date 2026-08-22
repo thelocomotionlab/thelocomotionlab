@@ -302,6 +302,18 @@ redemanderait une cinquantaine de tuiles à Esri toutes les 3 minutes pendant
 cinq jours. Si les tuiles sont injoignables, la carte sort quand même sur un
 aplat sombre — et l'attribution disparaît avec le fond.
 
+La **trace vécue** et les kilomètres viennent de `live-positions.json`, que
+`live-journal` lit **sur le volume `live_json`** (`TRACKING_DIR=/srv/live`,
+monté en lecture seule dans `infra/compose.yml`). Il passait auparavant par
+`https://tracking.thelocomotionlab.com` — un aller-retour par l'internet public
+pour un fichier posé sur la MÊME machine. Quand ce trajet lâche, la carte sort
+avec l'itinéraire en pointillés, **aucune trace vécue et 0,0 km** : elle se lit
+« il ne s'est rien passé » alors que la donnée est là. `trackingBase` reste le
+repli (dev hors VPS, volume pas encore monté, JSON lu en plein vol pendant que
+tracking-cache l'écrit), et un direct sans une seule position écrit désormais
+`[og] direct en cours mais AUCUNE position lue` dans les logs, au plus une fois
+par quart d'heure.
+
 - **`story.png`** utilise l'**API Web Share** : sur mobile, elle ouvre le
   partage natif (Instagram, etc.) avec l'image ; sinon elle s'ouvre dans un
   onglet.
@@ -618,6 +630,7 @@ Détails de la stratégie staging : [`plan-staging.md`](./plan-staging.md).
 | « ✗ Trop lourd pour l'API » | vidéo/fichier > 20 Mo (limite Bot API) | renvoyer plus court / compressé |
 | Message visiteur « n'est pas parti » | Telegram API ou service down | le visiteur réessaie ; vérifier `healthz` si ça persiste |
 | Bouton « Partager » sans effet | image `story.png` injoignable / navigateur sans Web Share | vérifier `…/journal/story.png` ; sinon l'onglet de repli s'ouvre |
+| Carte de partage sans trace vécue, **0,0 km** | `live-journal` ne lit pas `live-positions.json` | `docker compose exec live-journal ls -l /srv/live` (le volume doit être monté) ; `docker compose logs live-journal \| grep "AUCUNE position"` |
 | Aperçu OG périmé au partage | cache de la plateforme | Sharing Debugger Meta → « Scrape again » |
 | Service en crash-loop | secret manquant / volume | `docker compose logs live-journal` **dit** ce qui manque ; `/live` reste servi par Caddy pendant ce temps |
 | Régression après un déploiement | image `:latest` | épingler `LIVE_JOURNAL_IMAGE` au sha précédent + `./deploy.sh` |

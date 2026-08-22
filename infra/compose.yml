@@ -71,10 +71,18 @@ services:
     env_file: .env
     environment:
       - DATA_DIR=/data
+      # Artefacts de tracking lus SUR LE DISQUE (volume ci-dessous) plutôt que
+      # par https://tracking.… : les fichiers sont sur la même machine, et cet
+      # aller-retour par l'internet public était le point de rupture des cartes
+      # de partage (une panne de ce trajet = story sans trace ni kilomètres).
+      - TRACKING_DIR=/srv/live
     expose:
       - "3000"
     volumes:
       - live_journal_data:/data
+      # live-positions.json + live-timer.json produits par tracking-cache
+      # (lecture seule — c'est tracking-cache qui écrit, jamais ce service).
+      - live_json:/srv/live:ro
     # Premier healthcheck applicatif de la stack (préfigure l'auto-surveillance
     # de la PR5) : l'état est visible dans `docker compose ps`.
     healthcheck:

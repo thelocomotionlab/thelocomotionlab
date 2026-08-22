@@ -3,8 +3,12 @@
 // satori+resvg aux bonnes dimensions. Aucun accès réseau — fetch injecté, et
 // les tuiles sont fabriquées ici.
 
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
 import sharp from "sharp";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   jourParis,
@@ -357,5 +361,71 @@ describe("liveFromArtefacts", () => {
       COORDS,
     );
     expect(bancales.coords).toEqual([[6.35, 44.9]]);
+  });
+});
+
+describe("artefacts de tracking lus sur le volume", () => {
+  function dossier(fichiers: Record<string, unknown>): string {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-live-"));
+    for (const [nom, contenu] of Object.entries(fichiers)) {
+      fs.writeFileSync(path.join(dir, nom), typeof contenu === "string" ? contenu : JSON.stringify(contenu));
+    }
+    return dir;
+  }
+
+  function sourceAvec(dir: string | null, overrides: Record<string, unknown | null> = {}) {
+    return new OgDataSource({
+      siteBase: "http://site.test",
+      trackingBase: "http://tracking.test",
+      trackingDir: dir,
+      fetcher: fetcherWith(overrides),
+    });
+  }
+
+  it("le volume prime sur le réseau", async () => {
+    // Le disque porte 42 km, le réseau 96,4 : c'est le disque qui doit gagner.
+    const dir = dossier({
+      "live-positions.json": { ...POSITIONS, stats: { ...POSITIONS.stats, distance: 42_000 } },
+      "live-timer.json": { running: true },
+    });
+    const data = await sourceAvec(dir).collect();
+    expect(data.live?.doneKm).toBeCloseTo(42);
+    expect(data.live?.coords.length).toBe(25);
+  });
+
+  it("retombe sur le réseau si le volume n'a pas (encore) le fichier", async () => {
+    const data = await sourceAvec(dossier({})).collect();
+    expect(data.live?.doneKm).toBeCloseTo(96.4);
+    expect(data.live?.coords.length).toBe(25);
+  });
+
+  it("retombe sur le réseau si le JSON du volume est tronqué", async () => {
+    // tracking-cache écrit en continu : une lecture peut tomber en plein vol.
+    const dir = dossier({ "live-positions.json": '{"stats":{"dist', "live-timer.json": { running: true } });
+    const data = await sourceAvec(dir).collect();
+    expect(data.live?.doneKm).toBeCloseTo(96.4);
+  });
+
+  it("CRIE quand un direct tourne sans une seule position", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const data = await sourceAvec(null, { "/live-positions.json": null }).collect();
+      expect(data.live?.running).toBe(true);
+      expect(data.live?.coords).toEqual([]);
+      expect(warn).toHaveBeenCalledOnce();
+      expect(String(warn.mock.calls[0]?.[1])).toContain("AUCUNE position lue");
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("se tait quand la trace arrive normalement", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      await sourceAvec(null).collect();
+      expect(warn).not.toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
   });
 });

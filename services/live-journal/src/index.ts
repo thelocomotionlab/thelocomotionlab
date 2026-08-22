@@ -62,6 +62,7 @@ async function main(): Promise<void> {
     const source = new OgDataSource({
       siteBase: config.siteBase,
       trackingBase: config.trackingBase,
+      trackingDir: config.trackingDir,
       sim,
     });
     const scheduler = new OgScheduler(
