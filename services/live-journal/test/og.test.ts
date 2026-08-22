@@ -3,8 +3,12 @@
 // satori+resvg aux bonnes dimensions. Aucun accès réseau — fetch injecté, et
 // les tuiles sont fabriquées ici.
 
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
 import sharp from "sharp";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   jourParis,
@@ -357,5 +361,124 @@ describe("liveFromArtefacts", () => {
       COORDS,
     );
     expect(bancales.coords).toEqual([[6.35, 44.9]]);
+  });
+});
+
+describe("artefacts de tracking lus sur le volume", () => {
+  function dossier(fichiers: Record<string, unknown>): string {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-live-"));
+    for (const [nom, contenu] of Object.entries(fichiers)) {
+      fs.writeFileSync(path.join(dir, nom), typeof contenu === "string" ? contenu : JSON.stringify(contenu));
+    }
+    return dir;
+  }
+
+  function sourceAvec(dir: string | null, overrides: Record<string, unknown | null> = {}) {
+    return new OgDataSource({
+      siteBase: "http://site.test",
+      trackingBase: "http://tracking.test",
+      trackingDir: dir,
+      fetcher: fetcherWith(overrides),
+    });
+  }
+
+  it("le volume prime sur le réseau", async () => {
+    // Le disque porte 42 km, le réseau 96,4 : c'est le disque qui doit gagner.
+    const dir = dossier({
+      "live-positions.json": { ...POSITIONS, stats: { ...POSITIONS.stats, distance: 42_000 } },
+      "live-timer.json": { running: true },
+    });
+    const data = await sourceAvec(dir).collect();
+    expect(data.live?.doneKm).toBeCloseTo(42);
+    expect(data.live?.coords.length).toBe(25);
+  });
+
+  it("retombe sur le réseau si le volume n'a pas (encore) le fichier", async () => {
+    const data = await sourceAvec(dossier({})).collect();
+    expect(data.live?.doneKm).toBeCloseTo(96.4);
+    expect(data.live?.coords.length).toBe(25);
+  });
+
+  it("retombe sur le réseau si le JSON du volume est tronqué", async () => {
+    // tracking-cache écrit en continu : une lecture peut tomber en plein vol.
+    const dir = dossier({ "live-positions.json": '{"stats":{"dist', "live-timer.json": { running: true } });
+    const data = await sourceAvec(dir).collect();
+    expect(data.live?.doneKm).toBeCloseTo(96.4);
+  });
+
+  it("CRIE quand un direct tourne sans une seule position", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const data = await sourceAvec(null, { "/live-positions.json": null }).collect();
+      expect(data.live?.running).toBe(true);
+      expect(data.live?.coords).toEqual([]);
+      expect(warn).toHaveBeenCalledOnce();
+      expect(String(warn.mock.calls[0]?.[1])).toContain("AUCUNE position lue");
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("se tait quand la trace arrive normalement", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      await sourceAvec(null).collect();
+      expect(warn).not.toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
+  });
+});
+
+describe("config d'aventure périmée", () => {
+  it("le site est interrogé avec un cache-buster", async () => {
+    const vues: string[] = [];
+    const source = new OgDataSource({
+      siteBase: "http://site.test",
+      trackingBase: "http://tracking.test",
+      fetcher: (async (url: RequestInfo | URL) => {
+        vues.push(String(url));
+        return fetcherWith()(url);
+      }) as typeof fetch,
+    });
+    await source.collect();
+    // Un cache (Cloudflare devant Pages) servait live-config.json d'il y a
+    // douze jours : la carte du Tour des Écrins était composée avec la trace
+    // du Vercors, sans que rien ne le signale.
+    for (const cible of ["/live-config.json", "/tracks/test.track.json"]) {
+      const vue = vues.find((u) => u.includes(cible));
+      expect(vue, cible).toBeDefined();
+      expect(vue, cible).toContain("cacheBust=");
+    }
+  });
+
+  it("CRIE quand la trace vécue est hors de l'itinéraire", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      // Positions dans les Écrins, itinéraire de référence dans le Vercors.
+      const ailleurs = {
+        stats: POSITIONS.stats,
+        profile: Array.from({ length: 10 }, (_, i) => ({
+          longitude: 6.12 + i * 0.001,
+          latitude: 44.98 + i * 0.001,
+          fixTime: new Date(Date.parse("2026-08-20T06:00:00+02:00") + i * 600_000).toISOString(),
+        })),
+      };
+      await makeSource({ "/live-positions.json": ailleurs }).collect();
+      const cri = warn.mock.calls.map((c) => String(c[1])).find((m) => m.includes("HORS"));
+      expect(cri).toContain("mauvaise aventure");
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("se tait quand le vécu suit bien l'itinéraire", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      await makeSource().collect();
+      expect(warn.mock.calls.map((c) => String(c[1])).filter((m) => m.includes("HORS"))).toEqual([]);
+    } finally {
+      warn.mockRestore();
+    }
   });
 });

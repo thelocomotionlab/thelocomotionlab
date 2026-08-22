@@ -57,6 +57,12 @@ export interface Config {
   /** Le site public (live-config.json, .track.json) et les artefacts tracking. */
   siteBase: string;
   trackingBase: string;
+  /**
+   * Volume `live_json` monté dans le conteneur (`/srv/live`) : les artefacts de
+   * tracking s'y lisent DIRECTEMENT, sans passer par l'internet public. Vide =
+   * tout par `trackingBase` (dev hors VPS).
+   */
+  trackingDir: string | null;
   telegram: {
     mode: TelegramMode;
     apiBase: string;
@@ -73,6 +79,7 @@ interface FileConfig {
   selfCheck?: Partial<SelfCheckConfig>;
   siteBase?: string;
   trackingBase?: string;
+  trackingDir?: string;
   publicPrefix?: string;
   allowedOrigins?: string[];
   message?: Partial<MessageConfig>;
@@ -174,6 +181,7 @@ export function loadConfig(): Config {
     },
     siteBase: process.env.SITE_BASE || file.siteBase || "https://thelocomotionlab.com",
     trackingBase: process.env.TRACKING_BASE || file.trackingBase || "https://tracking.thelocomotionlab.com",
+    trackingDir: process.env.TRACKING_DIR || file.trackingDir || null,
     telegram: {
       mode,
       apiBase: process.env.TELEGRAM_API_BASE || "https://api.telegram.org",
