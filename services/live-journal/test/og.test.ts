@@ -429,3 +429,56 @@ describe("artefacts de tracking lus sur le volume", () => {
     }
   });
 });
+
+describe("config d'aventure périmée", () => {
+  it("le site est interrogé avec un cache-buster", async () => {
+    const vues: string[] = [];
+    const source = new OgDataSource({
+      siteBase: "http://site.test",
+      trackingBase: "http://tracking.test",
+      fetcher: (async (url: RequestInfo | URL) => {
+        vues.push(String(url));
+        return fetcherWith()(url);
+      }) as typeof fetch,
+    });
+    await source.collect();
+    // Un cache (Cloudflare devant Pages) servait live-config.json d'il y a
+    // douze jours : la carte du Tour des Écrins était composée avec la trace
+    // du Vercors, sans que rien ne le signale.
+    for (const cible of ["/live-config.json", "/tracks/test.track.json"]) {
+      const vue = vues.find((u) => u.includes(cible));
+      expect(vue, cible).toBeDefined();
+      expect(vue, cible).toContain("cacheBust=");
+    }
+  });
+
+  it("CRIE quand la trace vécue est hors de l'itinéraire", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      // Positions dans les Écrins, itinéraire de référence dans le Vercors.
+      const ailleurs = {
+        stats: POSITIONS.stats,
+        profile: Array.from({ length: 10 }, (_, i) => ({
+          longitude: 6.12 + i * 0.001,
+          latitude: 44.98 + i * 0.001,
+          fixTime: new Date(Date.parse("2026-08-20T06:00:00+02:00") + i * 600_000).toISOString(),
+        })),
+      };
+      await makeSource({ "/live-positions.json": ailleurs }).collect();
+      const cri = warn.mock.calls.map((c) => String(c[1])).find((m) => m.includes("HORS"));
+      expect(cri).toContain("mauvaise aventure");
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("se tait quand le vécu suit bien l'itinéraire", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      await makeSource().collect();
+      expect(warn.mock.calls.map((c) => String(c[1])).filter((m) => m.includes("HORS"))).toEqual([]);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+});

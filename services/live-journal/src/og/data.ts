@@ -245,7 +245,13 @@ export class OgDataSource {
     if (this.aventureCache && this.now() - this.aventureCache.at < CONFIG_TTL_MS) {
       return this.aventureCache;
     }
-    const raw = (await this.fetchJson(`${this.opts.siteBase}/live-config.json`)) as {
+    // Cache-buster comme sur les artefacts de tracking. Sans lui, un cache
+    // (Cloudflare devant Pages, proxy sortant) peut servir une config PÉRIMÉE
+    // pendant des jours : le service compose alors les cartes de partage avec
+    // l'itinéraire et la date de l'aventure PRÉCÉDENTE, sans rien signaler.
+    const raw = (await this.fetchJson(
+      `${this.opts.siteBase}/live-config.json?cacheBust=${this.now()}`,
+    )) as {
       aventure?: Partial<OgAventure>;
       live?: { referenceTrack?: string; waypoints?: OgWaypoint[] };
     } | null;
@@ -266,6 +272,12 @@ export class OgDataSource {
     } else {
       console.warn(new Date().toISOString(), "[og] live-config.json injoignable — aventure neutre");
     }
+    // Ce que le service croit couvrir, en clair dans les logs : c'est la seule
+    // façon de voir d'un coup d'œil qu'il compose avec la config d'hier.
+    console.log(
+      new Date(this.now()).toISOString(),
+      `[og] aventure « ${value.nom} » · départ ${value.dateDebut} · trace ${trackPath ?? "—"}`,
+    );
     this.aventureCache = { value, trackPath, at: this.now() };
     return this.aventureCache;
   }
@@ -275,7 +287,9 @@ export class OgDataSource {
       return this.trackCache.value;
     }
     const value = trackPath
-      ? trackFromJson(await this.fetchJson(`${this.opts.siteBase}${trackPath}`))
+      ? trackFromJson(
+          await this.fetchJson(`${this.opts.siteBase}${trackPath}?cacheBust=${this.now()}`),
+        )
       : null;
     this.trackCache = { value, at: this.now() };
     return value;
@@ -329,10 +343,47 @@ export class OgDataSource {
     );
   }
 
+  /**
+   * Vrai si la trace vécue tombe ENTIÈREMENT hors de l'itinéraire de référence.
+   *
+   * C'est la signature d'une config périmée : la carte se cadre sur la
+   * référence, donc le vécu se projette hors du canevas et la carte sort avec
+   * l'itinéraire seul, un pourcentage à 0 et le total d'une AUTRE sortie —
+   * exactement ce qu'on a vu au Tour des Écrins, composé avec la trace du
+   * Vercors. La marge (~5 km) laisse passer un départ décalé ou un détour.
+   */
+  private horsCadre(reference: LonLat[], vecu: LonLat[]): boolean {
+    if (reference.length < 2 || vecu.length === 0) return false;
+    const MARGE = 0.05;
+    let lon0 = Infinity;
+    let lon1 = -Infinity;
+    let lat0 = Infinity;
+    let lat1 = -Infinity;
+    for (const [lon, lat] of reference) {
+      if (lon < lon0) lon0 = lon;
+      if (lon > lon1) lon1 = lon;
+      if (lat < lat0) lat0 = lat;
+      if (lat > lat1) lat1 = lat;
+    }
+    return vecu.every(
+      ([lon, lat]) =>
+        lon < lon0 - MARGE || lon > lon1 + MARGE || lat < lat0 - MARGE || lat > lat1 + MARGE,
+    );
+  }
+
   async collect(): Promise<OgData> {
     const { value: aventure, trackPath } = await this.aventure();
     const track = await this.track(trackPath);
     const live = await this.liveSnapshot(track?.coords ?? []);
+
+    if (live && track && this.horsCadre(track.coords, live.coords)) {
+      console.warn(
+        new Date(this.now()).toISOString(),
+        `[og] la trace vécue est HORS de l'itinéraire « ${aventure.nom} » ` +
+          `(${trackPath}) — carte de partage composée avec la mauvaise aventure. ` +
+          "Redéploie le site, ou vide le cache de live-config.json.",
+      );
+    }
 
     const variant: OgVariant =
       aventure.statut === "termine" || live?.termine
