@@ -190,6 +190,7 @@ Sur le VPS, à la racine `/opt/locomotionlab` (ou en SSH depuis Termux) :
 | `./track stop` | arrête le chrono ; la donnée reste **figée** (consultation / replay). |
 | `./track reset` | remet tout à zéro : chrono neutre, cache brut + sortie vidés. |
 | `./track status` | état : chrono, durée, distance, D+/D−, nb points, dernier fix. |
+| `./track gpx` | écrit la trace de l'aventure en **GPX** sur la sortie standard (§ 10.4). |
 | `./track logs` | suit les logs du conteneur en direct. |
 
 **Depuis le téléphone (Termux)**, une seule ligne :
@@ -522,7 +523,33 @@ Changement **permanent** : éditer le JSON → commit → merge `main` → CI re
    `tracking.config.json`.
 5. `./track reset` puis `./track start` pour repartir propre.
 
-### 10.4 Hygiène Traccar
+### 10.4 Récupérer la trace en GPX (fin d'aventure)
+
+```bash
+# depuis Termux, en une ligne — le fichier atterrit sur le téléphone
+ssh vps "cd /opt/locomotionlab && ./track gpx" > tour-des-ecrins.gpx
+```
+
+Deux sources, et le choix compte :
+
+| | Ce que ça contient |
+| --- | --- |
+| `./track gpx` | la série **filtrée** — dérive statique écartée (`minDistanceThreshold`), altitudes lissées. C'est ce qu'a montré `/live`. **À utiliser par défaut.** |
+| `./track gpx --brut` | le relevé Traccar **intact**, zigzags de bivouac compris. Le vrai brut, pour une analyse. |
+
+Dans les deux cas, seuls les points de la **fenêtre de collecte** sortent : le
+fichier couvre l'aventure et rien d'autre.
+
+> ⚠️ **La distance qu'un lecteur recalculera depuis ce GPX ne sera pas celle de
+> `./track status`.** Un GPX ne transporte que des points : la distance s'y
+> redérive de la géométrie, alors que le chiffre affiché porte
+> `samplingCorrection` (recalé sur la montre, § 10.1). L'écart est exactement ce
+> coefficient. Même nature que l'écart Coros décrit dans l'atelier d'habillage —
+> ce n'est pas une erreur, ce sont deux méthodes de mesure.
+
+À faire **avant** `./track reset`, qui efface le cache brut.
+
+### 10.5 Hygiène Traccar
 Inscription publique **décochée** (Paramètres → Serveur), sinon des bots créent
 des comptes en masse. Port balise (`5055`/`5004`) laissé **ouvert** dans `ufw`.
 

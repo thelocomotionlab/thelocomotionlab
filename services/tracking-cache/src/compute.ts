@@ -10,6 +10,7 @@
 // 2) correction locale de courbure · 3-4) cumul brut + coefficients → profil ·
 // 5) stats globales lues depuis le dernier point du profil.
 
+import { dansLaFenetre } from "./fenetre";
 import type { ComputeParams, LivePositions, ProfilePoint, TraccarPosition } from "./types";
 
 const R = 6_371_000;
@@ -169,7 +170,7 @@ export function computeLiveData(
   // Remplace la date en dur de l'ancien live-cache.mjs.
   const points =
     windowStartIso != null
-      ? allPoints.filter((p) => !!p.fixTime && p.fixTime >= windowStartIso)
+      ? allPoints.filter((p) => dansLaFenetre(p.fixTime, windowStartIso))
       : allPoints;
 
   if (!Array.isArray(points) || points.length === 0) {
