@@ -102,7 +102,37 @@ Les champs de `aventure` :
 | `intention` | phrase en Lora italique sous le titre. |
 | `trace` | le `.track.json` généré au geste 2. |
 | `waypoints` | repères de cols sur le profil : `[{ nom, km }]`. `[]` pour aucun. |
-| `statut` | `avant` en temps normal (y compris pendant et après le direct) ; `repos` quand aucune aventure n'est prévue. Surchargé au build par `NEXT_PUBLIC_LIVE_STATUT`. |
+| `statut` | `avant` en temps normal (y compris pendant et après le direct) ; `repos` quand aucune aventure n'est prévue. Surchargé au build par `NEXT_PUBLIC_LIVE_STATUT` (cf. l'encadré). |
+
+> ### ⚠️ L'environnement gagne toujours, et il ne se voit pas
+>
+> `liveConfig.js` écrit ses valeurs sous la forme `process.env.X || "littéral"` :
+> une variable d'environnement **non vide** l'emporte donc sur le fichier. Or
+> elle vit dans `apps/site/.env.production` (git-ignoré, il n'existe que sur ta
+> machine — et `deploy:cf` construit EN LOCAL, donc c'est bien lui qui pilote)
+> ou dans les variables de build Cloudflare. **Rien dans le dépôt ne peut
+> révéler l'écart.**
+>
+> C'est arrivé deux fois : `statut` resté à « avant » par `.env.production`
+> alors que le fichier disait « repos », et `SITE_BASE` pointé sur le staging
+> côté live-journal — les cartes de partage ont composé douze jours avec
+> l'aventure précédente.
+>
+> **Le build l'annonce désormais**, via `app/live-config.json/route.js` :
+>
+> ```
+> [live] statut   = repos                                  ← lib/liveConfig.js
+> [live] tracking = https://tracking.thelocomotionlab.com  ← lib/liveConfig.js
+> [live] journal  = https://api.thelocomotionlab.com       ← NEXT_PUBLIC_JOURNAL_API (environnement)
+> ```
+>
+> Lis ces trois lignes dans la sortie de `pnpm -F site build` (ou `deploy:cf`)
+> avant de te demander pourquoi la page n'affiche pas ce que tu as écrit.
+>
+> **La bonne façon de revenir en arrière** : vider la variable (`X=`), pas y
+> recopier la valeur du fichier — sinon deux sources de vérité se
+> contrediront à la prochaine aventure, et c'est celle qu'on ne voit pas qui
+> gagnera.
 
 Réglages techniques (`liveReglages`, rarement touchés) : `positionsPollMs`
 (10 s), `journalPollMs` (30 s), `zoneBlancheMinutes` (60 — délai sans position
