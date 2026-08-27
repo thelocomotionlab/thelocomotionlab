@@ -4,6 +4,10 @@
 // Dédiée à l'état « En cours » v2 de /live — packages/tracking garde son propre
 // hook pour les replays/embeds. Erreur réseau = on garde le dernier état valide
 // (la fraîcheur, elle, continue de vieillir naturellement).
+//
+// `url` permet de lire un fichier FIGÉ (page d'archive : le live-positions.json
+// déposé dans public/replays/<slug>/). Avec `pollMs: 0`, une seule lecture — une
+// archive ne bouge plus, la resonder serait du bruit.
 
 "use client";
 
@@ -11,7 +15,7 @@ import { useEffect, useState } from "react";
 
 import { trackingApiBase } from "./liveConfig";
 
-export function useLivePositions({ pollMs = 10000 } = {}) {
+export function useLivePositions({ pollMs = 10000, url = null } = {}) {
   const [positions, setPositions] = useState(null);
 
   useEffect(() => {
@@ -19,10 +23,13 @@ export function useLivePositions({ pollMs = 10000 } = {}) {
 
     async function probe() {
       try {
-        const res = await fetch(
-          `${trackingApiBase}/live-positions.json?cacheBust=${Date.now()}`,
-          { cache: "no-store" },
-        );
+        // Fichier figé : ni cache-buster ni no-store — on VEUT qu'il se mette
+        // en cache, il ne changera plus.
+        const res = url
+          ? await fetch(url)
+          : await fetch(`${trackingApiBase}/live-positions.json?cacheBust=${Date.now()}`, {
+              cache: "no-store",
+            });
         if (!res.ok) return;
         const data = await res.json();
         if (cancelled || !data || !Array.isArray(data.profile)) return;
@@ -33,12 +40,13 @@ export function useLivePositions({ pollMs = 10000 } = {}) {
     }
 
     probe();
+    if (pollMs <= 0) return () => { cancelled = true; };
     const id = setInterval(probe, pollMs);
     return () => {
       cancelled = true;
       clearInterval(id);
     };
-  }, [pollMs]);
+  }, [pollMs, url]);
 
   return positions; // null puis { meta, stats, profile }
 }

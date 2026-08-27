@@ -5,6 +5,16 @@
 // fraîcheur à trois régimes, et la grille responsive — une colonne mobile dans
 // l'ordre du design, deux colonnes 1fr/460px en desktop (les wrappers passent
 // de display:contents à flex, les `order-*` ne jouent qu'en mobile).
+//
+// SERT AUSSI LES PAGES D'ARCHIVE (/live/archives/<slug>) : avec la prop
+// `archive`, le même écran se compose depuis les fichiers FIGÉS déposés dans
+// public/replays/<slug>/ au lieu des sondes du VPS. C'est délibérément le MÊME
+// composant : une archive doit se lire exactement comme le direct qu'on a
+// suivi, sinon ce n'est plus la même aventure qu'on revoit. Trois choses
+// tombent, parce qu'elles s'adressent au direct et à personne d'autre — la
+// pastille de fraîcheur (rien ne vieillit dans une archive), « Laisse un mot »
+// (le message part sur le Telegram de Valentin PENDANT l'aventure) et le
+// bouton de partage (il fabrique la carte du direct EN COURS, pas de celui-ci).
 
 "use client";
 
@@ -38,14 +48,24 @@ const LiveMap = dynamic(() => import("./LiveMap"), {
   loading: () => <div className="absolute inset-0 animate-pulse bg-brand-primary/10" />,
 });
 
-export default function LiveEnCours({ timer }) {
-  const { aventure } = liveConfig;
+export default function LiveEnCours({ timer, archive = null }) {
+  // Une archive porte SA propre identité d'aventure : liveConfig, lui, décrit
+  // déjà la suivante. Les confondre afficherait le nom du prochain départ
+  // au-dessus de la trace d'il y a six mois.
+  const aventure = archive?.aventure ?? liveConfig.aventure;
+  const base = archive ? `/replays/${archive.slug}` : null;
   const [mapStyle, setMapStyle] = useState("relief");
   const [hoverPoint, setHoverPoint] = useState(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
-  const positions = useLivePositions({ pollMs: liveReglages.positionsPollMs });
-  const journal = useJournal({ pollMs: liveReglages.journalPollMs });
+  const positions = useLivePositions(
+    archive
+      ? { pollMs: 0, url: `${base}/live-positions.json` }
+      : { pollMs: liveReglages.positionsPollMs },
+  );
+  const journal = useJournal(
+    archive ? { pollMs: 0, url: `${base}/journal.json` } : { pollMs: liveReglages.journalPollMs },
+  );
   const reference = useReferenceTrack(aventure.trace);
 
   // Repères de liveConfig, résolus une fois (cf. lib/liveWaypoints) : la carte
@@ -91,12 +111,14 @@ export default function LiveEnCours({ timer }) {
       ? (avancement.pourcent / 100) * reference.totalKm
       : null;
 
-  const running = timer?.running === true;
+  const running = !archive && timer?.running === true;
   const stats = positions?.stats;
   // Pas de pastille tant que la PREMIÈRE réponse des positions n'est pas là :
   // sinon « premier signal » clignote à chaque chargement en pleine course.
+  // Et jamais sur une archive : « dernière position il y a 7 mois » est exact,
+  // et parfaitement inutile.
   const freshness =
-    positions === null
+    archive || positions === null
       ? null
       : freshnessState({
           running,
@@ -106,7 +128,12 @@ export default function LiveEnCours({ timer }) {
         });
 
   // Le chrono vit sur la carte (ChronoBadge) : il y bat la seconde.
-  const jour = dayIndex(new Date(nowMs).toISOString(), aventure.dateDebut);
+  // Sur une archive, le jour se compte jusqu'au DERNIER point — pas jusqu'à
+  // aujourd'hui, sans quoi une sortie de l'été dernier afficherait « Jour 214 ».
+  const jour = dayIndex(
+    archive ? (stats?.lastFixTime ?? aventure.dateDebut) : new Date(nowMs).toISOString(),
+    aventure.dateDebut,
+  );
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -114,6 +141,7 @@ export default function LiveEnCours({ timer }) {
         aventure={aventure}
         jour={jour}
         running={running}
+        archive={!!archive}
         mapStyle={mapStyle}
         onMapStyle={setMapStyle}
       />
@@ -178,7 +206,12 @@ export default function LiveEnCours({ timer }) {
               />
             </div>
             <div className="order-4 lg:order-none lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
-              <JournalCard entries={journal?.entries} dateDebut={aventure.dateDebut} fill />
+              <JournalCard
+                entries={journal?.entries}
+                dateDebut={aventure.dateDebut}
+                {...(archive ? { mediaBase: base } : {})}
+                fill
+              />
             </div>
           </div>
         </div>
@@ -189,11 +222,15 @@ export default function LiveEnCours({ timer }) {
           fréquentée du site pendant un direct : elle n'avait aucun moyen de
           garder les gens qui la découvrent (audit des titres, 08/2026). */}
       <div className="mt-3.5 lg:mt-5">
-        <MessageCard />
-        <div className="mt-3 flex justify-start">
-          <ShareButton />
-        </div>
-        <div className="mt-3.5 lg:mt-5">
+        {!archive && (
+          <>
+            <MessageCard />
+            <div className="mt-3 flex justify-start">
+              <ShareButton />
+            </div>
+          </>
+        )}
+        <div className={archive ? "" : "mt-3.5 lg:mt-5"}>
           <EmailCaptureCard title="Suivre les prochaines aventures" />
         </div>
       </div>

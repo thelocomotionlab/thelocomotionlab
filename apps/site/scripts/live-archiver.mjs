@@ -104,7 +104,95 @@ async function main() {
   fs.writeFileSync(positionsOut, positions);
   console.log(`   → ${outDir}/live-positions.json`);
 
-  // 4. Les derniers gestes, délibérés.
+  // 4. RENDRE L'ARCHIVE AUTOPORTANTE.
+  //
+  //    C'est ce qui la distingue d'un simple replay : la page permanente
+  //    (/live/archives/<slug>) doit survivre à l'aventure SUIVANTE, qui
+  //    réécrit liveConfig.js et peut remplacer le .track.json de public/tracks/.
+  //    Rien de ce que lit cette page ne doit donc vivre ailleurs que dans son
+  //    propre dossier.
+  console.log("\n④ pièces d'autoportance (identité, trace, journal)…");
+  const dossier = path.join(REPO_ROOT, outDir);
+
+  //    a. La trace de référence, copiée sous un nom qui ne bougera plus.
+  let tracePubliee = null;
+  if (typeof liveConfig.aventure.trace === "string") {
+    const source = path.join(SITE_DIR, "public", liveConfig.aventure.trace.replace(/^\//, ""));
+    if (fs.existsSync(source)) {
+      fs.copyFileSync(source, path.join(dossier, "reference.track.json"));
+      tracePubliee = `/replays/${slug}/reference.track.json`;
+      console.log("   → reference.track.json");
+    } else {
+      console.warn(`   ⚠ trace de référence introuvable (${source}) — la page vivra sans itinéraire prévu.`);
+    }
+  }
+
+  //    b. Le chrono, pour le temps total affiché sur la carte.
+  const timerUrl = positionsUrl.replace(/live-positions\.json.*$/, "live-timer.json");
+  let timer = { running: false, startTime: null, stopTime: null };
+  try {
+    const r = await fetch(timerUrl);
+    if (r.ok) {
+      const t = await r.json();
+      timer = { running: false, startTime: t?.startTime ?? null, stopTime: t?.stopTime ?? null };
+    }
+  } catch {
+    console.warn("   ⚠ chrono injoignable — la durée totale ne s'affichera pas.");
+  }
+
+  //    c. Le journal AU FORMAT VIVANT, dérivé d'archive.json. La page réutilise
+  //       le composant du direct, qui attend { schemaVersion, entries } et des
+  //       médias sous `media.url` ; archive.json, lui, porte les littéraux
+  //       français du contrat v1 et un chemin relatif. On traduit ici, une fois,
+  //       plutôt que d'apprendre deux dialectes au composant.
+  const archiveFile = JSON.parse(fs.readFileSync(path.join(dossier, "archive.json"), "utf8"));
+  const TYPES = { texte: "text", photo: "photo", audio: "audio", video: "video" };
+  const entries = (archiveFile.journal ?? []).map((e, i) => {
+    const entry = {
+      id: e.id ?? `archive-${i}`,
+      ts: e.time,
+      type: TYPES[e.type] ?? "text",
+    };
+    if (e.texte) entry.text = e.texte;
+    if (e.media) {
+      entry.media = { url: `/${String(e.media).replace(/^\//, "")}` };
+      if (Number.isFinite(e.largeur)) entry.media.width = e.largeur;
+      if (Number.isFinite(e.hauteur)) entry.media.height = e.hauteur;
+      if (Number.isFinite(e.duree)) entry.media.duration = e.duree;
+    }
+    if (e.edite) entry.editedAt = e.time;
+    return entry;
+  });
+  fs.writeFileSync(
+    path.join(dossier, "journal.json"),
+    `${JSON.stringify({ schemaVersion: 1, generatedAt: new Date().toISOString(), count: entries.length, entries }, null, 2)}\n`,
+  );
+  console.log(`   → journal.json (${entries.length} entrée${entries.length > 1 ? "s" : ""})`);
+
+  //    d. L'identité de l'aventure — ce que la page affiche en tête.
+  fs.writeFileSync(
+    path.join(dossier, "aventure.json"),
+    `${JSON.stringify(
+      {
+        schemaVersion: 1,
+        slug,
+        nom,
+        dates: liveConfig.aventure.dates ?? "",
+        dateDebut: liveConfig.aventure.dateDebut ?? null,
+        intention: liveConfig.aventure.intention ?? "",
+        trace: tracePubliee,
+        waypoints: liveConfig.aventure.waypoints ?? [],
+        timer,
+        distanceKm: archiveFile.meta?.distanceKm ?? null,
+        deniveleM: archiveFile.meta?.denivelePositifM ?? null,
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  console.log("   → aventure.json");
+
+  // 5. Les derniers gestes, délibérés.
   console.log(
     [
       "\n✓ Données mises à l'abri. Tu peux maintenant faire `./track reset` sans rien perdre.",
@@ -114,7 +202,10 @@ async function main() {
       `  git commit -m "live: archive de « ${nom} »"`,
       "  pnpm -F site deploy:cf        # (ou deploy:staging pour vérifier d'abord)",
       "",
-      "Pour en faire un replay, pose la balise dans la page projet :",
+      `La page d'archive est en ligne au déploiement : /live/archives/${slug}`,
+      "  (le direct tel qu'on l'a suivi, figé, badge ARCHIVE — lie-la depuis un article)",
+      "",
+      "Pour en faire aussi un replay DANS un récit, pose la balise en page projet :",
       `  <postlivetracking positions="/replays/${slug}/live-positions.json" />`,
       "",
     ].join("\n"),

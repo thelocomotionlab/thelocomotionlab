@@ -11,7 +11,9 @@ import { useEffect, useState } from "react";
 
 import { journalApiBase } from "./liveConfig";
 
-export function useJournal({ pollMs = 30000 } = {}) {
+// `url` permet de lire le journal FIGÉ d'une archive (public/replays/<slug>/
+// journal.json). Avec `pollMs: 0`, une seule lecture.
+export function useJournal({ pollMs = 30000, url = null } = {}) {
   const [journal, setJournal] = useState(null);
 
   useEffect(() => {
@@ -19,10 +21,11 @@ export function useJournal({ pollMs = 30000 } = {}) {
 
     async function probe() {
       try {
-        const res = await fetch(
-          `${journalApiBase}/journal/journal.json?cacheBust=${Date.now()}`,
-          { cache: "no-store" },
-        );
+        const res = url
+          ? await fetch(url)
+          : await fetch(`${journalApiBase}/journal/journal.json?cacheBust=${Date.now()}`, {
+              cache: "no-store",
+            });
         if (!res.ok) return;
         const data = await res.json();
         // Refus poli d'une version de schéma inconnue (contrat d'archive).
@@ -34,12 +37,13 @@ export function useJournal({ pollMs = 30000 } = {}) {
     }
 
     probe();
+    if (pollMs <= 0) return () => { cancelled = true; };
     const id = setInterval(probe, pollMs);
     return () => {
       cancelled = true;
       clearInterval(id);
     };
-  }, [pollMs]);
+  }, [pollMs, url]);
 
   return journal; // null tant que rien n'est chargé, puis { entries, count, … }
 }

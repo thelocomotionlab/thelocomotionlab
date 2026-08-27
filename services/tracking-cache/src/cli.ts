@@ -4,9 +4,11 @@
 // (cf. le script `track` à la racine). Ne nécessite PAS le token : elle ne fait
 // que piloter le chrono + la fenêtre de collecte dans le volume.
 //
-//   node dist/cli.js start|stop|reset|status
+//   node dist/cli.js start|stop|reset|status|gpx [--brut]
 
 import { loadComputeParams, loadDataDir } from "./config";
+import { dansLaFenetre } from "./fenetre";
+import { versGpx, type PointGpx } from "./gpx";
 import { Store } from "./store";
 import { reset, start, status, stop, type StatusReport } from "./control";
 
@@ -38,6 +40,44 @@ function printStatus(r: StatusReport): void {
   }
 }
 
+/**
+ * La trace de l'aventure, en GPX, sur la sortie standard.
+ *
+ * Par défaut la série FILTRÉE (celle qu'a montrée /live) ; `--brut` rend le
+ * relevé Traccar intact. Dans les deux cas on applique la fenêtre de collecte,
+ * pour que le fichier couvre l'aventure et rien d'autre.
+ */
+function exporterGpx(store: Store, brut: boolean): void {
+  const depuis = store.readControl().windowStartIso;
+
+  let points: PointGpx[];
+  if (brut) {
+    points = store
+      .readRawCache()
+      .filter((p) => dansLaFenetre(p.fixTime, depuis))
+      .map((p) => ({ lat: p.latitude as number, lon: p.longitude as number, ele: p.altitude, time: p.fixTime }));
+  } else {
+    const live = store.readLivePositions();
+    points = (live?.profile ?? [])
+      .filter((p) => dansLaFenetre(p.fixTime, depuis))
+      .map((p) => ({ lat: p.latitude as number, lon: p.longitude as number, ele: p.alt, time: p.fixTime }));
+  }
+
+  if (points.length === 0) {
+    console.error(
+      "Aucune position à exporter." +
+        (depuis ? ` (fenêtre de collecte ouverte le ${depuis})` : " (aucune session enregistrée)"),
+    );
+    process.exit(3);
+  }
+
+  // Le nom porte la date de départ : c'est ce qui distingue deux aventures
+  // dans une bibliothèque de traces.
+  const jour = (points.find((p) => p.time)?.time ?? "").slice(0, 10);
+  const nom = `Locomotion Lab${jour ? ` — ${jour}` : ""}${brut ? " (brut)" : ""}`;
+  process.stdout.write(versGpx(points, { nom }));
+}
+
 function main(): void {
   const cmd = (process.argv[2] || "").toLowerCase();
   const store = new Store(loadDataDir());
@@ -62,8 +102,12 @@ function main(): void {
       printStatus(status(store, loadComputeParams()));
       break;
     }
+    case "gpx": {
+      exporterGpx(store, process.argv.includes("--brut"));
+      break;
+    }
     default: {
-      console.error("Usage : node dist/cli.js <start|stop|reset|status>");
+      console.error("Usage : node dist/cli.js <start|stop|reset|status|gpx [--brut]>");
       process.exit(1);
     }
   }

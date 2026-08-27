@@ -32,13 +32,20 @@ function Jour({ jour, className }) {
   );
 }
 
-export default function LiveHeader({ aventure, jour, running = true, mapStyle, onMapStyle }) {
+export default function LiveHeader({
+  aventure,
+  jour,
+  running = true,
+  archive = false,
+  mapStyle,
+  onMapStyle,
+}) {
   return (
     <div className="flex flex-col gap-2.5 pt-1 pb-3.5 lg:flex-row lg:items-start lg:justify-between lg:gap-4">
       {/* Mobile : badge seul en tête (l'ancien logo + wordmark est retiré).
           En desktop il repasse à côté du titre, dans le bloc ci-dessous. */}
       <div className="flex justify-end lg:hidden">
-        <LiveBadge running={running} />
+        <LiveBadge running={running} archive={archive} />
       </div>
 
       {/* Titre + jour : rendus UNE fois, taille et disposition ajustées par
@@ -49,7 +56,7 @@ export default function LiveHeader({ aventure, jour, running = true, mapStyle, o
             {aventure.nom}
           </h1>
           <span className="max-lg:hidden">
-            <LiveBadge desktop running={running} />
+            <LiveBadge desktop running={running} archive={archive} />
           </span>
         </div>
         <Jour jour={jour} className="mt-1.5 text-[10.5px] lg:text-[11px]" />
@@ -63,18 +70,25 @@ export default function LiveHeader({ aventure, jour, running = true, mapStyle, o
   );
 }
 
-function LiveBadge({ desktop = false, running = true }) {
+function LiveBadge({ desktop = false, running = true, archive = false }) {
   // Figé en marron (pas de clignotement) : « EN DIRECT » tant que le tracker
   // tourne, « TERMINÉ » dès `./track stop` (la page reste consultable telle
-  // quelle, jusqu'à l'archivage définitif depuis un ordinateur).
+  // quelle, jusqu'à l'archivage définitif depuis un ordinateur), « ARCHIVE »
+  // sur la page permanente d'une aventure passée. Le mot compte : sur une
+  // archive, « TERMINÉ » laisserait croire qu'on regarde le direct du moment.
+  const teinte = archive
+    ? "bg-brand-slate text-brand-bg"
+    : running
+      ? "bg-brand-deep text-brand-bg"
+      : "bg-brand-primary-dark text-brand-bg";
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-[20px] font-heading font-bold tracking-[0.1em] ${
-        running ? "bg-brand-deep text-brand-bg" : "bg-brand-primary-dark text-brand-bg"
-      } ${desktop ? "px-3 py-[5px] text-[11px]" : "px-[11px] py-[5px] text-[10.5px]"}`}
+      className={`inline-flex items-center gap-1.5 rounded-[20px] font-heading font-bold tracking-[0.1em] ${teinte} ${
+        desktop ? "px-3 py-[5px] text-[11px]" : "px-[11px] py-[5px] text-[10.5px]"
+      }`}
     >
       <span className="inline-block h-[7px] w-[7px] rounded-full bg-brand-bg" />
-      {running ? "EN DIRECT" : "TERMINÉ"}
+      {archive ? "ARCHIVE" : running ? "EN DIRECT" : "TERMINÉ"}
     </span>
   );
 }

@@ -7,6 +7,9 @@
 #   ./track reset    # remet tout à zéro (chrono + cache + sortie)
 #   ./track status   # affiche l'état courant (chrono, distance, D+/D-, points…)
 #   ./track logs     # suit les logs du conteneur en direct
+#   ./track gpx      # écrit la trace de l'aventure en GPX sur la sortie standard :
+#                    #   ./track gpx > tour-des-ecrins.gpx
+#                    # `--brut` rend le relevé Traccar sans filtrage.
 #
 # Depuis ton téléphone (Termux), une seule ligne :
 #   ssh vps "cd /opt/locomotionlab && ./track start"
@@ -38,11 +41,14 @@ case "$cmd" in
     shift || true
     exec "${DC[@]}" logs -f tracking-cache "$@"
     ;;
-  start|stop|reset|status)
-    exec "${DC[@]}" exec -T tracking-cache node dist/cli.js "$cmd"
+  start|stop|reset|status|gpx)
+    # -T (pas de TTY) est ce qui rend `./track gpx > trace.gpx` fiable : avec un
+    # TTY, docker ajouterait des retours chariot dans le XML.
+    shift || true
+    exec "${DC[@]}" exec -T tracking-cache node dist/cli.js "$cmd" "$@"
     ;;
   *)
-    echo "Usage : ./track <start|stop|reset|status|logs>" >&2
+    echo "Usage : ./track <start|stop|reset|status|gpx|logs>" >&2
     exit 1
     ;;
 esac
