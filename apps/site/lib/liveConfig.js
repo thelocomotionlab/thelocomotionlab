@@ -59,7 +59,7 @@ export const liveConfig = {
     waypoints: [
       { nom: "Valgaudémar",       km: 57.47,   icone: "bivouac" },
       { nom: "Vallouise",     km: 108.7,    icone: "bivouac" },
-      { nom: "Arsine",  km: 146.3, icone: "bivouac" },
+      { nom: "Arsine",  km: 155.5, icone: "bivouac" },
     ],
     
     // Deux valeurs seulement :
