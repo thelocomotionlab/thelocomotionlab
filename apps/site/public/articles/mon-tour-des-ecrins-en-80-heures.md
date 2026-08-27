@@ -3,10 +3,10 @@ title: "Mon tour des Écrins en 80 heures"
 author: "Valentin Fer"
 date: "2026-08-28"
 tags: ["ultra-trail", "fast-packing","minimalisme"]
-cover: "/images/articles/mon-tour-des-ecrins-en-80-heures.md/mon-tour-des-ecrins-en-80-heures.md.webp"
+cover: "/images/articles/mon-tour-des-ecrins-en-80-heures/cover_mon-tour-des-ecrins-en-80-heures.webp"
 description: "Immersion et transformation intérieure en montagne."
 type: "recit"
-published: true
+published: false
 ---
 
 Ces dernières années, mon goût pour l'aventure au long cours en mode fast-packing s'est progressivement développé. Cette discipline a de fascinant qu'elle incarne par essence la quête de robustesse : matérielle, où l'équipement doit être le plus versatile et complet possible, et physiologique, où l'organisme, mis à rude épreuve pendant des journées entières, doit être capable d'encaisser des dénivelés très importants, de la privation calorique ou du manque de sommeil. Pratiquer l'ultra en autonomie, avec mes propres règles, au cours d'aventures construites sur-mesure, est devenu une sorte de rendez-vous régulier que je m'accorde pour entretenir et développer ma nature animale ancestrale. Si l'idée d'aller de chez moi à chez ma mère en traversant le Vercors (160 km 8 000 m D+) m'est rapidement apparue comme un jalon évident au moment de construire ma saison de trail 2026, je dois avouer que je ne m'attendais pas à vivre un tel voyage. Sans vouloir abuser des superlatifs, on pourrait même parler d'une épopée sur ce coup. Voici le récit de cette immersion primale entre Vercors et Drôme. Belle lecture !

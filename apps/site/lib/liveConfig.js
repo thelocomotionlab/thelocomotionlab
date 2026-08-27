@@ -68,7 +68,7 @@ export const liveConfig = {
     //   • "repos" — quand AUCUNE aventure n'est prévue.
     // (Astuce recette : NEXT_PUBLIC_LIVE_STATUT=repos au build force l'aperçu
     // sans éditer ce fichier.)
-    statut: process.env.NEXT_PUBLIC_LIVE_STATUT || "avant",
+    statut: process.env.NEXT_PUBLIC_LIVE_STATUT || "repos",
   },
 
   // Libellés affichés AILLEURS que sur /live (accueil, tête de la page Explorer).
