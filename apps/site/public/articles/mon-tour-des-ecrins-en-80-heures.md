@@ -9,8 +9,7 @@ type: "recit"
 published: false
 ---
 
-Ces dernières années, mon goût pour l'aventure au long cours en mode fast-packing s'est progressivement développé. Cette discipline a de fascinant qu'elle incarne par essence la quête de robustesse : matérielle, où l'équipement doit être le plus versatile et complet possible, et physiologique, où l'organisme, mis à rude épreuve pendant des journées entières, doit être capable d'encaisser des dénivelés très importants, de la privation calorique ou du manque de sommeil. Pratiquer l'ultra en autonomie, avec mes propres règles, au cours d'aventures construites sur-mesure, est devenu une sorte de rendez-vous régulier que je m'accorde pour entretenir et développer ma nature animale ancestrale. Si l'idée d'aller de chez moi à chez ma mère en traversant le Vercors (160 km 8 000 m D+) m'est rapidement apparue comme un jalon évident au moment de construire ma saison de trail 2026, je dois avouer que je ne m'attendais pas à vivre un tel voyage. Sans vouloir abuser des superlatifs, on pourrait même parler d'une épopée sur ce coup. Voici le récit de cette immersion primale entre Vercors et Drôme. Belle lecture !
-
+Après quatre projets d'ultra consécutifs inachevés, je ne savais pas trop à quoi m'attendre sur ce tour d'Écrins en autonomie complète. Un projet encore plus ambitieux que tout ce que j'avais entrepris jusqu'alors. Plus de 190 km et 12 200 m D+ D- en montagne. Des chiffres qui font tourner la tête autant qu'ils m'excitent. Une tentative de plus dans ma quête d'ultra-endurance primale, dont je ne connaissais forcément pas l'issue, tant le nombre de paramètres à ajuster et maîtriser est grand. Et tant par la beauté des Écrins, que par l'intensité de cette aventure, je ne fus pas déçu du voyage. En voici le récit.  
 
 ## Préambule : connaître la signification
 
