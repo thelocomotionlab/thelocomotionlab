@@ -382,7 +382,15 @@ pnpm -F site live:archiver -- --slug mon-tour
 Elle enchaîne : ① build du service → ② **export** du journal, des médias et de
 `archive.json` vers `apps/site/public/replays/<slug>/` → ③ copie des
 **positions brutes** (`live-positions.json`, celles que lit la balise de replay)
-→ ④ affiche les gestes de publication, que tu lances toi-même.
+→ ④ les pièces qui rendent l'archive **autoportante** (`aventure.json`,
+`journal.json`, `reference.track.json`) → ⑤ affiche les gestes de publication,
+que tu lances toi-même.
+
+**Autoportante, et c'est le point** : la page d'archive (§9 bis) ne lit RIEN
+d'autre que le dossier `replays/<slug>/`. L'aventure suivante réécrit
+`liveConfig.js` et peut remplacer le `.track.json` de `public/tracks/` — une
+archive qui pointerait dessus afficherait le nom du prochain départ au-dessus
+d'une trace d'il y a six mois.
 
 `chat[]` reste **vide par construction** : les messages privés n'entrent JAMAIS
 dans une archive publique.
@@ -396,6 +404,45 @@ dans une archive publique.
 
 Le récit, lui, se publie quand tu le décides : une page projet + la balise
 `<postlivetracking positions="/replays/<slug>/live-positions.json" />` (§11).
+
+### 9 bis. La page d'archive — `/live/archives/<slug>`
+
+**Le direct tel qu'on l'a suivi, figé, badge « ARCHIVE ».** Générée toute seule
+dès qu'un dossier `replays/<slug>/` porte un `aventure.json` : rien à écrire.
+
+```
+https://thelocomotionlab.com/live/archives/tour-des-ecrins
+```
+
+C'est le MÊME composant que l'état « En cours » (`LiveEnCours`) — carte, profil
+altimétrique, progression, carnet de bord et médias — nourri par les fichiers du
+dossier au lieu des sondes du VPS. Une archive doit se relire exactement comme
+le direct qu'on a suivi.
+
+Trois choses tombent, parce qu'elles s'adressent au direct et à personne
+d'autre : la **pastille de fraîcheur** (rien ne vieillit dans une archive),
+**« Laisse un mot »** (le message part sur le Telegram de Valentin *pendant*
+l'aventure) et le **bouton de partage** (il fabrique la carte du direct en
+cours). Le jour affiché se compte jusqu'à la **dernière position**, pas jusqu'à
+aujourd'hui.
+
+**Lier depuis un article** — un lien markdown ordinaire, dans n'importe quel
+`.md` de `public/articles/` ou `public/projets/` :
+
+```markdown
+J'ai suivi ça en direct : [l'archive du Tour des Écrins](/live/archives/tour-des-ecrins).
+```
+
+> **Archive ≠ replay.** Le replay (§11) est une **carte posée dans un récit**,
+> et il ne se rend que dans une page **projet**. L'archive est l'**écran
+> complet**, à une URL stable, vers laquelle n'importe quel article peut
+> pointer. Les deux se nourrissent du même dossier ; poser l'un n'oblige à rien
+> pour l'autre.
+
+> Les replays **antérieurs** (Réunion 2025, Chartreuse/Vercors 2026) n'ont pas
+> d'`aventure.json` et n'ont donc pas de page d'archive — leurs données live ne
+> sont plus servies par le VPS, il n'y a rien à en régénérer. Aucune migration
+> rétroactive, même règle qu'au §15.
 
 Une fois l'archive en place, les **cartes du carrousel** se fabriquent depuis
 ce même dossier : `pnpm -F site carte:partage -- --slug <slug> --texte "…"`
