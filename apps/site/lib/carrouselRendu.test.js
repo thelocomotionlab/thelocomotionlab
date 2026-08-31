@@ -787,3 +787,27 @@ describe("les zones libres", () => {
     expect(ctx.boites.some((x) => x.type === "libre")).toBe(false);
   });
 });
+
+describe("la numérotation du pied", () => {
+  // « 03 / 12 » s'écrit avec `dessinerTexteEspace`, donc LETTRE PAR LETTRE : on
+  // recolle les mots de la planche pour la retrouver.
+  const texteDe = ({ mots }) => mots.map((m) => m.texte).join("");
+  const paginee = (ctx) => texteDe(ctx).includes("03 / 12");
+
+  it.each(GABARITS)("s'écrit par défaut sur « %s »", (gabarit) => {
+    expect(paginee(planche({ gabarit }, { index: 2, total: 12 }))).toBe(true);
+  });
+
+  it.each(GABARITS)("disparaît quand la planche la refuse — « %s »", (gabarit) => {
+    expect(paginee(planche({ gabarit, piedNumero: false }, { index: 2, total: 12 }))).toBe(false);
+  });
+
+  it("n'emporte QUE le décompte, pas le reste du pied", () => {
+    // On retire un décompte, pas une bande : le mot de droite reste, et c'est
+    // tout l'intérêt sur une planche qui n'appartient pas à une série.
+    const commun = { gabarit: "texte", piedDroite: "Glisse", piedCentre: "Écrins" };
+    const avec = texteDe(planche(commun, { index: 2, total: 12 }));
+    const sans = texteDe(planche({ ...commun, piedNumero: false }, { index: 2, total: 12 }));
+    expect(avec.replace("03 / 12", "")).toBe(sans);
+  });
+});
