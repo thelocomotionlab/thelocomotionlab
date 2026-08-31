@@ -869,6 +869,7 @@ function policeDe(carte, champ, polices) {
 function baseTitre(m, th, polices, carte, echelle = 1) {
   return {
     police: policeDe(carte, "policeTitre", polices),
+    polices,
     taille: Math.round(m.titre * echelle),
     graisse: 700,
     couleur: th.encre,
@@ -892,6 +893,9 @@ function baseTitre(m, th, polices, carte, echelle = 1) {
 function baseCorps(m, th, polices, carte) {
   return {
     police: policeDe(carte, "policeCorps", polices),
+    // Le TROUSSEAU voyage avec la base : c'est lui qui rend `[serif: mot]`
+    // possible au milieu d'un paragraphe (cf. `fonteDe`).
+    polices,
     taille: m.corps,
     graisse: 400,
     couleur: th.encreDouce,
@@ -2332,32 +2336,22 @@ export function ligneDeJournee(seg) {
 }
 
 /**
- * LES CHIFFRES D'UNE ÉTAPE, prêts pour le tableau de la planche.
+ * CE QU'ON MET DANS LA COLONNE D'UNE ÉTAPE, pour ne pas partir d'une page
+ * blanche : les trois chiffres que la trace connaît, en liste, les nombres en
+ * gras. Le quatrième est un RAPPEL sans valeur — la masse portée ne se déduit
+ * d'aucun fichier, et l'oublier serait pire que de la laisser en attente.
  *
- * Trois viennent de la trace, le quatrième NON — la masse portée ne se déduit
- * d'aucun fichier. Elle est là vide, pour être remplie : c'est la ligne qui dit
- * ce que la journée a vraiment coûté, et l'oublier serait pire que de la laisser
- * en attente.
+ * C'est un point de départ, pas un gabarit : tout le balisage marche ici
+ * (couleurs, polices au mot, puces, corps par ligne), et c'est bien l'intérêt
+ * d'une zone de texte plutôt que d'un tableau.
  */
-export function statsDeJournee(seg) {
-  return [
-    { label: "Distance", valeur: seg ? `${formatKm(seg.distanceKm)} km` : "", accent: false },
-    // « Dénivelé + » et « Dénivelé − » écrits en toutes lettres : les libellés
-    // sont en petites capitales de 16 px, où un signe seul ne pèse qu'un ou deux
-    // pixels et disparaît. Ce sont des textes libres — « D+ » se retape en deux
-    // secondes pour qui trouve ça trop long.
-    {
-      label: "Dénivelé positif",
-      valeur: seg?.dPlusM > 0 ? `${formatEntier(seg.dPlusM)} m` : "",
-      accent: false,
-    },
-    {
-      label: "Dénivelé négatif",
-      valeur: seg?.dMinusM > 0 ? `${formatEntier(seg.dMinusM)} m` : "",
-      accent: false,
-    },
-    { label: "Masse moyenne portée", valeur: "", accent: true },
-  ];
+export function colonneDeJournee(seg) {
+  const lignes = [];
+  if (seg?.distanceKm > 0) lignes.push(`- *${formatKm(seg.distanceKm)} km*`);
+  if (seg?.dPlusM > 0) lignes.push(`- *${formatEntier(seg.dPlusM)} m* D+`);
+  if (seg?.dMinusM > 0) lignes.push(`- *${formatEntier(seg.dMinusM)} m* D−`);
+  lignes.push("- masse portée : ");
+  return lignes.join("\n");
 }
 
 export function texteDeJournee(i, seg) {
@@ -2611,54 +2605,38 @@ function dessinerLibres(ctx, format, o) {
  *
  * Rend le HAUT du bloc : l'appelant compose du bas vers le haut.
  */
-function pasDesChiffres(m) {
-  return {
-    ligne: Math.round(m.ficheLabel * 1.7 + m.ficheValeur * 1.15),
-    ecart: Math.round(m.ficheValeur * 0.62),
+/**
+ * LA COLONNE DE L'ÉTAPE — à côté de la trace, du texte et rien d'autre.
+ *
+ * C'était un tableau de libellés et de valeurs. Il rangeait bien, et c'est le
+ * problème : chaque ligne coûtait deux corps de haut (le libellé puis la
+ * valeur) pour dire trois mots, et une planche d'étape n'a pas cette hauteur à
+ * donner. Une zone de texte tient les mêmes chiffres en deux fois moins de
+ * place, et surtout elle prend TOUT le balisage — listes, puces, gras, ambre,
+ * couleurs nommées, polices au mot, icônes, corps par ligne. On écrit ce qu'on
+ * veut dire au lieu de remplir des cases.
+ *
+ * Rend la hauteur occupée.
+ */
+function colonneDeTexte(ctx, m, th, polices, carte, boite, { ombre, zones }) {
+  const texte = carte.colonne ?? "";
+  if (!texte.trim()) return 0;
+  const base = {
+    ...baseCorps(m, th, polices, carte),
+    // Plus petit que le récit par défaut : la colonne est une marge de carnet,
+    // pas un second paragraphe. `tailleColonne` la reprend en main.
+    taille: Math.round(portee(carte.tailleColonne, m.corps * 0.8, m)),
   };
-}
-
-/** La hauteur qu'occupera le tableau — connue AVANT de dessiner, parce que la
- *  carte se partage la place avec lui. */
-function hauteurDesChiffres(m, nbLignes, colonnes) {
-  if (nbLignes === 0) return 0;
-  const rangs = Math.ceil(nbLignes / Math.max(1, colonnes));
-  const { ligne, ecart } = pasDesChiffres(m);
-  return rangs * ligne + (rangs - 1) * ecart;
-}
-
-function tableauDeChiffres(ctx, m, th, polices, carte, boite, { colonnes, ombre, zones }) {
-  const lignes = (carte.fiche ?? []).filter((l) => l && (l.label || l.valeur));
-  if (lignes.length === 0) return 0;
-  const cols = Math.max(1, Math.round(colonnes));
-  const pasX = boite.width / cols;
-  const { ligne: hLigne, ecart } = pasDesChiffres(m);
-
-  lignes.forEach((l, i) => {
-    const x = boite.x + (i % cols) * pasX;
-    const y = boite.y + Math.floor(i / cols) * (hLigne + ecart);
-
-    poserOmbre(ctx, ombre, "surtitre");
-    ctx.font = `400 ${m.ficheLabel}px ${policeDe(carte, "policeSurtitre", polices)}`;
-    ctx.fillStyle = th.encreFaible;
-    dessinerCapitales(
-      ctx,
-      morceauxCapitales(l.label ?? ""),
-      x,
-      y + m.ficheLabel,
-      m.ficheLabel,
-      0.26,
-      th.accent,
-    );
-
-    poserOmbre(ctx, ombre, "titre");
-    ctx.font = `700 ${m.ficheValeur}px ${policeDe(carte, "policeTitre", polices)}`;
-    ctx.fillStyle = l.accent ? th.accent : th.encre;
-    ctx.fillText(String(l.valeur ?? ""), x, y + hLigne);
+  poserOmbre(ctx, ombre, "corps");
+  const blocs = blocsDeTexte(ctx, texte, boite.width, base);
+  poserBlocs(ctx, blocs, boite.x, boite.y, base, {
+    align: alignementDe(carte),
+    largeur: boite.width,
+    puce: carte.puce,
   });
   sansOmbre(ctx);
-  const hauteur = hauteurDesChiffres(m, lignes.length, cols);
-  zone(zones, "fiche", boite.x, boite.y - m.ficheLabel, boite.width, hauteur + m.ficheLabel);
+  const hauteur = hauteurBlocs(blocs, base);
+  zone(zones, "colonne", boite.x, boite.y - base.taille, boite.width, hauteur + base.taille);
   return hauteur;
 }
 
@@ -2732,7 +2710,6 @@ function dessinerEtape(ctx, format, o) {
      côté, la carte redevient carrée et lisible, et le tableau tient debout dans
      la colonne de droite. `partCarte` règle le partage — à 0, la carte
      disparaît et les chiffres reprennent toute la largeur. */
-  const nbChiffres = (carte.fiche ?? []).filter((l) => l && (l.label || l.valeur)).length;
   const hautBloc = basTexte + Math.round(14 * m.k);
   const basBloc = m.piedFilet - Math.round(48 * m.k);
   const hBloc = Math.max(0, basBloc - hautBloc);
@@ -2741,8 +2718,7 @@ function dessinerEtape(ctx, format, o) {
   const avecCarte = carte.caseCarte !== false && part > 0.02 && cadre?.coords?.length > 1;
   const avecProfil = avecCarte && carte.afficherProfil !== false && cadre?.profil?.length > 1;
 
-  let colonnes = Math.max(1, Math.round(nombre(carte.casesColonnes, 1)));
-  let boiteChiffres = { x: m.pad, y: hautBloc, width: largeur };
+  let boiteColonne = { x: m.pad, y: hautBloc, width: largeur };
 
   if (avecCarte) {
     const ecart = avecProfil ? Math.round(16 * m.k) : 0;
@@ -2764,21 +2740,23 @@ function dessinerEtape(ctx, format, o) {
       }
       zone(zones, "carte", m.pad, hautBloc, cote, cote + ecart + hProfil);
       const gouttiere = Math.round(52 * m.k);
-      boiteChiffres = { x: m.pad + cote + gouttiere, y: hautBloc, width: largeur - cote - gouttiere };
-      // Une colonne étroite ne prend qu'une colonne de chiffres, quoi qu'on ait
-      // demandé : deux valeurs de 46 px n'y tiendraient pas côte à côte.
-      colonnes = Math.min(colonnes, boiteChiffres.width > largeur * 0.62 ? 2 : 1);
+      boiteColonne = { x: m.pad + cote + gouttiere, y: hautBloc, width: largeur - cote - gouttiere };
     }
   }
 
-  // Les deux colonnes partent de la même ligne. Centrer les chiffres les
-  // décalait d'une demi-ligne sur la carte, et la page perdait son aplomb —
-  // une note de labo s'aligne en haut, comme un tableau.
-  const hChiffres = hauteurDesChiffres(m, nbChiffres, colonnes);
-  boiteChiffres.y = avecCarte
-    ? hautBloc
-    : hautBloc + Math.max(0, Math.round((hBloc - hChiffres) / 2));
-  tableauDeChiffres(ctx, m, th, polices, carte, boiteChiffres, { colonnes, ombre, zones });
+  // Les deux colonnes partent de la même ligne — une note de labo s'aligne en
+  // haut. Sans vignette, le texte reprend toute la largeur et se centre sur la
+  // hauteur du bloc, sinon il flotterait tout en haut d'un grand vide.
+  boiteColonne.y = hautBloc;
+  if (!avecCarte) {
+    const base = {
+      ...baseCorps(m, th, polices, carte),
+      taille: Math.round(portee(carte.tailleColonne, m.corps * 0.8, m)),
+    };
+    const h = hauteurBlocs(blocsDeTexte(ctx, carte.colonne ?? "", largeur, base), base);
+    boiteColonne.y = hautBloc + Math.max(0, Math.round((hBloc - h) / 2));
+  }
+  colonneDeTexte(ctx, m, th, polices, carte, boiteColonne, { ombre, zones });
 
   // Le filet qui ouvre le bloc de données : la troisième règle de la page, avec
   // celle de l'en-tête et celle du pied. C'est elle qui fait la note de labo.

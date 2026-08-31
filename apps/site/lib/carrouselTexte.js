@@ -55,6 +55,7 @@ export const COULEURS_TEXTE = {
 
 export const AIDE_BALISAGE =
   "*gras*  _italique_  ~souligné~  [en ambre]  [bleu: mot]  :col: (icône)  > retrait\n" +
+  "[serif: mot]  [mono: 57,5 km]  — la police, au mot\n" +
   "- point de liste — « - :sac: » met CETTE icône en puce\n" +
   "en début de ligne :  | centré   |> à droite   |< à gauche   -- plus petit   ++ plus grand";
 
@@ -63,17 +64,34 @@ export const AIDE_BALISAGE =
  *  `:inconnu:` reste du texte plutôt que de disparaître. */
 const ICONE = /^:([a-z-]{2,24}):/;
 
-/** Le préfixe `nom:` d'un `[…]`, s'il désigne une couleur connue. */
-const PREFIXE_COULEUR = /^\s*([a-zà-ÿ]+)\s*:\s*/i;
+/**
+ * LES TROIS FAMILLES, appelables au mot : `[serif: un mot]`, `[mono: 57,5 km]`.
+ *
+ * Même crochet que les couleurs, et ce n'est pas une économie de syntaxe : les
+ * deux répondent à la même question — « ce morceau-là, autrement ». Une famille
+ * ne teinte RIEN (elle ne pose pas l'accent), et une couleur ne change pas de
+ * fonte : le préfixe dit lequel des deux on demande.
+ *
+ * Les valeurs sont les clés du trousseau que l'appelant passe dans `base` (cf.
+ * `POLICES` de lib/carrouselCartes) — jamais un nom de fonte, qui figerait la
+ * planche sur ce que CE navigateur avait sous la main.
+ */
+export const FAMILLES_TEXTE = { sans: true, serif: true, mono: true };
 
-function couleurNommee(contenu) {
-  const m = PREFIXE_COULEUR.exec(contenu);
+/** Le préfixe `nom:` d'un `[…]`, s'il désigne une couleur ou une famille connue. */
+const PREFIXE_NOMME = /^\s*([a-zà-ÿ]+)\s*:\s*/i;
+
+function prefixeNomme(contenu) {
+  const m = PREFIXE_NOMME.exec(contenu);
   if (!m) return null;
   const nom = m[1]
     .toLowerCase()
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "");
-  return nom in COULEURS_TEXTE ? { nom, reste: contenu.slice(m[0].length) } : null;
+  const reste = contenu.slice(m[0].length);
+  if (nom in COULEURS_TEXTE) return { quoi: "couleur", nom, reste };
+  if (nom in FAMILLES_TEXTE) return { quoi: "famille", nom, reste };
+  return null;
 }
 
 /** Position du marqueur fermant, en sautant les caractères échappés. */
@@ -130,13 +148,16 @@ export function analyserRiche(texte, style = {}) {
         // `[bleu: mot]` désigne une couleur nommée ; `[mot]` reste l'ambre du
         // thème. Un préfixe inconnu (`[note: …]`) n'en est pas un : il reste
         // du texte, on ne mange pas les mots de quelqu'un d'autre.
-        const nommee = marqueur.cle === "accent" ? couleurNommee(contenu) : null;
+        const nommee = marqueur.cle === "accent" ? prefixeNomme(contenu) : null;
         pousser();
+        // Une FAMILLE ne met pas en ambre : `[serif: mot]` change la fonte et
+        // rien d'autre. Sans cette garde, demander une police teindrait le mot.
+        const famille = nommee?.quoi === "famille";
         out.push(
           ...analyserRiche(nommee ? nommee.reste : contenu, {
             ...style,
-            [marqueur.cle]: true,
-            ...(nommee ? { couleur: nommee.nom } : null),
+            ...(famille ? { famille: nommee.nom } : { [marqueur.cle]: true }),
+            ...(nommee?.quoi === "couleur" ? { couleur: nommee.nom } : null),
           }),
         );
         i = fin;
@@ -156,11 +177,18 @@ export function texteNu(texte) {
     .join("");
 }
 
-/** La fonte CSS d'un morceau, à partir du style de base du bloc. */
-export function fonteDe(morceau, { police, taille, graisse = 400 }) {
+/**
+ * La fonte CSS d'un morceau, à partir du style de base du bloc.
+ *
+ * `polices` est le trousseau des trois familles ; il peut manquer (un appelant
+ * qui n'en a qu'une), et le morceau retombe alors sur la fonte du bloc. Une
+ * famille inconnue fait pareil : on ne perd pas le mot pour une balise ratée.
+ */
+export function fonteDe(morceau, { police, polices, taille, graisse = 400 }) {
   const style = morceau.italique ? "italic " : "";
   const poids = morceau.gras ? Math.max(700, graisse) : graisse;
-  return `${style}${poids} ${taille}px ${police}`;
+  const famille = (morceau.famille && polices?.[morceau.famille]) || police;
+  return `${style}${poids} ${taille}px ${famille}`;
 }
 
 /**

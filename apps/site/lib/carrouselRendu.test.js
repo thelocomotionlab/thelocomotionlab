@@ -891,33 +891,38 @@ describe("le gabarit « Étape »", () => {
         titre: "Jour 3",
         surtitre: "",
         texte: "Montée au col sous la pluie.",
-        fiche: [
-          { label: "Distance", valeur: "46,8 km" },
-          { label: "Dénivelé positif", valeur: "2 519 m" },
-          { label: "Dénivelé négatif", valeur: "1 940 m" },
-          { label: "Masse moyenne portée", valeur: "8,4 kg" },
-        ],
+        colonne: "- *46,8 km*\n- *2 519 m* D+\n- masse portée : 8,4 kg",
         ...reglage,
       },
       { trace, segments },
     );
-  const dit = (ctx, quoi) => ctx.mots.map((m) => m.texte).join("").includes(quoi);
+  // Les mots sont posés un par un (mesure et retour à la ligne) : on les recolle
+  // et on normalise les blancs pour lire la planche comme une phrase.
+  const lu = (ctx) => ctx.mots.map((m) => m.texte).join("").replace(/\s+/g, " ");
 
-  it("écrit le jour, son récit et ses chiffres", () => {
+  it("écrit le jour, son récit et sa colonne", () => {
     const ctx = etape({});
-    expect(dit(ctx, "Jour 3")).toBe(true);
-    expect(dit(ctx, "Montée au col")).toBe(true);
-    expect(dit(ctx, "46,8 km")).toBe(true);
-    expect(dit(ctx, "8,4 kg")).toBe(true);
-    // Les libellés passent en petites capitales, lettre par lettre.
-    expect(dit(ctx, "DISTANCE")).toBe(true);
+    expect(lu(ctx)).toContain("Jour 3");
+    expect(lu(ctx)).toContain("Montée");
+    expect(lu(ctx)).toContain("46,8");
+    expect(lu(ctx)).toContain("8,4");
+  });
+
+  it("met en gras ce que la colonne demande en gras", () => {
+    // La colonne prend le balisage entier : c'est ce qui la distingue du
+    // tableau de libellés qu'elle remplace.
+    const ctx = etape({});
+    const km = ctx.mots.find((m) => m.texte === "46,8");
+    const masse = ctx.mots.find((m) => m.texte === "masse");
+    expect(km.fonte).toMatch(/700/);
+    expect(masse.fonte).not.toMatch(/700/);
   });
 
   it("garde la bande de marque SUR LE PAPIER, la photo dessous", () => {
     // Sans image, la bande de photo est un aplat de repérage : il doit
     // commencer sous le filet d'en-tête, jamais par-dessus.
-    const ctx = etape({});
     // `y > 0` : le premier rectangle pleine largeur est le FOND de la planche.
+    const ctx = etape({});
     const aplat = ctx.rects.find(
       (r) => Math.round(r.w) === FORMATS.carrousel.width && r.h > 200 && r.y > 0,
     );
@@ -941,17 +946,13 @@ describe("le gabarit « Étape »", () => {
     // découpage sur le profil, dont chaque aire est une journée.
     const un = etape({ jusquA: 0 });
     const trois = etape({ jusquA: 2 });
-    // `fill` sert aux aires du profil ET aux tracés : on compte les appels.
     const aires = (ctx) => ctx.appels.filter((a) => a === "fill").length;
     expect(aires(trois)).toBeGreaterThan(aires(un));
   });
 
-  it("rend toute la largeur aux chiffres quand la vignette est à zéro", () => {
-    const avec = etape({ partCarte: 0.44 });
-    const sans = etape({ partCarte: 0 });
-    // Les VALEURS s'écrivent d'un bloc (les libellés, eux, lettre par lettre).
-    const xDistance = (ctx) => ctx.mots.find((m) => m.texte === "46,8 km")?.x ?? 0;
-    expect(xDistance(avec)).toBeGreaterThan(0);
-    expect(xDistance(sans)).toBeLessThan(xDistance(avec));
+  it("rend toute la largeur à la colonne quand la vignette est à zéro", () => {
+    const x = (ctx) => ctx.mots.find((m) => m.texte === "masse")?.x ?? 0;
+    expect(x(etape({ partCarte: 0.44 }))).toBeGreaterThan(0);
+    expect(x(etape({ partCarte: 0 }))).toBeLessThan(x(etape({ partCarte: 0.44 })));
   });
 });
