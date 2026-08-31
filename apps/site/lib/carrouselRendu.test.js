@@ -66,6 +66,9 @@ function ctxFactice() {
     "lineTo", "arc", "closePath", "fill", "stroke", "save", "restore",
     "translate", "rotate", "scale", "setTransform", "clip",
     "quadraticCurveTo", "bezierCurveTo", "ellipse", "rect",
+    // `arcTo` : les coins arrondis des étiquettes de journée. Il manquait tant
+    // qu'aucun test ne dessinait la carte AVEC ses étiquettes.
+    "arcTo", "roundRect", "setLineDash",
   ]) ctx[nom] = (...a) => appels.push(nom, ...(nom === "fill" ? [] : []));
   return ctx;
 }
@@ -809,5 +812,56 @@ describe("la numérotation du pied", () => {
     const avec = texteDe(planche(commun, { index: 2, total: 12 }));
     const sans = texteDe(planche({ ...commun, piedNumero: false }, { index: 2, total: 12 }));
     expect(avec.replace("03 / 12", "")).toBe(sans);
+  });
+});
+
+describe("la tranche de journées d'une carte", () => {
+  const segments = [0, 1, 2, 3].map((i) => ({
+    kmDebut: i * 40,
+    kmFin: (i + 1) * 40,
+    distanceKm: 40,
+    dPlusM: 2000 + i * 100,
+    coords: [
+      [6 + i * 0.1, 44.9],
+      [6.1 + i * 0.1, 45],
+    ],
+  }));
+  const trace = {
+    totalKm: 160,
+    dPlusM: 8000,
+    coords: segments.flatMap((s) => s.coords),
+    profil: Array.from({ length: 50 }, (_, i) => ({ km: (i / 49) * 160, alt: 1000 + i * 20 })),
+  };
+  const carte = (reglage) =>
+    planche({ gabarit: "carte", titre: "", surtitre: "", ...reglage }, { trace, segments });
+  /** Les étiquettes : leur texte, dans l'ordre où elles ont été posées. */
+  const etiquettes = ({ mots }) => mots.filter((m) => /^J\d$/.test(m.texte)).map((m) => m.texte);
+
+  it("les montre toutes sans réglage", () => {
+    expect(etiquettes(carte({}))).toEqual(["J1", "J2", "J3", "J4"]);
+  });
+
+  it("s'arrête à `jusquA` — l'avancement", () => {
+    expect(etiquettes(carte({ jusquA: 1 }))).toEqual(["J1", "J2"]);
+  });
+
+  it("n'en montre QU'UNE quand les deux bornes se touchent", () => {
+    expect(etiquettes(carte({ depuis: 2, jusquA: 2 }))).toEqual(["J3"]);
+  });
+
+  it("rend à l'atelier le RANG D'ORIGINE de l'étiquette, pas sa place dans la tranche", () => {
+    // Sans ça, déplacer l'étiquette d'une planche « J3 seule » écrirait dans
+    // celle de J1 : les étiquettes sont rangées par position dans la carte.
+    expect(carte({ depuis: 2, jusquA: 2 }).boites.map((b) => b.index)).toEqual([2]);
+    expect(carte({ jusquA: 2 }).boites.map((b) => b.index)).toEqual([0, 1, 2]);
+  });
+
+  it("lit la couleur et le texte de la journée à son rang", () => {
+    const ctx = carte({
+      depuis: 2,
+      jusquA: 2,
+      etiquettes: [{}, {}, { texte: "Vallouise" }, {}],
+    });
+    expect(ctx.mots.some((m) => m.texte === "Vallouise")).toBe(true);
   });
 });
