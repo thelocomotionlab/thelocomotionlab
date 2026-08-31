@@ -62,6 +62,7 @@ import {
   chargerFond,
   dessinerCartePartage,
   dureeCourte,
+  ligneDeJournee,
   ligneFactuelle,
   texteDeJournee,
   vueDeLaCarte,
@@ -90,6 +91,7 @@ import {
 import { chargerImage } from "@/lib/imageFile";
 import { chargerMarqueTeintee } from "@/lib/marque";
 import { liveConfig } from "@/lib/liveConfig";
+import CoqueAtelier from "@/components/outils/CoqueAtelier";
 import {
   AIDE,
   BOUTON_DISCRET,
@@ -274,6 +276,10 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0", style = 
     /** auto | toujours | jamais. « toujours » par défaut : la flèche de swipe
      *  doit être là, y compris sur un carrousel encore à une seule planche. */
     piedFleche: gabarit === "cloture" ? "jamais" : "toujours",
+    /** « 03 / 12 » en bas à gauche. Vrai par défaut — c'est la signature d'un
+     *  carrousel. On l'éteint planche par planche quand le lot n'est pas une
+     *  série : trois photos entre deux journées ne se numérotent pas. */
+    piedNumero: true,
     /** gauche | centre | droite. La clôture est centrée d'office : c'est un
      *  bloc symétrique autour du logo. */
     alignement: gabarit === "cloture" ? "centre" : "gauche",
@@ -428,6 +434,7 @@ export const CHAMPS_DE_STYLE = [
   "marque",
   "enteteAccent",
   "piedFleche",
+  "piedNumero",
   "filetEntete",
   "filetPied",
   "alignement",
@@ -522,10 +529,13 @@ export default function CarrouselAtelier() {
   const canvasRef = useRef(null);
   const boitesRef = useRef([]);
   const zonesRef = useRef([]);
-  /** Le panneau des réglages : le clic dans la planche y cherche SON champ,
-   *  pas le premier du document — les deux ateliers du studio sont montés
-   *  ensemble, et un `id` n'est unique que par accident. */
-  const panneauRef = useRef(null);
+  /** La poignée de la coque : `{ ouvrir, panneau }` (cf. CoqueAtelier).
+   *  `ouvrir` relève la feuille des réglages — un clic dans la planche ouvre le
+   *  bon réglage, encore faut-il qu'on le voie. `panneau` rend l'élément qui
+   *  défile : le clic y cherche SON champ, pas le premier du document — les
+   *  deux ateliers du studio sont montés ensemble, et un `id` n'est unique que
+   *  par accident. */
+  const feuilleRef = useRef(null);
   const glisseRef = useRef(null);
   /** Un déplacement d'étiquette finit par un `click` : sans ce drapeau, lâcher
    *  une étiquette ouvrirait le panneau de ce qu'il y a dessous. */
@@ -928,19 +938,70 @@ export default function CarrouselAtelier() {
     [active, segments],
   );
 
-  // La nouvelle planche devient l'active : on vient de la créer, c'est elle
-  // qu'on veut voir. Son index est la longueur ACTUELLE de la liste.
+  /**
+   * AJOUTER UNE PLANCHE — et choisir OÙ.
+   *
+   * Par défaut : juste APRÈS celle qu'on regarde. C'est ce qu'on veut presque
+   * toujours, parce qu'un carrousel se compose dans l'ordre où il se raconte —
+   * la planche « Jour 2 » se pose derrière les photos du jour 1, pas au bout du
+   * lot. Ajouter systématiquement à la fin obligeait à la remonter à la main sur
+   * toute la bande, geste par geste, et c'est exactement ce qui décourage
+   * d'intercaler quoi que ce soit.
+   *
+   * La nouvelle planche devient l'active : on vient de la créer, c'est elle
+   * qu'on veut voir. Son style est celui de la planche courante — on continue
+   * sur la même mise en forme au lieu de repartir de la charte à chaque ajout.
+   */
   const ajouterCarte = useCallback(
-    (gabarit) => {
-      // Le style de la planche courante est repris : on continue sur la même
-      // mise en forme au lieu de repartir de la charte à chaque ajout.
-      setCartes((cs) => [
-        ...cs,
-        carteNeuve(gabarit, trace, segments, bilan, idNeuf(), styleDe(cs[active])),
-      ]);
-      setActive(cartes.length);
+    (gabarit, position = null) => {
+      const ou = Math.min(Math.max(position ?? active + 1, 0), cartes.length);
+      setCartes((cs) => {
+        const neuve = carteNeuve(gabarit, trace, segments, bilan, idNeuf(), styleDe(cs[active]));
+        return [...cs.slice(0, ou), neuve, ...cs.slice(ou)];
+      });
+      setActive(ou);
     },
     [trace, segments, bilan, cartes.length, active, idNeuf],
+  );
+
+  /**
+   * LES PLANCHES DE JOURNÉE, À LA DEMANDE.
+   *
+   * Une planche « Jour 3 » se fabriquait jusqu'ici à la main : dupliquer la
+   * carte, changer « Afficher » dans l'onglet Trace, réécrire le titre, corriger
+   * les chiffres — quatre gestes, à refaire pour chaque jour, et à refaire
+   * encore si on ajoute une journée. D'où ce raccourci : un appui, une planche
+   * complète, posée derrière celle qu'on regarde.
+   *
+   * Elle montre l'AVANCEMENT (`jusquA`) : l'itinéraire entier reste en sourdine,
+   * les journées acquises sont en couleur, et le cadre ne bouge pas d'une
+   * planche à l'autre puisqu'il vient de la trace complète. La série se lit donc
+   * comme une progression, même quand des photos s'intercalent entre deux
+   * planches — et c'est justement pour ce cas qu'elle existe.
+   *
+   * Les chiffres sont ceux de LA JOURNÉE, pas de l'aventure entière : sur une
+   * planche « Jour 3 », annoncer les 188 km du tour est le mauvais chiffre.
+   */
+  const ajouterJournees = useCallback(
+    (indices) => {
+      if (!trace || indices.length === 0) return;
+      const ou = active + 1;
+      setCartes((cs) => {
+        const style = styleDe(cs[active]);
+        const neuves = indices.map((i) => ({
+          ...carteNeuve("carte", trace, segments, bilan, idNeuf(), style),
+          jusquA: i,
+          surtitre: trace.nom ?? liveConfig.aventure.nom,
+          titre: `Jour ${i + 1}`,
+          pied: ligneDeJournee(segments[i]),
+        }));
+        return [...cs.slice(0, ou), ...neuves, ...cs.slice(ou)];
+      });
+      // La DERNIÈRE des nouvelles : après « toutes les journées », c'est la fin
+      // de la série qu'on veut voir, pas son début.
+      setActive(ou + indices.length - 1);
+    },
+    [trace, segments, bilan, active, idNeuf],
   );
 
   /** Dupliquer : le geste le plus fréquent d'une série (J1, J1+J2, J1+J2+J3…). */
@@ -1287,11 +1348,12 @@ export default function CarrouselAtelier() {
         const regle = ZONES[z.champ];
         if (!regle) return;
         setOnglet(regle.onglet);
+        feuilleRef.current?.ouvrir();
         const id = regle.champ(z);
         // Deux images : la première monte le panneau, la seconde le trouve.
         requestAnimationFrame(() =>
           requestAnimationFrame(() => {
-            const el = panneauRef.current?.querySelector(`#${CSS.escape(id)}`);
+            const el = feuilleRef.current?.panneau()?.querySelector(`#${CSS.escape(id)}`);
             if (!el) return;
             el.scrollIntoView({ block: "center", behavior: "smooth" });
             el.focus({ preventScroll: true });
@@ -1355,225 +1417,218 @@ export default function CarrouselAtelier() {
   const aPhoto = AVEC_PHOTO.includes(carte?.gabarit);
   const gabarit = GABARITS.find((g) => g.cle === carte?.gabarit);
 
-  return (
-    <div
-      className={
-        // La hauteur du poste de travail : tout l'écran sous la barre du studio.
-        // Rien ne défile sauf le panneau — c'est ce qui fait qu'on voit toujours
-        // la planche pendant qu'on la règle.
-        // Enfant direct de la coque du studio (display:contents) : il prend
-        // toute la hauteur qui reste sous la barre. Sur un téléphone, la page
-        // défile et c'est l'aperçu qui se colle.
-        "flex flex-col bg-brand-paper/35 lg:min-h-0 lg:flex-1 lg:overflow-hidden"
-      }
-    >
-      {/* ---------------------------------------------------------- barre haute */}
-      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-brand-field/70 bg-brand-paper/70 px-3 py-2">
-        <input
-          type="text"
-          value={nomProjet}
-          placeholder="carrousel sans nom"
-          onChange={(e) => setNomProjet(e.target.value)}
-          className="min-w-0 flex-1 basis-40 rounded-lg border border-transparent bg-transparent px-2 py-1.5 font-heading text-[15px] font-medium text-brand-text hover:border-brand-field focus:border-brand-primary-dark focus:outline-none"
-          aria-label="Nom du projet"
+  /**
+   * LE FORMAT ET LE THÈME — deux réglages du LOT, pas d'une planche.
+   *
+   * Le même fragment sert deux fois : dans la barre haute sur grand écran, et
+   * en tête du panneau « Projet » sur téléphone, où la barre n'a plus la place.
+   * Écrit une fois : deux copies auraient divergé au premier format ajouté.
+   */
+  const reglagesDuLot = (
+    <>
+      <select
+        value={formatCle}
+        onChange={(e) => setFormatCle(e.target.value)}
+        className="w-full rounded-lg border border-brand-field bg-brand-paper px-2 py-2 font-heading text-[16px] text-brand-text focus:border-brand-primary-dark focus:outline-none lg:w-auto lg:py-1.5 lg:text-[13px]"
+        aria-label="Format"
+      >
+        {Object.values(FORMATS).map((f) => (
+          <option key={f.cle} value={f.cle}>
+            {f.label}
+          </option>
+        ))}
+      </select>
+      <div className="flex w-full rounded-full border border-brand-field bg-brand-paper p-0.5 lg:w-auto">
+        {Object.values(THEMES).map((t) => (
+          <button
+            key={t.cle}
+            type="button"
+            onClick={() => setThemeCle(t.cle)}
+            aria-pressed={themeCle === t.cle}
+            className={`flex-1 rounded-full px-3 py-1.5 font-heading text-[14px] transition-colors motion-reduce:transition-none lg:flex-none lg:py-1 lg:text-[13px] ${
+              themeCle === t.cle
+                ? "bg-brand-deep text-brand-bg"
+                : "text-brand-text/60 hover:text-brand-text"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+
+  /**
+   * LES OUTILS DE LA SCÈNE : le zoom, et la bande des vignettes qu'on replie.
+   *
+   * Écrits une fois, montés deux : sur téléphone la coque les pose dans la barre
+   * de la feuille (une rangée qui fait aussi poignée — c'est autant de rendu à
+   * la planche), en grand écran ils reprennent leur place sous l'aperçu.
+   */
+  const outilsDeScene = (
+    <>
+      <Zoom valeur={zoom} onChange={setZoom} mesurer={zoomAffiche} />
+      <button
+        type="button"
+        onClick={() => setBandeOuverte((v) => !v)}
+        aria-expanded={bandeOuverte}
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-brand-field bg-brand-paper px-2.5 py-1.5 font-heading text-[12px] text-brand-text/60 hover:text-brand-text"
+      >
+        <ChevronDown
+          size={14}
+          aria-hidden
+          className={`transition-transform motion-reduce:transition-none ${
+            bandeOuverte ? "" : "-rotate-180"
+          }`}
         />
-        <select
-          value={formatCle}
-          onChange={(e) => setFormatCle(e.target.value)}
-          className="rounded-lg border border-brand-field bg-brand-paper px-2 py-1.5 font-heading text-[13px] text-brand-text focus:border-brand-primary-dark focus:outline-none"
-          aria-label="Format"
-        >
-          {Object.values(FORMATS).map((f) => (
-            <option key={f.cle} value={f.cle}>
-              {f.label}
-            </option>
-          ))}
-        </select>
-        <div className="flex rounded-full border border-brand-field bg-brand-paper p-0.5">
-          {Object.values(THEMES).map((t) => (
-            <button
-              key={t.cle}
-              type="button"
-              onClick={() => setThemeCle(t.cle)}
-              aria-pressed={themeCle === t.cle}
-              className={`rounded-full px-3 py-1 font-heading text-[13px] transition-colors motion-reduce:transition-none ${
-                themeCle === t.cle
-                  ? "bg-brand-deep text-brand-bg"
-                  : "text-brand-text/60 hover:text-brand-text"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={enregistrer}
-          disabled={!nomProjet.trim() || etat.occupe}
-          className={BOUTON_SECOND}
-        >
-          <Save size={15} aria-hidden />
-          <span className="hidden sm:inline">Enregistrer</span>
-        </button>
-        <button
-          type="button"
-          className={BOUTON_PRINCIPAL}
-          disabled={etat.occupe}
-          onClick={() => exporter(cartes.map((_, i) => i))}
-        >
-          {etat.occupe ? (
-            <Loader2 size={16} className="animate-spin" aria-hidden />
-          ) : (
-            <Download size={16} aria-hidden />
-          )}
-          Exporter ({cartes.length})
-        </button>
-      </header>
+        <span>{cartes.length}</span>
+        <span className="hidden sm:inline">planche{cartes.length > 1 ? "s" : ""}</span>
+      </button>
+    </>
+  );
 
-      {etat.message && (
-        <p className="shrink-0 border-b border-brand-field/60 bg-brand-primary/12 px-4 py-2 font-heading text-[13px] text-brand-primary-dark">
-          {etat.message}
-        </p>
-      )}
+  // LA BARRE HAUTE tient sur UNE ligne sur téléphone. Elle en prenait trois —
+  // nom, format, thème, enregistrer, exporter — et les trois étaient prises sur
+  // la planche. Ce qui n'y tient plus n'est pas perdu : le format, le thème et
+  // l'enregistrement ouvrent le panneau « Projet », qui est déjà l'endroit où
+  // vivent le nom du projet et les sauvegardes.
+  return (
+    <CoqueAtelier
+      message={etat.message}
+      onglets={ONGLETS}
+      onglet={onglet}
+      setOnglet={setOnglet}
+      feuilleRef={feuilleRef}
+      outils={outilsDeScene}
+      barre={
+        <>
+          <input
+            type="text"
+            value={nomProjet}
+            placeholder="carrousel sans nom"
+            onChange={(e) => setNomProjet(e.target.value)}
+            className="min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-2 py-1.5 font-heading text-[16px] font-medium text-brand-text hover:border-brand-field focus:border-brand-primary-dark focus:outline-none lg:basis-40 lg:text-[15px]"
+            aria-label="Nom du projet"
+          />
+          <div className="hidden items-center gap-2 lg:flex">{reglagesDuLot}</div>
+          <button
+            type="button"
+            onClick={enregistrer}
+            disabled={!nomProjet.trim() || etat.occupe}
+            className={`${BOUTON_SECOND} max-lg:hidden`}
+          >
+            <Save size={15} aria-hidden />
+            Enregistrer
+          </button>
+          <button
+            type="button"
+            className={`${BOUTON_PRINCIPAL} shrink-0 max-lg:px-4 max-lg:py-2`}
+            disabled={etat.occupe}
+            onClick={() => exporter(cartes.map((_, i) => i))}
+          >
+            {etat.occupe ? (
+              <Loader2 size={16} className="animate-spin" aria-hidden />
+            ) : (
+              <Download size={16} aria-hidden />
+            )}
+            Exporter ({cartes.length})
+          </button>
+        </>
+      }
+      scene={
+        <>
+          {/* Le plan de travail : un aplat neutre derrière la planche, pour
+              qu'un fond clair ne se confonde pas avec la page. Il DÉFILE dès
+              qu'on zoome — sinon agrandir couperait la planche au lieu de
+              permettre d'en regarder un coin. */}
+          <div
+            onWheel={molette}
+            className="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-brand-bg/50 p-2 lg:m-3 lg:mb-0 lg:rounded-xl lg:bg-brand-text/5 lg:p-4"
+          >
+            {carte && (
+              <canvas
+                ref={canvasRef}
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+                onPointerCancel={onPointerUp}
+                onClick={onClick}
+                style={zoom == null ? undefined : { width: `${format.width * zoom}px` }}
+                className={
+                  // `max-h-full` et non `max-h-[40vh]` : la scène a maintenant
+                  // une hauteur à elle, et la planche doit remplir CE qui reste
+                  // — elle grandit quand on referme la feuille des réglages.
+                  zoom == null
+                    ? "block h-auto max-h-full w-auto max-w-full cursor-pointer touch-none rounded-lg bg-brand-text/10 shadow-card lg:rounded-xl"
+                    : "block h-auto max-w-none shrink-0 cursor-pointer touch-none rounded-lg bg-brand-text/10 shadow-card lg:rounded-xl"
+                }
+              />
+            )}
+          </div>
 
-      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        {/* ------------------------------------------------------------- scène */}
-        {/* En grand écran elle ne défile pas : elle occupe la place qui reste.
-            Sur un téléphone, la page défile — la planche se colle alors sous la
-            barre du studio pour qu'on la voie pendant qu'on règle. */}
-        {/* `contents` en petit écran, et il en faut : gardée, cette boîte
-            n'enveloppe QUE la planche — le collage n'a alors aucune course et
-            la planche défile hors de l'écran, exactement l'inverse du but sur
-            un téléphone. En `contents`, ce qui colle devient un enfant direct
-            de la colonne haute (planche + panneau) et retrouve sa course. */}
-        <section className="contents lg:order-2 lg:flex lg:min-h-0 lg:min-w-0 lg:flex-1 lg:flex-col">
-          <div className="order-1 sticky top-[var(--apercu-top,84px)] z-20 flex min-h-0 flex-col gap-3 bg-brand-bg/95 px-3 py-3 backdrop-blur lg:static lg:order-none lg:flex-1 lg:bg-transparent lg:backdrop-blur-none">
-            {/* Le plan de travail : un aplat neutre derrière la planche, pour
-                qu'un fond clair ne se confonde pas avec la page. Il DÉFILE dès
-                qu'on zoome — sinon agrandir couperait la planche au lieu de
-                permettre d'en regarder un coin. */}
-            <div
-              onWheel={molette}
-              className="flex min-h-0 flex-1 items-center justify-center overflow-auto lg:rounded-xl lg:bg-brand-text/5 lg:p-4"
-            >
-              {carte && (
-                <canvas
-                  ref={canvasRef}
-                  onPointerDown={onPointerDown}
-                  onPointerMove={onPointerMove}
-                  onPointerUp={onPointerUp}
-                  onPointerCancel={onPointerUp}
-                  onClick={onClick}
-                  style={zoom == null ? undefined : { width: `${format.width * zoom}px` }}
-                  className={
-                    zoom == null
-                      ? "block h-auto max-h-[40vh] w-auto max-w-full cursor-pointer touch-none rounded-xl bg-brand-text/10 shadow-card lg:max-h-full"
-                      : "block h-auto max-w-none shrink-0 cursor-pointer touch-none rounded-xl bg-brand-text/10 shadow-card"
-                  }
-                />
-              )}
-            </div>
-            <div className="flex shrink-0 items-center justify-center gap-2">
-              <Zoom valeur={zoom} onChange={setZoom} mesurer={zoomAffiche} />
-            </div>
-            <p className={`${AIDE} shrink-0 text-center`}>
-              Clique dans la planche pour ouvrir le réglage correspondant.
-              {carte?.libres?.length > 0 && " Attrape une zone libre pour la placer."}
-              {carte?.gabarit === "carte" &&
-                segments.length > 0 &&
-                " Attrape une étiquette pour la déplacer."}
-            </p>
+          <div className="hidden shrink-0 items-center justify-center gap-2 px-3 py-1.5 lg:flex">
+            {outilsDeScene}
+          </div>
 
-            {/* --------------------------------------- la bande des vignettes */}
-            <div className="shrink-0 border-t border-brand-field/60 pt-2">
+          <p className={`${AIDE} hidden shrink-0 px-3 pb-1 text-center lg:block`}>
+            Clique dans la planche pour ouvrir le réglage correspondant.
+            {carte?.libres?.length > 0 && " Attrape une zone libre pour la placer."}
+            {carte?.gabarit === "carte" &&
+              segments.length > 0 &&
+              " Attrape une étiquette pour la déplacer."}
+          </p>
+
+          {/* --------------------------------------- la bande des vignettes */}
+          {/* `hidden` plutôt qu'un démontage : replier la bande ne doit pas
+              redessiner N vignettes ni perdre où on en était dans le défilé. */}
+          <div
+            className={`shrink-0 border-t border-brand-field/60 px-2 py-1 lg:py-1.5 ${
+              bandeOuverte ? "" : "hidden"
+            }`}
+          >
+            <div className="flex items-end gap-2 overflow-x-auto pb-1">
+              {cartes.map((c, i) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  data-vignette={i}
+                  onPointerDown={(e) => debutGlissement(e, i)}
+                  onPointerMove={pendantGlissement}
+                  onPointerUp={() => finDuGeste(i)}
+                  onPointerCancel={finGlissement}
+                  aria-current={i === active ? "true" : undefined}
+                  className={`w-[42px] shrink-0 cursor-grab rounded-md border p-0.5 text-left transition-colors select-none motion-reduce:transition-none lg:w-[76px] lg:rounded-lg lg:p-1 ${
+                    glissee === i ? "cursor-grabbing opacity-60 ring-2 ring-brand-primary-dark" : ""
+                  } ${
+                    i === active
+                      ? "border-brand-primary-dark bg-brand-primary/20"
+                      : "border-brand-field bg-brand-paper hover:border-brand-primary/60"
+                  }`}
+                >
+                  <Vignette carte={c} options={options} format={format} index={i} bilan={bilan} />
+                  {/* L'étiquette ne survit pas au doigt : à 9 px elle ne se
+                      lisait plus, et sa rangée coûtait autant que la vignette.
+                      L'anneau dit laquelle est active, la position dit laquelle
+                      est laquelle. */}
+                  <span className="mt-1 hidden truncate font-heading text-[10px] leading-tight text-brand-text/55 lg:block">
+                    {i + 1}. {GABARITS.find((g) => g.cle === c.gabarit)?.label}
+                  </span>
+                </button>
+              ))}
               <button
                 type="button"
-                onClick={() => setBandeOuverte((v) => !v)}
-                aria-expanded={bandeOuverte}
-                className="mb-1 flex w-full items-center justify-center gap-1.5 rounded-lg py-0.5 font-heading text-[11px] text-brand-text/50 hover:bg-brand-primary/10 hover:text-brand-text"
+                onClick={() => ajouterCarte(carte?.gabarit ?? "texte", cartes.length)}
+                className="flex h-[54px] w-[42px] shrink-0 flex-col items-center justify-center gap-1 rounded-md border border-dashed border-brand-field text-brand-text/50 hover:border-brand-primary-dark hover:text-brand-text lg:h-[95px] lg:w-[76px] lg:rounded-lg"
+                aria-label="Ajouter une planche à la fin"
               >
-                <ChevronDown
-                  size={14}
-                  aria-hidden
-                  className={`transition-transform motion-reduce:transition-none ${
-                    bandeOuverte ? "" : "-rotate-180"
-                  }`}
-                />
-                {cartes.length} planche{cartes.length > 1 ? "s" : ""}
-                {cartes.length > 1 && (
-                  <span className="hidden opacity-70 sm:inline">— glisse pour réordonner</span>
-                )}
+                <Plus size={18} aria-hidden />
+                <span className="hidden font-heading text-[11px] lg:inline">Ajouter</span>
               </button>
-              <div className={`flex items-end gap-2 overflow-x-auto pb-1 ${bandeOuverte ? "" : "hidden"}`}>
-                {cartes.map((c, i) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    data-vignette={i}
-                    onPointerDown={(e) => debutGlissement(e, i)}
-                    onPointerMove={pendantGlissement}
-                    onPointerUp={() => finDuGeste(i)}
-                    onPointerCancel={finGlissement}
-                    aria-current={i === active ? "true" : undefined}
-                    className={`w-[76px] shrink-0 cursor-grab rounded-lg border p-1 text-left transition-colors select-none motion-reduce:transition-none ${
-                      glissee === i ? "cursor-grabbing opacity-60 ring-2 ring-brand-primary-dark" : ""
-                    } ${
-                      i === active
-                        ? "border-brand-primary-dark bg-brand-primary/20"
-                        : "border-brand-field bg-brand-paper hover:border-brand-primary/60"
-                    }`}
-                  >
-                    <Vignette
-                      carte={c}
-                      options={options}
-                      format={format}
-                      index={i}
-                      bilan={bilan}
-                    />
-                    <span className="mt-1 block truncate font-heading text-[10px] leading-tight text-brand-text/55">
-                      {i + 1}. {GABARITS.find((g) => g.cle === c.gabarit)?.label}
-                    </span>
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => ajouterCarte(carte?.gabarit ?? "texte")}
-                  className="flex h-[95px] w-[76px] shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-brand-field text-brand-text/50 hover:border-brand-primary-dark hover:text-brand-text"
-                  aria-label="Ajouter une planche"
-                >
-                  <Plus size={18} aria-hidden />
-                  <span className="font-heading text-[11px]">Ajouter</span>
-                </button>
-              </div>
             </div>
           </div>
-        </section>
-
-        {/* --------------------------------------------------- rail + panneau */}
-        <div className="order-2 flex min-h-0 shrink-0 flex-col lg:order-1 lg:w-[404px] lg:flex-row lg:border-r lg:border-brand-field/70">
-          <nav
-            aria-label="Réglages"
-            className="flex shrink-0 gap-1 overflow-x-auto border-y border-brand-field/70 bg-brand-paper/60 px-2 py-1.5 lg:w-[80px] lg:flex-col lg:overflow-x-visible lg:overflow-y-auto lg:border-y-0 lg:border-r lg:py-2"
-          >
-            {ONGLETS.map(({ cle, label, Icone }) => (
-              <button
-                key={cle}
-                type="button"
-                onClick={() => setOnglet(cle)}
-                aria-current={onglet === cle ? "page" : undefined}
-                className={`flex shrink-0 flex-col items-center gap-1 rounded-xl px-3 py-2 font-heading text-[11px] transition-colors motion-reduce:transition-none lg:w-full ${
-                  onglet === cle
-                    ? "bg-brand-primary/25 text-brand-text"
-                    : "text-brand-text/55 hover:bg-brand-primary/10 hover:text-brand-text"
-                }`}
-              >
-                <Icone size={19} aria-hidden />
-                {label}
-              </button>
-            ))}
-          </nav>
-
-          <div ref={panneauRef} className="min-h-0 flex-1 overflow-y-auto lg:w-[324px]">
+        </>
+      }
+    >
             {/* ==================================================== PLANCHE */}
             {onglet === "planche" && (
               <>
@@ -1639,7 +1694,10 @@ export default function CarrouselAtelier() {
                   </div>
                 </Groupe>
 
-                <Groupe titre="Ajouter une planche">
+                <Groupe
+                  titre="Ajouter une planche"
+                  aide={`Elle se pose EN ${active + 2}ᵉ position, juste derrière celle-ci — un carrousel se compose dans l'ordre où il se raconte. Le « + » de la bande, lui, ajoute toujours à la fin.`}
+                >
                   <div className="flex flex-wrap gap-1.5">
                     {GABARITS.map((g) => (
                       <button
@@ -1654,6 +1712,41 @@ export default function CarrouselAtelier() {
                     ))}
                   </div>
                 </Groupe>
+
+                {/* LES PLANCHES DE JOURNÉE : le raccourci du carrousel d'après
+                    l'aventure. Ici et pas dans l'onglet « Trace » — c'est un
+                    geste de composition (ajouter des planches), pas un réglage
+                    de la trace, et c'est ici qu'on vient quand on cherche à
+                    ajouter quelque chose. */}
+                {trace && segments.length > 1 && (
+                  <Groupe
+                    titre="Planches de journée"
+                    aide="Une planche par appui : la carte à l'avancement de ce jour-là, son titre, ses chiffres à elle. Le cadre ne bouge pas d'une planche à l'autre, la série se lit comme une progression — même avec des photos intercalées."
+                  >
+                    <div className="mb-2 flex flex-wrap gap-1.5">
+                      {segments.map((sg, i) => (
+                        <button
+                          key={`journee-${sg.kmDebut}`}
+                          type="button"
+                          onClick={() => ajouterJournees([i])}
+                          className={BOUTON_DISCRET}
+                          title={`Jour ${i + 1} — ${sg.distanceKm.toFixed(1)} km, ${sg.dPlusM} m D+`}
+                        >
+                          <Plus size={13} aria-hidden />
+                          Jour {i + 1}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => ajouterJournees(segments.map((_, i) => i))}
+                      className={`${BOUTON_SECOND} w-full`}
+                    >
+                      <Route size={15} aria-hidden />
+                      {`Les ${segments.length} journées d’un coup`}
+                    </button>
+                  </Groupe>
+                )}
 
                 <Groupe
                   titre="Exporter"
@@ -1734,11 +1827,11 @@ export default function CarrouselAtelier() {
                 {["carte", "photo"].includes(carte?.gabarit) && (
                   <Groupe
                     titre="Ligne de chiffres"
-                    aide="Sous le titre. Vide sur une carte, elle affiche ce que la trace sait dire ; écris ce que tu veux à la place, ou un espace pour la faire disparaître. Le balisage marche ici aussi."
+                    aide="Sous le titre. Vide sur une carte, elle affiche ce que la trace sait dire ; écris ce que tu veux à la place, ou un espace pour la faire disparaître. Le balisage marche ici aussi, et un retour à la ligne aussi — c'est là que tient la description d'une journée."
                   >
-                    <input
+                    <textarea
                       id="ligne-chiffres"
-                      type="text"
+                      rows={2}
                       value={carte.pied ?? ""}
                       placeholder={
                         carte.gabarit === "carte" && trace
@@ -1750,7 +1843,7 @@ export default function CarrouselAtelier() {
                         // silence : c'est ce qu'on attend d'un placeholder.
                         majCarte({ pied: e.target.value === "" ? null : e.target.value })
                       }
-                      className={CHAMP}
+                      className={`${CHAMP} resize-y`}
                       aria-label="Ligne de chiffres"
                     />
                     {carte.pied != null && (
@@ -2289,6 +2382,19 @@ export default function CarrouselAtelier() {
                 )}
 
                 <Groupe titre="Pied de page">
+                  <Case
+                    classe="mb-3"
+                    label={
+                      <>
+                        Numéroter cette planche{" "}
+                        <span className="text-brand-text/45">
+                          ({String(active + 1).padStart(2, "0")} / {String(cartes.length).padStart(2, "0")})
+                        </span>
+                      </>
+                    }
+                    coche={carte?.piedNumero !== false}
+                    onChange={(v) => majCarte({ piedNumero: v })}
+                  />
                   <label className={LEGENDE} htmlFor="fleche">
                     Flèche de swipe
                   </label>
@@ -2652,6 +2758,10 @@ export default function CarrouselAtelier() {
                         {segments
                           .map((s, i) => `J${i + 1} ${s.distanceKm.toFixed(1)} km / ${s.dPlusM} m D+`)
                           .join("  ·  ")}
+                      </p>
+                      <p className={`${AIDE} mt-2`}>
+                        Une planche par journée s&rsquo;ajoute en un appui depuis
+                        l&rsquo;onglet « Planche ».
                       </p>
                     </Groupe>
                   </>
@@ -3163,6 +3273,14 @@ export default function CarrouselAtelier() {
             {/* ====================================================== PROJET */}
             {onglet === "projet" && (
               <>
+                {/* Sur téléphone, la barre haute n'a la place que du nom et de
+                    l'export : le format et le thème du lot vivent ici. */}
+                <div className="lg:hidden">
+                  <Groupe titre="Format et thème">
+                    <div className="flex flex-col gap-2">{reglagesDuLot}</div>
+                  </Groupe>
+                </div>
+
                 <Groupe
                   titre="Projets"
                   aide="Le travail en cours est gardé tout seul sur cet appareil — fermer l'onglet ne coûte rien. Un projet NOMMÉ, lui, ne bouge que quand tu l'enregistres."
@@ -3241,9 +3359,6 @@ export default function CarrouselAtelier() {
                 </Groupe>
               </>
             )}
-          </div>
-        </div>
-      </div>
-    </div>
+    </CoqueAtelier>
   );
 }

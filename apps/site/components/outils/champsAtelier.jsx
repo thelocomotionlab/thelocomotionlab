@@ -20,8 +20,17 @@ import { Maximize2, Minus, Plus, RotateCcw } from "lucide-react";
 import { CLES_ICONES } from "@/lib/carrouselIcones";
 import { iconeDuRepere } from "@/lib/liveWaypointIcons";
 
+/**
+ * `text-[16px]` sous `lg`, et ce n'est PAS une question de lisibilité.
+ *
+ * Safari iOS zoome la page dès qu'on donne le focus à un champ dont le texte
+ * fait moins de 16 px — et le zoom ne se défait pas tout seul. Chaque frappe
+ * dans l'atelier décadrait donc l'écran, sur l'appareil où l'on s'en sert le
+ * plus. Le corps de 15 px, lui, reste sur grand écran : c'est la densité voulue
+ * pour les panneaux.
+ */
 export const CHAMP =
-  "w-full rounded-xl border border-brand-field bg-brand-paper px-3 py-2 font-heading text-[15px] text-brand-text focus:border-brand-primary-dark focus:outline-none";
+  "w-full rounded-xl border border-brand-field bg-brand-paper px-3 py-2 font-heading text-[16px] text-brand-text focus:border-brand-primary-dark focus:outline-none lg:text-[15px]";
 export const BOUTON_PRINCIPAL =
   "inline-flex items-center justify-center gap-2 rounded-full bg-brand-deep px-5 py-2.5 font-heading text-[14px] font-medium text-brand-bg transition-colors hover:bg-brand-deep-dark disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none";
 export const BOUTON_SECOND =
@@ -31,7 +40,7 @@ export const BOUTON_DISCRET =
 export const LEGENDE =
   "mb-1 block font-heading text-[13px] font-medium text-brand-text/70";
 export const CASE =
-  "flex items-center gap-2 font-heading text-[14px] text-brand-text/75";
+  "flex min-h-9 items-center gap-2 font-heading text-[14px] text-brand-text/75";
 export const AIDE = "font-heading text-[12px] leading-snug text-brand-text/50";
 
 /**
@@ -253,7 +262,7 @@ export function Choix({ label, valeur, options, onChange }) {
             type="button"
             onClick={() => onChange(o.cle)}
             aria-pressed={valeur === o.cle}
-            className={`rounded-full border px-3 py-1.5 font-heading text-[13px] transition-colors motion-reduce:transition-none ${
+            className={`min-h-9 rounded-full border px-3.5 py-1.5 font-heading text-[14px] transition-colors motion-reduce:transition-none lg:min-h-0 lg:px-3 lg:text-[13px] ${
               valeur === o.cle
                 ? "border-brand-primary-dark bg-brand-primary/25 text-brand-text"
                 : "border-brand-field bg-brand-paper text-brand-text/65 hover:border-brand-primary/60"
