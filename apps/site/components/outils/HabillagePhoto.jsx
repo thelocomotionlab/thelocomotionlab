@@ -12,7 +12,10 @@
 // MÊME POSTE DE TRAVAIL QUE LE CARROUSEL — barre en haut, rail à gauche,
 // panneau, image au centre. Ce n'est pas de la cosmétique : les deux ateliers
 // s'utilisent dans la même demi-heure, et deux ergonomies différentes pour deux
-// canvas identiques obligeaient à réapprendre à chaque bascule.
+// canvas identiques obligeaient à réapprendre à chaque bascule. La mise en page
+// est donc LA MÊME PIÈCE (components/outils/CoqueAtelier) : sur téléphone, elle
+// descend le rail sous le pouce et met les réglages dans une feuille qu'on
+// tire ; en grand écran, elle rend la colonne de gauche connue.
 //
 // DEUX HABILLAGES, DEUX FORMATS (cf. lib/habillage.js). « Silhouette » pose le
 // relief en bandeau ; « Chiffres » met la distance en très grand, à la manière
@@ -42,6 +45,7 @@ import {
   formatHabillage,
 } from "@/lib/habillage";
 import { CLES_ICONES } from "@/lib/carrouselIcones";
+import CoqueAtelier from "@/components/outils/CoqueAtelier";
 import { chargerMarqueTeintee } from "@/lib/marque";
 import {
   AIDE,
@@ -349,53 +353,63 @@ export default function HabillagePhoto() {
 
   const pret = Boolean(image && trace);
 
+  // LA BARRE HAUTE tient sur UNE ligne sur téléphone : elle en prenait deux, et
+  // les deux étaient prises sur l'image. Le format et l'habillage descendent
+  // alors en tête du panneau « Photo » — ils y sont aussi bien, et l'écran garde
+  // sa hauteur pour ce qu'on regarde.
+  const reglagesDuLot = (
+    <>
+      <select
+        value={formatCle}
+        onChange={(e) => setFormatCle(e.target.value)}
+        className="w-full rounded-lg border border-brand-field bg-brand-paper px-2 py-2 font-heading text-[16px] text-brand-text focus:border-brand-primary-dark focus:outline-none lg:w-auto lg:py-1.5 lg:text-[13px]"
+        aria-label="Format"
+      >
+        {Object.values(FORMATS_HABILLAGE).map((f) => (
+          <option key={f.cle} value={f.cle}>
+            {f.label}
+          </option>
+        ))}
+      </select>
+      <div className="flex w-full rounded-full border border-brand-field bg-brand-paper p-0.5 lg:w-auto">
+        {STYLES_HABILLAGE.map((st) => (
+          <button
+            key={st.cle}
+            type="button"
+            onClick={() => setStyle(st.cle)}
+            aria-pressed={style === st.cle}
+            title={st.aide}
+            className={`flex-1 rounded-full px-3 py-1.5 font-heading text-[14px] transition-colors motion-reduce:transition-none lg:flex-none lg:py-1 lg:text-[13px] ${
+              style === st.cle
+                ? "bg-brand-deep text-brand-bg"
+                : "text-brand-text/60 hover:text-brand-text"
+            }`}
+          >
+            {st.label}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+
   return (
-    <div
-      className={
-        // Enfant direct de la coque du studio (display:contents) : il prend
-        // toute la hauteur qui reste sous la barre. Sur un téléphone, la page
-        // défile et c'est l'aperçu qui se colle.
-        "flex flex-col bg-brand-paper/35 lg:min-h-0 lg:flex-1 lg:overflow-hidden"
-      }
-    >
-      {/* ---------------------------------------------------------- barre haute */}
-      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-brand-field/70 bg-brand-paper/70 px-3 py-2">
-        <select
-          value={formatCle}
-          onChange={(e) => setFormatCle(e.target.value)}
-          className="rounded-lg border border-brand-field bg-brand-paper px-2 py-1.5 font-heading text-[13px] text-brand-text focus:border-brand-primary-dark focus:outline-none"
-          aria-label="Format"
-        >
-          {Object.values(FORMATS_HABILLAGE).map((f) => (
-            <option key={f.cle} value={f.cle}>
-              {f.label}
-            </option>
-          ))}
-        </select>
-        <div className="flex rounded-full border border-brand-field bg-brand-paper p-0.5">
-          {STYLES_HABILLAGE.map((st) => (
-            <button
-              key={st.cle}
-              type="button"
-              onClick={() => setStyle(st.cle)}
-              aria-pressed={style === st.cle}
-              title={st.aide}
-              className={`rounded-full px-3 py-1 font-heading text-[13px] transition-colors motion-reduce:transition-none ${
-                style === st.cle
-                  ? "bg-brand-deep text-brand-bg"
-                  : "text-brand-text/60 hover:text-brand-text"
-              }`}
-            >
-              {st.label}
-            </button>
-          ))}
-        </div>
-        <div className="ml-auto flex gap-2">
+    <CoqueAtelier
+      message={etat.message}
+      onglets={ONGLETS}
+      onglet={onglet}
+      setOnglet={setOnglet}
+      outils={<Zoom valeur={zoom} onChange={setZoom} mesurer={zoomAffiche} />}
+      barre={
+        <>
+          <div className="hidden items-center gap-2 lg:flex">{reglagesDuLot}</div>
+          <span className="min-w-0 flex-1 truncate font-heading text-[13px] text-brand-text/45 lg:hidden">
+            {nomPhoto || "Habillage photo"}
+          </span>
           <button
             type="button"
             onClick={enregistrer}
             disabled={!pret || etat.occupe}
-            className={BOUTON_SECOND}
+            className={`${BOUTON_SECOND} shrink-0 max-lg:py-1.5 lg:ml-auto`}
           >
             <Download size={15} aria-hidden />
             <span className="hidden sm:inline">Enregistrer</span>
@@ -404,80 +418,53 @@ export default function HabillagePhoto() {
             type="button"
             onClick={partager}
             disabled={!pret || etat.occupe}
-            className={BOUTON_PRINCIPAL}
+            className={`${BOUTON_PRINCIPAL} shrink-0 max-lg:px-4 max-lg:py-2`}
           >
             <Share2 size={16} aria-hidden />
             Partager
           </button>
+        </>
+      }
+      scene={
+        <>
+          <div
+            onWheel={molette}
+            className="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-brand-bg/50 p-2 lg:m-3 lg:mb-0 lg:rounded-xl lg:bg-brand-text/5 lg:p-4"
+          >
+            <canvas
+              ref={canvasRef}
+              style={zoom == null ? undefined : { width: `${format.width * zoom}px` }}
+              className={
+                // `max-h-full` : la scène a maintenant une hauteur à elle, et
+                // l'image doit remplir CE qui reste — elle grandit dès qu'on
+                // referme la feuille des réglages.
+                zoom == null
+                  ? "block h-auto max-h-full w-auto max-w-full rounded-lg bg-brand-text/10 shadow-card lg:rounded-xl"
+                  : "block h-auto max-w-none shrink-0 rounded-lg bg-brand-text/10 shadow-card lg:rounded-xl"
+              }
+              aria-label="Aperçu de l'image habillée"
+            />
+          </div>
+          <div className="hidden shrink-0 items-center justify-center gap-2 px-3 py-1.5 lg:flex">
+            <Zoom valeur={zoom} onChange={setZoom} mesurer={zoomAffiche} />
+          </div>
+          <p className={`${AIDE} hidden shrink-0 px-3 pb-1 text-center lg:block`}>
+            Aperçu à l&rsquo;échelle exacte du fichier exporté ({format.width} × {format.height}).
+            {formatCle === "story"
+              ? " Tout est posé dans la bande qu’Instagram ne recouvre pas."
+              : " Une publication n’est recouverte de rien : le cadre entier sert."}
+          </p>
+        </>
+      }
+    >
+      {onglet === "photo" && (
+        <div className="lg:hidden">
+          <Groupe titre="Format et habillage">
+            <div className="flex flex-col gap-2">{reglagesDuLot}</div>
+          </Groupe>
         </div>
-      </header>
-
-      {etat.message && (
-        <p
-          className="shrink-0 border-b border-brand-field/60 bg-brand-primary/12 px-4 py-2 font-heading text-[13px] text-brand-primary-dark"
-          role="status"
-        >
-          {etat.message}
-        </p>
       )}
 
-      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        {/* `contents` en petit écran : gardée, cette boîte n'envelopperait que
-            l'image, et le collage n'aurait aucune course (cf. l'atelier
-            carrousel, où le même piège s'est refermé trois fois). */}
-        <section className="contents lg:order-2 lg:flex lg:min-h-0 lg:min-w-0 lg:flex-1 lg:flex-col">
-          <div className="order-1 sticky top-[var(--apercu-top,84px)] z-20 flex min-h-0 flex-col gap-2 bg-brand-bg/95 px-3 py-3 backdrop-blur lg:static lg:order-none lg:flex-1 lg:bg-transparent lg:backdrop-blur-none">
-            <div
-              onWheel={molette}
-              className="flex min-h-0 flex-1 items-center justify-center overflow-auto lg:rounded-xl lg:bg-brand-text/5 lg:p-4"
-            >
-              <canvas
-                ref={canvasRef}
-                style={zoom == null ? undefined : { width: `${format.width * zoom}px` }}
-                className={
-                  zoom == null
-                    ? "block h-auto max-h-[40vh] w-auto max-w-full rounded-xl bg-brand-text/10 shadow-card lg:max-h-full"
-                    : "block h-auto max-w-none shrink-0 rounded-xl bg-brand-text/10 shadow-card"
-                }
-                aria-label="Aperçu de l'image habillée"
-              />
-            </div>
-            <div className="flex shrink-0 items-center justify-center gap-2">
-              <Zoom valeur={zoom} onChange={setZoom} mesurer={zoomAffiche} />
-            </div>
-            <p className={`${AIDE} shrink-0 text-center`}>
-              Aperçu à l&rsquo;échelle exacte du fichier exporté ({format.width} × {format.height}).
-              {formatCle === "story"
-                ? " Tout est posé dans la bande qu’Instagram ne recouvre pas."
-                : " Une publication n’est recouverte de rien : le cadre entier sert."}
-            </p>
-          </div>
-        </section>
-
-        <div className="order-2 flex min-h-0 shrink-0 flex-col lg:order-1 lg:w-[404px] lg:flex-row lg:border-r lg:border-brand-field/70">
-          <nav
-            aria-label="Réglages"
-            className="flex shrink-0 gap-1 overflow-x-auto border-y border-brand-field/70 bg-brand-paper/60 px-2 py-1.5 lg:w-[80px] lg:flex-col lg:overflow-x-visible lg:overflow-y-auto lg:border-y-0 lg:border-r lg:py-2"
-          >
-            {ONGLETS.map(({ cle, label, Icone }) => (
-              <button
-                key={cle}
-                type="button"
-                onClick={() => setOnglet(cle)}
-                aria-current={onglet === cle ? "page" : undefined}
-                className={`flex shrink-0 flex-col items-center gap-1 rounded-xl px-3 py-2 font-heading text-[11px] transition-colors motion-reduce:transition-none lg:w-full ${
-                  onglet === cle
-                    ? "bg-brand-primary/25 text-brand-text"
-                    : "text-brand-text/55 hover:bg-brand-primary/10 hover:text-brand-text"
-                }`}
-              >
-                <Icone size={19} aria-hidden />
-                {label}
-              </button>
-            ))}
-          </nav>
-
-          <div className="min-h-0 flex-1 overflow-y-auto lg:w-[324px]">
             {onglet === "photo" && (
               <Groupe titre="La photo">
                 <label className={`${BOUTON_SECOND} mb-3 w-full cursor-pointer`}>
@@ -618,10 +605,7 @@ export default function HabillagePhoto() {
                 )}
               </>
             )}
-          </div>
-        </div>
-      </div>
-    </div>
+    </CoqueAtelier>
   );
 }
 

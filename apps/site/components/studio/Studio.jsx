@@ -20,6 +20,12 @@
 // Canva — une icône pour sortir, rien d'autre — avec l'empreinte du labo à la
 // place de la maison générique : on sait toujours chez qui on travaille.
 //
+// LA PAGE NE DÉFILE PLUS, sur téléphone comme sur écran. Elle défilait avant, et
+// l'aperçu se collait en haut pour rester visible : on réglait alors les
+// panneaux en faisant défiler la page SOUS une image figée qui mangeait les deux
+// tiers de la hauteur. Un poste de travail n'est pas un document — il tient dans
+// l'écran, et c'est le panneau qui défile (cf. components/outils/CoqueAtelier).
+//
 // PAS DE MOT DE PASSE. Décision assumée : ces outils ne portent aucune donnée,
 // aucun secret, aucun appel serveur — il n'y a rien à protéger derrière. La
 // page est en `noindex` et n'est liée depuis nulle part ; qui a l'URL entre.
@@ -28,7 +34,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Images, Wand2, WifiOff } from "lucide-react";
 
 import CarrouselAtelier from "@/components/outils/CarrouselAtelier";
@@ -40,13 +46,11 @@ const ATELIERS = [
 ];
 
 const ONGLET =
-  "inline-flex items-center justify-center gap-2 rounded-full px-3.5 py-1.5 font-heading text-[13px] font-medium transition-colors motion-reduce:transition-none";
+  "inline-flex items-center justify-center gap-2 rounded-full px-3.5 py-1 font-heading text-[13px] font-medium transition-colors motion-reduce:transition-none lg:py-1.5";
 
 export default function Studio() {
   const [actif, setActif] = useState("carrousel");
   const [horsLigne, setHorsLigne] = useState(false);
-  const barreRef = useRef(null);
-  const coqueRef = useRef(null);
 
   // L'onglet vient du FRAGMENT (#habillage), lu dans un effet et non au premier
   // rendu : le serveur ne connaît pas le fragment, le lire pendant le rendu
@@ -83,45 +87,16 @@ export default function Studio() {
     };
   }, []);
 
-  /**
-   * L'aperçu des ateliers se colle à `--apercu-top` : sur un téléphone, la page
-   * défile et la planche doit rester sous la barre du studio, pas glisser
-   * dessous.
-   *
-   * On MESURE la barre au lieu d'écrire sa hauteur en dur : elle change avec le
-   * bandeau « hors ligne », et une valeur figée se serait désaccordée en
-   * silence, à l'endroit précis qu'on ne regarde plus une fois qu'il marche.
-   */
-  useEffect(() => {
-    const barre = barreRef.current;
-    const coque = coqueRef.current;
-    if (!barre || !coque) return undefined;
-    const mesurer = () => {
-      coque.style.setProperty(
-        "--apercu-top",
-        `${Math.round(barre.getBoundingClientRect().height)}px`,
-      );
-    };
-    mesurer();
-    const observateur = new ResizeObserver(mesurer);
-    observateur.observe(barre);
-    return () => observateur.disconnect();
-  }, []);
-
   const changer = useCallback((cle) => {
     setActif(cle);
     window.history.replaceState(null, "", `#${cle}`);
   }, []);
 
   return (
-    <div ref={coqueRef} className="flex min-h-[100dvh] flex-col lg:h-[100dvh] lg:overflow-hidden">
+    <div className="flex h-[100dvh] flex-col overflow-hidden">
       {/* LA BARRE DU STUDIO : la marque pour sortir, les deux ateliers, et rien
-          d'autre. Collée en haut — sur un téléphone, la page défile et changer
-          d'atelier ne doit pas demander de remonter. */}
-      <header
-        ref={barreRef}
-        className="sticky top-0 z-30 flex shrink-0 items-center gap-3 border-b border-brand-field bg-brand-paper/95 px-3 py-1.5 backdrop-blur"
-      >
+          d'autre. Elle ne se colle plus : rien ne défile derrière elle. */}
+      <header className="z-30 flex shrink-0 items-center gap-3 border-b border-brand-field bg-brand-paper/95 px-3 py-1 lg:py-1.5">
         <Link
           href="/"
           title="Revenir au site"
@@ -133,7 +108,7 @@ export default function Studio() {
             alt=""
             width={30}
             height={30}
-            className="h-[30px] w-[30px]"
+            className="h-[26px] w-[26px] lg:h-[30px] lg:w-[30px]"
             priority
           />
         </Link>
@@ -143,6 +118,9 @@ export default function Studio() {
               key={cle}
               type="button"
               onClick={() => changer(cle)}
+              // Le libellé disparaît sous `sm` : sans `aria-label`, le bouton
+              // n'a plus de nom du tout pour qui ne voit pas l'icône.
+              aria-label={label}
               aria-current={actif === cle ? "page" : undefined}
               className={`${ONGLET} ${
                 actif === cle

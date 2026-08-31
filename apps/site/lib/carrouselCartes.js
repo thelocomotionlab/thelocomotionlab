@@ -961,7 +961,25 @@ function bandePied(
   m,
   th,
   police,
-  { index, total, centre, droite, fleche = "auto", filet = true, opacite = 1, zones = null },
+  {
+    index,
+    total,
+    centre,
+    droite,
+    fleche = "auto",
+    filet = true,
+    opacite = 1,
+    /**
+     * « 03 / 12 » en bas à gauche. Vrai par défaut — c'est la signature d'un
+     * carrousel, et elle dit au lecteur qu'il en reste.
+     *
+     * Mais un carrousel n'est pas toujours une SÉRIE : quand des planches de
+     * journée alternent avec des photos, numéroter chaque image en fait un
+     * décompte qui ne compte rien. La planche décide donc, une par une.
+     */
+    numero = true,
+    zones = null,
+  },
 ) {
   zone(zones, "pied", 0, m.piedFilet, format.width, format.height - m.piedFilet);
   ctx.save();
@@ -973,8 +991,10 @@ function bandePied(
 
   ctx.font = `400 ${m.piedTexte}px ${police}`;
   ctx.fillStyle = th.encreFaible;
-  const numero = `${String(index + 1).padStart(2, "0")} / ${String(total).padStart(2, "0")}`;
-  dessinerTexteEspace(ctx, numero, m.pad, m.piedBase, m.piedTexte, 0.24);
+  if (numero) {
+    const pagination = `${String(index + 1).padStart(2, "0")} / ${String(total).padStart(2, "0")}`;
+    dessinerTexteEspace(ctx, pagination, m.pad, m.piedBase, m.piedTexte, 0.24);
+  }
 
   if (centre) {
     const mots = morceauxCapitales(centre);
@@ -1485,6 +1505,7 @@ function dessinerCarte(ctx, format, o) {
     centre: carte.piedCentre,
     droite: carte.piedDroite,
     fleche: carte.piedFleche,
+    numero: carte.piedNumero !== false,
     filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
     zones,
@@ -1629,6 +1650,7 @@ function dessinerPhoto(ctx, format, o) {
     centre: carte.piedCentre,
     droite: carte.piedDroite,
     fleche: carte.piedFleche,
+    numero: carte.piedNumero !== false,
     filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
     zones,
@@ -1663,6 +1685,7 @@ function dessinerTexte(ctx, format, o) {
     centre: carte.piedCentre,
     droite: carte.piedDroite,
     fleche: carte.piedFleche,
+    numero: carte.piedNumero !== false,
     filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
     zones,
@@ -1815,6 +1838,7 @@ function dessinerBandeau(ctx, format, o) {
     centre: carte.piedCentre,
     droite: carte.piedDroite,
     fleche: carte.piedFleche,
+    numero: carte.piedNumero !== false,
     filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
     zones,
@@ -1925,6 +1949,7 @@ function dessinerFiche(ctx, format, o) {
     centre: carte.piedCentre,
     droite: carte.piedDroite,
     fleche: carte.piedFleche,
+    numero: carte.piedNumero !== false,
     filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
     zones,
@@ -2115,6 +2140,7 @@ function dessinerCloture(ctx, format, o) {
     centre: carte.piedCentre,
     droite: carte.piedDroite,
     fleche: carte.piedFleche ?? "jamais", // c'est la fin : il n'y a plus rien à glisser
+    numero: carte.piedNumero !== false,
     filet: carte.filetPied === true,
     opacite: carte.piedOpacite,
     zones,
@@ -2211,6 +2237,22 @@ function dessinerCarteCase(ctx, boite, th, { coords, segment, couleur }) {
 
 /** Le texte d'une case, quand personne ne l'a écrit. On part de ce que la
  *  journée sait déjà d'elle-même — le reste (« × Rapace ») s'ajoute à la main. */
+/**
+ * LA LIGNE DE CHIFFRES D'UNE SEULE JOURNÉE — sa distance, son dénivelé à elle.
+ *
+ * `ligneFactuelle` dit ce que la trace ENTIÈRE pèse ; sur une planche « Jour 3 »
+ * c'est le mauvais chiffre : elle annonce l'aventure, pas l'étape. Mise en gras,
+ * parce qu'elle porte alors le contenu, et non une mention de bas de titre.
+ */
+export function ligneDeJournee(seg) {
+  if (!seg) return null;
+  const bouts = [
+    seg.distanceKm > 0 ? `*${formatKm(seg.distanceKm)} km*` : "",
+    seg.dPlusM > 0 ? `*${formatEntier(seg.dPlusM)} m D+*` : "",
+  ];
+  return bouts.filter(Boolean).join("   ·   ") || null;
+}
+
 export function texteDeJournee(i, seg) {
   const titre = `*Jour ${i + 1}*`;
   if (!seg) return titre;
@@ -2395,6 +2437,7 @@ function dessinerJournees(ctx, format, o) {
     centre: carte.piedCentre,
     droite: carte.piedDroite,
     fleche: carte.piedFleche,
+    numero: carte.piedNumero !== false,
     filet: carte.filetPied !== false,
     opacite: carte.piedOpacite,
     zones,

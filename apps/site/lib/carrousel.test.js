@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { dureeCourte } from "./carrouselCartes";
+import { dureeCourte, ligneDeJournee } from "./carrouselCartes";
 import { fitView, decimerPixels, normX, normY } from "./carrouselGeo";
 import {
   ancreDuSegment,
@@ -266,5 +266,24 @@ describe("decimerPixels", () => {
     expect(out[0]).toEqual(points[0]);
     expect(out[out.length - 1]).toEqual(points[points.length - 1]);
     expect(out.length).toBeLessThan(points.length);
+  });
+});
+
+describe("ligneDeJournee", () => {
+  it("dit la journée, pas l'aventure", () => {
+    // Le piège qu'elle existe pour éviter : une planche « Jour 3 » annonçait les
+    // 188 km du tour entier, parce que c'est ce que la trace sait dire d'elle.
+    expect(ligneDeJournee({ distanceKm: 51.2, dPlusM: 2863 })).toBe(
+      "*51,2 km*   ·   *2 863 m D+*",
+    );
+  });
+
+  it("laisse tomber ce qui vaut zéro", () => {
+    expect(ligneDeJournee({ distanceKm: 12.4, dPlusM: 0 })).toBe("*12,4 km*");
+  });
+
+  it("rend `null` sans journée — la planche retombe alors sur la trace", () => {
+    expect(ligneDeJournee(null)).toBeNull();
+    expect(ligneDeJournee({ distanceKm: 0, dPlusM: 0 })).toBeNull();
   });
 });
