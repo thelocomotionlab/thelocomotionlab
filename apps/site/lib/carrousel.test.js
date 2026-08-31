@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { dureeCourte, ligneDeJournee } from "./carrouselCartes";
+import { dureeCourte, journeesMontrees, ligneDeJournee } from "./carrouselCartes";
 import { fitView, decimerPixels, normX, normY } from "./carrouselGeo";
 import {
   ancreDuSegment,
@@ -285,5 +285,45 @@ describe("ligneDeJournee", () => {
   it("rend `null` sans journée — la planche retombe alors sur la trace", () => {
     expect(ligneDeJournee(null)).toBeNull();
     expect(ligneDeJournee({ distanceKm: 0, dPlusM: 0 })).toBeNull();
+  });
+});
+
+describe("journeesMontrees", () => {
+  const quatre = [
+    { kmDebut: 0, kmFin: 40 },
+    { kmDebut: 40, kmFin: 90 },
+    { kmDebut: 90, kmFin: 140 },
+    { kmDebut: 140, kmFin: 188 },
+  ];
+  const jours = (carte) => journeesMontrees(carte, quatre).map((j) => j.jour);
+
+  it("rend tout l'itinéraire sans réglage", () => {
+    expect(jours({})).toEqual([0, 1, 2, 3]);
+    expect(jours({ jusquA: null, depuis: null })).toEqual([0, 1, 2, 3]);
+  });
+
+  it("s'arrête à `jusquA` — l'avancement", () => {
+    expect(jours({ jusquA: 1 })).toEqual([0, 1]);
+    expect(jours({ jusquA: 0 })).toEqual([0]);
+  });
+
+  it("ne rend QUE la journée demandée quand les deux bornes se touchent", () => {
+    expect(jours({ depuis: 2, jusquA: 2 })).toEqual([2]);
+  });
+
+  it("GARDE le rang d'origine — c'est toute la raison d'être des paires", () => {
+    // Le piège : couper la liste ferait de la journée 3 la journée 0. Elle
+    // repartirait en fuchsia, étiquetée « J1 », et déplacer son étiquette
+    // écrirait dans celle de J1.
+    const [seule] = journeesMontrees({ depuis: 2, jusquA: 2 }, quatre);
+    expect(seule.jour).toBe(2);
+    expect(seule.seg).toBe(quatre[2]);
+  });
+
+  it("ne déborde pas de la trace, et ne rend rien d'impossible", () => {
+    expect(jours({ jusquA: 9 })).toEqual([0, 1, 2, 3]);
+    expect(jours({ depuis: 3, jusquA: 1 })).toEqual([]);
+    expect(journeesMontrees({ jusquA: 1 }, [])).toEqual([]);
+    expect(journeesMontrees({}, null)).toEqual([]);
   });
 });

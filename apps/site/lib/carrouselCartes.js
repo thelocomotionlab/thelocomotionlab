@@ -1130,7 +1130,10 @@ function dessinerProfil(ctx, boite, th, options) {
     ctx.globalAlpha = 1;
   };
 
-  if (segments?.length > 1) {
+  // `>= 1` : une planche « la journée 3 seule » n'a qu'un segment, et c'est
+  // justement lui qu'on veut voir en couleur. L'appelant décide en amont s'il
+  // passe des journées ou `null` (une sortie d'un seul tenant n'en a pas).
+  if (segments?.length >= 1) {
     segments.forEach((s, i) => aire(s.kmDebut, s.kmFin, couleurs[i] ?? th.accent));
   } else if (doneKm > 0) {
     aire(0, doneKm, th.accent);
@@ -1149,12 +1152,12 @@ function dessinerProfil(ctx, boite, th, options) {
   }
 
   // Les bornes de journée, en pointillés discrets : c'est là qu'on dort.
-  if (segments?.length > 1) {
+  if (segments?.length >= 1) {
     ctx.save();
     ctx.setLineDash([4 * (boite.height / 150), 6 * (boite.height / 150)]);
     ctx.strokeStyle = th.filet;
     ctx.lineWidth = Math.max(1, boite.height * 0.012);
-    for (const s of segments.slice(1)) {
+    for (const s of segments.filter((s) => s.kmDebut > 0)) {
       ctx.beginPath();
       ctx.moveTo(X(s.kmDebut), boite.y);
       ctx.lineTo(X(s.kmDebut), base);
@@ -1266,10 +1269,42 @@ function polyligne(ctx, points, couleur, epaisseur, liseré) {
   ctx.stroke();
 }
 
+function couleurDuJour(carte, jour) {
+  return carte?.etiquettes?.[jour]?.couleur ?? PALETTE_JOURS[jour % PALETTE_JOURS.length];
+}
+
 function couleursDesJours(carte, segments) {
-  return segments.map(
-    (_, i) => carte.etiquettes?.[i]?.couleur ?? PALETTE_JOURS[i % PALETTE_JOURS.length],
-  );
+  return segments.map((_, i) => couleurDuJour(carte, i));
+}
+
+/**
+ * LES JOURNÉES QUE LA PLANCHE MONTRE — avec leur NUMÉRO D'ORIGINE.
+ *
+ * Deux façons de raconter une étape, et elles ne demandent pas la même chose :
+ *   • l'AVANCEMENT (`jusquA`) — tout ce qui est fait jusqu'à ce jour-là, en
+ *     couleur ; la série révèle l'itinéraire au fur et à mesure ;
+ *   • la JOURNÉE SEULE (`depuis` = `jusquA`) — cette étape et rien d'autre, sur
+ *     l'itinéraire entier resté en sourdine ; on lit où elle tombe dans le tour.
+ *
+ * Couper la liste suffisait tant qu'on ne montrait qu'un DÉBUT de série : les
+ * indices restaient alignés sur les couleurs et les étiquettes, qui sont rangées
+ * par position. Ne montrer QUE la journée 3 casse cet alignement — elle
+ * deviendrait la journée 0, en fuchsia, étiquetée « J1 ».
+ *
+ * On ne coupe donc plus : on rend des paires `{ jour, seg }`, où `jour` est le
+ * rang dans l'itinéraire ENTIER. Couleur, étiquette et numéro se lisent dessus,
+ * et la boîte rendue à l'atelier porte ce rang — sans quoi déplacer l'étiquette
+ * d'une planche « J3 seule » écrirait dans celle de J1.
+ */
+export function journeesMontrees(carte, segments) {
+  const tous = segments ?? [];
+  const depuis = Number.isInteger(carte?.depuis) ? Math.max(0, carte.depuis) : 0;
+  const jusquA = carte?.jusquA == null ? tous.length - 1 : Math.min(tous.length - 1, carte.jusquA);
+  const out = [];
+  for (let jour = depuis; jour <= jusquA; jour += 1) {
+    if (tous[jour]) out.push({ jour, seg: tous[jour] });
+  }
+  return out;
 }
 
 /** Le pied de page factuel d'une carte : les chiffres de l'itinéraire, ou ceux
@@ -1342,9 +1377,16 @@ function dessinerCarte(ctx, format, o) {
   const cadre = o.traceCadre ?? trace;
   const view = cadre?.coords?.length ? vueDeLaCarte(cadre.coords, format.cle) : null;
 
-  // `jusquA` : n'afficher que les n premières journées. `null` = tout.
-  const segments =
-    carte.jusquA == null ? (o.segments ?? []) : (o.segments ?? []).slice(0, carte.jusquA + 1);
+  // Les journées montrées, AVEC leur rang d'origine (cf. `journeesMontrees`).
+  const montrees = journeesMontrees(carte, o.segments);
+  // Le profil et la polyligne veulent deux listes parallèles : on les fabrique
+  // ICI, depuis les paires, pour qu'elles ne puissent pas se désaccorder.
+  const segments = montrees.map((j) => j.seg);
+  const couleurs = montrees.map((j) => couleurDuJour(carte, j.jour));
+  /** L'itinéraire est-il découpé du tout ? Une sortie d'un seul tenant garde le
+   *  profil « acquis » en ambre ; dès qu'il y a des journées, chacune a sa
+   *  couleur — y compris quand la planche n'en montre qu'UNE. */
+  const decoupee = (o.segments ?? []).length > 1;
 
   if (view && fond && carte.afficherFond !== false) {
     ctx.drawImage(
@@ -1377,8 +1419,6 @@ function dessinerCarte(ctx, format, o) {
   // Cliquer n'importe où hors des textes ouvre les réglages de trace.
   zoneDeRepli(zones, format, m, "carte");
 
-  const couleurs = couleursDesJours(carte, segments);
-
   if (view && cadre?.coords?.length) {
     const epaisseur = Math.max(3, 7.5 * m.k);
     // L'itinéraire ENTIER, en sourdine : il tient la forme du parcours même là
@@ -1390,16 +1430,17 @@ function dessinerCarte(ctx, format, o) {
       epaisseur * 0.62,
       false,
     );
-    segments.forEach((seg, i) => {
-      polyligne(ctx, decimerPixels(seg.coords.map((c) => view.project(c))), couleurs[i], epaisseur, true);
+    montrees.forEach(({ jour, seg }) => {
+      const couleur = couleurDuJour(carte, jour);
+      polyligne(ctx, decimerPixels(seg.coords.map((c) => view.project(c))), couleur, epaisseur, true);
     });
 
     // Étiquettes en DERNIER : sur tous les tracés, jamais dessous.
     poserOmbre(ctx, ombre, "corps");
-    segments.forEach((seg, i) => {
-      const etq = carte.etiquettes?.[i] ?? {};
+    montrees.forEach(({ jour, seg }) => {
+      const etq = carte.etiquettes?.[jour] ?? {};
       if (etq.masquee) return;
-      const texte = etq.texte ?? `J${i + 1}`;
+      const texte = etq.texte ?? `J${jour + 1}`;
       if (!texte.trim()) return;
       const ancre = ancreDuSegment(seg, view.project);
       if (!ancre) return;
@@ -1407,8 +1448,8 @@ function dessinerCarte(ctx, format, o) {
       boite.x += etq.dx ?? 0;
       boite.y += etq.dy ?? 0;
       dansLeCadre(boite, format);
-      dessinerEtiquette(ctx, texte, boite, couleurs[i], m, th, police);
-      boites.push({ index: i, ...boite });
+      dessinerEtiquette(ctx, texte, boite, couleurDuJour(carte, jour), m, th, police);
+      boites.push({ index: jour, ...boite });
     });
     sansOmbre(ctx);
   }
@@ -1492,7 +1533,10 @@ function dessinerCarte(ctx, format, o) {
     dessinerProfil(ctx, boite, th, {
       profil: cadre.profil,
       totalKm: cadre.totalKm,
-      segments: segments.length > 1 ? segments : null,
+      // `decoupee` et non `segments.length > 1` : une planche qui ne montre
+      // qu'une journée en montre UNE, et cette journée-là doit être à SA
+      // couleur — pas à l'ambre du « déjà parcouru », qui dirait autre chose.
+      segments: decoupee && segments.length > 0 ? segments : null,
       couleurs,
       doneKm: carte.jusquA != null ? (segments[segments.length - 1]?.kmFin ?? 0) : carte.bilan ? trace.totalKm : 0,
     });

@@ -306,8 +306,13 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0", style = 
     /** Les filets sous l'en-tête et au-dessus du pied. */
     filetEntete: gabarit !== "cloture",
     filetPied: gabarit !== "cloture",
-    /** N'afficher que les n+1 premières journées. `null` = tout. */
+    /** LA TRANCHE DE JOURNÉES MONTRÉE (cf. `journeesMontrees`).
+     *  `jusquA` : la dernière montrée — `null` = jusqu'au bout.
+     *  `depuis`  : la première — `null` = depuis le départ. Les deux égales
+     *  donnent la planche d'UNE journée, celle qu'on lit pour savoir où
+     *  l'étape tombe dans le tour. */
     jusquA: null,
+    depuis: null,
     /** La puce des listes : une forme tracée, ou une clé d'icône. */
     puce: "point",
     /** L'ombre portée des textes — ce qui rend un titre clair lisible sur une
@@ -570,6 +575,10 @@ export default function CarrouselAtelier() {
   /** Le filtre de la palette d'icônes. À quatre-vingt-dix pictogrammes, la
    *  grille ne se parcourt plus à l'œil : on tape ce qu'on cherche. */
   const [filtreIcones, setFiltreIcones] = useState("");
+  /** Ce que fabriquent les boutons « Jour N » : l'avancement, ou l'étape seule.
+   *  C'est un réglage de l'OUTIL, pas d'une planche — on fait en général une
+   *  série entière du même genre, et on ne veut pas le redire à chaque appui. */
+  const [journeeSeule, setJourneeSeule] = useState(false);
   const [fond, setFond] = useState(null);
   const [marque, setMarque] = useState(null);
   const [policePrete, setPolicePrete] = useState(false);
@@ -983,7 +992,7 @@ export default function CarrouselAtelier() {
    * planche « Jour 3 », annoncer les 188 km du tour est le mauvais chiffre.
    */
   const ajouterJournees = useCallback(
-    (indices) => {
+    (indices, seule = false) => {
       if (!trace || indices.length === 0) return;
       const ou = active + 1;
       setCartes((cs) => {
@@ -991,6 +1000,8 @@ export default function CarrouselAtelier() {
         const neuves = indices.map((i) => ({
           ...carteNeuve("carte", trace, segments, bilan, idNeuf(), style),
           jusquA: i,
+          // `depuis` égal à `jusquA` : cette étape et rien d'autre.
+          depuis: seule ? i : null,
           surtitre: trace.nom ?? liveConfig.aventure.nom,
           titre: `Jour ${i + 1}`,
           pied: ligneDeJournee(segments[i]),
@@ -1459,6 +1470,25 @@ export default function CarrouselAtelier() {
   );
 
   /**
+   * LA TRANCHE DE JOURNÉES, telle que le menu la dit — et l'inverse.
+   *
+   * Le modèle porte deux bornes (`depuis`, `jusquA`) parce que le rendu en a
+   * besoin ; le menu, lui, n'expose que les trois cas qui ont un sens. La
+   * traduction tient ici, en deux fonctions qui se répondent.
+   */
+  const trancheAffichee =
+    carte?.jusquA == null
+      ? ""
+      : `${carte.depuis === carte.jusquA ? "seule" : "jusqu"}:${carte.jusquA}`;
+
+  const trancheDepuisLeMenu = (valeur) => {
+    if (valeur === "") return { jusquA: null, depuis: null };
+    const [mode, n] = valeur.split(":");
+    const jour = Number(n);
+    return { jusquA: jour, depuis: mode === "seule" ? jour : null };
+  };
+
+  /**
    * LES OUTILS DE LA SCÈNE : le zoom, et la bande des vignettes qu'on replie.
    *
    * Écrits une fois, montés deux : sur téléphone la coque les pose dans la barre
@@ -1721,14 +1751,30 @@ export default function CarrouselAtelier() {
                 {trace && segments.length > 1 && (
                   <Groupe
                     titre="Planches de journée"
-                    aide="Une planche par appui : la carte à l'avancement de ce jour-là, son titre, ses chiffres à elle. Le cadre ne bouge pas d'une planche à l'autre, la série se lit comme une progression — même avec des photos intercalées."
+                    aide="Une planche par appui : la carte de ce jour-là, son titre, ses chiffres à elle. Le cadre ne bouge pas d'une planche à l'autre, la série se lit d'un bloc — même avec des photos intercalées."
                   >
+                    <div className="mb-3">
+                      <Choix
+                        label="Ce qu'elle met en couleur"
+                        valeur={journeeSeule}
+                        options={[
+                          { cle: false, label: "L’avancement" },
+                          { cle: true, label: "Cette journée seule" },
+                        ]}
+                        onChange={setJourneeSeule}
+                      />
+                      <p className={`${AIDE} mt-1.5`}>
+                        {journeeSeule
+                          ? "L’étape et rien d’autre, sur l’itinéraire resté en sourdine : on voit où elle tombe dans le tour."
+                          : "Tout ce qui est fait jusqu’à ce jour-là : la série révèle l’itinéraire au fur et à mesure."}
+                      </p>
+                    </div>
                     <div className="mb-2 flex flex-wrap gap-1.5">
                       {segments.map((sg, i) => (
                         <button
                           key={`journee-${sg.kmDebut}`}
                           type="button"
-                          onClick={() => ajouterJournees([i])}
+                          onClick={() => ajouterJournees([i], journeeSeule)}
                           className={BOUTON_DISCRET}
                           title={`Jour ${i + 1} — ${sg.distanceKm.toFixed(1)} km, ${sg.dPlusM} m D+`}
                         >
@@ -1739,7 +1785,7 @@ export default function CarrouselAtelier() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => ajouterJournees(segments.map((_, i) => i))}
+                      onClick={() => ajouterJournees(segments.map((_, i) => i), journeeSeule)}
                       className={`${BOUTON_SECOND} w-full`}
                     >
                       <Route size={15} aria-hidden />
@@ -2612,26 +2658,38 @@ export default function CarrouselAtelier() {
                           <label className={LEGENDE} htmlFor="jusqu-a">
                             Afficher
                           </label>
+                          {/* UN seul menu pour les trois cas : le tout, un
+                              avancement, une étape isolée. Deux réglages côte à
+                              côte auraient laissé fabriquer des combinaisons qui
+                              ne veulent rien dire (« de J3 à J1 »). */}
                           <select
                             id="jusqu-a"
-                            value={carte.jusquA ?? ""}
-                            onChange={(e) =>
-                              majCarte({
-                                jusquA: e.target.value === "" ? null : Number(e.target.value),
-                              })
-                            }
+                            value={trancheAffichee}
+                            onChange={(e) => majCarte(trancheDepuisLeMenu(e.target.value))}
                             className={`${CHAMP} mb-1`}
                           >
                             <option value="">Tout l&rsquo;itinéraire</option>
-                            {segments.map((sg, i) => (
-                              <option key={`jusqua-${sg.kmDebut}`} value={i}>
-                                Jusqu&rsquo;à la journée {i + 1}
-                              </option>
-                            ))}
+                            <optgroup label="L’avancement">
+                              {segments.map((sg, i) => (
+                                <option key={`jusqua-${sg.kmDebut}`} value={`jusqu:${i}`}>
+                                  Jusqu&rsquo;à la journée {i + 1}
+                                </option>
+                              ))}
+                            </optgroup>
+                            <optgroup label="Une seule journée">
+                              {segments.map((sg, i) => (
+                                <option key={`seule-${sg.kmDebut}`} value={`seule:${i}`}>
+                                  La journée {i + 1} seule
+                                </option>
+                              ))}
+                            </optgroup>
                           </select>
                           <p className={AIDE}>
-                            Une planche par valeur, et la série révèle l&rsquo;itinéraire jour après
-                            jour. Le cadre, lui, ne bouge pas.
+                            Une planche par valeur, et le cadre ne bouge pas d&rsquo;une planche à
+                            l&rsquo;autre. « Avancement » révèle l&rsquo;itinéraire jour après jour ;
+                            « une seule journée » montre l&rsquo;étape sur l&rsquo;itinéraire resté
+                            en sourdine. La journée garde sa couleur et son étiquette dans les deux
+                            cas.
                           </p>
                         </>
                       )}
