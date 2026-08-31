@@ -112,6 +112,12 @@ export const GABARITS = [
   { cle: "texte", label: "Texte", aide: "Un surtitre, un titre, un paragraphe." },
   { cle: "fiche", label: "Fiche", aide: "Des libellés à gauche, des valeurs en gros à droite." },
   {
+    cle: "etape",
+    label: "Étape",
+    aide:
+      "Le compte rendu d'une journée : la photo fondue, le récit, la portion de trace parcourue et ses chiffres.",
+  },
+  {
     cle: "journees",
     label: "Journées",
     aide: "L'espace découpé en cases : une journée par case, sa portion de trace et de profil.",
@@ -1813,6 +1819,46 @@ function blocTitreEtCorps(
 }
 
 /**
+ * UNE PHOTO QUI SE DISSOUT DANS LA PAGE.
+ *
+ * Le fondu n'est pas un effet : une coupure franche ressemble à une image
+ * COLLÉE, pas à une planche composée. Le dégradé va vers `voileTexte`, qui EST
+ * la couleur de fond du thème — la photo se termine donc exactement sur le
+ * papier, en sombre comme en clair, sans qu'on ait à redire la couleur ici.
+ *
+ * Sans image, on pose l'aplat de repérage : sur une planche vide, il faut voir
+ * où la photo ira.
+ *
+ * @param {number} haut - où la bande commence. Le bandeau part de 0 (l'en-tête
+ *   passe PAR-DESSUS l'image) ; l'étape part sous le filet d'en-tête, pour
+ *   garder la bande de marque sur le papier.
+ */
+function photoFondue(ctx, format, m, th, carte, haut, hauteur) {
+  if (!carte.image) {
+    ctx.fillStyle = th.filet;
+    ctx.fillRect(0, haut, format.width, hauteur);
+    return;
+  }
+  const c = cadrageCouverture(
+    { width: carte.image.width, height: carte.image.height },
+    { width: format.width, height: hauteur },
+    carte.ancrage ?? 0.5,
+  );
+  if (c) ctx.drawImage(carte.image, c.sx, c.sy, c.sw, c.sh, 0, haut, format.width, hauteur);
+
+  const bas = intensite(carte.degradeBas, 1);
+  if (bas <= 0) return;
+  const fondu = Math.round(portee(carte.degradeBasH, hauteur * 0.42, m));
+  const y = haut + hauteur - fondu;
+  const g = ctx.createLinearGradient(0, y, 0, haut + hauteur);
+  g.addColorStop(0, `rgba(${th.voileTexte}, 0)`);
+  g.addColorStop(0.55, `rgba(${th.voileTexte}, ${(0.55 * bas).toFixed(3)})`);
+  g.addColorStop(1, `rgba(${th.voileTexte}, ${bas.toFixed(3)})`);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, y, format.width, fondu);
+}
+
+/**
  * LE BANDEAU — une photo en haut, le texte dessous, sur le fond du thème.
  *
  * La différence avec le gabarit Photo n'est pas cosmétique : ici l'image ne
@@ -1829,24 +1875,8 @@ function dessinerBandeau(ctx, format, o) {
   zoneDeRepli(zones, format, m, "texte");
   zone(zones, "photo", 0, 0, format.width, hauteur);
 
+  photoFondue(ctx, format, m, th, carte, 0, hauteur);
   if (carte.image) {
-    const c = cadrageCouverture(
-      { width: carte.image.width, height: carte.image.height },
-      { width: format.width, height: hauteur },
-      carte.ancrage ?? 0.5,
-    );
-    if (c) ctx.drawImage(carte.image, c.sx, c.sy, c.sw, c.sh, 0, 0, format.width, hauteur);
-
-    const bas = intensite(carte.degradeBas, 1);
-    if (bas > 0) {
-      const fondu = Math.round(portee(carte.degradeBasH, hauteur * 0.42, m));
-      const g = ctx.createLinearGradient(0, hauteur - fondu, 0, hauteur);
-      g.addColorStop(0, `rgba(${th.voileTexte}, 0)`);
-      g.addColorStop(0.55, `rgba(${th.voileTexte}, ${(0.55 * bas).toFixed(3)})`);
-      g.addColorStop(1, `rgba(${th.voileTexte}, ${bas.toFixed(3)})`);
-      ctx.fillStyle = g;
-      ctx.fillRect(0, hauteur - fondu, format.width, fondu);
-    }
     voileEntete(
       ctx,
       format,
@@ -1855,9 +1885,6 @@ function dessinerBandeau(ctx, format, o) {
       intensite(carte.degradeHaut, 0.74),
       portee(carte.degradeHautH, m.bandeH * 1.4, m),
     );
-  } else {
-    ctx.fillStyle = th.filet;
-    ctx.fillRect(0, 0, format.width, hauteur);
   }
 
   poserOmbre(ctx, ombre, "entete");
@@ -2204,7 +2231,7 @@ function dessinerCloture(ctx, format, o) {
  * déplace — c'est ce déplacement qui fait lire la progression, bien mieux que
  * quatre profils recadrés qui se ressembleraient tous.
  */
-function dessinerProfilCase(ctx, boite, th, { profil, totalKm, kmDebut, kmFin, couleur }) {
+function dessinerProfilCase(ctx, boite, th, { profil, totalKm, journees }) {
   const points = (profil ?? []).filter((p) => Number.isFinite(p?.km) && Number.isFinite(p?.alt));
   if (points.length < 2) return;
   const total = totalKm > 0 ? totalKm : points[points.length - 1].km;
@@ -2225,31 +2252,37 @@ function dessinerProfilCase(ctx, boite, th, { profil, totalKm, kmDebut, kmFin, c
   ctx.lineJoin = "round";
   ctx.stroke();
 
-  const dedans = points.filter((p) => p.km >= kmDebut && p.km <= kmFin);
-  if (dedans.length < 2) return;
-  ctx.beginPath();
-  ctx.moveTo(X(dedans[0].km), base);
-  for (const p of dedans) ctx.lineTo(X(p.km), Y(p.alt));
-  ctx.lineTo(X(dedans[dedans.length - 1].km), base);
-  ctx.closePath();
-  ctx.globalAlpha = AIRE_OPACITE;
-  ctx.fillStyle = couleur;
-  ctx.fill();
+  // UNE aire par journée montrée : la grille n'en passe qu'une, l'étape en passe
+  // autant qu'elle en a parcourues. Chacune garde SA couleur — c'est ce qui fait
+  // lire une progression au lieu d'un bloc d'un seul tenant.
+  for (const { kmDebut, kmFin, couleur } of journees ?? []) {
+    const dedans = points.filter((p) => p.km >= kmDebut && p.km <= kmFin);
+    if (dedans.length < 2) continue;
+    ctx.beginPath();
+    ctx.moveTo(X(dedans[0].km), base);
+    for (const p of dedans) ctx.lineTo(X(p.km), Y(p.alt));
+    ctx.lineTo(X(dedans[dedans.length - 1].km), base);
+    ctx.closePath();
+    ctx.globalAlpha = AIRE_OPACITE;
+    ctx.fillStyle = couleur;
+    ctx.fill();
 
-  ctx.beginPath();
-  ctx.moveTo(X(dedans[0].km), Y(dedans[0].alt));
-  for (const p of dedans) ctx.lineTo(X(p.km), Y(p.alt));
-  ctx.globalAlpha = CRETE_OPACITE;
-  ctx.strokeStyle = couleur;
-  ctx.lineWidth = Math.max(2, boite.height * 0.038);
-  ctx.stroke();
-  ctx.globalAlpha = 1;
+    ctx.beginPath();
+    ctx.moveTo(X(dedans[0].km), Y(dedans[0].alt));
+    for (const p of dedans) ctx.lineTo(X(p.km), Y(p.alt));
+    ctx.globalAlpha = CRETE_OPACITE;
+    ctx.strokeStyle = couleur;
+    ctx.lineWidth = Math.max(2, boite.height * 0.038);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
 }
 
-/** La vignette d'itinéraire d'une case : la boucle entière en sourdine, la
- *  journée par-dessus. Le cadrage vient de la trace COMPLÈTE, donc la boucle
- *  occupe exactement la même place dans toutes les cases. */
-function dessinerCarteCase(ctx, boite, th, { coords, segment, couleur }) {
+/** La vignette d'itinéraire : la boucle entière en sourdine, les journées
+ *  montrées par-dessus, chacune à sa couleur. Le cadrage vient de la trace
+ *  COMPLÈTE, donc la boucle occupe exactement la même place d'une planche (ou
+ *  d'une case) à l'autre — c'est ce qui fait tenir une série. */
+function dessinerCarteCase(ctx, boite, th, { coords, journees }) {
   const marge = Math.round(Math.min(boite.width, boite.height) * 0.08);
   const vue = fitView(coords, {
     width: boite.width,
@@ -2274,8 +2307,9 @@ function dessinerCarteCase(ctx, boite, th, { coords, segment, couleur }) {
     epaisseur * 0.7,
     false,
   );
-  if (segment?.coords?.length > 1) {
-    polyligne(ctx, decimerPixels(segment.coords.map(projeter)), couleur, epaisseur, true);
+  for (const { seg, couleur } of journees ?? []) {
+    if (!(seg?.coords?.length > 1)) continue;
+    polyligne(ctx, decimerPixels(seg.coords.map(projeter)), couleur, epaisseur, true);
   }
 }
 
@@ -2295,6 +2329,35 @@ export function ligneDeJournee(seg) {
     seg.dPlusM > 0 ? `*${formatEntier(seg.dPlusM)} m D+*` : "",
   ];
   return bouts.filter(Boolean).join("   ·   ") || null;
+}
+
+/**
+ * LES CHIFFRES D'UNE ÉTAPE, prêts pour le tableau de la planche.
+ *
+ * Trois viennent de la trace, le quatrième NON — la masse portée ne se déduit
+ * d'aucun fichier. Elle est là vide, pour être remplie : c'est la ligne qui dit
+ * ce que la journée a vraiment coûté, et l'oublier serait pire que de la laisser
+ * en attente.
+ */
+export function statsDeJournee(seg) {
+  return [
+    { label: "Distance", valeur: seg ? `${formatKm(seg.distanceKm)} km` : "", accent: false },
+    // « Dénivelé + » et « Dénivelé − » écrits en toutes lettres : les libellés
+    // sont en petites capitales de 16 px, où un signe seul ne pèse qu'un ou deux
+    // pixels et disparaît. Ce sont des textes libres — « D+ » se retape en deux
+    // secondes pour qui trouve ça trop long.
+    {
+      label: "Dénivelé positif",
+      valeur: seg?.dPlusM > 0 ? `${formatEntier(seg.dPlusM)} m` : "",
+      accent: false,
+    },
+    {
+      label: "Dénivelé négatif",
+      valeur: seg?.dMinusM > 0 ? `${formatEntier(seg.dMinusM)} m` : "",
+      accent: false,
+    },
+    { label: "Masse moyenne portée", valeur: "", accent: true },
+  ];
 }
 
 export function texteDeJournee(i, seg) {
@@ -2435,7 +2498,7 @@ function dessinerJournees(ctx, format, o) {
         ctx,
         { x, y: y + (caseH - cote) / 2, width: cote, height: cote },
         th,
-        { coords: cadre.coords, segment: seg, couleur },
+        { coords: cadre.coords, journees: seg ? [{ seg, couleur }] : [] },
       );
     }
 
@@ -2466,9 +2529,7 @@ function dessinerJournees(ctx, format, o) {
         {
           profil: cadre.profil,
           totalKm: cadre.totalKm,
-          kmDebut: seg.kmDebut,
-          kmFin: seg.kmFin,
-          couleur,
+          journees: [{ kmDebut: seg.kmDebut, kmFin: seg.kmFin, couleur }],
         },
       );
     }
@@ -2537,8 +2598,215 @@ function dessinerLibres(ctx, format, o) {
   sansOmbre(ctx);
 }
 
+/* --------------------------------------------------------------- l'étape */
+
+/**
+ * LE TABLEAU DE CHIFFRES D'UNE ÉTAPE — le libellé en petites capitales, la
+ * valeur en gros dessous, en colonnes.
+ *
+ * Il porte les MÊMES données que la fiche (`carte.fiche`) : un libellé, une
+ * valeur, un accent. Seule la mise en page change — la fiche empile des lignes
+ * pleine largeur, l'étape range en colonnes pour tenir sous une carte. Une
+ * seconde structure de données n'aurait rien apporté qu'un second éditeur.
+ *
+ * Rend le HAUT du bloc : l'appelant compose du bas vers le haut.
+ */
+function pasDesChiffres(m) {
+  return {
+    ligne: Math.round(m.ficheLabel * 1.7 + m.ficheValeur * 1.15),
+    ecart: Math.round(m.ficheValeur * 0.62),
+  };
+}
+
+/** La hauteur qu'occupera le tableau — connue AVANT de dessiner, parce que la
+ *  carte se partage la place avec lui. */
+function hauteurDesChiffres(m, nbLignes, colonnes) {
+  if (nbLignes === 0) return 0;
+  const rangs = Math.ceil(nbLignes / Math.max(1, colonnes));
+  const { ligne, ecart } = pasDesChiffres(m);
+  return rangs * ligne + (rangs - 1) * ecart;
+}
+
+function tableauDeChiffres(ctx, m, th, polices, carte, boite, { colonnes, ombre, zones }) {
+  const lignes = (carte.fiche ?? []).filter((l) => l && (l.label || l.valeur));
+  if (lignes.length === 0) return 0;
+  const cols = Math.max(1, Math.round(colonnes));
+  const pasX = boite.width / cols;
+  const { ligne: hLigne, ecart } = pasDesChiffres(m);
+
+  lignes.forEach((l, i) => {
+    const x = boite.x + (i % cols) * pasX;
+    const y = boite.y + Math.floor(i / cols) * (hLigne + ecart);
+
+    poserOmbre(ctx, ombre, "surtitre");
+    ctx.font = `400 ${m.ficheLabel}px ${policeDe(carte, "policeSurtitre", polices)}`;
+    ctx.fillStyle = th.encreFaible;
+    dessinerCapitales(
+      ctx,
+      morceauxCapitales(l.label ?? ""),
+      x,
+      y + m.ficheLabel,
+      m.ficheLabel,
+      0.26,
+      th.accent,
+    );
+
+    poserOmbre(ctx, ombre, "titre");
+    ctx.font = `700 ${m.ficheValeur}px ${policeDe(carte, "policeTitre", polices)}`;
+    ctx.fillStyle = l.accent ? th.accent : th.encre;
+    ctx.fillText(String(l.valeur ?? ""), x, y + hLigne);
+  });
+  sansOmbre(ctx);
+  const hauteur = hauteurDesChiffres(m, lignes.length, cols);
+  zone(zones, "fiche", boite.x, boite.y - m.ficheLabel, boite.width, hauteur + m.ficheLabel);
+  return hauteur;
+}
+
+/**
+ * L'ÉTAPE — le compte rendu d'une journée, à la façon d'une note de labo.
+ *
+ * La bande de marque et le filet en haut, le filet et la flèche en bas ; entre
+ * les deux, dans l'ordre où on lit : une photo qui se dissout dans le papier, le
+ * jour et ce qu'on en dit, la portion de trace parcourue, ses chiffres.
+ *
+ * La différence avec le gabarit Carte est le point de vue. « Carte » annonce un
+ * ITINÉRAIRE : la trace occupe la planche, le texte se pose dessus. « Étape »
+ * raconte une JOURNÉE : le récit passe devant, la trace devient une vignette qui
+ * situe — et la série se lit comme un carnet, une page par jour.
+ *
+ * La carte honore `depuis`/`jusquA` comme le gabarit Carte : d'une étape à la
+ * suivante, la portion déjà faite reste, chaque journée à SA couleur, et le
+ * cadrage vient de la trace complète — la boucle ne bouge donc pas d'une page à
+ * l'autre.
+ *
+ * Ce qui est ÉLASTIQUE, c'est la carte : la photo, le texte et les chiffres
+ * prennent ce qu'il leur faut, elle occupe ce qui reste. C'est le seul ordre qui
+ * tienne quand le texte fait deux lignes un jour et six le lendemain.
+ */
+function dessinerEtape(ctx, format, o) {
+  const { carte, trace, police, polices, logo, m, th, ombre, zones, index, total } = o;
+  const cadre = o.traceCadre ?? trace;
+  const montrees = journeesMontrees(carte, o.segments);
+  const journees = montrees.map(({ jour, seg }) => ({
+    seg,
+    kmDebut: seg.kmDebut,
+    kmFin: seg.kmFin,
+    couleur: couleurDuJour(carte, jour),
+  }));
+
+  zoneDeRepli(zones, format, m, "texte");
+
+  /* --- la photo, SOUS la bande de marque et non dessous elle -------------- */
+  // Un filet d'en-tête posé sur une image ne se lit plus comme un filet : la
+  // photo commence donc après lui, avec l'air qu'il faut pour qu'il respire.
+  const hautPhoto = m.bandeH + Math.round(16 * m.k);
+  const hPhoto = Math.round(format.height * (carte.bandeauPart ?? 0.28));
+  if (hPhoto > 0) {
+    photoFondue(ctx, format, m, th, carte, hautPhoto, hPhoto);
+    zone(zones, "photo", 0, hautPhoto, format.width, hPhoto);
+  }
+
+  poserOmbre(ctx, ombre, "entete");
+  bandeEntete(ctx, format, m, th, police, {
+    texte: carte.entete,
+    accent: carte.enteteAccent,
+    logo,
+    marque: carte.marque,
+    filet: carte.filetEntete !== false,
+    opacite: carte.enteteOpacite,
+    zones,
+  });
+
+  /* --- le jour, et ce qu'on en dit ---------------------------------------- */
+  const largeur = format.width - m.pad * 2;
+  const yTexte = hautPhoto + hPhoto + Math.round(46 * m.k);
+  const basTexte = blocTitreEtCorps(ctx, format, m, th, polices, carte, yTexte, largeur, {
+    ombre,
+    zones,
+  });
+
+  /* --- LE BLOC DU BAS : la trace et ses chiffres -------------------------- */
+  /* Ils sont CÔTE À CÔTE, et ce n'est pas un choix d'esthète. Empilés, sur une
+     planche de 1350 qui porte déjà une photo, un titre et un récit, il restait
+     à la carte 150 px de haut : une boucle des Écrins y devenait un trait. À
+     côté, la carte redevient carrée et lisible, et le tableau tient debout dans
+     la colonne de droite. `partCarte` règle le partage — à 0, la carte
+     disparaît et les chiffres reprennent toute la largeur. */
+  const nbChiffres = (carte.fiche ?? []).filter((l) => l && (l.label || l.valeur)).length;
+  const hautBloc = basTexte + Math.round(14 * m.k);
+  const basBloc = m.piedFilet - Math.round(48 * m.k);
+  const hBloc = Math.max(0, basBloc - hautBloc);
+
+  const part = Math.max(0, Math.min(0.7, nombre(carte.partCarte, 0.44)));
+  const avecCarte = carte.caseCarte !== false && part > 0.02 && cadre?.coords?.length > 1;
+  const avecProfil = avecCarte && carte.afficherProfil !== false && cadre?.profil?.length > 1;
+
+  let colonnes = Math.max(1, Math.round(nombre(carte.casesColonnes, 1)));
+  let boiteChiffres = { x: m.pad, y: hautBloc, width: largeur };
+
+  if (avecCarte) {
+    const ecart = avecProfil ? Math.round(16 * m.k) : 0;
+    const hProfil = avecProfil ? Math.round(Math.min(hBloc * 0.19, 84 * m.k)) : 0;
+    const cote = Math.max(0, Math.min(hBloc - hProfil - ecart, Math.round(largeur * part)));
+    if (cote > 60 * m.k) {
+      sansOmbre(ctx);
+      dessinerCarteCase(ctx, { x: m.pad, y: hautBloc, width: cote, height: cote }, th, {
+        coords: cadre.coords,
+        journees,
+      });
+      if (avecProfil) {
+        dessinerProfilCase(
+          ctx,
+          { x: m.pad, y: hautBloc + cote + ecart, width: cote, height: hProfil },
+          th,
+          { profil: cadre.profil, totalKm: cadre.totalKm, journees },
+        );
+      }
+      zone(zones, "carte", m.pad, hautBloc, cote, cote + ecart + hProfil);
+      const gouttiere = Math.round(52 * m.k);
+      boiteChiffres = { x: m.pad + cote + gouttiere, y: hautBloc, width: largeur - cote - gouttiere };
+      // Une colonne étroite ne prend qu'une colonne de chiffres, quoi qu'on ait
+      // demandé : deux valeurs de 46 px n'y tiendraient pas côte à côte.
+      colonnes = Math.min(colonnes, boiteChiffres.width > largeur * 0.62 ? 2 : 1);
+    }
+  }
+
+  // Les deux colonnes partent de la même ligne. Centrer les chiffres les
+  // décalait d'une demi-ligne sur la carte, et la page perdait son aplomb —
+  // une note de labo s'aligne en haut, comme un tableau.
+  const hChiffres = hauteurDesChiffres(m, nbChiffres, colonnes);
+  boiteChiffres.y = avecCarte
+    ? hautBloc
+    : hautBloc + Math.max(0, Math.round((hBloc - hChiffres) / 2));
+  tableauDeChiffres(ctx, m, th, polices, carte, boiteChiffres, { colonnes, ombre, zones });
+
+  // Le filet qui ouvre le bloc de données : la troisième règle de la page, avec
+  // celle de l'en-tête et celle du pied. C'est elle qui fait la note de labo.
+  if (carte.caseFilet !== false && hBloc > 0) {
+    sansOmbre(ctx);
+    ctx.fillStyle = th.filet;
+    ctx.fillRect(m.pad, hautBloc - Math.round(16 * m.k), largeur, Math.max(1, 1.5 * m.k));
+  }
+
+  poserOmbre(ctx, ombre, "pied");
+  bandePied(ctx, format, m, th, police, {
+    index,
+    total,
+    centre: carte.piedCentre,
+    droite: carte.piedDroite,
+    fleche: carte.piedFleche,
+    numero: carte.piedNumero !== false,
+    filet: carte.filetPied !== false,
+    opacite: carte.piedOpacite,
+    zones,
+  });
+  sansOmbre(ctx);
+  return [];
+}
+
 const RENDUS = {
   carte: dessinerCarte,
+  etape: dessinerEtape,
   journees: dessinerJournees,
   bandeau: dessinerBandeau,
   photo: dessinerPhoto,

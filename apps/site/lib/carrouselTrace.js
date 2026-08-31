@@ -235,10 +235,16 @@ export function decouperTrace(trace, coupures) {
     }
 
     const profil = trace.profil.filter((p) => p.km >= kmDebut && p.km <= kmFin);
+    // La DESCENTE compte autant que la montée sur une étape de montagne — c'est
+    // elle qui dit ce que les jambes ont pris. On la mesure ici, du même geste
+    // que le D+, sur la même part de profil : deux passes séparées auraient fini
+    // par se désaccorder sur les bornes.
     let dPlus = 0;
+    let dMoins = 0;
     for (let k = 1; k < profil.length; k += 1) {
       const d = profil[k].alt - profil[k - 1].alt;
       if (d > 0) dPlus += d;
+      else dMoins -= d;
     }
 
     segments.push({
@@ -249,6 +255,7 @@ export function decouperTrace(trace, coupures) {
       coords,
       profil,
       dPlusM: Math.round(dPlus),
+      dMinusM: Math.round(dMoins),
       altMax: profil.length ? Math.max(...profil.map((p) => p.alt)) : null,
     });
   }

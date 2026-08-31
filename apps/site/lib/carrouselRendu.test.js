@@ -13,7 +13,7 @@ import { describe, expect, it } from "vitest";
 import { FORMATS, dessinerCartePartage } from "./carrouselCartes";
 import { CLES_ICONES, geometrieDIcone } from "./carrouselIcones";
 
-const GABARITS = ["carte", "bandeau", "photo", "texte", "fiche", "cloture"];
+const GABARITS = ["carte", "etape", "bandeau", "photo", "texte", "fiche", "cloture"];
 
 /**
  * `Path2D` n'existe pas sous Node, et `dessinerIcone` s'en sert pour tracer la
@@ -863,5 +863,95 @@ describe("la tranche de journées d'une carte", () => {
       etiquettes: [{}, {}, { texte: "Vallouise" }, {}],
     });
     expect(ctx.mots.some((m) => m.texte === "Vallouise")).toBe(true);
+  });
+});
+
+describe("le gabarit « Étape »", () => {
+  const segments = [0, 1, 2, 3].map((i) => ({
+    kmDebut: i * 40,
+    kmFin: (i + 1) * 40,
+    distanceKm: 40,
+    dPlusM: 2000 + i * 100,
+    dMinusM: 1800 + i * 50,
+    coords: [
+      [6 + i * 0.1, 44.9],
+      [6.1 + i * 0.1, 45],
+    ],
+  }));
+  const trace = {
+    totalKm: 160,
+    dPlusM: 8000,
+    coords: segments.flatMap((s) => s.coords),
+    profil: Array.from({ length: 50 }, (_, i) => ({ km: (i / 49) * 160, alt: 1000 + i * 20 })),
+  };
+  const etape = (reglage) =>
+    planche(
+      {
+        gabarit: "etape",
+        titre: "Jour 3",
+        surtitre: "",
+        texte: "Montée au col sous la pluie.",
+        fiche: [
+          { label: "Distance", valeur: "46,8 km" },
+          { label: "Dénivelé positif", valeur: "2 519 m" },
+          { label: "Dénivelé négatif", valeur: "1 940 m" },
+          { label: "Masse moyenne portée", valeur: "8,4 kg" },
+        ],
+        ...reglage,
+      },
+      { trace, segments },
+    );
+  const dit = (ctx, quoi) => ctx.mots.map((m) => m.texte).join("").includes(quoi);
+
+  it("écrit le jour, son récit et ses chiffres", () => {
+    const ctx = etape({});
+    expect(dit(ctx, "Jour 3")).toBe(true);
+    expect(dit(ctx, "Montée au col")).toBe(true);
+    expect(dit(ctx, "46,8 km")).toBe(true);
+    expect(dit(ctx, "8,4 kg")).toBe(true);
+    // Les libellés passent en petites capitales, lettre par lettre.
+    expect(dit(ctx, "DISTANCE")).toBe(true);
+  });
+
+  it("garde la bande de marque SUR LE PAPIER, la photo dessous", () => {
+    // Sans image, la bande de photo est un aplat de repérage : il doit
+    // commencer sous le filet d'en-tête, jamais par-dessus.
+    const ctx = etape({});
+    // `y > 0` : le premier rectangle pleine largeur est le FOND de la planche.
+    const aplat = ctx.rects.find(
+      (r) => Math.round(r.w) === FORMATS.carrousel.width && r.h > 200 && r.y > 0,
+    );
+    expect(aplat).toBeDefined();
+    expect(aplat.y).toBeGreaterThan(120);
+  });
+
+  it("tient dans la planche, texte long compris", () => {
+    const ctx = etape({
+      texte:
+        "Un récit qui déborde volontairement sur plusieurs lignes pour vérifier que le bloc du bas ne sort pas de la planche quand le texte pousse tout vers le bas de la page.",
+    });
+    for (const r of ctx.rects) {
+      expect(r.y).toBeGreaterThanOrEqual(0);
+      expect(r.y + r.h).toBeLessThanOrEqual(FORMATS.carrousel.height + 1);
+    }
+  });
+
+  it("montre les journées jusqu'au jour dit, chacune à sa couleur", () => {
+    // La carte de l'étape est une vignette : pas d'étiquettes, donc on lit le
+    // découpage sur le profil, dont chaque aire est une journée.
+    const un = etape({ jusquA: 0 });
+    const trois = etape({ jusquA: 2 });
+    // `fill` sert aux aires du profil ET aux tracés : on compte les appels.
+    const aires = (ctx) => ctx.appels.filter((a) => a === "fill").length;
+    expect(aires(trois)).toBeGreaterThan(aires(un));
+  });
+
+  it("rend toute la largeur aux chiffres quand la vignette est à zéro", () => {
+    const avec = etape({ partCarte: 0.44 });
+    const sans = etape({ partCarte: 0 });
+    // Les VALEURS s'écrivent d'un bloc (les libellés, eux, lettre par lettre).
+    const xDistance = (ctx) => ctx.mots.find((m) => m.texte === "46,8 km")?.x ?? 0;
+    expect(xDistance(avec)).toBeGreaterThan(0);
+    expect(xDistance(sans)).toBeLessThan(xDistance(avec));
   });
 });
