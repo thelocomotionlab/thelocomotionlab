@@ -64,6 +64,7 @@ import {
   dureeCourte,
   ligneDeJournee,
   ligneFactuelle,
+  statsDeJournee,
   texteDeJournee,
   vueDeLaCarte,
 } from "@/lib/carrouselCartes";
@@ -130,7 +131,16 @@ const ONGLETS = [
 ];
 
 /** Les gabarits qui portent une photo. */
-const AVEC_PHOTO = ["photo", "bandeau", "cloture"];
+const AVEC_PHOTO = ["photo", "bandeau", "cloture", "etape"];
+
+/** Les gabarits qui montrent la trace — ceux dont les réglages de carte et de
+ *  journées ont un sens. */
+const AVEC_TRACE = ["carte", "etape"];
+
+/** Les gabarits qui portent un tableau de libellés et de valeurs. La fiche les
+ *  empile pleine largeur, l'étape les range en colonnes ; ce sont les mêmes
+ *  données, donc le même éditeur. */
+const AVEC_FICHE = ["fiche", "etape"];
 
 /** Pour chercher une icône sans se soucier des accents ni de la casse. */
 const sansAccent = (s) =>
@@ -347,8 +357,20 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0", style = 
     /** …et la DISTANCE sur laquelle chacun s'éteint, en pixels de planche. */
     degradeHautH: null,
     degradeBasH: null,
-    bandeauPart: 0.42,
-    fiche: gabarit === "fiche" ? ficheParDefaut(trace, segments) : [],
+    // L'étape garde une photo plus basse que le bandeau : sous elle il reste le
+    // jour, son récit, la trace et ses chiffres — le bandeau, lui, n'a que du
+    // texte à loger.
+    bandeauPart: gabarit === "etape" ? 0.26 : 0.42,
+    /** ÉTAPE — la part de largeur que prend la vignette d'itinéraire, les
+     *  chiffres occupant le reste. `0` la retire et rend toute la largeur au
+     *  tableau. `null` = 44 %, le partage qui laisse la boucle carrée. */
+    partCarte: null,
+    fiche:
+      gabarit === "fiche"
+        ? ficheParDefaut(trace, segments)
+        : gabarit === "etape"
+          ? statsDeJournee(null)
+          : [],
     /* --- journées : l'espace découpé en cases --- */
     casesN: null,
     casesColonnes: 1,
@@ -477,6 +499,7 @@ export const CHAMPS_DE_STYLE = [
   "tailleCase",
   "casesColonnes",
   "caseCarte",
+  "partCarte",
   "caseProfil",
   "caseFilet",
 ];
@@ -575,10 +598,12 @@ export default function CarrouselAtelier() {
   /** Le filtre de la palette d'icônes. À quatre-vingt-dix pictogrammes, la
    *  grille ne se parcourt plus à l'œil : on tape ce qu'on cherche. */
   const [filtreIcones, setFiltreIcones] = useState("");
-  /** Ce que fabriquent les boutons « Jour N » : l'avancement, ou l'étape seule.
-   *  C'est un réglage de l'OUTIL, pas d'une planche — on fait en général une
-   *  série entière du même genre, et on ne veut pas le redire à chaque appui. */
+  /** Ce que fabriquent les boutons « Jour N » : quel gabarit, et l'avancement ou
+   *  la journée seule. Ce sont des réglages de l'OUTIL, pas d'une planche — on
+   *  fait en général une série entière du même genre, et on ne veut pas le
+   *  redire à chaque appui. */
   const [journeeSeule, setJourneeSeule] = useState(false);
+  const [gabaritDeJournee, setGabaritDeJournee] = useState("etape");
   const [fond, setFond] = useState(null);
   const [marque, setMarque] = useState(null);
   const [policePrete, setPolicePrete] = useState(false);
@@ -992,20 +1017,37 @@ export default function CarrouselAtelier() {
    * planche « Jour 3 », annoncer les 188 km du tour est le mauvais chiffre.
    */
   const ajouterJournees = useCallback(
-    (indices, seule = false) => {
+    (indices, { gabarit = "carte", seule = false } = {}) => {
       if (!trace || indices.length === 0) return;
+      const nom = trace.nom ?? liveConfig.aventure.nom;
       const ou = active + 1;
       setCartes((cs) => {
         const style = styleDe(cs[active]);
-        const neuves = indices.map((i) => ({
-          ...carteNeuve("carte", trace, segments, bilan, idNeuf(), style),
-          jusquA: i,
-          // `depuis` égal à `jusquA` : cette étape et rien d'autre.
-          depuis: seule ? i : null,
-          surtitre: trace.nom ?? liveConfig.aventure.nom,
-          titre: `Jour ${i + 1}`,
-          pied: ligneDeJournee(segments[i]),
-        }));
+        const neuves = indices.map((i) => {
+          const base = {
+            ...carteNeuve(gabarit, trace, segments, bilan, idNeuf(), style),
+            jusquA: i,
+            // `depuis` égal à `jusquA` : cette étape et rien d'autre.
+            depuis: seule ? i : null,
+            titre: `Jour ${i + 1}`,
+          };
+          // L'ÉTAPE est une page de carnet : le nom de l'aventure passe dans le
+          // coin haut, à côté de la marque, et le pied ne garde que la flèche —
+          // un décompte et le mot « glisse » feraient trois signes pour une
+          // seule idée. Ses chiffres sont ceux du jour, dans le tableau.
+          return gabarit === "etape"
+            ? {
+                ...base,
+                entete: nom,
+                surtitre: "",
+                pied: " ",
+                piedNumero: false,
+                piedDroite: " ",
+                piedFleche: "toujours",
+                fiche: statsDeJournee(segments[i]),
+              }
+            : { ...base, surtitre: nom, pied: ligneDeJournee(segments[i]) };
+        });
         return [...cs.slice(0, ou), ...neuves, ...cs.slice(ou)];
       });
       // La DERNIÈRE des nouvelles : après « toutes les journées », c'est la fin
@@ -1680,7 +1722,7 @@ export default function CarrouselAtelier() {
                       </button>
                     ))}
                   </div>
-                  {carte?.gabarit === "carte" && !trace && (
+                  {AVEC_TRACE.includes(carte?.gabarit) && !trace && (
                     <p className={`${AIDE} mb-3`}>
                       Ce gabarit a besoin d&rsquo;une trace — onglet « Trace ».
                     </p>
@@ -1755,6 +1797,22 @@ export default function CarrouselAtelier() {
                   >
                     <div className="mb-3">
                       <Choix
+                        label="Le gabarit"
+                        valeur={gabaritDeJournee}
+                        options={[
+                          { cle: "etape", label: "Étape" },
+                          { cle: "carte", label: "Carte pleine" },
+                        ]}
+                        onChange={setGabaritDeJournee}
+                      />
+                      <p className={`${AIDE} mt-1.5`}>
+                        {gabaritDeJournee === "etape"
+                          ? "Une page de carnet : la photo fondue, le jour et son récit, la portion de trace, ses chiffres. Le pied ne garde que la flèche."
+                          : "La trace pleine planche, le jour et ses chiffres posés dessus."}
+                      </p>
+                    </div>
+                    <div className="mb-3">
+                      <Choix
                         label="Ce qu'elle met en couleur"
                         valeur={journeeSeule}
                         options={[
@@ -1774,7 +1832,9 @@ export default function CarrouselAtelier() {
                         <button
                           key={`journee-${sg.kmDebut}`}
                           type="button"
-                          onClick={() => ajouterJournees([i], journeeSeule)}
+                          onClick={() =>
+                            ajouterJournees([i], { gabarit: gabaritDeJournee, seule: journeeSeule })
+                          }
                           className={BOUTON_DISCRET}
                           title={`Jour ${i + 1} — ${sg.distanceKm.toFixed(1)} km, ${sg.dPlusM} m D+`}
                         >
@@ -1785,7 +1845,12 @@ export default function CarrouselAtelier() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => ajouterJournees(segments.map((_, i) => i), journeeSeule)}
+                      onClick={() =>
+                        ajouterJournees(
+                          segments.map((_, i) => i),
+                          { gabarit: gabaritDeJournee, seule: journeeSeule },
+                        )
+                      }
                       className={`${BOUTON_SECOND} w-full`}
                     >
                       <Route size={15} aria-hidden />
@@ -1870,7 +1935,7 @@ export default function CarrouselAtelier() {
                   />
                 </Groupe>
 
-                {["carte", "photo"].includes(carte?.gabarit) && (
+                {["carte", "photo", "etape"].includes(carte?.gabarit) && (
                   <Groupe
                     titre="Ligne de chiffres"
                     aide="Sous le titre. Vide sur une carte, elle affiche ce que la trace sait dire ; écris ce que tu veux à la place, ou un espace pour la faire disparaître. Le balisage marche ici aussi, et un retour à la ligne aussi — c'est là que tient la description d'une journée."
@@ -2364,10 +2429,14 @@ export default function CarrouselAtelier() {
                   </Groupe>
                 )}
 
-                {carte?.gabarit === "fiche" && (
+                {AVEC_FICHE.includes(carte?.gabarit) && (
                   <Groupe
-                    titre="Les lignes de la fiche"
-                    aide="Un libellé à gauche, une valeur en gros à droite. Les valeurs sont du texte libre."
+                    titre={carte.gabarit === "etape" ? "Les chiffres de l’étape" : "Les lignes de la fiche"}
+                    aide={
+                      carte.gabarit === "etape"
+                        ? "Un libellé en petites capitales, la valeur en gros dessous, rangés en colonnes sous la trace. Les valeurs sont du texte libre : la masse portée, elle, ne se déduit d’aucun fichier."
+                        : "Un libellé à gauche, une valeur en gros à droite. Les valeurs sont du texte libre."
+                    }
                   >
                     <div className="mb-2 flex flex-col gap-2">
                       {(carte.fiche ?? []).map((l, i) => (
@@ -2412,18 +2481,59 @@ export default function CarrouselAtelier() {
                         </div>
                       ))}
                     </div>
-                    <button
-                      type="button"
-                      className={BOUTON_SECOND}
-                      onClick={() =>
-                        majCarte({
-                          fiche: [...(carte.fiche ?? []), { label: "", valeur: "", accent: false }],
-                        })
-                      }
-                    >
-                      <Plus size={15} aria-hidden />
-                      Une ligne de plus
-                    </button>
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        className={BOUTON_SECOND}
+                        onClick={() =>
+                          majCarte({
+                            fiche: [...(carte.fiche ?? []), { label: "", valeur: "", accent: false }],
+                          })
+                        }
+                      >
+                        <Plus size={15} aria-hidden />
+                        Une ligne de plus
+                      </button>
+                      {/* Les chiffres de la journée MONTRÉE, pas d'une autre :
+                          c'est `jusquA` qui dit de quelle étape la planche
+                          parle, et la masse portée déjà écrite est gardée — on
+                          ne la retrouverait nulle part ailleurs. */}
+                      {carte.gabarit === "etape" && segments[carte.jusquA ?? segments.length - 1] && (
+                        <button
+                          type="button"
+                          className={BOUTON_SECOND}
+                          onClick={() => {
+                            const neufs = statsDeJournee(
+                              segments[carte.jusquA ?? segments.length - 1],
+                            );
+                            const garde = (carte.fiche ?? []).find((l) => /masse/i.test(l.label ?? ""));
+                            majCarte({
+                              fiche: neufs.map((l) =>
+                                garde && /masse/i.test(l.label) ? { ...l, valeur: garde.valeur } : l,
+                              ),
+                            });
+                          }}
+                        >
+                          <RotateCcw size={15} aria-hidden />
+                          Reprendre les chiffres du jour
+                        </button>
+                      )}
+                    </div>
+                    {carte.gabarit === "etape" && (
+                      <div className="mt-3">
+                        <label className={LEGENDE} htmlFor="stats-colonnes">
+                          Colonnes
+                        </label>
+                        <Nombre
+                          id="stats-colonnes"
+                          min={1}
+                          max={4}
+                          valeur={carte.casesColonnes > 1 ? carte.casesColonnes : 3}
+                          onChange={(v) => majCarte({ casesColonnes: Math.round(v) })}
+                          classe={`${CHAMP} w-24`}
+                        />
+                      </div>
+                    )}
                   </Groupe>
                 )}
 
@@ -2631,7 +2741,7 @@ export default function CarrouselAtelier() {
 
                 {/* Le découpage en journées sert AUX DEUX gabarits qui en
                     parlent : la carte le colorie, la grille en fait ses cases. */}
-                {carte?.gabarit === "carte" && trace && (
+                {AVEC_TRACE.includes(carte?.gabarit) && trace && (
                   <>
                     <Groupe titre="La carte">
                       <div className="mb-3 flex flex-col gap-1.5">
@@ -2653,6 +2763,25 @@ export default function CarrouselAtelier() {
                           onChange={(v) => majCarte({ afficherProfil: v })}
                         />
                       </div>
+                      {carte.gabarit === "etape" && (
+                        <div className="mb-3">
+                          <Curseur
+                            id="part-carte"
+                            label="Largeur de la vignette"
+                            valeur={carte.partCarte}
+                            defaut={0.44}
+                            min={0}
+                            max={0.7}
+                            pas={0.02}
+                            format={(v) => (v < 0.03 ? "aucune" : `${Math.round(v * 100)} %`)}
+                            onChange={(v) => majCarte({ partCarte: v })}
+                          />
+                          <p className={`${AIDE} mt-1`}>
+                            La trace à gauche, les chiffres à droite. À zéro, la vignette
+                            dispara&icirc;t et le tableau reprend toute la largeur.
+                          </p>
+                        </div>
+                      )}
                       {segments.length > 1 && (
                         <>
                           <label className={LEGENDE} htmlFor="jusqu-a">
@@ -2698,7 +2827,7 @@ export default function CarrouselAtelier() {
                   </>
                 )}
 
-                {["carte", "journees"].includes(carte?.gabarit) && trace && (
+                {[...AVEC_TRACE, "journees"].includes(carte?.gabarit) && trace && (
                   <>
                     <Groupe titre="Les journées">
                       <label className={LEGENDE} htmlFor="nb-jours">
@@ -2905,7 +3034,7 @@ export default function CarrouselAtelier() {
                       defaut={CORPS.logo}
                       onChange={(v) => majCarte({ tailleLogo: v })}
                     />
-                    {carte?.gabarit === "fiche" && (
+                    {AVEC_FICHE.includes(carte?.gabarit) && (
                       <>
                         <Taille
                           id="t-fiche-l"

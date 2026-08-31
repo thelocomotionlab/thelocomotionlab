@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { dureeCourte, journeesMontrees, ligneDeJournee } from "./carrouselCartes";
+import { dureeCourte, journeesMontrees, ligneDeJournee, statsDeJournee } from "./carrouselCartes";
 import { fitView, decimerPixels, normX, normY } from "./carrouselGeo";
 import {
   ancreDuSegment,
@@ -325,5 +325,29 @@ describe("journeesMontrees", () => {
     expect(jours({ depuis: 3, jusquA: 1 })).toEqual([]);
     expect(journeesMontrees({ jusquA: 1 }, [])).toEqual([]);
     expect(journeesMontrees({}, null)).toEqual([]);
+  });
+});
+
+describe("les chiffres d'une étape", () => {
+  it("compte la DESCENTE autant que la montée", () => {
+    // Le D− manquait aux segments : un tour de montagne se raconte avec les
+    // deux, et la planche Étape en fait une colonne à part entière.
+    const [j1, j2] = decouperTrace(traceDepuisTrackJson(traceDroite()), [50]);
+    expect(j1.dPlusM).toBeGreaterThan(0);
+    expect(j1.dMinusM).toBe(0); // la première moitié ne fait que monter
+    expect(j2.dPlusM).toBe(0);
+    expect(j2.dMinusM).toBeGreaterThan(0);
+  });
+
+  it("range les quatre lignes de la planche Étape", () => {
+    const lignes = statsDeJournee({ distanceKm: 46.8, dPlusM: 2519, dMinusM: 1940 });
+    expect(lignes.map((l) => l.valeur)).toEqual(["46,8 km", "2 519 m", "1 940 m", ""]);
+    // La masse portée ne se déduit d'aucun fichier : elle attend, en ambre.
+    expect(lignes[3].label).toMatch(/masse/i);
+    expect(lignes[3].accent).toBe(true);
+  });
+
+  it("laisse les chiffres vides plutôt que d'inventer", () => {
+    expect(statsDeJournee(null).map((l) => l.valeur)).toEqual(["", "", "", ""]);
   });
 });
