@@ -2211,18 +2211,26 @@ export default function CarrouselAtelier() {
                 {carte?.gabarit === "etape" && (
                   <Groupe
                     titre="La colonne"
-                    aide="À côté de la trace. Du TEXTE, avec tout le balisage : listes, puces à icône, gras, ambre, couleurs et polices au mot, corps par ligne. C'est là que vont les chiffres du jour — ou tout autre chose."
+                    aide="À côté de la trace. Une ligne « Libellé = valeur » se compose comme une fiche : le libellé en petites capitales, la valeur en gros dessous. Le reste est du texte — listes, puces à icône, gras, ambre, couleurs et polices au mot, corps par ligne."
                   >
                     <textarea
                       ref={colonneRef}
                       id="colonne"
                       rows={5}
                       value={carte?.colonne ?? ""}
-                      placeholder={"- *57,5 km*\n- *4 356 m* D+"}
+                      placeholder={"Distance = 57,5 km\nDénivelé positif = 4 356 m"}
                       onChange={(e) => majCarte({ colonne: e.target.value })}
                       className={`${CHAMP} resize-y`}
                     />
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => insererDansColonne("\nLibellé = ")}
+                        className={BOUTON_DISCRET}
+                        title="Le libellé en petites capitales, la valeur en gros dessous"
+                      >
+                        + donnée
+                      </button>
                       <button
                         type="button"
                         onClick={() => insererDansColonne("\n- ")}
