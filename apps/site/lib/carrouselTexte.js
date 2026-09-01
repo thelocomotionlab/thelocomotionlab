@@ -46,6 +46,10 @@ const MARQUEURS = [
  */
 export const COULEURS_TEXTE = {
   ambre: null,
+  /** L'encre ATTÉNUÉE du thème — claire sur fond sombre, sombre sur fond clair.
+   *  Comme l'ambre, elle n'a pas de valeur ici : c'est un rôle, pas une teinte,
+   *  et l'écrire en dur donnerait un gris invisible dans l'un des deux thèmes. */
+  gris: null,
   bleu: "#8CB9BD",
   terracotta: "#B67352",
   ardoise: "#5B8286",
@@ -56,7 +60,7 @@ export const COULEURS_TEXTE = {
 export const AIDE_BALISAGE =
   "*gras*  _italique_  ~souligné~  [en ambre]  [bleu: mot]  > retrait\n" +
   ":col: (icône)  :fleche: (celle du swipe)\n" +
-  "[serif: mot]  [mono: 57,5 km]  — la police, au mot\n" +
+  "[serif: mot]  [mono: 57,5 km]  — la police, au mot   [gris: mot]\n" +
   "Distance = 57,5 km  — libellé en capitales, valeur en gros dessous\n" +
   "- point de liste — « - :sac: » met CETTE icône en puce\n" +
   "en début de ligne :  | centré   |> à droite   |< à gauche   -- plus petit   ++ plus grand";
@@ -86,10 +90,7 @@ const PREFIXE_NOMME = /^\s*([a-zà-ÿ]+)\s*:\s*/i;
 function prefixeNomme(contenu) {
   const m = PREFIXE_NOMME.exec(contenu);
   if (!m) return null;
-  const nom = m[1]
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
+  const nom = m[1].toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   const reste = contenu.slice(m[0].length);
   if (nom in COULEURS_TEXTE) return { quoi: "couleur", nom, reste };
   if (nom in FAMILLES_TEXTE) return { quoi: "famille", nom, reste };
@@ -201,6 +202,7 @@ export function fonteDe(morceau, { police, polices, taille, graisse = 400 }) {
 export function encreDe(morceau, base) {
   if (!morceau.accent) return base.couleur;
   if (!morceau.couleur || morceau.couleur === "ambre") return base.accent;
+  if (morceau.couleur === "gris") return base.douce ?? base.couleur;
   return COULEURS_TEXTE[morceau.couleur] ?? base.accent;
 }
 
@@ -280,7 +282,13 @@ export function largeurIcone(base, cle = null) {
  *
  * @returns {Array<Array<{texte:string, largeur:number}>>}
  */
-export function lignesRiches(ctx, morceaux, largeurMax, base, { retrait = 0 } = {}) {
+export function lignesRiches(
+  ctx,
+  morceaux,
+  largeurMax,
+  base,
+  { retrait = 0 } = {},
+) {
   const mots = [];
   for (const m of morceaux) {
     // Une icône est un mot à elle seule : elle ne se coupe pas, et elle ne se
@@ -300,13 +308,18 @@ export function lignesRiches(ctx, morceaux, largeurMax, base, { retrait = 0 } = 
 
   for (const mot of mots) {
     ctx.font = fonteDe(mot, base);
-    const w = mot.icone ? largeurIcone(base, mot.icone) : ctx.measureText(mot.texte).width;
+    const w = mot.icone
+      ? largeurIcone(base, mot.icone)
+      : ctx.measureText(mot.texte).width;
     const espace = !mot.icone && EST_ESPACE.test(mot.texte);
 
     // L'ALINÉA rétrécit la PREMIÈRE ligne, pas les suivantes : c'est ce qui
     // fait qu'un retrait de première ligne reste un retrait et ne devient pas
     // une marge. Les lignes d'après retrouvent toute la justification.
-    const maxCourant = lignes.length === 0 ? Math.max(base.taille, largeurMax - retrait) : largeurMax;
+    const maxCourant =
+      lignes.length === 0
+        ? Math.max(base.taille, largeurMax - retrait)
+        : largeurMax;
     if (!espace && ligne.length > 0 && largeur + w > maxCourant) {
       // Les blancs de fin de ligne ne comptent pas : ils décaleraient un texte
       // centré, et allongeraient un soulignement dans le vide.
@@ -326,7 +339,8 @@ export function lignesRiches(ctx, morceaux, largeurMax, base, { retrait = 0 } = 
     ligne.push({ ...mot, largeur: w });
     largeur += w;
   }
-  while (ligne.length && EST_ESPACE.test(ligne[ligne.length - 1].texte)) ligne.pop();
+  while (ligne.length && EST_ESPACE.test(ligne[ligne.length - 1].texte))
+    ligne.pop();
   if (ligne.length) lignes.push(ligne);
   return lignes;
 }
@@ -422,15 +436,22 @@ export function plaqueDeLigne(ctx, ligne, x, y, base) {
   const hauteur = base.taille * 1 + padY * 2;
   const boite = largeur + padX * 2;
   // La rallonge du fondu : ajoutée AUTOUR du texte, jamais prise dessus.
-  const cotes = p.degrade === "bords" ? 2 : p.degrade && p.degrade !== "aucun" ? 1 : 0;
+  const cotes =
+    p.degrade === "bords" ? 2 : p.degrade && p.degrade !== "aucun" ? 1 : 0;
   const ext = cotes ? Math.max(0, p.fondu ?? 0.4) * boite : 0;
-  const gauche = x - padX - (p.degrade === "gauche" || p.degrade === "bords" ? ext : 0);
+  const gauche =
+    x - padX - (p.degrade === "gauche" || p.degrade === "bords" ? ext : 0);
   const large = boite + ext * cotes;
   const r = Math.min((p.rayon ?? 0.18) * base.taille, hauteur / 2, large / 2);
 
   // L'ombre du texte ne doit pas se doubler sous la plaque : deux ombres
   // superposées font une tache.
-  const ombre = [ctx.shadowColor, ctx.shadowBlur, ctx.shadowOffsetX, ctx.shadowOffsetY];
+  const ombre = [
+    ctx.shadowColor,
+    ctx.shadowBlur,
+    ctx.shadowOffsetX,
+    ctx.shadowOffsetY,
+  ];
   ctx.shadowColor = "rgba(0, 0, 0, 0)";
   ctx.shadowBlur = 0;
   ctx.shadowOffsetX = 0;
@@ -441,7 +462,12 @@ export function plaqueDeLigne(ctx, ligne, x, y, base) {
   ctx.lineTo(gauche + large - r, haut);
   ctx.quadraticCurveTo(gauche + large, haut, gauche + large, haut + r);
   ctx.lineTo(gauche + large, haut + hauteur - r);
-  ctx.quadraticCurveTo(gauche + large, haut + hauteur, gauche + large - r, haut + hauteur);
+  ctx.quadraticCurveTo(
+    gauche + large,
+    haut + hauteur,
+    gauche + large - r,
+    haut + hauteur,
+  );
   ctx.lineTo(gauche + r, haut + hauteur);
   ctx.quadraticCurveTo(gauche, haut + hauteur, gauche, haut + hauteur - r);
   ctx.lineTo(gauche, haut + r);
@@ -452,7 +478,8 @@ export function plaqueDeLigne(ctx, ligne, x, y, base) {
   ctx.fill();
   ctx.fillStyle = encre;
 
-  [ctx.shadowColor, ctx.shadowBlur, ctx.shadowOffsetX, ctx.shadowOffsetY] = ombre;
+  [ctx.shadowColor, ctx.shadowBlur, ctx.shadowOffsetX, ctx.shadowOffsetY] =
+    ombre;
 }
 
 /**
@@ -528,49 +555,109 @@ export function morceauxCapitales(texte) {
 /** Le côté d'une icône dans une ligne de capitales. */
 const ICONE_CAPITALES = 1.05;
 
-export function largeurCapitales(ctx, morceaux, taille, espacementEm) {
+/**
+ * La même fonte, dans une autre famille.
+ *
+ * Une ligne de capitales règle `ctx.font` une fois pour toutes, puis pose les
+ * lettres une par une : un morceau `[serif: …]` ne peut donc pas passer par
+ * `fonteDe`, qui reconstruirait la fonte entière alors qu'on ne connaît plus
+ * ici ni le corps ni la graisse de l'appelant. On échange la seule famille,
+ * tout ce qui la précède dans la déclaration CSS est conservé.
+ */
+function familleEchangee(fonte, famille) {
+  return famille
+    ? String(fonte).replace(/(\d+(?:\.\d+)?px)\s+.*$/, `$1 ${famille}`)
+    : fonte;
+}
+
+/** La fonte d'un morceau dans une ligne de capitales. On part TOUJOURS de celle
+ *  de la ligne, jamais de `ctx.font` — qu'un morceau précédent a pu changer.
+ *  `polices` est le trio de la planche (sans/serif/mono). */
+function fonteDeCapitale(fonteLigne, mo, polices) {
+  const famille = mo.famille && polices?.[mo.famille];
+  return famille ? familleEchangee(fonteLigne, famille) : fonteLigne;
+}
+
+export function largeurCapitales(
+  ctx,
+  morceaux,
+  taille,
+  espacementEm,
+  polices = null,
+) {
   const ecart = espacementEm * taille;
+  const fonteLigne = ctx.font;
   let largeur = 0;
   for (const mo of morceaux) {
     if (mo.icone) {
-      largeur += taille * (glypheTrace(mo.icone)?.largeur ?? ICONE_CAPITALES) + ecart;
+      largeur +=
+        taille * (glypheTrace(mo.icone)?.largeur ?? ICONE_CAPITALES) + ecart;
       continue;
     }
+    ctx.font = fonteDeCapitale(fonteLigne, mo, polices);
     for (const l of mo.texte) largeur += ctx.measureText(l).width + ecart;
   }
+  ctx.font = fonteLigne;
   return Math.max(0, largeur - ecart);
 }
 
 /** Pose la ligne. `ctx.font` et `ctx.fillStyle` sont déjà réglés par l'appelant
- *  — sauf pour un morceau qui porte sa propre couleur. */
-export function dessinerCapitales(ctx, morceaux, x, base, taille, espacementEm, encre) {
+ *  — sauf pour un morceau qui porte sa propre couleur ou sa propre famille. */
+export function dessinerCapitales(
+  ctx,
+  morceaux,
+  x,
+  base,
+  taille,
+  espacementEm,
+  encre,
+  { douce = null, polices = null } = {},
+) {
   const ecart = espacementEm * taille;
   const parDefaut = ctx.fillStyle;
+  const fonteLigne = ctx.font;
   let curseur = x;
   for (const mo of morceaux) {
-    const couleur = mo.couleur ? encreDe(mo, { couleur: parDefaut, accent: encre }) : parDefaut;
+    const couleur = mo.couleur
+      ? encreDe(mo, { couleur: parDefaut, accent: encre, douce })
+      : parDefaut;
     if (mo.icone) {
       const glyphe = glypheTrace(mo.icone);
       if (glyphe) {
         // La flèche suit la ligne des capitales, pas la ligne de base : dans un
         // surtitre elle doit viser le milieu des lettres, comme le fait celle
         // du pied de page au-dessus de sa propre ligne.
-        glyphe.dessiner(ctx, curseur, base - taille * CENTRE_CAPITALES, taille, couleur);
+        glyphe.dessiner(
+          ctx,
+          curseur,
+          base - taille * CENTRE_CAPITALES,
+          taille,
+          couleur,
+        );
         curseur += taille * glyphe.largeur + ecart;
         continue;
       }
       const cote = taille * ICONE_CAPITALES;
-      dessinerIcone(ctx, mo.icone, curseur, base - taille * CENTRE_CAPITALES - cote / 2, cote, couleur);
+      dessinerIcone(
+        ctx,
+        mo.icone,
+        curseur,
+        base - taille * CENTRE_CAPITALES - cote / 2,
+        cote,
+        couleur,
+      );
       curseur += cote + ecart;
       continue;
     }
     ctx.fillStyle = couleur;
+    ctx.font = fonteDeCapitale(fonteLigne, mo, polices);
     for (const l of mo.texte) {
       ctx.fillText(l, curseur, base);
       curseur += ctx.measureText(l).width + ecart;
     }
   }
   ctx.fillStyle = parDefaut;
+  ctx.font = fonteLigne;
   return Math.max(0, curseur - x - ecart);
 }
 
@@ -715,7 +802,10 @@ function hauteurDonnee(bloc, base) {
 
 /** L'écart AVANT un bloc : serré entre deux données, normal partout ailleurs. */
 function ecartAvant(bloc, precedent, b) {
-  const cle = bloc.type === "donnee" && precedent?.type === "donnee" ? "entreDonnees" : "entreBlocs";
+  const cle =
+    bloc.type === "donnee" && precedent?.type === "donnee"
+      ? "entreDonnees"
+      : "entreBlocs";
   return b.taille * esp(b, cle);
 }
 
@@ -741,7 +831,7 @@ const PREFIXE_LIGNE = new RegExp(
 );
 const PAS_DE_CORPS = 1.25;
 
-function styleDeLigne(ligne) {
+export function styleDeLigne(ligne) {
   const m = PREFIXE_LIGNE.exec(ligne);
   if (!m) return { align: null, echelle: 1, reste: ligne };
   let align = null;
@@ -760,7 +850,9 @@ function styleDeLigne(ligne) {
 /** Le style d'un bloc, à l'échelle demandée. `null` quand rien ne change —
  *  le bloc suit alors celui de la planche, sans copie inutile. */
 function baseEchelle(base, echelle) {
-  return echelle === 1 ? null : { ...base, taille: Math.max(6, Math.round(base.taille * echelle)) };
+  return echelle === 1
+    ? null
+    : { ...base, taille: Math.max(6, Math.round(base.taille * echelle)) };
 }
 
 /**
@@ -787,9 +879,13 @@ export function blocsDeTexte(ctx, texte, largeurMax, base) {
       const large = largeurMax - retrait;
       const lignes = lignesDures(b)
         ? paragraphe.flatMap((ligne, i) =>
-            lignesRiches(ctx, analyserRiche(ligne), large, b, { retrait: i === 0 ? alinea : 0 }),
+            lignesRiches(ctx, analyserRiche(ligne), large, b, {
+              retrait: i === 0 ? alinea : 0,
+            }),
           )
-        : lignesRiches(ctx, analyserRiche(paragraphe.join(" ")), large, b, { retrait: alinea });
+        : lignesRiches(ctx, analyserRiche(paragraphe.join(" ")), large, b, {
+            retrait: alinea,
+          });
       blocs.push({
         type: "paragraphe",
         retrait,
@@ -838,14 +934,17 @@ export function blocsDeTexte(ctx, texte, largeurMax, base) {
     // Les lignes vides accumulées : la première sépare, les suivantes aèrent.
     if (vides > 0) {
       vider();
-      if (vides > 1 && blocs.length) blocs.push({ type: "espace", n: vides - 1 });
+      if (vides > 1 && blocs.length)
+        blocs.push({ type: "espace", n: vides - 1 });
       vides = 0;
     }
 
     // Le décalage puis le style de ligne se lisent AVANT tout le reste : c'est
     // ce qui permet d'écrire « | - un point de liste centré ».
     const cite = EST_RETRAIT.exec(ligne);
-    const { align, echelle, reste } = styleDeLigne((cite ? cite[1] : ligne).trim());
+    const { align, echelle, reste } = styleDeLigne(
+      (cite ? cite[1] : ligne).trim(),
+    );
     const style = { align, echelle };
 
     const item = EST_ITEM.exec(reste);
@@ -857,8 +956,14 @@ export function blocsDeTexte(ctx, texte, largeurMax, base) {
       itemsStyle = style;
       // Le premier `:clé:` du point, s'il en nomme une, EST sa puce.
       const dite = PUCE_DITE.exec(item[1]);
-      const puce = dite && (iconeConnue(dite[1]) || estPuceTracee(dite[1])) ? dite[1] : null;
-      (items ??= []).push({ texte: puce ? item[1].slice(dite[0].length) : item[1], puce });
+      const puce =
+        dite && (iconeConnue(dite[1]) || estPuceTracee(dite[1]))
+          ? dite[1]
+          : null;
+      (items ??= []).push({
+        texte: puce ? item[1].slice(dite[0].length) : item[1],
+        puce,
+      });
       continue;
     }
     viderListe();
@@ -888,7 +993,10 @@ export function blocsDeTexte(ctx, texte, largeurMax, base) {
     // Un changement de décalage ou de style FERME le paragraphe : « > » ouvre
     // un bloc à part, il ne se mélange pas à celui qu'on était en train
     // d'écrire — et une ligne centrée ne se fond pas dans un bloc à gauche.
-    if (paragraphe.length && (Boolean(cite) !== paraRetrait || !memeStyle(paraStyle, style))) {
+    if (
+      paragraphe.length &&
+      (Boolean(cite) !== paraRetrait || !memeStyle(paraStyle, style))
+    ) {
       viderParagraphe();
     }
     paraRetrait = Boolean(cite);
@@ -924,15 +1032,24 @@ export function largeurBlocs(ctx, blocs, base) {
     if (bloc.type === "donnee") {
       ctx.save();
       ctx.font = fonteDe({}, { ...b, taille: bloc.corps.label });
-      max = Math.max(max, largeurCapitales(ctx, bloc.label, bloc.corps.label, 0.26));
+      max = Math.max(
+        max,
+        largeurCapitales(ctx, bloc.label, bloc.corps.label, 0.26, b.polices),
+      );
       ctx.restore();
       for (const ligne of bloc.valeur) max = Math.max(max, largeurLigne(ligne));
       continue;
     }
     const retrait =
-      bloc.type === "liste" ? b.taille * esp(b, "retraitListe") : (bloc.retrait ?? 0);
-    const lignes = bloc.type === "liste" ? bloc.items.flatMap((it) => it.lignes) : bloc.lignes;
-    for (const ligne of lignes) max = Math.max(max, retrait + largeurLigne(ligne));
+      bloc.type === "liste"
+        ? b.taille * esp(b, "retraitListe")
+        : (bloc.retrait ?? 0);
+    const lignes =
+      bloc.type === "liste"
+        ? bloc.items.flatMap((it) => it.lignes)
+        : bloc.lignes;
+    for (const ligne of lignes)
+      max = Math.max(max, retrait + largeurLigne(ligne));
   }
   return max;
 }
@@ -946,7 +1063,8 @@ export function hauteurBlocs(blocs, base) {
     else if (bloc.type === "donnee") h += hauteurDonnee(bloc, b);
     else if (bloc.type === "liste") {
       h += bloc.items.reduce(
-        (somme, it) => somme + it.lignes.length * b.taille * esp(b, "interligne"),
+        (somme, it) =>
+          somme + it.lignes.length * b.taille * esp(b, "interligne"),
         0,
       );
       h += Math.max(0, bloc.items.length - 1) * b.taille * esp(b, "entreItems");
@@ -1077,7 +1195,7 @@ export function poserBlocs(
       const baseLabel = y + label;
       ctx.font = fonteDe({}, { ...b, taille: label, graisse: 400 });
       ctx.fillStyle = b.couleurLabel ?? b.couleur;
-      const largeurLabel = largeurCapitales(ctx, bloc.label, label, 0.26);
+      const largeurLabel = largeurCapitales(ctx, bloc.label, label, 0.26, b.polices);
       dessinerCapitales(
         ctx,
         bloc.label,
@@ -1086,10 +1204,17 @@ export function poserBlocs(
         label,
         0.26,
         b.accent,
+        { douce: b.douce, polices: b.polices },
       );
-      const bv = { ...b, taille: valeur, graisse: 700, couleur: b.couleurValeur ?? b.couleur };
+      const bv = {
+        ...b,
+        taille: valeur,
+        graisse: 700,
+        couleur: b.couleurValeur ?? b.couleur,
+      };
       bloc.valeur.forEach((ligne, j) => {
-        const baseLigne = baseLabel + label * 0.7 + valeur * 0.82 + j * valeur * interligne;
+        const baseLigne =
+          baseLabel + label * 0.7 + valeur * 0.82 + j * valeur * interligne;
         dessinerLigneRiche(
           ctx,
           ligne,
@@ -1115,9 +1240,18 @@ export function poserBlocs(
           const gauche =
             al === "gauche"
               ? x + retrait
-              : x + decalageAlignement(al, largeur, largeurLigne(ligne) + retrait) + retrait;
+              : x +
+                decalageAlignement(al, largeur, largeurLigne(ligne) + retrait) +
+                retrait;
           // La puce du POINT l'emporte sur celle de la planche.
-          if (j === 0) dessinerPuce(ctx, item.puce ?? puce, gauche - retrait, baseLigne, b);
+          if (j === 0)
+            dessinerPuce(
+              ctx,
+              item.puce ?? puce,
+              gauche - retrait,
+              baseLigne,
+              b,
+            );
           dessinerLigneRiche(ctx, ligne, gauche, baseLigne, b);
         });
         y += lignes.length * b.taille * interligne;
@@ -1130,8 +1264,13 @@ export function poserBlocs(
       // L'alinéa ne concerne QUE la première ligne, et n'a aucun sens hors de
       // l'alignement à gauche : un texte centré n'a pas de bord sur lequel
       // décaler.
-      const decale = (bloc.retrait ?? 0) + (j === 0 && al === "gauche" ? (bloc.alinea ?? 0) : 0);
-      const gauche = x + decale + decalageAlignement(al, largeur - decale, largeurLigne(ligne));
+      const decale =
+        (bloc.retrait ?? 0) +
+        (j === 0 && al === "gauche" ? (bloc.alinea ?? 0) : 0);
+      const gauche =
+        x +
+        decale +
+        decalageAlignement(al, largeur - decale, largeurLigne(ligne));
       dessinerLigneRiche(ctx, ligne, gauche, baseLigne, b);
     });
     y += bloc.lignes.length * b.taille * interligne;

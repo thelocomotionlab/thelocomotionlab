@@ -53,6 +53,7 @@ import {
   lignesRiches,
   plaqueDeLigne,
   poserBlocs,
+  styleDeLigne,
 } from "./carrouselTexte";
 import { traceColors } from "./liveTraceColors";
 
@@ -66,9 +67,27 @@ import { traceColors } from "./liveTraceColors";
  * redécouvrir sur une vraie publication.
  */
 export const FORMATS = {
-  carrousel: { cle: "carrousel", label: "Carrousel · 1080×1350", width: 1080, height: 1350, zoneSure: null },
-  story: { cle: "story", label: "Story · 1080×1920", width: 1080, height: 1920, zoneSure: { top: 250, bottom: 1600 } },
-  carre: { cle: "carre", label: "Carré · 1080×1080", width: 1080, height: 1080, zoneSure: null },
+  carrousel: {
+    cle: "carrousel",
+    label: "Carrousel · 1080×1350",
+    width: 1080,
+    height: 1350,
+    zoneSure: null,
+  },
+  story: {
+    cle: "story",
+    label: "Story · 1080×1920",
+    width: 1080,
+    height: 1920,
+    zoneSure: { top: 250, bottom: 1600 },
+  },
+  carre: {
+    cle: "carre",
+    label: "Carré · 1080×1080",
+    width: 1080,
+    height: 1080,
+    zoneSure: null,
+  },
 };
 
 /**
@@ -112,23 +131,42 @@ export const THEMES = {
 };
 
 export const GABARITS = [
-  { cle: "carte", label: "Carte", aide: "L'itinéraire et son profil, découpés en journées." },
-  { cle: "bandeau", label: "Bandeau", aide: "Une photo en bandeau haut, le texte dessous." },
+  {
+    cle: "carte",
+    label: "Carte",
+    aide: "L'itinéraire et son profil, découpés en journées.",
+  },
+  {
+    cle: "bandeau",
+    label: "Bandeau",
+    aide: "Une photo en bandeau haut, le texte dessous.",
+  },
   { cle: "photo", label: "Photo", aide: "Une photo plein cadre." },
-  { cle: "texte", label: "Texte", aide: "Un surtitre, un titre, un paragraphe." },
-  { cle: "fiche", label: "Fiche", aide: "Des libellés à gauche, des valeurs en gros à droite." },
+  {
+    cle: "texte",
+    label: "Texte",
+    aide: "Un surtitre, un titre, un paragraphe.",
+  },
+  {
+    cle: "fiche",
+    label: "Fiche",
+    aide: "Des libellés à gauche, des valeurs en gros à droite.",
+  },
   {
     cle: "etape",
     label: "Étape",
-    aide:
-      "Le compte rendu d'une journée : la photo fondue, le récit, la portion de trace parcourue et ses chiffres.",
+    aide: "Le compte rendu d'une journée : la photo fondue, le récit, la portion de trace parcourue et ses chiffres.",
   },
   {
     cle: "journees",
     label: "Journées",
     aide: "L'espace découpé en cases : une journée par case, sa portion de trace et de profil.",
   },
-  { cle: "cloture", label: "Clôture", aide: "La marque cerclée, et le mot de la fin." },
+  {
+    cle: "cloture",
+    label: "Clôture",
+    aide: "La marque cerclée, et le mot de la fin.",
+  },
 ];
 
 /** Ce que porte la bande d'en-tête : le logo, le nom, les deux, ou rien. */
@@ -177,7 +215,14 @@ export const FLECHES = [
  * journées, et une journée de la même teinte se lisait comme « la portion non
  * coloriée ».
  */
-export const PALETTE_JOURS = [traceColors.line, "#EFB159", "#B67352", "#8CB9BD", "#6E9CA0", "#9A6044"];
+export const PALETTE_JOURS = [
+  traceColors.line,
+  "#EFB159",
+  "#B67352",
+  "#8CB9BD",
+  "#6E9CA0",
+  "#9A6044",
+];
 
 export const TILE_URL =
   "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}";
@@ -191,7 +236,9 @@ export function dureeCourte(seconds) {
   const total = Math.max(0, Math.round(seconds / 60));
   const heures = Math.floor(total / 60);
   const minutes = total % 60;
-  return heures > 0 ? `${heures} h ${String(minutes).padStart(2, "0")}` : `${minutes} min`;
+  return heures > 0
+    ? `${heures} h ${String(minutes).padStart(2, "0")}`
+    : `${minutes} min`;
 }
 
 /* ------------------------------------------------------------------ métriques */
@@ -232,7 +279,9 @@ function metriques(format) {
     entete: Math.round(CORPS.entete * k),
     surtitre: Math.round(CORPS.surtitre * k),
     filetSurtitre: Math.round(CORPS.filet * k),
-    titre: Math.round((format.cle === "carre" ? CORPS.titre * 0.88 : CORPS.titre) * k),
+    titre: Math.round(
+      (format.cle === "carre" ? CORPS.titre * 0.88 : CORPS.titre) * k,
+    ),
     corps: Math.round(CORPS.corps * k),
     chiffre: Math.round(132 * k),
     unite: Math.round(34 * k),
@@ -287,7 +336,12 @@ function fenetreCarte(format) {
   const m = metriques(format);
   const y = m.bandeH + Math.round(40 * m.k);
   // Le bas réservé : profil + surtitre + titre + pied.
-  const reserve = m.profilH + m.surtitre * 2.4 + m.titre * 1.5 + (m.piedBase - m.piedFilet) + 56 * m.k;
+  const reserve =
+    m.profilH +
+    m.surtitre * 2.4 +
+    m.titre * 1.5 +
+    (m.piedBase - m.piedFilet) +
+    56 * m.k;
   return {
     x: m.pad,
     y,
@@ -305,7 +359,11 @@ function fenetreCarte(format) {
  */
 export function vueDeLaCarte(coords, formatCle) {
   const format = FORMATS[formatCle] ?? FORMATS.carrousel;
-  return fitView(coords, { width: format.width, height: format.height, fit: fenetreCarte(format) });
+  return fitView(coords, {
+    width: format.width,
+    height: format.height,
+    fit: fenetreCarte(format),
+  });
 }
 
 function rectArrondi(ctx, x, y, w, h, r) {
@@ -327,7 +385,10 @@ function rectArrondi(ctx, x, y, w, h, r) {
 /* ------------------------------------------------------------------ fond de carte */
 
 function urlTuile(template, z, x, y) {
-  return template.replace("{z}", String(z)).replace("{x}", String(x)).replace("{y}", String(y));
+  return template
+    .replace("{z}", String(z))
+    .replace("{x}", String(x))
+    .replace("{y}", String(y));
 }
 
 function chargerTuile(url) {
@@ -365,10 +426,19 @@ export async function chargerFond(view, options = {}) {
   for (let dy = 0; dy < w.rows; dy += 1) {
     for (let dx = 0; dx < w.cols; dx += 1) {
       demandes.push(
-        chargerTuile(urlTuile(tileUrl, w.zoom, w.tx0 + dx, w.ty0 + dy)).then((img) => {
-          if (img) ctx.drawImage(img, dx * TILE_SIZE, dy * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-          return Boolean(img);
-        }),
+        chargerTuile(urlTuile(tileUrl, w.zoom, w.tx0 + dx, w.ty0 + dy)).then(
+          (img) => {
+            if (img)
+              ctx.drawImage(
+                img,
+                dx * TILE_SIZE,
+                dy * TILE_SIZE,
+                TILE_SIZE,
+                TILE_SIZE,
+              );
+            return Boolean(img);
+          },
+        ),
       );
     }
   }
@@ -482,7 +552,12 @@ function bandeEntete(
 
   if (filet) {
     ctx.fillStyle = th.filet;
-    ctx.fillRect(m.pad, m.bandeH, format.width - m.pad * 2, Math.max(1, 1.5 * m.k));
+    ctx.fillRect(
+      m.pad,
+      m.bandeH,
+      format.width - m.pad * 2,
+      Math.max(1, 1.5 * m.k),
+    );
   }
   ctx.restore();
 }
@@ -495,7 +570,8 @@ function bandeEntete(
  */
 function largeurEspacee(ctx, texte, taille, espacementEm) {
   let largeur = 0;
-  for (const l of texte) largeur += ctx.measureText(l).width + espacementEm * taille;
+  for (const l of texte)
+    largeur += ctx.measureText(l).width + espacementEm * taille;
   return Math.max(0, largeur - espacementEm * taille);
 }
 
@@ -509,6 +585,26 @@ function largeurEspacee(ctx, texte, taille, espacementEm) {
  * n'a plus rien d'un surtitre, juste un trait perdu. Rend l'ordonnée de la
  * ligne de base.
  */
+/**
+ * LE SURTITRE : un filet ambre, puis des capitales espacées — sur AUTANT DE
+ * LIGNES qu'on en écrit.
+ *
+ * Une seule ligne suffisait tant qu'il n'annonçait qu'une chose. Mais une étape
+ * en dit deux : d'où l'on part et où l'on va, puis avec qui — et la seconde
+ * n'a ni le même corps ni la même encre que la première. Chaque ligne prend
+ * donc les préfixes de ligne du balisage (`--` et `++` pour le corps, `|` pour
+ * l'alignement) et tout le reste (`[gris: …]`, `:fleche:`, les couleurs).
+ *
+ * LE FILET n'ouvre que la PREMIÈRE : c'est le point d'entrée du regard, et le
+ * répéter à chaque ligne en ferait une liste.
+ *
+ * @param {boolean} o.depuisLeBas - `base` est la ligne de base de la DERNIÈRE
+ *   ligne, pas de la première. Les gabarits qui composent du bas vers le haut
+ *   en ont besoin : sinon leur surtitre déborderait vers le bas, sur le titre
+ *   qu'ils viennent de poser.
+ * @returns {{dernier:number, sup:number}} la ligne de base de la dernière
+ *   ligne, et la hauteur que les lignes SUPPLÉMENTAIRES ont prise.
+ */
 function surtitre(
   ctx,
   m,
@@ -517,43 +613,90 @@ function surtitre(
   texte,
   x,
   base,
-  { align = "gauche", largeur = 0, filet = true, plaque = null } = {},
+  {
+    align = "gauche",
+    largeur = 0,
+    filet = true,
+    plaque = null,
+    depuisLeBas = false,
+    polices = null,
+  } = {},
 ) {
-  if (!texte) return base;
-  // Sans filet, le surtitre n'est plus qu'une ligne de capitales ambrées : la
-  // place du trait ET son écart disparaissent, sinon il resterait un retrait
-  // fantôme que personne ne saurait expliquer.
-  const filetL = filet ? Math.round(m.surtitre * 2.6) : 0;
-  const ecart = filet ? m.surtitre * 0.9 : 0;
-  const epaisseur = Math.max(2, m.filetSurtitre);
-  const mots = morceauxCapitales(texte);
+  const brutes = String(texte ?? "")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+  if (brutes.length === 0) return { dernier: base, sup: 0 };
 
-  ctx.font = `500 ${m.surtitre}px ${police}`;
-  const total = filetL + ecart + largeurCapitales(ctx, mots, m.surtitre, 0.22);
-  const gauche = x + decalageAlignement(align, largeur, total);
+  const lignes = brutes.map((brute, i) => {
+    const { align: alignLigne, echelle, reste } = styleDeLigne(brute);
+    return {
+      align: alignLigne ?? align,
+      taille: Math.max(8, Math.round(m.surtitre * echelle)),
+      mots: morceauxCapitales(reste),
+      // Sans filet, le surtitre n'est plus qu'une ligne de capitales ambrées :
+      // la place du trait ET son écart disparaissent, sinon il resterait un
+      // retrait fantôme que personne ne saurait expliquer.
+      filet: filet && i === 0,
+    };
+  });
 
-  // La plaque passe SOUS le filet comme sous les lettres : c'est le bloc
-  // entier qu'on rend lisible, pas seulement son texte.
-  if (plaque) {
-    plaqueDeLigne(ctx, [{ largeur: total }], gauche, base, {
-      taille: m.surtitre,
-      plaque,
-    });
+  const pas = (l) => Math.round(l.taille * 1.75);
+  const sup = lignes.slice(1).reduce((total, l) => total + pas(l), 0);
+  let ligneBase = depuisLeBas ? base - sup : base;
+
+  for (const [i, l] of lignes.entries()) {
+    if (i > 0) ligneBase += pas(l);
+    const filetL = l.filet ? Math.round(l.taille * 2.6) : 0;
+    const ecart = l.filet ? l.taille * 0.9 : 0;
+    const epaisseur = Math.max(2, m.filetSurtitre);
+
+    ctx.font = `500 ${l.taille}px ${police}`;
+    const total =
+      filetL + ecart + largeurCapitales(ctx, l.mots, l.taille, 0.22, polices);
+    const gauche = x + decalageAlignement(l.align, largeur, total);
+
+    // La plaque passe SOUS le filet comme sous les lettres : c'est le bloc
+    // entier qu'on rend lisible, pas seulement son texte.
+    if (plaque) {
+      plaqueDeLigne(ctx, [{ largeur: total }], gauche, ligneBase, {
+        taille: l.taille,
+        plaque,
+      });
+    }
+    ctx.fillStyle = th.accent;
+    // Le filet est ÉPAIS (10 px de référence) : c'est lui le point d'entrée du
+    // regard, pas le petit texte qui le suit. Centré sur la hauteur de capitale
+    // du surtitre, sinon il pend sous la ligne dès qu'il s'épaissit.
+    if (l.filet) {
+      ctx.fillRect(
+        gauche,
+        ligneBase - l.taille * CENTRE_CAPITALES - epaisseur / 2,
+        filetL,
+        epaisseur,
+      );
+    }
+    dessinerCapitales(
+      ctx,
+      l.mots,
+      gauche + filetL + ecart,
+      ligneBase,
+      l.taille,
+      0.22,
+      th.accent,
+      {
+        douce: th.encreFaible,
+        polices,
+      },
+    );
   }
-  ctx.fillStyle = th.accent;
-  // Le filet est ÉPAIS (10 px de référence) : c'est lui le point d'entrée du
-  // regard, pas le petit texte qui le suit. Centré sur la hauteur de capitale
-  // du surtitre, sinon il pend sous la ligne dès qu'il s'épaissit.
-  if (filet) {
-    ctx.fillRect(gauche, base - m.surtitre * CENTRE_CAPITALES - epaisseur / 2, filetL, epaisseur);
-  }
-  dessinerCapitales(ctx, mots, gauche + filetL + ecart, base, m.surtitre, 0.22, th.accent);
-  return base;
+  return { dernier: ligneBase, sup };
 }
 
-/** Découpe un texte à la largeur donnée. Renvoie les lignes. */
 export function lignes(ctx, texte, largeurMax) {
-  const mots = String(texte ?? "").split(/\s+/).filter(Boolean);
+  const mots = String(texte ?? "")
+    .split(/\s+/)
+    .filter(Boolean);
   const out = [];
   let ligne = "";
   for (const mot of mots) {
@@ -577,6 +720,9 @@ export function lignes(ctx, texte, largeurMax) {
 /** Interligne d'un titre, en parts de son corps. */
 /** L'écart après le titre, en corps de ce qui suit (cf. `blocTitreEtCorps`). */
 const APRES_TITRE = 2.2;
+
+/** L'écart avant le bloc de données d'une étape, en corps (cf. `dessinerEtape`). */
+const AVANT_DONNEES = 1;
 
 const INTERLIGNE_TITRE = 1.16;
 
@@ -611,7 +757,9 @@ function zoneTexte(zones, champ, m, x, largeur, yHaut, yBas, marge = 0) {
  * ne répondait à rien, ce qui se lit comme un outil cassé.
  */
 function zoneDeRepli(zones, format, m, champ) {
-  zone(zones, champ, 0, m.bandeH, format.width, m.piedFilet - m.bandeH, { repli: true });
+  zone(zones, champ, 0, m.bandeH, format.width, m.piedFilet - m.bandeH, {
+    repli: true,
+  });
 }
 
 /** Les champs qui se partagent les blancs de la colonne de texte. */
@@ -664,7 +812,9 @@ export { ALIGNEMENTS, DEGRADES_PLAQUE };
  * l'ordre à l'envers — c'est le même réglage, lu dans l'autre sens.
  */
 function ordreDuTitre(carte, basVersHaut = false) {
-  const ordre = carte?.titreDevant ? ["titre", "surtitre"] : ["surtitre", "titre"];
+  const ordre = carte?.titreDevant
+    ? ["titre", "surtitre"]
+    : ["surtitre", "titre"];
   return basVersHaut ? [...ordre].reverse() : ordre;
 }
 
@@ -707,7 +857,13 @@ const OMBRE = { flou: 18, dx: 0, dy: 6, opacite: 0.5, couleur: "#000000" };
  * toute l'image, la plaque ne couvre que les lettres. On garde la photo, et le
  * texte tient quand même. Elle se pose LIGNE PAR LIGNE (cf. `plaqueDeLigne`).
  */
-const PLAQUE = { opacite: 0.88, padX: 0.3, padY: 0.24, rayon: 0.18, fondu: 0.4 };
+const PLAQUE = {
+  opacite: 0.88,
+  padX: 0.3,
+  padY: 0.24,
+  rayon: 0.18,
+  fondu: 0.4,
+};
 
 /** Les textes qui peuvent en porter une. L'en-tête et le pied vivent dans des
  *  bandes qui ont déjà leur propre opacité : ils n'en ont pas besoin. */
@@ -724,7 +880,10 @@ function plaqueDe(carte, th, quoi) {
   const rgb = composantes(carte.plaqueCouleur || th.fond) ?? "255, 255, 255";
   return {
     rgb,
-    alpha: Math.min(1, Math.max(0, nombre(carte.plaqueOpacite, PLAQUE.opacite))),
+    alpha: Math.min(
+      1,
+      Math.max(0, nombre(carte.plaqueOpacite, PLAQUE.opacite)),
+    ),
     padX: nombre(carte.plaquePadX, PLAQUE.padX),
     padY: nombre(carte.plaquePadY, PLAQUE.padY),
     rayon: nombre(carte.plaqueRayon, PLAQUE.rayon),
@@ -748,15 +907,26 @@ function composantes(hex) {
   const brut = String(hex ?? "").trim();
   const court = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(brut);
   const long = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(brut);
-  if (court) return court.slice(1).map((c) => parseInt(c + c, 16)).join(", ");
-  if (long) return long.slice(1).map((c) => parseInt(c, 16)).join(", ");
+  if (court)
+    return court
+      .slice(1)
+      .map((c) => parseInt(c + c, 16))
+      .join(", ");
+  if (long)
+    return long
+      .slice(1)
+      .map((c) => parseInt(c, 16))
+      .join(", ");
   return null;
 }
 
 function ombreDe(carte, m) {
   if (!carte?.ombre) return null;
   const rgb = composantes(carte.ombreCouleur || OMBRE.couleur) ?? "0, 0, 0";
-  const opacite = Math.min(1, Math.max(0, nombre(carte.ombreOpacite, OMBRE.opacite)));
+  const opacite = Math.min(
+    1,
+    Math.max(0, nombre(carte.ombreOpacite, OMBRE.opacite)),
+  );
   // Rien de coché = TOUT est ombré : allumer l'ombre puis ne rien voir serait
   // le plus sûr moyen de croire qu'elle ne marche pas.
   const sur = Object.fromEntries(
@@ -806,7 +976,9 @@ function nombre(v, defaut) {
  * du format — d'où les deux chemins).
  */
 function portee(reglee, defautDejaEchelle, m) {
-  return Number.isFinite(reglee) && reglee >= 0 ? reglee * m.k : defautDejaEchelle;
+  return Number.isFinite(reglee) && reglee >= 0
+    ? reglee * m.k
+    : defautDejaEchelle;
 }
 
 /** La famille RÉSOLUE d'un des trois rôles de texte (cf. `POLICES`). */
@@ -824,6 +996,7 @@ function baseTitre(m, th, polices, carte, echelle = 1) {
     graisse: 700,
     couleur: th.encre,
     accent: th.accent,
+    douce: th.encreFaible,
     plaque: plaqueDe(carte, th, "titre"),
     // L'interligne du titre : un seul défaut pour TOUS les gabarits. Les
     // chemins « du bas vers le haut » en avaient un autre (1,12) — ce n'était
@@ -850,6 +1023,9 @@ function baseCorps(m, th, polices, carte) {
     graisse: 400,
     couleur: th.encreDouce,
     accent: th.accent,
+    // L'encre ATTÉNUÉE, pour `[gris: …]` : c'est un rôle du thème, pas une
+    // teinte, et il faut donc la lui passer plutôt que de l'écrire en dur.
+    douce: th.encreFaible,
     plaque: plaqueDe(carte, th, "corps"),
     interligne: nombre(carte?.interligne, ESPACEMENT.interligne),
     entreBlocs: nombre(carte?.entreBlocs, ESPACEMENT.entreBlocs),
@@ -884,10 +1060,20 @@ function hauteurFiletTitre(m, carte) {
   );
 }
 
-function filetSousTitre(ctx, m, th, carte, y, { align = "gauche", x = m.pad, largeur = 0 } = {}) {
+function filetSousTitre(
+  ctx,
+  m,
+  th,
+  carte,
+  y,
+  { align = "gauche", x = m.pad, largeur = 0 } = {},
+) {
   if (!carte.filetTitre) return y;
   const l = Math.round(nombre(carte.filetTitreLargeur, 96) * m.k);
-  const epaisseur = Math.max(1, Math.round(nombre(carte.filetTitreEpaisseur, 4) * m.k));
+  const epaisseur = Math.max(
+    1,
+    Math.round(nombre(carte.filetTitreEpaisseur, 4) * m.k),
+  );
   const yTrait = y + Math.round(AVANT_FILET_TITRE * m.k);
   ctx.fillStyle = carte.couleurFiletTitre || th.accent;
   ctx.fillRect(x + decalageAlignement(align, largeur, l), yTrait, l, epaisseur);
@@ -899,7 +1085,14 @@ function filetSousTitre(ctx, m, th, carte, y, { align = "gauche", x = m.pad, lar
  * DERNIÈRE ligne de base — pas celle d'après : c'est à l'appelant de décider de
  * l'espace qui suit, il est le seul à savoir ce qui vient.
  */
-function poserLignes(ctx, lignes, x, y, base, { align = "gauche", largeur = 0 } = {}) {
+function poserLignes(
+  ctx,
+  lignes,
+  x,
+  y,
+  base,
+  { align = "gauche", largeur = 0 } = {},
+) {
   const interligne = base.interligne ?? INTERLIGNE_TITRE;
   let ligneBase = y;
   lignes.forEach((ligne, i) => {
@@ -941,12 +1134,24 @@ function bandePied(
     zones = null,
   },
 ) {
-  zone(zones, "pied", 0, m.piedFilet, format.width, format.height - m.piedFilet);
+  zone(
+    zones,
+    "pied",
+    0,
+    m.piedFilet,
+    format.width,
+    format.height - m.piedFilet,
+  );
   ctx.save();
   ctx.globalAlpha = Math.min(1, Math.max(0, opacite));
   if (filet) {
     ctx.fillStyle = th.filet;
-    ctx.fillRect(m.pad, m.piedFilet, format.width - m.pad * 2, Math.max(1, 1.5 * m.k));
+    ctx.fillRect(
+      m.pad,
+      m.piedFilet,
+      format.width - m.pad * 2,
+      Math.max(1, 1.5 * m.k),
+    );
   }
 
   ctx.font = `400 ${m.piedTexte}px ${police}`;
@@ -984,13 +1189,19 @@ function bandePied(
       ? morceauxCapitales("Glisse")
       : null;
   const avecFleche =
-    fleche === "toujours" ? true : fleche === "jamais" ? false : !droite && resteUneCarte;
+    fleche === "toujours"
+      ? true
+      : fleche === "jamais"
+        ? false
+        : !droite && resteUneCarte;
   if (!motDroite && !avecFleche) {
     ctx.restore();
     return;
   }
   const ecartFleche = avecFleche ? m.piedTexte * 1.5 : 0;
-  const largeur = motDroite ? largeurCapitales(ctx, motDroite, m.piedTexte, 0.24) : 0;
+  const largeur = motDroite
+    ? largeurCapitales(ctx, motDroite, m.piedTexte, 0.24)
+    : 0;
   if (motDroite) {
     dessinerCapitales(
       ctx,
@@ -1041,7 +1252,9 @@ const CRETE_OPACITE = 0.9;
 
 function dessinerProfil(ctx, boite, th, options) {
   const { profil, totalKm, segments, couleurs, doneKm } = options;
-  const points = (profil ?? []).filter((p) => Number.isFinite(p?.km) && Number.isFinite(p?.alt));
+  const points = (profil ?? []).filter(
+    (p) => Number.isFinite(p?.km) && Number.isFinite(p?.alt),
+  );
   if (points.length < 2) return;
   const total = totalKm > 0 ? totalKm : points[points.length - 1].km;
   if (!(total > 0)) return;
@@ -1050,7 +1263,8 @@ function dessinerProfil(ctx, boite, th, options) {
   const min = Math.min(...alts);
   const amplitude = Math.max(1, Math.max(...alts) - min);
 
-  const X = (km) => boite.x + (Math.max(0, Math.min(total, km)) / total) * boite.width;
+  const X = (km) =>
+    boite.x + (Math.max(0, Math.min(total, km)) / total) * boite.width;
   const Y = (alt) => boite.y + (1 - (alt - min) / amplitude) * boite.height;
   const base = boite.y + boite.height;
 
@@ -1090,7 +1304,9 @@ function dessinerProfil(ctx, boite, th, options) {
   // justement lui qu'on veut voir en couleur. L'appelant décide en amont s'il
   // passe des journées ou `null` (une sortie d'un seul tenant n'en a pas).
   if (segments?.length >= 1) {
-    segments.forEach((s, i) => aire(s.kmDebut, s.kmFin, couleurs[i] ?? th.accent));
+    segments.forEach((s, i) =>
+      aire(s.kmDebut, s.kmFin, couleurs[i] ?? th.accent),
+    );
   } else if (doneKm > 0) {
     aire(0, doneKm, th.accent);
     if (doneKm < total) {
@@ -1121,7 +1337,6 @@ function dessinerProfil(ctx, boite, th, options) {
     }
     ctx.restore();
   }
-
 }
 
 /* ------------------------------------------------------------------ étiquettes */
@@ -1163,7 +1378,11 @@ const borne = (v, min, max) => Math.min(Math.max(v, min), Math.max(min, max));
  */
 function calerEtiquette(boite, format, m, fenetre) {
   boite.x = borne(boite.x, m.pad, format.width - m.pad - boite.width);
-  boite.y = borne(boite.y, m.bandeH + m.etiquette * 0.5, fenetre.y + fenetre.height - boite.height);
+  boite.y = borne(
+    boite.y,
+    m.bandeH + m.etiquette * 0.5,
+    fenetre.y + fenetre.height - boite.height,
+  );
   return boite;
 }
 
@@ -1177,8 +1396,16 @@ function dansLeCadre(boite, format) {
 
 function dessinerEtiquette(ctx, texte, boite, couleur, m, th, police) {
   ctx.save();
-  rectArrondi(ctx, boite.x, boite.y, boite.width, boite.height, boite.height / 2);
-  ctx.fillStyle = th.cle === "clair" ? "rgba(254, 251, 246, 0.9)" : "rgba(16, 18, 14, 0.84)";
+  rectArrondi(
+    ctx,
+    boite.x,
+    boite.y,
+    boite.width,
+    boite.height,
+    boite.height / 2,
+  );
+  ctx.fillStyle =
+    th.cle === "clair" ? "rgba(254, 251, 246, 0.9)" : "rgba(16, 18, 14, 0.84)";
   ctx.fill();
   ctx.strokeStyle = couleur;
   ctx.lineWidth = Math.max(1.5, m.k * 2);
@@ -1188,14 +1415,24 @@ function dessinerEtiquette(ctx, texte, boite, couleur, m, th, police) {
 
   const cy = boite.y + boite.height / 2;
   ctx.beginPath();
-  ctx.arc(boite.x + boite.padX + boite.pastille / 2, cy, boite.pastille / 2, 0, Math.PI * 2);
+  ctx.arc(
+    boite.x + boite.padX + boite.pastille / 2,
+    cy,
+    boite.pastille / 2,
+    0,
+    Math.PI * 2,
+  );
   ctx.fillStyle = couleur;
   ctx.fill();
 
   ctx.font = `500 ${m.etiquette}px ${police}`;
   ctx.fillStyle = th.encre;
   ctx.textBaseline = "middle";
-  ctx.fillText(texte, boite.x + boite.padX + boite.pastille + m.etiquette * 0.4, cy + m.etiquette * 0.04);
+  ctx.fillText(
+    texte,
+    boite.x + boite.padX + boite.pastille + m.etiquette * 0.4,
+    cy + m.etiquette * 0.04,
+  );
   ctx.textBaseline = "alphabetic";
   ctx.restore();
 }
@@ -1226,7 +1463,10 @@ function polyligne(ctx, points, couleur, epaisseur, liseré) {
 }
 
 function couleurDuJour(carte, jour) {
-  return carte?.etiquettes?.[jour]?.couleur ?? PALETTE_JOURS[jour % PALETTE_JOURS.length];
+  return (
+    carte?.etiquettes?.[jour]?.couleur ??
+    PALETTE_JOURS[jour % PALETTE_JOURS.length]
+  );
 }
 
 function couleursDesJours(carte, segments) {
@@ -1254,8 +1494,13 @@ function couleursDesJours(carte, segments) {
  */
 export function journeesMontrees(carte, segments) {
   const tous = segments ?? [];
-  const depuis = Number.isInteger(carte?.depuis) ? Math.max(0, carte.depuis) : 0;
-  const jusquA = carte?.jusquA == null ? tous.length - 1 : Math.min(tous.length - 1, carte.jusquA);
+  const depuis = Number.isInteger(carte?.depuis)
+    ? Math.max(0, carte.depuis)
+    : 0;
+  const jusquA =
+    carte?.jusquA == null
+      ? tous.length - 1
+      : Math.min(tous.length - 1, carte.jusquA);
   const out = [];
   for (let jour = depuis; jour <= jusquA; jour += 1) {
     if (tous[jour]) out.push({ jour, seg: tous[jour] });
@@ -1271,7 +1516,8 @@ export function ligneFactuelle(trace, bilan) {
     trace.totalKm > 0 ? `${formatEntier(trace.totalKm)} km` : "",
     trace.dPlusM > 0 ? `${formatEntier(trace.dPlusM)} m D+` : "",
   ];
-  if (bilan && trace.dureeSecondes > 0) bouts.push(dureeCourte(trace.dureeSecondes));
+  if (bilan && trace.dureeSecondes > 0)
+    bouts.push(dureeCourte(trace.dureeSecondes));
   return bouts.filter(Boolean).join("   ·   ");
 }
 
@@ -1311,14 +1557,35 @@ function ligneDeChiffres(ctx, format, m, th, polices, carte, y, o) {
     );
     if (i > 0) ligne -= base.taille * base.interligne;
   }
-  zoneTexte(zones, "factuelle", m, m.pad, largeur, ligne - m.corps, y + m.corps * 0.3);
+  zoneTexte(
+    zones,
+    "factuelle",
+    m,
+    m.pad,
+    largeur,
+    ligne - m.corps,
+    y + m.corps * 0.3,
+  );
   // Une seule ligne retombe EXACTEMENT sur l'écart d'avant (1,9 corps) : ouvrir
   // le texte ne doit pas déplacer les planches déjà composées.
   return ligne - m.corps * 1.9;
 }
 
 function dessinerCarte(ctx, format, o) {
-  const { carte, trace, police, polices, logo, fond, m, th, ombre, zones, index, total } = o;
+  const {
+    carte,
+    trace,
+    police,
+    polices,
+    logo,
+    fond,
+    m,
+    th,
+    ombre,
+    zones,
+    index,
+    total,
+  } = o;
   const boites = [];
   const fenetre = fenetreCarte(format);
 
@@ -1331,7 +1598,9 @@ function dessinerCarte(ctx, format, o) {
      domaine (les kilomètres en abscisse, les altitudes en ordonnée) vient de
      la référence, la couleur ne remplit que ce qui est acquis. */
   const cadre = o.traceCadre ?? trace;
-  const view = cadre?.coords?.length ? vueDeLaCarte(cadre.coords, format.cle) : null;
+  const view = cadre?.coords?.length
+    ? vueDeLaCarte(cadre.coords, format.cle)
+    : null;
 
   // Les journées montrées, AVEC leur rang d'origine (cf. `journeesMontrees`).
   const montrees = journeesMontrees(carte, o.segments);
@@ -1366,11 +1635,23 @@ function dessinerCarte(ctx, format, o) {
     ctx,
     format,
     th,
-    format.height - portee(carte.degradeBasH, format.height - (fenetre.y + fenetre.height), m),
+    format.height -
+      portee(
+        carte.degradeBasH,
+        format.height - (fenetre.y + fenetre.height),
+        m,
+      ),
     intensite(carte.degradeBas, 1),
   );
   // La bande d'en-tête doit rester lisible par-dessus les tuiles.
-  voileEntete(ctx, format, m, th, intensite(carte.degradeHaut, 0.8), portee(carte.degradeHautH, m.bandeH * 1.4, m));
+  voileEntete(
+    ctx,
+    format,
+    m,
+    th,
+    intensite(carte.degradeHaut, 0.8),
+    portee(carte.degradeHautH, m.bandeH * 1.4, m),
+  );
 
   // Cliquer n'importe où hors des textes ouvre les réglages de trace.
   zoneDeRepli(zones, format, m, "carte");
@@ -1382,13 +1663,21 @@ function dessinerCarte(ctx, format, o) {
     polyligne(
       ctx,
       decimerPixels(cadre.coords.map((c) => view.project(c))),
-      th.cle === "clair" ? "rgba(34, 36, 30, 0.28)" : "rgba(254, 251, 246, 0.24)",
+      th.cle === "clair"
+        ? "rgba(34, 36, 30, 0.28)"
+        : "rgba(254, 251, 246, 0.24)",
       epaisseur * 0.62,
       false,
     );
     montrees.forEach(({ jour, seg }) => {
       const couleur = couleurDuJour(carte, jour);
-      polyligne(ctx, decimerPixels(seg.coords.map((c) => view.project(c))), couleur, epaisseur, true);
+      polyligne(
+        ctx,
+        decimerPixels(seg.coords.map((c) => view.project(c))),
+        couleur,
+        epaisseur,
+        true,
+      );
     });
 
     // Étiquettes en DERNIER : sur tous les tracés, jamais dessous.
@@ -1400,11 +1689,24 @@ function dessinerCarte(ctx, format, o) {
       if (!texte.trim()) return;
       const ancre = ancreDuSegment(seg, view.project);
       if (!ancre) return;
-      const boite = calerEtiquette(boiteEtiquette(ctx, texte, ancre, m, police), format, m, fenetre);
+      const boite = calerEtiquette(
+        boiteEtiquette(ctx, texte, ancre, m, police),
+        format,
+        m,
+        fenetre,
+      );
       boite.x += etq.dx ?? 0;
       boite.y += etq.dy ?? 0;
       dansLeCadre(boite, format);
-      dessinerEtiquette(ctx, texte, boite, couleurDuJour(carte, jour), m, th, police);
+      dessinerEtiquette(
+        ctx,
+        texte,
+        boite,
+        couleurDuJour(carte, jour),
+        m,
+        th,
+        police,
+      );
       boites.push({ index: jour, ...boite });
     });
     sansOmbre(ctx);
@@ -1455,21 +1757,54 @@ function dessinerCarte(ctx, format, o) {
       );
       y -= bt.taille * bt.interligne;
     }
-    filetSousTitre(ctx, m, th, carte, basTitre, { align, x: m.pad, largeur: largeurTexte });
-    zoneTexte(zones, "titre", m, m.pad, largeurTexte, y, basTitre + hauteurFiletTitre(m, carte));
+    filetSousTitre(ctx, m, th, carte, basTitre, {
+      align,
+      x: m.pad,
+      largeur: largeurTexte,
+    });
+    zoneTexte(
+      zones,
+      "titre",
+      m,
+      m.pad,
+      largeurTexte,
+      y,
+      basTitre + hauteurFiletTitre(m, carte),
+    );
     y -= m.surtitre * 0.5;
   };
   const poserSurtitre = () => {
     poserOmbre(ctx, ombre, "surtitre");
     ctx.fillStyle = th.accent;
-    surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, y, {
-      align,
-      filet: carte.surtitreFilet !== false,
-      plaque: plaqueDe(carte, th, "surtitre"),
-      largeur: largeurTexte,
-    });
-    zoneTexte(zones, "surtitre", m, m.pad, largeurTexte, y - m.surtitre, y + m.surtitre * 0.3);
-    y -= m.surtitre * 2.1;
+    const { sup } = surtitre(
+      ctx,
+      m,
+      th,
+      policeDe(carte, "policeSurtitre", polices),
+      carte.surtitre,
+      m.pad,
+      y,
+      {
+        align,
+        polices,
+        filet: carte.surtitreFilet !== false,
+        plaque: plaqueDe(carte, th, "surtitre"),
+        largeur: largeurTexte,
+        // Composé du bas vers le haut : `y` est la ligne du BAS, les lignes
+        // supplémentaires s'empilent au-dessus.
+        depuisLeBas: true,
+      },
+    );
+    zoneTexte(
+      zones,
+      "surtitre",
+      m,
+      m.pad,
+      largeurTexte,
+      y - m.surtitre - sup,
+      y + m.surtitre * 0.3,
+    );
+    y -= sup + m.surtitre * 2.1;
   };
   for (const quoi of ordreDuTitre(carte, true)) {
     if (quoi === "titre" && carte.titre) poserTitre();
@@ -1494,7 +1829,12 @@ function dessinerCarte(ctx, format, o) {
       // couleur — pas à l'ambre du « déjà parcouru », qui dirait autre chose.
       segments: decoupee && segments.length > 0 ? segments : null,
       couleurs,
-      doneKm: carte.jusquA != null ? (segments[segments.length - 1]?.kmFin ?? 0) : carte.bilan ? trace.totalKm : 0,
+      doneKm:
+        carte.jusquA != null
+          ? (segments[segments.length - 1]?.kmFin ?? 0)
+          : carte.bilan
+            ? trace.totalKm
+            : 0,
     });
   }
 
@@ -1511,7 +1851,8 @@ function dessinerCarte(ctx, format, o) {
     zones,
   });
   sansOmbre(ctx);
-  if (view && fond && carte.afficherFond !== false) attributionVerticale(ctx, format, m, th, police);
+  if (view && fond && carte.afficherFond !== false)
+    attributionVerticale(ctx, format, m, th, police);
   return boites;
 }
 
@@ -1532,7 +1873,10 @@ function attributionVerticale(ctx, format, m, th, police) {
   ctx.globalAlpha = 0.75;
   // Rotation d'un quart de tour à gauche : le texte se lit de bas en haut,
   // sa ligne de base tournée vers l'extérieur de la planche.
-  ctx.translate(format.width - Math.round(m.pad * 0.42), m.bandeH + Math.round(28 * m.k));
+  ctx.translate(
+    format.width - Math.round(m.pad * 0.42),
+    m.bandeH + Math.round(28 * m.k),
+  );
   ctx.rotate(Math.PI / 2);
   ctx.fillText(ATTRIBUTION, 0, 0);
   ctx.restore();
@@ -1558,7 +1902,18 @@ function dessinerPhoto(ctx, format, o) {
       format,
       carte.ancrage ?? 0.5,
     );
-    if (c) ctx.drawImage(carte.image, c.sx, c.sy, c.sw, c.sh, c.dx, c.dy, c.dw, c.dh);
+    if (c)
+      ctx.drawImage(
+        carte.image,
+        c.sx,
+        c.sy,
+        c.sw,
+        c.sh,
+        c.dx,
+        c.dy,
+        c.dw,
+        c.dh,
+      );
   }
   voileTexte(
     ctx,
@@ -1568,7 +1923,14 @@ function dessinerPhoto(ctx, format, o) {
     intensite(carte.degradeBas, 1),
   );
   if (carte.image)
-    voileEntete(ctx, format, m, th, intensite(carte.degradeHaut, 0.72), portee(carte.degradeHautH, m.bandeH * 1.5, m));
+    voileEntete(
+      ctx,
+      format,
+      m,
+      th,
+      intensite(carte.degradeHaut, 0.72),
+      portee(carte.degradeHautH, m.bandeH * 1.5, m),
+    );
 
   poserOmbre(ctx, ombre, "entete");
   bandeEntete(ctx, format, m, th, police, {
@@ -1623,20 +1985,53 @@ function dessinerPhoto(ctx, format, o) {
       );
       y -= bt.taille * bt.interligne;
     }
-    filetSousTitre(ctx, m, th, carte, basTitre, { align, x: m.pad, largeur: largeurTexte });
-    zoneTexte(zones, "titre", m, m.pad, largeurTexte, y, basTitre + hauteurFiletTitre(m, carte));
+    filetSousTitre(ctx, m, th, carte, basTitre, {
+      align,
+      x: m.pad,
+      largeur: largeurTexte,
+    });
+    zoneTexte(
+      zones,
+      "titre",
+      m,
+      m.pad,
+      largeurTexte,
+      y,
+      basTitre + hauteurFiletTitre(m, carte),
+    );
     y -= m.surtitre * 0.5;
   };
   const poserSurtitre = () => {
     poserOmbre(ctx, ombre, "surtitre");
-    surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, y, {
-      align,
-      filet: carte.surtitreFilet !== false,
-      plaque: plaqueDe(carte, th, "surtitre"),
-      largeur: largeurTexte,
-    });
-    zoneTexte(zones, "surtitre", m, m.pad, largeurTexte, y - m.surtitre, y + m.surtitre * 0.3);
-    y -= m.surtitre * 2.1;
+    const { sup } = surtitre(
+      ctx,
+      m,
+      th,
+      policeDe(carte, "policeSurtitre", polices),
+      carte.surtitre,
+      m.pad,
+      y,
+      {
+        align,
+        polices,
+        filet: carte.surtitreFilet !== false,
+        plaque: plaqueDe(carte, th, "surtitre"),
+        largeur: largeurTexte,
+        // Composé du bas vers le haut : `y` est la ligne du BAS, les lignes
+        // supplémentaires s'empilent au-dessus.
+        depuisLeBas: true,
+      },
+    );
+    zoneTexte(
+      zones,
+      "surtitre",
+      m,
+      m.pad,
+      largeurTexte,
+      y - m.surtitre - sup,
+      y + m.surtitre * 0.3,
+    );
+    y -= sup + m.surtitre * 2.1;
   };
   for (const quoi of ordreDuTitre(carte, true)) {
     if (quoi === "titre" && carte.titre) poserTitre();
@@ -1676,7 +2071,10 @@ function dessinerTexte(ctx, format, o) {
 
   const largeur = format.width - m.pad * 2;
   const y = m.bandeH + Math.round(112 * m.k);
-  blocTitreEtCorps(ctx, format, m, th, polices, carte, y, largeur, { ombre, zones });
+  blocTitreEtCorps(ctx, format, m, th, polices, carte, y, largeur, {
+    ombre,
+    zones,
+  });
 
   poserOmbre(ctx, ombre, "pied");
   bandePied(ctx, format, m, th, police, {
@@ -1718,33 +2116,59 @@ function blocTitreEtCorps(
   const bt = baseTitre(m, th, polices, carte, echelleTitre);
   const bc = baseCorps(m, th, polices, carte);
 
-  const poserSurtitre = (premier, ferme = false) => {
+  const poserSurtitre = (premier, ferme = false, dernierDuBloc = false) => {
     poserOmbre(ctx, ombre, "surtitre");
     ctx.fillStyle = th.accent;
     // En tête de bloc, `y` EST la ligne de base. Après le titre, il faut
     // d'abord descendre de la hauteur des capitales, sinon le surtitre remonte
     // dans la jambe du titre.
     const base = premier ? y : y + m.surtitre;
-    surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, base, {
-      align,
-      filet: carte.surtitreFilet !== false,
-      plaque: plaqueDe(carte, th, "surtitre"),
+    const { dernier, sup } = surtitre(
+      ctx,
+      m,
+      th,
+      policeDe(carte, "policeSurtitre", polices),
+      carte.surtitre,
+      m.pad,
+      base,
+      {
+        align,
+        polices,
+        filet: carte.surtitreFilet !== false,
+        plaque: plaqueDe(carte, th, "surtitre"),
+        largeur,
+      },
+    );
+    zoneTexte(
+      zones,
+      "surtitre",
+      m,
+      m.pad,
       largeur,
-    });
-    zoneTexte(zones, "surtitre", m, m.pad, largeur, base - m.surtitre, base + m.surtitre * 0.3);
+      base - m.surtitre,
+      dernier + m.surtitre * 0.3,
+    );
     // Passé DERRIÈRE le titre, le surtitre devient la ligne qui introduit le
     // corps : il lui faut le même souffle qu'à un titre, pas l'écart serré d'un
-    // surtitre qui ouvre.
-    y = base + m.surtitre * (premier ? 1.3 : 2.1);
+    // surtitre qui ouvre. Et RIEN quand il ferme le bloc : l'appelant décide
+    // alors de ce qui vient après, il n'a pas à défaire un écart hérité.
+    y = base + sup + m.surtitre * (dernierDuBloc ? 0.3 : premier ? 1.3 : 2.1);
     // `ferme` : le filet passe SOUS LE DUO. Le surtitre est alors le sous-titre
     // du titre, et un trait glissé entre les deux les séparerait au lieu de les
     // souligner.
     if (ferme) {
-      const bas = filetSousTitre(ctx, m, th, carte, base + m.surtitre * 0.4, {
-        align,
-        x: m.pad,
-        largeur,
-      });
+      const bas = filetSousTitre(
+        ctx,
+        m,
+        th,
+        carte,
+        base + sup + m.surtitre * 0.4,
+        {
+          align,
+          x: m.pad,
+          largeur,
+        },
+      );
       y = Math.max(y, bas + m.corps * 0.9);
     }
   };
@@ -1762,12 +2186,18 @@ function blocTitreEtCorps(
     poserOmbre(ctx, ombre, "titre");
     const haut = y;
     const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeur, bt);
-    y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.86, bt, { align, largeur });
+    y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.86, bt, {
+      align,
+      largeur,
+    });
     // En duo, le filet attend le surtitre (cf. `poserSurtitre`).
-    if (!duo) y = filetSousTitre(ctx, m, th, carte, y, { align, x: m.pad, largeur });
+    if (!duo)
+      y = filetSousTitre(ctx, m, th, carte, y, { align, x: m.pad, largeur });
     zoneTexte(zones, "titre", m, m.pad, largeur, haut, y);
     if (!suivant) return;
-    y += (suivant === "surtitre" ? m.surtitre : m.corps) * nombre(carte?.apresTitre, APRES_TITRE);
+    y +=
+      (suivant === "surtitre" ? m.surtitre : m.corps) *
+      nombre(carte?.apresTitre, APRES_TITRE);
   };
 
   const ordre = ordreDuTitre(carte);
@@ -1787,13 +2217,21 @@ function blocTitreEtCorps(
     ordre[0] === "titre";
 
   for (const [i, quoi] of ordre.entries()) {
-    if (quoi === "surtitre" && carte.surtitre) poserSurtitre(i === 0, duo);
+    // Dernier du bloc : rien d'écrit ne le suit — ni l'autre ligne du duo, ni
+    // un corps. C'est alors à l'appelant de dire l'air qu'il veut dessous.
+    const dernier = i === ordre.length - 1 && !carte.texte;
+    if (quoi === "surtitre" && carte.surtitre)
+      poserSurtitre(i === 0, duo, dernier);
     if (quoi === "titre" && carte.titre) {
       // Ce qui vient après le titre : l'autre ligne du duo si elle est écrite,
       // sinon le corps s'il y en a un, sinon rien — et le bloc s'arrête là.
       const apres = ordre[i + 1];
       poserTitre(
-        apres === "surtitre" && carte.surtitre ? "surtitre" : carte.texte ? "texte" : null,
+        apres === "surtitre" && carte.surtitre
+          ? "surtitre"
+          : carte.texte
+            ? "texte"
+            : null,
         duo,
       );
     }
@@ -1802,11 +2240,18 @@ function blocTitreEtCorps(
     poserOmbre(ctx, ombre, "corps");
     if (!carte.titre) y += m.corps * 0.4;
     const haut = y;
-    y = poserBlocs(ctx, blocsDeTexte(ctx, carte.texte, largeur, bc), m.pad, y, bc, {
-      align,
-      largeur,
-      puce: carte.puce,
-    });
+    y = poserBlocs(
+      ctx,
+      blocsDeTexte(ctx, carte.texte, largeur, bc),
+      m.pad,
+      y,
+      bc,
+      {
+        align,
+        largeur,
+        puce: carte.puce,
+      },
+    );
     zoneTexte(zones, "texte", m, m.pad, largeur, haut, y);
   }
   return y;
@@ -1838,7 +2283,18 @@ function photoFondue(ctx, format, m, th, carte, haut, hauteur) {
     { width: format.width, height: hauteur },
     carte.ancrage ?? 0.5,
   );
-  if (c) ctx.drawImage(carte.image, c.sx, c.sy, c.sw, c.sh, 0, haut, format.width, hauteur);
+  if (c)
+    ctx.drawImage(
+      carte.image,
+      c.sx,
+      c.sy,
+      c.sw,
+      c.sh,
+      0,
+      haut,
+      format.width,
+      hauteur,
+    );
 
   const bas = intensite(carte.degradeBas, 1);
   if (bas <= 0) return;
@@ -1894,7 +2350,10 @@ function dessinerBandeau(ctx, format, o) {
 
   const largeur = format.width - m.pad * 2;
   const y = hauteur + Math.round(74 * m.k);
-  blocTitreEtCorps(ctx, format, m, th, polices, carte, y, largeur, { ombre, zones });
+  blocTitreEtCorps(ctx, format, m, th, polices, carte, y, largeur, {
+    ombre,
+    zones,
+  });
 
   poserOmbre(ctx, ombre, "pied");
   bandePied(ctx, format, m, th, police, {
@@ -1944,27 +2403,55 @@ function dessinerFiche(ctx, format, o) {
     poserOmbre(ctx, ombre, "surtitre");
     ctx.fillStyle = th.accent;
     const base = premier ? y : y + m.surtitre;
-    surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, base, {
-      align,
-      filet: carte.surtitreFilet !== false,
-      plaque: plaqueDe(carte, th, "surtitre"),
-      largeur: largeurTexte,
-    });
-    zoneTexte(zones, "surtitre", m, m.pad, largeurTexte, base - m.surtitre, base + m.surtitre * 0.3);
-    y = base + m.surtitre * 1.3;
+    const { dernier, sup } = surtitre(
+      ctx,
+      m,
+      th,
+      policeDe(carte, "policeSurtitre", polices),
+      carte.surtitre,
+      m.pad,
+      base,
+      {
+        align,
+        polices,
+        filet: carte.surtitreFilet !== false,
+        plaque: plaqueDe(carte, th, "surtitre"),
+        largeur: largeurTexte,
+      },
+    );
+    zoneTexte(
+      zones,
+      "surtitre",
+      m,
+      m.pad,
+      largeurTexte,
+      base - m.surtitre,
+      dernier + m.surtitre * 0.3,
+    );
+    y = base + sup + m.surtitre * 1.3;
   };
   const poserTitre = () => {
     poserOmbre(ctx, ombre, "titre");
     const haut = y;
     const bt = baseTitre(m, th, polices, carte, 0.86);
     const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeurTexte, bt);
-    y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.86, bt, { align, largeur: largeurTexte });
-    // La fiche l'allume par défaut : c'est ce trait qui la faisait tenir.
-    y = filetSousTitre(ctx, m, th, { ...carte, filetTitre: carte.filetTitre !== false }, y, {
+    y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.86, bt, {
       align,
-      x: m.pad,
       largeur: largeurTexte,
     });
+    // La fiche l'allume par défaut : c'est ce trait qui la faisait tenir.
+    y = filetSousTitre(
+      ctx,
+      m,
+      th,
+      { ...carte, filetTitre: carte.filetTitre !== false },
+      y,
+      {
+        align,
+        x: m.pad,
+        largeur: largeurTexte,
+      },
+    );
     zoneTexte(zones, "titre", m, m.pad, largeurTexte, haut, y);
     y += Math.round(46 * m.k);
   };
@@ -1973,7 +2460,9 @@ function dessinerFiche(ctx, format, o) {
     if (quoi === "titre" && carte.titre) poserTitre();
   }
 
-  const lignesFiche = (carte.fiche ?? []).filter((l) => l && (l.label || l.valeur));
+  const lignesFiche = (carte.fiche ?? []).filter(
+    (l) => l && (l.label || l.valeur),
+  );
   const hautFiche = y;
   // Les corps de la fiche se règlent : une fiche à trois lignes respire d'un
   // tout autre calibre qu'une fiche à huit.
@@ -1994,13 +2483,25 @@ function dessinerFiche(ctx, format, o) {
     poserOmbre(ctx, ombre, "surtitre");
     ctx.font = `400 ${libelle}px ${policeDe(carte, "policeSurtitre", polices)}`;
     ctx.fillStyle = th.encreFaible;
-    dessinerCapitales(ctx, morceauxCapitales(l.label ?? ""), m.pad, base, libelle, 0.26, th.accent);
+    dessinerCapitales(
+      ctx,
+      morceauxCapitales(l.label ?? ""),
+      m.pad,
+      base,
+      libelle,
+      0.26,
+      th.accent,
+    );
 
     poserOmbre(ctx, ombre, "titre");
     ctx.font = `700 ${valeur}px ${policeDe(carte, "policeTitre", polices)}`;
     ctx.fillStyle = l.accent ? th.accent : th.encre;
     ctx.textAlign = "right";
-    ctx.fillText(String(l.valeur ?? ""), format.width - m.pad, base + valeur * 0.1);
+    ctx.fillText(
+      String(l.valeur ?? ""),
+      format.width - m.pad,
+      base + valeur * 0.1,
+    );
     ctx.textAlign = "left";
 
     y += pasLigne;
@@ -2047,7 +2548,18 @@ function dessinerCloture(ctx, format, o) {
       format,
       carte.ancrage ?? 0.5,
     );
-    if (c) ctx.drawImage(carte.image, c.sx, c.sy, c.sw, c.sh, c.dx, c.dy, c.dw, c.dh);
+    if (c)
+      ctx.drawImage(
+        carte.image,
+        c.sx,
+        c.sy,
+        c.sw,
+        c.sh,
+        c.dx,
+        c.dy,
+        c.dw,
+        c.dh,
+      );
     // Voile PLEIN, pas dégradé : le texte est au centre, il n'a pas de bord où
     // s'appuyer. Réglable, comme partout ailleurs.
     ctx.fillStyle = `rgba(${th.voileTexte}, ${carte.voileCloture ?? 0.62})`;
@@ -2086,7 +2598,9 @@ function dessinerCloture(ctx, format, o) {
   const lignesTitre = carte.titre
     ? lignesRiches(ctx, analyserRiche(carte.titre), largeur, bt)
     : [];
-  const blocsTexte = carte.texte ? blocsDeTexte(ctx, carte.texte, largeur, bc) : [];
+  const blocsTexte = carte.texte
+    ? blocsDeTexte(ctx, carte.texte, largeur, bc)
+    : [];
 
   /** Les pièces du bloc, dans l'ordre où elles se posent. */
   const morceaux = [];
@@ -2113,7 +2627,9 @@ function dessinerCloture(ctx, format, o) {
   // ferme ; passer au-dessus du logo est un réglage à part, qui DÉPLACE une
   // pièce sans changer l'ordre des autres entre elles.
   const suite = [
-    ...ordreDuTitre(carte).map((quoi) => (quoi === "surtitre" ? pieceSurtitre : pieceTitre)),
+    ...ordreDuTitre(carte).map((quoi) =>
+      quoi === "surtitre" ? pieceSurtitre : pieceTitre,
+    ),
     pieceTexte,
   ].filter(Boolean);
   for (const piece of suite) if (enHaut(piece.type)) morceaux.push(piece);
@@ -2172,17 +2688,34 @@ function dessinerCloture(ctx, format, o) {
         carte.surtitre,
         m.pad,
         y + m.surtitre,
-        { align, largeur, filet: carte.surtitreFilet !== false, plaque: plaqueDe(carte, th, "surtitre") },
+        {
+          align,
+          polices,
+          largeur,
+          filet: carte.surtitreFilet !== false,
+          plaque: plaqueDe(carte, th, "surtitre"),
+        },
       );
       zoneTexte(zones, "surtitre", m, m.pad, largeur, y, y + piece.hauteur);
     } else if (piece.type === "titre") {
       poserOmbre(ctx, ombre, "titre");
-      const bas = poserLignes(ctx, lignesTitre, m.pad, y + bt.taille * 0.7, bt, { align, largeur });
+      const bas = poserLignes(
+        ctx,
+        lignesTitre,
+        m.pad,
+        y + bt.taille * 0.7,
+        bt,
+        { align, largeur },
+      );
       filetSousTitre(ctx, m, th, carte, bas, { align, x: m.pad, largeur });
       zoneTexte(zones, "titre", m, m.pad, largeur, y, y + piece.hauteur);
     } else if (piece.type === "texte") {
       poserOmbre(ctx, ombre, "corps");
-      poserBlocs(ctx, blocsTexte, m.pad, y, bc, { align, largeur, puce: carte.puce });
+      poserBlocs(ctx, blocsTexte, m.pad, y, bc, {
+        align,
+        largeur,
+        puce: carte.puce,
+      });
       zoneTexte(zones, "texte", m, m.pad, largeur, y, y + piece.hauteur);
     }
     y += piece.hauteur;
@@ -2226,7 +2759,9 @@ function dessinerCloture(ctx, format, o) {
  * quatre profils recadrés qui se ressembleraient tous.
  */
 function dessinerProfilCase(ctx, boite, th, { profil, totalKm, journees }) {
-  const points = (profil ?? []).filter((p) => Number.isFinite(p?.km) && Number.isFinite(p?.alt));
+  const points = (profil ?? []).filter(
+    (p) => Number.isFinite(p?.km) && Number.isFinite(p?.alt),
+  );
   if (points.length < 2) return;
   const total = totalKm > 0 ? totalKm : points[points.length - 1].km;
   if (!(total > 0)) return;
@@ -2234,7 +2769,8 @@ function dessinerProfilCase(ctx, boite, th, { profil, totalKm, journees }) {
   const alts = points.map((p) => p.alt);
   const min = Math.min(...alts);
   const amplitude = Math.max(1, Math.max(...alts) - min);
-  const X = (km) => boite.x + (Math.max(0, Math.min(total, km)) / total) * boite.width;
+  const X = (km) =>
+    boite.x + (Math.max(0, Math.min(total, km)) / total) * boite.width;
   const Y = (alt) => boite.y + (1 - (alt - min) / amplitude) * boite.height;
   const base = boite.y + boite.height;
 
@@ -2303,7 +2839,13 @@ function dessinerCarteCase(ctx, boite, th, { coords, journees }) {
   );
   for (const { seg, couleur } of journees ?? []) {
     if (!(seg?.coords?.length > 1)) continue;
-    polyligne(ctx, decimerPixels(seg.coords.map(projeter)), couleur, epaisseur, true);
+    polyligne(
+      ctx,
+      decimerPixels(seg.coords.map(projeter)),
+      couleur,
+      epaisseur,
+      true,
+    );
   }
 }
 
@@ -2366,7 +2908,10 @@ export function casesEffectives(carte, segments) {
     const jour = Number.isInteger(c.jour) ? c.jour : i;
     out.push({
       jour,
-      texte: typeof c.texte === "string" && c.texte !== "" ? c.texte : texteDeJournee(i, segments[jour]),
+      texte:
+        typeof c.texte === "string" && c.texte !== ""
+          ? c.texte
+          : texteDeJournee(i, segments[jour]),
     });
   }
   return out;
@@ -2382,7 +2927,19 @@ export function casesEffectives(carte, segments) {
  * fait qu'on lit une progression et non quatre images sans rapport.
  */
 function dessinerJournees(ctx, format, o) {
-  const { carte, trace, police, polices, logo, m, th, ombre, zones, index, total } = o;
+  const {
+    carte,
+    trace,
+    police,
+    polices,
+    logo,
+    m,
+    th,
+    ombre,
+    zones,
+    index,
+    total,
+  } = o;
   const segments = o.segments ?? [];
   const cadre = o.traceCadre ?? trace;
   const couleurs = couleursDesJours(carte, segments);
@@ -2406,14 +2963,32 @@ function dessinerJournees(ctx, format, o) {
     poserOmbre(ctx, ombre, "surtitre");
     ctx.fillStyle = th.accent;
     const base = premier ? yHaut : yHaut + m.surtitre;
-    surtitre(ctx, m, th, policeDe(carte, "policeSurtitre", polices), carte.surtitre, m.pad, base, {
-      align,
-      filet: carte.surtitreFilet !== false,
-      plaque: plaqueDe(carte, th, "surtitre"),
-      largeur: largeurTexte,
-    });
-    zoneTexte(zones, "surtitre", m, m.pad, largeurTexte, base - m.surtitre, base + m.surtitre * 0.3);
-    yHaut = base + m.surtitre * 1.4;
+    const { dernier, sup } = surtitre(
+      ctx,
+      m,
+      th,
+      policeDe(carte, "policeSurtitre", polices),
+      carte.surtitre,
+      m.pad,
+      base,
+      {
+        align,
+        polices,
+        filet: carte.surtitreFilet !== false,
+        plaque: plaqueDe(carte, th, "surtitre"),
+        largeur: largeurTexte,
+      },
+    );
+    zoneTexte(
+      zones,
+      "surtitre",
+      m,
+      m.pad,
+      largeurTexte,
+      base - m.surtitre,
+      dernier + m.surtitre * 0.3,
+    );
+    yHaut = base + sup + m.surtitre * 1.4;
   };
   const poserTitre = () => {
     // Le titre d'une grille est plus court que celui d'une planche de texte :
@@ -2428,8 +3003,11 @@ function dessinerJournees(ctx, format, o) {
       largeur: largeurTexte,
     });
     yHaut =
-      filetSousTitre(ctx, m, th, carte, bas, { align, x: m.pad, largeur: largeurTexte }) +
-      Math.round(34 * m.k);
+      filetSousTitre(ctx, m, th, carte, bas, {
+        align,
+        x: m.pad,
+        largeur: largeurTexte,
+      }) + Math.round(34 * m.k);
     zoneTexte(zones, "titre", m, m.pad, largeurTexte, haut, yHaut);
   };
   for (const [i, quoi] of ordreDuTitre(carte).entries()) {
@@ -2438,7 +3016,10 @@ function dessinerJournees(ctx, format, o) {
   }
 
   const yBas = m.piedFilet - Math.round(30 * m.k);
-  const colonnes = Math.min(2, Math.max(1, Math.round(nombre(carte.casesColonnes, 1))));
+  const colonnes = Math.min(
+    2,
+    Math.max(1, Math.round(nombre(carte.casesColonnes, 1))),
+  );
   const rangees = Math.ceil(cases.length / colonnes);
   const gouttiereX = Math.round(34 * m.k);
   const gouttiereY = Math.round(22 * m.k);
@@ -2472,7 +3053,12 @@ function dessinerJournees(ctx, format, o) {
     if (carte.caseFilet !== false && rang > 0 && col === 0) {
       sansOmbre(ctx);
       ctx.fillStyle = th.filet;
-      ctx.fillRect(m.pad, y - gouttiereY / 2, largeurTexte, Math.max(1, 1.5 * m.k));
+      ctx.fillRect(
+        m.pad,
+        y - gouttiereY / 2,
+        largeurTexte,
+        Math.max(1, 1.5 * m.k),
+      );
     }
 
     const avecCarte = carte.caseCarte !== false && cadre?.coords?.length > 1;
@@ -2490,8 +3076,11 @@ function dessinerJournees(ctx, format, o) {
     const xTexte = x + (avecCarte ? cote + Math.round(26 * m.k) : 0);
     const wTexte = caseW - (avecCarte ? cote + Math.round(26 * m.k) : 0);
 
-    const avecProfil = carte.caseProfil !== false && cadre?.profil?.length > 1 && seg;
-    const hProfil = avecProfil ? Math.min(caseH * 0.42, Math.round(96 * m.k)) : 0;
+    const avecProfil =
+      carte.caseProfil !== false && cadre?.profil?.length > 1 && seg;
+    const hProfil = avecProfil
+      ? Math.min(caseH * 0.42, Math.round(96 * m.k))
+      : 0;
 
     poserOmbre(ctx, ombre, "corps");
     const blocs = blocsDeTexte(ctx, c.texte, wTexte, bcCase);
@@ -2499,11 +3088,18 @@ function dessinerJournees(ctx, format, o) {
     // Texte et profil se partagent la case : le texte se cale en haut de ce qui
     // reste, le profil garde toujours sa place en bas.
     const dispo = caseH - hProfil;
-    poserBlocs(ctx, blocs, xTexte, y + Math.max(0, (dispo - hTexte) / 2), bcCase, {
-      align,
-      largeur: wTexte,
-      puce: carte.puce,
-    });
+    poserBlocs(
+      ctx,
+      blocs,
+      xTexte,
+      y + Math.max(0, (dispo - hTexte) / 2),
+      bcCase,
+      {
+        align,
+        largeur: wTexte,
+        puce: carte.puce,
+      },
+    );
 
     if (avecProfil) {
       sansOmbre(ctx);
@@ -2558,7 +3154,10 @@ function dessinerLibres(ctx, format, o) {
   const libres = Array.isArray(carte.libres) ? carte.libres : [];
   for (const [i, z] of libres.entries()) {
     if (!z || z.masquee) continue;
-    const largeur = Math.max(60, (nombre(z.largeur, 0.62) || 0.62) * format.width);
+    const largeur = Math.max(
+      60,
+      (nombre(z.largeur, 0.62) || 0.62) * format.width,
+    );
     const x = (Number.isFinite(z.x) ? z.x : 0.1) * format.width;
     const y = (Number.isFinite(z.y) ? z.y : 0.5) * format.height;
     const base = {
@@ -2566,7 +3165,9 @@ function dessinerLibres(ctx, format, o) {
       taille: Math.round(nombre(z.taille, CORPS.corps) * m.k),
       graisse: z.gras ? 700 : 400,
       couleur: z.couleur || th.encre,
-      plaque: z.plaque ? plaqueDe({ ...carte, plaque: true, plaque_corps: true }, th, "corps") : null,
+      plaque: z.plaque
+        ? plaqueDe({ ...carte, plaque: true, plaque_corps: true }, th, "corps")
+        : null,
     };
     poserOmbre(ctx, ombre, "corps");
     const blocs = blocsDeTexte(ctx, z.texte ?? "", largeur, base);
@@ -2577,7 +3178,14 @@ function dessinerLibres(ctx, format, o) {
       puce: carte.puce,
     });
     // La boîte sert au glisser-déposer ; la zone, au clic qui ouvre le réglage.
-    boites?.push({ type: "libre", index: i, x, y, width: largeur, height: hauteur });
+    boites?.push({
+      type: "libre",
+      index: i,
+      x,
+      y,
+      width: largeur,
+      height: hauteur,
+    });
     zone(zones, "libre", x, y, largeur, hauteur, { index: i });
   }
   sansOmbre(ctx);
@@ -2645,7 +3253,14 @@ function colonneDeTexte(ctx, m, th, polices, carte, boite, { ombre, zones }) {
   });
   sansOmbre(ctx);
   const hauteur = hauteurBlocs(blocs, base);
-  zone(zones, "colonne", boite.x, boite.y - base.taille, boite.width, hauteur + base.taille);
+  zone(
+    zones,
+    "colonne",
+    boite.x,
+    boite.y - base.taille,
+    boite.width,
+    hauteur + base.taille,
+  );
   return hauteur;
 }
 
@@ -2671,7 +3286,19 @@ function colonneDeTexte(ctx, m, th, polices, carte, boite, { ombre, zones }) {
  * tienne quand le texte fait deux lignes un jour et six le lendemain.
  */
 function dessinerEtape(ctx, format, o) {
-  const { carte, trace, police, polices, logo, m, th, ombre, zones, index, total } = o;
+  const {
+    carte,
+    trace,
+    police,
+    polices,
+    logo,
+    m,
+    th,
+    ombre,
+    zones,
+    index,
+    total,
+  } = o;
   const cadre = o.traceCadre ?? trace;
   const montrees = journeesMontrees(carte, o.segments);
   const journees = montrees.map(({ jour, seg }) => ({
@@ -2735,10 +3362,20 @@ function dessinerEtape(ctx, format, o) {
   /* --- le jour, et ce qu'on en dit ---------------------------------------- */
   const largeur = format.width - m.pad * 2;
   const yTexte = departPhoto + hPhoto + Math.round(46 * m.k);
-  const basTexte = blocTitreEtCorps(ctx, format, m, th, polices, carte, yTexte, largeur, {
-    ombre,
-    zones,
-  });
+  const basTexte = blocTitreEtCorps(
+    ctx,
+    format,
+    m,
+    th,
+    polices,
+    carte,
+    yTexte,
+    largeur,
+    {
+      ombre,
+      zones,
+    },
+  );
 
   /* --- LE BLOC DU BAS : la trace et ses chiffres -------------------------- */
   /* Ils sont CÔTE À CÔTE, et ce n'est pas un choix d'esthète. Empilés, sur une
@@ -2747,7 +3384,11 @@ function dessinerEtape(ctx, format, o) {
      côté, la carte redevient carrée et lisible, et le tableau tient debout dans
      la colonne de droite. `partCarte` règle le partage — à 0, la carte
      disparaît et les chiffres reprennent toute la largeur. */
-  const hautBloc = basTexte + Math.round(14 * m.k);
+  // L'air entre ce qui précède et le filet des données. Il se règle : selon que
+  // la planche s'arrête au titre, au surtitre ou à un paragraphe, ce qui touche
+  // le filet n'est pas la même chose et n'appelle pas le même écart.
+  const hautBloc =
+    basTexte + Math.round(m.corps * nombre(carte.avantDonnees, AVANT_DONNEES));
   const basBloc = m.piedFilet - Math.round(48 * m.k);
   const hBloc = Math.max(0, basBloc - hautBloc);
 
@@ -2758,33 +3399,51 @@ function dessinerEtape(ctx, format, o) {
      règle le partage — à 0,5 les deux moitiés sont égales, à 0 la trace
      disparaît et le texte reprend toute la largeur. */
   const part = Math.max(0, Math.min(0.7, nombre(carte.partCarte, 0.5)));
-  const avecCarte = carte.caseCarte !== false && part > 0.02 && cadre?.coords?.length > 1;
-  const avecProfil = avecCarte && carte.afficherProfil !== false && cadre?.profil?.length > 1;
+  const avecCarte =
+    carte.caseCarte !== false && part > 0.02 && cadre?.coords?.length > 1;
+  const avecProfil =
+    avecCarte && carte.afficherProfil !== false && cadre?.profil?.length > 1;
 
   let boiteColonne = { x: m.pad, y: hautBloc, width: largeur };
 
   if (avecCarte) {
     const moitie = Math.round(largeur * part);
     const ecart = avecProfil ? Math.round(16 * m.k) : 0;
-    const hProfil = avecProfil ? Math.round(Math.min(hBloc * 0.19, 84 * m.k)) : 0;
+    const hProfil = avecProfil
+      ? Math.round(Math.min(hBloc * 0.19, 84 * m.k))
+      : 0;
     const cote = Math.max(0, Math.min(hBloc - hProfil - ecart, moitie));
     if (cote > 60 * m.k) {
       const xCarte = m.pad + Math.round((moitie - cote) / 2);
       sansOmbre(ctx);
-      dessinerCarteCase(ctx, { x: xCarte, y: hautBloc, width: cote, height: cote }, th, {
-        coords: cadre.coords,
-        journees,
-      });
+      dessinerCarteCase(
+        ctx,
+        { x: xCarte, y: hautBloc, width: cote, height: cote },
+        th,
+        {
+          coords: cadre.coords,
+          journees,
+        },
+      );
       if (avecProfil) {
         dessinerProfilCase(
           ctx,
-          { x: xCarte, y: hautBloc + cote + ecart, width: cote, height: hProfil },
+          {
+            x: xCarte,
+            y: hautBloc + cote + ecart,
+            width: cote,
+            height: hProfil,
+          },
           th,
           { profil: cadre.profil, totalKm: cadre.totalKm, journees },
         );
       }
       zone(zones, "carte", m.pad, hautBloc, moitie, cote + ecart + hProfil);
-      boiteColonne = { x: m.pad + moitie, y: hautBloc, width: largeur - moitie };
+      boiteColonne = {
+        x: m.pad + moitie,
+        y: hautBloc,
+        width: largeur - moitie,
+      };
     }
   }
 
@@ -2794,7 +3453,10 @@ function dessinerEtape(ctx, format, o) {
   boiteColonne.y = hautBloc;
   if (!avecCarte) {
     const b = baseDeColonne(m, th, polices, carte);
-    const h = hauteurBlocs(blocsDeTexte(ctx, carte.colonne ?? "", largeur, b), b);
+    const h = hauteurBlocs(
+      blocsDeTexte(ctx, carte.colonne ?? "", largeur, b),
+      b,
+    );
     boiteColonne.y = hautBloc + Math.max(0, Math.round((hBloc - h) / 2));
   }
   colonneDeTexte(ctx, m, th, polices, carte, boiteColonne, { ombre, zones });
@@ -2806,7 +3468,12 @@ function dessinerEtape(ctx, format, o) {
   if (carte.filetDonnees !== false && hBloc > 0) {
     sansOmbre(ctx);
     ctx.fillStyle = th.filet;
-    ctx.fillRect(m.pad, hautBloc - Math.round(16 * m.k), largeur, Math.max(1, 1.5 * m.k));
+    ctx.fillRect(
+      m.pad,
+      hautBloc - Math.round(16 * m.k),
+      largeur,
+      Math.max(1, 1.5 * m.k),
+    );
   }
 
   poserOmbre(ctx, ombre, "pied");
