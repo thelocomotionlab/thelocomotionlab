@@ -38,8 +38,10 @@ import {
   DEGRADES_PLAQUE,
   ESPACEMENT,
   analyserRiche,
+  FLECHE_LARGEUR,
   decalageAlignement,
   blocsDeTexte,
+  flecheTracee,
   dessinerCapitales,
   dessinerLigneRiche,
   encreDe,
@@ -1001,23 +1003,19 @@ function bandePied(
     ctx.restore();
     return;
   }
-  // Flèche horizontale, tracée à la main. Le canvas SAIT afficher U+2192 — il
-  // retombe sur une fonte système — mais justement : la flèche arriverait dans
-  // un dessin qui n'est pas celui d'Ubuntu, et changerait d'un appareil à
-  // l'autre. On la trace pour qu'elle soit la même partout.
+  // La flèche vient de `flecheTracee` — la MÊME que `:fleche:` dans un texte et
+  // que la puce de liste. Elle était tracée ici, et c'est de ce dessin-là que
+  // les deux autres sont nées : les garder séparés aurait suffi à les faire
+  // diverger au premier retouchage.
   const y = m.piedBase - m.piedTexte * 0.32;
-  const x1 = format.width - m.pad;
-  ctx.strokeStyle = th.encreFaible;
-  ctx.lineWidth = Math.max(1.5, 1.8 * m.k);
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.beginPath();
-  ctx.moveTo(x1 - ecartFleche * 0.9, y);
-  ctx.lineTo(x1, y);
-  ctx.moveTo(x1 - m.piedTexte * 0.34, y - m.piedTexte * 0.3);
-  ctx.lineTo(x1, y);
-  ctx.lineTo(x1 - m.piedTexte * 0.34, y + m.piedTexte * 0.3);
-  ctx.stroke();
+  flecheTracee(
+    ctx,
+    format.width - m.pad - m.piedTexte * FLECHE_LARGEUR,
+    y,
+    m.piedTexte,
+    th.encreFaible,
+    Math.max(1.5, 1.8 * m.k),
+  );
   ctx.restore();
 }
 
@@ -2631,30 +2629,58 @@ function dessinerEtape(ctx, format, o) {
 
   zoneDeRepli(zones, format, m, "texte");
 
-  /* --- la photo, SOUS la bande de marque et non dessous elle -------------- */
-  // Un filet d'en-tête posé sur une image ne se lit plus comme un filet : la
-  // photo commence donc après lui, avec l'air qu'il faut pour qu'il respire.
-  const hautPhoto = m.bandeH + Math.round(16 * m.k);
+  /* --- la photo ----------------------------------------------------------- */
+  /* Elle commence SOUS le filet d'en-tête par défaut : un filet posé sur une
+     image ne se lit plus comme un filet, et la bande de marque doit rester sur
+     le papier. `photoRemontee` lève cette règle par degrés, jusqu'à faire
+     toucher le bord haut de la planche — c'est l'autre façon de composer, celle
+     où l'image passe devant et la marque se pose dessus.
+
+     Le BAS ne bouge pas : la photo grandit vers le haut. Sans ça, remonter la
+     photo aurait déplacé le titre, le récit et la trace d'un même geste, et il
+     aurait fallu tout recaler derrière. */
+  const departPhoto = m.bandeH + Math.round(16 * m.k);
   const hPhoto = Math.round(format.height * (carte.bandeauPart ?? 0.28));
-  if (hPhoto > 0) {
-    photoFondue(ctx, format, m, th, carte, hautPhoto, hPhoto);
-    zone(zones, "photo", 0, hautPhoto, format.width, hPhoto);
+  const remontee = Math.max(0, Math.min(1, nombre(carte.photoRemontee, 0)));
+  const hautPhoto = Math.round(departPhoto * (1 - remontee));
+  const hauteurPhoto = departPhoto + hPhoto - hautPhoto;
+  /** La photo mord-elle sur la bande de marque ? */
+  const sousLaMarque = Boolean(carte.image) && hautPhoto < m.bandeH;
+  if (hauteurPhoto > 0) {
+    photoFondue(ctx, format, m, th, carte, hautPhoto, hauteurPhoto);
+    zone(zones, "photo", 0, hautPhoto, format.width, hauteurPhoto);
   }
 
   poserOmbre(ctx, ombre, "entete");
+  if (sousLaMarque) {
+    // Le voile de l'en-tête : le même que celui du bandeau. Sans lui, le nom du
+    // labo disparaît dans un ciel clair — et on ne s'en aperçoit qu'une fois la
+    // planche publiée.
+    sansOmbre(ctx);
+    voileEntete(
+      ctx,
+      format,
+      m,
+      th,
+      intensite(carte.degradeHaut, 0.74),
+      portee(carte.degradeHautH, m.bandeH * 1.4, m),
+    );
+    poserOmbre(ctx, ombre, "entete");
+  }
   bandeEntete(ctx, format, m, th, police, {
     texte: carte.entete,
     accent: carte.enteteAccent,
     logo,
     marque: carte.marque,
-    filet: carte.filetEntete !== false,
+    // Un filet tracé SUR la photo n'est plus un filet, c'est une rayure.
+    filet: carte.filetEntete !== false && !sousLaMarque,
     opacite: carte.enteteOpacite,
     zones,
   });
 
   /* --- le jour, et ce qu'on en dit ---------------------------------------- */
   const largeur = format.width - m.pad * 2;
-  const yTexte = hautPhoto + hPhoto + Math.round(46 * m.k);
+  const yTexte = departPhoto + hPhoto + Math.round(46 * m.k);
   const basTexte = blocTitreEtCorps(ctx, format, m, th, polices, carte, yTexte, largeur, {
     ombre,
     zones,

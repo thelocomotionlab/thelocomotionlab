@@ -899,6 +899,15 @@ describe("le gabarit « Étape »", () => {
   // Les mots sont posés un par un (mesure et retour à la ligne) : on les recolle
   // et on normalise les blancs pour lire la planche comme une phrase.
   const lu = (ctx) => ctx.mots.map((m) => m.texte).join("").replace(/\s+/g, " ");
+  /** L'aplat de repérage de la photo. Le FOND de la planche est lui aussi
+   *  pleine largeur : ce qui les sépare, c'est qu'il fait toute la hauteur. */
+  const bandePhoto = (ctx) =>
+    ctx.rects.find(
+      (r) =>
+        Math.round(r.w) === FORMATS.carrousel.width &&
+        r.h > 200 &&
+        r.h < FORMATS.carrousel.height,
+    );
 
   it("écrit le jour, son récit et sa colonne", () => {
     const ctx = etape({});
@@ -925,11 +934,7 @@ describe("le gabarit « Étape »", () => {
   it("garde la bande de marque SUR LE PAPIER, la photo dessous", () => {
     // Sans image, la bande de photo est un aplat de repérage : il doit
     // commencer sous le filet d'en-tête, jamais par-dessus.
-    // `y > 0` : le premier rectangle pleine largeur est le FOND de la planche.
-    const ctx = etape({});
-    const aplat = ctx.rects.find(
-      (r) => Math.round(r.w) === FORMATS.carrousel.width && r.h > 200 && r.y > 0,
-    );
+    const aplat = bandePhoto(etape({}));
     expect(aplat).toBeDefined();
     expect(aplat.y).toBeGreaterThan(120);
   });
@@ -952,6 +957,38 @@ describe("le gabarit « Étape »", () => {
     const trois = etape({ jusquA: 2 });
     const aires = (ctx) => ctx.appels.filter((a) => a === "fill").length;
     expect(aires(trois)).toBeGreaterThan(aires(un));
+  });
+
+  it("laisse la photo remonter jusqu'au bord haut de la planche", () => {
+    // Sans image, la bande de photo est un aplat de repérage : c'est lui qu'on
+    // suit pour savoir OÙ la photo commence.
+    const sous = bandePhoto(etape({}));
+    const haut = bandePhoto(etape({ photoRemontee: 1 }));
+    expect(haut.y).toBe(0);
+    expect(haut.y).toBeLessThan(sous.y);
+    // Elle grandit VERS LE HAUT : son bas ne bouge pas d'un pixel, donc rien de
+    // ce qui suit n'a à être recalé.
+    expect(Math.round(haut.y + haut.h)).toBe(Math.round(sous.y + sous.h));
+  });
+
+  it("efface le filet d'en-tête quand la photo passe dessous", () => {
+    // Un trait tracé SUR une photo n'est plus un filet, c'est une rayure.
+    const image = { width: 1200, height: 800 };
+    const filets = (carte) =>
+      planche({ gabarit: "etape", titre: "Jour 3", image, ...carte }, { trace, segments }).rects
+        .filter((r) => r.h <= 3 && r.y < 200 && r.y > 0).length;
+    expect(filets({})).toBeGreaterThan(0);
+    expect(filets({ photoRemontee: 1 })).toBe(0);
+  });
+
+  it("pose la flèche du swipe où on l'écrit", () => {
+    // `:fleche:` est un glyphe TRACÉ : il ne laisse pas de mot derrière lui,
+    // seulement des segments. On le lit donc sur les traits, pas sur le texte.
+    const traits = (colonne) => {
+      const ctx = etape({ colonne });
+      return ctx.appels.filter((a) => a === "lineTo").length;
+    };
+    expect(traits("Vénosc :fleche: Valgaudémar")).toBeGreaterThan(traits("Vénosc Valgaudémar"));
   });
 
   it("rend toute la largeur à la colonne quand la vignette est à zéro", () => {

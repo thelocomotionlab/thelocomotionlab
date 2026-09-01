@@ -16,6 +16,7 @@ import {
   lignesRiches,
   texteNu,
   largeurIcone,
+  glypheTrace,
 } from "./carrouselTexte";
 
 /** Un contexte 2D de comptoir : une lettre = 10 px, quelle que soit la fonte. */
@@ -531,5 +532,39 @@ describe("les données « libellé = valeur »", () => {
     const petit = hauteurBlocs(blocs("A = 1", { ...base, tailleLabel: 10, tailleValeur: 20 }), base);
     const grand = hauteurBlocs(blocs("A = 1", { ...base, tailleLabel: 20, tailleValeur: 60 }), base);
     expect(grand).toBeGreaterThan(petit);
+  });
+});
+
+describe("la flèche du swipe, posable dans une phrase", () => {
+  it("entre dans le vocabulaire de `:clé:` comme une icône", () => {
+    expect(analyserRiche("Vénosc :fleche: Valgaudémar")).toEqual([
+      { texte: "Vénosc " },
+      { texte: "", icone: "fleche" },
+      { texte: " Valgaudémar" },
+    ]);
+  });
+
+  it("hérite du style et de la couleur qui l'entourent", () => {
+    const [mo] = analyserRiche("[bleu: :fleche:]");
+    expect(mo.icone).toBe("fleche");
+    expect(mo.couleur).toBe("bleu");
+  });
+
+  it("prend sa VRAIE largeur, pas celle d'un carré", () => {
+    // Une flèche est longue et plate : lui réserver un carré ouvrirait un trou
+    // avant le mot suivant.
+    expect(largeurIcone(BASE, "fleche")).toBeGreaterThan(largeurIcone(BASE, "col"));
+    expect(largeurIcone(BASE, "col")).toBe(largeurIcone(BASE));
+  });
+
+  it("est un glyphe TRACÉ, pas un dessin du vocabulaire des repères", () => {
+    expect(glypheTrace("fleche")).not.toBeNull();
+    expect(glypheTrace("col")).toBeNull();
+  });
+
+  it("occupe sa largeur à la mise en lignes", () => {
+    const ctx = ctxFactice();
+    const [ligne] = lignesRiches(ctx, analyserRiche(":fleche:"), 500, BASE);
+    expect(ligne[0].largeur).toBe(largeurIcone(BASE, "fleche"));
   });
 });
