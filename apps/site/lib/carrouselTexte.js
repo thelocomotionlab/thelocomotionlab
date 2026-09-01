@@ -906,6 +906,37 @@ export function blocsDeTexte(ctx, texte, largeurMax, base) {
  * `++`) : mesure et pose lisent donc le même, sinon un bloc réduit serait
  * dessiné là où on avait réservé la place du grand.
  */
+/**
+ * LA LARGEUR NATURELLE d'un texte déjà mis en lignes — sa plus longue ligne.
+ *
+ * Elle sert à CENTRER un bloc sans centrer ses lignes : la colonne d'une étape
+ * se pose au milieu de sa moitié de planche, mais ses libellés et ses valeurs
+ * restent alignés entre eux. Les centrer chacun aurait fait un escalier.
+ *
+ * `ctx` est nécessaire : les libellés de donnée sont en petites capitales
+ * espacées, dont la largeur ne se lit que sur la fonte.
+ */
+export function largeurBlocs(ctx, blocs, base) {
+  let max = 0;
+  for (const bloc of blocs) {
+    const b = bloc.base ?? base;
+    if (bloc.type === "espace") continue;
+    if (bloc.type === "donnee") {
+      ctx.save();
+      ctx.font = fonteDe({}, { ...b, taille: bloc.corps.label });
+      max = Math.max(max, largeurCapitales(ctx, bloc.label, bloc.corps.label, 0.26));
+      ctx.restore();
+      for (const ligne of bloc.valeur) max = Math.max(max, largeurLigne(ligne));
+      continue;
+    }
+    const retrait =
+      bloc.type === "liste" ? b.taille * esp(b, "retraitListe") : (bloc.retrait ?? 0);
+    const lignes = bloc.type === "liste" ? bloc.items.flatMap((it) => it.lignes) : bloc.lignes;
+    for (const ligne of lignes) max = Math.max(max, retrait + largeurLigne(ligne));
+  }
+  return max;
+}
+
 export function hauteurBlocs(blocs, base) {
   let h = 0;
   blocs.forEach((bloc, i) => {

@@ -265,6 +265,10 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0", style = 
     policeCorps: "sans",
     /** Les espacements. `null` = la valeur de la charte (cf. ESPACEMENT). */
     interligneTitre: null,
+    /** L'écart sous le titre, en corps de CE QUI SUIT (cf. blocTitreEtCorps).
+     *  Serré d'office sur l'étape : sa page est dense, et 2,2 corps y ouvraient
+     *  un trou entre le jour et sa ligne de repères. */
+    apresTitre: gabarit === "etape" ? 1.2 : null,
     interligne: null,
     entreBlocs: null,
     respiration: null,
@@ -446,6 +450,7 @@ export const CHAMPS_DE_STYLE = [
   "policeSurtitre",
   "policeCorps",
   "interligneTitre",
+  "apresTitre",
   "interligne",
   "entreBlocs",
   "respiration",
@@ -2868,7 +2873,7 @@ export default function CarrouselAtelier() {
                             id="part-carte"
                             label="Largeur de la vignette"
                             valeur={carte.partCarte}
-                            defaut={0.44}
+                            defaut={0.5}
                             min={0}
                             max={0.7}
                             pas={0.02}
@@ -2876,8 +2881,9 @@ export default function CarrouselAtelier() {
                             onChange={(v) => majCarte({ partCarte: v })}
                           />
                           <p className={`${AIDE} mt-1`}>
-                            La trace à gauche, les chiffres à droite. À zéro, la vignette
-                            dispara&icirc;t et le tableau reprend toute la largeur.
+                            La planche se coupe en deux : la trace à gauche, les chiffres à
+                            droite, chacun centré sur SA moitié. À zéro, la vignette
+                            dispara&icirc;t et le texte reprend toute la largeur.
                           </p>
                         </div>
                       )}
@@ -3177,6 +3183,17 @@ export default function CarrouselAtelier() {
                       max={2}
                       pas={0.02}
                       onChange={(v) => majCarte({ interligneTitre: v })}
+                    />
+                    <Curseur
+                      id="e-apres-titre"
+                      label="Sous le titre"
+                      valeur={carte?.apresTitre}
+                      defaut={2.2}
+                      min={0}
+                      max={4}
+                      pas={0.1}
+                      format={(v) => `${v.toFixed(1)} corps`}
+                      onChange={(v) => majCarte({ apresTitre: v })}
                     />
                     <Curseur
                       id="e-interligne"

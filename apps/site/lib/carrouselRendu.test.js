@@ -991,6 +991,36 @@ describe("le gabarit « Étape »", () => {
     expect(traits("Vénosc :fleche: Valgaudémar")).toBeGreaterThan(traits("Vénosc Valgaudémar"));
   });
 
+  it("centre la colonne dans SA moitié, sans centrer ses lignes", () => {
+    // Un bloc court se pose plus à droite qu'un bloc large : c'est la signature
+    // d'un centrage. Avant, les deux commençaient au même x, collés à la trace.
+    // Une valeur qu'on ne risque pas de confondre avec la pagination du pied,
+    // elle aussi écrite chiffre par chiffre.
+    const x = (colonne) => etape({ colonne }).mots.find((m) => m.texte === "999").x;
+    expect(x("A = 999")).toBeGreaterThan(x("Un libellé beaucoup plus long = 999"));
+  });
+
+  it("mesure l'écart sous le titre sur CE QUI SUIT, pas sur le corps", () => {
+    // Le piège : l'écart valait 2,2 CORPS même devant un surtitre de 22 px, et
+    // grossir le corps du texte écartait alors une ligne qui ne le concerne pas.
+    const ecart = (reglage) => {
+      const ctx = etape({ titreDevant: true, surtitre: "ZZZ", texte: "", ...reglage });
+      const titre = ctx.mots.find((m) => m.texte === "Jour");
+      const sur = ctx.mots.find((m) => m.texte === "Z");
+      return sur.y - titre.y;
+    };
+    expect(ecart({ tailleCorps: 38 })).toBe(ecart({ tailleCorps: 90 }));
+  });
+
+  it("laisse régler cet écart, et le serre d'office sur l'étape", () => {
+    const ecart = (apresTitre) => {
+      const ctx = etape({ titreDevant: true, surtitre: "ZZZ", texte: "", apresTitre });
+      return ctx.mots.find((m) => m.texte === "Z").y - ctx.mots.find((m) => m.texte === "Jour").y;
+    };
+    expect(ecart(2.2)).toBeGreaterThan(ecart(1.2));
+    expect(ecart(0)).toBeLessThan(ecart(1.2));
+  });
+
   it("rend toute la largeur à la colonne quand la vignette est à zéro", () => {
     const x = (ctx) => ctx.mots.find((m) => m.texte === "46,8")?.x ?? 0;
     expect(x(etape({ partCarte: 0.44 }))).toBeGreaterThan(0);
