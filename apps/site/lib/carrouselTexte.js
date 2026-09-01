@@ -56,6 +56,7 @@ export const COULEURS_TEXTE = {
 export const AIDE_BALISAGE =
   "*gras*  _italique_  ~souligné~  [en ambre]  [bleu: mot]  :col: (icône)  > retrait\n" +
   "[serif: mot]  [mono: 57,5 km]  — la police, au mot\n" +
+  "Distance = 57,5 km  — libellé en capitales, valeur en gros dessous\n" +
   "- point de liste — « - :sac: » met CETTE icône en puce\n" +
   "en début de ligne :  | centré   |> à droite   |< à gauche   -- plus petit   ++ plus grand";
 
@@ -437,6 +438,65 @@ export function dessinerLigneRiche(ctx, ligne, x, y, base) {
   return curseur - x;
 }
 
+/**
+ * LES PETITES CAPITALES DE LA CHARTE — surtitre, en-tête, pied, libellés de
+ * fiche — ACCEPTENT LE BALISAGE.
+ *
+ * Elles étaient les seuls textes de l'atelier à ne pas le faire : elles
+ * passaient par `dessinerTexteEspace`, qui prend une chaîne et rien d'autre. On
+ * pouvait donc écrire `:balise:` dans un titre mais pas dans le surtitre juste
+ * au-dessus, ce qui n'a aucune raison d'être — et se découvre en tapant.
+ *
+ * Une icône y compte comme une lettre : même écart avant et après, alignée sur
+ * le centre optique des capitales. Les couleurs nommées marchent aussi
+ * (`[bleu: mot]`), l'ambre du surtitre restant la couleur par défaut.
+ */
+export function morceauxCapitales(texte) {
+  return analyserRiche(texte).map((mo) =>
+    mo.icone ? mo : { ...mo, texte: String(mo.texte).toUpperCase() },
+  );
+}
+
+/** Le côté d'une icône dans une ligne de capitales. */
+const ICONE_CAPITALES = 1.05;
+
+export function largeurCapitales(ctx, morceaux, taille, espacementEm) {
+  const ecart = espacementEm * taille;
+  let largeur = 0;
+  for (const mo of morceaux) {
+    if (mo.icone) {
+      largeur += taille * ICONE_CAPITALES + ecart;
+      continue;
+    }
+    for (const l of mo.texte) largeur += ctx.measureText(l).width + ecart;
+  }
+  return Math.max(0, largeur - ecart);
+}
+
+/** Pose la ligne. `ctx.font` et `ctx.fillStyle` sont déjà réglés par l'appelant
+ *  — sauf pour un morceau qui porte sa propre couleur. */
+export function dessinerCapitales(ctx, morceaux, x, base, taille, espacementEm, encre) {
+  const ecart = espacementEm * taille;
+  const parDefaut = ctx.fillStyle;
+  let curseur = x;
+  for (const mo of morceaux) {
+    const couleur = mo.couleur ? encreDe(mo, { couleur: parDefaut, accent: encre }) : parDefaut;
+    if (mo.icone) {
+      const cote = taille * ICONE_CAPITALES;
+      dessinerIcone(ctx, mo.icone, curseur, base - taille * CENTRE_CAPITALES - cote / 2, cote, couleur);
+      curseur += cote + ecart;
+      continue;
+    }
+    ctx.fillStyle = couleur;
+    for (const l of mo.texte) {
+      ctx.fillText(l, curseur, base);
+      curseur += ctx.measureText(l).width + ecart;
+    }
+  }
+  ctx.fillStyle = parDefaut;
+  return Math.max(0, curseur - x - ecart);
+}
+
 /* ------------------------------------------------------------------- blocs */
 
 /**
@@ -471,6 +531,10 @@ export const ESPACEMENT = {
   respiration: 1.1,
   /** Espace entre deux points d'une même liste. */
   entreItems: 0.35,
+  /** Espace entre deux DONNÉES qui se suivent. Bien plus serré qu'entre deux
+   *  blocs : une suite de `libellé = valeur` se lit comme UN tableau, pas
+   *  comme quatre paragraphes posés à la file. */
+  entreDonnees: 0.45,
   /** Retrait du texte d'une liste, qui laisse la place à la puce. */
   retraitListe: 1.6,
   /** Retrait de la PREMIÈRE ligne d'un paragraphe. Zéro = pas d'alinéa. */
@@ -525,6 +589,58 @@ const EST_ITEM = /^\s*-(?=[\s:])\s*(.*)$/;
 const PUCE_DITE = /^:([a-z-]{2,24}):\s*/;
 /** Un paragraphe DÉCALÉ en entier — une citation, une note. */
 const EST_RETRAIT = /^\s*>\s?(.*)$/;
+
+/**
+ * UNE DONNÉE : `Distance = 57,5 km`.
+ *
+ * Le libellé en petites capitales espacées, la valeur en gros dessous — la mise
+ * en page d'une fiche technique, mais dans du TEXTE. C'était un tableau à
+ * champs, et il rangeait bien : on ne pouvait simplement rien écrire d'autre
+ * que ce que ses cases prévoyaient. Ici les deux moitiés prennent tout le
+ * balisage, une donnée voisine avec une liste ou une phrase, et l'ordre se
+ * change en déplaçant une ligne.
+ *
+ * TROIS CONDITIONS, et chacune écarte un faux positif :
+ *   • des espaces autour du « = » — sinon « x=y » au milieu d'une phrase ;
+ *   • un SEUL « = » dans la ligne — sinon « a = b = c » ;
+ *   • une LETTRE dans le libellé — sinon « 12 - 4 = 8 » deviendrait une donnée
+ *     intitulée « 12 - 4 ». Une soustraction doit pouvoir s'écrire.
+ */
+const EST_DONNEE = /^([^=]*\p{L}[^=]*) = ([^=]*)$/u;
+
+/** Les deux corps d'une donnée, à défaut de ceux que l'appelant impose. */
+const DONNEE_LABEL = 0.46;
+const DONNEE_VALEUR = 1.24;
+
+function corpsDeDonnee(base) {
+  return {
+    label: Math.round(base.tailleLabel ?? base.taille * DONNEE_LABEL),
+    valeur: Math.round(base.tailleValeur ?? base.taille * DONNEE_VALEUR),
+  };
+}
+
+/**
+ * La hauteur d'une donnée : son libellé, sa valeur, et l'air entre les deux.
+ *
+ * UNE valeur d'une ligne vaut 1,07 corps, pas un interligne : l'interligne est
+ * l'écart entre deux lignes d'un paragraphe, et l'appliquer à une valeur seule
+ * ajoutait un demi-corps de vide sous chaque donnée — quatre d'affilée
+ * débordaient alors sous le pied de page.
+ */
+function hauteurDonnee(bloc, base) {
+  // Les corps viennent du BLOC, arrêtés à l'analyse : les recalculer ici depuis
+  // la base ferait mesurer une donnée avec d'autres chiffres que ceux avec
+  // lesquels elle a été mise en lignes.
+  const { label, valeur } = bloc.corps;
+  const n = Math.max(1, bloc.valeur.length);
+  return label * 1.7 + valeur * (1.07 + (n - 1) * esp(base, "interligne"));
+}
+
+/** L'écart AVANT un bloc : serré entre deux données, normal partout ailleurs. */
+function ecartAvant(bloc, precedent, b) {
+  const cle = bloc.type === "donnee" && precedent?.type === "donnee" ? "entreDonnees" : "entreBlocs";
+  return b.taille * esp(b, cle);
+}
 
 /**
  * L'ALIGNEMENT ET LE CORPS, LIGNE PAR LIGNE.
@@ -669,6 +785,29 @@ export function blocsDeTexte(ctx, texte, largeurMax, base) {
       continue;
     }
     viderListe();
+
+    // Une DONNÉE se lit après la liste (« - Distance = 57,5 km » reste un point
+    // de liste) et avant le paragraphe, dont elle est un cas particulier.
+    const donnee = EST_DONNEE.exec(reste);
+    if (donnee) {
+      viderParagraphe();
+      const b = baseEchelle(base, style.echelle) ?? base;
+      const { label, valeur } = corpsDeDonnee(b);
+      blocs.push({
+        type: "donnee",
+        align: style.align,
+        base: baseEchelle(base, style.echelle),
+        label: morceauxCapitales(donnee[1].trim()),
+        valeur: lignesRiches(ctx, analyserRiche(donnee[2].trim()), largeurMax, {
+          ...b,
+          taille: valeur,
+          graisse: 700,
+        }),
+        corps: { label, valeur },
+      });
+      continue;
+    }
+
     // Un changement de décalage ou de style FERME le paragraphe : « > » ouvre
     // un bloc à part, il ne se mélange pas à celui qu'on était en train
     // d'écrire — et une ligne centrée ne se fond pas dans un bloc à gauche.
@@ -694,8 +833,9 @@ export function hauteurBlocs(blocs, base) {
   let h = 0;
   blocs.forEach((bloc, i) => {
     const b = bloc.base ?? base;
-    if (i > 0) h += b.taille * esp(b, "entreBlocs");
+    if (i > 0) h += ecartAvant(bloc, blocs[i - 1], b);
     if (bloc.type === "espace") h += b.taille * esp(b, "respiration") * bloc.n;
+    else if (bloc.type === "donnee") h += hauteurDonnee(bloc, b);
     else if (bloc.type === "liste") {
       h += bloc.items.reduce(
         (somme, it) => somme + it.lignes.length * b.taille * esp(b, "interligne"),
@@ -818,10 +958,44 @@ export function poserBlocs(
     const b = bloc.base ?? base;
     const al = bloc.align ?? align;
     const interligne = esp(b, "interligne");
-    if (i > 0) y += b.taille * esp(b, "entreBlocs");
+    if (i > 0) y += ecartAvant(bloc, blocs[i - 1], b);
 
     if (bloc.type === "espace") {
       y += b.taille * esp(b, "respiration") * bloc.n;
+      return;
+    }
+
+    if (bloc.type === "donnee") {
+      // LE LIBELLÉ, puis LA VALEUR dessous. `ctx.fillStyle` porte l'encre
+      // courante ; le libellé descend d'un cran (`encreFaible` n'existe pas
+      // ici — c'est `base.couleurLabel` que l'appelant donne, ou l'encre du
+      // corps), la valeur remonte à l'encre pleine.
+      const { label, valeur } = bloc.corps;
+      const baseLabel = y + label;
+      ctx.font = fonteDe({}, { ...b, taille: label, graisse: 400 });
+      ctx.fillStyle = b.couleurLabel ?? b.couleur;
+      const largeurLabel = largeurCapitales(ctx, bloc.label, label, 0.26);
+      dessinerCapitales(
+        ctx,
+        bloc.label,
+        x + decalageAlignement(al, largeur, largeurLabel),
+        baseLabel,
+        label,
+        0.26,
+        b.accent,
+      );
+      const bv = { ...b, taille: valeur, graisse: 700, couleur: b.couleurValeur ?? b.couleur };
+      bloc.valeur.forEach((ligne, j) => {
+        const baseLigne = baseLabel + label * 0.7 + valeur * 0.82 + j * valeur * interligne;
+        dessinerLigneRiche(
+          ctx,
+          ligne,
+          x + decalageAlignement(al, largeur, largeurLigne(ligne)),
+          baseLigne,
+          bv,
+        );
+      });
+      y += hauteurDonnee(bloc, b);
       return;
     }
 

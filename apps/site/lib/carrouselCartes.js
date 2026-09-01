@@ -40,8 +40,11 @@ import {
   analyserRiche,
   decalageAlignement,
   blocsDeTexte,
+  dessinerCapitales,
   dessinerLigneRiche,
   encreDe,
+  largeurCapitales,
+  morceauxCapitales,
   largeurLigne,
   hauteurBlocs,
   lignesRiches,
@@ -494,65 +497,6 @@ function largeurEspacee(ctx, texte, taille, espacementEm) {
 }
 
 /* ------------------------------------------- capitales espacées, avec icônes */
-
-/**
- * LES PETITES CAPITALES DE LA CHARTE — surtitre, en-tête, pied, libellés de
- * fiche — ACCEPTENT LE BALISAGE.
- *
- * Elles étaient les seuls textes de l'atelier à ne pas le faire : elles
- * passaient par `dessinerTexteEspace`, qui prend une chaîne et rien d'autre. On
- * pouvait donc écrire `:balise:` dans un titre mais pas dans le surtitre juste
- * au-dessus, ce qui n'a aucune raison d'être — et se découvre en tapant.
- *
- * Une icône y compte comme une lettre : même écart avant et après, alignée sur
- * le centre optique des capitales. Les couleurs nommées marchent aussi
- * (`[bleu: mot]`), l'ambre du surtitre restant la couleur par défaut.
- */
-function morceauxCapitales(texte) {
-  return analyserRiche(texte).map((mo) =>
-    mo.icone ? mo : { ...mo, texte: String(mo.texte).toUpperCase() },
-  );
-}
-
-/** Le côté d'une icône dans une ligne de capitales. */
-const ICONE_CAPITALES = 1.05;
-
-function largeurCapitales(ctx, morceaux, taille, espacementEm) {
-  const ecart = espacementEm * taille;
-  let largeur = 0;
-  for (const mo of morceaux) {
-    if (mo.icone) {
-      largeur += taille * ICONE_CAPITALES + ecart;
-      continue;
-    }
-    for (const l of mo.texte) largeur += ctx.measureText(l).width + ecart;
-  }
-  return Math.max(0, largeur - ecart);
-}
-
-/** Pose la ligne. `ctx.font` et `ctx.fillStyle` sont déjà réglés par l'appelant
- *  — sauf pour un morceau qui porte sa propre couleur. */
-function dessinerCapitales(ctx, morceaux, x, base, taille, espacementEm, encre) {
-  const ecart = espacementEm * taille;
-  const parDefaut = ctx.fillStyle;
-  let curseur = x;
-  for (const mo of morceaux) {
-    const couleur = mo.couleur ? encreDe(mo, { couleur: parDefaut, accent: encre }) : parDefaut;
-    if (mo.icone) {
-      const cote = taille * ICONE_CAPITALES;
-      dessinerIcone(ctx, mo.icone, curseur, base - taille * CENTRE_CAPITALES - cote / 2, cote, couleur);
-      curseur += cote + ecart;
-      continue;
-    }
-    ctx.fillStyle = couleur;
-    for (const l of mo.texte) {
-      ctx.fillText(l, curseur, base);
-      curseur += ctx.measureText(l).width + ecart;
-    }
-  }
-  ctx.fillStyle = parDefaut;
-  return Math.max(0, curseur - x - ecart);
-}
 
 /**
  * Le surtitre : un filet ambre, puis des capitales espacées.
@@ -2337,21 +2281,22 @@ export function ligneDeJournee(seg) {
 
 /**
  * CE QU'ON MET DANS LA COLONNE D'UNE ÉTAPE, pour ne pas partir d'une page
- * blanche : les trois chiffres que la trace connaît, en liste, les nombres en
- * gras. Le quatrième est un RAPPEL sans valeur — la masse portée ne se déduit
- * d'aucun fichier, et l'oublier serait pire que de la laisser en attente.
+ * blanche : les trois chiffres que la trace connaît, en DONNÉES
+ * (`libellé = valeur`), et un quatrième sans valeur — la masse portée ne se
+ * déduit d'aucun fichier, et l'oublier serait pire que de la laisser en
+ * attente. Sa ligne s'affiche, libellé seul, jusqu'à ce qu'on la remplisse.
  *
- * C'est un point de départ, pas un gabarit : tout le balisage marche ici
- * (couleurs, polices au mot, puces, corps par ligne), et c'est bien l'intérêt
- * d'une zone de texte plutôt que d'un tableau.
+ * C'est un point de départ, pas un gabarit : c'est du TEXTE, on y change les
+ * libellés, on en ajoute, on en retire, on y mêle une liste ou une phrase, et
+ * tout le balisage y marche (couleurs, polices au mot, corps par ligne).
  */
 export function colonneDeJournee(seg) {
-  const lignes = [];
-  if (seg?.distanceKm > 0) lignes.push(`- *${formatKm(seg.distanceKm)} km*`);
-  if (seg?.dPlusM > 0) lignes.push(`- *${formatEntier(seg.dPlusM)} m* D+`);
-  if (seg?.dMinusM > 0) lignes.push(`- *${formatEntier(seg.dMinusM)} m* D−`);
-  lignes.push("- masse portée : ");
-  return lignes.join("\n");
+  return [
+    `Distance = ${seg?.distanceKm > 0 ? `${formatKm(seg.distanceKm)} km` : ""}`,
+    `Dénivelé positif = ${seg?.dPlusM > 0 ? `${formatEntier(seg.dPlusM)} m` : ""}`,
+    `Dénivelé négatif = ${seg?.dMinusM > 0 ? `${formatEntier(seg.dMinusM)} m` : ""}`,
+    "Masse moyenne portée = ",
+  ].join("\n");
 }
 
 export function texteDeJournee(i, seg) {
@@ -2618,15 +2563,27 @@ function dessinerLibres(ctx, format, o) {
  *
  * Rend la hauteur occupée.
  */
-function colonneDeTexte(ctx, m, th, polices, carte, boite, { ombre, zones }) {
-  const texte = carte.colonne ?? "";
-  if (!texte.trim()) return 0;
-  const base = {
+function baseDeColonne(m, th, polices, carte) {
+  return {
     ...baseCorps(m, th, polices, carte),
     // Plus petit que le récit par défaut : la colonne est une marge de carnet,
     // pas un second paragraphe. `tailleColonne` la reprend en main.
     taille: Math.round(portee(carte.tailleColonne, m.corps * 0.8, m)),
+    // LES DONNÉES (`Distance = 57,5 km`) reprennent les corps et les encres de
+    // la fiche — c'est la même chose écrite autrement, et les mêmes réglages
+    // doivent la tenir : libellé atténué en petites capitales, valeur en gros à
+    // l'encre pleine.
+    tailleLabel: m.ficheLabel,
+    tailleValeur: m.ficheValeur,
+    couleurLabel: th.encreFaible,
+    couleurValeur: th.encre,
   };
+}
+
+function colonneDeTexte(ctx, m, th, polices, carte, boite, { ombre, zones }) {
+  const texte = carte.colonne ?? "";
+  if (!texte.trim()) return 0;
+  const base = baseDeColonne(m, th, polices, carte);
   poserOmbre(ctx, ombre, "corps");
   const blocs = blocsDeTexte(ctx, texte, boite.width, base);
   poserBlocs(ctx, blocs, boite.x, boite.y, base, {
@@ -2749,11 +2706,8 @@ function dessinerEtape(ctx, format, o) {
   // hauteur du bloc, sinon il flotterait tout en haut d'un grand vide.
   boiteColonne.y = hautBloc;
   if (!avecCarte) {
-    const base = {
-      ...baseCorps(m, th, polices, carte),
-      taille: Math.round(portee(carte.tailleColonne, m.corps * 0.8, m)),
-    };
-    const h = hauteurBlocs(blocsDeTexte(ctx, carte.colonne ?? "", largeur, base), base);
+    const b = baseDeColonne(m, th, polices, carte);
+    const h = hauteurBlocs(blocsDeTexte(ctx, carte.colonne ?? "", largeur, b), b);
     boiteColonne.y = hautBloc + Math.max(0, Math.round((hBloc - h) / 2));
   }
   colonneDeTexte(ctx, m, th, polices, carte, boiteColonne, { ombre, zones });

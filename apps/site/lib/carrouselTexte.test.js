@@ -488,3 +488,48 @@ describe("la police au mot", () => {
     expect(texteNu("[note: à faire]")).toBe("note: à faire");
   });
 });
+
+describe("les données « libellé = valeur »", () => {
+  const ctx = ctxFactice();
+  const base = { police: "Ubuntu", taille: 30, couleur: "#111", accent: "#EFB159" };
+  const blocs = (t, b = base) => blocsDeTexte(ctx, t, 500, b);
+  const nu = (morceaux) => morceaux.map((m) => m.texte).join("");
+
+  it("met le libellé en capitales et garde la valeur telle quelle", () => {
+    const [b] = blocs("Distance = 57,5 km");
+    expect(b.type).toBe("donnee");
+    expect(nu(b.label)).toBe("DISTANCE");
+    expect(nu(b.valeur[0])).toBe("57,5 km");
+  });
+
+  it("laisse le balisage entrer des DEUX côtés", () => {
+    const [b] = blocs("[bleu: Masse] portée = *8,4 kg*");
+    expect(b.label.some((m) => m.couleur === "bleu")).toBe(true);
+    expect(b.valeur[0].some((m) => m.gras)).toBe(true);
+  });
+
+  it("n'attrape pas ce qui n'est pas une donnée", () => {
+    // Une soustraction, une chaîne d'égalités, un point de liste : trois façons
+    // d'écrire un « = » sans demander une fiche.
+    expect(blocs("12 - 4 = 8")[0].type).toBe("paragraphe");
+    expect(blocs("a = b = c")[0].type).toBe("paragraphe");
+    expect(blocs("x=y")[0].type).toBe("paragraphe");
+    expect(blocs("- Distance = 57,5 km")[0].type).toBe("liste");
+  });
+
+  it("serre deux données qui se suivent, pas une donnée après un texte", () => {
+    // Une suite de données se lit comme UN tableau ; après un paragraphe, elle
+    // reprend l'écart normal entre blocs.
+    const suite = hauteurBlocs(blocs("A = 1\nB = 2"), base);
+    const apres = hauteurBlocs(blocs("un mot\nA = 1"), base);
+    const une = hauteurBlocs(blocs("A = 1"), base);
+    const mot = hauteurBlocs(blocs("un mot"), base);
+    expect(suite - 2 * une).toBeLessThan(apres - une - mot);
+  });
+
+  it("suit les corps que la planche impose", () => {
+    const petit = hauteurBlocs(blocs("A = 1", { ...base, tailleLabel: 10, tailleValeur: 20 }), base);
+    const grand = hauteurBlocs(blocs("A = 1", { ...base, tailleLabel: 20, tailleValeur: 60 }), base);
+    expect(grand).toBeGreaterThan(petit);
+  });
+});

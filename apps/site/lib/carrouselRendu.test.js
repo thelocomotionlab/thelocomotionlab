@@ -891,7 +891,7 @@ describe("le gabarit « Étape »", () => {
         titre: "Jour 3",
         surtitre: "",
         texte: "Montée au col sous la pluie.",
-        colonne: "- *46,8 km*\n- *2 519 m* D+\n- masse portée : 8,4 kg",
+        colonne: "Distance = 46,8 km\nDénivelé positif = 2 519 m\nMasse portée = 8,4 kg",
         ...reglage,
       },
       { trace, segments },
@@ -908,14 +908,18 @@ describe("le gabarit « Étape »", () => {
     expect(lu(ctx)).toContain("8,4");
   });
 
-  it("met en gras ce que la colonne demande en gras", () => {
-    // La colonne prend le balisage entier : c'est ce qui la distingue du
-    // tableau de libellés qu'elle remplace.
-    const ctx = etape({});
-    const km = ctx.mots.find((m) => m.texte === "46,8");
-    const masse = ctx.mots.find((m) => m.texte === "masse");
-    expect(km.fonte).toMatch(/700/);
-    expect(masse.fonte).not.toMatch(/700/);
+  it("compose la colonne en libellé/valeur, et prend le balisage", () => {
+    // Le libellé passe en capitales, lettre par lettre ; la valeur s'écrit d'un
+    // bloc, en gras et plus gros. C'est la fiche d'avant, mais dans du texte —
+    // donc avec tout le balisage.
+    const ctx = etape({ colonne: "Distance = *46,8 km*" });
+    expect(lu(ctx)).toContain("DISTANCE");
+    const valeur = ctx.mots.find((m) => m.texte === "46,8");
+    const libelle = ctx.mots.find((m) => m.texte === "D");
+    expect(valeur.fonte).toMatch(/700/);
+    expect(Number(/(\d+)px/.exec(valeur.fonte)[1])).toBeGreaterThan(
+      Number(/(\d+)px/.exec(libelle.fonte)[1]),
+    );
   });
 
   it("garde la bande de marque SUR LE PAPIER, la photo dessous", () => {
@@ -951,7 +955,7 @@ describe("le gabarit « Étape »", () => {
   });
 
   it("rend toute la largeur à la colonne quand la vignette est à zéro", () => {
-    const x = (ctx) => ctx.mots.find((m) => m.texte === "masse")?.x ?? 0;
+    const x = (ctx) => ctx.mots.find((m) => m.texte === "46,8")?.x ?? 0;
     expect(x(etape({ partCarte: 0.44 }))).toBeGreaterThan(0);
     expect(x(etape({ partCarte: 0 }))).toBeLessThan(x(etape({ partCarte: 0.44 })));
   });
