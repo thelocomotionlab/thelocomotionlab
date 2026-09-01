@@ -469,7 +469,9 @@ describe("les zones cliquables", () => {
   const F = FORMATS.carrousel;
 
   it("rend une zone d'en-tête et une de pied sur tous les gabarits", () => {
-    for (const gabarit of GABARITS) {
+    // La clôture est la seule exception : elle ne pose NI l'une NI l'autre tant
+    // qu'on ne les rallume pas (cf. « les deux bandes de la clôture »).
+    for (const gabarit of GABARITS.filter((g) => g !== "cloture")) {
       const ctx = planche({ gabarit });
       const champs = ctx.zones.map((z) => z.champ);
       expect(champs, gabarit).toContain("entete");
@@ -797,11 +799,21 @@ describe("la numérotation du pied", () => {
   const texteDe = ({ mots }) => mots.map((m) => m.texte).join("");
   const paginee = (ctx) => texteDe(ctx).includes("03 / 12");
 
-  it.each(GABARITS)("s'écrit par défaut sur « %s »", (gabarit) => {
+  // La clôture n'a pas de pied tant qu'on ne le rallume pas : sa pagination se
+  // teste avec, sinon on testerait la bande absente et non le décompte.
+  const AVEC_PIED = GABARITS.filter((g) => g !== "cloture");
+
+  it.each(AVEC_PIED)("s'écrit par défaut sur « %s »", (gabarit) => {
     expect(paginee(planche({ gabarit }, { index: 2, total: 12 }))).toBe(true);
   });
 
-  it.each(GABARITS)("disparaît quand la planche la refuse — « %s »", (gabarit) => {
+  it("s'écrit sur une clôture dont on a rallumé le pied", () => {
+    expect(
+      paginee(planche({ gabarit: "cloture", piedVisible: true }, { index: 2, total: 12 })),
+    ).toBe(true);
+  });
+
+  it.each(AVEC_PIED)("disparaît quand la planche la refuse — « %s »", (gabarit) => {
     expect(paginee(planche({ gabarit, piedNumero: false }, { index: 2, total: 12 }))).toBe(false);
   });
 
@@ -1133,5 +1145,143 @@ describe("le surtitre sur plusieurs lignes", () => {
     expect(serif.fonte).not.toBe(avant.fonte);
     expect(taille(serif)).toBe(taille(avant));
     expect(apres.fonte).toBe(avant.fonte);
+  });
+});
+
+describe("le titre et le surtitre sur la même ligne", () => {
+  // X et Y : deux lettres ABSENTES de « THE LOCOMOTION LAB », qui s'écrit lui
+  // aussi lettre par lettre dans la bande d'en-tête.
+  const duo = (reglage) =>
+    planche({
+      gabarit: "texte",
+      titre: "Xour",
+      surtitre: "YYY",
+      texte: "",
+      // Sans ça l'ordre par défaut met le surtitre DEVANT le titre, et « sur la
+      // même ligne » n'aurait pas le même sens d'un cas à l'autre.
+      titreDevant: true,
+      ...reglage,
+    });
+  const mot = (ctx, l) => ctx.mots.find((m) => m.texte === l);
+
+  it("les pose sur la MÊME ligne de base", () => {
+    const ctx = duo({ surtitreEnLigne: true });
+    expect(mot(ctx, "Y").y).toBe(mot(ctx, "Xour").y);
+  });
+
+  it("empilés, le surtitre est plus bas que le titre", () => {
+    const ctx = duo({ surtitreEnLigne: false });
+    expect(mot(ctx, "Y").y).toBeGreaterThan(mot(ctx, "Xour").y);
+  });
+
+  it("met le surtitre APRÈS le titre, jamais dessus", () => {
+    const ctx = duo({ surtitreEnLigne: true, surtitreFilet: false });
+    expect(mot(ctx, "Y").x).toBeGreaterThan(mot(ctx, "Xour").x);
+  });
+
+  it("centre la PAIRE, pas chacune de ses moitiés", () => {
+    // Centré, le titre seul se centrerait et le surtitre partirait à droite :
+    // c'est l'ensemble qui doit tenir au milieu, donc le titre commence à
+    // GAUCHE de là où il serait tout seul.
+    const seul = planche({
+      gabarit: "texte", titre: "Xour", surtitre: "", texte: "",
+      titreDevant: true, centrer: true,
+    });
+    const paire = duo({ surtitreEnLigne: true, centrer: true });
+    expect(mot(paire, "Xour").x).toBeLessThan(mot(seul, "Xour").x);
+  });
+
+  it("ne s'applique qu'avec un titre ET un surtitre", () => {
+    const sansTitre = planche({
+      gabarit: "texte", titre: "", surtitre: "YYY", texte: "",
+      titreDevant: true, surtitreEnLigne: true,
+    });
+    expect(mot(sansTitre, "Y")).toBeDefined();
+  });
+});
+
+describe("la taille de la colonne d'une étape", () => {
+  // Une valeur se pose MOT PAR MOT : « 57,5 km » n'est jamais un seul fillText.
+  const valeur = (ctx) => ctx.mots.find((m) => m.texte === "57,5");
+  const etape = (tailleColonne) =>
+    planche({
+      gabarit: "etape",
+      titre: "Jour 1",
+      texte: "",
+      colonne: "Distance = 57,5 km",
+      tailleColonne,
+    });
+  const corps = (mot) => Number(/(\d+)px/.exec(mot.fonte)[1]);
+
+  it("emporte AUSSI les chiffres, pas seulement le texte libre", () => {
+    // Les données empruntaient les corps de la fiche, qu'aucun curseur ne règle
+    // sur une étape : le curseur ne bougeait alors que le texte autour.
+    expect(corps(valeur(etape(40)))).toBeGreaterThan(corps(valeur(etape(14))));
+  });
+
+  it("ne change rien tant qu'on n'y touche pas", () => {
+    expect(corps(valeur(etape(null)))).toBe(corps(valeur(etape(undefined))));
+  });
+});
+
+describe("la clôture qui fait le bilan", () => {
+  const TRACE = {
+    coords: [
+      [6.3, 44.9], [6.4, 44.95], [6.5, 44.92], [6.45, 44.86], [6.3, 44.9],
+    ],
+    profil: [[0, 1000], [10, 2400], [20, 1200], [30, 2600], [40, 1000]],
+    totalKm: 40,
+  };
+  const cloture = (reglage, options = {}) =>
+    planche({ gabarit: "cloture", ...reglage }, { trace: TRACE, ...options });
+
+  it("ne pose ni en-tête ni pied tant qu'on ne les demande pas", () => {
+    const champs = cloture({}).zones.map((z) => z.champ);
+    expect(champs).not.toContain("entete");
+    expect(champs).not.toContain("pied");
+  });
+
+  it("les rallume une par une", () => {
+    expect(cloture({ enteteVisible: true }).zones.map((z) => z.champ)).toContain("entete");
+    expect(cloture({ piedVisible: true }).zones.map((z) => z.champ)).toContain("pied");
+  });
+
+  it("dessine la trace entière quand on la demande", () => {
+    expect(cloture({}).zones.some((z) => z.champ === "carte")).toBe(false);
+    expect(cloture({ clotureTrace: true }).zones.some((z) => z.champ === "carte")).toBe(true);
+  });
+
+  it("garde la trace DANS la planche", () => {
+    const z = cloture({ clotureTrace: true }).zones.find((x) => x.champ === "carte");
+    expect(z.x).toBeGreaterThanOrEqual(0);
+    expect(z.y).toBeGreaterThanOrEqual(0);
+    expect(z.x + z.width).toBeLessThanOrEqual(FORMATS.carrousel.width);
+    expect(z.y + z.height).toBeLessThanOrEqual(FORMATS.carrousel.height);
+  });
+
+  it("garde le bloc DANS la planche, même chargé", () => {
+    // Cinq pièces — titre, surtitre, texte, trace, encart — dépassaient la page
+    // par les deux bouts, et rien ne le disait avant l'export.
+    const ctx = cloture({
+      clotureTrace: true,
+      clotureEncart: true,
+      tailleTrace: 900,
+      colonne: "Distance = 188 km\nDénivelé positif = 12 400 m\nJournées = 5",
+    });
+    for (const z of ctx.zones.filter((x) => ["carte", "colonne", "cloture"].includes(x.champ))) {
+      expect(z.y, z.champ).toBeGreaterThanOrEqual(0);
+      expect(z.y + z.height, z.champ).toBeLessThanOrEqual(FORMATS.carrousel.height);
+    }
+  });
+
+  it("écrit l'encart, cadre compris, à partir de la colonne", () => {
+    const ctx = cloture({ clotureEncart: true, colonne: "Distance = 188 km" });
+    expect(ctx.mots.some((m) => m.texte === "188")).toBe(true);
+    expect(ctx.appels).toContain("stroke");
+  });
+
+  it("n'ouvre pas d'encart vide", () => {
+    const ctx = cloture({ clotureEncart: true, colonne: "   " });
+    expect(ctx.zones.some((z) => z.champ === "colonne")).toBe(false);
   });
 });
