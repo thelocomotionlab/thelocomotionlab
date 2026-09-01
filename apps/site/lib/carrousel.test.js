@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { dureeCourte, journeesMontrees, ligneDeJournee, statsDeJournee } from "./carrouselCartes";
+import { colonneDeJournee, dureeCourte, journeesMontrees, ligneDeJournee } from "./carrouselCartes";
 import { fitView, decimerPixels, normX, normY } from "./carrouselGeo";
 import {
   ancreDuSegment,
@@ -339,15 +339,14 @@ describe("les chiffres d'une étape", () => {
     expect(j2.dMinusM).toBeGreaterThan(0);
   });
 
-  it("range les quatre lignes de la planche Étape", () => {
-    const lignes = statsDeJournee({ distanceKm: 46.8, dPlusM: 2519, dMinusM: 1940 });
-    expect(lignes.map((l) => l.valeur)).toEqual(["46,8 km", "2 519 m", "1 940 m", ""]);
-    // La masse portée ne se déduit d'aucun fichier : elle attend, en ambre.
-    expect(lignes[3].label).toMatch(/masse/i);
-    expect(lignes[3].accent).toBe(true);
+  it("écrit la colonne de départ en liste, les nombres en gras", () => {
+    expect(colonneDeJournee({ distanceKm: 46.8, dPlusM: 2519, dMinusM: 1940 })).toBe(
+      "- *46,8 km*\n- *2 519 m* D+\n- *1 940 m* D−\n- masse portée : ",
+    );
   });
 
-  it("laisse les chiffres vides plutôt que d'inventer", () => {
-    expect(statsDeJournee(null).map((l) => l.valeur)).toEqual(["", "", "", ""]);
+  it("n'invente aucun chiffre, mais rappelle toujours la masse", () => {
+    // Elle ne se déduit d'aucun fichier : la ligne reste, vide, pour être vue.
+    expect(colonneDeJournee(null)).toBe("- masse portée : ");
   });
 });

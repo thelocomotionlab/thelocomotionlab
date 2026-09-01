@@ -62,9 +62,9 @@ import {
   chargerFond,
   dessinerCartePartage,
   dureeCourte,
+  colonneDeJournee,
   ligneDeJournee,
   ligneFactuelle,
-  statsDeJournee,
   texteDeJournee,
   vueDeLaCarte,
 } from "@/lib/carrouselCartes";
@@ -137,10 +137,8 @@ const AVEC_PHOTO = ["photo", "bandeau", "cloture", "etape"];
  *  journées ont un sens. */
 const AVEC_TRACE = ["carte", "etape"];
 
-/** Les gabarits qui portent un tableau de libellés et de valeurs. La fiche les
- *  empile pleine largeur, l'étape les range en colonnes ; ce sont les mêmes
- *  données, donc le même éditeur. */
-const AVEC_FICHE = ["fiche", "etape"];
+/** Les gabarits qui portent un tableau de libellés et de valeurs. */
+const AVEC_FICHE = ["fiche"];
 
 /** Pour chercher une icône sans se soucier des accents ni de la casse. */
 const sansAccent = (s) =>
@@ -168,6 +166,7 @@ const ZONES = {
   libre: { onglet: "texte", champ: (z) => `libre-${z.index ?? 0}` },
   pied: { onglet: "texte", champ: () => "pied-centre" },
   fiche: { onglet: "texte", champ: () => "fiche-0" },
+  colonne: { onglet: "texte", champ: () => "colonne" },
   case: { onglet: "texte", champ: (z) => `case-${z.index ?? 0}` },
   cloture: { onglet: "texte", champ: () => "cercle-taille" },
   photo: { onglet: "photo", champ: () => "ancrage" },
@@ -365,12 +364,11 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0", style = 
      *  chiffres occupant le reste. `0` la retire et rend toute la largeur au
      *  tableau. `null` = 44 %, le partage qui laisse la boucle carrée. */
     partCarte: null,
-    fiche:
-      gabarit === "fiche"
-        ? ficheParDefaut(trace, segments)
-        : gabarit === "etape"
-          ? statsDeJournee(null)
-          : [],
+    fiche: gabarit === "fiche" ? ficheParDefaut(trace, segments) : [],
+    /** ÉTAPE — la colonne à côté de la trace. Du TEXTE, avec tout le balisage :
+     *  c'est là qu'on écrit les chiffres du jour, ou tout autre chose. */
+    colonne: "",
+    tailleColonne: null,
     /* --- journées : l'espace découpé en cases --- */
     casesN: null,
     casesColonnes: 1,
@@ -438,6 +436,7 @@ export const CHAMPS_DE_STYLE = [
   "tailleLogo",
   "tailleFicheLabel",
   "tailleFicheValeur",
+  "tailleColonne",
   "epaisseurFilet",
   "policeTitre",
   "policeSurtitre",
@@ -569,6 +568,7 @@ export default function CarrouselAtelier() {
    *  une étiquette ouvrirait le panneau de ce qu'il y a dessous. */
   const aGlisseRef = useRef(false);
   const texteRef = useRef(null);
+  const colonneRef = useRef(null);
   /** Les identifiants de planches, propres à CETTE instance (cf. carteNeuve). */
   const idRef = useRef(0);
   const idNeuf = useCallback(() => {
@@ -908,19 +908,27 @@ export default function CarrouselAtelier() {
    * balise à la main. On repose donc le curseur juste après l'insertion, et on
    * rend le focus au champ — la frappe continue sans rien toucher à la souris.
    */
-  const insererDansTexte = useCallback(
-    (balise) => {
-      const champ = texteRef.current;
-      const actuel = carte?.texte ?? "";
+  const insererDans = useCallback(
+    (nom, ref, balise) => {
+      const champ = ref.current;
+      // La valeur se lit sur le CHAMP, pas sur la carte : le textarea est
+      // contrôlé, les deux disent donc la même chose — mais passer par le DOM
+      // évite de refaire ce rappel à chaque frappe.
+      const actuel = champ?.value ?? "";
       const debut = champ?.selectionStart ?? actuel.length;
       const fin = champ?.selectionEnd ?? actuel.length;
-      majCarte({ texte: actuel.slice(0, debut) + balise + actuel.slice(fin) });
+      majCarte({ [nom]: actuel.slice(0, debut) + balise + actuel.slice(fin) });
       requestAnimationFrame(() => {
         champ?.focus();
         champ?.setSelectionRange(debut + balise.length, debut + balise.length);
       });
     },
-    [carte?.texte, majCarte],
+    [majCarte],
+  );
+  const insererDansTexte = useCallback((b) => insererDans("texte", texteRef, b), [insererDans]);
+  const insererDansColonne = useCallback(
+    (b) => insererDans("colonne", colonneRef, b),
+    [insererDans],
   );
 
   const majFiche = useCallback(
@@ -1034,17 +1042,16 @@ export default function CarrouselAtelier() {
           // L'ÉTAPE est une page de carnet : le nom de l'aventure passe dans le
           // coin haut, à côté de la marque, et le pied ne garde que la flèche —
           // un décompte et le mot « glisse » feraient trois signes pour une
-          // seule idée. Ses chiffres sont ceux du jour, dans le tableau.
+          // seule idée. Ses chiffres partent dans la colonne, en liste.
           return gabarit === "etape"
             ? {
                 ...base,
                 entete: nom,
                 surtitre: "",
-                pied: " ",
                 piedNumero: false,
                 piedDroite: " ",
                 piedFleche: "toujours",
-                fiche: statsDeJournee(segments[i]),
+                colonne: colonneDeJournee(segments[i]),
               }
             : { ...base, surtitre: nom, pied: ligneDeJournee(segments[i]) };
         });
@@ -1935,7 +1942,7 @@ export default function CarrouselAtelier() {
                   />
                 </Groupe>
 
-                {["carte", "photo", "etape"].includes(carte?.gabarit) && (
+                {["carte", "photo"].includes(carte?.gabarit) && (
                   <Groupe
                     titre="Ligne de chiffres"
                     aide="Sous le titre. Vide sur une carte, elle affiche ce que la trace sait dire ; écris ce que tu veux à la place, ou un espace pour la faire disparaître. Le balisage marche ici aussi, et un retour à la ligne aussi — c'est là que tient la description d'une journée."
@@ -2201,6 +2208,76 @@ export default function CarrouselAtelier() {
                   </div>
                 </Groupe>
 
+                {carte?.gabarit === "etape" && (
+                  <Groupe
+                    titre="La colonne"
+                    aide="À côté de la trace. Du TEXTE, avec tout le balisage : listes, puces à icône, gras, ambre, couleurs et polices au mot, corps par ligne. C'est là que vont les chiffres du jour — ou tout autre chose."
+                  >
+                    <textarea
+                      ref={colonneRef}
+                      id="colonne"
+                      rows={5}
+                      value={carte?.colonne ?? ""}
+                      placeholder={"- *57,5 km*\n- *4 356 m* D+"}
+                      onChange={(e) => majCarte({ colonne: e.target.value })}
+                      className={`${CHAMP} resize-y`}
+                    />
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => insererDansColonne("\n- ")}
+                        className={BOUTON_DISCRET}
+                      >
+                        + point de liste
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insererDansColonne("\n- :")}
+                        className={BOUTON_DISCRET}
+                        title="Un point dont la puce est l'icône qu'on nomme : « - :sac: 8,4 kg »"
+                      >
+                        + point à icône
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insererDansColonne("[mono: ]")}
+                        className={BOUTON_DISCRET}
+                        title="La police « instrument » pour un chiffre — [serif: …] pour l'accent"
+                      >
+                        + en mono
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insererDansColonne("\n-- ")}
+                        className={BOUTON_DISCRET}
+                        title="Réduire CETTE ligne seulement (++ pour agrandir, répétables)"
+                      >
+                        + ligne plus petite
+                      </button>
+                      {/* La journée MONTRÉE, pas une autre : c'est `jusquA` qui
+                          dit de quelle étape la planche parle. Le texte déjà
+                          écrit est REMPLACÉ — d'où l'infobulle qui le dit. */}
+                      {segments[carte.jusquA ?? segments.length - 1] && (
+                        <button
+                          type="button"
+                          className={BOUTON_DISCRET}
+                          onClick={() =>
+                            majCarte({
+                              colonne: colonneDeJournee(
+                                segments[carte.jusquA ?? segments.length - 1],
+                              ),
+                            })
+                          }
+                          title="Réécrit la colonne depuis les chiffres du jour — ce qui y est écrit est perdu"
+                        >
+                          <RotateCcw size={13} aria-hidden />
+                          chiffres du jour
+                        </button>
+                      )}
+                    </div>
+                  </Groupe>
+                )}
+
                 <Groupe
                   titre="Zones libres"
                   aide="Du texte posé OÙ TU VEUX : ajoute-le, puis attrape-le sur la planche pour le placer. La position est relative au cadre, donc la même zone tombe au même endroit en carrousel, en story ou en carré."
@@ -2431,12 +2508,8 @@ export default function CarrouselAtelier() {
 
                 {AVEC_FICHE.includes(carte?.gabarit) && (
                   <Groupe
-                    titre={carte.gabarit === "etape" ? "Les chiffres de l’étape" : "Les lignes de la fiche"}
-                    aide={
-                      carte.gabarit === "etape"
-                        ? "Un libellé en petites capitales, la valeur en gros dessous, rangés en colonnes sous la trace. Les valeurs sont du texte libre : la masse portée, elle, ne se déduit d’aucun fichier."
-                        : "Un libellé à gauche, une valeur en gros à droite. Les valeurs sont du texte libre."
-                    }
+                    titre="Les lignes de la fiche"
+                    aide="Un libellé à gauche, une valeur en gros à droite. Les valeurs sont du texte libre."
                   >
                     <div className="mb-2 flex flex-col gap-2">
                       {(carte.fiche ?? []).map((l, i) => (
@@ -2481,59 +2554,18 @@ export default function CarrouselAtelier() {
                         </div>
                       ))}
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      <button
-                        type="button"
-                        className={BOUTON_SECOND}
-                        onClick={() =>
-                          majCarte({
-                            fiche: [...(carte.fiche ?? []), { label: "", valeur: "", accent: false }],
-                          })
-                        }
-                      >
-                        <Plus size={15} aria-hidden />
-                        Une ligne de plus
-                      </button>
-                      {/* Les chiffres de la journée MONTRÉE, pas d'une autre :
-                          c'est `jusquA` qui dit de quelle étape la planche
-                          parle, et la masse portée déjà écrite est gardée — on
-                          ne la retrouverait nulle part ailleurs. */}
-                      {carte.gabarit === "etape" && segments[carte.jusquA ?? segments.length - 1] && (
-                        <button
-                          type="button"
-                          className={BOUTON_SECOND}
-                          onClick={() => {
-                            const neufs = statsDeJournee(
-                              segments[carte.jusquA ?? segments.length - 1],
-                            );
-                            const garde = (carte.fiche ?? []).find((l) => /masse/i.test(l.label ?? ""));
-                            majCarte({
-                              fiche: neufs.map((l) =>
-                                garde && /masse/i.test(l.label) ? { ...l, valeur: garde.valeur } : l,
-                              ),
-                            });
-                          }}
-                        >
-                          <RotateCcw size={15} aria-hidden />
-                          Reprendre les chiffres du jour
-                        </button>
-                      )}
-                    </div>
-                    {carte.gabarit === "etape" && (
-                      <div className="mt-3">
-                        <label className={LEGENDE} htmlFor="stats-colonnes">
-                          Colonnes
-                        </label>
-                        <Nombre
-                          id="stats-colonnes"
-                          min={1}
-                          max={4}
-                          valeur={carte.casesColonnes > 1 ? carte.casesColonnes : 3}
-                          onChange={(v) => majCarte({ casesColonnes: Math.round(v) })}
-                          classe={`${CHAMP} w-24`}
-                        />
-                      </div>
-                    )}
+                    <button
+                      type="button"
+                      className={BOUTON_SECOND}
+                      onClick={() =>
+                        majCarte({
+                          fiche: [...(carte.fiche ?? []), { label: "", valeur: "", accent: false }],
+                        })
+                      }
+                    >
+                      <Plus size={15} aria-hidden />
+                      Une ligne de plus
+                    </button>
                   </Groupe>
                 )}
 
@@ -3034,6 +3066,15 @@ export default function CarrouselAtelier() {
                       defaut={CORPS.logo}
                       onChange={(v) => majCarte({ tailleLogo: v })}
                     />
+                    {carte?.gabarit === "etape" && (
+                      <Taille
+                        id="t-colonne"
+                        label="Colonne"
+                        valeur={carte?.tailleColonne}
+                        defaut={Math.round(CORPS.corps * 0.8)}
+                        onChange={(v) => majCarte({ tailleColonne: v })}
+                      />
+                    )}
                     {AVEC_FICHE.includes(carte?.gabarit) && (
                       <>
                         <Taille

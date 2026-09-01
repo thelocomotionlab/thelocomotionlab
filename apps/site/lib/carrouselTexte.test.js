@@ -451,3 +451,40 @@ describe("une puce par point de liste", () => {
     expect(blocs("- eau")[0].type).toBe("liste");
   });
 });
+
+describe("la police au mot", () => {
+  const trousseau = { sans: "Ubuntu", serif: "Lora", mono: "Ubuntu Mono" };
+  const base = { police: "Ubuntu", polices: trousseau, taille: 38 };
+
+  it("change de famille sans rien teinter", () => {
+    const [mo] = analyserRiche("[mono: 57,5 km]");
+    expect(mo.famille).toBe("mono");
+    // Le piège que la garde évite : `[…]` porte l'ambre, et demander une police
+    // ne doit pas colorer le mot au passage.
+    expect(mo.accent).toBeUndefined();
+    expect(fonteDe(mo, base)).toContain("Ubuntu Mono");
+  });
+
+  it("laisse les couleurs nommées faire leur métier", () => {
+    const [mo] = analyserRiche("[bleu: mot]");
+    expect(mo.accent).toBe(true);
+    expect(mo.couleur).toBe("bleu");
+    expect(mo.famille).toBeUndefined();
+    expect(fonteDe(mo, base)).toContain("Ubuntu");
+  });
+
+  it("retombe sur la fonte du bloc sans trousseau, ou sur une famille inconnue", () => {
+    const [mo] = analyserRiche("[serif: mot]");
+    expect(fonteDe(mo, { police: "Ubuntu", taille: 38 })).toContain("Ubuntu");
+    expect(fonteDe({ texte: "x", famille: "gothique" }, base)).toContain("Ubuntu");
+  });
+
+  it("se combine avec le gras et l'italique", () => {
+    const [mo] = analyserRiche("*[serif: _un mot_]*");
+    expect(fonteDe(mo, base)).toBe("italic 700 38px Lora");
+  });
+
+  it("laisse un préfixe inconnu tranquille — c'est du texte", () => {
+    expect(texteNu("[note: à faire]")).toBe("note: à faire");
+  });
+});
