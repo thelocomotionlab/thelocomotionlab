@@ -13,7 +13,15 @@ import { describe, expect, it } from "vitest";
 import { FORMATS, dessinerCartePartage } from "./carrouselCartes";
 import { CLES_ICONES, geometrieDIcone } from "./carrouselIcones";
 
-const GABARITS = ["carte", "etape", "bandeau", "photo", "texte", "fiche", "cloture"];
+const GABARITS = [
+  "carte",
+  "etape",
+  "bandeau",
+  "photo",
+  "texte",
+  "fiche",
+  "cloture",
+];
 
 /**
  * `Path2D` n'existe pas sous Node, et `dessinerIcone` s'en sert pour tracer la
@@ -54,22 +62,47 @@ function ctxFactice() {
     // GRAISSE. C'est le bug qui faisait déborder le nom du labo de la story ;
     // le contexte factice doit reproduire la fonte, pas le piège.
     measureText: (t) => ({
-      width: String(t).length * 0.5 * (Number(/([\d.]+)px/.exec(ctx.font)?.[1]) || 20),
+      width:
+        String(t).length *
+        0.5 *
+        (Number(/([\d.]+)px/.exec(ctx.font)?.[1]) || 20),
     }),
-    fillRect: (x, y, w, h) => rects.push({ x, y, w, h, couleur: ctx.fillStyle }),
-    fillText: (t, x, y) => mots.push({ texte: String(t), fonte: ctx.font, x, y }),
+    fillRect: (x, y, w, h) =>
+      rects.push({ x, y, w, h, couleur: ctx.fillStyle }),
+    fillText: (t, x, y) =>
+      mots.push({ texte: String(t), fonte: ctx.font, x, y }),
     drawImage: (_src, x, y, w, h) => images.push({ x, y, w, h }),
     createLinearGradient: () => ({ addColorStop: noop, degrade: true }),
   };
   for (const nom of [
-    "clearRect", "strokeRect", "strokeText", "beginPath", "moveTo",
-    "lineTo", "arc", "closePath", "fill", "stroke", "save", "restore",
-    "translate", "rotate", "scale", "setTransform", "clip",
-    "quadraticCurveTo", "bezierCurveTo", "ellipse", "rect",
+    "clearRect",
+    "strokeRect",
+    "strokeText",
+    "beginPath",
+    "moveTo",
+    "lineTo",
+    "arc",
+    "closePath",
+    "fill",
+    "stroke",
+    "save",
+    "restore",
+    "translate",
+    "rotate",
+    "scale",
+    "setTransform",
+    "clip",
+    "quadraticCurveTo",
+    "bezierCurveTo",
+    "ellipse",
+    "rect",
     // `arcTo` : les coins arrondis des étiquettes de journée. Il manquait tant
     // qu'aucun test ne dessinait la carte AVEC ses étiquettes.
-    "arcTo", "roundRect", "setLineDash",
-  ]) ctx[nom] = (...a) => appels.push(nom, ...(nom === "fill" ? [] : []));
+    "arcTo",
+    "roundRect",
+    "setLineDash",
+  ])
+    ctx[nom] = (...a) => appels.push(nom, ...(nom === "fill" ? [] : []));
   return ctx;
 }
 
@@ -103,9 +136,15 @@ const rectsDe = (ctx) => ctx.rects;
 describe("le filet sous le titre", () => {
   const LARGEUR = 220;
   const EPAISSEUR = 8;
-  const reglage = { filetTitre: true, filetTitreLargeur: LARGEUR, filetTitreEpaisseur: EPAISSEUR };
+  const reglage = {
+    filetTitre: true,
+    filetTitreLargeur: LARGEUR,
+    filetTitreEpaisseur: EPAISSEUR,
+  };
   const filets = ({ rects }) =>
-    rects.filter((r) => Math.round(r.w) === LARGEUR && Math.round(r.h) === EPAISSEUR);
+    rects.filter(
+      (r) => Math.round(r.w) === LARGEUR && Math.round(r.h) === EPAISSEUR,
+    );
 
   it.each(GABARITS)("se dessine sur le gabarit « %s »", (gabarit) => {
     expect(filets(planche({ gabarit, ...reglage }))).toHaveLength(1);
@@ -122,21 +161,32 @@ describe("le filet sous le titre", () => {
   it("ne se dessine pas quand il est éteint", () => {
     // La fiche est le seul gabarit qui l'allume d'office : `false` doit l'éteindre.
     for (const gabarit of GABARITS) {
-      const rects = planche({ gabarit, filetTitre: false, filetTitreLargeur: LARGEUR, filetTitreEpaisseur: EPAISSEUR });
+      const rects = planche({
+        gabarit,
+        filetTitre: false,
+        filetTitreLargeur: LARGEUR,
+        filetTitreEpaisseur: EPAISSEUR,
+      });
       expect(filets(rects)).toHaveLength(0);
     }
   });
 
   it("suit sa couleur quand on lui en donne une", () => {
-    const [f] = filets(planche({ gabarit: "texte", ...reglage, couleurFiletTitre: "#D6246E" }));
+    const [f] = filets(
+      planche({ gabarit: "texte", ...reglage, couleurFiletTitre: "#D6246E" }),
+    );
     expect(f.couleur).toBe("#D6246E");
   });
 
   it("se centre avec le titre centré", () => {
     const [gauche] = filets(planche({ gabarit: "texte", ...reglage }));
-    const [centre] = filets(planche({ gabarit: "texte", ...reglage, centrer: true }));
+    const [centre] = filets(
+      planche({ gabarit: "texte", ...reglage, centrer: true }),
+    );
     expect(centre.x).toBeGreaterThan(gauche.x);
-    expect(Math.round(centre.x + centre.w / 2)).toBe(FORMATS.carrousel.width / 2);
+    expect(Math.round(centre.x + centre.w / 2)).toBe(
+      FORMATS.carrousel.width / 2,
+    );
   });
 });
 
@@ -149,7 +199,9 @@ describe("les dégradés réglables", () => {
     (gabarit) => {
       const image = { width: 1600, height: 1200 };
       const avec = degrades(planche({ gabarit, image }));
-      const sans = degrades(planche({ gabarit, image, degradeHaut: 0, degradeBas: 0 }));
+      const sans = degrades(
+        planche({ gabarit, image, degradeHaut: 0, degradeBas: 0 }),
+      );
       expect(avec.length).toBeGreaterThan(0);
       expect(sans).toHaveLength(0);
     },
@@ -157,9 +209,26 @@ describe("les dégradés réglables", () => {
 
   it("comprend encore l'ancien réglage à cocher", () => {
     const image = { width: 1600, height: 1200 };
-    expect(degrades(planche({ gabarit: "photo", image, degradeHaut: false, degradeBas: false }))).toHaveLength(0);
-    expect(degrades(planche({ gabarit: "photo", image, degradeHaut: true, degradeBas: true })).length)
-      .toBeGreaterThan(0);
+    expect(
+      degrades(
+        planche({
+          gabarit: "photo",
+          image,
+          degradeHaut: false,
+          degradeBas: false,
+        }),
+      ),
+    ).toHaveLength(0);
+    expect(
+      degrades(
+        planche({
+          gabarit: "photo",
+          image,
+          degradeHaut: true,
+          degradeBas: true,
+        }),
+      ).length,
+    ).toBeGreaterThan(0);
   });
 });
 
@@ -167,7 +236,8 @@ describe("les polices par rôle", () => {
   /** La fonte avec laquelle un mot précis a été écrit. Les mots sont posés UN
    *  PAR UN (c'est ce qui permet le gras au mot près) : on cherche le mot, pas
    *  la phrase. */
-  const fonteDuMot = (ctx, mot) => ctx.mots.find((m) => m.texte === mot)?.fonte ?? "";
+  const fonteDuMot = (ctx, mot) =>
+    ctx.mots.find((m) => m.texte === mot)?.fonte ?? "";
   const TITRE = "gramme.";
   const CORPS = "portés.";
   const trois = { sans: "Ubuntu", serif: "Lora", mono: "UbuntuMono" };
@@ -179,13 +249,19 @@ describe("les polices par rôle", () => {
   });
 
   it("met le TITRE en Lora sans toucher au texte", () => {
-    const ctx = planche({ gabarit: "texte", policeTitre: "serif" }, { polices: trois });
+    const ctx = planche(
+      { gabarit: "texte", policeTitre: "serif" },
+      { polices: trois },
+    );
     expect(fonteDuMot(ctx, TITRE)).toContain("Lora");
     expect(fonteDuMot(ctx, CORPS)).toContain("Ubuntu");
   });
 
   it("met le TEXTE en Ubuntu Mono sans toucher au titre", () => {
-    const ctx = planche({ gabarit: "texte", policeCorps: "mono" }, { polices: trois });
+    const ctx = planche(
+      { gabarit: "texte", policeCorps: "mono" },
+      { polices: trois },
+    );
     expect(fonteDuMot(ctx, CORPS)).toContain("UbuntuMono");
     expect(fonteDuMot(ctx, TITRE)).toBe("700 65px Ubuntu");
   });
@@ -196,7 +272,10 @@ describe("les polices par rôle", () => {
   });
 
   it("ignore une clé de police inconnue plutôt que d'écrire en vide", () => {
-    const ctx = planche({ gabarit: "texte", policeTitre: "gothique" }, { polices: trois });
+    const ctx = planche(
+      { gabarit: "texte", policeTitre: "gothique" },
+      { polices: trois },
+    );
     expect(fonteDuMot(ctx, TITRE)).toBe("700 65px Ubuntu");
   });
 });
@@ -214,7 +293,8 @@ describe("l'interligne du titre", () => {
       filetTitreEpaisseur: 8,
       interligneTitre,
     });
-    return rects.find((r) => Math.round(r.w) === 220 && Math.round(r.h) === 8).y;
+    return rects.find((r) => Math.round(r.w) === 220 && Math.round(r.h) === 8)
+      .y;
   };
 
   it("descend le bloc quand on l'ouvre, le remonte quand on le serre", () => {
@@ -228,7 +308,10 @@ describe("le vocabulaire d'icônes", () => {
     // Une clé sans géométrie disparaît SILENCIEUSEMENT de la planche : le texte
     // se dessine, l'icône non, et rien ne le dit.
     for (const cle of CLES_ICONES) {
-      expect(geometrieDIcone(cle), `géométrie manquante pour :${cle}:`).toBeTruthy();
+      expect(
+        geometrieDIcone(cle),
+        `géométrie manquante pour :${cle}:`,
+      ).toBeTruthy();
     }
   });
 
@@ -237,11 +320,21 @@ describe("le vocabulaire d'icônes", () => {
     expect(CLES_ICONES).toContain("chrono");
     // La sandale est dessinée à la maison : elle doit rendre la même forme de
     // géométrie que les icônes de lucide, sinon le canvas ne saurait pas la lire.
-    expect(geometrieDIcone("sandales").every(([type]) => typeof type === "string")).toBe(true);
+    expect(
+      geometrieDIcone("sandales").every(([type]) => typeof type === "string"),
+    ).toBe(true);
   });
 
   it("ne dessine que des primitives que le canvas sait tracer", () => {
-    const connues = new Set(["path", "circle", "ellipse", "line", "rect", "polyline", "polygon"]);
+    const connues = new Set([
+      "path",
+      "circle",
+      "ellipse",
+      "line",
+      "rect",
+      "polyline",
+      "polygon",
+    ]);
     for (const cle of CLES_ICONES) {
       for (const [type] of geometrieDIcone(cle)) {
         expect(connues.has(type), `${cle} → <${type}> inconnu`).toBe(true);
@@ -269,8 +362,12 @@ describe("la clôture", () => {
 
   it("descend le logo quand le texte lui passe devant", () => {
     const bas = yDuLogo(planche(commun, { logo: LOGO }));
-    const surtitre = yDuLogo(planche({ ...commun, clotureHaut: "surtitre" }, { logo: LOGO }));
-    const deux = yDuLogo(planche({ ...commun, clotureHaut: "les-deux" }, { logo: LOGO }));
+    const surtitre = yDuLogo(
+      planche({ ...commun, clotureHaut: "surtitre" }, { logo: LOGO }),
+    );
+    const deux = yDuLogo(
+      planche({ ...commun, clotureHaut: "les-deux" }, { logo: LOGO }),
+    );
     expect(surtitre).toBeGreaterThan(bas);
     expect(deux).toBeGreaterThan(surtitre);
   });
@@ -278,7 +375,10 @@ describe("la clôture", () => {
   it("centre le bloc entier : un bloc plus haut MONTE, il ne déborde pas", () => {
     const court = yDuLogo(planche(commun, { logo: LOGO }));
     const long = yDuLogo(
-      planche({ ...commun, texte: "Une ligne.\n\nUne autre.\n\nUne troisième." }, { logo: LOGO }),
+      planche(
+        { ...commun, texte: "Une ligne.\n\nUne autre.\n\nUne troisième." },
+        { logo: LOGO },
+      ),
     );
     expect(long).toBeLessThan(court);
   });
@@ -291,12 +391,22 @@ describe("la distance des dégradés", () => {
 
   it("suit le réglage sur la photo", () => {
     const image = { width: 1600, height: 1200 };
-    expect(Math.round(hautDuVoile(planche({ gabarit: "photo", image, degradeHautH: 400 })))).toBe(400);
-    expect(Math.round(hautDuVoile(planche({ gabarit: "photo", image, degradeHautH: 700 })))).toBe(700);
+    expect(
+      Math.round(
+        hautDuVoile(planche({ gabarit: "photo", image, degradeHautH: 400 })),
+      ),
+    ).toBe(400);
+    expect(
+      Math.round(
+        hautDuVoile(planche({ gabarit: "photo", image, degradeHautH: 700 })),
+      ),
+    ).toBe(700);
   });
 
   it("est réglable sur la carte aussi", () => {
-    expect(Math.round(hautDuVoile(planche({ gabarit: "carte", degradeHautH: 320 })))).toBe(320);
+    expect(
+      Math.round(hautDuVoile(planche({ gabarit: "carte", degradeHautH: 320 }))),
+    ).toBe(320);
   });
 
   it("garde la valeur du gabarit quand la planche ne dit rien", () => {
@@ -336,7 +446,10 @@ describe("le gabarit « Journées »", () => {
       [6.4, 45.1],
       [6.2, 45.3],
     ],
-    profil: Array.from({ length: 50 }, (_, i) => ({ km: (i / 49) * 160, alt: 1000 + i * 20 })),
+    profil: Array.from({ length: 50 }, (_, i) => ({
+      km: (i / 49) * 160,
+      alt: 1000 + i * 20,
+    })),
   };
 
   it("écrit une ligne par case, avec le jour et ses chiffres", () => {
@@ -348,8 +461,14 @@ describe("le gabarit « Journées »", () => {
   });
 
   it("suit le nombre de cases demandé", () => {
-    const deux = planche({ gabarit: "journees", casesN: 2 }, { trace, segments });
-    const quatre = planche({ gabarit: "journees", casesN: 4 }, { trace, segments });
+    const deux = planche(
+      { gabarit: "journees", casesN: 2 },
+      { trace, segments },
+    );
+    const quatre = planche(
+      { gabarit: "journees", casesN: 4 },
+      { trace, segments },
+    );
     const jours = (ctx) => ctx.mots.filter((m) => m.texte === "Jour").length;
     expect(jours(deux)).toBe(2);
     expect(jours(quatre)).toBe(4);
@@ -373,7 +492,11 @@ describe("le gabarit « Journées »", () => {
 });
 
 describe("l'alignement du texte", () => {
-  const commun = { gabarit: "texte", titre: "Un titre", texte: "Un paragraphe court." };
+  const commun = {
+    gabarit: "texte",
+    titre: "Un titre",
+    texte: "Un paragraphe court.",
+  };
   const LARGEUR = 200;
   const filet = ({ rects }) => rects.find((r) => Math.round(r.w) === LARGEUR);
   const avecFilet = (align) =>
@@ -395,7 +518,9 @@ describe("l'alignement du texte", () => {
     expect(c).toBeLessThan(d);
     expect(Math.round(c + LARGEUR / 2)).toBe(FORMATS.carrousel.width / 2);
     // Aligné à droite, le filet finit sur la marge droite.
-    expect(Math.round(d + LARGEUR)).toBe(FORMATS.carrousel.width - Math.round(64));
+    expect(Math.round(d + LARGEUR)).toBe(
+      FORMATS.carrousel.width - Math.round(64),
+    );
   });
 
   it("comprend encore l'ancien booléen « centrer »", () => {
@@ -409,14 +534,22 @@ describe("l'alignement du texte", () => {
         filetTitreEpaisseur: 6,
       }),
     );
-    expect(Math.round(centre.x + LARGEUR / 2)).toBe(FORMATS.carrousel.width / 2);
+    expect(Math.round(centre.x + LARGEUR / 2)).toBe(
+      FORMATS.carrousel.width / 2,
+    );
   });
 
   it("aligne aussi le filet ambre du surtitre", () => {
     // Le filet du surtitre fait 2,6 × son corps : on le repère par sa hauteur.
     const trouve = (align) => {
-      const { rects } = planche({ ...commun, surtitre: "matériel", alignement: align });
-      return rects.find((r) => Math.round(r.h) === 10 && Math.round(r.w) === 57);
+      const { rects } = planche({
+        ...commun,
+        surtitre: "matériel",
+        alignement: align,
+      });
+      return rects.find(
+        (r) => Math.round(r.h) === 10 && Math.round(r.w) === 57,
+      );
     };
     expect(trouve("centre").x).toBeGreaterThan(trouve("gauche").x);
     expect(trouve("droite").x).toBeGreaterThan(trouve("centre").x);
@@ -433,9 +566,13 @@ describe("l'ordre du titre et du surtitre", () => {
     filetTitreEpaisseur: 6,
   };
   const yFiletTitre = (carte) =>
-    planche(carte).rects.find((r) => Math.round(r.w) === 200 && Math.round(r.h) === 6).y;
+    planche(carte).rects.find(
+      (r) => Math.round(r.w) === 200 && Math.round(r.h) === 6,
+    ).y;
   const yFiletSurtitre = (carte) =>
-    planche(carte).rects.find((r) => Math.round(r.h) === 10 && Math.round(r.w) === 57).y;
+    planche(carte).rects.find(
+      (r) => Math.round(r.h) === 10 && Math.round(r.w) === 57,
+    ).y;
 
   it("met le surtitre AVANT le titre par défaut", () => {
     expect(yFiletSurtitre(commun)).toBeLessThan(yFiletTitre(commun));
@@ -462,7 +599,8 @@ describe("les zones cliquables", () => {
     const z = ctx.zones;
     for (let i = z.length - 1; i >= 0; i -= 1) {
       const r = z[i];
-      if (x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height) return r;
+      if (x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height)
+        return r;
     }
     return null;
   };
@@ -480,14 +618,24 @@ describe("les zones cliquables", () => {
   });
 
   it("ouvre le titre quand on clique sur le titre", () => {
-    const ctx = planche({ gabarit: "texte", surtitre: "matériel", titre: "Le sac" });
+    const ctx = planche({
+      gabarit: "texte",
+      surtitre: "matériel",
+      titre: "Le sac",
+    });
     const titre = ctx.zones.find((z) => z.champ === "titre");
     expect(titre).toBeDefined();
-    expect(zoneAu(ctx, F.width / 2, titre.y + titre.height / 2).champ).toBe("titre");
+    expect(zoneAu(ctx, F.width / 2, titre.y + titre.height / 2).champ).toBe(
+      "titre",
+    );
   });
 
   it("distingue le surtitre du titre", () => {
-    const ctx = planche({ gabarit: "texte", surtitre: "matériel", titre: "Le sac" });
+    const ctx = planche({
+      gabarit: "texte",
+      surtitre: "matériel",
+      titre: "Le sac",
+    });
     const sur = ctx.zones.find((z) => z.champ === "surtitre");
     const tit = ctx.zones.find((z) => z.champ === "titre");
     expect(sur.y).toBeLessThan(tit.y);
@@ -513,14 +661,26 @@ describe("les zones cliquables", () => {
       kmFin: (i + 1) * 40,
       distanceKm: 40,
       dPlusM: 2000,
-      coords: [[6, 44.9], [6.1, 45]],
+      coords: [
+        [6, 44.9],
+        [6.1, 45],
+      ],
     }));
     const trace = {
       totalKm: 120,
-      coords: [[6, 44.9], [6.4, 45.1]],
-      profil: [{ km: 0, alt: 1000 }, { km: 120, alt: 2000 }],
+      coords: [
+        [6, 44.9],
+        [6.4, 45.1],
+      ],
+      profil: [
+        { km: 0, alt: 1000 },
+        { km: 120, alt: 2000 },
+      ],
     };
-    const ctx = planche({ gabarit: "journees", casesN: 3 }, { trace, segments });
+    const ctx = planche(
+      { gabarit: "journees", casesN: 3 },
+      { trace, segments },
+    );
     const cases = ctx.zones.filter((z) => z.champ === "case");
     expect(cases).toHaveLength(3);
     expect(cases.map((c) => c.index)).toEqual([0, 1, 2]);
@@ -530,14 +690,23 @@ describe("les zones cliquables", () => {
   it("ne laisse AUCUN blanc entre les blocs de texte", () => {
     // Un clic entre le titre et son paragraphe doit ouvrir quelque chose :
     // n'ouvrir rien fait croire que le clic ne marche pas.
-    const ctx = planche({ gabarit: "texte", surtitre: "matériel", titre: "Le sac", texte: "Deux mots." });
+    const ctx = planche({
+      gabarit: "texte",
+      surtitre: "matériel",
+      titre: "Le sac",
+      texte: "Deux mots.",
+    });
     const textes = ctx.zones
-      .filter((z) => ["surtitre", "titre", "texte"].includes(z.champ) && !z.repli)
+      .filter(
+        (z) => ["surtitre", "titre", "texte"].includes(z.champ) && !z.repli,
+      )
       .sort((a, b) => a.y - b.y);
     expect(textes).toHaveLength(3);
     for (const [i, z] of textes.entries()) {
       if (i === 0) continue;
-      expect(Math.round(textes[i - 1].y + textes[i - 1].height)).toBe(Math.round(z.y));
+      expect(Math.round(textes[i - 1].y + textes[i - 1].height)).toBe(
+        Math.round(z.y),
+      );
     }
   });
 
@@ -547,7 +716,10 @@ describe("les zones cliquables", () => {
     for (const gabarit of GABARITS) {
       const ctx = planche({ gabarit });
       for (const y of [0.05, 0.3, 0.55, 0.8, 0.97]) {
-        expect(zoneAu(ctx, F.width / 2, F.height * y), `${gabarit} @${y}`).not.toBeNull();
+        expect(
+          zoneAu(ctx, F.width / 2, F.height * y),
+          `${gabarit} @${y}`,
+        ).not.toBeNull();
       }
     }
   });
@@ -574,20 +746,32 @@ describe("les icônes dans les petites capitales", () => {
   });
 
   it("met les capitales du pied et de l'en-tête", () => {
-    const ctx = planche({ gabarit: "texte", entete: "matériel", piedCentre: "jour 1" });
+    const ctx = planche({
+      gabarit: "texte",
+      entete: "matériel",
+      piedCentre: "jour 1",
+    });
     expect(mots(ctx)).toContain("MATÉRIEL");
     expect(mots(ctx)).toContain("JOUR 1");
   });
 
   it("n'écrit PAS la clé d'une icône dans le surtitre", () => {
     // Sans balisage, « :balise: » sortait tel quel, en capitales.
-    const ctx = planche({ gabarit: "texte", surtitre: ":balise: en direct", titre: "" });
+    const ctx = planche({
+      gabarit: "texte",
+      surtitre: ":balise: en direct",
+      titre: "",
+    });
     expect(mots(ctx)).not.toContain("BALISE");
     expect(mots(ctx)).toContain("EN DIRECT");
   });
 
   it("laisse une clé INCONNUE écrite, comme partout ailleurs", () => {
-    const ctx = planche({ gabarit: "texte", surtitre: ":licorne: en direct", titre: "" });
+    const ctx = planche({
+      gabarit: "texte",
+      surtitre: ":licorne: en direct",
+      titre: "",
+    });
     expect(mots(ctx)).toContain(":LICORNE:");
   });
 
@@ -603,7 +787,13 @@ describe("les icônes dans les petites capitales", () => {
 });
 
 describe("la ligne de chiffres", () => {
-  const trace = { totalKm: 188.2, dPlusM: 12279, dMinusM: 12279, coords: [], profil: [] };
+  const trace = {
+    totalKm: 188.2,
+    dPlusM: 12279,
+    dMinusM: 12279,
+    coords: [],
+    profil: [],
+  };
   const mots = (ctx) => ctx.mots.map((m) => m.texte).join("");
 
   it("annonce les chiffres de la trace quand la planche ne dit rien", () => {
@@ -613,7 +803,10 @@ describe("la ligne de chiffres", () => {
   });
 
   it("se remplace par le texte qu'on écrit", () => {
-    const ctx = planche({ gabarit: "carte", pied: "Quatre jours, aucun ravitaillement" }, { trace });
+    const ctx = planche(
+      { gabarit: "carte", pied: "Quatre jours, aucun ravitaillement" },
+      { trace },
+    );
     expect(mots(ctx)).toContain("ravitaillement");
     expect(mots(ctx)).not.toContain("188 km");
   });
@@ -624,7 +817,10 @@ describe("la ligne de chiffres", () => {
   });
 
   it("accepte le balisage, et donc les icônes", () => {
-    const ctx = planche({ gabarit: "carte", pied: "*188 km* :col:" }, { trace });
+    const ctx = planche(
+      { gabarit: "carte", pied: "*188 km* :col:" },
+      { trace },
+    );
     const gras = ctx.mots.find((m) => m.texte === "km");
     expect(gras.fonte).toMatch(/^700 /);
   });
@@ -637,7 +833,8 @@ describe("la ligne de chiffres", () => {
 
 describe("le filet du surtitre", () => {
   // Il fait 2,6 × le corps du surtitre (57 px pour 22) et 10 px d'épaisseur.
-  const filet = ({ rects }) => rects.find((r) => Math.round(r.h) === 10 && Math.round(r.w) === 57);
+  const filet = ({ rects }) =>
+    rects.find((r) => Math.round(r.h) === 10 && Math.round(r.w) === 57);
   const base = { gabarit: "texte", surtitre: "matériel", titre: "Le sac" };
 
   it("est là par défaut", () => {
@@ -648,7 +845,9 @@ describe("le filet du surtitre", () => {
     // Il y a SIX endroits qui dessinent un surtitre. Un seul oublié — c'était
     // la clôture — et le réglage passe pour cassé.
     expect(filet(planche({ ...base, gabarit }))).toBeDefined();
-    expect(filet(planche({ ...base, gabarit, surtitreFilet: false }))).toBeUndefined();
+    expect(
+      filet(planche({ ...base, gabarit, surtitreFilet: false })),
+    ).toBeUndefined();
   });
 
   it("rend sa place au texte, sans laisser de retrait fantôme", () => {
@@ -686,7 +885,9 @@ describe("la clôture : ce qui passe au-dessus du logo", () => {
 
   it("comprend encore l'ancien réglage à quatre entrées", () => {
     const rien = yDuLogo(commun);
-    expect(yDuLogo({ ...commun, clotureHaut: "les-deux" })).toBeGreaterThan(rien);
+    expect(yDuLogo({ ...commun, clotureHaut: "les-deux" })).toBeGreaterThan(
+      rien,
+    );
     expect(yDuLogo({ ...commun, clotureHaut: "non" })).toBe(rien);
   });
 });
@@ -742,17 +943,29 @@ describe("la plaque sous le texte", () => {
 
   it("se limite aux textes cochés", () => {
     const tout = planche({ ...base, plaque: true, texte: "Deux mots." });
-    const sansTitre = planche({ ...base, plaque: true, texte: "Deux mots.", plaque_titre: false });
+    const sansTitre = planche({
+      ...base,
+      plaque: true,
+      texte: "Deux mots.",
+      plaque_titre: false,
+    });
     expect(remplissages(sansTitre)).toBe(remplissages(tout) - 1);
   });
 });
 
 describe("les zones libres", () => {
-  const base = { gabarit: "photo", image: { width: 1600, height: 1200 }, titre: "" };
+  const base = {
+    gabarit: "photo",
+    image: { width: 1600, height: 1200 },
+    titre: "",
+  };
   const mots = (ctx) => ctx.mots.map((m) => m.texte).join("");
 
   it("écrit son texte et rend une boîte déplaçable", () => {
-    const ctx = planche({ ...base, libres: [{ texte: "Ici.", x: 0.2, y: 0.3 }] });
+    const ctx = planche({
+      ...base,
+      libres: [{ texte: "Ici.", x: 0.2, y: 0.3 }],
+    });
     expect(mots(ctx)).toContain("Ici.");
     const b = ctx.boites.find((x) => x.type === "libre");
     expect(b).toBeDefined();
@@ -779,7 +992,10 @@ describe("les zones libres", () => {
   });
 
   it("s'ouvre au clic, et gagne sur ce qu'il y a dessous", () => {
-    const ctx = planche({ ...base, libres: [{ texte: "Ici.", x: 0.2, y: 0.3 }] });
+    const ctx = planche({
+      ...base,
+      libres: [{ texte: "Ici.", x: 0.2, y: 0.3 }],
+    });
     const z = ctx.zones.filter((x) => x.champ === "libre");
     expect(z).toHaveLength(1);
     // Déclarée en DERNIER : au clic, elle passe devant la photo et les textes.
@@ -787,7 +1003,10 @@ describe("les zones libres", () => {
   });
 
   it("se masque sans se perdre", () => {
-    const ctx = planche({ ...base, libres: [{ texte: "Ici.", masquee: true }] });
+    const ctx = planche({
+      ...base,
+      libres: [{ texte: "Ici.", masquee: true }],
+    });
     expect(mots(ctx)).not.toContain("Ici.");
     expect(ctx.boites.some((x) => x.type === "libre")).toBe(false);
   });
@@ -809,20 +1028,38 @@ describe("la numérotation du pied", () => {
 
   it("s'écrit sur une clôture dont on a rallumé le pied", () => {
     expect(
-      paginee(planche({ gabarit: "cloture", piedVisible: true }, { index: 2, total: 12 })),
+      paginee(
+        planche(
+          { gabarit: "cloture", piedVisible: true },
+          { index: 2, total: 12 },
+        ),
+      ),
     ).toBe(true);
   });
 
-  it.each(AVEC_PIED)("disparaît quand la planche la refuse — « %s »", (gabarit) => {
-    expect(paginee(planche({ gabarit, piedNumero: false }, { index: 2, total: 12 }))).toBe(false);
-  });
+  it.each(AVEC_PIED)(
+    "disparaît quand la planche la refuse — « %s »",
+    (gabarit) => {
+      expect(
+        paginee(
+          planche({ gabarit, piedNumero: false }, { index: 2, total: 12 }),
+        ),
+      ).toBe(false);
+    },
+  );
 
   it("n'emporte QUE le décompte, pas le reste du pied", () => {
     // On retire un décompte, pas une bande : le mot de droite reste, et c'est
     // tout l'intérêt sur une planche qui n'appartient pas à une série.
-    const commun = { gabarit: "texte", piedDroite: "Glisse", piedCentre: "Écrins" };
+    const commun = {
+      gabarit: "texte",
+      piedDroite: "Glisse",
+      piedCentre: "Écrins",
+    };
     const avec = texteDe(planche(commun, { index: 2, total: 12 }));
-    const sans = texteDe(planche({ ...commun, piedNumero: false }, { index: 2, total: 12 }));
+    const sans = texteDe(
+      planche({ ...commun, piedNumero: false }, { index: 2, total: 12 }),
+    );
     expect(avec.replace("03 / 12", "")).toBe(sans);
   });
 });
@@ -842,12 +1079,19 @@ describe("la tranche de journées d'une carte", () => {
     totalKm: 160,
     dPlusM: 8000,
     coords: segments.flatMap((s) => s.coords),
-    profil: Array.from({ length: 50 }, (_, i) => ({ km: (i / 49) * 160, alt: 1000 + i * 20 })),
+    profil: Array.from({ length: 50 }, (_, i) => ({
+      km: (i / 49) * 160,
+      alt: 1000 + i * 20,
+    })),
   };
   const carte = (reglage) =>
-    planche({ gabarit: "carte", titre: "", surtitre: "", ...reglage }, { trace, segments });
+    planche(
+      { gabarit: "carte", titre: "", surtitre: "", ...reglage },
+      { trace, segments },
+    );
   /** Les étiquettes : leur texte, dans l'ordre où elles ont été posées. */
-  const etiquettes = ({ mots }) => mots.filter((m) => /^J\d$/.test(m.texte)).map((m) => m.texte);
+  const etiquettes = ({ mots }) =>
+    mots.filter((m) => /^J\d$/.test(m.texte)).map((m) => m.texte);
 
   it("les montre toutes sans réglage", () => {
     expect(etiquettes(carte({}))).toEqual(["J1", "J2", "J3", "J4"]);
@@ -864,7 +1108,9 @@ describe("la tranche de journées d'une carte", () => {
   it("rend à l'atelier le RANG D'ORIGINE de l'étiquette, pas sa place dans la tranche", () => {
     // Sans ça, déplacer l'étiquette d'une planche « J3 seule » écrirait dans
     // celle de J1 : les étiquettes sont rangées par position dans la carte.
-    expect(carte({ depuis: 2, jusquA: 2 }).boites.map((b) => b.index)).toEqual([2]);
+    expect(carte({ depuis: 2, jusquA: 2 }).boites.map((b) => b.index)).toEqual([
+      2,
+    ]);
     expect(carte({ jusquA: 2 }).boites.map((b) => b.index)).toEqual([0, 1, 2]);
   });
 
@@ -894,7 +1140,10 @@ describe("le gabarit « Étape »", () => {
     totalKm: 160,
     dPlusM: 8000,
     coords: segments.flatMap((s) => s.coords),
-    profil: Array.from({ length: 50 }, (_, i) => ({ km: (i / 49) * 160, alt: 1000 + i * 20 })),
+    profil: Array.from({ length: 50 }, (_, i) => ({
+      km: (i / 49) * 160,
+      alt: 1000 + i * 20,
+    })),
   };
   const etape = (reglage) =>
     planche(
@@ -903,14 +1152,19 @@ describe("le gabarit « Étape »", () => {
         titre: "Jour 3",
         surtitre: "",
         texte: "Montée au col sous la pluie.",
-        colonne: "Distance = 46,8 km\nDénivelé positif = 2 519 m\nMasse portée = 8,4 kg",
+        colonne:
+          "Distance = 46,8 km\nDénivelé positif = 2 519 m\nMasse portée = 8,4 kg",
         ...reglage,
       },
       { trace, segments },
     );
   // Les mots sont posés un par un (mesure et retour à la ligne) : on les recolle
   // et on normalise les blancs pour lire la planche comme une phrase.
-  const lu = (ctx) => ctx.mots.map((m) => m.texte).join("").replace(/\s+/g, " ");
+  const lu = (ctx) =>
+    ctx.mots
+      .map((m) => m.texte)
+      .join("")
+      .replace(/\s+/g, " ");
   /** L'aplat de repérage de la photo. Le FOND de la planche est lui aussi
    *  pleine largeur : ce qui les sépare, c'est qu'il fait toute la hauteur. */
   const bandePhoto = (ctx) =>
@@ -987,8 +1241,10 @@ describe("le gabarit « Étape »", () => {
     // Un trait tracé SUR une photo n'est plus un filet, c'est une rayure.
     const image = { width: 1200, height: 800 };
     const filets = (carte) =>
-      planche({ gabarit: "etape", titre: "Jour 3", image, ...carte }, { trace, segments }).rects
-        .filter((r) => r.h <= 3 && r.y < 200 && r.y > 0).length;
+      planche(
+        { gabarit: "etape", titre: "Jour 3", image, ...carte },
+        { trace, segments },
+      ).rects.filter((r) => r.h <= 3 && r.y < 200 && r.y > 0).length;
     expect(filets({})).toBeGreaterThan(0);
     expect(filets({ photoRemontee: 1 })).toBe(0);
   });
@@ -1000,7 +1256,9 @@ describe("le gabarit « Étape »", () => {
       const ctx = etape({ colonne });
       return ctx.appels.filter((a) => a === "lineTo").length;
     };
-    expect(traits("Vénosc :fleche: Valgaudémar")).toBeGreaterThan(traits("Vénosc Valgaudémar"));
+    expect(traits("Vénosc :fleche: Valgaudémar")).toBeGreaterThan(
+      traits("Vénosc Valgaudémar"),
+    );
   });
 
   it("centre la colonne dans SA moitié, sans centrer ses lignes", () => {
@@ -1008,15 +1266,23 @@ describe("le gabarit « Étape »", () => {
     // d'un centrage. Avant, les deux commençaient au même x, collés à la trace.
     // Une valeur qu'on ne risque pas de confondre avec la pagination du pied,
     // elle aussi écrite chiffre par chiffre.
-    const x = (colonne) => etape({ colonne }).mots.find((m) => m.texte === "999").x;
-    expect(x("A = 999")).toBeGreaterThan(x("Un libellé beaucoup plus long = 999"));
+    const x = (colonne) =>
+      etape({ colonne }).mots.find((m) => m.texte === "999").x;
+    expect(x("A = 999")).toBeGreaterThan(
+      x("Un libellé beaucoup plus long = 999"),
+    );
   });
 
   it("mesure l'écart sous le titre sur CE QUI SUIT, pas sur le corps", () => {
     // Le piège : l'écart valait 2,2 CORPS même devant un surtitre de 22 px, et
     // grossir le corps du texte écartait alors une ligne qui ne le concerne pas.
     const ecart = (reglage) => {
-      const ctx = etape({ titreDevant: true, surtitre: "ZZZ", texte: "", ...reglage });
+      const ctx = etape({
+        titreDevant: true,
+        surtitre: "ZZZ",
+        texte: "",
+        ...reglage,
+      });
       const titre = ctx.mots.find((m) => m.texte === "Jour");
       const sur = ctx.mots.find((m) => m.texte === "Z");
       return sur.y - titre.y;
@@ -1026,8 +1292,16 @@ describe("le gabarit « Étape »", () => {
 
   it("laisse régler cet écart, et le serre d'office sur l'étape", () => {
     const ecart = (apresTitre) => {
-      const ctx = etape({ titreDevant: true, surtitre: "ZZZ", texte: "", apresTitre });
-      return ctx.mots.find((m) => m.texte === "Z").y - ctx.mots.find((m) => m.texte === "Jour").y;
+      const ctx = etape({
+        titreDevant: true,
+        surtitre: "ZZZ",
+        texte: "",
+        apresTitre,
+      });
+      return (
+        ctx.mots.find((m) => m.texte === "Z").y -
+        ctx.mots.find((m) => m.texte === "Jour").y
+      );
     };
     expect(ecart(2.2)).toBeGreaterThan(ecart(1.2));
     expect(ecart(0)).toBeLessThan(ecart(1.2));
@@ -1036,7 +1310,10 @@ describe("le gabarit « Étape »", () => {
   it("laisse retirer le filet qui ouvre les données", () => {
     const traits = (reglage) =>
       etape(reglage).rects.filter(
-        (r) => Math.round(r.w) === FORMATS.carrousel.width - 128 && r.h <= 3 && r.y > 400,
+        (r) =>
+          Math.round(r.w) === FORMATS.carrousel.width - 128 &&
+          r.h <= 3 &&
+          r.y > 400,
       ).length;
     expect(traits({})).toBe(traits({ filetDonnees: false }) + 1);
   });
@@ -1044,7 +1321,9 @@ describe("le gabarit « Étape »", () => {
   it("rend toute la largeur à la colonne quand la vignette est à zéro", () => {
     const x = (ctx) => ctx.mots.find((m) => m.texte === "46,8")?.x ?? 0;
     expect(x(etape({ partCarte: 0.44 }))).toBeGreaterThan(0);
-    expect(x(etape({ partCarte: 0 }))).toBeLessThan(x(etape({ partCarte: 0.44 })));
+    expect(x(etape({ partCarte: 0 }))).toBeLessThan(
+      x(etape({ partCarte: 0.44 })),
+    );
   });
 });
 
@@ -1061,7 +1340,8 @@ describe("le filet qui souligne le titre", () => {
     });
   // Le filet a sa taille à lui : 96 × 4 par défaut, c'est ce qui le distingue
   // des trois autres traits de la planche.
-  const filet = (ctx) => ctx.rects.find((r) => Math.round(r.w) === 96 && Math.round(r.h) === 4);
+  const filet = (ctx) =>
+    ctx.rects.find((r) => Math.round(r.w) === 96 && Math.round(r.h) === 4);
   const surtitre = (ctx) => ctx.mots.find((m) => m.texte === "Z");
 
   it("passe ENTRE le titre et le surtitre par défaut", () => {
@@ -1093,7 +1373,13 @@ describe("le filet qui souligne le titre", () => {
 
 describe("le surtitre sur plusieurs lignes", () => {
   const carte = (reglage) =>
-    planche({ gabarit: "texte", titre: "", texte: "", surtitre: "XXX", ...reglage });
+    planche({
+      gabarit: "texte",
+      titre: "",
+      texte: "",
+      surtitre: "XXX",
+      ...reglage,
+    });
   // X et Y : deux lettres ABSENTES de « THE LOCOMOTION LAB », qui s'écrit lui
   // aussi en capitales une par une dans la bande d'en-tête.
   const lettres = (ctx, l) => ctx.mots.filter((m) => m.texte === l);
@@ -1112,7 +1398,9 @@ describe("le surtitre sur plusieurs lignes", () => {
     // « -- » réduit CETTE ligne, « [gris: …] » l'atténue : c'est ce qui permet
     // d'ajouter « × Rapace × Lolo » sous un « Vénosc → Valgaudémar ».
     const ctx = carte({ surtitre: "XXX\n-- [gris: YYY]" });
-    expect(taille(lettres(ctx, "Y")[0])).toBeLessThan(taille(lettres(ctx, "X")[0]));
+    expect(taille(lettres(ctx, "Y")[0])).toBeLessThan(
+      taille(lettres(ctx, "X")[0]),
+    );
   });
 
   it("n'ouvre QUE la première ligne du filet ambre", () => {
@@ -1126,7 +1414,12 @@ describe("le surtitre sur plusieurs lignes", () => {
 
   it("pousse ce qui suit d'autant de lignes qu'il en a", () => {
     const bas = (surtitre) => {
-      const ctx = planche({ gabarit: "texte", titre: "", surtitre, texte: "ZZZ" });
+      const ctx = planche({
+        gabarit: "texte",
+        titre: "",
+        surtitre,
+        texte: "ZZZ",
+      });
       return ctx.mots.find((m) => m.texte === "ZZZ").y;
     };
     expect(bas("XXX\nYYY\nZZZ")).toBeGreaterThan(bas("XXX"));
@@ -1164,9 +1457,29 @@ describe("le titre et le surtitre sur la même ligne", () => {
     });
   const mot = (ctx, l) => ctx.mots.find((m) => m.texte === l);
 
-  it("les pose sur la MÊME ligne de base", () => {
+  it("les centre sur leur hauteur de capitale, pas sur la ligne de base", () => {
+    // Posé sur la ligne de base d'un titre trois fois plus gros, le surtitre
+    // pend à son pied : juste typographiquement, décroché optiquement.
     const ctx = duo({ surtitreEnLigne: true });
-    expect(mot(ctx, "Y").y).toBe(mot(ctx, "Xour").y);
+    const titre = mot(ctx, "Xour");
+    const sur = mot(ctx, "Y");
+    const corps = (mo) => Number(/(\d+)px/.exec(mo.fonte)[1]);
+    expect(sur.y).toBeLessThan(titre.y);
+    // Les deux centres optiques coïncident, à un pixel d'arrondi près.
+    const centre = (mo) => mo.y - 0.35 * corps(mo);
+    expect(Math.abs(centre(sur) - centre(titre))).toBeLessThanOrEqual(1);
+  });
+
+  it("laisse la place au texte qui suit", () => {
+    const bas = (reglage) =>
+      duo({ surtitreEnLigne: true, texte: "ZZZ", ...reglage }).mots.find(
+        (m) => m.texte === "ZZZ",
+      ).y;
+    // Un surtitre à deux lignes redescend plus bas que le titre : le corps doit
+    // s'écarter d'autant, pas s'écrire par-dessus.
+    expect(bas({ surtitre: "YYY\nYYY" })).toBeGreaterThan(
+      bas({ surtitre: "YYY" }),
+    );
   });
 
   it("empilés, le surtitre est plus bas que le titre", () => {
@@ -1184,8 +1497,12 @@ describe("le titre et le surtitre sur la même ligne", () => {
     // c'est l'ensemble qui doit tenir au milieu, donc le titre commence à
     // GAUCHE de là où il serait tout seul.
     const seul = planche({
-      gabarit: "texte", titre: "Xour", surtitre: "", texte: "",
-      titreDevant: true, centrer: true,
+      gabarit: "texte",
+      titre: "Xour",
+      surtitre: "",
+      texte: "",
+      titreDevant: true,
+      centrer: true,
     });
     const paire = duo({ surtitreEnLigne: true, centrer: true });
     expect(mot(paire, "Xour").x).toBeLessThan(mot(seul, "Xour").x);
@@ -1193,8 +1510,12 @@ describe("le titre et le surtitre sur la même ligne", () => {
 
   it("ne s'applique qu'avec un titre ET un surtitre", () => {
     const sansTitre = planche({
-      gabarit: "texte", titre: "", surtitre: "YYY", texte: "",
-      titreDevant: true, surtitreEnLigne: true,
+      gabarit: "texte",
+      titre: "",
+      surtitre: "YYY",
+      texte: "",
+      titreDevant: true,
+      surtitreEnLigne: true,
     });
     expect(mot(sansTitre, "Y")).toBeDefined();
   });
@@ -1227,9 +1548,19 @@ describe("la taille de la colonne d'une étape", () => {
 describe("la clôture qui fait le bilan", () => {
   const TRACE = {
     coords: [
-      [6.3, 44.9], [6.4, 44.95], [6.5, 44.92], [6.45, 44.86], [6.3, 44.9],
+      [6.3, 44.9],
+      [6.4, 44.95],
+      [6.5, 44.92],
+      [6.45, 44.86],
+      [6.3, 44.9],
     ],
-    profil: [[0, 1000], [10, 2400], [20, 1200], [30, 2600], [40, 1000]],
+    profil: [
+      [0, 1000],
+      [10, 2400],
+      [20, 1200],
+      [30, 2600],
+      [40, 1000],
+    ],
     totalKm: 40,
   };
   const cloture = (reglage, options = {}) =>
@@ -1242,17 +1573,25 @@ describe("la clôture qui fait le bilan", () => {
   });
 
   it("les rallume une par une", () => {
-    expect(cloture({ enteteVisible: true }).zones.map((z) => z.champ)).toContain("entete");
-    expect(cloture({ piedVisible: true }).zones.map((z) => z.champ)).toContain("pied");
+    expect(
+      cloture({ enteteVisible: true }).zones.map((z) => z.champ),
+    ).toContain("entete");
+    expect(cloture({ piedVisible: true }).zones.map((z) => z.champ)).toContain(
+      "pied",
+    );
   });
 
   it("dessine la trace entière quand on la demande", () => {
     expect(cloture({}).zones.some((z) => z.champ === "carte")).toBe(false);
-    expect(cloture({ clotureTrace: true }).zones.some((z) => z.champ === "carte")).toBe(true);
+    expect(
+      cloture({ clotureTrace: true }).zones.some((z) => z.champ === "carte"),
+    ).toBe(true);
   });
 
   it("garde la trace DANS la planche", () => {
-    const z = cloture({ clotureTrace: true }).zones.find((x) => x.champ === "carte");
+    const z = cloture({ clotureTrace: true }).zones.find(
+      (x) => x.champ === "carte",
+    );
     expect(z.x).toBeGreaterThanOrEqual(0);
     expect(z.y).toBeGreaterThanOrEqual(0);
     expect(z.x + z.width).toBeLessThanOrEqual(FORMATS.carrousel.width);
@@ -1268,9 +1607,13 @@ describe("la clôture qui fait le bilan", () => {
       tailleTrace: 900,
       colonne: "Distance = 188 km\nDénivelé positif = 12 400 m\nJournées = 5",
     });
-    for (const z of ctx.zones.filter((x) => ["carte", "colonne", "cloture"].includes(x.champ))) {
+    for (const z of ctx.zones.filter((x) =>
+      ["carte", "colonne", "cloture"].includes(x.champ),
+    )) {
       expect(z.y, z.champ).toBeGreaterThanOrEqual(0);
-      expect(z.y + z.height, z.champ).toBeLessThanOrEqual(FORMATS.carrousel.height);
+      expect(z.y + z.height, z.champ).toBeLessThanOrEqual(
+        FORMATS.carrousel.height,
+      );
     }
   });
 

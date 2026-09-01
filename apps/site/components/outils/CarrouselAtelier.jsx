@@ -333,6 +333,10 @@ function carteNeuve(
      *  cesse de laisser sa ligne à moitié vide. */
     surtitreEnLigne: false,
     ecartDuoEnLigne: null,
+    /** Le décalage VERTICAL du surtitre en ligne. 0 = les deux centres optiques
+     *  coïncident ; le curseur sert aux polices dont la hauteur de capitale
+     *  s'écarte des 0,70 em d'Ubuntu. */
+    decalageDuoEnLigne: null,
     /** Inverse l'ordre du surtitre et du titre. */
     titreDevant: false,
     /** Le filet ambre qui ouvre le surtitre. */
@@ -546,6 +550,7 @@ export const CHAMPS_DE_STYLE = [
   "surtitreFilet",
   "surtitreEnLigne",
   "ecartDuoEnLigne",
+  "decalageDuoEnLigne",
   "puce",
   "filetTitre",
   "filetSousDuo",
@@ -2207,10 +2212,11 @@ export default function CarrouselAtelier() {
             />
             {carte?.surtitreEnLigne && (
               <p className={`${AIDE} mt-1`}>
-                « Jour 1 » puis le surtitre à la suite, sur la même ligne de
-                base. Écris le séparateur au début du surtitre («&nbsp;·&nbsp;»,
-                «&nbsp;—&nbsp;») ; le filet ambre se coupe juste au-dessus. Une
-                seconde ligne de surtitre s&rsquo;empile dessous.
+                « Jour 1 » puis le surtitre à la suite. Écris le séparateur au
+                début du surtitre («&nbsp;·&nbsp;», «&nbsp;—&nbsp;») ; le filet
+                ambre se coupe juste au-dessus. Les deux se centrent sur leur
+                hauteur de capitale ; une seconde ligne de surtitre
+                s&rsquo;empile dessous.
               </p>
             )}
             {carte?.surtitreEnLigne && (
@@ -2226,6 +2232,23 @@ export default function CarrouselAtelier() {
                   format={(v) => `${v.toFixed(1)} corps`}
                   onChange={(v) => majCarte({ ecartDuoEnLigne: v })}
                 />
+                <div className="mt-3">
+                  <Curseur
+                    id="e-duo-y"
+                    label="Hauteur du surtitre"
+                    valeur={carte?.decalageDuoEnLigne}
+                    defaut={0}
+                    min={-2}
+                    max={2}
+                    pas={0.05}
+                    format={(v) =>
+                      v === 0
+                        ? "centré"
+                        : `${v > 0 ? "+" : ""}${v.toFixed(2)} corps`
+                    }
+                    onChange={(v) => majCarte({ decalageDuoEnLigne: v })}
+                  />
+                </div>
               </div>
             )}
           </Groupe>
