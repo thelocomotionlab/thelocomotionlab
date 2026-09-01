@@ -605,6 +605,48 @@ function largeurEspacee(ctx, texte, taille, espacementEm) {
  * @returns {{dernier:number, sup:number}} la ligne de base de la dernière
  *   ligne, et la hauteur que les lignes SUPPLÉMENTAIRES ont prise.
  */
+/**
+ * Les lignes d'un surtitre, prêtes à mesurer OU à poser.
+ *
+ * La mesure et la pose doivent lire exactement la même découpe : c'est ce qui
+ * permet d'aligner un surtitre AVEC un titre sur la même ligne, où il faut
+ * connaître sa largeur avant de savoir où commence le titre.
+ */
+function lignesDeSurtitre(m, texte, { align = "gauche", filet = true } = {}) {
+  return String(texte ?? "")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((brute, i) => {
+      const { align: alignLigne, echelle, reste } = styleDeLigne(brute);
+      return {
+        align: alignLigne ?? align,
+        taille: Math.max(8, Math.round(m.surtitre * echelle)),
+        mots: morceauxCapitales(reste),
+        // Sans filet, le surtitre n'est plus qu'une ligne de capitales ambrées :
+        // la place du trait ET son écart disparaissent, sinon il resterait un
+        // retrait fantôme que personne ne saurait expliquer.
+        filet: filet && i === 0,
+      };
+    });
+}
+
+/** Le filet d'ouverture d'une ligne de surtitre : sa longueur et son écart. */
+function filetDeSurtitre(l) {
+  return l.filet
+    ? { longueur: Math.round(l.taille * 2.6), ecart: l.taille * 0.9 }
+    : { longueur: 0, ecart: 0 };
+}
+
+/** La largeur d'une ligne de surtitre, SON FILET COMPRIS. Change `ctx.font`. */
+function largeurDeSurtitre(ctx, police, l, polices) {
+  const { longueur, ecart } = filetDeSurtitre(l);
+  ctx.font = `500 ${l.taille}px ${police}`;
+  return (
+    longueur + ecart + largeurCapitales(ctx, l.mots, l.taille, 0.22, polices)
+  );
+}
+
 function surtitre(
   ctx,
   m,
@@ -622,24 +664,8 @@ function surtitre(
     polices = null,
   } = {},
 ) {
-  const brutes = String(texte ?? "")
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean);
-  if (brutes.length === 0) return { dernier: base, sup: 0 };
-
-  const lignes = brutes.map((brute, i) => {
-    const { align: alignLigne, echelle, reste } = styleDeLigne(brute);
-    return {
-      align: alignLigne ?? align,
-      taille: Math.max(8, Math.round(m.surtitre * echelle)),
-      mots: morceauxCapitales(reste),
-      // Sans filet, le surtitre n'est plus qu'une ligne de capitales ambrées :
-      // la place du trait ET son écart disparaissent, sinon il resterait un
-      // retrait fantôme que personne ne saurait expliquer.
-      filet: filet && i === 0,
-    };
-  });
+  const lignes = lignesDeSurtitre(m, texte, { align, filet });
+  if (lignes.length === 0) return { dernier: base, sup: 0 };
 
   const pas = (l) => Math.round(l.taille * 1.75);
   const sup = lignes.slice(1).reduce((total, l) => total + pas(l), 0);
@@ -647,13 +673,10 @@ function surtitre(
 
   for (const [i, l] of lignes.entries()) {
     if (i > 0) ligneBase += pas(l);
-    const filetL = l.filet ? Math.round(l.taille * 2.6) : 0;
-    const ecart = l.filet ? l.taille * 0.9 : 0;
+    const { longueur: filetL, ecart } = filetDeSurtitre(l);
     const epaisseur = Math.max(2, m.filetSurtitre);
 
-    ctx.font = `500 ${l.taille}px ${police}`;
-    const total =
-      filetL + ecart + largeurCapitales(ctx, l.mots, l.taille, 0.22, polices);
+    const total = largeurDeSurtitre(ctx, police, l, polices);
     const gauche = x + decalageAlignement(l.align, largeur, total);
 
     // La plaque passe SOUS le filet comme sous les lettres : c'est le bloc
@@ -720,6 +743,11 @@ export function lignes(ctx, texte, largeurMax) {
 /** Interligne d'un titre, en parts de son corps. */
 /** L'écart après le titre, en corps de ce qui suit (cf. `blocTitreEtCorps`). */
 const APRES_TITRE = 2.2;
+
+/** L'écart entre le titre et le surtitre quand ils partagent une ligne, en
+ *  parts du corps du SURTITRE. Un peu plus qu'une espace-mot : les deux corps
+ *  sont trop différents pour que l'espace du titre suffise à les séparer. */
+const ECART_DUO = 1.1;
 
 /** L'écart avant le bloc de données d'une étape, en corps (cf. `dessinerEtape`). */
 const AVANT_DONNEES = 1;
@@ -2201,6 +2229,94 @@ function blocTitreEtCorps(
   };
 
   const ordre = ordreDuTitre(carte);
+
+  /**
+   * LE DUO SUR UNE SEULE LIGNE : « Jour 1 · VÉNOSC → VALGAUDÉMAR ».
+   *
+   * Un titre court — un numéro de journée, un mot — laisse la moitié de sa
+   * ligne vide, et le surtitre qui le suit ouvre un second étage pour trois
+   * mots. Mis bout à bout, les deux ne font qu'une ligne, et le contraste des
+   * deux corps SUFFIT à les distinguer : c'est le geste d'un titre de presse.
+   *
+   * Seule la DERNIÈRE ligne du titre partage sa ligne — les précédentes gardent
+   * toute la largeur. Et seule la PREMIÈRE ligne du surtitre s'y met : les
+   * suivantes s'empilent dessous, à l'aplomb de leur début.
+   *
+   * L'alignement porte sur la PAIRE, jamais sur ses deux moitiés séparément :
+   * centré, c'est l'ensemble « titre + surtitre » qui se centre, sinon le titre
+   * se centrerait tout seul et le surtitre partirait vers la droite.
+   */
+  const poserDuoEnLigne = () => {
+    const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeur, bt);
+    const derniere = ls[ls.length - 1] ?? [];
+    const hautes = ls.slice(0, -1);
+    const haut = y;
+
+    let base = y + bt.taille * 0.86;
+    if (hautes.length) {
+      poserOmbre(ctx, ombre, "titre");
+      base =
+        poserLignes(ctx, hautes, m.pad, base, bt, { align, largeur }) +
+        bt.taille * (bt.interligne ?? INTERLIGNE_TITRE);
+    }
+
+    const lignesSur = lignesDeSurtitre(m, carte.surtitre, {
+      align: "gauche",
+      filet: carte.surtitreFilet !== false,
+    });
+    const policeSur = policeDe(carte, "policeSurtitre", polices);
+    const largeurTitre = largeurLigne(derniere);
+    // L'écart entre les deux se mesure sur le SURTITRE, pas sur le titre : il
+    // sépare deux mots, et c'est le petit corps qui donne l'échelle d'un blanc
+    // entre des mots. Mesuré sur le titre, un « Jour 1 » de 60 px poussait le
+    // surtitre à l'autre bout de la ligne.
+    const ecart = Math.round(
+      m.surtitre * nombre(carte.ecartDuoEnLigne, ECART_DUO),
+    );
+    const largeurSur = lignesSur.length
+      ? largeurDeSurtitre(ctx, policeSur, lignesSur[0], polices)
+      : 0;
+    const decal = decalageAlignement(
+      align,
+      largeur,
+      largeurTitre + (largeurSur ? ecart + largeurSur : 0),
+    );
+
+    poserOmbre(ctx, ombre, "titre");
+    dessinerLigneRiche(ctx, derniere, m.pad + decal, base, bt);
+    zoneTexte(zones, "titre", m, m.pad, largeur, haut, base + bt.taille * 0.3);
+
+    let sup = 0;
+    if (largeurSur) {
+      poserOmbre(ctx, ombre, "surtitre");
+      ctx.fillStyle = th.accent;
+      const xSur = m.pad + decal + largeurTitre + ecart;
+      ({ sup } = surtitre(ctx, m, th, policeSur, carte.surtitre, xSur, base, {
+        // Le bloc EST déjà placé : ses lignes se posent à son aplomb, elles ne
+        // se réalignent pas dans une largeur qui n'est plus la leur.
+        align: "gauche",
+        largeur: 0,
+        polices,
+        filet: carte.surtitreFilet !== false,
+        plaque: plaqueDe(carte, th, "surtitre"),
+      }));
+      zoneTexte(
+        zones,
+        "surtitre",
+        m,
+        xSur,
+        largeur - (xSur - m.pad),
+        base - m.surtitre,
+        base + sup + m.surtitre * 0.3,
+      );
+    }
+
+    y = base + sup + bt.taille * 0.3;
+    // Le filet souligne la PAIRE : elle est le titre, il passe dessous.
+    y = filetSousTitre(ctx, m, th, carte, y, { align, x: m.pad, largeur });
+    if (carte.texte) y += m.corps * nombre(carte?.apresTitre, APRES_TITRE);
+  };
+
   /**
    * LE DUO : titre puis surtitre, soulignés ENSEMBLE.
    *
@@ -2216,7 +2332,13 @@ function blocTitreEtCorps(
     Boolean(carte.surtitre) &&
     ordre[0] === "titre";
 
-  for (const [i, quoi] of ordre.entries()) {
+  const enLigne =
+    carte.surtitreEnLigne === true &&
+    Boolean(carte.titre) &&
+    Boolean(carte.surtitre);
+  if (enLigne) poserDuoEnLigne();
+
+  for (const [i, quoi] of enLigne ? [] : ordre.entries()) {
     // Dernier du bloc : rien d'écrit ne le suit — ni l'autre ligne du duo, ni
     // un corps. C'est alors à l'appelant de dire l'air qu'il veut dessous.
     const dernier = i === ordre.length - 1 && !carte.texte;
@@ -2538,8 +2660,86 @@ function dessinerFiche(ctx, format, o) {
  *   • en AVAL, une photo termine, et le cercle se pose dessus.
  * D'où l'image facultative : c'est le même gabarit dans les deux cas.
  */
+/**
+ * L'ENCART DE CLÔTURE : un cadre, et des chiffres dedans.
+ *
+ * Sur une photo pleine page, une colonne de données posée à nu se perd — le
+ * voile de clôture la rend lisible, mais rien ne la RASSEMBLE, et elle flotte
+ * au milieu de l'image. Un cadre en fait un objet : c'est la vignette de fin,
+ * le bilan qu'on lit d'un coup.
+ *
+ * Il porte le MÊME texte que la colonne d'une étape (`Libellé = valeur`, plus
+ * tout le balisage) : c'est déjà la syntaxe des chiffres du carrousel, et une
+ * seconde façon de les écrire n'aurait rien apporté.
+ */
+function dessinerEncart(ctx, m, th, polices, carte, boite, { ombre, zones }) {
+  const rayon = Math.round(nombre(carte.encartRayon, 18) * m.k);
+  const opacite = intensite(carte.encartFond, 0.34);
+  if (opacite > 0) {
+    ctx.fillStyle = `rgba(${th.voileTexte}, ${opacite.toFixed(3)})`;
+    rectArrondi(ctx, boite.x, boite.y, boite.width, boite.height, rayon);
+    ctx.fill();
+  }
+  if (carte.encartCadre !== false) {
+    ctx.strokeStyle = carte.couleurEncart || th.filet;
+    ctx.lineWidth = Math.max(1, nombre(carte.encartEpaisseur, 2) * m.k);
+    rectArrondi(ctx, boite.x, boite.y, boite.width, boite.height, rayon);
+    ctx.stroke();
+  }
+  const base = baseDeColonne(m, th, polices, carte);
+  const pad = Math.round(nombre(carte.encartPad, 34) * m.k);
+  const dedans = boite.width - pad * 2;
+  const blocs = blocsDeTexte(ctx, carte.colonne ?? "", dedans, base);
+  const naturelle = Math.min(dedans, largeurBlocs(ctx, blocs, base));
+  poserOmbre(ctx, ombre, "corps");
+  poserBlocs(
+    ctx,
+    blocs,
+    boite.x + Math.round((boite.width - naturelle) / 2),
+    boite.y + pad,
+    base,
+    {
+      align: alignementDe(carte, "centre"),
+      largeur: naturelle,
+      puce: carte.puce,
+    },
+  );
+  sansOmbre(ctx);
+  zoneTexte(
+    zones,
+    "colonne",
+    m,
+    boite.x,
+    boite.width,
+    boite.y,
+    boite.y + boite.height,
+  );
+}
+
+/** La hauteur qu'un encart prendra — mesurée avant que le bloc de clôture ne se
+ *  centre, comme toutes les autres pièces. */
+function hauteurEncart(ctx, m, th, polices, carte, largeur) {
+  const base = baseDeColonne(m, th, polices, carte);
+  const pad = Math.round(nombre(carte.encartPad, 34) * m.k);
+  const blocs = blocsDeTexte(ctx, carte.colonne ?? "", largeur - pad * 2, base);
+  return hauteurBlocs(blocs, base) + pad * 2;
+}
+
 function dessinerCloture(ctx, format, o) {
-  const { carte, police, polices, logo, m, th, ombre, zones, index, total } = o;
+  const {
+    carte,
+    trace,
+    police,
+    polices,
+    logo,
+    m,
+    th,
+    ombre,
+    zones,
+    index,
+    total,
+  } = o;
+  const cadre = o.traceCadre ?? trace;
 
   zone(zones, "photo", 0, 0, format.width, format.height);
   if (carte.image) {
@@ -2622,6 +2822,41 @@ function dessinerCloture(ctx, format, o) {
     : null;
   const pieceLogo = { type: "logo", hauteur: rayon * 2 };
 
+  /* LA TRACE ENTIÈRE — le tour, d'un coup, en guise de bilan.
+     Toutes les journées en couleur : la clôture ne raconte plus une étape, elle
+     rend le parcours. Un carré, comme la vignette d'une étape, avec le profil
+     dessous quand on le demande. */
+  const journees = journeesMontrees(carte, o.segments).map(({ jour, seg }) => ({
+    seg,
+    kmDebut: seg.kmDebut,
+    kmFin: seg.kmFin,
+    couleur: couleurDuJour(carte, jour),
+  }));
+  let coteTrace = Math.round(
+    Math.min(largeur, nombre(carte.tailleTrace, 420) * m.k),
+  );
+  const avecProfil = carte.afficherProfil === true && cadre?.profil?.length > 1;
+  const ecartProfil = avecProfil ? Math.round(16 * m.k) : 0;
+  let hProfil = avecProfil ? Math.round(coteTrace * 0.2) : 0;
+  const pieceTrace =
+    carte.clotureTrace === true && cadre?.coords?.length > 1
+      ? { type: "trace", hauteur: coteTrace + ecartProfil + hProfil }
+      : null;
+
+  const largeurEncart = Math.round(
+    Math.min(
+      largeur,
+      largeur * Math.max(0.3, Math.min(1, nombre(carte.encartPart, 0.78))),
+    ),
+  );
+  const pieceEncart =
+    carte.clotureEncart === true && String(carte.colonne ?? "").trim()
+      ? {
+          type: "encart",
+          hauteur: hauteurEncart(ctx, m, th, polices, carte, largeurEncart),
+        }
+      : null;
+
   const ecart = Math.round(72 * m.k);
   // L'ordre titre/surtitre est celui de la planche (`titreDevant`) et le texte
   // ferme ; passer au-dessus du logo est un réglage à part, qui DÉPLACE une
@@ -2631,6 +2866,8 @@ function dessinerCloture(ctx, format, o) {
       quoi === "surtitre" ? pieceSurtitre : pieceTitre,
     ),
     pieceTexte,
+    pieceTrace,
+    pieceEncart,
   ].filter(Boolean);
   for (const piece of suite) if (enHaut(piece.type)) morceaux.push(piece);
   morceaux.push(pieceLogo);
@@ -2640,13 +2877,47 @@ function dessinerCloture(ctx, format, o) {
   // Le bloc est centré dans la zone UTILE, pas dans la planche : en story,
   // l'interface d'Instagram mange le haut et le bas.
   const basZone = m.piedFilet;
-  const total_h =
+  const dispo = basZone - hautZone;
+  const empilee = () =>
     morceaux.reduce((somme, p) => somme + p.hauteur, 0) +
-    Math.max(0, morceaux.length - 1) * ecart;
-  let y = hautZone + (basZone - hautZone - total_h) / 2;
+    Math.max(0, morceaux.length - 1) * ecartUtile;
+
+  /**
+   * LE BLOC NE DÉBORDE PAS DE LA PLANCHE.
+   *
+   * Avec la trace et l'encart, la clôture peut porter cinq pièces : le bloc
+   * dépassait alors la page par les deux bouts — logo coupé en haut, chiffres
+   * sous le bord en bas — et rien ne le disait avant l'export.
+   *
+   * On resserre D'ABORD les écarts, jusqu'à un plancher : c'est le réglage le
+   * moins coûteux, personne ne compte les blancs. Puis, s'il le faut encore, on
+   * rétrécit la TRACE — la seule pièce dont la taille est un choix et non un
+   * texte qu'on aurait écrit. Un texte trop long reste trop long : le tronquer
+   * en douce serait pire que de le laisser déborder, qui au moins se voit.
+   */
+  let ecartUtile = ecart;
+  const ecartMin = Math.round(20 * m.k);
+  const entre = Math.max(0, morceaux.length - 1);
+  if (empilee() > dispo && entre > 0) {
+    ecartUtile = Math.max(ecartMin, ecartUtile - (empilee() - dispo) / entre);
+  }
+  if (empilee() > dispo && pieceTrace) {
+    const minTrace = Math.round(120 * m.k);
+    const reduit = Math.max(
+      minTrace,
+      coteTrace - (empilee() - dispo) / (avecProfil ? 1.2 : 1),
+    );
+    coteTrace = Math.round(reduit);
+    hProfil = avecProfil ? Math.round(coteTrace * 0.2) : 0;
+    pieceTrace.hauteur = coteTrace + ecartProfil + hProfil;
+  }
+  const total_h = empilee();
+  // Jamais au-dessus de la zone utile : débordant, le bloc part vers le BAS,
+  // où le pied est éteint — pas vers le haut, où la marque vit.
+  let y = Math.max(hautZone, hautZone + (dispo - total_h) / 2);
 
   for (const [i, piece] of morceaux.entries()) {
-    if (i > 0) y += ecart;
+    if (i > 0) y += ecartUtile;
     if (piece.type === "logo") {
       sansOmbre(ctx);
       const cy = y + rayon;
@@ -2717,32 +2988,80 @@ function dessinerCloture(ctx, format, o) {
         puce: carte.puce,
       });
       zoneTexte(zones, "texte", m, m.pad, largeur, y, y + piece.hauteur);
+    } else if (piece.type === "trace") {
+      sansOmbre(ctx);
+      const xTrace = Math.round(centreX - coteTrace / 2);
+      dessinerCarteCase(
+        ctx,
+        { x: xTrace, y, width: coteTrace, height: coteTrace },
+        th,
+        { coords: cadre.coords, journees },
+      );
+      if (avecProfil) {
+        dessinerProfilCase(
+          ctx,
+          {
+            x: xTrace,
+            y: y + coteTrace + ecartProfil,
+            width: coteTrace,
+            height: hProfil,
+          },
+          th,
+          { profil: cadre.profil, totalKm: cadre.totalKm, journees },
+        );
+      }
+      zone(zones, "carte", xTrace, y, coteTrace, piece.hauteur);
+    } else if (piece.type === "encart") {
+      dessinerEncart(
+        ctx,
+        m,
+        th,
+        polices,
+        carte,
+        {
+          x: Math.round(centreX - largeurEncart / 2),
+          y,
+          width: largeurEncart,
+          height: piece.hauteur,
+        },
+        { ombre, zones },
+      );
     }
     y += piece.hauteur;
   }
 
-  poserOmbre(ctx, ombre, "entete");
-  bandeEntete(ctx, format, m, th, police, {
-    texte: carte.entete,
-    accent: carte.enteteAccent,
-    logo,
-    marque: carte.marque ?? "rien", // la marque est déjà au centre, en grand
-    filet: carte.filetEntete === true,
-    opacite: carte.enteteOpacite,
-    zones,
-  });
-  poserOmbre(ctx, ombre, "pied");
-  bandePied(ctx, format, m, th, police, {
-    index,
-    total,
-    centre: carte.piedCentre,
-    droite: carte.piedDroite,
-    fleche: carte.piedFleche ?? "jamais", // c'est la fin : il n'y a plus rien à glisser
-    numero: carte.piedNumero !== false,
-    filet: carte.filetPied === true,
-    opacite: carte.piedOpacite,
-    zones,
-  });
+  /* NI EN-TÊTE NI PIED, sauf si on les redemande.
+     C'est la seule planche où les deux bandes n'ont rien à dire : la marque est
+     déjà au centre, en grand, et « 12 / 12 » compte des pages devant quelqu'un
+     qui vient d'arriver au bout. Une clôture en pleine photo les veut d'autant
+     moins. Les deux cases les rallument — le reste des gabarits ne change pas,
+     eux les portent toujours. */
+  if (carte.enteteVisible === true) {
+    poserOmbre(ctx, ombre, "entete");
+    bandeEntete(ctx, format, m, th, police, {
+      texte: carte.entete,
+      accent: carte.enteteAccent,
+      logo,
+      marque: carte.marque ?? "rien", // la marque est déjà au centre, en grand
+      filet: carte.filetEntete === true,
+      opacite: carte.enteteOpacite,
+      zones,
+    });
+  }
+  if (carte.piedVisible === true) {
+    poserOmbre(ctx, ombre, "pied");
+    bandePied(ctx, format, m, th, police, {
+      index,
+      total,
+      centre: carte.piedCentre,
+      droite: carte.piedDroite,
+      fleche: carte.piedFleche ?? "jamais", // c'est la fin : plus rien à glisser
+      numero: carte.piedNumero !== false,
+      filet: carte.filetPied === true,
+      opacite: carte.piedOpacite,
+      zones,
+    });
+  }
   sansOmbre(ctx);
   return [];
 }
@@ -3218,17 +3537,27 @@ function dessinerLibres(ctx, format, o) {
  * Rend la hauteur occupée.
  */
 function baseDeColonne(m, th, polices, carte) {
+  // Plus petit que le récit par défaut : la colonne est une marge de carnet,
+  // pas un second paragraphe. `tailleColonne` la reprend en main.
+  const nominale = m.corps * 0.8;
+  const taille = Math.round(portee(carte.tailleColonne, nominale, m));
+  /**
+   * UN SEUL CURSEUR POUR TOUTE LA COLONNE.
+   *
+   * Les données (`Distance = 57,5 km`) empruntaient les corps de la fiche, qui
+   * n'a pas de réglage sur une étape : régler « Colonne » ne bougeait donc que
+   * le texte libre, et les chiffres — qui sont l'essentiel de ce qu'on y écrit
+   * — ne bougeaient pas d'un pixel. Ils suivent maintenant la MÊME échelle, si
+   * bien que le curseur redimensionne le bloc entier sans en casser les
+   * proportions : libellé atténué en petites capitales, valeur en gros à
+   * l'encre pleine.
+   */
+  const echelle = taille / nominale;
   return {
     ...baseCorps(m, th, polices, carte),
-    // Plus petit que le récit par défaut : la colonne est une marge de carnet,
-    // pas un second paragraphe. `tailleColonne` la reprend en main.
-    taille: Math.round(portee(carte.tailleColonne, m.corps * 0.8, m)),
-    // LES DONNÉES (`Distance = 57,5 km`) reprennent les corps et les encres de
-    // la fiche — c'est la même chose écrite autrement, et les mêmes réglages
-    // doivent la tenir : libellé atténué en petites capitales, valeur en gros à
-    // l'encre pleine.
-    tailleLabel: m.ficheLabel,
-    tailleValeur: m.ficheValeur,
+    taille,
+    tailleLabel: Math.max(6, Math.round(m.ficheLabel * echelle)),
+    tailleValeur: Math.max(8, Math.round(m.ficheValeur * echelle)),
     couleurLabel: th.encreFaible,
     couleurValeur: th.encre,
   };

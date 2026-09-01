@@ -135,10 +135,14 @@ const AVEC_PHOTO = ["photo", "bandeau", "cloture", "etape"];
 
 /** Les gabarits qui montrent la trace — ceux dont les réglages de carte et de
  *  journées ont un sens. */
-const AVEC_TRACE = ["carte", "etape"];
+const AVEC_TRACE = ["carte", "etape", "cloture"];
 
 /** Les gabarits qui portent un tableau de libellés et de valeurs. */
 const AVEC_FICHE = ["fiche"];
+
+/** Les gabarits qui portent une colonne de chiffres écrite à la main : à côté
+ *  de la trace sur une étape, dans l'encart de bilan sur une clôture. */
+const AVEC_COLONNE = ["etape", "cloture"];
 
 /** Pour chercher une icône sans se soucier des accents ni de la casse. */
 const sansAccent = (s) =>
@@ -324,6 +328,11 @@ function carteNeuve(
     /** gauche | centre | droite. La clôture est centrée d'office : c'est un
      *  bloc symétrique autour du logo. */
     alignement: gabarit === "cloture" ? "centre" : "gauche",
+    /** Titre et surtitre sur UNE SEULE ligne : « Jour 1 · VÉNOSC → VALGAUDÉMAR ».
+     *  Le contraste des deux corps suffit à les distinguer, et un titre court
+     *  cesse de laisser sa ligne à moitié vide. */
+    surtitreEnLigne: false,
+    ecartDuoEnLigne: null,
     /** Inverse l'ordre du surtitre et du titre. */
     titreDevant: false,
     /** Le filet ambre qui ouvre le surtitre. */
@@ -409,10 +418,31 @@ function carteNeuve(
      *  tableau. `null` = 44 %, le partage qui laisse la boucle carrée. */
     partCarte: null,
     fiche: gabarit === "fiche" ? ficheParDefaut(trace, segments) : [],
-    /** ÉTAPE — la colonne à côté de la trace. Du TEXTE, avec tout le balisage :
-     *  c'est là qu'on écrit les chiffres du jour, ou tout autre chose. */
+    /** ÉTAPE et CLÔTURE — la colonne de chiffres. Du TEXTE, avec tout le
+     *  balisage : à côté de la trace sur une étape, dans l'encart sur une
+     *  clôture. C'est là qu'on écrit les chiffres du jour, ou tout autre chose. */
     colonne: "",
+    /** Le corps de TOUTE la colonne — le texte libre comme les données. */
     tailleColonne: null,
+    /* --- clôture : le bilan --- */
+    /** Les deux bandes de la clôture, éteintes d'office : la marque est déjà au
+     *  centre en grand, et « 12 / 12 » compte des pages devant quelqu'un qui
+     *  vient d'arriver au bout. */
+    enteteVisible: false,
+    piedVisible: false,
+    /** La trace ENTIÈRE, toutes journées en couleur : le tour d'un coup d'œil. */
+    clotureTrace: false,
+    tailleTrace: null,
+    /** Les chiffres dans un cadre — sur une photo pleine page, une colonne à nu
+     *  se perd ; le cadre en fait l'objet qu'on lit d'un coup. */
+    clotureEncart: false,
+    encartPart: null,
+    encartFond: null,
+    encartCadre: true,
+    encartPad: null,
+    encartRayon: null,
+    encartEpaisseur: null,
+    couleurEncart: "",
     /* --- journées : l'espace découpé en cases --- */
     casesN: null,
     casesColonnes: 1,
@@ -514,6 +544,8 @@ export const CHAMPS_DE_STYLE = [
   "alignement",
   "titreDevant",
   "surtitreFilet",
+  "surtitreEnLigne",
+  "ecartDuoEnLigne",
   "puce",
   "filetTitre",
   "filetSousDuo",
@@ -553,6 +585,18 @@ export const CHAMPS_DE_STYLE = [
   "caseProfil",
   "caseFilet",
   "filetDonnees",
+  "enteteVisible",
+  "piedVisible",
+  "clotureTrace",
+  "clotureEncart",
+  "tailleTrace",
+  "encartPart",
+  "encartFond",
+  "encartCadre",
+  "encartPad",
+  "encartRayon",
+  "encartEpaisseur",
+  "couleurEncart",
 ];
 
 function styleDe(carte) {
@@ -2152,6 +2196,38 @@ export default function CarrouselAtelier() {
               coche={carte?.titreDevant}
               onChange={(v) => majCarte({ titreDevant: v })}
             />
+            {/* Un titre court — « Jour 1 » — laisse sa ligne à moitié vide, et
+                le surtitre ouvre un second étage pour trois mots. Bout à bout,
+                les deux n'en font qu'une : le contraste des corps suffit à les
+                distinguer. */}
+            <Case
+              label="…et sur la MÊME ligne que lui"
+              coche={carte?.surtitreEnLigne}
+              onChange={(v) => majCarte({ surtitreEnLigne: v })}
+            />
+            {carte?.surtitreEnLigne && (
+              <p className={`${AIDE} mt-1`}>
+                « Jour 1 » puis le surtitre à la suite, sur la même ligne de
+                base. Écris le séparateur au début du surtitre («&nbsp;·&nbsp;»,
+                «&nbsp;—&nbsp;») ; le filet ambre se coupe juste au-dessus. Une
+                seconde ligne de surtitre s&rsquo;empile dessous.
+              </p>
+            )}
+            {carte?.surtitreEnLigne && (
+              <div className="mt-2">
+                <Curseur
+                  id="e-duo"
+                  label="Écart titre / surtitre"
+                  valeur={carte?.ecartDuoEnLigne}
+                  defaut={1.1}
+                  min={0}
+                  max={5}
+                  pas={0.1}
+                  format={(v) => `${v.toFixed(1)} corps`}
+                  onChange={(v) => majCarte({ ecartDuoEnLigne: v })}
+                />
+              </div>
+            )}
           </Groupe>
 
           {["carte", "photo"].includes(carte?.gabarit) && (
@@ -2264,6 +2340,132 @@ export default function CarrouselAtelier() {
                   onChange={(v) => majCarte({ filetPied: v })}
                 />
               </div>
+
+              {/* LES DEUX BANDES, éteintes d'office ici : la marque est déjà au
+                  centre en grand, et « 12 / 12 » compte des pages devant
+                  quelqu'un qui vient d'arriver au bout. */}
+              <div className="mt-3 flex flex-col gap-1.5">
+                <Case
+                  label="Bande d’en-tête"
+                  coche={carte.enteteVisible === true}
+                  onChange={(v) => majCarte({ enteteVisible: v })}
+                />
+                <Case
+                  label="Bande de pied"
+                  coche={carte.piedVisible === true}
+                  onChange={(v) => majCarte({ piedVisible: v })}
+                />
+              </div>
+
+              {/* LE BILAN : le tour entier, et ses chiffres dans un cadre. */}
+              <div className="mt-4 flex flex-col gap-1.5">
+                <Case
+                  label="La trace entière"
+                  coche={carte.clotureTrace === true}
+                  onChange={(v) => majCarte({ clotureTrace: v })}
+                />
+                <Case
+                  label="L’encart de chiffres"
+                  coche={carte.clotureEncart === true}
+                  onChange={(v) => majCarte({ clotureEncart: v })}
+                />
+              </div>
+              <p className={`${AIDE} mt-1`}>
+                Les journées gardent leurs couleurs (onglet Trace) ; les
+                chiffres de l&rsquo;encart s&rsquo;écrivent dans
+                «&nbsp;L&rsquo;encart&nbsp;», plus bas.
+              </p>
+
+              {carte.clotureTrace && (
+                <div className="mt-3">
+                  <Curseur
+                    id="cloture-trace"
+                    label="Taille de la trace"
+                    valeur={carte.tailleTrace}
+                    defaut={420}
+                    min={160}
+                    max={900}
+                    pas={10}
+                    format={(v) => `${Math.round(v)} px`}
+                    onChange={(v) => majCarte({ tailleTrace: v })}
+                  />
+                </div>
+              )}
+
+              {carte.clotureEncart && (
+                <div className="mt-3 flex flex-col gap-3">
+                  <Curseur
+                    id="encart-part"
+                    label="Largeur de l’encart"
+                    valeur={carte.encartPart}
+                    defaut={0.78}
+                    min={0.3}
+                    max={1}
+                    pas={0.02}
+                    format={(v) => `${Math.round(v * 100)} %`}
+                    onChange={(v) => majCarte({ encartPart: v })}
+                  />
+                  <Curseur
+                    id="encart-pad"
+                    label="Marge intérieure"
+                    valeur={carte.encartPad}
+                    defaut={34}
+                    min={0}
+                    max={90}
+                    pas={2}
+                    format={(v) => `${Math.round(v)} px`}
+                    onChange={(v) => majCarte({ encartPad: v })}
+                  />
+                  <Curseur
+                    id="encart-fond"
+                    label="Fond de l’encart"
+                    valeur={carte.encartFond}
+                    defaut={0.34}
+                    min={0}
+                    max={1}
+                    pas={0.02}
+                    format={(v) => `${Math.round(v * 100)} %`}
+                    onChange={(v) => majCarte({ encartFond: v })}
+                  />
+                  <Case
+                    label="Cadre autour"
+                    coche={carte.encartCadre !== false}
+                    onChange={(v) => majCarte({ encartCadre: v })}
+                  />
+                  {carte.encartCadre !== false && (
+                    <>
+                      <Curseur
+                        id="encart-trait"
+                        label="Épaisseur du cadre"
+                        valeur={carte.encartEpaisseur}
+                        defaut={2}
+                        min={1}
+                        max={10}
+                        pas={1}
+                        format={(v) => `${Math.round(v)} px`}
+                        onChange={(v) => majCarte({ encartEpaisseur: v })}
+                      />
+                      <Curseur
+                        id="encart-rayon"
+                        label="Coins de l’encart"
+                        valeur={carte.encartRayon}
+                        defaut={18}
+                        min={0}
+                        max={80}
+                        pas={2}
+                        format={(v) => `${Math.round(v)} px`}
+                        onChange={(v) => majCarte({ encartRayon: v })}
+                      />
+                      <Couleur
+                        label="Couleur du cadre"
+                        valeur={carte.couleurEncart}
+                        defaut={theme.filet}
+                        onChange={(v) => majCarte({ couleurEncart: v })}
+                      />
+                    </>
+                  )}
+                </div>
+              )}
             </Groupe>
           )}
 
@@ -2440,10 +2642,10 @@ export default function CarrouselAtelier() {
             </div>
           </Groupe>
 
-          {carte?.gabarit === "etape" && (
+          {AVEC_COLONNE.includes(carte?.gabarit) && (
             <Groupe
-              titre="La colonne"
-              aide="À côté de la trace. Une ligne « Libellé = valeur » se compose comme une fiche : le libellé en petites capitales, la valeur en gros dessous. Le reste est du texte — listes, puces à icône, gras, ambre, couleurs et polices au mot, corps par ligne."
+              titre={carte?.gabarit === "cloture" ? "L’encart" : "La colonne"}
+              aide="À côté de la trace sur une étape, dans l’encart sur une clôture. Une ligne « Libellé = valeur » se compose comme une fiche : le libellé en petites capitales, la valeur en gros dessous. Le reste est du texte — listes, puces à icône, gras, ambre, couleurs et polices au mot, corps par ligne."
             >
               <textarea
                 ref={colonneRef}
@@ -3437,10 +3639,10 @@ export default function CarrouselAtelier() {
                 defaut={CORPS.logo}
                 onChange={(v) => majCarte({ tailleLogo: v })}
               />
-              {carte?.gabarit === "etape" && (
+              {AVEC_COLONNE.includes(carte?.gabarit) && (
                 <Taille
                   id="t-colonne"
-                  label="Colonne"
+                  label={carte?.gabarit === "cloture" ? "Encart" : "Colonne"}
                   valeur={carte?.tailleColonne}
                   defaut={Math.round(CORPS.corps * 0.8)}
                   onChange={(v) => majCarte({ tailleColonne: v })}
