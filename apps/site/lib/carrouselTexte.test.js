@@ -568,3 +568,18 @@ describe("la flèche du swipe, posable dans une phrase", () => {
     expect(ligne[0].largeur).toBe(largeurIcone(BASE, "fleche"));
   });
 });
+
+describe("l'encre atténuée du thème", () => {
+  it("se demande par son nom, et se résout sur la planche", () => {
+    // Comme l'ambre, `gris` est un RÔLE : clair sur fond sombre, sombre sur fond
+    // clair. Une valeur en dur donnerait un gris invisible dans l'un des deux.
+    const [mo] = analyserRiche("[gris: × Rapace]");
+    expect(mo.couleur).toBe("gris");
+    expect(encreDe(mo, { couleur: "#222", accent: "#EFB159", douce: "#8a8a8a" })).toBe("#8a8a8a");
+  });
+
+  it("retombe sur l'encre du texte quand la planche n'en donne pas", () => {
+    const [mo] = analyserRiche("[gris: x]");
+    expect(encreDe(mo, { couleur: "#222", accent: "#EFB159" })).toBe("#222");
+  });
+});

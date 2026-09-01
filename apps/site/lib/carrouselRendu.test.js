@@ -1078,3 +1078,60 @@ describe("le filet qui souligne le titre", () => {
     expect(corps.y).toBeGreaterThan(filet(ctx).y + 4);
   });
 });
+
+describe("le surtitre sur plusieurs lignes", () => {
+  const carte = (reglage) =>
+    planche({ gabarit: "texte", titre: "", texte: "", surtitre: "XXX", ...reglage });
+  // X et Y : deux lettres ABSENTES de « THE LOCOMOTION LAB », qui s'écrit lui
+  // aussi en capitales une par une dans la bande d'en-tête.
+  const lettres = (ctx, l) => ctx.mots.filter((m) => m.texte === l);
+  /** La taille lue sur la fonte du morceau — c'est elle que `--` change. */
+  const taille = (mot) => Number(/(\d+)px/.exec(mot.fonte)[1]);
+
+  it("écrit chaque ligne, empilée sous la précédente", () => {
+    const ctx = carte({ surtitre: "XXX\nYYY" });
+    const [x] = lettres(ctx, "X");
+    const [y] = lettres(ctx, "Y");
+    expect(y).toBeDefined();
+    expect(y.y).toBeGreaterThan(x.y);
+  });
+
+  it("donne à chaque ligne son corps et son encre", () => {
+    // « -- » réduit CETTE ligne, « [gris: …] » l'atténue : c'est ce qui permet
+    // d'ajouter « × Rapace × Lolo » sous un « Vénosc → Valgaudémar ».
+    const ctx = carte({ surtitre: "XXX\n-- [gris: YYY]" });
+    expect(taille(lettres(ctx, "Y")[0])).toBeLessThan(taille(lettres(ctx, "X")[0]));
+  });
+
+  it("n'ouvre QUE la première ligne du filet ambre", () => {
+    // Le filet est le point d'entrée du regard ; répété, il ferait une liste.
+    const filets = (surtitre) =>
+      carte({ surtitre, surtitreFilet: true }).rects.filter(
+        (r) => r.h <= 12 && r.w > 40 && r.w < 90 && r.y < 700,
+      ).length;
+    expect(filets("XXX\nYYY")).toBe(filets("XXX"));
+  });
+
+  it("pousse ce qui suit d'autant de lignes qu'il en a", () => {
+    const bas = (surtitre) => {
+      const ctx = planche({ gabarit: "texte", titre: "", surtitre, texte: "ZZZ" });
+      return ctx.mots.find((m) => m.texte === "ZZZ").y;
+    };
+    expect(bas("XXX\nYYY\nZZZ")).toBeGreaterThan(bas("XXX"));
+  });
+
+  it("change la famille d'un morceau sans toucher au reste de la ligne", () => {
+    // Une ligne de capitales pose ses lettres une par une avec UNE fonte : un
+    // « [serif: …] » ne peut passer que par un échange de famille en cours de
+    // route — et la ligne doit reprendre la sienne juste après.
+    const ctx = planche(
+      { gabarit: "texte", titre: "", texte: "", surtitre: "X [serif: Y] X" },
+      { polices: { sans: "Ubuntu", serif: "Lora", mono: "UbuntuMono" } },
+    );
+    const [avant, apres] = lettres(ctx, "X");
+    const [serif] = lettres(ctx, "Y");
+    expect(serif.fonte).not.toBe(avant.fonte);
+    expect(taille(serif)).toBe(taille(avant));
+    expect(apres.fonte).toBe(avant.fonte);
+  });
+});
