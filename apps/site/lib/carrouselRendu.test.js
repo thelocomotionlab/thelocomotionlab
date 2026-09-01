@@ -1021,9 +1021,60 @@ describe("le gabarit « Étape »", () => {
     expect(ecart(0)).toBeLessThan(ecart(1.2));
   });
 
+  it("laisse retirer le filet qui ouvre les données", () => {
+    const traits = (reglage) =>
+      etape(reglage).rects.filter(
+        (r) => Math.round(r.w) === FORMATS.carrousel.width - 128 && r.h <= 3 && r.y > 400,
+      ).length;
+    expect(traits({})).toBe(traits({ filetDonnees: false }) + 1);
+  });
+
   it("rend toute la largeur à la colonne quand la vignette est à zéro", () => {
     const x = (ctx) => ctx.mots.find((m) => m.texte === "46,8")?.x ?? 0;
     expect(x(etape({ partCarte: 0.44 }))).toBeGreaterThan(0);
     expect(x(etape({ partCarte: 0 }))).toBeLessThan(x(etape({ partCarte: 0.44 })));
+  });
+});
+
+describe("le filet qui souligne le titre", () => {
+  const carte = (reglage) =>
+    planche({
+      gabarit: "texte",
+      titre: "Jour 3",
+      surtitre: "ZZZ",
+      texte: "",
+      filetTitre: true,
+      titreDevant: true,
+      ...reglage,
+    });
+  // Le filet a sa taille à lui : 96 × 4 par défaut, c'est ce qui le distingue
+  // des trois autres traits de la planche.
+  const filet = (ctx) => ctx.rects.find((r) => Math.round(r.w) === 96 && Math.round(r.h) === 4);
+  const surtitre = (ctx) => ctx.mots.find((m) => m.texte === "Z");
+
+  it("passe ENTRE le titre et le surtitre par défaut", () => {
+    const ctx = carte({});
+    expect(filet(ctx).y).toBeLessThan(surtitre(ctx).y);
+  });
+
+  it("souligne le DUO quand on le demande", () => {
+    // Le surtitre devient un sous-titre : le trait le tient avec le titre au
+    // lieu de les séparer.
+    const ctx = carte({ filetSousDuo: true });
+    expect(filet(ctx).y).toBeGreaterThan(surtitre(ctx).y);
+  });
+
+  it("ne bouge pas quand le surtitre OUVRE — il n'y a plus de duo à fermer", () => {
+    const normal = carte({ titreDevant: false });
+    const demande = carte({ titreDevant: false, filetSousDuo: true });
+    expect(filet(demande).y).toBe(filet(normal).y);
+  });
+
+  it("laisse le corps respirer sous le duo", () => {
+    // Le filet posé sous le surtitre ne doit pas se retrouver dans la première
+    // ligne du paragraphe qui suit.
+    const ctx = carte({ filetSousDuo: true, texte: "Une phrase." });
+    const corps = ctx.mots.find((m) => m.texte === "Une");
+    expect(corps.y).toBeGreaterThan(filet(ctx).y + 4);
   });
 });
