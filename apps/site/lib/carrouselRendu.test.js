@@ -10,7 +10,12 @@
 
 import { describe, expect, it } from "vitest";
 
-import { FORMATS, dessinerCartePartage } from "./carrouselCartes";
+import {
+  FORMATS,
+  dessinerCartePartage,
+  dessinerPieceTrace,
+  hauteurPieceTrace,
+} from "./carrouselCartes";
 import { CLES_ICONES, geometrieDIcone } from "./carrouselIcones";
 
 const GABARITS = [
@@ -1626,5 +1631,107 @@ describe("la clôture qui fait le bilan", () => {
   it("n'ouvre pas d'encart vide", () => {
     const ctx = cloture({ clotureEncart: true, colonne: "   " });
     expect(ctx.zones.some((z) => z.champ === "colonne")).toBe(false);
+  });
+});
+
+describe("les pièces détachées", () => {
+  const TRACE = {
+    coords: [
+      [6.3, 44.9],
+      [6.4, 44.95],
+      [6.5, 44.92],
+      [6.45, 44.86],
+      [6.3, 44.9],
+    ],
+    profil: [
+      { km: 0, alt: 1000 },
+      { km: 10, alt: 2400 },
+      { km: 20, alt: 1200 },
+      { km: 30, alt: 2600 },
+      { km: 40, alt: 1000 },
+    ],
+    totalKm: 40,
+  };
+  const JOURNEES = [{ kmDebut: 0, kmFin: 20, couleur: "#D6246E" }];
+  const piece = (o = {}) => {
+    const ctx = ctxFactice();
+    const largeur = 1200;
+    const hauteur = hauteurPieceTrace(largeur, {
+      avecProfil: o.partProfil !== 0,
+    });
+    dessinerPieceTrace(
+      ctx,
+      { x: 0, y: 0, width: largeur, height: hauteur },
+      THEMES_CLAIR,
+      {
+        coords: TRACE.coords,
+        profil: TRACE.profil,
+        totalKm: TRACE.totalKm,
+        journees: JOURNEES,
+        ...o,
+      },
+    );
+    return { ctx, largeur, hauteur };
+  };
+  // Le thème n'entre ici que par ses couleurs : un objet minimal suffit, et
+  // évite d'accrocher le test à la forme complète d'un thème.
+  const THEMES_CLAIR = { cle: "clair", profilRestant: "#999" };
+
+  it("ne peint AUCUN fond — c'est la transparence qu'on exporte", () => {
+    // Un seul `fillRect` pleine boîte et la pièce redeviendrait un carré blanc,
+    // sur lequel plus rien ne se pose dans l'outil de montage.
+    const { ctx, largeur } = piece();
+    expect(
+      ctx.rects.filter((r) => r.w >= largeur && r.h >= largeur),
+    ).toHaveLength(0);
+  });
+
+  it("réserve à l'altimétrie la place que la mesure annonce", () => {
+    expect(hauteurPieceTrace(1000)).toBeGreaterThan(1000);
+    expect(hauteurPieceTrace(1000, { avecProfil: false })).toBe(1000);
+  });
+
+  it("cadre sur le bout montré dès qu'on retire la silhouette", () => {
+    // Avec la boucle derrière, la portion reste À SA PLACE dans le tour : les
+    // deux pièces se superposent au pixel dans l'outil de montage. Sans elle,
+    // plus rien ne justifie le grand vide autour.
+    const seg = {
+      coords: [
+        [6.3, 44.9],
+        [6.32, 44.91],
+        [6.34, 44.9],
+      ],
+    };
+    const journees = [{ seg, kmDebut: 0, kmFin: 20, couleur: "#D6246E" }];
+    const trace = (silhouette) => {
+      const ctx = ctxFactice();
+      const points = [];
+      ctx.moveTo = (x, y) => points.push([x, y]);
+      ctx.lineTo = (x, y) => points.push([x, y]);
+      dessinerPieceTrace(
+        ctx,
+        { x: 0, y: 0, width: 1000, height: 1000 },
+        THEMES_CLAIR,
+        {
+          coords: TRACE.coords,
+          profil: TRACE.profil,
+          totalKm: TRACE.totalKm,
+          journees,
+          silhouette,
+          partProfil: 0,
+        },
+      );
+      const x = points.map((p) => p[0]);
+      return Math.max(...x) - Math.min(...x);
+    };
+    // Cadré sur lui-même, le bout occupe une bien plus grande part du carré.
+    expect(trace(false)).toBeGreaterThan(trace(true));
+  });
+
+  it("dessine la portion en couleur, silhouette ou non", () => {
+    const trait = (ctx) => ctx.appels.filter((a) => a === "stroke").length;
+    expect(trait(piece({ silhouette: true }).ctx)).toBeGreaterThan(
+      trait(piece({ silhouette: false }).ctx),
+    );
   });
 });

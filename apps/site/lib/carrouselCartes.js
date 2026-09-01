@@ -1490,7 +1490,7 @@ function polyligne(ctx, points, couleur, epaisseur, liseré) {
   ctx.stroke();
 }
 
-function couleurDuJour(carte, jour) {
+export function couleurDuJour(carte, jour) {
   return (
     carte?.etiquettes?.[jour]?.couleur ??
     PALETTE_JOURS[jour % PALETTE_JOURS.length]
@@ -3105,7 +3105,12 @@ function dessinerCloture(ctx, format, o) {
  * déplace — c'est ce déplacement qui fait lire la progression, bien mieux que
  * quatre profils recadrés qui se ressembleraient tous.
  */
-function dessinerProfilCase(ctx, boite, th, { profil, totalKm, journees }) {
+function dessinerProfilCase(
+  ctx,
+  boite,
+  th,
+  { profil, totalKm, journees, silhouette = true },
+) {
   const points = (profil ?? []).filter(
     (p) => Number.isFinite(p?.km) && Number.isFinite(p?.alt),
   );
@@ -3121,13 +3126,15 @@ function dessinerProfilCase(ctx, boite, th, { profil, totalKm, journees }) {
   const Y = (alt) => boite.y + (1 - (alt - min) / amplitude) * boite.height;
   const base = boite.y + boite.height;
 
-  ctx.beginPath();
-  ctx.moveTo(X(points[0].km), Y(points[0].alt));
-  for (const p of points) ctx.lineTo(X(p.km), Y(p.alt));
-  ctx.strokeStyle = th.profilRestant;
-  ctx.lineWidth = Math.max(1, boite.height * 0.022);
-  ctx.lineJoin = "round";
-  ctx.stroke();
+  if (silhouette) {
+    ctx.beginPath();
+    ctx.moveTo(X(points[0].km), Y(points[0].alt));
+    for (const p of points) ctx.lineTo(X(p.km), Y(p.alt));
+    ctx.strokeStyle = th.profilRestant;
+    ctx.lineWidth = Math.max(1, boite.height * 0.022);
+    ctx.lineJoin = "round";
+    ctx.stroke();
+  }
 
   // UNE aire par journée montrée : la grille n'en passe qu'une, l'étape en passe
   // autant qu'elle en a parcourues. Chacune garde SA couleur — c'est ce qui fait
@@ -3155,11 +3162,132 @@ function dessinerProfilCase(ctx, boite, th, { profil, totalKm, journees }) {
   }
 }
 
+/* --------------------------------------------------- les pièces détachées */
+
+/**
+ * LES PIÈCES DÉTACHÉES — la trace et son altimétrie, seules, sur fond
+ * transparent.
+ *
+ * Une planche du studio est un TOUT : elle compose la photo, le titre, les
+ * chiffres et la trace d'un seul geste, et c'est ce qui en fait la valeur. Mais
+ * une slide se monte parfois ailleurs — Canva, une story bricolée au pouce — et
+ * il faut alors la trace SEULE, en PNG transparent, à poser sur autre chose.
+ * Sans ça il ne restait qu'à découper une capture d'écran, ce qui rend un carré
+ * de fond avec.
+ *
+ * L'ALTIMÉTRIE VIENT TOUJOURS AVEC : les deux se lisent ensemble — où l'on est
+ * passé, et ce que ça montait — et les séparer obligerait à les réaligner à la
+ * main dans l'outil de montage. Elles partagent donc la largeur et le cadrage,
+ * exactement comme dans une case de journée.
+ *
+ * @param {Array} o.journees - les journées à colorer. Une seule, et c'est « le
+ *   bout de la trace » ; toutes, et c'est le tour entier.
+ * @param {boolean} o.silhouette - la boucle entière en sourdine derrière.
+ * @returns {number} la hauteur réellement dessinée — le profil peut manquer.
+ */
+export function dessinerPieceTrace(
+  ctx,
+  boite,
+  th,
+  { coords, profil, totalKm, journees, silhouette = true, partProfil = 0.24 },
+) {
+  const avecProfil =
+    partProfil > 0.01 && (profil ?? []).filter((p) => p?.km != null).length > 1;
+  const ecart = avecProfil ? Math.round(boite.width * 0.04) : 0;
+  const hProfil = avecProfil ? Math.round(boite.width * partProfil) : 0;
+  const cote = Math.max(0, boite.height - ecart - hProfil);
+  const vue = silhouette
+    ? { coords, profil, totalKm, journees }
+    : fenetreDesJournees({ coords, profil, totalKm, journees });
+
+  dessinerCarteCase(
+    ctx,
+    { x: boite.x, y: boite.y, width: boite.width, height: cote },
+    th,
+    { coords: vue.coords, journees: vue.journees, silhouette },
+  );
+  if (avecProfil) {
+    dessinerProfilCase(
+      ctx,
+      {
+        x: boite.x,
+        y: boite.y + cote + ecart,
+        width: boite.width,
+        height: hProfil,
+      },
+      th,
+      {
+        profil: vue.profil,
+        totalKm: vue.totalKm,
+        journees: vue.journees,
+        silhouette,
+      },
+    );
+  }
+  return cote + ecart + hProfil;
+}
+
+/**
+ * LA MÊME PIÈCE, CADRÉE SUR LE SEUL BOUT MONTRÉ.
+ *
+ * Éteindre la silhouette laissait la portion là où elle est dans le tour : un
+ * petit trait dans un grand carré vide, puisque le cadrage venait de la trace
+ * ENTIÈRE. C'est le bon rendu tant qu'on garde la boucle derrière — les deux
+ * pièces se superposent alors au pixel dans l'outil de montage — mais sans
+ * elle, plus rien ne justifie le vide.
+ *
+ * La règle tient donc en une phrase : on cadre sur ce qu'on MONTRE. Le profil
+ * suit, rebasé sur le début de la fenêtre, sinon il s'étalerait encore sur les
+ * kilomètres qu'on vient de retirer.
+ */
+function fenetreDesJournees({ coords, profil, totalKm, journees }) {
+  const montrees = (journees ?? []).filter((j) => j?.seg?.coords?.length > 1);
+  if (montrees.length === 0) return { coords, profil, totalKm, journees };
+
+  const debut = Math.min(...montrees.map((j) => j.kmDebut ?? 0));
+  const fin = Math.max(...montrees.map((j) => j.kmFin ?? 0));
+  const etendue = fin - debut;
+  return {
+    coords: montrees.flatMap((j) => j.seg.coords),
+    profil:
+      etendue > 0
+        ? (profil ?? [])
+            .filter((p) => p?.km >= debut && p?.km <= fin)
+            .map((p) => ({ ...p, km: p.km - debut }))
+        : profil,
+    totalKm: etendue > 0 ? etendue : totalKm,
+    journees:
+      etendue > 0
+        ? montrees.map((j) => ({
+            ...j,
+            kmDebut: (j.kmDebut ?? 0) - debut,
+            kmFin: (j.kmFin ?? 0) - debut,
+          }))
+        : montrees,
+  };
+}
+
+/** La hauteur d'une pièce « trace + altimétrie » pour une largeur donnée : la
+ *  carte est CARRÉE, le profil se pose dessous. Mesure et dessin lisent la même
+ *  règle, sinon la pièce exportée porterait une bande transparente en trop. */
+export function hauteurPieceTrace(
+  largeur,
+  { partProfil = 0.24, avecProfil = true } = {},
+) {
+  if (!avecProfil || partProfil <= 0.01) return largeur;
+  return Math.round(largeur * (1 + 0.04 + partProfil));
+}
+
 /** La vignette d'itinéraire : la boucle entière en sourdine, les journées
  *  montrées par-dessus, chacune à sa couleur. Le cadrage vient de la trace
  *  COMPLÈTE, donc la boucle occupe exactement la même place d'une planche (ou
  *  d'une case) à l'autre — c'est ce qui fait tenir une série. */
-function dessinerCarteCase(ctx, boite, th, { coords, journees }) {
+function dessinerCarteCase(
+  ctx,
+  boite,
+  th,
+  { coords, journees, silhouette = true },
+) {
   const marge = Math.round(Math.min(boite.width, boite.height) * 0.08);
   const vue = fitView(coords, {
     width: boite.width,
@@ -3177,13 +3305,20 @@ function dessinerCarteCase(ctx, boite, th, { coords, journees }) {
     return [boite.x + x, boite.y + y];
   };
   const epaisseur = Math.max(1.5, boite.width * 0.022);
-  polyligne(
-    ctx,
-    decimerPixels(coords.map(projeter)),
-    th.cle === "clair" ? "rgba(34, 36, 30, 0.24)" : "rgba(254, 251, 246, 0.22)",
-    epaisseur * 0.7,
-    false,
-  );
+  // LA BOUCLE ENTIÈRE, en sourdine, derrière la portion en couleur : c'est elle
+  // qui SITUE la journée. On peut l'éteindre — une pièce détachée destinée à un
+  // montage n'a pas toujours à porter le tour complet.
+  if (silhouette) {
+    polyligne(
+      ctx,
+      decimerPixels(coords.map(projeter)),
+      th.cle === "clair"
+        ? "rgba(34, 36, 30, 0.24)"
+        : "rgba(254, 251, 246, 0.22)",
+      epaisseur * 0.7,
+      false,
+    );
+  }
   for (const { seg, couleur } of journees ?? []) {
     if (!(seg?.coords?.length > 1)) continue;
     polyligne(

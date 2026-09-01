@@ -1,0 +1,76 @@
+# Déploie le SITE sur Cloudflare Pages à chaque push sur `main`. Le pendant, côté
+# Pages, de `deploy-vps.yml` : le « git-push-to-deploy » de l'ADR 0001, appliqué
+# à l'app qui n'est pas conteneurisée.
+#
+# TANT QUE LES SECRETS NE SONT PAS POSÉS, LE JOB SE SAUTE — il ne casse rien et
+# `pnpm -F site deploy:cf` en local reste la voie manuelle. Pour l'activer :
+# Settings → Secrets and variables → Actions, deux secrets de dépôt :
+#   CLOUDFLARE_API_TOKEN   jeton avec la permission « Cloudflare Pages: Edit »
+#   CLOUDFLARE_ACCOUNT_ID  l'ID de compte, en haut à droite du dashboard
+# (aucune valeur dans le repo, cf. docs/secrets.md.)
+name: deploy-site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/site/**"
+      - "packages/ui/**"
+      - "packages/tracking/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/deploy-site.yml"
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-site
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Le déploiement Cloudflare est-il configuré ?
+        id: check
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CLOUDFLARE_API_TOKEN absent → déploiement ignoré. Déploie avec pnpm -F site deploy:cf."
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.check.outputs.enabled == 'true'
+
+      - uses: pnpm/action-setup@v4
+        if: steps.check.outputs.enabled == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.check.outputs.enabled == 'true'
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Installer
+        if: steps.check.outputs.enabled == 'true'
+        run: pnpm install --frozen-lockfile
+
+      # LES GARDE-FOUS AVANT LA MISE EN LIGNE. Le site ne doit jamais partir
+      # cassé : c'est la règle du CLAUDE.md, et c'est le seul moment où on peut
+      # encore l'arrêter sans que personne ne le voie.
+      - name: Lint
+        if: steps.check.outputs.enabled == 'true'
+        run: pnpm -F site lint
+
+      - name: Tests
+        if: steps.check.outputs.enabled == 'true'
+        run: pnpm -F site test
+
+      - name: Construire et déployer
+        if: steps.check.outputs.enabled == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm -F site deploy:cf
