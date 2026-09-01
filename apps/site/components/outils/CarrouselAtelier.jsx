@@ -344,6 +344,10 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0", style = 
     ombre_pied: true,
     /** Le filet court sous le titre — allumé d'office sur la fiche. */
     filetTitre: gabarit === "fiche",
+    /** …et il souligne le DUO quand le surtitre passe derrière le titre : dans
+     *  cet ordre le surtitre est un sous-titre, et un trait glissé entre les
+     *  deux les sépare au lieu de les tenir ensemble. */
+    filetSousDuo: false,
     filetTitreLargeur: 96,
     filetTitreEpaisseur: 4,
     couleurFiletTitre: "",
@@ -385,6 +389,9 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0", style = 
     caseCarte: true,
     caseProfil: true,
     caseFilet: true,
+    /** ÉTAPE — le filet qui ouvre le bloc trace + chiffres. Son propre réglage,
+     *  comme celui de l'en-tête et celui du pied. */
+    filetDonnees: true,
     /* --- clôture --- */
     /** Ce qui passe AU-DESSUS du logo, pièce par pièce. */
     clotureHaut_surtitre: false,
@@ -477,6 +484,7 @@ export const CHAMPS_DE_STYLE = [
   "surtitreFilet",
   "puce",
   "filetTitre",
+  "filetSousDuo",
   "filetTitreLargeur",
   "filetTitreEpaisseur",
   "couleurFiletTitre",
@@ -511,6 +519,7 @@ export const CHAMPS_DE_STYLE = [
   "photoRemontee",
   "caseProfil",
   "caseFilet",
+  "filetDonnees",
 ];
 
 function styleDe(carte) {
@@ -2083,6 +2092,14 @@ export default function CarrouselAtelier() {
                     coche={carte?.filetTitre}
                     onChange={(v) => majCarte({ filetTitre: v })}
                   />
+                  {carte?.filetTitre && carte?.titreDevant && (
+                    <Case
+                      classe="mb-2 pl-6"
+                      label="…et sous le surtitre, qui devient un sous-titre"
+                      coche={carte?.filetSousDuo === true}
+                      onChange={(v) => majCarte({ filetSousDuo: v })}
+                    />
+                  )}
                   {carte?.filetTitre && (
                     <div className="mb-3 grid grid-cols-2 gap-2 pl-6">
                       <Taille
@@ -3522,6 +3539,13 @@ export default function CarrouselAtelier() {
                       coche={carte?.filetPied !== false}
                       onChange={(v) => majCarte({ filetPied: v })}
                     />
+                    {carte?.gabarit === "etape" && (
+                      <Case
+                        label="Ligne au-dessus des données"
+                        coche={carte?.filetDonnees !== false}
+                        onChange={(v) => majCarte({ filetDonnees: v })}
+                      />
+                    )}
                   </div>
                 </Groupe>
 
