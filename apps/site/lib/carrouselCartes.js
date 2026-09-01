@@ -45,6 +45,7 @@ import {
   dessinerCapitales,
   dessinerLigneRiche,
   encreDe,
+  largeurBlocs,
   largeurCapitales,
   morceauxCapitales,
   largeurLigne,
@@ -574,6 +575,9 @@ export function lignes(ctx, texte, largeurMax) {
  * des sous-ensembles latins et n'ont pas U+2192 (elle sortirait en carré).
  */
 /** Interligne d'un titre, en parts de son corps. */
+/** L'écart après le titre, en corps de ce qui suit (cf. `blocTitreEtCorps`). */
+const APRES_TITRE = 2.2;
+
 const INTERLIGNE_TITRE = 1.16;
 
 /* ------------------------------------------------------- zones cliquables */
@@ -1733,22 +1737,38 @@ function blocTitreEtCorps(
     // surtitre qui ouvre.
     y = base + m.surtitre * (premier ? 1.3 : 2.1);
   };
-  const poserTitre = () => {
+  /**
+   * L'écart APRÈS le titre se mesure sur CE QUI SUIT, jamais sur le corps seul.
+   *
+   * Il valait 2,2 corps quoi qu'il arrive. C'est juste devant un paragraphe —
+   * la jambe du titre descend sous sa ligne de base, la hampe du corps remonte,
+   * l'écart utile est bien plus petit que l'écart nominal, et « assistance. »
+   * collait à « Quatre jours ». Mais devant un SURTITRE, qui est une ligne de
+   * petites capitales de 22, ces 2,2 corps ouvraient un trou de cent pixels
+   * pour rien : on mesurait un écart avec la mauvaise règle.
+   */
+  const poserTitre = (suivant) => {
     poserOmbre(ctx, ombre, "titre");
     const haut = y;
     const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeur, bt);
     y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.86, bt, { align, largeur });
     y = filetSousTitre(ctx, m, th, carte, y, { align, x: m.pad, largeur });
     zoneTexte(zones, "titre", m, m.pad, largeur, haut, y);
-    // 2,2 corps et pas 1,7 : la jambe du titre descend sous sa ligne de base et
-    // la hampe du corps remonte — l'écart utile est bien plus petit que l'écart
-    // nominal, et « assistance. » collait à « Quatre jours ».
-    y += m.corps * 2.2;
+    if (!suivant) return;
+    y += (suivant === "surtitre" ? m.surtitre : m.corps) * nombre(carte?.apresTitre, APRES_TITRE);
   };
 
-  for (const [i, quoi] of ordreDuTitre(carte).entries()) {
+  const ordre = ordreDuTitre(carte);
+  for (const [i, quoi] of ordre.entries()) {
     if (quoi === "surtitre" && carte.surtitre) poserSurtitre(i === 0);
-    if (quoi === "titre" && carte.titre) poserTitre();
+    if (quoi === "titre" && carte.titre) {
+      // Ce qui vient après le titre : l'autre ligne du duo si elle est écrite,
+      // sinon le corps s'il y en a un, sinon rien — et le bloc s'arrête là.
+      const apres = ordre[i + 1];
+      poserTitre(
+        apres === "surtitre" && carte.surtitre ? "surtitre" : carte.texte ? "texte" : null,
+      );
+    }
   }
   if (carte.texte) {
     poserOmbre(ctx, ombre, "corps");
@@ -2582,11 +2602,17 @@ function colonneDeTexte(ctx, m, th, polices, carte, boite, { ombre, zones }) {
   const texte = carte.colonne ?? "";
   if (!texte.trim()) return 0;
   const base = baseDeColonne(m, th, polices, carte);
-  poserOmbre(ctx, ombre, "corps");
   const blocs = blocsDeTexte(ctx, texte, boite.width, base);
-  poserBlocs(ctx, blocs, boite.x, boite.y, base, {
+  // LE BLOC se centre dans sa moitié, PAS ses lignes : les libellés et les
+  // valeurs restent alignés entre eux — les centrer chacun ferait un escalier —
+  // mais l'ensemble se pose au milieu de la place qu'on lui a donnée, au lieu
+  // de se coller contre la trace.
+  const naturelle = Math.min(boite.width, largeurBlocs(ctx, blocs, base));
+  const x = boite.x + Math.round((boite.width - naturelle) / 2);
+  poserOmbre(ctx, ombre, "corps");
+  poserBlocs(ctx, blocs, x, boite.y, base, {
     align: alignementDe(carte),
-    largeur: boite.width,
+    largeur: naturelle,
     puce: carte.puce,
   });
   sansOmbre(ctx);
@@ -2697,33 +2723,40 @@ function dessinerEtape(ctx, format, o) {
   const basBloc = m.piedFilet - Math.round(48 * m.k);
   const hBloc = Math.max(0, basBloc - hautBloc);
 
-  const part = Math.max(0, Math.min(0.7, nombre(carte.partCarte, 0.44)));
+  /* DEUX MOITIÉS, et chacune tient son contenu AU MILIEU. La trace était calée
+     contre la marge gauche et les chiffres commençaient au bord de son carré :
+     comme la vignette laisse une marge autour de la boucle, les chiffres
+     paraissaient collés à elle, et tout le bloc penchait à gauche. `partCarte`
+     règle le partage — à 0,5 les deux moitiés sont égales, à 0 la trace
+     disparaît et le texte reprend toute la largeur. */
+  const part = Math.max(0, Math.min(0.7, nombre(carte.partCarte, 0.5)));
   const avecCarte = carte.caseCarte !== false && part > 0.02 && cadre?.coords?.length > 1;
   const avecProfil = avecCarte && carte.afficherProfil !== false && cadre?.profil?.length > 1;
 
   let boiteColonne = { x: m.pad, y: hautBloc, width: largeur };
 
   if (avecCarte) {
+    const moitie = Math.round(largeur * part);
     const ecart = avecProfil ? Math.round(16 * m.k) : 0;
     const hProfil = avecProfil ? Math.round(Math.min(hBloc * 0.19, 84 * m.k)) : 0;
-    const cote = Math.max(0, Math.min(hBloc - hProfil - ecart, Math.round(largeur * part)));
+    const cote = Math.max(0, Math.min(hBloc - hProfil - ecart, moitie));
     if (cote > 60 * m.k) {
+      const xCarte = m.pad + Math.round((moitie - cote) / 2);
       sansOmbre(ctx);
-      dessinerCarteCase(ctx, { x: m.pad, y: hautBloc, width: cote, height: cote }, th, {
+      dessinerCarteCase(ctx, { x: xCarte, y: hautBloc, width: cote, height: cote }, th, {
         coords: cadre.coords,
         journees,
       });
       if (avecProfil) {
         dessinerProfilCase(
           ctx,
-          { x: m.pad, y: hautBloc + cote + ecart, width: cote, height: hProfil },
+          { x: xCarte, y: hautBloc + cote + ecart, width: cote, height: hProfil },
           th,
           { profil: cadre.profil, totalKm: cadre.totalKm, journees },
         );
       }
-      zone(zones, "carte", m.pad, hautBloc, cote, cote + ecart + hProfil);
-      const gouttiere = Math.round(52 * m.k);
-      boiteColonne = { x: m.pad + cote + gouttiere, y: hautBloc, width: largeur - cote - gouttiere };
+      zone(zones, "carte", m.pad, hautBloc, moitie, cote + ecart + hProfil);
+      boiteColonne = { x: m.pad + moitie, y: hautBloc, width: largeur - moitie };
     }
   }
 
