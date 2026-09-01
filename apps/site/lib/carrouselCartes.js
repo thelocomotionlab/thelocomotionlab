@@ -1718,7 +1718,7 @@ function blocTitreEtCorps(
   const bt = baseTitre(m, th, polices, carte, echelleTitre);
   const bc = baseCorps(m, th, polices, carte);
 
-  const poserSurtitre = (premier) => {
+  const poserSurtitre = (premier, ferme = false) => {
     poserOmbre(ctx, ombre, "surtitre");
     ctx.fillStyle = th.accent;
     // En tête de bloc, `y` EST la ligne de base. Après le titre, il faut
@@ -1736,6 +1736,17 @@ function blocTitreEtCorps(
     // corps : il lui faut le même souffle qu'à un titre, pas l'écart serré d'un
     // surtitre qui ouvre.
     y = base + m.surtitre * (premier ? 1.3 : 2.1);
+    // `ferme` : le filet passe SOUS LE DUO. Le surtitre est alors le sous-titre
+    // du titre, et un trait glissé entre les deux les séparerait au lieu de les
+    // souligner.
+    if (ferme) {
+      const bas = filetSousTitre(ctx, m, th, carte, base + m.surtitre * 0.4, {
+        align,
+        x: m.pad,
+        largeur,
+      });
+      y = Math.max(y, bas + m.corps * 0.9);
+    }
   };
   /**
    * L'écart APRÈS le titre se mesure sur CE QUI SUIT, jamais sur le corps seul.
@@ -1747,26 +1758,43 @@ function blocTitreEtCorps(
    * petites capitales de 22, ces 2,2 corps ouvraient un trou de cent pixels
    * pour rien : on mesurait un écart avec la mauvaise règle.
    */
-  const poserTitre = (suivant) => {
+  const poserTitre = (suivant, duo) => {
     poserOmbre(ctx, ombre, "titre");
     const haut = y;
     const ls = lignesRiches(ctx, analyserRiche(carte.titre), largeur, bt);
     y = poserLignes(ctx, ls, m.pad, y + bt.taille * 0.86, bt, { align, largeur });
-    y = filetSousTitre(ctx, m, th, carte, y, { align, x: m.pad, largeur });
+    // En duo, le filet attend le surtitre (cf. `poserSurtitre`).
+    if (!duo) y = filetSousTitre(ctx, m, th, carte, y, { align, x: m.pad, largeur });
     zoneTexte(zones, "titre", m, m.pad, largeur, haut, y);
     if (!suivant) return;
     y += (suivant === "surtitre" ? m.surtitre : m.corps) * nombre(carte?.apresTitre, APRES_TITRE);
   };
 
   const ordre = ordreDuTitre(carte);
+  /**
+   * LE DUO : titre puis surtitre, soulignés ENSEMBLE.
+   *
+   * Le filet s'appelle « sous le titre » et se posait sous le titre — ce qui,
+   * quand le surtitre passe derrière, le glisse ENTRE les deux et les sépare.
+   * Or dans cet ordre le surtitre n'ouvre plus, il précise : c'est un
+   * sous-titre, et un trait qui souligne un titre passe sous son sous-titre.
+   */
+  const duo =
+    carte.filetSousDuo === true &&
+    Boolean(carte.filetTitre) &&
+    Boolean(carte.titre) &&
+    Boolean(carte.surtitre) &&
+    ordre[0] === "titre";
+
   for (const [i, quoi] of ordre.entries()) {
-    if (quoi === "surtitre" && carte.surtitre) poserSurtitre(i === 0);
+    if (quoi === "surtitre" && carte.surtitre) poserSurtitre(i === 0, duo);
     if (quoi === "titre" && carte.titre) {
       // Ce qui vient après le titre : l'autre ligne du duo si elle est écrite,
       // sinon le corps s'il y en a un, sinon rien — et le bloc s'arrête là.
       const apres = ordre[i + 1];
       poserTitre(
         apres === "surtitre" && carte.surtitre ? "surtitre" : carte.texte ? "texte" : null,
+        duo,
       );
     }
   }
@@ -2772,8 +2800,10 @@ function dessinerEtape(ctx, format, o) {
   colonneDeTexte(ctx, m, th, polices, carte, boiteColonne, { ombre, zones });
 
   // Le filet qui ouvre le bloc de données : la troisième règle de la page, avec
-  // celle de l'en-tête et celle du pied. C'est elle qui fait la note de labo.
-  if (carte.caseFilet !== false && hBloc > 0) {
+  // celle de l'en-tête et celle du pied. C'est elle qui fait la note de labo —
+  // et elle a SON réglage, comme les deux autres, plutôt que d'emprunter celui
+  // des séparateurs de la grille des journées.
+  if (carte.filetDonnees !== false && hBloc > 0) {
     sansOmbre(ctx);
     ctx.fillStyle = th.filet;
     ctx.fillRect(m.pad, hautBloc - Math.round(16 * m.k), largeur, Math.max(1, 1.5 * m.k));
