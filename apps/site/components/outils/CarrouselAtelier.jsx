@@ -60,9 +60,13 @@ import {
   THEMES,
   casesEffectives,
   chargerFond,
+  couleurDuJour,
   dessinerCartePartage,
+  dessinerPieceTrace,
   dureeCourte,
   colonneDeJournee,
+  hauteurPieceTrace,
+  journeesMontrees,
   ligneDeJournee,
   ligneFactuelle,
   texteDeJournee,
@@ -724,6 +728,11 @@ export default function CarrouselAtelier() {
   const [marque, setMarque] = useState(null);
   const [policePrete, setPolicePrete] = useState(false);
   const [etat, setEtat] = useState({ occupe: false, message: "" });
+  /* LES PIÈCES DÉTACHÉES — réglages du LOT, pas d'une planche : on n'exporte
+     pas une pièce « de la planche 4 », on exporte la trace du projet. */
+  const [piecesTaille, setPiecesTaille] = useState(1200);
+  const [piecesProfil, setPiecesProfil] = useState(true);
+  const [piecesSilhouette, setPiecesSilhouette] = useState(true);
   const [nomProjet, setNomProjet] = useState("");
   const [projets, setProjets] = useState([]);
   /** L'autosauvegarde n'écrit qu'une fois le projet RESTAURÉ : sans ce
@@ -1686,6 +1695,80 @@ export default function CarrouselAtelier() {
     [cartes, options, format, bilan],
   );
 
+  /**
+   * LES PIÈCES DÉTACHÉES — la trace et le logo, seuls, en PNG TRANSPARENT.
+   *
+   * Une planche est un tout, et c'est ce qui en fait la valeur ; mais une slide
+   * se monte parfois ailleurs (Canva), et il faut alors les morceaux. Sans ça
+   * il ne restait qu'à découper une capture d'écran — qui rend un carré de fond
+   * avec, sur lequel plus rien ne se pose.
+   *
+   * LA PORTION SUIT LA PLANCHE COURANTE : ses journées montrées (« Jour 3 » ou
+   * « du 1 au 3 ») sont celles qui sortent en couleur. C'est le réglage qu'on
+   * vient de faire à l'œil dans l'aperçu — en redemander un second, propre à
+   * l'export, aurait été un moyen de les faire diverger.
+   */
+  const exporterPiece = useCallback(
+    async (quoi) => {
+      const largeur = Math.max(200, Math.round(Number(piecesTaille) || 1200));
+      const hors = document.createElement("canvas");
+      const horodatage = Date.now();
+
+      if (quoi === "logo") {
+        if (!marque) return;
+        hors.width = largeur;
+        hors.height = largeur;
+        const ctx = hors.getContext("2d");
+        ctx.drawImage(marque, 0, 0, largeur, largeur);
+      } else {
+        const cadre = traceCadre ?? trace;
+        if (!(cadre?.coords?.length > 1)) return;
+        const avecProfil = piecesProfil && cadre.profil?.length > 1;
+        hors.width = largeur;
+        hors.height = hauteurPieceTrace(largeur, { avecProfil });
+        const ctx = hors.getContext("2d");
+        dessinerPieceTrace(
+          ctx,
+          { x: 0, y: 0, width: largeur, height: hors.height },
+          theme,
+          {
+            coords: cadre.coords,
+            profil: cadre.profil,
+            totalKm: cadre.totalKm,
+            journees: journeesMontrees(carte ?? {}, segments).map(
+              ({ jour, seg }) => ({
+                seg,
+                kmDebut: seg.kmDebut,
+                kmFin: seg.kmFin,
+                couleur: couleurDuJour(carte ?? {}, jour),
+              }),
+            ),
+            silhouette: piecesSilhouette,
+            partProfil: avecProfil ? 0.24 : 0,
+          },
+        );
+      }
+
+      setEtat({ occupe: true, message: "Fabrication de la pièce…" });
+      const blob = await new Promise((r) => hors.toBlob(r, "image/png"));
+      // PNG, pas JPEG : c'est la TRANSPARENCE qu'on exporte, un JPEG la
+      // remplirait de blanc et la pièce redeviendrait un carré.
+      if (blob) telecharger(blob, `piece-${quoi}-${horodatage}.png`);
+      setEtat({ occupe: false, message: "" });
+    },
+    [
+      carte,
+      marque,
+      segments,
+      theme,
+      trace,
+      traceCadre,
+      piecesTaille,
+      piecesProfil,
+      piecesSilhouette,
+    ],
+  );
+
   /* --------------------------------------------------------------------- vues */
 
   const aPhoto = AVEC_PHOTO.includes(carte?.gabarit);
@@ -2122,6 +2205,58 @@ export default function CarrouselAtelier() {
               <Download size={15} aria-hidden />
               Cette planche seulement
             </button>
+          </Groupe>
+
+          {/* LES PIÈCES DÉTACHÉES : de quoi monter la slide ailleurs. */}
+          <Groupe
+            titre="Pièces détachées"
+            aide="En PNG transparent, à poser sur autre chose (Canva). La portion colorée est celle de la planche courante : « Jour 3 » ici sort le Jour 3 là."
+          >
+            <div className="mb-3">
+              <Curseur
+                id="pieces-taille"
+                label="Largeur"
+                valeur={piecesTaille}
+                defaut={1200}
+                min={300}
+                max={3000}
+                pas={100}
+                format={(v) => `${Math.round(v)} px`}
+                onChange={(v) => setPiecesTaille(v ?? 1200)}
+              />
+            </div>
+            <div className="mb-3 flex flex-col gap-1.5">
+              <Case
+                label="Altimétrie en dessous"
+                coche={piecesProfil}
+                onChange={setPiecesProfil}
+              />
+              <Case
+                label="Silhouette du tour entier"
+                coche={piecesSilhouette}
+                onChange={setPiecesSilhouette}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                className={`${BOUTON_SECOND} w-full`}
+                disabled={etat.occupe || !(traceCadre ?? trace)?.coords?.length}
+                onClick={() => exporterPiece("trace")}
+              >
+                <Download size={15} aria-hidden />
+                La trace{piecesProfil ? " + l’altimétrie" : ""}
+              </button>
+              <button
+                type="button"
+                className={`${BOUTON_SECOND} w-full`}
+                disabled={etat.occupe || !marque}
+                onClick={() => exporterPiece("logo")}
+              >
+                <Download size={15} aria-hidden />
+                Le logo
+              </button>
+            </div>
           </Groupe>
         </>
       )}
