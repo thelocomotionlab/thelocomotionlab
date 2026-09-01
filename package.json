@@ -15,7 +15,8 @@
     "build:site": "pnpm -F site build",
     "lint:site": "pnpm -F site lint",
     "deploy:site": "pnpm -F site deploy:cf",
-    "deploy:site:staging": "pnpm -F site deploy:staging"
+    "deploy:site:staging": "pnpm -F site deploy:staging",
+    "ship": "bash scripts/ship.sh"
   },
   "devDependencies": {
     "turbo": "^2.5.0"

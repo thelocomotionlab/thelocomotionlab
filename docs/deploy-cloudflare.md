@@ -121,3 +121,41 @@ repo — cf. `docs/secrets.md`).
 > Tant que ces réglages ne sont pas appliqués, **un push casserait le build Cloudflare** (il
 > chercherait `package.json` à la racine, qui n'y est plus). Applique la checklist **avant** de pousser
 > la branche de production.
+
+---
+
+## Livrer une branche de dév, en une commande
+
+Le cycle « je récupère la branche, je fusionne dans `main`, je pousse, je déploie » tient dans :
+
+```bash
+pnpm ship                       # la branche courante
+pnpm ship claude/ma-branche     # une branche nommée
+pnpm ship --deploy              # …et déploie depuis ici, sans passer par la CI
+```
+
+`scripts/ship.sh` refuse de tourner sur un arbre sale, et fusionne en
+**fast-forward seulement** : si `main` a bougé de son côté, il s'arrête au lieu de fabriquer un
+commit de merge qu'on n'a pas demandé.
+
+### …et sans le déploiement manuel du tout
+
+`.github/workflows/deploy-site.yml` déploie le site à chaque push sur `main` qui touche
+`apps/site/`, `packages/ui/`, `packages/tracking/` ou le lockfile — après `lint` **et** `test`, pour
+que rien de cassé ne parte en ligne. C'est le pendant Pages de `deploy-vps.yml`, et le
+« git-push-to-deploy » de l'[ADR 0001](adr/0001-deploiement-vps.md).
+
+**Tant que ses deux secrets ne sont pas posés, le job se saute** : il ne casse rien, et
+`pnpm -F site deploy:cf` reste la voie manuelle. Pour l'activer, dans GitHub →
+**Settings → Secrets and variables → Actions** :
+
+| Secret | Où le trouver |
+| --- | --- |
+| `CLOUDFLARE_API_TOKEN` | dashboard Cloudflare → My Profile → API Tokens → *Create Token*, permission **Cloudflare Pages: Edit** |
+| `CLOUDFLARE_ACCOUNT_ID` | dashboard Cloudflare, colonne de droite de la page d'accueil du compte |
+
+Aucune valeur ne descend dans le repo (cf. [`secrets.md`](secrets.md)).
+
+> **L'autre voie** — l'intégration Git de Cloudflare Pages (section précédente) fait la même chose
+> sans secret GitHub, mais construit sur l'image Cloudflare et ne passe ni le lint ni les tests
+> avant de publier. Les deux ensemble déploieraient deux fois : n'en garde qu'une.
