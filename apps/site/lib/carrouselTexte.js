@@ -54,7 +54,8 @@ export const COULEURS_TEXTE = {
 };
 
 export const AIDE_BALISAGE =
-  "*gras*  _italique_  ~souligné~  [en ambre]  [bleu: mot]  :col: (icône)  > retrait\n" +
+  "*gras*  _italique_  ~souligné~  [en ambre]  [bleu: mot]  > retrait\n" +
+  ":col: (icône)  :fleche: (celle du swipe)\n" +
   "[serif: mot]  [mono: 57,5 km]  — la police, au mot\n" +
   "Distance = 57,5 km  — libellé en capitales, valeur en gros dessous\n" +
   "- point de liste — « - :sac: » met CETTE icône en puce\n" +
@@ -126,7 +127,7 @@ export function analyserRiche(texte, style = {}) {
     const c = source[i];
     if (c === ":") {
       const m = ICONE.exec(source.slice(i));
-      if (m && iconeConnue(m[1])) {
+      if (m && (iconeConnue(m[1]) || glypheTrace(m[1]))) {
         pousser();
         out.push({ ...style, texte: "", icone: m[1] });
         i += m[0].length - 1;
@@ -211,9 +212,63 @@ const EST_ESPACE = /^\s+$/;
  */
 const CENTRE_CAPITALES = 0.35;
 
-/** L'encombrement d'une icône : un carré, plus un souffle de chaque côté. */
-export function largeurIcone(base) {
-  return base.taille * 1.24;
+/**
+ * LA FLÈCHE DU LABO, tracée à la main — et à un seul endroit.
+ *
+ * Le canvas SAIT afficher U+2192 : il retombe sur une fonte système. Et c'est
+ * précisément le problème — la flèche arriverait dans un dessin qui n'est pas
+ * celui d'Ubuntu, et changerait d'un appareil à l'autre. On la trace donc, ici,
+ * une fois : le pied de page (« glisse → »), la puce d'une liste et `:fleche:`
+ * au milieu d'une phrase posent EXACTEMENT la même, à leurs tailles
+ * respectives. Trois dessins séparés auraient divergé au premier retouchage.
+ *
+ * `x` est son bord gauche, `y` la ligne que suit la hampe. Rend sa largeur.
+ */
+export function flecheTracee(ctx, x, y, taille, couleur, epaisseur = null) {
+  const longueur = taille * FLECHE_LARGEUR;
+  const pointe = x + longueur;
+  ctx.save();
+  ctx.strokeStyle = couleur;
+  ctx.lineWidth = epaisseur ?? Math.max(1.5, taille * 0.08);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(pointe, y);
+  ctx.moveTo(pointe - taille * 0.34, y - taille * 0.3);
+  ctx.lineTo(pointe, y);
+  ctx.lineTo(pointe - taille * 0.34, y + taille * 0.3);
+  ctx.stroke();
+  ctx.restore();
+  return longueur;
+}
+
+/** Sa hampe fait 1,35 corps : c'est la proportion relevée sur le pied de page,
+ *  et c'est elle qui fait qu'on reconnaît la flèche du swipe partout. */
+export const FLECHE_LARGEUR = 1.35;
+
+/**
+ * LES GLYPHES TRACÉS, posables dans une phrase comme une icône.
+ *
+ * Le vocabulaire de `:clé:` vient des repères de la carte, qui sont des dessins
+ * lucide. La flèche, elle, n'en est pas un — elle est tracée. Elle rejoint
+ * quand même le vocabulaire : de l'endroit où on écrit, `:fleche:` et `:col:`
+ * sont la même chose, et devoir savoir laquelle est « vraiment » une icône
+ * serait un détail d'implémentation qui remonte à la surface.
+ */
+const GLYPHES = {
+  fleche: { largeur: FLECHE_LARGEUR + 0.3, dessiner: flecheTracee },
+};
+
+export function glypheTrace(cle) {
+  return GLYPHES[cle] ?? null;
+}
+
+/** L'encombrement d'une icône : un carré, plus un souffle de chaque côté — ou
+ *  la largeur propre au glyphe, quand il n'est pas carré (la flèche est longue
+ *  et plate : lui donner un carré ouvrirait un trou avant le mot suivant). */
+export function largeurIcone(base, cle = null) {
+  return base.taille * (glypheTrace(cle)?.largeur ?? 1.24);
 }
 
 /**
@@ -245,7 +300,7 @@ export function lignesRiches(ctx, morceaux, largeurMax, base, { retrait = 0 } = 
 
   for (const mot of mots) {
     ctx.font = fonteDe(mot, base);
-    const w = mot.icone ? largeurIcone(base) : ctx.measureText(mot.texte).width;
+    const w = mot.icone ? largeurIcone(base, mot.icone) : ctx.measureText(mot.texte).width;
     const espace = !mot.icone && EST_ESPACE.test(mot.texte);
 
     // L'ALINÉA rétrécit la PREMIÈRE ligne, pas les suivantes : c'est ce qui
@@ -411,6 +466,19 @@ export function dessinerLigneRiche(ctx, ligne, x, y, base) {
     if (morceau.icone) {
       // Centrée sur le milieu optique des capitales, pas sur la ligne de base :
       // posée sur la ligne de base elle pendrait sous le mot voisin.
+      const glyphe = glypheTrace(morceau.icone);
+      if (glyphe) {
+        const large = base.taille * FLECHE_LARGEUR;
+        glyphe.dessiner(
+          ctx,
+          curseur + (morceau.largeur - large) / 2,
+          y - base.taille * CENTRE_CAPITALES,
+          base.taille,
+          encreDe(morceau, base),
+        );
+        curseur += morceau.largeur;
+        continue;
+      }
       const cote = base.taille * 0.98;
       dessinerIcone(
         ctx,
@@ -465,7 +533,7 @@ export function largeurCapitales(ctx, morceaux, taille, espacementEm) {
   let largeur = 0;
   for (const mo of morceaux) {
     if (mo.icone) {
-      largeur += taille * ICONE_CAPITALES + ecart;
+      largeur += taille * (glypheTrace(mo.icone)?.largeur ?? ICONE_CAPITALES) + ecart;
       continue;
     }
     for (const l of mo.texte) largeur += ctx.measureText(l).width + ecart;
@@ -482,6 +550,15 @@ export function dessinerCapitales(ctx, morceaux, x, base, taille, espacementEm, 
   for (const mo of morceaux) {
     const couleur = mo.couleur ? encreDe(mo, { couleur: parDefaut, accent: encre }) : parDefaut;
     if (mo.icone) {
+      const glyphe = glypheTrace(mo.icone);
+      if (glyphe) {
+        // La flèche suit la ligne des capitales, pas la ligne de base : dans un
+        // surtitre elle doit viser le milieu des lettres, comme le fait celle
+        // du pied de page au-dessus de sa propre ligne.
+        glyphe.dessiner(ctx, curseur, base - taille * CENTRE_CAPITALES, taille, couleur);
+        curseur += taille * glyphe.largeur + ecart;
+        continue;
+      }
       const cote = taille * ICONE_CAPITALES;
       dessinerIcone(ctx, mo.icone, curseur, base - taille * CENTRE_CAPITALES - cote / 2, cote, couleur);
       curseur += cote + ecart;
@@ -900,13 +977,8 @@ function dessinerPuce(ctx, puce, x, baseLigne, base) {
       ctx.fillRect(x, cy - trait / 2, t * 0.9, trait);
       break;
     case "fleche":
-      ctx.beginPath();
-      ctx.moveTo(x + t * 0.04, cy);
-      ctx.lineTo(x + t * 0.5, cy);
-      ctx.moveTo(x + t * 0.32, cy - t * 0.16);
-      ctx.lineTo(x + t * 0.5, cy);
-      ctx.lineTo(x + t * 0.32, cy + t * 0.16);
-      ctx.stroke();
+      // La MÊME que le pied de page et que `:fleche:`, à l'échelle d'une puce.
+      flecheTracee(ctx, x + t * 0.02, cy, t * 0.42, couleur, trait);
       break;
     case "chevron":
       ctx.beginPath();

@@ -360,6 +360,10 @@ function carteNeuve(gabarit, trace, segments, bilan = false, id = "c0", style = 
     // jour, son récit, la trace et ses chiffres — le bandeau, lui, n'a que du
     // texte à loger.
     bandeauPart: gabarit === "etape" ? 0.26 : 0.42,
+    /** ÉTAPE — de combien la photo remonte vers le haut de la planche. 0 = sous
+     *  le filet d'en-tête, 1 = jusqu'au bord. Elle grandit VERS LE HAUT : son
+     *  bas ne bouge pas, donc le titre et la trace restent où ils sont. */
+    photoRemontee: null,
     /** ÉTAPE — la part de largeur que prend la vignette d'itinéraire, les
      *  chiffres occupant le reste. `0` la retire et rend toute la largeur au
      *  tableau. `null` = 44 %, le partage qui laisse la boucle carrée. */
@@ -499,6 +503,7 @@ export const CHAMPS_DE_STYLE = [
   "casesColonnes",
   "caseCarte",
   "partCarte",
+  "photoRemontee",
   "caseProfil",
   "caseFilet",
 ];
@@ -2151,6 +2156,14 @@ export default function CarrouselAtelier() {
                     >
                       + retrait
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => insererDansTexte(":fleche:")}
+                      className={BOUTON_DISCRET}
+                      title="La flèche du swipe, la même que celle du pied de page"
+                    >
+                      + flèche
+                    </button>
                     {/* LOCAL, pas global : ces préfixes ne valent que pour la
                         ligne où on les met. L'alignement et le corps de la
                         planche, eux, restent dans « Composition » et « Allure ». */}
@@ -2245,6 +2258,14 @@ export default function CarrouselAtelier() {
                         title="Un point dont la puce est l'icône qu'on nomme : « - :sac: 8,4 kg »"
                       >
                         + point à icône
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insererDansColonne(":fleche:")}
+                        className={BOUTON_DISCRET}
+                        title="La flèche du swipe, la même que celle du pied de page"
+                      >
+                        + flèche
                       </button>
                       <button
                         type="button"
@@ -2665,6 +2686,44 @@ export default function CarrouselAtelier() {
                       format={(v) => `${Math.round(v * 100)} %`}
                       onChange={(v) => majCarte({ ancrage: v ?? 0.5 })}
                     />
+                    {carte.gabarit === "etape" && (
+                      <>
+                        <div className="mt-3">
+                          <Curseur
+                            id="etape-part"
+                            label="Hauteur de la photo"
+                            valeur={carte.bandeauPart}
+                            defaut={0.26}
+                            min={0.1}
+                            max={0.55}
+                            pas={0.01}
+                            format={(v) => `${Math.round(v * 100)} %`}
+                            onChange={(v) => majCarte({ bandeauPart: v ?? 0.26 })}
+                          />
+                        </div>
+                        <div className="mt-3">
+                          <Curseur
+                            id="etape-remontee"
+                            label="Remonter la photo"
+                            valeur={carte.photoRemontee}
+                            defaut={0}
+                            min={0}
+                            max={1}
+                            pas={0.05}
+                            format={(v) =>
+                              v < 0.03 ? "sous l’en-tête" : v > 0.97 ? "jusqu’en haut" : `${Math.round(v * 100)} %`
+                            }
+                            onChange={(v) => majCarte({ photoRemontee: v ?? 0 })}
+                          />
+                          <p className={`${AIDE} mt-1`}>
+                            Elle grandit vers le HAUT — son bas ne bouge pas, donc le titre et la
+                            trace restent en place. Passé la bande de marque, un voile revient sous
+                            le logo et le filet s&rsquo;efface : un trait sur une photo n&rsquo;est
+                            plus un filet.
+                          </p>
+                        </div>
+                      </>
+                    )}
                     {carte.gabarit === "bandeau" && (
                       <div className="mt-3">
                         <Curseur
