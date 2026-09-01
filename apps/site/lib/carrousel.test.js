@@ -339,14 +339,22 @@ describe("les chiffres d'une étape", () => {
     expect(j2.dMinusM).toBeGreaterThan(0);
   });
 
-  it("écrit la colonne de départ en liste, les nombres en gras", () => {
+  it("écrit la colonne de départ en données « libellé = valeur »", () => {
     expect(colonneDeJournee({ distanceKm: 46.8, dPlusM: 2519, dMinusM: 1940 })).toBe(
-      "- *46,8 km*\n- *2 519 m* D+\n- *1 940 m* D−\n- masse portée : ",
+      [
+        "Distance = 46,8 km",
+        "Dénivelé positif = 2 519 m",
+        "Dénivelé négatif = 1 940 m",
+        "Masse moyenne portée = ",
+      ].join("\n"),
     );
   });
 
-  it("n'invente aucun chiffre, mais rappelle toujours la masse", () => {
-    // Elle ne se déduit d'aucun fichier : la ligne reste, vide, pour être vue.
-    expect(colonneDeJournee(null)).toBe("- masse portée : ");
+  it("garde le libellé quand la trace ne sait rien dire", () => {
+    // Une donnée sans valeur reste une LIGNE : c'est le trou qu'on voit et
+    // qu'on va remplir, pas une ligne qui disparaît.
+    expect(colonneDeJournee(null)).toBe(
+      "Distance = \nDénivelé positif = \nDénivelé négatif = \nMasse moyenne portée = ",
+    );
   });
 });
