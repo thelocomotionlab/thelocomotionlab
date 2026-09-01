@@ -2287,31 +2287,59 @@ function blocTitreEtCorps(
     zoneTexte(zones, "titre", m, m.pad, largeur, haut, base + bt.taille * 0.3);
 
     let sup = 0;
+    let baseSur = base;
     if (largeurSur) {
       poserOmbre(ctx, ombre, "surtitre");
       ctx.fillStyle = th.accent;
       const xSur = m.pad + decal + largeurTitre + ecart;
-      ({ sup } = surtitre(ctx, m, th, policeSur, carte.surtitre, xSur, base, {
-        // Le bloc EST déjà placé : ses lignes se posent à son aplomb, elles ne
-        // se réalignent pas dans une largeur qui n'est plus la leur.
-        align: "gauche",
-        largeur: 0,
-        polices,
-        filet: carte.surtitreFilet !== false,
-        plaque: plaqueDe(carte, th, "surtitre"),
-      }));
+      /**
+       * LES DEUX SE CENTRENT SUR LEUR HAUTEUR DE CAPITALE, pas sur la ligne de
+       * base qu'ils partagent.
+       *
+       * Posé sur la même ligne de base qu'un titre trois fois plus gros, un
+       * surtitre en petites capitales pend au PIED du titre : typographiquement
+       * c'est juste, optiquement c'est un décrochage. On fait donc coïncider
+       * les deux centres optiques — la hauteur de capitale d'Ubuntu vaut ~0,70
+       * em, son milieu est à `CENTRE_CAPITALES` au-dessus de la ligne de base —
+       * ce qui revient à remonter le surtitre de la moitié de ce qui les sépare.
+       */
+      baseSur =
+        base -
+        CENTRE_CAPITALES * (bt.taille - lignesSur[0].taille) +
+        m.surtitre * nombre(carte.decalageDuoEnLigne, 0);
+      ({ sup } = surtitre(
+        ctx,
+        m,
+        th,
+        policeSur,
+        carte.surtitre,
+        xSur,
+        baseSur,
+        {
+          // Le bloc EST déjà placé : ses lignes se posent à son aplomb, elles ne
+          // se réalignent pas dans une largeur qui n'est plus la leur.
+          align: "gauche",
+          largeur: 0,
+          polices,
+          filet: carte.surtitreFilet !== false,
+          plaque: plaqueDe(carte, th, "surtitre"),
+        },
+      ));
       zoneTexte(
         zones,
         "surtitre",
         m,
         xSur,
         largeur - (xSur - m.pad),
-        base - m.surtitre,
-        base + sup + m.surtitre * 0.3,
+        baseSur - m.surtitre,
+        baseSur + sup + m.surtitre * 0.3,
       );
     }
 
-    y = base + sup + bt.taille * 0.3;
+    // Remonté, le surtitre ne décide plus du bas du bloc — mais sur plusieurs
+    // lignes il peut redescendre plus bas que le titre. On prend le plus bas
+    // des deux, sinon le texte qui suit viendrait s'écrire dessus.
+    y = Math.max(base, baseSur + sup) + bt.taille * 0.3;
     // Le filet souligne la PAIRE : elle est le titre, il passe dessous.
     y = filetSousTitre(ctx, m, th, carte, y, { align, x: m.pad, largeur });
     if (carte.texte) y += m.corps * nombre(carte?.apresTitre, APRES_TITRE);
