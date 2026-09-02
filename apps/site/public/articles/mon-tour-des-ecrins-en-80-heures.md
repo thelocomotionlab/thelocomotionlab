@@ -9,7 +9,9 @@ type: "recit"
 published: false
 ---
 
-Après quatre projets d'ultra consécutifs inachevés, je ne savais pas trop à quoi m'attendre sur ce tour d'Écrins en autonomie complète. Un projet encore plus ambitieux que tout ce que j'avais entrepris jusqu'alors. Plus de 190 km et 12 200 m D+ D- en montagne. Des chiffres qui font tourner la tête autant qu'ils m'excitent. Une tentative de plus dans ma quête d'ultra-endurance primale, dont je ne connaissais forcément pas l'issue, tant le nombre de paramètres à ajuster et maîtriser est grand. Et tant par la beauté des Écrins, que par l'intensité de cette aventure, je ne fus pas déçu du voyage. En voici le récit.  
+Voilà une aventure que l'on n'oublie pas. Après quatre projets d'ultra consécutifs inachevés, ce tour des Écrins revêtait l'apparence d'une humble exploration curieuse. Car les chiffres me faisaient tourner la tête : 190 km et 12 200 m de dénivelés positif et négatif. Le genre de trace après laquelle je cours depuis plus de 6 ans lorsque [j'ai débuté la course à pieds](https://thelocomotionlab.com/explorer/la-genese)
+
+Un projet encore plus ambitieux que tout ce que j'avais entrepris jusqu'alors. Plus de 190 km et 12 200 m D+ D- en montagne. Des chiffres qui font tourner la tête autant qu'ils m'excitent. Une tentative de plus dans ma quête d'ultra-endurance primale, dont je ne connaissais forcément pas l'issue, tant le nombre de paramètres à ajuster et maîtriser est grand. Et tant par la beauté des Écrins, que par l'intensité de cette aventure, je ne fus pas déçu du voyage. En voici le récit.  
 
 ## Préambule : connaître la signification
 
