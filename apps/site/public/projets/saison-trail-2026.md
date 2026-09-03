@@ -445,7 +445,16 @@ Cette brèche, réputée assez engagée, permet d'accéder au sommet de Chamecha
 
 Malheureusement, et je le compris bien plus tard, la chaleur eu raison de moi, et durant la montée qui menait au Grand Som, je décidai de ne pas aller au bout de cette trace, et de rentrer à ma voiture par un raccourci bien senti. Les sensations n'étaient pas bonnes, mes jambes ne répondaient pas, comme si elles manquaient d'oxygène pour avancer. Si la culpabilité de ne pas réussir à enchaîner les grosses semaines d'entraînement jusqu'au bout s'est faite ressentir, j'ai tenté de la chasser en me rappelant que je n'avais rien à prouver et qu'il fallait souvent mieux faire l'entraînement juste plutôt que celui de trop. Ce jour-ci, l'entraînement juste était de savoir s'arrêter avant d'aller trop loin.
 
-Au passage, cette sortie fut l'occasion d'étrener mon nouveau système de live tracking. Abondament amélioré, celui-ci me permet désormais de partager l'aventure en direct via des messages, vocaux, photos et vidéos directement transmises sur un journal de bord actualisé en continu sur le direct. Il y a également la possibilité maintenant pour les personnes qui me suivent, de m'envoyer un message que recevrai sur un canal telegram et que je pourrais consulter sans m'éparpiller sur toutes les applis de messagerie instantanée pendant mes futures aventures. L'essai fut très concluant, et l'archive de ce live 2.0 version beta est à retrouver ici :
+Au passage, cette sortie fut l'occasion d'étrener mon nouveau système de live tracking. Abondament amélioré, celui-ci me permet désormais de partager l'aventure en direct via des messages, vocaux, photos et vidéos directement transmises sur un journal de bord actualisé en continu sur le direct. Il y a également la possibilité maintenant pour les personnes qui me suivent, de m'envoyer un message que recevrai sur un canal telegram et que je pourrais consulter sans m'éparpiller sur toutes les applis de messagerie instantanée pendant mes futures aventures. L'essai fut très concluant, et l'archive de ce live 2.0 version beta est à retrouver ici : 
+
+<postlivetracking
+  positions="/replays/chartreuse-4x2000/live-positions.json"
+  totalDistance="49"
+  distanceFactor="1." ascentFactor="1." descentFactor="1."
+  elevationMin="700" elevationMax="2100"
+  referenceGpx="/tracks/4x2000m-chartreuse.gpx"
+  title="Replay des 4x2000m de Chartreuse"
+/>
 
 
 ## Août
