@@ -38,6 +38,7 @@ import Plot from "./PlotLazy";
 import { extractToc } from "@/lib/extractToc";
 import ProjetClientFx from "./ProjetClientFx";
 import ArticleNav from "./ArticleNav";
+import ImagesPleinEcran from "./ImagesPleinEcran";
 import TwinCohorteTeaser from "./TwinCohorteTeaser";
 
 export default function ProjetBody({
@@ -383,6 +384,9 @@ export default function ProjetBody({
         <TwinCohorteTeaser className="mt-12" />
 
         <ArticleNav items={related} kind="projet" />
+
+        {/* Les images du markdown s'ouvrent en taille réelle au clic. */}
+        <ImagesPleinEcran targetSelector=".article-body" />
 
         <div className="mt-12 text-center">
           <Link

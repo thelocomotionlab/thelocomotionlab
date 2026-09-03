@@ -28,10 +28,20 @@ import { visit } from "unist-util-visit";
  *       style="width:auto; max-height: <height>;"   (pour que le ratio
  *       reste correct malgré le `width:100%` posé sur .prose img et
  *       .md-split-col img dans globals.css)
+ *
+ * Et, pour TOUTE image de markdown (options ou pas) : `data-zoomable`, la
+ * marque que lit components/ImagesPleinEcran. C'est le seul endroit du site
+ * qui voit passer les images d'articles ET de projets, et il ne voit qu'elles
+ * — ni les fonds de carte, ni les vignettes d'un replay, ni les figures d'un
+ * graphique ne portent la marque, et aucune n'est donc cliquable par erreur.
  */
 export default function remarkImageOptions() {
   return function transformer(tree) {
     visit(tree, "image", (node) => {
+      node.data = node.data || {};
+      node.data.hProperties = node.data.hProperties || {};
+      node.data.hProperties["data-zoomable"] = "";
+
       if (!node.alt) return;
 
       // "Texte alt {size=lg align=center width=580px}"

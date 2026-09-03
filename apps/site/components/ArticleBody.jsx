@@ -26,6 +26,7 @@ import { getUsedCitations } from "@/lib/getUsedCitations";
 import { createCitation } from "./Citation";
 import CitationReferences from "./CitationReferences";
 import ArticleNav from "./ArticleNav";
+import ImagesPleinEcran from "./ImagesPleinEcran";
 import TwinCohorteTeaser from "./TwinCohorteTeaser";
 
 export default function ArticleBody({
@@ -159,6 +160,9 @@ export default function ArticleBody({
         <TwinCohorteTeaser className="mt-12" />
 
         <ArticleNav items={related} kind="article" />
+
+        {/* Les images du markdown s'ouvrent en taille réelle au clic. */}
+        <ImagesPleinEcran targetSelector=".article-body" />
 
         <div className="mt-12 text-center">
           <Link

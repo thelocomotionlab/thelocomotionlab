@@ -758,6 +758,21 @@ mark.search-highlight {
   }
 }
 
+/* Images d'article et de projet : cliquables, donc annoncées comme telles.
+   La loupe du curseur est le seul signal universel d'un agrandissement ; le
+   liseré ocre au survol reprend celui des liens du corps de texte. */
+.ll-image-zoomable {
+  cursor: zoom-in;
+  transition: box-shadow 160ms ease-out;
+}
+.ll-image-zoomable:hover {
+  box-shadow: 0 0 0 3px var(--color-brand-accent);
+}
+.ll-image-zoomable:focus-visible {
+  outline: 2px solid var(--color-brand-accent-ink);
+  outline-offset: 3px;
+}
+
 .ll-lightbox {
   animation: ll-lightbox-fond 180ms ease-out both;
 }
