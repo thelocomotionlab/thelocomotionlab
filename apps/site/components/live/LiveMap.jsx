@@ -6,7 +6,9 @@
 // Style (recette 2026-07-24) : itinéraire prévisionnel en TIRETS FINS et
 // trace vécue en trait PLEIN ÉPAIS, même teinte fuchsia (lib/liveTraceColors)
 // sur liseré blanc — lisible sur les trois fonds. Fonds : « Relief » = Esri
-// World Topo (défaut), « Topo » = OpenTopoMap, « Satellite » = Esri Imagery.
+// World Topo (défaut), « Topo » = OpenTopoMap, « Satellite » = Esri Imagery —
+// définis dans @locomotionlab/tracking (mapStyles.ts), partagés avec les
+// replays et les cartes GPX du site.
 // Marqueur coureur à halo pulsant ; `hoverPoint` pose le
 // point synchronisé avec le survol du profil altimétrique. Les deux traces
 // sont SIMPLIFIÉES (Douglas-Peucker) avant affichage.
@@ -22,59 +24,18 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { Locate } from "lucide-react";
 import { brandColors } from "@locomotionlab/ui";
 
-import { simplifyTrack } from "@/lib/simplify";
-import { traceColors } from "@/lib/liveTraceColors";
+import {
+  mapStyles,
+  resolveMapStyle,
+  ensureTraceLayers,
+  traceColors,
+} from "@locomotionlab/tracking";
 
-const RASTER_STYLES = {
-  // Fond « Relief » PAR DÉFAUT : Esri World Topo — relief ombré très lisible
-  // (recette 2026-07-24 : remplace le « Plan » OSM ; OpenTopoMap conservé).
-  relief: {
-    version: 8,
-    sources: {
-      raster: {
-        type: "raster",
-        tiles: [
-          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
-        ],
-        tileSize: 256,
-        maxzoom: 19,
-        attribution: "Tiles © Esri — Esri, HERE, Garmin, FAO, NOAA, USGS",
-      },
-    },
-    layers: [{ id: "raster", type: "raster", source: "raster" }],
-  },
-  topo: {
-    version: 8,
-    sources: {
-      raster: {
-        type: "raster",
-        tiles: [
-          "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
-          "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
-          "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
-        ],
-        tileSize: 256,
-        maxzoom: 17,
-        attribution: "© OpenTopoMap",
-      },
-    },
-    layers: [{ id: "raster", type: "raster", source: "raster" }],
-  },
-  sat: {
-    version: 8,
-    sources: {
-      raster: {
-        type: "raster",
-        tiles: [
-          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        ],
-        tileSize: 256,
-        attribution: "Tiles © Esri",
-      },
-    },
-    layers: [{ id: "raster", type: "raster", source: "raster" }],
-  },
-};
+import { simplifyTrack } from "@/lib/simplify";
+
+// Les fonds de carte et les couches de trace viennent de
+// @locomotionlab/tracking (mapStyles.ts) : la même grammaire sert les
+// replays des projets et les cartes GPX des récits.
 
 function lineFeature(coords) {
   return {
@@ -88,47 +49,6 @@ function boundsOf(coords) {
   const bounds = new maplibregl.LngLatBounds(coords[0], coords[0]);
   for (const c of coords) bounds.extend(c);
   return bounds;
-}
-
-/** Les 4 couches du design : itinéraire en TIRETS FINS, vécu en PLEIN ÉPAIS,
- *  même teinte (traceColors.line), chacun sur son liseré blanc — la paire
- *  reste discernable et contrastée sur les trois fonds. */
-function addTrackLayers(map) {
-  map.addSource("reference", { type: "geojson", data: lineFeature([]) });
-  map.addSource("done", { type: "geojson", data: lineFeature([]) });
-  map.addLayer({
-    id: "rfc",
-    type: "line",
-    source: "reference",
-    layout: { "line-cap": "round", "line-join": "round" },
-    paint: { "line-color": traceColors.casing, "line-width": 4.5, "line-opacity": 0.9 },
-  });
-  map.addLayer({
-    id: "rfl",
-    type: "line",
-    source: "reference",
-    layout: { "line-join": "round" },
-    paint: {
-      "line-color": traceColors.line,
-      "line-width": 1.8,
-      "line-dasharray": [1.5, 2.2],
-      "line-opacity": 0.95,
-    },
-  });
-  map.addLayer({
-    id: "rdc",
-    type: "line",
-    source: "done",
-    layout: { "line-cap": "round", "line-join": "round" },
-    paint: { "line-color": traceColors.casing, "line-width": 8, "line-opacity": 0.95 },
-  });
-  map.addLayer({
-    id: "rdl",
-    type: "line",
-    source: "done",
-    layout: { "line-cap": "round", "line-join": "round" },
-    paint: { "line-color": traceColors.line, "line-width": 4.5 },
-  });
 }
 
 function pushData(map, data) {
@@ -232,14 +152,14 @@ export default function LiveMap({
     const styleId = initialStyleRef.current;
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: RASTER_STYLES[styleId] ?? RASTER_STYLES.relief,
+      style: mapStyles[resolveMapStyle(styleId)],
       center: [6.27, 44.93],
       zoom: 8.6,
       attributionControl: { compact: true },
     });
     mapRef.current = map;
     map.on("load", () => {
-      addTrackLayers(map);
+      ensureTraceLayers(map);
       pushData(map, dataRef.current);
     });
     return () => {
@@ -256,9 +176,9 @@ export default function LiveMap({
     const map = mapRef.current;
     if (!map) return;
     if (!map.isStyleLoaded()) return; // le premier fond est posé par "load"
-    map.setStyle(RASTER_STYLES[mapStyle] ?? RASTER_STYLES.relief);
+    map.setStyle(mapStyles[resolveMapStyle(mapStyle)]);
     map.once("styledata", () => {
-      if (!map.getSource("reference")) addTrackLayers(map);
+      ensureTraceLayers(map);
       pushData(map, dataRef.current);
     });
   }, [mapStyle]);

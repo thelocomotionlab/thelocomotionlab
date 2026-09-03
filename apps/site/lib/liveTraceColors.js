@@ -1,13 +1,11 @@
 // lib/liveTraceColors.js
 //
-// Couleur des TRACES des cartes du live (couches maplibre + point de survol
-// du profil altimétrique). Fuchsia cartographique : la seule teinte absente
-// de TOUS les fonds (routes orange, forêts vertes, ombrages bruns, toits) —
-// même règle que les GPS outdoor. Hors charte ASSUMÉ (décision 2026-07-24) :
-// les couleurs du labo (terracotta/ambre) se fondent dans le relief. Les deux
-// traits (itinéraire en tirets fins, vécu plein épais) partagent cette teinte
-// et reposent sur un liseré blanc pour rester lisibles sur satellite.
-export const traceColors = {
-  line: "#D6246E",
-  casing: "#FFFFFF",
-};
+// Les couleurs des traces vivent désormais avec le reste du look
+// cartographique dans @locomotionlab/tracking (mapStyles.ts), partagé par le
+// direct, les replays et les cartes GPX. Ce module ne fait que ré-exporter,
+// pour que les importeurs existants ne bougent pas.
+//
+// Import du module FEUILLE (pas de l'index du package) : l'index tire les
+// composants carte et leur CSS maplibre, que les tests unitaires du carrousel
+// — de purs modules Node — ne sauraient pas charger.
+export { traceColors } from "@locomotionlab/tracking/mapStyles";

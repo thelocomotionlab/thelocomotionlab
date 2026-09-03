@@ -262,6 +262,23 @@ export default function ProjetBody({
                   if (paquetage) return <Paquetage {...paquetage} />;
                 }
 
+                // 2 ter) Lien .gpx seul dans son paragraphe : le renderer `a`
+                // en fait une carte (MapEmbed), c'est-à-dire un <div> — et un
+                // <div> dans un <p> est du HTML invalide, que React refuse à
+                // l'hydratation. On rend la figure SANS le <p>. Les blancs
+                // (retour à la ligne du markdown) ne comptent pas.
+                const pleins = childArray.filter(
+                  (c) => !(typeof c === "string" && c.trim() === "")
+                );
+                if (
+                  pleins.length === 1 &&
+                  React.isValidElement(pleins[0]) &&
+                  typeof pleins[0].props?.href === "string" &&
+                  pleins[0].props.href.endsWith(".gpx")
+                ) {
+                  return <figure className="lt-figure my-8 -mx-4">{pleins}</figure>;
+                }
+
                 // 3) Bloc Plot (Plotly)
                 if (
                   childArray.length === 1 &&
