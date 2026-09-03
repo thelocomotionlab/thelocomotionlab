@@ -441,10 +441,21 @@ En ce début juillet, le volume d'entraînement bat son plein et je décide de t
 
 Après une grosse phase de décharge, j'ai décidé de tenter de remettre un peu de volume sur la fin juillet. Mais, entre la préparation de ma reprise d'études de STAPS en septembre, le développement du Locomotion Lab, mon travail de réflexion autour d'une présence plus professionnelle sur les réseaux sociaux, force est de constater que ma chasse d'eau est pleine (voir [ce billet si le concept de chasse d'eau ne te parle pas](https://thelocomotionlab.com/explorer/traversee-reunion#incarner-le-concept-de-la-chasse-deau)). Cela s'est matérialisé par une tentative de sortie sur les 4x2000m de Chartreuse, la même qui m'avait mis en échec avant même de descendre de la voiture en octobre 2025. Cette fois-ci, j'ai réussi à m'y engager, avec la peur au ventre d'affronter la brèche Arnaud qui mène jusqu'à Chamechaude.
 
-![SL 4x2000](/images/projets/saison-trail-2026/chamechaude.webp)
-*Vue sur Chamechaude.*
+Cette brèche, réputée assez engagée, permet d'accéder au sommet de Chamechaude, et se fait généralement encordé·e et casqué·e. Je n'avais ni l'un ni l'autre et m'y suis présenté en sandales. Après un bref instant de régulation nerveuse, je m'y suis élancé. Le moment fut complètement incroyable. Je me suis senti épouser la roche, et enchaîner les mouvements de manière fluide et instinctive, sans penser au danger, juste dans l'instant, en état de flow. Le même genre de sensations que je peux régulièrement ressentir lorsque j'escalade des arbres intimidants. D'ailleurs, mes progrès en mouvement primal de cette année ne sont assurément pas étrangers à ce que j'ai vécu. 
 
-Cette brèche, réputée assez engagée, permet d'accéder au sommet de Chamechaude, et se fait généralement encordé·e et casqué·e. Je n'avais ni l'un ni l'autre et m'y suis présenté en sandales. 
+Malheureusement, et je le compris bien plus tard, la chaleur eu raison de moi, et durant la montée qui menait au Grand Som, je décidai de ne pas aller au bout de cette trace, et de rentrer à ma voiture par un raccourci bien senti. Les sensations n'étaient pas bonnes, mes jambes ne répondaient pas, comme si elles manquaient d'oxygène pour avancer. Si la culpabilité de ne pas réussir à enchaîner les grosses semaines d'entraînement jusqu'au bout s'est faite ressentir, j'ai tenté de la chasser en me rappelant que je n'avais rien à prouver et qu'il fallait souvent mieux faire l'entraînement juste plutôt que celui de trop. Ce jour-ci, l'entraînement juste était de savoir s'arrêter avant d'aller trop loin.
+
+Au passage, cette sortie fut l'occasion d'étrener mon nouveau système de live tracking. Abondament amélioré, celui-ci me permet désormais de partager l'aventure en direct via des messages, vocaux, photos et vidéos directement transmises sur un journal de bord actualisé en continu sur le direct. Il y a également la possibilité maintenant pour les personnes qui me suivent, de m'envoyer un message que recevrai sur un canal telegram et que je pourrais consulter sans m'éparpiller sur toutes les applis de messagerie instantanée pendant mes futures aventures. L'essai fut très concluant, et l'archive de ce live 2.0 version beta est à retrouver ici :
+
+
+## Août
+### Reprise appaisée et ancrée
+*09/08/2026*
+
+Sur ce début août, le focus est placé sur finir proprement ma préparation pour le tour des Écrins en autonomie complète sur 3,5 jours. Un gros morceau qui me paraît encore loin mais qui se rapproche tout doucement. Je sors d'une retraite spirituelle avec l'association Ose Ta Vie, et ce que j'y ai trouvé va à coup sûr me servir pour la suite. Je m'y étais rendu avec l'intention de cultiver et développer mon attention, que je trouvais de plus en plus dispersée avec tous les projets qui s'empilaient ces derniers temps. J'en suis revenu avec de nouveaux outils qui me rendent plus confiants en moi, notamment sur ma capacité à me dévoiler sur les réseaux sociaux, mais aussi la conviction nouvelle que méditer quotidiennement matin et soir n'est plus une option, au même titre que se brosser les dents ou prendre sa douche. Pour entretenir et cultiver cet ancrage. D'ailleurs, de cette clarté d'esprit, rejaillissent des réminiscences de nos séances passées de préparation mentale avec Éric Lacroix. Réminiscences qui enrichissent encore ma boîte à outil mentaux.
+
+
+
 
 <!-- ### Test
 
