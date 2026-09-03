@@ -95,10 +95,25 @@ export function moyenneGlissante(valeurs, fenetre) {
  * fort mangerait du relief réel.
  */
 export function denivele(altitudes, seuil = 3) {
-  if (altitudes.length < 2) return { dPlus: 0, dMinus: 0 };
+  const { dPlus, dMinus } = deniveleCumule(altitudes, seuil);
+  return { dPlus, dMinus };
+}
+
+/**
+ * Même hystérésis, mais en gardant le CUMUL à chaque point : c'est ce que le
+ * profil altimétrique affiche au survol (« D+ accumulé ici »). `cumul[i]` vaut
+ * { dp, dm } au point i ; les totaux sont ceux du dernier point.
+ */
+export function deniveleCumule(altitudes, seuil = 3) {
+  const cumul = new Array(altitudes.length);
+  if (altitudes.length < 2) {
+    cumul.fill({ dp: 0, dm: 0 });
+    return { dPlus: 0, dMinus: 0, cumul };
+  }
   let dPlus = 0;
   let dMinus = 0;
   let ref = altitudes[0];
+  cumul[0] = { dp: 0, dm: 0 };
   for (let i = 1; i < altitudes.length; i += 1) {
     const ecart = altitudes[i] - ref;
     if (ecart >= seuil) {
@@ -108,8 +123,9 @@ export function denivele(altitudes, seuil = 3) {
       dMinus += -ecart;
       ref = altitudes[i];
     }
+    cumul[i] = { dp: dPlus, dm: dMinus };
   }
-  return { dPlus, dMinus };
+  return { dPlus, dMinus, cumul };
 }
 
 /** Réduit la silhouette à ~`cible` points : au-delà, le tracé ne gagne rien. */
@@ -185,5 +201,69 @@ export function statsDeGpx(xml, options = {}) {
     debutMs: t0,
     profil,
     distanceSource,
+  };
+}
+
+/**
+ * La trace de référence d'une carte GPX posée dans un récit, calculée dans le
+ * navigateur au format que le direct lit dans un .track.json : totaux, bornes,
+ * et un profil de ~400 points portant km, altitude, lat/lng (pour le point
+ * jumeau sur la carte au survol) et D+/D− accumulés. Même distance et même
+ * dénivelé que statsDeGpx — c'est le même code.
+ *
+ * @returns {{ totalKm:number, dPlusM:number, dMinusM:number, elevMinM:number,
+ *   elevMaxM:number, profile:Array<{km:number,alt:number,lat:number,lng:number,dp:number,dm:number}> } | null}
+ */
+export function profilDeGpx(xml, options = {}) {
+  const { points } = parseGpx(xml);
+  if (points.length < 2) return null;
+
+  const cumule = new Array(points.length).fill(0);
+  const dernierDuFichier = points[points.length - 1].dist;
+  if (Number.isFinite(dernierDuFichier) && dernierDuFichier > 0) {
+    let precedent = 0;
+    for (let i = 0; i < points.length; i += 1) {
+      const d = Number.isFinite(points[i].dist) ? points[i].dist : precedent;
+      precedent = d >= precedent ? d : precedent;
+      cumule[i] = precedent;
+    }
+  } else {
+    for (let i = 1; i < points.length; i += 1) {
+      cumule[i] = cumule[i - 1] + haversine(points[i - 1], points[i]);
+    }
+  }
+
+  const avecAlt = [];
+  for (let i = 0; i < points.length; i += 1) {
+    if (points[i].alt !== null) avecAlt.push({ p: points[i], km: cumule[i] / 1000 });
+  }
+  if (avecAlt.length < 2) return null;
+
+  const lisses = moyenneGlissante(avecAlt.map((x) => x.p.alt), options.lissage ?? 5);
+  const { dPlus, dMinus, cumul } = deniveleCumule(lisses, options.seuil ?? 3);
+
+  let elevMin = Infinity;
+  let elevMax = -Infinity;
+  for (const a of lisses) {
+    if (a < elevMin) elevMin = a;
+    if (a > elevMax) elevMax = a;
+  }
+
+  const complet = avecAlt.map(({ p, km }, i) => ({
+    km: Number(km.toFixed(2)),
+    alt: Math.round(lisses[i]),
+    lat: Number(p.lat.toFixed(5)),
+    lng: Number(p.lon.toFixed(5)),
+    dp: Math.round(cumul[i].dp),
+    dm: Math.round(cumul[i].dm),
+  }));
+
+  return {
+    totalKm: Number((cumule[cumule.length - 1] / 1000).toFixed(2)),
+    dPlusM: Math.round(dPlus),
+    dMinusM: Math.round(dMinus),
+    elevMinM: Math.round(elevMin),
+    elevMaxM: Math.round(elevMax),
+    profile: decimerProfil(complet, options.points ?? 400),
   };
 }

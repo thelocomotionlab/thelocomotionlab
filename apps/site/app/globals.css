@@ -886,6 +886,21 @@ mark.search-highlight {
  * desktop comme mobile, avant/pendant/après). Les crédits Esri/OSM peuvent
  * vivre ailleurs (mentions légales) si besoin ; ils n'encombrent pas la carte. */
 .live-map .maplibregl-ctrl-attrib,
-.live-map .maplibregl-ctrl-bottom-right {
+.live-map .maplibregl-ctrl-bottom-right,
+.ll-map .maplibregl-ctrl-attrib,
+.ll-map .maplibregl-ctrl-bottom-right {
   display: none !important;
+}
+
+/* Toutes les cartes de contenu (replays, live de page projet, cartes GPX)
+   portent `ll-map` : même règle d'attribution que le direct ci-dessus, et le
+   groupe de commandes haut-droit (zoom, boussole) descend pour laisser la
+   première place aux pastilles Relief / Topo / Satellite (posées à 12 px du
+   bord, 33 px de haut) : les boutons commencent 11 px sous elles, alignés à
+   droite sur elles. */
+.ll-map .maplibregl-ctrl-top-right {
+  top: 46px;
+}
+.ll-map .maplibregl-ctrl-top-right .maplibregl-ctrl {
+  margin-right: 12px;
 }
