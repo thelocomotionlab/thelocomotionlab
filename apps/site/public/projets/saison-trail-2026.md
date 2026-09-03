@@ -478,10 +478,22 @@ Ma semaine s'est conclue sur une tentative de grosse sortie dans le Vercors, pas
 ### Préparatifs du projet Écrins
 *18/08/2026*
 
-#### La genèse du projet
+#### Genèse et préparatifs
 
+L'idée de faire le tour des Écrins en autonomie est néée le lendemain [de mon aventure entre Drôme et Vercors](https://thelocomotionlab.com/explorer/immersion-primale-entre-vercors-et-drome). On dit qu'il faut toujours avoir un projet d'avance, et là je n'en avais plus qu'un en ligne de mire : Nice le 25 septembre. J'ai donc fait quelques recherches et suis rapidement tombé sur cette trace de fou furieux de 188 km et 12 200 m D+ D- dans les Écrins.
 
+[Tour des Écrins](/tracks/tour-des-ecrins.gpx)
+*Trace du tour des Écrins*
 
+Ces chiffres défiant un peu l'entendement, je me suis dit que ce serait un parfait projet sur 4 jours, et que le placer autour de fin août me permettrait de le vivre comme une sorte de Week-End choc amélioré, un test final en vue de ma préparation pour Nice. L'affaire était dans le sac. Plus tard, mon ami Rapace, intéressé par le projet, décidait de se joindre à moi sur 2j de l'aventure. Le tour se décomposera alors ainsi :
+- Jour 1 : Vénosc → Valgaudémar
+- Jour 2 : Valgaudémar → Vallouise
+- Jour 3 : Vallouise → Arsine
+- Jour 4 : Arsine → Vénosc
+
+#### Le paquetage
+
+<paquetage src="/paquetages/tour-des-ecrins.csv" titre="Tour des Écrins, 2026" />
 
 <!-- ### Test
 
