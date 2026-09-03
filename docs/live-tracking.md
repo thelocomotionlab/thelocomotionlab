@@ -469,14 +469,56 @@ J'ai suivi ça en direct : [l'archive du Tour des Écrins](/live/archives/tour-d
 > pointer. Les deux se nourrissent du même dossier ; poser l'un n'oblige à rien
 > pour l'autre.
 
-> Les replays **antérieurs** (Réunion 2025, Chartreuse/Vercors 2026) n'ont pas
-> d'`aventure.json` et n'ont donc pas de page d'archive — leurs données live ne
-> sont plus servies par le VPS, il n'y a rien à en régénérer. Aucune migration
-> rétroactive, même règle qu'au §15.
+> Les replays **antérieurs** n'ont pas d'`aventure.json` et n'ont donc pas de
+> page d'archive tant qu'on ne la leur fabrique pas. Ils se répartissent en deux
+> familles, et une seule est rattrapable — voir le §9 ter.
 
 Une fois l'archive en place, les **cartes du carrousel** se fabriquent depuis
 ce même dossier : `pnpm -F site carte:partage -- --slug <slug> --texte "…"`
 (§8.2).
+
+---
+
+### 9 ter. Rattraper un replay d'avant les Écrins — `live:retro`
+
+`live:archiver` ne sait travailler que sur une aventure **encore servie par le
+VPS** : ses étapes ② et ③ vont chercher positions et journal en ligne. Passé un
+`./track reset`, ces données n'existent plus nulle part.
+
+Sauf si une `archive.json` a été déposée : elle porte **tout** — positions,
+stats, journal, métadonnées. `live:retro` en dérive les quatre pièces
+d'autoportance de l'étape ④, sans jamais réécrire l'archive ni les médias.
+
+```bash
+pnpm -F site live:retro -- \
+  --slug chartreuse-4x2000 \
+  --trace /tracks/4x2000m-chartreuse.track.json \
+  --intention "Quatre sommets à 2 000 m dans la journée."
+# options : --nom, --dates, --force (écraser des fichiers déjà produits)
+```
+
+Il produit `reference.track.json`, `live-positions.json`, `journal.json` et
+`aventure.json`. Ce qu'il **ne devine pas** et qu'on complète à la main dans
+`aventure.json` : l'`intention` (si on ne l'a pas passée) et les `waypoints`,
+dont le km dépend de l'itinéraire prévu.
+
+**Quels dossiers sont rattrapables** — ceux qui portent une `archive.json` :
+
+| Dossier de `public/replays/` | `archive.json` | Rattrapable |
+|---|---|---|
+| `tour-des-ecrins` | oui | déjà fait (archivé nativement) |
+| `chartreuse-4x2000` | oui | **fait** |
+| `croix-de-belledonne` | oui | oui |
+| `sortie-longue-vercors` | oui | oui |
+| `mdl-65km_off`, `traversee-chartreuse`, `traversee-reunion`, `traversee-vercors` | non | **non** — pas de journal ni de métadonnées à en tirer, seulement des positions. Ils restent des replays de page projet (§11) |
+
+> **Une précaution sur les facteurs de correction.** Un `live-positions.json`
+> produit par `live:retro` porte des stats **déjà corrigées** (elles viennent de
+> `archive.json`), et son dernier point de profil concorde avec son en-tête. Une
+> balise `<postlivetracking>` qui le lit doit donc laisser `distanceFactor`,
+> `ascentFactor` et `descentFactor` à **1** — les vieux fichiers, eux, portent
+> des valeurs brutes et gardent leurs `.8` / `.85`. Corriger deux fois, c'est
+> afficher un D+ faux.
 
 ---
 
