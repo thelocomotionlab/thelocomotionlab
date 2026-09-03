@@ -44,6 +44,9 @@ export default function remarkPostLiveTracking() {
         referenceGpx: attrs.referenceGpx || attrs.referencegpx || "",
         mapHeight: attrs.mapHeight || attrs.mapheight || "",
         title: attrs.title || "",
+        // Fond de départ : relief | topo | sat (« osm » et « satellite »
+        // restent compris). Absent → relief.
+        initialMapStyle: attrs.initialMapStyle || attrs.initialmapstyle || "",
       };
 
       parent.children[index] = {

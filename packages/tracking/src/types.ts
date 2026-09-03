@@ -31,8 +31,12 @@ export type GpxGeoJson = {
   [k: string]: unknown;
 };
 
-/** Styles de fond de carte disponibles. */
-export type MapStyleId = "osm" | "topo" | "satellite";
+/**
+ * Fond de carte demandé par une balise ou une prop. Les noms canoniques sont
+ * ceux de mapStyles.ts (relief | topo | sat) ; « osm » et « satellite » sont
+ * les anciens noms, encore acceptés et normalisés par resolveMapStyle().
+ */
+export type MapStyleId = "relief" | "topo" | "sat" | "osm" | "satellite";
 
 /**
  * Un point enrichi du tableau `profile[]` de /live-positions.json
@@ -173,4 +177,5 @@ export type ReplayProps = {
   ascentFactor?: number | string;
   descentFactor?: number | string;
   mapHeight?: number | string;
+  initialMapStyle?: MapStyleId;
 };

@@ -9,6 +9,18 @@
 
 export { default as LiveTrackingMap } from "./LiveTrackingMap";
 export { default as Replay } from "./Replay";
+export { default as MapStylePills } from "./MapStylePills";
+
+// Le look cartographique du labo, partagé avec les cartes du site.
+export {
+  mapStyles,
+  resolveMapStyle,
+  ensureTraceLayers,
+  traceColors,
+  MAP_STYLE_OPTIONS,
+  DEFAULT_MAP_STYLE,
+} from "./mapStyles";
+export type { MapStyleName } from "./mapStyles";
 
 export { useTrackingData } from "./useTrackingData";
 export type { UseTrackingDataOptions } from "./useTrackingData";

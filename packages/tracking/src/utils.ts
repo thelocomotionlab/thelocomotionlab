@@ -3,6 +3,7 @@
 // Helpers purs (géométrie, URL, formatage) partagés par la carte live et le
 // replay. Portés à l'identique des composants historiques du site.
 
+import { brandColors } from "@locomotionlab/ui";
 import type { GeoJSONSource } from "maplibre-gl";
 import type { GeoLineFeature, GpxGeoJson, LngLat } from "./types";
 
@@ -120,12 +121,16 @@ export function formatDuration(s: number): string {
 
 /** Crée l'élément DOM du marqueur « coureur » (icône partagée historique). */
 export function createRunnerElement(): HTMLDivElement {
+  // Le marqueur du direct (apps/site/components/live/LiveMap) : halo pulsant
+  // ambre, cœur terracotta cerclé de crème. Il remplace l'icône externe de
+  // flaticon — une image tierce, hors charte, que rien ne garantissait.
+  // L'animation `ll-pulse` vit dans la feuille globale du site.
   const el = document.createElement("div");
-  el.style.width = "28px";
-  el.style.height = "28px";
-  el.style.backgroundImage =
-    "url('https://cdn-icons-png.flaticon.com/512/847/847969.png')";
-  el.style.backgroundSize = "contain";
-  el.style.backgroundRepeat = "no-repeat";
+  el.style.cssText = "position:relative;width:18px;height:18px;";
+  const halo = document.createElement("div");
+  halo.style.cssText = `position:absolute;inset:0;border-radius:50%;background:${brandColors.accent};animation:ll-pulse 2.4s ease-out infinite;`;
+  const core = document.createElement("div");
+  core.style.cssText = `position:absolute;inset:3px;border-radius:50%;background:${brandColors.deep};box-shadow:0 0 0 3px ${brandColors.bg},0 4px 12px rgba(0,0,0,0.35);`;
+  el.append(halo, core);
   return el;
 }

@@ -4,71 +4,24 @@ import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import * as toGeoJSON from "@tmcw/togeojson";
+import { Crosshair, Download } from "lucide-react";
 import {
-  Crosshair,
-  Map as MapIcon,
-  Mountain,
-  Globe2,
-  Download,
-} from "lucide-react";
+  mapStyles,
+  resolveMapStyle,
+  ensureTraceLayers,
+  MapStylePills,
+} from "@locomotionlab/tracking";
 
-// Centre par défaut (île de la Réunion) et styles de carte : statiques, donc
-// définis au niveau module — référence stable → pas de réinit de la carte à
-// chaque render, et plus de warning react-hooks/exhaustive-deps.
+// Carte GPX posée dans un récit. Le fond, la teinte de la trace et le
+// sélecteur viennent de @locomotionlab/tracking (mapStyles.ts) : la même
+// grammaire que le direct et les replays. Une trace GPX seule est le SUJET de
+// sa carte : elle prend le trait plein épais du « vécu », pas les tirets fins
+// de l'itinéraire prévu, qui n'existent que par contraste avec lui.
 const defaultCenter = [55.5364, -21.1151];
-
-const styles = {
-  osm: {
-    version: 8,
-    sources: {
-      osm: {
-        type: "raster",
-        tiles: [
-          "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
-          "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
-          "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        ],
-        tileSize: 256,
-        attribution: "© OpenStreetMap contributors",
-      },
-    },
-    layers: [{ id: "osm", type: "raster", source: "osm" }],
-  },
-  topo: {
-    version: 8,
-    sources: {
-      opentopo: {
-        type: "raster",
-        tiles: [
-          "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
-          "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
-          "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
-        ],
-        tileSize: 256,
-        attribution: "© OpenTopoMap contributors",
-      },
-    },
-    layers: [{ id: "opentopo", type: "raster", source: "opentopo" }],
-  },
-  satellite: {
-    version: 8,
-    sources: {
-      esri: {
-        type: "raster",
-        tiles: [
-          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        ],
-        tileSize: 256,
-        attribution: "Tiles © Esri",
-      },
-    },
-    layers: [{ id: "esri", type: "raster", source: "esri" }],
-  },
-};
 
 export default function MapEmbed({
   gpx,
-  lineWeight = 3,
+  lineWeight = 4.5,
   defaultMinHeight = 350,
 }) {
   const mapRef = useRef(null);
@@ -77,10 +30,9 @@ export default function MapEmbed({
   const trackBoundsRef = useRef(null);
   // Suit le style applique pour eviter le no-op au montage (qui declenche un
   // warning "Style is not done loading" cote maplibre).
-  const appliedStyleRef = useRef("osm");
+  const appliedStyleRef = useRef(resolveMapStyle(null));
 
-  const [mapStyle, setMapStyle] = useState("osm");
-  const [showStyleMenu, setShowStyleMenu] = useState(false);
+  const [mapStyle, setMapStyle] = useState(resolveMapStyle(null));
   const [dynamicHeight, setDynamicHeight] = useState(defaultMinHeight);
   const [gpxError, setGpxError] = useState(false);
 
@@ -142,7 +94,7 @@ export default function MapEmbed({
 
     const map = new maplibregl.Map({
       container: mapContainer.current,
-      style: styles.osm,
+      style: mapStyles[appliedStyleRef.current],
       center: defaultCenter,
       zoom: defaultZoom,
       attributionControl: false,
@@ -204,22 +156,13 @@ export default function MapEmbed({
         }
 
         const applyTrack = () => {
-          if (!map.getSource("track")) {
-            map.addSource("track", { type: "geojson", data: geojson });
-          } else {
-            map.getSource("track").setData(geojson);
-          }
-
-          if (!map.getLayer("track-line")) {
-            const color = "#FF3B3B";
-            map.addLayer({
-              id: "track-line",
-              type: "line",
-              source: "track",
-              paint: { "line-color": color, "line-width": lineWeight },
-            });
-          } else {
-            map.setPaintProperty("track-line", "line-width", lineWeight);
+          // Les deux sources du design existent toujours ; ici seule
+          // « done » est nourrie : une carte GPX n'a pas d'itinéraire prévu.
+          ensureTraceLayers(map, { reference: "gpx-reference", done: "gpx-track" });
+          map.getSource("gpx-track").setData(geojson);
+          if (Number.isFinite(lineWeight)) {
+            map.setPaintProperty("gpx-track-line", "line-width", lineWeight);
+            map.setPaintProperty("gpx-track-casing", "line-width", lineWeight + 3.5);
           }
 
           if (trackBoundsRef.current) {
@@ -247,31 +190,23 @@ export default function MapEmbed({
   // --- Changement de style sans recréer la carte
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !styles[mapStyle]) return;
+    if (!map || !mapStyles[mapStyle]) return;
     if (appliedStyleRef.current === mapStyle) return;
     appliedStyleRef.current = mapStyle;
 
-    map.setStyle(styles[mapStyle]);
+    map.setStyle(mapStyles[mapStyle]);
 
+    // setStyle efface sources et couches : on les repose, puis on renourrit.
     map.once("styledata", () => {
       if (!map.style) return;
-      if (trackGeoJSONRef.current && !map.getSource("track")) {
-        map.addSource("track", {
-          type: "geojson",
-          data: trackGeoJSONRef.current,
-        });
+      ensureTraceLayers(map, { reference: "gpx-reference", done: "gpx-track" });
+      if (trackGeoJSONRef.current) {
+        map.getSource("gpx-track").setData(trackGeoJSONRef.current);
+        if (Number.isFinite(lineWeight)) {
+          map.setPaintProperty("gpx-track-line", "line-width", lineWeight);
+          map.setPaintProperty("gpx-track-casing", "line-width", lineWeight + 3.5);
+        }
       }
-
-      if (trackGeoJSONRef.current && !map.getLayer("track-line")) {
-        const color = "#FF3B3B";
-        map.addLayer({
-          id: "track-line",
-          type: "line",
-          source: "track",
-          paint: { "line-color": color, "line-width": lineWeight },
-        });
-      }
-
       map.resize();
     });
   }, [mapStyle, lineWeight]);
@@ -338,76 +273,9 @@ export default function MapEmbed({
         <span className="hidden sm:inline">Recentrer</span>
       </button>
 
-      {/* Sélecteur de style compact */}
-      <div className="absolute top-[100px] right-2.5 z-30">
-        <div className="relative">
-          {!showStyleMenu ? (
-            <button
-              type="button"
-              onClick={() => setShowStyleMenu(true)}
-              aria-label="Choisir le style de carte"
-              aria-haspopup="menu"
-              aria-expanded={showStyleMenu}
-              className="bg-white/90 backdrop-blur-sm border border-gray-300 shadow rounded-md p-[6px] hover:bg-brand-accent/80 hover:text-white transition flex items-center justify-center"
-              style={{ width: "32px", height: "32px" }}
-            >
-              <MapIcon size={16} className="text-gray-700" aria-hidden="true" />
-            </button>
-          ) : (
-            <div
-              role="menu"
-              aria-label="Styles de carte"
-              className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-md shadow-md flex flex-col items-center p-[2px]"
-              style={{ width: "32px" }}
-            >
-              <button
-                type="button"
-                role="menuitemradio"
-                aria-checked={mapStyle === "osm"}
-                aria-label="Carte OpenStreetMap"
-                onClick={() => {
-                  setMapStyle("osm");
-                  setShowStyleMenu(false);
-                }}
-                className={`w-full h-8 flex items-center justify-center rounded hover:bg-brand-accent/80 transition ${
-                  mapStyle === "osm" ? "bg-brand-accent/90 text-white" : "text-gray-700"
-                }`}
-              >
-                <MapIcon size={14} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                role="menuitemradio"
-                aria-checked={mapStyle === "topo"}
-                aria-label="Carte topographique"
-                onClick={() => {
-                  setMapStyle("topo");
-                  setShowStyleMenu(false);
-                }}
-                className={`w-full h-8 flex items-center justify-center rounded hover:bg-brand-accent/80 transition ${
-                  mapStyle === "topo" ? "bg-brand-accent/90 text-white" : "text-gray-700"
-                }`}
-              >
-                <Mountain size={14} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                role="menuitemradio"
-                aria-checked={mapStyle === "satellite"}
-                aria-label="Vue satellite"
-                onClick={() => {
-                  setMapStyle("satellite");
-                  setShowStyleMenu(false);
-                }}
-                className={`w-full h-8 flex items-center justify-center rounded hover:bg-brand-accent/80 transition ${
-                  mapStyle === "satellite" ? "bg-brand-accent/90 text-white" : "text-gray-700"
-                }`}
-              >
-                <Globe2 size={14} aria-hidden="true" />
-              </button>
-            </div>
-          )}
-        </div>
+      {/* Fond de carte : Relief / Topo / Satellite, comme sur le direct. */}
+      <div className="absolute right-2.5 top-[104px] z-30">
+        <MapStylePills value={mapStyle} onChange={setMapStyle} />
       </div>
 
       {/* Bouton de téléchargement GPX */}

@@ -16,9 +16,6 @@ import {
   Crosshair,
   ChevronDown,
   ChevronUp,
-  Map as MapIcon,
-  Mountain,
-  Globe2,
   Download,
   RefreshCw,
 } from "lucide-react";
@@ -42,10 +39,10 @@ import type {
   GpxGeoJson,
   LngLat,
   LiveTrackingMapProps,
-  MapStyleId,
   MutableMap,
 } from "./types";
-import { styles } from "./mapStyles";
+import { mapStyles, resolveMapStyle, ensureTraceLayers, type MapStyleName } from "./mapStyles";
+import MapStylePills from "./MapStylePills";
 import {
   asMapData,
   createRunnerElement,
@@ -104,10 +101,11 @@ export default function LiveTrackingMap({
   // Racine du composant : observée pour déclencher le fade in/out du bouton refresh.
   const rootRef = useRef<HTMLDivElement | null>(null);
   // Suit le style appliqué pour éviter le no-op au montage (warning maplibre).
-  const appliedStyleRef = useRef<MapStyleId>(initialMapStyle || "osm");
+  // Fond demandé par la balise (« osm » des anciens markdown compris),
+  // normalisé une fois pour toutes vers relief | topo | sat.
+  const appliedStyleRef = useRef<MapStyleName>(resolveMapStyle(initialMapStyle));
 
-  const [mapStyle, setMapStyle] = useState<MapStyleId>(initialMapStyle || "osm");
-  const [showStyleMenu, setShowStyleMenu] = useState(false);
+  const [mapStyle, setMapStyle] = useState<MapStyleName>(resolveMapStyle(initialMapStyle));
   const [showElevation, setShowElevation] = useState(true);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const [showRefresh, setShowRefresh] = useState(false);
@@ -204,7 +202,7 @@ export default function LiveTrackingMap({
     const initMap = () => {
       const map = new maplibregl.Map({
         container,
-        style: styles[initialMapStyle] || styles.osm,
+        style: mapStyles[resolveMapStyle(initialMapStyle)],
         center: [0, 0],
         zoom: 2,
         attributionControl: false,
@@ -236,25 +234,10 @@ export default function LiveTrackingMap({
 
           map._referenceGeoJSON = geojson;
 
-          if (!map.getSource("reference-track")) {
-            map.addSource("reference-track", {
-              type: "geojson",
-              data: asMapData(geojson),
-            });
-          }
-
-          if (!map.getLayer("reference-line")) {
-            map.addLayer({
-              id: "reference-line",
-              type: "line",
-              source: "reference-track",
-              paint: {
-                "line-color": "#007bff",
-                "line-width": 3,
-                "line-dasharray": [2, 2],
-              },
-            });
-          }
+          // Les quatre couches du design : itinéraire en tirets fins,
+          // trace vécue en plein épais, même teinte, liseré blanc.
+          ensureTraceLayers(map, { reference: "reference-track", done: "live-track" });
+          (map.getSource("reference-track") as GeoJSONSource).setData(asMapData(geojson));
 
           if (!map._hasAutoFramed) {
             const referenceCoords = getCoordsFromGeoJSON(geojson);
@@ -292,52 +275,22 @@ export default function LiveTrackingMap({
   /* ---------- 2) Changement de style ---------- */
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !styles[mapStyle]) return;
+    if (!map || !mapStyles[mapStyle]) return;
     if (appliedStyleRef.current === mapStyle) return;
     appliedStyleRef.current = mapStyle;
 
-    map.setStyle(styles[mapStyle]);
+    map.setStyle(mapStyles[mapStyle]);
 
     map.once("styledata", () => {
       if (!map.style) return;
-      if (map._referenceGeoJSON && !map.getSource("reference-track")) {
-        map.addSource("reference-track", {
-          type: "geojson",
-          data: asMapData(map._referenceGeoJSON),
-        });
-
-        if (!map.getLayer("reference-line")) {
-          map.addLayer({
-            id: "reference-line",
-            type: "line",
-            source: "reference-track",
-            paint: {
-              "line-color": mapStyle === "satellite" ? "#4CAF50" : "#007bff",
-              "line-width": 3,
-              "line-dasharray": [2, 2],
-            },
-          });
-        }
+      // setStyle efface sources et couches : on repose le design, puis on
+      // renourrit ce qu'on avait déjà chargé.
+      ensureTraceLayers(map, { reference: "reference-track", done: "live-track" });
+      if (map._referenceGeoJSON) {
+        (map.getSource("reference-track") as GeoJSONSource).setData(asMapData(map._referenceGeoJSON));
       }
-
-      if (map._liveTrackGeoJSON && !map.getSource("live-track")) {
-        map.addSource("live-track", {
-          type: "geojson",
-          data: asMapData(map._liveTrackGeoJSON),
-        });
-
-        if (!map.getLayer("live-track-line")) {
-          map.addLayer({
-            id: "live-track-line",
-            type: "line",
-            source: "live-track",
-            paint: {
-              "line-color": "#ff5500",
-              "line-width": 4,
-              "line-opacity": 0.9,
-            },
-          });
-        }
+      if (map._liveTrackGeoJSON) {
+        (map.getSource("live-track") as GeoJSONSource).setData(asMapData(map._liveTrackGeoJSON));
       }
 
       if (map._runnerMarker && map._runnerMarker.getLngLat()) {
@@ -363,22 +316,8 @@ export default function LiveTrackingMap({
 
     map._liveTrackGeoJSON = geojson;
 
-    const existing = map.getSource("live-track") as GeoJSONSource | undefined;
-    if (existing) {
-      existing.setData(asMapData(geojson));
-    } else {
-      map.addSource("live-track", { type: "geojson", data: asMapData(geojson) });
-      map.addLayer({
-        id: "live-track-line",
-        type: "line",
-        source: "live-track",
-        paint: {
-          "line-color": "#ff5500",
-          "line-width": 4,
-          "line-opacity": 0.9,
-        },
-      });
-    }
+    ensureTraceLayers(map, { reference: "reference-track", done: "live-track" });
+    (map.getSource("live-track") as GeoJSONSource).setData(asMapData(geojson));
 
     const last = coords[coords.length - 1];
 
@@ -398,7 +337,7 @@ export default function LiveTrackingMap({
     }
 
     if (!map._runnerMarker && last) {
-      map._runnerMarker = new maplibregl.Marker(createRunnerElement())
+      map._runnerMarker = new maplibregl.Marker({ element: createRunnerElement() })
         .setLngLat(last)
         .addTo(map);
     } else if (map._runnerMarker && last) {
@@ -504,80 +443,9 @@ export default function LiveTrackingMap({
           </a>
         )}
 
-        {/* Sélecteur de style compact */}
-        <div className="absolute top-[100px] right-2.5 z-30">
-          <div className="relative">
-            <div className="relative">
-              {!showStyleMenu ? (
-                <button
-                  type="button"
-                  onClick={() => setShowStyleMenu(true)}
-                  aria-label="Choisir le style de carte"
-                  aria-haspopup="menu"
-                  aria-expanded={showStyleMenu}
-                  className="bg-white/90 backdrop-blur-sm border border-gray-300 shadow rounded-md p-[6px] hover:bg-brand-accent/80 hover:text-white transition flex items-center justify-center"
-                  style={{ width: "32px", height: "32px" }}
-                >
-                  <MapIcon size={16} className="text-gray-700" aria-hidden="true" />
-                </button>
-              ) : (
-                <div
-                  role="menu"
-                  aria-label="Styles de carte"
-                  className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-md shadow-md flex flex-col items-center p-[2px]"
-                  style={{ width: "32px" }}
-                >
-                  <button
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={mapStyle === "osm"}
-                    aria-label="Carte OpenStreetMap"
-                    onClick={() => {
-                      setMapStyle("osm");
-                      setShowStyleMenu(false);
-                    }}
-                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-brand-accent/80 transition ${
-                      mapStyle === "osm" ? "bg-brand-accent/90 text-white" : "text-gray-700"
-                    }`}
-                  >
-                    <MapIcon size={14} aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={mapStyle === "topo"}
-                    aria-label="Carte topographique"
-                    onClick={() => {
-                      setMapStyle("topo");
-                      setShowStyleMenu(false);
-                    }}
-                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-brand-accent/80 transition ${
-                      mapStyle === "topo" ? "bg-brand-accent/90 text-white" : "text-gray-700"
-                    }`}
-                  >
-                    <Mountain size={14} aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={mapStyle === "satellite"}
-                    aria-label="Vue satellite"
-                    onClick={() => {
-                      setMapStyle("satellite");
-                      setShowStyleMenu(false);
-                    }}
-                    className={`w-full h-8 flex items-center justify-center rounded hover:bg-brand-accent/80 transition ${
-                      mapStyle === "satellite"
-                        ? "bg-brand-accent/90 text-white"
-                        : "text-gray-700"
-                    }`}
-                  >
-                    <Globe2 size={14} aria-hidden="true" />
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+        {/* Fond de carte : Relief / Topo / Satellite, comme sur le direct. */}
+        <div className="absolute right-2.5 top-[104px] z-30">
+          <MapStylePills value={mapStyle} onChange={setMapStyle} />
         </div>
 
         {/* Profil altimétrique intégré */}
