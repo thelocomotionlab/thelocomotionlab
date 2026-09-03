@@ -76,8 +76,14 @@ function LiveBadge({ desktop = false, running = true, archive = false }) {
   // quelle, jusqu'à l'archivage définitif depuis un ordinateur), « ARCHIVE »
   // sur la page permanente d'une aventure passée. Le mot compte : sur une
   // archive, « TERMINÉ » laisserait croire qu'on regarde le direct du moment.
+  //
+  // ARCHIVE est à l'ocre de la charte, en blanc comme partout ailleurs sur le
+  // site : bg-brand-accent + text-white est la paire des CTA, de la bande
+  // e-mail de l'accueil et des boutons du Twin. Le contraste y est faible
+  // (1,8:1) — choix assumé de Valentin, cohérence de marque d'abord ; la
+  // graisse et les capitales du libellé sont ce qui le porte.
   const teinte = archive
-    ? "bg-brand-slate text-brand-bg"
+    ? "bg-brand-accent text-white"
     : running
       ? "bg-brand-deep text-brand-bg"
       : "bg-brand-primary-dark text-brand-bg";
@@ -87,7 +93,9 @@ function LiveBadge({ desktop = false, running = true, archive = false }) {
         desktop ? "px-3 py-[5px] text-[11px]" : "px-[11px] py-[5px] text-[10.5px]"
       }`}
     >
-      <span className="inline-block h-[7px] w-[7px] rounded-full bg-brand-bg" />
+      {/* bg-current : la pastille suit la couleur du texte de sa variante —
+          inchangé pour EN DIRECT et TERMINÉ, sombre sur l'ocre d'ARCHIVE. */}
+      <span className="inline-block h-[7px] w-[7px] rounded-full bg-current" />
       {archive ? "ARCHIVE" : running ? "EN DIRECT" : "TERMINÉ"}
     </span>
   );

@@ -79,15 +79,16 @@ export default async function ArchivePage({ params }) {
 
   return (
     <div className="px-4 sm:px-6 py-8">
-      <div className="mx-auto max-w-6xl">
-        <Breadcrumb
-          items={[
-            { href: "/", label: "Accueil" },
-            { href: "/live", label: "Live" },
-            { label: archive.nom },
-          ]}
-        />
-      </div>
+      {/* Même gabarit que LiveEnCours (max-w-6xl) : le fil d'Ariane s'aligne
+          ainsi sur le bord gauche du titre, au lieu de flotter au milieu. */}
+      <Breadcrumb
+        className="mx-auto mb-2 max-w-6xl"
+        items={[
+          { href: "/", label: "Accueil" },
+          { href: "/live", label: "Live" },
+          { label: archive.nom },
+        ]}
+      />
       <LiveEnCours timer={timer} archive={{ slug, aventure }} />
     </div>
   );

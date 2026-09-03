@@ -1,7 +1,11 @@
 // components/live/MediaLightbox.jsx
 //
-// La visionneuse plein écran du journal de bord : on clique une photo (ou une
-// vidéo), elle s'ouvre par-dessus la page, en grand, avec sa légende.
+// La visionneuse plein écran : on clique une photo (ou une vidéo), elle
+// s'ouvre par-dessus la page, en grand, avec sa légende.
+//
+// Née pour le journal de bord du direct, elle sert aussi les images des
+// articles et des projets (components/ImagesPleinEcran) : rien n'y était
+// propre au journal sauf le mot, passé en `libelle`.
 //
 // Trois décisions qui expliquent le code :
 //
@@ -29,7 +33,13 @@ import { indexSuivant } from "@/lib/journalMedias";
 const BOUTON =
   "z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/45 text-white/90 backdrop-blur-sm transition hover:bg-black/65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70";
 
-export default function MediaLightbox({ medias, index, onIndex, onClose }) {
+export default function MediaLightbox({
+  medias,
+  index,
+  onIndex,
+  onClose,
+  libelle = "du journal",
+}) {
   const dialogueRef = useRef(null);
   const media = medias?.[index] ?? null;
 
@@ -80,8 +90,8 @@ export default function MediaLightbox({ medias, index, onIndex, onClose }) {
       aria-modal="true"
       aria-label={
         plusieurs
-          ? `${media.type === "video" ? "Vidéo" : "Photo"} du journal, ${index + 1} sur ${medias.length}`
-          : `${media.type === "video" ? "Vidéo" : "Photo"} du journal`
+          ? `${media.type === "video" ? "Vidéo" : "Photo"} ${libelle}, ${index + 1} sur ${medias.length}`
+          : `${media.type === "video" ? "Vidéo" : "Photo"} ${libelle}`
       }
       onClick={onClose}
       className="ll-lightbox fixed inset-0 z-[60] flex items-center justify-center bg-[#14160F]/95 px-4 pb-16 pt-16 focus:outline-none"
@@ -112,7 +122,7 @@ export default function MediaLightbox({ medias, index, onIndex, onClose }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={media.src}
-            alt={media.legende || "Photo du terrain"}
+            alt={media.legende || media.alt || "Photo du terrain"}
             className="max-h-[78vh] max-w-full rounded-lg object-contain"
           />
         ) : (
