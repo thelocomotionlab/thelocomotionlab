@@ -12,7 +12,6 @@
     "doi": "doi brut ex : 10.2165/11588760-000000000-00000",
     "issn": "Numéro issn ex : 1179-2035",
     "issbn": "Numéro issbn (pour les livres) ex : 978-2-7609-0570-9"
-
   },
   "millet2012": {
     "author": "Guillaume Millet",
@@ -138,5 +137,33 @@
     "month": "04",
     "issn": "1660-4601",
     "doi": "10.1249/MSS.0000000000000823"
-  }
+  },
+  "fink1975": {
+    "type": "article",
+    "author": "Fink, W. J., Costill, D. L., Van Handel, P. J.",
+    "year": "1975",
+    "title": "Leg muscle metabolism during exercise in the heat and cold",
+    "journal": "European Journal of Applied Physiology and Occupational Physiology",
+    "publisher": "Springer-Verlag",
+    "volume": "34",
+    "issue": "1",
+    "pages": "183-190",
+    "doi": "10.1007/BF00999931",
+    "issn": "1439-6327",
+    "issbn": ""
+    },
+    "febbraio2001": {
+        "type": "article",
+        "author": "Febbraio, Mark A.",
+        "year": "2001",
+        "title": "Alterations in Energy Metabolism During Exercise and Heat Stress",
+        "journal": "Sports Medicine",
+        "publisher": "Springer International Publishing",
+        "volume": "31",
+        "issue": "1",
+        "pages": "47-59",
+        "doi": "10.2165/00007256-200131010-00004",
+        "issn": "1179-2035",
+        "issbn": ""
+    }
 }

@@ -6,7 +6,7 @@ description: "Journal de bord de ma saison de trail 2026 : projets OFF, sorties 
 cover: "/images/projets/saison-trail-2026/cover_saison-trail-2026.webp"
 
 status: "En cours"
-activityAt: 2026-05-17
+activityAt: 2026-09-03
 
 published: true
 ---
@@ -377,6 +377,54 @@ Voilà déjà trois semaines que l'entraînement a repris et avec lui, mon explo
 [Retour au sommaire](#sommaire)
 
 
+## Juin
+### Week-End choc dans les Aravis
+*06/06/2026*
+
+Ce mois de juin commence sur les chapeaux de roues avec un Week-End choc prévu de longue date avec l'association Grenoble Trail. Ne sachant pas trop dans quoi je m'embarquais, j'y suis allé la fleur au fusil avec beaucoup de curiosité et d'humilité. La montagne est quelque chose qui m'effraie depuis que j'ai commencé le trail, et mon expérience se limite, à de rares exceptions près comme le Lavaredo ou certaines sorties en montagnes, à de la basse altitude et du terrain relativement peu technique. J'ai ainsi vu dans ce Week-End l'opportunité d'aller plus loin, et de découvrir la haute montagne avec des personnes qui en ont l'expérience et qui partagent ma passion.
+
+![Aravis jour 1](/images/projets/saison-trail-2026/aravis-1.webp)
+*Jour 1 du WEC Aravis.*
+
+ Mon but étant de borner, je me suis immédiatement positionné sur les sorties les plus longues du Week-End. Cela m'a valu de me retrouver avec les flèches de GT, que j'ai eu parfois bien du mal à suivre dans les sentiers techniques. Mais j'ai aussi beaucoup appris sur mes capacités à endurer des paces inconfortables sur des journées entières, et j'ai pu trouver cette expérience de montagne que j'étais venu chercher. 
+
+![Aravis jour 2.1](/images/projets/saison-trail-2026/aravis-7.webp)
+
+
+
+![Aravis jour 2.2](/images/projets/saison-trail-2026/aravis-6.webp)
+*Jour 2 du WEC Aravis.*
+
+Le jour 3 fut très compliqué. Tu te souviens de cette sortie de mai à Aiguebelette ? Ben en fait, je ne t'ai pas tout dit. Depuis plusieurs semaines, j'essaye d'entraîner mon corps à assimiler l'eau que je trouve sur mon chemin sans la filtrer. Cela a très bien fonctionné pendant plus d'un mois jusqu'à cette fameuse sortie. La soif étant vraiment trop forte, j'ai siroté un bon 50 cL d'un coup d'une rivière sans prendre mes précautions habituelles (prendre une petite gorgée, attendre 30 - 45 min, et s'il ne se passe rien, augmenter la dose). Deux jours plus tard, je me retrouvais avec un grand inconfort digestif, de la fièvre parfois, et une sensation que mon corps luttait contre quelque chose. J'ai malgré tout décidé de me rendre à ce WEC GT en connaissance de cause.
+
+Et mon corps me l'a fait payé le dimanche, quand déjà abimé par toutes ces heures de trail, de nourriture approximative, et de courtes nuits, je lui ai demandé une troisième sortie, sous un cagnard oppressant, avec des passages en altitude. Le résultat ne s'est pas fait attendre et toutes les 10 min je devais m'arrêter pour procéder à des purges bien senties. J'étais quand même un peu inquiet de constater la relative blancheur de mes selles, mais ai réussi à rester concentré pour aller au bout de la sortie. À l'arrivée, j'étais fier d'avoir totalisé 86 km avec 6 700 m D+ D- sur 3j, en montagne. Ce ne fut pas un WE facile, mais j'ai tenu bon, et ça mon mental s'en souviendra. J'ai aussi commencé à apprivoisé la montagne, et ressens au fond de moi une envie croissante de poursuivre l'exploration de ce milieu.
+
+![Aravis jour 3](/images/projets/saison-trail-2026/aravis-4.webp)
+*Jour 3 du WEC Aravis.*
+
+### Bilan du mois de juin : chaleur et montagne
+*28/06/2026*
+
+Une franche semaine de décharge après le WEC dans les Aravis m'a permis de bien récupérer et de repartir avec beaucoup d'envie sur la suite du bloc d'entraînement. Juin a été un mois placé sous le signe de la canicule, que j'ai tenté de mettre à profit pour améliorer ma tolérance à la chaleur. En vrac, j'ai aussi pu découvrir la course d'orientation à Vincennes, mais surtout engranger de l'expérience en montagne avec de belles sorties en Chartreuse autour de la Grande Sure.
+
+:::split
+
+![CO 1](/images/projets/saison-trail-2026/co-1.webp)
+
+---
+
+![CO 2](/images/projets/saison-trail-2026/co-2.webp)
+
+:::
+*Course d'orientation à Vincennes par grosse chaleur.*
+
+Ce milieu m'est de plus en plus familier, et les grosses pentes bien raides qui mettent plusieurs heures à être gravies me font de moins en moins peur. Voire je commence à en redemander de plus en plus. Sur cette dernière semaine de Juin, j'ai ainsi pu enchaîner deux sorties dans le WE avec au total près de 60 km et 5 000 m D+ D-. Le tout par relativement forte chaleur, en terrains techniques, et toujours armé de mes désormais fidèles sandales Panta Boreas, particulièrement adaptées à la pratique du trail en montagne. Tout cela est plutôt de bonne augure pour la suite.
+
+![Chamois Chartreuse](/images/projets/saison-trail-2026/chamois.webp)
+*Un bébé chamois qui alaite sa maman en Chartreuse.*
+
+
+Concernant la stratégie low carb à glycogène bas, elle devient physiologiquement plus difficile à maintenir par forte chaleur. D'après mes recherches, cela s'explique par le fait que l'exercice sous stress thermique accélère la dégradation du glycogène musculaire, un phénomène médié par la hausse des catécholamines, l'élévation de la température musculaire et le recrutement accru de fibres de type II pour compenser la fatigue neuromusculaire (<Citation id="fink1975">Fink et al., 1975</Citation> ; <Citation id="febbraio2001">Febbraio, 2001</Citation>). J'ai donc décidé d'y aller de manière plus instinctive sur ce point, en conservant le plus possible le jeûne intermittent, et en mettant davantage de glucides lorsque mon corps en demande. 
 
 <!-- ### Test
 
