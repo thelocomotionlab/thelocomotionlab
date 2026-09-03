@@ -4,31 +4,19 @@
 // Porté de apps/site/components/PostLiveTracking.jsx. Lit UN fichier statique
 // (public/replays/*) via useTrackingData(mode:"replay") — aucun token, pas de
 // polling. Le lazy-load de maplibre reste à la charge du consommateur.
+//
+// Le profil altimétrique est le bandeau du labo (ElevationProfile), collé sous
+// la carte dans le même cadre — plus de volet replié dans la carte. Son survol
+// pose le point jumeau sur la trace, comme sur le direct.
 
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import {
-  SatelliteDish,
-  Crosshair,
-  ChevronDown,
-  ChevronUp,
-  Download,
-} from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { SatelliteDish, Crosshair, Download } from "lucide-react";
 import maplibregl from "maplibre-gl";
-import type { GeoJSONSource } from "maplibre-gl";
+import type { GeoJSONSource, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import * as toGeoJSON from "@tmcw/togeojson";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  Tooltip,
-  ReferenceLine,
-  Label,
-} from "recharts";
 
 import type {
   GeoLineFeature,
@@ -39,44 +27,27 @@ import type {
 } from "./types";
 import { mapStyles, resolveMapStyle, ensureTraceLayers, type MapStyleName } from "./mapStyles";
 import MapStylePills from "./MapStylePills";
-import { asMapData, createRunnerElement, formatDuration } from "./utils";
+import ElevationProfile, { type ProfileGraphPoint } from "./ElevationProfile";
+import {
+  asMapData,
+  createHoverPointElement,
+  createRunnerElement,
+  formatDuration,
+} from "./utils";
 import { useTrackingData } from "./useTrackingData";
 
-// Tooltip du profil altimétrique (référence stable au niveau module).
-type TooltipPayload = {
-  active?: boolean;
-  payload?: Array<{ payload: { km: number; alt: number; dPlus: number; dMinus: number } }>;
-};
-function CustomTooltip({ active, payload }: TooltipPayload) {
-  if (active && payload && payload.length) {
-    const { km, alt, dPlus, dMinus } = payload[0].payload;
-    return (
-      <div
-        style={{
-          background: "rgba(255,255,255,0.8)",
-          border: "1px solid rgba(150,150,150,0.3)",
-          borderRadius: "6px",
-          padding: "4px 8px",
-          fontSize: "11px",
-        }}
-      >
-        <div>
-          {km.toFixed(1)} km, {Math.round(alt)} m
-        </div>
-        <div className="text-gray-600">
-          D+ {dPlus} m D− {dMinus} m
-        </div>
-      </div>
-    );
-  }
-  return null;
+/** Borne altimétrique donnée par la balise, si elle en donne une. */
+function borne(v: number | string | undefined): number | undefined {
+  if (v === undefined || v === null || v === "") return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
 }
 
 export default function Replay({
   positionsUrl,
   totalDistanceKm,
-  elevationMin = 0,
-  elevationMax = 3100,
+  elevationMin,
+  elevationMax,
   referenceGpx,
   title = "Replay GPS",
   distanceFactor = 1,
@@ -87,13 +58,12 @@ export default function Replay({
 }: ReplayProps) {
   const mapRef = useRef<MutableMap | null>(null);
   const mapContainer = useRef<HTMLDivElement | null>(null);
+  const hoverMarkerRef = useRef<Marker | null>(null);
   // Fond demandé par la balise (« osm » des anciens markdown compris),
   // normalisé une fois pour toutes vers relief | topo | sat.
   const appliedStyleRef = useRef<MapStyleName>(resolveMapStyle(initialMapStyle));
 
   const [mapStyle, setMapStyle] = useState<MapStyleName>(resolveMapStyle(initialMapStyle));
-  const [showElevation, setShowElevation] = useState(false);
-  const [isSmallScreen, setIsSmallScreen] = useState(false);
   const [mapReady, setMapReady] = useState(false);
 
   // si pas de prop → fallback (identique à l'historique)
@@ -101,11 +71,6 @@ export default function Replay({
 
   const MAP_HEIGHT =
     typeof mapHeight === "number" ? `${mapHeight}px` : mapHeight || "400px";
-
-  const parsedElevationMin = Number(elevationMin);
-  const parsedElevationMax = Number(elevationMax);
-  const ELEVATION_MIN = Number.isFinite(parsedElevationMin) ? parsedElevationMin : 0;
-  const ELEVATION_MAX = Number.isFinite(parsedElevationMax) ? parsedElevationMax : 3100;
 
   // ---- COUCHE DONNÉES (replay : fichier statique, aucun token) ----
   const {
@@ -126,13 +91,6 @@ export default function Replay({
 
   const runnerPosition: LngLat | null =
     coords.length > 0 ? coords[coords.length - 1] : null;
-
-  useEffect(() => {
-    const syncScreen = () => setIsSmallScreen(window.innerWidth < 640);
-    syncScreen();
-    window.addEventListener("resize", syncScreen);
-    return () => window.removeEventListener("resize", syncScreen);
-  }, []);
 
   /* ---------- 1) Initialisation de la carte + GPX de référence ---------- */
   useEffect(() => {
@@ -193,6 +151,7 @@ export default function Replay({
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
+        hoverMarkerRef.current = null;
       }
     };
   }, [gpxPath]);
@@ -285,6 +244,63 @@ export default function Replay({
       ? totalDistanceKm
       : computedTotalDistance || 100;
 
+  /* ---------- 4) Profil altimétrique : la trace vécue, sous la carte ---------- */
+  // Les échantillons du replay, au format du profil du labo : km cumulés,
+  // altitude, D+/D− accumulés, et le point géographique de chacun — c'est lui
+  // que le survol renvoie pour poser le point jumeau sur la carte.
+  const graphPoints = useMemo<ProfileGraphPoint[]>(
+    () =>
+      elevationData.map((p) => ({
+        km: p.km,
+        alt: Math.round(p.alt),
+        dp: p.dPlus,
+        dm: p.dMinus,
+        lat: p.lat,
+        lng: p.lng,
+      })),
+    [elevationData]
+  );
+
+  // Bornes de l'axe des altitudes : celles de la balise (elevationMin/Max),
+  // élargies au besoin par la trace elle-même — le profil ne sort jamais de
+  // son cadre. Sans balise, le profil décide seul.
+  const bornes = useMemo(() => {
+    let min = Infinity;
+    let max = -Infinity;
+    for (const p of graphPoints) {
+      if (p.alt < min) min = p.alt;
+      if (p.alt > max) max = p.alt;
+    }
+    const balMin = borne(elevationMin);
+    const balMax = borne(elevationMax);
+    return {
+      min: Number.isFinite(min) ? (balMin !== undefined ? Math.min(balMin, min) : min) : undefined,
+      max: Number.isFinite(max) ? (balMax !== undefined ? Math.max(balMax, max) : max) : undefined,
+    };
+  }, [graphPoints, elevationMin, elevationMax]);
+
+  // Tout le profil est « couvert » : le marqueur se pose au bout de la trace,
+  // là où la carte pose le coureur.
+  const doneKm = Number(stats.distance) || 0;
+
+  // Survol du profil → point jumeau sur la carte (posé / déplacé / retiré).
+  const poserSurvol = (lngLat: [number, number] | null) => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (!lngLat) {
+      hoverMarkerRef.current?.remove();
+      hoverMarkerRef.current = null;
+      return;
+    }
+    if (!hoverMarkerRef.current) {
+      hoverMarkerRef.current = new maplibregl.Marker({ element: createHoverPointElement() })
+        .setLngLat(lngLat)
+        .addTo(map);
+    } else {
+      hoverMarkerRef.current.setLngLat(lngLat);
+    }
+  };
+
   /* ---------- 5) Rendu ---------- */
   return (
     <div className="flex flex-col items-center w-full py-6 px-3 sm:px-6 gap-3">
@@ -329,13 +345,14 @@ export default function Replay({
         </div>
       </div>
 
-      {/* Carte + profil altimétrique */}
-      <div className="relative w-full max-w-6xl">
+      {/* Carte + profil altimétrique collé dessous : un seul cadre, une seule
+          ombre. Les commandes sont posées sur la carte, en haut du cadre. */}
+      <div className="relative w-full max-w-6xl shadow-lg">
         <div
           ref={mapContainer}
           role="application"
           aria-label="Carte du replay du parcours"
-          className="ll-map w-full overflow-hidden shadow-lg border border-gray-200"
+          className="ll-map w-full overflow-hidden border border-gray-200"
           style={{ height: MAP_HEIGHT }}
         />
 
@@ -370,115 +387,18 @@ export default function Replay({
           <MapStylePills value={mapStyle} onChange={setMapStyle} />
         </div>
 
-        {/* Bandeau altimétrique */}
-        {elevationData.length > 0 && (
-          <>
-            <button
-              type="button"
-              onClick={() => setShowElevation(!showElevation)}
-              aria-label={
-                showElevation
-                  ? "Masquer le profil altimétrique"
-                  : "Afficher le profil altimétrique"
-              }
-              aria-expanded={showElevation}
-              className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-white shadow-md rounded-lg p-1.5 border border-gray-300 hover:bg-brand-accent/90 hover:text-white transition z-30"
-            >
-              {showElevation ? (
-                <ChevronDown size={24} className="text-gray-700" />
-              ) : (
-                <ChevronUp size={24} className="text-gray-700" />
-              )}
-            </button>
-
-            <div
-              className={`absolute bottom-0 left-0 w-full bg-white/60 backdrop-blur-md border-t border-gray-200 shadow-lg transition-all duration-500 ${
-                showElevation ? "max-h-36" : "max-h-0"
-              } overflow-hidden`}
-              style={{ zIndex: 20 }}
-            >
-              {showElevation && (
-                <div className="mt-3 px-3">
-                  <ResponsiveContainer width="100%" height={128}>
-                    <LineChart
-                      data={elevationData}
-                      margin={
-                        isSmallScreen
-                          ? { top: 5, right: 10, bottom: 5, left: 15 }
-                          : { top: 10, right: 20, bottom: 0, left: 30 }
-                      }
-                    >
-                      <XAxis
-                        dataKey="km"
-                        type="number"
-                        domain={[0, TOTAL_DISTANCE_KM]}
-                        ticks={
-                          isSmallScreen
-                            ? [0, Math.round(TOTAL_DISTANCE_KM)]
-                            : [
-                                0,
-                                TOTAL_DISTANCE_KM * 0.25,
-                                TOTAL_DISTANCE_KM * 0.5,
-                                TOTAL_DISTANCE_KM * 0.75,
-                                TOTAL_DISTANCE_KM,
-                              ]
-                        }
-                        tickFormatter={(v: number) => `${v.toFixed(0)}km`}
-                        tick={{ fontSize: 11 }}
-                        allowDecimals={false}
-                      />
-                      <YAxis
-                        domain={[ELEVATION_MIN, ELEVATION_MAX]}
-                        tick={false}
-                        axisLine={false}
-                        width={0}
-                      />
-                      <Tooltip content={<CustomTooltip />} />
-                      {[ELEVATION_MIN, ELEVATION_MAX]
-                        .filter(
-                          (alt, index, arr) =>
-                            Number.isFinite(alt) &&
-                            alt >= 0 &&
-                            alt <= ELEVATION_MAX &&
-                            arr.indexOf(alt) === index
-                        )
-                        .map((alt) => (
-                          <ReferenceLine
-                            key={alt}
-                            y={alt}
-                            stroke="#999"
-                            strokeDasharray="4 4"
-                            ifOverflow="extendDomain"
-                          >
-                            <Label
-                              value={`${alt}m`}
-                              position={isSmallScreen ? "insideTopRight" : "insideTopLeft"}
-                              dy={isSmallScreen ? -11 : -15}
-                              dx={-4}
-                              fill="#555"
-                              fontSize={isSmallScreen ? 6 : 10}
-                              fontWeight={400}
-                              // `background` est honoré au runtime par recharts mais absent de
-                              // ses types v3 → spread casté (comportement identique à l'historique).
-                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                              {...({ background: { fill: "rgba(255,255,255,0.4)" } } as any)}
-                            />
-                          </ReferenceLine>
-                        ))}
-                      <Line
-                        type="monotone"
-                        dataKey="alt"
-                        stroke="#B67352"
-                        strokeWidth={2}
-                        dot={false}
-                        isAnimationActive={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </div>
-          </>
+        {/* Bandeau altimétrique, collé sous la carte */}
+        {graphPoints.length > 1 && (
+          <div className="ll-map-profil border border-t-0 border-gray-200 bg-white px-3 pb-1.5 sm:px-4">
+            <ElevationProfile
+              profile={graphPoints}
+              totalKm={TOTAL_DISTANCE_KM}
+              doneKm={doneKm}
+              elevationMin={bornes.min}
+              elevationMax={bornes.max}
+              onHoverPoint={poserSurvol}
+            />
+          </div>
         )}
       </div>
     </div>

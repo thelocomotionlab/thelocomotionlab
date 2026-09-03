@@ -11,6 +11,16 @@ export { default as LiveTrackingMap } from "./LiveTrackingMap";
 export { default as Replay } from "./Replay";
 export { default as MapStylePills } from "./MapStylePills";
 
+// Le profil altimétrique du labo, nu : le direct l'habille en carte, les
+// replays et les cartes GPX le collent sous leur carte.
+export { default as ElevationProfile } from "./ElevationProfile";
+export type {
+  ElevationProfileProps,
+  ProfileGraphPoint,
+  ProfileWaypoint,
+} from "./ElevationProfile";
+export { createHoverPointElement } from "./utils";
+
 // Le look cartographique du labo, partagé avec les cartes du site.
 export {
   mapStyles,

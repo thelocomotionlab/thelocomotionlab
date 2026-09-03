@@ -4,6 +4,7 @@
 // replay. Portés à l'identique des composants historiques du site.
 
 import { brandColors } from "@locomotionlab/ui";
+import { traceColors } from "./mapStyles";
 import type { GeoJSONSource } from "maplibre-gl";
 import type { GeoLineFeature, GpxGeoJson, LngLat } from "./types";
 
@@ -132,5 +133,16 @@ export function createRunnerElement(): HTMLDivElement {
   const core = document.createElement("div");
   core.style.cssText = `position:absolute;inset:3px;border-radius:50%;background:${brandColors.deep};box-shadow:0 0 0 3px ${brandColors.bg},0 4px 12px rgba(0,0,0,0.35);`;
   el.append(halo, core);
+  return el;
+}
+
+/**
+ * Point de survol du profil altimétrique : petit disque aux couleurs de la
+ * trace (fuchsia, liseré blanc), posé/déplacé au fil du survol par le parent.
+ * Partagé par le direct, les replays et les cartes GPX.
+ */
+export function createHoverPointElement(): HTMLDivElement {
+  const el = document.createElement("div");
+  el.style.cssText = `width:13px;height:13px;border-radius:50%;background:${traceColors.line};border:2.5px solid ${traceColors.casing};box-shadow:0 1px 6px rgba(0,0,0,0.35);pointer-events:none;`;
   return el;
 }

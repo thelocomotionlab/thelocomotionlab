@@ -100,12 +100,15 @@ export type DisplayStats = {
   descent: number;
 };
 
-/** Un point du profil altimétrique (axe recharts). */
+/** Un point du profil altimétrique (km cumulés, altitude, D+/D− cumulés). */
 export type ElevationPoint = {
   km: number;
   alt: number;
   dPlus: number;
   dMinus: number;
+  /** Position du point, quand la trace la porte : point jumeau sur la carte. */
+  lat?: number;
+  lng?: number;
 };
 
 /**

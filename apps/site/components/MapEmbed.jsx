@@ -9,13 +9,12 @@ import {
   mapStyles,
   resolveMapStyle,
   ensureTraceLayers,
-  traceColors,
+  createHoverPointElement,
   MapStylePills,
+  ElevationProfile,
 } from "@locomotionlab/tracking";
 
 import { profilDeGpx } from "@/lib/gpxStats";
-import ItineraireLine from "./live/ItineraireLine";
-import ProfileCard from "./live/ProfileCard";
 
 // Carte GPX posée dans un récit. Le fond, la teinte de la trace et le
 // sélecteur viennent de @locomotionlab/tracking (mapStyles.ts) : la même
@@ -23,10 +22,10 @@ import ProfileCard from "./live/ProfileCard";
 // sa carte : elle prend le trait plein épais du « vécu », pas les tirets fins
 // de l'itinéraire prévu, qui n'existent que par contraste avec lui.
 //
-// Sous la carte, le profil altimétrique du direct (ProfileCard), nourri par
-// lib/gpxStats.profilDeGpx — calculé dans le navigateur depuis le GPX, au
-// format du .track.json, sans build:track. Le survol du profil pose un point
-// jumeau sur la carte, comme sur le live.
+// Collé sous la carte, le profil altimétrique du labo (ElevationProfile, nu :
+// ni titre ni chiffres), nourri par lib/gpxStats.profilDeGpx — calculé dans
+// le navigateur depuis le GPX, au format du .track.json, sans build:track. Le
+// survol du profil pose un point jumeau sur la carte, comme sur le direct.
 const defaultCenter = [55.5364, -21.1151];
 
 export default function MapEmbed({
@@ -45,8 +44,7 @@ export default function MapEmbed({
   const [mapStyle, setMapStyle] = useState(resolveMapStyle(null));
   const [dynamicHeight, setDynamicHeight] = useState(defaultMinHeight);
   const [gpxError, setGpxError] = useState(false);
-  // Profil et totaux du GPX (lib/gpxStats), pour la ligne de chiffres et le
-  // profil altimétrique sous la carte.
+  // Profil du GPX (lib/gpxStats), pour le bandeau altimétrique sous la carte.
   const [reference, setReference] = useState(null);
   const hoverRef = useRef(null);
 
@@ -236,9 +234,9 @@ export default function MapEmbed({
       return;
     }
     if (!hoverRef.current) {
-      const el = document.createElement("div");
-      el.style.cssText = `width:13px;height:13px;border-radius:50%;background:${traceColors.line};border:2.5px solid ${traceColors.casing};box-shadow:0 1px 6px rgba(0,0,0,0.35);pointer-events:none;`;
-      hoverRef.current = new maplibregl.Marker({ element: el }).setLngLat(lngLat).addTo(map);
+      hoverRef.current = new maplibregl.Marker({ element: createHoverPointElement() })
+        .setLngLat(lngLat)
+        .addTo(map);
     } else {
       hoverRef.current.setLngLat(lngLat);
     }
@@ -326,12 +324,12 @@ export default function MapEmbed({
       </a>
     </div>
 
-    {/* Sous la carte : les chiffres de l'itinéraire et son profil, comme sur
-        le direct. Rien tant que le GPX n'est pas lu. */}
+    {/* Bandeau altimétrique collé sous la carte, sans titre ni chiffres.
+        Rien tant que le GPX n'est pas lu ; masqué en mise en page image |
+        carte (.md-split, voir globals.css). */}
     {reference && (
-      <div className="mt-3 flex flex-col gap-2.5">
-        <ItineraireLine reference={reference} className="px-1" />
-        <ProfileCard
+      <div className="ll-map-profil border-t border-brand-text/10 bg-white px-3 pb-1.5 sm:px-4">
+        <ElevationProfile
           profile={reference.profile}
           totalKm={reference.totalKm}
           doneKm={0}

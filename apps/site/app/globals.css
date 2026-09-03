@@ -904,3 +904,9 @@ mark.search-highlight {
 .ll-map .maplibregl-ctrl-top-right .maplibregl-ctrl {
   margin-right: 12px;
 }
+
+/* Le profil collé sous une carte GPX n'a pas sa place dans la mise en page
+   « image | carte » (md-split), où la carte cale sa hauteur sur l'image. */
+.md-split .ll-map-profil {
+  display: none;
+}
