@@ -414,7 +414,7 @@ export default function LiveTrackingMap({
           ref={mapContainer}
           role="application"
           aria-label="Carte live du parcours en cours"
-          className="w-full overflow-hidden shadow-lg border border-gray-200"
+          className="ll-map w-full overflow-hidden shadow-lg border border-gray-200"
           style={{ height: MAP_HEIGHT }}
         ></div>
 
@@ -443,8 +443,9 @@ export default function LiveTrackingMap({
           </a>
         )}
 
-        {/* Fond de carte : Relief / Topo / Satellite, comme sur le direct. */}
-        <div className="absolute right-2.5 top-[104px] z-30">
+        {/* Fond de carte : Relief / Topo / Satellite, comme sur le direct —
+            au-dessus du zoom, que la classe ll-map fait descendre. */}
+        <div className="absolute right-3 top-3 z-30">
           <MapStylePills value={mapStyle} onChange={setMapStyle} />
         </div>
 

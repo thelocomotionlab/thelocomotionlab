@@ -171,3 +171,47 @@ describe("decimerProfil", () => {
     expect(decimerProfil(court, 400)).toBe(court);
   });
 });
+
+describe("profilDeGpx", () => {
+  const trkpt = (lat, lon, alt) => `<trkpt lat="${lat}" lon="${lon}"><ele>${alt}</ele></trkpt>`;
+  // Une montée régulière de 300 m sur ~11 km, puis une descente de 200 m :
+  // un point tous les ~1,1 km (0,01° de latitude), sans lissage pour que les
+  // chiffres soient exacts.
+  const montee = Array.from({ length: 11 }, (_, i) => trkpt(45 + i * 0.01, 6, 1000 + i * 30));
+  const descente = Array.from({ length: 10 }, (_, i) => trkpt(45.1 + (i + 1) * 0.01, 6, 1300 - (i + 1) * 20));
+  const GPX = `<gpx><trk><trkseg>${[...montee, ...descente].join("")}</trkseg></trk></gpx>`;
+
+  it("renvoie totaux, bornes et un profil au format du .track.json", async () => {
+    const { profilDeGpx } = await import("./gpxStats");
+    const r = profilDeGpx(GPX, { lissage: 1 });
+    expect(r.dPlusM).toBe(300);
+    expect(r.dMinusM).toBe(200);
+    expect(r.elevMinM).toBe(1000);
+    expect(r.elevMaxM).toBe(1300);
+    expect(r.totalKm).toBeGreaterThan(22);
+    expect(r.totalKm).toBeLessThan(23);
+    expect(r.profile).toHaveLength(21);
+    expect(r.profile[0]).toEqual({ km: 0, alt: 1000, lat: 45, lng: 6, dp: 0, dm: 0 });
+    // Le D+ accumulé au sommet vaut le D+ total ; le D− n'a pas commencé.
+    expect(r.profile[10]).toMatchObject({ alt: 1300, dp: 300, dm: 0 });
+    // Au dernier point, les cumuls valent les totaux.
+    expect(r.profile[20]).toMatchObject({ dp: 300, dm: 200 });
+    // Le profil est croissant en km.
+    for (let i = 1; i < r.profile.length; i += 1) expect(r.profile[i].km).toBeGreaterThan(r.profile[i - 1].km);
+  });
+
+  it("donne les mêmes totaux que statsDeGpx, par construction", async () => {
+    const { profilDeGpx, statsDeGpx } = await import("./gpxStats");
+    const a = profilDeGpx(GPX);
+    const b = statsDeGpx(GPX);
+    expect(a.dPlusM).toBe(b.dPlusM);
+    expect(a.dMinusM).toBe(b.dMinusM);
+    expect(a.totalKm).toBeCloseTo(b.distanceKm, 2);
+  });
+
+  it("rend null sans altitude exploitable", async () => {
+    const { profilDeGpx } = await import("./gpxStats");
+    expect(profilDeGpx(`<gpx><trk><trkseg><trkpt lat="45" lon="6"/><trkpt lat="45.1" lon="6"/></trkseg></trk></gpx>`)).toBeNull();
+    expect(profilDeGpx("")).toBeNull();
+  });
+});

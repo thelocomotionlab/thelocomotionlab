@@ -9,14 +9,24 @@ import {
   mapStyles,
   resolveMapStyle,
   ensureTraceLayers,
+  traceColors,
   MapStylePills,
 } from "@locomotionlab/tracking";
+
+import { profilDeGpx } from "@/lib/gpxStats";
+import ItineraireLine from "./live/ItineraireLine";
+import ProfileCard from "./live/ProfileCard";
 
 // Carte GPX posée dans un récit. Le fond, la teinte de la trace et le
 // sélecteur viennent de @locomotionlab/tracking (mapStyles.ts) : la même
 // grammaire que le direct et les replays. Une trace GPX seule est le SUJET de
 // sa carte : elle prend le trait plein épais du « vécu », pas les tirets fins
 // de l'itinéraire prévu, qui n'existent que par contraste avec lui.
+//
+// Sous la carte, le profil altimétrique du direct (ProfileCard), nourri par
+// lib/gpxStats.profilDeGpx — calculé dans le navigateur depuis le GPX, au
+// format du .track.json, sans build:track. Le survol du profil pose un point
+// jumeau sur la carte, comme sur le live.
 const defaultCenter = [55.5364, -21.1151];
 
 export default function MapEmbed({
@@ -35,6 +45,10 @@ export default function MapEmbed({
   const [mapStyle, setMapStyle] = useState(resolveMapStyle(null));
   const [dynamicHeight, setDynamicHeight] = useState(defaultMinHeight);
   const [gpxError, setGpxError] = useState(false);
+  // Profil et totaux du GPX (lib/gpxStats), pour la ligne de chiffres et le
+  // profil altimétrique sous la carte.
+  const [reference, setReference] = useState(null);
+  const hoverRef = useRef(null);
 
   const defaultZoom = 9;
 
@@ -137,6 +151,7 @@ export default function MapEmbed({
         const geojson = toGeoJSON.gpx(doc);
 
         trackGeoJSONRef.current = geojson;
+        setReference(profilDeGpx(xml));
 
         const firstLineFeature = geojson.features.find(
           (f) =>
@@ -211,6 +226,24 @@ export default function MapEmbed({
     });
   }, [mapStyle, lineWeight]);
 
+  // Survol du profil → point jumeau sur la carte (posé/déplacé/retiré).
+  const poserSurvol = (lngLat) => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (!lngLat) {
+      hoverRef.current?.remove();
+      hoverRef.current = null;
+      return;
+    }
+    if (!hoverRef.current) {
+      const el = document.createElement("div");
+      el.style.cssText = `width:13px;height:13px;border-radius:50%;background:${traceColors.line};border:2.5px solid ${traceColors.casing};box-shadow:0 1px 6px rgba(0,0,0,0.35);pointer-events:none;`;
+      hoverRef.current = new maplibregl.Marker({ element: el }).setLngLat(lngLat).addTo(map);
+    } else {
+      hoverRef.current.setLngLat(lngLat);
+    }
+  };
+
   const resetView = () => {
     if (mapRef.current) {
       if (trackBoundsRef.current) {
@@ -230,8 +263,9 @@ export default function MapEmbed({
 
   // --- Rendu principal
   return (
+    <div className="w-full">
     <div
-      className="relative w-full overflow-hidden"
+      className="ll-map relative w-full overflow-hidden"
       style={{
         height: dynamicHeight,
         transition: "height 0.3s ease",
@@ -273,8 +307,9 @@ export default function MapEmbed({
         <span className="hidden sm:inline">Recentrer</span>
       </button>
 
-      {/* Fond de carte : Relief / Topo / Satellite, comme sur le direct. */}
-      <div className="absolute right-2.5 top-[104px] z-30">
+      {/* Fond de carte : Relief / Topo / Satellite, comme sur le direct —
+          au-dessus du zoom, que la classe ll-map fait descendre. */}
+      <div className="absolute right-3 top-3 z-30">
         <MapStylePills value={mapStyle} onChange={setMapStyle} />
       </div>
 
@@ -289,6 +324,23 @@ export default function MapEmbed({
         <Download size={16} aria-hidden="true" />
         <span className="hidden sm:inline text-sm font-medium">Télécharger</span>
       </a>
+    </div>
+
+    {/* Sous la carte : les chiffres de l'itinéraire et son profil, comme sur
+        le direct. Rien tant que le GPX n'est pas lu. */}
+    {reference && (
+      <div className="mt-3 flex flex-col gap-2.5">
+        <ItineraireLine reference={reference} className="px-1" />
+        <ProfileCard
+          profile={reference.profile}
+          totalKm={reference.totalKm}
+          doneKm={0}
+          elevationMin={reference.elevMinM}
+          elevationMax={reference.elevMaxM}
+          onHoverPoint={poserSurvol}
+        />
+      </div>
+    )}
     </div>
   );
 }
