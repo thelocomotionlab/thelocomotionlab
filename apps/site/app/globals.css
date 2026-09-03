@@ -758,6 +758,107 @@ mark.search-highlight {
   }
 }
 
+/* Paquetage : le composant vit DANS le corps d'article, dont les règles
+   .prose / .article-body (Lora, 1,18 rem, marges, puces ◆) s'appliquent à ses
+   <ul> et <li>. Le plugin typography n'étant pas chargé, `not-prose` ne fait
+   rien ici : on rend la main au composant, avec une spécificité supérieure.
+   Deux précautions apprises à la recette :
+   • le composant n'utilise PAS de <p> (les règles .article-body p ont une
+     spécificité qui bat ses utilitaires de taille) ;
+   • la police est nommée par la variable next/font, pas par --font-sans :
+     @theme inline n'émet pas cette dernière, et un var() non résolu rend la
+     déclaration invalide → héritage de Lora. */
+.prose .ll-paquetage {
+  font-family: var(--next-font-ubuntu), ui-sans-serif, system-ui;
+  font-size: 14px;
+  line-height: 1.45;
+  hyphens: manual;
+}
+.prose .ll-paquetage ul,
+.prose .ll-paquetage li {
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  list-style: none;
+}
+.prose .ll-paquetage ul li::marker {
+  content: none;
+}
+.prose .ll-paquetage details > ul {
+  padding-left: 1.25rem;
+  padding-bottom: 0.5rem;
+}
+.prose .ll-paquetage a {
+  font-family: inherit;
+}
+
+/* Paquetage (components/Paquetage.jsx) : ce que Tailwind ne sait pas dire —
+   le marqueur du <summary> et la grille des lignes d'articles. Le reste est en
+   classes utilitaires dans le composant. */
+.ll-paquetage-categorie {
+  border-top: 1px solid var(--color-brand-hairline);
+}
+.ll-paquetage-categorie:last-of-type {
+  border-bottom: 1px solid var(--color-brand-hairline);
+}
+.ll-paquetage-categorie > summary {
+  list-style: none;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 2px;
+  cursor: pointer;
+}
+.ll-paquetage-categorie > summary::-webkit-details-marker {
+  display: none;
+}
+.ll-paquetage-categorie > summary::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border: 5px solid transparent;
+  border-left: 7px solid var(--color-brand-deep-dark);
+  transition: transform 150ms ease-out;
+}
+.ll-paquetage-categorie[open] > summary::before {
+  transform: rotate(90deg);
+}
+.ll-paquetage-categorie > summary:focus-visible {
+  outline: 2px solid var(--color-brand-accent-ink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.ll-paquetage-article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px 64px 76px;
+  gap: 10px;
+  align-items: baseline;
+  padding: 5px 2px;
+  font-size: 14px;
+  border-top: 1px dashed var(--color-brand-grid);
+}
+.ll-paquetage-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  font-size: 13px;
+}
+.ll-paquetage-seg + .ll-paquetage-seg {
+  border-left: 1.5px solid #fff;
+}
+@media (max-width: 480px) {
+  .ll-paquetage-article {
+    grid-template-columns: minmax(0, 1fr) 76px;
+  }
+  .ll-paquetage-article > :nth-child(2),
+  .ll-paquetage-article > :nth-child(3) {
+    display: none;
+  }
+}
+
 /* Images d'article et de projet : cliquables, donc annoncées comme telles.
    La loupe du curseur est le seul signal universel d'un agrandissement ; le
    liseré ocre au survol reprend celui des liens du corps de texte. */

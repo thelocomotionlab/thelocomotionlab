@@ -17,6 +17,7 @@ import remarkFrontmatter from "remark-frontmatter";
 import remarkMath from "remark-math";
 import remarkSplit from "@/markdown/remarkSplit";
 import remarkImageOptions from "@/markdown/remarkImageOptions";
+import remarkPaquetage, { parsePaquetageBlock } from "@/markdown/remarkPaquetage";
 import remarkLiveTracking from "@/markdown/remarkLiveTracking";
 import remarkPostLiveTracking from "@/markdown/remarkPostLiveTracking";
 import remarkPlot from "@/markdown/remarkPlot";
@@ -39,6 +40,7 @@ import { extractToc } from "@/lib/extractToc";
 import ProjetClientFx from "./ProjetClientFx";
 import ArticleNav from "./ArticleNav";
 import ImagesPleinEcran from "./ImagesPleinEcran";
+import Paquetage from "./Paquetage";
 import TwinCohorteTeaser from "./TwinCohorteTeaser";
 
 export default function ProjetBody({
@@ -185,6 +187,7 @@ export default function ProjetBody({
               remarkLiveTracking,
               remarkPostLiveTracking,
               remarkPlot,
+              remarkPaquetage,
               remarkCitations,
               remarkDirective,
               remarkSplit,
@@ -251,6 +254,12 @@ export default function ProjetBody({
                       <PostLiveTracking {...props} />
                     </figure>
                   );
+                }
+
+                // 2 bis) Bloc Paquetage (export LighterPack)
+                if (childArray.length === 1) {
+                  const paquetage = parsePaquetageBlock(childArray[0]);
+                  if (paquetage) return <Paquetage {...paquetage} />;
                 }
 
                 // 3) Bloc Plot (Plotly)
