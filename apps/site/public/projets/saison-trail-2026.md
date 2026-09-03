@@ -483,17 +483,37 @@ Ma semaine s'est conclue sur une tentative de grosse sortie dans le Vercors, pas
 L'idée de faire le tour des Écrins en autonomie est néée le lendemain [de mon aventure entre Drôme et Vercors](https://thelocomotionlab.com/explorer/immersion-primale-entre-vercors-et-drome). On dit qu'il faut toujours avoir un projet d'avance, et là je n'en avais plus qu'un en ligne de mire : Nice le 25 septembre. J'ai donc fait quelques recherches et suis rapidement tombé sur cette trace de fou furieux de 188 km et 12 200 m D+ D- dans les Écrins.
 
 [Tour des Écrins](/tracks/tour-des-ecrins.gpx)
+
 *Trace du tour des Écrins*
 
-Ces chiffres défiant un peu l'entendement, je me suis dit que ce serait un parfait projet sur 4 jours, et que le placer autour de fin août me permettrait de le vivre comme une sorte de Week-End choc amélioré, un test final en vue de ma préparation pour Nice. L'affaire était dans le sac. Plus tard, mon ami Rapace, intéressé par le projet, décidait de se joindre à moi sur 2j de l'aventure. Le tour se décomposera alors ainsi :
-- Jour 1 : Vénosc → Valgaudémar
-- Jour 2 : Valgaudémar → Vallouise
-- Jour 3 : Vallouise → Arsine
-- Jour 4 : Arsine → Vénosc
+Ces chiffres défiant un peu l'entendement, je me suis dit que ce serait un parfait projet sur 4 jours, et que le placer autour de fin août me permettrait de le vivre comme une sorte de Week-End choc amélioré, un test final en vue de ma préparation pour Nice. L'affaire était dans le sac. Plus tard, mon ami Rapace, intéressé par le projet, décidait de se joindre à moi sur 2j de l'aventure. Le tour sera décomposé ainsi :
+- Jour 1 : Vénosc → Valgaudémar (57,5 km 4 800 m D+ 4 600 m D-) avec Rapace
+- Jour 2 : Valgaudémar → Vallouise (49,2 km 2 960 m D+ 2 890 m D-) avec Rapace
+- Jour 3 : Vallouise → Arsine (39,4 km 2 230 m D+ 1 700 m D-) solo
+- Jour 4 : Arsine → Vénosc (41,9 km 2 120 m D+ 2 800 m D-) solo
+
+Une sacrée aventure donc qui nécessite une préparation aux petits oignons.
 
 #### Le paquetage
 
+Niveau paquetage, je suis reparti sur les mêmes ingrédients utilisés lors de mon aventure dans le Vercors, exception faite au niveau de la nutrition, sur laquelle je reviens plus bas.
+
 <paquetage src="/paquetages/tour-des-ecrins.csv" titre="Tour des Écrins, 2026" />
+
+Ce setup me semble toujours aussi robuste dans sa capacité à faire face à de multiples imprévus, à pouvoir dormir même sous des températures assez basses (jusqu'autour de -4°C sans problème), ou à rester au sec en cas de fortes pluies grâce à la fonctionnalité poncho du Gatewood Cape. Par rapport au Vercors, je pars cette fois-ci avec un téléphone sattelite Garmin inReach.
+
+:::split
+
+![Paquetage Écrins 1](/images/projets/saison-trail-2026/paquetage-ecrins-1.webp)
+
+---
+
+![Paquetage Écrins 3](/images/projets/saison-trail-2026/paquetage-ecrins-3.webp)
+
+:::
+
+*Matos embarqué pour les Écrins (sans la nutrition montrée plus bas).*
+
 
 <!-- ### Test
 
