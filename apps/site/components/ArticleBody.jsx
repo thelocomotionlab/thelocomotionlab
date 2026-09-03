@@ -9,6 +9,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkFootnotes from "remark-footnotes";
@@ -17,6 +18,7 @@ import remarkMath from "remark-math";
 import remarkCitations from "@/markdown/remarkCitations";
 import remarkSplit from "@/markdown/remarkSplit";
 import remarkImageOptions from "@/markdown/remarkImageOptions";
+import remarkPaquetage, { parsePaquetageBlock } from "@/markdown/remarkPaquetage";
 
 import rehypeSlug from "rehype-slug";
 import rehypeRaw from "rehype-raw";
@@ -27,6 +29,7 @@ import { createCitation } from "./Citation";
 import CitationReferences from "./CitationReferences";
 import ArticleNav from "./ArticleNav";
 import ImagesPleinEcran from "./ImagesPleinEcran";
+import Paquetage from "./Paquetage";
 import TwinCohorteTeaser from "./TwinCohorteTeaser";
 
 export default function ArticleBody({
@@ -118,6 +121,7 @@ export default function ArticleBody({
             remarkPlugins={[
               remarkGfm,
               remarkImageOptions,
+              remarkPaquetage,
               [remarkFootnotes, { inlineNotes: true }],
               remarkCitations,
               remarkDirective,
@@ -127,6 +131,13 @@ export default function ArticleBody({
             rehypePlugins={[rehypeSlug, rehypeRaw, rehypeKatex]}
             components={{
               citation: Citation,
+              // Un paragraphe qui n'est qu'un bloc <paquetage> devient le
+              // composant ; tout autre paragraphe reste un <p> ordinaire.
+              p: ({ children }) => {
+                const enfants = React.Children.toArray(children);
+                const bloc = enfants.length === 1 ? parsePaquetageBlock(enfants[0]) : null;
+                return bloc ? <Paquetage {...bloc} /> : <p>{children}</p>;
+              },
               a: ({ node, ...props }) => {
                 // Lien identifiable sans survol (WCAG 1.4.1) : souligné en
                 // permanence + couleur de la charte lisible sur blanc.
