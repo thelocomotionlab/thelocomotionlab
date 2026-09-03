@@ -76,8 +76,12 @@ function LiveBadge({ desktop = false, running = true, archive = false }) {
   // quelle, jusqu'à l'archivage définitif depuis un ordinateur), « ARCHIVE »
   // sur la page permanente d'une aventure passée. Le mot compte : sur une
   // archive, « TERMINÉ » laisserait croire qu'on regarde le direct du moment.
+  //
+  // ARCHIVE passe à l'ocre de la charte. Texte SOMBRE, et pas clair comme les
+  // deux autres : sur #EFB159, le beige du site tombe à 1,8:1 — illisible. Le
+  // gris de texte y donne 6,7:1, mieux que les 4,1:1 de l'ancienne pastille.
   const teinte = archive
-    ? "bg-brand-slate text-brand-bg"
+    ? "bg-brand-accent text-brand-text"
     : running
       ? "bg-brand-deep text-brand-bg"
       : "bg-brand-primary-dark text-brand-bg";
@@ -87,7 +91,9 @@ function LiveBadge({ desktop = false, running = true, archive = false }) {
         desktop ? "px-3 py-[5px] text-[11px]" : "px-[11px] py-[5px] text-[10.5px]"
       }`}
     >
-      <span className="inline-block h-[7px] w-[7px] rounded-full bg-brand-bg" />
+      {/* bg-current : la pastille suit la couleur du texte de sa variante —
+          inchangé pour EN DIRECT et TERMINÉ, sombre sur l'ocre d'ARCHIVE. */}
+      <span className="inline-block h-[7px] w-[7px] rounded-full bg-current" />
       {archive ? "ARCHIVE" : running ? "EN DIRECT" : "TERMINÉ"}
     </span>
   );
