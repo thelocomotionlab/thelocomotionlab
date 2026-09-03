@@ -13,6 +13,7 @@
     "build:track": "node scripts/build-reference-track.mjs",
     "build:icons": "node scripts/build-icons.mjs",
     "live:archiver": "node scripts/live-archiver.mjs",
+    "live:retro": "node scripts/live-retro-archiver.mjs",
     "live:preview": "node scripts/live-preview.mjs",
     "carte:partage": "node scripts/carte-partage.mjs",
     "build:og": "node scripts/build-og-image.mjs",

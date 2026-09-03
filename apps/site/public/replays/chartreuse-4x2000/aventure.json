@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "slug": "chartreuse-4x2000",
+  "nom": "Les 4x2000m de Chartreuse",
+  "dates": "24 juillet 2026",
+  "dateDebut": "2026-07-24T08:52:43+02:00",
+  "intention": "Quatre sommets à 2 000 m dans la journée.",
+  "trace": "/replays/chartreuse-4x2000/reference.track.json",
+  "waypoints": [],
+  "timer": {
+    "running": false,
+    "startTime": "2026-07-24T06:52:43.000+00:00",
+    "stopTime": "2026-07-24T14:16:15.000+00:00"
+  },
+  "distanceKm": 32.8,
+  "deniveleM": 2943
+}
