@@ -77,11 +77,13 @@ function LiveBadge({ desktop = false, running = true, archive = false }) {
   // sur la page permanente d'une aventure passée. Le mot compte : sur une
   // archive, « TERMINÉ » laisserait croire qu'on regarde le direct du moment.
   //
-  // ARCHIVE passe à l'ocre de la charte. Texte SOMBRE, et pas clair comme les
-  // deux autres : sur #EFB159, le beige du site tombe à 1,8:1 — illisible. Le
-  // gris de texte y donne 6,7:1, mieux que les 4,1:1 de l'ancienne pastille.
+  // ARCHIVE est à l'ocre de la charte, en blanc comme partout ailleurs sur le
+  // site : bg-brand-accent + text-white est la paire des CTA, de la bande
+  // e-mail de l'accueil et des boutons du Twin. Le contraste y est faible
+  // (1,8:1) — choix assumé de Valentin, cohérence de marque d'abord ; la
+  // graisse et les capitales du libellé sont ce qui le porte.
   const teinte = archive
-    ? "bg-brand-accent text-brand-text"
+    ? "bg-brand-accent text-white"
     : running
       ? "bg-brand-deep text-brand-bg"
       : "bg-brand-primary-dark text-brand-bg";
