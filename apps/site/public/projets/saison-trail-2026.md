@@ -472,7 +472,14 @@ Cette semaine a été l'occasion de découvrir la beauté époustouflante du mas
 *Baptême en Belledonne.*
 
 
-Ma semaine s'est conclue sur une tentative de grosse sortie dans le Vercors, passant par le sommet du Moucherotte. Cette ascension m'aura pris 3h et aura été très difficile, avec parfois des étourdissements et le besoin de m'arrêter tous les 30 m pour reprendre mes forces. J'ai encore une fois dû abrégé la sortie, qui a été un chemin de croix pendant de nombreuses heures. Mais, à la fin de journée, lors de la redescente, à l'ombre, les conditions deviennent plus supportables, ma foulée redémarre, et mon souffle revient. Je comprends, en faisant le parallèle avec la sortie de Belledonne, que ce n'est pas mon organisme qui m'a fait défaut tout au long de la journée, mais bien la chaleur qui m'empêche de m'exprimer. Je me sens rassuré et me dis que toutes ces semaines à hauts volumes et fortes chaleurs m'ont forcément renforcé d'une manière que je ne peux encore palper du doigt.
+Ma semaine s'est conclue sur une tentative de grosse sortie dans le Vercors, passant par le sommet du Moucherotte. Cette ascension m'aura pris 3h et aura été très difficile, avec parfois des étourdissements et le besoin de m'arrêter tous les 30 m pour reprendre mes forces. J'ai encore une fois dû abrégé la sortie, qui a été un chemin de croix pendant de nombreuses heures. Mais, à la fin de journée, lors de la redescente, à l'ombre, les conditions deviennent plus supportables, ma foulée redémarre, et mon souffle revient. Je comprends, en faisant le parallèle avec la sortie de Belledonne, que ce n'est pas mon organisme qui m'a fait défaut tout au long de la journée, mais bien la chaleur qui m'empêche de m'exprimer. Je me sens rassuré et me dis que toutes ces semaines à hauts volumes et fortes chaleurs m'ont forcément renforcé d'une manière que je ne peux encore palper du doigt. Je finis cette première semaine d'août à 108 km et 6 600 m D+ D-.
+
+
+### Préparatifs du projet Écrins
+*18/08/2026*
+
+#### La genèse du projet
+
 
 
 
