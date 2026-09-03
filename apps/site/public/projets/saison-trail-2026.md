@@ -426,6 +426,26 @@ Ce milieu m'est de plus en plus familier, et les grosses pentes bien raides qui 
 
 Concernant la stratégie low carb à glycogène bas, elle devient physiologiquement plus difficile à maintenir par forte chaleur. D'après mes recherches, cela s'explique par le fait que l'exercice sous stress thermique accélère la dégradation du glycogène musculaire, un phénomène médié par la hausse des catécholamines, l'élévation de la température musculaire et le recrutement accru de fibres de type II pour compenser la fatigue neuromusculaire (<Citation id="fink1975">Fink et al., 1975</Citation> ; <Citation id="febbraio2001">Febbraio, 2001</Citation>). J'ai donc décidé d'y aller de manière plus instinctive sur ce point, en conservant le plus possible le jeûne intermittent, et en mettant davantage de glucides lorsque mon corps en demande. 
 
+
+## Juillet
+### Pic de volume et grosse décharge
+*05/07/2026*
+
+En ce début juillet, le volume d'entraînement bat son plein et je décide de titiller un peu mes limites en enchaînant une semaine à 112 km 6 700 m D+ D-, suivi d'une seconde à 121 km 6 800 m D+ D-, le tout régulièrement effectué en montagne, avec des séances de PPG hebdomadaires, du mouvement primal et de la calisthénie. Je cottoie régulièrement les 25h de sport par semaine, ce qui est énorme pour moi. À voir comment cela évolue et perdure dans le temps.
+
+![SL Chartreuse](/images/projets/saison-trail-2026/grande-sure.webp)
+*Vue depuis la Grande Sure en Chartreuse.*
+
+### Système nerveux en alerte, peur et hyperthermie
+*27/07/2026*
+
+Après une grosse phase de décharge, j'ai décidé de tenter de remettre un peu de volume sur la fin juillet. Mais, entre la préparation de ma reprise d'études de STAPS en septembre, le développement du Locomotion Lab, mon travail de réflexion autour d'une présence plus professionnelle sur les réseaux sociaux, force est de constater que ma chasse d'eau est pleine (voir [ce billet si le concept de chasse d'eau ne te parle pas](https://thelocomotionlab.com/explorer/traversee-reunion#incarner-le-concept-de-la-chasse-deau)). Cela s'est matérialisé par une tentative de sortie sur les 4x2000m de Chartreuse, la même qui m'avait mis en échec avant même de descendre de la voiture en octobre 2025. Cette fois-ci, j'ai réussi à m'y engager, avec la peur au ventre d'affronter la brèche Arnaud qui mène jusqu'à Chamechaude.
+
+![SL 4x2000](/images/projets/saison-trail-2026/chamechaude.webp)
+*Vue sur Chamechaude.*
+
+Cette brèche, réputée assez engagée, permet d'accéder au sommet de Chamechaude, et se fait généralement encordé·e et casqué·e. Je n'avais ni l'un ni l'autre et m'y suis présenté en sandales. 
+
 <!-- ### Test
 
 <livetracking
