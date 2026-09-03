@@ -108,6 +108,8 @@ function deriveLiveSnapshot(data: LivePositions): Snapshot | null {
     alt: p?.alt || 0,
     dPlus: Math.round(p?.dPlus || 0),
     dMinus: Math.round(p?.dMinus || 0),
+    lat: typeof p?.latitude === "number" ? p.latitude : undefined,
+    lng: typeof p?.longitude === "number" ? p.longitude : undefined,
   }));
 
   const lastKm =
@@ -296,6 +298,8 @@ export function useTrackingData(options: UseTrackingDataOptions): TrackingData {
           alt: p.alt || 0,
           dPlus: Math.round((p.dPlus || 0) * dplusCorrection),
           dMinus: Math.round((p.dMinus || 0) * dminusCorrection),
+          lat: typeof p.latitude === "number" ? p.latitude : undefined,
+          lng: typeof p.longitude === "number" ? p.longitude : undefined,
         }));
 
         applySnapshot({

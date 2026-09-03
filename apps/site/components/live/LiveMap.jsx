@@ -29,6 +29,7 @@ import {
   resolveMapStyle,
   ensureTraceLayers,
   traceColors,
+  createHoverPointElement,
 } from "@locomotionlab/tracking";
 
 import { simplifyTrack } from "@/lib/simplify";
@@ -194,9 +195,9 @@ export default function LiveMap({
       return;
     }
     if (!hoverRef.current) {
-      const el = document.createElement("div");
-      el.style.cssText = `width:13px;height:13px;border-radius:50%;background:${traceColors.line};border:2.5px solid ${traceColors.casing};box-shadow:0 1px 6px rgba(0,0,0,0.35);pointer-events:none;`;
-      hoverRef.current = new maplibregl.Marker({ element: el }).setLngLat(hoverPoint).addTo(map);
+      hoverRef.current = new maplibregl.Marker({ element: createHoverPointElement() })
+        .setLngLat(hoverPoint)
+        .addTo(map);
     } else {
       hoverRef.current.setLngLat(hoverPoint);
     }

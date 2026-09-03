@@ -4,7 +4,7 @@
 //
 // Le replay post-course lit UN fichier statique (public/replays/*) : pas de
 // proxy, pas de token. Ce fichier ne fait que préserver le lazy-load de
-// maplibre-gl + recharts via next/dynamic({ ssr:false }), chargé seulement quand
+// maplibre-gl via next/dynamic({ ssr:false }), chargé seulement quand
 // un bloc <postlivetracking> est présent dans le markdown d'un projet.
 //
 // ProjetBody continue d'importer ce composant et de lui passer les props de la
