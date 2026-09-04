@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(/CLAUDE.md)",
+      "Edit(/.claude/**)"
+    ],
+    "ask": [
+      "Edit(/docs/**)"
+    ]
+  }
+}
