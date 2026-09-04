@@ -276,7 +276,12 @@ export function assertContentRules({
       }
     }
 
-    // 3. Les relations résolvent, chacune vers la sorte qu'elle promet.
+    // 3. Les relations résolvent, chacune vers la sorte qu'elle promet — et
+    //    un atome PUBLIÉ ne cite jamais un brouillon : ces relations
+    //    engendrent des liens visibles, qui mèneraient à un 404.
+    //    `parent:` échappe à la règle : une fiche peut vivre avant que
+    //    l'expédition qui la porte soit publiée, son lien de retour est
+    //    conditionnel.
     for (const [champ, sorteAttendue] of Object.entries(RELATIONS)) {
       for (const slug of entry[champ]) {
         const cible = parSlug.get(slug);
@@ -284,6 +289,12 @@ export function assertContentRules({
           erreurs.push(
             `${entry.file} : « ${champ}: [… ${slug} …] » ne désigne aucun ` +
               `atome de sorte « ${sorteAttendue} » dans content/.`
+          );
+        } else if (entry.published && !cible.published) {
+          erreurs.push(
+            `${entry.file} : « ${champ}: [… ${slug} …] » désigne un brouillon ` +
+              `(${cible.file}). Un atome publié ne peut pas citer ce qui n'est ` +
+              `pas publié.`
           );
         }
       }

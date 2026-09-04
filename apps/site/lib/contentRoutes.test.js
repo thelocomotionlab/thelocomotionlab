@@ -166,6 +166,28 @@ describe("les règles de build", () => {
     ).toThrow(/« lie: \[… inconnu …\] »/);
   });
 
+  it("refuse qu'un atome publié cite un brouillon", () => {
+    expect(
+      verifie([
+        atome("concept", "hormese", { published: false }),
+        atome("expedition", "ecrins", { concepts: ["hormese"] }),
+      ])
+    ).toThrow(/désigne un brouillon/);
+  });
+
+  it("tolère qu'un brouillon cite un brouillon, et qu'une fiche ait un parent en brouillon", () => {
+    expect(
+      verifie([
+        atome("concept", "hormese", { published: false }),
+        atome("expedition", "ecrins", {
+          concepts: ["hormese"],
+          published: false,
+        }),
+        atome("fiche", "paquetage", { parent: "ecrins" }),
+      ])
+    ).not.toThrow();
+  });
+
   it("accepte des relations qui résolvent toutes", () => {
     expect(
       verifie([
