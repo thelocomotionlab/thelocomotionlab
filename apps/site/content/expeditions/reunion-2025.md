@@ -5,10 +5,31 @@ date: "2025-12-09"
 description: "Récit et bilan de la tentative de traversée de la Réunion en autonomie en sandales."
 cover: "/images/articles/recit-reunion-2025/cover_reunion_2025.webp"
 tags: ["ultra-trail", "fast-packing", "minimalisme"]
+concepts: [chasse-d-eau, respiration-nasale-et-regime-aerobie, creux-circadien, trace-sous-echantillonnee]
+fiches: [paquetage-reunion-2025, nutrition-reunion-2025, live-tracking-v1]
 published: true
 ---
 
-Cette aventure était une occasion d'éprouver mes capacités d'adaptation en autonomie complète sur très longue distance et en milieu tropical. Après quasiment deux mois de préparation (documentés [ici](https://thelocomotionlab.com/explorer/traversee-reunion)) et avec quelques semaines de recul maintenant, elle a surtout été l'occasion d'observer ma manière d'interagir avec un objectif. Explorative, intense, parfois dévorante, mais toujours nourrissante. Le projet n'est finalement que partiellement abouti certes, mais de nombreux enseignements en découlent, et cette tranche de vie incroyable mérite tout de même son récit. Belle lecture.
+Cette aventure était une occasion d'éprouver mes capacités d'adaptation en autonomie complète sur très longue distance et en milieu tropical. Après quasiment deux mois de préparation (documentés dans le [carnet 2025](/explorer/carnet-2025)) et avec quelques semaines de recul maintenant, elle a surtout été l'occasion d'observer ma manière d'interagir avec un objectif. Explorative, intense, parfois dévorante, mais toujours nourrissante. Le projet n'est finalement que partiellement abouti certes, mais de nombreux enseignements en découlent, et cette tranche de vie incroyable mérite tout de même son récit. Belle lecture.
+
+
+## Le direct, rejoué
+
+Trace complète : 170 km 9 800 m D+/D−, [téléchargeable ici](/tracks/reunion-r2_komoot.gpx).
+
+<postlivetracking
+  positions="/replays/traversee-reunion/live-positions.json"
+  stats="/replays/traversee-reunion/live-stats.json"
+  totalDistance="85.50"
+  distanceFactor="1.3"
+  ascentFactor="1.22"
+  descentFactor="1.29"
+  elevationMax="3100"
+  referenceGpx="/tracks/reunion-r2_temp.gpx"
+  title="Replay de la traversée de la Réunion 2025"
+/>
+
+*Tu peux plier/déplier le bandeau altimétrique sur la carte, et y lire les données de distance, D+ et D− à chaque point enregistré. Direct v1 (2025) — smartphone + Traccar, conservé tel quel.*
 
 ## Premier acte : joie et symbiose
 

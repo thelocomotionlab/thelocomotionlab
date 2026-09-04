@@ -28,13 +28,9 @@ Côté préparation physique, rien de neuf sous les tropiques. À savoir que je 
 ### Création de la trace GPX
 *30/09/2025*
 
-L'idée de faire le parcours en OFF de la diagonale des fous fut tentante. Mais pas assez créative à mon goût. J'ai donc choisi de me baser sur le parcours du GR R2, qui traverse l'île, en apportant les modifications nécessaires pour gravir les pitons des neige et de la fournaise. Cette trace a été construite à l'aide des sites [komoot](https://www.komoot.com/), [tracedetrail](https://tracedetrail.fr), et  vérifiée à l'aide de [geoportail](https://www.geoportail.gouv.fr/), véritable banger pour s'assurer gratuitement de la fiabilité d'une trace. Elle sera également à adapter en fonction des fermetures de sentiers quelques jours avant. J'ai choisi de faire le parcours depuis Saint-Denis, et de terminer à Basse Vallée. Total : 167 km 10 000 m D+, j'en salive d'avance.
+La trace part du GR R2, qui traverse l'île, modifié pour gravir les pitons des Neiges et de la Fournaise. Départ de Saint-Denis, arrivée à Basse-Vallée. Total : 167 km 10 000 m D+, j'en salive d'avance. Corrigée le 07/11 des sentiers fermés : 170 km 9 800 m D+.
 
-Update 07/11/2025 : correction de la trace pour prise en compte des sentiers fermés + ajout des checkpoint flotte + départ gare Saint-Denis et arrivée direct au Airbnb d'Éliane. Total : 170 km 9 800 m D+.
-
-[Traversée de la Réunion](/tracks/reunion-r2_komoot.gpx)
-
-*Trace de la traversée de la Réunion élaborée à partir du GR R2.*
+→ La méthode, les trois outils et les deux versions de la trace : [Construire une trace fiable](/explorer/construire-une-trace-fiable).
 
 ### Bilan S1
 *05/10/2025*
@@ -95,9 +91,11 @@ Matos :
 
 :::
 
-Côté caractéristiques du parcours, on était sur des sentiers bien techniques en montées comme en descentes. Mon choix de ne pas utiliser de bâtons m'a compliqué la tâche dans ces montées très abruptes et techniques. L'objectif était de passer le plus de temps possible en respiration nasale, signe de bien rester en régime aérobie. Cela est à mes yeux indispensable pour des efforts aussi longs que celui de la Réunion. Je n'ai pas encore assez décortiqué la science sur ce sujet pour parler d'autre chose que de mes ressentis, mais j'ai remarqué qu'en oxydant trop rapidement mes réserves de glycogène à cause du régime anaérobique, la perception moyenne de l'effort devient de plus en plus élevée, trop pour un effort de si longue distance. Et plus la perception de l'effort est grande, plus le plaisir de se mouvoir s'estompe. Parfois juste un poil au-dessus du seuil acceptable, et on passe d'un effort agréable, totalement addictif, à un stress corporel et cognitif continu.
+Côté caractéristiques du parcours, on était sur des sentiers bien techniques en montées comme en descentes. Mon choix de ne pas utiliser de bâtons m'a compliqué la tâche dans ces montées très abruptes et techniques. L'objectif était de passer le plus de temps possible en respiration nasale, signe de bien rester en régime aérobie.
 
 J'ai donc commencé à me poser des questions et à douter ma capacité à accomplir le dénivelé du GR R2 sans bâtons, lorsque l'effort perçu devenait trop important pour la respiration nasale passé les 1 000 - 1 500 m de dénivelé. Mais je n'avais pas dit mon dernier mot.
+
+→ Pourquoi le nez est un témoin d'allure : [La respiration nasale comme témoin du régime aérobie](/comprendre/respiration-nasale-et-regime-aerobie). La manière de s'en servir : [Rester en respiration nasale à l'effort](/explorer/respiration-nasale-a-l-effort).
 
 :::split
 
@@ -124,20 +122,18 @@ Je termine la semaine avec 104 km et 4 800 m D+/D-. Ces stats me font plaisir et
 *13/10/2025*
 
 
-Suite à mes difficultés à maintenir une allure aérobique en montées durant le tour du Taillefer, j'ai pensé qu'il existait forcément une manière plus économe de marcher dans les pentes abruptes. J'ai aussi remarqué pendant cette sortie une sur-utilisation de mes quadriceps, probablement masquée habituellement par l'utilisation des bâtons. Or, les quadri, c'est précieux pour enquiller des grosses quantités de D-, alors il faut les préserver à tout prix en montée et utiliser son bon gros bubble butt à la place. C'est ainsi qu'en fouillant, et inspiré par les sherpas Népalais du film 14x8000 que je viens de voir (et aussi par toi Bib), que je suis tombé sur le concept du "rest step", ou "pas de repos" en français.
-
-Il s'agit d'une technique fondamentale utilisée par toustes les montagnard.e.s aguerri.e.s, basée sur l'introduction d'une micro-pause de repos à chaque pas. Ceci permet le transfert de la charge du système musculaire vers le système squelettique. Le mécanisme est le suivant : lorsque le marcheur prend un pas vers l'avant, en inclinant le buste de manière appropriée, il transfère son poids sur la jambe en contact avec le sol, qui se redresse par gravité. Le genou ainsi verrouillé permet au squelette (os et ligaments) de supporter l'ensemble de la masse du marcheur, épargnant quadriceps et mollets. Pendant ce temps, l'autre jambe est suspendue au-dessus du sol, et bénéficie d'une micro-pause (parfois très brève, juste une fraction de seconde) avant d'avancer, les muscles complètement détendus, pour effectuer le pas suivant.
+Suite à mes difficultés à maintenir une allure aérobique en montées durant le tour du Taillefer, j'ai pensé qu'il existait forcément une manière plus économe de marcher dans les pentes abruptes. En fouillant, et inspiré par les sherpas népalais du film 14x8000 que je viens de voir (et aussi par toi Bib), je suis tombé sur le concept du "rest step", ou "pas de repos" en français.
 
 Ma curosité piquée à vif, et malgré la grosse sortie d'hier, j'étais obligé d'aller tester ça sur une pente à côté du boulot. Résultat très prometteur : full respiration nasale sur une pense de 300 m D+. Je tiens quelque chose...
+
+→ Le mécanisme, la dose et les deux terrains : [Le rest step en montée](/explorer/rest-step-en-montee).
 
 ### Incarner le concept de la chasse d'eau
 *18/10/2025*
 
-Tu connais le modèle de la chasse d'eau ? Si le nom peut prêter à sourire, il s'agit d'un concept très sérieux introduit en 2011 par l'illustre Guillaume Millet, professeur à l'Université de Saint-Étienne (personne n'est parfait), et véritable ponte de la fatigue en ultra-endurance (<Citation id="millet2012">voir l'étude</Citation>). Ce modèle stipule que tout athlète d'endurance dispose d'une certaine capacité à endurer la charge d'entraînement, modélisée par une chasse d'eau. Cette chasse d'eau se remplit à chaque entraînement, c'est la fatigue, et doit être vidée de temps en temps pour ne pas déborder : c'est le repos.
+Incapable de sortir de la voiture, après 45 min de route pour me rendre au départ d'un parcours de 50 km 4 000 m D+. Trop de fatigue, trop de charge mentale, trop de tout. Hop, demi-tour. Je suis rentré, me suis allongé et ai dormi 5h de suite. Ma chasse d'eau est pleine et je dois la vider.
 
-Le truc, c'est que quand on fait de l'ultra-endurance, on a souvent tendance à négliger les stress additionnels qui viennent eux aussi remplir la chasse d'eau. Par exemple avoir un rendu à faire au travail, travailler sur des projets perso chronophages, s'acquitter des tâches ménagères. Tout cela rempli progressivement la chasse d'eau, et en n'observant pas de phase de repos suffisante, elle se met à déborder, gentiment au début, mais en tirant trop sur la corde, on peut risquer l'innondation : la blessure.
-
-Dans mon cas, je n'ai pas vécu de blessure physique. Mais après ces premières semaines d'entraînement toujours plus volumineuses, une charge de travail au boulot importante, et préparer mon voyage à la Réunion, voilà que je me suis retrouvé incapable de sortir de la voiture, après avoir fait 45 min de route pour me rendre au départ d'un parcours de 50 km 4 000 m D+. Trop de fatigue, trop de charge mentale, trop de tout. Hop, demi-tour. Je suis rentré, me suis allongé et ai dormi 5h de suite. Mon corps a tiré la sonnette d'alarme au bon moment car qui sait ce qui se serait passé si je m'étais aventuré sur une telle sortie, incluant des passages engagés, dans un état de fatigue et d'inflammation avancés ? Ma chasse d'eau est pleine et je dois la vider.
+→ Le modèle de Millet, et pourquoi les stress qui ne portent pas de dossard comptent autant : [La chasse d'eau](/comprendre/chasse-d-eau).
 
 ### Bilan S3
 *19/10/2025*
@@ -278,47 +274,25 @@ Go Saint-Pierre ensuite, dernière vraie étape avant le départ pour la travers
 
 #### Matériel, nutrition et hydratation
 
-J'avais l'espoir de trouver mes victuailles habituelles de sorties longues à Saint-Pierre, mais la réalité dépassa mes espérances. J'ai pu acquérir (à prix d'or certes), tout le nécessaire pour ne pas mourir de faim pendant cette longue traversée, en utilisant quasiment exactement les mêmes produits que j'utilise habituellement. Ma nutrition sera donc composée ainsi :
+J'avais l'espoir de trouver mes victuailles habituelles de sorties longues à Saint-Pierre, mais la réalité dépassa mes espérances. J'ai pu acquérir (à prix d'or certes), tout le nécessaire pour ne pas mourir de faim pendant cette longue traversée, en utilisant quasiment exactement les mêmes produits que j'utilise habituellement. La surprise du chef sera sur les gels. Je n'ai en effet jamais ingurgité le moindre gel de ma vie jusqu'alors, mais le combo caféine + sucre est un combo gagnant pour lutter contre les coups de mous. De toute façon, j'ai évidemment prévu du PQ si ceux-ci ressortaient aussi vite qu'ils seraient rentrés (kikou les gels Ta Rapace).
 
-- 39 boules d'énergie poudre d'amande/pâte de dattes (ratio 1/1,54) dont 13 avec du café (765 g)
-- 14 doses de flasques isotoniques (720 g)
-- 2 saucissons bio (400 g)
-- 4 gels caféine citron (140 g)
-- 5 plats lyophilisés (600 g)
+Pour le reste, j'ai essayé de penser à tous les cas de figures possibles. Matériel : 2,9 kg. Nutrition : 2,62 kg. En sommant l'ensemble + les 3 L de liquide, on atteint un sac d'environ 8,5 kg, soit un peu plus d'1 kg de plus que ce que j'avais emporté sur mon OFF de l'UTMC (voir [ici](#la-big-sortie)).
 
-Un total de 2,62 kg. La surprise du chef sera sur les gels. Je n'ai en effet jamais ingurgité le moindre gel de ma vie jusqu'alors, mais le combo caféine + sucre est un combo gagnant pour lutter contre les coups de mous. De toute façon, j'ai évidemment prévu du PQ si ceux-ci ressortaient aussi vite qu'ils seraient rentrés (kikou les gels Ta Rapace).
-
-Pour le reste, j'ai essayé de penser à tous les cas de figures possibles, et ma carapace de Franklin sera cette fois composée de :
-
-- Sac Salomon SLab Aventure 20 (485 g)
-- Poche à eau 1,5 L Salomon (120 g) 
-- 3 flasques 500 mL Salomon (100 g)
-- Paire de Panta Zaros de rechange (225 g)
-- Bivy Sol Escape (245 g)
-- GoPro Hero 8 + 2 batteries (150 g)
-- Short + T-shirt + 2 paires de chaussettes (220 g)
-- Bob Raidlight + Manchettes Raidlight + Buff merinos (100 g)
-- Gants Decath + sur-mouffles Raidlight (77 g)
-- Veste imperméable respirante Raidlight (225 g)
-- 2 lampes Stoots Kiska II + 2 batteries (140 g)
-- 2 batteries externes Nitecore Gen II (300 g)
-- 2 Galaxy S21 (380 g)
-- Masque de snorkeling (pour l'arrivée faut pas déconner) (70 g)
-- Filtre sawyer PointOne + réserve 2 L (98 g)
-
-Ce qui nous fait un total de 2,9 kg. En sommant l'ensemble + les 3 L de liquide, on atteint un sac d'environ 8,5 kg, soit un peu plus d'1 kg de plus que ce que j'avais emporté sur mon OFF de l'UTMC (voir [ici](#la-big-sortie)). Avec la réserve de 2 L du Sawyer, je peux même monter à 5 L d'eau transportés dans les endroits critiques, et j'ai l'impression que sur la portion Volcan - Basse-Vallée, ce ne sera pas de trop.
+→ Les deux inventaires au gramme : [Paquetage — traversée de la Réunion 2025](/explorer/paquetage-reunion-2025) et [Nutrition — traversée de la Réunion 2025](/explorer/nutrition-reunion-2025).
 
 #### Ajustement du live-tracking
 
-J'ai encore éprouvé ce live-tracking toute la semaine pour trouver les paramètres optimaux pour cette traverée. L'affaire n'est pas si simple car il faut préserver la batterie du téléphone émetteur, mais à la fois ne pas envoyer une position toutes les 5 min au risque de biaiser totalement les stats affichées. Dans le détail : le S21 émetteur sera doté d'une e-SIM avec 1 Go de données, et enverra ses positions sur le réseau 3G, celles-ci étant des paquets de données de tailles vraiment réduites, la 3G suffit amplement. Cette solution permet d'économiser la batterie, la 4G étant bien plus énergivore. Côté fréquence de temps et distance, j'ai choisi d'émettre une position toutes les 90 s ou tous les 100 m. Avec ça, le téléphone perd environ 5 % de batterie par heure, ce qui, même en mettant 50h, nécessiterait 2,5 recharges complètes, totalement gérable avec mes deux batteries externes. À voir néanmoins dans Mafate ou dans les zones reculées avec peu d'antennes relai, où le captage du signal sera probablement plus difficile, donc énergivore. Quoiqu'il en soit, j'ai un peu de marge. Je me laisse la possibilité d'augmenter la fréquence de raffraichissement à mi-chemin, si je vois qu'il y a encore du jus.
+J'ai encore éprouvé ce live-tracking toute la semaine pour trouver les paramètres optimaux pour cette traversée. L'affaire n'est pas si simple car il faut préserver la batterie du téléphone émetteur, mais à la fois ne pas envoyer une position toutes les 5 min au risque de biaiser totalement les stats affichées. À voir néanmoins dans Mafate ou dans les zones reculées avec peu d'antennes relai, où le captage du signal sera probablement plus difficile, donc énergivore. Quoiqu'il en soit, j'ai un peu de marge. Je me laisse la possibilité d'augmenter la fréquence de rafraîchissement à mi-chemin, si je vois qu'il y a encore du jus.
 
-J'ai aussi amélioré le modèle de reconstruction du signal, car un point toutes les 90 s / 100 m corrrespond à un sous-échantillonnage assez marqué du signal réel. Sans rentrer trop dans les détails, j'applique en plus du modèle, des coefficients correctifs pour la distance ($\times$1.12), basé sur les études de <Citation id="fearnhead2003">Fearnhead et Clifford</Citation> et <Citation id="haklay2010">Haklay et al.</Citation>, ainsi que sur les dénivelés positif ($\times$1,3) et négatif ($\times$0,9), basé sur l'étude de <Citation id="sanchez2025">Sanchez et al.</Citation>, et interpolé à mon cas. Ces coefficients ont aussi été ajustés en fonction de mes expériences, même si celles-ci ont été essentiellement sur des terrains bitumés. 
+→ Les réglages retenus : [Paramètres du live-tracking v1](/explorer/live-tracking-v1). Pourquoi une position toutes les 90 s ne mesure pas la vraie distance, et comment on corrige : [Ce que perd une trace sous-échantillonnée](/comprendre/trace-sous-echantillonnee).
 
 #### Déroulé du parcours
 
 La dernière partie de ce projet. L'objectif majeur de l'aventure est d'arriver au piton des neiges au lever de soleil (5h30). Je ne dois donc pas partir trop tôt ce lundi, au risque d'arriver au sommet quelques heures avant le lever du soleil, et de laisser tous mes tissus se refroidir, conduisant à une descente potentiellement infâme. Je vais donc viser un départ autour de 8h30 - 9h. Ça me semble pas mal et me correspond car j'ai en horreur de ne pas me réveiller naturellement, et l'idée de mettre le réveil à 5h30 est un stress inutile. L'arrivée au sommet correspond au km 94 avec 7 700 m D+ cumulés de mon aventure.
 
-Niveau points d'eau, je vais être pas mal sur tout le parcours jusqu'à Bourg-Murat, dernier vrai point de ravito avant la fin. Le hic, c'est qu'à Bourg-Murat, on n'est qu'au km 115 avec 7 900 m D+ cumulés. Il en reste donc encore 55, avec le piton de la Fournaise, où je risque de passer à un des moments les plus chauds de la journée. Il va donc falloir charger la mulle à mort en eau, et c'est là que mon extension de 2 L intervient. Si j'arrive là, et selon comment se sera passé l'aventure jusqu'alors, je m'autoriserais peut-être à acheter une bouteille supplémentaire pour monter à 7 L jusqu'à la fin. En sachant que la dernière portion est une descente de 2 000 m D- sur 20 km (souvenir souvenir du Lavaredo), qui se fera probablement de nuit et dans une forêt humide. Le risque de déshydratation semble donc minoré. Je suis conscient de cette difficulté, j'ai des idées pour la gérer, maintenant il n'y a plus qu'à.
+Niveau points d'eau, le tronçon qui m'inquiète est celui d'après Bourg-Murat : 55 km restants, le piton de la Fournaise, et probablement l'heure la plus chaude. Il va donc falloir charger la mulle à mort en eau. Je suis conscient de cette difficulté, j'ai des idées pour la gérer, maintenant il n'y a plus qu'à.
+
+→ Le plan complet, les contenants et le dosage : [Gérer l'eau sur un OFF](/explorer/gerer-l-eau-sur-un-off).
 
 Sur ce, une belle aprem de repos m'attend pour accumuler un maximum d'énergie. Si tu as lu ce projet jusqu'ici, j'espère qu'il t'a plu, et que tu apprécieras de suivre cette traversée avec moi en direct. De mon côté, je vais puiser dans tous vos soutiens pour me dépasser et aller explorer mes limites en jouant à ce grand jeu très complexe. On se revoit de l'autre côté !
 
@@ -326,24 +300,9 @@ Sur ce, une belle aprem de repos m'attend pour accumuler un maximum d'énergie. 
 
 ## Semaine 7
 
-### La traversée de la Réunion (replay)
-*10/11/2025* 
+### La traversée de la Réunion
+*10/11/2025*
 
-Trace complète (170 km 9 800 m D+/D-) disponible et téléchargeable [ici](#création-de-la-trace-gpx). Le récit complet de l'aventure est à retrouver dans l'article [L'île intense vous dites ?](https://thelocomotionlab.com/explorer/recit-reunion-2025).
-<!-- <livetracking /> 
- -->
-<postlivetracking
-  positions="/replays/traversee-reunion/live-positions.json"
-  stats="/replays/traversee-reunion/live-stats.json"
-  totalDistance="85.50"
-  distanceFactor="1.3"
-  ascentFactor="1.22"
-  descentFactor="1.29"
-  elevationMax="3100"
-  referenceGpx="/tracks/reunion-r2_temp.gpx"
-  title="Replay de la traversée de la Réunion 2025"
-/>
-
-*Tracking actualisé tous les 90 s ou 100 m environ. Si la position tarde à s'actualiser, c'est que je suis dans une zone reculée et qu'il faut attendre que j'aie à nouveau des données cellulaires. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré. Direct v1 (2025) — smartphone + Traccar, conservé tel quel.*
+Le jour J. Le direct rejoué, la trace complète et le récit de bout en bout sont sur la page de l'expédition : [L'île intense vous dites ?](/explorer/reunion-2025).
 
 [Retour au sommaire](#sommaire)

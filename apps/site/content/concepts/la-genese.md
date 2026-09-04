@@ -5,7 +5,7 @@ date: "2025-09-21"
 description: "Retour sur les origines profondes de la création du labo."
 cover: "/images/articles/la-genese/cover_genese.webp"
 tags: ["ultra-trail", "minimalisme"]
-maturite: pousse
+maturite: graine
 published: true
 ---
 
