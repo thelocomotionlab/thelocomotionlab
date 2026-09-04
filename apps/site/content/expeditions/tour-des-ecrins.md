@@ -1,13 +1,17 @@
 ---
-title: "Mon tour des Écrins en 80 heures"
+title: "Tour des Écrins en autonomie"
 author: "Valentin Fer"
 date: "2026-08-28"
-description: "Immersion et transformation intérieure en montagne."
+description: "Trois bivouacs, quatre jours, un ongle en moins. Le voyage a été intérieur."
 cover: "/images/articles/mon-tour-des-ecrins-en-80-heures/cover_mon-tour-des-ecrins-en-80-heures.webp"
 tags: ["ultra-trail", "fast-packing", "minimalisme"]
 archive: tour-des-ecrins
 concepts: [flexibilite-metabolique]
 fiches: [paquetage-ecrins-2026, nutrition-ecrins-2026, plan-ecrins-2026]
+distanceKm: 198
+deniveleM: 12800
+duree: "79 h 30"
+dates: "22–25 août 2026"
 published: false
 ---
 

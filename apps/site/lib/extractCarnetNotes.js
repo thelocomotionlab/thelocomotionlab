@@ -42,10 +42,67 @@ export function extractCarnetNotes(slug) {
       if (m) date = m[0];
     }
 
-    notes.push(date ? { date, title } : { title });
+    // Le corps de la note : de la ligne de date jusqu'au titre suivant.
+    let k = date ? j + 1 : i + 1;
+    const debut = k;
+    while (k < lines.length && !/^#{2,3}\s/.test(lines[k])) k++;
+    const corps = lines.slice(debut, k).join("\n");
+
+    notes.push({ ...(date ? { date } : {}), title, corps });
   }
 
   return notes;
+}
+
+const LIEN_INTERNE = /\[([^\]]+)\]\((\/(?:comprendre|explorer)\/[a-z0-9-]+)\)/g;
+
+/**
+ * Le résumé d'une note pour le registre : ses premiers mots en texte nu, sans
+ * les images, les balises, les pointeurs « → » ni le retour au sommaire.
+ */
+export function resumeDeNote(corps = "", longueur = 170) {
+  const texte = corps
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<[a-z][^>]*>[\s\S]*?<\/[a-z]+>/gi, " ")
+    .replace(/<[a-z][^>]*\/?>/gi, " ")
+    .replace(/^\s*→.*$/gm, " ")
+    .replace(/^\s*#{1,6}\s.*$/gm, " ")
+    .replace(/\[Retour au sommaire\]\(#sommaire\)/g, " ")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/^\s*[-*]\s+/gm, "")
+    .replace(/:::\s*\w*/g, " ")
+    .replace(/[*_`#>]+/g, "")
+    .replace(/\$[^$]*\$/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (texte.length <= longueur) return texte;
+  const coupe = texte.slice(0, longueur);
+  return coupe.slice(0, coupe.lastIndexOf(" ")).replace(/[,;:]$/, "") + "…";
+}
+
+/**
+ * Les atomes qu'une note pointe, dans l'ordre : au plus `max` liens uniques.
+ * Les pointeurs « → … » sont les atomes que la note a fait naître : ils passent
+ * d'abord ; les autres liens internes ne servent qu'à défaut.
+ */
+export function liensDeNote(corps = "", max = 3) {
+  const pointeurs = corps
+    .split("\n")
+    .filter((l) => l.trim().startsWith("→"))
+    .join("\n");
+  const source = LIEN_INTERNE.test(pointeurs) ? pointeurs : corps;
+  LIEN_INTERNE.lastIndex = 0;
+
+  const vus = new Set();
+  const liens = [];
+  for (const [, label, href] of source.matchAll(LIEN_INTERNE)) {
+    if (vus.has(href)) continue;
+    vus.add(href);
+    liens.push({ label, href });
+    if (liens.length >= max) break;
+  }
+  return liens;
 }
 
 /**

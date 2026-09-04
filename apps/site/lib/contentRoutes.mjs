@@ -219,12 +219,17 @@ export function routeFor(entry) {
   return `${PILIERS[entry.pilier]}/${entry.slug}`;
 }
 
-/** L'état affichable d'un atome (« Graine », « Éprouvé »…), ou null. */
-export function etatDe(entry) {
+/** La valeur brute de l'état d'un atome (« graine », « eprouve »…), ou null. */
+export function etatCleDe(entry) {
   const etat = ETATS[entry.kind];
   if (!etat) return null;
-  const valeur = entry[etat.champ];
-  return valeur ? ETAT_LABELS[valeur] ?? null : null;
+  return entry[etat.champ] ?? null;
+}
+
+/** L'état affichable d'un atome (« Graine », « Éprouvé »…), ou null. */
+export function etatDe(entry) {
+  const cle = etatCleDe(entry);
+  return cle ? ETAT_LABELS[cle] ?? null : null;
 }
 
 /**

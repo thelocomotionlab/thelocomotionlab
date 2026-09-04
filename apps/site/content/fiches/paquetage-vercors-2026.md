@@ -2,7 +2,7 @@
 title: "Paquetage — OFF Vercors-Drôme 2026"
 author: "Valentin Fer"
 date: "2026-05-01"
-description: "Le sac de la traversée Fontaine-Rémuzat : 4,4 kg de matériel, 2,6 kg de nourriture, 10 kg au départ."
+description: "Le même système de couchage, sans téléphone satellite, sans Skinners."
 tags: ["paquetage", "autonomie", "fastpacking"]
 parent: immersion-primale-entre-vercors-et-drome
 published: true

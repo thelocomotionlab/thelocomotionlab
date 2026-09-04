@@ -2,25 +2,28 @@
 //
 // Pilier « Comprendre » : la science de la robustesse physiologique.
 //
-// L'index est une LISTE de concepts, triée par maturité puis par date, et non
-// une carte décidée d'avance. Une branche n'apparaît qu'à partir du moment où
-// SEUIL_BRANCHE concepts publiés s'y rangent : en dessous, elle n'existe nulle
-// part — ni titre, ni encadré, ni mot en gris. Les branches naissent donc de
-// la liste, une à une, et la carte se dessine au rythme réel du contenu.
+// Un concept n'a pas de photo : il se montre en REGISTRE — une ligne par
+// entrée, sous des titres de branche. Une branche n'apparaît qu'à partir du
+// moment où SEUIL_BRANCHE concepts publiés s'y rangent ; en dessous, elle
+// n'existe nulle part, et ses concepts vivent sous « Dernières graines ». Les
+// branches naissent donc de la liste, une à une, au rythme réel du contenu.
+//
+// En tête, quand elle est publiée, la page-pilier : la seule entrée qui ait
+// droit à une carte, parce qu'elle relie toutes les autres.
 import Link from "next/link";
-import CardMeta from "@/components/CardMeta";
-import CarteVisuel from "@/components/CarteVisuel";
 import EmailCapture from "@/components/EmailCapture";
 import PageHeader from "@/components/PageHeader";
 import SectionHeading from "@/components/SectionHeading";
+import Registre from "@/components/Registre";
 import {
   listByKind,
-  etatDe,
+  routeFor,
   BRANCHES,
   PAGE_PILIER,
   SEUIL_BRANCHE,
   ETATS,
 } from "@/lib/contentRoutes.mjs";
+import { itemRegistre, indexParSlug } from "@/lib/registre.mjs";
 import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
 export const metadata = {
@@ -54,31 +57,25 @@ const RANG = Object.fromEntries(
   ETATS.concept.valeurs.map((v, i) => [v, ETATS.concept.valeurs.length - i])
 );
 
-function shape(e) {
-  return {
-    slug: e.slug,
-    kind: e.kind,
-    kindLabel: e.label,
-    title: e.data.title || e.slug,
-    date: e.data.date ? new Date(e.data.date) : null,
-    cover: e.data.cover || "",
-    description: e.data.description || "",
-    etat: etatDe(e),
-    branche: e.branche,
-    rang: RANG[e.maturite] ?? 0,
-  };
+function parMaturitePuisDate(a, b) {
+  const ra = RANG[a.maturite] ?? 0;
+  const rb = RANG[b.maturite] ?? 0;
+  if (rb !== ra) return rb - ra;
+  return (
+    (new Date(b.data.date).getTime() || 0) -
+    (new Date(a.data.date).getTime() || 0)
+  );
 }
 
-function parMaturitePuisDate(a, b) {
-  if (b.rang !== a.rang) return b.rang - a.rang;
-  return (b.date?.getTime() ?? 0) - (a.date?.getTime() ?? 0);
+function pluriel(n, mot) {
+  return `${n} ${mot}${n > 1 ? "s" : ""}`;
 }
 
 function getComprendre() {
   const concepts = listByKind("concept")
     .filter((e) => e.published)
-    .map(shape)
     .sort(parMaturitePuisDate);
+  const parSlug = indexParSlug(concepts);
 
   const pilier = concepts.find((c) => c.slug === PAGE_PILIER) ?? null;
   const reste = concepts.filter((c) => c.slug !== PAGE_PILIER);
@@ -93,118 +90,88 @@ function getComprendre() {
   );
 
   return {
-    pilier,
-    // Ce qui n'a pas encore de branche née reste dans la liste.
-    liste: reste.filter((c) => !nees.includes(c.branche)),
+    pilier: pilier
+      ? {
+          href: routeFor(pilier),
+          title: pilier.data.title,
+          resume: pilier.data.description,
+        }
+      : null,
     branches: nees.map((key) => ({
       key,
       label: BRANCHES[key],
-      items: reste.filter((c) => c.branche === key),
+      items: reste
+        .filter((c) => c.branche === key)
+        .map((c) => itemRegistre(c, parSlug)),
     })),
+    // Ce qui n'a pas encore de branche née reste dans la liste.
+    graines: reste
+      .filter((c) => !nees.includes(c.branche))
+      .map((c) => itemRegistre(c, parSlug)),
   };
 }
 
-function ConceptCard({ concept }) {
-  return (
-    <div className="relative w-full max-w-[22rem] h-full">
-      <Link
-        href={`/comprendre/${concept.slug}`}
-        className="group bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col"
-      >
-        <CarteVisuel item={concept} sizes="(min-width: 768px) 384px, 100vw" />
-
-        <div className="p-5 flex flex-col flex-1">
-          {/* Méta homogène avec les cartes du pilier Explorer. Le détail est
-              la maturité : la promesse de l'atome est écrite sur sa carte. */}
-          <CardMeta kind="Concept" detail={concept.etat} className="mb-1" />
-
-          <h3 className="text-lg font-semibold text-brand-deep group-hover:underline mb-2">
-            {concept.title}
-          </h3>
-
-          <div className="flex flex-1 items-center py-1">
-            {concept.description ? (
-              <p className="font-lora text-[15px] italic text-gray-700 line-clamp-3">
-                {concept.description}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="pt-4 text-xs text-gray-500">
-            {concept.date && (
-              <p>Publié le {concept.date.toLocaleDateString("fr-FR")}</p>
-            )}
-          </div>
-        </div>
-      </Link>
-    </div>
-  );
-}
-
-function Grille({ items }) {
-  return (
-    <div className="grid gap-6 justify-center justify-items-center grid-cols-1 sm:grid-cols-2 lg:justify-start lg:[grid-template-columns:repeat(3,22rem)]">
-      {items.map((concept) => (
-        <ConceptCard key={concept.slug} concept={concept} />
-      ))}
-    </div>
-  );
-}
-
-/** La page-pilier : une carte pleine largeur, en tête de l'index. */
-function CartePilier({ concept }) {
+/** La page-pilier : la seule carte de l'index, sur la grille de labo. */
+function CartePilier({ pilier }) {
   return (
     <Link
-      href={`/comprendre/${concept.slug}`}
-      className="group mb-10 block rounded-2xl border-[1.5px] border-brand-primary-dark/30 bg-white p-6 shadow-card transition-shadow hover:shadow-lg md:p-8"
+      href={pilier.href}
+      className="ll-grille-labo group mb-10 grid grid-cols-1 items-center gap-x-8 gap-y-3 rounded-xl border border-brand-hairline bg-white px-6 py-5 md:grid-cols-[minmax(0,1fr)_auto]"
     >
-      <CardMeta kind="Le noyau" detail={concept.etat} className="mb-2" />
-      <h2 className="mb-3 font-lora text-2xl font-medium italic text-brand-deep md:text-[28px]">
-        {concept.title}
-      </h2>
-      {concept.description ? (
-        <p className="max-w-[60ch] text-[16.5px] leading-[1.65] text-gray-700">
-          {concept.description}
+      <div>
+        <p className="mb-1.5 font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-brand-slate-dark">
+          Commencer ici
         </p>
-      ) : null}
-      <span className="mt-4 inline-block text-sm font-semibold text-brand-deep group-hover:underline">
-        Entrer par le noyau
+        <h2 className="mb-1.5 text-[22px] font-semibold leading-tight text-brand-deep">
+          {pilier.title}
+        </h2>
+        {pilier.resume ? (
+          <p className="max-w-[58ch] font-lora text-[15.5px] italic text-gray-600">
+            {pilier.resume}
+          </p>
+        ) : null}
+      </div>
+      <span className="whitespace-nowrap text-sm font-bold text-brand-accent-ink group-hover:underline">
+        Lire →
       </span>
     </Link>
   );
 }
 
 export default function ComprendrePage() {
-  const { pilier, liste, branches } = getComprendre();
-  const vide = !pilier && liste.length === 0 && branches.length === 0;
+  const { pilier, branches, graines } = getComprendre();
+  const vide = !pilier && branches.length === 0 && graines.length === 0;
 
   return (
     <section className="py-12 max-w-6xl mx-auto px-4 sm:px-6">
-      {/* lg:px-6 : cale l'en-tête sur le bord gauche de la grille de
-          cartes (colonnes de 22rem). */}
       <div className="lg:px-6">
         <PageHeader
           title="Comprendre"
           tagline="Creuser la science derrière les concepts."
         />
 
-        {pilier ? <CartePilier concept={pilier} /> : null}
-
-        {liste.length > 0 ? (
-          <>
-            {/* h2 invisible : évite le saut h1 → h3 pour les lecteurs
-                d'écran quand la liste n'a pas encore de branches. */}
-            <h2 className="sr-only">Les concepts</h2>
-            <Grille items={liste} />
-          </>
-        ) : null}
+        {pilier ? <CartePilier pilier={pilier} /> : null}
 
         {branches.map((branche) => (
-          <section key={branche.key} className={liste.length > 0 ? "mt-12" : ""}>
-            <SectionHeading className="mb-6">{branche.label}</SectionHeading>
-            <Grille items={branche.items} />
+          <section key={branche.key} className="mt-9">
+            <SectionHeading
+              className="mb-1.5"
+              aside={pluriel(branche.items.length, "concept")}
+            >
+              {branche.label}
+            </SectionHeading>
+            <Registre items={branche.items} pilier="comprendre" />
           </section>
         ))}
+
+        {graines.length > 0 ? (
+          <section className="mt-9">
+            <SectionHeading className="mb-1.5" aside="sans branche encore">
+              Dernières graines
+            </SectionHeading>
+            <Registre items={graines} pilier="comprendre" />
+          </section>
+        ) : null}
 
         {vide ? (
           // État vide : même encadré pointillé + capture email que l'état vide

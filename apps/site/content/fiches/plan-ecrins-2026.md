@@ -5,6 +5,7 @@ date: "2026-08-18"
 description: "188 km et 12 200 m D+ découpés en quatre jours, dont deux accompagnés."
 tags: ["plan", "autonomie", "montagne"]
 parent: tour-des-ecrins
+valeur: "188 km · 12 200 m D+ · 4 jours"
 published: true
 ---
 

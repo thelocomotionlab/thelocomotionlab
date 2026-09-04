@@ -6,6 +6,7 @@ description: "Un stress dosé rend plus fort ; le même stress, mal dosé, abîm
 tags: ["hormèse", "froid", "chaud", "jeûne"]
 maturite: graine
 lie: [chasse-d-eau, chaleur-et-glycogene]
+branche: energie
 published: true
 ---
 

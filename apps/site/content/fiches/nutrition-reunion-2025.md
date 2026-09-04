@@ -5,6 +5,7 @@ date: "2025-11-09"
 description: "Ce que j'ai embarqué pour 170 km en autonomie complète : 2,62 kg."
 tags: ["nutrition", "autonomie"]
 parent: reunion-2025
+valeur: "2,62 kg"
 published: true
 ---
 

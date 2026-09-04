@@ -5,7 +5,7 @@ date: "2026-06-28"
 description: "Le stress thermique accélère la consommation du glycogène musculaire — ce qui rend une stratégie low carb plus dure à tenir l'été."
 tags: ["thermique", "énergie", "chaleur"]
 maturite: pousse
-branche: thermique
+branche: energie
 lie: [flexibilite-metabolique]
 published: true
 ---

@@ -2,7 +2,7 @@
 title: "La robustesse physiologique"
 author: "Valentin Fer"
 date: 2026-09-04
-description: "Maintenir une fonction malgré les fluctuations — de quoi, face à quoi, et au prix de quelle fragilité."
+description: "Pourquoi le vivant préfère la robustesse à la performance, ce que ça coûte, et comment ce labo l'éprouve sur lui-même. La page qui relie toutes les autres."
 tags: ["robustesse", "hormèse", "noyau"]
 maturite: graine
 lie: [hormese, chasse-d-eau, flexibilite-metabolique, memoire-musculaire]

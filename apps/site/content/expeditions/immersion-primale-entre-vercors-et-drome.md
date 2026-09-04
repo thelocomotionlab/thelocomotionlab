@@ -2,12 +2,16 @@
 title: "Immersion primale entre Vercors et Drôme"
 author: "Valentin Fer"
 date: "2026-05-28"
-description: "Récit détaillé de cette folle aventure en autonomie."
+description: "Neige, pluie verglaçante, et un hommage. Arrêt à Valdrôme, sans regret."
 cover: "/images/articles/immersion-primale-entre-vercors-et-drome/cover_immersion-primale-entre-vercors-et-drome.webp"
 tags: ["ultra-trail", "fast-packing", "minimalisme"]
 archive: traversee-vercors
 concepts: [hormese, chasse-d-eau]
 fiches: [paquetage-vercors-2026]
+distanceKm: 131
+deniveleM: 8000
+duree: "2 j"
+dates: "3–4 mai 2026"
 published: true
 ---
 

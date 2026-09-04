@@ -5,6 +5,7 @@ date: "2025-11-09"
 description: "Le matériel embarqué sur les 170 km de la traversée : 2,9 kg, hors eau et nourriture."
 tags: ["paquetage", "autonomie"]
 parent: reunion-2025
+valeur: "2,9 kg · 15 articles"
 published: true
 ---
 

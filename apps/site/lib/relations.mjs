@@ -15,20 +15,9 @@
 // Seuls les atomes PUBLIÉS entrent dans le graphe : un brouillon n'a pas de
 // page, et la règle de build interdit déjà qu'un atome publié le cite.
 
-import { listEntries, routeFor, etatDe } from "./contentRoutes.mjs";
+import { listEntries } from "./contentRoutes.mjs";
+import { itemRegistre, indexParSlug } from "./registre.mjs";
 
-/** La forme minimale que consomment les cartes de relation. */
-function carte(entry) {
-  return {
-    slug: entry.slug,
-    title: entry.data.title ?? entry.slug,
-    href: routeFor(entry),
-    cover: entry.data.cover ?? "",
-    kind: entry.kind,
-    kindLabel: entry.label,
-    etat: etatDe(entry),
-  };
-}
 
 /** Ordonne les cartes par sorte puis par titre : un affichage stable. */
 function ordonner(cartes) {
@@ -45,8 +34,10 @@ function ordonner(cartes) {
  */
 export function relationsDe(slug) {
   const publies = listEntries().filter((e) => e.published);
-  const parSlug = new Map(publies.map((e) => [e.slug, e]));
+  const parSlug = indexParSlug(publies);
   const moi = parSlug.get(slug);
+  // Un item de registre, comme aux index : même icône, même puce, même ligne.
+  const carte = (entry) => itemRegistre(entry, parSlug);
 
   const vide = {
     surLeTerrain: [],

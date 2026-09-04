@@ -2,7 +2,7 @@
 title: "La chasse d'eau"
 author: "Valentin Fer"
 date: "2025-10-18"
-description: "Ta capacité à encaisser la charge est un réservoir unique — et l'entraînement n'est pas le seul à le remplir."
+description: "Chaque entraînement la remplit, chaque stress aussi — le boulot, les projets, les nuits courtes. Le repos la vide. Le débordement s'appelle la blessure."
 tags: ["charge", "fatigue", "ultra-endurance"]
 maturite: graine
 branche: charge-et-tissus

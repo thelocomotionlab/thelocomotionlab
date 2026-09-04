@@ -1,16 +1,30 @@
 // app/explorer/page.jsx
 //
-// Pilier « Explorer » : le terrain, en quatre sections — expéditions,
-// protocoles, carnet, fiches. Une section vide ne s'affiche pas, et son bouton
-// de filtre non plus : l'index montre ce que le labo a, jamais ce qui lui
-// manque. Les items arrivent pré-formatés en chaînes du serveur.
+// Pilier « Explorer » : le terrain, en deux grammaires.
+//
+// Ce qui a une photo se montre en CARTE : les expéditions, l'année du carnet.
+// Ce qui n'en a pas se montre en REGISTRE : les protocoles, les dernières notes
+// du carnet, les fiches. Une section vide ne s'affiche pas, et son bouton de
+// filtre non plus. Tout est pré-formaté ici, en chaînes, pour la coque client
+// qui porte le filtre (ExplorerSections).
 import EmailCapture from "@/components/EmailCapture";
 import PageHeader from "@/components/PageHeader";
 import ExplorerSections from "@/components/ExplorerSections";
-import { listByPilier, KINDS, ORDRE_EXPLORER } from "@/lib/contentRoutes.mjs";
-import { shapeEntry } from "@/lib/getRecentActivity";
-import { extractCarnetNotes, parseNoteDate } from "@/lib/extractCarnetNotes";
-import { donneesDeFiche } from "@/lib/ficheDonnees.mjs";
+import {
+  listEntries,
+  listByPilier,
+  routeFor,
+} from "@/lib/contentRoutes.mjs";
+import { itemRegistre, indexParSlug } from "@/lib/registre.mjs";
+import { dateActivite } from "@/lib/getRecentActivity";
+import {
+  extractCarnetNotes,
+  parseNoteDate,
+  resumeDeNote,
+  liensDeNote,
+} from "@/lib/extractCarnetNotes";
+import { titresDe } from "@/lib/extractToc";
+import { getArchive } from "@/lib/archives.mjs";
 import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
 export const metadata = {
@@ -38,83 +52,132 @@ export const metadata = {
   },
 };
 
-/** Le titre de chaque section, au pluriel. */
-const TITRES = {
-  expedition: "Expéditions",
-  protocole: "Protocoles",
-  carnet: "Carnet",
-  fiche: "Fiches",
-};
+const parDateDesc = (a, b) =>
+  (new Date(b.data.date).getTime() || 0) - (new Date(a.data.date).getTime() || 0);
 
-/**
- * Les deux dernières notes d'un carnet, les plus récentes d'abord : c'est ce
- * que sa carte affiche à la place d'une date de publication.
- */
-function dernieresNotes(slug) {
-  return [...extractCarnetNotes(slug)]
-    .sort(
-      (a, b) =>
-        (parseNoteDate(b.date)?.getTime() ?? 0) -
-        (parseNoteDate(a.date)?.getTime() ?? 0)
-    )
-    .slice(0, 2);
+function nombre(valeur) {
+  const n = Number(valeur);
+  return Number.isFinite(n) ? n.toLocaleString("fr-FR") : null;
 }
 
-function shapeForClient(item, entry) {
+/** Ce qu'une page d'expédition contient, tel que sa carte l'annonce. */
+function contenusDe(entry, publies) {
+  const contenus = [];
+  if (entry.content.split(/\s+/).length > 200) contenus.push("Récit");
+  const aDesFiches =
+    entry.fiches.length > 0 ||
+    publies.some((e) => e.kind === "fiche" && e.parent === entry.slug);
+  if (aDesFiches) contenus.push("Paquetage");
+  if (getArchive(entry.archive ?? entry.slug)) contenus.push("Live");
+  else if (/<postlivetracking/i.test(entry.content)) contenus.push("Replay");
+  return contenus;
+}
+
+function carteExpedition(entry, publies) {
   return {
-    slug: item.slug,
-    href: item.href,
-    title: item.title,
-    description: item.description,
-    cover: item.cover,
-    kind: item.kind,
-    kindLabel: item.kindLabel,
-    // Une fiche montre ses chiffres à la place d'une photo, quand elle porte
-    // un paquetage : la variété vient des données.
-    donnees: item.kind === "fiche" ? donneesDeFiche(entry) : null,
-    // L'état de l'atome quand il en a un (« Éprouvé »), sa date sinon.
-    detail: item.etat,
-    dateLabel:
-      item.kind !== "carnet" && item.date
-        ? `Publié le ${item.date.toLocaleDateString("fr-FR")}`
-        : null,
-    notes: item.kind === "carnet" ? dernieresNotes(item.slug) : [],
+    slug: entry.slug,
+    href: routeFor(entry),
+    title: entry.data.title ?? entry.slug,
+    cover: entry.data.cover ?? "",
+    kindLabel: entry.label,
+    detail: "Terminée",
+    distanceKm: nombre(entry.data.distanceKm),
+    deniveleM: nombre(entry.data.deniveleM),
+    duree: entry.data.duree ?? null,
+    dates: entry.data.dates ?? null,
+    resume: entry.data.description ?? "",
+    contenus: contenusDe(entry, publies),
   };
 }
 
-function getSections() {
-  const publies = listByPilier("explorer").filter((e) => e.published);
+/** Le libellé court d'un atome pointé depuis une note : « Paquetage », pas
+ *  « Paquetage — tour des Écrins 2026 ». */
+function libelleCourt(entry) {
+  const titre = entry.data.title ?? entry.slug;
+  return entry.kind === "fiche" ? titre.split(" — ")[0] : titre;
+}
 
-  return ORDRE_EXPLORER.map((kind) => ({
-    key: kind,
-    label: TITRES[kind] ?? KINDS[kind].label,
-    // Repliée par défaut : on arrive sur une fiche depuis son parent, depuis
-    // la recherche ou depuis la légende d'un post — pas en balayant l'index.
-    replie: kind === "fiche",
-    items: publies
-      .filter((e) => e.kind === kind)
-      .map((e) => [shapeEntry(e), e])
+function carnetEtNotes(carnets, parSlug) {
+  if (!carnets.length) return null;
+  const [courant, ...autres] = carnets;
+  const annee = new Date(courant.data.date).getFullYear();
+  const notes = extractCarnetNotes(courant.slug);
+  const ancres = new Map(titresDe(courant.content).map((h) => [h.text, h.id]));
+  const href = routeFor(courant);
+
+  return {
+    carte: {
+      slug: courant.slug,
+      href,
+      title: courant.data.title ?? courant.slug,
+      cover: courant.data.cover ?? "",
+      kindLabel: courant.label,
+      detail: annee >= new Date().getFullYear() ? "En cours" : "Fermé",
+      resume: courant.data.description ?? "",
+      nbNotes: notes.length,
+      annee,
+      autres: autres.map((c) => ({
+        href: routeFor(c),
+        title: `Carnet ${new Date(c.data.date).getFullYear()}`,
+      })),
+    },
+    notes: [...notes]
+      .filter((n) => n.date)
       .sort(
-        ([a], [b]) =>
-          (b.activite?.getTime() ?? 0) - (a.activite?.getTime() ?? 0)
+        (a, b) =>
+          (parseNoteDate(b.date)?.getTime() ?? 0) -
+          (parseNoteDate(a.date)?.getTime() ?? 0)
       )
-      .map(([item, entry]) => shapeForClient(item, entry)),
-  })).filter((section) => section.items.length > 0);
+      .slice(0, 3)
+      .map((n) => ({
+        date: n.date,
+        title: n.title,
+        href: ancres.has(n.title) ? `${href}#${ancres.get(n.title)}` : href,
+        resume: resumeDeNote(n.corps),
+        liens: liensDeNote(n.corps)
+          .map((l) => {
+            const cible = parSlug.get(l.href.split("/").pop());
+            return cible ? { href: l.href, label: libelleCourt(cible) } : null;
+          })
+          .filter(Boolean),
+      })),
+  };
+}
+
+function getExplorer() {
+  const publies = listByPilier("explorer").filter((e) => e.published);
+  const parSlug = indexParSlug(listEntries().filter((e) => e.published));
+  const parSorte = (kind) => publies.filter((e) => e.kind === kind);
+
+  const carnets = parSorte("carnet").sort(
+    (a, b) => (dateActivite(b)?.getTime() ?? 0) - (dateActivite(a)?.getTime() ?? 0)
+  );
+
+  return {
+    expeditions: parSorte("expedition")
+      .sort(parDateDesc)
+      .map((e) => carteExpedition(e, publies)),
+    protocoles: parSorte("protocole")
+      .sort(parDateDesc)
+      .map((e) => itemRegistre(e, parSlug)),
+    carnet: carnetEtNotes(carnets, parSlug),
+    fiches: parSorte("fiche")
+      .sort(parDateDesc)
+      .map((e) => itemRegistre(e, parSlug)),
+  };
 }
 
 export default function ExplorerPage() {
-  const sections = getSections();
+  const donnees = getExplorer();
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
-      {/* lg:px-6 : cale l'en-tête et les titres de sections sur le bord
-          gauche des grilles de cartes (colonnes de 22rem). */}
       <div className="lg:px-6">
         <PageHeader title="Explorer" tagline="Être son propre laboratoire." />
 
         {/* L'indicateur live compact vit dans la rangée de filtres
             d'ExplorerSections (même source d'état que la page /live). */}
-        <ExplorerSections sections={sections} />
+        <ExplorerSections {...donnees} />
 
         <div className="mt-14 max-w-3xl mx-auto text-center">
           <h2 className="mb-3 text-lg font-semibold text-brand-accent-ink">

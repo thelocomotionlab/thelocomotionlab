@@ -1,12 +1,16 @@
 ---
-title: "L'île intense vous dites ?"
+title: "L'île intense, vous dites ?"
 author: "Valentin Fer"
 date: "2025-12-09"
-description: "Récit et bilan de la tentative de traversée de la Réunion en autonomie en sandales."
+description: "Traverser la Réunion en sandales, sans bâtons, en autonomie. Fin de partie au Taïbit."
 cover: "/images/articles/recit-reunion-2025/cover_reunion_2025.webp"
 tags: ["ultra-trail", "fast-packing", "minimalisme"]
 concepts: [chasse-d-eau, respiration-nasale-et-regime-aerobie, creux-circadien, trace-sous-echantillonnee]
 fiches: [paquetage-reunion-2025, nutrition-reunion-2025, live-tracking-v1]
+distanceKm: 86
+deniveleM: 7700
+duree: "1 nuit"
+dates: "10–11 nov. 2025"
 published: true
 ---
 

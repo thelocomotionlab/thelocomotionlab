@@ -2,7 +2,7 @@
 title: "L'entraînement à glycogène bas"
 author: "Valentin Fer"
 date: "2026-05-17"
-description: "Cinq protocoles pour apprendre au corps à oxyder les lipides — et ce que la canicule en a fait."
+description: "Cinq protocoles pour apprendre au corps à brûler du gras. Interrompus par la canicule : c'est un résultat."
 tags: ["nutrition", "énergie", "entraînement"]
 statut: en-test
 concepts: [flexibilite-metabolique, chaleur-et-glycogene, hormese]

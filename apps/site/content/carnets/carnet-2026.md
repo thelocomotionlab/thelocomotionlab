@@ -2,7 +2,7 @@
 title: "Journal d'aventures 2026"
 author: "Valentin Fer"
 date: "2026-01-01"
-description: "Journal de bord de ma saison de trail 2026 : projets OFF, sorties longues, préparation spécifique"
+description: "Un seul dossard, beaucoup d'OFF. Les notes courtes de l'année, dans l'ordre où elles arrivent."
 cover: "/images/projets/saison-trail-2026/cover_saison-trail-2026.webp"
 published: true
 ---
@@ -72,9 +72,39 @@ Ces temps-ci, l'envie d'aventure est forte, et les jambes répondent plutôt tr�
 ### Projet OFF Monts du Lyonnais
 *14/03/2026*
 
-Premier projet trail à trois avec Lolo et Rapace, et premier vrai test du sac lesté : 8,9 kg au départ, 65 km et 3 500 m D+ en 12 h 30. Je n'ai jamais fait une sortie aussi longue qui s'est écoulée aussi rapidement.
+Cette aventure, prévue de longue date, revêtait plusieurs objectifs. D'abord, celui de réaliser un projet trail tous les trois avec Lolo et Rapace pour la première fois. Mais aussi, tester ma capacité à parcourir une longue distance (ici autour de 65km 3 500m D+) avec un sac lesté dans les conditions OFF des projets à venir. J'ai donc préparé mon sac avec minutie, et celui-ci affichait 8.9kg sur la balance au début de l'aventure. 
 
-→ Le récit et le replay : [OFF dans les Monts du Lyonnais](/explorer/off-monts-du-lyonnais).
+![Contenu du sac {width=620px align=center}](/images/projets/saison-trail-2026/sac_full.webp)
+*Contenu du sac simulant des conditions de fastpacking lors de l'aventure dans les Monts du Lyonnais.*
+
+Si les premiers kms furent relativement difficiles, j'ai compris, par les lumières du bon Rapace, qu'il fallait un certain temps pour que toutes les filières énergétiques se mettent en place au moment de débuter un effort. Une fois celles-ci établies, le corps atteint un certain rythme de croisière qui, s'il est respecté, peut être tenu pendant de longues heures. 
+
+![Gueux avant {width=580px align=center}](/images/projets/saison-trail-2026/gueux_avant.webp)
+*Les trois gueux au début de cette belle aventure.*
+
+Concernant le contenu de la sortie, on était sur un parcours qui serpentait les Monts du Lyonnais, probablement établi par un borneur fou, puisque nous ne comptions plus les moments où la trace était artificiellement rallongée par des bosses pour engranger du D+ additionnel. Comment en vouloir à cette personne ? Car dans le fond, on a vraiment kiffé.
+
+En termes de ressenti, je n'ai jamais fait une sortie aussi longue qui s'est écoulée aussi rapidement. C'est incroyable comment le fait d'être à plusieurs dans l'effort transcende et modifie la perception du temps. Je n'en avais pas conscience dans une telle mesure. L'envie de réitérer l'expérience est très forte.
+
+Après environ 12h30 d'effort, nous revînmes à Vaugneray, notre lieu de départ, sous la neige. Big-up à Paupau qui nous a fait la surprise de venir nous faire coucou au beau milieu d'un sentier random vers Yzeron, sous la neige et de nuit. Moment suspendu qui nous a touchés fort fort. Un résumé vidéo de cette aventure incroyable est [disponible ici](https://www.instagram.com/p/DWHeZDeDCOD/?hl=fr).
+
+![Gueux après {width=580px align=center}](/images/projets/saison-trail-2026/gueux_apres.webp)
+*Les trois gueux à l'arrivée de cette belle aventure.*
+
+
+<postlivetracking
+  positions="/replays/mdl-65km_off/live-positions.json"
+  totalDistance="65"
+  distanceFactor="1."
+  ascentFactor=".8"
+  descentFactor=".8"
+  elevationMin="400"
+  elevationMax="900"
+  referenceGpx="/tracks/mdl-65km_off.gpx"
+  title="OFF Monts du Lyonnais 65 km"
+/>
+
+*Replay du tracking OFF Monts du Lyonnais. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré. Direct v1 (2026) — smartphone + Traccar, conservé tel quel.*
 
 [Retour au sommaire](#sommaire)
 
@@ -82,9 +112,49 @@ Premier projet trail à trois avec Lolo et Rapace, et premier vrai test du sac l
 ### Projet OFF Traversée de la Chartreuse
 *04/04/2026*
 
-Rallier Grenoble à Chambéry d'une traite avec l'ami Thomas, en traversant la Chartreuse. 81 km au lieu des 90 prévus, la neige nous ayant forcés à adapter la trace — et c'est en acceptant ce chiffre que la journée est devenue belle.
+Avril commence fort avec ce projet de longue date avec l'ami Thomas (Crasse l'ancien pour les intimes) : rallier Grenoble (chez moi) à Chambéry (chez lui) d'une traite en traversant la Chartreuse. Un itinéraire autour de 90 km 4 500 m D+.
 
-→ Le récit et le replay : [Traversée de la Chartreuse](/explorer/traversee-chartreuse).
+Notre départ, visé pour 7h30, se fait sur les chapeaux de roues lorsque, au moment de partir, je claque la porte en oubliant de retirer le double de mes clés d'appart sur la serures. La phrase « Sésame, ouvre-toi » a parfaitement fonctionné une fois délesté de 165€ par le serrurier 50 min plus tard (rire amer). Après cette première mise à l'épreuve du mental, nous pressentons que la journée va être belle, grâce à la météo de fou furieux qui nous attend. C'est la première vraie journée de printemps de l'année, avec un mercure annoncé autour de 24°C dans l'après-midi, une sorte d'éden pour une telle aventure.
+
+![Photo 1 {align=center}](/images/projets/saison-trail-2026/traversee-chartreuse-1.webp)
+*Thomas et moi avant le départ et premier panoramas au niveau de la Bastille à Grenoble.*
+
+À mesure que nous nous engouffrons en Chartreuse, nous prenons conscience que la neige risque d'être un problème. Les faces exposées Nord, abondantes sur notre parcours, sont en effet recouvertes d'épais manteaux neigeux dès 1 300 m d'altitude. Or, notre parcours contient de nombreux passages à plus de 1 700 m, dont certains allant jusqu'à 2 000 m. Évoluer dans la neige en sandales n'est pas chose aisée, surtout lorsque la couche avoisine les 50 cm. Après quelques heures à jauger la faisabilité, nous décidons d'adapter la trace, pour éviter les passages trop abrupts. C'est aussi ça l'aventure, savoir faire preuve de discernement, et être dans l'adaptation permanente.
+
+Je dois avouer que ces changements d'itinéraires, qui réduisent de plus en plus la trace, affectent mon moral. Quand je vois que nous ne ferons pas 90 km, mais 85 km. Et puis en fait pas 85 km, mais 80 km. Et puis quoi encore ? Moi je voulais mes 90 km, faisant presque une fixette sur cette data. Après quelques heures de rumination, je prends conscience que mon mental s'égare dans la mauvaise direction. Je ne suis pas ici pour accumuler 70, 80, 90 ou même 100 km. Non, je suis là pour rallier Grenoble à Chambéry, avec mon poto Thomas. M'attacher aux datas comme je le fais est une impasse, puisqu'elle revient à considérer que ma motivation principale est dûe à des facteurs totalement extrinsèques. Ce n'est pas suffisant pour venir à bout d'un ultra. Au moment où je prends conscience de tout cela, mon mental switch, comme remis à l'endroit, et je me sens pleinement épanoui, en phase avec l'instant. 
+
+Nous décidons malgré tout, car nous sommes en quelque sorte des explorateurs, de tenter un passage très neigeux qui durera de longues heures. Malgré la raideur des pentes, évoluer dans la difficulté à deux dans ce décor incroyable nous procure une forme de plaisir inattendu. Plaisir décuplé lorsque la portion se termine et que nous retrouvons enfin la route. Fort heureusement, j'avais prévu dans ma besace une paire de Skinners pour arpenter la neige, celles-ci étant particulièrement adaptées pour ce type de terrains.
+
+![Photo 2 {width=580px align=center}](/images/projets/saison-trail-2026/traversee-chartreuse-2.webp)
+*Let it snow, let it snow, let it snow !*
+
+La fin de la trace se fera sans encombre, de nuit, avec une pointe de frustration de mon côté que cela ne dure pas plus longtemps. J'en veux encore et ne suis pas rassasié. C'est bon signe, bien que le projet Fontaine-Rémuzat, qui arrive à grands pas, devrait m'apporter de quoi manger à ma faim. Du reste, un petit film de cette belle aventure est dispo [en suivant ce lien](https://www.instagram.com/p/DXjsuHojABt/?hl=fr). Maintenant, place au repos !
+
+<!-- <livetracking
+  apiBase="https://tracking.thelocomotionlab.com"
+  positionsEndpoint="/live-positions.json"
+  referenceGpx="/tracks/traversee-chartreuse.gpx"
+  totalDistance="88"
+  elevationMin="0"
+  elevationMax="2000"
+  title="Suivi en direct"
+  pollIntervalMs="10000"
+  initialMapStyle="osm"
+/> -->
+
+<postlivetracking
+  positions="/replays/traversee-chartreuse/live-positions.json"
+  totalDistance="81"
+  distanceFactor="1."
+  ascentFactor=".85"
+  descentFactor=".85"
+  elevationMin="0"
+  elevationMax="1800"
+  referenceGpx="/tracks/traversee-chartreuse.gpx"
+  title="Replay OFF Traversée de la Chartreuse"
+/>
+
+*Replay du tracking OFF Traversée de la Chartreuse. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré. Direct v1 (2026) — smartphone + Traccar, conservé tel quel.*
 
 ### Se préparer par l'hormèse
 *30/04/2026*
@@ -194,9 +264,28 @@ Voilà déjà trois semaines que l'entraînement a repris et avec lui, mon explo
 ### Week-End choc dans les Aravis
 *06/06/2026*
 
-Trois jours de haute montagne avec l'association Grenoble Trail, 86 km et 6 700 m D+/D−. J'y suis allé la fleur au fusil, et j'en suis reparti avec l'expérience de la montagne que j'étais venu chercher — et une infection digestive que je m'étais infligée deux jours plus tôt.
+Ce mois de juin commence sur les chapeaux de roue avec un week-end choc prévu de longue date avec l'association Grenoble Trail. Ne sachant pas trop dans quoi je m'embarquais, j'y suis allé la fleur au fusil, avec beaucoup de curiosité et d'humilité. La montagne est quelque chose qui m'effraie depuis que j'ai commencé le trail, et mon expérience se limite, à de rares exceptions près comme le Lavaredo ou certaines sorties en montagne, à de la basse altitude et à du terrain relativement peu technique. J'ai ainsi vu dans ce week-end l'opportunité d'aller plus loin et de découvrir la haute montagne avec des personnes expérimentées qui partagent ma passion.
 
-→ Le récit : [Week-end choc dans les Aravis](/explorer/wec-aravis). Le protocole qui m'a coûté ce dimanche : [L'habituation à l'eau non filtrée](/explorer/habituation-a-l-eau-non-filtree).
+![Aravis jour 1](/images/projets/saison-trail-2026/aravis-1.webp)
+*Jour 1 du WEC Aravis.*
+
+Mon but étant de borner, je me suis immédiatement positionné sur les sorties les plus longues du week-end. Cela m'a valu de me retrouver avec les flèches de GT, que j'ai eu parfois bien du mal à suivre sur les sentiers techniques. Mais j'ai aussi beaucoup appris sur ma capacité à endurer des allures inconfortables sur des journées entières, et j'ai pu trouver cette expérience de la montagne que j'étais venu chercher.
+
+![Aravis jour 2.1](/images/projets/saison-trail-2026/aravis-7.webp)
+
+
+
+![Aravis jour 2.2](/images/projets/saison-trail-2026/aravis-6.webp)
+*Jour 2 du WEC Aravis.*
+
+Le jour 3 a été très compliqué. Tu te souviens de cette sortie de mai à Aiguebelette ? En fait, je ne t'ai pas tout dit. Depuis plusieurs semaines, j'essaye d'entraîner mon corps à assimiler l'eau que je trouve sur mon chemin sans la filtrer. Cela a très bien fonctionné pendant plus d'un mois, jusqu'à cette fameuse sortie. La soif étant trop forte, j'ai siroté un bon 50 cl d'un coup dans une rivière, sans prendre mes précautions habituelles (prendre une petite gorgée, attendre 30 à 45 min, et s'il ne se passe rien, augmenter la dose). Deux jours plus tard, je me retrouvais avec un grand inconfort digestif, de la fièvre par moments, et la sensation que mon corps luttait contre une infection. J'ai malgré tout décidé de me rendre à ce WEC GT en connaissance de cause.
+
+→ Le protocole, et pourquoi il a été abandonné : [L'habituation à l'eau non filtrée](/explorer/habituation-a-l-eau-non-filtree).
+
+Et mon corps me l'a fait payer le dimanche quand, déjà abîmé par toutes ces heures de trail, une nourriture approximative et de courtes nuits, je lui ai demandé une troisième sortie sous un cagnard oppressant, avec des passages en altitude. Le résultat ne s'est pas fait attendre : toutes les 10 minutes, je devais m'arrêter pour procéder à des purges bien senties. J'étais quand même un peu inquiet de constater la relative blancheur de mes selles, mais j'ai réussi à rester concentré pour aller au bout de la sortie. À l'arrivée, j'étais fier d'avoir totalisé 86 km avec 6 700 m D+ D- sur 3 jours, en montagne. Ce ne fut pas un week-end facile, mais j'ai tenu bon, et mon mental s'en souviendra. J'ai aussi commencé à apprivoiser la montagne et je ressens au fond de moi l'envie croissante de poursuivre l'exploration de ce milieu.
+
+![Aravis jour 3](/images/projets/saison-trail-2026/aravis-4.webp)
+*Jour 3 du WEC Aravis.*
 
 ### Bilan du mois de juin : chaleur et montagne
 *28/06/2026*

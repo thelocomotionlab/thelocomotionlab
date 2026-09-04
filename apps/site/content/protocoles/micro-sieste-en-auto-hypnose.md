@@ -2,7 +2,7 @@
 title: "La micro-sieste en auto-hypnose"
 author: "Valentin Fer"
 date: "2025-10-25"
-description: "Quelques minutes d'yeux fermés dans le creux de 15 h, plutôt qu'une heure à lutter contre lui."
+description: "Quelques minutes d'yeux fermés dans le creux de 15 h, pour passer de « j'abandonne » à « plus que 40 km »."
 tags: ["sommeil", "mental", "ultra-endurance"]
 statut: eprouve
 concepts: [creux-circadien]

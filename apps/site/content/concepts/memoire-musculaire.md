@@ -2,7 +2,7 @@
 title: "La mémoire musculaire"
 author: "Valentin Fer"
 date: "2026-02-26"
-description: "Les noyaux gagnés à l'entraînement ne disparaissent pas à l'arrêt : ils dorment, et se rallument au premier stimulus."
+description: "Les noyaux gagnés à l'entraînement ne disparaissent pas à l'arrêt : ils s'endorment, et se réveillent au premier stimulus."
 tags: ["muscle", "déconditionnement", "mouvement primal"]
 maturite: pousse
 branche: charge-et-tissus

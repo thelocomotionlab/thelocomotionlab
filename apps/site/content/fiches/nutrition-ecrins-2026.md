@@ -2,9 +2,10 @@
 title: "Nutrition — tour des Écrins 2026"
 author: "Valentin Fer"
 date: "2026-08-18"
-description: "Environ 16 000 kcal pour quatre jours, en recettes maison pesées au gramme."
+description: "Gruau, couscous, boules d'énergie, saucisson, flasques iso."
 tags: ["nutrition", "autonomie"]
 parent: tour-des-ecrins
+valeur: "≈ 16 000 kcal · 4,1 kg"
 published: true
 ---
 

@@ -2,7 +2,7 @@
 title: "L'habituation à l'eau non filtrée"
 author: "Valentin Fer"
 date: "2026-06-06"
-description: "Une gorgée, 30 à 45 min d'attente, augmenter — jusqu'au jour où la soif a été plus forte que le protocole."
+description: "Une gorgée, 30 à 45 minutes d'attente, augmenter. Jusqu'au jour où la soif a pris le dessus."
 tags: ["hydratation", "autonomie", "incident"]
 statut: abandonne
 published: true

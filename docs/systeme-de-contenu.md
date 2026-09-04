@@ -149,17 +149,29 @@ reste un N = 1 ; le statut le dit.
 
 ---
 
-## 5. Les index
+## 5. Les index : deux grammaires, pas une
 
-**Comprendre** est une liste de concepts, triée par maturité puis par date, avec la page-pilier en tête. Dès que
-**deux concepts publiés** partagent la même `branche:`, la liste se regroupe sous ce titre. En dessous de deux,
-la branche n'apparaît nulle part : ni encadré, ni mot en gris. Les branches connues sont dans `BRANCHES`
-(`contentRoutes.mjs`) ; en ajouter une est un changement d'une ligne, le jour où deux concepts la demandent.
+**Ce qui a une photo se montre en carte** : les expéditions, l'année du carnet. C'est la seule chose qu'une carte
+sait bien faire. **Ce qui n'a pas de photo se montre en registre** : concepts, protocoles, fiches, notes de carnet
+— une ligne par entrée (icône de branche, titre, « en bref », état, date), sous des titres de section. Rien n'est
+répété, aucun rectangle vide, et cinquante entrées restent lisibles.
 
-**Explorer** a quatre sections, dans cet ordre : **Expéditions**, **Protocoles**, **Carnet**, **Fiches**
-(repliée). Une section vide ne s'affiche pas, et son bouton de filtre non plus.
+**Comprendre** ouvre, quand elle est publiée, sur la page-pilier — la seule carte de l'index. Puis un registre par
+branche née : dès que **deux concepts publiés** partagent la même `branche:`, elle a son titre et son effectif.
+En dessous, ses concepts vivent sous « Dernières graines », sans branche encore. Les branches connues sont dans
+`BRANCHES` (`contentRoutes.mjs`) ; en ajouter une est un changement d'une ligne, le jour où deux concepts la
+demandent.
+
+**Explorer** a quatre sections, dans cet ordre : **Expéditions** (cartes : photo, km, D+, durée, dates, et ce que
+la page contient), **Protocoles** (registre), **Carnet** (la carte de l'année, ses trois dernières notes en registre
+à côté, les années fermées en lien), **Fiches** (registre replié, on l'ouvre à la demande). Une section vide ne
+s'affiche pas, et son bouton de filtre non plus.
 
 **Aucune catégorie vide, jamais.** C'est la règle qui tient les deux index.
+
+Les chiffres d'une carte d'expédition viennent du frontmatter (`distanceKm`, `deniveleM`, `duree`, `dates`) ; la
+puce d'une fiche vient de son CSV quand elle a un paquetage, du champ `valeur:` sinon ; l'icône d'un protocole
+vient de sa `branche:`, ou de celle du premier concept qu'il cite.
 
 ---
 
@@ -197,13 +209,20 @@ système, et le build refuse un alias qui ne mène nulle part.
 
 ---
 
-## 8. Les images : une règle par sorte, pas une image par entrée
+## 8. Les images : une photo pour ce qui en a, une ligne pour le reste
 
-Le visuel est une propriété de la **sorte**, pas de l'entrée. Décidé une fois, le nombre de couvertures cesse de
-croître avec le nombre de pages.
+Multiplier les entrées ne doit pas multiplier les images. Le visuel est une propriété de la **sorte** :
 
-| Sorte | Visuel de carte | Décision à l'écriture |
+| Sorte | À l'index | Décision à l'écriture |
 |---|---|---|
+| **Expédition** | une carte, avec sa photo | choisir une photo — la seule sorte où c'est demandé |
+| **Carnet** | une carte pour l'année, avec sa photo | une fois par an |
+| **Concept**, **Protocole**, **Fiche** | une ligne de registre : icône de branche, titre, « en bref », état | aucune |
+
+Rien n'est fabriqué ni versionné pour les sortes sans photo : elles n'en ont pas besoin. Aucune image de stock,
+aucune image générée.
+
+---|---|---|
 | **Expédition** | une photo | choisir une photo — la seule sorte où c'est demandé |
 | **Carnet** | une photo par année | une fois par an |
 | **Protocole** | carte typographique, teinte Explorer, badge de statut | aucune |

@@ -2,9 +2,10 @@
 title: "Construire une trace fiable"
 author: "Valentin Fer"
 date: "2025-09-30"
-description: "Trois outils gratuits pour dessiner un parcours qui existe vraiment, et le corriger avant le départ."
+description: "Trois outils gratuits pour dessiner un parcours qui existe vraiment, et le corriger avant de partir."
 tags: ["instruments", "gpx", "préparation"]
 statut: eprouve
+branche: instruments
 published: true
 ---
 

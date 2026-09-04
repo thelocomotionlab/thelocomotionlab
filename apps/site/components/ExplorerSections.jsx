@@ -1,113 +1,44 @@
 // components/ExplorerSections.jsx
 //
-// Corps du pilier Explorer : une section par sorte (titre en Lora italique +
-// filet), chacune avec sa grille de cartes. Un filtre discret permet de n'en
-// afficher qu'une. Les sections vides n'arrivent jamais jusqu'ici : le serveur
-// les a retirées, et leur bouton de filtre avec.
+// Corps du pilier Explorer : quatre sections, deux grammaires. Les expéditions
+// en cartes, parce qu'elles ont une photo ; les protocoles et les fiches en
+// registre ; le carnet entre les deux — la carte de l'année, ses dernières
+// notes en registre à côté. Un filtre discret permet de n'afficher qu'une
+// section. Les sections vides n'arrivent jamais jusqu'ici : le serveur les a
+// retirées, et leur bouton de filtre avec.
 //
-// Une section peut être REPLIÉE par défaut (les fiches) : on y arrive depuis
-// un parent, la recherche ou la légende d'un post, pas en balayant l'index.
+// Les fiches sont REPLIÉES par défaut : on y arrive depuis un parent, la
+// recherche ou la légende d'un post, pas en balayant l'index.
 
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import CardMeta from "@/components/CardMeta";
-import CarteVisuel from "@/components/CarteVisuel";
+import CarteExpedition from "@/components/CarteExpedition";
+import CarteCarnet from "@/components/CarteCarnet";
 import ExplorerLiveIndicator from "@/components/ExplorerLiveIndicator";
+import Registre from "@/components/Registre";
 import SectionHeading from "@/components/SectionHeading";
 
-function Card({ item }) {
-  return (
-    <div className="relative w-full max-w-[22rem] h-full">
-      <Link
-        href={item.href}
-        className="group bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col"
-      >
-        <CarteVisuel item={item} />
-
-        <div className="p-5 flex flex-col flex-1">
-          <CardMeta
-            kind={item.kindLabel}
-            detail={item.detail}
-            className="mb-1"
-          />
-
-          <h3 className="text-lg font-semibold text-brand-deep group-hover:underline mb-2">
-            {item.title}
-          </h3>
-
-          {/* Description en Lora italique, centrée verticalement entre le
-              titre et le bloc du bas (notes ou date). */}
-          <div className="flex flex-1 items-center py-1">
-            {item.description ? (
-              <p className="font-lora text-[15px] italic text-gray-700 line-clamp-3">
-                {item.description}
-              </p>
-            ) : null}
-          </div>
-
-          {item.notes && item.notes.length > 0 ? (
-            <div className="pt-3 border-t border-gray-200">
-              <p className="text-xs font-semibold text-gray-500 mb-1">
-                Dernières notes :
-              </p>
-              <ul className="space-y-1">
-                {item.notes.map((note, i) => (
-                  <li key={i} className="text-xs text-gray-600">
-                    {note.date ? `${note.date} – ${note.title}` : note.title}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : item.dateLabel ? (
-            <div className="pt-3 text-xs text-gray-500">
-              <p>{item.dateLabel}</p>
-            </div>
-          ) : null}
-        </div>
-      </Link>
-    </div>
-  );
+function pluriel(n, mot) {
+  return `${n} ${mot}${n > 1 ? "s" : ""}`;
 }
 
-function CardGrid({ items }) {
-  return (
-    <div className="grid gap-6 justify-center justify-items-center grid-cols-1 sm:grid-cols-2 lg:justify-start lg:[grid-template-columns:repeat(3,22rem)]">
-      {items.map((item) => (
-        <Card key={item.slug} item={item} />
-      ))}
-    </div>
-  );
-}
-
-/** Une section repliée : son titre reste, sa grille s'ouvre à la demande. */
-function SectionRepliee({ section }) {
-  const [ouverte, setOuverte] = useState(false);
-
-  return (
-    <section className="mb-12">
-      <button
-        type="button"
-        onClick={() => setOuverte((v) => !v)}
-        aria-expanded={ouverte}
-        className="cursor-pointer group mb-6 flex w-full items-baseline gap-3 text-left"
-      >
-        <SectionHeading className="mb-0">{section.label}</SectionHeading>
-        <span className="text-[13px] font-medium text-gray-500 group-hover:text-brand-primary-dark">
-          {ouverte ? "masquer" : `voir les ${section.items.length}`}
-        </span>
-      </button>
-      {ouverte ? <CardGrid items={section.items} /> : null}
-    </section>
-  );
-}
-
-export default function ExplorerSections({ sections = [] }) {
+export default function ExplorerSections({
+  expeditions = [],
+  protocoles = [],
+  carnet = null,
+  fiches = [],
+}) {
   const [filtre, setFiltre] = useState("tout");
 
-  const visibles =
-    filtre === "tout" ? sections : sections.filter((s) => s.key === filtre);
+  const sections = [
+    expeditions.length && { key: "expedition", label: "Expéditions" },
+    protocoles.length && { key: "protocole", label: "Protocoles" },
+    carnet && { key: "carnet", label: "Carnet" },
+    fiches.length && { key: "fiche", label: "Fiches" },
+  ].filter(Boolean);
+
+  const visible = (key) => filtre === "tout" || filtre === key;
 
   return (
     <div>
@@ -119,7 +50,7 @@ export default function ExplorerSections({ sections = [] }) {
           <div
             role="group"
             aria-label="Filtrer les contenus"
-            className="flex gap-1 rounded-full border border-gray-300/70 bg-white/60 p-1"
+            className="flex flex-wrap gap-1 rounded-full border border-gray-300/70 bg-white/60 p-1"
           >
             {[{ key: "tout", label: "Tout" }, ...sections].map(
               ({ key, label }) => (
@@ -142,17 +73,60 @@ export default function ExplorerSections({ sections = [] }) {
         ) : null}
       </div>
 
-      {visibles.map((section) =>
-        // Une section repliée s'ouvre d'office quand on l'a filtrée seule.
-        section.replie && filtre !== section.key ? (
-          <SectionRepliee key={section.key} section={section} />
-        ) : (
-          <section key={section.key} className="mb-12">
-            <SectionHeading className="mb-6">{section.label}</SectionHeading>
-            <CardGrid items={section.items} />
-          </section>
-        )
-      )}
+      {expeditions.length > 0 && visible("expedition") ? (
+        <section className="mb-10">
+          <SectionHeading className="mb-4" aside={String(expeditions.length)}>
+            Expéditions
+          </SectionHeading>
+          <div className="grid gap-[22px] [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]">
+            {expeditions.map((item) => (
+              <CarteExpedition key={item.slug} item={item} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {protocoles.length > 0 && visible("protocole") ? (
+        <section className="mb-10">
+          <SectionHeading
+            className="mb-1.5"
+            aside={`${protocoles.length} · le cahier de labo`}
+          >
+            Protocoles
+          </SectionHeading>
+          <Registre items={protocoles} pilier="explorer" />
+        </section>
+      ) : null}
+
+      {carnet && visible("carnet") ? (
+        <section className="mb-10">
+          <SectionHeading
+            className="mb-4"
+            aside={`${carnet.carte.annee} · ${carnet.carte.detail.toLowerCase()}`}
+          >
+            Carnet
+          </SectionHeading>
+          <CarteCarnet carnet={carnet.carte} notes={carnet.notes} />
+        </section>
+      ) : null}
+
+      {fiches.length > 0 && visible("fiche") ? (
+        // Une section filtrée seule s'ouvre d'office : on est venu pour elle.
+        <details
+          className="ll-fiches mt-10 border-t border-brand-hairline pt-2"
+          open={filtre === "fiche"}
+        >
+          <summary className="flex items-baseline gap-3.5">
+            <h2 className="font-lora text-2xl font-medium italic text-brand-deep md:text-[28px]">
+              Fiches
+            </h2>
+            <span className="ll-fiches-hint text-[12.5px] text-gray-500">
+              {pluriel(fiches.length, "liste")} de référence ·
+            </span>
+          </summary>
+          <Registre items={fiches} pilier="explorer" />
+        </details>
+      ) : null}
     </div>
   );
 }

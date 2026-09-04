@@ -2,10 +2,11 @@
 title: "L'acclimatation au chaud en hammam"
 author: "Valentin Fer"
 date: "2026-04-30"
-description: "Quatre à cinq séances par semaine, 15 à 18 min, pour préparer l'été avant qu'il arrive."
+description: "Quatre à cinq séances par semaine, 15 à 18 minutes, avant l'été. Ressenti net, pas encore de mesure."
 tags: ["thermique", "chaleur", "hormèse"]
 statut: en-test
 concepts: [hormese, chaleur-et-glycogene]
+branche: thermique
 published: true
 ---
 

@@ -2,7 +2,7 @@
 title: "Paquetage — tour des Écrins 2026"
 author: "Valentin Fer"
 date: "2026-08-18"
-description: "Le sac des quatre jours en autonomie : le Vercors reconduit, plus un satellite et les Panta Boreas."
+description: "Couchage, trail, multimédia, hydratation, vêtements, alimentation."
 tags: ["paquetage", "autonomie", "fastpacking"]
 parent: tour-des-ecrins
 published: true

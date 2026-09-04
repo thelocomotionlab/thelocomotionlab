@@ -2,10 +2,11 @@
 title: "Le rest step en montée"
 author: "Valentin Fer"
 date: "2025-10-13"
-description: "Une micro-pause à chaque pas pour transférer la charge des quadriceps au squelette, sans bâtons."
+description: "Une micro-pause à chaque pas pour transférer la charge au squelette et épargner les quadriceps. Testé sur 300 m, puis sur 15 h."
 tags: ["technique", "montée", "minimalisme"]
 statut: eprouve
 concepts: [respiration-nasale-et-regime-aerobie]
+branche: charge-et-tissus
 published: true
 ---
 

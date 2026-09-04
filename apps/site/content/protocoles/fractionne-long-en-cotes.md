@@ -2,9 +2,10 @@
 title: "Le fractionné long en côtes"
 author: "Valentin Fer"
 date: "2026-03-04"
-description: "Six semaines de 5×3 min à 3×10 min en côte, avec la formule de récupération de Millet."
+description: "Six semaines de 5×3 min à 3×10 min, avec la formule de récupération de Millet : r = R/2 + 30 s."
 tags: ["entraînement", "montée", "intensité"]
 statut: eprouve
+branche: charge-et-tissus
 published: true
 ---
 

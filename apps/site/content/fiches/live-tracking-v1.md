@@ -5,6 +5,7 @@ date: "2025-11-09"
 description: "Les réglages du direct maison de 2025 : émission, réseau, batterie."
 tags: ["instruments", "live-tracking"]
 parent: reunion-2025
+valeur: "90 s · 100 m · 5 %/h"
 published: true
 ---
 
