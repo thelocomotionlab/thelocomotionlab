@@ -1,16 +1,11 @@
 // lib/buildSearchIndex.js
 //
-// Construit, au build, un index plat des contenus publiés (articles,
-// récits, projets) : titre, description, tags, et texte plain du corps
-// markdown. Permet à la page /recherche de charger un seul fichier
-// statique (/search-index.json) au lieu de fetch tous les .md à la demande.
-// Les hrefs pointent vers les piliers Comprendre / Explorer (contentRoutes).
+// Construit, au build, un index plat des atomes publiés : sorte, pilier,
+// titre, description, tags, et texte plain du corps markdown. Permet à la page
+// /recherche de charger un seul fichier statique (/search-index.json) au lieu
+// de fetch tous les .md à la demande.
 
-import {
-  listArticleEntries,
-  listProjetEntries,
-  routeFor,
-} from "./contentRoutes.mjs";
+import { listEntries, routeFor, etatDe } from "./contentRoutes.mjs";
 
 function stripMarkdown(md = "") {
   return md
@@ -30,15 +25,17 @@ function stripMarkdown(md = "") {
 }
 
 export function buildSearchIndex() {
-  return [...listArticleEntries(), ...listProjetEntries()]
+  return listEntries()
     .filter((e) => e.published)
     .map((e) => ({
-      type: e.kind, // "article" | "recit" | "projet"
+      kind: e.kind,
+      kindLabel: e.label,
+      pilier: e.pilier,
       slug: e.slug,
       href: routeFor(e),
       title: e.data.title || e.slug,
       description: e.data.description || "",
-      status: e.data.status || "",
+      etat: etatDe(e) || "",
       tags: Array.isArray(e.data.tags) ? e.data.tags.filter(Boolean) : [],
       body: stripMarkdown(e.content),
     }));

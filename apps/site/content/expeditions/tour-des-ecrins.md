@@ -2,10 +2,9 @@
 title: "Mon tour des Écrins en 80 heures"
 author: "Valentin Fer"
 date: "2026-08-28"
-tags: ["ultra-trail", "fast-packing","minimalisme"]
-cover: "/images/articles/mon-tour-des-ecrins-en-80-heures/cover_mon-tour-des-ecrins-en-80-heures.webp"
 description: "Immersion et transformation intérieure en montagne."
-type: "recit"
+cover: "/images/articles/mon-tour-des-ecrins-en-80-heures/cover_mon-tour-des-ecrins-en-80-heures.webp"
+tags: ["ultra-trail", "fast-packing", "minimalisme"]
 published: false
 ---
 

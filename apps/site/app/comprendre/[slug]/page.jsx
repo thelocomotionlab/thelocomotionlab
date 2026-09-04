@@ -1,8 +1,7 @@
 // app/comprendre/[slug]/page.jsx
 //
-// Détail d'un article du pilier Comprendre : uniquement les contenus
-// `type: "article"` publiés de public/articles/ (les récits vivent sous
-// /explorer/[slug]). Les cartes teaser n'ont volontairement AUCUNE route.
+// Détail d'un concept : le pilier Comprendre n'accueille que cette sorte.
+// Les brouillons sont pré-rendus en 404, jamais servis.
 export const dynamicParams = false;
 
 import { notFound } from "next/navigation";
@@ -10,17 +9,20 @@ import { notFound } from "next/navigation";
 import ArticleBody from "@/components/ArticleBody";
 import Breadcrumb from "@/components/Breadcrumb";
 import SearchHighlighter from "@/components/SearchHighlighter";
-import { getRelatedArticles } from "@/lib/getRelated";
-import { listArticleEntries, findComprendreEntry } from "@/lib/contentRoutes.mjs";
+import { getRelated } from "@/lib/getRelated";
+import {
+  listByPilier,
+  findComprendreEntry,
+  etatDe,
+} from "@/lib/contentRoutes.mjs";
 
 import { imageDePartage, LOGO_SIZE, LOGO_URL } from "@/lib/seo";
 
 const SITE_URL = "https://thelocomotionlab.com";
 
 /**
- * Lit un article à partir de son slug.
- * - retourne null si le fichier n'existe pas, n'est pas publié ou n'est
- *   pas un `type: "article"` (les récits ont leur route sous /explorer)
+ * Lit un concept à partir de son slug. Retourne null si le fichier n'existe
+ * pas ou n'est pas publié.
  */
 function readArticle(slug) {
   const entry = findComprendreEntry(slug);
@@ -34,7 +36,9 @@ function readArticle(slug) {
     date: data.date || null,
     cover: data.cover || "",
     description: data.description || "",
-    type: data.type || "",
+    kind: entry.kind,
+    kindLabel: entry.label,
+    etat: etatDe(entry),
     tags: data.tags || [],
     author: data.author || "",
   };
@@ -47,9 +51,7 @@ export async function generateStaticParams() {
   // sous @cloudflare/next-on-pages, une route [slug] sans AUCUN chemin
   // pré-rendu serait traitée comme dynamique et exigerait le runtime edge.
   // Ils deviennent de vraies pages dès published: true, sans autre changement.
-  return listArticleEntries()
-    .filter((e) => e.kind === "article")
-    .map((e) => ({ slug: e.slug }));
+  return listByPilier("comprendre").map((e) => ({ slug: e.slug }));
 }
 
 /**
@@ -119,7 +121,7 @@ export default async function ArticlePage({ params }) {
 
   const { article, content } = data;
   const jsonLd = buildArticleJsonLd(article);
-  const related = getRelatedArticles(slug, 3);
+  const related = getRelated("comprendre", slug, 3);
 
   return (
     <>

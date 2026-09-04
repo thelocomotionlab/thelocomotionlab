@@ -1,10 +1,9 @@
 // app/explorer/[slug]/page.jsx
 //
-// Détail unifié du pilier Explorer : le loader cherche dans les récits
-// (public/articles, type: "recit") PUIS dans les projets (public/projets),
-// et rend le bon corps — ArticleBody pour un récit, ProjetBody (qui monte
-// ProjetClientFx) pour un projet. Le contrôle de collision de slugs entre
-// les deux dossiers fait échouer le build avec les deux fichiers nommés.
+// Détail unifié du pilier Explorer : expéditions, protocoles, carnets et
+// fiches vivent dans le même espace de noms. Le corps de rendu vient de la
+// table KINDS (`corps`) — ArticleBody pour un texte suivi, ProjetBody pour ce
+// qui a un sommaire, des replays, des plots et des paquetages.
 export const dynamicParams = false;
 
 import { notFound } from "next/navigation";
@@ -13,12 +12,12 @@ import ArticleBody from "@/components/ArticleBody";
 import ProjetBody from "@/components/ProjetBody";
 import Breadcrumb from "@/components/Breadcrumb";
 import SearchHighlighter from "@/components/SearchHighlighter";
-import { getRelatedArticles, getRelatedProjects } from "@/lib/getRelated";
+import { getRelated } from "@/lib/getRelated";
 import {
-  listArticleEntries,
-  listProjetEntries,
+  listByPilier,
   findExplorerEntry,
-  assertNoSlugCollision,
+  assertContentRules,
+  etatDe,
 } from "@/lib/contentRoutes.mjs";
 
 import { imageDePartage, LOGO_SIZE, LOGO_URL } from "@/lib/seo";
@@ -38,8 +37,8 @@ function toIsoString(value) {
 }
 
 /**
- * Lit une fiche Explorer à partir de son slug : récit ou projet publié.
- * Retourne { kind, item, content } ou null (→ 404).
+ * Lit un atome d'Explorer à partir de son slug.
+ * Retourne { entry, item, content } ou null (→ 404).
  */
 function readExplorerEntry(slug) {
   const entry = findExplorerEntry(slug);
@@ -47,52 +46,31 @@ function readExplorerEntry(slug) {
 
   const { data, content } = entry;
 
-  if (entry.kind === "recit") {
-    return {
-      kind: "recit",
-      content,
-      item: {
-        slug,
-        title: data.title || slug,
-        date: data.date || null,
-        cover: data.cover || "",
-        description: data.description || "",
-        type: data.type || "",
-        tags: data.tags || [],
-        author: data.author || "",
-      },
-    };
-  }
-
   return {
-    kind: "projet",
+    entry,
     content,
     item: {
       slug,
+      kind: entry.kind,
+      kindLabel: entry.label,
+      etat: etatDe(entry),
       title: data.title || slug,
-      status: data.status || "",
-      cover: data.cover || "",
       description: data.description || "",
+      cover: data.cover || "",
       tags: data.tags || [],
       author: data.author || "",
       date: toDate(data.date),
-      completedAt: toDate(data.completedAt),
-      activityAt: toDate(data.activityAt),
     },
   };
 }
 
-// Génération statique : récits + projets publiés, dans un espace de noms
-// commun vérifié sans collision.
+// Génération statique : tous les atomes d'Explorer, brouillons compris. Les
+// brouillons sont pré-rendus en 404 (readExplorerEntry les refuse) : sous
+// @cloudflare/next-on-pages, une route [slug] sans AUCUN chemin pré-rendu
+// serait traitée comme dynamique et exigerait le runtime edge.
 export async function generateStaticParams() {
-  assertNoSlugCollision();
-
-  const recits = listArticleEntries().filter(
-    (e) => e.kind === "recit" && e.published
-  );
-  const projets = listProjetEntries().filter((e) => e.published);
-
-  return [...recits, ...projets].map((e) => ({ slug: e.slug }));
+  assertContentRules();
+  return listByPilier("explorer").map((e) => ({ slug: e.slug }));
 }
 
 export async function generateMetadata({ params }) {
@@ -110,48 +88,23 @@ export async function generateMetadata({ params }) {
     };
   }
 
-  const { kind, item } = data;
+  const { item } = data;
 
   const url = `${SITE_URL}/explorer/${item.slug}`;
   const ogImage = imageDePartage(item.cover);
 
   const description =
     item.description ||
-    "Explorer : récits d'aventures et projets de terrain du Locomotion Lab — traversées en autonomie, saisons de trail, expérimentations.";
+    "Explorer : le terrain du Locomotion Lab — expéditions en autonomie, protocoles N = 1, carnets de bord et fiches de matériel.";
 
-  const base = {
+  const publishedTime = toIsoString(item.date);
+
+  return {
     title: item.title,
     description,
     alternates: {
       canonical: url,
     },
-    twitter: {
-      card: "summary_large_image",
-      title: item.title,
-      description,
-      images: [ogImage],
-    },
-  };
-
-  if (kind === "recit") {
-    return {
-      ...base,
-      openGraph: {
-        title: item.title,
-        description,
-        url,
-        type: "article",
-        images: [{ url: ogImage }],
-        locale: "fr_FR",
-      },
-    };
-  }
-
-  const publishedTime = toIsoString(item.date);
-  const modifiedTime = toIsoString(item.completedAt || item.activityAt);
-
-  return {
-    ...base,
     openGraph: {
       title: item.title,
       description,
@@ -160,11 +113,12 @@ export async function generateMetadata({ params }) {
       locale: "fr_FR",
       images: [{ url: ogImage }],
       ...(publishedTime ? { publishedTime } : {}),
-      ...(modifiedTime ? { modifiedTime } : {}),
     },
-    robots: {
-      index: true,
-      follow: true,
+    twitter: {
+      card: "summary_large_image",
+      title: item.title,
+      description,
+      images: [ogImage],
     },
   };
 }
@@ -178,11 +132,9 @@ export default async function ExplorerEntryPage({ params }) {
     notFound();
   }
 
-  const { kind, item, content } = data;
-  const jsonLd =
-    kind === "recit" ? buildRecitJsonLd(item) : buildProjectJsonLd(item);
-  const related =
-    kind === "recit" ? getRelatedArticles(slug, 3) : getRelatedProjects(slug, 3);
+  const { entry, item, content } = data;
+  const jsonLd = buildJsonLd(item);
+  const related = getRelated("explorer", slug, 3);
 
   return (
     <>
@@ -197,7 +149,7 @@ export default async function ExplorerEntryPage({ params }) {
           { label: item.title },
         ]}
       />
-      {kind === "recit" ? (
+      {entry.corps === "article" ? (
         <ArticleBody
           article={item}
           initialContent={content}
@@ -214,26 +166,25 @@ export default async function ExplorerEntryPage({ params }) {
 }
 
 /**
- * JSON-LD BlogPosting pour un récit (comportement identique aux anciens
- * articles, URL sous /explorer).
+ * JSON-LD d'un atome d'Explorer. Une expédition est un récit daté
+ * (BlogPosting) ; un protocole, un carnet ou une fiche est un compte rendu de
+ * longue haleine, mieux décrit par Article + articleSection.
  */
-function buildRecitJsonLd(article) {
-  const url = `${SITE_URL}/explorer/${article.slug}`;
-  const imageUrl = imageDePartage(article.cover);
-
-  const datePublished = article.date
-    ? new Date(article.date).toISOString()
-    : undefined;
+function buildJsonLd(item) {
+  const url = `${SITE_URL}/explorer/${item.slug}`;
+  const imageUrl = imageDePartage(item.cover);
+  const datePublished = toIsoString(item.date);
 
   return {
     "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: article.title,
+    "@type": item.kind === "expedition" ? "BlogPosting" : "Article",
+    headline: item.title,
     description:
-      article.description ||
-      "Explorer : récits d'aventures et projets de terrain du Locomotion Lab.",
+      item.description ||
+      "Explorer : le terrain du Locomotion Lab — expéditions, protocoles, carnets et fiches.",
     image: [imageUrl],
     ...(datePublished ? { datePublished, dateModified: datePublished } : {}),
+    ...(item.kind === "expedition" ? {} : { articleSection: item.kindLabel }),
     author: {
       "@type": "Organization",
       name: "The Locomotion Lab",
@@ -253,59 +204,8 @@ function buildRecitJsonLd(article) {
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
     url,
     inLanguage: "fr-FR",
-    ...(Array.isArray(article.tags) && article.tags.length
-      ? { keywords: article.tags.filter(Boolean).join(", ") }
-      : {}),
-  };
-}
-
-/**
- * JSON-LD Article pour un projet. Les projets sont des comptes-rendus de
- * longue haleine (saison de trail, expéditions, formations) : Article avec
- * articleSection "Projet" est le type Schema.org le plus représentatif.
- */
-function buildProjectJsonLd(project) {
-  const url = `${SITE_URL}/explorer/${project.slug}`;
-  const imageUrl = imageDePartage(project.cover);
-
-  const datePublished = toIsoString(project.date);
-  const dateModified =
-    toIsoString(project.completedAt) ||
-    toIsoString(project.activityAt) ||
-    datePublished;
-
-  return {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: project.title,
-    description:
-      project.description ||
-      "Projets du labo : expérimentations en cours autour du mouvement, du minimalisme, de l'hormèse et de la performance humaine.",
-    image: [imageUrl],
-    ...(datePublished ? { datePublished } : {}),
-    ...(dateModified ? { dateModified } : {}),
-    articleSection: "Projet",
-    author: {
-      "@type": "Organization",
-      name: "The Locomotion Lab",
-      url: SITE_URL,
-    },
-    publisher: {
-      "@type": "Organization",
-      name: "The Locomotion Lab",
-      url: SITE_URL,
-      logo: {
-        "@type": "ImageObject",
-        url: LOGO_URL,
-        width: LOGO_SIZE,
-        height: LOGO_SIZE,
-      },
-    },
-    mainEntityOfPage: { "@type": "WebPage", "@id": url },
-    url,
-    inLanguage: "fr-FR",
-    ...(Array.isArray(project.tags) && project.tags.length
-      ? { keywords: project.tags.filter(Boolean).join(", ") }
+    ...(Array.isArray(item.tags) && item.tags.length
+      ? { keywords: item.tags.filter(Boolean).join(", ") }
       : {}),
   };
 }

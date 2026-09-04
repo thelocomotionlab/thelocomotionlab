@@ -456,17 +456,17 @@ l'aventure) et le **bouton de partage** (il fabrique la carte du direct en
 cours). Le jour affiché se compte jusqu'à la **dernière position**, pas jusqu'à
 aujourd'hui.
 
-**Lier depuis un article** — un lien markdown ordinaire, dans n'importe quel
-`.md` de `public/articles/` ou `public/projets/` :
+**Lier depuis un contenu** — un lien markdown ordinaire, dans n'importe quel
+`.md` de `apps/site/content/` :
 
 ```markdown
 J'ai suivi ça en direct : [l'archive du Tour des Écrins](/live/archives/tour-des-ecrins).
 ```
 
-> **Archive ≠ replay.** Le replay (§11) est une **carte posée dans un récit**,
-> et il ne se rend que dans une page **projet**. L'archive est l'**écran
-> complet**, à une URL stable, vers laquelle n'importe quel article peut
-> pointer. Les deux se nourrissent du même dossier ; poser l'un n'oblige à rien
+> **Archive ≠ replay.** Le replay (§11) est une **carte posée dans un texte**,
+> et il ne se rend que dans les sortes servies par `ProjetBody` (expédition,
+> protocole, carnet, fiche). L'archive est l'**écran complet**, à une URL
+> stable, vers laquelle n'importe quel contenu peut pointer. Les deux se nourrissent du même dossier ; poser l'un n'oblige à rien
 > pour l'autre.
 
 > Les replays **antérieurs** n'ont pas d'`aventure.json` et n'ont donc pas de
@@ -674,9 +674,10 @@ des comptes en masse. Port balise (`5055`/`5004`) laissé **ouvert** dans `ufw`.
 
 ---
 
-## 11. Les replays dans les pages projets
+## 11. Les replays dans les contenus
 
-Distinct de `/live` : les **pages projets** (`apps/site/public/projets/<slug>.md`)
+Distinct de `/live` : les contenus rendus par `ProjetBody` — expéditions,
+protocoles, carnets, fiches, sous `apps/site/content/<sorte>/<slug>.md` —
 peuvent embarquer une carte via une balise, rendue inline par le package
 `@locomotionlab/tracking` (pas d'iframe).
 

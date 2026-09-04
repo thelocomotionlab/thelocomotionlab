@@ -1,24 +1,19 @@
-import fs from "fs";
+// lib/getRecentActivity.js
+//
+// Les feeds « ce qui bouge » : accueil, carrousel, contenus liés.
+//
+// La clé de tri est la DATE D'ACTIVITÉ d'un atome. Pour les quatre sortes
+// fermées, c'est la date de publication du frontmatter. Pour un carnet, qui
+// n'a pas de fin, c'est la date de sa note la plus récente : un carnet remonte
+// quand on y écrit, sans qu'aucun champ ne soit à tenir à la main.
 
 import {
-  listArticleEntries,
-  listProjetEntries,
+  listEntries,
+  listByPilier,
   routeFor,
+  etatDe,
 } from "./contentRoutes.mjs";
-
-/**
- * Utilitaires pour lire les contenus Markdown
- * depuis /public/articles et /public/projets
- * et construire des feeds récents.
- *
- * Source de vérité :
- * - Articles : date frontmatter (publication) = clé de tri principale
- * - Projets  : date métier = completedAt si status "Terminé",
- *              sinon activityAt, sinon updatedAt en fallback technique
- *
- * Les hrefs pointent vers les piliers Comprendre / Explorer selon le
- * frontmatter `type` (mapping unique dans lib/contentRoutes.mjs).
- */
+import { derniereNote } from "./extractCarnetNotes";
 
 function safeDate(value) {
   if (!value) return null;
@@ -26,150 +21,62 @@ function safeDate(value) {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function getProjectActivityDate(item) {
-  if (item.type !== "Projet") return null;
-
-  if (item.status === "Terminé" && item.completedAt) {
-    return item.completedAt;
-  }
-
-  if (item.activityAt) {
-    return item.activityAt;
-  }
-
-  return item.updatedAt ?? null;
+/** La date d'activité d'un atome : ses notes s'il en a, sa date sinon. */
+export function dateActivite(entry) {
+  const publiee = safeDate(entry.data.date);
+  if (entry.kind !== "carnet") return publiee;
+  return derniereNote(entry.slug) ?? publiee;
 }
 
-function shapeItem(entry, type) {
-  const { data } = entry;
-  const stats = fs.statSync(entry.filePath);
-
+/** La forme commune consommée par les cartes et les carrousels. */
+export function shapeEntry(entry) {
   return {
-    type, // "Carnet" | "Projet"
+    kind: entry.kind,
+    kindLabel: entry.label,
+    pilier: entry.pilier,
     slug: entry.slug,
     href: routeFor(entry),
-
-    // Frontmatter
-    title: data.title ?? entry.slug,
-    description: data.description ?? "",
-    cover: data.cover ?? "",
-    status: data.status ?? null,
-    date: safeDate(data.date),
-
-    // Nouvelles dates métier projet
-    activityAt: safeDate(data.activityAt),
-    completedAt: safeDate(data.completedAt),
-
-    // Métadonnées fichier (fallback technique uniquement)
-    updatedAt: stats.mtime,
+    title: entry.data.title ?? entry.slug,
+    description: entry.data.description ?? "",
+    cover: entry.data.cover ?? "",
+    etat: etatDe(entry),
+    branche: entry.branche,
+    date: safeDate(entry.data.date),
+    activite: dateActivite(entry),
   };
 }
 
-function readPublishedArticles() {
-  return listArticleEntries()
-    .filter((e) => e.published)
-    .map((e) => shapeItem(e, "Carnet"));
-}
-
-// Récits de terrain uniquement (kind "recit") : exclut les articles
-// scientifiques, qui vivent dans le registre Comprendre.
-function readPublishedRecits() {
-  return listArticleEntries()
-    .filter((e) => e.published && e.kind === "recit")
-    .map((e) => shapeItem(e, "Carnet"));
-}
-
-function readPublishedProjects() {
-  return listProjetEntries()
-    .filter((e) => e.published)
-    .map((e) => shapeItem(e, "Projet"));
-}
-
-/**
- * Articles : tri par date de publication.
- * On n'utilise PAS updatedAt en clé principale pour éviter qu'un edit remonte l'article.
- */
-function sortArticlesByPublicationDate(a, b) {
-  const ad = a.date?.getTime?.() ?? 0;
-  const bd = b.date?.getTime?.() ?? 0;
+function parActiviteDesc(a, b) {
+  const ad = a.activite?.getTime() ?? 0;
+  const bd = b.activite?.getTime() ?? 0;
   if (bd !== ad) return bd - ad;
-
-  // Tie-breaker seulement : si même date (ou absente), on utilise updatedAt
-  const au = a.updatedAt?.getTime?.() ?? 0;
-  const bu = b.updatedAt?.getTime?.() ?? 0;
-  return bu - au;
+  // Départage stable : la date de publication, puis le slug.
+  const ap = a.date?.getTime() ?? 0;
+  const bp = b.date?.getTime() ?? 0;
+  if (bp !== ap) return bp - ap;
+  return a.slug.localeCompare(b.slug);
 }
 
-/**
- * Projets : tri par date métier.
- * - status "Terminé" + completedAt => completedAt
- * - sinon activityAt
- * - sinon updatedAt en fallback
- */
-function sortProjectsByMeaningfulDate(a, b) {
-  const aKey = getProjectActivityDate(a)?.getTime?.() ?? 0;
-  const bKey = getProjectActivityDate(b)?.getTime?.() ?? 0;
-
-  if (bKey !== aKey) return bKey - aKey;
-
-  // Tie-breaker 1 : updatedAt technique
-  const au = a.updatedAt?.getTime?.() ?? 0;
-  const bu = b.updatedAt?.getTime?.() ?? 0;
-  if (bu !== au) return bu - au;
-
-  // Tie-breaker 2 : date frontmatter éventuelle
-  const ad = a.date?.getTime?.() ?? 0;
-  const bd = b.date?.getTime?.() ?? 0;
-  return bd - ad;
+function publies(entries) {
+  return entries.filter((e) => e.published).map(shapeEntry).sort(parActiviteDesc);
 }
 
-/**
- * Feed mixte : comparaison "récence" selon la nature du contenu
- * - Carnet => date (publication)
- * - Projet => date métier projet
- */
-function sortMixedActivity(a, b) {
-  const aKey =
-    a.type === "Carnet"
-      ? a.date?.getTime?.() ?? 0
-      : getProjectActivityDate(a)?.getTime?.() ?? 0;
-
-  const bKey =
-    b.type === "Carnet"
-      ? b.date?.getTime?.() ?? 0
-      : getProjectActivityDate(b)?.getTime?.() ?? 0;
-
-  if (bKey !== aKey) return bKey - aKey;
-
-  // Tie-breaker stable : second champ
-  const aSecond = a.updatedAt?.getTime?.() ?? 0;
-  const bSecond = b.updatedAt?.getTime?.() ?? 0;
-
-  return bSecond - aSecond;
+/** Tous les atomes publiés, du plus actif au plus ancien. */
+export function getRecentAll({ limit = Number.POSITIVE_INFINITY } = {}) {
+  return publies(listEntries()).slice(0, limit);
 }
 
-/* ============================
-   FEEDS PUBLICS
-   ============================ */
-
-export function getRecentArticles({ limit = 3 } = {}) {
-  return readPublishedArticles()
-    .sort(sortArticlesByPublicationDate)
-    .slice(0, limit);
+/** Les atomes publiés d'un pilier. */
+export function getRecentByPilier(pilier, { limit = Number.POSITIVE_INFINITY } = {}) {
+  return publies(listByPilier(pilier)).slice(0, limit);
 }
 
-export function getRecentProjects({ limit = 3 } = {}) {
-  return readPublishedProjects()
-    .sort(sortProjectsByMeaningfulDate)
-    .slice(0, limit);
-}
-
-/**
- * Feed « terrain » (cartes Explorer de l'accueil) : récits + projets
- * uniquement, même tri métier que le feed mixte.
- */
+/** Le feed « terrain » : les quatre sortes d'Explorer, fiches comprises. */
 export function getRecentExplorer({ limit = 3 } = {}) {
-  return [...readPublishedRecits(), ...readPublishedProjects()]
-    .sort(sortMixedActivity)
-    .slice(0, limit);
+  return getRecentByPilier("explorer", { limit });
+}
+
+/** Le feed « savoir » : les concepts. */
+export function getRecentComprendre({ limit = 3 } = {}) {
+  return getRecentByPilier("comprendre", { limit });
 }

@@ -1,15 +1,15 @@
 // app/comprendre/page.jsx
 //
 // Pilier « Comprendre » : la science de la robustesse physiologique.
-// Liste les contenus `type: "article"` publiés, plus les cartes « à
-// paraître » (published: false + teaser: true) : titre + teaserText +
-// badge « À paraître », SANS lien — leur corps n'est jamais rendu.
+// Liste les concepts publiés, plus les cartes « à paraître »
+// (published: false + teaser: true) : titre + teaserText + badge
+// « À paraître », SANS lien — leur corps n'est jamais rendu.
 import Link from "next/link";
 import Image from "next/image";
 import CardMeta from "@/components/CardMeta";
 import EmailCapture from "@/components/EmailCapture";
 import PageHeader from "@/components/PageHeader";
-import { listArticleEntries } from "@/lib/contentRoutes.mjs";
+import { listByKind, etatDe } from "@/lib/contentRoutes.mjs";
 import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
 export const metadata = {
@@ -38,7 +38,7 @@ export const metadata = {
 };
 
 function getComprendreLists() {
-  const entries = listArticleEntries().filter((e) => e.kind === "article");
+  const entries = listByKind("concept");
 
   const shape = (e) => ({
     slug: e.slug,
@@ -47,6 +47,7 @@ function getComprendreLists() {
     cover: e.data.cover || "",
     description: e.data.description || "",
     teaserText: e.data.teaserText || "",
+    etat: etatDe(e),
   });
 
   const byDateDesc = (a, b) => {
@@ -87,7 +88,7 @@ function ArticleCard({ article }) {
 
         <div className="p-5 flex flex-col flex-1">
           {/* Méta homogène avec les cartes du pilier Explorer. */}
-          <CardMeta kind="Article" className="mb-1" />
+          <CardMeta kind="Concept" detail={article.etat} className="mb-1" />
 
           <h3 className="text-lg font-semibold text-brand-deep group-hover:underline mb-2">
             {article.title}
@@ -136,7 +137,7 @@ function TeaserCard({ article }) {
 
         <div className="p-5 flex flex-col flex-1">
           {/* Méta homogène avec les cartes du pilier Explorer. */}
-          <CardMeta kind="Article" detail="À paraître" className="mb-1" />
+          <CardMeta kind="Concept" detail="À paraître" className="mb-1" />
 
           <h3 className="text-lg font-semibold text-brand-deep mb-2">
             {article.title}
@@ -170,7 +171,7 @@ export default function ComprendrePage() {
 
         {/* Grille : articles publiés puis cartes « à paraître ».
             h2 invisible : évite le saut h1 → h3 pour les lecteurs d'écran. */}
-        <h2 className="sr-only">Tous les articles</h2>
+        <h2 className="sr-only">Tous les concepts</h2>
         {articles.length > 0 || teasers.length > 0 ? (
           <div className="grid gap-6 justify-center justify-items-center grid-cols-1 sm:grid-cols-2 lg:justify-start lg:[grid-template-columns:repeat(3,22rem)]">
             {articles.map((article) => (
@@ -186,7 +187,7 @@ export default function ComprendrePage() {
           // l'état vide de /pratiquer.
           <div className="rounded-2xl border-[1.5px] border-dashed border-brand-wash-line p-[22px] md:px-8 md:py-7">
             <p className="mb-4 max-w-[520px] text-base italic leading-[1.7] text-gray-600">
-              Les premiers articles sont à paraître. Laisse ton adresse pour
+              Les premiers concepts sont à paraître. Laisse ton adresse pour
               être prévenu·e de leur publication.
             </p>
             <div className="max-w-[420px]">

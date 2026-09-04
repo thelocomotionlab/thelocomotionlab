@@ -1,11 +1,12 @@
 // components/ExplorerSections.jsx
 //
-// Corps du pilier Explorer : deux sections « Projets » et « Récits »
-// (titres en Lora italique + filet), chacune avec sa grille de cartes —
-// les récits, sans bloc de notes, gardent ainsi une hauteur compacte au
-// lieu de s'étirer sur celle des projets. Un filtre discret permet de
-// n'afficher qu'un des deux types. Les items arrivent pré-formatés du
-// serveur (chaînes uniquement).
+// Corps du pilier Explorer : une section par sorte (titre en Lora italique +
+// filet), chacune avec sa grille de cartes. Un filtre discret permet de n'en
+// afficher qu'une. Les sections vides n'arrivent jamais jusqu'ici : le serveur
+// les a retirées, et leur bouton de filtre avec.
+//
+// Une section peut être REPLIÉE par défaut (les fiches) : on y arrive depuis
+// un parent, la recherche ou la légende d'un post, pas en balayant l'index.
 
 "use client";
 
@@ -15,12 +16,6 @@ import Image from "next/image";
 import CardMeta from "@/components/CardMeta";
 import ExplorerLiveIndicator from "@/components/ExplorerLiveIndicator";
 import SectionHeading from "@/components/SectionHeading";
-
-const FILTERS = [
-  { key: "tout", label: "Tout" },
-  { key: "projets", label: "Projets" },
-  { key: "recits", label: "Récits" },
-];
 
 function Card({ item }) {
   return (
@@ -45,7 +40,11 @@ function Card({ item }) {
         )}
 
         <div className="p-5 flex flex-col flex-1">
-          <CardMeta kind={item.kind} detail={item.detail} className="mb-1" />
+          <CardMeta
+            kind={item.kindLabel}
+            detail={item.detail}
+            className="mb-1"
+          />
 
           <h3 className="text-lg font-semibold text-brand-deep group-hover:underline mb-2">
             {item.title}
@@ -95,53 +94,77 @@ function CardGrid({ items }) {
   );
 }
 
-export default function ExplorerSections({ projets, recits }) {
-  const [filter, setFilter] = useState("tout");
+/** Une section repliée : son titre reste, sa grille s'ouvre à la demande. */
+function SectionRepliee({ section }) {
+  const [ouverte, setOuverte] = useState(false);
 
-  const showProjets = filter !== "recits" && projets.length > 0;
-  const showRecits = filter !== "projets" && recits.length > 0;
+  return (
+    <section className="mb-12">
+      <button
+        type="button"
+        onClick={() => setOuverte((v) => !v)}
+        aria-expanded={ouverte}
+        className="cursor-pointer group mb-6 flex w-full items-baseline gap-3 text-left"
+      >
+        <SectionHeading className="mb-0">{section.label}</SectionHeading>
+        <span className="text-[13px] font-medium text-gray-500 group-hover:text-brand-primary-dark">
+          {ouverte ? "masquer" : `voir les ${section.items.length}`}
+        </span>
+      </button>
+      {ouverte ? <CardGrid items={section.items} /> : null}
+    </section>
+  );
+}
+
+export default function ExplorerSections({ sections = [] }) {
+  const [filtre, setFiltre] = useState("tout");
+
+  const visibles =
+    filtre === "tout" ? sections : sections.filter((s) => s.key === filtre);
 
   return (
     <div>
-      {/* Rangée d'entrée : indicateur live discret à gauche, filtre
-          tout / projets / récits à droite — zéro hauteur ajoutée. */}
+      {/* Rangée d'entrée : indicateur live discret à gauche, filtre par sorte
+          à droite — zéro hauteur ajoutée. */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
         <ExplorerLiveIndicator tone="light" />
-        <div
-          role="group"
-          aria-label="Filtrer les contenus"
-          className="flex gap-1 rounded-full border border-gray-300/70 bg-white/60 p-1"
-        >
-          {FILTERS.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setFilter(key)}
-              aria-pressed={filter === key}
-              className={`cursor-pointer rounded-full px-3.5 py-1.5 text-[13px] font-medium transition ${
-                filter === key
-                  ? "bg-brand-primary-dark text-white"
-                  : "text-gray-500 hover:bg-white hover:text-brand-primary-dark"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        {sections.length > 1 ? (
+          <div
+            role="group"
+            aria-label="Filtrer les contenus"
+            className="flex gap-1 rounded-full border border-gray-300/70 bg-white/60 p-1"
+          >
+            {[{ key: "tout", label: "Tout" }, ...sections].map(
+              ({ key, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setFiltre(key)}
+                  aria-pressed={filtre === key}
+                  className={`cursor-pointer rounded-full px-3.5 py-1.5 text-[13px] font-medium transition ${
+                    filtre === key
+                      ? "bg-brand-primary-dark text-white"
+                      : "text-gray-500 hover:bg-white hover:text-brand-primary-dark"
+                  }`}
+                >
+                  {label}
+                </button>
+              )
+            )}
+          </div>
+        ) : null}
       </div>
 
-      {showProjets && (
-        <section className="mb-12">
-          <SectionHeading className="mb-6">Projets</SectionHeading>
-          <CardGrid items={projets} />
-        </section>
-      )}
-
-      {showRecits && (
-        <section>
-          <SectionHeading className="mb-6">Récits</SectionHeading>
-          <CardGrid items={recits} />
-        </section>
+      {visibles.map((section) =>
+        // Une section repliée s'ouvre d'office quand on l'a filtrée seule.
+        section.replie && filtre !== section.key ? (
+          <SectionRepliee key={section.key} section={section} />
+        ) : (
+          <section key={section.key} className="mb-12">
+            <SectionHeading className="mb-6">{section.label}</SectionHeading>
+            <CardGrid items={section.items} />
+          </section>
+        )
       )}
     </div>
   );

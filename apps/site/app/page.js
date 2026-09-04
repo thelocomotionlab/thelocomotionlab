@@ -16,7 +16,7 @@ import ExplorerLiveIndicator from "@/components/ExplorerLiveIndicator";
 import LiveBanner from "@/components/LiveBanner";
 import PhilosophieSection from "@/components/PhilosophieSection";
 import { getExplorerCarouselItems } from "@/lib/carouselItems";
-import { listArticleEntries } from "@/lib/contentRoutes.mjs";
+import { listByKind } from "@/lib/contentRoutes.mjs";
 import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
 export const metadata = {
@@ -59,7 +59,7 @@ const HEROES = [
 ];
 
 /* ============================
-   REGISTRE DES ARTICLES (section Comprendre)
+   REGISTRE DES CONCEPTS (section Comprendre)
    ============================ */
 
 // Statut d'une entrée du registre, dérivé du frontmatter :
@@ -88,7 +88,7 @@ const REGISTRE_BADGES = {
 const REGISTRE_MAX_ROWS = 8;
 
 function getRegistreRows() {
-  const entries = listArticleEntries().filter((e) => e.kind === "article");
+  const entries = listByKind("concept");
 
   const statusOf = (e) => {
     if (e.published) return "publie";
@@ -216,7 +216,7 @@ export default async function HomePage() {
   };
 
   const registreRows = getRegistreRows();
-  // Carrousel Explorer : dernières entrées du feed terrain (récits + projets).
+  // Carrousel Explorer : les dernières entrées du feed terrain.
   const explorerItems = getExplorerCarouselItems({ limit: 8 });
 
   return (

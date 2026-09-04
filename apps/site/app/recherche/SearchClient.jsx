@@ -152,7 +152,8 @@ function SearchClientInner() {
           [
             item.title,
             item.description,
-            item.status,
+            item.etat,
+            item.kindLabel,
             (item.tags || []).join(" "),
           ].join(" ")
         );
@@ -171,14 +172,14 @@ function SearchClientInner() {
       })
       .filter(Boolean);
 
+    // Le tri se fait par PILIER. L'ancien index, encore en cache navigateur
+    // pendant la bascule, portait un champ `type` au lieu de `pilier`.
+    const pilierDe = (i) =>
+      i.pilier ?? (i.type === "article" ? "comprendre" : "explorer");
+
     return {
-      // Pilier Comprendre : articles de fond.
-      arts: filtered.filter((i) => i.type === "article"),
-      // Pilier Explorer : récits + projets ("project" = ancien index encore
-      // en cache navigateur pendant la bascule).
-      pros: filtered.filter(
-        (i) => i.type === "recit" || i.type === "projet" || i.type === "project"
-      ),
+      arts: filtered.filter((i) => pilierDe(i) === "comprendre"),
+      pros: filtered.filter((i) => pilierDe(i) === "explorer"),
     };
   }, [q, index]);
 

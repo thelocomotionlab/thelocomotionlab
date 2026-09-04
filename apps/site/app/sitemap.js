@@ -2,12 +2,8 @@
 //
 // Les entrées de contenu s'appuient sur lib/contentRoutes.mjs (source
 // unique) : filtrage published/draft via gray-matter et URLs vers les
-// piliers Comprendre / Explorer. Brouillons et cartes teaser exclus.
-import {
-  listArticleEntries,
-  listProjetEntries,
-  routeFor,
-} from "@/lib/contentRoutes.mjs";
+// piliers Comprendre / Explorer. Brouillons exclus.
+import { listEntries, routeFor } from "@/lib/contentRoutes.mjs";
 
 const URL = "https://thelocomotionlab.com";
 
@@ -49,10 +45,10 @@ export default async function sitemap() {
     priority: route.priority,
   }));
 
-  // 2. Contenus publiés (articles → /comprendre, récits + projets → /explorer)
+  // 2. Les atomes publiés (concepts → /comprendre, le reste → /explorer)
   let entries = [];
   try {
-    entries = [...listArticleEntries(), ...listProjetEntries()]
+    entries = listEntries()
       .filter((e) => e.published)
       .map((e) => ({
         url: `${URL}${routeFor(e)}`,

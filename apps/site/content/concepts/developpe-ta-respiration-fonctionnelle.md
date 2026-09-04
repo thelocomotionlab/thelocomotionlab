@@ -1,16 +1,12 @@
 ---
-type: "article"
-
 title: "Développe ta respiration fonctionnelle"
 author: "Valentin Fer"
-description: ""
-
-# cover: "/images/articles/draft_cover.png"
-cover: "/images/articles/developpe-ta-respiration-fonctionnelle/cover_respiration_fonctionnelle_v2.webp"
-
 date: "2026-05-30"
-tags: ["respiration", ""]
-
+description: ""
+cover: "/images/articles/developpe-ta-respiration-fonctionnelle/cover_respiration_fonctionnelle_v2.webp"
+tags: ["respiration"]
+maturite: graine
+branche: respiration
 published: false
 teaser: true
 teaserText: "Comprendre ce qu'est une respiration physiologique et comment la réintégrer."

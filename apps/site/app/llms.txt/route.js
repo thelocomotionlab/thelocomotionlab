@@ -2,15 +2,12 @@
 //
 // Route handler pré-générée au build qui sert un fichier llms.txt
 // conforme au standard https://llmstxt.org : un résumé markdown du
-// site avec un index des articles et projets, optimisé pour les
+// site avec un index de ses atomes, optimisé pour les
 // modèles de langage qui veulent comprendre la structure du contenu.
 // Cloudflare Pages le sert ensuite comme un asset statique.
 
-import {
-  listArticleEntries,
-  listProjetEntries,
-  routeFor,
-} from "@/lib/contentRoutes.mjs";
+import { listEntries, routeFor } from "@/lib/contentRoutes.mjs";
+import { dateActivite } from "@/lib/getRecentActivity";
 
 const SITE_URL = "https://thelocomotionlab.com";
 
@@ -23,33 +20,31 @@ function shapeEntry(e) {
     title: data.title || e.slug,
     description: data.description || "",
     date: data.date ? new Date(data.date) : null,
-    activityAt: data.activityAt ? new Date(data.activityAt) : null,
+    activite: dateActivite(e),
   };
 }
 
-// Même clé de tri que l'index /explorer : activityAt ?? date.
+// Même clé de tri que les index : la date d'activité de l'atome.
 function activityDateKey(item) {
-  return item.activityAt?.getTime() ?? item.date?.getTime() ?? 0;
+  return item.activite?.getTime() ?? item.date?.getTime() ?? 0;
 }
 
 function formatEntry(item) {
   const url = `${SITE_URL}${routeFor(item.entry)}`;
-  const desc = item.description ? `: ${item.description}` : "";
-  return `- [${item.title}](${url})${desc}`;
+  const desc = item.description ? ` : ${item.description}` : "";
+  return `- [${item.title}](${url}) (${item.entry.label.toLowerCase()})${desc}`;
 }
 
 function buildLlmsTxt() {
-  const published = [...listArticleEntries(), ...listProjetEntries()].filter(
-    (e) => e.published
-  );
+  const published = listEntries().filter((e) => e.published);
 
   const comprendre = published
-    .filter((e) => e.kind === "article")
+    .filter((e) => e.pilier === "comprendre")
     .map(shapeEntry)
     .sort((a, b) => (b.date?.getTime() ?? 0) - (a.date?.getTime() ?? 0));
 
   const explorer = published
-    .filter((e) => e.kind !== "article")
+    .filter((e) => e.pilier === "explorer")
     .map(shapeEntry)
     .sort((a, b) => activityDateKey(b) - activityDateKey(a));
 
@@ -61,7 +56,7 @@ function buildLlmsTxt() {
   );
   lines.push("");
   lines.push(
-    "Le Locomotion Lab est un laboratoire vivant qui explore les facteurs et pratiques favorisant la robustesse physiologique. On y trouve deux piliers : Comprendre (la science — articles de fond sourcés et vulgarisés) et Explorer (le terrain — récits d'aventures et projets au long cours type saisons d'entraînement et traversées)."
+    "Le Locomotion Lab est un laboratoire vivant qui explore les facteurs et pratiques favorisant la robustesse physiologique. On y trouve deux piliers : Comprendre (la science — des concepts sourcés, chacun avec sa maturité) et Explorer (le terrain — des expéditions, des protocoles N = 1, des carnets de bord et des fiches de matériel)."
   );
   lines.push("");
   lines.push("## Pages principales");
@@ -71,10 +66,10 @@ function buildLlmsTxt() {
     `- [La quête](${SITE_URL}/quete): la quête du labo — la robustesse physiologique`
   );
   lines.push(
-    `- [Comprendre](${SITE_URL}/comprendre): la science — index des articles de fond`
+    `- [Comprendre](${SITE_URL}/comprendre): la science — index des concepts`
   );
   lines.push(
-    `- [Explorer](${SITE_URL}/explorer): le terrain — index des récits et projets`
+    `- [Explorer](${SITE_URL}/explorer): le terrain — expéditions, protocoles, carnets et fiches`
   );
   lines.push(
     `- [Pratiquer](${SITE_URL}/pratiquer): les ateliers de mouvement primal — dates et inscription`

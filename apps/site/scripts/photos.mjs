@@ -1,16 +1,17 @@
 // scripts/photos.mjs
 //
-// Prépare un LOT de photos pour un récit ou un projet, en une commande.
+// Prépare un LOT de photos pour un atome, en une commande.
 //
-//   pnpm -F site photos -- --projet saison-trail-2026 ~/Photos/chartreuse
-//   pnpm -F site photos -- --article initiation-au-froid ~/Photos/froid
+//   pnpm -F site photos -- --pour carnet-2026 ~/Photos/chartreuse
+//   pnpm -F site photos -- --pour tour-des-ecrins ~/Photos/ecrins
 //
 // Ce qu'il fait, pour chaque image du dossier source :
 //   1. redresse selon l'EXIF (une photo prise en portrait sort droite) ;
 //   2. réduit à 1 600 px de large au plus (la taille des photos déjà en ligne) ;
 //   3. encode en WebP ;
 //   4. EFFACE les métadonnées ;
-//   5. écrit dans public/images/{projets|articles}/<slug>/ ;
+//   5. écrit dans public/images/<sorte>/<slug>/, la sorte venant du dossier
+//      de l'atome dans content/ ;
 //   6. imprime les lignes markdown à coller, prêtes à l'emploi.
 //
 // Ce qu'il ne fait PAS : choisir les photos, et décider d'un cadrage. Le
@@ -25,7 +26,7 @@
 // demande explicite : on ne lui demande donc jamais.
 //
 // Options :
-//   --projet <slug> | --article <slug>   destination (obligatoire)
+//   --pour <slug>     l'atome de content/ à illustrer (obligatoire)
 //   --largeur <px>    défaut 1600
 //   --qualite <1-100> défaut 80
 //   --prefixe <mot>   nomme les fichiers <mot>-1.webp, <mot>-2.webp…
@@ -43,6 +44,8 @@ import { fileURLToPath } from "node:url";
 
 import sharp from "sharp";
 
+import { listEntries, KINDS } from "../lib/contentRoutes.mjs";
+
 const SITE_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LISIBLES = new Set([".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp", ".tif", ".tiff"]);
 
@@ -54,8 +57,7 @@ const opt = (nom, defaut = null) => {
 };
 const drapeau = (nom) => args.includes(`--${nom}`);
 
-const projet = opt("projet");
-const article = opt("article");
+const pour = opt("pour");
 const largeur = Number(opt("largeur", 1600));
 const qualite = Number(opt("qualite", 80));
 const prefixe = opt("prefixe");
@@ -66,7 +68,7 @@ const sec = drapeau("sec");
 // Le dossier source est le seul argument sans tiret qui ne soit pas la valeur
 // d'une option.
 const valeurs = new Set(
-  ["projet", "article", "largeur", "qualite", "prefixe", "ratio"]
+  ["pour", "largeur", "qualite", "prefixe", "ratio"]
     .map((n) => opt(n))
     .filter(Boolean),
 );
@@ -74,13 +76,11 @@ const source = args.find((a) => !a.startsWith("--") && !valeurs.has(a));
 
 function mourir(message) {
   console.error(`\n✗ ${message}\n`);
-  console.error("  pnpm -F site photos -- --projet <slug> <dossier-source>");
-  console.error("  pnpm -F site photos -- --article <slug> <dossier-source>\n");
+  console.error("  pnpm -F site photos -- --pour <slug> <dossier-source>\n");
   process.exit(1);
 }
 
-if (!projet && !article) mourir("préciser --projet <slug> ou --article <slug>.");
-if (projet && article) mourir("--projet et --article s'excluent.");
+if (!pour) mourir("préciser --pour <slug>, l'atome à illustrer.");
 if (!source) mourir("préciser le dossier des photos à préparer.");
 if (!fs.existsSync(source) || !fs.statSync(source).isDirectory()) {
   mourir(`dossier source introuvable : ${source}`);
@@ -95,8 +95,15 @@ if (ratio) {
   cadre = { largeur, hauteur: Math.round((largeur * h) / l) };
 }
 
-const slug = projet || article;
-const famille = projet ? "projets" : "articles";
+// La sorte de l'atome décide du dossier d'images : un slug suffit à écrire au
+// bon endroit, et un slug inconnu est une faute de frappe qu'on signale tout
+// de suite plutôt qu'un dossier créé pour rien.
+const atome = listEntries().find((e) => e.slug === pour);
+if (!atome) {
+  mourir(`aucun atome « ${pour} » dans content/ — vérifie le slug.`);
+}
+const slug = atome.slug;
+const famille = KINDS[atome.kind].dir;
 const destination = path.join(SITE_DIR, "public", "images", famille, slug);
 const urlBase = `/images/${famille}/${slug}`;
 
