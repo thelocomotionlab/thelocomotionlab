@@ -3,7 +3,7 @@
 // La carte des états du live (design 2a/2d) — composant du SITE :
 // packages/tracking (replays des projets) n'est pas touché. maplibre-gl en
 // import direct, chargé dynamiquement (ssr:false).
-// Style (recette 2026-07-24) : itinéraire prévisionnel en TIRETS FINS et
+// Style : itinéraire prévisionnel en TIRETS FINS et
 // trace vécue en trait PLEIN ÉPAIS, même teinte fuchsia (lib/liveTraceColors)
 // sur liseré blanc — lisible sur les trois fonds. Fonds : « Relief » = Esri
 // World Topo (défaut), « Topo » = OpenTopoMap, « Satellite » = Esri Imagery —

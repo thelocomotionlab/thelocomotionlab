@@ -112,7 +112,7 @@ export default function SearchClient() {
           seule la partie qui DÉPEND de la requête vit derrière la frontière.
           Avant, la page entière y était avec `fallback={null}` — le HTML
           pré-rendu ne contenait que la navbar et le footer, sans le moindre
-          titre (audit des titres, 08/2026). */}
+          titre. */}
       <Suspense fallback={<SearchForm />}>
         <SearchClientInner />
       </Suspense>

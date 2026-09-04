@@ -1,7 +1,7 @@
 // lib/simplify.js
 //
-// Douglas-Peucker itératif : la trace est SIMPLIFIÉE AVANT AFFICHAGE (règle du
-// brief §5 — un GPX de 20 000 points n'a rien à faire dans maplibre tel quel).
+// Douglas-Peucker itératif : la trace est SIMPLIFIÉE AVANT AFFICHAGE — un GPX
+// de 20 000 points n'a rien à faire dans maplibre tel quel.
 // Distances en degrés plan (suffisant pour une simplification d'affichage à
 // l'échelle d'un massif) ; tolérance par défaut ≈ 8-9 m.
 

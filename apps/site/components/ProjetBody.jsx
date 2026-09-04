@@ -105,7 +105,7 @@ export default function ProjetBody({
       <div className="bg-white rounded-2xl shadow-card p-4 sm:p-6 md:p-10">
         {/* Titre à la convention des pages (bleu profond), auteur et date
             juste dessous, liseré ocre en séparateur — le tout FERRÉ À GAUCHE,
-            comme PageHeader et ArticleBody (audit des titres, 08/2026). */}
+            comme PageHeader et ArticleBody. */}
         <h1 className="text-3xl text-brand-slate-dark md:text-5xl font-heading font-bold mb-3">
           {project.title}
         </h1>

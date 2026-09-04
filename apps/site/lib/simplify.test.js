@@ -1,4 +1,4 @@
-// Douglas-Peucker : la trace est simplifiée avant affichage (brief §5).
+// Douglas-Peucker : la trace est simplifiée avant affichage.
 
 import { describe, expect, it } from "vitest";
 

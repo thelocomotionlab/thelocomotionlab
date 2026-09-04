@@ -105,7 +105,7 @@ export default function PratiquerPage() {
         ) : (
           // État vide : il renvoyait vers /contact — et même pas par un lien,
           // c'était du texte brut. Une fuite d'entonnoir sur la seule page où
-          // l'intention est explicite (audit des titres, 08/2026).
+          // l'intention est explicite.
           <div className="rounded-2xl border-[1.5px] border-dashed border-brand-wash-line p-[22px] md:px-8 md:py-7">
             <p className="mb-4 max-w-[520px] text-base italic leading-[1.7] text-gray-600">
               De nouvelles dates arrivent très bientôt. Laisse ton adresse pour

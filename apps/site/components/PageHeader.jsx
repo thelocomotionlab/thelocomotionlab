@@ -11,7 +11,7 @@
 // ⚠️ La tagline est un <p> FRÈRE du <h1>, jamais un enfant. Quand elle vivait
 // dans le titre (<span> interne), le H1 réel valait « ComprendreLa science
 // derrière les concepts. » — deux phrases collées, servies telles quelles aux
-// moteurs de recherche et aux lecteurs d'écran (audit des titres, 08/2026).
+// moteurs de recherche et aux lecteurs d'écran.
 
 export default function PageHeader({ title, tagline = null, className = "" }) {
   return (

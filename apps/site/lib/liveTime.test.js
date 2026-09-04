@@ -1,5 +1,5 @@
 // J-index et heures : fuseau FORCÉ Europe/Paris, frontière de jour à minuit
-// heure française — les cas limites exigés par la décision PR1 §13.5.
+// heure française, et ses cas limites.
 
 import { describe, expect, it } from "vitest";
 

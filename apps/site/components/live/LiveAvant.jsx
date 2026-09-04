@@ -3,7 +3,7 @@
 // L'état « Avant » de /live (design 2b) : hero « Prochain départ », intention
 // en Lora, compte à rebours, capture email, itinéraire prévisionnel et profil
 // altimétrique. Toutes les valeurs viennent de liveConfig. Desktop non maquetté
-// → une colonne centrée sobre, même grammaire de cartes (décision PR3 §7.1).
+// → une colonne centrée sobre, même grammaire de cartes.
 
 "use client";
 

@@ -1,7 +1,7 @@
 // app/a-propos/page.jsx
 //
-// Ex-/about : la seule URL en anglais parmi les piliers du site (audit des
-// titres, 08/2026). Le 308 depuis /about vit dans next.config.mjs.
+// Ex-/about : la seule URL en anglais parmi les piliers du site. Le 308
+// depuis /about vit dans next.config.mjs.
 import Link from "next/link";
 
 import EmailCapture from "@/components/EmailCapture";
@@ -96,7 +96,7 @@ export default function AboutPage() {
 
       {/* Capture email : une page à forte intention — qui la lit en entier est
           le meilleur prospect du labo — et elle n'avait aucun moyen de garder
-          le lien (audit des titres, 08/2026). */}
+          le lien. */}
       <div className="mt-12 max-w-2xl mx-auto text-center">
         <h2 className="mb-3 text-lg font-semibold text-brand-accent-ink">
           Suivre les explorations du labo

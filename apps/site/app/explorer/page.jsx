@@ -139,7 +139,7 @@ export default function ExplorerPage() {
         <ExplorerSections projets={projets} recits={recits} />
 
         {/* Capture email : le pilier terrain n'en avait aucune, alors que les
-            trois autres en ont une (audit des titres, 08/2026). */}
+            trois autres en ont une. */}
         <div className="mt-14 max-w-3xl mx-auto text-center">
           <h2 className="mb-3 text-lg font-semibold text-brand-accent-ink">
             Être prévenu·e des prochaines explorations

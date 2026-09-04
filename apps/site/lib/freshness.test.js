@@ -1,4 +1,4 @@
-// Les trois régimes de l'indicateur de fraîcheur (brief §5 + texte validé PR1 §13).
+// Les trois régimes de l'indicateur de fraîcheur.
 
 import { describe, expect, it } from "vitest";
 

@@ -248,7 +248,7 @@ export default async function HomePage() {
             {/* Une SEULE phrase, coupée en deux lignes : le <span> est donc
                 légitime ici (contrairement aux taglines de PageHeader). Le
                 {" "} explicite est indispensable — sans lui, le H1 extrait
-                vaut « …scientifique,l'utiliser… » (audit des titres, 08/2026). */}
+                vaut « …scientifique,l'utiliser… ». */}
             Comprendre le corps comme un scientifique,{" "}
             <span className="mt-1.5 block font-lora text-[21px] font-medium italic leading-snug text-brand-accent-light sm:text-[26px] md:text-[30px]">
               l&rsquo;utiliser comme un animal.

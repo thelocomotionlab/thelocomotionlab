@@ -1,7 +1,7 @@
 // packages/tracking/src/ElevationProfile.tsx
 //
 // Profil altimétrique du labo : SVG inline calculé côté client, zéro lib de
-// chart (design 2a/2d du direct, recette 2026-07-24). Porté du ProfileCard du
+// chart. Porté du ProfileCard du
 // site pour servir les trois cartes de contenu — direct, replays, traces GPX —
 // depuis un seul endroit. Le composant est NU : ni cadre ni titre ; c'est le
 // parent qui décide de l'habillage (carte du direct, bandeau collé sous une

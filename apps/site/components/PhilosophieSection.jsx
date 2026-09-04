@@ -149,7 +149,7 @@ export default function PhilosophieSection() {
                   ~34 caractères par ligne — trop étroit pour justifier sans
                   ouvrir des blancs inter-mots visibles, même avec césure. La
                   règle du site : justifié à partir de md ET sur une colonne de
-                  lecture large (audit des titres, 08/2026). */}
+                  lecture large. */}
               <p className="mt-3.5 text-[14px] leading-[1.65] text-gray-600 text-pretty">
                 {p.texte}
               </p>

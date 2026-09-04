@@ -1,6 +1,6 @@
 // lib/freshness.js
 //
-// L'indicateur de fraîcheur à DEUX RÉGIMES + le cas « premier signal » (brief §5).
+// L'indicateur de fraîcheur à DEUX RÉGIMES, plus le cas « premier signal ».
 // Fonction pure : le composant FreshnessPill ne fait que l'habiller.
 // Ton : information de terrain — la zone blanche n'est JAMAIS une alerte.
 
@@ -18,7 +18,7 @@ import { formatAgo } from "./liveTime";
 export function freshnessState({ running, lastFixTime, nowMs, zoneBlancheMinutes }) {
   if (!lastFixTime) {
     if (!running) return null;
-    // Texte validé (PR1 §13) pour le trou du design.
+    // Le direct tourne mais aucune position n'est encore arrivée.
     return {
       regime: "premier-signal",
       ageMinutes: null,

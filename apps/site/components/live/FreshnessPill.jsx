@@ -1,7 +1,7 @@
 // components/live/FreshnessPill.jsx
 //
 // Indicateur de fraîcheur, en overlay bas-gauche de la carte. Trois régimes
-// (lib/freshness.js) : premier signal (texte validé PR1 §13), normal (point
+// (lib/freshness.js) : premier signal, normal (point
 // pulsant terracotta), zone blanche (glyphe montagne — information de terrain,
 // jamais une alerte).
 

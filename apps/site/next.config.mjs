@@ -122,13 +122,11 @@ export default function nextConfig(phase) {
         // L'ancien hub /labo est remplacé par La quête (ex-« Manifeste »).
         { source: "/labo", destination: "/quete", permanent: true },
         // /about était la seule URL en anglais parmi les piliers (/comprendre,
-        // /explorer, /pratiquer, /outils, /quete) — audit des titres, 08/2026.
+        // /explorer, /pratiquer, /outils, /quete).
         { source: "/about", destination: "/a-propos", permanent: true },
         // La page « Manifeste » a été renommée « La quête » : on préserve
         // l'ancienne URL (liens externes, historique) par un 308.
         { source: "/manifeste", destination: "/quete", permanent: true },
-        // /live est désormais une vraie page (hub live permanent, PR3) :
-        // l'ancienne redirection temporaire a été retirée.
         // Les deux ateliers de visuels sont réunis dans /studio. Un serveur ne
         // peut pas poser de fragment : on atterrit sur l'onglet par défaut, et
         // le studio n'en a que deux.

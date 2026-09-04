@@ -220,7 +220,7 @@ export default function LiveEnCours({ timer, archive = null }) {
       {/* Sous la grille, PLEINE LARGEUR : « Laisse un mot », puis le partage
           en dessous à gauche, puis la capture email. C'est la page la plus
           fréquentée du site pendant un direct : elle n'avait aucun moyen de
-          garder les gens qui la découvrent (audit des titres, 08/2026). */}
+          garder les gens qui la découvrent. */}
       <div className="mt-3.5 lg:mt-5">
         {!archive && (
           <>

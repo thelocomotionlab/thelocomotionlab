@@ -14,10 +14,10 @@ import SectionHeading from "@/components/SectionHeading";
 import { getExplorerCarouselItems } from "@/lib/carouselItems";
 import { journalApiBase } from "@/lib/liveConfig";
 
-// Carte de partage dynamique (chantier 2, PR4) : URL stable régénérée côté VPS
+// Carte de partage dynamique : URL stable régénérée côté VPS
 // (≤ 3 min), cache-buster PAR BUILD — chaque déploiement force les scrapers à
 // re-crawler ; entre deux, l'URL stable sert une image fraîche à tout nouveau
-// partage (limite du site 100 % statique, plan PR4 §2).
+// partage (limite du site 100 % statique).
 const OG_IMAGE = `${journalApiBase}/journal/og.png?v=${Date.now()}`;
 
 export const metadata = {

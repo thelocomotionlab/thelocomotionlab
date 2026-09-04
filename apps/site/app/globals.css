@@ -882,8 +882,8 @@ mark.search-highlight {
   animation: ll-lightbox-entree 240ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
-/* Attribution maplibre MASQUÉE sur les cartes du live (recette 2026-07-24 :
- * desktop comme mobile, avant/pendant/après). Les crédits Esri/OSM peuvent
+/* Attribution maplibre MASQUÉE sur les cartes du live, desktop comme mobile
+ * et à tous les états. Les crédits Esri/OSM peuvent
  * vivre ailleurs (mentions légales) si besoin ; ils n'encombrent pas la carte. */
 .live-map .maplibregl-ctrl-attrib,
 .live-map .maplibregl-ctrl-bottom-right,

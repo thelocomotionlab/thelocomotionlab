@@ -3,16 +3,16 @@
 // En-tête de l'état « En cours ». Titre bleu (comme le reste du site), jour
 // de l'aventure dessous, badge figé (EN DIRECT / PARCOURS FIGÉ). En desktop,
 // le sélecteur de fond de carte vient s'y loger. Ni logo ni « The Locomotion
-// Lab » (recette 2026-07-24).
+// Lab ».
 //
 // Les kilomètres et le dénivelé du PARCOURS ne sont plus ici : ils ont rejoint
 // la ligne au-dessus de la carte (ItineraireLine), partagée avec l'état Avant.
 // Ils y étaient en Lora italique, une typographie qui ne servait qu'ici.
 //
 // ⚠️ UN SEUL <h1> dans le DOM. Il y en avait deux (une variante desktop et une
-// variante mobile, chacune masquée par média-query mais toutes deux présentes)
-// — audit des titres, 08/2026. Le titre et le jour sont désormais rendus une
-// fois, et c'est la MISE EN PAGE qui change entre mobile et desktop.
+// variante mobile, chacune masquée par média-query mais toutes deux
+// présentes). Le titre et le jour sont rendus une fois, et c'est la MISE EN
+// PAGE qui change entre mobile et desktop.
 //
 // PAS de phrase d'intention ici : elle appartient à l'état Avant. En direct,
 // l'en-tête ne porte que le titre, le jour et le badge.

@@ -44,7 +44,7 @@ export default function CohortePage() {
       />
 
       {/* Colonne de lecture large (max-w-3xl) → justifié à partir de md,
-          comme /quete, /a-propos et /outils/twin (audit des titres, 08/2026). */}
+          comme /quete, /a-propos et /outils/twin. */}
       <p className="mb-9 text-[16.5px] leading-[1.65] text-gray-700 text-left hyphens-auto md:text-justify">
         Le Twin apprend sur des données réelles. En rejoignant la cohorte, tu
         me confies ton archive d&rsquo;entraînement : elle sert à calibrer et

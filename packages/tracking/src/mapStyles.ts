@@ -4,7 +4,7 @@
 // le direct (apps/site/components/live/LiveMap), les replays de page projet
 // (<postlivetracking>, <livetracking>) et les cartes GPX posées dans un
 // récit (apps/site/components/MapEmbed). Modèle : la nouvelle mouture du
-// live (recette 2026-07-24), étendue à tout le site le 03/09/2026.
+// live, étendue à tout le site.
 //
 // Trois fonds, mêmes noms partout :
 //   • relief — Esri World Topo, relief ombré très lisible (DÉFAUT) ;

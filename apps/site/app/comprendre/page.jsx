@@ -183,7 +183,7 @@ export default function ComprendrePage() {
         ) : (
           // État vide : il était centré, seul élément centré d'une page ferrée
           // à gauche, et sans issue. Même encadré pointillé + capture email que
-          // l'état vide de /pratiquer (audit des titres, 08/2026).
+          // l'état vide de /pratiquer.
           <div className="rounded-2xl border-[1.5px] border-dashed border-brand-wash-line p-[22px] md:px-8 md:py-7">
             <p className="mb-4 max-w-[520px] text-base italic leading-[1.7] text-gray-600">
               Les premiers articles sont à paraître. Laisse ton adresse pour

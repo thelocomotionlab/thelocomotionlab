@@ -67,8 +67,7 @@ export default function TwinTeaserPage() {
       {/* Colonne de lecture large (max-w-3xl) → paragraphes justifiés à partir
           de md, comme /quete, /a-propos et les articles. La justification est
           posée sur les PARAGRAPHES, pas sur la carte : les titres, le badge et
-          les blocs centrés en dessous n'ont rien à y gagner (audit des titres,
-          08/2026). */}
+          les blocs centrés en dessous n'ont rien à y gagner. */}
       <div className="bg-white rounded-2xl shadow-card p-4 sm:p-6 md:p-10">
         <p className="mb-8 text-[17px] leading-[1.65] text-brand-text text-left hyphens-auto md:text-justify">
           À partir de ton archive d&rsquo;entraînement et de la trace GPX de ta
@@ -100,7 +99,7 @@ export default function TwinTeaserPage() {
 
         {/* Statut honnête : l'outil se calibre sur les archives de la cohorte.
             « STATUT » est un BADGE, pas un titre : il était en <h2> et cassait
-            la hiérarchie sémantique de la page (audit des titres, 08/2026). */}
+            la hiérarchie sémantique de la page. */}
         <div className="mt-8 bg-brand-bg border border-gray-200 rounded-xl p-5">
           <p className="mb-2 font-heading text-[11px] font-bold tracking-[0.18em] text-brand-slate-dark">
             STATUT

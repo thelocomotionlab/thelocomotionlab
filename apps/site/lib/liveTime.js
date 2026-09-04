@@ -3,7 +3,7 @@
 // Temps du live : J-index et heures du journal en fuseau FORCÉ Europe/Paris
 // (jamais celui du visiteur), frontière de jour à MINUIT HEURE FRANÇAISE.
 // Fonctions pures, testées unitairement (liveTime.test.js), réutilisées à
-// l'identique pour le direct ET pour l'archive (PR3). Décision PR1 §13.5.
+// l'identique pour le direct ET pour l'archive.
 
 const PARIS_TZ = "Europe/Paris";
 
