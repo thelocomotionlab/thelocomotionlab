@@ -88,10 +88,10 @@ Ces temps-ci, l'envie d'aventure est forte, et les jambes répondent plutôt tr�
 ### Projet OFF Monts du Lyonnais 
 *14/03/2026*
 
-Cette aventure, prévue de longue date, revêtait plusieurs objectifs. D'abord, celui de réaliser un projet trail tous les trois avec Lolo et Rapace pour la première fois. Mais aussi, tester ma capacité à parcourir une longue distance (ici autour de 65km 3 500m D+) avec un sac lesté dans les conditions du *31 project* à venir. J'ai donc préparé mon sac avec minutie, et celui-ci affichait 8.9kg sur la balance au début de l'aventure. 
+Cette aventure, prévue de longue date, revêtait plusieurs objectifs. D'abord, celui de réaliser un projet trail tous les trois avec Lolo et Rapace pour la première fois. Mais aussi, tester ma capacité à parcourir une longue distance (ici autour de 65km 3 500m D+) avec un sac lesté dans les conditions OFF des projets à venir. J'ai donc préparé mon sac avec minutie, et celui-ci affichait 8.9kg sur la balance au début de l'aventure. 
 
 ![Contenu du sac {width=620px align=center}](/images/projets/saison-trail-2026/sac_full.webp)
-*Contenu du sac simulant les conditions du "31 project" lors de l'aventure dans les Monts du Lyonnais.*
+*Contenu du sac simulant des conditions de fastpacking lors de l'aventure dans les Monts du Lyonnais.*
 
 Si les premiers kms furent relativement difficiles, j'ai compris, par les lumières du bon Rapace, qu'il fallait un certain temps pour que toutes les filières énergétiques se mettent en place au moment de débuter un effort. Une fois celles-ci établies, le corps atteint un certain rythme de croisière qui, s'il est respecté, peut être tenu pendant de longues heures. 
 
@@ -205,7 +205,7 @@ La trace finale est téléchargeable un peu plus bas, dans l'encart du live-trac
 ![Entraînement campement {width=680px align=center}](/images/projets/saison-trail-2026/depliage_tente.webp)
 *Entraînement intensif de pliage/repliage de couchage par 28°C (lol).*
 
-Côté alimentation, je pars sur du classique avec :
+<!-- Côté alimentation, je pars sur du classique avec :
 
 - x14 boule d'énergie amandes/dattes (330 g) 
 - x12 boule d'énergie amandes/cramberries (290 g)
@@ -259,7 +259,11 @@ Vêtements
 - Short On Ultra Shorts (150 g)
 - Caleçon long Decathlon (120 g)
 
-pour un total de 4,3 kg. En ajoutant à cela les liquides, de 9,7 kg. Cela représente une belle masse, néanmoins je garde en tête que ce paquetage est voué à se réduire progressivement en même temps que ma consommation d'aliments. En plus, j'ai beaucoup utilisé mon gilet lesté à 12 kg ces temps-ci, une quinzaine de minutes tous les jours en faisant la vaisselle, préparant à manger, ou en faisant de la mobilité. Donc finalement, ce paquetage me semble relativement léger ! Eh bien voilà, on dirait qu'il n'y a désormais plus qu'à ! :)
+pour un total de 4,3 kg. En ajoutant à cela les liquides, de 9,7 kg.  -->
+
+<paquetage src="/paquetages/vercors-drome.csv" titre="OFF Vercors Drôme, 2026" />
+
+Je me retrouve avec une masse totale qui avoisine les 10 kg, incluant 2,6 kg de nourriture et 4,4 kg de matériel. Cela représente une belle masse, néanmoins je garde en tête que ce paquetage est voué à se réduire progressivement en même temps que ma consommation d'aliments. En plus, j'ai beaucoup utilisé mon gilet lesté à 12 kg ces temps-ci, une quinzaine de minutes tous les jours en faisant la vaisselle, préparant à manger, ou en faisant de la mobilité. Donc finalement, ce paquetage me semble relativement léger ! Eh bien voilà, on dirait qu'il n'y a désormais plus qu'à ! :)
 
 ![Matos traversée du Vercors {width=580px align=center}](/images/projets/saison-trail-2026/paquetage.webp)
 *Paquetage complet.*
@@ -381,12 +385,12 @@ Voilà déjà trois semaines que l'entraînement a repris et avec lui, mon explo
 ### Week-End choc dans les Aravis
 *06/06/2026*
 
-Ce mois de juin commence sur les chapeaux de roues avec un Week-End choc prévu de longue date avec l'association Grenoble Trail. Ne sachant pas trop dans quoi je m'embarquais, j'y suis allé la fleur au fusil avec beaucoup de curiosité et d'humilité. La montagne est quelque chose qui m'effraie depuis que j'ai commencé le trail, et mon expérience se limite, à de rares exceptions près comme le Lavaredo ou certaines sorties en montagnes, à de la basse altitude et du terrain relativement peu technique. J'ai ainsi vu dans ce Week-End l'opportunité d'aller plus loin, et de découvrir la haute montagne avec des personnes qui en ont l'expérience et qui partagent ma passion.
+Ce mois de juin commence sur les chapeaux de roue avec un week-end choc prévu de longue date avec l'association Grenoble Trail. Ne sachant pas trop dans quoi je m'embarquais, j'y suis allé la fleur au fusil, avec beaucoup de curiosité et d'humilité. La montagne est quelque chose qui m'effraie depuis que j'ai commencé le trail, et mon expérience se limite, à de rares exceptions près comme le Lavaredo ou certaines sorties en montagne, à de la basse altitude et à du terrain relativement peu technique. J'ai ainsi vu dans ce week-end l'opportunité d'aller plus loin et de découvrir la haute montagne avec des personnes expérimentées qui partagent ma passion.
 
 ![Aravis jour 1](/images/projets/saison-trail-2026/aravis-1.webp)
 *Jour 1 du WEC Aravis.*
 
- Mon but étant de borner, je me suis immédiatement positionné sur les sorties les plus longues du Week-End. Cela m'a valu de me retrouver avec les flèches de GT, que j'ai eu parfois bien du mal à suivre dans les sentiers techniques. Mais j'ai aussi beaucoup appris sur mes capacités à endurer des paces inconfortables sur des journées entières, et j'ai pu trouver cette expérience de montagne que j'étais venu chercher. 
+Mon but étant de borner, je me suis immédiatement positionné sur les sorties les plus longues du week-end. Cela m'a valu de me retrouver avec les flèches de GT, que j'ai eu parfois bien du mal à suivre sur les sentiers techniques. Mais j'ai aussi beaucoup appris sur ma capacité à endurer des allures inconfortables sur des journées entières, et j'ai pu trouver cette expérience de la montagne que j'étais venu chercher.
 
 ![Aravis jour 2.1](/images/projets/saison-trail-2026/aravis-7.webp)
 
@@ -395,9 +399,9 @@ Ce mois de juin commence sur les chapeaux de roues avec un Week-End choc prévu 
 ![Aravis jour 2.2](/images/projets/saison-trail-2026/aravis-6.webp)
 *Jour 2 du WEC Aravis.*
 
-Le jour 3 fut très compliqué. Tu te souviens de cette sortie de mai à Aiguebelette ? Ben en fait, je ne t'ai pas tout dit. Depuis plusieurs semaines, j'essaye d'entraîner mon corps à assimiler l'eau que je trouve sur mon chemin sans la filtrer. Cela a très bien fonctionné pendant plus d'un mois jusqu'à cette fameuse sortie. La soif étant vraiment trop forte, j'ai siroté un bon 50 cL d'un coup d'une rivière sans prendre mes précautions habituelles (prendre une petite gorgée, attendre 30 - 45 min, et s'il ne se passe rien, augmenter la dose). Deux jours plus tard, je me retrouvais avec un grand inconfort digestif, de la fièvre parfois, et une sensation que mon corps luttait contre quelque chose. J'ai malgré tout décidé de me rendre à ce WEC GT en connaissance de cause.
+Le jour 3 a été très compliqué. Tu te souviens de cette sortie de mai à Aiguebelette ? En fait, je ne t'ai pas tout dit. Depuis plusieurs semaines, j'essaye d'entraîner mon corps à assimiler l'eau que je trouve sur mon chemin sans la filtrer. Cela a très bien fonctionné pendant plus d'un mois, jusqu'à cette fameuse sortie. La soif étant trop forte, j'ai siroté un bon 50 cl d'un coup dans une rivière, sans prendre mes précautions habituelles (prendre une petite gorgée, attendre 30 à 45 min, et s'il ne se passe rien, augmenter la dose). Deux jours plus tard, je me retrouvais avec un grand inconfort digestif, de la fièvre par moments, et la sensation que mon corps luttait contre une infection. J'ai malgré tout décidé de me rendre à ce WEC GT en connaissance de cause.
 
-Et mon corps me l'a fait payé le dimanche, quand déjà abimé par toutes ces heures de trail, de nourriture approximative, et de courtes nuits, je lui ai demandé une troisième sortie, sous un cagnard oppressant, avec des passages en altitude. Le résultat ne s'est pas fait attendre et toutes les 10 min je devais m'arrêter pour procéder à des purges bien senties. J'étais quand même un peu inquiet de constater la relative blancheur de mes selles, mais ai réussi à rester concentré pour aller au bout de la sortie. À l'arrivée, j'étais fier d'avoir totalisé 86 km avec 6 700 m D+ D- sur 3j, en montagne. Ce ne fut pas un WE facile, mais j'ai tenu bon, et ça mon mental s'en souviendra. J'ai aussi commencé à apprivoisé la montagne, et ressens au fond de moi une envie croissante de poursuivre l'exploration de ce milieu.
+Et mon corps me l'a fait payer le dimanche quand, déjà abîmé par toutes ces heures de trail, une nourriture approximative et de courtes nuits, je lui ai demandé une troisième sortie sous un cagnard oppressant, avec des passages en altitude. Le résultat ne s'est pas fait attendre : toutes les 10 minutes, je devais m'arrêter pour procéder à des purges bien senties. J'étais quand même un peu inquiet de constater la relative blancheur de mes selles, mais j'ai réussi à rester concentré pour aller au bout de la sortie. À l'arrivée, j'étais fier d'avoir totalisé 86 km avec 6 700 m D+ D- sur 3 jours, en montagne. Ce ne fut pas un week-end facile, mais j'ai tenu bon, et mon mental s'en souviendra. J'ai aussi commencé à apprivoiser la montagne et je ressens au fond de moi l'envie croissante de poursuivre l'exploration de ce milieu.
 
 ![Aravis jour 3](/images/projets/saison-trail-2026/aravis-4.webp)
 *Jour 3 du WEC Aravis.*
@@ -405,7 +409,7 @@ Et mon corps me l'a fait payé le dimanche, quand déjà abimé par toutes ces h
 ### Bilan du mois de juin : chaleur et montagne
 *28/06/2026*
 
-Une franche semaine de décharge après le WEC dans les Aravis m'a permis de bien récupérer et de repartir avec beaucoup d'envie sur la suite du bloc d'entraînement. Juin a été un mois placé sous le signe de la canicule, que j'ai tenté de mettre à profit pour améliorer ma tolérance à la chaleur. En vrac, j'ai aussi pu découvrir la course d'orientation à Vincennes, mais surtout engranger de l'expérience en montagne avec de belles sorties en Chartreuse autour de la Grande Sure.
+Une franche semaine de décharge après le WEC dans les Aravis m'a permis de bien récupérer et de repartir avec beaucoup d'envie pour la suite du bloc d'entraînement. Juin a été un mois placé sous le signe de la canicule, que j'ai tenté de mettre à profit pour améliorer ma tolérance à la chaleur. En vrac, j'ai aussi pu découvrir la course d'orientation à Vincennes, mais surtout engranger de l'expérience en montagne avec de belles sorties en Chartreuse autour de la Grande Sure.
 
 :::split
 
@@ -418,20 +422,19 @@ Une franche semaine de décharge après le WEC dans les Aravis m'a permis de bie
 :::
 *Course d'orientation à Vincennes par grosse chaleur.*
 
-Ce milieu m'est de plus en plus familier, et les grosses pentes bien raides qui mettent plusieurs heures à être gravies me font de moins en moins peur. Voire je commence à en redemander de plus en plus. Sur cette dernière semaine de Juin, j'ai ainsi pu enchaîner deux sorties dans le WE avec au total près de 60 km et 5 000 m D+ D-. Le tout par relativement forte chaleur, en terrains techniques, et toujours armé de mes désormais fidèles sandales Panta Boreas, particulièrement adaptées à la pratique du trail en montagne. Tout cela est plutôt de bonne augure pour la suite.
+Ce milieu m'est de plus en plus familier, et les grosses pentes bien raides qui mettent plusieurs heures à être gravies me font de moins en moins peur. Je commence même à en redemander. Sur cette dernière semaine de juin, j'ai ainsi pu enchaîner deux sorties durant le week-end, pour un total de près de 60 km et 5 000 m D+ D-. Le tout par une chaleur relativement forte, sur des terrains techniques, et toujours armé de mes désormais fidèles sandales Panta Boreas, particulièrement adaptées à la pratique du trail en montagne. Tout cela est plutôt de bon augure pour la suite.
 
 ![Chamois Chartreuse](/images/projets/saison-trail-2026/chamois.webp)
 *Un bébé chamois qui alaite sa maman en Chartreuse.*
 
 
-Concernant la stratégie low carb à glycogène bas, elle devient physiologiquement plus difficile à maintenir par forte chaleur. D'après mes recherches, cela s'explique par le fait que l'exercice sous stress thermique accélère la dégradation du glycogène musculaire, un phénomène médié par la hausse des catécholamines, l'élévation de la température musculaire et le recrutement accru de fibres de type II pour compenser la fatigue neuromusculaire (<Citation id="fink1975">Fink et al., 1975</Citation> ; <Citation id="febbraio2001">Febbraio, 2001</Citation>). J'ai donc décidé d'y aller de manière plus instinctive sur ce point, en conservant le plus possible le jeûne intermittent, et en mettant davantage de glucides lorsque mon corps en demande. 
-
+Concernant la stratégie low carb à glycogène bas, elle devient physiologiquement plus difficile à maintenir par forte chaleur. D'après mes recherches, cela s'explique par le fait que l'exercice sous stress thermique accélère la dégradation du glycogène musculaire, un phénomène médié par la hausse des catécholamines, l'élévation de la température musculaire et le recrutement accru de fibres de type II pour compenser la fatigue neuromusculaire (Fink et al., 1975<Citation id="fink1975"></Citation> ; Febbraio, 2001<Citation id="febbraio2001"></Citation>). J'ai donc décidé d'y aller de manière plus instinctive sur ce point, en conservant le plus possible le jeûne intermittent et en apportant davantage de glucides lorsque mon corps en demande.
 
 ## Juillet
 ### Pic de volume et grosse décharge
 *05/07/2026*
 
-En ce début juillet, le volume d'entraînement bat son plein et je décide de titiller un peu mes limites en enchaînant une semaine à 112 km 6 700 m D+ D-, suivi d'une seconde à 121 km 6 800 m D+ D-, le tout régulièrement effectué en montagne, avec des séances de PPG hebdomadaires, du mouvement primal et de la calisthénie. Je cottoie régulièrement les 25h de sport par semaine, ce qui est énorme pour moi. À voir comment cela évolue et perdure dans le temps.
+En ce début juillet, le volume d'entraînement bat son plein et je décide de titiller un peu mes limites en enchaînant une semaine à 112 km et 6 700 m D+ D-, suivie d'une seconde à 121 km et 6 800 m D+ D-, le tout régulièrement effectué en montagne, avec des séances de PPG hebdomadaires, du mouvement primal et de la calisthénie. Je côtoie régulièrement les 25 h de sport par semaine, ce qui est énorme pour moi. À voir comment cela évolue et perdure dans le temps.
 
 ![SL Chartreuse](/images/projets/saison-trail-2026/grande-sure.webp)
 *Vue depuis la Grande Sure en Chartreuse.*
@@ -439,13 +442,13 @@ En ce début juillet, le volume d'entraînement bat son plein et je décide de t
 ### Système nerveux en alerte, peur et hyperthermie
 *27/07/2026*
 
-Après une grosse phase de décharge, j'ai décidé de tenter de remettre un peu de volume sur la fin juillet. Mais, entre la préparation de ma reprise d'études de STAPS en septembre, le développement du Locomotion Lab, mon travail de réflexion autour d'une présence plus professionnelle sur les réseaux sociaux, force est de constater que ma chasse d'eau est pleine (voir [ce billet si le concept de chasse d'eau ne te parle pas](https://thelocomotionlab.com/explorer/traversee-reunion#incarner-le-concept-de-la-chasse-deau)). Cela s'est matérialisé par une tentative de sortie sur les 4x2000m de Chartreuse, la même qui m'avait mis en échec avant même de descendre de la voiture en octobre 2025. Cette fois-ci, j'ai réussi à m'y engager, avec la peur au ventre d'affronter la brèche Arnaud qui mène jusqu'à Chamechaude.
+Après une grosse phase de décharge, j'ai décidé de tenter de remettre un peu de volume sur la fin juillet. Mais entre la préparation de ma reprise d'études en STAPS en septembre, le développement du Locomotion Lab et mon travail de réflexion autour d'une présence plus professionnelle sur les réseaux sociaux, force est de constater que ma chasse d'eau est pleine (voir [ce billet si le concept de chasse d'eau ne te parle pas](https://thelocomotionlab.com/explorer/traversee-reunion#incarner-le-concept-de-la-chasse-deau)).Cela s'est matérialisé par une tentative de sortie sur les 4x2000m de Chartreuse, la même qui m'avait mis en échec avant même de descendre de la voiture en octobre 2025. Cette fois-ci, j'ai réussi à m'y engager, avec la peur au ventre d'affronter la brèche Arnaud qui mène jusqu'à Chamechaude.
 
-Cette brèche, réputée assez engagée, permet d'accéder au sommet de Chamechaude, et se fait généralement encordé·e et casqué·e. Je n'avais ni l'un ni l'autre et m'y suis présenté en sandales. Après un bref instant de régulation nerveuse, je m'y suis élancé. Le moment fut complètement incroyable. Je me suis senti épouser la roche, et enchaîner les mouvements de manière fluide et instinctive, sans penser au danger, juste dans l'instant, en état de flow. Le même genre de sensations que je peux régulièrement ressentir lorsque j'escalade des arbres intimidants. D'ailleurs, mes progrès en mouvement primal de cette année ne sont assurément pas étrangers à ce que j'ai vécu. 
+Cette brèche, réputée assez engagée, permet d'accéder au sommet de Chamechaude et se franchit généralement encordé·e et casqué·e. Je n'avais ni l'un ni l'autre et m'y suis présenté en sandales. Après un bref instant de régulation nerveuse, je m'y suis élancé. Le moment a été complètement incroyable. Je me suis senti épouser la roche et enchaîner les mouvements de manière fluide et instinctive, sans penser au danger, juste dans l'instant, en état de flow. Le même genre de sensations que je peux régulièrement ressentir lorsque j'escalade des arbres intimidants. D'ailleurs, mes progrès en mouvement primal cette année ne sont assurément pas étrangers à ce que j'ai vécu.
 
-Malheureusement, et je le compris bien plus tard, la chaleur eu raison de moi, et durant la montée qui menait au Grand Som, je décidai de ne pas aller au bout de cette trace, et de rentrer à ma voiture par un raccourci bien senti. Les sensations n'étaient pas bonnes, mes jambes ne répondaient pas, comme si elles manquaient d'oxygène pour avancer. Si la culpabilité de ne pas réussir à enchaîner les grosses semaines d'entraînement jusqu'au bout s'est faite ressentir, j'ai tenté de la chasser en me rappelant que je n'avais rien à prouver et qu'il fallait souvent mieux faire l'entraînement juste plutôt que celui de trop. Ce jour-ci, l'entraînement juste était de savoir s'arrêter avant d'aller trop loin.
+Malheureusement, et je l'ai compris bien plus tard, la chaleur eut raison de moi. Durant la montée qui menait au Grand Som, j'ai décidé de ne pas aller au bout de cette trace et de rentrer à ma voiture par un raccourci bien senti. Les sensations n'étaient pas bonnes, mes jambes ne répondaient pas, comme si elles manquaient d'oxygène pour avancer. Si la culpabilité de ne pas réussir à enchaîner les grosses semaines d'entraînement jusqu'au bout s'est fait ressentir, j'ai tenté de la chasser en me rappelant que je n'avais rien à prouver et qu'il valait souvent mieux faire l'entraînement juste plutôt que celui de trop. Ce jour-là, l'entraînement juste était de savoir s'arrêter avant d'aller trop loin.
 
-Au passage, cette sortie fut l'occasion d'étrener mon nouveau système de live tracking. Abondament amélioré, celui-ci me permet désormais de partager l'aventure en direct via des messages, vocaux, photos et vidéos directement transmises sur un journal de bord actualisé en continu sur le direct. Il y a également la possibilité maintenant pour les personnes qui me suivent, de m'envoyer un message que recevrai sur un canal telegram et que je pourrais consulter sans m'éparpiller sur toutes les applis de messagerie instantanée pendant mes futures aventures. L'essai fut très concluant, et l'archive de ce live 2.0 version beta est à retrouver [ici](https://thelocomotionlab.com/live/archives/chartreuse-4x2000), en plus du replay ci-dessous.
+Au passage, cette sortie a été l'occasion d'étrenner mon nouveau système de live tracking. Abondamment amélioré, celui-ci me permet désormais de partager l'aventure en direct via des messages, des vocaux, des photos et des vidéos directement transmis sur un journal de bord actualisé en continu sur le direct. Les personnes qui me suivent ont désormais la possibilité de m'envoyer un message que je recevrai sur un canal Telegram, ce qui me permettra de le consulter sans m'éparpiller sur toutes les applications de messagerie instantanée pendant mes futures aventures. L'essai a été très concluant, et l'archive de ce live 2.0 en version bêta est à retrouver [ici](https://thelocomotionlab.com/live/archives/chartreuse-4x2000), en plus du replay ci-dessous.
 
 <postlivetracking
   positions="/replays/chartreuse-4x2000/live-positions.json"
@@ -461,9 +464,9 @@ Au passage, cette sortie fut l'occasion d'étrener mon nouveau système de live 
 ### Reprise appaisée et ancrée
 *09/08/2026*
 
-Sur ce début août, le focus est placé sur finir proprement ma préparation pour le tour des Écrins en autonomie complète sur 3,5 jours. Un gros morceau qui me paraît encore loin mais qui se rapproche tout doucement. Je sors d'une retraite spirituelle avec l'association Ose Ta Vie, et ce que j'y ai trouvé va à coup sûr me servir pour la suite. Je m'y étais rendu avec l'intention de cultiver et développer mon attention, que je trouvais de plus en plus dispersée avec tous les projets qui s'empilaient ces derniers temps. J'en suis revenu avec de nouveaux outils qui me rendent plus confiants en moi, notamment sur ma capacité à me dévoiler sur les réseaux sociaux, mais aussi la conviction nouvelle que méditer quotidiennement matin et soir n'est plus une option, au même titre que se brosser les dents ou prendre sa douche. Pour entretenir et cultiver cet ancrage. D'ailleurs, de cette clarté d'esprit, rejaillissent des réminiscences de nos séances passées de préparation mentale avec Éric Lacroix. Réminiscences qui enrichissent encore ma boîte à outil mentaux.
+En ce début août, le focus est mis sur la finalisation de ma préparation pour le tour des Écrins en autonomie complète sur 3,5 jours. Un gros morceau qui me paraît encore loin, mais qui se rapproche tout doucement. Je sors d'une retraite spirituelle avec l'association Ose Ta Vie, et ce que j'y ai trouvé va à coup sûr me servir pour la suite. Je m'y étais rendu avec l'intention de cultiver et de développer mon attention, que je trouvais de plus en plus dispersée avec tous les projets qui s'empilaient ces derniers temps. J'en suis revenu avec de nouveaux outils qui me rendent plus confiant en moi, notamment sur ma capacité à me dévoiler sur les réseaux sociaux, mais aussi avec la conviction nouvelle que méditer quotidiennement matin et soir n'est plus une option, au même titre que se brosser les dents ou prendre sa douche, pour entretenir et cultiver cet ancrage. D'ailleurs, de cette clarté d'esprit rejaillissent des réminiscences de nos séances passées de préparation mentale avec Éric Lacroix. Ces réminiscences enrichissent encore ma boîte à outils mentaux.
 
-Cette semaine a été l'occasion de découvrir la beauté époustouflante du massif de Belledonne. Vraiment, j'en ai été choqué. Sa technicité également, ses sentiers étant réputés être d'infâmes salades de cailloux. La salade nous a en effet été abondament servie. Avec l'ami Gauchoux, lui aussi coureur minimaliste, il nous a fallu près de 7h45 pour venir à bout des 24 km 2 700 m D+ D- de cette boucle par la croix de Belledonne. Avec le sentiment à la fin de la sortie que nous n'aurions pas pu mettre beaucoup moins de temps même en réduisant les pauses, tant la technicité et l'inclinaison des pentes étaient fortes. Malgré tout, à deux le temps file toujours à toute allure, et cette sortie fut un délice partagé. Le ressenti aussi fut différent par rapport aux entraînements récents. Car en Belledonne, il fait doux et frais, et l'impression de voler s'est faite plusieurs fois ressentir. Comme si, la chaleur disparu, nos corps pouvaient s'exprimer pleinement.
+Cette semaine a été l'occasion de découvrir la beauté époustouflante du massif de Belledonne. Vraiment, j'en ai été émerveillé. Sa technicité m'a marqué aussi, ses sentiers étant réputés pour être d'infâmes salades de cailloux. La salade nous a en effet été abondamment servie. Avec l'ami Gauchoux, lui aussi coureur minimaliste, il nous a fallu près de 7 h 45 pour venir à bout des 24 km et 2 700 m D+ D- de cette boucle par la croix de Belledonne. Avec le sentiment à la fin de la sortie que nous n'aurions pas pu mettre beaucoup moins de temps, même en réduisant les pauses, tant la technicité et l'inclinaison des pentes étaient fortes. Malgré tout, à deux, le temps file toujours à toute allure, et cette sortie fut un délice partagé. Le ressenti aussi était différent par rapport aux entraînements récents. Car en Belledonne, il fait doux et frais, et l'impression de voler s'est fait sentir plusieurs fois. Comme si, la chaleur disparue, nos corps pouvaient s'exprimer pleinement.
 
 ![SL Belledonne](/images/projets/saison-trail-2026/belledonne-1.webp)
 
@@ -472,7 +475,7 @@ Cette semaine a été l'occasion de découvrir la beauté époustouflante du mas
 *Baptême en Belledonne.*
 
 
-Ma semaine s'est conclue sur une tentative de grosse sortie dans le Vercors, passant par le sommet du Moucherotte. Cette ascension m'aura pris 3h et aura été très difficile, avec parfois des étourdissements et le besoin de m'arrêter tous les 30 m pour reprendre mes forces. J'ai encore une fois dû abrégé la sortie, qui a été un chemin de croix pendant de nombreuses heures. Mais, à la fin de journée, lors de la redescente, à l'ombre, les conditions deviennent plus supportables, ma foulée redémarre, et mon souffle revient. Je comprends, en faisant le parallèle avec la sortie de Belledonne, que ce n'est pas mon organisme qui m'a fait défaut tout au long de la journée, mais bien la chaleur qui m'empêche de m'exprimer. Je me sens rassuré et me dis que toutes ces semaines à hauts volumes et fortes chaleurs m'ont forcément renforcé d'une manière que je ne peux encore palper du doigt. Je finis cette première semaine d'août à 108 km et 6 600 m D+ D-.
+Ma semaine s'est conclue sur une tentative de grosse sortie dans le Vercors, passant par le sommet du Moucherotte. Cette ascension m'aura pris 3 h et aura été très difficile, avec parfois des étourdissements et le besoin de m'arrêter tous les 30 m pour reprendre mes forces. J'ai encore une fois dû abréger la sortie, qui a été un chemin de croix pendant de nombreuses heures. Mais, en fin de journée, lors de la redescente à l'ombre, les conditions sont devenues plus supportables, ma foulée est repartie et mon souffle est revenu. Je comprends, en faisant le parallèle avec la sortie de Belledonne, que ce n'est pas mon organisme qui m'a fait défaut tout au long de la journée, mais bien la chaleur qui m'empêchait de m'exprimer. Je me sens rassuré et me dis que toutes ces semaines à haut volume et fortes chaleurs m'ont forcément renforcé d'une manière que je ne peux encore palper du doigt. Je finis cette première semaine d'août à 108 km et 6 600 m D+ D-.
 
 
 ### Préparatifs du projet Écrins
@@ -480,27 +483,27 @@ Ma semaine s'est conclue sur une tentative de grosse sortie dans le Vercors, pas
 
 #### Genèse et préparatifs
 
-L'idée de faire le tour des Écrins en autonomie est néée le lendemain [de mon aventure entre Drôme et Vercors](https://thelocomotionlab.com/explorer/immersion-primale-entre-vercors-et-drome). On dit qu'il faut toujours avoir un projet d'avance, et là je n'en avais plus qu'un en ligne de mire : Nice le 25 septembre. J'ai donc fait quelques recherches et suis rapidement tombé sur cette trace de fou furieux de 188 km et 12 200 m D+ D- dans les Écrins.
+L'idée de faire le tour des Écrins en autonomie est née le lendemain [de mon aventure entre Drôme et Vercors](https://thelocomotionlab.com/explorer/immersion-primale-entre-vercors-et-drome). On dit qu'il faut toujours avoir un projet d'avance, et là je n'en avais plus qu'un en ligne de mire : Nice le 25 septembre. J'ai donc fait quelques recherches et suis rapidement tombé sur cette trace magnifique de 188 km et 12 200 m D+ D- dans les Écrins.
 
 [Tour des Écrins](/tracks/tour-des-ecrins.gpx)
 
 *Trace du tour des Écrins*
 
-Ces chiffres défiant un peu l'entendement, je me suis dit que ce serait un parfait projet sur 4 jours, et que le placer autour de fin août me permettrait de le vivre comme une sorte de Week-End choc amélioré, un test final en vue de ma préparation pour Nice. L'affaire était dans le sac. Plus tard, mon ami Rapace, intéressé par le projet, décidait de se joindre à moi sur 2j de l'aventure. Le tour sera décomposé ainsi :
+Ces chiffres défiant un peu l'entendement, je me suis dit que ce serait un parfait projet sur 4 jours, et que le placer vers la fin août me permettrait de le vivre comme une sorte de week-end choc amélioré, un test final en vue de ma préparation pour Nice. L'affaire était dans le sac. Plus tard, mon ami Rapace, intéressé par le projet, a décidé de se joindre à moi sur 2 jours de l'aventure. Le tour sera donc décomposé ainsi :
 - Jour 1 : Vénosc → Valgaudémar (57,5 km 4 800 m D+ 4 600 m D-) avec Rapace
 - Jour 2 : Valgaudémar → Vallouise (49,2 km 2 960 m D+ 2 890 m D-) avec Rapace
 - Jour 3 : Vallouise → Arsine (39,4 km 2 230 m D+ 1 700 m D-) solo
 - Jour 4 : Arsine → Vénosc (41,9 km 2 120 m D+ 2 800 m D-) solo
 
-Une sacrée aventure donc qui nécessite une préparation aux petits oignons.
+Une sacrée aventure, plus longue que ce que j'ai l'habitude de faire, et qui nécessite une préparation aux petits oignons.
 
 #### Le paquetage
 
-Niveau paquetage, je suis reparti sur les mêmes ingrédients utilisés lors de mon aventure dans le Vercors, exception faite au niveau de la nutrition, sur laquelle je reviens plus bas.
+Niveau paquetage, je suis reparti sur les mêmes éléments que lors de mon aventure dans le Vercors, à l'exception de la nutrition, sur laquelle je reviens plus bas.
 
 <paquetage src="/paquetages/tour-des-ecrins.csv" titre="Tour des Écrins, 2026" />
 
-Ce setup me semble toujours aussi robuste dans sa capacité à faire face à de multiples imprévus, à pouvoir dormir même sous des températures assez basses (jusqu'autour de -4°C sans problème), ou à rester au sec en cas de fortes pluies grâce à la fonctionnalité poncho du Gatewood Cape. Par rapport au Vercors, je pars cette fois-ci avec un téléphone sattelite Garmin inReach.
+Cet équipement me semble toujours aussi robuste dans sa capacité à faire face à de multiples imprévus, à permettre de dormir sous des températures assez basses (jusqu'à environ -4 °C sans problème), ou à me maintenir au sec en cas de fortes pluies grâce à la fonctionnalité poncho du Gatewood Cape. Par rapport au Vercors, je pars cette fois-ci avec un téléphone satellite Garmin inReach. Du reste, pas grand chose de nouveaux sous les tropiques si ce n'est les Panta Boreas, dont je vais éprouver la capacité à endurer sur des terrains techniques pendant autant de kilomètres.
 
 :::split
 
@@ -514,6 +517,30 @@ Ce setup me semble toujours aussi robuste dans sa capacité à faire face à de 
 
 *Matos embarqué pour les Écrins (sans la nutrition montrée plus bas).*
 
+
+#### Nutrition
+
+Côté alimentation, j'ai d'abord voulu m'approvisionner en plats lyophilisés chez Decathlon. Sauf qu'en début d'août, autant dire que tous les magasins Decathlon de France et de Navarre étaient dévalisés. J'ai donc décidé de confectionner mes propres recettes pour cette aventure, ce qui n'a pas été pour déplaire à mon portefeuille. Moi qui ne prends pas de petit-déjeuner habituellement, j'ai quand même choisi d'en embarquer avec moi, car le besoin calorique pour se déplacer sur de telles distances reste très élevé. Il s'agit d'un gruau composé de :
+- 30 g de coco râpée
+- 30 g d'amandes moulues
+- 30 g de lait entier en poudre
+- 25 g de flocons d'avoine complets
+- 120 g d'eau froide
+
+pour une masse sèche de 115 g par repas et environ 615 kcal. Le goût était très bon, avec la sensation d'apporter à son corps tout ce dont il a besoin. Côté déjeuners et dîners, je pars sur une sorte de couscous super protéiné, salé et lacté, dont voici la recette :
+- 40 g huile d'olive 
+- 55 g couscous complet
+- 45 g parmesan
+- 25 g sésame moulu
+- 10 g tomates séchées
+- 140 g d'eau froide
+
+pour une masse sèche de 175 g et un plat avoisinant les 920 kcal. Il est très intéressant sur le plan nutritionnel car il est riche en protéines, en graisses et en glucides. C'est un plat aussi délicieux que digeste, testé à plusieurs reprises pour trouver le bon dosage en eau, et dont je suis sûr de ne pas me lasser.
+
+Côté snacks, je reste sur du classique avec 24 boules d'énergie, 3 saucissons et une douzaine de flasques isotoniques Decathlon. Le total de nourriture emporté avoisine les 16 000 kcal, ce qui me semble en accord avec les capacités d'assimilation quotidiennes de mon corps.
+
+![Paquetage Écrins 2](/images/projets/saison-trail-2026/paquetage-ecrins-2.webp)
+*Nutrition embarquée.*
 
 <!-- ### Test
 
