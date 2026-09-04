@@ -38,20 +38,29 @@ import Plot from "./PlotLazy";
 
 import { extractToc } from "@/lib/extractToc";
 import ProjetClientFx from "./ProjetClientFx";
-import ArticleNav from "./ArticleNav";
+import BlocsRelations from "./BlocsRelations";
+import BlocTechnique from "./BlocTechnique";
 import ImagesPleinEcran from "./ImagesPleinEcran";
 import Paquetage from "./Paquetage";
 import TwinCohorteTeaser from "./TwinCohorteTeaser";
 
+/** Les sortes assez longues pour mériter un plan en tête de page. */
+const SORTES_AVEC_SOMMAIRE = new Set(["carnet", "expedition"]);
+
 export default function ProjetBody({
   project,
   initialContent,
-  related = [],
+  relations = null,
+  archive = null,
 }) {
   if (!project) return <p className="p-6">Projet non trouvé</p>;
 
   const raw = initialContent || "";
   const toc = extractToc(raw);
+  // Un sommaire au-delà de quatre titres, et seulement sur un carnet ou une
+  // expédition : ailleurs, il double le texte au lieu de le servir.
+  const avecSommaire =
+    toc.length >= 4 && SORTES_AVEC_SOMMAIRE.has(project.kind);
   const usedCitations = getUsedCitations(raw);
   const Citation = createCitation(usedCitations);
 
@@ -137,7 +146,11 @@ export default function ProjetBody({
           aria-hidden="true"
         />
 
-        {toc.length > 0 && (
+        <BlocTechnique archive={archive} />
+
+        {/* Le sommaire n'a de sens que sur les sortes longues et découpées.
+            Une fiche de quinze lignes n'a pas besoin d'un plan. */}
+        {avecSommaire && (
           <div
             id="sommaire"
             className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-10"
@@ -409,7 +422,7 @@ export default function ProjetBody({
             personne à qui la question se pose vraiment. */}
         <TwinCohorteTeaser className="mt-12" />
 
-        <ArticleNav items={related} kind="projet" />
+        <BlocsRelations relations={relations} />
 
         {/* Les images du markdown s'ouvrent en taille réelle au clic. */}
         <ImagesPleinEcran targetSelector=".article-body" />

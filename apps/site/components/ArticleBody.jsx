@@ -27,7 +27,7 @@ import rehypeKatex from "rehype-katex";
 import { getUsedCitations } from "@/lib/getUsedCitations";
 import { createCitation } from "./Citation";
 import CitationReferences from "./CitationReferences";
-import ArticleNav from "./ArticleNav";
+import BlocsRelations from "./BlocsRelations";
 import ImagesPleinEcran from "./ImagesPleinEcran";
 import Paquetage from "./Paquetage";
 import TwinCohorteTeaser from "./TwinCohorteTeaser";
@@ -35,7 +35,7 @@ import TwinCohorteTeaser from "./TwinCohorteTeaser";
 export default function ArticleBody({
   article,
   initialContent,
-  related = [],
+  relations = null,
   backHref = "/comprendre",
   backLabel = "Retour à Comprendre",
 }) {
@@ -170,7 +170,7 @@ export default function ArticleBody({
             personne à qui la question se pose vraiment. */}
         <TwinCohorteTeaser className="mt-12" />
 
-        <ArticleNav items={related} kind="article" />
+        <BlocsRelations relations={relations} />
 
         {/* Les images du markdown s'ouvrent en taille réelle au clic. */}
         <ImagesPleinEcran targetSelector=".article-body" />

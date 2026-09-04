@@ -34,7 +34,12 @@ function makeUniqueSlug(slug, seen) {
   return `${slug}-${count}`;
 }
 
-export function extractToc(markdown = "") {
+/**
+ * Tous les titres d'un markdown, avec l'id que rehype-slug leur posera.
+ * `extractToc` n'en garde que les h2/h3 ; la vérification des ancres internes
+ * a besoin de TOUS les niveaux, puisqu'un lien peut viser un h4.
+ */
+export function titresDe(markdown = "") {
   if (!markdown) return [];
 
   const tree = unified()
@@ -46,12 +51,17 @@ export function extractToc(markdown = "") {
   const seen = new Map();
 
   visit(tree, "heading", (node) => {
-    if (node.depth < 2 || node.depth > 3) return;
     const text = extractText(node);
     if (!text) return;
+    // Le compteur d'unicité couvre TOUS les titres : c'est ce que fait
+    // github-slugger au rendu, quel que soit le niveau.
     const id = makeUniqueSlug(baseSlug(text), seen);
     headings.push({ id, text, level: node.depth });
   });
 
   return headings;
+}
+
+export function extractToc(markdown = "") {
+  return titresDe(markdown).filter((h) => h.level >= 2 && h.level <= 3);
 }

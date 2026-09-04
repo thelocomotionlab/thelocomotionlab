@@ -25,6 +25,7 @@ import {
   PILIERS,
   SLUG_ALIASES,
 } from "./contentRoutes.mjs";
+import { assertLiensInternes } from "./liensInternes.mjs";
 
 /** Les anciens rayons, pour un slug donné. */
 function rayons(slug) {
@@ -33,8 +34,10 @@ function rayons(slug) {
 
 export function buildLegacyRedirects() {
   // Le seul point du build par lequel TOUT passe : c'est ici que les règles de
-  // contenu font échouer la compilation si un atome est mal rangé.
+  // contenu font échouer la compilation si un atome est mal rangé, ou si un
+  // lien interne pointe dans le vide.
   assertContentRules();
+  assertLiensInternes();
 
   const entries = listEntries();
   const parSlug = new Map(entries.map((e) => [e.slug, e]));

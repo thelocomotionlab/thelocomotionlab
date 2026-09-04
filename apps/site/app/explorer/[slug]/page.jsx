@@ -12,7 +12,8 @@ import ArticleBody from "@/components/ArticleBody";
 import ProjetBody from "@/components/ProjetBody";
 import Breadcrumb from "@/components/Breadcrumb";
 import SearchHighlighter from "@/components/SearchHighlighter";
-import { getRelated } from "@/lib/getRelated";
+import { relationsDe } from "@/lib/relations.mjs";
+import { getArchive } from "@/lib/archives.mjs";
 import {
   listByPilier,
   findExplorerEntry,
@@ -134,7 +135,11 @@ export default async function ExplorerEntryPage({ params }) {
 
   const { entry, item, content } = data;
   const jsonLd = buildJsonLd(item);
-  const related = getRelated("explorer", slug, 3);
+  const relations = relationsDe(slug);
+  // Le bloc technique ne se rend que si l'aventure a une archive : ses données
+  // viennent de l'archive, jamais du markdown.
+  const archive =
+    entry.kind === "expedition" ? getArchive(entry.archive ?? slug) : null;
 
   return (
     <>
@@ -146,6 +151,12 @@ export default async function ExplorerEntryPage({ params }) {
         items={[
           { href: "/", label: "Accueil" },
           { href: "/explorer", label: "Explorer" },
+          // Une fiche se consulte depuis son parent : le fil d'Ariane le dit,
+          // et donne le chemin du retour. Un parent en brouillon est absent du
+          // graphe, et la fiche reste alors à plat.
+          ...(relations.parent
+            ? [{ href: relations.parent.href, label: relations.parent.title }]
+            : []),
           { label: item.title },
         ]}
       />
@@ -153,12 +164,17 @@ export default async function ExplorerEntryPage({ params }) {
         <ArticleBody
           article={item}
           initialContent={content}
-          related={related}
+          relations={relations}
           backHref="/explorer"
           backLabel="Retour à Explorer"
         />
       ) : (
-        <ProjetBody project={item} initialContent={content} related={related} />
+        <ProjetBody
+          project={item}
+          initialContent={content}
+          relations={relations}
+          archive={archive}
+        />
       )}
       <SearchHighlighter targetSelector=".article-body" />
     </>

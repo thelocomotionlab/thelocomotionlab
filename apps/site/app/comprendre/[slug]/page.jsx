@@ -9,7 +9,7 @@ import { notFound } from "next/navigation";
 import ArticleBody from "@/components/ArticleBody";
 import Breadcrumb from "@/components/Breadcrumb";
 import SearchHighlighter from "@/components/SearchHighlighter";
-import { getRelated } from "@/lib/getRelated";
+import { relationsDe } from "@/lib/relations.mjs";
 import {
   listByPilier,
   findComprendreEntry,
@@ -121,7 +121,7 @@ export default async function ArticlePage({ params }) {
 
   const { article, content } = data;
   const jsonLd = buildArticleJsonLd(article);
-  const related = getRelated("comprendre", slug, 3);
+  const relations = relationsDe(slug);
 
   return (
     <>
@@ -139,7 +139,7 @@ export default async function ArticlePage({ params }) {
       <ArticleBody
         article={article}
         initialContent={content}
-        related={related}
+        relations={relations}
         backHref="/comprendre"
         backLabel="Retour à Comprendre"
       />

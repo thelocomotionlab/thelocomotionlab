@@ -1,22 +1,15 @@
 // components/ArticleNav.jsx
 //
-// Section "Derniers articles" / "Derniers projets" en bas d'une page
-// de detail. Heading aligne a gauche, lisere accent court juste en
-// dessous, puis une rangee de mini-cartes (cover + titre) jusqu'a 3
-// elements.
+// Une rangée de mini-cartes sous un titre : le motif commun de tous les blocs
+// de relation d'une page de détail. Titre aligné à gauche, liseré accent court
+// juste en dessous, puis les cartes (cover + sorte + titre).
 
 import Link from "next/link";
 import Image from "next/image";
+import CardMeta from "@/components/CardMeta";
 
-const HEADINGS = {
-  article: "Derniers articles",
-  projet: "Derniers projets",
-};
-
-export default function ArticleNav({ items = [], kind = "article" }) {
+export default function ArticleNav({ items = [], heading }) {
   if (!items?.length) return null;
-
-  const heading = HEADINGS[kind] || HEADINGS.article;
 
   return (
     <nav aria-label={heading} className="mt-14">
@@ -49,6 +42,13 @@ export default function ArticleNav({ items = [], kind = "article" }) {
                 <div className="h-32 w-full bg-brand-bg" aria-hidden="true" />
               )}
               <div className="px-4 py-3">
+                {item.kindLabel ? (
+                  <CardMeta
+                    kind={item.kindLabel}
+                    detail={item.etat}
+                    className="mb-1"
+                  />
+                ) : null}
                 <span className="block text-sm font-medium text-brand-deep transition group-hover:text-brand-accent line-clamp-2">
                   {item.title}
                 </span>
