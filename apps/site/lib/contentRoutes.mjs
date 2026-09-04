@@ -99,6 +99,21 @@ export const BRANCHES = {
   instruments: "Instruments",
 };
 
+/**
+ * Le slug de la page-pilier de Comprendre : le concept de plus haut niveau,
+ * celui dont tous les autres sont des briques. Il ouvre l'index, seul, avant
+ * la liste et les branches. Tant qu'il n'existe pas, l'index commence par la
+ * liste — aucun encadré ne vient dire qu'il manque.
+ */
+export const PAGE_PILIER = "robustesse-physiologique";
+
+/**
+ * Le nombre de concepts publiés à partir duquel une branche s'affiche. En
+ * dessous, elle n'apparaît nulle part : ni titre, ni encadré, ni mot en gris.
+ * Une branche naît de la liste quand la liste la demande.
+ */
+export const SEUIL_BRANCHE = 2;
+
 /** Les champs de relation, et la sorte que chacun doit désigner. */
 const RELATIONS = {
   concepts: "concept",

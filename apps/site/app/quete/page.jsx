@@ -1,6 +1,6 @@
 // app/quete/page.jsx
-// NB : le bloc « Par où commencer » plus bas est commenté (réserve éditoriale) ;
-// le ré-activer demande de ré-importer Link depuis next/link.
+import Link from "next/link";
+
 import EmailCapture from "@/components/EmailCapture";
 import PageHeader from "@/components/PageHeader";
 import SectionHeading from "@/components/SectionHeading";
@@ -117,35 +117,36 @@ export default function QuetePage() {
             que cet adage est profondément robuste.
           </p>
         </section>
-          {/* ⑤ Par où commencer : les portes d'entrée du site. */}
-{/*          <section>
-            <h2 className="text-xl font-sans font-semibold mb-3 text-brand-deep">
-              Par où commencer
-            </h2>
-            <p>
-              <Link
-                href="/comprendre"
-                className="font-semibold text-brand-deep hover:underline"
-              >
-                Comprendre
-              </Link>{" "}
-              pour la science,{" "}
-              <Link
-                href="/explorer"
-                className="font-semibold text-brand-deep hover:underline"
-              >
-                Explorer
-              </Link>{" "}
-              pour le terrain,{" "}
-              <Link
-                href="/outils/twin"
-                className="font-semibold text-brand-deep hover:underline"
-              >
-                Accompagnement (à venir)
-              </Link>{" "}
-              ateliers, stages, retraites,{" "}
-            </p>
-          </section>*/}
+        {/* ⑤ Par où commencer : les portes de sortie du manifeste vers les
+            piliers. Sans elles, la quête est un cul-de-sac. */}
+        <section>
+          <SectionHeading className="mb-3">Par où commencer</SectionHeading>
+          <p>
+            <Link
+              href="/comprendre"
+              className="font-semibold text-brand-deep hover:underline"
+            >
+              Comprendre
+            </Link>{" "}
+            pour la science : chaque concept dit son mécanisme, sa fenêtre de
+            dose et ce qu&rsquo;il fragilise, avec sa maturité affichée.{" "}
+            <Link
+              href="/explorer"
+              className="font-semibold text-brand-deep hover:underline"
+            >
+              Explorer
+            </Link>{" "}
+            pour le terrain : les expéditions, les protocoles éprouvés sur moi
+            seul, le carnet de bord de l&rsquo;année.{" "}
+            <Link
+              href="/pratiquer"
+              className="font-semibold text-brand-deep hover:underline"
+            >
+              Pratiquer
+            </Link>{" "}
+            pour venir bouger ensemble.
+          </p>
+        </section>
       </div>
 
       <div className="mt-12 max-w-2xl mx-auto text-center">

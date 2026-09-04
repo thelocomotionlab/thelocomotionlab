@@ -16,7 +16,7 @@ import ExplorerLiveIndicator from "@/components/ExplorerLiveIndicator";
 import LiveBanner from "@/components/LiveBanner";
 import PhilosophieSection from "@/components/PhilosophieSection";
 import { getExplorerCarouselItems } from "@/lib/carouselItems";
-import { listByKind } from "@/lib/contentRoutes.mjs";
+import { listByKind, etatDe } from "@/lib/contentRoutes.mjs";
 import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
 export const metadata = {
@@ -62,24 +62,13 @@ const HEROES = [
    REGISTRE DES CONCEPTS (section Comprendre)
    ============================ */
 
-// Statut d'une entrée du registre, dérivé du frontmatter :
-// publié → PUBLIÉ (ligne cliquable) ; brouillon teaser:true → À PARAÎTRE ;
-// autre brouillon → À VENIR (ligne estompée).
+// Un concept publié porte sa MATURITÉ (graine, pousse, établi) et sa ligne
+// est cliquable ; un brouillon porte « À VENIR » et n'a pas de lien — son
+// corps n'est jamais rendu.
 const REGISTRE_BADGES = {
-  publie: {
-    label: "PUBLIÉ",
-    className:
-      "border-brand-primary-dark/55 bg-brand-primary/14 text-brand-slate-dark",
-  },
-  aParaitre: {
-    label: "À PARAÎTRE",
-    className:
-      "border-brand-accent-dark/55 bg-brand-accent-light/14 text-brand-accent-ink",
-  },
-  aVenir: {
-    label: "À VENIR",
-    className: "border-black/25 text-gray-600",
-  },
+  publie:
+    "border-brand-primary-dark/55 bg-brand-primary/14 text-brand-slate-dark",
+  aVenir: "border-black/25 text-gray-600",
 };
 
 // La zone du registre défile (RegistreScroller) : on borne large ; publiés
@@ -90,11 +79,8 @@ const REGISTRE_MAX_ROWS = 8;
 function getRegistreRows() {
   const entries = listByKind("concept");
 
-  const statusOf = (e) => {
-    if (e.published) return "publie";
-    return e.data.teaser === true ? "aParaitre" : "aVenir";
-  };
-  const GROUP_ORDER = { publie: 0, aParaitre: 1, aVenir: 2 };
+  const statusOf = (e) => (e.published ? "publie" : "aVenir");
+  const GROUP_ORDER = { publie: 0, aVenir: 1 };
 
   const dateKey = (e) => {
     const d = e.data.date ? new Date(e.data.date) : null;
@@ -114,11 +100,14 @@ function getRegistreRows() {
       theme:
         (e.data.tags || []).find((t) => t && t.trim())?.toUpperCase() ?? "",
       status: statusOf(e),
+      badge: e.published
+        ? (etatDe(e) ?? "PUBLIÉ").toUpperCase()
+        : "À VENIR",
     }));
 }
 
 function RegistreRow({ row, isLast }) {
-  const badge = REGISTRE_BADGES[row.status];
+  const badgeClassName = REGISTRE_BADGES[row.status];
   const rowClassName = [
     "flex snap-start items-center gap-3 px-1 py-[18px] md:gap-4",
     isLast ? "" : "border-b border-brand-primary-dark/25",
@@ -142,9 +131,9 @@ function RegistreRow({ row, isLast }) {
         ) : null}
       </span>
       <span
-        className={`flex-none whitespace-nowrap rounded-[3px] border px-2 py-1 font-heading text-[10px] tracking-[0.1em] md:px-2.5 md:text-[11px] ${badge.className}`}
+        className={`flex-none whitespace-nowrap rounded-[3px] border px-2 py-1 font-heading text-[10px] tracking-[0.1em] md:px-2.5 md:text-[11px] ${badgeClassName}`}
       >
-        {badge.label}
+        {row.badge}
       </span>
     </>
   );
@@ -164,7 +153,7 @@ function RegistrePanel({ rows }) {
       {/* En-tête centré verticalement entre le bord supérieur et le filet. */}
       <div className="flex items-center border-b-[1.5px] border-brand-primary-dark/40 py-[18px] md:py-5">
         <span className="font-heading text-[12px] font-bold tracking-[0.2em] text-gray-600">
-          DERNIERS ARTICLES
+          LES CONCEPTS
         </span>
       </div>
 
