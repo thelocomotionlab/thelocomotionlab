@@ -10,6 +10,7 @@ import ExplorerSections from "@/components/ExplorerSections";
 import { listByPilier, KINDS, ORDRE_EXPLORER } from "@/lib/contentRoutes.mjs";
 import { shapeEntry } from "@/lib/getRecentActivity";
 import { extractCarnetNotes, parseNoteDate } from "@/lib/extractCarnetNotes";
+import { donneesDeFiche } from "@/lib/ficheDonnees.mjs";
 import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
 export const metadata = {
@@ -59,14 +60,18 @@ function dernieresNotes(slug) {
     .slice(0, 2);
 }
 
-function shapeForClient(item) {
+function shapeForClient(item, entry) {
   return {
     slug: item.slug,
     href: item.href,
     title: item.title,
     description: item.description,
     cover: item.cover,
+    kind: item.kind,
     kindLabel: item.kindLabel,
+    // Une fiche montre ses chiffres à la place d'une photo, quand elle porte
+    // un paquetage : la variété vient des données.
+    donnees: item.kind === "fiche" ? donneesDeFiche(entry) : null,
     // L'état de l'atome quand il en a un (« Éprouvé »), sa date sinon.
     detail: item.etat,
     dateLabel:
@@ -88,11 +93,12 @@ function getSections() {
     replie: kind === "fiche",
     items: publies
       .filter((e) => e.kind === kind)
-      .map(shapeEntry)
+      .map((e) => [shapeEntry(e), e])
       .sort(
-        (a, b) => (b.activite?.getTime() ?? 0) - (a.activite?.getTime() ?? 0)
+        ([a], [b]) =>
+          (b.activite?.getTime() ?? 0) - (a.activite?.getTime() ?? 0)
       )
-      .map(shapeForClient),
+      .map(([item, entry]) => shapeForClient(item, entry)),
   })).filter((section) => section.items.length > 0);
 }
 

@@ -2,7 +2,7 @@
   "template": {
     "type": "Type de référence (article, book, thesis, chapter, etc.)",
     "author": "Auteurices",
-    "year" : "Année de publication",
+    "year": "Année de publication",
     "title": "Titre complet",
     "journal": "Nom du journal",
     "publisher": "Maison d'édition (si livre, rapport, etc.)",
@@ -56,7 +56,7 @@
   },
   "sanchez2025": {
     "author": "Raimundo Sanchez and Pascal E Egli and Kilian Jornet and Michael Duggan and Manuela Besomi",
-    "title" : "How fractal complexity distorts distance and elevation gain in trail and mountain running: The case for course measurement standardization",
+    "title": "How fractal complexity distorts distance and elevation gain in trail and mountain running: The case for course measurement standardization",
     "journal": "Proceedings of the Institution of Mechanical Engineers, Part P: Journal of Sports Engineering and Technology",
     "volume": "0",
     "number": "0",
@@ -94,7 +94,7 @@
     "year": "2022",
     "issn": "2813-0413",
     "doi": "10.3390/muscles1010001"
-  },  
+  },
   "bonaldo2013": {
     "author": "Bonaldo, P., and Sandri, M. ",
     "title": "Cellular and molecular mechanisms of muscle atrophy.",
@@ -104,7 +104,7 @@
     "pages": "25-39",
     "year": "2013",
     "doi": "10.1242/dmm.010389"
-  },   
+  },
   "abdullah2021": {
     "author": "Alghannam, Abdullah F. and Ghaith, Mazen M. and Alhussain, Maha H.",
     "title": "Regulation of Energy Substrate Metabolism in Endurance Exercise",
@@ -151,19 +151,76 @@
     "doi": "10.1007/BF00999931",
     "issn": "1439-6327",
     "issbn": ""
-    },
-    "febbraio2001": {
-        "type": "article",
-        "author": "Febbraio, Mark A.",
-        "year": "2001",
-        "title": "Alterations in Energy Metabolism During Exercise and Heat Stress",
-        "journal": "Sports Medicine",
-        "publisher": "Springer International Publishing",
-        "volume": "31",
-        "issue": "1",
-        "pages": "47-59",
-        "doi": "10.2165/00007256-200131010-00004",
-        "issn": "1179-2035",
-        "issbn": ""
-    }
+  },
+  "febbraio2001": {
+    "type": "article",
+    "author": "Febbraio, Mark A.",
+    "year": "2001",
+    "title": "Alterations in Energy Metabolism During Exercise and Heat Stress",
+    "journal": "Sports Medicine",
+    "publisher": "Springer International Publishing",
+    "volume": "31",
+    "issue": "1",
+    "pages": "47-59",
+    "doi": "10.2165/00007256-200131010-00004",
+    "issn": "1179-2035",
+    "issbn": ""
+  },
+  "kitano2004": {
+    "author": "Hiroaki Kitano",
+    "year": "2004",
+    "title": "Biological robustness",
+    "journal": "Nature Reviews Genetics",
+    "volume": "5(11)",
+    "pages": "826–837",
+    "link": "https://doi.org/10.1038/nrg1471"
+  },
+  "carlson2002": {
+    "author": "Jean M. Carlson, John Doyle",
+    "year": "2002",
+    "title": "Complexity and robustness",
+    "journal": "PNAS",
+    "volume": "99(suppl. 1)",
+    "pages": "2538–2545",
+    "link": "https://doi.org/10.1073/pnas.012582499"
+  },
+  "edelman2001": {
+    "author": "Gerald M. Edelman, Joseph A. Gally",
+    "year": "2001",
+    "title": "Degeneracy and complexity in biological systems",
+    "journal": "PNAS",
+    "volume": "98(24)",
+    "pages": "13763–13768",
+    "link": "https://doi.org/10.1073/pnas.231499798"
+  },
+  "sterling2012": {
+    "author": "Peter Sterling",
+    "year": "2012",
+    "title": "Allostasis: A model of predictive regulation",
+    "journal": "Physiology & Behavior",
+    "volume": "106(1)",
+    "pages": "5–15",
+    "link": "https://doi.org/10.1016/j.physbeh.2011.06.004"
+  },
+  "mattson2008": {
+    "author": "Mark P. Mattson",
+    "year": "2008",
+    "title": "Hormesis defined",
+    "journal": "Ageing Research Reviews",
+    "volume": "7(1)",
+    "pages": "1–7",
+    "link": "https://doi.org/10.1016/j.arr.2007.08.007"
+  },
+  "hamant2022": {
+    "author": "Olivier Hamant",
+    "year": "2022",
+    "title": "La troisième voie du vivant",
+    "publisher": "Odile Jacob"
+  },
+  "lieberman2020": {
+    "author": "Daniel Lieberman",
+    "year": "2020",
+    "title": "Exercised: The Science of Physical Activity, Rest and Health",
+    "publisher": "Allen Lane"
+  }
 }

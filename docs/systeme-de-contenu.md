@@ -87,7 +87,7 @@ passer : c'est la marche d'avant.
 
 ### Les relations, et ce qu'elles engendrent
 
-Quatre champs, trois blocs générés. On n'écrit **jamais** un lien de contenu à la main entre deux atomes.
+Quatre champs, quatre blocs générés. On n'écrit **jamais** un lien de contenu à la main entre deux atomes.
 
 | Champ | Porté par | Ce qu'il affiche | Le bloc inverse |
 |---|---|---|---|
@@ -171,10 +171,12 @@ Ces règles font **échouer la compilation** en nommant le fichier fautif (`asse
 1. Deux fichiers ne peuvent pas produire le même slug dans tout `content/`, brouillons compris.
 2. Une fiche déclare un `parent:`, qui résout vers une expédition ou un protocole.
 3. Chaque entrée de `concepts:` et de `lie:` résout vers un concept ; chaque entrée de `fiches:` vers une fiche.
-4. `maturite` et `statut` appartiennent au vocabulaire de leur sorte, et sont présents sur un atome publié.
-5. `branche` appartient à la table des branches.
-6. Un alias de slug ne masque jamais un atome vivant, et mène à un atome qui existe.
-7. Toute ancre `#…` d'un contenu publié résout vers un titre du même fichier, et tout lien interne vers
+4. Un atome **publié** ne cite jamais un brouillon dans `concepts:` ou `fiches:` — ces relations engendrent des
+   liens visibles. `parent:` y échappe : une fiche peut exister avant l'expédition qui la portera.
+5. `maturite` et `statut` appartiennent au vocabulaire de leur sorte, et sont présents sur un atome publié.
+6. `branche` appartient à la table des branches.
+7. Un alias de slug ne masque jamais un atome vivant, et mène à un atome qui existe.
+8. Toute ancre `#…` d'un contenu publié résout vers un titre du même fichier, et tout lien interne vers
    `/comprendre/…` ou `/explorer/…` résout vers un atome ou un alias.
 
 C'est la contrepartie de la seule fragilité du modèle : la décision de rangement au moment d'écrire. Le build

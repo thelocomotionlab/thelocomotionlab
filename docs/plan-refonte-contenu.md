@@ -4,6 +4,15 @@
 contenu robuste » et d'une lecture du dépôt tel qu'il est sur cette branche. Ce document est un mode d'emploi de
 chantier : il part dans `docs/archive/` quand le chantier est fini.*
 
+> **Où on en est.** Les chantiers 0 à 4 sont faits : le nettoyage, la plomberie `content/`, les index, la découpe
+> des deux carnets en 28 atomes, les blocs de relation générés et la vérification des liens au build. Du chantier 5,
+> la partie outillage est faite (cartes typographiques par sorte, badge d'état sur chaque page, bibliographie
+> élargie au noyau) ; **la partie éditoriale t'attend** : la page-pilier `robustesse-physiologique` est écrite mais
+> reste en brouillon — c'est la thèse du labo, elle doit passer par ta plume avant d'être publiée. Restent aussi à
+> écrire les concepts du noyau (dégénérescence, allostasie, variété requise, robuste-mais-fragile), la découpe du
+> brouillon respiration en quatre atomes, le mécanisme du concept froid, et la réécriture de *La genèse* en constat.
+> Ce document s'archive quand tu auras ajusté ce qui précède.
+
 ---
 
 ## 0. En bref

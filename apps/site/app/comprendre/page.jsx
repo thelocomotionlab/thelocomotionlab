@@ -8,8 +8,8 @@
 // part — ni titre, ni encadré, ni mot en gris. Les branches naissent donc de
 // la liste, une à une, et la carte se dessine au rythme réel du contenu.
 import Link from "next/link";
-import Image from "next/image";
 import CardMeta from "@/components/CardMeta";
+import CarteVisuel from "@/components/CarteVisuel";
 import EmailCapture from "@/components/EmailCapture";
 import PageHeader from "@/components/PageHeader";
 import SectionHeading from "@/components/SectionHeading";
@@ -57,6 +57,8 @@ const RANG = Object.fromEntries(
 function shape(e) {
   return {
     slug: e.slug,
+    kind: e.kind,
+    kindLabel: e.label,
     title: e.data.title || e.slug,
     date: e.data.date ? new Date(e.data.date) : null,
     cover: e.data.cover || "",
@@ -102,22 +104,6 @@ function getComprendre() {
   };
 }
 
-function Cover({ src, alt }) {
-  if (!src) return <div className="w-full h-44 bg-brand-bg" aria-hidden="true" />;
-  return (
-    <div className="relative w-full h-44">
-      <Image
-        src={src}
-        alt={alt}
-        fill
-        className="object-cover"
-        sizes="(min-width: 768px) 384px, 100vw"
-        loading="lazy"
-      />
-    </div>
-  );
-}
-
 function ConceptCard({ concept }) {
   return (
     <div className="relative w-full max-w-[22rem] h-full">
@@ -125,10 +111,7 @@ function ConceptCard({ concept }) {
         href={`/comprendre/${concept.slug}`}
         className="group bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col"
       >
-        <Cover
-          src={concept.cover}
-          alt={`Illustration du concept : ${concept.title}`}
-        />
+        <CarteVisuel item={concept} sizes="(min-width: 768px) 384px, 100vw" />
 
         <div className="p-5 flex flex-col flex-1">
           {/* Méta homogène avec les cartes du pilier Explorer. Le détail est

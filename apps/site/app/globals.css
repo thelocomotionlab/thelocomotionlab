@@ -910,3 +910,23 @@ mark.search-highlight {
 .md-split .ll-map-profil {
   display: none;
 }
+
+/* ── Cartes sans photo ───────────────────────────────────────────────────
+   La grille de labo en filigrane, derrière les cartes typographiques des
+   concepts : le fond de carnet quadrillé du pilier Comprendre. Toutes les
+   couleurs viennent des tokens de la charte. */
+.ll-visuel--grille {
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--color-brand-primary-dark) 22%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--color-brand-primary-dark) 22%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 22px 22px;
+  background-position: -1px -1px;
+}

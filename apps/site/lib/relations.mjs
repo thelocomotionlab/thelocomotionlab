@@ -24,6 +24,7 @@ function carte(entry) {
     title: entry.data.title ?? entry.slug,
     href: routeFor(entry),
     cover: entry.data.cover ?? "",
+    kind: entry.kind,
     kindLabel: entry.label,
     etat: etatDe(entry),
   };

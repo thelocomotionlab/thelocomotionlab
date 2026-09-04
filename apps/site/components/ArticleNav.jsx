@@ -5,8 +5,8 @@
 // juste en dessous, puis les cartes (cover + sorte + titre).
 
 import Link from "next/link";
-import Image from "next/image";
 import CardMeta from "@/components/CardMeta";
+import CarteVisuel from "@/components/CarteVisuel";
 
 export default function ArticleNav({ items = [], heading }) {
   if (!items?.length) return null;
@@ -28,19 +28,12 @@ export default function ArticleNav({ items = [], heading }) {
               href={item.href}
               className="group flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-card transition hover:shadow-lg no-underline"
             >
-              {item.cover ? (
-                <div className="relative h-32 w-full overflow-hidden">
-                  <Image
-                    src={item.cover}
-                    alt=""
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    sizes="(min-width: 1024px) 240px, (min-width: 640px) 45vw, 90vw"
-                  />
-                </div>
-              ) : (
-                <div className="h-32 w-full bg-brand-bg" aria-hidden="true" />
-              )}
+              <CarteVisuel
+                item={item}
+                hauteur="h-32"
+                sizes="(min-width: 1024px) 240px, (min-width: 640px) 45vw, 90vw"
+                decoratif
+              />
               <div className="px-4 py-3">
                 {item.kindLabel ? (
                   <CardMeta

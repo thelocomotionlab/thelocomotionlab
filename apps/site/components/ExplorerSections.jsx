@@ -12,8 +12,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import CardMeta from "@/components/CardMeta";
+import CarteVisuel from "@/components/CarteVisuel";
 import ExplorerLiveIndicator from "@/components/ExplorerLiveIndicator";
 import SectionHeading from "@/components/SectionHeading";
 
@@ -24,20 +24,7 @@ function Card({ item }) {
         href={item.href}
         className="group bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col"
       >
-        {item.cover ? (
-          <div className="relative w-full h-44">
-            <Image
-              src={item.cover}
-              alt={`Illustration : ${item.title}`}
-              fill
-              className="object-cover"
-              sizes="(min-width: 768px) 352px, 100vw"
-              loading="lazy"
-            />
-          </div>
-        ) : (
-          <div className="w-full h-44 bg-brand-bg" aria-hidden="true" />
-        )}
+        <CarteVisuel item={item} />
 
         <div className="p-5 flex flex-col flex-1">
           <CardMeta

@@ -76,6 +76,16 @@ export default function ArticleBody({
             la seule grammaire d'en-tête différente du site, précisément sur
             les pages d'atterrissage depuis Google et les réseaux (audit des
             titres, 08/2026). */}
+        {article.etat ? (
+          /* La maturité d'un concept, le statut d'un protocole : la promesse
+             de l'atome est écrite en tête de sa page, pas seulement sur sa
+             carte d'index. */
+          <p className="mb-2">
+            <span className="inline-block rounded-[3px] border border-brand-primary-dark/45 bg-brand-primary/10 px-2 py-0.5 font-heading text-[11px] uppercase tracking-[0.1em] text-brand-slate-dark">
+              {article.kindLabel} · {article.etat}
+            </span>
+          </p>
+        ) : null}
         <h1 className="text-3xl text-brand-slate-dark md:text-5xl font-heading font-bold mb-3">
           {article.title}
         </h1>
