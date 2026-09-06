@@ -1,277 +1,380 @@
-# Le système de contenu du site
+# Système de contenu du site
 
-> **À qui ça s'adresse :** toi quand tu écris, et toute session qui touche au contenu du site.
-> Mode d'emploi, pas règlement. La source de vérité du code est `apps/site/lib/contentRoutes.mjs` ;
-> ce document explique ce qu'elle fait et comment s'en servir.
-
----
-
-## 0. En une page
-
-Cinq sortes de contenu. Chacune répond à **une seule question de lecteur**, vit dans **son dossier**, et se
-range **sans décision** parce que le dossier fait foi.
-
-| Sorte | Dossier | Pilier | La question | Elle est finie quand… |
-|---|---|---|---|---|
-| **Concept** | `content/concepts/` | Comprendre | *Pourquoi ça marche ?* | le mécanisme est écrit, une source au moins, « Ce que ça fragilise » rempli |
-| **Protocole** | `content/protocoles/` | Explorer | *Comment je fais, et qu'est-ce que ça donne ?* | quelqu'un d'autre pourrait le reproduire : dose, durée, observations datées, statut |
-| **Expédition** | `content/expeditions/` | Explorer | *Où, quand, combien, avec quoi — et qu'est-ce que ça m'a fait ?* | le bloc technique est rempli ; le récit peut manquer ou arriver après |
-| **Fiche** | `content/fiches/` | Explorer | *Qu'est-ce que j'emporte, quelle liste, quelle valeur ?* | la liste est complète, datée, sans commentaire, rattachée à un parent |
-| **Carnet** | `content/carnets/` | Explorer | *Qu'est-ce qui se passe en ce moment ?* | jamais — c'est le seul contenu ouvert, et c'est voulu |
-
-**La règle de routage, deux questions au moment d'écrire :**
-
-1. **Est-ce daté ?** Le texte n'a de sens qu'à une date (un bilan de semaine, une sortie, un état d'esprit)
-   → **carnet**. C'est une aventure complète, avec un début, une fin et des chiffres → **expédition**.
-2. Sinon : **est-ce une liste, une méthode ou une explication ?** → **fiche**, **protocole**, **concept**.
-
-**En cas de doute : carnet.** Le carnet est l'inbox du système ; on n'attend jamais de savoir où ranger pour
-écrire. Quand une entrée de carnet grossit, c'est qu'une autre sorte veut naître : on coupe, on colle dans le
-gabarit, on remplace par deux lignes et un lien.
+Mode d'emploi du modèle de contenu de `apps/site`. Décrit les sortes de contenu, leur frontmatter, le routage,
+les sections d'une aventure, les blocs réutilisables et les règles de build. Ce document n'est pas une loi :
+il décrit l'état du système, et il se corrige quand le système change.
 
 ---
 
-## 1. Où vivent les fichiers
+## 1. Les deux registres
 
-```
-apps/site/content/
-├─ bibliography.json      # les références, par clé ({{cite:millet2012}})
-├─ concepts/              # Comprendre
-├─ protocoles/            # Explorer
-├─ expeditions/           # Explorer
-├─ fiches/                # Explorer
-└─ carnets/               # Explorer
-```
+Une seule règle gouverne le classement du contenu, et elle se décide à l'écriture :
 
-Les `.md` ne vivent **pas** dans `public/` : ce qui y est déposé est servi brut, brouillons compris. Les images
-restent sous `public/images/`, les paquetages sous `public/paquetages/*.csv`, les replays sous
-`public/replays/<slug>/`, les graphes sous `public/data/plots/`.
+> **Une page Aventure est factuelle et structurée. Le Blog est narratif et chronologique.**
+>
+> Si un paragraphe apparaît dans une page Aventure, il part dans le Blog et l'aventure n'en garde qu'une ligne
+> et un lien. Si une liste de masses apparaît dans un billet, c'est un `paquetage` et il vit sur l'aventure.
 
-**La sorte vient du dossier, jamais d'un champ.** Un fichier mal rangé se voit à l'œil nu, et il n'existe aucun
-état où le dossier et le frontmatter se contredisent.
+Les deux surfaces ne peuvent donc pas contenir la même chose, et les index correspondants ne se ressemblent pas :
+l'index Aventures est une étagère (peu d'objets, grands, avec cover), l'index Blog est un registre chronologique
+dense, sans cover.
 
-**Les URL** : `/comprendre/<slug>` pour un concept, `/explorer/<slug>` pour les quatre autres sortes. Un slug est
-unique dans tout `content/`, brouillons compris — c'est ce qui permet aux relations de désigner un atome par son
-seul nom.
+Corollaire technique : **un bloc de contenu a un seul fichier source.** Tout autre emplacement affiche une carte
+qui lit l'index généré, jamais une copie du texte. Aucun contenu n'est dupliqué nulle part.
 
 ---
 
-## 2. Le frontmatter
+## 2. Les sortes de contenu
+
+Quatre sortes de pages, deux blocs qui vivent à l'intérieur des billets.
+
+| Sorte | Nature | Route |
+|---|---|---|
+| `aventure` | campagne : données, préparation, matériel, direct | `/aventures/<slug>` |
+| `recit` | le texte long d'une campagne, illustré, partageable | `/aventures/<slug-aventure>/recit` |
+| `billet` | entrée datée du carnet de bord | `/blog/<slug>` |
+| `article` | document scientifique vivant, sourcé, révisé | `/science/<slug>` |
+
+Index : `/aventures`, `/blog`, `/science`, `/labo`, `/services`.
+
+Les blocs `Note` et `Protocole` n'ont pas de page propre. Ils sont écrits à l'intérieur d'un billet et adressés par
+ancre. Voir §6.
+
+---
+
+## 3. Frontmatter
+
+Champs communs à toutes les sortes : `sorte`, `titre`, `slug`, `statut`, `chapeau`.
+
+`statut` vaut `brouillon` ou `publie`. **Le défaut est `brouillon`.** Voir §8.
+
+### aventure
 
 ```yaml
-# communs à toutes les sortes
-title: "Le froid comme stresseur"
-description: "Pourquoi une exposition dosée au froid renforce, et ce qu'elle fragilise."
-date: 2026-09-20
-published: true              # false = brouillon, jamais rendu
-cover: "/images/…"           # facultatif : sans lui, la carte est typographique
-tags: [thermique]            # libres, pour la recherche
-author: "Valentin Fer"
-
-# selon la sorte
-maturite: graine             # CONCEPT : graine | pousse | etabli
-statut: eprouve              # PROTOCOLE : en-test | eprouve | abandonne
-branche: thermique           # CONCEPT, facultatif : sa branche sur la carte
-parent: tour-des-ecrins      # FICHE : obligatoire, l'atome depuis lequel on la consulte
-archive: tour-des-ecrins     # EXPÉDITION, facultatif : le dossier de public/replays/
-
-# les relations
-concepts: [hormese]                 # protocole, expédition → les concepts éprouvés
-fiches:   [paquetage-ecrins-2026]   # expédition, protocole → les listes emportées
-lie:      [robuste-mais-fragile]    # concept ↔ concept
-origine:  staps-l2-neurosciences    # facultatif : d'où vient la matière
+sorte: aventure
+titre: "Traversée de La Réunion en autonomie"
+slug: "reunion-2025"
+statut: publie
+chapeau: "170 km et deux pitons, en autonomie complète, en sandales."
+etat: termine            # termine | en-cours | en-preparation
+campagne: { debut: 2025-09-29, fin: 2025-11-30 }
+cover: "reunion-cover.webp"
+resume:                  # chiffres affichés sur la carte d'index
+  - "170 km"
+  - "9 800 m D+"
+  - "sandales"
+recit: "ile-intense"     # slug du récit, absent s'il n'existe pas
+sections: [...]          # voir §5
 ```
 
-`maturite` est obligatoire sur un concept publié, `statut` sur un protocole publié. Un brouillon peut s'en
-passer : c'est la marche d'avant.
+### recit
 
-### Les relations, et ce qu'elles engendrent
+```yaml
+sorte: recit
+titre: "« L'île intense vous dites ? »"
+slug: "ile-intense"
+statut: publie
+date: 2025-12-09
+aventure: "reunion-2025"   # obligatoire
+cover: "pitons.webp"
+lecture: 12                # minutes
+chiffres:                  # barre de chiffres sous le titre
+  - "170 km"
+  - "9 800 m D+"
+  - "8,5 kg au départ"
+  - "0 bâton"
+```
 
-Quatre champs, quatre blocs générés. On n'écrit **jamais** un lien de contenu à la main entre deux atomes.
+### billet
 
-| Champ | Porté par | Ce qu'il affiche | Le bloc inverse |
-|---|---|---|---|
-| `concepts:` | protocole, expédition | « Ce que j'ai compris » | « Sur le terrain » sur le concept |
-| `fiches:` | expédition, protocole | « Ce que j'ai emporté » | — |
-| `parent:` | fiche | le fil d'Ariane vers l'atome parent | « Dans cette expédition » |
-| `lie:` | concept | « Motifs voisins » | réciproque, dans les deux sens |
+```yaml
+sorte: billet
+titre: "Projet OFF Monts du Lyonnais"
+slug: "monts-du-lyonnais"
+statut: publie
+date: 2026-03-14
+type: recit-de-sortie      # recit-de-sortie | bilan | billet | note-de-terrain
+chapeau: "65 km, trois gueux et de la neige."
+aventure: "vercors-2026"   # rattachement facultatif
+```
 
----
+### article
 
-## 3. Les gabarits
-
-Le gabarit n'est pas une contrainte de style, c'est l'anti-page-blanche : on remplit des cases. Les fichiers
-d'exemple sont dans `content/_gabarits/`.
-
-**Concept** — 600 à 1 500 mots ; plus court est permis pour une graine.
-
-- *En bref* — trois lignes, la réponse d'abord.
-- *Ce que j'ai observé* — le terrain, deux phrases, daté.
-- *Le mécanisme* — sourcé, avec `{{cite:cle}}`.
-- *La fenêtre de dose* — ce que le mécanisme ne dit pas, où il bascule.
-- *Ce que ça fragilise* — la contrepartie. C'est la section qui distingue un concept de robustesse d'un article
-  de vulgarisation : *robustesse de [la fonction] face à [la perturbation] au prix de [la fragilité]*.
-- *Sur le terrain* et *Motifs voisins* — **générés**, jamais écrits.
-
-**Protocole** — *En bref* · *L'hypothèse* (le concept éprouvé, via `concepts:`) · *Le protocole* (dose, fréquence,
-durée, ce qu'on regarde) · *Les observations*, datées · *Ce que ça fragilise*. Le statut est dans le frontmatter.
-Un protocole abandonné est un résultat, et se publie comme tel.
-
-**Expédition** — le *bloc technique* est généré (frontmatter + `aventure.json` de l'archive s'il existe) ; puis
-*Ce que j'ai emporté* (généré depuis `fiches:`), *le direct archivé* s'il existe, *le récit* (le texte long, tel
-que tu l'écris — il peut manquer, la page est complète sans lui), *Ce que j'ai compris* (généré), *Bilan*
-(facultatif).
-
-**Fiche** — le frontmatter, puis un `<paquetage>` ou une liste sans commentaire. Une fiche qui commente déborde
-vers le protocole.
-
-**Carnet** — un par année, entrées `### Titre` suivi de `*JJ/MM/AAAA*`. C'est ce format que le site lit pour
-afficher les dernières notes. Fermé au 31 décembre. Chaque entrée peut pointer vers l'atome qu'elle a fait naître.
-
----
-
-## 4. La maturité, et pourquoi elle débloque
-
-Trois marches publiables, à la place du « article ultra complet » qui ne sort jamais :
-
-- **Graine** — *En bref* + *Ce que j'ai observé* + un mécanisme même court + une source **ou** une position
-  assumée. Se publie.
-- **Pousse** — mécanisme sourcé (deux références au moins), *Ce que ça fragilise* rempli, et au moins un
-  protocole ou une expédition qui le cite (le bloc « Sur le terrain » n'est pas vide).
-- **Établi** — trois références au moins dont une contradictoire ou nuancée, éprouvé sur deux terrains, et la
-  fenêtre de dose est écrite.
-
-La maturité s'affiche sur chaque carte et en tête de chaque page. C'est ce qui autorise à publier une graine sans
-trahir la promesse de Comprendre : la promesse est écrite sur l'atome.
-
-Pour un protocole, le vocabulaire est celui de l'expérience : **en test**, **éprouvé**, **abandonné**. Un N = 1
-reste un N = 1 ; le statut le dit.
+```yaml
+sorte: article
+titre: "« Use it or lose it », vous êtes sûr ?"
+slug: "use-it-or-lose-it"
+statut: publie
+publie_le: 2026-02-22
+revise_le: 2026-09-03      # affiché en évidence : c'est le marqueur de Science
+themes: ["memoire-musculaire"]
+chapeau: "Ce que le muscle garde quand on arrête."
+lecture: 9
+refs: ["gundersen2016", "bonaldo2013", "encarnacao2022", "buxton2024"]
+revisions:
+  - { date: 2026-09-03, quoi: "section 3 et référence [4] ajoutées" }
+```
 
 ---
 
-## 5. Les index : deux grammaires, pas une
+## 4. Une aventure n'a pas de gabarit
 
-**Ce qui a une photo se montre en carte** : les expéditions, l'année du carnet. C'est la seule chose qu'une carte
-sait bien faire. **Ce qui n'a pas de photo se montre en registre** : concepts, protocoles, fiches, notes de carnet
-— une ligne par entrée (icône de branche, titre, « en bref », état, date), sous des titres de section. Rien n'est
-répété, aucun rectangle vide, et cinquante entrées restent lisibles.
+**Une page Aventure est une liste ordonnée de sections déclarées dans le frontmatter.** Aucune section n'est
+obligatoire, l'ordre est libre, et la liste s'allonge en cours de campagne. Il n'existe pas de gabarit par type
+d'aventure : un « template » n'est rien d'autre qu'une liste de départ qu'on modifie ensuite.
 
-**Comprendre** ouvre, quand elle est publiée, sur la page-pilier — la seule carte de l'index. Puis un registre par
-branche née : dès que **deux concepts publiés** partagent la même `branche:`, elle a son titre et son effectif.
-En dessous, ses concepts vivent sous « Dernières graines », sans branche encore. Les branches connues sont dans
-`BRANCHES` (`contentRoutes.mjs`) ; en ajouter une est un changement d'une ligne, le jour où deux concepts la
-demandent.
+Trois exemples réels, volontairement dissemblables :
 
-**Explorer** a quatre sections, dans cet ordre : **Expéditions** (cartes : photo, km, D+, durée, dates, et ce que
-la page contient), **Protocoles** (registre), **Carnet** (la carte de l'année, ses trois dernières notes en registre
-à côté, les années fermées en lien), **Fiches** (registre replié, on l'ouvre à la demande). Une section vide ne
-s'affiche pas, et son bouton de filtre non plus.
+- **Réunion** : caracteristiques, geo, preparation, paquetage, nutrition, direct, recit
+- **Costa Rica** : caracteristiques, geo, preparation, libre, libre, paquetage, nutrition, direct, recit
+- **Écrins** : caracteristiques, libre, recit
 
-**Aucune catégorie vide, jamais.** C'est la règle qui tient les deux index.
+La page à trois sections doit avoir l'air finie, pas amputée. C'est le cas de test du système.
 
-Les chiffres d'une carte d'expédition viennent du frontmatter (`distanceKm`, `deniveleM`, `duree`, `dates`) ; la
-puce d'une fiche vient de son CSV quand elle a un paquetage, du champ `valeur:` sinon ; l'icône d'un protocole
-vient de sa `branche:`, ou de celle du premier concept qu'il cite.
+Tout est saisi à la main. Aucune donnée n'est synchronisée depuis un service externe.
 
 ---
 
-## 6. Ce que le build vérifie
+## 5. Les huit types de section
 
-Ces règles font **échouer la compilation** en nommant le fichier fautif (`assertContentRules`, appelée par
-`lib/legacyRedirects.mjs`, donc par tout build) :
+### caracteristiques
+Fiche clé/valeur libre. Aucun champ imposé : Réunion déclare distance et dénivelé, Costa Rica déclare climat et
+hébergement.
 
-1. Deux fichiers ne peuvent pas produire le même slug dans tout `content/`, brouillons compris.
-2. Une fiche déclare un `parent:`, qui résout vers une expédition ou un protocole.
-3. Chaque entrée de `concepts:` et de `lie:` résout vers un concept ; chaque entrée de `fiches:` vers une fiche.
-4. Un atome **publié** ne cite jamais un brouillon dans `concepts:` ou `fiches:` — ces relations engendrent des
-   liens visibles. `parent:` y échappe : une fiche peut exister avant l'expédition qui la portera.
-5. `maturite` et `statut` appartiennent au vocabulaire de leur sorte, et sont présents sur un atome publié.
-6. `branche` appartient à la table des branches.
-7. Un alias de slug ne masque jamais un atome vivant, et mène à un atome qui existe.
-8. Toute ancre `#…` d'un contenu publié résout vers un titre du même fichier, et tout lien interne vers
-   `/comprendre/…` ou `/explorer/…` résout vers un atome ou un alias.
+```yaml
+- type: caracteristiques
+  champs:
+    - { label: "Distance", valeur: "170 km" }
+    - { label: "Appui", valeur: "Sandales, sans bâtons" }
+```
 
-C'est la contrepartie de la seule fragilité du modèle : la décision de rangement au moment d'écrire. Le build
-rattrape ce que la main a mal posé.
+### geo
+Carte plus tableau ordonné. Colonnes libres : `Trace` pour un trail (repères, km, D+ cumulé), `Itinéraire` pour un
+voyage (étapes, jours, lieu).
+
+```yaml
+- type: geo
+  titre: "Trace"
+  carte: "reunion.geojson"
+  gpx: "reunion.gpx"        # facultatif, produit le bouton de téléchargement
+  colonnes: ["Repère", "km", "D+ cumulé"]
+  lignes:
+    - ["Saint-Denis, gare", "0", "0 m"]
+```
+
+### preparation
+Quatre éléments **indépendants et tous facultatifs**. Une préparation peut n'avoir que des stresseurs.
+
+```yaml
+- type: preparation
+  graphe:                       # facultatif
+    abscisse: ["S1", "S2", "S3", "S4"]
+    series:
+      - { nom: "Distance", unite: "km", valeurs: [64, 104, 48, 117] }
+      - { nom: "Dénivelé positif", unite: "m", valeurs: [2000, 4800, 1200, 5100] }
+  seances:                      # facultatif
+    colonnes: ["Date", "Sortie", "km", "D+", "Sac", "Ce qu'on éprouvait", "Billet"]
+    lignes:
+      - ["12/10/2025", "Tour du Taillefer", "39", "2 500 m", "6 kg", "Matériel et lyophilisé", "taillefer"]
+  stresseurs:                   # facultatif
+    travailles:
+      - { nom: "Chaleur", dose: "7 jours", frequence: "quotidien", intensite: "effort léger",
+          pourquoi: "Baisser la FC à effort égal, transpirer plus tôt, boire avant la soif." }
+    non_travailles: ["Froid", "Jeûne"]
+  protocoles: ["rest-step"]     # facultatif, ids résolus dans l'index des blocs
+```
+
+La dernière colonne de `seances` contient un slug de billet, résolu en lien. Les stresseurs ont un schéma fixe :
+nom, dose, fréquence, intensité, pourquoi. `non_travailles` est un champ structuré, pas une phrase libre.
+
+### paquetage
+Référence un jeu de données de paquetage. Produit le tableau, les masses et l'export CSV.
+
+```yaml
+- type: paquetage
+  ref: "reunion-2025"
+```
+
+### nutrition
+Tableau à colonnes libres.
+
+### libre
+Section titrée acceptant texte, images et vidéos. Le corps vit dans le MDX de la page, dans un slot nommé ;
+le frontmatter ne déclare que la position et le titre.
+
+```yaml
+- type: libre
+  id: "mouvement-primal"
+  titre: "Mouvement primal"
+```
+
+```mdx
+<SectionLibre id="mouvement-primal">
+Texte, photos avec légende, et vidéos.
+</SectionLibre>
+```
+
+*Point à trancher à l'implémentation : si le setup MDX offre un idiome plus simple pour rattacher de la prose à une
+position déclarée en frontmatter, le proposer.*
+
+### direct
+Versions du live-tracking, replay, journal de bord de la campagne.
+
+### recit
+Grande carte de renvoi vers `/aventures/<slug>/recit`, même motif que les cartes de protocole. Résolue depuis le
+champ `recit` du frontmatter. Absente si le récit n'existe pas.
 
 ---
 
-## 7. Renommer, déplacer, ne jamais casser une URL
+## 6. Les blocs et l'index généré
 
-Toute adresse publiée un jour continue de répondre. Deux couches, dans `lib/legacyRedirects.mjs` :
+Deux blocs s'écrivent à l'intérieur d'un billet, dans le flux, sans changer de fichier.
 
-- les anciens rayons `/articles/<slug>` et `/projets/<slug>` répondent pour **tout** atome ;
-- la table `SLUG_ALIASES` (dans `contentRoutes.mjs`) produit trois 308 par renommage : depuis le pilier, depuis
-  `/articles`, depuis `/projets`.
+```mdx
+<Protocole id="train-low-eat-low" statut="en-test" n="1"
+  titre="Train-low, Eat-low"
+  objectif="Maximiser l'activation de l'AMPK et de PGC-1α"
+  concepts="flexibilite-metabolique,jeune-intermittent"
+  refs="marquet2016">
 
-**Quand tu renommes ou scindes un atome, ajoute son ancien slug à `SLUG_ALIASES`.** C'est le seul geste manuel du
-système, et le build refuse un alias qui ne mène nulle part.
+Footing à jeûn de 50 min avec accélérations en montée, déjeuner cétogène,
+second footing d'1 h. Recharge glucidique au dîner.
 
----
+**Sensations —** début de deuxième footing difficile, puis atténuation.
+</Protocole>
+```
 
-## 8. Les images : une photo pour ce qui en a, une ligne pour le reste
+`statut` d'un protocole : `hypothese`, `en-test`, `eprouve`, `abandonne`.
+`Note` a la même forme, sans `statut` ni `n`, et sert aux notes scientifiques sourcées.
 
-Multiplier les entrées ne doit pas multiplier les images. Le visuel est une propriété de la **sorte** :
+Les propriétés de liste s'écrivent en chaîne séparée par des virgules, jamais en accolades : une prop en accolades
+revient dans l'AST MDX sous forme de code source à évaluer.
 
-| Sorte | À l'index | Décision à l'écriture |
-|---|---|---|
-| **Expédition** | une carte, avec sa photo | choisir une photo — la seule sorte où c'est demandé |
-| **Carnet** | une carte pour l'année, avec sa photo | une fois par an |
-| **Concept**, **Protocole**, **Fiche** | une ligne de registre : icône de branche, titre, « en bref », état | aucune |
+### Extraction
 
-Rien n'est fabriqué ni versionné pour les sortes sans photo : elles n'en ont pas besoin. Aucune image de stock,
-aucune image générée.
+Un script de build parcourt tous les MDX, collecte les nœuds `Note` et `Protocole` et écrit `.generated/blocs.json` :
 
----|---|---|
-| **Expédition** | une photo | choisir une photo — la seule sorte où c'est demandé |
-| **Carnet** | une photo par année | une fois par an |
-| **Protocole** | carte typographique, teinte Explorer, badge de statut | aucune |
-| **Concept** | carte typographique, teinte Comprendre sur la grille du labo, titre en Lora italique, badge de maturité | aucune ; `cover:` reste possible |
-| **Fiche** | carte-donnée : masse totale, nombre d'éléments, parent | aucune, c'est calculé depuis le CSV |
+```json
+{
+  "type": "protocole",
+  "id": "train-low-eat-low",
+  "titre": "Train-low, Eat-low",
+  "objectif": "Maximiser l'activation de l'AMPK et de PGC-1α",
+  "statut": "en-test",
+  "n": 1,
+  "concepts": ["flexibilite-metabolique", "jeune-intermittent"],
+  "refs": ["marquet2016"],
+  "source": { "sorte": "billet", "slug": "nouveau-bloc", "titre": "Nouveau bloc d'entraînement" },
+  "url": "/blog/nouveau-bloc#protocole-train-low-eat-low",
+  "date": "2026-05-17"
+}
+```
 
-La variété vient des données, pas des images : une silhouette altimétrique pour une expédition sans photo, un
-mini-graphe pour un protocole qui a des mesures, des chiffres pour une fiche. Ce sont des images fabriquées par
-le labo à partir de ses propres mesures. Aucune image de stock, aucune image générée.
+### Résolution
 
----
+N'importe quelle page affiche un bloc par sa carte :
 
-## 9. Le miroir Obsidian
+```mdx
+<VersProtocole id="train-low-eat-low" />
+```
 
-Les mêmes cinq dossiers dans le coffre, le même frontmatter, et les wiki-liens portent les slugs
-(`[[flexibilite-metabolique]]`). Une note passe du coffre au site **par copie, sans reclassement** : la sorte est
-déjà le dossier, les relations sont déjà les liens.
+La carte lit l'index et affiche titre, objectif, statut et lien. **Elle ne recopie jamais le corps du bloc.**
+Conséquence : renommer un protocole ou changer son statut met à jour toutes ses citations sans toucher à aucune
+d'elles.
 
-Ce que le coffre a en plus, et qui ne sort jamais : `cours/` (notes de cours et de lecture, par UE et par
-chapitre) et les notes fugaces.
+### Promotion
 
-La chaîne complète : note de lecture (coffre) → entrée de carnet (site, datée) → graine → pousse → établi.
-Chaque marche est un fichier qu'on déplace, pas un texte qu'on réécrit.
-
-**Le filtre du flux STAPS** : une note de cours entre dans Comprendre quand elle répond à une question du labo,
-c'est-à-dire quand elle est reliée soit à une observation déjà écrite (le bloc « Sur le terrain » n'est pas
-vide), soit à un concept du noyau (`lie:`). Sinon elle reste dans le coffre. On écrit la graine **de mémoire**
-après le cours, on corrige contre le manuel, et on cite le manuel plutôt que le cours.
-
----
-
-## 10. Les composants disponibles dans un markdown
-
-- `{{cite:cle}}` ou `<Citation id="cle">` — une référence de `bibliography.json`, avec sa bulle et son entrée en
-  bas de page.
-- `<paquetage src="/paquetages/<slug>.csv">` — un export LighterPack rendu en tableau, avec les masses.
-- `<plot name="…" src="/data/plots/…">` et `{{fig:name}}` — un graphe et sa référence numérotée.
-- `<postlivetracking positions="/replays/<slug>/live-positions.json">` — un replay de trace figée.
-- `<livetracking referenceGpx="…">` — la variante en direct.
-- `:::split` — deux colonnes.
-- `![alt](src)` — une image ; toute image s'ouvre en taille réelle au clic.
+Quand un bloc mérite sa propre URL, son corps part dans un fichier dédié et le billet d'origine le remplace par
+`<VersProtocole id="..." />`. **Le schéma de l'index ne change pas** : seule l'`url` pointe désormais vers une page
+au lieu d'une ancre. Aucune page d'index n'est modifiée.
 
 ---
 
-## 11. Écrire un nouvel atome, en pratique
+## 7. Règles portées par le code
 
-1. Poser les deux questions du §0 ; en cas de doute, écrire dans le carnet de l'année.
-2. Créer le fichier dans le dossier de sa sorte, copier le gabarit de `content/_gabarits/`.
-3. Remplir le frontmatter — `title`, `description`, `date`, la maturité ou le statut, les relations.
-4. `pnpm -F site dev` et lire la page. `pnpm -F site build` dit ce qui manque, fichier par fichier.
-5. Si l'atome sort d'une entrée de carnet : couper le passage, le coller dans le gabarit, et laisser dans le
-   carnet deux lignes et un lien.
+Ces règles ne sont pas des consignes à retenir : elles décrivent des états que le code rend impossibles. Elles sont
+consignées ici pour expliquer pourquoi les composants sont faits ainsi.
+
+- **La numérotation des sections (01, 02, 03) et le sommaire latéral sont calculés depuis la position** dans le
+  tableau `sections`. Rien n'est écrit en dur, donc insérer une section renumérote tout.
+- **Les ancres sont dérivées du slug** de la section ou du bloc, jamais du numéro. `#preparation`, pas
+  `#03-preparation`. Insérer une section ne casse aucun lien existant.
+- **Les composants posent leurs propres ancres.** Aucune ancre n'est écrite à la main, donc aucune ne peut diverger
+  de celle que l'index calcule.
+- **Les accents de couleur sont deux jetons**, l'un pour fond sombre, l'autre pour fond clair. La combinaison
+  illisible n'existe pas.
+- **L'accroche est un composant de la charte**, en romain maigre. On ne peut pas lui appliquer un italique par
+  distraction.
+- **Les chapeaux de cartes sont en romain.** L'italique est réservé aux légendes, au bloc « Sensations » et aux
+  mentions de version du Direct.
+- **Le filtre par thème de `/science` est dérivé du contenu** et masqué tant qu'il n'existe pas au moins deux thèmes
+  contenant chacun au moins deux articles. Un thème sans article n'existe pas.
+- **L'index Blog ne rend pas de cover.** Les covers vivent sur les pages de destination.
+
+---
+
+## 8. Publication, brouillons, fixtures
+
+**Le statut par défaut d'un contenu est `brouillon`.** Une page sans `statut: publie` explicite n'est pas routée,
+n'apparaît dans aucun index et ne figure pas au sitemap. Un contenu inventé ou incomplet est donc invisible sans
+que personne ait eu à le repérer.
+
+**Les fixtures vivent dans `content/__fixtures__/`**, exclu du glob de contenu et du routage. Tout ce qui sert à
+démontrer un gabarit sans exister vraiment y va.
+
+**Une donnée manquante s'écrit `TODO` en clair.** Jamais de valeur vraisemblable : un trou visible vaut mieux
+qu'une invention plausible, qu'on ne retrouvera pas.
+
+Sur l'accueil, le bloc Aventures affiche le récit d'une campagne quand il existe, sinon la carte de la campagne.
+La carte de récit porte le nom de l'aventure en surtitre et le titre du récit en titre. L'action est « Lire le
+récit » sur une campagne terminée, « Suivre la campagne » sur une campagne en cours. Tri sur la date de l'événement
+le plus récent.
+
+---
+
+## 9. Validation au build
+
+Le build échoue, avec le message indiqué. Aucun avertissement silencieux.
+
+| Condition | Message |
+|---|---|
+| Deux blocs partagent un `id` | `id de bloc en double : "<id>" dans <fichier A> et <fichier B>` |
+| Une carte pointe vers un `id` absent de l'index | `<VersProtocole id="<id>"> dans <fichier> : aucun bloc ne porte cet id` |
+| Une clé de `refs` absente de la bibliographie | `référence inconnue : "<clé>" dans <fichier>` |
+| Un `type` de section inconnu | `type de section inconnu : "<type>" dans <fichier>` |
+| Deux sections d'une même page produisent la même ancre | `ancre en double : "<ancre>" dans <fichier>` |
+| Un `recit` pointe vers un slug inexistant | `récit introuvable : "<slug>" déclaré par <fichier>` |
+| Une `aventure` déclarée par un billet ou un récit n'existe pas | `aventure introuvable : "<slug>" déclarée par <fichier>` |
+| Une section `paquetage` référence un jeu de données absent | `paquetage introuvable : "<ref>" dans <fichier>` |
+| Un slug de billet en dernière colonne de `seances` n'existe pas | `billet introuvable : "<slug>" dans <fichier>` |
+| Un frontmatter ne valide pas son schéma Zod | message Zod, préfixé du chemin du fichier |
+
+Les schémas Zod vivent dans `packages`, pas dans `apps/site`.
+
+---
+
+## 10. Bibliographie
+
+Une source unique, clé → entrée bibliographique, avec DOI quand il existe. `refs` en frontmatter (articles) ou en
+prop (blocs) contient des clés. Les appels de référence sont numérotés par page, à l'affichage : la numérotation
+n'est jamais écrite dans le contenu, donc déplacer un bloc ne casse rien.
+
+---
+
+## 11. Migration
+
+Le journal 2026 se scinde en trois campagnes, par **intention déclarée dans le texte**, pas par chronologie :
+Vercors–Drôme, Tour des Écrins, Nice by UTMB. Le bloc d'entraînement du 17 mai vise explicitement Nice, pas les
+Écrins.
+
+Le projet Réunion se scinde en une page Aventure, un récit et des billets.
+
+Les sorties OFF (Monts du Lyonnais, Chartreuse, Aravis) sont des billets rattachés à la préparation d'une campagne,
+pas des aventures autonomes.
+
+Redirections 301 depuis `/comprendre`, `/explorer`, `/pratiquer`. Les ancres des anciennes pages ne sont pas
+conservées : un fragment d'URL n'étant pas envoyé au serveur, une 301 ne peut pas router dessus, et le contenu est
+réécrit de toute façon.
+
+Le canonical du site actuel pointe vers `thelocomotionlab.com` alors que les pages sont servies sur
+`www.thelocomotionlab.com`. Choisir une version, 301 l'autre, aligner le canonical.

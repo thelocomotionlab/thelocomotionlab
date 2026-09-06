@@ -8,13 +8,14 @@ l'histoire, jamais une loi. Une décision prise hier n'est pas un ordre pour auj
 
 ## Invariants
 
-1. **La charte vient de `packages/ui` et de nulle part ailleurs** : tokens (`theme.css`), Ubuntu + Lora, composants.
-   Aucune couleur, police, ombre ou arrondi codé en dur dans une app.
-2. **La direction artistique** : sobre, chaude, typographique. Fond crème, ocre doré, bleu-vert de Comprendre,
-   terracotta d'Explorer, grille de labo en filigrane. Le texte tutoie, en français, au registre du carnet de bord.
+1. **La charte vient de `packages/ui` et de nulle part ailleurs** : tokens (`theme.css`), Ubuntu Sans, Computer
+   Modern pour les mathématiques, composants. Aucune couleur, police, ombre ou arrondi codé en dur dans une app.
+2. **La direction artistique** : sobre, chaude, typographique. Fond crème, ocre doré, bleu-vert de Science,
+   terracotta d'Aventures, grille de labo en filigrane. Le texte tutoie, en français, au registre du carnet de bord.
    Aucune image de stock, aucune image générée par IA : des photos de Valentin, ou des visuels calculés depuis ses
    propres données (traces, profils, chiffres, paquetages).
 3. **Le site doit builder et se déployer** : `pnpm -F site build`, `lint` et `test` verts avant de proposer un merge.
+   Un contenu invalide fait échouer le build, il ne produit pas d'avertissement.
 4. **Aucun secret dans le dépôt** (`docs/secrets.md` liste ce qui est attendu en variables d'environnement).
 5. **Nouveau code en TypeScript** ; le site reste en JavaScript.
 6. **Le moteur Twin est validé empiriquement** : avant d'y toucher, lire `docs/manuel-twin.md` et suivre son protocole
@@ -27,7 +28,8 @@ l'histoire, jamais une loi. Une décision prise hier n'est pas un ordre pour auj
 - Une branche par chantier, des commits logiques. Si le chantier touche plus d'un module : un plan d'abord, le code
   après validation.
 - Mode d'emploi du dépôt : `docs/manuel-monorepo.md`. Déploiement : `docs/deploy-cloudflare.md`, `docs/runbook-vps.md`.
-- Modèle de contenu du site (cinq sortes, routage, gabarits, règles de build) : `docs/systeme-de-contenu.md`.
+- Modèle de contenu du site (les sortes, les sections, routage, gabarits, règles de build) :
+  `docs/systeme-de-contenu.md`.
 
 ## Liberté
 
