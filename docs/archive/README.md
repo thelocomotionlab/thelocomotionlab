@@ -17,3 +17,9 @@ Documents **terminés ou périmés**, conservés pour la trace (rien n'est suppr
   unique), qui a remplacé les anciens `live-runbook-ecrins.md`,
   `live-tracking-guide.md`, `live-reste-a-faire.md`, `tracking-cache.md` et
   `live-archive-schema.md`.
+
+- `audit-ux-ui-site.md`, `plan-staging.md`, `twin-review-2026-07.md` — trois chantiers terminés,
+  archivés le 4 septembre 2026.
+
+- `revue-integrale-2026-07/` — le dossier de travail de la revue de code complète de juillet 2026
+  (README + constats). Ses correctifs sont appliqués ; le dossier reste comme trace.
