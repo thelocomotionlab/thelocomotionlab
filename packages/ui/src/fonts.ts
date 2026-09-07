@@ -1,17 +1,18 @@
 // packages/ui/src/fonts.ts
 //
-// LA POLICE DE LA CHARTE, désormais unique : Ubuntu Sans partout, en variable
-// 300 → 800, romain et italique. Ubuntu Sans Mono ne sert qu'aux étiquettes en
-// petites capitales (surtitres, méta, numéros) — la voix « instrument ».
+// LA POLICE DE LA CHARTE, unique : Ubuntu Sans partout, en variable 300 → 800,
+// romain et italique. Titres, corps et étiquettes en petites capitales sortent
+// de la même fonte ; ce sont la graisse, la casse et l'interlettrage qui les
+// distinguent, pas une seconde famille.
 //
-// Auto-hébergées via next/font/local : les woff2 officiels (sous-ensemble
-// latin, Ubuntu Font Licence) vivent dans src/fonts/, plus aucune dépendance à
-// Google Fonts au build, qui échouait silencieusement.
+// Auto-hébergée via next/font/local : le woff2 officiel (sous-ensemble latin,
+// Ubuntu Font Licence) vit dans src/fonts/, plus aucune dépendance à Google
+// Fonts au build, qui échouait silencieusement.
 //
-// Les apps posent `ubuntuSans.variable` / `ubuntuSansMono.variable` sur <body> ;
-// les variables --next-font-* sont référencées par les tokens @theme.
-// ⚠ Ces variables ne doivent JAMAIS s'appeler --font-* : ce nom entrerait en
-// collision avec les tokens Tailwind (auto-référence).
+// Les apps posent `fontVariables` sur <body> ; la variable --next-font-* est
+// référencée par les tokens @theme.
+// ⚠ Elle ne doit JAMAIS s'appeler --font-* : ce nom entrerait en collision
+// avec les tokens Tailwind (auto-référence).
 
 import localFont from "next/font/local";
 
@@ -24,11 +25,5 @@ export const ubuntuSans = localFont({
   display: "swap",
 });
 
-export const ubuntuSansMono = localFont({
-  src: [{ path: "./fonts/ubuntu-sans-mono-400-700-normal.woff2", weight: "400 700", style: "normal" }],
-  variable: "--next-font-ubuntu-mono",
-  display: "swap",
-});
-
 /** Classes des variables de police à poser sur <body> (ou <html>). */
-export const fontVariables = `${ubuntuSans.variable} ${ubuntuSansMono.variable}`;
+export const fontVariables = ubuntuSans.variable;

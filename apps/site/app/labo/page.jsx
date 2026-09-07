@@ -29,7 +29,6 @@ const COORDONNEES = [
     valeur: "@valent1.fer",
     href: "https://www.instagram.com/valent1.fer",
   },
-  { libelle: "Délai de réponse", valeur: "Quelques jours." },
 ];
 
 const SECTIONS = [
@@ -113,6 +112,7 @@ export default function LaboPage() {
               </p>
               <div className="min-w-[17rem] flex-1">
                 <EmailCapture
+                  variant="ligne"
                   title={null}
                   description={null}
                   source="labo-quete"
@@ -136,6 +136,7 @@ export default function LaboPage() {
               </p>
               <div className="min-w-[17rem] flex-1">
                 <EmailCapture
+                  variant="ligne"
                   title={null}
                   description={null}
                   source="labo-apropos"

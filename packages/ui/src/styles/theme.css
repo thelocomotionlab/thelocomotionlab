@@ -87,21 +87,21 @@
   /* Variante sur lavis bleu (section Comprendre de l'accueil) */
   --background-image-lab-grid-blue: linear-gradient(
       to right,
-      rgba(91, 130, 134, 0.16) 1px,
+      rgba(91, 130, 134, 0.26) 1px,
       transparent 1px
     ),
     linear-gradient(
       to bottom,
-      rgba(91, 130, 134, 0.16) 1px,
+      rgba(91, 130, 134, 0.26) 1px,
       transparent 1px
     );
   /* Le voile terracotta posé sur la photo du bloc Aventures : opaque à gauche,
      où se lit le texte, transparent à droite, où la photo respire. */
   --background-image-voile-aventures: linear-gradient(
-    90deg,
-    rgba(118, 64, 38, 0.94) 0%,
-    rgba(118, 64, 38, 0.78) 55%,
-    rgba(118, 64, 38, 0.5) 100%
+    100deg,
+    rgba(64, 36, 20, 0.92) 0%,
+    rgba(90, 52, 30, 0.72) 48%,
+    rgba(90, 52, 30, 0.3) 100%
   );
   --text-xxs: 0.625rem;
   /* Le corps mono des pages de contenu : méta d'un bloc, numéro de section,
@@ -125,7 +125,10 @@
 
 /* Police (liée à next/font via packages/ui/src/fonts.ts).
    UNE SEULE famille : Ubuntu Sans, en variable 300 → 800, romain et italique.
-   Ubuntu Sans Mono ne sert qu'aux étiquettes en petites capitales.
+   Les trois jetons pointent tous vers elle — `--font-mono` compris : les
+   étiquettes en petites capitales se distinguent par la casse, la graisse et
+   l'interlettrage, pas par une seconde fonte. Le jeton reste, parce que les
+   composants l'appellent pour dire « ceci est une étiquette ».
    Deux impératifs, appris à la dure :
    ⚠ 1) OBLIGATOIREMENT en @theme inline : les variables --next-font-* sont
    posées par next/font sur <body>, pas sur :root. Un @theme classique résout
@@ -140,5 +143,5 @@
 @theme inline {
   --font-heading: var(--next-font-ubuntu), ui-sans-serif, system-ui;
   --font-sans: var(--next-font-ubuntu), ui-sans-serif, system-ui;
-  --font-mono: var(--next-font-ubuntu-mono), ui-monospace, SFMono-Regular, monospace;
+  --font-mono: var(--next-font-ubuntu), ui-sans-serif, system-ui;
 }

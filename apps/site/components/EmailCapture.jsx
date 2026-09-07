@@ -40,6 +40,11 @@ export default function EmailCapture({
   variant = "default",
 }) {
   const isBand = variant === "band";
+  // `ligne` : mêmes couleurs que la variante par défaut, mais posée dans une
+  // rangée à côté d'un intitulé — la zone de statut y sort du flux, comme
+  // dans la bande, sinon elle décale le champ par rapport à l'intitulé.
+  const isLigne = variant === "ligne";
+  const statutHorsFlux = isBand || isLigne;
   const [email, setEmail] = useState("");
   const [website, setWebsite] = useState(""); // honeypot
   const [status, setStatus] = useState("idle");
@@ -81,7 +86,7 @@ export default function EmailCapture({
   return (
     // `relative` en variante bande : la zone de statut y est sortie du flux
     // (voir plus bas), et il lui faut un ancrage.
-    <div className={`${isBand ? "relative" : ""} ${className}`}>
+    <div className={`${statutHorsFlux ? "relative" : ""} ${className}`}>
       {title ? (
         <h4 className="text-lg font-semibold mb-2 text-brand-accent-ink text-center">
           {title}
@@ -97,7 +102,7 @@ export default function EmailCapture({
       <form
         onSubmit={handleSubmit}
         className={
-          isBand
+          statutHorsFlux
             ? "flex flex-col sm:flex-row items-stretch gap-2 w-full"
             : "flex flex-col sm:flex-row justify-center items-stretch gap-2 w-full max-w-md mx-auto"
         }
@@ -171,7 +176,7 @@ export default function EmailCapture({
       <div
         id={statusId}
         className={`min-h-6 mt-2 text-center ${
-          isBand ? "md:absolute md:inset-x-0 md:top-full md:mt-1.5" : ""
+          statutHorsFlux ? "md:absolute md:inset-x-0 md:top-full md:mt-1.5" : ""
         }`}
         aria-live="polite"
         aria-atomic="true"

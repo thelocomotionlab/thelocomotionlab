@@ -210,11 +210,7 @@ function policesDuSite() {
   return {
     sans: st.fontFamily || "sans-serif",
     serif: famille("--next-font-ubuntu", "--font-sans", "ui-sans-serif, system-ui"),
-    mono: famille(
-      "--next-font-ubuntu-mono",
-      "--font-mono",
-      "ui-monospace, monospace",
-    ),
+    mono: famille("--next-font-ubuntu", "--font-mono", "ui-sans-serif, system-ui"),
   };
 }
 

@@ -112,8 +112,8 @@ function AccordeonItem({ verb, suite, texte }) {
 
 export default function PhilosophieSection() {
   return (
-    <section className="mx-auto max-w-[1180px] bg-brand-bg px-6 pt-14 md:px-8 md:pt-24">
-      <div>
+    <section className="bg-brand-bg px-[26px] pb-12 pt-14 md:px-16 md:pb-[84px] md:pt-24">
+      <div className="mx-auto max-w-6xl">
         <h2 className="text-center font-heading text-[28px] font-bold tracking-[-0.015em] text-brand-slate-dark md:text-[40px]">
           La philosophie du lab
         </h2>

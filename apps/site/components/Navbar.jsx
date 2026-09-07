@@ -2,12 +2,13 @@
 
 // components/Navbar.jsx
 //
-// LA NAVBAR DE LA MAQUETTE v6.
+// LA NAVBAR.
 //
-// Bandeau collant translucide, 72 px, en trois colonnes : la marque à gauche
-// (le sceau puis le nom en petites capitales espacées), les cinq index au
-// centre, la recherche à droite. L'entrée active porte un filet sous le
-// libellé — c'est le seul marqueur, il n'y a pas d'icône.
+// Bandeau collant translucide, pleine largeur : la marque calée sur le bord
+// gauche, les cinq index centrés sur la page (pas sur l'espace restant — d'où
+// le positionnement absolu), la recherche sur le bord droit. L'entrée active
+// porte un filet sous le libellé — c'est le seul marqueur, il n'y a pas
+// d'icône.
 //
 // L'entrée « Live » est la seule exception à ces cinq liens : elle n'apparaît
 // que dans la fenêtre d'une aventure en cours, et s'efface d'elle-même.
@@ -84,81 +85,84 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-brand-hairline bg-white/92 backdrop-blur-[8px]">
-      <div className="mx-auto grid h-18 max-w-[1180px] grid-cols-[1fr_auto] items-center gap-8 px-6 md:grid-cols-[1fr_auto_1fr] md:px-8">
-        <Link
-          href="/"
-          aria-label="Accueil"
-          className="inline-flex items-center gap-3.5 justify-self-start text-brand-text no-underline transition-colors hover:text-brand-deep-dark"
+    <header className="sticky top-0 z-50 flex items-center justify-between border-b border-brand-hairline bg-white/92 p-4 backdrop-blur-[8px]">
+      <Link
+        href="/"
+        aria-label="Accueil"
+        className="inline-flex items-center gap-3.5 text-brand-text no-underline transition-colors hover:text-brand-deep-dark"
+      >
+        <Image
+          src="/images/assets/logo-mark.png"
+          alt=""
+          width={96}
+          height={96}
+          priority
+          className="h-12 w-12 flex-none"
+        />
+        <span className="whitespace-nowrap pt-px font-heading text-base font-semibold uppercase tracking-[0.24em]">
+          Locomotion Lab
+        </span>
+      </Link>
+
+      {/* Centré sur la PAGE : `justify-between` centrerait la nav sur ce qui
+          reste entre la marque et la recherche, qui n'ont pas la même largeur. */}
+      <nav
+        aria-label="Navigation principale"
+        className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex"
+      >
+        {items.map(({ href, label, live }) => {
+          const active = isActivePath(pathname, href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active ? "page" : undefined}
+              className={`inline-flex items-center gap-1.5 border-b-2 py-1.5 font-heading text-[17px] font-medium no-underline transition-colors hover:text-brand-accent-ink ${
+                active
+                  ? "border-brand-deep text-brand-deep"
+                  : "border-transparent text-brand-text"
+              }`}
+            >
+              {live ? (
+                <SatelliteDish className="h-4 w-4 text-brand-deep-dark" aria-hidden="true" />
+              ) : null}
+              {label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="ml-auto flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => setSearchOpen((ouvert) => !ouvert)}
+          aria-label="Rechercher"
+          aria-expanded={searchOpen}
+          title="Rechercher"
+          className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-brand-text transition-colors hover:bg-brand-grid hover:text-brand-deep-dark"
         >
-          <Image
-            src="/images/assets/logo-mark.png"
-            alt=""
-            width={80}
-            height={80}
-            priority
-            className="h-10 w-10 flex-none"
-          />
-          <span className="whitespace-nowrap pt-px font-heading text-sm font-semibold uppercase tracking-[0.24em]">
-            Locomotion Lab
-          </span>
-        </Link>
+          <Search className="h-[22px] w-[22px]" strokeWidth={1.8} aria-hidden="true" />
+        </button>
 
-        <nav aria-label="Navigation principale" className="hidden gap-7 md:flex">
-          {items.map(({ href, label, live }) => {
-            const active = isActivePath(pathname, href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                aria-current={active ? "page" : undefined}
-                className={`inline-flex items-center gap-1.5 border-b-2 py-1.5 font-heading font-medium no-underline transition-colors hover:text-brand-accent-ink ${
-                  active
-                    ? "border-brand-deep text-brand-deep"
-                    : "border-transparent text-brand-text"
-                }`}
-              >
-                {live ? (
-                  <SatelliteDish className="h-4 w-4 text-brand-deep-dark" aria-hidden="true" />
-                ) : null}
-                {label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="flex items-center justify-end gap-1 justify-self-end">
-          <button
-            type="button"
-            onClick={() => setSearchOpen((ouvert) => !ouvert)}
-            aria-label="Rechercher"
-            aria-expanded={searchOpen}
-            title="Rechercher"
-            className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-brand-text transition-colors hover:bg-brand-grid hover:text-brand-deep-dark"
-          >
-            <Search className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
-          </button>
-
-          <button
-            ref={burgerRef}
-            type="button"
-            onClick={() => setMenuOpen((ouvert) => !ouvert)}
-            aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
-            aria-expanded={menuOpen}
-            className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-brand-text transition-colors hover:bg-brand-grid md:hidden"
-          >
-            {menuOpen ? (
-              <X className="h-5 w-5" aria-hidden="true" />
-            ) : (
-              <Menu className="h-5 w-5" aria-hidden="true" />
-            )}
-          </button>
-        </div>
+        <button
+          ref={burgerRef}
+          type="button"
+          onClick={() => setMenuOpen((ouvert) => !ouvert)}
+          aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+          aria-expanded={menuOpen}
+          className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-brand-text transition-colors hover:bg-brand-grid md:hidden"
+        >
+          {menuOpen ? (
+            <X className="h-[22px] w-[22px]" aria-hidden="true" />
+          ) : (
+            <Menu className="h-[22px] w-[22px]" aria-hidden="true" />
+          )}
+        </button>
       </div>
 
       {searchOpen ? (
-        <div className="border-t border-brand-hairline bg-white/95">
-          <form onSubmit={submitSearch} className="mx-auto flex max-w-[1180px] gap-2 px-6 py-3 md:px-8">
+        <div className="absolute inset-x-0 top-full border-t border-brand-hairline bg-white/95">
+          <form onSubmit={submitSearch} className="flex gap-2 p-4">
             <input
               ref={searchRef}
               type="search"
@@ -182,9 +186,9 @@ export default function Navbar() {
       {menuOpen ? (
         <nav
           aria-label="Navigation principale"
-          className="border-t border-brand-hairline bg-white/95 md:hidden"
+          className="absolute inset-x-0 top-full border-t border-brand-hairline bg-white/95 md:hidden"
         >
-          <ul className="m-0 list-none px-6 py-2">
+          <ul className="m-0 list-none px-4 py-2">
             {items.map(({ href, label }) => (
               <li key={href}>
                 <Link

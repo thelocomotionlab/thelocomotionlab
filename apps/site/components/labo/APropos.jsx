@@ -27,7 +27,7 @@ export function PortraitDeValentin() {
 
 export default function APropos() {
   return (
-    <div className="max-w-[38em] space-y-[1.1em] font-sans text-lecture leading-[1.7] text-brand-ink hyphens-auto [text-wrap:pretty]">
+    <div className="max-w-[38em] font-sans text-lecture leading-[1.7] text-brand-ink hyphens-auto [text-wrap:pretty] [&>p+p]:mt-[1.1em]">
       <p className="m-0">
         Ingénieur et docteur en mécanique des fluides, je pratique la course à pieds minimaliste
         depuis 2020. À l&apos;issue de ma thèse début 2023 (
@@ -67,7 +67,7 @@ export default function APropos() {
         d&apos;exploration et de partage centré autour de toutes les pratiques et découvertes qui
         m&apos;animent au quotidien.
       </p>
-      <p className="m-0 pt-2 text-right font-sans text-2xl font-light not-italic text-brand-deep-dark">
+      <p className="m-0 mt-[1.6em]! text-right font-sans text-2xl font-light not-italic text-brand-deep-dark">
         Valentin
       </p>
     </div>

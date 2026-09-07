@@ -184,7 +184,9 @@ export default async function HomePage() {
   const dernieresEntrees = entreesDuBlog().slice(0, 4);
 
   return (
-    <div>
+    // -mb-12 : annule le mt-12 du Footer partagé pour que la bande email
+    // touche directement le footer, sans impacter les autres pages.
+    <div className="-mb-12">
       <Script
         id="json-ld-sitelinks"
         type="application/ld+json"
@@ -193,7 +195,7 @@ export default async function HomePage() {
 
       {/* ── HERO — gabarit et ton de l'ancienne accueil : overlay léger
              uniforme, texte modeste, bloc calé vers le bas ───────────── */}
-      <section className="relative grid min-h-[600px] place-items-center overflow-hidden px-6 py-16 text-center md:px-8 md:py-24">
+      <section className="relative grid min-h-[70vh] place-items-end overflow-hidden pb-12 pt-10 text-center sm:min-h-[68vh] sm:pb-16 sm:pt-14 md:pb-20 md:pt-16">
         <Image
           src={hero.src}
           alt={hero.alt}
@@ -205,25 +207,25 @@ export default async function HomePage() {
         />
         <div className="absolute inset-0 bg-black/35" aria-hidden="true" />
 
-        <div className="relative z-10 mx-auto w-full max-w-[880px]">
-          <h1 className="font-heading text-[30px] font-bold leading-[1.15] text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.4)] sm:text-[36px] md:text-[44px]">
+        <div className="relative z-10 mx-auto w-full max-w-4xl px-4 sm:px-6">
+          <h1 className="font-heading text-2xl font-bold leading-tight text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.4)] sm:text-3xl md:text-4xl">
             {/* Une SEULE phrase, coupée en deux lignes : le <span> est donc
                 légitime ici (contrairement aux taglines de PageHeader). Le
                 {" "} explicite est indispensable — sans lui, le H1 extrait
                 vaut « …scientifique,l'utiliser… » (audit des titres, 08/2026). */}
             Comprendre le corps comme un scientifique,{" "}
-            <span className="mt-2 block font-sans text-[24px] font-light not-italic leading-snug tracking-[0.012em] text-brand-accent-light sm:text-[29px] md:text-[34px]">
+            <span className="mt-1.5 block font-sans text-[21px] font-light not-italic leading-snug tracking-[0.012em] text-brand-accent-light sm:text-[26px] md:text-[30px]">
               l&rsquo;utiliser comme un animal.
             </span>
           </h1>
-          <p className="mx-auto mt-6 max-w-[640px] text-[17px] leading-[1.55] text-white text-pretty md:text-[19px]">
+          <p className="mx-auto mt-4 max-w-[680px] text-base leading-relaxed text-white/90 text-pretty sm:text-lg">
             Explorer la robustesse physiologique comme instrument de confiance
             en soi, force et bien-être.
           </p>
-          <div className="mt-[34px] flex items-center justify-center">
+          <div className="mt-8 flex items-center justify-center">
             <Link
               href="/labo#labo-quete"
-              className="inline-block rounded-full bg-brand-accent px-[30px] py-3.5 font-semibold text-white shadow-cta transition hover:bg-brand-accent-dark"
+              className="inline-block rounded-full bg-brand-accent px-6 py-3 font-semibold text-white shadow transition hover:bg-brand-accent-dark"
             >
               La quête du labo
             </Link>
@@ -237,25 +239,25 @@ export default async function HomePage() {
       {/* ── 01 · SCIENCE — lavis bleu + registre des articles ─────── */}
       <section
         id="science"
-        className="scroll-mt-20 bg-brand-mist bg-lab-grid-blue px-6 py-14 [background-size:32px_32px] md:px-8 md:py-[88px]"
+        className="scroll-mt-20 bg-brand-wash bg-lab-grid-blue px-6 py-11 [background-size:28px_28px] md:px-16 md:py-24 md:[background-size:32px_32px]"
       >
-        <div className="mx-auto grid max-w-[1180px] grid-cols-1 items-center gap-10 md:grid-cols-2 md:gap-16">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:gap-16">
           <div>
-            <h2 className="font-heading text-[40px] font-bold leading-none tracking-[-0.02em] text-brand-slate-dark md:text-[60px]">
+            <h2 className="font-heading text-[40px] font-bold leading-none tracking-[-0.02em] text-brand-slate-dark md:text-[64px]">
               Science
             </h2>
             <Accroche>Creuser la science derrière les concepts.</Accroche>
-            <p className="mt-[22px] max-w-[48ch] text-lecture leading-[1.65] text-brand-ink text-pretty">
+            <p className="mt-5 max-w-[460px] text-[16.5px] leading-[1.7] text-brand-ink text-pretty">
               Des articles de fond, sourcés et accessibles, qui décortiquent ce
-              qui rend un corps capable d&rsquo;encaisser, de s&rsquo;adapter
-              et de durer, puis le traduisent en pratiques concrètes,
-              éprouvées sur le terrain.
+              qui rend un corps capable d&rsquo;encaisser, de s&rsquo;adapter et
+              de durer, puis le traduisent en pratiques concrètes, éprouvées sur
+              le terrain.
             </p>
             {/* Desktop : CTA dans la colonne texte ; mobile : sous le
                 registre (dupliqué ci-dessous). */}
             <Link
               href="/science"
-              className="mt-[30px] hidden rounded-full bg-brand-accent px-7 py-3 text-[15px] font-semibold text-white shadow-cta transition hover:bg-brand-accent-dark md:inline-block"
+              className="mt-7 hidden rounded-full bg-brand-accent px-[26px] py-3 text-[15.5px] font-semibold text-white shadow-cta transition hover:bg-brand-accent-dark md:inline-block"
             >
               Voir tout
             </Link>
@@ -266,7 +268,7 @@ export default async function HomePage() {
           <div className="-mt-4 md:hidden">
             <Link
               href="/science"
-              className="inline-block rounded-full bg-brand-accent px-7 py-3 text-[15px] font-semibold text-white shadow-cta transition hover:bg-brand-accent-dark"
+              className="inline-block rounded-full bg-brand-accent px-[26px] py-3 text-[15.5px] font-semibold text-white shadow-cta transition hover:bg-brand-accent-dark"
             >
               Voir tout
             </Link>
@@ -277,7 +279,7 @@ export default async function HomePage() {
       {/* ── 02 · AVENTURES — photo + cartes de campagne ───────────── */}
       <section
         id="aventures"
-        className="relative scroll-mt-20 overflow-hidden px-6 py-14 text-white md:px-8 md:pb-[72px] md:pt-[88px]"
+        className="relative scroll-mt-20 overflow-hidden px-6 py-11 text-white md:px-16 md:pb-[88px] md:pt-24"
       >
         <Image
           src="/images/heroes/explorer-dolomites.webp"
@@ -287,21 +289,24 @@ export default async function HomePage() {
           className="object-cover"
           style={{ objectPosition: "55% 38%" }}
         />
-        <div className="absolute inset-0 bg-voile-aventures" aria-hidden="true" />
+        <div
+          className="absolute inset-0 bg-voile-aventures"
+          aria-hidden="true"
+        />
 
-        <div className="relative z-[2] mx-auto max-w-[1180px]">
-          <h2 className="font-heading text-[40px] font-bold leading-none tracking-[-0.02em] text-white md:text-[60px]">
+        <div className="relative z-[2] mx-auto max-w-6xl">
+          <h2 className="font-heading text-[40px] font-bold leading-none tracking-[-0.02em] text-white md:text-[64px]">
             Aventures
           </h2>
           <Accroche teinte="clair">Être son propre laboratoire.</Accroche>
-          <p className="mt-[22px] max-w-[54ch] text-lecture leading-[1.65] text-white text-pretty">
+          <p className="mt-[18px] max-w-[520px] text-[16.5px] leading-[1.7] text-white/88 text-pretty">
             Récits d&rsquo;aventures et projets au long cours : explorations en
-            autonomie, saisons de trail, expérimentations. Ici,
-            la robustesse se développe, s&rsquo;éprouve et s&rsquo;affine.
+            autonomie, saisons de trail, expérimentations. Ici, la robustesse se
+            développe, s&rsquo;éprouve et s&rsquo;affine.
           </p>
 
           {cartesDAventure.length > 0 ? (
-            <div className="mt-8 grid gap-5 md:mt-11 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 grid gap-5 md:mt-[38px] md:grid-cols-2 lg:grid-cols-3">
               {cartesDAventure.map((carte) => (
                 <CarteDAccueil key={carte.url} carte={carte} />
               ))}
@@ -311,7 +316,7 @@ export default async function HomePage() {
           <div className="mt-9 flex flex-wrap items-center gap-8">
             <Link
               href="/aventures"
-              className="inline-block rounded-full border border-white/75 px-[26px] py-[11px] text-[15px] font-semibold text-white transition hover:bg-white hover:text-brand-deep"
+              className="inline-block rounded-full border-[1.5px] border-white/70 px-[26px] py-3 text-[15.5px] font-semibold text-white transition hover:bg-white hover:text-brand-deep-dark"
             >
               Voir tout
             </Link>
@@ -320,50 +325,52 @@ export default async function HomePage() {
       </section>
 
       {/* ── 03 · BLOG — les dernières entrées du carnet ────────────── */}
-      <section id="blog" className="mx-auto max-w-[1180px] scroll-mt-20 px-6 pt-14 md:px-8 md:pt-[88px]">
-        <div className="grid items-start gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] md:gap-16">
-          <div>
-            <h2 className="font-heading text-[40px] font-bold leading-none tracking-[-0.02em] md:text-[60px]">
-              Blog
-            </h2>
-            <Accroche>Le carnet de bord, au jour le jour.</Accroche>
-            <p className="mt-[22px] max-w-[40ch] text-lecture leading-[1.65] text-brand-ink text-pretty">
-              Sorties, bilans, billets et notes de terrain : ce qui se passe au
-              labo cette semaine, protocoles en cours compris.
-            </p>
-            <Link
-              href="/blog"
-              className="mt-[30px] inline-block rounded-full border border-brand-text px-[26px] py-[11px] text-[15px] font-semibold text-brand-text transition hover:bg-brand-text hover:text-brand-bg"
-            >
-              Voir tout
-            </Link>
-          </div>
-
-          <div className="border-t-[1.5px] border-brand-text">
-            {dernieresEntrees.map((entree) => (
+      <section id="blog" className="scroll-mt-20 px-6 pt-11 md:px-16 md:pt-24">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid items-start gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] md:gap-16">
+            <div>
+              <h2 className="font-heading text-[40px] font-bold leading-none tracking-[-0.02em] md:text-[64px]">
+                Blog
+              </h2>
+              <Accroche>Le carnet de bord, au jour le jour.</Accroche>
+              <p className="mt-5 max-w-[40ch] text-[16.5px] leading-[1.7] text-brand-ink text-pretty">
+                Sorties, bilans, billets et notes de terrain : ce qui se passe
+                au labo cette semaine, protocoles en cours compris.
+              </p>
               <Link
-                key={entree.url}
-                href={entree.url}
-                className="grid grid-cols-[100px_minmax(0,1fr)] items-baseline gap-x-5 border-b border-brand-hairline py-4 text-brand-text no-underline transition-colors hover:text-brand-accent-ink sm:grid-cols-[100px_minmax(0,1fr)_auto]"
+                href="/blog"
+                className="mt-7 inline-block rounded-full border border-brand-text px-[26px] py-3 text-[15.5px] font-semibold text-brand-text transition hover:bg-brand-text hover:text-brand-bg"
               >
-                <span className="font-mono text-[12.5px] text-brand-muted tabular-nums">
-                  {entree.dateLisible}
-                </span>
-                <span className="min-w-0">
-                  <span className="block font-heading text-lecture font-semibold leading-[1.3]">
-                    {entree.titre}
-                  </span>
-                  {entree.chapeau ? (
-                    <span className="mt-1 block text-[15px] leading-normal text-brand-soft [text-wrap:pretty]">
-                      {entree.chapeau}
-                    </span>
-                  ) : null}
-                </span>
-                <span className="col-start-2 mt-1 whitespace-nowrap font-mono text-xxs font-semibold uppercase tracking-lien text-brand-muted sm:col-start-3 sm:mt-0">
-                  {entree.typeLabel}
-                </span>
+                Voir tout
               </Link>
-            ))}
+            </div>
+
+            <div className="border-t-[1.5px] border-brand-text">
+              {dernieresEntrees.map((entree) => (
+                <Link
+                  key={entree.url}
+                  href={entree.url}
+                  className="grid grid-cols-[100px_minmax(0,1fr)] items-baseline gap-x-5 border-b border-brand-hairline py-4 text-brand-text no-underline transition-colors hover:text-brand-accent-ink sm:grid-cols-[100px_minmax(0,1fr)_auto]"
+                >
+                  <span className="font-mono text-[12.5px] text-brand-muted tabular-nums">
+                    {entree.dateLisible}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block font-heading text-lecture font-semibold leading-[1.3]">
+                      {entree.titre}
+                    </span>
+                    {entree.chapeau ? (
+                      <span className="mt-1 block text-[15px] leading-normal text-brand-soft [text-wrap:pretty]">
+                        {entree.chapeau}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="col-start-2 mt-1 whitespace-nowrap font-mono text-xxs font-semibold uppercase tracking-lien text-brand-muted sm:col-start-3 sm:mt-0">
+                    {entree.typeLabel}
+                  </span>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -374,9 +381,9 @@ export default async function HomePage() {
       {/* ── Capture email — bande accent ────────────────────────────── */}
       <section
         id="email"
-        className="mt-[72px] scroll-mt-24 bg-brand-accent px-6 py-11 md:px-8"
+        className="scroll-mt-24 bg-brand-accent px-6 py-11 md:px-16"
       >
-        <div className="mx-auto flex max-w-[1000px] flex-col gap-6 md:flex-row md:items-center md:justify-between md:gap-8">
+        <div className="mx-auto flex max-w-[1000px] flex-col gap-6 md:flex-row md:items-center md:justify-between md:gap-10">
           <div>
             <p className="font-heading text-[21px] font-bold leading-[1.3] text-white">
               Recevoir les nouveautés du labo
