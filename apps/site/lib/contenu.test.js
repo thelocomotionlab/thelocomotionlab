@@ -55,11 +55,17 @@ describe("l'aventure à trois sections", () => {
   });
 
   it("garde ses ancres quand une section s'insère en tête", () => {
+    // Les ancres attendues sont écrites en littéraux : comparer deux appels de
+    // la même fonction passerait même si elle rendait partout la même chaîne.
+    const ANCRES = ["caracteristiques", "genese-et-preparatifs", "paquetage"];
+
     const avant = numeroterSections(ecrins().sections);
     const apres = numeroterSections([{ type: "direct" }, ...ecrins().sections]);
 
-    expect(apres.slice(1).map((s) => s.ancre)).toEqual(avant.map((s) => s.ancre));
-    expect(apres.slice(1).map((s) => s.numero)).not.toEqual(avant.map((s) => s.numero));
+    expect(avant.map((s) => s.ancre)).toEqual(ANCRES);
+    expect(apres.map((s) => s.ancre)).toEqual(["direct", ...ANCRES]);
+    expect(avant.map((s) => s.numero)).toEqual(["01", "02", "03"]);
+    expect(apres.map((s) => s.numero)).toEqual(["01", "02", "03", "04"]);
   });
 });
 

@@ -12,15 +12,21 @@
 // par rehype-raw, composant dans un .mdx) donnent ici le même résultat, ce qui
 // laisse le choix du pipeline de rendu ouvert.
 //
-// Ce qui est ignoré : tout ce qui est dans un bloc de code (``` ou ~~~), dans
-// du code en ligne (`…`) ou dans un commentaire HTML. La documentation cite les
-// balises dans des blocs de code, et le carnet garde de vieux passages en
-// commentaire ; le contenu, lui, les écrit dans le flux.
+// Ce qui est ignoré : les quatre formes de code de Markdown (clôturé par ``` ou
+// ~~~, indenté de quatre espaces, en ligne entre backticks) et les commentaires
+// HTML. La documentation cite les balises dans des blocs de code, et le carnet
+// garde de vieux passages en commentaire ; le contenu, lui, les écrit dans le
+// flux.
 
 import { BALISES_DE_BLOC, BALISE_DE_CARTE } from "./blocs.ts";
 import type { TypeBloc } from "./blocs.ts";
 
-export type BalisePosition = { debut: number; fin: number; ligne: number };
+export type BalisePosition = {
+  debut: number;
+  fin: number;
+  /** Ligne dans le corps reçu, frontmatter non compris. */
+  ligne: number;
+};
 
 export type BlocBrut = {
   type: TypeBloc;
@@ -39,8 +45,12 @@ export type ResultatExtraction = {
 };
 
 /**
- * Remplace les zones de code par des espaces de même longueur : les décalages
- * restent valides, et rien de ce qui s'y trouve n'est pris pour une balise.
+ * Remplace les zones de code et les commentaires par des espaces de même
+ * longueur : les décalages restent valides, et rien de ce qui s'y trouve n'est
+ * pris pour une balise.
+ *
+ * L'ordre compte. Le code passe avant les commentaires, sans quoi un `<!--`
+ * cité entre backticks ouvrirait un commentaire qui n'existe pas.
  */
 function masquerLeCode(texte: string): string {
   const masque = texte.split("");
@@ -50,7 +60,8 @@ function masquerLeCode(texte: string): string {
     }
   };
 
-  // Blocs délimités par ``` ou ~~~ en début de ligne.
+  // 1. Blocs délimités par ``` ou ~~~ en début de ligne. Une clôture jamais
+  //    refermée court jusqu'à la fin, comme en Markdown.
   const cloture = /^[ \t]{0,3}(`{3,}|~{3,})[^\n]*$/gm;
   let ouverture: RegExpExecArray | null = null;
   let correspondance: RegExpExecArray | null;
@@ -64,23 +75,53 @@ function masquerLeCode(texte: string): string {
       ouverture = null;
     }
   }
-  // Bloc de code jamais refermé : on masque jusqu'à la fin.
   if (ouverture !== null) effacer(ouverture.index, texte.length);
 
-  // Commentaires HTML : le carnet en garde de vieux passages, balises comprises.
-  const commentaire = /<!--[\s\S]*?-->/g;
-  let commente: RegExpExecArray | null;
-  const sansCode = masque.join("");
-  while ((commente = commentaire.exec(sansCode)) !== null) {
-    effacer(commente.index, commente.index + commente[0].length);
+  // 2. Blocs indentés de quatre espaces ou d'une tabulation, précédés d'une
+  //    ligne vide : c'est ainsi qu'on montre une balise sans l'écrire.
+  let position = 0;
+  let precedenteVide = true;
+  let debutIndente: number | null = null;
+  for (const ligne of texte.split("\n")) {
+    const vide = ligne.trim().length === 0;
+    const indentee = /^(?: {4}|\t)/.test(ligne);
+
+    if (debutIndente === null) {
+      if (indentee && precedenteVide && !vide) debutIndente = position;
+    } else if (!indentee && !vide) {
+      effacer(debutIndente, position);
+      debutIndente = null;
+    }
+
+    if (!vide) precedenteVide = false;
+    else if (debutIndente === null) precedenteVide = true;
+
+    position += ligne.length + 1;
+  }
+  if (debutIndente !== null) effacer(debutIndente, texte.length);
+
+  // 3. Code en ligne : une suite de backticks, du texte sans backtick, la même suite.
+  const enLigne = /(`+)([^`\n]*)\1/g;
+  const sansBlocs = masque.join("");
+  let span: RegExpExecArray | null;
+  while ((span = enLigne.exec(sansBlocs)) !== null) {
+    effacer(span.index, span.index + span[0].length);
   }
 
-  // Code en ligne : une suite de backticks, du texte sans backtick, la même suite.
-  const enLigne = /(`+)([^`\n]*)\1/g;
-  const sansCommentaire = masque.join("");
-  let span: RegExpExecArray | null;
-  while ((span = enLigne.exec(sansCommentaire)) !== null) {
-    effacer(span.index, span.index + span[0].length);
+  // 4. Commentaires HTML. Un commentaire ouvert et jamais refermé masque la
+  //    suite du document, comme une clôture de code oubliée.
+  const sansCode = masque.join("");
+  let depuis = 0;
+  for (;;) {
+    const debut = sansCode.indexOf("<!--", depuis);
+    if (debut === -1) break;
+    const fin = sansCode.indexOf("-->", debut + 4);
+    if (fin === -1) {
+      effacer(debut, texte.length);
+      break;
+    }
+    effacer(debut, fin + 3);
+    depuis = fin + 3;
   }
 
   return masque.join("");
@@ -92,6 +133,13 @@ function numeroDeLigne(texte: string, index: number): number {
   return ligne;
 }
 
+/** Le nom d'une balise s'arrête sur une espace, un `>` ou un `/`, jamais au milieu d'un mot. */
+function baliseCommence(texte: string, index: number, nom: string): boolean {
+  if (!texte.startsWith(`<${nom}`, index)) return false;
+  const suivant = texte[index + nom.length + 1];
+  return suivant === undefined || suivant === ">" || suivant === "/" || /\s/.test(suivant);
+}
+
 type BaliseLue = {
   nom: string;
   attributs: Record<string, string>;
@@ -101,12 +149,18 @@ type BaliseLue = {
 };
 
 /**
- * Lit une balise ouvrante à partir du `<`. Les valeurs d'attribut sont des
- * chaînes entre guillemets, jamais des accolades : une accolade est refusée
- * ici, avant d'être prise pour du texte.
+ * Lit une balise ouvrante à partir du `<`.
+ *
+ * La STRUCTURE se lit dans le texte masqué — pour ne pas ouvrir une balise sur
+ * un exemple en code — mais les VALEURS se découpent dans le texte d'origine,
+ * aux mêmes décalages : un titre qui contient un backtick ou un tiret de
+ * commentaire doit arriver entier dans l'index.
+ *
+ * Les valeurs d'attribut sont des chaînes entre guillemets, jamais des
+ * accolades : une accolade est refusée ici, avant d'être prise pour du texte.
  */
-function lireBalise(texte: string, debut: number): BaliseLue | null {
-  const nomTrouve = /^<([A-Z][A-Za-z0-9]*)/.exec(texte.slice(debut, debut + 64));
+function lireBalise(masque: string, corps: string, debut: number): BaliseLue | null {
+  const nomTrouve = /^<([A-Z][A-Za-z0-9]*)/.exec(masque.slice(debut, debut + 64));
   if (!nomTrouve) return null;
 
   const nom = nomTrouve[1]!;
@@ -114,19 +168,21 @@ function lireBalise(texte: string, debut: number): BaliseLue | null {
   let i = debut + nomTrouve[0].length;
 
   for (;;) {
-    while (i < texte.length && /\s/.test(texte[i]!)) i += 1;
-    if (i >= texte.length) return { nom, attributs, fin: i, autoFermante: false, erreur: `<${nom}> n'est pas refermée` };
+    while (i < masque.length && /\s/.test(masque[i]!)) i += 1;
+    if (i >= masque.length) {
+      return { nom, attributs, fin: i, autoFermante: false, erreur: `<${nom}> n'est pas refermée` };
+    }
 
-    if (texte[i] === ">") return { nom, attributs, fin: i + 1, autoFermante: false };
-    if (texte[i] === "/" && texte[i + 1] === ">") return { nom, attributs, fin: i + 2, autoFermante: true };
+    if (masque[i] === ">") return { nom, attributs, fin: i + 1, autoFermante: false };
+    if (masque[i] === "/" && masque[i + 1] === ">") return { nom, attributs, fin: i + 2, autoFermante: true };
 
-    const attribut = /^([A-Za-z_][A-Za-z0-9_-]*)\s*=\s*/.exec(texte.slice(i));
+    const attribut = /^([A-Za-z_][A-Za-z0-9_-]*)\s*=\s*/.exec(masque.slice(i));
     if (!attribut) {
       return { nom, attributs, fin: i, autoFermante: false, erreur: `<${nom}> : attribut illisible` };
     }
     i += attribut[0].length;
 
-    const guillemet = texte[i];
+    const guillemet = masque[i];
     if (guillemet === "{") {
       return {
         nom,
@@ -137,20 +193,32 @@ function lireBalise(texte: string, debut: number): BaliseLue | null {
       };
     }
     if (guillemet !== '"' && guillemet !== "'") {
-      return { nom, attributs, fin: i, autoFermante: false, erreur: `<${nom}> : la propriété « ${attribut[1]} » n'est pas entre guillemets` };
+      return {
+        nom,
+        attributs,
+        fin: i,
+        autoFermante: false,
+        erreur: `<${nom}> : la propriété « ${attribut[1]} » n'est pas entre guillemets`,
+      };
     }
 
-    const ferme = texte.indexOf(guillemet, i + 1);
+    const ferme = masque.indexOf(guillemet, i + 1);
     if (ferme === -1) {
-      return { nom, attributs, fin: i, autoFermante: false, erreur: `<${nom}> : la propriété « ${attribut[1]} » n'est pas refermée` };
+      return {
+        nom,
+        attributs,
+        fin: i,
+        autoFermante: false,
+        erreur: `<${nom}> : la propriété « ${attribut[1]} » n'est pas refermée`,
+      };
     }
-    attributs[attribut[1]!] = texte.slice(i + 1, ferme);
+    attributs[attribut[1]!] = corps.slice(i + 1, ferme);
     i = ferme + 1;
   }
 }
 
-/** Les cartes écrites entre deux positions du texte masqué. */
-function relever(masque: string, corps: string, debut: number, fin: number): CarteBrute[] {
+/** Les cartes écrites entre deux positions du texte. */
+function releverLesCartes(masque: string, corps: string, debut: number, fin: number): CarteBrute[] {
   const cartes: CarteBrute[] = [];
   let curseur = debut;
 
@@ -158,7 +226,9 @@ function relever(masque: string, corps: string, debut: number, fin: number): Car
     const ouverture = masque.indexOf(`<${BALISE_DE_CARTE}`, curseur);
     if (ouverture === -1 || ouverture >= fin) return cartes;
 
-    const balise = lireBalise(masque, ouverture);
+    const balise = baliseCommence(masque, ouverture, BALISE_DE_CARTE)
+      ? lireBalise(masque, corps, ouverture)
+      : null;
     if (balise && !balise.erreur) {
       cartes.push({
         id: balise.attributs.id,
@@ -167,6 +237,16 @@ function relever(masque: string, corps: string, debut: number, fin: number): Car
     }
     curseur = balise ? Math.max(balise.fin, ouverture + 1) : ouverture + 1;
   }
+}
+
+/** La première ouverture de bloc trouvée dans un intervalle, s'il y en a une. */
+function blocImbrique(masque: string, debut: number, fin: number): string | null {
+  for (const nom of Object.keys(BALISES_DE_BLOC)) {
+    for (let i = masque.indexOf(`<${nom}`, debut); i !== -1 && i < fin; i = masque.indexOf(`<${nom}`, i + 1)) {
+      if (baliseCommence(masque, i, nom)) return nom;
+    }
+  }
+  return null;
 }
 
 /**
@@ -184,7 +264,7 @@ export function extraireBlocs(corps: string): ResultatExtraction {
     const debut = masque.indexOf("<", curseur);
     if (debut === -1) break;
 
-    const balise = lireBalise(masque, debut);
+    const balise = lireBalise(masque, corps, debut);
     if (!balise) {
       curseur = debut + 1;
       continue;
@@ -193,7 +273,7 @@ export function extraireBlocs(corps: string): ResultatExtraction {
     const typeDeBloc = BALISES_DE_BLOC[balise.nom];
     const estCarte = balise.nom === BALISE_DE_CARTE;
     if (!typeDeBloc && !estCarte) {
-      curseur = balise.fin;
+      curseur = Math.max(balise.fin, debut + 1);
       continue;
     }
 
@@ -211,6 +291,14 @@ export function extraireBlocs(corps: string): ResultatExtraction {
       continue;
     }
 
+    // Une balise auto-fermante est un bloc au corps vide : le schéma dira ce
+    // qui manque, plutôt qu'une fermeture cherchée jusqu'au bloc suivant.
+    if (balise.autoFermante) {
+      blocs.push({ type: typeDeBloc!, attributs: balise.attributs, corps: "", position });
+      curseur = balise.fin;
+      continue;
+    }
+
     const fermeture = `</${balise.nom}>`;
     const finCorps = masque.indexOf(fermeture, balise.fin);
     if (finCorps === -1) {
@@ -218,9 +306,11 @@ export function extraireBlocs(corps: string): ResultatExtraction {
       curseur = balise.fin;
       continue;
     }
-    const imbriquee = masque.indexOf(`<${balise.nom}`, balise.fin);
-    if (imbriquee !== -1 && imbriquee < finCorps) {
-      erreurs.push(`<${balise.nom} id="${balise.attributs.id ?? ""}"> en contient une autre ; les blocs ne s'imbriquent pas`);
+    const imbrique = blocImbrique(masque, balise.fin, finCorps);
+    if (imbrique !== null) {
+      erreurs.push(
+        `<${balise.nom} id="${balise.attributs.id ?? ""}"> contient un <${imbrique}> ; les blocs ne s'imbriquent pas`,
+      );
       curseur = balise.fin;
       continue;
     }
@@ -233,7 +323,7 @@ export function extraireBlocs(corps: string): ResultatExtraction {
     });
     // Un bloc cite parfois un autre bloc dans son corps : la carte compte
     // autant que celles écrites dans le flux de la page.
-    cartes.push(...relever(masque, corps, balise.fin, finCorps));
+    cartes.push(...releverLesCartes(masque, corps, balise.fin, finCorps));
     curseur = finCorps + fermeture.length;
   }
 

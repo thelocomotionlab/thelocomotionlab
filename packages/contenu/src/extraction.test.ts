@@ -66,6 +66,59 @@ describe("extraireBlocs", () => {
     expect(erreurs).toEqual([]);
   });
 
+  it("garde une valeur d'attribut contenant du code ou un tiret de commentaire", () => {
+    const { blocs } = extraireBlocs(
+      "<Note id=\"n\" titre=\"T\" objectif=\"Ce que fait `AMPK` au repos\">corps</Note>",
+    );
+    expect(blocs[0]!.attributs.objectif).toBe("Ce que fait `AMPK` au repos");
+  });
+
+  it("ignore un exemple écrit en bloc indenté", () => {
+    const { blocs, erreurs } = extraireBlocs(
+      'On écrit une note ainsi :\n\n    <Note id="exemple" titre="Exemple" objectif="Montrer">\n    Le corps.\n    </Note>\n\nEt voilà.',
+    );
+    expect(blocs).toEqual([]);
+    expect(erreurs).toEqual([]);
+  });
+
+  it("ne prend pas un composant au nom voisin pour un bloc imbriqué", () => {
+    const { blocs, erreurs } = extraireBlocs(
+      `<Note id="a" titre="T" objectif="O">\nVoir <NoteBis /> ici.\n</Note>`,
+    );
+    expect(erreurs).toEqual([]);
+    expect(blocs.map((b) => b.attributs.id)).toEqual(["a"]);
+  });
+
+  it("refuse un bloc d'un autre type imbriqué dans un bloc", () => {
+    const { erreurs } = extraireBlocs(
+      `<Protocole id="p" statut="en-test" n="1" titre="T" objectif="O">\n<Note id="n" titre="T" objectif="O">x</Note>\n</Protocole>`,
+    );
+    expect(erreurs).toHaveLength(1);
+    expect(erreurs[0]).toContain("contient un <Note>");
+  });
+
+  it("lit une balise auto-fermante comme un bloc au corps vide, sans annexer le suivant", () => {
+    const { blocs, erreurs } = extraireBlocs(
+      `<Note id="a" titre="A" objectif="O" />\n\n<Note id="b" titre="B" objectif="O">corps</Note>`,
+    );
+    expect(erreurs).toEqual([]);
+    expect(blocs.map((b) => b.attributs.id)).toEqual(["a", "b"]);
+    expect(blocs[0]!.corps).toBe("");
+  });
+
+  it("masque un commentaire jamais refermé, et pas un exemple de commentaire en ligne", () => {
+    const ouvert = extraireBlocs(`<!--
+<Note id="n" titre="T" objectif="O">corps</Note>
+
+Suite.`);
+    expect(ouvert.blocs).toEqual([]);
+
+    const cite = extraireBlocs(
+      "On écrit `<!--` pour commenter.\n\n<Note id=\"n\" titre=\"T\" objectif=\"O\">corps</Note>\n",
+    );
+    expect(cite.blocs.map((b) => b.attributs.id)).toEqual(["n"]);
+  });
+
   it("refuse une propriété de liste écrite en accolades", () => {
     const { erreurs } = extraireBlocs(
       `<Note id="n" titre="T" objectif="O" concepts={["a","b"]}>corps</Note>`,
@@ -84,6 +137,6 @@ describe("extraireBlocs", () => {
     const { erreurs } = extraireBlocs(
       `<Note id="a" titre="A" objectif="O">\n<Note id="b" titre="B" objectif="O">x</Note>\n</Note>`,
     );
-    expect(erreurs[0]).toContain("ne s'imbriquent pas");
+    expect(erreurs[0]).toContain("contient un <Note>");
   });
 });

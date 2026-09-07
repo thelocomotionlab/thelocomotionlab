@@ -61,15 +61,22 @@ export function ancreDeBloc(type: TypeBloc, props: Pick<PropsBloc, "id">): strin
   return `${type}-${slug(props.id)}`;
 }
 
-/** Le chemin de la page qui porte un contenu, sans ancre. */
+/**
+ * Le chemin de la page qui porte un contenu, sans ancre.
+ *
+ * Un récit vit sous son aventure : son propre slug n'apparaît jamais dans
+ * l'URL. Sans le slug de l'aventure, la fonction refuse plutôt que de rendre
+ * une route vraisemblable qui n'existe pas.
+ */
 export function cheminDeSorte(sorte: Sorte, slugPage: string, slugAventure?: string): string {
   switch (sorte) {
     case "aventure":
       return `/aventures/${slugPage}`;
     case "recit":
-      // Un récit vit sous son aventure : le slug de la page est celui du récit,
-      // mais l'URL est celle de l'aventure qui le porte.
-      return `/aventures/${slugAventure ?? slugPage}/recit`;
+      if (!slugAventure) {
+        throw new Error(`l'URL du récit « ${slugPage} » a besoin du slug de son aventure`);
+      }
+      return `/aventures/${slugAventure}/recit`;
     case "billet":
       return `/blog/${slugPage}`;
     case "article":

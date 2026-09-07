@@ -44,7 +44,19 @@ describe("ancres", () => {
     } as never);
     const apres = numeroterSections(Aventure.parse(allongee).sections);
 
-    expect(apres.map((s) => s.ancre)).toEqual(["geo", ...avant.map((s) => s.ancre)]);
+    // Les ancres sont figées en littéraux : un calcul cassé qui rendrait
+    // partout la même chaîne passerait une comparaison de deux calculs.
+    expect(avant.map((s) => s.ancre)).toEqual([
+      "caracteristiques",
+      "genese-et-preparatifs",
+      "paquetage",
+    ]);
+    expect(apres.map((s) => s.ancre)).toEqual([
+      "geo",
+      "caracteristiques",
+      "genese-et-preparatifs",
+      "paquetage",
+    ]);
     for (const section of avant) {
       const meme = apres.find((s) => s.ancre === section.ancre);
       expect(meme).toBeDefined();
