@@ -84,12 +84,25 @@ export const SectionCaracteristiques = z.strictObject({
 // Carte plus tableau ordonné. Les colonnes sont libres : « Repère / km / D+
 // cumulé » pour une trace, « Étape / jours / lieu » pour un voyage.
 
+/**
+ * Un repère posé sur la trace : il est saisi en KILOMÈTRES le long du parcours
+ * — ce qui se lit sur une trace, et qui reste juste même si le GPX est
+ * régénéré. La carte retrouve la coordonnée en projetant le km sur le profil.
+ * `icone` nomme un pictogramme du site (`bivouac`, `refuge`, `eau`…).
+ */
+const Repere = z.strictObject({
+  nom: z.string().min(1),
+  km: z.number().nonnegative(),
+  icone: z.string().min(1).optional(),
+});
+
 export const SectionGeo = z
   .strictObject({
     type: z.literal("geo"),
     ...communs,
     carte: z.string().min(1),
     gpx: z.string().min(1).optional(),
+    reperes: z.array(Repere).optional(),
     ...champsDeTableau,
   })
   .superRefine((valeur, ctx) => verifierLargeurDesLignes("geo", valeur, ctx));

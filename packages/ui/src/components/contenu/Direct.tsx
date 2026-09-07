@@ -16,16 +16,30 @@ export type DirectProps = {
   /** « Direct v1 (2025) — smartphone + Traccar, conservé tel quel. » */
   version?: ReactNode;
   reglages?: readonly ReglageDuDirect[];
-  /** La page d'archive du direct, quand il en existe une. */
-  archiveUrl?: string;
 };
 
-export default function Direct({
-  children,
-  version,
-  reglages = [],
-  archiveUrl,
-}: DirectProps) {
+/**
+ * L'appel vers la page d'archive du direct. Il se pose en tête de section,
+ * avant le texte : c'est le premier geste possible sur une campagne terminée.
+ */
+export function ArchiveDuDirect({ url }: { url: string }) {
+  return (
+    <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-md border border-brand-hairline bg-brand-paper px-5 py-4 shadow-bloc">
+      <p className="m-0 max-w-[58ch] text-brand-soft [text-wrap:pretty]">
+        Le direct de cette campagne est archivé : la carte, le profil, la progression et le carnet
+        de bord, figés tels qu&rsquo;on les a suivis.
+      </p>
+      <a
+        href={url}
+        className="inline-block whitespace-nowrap rounded-full bg-brand-deep px-5 py-2.5 font-heading text-sm font-semibold text-white no-underline transition-colors hover:bg-brand-deep-dark"
+      >
+        Ouvrir le direct archivé
+      </a>
+    </div>
+  );
+}
+
+export default function Direct({ children, version, reglages = [] }: DirectProps) {
   return (
     <>
       {children || version ? (
@@ -40,15 +54,6 @@ export default function Direct({
             </figcaption>
           ) : null}
         </figure>
-      ) : null}
-
-      {archiveUrl ? (
-        <a
-          href={archiveUrl}
-          className="mt-5 inline-block border-b border-brand-accent font-mono text-meta font-semibold uppercase tracking-lien text-brand-accent-ink no-underline"
-        >
-          Ouvrir le direct archivé
-        </a>
       ) : null}
 
       {reglages.length > 0 ? (

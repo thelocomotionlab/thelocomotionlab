@@ -20,9 +20,9 @@ describe("le registre du Blog", () => {
     expect(sortes.has("recit")).toBe(true);
   });
 
-  it("garde au récit son URL sous son aventure", () => {
+  it("adresse un récit par le slug de son aventure", () => {
     const recit = entrees().find((entree) => entree.sorte === "recit");
-    expect(recit.url).toMatch(/^\/aventures\/[a-z0-9-]+\/recit$/);
+    expect(recit.url).toMatch(/^\/aventures\/recit\/[a-z0-9-]+$/);
   });
 
   it("nomme chaque type, récits d'aventure compris", () => {
@@ -116,7 +116,7 @@ describe("le bloc Aventures de l'accueil", () => {
   it("montre le récit d'une campagne quand il existe, la campagne sinon", () => {
     for (const carte of blocAventuresDeLAccueil()) {
       if (carte.genre === "recit") {
-        expect(carte.url).toMatch(/\/recit$/);
+        expect(carte.url).toMatch(/^\/aventures\/recit\//);
       } else {
         expect(carte.url).toMatch(/^\/aventures\/[a-z0-9-]+$/);
       }

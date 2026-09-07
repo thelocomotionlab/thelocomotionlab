@@ -18,6 +18,11 @@ import Corps from "@/components/contenu/Corps";
 import FilDAriane from "@/components/contenu/FilDAriane";
 import { referencesDePage } from "@/components/contenu/references";
 
+// Les récits publiés sont connus au build, et ils sont moins nombreux que les
+// aventures : sans cette ligne, Next garde une fonction serveur pour les slugs
+// d'aventure sans récit, que l'export Cloudflare Pages refuse de servir.
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return parSorte("recit")
     .filter((page) => parSlug("aventure", page.frontmatter.aventure))

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import * as toGeoJSON from "@tmcw/togeojson";
@@ -15,6 +16,8 @@ import {
 } from "@locomotionlab/tracking";
 
 import { profilDeGpx } from "@/lib/gpxStats";
+import { reperesSurCarte, reperesSurProfil } from "@/lib/liveWaypoints";
+import WaypointPin from "@/components/live/WaypointPin";
 
 // Carte GPX posée dans un récit. Le fond, la teinte de la trace et le
 // sélecteur viennent de @locomotionlab/tracking (mapStyles.ts) : la même
@@ -26,10 +29,15 @@ import { profilDeGpx } from "@/lib/gpxStats";
 // ni titre ni chiffres), nourri par lib/gpxStats.profilDeGpx — calculé dans
 // le navigateur depuis le GPX, au format du .track.json, sans build:track. Le
 // survol du profil pose un point jumeau sur la carte, comme sur le direct.
+//
+// `reperes` (bivouacs, refuges, ravitaillements) est saisi en kilomètres dans
+// la section geo : les coordonnées se retrouvent en projetant le km sur le
+// profil, comme pour les repères du direct.
 const defaultCenter = [55.5364, -21.1151];
 
 export default function MapEmbed({
   gpx,
+  reperes = [],
   lineWeight = 4.5,
   defaultMinHeight = 350,
 }) {
@@ -47,6 +55,17 @@ export default function MapEmbed({
   // Profil du GPX (lib/gpxStats), pour le bandeau altimétrique sous la carte.
   const [reference, setReference] = useState(null);
   const hoverRef = useRef(null);
+
+  // Les repères ne sont posables qu'une fois le GPX lu : c'est son profil qui
+  // donne la coordonnée d'un kilomètre.
+  const reperesCarte = useMemo(() => reperesSurCarte(reperes, reference), [reperes, reference]);
+  const reperesProfil = useMemo(() => reperesSurProfil(reperes, reference), [reperes, reference]);
+  // Hôtes DOM des repères : maplibre veut un élément, React veut rendre dedans
+  // — l'élément est créé ici et l'icône y est portée par createPortal.
+  const reperesHotes = useMemo(
+    () => reperesCarte.map((repere) => ({ repere, el: document.createElement("div") })),
+    [reperesCarte],
+  );
 
   const defaultZoom = 9;
 
@@ -200,6 +219,22 @@ export default function MapEmbed({
     loadGPX();
   }, [gpx, lineWeight]);
 
+  // --- Repères de la trace : une pastille par bivouac, refuge, ravito.
+  // Ce sont des surcouches DOM, pas des couches de style : un changement de
+  // fond de carte ne les efface donc pas.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || reperesHotes.length === 0) return undefined;
+    const marqueurs = reperesHotes.map(({ repere, el }) =>
+      new maplibregl.Marker({ element: el, anchor: "center" })
+        .setLngLat([repere.lng, repere.lat])
+        .addTo(map),
+    );
+    return () => {
+      for (const marqueur of marqueurs) marqueur.remove();
+    };
+  }, [reperesHotes]);
+
   // --- Changement de style sans recréer la carte
   useEffect(() => {
     const map = mapRef.current;
@@ -276,6 +311,11 @@ export default function MapEmbed({
         style={{ width: "100%", height: "100%" }}
       />
 
+      {/* Icônes des repères, portées dans les éléments que maplibre positionne. */}
+      {reperesHotes.map(({ el, repere }) =>
+        createPortal(<WaypointPin Icone={repere.Icone} nom={repere.nom} />, el, repere.cle),
+      )}
+
       {gpxError && (
         <div
           role="alert"
@@ -335,6 +375,7 @@ export default function MapEmbed({
           doneKm={0}
           elevationMin={reference.elevMinM}
           elevationMax={reference.elevMaxM}
+          waypoints={reperesProfil}
           onHoverPoint={poserSurvol}
         />
       </div>

@@ -129,13 +129,17 @@ export function dateDArticle(article) {
   return article.revise_le ?? article.publie_le;
 }
 
-/** L'URL publique d'une page. Un récit vit sous son aventure. */
+/**
+ * L'URL publique d'une page. Un récit s'adresse par le slug de son aventure,
+ * sous `/aventures/recit/` : le segment variable est toujours le dernier, ce
+ * que l'export Cloudflare Pages exige pour servir la page en statique.
+ */
 export function urlDe(page) {
   const { sorte, slug } = page.frontmatter;
   if (sorte === "aventure") return `/aventures/${slug}`;
   if (sorte === "billet") return `/blog/${slug}`;
   if (sorte === "article") return `/science/${slug}`;
-  return `/aventures/${page.frontmatter.aventure}/recit`;
+  return `/aventures/recit/${page.frontmatter.aventure}`;
 }
 
 /** Les blocs écrits dans une page, pour marquer l'index Blog. */

@@ -17,6 +17,8 @@ import FilDAriane from "@/components/contenu/FilDAriane";
 import RetourAIndex from "@/components/contenu/RetourAIndex";
 import { referencesDePage } from "@/components/contenu/references";
 
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return parSorte("article").map((page) => ({ slug: page.frontmatter.slug }));
 }

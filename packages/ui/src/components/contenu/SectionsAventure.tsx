@@ -24,7 +24,7 @@ import Paquetage from "./Paquetage.tsx";
 import type { DonneesDePaquetage } from "./Paquetage.tsx";
 import Nutrition from "./Nutrition.tsx";
 import SectionLibre from "./SectionLibre.tsx";
-import Direct from "./Direct.tsx";
+import Direct, { ArchiveDuDirect } from "./Direct.tsx";
 import CarteRecit from "./CarteRecit.tsx";
 import type { CarteRecitProps } from "./CarteRecit.tsx";
 import type { BilletDeSeance } from "./LigneSeance.tsx";
@@ -108,11 +108,7 @@ function corpsDeSection(section: Section, rendus: RendusDAventure): ReactNode {
 
     case "direct":
       return (
-        <Direct
-          version={rendus.direct?.version}
-          reglages={rendus.direct?.reglages}
-          archiveUrl={rendus.direct?.archiveUrl}
-        >
+        <Direct version={rendus.direct?.version} reglages={rendus.direct?.reglages}>
           {rendus.direct?.replay}
         </Direct>
       );
@@ -134,6 +130,12 @@ function introDeSection(section: Section, rendus: RendusDAventure): ReactNode {
   return rendus.libres?.[section.id]?.corps ?? null;
 }
 
+/** Ce qui se pose sous le titre d'une section, avant son texte. */
+function enteteDeSection(section: Section, rendus: RendusDAventure): ReactNode {
+  if (section.type !== "direct" || !rendus.direct?.archiveUrl) return null;
+  return <ArchiveDuDirect url={rendus.direct.archiveUrl} />;
+}
+
 export default function SectionsAventure({ sections, rendus = {} }: SectionsAventureProps) {
   return (
     <>
@@ -144,6 +146,7 @@ export default function SectionsAventure({ sections, rendus = {} }: SectionsAven
             key={`${section.type}-${section.id ?? index}`}
             section={section}
             index={index}
+            entete={enteteDeSection(section, rendus)}
           >
             {intro ? <div className="mt-5">{intro}</div> : null}
             {corpsDeSection(section, rendus)}

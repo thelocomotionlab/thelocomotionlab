@@ -37,7 +37,7 @@ export type {
 export { default as Nutrition } from "./Nutrition.tsx";
 export { default as SectionLibre } from "./SectionLibre.tsx";
 export type { SectionLibreProps } from "./SectionLibre.tsx";
-export { default as Direct } from "./Direct.tsx";
+export { default as Direct, ArchiveDuDirect } from "./Direct.tsx";
 export type { DirectProps, ReglageDuDirect } from "./Direct.tsx";
 export { default as CarteRecit } from "./CarteRecit.tsx";
 export type { CarteRecitProps } from "./CarteRecit.tsx";

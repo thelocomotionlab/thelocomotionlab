@@ -31,7 +31,7 @@ Quatre sortes de pages, deux blocs qui vivent à l'intérieur des billets.
 | Sorte | Nature | Route |
 |---|---|---|
 | `aventure` | campagne : données, préparation, matériel, direct | `/aventures/<slug>` |
-| `recit` | le texte long d'une campagne, illustré, partageable | `/aventures/<slug-aventure>/recit` |
+| `recit` | le texte long d'une campagne, illustré, partageable | `/aventures/recit/<slug-aventure>` |
 | `billet` | entrée datée du carnet de bord | `/blog/<slug>` |
 | `article` | document scientifique vivant, sourcé, révisé | `/science/<slug>` |
 
@@ -158,10 +158,17 @@ voyage (étapes, jours, lieu).
   carte: "reunion.geojson"
   gpx: "reunion.gpx"        # facultatif : la carte lit ce fichier de public/tracks/
                             # et pose le bouton de téléchargement
+  reperes:                  # facultatif : des icônes posées sur la trace
+    - { nom: "Valgaudémar", km: 57.5, icone: "bivouac" }
   colonnes: ["Repère", "km", "D+ cumulé"]
   lignes:
     - ["Saint-Denis, gare", "0", "0 m"]
 ```
+
+Un repère est saisi en **kilomètres le long du parcours** — ce qui se lit sur une trace, et qui reste juste même
+si le GPX est régénéré ; la carte retrouve la coordonnée en projetant le km sur le profil, et l'icône se pose
+aussi sur le bandeau altimétrique. `icone` nomme un pictogramme (`bivouac`, `refuge`, `eau`,
+`ravitaillement`… : les clés de `lib/liveWaypointIcons`), les mêmes que les repères du direct.
 
 ### preparation
 Quatre éléments **indépendants et tous facultatifs**. Une préparation peut n'avoir que des stresseurs.
@@ -254,7 +261,7 @@ Versions du live-tracking, replay, journal de bord de la campagne. Quand le dire
 `/live/archives/<slug>`, où vivent la progression, le carnet de bord et les médias.
 
 ### recit
-Grande carte de renvoi vers `/aventures/<slug>/recit`, même motif que les cartes de protocole. Résolue depuis le
+Grande carte de renvoi vers `/aventures/recit/<slug>`, même motif que les cartes de protocole. Résolue depuis le
 champ `recit` du frontmatter. Absente si le récit n'existe pas.
 
 ---

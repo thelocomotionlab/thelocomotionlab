@@ -20,6 +20,8 @@ import MapEmbed from "@/components/MapEmbedLazy";
 import RetourAIndex from "@/components/contenu/RetourAIndex";
 import { referencesDePage } from "@/components/contenu/references";
 
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return parSorte("aventure").map((page) => ({ slug: page.frontmatter.slug }));
 }
@@ -57,7 +59,9 @@ export default async function AventurePage({ params }) {
   const rendus = rendusDe(page, {
     libres: corpsDesSectionsLibres(page, citation),
     cover: (src, alt) => <Image src={src} alt={alt} width={900} height={600} />,
-    carte: (gpxUrl) => <MapEmbed gpx={gpxUrl} defaultMinHeight={420} />,
+    carte: (gpxUrl, reperes) => (
+      <MapEmbed gpx={gpxUrl} reperes={reperes} defaultMinHeight={420} />
+    ),
   });
 
   return (

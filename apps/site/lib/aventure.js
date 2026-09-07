@@ -66,7 +66,8 @@ function paquetage(ref) {
  * sections libres, la carte du récit.
  *
  * `cover` et `carte` sont des fabriques fournies par l'app : ce module ne rend
- * pas de JSX, il donne les chemins, la page en fait une image et une carte.
+ * pas de JSX, il donne les chemins et les repères, la page en fait une image
+ * et une carte.
  */
 export function rendusDe(aventure, { libres = {}, cover, carte } = {}) {
   const sections = aventure.frontmatter.sections;
@@ -84,7 +85,10 @@ export function rendusDe(aventure, { libres = {}, cover, carte } = {}) {
   const geo = sections.find((section) => section.type === "geo");
   if (geo?.gpx) {
     const gpxUrl = `/tracks/${geo.gpx}`;
-    rendus.geo = { gpxUrl, carte: carte ? carte(gpxUrl) : undefined };
+    rendus.geo = {
+      gpxUrl,
+      carte: carte ? carte(gpxUrl, geo.reperes ?? []) : undefined,
+    };
   }
 
   // Le direct d'une campagne se lit à partir du slug : une aventure dont le

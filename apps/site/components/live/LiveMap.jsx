@@ -33,6 +33,7 @@ import {
 } from "@locomotionlab/tracking";
 
 import { simplifyTrack } from "@/lib/simplify";
+import WaypointPin from "@/components/live/WaypointPin";
 
 // Les fonds de carte et les couches de trace viennent de
 // @locomotionlab/tracking (mapStyles.ts) : la même grammaire sert les
@@ -75,37 +76,6 @@ function runnerElement(mode) {
   core.style.cssText = `position:absolute;inset:3px;border-radius:50%;background:${colors.core};box-shadow:0 0 0 3px ${brandColors.bg},0 4px 12px rgba(0,0,0,0.35);`;
   el.append(halo, core);
   return el;
-}
-
-/** Pastille d'un repère : cercle blanc cerclé de bleu profond, icône dedans.
- *  Même grammaire de cercle que le marqueur coureur, sans le halo — un repère
- *  est fixe, il ne doit pas attirer l'œil autant que la position en direct. */
-function WaypointPin({ Icone, nom }) {
-  return (
-    // `role="img"` + `aria-label` : sur un <span> sans rôle, aria-label n'est
-    // pas un nom accessible valide et la plupart des lecteurs d'écran
-    // l'ignorent. Sans nom, le repère est purement décoratif.
-    <span
-      title={nom || undefined}
-      role={nom ? "img" : undefined}
-      aria-label={nom || undefined}
-      aria-hidden={nom ? undefined : "true"}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 26,
-        height: 26,
-        borderRadius: "50%",
-        background: brandColors.bg,
-        border: `2px solid ${brandColors.deep}`,
-        color: brandColors.deepDark,
-        boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-      }}
-    >
-      <Icone size={14} strokeWidth={2.2} aria-hidden="true" />
-    </span>
-  );
 }
 
 export default function LiveMap({

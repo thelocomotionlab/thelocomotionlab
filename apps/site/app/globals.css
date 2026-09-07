@@ -471,6 +471,23 @@ a.data-footnote-backref,
   margin: 0 0 0.5rem;
 }
 
+/* Une image alignée emmène sa légende : le filet et le texte se posent sous
+   son axe, pas contre la marge gauche de la colonne. */
+.prose img.md-img-align-center + em {
+  text-align: center;
+}
+.prose img.md-img-align-center + em::before {
+  margin-left: auto;
+  margin-right: auto;
+}
+.prose img.md-img-align-right + em {
+  text-align: right;
+}
+.prose img.md-img-align-right + em::before {
+  margin-left: auto;
+  margin-right: 0;
+}
+
 .md-split.md-split--with-caption
   .md-split-col
   p:last-child:has(> em):not(:has(> img)) > em {

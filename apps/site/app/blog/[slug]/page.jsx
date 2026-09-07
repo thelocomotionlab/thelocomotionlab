@@ -19,6 +19,8 @@ import RetourAIndex from "@/components/contenu/RetourAIndex";
 import { referencesDePage } from "@/components/contenu/references";
 import { dateLisible, minutesDeLecture } from "@/lib/lisible";
 
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return parSorte("billet").map((page) => ({ slug: page.frontmatter.slug }));
 }
