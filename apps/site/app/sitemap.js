@@ -8,6 +8,7 @@ import {
   listProjetEntries,
   routeFor,
 } from "@/lib/contentRoutes.mjs";
+import { aventures, parSorte, urlDe } from "@/lib/contenu";
 
 const URL = "https://thelocomotionlab.com";
 
@@ -25,10 +26,37 @@ function frontmatterDateOrNow(data) {
   return new Date().toISOString();
 }
 
+/**
+ * Les pages du nouveau modèle de contenu. Le chargeur ne rend que ce qui
+ * déclare `statut: publie` : un brouillon ne peut donc pas entrer ici.
+ */
+function routesDeContenu() {
+  const pages = [
+    ...aventures(),
+    ...parSorte("recit"),
+    ...parSorte("billet"),
+    ...parSorte("article"),
+  ];
+
+  return pages.map((page) => ({
+    url: `${URL}${urlDe(page)}`,
+    lastModified: new Date(
+      page.frontmatter.date ?? page.frontmatter.publie_le ?? page.frontmatter.campagne.debut,
+    ).toISOString(),
+    changeFrequency: "monthly",
+    priority: 0.8,
+  }));
+}
+
 export default async function sitemap() {
   // 1. Les routes statiques avec priorités personnalisées
   const routes = [
     { url: "", priority: 1.0, freq: "monthly" },
+    { url: "/aventures", priority: 0.9, freq: "weekly" },
+    { url: "/blog", priority: 0.9, freq: "weekly" },
+    { url: "/science", priority: 0.9, freq: "weekly" },
+    { url: "/labo", priority: 0.8, freq: "monthly" },
+    { url: "/services", priority: 0.8, freq: "monthly" },
     { url: "/explorer", priority: 0.9, freq: "weekly" },
     { url: "/comprendre", priority: 0.9, freq: "weekly" },
     { url: "/pratiquer", priority: 0.9, freq: "weekly" },
@@ -64,5 +92,5 @@ export default async function sitemap() {
     console.error("Erreur sitemap contenus:", error);
   }
 
-  return [...routes, ...entries];
+  return [...routes, ...entries, ...routesDeContenu()];
 }
