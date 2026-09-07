@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "contenu": "node ../../packages/contenu/src/cli.ts .",
+    "predev": "pnpm run contenu",
     "dev": "next dev",
+    "prebuild": "pnpm run contenu",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
@@ -20,6 +23,7 @@
     "photos": "node scripts/photos.mjs"
   },
   "dependencies": {
+    "@locomotionlab/contenu": "workspace:*",
     "@locomotionlab/tracking": "workspace:*",
     "@locomotionlab/ui": "workspace:*",
     "@tmcw/togeojson": "^7.1.2",

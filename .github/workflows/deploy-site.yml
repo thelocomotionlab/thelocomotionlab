@@ -15,6 +15,7 @@ on:
     branches: [main]
     paths:
       - "apps/site/**"
+      - "packages/contenu/**"
       - "packages/ui/**"
       - "packages/tracking/**"
       - "pnpm-lock.yaml"

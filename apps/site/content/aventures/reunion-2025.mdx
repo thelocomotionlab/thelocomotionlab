@@ -1,0 +1,81 @@
+---
+sorte: aventure
+titre: "Traversée de la Réunion en autonomie"
+slug: "reunion-2025"
+statut: publie
+chapeau: "Projet OFF. Documentation du parcours, liste du matériel, préparation spécifique et détails de l'expédition."
+etat: termine
+campagne: { debut: 2025-09-29, fin: 2025-11-30 }
+cover: "/images/projets/traversee-reunion/cover_traversee_reunion.webp"
+resume:
+  - "170 km"
+  - "9 800 m D+"
+  - "sandales"
+recit: "ile-intense"
+sections:
+  - type: caracteristiques
+    champs:
+      - { label: "Distance", valeur: "170 km" }
+      - { label: "Dénivelé positif", valeur: "9 800 m" }
+      - { label: "Itinéraire", valeur: "GR R2, modifié pour gravir le piton des Neiges et le piton de la Fournaise" }
+      - { label: "Départ", valeur: "Gare de Saint-Denis" }
+      - { label: "Appui", valeur: "Sandales Panta Zaros, sans bâtons" }
+      - { label: "Autonomie", valeur: "Complète, sans réchaud" }
+      - { label: "Sac au départ", valeur: "≈ 8,5 kg, dont 3 L de liquide" }
+      - { label: "Résultat", valeur: "Arrêt au km 85, après 26 h 52 et 7 700 m D+" }
+
+  - type: geo
+    titre: "Trace"
+    carte: "TODO"
+    gpx: "reunion-r2_komoot.gpx"
+    colonnes: ["Repère", "km", "D+ cumulé"]
+    lignes:
+      - ["Piton des Neiges", "94", "7 700 m"]
+      - ["Bourg-Murat", "115", "7 900 m"]
+
+  - type: preparation
+    graphe:
+      abscisse: ["S1", "S2", "S3", "S4"]
+      series:
+        - { nom: "Distance", unite: "km", valeurs: [64, 104, 48, 117] }
+        - { nom: "Dénivelé positif", unite: "m", valeurs: [2000, 4800, 1200, 5100] }
+    seances:
+      colonnes: ["Date", "Sortie", "km", "D+", "Sac", "Ce qu'on éprouvait", "Billet"]
+      lignes:
+        - ["12/10/2025", "Tour du Taillefer", "39", "2 500 m", "6 kg", "Matériel et lyophilisé", ""]
+        - ["25/10/2025", "UTMC OFF", "85", "4 500 m", "7,4 kg", "Rest step et nuit", ""]
+    stresseurs:
+      travailles:
+        - nom: "Dénivelé sans bâtons (rest step)"
+          dose: "TODO"
+          frequence: "TODO"
+          intensite: "300 m D+ en respiration nasale, puis de longues heures sur l'UTMC OFF"
+          pourquoi: "Transférer la charge du système musculaire vers le système squelettique et préserver les quadriceps pour les descentes."
+        - nom: "Charge du sac"
+          dose: "6 kg, puis 7,4 kg, puis 8,5 kg au départ"
+          frequence: "TODO"
+          intensite: "TODO"
+          pourquoi: "Éprouver la répartition des masses avant le jour J."
+        - nom: "Respiration nasale"
+          dose: "TODO"
+          frequence: "TODO"
+          intensite: "Maintenue le plus longtemps possible en sortie longue"
+          pourquoi: "Rester en régime aérobie et éviter d'oxyder trop vite le glycogène."
+      non_travailles: ["Chaleur", "Terrains réunionnais"]
+
+  - type: nutrition
+    titre: "Nutrition embarquée"
+    colonnes: ["Poste", "Détail", "Masse"]
+    lignes:
+      - ["Boules d'énergie", "39 boules poudre d'amande / pâte de dattes (ratio 1/1,54), dont 13 avec du café", "765 g"]
+      - ["Isotonique", "14 doses de flasques", "720 g"]
+      - ["Saucissons", "2 saucissons bio", "400 g"]
+      - ["Gels", "4 gels caféine citron", "140 g"]
+      - ["Lyophilisés", "5 plats", "600 g"]
+      - ["Total", "", "2,62 kg"]
+
+  - type: direct
+    titre: "Direct v1 (2025)"
+
+  - type: recit
+---

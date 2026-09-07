@@ -21,6 +21,9 @@ out/
 build/
 dist/
 
+# index des blocs, reconstruit avant chaque dev et chaque build
+.generated/
+
 # testing
 coverage/
 # sortie de compilation des tests (services/tracking-cache/tsconfig.test.json)
