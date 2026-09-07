@@ -49,6 +49,15 @@ describe("extraireBlocs", () => {
     expect(erreurs).toEqual([]);
   });
 
+  it("ignore une balise laissée en commentaire HTML", () => {
+    const { blocs, cartes, erreurs } = extraireBlocs(
+      `Un paragraphe.\n\n<!--\n<Protocole id="ancien" titre="T" objectif="O" statut="en-test" n="1">\ncorps\n</Protocole>\n-->\n\nLa suite.`,
+    );
+    expect(blocs).toEqual([]);
+    expect(cartes).toEqual([]);
+    expect(erreurs).toEqual([]);
+  });
+
   it("refuse une propriété de liste écrite en accolades", () => {
     const { erreurs } = extraireBlocs(
       `<Note id="n" titre="T" objectif="O" concepts={["a","b"]}>corps</Note>`,

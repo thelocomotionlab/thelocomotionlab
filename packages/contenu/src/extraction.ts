@@ -12,9 +12,10 @@
 // par rehype-raw, composant dans un .mdx) donnent ici le même résultat, ce qui
 // laisse le choix du pipeline de rendu ouvert.
 //
-// Ce qui est ignoré : tout ce qui est dans un bloc de code (``` ou ~~~) ou
-// dans du code en ligne (`…`). La documentation cite les balises dans des
-// blocs de code ; le contenu, lui, les écrit dans le flux.
+// Ce qui est ignoré : tout ce qui est dans un bloc de code (``` ou ~~~), dans
+// du code en ligne (`…`) ou dans un commentaire HTML. La documentation cite les
+// balises dans des blocs de code, et le carnet garde de vieux passages en
+// commentaire ; le contenu, lui, les écrit dans le flux.
 
 import { BALISES_DE_BLOC, BALISE_DE_CARTE } from "./blocs.ts";
 import type { TypeBloc } from "./blocs.ts";
@@ -66,12 +67,19 @@ function masquerLeCode(texte: string): string {
   // Bloc de code jamais refermé : on masque jusqu'à la fin.
   if (ouverture !== null) effacer(ouverture.index, texte.length);
 
-  const masqueIntermediaire = masque.join("");
+  // Commentaires HTML : le carnet en garde de vieux passages, balises comprises.
+  const commentaire = /<!--[\s\S]*?-->/g;
+  let commente: RegExpExecArray | null;
+  const sansCode = masque.join("");
+  while ((commente = commentaire.exec(sansCode)) !== null) {
+    effacer(commente.index, commente.index + commente[0].length);
+  }
 
   // Code en ligne : une suite de backticks, du texte sans backtick, la même suite.
   const enLigne = /(`+)([^`\n]*)\1/g;
+  const sansCommentaire = masque.join("");
   let span: RegExpExecArray | null;
-  while ((span = enLigne.exec(masqueIntermediaire)) !== null) {
+  while ((span = enLigne.exec(sansCommentaire)) !== null) {
     effacer(span.index, span.index + span[0].length);
   }
 
