@@ -124,8 +124,6 @@ export default function nextConfig(phase) {
         // Explorer. Générées au build depuis le frontmatter, par slug exact
         // (cf. lib/legacyRedirects.mjs).
         ...buildLegacyRedirects(),
-        // L'ancien hub /labo est remplacé par La quête (ex-« Manifeste »).
-        { source: "/labo", destination: "/quete", permanent: true },
         // /about était la seule URL en anglais parmi les piliers (/comprendre,
         // /explorer, /pratiquer, /outils, /quete) — audit des titres, 08/2026.
         { source: "/about", destination: "/a-propos", permanent: true },
