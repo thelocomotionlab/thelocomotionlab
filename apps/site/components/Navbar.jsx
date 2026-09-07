@@ -54,6 +54,7 @@ export default function Navbar() {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchClosing, setSearchClosing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [liveOpen, setLiveOpen] = useState(false);
 
@@ -80,8 +81,18 @@ export default function Navbar() {
     const terme = searchTerm.trim();
     if (!terme) return;
     router.push(`/recherche?q=${encodeURIComponent(terme)}`);
-    setSearchOpen(false);
-    setSearchTerm("");
+    fermerLaRecherche();
+  }
+
+  // Le champ se replie vers la droite avant de sortir du DOM : la classe
+  // d'animation dure 300 ms, le démontage attend la fin.
+  function fermerLaRecherche() {
+    setSearchClosing(true);
+    setTimeout(() => {
+      setSearchClosing(false);
+      setSearchOpen(false);
+      setSearchTerm("");
+    }, 300);
   }
 
   return (
@@ -133,16 +144,50 @@ export default function Navbar() {
       </nav>
 
       <div className="ml-auto flex items-center gap-1">
-        <button
-          type="button"
-          onClick={() => setSearchOpen((ouvert) => !ouvert)}
-          aria-label="Rechercher"
-          aria-expanded={searchOpen}
-          title="Rechercher"
-          className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-brand-text transition-colors hover:bg-brand-grid hover:text-brand-deep-dark"
-        >
-          <Search className="h-[22px] w-[22px]" strokeWidth={1.8} aria-hidden="true" />
-        </button>
+        <div className="hidden items-center md:flex">
+          {searchOpen ? (
+            <form
+              onSubmit={submitSearch}
+              className={`flex items-center ${searchClosing ? "animate-slideOut" : "animate-slideIn"}`}
+            >
+              <input
+                ref={searchRef}
+                type="search"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                onKeyDown={(event) => event.key === "Escape" && fermerLaRecherche()}
+                placeholder="Rechercher un article, une aventure…"
+                aria-label="Rechercher sur le site"
+                className="w-80 rounded-full border border-brand-field px-3.5 py-1.5 text-brand-text outline-none focus:border-transparent focus:ring-2 focus:ring-brand-accent"
+              />
+              <button
+                type="submit"
+                aria-label="Lancer la recherche"
+                className="ml-2 cursor-pointer text-brand-text transition-colors hover:text-brand-accent-ink"
+              >
+                <Search className="h-5 w-5" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={fermerLaRecherche}
+                aria-label="Fermer la recherche"
+                className="ml-2 cursor-pointer text-brand-text transition-colors hover:text-brand-accent-ink"
+              >
+                <X className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Ouvrir la recherche"
+              title="Rechercher"
+              className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-brand-text transition-colors hover:bg-brand-grid hover:text-brand-deep-dark"
+            >
+              <Search className="h-[22px] w-[22px]" strokeWidth={1.8} aria-hidden="true" />
+            </button>
+          )}
+        </div>
 
         <button
           ref={burgerRef}
@@ -160,35 +205,21 @@ export default function Navbar() {
         </button>
       </div>
 
-      {searchOpen ? (
-        <div className="absolute inset-x-0 top-full border-t border-brand-hairline bg-white/95">
-          <form onSubmit={submitSearch} className="flex gap-2 p-4">
-            <input
-              ref={searchRef}
-              type="search"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              onKeyDown={(event) => event.key === "Escape" && setSearchOpen(false)}
-              placeholder="Rechercher sur le site"
-              aria-label="Rechercher sur le site"
-              className="min-w-0 flex-1 rounded-full border border-brand-field bg-white px-4 py-2 font-heading text-brand-ink outline-none focus:border-brand-deep"
-            />
-            <button
-              type="submit"
-              className="cursor-pointer rounded-full bg-brand-accent px-5 py-2 font-heading font-semibold text-white transition-colors hover:bg-brand-accent-dark"
-            >
-              Chercher
-            </button>
-          </form>
-        </div>
-      ) : null}
-
       {menuOpen ? (
         <nav
           aria-label="Navigation principale"
           className="absolute inset-x-0 top-full border-t border-brand-hairline bg-white/95 md:hidden"
         >
           <ul className="m-0 list-none px-4 py-2">
+            <li>
+              <Link
+                href="/recherche"
+                onClick={() => setMenuOpen(false)}
+                className="block border-b border-brand-grid py-3 font-heading font-medium text-brand-text no-underline"
+              >
+                Recherche
+              </Link>
+            </li>
             {items.map(({ href, label }) => (
               <li key={href}>
                 <Link

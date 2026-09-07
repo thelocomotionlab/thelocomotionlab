@@ -35,6 +35,9 @@ export default function Footer() {
             >
               Contact
             </Link>
+            <Link className="underline-offset-4 hover:underline" href="/soutenir">
+              Soutenir
+            </Link>
             <Link
               className="underline-offset-4 hover:underline"
               href="/mentions-legales"
