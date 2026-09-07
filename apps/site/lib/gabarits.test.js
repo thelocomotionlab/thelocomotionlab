@@ -11,7 +11,7 @@ import { barreDeThemesVisible } from "./science";
 import { chiffreDeCarte, campagneLisible, ETATS } from "./aventure";
 import { dateLisible, dateEnToutesLettres, minutesDeLecture } from "./lisible";
 import { entrees } from "./blog";
-import { aventures, parSorte, urlDe } from "./contenu";
+import { aventures, parSorte, urlDe, blocAventuresDeLAccueil } from "./contenu";
 
 describe("le registre du Blog", () => {
   it("accueille les billets ET les récits d'aventure", () => {
@@ -109,5 +109,44 @@ describe("les mises en forme partagées", () => {
     expect(minutesDeLecture("un texte court", 12)).toBe(12);
     expect(minutesDeLecture("mot ".repeat(440))).toBe(2);
     expect(minutesDeLecture("")).toBe(1);
+  });
+});
+
+describe("le bloc Aventures de l'accueil", () => {
+  it("montre le récit d'une campagne quand il existe, la campagne sinon", () => {
+    for (const carte of blocAventuresDeLAccueil()) {
+      if (carte.genre === "recit") {
+        expect(carte.url).toMatch(/\/recit$/);
+      } else {
+        expect(carte.url).toMatch(/^\/aventures\/[a-z0-9-]+$/);
+      }
+    }
+  });
+
+  it("porte le nom de l'aventure en surtitre et le titre du récit en titre", () => {
+    const carte = blocAventuresDeLAccueil().find((entree) => entree.genre === "recit");
+    const campagne = aventures().find((page) => page.frontmatter.titre === carte.surtitre);
+
+    expect(campagne, "le surtitre est le titre d'une aventure").toBeDefined();
+    expect(carte.titre).not.toBe(carte.surtitre);
+    expect(carte.titre).toBe(
+      parSorte("recit").find((page) => page.frontmatter.slug === campagne.frontmatter.recit)
+        .frontmatter.titre,
+    );
+  });
+
+  it("dit « Lire le récit » sur une campagne terminée, « Suivre la campagne » sinon", () => {
+    for (const carte of blocAventuresDeLAccueil()) {
+      if (carte.etat === "termine") {
+        expect(carte.action).toMatch(/^(Lire le récit|Voir la campagne)$/);
+      } else {
+        expect(carte.action).toBe("Suivre la campagne");
+      }
+    }
+  });
+
+  it("trie sur la date de l'événement le plus récent", () => {
+    const dates = blocAventuresDeLAccueil().map((carte) => carte.date);
+    expect([...dates].sort().reverse()).toEqual(dates);
   });
 });

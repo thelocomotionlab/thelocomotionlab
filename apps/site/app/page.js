@@ -1,22 +1,24 @@
-// app/page.js — refonte accueil 2026 (design_handoff_accueil)
+// app/page.js
 //
-// Page d'accueil en cinq actes : hero pleine hauteur → Comprendre (lavis
-// bleu + registre des articles) → Explorer (photo Dolomites + cartes du
-// terrain) → La philosophie (grille 4 piliers / accordéon mobile,
-// composant PhilosophieSection) → bande de capture email.
-// Les textes et valeurs (couleurs, tailles) viennent du handoff, validés
-// par Valentin ; les données (registre, cartes) du contenu Markdown.
+// L'ACCUEIL, en cinq actes : hero pleine hauteur → Science (lavis bleu +
+// registre des articles) → Aventures (photo + cartes de campagne) → Blog
+// (les dernières entrées du carnet) → La philosophie → bande de capture email.
+//
+// Les trois blocs de contenu lisent le modèle : les articles publiés, les
+// campagnes — chacune montrant son récit quand il existe, sa propre carte
+// sinon (§8) — et le registre du Blog.
 import Link from "next/link";
 import Script from "next/script";
 import Image from "next/image";
 
 import EmailCapture from "@/components/EmailCapture";
-import ExplorerCarousel from "@/components/ExplorerCarousel";
-import ExplorerLiveIndicator from "@/components/ExplorerLiveIndicator";
 import LiveBanner from "@/components/LiveBanner";
 import PhilosophieSection from "@/components/PhilosophieSection";
-import { getExplorerCarouselItems } from "@/lib/carouselItems";
-import { listArticleEntries } from "@/lib/contentRoutes.mjs";
+import { blocAventuresDeLAccueil } from "@/lib/contenu";
+import { entrees as entreesDuBlog } from "@/lib/blog";
+import { entrees as articlesDeScience } from "@/lib/science";
+import { ETATS, chiffreDeCarte } from "@/lib/aventure";
+import { dateLisible } from "@/lib/lisible";
 import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
 export const metadata = {
@@ -65,118 +67,62 @@ const HEROES = [
 // Statut d'une entrée du registre, dérivé du frontmatter :
 // publié → PUBLIÉ (ligne cliquable) ; brouillon teaser:true → À PARAÎTRE ;
 // autre brouillon → À VENIR (ligne estompée).
-const REGISTRE_BADGES = {
-  publie: {
-    label: "PUBLIÉ",
-    className:
-      "border-brand-primary-dark/55 bg-brand-primary/14 text-brand-slate-dark",
-  },
-  aParaitre: {
-    label: "À PARAÎTRE",
-    className:
-      "border-brand-accent-dark/55 bg-brand-accent-light/14 text-brand-accent-ink",
-  },
-  aVenir: {
-    label: "À VENIR",
-    className: "border-black/25 text-gray-600",
-  },
-};
-
-// La zone du registre défile (RegistreScroller) : on borne large ; publiés
-// d'abord, puis « à paraître », puis « à venir », par date décroissante
-// dans chaque groupe.
 const REGISTRE_MAX_ROWS = 8;
 
+/** Les derniers articles publiés, tels que le registre les affiche. */
 function getRegistreRows() {
-  const entries = listArticleEntries().filter((e) => e.kind === "article");
-
-  const statusOf = (e) => {
-    if (e.published) return "publie";
-    return e.data.teaser === true ? "aParaitre" : "aVenir";
-  };
-  const GROUP_ORDER = { publie: 0, aParaitre: 1, aVenir: 2 };
-
-  const dateKey = (e) => {
-    const d = e.data.date ? new Date(e.data.date) : null;
-    return d && !Number.isNaN(d.getTime()) ? d.getTime() : 0;
-  };
-
-  return entries
-    .sort(
-      (a, b) =>
-        GROUP_ORDER[statusOf(a)] - GROUP_ORDER[statusOf(b)] ||
-        dateKey(b) - dateKey(a)
-    )
+  return articlesDeScience()
     .slice(0, REGISTRE_MAX_ROWS)
-    .map((e) => ({
-      slug: e.slug,
-      title: e.data.title || e.slug,
-      theme:
-        (e.data.tags || []).find((t) => t && t.trim())?.toUpperCase() ?? "",
-      status: statusOf(e),
+    .map((article) => ({
+      slug: article.slug,
+      url: article.url,
+      title: article.titre,
+      theme: article.themes[0] ? article.themes[0].split("-").join(" ").toUpperCase() : "",
+      quand: `${article.revise ? "révisé" : "publié"} le ${dateLisible(article.date)}`,
     }));
 }
 
 function RegistreRow({ row, isLast }) {
-  const badge = REGISTRE_BADGES[row.status];
-  const rowClassName = [
-    "flex snap-start items-center gap-3 px-1 py-[18px] md:gap-4",
-    isLast ? "" : "border-b border-brand-primary-dark/25",
-    // Le prototype ne met pas de hover sur la ligne estompée « À VENIR »
-    // (estompe adoucie à 65 % pour rester lisible).
-    row.status === "aVenir"
-      ? "opacity-80"
-      : "transition-colors hover:bg-brand-primary/8",
-  ].join(" ");
-
-  const inner = (
-    <>
+  return (
+    <Link
+      href={row.url}
+      className={`flex snap-start items-baseline justify-between gap-5 px-1 py-[18px] transition-colors hover:bg-brand-primary/8 ${
+        isLast ? "" : "border-b border-brand-primary-dark/25"
+      }`}
+    >
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-semibold text-brand-text md:text-[16.5px]">
           {row.title}
         </span>
         {row.theme ? (
-          <span className="mt-[3px] block font-heading text-[11px] tracking-[0.12em] text-gray-500">
+          <span className="mt-[3px] block font-mono text-xxs font-semibold tracking-etiquette text-brand-muted">
             {row.theme}
           </span>
         ) : null}
       </span>
-      <span
-        className={`flex-none whitespace-nowrap rounded-[3px] border px-2 py-1 font-heading text-[10px] tracking-[0.1em] md:px-2.5 md:text-[11px] ${badge.className}`}
-      >
-        {badge.label}
+      <span className="flex-none whitespace-nowrap font-mono text-meta text-brand-muted tabular-nums">
+        {row.quand}
       </span>
-    </>
-  );
-
-  return row.status === "publie" ? (
-    <Link href={`/comprendre/${row.slug}`} className={rowClassName}>
-      {inner}
     </Link>
-  ) : (
-    <div className={rowClassName}>{inner}</div>
   );
 }
 
 function RegistrePanel({ rows }) {
   return (
     <div className="rounded border border-brand-primary-dark/45 border-t-[3px] border-t-brand-primary-dark bg-white px-6 pb-6 shadow-card md:px-8 md:pb-[26px]">
-      {/* En-tête centré verticalement entre le bord supérieur et le filet. */}
       <div className="flex items-center border-b-[1.5px] border-brand-primary-dark/40 py-[18px] md:py-5">
-        <span className="font-heading text-[12px] font-bold tracking-[0.2em] text-gray-600">
-          DERNIERS ARTICLES
+        <span className="font-mono text-xxs font-bold uppercase tracking-surtitre text-brand-slate-dark">
+          Derniers articles
         </span>
       </div>
 
-      {/* Zone défilante : ~3 lignes visibles, fine barre bleue en
-          indicateur quand il y a plus d'articles. */}
       <div className="ll-vscroll max-h-[248px] snap-y overflow-y-auto">
         {rows.map((row, i) => (
           <RegistreRow key={row.slug} row={row} isLast={i === rows.length - 1} />
         ))}
       </div>
 
-      <p className="mt-3 font-heading text-[11px] tracking-[0.16em]">
+      <p className="mt-3 font-mono text-meta tracking-lien">
         <a
           href="#email"
           className="text-brand-accent-ink underline underline-offset-[3px] hover:text-brand-deep-dark"
@@ -185,6 +131,44 @@ function RegistrePanel({ rows }) {
         </a>
       </p>
     </div>
+  );
+}
+
+/** Une carte du bloc Aventures : le récit d'une campagne, ou la campagne. */
+function CarteDAccueil({ carte }) {
+  return (
+    <Link
+      href={carte.url}
+      className="block overflow-hidden rounded-xl bg-white text-brand-text no-underline shadow-renvoi"
+    >
+      {carte.cover && carte.cover !== "TODO" ? (
+        <div className="aspect-video overflow-hidden">
+          <Image
+            src={carte.cover}
+            alt={carte.titre}
+            width={720}
+            height={405}
+            className="block h-full w-full object-cover"
+          />
+        </div>
+      ) : null}
+      <div className="px-5 pb-[18px] pt-4">
+        <div className="font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
+          <span className="font-bold text-brand-deep">{carte.surtitre}</span>
+          {" · "}
+          {ETATS[carte.etat].toLowerCase()} le {dateLisible(carte.date)}
+        </div>
+        <div className="mt-2 font-heading text-lg font-bold leading-snug text-brand-deep">
+          {carte.titre}
+        </div>
+        <div className="mt-2 font-mono text-xs text-brand-soft tabular-nums">
+          {carte.chiffres.join(" · ")}
+        </div>
+        <div className="mt-3 font-mono text-meta tracking-pastille text-brand-deep-dark">
+          {carte.action}
+        </div>
+      </div>
+    </Link>
   );
 }
 
@@ -197,27 +181,17 @@ export default async function HomePage() {
     name: "The Locomotion Lab",
     url: "https://thelocomotionlab.com",
     hasPart: [
-      {
+      ...["Science", "Aventures", "Blog", "Services", "Labo"].map((nom) => ({
         "@type": "SiteNavigationElement",
-        name: "Comprendre",
-        url: "https://thelocomotionlab.com/comprendre",
-      },
-      {
-        "@type": "SiteNavigationElement",
-        name: "Explorer",
-        url: "https://thelocomotionlab.com/explorer",
-      },
-      {
-        "@type": "SiteNavigationElement",
-        name: "La quête",
-        url: "https://thelocomotionlab.com/quete",
-      },
+        name: nom,
+        url: `https://thelocomotionlab.com/${nom.toLowerCase()}`,
+      })),
     ],
   };
 
   const registreRows = getRegistreRows();
-  // Carrousel Explorer : dernières entrées du feed terrain (récits + projets).
-  const explorerItems = getExplorerCarouselItems({ limit: 8 });
+  const cartesDAventure = blocAventuresDeLAccueil();
+  const dernieresEntrees = entreesDuBlog().slice(0, 4);
 
   return (
     // -mb-12 : annule le mt-12 du Footer partagé pour que la bande email
@@ -272,17 +246,17 @@ export default async function HomePage() {
       {/* ── Bandeau du direct — n'apparaît QUE pendant un live ─────── */}
       <LiveBanner />
 
-      {/* ── 01 · COMPRENDRE — lavis bleu + registre des articles ───── */}
+      {/* ── 01 · SCIENCE — lavis bleu + registre des articles ─────── */}
       <section
-        id="comprendre"
+        id="science"
         className="scroll-mt-20 bg-brand-wash bg-lab-grid-blue px-6 py-11 [background-size:28px_28px] md:px-16 md:py-24 md:[background-size:32px_32px]"
       >
         <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:gap-16">
           <div>
             <h2 className="font-heading text-[40px] font-bold leading-none tracking-[-0.01em] text-brand-slate-dark md:text-[64px]">
-              Comprendre
+              Science
             </h2>
-            <p className="mt-3.5 font-lora text-xl italic text-brand-deep">
+            <p className="mt-3.5 font-lora text-xl font-light not-italic text-brand-deep-dark">
               Creuser la science derrière les concepts.
             </p>
             <p className="mt-5 max-w-[460px] text-[16.5px] leading-[1.7] text-gray-700 text-pretty">
@@ -294,7 +268,7 @@ export default async function HomePage() {
             {/* Desktop : CTA dans la colonne texte ; mobile : sous le
                 registre (dupliqué ci-dessous). */}
             <Link
-              href="/comprendre"
+              href="/science"
               className="mt-7 hidden rounded-full bg-brand-accent px-[26px] py-3 text-[15.5px] font-semibold text-white shadow-cta transition hover:bg-brand-accent-dark md:inline-block"
             >
               Voir tout
@@ -305,7 +279,7 @@ export default async function HomePage() {
 
           <div className="-mt-4 md:hidden">
             <Link
-              href="/comprendre"
+              href="/science"
               className="inline-block rounded-full bg-brand-accent px-[26px] py-3 text-[15.5px] font-semibold text-white shadow-cta transition hover:bg-brand-accent-dark"
             >
               Voir tout
@@ -314,9 +288,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 02 · EXPLORER — Dolomites + cartes du terrain ──────────── */}
+      {/* ── 02 · AVENTURES — photo + cartes de campagne ───────────── */}
       <section
-        id="explorer"
+        id="aventures"
         className="relative scroll-mt-20 overflow-hidden px-6 py-11 md:px-16 md:pb-[88px] md:pt-24"
       >
         <Image
@@ -337,10 +311,10 @@ export default async function HomePage() {
         />
 
         <div className="relative z-[2] mx-auto max-w-6xl">
-          <h2 className="font-lora text-[40px] font-semibold italic leading-none text-white md:text-[64px]">
-            Explorer
+          <h2 className="font-heading text-[40px] font-bold leading-none tracking-[-0.02em] text-white md:text-[64px]">
+            Aventures
           </h2>
-          <p className="mt-3.5 font-lora text-xl italic text-brand-accent-light">
+          <p className="mt-3.5 font-lora text-xl font-light not-italic text-brand-accent-light">
             Être son propre laboratoire.
           </p>
           <p className="mt-[18px] max-w-[520px] text-[16.5px] leading-[1.7] text-white/88 text-pretty">
@@ -349,26 +323,76 @@ export default async function HomePage() {
             la robustesse se développe, s&rsquo;éprouve et s&rsquo;affine.
           </p>
 
-          <div className="mt-8 md:mt-[38px]">
-            <ExplorerCarousel
-              items={explorerItems}
-              actions={
-                <>
-                  <Link
-                    href="/explorer"
-                    className="inline-block rounded-full border-[1.5px] border-white/70 px-[26px] py-3 text-[15.5px] font-semibold text-white transition hover:bg-white hover:text-brand-deep-dark"
-                  >
-                    Voir tout
-                  </Link>
-                  <ExplorerLiveIndicator />
-                </>
-              }
-            />
+          {cartesDAventure.length > 0 ? (
+            <div className="mt-8 grid gap-5 md:mt-[38px] md:grid-cols-2 lg:grid-cols-3">
+              {cartesDAventure.map((carte) => (
+                <CarteDAccueil key={carte.url} carte={carte} />
+              ))}
+            </div>
+          ) : null}
+
+          <div className="mt-9 flex flex-wrap items-center gap-8">
+            <Link
+              href="/aventures"
+              className="inline-block rounded-full border-[1.5px] border-white/70 px-[26px] py-3 text-[15.5px] font-semibold text-white transition hover:bg-white hover:text-brand-deep-dark"
+            >
+              Voir tout
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* ── 03 · LA PHILOSOPHIE — grille 4 piliers / accordéon mobile ── */}
+      {/* ── 03 · BLOG — les dernières entrées du carnet ────────────── */}
+      <section id="blog" className="mx-auto max-w-6xl scroll-mt-20 px-6 pt-16 md:px-16 md:pt-24">
+        <div className="grid items-start gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] md:gap-16">
+          <div>
+            <h2 className="font-heading text-[40px] font-bold leading-none tracking-[-0.02em] md:text-[64px]">
+              Blog
+            </h2>
+            <p className="mt-3.5 font-lora text-xl font-light not-italic text-brand-deep-dark">
+              Le carnet de bord, au jour le jour.
+            </p>
+            <p className="mt-5 max-w-[40ch] text-[16.5px] leading-[1.7] text-gray-700 text-pretty">
+              Sorties, bilans, billets et notes de terrain : ce qui se passe au
+              labo cette semaine, protocoles en cours compris.
+            </p>
+            <Link
+              href="/blog"
+              className="mt-7 inline-block rounded-full border border-brand-text px-[26px] py-3 text-[15.5px] font-semibold text-brand-text transition hover:bg-brand-text hover:text-brand-bg"
+            >
+              Voir tout
+            </Link>
+          </div>
+
+          <div className="border-t-[1.5px] border-brand-text">
+            {dernieresEntrees.map((entree) => (
+              <Link
+                key={entree.url}
+                href={entree.url}
+                className="grid grid-cols-[6rem_minmax(0,1fr)] items-baseline gap-x-5 border-b border-brand-hairline py-4 text-brand-text no-underline"
+              >
+                <span className="font-mono text-xs text-brand-muted tabular-nums">
+                  {entree.dateLisible}
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-heading font-semibold leading-snug">
+                    {entree.titre}
+                  </span>
+                  <span className="mt-1 block font-mono text-xxs font-semibold uppercase tracking-lien text-brand-muted">
+                    {entree.typeLabel}
+                    {entree.note ? <span className="ml-2 text-brand-slate">● Note</span> : null}
+                    {entree.protocole ? (
+                      <span className="ml-2 text-brand-deep">● Protocole</span>
+                    ) : null}
+                  </span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 04 · LA PHILOSOPHIE — grille 4 piliers / accordéon mobile ── */}
       <PhilosophieSection />
 
       {/* ── Capture email — bande accent ────────────────────────────── */}

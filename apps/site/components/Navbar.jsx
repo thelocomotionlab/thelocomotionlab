@@ -10,7 +10,7 @@ import {
   Compass,
   FlaskConical,
   Menu,
-  Play,
+  NotebookPen,
   SatelliteDish,
   Search,
   Wrench,
@@ -18,10 +18,6 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { liveConfig } from "@/lib/liveConfig";
-
-// Menu « Outils » livré masqué en PR1, activé en PR2 avec la page
-// /outils/twin.
-const SHOW_OUTILS = true;
 
 // « Live » n'entre dans la navbar que 24 h avant le départ de l'aventure
 // (liveConfig.aventure.dateDebut) et en sort au passage en « repos ».
@@ -52,34 +48,15 @@ function liveWindowOpen() {
   return now >= start - LIVE_AVANT_MS && now <= start + LIVE_APRES_MS;
 }
 
+// Les cinq destinations du modèle de contenu. Chacune est un index :
+// /science, /aventures, /blog, /services, /labo (cf. docs/systeme-de-contenu.md
+// §2). Le Labo réunit la quête, À propos et Contact en une page.
 const NAV_ITEMS = [
-  { type: "link", href: "/comprendre", label: "Comprendre", Icon: Brain },
-  { type: "link", href: "/explorer", label: "Explorer", Icon: Compass },
-  // Évolutif : quand l'accompagnement trail ouvrira (2027), cette entrée
-  // passera en `type: "menu"` (Ateliers / Accompagnement trail).
-  { type: "link", href: "/pratiquer", label: "Pratiquer", Icon: Play },
-  {
-    type: "menu",
-    label: "Outils",
-    Icon: Wrench,
-    hidden: !SHOW_OUTILS,
-    items: [
-      { href: "/outils/twin", label: "Locomotion Twin" },
-      // Le studio (/studio) n'est PAS listé : c'est l'atelier interne des
-      // visuels, il n'a rien à faire dans la navigation publique.
-    ],
-  },
-  {
-    type: "menu",
-    label: "Le labo",
-    Icon: FlaskConical,
-    items: [
-      { href: "/quete", label: "La quête" },
-      { href: "/a-propos", label: "À propos" },
-      { href: "/soutenir", label: "Soutenir" },
-      { href: "/contact", label: "Contact" },
-    ],
-  },
+  { type: "link", href: "/science", label: "Science", Icon: Brain },
+  { type: "link", href: "/aventures", label: "Aventures", Icon: Compass },
+  { type: "link", href: "/blog", label: "Blog", Icon: NotebookPen },
+  { type: "link", href: "/services", label: "Services", Icon: Wrench },
+  { type: "link", href: "/labo", label: "Labo", Icon: FlaskConical },
 ].filter((item) => !item.hidden);
 
 function isActivePath(pathname, href) {

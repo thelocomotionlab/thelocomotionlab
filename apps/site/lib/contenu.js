@@ -142,3 +142,48 @@ export function urlDe(page) {
 export function blocsDe(page) {
   return blocs.parSource(page.frontmatter.sorte, page.frontmatter.slug);
 }
+
+/**
+ * Le bloc Aventures de l'accueil (§8).
+ *
+ * Une campagne y montre SON RÉCIT quand il existe — le nom de l'aventure en
+ * surtitre, le titre du récit en titre — et sa propre carte sinon. L'action
+ * dépend de l'état : on lit un récit sur une campagne terminée, on suit celle
+ * qui est en cours. Le tri est celui des aventures : l'événement le plus
+ * récent d'abord.
+ */
+export function blocAventuresDeLAccueil(limite = 3) {
+  return aventures()
+    .slice(0, limite)
+    .map((page) => {
+      const { frontmatter } = page;
+      const recit = recitDe(frontmatter);
+      const termine = frontmatter.etat === "termine";
+
+      if (recit) {
+        return {
+          genre: "recit",
+          surtitre: frontmatter.titre,
+          titre: recit.frontmatter.titre,
+          url: urlDe(recit),
+          cover: recit.frontmatter.cover,
+          chiffres: recit.frontmatter.chiffres ?? frontmatter.resume,
+          etat: frontmatter.etat,
+          date: dateDeCampagne(frontmatter),
+          action: termine ? "Lire le récit" : "Suivre la campagne",
+        };
+      }
+
+      return {
+        genre: "campagne",
+        surtitre: "Aventure",
+        titre: frontmatter.titre,
+        url: urlDe(page),
+        cover: frontmatter.cover,
+        chiffres: frontmatter.resume,
+        etat: frontmatter.etat,
+        date: dateDeCampagne(frontmatter),
+        action: termine ? "Voir la campagne" : "Suivre la campagne",
+      };
+    });
+}
