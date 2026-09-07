@@ -170,30 +170,32 @@ function ContactFormInner({ initialMessage = "" }) {
   return (
     <div className="rounded-xl border border-brand-hairline bg-brand-paper px-7 py-7 font-sans text-brand-text shadow-bloc">
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
-        <Field
-          label="Nom"
-          id="name"
-          name="name"
-          autoComplete="name"
-          required
-          value={formData.name}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          error={errors.name}
-        />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field
+            label="Nom"
+            id="name"
+            name="name"
+            autoComplete="name"
+            required
+            value={formData.name}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={errors.name}
+          />
 
-        <Field
-          label="Email"
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          value={formData.email}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          error={errors.email}
-        />
+          <Field
+            label="Email"
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            value={formData.email}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={errors.email}
+          />
+        </div>
 
         <Field
           label="Message"

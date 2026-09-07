@@ -209,7 +209,7 @@ function policesDuSite() {
   };
   return {
     sans: st.fontFamily || "sans-serif",
-    serif: famille("--next-font-sans", "--font-sans", "Georgia, serif"),
+    serif: famille("--next-font-ubuntu", "--font-sans", "ui-sans-serif, system-ui"),
     mono: famille(
       "--next-font-ubuntu-mono",
       "--font-mono",

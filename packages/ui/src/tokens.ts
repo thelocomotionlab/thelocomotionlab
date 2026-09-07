@@ -22,4 +22,10 @@ export const brandColors = {
   deep: "#B67352",
   /** --color-brand-deep-dark */
   deepDark: "#9A6044",
+  /** --color-brand-text */
+  text: "#333333",
+  /** --color-brand-hairline */
+  hairline: "#E5DFD3",
+  /** --color-brand-paper */
+  paper: "#FFFFFF",
 } as const;

@@ -13,6 +13,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { brandColors } from "@locomotionlab/ui";
 
 const MATHJAX_SCRIPT_ID = "plotly-mathjax-v2";
 const MATHJAX_SRC =
@@ -64,27 +65,41 @@ function ensureMathJax() {
   });
 }
 
-const DEFAULT_LAYOUT = {
-  autosize: true,
-  paper_bgcolor: "white",
-  plot_bgcolor: "white",
-  font: { family: "Lora, Georgia, serif", size: 14, color: "#1f2937" },
-  hoverlabel: {
-    bgcolor: "white",
-    bordercolor: "#8CB9BD",
-    font: { family: "Lora, Georgia, serif", size: 13, color: "#1f2937" },
-  },
-};
+// Plotly dessine en canvas : il lui faut des valeurs littérales, pas des
+// var(). La famille se lit sur <body>, où next/font l'a posée ; les couleurs
+// viennent du miroir JS de la charte.
+const FAMILLE_DE_SECOURS = "ui-sans-serif, system-ui, sans-serif";
+
+function familleDuSite() {
+  if (typeof document === "undefined") return FAMILLE_DE_SECOURS;
+  const nom = getComputedStyle(document.body).getPropertyValue("--next-font-ubuntu").trim();
+  return nom ? `${nom}, ${FAMILLE_DE_SECOURS}` : FAMILLE_DE_SECOURS;
+}
+
+function layoutParDefaut() {
+  const family = familleDuSite();
+  return {
+    autosize: true,
+    paper_bgcolor: brandColors.paper,
+    plot_bgcolor: brandColors.paper,
+    font: { family, size: 14, color: brandColors.text },
+    hoverlabel: {
+      bgcolor: brandColors.paper,
+      bordercolor: brandColors.primary,
+      font: { family, size: 13, color: brandColors.text },
+    },
+  };
+}
 
 const AXIS_DEFAULTS = {
   showgrid: true,
-  gridcolor: "#e5e7eb",
+  gridcolor: brandColors.hairline,
   zeroline: false,
   showline: true,
-  linecolor: "#1f2937",
+  linecolor: brandColors.text,
   linewidth: 1,
   ticks: "outside",
-  tickcolor: "#1f2937",
+  tickcolor: brandColors.text,
   mirror: true,
   titlefont: { size: 15 },
   automargin: true,
@@ -96,10 +111,10 @@ const SECONDARY_AXIS_DEFAULTS = {
   showgrid: false,
   zeroline: false,
   showline: true,
-  linecolor: "#1f2937",
+  linecolor: brandColors.text,
   linewidth: 1,
   ticks: "outside",
-  tickcolor: "#1f2937",
+  tickcolor: brandColors.text,
   titlefont: { size: 15 },
   automargin: true,
 };
@@ -123,10 +138,11 @@ function computeMargin(userLayout) {
 }
 
 function mergeLayout(userLayout) {
-  const layout = { ...DEFAULT_LAYOUT, ...(userLayout || {}) };
+  const defauts = layoutParDefaut();
+  const layout = { ...defauts, ...(userLayout || {}) };
   layout.margin = { ...computeMargin(userLayout), ...(userLayout?.margin || {}) };
   if (userLayout?.font) {
-    layout.font = { ...DEFAULT_LAYOUT.font, ...userLayout.font };
+    layout.font = { ...defauts.font, ...userLayout.font };
   }
   layout.xaxis = { ...AXIS_DEFAULTS, ...(userLayout?.xaxis || {}) };
   layout.yaxis = { ...AXIS_DEFAULTS, ...(userLayout?.yaxis || {}) };

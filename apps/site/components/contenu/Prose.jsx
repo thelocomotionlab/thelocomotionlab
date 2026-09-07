@@ -60,11 +60,19 @@ function preparer(texte) {
   });
 }
 
-export default function Prose({ texte, citation, className = "" }) {
+// La mesure du corps. `lecture` est celle d'une page ; `herite` laisse le
+// conteneur décider — c'est ce qu'il faut à l'intérieur d'un bloc Note ou
+// Protocole, qui pose déjà sa propre échelle.
+const MESURES = {
+  lecture: "text-lecture leading-lecture",
+  herite: "leading-relaxed",
+};
+
+export default function Prose({ texte, citation, taille = "lecture", className = "" }) {
   if (!texte || texte.trim() === "") return null;
 
   return (
-    <div className={`prose article-body max-w-none font-sans text-lecture leading-lecture ${className}`}>
+    <div className={`prose article-body max-w-none font-sans ${MESURES[taille]} ${className}`}>
       <ReactMarkdown
         remarkPlugins={PLUGINS_REMARK}
         rehypePlugins={PLUGINS_REHYPE}

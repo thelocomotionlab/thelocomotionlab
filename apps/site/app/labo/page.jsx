@@ -126,7 +126,7 @@ export default function LaboPage() {
       </Section>
 
       <Section {...SECTIONS[1]} exergue={<Exergue>Qui suis-je ?</Exergue>}>
-        <div className="mt-8 grid items-start gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
+        <div className="mt-8 grid items-start gap-14 lg:grid-cols-[300px_minmax(0,1fr)]">
           <PortraitDeValentin />
           <div className="min-w-0">
             <APropos />

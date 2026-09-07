@@ -62,7 +62,7 @@ export default function Preparation({ section, billets = {}, protocoles = [] }: 
                   <th
                     key={colonne}
                     scope="col"
-                    className={`border-b border-brand-hairline py-2 font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted ${
+                    className={`border-b border-brand-hairline py-2 pr-4 font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted last:pr-0 ${
                       colonnesNumeriques(seances.colonnes).includes(index)
                         ? "text-right"
                         : "text-left"

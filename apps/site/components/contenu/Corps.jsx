@@ -54,7 +54,7 @@ export default function Corps({ page, citation, appelDeReference: Ref }) {
         if (nom === "Note") {
           return (
             <Note key={rang} id={attributs.id} titre={attributs.titre}>
-              <Prose texte={corps} citation={citation} />
+              <Prose texte={corps} citation={citation} taille="herite" />
             </Note>
           );
         }
@@ -75,12 +75,16 @@ export default function Corps({ page, citation, appelDeReference: Ref }) {
             objectif={attributs.objectif}
             sensations={
               sensations.length > 0 ? (
-                <Prose texte={sensations.join("\n\n").replace(/^Sensations\s*:\s*/i, "")} citation={citation} />
+                <Prose
+                  texte={sensations.join("\n\n").replace(/^Sensations\s*:\s*/i, "")}
+                  citation={citation}
+                  taille="herite"
+                />
               ) : undefined
             }
             references={references}
           >
-            <Prose texte={protocole.join("\n\n")} citation={citation} />
+            <Prose texte={protocole.join("\n\n")} citation={citation} taille="herite" />
           </Protocole>
         );
       })}

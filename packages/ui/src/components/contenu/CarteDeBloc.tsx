@@ -50,7 +50,7 @@ function Carte({ bloc }: CarteDeBlocProps) {
   return (
     <a
       href={bloc.url}
-      className={`block rounded-xl border border-brand-hairline border-t-[3px] bg-brand-paper px-5 py-4.5 text-brand-text no-underline shadow-bloc transition-colors ${accent.filet} ${accent.survol}`}
+      className={`block rounded-[10px] border border-brand-hairline border-t-[3px] bg-brand-paper px-5 py-4.5 text-brand-text no-underline shadow-bloc transition-colors ${accent.filet} ${accent.survol}`}
     >
       <div className="flex items-center justify-between gap-3">
         <span className={`font-mono text-xxs font-bold uppercase tracking-surtitre ${accent.texte}`}>
@@ -59,9 +59,9 @@ function Carte({ bloc }: CarteDeBlocProps) {
         {bloc.statut ? <BadgeStatut statut={bloc.statut} /> : null}
       </div>
 
-      <div className="mt-2 font-heading text-lg font-bold leading-tight">{bloc.titre}</div>
+      <div className="mt-2 font-heading text-[19px] font-bold leading-[1.2]">{bloc.titre}</div>
 
-      <div className="mt-1.5 font-sans leading-relaxed text-brand-soft">
+      <div className="mt-1.5 font-sans text-[15px] leading-normal text-brand-soft">
         Objectif : {bloc.objectif}
       </div>
 

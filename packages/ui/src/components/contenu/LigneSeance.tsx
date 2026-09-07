@@ -32,7 +32,9 @@ export default function LigneSeance({
   return (
     <tr>
       {cellules.map((cellule, index) => {
-        const commun = `py-3 align-top ${bordure}`;
+        // La gouttière est portée par la cellule : sans elle, une valeur
+        // chiffrée colle au libellé de la colonne suivante.
+        const commun = `py-3 pr-4 align-top last:pr-0 ${bordure}`;
 
         if (index === derniereColonne) {
           return (
