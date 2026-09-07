@@ -59,9 +59,9 @@ const propsCommunes = {
   refs: listeEnChaine.default([]),
 };
 
-export const PropsNote = z.object({ ...propsCommunes });
+export const PropsNote = z.strictObject({ ...propsCommunes });
 
-export const PropsProtocole = z.object({
+export const PropsProtocole = z.strictObject({
   ...propsCommunes,
   statut: z.enum(STATUTS_DE_PROTOCOLE),
   n: entierEnChaine,

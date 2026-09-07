@@ -49,6 +49,14 @@ describe("extraireBlocs", () => {
     expect(erreurs).toEqual([]);
   });
 
+  it("relève une carte écrite dans le corps d'un bloc", () => {
+    const { blocs, cartes } = extraireBlocs(
+      `<Protocole id="p1" titre="T" objectif="O" statut="en-test" n="1">\nVoir <VersProtocole id="rest-step" />.\n</Protocole>`,
+    );
+    expect(blocs).toHaveLength(1);
+    expect(cartes.map((c) => c.id)).toEqual(["rest-step"]);
+  });
+
   it("ignore une balise laissée en commentaire HTML", () => {
     const { blocs, cartes, erreurs } = extraireBlocs(
       `Un paragraphe.\n\n<!--\n<Protocole id="ancien" titre="T" objectif="O" statut="en-test" n="1">\ncorps\n</Protocole>\n-->\n\nLa suite.`,

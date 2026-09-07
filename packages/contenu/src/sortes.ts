@@ -2,6 +2,10 @@
 //
 // LES QUATRE SORTES DE PAGE ET LEUR FRONTMATTER.
 //
+// Les schémas sont stricts : une clé que le modèle ne connaît pas arrête le
+// build au lieu d'être retirée en silence. `lectuer: 12` est une faute de
+// frappe, pas un champ absent.
+//
 //   aventure  campagne : données, préparation, matériel, direct  /aventures/<slug>
 //   recit     le texte long d'une campagne                       /aventures/<slug-aventure>/recit
 //   billet    entrée datée du carnet de bord                     /blog/<slug>
@@ -31,12 +35,22 @@ const slugDePage = z
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "un slug s'écrit en minuscules, chiffres et tirets");
 
 /**
- * Une date de frontmatter. YAML transforme `2025-09-29` en objet Date : on
- * ramène les deux écritures à la même chaîne `AAAA-MM-JJ`, parce que c'est
- * elle qu'on compare, qu'on trie et qu'on écrit dans l'index des blocs.
+ * Une date de frontmatter. YAML transforme `2025-09-29` en objet Date à minuit
+ * UTC : on ramène les deux écritures à la même chaîne `AAAA-MM-JJ`, parce que
+ * c'est elle qu'on compare, qu'on trie et qu'on écrit dans l'index des blocs.
+ *
+ * Un horodatage complet est refusé plutôt que tronqué : `2026-05-18 00:30 +02:00`
+ * tombe la veille en UTC, et le jour lu ne serait pas le jour écrit.
  */
 export const DateDeContenu = z.preprocess((valeur) => {
-  if (valeur instanceof Date) return valeur.toISOString().slice(0, 10);
+  if (valeur instanceof Date) {
+    const minuitUTC =
+      valeur.getUTCHours() === 0 &&
+      valeur.getUTCMinutes() === 0 &&
+      valeur.getUTCSeconds() === 0 &&
+      valeur.getUTCMilliseconds() === 0;
+    return minuitUTC ? valeur.toISOString().slice(0, 10) : valeur.toISOString();
+  }
   return valeur;
 }, z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "une date s'écrit AAAA-MM-JJ"));
 
@@ -97,11 +111,11 @@ export const TYPE_DE_SECTION_INCONNU = "type-de-section-inconnu:";
 
 // ── aventure ────────────────────────────────────────────────────────────────
 
-export const Aventure = z.object({
+export const Aventure = z.strictObject({
   sorte: z.literal("aventure"),
   ...communs,
   etat: z.enum(ETATS_DE_CAMPAGNE),
-  campagne: z.object({
+  campagne: z.strictObject({
     debut: DateDeContenu,
     // Une campagne en préparation ou en cours n'a pas de fin connue.
     fin: DateDeContenu.optional(),
@@ -116,7 +130,7 @@ export const Aventure = z.object({
 
 // ── recit ───────────────────────────────────────────────────────────────────
 
-export const Recit = z.object({
+export const Recit = z.strictObject({
   sorte: z.literal("recit"),
   ...communs,
   date: DateDeContenu,
@@ -131,7 +145,7 @@ export const Recit = z.object({
 
 // ── billet ──────────────────────────────────────────────────────────────────
 
-export const Billet = z.object({
+export const Billet = z.strictObject({
   sorte: z.literal("billet"),
   ...communs,
   date: DateDeContenu,
@@ -142,7 +156,7 @@ export const Billet = z.object({
 
 // ── article ─────────────────────────────────────────────────────────────────
 
-export const Article = z.object({
+export const Article = z.strictObject({
   sorte: z.literal("article"),
   ...communs,
   publie_le: DateDeContenu,
@@ -152,7 +166,7 @@ export const Article = z.object({
   lecture: z.number().int().positive().optional(),
   refs: z.array(cleDeReference).default([]),
   revisions: z
-    .array(z.object({ date: DateDeContenu, quoi: z.string().min(1) }))
+    .array(z.strictObject({ date: DateDeContenu, quoi: z.string().min(1) }))
     .default([]),
 });
 

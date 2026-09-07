@@ -156,12 +156,17 @@ export function construireIndexDesBlocs(pages: readonly PageAnalysee[]): {
   return { index, erreurs };
 }
 
-/** Les clés de `refs` déclarées par une page : frontmatter d'article, props de ses blocs. */
-function referencesDeLaPage(page: PageAnalysee, index: readonly Bloc[]): string[] {
+/**
+ * Les clés de `refs` déclarées par une page : le frontmatter d'un article, et
+ * les props des blocs écrits DANS cette page — lues sur place, pour qu'une page
+ * ne réponde jamais des références d'une autre.
+ */
+function referencesDeLaPage(page: PageAnalysee): string[] {
   const cles = page.frontmatter.sorte === "article" ? [...page.frontmatter.refs] : [];
-  for (const bloc of index) {
-    if (bloc.source.sorte === page.frontmatter.sorte && bloc.source.slug === page.frontmatter.slug) {
-      cles.push(...bloc.refs);
+  for (const brut of page.extraction.blocs) {
+    for (const cle of (brut.attributs.refs ?? "").split(",")) {
+      const nettoyee = cle.trim();
+      if (nettoyee.length > 0) cles.push(nettoyee);
     }
   }
   return cles;
@@ -195,7 +200,7 @@ export function validerCorpus(
     }
 
     // Une clé de `refs` absente de la bibliographie.
-    for (const cle of referencesDeLaPage(page, index)) {
+    for (const cle of referencesDeLaPage(page)) {
       if (!catalogue.bibliographie.has(cle)) erreurs.push(messages.referenceInconnue(cle, fichier));
     }
 
@@ -208,7 +213,7 @@ export function validerCorpus(
     }
 
     if (page.frontmatter.sorte === "aventure") {
-      erreurs.push(...validerAventure(page.frontmatter, fichier, slugsParSorte, catalogue));
+      erreurs.push(...validerAventure(page.frontmatter, fichier, slugsParSorte, catalogue, idsDeBloc));
     }
   }
 
@@ -220,6 +225,7 @@ function validerAventure(
   fichier: string,
   slugsParSorte: ReadonlyMap<Sorte, Set<string>>,
   catalogue: Catalogue,
+  idsDeBloc: ReadonlySet<string>,
 ): string[] {
   const erreurs: string[] = [];
 
@@ -239,6 +245,14 @@ function validerAventure(
     // Une section `paquetage` référence un jeu de données absent.
     if (section.type === "paquetage" && !catalogue.paquetages.has(section.ref)) {
       erreurs.push(messages.paquetageIntrouvable(section.ref, fichier));
+    }
+
+    // `protocoles` porte des ids résolus dans l'index des blocs : ils
+    // produisent les mêmes cartes, donc la même erreur.
+    if (section.type === "preparation" && section.protocoles) {
+      for (const identifiant of section.protocoles) {
+        if (!idsDeBloc.has(identifiant)) erreurs.push(messages.carteSansBloc(identifiant, fichier));
+      }
     }
 
     // Un slug de billet en dernière colonne de `seances` n'existe pas.

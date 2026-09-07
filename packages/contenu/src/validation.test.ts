@@ -50,6 +50,42 @@ describe("§9 — les règles qui font échouer le build", () => {
     ]);
   });
 
+  it("une carte pointant vers un id inexistant, écrite dans le corps d'un bloc", () => {
+    const { erreurs } = valider([
+      page(
+        "content/blog/a.mdx",
+        { ...BILLET, slug: "a" },
+        `<Protocole id="p" statut="en-test" n="1" titre="T" objectif="O">\n<VersProtocole id="fantome" />\n</Protocole>`,
+      ),
+    ]);
+    expect(erreurs).toContain(
+      '<VersProtocole id="fantome"> dans content/blog/a.mdx : aucun bloc ne porte cet id',
+    );
+  });
+
+  it("un id de preparation.protocoles absent de l'index est une carte morte", () => {
+    const aventure = {
+      ...AVENTURE_TROIS_SECTIONS,
+      sections: [{ type: "preparation", protocoles: ["rest-step"] }],
+    };
+    const { erreurs } = valider([page("content/aventures/a.mdx", aventure)]);
+    expect(erreurs).toEqual([
+      '<VersProtocole id="rest-step"> dans content/aventures/a.mdx : aucun bloc ne porte cet id',
+    ]);
+  });
+
+  it("un id de preparation.protocoles présent dans l'index passe", () => {
+    const aventure = {
+      ...AVENTURE_TROIS_SECTIONS,
+      sections: [{ type: "preparation", protocoles: ["train-low-eat-low"] }],
+    };
+    const { erreurs } = valider([
+      page("content/blog/a.mdx", { ...BILLET, slug: "a" }, protocole("train-low-eat-low")),
+      page("content/aventures/a.mdx", aventure),
+    ]);
+    expect(erreurs).toEqual([]);
+  });
+
   it("référence inconnue", () => {
     const { erreurs } = valider([
       page("content/blog/a.mdx", { ...BILLET, slug: "a" }, protocole("p", "sanchez2025")),
@@ -116,9 +152,24 @@ describe("§9 — les règles qui font échouer le build", () => {
     expect(erreurs).toContain('récit introuvable : "ile-intense" déclaré par content/aventures/a.mdx');
   });
 
-  it("aventure introuvable", () => {
+  it("aventure introuvable, déclarée par un billet", () => {
     const { erreurs } = valider([page("content/blog/a.mdx", { ...BILLET, aventure: "nice-2026" })]);
     expect(erreurs).toContain('aventure introuvable : "nice-2026" déclarée par content/blog/a.mdx');
+  });
+
+  it("aventure introuvable, déclarée par un récit", () => {
+    const { erreurs } = valider([
+      page("content/recits/a.mdx", {
+        sorte: "recit",
+        titre: "T",
+        slug: "a",
+        chapeau: "C",
+        date: "2025-12-09",
+        aventure: "nice-2026",
+        cover: "c.webp",
+      }),
+    ]);
+    expect(erreurs).toContain('aventure introuvable : "nice-2026" déclarée par content/recits/a.mdx');
   });
 
   it("paquetage introuvable", () => {
@@ -147,6 +198,50 @@ describe("§9 — les règles qui font échouer le build", () => {
     };
     const { erreurs } = valider([page("content/aventures/a.mdx", aventure)]);
     expect(erreurs).toEqual(['billet introuvable : "taillefer" dans content/aventures/a.mdx']);
+  });
+
+  it("une référence est imputée à la page qui l'écrit, jamais à une homonyme", () => {
+    const { erreurs } = valider([
+      page("content/blog/a.mdx", { ...BILLET, slug: "doublon" }),
+      page("content/blog/b.mdx", { ...BILLET, slug: "doublon" }, protocole("p", "inconnue2026")),
+    ]);
+    expect(erreurs).toEqual(['référence inconnue : "inconnue2026" dans content/blog/b.mdx']);
+  });
+
+  it("refuse une clé de frontmatter que le modèle ne connaît pas", () => {
+    const analyse = analyserFrontmatter("content/recits/a.mdx", {
+      sorte: "recit",
+      titre: "T",
+      slug: "a",
+      chapeau: "C",
+      date: "2025-12-09",
+      aventure: "reunion-2025",
+      cover: "c.webp",
+      lectuer: 12,
+    });
+    expect(analyse.ok).toBe(false);
+    expect(analyse.ok === false && analyse.erreurs[0]).toContain("content/recits/a.mdx : ");
+    expect(analyse.ok === false && analyse.erreurs[0]).toContain("lectuer");
+  });
+
+  it("refuse une clé de section que le modèle ne connaît pas", () => {
+    const analyse = analyserFrontmatter("content/aventures/a.mdx", {
+      ...AVENTURE_TROIS_SECTIONS,
+      sections: [{ type: "direct", versions: ["v1", "v2"] }],
+    });
+    expect(analyse.ok).toBe(false);
+    expect(analyse.ok === false && analyse.erreurs[0]).toContain("versions");
+  });
+
+  it("refuse un horodatage : le jour lu ne serait pas le jour écrit", () => {
+    const analyse = analyserFrontmatter("content/blog/a.mdx", {
+      ...BILLET,
+      date: new Date("2026-05-18T00:30:00+02:00"),
+    });
+    expect(analyse.ok).toBe(false);
+    expect(analyse.ok === false && analyse.erreurs[0]).toBe(
+      "content/blog/a.mdx : date : une date s'écrit AAAA-MM-JJ",
+    );
   });
 
   it("frontmatter invalide : message Zod préfixé du chemin du fichier", () => {

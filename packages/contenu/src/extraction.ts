@@ -149,6 +149,26 @@ function lireBalise(texte: string, debut: number): BaliseLue | null {
   }
 }
 
+/** Les cartes écrites entre deux positions du texte masqué. */
+function relever(masque: string, corps: string, debut: number, fin: number): CarteBrute[] {
+  const cartes: CarteBrute[] = [];
+  let curseur = debut;
+
+  for (;;) {
+    const ouverture = masque.indexOf(`<${BALISE_DE_CARTE}`, curseur);
+    if (ouverture === -1 || ouverture >= fin) return cartes;
+
+    const balise = lireBalise(masque, ouverture);
+    if (balise && !balise.erreur) {
+      cartes.push({
+        id: balise.attributs.id,
+        position: { debut: ouverture, fin: balise.fin, ligne: numeroDeLigne(corps, ouverture) },
+      });
+    }
+    curseur = balise ? Math.max(balise.fin, ouverture + 1) : ouverture + 1;
+  }
+}
+
 /**
  * Relève les blocs et les cartes du corps d'une page. Les autres composants
  * (<Citation>, <Plot>, …) sont laissés tels quels.
@@ -211,6 +231,9 @@ export function extraireBlocs(corps: string): ResultatExtraction {
       corps: corps.slice(balise.fin, finCorps).trim(),
       position: { ...position, fin: finCorps + fermeture.length },
     });
+    // Un bloc cite parfois un autre bloc dans son corps : la carte compte
+    // autant que celles écrites dans le flux de la page.
+    cartes.push(...relever(masque, corps, balise.fin, finCorps));
     curseur = finCorps + fermeture.length;
   }
 

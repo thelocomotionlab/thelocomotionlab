@@ -72,11 +72,11 @@ function verifierLargeurDesLignes(
 // Fiche clé/valeur libre : aucun champ imposé, chaque aventure déclare les
 // siens (distance et dénivelé ici, climat et hébergement ailleurs).
 
-export const SectionCaracteristiques = z.object({
+export const SectionCaracteristiques = z.strictObject({
   type: z.literal("caracteristiques"),
   ...communs,
   champs: z
-    .array(z.object({ label: z.string().min(1), valeur: z.string().min(1) }))
+    .array(z.strictObject({ label: z.string().min(1), valeur: z.string().min(1) }))
     .min(1),
 });
 
@@ -85,7 +85,7 @@ export const SectionCaracteristiques = z.object({
 // cumulé » pour une trace, « Étape / jours / lieu » pour un voyage.
 
 export const SectionGeo = z
-  .object({
+  .strictObject({
     type: z.literal("geo"),
     ...communs,
     carte: z.string().min(1),
@@ -99,11 +99,11 @@ export const SectionGeo = z
 // n'avoir que des stresseurs.
 
 const Graphe = z
-  .object({
+  .strictObject({
     abscisse: z.array(z.string().min(1)).min(1),
     series: z
       .array(
-        z.object({
+        z.strictObject({
           nom: z.string().min(1),
           unite: z.string().min(1),
           valeurs: z.array(z.number()).min(1),
@@ -124,7 +124,7 @@ const Graphe = z
   });
 
 /** Schéma fixe d'un stresseur : rien de libre, cinq champs, tous requis. */
-const Stresseur = z.object({
+const Stresseur = z.strictObject({
   nom: z.string().min(1),
   dose: z.string().min(1),
   frequence: z.string().min(1),
@@ -132,16 +132,16 @@ const Stresseur = z.object({
   pourquoi: z.string().min(1),
 });
 
-export const SectionPreparation = z.object({
+export const SectionPreparation = z.strictObject({
   type: z.literal("preparation"),
   ...communs,
   graphe: Graphe.optional(),
   seances: z
-    .object(champsDeTableau)
+    .strictObject(champsDeTableau)
     .superRefine((valeur, ctx) => verifierLargeurDesLignes("seances", valeur, ctx))
     .optional(),
   stresseurs: z
-    .object({
+    .strictObject({
       travailles: z.array(Stresseur).default([]),
       // Champ structuré, pas une phrase libre : ce qu'on n'a pas travaillé
       // s'affiche comme une liste, à côté de ce qu'on a travaillé.
@@ -155,7 +155,7 @@ export const SectionPreparation = z.object({
 // Référence un jeu de données de paquetage : le tableau, les masses et
 // l'export CSV sont produits à partir de lui.
 
-export const SectionPaquetage = z.object({
+export const SectionPaquetage = z.strictObject({
   type: z.literal("paquetage"),
   ...communs,
   ref: z.string().min(1),
@@ -164,14 +164,14 @@ export const SectionPaquetage = z.object({
 // ── nutrition ───────────────────────────────────────────────────────────────
 
 export const SectionNutrition = z
-  .object({ type: z.literal("nutrition"), ...communs, ...champsDeTableau })
+  .strictObject({ type: z.literal("nutrition"), ...communs, ...champsDeTableau })
   .superRefine((valeur, ctx) => verifierLargeurDesLignes("nutrition", valeur, ctx));
 
 // ── libre ───────────────────────────────────────────────────────────────────
 // Le frontmatter ne déclare que la position et le titre ; le corps vit dans le
 // MDX de la page, dans un slot nommé par cet `id`.
 
-export const SectionLibre = z.object({
+export const SectionLibre = z.strictObject({
   type: z.literal("libre"),
   id: identifiant,
   titre: z.string().min(1),
@@ -182,14 +182,14 @@ export const SectionLibre = z.object({
 // aucune donnée : le direct d'une campagne se lit à partir du slug de
 // l'aventure.
 
-export const SectionDirect = z.object({ type: z.literal("direct"), ...communs });
+export const SectionDirect = z.strictObject({ type: z.literal("direct"), ...communs });
 
 // ── recit ───────────────────────────────────────────────────────────────────
 // Grande carte de renvoi vers /aventures/<slug>/recit, résolue depuis le champ
 // `recit` du frontmatter. Absente si le récit n'existe pas, donc sans donnée
 // propre elle non plus.
 
-export const SectionRecit = z.object({ type: z.literal("recit"), ...communs });
+export const SectionRecit = z.strictObject({ type: z.literal("recit"), ...communs });
 
 /**
  * Le schéma d'une section, choisi par son `type`. Un `type` inconnu n'arrive
