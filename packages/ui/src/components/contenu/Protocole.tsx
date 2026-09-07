@@ -3,7 +3,7 @@
 // LE BLOC PROTOCOLE, écrit dans le flux d'un billet.
 //
 // Une carte à filet terracotta : surtitre, statut, titre, ligne de méta
-// (numéro et références), l'objectif et le corps en clé/valeur, l'encart
+// (références), l'objectif et le corps en clé/valeur, l'encart
 // « Sensations » en italique, et la mention qui clôt tout protocole.
 // Le composant pose son ancre lui-même, dérivée de l'id du bloc.
 
@@ -17,7 +17,6 @@ export type ProtocoleProps = {
   titre: string;
   objectif: ReactNode;
   statut: StatutDeProtocole;
-  n: number;
   children: ReactNode;
   /** Le vécu de la séance, en italique. */
   sensations?: ReactNode;
@@ -30,7 +29,6 @@ export default function Protocole({
   titre,
   objectif,
   statut,
-  n,
   children,
   sensations,
   references,
@@ -51,10 +49,11 @@ export default function Protocole({
         {titre}
       </h3>
 
-      <div className="mt-1.5 font-mono text-xs text-brand-muted tabular-nums">
-        n = {n}
-        {references ? <> · réf. {references}</> : null}
-      </div>
+      {references ? (
+        <div className="mt-1.5 font-mono text-xs text-brand-muted tabular-nums">
+          réf. {references}
+        </div>
+      ) : null}
 
       <dl className="m-0 mt-4 grid grid-cols-[7rem_minmax(0,1fr)] gap-x-5 gap-y-3 border-t border-brand-hairline pt-4">
         <dt className="pt-0.5 font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">

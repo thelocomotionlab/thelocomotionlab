@@ -11,9 +11,14 @@ import { decouperLeCorps } from "@locomotionlab/contenu";
 import { Note, Protocole, VersProtocole, VersNote } from "@locomotionlab/ui/contenu";
 
 import { blocs } from "@/lib/contenu";
+import PostLiveTracking from "@/components/PostLiveTrackingLazy";
 import Prose from "./Prose";
 
-const BALISES = ["Note", "Protocole", "VersProtocole", "VersNote"];
+// `Replay` n'est pas un bloc : il ne va pas dans l'index et ne se cite pas.
+// Il est ici parce qu'une sortie OFF est racontée dans un billet, et que son
+// replay appartient au billet — la section `direct` n'existe que sur une
+// aventure.
+const BALISES = ["Note", "Protocole", "VersProtocole", "VersNote", "Replay"];
 
 /** Une liste écrite en chaîne séparée par des virgules. */
 function liste(valeur) {
@@ -34,6 +39,14 @@ export default function Corps({ page, citation, appelDeReference: Ref }) {
         }
 
         const { nom, attributs, corps } = segment;
+
+        if (nom === "Replay") {
+          return (
+            <div key={rang} className="my-8">
+              <PostLiveTracking {...attributs} />
+            </div>
+          );
+        }
 
         if (nom === "VersProtocole" || nom === "VersNote") {
           const bloc = blocs.carte(attributs.id, page.chemin);
@@ -71,7 +84,6 @@ export default function Corps({ page, citation, appelDeReference: Ref }) {
             id={attributs.id}
             titre={attributs.titre}
             statut={attributs.statut}
-            n={Number(attributs.n)}
             objectif={attributs.objectif}
             sensations={
               sensations.length > 0 ? (

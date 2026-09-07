@@ -42,7 +42,9 @@ export type RendusDAventure = {
     string,
     { paquetage: DonneesDePaquetage; csvUrl?: string; provenance?: ReactNode }
   >;
-  /** Les corps des sections libres, par `id`. */
+  /** Les corps de section écrits dans le MDX, par `id`. Une section libre y
+   *  puise tout son contenu ; une section structurée qui déclare un `id` y
+   *  puise le texte qui présente son tableau. */
   libres?: Record<string, { corps: ReactNode; media?: ReactNode; cote?: "droite" | "gauche"; suite?: ReactNode }>;
   /** Le replay, la version et les réglages du direct. */
   direct?: { replay?: ReactNode; version?: ReactNode; reglages?: readonly ReglageDuDirect[] };
@@ -111,14 +113,34 @@ function corpsDeSection(section: Section, rendus: RendusDAventure): ReactNode {
   }
 }
 
+/**
+ * Le texte qui présente une section structurée : les chiffres d'une trace, d'un
+ * paquetage ou d'une nutrition ne disent pas pourquoi ils sont là. La section
+ * déclare un `id`, le MDX écrit un `<SectionLibre>` du même id, et la prose se
+ * rend au-dessus du tableau — le même mécanisme que les sections libres, sans
+ * composant de plus.
+ */
+function introDeSection(section: Section, rendus: RendusDAventure): ReactNode {
+  if (section.type === "libre" || !section.id) return null;
+  return rendus.libres?.[section.id]?.corps ?? null;
+}
+
 export default function SectionsAventure({ sections, rendus = {} }: SectionsAventureProps) {
   return (
     <>
-      {sections.map((section, index) => (
-        <SectionAventure key={`${section.type}-${section.id ?? index}`} section={section} index={index}>
-          {corpsDeSection(section, rendus)}
-        </SectionAventure>
-      ))}
+      {sections.map((section, index) => {
+        const intro = introDeSection(section, rendus);
+        return (
+          <SectionAventure
+            key={`${section.type}-${section.id ?? index}`}
+            section={section}
+            index={index}
+          >
+            {intro ? <div className="mt-5">{intro}</div> : null}
+            {corpsDeSection(section, rendus)}
+          </SectionAventure>
+        );
+      })}
     </>
   );
 }

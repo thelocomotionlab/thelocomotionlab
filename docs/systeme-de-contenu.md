@@ -214,8 +214,37 @@ Texte, photos avec légende, et vidéos.
 </SectionLibre>
 ```
 
-*Point à trancher à l'implémentation : si le setup MDX offre un idiome plus simple pour rattacher de la prose à une
-position déclarée en frontmatter, le proposer.*
+### Le texte d'une section structurée
+
+`caracteristiques`, `geo`, `paquetage` et `nutrition` n'affichent qu'une fiche ou un tableau. Quand ces chiffres
+demandent à être présentés — comment la trace a été construite, pourquoi ce couchage, comment gérer l'eau sur la
+dernière portion — la section déclare un `id`, le MDX écrit un `<SectionLibre>` du même id, et cette prose se rend
+au-dessus du tableau. C'est le mécanisme des sections libres, sans composant de plus.
+
+```yaml
+- type: geo
+  id: "trace-reunion"
+  titre: "Trace"
+  ...
+```
+
+```mdx
+<SectionLibre id="trace-reunion">
+Le parcours est basé sur le GR R2, modifié pour gravir les deux pitons.
+</SectionLibre>
+```
+
+### Le replay d'un billet
+
+Une sortie OFF est racontée dans un billet, et la section `direct` n'existe que sur une aventure. Un billet peut
+donc écrire `<Replay />` dans son corps, au même titre que `Note` et `Protocole` :
+
+```mdx
+<Replay positionsUrl="/replays/mdl-65km_off/live-positions.json" totalDistanceKm="65"
+  referenceGpx="/tracks/mdl-65km_off.gpx" title="OFF Monts du Lyonnais 65 km" />
+```
+
+Ce n'est pas un bloc : il n'entre pas dans l'index et ne se cite pas.
 
 ### direct
 Versions du live-tracking, replay, journal de bord de la campagne.
@@ -231,7 +260,7 @@ champ `recit` du frontmatter. Absente si le récit n'existe pas.
 Deux blocs s'écrivent à l'intérieur d'un billet, dans le flux, sans changer de fichier.
 
 ```mdx
-<Protocole id="train-low-eat-low" statut="en-test" n="1"
+<Protocole id="train-low-eat-low" statut="en-test"
   titre="Train-low, Eat-low"
   objectif="Maximiser l'activation de l'AMPK et de PGC-1α"
   concepts="flexibilite-metabolique,jeune-intermittent"
@@ -245,7 +274,7 @@ second footing d'1 h. Recharge glucidique au dîner.
 ```
 
 `statut` d'un protocole : `hypothese`, `en-test`, `eprouve`, `abandonne`.
-`Note` a la même forme, sans `statut` ni `n`, et sert aux notes scientifiques sourcées.
+`Note` a la même forme, sans `statut`, et sert aux notes scientifiques sourcées.
 
 Les propriétés de liste s'écrivent en chaîne séparée par des virgules, jamais en accolades : une prop en accolades
 revient dans l'AST MDX sous forme de code source à évaluer.

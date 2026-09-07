@@ -156,13 +156,11 @@ describe("props de bloc", () => {
       titre: "Train-low, Eat-low",
       objectif: "Maximiser l'activation de l'AMPK et de PGC-1α",
       statut: "en-test",
-      n: "4",
       concepts: "flexibilite-metabolique, jeune-intermittent",
       refs: "marquet2016",
     });
     expect(props.concepts).toEqual(["flexibilite-metabolique", "jeune-intermittent"]);
     expect(props.refs).toEqual(["marquet2016"]);
-    expect(props.n).toBe(4);
   });
 
   it("refuse un statut de protocole hors des quatre valeurs", () => {

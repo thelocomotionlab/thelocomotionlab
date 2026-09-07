@@ -20,7 +20,6 @@ export type CarteDeBloc = {
   titre: string;
   objectif: string;
   statut?: StatutDeProtocole;
-  n?: number;
   url: string;
   source: Bloc["source"];
 };
@@ -51,14 +50,13 @@ export class BlocIntrouvable extends Error {
 }
 
 function versCarte(bloc: Bloc): CarteDeBloc {
-  const { type, id, titre, objectif, statut, n, url, source } = bloc;
+  const { type, id, titre, objectif, statut, url, source } = bloc;
   return {
     type,
     id,
     titre,
     objectif,
     ...(statut === undefined ? {} : { statut }),
-    ...(n === undefined ? {} : { n }),
     url,
     source,
   };

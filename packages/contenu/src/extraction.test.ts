@@ -5,7 +5,7 @@ import { extraireBlocs, decouperLeCorps } from "./extraction.ts";
 
 const PROTOCOLE = `Un paragraphe d'introduction.
 
-<Protocole id="train-low-eat-low" statut="en-test" n="4"
+<Protocole id="train-low-eat-low" statut="en-test"
   titre="Train-low, Eat-low"
   objectif="Maximiser l'activation de l'AMPK et de PGC-1α"
   concepts="flexibilite-metabolique,jeune-intermittent"
@@ -26,7 +26,6 @@ describe("extraireBlocs", () => {
     expect(cartes).toEqual([]);
     expect(blocs).toHaveLength(1);
     expect(blocs[0]!.type).toBe("protocole");
-    expect(blocs[0]!.attributs.n).toBe("4");
     expect(blocs[0]!.attributs.concepts).toBe("flexibilite-metabolique,jeune-intermittent");
     expect(blocs[0]!.corps).toContain("Sensations : début de deuxième footing difficile.");
     expect(blocs[0]!.corps).not.toContain("<Protocole");
@@ -51,7 +50,7 @@ describe("extraireBlocs", () => {
 
   it("relève une carte écrite dans le corps d'un bloc", () => {
     const { blocs, cartes } = extraireBlocs(
-      `<Protocole id="p1" titre="T" objectif="O" statut="en-test" n="1">\nVoir <VersProtocole id="rest-step" />.\n</Protocole>`,
+      `<Protocole id="p1" titre="T" objectif="O" statut="en-test">\nVoir <VersProtocole id="rest-step" />.\n</Protocole>`,
     );
     expect(blocs).toHaveLength(1);
     expect(cartes.map((c) => c.id)).toEqual(["rest-step"]);
@@ -59,7 +58,7 @@ describe("extraireBlocs", () => {
 
   it("ignore une balise laissée en commentaire HTML", () => {
     const { blocs, cartes, erreurs } = extraireBlocs(
-      `Un paragraphe.\n\n<!--\n<Protocole id="ancien" titre="T" objectif="O" statut="en-test" n="1">\ncorps\n</Protocole>\n-->\n\nLa suite.`,
+      `Un paragraphe.\n\n<!--\n<Protocole id="ancien" titre="T" objectif="O" statut="en-test">\ncorps\n</Protocole>\n-->\n\nLa suite.`,
     );
     expect(blocs).toEqual([]);
     expect(cartes).toEqual([]);
@@ -99,7 +98,7 @@ describe("extraireBlocs", () => {
 
   it("refuse un bloc d'un autre type imbriqué dans un bloc", () => {
     const { erreurs } = extraireBlocs(
-      `<Protocole id="p" statut="en-test" n="1" titre="T" objectif="O">\n<Note id="n" titre="T" objectif="O">x</Note>\n</Protocole>`,
+      `<Protocole id="p" statut="en-test" titre="T" objectif="O">\n<Note id="n" titre="T" objectif="O">x</Note>\n</Protocole>`,
     );
     expect(erreurs).toHaveLength(1);
     expect(erreurs[0]).toContain("contient un <Note>");

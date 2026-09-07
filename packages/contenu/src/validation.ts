@@ -134,7 +134,6 @@ export function construireIndexDesBlocs(pages: readonly PageAnalysee[]): {
           titre: props.data.titre,
           objectif: props.data.objectif,
           ...("statut" in props.data ? { statut: props.data.statut } : {}),
-          ...("n" in props.data ? { n: props.data.n } : {}),
           concepts: props.data.concepts,
           refs: props.data.refs,
           source: {

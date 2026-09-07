@@ -45,12 +45,6 @@ const listeEnChaine = z
       .filter((element) => element.length > 0),
   );
 
-/** `n="1"` arrive en chaîne depuis les props : on le ramène à un entier. */
-const entierEnChaine = z.preprocess((valeur) => {
-  if (typeof valeur === "string" && /^\d+$/.test(valeur.trim())) return Number(valeur.trim());
-  return valeur;
-}, z.number().int().positive());
-
 const propsCommunes = {
   id: identifiant,
   titre: z.string().min(1),
@@ -64,7 +58,6 @@ export const PropsNote = z.strictObject({ ...propsCommunes });
 export const PropsProtocole = z.strictObject({
   ...propsCommunes,
   statut: z.enum(STATUTS_DE_PROTOCOLE),
-  n: entierEnChaine,
 });
 
 export const SCHEMAS_DE_BLOC = { note: PropsNote, protocole: PropsProtocole } as const;
@@ -85,7 +78,6 @@ export const EntreeDeBloc = z.object({
   titre: z.string().min(1),
   objectif: z.string().min(1),
   statut: z.enum(STATUTS_DE_PROTOCOLE).optional(),
-  n: z.number().int().positive().optional(),
   concepts: z.array(z.string().min(1)),
   refs: z.array(z.string().min(1)),
   source: z.object({

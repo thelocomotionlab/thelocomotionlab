@@ -172,14 +172,13 @@ describe("la charte tient dans les composants", () => {
     }
   });
 
-  it("un protocole porte sa mention, son numéro et son ancre", () => {
+  it("un protocole porte sa mention, son statut et son ancre", () => {
     const html = renderToStaticMarkup(
       <Protocole
         id="train-low-eat-low"
         titre="Train-low, Eat-low"
         objectif="Maximiser l'activation de l'AMPK"
         statut="en-test"
-        n={4}
         sensations="Début de deuxième footing difficile."
       >
         Footing à jeûn de 50 min.
@@ -187,7 +186,7 @@ describe("la charte tient dans les composants", () => {
     );
 
     expect(html).toContain('id="protocole-train-low-eat-low"');
-    expect(html).toContain("n = 4");
+    expect(html).toContain("En test");
     expect(html).toContain("Sensations");
     expect(html).toContain("Démarche personnelle, ne constitue pas un conseil.");
   });

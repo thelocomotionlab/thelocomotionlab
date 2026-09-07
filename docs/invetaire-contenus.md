@@ -20,24 +20,18 @@ autorité que sur la mise en page. Le contenu réel vient du site actuel, `www.t
 **Récits**
 - « L'île intense vous dites ? » → Réunion 2025
 - « Immersion primale entre Vercors et Drôme » → Vercors–Drôme 2026
-- [À VÉRIFIER] Récit du Tour des Écrins : écrit ou non ? Si non, l'aventure n'a pas de section `recit`.
-
-**Articles Science** — il n'y en a que deux
+**Articles Science**
 - « Use it or lose it, vous êtes sûr ? »
 - « Incarner le concept de la chasse d'eau »
+- « L'an 2020 : la genèse du labo » — publié, sans aventure de rattachement : c'est un article, pas un récit
 
-**Bibliographie** — uniquement les références réellement citées dans ces deux articles et dans les blocs extraits.
+**Bibliographie** — uniquement les références réellement citées dans ces articles et dans les blocs extraits.
 
 **Billets** — tout ce qui est extrait du journal 2026 et du projet Réunion : sorties OFF, bilans mensuels, reprises,
 blessures, retraite, images.
 
 **Blocs Note et Protocole** — uniquement ceux réellement écrits dans ces textes. Ne pas en créer pour compléter
 une page.
-
-**Instruments (Labo)**
-- Live-tracking maison v1 (2025) et v2 (2026)
-- Modèle de reconstruction du signal GPS
-- Paquetages Réunion et Écrins
 
 **Services**
 - Locomotion Twin — en calibration, recrute une cohorte
@@ -47,6 +41,9 @@ une page.
 
 ## Existe mais n'est pas commencé (`statut: brouillon`)
 
+- « Développe ta respiration fonctionnelle » et « Pourquoi et comment s'initier à l'exposition au froid ? » :
+  articles Science non publiés dans la source. Le second n'a aucun corps.
+- **« Mon tour des Écrins en 80 heures »**, le récit du Tour des Écrins : une amorce d'1 ko, pas un texte.
 - **Aventure Costa Rica 2027.** Garder le squelette de sections, vider toute donnée spéculative — lieu exact, dates,
   séances, doses de stresseurs, volumes — et la remplacer par `TODO`. Non routée tant que le projet n'est pas amorcé.
 
@@ -57,7 +54,7 @@ une page.
 - Les trois calculateurs gratuits (fractionné, correcteur GPX, optimiseur de paquetage)
 - La plateforme d'entraînement multisport
 - L'offre de coaching individuel
-- « Développe ta respiration fonctionnelle »
-- « Pourquoi et comment s'initier à l'exposition au froid ? »
 - Direct v3 (balise satellite)
+- Les instruments du Labo : le live-tracking v1 et v2, le modèle de reconstruction du signal GPS.
+  Les textes qui les racontent restent des billets.
 - Tout chiffre, date, citation ou paragraphe présent dans la maquette et absent du site actuel

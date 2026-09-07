@@ -18,7 +18,7 @@ function valider(pages: ReturnType<typeof page>[], catalogue = CATALOGUE) {
 }
 
 const protocole = (id: string, refs = "marquet2016") =>
-  `<Protocole id="${id}" statut="en-test" n="4" titre="Train-low, Eat-low" objectif="Maximiser l'activation de l'AMPK" refs="${refs}">\ncorps\n</Protocole>`;
+  `<Protocole id="${id}" statut="en-test" titre="Train-low, Eat-low" objectif="Maximiser l'activation de l'AMPK" refs="${refs}">\ncorps\n</Protocole>`;
 
 describe("§9 — les règles qui font échouer le build", () => {
   it("id de bloc en double", () => {
@@ -55,7 +55,7 @@ describe("§9 — les règles qui font échouer le build", () => {
       page(
         "content/blog/a.mdx",
         { ...BILLET, slug: "a" },
-        `<Protocole id="p" statut="en-test" n="1" titre="T" objectif="O">\n<VersProtocole id="fantome" />\n</Protocole>`,
+        `<Protocole id="p" statut="en-test" titre="T" objectif="O">\n<VersProtocole id="fantome" />\n</Protocole>`,
       ),
     ]);
     expect(erreurs).toContain(
@@ -291,7 +291,6 @@ describe("index des blocs", () => {
         titre: "Train-low, Eat-low",
         objectif: "Maximiser l'activation de l'AMPK",
         statut: "en-test",
-        n: 4,
         concepts: [],
         refs: ["marquet2016"],
         source: { sorte: "billet", slug: "nouveau-bloc", titre: "Nouveau bloc d'entraînement" },
