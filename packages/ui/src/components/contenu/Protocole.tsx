@@ -2,21 +2,18 @@
 //
 // LE BLOC PROTOCOLE, écrit dans le flux d'un billet.
 //
-// Une carte à filet terracotta : surtitre, statut, titre, ligne de méta
+// Une carte à filet terracotta : surtitre, titre, ligne de méta
 // (références), l'objectif et le corps en clé/valeur, l'encart
 // « Sensations » en italique, et la mention qui clôt tout protocole.
 // Le composant pose son ancre lui-même, dérivée de l'id du bloc.
 
 import type { ReactNode } from "react";
 import { ancreDeBloc } from "@locomotionlab/contenu/ancres";
-import type { StatutDeProtocole } from "@locomotionlab/contenu/blocs";
-import BadgeStatut from "./BadgeStatut.tsx";
 
 export type ProtocoleProps = {
   id: string;
   titre: string;
   objectif: ReactNode;
-  statut: StatutDeProtocole;
   children: ReactNode;
   /** Le vécu de la séance, en italique. */
   sensations?: ReactNode;
@@ -28,7 +25,6 @@ export default function Protocole({
   id,
   titre,
   objectif,
-  statut,
   children,
   sensations,
   references,
@@ -38,12 +34,9 @@ export default function Protocole({
       id={ancreDeBloc("protocole", { id })}
       className="my-8 scroll-mt-24 rounded-xl border border-brand-hairline border-t-[3px] border-t-brand-deep bg-brand-paper px-6 pb-4.5 pt-5.5 text-[0.94em] shadow-bloc"
     >
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <span className="font-mono text-xxs font-bold uppercase tracking-surtitre text-brand-deep-dark">
-          Protocole
-        </span>
-        <BadgeStatut statut={statut} />
-      </div>
+      <span className="font-mono text-xxs font-bold uppercase tracking-surtitre text-brand-deep-dark">
+        Protocole
+      </span>
 
       <h3 className="m-0 mt-2 font-heading text-[1.45em] font-bold leading-tight text-brand-text">
         {titre}

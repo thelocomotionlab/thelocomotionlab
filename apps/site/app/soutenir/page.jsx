@@ -1,15 +1,11 @@
 // app/soutenir/page.jsx
-import SoutenirSection from "@/components/SoutenirSection";
+//
+// Soutenir vit désormais dans Le Labo, au-dessus de Contact. La route reste
+// servie parce que des billets et des liens extérieurs y pointent : elle
+// redirige, en permanent, vers la section.
 
-export const metadata = {
-  title: "Soutenir le Labo – The Locomotion Lab",
-  description:
-    "Contribue au développement du Locomotion Lab : financement matériel, soutien aux expérimentations et à la création de contenus indépendants.",
-  alternates: {
-    canonical: "https://thelocomotionlab.com/soutenir",
-  },
-};
+import { permanentRedirect } from "next/navigation";
 
 export default function SoutenirPage() {
-  return <SoutenirSection />;
+  permanentRedirect("/labo#labo-soutenir");
 }

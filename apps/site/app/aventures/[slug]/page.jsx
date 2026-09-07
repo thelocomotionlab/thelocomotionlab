@@ -14,7 +14,10 @@ import { Accroche, Sommaire, SectionsAventure } from "@locomotionlab/ui/contenu"
 
 import { parSorte, parSlug } from "@/lib/contenu";
 import { ETATS, campagneLisible, rendusDe } from "@/lib/aventure";
-import Prose from "@/components/contenu/Prose";
+import FilDAriane from "@/components/contenu/FilDAriane";
+import Corps from "@/components/contenu/Corps";
+import MapEmbed from "@/components/MapEmbedLazy";
+import RetourAIndex from "@/components/contenu/RetourAIndex";
 import { referencesDePage } from "@/components/contenu/references";
 
 export function generateStaticParams() {
@@ -28,13 +31,17 @@ export async function generateMetadata({ params }) {
   return { title: page.frontmatter.titre, description: page.frontmatter.chapeau };
 }
 
-/** Les corps des sections libres, écrits dans le MDX de la page. */
+/**
+ * Les corps des sections libres, écrits dans le MDX de la page. Chaque morceau
+ * repasse par `Corps` : une section libre porte donc les mêmes balises qu'un
+ * billet — une note, un protocole, le replay d'un direct.
+ */
 function corpsDesSectionsLibres(page, citation) {
   const libres = {};
   for (const segment of decouperLeCorps(page.corps, ["SectionLibre"])) {
     if (segment.type !== "balise" || !segment.attributs.id) continue;
     libres[segment.attributs.id] = {
-      corps: <Prose texte={segment.corps} citation={citation} />,
+      corps: <Corps page={page} corps={segment.corps} citation={citation} />,
     };
   }
   return libres;
@@ -50,16 +57,17 @@ export default async function AventurePage({ params }) {
   const rendus = rendusDe(page, {
     libres: corpsDesSectionsLibres(page, citation),
     cover: (src, alt) => <Image src={src} alt={alt} width={900} height={600} />,
+    carte: (gpxUrl) => <MapEmbed gpx={gpxUrl} defaultMinHeight={420} />,
   });
 
   return (
     <div className="mx-auto max-w-[1180px] px-6 pt-10 md:px-8">
-      <Link
-        href="/aventures"
-        className="font-mono text-xs tracking-lien text-brand-muted no-underline hover:text-brand-accent-ink"
-      >
-        Retour aux aventures
-      </Link>
+      <FilDAriane
+        maillons={[
+          { href: "/aventures", label: "Aventures" },
+          { label: frontmatter.titre },
+        ]}
+      />
 
       <div className="mt-7 grid items-start gap-14 lg:grid-cols-[12.5rem_minmax(0,1fr)]">
         <div className="hidden lg:block">
@@ -97,6 +105,8 @@ export default async function AventurePage({ params }) {
           </header>
 
           <SectionsAventure sections={frontmatter.sections} rendus={rendus} />
+
+          <RetourAIndex href="/aventures" label="Retour aux aventures" />
         </div>
       </div>
     </div>

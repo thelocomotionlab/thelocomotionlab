@@ -111,6 +111,9 @@
      charte pour un texte long. */
   --text-lecture: 1.0625rem;
   --leading-lecture: 1.75;
+  /* Ubuntu Sans est une variable 300 → 800 : un cran au-dessus du romain
+     donne au corps long l'assise d'un livre, sans virer au demi-gras. */
+  --font-weight-lecture: 450;
   /* Le corps d'un tableau ordonné et d'une entrée de bibliographie. */
   --text-tableau: 0.95rem;
 

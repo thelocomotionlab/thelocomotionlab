@@ -14,6 +14,7 @@ import { blocs, parSorte, recitDe, urlDe } from "@/lib/contenu";
 import { dateLisible } from "@/lib/lisible";
 
 const PAQUETAGES = path.join(process.cwd(), "public/paquetages");
+const REPLAYS = path.join(process.cwd(), "public/replays");
 
 /** L'état d'une campagne, tel qu'il s'affiche. */
 export const ETATS = {
@@ -64,10 +65,10 @@ function paquetage(ref) {
  * paquetage, les billets des séances, les protocoles rattachés, les corps des
  * sections libres, la carte du récit.
  *
- * `cover` est une fabrique fournie par l'app : ce module ne rend pas de JSX,
- * il donne le chemin et le texte de remplacement, la page en fait une image.
+ * `cover` et `carte` sont des fabriques fournies par l'app : ce module ne rend
+ * pas de JSX, il donne les chemins, la page en fait une image et une carte.
  */
-export function rendusDe(aventure, { libres = {}, cover } = {}) {
+export function rendusDe(aventure, { libres = {}, cover, carte } = {}) {
   const sections = aventure.frontmatter.sections;
   const rendus = { libres };
 
@@ -78,10 +79,23 @@ export function rendusDe(aventure, { libres = {}, cover } = {}) {
   }
   if (Object.keys(jeux).length > 0) rendus.paquetages = jeux;
 
-  // La trace d'une section geo : le bouton de téléchargement pointe vers
-  // public/tracks, où vivent les GPX du site.
+  // La trace d'une section geo : la carte la lit dans public/tracks, où vivent
+  // les GPX du site, et le bouton de téléchargement pointe au même endroit.
   const geo = sections.find((section) => section.type === "geo");
-  if (geo?.gpx) rendus.geo = { gpxUrl: `/tracks/${geo.gpx}` };
+  if (geo?.gpx) {
+    const gpxUrl = `/tracks/${geo.gpx}`;
+    rendus.geo = { gpxUrl, carte: carte ? carte(gpxUrl) : undefined };
+  }
+
+  // Le direct d'une campagne se lit à partir du slug : une aventure dont le
+  // direct a été archivé (public/replays/<slug>/aventure.json) renvoie vers sa
+  // page d'archive, où vivent la progression, le carnet de bord et les médias.
+  if (sections.some((section) => section.type === "direct")) {
+    const slug = aventure.frontmatter.slug;
+    if (fs.existsSync(path.join(REPLAYS, slug, "aventure.json"))) {
+      rendus.direct = { archiveUrl: `/live/archives/${slug}` };
+    }
+  }
 
   const preparation = sections.find((section) => section.type === "preparation");
   if (preparation) {

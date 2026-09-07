@@ -46,8 +46,13 @@ export type RendusDAventure = {
    *  puise tout son contenu ; une section structurée qui déclare un `id` y
    *  puise le texte qui présente son tableau. */
   libres?: Record<string, { corps: ReactNode; media?: ReactNode; cote?: "droite" | "gauche"; suite?: ReactNode }>;
-  /** Le replay, la version et les réglages du direct. */
-  direct?: { replay?: ReactNode; version?: ReactNode; reglages?: readonly ReglageDuDirect[] };
+  /** Le replay, la version, les réglages et l'archive du direct. */
+  direct?: {
+    replay?: ReactNode;
+    version?: ReactNode;
+    reglages?: readonly ReglageDuDirect[];
+    archiveUrl?: string;
+  };
   /** La carte du récit, résolue depuis le champ `recit` du frontmatter. */
   recit?: CarteRecitProps;
 };
@@ -103,7 +108,11 @@ function corpsDeSection(section: Section, rendus: RendusDAventure): ReactNode {
 
     case "direct":
       return (
-        <Direct version={rendus.direct?.version} reglages={rendus.direct?.reglages}>
+        <Direct
+          version={rendus.direct?.version}
+          reglages={rendus.direct?.reglages}
+          archiveUrl={rendus.direct?.archiveUrl}
+        >
           {rendus.direct?.replay}
         </Direct>
       );

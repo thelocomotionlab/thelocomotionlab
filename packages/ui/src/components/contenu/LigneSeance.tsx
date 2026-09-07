@@ -34,7 +34,7 @@ export default function LigneSeance({
       {cellules.map((cellule, index) => {
         // La gouttière est portée par la cellule : sans elle, une valeur
         // chiffrée colle au libellé de la colonne suivante.
-        const commun = `py-3 pr-4 align-top last:pr-0 ${bordure}`;
+        const commun = `px-3 py-3 text-center align-middle first:pl-0 last:pr-0 ${bordure}`;
 
         if (index === derniereColonne) {
           return (
@@ -65,7 +65,7 @@ export default function LigneSeance({
 
         if (numeriques.includes(index)) {
           return (
-            <td key={index} className={`${commun} text-right font-mono tabular-nums`}>
+            <td key={index} className={`${commun} font-mono tabular-nums whitespace-nowrap`}>
               {cellule}
             </td>
           );

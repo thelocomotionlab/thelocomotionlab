@@ -76,7 +76,7 @@ describe("index des blocs", () => {
   it("contient le protocole du billet, adressé par son ancre", () => {
     const carte = creerResolveur(index).carte("train-low-eat-low", "lib/contenu.test.js");
     expect(carte.url).toBe("/blog/nouveau-bloc#protocole-train-low-eat-low");
-    expect(carte.statut).toBe("en-test");
+    expect(carte.titre).toBe("Train-low, Eat-low");
     expect(carte.source.slug).toBe("nouveau-bloc");
   });
 });

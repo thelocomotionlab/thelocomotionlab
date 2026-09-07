@@ -28,8 +28,11 @@ function liste(valeur) {
     .filter(Boolean);
 }
 
-export default function Corps({ page, citation, appelDeReference: Ref }) {
-  const segments = decouperLeCorps(page.corps, BALISES);
+// `corps` permet de rendre un MORCEAU du corps de la page — le contenu d'une
+// section libre d'aventure, par exemple — avec les mêmes balises que la page
+// entière. Sans lui, c'est le corps complet qui est rendu.
+export default function Corps({ page, corps: texte, citation, appelDeReference: Ref }) {
+  const segments = decouperLeCorps(texte ?? page.corps, BALISES);
 
   return (
     <>
@@ -83,7 +86,6 @@ export default function Corps({ page, citation, appelDeReference: Ref }) {
             key={rang}
             id={attributs.id}
             titre={attributs.titre}
-            statut={attributs.statut}
             objectif={attributs.objectif}
             sensations={
               sensations.length > 0 ? (

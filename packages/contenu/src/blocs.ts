@@ -57,7 +57,7 @@ export const PropsNote = z.strictObject({ ...propsCommunes });
 
 export const PropsProtocole = z.strictObject({
   ...propsCommunes,
-  statut: z.enum(STATUTS_DE_PROTOCOLE),
+  statut: z.enum(STATUTS_DE_PROTOCOLE).optional(),
 });
 
 export const SCHEMAS_DE_BLOC = { note: PropsNote, protocole: PropsProtocole } as const;

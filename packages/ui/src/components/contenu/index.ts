@@ -29,7 +29,11 @@ export { default as Preparation } from "./Preparation.tsx";
 export { default as Graphe } from "./Graphe.tsx";
 export { default as Stresseurs } from "./Stresseurs.tsx";
 export { default as Paquetage } from "./Paquetage.tsx";
-export type { DonneesDePaquetage, CategorieDePaquetage } from "./Paquetage.tsx";
+export type {
+  DonneesDePaquetage,
+  CategorieDePaquetage,
+  ArticleDePaquetage,
+} from "./Paquetage.tsx";
 export { default as Nutrition } from "./Nutrition.tsx";
 export { default as SectionLibre } from "./SectionLibre.tsx";
 export type { SectionLibreProps } from "./SectionLibre.tsx";

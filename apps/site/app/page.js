@@ -132,29 +132,31 @@ function CarteDAccueil({ carte }) {
   return (
     <Link
       href={carte.url}
-      className="block overflow-hidden rounded-[10px] bg-brand-paper text-brand-text no-underline shadow-vignette"
+      className="block w-full overflow-hidden rounded-[10px] bg-brand-paper text-brand-text no-underline shadow-vignette transition-transform duration-200 md:w-[250px] md:hover:-translate-y-1.5"
     >
-      {carte.cover && carte.cover !== "TODO" ? (
-        <div className="aspect-video overflow-hidden">
+      {/* La vignette est rendue même sans photo : sans elle, une carte sans
+          cover se décale par rapport à ses voisines. */}
+      <div className="h-[130px] overflow-hidden bg-brand-wash">
+        {carte.cover && carte.cover !== "TODO" ? (
           <Image
             src={carte.cover}
             alt={carte.titre}
-            width={720}
-            height={405}
+            width={500}
+            height={260}
             className="block h-full w-full object-cover"
           />
-        </div>
-      ) : null}
-      <div className="px-5 pb-[18px] pt-4">
+        ) : null}
+      </div>
+      <div className="px-4 pb-4 pt-3">
         <div className="font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
           <span className="font-bold text-brand-deep">{carte.surtitre}</span>
           {" · "}
           {ETATS[carte.etat].toLowerCase()} le {dateLisible(carte.date)}
         </div>
-        <div className="mt-2 font-heading text-lg font-bold leading-[1.25] text-brand-deep">
+        <div className="mt-1.5 font-heading text-[15px] font-bold leading-[1.3] text-brand-deep">
           {carte.titre}
         </div>
-        <div className="mt-2 font-mono text-xs text-brand-soft tabular-nums">
+        <div className="mt-1.5 font-mono text-xxs text-brand-soft tabular-nums">
           {carte.chiffres.join(" · ")}
         </div>
       </div>
@@ -306,7 +308,7 @@ export default async function HomePage() {
           </p>
 
           {cartesDAventure.length > 0 ? (
-            <div className="mt-8 grid gap-5 md:mt-[38px] md:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 flex flex-wrap gap-5 md:mt-[38px]">
               {cartesDAventure.map((carte) => (
                 <CarteDAccueil key={carte.url} carte={carte} />
               ))}

@@ -64,7 +64,7 @@ function preparer(texte) {
 // conteneur décider — c'est ce qu'il faut à l'intérieur d'un bloc Note ou
 // Protocole, qui pose déjà sa propre échelle.
 const MESURES = {
-  lecture: "text-lecture leading-lecture",
+  lecture: "text-lecture leading-lecture font-lecture",
   herite: "leading-relaxed",
 };
 

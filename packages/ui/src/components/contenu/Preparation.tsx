@@ -58,15 +58,11 @@ export default function Preparation({ section, billets = {}, protocoles = [] }: 
           <table className="mt-2 w-full border-collapse text-tableau">
             <thead>
               <tr>
-                {seances.colonnes.map((colonne, index) => (
+                {seances.colonnes.map((colonne) => (
                   <th
                     key={colonne}
                     scope="col"
-                    className={`border-b border-brand-hairline py-2 pr-4 font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted last:pr-0 ${
-                      colonnesNumeriques(seances.colonnes).includes(index)
-                        ? "text-right"
-                        : "text-left"
-                    }`}
+                    className="border-b border-brand-hairline px-3 py-2 text-center align-middle font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted first:pl-0 last:pr-0"
                   >
                     {colonne}
                   </th>

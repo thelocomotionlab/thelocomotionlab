@@ -26,30 +26,38 @@ export default function Stresseurs({ stresseurs }: StresseursProps) {
       {travailles.length > 0 ? (
         <div className="mt-4 border-t border-brand-hairline">
           {travailles.map((stresseur) => (
-            <div key={stresseur.nom} className="grid gap-2.5 border-b border-brand-hairline py-4.5">
-              <div className="flex flex-wrap items-baseline justify-between gap-6">
+            <div
+              key={stresseur.nom}
+              className="grid items-center gap-x-8 gap-y-4 border-b border-brand-hairline py-5 md:grid-cols-[minmax(0,1fr)_auto]"
+            >
+              <div className="min-w-0">
                 <span className="font-heading text-lecture font-bold leading-snug">
                   {stresseur.nom}
                 </span>
-                <div className="flex flex-wrap gap-7">
-                  {MESURES.map(({ cle, libelle }) => (
-                    <div key={cle} className="grid gap-1">
-                      <span className="font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
-                        {libelle}
-                      </span>
-                      <span className="font-mono text-xs leading-snug">
-                        {stresseur[cle]}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                <p className="mt-2 mb-0 max-w-[62ch] font-sans leading-relaxed text-brand-soft [text-wrap:pretty]">
+                  <span className="mr-2.5 font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
+                    Pourquoi
+                  </span>
+                  {stresseur.pourquoi}
+                </p>
               </div>
-              <p className="m-0 max-w-[64ch] font-sans leading-relaxed text-brand-soft [text-wrap:pretty]">
-                <span className="mr-2.5 font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
-                  Pourquoi
-                </span>
-                {stresseur.pourquoi}
-              </p>
+              {/* Les trois mesures en colonnes de largeur fixe : d'un stresseur
+                  au suivant, Dose, Fréquence et Intensité restent alignées. */}
+              <dl className="m-0 grid grid-cols-3 divide-x divide-brand-grid md:w-[25rem]">
+                {MESURES.map(({ cle, libelle }) => (
+                  <div
+                    key={cle}
+                    className="flex flex-col items-center justify-start gap-1.5 px-3 text-center"
+                  >
+                    <dt className="font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
+                      {libelle}
+                    </dt>
+                    <dd className="m-0 font-mono text-xs leading-snug text-balance">
+                      {stresseur[cle]}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           ))}
         </div>

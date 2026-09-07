@@ -156,7 +156,8 @@ voyage (étapes, jours, lieu).
 - type: geo
   titre: "Trace"
   carte: "reunion.geojson"
-  gpx: "reunion.gpx"        # facultatif, produit le bouton de téléchargement
+  gpx: "reunion.gpx"        # facultatif : la carte lit ce fichier de public/tracks/
+                            # et pose le bouton de téléchargement
   colonnes: ["Repère", "km", "D+ cumulé"]
   lignes:
     - ["Saint-Denis, gare", "0", "0 m"]
@@ -244,10 +245,13 @@ donc écrire `<Replay />` dans son corps, au même titre que `Note` et `Protocol
   referenceGpx="/tracks/mdl-65km_off.gpx" title="OFF Monts du Lyonnais 65 km" />
 ```
 
-Ce n'est pas un bloc : il n'entre pas dans l'index et ne se cite pas.
+Ce n'est pas un bloc : il n'entre pas dans l'index et ne se cite pas. Le corps d'un `<SectionLibre>` passe par le
+même rendu : le replay d'une campagne s'écrit donc dans le slot de sa section `direct`, avec ses réglages.
 
 ### direct
-Versions du live-tracking, replay, journal de bord de la campagne.
+Versions du live-tracking, replay, journal de bord de la campagne. Quand le direct a été archivé
+(`public/replays/<slug>/aventure.json`, le slug étant celui de l'aventure), la section pose en plus un lien vers
+`/live/archives/<slug>`, où vivent la progression, le carnet de bord et les médias.
 
 ### recit
 Grande carte de renvoi vers `/aventures/<slug>/recit`, même motif que les cartes de protocole. Résolue depuis le

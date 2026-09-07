@@ -40,7 +40,6 @@ export default async function sitemap() {
     { url: "/services", priority: 0.8, freq: "monthly" },
     { url: "/live", priority: 0.7, freq: "weekly" },
     { url: "/outils/twin/cohorte", priority: 0.7, freq: "monthly" },
-    { url: "/soutenir", priority: 0.6, freq: "monthly" },
     { url: "/recherche", priority: 0.3, freq: "yearly" },
     { url: "/mentions-legales", priority: 0.4, freq: "yearly" },
   ].map((route) => ({

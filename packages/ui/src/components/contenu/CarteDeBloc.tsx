@@ -2,15 +2,14 @@
 //
 // LA CARTE DE RENVOI VERS UN BLOC — <VersProtocole> et <VersNote>.
 //
-// Elle lit l'index généré et affiche titre, objectif, statut et lien. Elle ne
-// recopie jamais le corps du bloc : renommer un protocole ou changer son statut
-// met donc à jour toutes ses citations sans toucher à aucune d'elles.
+// Elle lit l'index généré et affiche titre, objectif et lien. Elle ne recopie
+// jamais le corps du bloc : renommer un protocole met donc à jour toutes ses
+// citations sans toucher à aucune d'elles.
 //
 // La carte entière est le lien. Le bloc reste introuvable → le résolveur lève,
 // et le build s'arrête ; ce composant n'a pas d'état « absent » à rendre.
 
 import type { CarteDeBloc as DonneesDeCarte } from "@locomotionlab/contenu/resolveur";
-import BadgeStatut from "./BadgeStatut.tsx";
 
 // Chaque sorte de bloc garde son accent : terracotta d'Explorer pour un
 // protocole, bleu-vert de Comprendre pour une note. Le filet du haut, le
@@ -52,12 +51,9 @@ function Carte({ bloc }: CarteDeBlocProps) {
       href={bloc.url}
       className={`block rounded-[10px] border border-brand-hairline border-t-[3px] bg-brand-paper px-5 py-4.5 text-brand-text no-underline shadow-bloc transition-colors ${accent.filet} ${accent.survol}`}
     >
-      <div className="flex items-center justify-between gap-3">
-        <span className={`font-mono text-xxs font-bold uppercase tracking-surtitre ${accent.texte}`}>
-          {accent.surtitre}
-        </span>
-        {bloc.statut ? <BadgeStatut statut={bloc.statut} /> : null}
-      </div>
+      <span className={`font-mono text-xxs font-bold uppercase tracking-surtitre ${accent.texte}`}>
+        {accent.surtitre}
+      </span>
 
       <div className="mt-2 font-heading text-[19px] font-bold leading-[1.2]">{bloc.titre}</div>
 

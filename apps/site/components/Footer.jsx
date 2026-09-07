@@ -31,12 +31,15 @@ export default function Footer() {
             </Link>
             <Link
               className="underline-offset-4 hover:underline"
+              href="/labo#labo-soutenir"
+            >
+              Soutenir
+            </Link>
+            <Link
+              className="underline-offset-4 hover:underline"
               href="/labo#labo-contact"
             >
               Contact
-            </Link>
-            <Link className="underline-offset-4 hover:underline" href="/soutenir">
-              Soutenir
             </Link>
             <Link
               className="underline-offset-4 hover:underline"

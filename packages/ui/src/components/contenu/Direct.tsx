@@ -16,9 +16,16 @@ export type DirectProps = {
   /** « Direct v1 (2025) — smartphone + Traccar, conservé tel quel. » */
   version?: ReactNode;
   reglages?: readonly ReglageDuDirect[];
+  /** La page d'archive du direct, quand il en existe une. */
+  archiveUrl?: string;
 };
 
-export default function Direct({ children, version, reglages = [] }: DirectProps) {
+export default function Direct({
+  children,
+  version,
+  reglages = [],
+  archiveUrl,
+}: DirectProps) {
   return (
     <>
       {children || version ? (
@@ -33,6 +40,15 @@ export default function Direct({ children, version, reglages = [] }: DirectProps
             </figcaption>
           ) : null}
         </figure>
+      ) : null}
+
+      {archiveUrl ? (
+        <a
+          href={archiveUrl}
+          className="mt-5 inline-block border-b border-brand-accent font-mono text-meta font-semibold uppercase tracking-lien text-brand-accent-ink no-underline"
+        >
+          Ouvrir le direct archivé
+        </a>
       ) : null}
 
       {reglages.length > 0 ? (

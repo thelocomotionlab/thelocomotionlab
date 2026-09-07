@@ -172,13 +172,12 @@ describe("la charte tient dans les composants", () => {
     }
   });
 
-  it("un protocole porte sa mention, son statut et son ancre", () => {
+  it("un protocole porte sa mention et son ancre, jamais un statut", () => {
     const html = renderToStaticMarkup(
       <Protocole
         id="train-low-eat-low"
         titre="Train-low, Eat-low"
         objectif="Maximiser l'activation de l'AMPK"
-        statut="en-test"
         sensations="Début de deuxième footing difficile."
       >
         Footing à jeûn de 50 min.
@@ -186,9 +185,11 @@ describe("la charte tient dans les composants", () => {
     );
 
     expect(html).toContain('id="protocole-train-low-eat-low"');
-    expect(html).toContain("En test");
     expect(html).toContain("Sensations");
     expect(html).toContain("Démarche personnelle, ne constitue pas un conseil.");
+    for (const statut of ["En test", "Éprouvé", "Hypothèse", "Abandonné"]) {
+      expect(html, statut).not.toContain(statut);
+    }
   });
 
   it("une carte de renvoi prend l'accent de sa sorte de bloc", () => {

@@ -2,10 +2,11 @@
 //
 // LE LABO : la coulisse du site.
 //
-// Trois sections en une page — la quête, qui tient le labo, et comment
-// écrire. Chacune pose son ancre ; la barre du haut y renvoie. Les textes de
-// la quête et d'À propos vivent dans components/labo/, d'où les pages /quete
-// et /a-propos les lisent aussi : un seul fichier source par texte.
+// Quatre sections en une page — la quête, qui tient le labo, comment le
+// soutenir, comment écrire. Chacune pose son ancre ; la barre du haut y
+// renvoie. Les textes de la quête et d'À propos vivent dans components/labo/,
+// d'où les pages /quete et /a-propos les lisent aussi : un seul fichier source
+// par texte.
 
 import EmailCapture from "@/components/EmailCapture";
 import ContactForm from "@/components/ContactForm";
@@ -34,6 +35,7 @@ const COORDONNEES = [
 const SECTIONS = [
   { id: "labo-quete", titre: "La quête" },
   { id: "labo-apropos", titre: "À propos" },
+  { id: "labo-soutenir", titre: "Soutenir" },
   { id: "labo-contact", titre: "Contact" },
 ];
 
@@ -151,6 +153,43 @@ export default function LaboPage() {
 
       <Section
         {...SECTIONS[2]}
+        exergue={
+          <Exergue>
+            Le Locomotion Lab est un projet indépendant axé sur l&rsquo;exploration et le partage
+            des connaissances.
+          </Exergue>
+        }
+      >
+        <div className="mt-8 grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+          <div className="flex flex-col justify-between gap-7">
+            <p className="m-0 font-sans text-lecture leading-[1.7] text-brand-ink [text-wrap:pretty]">
+              Plusieurs manières de contribuer au fonctionnement du Labo arrivent bientôt.
+            </p>
+            <p className="m-0 border-t border-brand-hairline pt-5 font-sans text-brand-soft [text-wrap:pretty]">
+              Ton futur soutien aidera à financer les expérimentations, le matériel, la création de
+              contenu et l&rsquo;entretien du site web.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-6 self-start border-t border-brand-hairline pt-5 lg:border-t-0 lg:pt-0">
+            <p className="m-0 max-w-[30ch] font-heading font-semibold leading-snug text-brand-deep-dark">
+              Rester informé·e des futures explorations et du soutien au labo
+            </p>
+            <div className="min-w-[17rem] flex-1">
+              <EmailCapture
+                variant="ligne"
+                title={null}
+                description={null}
+                source="soutenir"
+                placeholder="Ton adresse e-mail"
+                buttonLabel="M'inscrire"
+              />
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      <Section
+        {...SECTIONS[3]}
         exergue={<Exergue>Une question, une idée, une envie de collaborer ?</Exergue>}
       >
         <div className="mt-8 grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">

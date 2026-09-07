@@ -15,6 +15,7 @@ import { Accroche, Bibliographie } from "@locomotionlab/ui/contenu";
 import { parSorte, parSlug, aventureDe, bibliographie, urlDe } from "@/lib/contenu";
 import { dateLisible, minutesDeLecture } from "@/lib/lisible";
 import Corps from "@/components/contenu/Corps";
+import FilDAriane from "@/components/contenu/FilDAriane";
 import { referencesDePage } from "@/components/contenu/references";
 
 export function generateStaticParams() {
@@ -72,14 +73,13 @@ export default async function RecitPage({ params }) {
 
       <div className="mx-auto max-w-[1180px] px-6 md:px-8">
         <div className="flex flex-wrap items-center justify-between gap-6 border-b border-brand-hairline py-5">
-          {campagne ? (
-            <Link
-              href={urlDe(campagne)}
-              className="font-mono text-xs tracking-lien text-brand-muted no-underline hover:text-brand-accent-ink"
-            >
-              Voir la campagne
-            </Link>
-          ) : null}
+          <FilDAriane
+            maillons={[
+              { href: "/aventures", label: "Aventures" },
+              ...(campagne ? [{ href: urlDe(campagne), label: campagne.frontmatter.titre }] : []),
+              { label: "Récit" },
+            ]}
+          />
           {frontmatter.chiffres?.length ? (
             <div className="flex flex-wrap gap-7 font-mono text-meta text-brand-muted tabular-nums">
               {frontmatter.chiffres.map((chiffre) => (
@@ -89,7 +89,7 @@ export default async function RecitPage({ params }) {
           ) : null}
         </div>
 
-        <article className="mx-auto mt-12 max-w-[36em] pb-6 text-lecture">
+        <article className="mx-auto mt-12 max-w-[42em] pb-6 text-lecture">
           <Corps page={recit} citation={citation} appelDeReference={Ref} />
           <Bibliographie registre={registre} entrees={bibliographie} id="references" />
 

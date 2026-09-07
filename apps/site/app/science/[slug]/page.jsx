@@ -7,13 +7,14 @@
 // dit ce qui a changé et quand ; la bibliographie ne liste que ce que le texte
 // a réellement appelé.
 
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Bibliographie } from "@locomotionlab/ui/contenu";
 
 import { parSorte, parSlug, bibliographie } from "@/lib/contenu";
 import { dateLisible, minutesDeLecture } from "@/lib/lisible";
 import Corps from "@/components/contenu/Corps";
+import FilDAriane from "@/components/contenu/FilDAriane";
+import RetourAIndex from "@/components/contenu/RetourAIndex";
 import { referencesDePage } from "@/components/contenu/references";
 
 export function generateStaticParams() {
@@ -38,14 +39,14 @@ export default async function ArticlePage({ params }) {
 
   return (
     <div className="mx-auto max-w-[1180px] px-6 pt-10 md:px-8">
-      <Link
-        href="/science"
-        className="font-mono text-xs tracking-lien text-brand-muted no-underline hover:text-brand-accent-ink"
-      >
-        Retour à la science
-      </Link>
+      <FilDAriane
+        maillons={[
+          { href: "/science", label: "Science" },
+          { label: frontmatter.titre },
+        ]}
+      />
 
-      <article className="mx-auto mt-9 max-w-[760px]">
+      <article className="mx-auto mt-9 max-w-[860px]">
         <header>
           <div className="font-mono text-meta font-bold uppercase tracking-surtitre text-brand-slate-dark">
             Article Science
@@ -82,7 +83,7 @@ export default async function ArticlePage({ params }) {
           </div>
         </header>
 
-        <div className="mx-auto mt-10 max-w-[34em] text-lecture">
+        <div className="mx-auto mt-10 max-w-[40em] text-lecture">
           <Corps page={page} citation={citation} appelDeReference={Ref} />
 
           {frontmatter.revisions.length > 0 ? (
@@ -108,6 +109,8 @@ export default async function ArticlePage({ params }) {
           ) : null}
 
           <Bibliographie registre={registre} entrees={bibliographie} id="references" />
+
+          <RetourAIndex href="/science" label="Retour à la science" />
         </div>
       </article>
     </div>
