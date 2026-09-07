@@ -61,7 +61,7 @@ function Carte({ bloc }: CarteDeBlocProps) {
 
       <div className="mt-2 font-heading text-lg font-bold leading-tight">{bloc.titre}</div>
 
-      <div className="mt-1.5 font-lora leading-relaxed text-brand-soft">
+      <div className="mt-1.5 font-sans leading-relaxed text-brand-soft">
         Objectif : {bloc.objectif}
       </div>
 

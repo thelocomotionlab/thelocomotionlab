@@ -3,8 +3,8 @@
 // LA GRANDE CARTE DE RENVOI VERS LE RÉCIT D'UNE CAMPAGNE.
 //
 // Même motif que les cartes de bloc, en plus grand : la cover à gauche, le
-// surtitre, la date et le temps de lecture, le titre du récit et son chapeau —
-// en romain, comme tous les chapeaux de carte. La carte entière est le lien.
+// surtitre, la date et le temps de lecture, le titre du récit et son chapeau.
+// Sans cover, le texte reprend toute la largeur : la carte entière est le lien.
 
 import type { ReactNode } from "react";
 
@@ -36,7 +36,9 @@ export default function CarteRecit({
   return (
     <a
       href={url}
-      className="mt-5 grid overflow-hidden rounded-xl border border-brand-hairline bg-brand-paper text-brand-text no-underline shadow-renvoi transition-colors hover:border-brand-deep md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]"
+      className={`mt-5 grid overflow-hidden rounded-xl border border-brand-hairline bg-brand-paper text-brand-text no-underline shadow-renvoi transition-colors hover:border-brand-deep ${
+        cover ? "md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]" : ""
+      }`}
     >
       {cover ? (
         <div className="min-h-70 [&>*]:block [&>*]:h-full [&>*]:w-full [&>img]:object-cover">
@@ -54,11 +56,11 @@ export default function CarteRecit({
             </span>
           ) : null}
         </div>
-        <h3 className="m-0 mt-3 font-heading text-3xl font-bold leading-tight text-brand-deep">
+        <h3 className="m-0 mt-3 font-heading text-3xl font-bold leading-[1.12] tracking-[-0.01em] text-brand-deep">
           {titre}
         </h3>
         {chapeau ? (
-          <p className="m-0 mt-3 font-lora text-lecture font-light not-italic leading-snug text-brand-soft [text-wrap:pretty]">
+          <p className="m-0 mt-3 font-sans text-lecture leading-normal text-brand-soft [text-wrap:pretty]">
             {chapeau}
           </p>
         ) : null}

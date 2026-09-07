@@ -68,7 +68,7 @@ function BlocTitre({ numero, children }) {
         / {numero}
       </p>
       <div className="mb-4 flex items-baseline gap-4">
-        <h2 className="flex-none font-lora text-2xl font-medium italic text-brand-deep">
+        <h2 className="flex-none font-sans text-2xl font-medium italic text-brand-deep">
           {children}
         </h2>
         <div className="h-px flex-1 bg-brand-wash-line" aria-hidden="true" />
@@ -393,7 +393,7 @@ export default function InscriptionForm({ atelier }) {
           <h1 className="mb-1.5 mt-4 text-[28px] font-bold text-brand-slate-dark">
             Ta place est réservée
           </h1>
-          <p className="font-lora text-[17px] italic text-brand-deep">
+          <p className="font-sans text-[17px] italic text-brand-deep">
             On se voit sur le terrain.
           </p>
         </div>
@@ -448,7 +448,7 @@ export default function InscriptionForm({ atelier }) {
             Validé le {confirmation.horodatage}
           </p>
           <Link
-            href="/pratiquer"
+            href="/services#ateliers"
             className="inline-flex items-center justify-center rounded-full bg-brand-accent px-8 py-3 text-[15.5px] font-bold text-white transition-all duration-300 hover:bg-brand-accent-dark"
           >
             Revenir aux ateliers
@@ -469,7 +469,7 @@ export default function InscriptionForm({ atelier }) {
             / INSCRIPTION
           </p>
           <Link
-            href="/pratiquer"
+            href="/services#ateliers"
             className="inline-flex items-center gap-1.5 font-heading text-[12.5px] font-bold tracking-[0.12em] text-brand-slate transition-colors hover:text-brand-accent-dark"
           >
             REVENIR AUX ATELIERS
@@ -478,7 +478,7 @@ export default function InscriptionForm({ atelier }) {
         <h1 className="mb-1.5 text-[30px] font-bold text-brand-slate-dark">
           Ta place à l&rsquo;atelier
         </h1>
-        <p className="mb-5 font-lora text-lg italic text-brand-deep">
+        <p className="mb-5 font-sans text-lg italic text-brand-deep">
           À parcourir avant de t&rsquo;inscrire.
         </p>
         {recapAtelier}
@@ -627,7 +627,7 @@ export default function InscriptionForm({ atelier }) {
             {CONSIGNES.map((consigne, i) => (
               <li key={consigne.titre} className="flex gap-4">
                 <span
-                  className="w-[30px] flex-none text-right font-lora text-[22px] font-semibold italic text-brand-accent-ink"
+                  className="w-[30px] flex-none text-right font-sans text-[22px] font-semibold italic text-brand-accent-ink"
                   aria-hidden="true"
                 >
                   {i + 1}
@@ -892,7 +892,7 @@ export default function InscriptionForm({ atelier }) {
               <div role="alert" className={`${CALLOUT_BASE} ${CALLOUT_TONES.erreur}`}>
                 <p className="text-[14.5px] leading-[1.55] text-brand-deep-dark">
                   L&rsquo;atelier s&rsquo;est rempli entre-temps&hellip;{" "}
-                  <Link href="/pratiquer" className="font-bold underline">
+                  <Link href="/services#ateliers" className="font-bold underline">
                     Reviens aux ateliers
                   </Link>{" "}
                   pour rejoindre la liste d&rsquo;attente.

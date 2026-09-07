@@ -19,7 +19,7 @@ export type SectionLibreProps = {
 
 export default function SectionLibre({ children, media, cote = "droite", suite }: SectionLibreProps) {
   const corps = (
-    <div className="font-lora text-[1.03rem] leading-loose text-brand-ink [text-wrap:pretty] [&>p+p]:mt-4 [&>p]:m-0">
+    <div className="font-sans text-[1.03rem] leading-loose text-brand-ink [text-wrap:pretty] [&>p+p]:mt-4 [&>p]:m-0">
       {children}
     </div>
   );

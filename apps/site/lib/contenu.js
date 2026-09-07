@@ -163,7 +163,7 @@ export function blocAventuresDeLAccueil(limite = 3) {
       if (recit) {
         return {
           genre: "recit",
-          surtitre: frontmatter.titre,
+          surtitre: "Récit",
           titre: recit.frontmatter.titre,
           url: urlDe(recit),
           cover: recit.frontmatter.cover,

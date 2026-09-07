@@ -59,23 +59,23 @@ export default function ServicesPage() {
 
       {/* ── Le Twin ─────────────────────────────────────────────────────── */}
       <section id="twin" className="mt-14 scroll-mt-24">
-        <article className="grid overflow-hidden rounded-2xl border border-brand-wash-line bg-brand-wash/30 shadow-card lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <article className="grid overflow-hidden rounded-[14px] border border-brand-wash-line bg-brand-mist shadow-mist lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
           <div className="px-8 py-9 md:px-10">
             <div className="font-mono text-xxs font-bold uppercase tracking-etiquette text-brand-slate-dark">
               Jumeau physiologique · en calibration
             </div>
-            <h2 className="mt-2.5 font-heading text-3xl font-bold leading-none tracking-tight text-brand-slate-dark md:text-4xl">
+            <h2 className="mt-2.5 font-heading text-3xl font-bold leading-[1.05] tracking-[-0.015em] text-brand-slate-dark md:text-4xl">
               Locomotion Twin
             </h2>
-            <p className="m-0 mt-2.5 max-w-[46ch] font-lora text-xl font-light not-italic leading-snug text-brand-deep-dark [text-wrap:pretty]">
+            <p className="m-0 mt-2.5 max-w-[46ch] font-sans text-xl font-light not-italic leading-snug text-brand-deep-dark [text-wrap:pretty]">
               Ton jumeau physiologique, et le plan de course qui en découle.
             </p>
 
-            <dl className="m-0 mt-6 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-[9rem_minmax(0,1fr)]">
+            <dl className="m-0 mt-5 grid grid-cols-1 gap-x-[18px] gap-y-3 text-[15px] leading-normal sm:grid-cols-[118px_minmax(0,1fr)]">
               {TWIN.map(({ question, reponse }) => (
                 <div key={question} className="contents">
                   <dt className={`${ETIQUETTE} sm:pt-1`}>{question}</dt>
-                  <dd className="m-0 font-lora leading-snug [text-wrap:pretty]">{reponse}</dd>
+                  <dd className="m-0 font-sans [text-wrap:pretty]">{reponse}</dd>
                 </div>
               ))}
             </dl>
@@ -86,12 +86,12 @@ export default function ServicesPage() {
               <div className="font-mono text-xxs font-bold uppercase tracking-etiquette text-brand-slate">
                 Ce que ça coûte
               </div>
-              <p className="m-0 mt-2.5 font-lora leading-snug">
+              <p className="m-0 mt-2.5 font-sans text-[15px] leading-[1.55] text-brand-ink">
                 Rien. Le Twin s&rsquo;obtient en échange de ton archive d&rsquo;entraînement :
                 elle sert à valider le moteur sur des données réelles, et ton plan de course est
                 la contrepartie.
               </p>
-              <p className="m-0 mt-4 font-lora leading-snug text-brand-soft [text-wrap:pretty]">
+              <p className="m-0 mt-4 font-sans text-[15px] leading-[1.55] text-brand-soft [text-wrap:pretty]">
                 L&rsquo;outil est en cours de calibration. C&rsquo;est précisément le moment où
                 une archive de plus compte.
               </p>
@@ -99,7 +99,7 @@ export default function ServicesPage() {
 
             <Link
               href="/outils/twin/cohorte"
-              className="inline-block self-start rounded-full bg-brand-accent px-6 py-3 font-heading font-semibold text-white no-underline shadow-cta transition-colors hover:bg-brand-accent-dark"
+              className="inline-block self-start rounded-full bg-brand-accent px-[26px] py-3 font-heading text-[15px] font-semibold text-white no-underline shadow-cta transition-colors hover:bg-brand-accent-dark"
             >
               Rejoindre la cohorte
             </Link>
@@ -110,13 +110,13 @@ export default function ServicesPage() {
       {/* ── Les ateliers ────────────────────────────────────────────────── */}
       <section id="ateliers" className="mt-16 scroll-mt-24 pb-6">
         <div className="flex flex-wrap items-baseline justify-between gap-4 border-b border-brand-hairline pb-2.5">
-          <h2 className="m-0 font-heading text-2xl font-bold text-brand-deep">
+          <h2 className="m-0 font-heading text-[26px] font-bold text-brand-deep">
             Ateliers de motricité primale
           </h2>
           <span className={ETIQUETTE}>en extérieur · gratuits pendant le lancement</span>
         </div>
 
-        <p className="m-0 mt-5 max-w-[60ch] font-lora text-lecture leading-loose text-brand-ink [text-wrap:pretty]">
+        <p className="m-0 mt-5 max-w-[60ch] font-sans text-lecture leading-[1.7] text-brand-ink [text-wrap:pretty]">
           Des rendez-vous en extérieur pour réincarner l&rsquo;animal qui sommeille en toi :
           quadrupédie, suspension, équilibre, sauts de précision. On y vient sans matériel et sans
           niveau requis.
@@ -135,7 +135,7 @@ export default function ServicesPage() {
                 <h3 className="m-0 mt-2 font-heading text-xl font-bold leading-snug">
                   {atelier.title}
                 </h3>
-                <p className="m-0 mt-1.5 font-lora leading-snug text-brand-soft">{atelier.lieu}</p>
+                <p className="m-0 mt-1.5 font-sans leading-snug text-brand-soft">{atelier.lieu}</p>
                 <Link
                   href={`/pratiquer/inscription/${atelier.slug}`}
                   className="mt-4 inline-block rounded-full border-[1.5px] border-brand-deep px-5 py-2 font-heading text-sm font-semibold text-brand-deep no-underline transition-colors hover:bg-brand-deep hover:text-white"
@@ -147,7 +147,7 @@ export default function ServicesPage() {
           </ul>
         ) : (
           <div className="mt-7 rounded-xl border-[1.5px] border-dashed border-brand-wash-line px-6 py-6">
-            <p className="m-0 mb-4 max-w-[52ch] font-lora leading-loose text-brand-soft">
+            <p className="m-0 mb-4 max-w-[52ch] font-sans leading-normal text-brand-soft">
               Aucune date ouverte pour l&rsquo;instant. Laisse ton adresse pour être prévenu·e de
               l&rsquo;ouverture des inscriptions.
             </p>

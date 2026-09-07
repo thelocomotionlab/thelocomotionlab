@@ -10,7 +10,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Bibliographie } from "@locomotionlab/ui/contenu";
+import { Accroche, Bibliographie } from "@locomotionlab/ui/contenu";
 
 import { parSorte, parSlug, aventureDe, bibliographie, urlDe } from "@/lib/contenu";
 import { dateLisible, minutesDeLecture } from "@/lib/lisible";
@@ -45,7 +45,7 @@ export default async function RecitPage({ params }) {
 
   return (
     <>
-      <div className="relative h-[26rem] overflow-hidden bg-brand-text md:h-[34rem]">
+      <div className="relative h-[26rem] overflow-hidden bg-brand-text md:h-[540px]">
         <Image
           src={frontmatter.cover}
           alt={frontmatter.titre}
@@ -63,12 +63,10 @@ export default async function RecitPage({ params }) {
             Récit · {campagne?.frontmatter.titre} · publié le {dateLisible(frontmatter.date)} ·{" "}
             {minutesDeLecture(recit.corps, frontmatter.lecture)} min
           </div>
-          <h1 className="mt-3.5 max-w-[20ch] font-heading text-4xl font-bold leading-none tracking-tight text-white [text-wrap:balance] md:text-6xl">
+          <h1 className="mt-3.5 max-w-[20ch] font-heading text-4xl font-bold leading-[1.02] tracking-[-0.02em] text-white [text-wrap:balance] md:text-[58px]">
             {frontmatter.titre}
           </h1>
-          <p className="mt-3.5 max-w-[44ch] font-lora text-xl font-light not-italic text-brand-accent-light [text-wrap:pretty]">
-            {frontmatter.chapeau}
-          </p>
+          <Accroche teinte="clair">{frontmatter.chapeau}</Accroche>
         </div>
       </div>
 
@@ -91,7 +89,7 @@ export default async function RecitPage({ params }) {
           ) : null}
         </div>
 
-        <article className="mx-auto mt-12 max-w-[36em] pb-6">
+        <article className="mx-auto mt-12 max-w-[36em] pb-6 text-lecture">
           <Corps page={recit} citation={citation} appelDeReference={Ref} />
           <Bibliographie registre={registre} entrees={bibliographie} id="references" />
 

@@ -1,37 +1,42 @@
 // lib/carouselItems.js
 //
-// Items du carrousel de contenus terrain (accueil, /live) : le feed
-// récits + projets de getRecentExplorer, pré-formaté en chaînes pour les
-// composants client — « Récit · 09/12/2025 », « Projet · En cours »,
-// « Projet · Terminé le 30/11/2025 ».
+// Items du carrousel de contenus terrain (page /live) : les campagnes et leurs
+// récits, pré-formatés en chaînes pour les composants client —
+// « Récit · 09/12/2025 », « Aventure · Terminé le 30/11/2025 ».
+//
+// La source est le modèle de contenu : ce qui n'est pas publié n'y entre pas,
+// et les liens sont ceux du routage.
 
-import { getRecentExplorer } from "./getRecentActivity";
-
-function shapeCarouselItem(item) {
-  const isProjet = item.type === "Projet";
-
-  // Le détail (après le « · ») est rendu en ocre par CardMeta.
-  let detail = null;
-  if (isProjet) {
-    if (item.status === "Terminé" && item.completedAt) {
-      detail = `Terminé le ${item.completedAt.toLocaleDateString("fr-FR")}`;
-    } else {
-      detail = item.status || null;
-    }
-  } else if (item.date) {
-    detail = item.date.toLocaleDateString("fr-FR");
-  }
-
-  return {
-    key: `${item.type}-${item.slug}`,
-    href: item.href,
-    cover: item.cover,
-    title: item.title,
-    kindLabel: isProjet ? "Projet" : "Récit",
-    detail,
-  };
-}
+import { aventures, parSorte, urlDe, dateDeCampagne } from "@/lib/contenu";
+import { ETATS } from "@/lib/aventure";
+import { dateLisible } from "@/lib/lisible";
 
 export function getExplorerCarouselItems({ limit = 8 } = {}) {
-  return getRecentExplorer({ limit }).map(shapeCarouselItem);
+  const campagnes = aventures().map((page) => ({
+    key: `aventure-${page.frontmatter.slug}`,
+    href: urlDe(page),
+    cover: page.frontmatter.cover !== "TODO" ? page.frontmatter.cover : null,
+    title: page.frontmatter.titre,
+    kindLabel: "Aventure",
+    detail:
+      page.frontmatter.etat === "termine" && page.frontmatter.campagne.fin
+        ? `Terminé le ${dateLisible(page.frontmatter.campagne.fin)}`
+        : ETATS[page.frontmatter.etat],
+    tri: dateDeCampagne(page.frontmatter),
+  }));
+
+  const recits = parSorte("recit").map((page) => ({
+    key: `recit-${page.frontmatter.slug}`,
+    href: urlDe(page),
+    cover: page.frontmatter.cover,
+    title: page.frontmatter.titre,
+    kindLabel: "Récit",
+    detail: dateLisible(page.frontmatter.date),
+    tri: page.frontmatter.date,
+  }));
+
+  return [...campagnes, ...recits]
+    .sort((a, b) => b.tri.localeCompare(a.tri))
+    .slice(0, limit)
+    .map(({ tri, ...item }) => item);
 }

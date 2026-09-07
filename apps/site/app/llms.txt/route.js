@@ -1,127 +1,91 @@
 // app/llms.txt/route.js
 //
-// Route handler pré-générée au build qui sert un fichier llms.txt
-// conforme au standard https://llmstxt.org : un résumé markdown du
-// site avec un index des articles et projets, optimisé pour les
-// modèles de langage qui veulent comprendre la structure du contenu.
-// Cloudflare Pages le sert ensuite comme un asset statique.
+// /llms.txt — une carte du site en markdown, pour les modèles de langage qui
+// veulent en comprendre la structure. Générée au build depuis le modèle de
+// contenu : ce qui n'est pas publié n'y figure pas.
 
-import {
-  listArticleEntries,
-  listProjetEntries,
-  routeFor,
-} from "@/lib/contentRoutes.mjs";
+import { parSorte, aventures, articles, registreDuBlog, urlDe } from "@/lib/contenu";
+import { dateLisible } from "@/lib/lisible";
 
 const SITE_URL = "https://thelocomotionlab.com";
 
 export const dynamic = "force-static";
 
-function shapeEntry(e) {
-  const { data } = e;
-  return {
-    entry: e,
-    title: data.title || e.slug,
-    description: data.description || "",
-    date: data.date ? new Date(data.date) : null,
-    activityAt: data.activityAt ? new Date(data.activityAt) : null,
-  };
-}
-
-// Même clé de tri que l'index /explorer : activityAt ?? date.
-function activityDateKey(item) {
-  return item.activityAt?.getTime() ?? item.date?.getTime() ?? 0;
-}
-
-function formatEntry(item) {
-  const url = `${SITE_URL}${routeFor(item.entry)}`;
-  const desc = item.description ? `: ${item.description}` : "";
-  return `- [${item.title}](${url})${desc}`;
+function ligne(page, quand) {
+  const { titre, chapeau } = page.frontmatter;
+  const date = quand ? ` (${dateLisible(quand)})` : "";
+  return `- [${titre}](${SITE_URL}${urlDe(page)})${date}: ${chapeau}`;
 }
 
 function buildLlmsTxt() {
-  const published = [...listArticleEntries(), ...listProjetEntries()].filter(
-    (e) => e.published
-  );
+  const lignes = [];
 
-  const comprendre = published
-    .filter((e) => e.kind === "article")
-    .map(shapeEntry)
-    .sort((a, b) => (b.date?.getTime() ?? 0) - (a.date?.getTime() ?? 0));
+  lignes.push("# The Locomotion Lab");
+  lignes.push("");
+  lignes.push(
+    "> Espace d'exploration de la robustesse physiologique : mouvement primal, ultra-endurance, minimalisme, hormèse.",
+  );
+  lignes.push("");
+  lignes.push(
+    "Le Locomotion Lab est un laboratoire vivant qui explore les facteurs et pratiques favorisant la robustesse physiologique. Le contenu se range en quatre sortes : les aventures (campagnes : données, préparation, matériel, direct), leurs récits, les billets du carnet de bord, et les articles Science — des documents sourcés, datés et révisés.",
+  );
+  lignes.push("");
 
-  const explorer = published
-    .filter((e) => e.kind !== "article")
-    .map(shapeEntry)
-    .sort((a, b) => activityDateKey(b) - activityDateKey(a));
+  lignes.push("## Index");
+  lignes.push("");
+  lignes.push(`- [Accueil](${SITE_URL}/)`);
+  lignes.push(`- [Science](${SITE_URL}/science): les articles de fond, sourcés et révisés`);
+  lignes.push(`- [Aventures](${SITE_URL}/aventures): les campagnes, une par une`);
+  lignes.push(`- [Blog](${SITE_URL}/blog): le carnet de bord, au jour le jour`);
+  lignes.push(`- [Services](${SITE_URL}/services): le Locomotion Twin et les ateliers`);
+  lignes.push(`- [Labo](${SITE_URL}/labo): la quête, qui est derrière, comment écrire`);
+  lignes.push(`- [Live](${SITE_URL}/live): le direct des aventures, ou le prochain départ`);
+  lignes.push("");
 
-  const lines = [];
-  lines.push("# The Locomotion Lab");
-  lines.push("");
-  lines.push(
-    "> Espace d'exploration de la robustesse physiologique : mouvement primal, ultra-endurance, minimalisme, hormèse."
-  );
-  lines.push("");
-  lines.push(
-    "Le Locomotion Lab est un laboratoire vivant qui explore les facteurs et pratiques favorisant la robustesse physiologique. On y trouve deux piliers : Comprendre (la science — articles de fond sourcés et vulgarisés) et Explorer (le terrain — récits d'aventures et projets au long cours type saisons d'entraînement et traversées)."
-  );
-  lines.push("");
-  lines.push("## Pages principales");
-  lines.push("");
-  lines.push(`- [Accueil](${SITE_URL}/)`);
-  lines.push(
-    `- [La quête](${SITE_URL}/quete): la quête du labo — la robustesse physiologique`
-  );
-  lines.push(
-    `- [Comprendre](${SITE_URL}/comprendre): la science — index des articles de fond`
-  );
-  lines.push(
-    `- [Explorer](${SITE_URL}/explorer): le terrain — index des récits et projets`
-  );
-  lines.push(
-    `- [Pratiquer](${SITE_URL}/pratiquer): les ateliers de mouvement primal — dates et inscription`
-  );
-  lines.push(
-    `- [Live](${SITE_URL}/live): le direct des aventures du labo, ou le prochain départ`
-  );
-  lines.push(
-    `- [Outils](${SITE_URL}/outils): les outils construits au labo`
-  );
-  lines.push(
-    `- [Locomotion Twin](${SITE_URL}/outils/twin): prédiction de temps de course calibrée sur les données de l'athlète (en construction)`
-  );
-  lines.push(`- [À propos](${SITE_URL}/a-propos): qui est derrière le site`);
-  lines.push(
-    `- [Soutenir](${SITE_URL}/soutenir): comment soutenir le projet`
-  );
-  lines.push(`- [Contact](${SITE_URL}/contact)`);
-  lines.push("");
-
-  if (comprendre.length) {
-    lines.push("## Comprendre");
-    lines.push("");
-    for (const a of comprendre) {
-      lines.push(formatEntry(a));
+  const science = articles();
+  if (science.length) {
+    lignes.push("## Science");
+    lignes.push("");
+    for (const page of science) {
+      lignes.push(ligne(page, page.frontmatter.revise_le ?? page.frontmatter.publie_le));
     }
-    lines.push("");
+    lignes.push("");
   }
 
-  if (explorer.length) {
-    lines.push("## Explorer");
-    lines.push("");
-    for (const p of explorer) {
-      lines.push(formatEntry(p));
+  const campagnes = aventures();
+  if (campagnes.length) {
+    lignes.push("## Aventures");
+    lignes.push("");
+    for (const page of campagnes) {
+      lignes.push(ligne(page, page.frontmatter.campagne.debut));
     }
-    lines.push("");
+    lignes.push("");
   }
 
-  return lines.join("\n");
+  const recits = parSorte("recit");
+  if (recits.length) {
+    lignes.push("## Récits");
+    lignes.push("");
+    for (const page of recits) lignes.push(ligne(page, page.frontmatter.date));
+    lignes.push("");
+  }
+
+  const carnet = registreDuBlog().filter((page) => page.frontmatter.sorte === "billet");
+  if (carnet.length) {
+    lignes.push("## Blog");
+    lignes.push("");
+    for (const page of carnet) lignes.push(ligne(page, page.frontmatter.date));
+    lignes.push("");
+  }
+
+  return lignes.join("\n");
 }
 
 export function GET() {
-  const body = buildLlmsTxt();
-  return new Response(body, {
+  return new Response(buildLlmsTxt(), {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
-      "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+      "Cache-Control": "public, max-age=3600, s-maxage=86400",
     },
   });
 }

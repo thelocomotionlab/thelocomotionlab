@@ -158,7 +158,7 @@ describe("l'appel de référence est numéroté à l'affichage", () => {
 describe("la charte tient dans les composants", () => {
   it("l'accroche est en romain maigre, jamais en italique", () => {
     const html = renderToStaticMarkup(<Accroche>170 km et deux pitons.</Accroche>);
-    expect(html).toContain("font-lora");
+    expect(html).toContain("font-sans");
     expect(html).toContain("font-light");
     expect(html).toContain("not-italic");
     expect(html).not.toContain(" italic");

@@ -123,12 +123,11 @@ describe("le bloc Aventures de l'accueil", () => {
     }
   });
 
-  it("porte le nom de l'aventure en surtitre et le titre du récit en titre", () => {
+  it("annonce la sorte en surtitre et porte le titre du récit en titre", () => {
     const carte = blocAventuresDeLAccueil().find((entree) => entree.genre === "recit");
-    const campagne = aventures().find((page) => page.frontmatter.titre === carte.surtitre);
+    const campagne = aventures().find((page) => page.frontmatter.recit);
 
-    expect(campagne, "le surtitre est le titre d'une aventure").toBeDefined();
-    expect(carte.titre).not.toBe(carte.surtitre);
+    expect(carte.surtitre).toBe("Récit");
     expect(carte.titre).toBe(
       parSorte("recit").find((page) => page.frontmatter.slug === campagne.frontmatter.recit)
         .frontmatter.titre,

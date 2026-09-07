@@ -16,7 +16,7 @@ export default function ShareButton() {
   const pathname = usePathname();
 
   // 💡 Masquer sur certaines pages
-  if (["/contact", "/mentions-legales"].includes(pathname)) return null;
+  if (["/mentions-legales"].includes(pathname)) return null;
 
   async function handleShare() {
     const url = typeof window !== "undefined" ? window.location.href : "";

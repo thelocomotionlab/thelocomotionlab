@@ -59,7 +59,7 @@ export default function Countdown({ dateDebut }) {
         Départ le {quand}
       </p>
       {imminent ? (
-        <p className="m-0 mt-2.5 font-lora text-lg italic text-brand-text">
+        <p className="m-0 mt-2.5 font-sans text-lg italic text-brand-text">
           Départ imminent…
         </p>
       ) : (

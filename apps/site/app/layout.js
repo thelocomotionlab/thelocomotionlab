@@ -4,7 +4,7 @@ import "./globals.css";
 import "katex/dist/katex.min.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { ubuntu, lora, ubuntuMono } from "@locomotionlab/ui/fonts";
+import { ubuntuSans, ubuntuSansMono } from "@locomotionlab/ui/fonts";
 import ShareButton from "@/components/ShareButton";
 import ChromeDuSite from "@/components/ChromeDuSite";
 import { OG_IMAGE, OG_IMAGE_ALT, OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH } from "@/lib/seo";
@@ -50,7 +50,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="fr" data-scroll-behavior="smooth">
       <body
-        className={`${ubuntu.variable} ${lora.variable} ${ubuntuMono.variable} font-sans text-brand-text relative min-h-screen`}
+        className={`${ubuntuSans.variable} ${ubuntuSansMono.variable} font-sans text-brand-text relative min-h-screen`}
       >
         <a href="#main-content" className="skip-link">
           Aller au contenu principal

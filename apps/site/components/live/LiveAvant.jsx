@@ -51,7 +51,7 @@ export default function LiveAvant() {
         </h1>
         {/* Intention : la voix éditoriale du site (Lora italique terracotta,
             même gabarit que les exergues des autres pages). */}
-        <p className="mt-3.5 font-lora text-xl italic leading-relaxed text-brand-deep md:text-[22px]">
+        <p className="mt-3.5 font-sans text-xl italic leading-relaxed text-brand-deep md:text-[22px]">
           {aventure.intention}
         </p>
         <div

@@ -35,7 +35,7 @@ export default function Photo({ children, legende, format = "libre" }: PhotoProp
         {children}
       </div>
       {legende ? (
-        <figcaption className="mt-2.5 font-lora text-sm italic leading-relaxed text-brand-muted">
+        <figcaption className="mt-2.5 font-sans text-sm italic leading-relaxed text-brand-muted">
           <span className="mb-2 block h-0.5 w-11 bg-brand-accent/75" />
           {legende}
         </figcaption>

@@ -47,7 +47,10 @@ export default async function AventurePage({ params }) {
 
   const { frontmatter } = page;
   const { citation } = referencesDePage(page.corps);
-  const rendus = rendusDe(page, { libres: corpsDesSectionsLibres(page, citation) });
+  const rendus = rendusDe(page, {
+    libres: corpsDesSectionsLibres(page, citation),
+    cover: (src, alt) => <Image src={src} alt={alt} width={900} height={600} />,
+  });
 
   return (
     <div className="mx-auto max-w-[1180px] px-6 pt-10 md:px-8">
@@ -73,7 +76,7 @@ export default async function AventurePage({ params }) {
               <span className="tabular-nums">{campagneLisible(frontmatter.campagne)}</span>
             </div>
 
-            <h1 className="mt-4 font-heading text-4xl font-bold leading-tight tracking-tight text-brand-deep md:text-[2.75rem]">
+            <h1 className="mt-4 font-heading text-[32px] font-bold leading-[1.05] tracking-[-0.015em] text-brand-deep md:text-[44px]">
               {frontmatter.titre}
             </h1>
             <Accroche>{frontmatter.chapeau}</Accroche>

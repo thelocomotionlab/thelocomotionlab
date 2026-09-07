@@ -119,25 +119,9 @@ export default function nextConfig(phase) {
     },
 
     async redirects() {
-      return [
-        // Anciennes routes /articles/* et /projets/* → piliers Comprendre /
-        // Explorer. Générées au build depuis le frontmatter, par slug exact
-        // (cf. lib/legacyRedirects.mjs).
-        ...buildLegacyRedirects(),
-        // /about était la seule URL en anglais parmi les piliers (/comprendre,
-        // /explorer, /pratiquer, /outils, /quete) — audit des titres, 08/2026.
-        { source: "/about", destination: "/a-propos", permanent: true },
-        // La page « Manifeste » a été renommée « La quête » : on préserve
-        // l'ancienne URL (liens externes, historique) par un 308.
-        { source: "/manifeste", destination: "/quete", permanent: true },
-        // /live est désormais une vraie page (hub live permanent, PR3) :
-        // l'ancienne redirection temporaire a été retirée.
-        // Les deux ateliers de visuels sont réunis dans /studio. Un serveur ne
-        // peut pas poser de fragment : on atterrit sur l'onglet par défaut, et
-        // le studio n'en a que deux.
-        { source: "/outils/habillage", destination: "/studio", permanent: true },
-        { source: "/outils/carrousel", destination: "/studio", permanent: true },
-      ];
+      // Toutes les redirections vivent dans lib/legacyRedirects.mjs : une
+      // seule table, un seul ordre de priorité.
+      return buildLegacyRedirects();
     },
   };
 }

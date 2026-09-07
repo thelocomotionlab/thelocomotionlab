@@ -1,7 +1,7 @@
 // components/SoutenirSection.jsx
 //
 // Page Soutenir, au gabarit des pages de lecture (Quête / À propos) :
-// colonne max-w-3xl alignée à gauche, sections en SectionHeading (Lora
+// colonne max-w-3xl alignée à gauche, sections en SectionHeading (titre
 // italique + filet). Seul le bloc email final reste centré — c'est le
 // motif commun à Comprendre / Quête / Twin. La capture email passe par le
 // composant EmailCapture partagé (honeypot, aria-live, source « soutenir »).

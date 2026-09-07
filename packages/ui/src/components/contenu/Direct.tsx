@@ -27,7 +27,7 @@ export default function Direct({ children, version, reglages = [] }: DirectProps
             <div className="overflow-hidden rounded-md border border-brand-hairline">{children}</div>
           ) : null}
           {version ? (
-            <figcaption className="mt-3 font-lora italic leading-relaxed text-brand-muted">
+            <figcaption className="mt-3 font-sans italic leading-relaxed text-brand-muted">
               <span className="mb-2 block h-0.5 w-11 bg-brand-accent/75" />
               {version}
             </figcaption>

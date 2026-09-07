@@ -36,6 +36,11 @@
   --color-brand-wash: #D3E2E3;
   --color-brand-slate: #5B8286;
   --color-brand-slate-dark: #4E767A;
+  /* Le fond des grandes plages de Science : une brume verte, presque blanche,
+     assez claire pour porter du texte long. Le lavis (wash) reste réservé aux
+     petits encarts. */
+  --color-brand-mist: #EBF0ED;
+  --color-brand-mist-line: #D9E4E4;
 
   /* Pratiquer 2026 — neutres chauds (filets, champs, jauges) + liseré wash */
   --color-brand-hairline: #E5DFD3;
@@ -62,6 +67,12 @@
      parce qu'elles se répètent dans le flux d'un texte. */
   --shadow-bloc: 0 6px 20px rgba(51, 51, 51, 0.06);
   --shadow-renvoi: 0 10px 30px rgba(51, 51, 51, 0.07);
+  /* Les cartes posées sur une photo : elles doivent décoller du fond. */
+  --shadow-vignette: 0 12px 32px rgba(0, 0, 0, 0.22);
+  /* Le panneau blanc d'une plage de brume verte. */
+  --shadow-mist: 0 10px 30px rgba(78, 118, 122, 0.1);
+  /* L'étagère des aventures : une ombre courte, sous le filet de séparation. */
+  --shadow-etagere: 0 22px 22px -22px rgba(154, 96, 68, 0.35);
 
   --background-image-lab-grid: linear-gradient(
       to right,
@@ -76,20 +87,30 @@
   /* Variante sur lavis bleu (section Comprendre de l'accueil) */
   --background-image-lab-grid-blue: linear-gradient(
       to right,
-      rgba(91, 130, 134, 0.26) 1px,
+      rgba(91, 130, 134, 0.16) 1px,
       transparent 1px
     ),
     linear-gradient(
       to bottom,
-      rgba(91, 130, 134, 0.26) 1px,
+      rgba(91, 130, 134, 0.16) 1px,
       transparent 1px
     );
+  /* Le voile terracotta posé sur la photo du bloc Aventures : opaque à gauche,
+     où se lit le texte, transparent à droite, où la photo respire. */
+  --background-image-voile-aventures: linear-gradient(
+    90deg,
+    rgba(118, 64, 38, 0.94) 0%,
+    rgba(118, 64, 38, 0.78) 55%,
+    rgba(118, 64, 38, 0.5) 100%
+  );
   --text-xxs: 0.625rem;
   /* Le corps mono des pages de contenu : méta d'un bloc, numéro de section,
      lien de téléchargement. */
   --text-meta: 0.6875rem;
-  /* Le corps de lecture d'une section libre et d'un chapeau de carte. */
+  /* Le corps de lecture : 17 px sur un interligne de 1,75, la mesure de la
+     charte pour un texte long. */
   --text-lecture: 1.0625rem;
+  --leading-lecture: 1.75;
   /* Le corps d'un tableau ordonné et d'une entrée de bibliographie. */
   --text-tableau: 0.95rem;
 
@@ -102,7 +123,9 @@
   --tracking-pastille: 0.06em;
 }
 
-/* Polices (liées à next/font via packages/ui/src/fonts.ts).
+/* Police (liée à next/font via packages/ui/src/fonts.ts).
+   UNE SEULE famille : Ubuntu Sans, en variable 300 → 800, romain et italique.
+   Ubuntu Sans Mono ne sert qu'aux étiquettes en petites capitales.
    Deux impératifs, appris à la dure :
    ⚠ 1) OBLIGATOIREMENT en @theme inline : les variables --next-font-* sont
    posées par next/font sur <body>, pas sur :root. Un @theme classique résout
@@ -111,14 +134,11 @@
    chaîne var() dans chaque utilitaire, qui se résout alors au niveau de
    l'élément.
    ⚠ 2) Noms DISTINCTS des tokens : les variables next/font s'appellent
-   --next-font-* (fonts.ts), jamais --font-*. Sinon le token --font-lora
-   référencerait var(--font-lora) — auto-référence dont la résolution dépend
-   de l'implémentation (Tailwind/navigateur). */
+   --next-font-* (fonts.ts), jamais --font-*. Sinon le token référencerait
+   var(--font-…) — auto-référence dont la résolution dépend de
+   l'implémentation. */
 @theme inline {
   --font-heading: var(--next-font-ubuntu), ui-sans-serif, system-ui;
   --font-sans: var(--next-font-ubuntu), ui-sans-serif, system-ui;
-  /* Serif d'accent de la charte = Lora, vraies italiques (fonts.ts). */
-  --font-serif: var(--next-font-lora), Georgia, serif;
-  --font-lora: var(--next-font-lora), Georgia, serif;
   --font-mono: var(--next-font-ubuntu-mono), ui-monospace, SFMono-Regular, monospace;
 }

@@ -63,8 +63,11 @@ function paquetage(ref) {
  * Tout ce que SectionsAventure ne sait pas rendre seul : les données de
  * paquetage, les billets des séances, les protocoles rattachés, les corps des
  * sections libres, la carte du récit.
+ *
+ * `cover` est une fabrique fournie par l'app : ce module ne rend pas de JSX,
+ * il donne le chemin et le texte de remplacement, la page en fait une image.
  */
-export function rendusDe(aventure, { libres = {} } = {}) {
+export function rendusDe(aventure, { libres = {}, cover } = {}) {
   const sections = aventure.frontmatter.sections;
   const rendus = { libres };
 
@@ -92,12 +95,17 @@ export function rendusDe(aventure, { libres = {} } = {}) {
 
   const recit = recitDe(aventure.frontmatter);
   if (recit) {
+    const coverDuRecit = recit.frontmatter.cover;
     rendus.recit = {
       titre: recit.frontmatter.titre,
       url: urlDe(recit),
       chapeau: recit.frontmatter.chapeau,
       publieLe: `Publié le ${dateLisible(recit.frontmatter.date)}`,
       lecture: recit.frontmatter.lecture,
+      cover:
+        cover && coverDuRecit && coverDuRecit !== "TODO"
+          ? cover(coverDuRecit, recit.frontmatter.titre)
+          : undefined,
       action:
         aventure.frontmatter.etat === "termine" ? "Lire le récit" : "Suivre la campagne",
     };

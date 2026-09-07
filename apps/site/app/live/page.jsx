@@ -77,7 +77,7 @@ export default function LivePage() {
       <p className="mt-12 max-w-4xl mx-auto text-center text-sm text-gray-600 italic">
         Ce dispositif de suivi est déployable sur une grande variété
         d&rsquo;aventures.{" "}
-        <Link href="/contact" className="underline hover:text-brand-accent">
+        <Link href="/labo#labo-contact" className="underline hover:text-brand-accent">
           Écris-moi s&rsquo;il t&rsquo;intéresse
         </Link>
         .

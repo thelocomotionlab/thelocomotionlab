@@ -60,11 +60,11 @@ export default function Protocole({
         <dt className="pt-0.5 font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
           Objectif
         </dt>
-        <dd className="m-0 font-lora leading-relaxed">{objectif}</dd>
+        <dd className="m-0 font-sans leading-relaxed">{objectif}</dd>
         <dt className="pt-0.5 font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
           Protocole
         </dt>
-        <dd className="m-0 font-lora leading-relaxed">{children}</dd>
+        <dd className="m-0 font-sans leading-relaxed">{children}</dd>
       </dl>
 
       {sensations ? (
@@ -72,7 +72,7 @@ export default function Protocole({
           <div className="font-mono text-xxs font-bold uppercase tracking-etiquette text-brand-deep-dark">
             Sensations
           </div>
-          <div className="mt-1.5 font-lora italic leading-relaxed text-brand-soft">{sensations}</div>
+          <div className="mt-1.5 font-sans italic leading-relaxed text-brand-soft">{sensations}</div>
         </div>
       ) : null}
 

@@ -27,7 +27,7 @@ export default function Note({ id, titre, children, article }: NoteProps) {
         Note
         <span className="font-normal normal-case tracking-pastille text-brand-muted">{titre}</span>
       </div>
-      <div className="mt-2 font-lora text-[0.95em] leading-relaxed text-brand-ink">{children}</div>
+      <div className="mt-2 font-sans text-[0.95em] leading-relaxed text-brand-ink">{children}</div>
       {article ? (
         <a
           href={article.url}

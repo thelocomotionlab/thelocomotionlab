@@ -44,7 +44,7 @@ export default function Bibliographie({
           return (
             <li key={cle} className="grid grid-cols-[1.75rem_minmax(0,1fr)] gap-2">
               <span className="font-mono text-sm text-brand-faint tabular-nums">{index + 1}</span>
-              <span className="font-lora text-tableau leading-relaxed text-brand-soft">
+              <span className="font-sans text-tableau leading-relaxed text-brand-soft">
                 {entree ? (
                   <>
                     {entree.auteur ? `${entree.auteur} ` : null}

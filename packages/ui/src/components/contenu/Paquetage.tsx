@@ -110,7 +110,7 @@ export default function Paquetage({
               key={`${categorie.nom}-${article.nom}`}
               className="flex justify-between gap-3 border-t border-brand-grid py-1.5"
             >
-              <span className="font-lora">{article.nom}</span>
+              <span className="font-sans">{article.nom}</span>
               <span className="font-mono text-brand-muted tabular-nums">{masse(article.masse)}</span>
             </div>
           )),

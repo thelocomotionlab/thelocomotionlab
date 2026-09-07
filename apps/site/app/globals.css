@@ -33,6 +33,9 @@ body {
   margin: 0;
   background: var(--color-brand-bg);
   color: var(--color-brand-text); /* source unique : packages/ui (brand-text) */
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
   /* La famille de police est appliquée via la classe `font-sans` (var(--font-sans))
      posée sur le body dans app/layout.js. Une seule source de vérité = @theme. */
 }
@@ -73,7 +76,7 @@ select:focus-visible {
 }
 
 /* Titres "hors prose" (Hero, etc.) — dans @layer base pour rester
-   surchargeable par les utilitaires (ex. font-lora sur le H2 Explorer) :
+   surchargeable par les utilitaires (ex. font-sans sur le H2 Explorer) :
    une règle hors layer écraserait toute classe Tailwind. */
 @layer base {
   h1,
@@ -529,7 +532,7 @@ a.data-footnote-backref,
   line-height: 1.5;
   font-size: 1rem;
   color: var(--color-brand-text);
-  font-family: var(--next-font-lora), Georgia, serif;
+  font-family: var(--next-font-sans), Georgia, serif;
 }
 
 .prose ul li,
@@ -602,7 +605,7 @@ html {
 .article-body p {
   font-size: 1.18rem;
   line-height: 1.7;
-  font-family: var(--next-font-lora), Georgia, serif;
+  font-family: var(--next-font-sans), Georgia, serif;
   margin-top: 1.25rem;
   margin-bottom: 1.25rem;
 }

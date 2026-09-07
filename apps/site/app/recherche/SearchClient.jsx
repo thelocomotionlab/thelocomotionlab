@@ -177,7 +177,7 @@ function SearchClientInner() {
       // Pilier Explorer : récits + projets ("project" = ancien index encore
       // en cache navigateur pendant la bascule).
       pros: filtered.filter(
-        (i) => i.type === "recit" || i.type === "projet" || i.type === "project"
+        (i) => i.type === "recit" || i.type === "aventure" || i.type === "billet"
       ),
     };
   }, [q, index]);
@@ -244,7 +244,7 @@ function SearchClientInner() {
                 className="group block bg-white rounded-2xl shadow-card p-6 hover:shadow-lg transition-shadow"
               >
                 <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
-                  {p.type === "recit" ? "Récit" : "Projet"}
+                  {p.type === "recit" ? "Récit" : p.type === "aventure" ? "Aventure" : "Billet"}
                 </p>
                 <h3 className="text-xl font-semibold mb-2 text-brand-accent-ink group-hover:underline">
                   {p.title}

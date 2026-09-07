@@ -17,7 +17,7 @@ export default function EnTeteDIndex({ titre, accroche, teinte = "neutre" }) {
   return (
     <header>
       <h1
-        className={`m-0 font-heading text-4xl font-bold leading-tight tracking-tight md:text-5xl ${TEINTES[teinte]}`}
+        className={`m-0 font-heading text-[34px] font-bold leading-[1.05] tracking-[-0.015em] md:text-[46px] ${TEINTES[teinte]}`}
       >
         {titre}
       </h1>

@@ -9,7 +9,7 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Accroche, Bibliographie } from "@locomotionlab/ui/contenu";
+import { Bibliographie } from "@locomotionlab/ui/contenu";
 
 import { parSorte, parSlug, bibliographie } from "@/lib/contenu";
 import { dateLisible, minutesDeLecture } from "@/lib/lisible";
@@ -45,17 +45,19 @@ export default async function ArticlePage({ params }) {
         Retour à la science
       </Link>
 
-      <article className="mx-auto mt-9 max-w-[46em]">
+      <article className="mx-auto mt-9 max-w-[760px]">
         <header>
           <div className="font-mono text-meta font-bold uppercase tracking-surtitre text-brand-slate-dark">
             Article Science
           </div>
-          <h1 className="mt-4 font-heading text-4xl font-bold leading-tight tracking-tight text-brand-slate-dark md:text-[2.625rem]">
+          <h1 className="mt-4 font-heading text-[32px] font-bold leading-[1.08] tracking-[-0.015em] text-brand-slate-dark md:text-[42px]">
             {frontmatter.titre}
           </h1>
-          <Accroche>{frontmatter.chapeau}</Accroche>
+          <p className="mt-4 text-xl leading-normal text-brand-soft [text-wrap:pretty]">
+            {frontmatter.chapeau}
+          </p>
 
-          <div className="mt-6 flex flex-wrap gap-x-7 gap-y-2.5 border-y border-brand-wash-line py-4 font-mono text-xs text-brand-muted tabular-nums">
+          <div className="mt-[26px] flex flex-wrap gap-x-7 gap-y-2.5 border-y border-brand-wash-line py-4 font-mono text-[12.5px] text-brand-muted tabular-nums">
             <span>
               Publié le <span className="text-brand-text">{dateLisible(frontmatter.publie_le)}</span>
             </span>
@@ -80,7 +82,7 @@ export default async function ArticlePage({ params }) {
           </div>
         </header>
 
-        <div className="mx-auto mt-10 max-w-[34em]">
+        <div className="mx-auto mt-10 max-w-[34em] text-lecture">
           <Corps page={page} citation={citation} appelDeReference={Ref} />
 
           {frontmatter.revisions.length > 0 ? (
@@ -94,13 +96,13 @@ export default async function ArticlePage({ params }) {
                     <dt className="font-mono text-xs text-brand-slate">
                       {dateLisible(revision.date)}
                     </dt>
-                    <dd className="m-0 font-lora">{revision.quoi}</dd>
+                    <dd className="m-0 font-sans">{revision.quoi}</dd>
                   </div>
                 ))}
                 <dt className="font-mono text-xs text-brand-slate">
                   {dateLisible(frontmatter.publie_le)}
                 </dt>
-                <dd className="m-0 font-lora">Publication.</dd>
+                <dd className="m-0 font-sans">Publication.</dd>
               </dl>
             </aside>
           ) : null}

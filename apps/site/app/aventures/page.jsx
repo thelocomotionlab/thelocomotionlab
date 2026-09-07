@@ -19,9 +19,9 @@ export const metadata = {
 };
 
 const ACTION_PRIMAIRE =
-  "inline-block rounded-full bg-brand-deep px-6 py-2.5 font-heading text-sm font-semibold text-white no-underline transition-colors hover:bg-brand-deep-dark";
+  "inline-block rounded-full bg-brand-deep px-[22px] py-2.5 font-heading text-[14.5px] font-semibold text-white no-underline transition-colors hover:bg-brand-deep-dark";
 const ACTION_SECONDAIRE =
-  "inline-block rounded-full border-[1.5px] border-brand-deep px-5 py-2 font-heading text-sm font-semibold text-brand-deep no-underline transition-colors hover:bg-brand-deep hover:text-white";
+  "inline-block rounded-full border-[1.5px] border-brand-deep px-5 py-[8.5px] font-heading text-[14.5px] font-semibold text-brand-deep no-underline transition-colors hover:bg-brand-deep hover:text-white";
 
 function Chiffres({ resume }) {
   return (
@@ -30,7 +30,7 @@ function Chiffres({ resume }) {
         const { valeur, libelle } = chiffreDeCarte(entree);
         return (
           <div key={entree}>
-            <dd className="m-0 font-heading text-2xl font-bold leading-none">{valeur}</dd>
+            <dd className="m-0 font-heading text-[28px] font-bold leading-none">{valeur}</dd>
             {libelle ? (
               <dt className="mt-1.5 font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
                 {libelle}
@@ -63,7 +63,7 @@ export default function AventuresPage() {
           return (
             <article
               key={frontmatter.slug}
-              className="grid items-end gap-10 border-b-[3px] border-brand-deep pb-9 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]"
+              className="grid items-end gap-10 border-b-[3px] border-brand-deep pb-9 shadow-etagere lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]"
             >
               {frontmatter.cover !== "TODO" ? (
                 <div className="aspect-[11/6] overflow-hidden rounded-md shadow-card">
@@ -89,13 +89,13 @@ export default function AventuresPage() {
                   <span className="tabular-nums">{campagneLisible(frontmatter.campagne)}</span>
                 </div>
 
-                <h2 className="mt-3.5 font-heading text-3xl font-bold leading-tight tracking-tight text-brand-deep">
+                <h2 className="mt-3.5 font-heading text-[28px] font-bold leading-[1.1] tracking-[-0.01em] text-brand-deep md:text-[34px]">
                   <Link href={url} className="text-brand-deep no-underline hover:text-brand-deep-dark">
                     {frontmatter.titre}
                   </Link>
                 </h2>
 
-                <p className="m-0 mt-2.5 font-lora leading-snug text-brand-soft [text-wrap:pretty]">
+                <p className="m-0 mt-2.5 font-sans leading-normal text-brand-soft [text-wrap:pretty]">
                   {frontmatter.chapeau}
                 </p>
 

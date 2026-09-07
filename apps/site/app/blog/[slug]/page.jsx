@@ -9,7 +9,7 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Accroche, Bibliographie } from "@locomotionlab/ui/contenu";
+import { Bibliographie } from "@locomotionlab/ui/contenu";
 
 import { parSorte, parSlug, bibliographie } from "@/lib/contenu";
 import { TYPES } from "@/lib/blogRegistre";
@@ -45,7 +45,7 @@ export default async function BilletPage({ params }) {
         Retour au blog
       </Link>
 
-      <article className="mx-auto mt-9 max-w-[34em]">
+      <article className="mx-auto mt-9 max-w-[34em] text-lecture">
         <header>
           <div className="flex flex-wrap items-center gap-3 font-mono text-xs font-semibold uppercase tracking-etiquette text-brand-muted">
             <span className="rounded-xs border border-brand-gauge-full px-1.5 py-0.5 text-brand-soft">
@@ -56,10 +56,12 @@ export default async function BilletPage({ params }) {
             <span>{minutesDeLecture(page.corps)} min</span>
           </div>
 
-          <h1 className="mt-4.5 font-heading text-4xl font-bold leading-tight tracking-tight">
+          <h1 className="mt-4.5 font-heading text-[30px] font-bold leading-[1.1] tracking-[-0.015em] md:text-[38px]">
             {frontmatter.titre}
           </h1>
-          <Accroche>{frontmatter.chapeau}</Accroche>
+          <p className="mt-4 text-[1.18em] leading-normal text-brand-soft [text-wrap:pretty]">
+            {frontmatter.chapeau}
+          </p>
           <div className="mt-5.5 h-[3px] w-16 rounded-full bg-brand-accent" aria-hidden="true" />
         </header>
 

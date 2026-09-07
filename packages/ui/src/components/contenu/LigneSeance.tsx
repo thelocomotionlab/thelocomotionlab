@@ -70,7 +70,7 @@ export default function LigneSeance({
         }
 
         return (
-          <td key={index} className={`${commun} font-lora text-brand-soft`}>
+          <td key={index} className={`${commun} font-sans text-brand-soft`}>
             {cellule}
           </td>
         );

@@ -84,7 +84,7 @@ export default function JournalCard({
       </div>
 
       {newestFirst.length === 0 && (
-        <p className="pb-4 font-lora text-sm italic leading-[1.55] text-brand-text/60">
+        <p className="pb-4 font-sans text-sm italic leading-[1.55] text-brand-text/60">
           Fil d&rsquo;actualité de l&rsquo;aventure alimenté selon le réseau mobile.
         </p>
       )}
@@ -110,7 +110,7 @@ export default function JournalCard({
           </div>
 
           {entry.text && (
-            <p className="mt-1.5 font-lora text-sm italic leading-[1.55] text-brand-text/90 lg:mt-[5px] lg:text-[13.5px]">
+            <p className="mt-1.5 font-sans text-sm italic leading-[1.55] text-brand-text/90 lg:mt-[5px] lg:text-[13.5px]">
               {entry.type === "audio" ? <>«&nbsp;{entry.text}&nbsp;»</> : entry.text}
             </p>
           )}

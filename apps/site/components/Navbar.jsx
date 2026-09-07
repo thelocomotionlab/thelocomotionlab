@@ -1,46 +1,32 @@
-// components/Navbar.jsx
 "use client";
+
+// components/Navbar.jsx
+//
+// LA NAVBAR DE LA MAQUETTE v6.
+//
+// Bandeau collant translucide, 72 px, en trois colonnes : la marque à gauche
+// (le sceau puis le nom en petites capitales espacées), les cinq index au
+// centre, la recherche à droite. L'entrée active porte un filet sous le
+// libellé — c'est le seul marqueur, il n'y a pas d'icône.
+//
+// L'entrée « Live » est la seule exception à ces cinq liens : elle n'apparaît
+// que dans la fenêtre d'une aventure en cours, et s'efface d'elle-même.
 
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  Brain,
-  ChevronDown,
-  Compass,
-  FlaskConical,
-  Menu,
-  NotebookPen,
-  SatelliteDish,
-  Search,
-  Wrench,
-  X,
-} from "lucide-react";
+import { Menu, SatelliteDish, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+
 import { liveConfig } from "@/lib/liveConfig";
 
-// « Live » n'entre dans la navbar que 24 h avant le départ de l'aventure
-// (liveConfig.aventure.dateDebut) et en sort au passage en « repos ».
-// Quand il est là, il passe en tête et clignote doucement.
-const LIVE_NAV_ITEM = {
-  type: "link",
-  href: "/live",
-  label: "Live",
-  Icon: SatelliteDish,
-  live: true,
-};
+// « Live » entre dans la navbar 24 h avant le départ et en sort sept jours
+// après : au-delà, c'est que la config n'a pas été remise à jour.
 const LIVE_AVANT_MS = 24 * 60 * 60 * 1000;
-// FILET DE SÉCURITÉ, pas une durée d'aventure. La fenêtre n'avait pas de borne
-// haute : une fois `dateDebut` passée, l'entrée « Live » restait épinglée dans
-// la navbar POUR TOUJOURS, même sans direct — il fallait penser à repasser
-// `statut` à « repos ». C'est ce qui s'est produit après la sortie du Vercors.
-// Sept jours couvrent largement une aventure du labo ; au-delà, c'est que la
-// config n'a pas été remise à jour, et l'entrée s'efface d'elle-même.
 const LIVE_APRES_MS = 7 * 24 * 60 * 60 * 1000;
 
 function liveWindowOpen() {
   const { statut } = liveConfig.aventure;
-  // Pas d'entrée « Live » au « repos » : il n'y a rien à suivre.
   if (statut === "repos") return false;
   const start = new Date(liveConfig.aventure.dateDebut).getTime();
   if (Number.isNaN(start)) return false;
@@ -48,454 +34,174 @@ function liveWindowOpen() {
   return now >= start - LIVE_AVANT_MS && now <= start + LIVE_APRES_MS;
 }
 
-// Les cinq destinations du modèle de contenu. Chacune est un index :
-// /science, /aventures, /blog, /services, /labo (cf. docs/systeme-de-contenu.md
-// §2). Le Labo réunit la quête, À propos et Contact en une page.
+/** Les cinq index du modèle (docs/systeme-de-contenu.md §2). */
 const NAV_ITEMS = [
-  { type: "link", href: "/science", label: "Science", Icon: Brain },
-  { type: "link", href: "/aventures", label: "Aventures", Icon: Compass },
-  { type: "link", href: "/blog", label: "Blog", Icon: NotebookPen },
-  { type: "link", href: "/services", label: "Services", Icon: Wrench },
-  { type: "link", href: "/labo", label: "Labo", Icon: FlaskConical },
-].filter((item) => !item.hidden);
+  { href: "/science", label: "Science" },
+  { href: "/aventures", label: "Aventures" },
+  { href: "/blog", label: "Blog" },
+  { href: "/services", label: "Services" },
+  { href: "/labo", label: "Labo" },
+];
 
 function isActivePath(pathname, href) {
-  if (!pathname) return false;
-  if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-/**
- * Menu déroulant desktop accessible : bouton aria-expanded/aria-haspopup,
- * fermeture à l'échappement (focus rendu au bouton) et au clic extérieur,
- * navigation aux flèches entre les entrées.
- */
-function DesktopDropdown({ label, Icon, items, pathname }) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef(null);
-  const buttonRef = useRef(null);
-
-  const menuId = `menu-${label.toLowerCase().replace(/\s+/g, "-")}`;
-  const active = items.some(({ href }) => isActivePath(pathname, href));
-
-  useEffect(() => {
-    if (!open) return undefined;
-    const onPointerDown = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setOpen(false);
-      }
-    };
-    // Échap ferme le menu même si le focus est sorti du composant.
-    const onDocKeyDown = (e) => {
-      if (e.key === "Escape") {
-        setOpen(false);
-        buttonRef.current?.focus();
-      }
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onDocKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onDocKeyDown);
-    };
-  }, [open]);
-
-  const focusItem = (delta) => {
-    const links = Array.from(
-      containerRef.current?.querySelectorAll("a[role='menuitem']") ?? []
-    );
-    if (!links.length) return;
-    const idx = links.indexOf(document.activeElement);
-    const next =
-      idx === -1
-        ? delta > 0
-          ? 0
-          : links.length - 1
-        : (idx + delta + links.length) % links.length;
-    links[next].focus();
-  };
-
-  const onKeyDown = (e) => {
-    if (e.key === "Escape") {
-      e.stopPropagation();
-      setOpen(false);
-      buttonRef.current?.focus();
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      if (!open) setOpen(true);
-      else focusItem(1);
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      focusItem(-1);
-    }
-  };
-
-  return (
-    <div className="relative" ref={containerRef} onKeyDown={onKeyDown}>
-      <button
-        ref={buttonRef}
-        type="button"
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-controls={menuId}
-        onClick={() => setOpen((v) => !v)}
-        className={`hover:text-brand-accent-ink flex items-center gap-1 group cursor-pointer font-medium ${
-          active ? "text-brand-accent-ink" : ""
-        }`}
-      >
-        <Icon
-          size={18}
-          className={`group-hover:text-brand-accent-ink ${
-            active ? "text-brand-accent-ink" : "text-gray-700"
-          }`}
-          aria-hidden="true"
-        />
-        <span>{label}</span>
-        <ChevronDown
-          size={16}
-          aria-hidden="true"
-          className={`transition-transform ${open ? "rotate-180" : ""}`}
-        />
-      </button>
-
-      {open && (
-        <ul
-          id={menuId}
-          role="menu"
-          aria-label={label}
-          className="absolute left-1/2 -translate-x-1/2 top-full mt-3 min-w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50"
-        >
-          {items.map(({ href, label: itemLabel }) => (
-            <li key={href} role="none">
-              <Link
-                href={href}
-                role="menuitem"
-                aria-current={isActivePath(pathname, href) ? "page" : undefined}
-                onClick={() => setOpen(false)}
-                className={`block px-4 py-2 hover:bg-brand-bg hover:text-brand-accent-ink whitespace-nowrap ${
-                  isActivePath(pathname, href) ? "text-brand-accent-ink" : ""
-                }`}
-              >
-                {itemLabel}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
 export default function Navbar() {
-  const [open, setOpen] = useState(false);
-  const [closingMenu, setClosingMenu] = useState(false);
-  const [openSection, setOpenSection] = useState(null);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [closing, setClosing] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [hovered, setHovered] = useState(false);
-  const [focused, setFocused] = useState(false);
-
-  const burgerRef = useRef(null);
+  const pathname = usePathname() || "/";
   const router = useRouter();
-  const pathname = usePathname();
 
-  // Fenêtre live évaluée côté client (et réévaluée chaque minute) pour
-  // rester juste sur une page statique pré-rendue.
-  const [liveVisible, setLiveVisible] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [liveOpen, setLiveOpen] = useState(false);
+
+  const searchRef = useRef(null);
+  const burgerRef = useRef(null);
+
+  // La fenêtre du direct dépend de l'heure : évaluée côté client, et
+  // réévaluée chaque minute, pour rester juste sur une page pré-rendue.
   useEffect(() => {
-    const check = () => setLiveVisible(liveWindowOpen());
-    check();
-    const id = setInterval(check, 60_000);
-    return () => clearInterval(id);
+    const verifier = () => setLiveOpen(liveWindowOpen());
+    verifier();
+    const minuterie = setInterval(verifier, 60_000);
+    return () => clearInterval(minuterie);
   }, []);
-  const navItems = liveVisible ? [LIVE_NAV_ITEM, ...NAV_ITEMS] : NAV_ITEMS;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (searchTerm.trim()) {
-      router.push(`/recherche?q=${encodeURIComponent(searchTerm.trim())}`);
-      setSearchOpen(false);
-      setSearchTerm("");
-    }
-  };
+  useEffect(() => {
+    if (searchOpen) searchRef.current?.focus();
+  }, [searchOpen]);
 
-  const handleCloseSearch = () => {
-    setClosing(true);
-    setTimeout(() => {
-      setClosing(false);
-      setSearchOpen(false);
-      setSearchTerm("");
-    }, 300);
-  };
+  const items = liveOpen ? [{ href: "/live", label: "Live", live: true }, ...NAV_ITEMS] : NAV_ITEMS;
 
-  const handleCloseMenu = () => {
-    setClosingMenu(true);
-    setTimeout(() => {
-      setClosingMenu(false);
-      setOpen(false);
-      setOpenSection(null);
-    }, 300);
-  };
-
-  // Fermeture du menu mobile à l'échappement, focus rendu au burger.
-  const handleMobileKeyDown = (e) => {
-    if (e.key === "Escape") {
-      handleCloseMenu();
-      burgerRef.current?.focus();
-    }
-  };
-
-  const logoActive = hovered || focused;
+  function submitSearch(event) {
+    event.preventDefault();
+    const terme = searchTerm.trim();
+    if (!terme) return;
+    router.push(`/recherche?q=${encodeURIComponent(terme)}`);
+    setSearchOpen(false);
+    setSearchTerm("");
+  }
 
   return (
-    <header className="flex items-center justify-between p-4 shadow-md bg-white/90 backdrop-blur sticky top-0 z-50 text-gray-700">
-      {/* Logo à gauche */}
-      <div className="flex items-center">
+    <header className="sticky top-0 z-50 border-b border-brand-hairline bg-white/92 backdrop-blur-[8px]">
+      <div className="mx-auto grid h-18 max-w-[1180px] grid-cols-[1fr_auto] items-center gap-8 px-6 md:grid-cols-[1fr_auto_1fr] md:px-8">
         <Link
           href="/"
-          className="inline-flex items-center"
           aria-label="Accueil"
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
+          className="inline-flex items-center gap-3.5 justify-self-start text-brand-text no-underline transition-colors hover:text-brand-deep-dark"
         >
           <Image
-            src={logoActive ? "/logo_deep_primary.webp" : "/logo_primary_deep.webp"}
-            alt="Logo The Locomotion Lab — retour à l'accueil"
-            width={296}
-            height={96}
+            src="/images/assets/logo-mark.png"
+            alt=""
+            width={80}
+            height={80}
             priority
-            sizes="148px"
-            className="h-12 w-auto transition duration-300"
+            className="h-10 w-10 flex-none"
           />
+          <span className="whitespace-nowrap pt-px font-heading text-sm font-semibold uppercase tracking-[0.24em]">
+            Locomotion Lab
+          </span>
         </Link>
-      </div>
 
-      {/* Liens au centre */}
-      <nav
-        className="hidden md:flex items-center space-x-8 font-medium absolute left-1/2 -translate-x-1/2"
-        aria-label="Navigation principale"
-      >
-        {navItems.map((item) => {
-          if (item.type === "menu") {
-            return (
-              <DesktopDropdown
-                key={item.label}
-                label={item.label}
-                Icon={item.Icon}
-                items={item.items}
-                pathname={pathname}
-              />
-            );
-          }
-
-          const { href, label, Icon } = item;
-          const active = isActivePath(pathname, href);
-
-          // « Live » : figé en marron, seul le point pulse (pas de clignotement).
-          if (item.live) {
+        <nav aria-label="Navigation principale" className="hidden gap-7 md:flex">
+          {items.map(({ href, label, live }) => {
+            const active = isActivePath(pathname, href);
             return (
               <Link
                 key={href}
                 href={href}
                 aria-current={active ? "page" : undefined}
-                className="flex items-center gap-1.5 font-semibold text-brand-accent-dark hover:text-brand-deep"
+                className={`inline-flex items-center gap-1.5 border-b-2 py-1.5 font-heading font-medium no-underline transition-colors hover:text-brand-accent-ink ${
+                  active
+                    ? "border-brand-deep text-brand-deep"
+                    : "border-transparent text-brand-text"
+                }`}
               >
-                <span className="relative h-2 w-2 flex-none" aria-hidden="true">
-                  <span className="absolute inset-0 rounded-full bg-brand-accent-dark" />
-                  <span className="absolute inset-0 rounded-full bg-brand-accent-dark animate-[ll-pulse_2.4s_ease-out_infinite]" />
-                </span>
-                <Icon size={18} aria-hidden="true" />
-                <span>{label}</span>
+                {live ? (
+                  <SatelliteDish className="h-4 w-4 text-brand-deep-dark" aria-hidden="true" />
+                ) : null}
+                {label}
               </Link>
             );
-          }
+          })}
+        </nav>
 
-          return (
-            <Link
-              key={href}
-              href={href}
-              aria-current={active ? "page" : undefined}
-              className={`hover:text-brand-accent-ink flex items-center gap-1 group ${
-                active ? "text-brand-accent-ink" : ""
-              }`}
-            >
-              <Icon
-                size={18}
-                className={`group-hover:text-brand-accent-ink ${
-                  active ? "text-brand-accent-ink" : "text-gray-700"
-                }`}
-                aria-hidden="true"
-              />
-              <span>{label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Barre de recherche à droite */}
-      <div className="hidden md:flex items-center ml-auto">
-        {!searchOpen ? (
+        <div className="flex items-center justify-end gap-1 justify-self-end">
           <button
-            onClick={() => setSearchOpen(true)}
-            className="p-2 hover:text-brand-accent-ink cursor-pointer"
-            aria-label="Ouvrir la recherche"
+            type="button"
+            onClick={() => setSearchOpen((ouvert) => !ouvert)}
+            aria-label="Rechercher"
+            aria-expanded={searchOpen}
+            title="Rechercher"
+            className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-brand-text transition-colors hover:bg-brand-grid hover:text-brand-deep-dark"
           >
-            <Search size={22} className="text-gray-700" />
+            <Search className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
           </button>
-        ) : (
-          <form
-            onSubmit={handleSubmit}
-            className={`flex items-center ${
-              closing ? "animate-slideOut" : "animate-slideIn"
-            }`}
+
+          <button
+            ref={burgerRef}
+            type="button"
+            onClick={() => setMenuOpen((ouvert) => !ouvert)}
+            aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+            aria-expanded={menuOpen}
+            className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-brand-text transition-colors hover:bg-brand-grid md:hidden"
           >
+            {menuOpen ? (
+              <X className="h-5 w-5" aria-hidden="true" />
+            ) : (
+              <Menu className="h-5 w-5" aria-hidden="true" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {searchOpen ? (
+        <div className="border-t border-brand-hairline bg-white/95">
+          <form onSubmit={submitSearch} className="mx-auto flex max-w-[1180px] gap-2 px-6 py-3 md:px-8">
             <input
-              type="text"
+              ref={searchRef}
+              type="search"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              autoFocus
-              placeholder="Rechercher un article, un projet…"
+              onChange={(event) => setSearchTerm(event.target.value)}
+              onKeyDown={(event) => event.key === "Escape" && setSearchOpen(false)}
+              placeholder="Rechercher sur le site"
               aria-label="Rechercher sur le site"
-              className="px-3 py-1 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent"
+              className="min-w-0 flex-1 rounded-full border border-brand-field bg-white px-4 py-2 font-heading text-brand-ink outline-none focus:border-brand-deep"
             />
             <button
               type="submit"
-              className="ml-2 cursor-pointer hover:text-brand-accent-ink"
-              aria-label="Lancer la recherche"
+              className="cursor-pointer rounded-full bg-brand-accent px-5 py-2 font-heading font-semibold text-white transition-colors hover:bg-brand-accent-dark"
             >
-              <Search size={20} className="text-gray-700" />
-            </button>
-            <button
-              type="button"
-              onClick={handleCloseSearch}
-              className="ml-2 cursor-pointer"
-              aria-label="Fermer la recherche"
-            >
-              <X size={20} className="text-gray-700" />
+              Chercher
             </button>
           </form>
-        )}
-      </div>
+        </div>
+      ) : null}
 
-      {/* Bouton burger mobile */}
-      <button
-        ref={burgerRef}
-        className="md:hidden inline-flex items-center justify-center p-2 rounded-md hover:bg-gray-100 ml-auto"
-        aria-controls="mobile-menu"
-        aria-expanded={open}
-        aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
-        onClick={() => (open ? handleCloseMenu() : setOpen(true))}
-      >
-        {open ? (
-          <X className="text-gray-700" />
-        ) : (
-          <Menu className="text-gray-700" />
-        )}
-      </button>
-
-      {/* Menu mobile avec animation : liens directs + accordéons */}
-      {(open || closingMenu) && (
-        <div
-          id="mobile-menu"
-          onKeyDown={handleMobileKeyDown}
-          className={`absolute top-full inset-x-0 bg-white shadow-lg md:hidden text-gray-700 ${
-            closingMenu ? "animate-slideUp" : "animate-slideDown"
-          }`}
+      {menuOpen ? (
+        <nav
+          aria-label="Navigation principale"
+          className="border-t border-brand-hairline bg-white/95 md:hidden"
         >
-          <nav
-            className="flex flex-col p-4 space-y-1"
-            aria-label="Navigation mobile"
-          >
-            <Link href="/recherche" onClick={handleCloseMenu} className="py-2">
-              Recherche
-            </Link>
-
-            {navItems.map((item) => {
-              if (item.type === "menu") {
-                const sectionOpen = openSection === item.label;
-                const sectionActive = item.items.some(({ href }) =>
-                  isActivePath(pathname, href)
-                );
-                const sectionId = `mobile-section-${item.label
-                  .toLowerCase()
-                  .replace(/\s+/g, "-")}`;
-                return (
-                  <div key={item.label}>
-                    <button
-                      type="button"
-                      aria-expanded={sectionOpen}
-                      aria-controls={sectionId}
-                      onClick={() =>
-                        setOpenSection(sectionOpen ? null : item.label)
-                      }
-                      className={`w-full flex items-center justify-between py-2 cursor-pointer ${
-                        sectionActive ? "text-brand-accent-ink" : ""
-                      }`}
-                    >
-                      <span>{item.label}</span>
-                      <ChevronDown
-                        size={18}
-                        aria-hidden="true"
-                        className={`transition-transform ${
-                          sectionOpen ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
-                    {sectionOpen && (
-                      <div id={sectionId} className="flex flex-col pl-4">
-                        {item.items.map(({ href, label }) => (
-                          <Link
-                            key={href}
-                            href={href}
-                            onClick={handleCloseMenu}
-                            aria-current={
-                              isActivePath(pathname, href) ? "page" : undefined
-                            }
-                            className={`py-2 ${
-                              isActivePath(pathname, href)
-                                ? "font-medium text-brand-accent-ink"
-                                : ""
-                            }`}
-                          >
-                            {label}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
-              const { href, label } = item;
-              const active = isActivePath(pathname, href);
-              return (
+          <ul className="m-0 list-none px-6 py-2">
+            {items.map(({ href, label }) => (
+              <li key={href}>
                 <Link
-                  key={href}
                   href={href}
-                  onClick={handleCloseMenu}
-                  aria-current={active ? "page" : undefined}
-                  className={
-                    item.live
-                      ? "flex items-center gap-2 py-2 font-semibold text-brand-accent-dark"
-                      : `py-2 ${active ? "font-medium text-brand-accent-ink" : ""}`
-                  }
+                  onClick={() => setMenuOpen(false)}
+                  aria-current={isActivePath(pathname, href) ? "page" : undefined}
+                  className={`block border-b border-brand-grid py-3 font-heading font-medium no-underline last:border-b-0 ${
+                    isActivePath(pathname, href) ? "text-brand-deep" : "text-brand-text"
+                  }`}
                 >
-                  {item.live ? (
-                    <span className="relative h-2 w-2 flex-none" aria-hidden="true">
-                      <span className="absolute inset-0 rounded-full bg-brand-accent-dark" />
-                      <span className="absolute inset-0 rounded-full bg-brand-accent-dark animate-[ll-pulse_2.4s_ease-out_infinite]" />
-                    </span>
-                  ) : null}
                   {label}
                 </Link>
-              );
-            })}
-          </nav>
-        </div>
-      )}
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ) : null}
     </header>
   );
 }

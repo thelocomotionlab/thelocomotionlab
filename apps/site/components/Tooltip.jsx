@@ -73,7 +73,7 @@ export default function Tooltip({ entry, children }) {
           className="
             absolute z-50 bg-white border border-gray-200 shadow-xl rounded-lg
             p-4 w-80 max-w-[min(20rem,calc(100vw-2rem))] top-7 left-1/2 -translate-x-1/2
-            text-gray-800 text-sm leading-snug font-serif
+            text-gray-800 text-sm leading-snug font-sans
           "
           style={{
             lineHeight: "1.4em",

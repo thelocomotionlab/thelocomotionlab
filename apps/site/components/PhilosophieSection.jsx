@@ -1,9 +1,9 @@
 // components/PhilosophieSection.jsx
 //
-// Section « La philosophie » de l'accueil (design_handoff_labo v3, 9a) :
-// les 4 piliers du labo entre la section Explorer et la bande email.
-// - Desktop (≥ md) : grille 4 colonnes STATIQUE — verbe + suite italique +
-//   texte d'appui justifié, toujours visibles ; filets chauds, hover blanc.
+// Section « La philosophie » de l'accueil : les 4 piliers du labo, entre le
+// bloc Blog et la bande email.
+// - Desktop (≥ md) : grille 4 colonnes STATIQUE — verbe, suite en romain
+//   maigre et texte d'appui, toujours visibles ; filets chauds, hover blanc.
 // - Mobile (< md) : accordéon — punchline sur UNE ligne (« Questionner les
 //   normes établies. », taille fluide clamp() calibrée pour ne pas replier
 //   la plus longue de 320 à 430px), bouton cerclé « + » qui devient « − »
@@ -14,7 +14,6 @@
 
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 
@@ -47,16 +46,6 @@ const PILIERS = [
   },
 ];
 
-const FOOT_LINKS = [
-  { label: "Science", href: "/comprendre" },
-  { label: "Explorations", href: "/explorer" },
-  { label: "Accompagnements", href: "/pratiquer" },
-  { label: "Outils", href: "/outils" },
-];
-
-const FOOT_LINK_CLASS =
-  "text-[14px] font-semibold tracking-[0.01em] text-brand-slate-dark transition hover:text-brand-accent-ink md:text-[14.5px]";
-
 function slugify(verb) {
   return verb
     .toLowerCase()
@@ -71,7 +60,7 @@ function AccordeonItem({ verb, suite, texte }) {
   const id = `philo-${slugify(verb)}`;
 
   return (
-    <div className="border-b border-brand-deep-dark/18">
+    <div className="border-b border-brand-hairline">
       <h3>
         <button
           type="button"
@@ -84,13 +73,11 @@ function AccordeonItem({ verb, suite, texte }) {
           {/* Punchline UNE ligne : taille fluide calibrée pour que la plus
               longue (« Questionner les normes établies. ») tienne sans
               replier de 320 à 430px — vérifié au pixel (Puppeteer). */}
-          <span className="block flex-1 text-[clamp(13.5px,6.2vw-5px,22px)] font-bold leading-[1.25] tracking-[-0.01em] text-brand-deep-dark">
+          <span className="block flex-1 text-[clamp(13.5px,6.2vw-5px,22px)] font-bold leading-[1.25] tracking-[-0.01em] text-brand-deep">
             {verb}{" "}
-            {/* Ocre doré (~3,2:1, choix assumé) : la graisse semibold sert
-                d'indice de lecture complémentaire à la couleur. */}
-            <em className="font-lora font-semibold italic text-brand-accent-ink">
+            <span className="font-light tracking-[0.012em] text-brand-deep-dark">
               {suite}.
-            </em>
+            </span>
           </span>
           {/* Chevron : à droite au repos, il pivote vers le bas au dépliage.
               Un signe qui TOURNE dit le mouvement mieux qu'un + qui devient −.
@@ -114,7 +101,7 @@ function AccordeonItem({ verb, suite, texte }) {
         }`}
       >
         <div className="overflow-hidden">
-          <p className="pb-5 pl-0.5 pr-10 text-[14px] leading-[1.65] text-gray-600 [text-wrap:pretty]">
+          <p className="pb-5 pl-0.5 pr-10 text-[15.5px] leading-[1.6] text-brand-soft [text-wrap:pretty]">
             {texte}
           </p>
         </div>
@@ -125,32 +112,26 @@ function AccordeonItem({ verb, suite, texte }) {
 
 export default function PhilosophieSection() {
   return (
-    <section className="bg-brand-bg px-[26px] pb-12 pt-14 md:px-16 md:pb-[84px] md:pt-24">
-      <div className="mx-auto max-w-[1152px]">
-        <h2 className="text-center font-heading text-[28px] font-bold text-brand-primary-dark md:text-[40px]">
+    <section className="mx-auto max-w-[1180px] bg-brand-bg px-6 pt-14 md:px-8 md:pt-24">
+      <div>
+        <h2 className="text-center font-heading text-[28px] font-bold tracking-[-0.015em] text-brand-slate-dark md:text-[40px]">
           La philosophie du lab
         </h2>
 
-        {/* Desktop ≥ md : grille 4 colonnes, textes justifiés */}
-        <div className="mt-12 hidden border-t border-brand-deep-dark/18 md:grid md:grid-cols-4">
+        {/* Desktop ≥ md : grille 4 colonnes, entre deux filets */}
+        <div className="mt-12 hidden border-y border-brand-hairline md:grid md:grid-cols-4">
           {PILIERS.map((p) => (
             <div
               key={p.verb}
-              className="border-r border-brand-deep-dark/14 px-6 pb-9 pt-[34px] transition-colors last:border-r-0 hover:bg-white"
+              className="border-r border-brand-hairline px-7 pb-11 pt-10 transition-colors last:border-r-0 hover:bg-brand-paper"
             >
-              <h3 className="text-[28px] font-bold leading-[1.1] tracking-[-0.01em] text-brand-deep-dark">
+              <h3 className="font-heading text-[28px] font-bold leading-[1.1] text-brand-deep">
                 {p.verb}
               </h3>
-              {/* Ocre doré (~3,2:1, choix assumé) : semibold en compensation. */}
-              <p className="mt-1.5 font-lora text-[17px] font-semibold italic leading-[1.35] text-brand-accent-ink [text-wrap:balance]">
+              <p className="mt-1.5 font-sans text-[17px] font-light tracking-[0.012em] text-brand-deep-dark [text-wrap:balance]">
                 {p.suite}
               </p>
-              {/* PAS de text-justify ici : la colonne fait 240 px à 14 px, soit
-                  ~34 caractères par ligne — trop étroit pour justifier sans
-                  ouvrir des blancs inter-mots visibles, même avec césure. La
-                  règle du site : justifié à partir de md ET sur une colonne de
-                  lecture large (audit des titres, 08/2026). */}
-              <p className="mt-3.5 text-[14px] leading-[1.65] text-gray-600 text-pretty">
+              <p className="mt-4 text-[15.5px] leading-[1.6] text-brand-soft text-pretty">
                 {p.texte}
               </p>
             </div>
@@ -158,40 +139,10 @@ export default function PhilosophieSection() {
         </div>
 
         {/* Mobile < md : accordéon */}
-        <div className="mt-[30px] border-t border-brand-deep-dark/18 md:hidden">
+        <div className="mt-[30px] border-t border-brand-hairline md:hidden">
           {PILIERS.map((p) => (
             <AccordeonItem key={p.verb} {...p} />
           ))}
-        </div>
-
-        {/* Pied : « cette philosophie en action » + 4 liens à points médians */}
-        <div className="mt-[26px] flex flex-col items-center gap-y-3.5 md:mt-8 md:flex-row md:flex-wrap md:items-baseline md:justify-center md:gap-x-[18px] md:border-t md:border-brand-deep-dark/14 md:pt-[26px]">
-{/*          <span className="font-heading text-[10px] font-bold tracking-[0.2em] text-gray-400 md:text-[11px]">
-            CETTE PHILOSOPHIE EN ACTION
-          </span>*/}
-          <span className="inline-flex flex-wrap items-baseline justify-center gap-[18px]">
-            {FOOT_LINKS.map((l, i) => (
-              <span
-                key={l.href}
-                className="inline-flex items-baseline gap-[18px]"
-              >
-                {i > 0 ? (
-                  <span aria-hidden="true" className="text-[13px] text-brand-accent">
-                    ·
-                  </span>
-                ) : null}
-                {l.href.startsWith("#") ? (
-                  <a href={l.href} className={FOOT_LINK_CLASS}>
-                    {l.label}
-                  </a>
-                ) : (
-                  <Link href={l.href} className={FOOT_LINK_CLASS}>
-                    {l.label}
-                  </Link>
-                )}
-              </span>
-            ))}
-          </span>
         </div>
       </div>
     </section>

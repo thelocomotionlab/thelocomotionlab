@@ -564,7 +564,7 @@ export default function LiveTrackingMap({
       </div>
 
       {/* Bouton refresh flottant. fontFamily force font-sans car le composant vit
-          dans un .prose .font-lora (sur le site). */}
+          dans un .prose .font-sans (sur le site). */}
       <button
         type="button"
         onClick={handleRefresh}

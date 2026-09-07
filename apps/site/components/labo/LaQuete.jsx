@@ -2,11 +2,9 @@
 //
 // LA QUÊTE : pourquoi la robustesse plutôt que la performance.
 //
-// Source unique du texte : la page /quete et la section « La quête » du Labo
-// rendent toutes deux ce composant. Les `id` des parties sont la seule chose
-// qu'il déclare en plus du texte — le sommaire du Labo les lit ici.
-
-import { Accroche } from "@locomotionlab/ui/contenu";
+// Source unique du texte, rendu par la section « La quête » du Labo. Les `id`
+// des parties sont la seule chose qu'il déclare en plus du texte — le sommaire
+// du Labo les lit ici.
 
 /** Les parties, dans l'ordre : le sommaire du Labo est dérivé de cette liste. */
 export const PARTIES = [
@@ -21,7 +19,7 @@ export const EXERGUE = "Pourquoi la robustesse plutôt que la performance.";
 function Partie({ id, titre, children }) {
   return (
     <section id={id} className="scroll-mt-24">
-      <h3 className="m-0 mb-2.5 font-heading text-xl font-bold leading-snug">{titre}</h3>
+      <h3 className="m-0 mb-2.5 font-heading text-xl font-bold leading-[1.25]">{titre}</h3>
       <p className="m-0">{children}</p>
     </section>
   );
@@ -29,7 +27,7 @@ function Partie({ id, titre, children }) {
 
 export default function LaQuete() {
   return (
-    <div className="max-w-[38em] space-y-9 font-lora text-lecture leading-loose text-brand-ink hyphens-auto [text-wrap:pretty]">
+    <div className="max-w-[38em] space-y-9 font-sans text-lecture leading-[1.7] text-brand-ink hyphens-auto [text-wrap:pretty]">
       <Partie {...PARTIES[0]}>
         Nos corps ont été façonnés par des millions d&rsquo;années de marche, de course, de
         portage et d&rsquo;inconfort, et nous les faisons vivre assis, au chaud l&rsquo;hiver,
@@ -80,10 +78,3 @@ export default function LaQuete() {
 }
 
 /** L'exergue de la quête, en romain maigre derrière un filet ocre. */
-export function ExergueDeLaQuete() {
-  return (
-    <div className="border-l-[3px] border-brand-accent pl-4.5">
-      <Accroche>{EXERGUE}</Accroche>
-    </div>
-  );
-}

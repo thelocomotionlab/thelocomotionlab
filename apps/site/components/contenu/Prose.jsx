@@ -64,7 +64,7 @@ export default function Prose({ texte, citation, className = "" }) {
   if (!texte || texte.trim() === "") return null;
 
   return (
-    <div className={`prose max-w-none font-lora leading-relaxed article-body ${className}`}>
+    <div className={`prose article-body max-w-none font-sans text-lecture leading-lecture ${className}`}>
       <ReactMarkdown
         remarkPlugins={PLUGINS_REMARK}
         rehypePlugins={PLUGINS_REHYPE}

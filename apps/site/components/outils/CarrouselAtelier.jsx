@@ -188,7 +188,7 @@ const ZONES = {
  * (vide sur documentElement : le canvas partait alors en police système sans
  * que rien ne le signale).
  *
- * LE SERIF ET LE MONO NE PEUVENT PAS PASSER PAR `--font-serif` / `--font-mono`,
+ * LE SERIF ET LE MONO NE PEUVENT PAS PASSER PAR `--font-sans` / `--font-mono`,
  * même si ce sont eux les tokens de la charte. Deux raisons, et toutes deux
  * silencieuses : Tailwind v4 élague une variable `@theme` que personne
  * n'utilise en classe, et sa valeur est de toute façon un `var(--next-font-…)`
@@ -209,7 +209,7 @@ function policesDuSite() {
   };
   return {
     sans: st.fontFamily || "sans-serif",
-    serif: famille("--next-font-lora", "--font-serif", "Georgia, serif"),
+    serif: famille("--next-font-sans", "--font-sans", "Georgia, serif"),
     mono: famille(
       "--next-font-ubuntu-mono",
       "--font-mono",

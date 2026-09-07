@@ -44,7 +44,7 @@ export default function Stresseurs({ stresseurs }: StresseursProps) {
                   ))}
                 </div>
               </div>
-              <p className="m-0 max-w-[64ch] font-lora leading-relaxed text-brand-soft [text-wrap:pretty]">
+              <p className="m-0 max-w-[64ch] font-sans leading-relaxed text-brand-soft [text-wrap:pretty]">
                 <span className="mr-2.5 font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
                   Pourquoi
                 </span>

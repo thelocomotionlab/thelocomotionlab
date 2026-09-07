@@ -15,7 +15,7 @@ export default function LiveRepos() {
         <h1 className="m-0 font-heading text-3xl font-bold leading-[1.15] text-brand-slate-dark md:text-4xl">
           Pas de live en ce moment
         </h1>
-        <p className="mx-auto mt-3.5 max-w-md font-lora text-lg italic leading-relaxed text-brand-deep">
+        <p className="mx-auto mt-3.5 max-w-md font-sans text-lg italic leading-relaxed text-brand-deep">
           Mais de nouvelles aventures arrivent très vite !
         </p>
       </div>

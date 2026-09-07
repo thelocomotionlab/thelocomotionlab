@@ -136,7 +136,7 @@ export default function MediaLightbox({
           />
         )}
         {media.legende && (
-          <figcaption className="max-w-[46rem] text-center font-lora text-sm italic leading-[1.55] text-white/80">
+          <figcaption className="max-w-[46rem] text-center font-sans text-sm italic leading-[1.55] text-white/80">
             {media.legende}
           </figcaption>
         )}

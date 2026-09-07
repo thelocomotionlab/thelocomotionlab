@@ -66,7 +66,7 @@ export default function RegistreDuBlog({ entrees, enTete }) {
           </div>
         ) : null}
 
-        <div className="flex flex-wrap items-center gap-4 font-mono text-meta text-brand-muted">
+        <div className="flex flex-wrap items-center gap-4 font-mono text-[11.5px] text-brand-muted md:gap-[18px]">
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-brand-slate" aria-hidden="true" />
             contient une Note
@@ -75,6 +75,19 @@ export default function RegistreDuBlog({ entrees, enTete }) {
             <span className="h-2 w-2 rounded-full bg-brand-deep" aria-hidden="true" />
             contient un Protocole
           </span>
+          {annees.length > 1 ? (
+            <span className="inline-flex gap-2.5 border-l border-brand-gauge-full pl-[18px]">
+              {annees.map((annee) => (
+                <a
+                  key={annee.annee}
+                  href={`#blog-${annee.annee}`}
+                  className="border-b border-brand-gauge-full text-brand-text no-underline hover:text-brand-accent-ink"
+                >
+                  {annee.annee}
+                </a>
+              ))}
+            </span>
+          ) : null}
         </div>
         </div>
       </div>
@@ -84,10 +97,10 @@ export default function RegistreDuBlog({ entrees, enTete }) {
           <section
             key={annee.annee}
             id={`blog-${annee.annee}`}
-            className="grid scroll-mt-24 grid-cols-1 md:grid-cols-[9rem_minmax(0,1fr)]"
+            className="mb-2 grid scroll-mt-24 grid-cols-1 md:grid-cols-[150px_minmax(0,1fr)]"
           >
-            <div className="pr-0 text-left md:pr-8 md:text-right">
-              <h2 className="sticky top-24 m-0 font-heading text-5xl font-light leading-none tracking-tighter md:text-6xl">
+            <div className="pr-0 text-left md:pr-[30px] md:text-right">
+              <h2 className="sticky top-24 m-0 font-heading text-5xl font-light leading-none tracking-[-0.03em] md:text-[64px]">
                 {annee.annee}
               </h2>
             </div>
@@ -107,8 +120,12 @@ export default function RegistreDuBlog({ entrees, enTete }) {
                     <Link
                       key={entree.url}
                       href={entree.url}
-                      className="group relative block pb-1 pt-4 text-brand-text no-underline"
+                      className="group relative block pb-1 pt-[18px] text-brand-text no-underline"
                     >
+                      <span
+                        className="absolute top-[29px] hidden h-[7px] w-[7px] rounded-full bg-brand-deep-dark md:block md:-left-[2.85rem]"
+                        aria-hidden="true"
+                      />
                       <span className="flex flex-wrap items-baseline gap-3.5">
                         <span className="font-mono text-xs text-brand-muted tabular-nums">
                           {entree.dateLisible}
@@ -117,14 +134,14 @@ export default function RegistreDuBlog({ entrees, enTete }) {
                           {entree.typeLabel}
                         </span>
                       </span>
-                      <span className="mt-1.5 block font-heading text-xl font-semibold leading-snug transition-colors group-hover:text-brand-accent-ink">
+                      <span className="mt-1.5 block font-heading text-[21px] font-semibold leading-[1.25] transition-colors group-hover:text-brand-accent-ink">
                         {entree.titre}
                       </span>
-                      <span className="mt-1.5 block max-w-[64ch] font-lora text-lecture leading-snug text-brand-soft [text-wrap:pretty]">
+                      <span className="mt-1.5 block max-w-[64ch] font-sans text-lecture leading-normal text-brand-soft [text-wrap:pretty]">
                         {entree.chapeau}
                       </span>
                       {entree.note || entree.protocole ? (
-                        <span className="mt-2 flex items-center gap-3.5 font-mono text-meta font-bold uppercase tracking-lien">
+                        <span className="mt-2 flex items-center gap-3.5 font-mono text-meta font-bold uppercase tracking-lien text-brand-faint">
                           {entree.note ? <span className="text-brand-slate">● Note</span> : null}
                           {entree.protocole ? (
                             <span className="text-brand-deep">● Protocole</span>

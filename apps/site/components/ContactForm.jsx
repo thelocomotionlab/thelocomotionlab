@@ -1,5 +1,8 @@
 // components/ContactForm.jsx
 //
+// LE FORMULAIRE DE CONTACT — la carte blanche de la section Contact du Labo.
+// Il ne porte ni titre ni chapeau : la section qui l'accueille les pose.
+//
 // Deux chemins d'envoi :
 //  - NEXT_PUBLIC_CONTACT_ENDPOINT défini → passerelle du repo
 //    (services/email-gateway, POST /contact : relai Brevo, Reply-To = le
@@ -11,7 +14,6 @@
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button, Field, brandColors } from "@locomotionlab/ui";
-import PageHeader from "@/components/PageHeader";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CONTACT_ENDPOINT = process.env.NEXT_PUBLIC_CONTACT_ENDPOINT || "";
@@ -166,21 +168,7 @@ function ContactFormInner({ initialMessage = "" }) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-12 text-gray-800 font-sans">
-      <PageHeader title="Contact" />
-
-      <p className="mb-6">
-        Une question, une idée, une envie de collaborer ? Écris-moi via ce
-        formulaire ou directement par mail à{" "}
-        <a
-          href="mailto:thelocomotionlab@gmail.com"
-          className="font-semibold text-brand-deep-dark underline underline-offset-2 decoration-brand-accent-dark/60 hover:decoration-brand-accent-dark"
-        >
-          thelocomotionlab@gmail.com
-        </a>
-        .
-      </p>
-
+    <div className="rounded-xl border border-brand-hairline bg-brand-paper px-7 py-7 font-sans text-brand-text shadow-bloc">
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <Field
           label="Nom"
