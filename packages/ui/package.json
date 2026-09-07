@@ -8,11 +8,17 @@
   ],
   "exports": {
     ".": "./src/index.ts",
+    "./contenu": "./src/components/contenu/index.ts",
     "./fonts": "./src/fonts.ts",
     "./theme.css": "./src/styles/theme.css",
     "./tailwind-preset": "./src/tailwind-preset.js"
   },
+  "scripts": {
+    "lint": "tsc --noEmit",
+    "test": "vitest run"
+  },
   "dependencies": {
+    "@locomotionlab/contenu": "workspace:*",
     "@tailwindcss/typography": "^0.5.19"
   },
   "peerDependencies": {
@@ -24,6 +30,9 @@
   "devDependencies": {
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "typescript": "^5"
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "typescript": "^5",
+    "vitest": "4.1.10"
   }
 }

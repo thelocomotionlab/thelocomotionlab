@@ -73,6 +73,14 @@ describe("extraireBlocs", () => {
     expect(blocs[0]!.attributs.objectif).toBe("Ce que fait `AMPK` au repos");
   });
 
+  it("ne referme pas un bloc de code sur une clôture porteuse de langage", () => {
+    const { blocs, cartes } = extraireBlocs(
+      "```md\nExemple :\n```mdx\n<Note id=\"exemple\" titre=\"T\" objectif=\"O\">corps</Note>\n```\n\nTexte après.\n",
+    );
+    expect(blocs).toEqual([]);
+    expect(cartes).toEqual([]);
+  });
+
   it("ignore un exemple écrit en bloc indenté", () => {
     const { blocs, erreurs } = extraireBlocs(
       'On écrit une note ainsi :\n\n    <Note id="exemple" titre="Exemple" objectif="Montrer">\n    Le corps.\n    </Note>\n\nEt voilà.',

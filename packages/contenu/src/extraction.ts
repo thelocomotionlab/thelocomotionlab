@@ -62,7 +62,10 @@ function masquerLeCode(texte: string): string {
 
   // 1. Blocs délimités par ``` ou ~~~ en début de ligne. Une clôture jamais
   //    refermée court jusqu'à la fin, comme en Markdown.
-  const cloture = /^[ \t]{0,3}(`{3,}|~{3,})[^\n]*$/gm;
+  // Une ouverture peut porter un langage (```mdx) ; une fermeture, non — sinon
+  // ```python fermerait un bloc ouvert par ```js, et ce qui suit sortirait du
+  // code alors que remark l'y laisse.
+  const cloture = /^[ \t]{0,3}(`{3,}|~{3,})([^\n]*)$/gm;
   let ouverture: RegExpExecArray | null = null;
   let correspondance: RegExpExecArray | null;
   while ((correspondance = cloture.exec(texte)) !== null) {
@@ -70,6 +73,7 @@ function masquerLeCode(texte: string): string {
       ouverture = correspondance;
       continue;
     }
+    if (correspondance[2]!.trim() !== "") continue;
     if (correspondance[1]![0] === ouverture[1]![0] && correspondance[1]!.length >= ouverture[1]!.length) {
       effacer(ouverture.index, correspondance.index + correspondance[0].length);
       ouverture = null;

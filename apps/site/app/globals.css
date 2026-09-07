@@ -14,6 +14,11 @@
 @source "../../../packages/ui/src/components/Button.tsx";
 @source "../../../packages/ui/src/components/Field.tsx";
 
+/* Les composants des pages de contenu (blocs, sections d'aventure, transverses)
+   vivent dans packages/ui : Tailwind doit scanner tout le dossier pour générer
+   leurs classes de marque. */
+@source "../../../packages/ui/src/components/contenu";
+
 /* Live-tracking : la carte et le replay vivent désormais dans
    @locomotionlab/tracking (consommé inline par le site).
    Tailwind v4 doit scanner ses sources pour régénérer les classes de marque
