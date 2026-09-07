@@ -3,9 +3,8 @@
 // LES MESSAGES D'ERREUR DU BUILD, mot pour mot ceux du tableau §9 de
 // docs/systeme-de-contenu.md.
 //
-// Le build échoue, il n'avertit pas : il n'existe donc pas de canal
-// d'avertissement dans ce module, et aucune de ces conditions n'est
-// « tolérée ». Un message qui change ici change le contrat du tableau.
+// Chaque fonction rend une des lignes du tableau, avec ses valeurs. Un test
+// compare ces sorties au tableau lui-même, lu dans le fichier de spécification.
 
 /** Deux blocs partagent un `id`. */
 export const idDeBlocEnDouble = (id: string, fichierA: string, fichierB: string): string =>

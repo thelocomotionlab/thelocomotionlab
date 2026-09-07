@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "contenu": "node ../../packages/contenu/src/cli.ts .",
+    "contenu": "node --experimental-strip-types ../../packages/contenu/src/cli.ts .",
     "predev": "pnpm run contenu",
     "dev": "next dev",
     "prebuild": "pnpm run contenu",

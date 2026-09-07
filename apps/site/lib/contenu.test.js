@@ -41,7 +41,7 @@ describe("content/", () => {
 
   it("laisse en brouillon ce qui n'est pas complet", () => {
     expect(parSlug("reunion-2025").frontmatter.statut).toBe("publie");
-    // Le Tour des Écrins n'a ni cover ni chapeau écrits : il n'est pas routé.
+    // Le Tour des Écrins n'a pas de cover : il n'est pas routé.
     expect(parSlug("tour-des-ecrins").frontmatter.statut).toBe("brouillon");
   });
 });

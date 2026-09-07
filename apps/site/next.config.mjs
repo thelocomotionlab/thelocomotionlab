@@ -35,9 +35,14 @@ export default function nextConfig(phase) {
     outputFileTracingRoot: root,
 
     // Transpile les packages partagés (TS/TSX + next/font) consommés depuis le
-    // monorepo : la charte (@locomotionlab/ui) et le live-tracking
-    // (@locomotionlab/tracking — carte maplibre + replay, embed inline natif).
-    transpilePackages: ["@locomotionlab/ui", "@locomotionlab/tracking"],
+    // monorepo : la charte (@locomotionlab/ui), le live-tracking
+    // (@locomotionlab/tracking — carte maplibre + replay, embed inline natif) et
+    // le modèle de contenu (@locomotionlab/contenu — schémas et résolveur).
+    transpilePackages: [
+      "@locomotionlab/ui",
+      "@locomotionlab/tracking",
+      "@locomotionlab/contenu",
+    ],
 
     // Autorise l'acces au dev server depuis le LAN (telephone connecte au
     // meme wifi). Sans ca, Next.js bloque les requetes HMR et chunks

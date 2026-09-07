@@ -5,10 +5,12 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./ancres": "./src/ancres.ts",
+    "./blocs": "./src/blocs.ts",
+    "./resolveur": "./src/resolveur.ts",
+    "./sections": "./src/sections.ts",
+    "./sortes": "./src/sortes.ts",
     "./cli": "./src/cli.ts"
-  },
-  "bin": {
-    "contenu-build": "./src/cli.ts"
   },
   "scripts": {
     "lint": "tsc --noEmit",
