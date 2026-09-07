@@ -66,21 +66,6 @@ export default async function ArticlePage({ params }) {
             {frontmatter.chapeau}
           </p>
 
-          {frontmatter.cover ? (
-            // La colonne de lecture donne la largeur : l'image ouvre l'article
-            // sans le déborder, alignée sur le texte qui la suit.
-            <div className="mx-auto mt-8 max-w-[40em] overflow-hidden rounded-md shadow-card">
-              <Image
-                src={frontmatter.cover}
-                alt={frontmatter.titre}
-                width={1200}
-                height={800}
-                priority
-                className="block h-full w-full object-cover"
-              />
-            </div>
-          ) : null}
-
           <div className="mt-[26px] flex flex-wrap gap-x-7 gap-y-2.5 border-y border-brand-wash-line py-4 font-mono text-[12.5px] text-brand-muted tabular-nums">
             <span>
               Publié le <span className="text-brand-text">{dateLisible(frontmatter.publie_le)}</span>
@@ -104,6 +89,21 @@ export default async function ArticlePage({ params }) {
               min de lecture
             </span>
           </div>
+
+          {frontmatter.cover ? (
+            // Pleine largeur de l'article : l'image ouvre le document sous son
+            // bandeau, et la colonne de lecture reprend en dessous.
+            <div className="mt-8 aspect-[11/6] overflow-hidden rounded-md shadow-card">
+              <Image
+                src={frontmatter.cover}
+                alt={frontmatter.titre}
+                width={1720}
+                height={938}
+                priority
+                className="block h-full w-full object-cover"
+              />
+            </div>
+          ) : null}
         </header>
 
         <div className="mx-auto mt-10 max-w-[40em] text-lecture">
