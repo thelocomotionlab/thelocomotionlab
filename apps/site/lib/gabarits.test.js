@@ -124,14 +124,14 @@ describe("le bloc Aventures de l'accueil", () => {
   });
 
   it("annonce la sorte en surtitre et porte le titre du récit en titre", () => {
-    const carte = blocAventuresDeLAccueil().find((entree) => entree.genre === "recit");
-    const campagne = aventures().find((page) => page.frontmatter.recit);
+    const recits = blocAventuresDeLAccueil().filter((entree) => entree.genre === "recit");
+    expect(recits.length, "aucune carte de récit sur l'accueil").toBeGreaterThan(0);
 
-    expect(carte.surtitre).toBe("Récit");
-    expect(carte.titre).toBe(
-      parSorte("recit").find((page) => page.frontmatter.slug === campagne.frontmatter.recit)
-        .frontmatter.titre,
-    );
+    const titres = parSorte("recit").map((page) => page.frontmatter.titre);
+    for (const carte of recits) {
+      expect(carte.surtitre).toBe("Récit");
+      expect(titres, `« ${carte.titre} » ne vient d'aucun récit publié`).toContain(carte.titre);
+    }
   });
 
   it("dit « Lire le récit » sur une campagne terminée, « Suivre la campagne » sinon", () => {

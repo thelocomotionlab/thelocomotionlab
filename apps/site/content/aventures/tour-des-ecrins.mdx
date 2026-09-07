@@ -2,38 +2,89 @@
 sorte: aventure
 titre: "Tour des Écrins"
 slug: "tour-des-ecrins"
-statut: brouillon
-chapeau: "En autonomie complète sur 4 jours."
+statut: publie
+chapeau: "En autonomie complète sur 4 jours, trois bivouacs, en sandales."
 etat: termine
 campagne: { debut: 2026-08-22, fin: 2026-08-25 }
-cover: "TODO"
+cover: "/images/articles/mon-tour-des-ecrins-en-80-heures/cover_mon-tour-des-ecrins-en-80-heures.webp"
 resume:
   - "198 km"
   - "12 767 m D+"
-  - "4 jours en autonomie"
+  - "4 jours"
+recit: "tour-des-ecrins-80-heures"
 sections:
   - type: caracteristiques
     champs:
+      - { label: "Trace prévue", valeur: "188 km, 12 200 m D+ / D−" }
       - { label: "Distance parcourue", valeur: "198,1 km" }
       - { label: "Dénivelé positif", valeur: "12 767 m" }
-      - { label: "Trace prévue", valeur: "188,17 km, 12 258 m D+" }
       - { label: "Durée", valeur: "79 h 34 min" }
       - { label: "Bivouacs", valeur: "Valgaudémar (km 57,5), Vallouise (km 108,7), Arsine (km 155,5)" }
       - { label: "Sac au départ", valeur: "10,1 kg" }
-      - { label: "Appui", valeur: "Panta Boreas, bâtons Leki Crosstrail FX One" }
+      - { label: "Autonomie", valeur: "Complète, avec un téléphone satellite Garmin inReach" }
+
+  - type: geo
+    id: "les-quatre-jours"
+    titre: "Les quatre jours"
+    carte: "TODO"
+    gpx: "tour-des-ecrins.gpx"
+    colonnes: ["Étape", "km", "D+", "D−"]
+    lignes:
+      - ["Jour 1 — Vénosc → Valgaudémar", "57,5", "4 800 m", "4 600 m"]
+      - ["Jour 2 — Valgaudémar → Vallouise", "49,2", "2 960 m", "2 890 m"]
+      - ["Jour 3 — Vallouise → Arsine", "39,4", "2 230 m", "1 700 m"]
+      - ["Jour 4 — Arsine → Vénosc", "41,9", "2 120 m", "2 800 m"]
 
   - type: libre
     id: "genese-et-preparatifs"
     titre: "Genèse et préparatifs"
 
+  - type: preparation
+    seances:
+      colonnes: ["Date", "Sortie", "km", "D+", "Sac", "Ce qu'on éprouvait", "Billet"]
+      lignes:
+        - ["06/06/2026", "WEC Aravis", "86", "6 700 m", "TODO", "Trois jours de haute montagne", "wec-aravis"]
+        - ["27/07/2026", "4x2000 m de Chartreuse", "49", "TODO", "TODO", "Brèche Arnaud et hyperthermie", "systeme-nerveux-en-alerte"]
+        - ["09/08/2026", "Croix de Belledonne", "24", "2 700 m", "TODO", "Terrain technique, temps frais", "reprise-apaisee-et-ancree"]
+    stresseurs:
+      travailles:
+        - nom: "Flexibilité métabolique"
+          dose: "Cinq protocoles à glycogène bas"
+          frequence: "TODO"
+          intensite: "TODO"
+          pourquoi: "Entraîner l'organisme à augmenter sa capacité d'oxydation des lipides à l'effort."
+        - nom: "Chaleur"
+          dose: "TODO"
+          frequence: "TODO"
+          intensite: "Sorties longues en pleine canicule de juin et juillet"
+          pourquoi: "Améliorer la tolérance à la chaleur, qui coupe les jambes en montée."
+      non_travailles: ["TODO"]
+    protocoles:
+      - "footing-a-jeun-prolonge"
+      - "jeune-cetogene-apres-midi"
+      - "descentes-glycogene-bas"
+      - "train-low-eat-low"
+      - "sortie-longue-cetogene"
+
   - type: paquetage
+    id: "le-paquetage"
     titre: "Le paquetage"
     ref: "tour-des-ecrins"
+
+  - type: nutrition
+    id: "nutrition-embarquee"
+    titre: "Nutrition embarquée"
+    colonnes: ["Repas", "Composition", "Masse sèche", "Apport"]
+    lignes:
+      - ["Petit-déjeuner", "30 g coco râpée, 30 g amandes moulues, 30 g lait entier en poudre, 25 g flocons d'avoine complets, 120 g d'eau froide", "115 g", "≈ 615 kcal"]
+      - ["Déjeuners et dîners", "40 g huile d'olive, 55 g couscous complet, 45 g parmesan, 25 g sésame moulu, 10 g tomates séchées, 140 g d'eau froide", "175 g", "≈ 920 kcal"]
+      - ["Snacks", "24 boules d'énergie, 3 saucissons, une douzaine de flasques isotoniques", "TODO", "TODO"]
+      - ["Total emporté", "", "TODO", "≈ 16 000 kcal"]
 ---
 
 <SectionLibre id="genese-et-preparatifs">
 
-L'idée de faire le tour des Écrins en autonomie est née le lendemain [de mon aventure entre Drôme et Vercors](https://thelocomotionlab.com/explorer/immersion-primale-entre-vercors-et-drome). On dit qu'il faut toujours avoir un projet d'avance, et là je n'en avais plus qu'un en ligne de mire : Nice le 25 septembre. J'ai donc fait quelques recherches et suis rapidement tombé sur cette trace magnifique de 188 km et 12 200 m D+ D- dans les Écrins.
+L'idée de faire le tour des Écrins en autonomie est née le lendemain [de mon aventure entre Drôme et Vercors](/aventures/vercors-2026/recit). On dit qu'il faut toujours avoir un projet d'avance, et là je n'en avais plus qu'un en ligne de mire : Nice le 25 septembre. J'ai donc fait quelques recherches et suis rapidement tombé sur cette trace magnifique de 188 km et 12 200 m D+ D- dans les Écrins.
 
 [Tour des Écrins](/tracks/tour-des-ecrins.gpx)
 
@@ -46,5 +97,51 @@ Ces chiffres défiant un peu l'entendement, je me suis dit que ce serait un parf
 - Jour 4 : Arsine → Vénosc (41,9 km 2 120 m D+ 2 800 m D-) solo
 
 Une sacrée aventure, plus longue que ce que j'ai l'habitude de faire, et qui nécessite une préparation aux petits oignons.
+
+</SectionLibre>
+
+<SectionLibre id="le-paquetage">
+
+Niveau paquetage, je suis reparti sur les mêmes éléments que lors de mon aventure dans le Vercors, à l'exception de la nutrition, sur laquelle je reviens plus bas.
+
+Cet équipement me semble toujours aussi robuste dans sa capacité à faire face à de multiples imprévus, à permettre de dormir sous des températures assez basses (jusqu'à environ -4 °C sans problème), ou à me maintenir au sec en cas de fortes pluies grâce à la fonctionnalité poncho du Gatewood Cape. Par rapport au Vercors, je pars cette fois-ci avec un téléphone satellite Garmin inReach. Du reste, pas grand chose de nouveaux sous les tropiques si ce n'est les Panta Boreas, dont je vais éprouver la capacité à endurer sur des terrains techniques pendant autant de kilomètres.
+
+:::split
+
+![Paquetage Écrins 1](/images/projets/saison-trail-2026/paquetage-ecrins-1.webp)
+
+---
+
+![Paquetage Écrins 3](/images/projets/saison-trail-2026/paquetage-ecrins-3.webp)
+
+:::
+
+*Matos embarqué pour les Écrins (sans la nutrition montrée plus bas).*
+
+</SectionLibre>
+
+<SectionLibre id="nutrition-embarquee">
+
+Côté alimentation, j'ai d'abord voulu m'approvisionner en plats lyophilisés chez Decathlon. Sauf qu'en début d'août, autant dire que tous les magasins Decathlon de France et de Navarre étaient dévalisés. J'ai donc décidé de confectionner mes propres recettes pour cette aventure, ce qui n'a pas été pour déplaire à mon portefeuille. Moi qui ne prends pas de petit-déjeuner habituellement, j'ai quand même choisi d'en embarquer avec moi, car le besoin calorique pour se déplacer sur de telles distances reste très élevé. Il s'agit d'un gruau composé de :
+- 30 g de coco râpée
+- 30 g d'amandes moulues
+- 30 g de lait entier en poudre
+- 25 g de flocons d'avoine complets
+- 120 g d'eau froide
+
+pour une masse sèche de 115 g par repas et environ 615 kcal. Le goût était très bon, avec la sensation d'apporter à son corps tout ce dont il a besoin. Côté déjeuners et dîners, je pars sur une sorte de couscous super protéiné, salé et lacté, dont voici la recette :
+- 40 g huile d'olive 
+- 55 g couscous complet
+- 45 g parmesan
+- 25 g sésame moulu
+- 10 g tomates séchées
+- 140 g d'eau froide
+
+pour une masse sèche de 175 g et un plat avoisinant les 920 kcal. Il est très intéressant sur le plan nutritionnel car il est riche en protéines, en graisses et en glucides. C'est un plat aussi délicieux que digeste, testé à plusieurs reprises pour trouver le bon dosage en eau, et dont je suis sûr de ne pas me lasser.
+
+Côté snacks, je reste sur du classique avec 24 boules d'énergie, 3 saucissons et une douzaine de flasques isotoniques Decathlon. Le total de nourriture emporté avoisine les 16 000 kcal, ce qui me semble en accord avec les capacités d'assimilation quotidiennes de mon corps.
+
+![Paquetage Écrins 2](/images/projets/saison-trail-2026/paquetage-ecrins-2.webp)
+*Nutrition embarquée.*
 
 </SectionLibre>

@@ -1,0 +1,17 @@
+---
+sorte: billet
+titre: "Développement d'un live-tracking maison"
+slug: "live-tracking-maison"
+statut: publie
+chapeau: "TODO"
+date: 2025-10-17
+type: billet
+aventure: "reunion-2025"
+---
+
+Dimanche dernier, mon pote Lolo me sort "on pourra te suivre pendant ta traversée de la Réunion ?". Évidemment que j'y avais pensé, mais moi j'aime bien les solutions open-source, et mettre 300€ dans un système GPS pour l'utiliser qu'une fois, c'est pas trop mon truc. Mais l'idée me taraudait et j'ai fini par découvrir une méthode pour coder mon propre live-tracking, pour pas plus de 5€, moyennant une dose certaine de geekerie.
+
+Donc pour les plus curieux.euses d'entre vous, voici les détails. Le live-tracking, que je proposerai le jour de la traversée, est basé sur l'utilisation d'un serveur VPS distant. Sur celui-ci, loué 5€ pour un mois, j'ai installé le logiciel de géolocalisation open-source Traccar, et établi un serveur dédié associé à mon site web. En rentrant les paramètres de ce serveur dans mon téléphone avec l'application Client Traccar, celui-ci échange, selon les paramètrages de précision et fréquence de mon choix, la position directement sur ce serveur. Ainsi, de manière distante, les données de mes positions successives sont stockées, post-traitées, puis rendues lisibles par mon site web qui, via un petit composant React, devient capable d'afficher un suivi en temps réel. Relativement simple en apparence, mais plutôt redoutable à mettre en place, surtout quand comme moi, on n'a aucune expérience en administration des serveurs (merci l'IA). Je m'en suis néanmoins pas mal sorti, et l'objectif est d'expérimenter la fonctionnalité sur une big sortie ce week-end.
+
+![Le serveur Traccar fonctionne](/images/projets/traversee-reunion/traccar_fonctionne.webp)
+*Ne m'dis pas que ça fonctionne enfin :').*

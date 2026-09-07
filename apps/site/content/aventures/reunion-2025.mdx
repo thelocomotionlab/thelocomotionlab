@@ -25,6 +25,7 @@ sections:
       - { label: "Résultat", valeur: "Arrêt au km 85, après 26 h 52 et 7 700 m D+" }
 
   - type: geo
+    id: "trace"
     titre: "Trace"
     carte: "TODO"
     gpx: "reunion-r2_komoot.gpx"
@@ -42,8 +43,8 @@ sections:
     seances:
       colonnes: ["Date", "Sortie", "km", "D+", "Sac", "Ce qu'on éprouvait", "Billet"]
       lignes:
-        - ["12/10/2025", "Tour du Taillefer", "39", "2 500 m", "6 kg", "Matériel et lyophilisé", ""]
-        - ["25/10/2025", "UTMC OFF", "85", "4 500 m", "7,4 kg", "Rest step et nuit", ""]
+        - ["12/10/2025", "Tour du Taillefer", "39", "2 500 m", "6 kg", "Matériel et lyophilisé", "tour-du-taillefer"]
+        - ["25/10/2025", "UTMC OFF", "85", "4 500 m", "7,4 kg", "Rest step et nuit", "utmc-off"]
     stresseurs:
       travailles:
         - nom: "Dénivelé sans bâtons (rest step)"
@@ -62,8 +63,14 @@ sections:
           intensite: "Maintenue le plus longtemps possible en sortie longue"
           pourquoi: "Rester en régime aérobie et éviter d'oxyder trop vite le glycogène."
       non_travailles: ["Terrains réunionnais"]
+    protocoles: ["rest-step"]
+
+  - type: libre
+    id: "materiel"
+    titre: "Matériel"
 
   - type: nutrition
+    id: "nutrition-embarquee"
     titre: "Nutrition embarquée"
     colonnes: ["Poste", "Détail", "Masse"]
     lignes:
@@ -75,7 +82,58 @@ sections:
       - ["Total", "", "2,62 kg"]
 
   - type: direct
+    id: "direct"
     titre: "Direct v1 (2025)"
 
   - type: recit
 ---
+
+<SectionLibre id="trace">
+
+L'idée de faire le parcours en OFF de la diagonale des fous fut tentante. Mais pas assez créative à mon goût. J'ai donc choisi de me baser sur le parcours du GR R2, qui traverse l'île, en apportant les modifications nécessaires pour gravir les pitons des neige et de la fournaise. Cette trace a été construite à l'aide des sites [komoot](https://www.komoot.com/), [tracedetrail](https://tracedetrail.fr), et  vérifiée à l'aide de [geoportail](https://www.geoportail.gouv.fr/), véritable banger pour s'assurer gratuitement de la fiabilité d'une trace. Elle sera également à adapter en fonction des fermetures de sentiers quelques jours avant. J'ai choisi de faire le parcours depuis Saint-Denis, et de terminer à Basse Vallée. Total : 167 km 10 000 m D+, j'en salive d'avance.
+
+Update 07/11/2025 : correction de la trace pour prise en compte des sentiers fermés + ajout des checkpoint flotte + départ gare Saint-Denis et arrivée direct au Airbnb d'Éliane. Total : 170 km 9 800 m D+.
+
+</SectionLibre>
+
+<SectionLibre id="materiel">
+
+Pour le reste, j'ai essayé de penser à tous les cas de figures possibles, et ma carapace de Franklin sera cette fois composée de :
+
+- Sac Salomon SLab Aventure 20 (485 g)
+- Poche à eau 1,5 L Salomon (120 g) 
+- 3 flasques 500 mL Salomon (100 g)
+- Paire de Panta Zaros de rechange (225 g)
+- Bivy Sol Escape (245 g)
+- GoPro Hero 8 + 2 batteries (150 g)
+- Short + T-shirt + 2 paires de chaussettes (220 g)
+- Bob Raidlight + Manchettes Raidlight + Buff merinos (100 g)
+- Gants Decath + sur-mouffles Raidlight (77 g)
+- Veste imperméable respirante Raidlight (225 g)
+- 2 lampes Stoots Kiska II + 2 batteries (140 g)
+- 2 batteries externes Nitecore Gen II (300 g)
+- 2 Galaxy S21 (380 g)
+- Masque de snorkeling (pour l'arrivée faut pas déconner) (70 g)
+- Filtre sawyer PointOne + réserve 2 L (98 g)
+
+Ce qui nous fait un total de 2,9 kg. En sommant l'ensemble + les 3 L de liquide, on atteint un sac d'environ 8,5 kg, soit un peu plus d'1 kg de plus que ce que j'avais emporté sur mon OFF de l'UTMC (voir [ici](/blog/utmc-off)). Avec la réserve de 2 L du Sawyer, je peux même monter à 5 L d'eau transportés dans les endroits critiques, et j'ai l'impression que sur la portion Volcan - Basse-Vallée, ce ne sera pas de trop.
+
+</SectionLibre>
+
+<SectionLibre id="nutrition-embarquee">
+
+J'avais l'espoir de trouver mes victuailles habituelles de sorties longues à Saint-Pierre, mais la réalité dépassa mes espérances. J'ai pu acquérir (à prix d'or certes), tout le nécessaire pour ne pas mourir de faim pendant cette longue traversée, en utilisant quasiment exactement les mêmes produits que j'utilise habituellement. Ma nutrition sera donc composée ainsi :
+
+Un total de 2,62 kg. La surprise du chef sera sur les gels. Je n'ai en effet jamais ingurgité le moindre gel de ma vie jusqu'alors, mais le combo caféine + sucre est un combo gagnant pour lutter contre les coups de mous. De toute façon, j'ai évidemment prévu du PQ si ceux-ci ressortaient aussi vite qu'ils seraient rentrés (kikou les gels Ta Rapace).
+
+</SectionLibre>
+
+<SectionLibre id="direct">
+
+La dernière partie de ce projet. L'objectif majeur de l'aventure est d'arriver au piton des neiges au lever de soleil (5h30). Je ne dois donc pas partir trop tôt ce lundi, au risque d'arriver au sommet quelques heures avant le lever du soleil, et de laisser tous mes tissus se refroidir, conduisant à une descente potentiellement infâme. Je vais donc viser un départ autour de 8h30 - 9h. Ça me semble pas mal et me correspond car j'ai en horreur de ne pas me réveiller naturellement, et l'idée de mettre le réveil à 5h30 est un stress inutile. L'arrivée au sommet correspond au km 94 avec 7 700 m D+ cumulés de mon aventure.
+
+Niveau points d'eau, je vais être pas mal sur tout le parcours jusqu'à Bourg-Murat, dernier vrai point de ravito avant la fin. Le hic, c'est qu'à Bourg-Murat, on n'est qu'au km 115 avec 7 900 m D+ cumulés. Il en reste donc encore 55, avec le piton de la Fournaise, où je risque de passer à un des moments les plus chauds de la journée. Il va donc falloir charger la mulle à mort en eau, et c'est là que mon extension de 2 L intervient. Si j'arrive là, et selon comment se sera passé l'aventure jusqu'alors, je m'autoriserais peut-être à acheter une bouteille supplémentaire pour monter à 7 L jusqu'à la fin. En sachant que la dernière portion est une descente de 2 000 m D- sur 20 km (souvenir souvenir du Lavaredo), qui se fera probablement de nuit et dans une forêt humide. Le risque de déshydratation semble donc minoré. Je suis conscient de cette difficulté, j'ai des idées pour la gérer, maintenant il n'y a plus qu'à.
+
+Sur ce, une belle aprem de repos m'attend pour accumuler un maximum d'énergie. Si tu as lu ce projet jusqu'ici, j'espère qu'il t'a plu, et que tu apprécieras de suivre cette traversée avec moi en direct. De mon côté, je vais puiser dans tous vos soutiens pour me dépasser et aller explorer mes limites en jouant à ce grand jeu très complexe. On se revoit de l'autre côté !
+
+</SectionLibre>

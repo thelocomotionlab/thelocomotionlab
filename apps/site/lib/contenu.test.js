@@ -39,28 +39,31 @@ describe("content/", () => {
     }
   });
 
-  it("laisse en brouillon ce qui n'est pas complet", () => {
+  it("laisse en brouillon ce qui n'est pas écrit", () => {
     expect(parSlug("reunion-2025").frontmatter.statut).toBe("publie");
-    // Le Tour des Écrins n'a pas de cover : il n'est pas routé.
-    expect(parSlug("tour-des-ecrins").frontmatter.statut).toBe("brouillon");
+    // Le récit des Écrins n'est qu'une amorce, l'article sur le froid n'a
+    // aucun corps : ni l'un ni l'autre n'est routé.
+    expect(parSlug("tour-des-ecrins-80-heures").frontmatter.statut).toBe("brouillon");
+    expect(parSlug("exposition-au-froid").frontmatter.statut).toBe("brouillon");
   });
 });
 
 describe("l'aventure à trois sections", () => {
-  const ecrins = () => parSlug("tour-des-ecrins").frontmatter;
-
-  it("valide telle quelle", () => {
-    expect(ecrins().sections).toHaveLength(3);
-    expect(erreurs).toEqual([]);
-  });
+  // Écrite en littéral : aucune aventure réelle ne doit avoir à rester courte
+  // pour que ce cas reste couvert.
+  const COURTE = [
+    { type: "caracteristiques" },
+    { type: "libre", id: "genese-et-preparatifs" },
+    { type: "paquetage" },
+  ];
 
   it("garde ses ancres quand une section s'insère en tête", () => {
     // Les ancres attendues sont écrites en littéraux : comparer deux appels de
     // la même fonction passerait même si elle rendait partout la même chaîne.
     const ANCRES = ["caracteristiques", "genese-et-preparatifs", "paquetage"];
 
-    const avant = numeroterSections(ecrins().sections);
-    const apres = numeroterSections([{ type: "direct" }, ...ecrins().sections]);
+    const avant = numeroterSections(COURTE);
+    const apres = numeroterSections([{ type: "direct" }, ...COURTE]);
 
     expect(avant.map((s) => s.ancre)).toEqual(ANCRES);
     expect(apres.map((s) => s.ancre)).toEqual(["direct", ...ANCRES]);
@@ -86,18 +89,20 @@ describe("la traversée de la Réunion", () => {
       "caracteristiques",
       "geo",
       "preparation",
+      "libre",
       "nutrition",
       "direct",
       "recit",
     ]);
   });
 
-  it("produit des ancres dérivées du type, pas du numéro", () => {
+  it("produit des ancres dérivées du type ou de l'id, jamais du numéro", () => {
     expect(ancresDeSections(reunion().sections)).toEqual([
       "caracteristiques",
-      "geo",
+      "trace",
       "preparation",
-      "nutrition",
+      "materiel",
+      "nutrition-embarquee",
       "direct",
       "recit",
     ]);
