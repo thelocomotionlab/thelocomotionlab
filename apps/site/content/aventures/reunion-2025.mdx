@@ -1,0 +1,69 @@
+---
+sorte: aventure
+titre: "Traversée de La Réunion en autonomie"
+slug: "reunion-2025"
+statut: publie
+chapeau: "170 km et deux pitons, en autonomie complète, en sandales."
+etat: termine
+campagne: { debut: 2025-09-29, fin: 2025-11-30 }
+cover: "cover_traversee_reunion.webp"
+resume:
+  - "170 km"
+  - "9 800 m D+"
+  - "sandales"
+recit: "ile-intense"
+sections:
+  - type: caracteristiques
+    champs:
+      - { label: "Distance", valeur: "170 km" }
+      - { label: "Dénivelé positif", valeur: "9 800 m" }
+      - { label: "Départ", valeur: "Saint-Denis, gare routière" }
+      - { label: "Arrivée", valeur: "Basse-Vallée" }
+      - { label: "Appui", valeur: "Sandales, sans bâtons" }
+      - { label: "Ravitaillement", valeur: "Autonomie complète" }
+      - { label: "Masse au départ", valeur: "8,5 kg" }
+
+  - type: geo
+    titre: "Trace"
+    gpx: "reunion-r2_komoot.gpx"
+    colonnes: ["Repère", "km", "D+ cumulé"]
+    lignes:
+      - ["Saint-Denis, gare routière", "0", "0 m"]
+      - ["Piton des Neiges", "94", "7 700 m"]
+      - ["Bourg-Murat", "115", "7 900 m"]
+      - ["Basse-Vallée", "170", "9 800 m"]
+
+  - type: preparation
+    graphe:
+      abscisse: ["S1", "S2", "S3", "S4"]
+      series:
+        - { nom: "Distance", unite: "km", valeurs: [64, 104, 48, 117] }
+        - { nom: "Dénivelé positif", unite: "m", valeurs: [2000, 4800, 1200, 5100] }
+    seances:
+      colonnes: ["Date", "Sortie", "km", "D+", "Sac", "Ce qu'on éprouvait", "Billet"]
+      lignes:
+        - ["12/10/2025", "Tour du Taillefer", "39", "2 500 m", "6 kg", "Matériel et lyophilisé", "tour-du-taillefer"]
+        - ["25/10/2025", "UTMC OFF", "85", "4 500 m", "7,4 kg", "Live-tracking et rest step", "utmc-off"]
+    protocoles: ["rest-step"]
+
+  - type: paquetage
+    ref: "reunion-2025"
+
+  - type: nutrition
+    titre: "Nutrition embarquée"
+    colonnes: ["Aliment", "Quantité", "Masse"]
+    lignes:
+      - ["Boules d'énergie amande / datte, dont 13 caféinées", "39", "765 g"]
+      - ["Doses de flasque isotonique", "14", "720 g"]
+      - ["Saucisson bio", "2", "400 g"]
+      - ["Gel caféine citron", "4", "140 g"]
+      - ["Plat lyophilisé", "5", "600 g"]
+      - ["Total", "", "2,62 kg"]
+
+  - type: direct
+    version: "v1"
+    mention: "Live-tracking maison v1, une position toutes les 90 s ou tous les 100 m"
+    replay: "traversee-reunion"
+
+  - type: recit
+---

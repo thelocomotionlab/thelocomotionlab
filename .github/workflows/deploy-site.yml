@@ -17,6 +17,7 @@ on:
       - "apps/site/**"
       - "packages/ui/**"
       - "packages/tracking/**"
+      - "packages/contenu/**"
       - "pnpm-lock.yaml"
       - ".github/workflows/deploy-site.yml"
   workflow_dispatch: {}

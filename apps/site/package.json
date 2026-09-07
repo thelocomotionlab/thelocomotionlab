@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build --webpack",
+    "contenu": "node ../../packages/contenu/scripts/construire-index.ts",
+    "build": "pnpm run contenu && next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "deploy:cf": "npx @cloudflare/next-on-pages && npx wrangler pages deploy .vercel/output/static --project-name=thelocomotionlab-website",
@@ -20,6 +21,7 @@
     "photos": "node scripts/photos.mjs"
   },
   "dependencies": {
+    "@locomotionlab/contenu": "workspace:*",
     "@locomotionlab/tracking": "workspace:*",
     "@locomotionlab/ui": "workspace:*",
     "@tmcw/togeojson": "^7.1.2",
