@@ -93,17 +93,20 @@ describe("§9 — les règles qui font échouer le build", () => {
     expect(erreurs).toContain('référence inconnue : "sanchez2025" dans content/blog/a.mdx');
   });
 
-  it("référence inconnue déclarée par le frontmatter d'un article", () => {
+  it("référence inconnue citée dans le corps d'un article", () => {
     const { erreurs } = valider([
-      page("content/science/a.mdx", {
-        sorte: "article",
-        titre: "T",
-        slug: "a",
-        chapeau: "C",
-        publie_le: "2026-02-26",
-        themes: ["memoire-musculaire"],
-        refs: ["inconnue2026"],
-      }),
+      page(
+        "content/science/a.mdx",
+        {
+          sorte: "article",
+          titre: "T",
+          slug: "a",
+          chapeau: "C",
+          publie_le: "2026-02-26",
+          themes: ["memoire-musculaire"],
+        },
+        'Un texte qui cite <Citation id="inconnue2026">une étude</Citation>.',
+      ),
     ]);
     expect(erreurs).toEqual(['référence inconnue : "inconnue2026" dans content/science/a.mdx']);
   });

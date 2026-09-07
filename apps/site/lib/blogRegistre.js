@@ -13,6 +13,15 @@ export const TYPES = {
   "note-de-terrain": "Notes de terrain",
 };
 
+/** Les mêmes, au singulier : une carte annonce UN billet, pas la rubrique. */
+export const TYPE_AU_SINGULIER = {
+  recit: "Récit d'aventure",
+  "recit-de-sortie": "Récit de sortie",
+  bilan: "Bilan",
+  billet: "Billet",
+  "note-de-terrain": "Note de terrain",
+};
+
 const MOIS = [
   "janvier", "février", "mars", "avril", "mai", "juin",
   "juillet", "août", "septembre", "octobre", "novembre", "décembre",

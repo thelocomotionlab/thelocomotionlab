@@ -155,13 +155,20 @@ export function construireIndexDesBlocs(pages: readonly PageAnalysee[]): {
   return { index, erreurs };
 }
 
+/** Les deux écritures d'un appel de référence dans le corps d'une page. */
+const APPELS_DE_REFERENCE = /<Citation\s+id="([\w-]+)"|\{\{cite:([\w-]+)\}\}/g;
+
 /**
- * Les clés de `refs` déclarées par une page : le frontmatter d'un article, et
- * les props des blocs écrits DANS cette page — lues sur place, pour qu'une page
- * ne réponde jamais des références d'une autre.
+ * Les clés de référence appelées par une page : celles du corps, et celles des
+ * props des blocs écrits DANS cette page — lues sur place, pour qu'une page ne
+ * réponde jamais des références d'une autre. Une clé n'est écrite qu'une fois,
+ * là où elle est citée : rien à recopier dans le frontmatter.
  */
 function referencesDeLaPage(page: PageAnalysee): string[] {
-  const cles = page.frontmatter.sorte === "article" ? [...page.frontmatter.refs] : [];
+  const cles: string[] = [];
+  for (const appel of page.corps.matchAll(APPELS_DE_REFERENCE)) {
+    cles.push(appel[1] ?? appel[2]!);
+  }
   for (const brut of page.extraction.blocs) {
     for (const cle of (brut.attributs.refs ?? "").split(",")) {
       const nettoyee = cle.trim();

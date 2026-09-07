@@ -48,6 +48,7 @@ export function entrees() {
     themes: page.frontmatter.themes,
     revise: Boolean(page.frontmatter.revise_le),
     date: dateDArticle(page.frontmatter),
+    cover: page.frontmatter.cover,
     lecture: page.frontmatter.lecture,
     corps: page.corps,
     url: urlDe(page),
@@ -72,12 +73,14 @@ export function journalDesRevisions() {
   return evenements.sort((a, b) => b.date.localeCompare(a.date));
 }
 
+/** Les deux écritures d'un appel de référence dans le corps d'un article. */
+const APPELS = /<Citation\s+id="([\w-]+)"|\{\{cite:([\w-]+)\}\}/g;
+
 /** Les références réellement citées par les articles, dans l'ordre alphabétique de clé. */
 export function bibliographieDuLabo() {
   const citees = new Set();
   for (const page of articles()) {
-    for (const cle of page.frontmatter.refs) citees.add(cle);
-    for (const appel of page.corps.matchAll(/<Citation\s+id="([\w-]+)"/g)) citees.add(appel[1]);
+    for (const appel of page.corps.matchAll(APPELS)) citees.add(appel[1] ?? appel[2]);
   }
   return [...citees]
     .filter((cle) => bibliographie[cle])

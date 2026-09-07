@@ -54,9 +54,6 @@ export const DateDeContenu = z.preprocess((valeur) => {
   return valeur;
 }, z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "une date s'écrit AAAA-MM-JJ"));
 
-/** Une clé de bibliographie, résolue au build contre content/bibliography.json. */
-const cleDeReference = z.string().min(1);
-
 /** Les cinq champs communs aux quatre sortes (§3). */
 const communs = {
   titre: z.string().min(1),
@@ -159,12 +156,15 @@ export const Billet = z.strictObject({
 export const Article = z.strictObject({
   sorte: z.literal("article"),
   ...communs,
+  /** Signature affichée sous le titre. Absente, l'article ne signe pas. */
+  auteur: z.string().min(1).optional(),
   publie_le: DateDeContenu,
   /** Le marqueur de Science : affiché en évidence. Absent tant qu'il n'y a pas eu de révision. */
   revise_le: DateDeContenu.optional(),
   themes: z.array(z.string().min(1)).min(1),
+  /** Vignette de l'index et image d'ouverture de l'article. */
+  cover: z.string().min(1).optional(),
   lecture: z.number().int().positive().optional(),
-  refs: z.array(cleDeReference).default([]),
   revisions: z
     .array(z.strictObject({ date: DateDeContenu, quoi: z.string().min(1) }))
     .default([]),

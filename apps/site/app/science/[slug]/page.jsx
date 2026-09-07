@@ -7,6 +7,7 @@
 // dit ce qui a changé et quand ; la bibliographie ne liste que ce que le texte
 // a réellement appelé.
 
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Bibliographie } from "@locomotionlab/ui/contenu";
 
@@ -56,9 +57,29 @@ export default async function ArticlePage({ params }) {
           <h1 className="mt-4 font-heading text-[32px] font-bold leading-[1.08] tracking-[-0.015em] text-brand-slate-dark md:text-[42px]">
             {frontmatter.titre}
           </h1>
+          {frontmatter.auteur ? (
+            <p className="mt-3.5 m-0 font-mono text-meta font-semibold uppercase tracking-etiquette text-brand-muted">
+              par <span className="text-brand-slate-dark">{frontmatter.auteur}</span>
+            </p>
+          ) : null}
           <p className="mt-4 text-xl leading-normal text-brand-soft [text-wrap:pretty]">
             {frontmatter.chapeau}
           </p>
+
+          {frontmatter.cover ? (
+            // La colonne de lecture donne la largeur : l'image ouvre l'article
+            // sans le déborder, alignée sur le texte qui la suit.
+            <div className="mx-auto mt-8 max-w-[40em] overflow-hidden rounded-md shadow-card">
+              <Image
+                src={frontmatter.cover}
+                alt={frontmatter.titre}
+                width={1200}
+                height={800}
+                priority
+                className="block h-full w-full object-cover"
+              />
+            </div>
+          ) : null}
 
           <div className="mt-[26px] flex flex-wrap gap-x-7 gap-y-2.5 border-y border-brand-wash-line py-4 font-mono text-[12.5px] text-brand-muted tabular-nums">
             <span>

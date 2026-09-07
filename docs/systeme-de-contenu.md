@@ -105,12 +105,13 @@ sorte: article
 titre: "« Use it or lose it », vous êtes sûr ?"
 slug: "use-it-or-lose-it"
 statut: publie
+auteur: "Valentin Fer"    # facultatif : la signature affichée sous le titre
 publie_le: 2026-02-22
 revise_le: 2026-09-03      # affiché en évidence : c'est le marqueur de Science
 themes: ["memoire-musculaire"]
 chapeau: "Ce que le muscle garde quand on arrête."
+cover: "/images/…/quadrupedie.webp"   # vignette de l'index et image d'ouverture
 lecture: 9
-refs: ["gundersen2016", "bonaldo2013", "encarnacao2022", "buxton2024"]
 revisions:
   - { date: 2026-09-03, quoi: "section 3 et référence [4] ajoutées" }
 ```
@@ -241,6 +242,19 @@ au-dessus du tableau. C'est le mécanisme des sections libres, sans composant de
 Le parcours est basé sur le GR R2, modifié pour gravir les deux pitons.
 </SectionLibre>
 ```
+
+### Le renvoi vers un billet
+
+Le récit d'une préparation appartient au carnet de bord (§1). La page Aventure garde la section et son titre, et
+son slot ne contient qu'une carte :
+
+```mdx
+<SectionLibre id="genese-du-projet">
+<VersBillet slug="genese-fontaine-remuzat" />
+</SectionLibre>
+```
+
+La carte lit le billet — titre, date, amorce — et un slug introuvable arrête le build.
 
 ### Le replay d'un billet
 
@@ -380,7 +394,7 @@ Le build échoue, avec le message indiqué. Aucun avertissement silencieux.
 |---|---|
 | Deux blocs partagent un `id` | `id de bloc en double : "<id>" dans <fichier A> et <fichier B>` |
 | Une carte pointe vers un `id` absent de l'index | `<VersProtocole id="<id>"> dans <fichier> : aucun bloc ne porte cet id` |
-| Une clé de `refs` absente de la bibliographie | `référence inconnue : "<clé>" dans <fichier>` |
+| Une clé de référence absente de la bibliographie | `référence inconnue : "<clé>" dans <fichier>` |
 | Un `type` de section inconnu | `type de section inconnu : "<type>" dans <fichier>` |
 | Deux sections d'une même page produisent la même ancre | `ancre en double : "<ancre>" dans <fichier>` |
 | Un `recit` pointe vers un slug inexistant | `récit introuvable : "<slug>" déclaré par <fichier>` |
@@ -395,9 +409,11 @@ Les schémas Zod vivent dans `packages`, pas dans `apps/site`.
 
 ## 10. Bibliographie
 
-Une source unique, clé → entrée bibliographique, avec DOI quand il existe. `refs` en frontmatter (articles) ou en
-prop (blocs) contient des clés. Les appels de référence sont numérotés par page, à l'affichage : la numérotation
-n'est jamais écrite dans le contenu, donc déplacer un bloc ne casse rien.
+Une source unique, clé → entrée bibliographique, avec DOI quand il existe. **Une clé ne s'écrit qu'une fois, là où
+elle est citée** : `<Citation id="…">` ou `{{cite:…}}` dans le corps, `refs` en prop d'un bloc. Le build vérifie
+chaque clé appelée, la bibliographie d'une page ne liste que ce qu'elle a cité, et celle du labo réunit les appels
+de tous les articles — rien à recopier dans le frontmatter. Les appels sont numérotés par page, à l'affichage : la
+numérotation n'est jamais écrite dans le contenu, donc déplacer un bloc ne casse rien.
 
 ---
 

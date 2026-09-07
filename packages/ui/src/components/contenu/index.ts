@@ -41,6 +41,8 @@ export { default as Direct, ArchiveDuDirect } from "./Direct.tsx";
 export type { DirectProps, ReglageDuDirect } from "./Direct.tsx";
 export { default as CarteRecit } from "./CarteRecit.tsx";
 export type { CarteRecitProps } from "./CarteRecit.tsx";
+export { default as CarteBillet } from "./CarteBillet.tsx";
+export type { CarteBilletProps } from "./CarteBillet.tsx";
 
 // ── Transverses ─────────────────────────────────────────────────────────────
 export { default as Sommaire } from "./Sommaire.tsx";

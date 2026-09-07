@@ -7,6 +7,7 @@
 // Sous la liste, la bibliographie du labo et le journal des révisions se
 // comptent eux aussi depuis les articles.
 
+import Image from "next/image";
 import Link from "next/link";
 
 import {
@@ -63,7 +64,7 @@ export default function SciencePage() {
           <Link
             key={article.slug}
             href={article.url}
-            className="group grid items-center gap-x-8 border-b border-brand-hairline py-[30px] text-brand-text no-underline md:grid-cols-[24px_minmax(0,1fr)_110px]"
+            className="group grid items-center gap-x-8 border-b border-brand-hairline py-[30px] text-brand-text no-underline md:grid-cols-[24px_250px_minmax(0,1fr)_110px]"
           >
             {/* Le rail : un filet et, s'il y en a un, le thème lu à la
                 verticale — la marque de rubrique de la maquette. */}
@@ -73,6 +74,19 @@ export default function SciencePage() {
                 <span className="flex flex-col items-center justify-center font-mono text-xxs font-semibold uppercase tracking-surtitre whitespace-nowrap text-brand-slate-dark [writing-mode:vertical-rl] [transform:rotate(180deg)]">
                   {article.themes[0].split("-").join(" ")}
                 </span>
+              ) : null}
+            </span>
+            {/* La vignette est rendue même sans photo : sans elle, une entrée
+                sans cover décalerait toute sa ligne. */}
+            <span className="hidden aspect-[3/2] overflow-hidden rounded-md bg-brand-wash md:block">
+              {article.cover ? (
+                <Image
+                  src={article.cover}
+                  alt={article.titre}
+                  width={500}
+                  height={334}
+                  className="block h-full w-full object-cover"
+                />
               ) : null}
             </span>
             <span className="min-w-0">

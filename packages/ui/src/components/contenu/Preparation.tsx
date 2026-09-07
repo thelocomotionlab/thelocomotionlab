@@ -26,9 +26,15 @@ export type PreparationProps = {
   protocoles?: readonly DonneesDeCarte[];
 };
 
+/**
+ * L'intertitre d'un des quatre éléments. Il porte la voix des titres (Ubuntu
+ * gras, ocre) et un filet d'accent : en mono gris, il se confondait avec les
+ * en-têtes des tableaux qu'il annonce.
+ */
 function Intertitre({ children }: { children: string }) {
   return (
-    <h3 className="mt-8 mb-0 font-mono text-meta font-bold uppercase tracking-surtitre text-brand-muted">
+    <h3 className="mt-10 mb-0 flex items-center gap-3 font-heading text-[15px] font-bold uppercase tracking-etiquette text-brand-accent-ink">
+      <span className="h-[3px] w-6 shrink-0 rounded-full bg-brand-accent" aria-hidden="true" />
       {children}
     </h3>
   );

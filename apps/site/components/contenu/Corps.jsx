@@ -8,17 +8,26 @@
 // Markdown, qui les couperait au premier paragraphe vide.
 
 import { decouperLeCorps } from "@locomotionlab/contenu";
-import { Note, Protocole, VersProtocole, VersNote } from "@locomotionlab/ui/contenu";
+import {
+  CarteBillet,
+  Note,
+  Protocole,
+  VersProtocole,
+  VersNote,
+} from "@locomotionlab/ui/contenu";
 
-import { blocs } from "@/lib/contenu";
+import { blocs, parSlug, urlDe } from "@/lib/contenu";
+import { amorce } from "@/lib/blog";
+import { TYPE_AU_SINGULIER } from "@/lib/blogRegistre";
+import { dateLisible } from "@/lib/lisible";
 import PostLiveTracking from "@/components/PostLiveTrackingLazy";
 import Prose from "./Prose";
 
-// `Replay` n'est pas un bloc : il ne va pas dans l'index et ne se cite pas.
-// Il est ici parce qu'une sortie OFF est racontée dans un billet, et que son
-// replay appartient au billet — la section `direct` n'existe que sur une
-// aventure.
-const BALISES = ["Note", "Protocole", "VersProtocole", "VersNote", "Replay"];
+// `Replay` et `VersBillet` ne sont pas des blocs : ils ne vont pas dans
+// l'index et ne se citent pas. Le premier est là parce qu'une sortie OFF est
+// racontée dans un billet et que son replay lui appartient ; le second parce
+// qu'une page Aventure renvoie au carnet de bord plutôt que de raconter.
+const BALISES = ["Note", "Protocole", "VersProtocole", "VersNote", "Replay", "VersBillet"];
 
 /** Une liste écrite en chaîne séparée par des virgules. */
 function liste(valeur) {
@@ -47,6 +56,29 @@ export default function Corps({ page, corps: texte, citation, appelDeReference: 
           return (
             <div key={rang} className="my-8">
               <PostLiveTracking {...attributs} />
+            </div>
+          );
+        }
+
+        // Le billet introuvable arrête le build en nommant le slug fautif :
+        // une page Aventure ne doit pas pouvoir renvoyer dans le vide.
+        if (nom === "VersBillet") {
+          const billet = parSlug("billet", attributs.slug);
+          if (!billet) {
+            throw new Error(
+              `<VersBillet slug="${attributs.slug ?? ""}"> dans ${page.chemin} : aucun billet de ce slug.`,
+            );
+          }
+          const { titre, type, chapeau, date } = billet.frontmatter;
+          return (
+            <div key={rang} className="my-8">
+              <CarteBillet
+                url={urlDe(billet)}
+                titre={titre}
+                surtitre={TYPE_AU_SINGULIER[type]}
+                extrait={chapeau && chapeau !== "TODO" ? chapeau : amorce(billet.corps)}
+                date={dateLisible(date)}
+              />
             </div>
           );
         }

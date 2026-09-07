@@ -62,7 +62,7 @@ describe("frontmatter", () => {
     expect(Aventure.parse(enPreparation).campagne.fin).toBeUndefined();
   });
 
-  it("donne à refs et revisions d'un article des tableaux vides par défaut", () => {
+  it("donne aux revisions d'un article un tableau vide par défaut", () => {
     const article = Article.parse({
       sorte: "article",
       titre: "T",
@@ -71,7 +71,6 @@ describe("frontmatter", () => {
       publie_le: "2026-02-26",
       themes: ["memoire-musculaire"],
     });
-    expect(article.refs).toEqual([]);
     expect(article.revisions).toEqual([]);
   });
 });
