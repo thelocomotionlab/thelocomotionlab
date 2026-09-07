@@ -333,3 +333,72 @@ export function extraireBlocs(corps: string): ResultatExtraction {
 
   return { blocs, cartes, erreurs };
 }
+
+export type SegmentDeCorps =
+  | { type: "texte"; texte: string }
+  | { type: "balise"; nom: string; attributs: Record<string, string>; corps: string };
+
+/**
+ * Découpe un corps en segments : le texte tel quel, et les balises demandées
+ * avec leurs props et leur corps.
+ *
+ * Sert au rendu : une page n'a pas à re-parcourir le texte pour retrouver ses
+ * blocs, ni à faire confiance au pipeline Markdown pour préserver une balise à
+ * cheval sur plusieurs paragraphes. Ce qui est masqué pour l'extraction l'est
+ * aussi ici : un exemple en bloc de code reste du texte.
+ */
+export function decouperLeCorps(corps: string, noms: readonly string[]): SegmentDeCorps[] {
+  const masque = masquerLeCode(corps);
+  const segments: SegmentDeCorps[] = [];
+  let curseur = 0;
+  let depuis = 0;
+
+  const pousserLeTexte = (jusqua: number) => {
+    if (jusqua > depuis) segments.push({ type: "texte", texte: corps.slice(depuis, jusqua) });
+  };
+
+  while (curseur < masque.length) {
+    const debut = masque.indexOf("<", curseur);
+    if (debut === -1) break;
+
+    const nom = noms.find((candidat) => baliseCommence(masque, debut, candidat));
+    if (!nom) {
+      curseur = debut + 1;
+      continue;
+    }
+
+    const balise = lireBalise(masque, corps, debut);
+    if (!balise || balise.erreur) {
+      curseur = debut + 1;
+      continue;
+    }
+
+    if (balise.autoFermante) {
+      pousserLeTexte(debut);
+      segments.push({ type: "balise", nom, attributs: balise.attributs, corps: "" });
+      curseur = balise.fin;
+      depuis = balise.fin;
+      continue;
+    }
+
+    const fermeture = `</${nom}>`;
+    const finCorps = masque.indexOf(fermeture, balise.fin);
+    if (finCorps === -1) {
+      curseur = balise.fin;
+      continue;
+    }
+
+    pousserLeTexte(debut);
+    segments.push({
+      type: "balise",
+      nom,
+      attributs: balise.attributs,
+      corps: corps.slice(balise.fin, finCorps).trim(),
+    });
+    curseur = finCorps + fermeture.length;
+    depuis = curseur;
+  }
+
+  pousserLeTexte(corps.length);
+  return segments;
+}

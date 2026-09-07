@@ -1,7 +1,7 @@
 // packages/contenu/src/extraction.test.ts
 
 import { describe, it, expect } from "vitest";
-import { extraireBlocs } from "./extraction.ts";
+import { extraireBlocs, decouperLeCorps } from "./extraction.ts";
 
 const PROTOCOLE = `Un paragraphe d'introduction.
 
@@ -146,5 +146,31 @@ Suite.`);
       `<Note id="a" titre="A" objectif="O">\n<Note id="b" titre="B" objectif="O">x</Note>\n</Note>`,
     );
     expect(erreurs[0]).toContain("contient un <Note>");
+  });
+});
+
+describe("decouperLeCorps", () => {
+  it("rend le texte et les balises demandées, dans l'ordre", () => {
+    const segments = decouperLeCorps(
+      'Avant.\n\n<SectionLibre id="a">Le corps.</SectionLibre>\n\nAprès.',
+      ["SectionLibre"],
+    );
+    expect(segments.map((s) => s.type)).toEqual(["texte", "balise", "texte"]);
+    expect(segments[1]).toMatchObject({ nom: "SectionLibre", attributs: { id: "a" }, corps: "Le corps." });
+    expect((segments[0] as { texte: string }).texte.trim()).toBe("Avant.");
+    expect((segments[2] as { texte: string }).texte.trim()).toBe("Après.");
+  });
+
+  it("laisse en texte une balise qu'on ne lui a pas demandée", () => {
+    const segments = decouperLeCorps('<Citation id="x">y</Citation>', ["SectionLibre"]);
+    expect(segments).toEqual([{ type: "texte", texte: '<Citation id="x">y</Citation>' }]);
+  });
+
+  it("ne découpe pas sur un exemple écrit en bloc de code", () => {
+    const segments = decouperLeCorps(
+      '```mdx\n<Note id="exemple" titre="T" objectif="O">corps</Note>\n```',
+      ["Note"],
+    );
+    expect(segments.map((s) => s.type)).toEqual(["texte"]);
   });
 });
