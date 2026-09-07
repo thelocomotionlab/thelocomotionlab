@@ -15,7 +15,7 @@ import EnTeteDIndex from "@/components/contenu/EnTeteDIndex";
 export const metadata = {
   title: "Aventures",
   description:
-    "Une campagne à la fois : l'itinéraire, la préparation, le paquetage, les chiffres.",
+    "Itinéraires, préparations, paquetages, nutrition, protocoles, et plus encore !",
 };
 
 const ACTION_PRIMAIRE =
@@ -50,7 +50,7 @@ export default function AventuresPage() {
     <div className="mx-auto max-w-[1180px] px-6 pt-12 md:px-8">
       <EnTeteDIndex
         titre="Aventures"
-        accroche="Une campagne à la fois : l'itinéraire, la préparation, le paquetage, les chiffres."
+        accroche="Itinéraires, préparations, paquetages, nutrition, protocoles, et plus encore !"
         teinte="aventure"
       />
 
