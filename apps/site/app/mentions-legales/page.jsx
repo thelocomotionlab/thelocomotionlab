@@ -28,10 +28,10 @@ export default function MentionsPage() {
           <br />
           Contact :{" "}
           <a
-            href="mailto:thelocomotionlab@gmail.com"
+            href="mailto:contact@thelocomotionlab.com"
             className="font-semibold text-brand-deep-dark underline underline-offset-2 decoration-brand-accent-dark/60 hover:decoration-brand-accent-dark"
           >
-            thelocomotionlab@gmail.com
+            contact@thelocomotionlab.com
           </a>
         </p>
       </section>

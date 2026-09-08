@@ -43,7 +43,9 @@ export default function CarteRecit({
       }`}
     >
       {cover ? (
-        <div className="min-h-70 [&>*]:block [&>*]:h-full [&>*]:w-full [&>img]:object-cover">
+        // En colonne, la photo garde le format des couvertures ; en ligne, elle
+        // s'étire sur la hauteur du texte à côté d'elle.
+        <div className="aspect-cover md:aspect-auto md:min-h-70 [&>*]:block [&>*]:h-full [&>*]:w-full [&>img]:object-cover">
           {cover}
         </div>
       ) : null}

@@ -103,6 +103,10 @@
     rgba(90, 52, 30, 0.72) 48%,
     rgba(90, 52, 30, 0.3) 100%
   );
+  /* Le format des couvertures du labo. Les visuels sont cadrés en 11:6 à la
+     source : tout cadre d'un autre rapport les recoupe, et la vignette ne
+     montre plus ce que la photo montrait. */
+  --aspect-cover: 11 / 6;
   --text-xxs: 0.625rem;
   /* Le corps mono des pages de contenu : méta d'un bloc, numéro de section,
      lien de téléchargement. */

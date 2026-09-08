@@ -116,7 +116,7 @@ export default async function AventurePage({ params }) {
             <div className="mt-5 h-[3px] w-16 rounded-full bg-brand-accent" aria-hidden="true" />
 
             {frontmatter.cover !== "TODO" ? (
-              <div className="mt-7 aspect-[11/6] overflow-hidden rounded-md shadow-card">
+              <div className="mt-7 aspect-cover overflow-hidden rounded-md shadow-card">
                 <Image
                   src={frontmatter.cover}
                   alt={frontmatter.titre}
@@ -128,6 +128,15 @@ export default async function AventurePage({ params }) {
               </div>
             ) : null}
           </header>
+
+          {/* Sans colonne latérale, le sommaire se plie et se pose sous
+              l'en-tête : le plan de la campagne se lit avant d'entrer dedans,
+              et chaque entrée y mène directement. */}
+          <Sommaire
+            sections={frontmatter.sections}
+            repliable
+            className="mt-7 lg:hidden"
+          />
 
           <SectionsAventure sections={frontmatter.sections} rendus={rendus} />
 
