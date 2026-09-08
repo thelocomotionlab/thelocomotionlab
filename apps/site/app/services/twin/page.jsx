@@ -70,7 +70,7 @@ export default function TwinPage() {
           <div className="mt-5 h-[3px] w-16 rounded-full bg-brand-accent" aria-hidden="true" />
         </header>
 
-        <dl className="m-0 mt-10 grid grid-cols-1 gap-x-[18px] gap-y-5 text-lecture leading-relaxed sm:grid-cols-[140px_minmax(0,1fr)]">
+        <dl className="m-0 mt-10 grid grid-cols-1 gap-x-[18px] gap-y-5 text-lecture font-lecture leading-lecture sm:grid-cols-[140px_minmax(0,1fr)]">
           {TWIN.map(({ question, reponse }) => (
             <div key={question} className="contents">
               <dt className={`${ETIQUETTE} sm:pt-1.5`}>{question}</dt>
@@ -83,12 +83,12 @@ export default function TwinPage() {
           <div className="font-mono text-xxs font-bold uppercase tracking-etiquette text-brand-slate">
             Ce que ça coûte
           </div>
-          <p className="m-0 mt-2.5 max-w-[62ch] font-sans leading-[1.6] text-brand-ink [text-wrap:pretty]">
+          <p className="m-0 mt-2.5 max-w-[40em] font-sans text-lecture font-lecture leading-lecture text-brand-ink [text-wrap:pretty]">
             Rien. Le Twin s&rsquo;obtient en échange de ton archive d&rsquo;entraînement : elle
             sert à valider le moteur sur des données réelles, et ton plan de course est la
             contrepartie.
           </p>
-          <p className="m-0 mt-4 max-w-[62ch] font-sans leading-[1.6] text-brand-soft [text-wrap:pretty]">
+          <p className="m-0 mt-4 max-w-[40em] font-sans text-lecture font-lecture leading-lecture text-brand-soft [text-wrap:pretty]">
             L&rsquo;outil est en cours de calibration. C&rsquo;est précisément le moment où une
             archive de plus compte.
           </p>
@@ -101,7 +101,7 @@ export default function TwinPage() {
           </Link>
         </section>
 
-        <p className="m-0 mt-8 max-w-[62ch] font-sans leading-relaxed text-brand-soft [text-wrap:pretty]">
+        <p className="m-0 mt-8 max-w-[40em] font-sans text-lecture font-lecture leading-lecture text-brand-soft [text-wrap:pretty]">
           Le Twin est le premier module d&rsquo;une plateforme en construction : d&rsquo;autres
           outils en ligne viendront s&rsquo;y ajouter.
         </p>

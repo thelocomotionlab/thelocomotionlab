@@ -6,8 +6,9 @@
 // des données réelles, puis est supprimée. Tout l'interactif (choix de
 // la montre, dépôt, formulaire, envoi vers le service twin-depot du VPS)
 // vit dans components/twin/CohorteForm.jsx.
-import PageHeader from "@/components/PageHeader";
 import CohorteForm from "@/components/twin/CohorteForm";
+import FilDAriane from "@/components/contenu/FilDAriane";
+import RetourAIndex from "@/components/contenu/RetourAIndex";
 import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
 export const metadata = {
@@ -37,23 +38,40 @@ export const metadata = {
 
 export default function CohortePage() {
   return (
-    <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
-      <PageHeader
-        title="Rejoindre la cohorte"
-        tagline="Tes courses passées font avancer l'outil"
+    <div className="mx-auto max-w-[1180px] px-6 pt-10 md:px-8">
+      <FilDAriane
+        maillons={[
+          { href: "/services", label: "Services" },
+          { href: "/services/twin", label: "Locomotion Twin" },
+          { label: "Rejoindre la cohorte" },
+        ]}
       />
 
-      {/* Colonne de lecture large (max-w-3xl) → justifié à partir de md,
-          comme /quete, /a-propos et /outils/twin (audit des titres, 08/2026). */}
-      <p className="mb-9 text-[16.5px] leading-[1.65] text-gray-700 text-left hyphens-auto md:text-justify">
-        Le Twin apprend sur des données réelles. En rejoignant la cohorte, tu
-        me confies ton archive d&rsquo;entraînement : elle sert à calibrer et
-        valider le moteur, puis elle est <strong>supprimée</strong>. En
-        échange, tu recevras ton plan de course gratuit dès que ton jumeau
-        sera prêt.
-      </p>
+      <article className="mx-auto mt-9 max-w-[860px] pb-6">
+        <header>
+          <div className="font-mono text-meta font-semibold uppercase tracking-etiquette text-brand-muted">
+            <span className="font-bold text-brand-slate-dark">En ligne</span>
+          </div>
+          <h1 className="mt-4 font-heading text-[32px] font-bold leading-[1.05] tracking-[-0.015em] text-brand-slate-dark md:text-[42px]">
+            Rejoindre la cohorte
+          </h1>
+          <p className="m-0 mt-3.5 max-w-[46ch] font-sans text-xl font-light leading-snug text-brand-deep-dark [text-wrap:pretty]">
+            Tes courses passées font avancer l&rsquo;outil.
+          </p>
+          <div className="mt-5 h-[3px] w-16 rounded-full bg-brand-accent" aria-hidden="true" />
+        </header>
 
-      <CohorteForm />
-    </article>
+        <p className="mb-9 mt-8 max-w-[40em] font-sans text-lecture font-lecture leading-lecture text-brand-ink [text-wrap:pretty]">
+          Le Twin apprend sur des données réelles. En rejoignant la cohorte, tu me confies ton
+          archive d&rsquo;entraînement : elle sert à calibrer et valider le moteur, puis elle est{" "}
+          <strong>supprimée</strong>. En échange, tu recevras ton plan de course gratuit dès que
+          ton jumeau sera prêt.
+        </p>
+
+        <CohorteForm />
+
+        <RetourAIndex href="/services/twin" label="Retour au Locomotion Twin" />
+      </article>
+    </div>
   );
 }
