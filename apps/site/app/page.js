@@ -363,7 +363,7 @@ export default async function HomePage() {
               </h2>
               <Accroche>Le carnet de bord, au jour le jour.</Accroche>
               <p className="mt-5 max-w-[40ch] text-[16.5px] leading-[1.7] text-brand-ink text-pretty">
-                L'actualité du labo au fil de l'eau.
+                L&rsquo;actualité du labo au fil de l&rsquo;eau.
               </p>
               <Link
                 href="/blog"
