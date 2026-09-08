@@ -31,14 +31,31 @@ const ACTION_PRIMAIRE =
 const ACTION_SECONDAIRE =
   "inline-block rounded-full border-[1.5px] border-brand-deep px-5 py-[8.5px] font-heading text-[14.5px] font-semibold text-brand-deep no-underline transition-colors hover:bg-brand-deep hover:text-white";
 
+/** Écrites en toutes lettres : Tailwind ne voit pas une classe fabriquée. */
+const COLONNES = {
+  1: "sm:grid-cols-1",
+  2: "sm:grid-cols-2",
+  3: "sm:grid-cols-3",
+  4: "sm:grid-cols-4",
+};
+
 function Chiffres({ resume }) {
   return (
-    <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-brand-hairline pt-4 tabular-nums sm:grid-cols-4">
+    // Autant de colonnes que d'entrées, quatre au plus : à quatre colonnes
+    // fixes, trois repères en laissaient une vide et se serraient dans les
+    // trois autres — « Autonomie » débordait alors sur son voisin.
+    <dl
+      className={`mt-6 grid grid-cols-2 gap-x-5 gap-y-4 border-t border-brand-hairline pt-4 tabular-nums ${
+        COLONNES[Math.min(resume.length, 4)]
+      }`}
+    >
       {resume.map((entree) => {
         const { valeur, libelle } = chiffreDeCarte(entree);
         return (
-          <div key={valeur}>
-            <dd className="m-0 font-heading text-[28px] font-bold leading-none [text-wrap:balance]">
+          <div key={valeur} className="min-w-0">
+            {/* Un mot plus large que sa colonne se coupe plutôt que de mordre
+                sur la suivante. */}
+            <dd className="m-0 font-heading text-2xl font-bold leading-[1.1] [overflow-wrap:break-word] md:text-[28px]">
               {valeur}
             </dd>
             {libelle ? (

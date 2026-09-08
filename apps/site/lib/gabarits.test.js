@@ -8,7 +8,7 @@ import { describe, it, expect } from "vitest";
 
 import { TYPES, parAnnee } from "./blogRegistre";
 import { barreDeThemesVisible } from "./science";
-import { chiffreDeCarte, campagneLisible, ETATS } from "./aventure";
+import { chiffreDeCarte, campagneLisible, caloriesDe, ETATS } from "./aventure";
 import { dateLisible, dateEnToutesLettres, minutesDeLecture } from "./lisible";
 import { entrees } from "./blog";
 import { aventures, parSorte, urlDe, blocAventuresDeLAccueil } from "./contenu";
@@ -78,6 +78,16 @@ describe("l'étagère des aventures", () => {
 
   it("n'annonce qu'un départ quand l'aventure n'a pas de fin", () => {
     expect(campagneLisible({ debut: "2027-01-10" })).toBe("Départ le 10/01/2027");
+  });
+
+  it("lit les calories dans la description d'un article de paquetage", () => {
+    expect(caloriesDe("615 kcal")).toBe(615);
+    expect(caloriesDe("Gruau maison, 615 kcal par portion")).toBe(615);
+    expect(caloriesDe("1 200 kcal")).toBe(1200);
+    expect(caloriesDe("920,5 kcal")).toBe(920.5);
+    expect(caloriesDe("environ 920 Cal")).toBe(920);
+    expect(caloriesDe("sans indication")).toBe(null);
+    expect(caloriesDe(null)).toBe(null);
   });
 
   it("nomme les trois états du modèle", () => {

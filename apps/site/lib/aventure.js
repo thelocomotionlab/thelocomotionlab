@@ -10,6 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { agregerPaquetage, grammes } from "@/lib/paquetage";
+import { specDuGraphe } from "@/lib/grapheDePreparation";
 import { blocs, parSorte, recitDe, urlDe } from "@/lib/contenu";
 import { dateLisible } from "@/lib/lisible";
 
@@ -77,24 +78,62 @@ function paquetage(ref) {
 const CATEGORIE_ALIMENTAIRE = /aliment|nutrition|nourriture|ravitaillement/i;
 
 /**
+ * Les calories d'un article, lues dans sa DESCRIPTION.
+ *
+ * LighterPack n'a pas de champ d'énergie — la description est le seul champ
+ * libre qu'il exporte. Une description qui contient « 615 kcal » vaut donc
+ * déclaration, et la valeur est comptée PAR UNITÉ, comme la masse : trois
+ * gruaux à 615 kcal font 1 845 kcal.
+ */
+const KCAL = /([\d]+(?:[.,\s ][\d]+)*)\s*k?cal/i;
+
+export function caloriesDe(description) {
+  const trouve = KCAL.exec(description ?? "");
+  if (!trouve) return null;
+  const nombre = Number(trouve[1].replace(/[\s ]/g, "").replace(",", "."));
+  return Number.isFinite(nombre) ? nombre : null;
+}
+
+/** « 1 845 kcal » — même espace fine que les masses. */
+function calories(valeur) {
+  return `${Math.round(valeur).toLocaleString("fr-FR")} kcal`;
+}
+
+/**
  * Le tableau de nutrition embarquée, tiré de la catégorie alimentaire d'un
  * paquetage. `null` si le CSV n'existe pas ou n'a pas de telle catégorie : la
  * section n'affichera alors que son texte.
+ *
+ * La colonne d'apport n'apparaît que si au moins un article annonce ses
+ * calories : un paquetage qui ne les renseigne pas n'a pas de colonne vide.
  */
 function nutritionDuPaquetage(ref) {
   const donnees = paquetage(ref);
   const categorie = donnees?.paquetage.categories.find((c) => CATEGORIE_ALIMENTAIRE.test(c.nom));
   if (!categorie) return null;
 
+  const apports = categorie.articles.map((article) => {
+    const parUnite = caloriesDe(article.description);
+    return parUnite === null ? null : parUnite * article.quantite;
+  });
+  const avecApport = apports.some((apport) => apport !== null);
+  const total = apports.reduce((somme, apport) => somme + (apport ?? 0), 0);
+
   return {
-    colonnes: ["Aliment", "Qté", "Masse"],
+    colonnes: ["Aliment", "Qté", "Masse", ...(avecApport ? ["Apport"] : [])],
     lignes: [
-      ...categorie.articles.map((article) => [
+      ...categorie.articles.map((article, rang) => [
         article.nom,
         String(article.quantite),
         grammes(article.masse),
+        ...(avecApport ? [apports[rang] === null ? "" : calories(apports[rang])] : []),
       ]),
-      ["Total emporté", "", grammes(categorie.masse)],
+      [
+        "Total emporté",
+        "",
+        grammes(categorie.masse),
+        ...(avecApport ? [calories(total)] : []),
+      ],
     ],
   };
 }
@@ -104,11 +143,11 @@ function nutritionDuPaquetage(ref) {
  * paquetage, la nutrition embarquée, les billets des séances, les protocoles
  * rattachés, les corps des sections libres, la carte du récit.
  *
- * `cover` et `carte` sont des fabriques fournies par l'app : ce module ne rend
- * pas de JSX, il donne les chemins et les repères, la page en fait une image
- * et une carte.
+ * `cover`, `carte` et `graphe` sont des fabriques fournies par l'app : ce
+ * module ne rend pas de JSX, il donne les chemins, les repères et la spec, la
+ * page en fait une image, une carte et une figure.
  */
-export function rendusDe(aventure, { libres = {}, cover, carte } = {}) {
+export function rendusDe(aventure, { libres = {}, cover, carte, graphe } = {}) {
   const sections = aventure.frontmatter.sections;
   const rendus = { libres };
 
@@ -152,6 +191,10 @@ export function rendusDe(aventure, { libres = {}, cover, carte } = {}) {
   const preparation = sections.find((section) => section.type === "preparation");
   if (preparation) {
     rendus.billets = billetsParSlug();
+    if (preparation.graphe && graphe) {
+      const spec = specDuGraphe(preparation.graphe);
+      if (spec) rendus.graphe = graphe(spec);
+    }
     if (preparation.protocoles?.length) {
       rendus.protocoles = preparation.protocoles.map((id) =>
         blocs.carte(id, aventure.chemin),

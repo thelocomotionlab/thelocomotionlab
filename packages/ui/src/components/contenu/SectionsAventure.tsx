@@ -45,6 +45,8 @@ export type RendusDAventure = {
   >;
   /** Les tableaux de nutrition tirés d'un paquetage, par `ref`. */
   nutritions?: Record<string, TableauDeNutrition>;
+  /** La figure du volume, rendue par l'app — elle seule charge Plotly. */
+  graphe?: ReactNode;
   /** Les corps de section écrits dans le MDX, par `id`. Une section libre y
    *  puise tout son contenu ; une section structurée qui déclare un `id` y
    *  puise le texte qui présente son tableau. */
@@ -83,6 +85,7 @@ function corpsDeSection(section: Section, rendus: RendusDAventure): ReactNode {
           section={section}
           billets={rendus.billets}
           protocoles={rendus.protocoles}
+          graphe={rendus.graphe}
         />
       );
 

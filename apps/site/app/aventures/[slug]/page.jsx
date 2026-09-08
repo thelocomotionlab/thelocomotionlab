@@ -18,6 +18,7 @@ import DonneesStructurees from "@/components/DonneesStructurees";
 import FilDAriane from "@/components/contenu/FilDAriane";
 import Corps from "@/components/contenu/Corps";
 import MapEmbed from "@/components/MapEmbedLazy";
+import Plot from "@/components/PlotLazy";
 import RetourAIndex from "@/components/contenu/RetourAIndex";
 import { referencesDePage } from "@/components/contenu/references";
 import { filDAriane, pageDeContenu } from "@/lib/jsonld";
@@ -75,6 +76,11 @@ export default async function AventurePage({ params }) {
     cover: (src, alt) => <Image src={src} alt={alt} width={900} height={600} />,
     carte: (gpxUrl, reperes) => (
       <MapEmbed gpx={gpxUrl} reperes={reperes} defaultMinHeight={420} />
+    ),
+    graphe: (spec) => (
+      <div className="mt-3.5">
+        <Plot donnees={spec} height={300} />
+      </div>
     ),
   });
 

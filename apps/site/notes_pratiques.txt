@@ -91,3 +91,16 @@ Icônes des repères de trace (champ `icone` d'un repère, section geo) :
   route            sablier          sac              salade           sandales         secours
   sentier          soleil           sommet           temperature      tortue           valide
   velo             vent             video            village
+
+Nutrition embarquée depuis LighterPack :
+- dans la fiche d'aventure, la section nutrition s'écrit
+    - type: nutrition
+      titre: "Nutrition embarquée"
+      ref: "tour-des-ecrins"      # le nom du .csv, sans l'extension
+- le tableau est produit depuis la catégorie de nourriture du paquetage
+  (une catégorie nommée Alimentation, Nutrition, Nourriture ou Ravitaillement)
+- LighterPack n'a pas de champ d'énergie : les calories s'écrivent dans la
+  DESCRIPTION de l'article, par exemple « 615 kcal » ou « gruau, 615 kcal »
+- la valeur est comptée PAR UNITÉ, comme la masse : 3 gruaux à 615 kcal = 1 845
+- la colonne Apport n'apparaît que si au moins un article en déclare
+- sans .csv ou sans catégorie de nourriture, la section n'affiche que son texte

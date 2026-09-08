@@ -68,23 +68,26 @@ export default function Stresseurs({ stresseurs, billets = {} }: StresseursProps
                   </p>
                 ) : null}
               </div>
-              {/* Les trois mesures en colonnes de largeur fixe : d'un stresseur
-                  au suivant, Dose, Fréquence et Intensité restent alignées. */}
-              <dl className="m-0 grid grid-cols-3 divide-x divide-brand-grid md:w-[25rem]">
-                {MESURES.map(({ cle, libelle }) => (
-                  <div
-                    key={cle}
-                    className="flex flex-col items-center justify-start gap-1.5 px-3 text-center"
-                  >
-                    <dt className="font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
-                      {libelle}
-                    </dt>
-                    <dd className="m-0 font-mono text-xs leading-snug text-balance">
-                      {stresseur[cle]}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
+              {/* Les mesures renseignées, en colonnes de largeur fixe : d'un
+                  stresseur au suivant, elles restent alignées. Un stresseur qui
+                  n'en déclare aucune n'a pas de colonne vide. */}
+              {MESURES.some(({ cle }) => stresseur[cle]) ? (
+                <dl className="m-0 grid grid-cols-3 divide-x divide-brand-grid md:w-[25rem]">
+                  {MESURES.map(({ cle, libelle }) => (
+                    <div
+                      key={cle}
+                      className="flex flex-col items-center justify-start gap-1.5 px-3 text-center"
+                    >
+                      <dt className="font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
+                        {libelle}
+                      </dt>
+                      <dd className="m-0 font-mono text-xs leading-snug text-balance">
+                        {stresseur[cle] ?? <span className="text-brand-faint">—</span>}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
             </div>
           ))}
         </div>

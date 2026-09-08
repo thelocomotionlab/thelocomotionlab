@@ -144,10 +144,12 @@ const Graphe = z
  */
 const Stresseur = z.strictObject({
   nom: z.string().min(1),
-  dose: z.string().min(1),
-  frequence: z.string().min(1),
-  intensite: z.string().min(1),
   pourquoi: z.string().min(1),
+  // Les trois mesures sont facultatives : tout ne se dose pas en chiffres, et
+  // un stresseur raconté « en pratique » n'a pas de case vide à remplir.
+  dose: z.string().min(1).optional(),
+  frequence: z.string().min(1).optional(),
+  intensite: z.string().min(1).optional(),
   en_pratique: z.string().min(1).optional(),
   billet: identifiant.optional(),
 });

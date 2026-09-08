@@ -10,6 +10,7 @@
 // Une préparation qui n'a que des stresseurs rend les stresseurs, et rien
 // d'autre : pas d'intertitre vide, pas de cadre en attente.
 
+import type { ReactNode } from "react";
 import type { Section } from "@locomotionlab/contenu/sections";
 import type { CarteDeBloc as DonneesDeCarte } from "@locomotionlab/contenu/resolveur";
 import Graphe from "./Graphe.tsx";
@@ -24,6 +25,11 @@ export type PreparationProps = {
   billets?: Record<string, BilletDeSeance>;
   /** Les blocs de `protocoles`, déjà résolus dans l'index. */
   protocoles?: readonly DonneesDeCarte[];
+  /**
+   * La figure du volume rendue par l'app — interactive, elle donne au survol
+   * d'une semaine toutes ses valeurs. Sans elle, le graphe statique suffit.
+   */
+  graphe?: ReactNode;
 };
 
 /**
@@ -46,7 +52,12 @@ function colonnesNumeriques(colonnes: readonly string[]): number[] {
     .filter((index) => index >= 0);
 }
 
-export default function Preparation({ section, billets = {}, protocoles = [] }: PreparationProps) {
+export default function Preparation({
+  section,
+  billets = {},
+  protocoles = [],
+  graphe: figure,
+}: PreparationProps) {
   const { graphe, seances, stresseurs } = section;
 
   return (
@@ -54,7 +65,7 @@ export default function Preparation({ section, billets = {}, protocoles = [] }: 
       {graphe ? (
         <>
           <Intertitre>Volume hebdomadaire</Intertitre>
-          <Graphe graphe={graphe} />
+          {figure ?? <Graphe graphe={graphe} />}
         </>
       ) : null}
 

@@ -164,13 +164,19 @@ const DEFAULT_CONFIG = {
   modeBarButtonsToRemove: ["lasso2d", "select2d"],
 };
 
-export default function Plot({ src, height = 420 }) {
+/**
+ * `src` charge une spec depuis un fichier ; `donnees` en fournit une déjà
+ * construite — un graphe dérivé d'un frontmatter n'a pas de JSON à déposer
+ * dans public/ pour être affiché.
+ */
+export default function Plot({ src, donnees, height = 420 }) {
   const containerRef = useRef(null);
-  const [spec, setSpec] = useState(null);
+  const [specChargee, setSpec] = useState(null);
   const [error, setError] = useState(null);
+  const spec = donnees ?? specChargee;
 
   useEffect(() => {
-    if (!src) return undefined;
+    if (!src || donnees) return undefined;
     let cancelled = false;
     setError(null);
     fetch(src, { cache: "no-cache" })
@@ -187,7 +193,7 @@ export default function Plot({ src, height = 420 }) {
     return () => {
       cancelled = true;
     };
-  }, [src]);
+  }, [src, donnees]);
 
   useEffect(() => {
     if (!spec || !containerRef.current) return undefined;
