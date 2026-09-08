@@ -9,11 +9,10 @@
 
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import CardMeta from "@/components/CardMeta";
+import Carrousel from "@/components/Carrousel";
 
 function Card({ item, tone }) {
   const shadow =
@@ -55,97 +54,24 @@ function Card({ item, tone }) {
   );
 }
 
-function ArrowButton({ direction, onClick, enabled, tone }) {
-  const Icon = direction === "prev" ? ChevronLeft : ChevronRight;
-  const toneClass =
-    tone === "dark"
-      ? "border-white/70 text-white hover:bg-white hover:text-brand-deep-dark"
-      : "border-brand-primary-dark/50 text-brand-primary-dark hover:bg-brand-primary-dark hover:text-white";
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={!enabled}
-      aria-label={
-        direction === "prev" ? "Cartes précédentes" : "Cartes suivantes"
-      }
-      className={`hidden h-10 w-10 items-center justify-center rounded-full border-[1.5px] transition md:inline-flex ${toneClass} ${
-        enabled ? "cursor-pointer" : "pointer-events-none opacity-30"
-      }`}
-    >
-      <Icon size={20} aria-hidden="true" />
-    </button>
-  );
-}
-
 // `actions` : contenu de la rangée sous le carrousel (CTA « Voir tout »,
 // indicateur live…), rendu à gauche des flèches de navigation.
 export default function ExplorerCarousel({ items, actions = null, tone = "dark" }) {
-  const scrollerRef = useRef(null);
-  const [canPrev, setCanPrev] = useState(false);
-  const [canNext, setCanNext] = useState(false);
-
-  const update = useCallback(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    setCanPrev(el.scrollLeft > 4);
-    setCanNext(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
-  }, []);
-
-  useEffect(() => {
-    update();
-    const el = scrollerRef.current;
-    el?.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    return () => {
-      el?.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-    };
-  }, [update]);
-
-  const scrollByCards = (dir) => {
-    // Deux cartes par clic : largeur carte (250) + gap (20).
-    scrollerRef.current?.scrollBy({ left: dir * 540, behavior: "smooth" });
-  };
-
   return (
-    <div>
-      <div
-        ref={scrollerRef}
-        role="region"
-        aria-label="Récits et projets récents"
-        // Mobile : carrousel VERTICAL — fenêtre de 3 cartes exactement
-        // (hauteur fixe des cartes), accroche snap-y, fine barre bleue sur
-        // le côté comme indicateur. Desktop : défilement horizontal ; marges
-        // négatives compensant le padding qui évite de rogner les ombres et
-        // le hover surélevé.
-        className="ll-vscroll ll-vscroll-md-none flex max-h-[288px] snap-y flex-col gap-3 overflow-y-auto pr-2 md:-mx-1 md:-mb-6 md:-mt-3 md:max-h-none md:snap-x md:flex-row md:gap-5 md:overflow-x-auto md:overflow-y-visible md:px-1 md:pb-6 md:pt-3"
-      >
-        {items.map((item) => (
-          <Card key={item.key} item={item} tone={tone} />
-        ))}
-      </div>
-
-      <div className="mt-7 flex flex-wrap items-center gap-5 md:mt-[34px] md:gap-[22px]">
-        {actions}
-        {(canPrev || canNext) && (
-          <div className="ml-auto hidden gap-3 md:flex">
-            <ArrowButton
-              direction="prev"
-              onClick={() => scrollByCards(-1)}
-              enabled={canPrev}
-              tone={tone}
-            />
-            <ArrowButton
-              direction="next"
-              onClick={() => scrollByCards(1)}
-              enabled={canNext}
-              tone={tone}
-            />
-          </div>
-        )}
-      </div>
-    </div>
+    <Carrousel
+      label="Récits et projets récents"
+      actions={actions}
+      tone={tone}
+      // Mobile : carrousel VERTICAL — fenêtre de 3 cartes exactement
+      // (hauteur fixe des cartes), accroche snap-y, fine barre bleue sur
+      // le côté comme indicateur. Desktop : défilement horizontal ; marges
+      // négatives compensant le padding qui évite de rogner les ombres et
+      // le hover surélevé.
+      scrollerClassName="ll-vscroll ll-vscroll-md-none flex max-h-[288px] snap-y flex-col gap-3 overflow-y-auto pr-2 md:-mx-1 md:-mb-6 md:-mt-3 md:max-h-none md:snap-x md:flex-row md:gap-5 md:overflow-x-auto md:overflow-y-visible md:px-1 md:pb-6 md:pt-3"
+    >
+      {items.map((item) => (
+        <Card key={item.key} item={item} tone={tone} />
+      ))}
+    </Carrousel>
   );
 }

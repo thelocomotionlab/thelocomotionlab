@@ -10,6 +10,8 @@
 import Link from "next/link";
 import Image from "next/image";
 
+import Apercu from "@/components/contenu/Apercu";
+import Carrousel from "@/components/Carrousel";
 import DonneesStructurees from "@/components/DonneesStructurees";
 import EmailCapture from "@/components/EmailCapture";
 import LiveBanner from "@/components/LiveBanner";
@@ -130,7 +132,7 @@ function CarteDAccueil({ carte }) {
   return (
     <Link
       href={carte.url}
-      className="block w-full overflow-hidden rounded-[10px] bg-brand-paper text-brand-text no-underline shadow-vignette transition-transform duration-200 md:w-[250px] md:hover:-translate-y-1.5"
+      className="block w-[250px] shrink-0 snap-start overflow-hidden rounded-[10px] bg-brand-paper text-brand-text no-underline shadow-vignette transition-transform duration-200 md:hover:-translate-y-1.5"
     >
       {/* La vignette est rendue même sans photo : sans elle, une carte sans
           cover se décale par rapport à ses voisines. Au format des couvertures
@@ -193,6 +195,17 @@ export default async function HomePage() {
   const registreRows = getRegistreRows();
   const cartesDAventure = blocAventuresDeLAccueil();
   const dernieresEntrees = entreesDuBlog().slice(0, 4);
+
+  // Rendu à gauche des flèches du carrousel, ou seul s'il n'y a rien à faire
+  // défiler.
+  const voirToutesLesAventures = (
+    <Link
+      href="/aventures"
+      className="inline-block rounded-full border-[1.5px] border-white/70 px-[26px] py-3 text-[15.5px] font-semibold text-white transition hover:bg-white hover:text-brand-deep-dark"
+    >
+      Voir tout
+    </Link>
+  );
 
   return (
     // -mb-12 : annule le mt-12 du Footer partagé pour que la bande email
@@ -315,21 +328,24 @@ export default async function HomePage() {
           </p>
 
           {cartesDAventure.length > 0 ? (
-            <div className="mt-8 flex flex-wrap gap-5 md:mt-[38px]">
-              {cartesDAventure.map((carte) => (
-                <CarteDAccueil key={carte.url} carte={carte} />
-              ))}
+            <div className="mt-8 md:mt-[38px]">
+              <Carrousel
+                label="Aventures récentes"
+                actions={voirToutesLesAventures}
+                // Une rangée qui défile, du téléphone au grand écran : les
+                // cartes gardent leur largeur, on les fait glisser au doigt ou
+                // aux flèches. Le padding évite de rogner l'ombre et le
+                // soulèvement au survol, les marges négatives le compensent.
+                scrollerClassName="ll-vscroll ll-vscroll-md-none -mx-1 -mb-6 -mt-3 flex snap-x gap-5 overflow-x-auto px-1 pb-6 pt-3"
+              >
+                {cartesDAventure.map((carte) => (
+                  <CarteDAccueil key={carte.url} carte={carte} />
+                ))}
+              </Carrousel>
             </div>
-          ) : null}
-
-          <div className="mt-9 flex flex-wrap items-center gap-8">
-            <Link
-              href="/aventures"
-              className="inline-block rounded-full border-[1.5px] border-white/70 px-[26px] py-3 text-[15.5px] font-semibold text-white transition hover:bg-white hover:text-brand-deep-dark"
-            >
-              Voir tout
-            </Link>
-          </div>
+          ) : (
+            <div className="mt-9">{voirToutesLesAventures}</div>
+          )}
         </div>
       </section>
 
@@ -371,11 +387,9 @@ export default async function HomePage() {
                     <span className="block font-heading text-lecture font-semibold leading-[1.3]">
                       {entree.titre}
                     </span>
-                    {entree.chapeau ? (
-                      <span className="mt-1 block text-[15px] leading-normal text-brand-soft [text-wrap:pretty]">
-                        {entree.chapeau}
-                      </span>
-                    ) : null}
+                    <Apercu className="mt-1 text-[15px] text-brand-soft [text-wrap:pretty]">
+                      {entree.chapeau}
+                    </Apercu>
                   </span>
                   <span className="mt-1.5 whitespace-nowrap font-mono text-xxs font-semibold uppercase tracking-lien text-brand-muted sm:col-start-3 sm:mt-0">
                     {entree.typeLabel}
