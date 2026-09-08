@@ -38,7 +38,6 @@ describe("ancres", () => {
     allongee.sections.unshift({
       type: "geo",
       titre: "Trace",
-      carte: "TODO",
       colonnes: ["Repère", "km"],
       lignes: [["Vénosc", "0"]],
     } as never);

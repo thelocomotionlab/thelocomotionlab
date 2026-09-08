@@ -164,7 +164,7 @@ function CarteDAccueil({ carte }) {
           {carte.titre}
         </div>
         <div className="mt-auto pt-2 font-mono text-xxs text-brand-soft tabular-nums">
-          {carte.chiffres.join(" · ")}
+          {carte.chiffres.map((entree) => chiffreDeCarte(entree).valeur).join(" · ")}
         </div>
       </div>
     </Link>

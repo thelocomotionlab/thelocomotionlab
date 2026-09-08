@@ -37,8 +37,10 @@ function Chiffres({ resume }) {
       {resume.map((entree) => {
         const { valeur, libelle } = chiffreDeCarte(entree);
         return (
-          <div key={entree}>
-            <dd className="m-0 font-heading text-[28px] font-bold leading-none">{valeur}</dd>
+          <div key={valeur}>
+            <dd className="m-0 font-heading text-[28px] font-bold leading-none [text-wrap:balance]">
+              {valeur}
+            </dd>
             {libelle ? (
               <dt className="mt-1.5 font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
                 {libelle}

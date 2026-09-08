@@ -8,9 +8,9 @@ etat: termine
 campagne: { debut: 2026-05-17, fin: 2026-08-25 }
 cover: "/images/articles/mon-tour-des-ecrins-en-80-heures/cover_mon-tour-des-ecrins-en-80-heures.webp"
 resume:
-  - "198 km"
-  - "12 767 m D+"
-  - "4 jours"
+  - { label: "Type de projet", valeur: "OFF" }
+  - { label: "Conditions", valeur: "Autonomie" }
+  - { label: "Distance", valeur: "Ultra" }
 recit: "tour-des-ecrins-80-heures"
 sections:
   - type: caracteristiques
@@ -26,7 +26,6 @@ sections:
   - type: geo
     id: "les-quatre-jours"
     titre: "Les quatre jours"
-    carte: "TODO"
     gpx: "tour-des-ecrins.gpx"
     reperes:
       - { nom: "Valgaudémar", km: 57.5, icone: "bivouac" }
@@ -78,12 +77,7 @@ sections:
   - type: nutrition
     id: "nutrition-embarquee"
     titre: "Nutrition embarquée"
-    colonnes: ["Repas", "Composition", "Masse sèche", "Apport"]
-    lignes:
-      - ["Petit-déjeuner", "30 g coco râpée, 30 g amandes moulues, 30 g lait entier en poudre, 25 g flocons d'avoine complets, 120 g d'eau froide", "115 g", "≈ 615 kcal"]
-      - ["Déjeuners et dîners", "40 g huile d'olive, 55 g couscous complet, 45 g parmesan, 25 g sésame moulu, 10 g tomates séchées, 140 g d'eau froide", "175 g", "≈ 920 kcal"]
-      - ["Snacks", "24 boules d'énergie, 3 saucissons, une douzaine de flasques isotoniques", "TODO", "TODO"]
-      - ["Total emporté", "", "TODO", "≈ 16 000 kcal"]
+    ref: "tour-des-ecrins"
 
   - type: direct
     id: "direct"

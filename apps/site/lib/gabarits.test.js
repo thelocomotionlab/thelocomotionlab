@@ -69,10 +69,10 @@ describe("l'étagère des aventures", () => {
 
   it("tait l'année du début quand la période tient dans une seule", () => {
     expect(campagneLisible({ debut: "2025-09-29", fin: "2025-11-30" })).toBe(
-      "Du 29/09 au 30/11/2025",
+      "Prépa du 29/09 au 30/11/2025",
     );
     expect(campagneLisible({ debut: "2026-12-28", fin: "2027-01-05" })).toBe(
-      "Du 28/12/2026 au 05/01/2027",
+      "Prépa du 28/12/2026 au 05/01/2027",
     );
   });
 

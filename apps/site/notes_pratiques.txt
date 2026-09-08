@@ -67,3 +67,27 @@ server {
     #  Redirection HTTP -> HTTPS
     error_page 497 https://$host$request_uri;
 }
+
+Icônes des repères de trace (champ `icone` d'un repère, section geo) :
+- s'écrit en minuscules, sans accent
+- une clé inconnue ne casse rien : le repère prend la punaise générique
+- la liste vit dans apps/site/lib/liveWaypointIcons.js ; pour en ajouter une,
+  la choisir sur https://lucide.dev/icons, l'importer nommément, et lui donner
+  une clé dans WAYPOINT_ICONES
+
+  amis             ancre            animal           arrivee          balance          balise
+  barre            barres           batterie         bivouac          blessure         brouillard
+  cafe             calendrier       carnet           carte            casque           chaud
+  choc             chrono           cible            coeur            col              commerce
+  coucher-soleil   courbe           danger           depart           eau              eclat
+  etoile           explorer         feu              fiole            force            foret
+  froid            fruit            gourde           heure            hydratation      idee
+  itineraire       jumelles         lever-soleil     lien             lievre           limite
+  livre            loupe            mental           message          micro            microscope
+  montagne         neige            nuage            nuit             oeil             orage
+  panneau          partage          pharmacie        photo            physiologie      pluie
+  plume            poids            pouls            pousse           question         ravitaillement
+  recharge         refuge           regle            repas            repere           riviere
+  route            sablier          sac              salade           sandales         secours
+  sentier          soleil           sommet           temperature      tortue           valide
+  velo             vent             video            village

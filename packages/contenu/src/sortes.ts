@@ -118,8 +118,21 @@ export const Aventure = z.strictObject({
     fin: DateDeContenu.optional(),
   }),
   cover: z.string().min(1),
-  /** Les chiffres affichés sur la carte de l'index Aventures. */
-  resume: z.array(z.string().min(1)).min(1),
+  /**
+   * Les trois repères affichés sur la carte de l'index Aventures.
+   *
+   * `{ label, valeur }` nomme ce qu'on montre — « Type de projet : OFF ». La
+   * forme courte, une simple chaîne, reste lue : « 198 km » y détache seul son
+   * nombre de son unité.
+   */
+  resume: z
+    .array(
+      z.union([
+        z.string().min(1),
+        z.strictObject({ label: z.string().min(1), valeur: z.string().min(1) }),
+      ]),
+    )
+    .min(1),
   /** Slug du récit. Absent tant que le récit n'existe pas. */
   recit: slugDePage.optional(),
   sections: Sections.default([]),

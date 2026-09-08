@@ -9,7 +9,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { agregerPaquetage } from "@/lib/paquetage";
+import { agregerPaquetage, grammes } from "@/lib/paquetage";
 import { blocs, parSorte, recitDe, urlDe } from "@/lib/contenu";
 import { dateLisible } from "@/lib/lisible";
 
@@ -37,15 +37,23 @@ export function campagneLisible(campagne) {
   const fin = dateLisible(campagne.fin);
   const memeAnnee = campagne.debut.slice(0, 4) === campagne.fin.slice(0, 4);
   const debutCourt = memeAnnee ? `${jourDebut}/${moisDebut}` : debut;
-  return `Du ${debutCourt} au ${fin}`;
+  return `Prépa du ${debutCourt} au ${fin}`;
 }
 
 /**
- * Un chiffre du `resume` en valeur et libellé : « 9 800 m D+ » se lit « 9 800 »
- * sous « m D+ ». Une entrée qui ne commence pas par un nombre reste entière —
- * « sandales » n'a pas de valeur à détacher.
+ * Une entrée du `resume` en valeur et libellé.
+ *
+ * `{ label, valeur }` dit les deux : « OFF » sous « Type de projet ». Une
+ * chaîne détache son nombre de son unité — « 9 800 m D+ » se lit « 9 800 » sous
+ * « m D+ » — et reste entière quand elle n'en a pas : « sandales » n'a pas de
+ * valeur à détacher.
  */
-export function chiffreDeCarte(texte) {
+export function chiffreDeCarte(entree) {
+  if (typeof entree === "object" && entree !== null) {
+    return { valeur: entree.valeur, libelle: entree.label };
+  }
+
+  const texte = entree;
   const trouve = /^([\d\s.,]+)\s+(.+)$/.exec(texte.trim());
   if (!trouve) return { valeur: texte, libelle: null };
   return { valeur: trouve[1].trim(), libelle: trouve[2].trim() };
@@ -65,10 +73,36 @@ function paquetage(ref) {
   };
 }
 
+/** Ce qui, dans un paquetage, est de la nourriture. */
+const CATEGORIE_ALIMENTAIRE = /aliment|nutrition|nourriture|ravitaillement/i;
+
+/**
+ * Le tableau de nutrition embarquée, tiré de la catégorie alimentaire d'un
+ * paquetage. `null` si le CSV n'existe pas ou n'a pas de telle catégorie : la
+ * section n'affichera alors que son texte.
+ */
+function nutritionDuPaquetage(ref) {
+  const donnees = paquetage(ref);
+  const categorie = donnees?.paquetage.categories.find((c) => CATEGORIE_ALIMENTAIRE.test(c.nom));
+  if (!categorie) return null;
+
+  return {
+    colonnes: ["Aliment", "Qté", "Masse"],
+    lignes: [
+      ...categorie.articles.map((article) => [
+        article.nom,
+        String(article.quantite),
+        grammes(article.masse),
+      ]),
+      ["Total emporté", "", grammes(categorie.masse)],
+    ],
+  };
+}
+
 /**
  * Tout ce que SectionsAventure ne sait pas rendre seul : les données de
- * paquetage, les billets des séances, les protocoles rattachés, les corps des
- * sections libres, la carte du récit.
+ * paquetage, la nutrition embarquée, les billets des séances, les protocoles
+ * rattachés, les corps des sections libres, la carte du récit.
  *
  * `cover` et `carte` sont des fabriques fournies par l'app : ce module ne rend
  * pas de JSX, il donne les chemins et les repères, la page en fait une image
@@ -84,6 +118,15 @@ export function rendusDe(aventure, { libres = {}, cover, carte } = {}) {
     if (donnees) jeux[section.ref] = donnees;
   }
   if (Object.keys(jeux).length > 0) rendus.paquetages = jeux;
+
+  // La nutrition embarquée est déjà pesée dans le paquetage : une section qui
+  // déclare un `ref` la lit là plutôt que de la faire recopier.
+  const tables = {};
+  for (const section of sections.filter((s) => s.type === "nutrition" && s.ref)) {
+    const table = nutritionDuPaquetage(section.ref);
+    if (table) tables[section.ref] = table;
+  }
+  if (Object.keys(tables).length > 0) rendus.nutritions = tables;
 
   // La trace d'une section geo : la carte la lit dans public/tracks, où vivent
   // les GPX du site, et le bouton de téléchargement pointe au même endroit.
@@ -130,7 +173,7 @@ export function rendusDe(aventure, { libres = {}, cover, carte } = {}) {
           ? cover(coverDuRecit, recit.frontmatter.titre)
           : undefined,
       action:
-        aventure.frontmatter.etat === "termine" ? "Lire le récit" : "Suivre la campagne",
+        aventure.frontmatter.etat === "termine" ? "Lire le récit" : "Suivre l'aventure",
     };
   }
 

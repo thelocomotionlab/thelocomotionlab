@@ -97,7 +97,7 @@ export default function Preparation({ section, billets = {}, protocoles = [] }: 
       {stresseurs ? (
         <>
           <Intertitre>Stresseurs hormétiques</Intertitre>
-          <Stresseurs stresseurs={stresseurs} />
+          <Stresseurs stresseurs={stresseurs} billets={billets} />
         </>
       ) : null}
 

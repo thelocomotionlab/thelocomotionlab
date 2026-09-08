@@ -8,9 +8,9 @@ etat: termine
 campagne: { debut: 2025-09-29, fin: 2025-11-30 }
 cover: "/images/projets/traversee-reunion/cover_traversee_reunion.webp"
 resume:
-  - "170 km"
-  - "9 800 m dénivelé"
-  - "Autonomie"
+  - { label: "Type de projet", valeur: "OFF" }
+  - { label: "Conditions", valeur: "Autonomie" }
+  - { label: "Distance", valeur: "Ultra" }
 recit: "ile-intense"
 sections:
   - type: caracteristiques
@@ -27,7 +27,6 @@ sections:
   - type: geo
     id: "trace"
     titre: "Trace"
-    carte: "TODO"
     gpx: "reunion-r2_komoot.gpx"
     reperes:
       - { nom: "Piton des Neiges", km: 92.3, icone: "montagne" }
@@ -56,6 +55,7 @@ sections:
           frequence: "TODO"
           intensite: "300 m D+ en respiration nasale, puis de longues heures sur l'UTMC OFF"
           pourquoi: "Transférer la charge du système musculaire vers le système squelettique et préserver les quadriceps pour les descentes."
+          billet: "rest-step"
         - nom: "Charge du sac"
           dose: "6 kg, puis 7,4 kg, puis 8,5 kg au départ"
           frequence: "TODO"

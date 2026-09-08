@@ -115,6 +115,7 @@ import { Sandale } from "./iconesMaison";
 export const WAYPOINT_ICONES = {
   // Relief
   sommet: MountainSnow,
+  montagne: Mountain,
   col: Mountain,
   neige: Snowflake,
   // Le sac et ce qu'il porte

@@ -29,7 +29,6 @@ const SECTIONS: Section[] = [
 const GEO: Section = {
   type: "geo",
   titre: "Trace",
-  carte: "TODO",
   colonnes: ["Repère", "km"],
   lignes: [["Vénosc", "0"]],
 };

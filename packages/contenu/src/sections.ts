@@ -100,7 +100,6 @@ export const SectionGeo = z
   .strictObject({
     type: z.literal("geo"),
     ...communs,
-    carte: z.string().min(1),
     gpx: z.string().min(1).optional(),
     reperes: z.array(Repere).optional(),
     ...champsDeTableau,
@@ -136,13 +135,21 @@ const Graphe = z
     });
   });
 
-/** Schéma fixe d'un stresseur : rien de libre, cinq champs, tous requis. */
+/**
+ * Un stresseur : ce qu'on a cherché, ce qu'on a dosé, et ce qu'on en a fait.
+ *
+ * `en_pratique` raconte le geste réel là où `dose`, `frequence` et `intensite`
+ * ne donnent que des ordres de grandeur ; `billet` renvoie au texte qui le
+ * raconte en entier, quand il existe.
+ */
 const Stresseur = z.strictObject({
   nom: z.string().min(1),
   dose: z.string().min(1),
   frequence: z.string().min(1),
   intensite: z.string().min(1),
   pourquoi: z.string().min(1),
+  en_pratique: z.string().min(1).optional(),
+  billet: identifiant.optional(),
 });
 
 export const SectionPreparation = z.strictObject({
@@ -175,10 +182,38 @@ export const SectionPaquetage = z.strictObject({
 });
 
 // ── nutrition ───────────────────────────────────────────────────────────────
+// Deux manières de la remplir. `ref` désigne un jeu de paquetage : la catégorie
+// « Alimentation » de son CSV devient le tableau, et il n'y a rien à recopier.
+// Sinon, un tableau écrit à la main, comme les autres.
 
 export const SectionNutrition = z
-  .strictObject({ type: z.literal("nutrition"), ...communs, ...champsDeTableau })
-  .superRefine((valeur, ctx) => verifierLargeurDesLignes("nutrition", valeur, ctx));
+  .strictObject({
+    type: z.literal("nutrition"),
+    ...communs,
+    ref: z.string().min(1).optional(),
+    colonnes: champsDeTableau.colonnes.optional(),
+    lignes: champsDeTableau.lignes.optional(),
+  })
+  .superRefine((valeur, ctx) => {
+    if (valeur.ref) {
+      if (valeur.colonnes || valeur.lignes) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["ref"],
+          message: "nutrition : `ref` lit le paquetage, il ne se cumule pas avec un tableau écrit",
+        });
+      }
+      return;
+    }
+    if (!valeur.colonnes || !valeur.lignes) {
+      ctx.addIssue({
+        code: "custom",
+        message: "nutrition : il faut soit `ref`, soit `colonnes` et `lignes`",
+      });
+      return;
+    }
+    verifierLargeurDesLignes("nutrition", { colonnes: valeur.colonnes, lignes: valeur.lignes }, ctx);
+  });
 
 // ── libre ───────────────────────────────────────────────────────────────────
 // Le frontmatter ne déclare que la position et le titre ; le corps vit dans le

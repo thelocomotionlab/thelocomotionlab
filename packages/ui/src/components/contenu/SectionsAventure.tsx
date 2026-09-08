@@ -23,6 +23,7 @@ import Preparation from "./Preparation.tsx";
 import Paquetage from "./Paquetage.tsx";
 import type { DonneesDePaquetage } from "./Paquetage.tsx";
 import Nutrition from "./Nutrition.tsx";
+import type { TableauDeNutrition } from "./Nutrition.tsx";
 import SectionLibre from "./SectionLibre.tsx";
 import Direct, { ArchiveDuDirect } from "./Direct.tsx";
 import CarteRecit from "./CarteRecit.tsx";
@@ -42,6 +43,8 @@ export type RendusDAventure = {
     string,
     { paquetage: DonneesDePaquetage; csvUrl?: string; provenance?: ReactNode }
   >;
+  /** Les tableaux de nutrition tirés d'un paquetage, par `ref`. */
+  nutritions?: Record<string, TableauDeNutrition>;
   /** Les corps de section écrits dans le MDX, par `id`. Une section libre y
    *  puise tout son contenu ; une section structurée qui déclare un `id` y
    *  puise le texte qui présente son tableau. */
@@ -95,7 +98,12 @@ function corpsDeSection(section: Section, rendus: RendusDAventure): ReactNode {
     }
 
     case "nutrition":
-      return <Nutrition section={section} />;
+      return (
+        <Nutrition
+          section={section}
+          depuisLePaquetage={section.ref ? rendus.nutritions?.[section.ref] : undefined}
+        />
+      );
 
     case "libre": {
       const libre = rendus.libres?.[section.id];
