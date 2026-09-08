@@ -9,18 +9,19 @@ campagne: { debut: 2025-09-29, fin: 2025-11-30 }
 cover: "/images/projets/traversee-reunion/cover_traversee_reunion.webp"
 resume:
   - "170 km"
-  - "9 800 m D+"
-  - "sandales"
+  - "9 800 m dénivelé"
+  - "Autonomie"
 recit: "ile-intense"
 sections:
   - type: caracteristiques
     champs:
       - { label: "Distance", valeur: "170 km" }
-      - { label: "Dénivelé positif", valeur: "9 800 m" }
+      - { label: "Dénivelé", valeur: "9 800 m" }
       - { label: "Itinéraire", valeur: "GR R2 en passant par les pitons des neige et de la Fournaise" }
       - { label: "Départ", valeur: "Gare de Saint-Denis" }
+      - { label: "Arrivée", valeur: "Basse-vallée" }
       - { label: "Conditions", valeur: "Autonomie complète" }
-      - { label: "Sac au départ", valeur: "≈ 8,5 kg, dont 3 L de liquide" }
+      - { label: "Masse portée au départ", valeur: " 8,5 kg, dont 3 L de liquide" }
       - { label: "Résultat", valeur: "Arrêt au km 85, après 26 h 52 et 7 700 m D+" }
 
   - type: geo
@@ -28,10 +29,14 @@ sections:
     titre: "Trace"
     carte: "TODO"
     gpx: "reunion-r2_komoot.gpx"
-    colonnes: ["Repère", "km", "D+ cumulé"]
+    reperes:
+      - { nom: "Piton des Neiges", km: 92.3, icone: "montagne" }
+      - { nom: "Piton de la Fournaise", km: 141., icone: "montagne" }
+      - { nom: "Basse-vallée", km: 170., icone: "arrivee" }
+    colonnes: ["Repère", "km", "D+ cumulé", "D- cumulé"]
     lignes:
-      - ["Piton des Neiges", "94", "7 700 m"]
-      - ["Bourg-Murat", "115", "7 900 m"]
+      - ["Piton des Neiges", "94", "7 280 m", "4 260 m"]
+      - ["Piton de la Fournaise", "141", "8 740 m", "6 275 m"]
 
   - type: preparation
     graphe:
@@ -40,7 +45,7 @@ sections:
         - { nom: "Distance", unite: "km", valeurs: [64, 104, 48, 117] }
         - { nom: "Dénivelé positif", unite: "m", valeurs: [2000, 4800, 1200, 5100] }
     seances:
-      colonnes: ["Date", "Sortie", "km", "D+", "Sac", "Ce qu'on éprouvait", "Billet"]
+      colonnes: ["Date", "Sortie", "km", "Dénivelé", "Masse portée", "Ce que j'ai testé", "Billet"]
       lignes:
         - ["12/10/2025", "Tour du Taillefer", "39", "2 500 m", "6 kg", "Matériel et lyophilisé", "tour-du-taillefer"]
         - ["25/10/2025", "UTMC OFF", "85", "4 500 m", "7,4 kg", "Rest step et nuit", "utmc-off"]
@@ -64,14 +69,15 @@ sections:
       non_travailles: ["Terrains réunionnais"]
     protocoles: ["rest-step"]
 
-  - type: libre
-    id: "materiel"
-    titre: "Matériel"
+  - type: paquetage
+    id: "le-paquetage"
+    titre: "Le paquetage"
+    ref: "traversee-reunion"
 
   - type: nutrition
     id: "nutrition-embarquee"
     titre: "Nutrition embarquée"
-    colonnes: ["Poste", "Détail", "Masse"]
+    colonnes: ["Aliment", "Quantité", "Masse"]
     lignes:
       - ["Boules d'énergie", "39 boules poudre d'amande / pâte de dattes (ratio 1/1,54), dont 13 avec du café", "765 g"]
       - ["Isotonique", "14 doses de flasques", "720 g"]
@@ -82,7 +88,7 @@ sections:
 
   - type: direct
     id: "direct"
-    titre: "Direct v1 (2025)"
+    titre: "Le direct"
 
   - type: recit
 ---
@@ -95,47 +101,23 @@ Update 07/11/2025 : correction de la trace pour prise en compte des sentiers fer
 
 </SectionLibre>
 
-<SectionLibre id="materiel">
+<SectionLibre id="le-paquetage">
 
-Pour le reste, j'ai essayé de penser à tous les cas de figures possibles, et ma carapace de Franklin sera cette fois composée de :
-
-- Sac Salomon SLab Aventure 20 (485 g)
-- Poche à eau 1,5 L Salomon (120 g) 
-- 3 flasques 500 mL Salomon (100 g)
-- Paire de Panta Zaros de rechange (225 g)
-- Bivy Sol Escape (245 g)
-- GoPro Hero 8 + 2 batteries (150 g)
-- Short + T-shirt + 2 paires de chaussettes (220 g)
-- Bob Raidlight + Manchettes Raidlight + Buff merinos (100 g)
-- Gants Decath + sur-mouffles Raidlight (77 g)
-- Veste imperméable respirante Raidlight (225 g)
-- 2 lampes Stoots Kiska II + 2 batteries (140 g)
-- 2 batteries externes Nitecore Gen II (300 g)
-- 2 Galaxy S21 (380 g)
-- Masque de snorkeling (pour l'arrivée faut pas déconner) (70 g)
-- Filtre sawyer PointOne + réserve 2 L (98 g)
-
-Ce qui nous fait un total de 2,9 kg. En sommant l'ensemble + les 3 L de liquide, on atteint un sac d'environ 8,5 kg, soit un peu plus d'1 kg de plus que ce que j'avais emporté sur mon OFF de l'UTMC (voir [ici](/blog/utmc-off)). Avec la réserve de 2 L du Sawyer, je peux même monter à 5 L d'eau transportés dans les endroits critiques, et j'ai l'impression que sur la portion Volcan - Basse-Vallée, ce ne sera pas de trop.
+En tentant d'imaginer tous les cas de figures possibles, j'atteins une masse de matériel d'environ 2,9 kg. En ajoutant les 3 L de liquide, ainsi que la nutrition (détaillée en-dessous), j'obtiens une carapace de Franklin qui avoisine les 8,6 kg, soit un peu plus d'1 kg de plus que ce que j'avais emporté sur mon OFF de l'UTMC (voir [ici](/blog/utmc-off)). Avec la réserve de 2 L du Sawyer, je peux même monter à 5 L d'eau transportés dans les endroits critiques, et j'ai l'impression que sur la portion Volcan - Basse-Vallée, ce ne sera pas de trop.
 
 </SectionLibre>
 
 <SectionLibre id="nutrition-embarquee">
 
-J'avais l'espoir de trouver mes victuailles habituelles de sorties longues à Saint-Pierre, mais la réalité dépassa mes espérances. J'ai pu acquérir (à prix d'or certes), tout le nécessaire pour ne pas mourir de faim pendant cette longue traversée, en utilisant quasiment exactement les mêmes produits que j'utilise habituellement. Ma nutrition sera donc composée ainsi :
+J'avais l'espoir de trouver mes victuailles habituelles de sorties longues à Saint-Pierre, mais la réalité dépassa mes espérances. J'ai pu acquérir, à prix d'or certes, tout le nécessaire pour ne pas mourir de faim pendant cette longue traversée, en utilisant quasiment exactement les mêmes produits que j'utilise habituellement. Ma nutrition sera donc composée ainsi :
 
-Un total de 2,62 kg. La surprise du chef sera sur les gels. Je n'ai en effet jamais ingurgité le moindre gel de ma vie jusqu'alors, mais le combo caféine + sucre est un combo gagnant pour lutter contre les coups de mous. De toute façon, j'ai évidemment prévu du PQ si ceux-ci ressortaient aussi vite qu'ils seraient rentrés (kikou les gels Ta Rapace).
+Un total de 2,62 kg. La surprise du chef sera sur les gels. Je n'ai en effet jamais ingurgité le moindre gel de ma vie jusqu'alors, mais le combo caféine-sucre est un combo gagnant pour lutter contre les coups de mous. De toute façon, j'ai évidemment prévu du PQ si ceux-ci ressortaient aussi vite qu'ils seraient rentrés (kikou les gels Ta Rapace).
 
 </SectionLibre>
 
 <SectionLibre id="direct">
 
-La dernière partie de ce projet. L'objectif majeur de l'aventure est d'arriver au piton des neiges au lever de soleil (5h30). Je ne dois donc pas partir trop tôt ce lundi, au risque d'arriver au sommet quelques heures avant le lever du soleil, et de laisser tous mes tissus se refroidir, conduisant à une descente potentiellement infâme. Je vais donc viser un départ autour de 8h30 - 9h. Ça me semble pas mal et me correspond car j'ai en horreur de ne pas me réveiller naturellement, et l'idée de mettre le réveil à 5h30 est un stress inutile. L'arrivée au sommet correspond au km 94 avec 7 700 m D+ cumulés de mon aventure.
-
-Niveau points d'eau, je vais être pas mal sur tout le parcours jusqu'à Bourg-Murat, dernier vrai point de ravito avant la fin. Le hic, c'est qu'à Bourg-Murat, on n'est qu'au km 115 avec 7 900 m D+ cumulés. Il en reste donc encore 55, avec le piton de la Fournaise, où je risque de passer à un des moments les plus chauds de la journée. Il va donc falloir charger la mulle à mort en eau, et c'est là que mon extension de 2 L intervient. Si j'arrive là, et selon comment se sera passé l'aventure jusqu'alors, je m'autoriserais peut-être à acheter une bouteille supplémentaire pour monter à 7 L jusqu'à la fin. En sachant que la dernière portion est une descente de 2 000 m D- sur 20 km (souvenir souvenir du Lavaredo), qui se fera probablement de nuit et dans une forêt humide. Le risque de déshydratation semble donc minoré. Je suis conscient de cette difficulté, j'ai des idées pour la gérer, maintenant il n'y a plus qu'à.
-
-Sur ce, une belle aprem de repos m'attend pour accumuler un maximum d'énergie. Si tu as lu ce projet jusqu'ici, j'espère qu'il t'a plu, et que tu apprécieras de suivre cette traversée avec moi en direct. De mon côté, je vais puiser dans tous vos soutiens pour me dépasser et aller explorer mes limites en jouant à ce grand jeu très complexe. On se revoit de l'autre côté !
-
-Trace complète (170 km 9 800 m D+/D-) disponible et téléchargeable [ici](#trace).
+<VersBillet slug="un-mot-avant-de-demarrer" />
 
 <Replay
   positionsUrl="/replays/traversee-reunion/live-positions.json"
