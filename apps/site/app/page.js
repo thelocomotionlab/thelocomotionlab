@@ -225,7 +225,7 @@ export default async function HomePage() {
             </span>
           </h1>
           <p className="mx-auto mt-4 max-w-[680px] text-base leading-relaxed text-white/90 text-pretty sm:text-lg">
-            Explorer la robustesse physiologique comme instrument de confiance
+            Explorer la robustesse comme instrument de confiance
             en soi, force et bien-être.
           </p>
           <div className="mt-8 flex items-center justify-center">
