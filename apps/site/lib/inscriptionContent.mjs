@@ -1,7 +1,7 @@
 // lib/inscriptionContent.mjs
 //
 // SOURCE UNIQUE du contenu volatil de la page d'inscription aux ateliers
-// (/pratiquer/inscription/[slug]) : consignes de sécurité et questions de
+// (/services/ateliers/inscription/[slug]) : consignes de sécurité et questions de
 // santé. Ce contenu est AFFICHÉ par la page ET EMBARQUÉ dans le payload
 // d'inscription — la fiche PDF (twin-engine) le boucle tel quel.
 // → Modifier ICI suffit : la page et le PDF suivent, sans toucher au

@@ -8,14 +8,24 @@
 
 import Link from "next/link";
 
+import DonneesStructurees from "@/components/DonneesStructurees";
 import FilDAriane from "@/components/contenu/FilDAriane";
 import RetourAIndex from "@/components/contenu/RetourAIndex";
+import { filDAriane } from "@/lib/jsonld";
+import { partageDIndex } from "@/lib/seo";
+
+const DESCRIPTION =
+  "Ton jumeau physiologique, et le plan de course qui en découle : ce que fait le Twin, ce dont il a besoin, ce que tu récupères, et ce qui est fait de tes données.";
 
 export const metadata = {
   title: "Locomotion Twin",
-  description:
-    "Ton jumeau physiologique, et le plan de course qui en découle : ce que fait le Twin, ce dont il a besoin, ce que tu récupères, et ce qui est fait de tes données.",
+  description: DESCRIPTION,
   alternates: { canonical: "https://thelocomotionlab.com/services/twin" },
+  ...partageDIndex({
+    titre: "Locomotion Twin – The Locomotion Lab",
+    description: DESCRIPTION,
+    url: "/services/twin",
+  }),
 };
 
 const ETIQUETTE =
@@ -45,12 +55,14 @@ const TWIN = [
   },
 ];
 
+const MAILLONS = [{ href: "/services", label: "Services" }, { label: "Locomotion Twin" }];
+
 export default function TwinPage() {
   return (
     <div className="mx-auto max-w-[1180px] px-6 pt-10 md:px-8">
-      <FilDAriane
-        maillons={[{ href: "/services", label: "Services" }, { label: "Locomotion Twin" }]}
-      />
+      <DonneesStructurees id="twin" donnees={filDAriane(MAILLONS)} />
+
+      <FilDAriane maillons={MAILLONS} />
 
       <article className="mx-auto mt-9 max-w-[860px] pb-6">
         <header>
@@ -94,7 +106,7 @@ export default function TwinPage() {
           </p>
 
           <Link
-            href="/outils/twin/cohorte"
+            href="/services/twin/cohorte"
             className="mt-6 inline-block rounded-full bg-brand-accent px-[26px] py-3 font-heading text-[15px] font-semibold text-white no-underline shadow-cta transition-colors hover:bg-brand-accent-dark"
           >
             Rejoindre la cohorte

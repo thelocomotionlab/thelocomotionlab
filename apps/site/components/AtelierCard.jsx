@@ -1,11 +1,11 @@
 // components/AtelierCard.jsx
 //
-// Carte atelier de la page Pratiquer, au gabarit compact des cartes du
-// pilier Comprendre (22rem max) : photo, méta ATELIER · prix, date/lieu,
-// jauge de places en barre. « Je réserve ma place » mène à la page
-// d'inscription complète (/pratiquer/inscription/[slug]) ; atelier complet :
-// badge COMPLET, jauge grise, bouton « liste d'attente » qui révèle le
-// mini-formulaire prénom + email sur place.
+// Carte d'un atelier, au gabarit compact des cartes de contenu (22rem max) :
+// photo, méta ATELIER · prix, date/lieu, jauge de places en barre.
+// « Je réserve ma place » mène à la page d'inscription complète
+// (/services/ateliers/inscription/[slug]) ; atelier complet : badge COMPLET,
+// jauge grise, bouton « liste d'attente » qui révèle le mini-formulaire
+// prénom + email sur place.
 //
 // Composant CONTRÔLÉ par AteliersGrid : les compteurs (registered/capacity/
 // status) arrivent par props, déjà fusionnés avec l'API ; après une
@@ -28,12 +28,10 @@ const LEGACY_ENDPOINT = "https://send-email.thelocomotionlab.workers.dev/";
 const EMAIL_ENDPOINT = process.env.NEXT_PUBLIC_EMAIL_ENDPOINT || LEGACY_ENDPOINT;
 
 const INPUT_CLASSES =
-  "min-w-0 rounded-full border border-brand-field bg-white px-4 py-3 text-[15px] text-gray-700 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-accent sm:py-2.5 sm:text-[14.5px]";
+  "min-w-0 rounded-full border border-brand-field bg-brand-paper px-4 py-3 font-sans text-tableau text-brand-ink placeholder:text-brand-muted focus:outline-none focus:ring-2 focus:ring-brand-accent sm:py-2.5";
 
-// CTA plein : orange accent + blanc (identité assumée, cf. audit C1),
-// hover orange foncé — même famille.
 const SUBMIT_CLASSES =
-  "cursor-pointer rounded-full bg-brand-accent py-3 text-[15px] font-bold text-white transition-all duration-300";
+  "cursor-pointer rounded-full bg-brand-accent py-3 font-heading text-[15px] font-semibold text-white shadow-cta transition-colors";
 
 export default function AtelierCard({ atelier, onPlaces = () => {} }) {
   const { id, title, dateLabel, lieu, capacity, priceLabel, cover, coverAlt } =
@@ -177,8 +175,8 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
   );
 
   return (
-    <article className="flex h-full w-full max-w-[22rem] flex-col overflow-hidden rounded-2xl bg-white shadow-card">
-      {/* Même hauteur d'image que les cartes Comprendre/Explorer. */}
+    <article className="flex h-full w-full max-w-[22rem] flex-col overflow-hidden rounded-xl border border-brand-hairline bg-brand-paper shadow-bloc">
+      {/* Même hauteur d'image que les cartes de contenu. */}
       <div className="relative h-44 flex-none">
         <PhotoSlot
           src={cover}
@@ -187,28 +185,27 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
           className="h-full w-full"
         />
         {isFull ? (
-          <span className="absolute right-3.5 top-3.5 rounded-full bg-brand-slate-dark px-3 py-[5px] font-heading text-[11px] font-bold tracking-[0.14em] text-brand-bg">
-            COMPLET
+          <span className="absolute right-3.5 top-3.5 rounded-full bg-brand-slate-dark px-3 py-[5px] font-mono text-xxs font-bold uppercase tracking-etiquette text-brand-bg">
+            Complet
           </span>
         ) : null}
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-5">
-        {/* Méta et titre au gabarit des cartes Comprendre/Explorer
-            (CardMeta + titre terracotta). */}
+        {/* Méta et titre au gabarit des cartes de contenu. */}
         <CardMeta kind="Atelier" detail={priceLabel} />
 
-        <h3 className="text-lg font-semibold text-brand-deep">
+        <h3 className="m-0 font-heading text-xl font-bold leading-snug text-brand-deep">
           {title}
         </h3>
 
-        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-[5px] text-sm text-gray-600">
-          <span className="self-center font-heading text-[11px] font-bold tracking-[0.12em] text-gray-500">
-            DATE
+        <div className="grid grid-cols-[auto_1fr] items-baseline gap-x-3 gap-y-[5px] font-sans text-tableau text-brand-soft">
+          <span className="self-center font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
+            Date
           </span>
           <span>{dateLabel}</span>
-          <span className="self-center font-heading text-[11px] font-bold tracking-[0.12em] text-gray-500">
-            LIEU
+          <span className="self-center font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
+            Lieu
           </span>
           <span>{lieu}</span>
         </div>
@@ -229,15 +226,15 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
             />
           </div>
           <span
-            className={`flex-none font-mono text-[13px] font-bold ${
-              isFull ? "text-gray-400" : "text-brand-slate-dark"
+            className={`flex-none font-mono text-meta font-bold tabular-nums ${
+              isFull ? "text-brand-faint" : "text-brand-slate-dark"
             }`}
           >
             {registered}/{capacity}
           </span>
           <span
-            className={`text-[13.5px] font-bold ${
-              isFull ? "text-gray-400" : "text-brand-accent-ink"
+            className={`font-sans text-tableau font-semibold ${
+              isFull ? "text-brand-faint" : "text-brand-accent-ink"
             }`}
           >
             {isFull
@@ -251,7 +248,7 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
         <div className="mt-auto flex flex-col gap-2.5 border-t border-brand-gauge pt-3.5">
           {!done && !isFull ? (
             <Link
-              href={`/pratiquer/inscription/${atelier.slug}`}
+              href={`/services/ateliers/inscription/${atelier.slug}`}
               className={`${SUBMIT_CLASSES} block text-center hover:bg-brand-accent-dark`}
             >
               Je réserve ma place
@@ -264,7 +261,7 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
                 type="button"
                 aria-expanded={waitlistOpen}
                 onClick={() => setWaitlistOpen(true)}
-                className="w-full cursor-pointer rounded-full border-[1.5px] border-brand-accent py-3 text-[15px] font-bold text-brand-accent-ink transition-all duration-300 hover:bg-brand-accent hover:text-white"
+                className="w-full cursor-pointer rounded-full border-[1.5px] border-brand-deep py-3 font-heading text-[15px] font-semibold text-brand-deep transition-colors hover:bg-brand-deep hover:text-white"
               >
                 Rejoindre la liste d&rsquo;attente
               </button>
@@ -285,7 +282,7 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
                     ? "Envoi..."
                     : "Rejoindre la liste d'attente"}
                 </button>
-                <p className="text-center text-xs italic text-gray-400">
+                <p className="m-0 text-center font-sans text-meta italic text-brand-muted">
                   On te prévient si une place se libère.
                 </p>
               </form>
@@ -301,18 +298,18 @@ export default function AtelierCard({ atelier, onPlaces = () => {} }) {
             role="status"
           >
             {status === "success" && (
-              <p className="animate-fade-in text-[13px] font-medium text-green-700">
+              <p className="animate-fade-in font-sans text-tableau font-medium text-brand-success">
                 Merci ! Ta place est réservée.
               </p>
             )}
             {status === "success-waitlist" && (
-              <p className="animate-fade-in text-[13px] font-medium text-green-700">
+              <p className="animate-fade-in font-sans text-tableau font-medium text-brand-success">
                 C&rsquo;est noté ! On te prévient dès qu&rsquo;une place se
                 libère.
               </p>
             )}
             {status === "error" && (
-              <p className="animate-fade-in text-[13px] font-medium text-red-700">
+              <p className="animate-fade-in font-sans text-tableau font-medium text-brand-deep-dark">
                 L&rsquo;envoi a échoué. Vérifie ta connexion et réessaie.
               </p>
             )}

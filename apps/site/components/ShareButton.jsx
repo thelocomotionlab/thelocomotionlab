@@ -18,7 +18,7 @@ export default function ShareButton() {
   // Masqué là où il n'y a rien à partager : les mentions légales, les pages
   // de Services, et les flux qui en découlent — déposer une archive ou
   // s'inscrire à un atelier ne se partage pas.
-  const MUET = ["/mentions-legales", "/services", "/outils/twin/cohorte", "/pratiquer/inscription"];
+  const MUET = ["/mentions-legales", "/services"];
   if (MUET.some((route) => pathname === route || pathname.startsWith(`${route}/`))) return null;
 
   async function handleShare() {

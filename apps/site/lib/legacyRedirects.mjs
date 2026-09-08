@@ -14,15 +14,32 @@
 // @cloudflare/next-on-pages. `permanent: true` émet un 308.
 
 /**
- * Les contenus déjà migrés, ancienne URL → nouvelle. Cette table grandit à
- * chaque page reprise ; ce qui n'y figure pas retombe sur son index.
+ * Les contenus de l'ancien site, ancienne URL → nouvelle. Chaque page publiée
+ * avait DEUX adresses au fil du temps (`/articles|/projets`, puis
+ * `/comprendre|/explorer`) : les deux sont reprises, parce que les deux ont pu
+ * être indexées ou partagées.
+ *
+ * Une redirection précise vaut mieux qu'un renvoi vers l'index : Google traite
+ * un rayon entier comme une réponse hors sujet, et n'y transfère rien.
  */
-const MIGRES = [
-  ["/articles/recit-reunion-2025", "/aventures/reunion-2025/recit"],
-  ["/explorer/recit-reunion-2025", "/aventures/reunion-2025/recit"],
-  ["/projets/traversee-reunion", "/aventures/reunion-2025"],
-  ["/explorer/traversee-reunion", "/aventures/reunion-2025"],
+const CONTENUS = [
+  // Récits et projets (anciennement sous /explorer).
+  ["recit-reunion-2025", "/aventures/recit/reunion-2025"],
+  ["immersion-primale-entre-vercors-et-drome", "/aventures/recit/vercors-2026"],
+  ["traversee-reunion", "/aventures/reunion-2025"],
+  // Le récit des Écrins est encore un brouillon : la campagne le remplace.
+  ["mon-tour-des-ecrins-en-80-heures", "/aventures/tour-des-ecrins"],
+  // Le journal de la saison est devenu le carnet de bord tout entier.
+  ["saison-trail-2026", "/blog"],
+  ["coach-tarzan-movement", "/services/ateliers"],
+  // Articles (anciennement sous /comprendre).
+  ["la-genese", "/science/l-an-2020"],
+  ["developpe-ta-respiration-fonctionnelle", "/science"],
+  ["initiation-exposition-au-froid", "/science"],
 ];
+
+/** Les préfixes qu'ont porté ces contenus, dans l'ordre des générations. */
+const PREFIXES = ["/articles", "/projets", "/comprendre", "/explorer"];
 
 /** Les anciennes racines et ce qui les remplace. */
 const RACINES = [
@@ -30,7 +47,7 @@ const RACINES = [
   ["/projets", "/aventures"],
   ["/comprendre", "/science"],
   ["/explorer", "/aventures"],
-  ["/pratiquer", "/services"],
+  ["/pratiquer", "/services/ateliers"],
   ["/outils", "/services"],
   ["/quete", "/labo#labo-quete"],
   ["/manifeste", "/labo#labo-quete"],
@@ -41,11 +58,29 @@ const RACINES = [
 
 export function buildLegacyRedirects() {
   return [
-    ...MIGRES.map(([source, destination]) => ({ source, destination, permanent: true })),
+    ...CONTENUS.flatMap(([slug, destination]) =>
+      PREFIXES.map((prefixe) => ({
+        source: `${prefixe}/${slug}`,
+        destination,
+        permanent: true,
+      })),
+    ),
 
-    // Les ateliers gardent leur formulaire d'inscription, le Twin sa cohorte :
-    // ce sont des flux, pas des pages d'index, et rien ne les remplace.
-    { source: "/outils/twin", destination: "/services", permanent: true },
+    // Le formulaire d'inscription a suivi la page des ateliers sous /services.
+    {
+      source: "/pratiquer/inscription/:slug",
+      destination: "/services/ateliers/inscription/:slug",
+      permanent: true,
+    },
+
+    // L'appel à la cohorte a suivi la page du Twin : il vit sous /services/twin,
+    // pas sous /outils, qui n'est plus une racine du site.
+    {
+      source: "/outils/twin/cohorte",
+      destination: "/services/twin/cohorte",
+      permanent: true,
+    },
+    { source: "/outils/twin", destination: "/services/twin", permanent: true },
     { source: "/outils/habillage", destination: "/studio", permanent: true },
     { source: "/outils/carrousel", destination: "/studio", permanent: true },
 

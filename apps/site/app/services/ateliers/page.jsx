@@ -17,8 +17,10 @@ import PhotoSlot from "@/components/PhotoSlot";
 import SeanceFrise from "@/components/SeanceFrise";
 import SectionHeading from "@/components/SectionHeading";
 import TrailNotify from "@/components/TrailNotify";
+import DonneesStructurees from "@/components/DonneesStructurees";
 import FilDAriane from "@/components/contenu/FilDAriane";
 import RetourAIndex from "@/components/contenu/RetourAIndex";
+import { filDAriane } from "@/lib/jsonld";
 import { listAteliers } from "@/lib/ateliers.mjs";
 import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
@@ -83,17 +85,19 @@ export const metadata = {
   },
 };
 
+const MAILLONS = [
+  { href: "/services", label: "Services" },
+  { label: "Ateliers de motricité primale" },
+];
+
 export default function AteliersPage() {
   const ateliers = listAteliers();
 
   return (
     <div className="mx-auto max-w-[1180px] px-6 pt-10 pb-6 md:px-8">
-      <FilDAriane
-        maillons={[
-          { href: "/services", label: "Services" },
-          { label: "Ateliers de motricité primale" },
-        ]}
-      />
+      <DonneesStructurees id="ateliers" donnees={filDAriane(MAILLONS)} />
+
+      <FilDAriane maillons={MAILLONS} />
 
       <header className="mt-7">
         <div className="flex flex-wrap items-center gap-3 font-mono text-meta font-semibold uppercase tracking-etiquette text-brand-muted">

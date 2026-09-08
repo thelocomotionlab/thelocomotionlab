@@ -14,11 +14,19 @@ import { CarteDOffre, GroupeDOffres } from "@locomotionlab/ui";
 
 import EnTeteDIndex from "@/components/contenu/EnTeteDIndex";
 import { listAteliers } from "@/lib/ateliers.mjs";
+import { partageDIndex } from "@/lib/seo";
+
+const DESCRIPTION =
+  "Deux façons de travailler avec le labo : le Locomotion Twin, en ligne, et les ateliers de motricité primale, sur le terrain.";
 
 export const metadata = {
   title: "Services",
-  description:
-    "Deux façons de travailler avec le labo : le Locomotion Twin, en ligne, et les ateliers de motricité primale, sur le terrain.",
+  description: DESCRIPTION,
+  ...partageDIndex({
+    titre: "Services – The Locomotion Lab",
+    description: DESCRIPTION,
+    url: "/services",
+  }),
 };
 
 export default function ServicesPage() {
@@ -38,7 +46,7 @@ export default function ServicesPage() {
           teinte="science"
           nom="Locomotion Twin"
           promesse="Ton jumeau physiologique, et le plan de course qui en découle."
-          action={{ href: "/outils/twin/cohorte", libelle: "Rejoindre la cohorte" }}
+          action={{ href: "/services/twin/cohorte", libelle: "Rejoindre la cohorte" }}
           lien={{ href: "/services/twin", libelle: "Comment ça marche" }}
         >
           Le moteur se calibre sur ton archive d&rsquo;entraînement, puis confronte ton jumeau au

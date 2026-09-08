@@ -14,9 +14,12 @@ import { parSorte, parSlug, bibliographie } from "@/lib/contenu";
 import { amorce } from "@/lib/blog";
 import { TYPES } from "@/lib/blogRegistre";
 import Corps from "@/components/contenu/Corps";
+import DonneesStructurees from "@/components/DonneesStructurees";
 import FilDAriane from "@/components/contenu/FilDAriane";
 import RetourAIndex from "@/components/contenu/RetourAIndex";
 import { referencesDePage } from "@/components/contenu/references";
+import { filDAriane, pageDeContenu } from "@/lib/jsonld";
+import { partageDeContenu } from "@/lib/seo";
 import { dateLisible, minutesDeLecture } from "@/lib/lisible";
 
 export const dynamicParams = false;
@@ -29,10 +32,16 @@ export async function generateMetadata({ params }) {
   const { slug } = await params;
   const page = parSlug("billet", slug);
   if (!page) return {};
-  const { titre, chapeau } = page.frontmatter;
+  const { titre, chapeau, date, cover } = page.frontmatter;
   // Le fil du blog remplace un chapeau manquant par l'amorce du texte ; la
-  // description de la page fait de même plutôt que d'annoncer « TODO ».
-  return { title: titre, description: chapeau === "TODO" ? amorce(page.corps) : chapeau };
+  // description de la page fait de même plutôt que d'annoncer « TODO », mais
+  // coupée plus court : au-delà, un moteur tronque en plein mot.
+  const description = chapeau === "TODO" ? amorce(page.corps, 155) : chapeau;
+  return {
+    title: titre,
+    description,
+    ...partageDeContenu({ titre, description, url: `/blog/${slug}`, cover, publieLe: date }),
+  };
 }
 
 export default async function BilletPage({ params }) {
@@ -42,15 +51,22 @@ export default async function BilletPage({ params }) {
 
   const { frontmatter } = page;
   const { registre, Ref, citation } = referencesDePage(page.corps);
+  const maillons = [{ href: "/blog", label: "Blog" }, { label: frontmatter.titre }];
 
   return (
     <div className="mx-auto max-w-[1180px] px-6 pt-10 md:px-8">
-      <FilDAriane
-        maillons={[
-          { href: "/blog", label: "Blog" },
-          { label: frontmatter.titre },
+      <DonneesStructurees
+        id="billet"
+        donnees={[
+          pageDeContenu(page, {
+            url: `/blog/${frontmatter.slug}`,
+            description: frontmatter.chapeau === "TODO" ? amorce(page.corps) : frontmatter.chapeau,
+          }),
+          filDAriane(maillons),
         ]}
       />
+
+      <FilDAriane maillons={maillons} />
 
       <article className="mx-auto mt-9 max-w-[40em] text-lecture">
         <header>

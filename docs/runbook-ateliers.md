@@ -37,7 +37,7 @@ est listé. Le décompte public reste visible sans jeton :
 ## 2. Ajouter quelqu'un
 
 **Voie normale (à privilégier)** : envoie-lui le lien du formulaire —
-`<site>/pratiquer/inscription/<slug>` — il/elle reçoit l'email + la fiche PDF,
+`<site>/services/ateliers/inscription/<slug>` — il/elle reçoit l'email + la fiche PDF,
 tout est en règle.
 
 **À sa place** (inscription par téléphone, personne peu à l'aise en ligne) :

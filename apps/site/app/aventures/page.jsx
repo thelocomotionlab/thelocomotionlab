@@ -11,11 +11,19 @@ import Link from "next/link";
 import { aventures, recitDe, urlDe } from "@/lib/contenu";
 import { ETATS, campagneLisible, chiffreDeCarte } from "@/lib/aventure";
 import EnTeteDIndex from "@/components/contenu/EnTeteDIndex";
+import { partageDIndex } from "@/lib/seo";
+
+const DESCRIPTION =
+  "Itinéraires, préparations, paquetages, nutrition, protocoles, et plus encore !";
 
 export const metadata = {
   title: "Aventures",
-  description:
-    "Itinéraires, préparations, paquetages, nutrition, protocoles, et plus encore !",
+  description: DESCRIPTION,
+  ...partageDIndex({
+    titre: "Aventures – The Locomotion Lab",
+    description: DESCRIPTION,
+    url: "/aventures",
+  }),
 };
 
 const ACTION_PRIMAIRE =

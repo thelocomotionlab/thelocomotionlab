@@ -20,10 +20,18 @@ import {
 import { dateLisible } from "@/lib/lisible";
 import { minutesDeLecture } from "@/lib/lisible";
 import EnTeteDIndex from "@/components/contenu/EnTeteDIndex";
+import { partageDIndex } from "@/lib/seo";
+
+const DESCRIPTION = "Des documents vivants : sourcés, datés, révisés.";
 
 export const metadata = {
   title: "Science",
-  description: "Des documents vivants : sourcés, datés, révisés.",
+  description: DESCRIPTION,
+  ...partageDIndex({
+    titre: "Science – The Locomotion Lab",
+    description: DESCRIPTION,
+    url: "/science",
+  }),
 };
 
 export default function SciencePage() {

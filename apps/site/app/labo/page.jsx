@@ -13,10 +13,18 @@ import ContactForm from "@/components/ContactForm";
 import EnTeteDIndex from "@/components/contenu/EnTeteDIndex";
 import LaQuete, { PARTIES, EXERGUE } from "@/components/labo/LaQuete";
 import APropos, { PortraitDeValentin } from "@/components/labo/APropos";
+import { partageDIndex } from "@/lib/seo";
+
+const DESCRIPTION = "La coulisse du site : la quête, qui est derrière, comment écrire.";
 
 export const metadata = {
   title: "Le labo",
-  description: "La coulisse du site : la quête, qui est derrière, comment écrire.",
+  description: DESCRIPTION,
+  ...partageDIndex({
+    titre: "Le labo – The Locomotion Lab",
+    description: DESCRIPTION,
+    url: "/labo",
+  }),
 };
 
 const COORDONNEES = [

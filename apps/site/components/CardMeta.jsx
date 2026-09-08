@@ -7,7 +7,7 @@
 export default function CardMeta({ kind, detail = null, className = "" }) {
   return (
     <span
-      className={`block truncate text-[11px] font-medium uppercase tracking-[0.1em] text-gray-500 ${className}`}
+      className={`block truncate font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted ${className}`}
     >
       {kind}
       {detail ? (

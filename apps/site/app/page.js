@@ -8,9 +8,9 @@
 // campagnes — chacune montrant son récit quand il existe, sa propre carte
 // sinon (§8) — et le registre du Blog.
 import Link from "next/link";
-import Script from "next/script";
 import Image from "next/image";
 
+import DonneesStructurees from "@/components/DonneesStructurees";
 import EmailCapture from "@/components/EmailCapture";
 import LiveBanner from "@/components/LiveBanner";
 import PhilosophieSection from "@/components/PhilosophieSection";
@@ -20,7 +20,8 @@ import { entrees as entreesDuBlog } from "@/lib/blog";
 import { entrees as articlesDeScience } from "@/lib/science";
 import { ETATS, chiffreDeCarte } from "@/lib/aventure";
 import { dateLisible } from "@/lib/lisible";
-import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
+import { OG_IMAGE, OG_IMAGES, SITE_URL } from "@/lib/seo";
+import { ORGANISATION } from "@/lib/jsonld";
 
 export const metadata = {
   title: "The Locomotion Lab",
@@ -167,16 +168,24 @@ function CarteDAccueil({ carte }) {
 export default async function HomePage() {
   const hero = HEROES[0];
 
+  // Un seul graphe pour l'accueil : le site, son éditeur, et la navigation.
+  // Les pages de contenu citent la même organisation par son @id.
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: "The Locomotion Lab",
-    url: "https://thelocomotionlab.com",
-    hasPart: [
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": `${SITE_URL}/#site`,
+        name: "The Locomotion Lab",
+        url: SITE_URL,
+        inLanguage: "fr-FR",
+        publisher: { "@id": ORGANISATION["@id"] },
+      },
+      ORGANISATION,
       ...["Science", "Aventures", "Blog", "Services", "Labo"].map((nom) => ({
         "@type": "SiteNavigationElement",
         name: nom,
-        url: `https://thelocomotionlab.com/${nom.toLowerCase()}`,
+        url: `${SITE_URL}/${nom.toLowerCase()}`,
       })),
     ],
   };
@@ -189,11 +198,9 @@ export default async function HomePage() {
     // -mb-12 : annule le mt-12 du Footer partagé pour que la bande email
     // touche directement le footer, sans impacter les autres pages.
     <div className="-mb-12">
-      <Script
-        id="json-ld-sitelinks"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      {/* Balise rendue par le serveur, pas injectée après coup : les données
+          structurées doivent être dans le HTML tel qu'il est livré. */}
+      <DonneesStructurees id="accueil" donnees={jsonLd} />
 
       {/* ── HERO — gabarit et ton de l'ancienne accueil : overlay léger
              uniforme, texte modeste, bloc calé vers le bas ───────────── */}

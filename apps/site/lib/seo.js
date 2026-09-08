@@ -57,3 +57,83 @@ export const OG_IMAGES = [
 export function imageDePartage(cover) {
   return cover ? `${SITE_URL}${cover}` : OG_IMAGE;
 }
+
+/**
+ * Les métadonnées de partage d'un index (Science, Blog, Aventures, Services,
+ * Le Labo) : le visuel du site, mais le titre, la description et l'URL DE
+ * L'INDEX. Sans elles, partager un rayon affiche la carte de l'accueil.
+ *
+ * @param {object} options
+ * @param {string} options.titre
+ * @param {string} options.description
+ * @param {string} options.url  chemin de l'index, sans le domaine
+ */
+export function partageDIndex({ titre, description, url }) {
+  return {
+    openGraph: {
+      title: titre,
+      description,
+      url: `${SITE_URL}${url}`,
+      siteName: "The Locomotion Lab",
+      locale: "fr_FR",
+      type: "website",
+      images: OG_IMAGES,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: titre,
+      description,
+      images: [OG_IMAGE],
+    },
+  };
+}
+
+/**
+ * Les métadonnées de partage d'une page de contenu.
+ *
+ * `openGraph` déclaré par une page REMPLACE celui du layout, il ne s'y ajoute
+ * pas : une page qui n'en déclare pas hérite donc du titre, de la description
+ * et du visuel du site entier. Cette fonction rend à chaque texte les siens.
+ *
+ * @param {object} options
+ * @param {string} options.titre
+ * @param {string} [options.description]
+ * @param {string} options.url         chemin de la page, sans le domaine
+ * @param {string} [options.cover]     visuel de la page
+ * @param {string} [options.publieLe]  AAAA-MM-JJ
+ * @param {string} [options.reviseLe]  AAAA-MM-JJ
+ * @param {string} [options.auteur]
+ */
+export function partageDeContenu({
+  titre,
+  description,
+  url,
+  cover,
+  publieLe,
+  reviseLe,
+  auteur = "Valentin Fer",
+}) {
+  const propre = cover && cover !== "TODO";
+  const images = propre ? [{ url: imageDePartage(cover), alt: titre }] : OG_IMAGES;
+
+  return {
+    openGraph: {
+      title: titre,
+      ...(description ? { description } : {}),
+      url: `${SITE_URL}${url}`,
+      siteName: "The Locomotion Lab",
+      locale: "fr_FR",
+      type: "article",
+      ...(publieLe ? { publishedTime: publieLe } : {}),
+      ...(reviseLe ? { modifiedTime: reviseLe } : {}),
+      authors: [auteur],
+      images,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: titre,
+      ...(description ? { description } : {}),
+      images: images.map((image) => image.url),
+    },
+  };
+}

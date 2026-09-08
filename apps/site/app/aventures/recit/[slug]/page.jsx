@@ -1,4 +1,4 @@
-// app/aventures/[slug]/recit/page.jsx
+// app/aventures/recit/[slug]/page.jsx
 //
 // LE RÉCIT D'UNE CAMPAGNE.
 //
@@ -15,8 +15,11 @@ import { Accroche, Bibliographie } from "@locomotionlab/ui/contenu";
 import { parSorte, parSlug, aventureDe, bibliographie, urlDe } from "@/lib/contenu";
 import { dateLisible, minutesDeLecture } from "@/lib/lisible";
 import Corps from "@/components/contenu/Corps";
+import DonneesStructurees from "@/components/DonneesStructurees";
 import FilDAriane from "@/components/contenu/FilDAriane";
 import { referencesDePage } from "@/components/contenu/references";
+import { filDAriane, pageDeContenu } from "@/lib/jsonld";
+import { partageDeContenu } from "@/lib/seo";
 
 // Les récits publiés sont connus au build, et ils sont moins nombreux que les
 // aventures : sans cette ligne, Next garde une fonction serveur pour les slugs
@@ -34,7 +37,18 @@ export async function generateMetadata({ params }) {
   const aventure = parSlug("aventure", slug);
   const recit = aventure ? parSlug("recit", aventure.frontmatter.recit) : undefined;
   if (!recit) return {};
-  return { title: recit.frontmatter.titre, description: recit.frontmatter.chapeau };
+  const { titre, chapeau, cover, date } = recit.frontmatter;
+  return {
+    title: titre,
+    description: chapeau,
+    ...partageDeContenu({
+      titre,
+      description: chapeau,
+      url: `/aventures/recit/${slug}`,
+      cover,
+      publieLe: date,
+    }),
+  };
 }
 
 export default async function RecitPage({ params }) {
@@ -48,9 +62,22 @@ export default async function RecitPage({ params }) {
   const { frontmatter } = recit;
   const campagne = aventureDe(frontmatter);
   const { registre, Ref, citation } = referencesDePage(recit.corps);
+  const maillons = [
+    { href: "/aventures", label: "Aventures" },
+    ...(campagne ? [{ href: urlDe(campagne), label: campagne.frontmatter.titre }] : []),
+    { label: "Récit" },
+  ];
 
   return (
     <>
+      <DonneesStructurees
+        id="recit"
+        donnees={[
+          pageDeContenu(recit, { url: `/aventures/recit/${slug}` }),
+          filDAriane(maillons),
+        ]}
+      />
+
       <div className="relative h-[26rem] overflow-hidden bg-brand-text md:h-[540px]">
         <Image
           src={frontmatter.cover}
@@ -78,13 +105,7 @@ export default async function RecitPage({ params }) {
 
       <div className="mx-auto max-w-[1180px] px-6 md:px-8">
         <div className="flex flex-wrap items-center justify-between gap-6 border-b border-brand-hairline py-5">
-          <FilDAriane
-            maillons={[
-              { href: "/aventures", label: "Aventures" },
-              ...(campagne ? [{ href: urlDe(campagne), label: campagne.frontmatter.titre }] : []),
-              { label: "Récit" },
-            ]}
-          />
+          <FilDAriane maillons={maillons} />
           {frontmatter.chiffres?.length ? (
             <div className="flex flex-wrap gap-7 font-mono text-meta text-brand-muted tabular-nums">
               {frontmatter.chiffres.map((chiffre) => (

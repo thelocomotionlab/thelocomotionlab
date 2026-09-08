@@ -1,4 +1,4 @@
-// app/pratiquer/inscription/[slug]/page.jsx
+// app/services/ateliers/inscription/[slug]/page.jsx
 //
 // Page d'inscription à un atelier (arrivée depuis « Je réserve ma place »
 // de la page Pratiquer). Une page statique par atelier du catalogue

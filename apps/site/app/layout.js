@@ -15,7 +15,11 @@ export const metadata = {
     template: "%s | The Locomotion Lab", // Permet d'avoir "Titre Article | The Locomotion Lab" automatiquement
   },
   description: "Explorations de la locomotion humaine, analyse de la foulée et aventures sportives.",
-  metadataBase: new URL('https://thelocomotionlab.com'), // Indispensable pour que les images sociales marchent
+  metadataBase: new URL("https://thelocomotionlab.com"), // Indispensable pour que les images sociales marchent
+  // Canonique auto-référente sur CHAQUE page : « ./ » se résout contre
+  // metadataBase et le chemin courant. Sans elle, l'apex, le www et les
+  // variantes avec paramètres se disputent la même page aux yeux de Google.
+  alternates: { canonical: "./" },
   manifest: "/manifest.json",
   icons: {
     icon: [

@@ -20,7 +20,7 @@ import Link from "next/link";
 import { Gauge } from "lucide-react";
 
 const TITRE_ID = "twin-cohorte-titre";
-const HREF = "/outils/twin/cohorte";
+const HREF = "/services/twin/cohorte";
 const KICKER = "EN CALIBRATION";
 const TITRE = "Le Locomotion Twin cherche des données";
 const CTA = "Rejoindre la cohorte";

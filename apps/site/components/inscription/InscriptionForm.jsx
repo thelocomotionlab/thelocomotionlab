@@ -1,6 +1,6 @@
 // components/inscription/InscriptionForm.jsx
 //
-// Formulaire d'inscription à un atelier (page /pratiquer/inscription/[slug]),
+// Formulaire d'inscription à un atelier (page /services/ateliers/inscription/[slug]),
 // fidèle au handoff « Inscription Atelier » : ce n'est pas un simple
 // formulaire, c'est un instrument de preuve — la structure reflète bloc par
 // bloc le PDF généré côté serveur et envoyé par email.

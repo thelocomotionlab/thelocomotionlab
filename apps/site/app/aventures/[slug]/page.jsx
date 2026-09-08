@@ -14,11 +14,14 @@ import { Accroche, Sommaire, SectionsAventure } from "@locomotionlab/ui/contenu"
 
 import { parSorte, parSlug } from "@/lib/contenu";
 import { ETATS, campagneLisible, rendusDe } from "@/lib/aventure";
+import DonneesStructurees from "@/components/DonneesStructurees";
 import FilDAriane from "@/components/contenu/FilDAriane";
 import Corps from "@/components/contenu/Corps";
 import MapEmbed from "@/components/MapEmbedLazy";
 import RetourAIndex from "@/components/contenu/RetourAIndex";
 import { referencesDePage } from "@/components/contenu/references";
+import { filDAriane, pageDeContenu } from "@/lib/jsonld";
+import { partageDeContenu } from "@/lib/seo";
 
 export const dynamicParams = false;
 
@@ -30,7 +33,18 @@ export async function generateMetadata({ params }) {
   const { slug } = await params;
   const page = parSlug("aventure", slug);
   if (!page) return {};
-  return { title: page.frontmatter.titre, description: page.frontmatter.chapeau };
+  const { titre, chapeau, cover, campagne } = page.frontmatter;
+  return {
+    title: titre,
+    description: chapeau,
+    ...partageDeContenu({
+      titre,
+      description: chapeau,
+      url: `/aventures/${slug}`,
+      cover,
+      publieLe: campagne.debut,
+    }),
+  };
 }
 
 /**
@@ -64,14 +78,19 @@ export default async function AventurePage({ params }) {
     ),
   });
 
+  const maillons = [{ href: "/aventures", label: "Aventures" }, { label: frontmatter.titre }];
+
   return (
     <div className="mx-auto max-w-[1180px] px-6 pt-10 md:px-8">
-      <FilDAriane
-        maillons={[
-          { href: "/aventures", label: "Aventures" },
-          { label: frontmatter.titre },
+      <DonneesStructurees
+        id="aventure"
+        donnees={[
+          pageDeContenu(page, { url: `/aventures/${frontmatter.slug}`, type: "Article" }),
+          filDAriane(maillons),
         ]}
       />
+
+      <FilDAriane maillons={maillons} />
 
       <div className="mt-7 grid items-start gap-14 lg:grid-cols-[12.5rem_minmax(0,1fr)]">
         <div className="hidden lg:block">

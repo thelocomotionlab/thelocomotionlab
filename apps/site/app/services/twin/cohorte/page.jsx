@@ -1,4 +1,4 @@
-// app/outils/twin/cohorte/page.jsx
+// app/services/twin/cohorte/page.jsx
 //
 // Rejoindre la cohorte de calibration du Locomotion Twin (maquette
 // « Recrutement cohorte », 07/2026) : les athlètes test déposent leur
@@ -7,8 +7,10 @@
 // la montre, dépôt, formulaire, envoi vers le service twin-depot du VPS)
 // vit dans components/twin/CohorteForm.jsx.
 import CohorteForm from "@/components/twin/CohorteForm";
+import DonneesStructurees from "@/components/DonneesStructurees";
 import FilDAriane from "@/components/contenu/FilDAriane";
 import RetourAIndex from "@/components/contenu/RetourAIndex";
+import { filDAriane } from "@/lib/jsonld";
 import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
 
 export const metadata = {
@@ -16,13 +18,13 @@ export const metadata = {
   description:
     "Confie ton archive d'entraînement au Locomotion Lab pour calibrer le Locomotion Twin sur des données réelles, et reçois ton plan de course gratuit en échange.",
   alternates: {
-    canonical: "https://thelocomotionlab.com/outils/twin/cohorte",
+    canonical: "https://thelocomotionlab.com/services/twin/cohorte",
   },
   openGraph: {
     title: "Rejoindre la cohorte du Locomotion Twin – The Locomotion Lab",
     description:
       "Tes courses passées font avancer l'outil : dépose ton archive d'entraînement, elle calibre le moteur puis est supprimée — ton plan de course gratuit en échange.",
-    url: "https://thelocomotionlab.com/outils/twin/cohorte",
+    url: "https://thelocomotionlab.com/services/twin/cohorte",
     type: "website",
     images: OG_IMAGES,
     locale: "fr_FR",
@@ -36,16 +38,18 @@ export const metadata = {
   },
 };
 
+const MAILLONS = [
+  { href: "/services", label: "Services" },
+  { href: "/services/twin", label: "Locomotion Twin" },
+  { label: "Rejoindre la cohorte" },
+];
+
 export default function CohortePage() {
   return (
     <div className="mx-auto max-w-[1180px] px-6 pt-10 md:px-8">
-      <FilDAriane
-        maillons={[
-          { href: "/services", label: "Services" },
-          { href: "/services/twin", label: "Locomotion Twin" },
-          { label: "Rejoindre la cohorte" },
-        ]}
-      />
+      <DonneesStructurees id="cohorte" donnees={filDAriane(MAILLONS)} />
+
+      <FilDAriane maillons={MAILLONS} />
 
       <article className="mx-auto mt-9 max-w-[860px] pb-6">
         <header>

@@ -1,7 +1,7 @@
 // components/twin/CohorteForm.jsx
 //
 // Formulaire de dépôt d'archive de la cohorte Locomotion Twin (page
-// /outils/twin/cohorte), fidèle à la maquette « Recrutement cohorte » :
+// /services/twin/cohorte), fidèle à la maquette « Recrutement cohorte » :
 //   * étape 1 — choix de la montre, qui déplie le tuto d'extraction de
 //     l'archive (contenu : lib/twinCohorte.mjs, source unique) ;
 //   * étape 2 — dépôt de l'archive (glisser-déposer ou sélecteur) ;
