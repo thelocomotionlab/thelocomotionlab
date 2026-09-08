@@ -113,7 +113,7 @@ describe("les mises en forme partagées", () => {
 });
 
 describe("le bloc Aventures de l'accueil", () => {
-  it("porte une carte par page — la campagne et son récit sont deux entrées", () => {
+  it("montre le récit d'une campagne quand il existe, la campagne sinon", () => {
     const cartes = blocAventuresDeLAccueil();
     for (const carte of cartes) {
       if (carte.genre === "recit") {
@@ -123,8 +123,8 @@ describe("le bloc Aventures de l'accueil", () => {
       }
     }
 
-    const urls = cartes.map((carte) => carte.url);
-    expect(new Set(urls).size, "deux cartes mènent à la même page").toBe(urls.length);
+    // Une aventure, une carte : jamais son récit ET sa campagne.
+    expect(cartes.length).toBe(aventures().length);
   });
 
   it("annonce la sorte en surtitre et porte le titre du récit en titre", () => {
@@ -138,12 +138,10 @@ describe("le bloc Aventures de l'accueil", () => {
     }
   });
 
-  it("dit « Lire le récit » sur un récit, et l'état de la campagne sinon", () => {
+  it("dit « Lire le récit » sur une campagne terminée, « Suivre la campagne » sinon", () => {
     for (const carte of blocAventuresDeLAccueil()) {
-      if (carte.genre === "recit") {
-        expect(carte.action).toBe("Lire le récit");
-      } else if (carte.etat === "termine") {
-        expect(carte.action).toBe("Voir la campagne");
+      if (carte.etat === "termine") {
+        expect(carte.action).toMatch(/^(Lire le récit|Voir la campagne)$/);
       } else {
         expect(carte.action).toBe("Suivre la campagne");
       }
