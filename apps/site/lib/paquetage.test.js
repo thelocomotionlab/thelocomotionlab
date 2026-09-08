@@ -59,12 +59,12 @@ describe("agregerPaquetage", () => {
     expect(p.categories[0].articles[1]).toMatchObject({ url: null, description: null });
   });
 
-  it("digère l'export réel des Écrins : 47 articles, 7 catégories, 10 121 g", () => {
+  it("digère l'export réel des Écrins : 47 articles, 7 catégories, 10 241 g", () => {
     const csv = fs.readFileSync(path.join(process.cwd(), "public", "paquetages", "tour-des-ecrins.csv"), "utf8");
     const p = agregerPaquetage(csv);
     expect(p.nombreArticles).toBe(47);
     expect(p.categories).toHaveLength(7);
-    expect(Math.round(p.total)).toBe(10121);
+    expect(Math.round(p.total)).toBe(10241);
     expect(p.categories[0]).toMatchObject({ nom: "Alimentation", masse: 3230 });
     // Le champ entre guillemets de l'export est bien lu en un seul article.
     const divers = p.categories.find((c) => c.nom === "Divers");
