@@ -98,9 +98,9 @@ export default function CarteDOffre({
           {lien ? (
             <a
               href={lien.href}
-              className="font-sans text-[15px] text-brand-soft no-underline transition-colors hover:text-brand-accent-ink"
+              className="font-sans text-[15px] text-brand-soft underline decoration-brand-accent/60 underline-offset-4 transition-colors hover:text-brand-accent-ink hover:decoration-brand-accent-dark"
             >
-              {lien.libelle} <span aria-hidden="true">→</span>
+              {lien.libelle}
             </a>
           ) : null}
         </div>
