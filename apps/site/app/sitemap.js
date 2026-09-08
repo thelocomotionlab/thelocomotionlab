@@ -38,6 +38,8 @@ export default async function sitemap() {
     { url: "/science", priority: 0.9, freq: "weekly" },
     { url: "/labo", priority: 0.8, freq: "monthly" },
     { url: "/services", priority: 0.8, freq: "monthly" },
+    { url: "/services/twin", priority: 0.8, freq: "monthly" },
+    { url: "/services/ateliers", priority: 0.7, freq: "monthly" },
     { url: "/live", priority: 0.7, freq: "weekly" },
     { url: "/outils/twin/cohorte", priority: 0.7, freq: "monthly" },
     { url: "/recherche", priority: 0.3, freq: "yearly" },

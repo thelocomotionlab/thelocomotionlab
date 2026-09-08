@@ -13,6 +13,7 @@
    il n'est utilisé que par les autres apps. */
 @source "../../../packages/ui/src/components/Button.tsx";
 @source "../../../packages/ui/src/components/Field.tsx";
+@source "../../../packages/ui/src/components/CarteDOffre.tsx";
 
 /* Les composants des pages de contenu (blocs, sections d'aventure, transverses)
    vivent dans packages/ui : Tailwind doit scanner tout le dossier pour générer

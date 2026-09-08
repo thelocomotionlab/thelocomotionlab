@@ -204,7 +204,7 @@ export default function CohorteForm() {
         </p>
         <div className="mt-7">
           <Link
-            href="/services#twin"
+            href="/services/twin"
             className="inline-block rounded-full border-[1.5px] border-brand-accent-dark px-6 py-[11px] font-semibold text-brand-deep-dark transition hover:border-brand-accent hover:bg-brand-accent hover:text-white"
           >
             Retour à la page Twin
