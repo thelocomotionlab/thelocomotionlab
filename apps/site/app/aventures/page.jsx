@@ -116,7 +116,7 @@ export default function AventuresPage() {
                     </Link>
                   ) : null}
                   <Link href={url} className={recit ? ACTION_SECONDAIRE : ACTION_PRIMAIRE}>
-                    {frontmatter.etat === "termine" ? "Voir la campagne" : "Suivre la campagne"}
+                    {frontmatter.etat === "termine" ? "Voir l'aventure" : "Suivre l'aventure"}
                   </Link>
                 </div>
               </div>

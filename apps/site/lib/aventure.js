@@ -23,16 +23,21 @@ export const ETATS = {
   "en-preparation": "En préparation",
 };
 
-/** « Campagne 29/09 → 30/11/2025 ». Une campagne sans fin n'annonce qu'un départ. */
+/**
+ * La période d'une aventure, dite comme on la dirait : « Du 29/09 au
+ * 30/11/2025 ». Une aventure sans fin n'annonce qu'un départ.
+ *
+ * L'année du début est tue quand c'est la même qu'à la fin.
+ */
 export function campagneLisible(campagne) {
   const debut = dateLisible(campagne.debut);
   if (!campagne.fin) return `Départ le ${debut}`;
 
-  const [jourDebut, moisDebut, anneeDebut] = campagne.debut.split("-").reverse();
+  const [jourDebut, moisDebut] = campagne.debut.split("-").reverse();
   const fin = dateLisible(campagne.fin);
   const memeAnnee = campagne.debut.slice(0, 4) === campagne.fin.slice(0, 4);
   const debutCourt = memeAnnee ? `${jourDebut}/${moisDebut}` : debut;
-  return `Campagne ${debutCourt} → ${fin}`;
+  return `Du ${debutCourt} au ${fin}`;
 }
 
 /**

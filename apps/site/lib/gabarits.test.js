@@ -67,16 +67,16 @@ describe("l'étagère des aventures", () => {
     expect(chiffreDeCarte("sandales")).toEqual({ valeur: "sandales", libelle: null });
   });
 
-  it("abrège la campagne quand elle tient dans une année", () => {
+  it("tait l'année du début quand la période tient dans une seule", () => {
     expect(campagneLisible({ debut: "2025-09-29", fin: "2025-11-30" })).toBe(
-      "Campagne 29/09 → 30/11/2025",
+      "Du 29/09 au 30/11/2025",
     );
     expect(campagneLisible({ debut: "2026-12-28", fin: "2027-01-05" })).toBe(
-      "Campagne 28/12/2026 → 05/01/2027",
+      "Du 28/12/2026 au 05/01/2027",
     );
   });
 
-  it("n'annonce qu'un départ quand la campagne n'a pas de fin", () => {
+  it("n'annonce qu'un départ quand l'aventure n'a pas de fin", () => {
     expect(campagneLisible({ debut: "2027-01-10" })).toBe("Départ le 10/01/2027");
   });
 
@@ -138,12 +138,12 @@ describe("le bloc Aventures de l'accueil", () => {
     }
   });
 
-  it("dit « Lire le récit » sur une campagne terminée, « Suivre la campagne » sinon", () => {
+  it("dit « Lire le récit » sur une aventure terminée, « Suivre l'aventure » sinon", () => {
     for (const carte of blocAventuresDeLAccueil()) {
       if (carte.etat === "termine") {
-        expect(carte.action).toMatch(/^(Lire le récit|Voir la campagne)$/);
+        expect(carte.action).toMatch(/^(Lire le récit|Voir l'aventure)$/);
       } else {
-        expect(carte.action).toBe("Suivre la campagne");
+        expect(carte.action).toBe("Suivre l'aventure");
       }
     }
   });

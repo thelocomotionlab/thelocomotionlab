@@ -125,7 +125,7 @@ export default async function RecitPage({ params }) {
                 href={urlDe(campagne)}
                 className="inline-block rounded-full bg-brand-deep px-6 py-2.5 font-heading text-sm font-semibold text-white no-underline transition-colors hover:bg-brand-deep-dark"
               >
-                Voir la campagne
+                Voir l&rsquo;aventure
               </Link>
               <Link
                 href="/aventures"

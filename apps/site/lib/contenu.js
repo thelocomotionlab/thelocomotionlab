@@ -177,7 +177,7 @@ export function blocAventuresDeLAccueil(limite = 8) {
           chiffres: recit.frontmatter.chiffres ?? frontmatter.resume,
           etat: frontmatter.etat,
           date: dateDeCampagne(frontmatter),
-          action: termine ? "Lire le récit" : "Suivre la campagne",
+          action: termine ? "Lire le récit" : "Suivre l'aventure",
         };
       }
 
@@ -190,7 +190,7 @@ export function blocAventuresDeLAccueil(limite = 8) {
         chiffres: frontmatter.resume,
         etat: frontmatter.etat,
         date: dateDeCampagne(frontmatter),
-        action: termine ? "Voir la campagne" : "Suivre la campagne",
+        action: termine ? "Voir l'aventure" : "Suivre l'aventure",
       };
     });
 }

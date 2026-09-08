@@ -132,7 +132,7 @@ function CarteDAccueil({ carte }) {
   return (
     <Link
       href={carte.url}
-      className="block w-[250px] shrink-0 snap-start overflow-hidden rounded-[10px] bg-brand-paper text-brand-text no-underline shadow-vignette transition-transform duration-200 md:hover:-translate-y-1.5"
+      className="flex w-[250px] shrink-0 snap-start flex-col overflow-hidden rounded-[10px] bg-brand-paper text-brand-text no-underline shadow-vignette transition-transform duration-200 md:hover:-translate-y-1.5"
     >
       {/* La vignette est rendue même sans photo : sans elle, une carte sans
           cover se décale par rapport à ses voisines. Au format des couvertures
@@ -150,16 +150,20 @@ function CarteDAccueil({ carte }) {
           />
         ) : null}
       </div>
-      <div className="px-4 pb-4 pt-3">
-        <div className="font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
+      {/* Les trois lignes s'alignent d'une carte à l'autre : la méta et le
+          titre gardent la hauteur de deux lignes même quand ils n'en occupent
+          qu'une, et les chiffres sont poussés en pied. Sans quoi, un titre
+          court remontait tout ce qui le suit et la rangée partait en escalier. */}
+      <div className="flex flex-1 flex-col px-4 pb-4 pt-3">
+        <div className="min-h-[2.8em] font-mono text-xxs font-semibold uppercase leading-[1.4] tracking-etiquette text-brand-muted">
           <span className="font-bold text-brand-deep">{carte.surtitre}</span>
           {" · "}
           {ETATS[carte.etat].toLowerCase()} le {dateLisible(carte.date)}
         </div>
-        <div className="mt-1.5 font-heading text-[15px] font-bold leading-[1.3] text-brand-deep">
+        <div className="mt-1.5 min-h-[2.6em] font-heading text-[15px] font-bold leading-[1.3] text-brand-deep">
           {carte.titre}
         </div>
-        <div className="mt-1.5 font-mono text-xxs text-brand-soft tabular-nums">
+        <div className="mt-auto pt-2 font-mono text-xxs text-brand-soft tabular-nums">
           {carte.chiffres.join(" · ")}
         </div>
       </div>

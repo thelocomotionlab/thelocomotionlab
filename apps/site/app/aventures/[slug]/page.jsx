@@ -102,7 +102,6 @@ export default async function AventurePage({ params }) {
         <div className="min-w-0 tabular-nums">
           <header>
             <div className="flex flex-wrap items-center gap-3 font-mono text-meta font-semibold uppercase tracking-etiquette text-brand-muted">
-              <span>Aventure</span>
               <span className="rounded-xs border border-brand-deep-dark px-2 py-0.5 font-bold text-brand-deep-dark">
                 {ETATS[frontmatter.etat]}
               </span>
