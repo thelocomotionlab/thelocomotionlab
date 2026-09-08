@@ -90,7 +90,7 @@ export default function SciencePage() {
                 colonne il n'aligne rien, il ne sert donc qu'à laisser un
                 rectangle beige au-dessus du titre. */}
             <span
-              className={`aspect-[3/2] overflow-hidden rounded-md bg-brand-wash md:mb-0 md:block ${
+              className={`aspect-cover overflow-hidden rounded-md bg-brand-wash md:mb-0 md:block ${
                 article.cover ? "mb-5 block" : "hidden"
               }`}
             >

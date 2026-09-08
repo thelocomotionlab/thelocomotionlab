@@ -30,8 +30,8 @@ export const metadata = {
 const COORDONNEES = [
   {
     libelle: "E-mail",
-    valeur: "thelocomotionlab@gmail.com",
-    href: "mailto:thelocomotionlab@gmail.com",
+    valeur: "contact@thelocomotionlab.com",
+    href: "mailto:contact@thelocomotionlab.com",
   },
   {
     libelle: "Instagram",

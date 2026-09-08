@@ -74,7 +74,7 @@ export default function AventuresPage() {
               className="grid items-end gap-10 border-b-[3px] border-brand-deep pb-9 shadow-etagere lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]"
             >
               {frontmatter.cover !== "TODO" ? (
-                <div className="aspect-[11/6] overflow-hidden rounded-md shadow-card">
+                <div className="aspect-cover overflow-hidden rounded-md shadow-card">
                   <Image
                     src={frontmatter.cover}
                     alt={frontmatter.titre}
@@ -84,7 +84,7 @@ export default function AventuresPage() {
                   />
                 </div>
               ) : (
-                <div className="flex aspect-[11/6] items-center justify-center rounded-md border border-brand-hairline bg-brand-grid font-mono text-meta uppercase tracking-lien text-brand-faint">
+                <div className="flex aspect-cover items-center justify-center rounded-md border border-brand-hairline bg-brand-grid font-mono text-meta uppercase tracking-lien text-brand-faint">
                   cover à faire
                 </div>
               )}

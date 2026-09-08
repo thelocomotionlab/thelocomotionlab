@@ -128,7 +128,10 @@ export function GroupeDOffres({ titre, children }: GroupeDOffresProps) {
           {titre}
         </h2>
       ) : null}
-      <div className="grid items-stretch gap-6 [grid-template-columns:repeat(auto-fit,minmax(20rem,1fr))]">
+      {/* `min(20rem,100%)` et non `20rem` : le plancher d'une colonne
+          auto-fit s'applique même quand la grille est plus étroite que lui, et
+          les cartes débordaient alors de l'écran sous 21 rem de large. */}
+      <div className="grid items-stretch gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(20rem,100%),1fr))]">
         {children}
       </div>
     </section>

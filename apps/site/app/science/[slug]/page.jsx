@@ -115,7 +115,7 @@ export default async function ArticlePage({ params }) {
           {frontmatter.cover ? (
             // Pleine largeur de l'article : l'image ouvre le document sous son
             // bandeau, et la colonne de lecture reprend en dessous.
-            <div className="mt-8 aspect-[11/6] overflow-hidden rounded-md shadow-card">
+            <div className="mt-8 aspect-cover overflow-hidden rounded-md shadow-card">
               <Image
                 src={frontmatter.cover}
                 alt={frontmatter.titre}

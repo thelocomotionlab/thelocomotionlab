@@ -17,7 +17,10 @@ export const PORTRAIT = {
 /** Le portrait, à côté du texte sur le Labo, absent de la page /a-propos. */
 export function PortraitDeValentin() {
   return (
-    <div className="sticky top-24">
+    // Collant seulement quand il y a une colonne à côté de laquelle tenir : en
+    // dessous de lg le portrait passe AU-DESSUS du texte, et rester collé
+    // revenait à faire défiler le texte derrière lui.
+    <div className="lg:sticky lg:top-24">
       <Photo format="portrait" legende={PORTRAIT.legende}>
         <Image src={PORTRAIT.src} alt={PORTRAIT.alt} width={800} height={1000} />
       </Photo>

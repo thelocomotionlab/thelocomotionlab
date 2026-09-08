@@ -29,8 +29,9 @@ function Card({ item, tone }) {
       className={`group flex h-[88px] w-full shrink-0 snap-start items-center gap-3 overflow-hidden rounded-[10px] bg-white transition-transform duration-200 md:block md:h-auto md:w-[250px] md:rounded-[14px] md:hover:-translate-y-1.5 ${shadow}`}
     >
       {/* Vignette : s'étire sur toute la hauteur de la ligne (titres sur
-          2 lignes compris) ; bloc 130px plein cadre sur desktop. */}
-      <span className="relative block min-h-[62px] w-[78px] flex-none self-stretch md:h-[130px] md:w-full md:self-auto">
+          2 lignes compris) ; au format des couvertures sur desktop, où elle
+          est en plein cadre. */}
+      <span className="relative block min-h-[62px] w-[78px] flex-none self-stretch md:aspect-cover md:h-auto md:w-full md:self-auto">
         {item.cover ? (
           <Image
             src={item.cover}

@@ -133,14 +133,17 @@ function CarteDAccueil({ carte }) {
       className="block w-full overflow-hidden rounded-[10px] bg-brand-paper text-brand-text no-underline shadow-vignette transition-transform duration-200 md:w-[250px] md:hover:-translate-y-1.5"
     >
       {/* La vignette est rendue même sans photo : sans elle, une carte sans
-          cover se décale par rapport à ses voisines. */}
-      <div className="h-[130px] overflow-hidden bg-brand-wash">
+          cover se décale par rapport à ses voisines. Au format des couvertures
+          — une hauteur fixe rognait la photo de moitié dès que la carte
+          s'élargissait, c'est-à-dire sur tout téléphone. */}
+      <div className="aspect-cover overflow-hidden bg-brand-wash">
         {carte.cover && carte.cover !== "TODO" ? (
           <Image
             src={carte.cover}
             alt={carte.titre}
-            width={500}
-            height={260}
+            width={550}
+            height={300}
+            sizes="(min-width: 768px) 250px, 100vw"
             className="block h-full w-full object-cover"
           />
         ) : null}
