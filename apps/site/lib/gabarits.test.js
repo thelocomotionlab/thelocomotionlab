@@ -113,14 +113,18 @@ describe("les mises en forme partagées", () => {
 });
 
 describe("le bloc Aventures de l'accueil", () => {
-  it("montre le récit d'une campagne quand il existe, la campagne sinon", () => {
-    for (const carte of blocAventuresDeLAccueil()) {
+  it("porte une carte par page — la campagne et son récit sont deux entrées", () => {
+    const cartes = blocAventuresDeLAccueil();
+    for (const carte of cartes) {
       if (carte.genre === "recit") {
         expect(carte.url).toMatch(/^\/aventures\/recit\//);
       } else {
         expect(carte.url).toMatch(/^\/aventures\/[a-z0-9-]+$/);
       }
     }
+
+    const urls = cartes.map((carte) => carte.url);
+    expect(new Set(urls).size, "deux cartes mènent à la même page").toBe(urls.length);
   });
 
   it("annonce la sorte en surtitre et porte le titre du récit en titre", () => {
@@ -134,10 +138,12 @@ describe("le bloc Aventures de l'accueil", () => {
     }
   });
 
-  it("dit « Lire le récit » sur une campagne terminée, « Suivre la campagne » sinon", () => {
+  it("dit « Lire le récit » sur un récit, et l'état de la campagne sinon", () => {
     for (const carte of blocAventuresDeLAccueil()) {
-      if (carte.etat === "termine") {
-        expect(carte.action).toMatch(/^(Lire le récit|Voir la campagne)$/);
+      if (carte.genre === "recit") {
+        expect(carte.action).toBe("Lire le récit");
+      } else if (carte.etat === "termine") {
+        expect(carte.action).toBe("Voir la campagne");
       } else {
         expect(carte.action).toBe("Suivre la campagne");
       }

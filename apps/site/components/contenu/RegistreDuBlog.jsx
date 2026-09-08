@@ -15,6 +15,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 
 import { TYPES, parAnnee } from "@/lib/blogRegistre";
+import Apercu from "@/components/contenu/Apercu";
 
 function Pastille({ actif, children, onClick }) {
   return (
@@ -140,9 +141,9 @@ export default function RegistreDuBlog({ entrees, enTete }) {
                       <span className="mt-1.5 block font-heading text-[21px] font-semibold leading-[1.25] transition-colors group-hover:text-brand-accent-ink">
                         {entree.titre}
                       </span>
-                      <span className="mt-1.5 block max-w-[64ch] font-sans text-lecture leading-normal text-brand-soft [text-wrap:pretty]">
+                      <Apercu className="mt-1.5 max-w-[64ch] font-sans text-lecture text-brand-soft [text-wrap:pretty]">
                         {entree.chapeau}
-                      </span>
+                      </Apercu>
                       {entree.note || entree.protocole ? (
                         <span className="mt-2 flex items-center gap-3.5 font-mono text-meta font-bold uppercase tracking-lien text-brand-faint">
                           {entree.note ? <span className="text-brand-slate">● Note</span> : null}
