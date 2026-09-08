@@ -148,50 +148,49 @@ export function blocsDe(page) {
 }
 
 /**
- * Le bloc Aventures de l'accueil (§8) : la rangée qui défile.
+ * Le bloc Aventures de l'accueil (§8).
  *
- * Une campagne et son récit sont deux pages, et font donc deux cartes — l'une
- * porte les données et la préparation, l'autre le texte. C'est ce qui donne à
- * la rangée de quoi défiler : à trois cartes il n'y a rien à faire glisser.
+ * UNE aventure, UNE carte : celle de son récit quand il existe — le titre du
+ * récit, la mention « Récit » en surtitre — et celle de la campagne sinon. Pas
+ * les deux : le récit ouvre le texte, et il ramène lui-même à la campagne pour
+ * qui veut la préparation entière.
  *
- * Tri par date, l'événement le plus récent d'abord.
+ * L'action dépend de l'état : on lit un récit sur une campagne terminée, on
+ * suit celle qui est en cours. Le tri est celui des aventures : l'événement le
+ * plus récent d'abord.
  */
 export function blocAventuresDeLAccueil(limite = 8) {
-  const campagnes = aventures().map((page) => {
-    const { frontmatter } = page;
-    return {
-      genre: "campagne",
-      surtitre: "Aventure",
-      titre: frontmatter.titre,
-      url: urlDe(page),
-      cover: frontmatter.cover,
-      chiffres: frontmatter.resume,
-      etat: frontmatter.etat,
-      date: dateDeCampagne(frontmatter),
-      action: frontmatter.etat === "termine" ? "Voir la campagne" : "Suivre la campagne",
-    };
-  });
+  return aventures()
+    .slice(0, limite)
+    .map((page) => {
+      const { frontmatter } = page;
+      const recit = recitDe(frontmatter);
+      const termine = frontmatter.etat === "termine";
 
-  const recits = aventures().flatMap((page) => {
-    const { frontmatter } = page;
-    const recit = recitDe(frontmatter);
-    if (!recit) return [];
-    return [
-      {
-        genre: "recit",
-        surtitre: "Récit",
-        titre: recit.frontmatter.titre,
-        url: urlDe(recit),
-        cover: recit.frontmatter.cover,
-        chiffres: recit.frontmatter.chiffres ?? frontmatter.resume,
+      if (recit) {
+        return {
+          genre: "recit",
+          surtitre: "Récit",
+          titre: recit.frontmatter.titre,
+          url: urlDe(recit),
+          cover: recit.frontmatter.cover,
+          chiffres: recit.frontmatter.chiffres ?? frontmatter.resume,
+          etat: frontmatter.etat,
+          date: dateDeCampagne(frontmatter),
+          action: termine ? "Lire le récit" : "Suivre la campagne",
+        };
+      }
+
+      return {
+        genre: "campagne",
+        surtitre: "Aventure",
+        titre: frontmatter.titre,
+        url: urlDe(page),
+        cover: frontmatter.cover,
+        chiffres: frontmatter.resume,
         etat: frontmatter.etat,
-        date: recit.frontmatter.date,
-        action: "Lire le récit",
-      },
-    ];
-  });
-
-  return [...campagnes, ...recits]
-    .sort((a, b) => String(b.date).localeCompare(String(a.date)))
-    .slice(0, limite);
+        date: dateDeCampagne(frontmatter),
+        action: termine ? "Voir la campagne" : "Suivre la campagne",
+      };
+    });
 }
