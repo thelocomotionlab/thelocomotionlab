@@ -27,6 +27,11 @@ const CONTENUS = [
   ["recit-reunion-2025", "/aventures/recit/reunion-2025"],
   ["immersion-primale-entre-vercors-et-drome", "/aventures/recit/vercors-2026"],
   ["traversee-reunion", "/aventures/reunion-2025"],
+  // Les slugs de la génération intermédiaire, quand les projets étaient
+  // devenus des carnets.
+  ["reunion-2025", "/aventures/reunion-2025"],
+  ["carnet-2025", "/aventures/reunion-2025"],
+  ["carnet-2026", "/blog"],
   // Le récit des Écrins est encore un brouillon : la campagne le remplace.
   ["mon-tour-des-ecrins-en-80-heures", "/aventures/tour-des-ecrins"],
   // Le journal de la saison est devenu le carnet de bord tout entier.
