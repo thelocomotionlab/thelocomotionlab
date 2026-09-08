@@ -19,11 +19,24 @@ export type StresseursProps = {
   billets?: Record<string, BilletDeSeance>;
 };
 
+// Les colonnes possibles, dans l'ordre. Seules celles que le stresseur
+// renseigne sont rendues : une fréquence qui n'a pas lieu d'être n'occupe pas
+// une colonne pour y afficher un tiret. « En pratique » prend la place laissée
+// par celles qui manquent.
 const MESURES = [
   { cle: "dose", libelle: "Dose" },
   { cle: "frequence", libelle: "Fréquence" },
   { cle: "intensite", libelle: "Intensité" },
+  { cle: "en_pratique", libelle: "En pratique" },
 ] as const;
+
+/** Écrites en toutes lettres : une classe fabriquée échappe à Tailwind. */
+const COLONNES: Record<number, string> = {
+  1: "grid-cols-1 md:w-[16rem]",
+  2: "grid-cols-2 md:w-[22rem]",
+  3: "grid-cols-3 md:w-[25rem]",
+  4: "grid-cols-2 md:grid-cols-4 md:w-[32rem]",
+};
 
 export default function Stresseurs({ stresseurs, billets = {} }: StresseursProps) {
   const { travailles, non_travailles: nonTravailles } = stresseurs;
@@ -32,7 +45,9 @@ export default function Stresseurs({ stresseurs, billets = {} }: StresseursProps
     <>
       {travailles.length > 0 ? (
         <div className="mt-4 border-t border-brand-hairline">
-          {travailles.map((stresseur) => (
+          {travailles.map((stresseur) => {
+            const mesures = MESURES.filter(({ cle }) => stresseur[cle]);
+            return (
             <div
               key={stresseur.nom}
               className="grid items-center gap-x-8 gap-y-4 border-b border-brand-hairline py-5 md:grid-cols-[minmax(0,1fr)_auto]"
@@ -47,16 +62,6 @@ export default function Stresseurs({ stresseurs, billets = {} }: StresseursProps
                   </span>
                   {stresseur.pourquoi}
                 </p>
-                {/* Ce qui a réellement été fait, sous l'intention : les trois
-                    mesures donnent des ordres de grandeur, celle-ci le geste. */}
-                {stresseur.en_pratique ? (
-                  <p className="mt-2 mb-0 max-w-[62ch] font-sans leading-relaxed text-brand-ink [text-wrap:pretty]">
-                    <span className="mr-2.5 font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
-                      En pratique
-                    </span>
-                    {stresseur.en_pratique}
-                  </p>
-                ) : null}
                 {stresseur.billet && billets[stresseur.billet] ? (
                   <p className="m-0 mt-2.5">
                     <a
@@ -68,12 +73,9 @@ export default function Stresseurs({ stresseurs, billets = {} }: StresseursProps
                   </p>
                 ) : null}
               </div>
-              {/* Les mesures renseignées, en colonnes de largeur fixe : d'un
-                  stresseur au suivant, elles restent alignées. Un stresseur qui
-                  n'en déclare aucune n'a pas de colonne vide. */}
-              {MESURES.some(({ cle }) => stresseur[cle]) ? (
-                <dl className="m-0 grid grid-cols-3 divide-x divide-brand-grid md:w-[25rem]">
-                  {MESURES.map(({ cle, libelle }) => (
+              {mesures.length > 0 ? (
+                <dl className={`m-0 grid divide-x divide-brand-grid ${COLONNES[mesures.length]}`}>
+                  {mesures.map(({ cle, libelle }) => (
                     <div
                       key={cle}
                       className="flex flex-col items-center justify-start gap-1.5 px-3 text-center"
@@ -82,14 +84,15 @@ export default function Stresseurs({ stresseurs, billets = {} }: StresseursProps
                         {libelle}
                       </dt>
                       <dd className="m-0 font-mono text-xs leading-snug text-balance">
-                        {stresseur[cle] ?? <span className="text-brand-faint">—</span>}
+                        {stresseur[cle]}
                       </dd>
                     </div>
                   ))}
                 </dl>
               ) : null}
             </div>
-          ))}
+            );
+          })}
         </div>
       ) : null}
 

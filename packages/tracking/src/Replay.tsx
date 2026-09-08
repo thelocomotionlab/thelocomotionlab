@@ -304,45 +304,39 @@ export default function Replay({
   /* ---------- 5) Rendu ---------- */
   return (
     <div className="flex flex-col items-center w-full py-6 px-3 sm:px-6 gap-3">
-      {/* Bloc stats */}
-      <div className="bg-white/80 backdrop-blur-md shadow-md rounded-2xl p-4 w-full max-w-3xl text-center border border-gray-200">
-        <div className="flex justify-center items-center gap-2 font-semibold text-lg text-brand-deep sm:mb-1">
-          <SatelliteDish size={18} /> {title}
+      {/* L'en-tête du replay : ce qu'on regarde, et ce que ça pèse. Les chiffres
+          sont lus comme ceux d'une carte d'aventure — valeur en gras, libellé
+          en petites capitales dessous — plutôt qu'en ligne de texte. */}
+      <div className="w-full max-w-3xl rounded-xl border border-brand-hairline bg-brand-paper px-5 py-4 shadow-bloc sm:px-7 sm:py-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-1.5">
+          <span className="inline-flex items-center gap-2 font-heading text-[15px] font-bold text-brand-deep">
+            <SatelliteDish size={16} aria-hidden="true" /> {title}
+          </span>
+          <span className="font-mono text-xxs uppercase tracking-etiquette text-brand-muted">
+            Dernière position{" "}
+            <span className="tabular-nums text-brand-soft">
+              {lastUpdate ? new Date(lastUpdate).toLocaleString("fr-FR") : "—"}
+            </span>
+          </span>
         </div>
 
-        <div className="text-gray-700 mb-2 text-sm sm:flex sm:flex-row sm:items-center sm:justify-center sm:gap-1">
-          <div className="flex flex-col items-center sm:hidden">
-            <span className="text-xxs">Durée de locomotion :</span>
-            <span className="text-xs font-bold mb-1">{formatDuration(elapsed)}</span>
-            <div className="w-16 h-[2px] bg-brand-accent mt-1 mb-4 rounded-full mx-auto"></div>
-          </div>
-
-          <div className="hidden sm:inline">
-            <span className="text-sm">Durée de locomotion : </span>
-            <span className="text-sm font-semibold mb-1">{formatDuration(elapsed)}</span>
-          </div>
-        </div>
-
-        <div className="hidden sm:block w-24 h-[2px] bg-brand-accent mt-1 mb-1 rounded-full mx-auto"></div>
-
-        <div className="flex justify-around text-sm sm:text-base font-medium text-gray-800">
-          <div>
-            <span className="font-semibold">{stats.distance} km</span>
-            <div className="sm:text-xs text-xxs text-gray-500">Distance</div>
-          </div>
-          <div>
-            <span className="font-semibold">{stats.ascent} m</span>
-            <div className="sm:text-xs text-xxs text-gray-500">D+</div>
-          </div>
-          <div>
-            <span className="font-semibold">{stats.descent} m</span>
-            <div className="sm:text-xs text-xxs text-gray-500 sm:mb-2">D−</div>
-          </div>
-        </div>
-        <div className="sm:text-xs text-xxs mt-0 text-gray-500">
-          Dernière position :{" "}
-          {lastUpdate ? new Date(lastUpdate).toLocaleString("fr-FR") : "—"}
-        </div>
+        <dl className="m-0 mt-4 grid grid-cols-2 gap-x-5 gap-y-4 border-t border-brand-hairline pt-4 sm:grid-cols-4">
+          {[
+            { valeur: formatDuration(elapsed), libelle: "Durée de locomotion" },
+            { valeur: `${stats.distance} km`, libelle: "Distance" },
+            { valeur: `${stats.ascent} m`, libelle: "D+" },
+            { valeur: `${stats.descent} m`, libelle: "D−" },
+          ].map((chiffre) => (
+            <div key={chiffre.libelle} className="min-w-0">
+              <dd className="m-0 font-heading text-xl font-bold leading-none tabular-nums text-brand-text">
+                {chiffre.valeur}
+              </dd>
+              <dt className="mt-1.5 font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
+                {chiffre.libelle}
+              </dt>
+            </div>
+          ))}
+        </dl>
       </div>
 
       {/* Carte + profil altimétrique collé dessous : un seul cadre, une seule

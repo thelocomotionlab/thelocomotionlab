@@ -24,21 +24,16 @@ export type DirectProps = {
  */
 export function ArchiveDuDirect({ url }: { url: string }) {
   return (
-    <div className="mt-5 flex flex-col gap-5 rounded-[14px] border border-brand-wash-line bg-brand-mist px-6 py-5 shadow-mist sm:flex-row sm:items-center sm:justify-between sm:gap-8">
-      <div className="min-w-0">
-        <p className="m-0 font-mono text-xxs font-bold uppercase tracking-etiquette text-brand-slate">
-          Direct archivé
-        </p>
-        <p className="m-0 mt-2 max-w-[52ch] font-sans text-lecture font-lecture leading-lecture text-brand-ink [text-wrap:pretty]">
-          La carte, le profil, la progression et le carnet de bord, figés tels qu&rsquo;on les a
-          suivis en direct.
-        </p>
-      </div>
+    <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-md border border-brand-hairline bg-brand-paper px-5 py-4 shadow-bloc">
+      <p className="m-0 max-w-[58ch] text-brand-soft [text-wrap:pretty]">
+        Le direct de cette campagne est archivé : la carte, le profil, la progression et le carnet
+        de bord, figés tels qu&rsquo;on les a suivis.
+      </p>
       <a
         href={url}
-        className="inline-block shrink-0 self-start whitespace-nowrap rounded-full bg-brand-accent px-[26px] py-3 font-heading text-[15px] font-semibold text-white no-underline shadow-cta transition-colors hover:bg-brand-accent-dark sm:self-auto"
+        className="inline-block whitespace-nowrap rounded-full bg-brand-deep px-5 py-2.5 font-heading text-sm font-semibold text-white no-underline transition-colors hover:bg-brand-deep-dark"
       >
-        Ouvrir le direct
+        Ouvrir le direct archivé
       </a>
     </div>
   );

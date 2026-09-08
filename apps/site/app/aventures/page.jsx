@@ -55,7 +55,7 @@ function Chiffres({ resume }) {
           <div key={valeur} className="min-w-0">
             {/* Un mot plus large que sa colonne se coupe plutôt que de mordre
                 sur la suivante. */}
-            <dd className="m-0 font-heading text-2xl font-bold leading-[1.1] [overflow-wrap:break-word] md:text-[28px]">
+            <dd className="m-0 font-heading text-xl font-bold leading-[1.15] [overflow-wrap:break-word] md:text-2xl">
               {valeur}
             </dd>
             {libelle ? (
