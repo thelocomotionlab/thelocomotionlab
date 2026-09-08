@@ -245,7 +245,7 @@ export default async function HomePage() {
             </span>
           </h1>
           <p className="mx-auto mt-4 max-w-[680px] text-base leading-relaxed text-white/90 text-pretty sm:text-lg">
-            Explorer la robustesse physiologique comme instrument de confiance
+            Explorer la robustesse comme instrument de confiance
             en soi, force et bien-être.
           </p>
           <div className="mt-8 flex items-center justify-center">
@@ -363,8 +363,7 @@ export default async function HomePage() {
               </h2>
               <Accroche>Le carnet de bord, au jour le jour.</Accroche>
               <p className="mt-5 max-w-[40ch] text-[16.5px] leading-[1.7] text-brand-ink text-pretty">
-                Sorties, bilans, billets et notes de terrain : ce qui se passe
-                au labo cette semaine, protocoles en cours compris.
+                L'actualité du labo au fil de l'eau.
               </p>
               <Link
                 href="/blog"
