@@ -359,8 +359,7 @@ export default async function HomePage() {
               </h2>
               <Accroche>Le carnet de bord, au jour le jour.</Accroche>
               <p className="mt-5 max-w-[40ch] text-[16.5px] leading-[1.7] text-brand-ink text-pretty">
-                Sorties, bilans, billets et notes de terrain : ce qui se passe
-                au labo cette semaine, protocoles en cours compris.
+                L'actualité du labo au fil de l'eau.
               </p>
               <Link
                 href="/blog"
