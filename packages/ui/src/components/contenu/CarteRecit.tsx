@@ -36,7 +36,9 @@ export default function CarteRecit({
   return (
     <a
       href={url}
-      className={`mt-5 grid overflow-hidden rounded-xl border border-brand-hairline bg-brand-paper text-brand-text no-underline shadow-renvoi transition-colors hover:border-brand-deep ${
+      // `grid-cols-1` et non la colonne implicite : `auto` se dimensionne sur
+      // le contenu, et la photo imposait alors sa largeur naturelle à la carte.
+      className={`mt-5 grid grid-cols-1 overflow-hidden rounded-xl border border-brand-hairline bg-brand-paper text-brand-text no-underline shadow-renvoi transition-colors hover:border-brand-deep ${
         cover ? "md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]" : ""
       }`}
     >

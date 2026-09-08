@@ -96,11 +96,14 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 flex items-center justify-between border-b border-brand-hairline bg-white/92 p-4 backdrop-blur-[8px]">
+    // Le bandeau est collant : sur un téléphone, chaque pixel qu'il prend est
+    // pris au contenu pour toute la durée du défilement. La marque y tient
+    // donc à une taille réduite, et retrouve la sienne dès qu'il y a la place.
+    <header className="sticky top-0 z-50 flex items-center justify-between border-b border-brand-hairline bg-white/92 px-4 py-1.5 backdrop-blur-[8px] md:p-4">
       <Link
         href="/"
         aria-label="Accueil"
-        className="inline-flex items-center gap-3.5 text-brand-text no-underline transition-colors hover:text-brand-deep-dark"
+        className="inline-flex items-center gap-2.5 text-brand-text no-underline transition-colors hover:text-brand-deep-dark md:gap-3.5"
       >
         <Image
           src="/images/assets/logo-mark.png"
@@ -108,9 +111,9 @@ export default function Navbar() {
           width={96}
           height={96}
           priority
-          className="h-12 w-12 flex-none"
+          className="h-9 w-9 flex-none md:h-12 md:w-12"
         />
-        <span className="whitespace-nowrap pt-px font-heading text-base font-semibold uppercase tracking-[0.24em]">
+        <span className="whitespace-nowrap pt-px font-heading text-[13px] font-semibold uppercase tracking-[0.18em] md:text-base md:tracking-[0.24em]">
           Locomotion Lab
         </span>
       </Link>

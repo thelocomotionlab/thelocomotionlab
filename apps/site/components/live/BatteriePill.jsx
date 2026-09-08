@@ -43,7 +43,7 @@ export default function BatteriePill({ percent }) {
         />
       </span>
       <span
-        className={`font-heading text-[10px] font-bold tabular-nums ${
+        className={`font-heading text-[11px] font-bold tabular-nums lg:text-[10px] ${
           bas ? "text-red-700" : "text-brand-text/70"
         }`}
       >

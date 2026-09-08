@@ -123,7 +123,9 @@ export default function EmailCapture({
           placeholder={placeholder}
           className={
             isBand
-              ? "flex-1 rounded-full bg-white px-[18px] py-3 text-[14.5px] text-gray-700 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-deep transition-all"
+              ? // 16 px sous md : en deçà, Safari iOS zoome sur le champ à la
+                // mise au point et laisse la page décalée en travers.
+                "flex-1 rounded-full bg-white px-[18px] py-3 text-base text-brand-ink placeholder:text-brand-muted focus:outline-none focus:ring-2 focus:ring-brand-deep transition-all md:text-[14.5px]"
               : "flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-accent focus:rounded-full transition-all"
           }
         />

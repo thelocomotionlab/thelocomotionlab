@@ -28,7 +28,8 @@ const LEGACY_ENDPOINT = "https://send-email.thelocomotionlab.workers.dev/";
 const EMAIL_ENDPOINT = process.env.NEXT_PUBLIC_EMAIL_ENDPOINT || LEGACY_ENDPOINT;
 
 const INPUT_CLASSES =
-  "min-w-0 rounded-full border border-brand-field bg-brand-paper px-4 py-3 font-sans text-tableau text-brand-ink placeholder:text-brand-muted focus:outline-none focus:ring-2 focus:ring-brand-accent sm:py-2.5";
+  // 16 px sous sm : en deçà, Safari iOS zoome sur le champ à la mise au point.
+  "min-w-0 rounded-full border border-brand-field bg-brand-paper px-4 py-3 font-sans text-base text-brand-ink placeholder:text-brand-muted focus:outline-none focus:ring-2 focus:ring-brand-accent sm:py-2.5 sm:text-tableau";
 
 const SUBMIT_CLASSES =
   "cursor-pointer rounded-full bg-brand-accent py-3 font-heading text-[15px] font-semibold text-white shadow-cta transition-colors";

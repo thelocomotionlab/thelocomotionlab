@@ -356,9 +356,12 @@ export default async function HomePage() {
                 <Link
                   key={entree.url}
                   href={entree.url}
-                  className="grid grid-cols-[100px_minmax(0,1fr)] items-baseline gap-x-5 border-b border-brand-hairline py-4 text-brand-text no-underline transition-colors hover:text-brand-accent-ink sm:grid-cols-[100px_minmax(0,1fr)_auto]"
+                  // Une colonne sur téléphone : la date en tête, le titre sur
+                  // toute la largeur. En deux colonnes, il ne restait que
+                  // deux cents pixels pour le texte.
+                  className="grid grid-cols-1 gap-x-5 border-b border-brand-hairline py-4 text-brand-text no-underline transition-colors hover:text-brand-accent-ink sm:grid-cols-[100px_minmax(0,1fr)_auto] sm:items-baseline"
                 >
-                  <span className="font-mono text-[12.5px] text-brand-muted tabular-nums">
+                  <span className="mb-1 font-mono text-[12.5px] text-brand-muted tabular-nums sm:mb-0">
                     {entree.dateLisible}
                   </span>
                   <span className="min-w-0">
@@ -371,7 +374,7 @@ export default async function HomePage() {
                       </span>
                     ) : null}
                   </span>
-                  <span className="col-start-2 mt-1 whitespace-nowrap font-mono text-xxs font-semibold uppercase tracking-lien text-brand-muted sm:col-start-3 sm:mt-0">
+                  <span className="mt-1.5 whitespace-nowrap font-mono text-xxs font-semibold uppercase tracking-lien text-brand-muted sm:col-start-3 sm:mt-0">
                     {entree.typeLabel}
                   </span>
                 </Link>

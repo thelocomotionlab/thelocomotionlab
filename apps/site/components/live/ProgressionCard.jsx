@@ -19,7 +19,7 @@ const M = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 });
 function Mesure({ label, valeur, unite }) {
   return (
     <div className="min-w-0 flex-1">
-      <p className="font-heading text-[9.5px] font-medium uppercase tracking-[0.08em] text-brand-text/55 lg:text-[10px]">
+      <p className="font-heading text-[11px] font-medium uppercase tracking-[0.08em] text-brand-text/55 lg:text-[10px]">
         {label}
       </p>
       <p className="mt-0.5 whitespace-nowrap font-heading text-[22px] font-bold leading-none text-brand-text lg:text-[24px]">

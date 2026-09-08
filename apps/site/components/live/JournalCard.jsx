@@ -99,7 +99,7 @@ export default function JournalCard({
             style={{ background: dotColor(index, newestFirst.length) }}
           />
           <div className="flex items-center gap-2">
-            <span className="font-heading text-[10.5px] font-bold uppercase tracking-[0.06em] text-brand-deep">
+            <span className="font-heading text-[11px] font-bold uppercase tracking-[0.06em] text-brand-deep lg:text-[10.5px]">
               {formatEntryTag(entry.ts, dateDebut)}
             </span>
             {kindLabel(entry) && (
@@ -162,7 +162,7 @@ export default function JournalCard({
           )}
 
           {entry.editedAt && (
-            <p className="mt-1 font-heading text-[10px] text-brand-text/40">corrigé</p>
+            <p className="mt-1 font-heading text-[11px] text-brand-text/40 lg:text-[10px]">corrigé</p>
           )}
 
           {entry.type === "video" && entry.media?.duration ? (

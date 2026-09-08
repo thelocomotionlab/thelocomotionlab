@@ -59,7 +59,7 @@ export default function LiveHeader({
             <LiveBadge desktop running={running} archive={archive} />
           </span>
         </div>
-        <Jour jour={jour} className="mt-1.5 text-[10.5px] lg:text-[11px]" />
+        <Jour jour={jour} className="mt-1.5 text-[11px]" />
       </div>
 
       {/* Le sélecteur de fond de carte quitte la carte pour le header (desktop). */}
@@ -90,7 +90,7 @@ function LiveBadge({ desktop = false, running = true, archive = false }) {
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-[20px] font-heading font-bold tracking-[0.1em] ${teinte} ${
-        desktop ? "px-3 py-[5px] text-[11px]" : "px-[11px] py-[5px] text-[10.5px]"
+        desktop ? "px-3 py-[5px] text-[11px]" : "px-[11px] py-[5px] text-[11px]"
       }`}
     >
       {/* bg-current : la pastille suit la couleur du texte de sa variante —
