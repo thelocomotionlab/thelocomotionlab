@@ -11,31 +11,20 @@ import DonneesStructurees from "@/components/DonneesStructurees";
 import FilDAriane from "@/components/contenu/FilDAriane";
 import RetourAIndex from "@/components/contenu/RetourAIndex";
 import { filDAriane } from "@/lib/jsonld";
-import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
+import { partageDIndex } from "@/lib/seo";
+
+const PARTAGE =
+  "Tes courses passées font avancer l'outil : dépose ton archive d'entraînement, elle calibre le moteur puis est supprimée — ton plan de course gratuit en échange.";
 
 export const metadata = {
   title: "Rejoindre la cohorte – Locomotion Twin",
   description:
     "Confie ton archive d'entraînement au Locomotion Lab pour calibrer le Locomotion Twin sur des données réelles, et reçois ton plan de course gratuit en échange.",
-  alternates: {
-    canonical: "https://thelocomotionlab.com/services/twin/cohorte",
-  },
-  openGraph: {
-    title: "Rejoindre la cohorte du Locomotion Twin – The Locomotion Lab",
-    description:
-      "Tes courses passées font avancer l'outil : dépose ton archive d'entraînement, elle calibre le moteur puis est supprimée — ton plan de course gratuit en échange.",
-    url: "https://thelocomotionlab.com/services/twin/cohorte",
-    type: "website",
-    images: OG_IMAGES,
-    locale: "fr_FR",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Rejoindre la cohorte du Locomotion Twin – The Locomotion Lab",
-    description:
-      "Tes courses passées font avancer l'outil : dépose ton archive d'entraînement, elle calibre le moteur puis est supprimée — ton plan de course gratuit en échange.",
-    images: [OG_IMAGE],
-  },
+  ...partageDIndex({
+    titre: "Rejoindre la cohorte du Locomotion Twin – The Locomotion Lab",
+    description: PARTAGE,
+    url: "/services/twin/cohorte",
+  }),
 };
 
 const MAILLONS = [

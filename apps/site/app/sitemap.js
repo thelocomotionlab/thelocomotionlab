@@ -5,8 +5,7 @@
 // entrer.
 import { aventures, parSorte, urlDe } from "@/lib/contenu";
 import { listArchives } from "@/lib/archives.mjs";
-
-const URL = "https://thelocomotionlab.com";
+import { SITE_URL } from "@/lib/seo";
 
 /** La date de dernière modification d'une page, du plus précis au plus vague. */
 function dateDe(page) {
@@ -33,7 +32,7 @@ function routesDeContenu() {
   ];
 
   return pages.map((page) => ({
-    url: `${URL}${urlDe(page)}`,
+    url: `${SITE_URL}${urlDe(page)}`,
     lastModified: new Date(dateDe(page)).toISOString(),
     changeFrequency: "monthly",
     priority: 0.8,
@@ -65,7 +64,7 @@ export default async function sitemap() {
     { url: "/live", priority: 0.7, freq: "weekly" },
     { url: "/mentions-legales", priority: 0.4, freq: "yearly" },
   ].map((route) => ({
-    url: `${URL}${route.url}`,
+    url: `${SITE_URL}${route.url}`,
     ...(route.maj ? { lastModified: route.maj } : {}),
     changeFrequency: route.freq,
     priority: route.priority,
@@ -73,7 +72,7 @@ export default async function sitemap() {
 
   // Les directs archivés sont des pages à part entière, à une URL stable.
   const archives = listArchives().map((archive) => ({
-    url: `${URL}/live/archives/${archive.slug}`,
+    url: `${SITE_URL}/live/archives/${archive.slug}`,
     ...(archive.dateDebut ? { lastModified: new Date(archive.dateDebut).toISOString() } : {}),
     changeFrequency: "yearly",
     priority: 0.5,

@@ -21,9 +21,7 @@ import { notFound } from "next/navigation";
 import Breadcrumb from "@/components/Breadcrumb";
 import LiveEnCours from "@/components/live/LiveEnCours";
 import { getArchive, listArchives } from "@/lib/archives.mjs";
-import { LOGO_SIZE, LOGO_URL } from "@/lib/seo";
-
-const SITE_URL = "https://thelocomotionlab.com";
+import { LOGO_SIZE, LOGO_URL, SITE_URL } from "@/lib/seo";
 
 export async function generateStaticParams() {
   return listArchives().map((a) => ({ slug: a.slug }));

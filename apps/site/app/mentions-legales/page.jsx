@@ -1,31 +1,19 @@
 // app/mentions-legales/page.jsx
 import PageHeader from "@/components/PageHeader";
 import SectionHeading from "@/components/SectionHeading";
-import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
+import { partageDIndex } from "@/lib/seo";
+
+const DESCRIPTION =
+  "Informations légales du site thelocomotionlab.com : éditeur, hébergeur, propriété intellectuelle et contact du Locomotion Lab.";
 
 export const metadata = {
   title: "Mentions légales – The Locomotion Lab",
-  description:
-    "Informations légales du site thelocomotionlab.com : éditeur, hébergeur, propriété intellectuelle et contact du Locomotion Lab.",
-  alternates: {
-    canonical: "https://thelocomotionlab.com/mentions-legales",
-  },
-  openGraph: {
-    title: "Mentions légales – The Locomotion Lab",
-    description:
-      "Informations légales du site thelocomotionlab.com : éditeur, hébergeur, propriété intellectuelle et contact du Locomotion Lab.",
-    url: "https://thelocomotionlab.com/mentions-legales",
-    type: "website",
-    locale: "fr_FR",
-    images: OG_IMAGES,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Mentions légales – The Locomotion Lab",
-    description:
-      "Informations légales du site thelocomotionlab.com : éditeur, hébergeur, propriété intellectuelle et contact du Locomotion Lab.",
-    images: [OG_IMAGE],
-  },
+  description: DESCRIPTION,
+  ...partageDIndex({
+    titre: "Mentions légales – The Locomotion Lab",
+    description: DESCRIPTION,
+    url: "/mentions-legales",
+  }),
 };
 
 export default function MentionsPage() {

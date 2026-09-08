@@ -16,7 +16,13 @@
 // seul moyen fiable de forcer une nouvelle lecture. C'est pourquoi la reprise du
 // hero s'appelle `og-hero.jpg` et n'a pas écrasé `og-image.jpg`.
 
-export const SITE_URL = "https://thelocomotionlab.com";
+// L'ADRESSE OFFICIELLE DU SITE, et la seule. Tout ce qui doit être absolu en
+// part : les canoniques, le plan de site, le robots.txt, les URL de partage et
+// les données structurées. Le jour où l'on change d'hôte, on change ici.
+//
+// L'apex et le www servent le même site : celui des deux qui n'est pas écrit
+// ici doit rediriger vers celui-ci, sans quoi chaque page existe en double.
+export const SITE_URL = "https://www.thelocomotionlab.com";
 
 /** Image de partage par défaut, en absolu — les scrapers refusent le relatif. */
 export const OG_IMAGE = `${SITE_URL}/images/assets/og-hero.jpg`;

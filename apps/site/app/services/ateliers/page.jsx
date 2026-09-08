@@ -22,7 +22,7 @@ import FilDAriane from "@/components/contenu/FilDAriane";
 import RetourAIndex from "@/components/contenu/RetourAIndex";
 import { filDAriane } from "@/lib/jsonld";
 import { listAteliers } from "@/lib/ateliers.mjs";
-import { OG_IMAGE, OG_IMAGES } from "@/lib/seo";
+import { partageDIndex } from "@/lib/seo";
 
 // ── DÉROULÉ D'UNE SÉANCE ─────────────────────────────────────────────────
 // Étapes de la frise (composant SeanceFrise) : la frise tient sur UNE ligne
@@ -60,29 +60,17 @@ const PHOTOS = {
   },
 };
 
+const PARTAGE =
+  "Des ateliers de motricité primale en extérieur — marcher, ramper, grimper, jouer. Gratuits pendant la phase de lancement du labo.";
+
 export const metadata = {
   title: "Ateliers de motricité primale",
-  description:
-    "Des ateliers de motricité primale en extérieur — marcher, ramper, grimper, jouer. Gratuits pendant la phase de lancement du labo. Places limitées, inscription en ligne.",
-  alternates: {
-    canonical: "https://thelocomotionlab.com/services/ateliers",
-  },
-  openGraph: {
-    title: "Ateliers de motricité primale – The Locomotion Lab",
-    description:
-      "Des ateliers de motricité primale en extérieur — marcher, ramper, grimper, jouer. Gratuits pendant la phase de lancement du labo.",
-    url: "https://thelocomotionlab.com/services/ateliers",
-    type: "website",
-    images: OG_IMAGES,
-    locale: "fr_FR",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Ateliers de motricité primale – The Locomotion Lab",
-    description:
-      "Des ateliers de motricité primale en extérieur — marcher, ramper, grimper, jouer. Gratuits pendant la phase de lancement du labo.",
-    images: [OG_IMAGE],
-  },
+  description: `${PARTAGE} Places limitées, inscription en ligne.`,
+  ...partageDIndex({
+    titre: "Ateliers de motricité primale – The Locomotion Lab",
+    description: PARTAGE,
+    url: "/services/ateliers",
+  }),
 };
 
 const MAILLONS = [

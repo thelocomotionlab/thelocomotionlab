@@ -27,14 +27,11 @@ export const metadata = {
   title: "The Locomotion Lab",
   description:
     "Comprendre le corps comme un scientifique, l'utiliser comme un animal : le Locomotion Lab explore la robustesse physiologique — science, terrain et instruments.",
-  alternates: {
-    canonical: "https://thelocomotionlab.com/",
-  },
   openGraph: {
     title: "The Locomotion Lab",
     description:
       "Comprendre le corps comme un scientifique, l'utiliser comme un animal : science, terrain et outils de la robustesse physiologique.",
-    url: "https://thelocomotionlab.com/",
+    url: SITE_URL,
     type: "website",
     // Une page qui déclare `openGraph` REMPLACE celui du layout, elle n'y
     // ajoute pas : sans cette ligne, l'accueil — la page la plus partagée du

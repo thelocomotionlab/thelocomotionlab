@@ -5,8 +5,7 @@
 // (pré-généré au build par le route handler).
 
 import SearchClient from "./SearchClient";
-
-const SITE_URL = "https://thelocomotionlab.com";
+import { SITE_URL } from "@/lib/seo";
 
 export const metadata = {
   title: "Recherche",

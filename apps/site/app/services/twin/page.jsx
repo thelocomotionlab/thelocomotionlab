@@ -20,7 +20,6 @@ const DESCRIPTION =
 export const metadata = {
   title: "Locomotion Twin",
   description: DESCRIPTION,
-  alternates: { canonical: "https://thelocomotionlab.com/services/twin" },
   ...partageDIndex({
     titre: "Locomotion Twin – The Locomotion Lab",
     description: DESCRIPTION,
