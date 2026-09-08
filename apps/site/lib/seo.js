@@ -16,13 +16,11 @@
 // seul moyen fiable de forcer une nouvelle lecture. C'est pourquoi la reprise du
 // hero s'appelle `og-hero.jpg` et n'a pas écrasé `og-image.jpg`.
 
-// L'ADRESSE OFFICIELLE DU SITE, et la seule. Tout ce qui doit être absolu en
-// part : les canoniques, le plan de site, le robots.txt, les URL de partage et
-// les données structurées. Le jour où l'on change d'hôte, on change ici.
-//
-// L'apex et le www servent le même site : celui des deux qui n'est pas écrit
-// ici doit rediriger vers celui-ci, sans quoi chaque page existe en double.
-export const SITE_URL = "https://www.thelocomotionlab.com";
+// L'adresse officielle du site vient de lib/site.mjs — next.config.mjs la lit
+// aussi, pour rediriger l'autre hôte vers elle.
+import { SITE_URL } from "./site.mjs";
+
+export { SITE_URL };
 
 /** Image de partage par défaut, en absolu — les scrapers refusent le relatif. */
 export const OG_IMAGE = `${SITE_URL}/images/assets/og-hero.jpg`;

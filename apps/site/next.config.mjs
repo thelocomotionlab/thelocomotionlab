@@ -1,6 +1,30 @@
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { buildLegacyRedirects } from "./lib/legacyRedirects.mjs";
+import { SITE_HOST_ALIAS, SITE_URL } from "./lib/site.mjs";
+
+// Une page, une adresse. L'apex et le www pointent sur le même déploiement
+// Cloudflare : sans cette règle, chaque page du site existe à deux adresses,
+// et les moteurs choisissent laquelle indexer à notre place.
+//
+// Le motif est ANCRÉ : sans les bornes, « thelocomotionlab.com » se retrouve
+// aussi dans « www.thelocomotionlab.com » et la redirection boucle sur
+// elle-même.
+const VERS_LHOTE_OFFICIEL = {
+  source: "/:chemin*",
+  has: [{ type: "host", value: `^${SITE_HOST_ALIAS.replace(/\./g, "\\.")}$` }],
+  destination: `${SITE_URL}/:chemin*`,
+  permanent: true,
+};
+
+// Les déploiements de prévisualisation servent le site entier sur
+// <branche>.<projet>.pages.dev. Cet en-tête les tient hors des index sans rien
+// changer pour le domaine, et sans dépendre d'une règle écrite dans Cloudflare.
+const PREVISUALISATIONS_HORS_INDEX = {
+  source: "/(.*)",
+  has: [{ type: "host", value: ".*\\.pages\\.dev" }],
+  headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+};
 
 // Ce fichier vit dans apps/site/ ; la racine du monorepo est deux niveaux au-dessus.
 const appDir = dirname(fileURLToPath(import.meta.url));
@@ -79,6 +103,7 @@ export default function nextConfig(phase) {
     // traduits en règles `_headers` lors du déploiement.
     async headers() {
       return [
+        PREVISUALISATIONS_HORS_INDEX,
         {
           source: "/(.*)",
           headers: [
@@ -119,9 +144,9 @@ export default function nextConfig(phase) {
     },
 
     async redirects() {
-      // Toutes les redirections vivent dans lib/legacyRedirects.mjs : une
-      // seule table, un seul ordre de priorité.
-      return buildLegacyRedirects();
+      // L'hôte d'abord : ce qui arrive sur l'apex repart tout de suite vers le
+      // www, et la table des anciennes URL n'a plus qu'un hôte à connaître.
+      return [VERS_LHOTE_OFFICIEL, ...buildLegacyRedirects()];
     },
   };
 }
