@@ -84,15 +84,23 @@ export default function SciencePage() {
                 </span>
               ) : null}
             </span>
-            {/* La vignette est rendue même sans photo : sans elle, une entrée
-                sans cover décalerait toute sa ligne. */}
-            <span className="hidden aspect-[3/2] overflow-hidden rounded-md bg-brand-wash md:block">
+            {/* En colonne, la vignette ouvre l'entrée ; en ligne, elle tient
+                sa case. Le cadre vide est rendu en desktop même sans photo,
+                sinon une entrée sans cover décalerait toute sa ligne — en
+                colonne il n'aligne rien, il ne sert donc qu'à laisser un
+                rectangle beige au-dessus du titre. */}
+            <span
+              className={`aspect-[3/2] overflow-hidden rounded-md bg-brand-wash md:mb-0 md:block ${
+                article.cover ? "mb-5 block" : "hidden"
+              }`}
+            >
               {article.cover ? (
                 <Image
                   src={article.cover}
                   alt={article.titre}
                   width={500}
                   height={334}
+                  sizes="(min-width: 768px) 250px, 100vw"
                   className="block h-full w-full object-cover"
                 />
               ) : null}
@@ -109,7 +117,7 @@ export default function SciencePage() {
                 {article.chapeau}
               </span>
             </span>
-            <span className="flex flex-row items-center gap-3 md:flex-col md:items-end">
+            <span className="mt-4 flex flex-row items-center gap-3 md:mt-0 md:flex-col md:items-end">
               <span className="font-mono text-meta font-semibold uppercase tracking-lien text-brand-muted tabular-nums">
                 {minutesDeLecture(article.corps, article.lecture)} min
               </span>

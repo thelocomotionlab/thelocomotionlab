@@ -61,7 +61,10 @@ export default function Preparation({ section, billets = {}, protocoles = [] }: 
       {seances ? (
         <>
           <Intertitre>Entraînements spécifiques notables</Intertitre>
-          <table className="mt-2 w-full border-collapse text-tableau">
+          {/* Six colonnes : plus large qu'un téléphone quoi qu'on fasse. Le
+              tableau défile dans sa boîte plutôt que d'emporter la page. */}
+          <div className="mt-2 overflow-x-auto">
+          <table className="w-full border-collapse text-tableau">
             <thead>
               <tr>
                 {seances.colonnes.map((colonne) => (
@@ -87,6 +90,7 @@ export default function Preparation({ section, billets = {}, protocoles = [] }: 
               ))}
             </tbody>
           </table>
+          </div>
         </>
       ) : null}
 

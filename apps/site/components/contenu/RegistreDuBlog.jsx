@@ -22,7 +22,7 @@ function Pastille({ actif, children, onClick }) {
       type="button"
       onClick={onClick}
       aria-pressed={actif}
-      className={`cursor-pointer rounded-full border px-3 py-1.5 font-mono text-meta font-semibold uppercase tracking-lien transition-colors ${
+      className={`cursor-pointer rounded-full border px-3.5 py-2.5 font-mono text-meta font-semibold uppercase tracking-lien transition-colors md:px-3 md:py-1.5 ${
         actif
           ? "border-brand-deep bg-brand-deep text-white"
           : "border-brand-gauge-full text-brand-soft hover:border-brand-deep hover:text-brand-deep"
@@ -105,7 +105,10 @@ export default function RegistreDuBlog({ entrees, enTete }) {
               </h2>
             </div>
 
-            <div className="border-l-2 border-brand-gauge-full pb-10 pl-6 md:pl-10">
+            {/* Le rail porte les pastilles de mois et d'entrée, qui ne sont
+                rendues qu'à partir de md : en colonne il ne relie rien et
+                coûte vingt-six pixels de largeur de texte. */}
+            <div className="pb-10 md:border-l-2 md:border-brand-gauge-full md:pl-10">
               {annee.mois.map((mois) => (
                 <div key={mois.id} id={mois.id} className="relative mb-6 scroll-mt-24 pt-1.5">
                   <span

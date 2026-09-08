@@ -148,3 +148,17 @@
   --font-sans: var(--next-font-ubuntu), ui-sans-serif, system-ui;
   --font-mono: var(--next-font-ubuntu), ui-sans-serif, system-ui;
 }
+
+/* LE PALIER TÉLÉPHONE de l'échelle.
+   Les deux plus petits crans portent les surtitres, les étiquettes et les
+   méta : dessinés pour une page vue de près, ils deviennent des traits gris
+   sur un écran tenu à bout de bras. Ils remontent d'un point sous 768 px.
+   Les utilitaires lisent ces jetons par var() — la règle suffit, aucun
+   composant n'a de variante à porter. Hors @theme, donc hors couche : elle
+   l'emporte sur la déclaration de base à spécificité égale. */
+@media (max-width: 767px) {
+  :root {
+    --text-xxs: 0.6875rem;
+    --text-meta: 0.75rem;
+  }
+}

@@ -92,7 +92,9 @@ export default async function AventurePage({ params }) {
 
       <FilDAriane maillons={maillons} />
 
-      <div className="mt-7 grid items-start gap-14 lg:grid-cols-[12.5rem_minmax(0,1fr)]">
+      {/* `grid-cols-1` : la colonne implicite se dimensionne sur le contenu,
+          si bien qu'un tableau large étirait la page entière. */}
+      <div className="mt-7 grid grid-cols-1 items-start gap-14 lg:grid-cols-[12.5rem_minmax(0,1fr)]">
         <div className="hidden lg:block">
           <Sommaire sections={frontmatter.sections} />
         </div>

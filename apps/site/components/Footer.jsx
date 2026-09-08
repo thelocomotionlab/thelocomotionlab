@@ -21,28 +21,28 @@ export default function Footer() {
           </div>
           <nav
             aria-label="Liens de pied de page"
-            className="flex items-center gap-4 text-sm"
+            className="flex flex-wrap items-center justify-center gap-x-4 gap-y-0.5 text-sm md:justify-start"
           >
             <Link
-              className="underline-offset-4 hover:underline"
+              className="py-2 underline-offset-4 hover:underline md:py-0"
               href="/labo#labo-apropos"
             >
               À propos
             </Link>
             <Link
-              className="underline-offset-4 hover:underline"
+              className="py-2 underline-offset-4 hover:underline md:py-0"
               href="/labo#labo-soutenir"
             >
               Soutenir
             </Link>
             <Link
-              className="underline-offset-4 hover:underline"
+              className="py-2 underline-offset-4 hover:underline md:py-0"
               href="/labo#labo-contact"
             >
               Contact
             </Link>
             <Link
-              className="underline-offset-4 hover:underline"
+              className="py-2 underline-offset-4 hover:underline md:py-0"
               href="/mentions-legales"
             >
               Mentions légales
@@ -52,7 +52,7 @@ export default function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Suivre Valentin Fer sur Instagram (nouvel onglet)"
-              className="hover:text-brand-accent"
+              className="py-2 hover:text-brand-accent md:py-0"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
