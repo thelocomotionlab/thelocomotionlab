@@ -1,7 +1,7 @@
 // components/twin/CohorteForm.jsx
 //
 // Formulaire de dépôt d'archive de la cohorte Locomotion Twin (page
-// /outils/twin/cohorte), fidèle à la maquette « Recrutement cohorte » :
+// /services/twin/cohorte), fidèle à la maquette « Recrutement cohorte » :
 //   * étape 1 — choix de la montre, qui déplie le tuto d'extraction de
 //     l'archive (contenu : lib/twinCohorte.mjs, source unique) ;
 //   * étape 2 — dépôt de l'archive (glisser-déposer ou sélecteur) ;
@@ -39,7 +39,7 @@ const INPUT_CLASSES =
 
 function EtapeCard({ numero, titre, children }) {
   return (
-    <section className="bg-white rounded-2xl shadow-card p-5 sm:px-9 sm:py-8">
+    <section className="rounded-xl border border-brand-hairline bg-brand-paper p-5 shadow-bloc sm:px-9 sm:py-8">
       <p className="mb-1.5 font-heading text-[11px] font-bold tracking-[0.18em] text-brand-slate-dark">
         ÉTAPE {numero}
       </p>
@@ -186,7 +186,7 @@ export default function CohorteForm() {
   // ── Écran de succès : remplace les trois étapes. ─────────────────────
   if (statut === "succes") {
     return (
-      <div className="bg-white rounded-2xl shadow-card p-8 sm:px-10 sm:py-12 text-center animate-fade-in">
+      <div className="animate-fade-in rounded-xl border border-brand-hairline bg-brand-paper p-8 text-center shadow-bloc sm:px-10 sm:py-12">
         <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-brand-success">
           <Check size={28} strokeWidth={2.5} className="text-white" aria-hidden="true" />
         </div>
@@ -204,7 +204,7 @@ export default function CohorteForm() {
         </p>
         <div className="mt-7">
           <Link
-            href="/services#twin"
+            href="/services/twin"
             className="inline-block rounded-full border-[1.5px] border-brand-accent-dark px-6 py-[11px] font-semibold text-brand-deep-dark transition hover:border-brand-accent hover:bg-brand-accent hover:text-white"
           >
             Retour à la page Twin

@@ -6,8 +6,7 @@
 
 import { parSorte, aventures, articles, registreDuBlog, urlDe } from "@/lib/contenu";
 import { dateLisible } from "@/lib/lisible";
-
-const SITE_URL = "https://thelocomotionlab.com";
+import { SITE_URL } from "@/lib/seo";
 
 export const dynamic = "force-static";
 

@@ -1,6 +1,6 @@
 // components/inscription/InscriptionForm.jsx
 //
-// Formulaire d'inscription à un atelier (page /pratiquer/inscription/[slug]),
+// Formulaire d'inscription à un atelier (page /services/ateliers/inscription/[slug]),
 // fidèle au handoff « Inscription Atelier » : ce n'est pas un simple
 // formulaire, c'est un instrument de preuve — la structure reflète bloc par
 // bloc le PDF généré côté serveur et envoyé par email.
@@ -448,7 +448,7 @@ export default function InscriptionForm({ atelier }) {
             Validé le {confirmation.horodatage}
           </p>
           <Link
-            href="/services#ateliers"
+            href="/services/ateliers"
             className="inline-flex items-center justify-center rounded-full bg-brand-accent px-8 py-3 text-[15.5px] font-bold text-white transition-all duration-300 hover:bg-brand-accent-dark"
           >
             Revenir aux ateliers
@@ -469,7 +469,7 @@ export default function InscriptionForm({ atelier }) {
             / INSCRIPTION
           </p>
           <Link
-            href="/services#ateliers"
+            href="/services/ateliers"
             className="inline-flex items-center gap-1.5 font-heading text-[12.5px] font-bold tracking-[0.12em] text-brand-slate transition-colors hover:text-brand-accent-dark"
           >
             REVENIR AUX ATELIERS
@@ -892,7 +892,7 @@ export default function InscriptionForm({ atelier }) {
               <div role="alert" className={`${CALLOUT_BASE} ${CALLOUT_TONES.erreur}`}>
                 <p className="text-[14.5px] leading-[1.55] text-brand-deep-dark">
                   L&rsquo;atelier s&rsquo;est rempli entre-temps&hellip;{" "}
-                  <Link href="/services#ateliers" className="font-bold underline">
+                  <Link href="/services/ateliers" className="font-bold underline">
                     Reviens aux ateliers
                   </Link>{" "}
                   pour rejoindre la liste d&rsquo;attente.

@@ -9,10 +9,18 @@
 import { entrees } from "@/lib/blog";
 import EnTeteDIndex from "@/components/contenu/EnTeteDIndex";
 import RegistreDuBlog from "@/components/contenu/RegistreDuBlog";
+import { partageDIndex } from "@/lib/seo";
+
+const DESCRIPTION = "Le carnet de bord du Locomotion Lab, au jour le jour.";
 
 export const metadata = {
   title: "Blog",
-  description: "Le carnet de bord du Locomotion Lab, au jour le jour.",
+  description: DESCRIPTION,
+  ...partageDIndex({
+    titre: "Blog – The Locomotion Lab",
+    description: DESCRIPTION,
+    url: "/blog",
+  }),
 };
 
 export default function BlogPage() {

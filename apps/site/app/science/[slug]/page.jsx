@@ -14,9 +14,12 @@ import { Bibliographie } from "@locomotionlab/ui/contenu";
 import { parSorte, parSlug, bibliographie } from "@/lib/contenu";
 import { dateLisible, minutesDeLecture } from "@/lib/lisible";
 import Corps from "@/components/contenu/Corps";
+import DonneesStructurees from "@/components/DonneesStructurees";
 import FilDAriane from "@/components/contenu/FilDAriane";
 import RetourAIndex from "@/components/contenu/RetourAIndex";
 import { referencesDePage } from "@/components/contenu/references";
+import { filDAriane, pageDeContenu } from "@/lib/jsonld";
+import { partageDeContenu } from "@/lib/seo";
 
 export const dynamicParams = false;
 
@@ -28,7 +31,20 @@ export async function generateMetadata({ params }) {
   const { slug } = await params;
   const page = parSlug("article", slug);
   if (!page) return {};
-  return { title: page.frontmatter.titre, description: page.frontmatter.chapeau };
+  const { titre, chapeau, cover, auteur, publie_le, revise_le } = page.frontmatter;
+  return {
+    title: titre,
+    description: chapeau,
+    ...partageDeContenu({
+      titre,
+      description: chapeau,
+      url: `/science/${slug}`,
+      cover,
+      auteur,
+      publieLe: publie_le,
+      reviseLe: revise_le,
+    }),
+  };
 }
 
 export default async function ArticlePage({ params }) {
@@ -39,15 +55,21 @@ export default async function ArticlePage({ params }) {
   const { frontmatter } = page;
   const { registre, Ref, citation } = referencesDePage(page.corps);
   const references = registre.citees().length;
+  const maillons = [{ href: "/science", label: "Science" }, { label: frontmatter.titre }];
 
   return (
     <div className="mx-auto max-w-[1180px] px-6 pt-10 md:px-8">
-      <FilDAriane
-        maillons={[
-          { href: "/science", label: "Science" },
-          { label: frontmatter.titre },
+      <DonneesStructurees
+        id="article"
+        donnees={[
+          // `Article` et non `BlogPosting` : un article Science est un document
+          // révisé, avec sa bibliographie et son historique de révisions.
+          pageDeContenu(page, { url: `/science/${frontmatter.slug}`, type: "Article" }),
+          filDAriane(maillons),
         ]}
       />
+
+      <FilDAriane maillons={maillons} />
 
       <article className="mx-auto mt-9 max-w-[860px]">
         <header>

@@ -10,6 +10,9 @@ export type { ButtonProps } from "./components/Button";
 export { default as Field } from "./components/Field";
 export type { FieldProps } from "./components/Field";
 
+export { default as CarteDOffre, GroupeDOffres } from "./components/CarteDOffre";
+export type { CarteDOffreProps, GroupeDOffresProps, LienDOffre } from "./components/CarteDOffre";
+
 export { default as PageShell } from "./components/PageShell";
 export type { PageShellProps } from "./components/PageShell";
 

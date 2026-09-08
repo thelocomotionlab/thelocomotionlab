@@ -25,8 +25,13 @@ const LONGUEUR_DE_LAMORCE = 180;
  * frontmatter porte un chapeau — c'est le cas des récits — on l'affiche tel
  * quel. Sinon on prend le début du texte : mieux vaut les premiers mots de
  * Valentin qu'un champ vide ou un « TODO » exposé aux lecteurs.
+ *
+ * @param {string} corps
+ * @param {number} [longueur] la coupe se règle : le registre s'accommode d'une
+ *   ligne longue, une méta-description est tronquée au-delà d'environ 155
+ *   caractères dans les résultats de recherche.
  */
-export function amorce(corps) {
+export function amorce(corps, longueur = LONGUEUR_DE_LAMORCE) {
   const nu = corps
     // les balises de bloc, de replay et de figure ne sont pas de la prose
     .replace(/<[^>]*>/g, " ")
@@ -41,8 +46,8 @@ export function amorce(corps) {
     .replace(/\s+/g, " ")
     .trim();
 
-  if (nu.length <= LONGUEUR_DE_LAMORCE) return nu;
-  const coupe = nu.slice(0, LONGUEUR_DE_LAMORCE);
+  if (nu.length <= longueur) return nu;
+  const coupe = nu.slice(0, longueur);
   const espace = coupe.lastIndexOf(" ");
   return `${(espace > 0 ? coupe.slice(0, espace) : coupe).replace(/[,;:.…]$/, "")}…`;
 }

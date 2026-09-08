@@ -13,6 +13,7 @@ import TwinCohorteTeaser from "@/components/TwinCohorteTeaser";
 import SectionHeading from "@/components/SectionHeading";
 import { getExplorerCarouselItems } from "@/lib/carouselItems";
 import { journalApiBase } from "@/lib/liveConfig";
+import { SITE_URL } from "@/lib/seo";
 
 // Carte de partage dynamique (chantier 2, PR4) : URL stable régénérée côté VPS
 // (≤ 3 min), cache-buster PAR BUILD — chaque déploiement force les scrapers à
@@ -24,14 +25,11 @@ export const metadata = {
   title: "Live – Le direct des aventures du labo",
   description:
     "Suivi en direct des aventures du Locomotion Lab — ou le prochain départ : Tour des Écrins en autonomie, 20–24 août 2026.",
-  alternates: {
-    canonical: "https://thelocomotionlab.com/live",
-  },
   openGraph: {
     title: "Live – The Locomotion Lab",
     description:
       "Suivi en direct des aventures du Locomotion Lab — ou le prochain départ.",
-    url: "https://thelocomotionlab.com/live",
+    url: `${SITE_URL}/live`,
     type: "website",
     images: [
       {

@@ -1,3 +1,5 @@
+import { SITE_URL } from "@/lib/seo";
+
 // Règles explicites pour les principaux crawlers IA. Notre robots.txt
 // est totalement permissif (rien à cacher côté contenu) : on les liste
 // nommément pour clarifier l'intention. Le blocage effectif des bots
@@ -26,7 +28,7 @@ export default function robots() {
       { userAgent: "*", allow: "/" },
       ...AI_BOTS.map((bot) => ({ userAgent: bot, allow: "/" })),
     ],
-    sitemap: "https://thelocomotionlab.com/sitemap.xml",
-    host: "https://thelocomotionlab.com",
+    sitemap: `${SITE_URL}/sitemap.xml`,
+    host: SITE_URL,
   };
 }

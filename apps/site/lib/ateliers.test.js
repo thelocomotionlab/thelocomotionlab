@@ -1,7 +1,7 @@
 // lib/ateliers.test.js
 //
 // Un seul invariant, mais celui qui a cassé un déploiement le 5 août 2026 :
-// la liste des paramètres statiques de /pratiquer/inscription/[slug] ne doit
+// la liste des paramètres statiques de /services/ateliers/inscription/[slug] ne doit
 // JAMAIS être vide, même quand plus aucun atelier n'est programmé.
 
 import { describe, expect, it } from "vitest";

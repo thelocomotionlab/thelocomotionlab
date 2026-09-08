@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import { ubuntuSans } from "@locomotionlab/ui/fonts";
 import ShareButton from "@/components/ShareButton";
 import ChromeDuSite from "@/components/ChromeDuSite";
-import { OG_IMAGE, OG_IMAGE_ALT, OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH } from "@/lib/seo";
+import { OG_IMAGE, OG_IMAGE_ALT, OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH, SITE_URL } from "@/lib/seo";
 
 export const metadata = {
   title: {
@@ -15,7 +15,11 @@ export const metadata = {
     template: "%s | The Locomotion Lab", // Permet d'avoir "Titre Article | The Locomotion Lab" automatiquement
   },
   description: "Explorations de la locomotion humaine, analyse de la foulée et aventures sportives.",
-  metadataBase: new URL('https://thelocomotionlab.com'), // Indispensable pour que les images sociales marchent
+  metadataBase: new URL(SITE_URL), // Indispensable pour que les images sociales marchent
+  // Canonique auto-référente sur CHAQUE page : « ./ » se résout contre
+  // metadataBase et le chemin courant. Sans elle, l'apex, le www et les
+  // variantes avec paramètres se disputent la même page aux yeux de Google.
+  alternates: { canonical: "./" },
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -31,7 +35,7 @@ export const metadata = {
   openGraph: {
     title: "The Locomotion Lab",
     description: "Explorations de la locomotion humaine et aventures sportives.",
-    url: "https://thelocomotionlab.com",
+    url: SITE_URL,
     siteName: "The Locomotion Lab",
     images: [
       {

@@ -88,7 +88,7 @@ export function listAteliers() {
 export const SLUG_AUCUN_ATELIER = "aucun-atelier";
 
 /**
- * Paramètres statiques de /pratiquer/inscription/[slug].
+ * Paramètres statiques de /services/ateliers/inscription/[slug].
  *
  * ⚠️ NE DOIT JAMAIS RENVOYER UN TABLEAU VIDE. Sans chemin à prérendre, Next
  * garde la route dynamique et lui émet une fonction Node ; or

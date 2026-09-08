@@ -17,9 +17,6 @@ export const metadata = {
   title: "Studio – The Locomotion Lab",
   description:
     "L'espace de création des visuels du labo : carrousels d'itinéraire et habillage de photos, entièrement dans le navigateur.",
-  alternates: {
-    canonical: "https://thelocomotionlab.com/studio",
-  },
 };
 
 export default function StudioPage() {

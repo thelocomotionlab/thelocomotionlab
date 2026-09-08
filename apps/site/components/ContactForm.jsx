@@ -15,6 +15,8 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button, Field, brandColors } from "@locomotionlab/ui";
 
+import { SITE_URL } from "@/lib/seo";
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CONTACT_ENDPOINT = process.env.NEXT_PUBLIC_CONTACT_ENDPOINT || "";
 const LEGACY_ENDPOINT = "https://send-email.thelocomotionlab.workers.dev/";
@@ -134,7 +136,7 @@ function ContactFormInner({ initialMessage = "" }) {
           </div>
           <hr style="margin-top: 20px; border: none; border-top: 1px solid #eee;" />
           <p style="font-size: 13px; color: #aaa;">
-            Ce message a été envoyé depuis le formulaire de contact du site <a href="https://thelocomotionlab.com" style="color:${brandColors.accent}; text-decoration:none;">thelocomotionlab.com</a>.
+            Ce message a été envoyé depuis le formulaire de contact du site <a href="${SITE_URL}" style="color:${brandColors.accent}; text-decoration:none;">thelocomotionlab.com</a>.
           </p>
         </div>
       `;

@@ -58,7 +58,7 @@ export default function SeanceFrise({ steps }) {
               >
                 {step.title}
               </p>
-              <p className="text-[13.5px] leading-[1.55] text-gray-500">
+              <p className="font-sans text-tableau leading-relaxed text-brand-muted">
                 {step.text}
               </p>
               {step.chips?.length ? (
