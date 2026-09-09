@@ -32,11 +32,9 @@ décrite dans [`docs/email-setup.md`](../../docs/email-setup.md).
 
   | `etat` | ce qui s'est passé |
   | --- | --- |
-  | `nouveau` | contact créé, l'email de confirmation part |
-  | `reinscrit` | s'était désinscrite, remise sur la liste, nouvel opt-in |
+  | `nouveau` | contact créé — ou désinscrit remis sur la liste : l'email de confirmation part |
   | `deja_inscrit` | déjà sur la liste et confirmée : rien à faire |
   | `confirmation_en_attente` | inscrite, mais le lien d'opt-in n'a jamais été cliqué |
-  | `desinscrit` | désinscription globale (liste noire) : à rétablir à la main |
 
   Une adresse connue ne reçoit pas de nouvel email de confirmation ; sans ce
   champ, la page annonçait un email qui n'arrivait jamais. En contrepartie, le

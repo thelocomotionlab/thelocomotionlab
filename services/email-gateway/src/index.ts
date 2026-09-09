@@ -37,22 +37,30 @@ const MAX_EMAIL_LENGTH = 254;
 const MAX_NAME_LENGTH = 120;
 const MAX_MESSAGE_LENGTH = 5000;
 
-// Provenances acceptées — doit couvrir tous les formulaires du site.
-// Émises aujourd'hui : quete, comprendre, twin, live, home, pratiquer
-// (bande email + formulaire d'inscription des ateliers en repli),
-// soutenir (page Soutenir, via EmailCapture).
-// « pratiquer-trail » est réservé au teaser accompagnement trail 2027.
-// « manifeste » (ex-nom de /quete, 308) et « footer » sont gardés par
-// tolérance pour d'éventuelles pages en cache navigateur.
+// Provenances acceptées — DOIT couvrir tous les formulaires du site : une
+// valeur absente d'ici part en 400, et la page affiche « l'envoi a échoué »
+// alors que rien n'est en panne. Le test `email.test.js` du site compare cette
+// liste aux `source` réellement émis.
+//
+// Émises aujourd'hui : home (bande de l'accueil), labo-quete et labo-apropos
+// (les deux encarts de /labo), soutenir (page Soutenir et bas de /labo),
+// pratiquer (inscription à un atelier, en repli de l'API ateliers),
+// pratiquer-ateliers (encart de /services/ateliers), pratiquer-trail (teaser
+// accompagnement trail 2027), live (les trois états de /live).
+// « quete », « comprendre », « twin », « manifeste » et « footer » sont gardés
+// par tolérance pour d'éventuelles pages en cache navigateur.
 const SOURCES = new Set([
+  "home",
+  "labo-quete",
+  "labo-apropos",
+  "soutenir",
+  "pratiquer",
+  "pratiquer-ateliers",
+  "pratiquer-trail",
+  "live",
   "quete",
   "comprendre",
   "twin",
-  "live",
-  "home",
-  "pratiquer",
-  "pratiquer-trail",
-  "soutenir",
   "footer",
   "manifeste",
 ]);
@@ -128,11 +136,9 @@ function isRobot(payload: Record<string, unknown>): boolean {
  * suivi d'un email qui n'arrive jamais.
  */
 type EtatDInscription =
-  | "nouveau" // créé, l'email de confirmation part
+  | "nouveau" // créé (ou remis sur la liste) : l'email de confirmation part
   | "deja_inscrit" // sur la liste, confirmé : rien à faire
-  | "confirmation_en_attente" // inscrit mais le lien de confirmation n'a jamais été cliqué
-  | "reinscrit" // s'était désinscrit, remis sur la liste, nouvel opt-in
-  | "desinscrit"; // désinscription globale : on ne la défait pas sans un mot
+  | "confirmation_en_attente"; // inscrit, mais le lien de confirmation n'a jamais été cliqué
 
 type Resultat = EtatDInscription | "upstream_error";
 
@@ -242,7 +248,6 @@ async function subscribeToListmonk(env: Env, email: string, source: string): Pro
   // reste vraie : elle est bien déjà là.
   const connu = await inscritConnu(env, email);
   if (!connu) return "deja_inscrit";
-  if (connu.global === "blocklisted") return "desinscrit";
 
   switch (connu.surLaListe) {
     case "confirmed":
@@ -251,8 +256,11 @@ async function subscribeToListmonk(env: Env, email: string, source: string): Pro
       return "confirmation_en_attente";
     default:
       // « unsubscribed », ou plus sur la liste du tout : la personne redemande
-      // à s'inscrire, on la remet — Listmonk lui renvoie l'email de confirmation.
-      return (await remettreSurLaListe(env, connu.id)) ? "reinscrit" : "desinscrit";
+      // à s'inscrire, on la remet et Listmonk lui renvoie l'email de
+      // confirmation — de son point de vue, une inscription neuve. Une
+      // désinscription globale (liste noire), elle, ne se défait pas ici.
+      if (connu.global === "blocklisted") return "deja_inscrit";
+      return (await remettreSurLaListe(env, connu.id)) ? "nouveau" : "deja_inscrit";
   }
 }
 
