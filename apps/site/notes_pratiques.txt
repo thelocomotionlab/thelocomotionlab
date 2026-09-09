@@ -68,6 +68,17 @@ server {
     error_page 497 https://$host$request_uri;
 }
 
+Ordre des blocs d'une page aventure :
+- la page EST la liste `sections:` du frontmatter, dans cet ordre exact
+- pour déplacer un bloc, déplacer son entrée dans cette liste ; rien d'autre
+- l'ordre du corps MDX ne compte pas : un <SectionLibre id="x"> est rattaché
+  par son id à l'entrée `- type: libre / id: "x"`, où qu'il soit écrit
+- la numérotation (01, 02…) et le sommaire suivent tout seuls
+- les ancres (#genese-du-projet) viennent de l'id ou du titre, pas du rang :
+  un lien déjà partagé continue de tomber au bon endroit après un déplacement
+- aucun type n'est obligatoire ni contraint à une position : le récit peut être
+  en tête, la trace en fin, une page peut n'avoir que trois blocs
+
 Icônes des repères de trace (champ `icone` d'un repère, section geo) :
 - s'écrit en minuscules, sans accent
 - une clé inconnue ne casse rien : le repère prend la punaise générique
