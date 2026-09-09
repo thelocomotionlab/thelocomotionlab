@@ -32,10 +32,10 @@ const MESURES = [
 
 /** Écrites en toutes lettres : une classe fabriquée échappe à Tailwind. */
 const COLONNES: Record<number, string> = {
-  1: "grid-cols-1 md:w-[16rem]",
-  2: "grid-cols-2 md:w-[22rem]",
-  3: "grid-cols-3 md:w-[25rem]",
-  4: "grid-cols-2 md:grid-cols-4 md:w-[32rem]",
+  1: "grid-cols-1 md:w-[19rem]",
+  2: "grid-cols-2 md:w-[25rem]",
+  3: "grid-cols-3 md:w-[28rem]",
+  4: "grid-cols-2 md:grid-cols-4 md:w-[34rem]",
 };
 
 export default function Stresseurs({ stresseurs, billets = {} }: StresseursProps) {
@@ -75,15 +75,16 @@ export default function Stresseurs({ stresseurs, billets = {} }: StresseursProps
               </div>
               {mesures.length > 0 ? (
                 <dl className={`m-0 grid divide-x divide-brand-grid ${COLONNES[mesures.length]}`}>
+                  {/* Une mesure se lit comme le « pourquoi » d'à côté : même
+                      corps, même interligne, même gris. « En pratique » y porte
+                      des phrases entières — en petit mono, elles ne faisaient
+                      pas le poids face au paragraphe voisin. */}
                   {mesures.map(({ cle, libelle }) => (
-                    <div
-                      key={cle}
-                      className="flex flex-col items-center justify-start gap-1.5 px-3 text-center"
-                    >
+                    <div key={cle} className="flex flex-col items-start gap-1.5 px-4 first:pl-0">
                       <dt className="font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
                         {libelle}
                       </dt>
-                      <dd className="m-0 font-mono text-xs leading-snug text-balance">
+                      <dd className="m-0 font-sans leading-relaxed text-brand-soft [text-wrap:pretty]">
                         {stresseur[cle]}
                       </dd>
                     </div>

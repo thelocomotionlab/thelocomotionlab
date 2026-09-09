@@ -107,7 +107,7 @@ export default function Preparation({
 
       {stresseurs ? (
         <>
-          <Intertitre>Stresseurs hormétiques</Intertitre>
+          <Intertitre>Stresseurs</Intertitre>
           <Stresseurs stresseurs={stresseurs} billets={billets} />
         </>
       ) : null}

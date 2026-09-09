@@ -104,35 +104,41 @@ function calories(valeur) {
  * paquetage. `null` si le CSV n'existe pas ou n'a pas de telle catégorie : la
  * section n'affichera alors que son texte.
  *
- * La colonne d'apport n'apparaît que si au moins un article annonce ses
- * calories : un paquetage qui ne les renseigne pas n'a pas de colonne vide.
+ * Les deux colonnes d'énergie n'apparaissent que si au moins un article annonce
+ * ses calories : un paquetage qui ne les renseigne pas n'a pas de colonne vide.
+ * L'énergie déclarée vaut PAR UNITÉ, comme la masse ; la seconde colonne la
+ * multiplie par la quantité, et la dernière ligne les somme.
  */
 function nutritionDuPaquetage(ref) {
   const donnees = paquetage(ref);
   const categorie = donnees?.paquetage.categories.find((c) => CATEGORIE_ALIMENTAIRE.test(c.nom));
   if (!categorie) return null;
 
-  const apports = categorie.articles.map((article) => {
-    const parUnite = caloriesDe(article.description);
-    return parUnite === null ? null : parUnite * article.quantite;
-  });
-  const avecApport = apports.some((apport) => apport !== null);
-  const total = apports.reduce((somme, apport) => somme + (apport ?? 0), 0);
+  const parUnite = categorie.articles.map((article) => caloriesDe(article.description));
+  const avecEnergie = parUnite.some((valeur) => valeur !== null);
+  const total = parUnite.reduce(
+    (somme, valeur, rang) => somme + (valeur ?? 0) * categorie.articles[rang].quantite,
+    0,
+  );
+  const energie = (rang) =>
+    parUnite[rang] === null
+      ? ["", ""]
+      : [calories(parUnite[rang]), calories(parUnite[rang] * categorie.articles[rang].quantite)];
 
   return {
-    colonnes: ["Aliment", "Qté", "Masse", ...(avecApport ? ["Apport"] : [])],
+    colonnes: ["Aliment", "Qté", "Masse", ...(avecEnergie ? ["kcal/unité", "kcal total"] : [])],
     lignes: [
       ...categorie.articles.map((article, rang) => [
         article.nom,
         String(article.quantite),
         grammes(article.masse),
-        ...(avecApport ? [apports[rang] === null ? "" : calories(apports[rang])] : []),
+        ...(avecEnergie ? energie(rang) : []),
       ]),
       [
         "Total emporté",
         "",
         grammes(categorie.masse),
-        ...(avecApport ? [calories(total)] : []),
+        ...(avecEnergie ? ["", calories(total)] : []),
       ],
     ],
   };

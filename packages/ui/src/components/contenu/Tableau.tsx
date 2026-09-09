@@ -7,6 +7,9 @@
 // texte celles qui portent des phrases, et rend une cellule vide par un tiret
 // cadratin plutôt que par du blanc. La gouttière est portée par les cellules :
 // sans elle, deux libellés voisins se touchent.
+//
+// Une ligne dont la première cellule commence par « Total » est une somme : le
+// tableau la met en gras, d'où qu'elle vienne — écrite à la main ou calculée.
 
 export type TableauProps = {
   colonnes: readonly string[];
@@ -14,6 +17,8 @@ export type TableauProps = {
   /** Index des colonnes à aligner à droite, en mono. */
   numeriques?: readonly number[];
 };
+
+const TOTAL = /^total\b/i;
 
 export default function Tableau({ colonnes, lignes, numeriques = [] }: TableauProps) {
   const estNumerique = (index: number) => numeriques.includes(index);
@@ -40,22 +45,27 @@ export default function Tableau({ colonnes, lignes, numeriques = [] }: TableauPr
           </tr>
         </thead>
         <tbody>
-          {lignes.map((ligne, rang) => (
-            <tr key={rang}>
-              {ligne.map((cellule, index) => (
-                <td
-                  key={index}
-                  className={`border-b border-brand-grid px-3 py-2.5 align-middle first:pl-0 last:pr-0 ${
-                    estNumerique(index)
-                      ? "whitespace-nowrap text-center font-mono tabular-nums"
-                      : "font-sans"
-                  } ${cellule.trim() === "" ? "text-brand-faint" : ""}`}
-                >
-                  {cellule.trim() === "" ? "—" : cellule}
-                </td>
-              ))}
-            </tr>
-          ))}
+          {lignes.map((ligne, rang) => {
+            const total = TOTAL.test((ligne[0] ?? "").trim());
+            return (
+              <tr key={rang}>
+                {ligne.map((cellule, index) => (
+                  <td
+                    key={index}
+                    className={`border-b border-brand-grid px-3 py-2.5 align-middle first:pl-0 last:pr-0 ${
+                      estNumerique(index)
+                        ? "whitespace-nowrap text-center font-mono tabular-nums"
+                        : "font-sans"
+                    } ${total ? "font-bold" : ""} ${
+                      cellule.trim() === "" ? "text-brand-faint" : ""
+                    }`}
+                  >
+                    {cellule.trim() === "" ? "—" : cellule}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

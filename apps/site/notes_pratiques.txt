@@ -102,5 +102,7 @@ Nutrition embarquée depuis LighterPack :
 - LighterPack n'a pas de champ d'énergie : les calories s'écrivent dans la
   DESCRIPTION de l'article, par exemple « 615 kcal » ou « gruau, 615 kcal »
 - la valeur est comptée PAR UNITÉ, comme la masse : 3 gruaux à 615 kcal = 1 845
-- la colonne Apport n'apparaît que si au moins un article en déclare
+- deux colonnes en sortent, kcal/unité et kcal total ; elles n'apparaissent que
+  si au moins un article déclare son énergie
+- la dernière ligne d'un tableau, si elle commence par « Total », se lit en gras
 - sans .csv ou sans catégorie de nourriture, la section n'affiche que son texte

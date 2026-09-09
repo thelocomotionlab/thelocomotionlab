@@ -305,9 +305,9 @@ export default function Replay({
   return (
     <div className="flex flex-col items-center w-full py-6 px-3 sm:px-6 gap-3">
       {/* L'en-tête du replay : ce qu'on regarde, et ce que ça pèse. Aucun
-          cadre — la carte en pose un juste dessous ; la composition tient au
-          filet d'accent et à l'alignement centré. */}
-      <div className="w-full max-w-3xl text-center">
+          cadre — la carte en pose un juste dessous, et il s'aligne sur elle,
+          au fer à gauche, jusqu'au filet qui le sépare des chiffres. */}
+      <div className="w-full max-w-6xl">
         <p className="m-0 inline-flex items-center gap-2 font-heading text-lecture font-bold leading-tight text-brand-deep">
           <SatelliteDish size={17} aria-hidden="true" className="text-brand-accent-dark" />
           {title}
@@ -315,7 +315,7 @@ export default function Replay({
 
         <span
           aria-hidden="true"
-          className="mx-auto mt-3 block h-0.5 w-10 rounded-full bg-brand-accent/80"
+          className="mt-3 block h-0.5 w-10 rounded-full bg-brand-gauge-full"
         />
 
         <p className="m-0 mt-3 font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
@@ -325,7 +325,7 @@ export default function Replay({
           </span>
         </p>
 
-        <dl className="m-0 mt-4 flex flex-wrap items-baseline justify-center gap-x-11 gap-y-3 sm:gap-x-16">
+        <dl className="m-0 mt-4 flex flex-wrap items-baseline gap-x-11 gap-y-3 sm:gap-x-16">
           {[
             { valeur: `${stats.distance} km`, libelle: "Distance" },
             { valeur: `${stats.ascent} m`, libelle: "D+" },
