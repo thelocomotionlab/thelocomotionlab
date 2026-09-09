@@ -27,6 +27,7 @@ export const STATUTS = ["brouillon", "publie"] as const;
 export type Statut = (typeof STATUTS)[number];
 
 export const ETATS_DE_CAMPAGNE = ["termine", "en-cours", "en-preparation"] as const;
+export type EtatDeCampagne = (typeof ETATS_DE_CAMPAGNE)[number];
 export const TYPES_DE_BILLET = ["recit-de-sortie", "bilan", "billet", "note-de-terrain"] as const;
 
 const slugDePage = z

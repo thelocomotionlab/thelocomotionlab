@@ -10,7 +10,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { decouperLeCorps } from "@locomotionlab/contenu";
-import { Accroche, Sommaire, SectionsAventure } from "@locomotionlab/ui/contenu";
+import { Accroche, BadgeEtat, Sommaire, SectionsAventure } from "@locomotionlab/ui/contenu";
 
 import { parSorte, parSlug } from "@/lib/contenu";
 import { ETATS, campagneLisible, rendusDe } from "@/lib/aventure";
@@ -108,9 +108,7 @@ export default async function AventurePage({ params }) {
         <div className="min-w-0 tabular-nums">
           <header>
             <div className="flex flex-wrap items-center gap-3 font-mono text-meta font-semibold uppercase tracking-etiquette text-brand-muted">
-              <span className="rounded-xs border border-brand-deep-dark px-2 py-0.5 font-bold text-brand-deep-dark">
-                {ETATS[frontmatter.etat]}
-              </span>
+              <BadgeEtat etat={frontmatter.etat}>{ETATS[frontmatter.etat]}</BadgeEtat>
               <span className="tabular-nums">{campagneLisible(frontmatter.campagne)}</span>
             </div>
 

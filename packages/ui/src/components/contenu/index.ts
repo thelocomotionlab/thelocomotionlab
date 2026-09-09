@@ -19,6 +19,8 @@ export { VersProtocole, VersNote } from "./CarteDeBloc.tsx";
 export type { CarteDeBlocProps } from "./CarteDeBloc.tsx";
 
 // ── Sections d'aventure ─────────────────────────────────────────────────────
+export { default as BadgeEtat } from "./BadgeEtat.tsx";
+export type { BadgeEtatProps } from "./BadgeEtat.tsx";
 export { default as SectionsAventure } from "./SectionsAventure.tsx";
 export type { SectionsAventureProps, RendusDAventure } from "./SectionsAventure.tsx";
 export { default as SectionAventure, numeroDeSection } from "./SectionAventure.tsx";
