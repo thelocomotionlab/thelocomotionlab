@@ -64,7 +64,7 @@ export default function ServicesPage() {
               ? { href: "/services/ateliers", libelle: "Voir les dates" }
               : { href: "/services/ateliers#prevenir", libelle: "Me prévenir", contour: true }
           }
-          lien={{ href: "/services/ateliers", libelle: "Voir l'atelier" }}
+          lien={{ href: "/services/ateliers", libelle: "En savoir plus" }}
         >
           Quadrupédie, suspension, équilibre, sauts de précision. Sans matériel, sans niveau
           requis, en extérieur.
