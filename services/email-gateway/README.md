@@ -32,9 +32,14 @@ décrite dans [`docs/email-setup.md`](../../docs/email-setup.md).
 
   | `etat` | ce qui s'est passé |
   | --- | --- |
-  | `nouveau` | contact créé — ou désinscrit remis sur la liste : l'email de confirmation part |
-  | `deja_inscrit` | déjà sur la liste et confirmée : rien à faire |
-  | `confirmation_en_attente` | inscrite, mais le lien d'opt-in n'a jamais été cliqué |
+  | `nouveau` | contact créé : l'email de confirmation part |
+  | `deja_inscrit` | Listmonk connaît déjà l'adresse : aucun email ne part |
+  | `confirmation_en_attente` | connue, et le lien d'opt-in n'a jamais été cliqué |
+
+  `nouveau` ne se dit QUE si Listmonk a créé le contact ; le reste du chemin est
+  en lecture seule. Une adresse déjà inscrite ne peut donc pas s'entendre
+  annoncer un email qui ne partira pas, et rien ne modifie une inscription en
+  place.
 
   Une adresse connue ne reçoit pas de nouvel email de confirmation ; sans ce
   champ, la page annonçait un email qui n'arrivait jamais. En contrepartie, le
