@@ -304,31 +304,35 @@ export default function Replay({
   /* ---------- 5) Rendu ---------- */
   return (
     <div className="flex flex-col items-center w-full py-6 px-3 sm:px-6 gap-3">
-      {/* L'en-tête du replay : ce qu'on regarde, et ce que ça pèse. Les chiffres
-          sont lus comme ceux d'une carte d'aventure — valeur en gras, libellé
-          en petites capitales dessous — plutôt qu'en ligne de texte. */}
-      <div className="w-full max-w-3xl rounded-xl border border-brand-hairline bg-brand-paper px-5 py-4 shadow-bloc sm:px-7 sm:py-5">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-1.5">
-          <span className="inline-flex items-center gap-2 font-heading text-[15px] font-bold text-brand-deep">
-            <SatelliteDish size={16} aria-hidden="true" /> {title}
-          </span>
-          <span className="font-mono text-xxs uppercase tracking-etiquette text-brand-muted">
-            Dernière position{" "}
-            <span className="tabular-nums text-brand-soft">
-              {lastUpdate ? new Date(lastUpdate).toLocaleString("fr-FR") : "—"}
-            </span>
-          </span>
-        </div>
+      {/* L'en-tête du replay : ce qu'on regarde, et ce que ça pèse. Aucun
+          cadre — la carte en pose un juste dessous ; la composition tient au
+          filet d'accent et à l'alignement centré. */}
+      <div className="w-full max-w-3xl text-center">
+        <p className="m-0 inline-flex items-center gap-2 font-heading text-lecture font-bold leading-tight text-brand-deep">
+          <SatelliteDish size={17} aria-hidden="true" className="text-brand-accent-dark" />
+          {title}
+        </p>
 
-        <dl className="m-0 mt-4 grid grid-cols-2 gap-x-5 gap-y-4 border-t border-brand-hairline pt-4 sm:grid-cols-4">
+        <span
+          aria-hidden="true"
+          className="mx-auto mt-3 block h-0.5 w-10 rounded-full bg-brand-accent/80"
+        />
+
+        <p className="m-0 mt-3 font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
+          Durée de locomotion
+          <span className="ml-2.5 font-heading text-base font-bold normal-case tracking-normal tabular-nums text-brand-text">
+            {formatDuration(elapsed)}
+          </span>
+        </p>
+
+        <dl className="m-0 mt-4 flex flex-wrap items-baseline justify-center gap-x-11 gap-y-3 sm:gap-x-16">
           {[
-            { valeur: formatDuration(elapsed), libelle: "Durée de locomotion" },
             { valeur: `${stats.distance} km`, libelle: "Distance" },
             { valeur: `${stats.ascent} m`, libelle: "D+" },
             { valeur: `${stats.descent} m`, libelle: "D−" },
           ].map((chiffre) => (
-            <div key={chiffre.libelle} className="min-w-0">
-              <dd className="m-0 font-heading text-xl font-bold leading-none tabular-nums text-brand-text">
+            <div key={chiffre.libelle}>
+              <dd className="m-0 font-heading text-lg font-bold leading-none tabular-nums text-brand-text">
                 {chiffre.valeur}
               </dd>
               <dt className="mt-1.5 font-mono text-xxs font-semibold uppercase tracking-etiquette text-brand-muted">
@@ -337,6 +341,13 @@ export default function Replay({
             </div>
           ))}
         </dl>
+
+        <p className="m-0 mt-4 font-mono text-xxs uppercase tracking-etiquette text-brand-faint">
+          Dernière position{" "}
+          <span className="tabular-nums text-brand-muted">
+            {lastUpdate ? new Date(lastUpdate).toLocaleString("fr-FR") : "—"}
+          </span>
+        </p>
       </div>
 
       {/* Carte + profil altimétrique collé dessous : un seul cadre, une seule
