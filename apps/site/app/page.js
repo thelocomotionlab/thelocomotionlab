@@ -20,7 +20,7 @@ import { Accroche } from "@locomotionlab/ui/contenu";
 import { blocAventuresDeLAccueil } from "@/lib/contenu";
 import { entrees as entreesDuBlog } from "@/lib/blog";
 import { entrees as articlesDeScience } from "@/lib/science";
-import { ETATS, chiffreDeCarte } from "@/lib/aventure";
+import { ETATS } from "@/lib/aventure";
 import { dateLisible } from "@/lib/lisible";
 import { OG_IMAGE, OG_IMAGES, SITE_URL } from "@/lib/seo";
 import { ORGANISATION } from "@/lib/jsonld";
@@ -150,10 +150,10 @@ function CarteDAccueil({ carte }) {
           />
         ) : null}
       </div>
-      {/* Les trois lignes s'alignent d'une carte à l'autre : la méta et le
-          titre gardent la hauteur de deux lignes même quand ils n'en occupent
-          qu'une, et les chiffres sont poussés en pied. Sans quoi, un titre
-          court remontait tout ce qui le suit et la rangée partait en escalier. */}
+      {/* Les deux lignes s'alignent d'une carte à l'autre : la méta et le titre
+          gardent la hauteur de deux lignes même quand ils n'en occupent qu'une.
+          Sans quoi, un titre court remontait tout ce qui le suit et la rangée
+          partait en escalier. */}
       <div className="flex flex-1 flex-col px-4 pb-4 pt-3">
         <div className="min-h-[2.8em] font-mono text-xxs font-semibold uppercase leading-[1.4] tracking-etiquette text-brand-muted">
           <span className="font-bold text-brand-deep">{carte.surtitre}</span>
@@ -162,9 +162,6 @@ function CarteDAccueil({ carte }) {
         </div>
         <div className="mt-1.5 min-h-[2.6em] font-heading text-[15px] font-bold leading-[1.3] text-brand-deep">
           {carte.titre}
-        </div>
-        <div className="mt-auto pt-2 font-mono text-xxs text-brand-soft tabular-nums">
-          {carte.chiffres.map((entree) => chiffreDeCarte(entree).valeur).join(" · ")}
         </div>
       </div>
     </Link>

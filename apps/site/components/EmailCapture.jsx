@@ -23,6 +23,25 @@ const ENDPOINT = process.env.NEXT_PUBLIC_EMAIL_ENDPOINT || LEGACY_ENDPOINT;
 // de confirmation ; sur l'ancien flux, l'ancien message.
 const IS_GATEWAY = ENDPOINT !== LEGACY_ENDPOINT;
 
+// La passerelle répond `etat` : une adresse déjà connue ne reçoit pas de
+// nouvel email de confirmation, et se croyait en échec faute qu'on le lui
+// dise. L'ancien Worker n'envoie rien de tel — d'où le repli.
+const MESSAGES = {
+  nouveau: "Merci ! Un email de confirmation vient de t'être envoyé — pense à cliquer le lien.",
+  reinscrit: "Te revoilà ! Un email de confirmation vient de partir — pense à cliquer le lien.",
+  deja_inscrit: "Tu es déjà inscrit·e : rien à faire, les prochaines nouvelles t'arriveront.",
+  confirmation_en_attente:
+    "Cette adresse est déjà inscrite, mais la confirmation manque encore : le lien t'attend dans un email précédent, peut-être dans les indésirables.",
+  desinscrit:
+    "Cette adresse s'était désinscrite. Écris à contact@thelocomotionlab.com et je te remets sur la liste.",
+};
+const REPLI = IS_GATEWAY
+  ? MESSAGES.nouveau
+  : "Merci ! Tu recevras bientôt les nouvelles explorations du labo.";
+
+/** Une inscription qui n'en crée pas une nouvelle se lit comme une information. */
+const INFORMATIFS = new Set(["deja_inscrit", "confirmation_en_attente", "desinscrit"]);
+
 export default function EmailCapture({
   title = "Reste à l'écoute !",
   description = null,
@@ -48,6 +67,7 @@ export default function EmailCapture({
   const [email, setEmail] = useState("");
   const [website, setWebsite] = useState(""); // honeypot
   const [status, setStatus] = useState("idle");
+  const [etat, setEtat] = useState(null);
   const emailId = useId();
   const statusId = useId();
   const websiteId = useId();
@@ -71,6 +91,10 @@ export default function EmailCapture({
       });
 
       if (res.ok) {
+        // Un corps illisible (ancien Worker, réponse vide) laisse `etat` nul :
+        // le message de repli tient.
+        const corps = await res.json().catch(() => null);
+        setEtat(typeof corps?.etat === "string" ? corps.etat : null);
         setStatus("success");
         setEmail("");
       } else {
@@ -187,12 +211,14 @@ export default function EmailCapture({
         {status === "success" && (
           <p
             className={`${
-              isBand ? "text-white" : "text-green-700"
+              isBand
+                ? "text-white"
+                : INFORMATIFS.has(etat)
+                  ? "text-brand-accent-ink"
+                  : "text-green-700"
             } text-sm font-medium animate-fade-in leading-snug`}
           >
-            {IS_GATEWAY
-              ? "Merci ! Un email de confirmation vient de t'être envoyé — pense à cliquer le lien."
-              : "Merci ! Tu recevras bientôt les nouvelles explorations du labo."}
+            {MESSAGES[etat] ?? REPLI}
           </p>
         )}
         {status === "error" && (
