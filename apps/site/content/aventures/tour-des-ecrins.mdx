@@ -10,22 +10,27 @@ cover: "/images/articles/mon-tour-des-ecrins-en-80-heures/cover_mon-tour-des-ecr
 resume:
   - { label: "Type de projet", valeur: "OFF" }
   - { label: "Conditions", valeur: "Autonomie" }
-  - { label: "Distance", valeur: "Ultra" }
+  - { label: "Distance", valeur: "Ultra-trail" }
 recit: "tour-des-ecrins-80-heures"
 sections:
   - type: caracteristiques
     champs:
-      - { label: "Trace prévue", valeur: "188 km, 12 200 m D+ / D−" }
-      - { label: "Distance parcourue", valeur: "198,1 km" }
-      - { label: "Dénivelé positif", valeur: "12 767 m" }
-      - { label: "Durée", valeur: "79 h 34 min" }
-      - { label: "Bivouacs", valeur: "Valgaudémar (km 57,5), Vallouise (km 108,7), Arsine (km 155,5)" }
-      - { label: "Sac au départ", valeur: "10,1 kg" }
-      - { label: "Autonomie", valeur: "Complète, avec un téléphone satellite Garmin inReach" }
+      - { label: "Distance", valeur: "188 km" }
+      - { label: "Dénivelé", valeur: "12 200 m" }
+      - { label: "Départ", valeur: "Vénosc" }
+      - { label: "Type de trace", valeur: "Boucle" }
+      - { label: "Bivouacs", valeur: "3" }
+      - { label: "Conditions", valeur: "Autonomie omplète" }      
+      - { label: "Masse portée au départ", valeur: "10,1 kg" }
+      - { label: "Résultat", valeur: "Défi complété" }
+
+  - type: libre
+    id: "genese-du-projet"
+    titre: "Genèse du projet"
 
   - type: geo
-    id: "les-quatre-jours"
-    titre: "Les quatre jours"
+    id: "trace"
+    titre: "Trace"
     gpx: "tour-des-ecrins.gpx"
     reperes:
       - { nom: "Valgaudémar", km: 57.5, icone: "bivouac" }
@@ -33,35 +38,34 @@ sections:
       - { nom: "Arsine", km: 155.5, icone: "bivouac" }
     colonnes: ["Étape", "km", "D+", "D−"]
     lignes:
-      - ["Jour 1 — Vénosc → Valgaudémar", "57,5", "4 800 m", "4 600 m"]
-      - ["Jour 2 — Valgaudémar → Vallouise", "49,2", "2 960 m", "2 890 m"]
-      - ["Jour 3 — Vallouise → Arsine", "39,4", "2 230 m", "1 700 m"]
-      - ["Jour 4 — Arsine → Vénosc", "41,9", "2 120 m", "2 800 m"]
+      - ["Jour 1 · Vénosc → Valgaudémar", "57,5", "4 800 m", "4 600 m"]
+      - ["Jour 2 · Valgaudémar → Vallouise", "49,2", "2 960 m", "2 890 m"]
+      - ["Jour 3 · Vallouise → Arsine", "39,4", "2 230 m", "1 700 m"]
+      - ["Jour 4 · Arsine → Vénosc", "41,9", "2 120 m", "2 800 m"]
 
-  - type: libre
-    id: "genese-et-preparatifs"
-    titre: "Genèse et préparatifs"
+
 
   - type: preparation
     seances:
-      colonnes: ["Date", "Sortie", "km", "D+", "Sac", "Ce qu'on éprouvait", "Billet"]
+      colonnes: ["Date", "Sortie", "km", "Dénivelé", "Remarque", "Billet"]
       lignes:
-        - ["06/06/2026", "WEC Aravis", "86", "6 700 m", "TODO", "Trois jours de haute montagne", "wec-aravis"]
-        - ["27/07/2026", "4x2000 m de Chartreuse", "49", "TODO", "TODO", "Brèche Arnaud et hyperthermie", "systeme-nerveux-en-alerte"]
-        - ["09/08/2026", "Croix de Belledonne", "24", "2 700 m", "TODO", "Terrain technique, temps frais", "reprise-apaisee-et-ancree"]
+        - ["06/06/2026", "WEC Aravis", "86", "6 700 m", "Trois jours de haute montagne", "wec-aravis"]
+        - ["27/07/2026", "4x2000 m de Chartreuse", "49", "Conditions fastpacking", "Brèche Arnaud et hyperthermie", "systeme-nerveux-en-alerte"]
+        - ["09/08/2026", "Croix de Belledonne", "24", "2 700 m", "Terrain très technique, temps frais", "reprise-apaisee-et-ancree"]
     stresseurs:
       travailles:
         - nom: "Flexibilité métabolique"
-          dose: "Cinq protocoles à glycogène bas"
-          frequence: "TODO"
-          intensite: "TODO"
           pourquoi: "Entraîner l'organisme à augmenter sa capacité d'oxydation des lipides à l'effort."
+          en_pratique: "Cinq protocoles à glycogène bas éprouvés pendant plusieurs semaines."
         - nom: "Chaleur"
-          dose: "TODO"
-          frequence: "TODO"
-          intensite: "Sorties longues en pleine canicule de juin et juillet"
+          en_pratique: "Multiplier les entraînements en pleine canicule."
           pourquoi: "Améliorer la tolérance à la chaleur, qui coupe les jambes en montée."
-      non_travailles: ["TODO"]
+        - nom: "Terrains techniques"
+          en_pratique: "Passer beaucoup de temps en montagne."
+          pourquoi: "Augmenter mon agilité en terrains montagneux."
+        - nom: "Dénivelé négatif"
+          en_pratique: "Pratiquer le fractionner en descente ainsi que les sorties avec beaucoup de dénivelé négatif."
+          pourquoi: "Augmenter la tolérance tissulaire au stress excentrique de la descente."
     protocoles:
       - "footing-a-jeun-prolonge"
       - "jeune-cetogene-apres-midi"
@@ -84,7 +88,7 @@ sections:
     titre: "Le direct"
 ---
 
-<SectionLibre id="genese-et-preparatifs">
+<SectionLibre id="genese-du-projet">
 
 <VersBillet slug="genese-tour-des-ecrins" />
 
