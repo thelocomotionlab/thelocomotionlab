@@ -23,6 +23,10 @@ sections:
       - { label: "Masse portée au départ", valeur: "10 kg" }
       - { label: "Résultat", valeur: "DNF après 38 h" }
 
+  - type: libre
+    id: "genese-du-projet"
+    titre: "Genèse du projet"
+
   - type: geo
     id: "trace"
     titre: "Trace"
@@ -32,10 +36,6 @@ sections:
       - ["Cabane de Chatillon", "82,8", "3 300 m", "1 700 m"]
       - ["Valdrôme", "131", "5 600 m", "4 900 m"]
 
-  - type: libre
-    id: "genese-du-projet"
-    titre: "Genèse du projet"
-
   - type: preparation
     graphe:
       abscisse: ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "S11", "S12", "S13", "S14", "S15", "S16", "S17", "S18", "S19"]
@@ -43,30 +43,26 @@ sections:
         - { nom: "Distance", unite: "km", valeurs: [0, 24, 4, 49, 67, 76, 44, 75, 53, 100, 86, 34, 50, 98, 29, 60, 48, 85, 63] }
         - { nom: "Dénivelé positif", unite: "m", valeurs: [0, 312, 54, 1025, 2149, 3277, 1817, 3082, 1937, 4462, 4804, 688, 1986, 4755, 591, 2363, 798, 4462, 3956] }
     seances:
-      colonnes: ["Date", "Sortie", "km", "D+", "Sac", "Ce qu'on éprouvait", "Billet"]
+      colonnes: ["Date", "Sortie", "km", "Dénivelé", "Masse portée", "Ce que j'éprouvais", "Billet"]
       lignes:
         - ["08/02/2026", "Première sortie longue", "32", "1 900 m", "5 kg", "Reprise du lest", "premiere-sortie-longue-2026"]
-        - ["06/03/2026", "Premier maratrail", "44", "2 100 m", "6,4 kg", "Endurer près de 7 h", "premier-maratrail-2026"]
-        - ["14/03/2026", "OFF Monts du Lyonnais", "65", "3 500 m", "8,9 kg", "Fastpacking à trois", "monts-du-lyonnais"]
-        - ["04/04/2026", "OFF Traversée de la Chartreuse", "81", "TODO", "TODO", "Neige et adaptation de trace", "traversee-chartreuse"]
+        - ["06/03/2026", "Premier maratrail", "44", "2 100 m", "6,4 kg", "Sortie de près de 7 h", "premier-maratrail-2026"]
+        - ["14/03/2026", "OFF Monts du Lyonnais", "65", "3 500 m", "8,9 kg", "Fastpacking chargé", "monts-du-lyonnais"]
+        - ["04/04/2026", "OFF Traversée de la Chartreuse", "81", "4 900 m", "—", "Dénivelé, neige, adaptatibilité au changement de trace", "traversee-chartreuse"]
     stresseurs:
       travailles:
-        - nom: "Chaleur"
-          dose: "15 - 18 min de hammam Jolt"
-          frequence: "4 à 5 sessions par semaine"
-          intensite: "TODO"
-          pourquoi: "Se préparer à l'été et au projet Fontaine-Rémuzat, la chaleur étant un point faible."
+        - nom: "Froid"
+          pourquoi: "Endurer des conditions potentiellement froides."
+          en_pratique: "Exposition régulière au froid via des bains en rivière tout l'hiver."
+        - nom: "Chaud"
+          pourquoi: "Préparer l'organisme à l'été qui arrive."
+          en_pratique: "Session hammam Jolt de 10 à 15 min 3 fois par semaine."
         - nom: "Jeûne intermittent"
-          dose: "Fenêtre de jeûne de 14 à 16 h"
-          frequence: "Quotidien"
-          intensite: "TODO"
           pourquoi: "Retrouver l'autophagie cellulaire via l'activation de la filière AMPK, sans manger moins."
+          en_pratique: "Réintroduction progressive sur un mois."
         - nom: "Mouvement primal"
-          dose: "TODO"
-          frequence: "TODO"
-          intensite: "TODO"
-          pourquoi: "Progresser sur le plan athlétique, la mobilité, et la gestion de la hauteur par le système nerveux autonome."
-      non_travailles: ["Froid"]
+          pourquoi: "Progresser sur le plan athlétique, la mobilité, la gestion du système nerveux, et développer le haut du corps."
+          en_pratique: "Diversifier les arbres grimpés, calisthénie, gilet lesté."
 
   - type: paquetage
     id: "le-paquetage"
@@ -75,7 +71,7 @@ sections:
 
   - type: direct
     id: "direct"
-    titre: "Direct v1 (2026)"
+    titre: "Le direct"
 
   - type: recit
 ---
@@ -83,10 +79,6 @@ sections:
 <SectionLibre id="genese-du-projet">
 
 <VersBillet slug="genese-fontaine-remuzat" />
-
-</SectionLibre>
-
-<SectionLibre id="trace">
 
 </SectionLibre>
 
@@ -122,6 +114,6 @@ Le récit complet de cette aventure est à retrouver [par ici](/aventures/recit/
   title="Replay OFF Fontaine Rémuzat"
 />
 
-*Replay du tracking OFF Fontaine Rémuzat. Tu peux plier/déplier le bandeau altimétrique sur la carte, et voir sur celui-ci les données de distance/D+/D- à chaque point enregistré. Direct v1 (2026) — smartphone + Traccar, conservé tel quel.*
+*Replay du tracking OFF Fontaine Rémuzat. Direct v2 (2026) — smartphone + Traccar.*
 
 </SectionLibre>
