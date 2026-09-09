@@ -73,7 +73,9 @@ export default async function AventurePage({ params }) {
   const { citation } = referencesDePage(page.corps);
   const rendus = rendusDe(page, {
     libres: corpsDesSectionsLibres(page, citation),
-    cover: (src, alt) => <Image src={src} alt={alt} width={900} height={600} />,
+    cover: (src, alt) => (
+      <Image src={src} alt={alt} width={900} height={600} sizes="(min-width: 768px) 300px, 100vw" />
+    ),
     carte: (gpxUrl, reperes) => (
       <MapEmbed gpx={gpxUrl} reperes={reperes} defaultMinHeight={420} />
     ),
@@ -125,6 +127,7 @@ export default async function AventurePage({ params }) {
                   alt={frontmatter.titre}
                   width={1400}
                   height={764}
+                  sizes="(min-width: 1024px) 860px, 100vw"
                   priority
                   className="block h-full w-full object-cover"
                 />

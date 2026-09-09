@@ -145,7 +145,7 @@ function CarteDAccueil({ carte }) {
             alt={carte.titre}
             width={550}
             height={300}
-            sizes="(min-width: 768px) 250px, 100vw"
+            sizes="250px"
             className="block h-full w-full object-cover"
           />
         ) : null}

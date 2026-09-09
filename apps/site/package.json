@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "contenu": "node --experimental-strip-types ../../packages/contenu/src/cli.ts .",
-    "predev": "pnpm run contenu",
+    "predev": "pnpm run contenu && pnpm run images",
     "dev": "next dev",
-    "prebuild": "pnpm run contenu",
+    "prebuild": "pnpm run contenu && pnpm run images",
     "build": "next build --webpack",
+    "images": "node scripts/build-images.mjs",
     "start": "next start",
     "lint": "eslint",
     "deploy:cf": "npx @cloudflare/next-on-pages && npx wrangler pages deploy .vercel/output/static --project-name=thelocomotionlab-website",
