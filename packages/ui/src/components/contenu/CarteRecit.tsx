@@ -39,17 +39,17 @@ export default function CarteRecit({
       // `grid-cols-1` et non la colonne implicite : `auto` se dimensionne sur
       // le contenu, et la photo imposait alors sa largeur naturelle à la carte.
       className={`mt-5 grid grid-cols-1 overflow-hidden rounded-xl border border-brand-hairline bg-brand-paper text-brand-text no-underline shadow-renvoi transition-colors hover:border-brand-deep ${
-        cover ? "md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]" : ""
+        cover ? "md:grid-cols-[minmax(0,1fr)_minmax(0,1.9fr)]" : ""
       }`}
     >
       {cover ? (
         // En colonne, la photo garde le format des couvertures ; en ligne, elle
         // s'étire sur la hauteur du texte à côté d'elle.
-        <div className="aspect-cover md:aspect-auto md:min-h-70 [&>*]:block [&>*]:h-full [&>*]:w-full [&>img]:object-cover">
+        <div className="aspect-cover md:aspect-auto md:min-h-44 [&>*]:block [&>*]:h-full [&>*]:w-full [&>img]:object-cover">
           {cover}
         </div>
       ) : null}
-      <div className="flex flex-col justify-center px-9 py-8">
+      <div className="flex flex-col justify-center px-7 py-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="font-mono text-xxs font-bold uppercase tracking-surtitre text-brand-deep-dark">
             Récit
@@ -60,15 +60,15 @@ export default function CarteRecit({
             </span>
           ) : null}
         </div>
-        <h3 className="m-0 mt-3 font-heading text-3xl font-bold leading-[1.12] tracking-[-0.01em] text-brand-deep">
+        <h3 className="m-0 mt-2.5 font-heading text-xl font-bold leading-[1.12] tracking-[-0.01em] text-brand-deep">
           {titre}
         </h3>
         {chapeau ? (
-          <p className="m-0 mt-3 font-sans text-lecture leading-normal text-brand-soft [text-wrap:pretty]">
+          <p className="m-0 mt-2.5 font-sans leading-normal text-brand-soft [text-wrap:pretty]">
             {chapeau}
           </p>
         ) : null}
-        <span className="mt-4 inline-block font-mono text-meta tracking-pastille text-brand-deep-dark">
+        <span className="mt-3.5 inline-block font-mono text-meta tracking-pastille text-brand-deep-dark">
           {action}
         </span>
       </div>
