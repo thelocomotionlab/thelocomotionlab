@@ -1,0 +1,21 @@
+# Cloudflare Pages — en-têtes des fichiers servis depuis public/.
+#
+# LE PIÈGE QU'IL CORRIGE — les règles `headers()` de next.config.mjs
+# n'atteignent PAS ces fichiers : Pages les sert lui-même et leur pose son
+# défaut, `Cache-Control: public, max-age=0, must-revalidate`. Chaque visite
+# redemandait donc chaque image, d'où le carré gris à chaque passage, même
+# revenu sur une page déjà vue. Vérifié en servant le worker compilé.
+#
+# Trente jours, pas un an : les noms de fichiers ne portent pas d'empreinte,
+# donc une photo remplacée garde son adresse. Un an d'`immutable` la figerait
+# pour tous ceux qui l'ont déjà vue.
+
+/images/*
+  Cache-Control: public, max-age=2592000
+
+/images-opt/*
+  Cache-Control: public, max-age=2592000
+
+# Les traces et journaux d'un direct archivé bougent encore un peu.
+/replays/*
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
