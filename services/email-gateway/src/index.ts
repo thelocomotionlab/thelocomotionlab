@@ -16,8 +16,9 @@
 //     vide — un robot qui le remplit reçoit un faux succès ;
 //   - limite de débit best-effort en mémoire (par isolat Worker : suffisant
 //     contre les rafales naïves, pas contre une attaque distribuée) ;
-//   - /subscribe : réponse identique que l'adresse soit nouvelle ou déjà
-//     inscrite (pas d'énumération d'emails).
+//   - /subscribe : toujours un 200, avec `etat` — une adresse déjà inscrite
+//     doit pouvoir se l'entendre dire, sans quoi elle attend un email de
+//     confirmation qui ne repartira pas.
 
 export interface Env {
   LISTMONK_URL: string;
@@ -36,22 +37,30 @@ const MAX_EMAIL_LENGTH = 254;
 const MAX_NAME_LENGTH = 120;
 const MAX_MESSAGE_LENGTH = 5000;
 
-// Provenances acceptées — doit couvrir tous les formulaires du site.
-// Émises aujourd'hui : quete, comprendre, twin, live, home, pratiquer
-// (bande email + formulaire d'inscription des ateliers en repli),
-// soutenir (page Soutenir, via EmailCapture).
-// « pratiquer-trail » est réservé au teaser accompagnement trail 2027.
-// « manifeste » (ex-nom de /quete, 308) et « footer » sont gardés par
-// tolérance pour d'éventuelles pages en cache navigateur.
+// Provenances acceptées — DOIT couvrir tous les formulaires du site : une
+// valeur absente d'ici part en 400, et la page affiche « l'envoi a échoué »
+// alors que rien n'est en panne. Le test `email.test.js` du site compare cette
+// liste aux `source` réellement émis.
+//
+// Émises aujourd'hui : home (bande de l'accueil), labo-quete et labo-apropos
+// (les deux encarts de /labo), soutenir (page Soutenir et bas de /labo),
+// pratiquer (inscription à un atelier, en repli de l'API ateliers),
+// pratiquer-ateliers (encart de /services/ateliers), pratiquer-trail (teaser
+// accompagnement trail 2027), live (les trois états de /live).
+// « quete », « comprendre », « twin », « manifeste » et « footer » sont gardés
+// par tolérance pour d'éventuelles pages en cache navigateur.
 const SOURCES = new Set([
+  "home",
+  "labo-quete",
+  "labo-apropos",
+  "soutenir",
+  "pratiquer",
+  "pratiquer-ateliers",
+  "pratiquer-trail",
+  "live",
   "quete",
   "comprendre",
   "twin",
-  "live",
-  "home",
-  "pratiquer",
-  "pratiquer-trail",
-  "soutenir",
   "footer",
   "manifeste",
 ]);
@@ -121,23 +130,98 @@ function isRobot(payload: Record<string, unknown>): boolean {
 }
 
 /**
+ * Ce que devient une adresse soumise au formulaire. La page en fait une
+ * phrase : quelqu'un qui s'était inscrit il y a six mois et l'a oublié doit
+ * lire « tu es déjà là », pas le message d'accueil d'une nouvelle inscription
+ * suivi d'un email qui n'arrive jamais.
+ */
+type EtatDInscription =
+  | "nouveau" // créé (ou remis sur la liste) : l'email de confirmation part
+  | "deja_inscrit" // sur la liste, confirmé : rien à faire
+  | "confirmation_en_attente"; // inscrit, mais le lien de confirmation n'a jamais été cliqué
+
+type Resultat = EtatDInscription | "upstream_error";
+
+function listmonk(env: Env, chemin: string, init: RequestInit = {}): Promise<Response> {
+  return fetch(`${env.LISTMONK_URL}${chemin}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `token ${env.LISTMONK_API_USER}:${env.LISTMONK_API_TOKEN}`,
+    },
+  });
+}
+
+type Inscrit = { id: number; global: string; surLaListe: string | null };
+
+/**
+ * L'adresse telle que Listmonk la connaît, et son statut sur la liste du labo.
+ *
+ * Listmonk ne cherche pas par email : il prend un fragment SQL. L'adresse s'y
+ * insère comme littéral, apostrophes doublées — la validation en amont interdit
+ * déjà les espaces, mais pas les apostrophes, qui sont légales dans un email.
+ */
+async function inscritConnu(env: Env, email: string): Promise<Inscrit | null> {
+  const litteral = email.replace(/'/g, "''");
+  const requete = encodeURIComponent(`subscribers.email = '${litteral}'`);
+
+  let res: Response;
+  try {
+    res = await listmonk(env, `/api/subscribers?per_page=1&query=${requete}`);
+  } catch (err) {
+    console.error(`Listmonk injoignable (recherche): ${String(err)}`);
+    return null;
+  }
+  if (!res.ok) return null;
+
+  const corps = (await res.json()) as {
+    data?: { results?: { id?: number; status?: string; lists?: { id?: number; subscription_status?: string }[] }[] };
+  };
+  const trouve = corps.data?.results?.[0];
+  if (!trouve || typeof trouve.id !== "number") return null;
+
+  const liste = trouve.lists?.find((l) => Number(l.id) === Number(env.LISTMONK_LIST_ID));
+  return {
+    id: trouve.id,
+    global: trouve.status ?? "",
+    surLaListe: liste?.subscription_status ?? null,
+  };
+}
+
+/** Remet un désinscrit sur la liste, en « non confirmé » : l'opt-in repart. */
+async function remettreSurLaListe(env: Env, id: number): Promise<boolean> {
+  try {
+    const res = await listmonk(env, "/api/subscribers/lists", {
+      method: "PUT",
+      body: JSON.stringify({
+        ids: [id],
+        action: "add",
+        target_list_ids: [Number(env.LISTMONK_LIST_ID)],
+        status: "unconfirmed",
+      }),
+    });
+    if (!res.ok) console.error(`Listmonk réinscription ${res.status}`);
+    return res.ok;
+  } catch (err) {
+    console.error(`Listmonk injoignable (réinscription): ${String(err)}`);
+    return false;
+  }
+}
+
+/**
  * Crée le contact dans Listmonk. `preconfirm_subscriptions: false` →
  * l'inscription reste « non confirmée » et Listmonk envoie l'email de
  * double opt-in pour les listes configurées ainsi.
+ *
+ * Si l'adresse existe déjà, on va chercher dans quel état, pour pouvoir le
+ * dire. C'est un renoncement assumé à la non-énumération : le formulaire
+ * distingue désormais une adresse connue d'une adresse nouvelle.
  */
-async function subscribeToListmonk(
-  env: Env,
-  email: string,
-  source: string
-): Promise<"ok" | "exists" | "upstream_error"> {
+async function subscribeToListmonk(env: Env, email: string, source: string): Promise<Resultat> {
   let res: Response;
   try {
-    res = await fetch(`${env.LISTMONK_URL}/api/subscribers`, {
+    res = await listmonk(env, "/api/subscribers", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `token ${env.LISTMONK_API_USER}:${env.LISTMONK_API_TOKEN}`,
-      },
       body: JSON.stringify({
         email,
         name: "",
@@ -152,15 +236,32 @@ async function subscribeToListmonk(
     return "upstream_error";
   }
 
-  if (res.ok) return "ok";
+  if (res.ok) return "nouveau";
 
-  // Adresse déjà inscrite : Listmonk répond en erreur avec un message
-  // explicite — on traite ça comme un succès (pas d'énumération d'emails).
   const text = await res.text();
-  if (res.status === 409 || /exist/i.test(text)) return "exists";
+  if (res.status !== 409 && !/exist/i.test(text)) {
+    console.error(`Listmonk ${res.status}: ${text.slice(0, 300)}`);
+    return "upstream_error";
+  }
 
-  console.error(`Listmonk ${res.status}: ${text.slice(0, 300)}`);
-  return "upstream_error";
+  // Adresse déjà connue. Faute de pouvoir lire son état, la réponse neutre
+  // reste vraie : elle est bien déjà là.
+  const connu = await inscritConnu(env, email);
+  if (!connu) return "deja_inscrit";
+
+  switch (connu.surLaListe) {
+    case "confirmed":
+      return "deja_inscrit";
+    case "unconfirmed":
+      return "confirmation_en_attente";
+    default:
+      // « unsubscribed », ou plus sur la liste du tout : la personne redemande
+      // à s'inscrire, on la remet et Listmonk lui renvoie l'email de
+      // confirmation — de son point de vue, une inscription neuve. Une
+      // désinscription globale (liste noire), elle, ne se défait pas ici.
+      if (connu.global === "blocklisted") return "deja_inscrit";
+      return (await remettreSurLaListe(env, connu.id)) ? "nouveau" : "deja_inscrit";
+  }
 }
 
 async function handleSubscribe(
@@ -184,13 +285,13 @@ async function handleSubscribe(
     return json({ ok: false, error: "source_invalide" }, 400, cors);
   }
 
-  const result = await subscribeToListmonk(env, email, source);
-  if (result === "upstream_error") {
+  const etat = await subscribeToListmonk(env, email, source);
+  if (etat === "upstream_error") {
     return json({ ok: false, error: "service_indisponible" }, 502, cors);
   }
 
-  // « ok » comme « exists » → même réponse.
-  return json({ ok: true }, 200, cors);
+  // Toujours un succès — la page choisit sa phrase sur `etat`.
+  return json({ ok: true, etat }, 200, cors);
 }
 
 /**
