@@ -32,8 +32,11 @@ const MESSAGES = {
   confirmation_en_attente:
     "Cette adresse est déjà inscrite, mais la confirmation manque encore : le lien t'attend dans un email précédent, peut-être dans les indésirables.",
 };
+// Repli quand la réponse ne dit pas ce qu'est devenue l'adresse : il ne promet
+// pas d'email, parce qu'il n'y en a pas pour une adresse déjà inscrite — c'est
+// cette promesse-là qui faisait attendre une confirmation qui ne venait jamais.
 const REPLI = IS_GATEWAY
-  ? MESSAGES.nouveau
+  ? "Merci ! Si cette adresse n'était pas encore inscrite, un email de confirmation vient de partir — pense à cliquer le lien."
   : "Merci ! Tu recevras bientôt les nouvelles explorations du labo.";
 
 /** Une inscription qui n'en crée pas une nouvelle se lit comme une information. */

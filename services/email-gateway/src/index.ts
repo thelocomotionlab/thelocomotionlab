@@ -136,9 +136,9 @@ function isRobot(payload: Record<string, unknown>): boolean {
  * suivi d'un email qui n'arrive jamais.
  */
 type EtatDInscription =
-  | "nouveau" // créé (ou remis sur la liste) : l'email de confirmation part
-  | "deja_inscrit" // sur la liste, confirmé : rien à faire
-  | "confirmation_en_attente"; // inscrit, mais le lien de confirmation n'a jamais été cliqué
+  | "nouveau" // contact créé : l'email de confirmation part
+  | "deja_inscrit" // Listmonk connaît déjà l'adresse : aucun email ne part
+  | "confirmation_en_attente"; // connue, et le lien de confirmation attend toujours
 
 type Resultat = EtatDInscription | "upstream_error";
 
@@ -152,16 +152,16 @@ function listmonk(env: Env, chemin: string, init: RequestInit = {}): Promise<Res
   });
 }
 
-type Inscrit = { id: number; global: string; surLaListe: string | null };
-
 /**
- * L'adresse telle que Listmonk la connaît, et son statut sur la liste du labo.
+ * Le statut de l'adresse sur la liste du labo, tel que Listmonk le donne —
+ * `null` quand la recherche n'aboutit pas ou que la liste n'est pas dans ce
+ * qu'elle rend.
  *
  * Listmonk ne cherche pas par email : il prend un fragment SQL. L'adresse s'y
  * insère comme littéral, apostrophes doublées — la validation en amont interdit
  * déjà les espaces, mais pas les apostrophes, qui sont légales dans un email.
  */
-async function inscritConnu(env: Env, email: string): Promise<Inscrit | null> {
+async function statutSurLaListe(env: Env, email: string): Promise<string | null> {
   const litteral = email.replace(/'/g, "''");
   const requete = encodeURIComponent(`subscribers.email = '${litteral}'`);
 
@@ -172,40 +172,18 @@ async function inscritConnu(env: Env, email: string): Promise<Inscrit | null> {
     console.error(`Listmonk injoignable (recherche): ${String(err)}`);
     return null;
   }
-  if (!res.ok) return null;
+  if (!res.ok) {
+    console.error(`Listmonk recherche ${res.status}`);
+    return null;
+  }
 
   const corps = (await res.json()) as {
-    data?: { results?: { id?: number; status?: string; lists?: { id?: number; subscription_status?: string }[] }[] };
+    data?: { results?: { lists?: { id?: number; subscription_status?: string }[] }[] };
   };
-  const trouve = corps.data?.results?.[0];
-  if (!trouve || typeof trouve.id !== "number") return null;
-
-  const liste = trouve.lists?.find((l) => Number(l.id) === Number(env.LISTMONK_LIST_ID));
-  return {
-    id: trouve.id,
-    global: trouve.status ?? "",
-    surLaListe: liste?.subscription_status ?? null,
-  };
-}
-
-/** Remet un désinscrit sur la liste, en « non confirmé » : l'opt-in repart. */
-async function remettreSurLaListe(env: Env, id: number): Promise<boolean> {
-  try {
-    const res = await listmonk(env, "/api/subscribers/lists", {
-      method: "PUT",
-      body: JSON.stringify({
-        ids: [id],
-        action: "add",
-        target_list_ids: [Number(env.LISTMONK_LIST_ID)],
-        status: "unconfirmed",
-      }),
-    });
-    if (!res.ok) console.error(`Listmonk réinscription ${res.status}`);
-    return res.ok;
-  } catch (err) {
-    console.error(`Listmonk injoignable (réinscription): ${String(err)}`);
-    return false;
-  }
+  const liste = corps.data?.results?.[0]?.lists?.find(
+    (l) => Number(l.id) === Number(env.LISTMONK_LIST_ID)
+  );
+  return liste?.subscription_status ?? null;
 }
 
 /**
@@ -216,6 +194,11 @@ async function remettreSurLaListe(env: Env, id: number): Promise<boolean> {
  * Si l'adresse existe déjà, on va chercher dans quel état, pour pouvoir le
  * dire. C'est un renoncement assumé à la non-énumération : le formulaire
  * distingue désormais une adresse connue d'une adresse nouvelle.
+ *
+ * Une seule chose fait dire « nouveau » : que Listmonk ait bel et bien créé le
+ * contact. Tout le reste du chemin est en lecture — une adresse connue ne peut
+ * pas s'entendre annoncer un email qui ne partira pas, et rien ne vient
+ * modifier une inscription en place.
  */
 async function subscribeToListmonk(env: Env, email: string, source: string): Promise<Resultat> {
   let res: Response;
@@ -244,24 +227,12 @@ async function subscribeToListmonk(env: Env, email: string, source: string): Pro
     return "upstream_error";
   }
 
-  // Adresse déjà connue. Faute de pouvoir lire son état, la réponse neutre
-  // reste vraie : elle est bien déjà là.
-  const connu = await inscritConnu(env, email);
-  if (!connu) return "deja_inscrit";
-
-  switch (connu.surLaListe) {
-    case "confirmed":
-      return "deja_inscrit";
-    case "unconfirmed":
-      return "confirmation_en_attente";
-    default:
-      // « unsubscribed », ou plus sur la liste du tout : la personne redemande
-      // à s'inscrire, on la remet et Listmonk lui renvoie l'email de
-      // confirmation — de son point de vue, une inscription neuve. Une
-      // désinscription globale (liste noire), elle, ne se défait pas ici.
-      if (connu.global === "blocklisted") return "deja_inscrit";
-      return (await remettreSurLaListe(env, connu.id)) ? "nouveau" : "deja_inscrit";
-  }
+  // Adresse déjà connue. Seule une confirmation en attente change la phrase :
+  // tout le reste — désinscrite, hors liste, statut illisible — s'en tient au
+  // fait certain, l'adresse est déjà là, et aucun email ne part.
+  return (await statutSurLaListe(env, email)) === "unconfirmed"
+    ? "confirmation_en_attente"
+    : "deja_inscrit";
 }
 
 async function handleSubscribe(
@@ -275,7 +246,11 @@ async function handleSubscribe(
   }
   if (isRobot(payload)) return json({ ok: true }, 200, cors);
 
-  const email = typeof payload.email === "string" ? payload.email.trim() : "";
+  // En minuscules : Listmonk range les adresses ainsi, et la recherche par
+  // fragment SQL compare caractère à caractère. « Louis@… » n'y retrouvait pas
+  // « louis@… », déjà inscrit.
+  const email =
+    typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
   if (email.length > MAX_EMAIL_LENGTH || !EMAIL_REGEX.test(email)) {
     return json({ ok: false, error: "email_invalide" }, 400, cors);
   }
