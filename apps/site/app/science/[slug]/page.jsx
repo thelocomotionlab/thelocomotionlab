@@ -121,6 +121,7 @@ export default async function ArticlePage({ params }) {
                 alt={frontmatter.titre}
                 width={1720}
                 height={938}
+                sizes="(min-width: 1024px) 860px, 100vw"
                 priority
                 className="block h-full w-full object-cover"
               />

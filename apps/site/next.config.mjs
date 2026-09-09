@@ -100,12 +100,16 @@ export default function nextConfig(phase) {
     },
 
     images: {
-      // Sur Cloudflare Pages, l'optimisation d'images Next a des limites :
-      // ces formats sont utilisés si la pipeline d'optimisation est active,
-      // sinon les WebP existants dans /public sont servis tels quels.
-      formats: ["image/avif", "image/webp"],
-      deviceSizes: [360, 640, 828, 1080, 1200, 1920],
-      minimumCacheTTL: 60 * 60 * 24 * 30, // 30 jours
+      // Sur Cloudflare Pages, l'optimiseur d'images de Next ne redimensionne
+      // rien : `/_next/image?url=…&w=360` renvoie la source, octet pour octet.
+      // Les variantes sont donc fabriquées au build et adressées par ce
+      // chargeur (scripts/build-images.mjs, lib/imageLoader.js).
+      loader: "custom",
+      loaderFile: "./lib/imageLoader.js",
+      // Les largeurs que Next a le droit de demander — exactement les barreaux
+      // fabriqués. En demander une autre renverrait vers un fichier absent.
+      deviceSizes: [360, 640, 1080, 1600],
+      imageSizes: [96, 256],
     },
 
     // Sur Cloudflare Pages via @cloudflare/next-on-pages, ces headers sont
@@ -129,7 +133,18 @@ export default function nextConfig(phase) {
             },
           ],
         },
-        // Cache long pour les assets immuables servis depuis /public/images
+        // Cache long pour les assets immuables servis depuis /public/images —
+        // et pour les variantes fabriquées au build, qui portent leur largeur
+        // dans leur nom et ne changent donc jamais sans changer d'adresse.
+        {
+          source: "/images-opt/:path*",
+          headers: [
+            {
+              key: "Cache-Control",
+              value: "public, max-age=31536000, immutable",
+            },
+          ],
+        },
         {
           source: "/images/:path*",
           headers: [

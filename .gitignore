@@ -77,3 +77,7 @@ services/twin-engine/_seed/cas_validation/
 # cartes de partage fabriquées en local (pnpm -F site carte:partage)
 # — images de publication + cache des fonds de carte, jamais committées
 /cartes/
+
+# variantes d'images fabriquées au build (scripts/build-images.mjs) —
+# les originaux vivent dans public/images, celles-ci se refabriquent
+/apps/site/public/images-opt/

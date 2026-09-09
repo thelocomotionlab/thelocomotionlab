@@ -110,6 +110,7 @@ export default function Navbar() {
           alt=""
           width={96}
           height={96}
+          sizes="48px"
           priority
           className="h-9 w-9 flex-none md:h-12 md:w-12"
         />

@@ -22,7 +22,13 @@ export function PortraitDeValentin() {
     // revenait à faire défiler le texte derrière lui.
     <div className="lg:sticky lg:top-24">
       <Photo format="portrait" legende={PORTRAIT.legende}>
-        <Image src={PORTRAIT.src} alt={PORTRAIT.alt} width={800} height={1000} />
+        <Image
+          src={PORTRAIT.src}
+          alt={PORTRAIT.alt}
+          width={800}
+          height={1000}
+          sizes="(min-width: 1024px) 380px, 100vw"
+        />
       </Photo>
     </div>
   );

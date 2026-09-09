@@ -89,6 +89,7 @@ export default function AventuresPage() {
                     alt={frontmatter.titre}
                     width={1400}
                     height={764}
+                    sizes="(min-width: 1024px) 600px, 100vw"
                     className="block h-full w-full object-cover"
                   />
                 </div>

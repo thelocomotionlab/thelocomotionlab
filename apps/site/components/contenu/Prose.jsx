@@ -16,6 +16,7 @@ import remarkMath from "remark-math";
 import remarkCitations from "@/markdown/remarkCitations";
 import remarkSplit from "@/markdown/remarkSplit";
 import remarkImageOptions from "@/markdown/remarkImageOptions";
+import remarkImagesOptimisees from "@/markdown/remarkImagesOptimisees";
 import remarkPlot from "@/markdown/remarkPlot";
 import rehypeSlug from "rehype-slug";
 import rehypeRaw from "rehype-raw";
@@ -26,6 +27,7 @@ import PlotLazy from "@/components/PlotLazy";
 const PLUGINS_REMARK = [
   remarkGfm,
   remarkImageOptions,
+  remarkImagesOptimisees,
   remarkPlot,
   [remarkFootnotes, { inlineNotes: true }],
   remarkCitations,
