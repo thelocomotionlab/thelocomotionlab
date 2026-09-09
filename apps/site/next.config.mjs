@@ -112,8 +112,10 @@ export default function nextConfig(phase) {
       imageSizes: [96, 256],
     },
 
-    // Sur Cloudflare Pages via @cloudflare/next-on-pages, ces headers sont
-    // traduits en règles `_headers` lors du déploiement.
+    // ⚠ Ces règles ne valent QUE pour les pages : un fichier de public/ est
+    // servi par Cloudflare Pages lui-même, qui lui pose son propre
+    // Cache-Control et ignore ce qui est écrit ici. La mise en cache des
+    // images et des replays vit donc dans public/_headers.
     async headers() {
       return [
         ...PREVISUALISATIONS_HORS_INDEX,
@@ -130,37 +132,6 @@ export default function nextConfig(phase) {
             {
               key: "Strict-Transport-Security",
               value: "max-age=63072000; includeSubDomains; preload",
-            },
-          ],
-        },
-        // Cache long pour les assets immuables servis depuis /public/images —
-        // et pour les variantes fabriquées au build, qui portent leur largeur
-        // dans leur nom et ne changent donc jamais sans changer d'adresse.
-        {
-          source: "/images-opt/:path*",
-          headers: [
-            {
-              key: "Cache-Control",
-              value: "public, max-age=31536000, immutable",
-            },
-          ],
-        },
-        {
-          source: "/images/:path*",
-          headers: [
-            {
-              key: "Cache-Control",
-              value: "public, max-age=31536000, immutable",
-            },
-          ],
-        },
-        // Cache long pour les replays GPX / JSON statiques
-        {
-          source: "/replays/:path*",
-          headers: [
-            {
-              key: "Cache-Control",
-              value: "public, max-age=3600, stale-while-revalidate=86400",
             },
           ],
         },
