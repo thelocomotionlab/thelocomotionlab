@@ -7,24 +7,33 @@ import { SITE_HOST_ALIAS, SITE_URL } from "./lib/site.mjs";
 // Cloudflare : sans cette règle, chaque page du site existe à deux adresses,
 // et les moteurs choisissent laquelle indexer à notre place.
 //
-// Le motif est ANCRÉ : sans les bornes, « thelocomotionlab.com » se retrouve
-// aussi dans « www.thelocomotionlab.com » et la redirection boucle sur
-// elle-même.
+// ⚠ L'hôte s'écrit TEL QUEL, sans motif : le routeur de Cloudflare compare
+// `has.host` à l'égalité stricte (`url.hostname === value`), là où celui de
+// Next le lit comme une expression régulière. Un motif ancré, correct pour
+// Next, n'est jamais égal à un nom d'hôte — la règle ne partait donc jamais,
+// et l'apex répondait 200 au lieu de rediriger. C'est Cloudflare qui sert le
+// site : c'est sa règle du jeu qui compte.
 const VERS_LHOTE_OFFICIEL = {
   source: "/:chemin*",
-  has: [{ type: "host", value: `^${SITE_HOST_ALIAS.replace(/\./g, "\\.")}$` }],
+  has: [{ type: "host", value: SITE_HOST_ALIAS }],
   destination: `${SITE_URL}/:chemin*`,
   permanent: true,
 };
 
-// Les déploiements de prévisualisation servent le site entier sur
-// <branche>.<projet>.pages.dev. Cet en-tête les tient hors des index sans rien
-// changer pour le domaine, et sans dépendre d'une règle écrite dans Cloudflare.
-const PREVISUALISATIONS_HORS_INDEX = {
+// Le site entier est aussi servi sur les adresses *.pages.dev du projet. Les
+// déploiements de prévisualisation reçoivent leur `noindex` de Cloudflare
+// lui-même ; l'adresse de PRODUCTION du projet, elle, ne le reçoit pas — d'où
+// cette liste, à l'égalité stricte comme ci-dessus.
+const HOTES_HORS_INDEX = [
+  "thelocomotionlab-website.pages.dev",
+  "staging.thelocomotionlab-website.pages.dev",
+  "thelocomotionlab-staging.pages.dev",
+];
+const PREVISUALISATIONS_HORS_INDEX = HOTES_HORS_INDEX.map((hote) => ({
   source: "/(.*)",
-  has: [{ type: "host", value: ".*\\.pages\\.dev" }],
+  has: [{ type: "host", value: hote }],
   headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
-};
+}));
 
 // Ce fichier vit dans apps/site/ ; la racine du monorepo est deux niveaux au-dessus.
 const appDir = dirname(fileURLToPath(import.meta.url));
@@ -103,7 +112,7 @@ export default function nextConfig(phase) {
     // traduits en règles `_headers` lors du déploiement.
     async headers() {
       return [
-        PREVISUALISATIONS_HORS_INDEX,
+        ...PREVISUALISATIONS_HORS_INDEX,
         {
           source: "/(.*)",
           headers: [
