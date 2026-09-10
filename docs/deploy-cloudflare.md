@@ -1,12 +1,14 @@
-# Déploiement du site sur Cloudflare Pages (après passage en monorepo)
+# Déploiement sur Cloudflare Pages — le site, et le studio
 
-> **TL;DR** — Le code du site est passé de la racine du repo à `apps/site/`. Le seul réglage à
-> changer côté Cloudflare Pages est le **répertoire racine du build = `apps/site`**. Rien d'autre ne
-> change : même projet, même domaine, même sortie `.vercel/output/static`.
+> **TL;DR** — **Deux projets Pages**, un par app : `thelocomotionlab-website` pour le site,
+> `thelocomotionlab-studio` pour le studio v2. Chacun se déploie d'une commande
+> (`pnpm -F site deploy:cf`, `pnpm -F studio deploy:cf`), et `wrangler` crée le projet qui manque.
+> Le studio v2 est neuf : va directement à « [Le studio : un SECOND projet
+> Pages](#le-studio--un-second-projet-pages) ».
 >
 > ⚠️ Ce document est une **procédure pour toi** : Claude n'a rien modifié sur Cloudflare.
 
-## Ce qui change
+## Le site : ce qui a changé au passage en monorepo
 
 | Avant (repo = site) | Après (monorepo) |
 | --- | --- |
@@ -107,15 +109,61 @@ pnpm --filter site deploy:cf
 `wrangler` te demandera de te connecter au compte Cloudflare la première fois (jamais de token dans le
 repo — cf. `docs/secrets.md`).
 
-### Trois déploiements distincts, à ne pas confondre
+### Quatre déploiements distincts, à ne pas confondre
 
 | Quoi | Où | Commande |
 | --- | --- | --- |
-| le site | Cloudflare Pages | `pnpm -F site deploy:cf` |
+| le site | Cloudflare Pages · `thelocomotionlab-website` | `pnpm -F site deploy:cf` |
+| le studio | Cloudflare Pages · `thelocomotionlab-studio` | `pnpm -F studio deploy:cf` |
 | la passerelle email | Cloudflare Workers | `cd services/email-gateway && npx wrangler deploy` |
 | Listmonk, Caddy, les services | le VPS | `cd /opt/locomotionlab/infra && ./deploy.sh` |
 
-Aucune de ces trois commandes n'entraîne les autres, et aucun workflow CI ne déploie la passerelle.
+Aucune de ces quatre commandes n'entraîne les autres, et aucun workflow CI ne déploie la
+passerelle ni le studio.
+
+> `--legacy-peer-deps` dans les deux scripts `deploy:cf` n'est pas décoratif : sur un cache npm
+> froid — une machine neuve, un runner CI — `npx @cloudflare/next-on-pages` échoue en `ERESOLVE`.
+> `wrangler` 4 déclare `@cloudflare/workers-types@^5` en pair optionnel, `next-on-pages` le veut
+> en `^4`, et npm refuse d'arbitrer deux pairs *optionnels*. Le flag lui dit de passer outre, ce
+> qui est sans effet ici : ces types ne servent qu'à la compilation, et rien ne les compile.
+
+---
+
+## Le studio : un SECOND projet Pages
+
+`thelocomotionlab.com/studio` sert le studio **v1**, qui est une route du site. Le studio v2 est
+une app Next à part (`apps/studio`) : elle a son propre build, et il lui faut donc son propre
+projet Pages. Deux sorties `.vercel/output/static` ne tiennent pas dans un seul projet.
+
+Ce qui justifie l'app séparée : maplibre, le terrain 3D et l'encodeur vidéo n'entrent que dans
+*son* bundle, jamais dans celui du site ; et le site reste en JavaScript quand le studio est en
+TypeScript.
+
+### La mise en ligne, une fois
+
+```bash
+pnpm install
+pnpm -F studio deploy:cf
+```
+
+`wrangler` propose de **créer** `thelocomotionlab-studio` s'il n'existe pas — il demande le nom et
+la branche de production, et déploie dans la foulée. Rien à préparer dans le dashboard.
+
+Puis, pour l'adresse : **Workers & Pages → `thelocomotionlab-studio` → Custom domains → Set up a
+custom domain → `studio.thelocomotionlab.com`**. Le DNS de `thelocomotionlab.com` étant déjà chez
+Cloudflare, l'enregistrement se pose tout seul.
+
+### Ce que le studio ne partage pas avec le site
+
+| | site | studio |
+| --- | --- | --- |
+| Compatibility flag `nodejs_compat` | requis | requis (Production **et** Preview) |
+| `NODE_VERSION` | 22 | 22 — seulement pour l'intégration Git, inutile en déploiement manuel |
+| en-têtes des fichiers statiques | `apps/site/public/_headers` | `apps/studio/public/_headers` |
+| indexation | indexé | `X-Robots-Tag: noindex` sur **tout**, page comme fichier |
+
+Le `_headers` du studio pose le `noindex` sur `/*` parce que les règles `headers()` de
+`next.config.ts` n'atteignent pas les fichiers de `public/` (cf. le piège n° 2 plus bas).
 
 ---
 
