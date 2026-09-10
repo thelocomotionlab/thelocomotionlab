@@ -19,7 +19,7 @@
 // sur la carte du direct et dans le texte d'un carrousel. Ajouter une icône se
 // fait à UN endroit (lib/liveWaypointIcons.js) et elle est disponible aux deux.
 
-import { WAYPOINT_ICONES } from "./liveWaypointIcons";
+import { WAYPOINT_ICONES } from "@locomotionlab/ui/icones";
 
 /** Les clés écrivables entre deux-points, triées pour l'affichage. */
 export const CLES_ICONES = Object.keys(WAYPOINT_ICONES).sort();

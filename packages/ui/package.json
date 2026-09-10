@@ -10,7 +10,10 @@
     ".": "./src/index.ts",
     "./contenu": "./src/components/contenu/index.ts",
     "./fonts": "./src/fonts.ts",
+    "./icones": "./src/icones.ts",
+    "./iconesMaison": "./src/iconesMaison.ts",
     "./theme.css": "./src/styles/theme.css",
+    "./tokens": "./src/tokens.ts",
     "./tailwind-preset": "./src/tailwind-preset.js"
   },
   "scripts": {
@@ -19,7 +22,8 @@
   },
   "dependencies": {
     "@locomotionlab/contenu": "workspace:*",
-    "@tailwindcss/typography": "^0.5.19"
+    "@tailwindcss/typography": "^0.5.19",
+    "lucide-react": "^0.554.0"
   },
   "peerDependencies": {
     "next": ">=15",

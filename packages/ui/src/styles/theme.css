@@ -28,6 +28,17 @@
   --color-brand-deep-dark: #9A6044;
   --color-brand-text: #333333;
   --color-brand-paper: #FFFFFF;
+  /* Les deux fonds d'une PLANCHE publiée (visuels du studio, exportés en
+     image). Ni l'un ni l'autre ne sert au site : une planche se lit sur un
+     écran de téléphone, au milieu d'un fil, et demande un noir plus dense que
+     le gris de lecture (#333) comme un crème plus franc que le papier. */
+  --color-brand-planche-fond: #1A1C18;
+  --color-brand-planche-encre: #22241E;
+  /* LA TRACE. Hors gamme de marque, et c'est le choix : le fuchsia est la
+     seule teinte absente de TOUS les fonds cartographiques (routes orange,
+     forêts vertes, ombrages bruns), donc la seule qui se lise sur chacun.
+     Son liseré est le papier. */
+  --color-brand-trace: #D6246E;
   --color-brand-grid: #F3EEE6;
   /* États (confirmation d'inscription atelier, etc.) */
   --color-brand-success: #3F8F5B;

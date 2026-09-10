@@ -8,6 +8,7 @@
   ],
   "exports": {
     ".": "./src/index.ts",
+    "./fonds": "./src/fonds.ts",
     "./mapStyles": "./src/mapStyles.ts",
     "./ElevationProfile": "./src/ElevationProfile.tsx"
   },

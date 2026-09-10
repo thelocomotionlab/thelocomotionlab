@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+/* Charte partagée — tokens @theme (SOURCE UNIQUE : packages/ui). */
+@import "@locomotionlab/ui/theme.css";
+
+/* Scanne la charte pour générer les classes utilitaires de marque utilisées ici. */
+@source "../../../packages/ui/src";
+
+/* LE CHROME DU STUDIO S'EFFACE. Crème, filets fins, Ubuntu à 13 px : la seule
+   chose qui a de la couleur dans cette fenêtre, c'est la planche. Pas de mode
+   sombre — une planche sombre se détache mieux sur le crème, et le studio reste
+   reconnaissable comme un lieu du labo. */
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overscroll-behavior: none;
+  background: var(--color-brand-bg);
+  color: var(--color-brand-text);
+  font-size: 13px;
+}
+
+/* Toute valeur numérique d'un champ est en chiffres à largeur fixe : sans ça un
+   curseur qui passe de 9 à 10 fait sauter la ligne entière. */
+input[type="number"],
+.tabulaire {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-primary-dark);
+  outline-offset: 2px;
+}

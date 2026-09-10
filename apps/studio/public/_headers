@@ -1,0 +1,22 @@
+# Cloudflare Pages — en-têtes du studio.
+#
+# LE PIÈGE QU'IL CORRIGE : les règles `headers()` de next.config.ts n'atteignent
+# PAS les fichiers servis depuis public/ — Pages les sert lui-même et leur pose
+# son propre défaut. Le `noindex` du studio doit valoir pour TOUT ce qui sort de
+# ce domaine, page comme fichier : c'est une app qui n'est liée de nulle part et
+# n'a rien à faire dans un index.
+
+/*
+  X-Robots-Tag: noindex, nofollow
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# Le logo et les icônes ne bougent pas. Trente jours, pas un an : leurs noms ne
+# portent pas d'empreinte, donc un visuel remplacé garde son adresse.
+/images/*
+  Cache-Control: public, max-age=2592000
+
+# Le service worker, lui, doit être RE-DEMANDÉ à chaque visite : c'est par lui
+# qu'une nouvelle version arrive, et un sw en cache fige le studio sur l'ancienne.
+/sw.js
+  Cache-Control: no-cache

@@ -18,6 +18,8 @@ export const brandColors = {
   accent: "#EFB159",
   /** --color-brand-accent-dark */
   accentDark: "#D89A3D",
+  /** --color-brand-accent-ink — l'ambre qui tient en TEXTE sur fond clair. */
+  accentInk: "#C08327",
   /** --color-brand-deep */
   deep: "#B67352",
   /** --color-brand-deep-dark */
@@ -28,4 +30,10 @@ export const brandColors = {
   hairline: "#E5DFD3",
   /** --color-brand-paper */
   paper: "#FFFFFF",
+  /** --color-brand-planche-fond — le fond d'une planche sombre. */
+  plancheFond: "#1A1C18",
+  /** --color-brand-planche-encre — l'encre d'une planche claire. */
+  plancheEncre: "#22241E",
+  /** --color-brand-trace — le fuchsia cartographique, sur tous les fonds. */
+  trace: "#D6246E",
 } as const;
