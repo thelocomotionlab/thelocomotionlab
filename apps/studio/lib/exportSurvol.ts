@@ -16,7 +16,7 @@
 
 import type maplibregl from "maplibre-gl";
 import {
-  contexteDeRendu,
+  contexteDuHud,
   dessinerAvecCadre,
   formatDe,
   planDeSurvol,
@@ -75,18 +75,7 @@ export async function exporterSurvol(
 
   const logo = await logoDuLabo();
   const segments = decouperTrace(projet.donnees.trace, projet.donnees.coupures);
-  const base = contexteDeRendu(
-    projet,
-    {
-      ...planche,
-      type: "image",
-      modele: "texte",
-      fond: "",
-      tranche: { mode: "toutes", jour: 0 },
-      elements: planche.hud,
-    },
-    { police: policeDuLabo(), logo, segments, images: imagesEnCache() },
-  );
+  const rendu = { police: policeDuLabo(), logo, segments, images: imagesEnCache() };
 
   // On agrandit la scène, en gardant de quoi la remettre.
   const avant = { largeur: conteneur.style.width, hauteur: conteneur.style.height };
@@ -110,9 +99,13 @@ export async function exporterSurvol(
     ctx.drawImage(carte.getCanvas(), 0, 0, format.width, format.height);
 
     ctxHud.clearRect(0, 0, format.width, format.height);
-    const instant = seance.points[index] ?? null;
-    const c = { ...base, variables: { ...base.variables, instant } };
-    for (const e of planche.hud) dessinerAvecCadre(ctxHud, e, c);
+    const { contexte, elements } = contexteDuHud(
+      projet,
+      planche,
+      seance.points[index] ?? null,
+      rendu,
+    );
+    for (const e of elements) dessinerAvecCadre(ctxHud, e, contexte);
     ctx.drawImage(habillage, 0, 0);
   };
 

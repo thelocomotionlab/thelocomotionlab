@@ -104,6 +104,12 @@ export function monterScene(
     // Aucune interaction : la caméra appartient au montage. Une souris qui
     // déplace la vue ferait diverger l'aperçu de ce qu'on exporte.
     interactive: false,
+    // UN PIXEL DE SCÈNE = UN PIXEL DE SORTIE. Par défaut MapLibre suit la
+    // densité de l'écran : sur un portable rétina, agrandir le conteneur à
+    // 1080 × 1920 pour l'export donnerait un canvas de 2160 × 3840 — quatre
+    // fois la mémoire, et une image plus fine que l'aperçu qu'on a validé.
+    // L'aperçu EST l'image finale, ici comme sur une planche.
+    pixelRatio: 1,
     // Le survol ne montre aucun texte de carte : les toponymes viendront d'une
     // couche vecteur, plus tard. Sans glyphes, MapLibre n'a rien à télécharger.
     fadeDuration: 0,

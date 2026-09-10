@@ -218,6 +218,7 @@ export {
 } from "./groupes.ts";
 
 export { apparenceDe, avecApparence } from "./apparence.ts";
+export { contexteDuHud } from "./contexte.ts";
 export { capLisse, priseDe, priseDEnsemble, prisesDuPlan, zoomSelonVitesse } from "./camera.ts";
 export type { Prise } from "./camera.ts";
 export { imagesDuMontage, planDeSurvol, pointsRetenus } from "./montage.ts";

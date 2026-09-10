@@ -18,7 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Download, Pause, Play, SkipBack, X } from "lucide-react";
 import type maplibregl from "maplibre-gl";
 import {
-  contexteDeRendu,
+  contexteDuHud,
   dessinerAvecCadre,
   formatDe,
   planDeSurvol,
@@ -183,23 +183,13 @@ export default function Survol({
     if (!ctx) return;
     ctx.clearRect(0, 0, format.width, format.height);
     const index = plan.images[image] ?? 0;
-    const c = contexteDeRendu(
-      projet,
-      { ...planche, type: "image", modele: "texte", fond: "", tranche: { mode: "toutes", jour: 0 }, elements: planche.hud },
-      {
-        police: policeDuLabo(),
-        logo,
-        segments: decouperTrace(projet.donnees.trace, projet.donnees.coupures),
-        images: imagesEnCache(),
-      },
-    );
-    // Les chiffres du HUD suivent le point : la variable lit l'instant, pas le
-    // résumé de la sortie entière.
-    const instant = seance?.points[index] ?? null;
-    const variables = instant
-      ? { ...c.variables, instant }
-      : c.variables;
-    for (const e of planche.hud) dessinerAvecCadre(ctx, e, { ...c, variables });
+    const { contexte, elements } = contexteDuHud(projet, planche, seance?.points[index] ?? null, {
+      police: policeDuLabo(),
+      logo,
+      segments: decouperTrace(projet.donnees.trace, projet.donnees.coupures),
+      images: imagesEnCache(),
+    });
+    for (const e of elements) dessinerAvecCadre(ctx, e, contexte);
   }, [projet, planche, image, plan.images, logo, prete, format.width, format.height, seance]);
 
   const echelle = ajuste;

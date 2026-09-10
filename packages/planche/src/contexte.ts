@@ -12,8 +12,8 @@ import type { SourceImage } from "./canvas.ts";
 import type { Format, Theme } from "./charte.ts";
 import type { Contexte as ContexteVariables } from "./variables.ts";
 import { segmentsDeLaTranche } from "./variables.ts";
-import type { Coord, Segment } from "@locomotionlab/trace";
-import type { PlancheImage, Projet, Tranche } from "./types.ts";
+import type { Coord, PointSeance, Segment } from "@locomotionlab/trace";
+import type { PlancheImage, PlancheSurvol, Projet, Tranche } from "./types.ts";
 
 /**
  * TOUT CE QU'UN ÉLÉMENT PEUT AVOIR BESOIN DE SAVOIR, rassemblé une fois.
@@ -103,3 +103,38 @@ export function segmentsMontres(c: ContexteRendu): Segment[] {
   return segmentsDeLaTranche(c.segments, c.tranche);
 }
 
+/**
+ * Le contexte de rendu du HUD d'un survol, à un point donné de la séance.
+ *
+ * UN SEUL ENDROIT construit ce contexte, et l'aperçu comme l'export l'appellent.
+ * Les deux le fabriquaient chacun de leur côté — même recette, deux copies —, et
+ * c'est très exactement là qu'ils auraient fini par diverger : le jour où l'un
+ * gagne un réglage que l'autre n'a pas, la vidéo cesse d'être l'aperçu qu'on a
+ * validé, et c'est toute la promesse du studio qui tombe.
+ *
+ * `instant` est le point regardé : c'est lui qui fait défiler les chiffres.
+ */
+export function contexteDuHud(
+  projet: Projet,
+  planche: PlancheSurvol,
+  instant: PointSeance | null,
+  options: OptionsContexte = {},
+): { contexte: ContexteRendu; elements: PlancheImage["elements"] } {
+  // Le HUD est une liste d'éléments ordinaires : on l'emballe dans une planche
+  // image le temps du rendu, sans fond ni tranche — la scène est dessous, et un
+  // survol montre la sortie entière.
+  const support: PlancheImage = {
+    id: planche.id,
+    type: "image",
+    nom: planche.nom,
+    modele: "texte",
+    fond: "",
+    tranche: { mode: "toutes", jour: 0 },
+    elements: planche.hud,
+  };
+  const base = contexteDeRendu(projet, support, options);
+  return {
+    contexte: { ...base, variables: { ...base.variables, instant } },
+    elements: planche.hud,
+  };
+}
