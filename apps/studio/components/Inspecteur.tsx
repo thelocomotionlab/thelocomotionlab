@@ -16,7 +16,9 @@ import { enPixels, formatDe, type Element, type PlancheImage, type Projet } from
 
 import { avecTranche, surSelection } from "@/lib/projet";
 import type { PosteDeTravail } from "@/lib/usePosteDeTravail";
+import { Nombre } from "./Controles";
 import InspecteurSurvol from "./InspecteurSurvol";
+import ReglagesElement from "./ReglagesElement";
 import ReglageTranche from "./ReglageTranche";
 
 const NOMS: Record<Element["type"], string> = {
@@ -49,33 +51,6 @@ function Ligne({ libelle, valeur }: { libelle: string; valeur: string }) {
       <span className="text-brand-muted">{libelle}</span>
       <span className="tabulaire text-brand-text">{valeur}</span>
     </p>
-  );
-}
-
-function Nombre({
-  libelle,
-  valeur,
-  onChange,
-  suffixe = "",
-}: {
-  libelle: string;
-  valeur: number;
-  onChange: (n: number) => void;
-  suffixe?: string;
-}) {
-  return (
-    <label className="flex items-center justify-between gap-2 py-0.5 text-[12px]">
-      <span className="text-brand-muted">{libelle}</span>
-      <span className="flex items-center gap-1">
-        <input
-          type="number"
-          value={Math.round(valeur)}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="tabulaire w-20 rounded border border-brand-field bg-brand-bg px-1.5 py-1 text-right text-[13px]"
-        />
-        {suffixe && <span className="w-4 text-brand-muted">{suffixe}</span>}
-      </span>
-    </label>
   );
 }
 
@@ -238,6 +213,12 @@ export default function Inspecteur({ poste }: { poste: PosteDeTravail }) {
             l&rsquo;interlettrage — la charte n&rsquo;a qu&rsquo;une police. Décoché,
             les lignes d&rsquo;un paragraphe se recollent, comme en v1.
           </p>
+        </Section>
+      )}
+
+      {seul && (
+        <Section titre="Réglages">
+          <ReglagesElement element={seul} regler={regler} ctx={{ jours }} />
         </Section>
       )}
 
