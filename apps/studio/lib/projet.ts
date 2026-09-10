@@ -12,10 +12,13 @@ import {
   SCHEMA,
   changerModele,
   creer,
+  degrouper,
   deplacer,
   dupliquer,
+  grouper,
   instancier,
   photoNeuve,
+  renouer,
   type CleFormat,
   type CleModele,
   type CleTheme,
@@ -140,6 +143,34 @@ export function sansSelection(p: Projet, index: number, ids: readonly string[]):
   return avecPlanches(p, planches);
 }
 
+/** Pose des éléments au-dessus de la pile de la planche courante. */
+export function avecAjouts(p: Projet, index: number, neufs: readonly Element[]): Projet {
+  const planche = p.planches[index];
+  if (!planche || planche.type !== "image" || neufs.length === 0) return p;
+  const planches = [...p.planches];
+  planches[index] = { ...planche, elements: [...planche.elements, ...neufs] };
+  return avecPlanches(p, planches);
+}
+
+/** Noue ou dénoue les éléments choisis. */
+export function avecNoeud(
+  p: Projet,
+  index: number,
+  ids: readonly string[],
+  quoi: "grouper" | "degrouper",
+): Projet {
+  const planche = p.planches[index];
+  if (!planche || planche.type !== "image") return p;
+  const elements =
+    quoi === "grouper"
+      ? grouper(planche.elements, [...ids])
+      : degrouper(planche.elements, [...ids]);
+  if (elements === planche.elements) return p;
+  const planches = [...p.planches];
+  planches[index] = { ...planche, elements };
+  return avecPlanches(p, planches);
+}
+
 /** Duplique les éléments choisis, décalés, et rend les nouveaux identifiants. */
 export function avecDoublons(
   p: Projet,
@@ -148,7 +179,9 @@ export function avecDoublons(
 ): { projet: Projet; nouveaux: string[] } {
   const planche = p.planches[index];
   if (!planche || planche.type !== "image") return { projet: p, nouveaux: [] };
-  const copies = planche.elements.filter((e) => ids.includes(e.id)).map((e) => dupliquer(e));
+  const copies = renouer(
+    planche.elements.filter((e) => ids.includes(e.id)).map((e) => dupliquer(e)),
+  );
   if (copies.length === 0) return { projet: p, nouveaux: [] };
   const planches = [...p.planches];
   planches[index] = { ...planche, elements: [...planche.elements, ...copies] };

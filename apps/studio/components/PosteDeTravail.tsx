@@ -21,11 +21,21 @@ import Inspecteur from "./Inspecteur";
 import PlanDeTravail from "./PlanDeTravail";
 import Rail from "./Rail";
 import Tiroir from "./Tiroir";
-import { deplacer } from "@locomotionlab/planche";
+import { avecApparence, contientUnGroupe, deplacer } from "@locomotionlab/planche";
 
 import { enregistrerIcones } from "@/lib/icones";
-import { avecDoublons, sansSelection, surSelection } from "@/lib/projet";
+import {
+  avecAjouts,
+  avecDoublons,
+  avecNoeud,
+  avecOrdre,
+  sansSelection,
+  surSelection,
+} from "@/lib/projet";
+import * as papiers from "@/lib/pressePapiers";
 import { usePosteDeTravail } from "@/lib/usePosteDeTravail";
+import FicheRaccourcis from "./FicheRaccourcis";
+import BoiteAOutils from "./BoiteAOutils";
 
 export default function PosteDeTravail() {
   const poste = usePosteDeTravail();
@@ -68,6 +78,18 @@ export default function PosteDeTravail() {
     // déplacer dans la foulée.
     queueMicrotask(() => nouveaux.length > 0 && setSelection(nouveaux));
   }, [modifier, indexPlanche, selection, setSelection]);
+
+  const choisis = useMemo(
+    () => (planche?.elements ?? []).filter((e) => selection.includes(e.id)),
+    [planche, selection],
+  );
+
+  const collerSelection = useCallback(() => {
+    const neufs = papiers.aColler();
+    if (neufs.length === 0) return;
+    modifier((p) => avecAjouts(p, indexPlanche, neufs), { libelle: "coller" });
+    queueMicrotask(() => setSelection(neufs.map((e) => e.id)));
+  }, [modifier, indexPlanche, setSelection]);
 
   const pousserDe = useCallback(
     (dx: number, dy: number) => {
@@ -113,12 +135,88 @@ export default function PosteDeTravail() {
         dupliquerSelection();
         return;
       }
+      // LE ZOOM. Ctrl+0 revient à « ajuster » — l'état sans nombre, celui qui
+      // suit la fenêtre quand on replie un tiroir.
+      if (commande && (touche === "0" || e.key === "0")) {
+        e.preventDefault();
+        poste.ajuster();
+        return;
+      }
+      if (commande && (e.key === "+" || e.key === "=" || e.key === "-")) {
+        e.preventDefault();
+        poste.zoomer(e.key === "-" ? -1 : 1);
+        return;
+      }
+      // LES PLANCHES. PgUp / PgDn passent de l'une à l'autre sans quitter le
+      // plan de travail — la bande du bas est là pour la vue d'ensemble, pas
+      // pour la navigation au clavier.
+      if (e.key === "PageUp" || e.key === "PageDown") {
+        e.preventDefault();
+        const vers = e.key === "PageUp" ? -1 : 1;
+        const n = poste.projet.planches.length;
+        if (n > 0) {
+          poste.setPlanche(Math.max(0, Math.min(n - 1, indexPlanche + vers)));
+          setSelection([]);
+        }
+        return;
+      }
+      if (e.key === "?" || (e.shiftKey && e.key === "/")) {
+        e.preventDefault();
+        poste.setRaccourcis(!poste.raccourcisOuverts);
+        return;
+      }
+      // LES OUTILS, sans modificateur : une seule lettre, comme partout.
+      if (!commande && !e.altKey && "vtrl".includes(touche) && touche.length === 1) {
+        e.preventDefault();
+        poste.setOutil(touche.toUpperCase() as "V" | "T" | "R" | "L");
+        return;
+      }
       if (e.key === "Escape") {
-        setSelection([]);
+        // Échap range l'outil avant de lâcher la sélection : reposer l'outil
+        // est le geste qu'on cherche le plus souvent après en avoir pris un.
+        if (poste.outil !== "V") poste.setOutil("V");
+        else if (poste.raccourcisOuverts) poste.setRaccourcis(false);
+        else setSelection([]);
+        return;
+      }
+      if (commande && touche === "v") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          const apparence = papiers.apparenceCopiee();
+          if (apparence) {
+            modifier((p) => surSelection(p, indexPlanche, selection, (x) => avecApparence(x, apparence)), {
+              libelle: "coller le style",
+            });
+          }
+        } else collerSelection();
         return;
       }
       if (selection.length === 0) return;
 
+      if (commande && touche === "c") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          if (choisis[0]) papiers.copierApparence(choisis[0]);
+        } else papiers.copier(choisis);
+        return;
+      }
+      if (commande && touche === "g") {
+        e.preventDefault();
+        const noue = planche ? contientUnGroupe(planche.elements, selection) : false;
+        const quoi = e.shiftKey || noue ? "degrouper" : "grouper";
+        modifier((p) => avecNoeud(p, indexPlanche, selection, quoi), {
+          libelle: quoi === "grouper" ? "grouper" : "dégrouper",
+        });
+        return;
+      }
+      if (commande && (e.key === "]" || e.key === "[")) {
+        e.preventDefault();
+        const vers = e.key === "]" ? "devant" : "derriere";
+        modifier((p) => selection.reduce((acc, id) => avecOrdre(acc, indexPlanche, id, vers), p), {
+          libelle: vers === "devant" ? "passer devant" : "passer derrière",
+        });
+        return;
+      }
       if (e.key === "Delete" || e.key === "Backspace") {
         e.preventDefault();
         supprimerSelection();
@@ -148,7 +246,12 @@ export default function PosteDeTravail() {
     elementsVisibles,
     dupliquerSelection,
     supprimerSelection,
+    collerSelection,
     pousserDe,
+    modifier,
+    indexPlanche,
+    planche,
+    choisis,
     poste,
   ]);
 
@@ -159,11 +262,16 @@ export default function PosteDeTravail() {
       <div className="flex min-h-0 flex-1">
         <Rail actif={poste.tiroir} onChange={poste.setTiroir} />
         {poste.tiroir !== null && <Tiroir cle={poste.tiroir} poste={poste} />}
-<PlanDeTravail poste={poste} />
+        <div className="relative flex min-w-0 flex-1">
+          <PlanDeTravail poste={poste} />
+          <BoiteAOutils actif={poste.outil} onChange={poste.setOutil} />
+        </div>
         <Inspecteur poste={poste} />
       </div>
 
       <BandeDesPlanches poste={poste} />
+
+      {poste.raccourcisOuverts && <FicheRaccourcis onFermer={() => poste.setRaccourcis(false)} />}
 
       {poste.exportOuvert && (
         <DialogueExport

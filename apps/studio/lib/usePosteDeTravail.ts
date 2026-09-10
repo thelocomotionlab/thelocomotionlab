@@ -34,6 +34,25 @@ export type CleTiroir =
   | "calques"
   | "projets";
 
+/**
+ * L'OUTIL ACTIF.
+ *
+ * `V` prend et déplace ; `T`, `R` et `L` posent — un glissé sur le fond trace
+ * la boîte de ce qu'on ajoute, puis l'outil revient à `V`. Poser au clic
+ * plutôt qu'au centre de la planche évite le geste « ajouter, puis chercher
+ * ce qui vient d'apparaître ».
+ */
+export type Outil = "V" | "T" | "R" | "L";
+
+/**
+ * LES PALIERS DE ZOOM.
+ *
+ * Une seule liste : le menu de la barre haute et le Ctrl + du clavier doivent
+ * s'arrêter aux mêmes crans, sinon le menu affiche un blanc dès qu'on a zoomé
+ * au clavier.
+ */
+export const ZOOMS = [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2] as const;
+
 export type Modification = {
   libelle?: string;
   /** Deux modifications de suite portant la même clé ne font qu'une étape. */
@@ -47,7 +66,11 @@ export function usePosteDeTravail() {
   const [tiroir, setTiroir] = useState<CleTiroir | null>("modeles");
   /** `null` = ajuster à la fenêtre ; un nombre = un facteur choisi à la main. */
   const [zoom, setZoom] = useState<number | null>(null);
+  /** Le déplacement de la vue, en pixels d'écran. */
+  const [vue, setVue] = useState({ x: 0, y: 0 });
   const [exportOuvert, setExport] = useState(false);
+  const [outil, setOutil] = useState<Outil>("V");
+  const [raccourcisOuverts, setRaccourcis] = useState(false);
 
   const projet = histoire.present;
   const [sauvegarde, setSauvegarde] = useState<"repos" | "en-cours" | "fait" | "souci">("repos");
@@ -116,6 +139,23 @@ export function usePosteDeTravail() {
     },
     [planche],
   );
+  /** Ajuster : le zoom revient à la fenêtre ET la vue se recentre — une
+   *  planche ajustée tient à l'écran, un décalage n'y aurait plus de sens. */
+  const ajuster = useCallback(() => {
+    setZoom(null);
+    setVue({ x: 0, y: 0 });
+  }, []);
+
+  /** Le cran suivant, vers le haut ou vers le bas. */
+  const zoomer = useCallback((vers: 1 | -1) => {
+    setZoom((actuel) => {
+      const z = actuel ?? 0.5;
+      return vers > 0
+        ? (ZOOMS.find((v) => v > z + 0.001) ?? ZOOMS[ZOOMS.length - 1]!)
+        : ([...ZOOMS].reverse().find((v) => v < z - 0.001) ?? ZOOMS[0]!);
+    });
+  }, []);
+
   const annuler = useCallback(() => setHistoire(annulerH), []);
   const refaire = useCallback(() => setHistoire(refaireH), []);
 
@@ -131,7 +171,10 @@ export function usePosteDeTravail() {
       selection,
       tiroir,
       zoom,
+      vue,
+      outil,
       exportOuvert,
+      raccourcisOuverts,
       sauvegarde,
       peutAnnuler: peutAnnuler(histoire),
       peutRefaire: peutRefaire(histoire),
@@ -144,7 +187,12 @@ export function usePosteDeTravail() {
       setSelection,
       setTiroir,
       setZoom,
+      setVue,
+      ajuster,
+      zoomer,
+      setOutil,
       setExport,
+      setRaccourcis,
     }),
     [
       projet,
@@ -153,9 +201,14 @@ export function usePosteDeTravail() {
       selection,
       tiroir,
       zoom,
+      vue,
+      outil,
       exportOuvert,
+      raccourcisOuverts,
       sauvegarde,
       histoire,
+      ajuster,
+      zoomer,
       modifier,
       sceller,
       annuler,

@@ -43,7 +43,7 @@ const RESPIRATION = 48;
 
 export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
   const projet: Projet = poste.projet;
-  const { indexPlanche, zoom } = poste;
+  const { indexPlanche, zoom, vue, setVue } = poste;
   const manip = useManipulation(poste);
   const cadre = useRef<HTMLDivElement | null>(null);
   const planche = useRef<HTMLCanvasElement | null>(null);
@@ -53,6 +53,8 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
   const [logo, setLogo] = useState<SourceImage | null>(null);
   // Incrémenté quand une mosaïque arrive : le rendu se rejoue avec le terrain.
   const [fondsVenus, setFondsVenus] = useState(0);
+  const [espace, setEspace] = useState(false);
+  const panoramique = useRef<{ x: number; y: number } | null>(null);
 
   const format = formatDe(projet.format);
   const theme = themeDe(projet.theme);
@@ -99,13 +101,34 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
     return () => ro.disconnect();
   }, [mesurer]);
 
+  // ESPACE + GLISSÉ déplace la vue. La barre d'espace ne fait rien d'autre dans
+  // le studio, et c'est le geste que toute la profession connaît.
+  useEffect(() => {
+    const bas = (e: KeyboardEvent) => {
+      const cible = e.target as HTMLElement | null;
+      if (cible?.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(cible?.tagName ?? "")) return;
+      if (e.code === "Space") {
+        e.preventDefault();
+        setEspace(true);
+      }
+    };
+    const haut = (e: KeyboardEvent) => e.code === "Space" && setEspace(false);
+    window.addEventListener("keydown", bas);
+    window.addEventListener("keyup", haut);
+    return () => {
+      window.removeEventListener("keydown", bas);
+      window.removeEventListener("keyup", haut);
+    };
+  }, []);
+
   const echelle = zoom ?? ajuste;
   const courante = projet.planches[indexPlanche] ?? null;
   const enSaisie = manip.edition;
-  const curseur =
-    manip.etat.geste === "deplacer"
-      ? "grabbing"
-      : manip.etat.geste === "tourner"
+  const curseur = espace
+    ? "grab"
+    : poste.outil !== "V"
+      ? "crosshair"
+      : manip.etat.geste === "deplacer" || manip.etat.geste === "tourner"
         ? "grabbing"
         : "default";
 
@@ -204,7 +227,11 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
           }
         }}
         className="relative shadow-card"
-        style={{ width: format.width * echelle, height: format.height * echelle }}
+        style={{
+          width: format.width * echelle,
+          height: format.height * echelle,
+          transform: vue.x || vue.y ? `translate(${vue.x}px, ${vue.y}px)` : undefined,
+        }}
       >
         <canvas
           ref={planche}
@@ -222,13 +249,32 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
           style={{ cursor: curseur }}
           onPointerDown={(e) => {
             (e.target as HTMLElement).setPointerCapture(e.pointerId);
+            // Espace ou bouton du milieu : on déplace la VUE, pas la planche.
+            if (espace || e.button === 1) {
+              panoramique.current = { x: e.clientX - vue.x, y: e.clientY - vue.y };
+              return;
+            }
             manip.surEnfoncement(pointDe(e), { ajoute: e.shiftKey });
           }}
-          onPointerMove={(e) =>
-            manip.surDeplacement(pointDe(e), { maj: e.shiftKey, alt: e.altKey })
-          }
-          onPointerUp={manip.surRelachement}
-          onPointerCancel={manip.surRelachement}
+          onPointerMove={(e) => {
+            const depart = panoramique.current;
+            if (depart) {
+              setVue({ x: e.clientX - depart.x, y: e.clientY - depart.y });
+              return;
+            }
+            manip.surDeplacement(pointDe(e), { maj: e.shiftKey, alt: e.altKey });
+          }}
+          onPointerUp={(e) => {
+            if (panoramique.current) {
+              panoramique.current = null;
+              return;
+            }
+            manip.surRelachement(pointDe(e));
+          }}
+          onPointerCancel={() => {
+            panoramique.current = null;
+            manip.surRelachement();
+          }}
         />
         {/* La barre ne paraît QUE sur sélection, et jamais pendant la saisie :
             elle recouvrirait le texte qu'on est en train d'écrire. */}

@@ -53,6 +53,7 @@ function commun(id: string): Omit<Element, "type"> & { id: string } {
     opacite: 1,
     verrouille: false,
     masque: false,
+    groupe: null,
   } as Omit<Element, "type"> & { id: string };
 }
 

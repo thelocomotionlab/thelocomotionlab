@@ -28,11 +28,16 @@ import {
   ciblesDeLaPlanche,
   elementSous,
   elementsDans,
+  enFractions,
   enPixels,
   englobante,
+  etendreAuxGroupes,
+  formeNeuve,
+  formatDe,
   parPas,
   poigneeSous,
   redimensionner,
+  texteNeuf,
   tourner,
   type BoitePx,
   type ClePoignee,
@@ -44,8 +49,8 @@ import {
   type Projet,
 } from "@locomotionlab/planche";
 
-import { avecPlanches } from "./projet";
-import type { PosteDeTravail } from "./usePosteDeTravail";
+import { avecAjouts, avecPlanches } from "./projet";
+import type { Outil, PosteDeTravail } from "./usePosteDeTravail";
 
 /** En deçà, c'est un clic, pas un glissé : sans ce seuil, sélectionner déplace. */
 const SEUIL_GLISSE = 3;
@@ -57,7 +62,8 @@ type Geste =
   | { quoi: "deplacer"; depart: Point; boites: Map<string, BoitePx> }
   | { quoi: "redimensionner"; depart: Point; poignee: ClePoignee; boites: Map<string, BoitePx> }
   | { quoi: "tourner"; centre: Point; angleInitial: number; rotations: Map<string, number> }
-  | { quoi: "rectangle"; depart: Point };
+  | { quoi: "rectangle"; depart: Point }
+  | { quoi: "poser"; depart: Point; outil: Outil };
 
 export type EtatManipulation = {
   /** Le rectangle de sélection en cours, en pixels de planche. */
@@ -73,6 +79,7 @@ const DOUBLE_CLIC = 400;
 export function useManipulation(poste: PosteDeTravail) {
   const { projet, plancheCourante, indexPlanche, selection, setSelection, modifier, sceller } =
     poste;
+  const { outil, setOutil } = poste;
   const geste = useRef<Geste | null>(null);
   const bouge = useRef(false);
   const dernierClic = useRef<{ id: string; le: number } | null>(null);
@@ -136,6 +143,18 @@ export function useManipulation(poste: PosteDeTravail) {
       if (!planche) return;
       bouge.current = false;
 
+      // UN OUTIL DE POSE PREND LA MAIN. Avec T, R ou L en main, un enfoncement
+      // dessine la boîte de ce qu'on ajoute : ni poignée ni sélection ne s'y
+      // interposent, sinon poser un texte par-dessus une photo serait
+      // impossible.
+      if (outil !== "V") {
+        setEdition(null);
+        setSelection([]);
+        geste.current = { quoi: "poser", depart: p, outil };
+        setEtat((s) => ({ ...s, geste: "poser" }));
+        return;
+      }
+
       // Une poignée d'abord : elle est SUR l'élément, et la viser doit
       // redimensionner, pas re-sélectionner.
       if (cadre) {
@@ -194,13 +213,15 @@ export function useManipulation(poste: PosteDeTravail) {
       if (edition !== null && edition !== vise.id) setEdition(null);
 
       const dejaPris = selection.includes(vise.id);
-      const prochaine = opts.ajoute
+      // Prendre un membre prend son groupe : c'est ce que « grouper » veut dire.
+      const brute = opts.ajoute
         ? dejaPris
           ? selection.filter((id) => id !== vise.id)
           : [...selection, vise.id]
         : dejaPris
           ? selection
           : [vise.id];
+      const prochaine = etendreAuxGroupes(planche.elements, brute);
       setSelection(prochaine);
 
       // Un élément VERROUILLÉ se sélectionne mais ne se déplace pas : sinon on
@@ -216,7 +237,7 @@ export function useManipulation(poste: PosteDeTravail) {
       };
       setEtat((s) => ({ ...s, geste: "deplacer" }));
     },
-    [planche, cadre, rotation, choisis, format, selection, setSelection, edition],
+    [planche, cadre, rotation, choisis, format, selection, setSelection, edition, outil],
   );
 
   const surDeplacement = useCallback(
@@ -234,8 +255,27 @@ export function useManipulation(poste: PosteDeTravail) {
         bouge.current = rect.l > SEUIL_GLISSE || rect.h > SEUIL_GLISSE;
         setEtat((s) => ({ ...s, rectangle: rect }));
         if (planche && bouge.current) {
-          setSelection(elementsDans(planche.elements, rect, format).map((e) => e.id));
+          setSelection(
+            etendreAuxGroupes(
+              planche.elements,
+              elementsDans(planche.elements, rect, format).map((e) => e.id),
+            ),
+          );
         }
+        return;
+      }
+
+      if (g.quoi === "poser") {
+        bouge.current = true;
+        setEtat((s) => ({
+          ...s,
+          rectangle: {
+            x: Math.min(g.depart.x, p.x),
+            y: Math.min(g.depart.y, p.y),
+            l: Math.abs(p.x - g.depart.x),
+            h: Math.abs(p.y - g.depart.y),
+          },
+        }));
         return;
       }
 
@@ -302,13 +342,57 @@ export function useManipulation(poste: PosteDeTravail) {
     [planche, cibles, format, rotation, remplacer, selection, setSelection],
   );
 
-  const surRelachement = useCallback(() => {
-    geste.current = null;
-    bouge.current = false;
-    setEtat({ rectangle: null, guides: [], geste: null });
-    // Referme l'étape : la poussée suivante en ouvrira une neuve.
-    sceller();
-  }, [sceller]);
+  /**
+   * LA BOÎTE D'UN ÉLÉMENT POSÉ À L'OUTIL.
+   *
+   * Un glissé donne la boîte tracée ; un simple clic donne une boîte par défaut
+   * posée sous le curseur. Sans ce second cas, cliquer avec T en main ne
+   * produirait qu'un texte de zéro pixel, invisible et introuvable.
+   */
+  const poserA = useCallback(
+    (g: Extract<Geste, { quoi: "poser" }>, fin: Point) => {
+      const f = formatDe(format);
+      const l = Math.abs(fin.x - g.depart.x);
+      const h = Math.abs(fin.y - g.depart.y);
+      const trace = l > SEUIL_GLISSE && h > SEUIL_GLISSE;
+      const parDefaut =
+        g.outil === "T"
+          ? { l: f.width * 0.6, h: f.width * 0.09 }
+          : g.outil === "L"
+            ? { l: f.width * 0.4, h: 10 }
+            : { l: f.width * 0.3, h: f.width * 0.3 };
+      const px = trace
+        ? { x: Math.min(g.depart.x, fin.x), y: Math.min(g.depart.y, fin.y), l, h }
+        : { x: g.depart.x, y: g.depart.y, ...parDefaut };
+      const boite = enFractions(px, format);
+      const neuf: Element =
+        g.outil === "T"
+          ? texteNeuf(boite, "Un titre", "titre")
+          : g.outil === "L"
+            ? formeNeuve(boite, { forme: "ligne", nom: "Ligne" })
+            : formeNeuve(boite, { forme: "rectangle" });
+      modifier((p: Projet) => avecAjouts(p, indexPlanche, [neuf]), {
+        libelle: "poser un élément",
+      });
+      // L'outil ne colle pas à la main : on pose une chose, et on la règle.
+      setOutil("V");
+      queueMicrotask(() => setSelection([neuf.id]));
+    },
+    [format, modifier, indexPlanche, setOutil, setSelection],
+  );
+
+  const surRelachement = useCallback(
+    (p?: Point) => {
+      const g = geste.current;
+      if (g?.quoi === "poser" && p) poserA(g, p);
+      geste.current = null;
+      bouge.current = false;
+      setEtat({ rectangle: null, guides: [], geste: null });
+      // Referme l'étape : la poussée suivante en ouvrira une neuve.
+      sceller();
+    },
+    [sceller, poserA],
+  );
 
   // Un élément qui disparaît de la planche (supprimé, autre planche) ou qui
   // quitte la sélection (choisi dans les calques) ne doit pas laisser un champ
@@ -323,6 +407,7 @@ export function useManipulation(poste: PosteDeTravail) {
     rotation,
     choisis,
     etat,
+    outil,
     edition: enSaisie,
     ouvrirSaisie: setEdition,
     fermerSaisie: useCallback(() => setEdition(null), []),

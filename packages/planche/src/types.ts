@@ -70,6 +70,15 @@ export type ElementCommun = Boite & {
   opacite: number;
   verrouille: boolean;
   masque: boolean;
+  /**
+   * LE GROUPE EST UNE ÉTIQUETTE, pas un conteneur.
+   *
+   * Un élément conteneur imposerait un arbre — coordonnées relatives, rendu
+   * récursif, calques imbriqués — pour un service qui tient en une phrase :
+   * prendre l'un, c'est prendre les autres. La même chaîne sur plusieurs
+   * éléments suffit, et l'ordre des calques reste la liste à plat qu'il est.
+   */
+  groupe: string | null;
 };
 
 export type Alignement = "gauche" | "centre" | "droite";

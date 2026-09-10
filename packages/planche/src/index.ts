@@ -207,6 +207,17 @@ export {
   texteNeuf,
 } from "./fabrique.ts";
 
+export {
+  contientUnGroupe,
+  degrouper,
+  etendreAuxGroupes,
+  grouper,
+  renouer,
+} from "./groupes.ts";
+
+export { apparenceDe, avecApparence } from "./apparence.ts";
+export type { Apparence } from "./apparence.ts";
+
 export { lireExif } from "./exif.ts";
 export type { Exif } from "./exif.ts";
 

@@ -45,6 +45,7 @@ function elem(over: Partial<Element> & { id: string }): Element {
     opacite: 1,
     verrouille: false,
     masque: false,
+    groupe: null,
     ...over,
   } as Element;
 }

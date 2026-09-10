@@ -48,6 +48,7 @@ function commun(type: string, boite: Boite, nom: string) {
     opacite: 1,
     verrouille: false,
     masque: false,
+    groupe: null,
   };
 }
 

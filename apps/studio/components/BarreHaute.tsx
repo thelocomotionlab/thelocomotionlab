@@ -12,16 +12,17 @@
 import { Redo2, Undo2 } from "lucide-react";
 import { FORMATS, THEMES, type CleFormat, type CleTheme } from "@locomotionlab/planche";
 
+import { ZOOMS } from "@/lib/usePosteDeTravail";
 import type { PosteDeTravail } from "@/lib/usePosteDeTravail";
 import { avecFormat, avecNom, avecTheme } from "@/lib/projet";
 
-const ZOOMS = [0.5, 1, 2];
 
 const BOUTON =
   "inline-flex h-8 items-center justify-center gap-1.5 rounded-md px-2 text-[13px] transition-colors motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-35";
 
 export default function BarreHaute({ poste }: { poste: PosteDeTravail }) {
-  const { projet, zoom, setZoom, annuler, refaire, peutAnnuler, peutRefaire, modifier } = poste;
+  const { projet, zoom, setZoom, ajuster, annuler, refaire, peutAnnuler, peutRefaire, modifier } =
+    poste;
 
   return (
     <header className="z-30 flex h-12 shrink-0 items-center gap-2 border-b border-brand-field bg-brand-paper px-2.5">
@@ -122,7 +123,9 @@ export default function BarreHaute({ poste }: { poste: PosteDeTravail }) {
       <select
         id="zoom"
         value={zoom === null ? "ajuster" : String(zoom)}
-        onChange={(e) => setZoom(e.target.value === "ajuster" ? null : Number(e.target.value))}
+        onChange={(e) =>
+          e.target.value === "ajuster" ? ajuster() : setZoom(Number(e.target.value))
+        }
         className="tabulaire h-8 rounded-md border border-brand-field bg-brand-bg px-2 text-[13px]"
       >
         <option value="ajuster">Ajuster</option>
