@@ -200,6 +200,9 @@ parce qu'ils lisent l'instant et non le résumé de la sortie.
 Si tu veux d'autres chiffres, choisis-en un et change sa variable dans l'inspecteur. `{altitude}` et
 `{fc}` sont les deux variables *d'instant* : elles n'ont de sens que sur un survol.
 
+Le **profil du bas se remplit jusqu'au point**, image après image, la part restante en sourdine :
+c'est ce qui dit d'un coup d'œil où l'on en est dans la sortie, mieux qu'aucun chiffre.
+
 ### 2.8 Exporter la vidéo
 
 Le bouton **Vidéo**, à droite de la timeline.

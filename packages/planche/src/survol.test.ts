@@ -6,7 +6,12 @@ import { capLisse, priseDe, prisesDuPlan, zoomSelonVitesse } from "./camera.ts";
 import { imagesDuMontage, planDeSurvol, pointsRetenus } from "./montage.ts";
 import { instancierSurvol } from "./modeles.ts";
 import { valeurDe } from "./variables.ts";
-import type { Camera, Montage } from "./types.ts";
+import { contexteDeRendu } from "./contexte.ts";
+import { ctxFactice } from "./factice.ts";
+import { dessinerElement } from "./elements.ts";
+import { profilNeuf } from "./fabrique.ts";
+import { SCHEMA } from "./types.ts";
+import type { Camera, Montage, Projet } from "./types.ts";
 
 const MONTAGE: Montage = instancierSurvol().montage;
 const CAMERA: Camera = instancierSurvol().camera;
@@ -251,5 +256,83 @@ describe("les chiffres du survol", () => {
     const ctx = { ...base, seance: s, instant: s.points[100]! };
     expect(valeurDe("nom", ctx)).toBe("Droite");
     expect(valeurDe("fc_max", ctx)).toBeNull();
+  });
+});
+
+describe("le profil du survol", () => {
+  /** Les couples [x, y] posés par le tracé du profil, dans la boîte donnée. */
+  function largeurTracee(instantKm: number | null): number {
+    const s = seance();
+    const profil = Array.from({ length: 100 }, (_, i) => ({
+      km: (i / 99) * 7.2,
+      alt: 1000 + i,
+      dp: i,
+      dm: 0,
+    }));
+    const trace = {
+      nom: "Droite",
+      totalKm: 7.2,
+      dPlusM: 99,
+      dMinusM: 0,
+      profil,
+      coords: profil.map((_, i) => [6, 45 + i * 1e-4] as [number, number]),
+      cumul: profil.map((p) => p.km * 1000),
+      dureeSecondes: 3600,
+      vecue: true,
+      source: "gpx" as const,
+    };
+    const instant = instantKm === null ? null : s.points.find((p) => p.dist >= instantKm * 1000)!;
+    const ctx = ctxFactice();
+    const planche = {
+      ...instancierSurvol(),
+      type: "image" as const,
+      modele: "texte" as const,
+      fond: "",
+      tranche: { mode: "toutes" as const, jour: 0 },
+      elements: [profilNeuf({ x: 0, y: 0.5, l: 1, h: 0.2 })],
+    };
+    const projet: Projet = {
+      schema: SCHEMA,
+      id: "p",
+      nom: "Écrins",
+      creeLe: "",
+      modifieLe: "",
+      format: "carrousel" as const,
+      theme: "sombre" as const,
+      bilan: "apres" as const,
+      donnees: { trace, coupures: [], etiquettes: [], traceCadrage: null, seance: s },
+      medias: [],
+      planches: [planche],
+    };
+    const c = contexteDeRendu(projet, planche, { police: "Ubuntu" });
+    dessinerElement(ctx, planche.elements[0]!, { x: 0, y: 675, l: 1080, h: 270 }, {
+      ...c,
+      variables: { ...c.variables, instant },
+    });
+    // Le profil COMPLET est tracé en sourdine dessous, sur toute la largeur :
+    // ce qu'on mesure est le DERNIER chemin, celui de la part parcourue.
+    const chemins: number[][] = [];
+    for (const o of ctx.ops) {
+      if (o.op === "beginPath") chemins.push([]);
+      if ((o.op === "lineTo" || o.op === "moveTo") && chemins.length > 0) {
+        chemins[chemins.length - 1]!.push(o.args[0] as number);
+      }
+    }
+    const dernier = chemins.filter((x) => x.length > 1).pop() ?? [];
+    return dernier.length ? Math.max(...dernier) : 0;
+  }
+
+  it("se remplit jusqu'au point, et pas au-delà", () => {
+    // À mi-parcours, la part pleine s'arrête au milieu de la boîte.
+    expect(largeurTracee(3.6)).toBeGreaterThan(400);
+    expect(largeurTracee(3.6)).toBeLessThan(700);
+  });
+
+  it("va d'un bout à l'autre à l'arrivée", () => {
+    expect(largeurTracee(7.2)).toBeCloseTo(1080, -1);
+  });
+
+  it("sans instant, montre tout — c'est une planche fixe", () => {
+    expect(largeurTracee(null)).toBeCloseTo(1080, -1);
   });
 });

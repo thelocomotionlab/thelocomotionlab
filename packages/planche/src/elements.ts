@@ -616,10 +616,18 @@ export function cheminDuProfil(
 
 function dessinerProfil(ctx: Ctx2D, e: ElementProfil, b: BoitePx, c: ContexteRendu): void {
   const montres = segmentsMontres(c);
-  const profil = montres.length
-    ? montres.flatMap((s) => s.profil)
-    : (c.variables.trace?.profil ?? []);
   const complet = c.variables.trace?.profil ?? [];
+
+  // SUR UN SURVOL, LA PART MONTRÉE EST CE QUI EST DÉJÀ PARCOURU. Le profil se
+  // remplit alors jusqu'au point, image après image, et dit d'un coup d'œil où
+  // l'on en est dans la sortie — ce qu'aucun chiffre ne montre aussi vite. Le
+  // reste du temps, c'est la tranche de journées qui décide, comme partout.
+  const instant = c.variables.instant;
+  const profil = instant
+    ? jusquAu(complet, instant.dist / 1000)
+    : montres.length
+      ? montres.flatMap((s) => s.profil)
+      : complet;
 
   // LE RESTANT ESTOMPÉ : la silhouette entière en sourdine, la part parcourue
   // par-dessus. C'est ce qui dit « on en est là » sans deux images — et ça n'a
@@ -634,6 +642,18 @@ function dessinerProfil(ctx: Ctx2D, e: ElementProfil, b: BoitePx, c: ContexteRen
   const chemin = cheminDuProfil(profil, e.restantEstompe && partiel ? boiteDuSegment(b, complet, profil) : b);
   if (!chemin) return;
   traceProfil(ctx, chemin, e.remplissage || c.theme.accent, c.theme.accentAire);
+}
+
+/**
+ * Le profil jusqu'à un kilomètre donné, bornes comprises.
+ *
+ * Au moins deux points : une portion d'un seul point ne se trace pas, et le
+ * profil disparaîtrait pendant la première seconde d'un survol.
+ */
+function jusquAu(profil: readonly PointProfil[], km: number): PointProfil[] {
+  if (profil.length < 2) return [...profil];
+  const gardes = profil.filter((p) => p.km <= km);
+  return gardes.length >= 2 ? gardes : profil.slice(0, 2);
 }
 
 /**
