@@ -33,13 +33,16 @@ import {
   surSelection,
 } from "@/lib/projet";
 import * as papiers from "@/lib/pressePapiers";
+import { useGrandEcran } from "@/lib/useEcran";
 import { usePosteDeTravail } from "@/lib/usePosteDeTravail";
 import FicheRaccourcis from "./FicheRaccourcis";
 import BoiteAOutils from "./BoiteAOutils";
+import PosteMobile from "./PosteMobile";
 
 export default function PosteDeTravail() {
   const poste = usePosteDeTravail();
   const { annuler, refaire } = poste;
+  const grandEcran = useGrandEcran();
 
   // Le vocabulaire d'icônes est déclaré par l'APP : le paquet de rendu ne fait
   // que découper, mesurer et poser, et n'a pas à consommer React pour autant.
@@ -261,6 +264,11 @@ export default function PosteDeTravail() {
     choisis,
     poste,
   ]);
+
+  // Un seul arbre à la fois : deux canvas de 1080 × 1350 tourneraient pour
+  // rien. Le clavier reste branché des deux côtés — un téléphone peut avoir un
+  // clavier, et une fenêtre étroite sur ordinateur en a toujours un.
+  if (!grandEcran) return <PosteMobile poste={poste} />;
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden">

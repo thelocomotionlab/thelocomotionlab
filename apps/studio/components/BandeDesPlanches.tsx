@@ -36,11 +36,19 @@ function legende(planche: Planche): string {
   return planche.tranche.mode === "seule" ? jour : `→ ${jour}`;
 }
 
-export default function BandeDesPlanches({ poste }: { poste: PosteDeTravail }) {
+export default function BandeDesPlanches({
+  poste,
+  compact = false,
+}: {
+  poste: PosteDeTravail;
+  /** Sur téléphone : une seule ligne, sans les actions — la place manque. */
+  compact?: boolean;
+}) {
   const { projet, indexPlanche, setPlanche, modifier } = poste;
   const format = formatDe(projet.format);
   const theme = themeDe(projet.theme);
-  const largeur = Math.round((VIGNETTE * format.width) / format.height);
+  const hauteur = compact ? 34 : VIGNETTE;
+  const largeur = Math.round((hauteur * format.width) / format.height);
 
   const ajouter = () =>
     modifier((p) => avecPlanches(p, [...p.planches, plancheNeuve(p)]), {
@@ -73,7 +81,11 @@ export default function BandeDesPlanches({ poste }: { poste: PosteDeTravail }) {
     );
 
   return (
-    <footer className="flex h-[108px] shrink-0 items-center gap-2 border-t border-brand-field bg-brand-paper px-2.5">
+    <footer
+      className={`flex shrink-0 items-center gap-2 border-brand-field bg-brand-paper px-2.5 ${
+        compact ? "h-14 border-b" : "h-[108px] border-t"
+      }`}
+    >
       <ol className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-1">
         {projet.planches.map((planche, i) => (
           <li key={planche.id} className="shrink-0">
@@ -89,7 +101,7 @@ export default function BandeDesPlanches({ poste }: { poste: PosteDeTravail }) {
             >
               <span
                 className="block rounded-sm border border-brand-hairline"
-                style={{ width: largeur, height: VIGNETTE, background: theme.fond }}
+                style={{ width: largeur, height: hauteur, background: theme.fond }}
               />
               <span className="tabulaire text-[10px] leading-none text-brand-muted">
                 {String(i + 1).padStart(2, "0")} · {legende(planche)}
@@ -99,7 +111,11 @@ export default function BandeDesPlanches({ poste }: { poste: PosteDeTravail }) {
         ))}
       </ol>
 
-      <div className="flex shrink-0 items-center gap-0.5 border-l border-brand-hairline pl-2">
+      <div
+        className={`flex shrink-0 items-center gap-0.5 border-l border-brand-hairline pl-2 ${
+          compact ? "hidden" : ""
+        }`}
+      >
         <button type="button" onClick={ajouter} title="Ajouter une planche" aria-label="Ajouter une planche" className={ACTION}>
           <Plus size={16} aria-hidden />
         </button>

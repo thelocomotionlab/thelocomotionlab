@@ -39,10 +39,24 @@ import SaisieEnPlace from "./SaisieEnPlace";
 import { avecDoublons, avecOrdre, sansSelection, surSelection } from "@/lib/projet";
 import type { PosteDeTravail } from "@/lib/usePosteDeTravail";
 
-/** L'air laissé autour de la planche quand elle s'ajuste à la fenêtre. */
-const RESPIRATION = 48;
+/**
+ * L'air laissé autour de la planche quand elle s'ajuste à la fenêtre.
+ *
+ * Généreux sur un écran d'ordinateur, presque nul sur un téléphone : là, un
+ * liseré de 48 px de chaque côté mangerait le quart de la planche.
+ */
+function respiration(largeur: number): number {
+  return largeur < 640 ? 8 : 48;
+}
 
-export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
+export default function PlanDeTravail({
+  poste,
+  avecBarre = true,
+}: {
+  poste: PosteDeTravail;
+  /** La barre contextuelle : sur téléphone, ce sont les chips du bas. */
+  avecBarre?: boolean;
+}) {
   const projet: Projet = poste.projet;
   const { indexPlanche, zoom, vue, setVue } = poste;
   const manip = useManipulation(poste);
@@ -56,6 +70,9 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
   const [fondsVenus, setFondsVenus] = useState(0);
   const [espace, setEspace] = useState(false);
   const panoramique = useRef<{ x: number; y: number } | null>(null);
+  /** Les doigts posés, en pixels d'écran : c'est ce que le pincement mesure. */
+  const doigts = useRef(new Map<number, { x: number; y: number }>());
+  const pincement = useRef<{ ecart: number; milieu: { x: number; y: number }; zoom: number; vue: { x: number; y: number } } | null>(null);
 
   const format = formatDe(projet.format);
   const theme = themeDe(projet.theme);
@@ -82,12 +99,13 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
   const mesurer = useCallback(() => {
     const el = cadre.current;
     if (!el) return;
+    const air = respiration(el.clientWidth);
     setAjuste(
       Math.max(
         0.05,
         Math.min(
-          (el.clientWidth - RESPIRATION * 2) / format.width,
-          (el.clientHeight - RESPIRATION * 2) / format.height,
+          (el.clientWidth - air * 2) / format.width,
+          (el.clientHeight - air * 2) / format.height,
         ),
       ),
     );
@@ -227,6 +245,21 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
     aRecadrer,
   ]);
 
+  /**
+   * L'ÉCART ET LE MILIEU DE DEUX DOIGTS.
+   *
+   * Le rapport des écarts donne le facteur de zoom, le déplacement du milieu
+   * donne celui de la vue : un seul geste fait les deux, comme partout.
+   */
+  const pince = useCallback(() => {
+    const [a, b] = [...doigts.current.values()];
+    if (!a || !b) return null;
+    return {
+      ecart: Math.hypot(b.x - a.x, b.y - a.y),
+      milieu: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
+    };
+  }, []);
+
   /** Le point sous le curseur, en pixels de PLANCHE — jamais en pixels d'écran. */
   const pointDe = useCallback(
     (e: { clientX: number; clientY: number }): { x: number; y: number } => {
@@ -240,7 +273,7 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
   return (
     <div
       ref={cadre}
-      className="relative flex min-w-0 flex-1 items-center justify-center overflow-hidden bg-brand-text/5"
+      className="relative flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden bg-brand-text/5"
     >
       <div
         onDragOver={(e) => {
@@ -282,6 +315,15 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
           style={{ cursor: curseur }}
           onPointerDown={(e) => {
             (e.target as HTMLElement).setPointerCapture(e.pointerId);
+            doigts.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            if (doigts.current.size === 2) {
+              // Le second doigt ANNULE ce que le premier avait commencé : on
+              // pince pour regarder, pas pour déplacer un élément par mégarde.
+              manip.surRelachement();
+              const p2 = pince();
+              if (p2) pincement.current = { ...p2, zoom: echelle, vue };
+              return;
+            }
             // Espace ou bouton du milieu : on déplace la VUE, pas la planche.
             if (espace || e.button === 1) {
               panoramique.current = { x: e.clientX - vue.x, y: e.clientY - vue.y };
@@ -290,6 +332,20 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
             manip.surEnfoncement(pointDe(e), { ajoute: e.shiftKey });
           }}
           onPointerMove={(e) => {
+            if (doigts.current.has(e.pointerId)) {
+              doigts.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            }
+            const deux = pincement.current;
+            if (deux) {
+              const p2 = pince();
+              if (!p2 || deux.ecart <= 0) return;
+              poste.setZoom(Math.max(0.05, Math.min(4, deux.zoom * (p2.ecart / deux.ecart))));
+              setVue({
+                x: deux.vue.x + (p2.milieu.x - deux.milieu.x),
+                y: deux.vue.y + (p2.milieu.y - deux.milieu.y),
+              });
+              return;
+            }
             const depart = panoramique.current;
             if (depart) {
               setVue({ x: e.clientX - depart.x, y: e.clientY - depart.y });
@@ -298,13 +354,17 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
             manip.surDeplacement(pointDe(e), { maj: e.shiftKey, alt: e.altKey });
           }}
           onPointerUp={(e) => {
+            doigts.current.delete(e.pointerId);
+            if (doigts.current.size < 2) pincement.current = null;
             if (panoramique.current) {
               panoramique.current = null;
               return;
             }
             manip.surRelachement(pointDe(e));
           }}
-          onPointerCancel={() => {
+          onPointerCancel={(e) => {
+            doigts.current.delete(e.pointerId);
+            if (doigts.current.size < 2) pincement.current = null;
             panoramique.current = null;
             manip.surRelachement();
           }}
@@ -319,7 +379,7 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
         {/* La barre ne paraît QUE sur sélection, et jamais pendant qu'on est
             ENTRÉ dans un élément — saisie ou recadrage : elle recouvrirait ce
             qu'on est justement en train de régler. */}
-        {manip.cadre && manip.choisis.length > 0 && !enSaisie && !manip.recadrage && (
+        {avecBarre && manip.cadre && manip.choisis.length > 0 && !enSaisie && !manip.recadrage && (
           <BarreContextuelle
             choisis={manip.choisis}
             cadre={manip.cadre}
