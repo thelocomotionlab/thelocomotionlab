@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { definirVocabulaireDIcones, type Ctx2D } from "./canvas.ts";
+import { definirVocabulaireDIcones } from "./canvas.ts";
+import { ctxFactice } from "./factice.ts";
 import {
   ESPACEMENT,
   analyserRiche,
@@ -32,59 +33,6 @@ beforeAll(() => {
     dessiner: () => true,
   });
 });
-
-type Op = { op: string; args: unknown[] };
-
-/**
- * Un contexte 2D de comptoir : une lettre = 10 px, quelle que soit la fonte, et
- * chaque opération de dessin est notée. Mesurer sans canvas rend la mise en page
- * testable ; noter les tracés rend la POSE testable, ce qui manquait.
- */
-function ctxFactice(): Ctx2D & { ops: Op[] } {
-  const ops: Op[] = [];
-  const note =
-    (op: string) =>
-    (...args: unknown[]) => {
-      ops.push({ op, args });
-    };
-  return {
-    ops,
-    font: "",
-    fillStyle: "#000",
-    strokeStyle: "#000",
-    lineWidth: 1,
-    lineCap: "butt",
-    lineJoin: "miter",
-    globalAlpha: 1,
-    shadowColor: "rgba(0,0,0,0)",
-    shadowBlur: 0,
-    shadowOffsetX: 0,
-    shadowOffsetY: 0,
-    measureText: (t: string) => ({ width: t.length * 10 }),
-    fillText: note("fillText"),
-    fillRect: note("fillRect"),
-    strokeRect: note("strokeRect"),
-    clearRect: note("clearRect"),
-    beginPath: note("beginPath"),
-    closePath: note("closePath"),
-    moveTo: note("moveTo"),
-    lineTo: note("lineTo"),
-    quadraticCurveTo: note("quadraticCurveTo"),
-    arc: note("arc"),
-    ellipse: note("ellipse"),
-    rect: note("rect"),
-    fill: note("fill"),
-    stroke: note("stroke"),
-    clip: note("clip"),
-    setLineDash: note("setLineDash"),
-    save: note("save"),
-    restore: note("restore"),
-    translate: note("translate"),
-    rotate: note("rotate"),
-    scale: note("scale"),
-    createLinearGradient: () => ({ addColorStop: () => {} }),
-  } as Ctx2D & { ops: Op[] };
-}
 
 const BASE: StyleTexte = {
   police: "Ubuntu",

@@ -14,6 +14,9 @@ export type Degrade = {
 
 export type Mesure = { width: number };
 
+/** Ce que le rendu attend d'une image : une photo décodée, le logo, une tuile. */
+export type SourceImage = { width: number; height: number };
+
 /** Le sous-ensemble du contexte 2D qu'utilise le rendu d'une planche. */
 export type Ctx2D = {
   font: string;
@@ -33,6 +36,18 @@ export type Ctx2D = {
   fillRect(x: number, y: number, l: number, h: number): void;
   strokeRect(x: number, y: number, l: number, h: number): void;
   clearRect(x: number, y: number, l: number, h: number): void;
+  drawImage(source: SourceImage, dx: number, dy: number, dl: number, dh: number): void;
+  drawImage(
+    source: SourceImage,
+    sx: number,
+    sy: number,
+    sl: number,
+    sh: number,
+    dx: number,
+    dy: number,
+    dl: number,
+    dh: number,
+  ): void;
 
   beginPath(): void;
   closePath(): void;

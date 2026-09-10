@@ -76,22 +76,6 @@ export type Alignement = "gauche" | "centre" | "droite";
 export type Casse = "normale" | "capitales";
 export type RoleTexte = "surtitre" | "titre" | "corps" | "libre";
 
-/** Un fragment de texte et sa mise en forme locale. */
-export type Morceau = {
-  texte: string;
-  gras?: boolean;
-  italique?: boolean;
-  /** Prend la couleur d'accent du thème plutôt que l'encre courante. */
-  accent?: boolean;
-};
-
-/** Une ligne de contenu riche, éventuellement à puce. */
-export type Ligne = {
-  morceaux: Morceau[];
-  /** Clé de puce (forme tracée ou icône), ou `null` pour un paragraphe. */
-  puce?: string | null;
-};
-
 export type Ombre = {
   flou: number;
   dx: number;
@@ -117,8 +101,19 @@ export type Filet = { largeur: number; epaisseur: number; couleur: string };
 
 export type ElementTexte = ElementCommun & {
   type: "texte";
-  contenu: Ligne[];
+  /**
+   * LE CONTENU EST DU BALISAGE, pas un arbre.
+   *
+   * `*gras*`, `[bleu: mot]`, `- point de liste`, `Distance = 57,5 km` : la même
+   * chaîne que lit le moteur typographique. Une seconde représentation
+   * structurée obligerait à convertir dans les deux sens à chaque rendu, et
+   * c'est exactement là que deux modèles finissent par diverger. L'édition en
+   * place écrit ce balisage ; il reste lisible, diffable et copiable tel quel.
+   */
+  contenu: string;
   role: RoleTexte;
+  /** La puce des points de liste — une forme tracée ou une clé d'icône. */
+  puce: string;
   /** En pixels d'une planche de 1080 de large. */
   corps: number;
   /** 300 → 800 : c'est elle qui fait la hiérarchie, pas une seconde fonte. */

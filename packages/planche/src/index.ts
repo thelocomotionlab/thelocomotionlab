@@ -132,6 +132,24 @@ export type {
   StyleTexte,
 } from "./texte.ts";
 
+export {
+  contexteDeRendu,
+  dessinerAvecCadre,
+  dessinerFond,
+  dessinerPlanche,
+  segmentsMontres,
+} from "./rendu.ts";
+export type { ContexteRendu, OptionsContexte } from "./rendu.ts";
+
+export {
+  cadrageCouverture,
+  cheminDuProfil,
+  dessinerElement,
+  hauteurNaturelle,
+  styleDe,
+  valeurAffichee,
+} from "./elements.ts";
+
 export { SCHEMA } from "./types.ts";
 export type {
   Alignement,
@@ -160,12 +178,10 @@ export type {
   Etiquette,
   Filet,
   FondCarte,
-  Ligne as LigneContenu,
   LigneFiche,
   Media,
   ModeCamera,
   Montage,
-  Morceau as MorceauContenu,
   Ombre,
   Planche,
   PlancheImage,
