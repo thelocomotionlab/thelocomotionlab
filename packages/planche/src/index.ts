@@ -213,6 +213,10 @@ export type { Exif } from "./exif.ts";
 export { estProjetV1, migrerProjet, trancheV1 } from "./migration.ts";
 export type { CarteV1, ProjetV1, ResultatMigration } from "./migration.ts";
 
+// Les couleurs de marque, ré-exportées : le chrome du studio les lit sans avoir
+// à connaître le chemin de la charte.
+export { brandColors } from "@locomotionlab/ui/tokens";
+
 export { SCHEMA } from "./types.ts";
 export type {
   Alignement,

@@ -33,8 +33,9 @@ import { completerLesImages, imagesEnCache, poser } from "@/lib/images";
 import { importer } from "@/lib/medias";
 import { dessinerChrome, dessinerReperes } from "@/lib/chrome";
 import { useManipulation } from "@/lib/useManipulation";
+import BarreContextuelle from "./BarreContextuelle";
 import SaisieEnPlace from "./SaisieEnPlace";
-import { surSelection } from "@/lib/projet";
+import { avecDoublons, avecOrdre, sansSelection, surSelection } from "@/lib/projet";
 import type { PosteDeTravail } from "@/lib/usePosteDeTravail";
 
 /** L'air laissé autour de la planche quand elle s'ajuste à la fenêtre. */
@@ -229,6 +230,48 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
           onPointerUp={manip.surRelachement}
           onPointerCancel={manip.surRelachement}
         />
+        {/* La barre ne paraît QUE sur sélection, et jamais pendant la saisie :
+            elle recouvrirait le texte qu'on est en train d'écrire. */}
+        {manip.cadre && manip.choisis.length > 0 && !enSaisie && (
+          <BarreContextuelle
+            choisis={manip.choisis}
+            cadre={manip.cadre}
+            echelle={echelle}
+            theme={theme}
+            onRegler={(transforme, libelle) =>
+              poste.modifier(
+                (p) => surSelection(p, indexPlanche, poste.selection, transforme),
+                { libelle },
+              )
+            }
+            onDupliquer={() => {
+              let neufs: string[] = [];
+              poste.modifier(
+                (p) => {
+                  const r = avecDoublons(p, indexPlanche, poste.selection);
+                  neufs = r.nouveaux;
+                  return r.projet;
+                },
+                { libelle: "dupliquer" },
+              );
+              queueMicrotask(() => neufs.length > 0 && poste.setSelection(neufs));
+            }}
+            onSupprimer={() => {
+              poste.modifier((p) => sansSelection(p, indexPlanche, poste.selection), {
+                libelle: "supprimer",
+              });
+              poste.setSelection([]);
+            }}
+            onOrdre={(vers) =>
+              poste.modifier(
+                (p) =>
+                  poste.selection.reduce((acc, id) => avecOrdre(acc, indexPlanche, id, vers), p),
+                { libelle: vers === "devant" ? "passer devant" : "passer derrière" },
+              )
+            }
+          />
+        )}
+
         {enSaisie && (
           <SaisieEnPlace
             key={enSaisie.id}
