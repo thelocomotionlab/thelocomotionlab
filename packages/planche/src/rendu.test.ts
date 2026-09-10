@@ -4,7 +4,13 @@ import type { Trace } from "@locomotionlab/trace";
 
 import { definirVocabulaireDIcones } from "./canvas.ts";
 import { THEMES } from "./charte.ts";
-import { cadrageCouverture, cheminDuProfil, valeurAffichee } from "./elements.ts";
+import {
+  cadrageCouverture,
+  cheminDuProfil,
+  etendueDeLaPhoto,
+  glisserLeCadrage,
+  valeurAffichee,
+} from "./elements.ts";
 import { ctxFactice, type CtxFactice } from "./factice.ts";
 import { contexteDeRendu, dessinerAvecCadre, dessinerPlanche } from "./rendu.ts";
 import { resoudre, valeurDe } from "./variables.ts";
@@ -464,5 +470,52 @@ describe("lignes dures", () => {
       .filter((o) => o.op === "fillText")
       .map((o) => o.args[2] as number);
     expect(new Set(y).size).toBe(1);
+  });
+});
+
+describe("recadrage d'une photo", () => {
+  const cadre = { x: 100, y: 200, l: 400, h: 400 };
+  const centre = { x: 0.5, y: 0.5, echelle: 1 };
+
+  it("étend la photo au-delà du cadre, dans le sens où elle déborde", () => {
+    // Photo panoramique dans un cadre carré : elle dépasse à gauche et à
+    // droite, et pas en haut ni en bas.
+    const e = etendueDeLaPhoto({ width: 2000, height: 1000 }, cadre, centre)!;
+    expect(e.h).toBeCloseTo(400, 6);
+    expect(e.l).toBeCloseTo(800, 6);
+    expect(e.y).toBeCloseTo(200, 6);
+    expect(e.x).toBeCloseTo(-100, 6);
+  });
+
+  it("suit le zoom", () => {
+    const e = etendueDeLaPhoto({ width: 1000, height: 1000 }, cadre, {
+      ...centre,
+      echelle: 2,
+    })!;
+    expect(e.l).toBeCloseTo(800, 6);
+    expect(e.h).toBeCloseTo(800, 6);
+  });
+
+  it("rend null sur une source vide", () => {
+    expect(etendueDeLaPhoto({ width: 0, height: 0 }, cadre, centre)).toBeNull();
+  });
+
+  it("tirer vers la droite montre ce qui était à gauche", () => {
+    const source = { width: 2000, height: 1000 };
+    const apres = glisserLeCadrage(source, cadre, centre, 100, 0);
+    expect(apres.x).toBeLessThan(0.5);
+    expect(glisserLeCadrage(source, cadre, centre, -100, 0).x).toBeGreaterThan(0.5);
+  });
+
+  it("ne bouge pas dans le sens où la photo ne déborde pas", () => {
+    // Carrée dans un cadre carré : rien à révéler verticalement.
+    const apres = glisserLeCadrage({ width: 1000, height: 1000 }, cadre, centre, 0, 200);
+    expect(apres.y).toBe(0.5);
+  });
+
+  it("s'arrête au bord", () => {
+    const source = { width: 2000, height: 1000 };
+    expect(glisserLeCadrage(source, cadre, centre, 100_000, 0).x).toBe(0);
+    expect(glisserLeCadrage(source, cadre, centre, -100_000, 0).x).toBe(1);
   });
 });

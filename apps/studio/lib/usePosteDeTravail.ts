@@ -70,6 +70,14 @@ export function usePosteDeTravail() {
   const [vue, setVue] = useState({ x: 0, y: 0 });
   const [exportOuvert, setExport] = useState(false);
   const [outil, setOutil] = useState<Outil>("V");
+  /**
+   * LA PHOTO OUVERTE AU RECADRAGE.
+   *
+   * Elle vit ici et non dans le geste, parce que c'est le clavier du poste qui
+   * en sort : Échap et Entrée ferment le recadrage avant de toucher à la
+   * sélection, et un seul écouteur doit pouvoir en décider.
+   */
+  const [recadrage, setRecadrage] = useState<string | null>(null);
   const [raccourcisOuverts, setRaccourcis] = useState(false);
 
   const projet = histoire.present;
@@ -187,6 +195,7 @@ export function usePosteDeTravail() {
       zoom,
       vue,
       outil,
+      recadrage,
       exportOuvert,
       raccourcisOuverts,
       sauvegarde,
@@ -206,6 +215,7 @@ export function usePosteDeTravail() {
       zoomer,
       ouvrir,
       setOutil,
+      setRecadrage,
       setExport,
       setRaccourcis,
     }),
@@ -218,6 +228,7 @@ export function usePosteDeTravail() {
       zoom,
       vue,
       outil,
+      recadrage,
       exportOuvert,
       raccourcisOuverts,
       sauvegarde,

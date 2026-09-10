@@ -30,6 +30,7 @@ import {
   elementsDans,
   enFractions,
   enPixels,
+  glisserLeCadrage,
   englobante,
   etendreAuxGroupes,
   formeNeuve,
@@ -49,6 +50,7 @@ import {
   type Projet,
 } from "@locomotionlab/planche";
 
+import { imagesEnCache } from "./images";
 import { avecAjouts, avecPlanches } from "./projet";
 import type { Outil, PosteDeTravail } from "./usePosteDeTravail";
 
@@ -63,7 +65,8 @@ type Geste =
   | { quoi: "redimensionner"; depart: Point; poignee: ClePoignee; boites: Map<string, BoitePx> }
   | { quoi: "tourner"; centre: Point; angleInitial: number; rotations: Map<string, number> }
   | { quoi: "rectangle"; depart: Point }
-  | { quoi: "poser"; depart: Point; outil: Outil };
+  | { quoi: "poser"; depart: Point; outil: Outil }
+  | { quoi: "recadrer"; dernier: Point };
 
 export type EtatManipulation = {
   /** Le rectangle de sélection en cours, en pixels de planche. */
@@ -79,7 +82,7 @@ const DOUBLE_CLIC = 400;
 export function useManipulation(poste: PosteDeTravail) {
   const { projet, plancheCourante, indexPlanche, selection, setSelection, modifier, sceller } =
     poste;
-  const { outil, setOutil } = poste;
+  const { outil, setOutil, recadrage, setRecadrage } = poste;
   const geste = useRef<Geste | null>(null);
   const bouge = useRef(false);
   const dernierClic = useRef<{ id: string; le: number } | null>(null);
@@ -186,31 +189,46 @@ export function useManipulation(poste: PosteDeTravail) {
         // Sur le fond : on trace un rectangle de sélection. Échap et un clic
         // simple désélectionnent.
         setEdition(null);
+        setRecadrage(null);
         if (!opts.ajoute) setSelection([]);
         geste.current = { quoi: "rectangle", depart: p };
         setEtat((s) => ({ ...s, geste: "rectangle" }));
         return;
       }
 
-      // DOUBLE-CLIC : le caret entre dans l'image. Sur un texte seulement — les
-      // autres éléments n'ont rien à saisir en place (une photo se recadre, ce
-      // qui est un autre geste).
+      // DOUBLE-CLIC : on entre DANS l'élément. Le caret pour un texte, le
+      // recadrage pour une photo — deux gestes, une seule porte d'entrée.
       const maintenant = Date.now();
       const precedent = dernierClic.current;
       dernierClic.current = { id: vise.id, le: maintenant };
-      if (
-        vise.type === "texte" &&
-        !vise.verrouille &&
-        precedent?.id === vise.id &&
-        maintenant - precedent.le < DOUBLE_CLIC
-      ) {
+      const double =
+        !vise.verrouille && precedent?.id === vise.id && maintenant - precedent.le < DOUBLE_CLIC;
+      if (double && vise.type === "texte") {
         setSelection([vise.id]);
         setEdition(vise.id);
         geste.current = null;
         setEtat((s) => ({ ...s, geste: null }));
         return;
       }
+      if (double && vise.type === "photo" && vise.mediaId) {
+        setSelection([vise.id]);
+        setRecadrage(vise.id);
+        geste.current = { quoi: "recadrer", dernier: p };
+        setEtat((s) => ({ ...s, geste: "recadrer" }));
+        return;
+      }
       if (edition !== null && edition !== vise.id) setEdition(null);
+
+      // DANS le recadrage, un enfoncement sur la photo la fait glisser sous son
+      // cadre ; ailleurs, il en sort.
+      if (recadrage !== null) {
+        if (vise.id === recadrage) {
+          geste.current = { quoi: "recadrer", dernier: p };
+          setEtat((s) => ({ ...s, geste: "recadrer" }));
+          return;
+        }
+        setRecadrage(null);
+      }
 
       const dejaPris = selection.includes(vise.id);
       // Prendre un membre prend son groupe : c'est ce que « grouper » veut dire.
@@ -237,7 +255,19 @@ export function useManipulation(poste: PosteDeTravail) {
       };
       setEtat((s) => ({ ...s, geste: "deplacer" }));
     },
-    [planche, cadre, rotation, choisis, format, selection, setSelection, edition, outil],
+    [
+      planche,
+      cadre,
+      rotation,
+      choisis,
+      format,
+      selection,
+      setSelection,
+      edition,
+      outil,
+      recadrage,
+      setRecadrage,
+    ],
   );
 
   const surDeplacement = useCallback(
@@ -262,6 +292,28 @@ export function useManipulation(poste: PosteDeTravail) {
             ),
           );
         }
+        return;
+      }
+
+      if (g.quoi === "recadrer") {
+        const photo = elements.find((e) => e.id === recadrage);
+        const source =
+          photo?.type === "photo" && photo.mediaId
+            ? (imagesEnCache().get(photo.mediaId) ?? null)
+            : null;
+        const dx = p.x - g.dernier.x;
+        const dy = p.y - g.dernier.y;
+        g.dernier = p;
+        if (!photo || photo.type !== "photo" || !source) return;
+        bouge.current = true;
+        const cadre = enPixels(photo, format);
+        remplacer(
+          (e) =>
+            e.type === "photo"
+              ? { ...e, cadrage: glisserLeCadrage(source, cadre, e.cadrage, dx, dy) }
+              : e,
+          { libelle: "recadrer", fusion: `recadrer:${photo.id}` },
+        );
         return;
       }
 
@@ -339,7 +391,7 @@ export function useManipulation(poste: PosteDeTravail) {
         { libelle: "redimensionner", fusion: `redimensionner:${selection.join(",")}` },
       );
     },
-    [planche, cibles, format, rotation, remplacer, selection, setSelection],
+    [planche, cibles, format, rotation, remplacer, selection, setSelection, elements, recadrage],
   );
 
   /**
@@ -381,6 +433,33 @@ export function useManipulation(poste: PosteDeTravail) {
     [format, modifier, indexPlanche, setOutil, setSelection],
   );
 
+  /**
+   * LA MOLETTE ZOOME DANS LE CADRE, jamais la vue.
+   *
+   * En recadrage, la molette appartient à la photo : c'est le seul moment où
+   * elle a un sens local, et il n'y a rien d'autre à faire tourner.
+   */
+  const surMolette = useCallback(
+    (delta: number) => {
+      const photo = elements.find((e) => e.id === recadrage);
+      if (!photo || photo.type !== "photo") return;
+      remplacer(
+        (e) =>
+          e.type === "photo"
+            ? {
+                ...e,
+                cadrage: {
+                  ...e.cadrage,
+                  echelle: Math.max(1, Math.min(6, e.cadrage.echelle * (delta < 0 ? 1.1 : 1 / 1.1))),
+                },
+              }
+            : e,
+        { libelle: "zoomer dans le cadre", fusion: `zoom-cadre:${photo.id}` },
+      );
+    },
+    [elements, recadrage, remplacer],
+  );
+
   const surRelachement = useCallback(
     (p?: Point) => {
       const g = geste.current;
@@ -408,6 +487,8 @@ export function useManipulation(poste: PosteDeTravail) {
     choisis,
     etat,
     outil,
+    recadrage: recadrage !== null ? (elements.find((e) => e.id === recadrage) ?? null) : null,
+    surMolette,
     edition: enSaisie,
     ouvrirSaisie: setEdition,
     fermerSaisie: useCallback(() => setEdition(null), []),

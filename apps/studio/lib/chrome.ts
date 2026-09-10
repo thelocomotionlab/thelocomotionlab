@@ -18,6 +18,7 @@ import {
   type BoitePx,
   type Ctx2D,
   type Guide,
+  type SourceImage,
   type Theme,
 } from "@locomotionlab/planche";
 import { brandColors } from "@locomotionlab/ui/tokens";
@@ -35,7 +36,57 @@ export type OptionsChrome = {
   guides: Guide[];
   rectangle: BoitePx | null;
   verrouille: boolean;
+  /** Le recadrage en cours : la photo entière, son cadre, et de quoi la dessiner. */
+  recadrage: { source: SourceImage; cadre: BoitePx; etendue: BoitePx } | null;
 };
+
+/**
+ * LE RECADRAGE MONTRE CE QU'ON ÉCARTE.
+ *
+ * La photo entière apparaît en sourdine autour du cadre, qui reste net : on
+ * voit alors ce qu'on est en train de perdre, au lieu de tirer à l'aveugle sur
+ * ce qui ne s'affiche pas. Le tout est dessiné sur le calque des repères, donc
+ * ne part jamais à l'export.
+ */
+function dessinerRecadrage(ctx: Ctx2D, l: number, h: number, o: OptionsChrome): void {
+  const r = o.recadrage;
+  if (!r) return;
+  const z = o.zoom;
+  ctx.save();
+
+  // Le voile sur toute la planche, la photo entière par-dessus mais estompée.
+  ctx.fillStyle = "rgba(24, 26, 22, 0.62)";
+  ctx.fillRect(0, 0, l, h);
+  ctx.globalAlpha = 0.4;
+  ctx.drawImage(r.source, r.etendue.x, r.etendue.y, r.etendue.l, r.etendue.h);
+  ctx.globalAlpha = 1;
+
+  // Et la part retenue, à pleine lumière, dans son cadre.
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(r.cadre.x, r.cadre.y, r.cadre.l, r.cadre.h);
+  ctx.clip();
+  ctx.drawImage(r.source, r.etendue.x, r.etendue.y, r.etendue.l, r.etendue.h);
+  ctx.restore();
+
+  ctx.strokeStyle = TEINTE;
+  ctx.lineWidth = 2 / z;
+  ctx.setLineDash([]);
+  ctx.strokeRect(r.cadre.x, r.cadre.y, r.cadre.l, r.cadre.h);
+
+  // La règle des tiers : le seul repère de cadrage qui serve à quelque chose.
+  ctx.globalAlpha = 0.45;
+  ctx.lineWidth = 1 / z;
+  ctx.beginPath();
+  for (let i = 1; i < 3; i += 1) {
+    ctx.moveTo(r.cadre.x + (r.cadre.l * i) / 3, r.cadre.y);
+    ctx.lineTo(r.cadre.x + (r.cadre.l * i) / 3, r.cadre.y + r.cadre.h);
+    ctx.moveTo(r.cadre.x, r.cadre.y + (r.cadre.h * i) / 3);
+    ctx.lineTo(r.cadre.x + r.cadre.l, r.cadre.y + (r.cadre.h * i) / 3);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
 
 /** Les repères d'atelier : marges de la charte et zone sûre d'Instagram. */
 export function dessinerReperes(
@@ -66,6 +117,13 @@ export function dessinerReperes(
 export function dessinerChrome(ctx: Ctx2D, l: number, h: number, o: OptionsChrome): void {
   const z = o.zoom;
   const px = (n: number) => n / z;
+
+  // Le recadrage prend toute la place : pas de cadre de sélection, pas de
+  // guides, rien d'autre à faire tant qu'on est dedans.
+  if (o.recadrage) {
+    dessinerRecadrage(ctx, l, h, o);
+    return;
+  }
 
   // Les guides d'alignement, sous le cadre : ils traversent toute la planche.
   ctx.save();

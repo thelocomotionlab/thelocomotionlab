@@ -172,6 +172,8 @@ export {
   cadrageCouverture,
   cheminDuProfil,
   dessinerElement,
+  etendueDeLaPhoto,
+  glisserLeCadrage,
   hauteurNaturelle,
   styleDe,
   valeurAffichee,

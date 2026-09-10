@@ -27,7 +27,7 @@ const GROUPES: { titre: string; lignes: [string, string][] }[] = [
       ["Clic", "Choisir"],
       ["Maj + clic", "Ajouter à la sélection"],
       ["Glissé sur le fond", "Rectangle de sélection"],
-      ["Double-clic", "Écrire dans le texte"],
+      ["Double-clic", "Écrire dans un texte, recadrer une photo"],
       ["Ctrl + A", "Tout choisir"],
       ["Ctrl + G", "Grouper · Ctrl + Maj + G dégrouper"],
     ],
@@ -51,6 +51,8 @@ const GROUPES: { titre: string; lignes: [string, string][] }[] = [
       ["Ctrl + Maj + C · V", "Copier · coller le style"],
       ["Ctrl + D", "Dupliquer"],
       ["Suppr", "Supprimer"],
+      ["Molette (recadrage)", "Zoomer dans le cadre"],
+      ["Entrée", "Valider un recadrage"],
     ],
   },
   {

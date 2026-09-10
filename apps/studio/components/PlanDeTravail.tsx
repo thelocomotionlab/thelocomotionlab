@@ -13,11 +13,12 @@
 // charte et zone sûre d'Instagram ne partent pas sur le réseau : les dessiner
 // dans le même canvas que la planche les enverrait à l'export.
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   MARGE,
   besoinsDeFond,
   enPixels,
+  etendueDeLaPhoto,
   contexteDeRendu,
   dessinerPlanche,
   formatDe,
@@ -124,7 +125,9 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
   const echelle = zoom ?? ajuste;
   const courante = projet.planches[indexPlanche] ?? null;
   const enSaisie = manip.edition;
-  const curseur = espace
+  const curseur = manip.recadrage
+    ? "move"
+    : espace
     ? "grab"
     : poste.outil !== "V"
       ? "crosshair"
@@ -178,6 +181,25 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
     };
   }, [projet, courante, format, theme, logo, prete, fondsVenus, manip.edition]);
 
+  /**
+   * Ce qu'il faut au chrome pour dessiner un recadrage : la photo, son cadre,
+   * et l'étendue qu'occuperait l'image entière à la même échelle.
+   */
+  // La SOURCE se lit à chaque rendu : elle vient d'un cache impératif que
+  // nulle liste de dépendances ne sait surveiller, et c'est le rendu déclenché
+  // par l'arrivée d'une image qui la fait apparaître.
+  const photoRecadree = manip.recadrage;
+  const source =
+    photoRecadree?.type === "photo" && photoRecadree.mediaId
+      ? (imagesEnCache().get(photoRecadree.mediaId) ?? null)
+      : null;
+  const aRecadrer = useMemo(() => {
+    if (!source || photoRecadree?.type !== "photo") return null;
+    const cadre = enPixels(photoRecadree, projet.format);
+    const etendue = etendueDeLaPhoto(source, cadre, photoRecadree.cadrage);
+    return etendue ? { source, cadre, etendue } : null;
+  }, [source, photoRecadree, projet.format]);
+
   useEffect(() => {
     const ctx = reperes.current?.getContext("2d");
     if (!ctx) return;
@@ -191,8 +213,19 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
       guides: manip.etat.guides,
       rectangle: manip.etat.rectangle,
       verrouille: manip.choisis.length === 1 && manip.choisis[0]!.verrouille,
+      recadrage: aRecadrer,
     });
-  }, [format, theme, echelle, manip.cadre, manip.rotation, manip.choisis, manip.etat, projet.format]);
+  }, [
+    format,
+    theme,
+    echelle,
+    manip.cadre,
+    manip.rotation,
+    manip.choisis,
+    manip.etat,
+    projet.format,
+    aRecadrer,
+  ]);
 
   /** Le point sous le curseur, en pixels de PLANCHE — jamais en pixels d'écran. */
   const pointDe = useCallback(
@@ -275,10 +308,18 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
             panoramique.current = null;
             manip.surRelachement();
           }}
+          onWheel={(e) => {
+            // La molette n'appartient à la planche QUE pendant un recadrage.
+            // Ailleurs, elle reste au navigateur.
+            if (!manip.recadrage) return;
+            e.preventDefault();
+            manip.surMolette(e.deltaY);
+          }}
         />
-        {/* La barre ne paraît QUE sur sélection, et jamais pendant la saisie :
-            elle recouvrirait le texte qu'on est en train d'écrire. */}
-        {manip.cadre && manip.choisis.length > 0 && !enSaisie && (
+        {/* La barre ne paraît QUE sur sélection, et jamais pendant qu'on est
+            ENTRÉ dans un élément — saisie ou recadrage : elle recouvrirait ce
+            qu'on est justement en train de régler. */}
+        {manip.cadre && manip.choisis.length > 0 && !enSaisie && !manip.recadrage && (
           <BarreContextuelle
             choisis={manip.choisis}
             cadre={manip.cadre}

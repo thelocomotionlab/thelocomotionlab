@@ -246,6 +246,57 @@ export function cadrageCouverture(
   };
 }
 
+/**
+ * Où tomberait la photo ENTIÈRE, à l'échelle où le cadre la montre.
+ *
+ * C'est ce que le recadrage a besoin de savoir : on montre la photo complète en
+ * sourdine autour du cadre, pour qu'on voie ce qu'on est en train d'écarter.
+ * Sans cette boîte, recadrer serait tirer à l'aveugle sur ce qu'on ne voit pas.
+ */
+export function etendueDeLaPhoto(
+  source: { width: number; height: number },
+  cadre: BoitePx,
+  cadrage: { x: number; y: number; echelle: number },
+): BoitePx | null {
+  const vue = cadrageCouverture(source, cadre, cadrage);
+  if (!vue || !(vue.sl > 0) || !(vue.sh > 0)) return null;
+  const echelle = cadre.l / vue.sl;
+  return {
+    x: cadre.x - vue.sx * echelle,
+    y: cadre.y - vue.sy * echelle,
+    l: source.width * echelle,
+    h: source.height * echelle,
+  };
+}
+
+/**
+ * Le cadrage après un glissé de `dx`, `dy` PIXELS DE PLANCHE.
+ *
+ * Tirer la photo la fait glisser SOUS le cadre : déplacer la main vers la
+ * droite montre ce qui était à gauche, donc `x` diminue. Une photo qui ne
+ * déborde pas dans un sens ne bouge pas dans ce sens — il n'y a rien à révéler.
+ */
+export function glisserLeCadrage(
+  source: { width: number; height: number },
+  cadre: BoitePx,
+  cadrage: { x: number; y: number; echelle: number },
+  dx: number,
+  dy: number,
+): { x: number; y: number; echelle: number } {
+  const vue = cadrageCouverture(source, cadre, cadrage);
+  if (!vue) return cadrage;
+  const parPixelX = cadre.l > 0 ? vue.sl / cadre.l : 0;
+  const parPixelY = cadre.h > 0 ? vue.sh / cadre.h : 0;
+  const margeX = source.width - vue.sl;
+  const margeY = source.height - vue.sh;
+  const borne = (v: number) => Math.min(1, Math.max(0, v));
+  return {
+    echelle: cadrage.echelle,
+    x: margeX > 0 ? borne(cadrage.x - (dx * parPixelX) / margeX) : cadrage.x,
+    y: margeY > 0 ? borne(cadrage.y - (dy * parPixelY) / margeY) : cadrage.y,
+  };
+}
+
 /** Le chemin d'un rectangle à coins arrondis — le cadre d'une photo, d'une forme. */
 function cheminArrondi(ctx: Ctx2D, b: BoitePx, rayon: number): void {
   const r = Math.max(0, Math.min(rayon, b.l / 2, b.h / 2));
@@ -528,7 +579,10 @@ function dessinerFiche(ctx: Ctx2D, e: ElementFiche, b: BoitePx, c: ContexteRendu
  * forme de l'effort, ce qu'on lit sur une planche.
  */
 export function cheminDuProfil(
-  profil: readonly PointProfil[],
+  // La silhouette ne lit que le kilomètre et l'altitude : le dénivelé accumulé
+  // que porte aussi un point de profil ne lui sert à rien, et l'exiger
+  // obligerait l'appelant à le fabriquer pour rien.
+  profil: readonly { km: number; alt: number }[],
   b: BoitePx,
 ): { base: number; min: number; max: number; points: [number, number][] } | null {
   const points = (Array.isArray(profil) ? profil : []).filter(

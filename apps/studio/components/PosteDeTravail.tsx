@@ -171,10 +171,17 @@ export default function PosteDeTravail() {
         poste.setOutil(touche.toUpperCase() as "V" | "T" | "R" | "L");
         return;
       }
+      // ENTRÉE VALIDE UN RECADRAGE, et ne fait rien d'autre nulle part.
+      if (e.key === "Enter" && poste.recadrage) {
+        e.preventDefault();
+        poste.setRecadrage(null);
+        return;
+      }
       if (e.key === "Escape") {
-        // Échap range l'outil avant de lâcher la sélection : reposer l'outil
-        // est le geste qu'on cherche le plus souvent après en avoir pris un.
-        if (poste.outil !== "V") poste.setOutil("V");
+        // Échap sort d'abord de ce dans quoi on est entré — le recadrage, puis
+        // l'outil —, et ne lâche la sélection qu'en dernier.
+        if (poste.recadrage) poste.setRecadrage(null);
+        else if (poste.outil !== "V") poste.setOutil("V");
         else if (poste.raccourcisOuverts) poste.setRaccourcis(false);
         else setSelection([]);
         return;
