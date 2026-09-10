@@ -7,6 +7,7 @@ import { THEMES } from "./charte.ts";
 import { cadrageCouverture, cheminDuProfil, valeurAffichee } from "./elements.ts";
 import { ctxFactice, type CtxFactice } from "./factice.ts";
 import { contexteDeRendu, dessinerAvecCadre, dessinerPlanche } from "./rendu.ts";
+import { resoudre, valeurDe } from "./variables.ts";
 import { SCHEMA } from "./types.ts";
 import type {
   BoitePx,
@@ -420,5 +421,27 @@ describe("le thème", () => {
     const deLaPlanche = espionner(surPlanche, "fillRect", (x) => x.fillStyle as string);
     dessinerPlanche(surPlanche, { ...planche, fond: "#123456" }, c);
     expect(deLaPlanche()).toBe("#123456");
+  });
+});
+
+describe("la pagination", () => {
+  it("COMPTE DES PLANCHES, pas des journées", () => {
+    // « 03 / 12 » est une donnée du DOCUMENT. Le brancher sur `{jour}` donnait
+    // un pied qui affichait le numéro du jour, ou rien du tout sur un carrousel
+    // sans trace.
+    const ctx = ctxFactice();
+    const { p, planche } = projet([], false);
+    const trois: PlancheImage[] = [planche, { ...planche, id: "p2" }, { ...planche, id: "p3" }];
+    const lot: Projet = { ...p, planches: trois };
+    const c = contexteDeRendu(lot, trois[1]!, { police: "Ubuntu" });
+    expect(valeurDe("planche", c.variables)).toBe("02");
+    expect(valeurDe("planches", c.variables)).toBe("03");
+    dessinerPlanche(ctx, trois[1]!, c);
+  });
+
+  it("se lit sur une planche sans trace — c'est bien le sujet", () => {
+    const { p, planche } = projet([], false);
+    const c = contexteDeRendu(p, planche, { police: "Ubuntu" });
+    expect(resoudre("{planche} / {planches}", c.variables)).toBe("01 / 01");
   });
 });

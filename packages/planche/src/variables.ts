@@ -90,6 +90,8 @@ export const VARIABLES: FicheVariable[] = [
   { cle: "jour", label: "Numéro de journée", unite: "", exigeSeance: false },
   { cle: "jour_distance", label: "Distance de la journée", unite: "km", exigeSeance: false },
   { cle: "jour_dplus", label: "D+ de la journée", unite: "m", exigeSeance: false },
+  { cle: "planche", label: "Numéro de planche", unite: "", exigeSeance: false },
+  { cle: "planches", label: "Nombre de planches", unite: "", exigeSeance: false },
   { cle: "nom", label: "Nom de la sortie", unite: "", exigeSeance: false },
   { cle: "date", label: "Date", unite: "", exigeSeance: false },
 ];
@@ -133,6 +135,15 @@ export type Contexte = {
   bilan: Bilan;
   /** Le nom du projet, en dernier recours pour `{nom}`. */
   nomProjet: string;
+  /**
+   * LA PAGINATION EST UNE DONNÉE DU DOCUMENT, pas de la séance.
+   *
+   * « 03 / 12 » compte des PLANCHES, et n'a rien à voir avec les journées d'une
+   * trace. Les confondre donnait un pied qui affichait le numéro du jour, ou
+   * rien du tout sur un carrousel sans trace.
+   */
+  planche?: number;
+  planches?: number;
 };
 
 /** Les journées que la tranche montre. Vide = il n'y a pas de découpage. */
@@ -202,6 +213,10 @@ export function valeurDe(cle: CleVariable, ctx: Contexte): string | null {
       const profil = trace?.profil ?? [];
       return profil.length ? formatEntier(Math.max(...profil.map((p) => p.alt))) : null;
     }
+    case "planche":
+      return ctx.planche === undefined ? null : String(ctx.planche + 1).padStart(2, "0");
+    case "planches":
+      return ctx.planches === undefined ? null : String(ctx.planches).padStart(2, "0");
     case "jour":
       return ctx.segments.length ? String(jour + 1) : null;
     case "jour_distance":

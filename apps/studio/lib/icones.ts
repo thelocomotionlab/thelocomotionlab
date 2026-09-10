@@ -1,10 +1,10 @@
-// lib/carrouselIcones.js
+// lib/icones.ts
 //
-// LES ICÔNES DANS LE TEXTE DES PLANCHES : `:col:`, `:bivouac:`, `:eau:`…
+// LES ICÔNES DU LABO, TRACÉES SUR LE CANVAS.
 //
-// POURQUOI ON NE « MET PAS D'ICÔNE REACT ». Une icône lucide EST un composant
-// React, et le rendu des planches est un canvas 2D : `fillText` et `stroke`, pas
-// un arbre de composants. Rien de ce que React produit n'arrive sur un canvas.
+// Une icône lucide EST un composant React, et le rendu des planches est un
+// canvas 2D : `fillText` et `stroke`, pas un arbre de composants. Rien de ce que
+// React produit n'arrive sur un canvas.
 //
 // Mais une icône lucide n'est pas VRAIMENT du React — c'est de la géométrie
 // emballée dans du React. Chaque composant porte son `iconNode` : la liste des
@@ -14,33 +14,35 @@
 // simplement celle du trait — donc une icône suit la couleur du mot qui la
 // précède, y compris `[bleu: …]`.
 //
-// LE VOCABULAIRE EST CELUI DE LA CARTE. On réutilise `WAYPOINT_ICONES`, la
-// liste déjà utilisée par les repères de /live : `col` est le même pictogramme
-// sur la carte du direct et dans le texte d'un carrousel. Ajouter une icône se
-// fait à UN endroit (lib/liveWaypointIcons.js) et elle est disponible aux deux.
+// C'EST L'APP QUI DÉCLARE LE VOCABULAIRE, pas le paquet : `@locomotionlab/planche`
+// ne fait que découper, mesurer et poser, et n'a pas à devenir un consommateur
+// de React pour autant.
 
-import { WAYPOINT_ICONES } from "@locomotionlab/ui/icones";
-
-/** Les clés écrivables entre deux-points, triées pour l'affichage. */
-export const CLES_ICONES = Object.keys(WAYPOINT_ICONES).sort();
+import { WAYPOINT_ICONES, iconeConnue } from "@locomotionlab/ui/icones";
+import { definirVocabulaireDIcones, type Ctx2D, type Vocabulaire } from "@locomotionlab/planche";
 
 /** Le repère lucide : 24×24, trait de 2, bouts et angles arrondis, sans remplissage. */
 const COTE_SOURCE = 24;
 const TRAIT_SOURCE = 2;
 
-const cache = new Map();
+type Primitive = [string, Record<string, unknown>];
+
+const cache = new Map<string, Primitive[] | null>();
 
 /**
- * La géométrie d'une icône : `[["path", {d}], ["circle", {cx, cy, r}], …]`.
- * `null` si la clé est inconnue — un texte ne doit jamais faire échouer un rendu.
+ * La géométrie d'une icône. `null` si la clé est inconnue — un texte ne doit
+ * jamais faire échouer un rendu.
  *
  * `render({}, null)` déballe le `forwardRef` sans passer par React : on ne monte
  * rien, on lit juste les props que le composant aurait transmises.
  */
-export function geometrieDIcone(cle) {
-  if (cache.has(cle)) return cache.get(cle);
-  const Composant = WAYPOINT_ICONES[cle];
-  let noeud = null;
+export function geometrieDIcone(cle: string): Primitive[] | null {
+  const connu = cache.get(cle);
+  if (connu !== undefined) return connu;
+  const Composant = WAYPOINT_ICONES[cle] as
+    | { render?: (p: object, r: null) => { props?: { iconNode?: Primitive[] } } }
+    | undefined;
+  let noeud: Primitive[] | null = null;
   try {
     noeud = Composant?.render?.({}, null)?.props?.iconNode ?? null;
   } catch {
@@ -50,10 +52,6 @@ export function geometrieDIcone(cle) {
   return noeud;
 }
 
-export function iconeConnue(cle) {
-  return Object.hasOwn(WAYPOINT_ICONES, cle);
-}
-
 /**
  * Trace une icône dans un carré de `taille`, coin haut-gauche en (x, y).
  *
@@ -61,7 +59,14 @@ export function iconeConnue(cle) {
  * doivent avoir le MÊME poids apparent que le texte qu'elles accompagnent, ce
  * qu'un trait fixe ne donne pas.
  */
-export function dessinerIcone(ctx, cle, x, y, taille, couleur) {
+export function dessinerIcone(
+  ctx: Ctx2D,
+  cle: string,
+  x: number,
+  y: number,
+  taille: number,
+  couleur: string,
+): boolean {
   const noeud = geometrieDIcone(cle);
   if (!noeud) return false;
 
@@ -81,7 +86,7 @@ export function dessinerIcone(ctx, cle, x, y, taille, couleur) {
       case "path":
         // `Path2D` accepte la même syntaxe que l'attribut `d` d'un SVG : c'est
         // exactement ce qu'on a sous la main, il n'y a rien à convertir.
-        ctx.stroke(new Path2D(attrs.d));
+        ctx.stroke(new Path2D(String(attrs.d)));
         continue;
       case "circle":
         ctx.arc(Number(attrs.cx), Number(attrs.cy), Number(attrs.r), 0, Math.PI * 2);
@@ -108,8 +113,8 @@ export function dessinerIcone(ctx, cle, x, y, taille, couleur) {
       case "polygon": {
         const pts = String(attrs.points).trim().split(/[\s,]+/).map(Number);
         for (let i = 0; i + 1 < pts.length; i += 2) {
-          if (i === 0) ctx.moveTo(pts[0], pts[1]);
-          else ctx.lineTo(pts[i], pts[i + 1]);
+          if (i === 0) ctx.moveTo(pts[0]!, pts[1]!);
+          else ctx.lineTo(pts[i]!, pts[i + 1]!);
         }
         if (type === "polygon") ctx.closePath();
         break;
@@ -121,4 +126,11 @@ export function dessinerIcone(ctx, cle, x, y, taille, couleur) {
   }
   ctx.restore();
   return true;
+}
+
+export const VOCABULAIRE: Vocabulaire = { connue: iconeConnue, dessiner: dessinerIcone };
+
+/** À appeler une fois, au montage du poste de travail. */
+export function enregistrerIcones(): void {
+  definirVocabulaireDIcones(VOCABULAIRE);
 }

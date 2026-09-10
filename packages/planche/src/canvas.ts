@@ -14,8 +14,22 @@ export type Degrade = {
 
 export type Mesure = { width: number };
 
-/** Ce que le rendu attend d'une image : une photo décodée, le logo, une tuile. */
-export type SourceImage = { width: number; height: number };
+/**
+ * Ce que le rendu attend d'une image : une photo décodée, le logo, une tuile.
+ *
+ * Les quatre sources que le studio dessine vraiment : une photo décodée, un
+ * canvas hors écran, une tuile. Toutes portent `width` et `height` en nombres,
+ * ce que `CanvasImageSource` ne garantit pas (un `SVGImageElement` rend des
+ * `SVGAnimatedLength`, un `VideoFrame` n'a pas de `width` du tout) — et le
+ * cadrage d'une photo a besoin de nombres.
+ *
+ * Le paquet n'importe rien du DOM à l'exécution : seuls ses TYPES viennent de là.
+ */
+export type SourceImage =
+  | HTMLImageElement
+  | HTMLCanvasElement
+  | ImageBitmap
+  | OffscreenCanvas;
 
 /** Le sous-ensemble du contexte 2D qu'utilise le rendu d'une planche. */
 export type Ctx2D = {

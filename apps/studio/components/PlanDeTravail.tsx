@@ -7,42 +7,79 @@
 // L'APERÇU EST L'IMAGE FINALE. Le canvas est dimensionné en PIXELS DE SORTIE
 // (1080 × 1350, 1080 × 1920, 1080 × 1080) et seulement réduit en CSS. Ce qu'on
 // voit est ce qu'on exporte, au pixel près — c'est ce qui rend la manipulation
-// directe honnête : une poignée déplace vraiment le pixel qu'elle montre.
+// directe honnête : une poignée déplacera vraiment le pixel qu'elle montre.
 //
-// La zone sûre de la story est tracée en pointillé : c'est la bande qu'Instagram
-// ne recouvre pas de son interface, et la contrainte qu'on découvre autrement
-// sur une vraie publication.
+// LES REPÈRES D'ATELIER SONT SUR UN SECOND CANVAS, par-dessus. Marges de la
+// charte et zone sûre d'Instagram ne partent pas sur le réseau : les dessiner
+// dans le même canvas que la planche les enverrait à l'export.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MARGE, formatDe, themeDe, type Projet } from "@locomotionlab/planche";
+import {
+  MARGE,
+  contexteDeRendu,
+  dessinerPlanche,
+  formatDe,
+  themeDe,
+  type Projet,
+  type SourceImage,
+} from "@locomotionlab/planche";
+import { decouperTrace } from "@locomotionlab/trace";
+
+import { policeChargee, policeDuLabo } from "@/lib/police";
 
 /** L'air laissé autour de la planche quand elle s'ajuste à la fenêtre. */
 const RESPIRATION = 48;
 
 export default function PlanDeTravail({
   projet,
+  indexPlanche,
   zoom,
 }: {
   projet: Projet;
+  indexPlanche: number;
   zoom: number | null;
 }) {
   const cadre = useRef<HTMLDivElement | null>(null);
-  const canvas = useRef<HTMLCanvasElement | null>(null);
+  const planche = useRef<HTMLCanvasElement | null>(null);
+  const reperes = useRef<HTMLCanvasElement | null>(null);
   const [ajuste, setAjuste] = useState(0.3);
+  const [prete, setPrete] = useState(false);
+  const [logo, setLogo] = useState<SourceImage | null>(null);
 
   const format = formatDe(projet.format);
   const theme = themeDe(projet.theme);
+
+  // La fonte d'abord : sans elle, la première planche se mesure sur la police
+  // de secours, les lignes se coupent ailleurs, et tout se décale à l'arrivée
+  // d'Ubuntu.
+  useEffect(() => {
+    let vivant = true;
+    policeChargee().then(() => vivant && setPrete(true));
+    const img = new Image();
+    img.src = "/images/assets/logo-mark-512.png";
+    img.decode().then(
+      () => vivant && setLogo(img),
+      () => {},
+    );
+    return () => {
+      vivant = false;
+    };
+  }, []);
 
   // « Ajuster » se recalcule à chaque changement de taille du plan de travail :
   // replier le tiroir doit agrandir la planche, pas laisser un blanc.
   const mesurer = useCallback(() => {
     const el = cadre.current;
     if (!el) return;
-    const dispo = Math.min(
-      (el.clientWidth - RESPIRATION * 2) / format.width,
-      (el.clientHeight - RESPIRATION * 2) / format.height,
+    setAjuste(
+      Math.max(
+        0.05,
+        Math.min(
+          (el.clientWidth - RESPIRATION * 2) / format.width,
+          (el.clientHeight - RESPIRATION * 2) / format.height,
+        ),
+      ),
     );
-    setAjuste(Math.max(0.05, dispo));
   }, [format.width, format.height]);
 
   useEffect(() => {
@@ -55,18 +92,32 @@ export default function PlanDeTravail({
   }, [mesurer]);
 
   const echelle = zoom ?? ajuste;
+  const courante = projet.planches[indexPlanche] ?? null;
 
   useEffect(() => {
-    const c = canvas.current;
-    const ctx = c?.getContext("2d");
-    if (!c || !ctx) return;
-
+    const ctx = planche.current?.getContext("2d");
+    if (!ctx) return;
     ctx.clearRect(0, 0, format.width, format.height);
-    ctx.fillStyle = projet.theme === "sombre" ? theme.fond : theme.fond;
-    ctx.fillRect(0, 0, format.width, format.height);
+    if (!courante || courante.type !== "image") {
+      ctx.fillStyle = theme.fond;
+      ctx.fillRect(0, 0, format.width, format.height);
+      return;
+    }
+    dessinerPlanche(
+      ctx,
+      courante,
+      contexteDeRendu(projet, courante, {
+        police: policeDuLabo(),
+        logo,
+        segments: decouperTrace(projet.donnees.trace, projet.donnees.coupures),
+      }),
+    );
+  }, [projet, courante, format, theme, logo, prete]);
 
-    // Les marges de la charte et la zone sûre, en repères d'atelier : elles ne
-    // sont PAS dessinées à l'export, seulement ici, sous la composition.
+  useEffect(() => {
+    const ctx = reperes.current?.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, format.width, format.height);
     ctx.save();
     ctx.strokeStyle = theme.filet;
     ctx.lineWidth = 2;
@@ -81,7 +132,7 @@ export default function PlanDeTravail({
       ctx.stroke();
     }
     ctx.restore();
-  }, [format, theme, projet.theme]);
+  }, [format, theme]);
 
   return (
     <div
@@ -89,18 +140,22 @@ export default function PlanDeTravail({
       className="relative flex min-w-0 flex-1 items-center justify-center overflow-hidden bg-brand-text/5"
     >
       <div
-        className="shadow-card"
-        style={{
-          width: format.width * echelle,
-          height: format.height * echelle,
-        }}
+        className="relative shadow-card"
+        style={{ width: format.width * echelle, height: format.height * echelle }}
       >
         <canvas
-          ref={canvas}
+          ref={planche}
           width={format.width}
           height={format.height}
           aria-label={`Planche ${format.label}`}
           className="block h-full w-full"
+        />
+        <canvas
+          ref={reperes}
+          width={format.width}
+          height={format.height}
+          aria-hidden
+          className="pointer-events-none absolute inset-0 block h-full w-full"
         />
       </div>
 

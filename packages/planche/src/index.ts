@@ -91,7 +91,7 @@ export {
 export type { Contexte, FicheVariable } from "./variables.ts";
 
 export { definirVocabulaireDIcones, vocabulaireDIcones } from "./canvas.ts";
-export type { Ctx2D, Degrade, Vocabulaire } from "./canvas.ts";
+export type { Ctx2D, Degrade, SourceImage, Vocabulaire } from "./canvas.ts";
 
 export {
   AIDE_BALISAGE,

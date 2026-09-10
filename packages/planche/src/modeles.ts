@@ -134,7 +134,7 @@ export function mobilier(f: Format, o: OptionsMobilier = {}): Element[] {
     // hiérarchie du compte, et c'est lui qui décide de ce qui suit un texte
     // quand on change de modèle — une pagination n'a rien à voler à personne.
     out.push(
-      texteNeuf(boite(f, MARGE, basPied, 320, CORPS.pied * 1.4), "{jour}", "libre", {
+      texteNeuf(boite(f, MARGE, basPied, 320, CORPS.pied * 1.4), "{planche} / {planches}", "libre", {
         nom: "Pagination",
         ...PIED,
       } as Partial<ElementTexte>),

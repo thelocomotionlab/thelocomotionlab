@@ -234,6 +234,8 @@ export type CleVariable =
   | "alt_max"
   | "jour"
   | "jour_distance"
+  | "planche"
+  | "planches"
   | "jour_dplus"
   | "nom"
   | "date";

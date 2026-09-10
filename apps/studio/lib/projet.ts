@@ -8,11 +8,15 @@
 // ajoutée dans six mois soit la seule qu'on ne puisse pas défaire.
 
 import {
+  CONTEXTE_PAR_DEFAUT,
   SCHEMA,
+  changerModele,
   creer,
+  instancier,
   type CleFormat,
   type CleModele,
   type CleTheme,
+  type ContexteModele,
   type Historique,
   type PlancheImage,
   type Projet,
@@ -23,16 +27,32 @@ export function id(prefixe: string): string {
   return `${prefixe}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-export function plancheNeuve(modele: CleModele = "texte"): PlancheImage {
+/**
+ * Le contexte qu'un modèle lit pour s'instancier : ce que la planche doit
+ * savoir du projet avant de poser ses éléments.
+ */
+export function contexteDuProjet(p: Projet): ContexteModele {
   return {
-    id: id("planche"),
-    type: "image",
-    nom: "",
-    modele,
-    fond: "",
-    tranche: { mode: "toutes", jour: 0 },
-    elements: [],
+    ...CONTEXTE_PAR_DEFAUT,
+    format: p.format,
+    theme: p.theme,
+    bilan: p.bilan,
+    nomTrace: p.donnees.trace?.nom ?? null,
+    vecue: p.donnees.trace?.vecue ?? false,
   };
+}
+
+export function plancheNeuve(p: Projet, modele: CleModele = "texte"): PlancheImage {
+  return instancier(modele, contexteDuProjet(p));
+}
+
+/** Change le modèle d'une planche en gardant ce qui a été écrit. */
+export function avecModele(p: Projet, index: number, modele: CleModele): Projet {
+  const planche = p.planches[index];
+  if (!planche || planche.type !== "image") return p;
+  const planches = [...p.planches];
+  planches[index] = changerModele(planche, modele, contexteDuProjet(p));
+  return avecPlanches(p, planches);
 }
 
 export function projetNeuf(nom = "Sans titre"): Projet {
@@ -54,12 +74,16 @@ export function projetNeuf(nom = "Sans titre"): Projet {
       seance: null,
     },
     medias: [],
-    planches: [plancheNeuve("carte")],
+    planches: [],
   };
 }
 
 export function historiqueNeuf(): Historique<Projet> {
-  return creer(projetNeuf());
+  const vide = projetNeuf();
+  // Un projet neuf s'ouvre sur une planche : un document sans rien n'apprend
+  // pas ce qu'est une planche, et la première chose à faire serait d'en créer
+  // une.
+  return creer({ ...vide, planches: [plancheNeuve(vide, "carte")] });
 }
 
 /** Le format et le thème sont des réglages DU LOT : ils valent pour tout le projet. */

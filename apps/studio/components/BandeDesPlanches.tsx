@@ -29,7 +29,7 @@ export default function BandeDesPlanches({ poste }: { poste: PosteDeTravail }) {
   const largeur = Math.round((VIGNETTE * format.width) / format.height);
 
   const ajouter = () =>
-    modifier((p) => avecPlanches(p, [...p.planches, plancheNeuve()]), {
+    modifier((p) => avecPlanches(p, [...p.planches, plancheNeuve(p)]), {
       libelle: "ajouter une planche",
     });
 

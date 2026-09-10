@@ -84,6 +84,8 @@ export function contexteDeRendu(
       tranche: planche.tranche,
       bilan: projet.bilan,
       nomProjet: projet.nom,
+      planche: Math.max(0, projet.planches.indexOf(planche)),
+      planches: projet.planches.length,
     },
   };
 }

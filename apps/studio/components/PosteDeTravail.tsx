@@ -20,11 +20,16 @@ import Inspecteur from "./Inspecteur";
 import PlanDeTravail from "./PlanDeTravail";
 import Rail from "./Rail";
 import Tiroir from "./Tiroir";
+import { enregistrerIcones } from "@/lib/icones";
 import { usePosteDeTravail } from "@/lib/usePosteDeTravail";
 
 export default function PosteDeTravail() {
   const poste = usePosteDeTravail();
   const { annuler, refaire } = poste;
+
+  // Le vocabulaire d'icônes est déclaré par l'APP : le paquet de rendu ne fait
+  // que découper, mesurer et poser, et n'a pas à consommer React pour autant.
+  useEffect(enregistrerIcones, []);
 
   // Le service worker : jamais en développement, où garder les chunks de Next
   // en cache pendant qu'on édite produit des erreurs incompréhensibles.
@@ -56,8 +61,12 @@ export default function PosteDeTravail() {
 
       <div className="flex min-h-0 flex-1">
         <Rail actif={poste.tiroir} onChange={poste.setTiroir} />
-        {poste.tiroir !== null && <Tiroir cle={poste.tiroir} />}
-        <PlanDeTravail projet={poste.projet} zoom={poste.zoom} />
+        {poste.tiroir !== null && <Tiroir cle={poste.tiroir} poste={poste} />}
+        <PlanDeTravail
+          projet={poste.projet}
+          indexPlanche={poste.indexPlanche}
+          zoom={poste.zoom}
+        />
         <Inspecteur projet={poste.projet} planche={planche} selection={poste.selection} />
       </div>
 
