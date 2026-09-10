@@ -387,6 +387,22 @@ function teintesRemplies(ctx: CtxFactice): string[] {
   return ctx.ops.flatMap((o) => (o.op === "fill" ? [String(o.args[0])] : []));
 }
 
+describe("le filet sous le titre", () => {
+  function filetPose(casse: "normale" | "capitales"): boolean {
+    const ctx = rendre([
+      texte({ casse, filetSousTitre: { largeur: 96, epaisseur: 4, couleur: "#abcdef" } }),
+    ]);
+    return ctx.ops.some(
+      (o) => o.op === "fillRect" && Number(o.args[2]) === 96 && Number(o.args[3]) === 4,
+    );
+  }
+
+  it("se pose sous un titre en capitales comme sous un autre", () => {
+    expect(filetPose("normale")).toBe(true);
+    expect(filetPose("capitales")).toBe(true);
+  });
+});
+
 describe("le profil", () => {
   /** Le fond factice ne note pas le style courant : on le lui fait dire. */
   function rendreEnNotant(elements: Element[]): CtxFactice {
@@ -425,7 +441,7 @@ describe("le profil", () => {
     expect(new Set(jours).size).toBe(3);
   });
 
-  it("garde une seule couleur quand une seule journée est montrée", () => {
+  it("donne sa couleur à la journée montrée seule, celle de la carte", () => {
     const ctx = ctxFactice();
     const cible = ctx as unknown as Record<string, (...a: unknown[]) => void>;
     const fill = cible.fill!.bind(ctx);
@@ -441,12 +457,13 @@ describe("le profil", () => {
       }),
     );
     const jours = teintesRemplies(ctx).filter((t) => PALETTE_JOURS.includes(t as never));
-    expect(jours).toEqual([]);
+    expect(jours).toEqual([PALETTE_JOURS[1]]);
   });
 
   it("une couleur imposée passe devant les journées", () => {
     const teintes = teintesRemplies(rendreEnNotant([profil({ remplissage: "#123456" })]));
     expect(teintes.filter((t) => t === "#123456").length).toBe(3);
+    expect(teintes.filter((t) => PALETTE_JOURS.includes(t as never))).toEqual([]);
   });
 
   /**

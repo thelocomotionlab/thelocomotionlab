@@ -163,7 +163,7 @@ function dessinerTexteCapitales(
   boite: BoitePx,
   c: ContexteRendu,
   style: StyleTexte,
-): void {
+): number {
   const morceaux = morceauxCapitales(resoudre(e.contenu, c.variables));
   ctx.font = fonteDe({ texte: "" }, style);
   ctx.fillStyle = style.couleur;
@@ -183,6 +183,7 @@ function dessinerTexteCapitales(
   dessinerCapitales(ctx, morceaux, x, ligneDeBase, e.corps, e.lettrage, c.theme.accent, {
     douce: c.theme.encreDouce,
   });
+  return ligneDeBase;
 }
 
 /** L'encombrement du filet d'ouverture, écart compris. */
@@ -195,22 +196,18 @@ function dessinerTexte(ctx: Ctx2D, e: ElementTexte, boite: BoitePx, c: ContexteR
   ctx.save();
   poserOmbre(ctx, e, c);
 
-  if (e.casse === "capitales") {
-    dessinerTexteCapitales(ctx, e, boite, c, style);
-    ctx.restore();
-    return;
-  }
-
-  const texte = resoudre(e.contenu, c.variables);
-  const blocs = blocsDeTexte(ctx, texte, boite.l, style);
-  const bas = poserBlocs(ctx, blocs, boite.x, boite.y, style, {
-    align: e.alignement,
-    largeur: boite.l,
-    puce: e.puce,
-  });
+  const bas =
+    e.casse === "capitales"
+      ? dessinerTexteCapitales(ctx, e, boite, c, style)
+      : poserBlocs(ctx, blocsDeTexte(ctx, resoudre(e.contenu, c.variables), boite.l, style), boite.x, boite.y, style, {
+          align: e.alignement,
+          largeur: boite.l,
+          puce: e.puce,
+        });
 
   // Le filet court SOUS le titre — il se pose après le texte, à la place que le
-  // texte a réellement prise, pas à celle qu'on lui avait réservée.
+  // texte a réellement prise, pas à celle qu'on lui avait réservée. Un titre en
+  // capitales y a droit comme un autre : c'est le même filet.
   if (e.filetSousTitre) {
     const f = e.filetSousTitre;
     ctx.shadowColor = "rgba(0, 0, 0, 0)";
@@ -682,10 +679,10 @@ function dessinerProfil(ctx: Ctx2D, e: ElementProfil, b: BoitePx, c: ContexteRen
   if (estompe) traceProfil(ctx, echelle, complet, c.theme.profilRestant, null);
 
   // UNE AIRE PAR JOURNÉE MONTRÉE, chacune dans SA couleur : c'est ce qui fait
-  // lire une progression au lieu d'un bloc d'un seul tenant, et c'est la même
-  // couleur qu'a pris la journée sur la carte. En dessous de deux journées il
-  // n'y a rien à distinguer, et le profil garde l'accent du thème.
-  const parJournee = !instant && e.parJournee !== false && montres.length > 1;
+  // lire une progression au lieu d'un bloc d'un seul tenant. Une planche « le
+  // jour 3 seul » n'en montre qu'une, et c'est justement elle qu'on veut voir
+  // à SA couleur — la même que sur la carte juste à côté.
+  const parJournee = !instant && e.parJournee !== false && montres.length >= 1;
   if (parJournee) {
     for (const segment of montres) {
       const dedans = entre(echelle.points, segment.kmDebut, segment.kmFin);
