@@ -1,7 +1,9 @@
 # CLAUDE.md — Locomotion Lab
 
-Monorepo du Locomotion Lab : le site public (Next.js, JavaScript, `apps/site`), des services conteneurisés
-(`services/`), le moteur Locomotion Twin (Python, `services/twin-engine`), la charte partagée (`packages/ui`).
+Monorepo du Locomotion Lab : le site public (Next.js, JavaScript, `apps/site`), les services (`services/` —
+conteneurs sur le VPS, sauf la passerelle email, Worker Cloudflare), le moteur Locomotion Twin (Python,
+`services/twin-engine`), et trois paquets partagés (`packages/` : la charte `ui`, le modèle de `contenu`,
+le `tracking`).
 
 **Ce fichier est la seule règle permanente du dépôt.** Tout ce qui est dans `docs/` est un mode d'emploi ou de
 l'histoire, jamais une loi. Une décision prise hier n'est pas un ordre pour aujourd'hui.
@@ -26,8 +28,11 @@ l'histoire, jamais une loi. Une décision prise hier n'est pas un ordre pour auj
 
 - Une branche par chantier, des commits logiques. Si le chantier touche plus d'un module : un plan d'abord, le code
   après validation.
-- Mode d'emploi du dépôt : `docs/manuel-monorepo.md`. Déploiement : `docs/deploy-cloudflare.md`, `docs/runbook-vps.md`.
-- Modèle de contenu du site (cinq sortes, routage, gabarits, règles de build) : `docs/systeme-de-contenu.md`.
+- Mode d'emploi du dépôt : `docs/manuel-monorepo.md`. Déploiement — site, passerelle email et VPS sont trois
+  commandes indépendantes, et Cloudflare Pages ignore silencieusement une partie de `next.config.mjs` :
+  `docs/deploy-cloudflare.md`, `docs/runbook-vps.md`.
+- Modèle de contenu du site (quatre sortes, routage, sections, règles de build) : `docs/systeme-de-contenu.md`.
+  Mode d'emploi d'écriture au quotidien (icônes de trace, nutrition, tailles d'images) : `apps/site/notes_pratiques.txt`.
 
 ## Liberté
 

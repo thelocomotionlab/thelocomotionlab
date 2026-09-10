@@ -59,10 +59,10 @@ chapeau: "170 km et deux pitons, en autonomie complète, en sandales."
 etat: termine            # termine | en-cours | en-preparation
 campagne: { debut: 2025-09-29, fin: 2025-11-30 }
 cover: "reunion-cover.webp"
-resume:                  # chiffres affichés sur la carte d'index
-  - "170 km"
-  - "9 800 m D+"
-  - "sandales"
+resume:                  # repères affichés sur la carte d'index
+  - { label: "Projet", valeur: "OFF" }      # un libellé et sa valeur…
+  - "170 km"                                # …ou une chaîne, dont le nombre
+  - "9 800 m D+"                            #    se détache de son unité
 recit: "ile-intense"     # slug du récit, absent s'il n'existe pas
 sections: [...]          # voir §5
 ```
@@ -132,6 +132,11 @@ Trois exemples réels, volontairement dissemblables :
 
 La page à trois sections doit avoir l'air finie, pas amputée. C'est le cas de test du système.
 
+**Déplacer un bloc, c'est déplacer son entrée dans `sections`, et rien d'autre.** L'ordre du corps MDX ne compte
+pas : un `<SectionLibre id="x">` est rattaché par son id à l'entrée du même id, où qu'il soit écrit. La
+numérotation (01, 02…) et le sommaire suivent le rang ; les ancres viennent de l'`id` ou du titre, jamais du rang,
+si bien qu'un lien déjà partagé tombe au bon endroit après un déplacement.
+
 Tout est saisi à la main. Aucune donnée n'est synchronisée depuis un service externe.
 
 ---
@@ -156,7 +161,6 @@ voyage (étapes, jours, lieu).
 ```yaml
 - type: geo
   titre: "Trace"
-  carte: "reunion.geojson"
   gpx: "reunion.gpx"        # facultatif : la carte lit ce fichier de public/tracks/
                             # et pose le bouton de téléchargement
   reperes:                  # facultatif : des icônes posées sur la trace
@@ -189,12 +193,18 @@ Quatre éléments **indépendants et tous facultatifs**. Une préparation peut n
     travailles:
       - { nom: "Chaleur", dose: "7 jours", frequence: "quotidien", intensite: "effort léger",
           pourquoi: "Baisser la FC à effort égal, transpirer plus tôt, boire avant la soif." }
+      - { nom: "Rest step", pourquoi: "Préserver les quadriceps.",
+          en_pratique: "Bâtons retirés à l'entraînement plusieurs mois avant.",
+          billet: "rest-step" }
     non_travailles: ["Froid", "Jeûne"]
   protocoles: ["rest-step"]     # facultatif, ids résolus dans l'index des blocs
 ```
 
-La dernière colonne de `seances` contient un slug de billet, résolu en lien. Les stresseurs ont un schéma fixe :
-nom, dose, fréquence, intensité, pourquoi. `non_travailles` est un champ structuré, pas une phrase libre.
+La dernière colonne de `seances` contient un slug de billet, résolu en lien. Un stresseur exige `nom` et
+`pourquoi` ; `dose`, `frequence`, `intensite` et `en_pratique` sont facultatifs et **seules les mesures
+renseignées sont rendues** — une fréquence qui n'a pas lieu d'être n'occupe pas une colonne pour y afficher un
+tiret. `billet` renvoie au texte qui raconte le stresseur. `non_travailles` est un champ structuré, pas une
+phrase libre.
 
 ### paquetage
 Référence un jeu de données de paquetage. Produit le tableau, les masses et l'export CSV.
@@ -205,7 +215,18 @@ Référence un jeu de données de paquetage. Produit le tableau, les masses et l
 ```
 
 ### nutrition
-Tableau à colonnes libres.
+Deux manières de la remplir, exclusives l'une de l'autre.
+
+```yaml
+- type: nutrition
+  ref: "traversee-reunion"   # le nom du .csv de paquetage, sans l'extension
+```
+
+`ref` lit la catégorie de nourriture du paquetage (une catégorie nommée *Alimentation*, *Nutrition*,
+*Nourriture* ou *Ravitaillement*) et en fabrique le tableau : aliment, quantité, masse, et le total en gras.
+LighterPack n'ayant pas de champ d'énergie, une description contenant « 615 kcal » vaut déclaration — comptée
+**par unité**, comme la masse — et ajoute deux colonnes, kcal/unité et kcal total. Sans `ref`, un tableau écrit
+à la main : `colonnes` et `lignes`, comme partout ailleurs.
 
 ### libre
 Section titrée acceptant texte, images et vidéos. Le corps vit dans le MDX de la page, dans un slot nommé ;

@@ -87,6 +87,24 @@ Test de bout en bout : depuis le site en local
 s'inscrire avec une vraie adresse → l'email de confirmation arrive → après
 clic, le contact apparaît dans Listmonk avec `source` dans ses attributs.
 
+Ce déploiement-là est **indépendant** de celui du site et de celui du VPS :
+`infra/deploy.sh` ne touche pas à la passerelle, et aucun workflow CI ne la
+déploie. Une correction dans `services/email-gateway/` n'est en ligne qu'après
+un `npx wrangler deploy`.
+
+Deux choses qui vivent dans le code de la passerelle et méritent d'être sues :
+
+- **la liste des provenances acceptées** (`SOURCES` dans `src/index.ts`) doit
+  couvrir tous les formulaires du site — une valeur absente part en 400, et la
+  page affiche « l'envoi a échoué » alors que rien n'est en panne. Le test
+  `apps/site/lib/portesEmail.test.js` compare les deux côtés et nomme le
+  fichier fautif ;
+- **la réponse de `/subscribe`** porte un `etat` (`nouveau`, `deja_inscrit`,
+  `confirmation_en_attente`) dont la page fait sa phrase : Listmonk n'envoie pas
+  de second email de confirmation à une adresse qu'il connaît déjà, et sans ce
+  champ on lui annonçait un email qui n'arrivait jamais. Détail dans
+  [`services/email-gateway/README.md`](../services/email-gateway/README.md).
+
 ## 5. Importer le Google Sheet existant
 
 Dans Listmonk, **Subscribers → Import** : CSV avec colonnes

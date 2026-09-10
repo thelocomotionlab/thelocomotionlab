@@ -23,3 +23,10 @@ Documents **terminés ou périmés**, conservés pour la trace (rien n'est suppr
 
 - `revue-integrale-2026-07/` — le dossier de travail de la revue de code complète de juillet 2026
   (README + constats). Ses correctifs sont appliqués ; le dossier reste comme trace.
+
+- `plan-refonte-contenu.md`, `table-de-migration.md`, `inventaire-contenus.md` — le chantier 3
+  (refonte du système de contenu), livré et déployé, archivé le 10 septembre 2026. Le plan
+  décrivait une arborescence `content/concepts/` que la refonte n'a pas retenue : le modèle
+  effectivement en place est décrit par `docs/systeme-de-contenu.md`, et les anciennes URL
+  redirigées vivent dans `apps/site/lib/legacyRedirects.mjs`, pas dans la table de migration.
+  (Le fichier d'inventaire s'appelait `invetaire-contenus.md` ; la coquille est corrigée ici.)

@@ -548,6 +548,8 @@ la fiche, la clôture…) et **Habillage photo** (§8 bis). Les anciennes URL
 | Lancer le site en local | `pnpm --filter site dev` |
 | Compiler le site (vérif) | `pnpm --filter site build` |
 | Déployer le site (manuel) | `pnpm --filter site deploy:cf` |
+| Déployer la passerelle email (séparé du site et du VPS) | `cd services/email-gateway && npx wrangler deploy` |
+| Refabriquer les tailles d'images à la main | `pnpm -F site images` (sinon `prebuild`/`predev` s'en chargent) |
 | Lancer une autre app | `pnpm --filter <app> dev` |
 | Compiler une autre app sans toucher au site | `pnpm --filter <app> build` |
 | Créer une nouvelle app | `cp -r apps/_template apps/<nom>` → renommer `name` → `pnpm install` |

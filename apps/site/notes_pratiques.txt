@@ -10,6 +10,15 @@ Cover :
 - ratio 11:6
 - viser autour de 2048x1118px
 
+Tailles d'images :
+- ne rien pré-redimensionner : le build fabrique six largeurs par image
+  (96, 256, 360, 640, 1080, 1600) dans public/images-opt, et le site y renvoie
+- déposer les sources dans public/images, à leur taille de travail
+- une variante n'agrandit jamais sa source, et ne la remplace pas si le
+  réencodage ressort plus lourd
+- public/images-opt n'est pas versionné : il se refabrique à chaque build
+  (56 s à froid, instantané ensuite)
+
 
 tail -1000 /etc/nginx/sites-available/traccar-api.conf
 server {

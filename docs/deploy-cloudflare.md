@@ -107,6 +107,42 @@ pnpm --filter site deploy:cf
 `wrangler` te demandera de te connecter au compte Cloudflare la première fois (jamais de token dans le
 repo — cf. `docs/secrets.md`).
 
+### Trois déploiements distincts, à ne pas confondre
+
+| Quoi | Où | Commande |
+| --- | --- | --- |
+| le site | Cloudflare Pages | `pnpm -F site deploy:cf` |
+| la passerelle email | Cloudflare Workers | `cd services/email-gateway && npx wrangler deploy` |
+| Listmonk, Caddy, les services | le VPS | `cd /opt/locomotionlab/infra && ./deploy.sh` |
+
+Aucune de ces trois commandes n'entraîne les autres, et aucun workflow CI ne déploie la passerelle.
+
+---
+
+## Ce que Cloudflare Pages ne fait PAS comme Vercel
+
+Trois pièges payés comptant. Chacun se manifeste par « ça marche en local, pas en ligne », et aucun ne lève
+d'erreur : la règle est simplement ignorée. Le seul moyen fiable de vérifier est de servir la sortie compilée —
+`npx wrangler pages dev .vercel/output/static` — et d'interroger le worker avec le bon `Host`.
+
+**1. `/_next/image` ne redimensionne rien.** `?url=…&w=360` renvoie le fichier source, octet pour octet, quelle
+que soit la largeur demandée : une vignette de 250 px téléchargeait la photo entière. Le site fabrique donc ses
+tailles au build — `apps/site/scripts/build-images.mjs` produit six barreaux dans `public/images-opt`
+(non versionné, regénéré à chaque build), et `apps/site/lib/imageLoader.js` les adresse en `loader: "custom"`.
+Les images du markdown, elles, sortent en `<img>` ordinaire et échappent au chargeur : c'est
+`markdown/remarkImagesOptimisees.js` qui leur pose le `srcset`.
+
+**2. `headers()` n'atteint pas les fichiers de `public/`.** Pages les sert lui-même et leur impose
+`Cache-Control: public, max-age=0, must-revalidate` — chaque visite redemandait chaque image. Les règles de cache
+des fichiers statiques vivent donc dans **`apps/site/public/_headers`**, que Pages lit vraiment ;
+`next-on-pages` y ajoute son propre bloc pour `/_next/static/*` sans écraser le nôtre. Les en-têtes de
+`next.config.mjs`, eux, s'appliquent bien aux **pages**.
+
+**3. `has: [{ type: "host" }]` est une égalité stricte**, là où le routeur de Next lit la valeur comme une
+expression régulière. `^thelocomotionlab\.com$` n'est jamais *égal* à un nom d'hôte : la redirection de l'apex
+vers le www n'est jamais partie, et le site a servi chaque page à deux adresses. L'hôte s'écrit tel quel, et
+un motif générique (`.*\.pages\.dev`) est impossible — il faut nommer chaque hôte.
+
 ---
 
 ## Checklist de migration (à faire une seule fois)
