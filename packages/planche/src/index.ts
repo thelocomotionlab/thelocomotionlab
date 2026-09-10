@@ -90,6 +90,48 @@ export {
 } from "./variables.ts";
 export type { Contexte, FicheVariable } from "./variables.ts";
 
+export { definirVocabulaireDIcones, vocabulaireDIcones } from "./canvas.ts";
+export type { Ctx2D, Degrade, Vocabulaire } from "./canvas.ts";
+
+export {
+  AIDE_BALISAGE,
+  CENTRE_CAPITALES,
+  COULEURS_TEXTE,
+  ESPACEMENT,
+  FLECHE_LARGEUR,
+  PUCES_SIMPLES,
+  analyserRiche,
+  blocsDeTexte,
+  decalageAlignement,
+  dessinerCapitales,
+  dessinerLigneRiche,
+  encreDe,
+  estPuceTracee,
+  flecheTracee,
+  fonteDe,
+  glypheTrace,
+  hauteurBlocs,
+  largeurBlocs,
+  largeurCapitales,
+  largeurIcone,
+  largeurLigne,
+  lignesRiches,
+  morceauxCapitales,
+  plaqueDeLigne,
+  poserBlocs,
+  styleDeLigne,
+  texteNu,
+} from "./texte.ts";
+export type {
+  Align,
+  Bloc,
+  Ligne as LigneTexte,
+  Morceau as MorceauTexte,
+  MorceauMesure,
+  PlaqueRendu,
+  StyleTexte,
+} from "./texte.ts";
+
 export { SCHEMA } from "./types.ts";
 export type {
   Alignement,
@@ -118,12 +160,12 @@ export type {
   Etiquette,
   Filet,
   FondCarte,
-  Ligne,
+  Ligne as LigneContenu,
   LigneFiche,
   Media,
   ModeCamera,
   Montage,
-  Morceau,
+  Morceau as MorceauContenu,
   Ombre,
   Planche,
   PlancheImage,
