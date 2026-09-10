@@ -103,7 +103,7 @@ export async function rendreHorsEcran(
 
 let logo: Promise<HTMLImageElement | null> | null = null;
 
-function logoDuLabo(): Promise<HTMLImageElement | null> {
+export function logoDuLabo(): Promise<HTMLImageElement | null> {
   logo ??= new Promise((resolve) => {
     const img = new Image();
     img.src = "/images/assets/logo-mark-512.png";
