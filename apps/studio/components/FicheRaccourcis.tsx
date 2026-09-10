@@ -56,6 +56,14 @@ const GROUPES: { titre: string; lignes: [string, string][] }[] = [
     ],
   },
   {
+    titre: "Survol",
+    lignes: [
+      ["▶", "Lire · le curseur saute où l'on veut"],
+      ["Double-clic sur un chiffre", "Changer sa variable dans l'inspecteur"],
+      ["Vidéo", "Exporter, image par image — garde l'onglet devant"],
+    ],
+  },
+  {
     titre: "Voir",
     lignes: [
       ["Ctrl + 0", "Ajuster à la fenêtre et recentrer"],

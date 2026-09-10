@@ -249,11 +249,20 @@ export function attendreCalme(carte: maplibregl.Map, garde = 4000): Promise<bool
       if (fini) return;
       fini = true;
       carte.off("idle", surCalme);
+      carte.off("render", surRendu);
       clearTimeout(minuteur);
       resolve(ok);
     };
     const surCalme = () => finir(true);
+    // On ne se contente pas d'« idle » : il attend en plus la fin de tout
+    // mouvement interne, et sur un GPU logiciel il tarde de plusieurs
+    // secondes. Ce qui compte pour une capture, c'est que les TUILES soient
+    // là — on regarde donc à chaque dessin, et « idle » n'est que le filet.
+    const surRendu = () => {
+      if (carte.areTilesLoaded()) finir(true);
+    };
     const minuteur = setTimeout(() => finir(false), garde);
     carte.on("idle", surCalme);
+    carte.on("render", surRendu);
   });
 }

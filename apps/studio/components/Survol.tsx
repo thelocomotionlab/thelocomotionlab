@@ -15,7 +15,7 @@
 // autre chose que la vidéo, et on validerait un aperçu qu'on ne recevrait pas.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pause, Play, SkipBack } from "lucide-react";
+import { Download, Pause, Play, SkipBack, X } from "lucide-react";
 import type maplibregl from "maplibre-gl";
 import {
   contexteDeRendu,
@@ -32,6 +32,9 @@ import { decouperTrace } from "@locomotionlab/trace";
 import { policeChargee, policeDuLabo } from "@/lib/police";
 import { imagesEnCache } from "@/lib/images";
 import { cadrer, monterScene, poserLaTrace, poserLePoint } from "@/lib/scene";
+import { exporterSurvol } from "@/lib/exportSurvol";
+import { enNomDeFichier, telecharger } from "@/lib/export";
+import type { Avancement } from "@/lib/video";
 import type { PosteDeTravail } from "@/lib/usePosteDeTravail";
 
 /** L'air autour de la scène, comme pour une planche. */
@@ -58,6 +61,9 @@ export default function Survol({
   // et la caméra sur la carte NEUVE. Sans lui, changer de fond laisserait une
   // scène vide, la carte vivant dans une ref que nul effet ne surveille.
   const [scenePrete, setScenePrete] = useState(0);
+  const [avancement, setAvancement] = useState<Avancement | null>(null);
+  const [souci, setSouci] = useState<string | null>(null);
+  const annuler = useRef(false);
 
   const format = formatDe(projet.format);
   const theme = themeDe(projet.theme);
@@ -199,6 +205,32 @@ export default function Survol({
   const echelle = ajuste;
   const secondes = total > 0 ? (image / plan.imagesParSeconde).toFixed(1) : "0.0";
 
+  async function exporter() {
+    const c = carte.current;
+    const el = boite.current;
+    if (!c || !el) return;
+    setSouci(null);
+    annuler.current = false;
+    setLecture(false);
+    setAvancement({ image: 0, total, restantMs: null });
+    try {
+      const r = await exporterSurvol(projet, planche, c, el, {
+        nom: enNomDeFichier(projet.nom, "projet"),
+        surAvancement: setAvancement,
+        annule: () => annuler.current,
+      });
+      if (r) telecharger(r.blob, r.nom);
+    } catch (e) {
+      setSouci(
+        e instanceof Error
+          ? `L'export a échoué : ${e.message}`
+          : "L'export a échoué.",
+      );
+    } finally {
+      setAvancement(null);
+    }
+  }
+
   if (!seance) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center bg-brand-text/5 px-8">
@@ -264,7 +296,57 @@ export default function Survol({
         <span className="tabulaire w-24 shrink-0 text-right text-[12px] text-brand-muted">
           {secondes} s / {planche.montage.duree} s
         </span>
+        <button
+          type="button"
+          onClick={exporter}
+          disabled={avancement !== null}
+          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-brand-deep px-3 text-[13px] font-medium text-brand-bg transition-colors hover:bg-brand-deep-dark disabled:opacity-40 motion-reduce:transition-none"
+        >
+          <Download size={15} aria-hidden />
+          Vidéo
+        </button>
       </div>
+
+      {souci && (
+        <p role="alert" className="mt-2 px-4 text-[12px] text-brand-accent-ink">
+          {souci}
+        </p>
+      )}
+
+      {avancement && (
+        <div
+          role="dialog"
+          aria-label="Export du survol"
+          className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-3 bg-brand-text/60 px-8"
+        >
+          <p className="tabulaire text-[13px] text-brand-bg">
+            Image {avancement.image} / {avancement.total}
+            {avancement.restantMs !== null &&
+              ` · environ ${Math.ceil(avancement.restantMs / 1000)} s`}
+          </p>
+          <div className="h-1.5 w-64 overflow-hidden rounded-full bg-brand-bg/25">
+            <div
+              className="h-full bg-brand-accent transition-[width] motion-reduce:transition-none"
+              style={{ width: `${(avancement.image / Math.max(1, avancement.total)) * 100}%` }}
+            />
+          </div>
+          <p className="max-w-xs text-center text-[11px] leading-snug text-brand-bg/70">
+            Chaque image attend ses tuiles : c&rsquo;est ce qui rend la vidéo identique
+            partout. Laisse cet onglet au premier plan — une scène 3D ne se dessine pas en
+            arrière-plan.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              annuler.current = true;
+            }}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-brand-bg/40 px-3 text-[13px] text-brand-bg"
+          >
+            <X size={15} aria-hidden />
+            Annuler
+          </button>
+        </div>
+      )}
     </div>
   );
 }
