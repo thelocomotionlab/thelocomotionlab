@@ -21,6 +21,8 @@
 
 import type { Map as MaplibreMap, StyleSpecification } from "maplibre-gl";
 
+import { brandColors } from "@locomotionlab/ui/tokens";
+
 /** Identifiants canoniques des fonds. */
 export type MapStyleName = "relief" | "topo" | "sat";
 
@@ -80,8 +82,8 @@ export const MAP_STYLE_OPTIONS: ReadonlyArray<{ id: MapStyleName; label: string 
 
 /** Couleurs des traces (couches maplibre, marqueurs DOM, point de survol). */
 export const traceColors = {
-  line: "#D6246E",
-  casing: "#FFFFFF",
+  line: brandColors.trace,
+  casing: brandColors.paper,
 } as const;
 
 /**

@@ -11,6 +11,7 @@
     "./contenu": "./src/components/contenu/index.ts",
     "./fonts": "./src/fonts.ts",
     "./theme.css": "./src/styles/theme.css",
+    "./tokens": "./src/tokens.ts",
     "./tailwind-preset": "./src/tailwind-preset.js"
   },
   "scripts": {
