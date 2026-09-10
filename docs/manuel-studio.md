@@ -66,6 +66,35 @@ sélectionné, section **JOURNÉES** :
 
 **Carte, profil et chiffres suivent la même tranche.** Il n'y a qu'un réglage, à un seul endroit.
 
+Et **chaque journée garde sa couleur d'une pièce à l'autre** : la portion de trace sur la carte,
+l'aire du profil, la pastille de son étiquette et sa case dans le déroulé sont de la même teinte.
+C'est ce qui fait lire une progression au lieu d'un bloc d'un seul tenant. La palette se change dans
+l'inspecteur, section **COULEURS**, sur la carte comme sur le profil.
+
+### 1.4 bis Régler un élément
+
+Clique un élément : l'inspecteur montre **tout ce qui le concerne**, et rien d'autre. Chaque type a
+ses propres réglages, sous **RÉGLAGES** :
+
+- **Carte** — le fond (aucun, relief, topo, satellite), l'épaisseur du trait, les marqueurs de départ
+  et d'arrivée, l'itinéraire entier en sourdine, les couleurs des journées, et les **étiquettes** :
+  une par journée, avec sa pastille (ou une icône à la place), son texte et son décalage à la main si
+  elle tombe mal.
+- **Profil** — le restant estompé, une couleur par journée, ou une couleur imposée qui passe devant.
+- **Journées** (la grille du déroulé) — le nombre de colonnes, la mini-carte, le mini-profil, le
+  filet de séparation, et le **texte de chaque case** : laissé vide, la journée écrit son numéro et
+  ses chiffres ; écrit, il remplace tout (« Jour 1 × Rapace × Lolo »).
+- **Photo** — le cadrage, la luminosité, le contraste, la saturation, un voile, les fondus vers le
+  fond, la bordure et les coins.
+- **Chiffre** — la variable, son libellé, son corps, et une **valeur écrite à la main** qui remplace
+  le calcul : la montre a toujours raison sur son propre fichier.
+- **Fiche** — les lignes, chacune tirant sa valeur d'une variable ou d'un texte écrit.
+- **Texte, forme, icône, marque** — alignement, casse, interlettrage, encre, filets, plaque, ombre ;
+  forme et coins ; clé d'icône ; variante de la marque.
+
+Partout, le bouton **Thème** à côté d'un sélecteur de couleur rend le réglage au thème — c'est ce qui
+permet à une planche de suivre le passage en clair ou en sombre.
+
 ### 1.5 Écrire
 
 Double-clic sur un texte : le caret entre dans l'image, à la bonne taille, à la bonne place. Le
@@ -76,11 +105,21 @@ balisage est court :
 | `*gras*` | gras |
 | `_italique_` | italique |
 | `[ambre]` | à la couleur d'accent |
+| `[terracotta: mot]` | une couleur nommée — `bleu`, `terracotta`, `ardoise`, `vert`, `fuchsia`, `gris` |
+| `[surtitre: mot]` | un corps de la charte au milieu d'une ligne — voir juste dessous |
+| `Distance = 52,9 km` | le libellé en petites capitales, la valeur en gros dessous |
 | `- point` | une puce ; `- :sac:` met une icône en puce |
 | `{distance}` | une variable — voir plus bas |
 
 Entrée fait une ligne. (Si tu importes un vieux document et que la mise en page se recolle, décoche
 « Entrée fait une ligne » dans l'inspecteur : c'était le pli de la v1.)
+
+**Deux corps sur une seule ligne.** Un titre court laisse la moitié de sa ligne vide, et la
+destination qui le suit ouvre un second étage pour trois mots. `Jour 2 [surtitre: VALGAUDÉMAR →
+VALLOUISE]` les met bout à bout : le contraste des deux corps suffit à les distinguer, c'est le geste
+d'un titre de presse. Les deux se calent sur leur **hauteur de capitale**, pas sur la ligne de base
+qu'ils partagent — sinon le petit pend au pied du gros. Les rôles disponibles : `surtitre`, `titre`,
+`corps`, `entete`, `pied`.
 
 ### 1.6 Les variables
 
