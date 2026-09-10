@@ -46,7 +46,8 @@ import type {
 } from "./types.ts";
 import type { PointProfil } from "@locomotionlab/trace";
 
-const MARQUE = "THE LOCOMOTION LAB";
+/** Le nom, tel que la navbar du site l'écrit — capitales espacées, sans « The ». */
+const MARQUE = "LOCOMOTION LAB";
 
 /** Le logo est teinté à la couleur du nom : même encre, même présence. */
 const MARQUE_OPACITE = 0.68;
