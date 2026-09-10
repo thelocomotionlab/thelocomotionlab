@@ -27,7 +27,7 @@ import { deplacer, type Element, type Projet } from "@locomotionlab/planche";
 import { avecDoublons, avecOrdre, sansSelection, surSelection } from "@/lib/projet";
 import type { CleTiroir, PosteDeTravail } from "@/lib/usePosteDeTravail";
 import Feuille from "./Feuille";
-import Tiroir from "./Tiroir";
+import { ContenuDeTiroir } from "./Tiroir";
 
 /** Les chips de la sélection : un réglage, une feuille. */
 type CleChip = "modifier" | "corps" | "couleur" | "position" | "calque";
@@ -103,7 +103,7 @@ export default function BarreMobile({
                 </button>
               ))}
             </div>
-            <Tiroir cle={ajout} poste={poste} />
+            <ContenuDeTiroir cle={ajout} poste={poste} />
           </Feuille>
         )}
         <nav className="z-30 flex shrink-0 items-stretch border-t border-brand-field bg-brand-paper">
