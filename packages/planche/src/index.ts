@@ -150,6 +150,39 @@ export {
   valeurAffichee,
 } from "./elements.ts";
 
+export {
+  CONTEXTE_PAR_DEFAUT,
+  MODELES,
+  changerModele,
+  instancier,
+  instancierSurvol,
+  mobilier,
+  modeleDe,
+  modelesPour,
+  remettreLeModele,
+} from "./modeles.ts";
+export type { ContexteModele, Modele, OptionsMobilier } from "./modeles.ts";
+
+export {
+  carteNeuve,
+  casesNeuves,
+  dupliquer,
+  ficheNeuve,
+  filetNeuf,
+  iconeNeuve,
+  idNeuf,
+  marqueNeuve,
+  photoNeuve,
+  profilNeuf,
+  formeNeuve,
+  statNeuve,
+  styleDuRole,
+  texteNeuf,
+} from "./fabrique.ts";
+
+export { estProjetV1, migrerProjet, trancheV1 } from "./migration.ts";
+export type { CarteV1, ProjetV1, ResultatMigration } from "./migration.ts";
+
 export { SCHEMA } from "./types.ts";
 export type {
   Alignement,
