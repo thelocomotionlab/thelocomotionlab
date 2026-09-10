@@ -10,7 +10,7 @@ l'histoire, jamais une loi. Une décision prise hier n'est pas un ordre pour auj
 
 ## Invariants
 
-1. **La charte vient de `packages/ui` et de nulle part ailleurs** : tokens (`theme.css`), Ubuntu + Lora, composants.
+1. **La charte vient de `packages/ui` et de nulle part ailleurs** : tokens (`theme.css`), Ubuntu Sans (300 → 800), composants.
    Aucune couleur, police, ombre ou arrondi codé en dur dans une app.
 2. **La direction artistique** : sobre, chaude, typographique. Fond crème, ocre doré, bleu-vert de Comprendre,
    terracotta d'Explorer, grille de labo en filigrane. Le texte tutoie, en français, au registre du carnet de bord.

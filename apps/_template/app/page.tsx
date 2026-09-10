@@ -16,7 +16,7 @@ export default function Home() {
         <code className="rounded bg-brand-grid px-1 py-0.5 text-brand-deep-dark">
           @locomotionlab/ui
         </code>{" "}
-        : tokens <code>@theme</code>, polices Ubuntu + Lora et primitives du design
+        : tokens <code>@theme</code>, police Ubuntu Sans et primitives du design
         system. Duplique <code>apps/_template</code> pour démarrer une nouvelle app.
       </p>
 

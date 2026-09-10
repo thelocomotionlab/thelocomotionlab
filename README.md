@@ -12,7 +12,7 @@ contexte complet.
 
 - **Gestionnaire** : [pnpm](https://pnpm.io) workspaces + [Turborepo](https://turbo.build).
 - **Apps web** : Next.js (App Router). Le **site** est en JavaScript ; toute nouvelle app est en TypeScript.
-- **Charte** : Tailwind v4. Tokens, preset, polices (Ubuntu + Lora) et primitives vivent **uniquement**
+- **Charte** : Tailwind v4. Tokens, preset, polices (Ubuntu Sans) et primitives vivent **uniquement**
   dans `packages/ui`.
 
 ## Arborescence
