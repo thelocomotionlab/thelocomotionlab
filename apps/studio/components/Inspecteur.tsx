@@ -14,8 +14,9 @@
 import { Eye, EyeOff, Lock, LockOpen } from "lucide-react";
 import { enPixels, formatDe, type Element, type PlancheImage, type Projet } from "@locomotionlab/planche";
 
-import { surSelection } from "@/lib/projet";
+import { avecTranche, surSelection } from "@/lib/projet";
 import type { PosteDeTravail } from "@/lib/usePosteDeTravail";
+import ReglageTranche from "./ReglageTranche";
 
 const NOMS: Record<Element["type"], string> = {
   texte: "Texte",
@@ -84,6 +85,7 @@ export default function Inspecteur({ poste }: { poste: PosteDeTravail }) {
   const choisis = (planche?.elements ?? []).filter((e) => selection.includes(e.id));
   const seul = choisis.length === 1 ? choisis[0]! : null;
   const format = formatDe(projet.format);
+  const jours = projet.donnees.coupures.length + (projet.donnees.trace ? 1 : 0);
 
   const regler = (transforme: (e: Element) => Element, libelle: string) =>
     modifier((p: Projet) => surSelection(p, indexPlanche, selection, transforme), { libelle });
@@ -97,7 +99,21 @@ export default function Inspecteur({ poste }: { poste: PosteDeTravail }) {
         <Section titre="Planche">
           <Ligne libelle="Modèle" valeur={planche?.modele ?? "—"} />
           <Ligne libelle="Éléments" valeur={String(planche?.elements.length ?? 0)} />
-          <Ligne libelle="Journées" valeur={planche ? planche.tranche.mode : "—"} />
+        </Section>
+        <Section titre="Journées">
+          {planche ? (
+            <ReglageTranche
+              tranche={planche.tranche}
+              jours={jours}
+              onChange={(t) =>
+                modifier((p: Projet) => avecTranche(p, indexPlanche, t), {
+                  libelle: "changer la tranche",
+                })
+              }
+            />
+          ) : (
+            <p className="text-[11px] text-brand-muted">—</p>
+          )}
         </Section>
         <Section titre="Lot">
           <Ligne libelle="Format" valeur={projet.format} />
@@ -194,9 +210,24 @@ export default function Inspecteur({ poste }: { poste: PosteDeTravail }) {
               )
             }
           />
+          <label className="mt-2 flex items-center gap-2 text-[12px] text-brand-soft">
+            <input
+              type="checkbox"
+              checked={seul.lignesDures}
+              onChange={(e) =>
+                regler(
+                  (x) => (x.type === "texte" ? { ...x, lignesDures: e.target.checked } : x),
+                  "lignes",
+                )
+              }
+              className="accent-brand-primary-dark"
+            />
+            Entrée fait une ligne
+          </label>
           <p className="mt-1 text-[11px] leading-snug text-brand-muted">
             300 → 800. La hiérarchie vient de la graisse, de la casse et de
-            l&rsquo;interlettrage — la charte n&rsquo;a qu&rsquo;une police.
+            l&rsquo;interlettrage — la charte n&rsquo;a qu&rsquo;une police. Décoché,
+            les lignes d&rsquo;un paragraphe se recollent, comme en v1.
           </p>
         </Section>
       )}

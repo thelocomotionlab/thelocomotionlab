@@ -106,6 +106,7 @@ export function styleDe(e: ElementTexte, c: ContexteRendu): StyleTexte {
         }
       : null,
     interligne: e.interligne,
+    lignesDures: e.lignesDures,
   };
 }
 

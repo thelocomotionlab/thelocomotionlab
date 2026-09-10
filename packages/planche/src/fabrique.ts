@@ -103,6 +103,7 @@ export function texteNeuf(
     ...commun("texte", boite, nom),
     type: "texte",
     contenu,
+    lignesDures: true,
     role,
     puce: "point",
     corps: CORPS.corps,
@@ -214,7 +215,6 @@ export function carteNeuve(boite: Boite, over: Partial<ElementCarte> = {}): Elem
     ...commun("carte", boite, "Carte"),
     type: "carte",
     fond: "topo",
-    tranche: { mode: "toutes", jour: 0 },
     couleurs: [],
     epaisseur: 6,
     etiquettes: [],
@@ -229,7 +229,6 @@ export function profilNeuf(boite: Boite, over: Partial<ElementProfil> = {}): Ele
   return {
     ...commun("profil", boite, "Profil"),
     type: "profil",
-    tranche: { mode: "toutes", jour: 0 },
     remplissage: "",
     restantEstompe: true,
     ...over,

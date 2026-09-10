@@ -10,7 +10,7 @@
 // détonne avant de l'avoir publiée.
 
 import { Copy, Plus, Trash2 } from "lucide-react";
-import { formatDe, themeDe } from "@locomotionlab/planche";
+import { formatDe, themeDe, type Planche } from "@locomotionlab/planche";
 
 import { avecPlanches, plancheNeuve } from "@/lib/projet";
 import type { PosteDeTravail } from "@/lib/usePosteDeTravail";
@@ -21,6 +21,20 @@ const VIGNETTE = 72;
 
 const ACTION =
   "inline-flex h-8 w-8 items-center justify-center rounded-md text-brand-soft transition-colors hover:bg-brand-primary/12 hover:text-brand-text motion-reduce:transition-none disabled:opacity-35";
+
+/**
+ * Ce qu'on lit sous la vignette.
+ *
+ * Une planche de journée se reconnaît à sa journée, pas à son modèle : douze
+ * vignettes marquées « etape » ne se distinguent pas les unes des autres.
+ */
+function legende(planche: Planche): string {
+  if (planche.type !== "image" || planche.tranche.mode === "toutes") {
+    return planche.type === "image" ? planche.modele : "survol";
+  }
+  const jour = `J${planche.tranche.jour + 1}`;
+  return planche.tranche.mode === "seule" ? jour : `→ ${jour}`;
+}
 
 export default function BandeDesPlanches({ poste }: { poste: PosteDeTravail }) {
   const { projet, indexPlanche, setPlanche, modifier } = poste;
@@ -78,7 +92,7 @@ export default function BandeDesPlanches({ poste }: { poste: PosteDeTravail }) {
                 style={{ width: largeur, height: VIGNETTE, background: theme.fond }}
               />
               <span className="tabulaire text-[10px] leading-none text-brand-muted">
-                {String(i + 1).padStart(2, "0")} · {planche.modele}
+                {String(i + 1).padStart(2, "0")} · {legende(planche)}
               </span>
             </button>
           </li>

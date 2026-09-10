@@ -28,6 +28,7 @@ import {
   type Media,
   type PlancheImage,
   type Projet,
+  type Tranche,
 } from "@locomotionlab/planche";
 
 /** Un identifiant court, unique dans la session. */
@@ -141,6 +142,44 @@ export function sansSelection(p: Projet, index: number, ids: readonly string[]):
     elements: planche.elements.filter((e) => !ids.includes(e.id) || e.verrouille),
   };
   return avecPlanches(p, planches);
+}
+
+/**
+ * LA TRANCHE DE JOURNÉES D'UNE PLANCHE.
+ *
+ * Carte, profil et chiffres la suivent : c'est le réglage qui fait une planche
+ * d'étape, et il n'y en a qu'un.
+ */
+export function avecTranche(p: Projet, index: number, tranche: Tranche): Projet {
+  const planche = p.planches[index];
+  if (!planche || planche.type !== "image") return p;
+  const planches = [...p.planches];
+  planches[index] = { ...planche, tranche };
+  return avecPlanches(p, planches);
+}
+
+/**
+ * Ajoute une planche par journée, en UNE étape d'historique.
+ *
+ * Un tour de six jours, c'est six planches identiques à la tranche près ; les
+ * poser une par une puis régler chacune est le travail que le studio doit
+ * faire à la place de Valentin.
+ */
+export function avecPlanchesDeJournee(
+  p: Projet,
+  modele: CleModele,
+  mode: Tranche["mode"],
+  jours: number,
+): { projet: Projet; premier: number } {
+  if (jours <= 0) return { projet: p, premier: p.planches.length };
+  const neuves = Array.from({ length: jours }, (_, i) => ({
+    ...plancheNeuve(p, modele),
+    tranche: { mode, jour: i },
+  }));
+  return {
+    projet: avecPlanches(p, [...p.planches, ...neuves]),
+    premier: p.planches.length,
+  };
 }
 
 /** Pose des éléments au-dessus de la pile de la planche courante. */

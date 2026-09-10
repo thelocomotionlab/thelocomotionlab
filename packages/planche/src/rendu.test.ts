@@ -446,3 +446,23 @@ describe("la pagination", () => {
     expect(resoudre("{planche} / {planches}", c.variables)).toBe("01 / 01");
   });
 });
+
+describe("lignes dures", () => {
+  const deux = "premier\nsecond";
+
+  it("garde deux lignes quand l'élément le demande", () => {
+    const ctx = rendre([texte({ contenu: deux, lignesDures: true })]);
+    const y = ctx.ops
+      .filter((o) => o.op === "fillText")
+      .map((o) => o.args[2] as number);
+    expect(new Set(y).size).toBe(2);
+  });
+
+  it("recolle le paragraphe quand un document v1 le demandait", () => {
+    const ctx = rendre([texte({ contenu: deux, lignesDures: false })]);
+    const y = ctx.ops
+      .filter((o) => o.op === "fillText")
+      .map((o) => o.args[2] as number);
+    expect(new Set(y).size).toBe(1);
+  });
+});

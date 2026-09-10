@@ -108,7 +108,9 @@ function contenuV1(carte: CarteV1, cle: string): string {
 
 /** Reporte sur un élément texte les réglages v1 qui ont un correspondant. */
 function styleV1(e: ElementTexte, carte: CarteV1): ElementTexte {
-  const out: ElementTexte = { ...e };
+  // Les lignes molles étaient la règle en v1 : un document importé garde sa
+  // mise en page, alors que le studio compose en lignes dures.
+  const out: ElementTexte = { ...e, lignesDures: carte.lignesDures === true };
   const taille = {
     surtitre: carte.tailleSurtitre,
     titre: carte.tailleTitre,
@@ -300,10 +302,8 @@ function migrerCarte(
         ...e,
         etiquettes: etiquettes as never,
         fond: carte.afficherFond === false ? "aucun" : e.fond,
-        tranche: planche.tranche,
       };
     }
-    if (e.type === "profil") return { ...e, tranche: planche.tranche };
     if (e.type === "marque" && chaine(carte.marque) === "rien") return { ...e, masque: true };
     return e;
   });

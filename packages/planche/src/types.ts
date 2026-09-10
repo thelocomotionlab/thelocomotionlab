@@ -120,6 +120,16 @@ export type ElementTexte = ElementCommun & {
    * place écrit ce balisage ; il reste lisible, diffable et copiable tel quel.
    */
   contenu: string;
+  /**
+   * ENTRÉE FAIT UNE LIGNE.
+   *
+   * Le moteur typographique sait faire les deux : recoller les lignes d'un
+   * paragraphe comme le fait Markdown, ou les garder telles quelles. Dans un
+   * studio où l'on tape dans l'image, la seconde est la seule qui ne surprenne
+   * pas — d'où la valeur par défaut. Les documents de la v1 arrivent avec le
+   * réglage qu'ils avaient, pour que leur mise en page ne bouge pas.
+   */
+  lignesDures: boolean;
   role: RoleTexte;
   /** La puce des points de liste — une forme tracée ou une clé d'icône. */
   puce: string;
@@ -210,7 +220,6 @@ export type Etiquette = {
 export type ElementCarte = ElementCommun & {
   type: "carte";
   fond: FondCarte;
-  tranche: Tranche;
   /** Une couleur par journée, cyclique. */
   couleurs: string[];
   epaisseur: number;
@@ -223,7 +232,6 @@ export type ElementCarte = ElementCommun & {
 
 export type ElementProfil = ElementCommun & {
   type: "profil";
-  tranche: Tranche;
   remplissage: string;
   /** Ce qu'il reste à parcourir, estompé. */
   restantEstompe: boolean;
@@ -320,7 +328,14 @@ export type PlancheImage = {
   modele: CleModele;
   /** Vide = le fond du thème. */
   fond: string;
-  /** La tranche de journées que suivent les éléments liés aux données. */
+  /**
+   * LA TRANCHE EST UN RÉGLAGE DE LA PLANCHE, et d'elle seule.
+   *
+   * Carte, profil et chiffres la suivent : une planche d'étape montre le jour
+   * trois quand sa voisine montre le tour entier, sans qu'aucun élément ait à
+   * porter sa propre idée de la question. Un second réglage sur l'élément
+   * ferait deux vérités pour une seule image.
+   */
   tranche: Tranche;
   /** Du fond vers l'avant : l'ordre du tableau EST l'ordre des calques. */
   elements: Element[];
