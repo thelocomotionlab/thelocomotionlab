@@ -16,6 +16,7 @@ import { enPixels, formatDe, type Element, type PlancheImage, type Projet } from
 
 import { avecTranche, surSelection } from "@/lib/projet";
 import type { PosteDeTravail } from "@/lib/usePosteDeTravail";
+import InspecteurSurvol from "./InspecteurSurvol";
 import ReglageTranche from "./ReglageTranche";
 
 const NOMS: Record<Element["type"], string> = {
@@ -80,6 +81,14 @@ function Nombre({
 
 export default function Inspecteur({ poste }: { poste: PosteDeTravail }) {
   const { projet, selection, modifier, indexPlanche } = poste;
+
+  // Un survol ne se règle pas comme une planche : sa scène, sa caméra et son
+  // montage n'ont pas d'équivalent, et ses éléments de HUD se prennent dans
+  // l'image comme ailleurs.
+  if (poste.plancheCourante?.type === "survol") {
+    return <InspecteurSurvol poste={poste} planche={poste.plancheCourante} />;
+  }
+
   const planche: PlancheImage | null =
     poste.plancheCourante?.type === "image" ? poste.plancheCourante : null;
   const choisis = (planche?.elements ?? []).filter((e) => selection.includes(e.id));

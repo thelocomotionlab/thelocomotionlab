@@ -38,6 +38,7 @@ import { usePosteDeTravail } from "@/lib/usePosteDeTravail";
 import FicheRaccourcis from "./FicheRaccourcis";
 import BoiteAOutils from "./BoiteAOutils";
 import PosteMobile from "./PosteMobile";
+import Survol from "./Survol";
 
 export default function PosteDeTravail() {
   const poste = usePosteDeTravail();
@@ -277,10 +278,14 @@ export default function PosteDeTravail() {
       <div className="flex min-h-0 flex-1">
         <Rail actif={poste.tiroir} onChange={poste.setTiroir} />
         {poste.tiroir !== null && <Tiroir cle={poste.tiroir} poste={poste} />}
-        <div className="relative flex min-w-0 flex-1">
-          <PlanDeTravail poste={poste} />
-          <BoiteAOutils actif={poste.outil} onChange={poste.setOutil} />
-        </div>
+        {poste.plancheCourante?.type === "survol" ? (
+          <Survol poste={poste} planche={poste.plancheCourante} />
+        ) : (
+          <div className="relative flex min-w-0 flex-1">
+            <PlanDeTravail poste={poste} />
+            <BoiteAOutils actif={poste.outil} onChange={poste.setOutil} />
+          </div>
+        )}
         <Inspecteur poste={poste} />
       </div>
 

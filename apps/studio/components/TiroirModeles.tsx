@@ -16,7 +16,7 @@
 import { useState } from "react";
 import { modelesPour, type CleModele, type Tranche } from "@locomotionlab/planche";
 
-import { avecModele, avecPlanchesDeJournee } from "@/lib/projet";
+import { avecModele, avecPlanches, avecPlanchesDeJournee, survolNeuf } from "@/lib/projet";
 import type { PosteDeTravail } from "@/lib/usePosteDeTravail";
 import ReglageTranche from "./ReglageTranche";
 
@@ -89,6 +89,34 @@ export default function TiroirModeles({ poste }: { poste: PosteDeTravail }) {
 
       <section className="mt-4 border-t border-brand-hairline pt-3">
         <h3 className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-brand-muted">
+          Survol
+        </h3>
+        <button
+          type="button"
+          disabled={!projet.donnees.seance}
+          onClick={() =>
+            modifier(
+              (p) => {
+                const planches = [...p.planches, survolNeuf(p)];
+                queueMicrotask(() => setPlanche(planches.length - 1));
+                return avecPlanches(p, planches);
+              },
+              { libelle: "ajouter un survol" },
+            )
+          }
+          className="w-full rounded-md border border-brand-field px-3 py-2 text-[13px] transition-colors hover:bg-brand-primary/10 motion-reduce:transition-none disabled:opacity-40"
+        >
+          + Survol
+        </button>
+        <p className="mt-1.5 text-[11px] leading-snug text-brand-muted">
+          {projet.donnees.seance
+            ? "La séance rejouée sur le relief : la caméra suit le point, les chiffres défilent."
+            : "Charge une séance — un GPX de montre — dans Données pour la survoler."}
+        </p>
+      </section>
+
+      <section className="mt-4 border-t border-brand-hairline pt-3">
+        <h3 className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-brand-muted">
           Planche de journée
         </h3>
         {jours === 0 ? (
@@ -136,10 +164,12 @@ export default function TiroirModeles({ poste }: { poste: PosteDeTravail }) {
               <button
                 type="button"
                 onClick={() => poserJournees(jours, 0)}
-                title={`Une planche par journée, de J1 à J${jours}`}
+                title={
+                  jours > 1 ? `Une planche par journée, de J1 à J${jours}` : "Une planche pour J1"
+                }
                 className="flex-1 rounded-md border border-brand-field px-2 py-1.5 text-[12px] transition-colors hover:bg-brand-primary/10 motion-reduce:transition-none"
               >
-                + Les {jours} journées
+                {jours > 1 ? `+ Les ${jours} journées` : "+ La journée"}
               </button>
             </div>
           </div>

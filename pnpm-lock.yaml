@@ -172,6 +172,9 @@ importers:
       '@locomotionlab/trace':
         specifier: workspace:*
         version: link:../../packages/trace
+      '@locomotionlab/tracking':
+        specifier: workspace:*
+        version: link:../../packages/tracking
       '@locomotionlab/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -181,6 +184,9 @@ importers:
       lucide-react:
         specifier: ^0.554.0
         version: 0.554.0(react@19.2.0)
+      maplibre-gl:
+        specifier: ^5.13.0
+        version: 5.24.0
       next:
         specifier: ^16.1.1
         version: 16.2.9(@babel/core@7.29.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)

@@ -19,6 +19,7 @@ import BandeDesPlanches from "./BandeDesPlanches";
 import BarreMobile from "./BarreMobile";
 import DialogueExport from "./DialogueExport";
 import PlanDeTravail from "./PlanDeTravail";
+import Survol from "./Survol";
 import { Download, Redo2, Undo2 } from "lucide-react";
 
 import { avecNom } from "@/lib/projet";
@@ -79,7 +80,11 @@ export default function PosteMobile({ poste }: { poste: PosteDeTravail }) {
       {bande && <BandeDesPlanches poste={poste} compact />}
 
       <div className="relative flex min-h-0 flex-1 flex-col">
-        <PlanDeTravail poste={poste} avecBarre={false} />
+        {poste.plancheCourante?.type === "survol" ? (
+          <Survol poste={poste} planche={poste.plancheCourante} />
+        ) : (
+          <PlanDeTravail poste={poste} avecBarre={false} />
+        )}
         <BarreMobile poste={poste} bandeOuverte={bande} onBande={() => setBande((b) => !b)} />
       </div>
 

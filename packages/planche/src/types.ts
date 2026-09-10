@@ -247,6 +247,10 @@ export type CleVariable =
   | "vitesse"
   | "fc_moy"
   | "fc_max"
+  /** La FC et l'altitude À L'INSTANT : elles ne veulent rien dire sur une
+   *  planche fixe, et c'est le survol qui les fait battre. */
+  | "fc"
+  | "altitude"
   | "cadence"
   | "alt_max"
   | "jour"
