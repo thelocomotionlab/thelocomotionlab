@@ -7,8 +7,8 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint && tsc --noEmit",
-    "deploy:cf": "npx @cloudflare/next-on-pages && npx wrangler pages deploy .vercel/output/static --project-name=thelocomotionlab-studio",
-    "deploy:staging": "npx @cloudflare/next-on-pages && npx wrangler pages deploy .vercel/output/static --project-name=thelocomotionlab-studio --branch=staging"
+    "deploy:cf": "npx --legacy-peer-deps @cloudflare/next-on-pages && npx wrangler pages deploy .vercel/output/static --project-name=thelocomotionlab-studio",
+    "deploy:staging": "npx --legacy-peer-deps @cloudflare/next-on-pages && npx wrangler pages deploy .vercel/output/static --project-name=thelocomotionlab-studio --branch=staging"
   },
   "dependencies": {
     "@locomotionlab/planche": "workspace:*",
