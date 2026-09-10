@@ -19,10 +19,16 @@ contexte complet.
 
 ```
 ├─ apps/
-│  ├─ site/        # le site actuel (Next + JS) → Cloudflare Pages
+│  ├─ site/        # le site public (Next + JS) → Cloudflare Pages
+│  ├─ studio/      # le poste de travail des visuels (Next + TS) → Cloudflare Pages
 │  └─ _template/   # gabarit d'app Next + TS qui consomme packages/ui
 ├─ packages/
-│  └─ ui/          # LA charte partagée (tokens + preset + fonts + composants)
+│  ├─ ui/          # LA charte partagée (tokens + preset + fonts + composants)
+│  ├─ contenu/     # le modèle de contenu du site (schémas, résolveur, CLI)
+│  ├─ tracking/    # le direct : carte, replay, styles cartographiques
+│  ├─ trace/       # lire une trace : GPX, .track.json, statistiques, séances
+│  └─ planche/     # le modèle de document du studio, sa charte, ses interactions
+├─ services/       # les conteneurs du VPS, la passerelle email, le moteur Twin
 ├─ infra/          # infra-as-code (à venir)
 └─ docs/           # plans, runbooks, déploiement, secrets
 ```
@@ -37,6 +43,7 @@ pnpm install               # installe tout le workspace
 pnpm --filter site dev     # lance le site en local
 pnpm --filter site build   # build du site (identique à avant)
 
+pnpm --filter studio dev   # lance le studio en local
 pnpm --filter _template dev # lance le gabarit
 
 pnpm dev                   # turbo : lance toutes les apps

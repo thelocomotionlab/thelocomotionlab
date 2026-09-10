@@ -1,9 +1,9 @@
 # CLAUDE.md — Locomotion Lab
 
-Monorepo du Locomotion Lab : le site public (Next.js, JavaScript, `apps/site`), les services (`services/` —
-conteneurs sur le VPS, sauf la passerelle email, Worker Cloudflare), le moteur Locomotion Twin (Python,
-`services/twin-engine`), et trois paquets partagés (`packages/` : la charte `ui`, le modèle de `contenu`,
-le `tracking`).
+Monorepo du Locomotion Lab : le site public (Next.js, JavaScript, `apps/site`), le studio (Next.js,
+TypeScript, `apps/studio`), les services (`services/` — conteneurs sur le VPS, sauf la passerelle email,
+Worker Cloudflare), le moteur Locomotion Twin (Python, `services/twin-engine`), et cinq paquets partagés
+(`packages/` : la charte `ui`, le modèle de `contenu`, le `tracking`, la `trace`, la `planche`).
 
 **Ce fichier est la seule règle permanente du dépôt.** Tout ce qui est dans `docs/` est un mode d'emploi ou de
 l'histoire, jamais une loi. Une décision prise hier n'est pas un ordre pour aujourd'hui.
