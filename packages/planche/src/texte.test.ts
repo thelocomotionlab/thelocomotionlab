@@ -9,16 +9,19 @@ import {
   decalageAlignement,
   dessinerCapitales,
   dessinerLigneRiche,
+  ecartDe,
   encreDe,
   fonteDe,
   glypheTrace,
   hauteurBlocs,
+  hauteurDeLigne,
   largeurBlocs,
   largeurIcone,
   largeurLigne,
   lignesRiches,
   morceauxCapitales,
   poserBlocs,
+  tailleDe,
   texteNu,
   type Bloc,
   type StyleTexte,
@@ -648,5 +651,56 @@ describe("la pose sur le canvas", () => {
     const enListe = largeurBlocs(ctx, blocsDeTexte(ctx, "- abcd", 500, BASE), BASE);
     expect(large).toBe(40);
     expect(enListe).toBeGreaterThan(large);
+  });
+});
+
+describe("les rôles nommés", () => {
+  it("donne au morceau le corps de son rôle", () => {
+    const morceaux = analyserRiche("Jour 2 [surtitre: VALLOUISE]");
+    const base = { taille: 65, corps: { surtitre: 22 } };
+    expect(tailleDe(morceaux[0]!, base)).toBe(65);
+    expect(tailleDe(morceaux[morceaux.length - 1]!, base)).toBe(22);
+  });
+
+  it("ne met pas le mot en ambre au passage", () => {
+    const morceaux = analyserRiche("[surtitre: VALLOUISE]");
+    expect(morceaux.every((m) => !m.accent)).toBe(true);
+  });
+
+  it("retombe sur le corps de la ligne quand la charte est muette", () => {
+    const morceaux = analyserRiche("[surtitre: X]");
+    expect(tailleDe(morceaux[0]!, { taille: 40 })).toBe(40);
+  });
+
+  it("écarte les lettres d'un rôle qui l'exige", () => {
+    const [mo] = analyserRiche("[surtitre: AB]");
+    const base = { taille: 65, corps: { surtitre: 22 }, lettrages: { surtitre: 0.16 } };
+    expect(ecartDe(mo!, base)).toBeCloseTo(22 * 0.16, 5);
+    expect(ecartDe({ texte: "AB" }, base)).toBe(0);
+  });
+
+  it("remonte le petit corps sur les capitales du gros", () => {
+    const ctx = ctxFactice();
+    const base: StyleTexte = {
+      police: "Ubuntu",
+      taille: 65,
+      couleur: "#000",
+      accent: "#f00",
+      corps: { surtitre: 22 },
+    };
+    const ligne = lignesRiches(ctx, analyserRiche("Jour [surtitre: X]"), 10_000, base)[0]!;
+    dessinerLigneRiche(ctx, ligne, 0, 100, base);
+    const y = ctx.ops.filter((o) => o.op === "fillText").map((o) => Number(o.args[2]));
+    expect(y[0]).toBe(100);
+    // Le petit remonte de la moitié de ce qui sépare les deux hauteurs de
+    // capitale — il ne pend pas au pied du gros.
+    expect(y[y.length - 1]).toBeCloseTo(100 - 0.35 * (65 - 22), 5);
+  });
+
+  it("la ligne réclame la hauteur de son plus gros morceau", () => {
+    const ctx = ctxFactice();
+    const base = { police: "Ubuntu", taille: 20, couleur: "#000", accent: "#f00", corps: { titre: 65 } };
+    const ligne = lignesRiches(ctx, analyserRiche("a [titre: B]"), 10_000, base)[0]!;
+    expect(hauteurDeLigne(ligne, base)).toBe(65);
   });
 });

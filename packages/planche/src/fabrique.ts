@@ -231,6 +231,8 @@ export function profilNeuf(boite: Boite, over: Partial<ElementProfil> = {}): Ele
     type: "profil",
     remplissage: "",
     restantEstompe: true,
+    parJournee: true,
+    couleurs: [],
     ...over,
   };
 }
@@ -243,6 +245,9 @@ export function casesNeuves(boite: Boite, over: Partial<ElementCases> = {}): Ele
     miniCarte: true,
     miniProfil: true,
     filet: true,
+    cases: [],
+    taille: 30,
+    couleurs: [],
     ...over,
   };
 }

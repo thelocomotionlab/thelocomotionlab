@@ -38,10 +38,10 @@ const APPARENCE: Record<Element["type"], readonly string[]> = {
   icone: ["couleur", "epaisseur"],
   marque: ["variante", "teinte"],
   carte: ["fond", "couleurs", "epaisseur", "depart", "arrivee", "itineraireSourdine"],
-  profil: ["remplissage", "restantEstompe"],
+  profil: ["remplissage", "restantEstompe", "parJournee", "couleurs"],
   stat: ["taille", "libelle"],
   fiche: ["tailleLibelle", "tailleValeur"],
-  cases: ["colonnes", "miniCarte", "miniProfil", "filet"],
+  cases: ["colonnes", "miniCarte", "miniProfil", "filet", "taille", "couleurs"],
 };
 
 export type Apparence = { type: Element["type"]; valeurs: Record<string, unknown> };

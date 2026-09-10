@@ -406,3 +406,50 @@ function segmentsEntiers(c: ContexteRendu): Segment[] {
     },
   ];
 }
+
+/**
+ * LA MINI-CARTE D'UNE CASE : la boucle entière en sourdine, une journée en
+ * couleur.
+ *
+ * Ce n'est pas `dessinerCarte` en petit — ni fond, ni étiquettes, ni bornes. La
+ * boucle entière revient dans CHAQUE case et c'est elle qui SITUE la journée :
+ * seule la portion colorée se déplace d'une case à l'autre, et c'est ce
+ * déplacement qui fait lire une progression. Quatre cartes recadrées sur leur
+ * propre journée se ressembleraient toutes.
+ */
+export function miniCarte(
+  ctx: Ctx2D,
+  b: BoitePx,
+  cadrage: readonly Coord[],
+  journee: { coords: readonly Coord[]; couleur: string } | null,
+  c: ContexteRendu,
+): void {
+  const vue = vueDeLaCarte(b, cadrage);
+  if (!vue) return;
+  const projeter = ([lon, lat]: Coord): [number, number] => {
+    const [x, y] = vue.project([lon, lat]);
+    return [b.x + x, b.y + y];
+  };
+  const epaisseur = Math.max(1.5, b.l * 0.022);
+
+  ctx.save();
+  polyligne(
+    ctx,
+    decimerPixels(cadrage.map(projeter)),
+    rgba(c.theme.encre, 0.24),
+    epaisseur * 0.7,
+    false,
+    c.theme.encre,
+  );
+  if (journee && journee.coords.length > 1) {
+    polyligne(
+      ctx,
+      decimerPixels(journee.coords.map(projeter)),
+      journee.couleur,
+      epaisseur,
+      true,
+      c.theme.encre,
+    );
+  }
+  ctx.restore();
+}

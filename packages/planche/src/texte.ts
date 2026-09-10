@@ -56,6 +56,7 @@ export const COULEURS_TEXTE: Record<string, string | null> = {
 
 export const AIDE_BALISAGE =
   "*gras*  _italique_  ~souligné~  [en ambre]  [bleu: mot]  > retrait\n" +
+  "[surtitre: mot] — le corps de la charte, aligné sur les capitales du voisin\n" +
   ":col: (icône)  :fleche: (celle du swipe)\n" +
   "Distance = 57,5 km  — libellé en capitales, valeur en gros dessous\n" +
   "- point de liste — « - :sac: » met CETTE icône en puce\n" +
@@ -69,6 +70,25 @@ const ICONE = /^:([a-z-]{2,24}):/;
 /** Les familles encore reconnues à la lecture, toutes rendues à l'identique. */
 const FAMILLES_TEXTE: Record<string, true> = { sans: true, serif: true, mono: true };
 
+/**
+ * LES RÔLES DE LA CHARTE, appelables au mot : `[surtitre: VALGAUDÉMAR]`.
+ *
+ * C'est ce qui met deux corps sur UNE ligne — « Jour 2 » en gros, la destination
+ * en petites capitales à côté — sans deux éléments à aligner à la main. Le titre
+ * de presse, en une frappe.
+ *
+ * Les NOMS sont ici, les tailles non : ce module ne décide d'aucun corps. Un rôle
+ * dont l'appelant n'a pas donné la taille retombe sur celle de la ligne, et le
+ * texte s'affiche — jamais il ne disparaît.
+ */
+const ROLES_TEXTE: Record<string, true> = {
+  entete: true,
+  surtitre: true,
+  titre: true,
+  corps: true,
+  pied: true,
+};
+
 const PREFIXE_NOMME = /^\s*([a-zà-ÿ]+)\s*:\s*/i;
 
 export type Morceau = {
@@ -80,6 +100,8 @@ export type Morceau = {
   couleur?: string;
   famille?: string;
   icone?: string;
+  /** Un rôle de la charte : c'est lui qui donne au morceau SON corps. */
+  role?: string;
 };
 
 /** Un morceau une fois mesuré, prêt à poser. */
@@ -89,13 +111,14 @@ export type Ligne = MorceauMesure[];
 
 function prefixeNomme(
   contenu: string,
-): { quoi: "couleur" | "famille"; nom: string; reste: string } | null {
+): { quoi: "couleur" | "famille" | "role"; nom: string; reste: string } | null {
   const m = PREFIXE_NOMME.exec(contenu);
   if (!m) return null;
   const nom = m[1]!.toLowerCase().normalize("NFD").replace(/[\u0300-\u036F]/g, "");
   const reste = contenu.slice(m[0].length);
   if (nom in COULEURS_TEXTE) return { quoi: "couleur", nom, reste };
   if (nom in FAMILLES_TEXTE) return { quoi: "famille", nom, reste };
+  if (nom in ROLES_TEXTE) return { quoi: "role", nom, reste };
   return null;
 }
 
@@ -151,15 +174,15 @@ export function analyserRiche(texte: unknown, style: Morceau | object = {}): Mor
         // texte, on ne mange pas les mots de quelqu'un d'autre.
         const nommee = marqueur.cle === "accent" ? prefixeNomme(contenu) : null;
         pousser();
-        // Une FAMILLE ne met pas en ambre : sans cette garde, nommer une police
-        // teindrait le mot.
-        const famille = nommee?.quoi === "famille";
+        // NI UNE FAMILLE NI UN RÔLE NE METTENT EN AMBRE : sans cette garde,
+        // nommer une police ou un corps teindrait le mot.
+        const sansAccent = nommee?.quoi === "famille" || nommee?.quoi === "role";
         out.push(
           ...analyserRiche(nommee ? nommee.reste : contenu, {
             ...herite,
-            ...(famille
-              ? { famille: nommee.nom }
-              : { [marqueur.cle as CleMarqueur]: true }),
+            ...(sansAccent ? null : { [marqueur.cle as CleMarqueur]: true }),
+            ...(nommee?.quoi === "famille" ? { famille: nommee.nom } : null),
+            ...(nommee?.quoi === "role" ? { role: nommee.nom } : null),
             ...(nommee?.quoi === "couleur" ? { couleur: nommee.nom } : null),
           }),
         );
@@ -209,6 +232,13 @@ export type StyleTexte = {
   alinea?: number;
   /** Chaque retour tapé reste une ligne — pour une légende, pas un texte suivi. */
   lignesDures?: boolean;
+  /**
+   * Les corps que la charte donne à ses rôles, pour `[surtitre: mot]`. Absent,
+   * un rôle nommé garde le corps de la ligne.
+   */
+  corps?: Record<string, number>;
+  /** Et leur interlettrage, en em — c'est lui qui fait des capitales espacées. */
+  lettrages?: Record<string, number>;
   couleurLabel?: string;
   couleurValeur?: string;
   tailleLabel?: number;
@@ -233,11 +263,49 @@ export type PlaqueRendu = {
  * bloc : un corps déjà en 500 mis en gras doit monter, pas s'aligner sur un 700
  * arbitraire.
  */
-export function fonteDe(morceau: Morceau, base: Pick<StyleTexte, "police" | "taille" | "graisse">): string {
+/**
+ * Le corps d'un morceau : celui de son rôle, sinon celui de la ligne.
+ *
+ * Un rôle que l'appelant n'a pas tarifé retombe sur la ligne plutôt que sur zéro
+ * — un mot mal nommé ne doit pas faire disparaître la phrase.
+ */
+export function tailleDe(
+  morceau: Morceau,
+  base: Pick<StyleTexte, "taille" | "corps">,
+): number {
+  const nommee = morceau.role ? base.corps?.[morceau.role] : undefined;
+  return Number.isFinite(nommee) && (nommee as number) > 0 ? (nommee as number) : base.taille;
+}
+
+/** L'écart entre les lettres d'un morceau, en pixels. Zéro hors d'un rôle. */
+export function ecartDe(
+  morceau: Morceau,
+  base: Pick<StyleTexte, "taille" | "corps" | "lettrages">,
+): number {
+  const em = morceau.role ? base.lettrages?.[morceau.role] : undefined;
+  return Number.isFinite(em) ? (em as number) * tailleDe(morceau, base) : 0;
+}
+
+export function fonteDe(
+  morceau: Morceau,
+  base: Pick<StyleTexte, "police" | "taille" | "graisse" | "corps">,
+): string {
   const style = morceau.italique ? "italic " : "";
   const graisse = base.graisse ?? 400;
   const poids = morceau.gras ? Math.max(700, graisse) : graisse;
-  return `${style}${poids} ${base.taille}px ${base.police}`;
+  return `${style}${poids} ${tailleDe(morceau, base)}px ${base.police}`;
+}
+
+/**
+ * La hauteur qu'une ligne réclame : celle de son plus gros morceau.
+ *
+ * Sans elle, un `[titre: MOT]` glissé dans un paragraphe écraserait la ligne
+ * suivante — mesure et pose lisent donc toutes deux cette hauteur-là.
+ */
+export function hauteurDeLigne(ligne: Ligne, base: StyleTexte): number {
+  let max = base.taille;
+  for (const m of ligne) max = Math.max(max, tailleDe(m, base));
+  return max;
 }
 
 /**
@@ -375,7 +443,9 @@ export function lignesRiches(
 
   for (const mot of mots) {
     ctx.font = fonteDe(mot, base);
-    const w = mot.icone ? largeurIcone(base, mot.icone) : ctx.measureText(mot.texte).width;
+    const w = mot.icone
+      ? largeurIcone({ taille: tailleDe(mot, base) }, mot.icone)
+      : ctx.measureText(mot.texte).width + ecartDe(mot, base) * mot.texte.length;
     const espace = !mot.icone && EST_ESPACE.test(mot.texte);
 
     // L'ALINÉA rétrécit la PREMIÈRE ligne, pas les suivantes : c'est ce qui fait
@@ -553,26 +623,38 @@ export function dessinerLigneRiche(
   plaqueDeLigne(ctx, ligne, x, y, base);
   let curseur = x;
   for (const morceau of ligne) {
+    const taille = tailleDe(morceau, base);
+    /**
+     * DEUX CORPS SUR UNE LIGNE SE CENTRENT SUR LEURS CAPITALES, pas sur la ligne
+     * de base qu'ils partagent.
+     *
+     * Posé sur la même ligne de base qu'un mot trois fois plus gros, un petit
+     * mot pend à son PIED : typographiquement c'est juste, optiquement c'est un
+     * décrochage. On fait donc coïncider les deux centres optiques — le milieu
+     * des capitales est à `CENTRE_CAPITALES` au-dessus de la ligne de base —, ce
+     * qui revient à remonter le petit de la moitié de ce qui les sépare.
+     */
+    const ligneDeBase = y - CENTRE_CAPITALES * (base.taille - taille);
     if (morceau.icone) {
       const glyphe = glypheTrace(morceau.icone);
       if (glyphe) {
-        const large = base.taille * FLECHE_LARGEUR;
+        const large = taille * FLECHE_LARGEUR;
         glyphe.dessiner(
           ctx,
           curseur + (morceau.largeur - large) / 2,
-          y - base.taille * CENTRE_CAPITALES,
-          base.taille,
+          ligneDeBase - taille * CENTRE_CAPITALES,
+          taille,
           encreDe(morceau, base),
         );
         curseur += morceau.largeur;
         continue;
       }
-      const cote = base.taille * 0.98;
+      const cote = taille * 0.98;
       vocabulaireDIcones().dessiner(
         ctx,
         morceau.icone,
         curseur + (morceau.largeur - cote) / 2,
-        y - base.taille * CENTRE_CAPITALES - cote / 2,
+        ligneDeBase - taille * CENTRE_CAPITALES - cote / 2,
         cote,
         encreDe(morceau, base),
       );
@@ -581,13 +663,24 @@ export function dessinerLigneRiche(
     }
     ctx.font = fonteDe(morceau, base);
     ctx.fillStyle = encreDe(morceau, base);
-    ctx.fillText(morceau.texte, curseur, y);
+    // UN RÔLE PEUT ÉCARTER SES LETTRES : `fillText` d'un mot entier ne sait pas
+    // le faire, et c'est l'interlettrage qui fait des capitales de la charte.
+    const ecart = ecartDe(morceau, base);
+    if (ecart) {
+      let lettre = curseur;
+      for (const l of morceau.texte) {
+        ctx.fillText(l, lettre, ligneDeBase);
+        lettre += ctx.measureText(l).width + ecart;
+      }
+    } else {
+      ctx.fillText(morceau.texte, curseur, ligneDeBase);
+    }
 
     if (morceau.souligne && !EST_ESPACE.test(morceau.texte)) {
       // Épaisseur et distance proportionnelles au corps : un soulignement fixé
       // en pixels colle au texte à 22 px et flotte à 65.
-      const epaisseur = Math.max(1, base.taille * 0.055);
-      ctx.fillRect(curseur, y + base.taille * 0.17, morceau.largeur, epaisseur);
+      const epaisseur = Math.max(1, taille * 0.055);
+      ctx.fillRect(curseur, ligneDeBase + taille * 0.17, morceau.largeur, epaisseur);
     }
     curseur += morceau.largeur;
   }
@@ -1077,11 +1170,14 @@ export function hauteurBlocs(blocs: readonly Bloc[], base: StyleTexte): number {
     else if (bloc.type === "donnee") h += hauteurDonnee(bloc, b);
     else if (bloc.type === "liste") {
       h += bloc.items.reduce(
-        (somme, it) => somme + it.lignes.length * b.taille * esp(b, "interligne"),
+        (somme, it) =>
+          somme +
+          it.lignes.reduce((h, l) => h + hauteurDeLigne(l, b) * esp(b, "interligne"), 0),
         0,
       );
       h += Math.max(0, bloc.items.length - 1) * b.taille * esp(b, "entreItems");
-    } else h += bloc.lignes.length * b.taille * esp(b, "interligne");
+    } else
+      h += bloc.lignes.reduce((s, l) => s + hauteurDeLigne(l, b) * esp(b, "interligne"), 0);
   });
   return h;
 }
@@ -1274,8 +1370,13 @@ export function poserBlocs(
       bloc.items.forEach((item, k) => {
         const { lignes } = item;
         if (k > 0) y += b.taille * esp(b, "entreItems");
+        // Un curseur, et non l'index de la ligne : une ligne peut être plus
+        // haute que les autres, et c'est la SIENNE qui doit pousser la suivante.
+        let dy = 0;
         lignes.forEach((ligne, j) => {
-          const baseLigne = y + b.taille * 0.78 + j * b.taille * interligne;
+          const haut = hauteurDeLigne(ligne, b);
+          const baseLigne = y + dy + haut * 0.78;
+          dy += haut * interligne;
           // Une liste alignée autrement qu'à gauche garde sa puce COLLÉE au
           // texte plutôt qu'à une marge : sinon chaque puce flotte à une
           // abscisse différente, et ça ne se lit plus comme une liste.
@@ -1289,13 +1390,16 @@ export function poserBlocs(
           if (j === 0) dessinerPuce(ctx, item.puce ?? puce, gauche - retrait, baseLigne, b);
           dessinerLigneRiche(ctx, ligne, gauche, baseLigne, b);
         });
-        y += lignes.length * b.taille * interligne;
+        y += dy;
       });
       return;
     }
 
+    let dy = 0;
     bloc.lignes.forEach((ligne, j) => {
-      const baseLigne = y + b.taille * 0.78 + j * b.taille * interligne;
+      const haut = hauteurDeLigne(ligne, b);
+      const baseLigne = y + dy + haut * 0.78;
+      dy += haut * interligne;
       // L'alinéa ne concerne QUE la première ligne, et n'a aucun sens hors de
       // l'alignement à gauche : un texte centré n'a pas de bord sur lequel se
       // décaler.
@@ -1304,7 +1408,7 @@ export function poserBlocs(
         x + decale + decalageAlignement(al, largeur - decale, largeurLigne(ligne));
       dessinerLigneRiche(ctx, ligne, gauche, baseLigne, b);
     });
-    y += bloc.lignes.length * b.taille * interligne;
+    y += dy;
   });
   return y;
 }

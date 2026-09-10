@@ -3,7 +3,7 @@ import { decouperTrace, traceDepuisTrackJson } from "@locomotionlab/trace";
 import type { Trace } from "@locomotionlab/trace";
 
 import { definirVocabulaireDIcones } from "./canvas.ts";
-import { THEMES } from "./charte.ts";
+import { PALETTE_JOURS, THEMES } from "./charte.ts";
 import {
   cadrageCouverture,
   cheminDuProfil,
@@ -382,6 +382,91 @@ describe("les chiffres liés aux données", () => {
   });
 });
 
+/** Les couleurs posées à chaque `fill`, dans l'ordre. */
+function teintesRemplies(ctx: CtxFactice): string[] {
+  return ctx.ops.flatMap((o) => (o.op === "fill" ? [String(o.args[0])] : []));
+}
+
+describe("le profil", () => {
+  /** Le fond factice ne note pas le style courant : on le lui fait dire. */
+  function rendreEnNotant(elements: Element[]): CtxFactice {
+    const ctx = ctxFactice();
+    const cible = ctx as unknown as Record<string, (...a: unknown[]) => void>;
+    const fill = cible.fill!.bind(ctx);
+    cible.fill = () => fill(ctx.fillStyle);
+    const { p, planche } = projet(elements);
+    dessinerPlanche(
+      ctx,
+      planche,
+      contexteDeRendu(p, planche, {
+        police: "Ubuntu",
+        segments: decouperTrace(p.donnees.trace, p.donnees.coupures),
+      }),
+    );
+    return ctx;
+  }
+
+  function profil(over: Record<string, unknown> = {}): Element {
+    return {
+      ...commun("pr1"),
+      type: "profil",
+      remplissage: "",
+      restantEstompe: true,
+      parJournee: true,
+      couleurs: [],
+      ...over,
+    } as Element;
+  }
+
+  it("donne à chaque journée SA couleur", () => {
+    const teintes = teintesRemplies(rendreEnNotant([profil()]));
+    const jours = teintes.filter((t) => PALETTE_JOURS.includes(t as never));
+    // Trois journées, trois teintes différentes de la palette.
+    expect(new Set(jours).size).toBe(3);
+  });
+
+  it("garde une seule couleur quand une seule journée est montrée", () => {
+    const ctx = ctxFactice();
+    const cible = ctx as unknown as Record<string, (...a: unknown[]) => void>;
+    const fill = cible.fill!.bind(ctx);
+    cible.fill = () => fill(ctx.fillStyle);
+    const { p, planche } = projet([profil()]);
+    const seule: PlancheImage = { ...planche, tranche: { mode: "seule", jour: 1 } };
+    dessinerPlanche(
+      ctx,
+      seule,
+      contexteDeRendu(p, seule, {
+        police: "Ubuntu",
+        segments: decouperTrace(p.donnees.trace, p.donnees.coupures),
+      }),
+    );
+    const jours = teintesRemplies(ctx).filter((t) => PALETTE_JOURS.includes(t as never));
+    expect(jours).toEqual([]);
+  });
+
+  it("une couleur imposée passe devant les journées", () => {
+    const teintes = teintesRemplies(rendreEnNotant([profil({ remplissage: "#123456" })]));
+    expect(teintes.filter((t) => t === "#123456").length).toBe(3);
+  });
+
+  /**
+   * LA PART MONTRÉE SE POSE SUR LA SILHOUETTE, elle ne se réétire pas dedans.
+   * Deux journées de reliefs différents doivent partager le même sol et le même
+   * plafond, sinon la portion colorée flotte au-dessus du trait qui la porte.
+   */
+  it("projette toutes les journées sur la même échelle", () => {
+    const ctx = rendreEnNotant([profil()]);
+    const y = ctx.ops
+      .filter((o) => o.op === "lineTo")
+      .map((o) => Number(o.args[1]));
+    // Le point le plus haut du tracé est le sommet de la trace, atteint par la
+    // journée qui le contient — et il ne peut pas être atteint deux fois à des
+    // hauteurs différentes.
+    const sommets = y.filter((v) => v <= Math.min(...y) + 0.5);
+    expect(sommets.length).toBeGreaterThan(1);
+  });
+});
+
 describe("la fiche et les cases", () => {
   it("pose un libellé en capitales et sa valeur", () => {
     const fiche = {
@@ -400,7 +485,7 @@ describe("la fiche et les cases", () => {
     expect(dit).toContain("Écrins");
   });
 
-  it("range les journées en grille et les numérote", () => {
+  it("écrit dans chaque case le jour et ses chiffres à lui", () => {
     const cases = {
       ...commun("c1"),
       type: "cases",
@@ -408,9 +493,33 @@ describe("la fiche et les cases", () => {
       miniCarte: false,
       miniProfil: true,
       filet: true,
+      cases: [],
+      taille: 30,
+      couleurs: [],
     } as Element;
-    const dit = poses(rendre([cases]));
-    expect(dit).toEqual(["J1", "J2", "J3"]);
+    const dit = poses(rendre([cases])).join("");
+    expect(dit).toContain("Jour 1");
+    expect(dit).toContain("Jour 3");
+    // Les chiffres sont ceux de LA journée, pas ceux de la trace entière.
+    expect(dit).toContain("40,0");
+    expect(dit).not.toContain("120,0");
+  });
+
+  it("laisse le texte écrit remplacer celui de la journée", () => {
+    const cases = {
+      ...commun("c1"),
+      type: "cases",
+      colonnes: 1,
+      miniCarte: false,
+      miniProfil: false,
+      filet: false,
+      cases: [{ jour: 1, texte: "Jour 2 × Rapace" }],
+      taille: 30,
+      couleurs: [],
+    } as Element;
+    const dit = poses(rendre([cases])).join("");
+    expect(dit).toContain("Rapace");
+    expect(dit).toContain("Jour 1");
   });
 });
 
