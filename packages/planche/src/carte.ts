@@ -279,9 +279,14 @@ export function dessinerCarte(
   ctx.rect(b.x, b.y, b.l, b.h);
   ctx.clip();
 
-  // 1. L'aplat, toujours : une carte sans réseau reste une carte.
-  ctx.fillStyle = rgba(c.theme.encre, 0.06);
-  ctx.fillRect(b.x, b.y, b.l, b.h);
+  // 1. L'APLAT ATTEND LES TUILES. Une carte dont la mosaïque n'est pas encore
+  // là reste une carte : le lavis dit sa place. Mais « aucun fond » n'attend
+  // rien — c'est une SILHOUETTE, et le lavis y devenait une bande grise en
+  // travers de la photo d'une story.
+  if (e.fond !== "aucun") {
+    ctx.fillStyle = rgba(c.theme.encre, 0.06);
+    ctx.fillRect(b.x, b.y, b.l, b.h);
+  }
 
   if (!vue) {
     ctx.restore();

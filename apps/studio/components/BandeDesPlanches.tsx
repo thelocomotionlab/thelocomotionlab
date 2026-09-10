@@ -50,10 +50,17 @@ export default function BandeDesPlanches({
   const hauteur = compact ? 34 : VIGNETTE;
   const largeur = Math.round((hauteur * format.width) / format.height);
 
+  // ON SAUTE SUR LA PLANCHE QU'ON VIENT DE POSER. La créer sans y aller
+  // obligerait à la chercher dans la bande, puis à revenir : les deux gestes
+  // qu'on croyait avoir évités en cliquant sur « + ».
   const ajouter = () =>
-    modifier((p) => avecPlanches(p, [...p.planches, plancheNeuve(p)]), {
-      libelle: "ajouter une planche",
-    });
+    modifier(
+      (p) => {
+        queueMicrotask(() => setPlanche(p.planches.length));
+        return avecPlanches(p, [...p.planches, plancheNeuve(p)]);
+      },
+      { libelle: "ajouter une planche" },
+    );
 
   const dupliquer = () =>
     modifier(
@@ -63,6 +70,7 @@ export default function BandeDesPlanches({
         const copie = { ...source, id: `${source.id}-copie-${p.planches.length}` };
         const planches = [...p.planches];
         planches.splice(indexPlanche + 1, 0, copie);
+        queueMicrotask(() => setPlanche(indexPlanche + 1));
         return avecPlanches(p, planches);
       },
       { libelle: "dupliquer la planche" },

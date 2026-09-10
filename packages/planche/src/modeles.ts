@@ -159,6 +159,9 @@ export function mobilier(f: Format, o: OptionsMobilier = {}): Element[] {
  * de laisser un blanc qu'il faut penser à combler. Sans trace, la variable
  * retombe sur le nom du projet — jamais sur un tiret.
  */
+/** La hauteur qu'un en-tête occupe : surtitre, puis titre sur deux lignes. */
+const HAUTEUR_ENTETE = CORPS.surtitre * 2.1 + CORPS.titre * 2.4;
+
 function enTete(f: Format, c: ContexteModele, y: number, surtitre?: string): Element[] {
   const mot = surtitre ?? (c.vecue ? "la sortie" : "l'itinéraire");
   return [
@@ -183,6 +186,9 @@ export type Modele = {
 };
 
 const LIGNE_FACTUELLE = "{distance} km  ·  {dplus} m D+  ·  {duree}";
+
+/** L'air entre deux blocs d'une pile, en pixels de planche. */
+const ECART_BLOCS = 40;
 
 export const MODELES: Modele[] = [
   {
@@ -369,7 +375,13 @@ export const MODELES: Modele[] = [
     aide: "La trace seule sur une photo, en story.",
     formats: ["story"],
     elements: (f, c) => {
+      // LA PILE SE CALCULE DEPUIS LE BAS, dans l'ordre où on lit : la
+      // silhouette, puis le nom. Poser chaque bloc à une distance choisie à la
+      // main faisait se chevaucher le titre et ce qui le précède dès que la
+      // charte changeait un corps.
       const bas = basDuContenu(f);
+      const hCarte = 420;
+      const yCarte = bas - HAUTEUR_ENTETE - ECART_BLOCS - hCarte;
       return [
         photoNeuve(boite(f, 0, 0, f.width, f.height), {
           fondDePlanche: true,
@@ -377,12 +389,12 @@ export const MODELES: Modele[] = [
           degrades: { haut: 0.4, bas: 0.8, hauteur: 0.34 },
         } as never),
         ...mobilier(f, { pied: false }),
-        carteNeuve(boite(f, MARGE, bas - 620, utile(f), 420), {
+        carteNeuve(boite(f, MARGE, yCarte, utile(f), hCarte), {
           fond: "aucun",
           nom: "Silhouette",
           itineraireSourdine: false,
         } as never),
-        ...enTete(f, c, bas - 170),
+        ...enTete(f, c, yCarte + hCarte + ECART_BLOCS),
       ];
     },
   },
@@ -392,9 +404,14 @@ export const MODELES: Modele[] = [
     aide: "Les chiffres de la sortie sur une photo, en story.",
     formats: ["story"],
     elements: (f, c) => {
+      // Trois chiffres, le profil, puis le nom : la pile se calcule depuis le
+      // bas pour que rien ne se chevauche quand la charte change un corps.
       const bas = basDuContenu(f);
       const large = Math.round(utile(f) / 3);
-      const yChiffres = bas - 430;
+      const hChiffres = 150;
+      const hProfil = 150;
+      const yChiffres = bas - HAUTEUR_ENTETE - ECART_BLOCS - hProfil - ECART_BLOCS - hChiffres;
+      const yProfil = yChiffres + hChiffres + ECART_BLOCS;
       return [
         photoNeuve(boite(f, 0, 0, f.width, f.height), {
           fondDePlanche: true,
@@ -402,11 +419,11 @@ export const MODELES: Modele[] = [
           degrades: { haut: 0.4, bas: 0.85, hauteur: 0.36 },
         } as never),
         ...mobilier(f, { pied: false }),
-        statNeuve(boite(f, MARGE, yChiffres, large, 150), "distance", "km"),
-        statNeuve(boite(f, MARGE + large, yChiffres, large, 150), "dplus", "m D+"),
-        statNeuve(boite(f, MARGE + large * 2, yChiffres, large, 150), "duree", "durée"),
-        profilNeuf(boite(f, MARGE, yChiffres + 190, utile(f), 150)),
-        ...enTete(f, c, bas - 170),
+        statNeuve(boite(f, MARGE, yChiffres, large, hChiffres), "distance", "km"),
+        statNeuve(boite(f, MARGE + large, yChiffres, large, hChiffres), "dplus", "m D+"),
+        statNeuve(boite(f, MARGE + large * 2, yChiffres, large, hChiffres), "duree", "durée"),
+        profilNeuf(boite(f, MARGE, yProfil, utile(f), hProfil)),
+        ...enTete(f, c, yProfil + hProfil + ECART_BLOCS),
       ];
     },
   },
@@ -571,8 +588,17 @@ export function changerModele(
   return { ...planche, modele: cle, elements: [...elements, ...orphelins] };
 }
 
+/**
+ * Ce qui mérite de survivre à un changement de modèle : ce que L'AUTEUR a mis.
+ *
+ * Le MOBILIER n'en est pas. Une pagination porte « {planche} / {planches} » et
+ * un pied « glisse → », mais c'est le modèle qui les a écrits, pas Valentin :
+ * les garder faisait apparaître le « glisse → » d'un carrousel au bas d'une
+ * story, qu'on ne fait pas glisser. Un modèle qui n'a pas de pied n'en veut
+ * pas, et le dire est tout ce que ce test doit faire.
+ */
 function porteQuelqueChose(e: Element): boolean {
-  if (e.type === "texte") return e.contenu.trim() !== "";
+  if (e.type === "texte") return e.role !== "libre" && e.contenu.trim() !== "";
   if (e.type === "photo") return e.mediaId !== null;
   if (e.type === "fiche") return e.lignes.length > 0;
   if (e.type === "stat") return e.valeurManuelle !== null;

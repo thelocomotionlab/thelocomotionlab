@@ -292,3 +292,30 @@ describe("dessiner une carte", () => {
     expect(seule.originX).toBe(toutes.originX);
   });
 });
+
+describe("l'aplat de la carte", () => {
+  /** Les `fillRect` couvrant exactement la boîte : c'est ça, un aplat. */
+  function aplats(fond: ElementCarte["fond"]): number {
+    const carte = { ...carteNeuve({ x: 0.06, y: 0.3, l: 0.88, h: 0.44 }), fond };
+    const { planche, c } = monde([carte]);
+    const ctx: CtxFactice = ctxFactice();
+    dessinerPlanche(ctx, planche, c);
+    const b = { x: 0.06 * 1080, y: 0.3 * 1350, l: 0.88 * 1080, h: 0.44 * 1350 };
+    return ctx.ops.filter(
+      (o) =>
+        o.op === "fillRect" &&
+        Math.abs((o.args[0] as number) - b.x) < 1 &&
+        Math.abs((o.args[2] as number) - b.l) < 1 &&
+        Math.abs((o.args[3] as number) - b.h) < 1,
+    ).length;
+  }
+
+  it("pose un lavis quand la carte ATTEND ses tuiles", () => {
+    expect(aplats("topo")).toBe(1);
+  });
+
+  it("n'en pose aucun sur une silhouette, qui n'attend rien", () => {
+    // Sinon la trace d'une story traîne une bande grise en travers de la photo.
+    expect(aplats("aucun")).toBe(0);
+  });
+});

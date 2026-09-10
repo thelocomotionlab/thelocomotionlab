@@ -15,6 +15,7 @@ import {
 } from "./modeles.ts";
 import type { ContexteModele } from "./modeles.ts";
 import { enPixels } from "./geometrie.ts";
+import { formatDe } from "./charte.ts";
 import { resoudre } from "./variables.ts";
 import type { CleModele, Element, ElementTexte, PlancheImage } from "./types.ts";
 
@@ -180,6 +181,18 @@ describe("changer de modèle", () => {
     expect(dits).toContain("Un récit écrit à la main.");
   });
 
+  it("laisse le mobilier au modèle : une story n'hérite pas du « glisse → »", () => {
+    // La pagination et le pied portent du texte, mais c'est le MODÈLE qui l'a
+    // écrit. Un modèle sans pied n'en veut pas.
+    const story: ContexteModele = { ...CTX, format: "story" };
+    const apres = changerModele(ecrite(), "chiffres", story);
+    const dits = textes(apres).map((e) => e.contenu);
+    expect(dits.some((t) => t.includes("glisse"))).toBe(false);
+    expect(dits.some((t) => t.includes("{planche}"))).toBe(false);
+    // …et le texte de l'auteur, lui, survit.
+    expect(dits).toContain("Un récit écrit à la main.");
+  });
+
   it("garde la tranche de journées de la planche", () => {
     const p = { ...ecrite(), tranche: { mode: "seule", jour: 2 } as const };
     expect(changerModele(p, "etape", CTX).tranche).toEqual({ mode: "seule", jour: 2 });
@@ -316,4 +329,39 @@ describe("les données font le travail", () => {
     )!;
     expect(titre.contenu).toBe("{nom}");
   });
+});
+
+describe("les piles des stories ne se chevauchent pas", () => {
+  const STORY: ContexteModele = { ...CTX, format: "story" };
+
+  /** Les boîtes en pixels, hors fond de planche et hors mobilier d'en-tête. */
+  function blocs(cle: CleModele) {
+    return instancier(cle, STORY)
+      .elements.filter((e) => !(e.type === "photo" && e.fondDePlanche) && e.type !== "marque")
+      .filter((e) => e.type !== "forme")
+      .map((e) => ({ nom: e.nom, ...enPixels(e, "story") }));
+  }
+
+  for (const cle of ["silhouette", "chiffres"] as const) {
+    it(`« ${cle} » empile ses blocs sans qu'aucun n'en recouvre un autre`, () => {
+      const b = blocs(cle);
+      for (let i = 0; i < b.length; i += 1) {
+        for (let j = i + 1; j < b.length; j += 1) {
+          const a = b[i]!;
+          const c = b[j]!;
+          const seCroisent =
+            a.x < c.x + c.l && c.x < a.x + a.l && a.y < c.y + c.h && c.y < a.y + a.h;
+          expect(seCroisent, `${a.nom} recouvre ${c.nom}`).toBe(false);
+        }
+      }
+    });
+
+    it(`« ${cle} » tient dans la zone sûre`, () => {
+      const zone = formatDe("story").zoneSure!;
+      for (const e of blocs(cle)) {
+        expect(e.y, e.nom).toBeGreaterThanOrEqual(zone.top - 1);
+        expect(e.y + e.h, e.nom).toBeLessThanOrEqual(zone.bottom + 1);
+      }
+    });
+  }
 });
