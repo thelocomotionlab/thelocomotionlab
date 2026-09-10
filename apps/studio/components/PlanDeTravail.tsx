@@ -31,6 +31,8 @@ import { policeChargee, policeDuLabo } from "@/lib/police";
 import { completerLesFonds, fondsEnCache } from "@/lib/tuiles";
 import { dessinerChrome, dessinerReperes } from "@/lib/chrome";
 import { useManipulation } from "@/lib/useManipulation";
+import SaisieEnPlace from "./SaisieEnPlace";
+import { surSelection } from "@/lib/projet";
 import type { PosteDeTravail } from "@/lib/usePosteDeTravail";
 
 /** L'air laissé autour de la planche quand elle s'ajuste à la fenêtre. */
@@ -96,6 +98,7 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
 
   const echelle = zoom ?? ajuste;
   const courante = projet.planches[indexPlanche] ?? null;
+  const enSaisie = manip.edition;
   const curseur =
     manip.etat.geste === "deplacer"
       ? "grabbing"
@@ -112,13 +115,23 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
       ctx.fillRect(0, 0, format.width, format.height);
       return;
     }
-    const c = contexteDeRendu(projet, courante, {
+    // L'élément en cours de saisie est retiré du rendu : le champ posé au pixel
+    // le remplace. Le garder dessous doublerait le texte, décalé d'un cheveu.
+    const aDessiner = manip.edition
+      ? {
+          ...courante,
+          elements: courante.elements.map((e) =>
+            e.id === manip.edition?.id ? { ...e, masque: true } : e,
+          ),
+        }
+      : courante;
+    const c = contexteDeRendu(projet, aDessiner, {
       police: policeDuLabo(),
       logo,
       segments: decouperTrace(projet.donnees.trace, projet.donnees.coupures),
       fonds: fondsEnCache(),
     });
-    dessinerPlanche(ctx, courante, c);
+    dessinerPlanche(ctx, aDessiner, c);
 
     // La planche est déjà à l'écran, sur son aplat : les tuiles la complètent
     // quand elles arrivent. L'inverse — attendre le réseau pour dessiner —
@@ -130,7 +143,7 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
     return () => {
       vivant = false;
     };
-  }, [projet, courante, format, theme, logo, prete, fondsVenus]);
+  }, [projet, courante, format, theme, logo, prete, fondsVenus, manip.edition]);
 
   useEffect(() => {
     const ctx = reperes.current?.getContext("2d");
@@ -191,6 +204,29 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
           onPointerUp={manip.surRelachement}
           onPointerCancel={manip.surRelachement}
         />
+        {enSaisie && (
+          <SaisieEnPlace
+            key={enSaisie.id}
+            element={enSaisie}
+            projet={projet}
+            echelle={echelle}
+            onChange={(contenu) =>
+              poste.modifier(
+                (p) =>
+                  surSelection(p, indexPlanche, [enSaisie.id], (x) =>
+                    x.type === "texte" ? { ...x, contenu } : x,
+                  ),
+                { libelle: "écrire", fusion: `contenu:${enSaisie.id}` },
+              )
+            }
+            onFermer={() => {
+              manip.fermerSaisie();
+              poste.sceller();
+            }}
+            onAnnuler={poste.annuler}
+            onRefaire={poste.refaire}
+          />
+        )}
       </div>
 
       <p className="tabulaire pointer-events-none absolute bottom-2 right-3 text-[11px] text-brand-muted">

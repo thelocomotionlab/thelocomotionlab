@@ -37,6 +37,7 @@ import {
   type BoitePx,
   type ClePoignee,
   type Element,
+  type ElementTexte,
   type Guide,
   type PlancheImage,
   type Point,
@@ -66,11 +67,17 @@ export type EtatManipulation = {
   geste: Geste["quoi"] | null;
 };
 
+/** Deux clics plus espacés que ça sont deux clics, pas un double-clic. */
+const DOUBLE_CLIC = 400;
+
 export function useManipulation(poste: PosteDeTravail) {
   const { projet, plancheCourante, indexPlanche, selection, setSelection, modifier, sceller } =
     poste;
   const geste = useRef<Geste | null>(null);
   const bouge = useRef(false);
+  const dernierClic = useRef<{ id: string; le: number } | null>(null);
+  /** L'élément dont le texte est ouvert à la saisie, en place. */
+  const [edition, setEdition] = useState<string | null>(null);
   const [etat, setEtat] = useState<EtatManipulation>({
     rectangle: null,
     guides: [],
@@ -159,11 +166,32 @@ export function useManipulation(poste: PosteDeTravail) {
       if (!vise) {
         // Sur le fond : on trace un rectangle de sélection. Échap et un clic
         // simple désélectionnent.
+        setEdition(null);
         if (!opts.ajoute) setSelection([]);
         geste.current = { quoi: "rectangle", depart: p };
         setEtat((s) => ({ ...s, geste: "rectangle" }));
         return;
       }
+
+      // DOUBLE-CLIC : le caret entre dans l'image. Sur un texte seulement — les
+      // autres éléments n'ont rien à saisir en place (une photo se recadre, ce
+      // qui est un autre geste).
+      const maintenant = Date.now();
+      const precedent = dernierClic.current;
+      dernierClic.current = { id: vise.id, le: maintenant };
+      if (
+        vise.type === "texte" &&
+        !vise.verrouille &&
+        precedent?.id === vise.id &&
+        maintenant - precedent.le < DOUBLE_CLIC
+      ) {
+        setSelection([vise.id]);
+        setEdition(vise.id);
+        geste.current = null;
+        setEtat((s) => ({ ...s, geste: null }));
+        return;
+      }
+      if (edition !== null && edition !== vise.id) setEdition(null);
 
       const dejaPris = selection.includes(vise.id);
       const prochaine = opts.ajoute
@@ -188,7 +216,7 @@ export function useManipulation(poste: PosteDeTravail) {
       };
       setEtat((s) => ({ ...s, geste: "deplacer" }));
     },
-    [planche, cadre, rotation, choisis, format, selection, setSelection],
+    [planche, cadre, rotation, choisis, format, selection, setSelection, edition],
   );
 
   const surDeplacement = useCallback(
@@ -282,11 +310,22 @@ export function useManipulation(poste: PosteDeTravail) {
     sceller();
   }, [sceller]);
 
+  // Un élément qui disparaît de la planche (supprimé, autre planche) ou qui
+  // quitte la sélection (choisi dans les calques) ne doit pas laisser un champ
+  // de saisie flotter au-dessus d'un texte qu'on ne modifie plus.
+  const enSaisie =
+    edition !== null && selection.includes(edition)
+      ? (elements.find((e): e is ElementTexte => e.id === edition && e.type === "texte") ?? null)
+      : null;
+
   return {
     cadre,
     rotation,
     choisis,
     etat,
+    edition: enSaisie,
+    ouvrirSaisie: setEdition,
+    fermerSaisie: useCallback(() => setEdition(null), []),
     surEnfoncement,
     surDeplacement,
     surRelachement,
