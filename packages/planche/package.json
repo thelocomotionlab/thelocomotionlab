@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./carte": "./src/carte.ts",
     "./charte": "./src/charte.ts",
     "./geometrie": "./src/geometrie.ts",
     "./historique": "./src/historique.ts",
@@ -17,6 +18,7 @@
   },
   "dependencies": {
     "@locomotionlab/trace": "workspace:*",
+    "@locomotionlab/tracking": "workspace:*",
     "@locomotionlab/ui": "workspace:*"
   },
   "devDependencies": {

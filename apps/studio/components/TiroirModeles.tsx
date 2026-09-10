@@ -15,7 +15,7 @@
 
 import { modelesPour } from "@locomotionlab/planche";
 
-import { avecModele, contexteDuProjet, plancheNeuve } from "@/lib/projet";
+import { avecModele, plancheNeuve } from "@/lib/projet";
 import { avecPlanches } from "@/lib/projet";
 import type { PosteDeTravail } from "@/lib/usePosteDeTravail";
 
@@ -76,8 +76,9 @@ export default function TiroirModeles({ poste }: { poste: PosteDeTravail }) {
       </button>
 
       <p className="mt-3 text-[11px] leading-snug text-brand-muted">
-        Les vignettes rendues arrivent avec la carte —{" "}
-        {contexteDuProjet(projet).vecue ? "la trace est chargée" : "aucune trace chargée"}.
+        {projet.donnees.trace
+          ? `Trace : ${projet.donnees.trace.nom ?? "sans nom"}.`
+          : "Aucune trace chargée — les modèles Carte et Journées resteront vides."}
       </p>
     </div>
   );

@@ -133,6 +133,7 @@ export type {
 } from "./texte.ts";
 
 export {
+  besoinsDeFond,
   contexteDeRendu,
   dessinerAvecCadre,
   dessinerFond,
@@ -140,6 +141,27 @@ export {
   segmentsMontres,
 } from "./rendu.ts";
 export type { ContexteRendu, OptionsContexte } from "./rendu.ts";
+
+export {
+  MAX_TUILES,
+  attributionDe,
+  besoinDeFond,
+  cleDuFond,
+  coordsDeCadrage,
+  dessinerCarte,
+  vueDeLaCarte,
+} from "./carte.ts";
+export type { BesoinDeFond, FondPret } from "./carte.ts";
+
+export {
+  TILE_SIZE,
+  cadrer,
+  decimerPixels,
+  normX,
+  normY,
+  tuilesDeLaVue,
+} from "./projection.ts";
+export type { Fenetre, Mosaique, OptionsVue, Vue } from "./projection.ts";
 
 export {
   cadrageCouverture,

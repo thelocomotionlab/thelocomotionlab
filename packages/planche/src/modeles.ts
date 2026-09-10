@@ -151,14 +151,21 @@ export function mobilier(f: Format, o: OptionsMobilier = {}): Element[] {
   return out;
 }
 
-/** Le surtitre et le titre, le bloc d'entrée du regard. */
+/**
+ * Le surtitre et le titre, le bloc d'entrée du regard.
+ *
+ * Le titre part sur `{nom}` plutôt que sur le nom recopié à l'instanciation :
+ * une trace chargée APRÈS la planche remplit alors le titre toute seule, au lieu
+ * de laisser un blanc qu'il faut penser à combler. Sans trace, la variable
+ * retombe sur le nom du projet — jamais sur un tiret.
+ */
 function enTete(f: Format, c: ContexteModele, y: number, surtitre?: string): Element[] {
   const mot = surtitre ?? (c.vecue ? "la sortie" : "l'itinéraire");
   return [
     texteNeuf(boite(f, MARGE, y, utile(f), CORPS.surtitre * 1.6), mot, "surtitre"),
     texteNeuf(
       boite(f, MARGE, y + CORPS.surtitre * 2.1, utile(f), CORPS.titre * 2.4),
-      c.nomTrace ?? "",
+      "{nom}",
       "titre",
     ),
   ];

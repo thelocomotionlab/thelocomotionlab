@@ -15,6 +15,7 @@ import {
 } from "./modeles.ts";
 import type { ContexteModele } from "./modeles.ts";
 import { enPixels } from "./geometrie.ts";
+import { resoudre } from "./variables.ts";
 import type { CleModele, Element, ElementTexte, PlancheImage } from "./types.ts";
 
 beforeAll(() => {
@@ -62,9 +63,19 @@ describe("les modèles", () => {
       expect(p.elements.length, m.cle).toBeGreaterThan(0);
       expect(p.modele, m.cle).toBe(m.cle);
     }
-    expect(textes(instancier("carte", CTX)).find((e) => e.role === "titre")!.contenu).toBe(
-      "Tour des Écrins",
-    );
+    // Le titre porte la VARIABLE, qui se résout sur la trace au rendu.
+    const titre = textes(instancier("carte", CTX)).find((e) => e.role === "titre")!;
+    expect(titre.contenu).toBe("{nom}");
+    expect(
+      resoudre(titre.contenu, {
+        trace: { nom: "Tour des Écrins" } as never,
+        seance: null,
+        segments: [],
+        tranche: { mode: "toutes", jour: 0 },
+        bilan: "apres",
+        nomProjet: "Écrins 2026",
+      }),
+    ).toBe("Tour des Écrins");
   });
 
   it("dit « la sortie » d'une trace vécue, « l'itinéraire » d'un projet", () => {
@@ -293,5 +304,16 @@ describe("migration d'un projet v1", () => {
   it("un projet v1 vide donne une planche, pas un document sans rien", () => {
     const r = migrerProjet({ schema: 1, cartes: [] })!;
     expect(r.projet.planches).toHaveLength(1);
+  });
+});
+
+describe("les données font le travail", () => {
+  it("LE TITRE SE REMPLIT DEPUIS LA TRACE, même chargée après coup", () => {
+    // Recopier le nom à l'instanciation laissait un blanc qu'il fallait penser
+    // à combler quand la trace arrivait ensuite.
+    const titre = textes(instancier("carte", { ...CTX, nomTrace: null })).find(
+      (e) => e.role === "titre",
+    )!;
+    expect(titre.contenu).toBe("{nom}");
   });
 });

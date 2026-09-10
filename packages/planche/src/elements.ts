@@ -12,9 +12,9 @@
 
 import { CORPS, couleurDuJour, rgba } from "./charte.ts";
 import type { Ctx2D } from "./canvas.ts";
+import { dessinerCarte } from "./carte.ts";
 import { vocabulaireDIcones } from "./canvas.ts";
-import type { ContexteRendu } from "./rendu.ts";
-import { segmentsMontres } from "./rendu.ts";
+import { segmentsMontres, type ContexteRendu } from "./contexte.ts";
 import {
   blocsDeTexte,
   decalageAlignement,
@@ -76,9 +76,9 @@ export function dessinerElement(
       return dessinerProfil(ctx, element, boite, c);
     case "cases":
       return dessinerCases(ctx, element, boite, c);
+    case "carte":
+      return dessinerCarte(ctx, element, boite, c);
     default:
-      // La carte a besoin des tuiles et de la projection : elle vient avec la
-      // couche cartographique, pas ici.
       return;
   }
 }
@@ -566,13 +566,16 @@ function dessinerProfil(ctx: Ctx2D, e: ElementProfil, b: BoitePx, c: ContexteRen
   const complet = c.variables.trace?.profil ?? [];
 
   // LE RESTANT ESTOMPÉ : la silhouette entière en sourdine, la part parcourue
-  // par-dessus. C'est ce qui dit « on en est là » sans deux images.
-  if (e.restantEstompe && complet.length > 1) {
+  // par-dessus. C'est ce qui dit « on en est là » sans deux images — et ça n'a
+  // rien à dire quand la part montrée EST le tout : on tracerait alors deux fois
+  // la même courbe.
+  const partiel = profil.length > 1 && profil.length < complet.length;
+  if (e.restantEstompe && partiel && complet.length > 1) {
     const tout = cheminDuProfil(complet, b);
     if (tout) traceProfil(ctx, tout, c.theme.profilRestant, null);
   }
 
-  const chemin = cheminDuProfil(profil, e.restantEstompe ? boiteDuSegment(b, complet, profil) : b);
+  const chemin = cheminDuProfil(profil, e.restantEstompe && partiel ? boiteDuSegment(b, complet, profil) : b);
   if (!chemin) return;
   traceProfil(ctx, chemin, e.remplissage || c.theme.accent, c.theme.accentAire);
 }

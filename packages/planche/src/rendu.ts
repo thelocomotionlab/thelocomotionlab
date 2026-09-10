@@ -16,84 +16,15 @@
 // DESSINÉS ICI. Ils se posent par-dessus, dans l'app : ce fichier ne produit que
 // ce qui part sur Instagram.
 
-import { formatDe, themeDe } from "./charte.ts";
-import type { Ctx2D, SourceImage } from "./canvas.ts";
+import type { Ctx2D } from "./canvas.ts";
+import { besoinDeFond, type BesoinDeFond } from "./carte.ts";
+import { contexteDeRendu, segmentsMontres, type ContexteRendu } from "./contexte.ts";
 import { dessinerElement } from "./elements.ts";
-import type { Contexte as ContexteVariables } from "./variables.ts";
-import { segmentsDeLaTranche } from "./variables.ts";
 import { enPixels } from "./geometrie.ts";
-import type { Format, Theme } from "./charte.ts";
-import type { Element, PlancheImage, Projet, Tranche } from "./types.ts";
-import type { Segment } from "@locomotionlab/trace";
+import type { Element, PlancheImage } from "./types.ts";
 
-/**
- * TOUT CE QU'UN ÉLÉMENT PEUT AVOIR BESOIN DE SAVOIR, rassemblé une fois.
- *
- * Les images sont DÉJÀ DÉCODÉES : le rendu est synchrone de bout en bout, et
- * c'est ce qui permet d'exporter une vidéo image par image sans jamais attendre.
- * Charger est le travail de l'app, dessiner celui d'ici.
- */
-export type ContexteRendu = {
-  format: Format;
-  theme: Theme;
-  /** La famille CSS résolue — une seule dans la charte. */
-  police: string;
-  /** Les photos du projet, par identifiant de média. */
-  images: Map<string, SourceImage>;
-  /** L'empreinte du labo, pour les éléments « marque ». */
-  logo: SourceImage | null;
-  /** Les journées découpées, dans l'ordre. */
-  segments: Segment[];
-  /** La tranche que suivent les éléments liés aux données. */
-  tranche: Tranche;
-  /** De quoi résoudre `{distance}`, `{allure}`… */
-  variables: ContexteVariables;
-};
-
-export type OptionsContexte = {
-  images?: Map<string, SourceImage>;
-  logo?: SourceImage | null;
-  segments?: Segment[];
-  police?: string;
-};
-
-/**
- * Le contexte de rendu d'une planche du projet.
- *
- * La tranche vient de la PLANCHE, pas du projet : c'est elle qui fait qu'une
- * planche d'étape montre le jour 3 quand sa voisine montre le tour entier.
- */
-export function contexteDeRendu(
-  projet: Projet,
-  planche: PlancheImage,
-  options: OptionsContexte = {},
-): ContexteRendu {
-  const segments = options.segments ?? [];
-  return {
-    format: formatDe(projet.format),
-    theme: themeDe(projet.theme),
-    police: options.police ?? "sans-serif",
-    images: options.images ?? new Map(),
-    logo: options.logo ?? null,
-    segments,
-    tranche: planche.tranche,
-    variables: {
-      trace: projet.donnees.trace,
-      seance: projet.donnees.seance,
-      segments,
-      tranche: planche.tranche,
-      bilan: projet.bilan,
-      nomProjet: projet.nom,
-      planche: Math.max(0, projet.planches.indexOf(planche)),
-      planches: projet.planches.length,
-    },
-  };
-}
-
-/** Les journées que la planche montre — carte, profil et chiffres les suivent. */
-export function segmentsMontres(c: ContexteRendu): Segment[] {
-  return segmentsDeLaTranche(c.segments, c.tranche);
-}
+export { contexteDeRendu, segmentsMontres };
+export type { ContexteRendu, OptionsContexte } from "./contexte.ts";
 
 /** Le fond de la planche : celui qu'elle impose, sinon celui du thème. */
 export function dessinerFond(ctx: Ctx2D, planche: PlancheImage, c: ContexteRendu): void {
@@ -138,4 +69,24 @@ export function dessinerAvecCadre(ctx: Ctx2D, element: Element, c: ContexteRendu
   }
   dessinerElement(ctx, element, boite, c);
   ctx.restore();
+}
+
+/**
+ * TOUT CE QU'UNE PLANCHE A BESOIN DE TÉLÉCHARGER avant d'être dessinée.
+ *
+ * L'app appelle ceci, va chercher les tuiles, remplit `contexte.fonds`, puis
+ * dessine. Deux cartes qui cadrent le même terrain au même zoom partagent leur
+ * besoin — il n'est donc rendu qu'une fois.
+ */
+export function besoinsDeFond(planche: PlancheImage, c: ContexteRendu): BesoinDeFond[] {
+  const vus = new Set<string>();
+  const out: BesoinDeFond[] = [];
+  for (const e of planche.elements) {
+    if (e.type !== "carte" || e.masque) continue;
+    const besoin = besoinDeFond(e, enPixels(e, c.format.cle), c);
+    if (!besoin || vus.has(besoin.cle)) continue;
+    vus.add(besoin.cle);
+    out.push(besoin);
+  }
+  return out;
 }

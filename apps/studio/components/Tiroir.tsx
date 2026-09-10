@@ -9,6 +9,7 @@
 // thème du projet, pas des images fixes), Données avec le chargement de trace,
 // Calques avec la liste des éléments de la planche.
 
+import TiroirDonnees from "./TiroirDonnees";
 import TiroirModeles from "./TiroirModeles";
 import { TIROIRS } from "./Rail";
 import type { CleTiroir, PosteDeTravail } from "@/lib/usePosteDeTravail";
@@ -41,6 +42,8 @@ export default function Tiroir({ cle, poste }: { cle: CleTiroir; poste: PosteDeT
       </h2>
       {cle === "modeles" ? (
         <TiroirModeles poste={poste} />
+      ) : cle === "donnees" ? (
+        <TiroirDonnees poste={poste} />
       ) : (
         <>
           <p className="px-3.5 py-3 text-[13px] leading-relaxed text-brand-soft">{aVenir}</p>

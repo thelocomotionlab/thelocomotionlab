@@ -16,6 +16,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   MARGE,
+  besoinsDeFond,
   contexteDeRendu,
   dessinerPlanche,
   formatDe,
@@ -26,6 +27,7 @@ import {
 import { decouperTrace } from "@locomotionlab/trace";
 
 import { policeChargee, policeDuLabo } from "@/lib/police";
+import { completerLesFonds, fondsEnCache } from "@/lib/tuiles";
 
 /** L'air laissé autour de la planche quand elle s'ajuste à la fenêtre. */
 const RESPIRATION = 48;
@@ -45,6 +47,8 @@ export default function PlanDeTravail({
   const [ajuste, setAjuste] = useState(0.3);
   const [prete, setPrete] = useState(false);
   const [logo, setLogo] = useState<SourceImage | null>(null);
+  // Incrémenté quand une mosaïque arrive : le rendu se rejoue avec le terrain.
+  const [fondsVenus, setFondsVenus] = useState(0);
 
   const format = formatDe(projet.format);
   const theme = themeDe(projet.theme);
@@ -103,16 +107,25 @@ export default function PlanDeTravail({
       ctx.fillRect(0, 0, format.width, format.height);
       return;
     }
-    dessinerPlanche(
-      ctx,
-      courante,
-      contexteDeRendu(projet, courante, {
-        police: policeDuLabo(),
-        logo,
-        segments: decouperTrace(projet.donnees.trace, projet.donnees.coupures),
-      }),
-    );
-  }, [projet, courante, format, theme, logo, prete]);
+    const c = contexteDeRendu(projet, courante, {
+      police: policeDuLabo(),
+      logo,
+      segments: decouperTrace(projet.donnees.trace, projet.donnees.coupures),
+      fonds: fondsEnCache(),
+    });
+    dessinerPlanche(ctx, courante, c);
+
+    // La planche est déjà à l'écran, sur son aplat : les tuiles la complètent
+    // quand elles arrivent. L'inverse — attendre le réseau pour dessiner —
+    // rendrait le studio inutilisable au bivouac.
+    let vivant = true;
+    completerLesFonds(besoinsDeFond(courante, c)).then((venu) => {
+      if (venu && vivant) setFondsVenus((n) => n + 1);
+    });
+    return () => {
+      vivant = false;
+    };
+  }, [projet, courante, format, theme, logo, prete, fondsVenus]);
 
   useEffect(() => {
     const ctx = reperes.current?.getContext("2d");

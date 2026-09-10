@@ -23,6 +23,8 @@ import type { Map as MaplibreMap, StyleSpecification } from "maplibre-gl";
 
 import { brandColors } from "@locomotionlab/ui/tokens";
 
+import { FONDS } from "./fonds";
+
 /** Identifiants canoniques des fonds. */
 export type MapStyleName = "relief" | "topo" | "sat";
 
@@ -51,26 +53,12 @@ function raster(tiles: string[], attribution: string, maxzoom: number): StyleSpe
   };
 }
 
+// Les adresses viennent de `fonds.ts`, qui ne dépend d'aucun moteur de carte :
+// le studio y lit les mêmes pour dessiner sa mosaïque sur un canvas 2D.
 export const mapStyles: Record<MapStyleName, StyleSpecification> = {
-  relief: raster(
-    ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"],
-    "Tiles © Esri — Esri, HERE, Garmin, FAO, NOAA, USGS",
-    19,
-  ),
-  topo: raster(
-    [
-      "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
-      "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
-      "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
-    ],
-    "© OpenTopoMap",
-    17,
-  ),
-  sat: raster(
-    ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-    "Tiles © Esri",
-    19,
-  ),
+  relief: raster(FONDS.relief.tuiles, FONDS.relief.attribution, FONDS.relief.zoomMax),
+  topo: raster(FONDS.topo.tuiles, FONDS.topo.attribution, FONDS.topo.zoomMax),
+  sat: raster(FONDS.sat.tuiles, FONDS.sat.attribution, FONDS.sat.zoomMax),
 };
 
 /** Les trois entrées du sélecteur, dans l'ordre d'affichage. */
