@@ -207,6 +207,9 @@ export {
   texteNeuf,
 } from "./fabrique.ts";
 
+export { lireExif } from "./exif.ts";
+export type { Exif } from "./exif.ts";
+
 export { estProjetV1, migrerProjet, trancheV1 } from "./migration.ts";
 export type { CarteV1, ProjetV1, ResultatMigration } from "./migration.ts";
 

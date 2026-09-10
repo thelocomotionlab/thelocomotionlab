@@ -134,13 +134,20 @@ export default function BarreHaute({ poste }: { poste: PosteDeTravail }) {
       </select>
 
       <p role="status" className="ml-auto hidden text-[12px] text-brand-muted lg:block">
-        Brouillon local
+        {
+          {
+            repos: "Brouillon local",
+            "en-cours": "Enregistrement…",
+            fait: "Enregistré sur cet appareil",
+            souci: "Pas pu enregistrer — garde l'onglet ouvert",
+          }[poste.sauvegarde]
+        }
       </p>
 
       <button
         type="button"
-        disabled
-        title="L'export arrive avec le moteur de rendu"
+        onClick={() => poste.setExport(true)}
+        title="Exporter (Ctrl+E)"
         className={`${BOUTON} bg-brand-deep px-3 font-medium text-brand-bg hover:bg-brand-deep-dark`}
       >
         Exporter

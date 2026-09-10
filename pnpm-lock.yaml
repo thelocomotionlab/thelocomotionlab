@@ -175,6 +175,9 @@ importers:
       '@locomotionlab/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      heic2any:
+        specifier: 0.0.4
+        version: 0.0.4
       lucide-react:
         specifier: ^0.554.0
         version: 0.554.0(react@19.2.0)

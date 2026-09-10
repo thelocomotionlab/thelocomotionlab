@@ -15,6 +15,7 @@
 import { useCallback, useEffect, useMemo } from "react";
 
 import BandeDesPlanches from "./BandeDesPlanches";
+import DialogueExport from "./DialogueExport";
 import BarreHaute from "./BarreHaute";
 import Inspecteur from "./Inspecteur";
 import PlanDeTravail from "./PlanDeTravail";
@@ -102,6 +103,11 @@ export default function PosteDeTravail() {
         setSelection(elementsVisibles.map((x) => x.id));
         return;
       }
+      if (commande && touche === "e") {
+        e.preventDefault();
+        poste.setExport(true);
+        return;
+      }
       if (commande && touche === "d") {
         e.preventDefault();
         dupliquerSelection();
@@ -143,6 +149,7 @@ export default function PosteDeTravail() {
     dupliquerSelection,
     supprimerSelection,
     pousserDe,
+    poste,
   ]);
 
   return (
@@ -157,6 +164,14 @@ export default function PosteDeTravail() {
       </div>
 
       <BandeDesPlanches poste={poste} />
+
+      {poste.exportOuvert && (
+        <DialogueExport
+          projet={poste.projet}
+          plancheCourante={poste.indexPlanche}
+          onFermer={() => poste.setExport(false)}
+        />
+      )}
     </div>
   );
 }

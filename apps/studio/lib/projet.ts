@@ -15,12 +15,14 @@ import {
   deplacer,
   dupliquer,
   instancier,
+  photoNeuve,
   type CleFormat,
   type CleModele,
   type CleTheme,
   type ContexteModele,
   type Element,
   type Historique,
+  type Media,
   type PlancheImage,
   type Projet,
 } from "@locomotionlab/planche";
@@ -183,4 +185,66 @@ export function avecOrdre(
   const planches = [...p.planches];
   planches[index] = { ...planche, elements };
   return avecPlanches(p, planches);
+}
+
+/**
+ * Pose une photo à un point donné de la planche, centrée dessus.
+ *
+ * La taille part du rapport du cliché : un cadre carré déformerait une photo de
+ * téléphone au premier coup d'œil, et on la corrigerait à la main à chaque fois.
+ */
+export function avecPhotoA(
+  p: Projet,
+  index: number,
+  media: Media,
+  point: { x: number; y: number },
+  format: { width: number; height: number },
+): { projet: Projet; id: string } {
+  const planche = p.planches[index];
+  if (!planche || planche.type !== "image") return { projet: p, id: "" };
+
+  // Lâchée SUR un cadre en attente, la photo y entre plutôt que de se poser
+  // par-dessus : c'est le geste qu'on fait, et celui qu'on attend.
+  const sousLeCurseur = planche.elements
+    .filter(
+      (e): e is Extract<Element, { type: "photo" }> => e.type === "photo" && e.mediaId === null,
+    )
+    .reverse()
+    .find(
+      (e) =>
+        point.x >= e.x * format.width &&
+        point.x <= (e.x + e.l) * format.width &&
+        point.y >= e.y * format.height &&
+        point.y <= (e.y + e.h) * format.height,
+    );
+  if (sousLeCurseur) {
+    const planches = [...p.planches];
+    planches[index] = {
+      ...planche,
+      elements: planche.elements.map((e) =>
+        e.id === sousLeCurseur.id && e.type === "photo" ? { ...e, mediaId: media.id } : e,
+      ),
+    };
+    return {
+      projet: { ...avecPlanches(p, planches), medias: [...p.medias, media] },
+      id: sousLeCurseur.id,
+    };
+  }
+
+  const rapport = media.hauteur > 0 ? media.largeur / media.hauteur : 1;
+  const l = 0.6;
+  const h = Math.min(0.8, (l * format.width) / rapport / format.height);
+  const element = photoNeuve(
+    {
+      x: Math.max(0, Math.min(1 - l, point.x / format.width - l / 2)),
+      y: Math.max(0, Math.min(1 - h, point.y / format.height - h / 2)),
+      l,
+      h,
+    },
+    { mediaId: media.id, nom: media.nom },
+  );
+
+  const planches = [...p.planches];
+  planches[index] = { ...planche, elements: [...planche.elements, element] };
+  return { projet: { ...avecPlanches(p, planches), medias: [...p.medias, media] }, id: element.id };
 }

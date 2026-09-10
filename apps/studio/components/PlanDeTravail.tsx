@@ -29,6 +29,8 @@ import { decouperTrace } from "@locomotionlab/trace";
 
 import { policeChargee, policeDuLabo } from "@/lib/police";
 import { completerLesFonds, fondsEnCache } from "@/lib/tuiles";
+import { completerLesImages, imagesEnCache, poser } from "@/lib/images";
+import { importer } from "@/lib/medias";
 import { dessinerChrome, dessinerReperes } from "@/lib/chrome";
 import { useManipulation } from "@/lib/useManipulation";
 import SaisieEnPlace from "./SaisieEnPlace";
@@ -130,6 +132,7 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
       logo,
       segments: decouperTrace(projet.donnees.trace, projet.donnees.coupures),
       fonds: fondsEnCache(),
+      images: imagesEnCache(),
     });
     dessinerPlanche(ctx, aDessiner, c);
 
@@ -137,8 +140,14 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
     // quand elles arrivent. L'inverse — attendre le réseau pour dessiner —
     // rendrait le studio inutilisable au bivouac.
     let vivant = true;
-    completerLesFonds(besoinsDeFond(courante, c)).then((venu) => {
-      if (venu && vivant) setFondsVenus((n) => n + 1);
+    const manquantes = aDessiner.elements.flatMap((e) =>
+      e.type === "photo" && e.mediaId ? [e.mediaId] : [],
+    );
+    Promise.all([
+      completerLesFonds(besoinsDeFond(courante, c)),
+      completerLesImages(manquantes),
+    ]).then(([fond, image]) => {
+      if ((fond || image) && vivant) setFondsVenus((n) => n + 1);
     });
     return () => {
       vivant = false;
@@ -177,6 +186,22 @@ export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
       className="relative flex min-w-0 flex-1 items-center justify-center overflow-hidden bg-brand-text/5"
     >
       <div
+        onDragOver={(e) => {
+          if (e.dataTransfer.types.includes("Files")) e.preventDefault();
+        }}
+        onDrop={async (e) => {
+          if (!e.dataTransfer.files.length) return;
+          e.preventDefault();
+          // Le point du lâcher décide de la place : on pose la photo LÀ, sous le
+          // curseur, plutôt qu'au centre d'une planche qu'on ne regardait pas.
+          const p = pointDe(e);
+          for (const fichier of e.dataTransfer.files) {
+            const r = await importer(fichier);
+            if (!r) continue;
+            poser(r.media.id, r.image);
+            poste.poserPhotoA(r.media, p);
+          }
+        }}
         className="relative shadow-card"
         style={{ width: format.width * echelle, height: format.height * echelle }}
       >
