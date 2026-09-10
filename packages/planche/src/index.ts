@@ -216,6 +216,10 @@ export {
 } from "./groupes.ts";
 
 export { apparenceDe, avecApparence } from "./apparence.ts";
+export { EXTENSION, depaqueter, empaqueter } from "./fichier.ts";
+export type { MediaEmporte } from "./fichier.ts";
+export { crc32, ecrireZip, lireZip } from "./zip.ts";
+export type { Entree } from "./zip.ts";
 export type { Apparence } from "./apparence.ts";
 
 export { lireExif } from "./exif.ts";

@@ -46,15 +46,28 @@ export const PAR_DEFAUT: Reglages = {
   planches: [],
 };
 
-/** « ecrins-2026-03.jpg » — un nom qui se range tout seul dans un dossier. */
-export function nomDeFichier(projet: Projet, index: number, type: string): string {
-  const base =
-    (projet.nom || "planche")
+/**
+ * Un fragment de nom de fichier, sûr partout.
+ *
+ * Un accent suffit à faire tomber le nom : Chromium refuse un `download`
+ * non-ASCII sur une URL de blob et le remplace par « download », sans
+ * extension. « Écrins 2026 » doit donc devenir « ecrins-2026 » avant d'être
+ * proposé.
+ */
+export function enNomDeFichier(texte: string, secours: string): string {
+  return (
+    texte
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
+      .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "planche";
+      .replace(/^-+|-+$/g, "") || secours
+  );
+}
+
+/** « ecrins-2026-03.jpg » — un nom qui se range tout seul dans un dossier. */
+export function nomDeFichier(projet: Projet, index: number, type: string): string {
+  const base = enNomDeFichier(projet.nom || "planche", "planche");
   return `${base}-${String(index + 1).padStart(2, "0")}.${type === "image/png" ? "png" : "jpg"}`;
 }
 

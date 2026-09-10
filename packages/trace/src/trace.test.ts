@@ -193,6 +193,24 @@ describe("decouperTrace", () => {
     expect(segs[1]!.dPlusM).toBe(0);
   });
 
+  /**
+   * LA SOMME DES JOURNÉES FAIT LE TOUR.
+   *
+   * C'est l'invariant qui compte : la planche d'étape publie un D+ de journée,
+   * la planche de clôture publie le total, et les deux doivent se répondre. Il
+   * ne tient que parce que le D+ d'un segment est une soustraction sur un cumul
+   * mesuré une seule fois.
+   */
+  it("les journées somment au total de la trace", () => {
+    for (const coupures of [[], [50], [25, 50, 75], [10, 20, 30, 40, 60, 90]]) {
+      const segs = decouperTrace(trace, coupures);
+      const somme = segs.reduce((s, x) => s + x.dPlusM, 0);
+      expect(Math.abs(somme - trace!.dPlusM)).toBeLessThanOrEqual(segs.length);
+      const sommeD = segs.reduce((s, x) => s + x.dMinusM, 0);
+      expect(Math.abs(sommeD - trace!.dMinusM)).toBeLessThanOrEqual(segs.length);
+    }
+  });
+
   it("ignore une coupure hors de l'itinéraire", () => {
     expect(decouperTrace(trace, [-5, 250])).toHaveLength(1);
   });

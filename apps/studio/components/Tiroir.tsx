@@ -15,6 +15,7 @@ import TiroirDonnees from "./TiroirDonnees";
 import TiroirMedias from "./TiroirMedias";
 import TiroirTexte from "./TiroirTexte";
 import TiroirModeles from "./TiroirModeles";
+import TiroirProjets from "./TiroirProjets";
 import { TIROIRS } from "./Rail";
 import type { CleTiroir, PosteDeTravail } from "@/lib/usePosteDeTravail";
 
@@ -54,6 +55,8 @@ export default function Tiroir({ cle, poste }: { cle: CleTiroir; poste: PosteDeT
         <TiroirElements poste={poste} />
       ) : cle === "medias" ? (
         <TiroirMedias poste={poste} />
+      ) : cle === "projets" ? (
+        <TiroirProjets poste={poste} />
       ) : cle === "calques" ? (
         <TiroirCalques poste={poste} />
       ) : (

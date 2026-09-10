@@ -65,10 +65,11 @@ describe("statsDeGpx", () => {
   });
 
   it("le profil suit la distance retenue, altitudes manquantes exclues", () => {
+    // Le lissage sur 5 points aplatit cette série de trois : aucun cumul.
     expect(statsDeGpx(GPX_COROS)!.profil).toEqual([
-      { km: 0, alt: 1123 },
-      { km: 1.5, alt: 1223 },
-      { km: 3, alt: 1023 },
+      { km: 0, alt: 1123, dp: 0, dm: 0 },
+      { km: 1.5, alt: 1223, dp: 0, dm: 0 },
+      { km: 3, alt: 1023, dp: 0, dm: 0 },
     ]);
     expect(statsDeGpx(GPX_NU)!.profil).toHaveLength(2); // le 3e point n'a pas d'altitude
   });

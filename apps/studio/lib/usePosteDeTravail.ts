@@ -156,6 +156,20 @@ export function usePosteDeTravail() {
     });
   }, []);
 
+  /**
+   * OUVRIR UN AUTRE DOCUMENT.
+   *
+   * L'historique repart à zéro : les étapes du projet précédent n'ont rien à
+   * dire de celui-ci, et un Ctrl+Z qui ramènerait l'autre projet serait la
+   * pire des surprises.
+   */
+  const ouvrir = useCallback((autre: Projet) => {
+    setHistoire(creer(autre));
+    setSelection([]);
+    setPlanche(0);
+    setVue({ x: 0, y: 0 });
+  }, []);
+
   const annuler = useCallback(() => setHistoire(annulerH), []);
   const refaire = useCallback(() => setHistoire(refaireH), []);
 
@@ -190,6 +204,7 @@ export function usePosteDeTravail() {
       setVue,
       ajuster,
       zoomer,
+      ouvrir,
       setOutil,
       setExport,
       setRaccourcis,
@@ -209,6 +224,7 @@ export function usePosteDeTravail() {
       histoire,
       ajuster,
       zoomer,
+      ouvrir,
       modifier,
       sceller,
       annuler,

@@ -12,10 +12,26 @@
 // d'un point de coupure sur l'itinéraire — typiquement un bivouac. C'est aussi
 // ce qui rend l'outil utilisable sur n'importe quelle trace, vécue ou prévue.
 
+import { deniveleCumule } from "./denivele.ts";
 import { cumulKm } from "./geo.ts";
 import { statsDeGpx } from "./stats.ts";
 import { parseGpx } from "./gpx.ts";
 import type { Coord, PointProfil, Segment, Trace } from "./types.ts";
+
+/**
+ * Complète un profil qui n'apporte pas son dénivelé accumulé.
+ *
+ * Un `.track.json` ne porte que des couples km / altitude : le cumul se
+ * reconstruit ici, par la même hystérésis que partout ailleurs, sur la seule
+ * altitude dont on dispose. Un profil qui l'apporte déjà n'est pas retouché —
+ * son cumul vient de la pleine résolution, celui-ci n'en serait qu'une
+ * approximation.
+ */
+function avecCumul(profil: readonly PointProfil[]): PointProfil[] {
+  if (profil.every((p) => Number.isFinite(p.dp) && Number.isFinite(p.dm))) return [...profil];
+  const { cumul } = deniveleCumule(profil.map((p) => p.alt));
+  return profil.map((p, i) => ({ ...p, dp: cumul[i]?.dp ?? 0, dm: cumul[i]?.dm ?? 0 }));
+}
 
 /** Lecture d'un `.track.json` (schemaVersion 1). `null` si inexploitable. */
 export function traceDepuisTrackJson(raw: unknown): Trace | null {
@@ -34,7 +50,7 @@ export function traceDepuisTrackJson(raw: unknown): Trace | null {
     totalKm,
     dPlusM: Math.round((t.dPlusM as number) ?? 0),
     dMinusM: Math.round((t.dMinusM as number) ?? 0),
-    profil,
+    profil: avecCumul(profil),
     coords,
     cumul: cumulKm(coords, totalKm),
     dureeSecondes: null,
@@ -98,7 +114,11 @@ export function fusionnerTraces(traces: readonly (Trace | null)[]): Trace | null
 
   for (const t of valides) {
     coords.push(...t.coords);
-    for (const p of t.profil) profil.push({ km: totalKm + p.km, alt: p.alt });
+    // Les cumuls de dénivelé se décalent comme les kilomètres : chaque trace
+    // repart de zéro, la fusion les met bout à bout.
+    for (const p of t.profil) {
+      profil.push({ km: totalKm + p.km, alt: p.alt, dp: dPlusM + p.dp, dm: dMinusM + p.dm });
+    }
     totalKm += t.totalKm;
     dPlusM += t.dPlusM;
     dMinusM += t.dMinusM;
@@ -194,17 +214,17 @@ export function decouperTrace(trace: Trace | null, coupures: readonly number[]):
     }
 
     const profil = trace.profil.filter((p) => p.km >= kmDebut && p.km <= kmFin);
-    // La DESCENTE compte autant que la montée sur une étape de montagne — c'est
-    // elle qui dit ce que les jambes ont pris. On la mesure ici, du même geste
-    // que le D+, sur la même part de profil : deux passes séparées auraient fini
-    // par se désaccorder sur les bornes.
-    let dPlus = 0;
-    let dMoins = 0;
-    for (let k = 1; k < profil.length; k += 1) {
-      const d = profil[k]!.alt - profil[k - 1]!.alt;
-      if (d > 0) dPlus += d;
-      else dMoins -= d;
-    }
+    // LE D+ D'UNE JOURNÉE EST UNE SOUSTRACTION.
+    //
+    // Le profil porte le dénivelé accumulé depuis le départ, mesuré une fois
+    // par hystérésis sur l'altitude à pleine résolution. Le mesurer une seconde
+    // fois ici — en additionnant les écarts d'un profil décimé — comptait le
+    // tremblement de l'altimètre comme du relief : la somme des journées
+    // dépassait le total de la trace, et la planche publiait un chiffre que
+    // l'atelier ne reconnaissait pas. La DESCENTE suit le même chemin ; elle dit
+    // ce que les jambes ont pris, et mérite la même mesure que la montée.
+    const dPlus = cumulA(trace.profil, kmFin, "dp") - cumulA(trace.profil, kmDebut, "dp");
+    const dMoins = cumulA(trace.profil, kmFin, "dm") - cumulA(trace.profil, kmDebut, "dm");
 
     segments.push({
       index: segments.length,
@@ -219,6 +239,27 @@ export function decouperTrace(trace: Trace | null, coupures: readonly number[]):
     });
   }
   return segments;
+}
+
+/**
+ * Le cumul de dénivelé au kilomètre `km`, interpolé entre deux points du profil.
+ *
+ * Sans interpolation, deux journées voisines liraient le même point de profil à
+ * leur frontière commune et se partageraient mal les mètres qui tombent entre
+ * deux échantillons.
+ */
+function cumulA(profil: readonly PointProfil[], km: number, cle: "dp" | "dm"): number {
+  if (profil.length === 0) return 0;
+  if (km <= profil[0]!.km) return profil[0]![cle];
+  const dernier = profil[profil.length - 1]!;
+  if (km >= dernier.km) return dernier[cle];
+  let i = 1;
+  while (i < profil.length && profil[i]!.km < km) i += 1;
+  const a = profil[i - 1]!;
+  const b = profil[i]!;
+  const large = b.km - a.km;
+  const part = large > 0 ? (km - a.km) / large : 0;
+  return a[cle] + (b[cle] - a[cle]) * part;
 }
 
 /**

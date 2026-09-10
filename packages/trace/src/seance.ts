@@ -408,6 +408,19 @@ export function seanceDepuisGpx(xml: unknown, options: OptionsSeance = {}): Sean
   );
 
   // ------------------------------------------------------------------- montage
+  //
+  // ON ARRONDIT À LA PRÉCISION QUE LA MESURE A VRAIMENT.
+  //
+  // Une position GPS n'est pas connue au dix-milliardième de degré, ni une
+  // altitude barométrique au picomètre — mais `JSON.stringify` écrit dix-sept
+  // chiffres pour chacune. Une sortie de onze heures pesait 26 Mo de flottants
+  // dont les trois quarts n'étaient que du bruit de calcul, et un projet
+  // enregistré cinq fois remplissait le quota du navigateur. Six décimales de
+  // degré valent onze centimètres ; le reste suit.
+  const arrondi = (v: number, decimales: number) => {
+    const f = 10 ** decimales;
+    return Math.round(v * f) / f;
+  };
   const serie: PointSeance[] = new Array(n);
   for (let k = 0; k < n; k += 1) {
     const a = Math.max(0, k - 1);
@@ -417,20 +430,20 @@ export function seanceDepuisGpx(xml: unknown, options: OptionsSeance = {}): Sean
     const v = vitesse[k]!;
     serie[k] = {
       t: temps[k]!,
-      lat: lat[k]!,
-      lon: lon[k]!,
-      alt: altLisse[k]!,
-      dist: dist[k]!,
-      vitesse: v,
+      lat: arrondi(lat[k]!, 6),
+      lon: arrondi(lon[k]!, 6),
+      alt: arrondi(altLisse[k]!, 2),
+      dist: arrondi(dist[k]!, 2),
+      vitesse: arrondi(v, 3),
       // Pas d'allure sur un arrêt, même si la moyenne glissante traîne encore
       // la vitesse d'avant : le lissage déborde sur les vingt secondes qui
       // précèdent, et l'habillage afficherait une allure pendant une pause.
-      allure: !arret[k] && v >= VITESSE_MINIMALE ? 1000 / v : null,
-      pente: Math.max(-PENTE_MAX, Math.min(PENTE_MAX, pente)),
-      cap: capLisse[k]!,
+      allure: !arret[k] && v >= VITESSE_MINIMALE ? arrondi(1000 / v, 2) : null,
+      pente: arrondi(Math.max(-PENTE_MAX, Math.min(PENTE_MAX, pente)), 2),
+      cap: arrondi(capLisse[k]!, 2),
       fc: fcSource ? Math.round(fc[k]!) : null,
       cadence: cadSource ? Math.round(cadence[k]!) : null,
-      dPlus: lireParDistance(denivele.distances, denivele.dp, dist[k]!),
+      dPlus: arrondi(lireParDistance(denivele.distances, denivele.dp, dist[k]!), 2),
       enPause: arret[k]!,
     };
   }

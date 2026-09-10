@@ -47,19 +47,25 @@ export function statsDeGpx(xml: unknown, options: OptionsStats = {}): StatsGpx |
 
   const { cumul, source } = distanceCumulee(points);
 
-  const altitudes = points.filter((p) => p.alt !== null).map((p) => p.alt as number);
-  const { dPlus, dMinus } =
+  // LE PROFIL PORTE LE CUMUL. L'hystérésis tourne sur l'altitude à PLEINE
+  // résolution, et son cumul point par point suit jusque dans le profil
+  // décimé : c'est ce qui permet ensuite de dire le D+ d'une journée par une
+  // soustraction, plutôt que par un second calcul qui n'aurait pas donné le
+  // même total.
+  const avecAlt = points
+    .map((p, i) => ({ km: cumul[i]! / 1000, alt: p.alt }))
+    .filter((p): p is { km: number; alt: number } => p.alt !== null);
+  const altitudes = avecAlt.map((p) => p.alt);
+  const { dPlus, dMinus, cumul: dCumul } =
     altitudes.length > 1
       ? deniveleCumule(
           moyenneGlissante(altitudes, options.lissage ?? LISSAGE_ALTITUDE),
           options.seuil ?? SEUIL_DENIVELE,
         )
-      : { dPlus: 0, dMinus: 0 };
+      : { dPlus: 0, dMinus: 0, cumul: altitudes.map(() => ({ dp: 0, dm: 0 })) };
 
   const profil = decimer(
-    points
-      .map((p, i) => ({ km: cumul[i]! / 1000, alt: p.alt }))
-      .filter((p): p is PointProfil => p.alt !== null),
+    avecAlt.map((p, i) => ({ km: p.km, alt: p.alt, dp: dCumul[i]!.dp, dm: dCumul[i]!.dm })),
     options.points ?? 400,
   );
 

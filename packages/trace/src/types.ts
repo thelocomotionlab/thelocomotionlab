@@ -37,8 +37,16 @@ export type PointBrut = {
   cadence: number | null;
 };
 
-/** Un point de la silhouette altimétrique. */
-export type PointProfil = { km: number; alt: number };
+/**
+ * Un point de la silhouette altimétrique.
+ *
+ * `dp` et `dm` sont le dénivelé ACCUMULÉ jusqu'ici, mesuré par hystérésis sur
+ * l'altitude à pleine résolution, avant décimation. Les porter ici plutôt que
+ * de les recalculer par segment donne deux choses : le D+ d'une journée est une
+ * soustraction — donc la somme des journées fait exactement le total —, et un
+ * profil sait dire « D+ accumulé ici » sous le curseur.
+ */
+export type PointProfil = { km: number; alt: number; dp: number; dm: number };
 
 /** D'où vient la distance annoncée — la montre fait foi quand elle parle. */
 export type SourceDistance = "montre" | "geometrie";

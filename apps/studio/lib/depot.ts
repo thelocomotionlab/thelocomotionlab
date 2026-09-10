@@ -90,6 +90,22 @@ export async function supprimer(nom: string): Promise<void> {
   await transaction(PROJETS, "readwrite", (s) => s.delete(nom));
 }
 
+/** Renomme un enregistrement : on relit, on réécrit sous l'autre clé, on efface. */
+export async function renommer(de: string, vers: string): Promise<void> {
+  const projet = await charger(de);
+  if (!projet) return;
+  await enregistrer(vers, projet);
+  if (de !== vers) await supprimer(de);
+}
+
+/** Tous les médias stockés, avec leurs octets — ce qu'un `.llstudio` emporte. */
+export async function tousLesMedias(): Promise<MediaStocke[]> {
+  const tout = (await transaction(MEDIAS, "readonly", (s) => s.getAll())) as
+    | MediaStocke[]
+    | undefined;
+  return tout ?? [];
+}
+
 /** Les projets enregistrés, du plus récent au plus ancien, sans leur contenu. */
 export async function lister(): Promise<
   { nom: string; enregistreLe: string; planches: number; schema: number }[]
