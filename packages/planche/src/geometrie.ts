@@ -171,10 +171,20 @@ export function poignees(b: BoitePx, rotation = 0): Record<ClePoignee, Point> {
   return out;
 }
 
-/** La poignée sous le curseur, ou `null` — la rotation est testée en premier. */
-export function poigneeSous(b: BoitePx, rotation: number, p: Point): ClePoignee | null {
+/**
+ * La poignée sous le curseur, ou `null` — la rotation est testée en premier.
+ *
+ * `rayon` est la tolérance en pixels de PLANCHE. Le plan de travail y passe
+ * `POIGNEE / zoom` : une poignée doit garder la même taille à l'écran, donc son
+ * empreinte dans la planche grandit quand on dézoome.
+ */
+export function poigneeSous(
+  b: BoitePx,
+  rotation: number,
+  p: Point,
+  rayon: number = POIGNEE,
+): ClePoignee | null {
   const tout = poignees(b, rotation);
-  const rayon = POIGNEE;
   const proche = (q: Point) => Math.abs(p.x - q.x) <= rayon && Math.abs(p.y - q.y) <= rayon;
   if (proche(tout.rotation)) return "rotation";
   for (const cle of ["no", "ne", "se", "so", "n", "e", "s", "o"] as const) {
@@ -298,6 +308,24 @@ export function ciblesDAimant(
   return { x, y };
 }
 
+/**
+ * Les cibles d'une planche : ses bords, ses marges, sa zone sûre, et les
+ * éléments qu'on ne déplace PAS.
+ *
+ * Exclure la sélection est ce qui compte : sans ça un élément se collerait à
+ * lui-même dès le premier pixel de glissé, et ne bougerait plus.
+ */
+export function ciblesDeLaPlanche(
+  elements: readonly Element[],
+  format: CleFormat,
+  exclus: readonly string[] = [],
+): { x: Cible[]; y: Cible[] } {
+  const voisins = elements
+    .filter((e) => !e.masque && !exclus.includes(e.id))
+    .map((e) => enPixels(e, format));
+  return ciblesDAimant(format, voisins);
+}
+
 export type ResultatAimant = { boite: BoitePx; guides: Guide[] };
 
 /**
@@ -403,4 +431,39 @@ export function repartir(boites: readonly BoitePx[], axe: "x" | "y"): BoitePx[] 
     curseur += b[taille] + blanc;
   }
   return out;
+}
+
+/* --------------------------------------------------- appliquer aux éléments */
+
+/** Repose une boîte en pixels sur un élément, qui range des fractions. */
+export function avecBoite<T extends Boite>(element: T, b: BoitePx, format: CleFormat): T {
+  return { ...element, ...enFractions(b, format) };
+}
+
+/** Déplace un élément de `dx`, `dy` pixels de planche. */
+export function deplacer<T extends Boite>(
+  element: T,
+  dx: number,
+  dy: number,
+  format: CleFormat,
+): T {
+  const b = enPixels(element, format);
+  return avecBoite(element, { ...b, x: b.x + dx, y: b.y + dy }, format);
+}
+
+/**
+ * L'angle, en degrés, du vecteur `centre → p`, ramené au repère d'une rotation
+ * (0 = vers le haut, sens horaire).
+ *
+ * La poignée de rotation est AU-DESSUS de la boîte : c'est donc le nord qui vaut
+ * zéro, pas l'est. Prendre `atan2` tel quel ferait sauter l'élément d'un quart
+ * de tour dès qu'on l'attrape.
+ */
+export function angleVers(centre: Point, p: Point): number {
+  return (Math.atan2(p.y - centre.y, p.x - centre.x) * 180) / Math.PI + 90;
+}
+
+/** Ramène un angle à un multiple de `pas` — ce que fait Maj pendant une rotation. */
+export function parPas(angle: number, pas: number): number {
+  return pas > 0 ? Math.round(angle / pas) * pas : angle;
 }

@@ -6,8 +6,13 @@ import {
   TAILLE_MINIMALE,
   aimanter,
   aligner,
+  angleVers,
+  avecBoite,
   centreDe,
+  deplacer,
+  parPas,
   ciblesDAimant,
+  ciblesDeLaPlanche,
   coinsDe,
   contient,
   elementSous,
@@ -281,5 +286,73 @@ describe("aligner et répartir", () => {
 
   it("englobante d'une liste vide : null", () => {
     expect(englobante([])).toBeNull();
+  });
+});
+
+describe("appliquer aux éléments", () => {
+  it("repose une boîte de pixels en fractions", () => {
+    const e = elem({ id: "e1" });
+    const bouge = avecBoite(e, { x: 540, y: 675, l: 108, h: 135 }, "carrousel");
+    expect(bouge.x).toBeCloseTo(0.5, 9);
+    expect(bouge.y).toBeCloseTo(0.5, 9);
+    expect(bouge.l).toBeCloseTo(0.1, 9);
+    expect(bouge.h).toBeCloseTo(0.1, 9);
+  });
+
+  it("déplace en pixels de planche, sans toucher à la taille", () => {
+    const e = elem({ id: "e1", x: 0.1, y: 0.1, l: 0.2, h: 0.1 });
+    const bouge = deplacer(e, 108, 135, "carrousel");
+    expect(enPixels(bouge, "carrousel").x).toBeCloseTo(enPixels(e, "carrousel").x + 108, 6);
+    expect(bouge.l).toBe(e.l);
+    expect(bouge.h).toBe(e.h);
+  });
+
+  it("LE NORD VAUT ZÉRO pour la poignée de rotation", () => {
+    // Elle est AU-DESSUS de la boîte : prendre `atan2` tel quel ferait sauter
+    // l'élément d'un quart de tour dès qu'on l'attrape.
+    const c = { x: 0, y: 0 };
+    expect(angleVers(c, { x: 0, y: -10 })).toBeCloseTo(0, 9);
+    expect(angleVers(c, { x: 10, y: 0 })).toBeCloseTo(90, 9);
+    expect(angleVers(c, { x: 0, y: 10 })).toBeCloseTo(180, 9);
+  });
+
+  it("Maj cale la rotation sur des paliers", () => {
+    expect(parPas(43, 15)).toBe(45);
+    expect(parPas(43, 0)).toBe(43);
+  });
+
+  it("la tolérance de visée suit le zoom", () => {
+    const b: BoitePx = { x: 100, y: 100, l: 200, h: 100 };
+    // Dézoomé de moitié, la poignée occupe deux fois plus de pixels de planche.
+    expect(poigneeSous(b, 0, { x: 100 + POIGNEE * 1.5, y: 100 })).toBeNull();
+    expect(poigneeSous(b, 0, { x: 100 + POIGNEE * 1.5, y: 100 }, POIGNEE * 2)).toBe("no");
+  });
+});
+
+describe("ciblesDeLaPlanche", () => {
+  const a = elem({ id: "a", x: 0.1, y: 0.1, l: 0.2, h: 0.1 });
+  const b = elem({ id: "b", x: 0.5, y: 0.5, l: 0.2, h: 0.1 });
+
+  it("EXCLUT la sélection — sinon un élément se colle à lui-même", () => {
+    // Sans cette exclusion, le premier pixel de glissé recollerait l'élément sur
+    // sa propre position, et il ne bougerait plus.
+    const bordA = enPixels(a, "carrousel").x;
+    const avec = ciblesDeLaPlanche([a, b], "carrousel", []);
+    const sans = ciblesDeLaPlanche([a, b], "carrousel", ["a"]);
+    expect(avec.x.some((c) => c.origine === "element" && c.position === bordA)).toBe(true);
+    expect(sans.x.some((c) => c.origine === "element" && c.position === bordA)).toBe(false);
+  });
+
+  it("ignore un élément masqué : on ne se cale pas sur l'invisible", () => {
+    const cache = elem({ id: "c", x: 0.8, y: 0.8, l: 0.1, h: 0.1, masque: true });
+    const bord = enPixels(cache, "carrousel").x;
+    const cibles = ciblesDeLaPlanche([a, cache], "carrousel", []);
+    expect(cibles.x.some((c) => c.position === bord)).toBe(false);
+  });
+
+  it("garde toujours les bords et les marges de la planche", () => {
+    const cibles = ciblesDeLaPlanche([], "carrousel", []);
+    expect(cibles.x.some((c) => c.origine === "marge")).toBe(true);
+    expect(cibles.y.some((c) => c.origine === "planche")).toBe(true);
   });
 });

@@ -17,6 +17,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   MARGE,
   besoinsDeFond,
+  enPixels,
   contexteDeRendu,
   dessinerPlanche,
   formatDe,
@@ -28,19 +29,17 @@ import { decouperTrace } from "@locomotionlab/trace";
 
 import { policeChargee, policeDuLabo } from "@/lib/police";
 import { completerLesFonds, fondsEnCache } from "@/lib/tuiles";
+import { dessinerChrome, dessinerReperes } from "@/lib/chrome";
+import { useManipulation } from "@/lib/useManipulation";
+import type { PosteDeTravail } from "@/lib/usePosteDeTravail";
 
 /** L'air laissé autour de la planche quand elle s'ajuste à la fenêtre. */
 const RESPIRATION = 48;
 
-export default function PlanDeTravail({
-  projet,
-  indexPlanche,
-  zoom,
-}: {
-  projet: Projet;
-  indexPlanche: number;
-  zoom: number | null;
-}) {
+export default function PlanDeTravail({ poste }: { poste: PosteDeTravail }) {
+  const projet: Projet = poste.projet;
+  const { indexPlanche, zoom } = poste;
+  const manip = useManipulation(poste);
   const cadre = useRef<HTMLDivElement | null>(null);
   const planche = useRef<HTMLCanvasElement | null>(null);
   const reperes = useRef<HTMLCanvasElement | null>(null);
@@ -97,6 +96,12 @@ export default function PlanDeTravail({
 
   const echelle = zoom ?? ajuste;
   const courante = projet.planches[indexPlanche] ?? null;
+  const curseur =
+    manip.etat.geste === "deplacer"
+      ? "grabbing"
+      : manip.etat.geste === "tourner"
+        ? "grabbing"
+        : "default";
 
   useEffect(() => {
     const ctx = planche.current?.getContext("2d");
@@ -131,21 +136,27 @@ export default function PlanDeTravail({
     const ctx = reperes.current?.getContext("2d");
     if (!ctx) return;
     ctx.clearRect(0, 0, format.width, format.height);
-    ctx.save();
-    ctx.strokeStyle = theme.filet;
-    ctx.lineWidth = 2;
-    ctx.setLineDash([10, 12]);
-    ctx.strokeRect(MARGE, MARGE, format.width - MARGE * 2, format.height - MARGE * 2);
-    if (format.zoneSure) {
-      ctx.beginPath();
-      ctx.moveTo(0, format.zoneSure.top);
-      ctx.lineTo(format.width, format.zoneSure.top);
-      ctx.moveTo(0, format.zoneSure.bottom);
-      ctx.lineTo(format.width, format.zoneSure.bottom);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }, [format, theme]);
+    dessinerReperes(ctx, format.width, format.height, MARGE, format.zoneSure, theme, echelle);
+    dessinerChrome(ctx, format.width, format.height, {
+      zoom: echelle,
+      cadre: manip.cadre,
+      rotation: manip.rotation,
+      membres: manip.choisis.map((e) => enPixels(e, projet.format)),
+      guides: manip.etat.guides,
+      rectangle: manip.etat.rectangle,
+      verrouille: manip.choisis.length === 1 && manip.choisis[0]!.verrouille,
+    });
+  }, [format, theme, echelle, manip.cadre, manip.rotation, manip.choisis, manip.etat, projet.format]);
+
+  /** Le point sous le curseur, en pixels de PLANCHE — jamais en pixels d'écran. */
+  const pointDe = useCallback(
+    (e: { clientX: number; clientY: number }): { x: number; y: number } => {
+      const r = reperes.current?.getBoundingClientRect();
+      if (!r) return { x: 0, y: 0 };
+      return { x: (e.clientX - r.left) / echelle, y: (e.clientY - r.top) / echelle };
+    },
+    [echelle],
+  );
 
   return (
     <div
@@ -168,7 +179,17 @@ export default function PlanDeTravail({
           width={format.width}
           height={format.height}
           aria-hidden
-          className="pointer-events-none absolute inset-0 block h-full w-full"
+          className="absolute inset-0 block h-full w-full touch-none"
+          style={{ cursor: curseur }}
+          onPointerDown={(e) => {
+            (e.target as HTMLElement).setPointerCapture(e.pointerId);
+            manip.surEnfoncement(pointDe(e), { ajoute: e.shiftKey });
+          }}
+          onPointerMove={(e) =>
+            manip.surDeplacement(pointDe(e), { maj: e.shiftKey, alt: e.altKey })
+          }
+          onPointerUp={manip.surRelachement}
+          onPointerCancel={manip.surRelachement}
         />
       </div>
 

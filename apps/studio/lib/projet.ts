@@ -12,11 +12,14 @@ import {
   SCHEMA,
   changerModele,
   creer,
+  deplacer,
+  dupliquer,
   instancier,
   type CleFormat,
   type CleModele,
   type CleTheme,
   type ContexteModele,
+  type Element,
   type Historique,
   type PlancheImage,
   type Projet,
@@ -101,4 +104,83 @@ export function avecNom(p: Projet, nom: string): Projet {
 
 export function avecPlanches(p: Projet, planches: Projet["planches"]): Projet {
   return { ...p, planches, modifieLe: new Date().toISOString() };
+}
+
+/* ---------------------------------------------------- agir sur la sélection */
+
+/** Applique une transformation aux éléments choisis de la planche courante. */
+export function surSelection(
+  p: Projet,
+  index: number,
+  ids: readonly string[],
+  transforme: (e: Element) => Element,
+): Projet {
+  const planche = p.planches[index];
+  if (!planche || planche.type !== "image") return p;
+  const planches = [...p.planches];
+  planches[index] = {
+    ...planche,
+    elements: planche.elements.map((e) => (ids.includes(e.id) ? transforme(e) : e)),
+  };
+  return avecPlanches(p, planches);
+}
+
+/** Retire les éléments choisis. Un élément verrouillé ne se supprime pas au
+ *  clavier : c'est précisément ce contre quoi le verrou protège. */
+export function sansSelection(p: Projet, index: number, ids: readonly string[]): Projet {
+  const planche = p.planches[index];
+  if (!planche || planche.type !== "image") return p;
+  const planches = [...p.planches];
+  planches[index] = {
+    ...planche,
+    elements: planche.elements.filter((e) => !ids.includes(e.id) || e.verrouille),
+  };
+  return avecPlanches(p, planches);
+}
+
+/** Duplique les éléments choisis, décalés, et rend les nouveaux identifiants. */
+export function avecDoublons(
+  p: Projet,
+  index: number,
+  ids: readonly string[],
+): { projet: Projet; nouveaux: string[] } {
+  const planche = p.planches[index];
+  if (!planche || planche.type !== "image") return { projet: p, nouveaux: [] };
+  const copies = planche.elements.filter((e) => ids.includes(e.id)).map((e) => dupliquer(e));
+  if (copies.length === 0) return { projet: p, nouveaux: [] };
+  const planches = [...p.planches];
+  planches[index] = { ...planche, elements: [...planche.elements, ...copies] };
+  return { projet: avecPlanches(p, planches), nouveaux: copies.map((e) => e.id) };
+}
+
+/**
+ * Change l'ordre des calques.
+ *
+ * L'ordre du tableau EST l'ordre des calques, du fond vers l'avant : monter un
+ * élément, c'est le déplacer vers la fin.
+ */
+export function avecOrdre(
+  p: Projet,
+  index: number,
+  id: string,
+  vers: "devant" | "derriere" | "premier" | "dernier",
+): Projet {
+  const planche = p.planches[index];
+  if (!planche || planche.type !== "image") return p;
+  const i = planche.elements.findIndex((e) => e.id === id);
+  if (i < 0) return p;
+  const elements = [...planche.elements];
+  const [pris] = elements.splice(i, 1);
+  const cible =
+    vers === "devant"
+      ? Math.min(elements.length, i + 1)
+      : vers === "derriere"
+        ? Math.max(0, i - 1)
+        : vers === "dernier"
+          ? elements.length
+          : 0;
+  elements.splice(cible, 0, pris!);
+  const planches = [...p.planches];
+  planches[index] = { ...planche, elements };
+  return avecPlanches(p, planches);
 }
