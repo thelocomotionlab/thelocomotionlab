@@ -165,5 +165,19 @@
         "doi": "10.2165/00007256-200131010-00004",
         "issn": "1179-2035",
         "issbn": ""
+    },
+    "teunissen2007": {
+        "type": "article",
+        "author": "Teunissen, Lennart P. J., Grabowski, Alena, Kram, Rodger",
+        "year": "2007",
+        "title": "Effects of independently altering body weight and body mass on the metabolic cost of running",
+        "journal": "Journal of Experimental Biology",
+        "publisher": "The Company of Biologists",
+        "volume": "210",
+        "issue": "24",
+        "pages": "4418-4427",
+        "doi": "10.1242/jeb.004481",
+        "issn": "0022-0949",
+        "issbn": ""
     }
 }

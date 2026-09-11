@@ -358,7 +358,7 @@ export default async function HomePage() {
               <h2 className="font-heading text-[40px] font-bold leading-none tracking-[-0.02em] md:text-[64px]">
                 Blog
               </h2>
-              <Accroche>Le carnet de bord, au jour le jour.</Accroche>
+              <Accroche>Le carnet de bord.</Accroche>
               <p className="mt-5 max-w-[40ch] text-[16.5px] leading-[1.7] text-brand-ink text-pretty">
                 L&rsquo;actualité du labo au fil de l&rsquo;eau.
               </p>
