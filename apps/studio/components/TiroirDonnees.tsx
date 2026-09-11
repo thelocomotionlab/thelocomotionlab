@@ -93,6 +93,16 @@ export default function TiroirDonnees({ poste }: { poste: PosteDeTravail }) {
     }
   }
 
+  /** Le nom de la trace est un TITRE, pas une donnée de mesure : il vient d'un
+   *  fichier qu'on n'a pas écrit, et il se réécrit ici sans toucher au reste. */
+  function renommer(nom: string) {
+    if (!trace) return;
+    modifier(
+      (p) => (p.donnees.trace ? { ...p, donnees: { ...p.donnees, trace: { ...p.donnees.trace, nom } } } : p),
+      { libelle: "renommer la trace", fusion: "nom-trace" },
+    );
+  }
+
   function couperEn(n: number) {
     if (!trace) return;
     modifier(
@@ -140,8 +150,23 @@ export default function TiroirDonnees({ poste }: { poste: PosteDeTravail }) {
             <h3 className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-brand-muted">
               La trace
             </h3>
+            <label className="mb-1.5 block text-[12px]" htmlFor="nom-trace">
+              <span className="text-brand-muted">Nom</span>
+              <input
+                id="nom-trace"
+                type="text"
+                value={trace.nom ?? ""}
+                placeholder="sans nom"
+                onChange={(e) => renommer(e.target.value)}
+                onBlur={poste.sceller}
+                className="mt-0.5 w-full rounded-md border border-brand-field bg-brand-bg px-2 py-1.5 text-[13px]"
+              />
+            </label>
+            <p className="mb-2 text-[11px] leading-snug text-brand-muted">
+              C&rsquo;est lui qu&rsquo;écrit {"{nom}"} — le titre des modèles. Un nom de GPX fait
+              souvent trois lignes ; celui-ci est le tien.
+            </p>
             <dl className="space-y-0.5 text-[13px]">
-              <Ligne k="Nom" v={trace.nom ?? "sans nom"} />
               <Ligne k="Distance" v={`${formatKm(trace.totalKm)} km`} />
               <Ligne k="D+" v={`${formatEntier(trace.dPlusM)} m`} />
               <Ligne k="D−" v={`${formatEntier(trace.dMinusM)} m`} />

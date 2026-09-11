@@ -131,6 +131,17 @@ export type ElementTexte = ElementCommun & {
    */
   lignesDures: boolean;
   role: RoleTexte;
+  /**
+   * LE CORPS SE RÉDUIT POUR TENIR DANS LE CADRE.
+   *
+   * Un titre de modèle a la hauteur de deux lignes, et son contenu est `{nom}` —
+   * qui vient d'un fichier GPX, où « GR®54 - Tour de l'Oisans et des Écrins
+   * depuis La Chapelle-en-Valgaudemar » est un nom ordinaire. Sans ça il déborde
+   * sur ses voisins et sort de la planche, et l'auteur n'a rien tapé qui
+   * l'explique. D'où le réglage par défaut sur les titres et les surtitres, et
+   * pas sur un corps de texte, où la taille qui change à la frappe surprendrait.
+   */
+  ajuster: boolean;
   /** La puce des points de liste — une forme tracée ou une clé d'icône. */
   puce: string;
   /** En pixels d'une planche de 1080 de large. */

@@ -165,34 +165,83 @@ function dessinerTexteCapitales(
   style: StyleTexte,
 ): number {
   const morceaux = morceauxCapitales(resoudre(e.contenu, c.variables));
+  const corps = style.taille;
   ctx.font = fonteDe({ texte: "" }, style);
   ctx.fillStyle = style.couleur;
-  const largeur = largeurCapitales(ctx, morceaux, e.corps, e.lettrage);
+  const largeur = largeurCapitales(ctx, morceaux, corps, e.lettrage);
 
   // Le filet ambre qui OUVRE un surtitre : c'est le point d'entrée du regard,
   // et il se pose avant les lettres, sur la même ligne optique.
-  let x = boite.x + decalageAlignement(e.alignement, boite.l, largeur + filetOuvrantLarge(e));
-  const ligneDeBase = boite.y + e.corps;
+  let x =
+    boite.x + decalageAlignement(e.alignement, boite.l, largeur + filetOuvrantLarge(e, corps));
+  const ligneDeBase = boite.y + corps;
   if (e.filetOuvrant) {
     const f = e.filetOuvrant;
     ctx.fillStyle = f.couleur || c.theme.accent;
-    ctx.fillRect(x, ligneDeBase - e.corps * 0.34 - f.epaisseur / 2, f.largeur, f.epaisseur);
-    x += f.largeur + e.corps * 0.55;
+    ctx.fillRect(x, ligneDeBase - corps * 0.34 - f.epaisseur / 2, f.largeur, f.epaisseur);
+    x += f.largeur + corps * 0.55;
     ctx.fillStyle = style.couleur;
   }
-  dessinerCapitales(ctx, morceaux, x, ligneDeBase, e.corps, e.lettrage, c.theme.accent, {
+  dessinerCapitales(ctx, morceaux, x, ligneDeBase, corps, e.lettrage, c.theme.accent, {
     douce: c.theme.encreDouce,
   });
   return ligneDeBase;
 }
 
 /** L'encombrement du filet d'ouverture, écart compris. */
-function filetOuvrantLarge(e: ElementTexte): number {
-  return e.filetOuvrant ? e.filetOuvrant.largeur + e.corps * 0.55 : 0;
+function filetOuvrantLarge(e: ElementTexte, corps: number): number {
+  return e.filetOuvrant ? e.filetOuvrant.largeur + corps * 0.55 : 0;
+}
+
+/** Le plus petit corps qu'un ajustement s'autorise : sous ça, ce n'est plus le
+ *  même titre, et mieux vaut que l'auteur voie que son texte est trop long. */
+const AJUSTEMENT_PLANCHER = 0.4;
+
+/**
+ * Le style, réduit jusqu'à ce que le texte tienne dans sa boîte.
+ *
+ * Une mesure suffit dans le cas courant — le texte tient, on n'a rien à faire.
+ * Sinon une dichotomie de six pas trouve le corps, et le rendu reste au même
+ * coût d'une image à l'autre : le texte d'une planche se remesure à chaque
+ * glissement de souris.
+ */
+function styleQuiTient(
+  ctx: Ctx2D,
+  e: ElementTexte,
+  boite: BoitePx,
+  c: ContexteRendu,
+  style: StyleTexte,
+): StyleTexte {
+  const ajuste = e.ajuster ?? (e.role === "titre" || e.role === "surtitre");
+  if (!ajuste || !(boite.h > 0) || !(boite.l > 0)) return style;
+  const texte = resoudre(e.contenu, c.variables);
+
+  // En capitales, c'est la LARGEUR qui borne : le bloc tient sur une ligne, et
+  // c'est elle qui sort du cadre.
+  const tient = (taille: number): boolean => {
+    const essai = { ...style, taille };
+    if (e.casse === "capitales") {
+      ctx.font = fonteDe({ texte: "" }, essai);
+      return largeurCapitales(ctx, morceauxCapitales(texte), taille, e.lettrage) +
+        filetOuvrantLarge(e, taille) <= boite.l;
+    }
+    return hauteurBlocs(blocsDeTexte(ctx, texte, boite.l, essai), essai) <= boite.h;
+  };
+
+  if (tient(style.taille)) return style;
+
+  let trop = style.taille;
+  let bon = style.taille * AJUSTEMENT_PLANCHER;
+  for (let i = 0; i < 6; i += 1) {
+    const milieu = (bon + trop) / 2;
+    if (tient(milieu)) bon = milieu;
+    else trop = milieu;
+  }
+  return { ...style, taille: bon };
 }
 
 function dessinerTexte(ctx: Ctx2D, e: ElementTexte, boite: BoitePx, c: ContexteRendu): void {
-  const style = styleDe(e, c);
+  const style = styleQuiTient(ctx, e, boite, c, styleDe(e, c));
   ctx.save();
   poserOmbre(ctx, e, c);
 
@@ -214,7 +263,7 @@ function dessinerTexte(ctx: Ctx2D, e: ElementTexte, boite: BoitePx, c: ContexteR
     ctx.fillStyle = f.couleur || c.theme.accent;
     ctx.fillRect(
       boite.x + decalageAlignement(e.alignement, boite.l, f.largeur),
-      bas + e.corps * 0.42,
+      bas + style.taille * 0.42,
       f.largeur,
       f.epaisseur,
     );

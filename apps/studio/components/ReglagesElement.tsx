@@ -195,6 +195,11 @@ function ReglagesTexte({ e, poser }: { e: ElementTexte; poser: Poser<ElementText
         onChange={(n) => poser((x) => ({ ...x, interligne: Math.max(0.6, n) }), "interligne")}
       />
       <Case
+        libelle="Réduire pour tenir dans le cadre"
+        coche={e.ajuster !== false}
+        onChange={(v) => poser((x) => ({ ...x, ajuster: v }), "ajuster")}
+      />
+      <Case
         libelle="Italique"
         coche={e.italique}
         onChange={(v) => poser((x) => ({ ...x, italique: v }), "italique")}

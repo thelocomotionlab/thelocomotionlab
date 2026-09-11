@@ -71,17 +71,39 @@ function utile(f: Format): number {
   return f.width - MARGE * 2;
 }
 
+/** L'air entre deux blocs d'une pile, en pixels de planche. */
+const ECART_BLOCS = 40;
+
 /**
- * Le haut du contenu, sous la bande d'en-tête — et sous la zone qu'Instagram
- * recouvre, en story.
+ * OÙ COMMENCE ET OÙ FINIT LE MOBILIER.
+ *
+ * Le mobilier et le contenu lisent la MÊME mesure. Chacune calculée de son côté,
+ * les deux se chevauchaient en story : la zone sûre d'Instagram descend l'en-tête
+ * et remonte le pied, et le contenu, qui n'en tenait compte qu'à moitié, passait
+ * dessous puis dessus — un titre par-dessus la pagination.
  */
+function hautDeLEntete(f: Format): number {
+  return f.zoneSure ? f.zoneSure.top + 24 : MARGE;
+}
+
+/** Le bas de la bande d'en-tête, son filet compris. */
+function basDeLEntete(f: Format): number {
+  return hautDeLEntete(f) + CORPS.logo + 28;
+}
+
+/** Le haut du pied, son filet compris. */
+function hautDuPied(f: Format): number {
+  return (f.zoneSure?.bottom ?? f.height) - MARGE - CORPS.pied - 34;
+}
+
+/** Le haut du contenu, sous la bande d'en-tête. */
 function hautDuContenu(f: Format): number {
-  return Math.max(MARGE + 120, (f.zoneSure?.top ?? 0) + 40);
+  return basDeLEntete(f) + ECART_BLOCS;
 }
 
 /** Le bas du contenu, au-dessus du pied. */
 function basDuContenu(f: Format): number {
-  return Math.min(f.height - MARGE - 90, (f.zoneSure?.bottom ?? f.height) - 40);
+  return hautDuPied(f) - ECART_BLOCS;
 }
 
 /* ------------------------------------------------------------- le mobilier */
@@ -109,7 +131,7 @@ const PIED = {
 
 export function mobilier(f: Format, o: OptionsMobilier = {}): Element[] {
   const out: Element[] = [];
-  const hautEntete = f.zoneSure ? f.zoneSure.top + 24 : MARGE;
+  const hautEntete = hautDeLEntete(f);
 
   if (o.entete !== false) {
     out.push(marqueNeuve(boite(f, MARGE, hautEntete, 520, CORPS.logo), { variante: "logo-nom" }));
@@ -122,7 +144,7 @@ export function mobilier(f: Format, o: OptionsMobilier = {}): Element[] {
   }
 
   if (o.pied !== false) {
-    const basPied = (f.zoneSure?.bottom ?? f.height) - MARGE - CORPS.pied;
+    const basPied = hautDuPied(f) + 34;
     out.push(
       filetNeuf(boite(f, MARGE, basPied - 34, utile(f), 2), {
         remplissage: null,
@@ -187,9 +209,6 @@ export type Modele = {
 
 const LIGNE_FACTUELLE = "{distance} km  ·  {dplus} m D+  ·  {duree}";
 
-/** L'air entre deux blocs d'une pile, en pixels de planche. */
-const ECART_BLOCS = 40;
-
 export const MODELES: Modele[] = [
   {
     cle: "carte",
@@ -224,15 +243,15 @@ export const MODELES: Modele[] = [
       const hautPhoto = f.zoneSure ? f.zoneSure.top : 0;
       const hPhoto = Math.round(f.height * 0.42);
       const y = hautPhoto + hPhoto + 70;
+      const yCorps = y + CORPS.surtitre * 2.1 + CORPS.titre * 2.6;
+      // Le corps prend ce qui RESTE : six lignes fixes passaient sous le pied en
+      // story, où la zone sûre remonte celui-ci de trois cents pixels.
+      const hCorps = Math.max(CORPS.corps * 2, basDuContenu(f) - yCorps);
       return [
         photoNeuve(boite(f, 0, hautPhoto, f.width, hPhoto), { nom: "Bandeau" } as never),
         ...mobilier(f),
         ...enTete(f, c, y),
-        texteNeuf(
-          boite(f, MARGE, y + CORPS.surtitre * 2.1 + CORPS.titre * 2.6, utile(f), CORPS.corps * 6),
-          "",
-          "corps",
-        ),
+        texteNeuf(boite(f, MARGE, yCorps, utile(f), hCorps), "", "corps"),
       ];
     },
   },

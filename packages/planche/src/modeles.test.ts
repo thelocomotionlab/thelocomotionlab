@@ -365,3 +365,38 @@ describe("les piles des stories ne se chevauchent pas", () => {
     });
   }
 });
+
+describe("le mobilier et le contenu ne se recouvrent pas", () => {
+  /** Les éléments que `mobilier()` pose : marque, filets, pagination, glisse. */
+  const MOBILIER = ["Filet d'en-tête", "Filet de pied", "Pagination", "Glisse"];
+  const estMobilier = (e: Element) => e.type === "marque" || MOBILIER.includes(e.nom);
+
+  /** Deux boîtes se recouvrent si elles se croisent dans les DEUX sens. */
+  function croise(a: ReturnType<typeof enPixels>, b: ReturnType<typeof enPixels>): boolean {
+    const x = Math.min(a.x + a.l, b.x + b.l) - Math.max(a.x, b.x);
+    const y = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+    return x > 2 && y > 2;
+  }
+
+  for (const cle of Object.keys(FORMATS) as (keyof typeof FORMATS)[]) {
+    for (const m of MODELES) {
+      if (m.formats && !m.formats.includes(cle)) continue;
+      it(`${m.cle} · ${cle}`, () => {
+        const planche = instancier(m.cle, { ...CTX, format: cle });
+        const poses = planche.elements.map((e) => ({ e, b: enPixels(e, cle) }));
+        // Une photo passe DESSOUS le mobilier par construction — c'est tout
+        // l'intérêt d'une marque posée sur une image. Ce qui ne doit jamais s'y
+        // superposer, c'est ce qui se lit : un texte, un chiffre, une carte.
+        const contenu = poses.filter(({ e }) => !estMobilier(e) && e.type !== "photo");
+        for (const mo of poses.filter(({ e }) => estMobilier(e))) {
+          for (const co of contenu) {
+            expect(
+              croise(mo.b, co.b),
+              `« ${co.e.nom} » recouvre « ${mo.e.nom} »`,
+            ).toBe(false);
+          }
+        }
+      });
+    }
+  }
+});

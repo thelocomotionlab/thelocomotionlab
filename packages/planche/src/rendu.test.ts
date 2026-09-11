@@ -387,6 +387,60 @@ function teintesRemplies(ctx: CtxFactice): string[] {
   return ctx.ops.flatMap((o) => (o.op === "fill" ? [String(o.args[0])] : []));
 }
 
+describe("l'ajustement au cadre", () => {
+  /** Le corps réellement posé : la taille lue dans `ctx.font` au premier mot. */
+  function corpsPose(over: Partial<ElementTexte>): number {
+    const ctx = ctxFactice();
+    const { p, planche } = projet([texte(over)]);
+    let vu = 0;
+    const cible = ctx as unknown as Record<string, (...a: unknown[]) => void>;
+    const fillText = cible.fillText!.bind(ctx);
+    cible.fillText = (...a: unknown[]) => {
+      if (!vu) vu = Number(/(\d+(?:\.\d+)?)px/.exec(String(ctx.font))?.[1] ?? 0);
+      fillText(...a);
+    };
+    dessinerPlanche(
+      ctx,
+      planche,
+      contexteDeRendu(p, planche, {
+        police: "Ubuntu",
+        segments: decouperTrace(p.donnees.trace, p.donnees.coupures),
+      }),
+    );
+    return vu;
+  }
+
+  const LONG =
+    "GR®54 - Tour de l'Oisans et des Écrins depuis La Chapelle-en-Valgaudemar, " +
+    "par le GR®54B et le GR®54C";
+
+  it("laisse le corps intact quand le texte tient", () => {
+    expect(corpsPose({ contenu: "Court", corps: 65, ajuster: true })).toBe(65);
+  });
+
+  it("réduit le corps quand le texte déborde", () => {
+    const pose = corpsPose({ contenu: LONG, corps: 65, ajuster: true, h: 0.06 });
+    expect(pose).toBeLessThan(65);
+    expect(pose).toBeGreaterThan(0);
+  });
+
+  it("ne descend pas sous le plancher", () => {
+    const pose = corpsPose({ contenu: LONG.repeat(6), corps: 65, ajuster: true, h: 0.02 });
+    expect(pose).toBeGreaterThanOrEqual(65 * 0.4);
+  });
+
+  it("ne touche à rien quand l'ajustement est éteint", () => {
+    expect(corpsPose({ contenu: LONG, corps: 65, ajuster: false, h: 0.06 })).toBe(65);
+  });
+
+  /** Un document écrit avant le réglage garde celui de son rôle. */
+  it("ajuste un titre venu d'un document qui ne connaissait pas le réglage", () => {
+    const sans = { contenu: LONG, corps: 65, role: "titre" as const, h: 0.06 };
+    const pose = corpsPose({ ...sans, ajuster: undefined as unknown as boolean });
+    expect(pose).toBeLessThan(65);
+  });
+});
+
 describe("le filet sous le titre", () => {
   function filetPose(casse: "normale" | "capitales"): boolean {
     const ctx = rendre([
