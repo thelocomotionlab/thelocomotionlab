@@ -22,7 +22,7 @@ import type { Ctx2D, SourceImage } from "./canvas.ts";
 import { vocabulaireDIcones } from "./canvas.ts";
 import { cadrer, decimerPixels, tuilesDeLaVue, type Vue } from "./projection.ts";
 import { segmentsMontres, type ContexteRendu } from "./contexte.ts";
-import { dessinerCapitales, fonteDe, largeurCapitales, morceauxCapitales } from "./texte.ts";
+import { CENTRE_CAPITALES, dessinerCapitales, fonteDe, largeurCapitales, morceauxCapitales } from "./texte.ts";
 import type { Boite, BoitePx, DegradesCarte, ElementCarte, FondCarte } from "./types.ts";
 
 /** Une mosaïque déjà assemblée, prête à poser sous la trace. */
@@ -129,6 +129,9 @@ export function besoinDeFond(
   };
 }
 
+/** Le corps d'une étiquette de journée, en pixels d'une planche de 1080. */
+const CORPS_ETIQUETTE = 29;
+
 /** Jamais plus de 64 tuiles pour une carte : au-delà, l'aplat suffit. */
 export const MAX_TUILES = 64;
 
@@ -220,20 +223,17 @@ function etiquette(
   cadre: BoitePx,
   c: ContexteRendu,
 ): void {
-  const morceaux = morceauxCapitales(texte);
   ctx.save();
-  ctx.font = fonteDe({ texte: "" }, { police: c.police, taille: corps, graisse: 600 });
-  const lettrage = 0.12;
-  const largeurTexte = largeurCapitales(ctx, morceaux, corps, lettrage);
-  // LA PASTILLE OU L'ICÔNE, jamais les deux : la marque à gauche du texte dit de
-  // quelle journée il s'agit. Un point plein suffit quand rien de plus précis
-  // n'a été demandé, et c'est ce qui fait lire « J1 » comme la journée fuchsia.
-  const cote = icone ? corps * 1.15 : corps * 0.5;
-  const ecart = icone ? corps * 0.4 : corps * 0.38;
-  const padX = corps * 0.55;
+  ctx.font = `500 ${corps}px ${c.police}`;
+  const largeurTexte = ctx.measureText(texte).width;
+
+  // LA MARQUE À GAUCHE DU TEXTE : une icône, ou la pastille de la journée.
+  const cote = icone ? corps * 1.15 : corps * 0.34;
+  const padX = corps * 0.62;
   const padY = corps * 0.42;
-  const l = largeurTexte + cote + ecart + padX * 2;
+  const l = largeurTexte + padX * 2 + cote + corps * 0.4;
   const h = corps + padY * 2;
+
   // L'ÉTIQUETTE RESTE DANS LE CADRE. Elle se pose au-dessus du sommet de sa
   // journée, et un sommet près du bord haut la mettait hors de la carte, où le
   // découpage la coupe en deux — la journée perdait son nom sans rien dire.
@@ -243,7 +243,7 @@ function etiquette(
     Math.max(cadre.x + marge, cadre.x + cadre.l - l - marge),
   );
   const haut = Math.min(
-    Math.max(y - h, cadre.y + marge),
+    Math.max(y - h - corps * 0.9, cadre.y + marge),
     Math.max(cadre.y + marge, cadre.y + cadre.h - h - marge),
   );
 
@@ -257,34 +257,33 @@ function etiquette(
   ctx.quadraticCurveTo(gauche, haut + h, gauche, haut + r);
   ctx.quadraticCurveTo(gauche, haut, gauche + r, haut);
   ctx.closePath();
-  ctx.fillStyle = rgba(c.theme.fond, 0.82);
+  ctx.fillStyle = `rgba(${c.theme.voileTexte}, ${c.theme.cle === "clair" ? 0.9 : 0.84})`;
   ctx.fill();
-  ctx.lineWidth = Math.max(1.5, corps * 0.08);
+  ctx.lineWidth = Math.max(1.5, corps * 0.069);
   ctx.strokeStyle = couleur;
+  ctx.globalAlpha = 0.9;
   ctx.stroke();
+  ctx.globalAlpha = 1;
 
-  const ligneDeBase = haut + padY + corps * 0.78;
+  const milieu = haut + h / 2;
   let curseur = gauche + padX;
   if (icone) {
-    vocabulaireDIcones().dessiner(
-      ctx,
-      icone,
-      curseur,
-      ligneDeBase - corps * 0.35 - cote / 2,
-      cote,
-      couleur,
-    );
+    vocabulaireDIcones().dessiner(ctx, icone, curseur, milieu - cote / 2, cote, couleur);
   } else {
     ctx.beginPath();
-    ctx.arc(curseur + cote / 2, ligneDeBase - corps * 0.35, cote / 2, 0, Math.PI * 2);
+    ctx.arc(curseur + cote / 2, milieu, cote / 2, 0, Math.PI * 2);
     ctx.fillStyle = couleur;
     ctx.fill();
   }
-  curseur += cote + ecart;
+  curseur += cote + corps * 0.4;
+
   // Le texte reste à l'ENCRE : la couleur est déjà dite par la pastille et par
   // le liseré, et un mot de la teinte du jour se lit mal sur une imagerie.
   ctx.fillStyle = c.theme.encre;
-  dessinerCapitales(ctx, morceaux, curseur, ligneDeBase, corps, lettrage, couleur);
+  // Centré sur la HAUTEUR DE CAPITALE, sans toucher à `textBaseline` : le
+  // contexte de comptoir des tests ne le porte pas, et un rendu qui dépend d'un
+  // état global se décale dès qu'un voisin l'oublie.
+  ctx.fillText(texte, curseur, milieu + corps * CENTRE_CAPITALES);
   ctx.restore();
 }
 
@@ -458,7 +457,10 @@ export function dessinerCarte(
   //    ancrage calculé. La liste de la carte ne les crée pas : elle les
   //    RÉÉCRIT, une entrée par journée. Une trace découpée après la planche se
   //    nomme donc toute seule.
-  const corps = Math.max(11, b.l * 0.038);
+  // LE CORPS D'UNE ÉTIQUETTE EST EN PIXELS DE PLANCHE, comme le trait de la
+  // trace : pris en part de la boîte, il enflait d'un tiers le jour où la carte
+  // passait plein cadre.
+  const corps = Math.max(11, CORPS_ETIQUETTE * (c.format.width / LARGEUR_REFERENCE));
   if (e.etiquettesAuto !== false && journees.length > 1) {
     for (const seg of journees) {
       const dit = e.etiquettes.find((t) => t.segment === seg.index);

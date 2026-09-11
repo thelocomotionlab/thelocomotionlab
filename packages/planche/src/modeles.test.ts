@@ -414,11 +414,13 @@ describe("le gabarit Carte tombe aux mesures de la charte", () => {
     baseMarque: 80,
     filetPied: 1254,
     basePied: 1304,
-    hautProfil: 789.8,
-    basProfil: 939.8,
-    baseSurtitre: 986,
-    baseTitre: 1072.4,
+    hautProfil: 865.2,
+    basProfil: 1015.2,
+    baseSurtitre: 1061.4,
+    baseTitre: 1147.8,
     baseChiffres: 1220,
+    /** La fenêtre où se cadre la trace s'arrête AU-DESSUS du profil. */
+    basFenetre: 847.7,
   };
 
   const planche = instancier("carte", { ...CTX, format: "carrousel" });
@@ -456,7 +458,11 @@ describe("le gabarit Carte tombe aux mesures de la charte", () => {
     const carte = planche.elements.find((e) => e.type === "carte");
     if (!carte || carte.type !== "carte" || !carte.fenetre) throw new Error("fenêtre absente");
     expect(carte.fenetre.y * 1350).toBeCloseTo(168, 0);
-    expect((carte.fenetre.y + carte.fenetre.h) * 1350).toBeCloseTo(847.7, 0);
+    expect((carte.fenetre.y + carte.fenetre.h) * 1350).toBeCloseTo(V1.basFenetre, 0);
+    // Elle ne DESCEND PAS dans le profil : une trace qui touche sa propre
+    // altimétrie, c'est deux dessins qui se disputent la même bande.
+    expect(V1.hautProfil).toBeGreaterThan(V1.basFenetre);
+    expect(px("Profil").y).toBeGreaterThan((carte.fenetre.y + carte.fenetre.h) * 1350);
   });
 
   it("porte le fond et le trait du labo", () => {

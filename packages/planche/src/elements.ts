@@ -52,8 +52,9 @@ const MARQUE = "LOCOMOTION LAB";
 /** Le logo est teinté à la couleur du nom : même encre, même présence. */
 const MARQUE_OPACITE = 0.68;
 
-/** L'interlettrage du nom dans la bande d'en-tête. */
-const LETTRAGE_MARQUE = 0.28;
+/** L'interlettrage et la graisse du nom, ceux de la navbar du site. */
+const LETTRAGE_MARQUE = 0.24;
+const GRAISSE_MARQUE = 600;
 
 /** L'aire d'une journée reste transparente : les journées voisines se touchent
  *  par leur borne, et deux aplats opaques feraient une frise de blocs. */
@@ -443,10 +444,12 @@ function dessinerForme(ctx: Ctx2D, e: ElementForme, b: BoitePx, c: ContexteRendu
   const remplissage = e.remplissage === null ? null : e.remplissage || c.theme.accent;
 
   if (e.forme === "ligne" || e.forme === "filet") {
-    // Le FILET AMBRE de la charte : la même épaisseur que celui qui ouvre un
-    // surtitre, mais posable n'importe où.
-    ctx.fillStyle = remplissage ?? c.theme.accent;
-    const epaisseur = e.forme === "filet" ? Math.max(2, b.h) : Math.max(1, b.h);
+    // DEUX FILETS, ET C'EST `null` QUI LES SÉPARE. Posé à la main, un filet est
+    // l'AMBRE de la charte — celui qui ouvre un surtitre. Celui du mobilier, lui,
+    // ferme une bande d'en-tête ou un pied : c'est un trait discret, l'encre du
+    // thème à peine posée, et il passait en ambre en travers de la planche.
+    ctx.fillStyle = remplissage ?? c.theme.filet;
+    const epaisseur = Math.max(1, b.h);
     ctx.fillRect(b.x, b.y, b.l, epaisseur);
     ctx.restore();
     return;
@@ -492,7 +495,10 @@ function dessinerIcone(ctx: Ctx2D, e: ElementIcone, b: BoitePx, c: ContexteRendu
 /* ----------------------------------------------------------------- marque */
 
 function dessinerMarque(ctx: Ctx2D, e: ElementMarque, b: BoitePx, c: ContexteRendu): void {
-  const teinte = e.teinte || c.theme.accent;
+  // LA MARQUE S'ÉCRIT COMME LA NAVBAR DU SITE : à l'encre, en demi-gras, très
+  // espacée. En ambre elle se lisait comme un accent de la planche, alors que
+  // c'est une signature — elle ne doit rien prendre au titre.
+  const teinte = e.teinte || c.theme.encre;
   ctx.save();
 
   if (e.variante === "cercle") {
@@ -528,7 +534,7 @@ function dessinerMarque(ctx: Ctx2D, e: ElementMarque, b: BoitePx, c: ContexteRen
     x += cote + taille * 0.5;
   }
   if (e.variante !== "logo") {
-    ctx.font = `500 ${taille}px ${c.police}`;
+    ctx.font = `${GRAISSE_MARQUE} ${taille}px ${c.police}`;
     ctx.fillStyle = teinte;
     dessinerCapitales(ctx, analyserRiche(MARQUE), x, ligneDeBase, taille, LETTRAGE_MARQUE, teinte);
   }

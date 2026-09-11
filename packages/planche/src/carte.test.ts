@@ -13,7 +13,7 @@ import {
 import { contexteDeRendu } from "./contexte.ts";
 import { ctxFactice, type CtxFactice } from "./factice.ts";
 import { besoinsDeFond, dessinerPlanche } from "./rendu.ts";
-import { THEMES } from "./charte.ts";
+import { PALETTE_JOURS, THEMES } from "./charte.ts";
 import { brandColors } from "@locomotionlab/ui/tokens";
 import { carteNeuve } from "./fabrique.ts";
 import { TILE_SIZE, cadrer, decimerPixels, normX, normY, tuilesDeLaVue } from "./projection.ts";
@@ -277,7 +277,9 @@ describe("dessiner une carte", () => {
         { id: "e2", segment: 1, texte: "Arsine", icone: "col", dx: 0.05, dy: -0.02, masquee: false },
       ],
     });
-    expect(dits(ctx)).toContain("ARSINE");
+    // Le texte s'écrit TEL QU'ON LE TAPE : une étiquette nomme un lieu — « col
+    // d'Arsine » —, elle ne crie pas.
+    expect(dits(ctx)).toContain("Arsine");
     expect(dits(ctx)).toContain("J1");
     expect(dits(ctx)).not.toContain("J2");
   });
@@ -414,5 +416,33 @@ describe("le liseré de la trace", () => {
     for (const theme of ["clair", "sombre"] as const) {
       expect(traits(theme)).toContain(brandColors.paper);
     }
+  });
+});
+
+describe("les encres, celles du studio d'avant", () => {
+  /**
+   * Relevées dans `apps/site/lib/carrouselCartes.js`. Ce sont elles que portent
+   * les planches publiées : une teinte qui glisse et la série ne se lit plus
+   * comme un tout.
+   */
+  it("garde la palette des journées", () => {
+    expect([...PALETTE_JOURS]).toEqual([
+      "#D6246E",
+      "#EFB159",
+      "#B67352",
+      "#8CB9BD",
+      "#6E9CA0",
+      "#9A6044",
+    ]);
+  });
+
+  it("garde les encres des deux thèmes", () => {
+    expect(THEMES.clair.voileCarte).toBe("rgba(254, 251, 246, 0.3)");
+    expect(THEMES.sombre.voileCarte).toBe("rgba(16, 18, 14, 0.34)");
+    expect(THEMES.clair.voileTexte).toBe("254, 251, 246");
+    expect(THEMES.sombre.voileTexte).toBe("16, 18, 14");
+    // L'itinéraire en sourdine : l'encre du thème, posée à peine.
+    expect(THEMES.clair.encre).toBe("#22241E");
+    expect(THEMES.sombre.encre).toBe("#FEFBF6");
   });
 });
