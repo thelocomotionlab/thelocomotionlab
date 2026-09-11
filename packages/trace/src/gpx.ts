@@ -34,6 +34,41 @@ const NOM = /<trk>[\s\S]*?<name>\s*([^<]*?)\s*<\/name>/;
 const LAT = ATTR("lat");
 const LON = ATTR("lon");
 
+/** Les entités XML nommées qu'un GPX écrit réellement. */
+const ENTITES: Record<string, string> = {
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  amp: "&",
+  nbsp: "\u00A0",
+};
+
+const ENTITE = /&(?:#(\d+)|#[xX]([0-9a-fA-F]+)|([a-zA-Z]+));/g;
+
+/**
+ * LE TEXTE D'UN GPX, ENTITÉS LUES.
+ *
+ * Un nom de trace vient d'un fichier, et un fichier écrit `l&apos;Oisans` et
+ * `GR&#174;54` : sans cette lecture, le balisage brut se retrouve tel quel dans
+ * le titre d'une planche publiée.
+ *
+ * UNE SEULE PASSE, et c'est ce qui rend `&amp;` sûr : le remplacement ne
+ * relit pas ce qu'il vient d'écrire, donc `&amp;apos;` — une esperluette
+ * échappée suivie du mot — reste `&apos;` au lieu de devenir une apostrophe.
+ */
+function decoder(texte: string): string {
+  return texte.replace(ENTITE, (tout, dec: string, hex: string, nom: string) => {
+    const code = dec ? Number(dec) : hex ? Number.parseInt(hex, 16) : NaN;
+    if (Number.isFinite(code)) {
+      // Hors plage, `fromCodePoint` jette : une entité fautive reste du texte.
+      if (code < 0 || code > 0x10ffff) return tout;
+      return String.fromCodePoint(code);
+    }
+    return ENTITES[nom?.toLowerCase()] ?? tout;
+  });
+}
+
 /** Un nombre fini, ou `null` — jamais un `NaN` qui contaminerait une somme. */
 function nombre(brut: string | undefined): number | null {
   const v = Number.parseFloat(brut ?? "");
@@ -70,7 +105,8 @@ export function parseGpx(xml: unknown): { nom: string | null; points: PointBrut[
       cadence: nombre(corps.match(CAD)?.[1]),
     });
   }
-  return { nom: texte.match(NOM)?.[1] || null, points };
+  const nom = texte.match(NOM)?.[1];
+  return { nom: nom ? decoder(nom) : null, points };
 }
 
 /**

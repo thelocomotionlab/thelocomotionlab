@@ -19,6 +19,7 @@ import type { Element } from "./types.ts";
 const APPARENCE: Record<Element["type"], readonly string[]> = {
   texte: [
     "role",
+    "ajuster",
     "puce",
     "corps",
     "graisse",

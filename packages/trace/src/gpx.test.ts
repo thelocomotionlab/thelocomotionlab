@@ -98,3 +98,29 @@ describe("distanceCumulee", () => {
     expect(cumul).toEqual([0, 1500, 1500]);
   });
 });
+
+describe("le nom de la trace", () => {
+  const avecNom = (nom: string) =>
+    parseGpx(
+      `<gpx><trk><name>${nom}</name><trkseg>` +
+        `<trkpt lat="45" lon="6"><ele>1000</ele></trkpt>` +
+        `<trkpt lat="45.001" lon="6"><ele>1010</ele></trkpt>` +
+        `</trkseg></trk></gpx>`,
+    ).nom;
+
+  it("lit les entités nommées et numériques", () => {
+    expect(avecNom("GR&#174;54 - Tour de l&apos;Oisans")).toBe("GR®54 - Tour de l'Oisans");
+    expect(avecNom("Col &lt;&gt;&quot; du Lautaret")).toBe('Col <>" du Lautaret');
+    expect(avecNom("Vercors &#x26; Chartreuse")).toBe("Vercors & Chartreuse");
+  });
+
+  it("ne relit pas ce qu'elle vient d'écrire", () => {
+    // Une esperluette échappée suivie du mot reste le mot, pas une apostrophe.
+    expect(avecNom("Tour &amp;apos; des Écrins")).toBe("Tour &apos; des Écrins");
+  });
+
+  it("laisse une entité fautive telle quelle", () => {
+    expect(avecNom("Col du &inconnu; Galibier")).toBe("Col du &inconnu; Galibier");
+    expect(avecNom("Hors plage &#99999999;")).toBe("Hors plage &#99999999;");
+  });
+});
