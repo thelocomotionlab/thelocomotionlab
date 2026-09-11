@@ -223,7 +223,15 @@ export default function PlanDeTravail({
     const ctx = reperes.current?.getContext("2d");
     if (!ctx) return;
     ctx.clearRect(0, 0, format.width, format.height);
-    dessinerReperes(ctx, format.width, format.height, MARGE, format.zoneSure, theme, echelle);
+    // LES REPÈRES NE SORTENT QUE PENDANT LE GESTE. Ils servent à caler un
+    // élément qu'on déplace ; posés en permanence, ils barrent la planche de
+    // pointillés qu'on finit par lire comme faisant partie de l'image.
+    const enCours =
+      manip.etat.geste === "deplacer" ||
+      manip.etat.geste === "redimensionner" ||
+      manip.etat.geste === "poser";
+    if (enCours)
+      dessinerReperes(ctx, format.width, format.height, MARGE, format.zoneSure, theme, echelle);
     dessinerChrome(ctx, format.width, format.height, {
       zoom: echelle,
       cadre: manip.cadre,

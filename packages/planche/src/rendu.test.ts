@@ -387,6 +387,43 @@ function teintesRemplies(ctx: CtxFactice): string[] {
   return ctx.ops.flatMap((o) => (o.op === "fill" ? [String(o.args[0])] : []));
 }
 
+describe("les encres des rôles", () => {
+  /** L'encre posée au premier mot. */
+  function encre(over: Partial<ElementTexte>, theme: "clair" | "sombre" = "sombre"): string {
+    const ctx = ctxFactice();
+    const { p, planche } = projet([texte(over)]);
+    const c = contexteDeRendu({ ...p, theme }, planche, {
+      police: "Ubuntu",
+      segments: decouperTrace(p.donnees.trace, p.donnees.coupures),
+    });
+    let vue = "";
+    const cible = ctx as unknown as Record<string, (...a: unknown[]) => void>;
+    const fillText = cible.fillText!.bind(ctx);
+    cible.fillText = (...a: unknown[]) => {
+      if (!vue) vue = String(ctx.fillStyle);
+      fillText(...a);
+    };
+    dessinerPlanche(ctx, planche, c);
+    return vue;
+  }
+
+  it("donne l'ambre au surtitre et l'encre atténuée au corps", () => {
+    expect(encre({ role: "surtitre", casse: "capitales" })).toBe(THEMES.sombre.accent);
+    expect(encre({ role: "corps" })).toBe(THEMES.sombre.encreDouce);
+    expect(encre({ role: "titre" })).toBe(THEMES.sombre.encre);
+  });
+
+  it("nomme les encres plutôt que de les écrire, pour qu'elles suivent le thème", () => {
+    expect(encre({ couleur: "faible" }, "clair")).toBe(THEMES.clair.encreFaible);
+    expect(encre({ couleur: "faible" }, "sombre")).toBe(THEMES.sombre.encreFaible);
+    expect(encre({ couleur: "douce" }, "clair")).toBe(THEMES.clair.encreDouce);
+  });
+
+  it("une couleur écrite l'emporte sur le rôle", () => {
+    expect(encre({ role: "surtitre", casse: "normale", couleur: "#123456" })).toBe("#123456");
+  });
+});
+
 describe("l'ajustement au cadre", () => {
   /** Le corps réellement posé : la taille lue dans `ctx.font` au premier mot. */
   function corpsPose(over: Partial<ElementTexte>): number {

@@ -98,12 +98,30 @@ export function dessinerElement(
 /* ------------------------------------------------------------------ texte */
 
 /** Le style de rendu d'un élément texte : ses réglages, sur l'encre du thème. */
+/**
+ * L'ENCRE D'UN TEXTE : la sienne, ou celle que la charte donne à son RÔLE.
+ *
+ * Un surtitre est ambre, un corps porte l'encre atténuée, un titre l'encre
+ * pleine. Écrites en dur dans les modèles, ces teintes cesseraient de suivre le
+ * passage en sombre ; nommées ici, elles suivent le thème. « douce » et
+ * « faible » sont des rôles d'encre eux aussi, et non des teintes : le pied
+ * d'une planche doit s'effacer sur les deux fonds, pas être gris.
+ */
+function encreDuTexte(e: ElementTexte, c: ContexteRendu): string {
+  if (e.couleur === "douce") return c.theme.encreDouce;
+  if (e.couleur === "faible") return c.theme.encreFaible;
+  if (e.couleur) return e.couleur;
+  if (e.role === "surtitre") return c.theme.accent;
+  if (e.role === "corps") return c.theme.encreDouce;
+  return c.theme.encre;
+}
+
 export function styleDe(e: ElementTexte, c: ContexteRendu): StyleTexte {
   return {
     police: c.police,
     taille: e.corps,
     graisse: e.graisse,
-    couleur: e.couleur || c.theme.encre,
+    couleur: encreDuTexte(e, c),
     accent: c.theme.accent,
     douce: c.theme.encreDouce,
     plaque: e.plaque

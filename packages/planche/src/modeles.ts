@@ -186,6 +186,8 @@ const PIED = {
   casse: "capitales" as const,
   lettrage: LETTRAGE.etiquette,
   filetOuvrant: null,
+  // Le pied s'efface : il numérote, il n'annonce pas.
+  couleur: "faible",
 };
 
 export function mobilier(f: Format, o: OptionsMobilier = {}): Element[] {
