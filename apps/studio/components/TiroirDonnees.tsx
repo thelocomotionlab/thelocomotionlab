@@ -38,6 +38,20 @@ async function lire(fichier: File): Promise<Trace | null> {
   return traceDepuisGpx(texte);
 }
 
+/**
+ * LES JOURNÉES D'UNE TRACE QUI ARRIVE.
+ *
+ * Les jonctions d'une fusion l'emportent : ce sont les bivouacs réels, un
+ * fichier par jour. Sinon, UNE SORTIE DÉJÀ FAITE EST D'UN SEUL TENANT — elle se
+ * raconte, elle ne se planifie plus — et un itinéraire prévu, lui, se découpe.
+ * Sans ce partage, une carte chargée restait d'une seule couleur et sans une
+ * étiquette, et il fallait deviner qu'un réglage ailleurs la coupait.
+ */
+function coupuresALOuverture(trace: Trace): number[] {
+  if (trace.jonctions?.length) return trace.jonctions;
+  return trace.vecue ? [] : coupuresRegulieres(trace.totalKm, 2);
+}
+
 const CHAMP =
   "w-full rounded-md border border-brand-field bg-brand-bg px-2 py-1.5 text-[13px] tabulaire";
 
@@ -80,7 +94,7 @@ export default function TiroirDonnees({ poste }: { poste: PosteDeTravail }) {
             // Le cadrage se fige sur la trace complète : changer la tranche de
             // journées ne doit pas recadrer les cartes de la série.
             traceCadrage: fusionnee,
-            coupures: fusionnee.jonctions ?? p.donnees.coupures,
+            coupures: coupuresALOuverture(fusionnee),
           },
           modifieLe: new Date().toISOString(),
         }),

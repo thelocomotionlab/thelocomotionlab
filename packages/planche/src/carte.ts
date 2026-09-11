@@ -17,6 +17,7 @@ import { FONDS, urlDeTuile, type NomDeFond } from "@locomotionlab/tracking/fonds
 import type { Coord, Segment } from "@locomotionlab/trace";
 
 import { LARGEUR_REFERENCE, couleurDuJour, rgba } from "./charte.ts";
+import { brandColors } from "@locomotionlab/ui/tokens";
 import type { Ctx2D, SourceImage } from "./canvas.ts";
 import { vocabulaireDIcones } from "./canvas.ts";
 import { cadrer, decimerPixels, tuilesDeLaVue, type Vue } from "./projection.ts";
@@ -405,7 +406,11 @@ export function dessinerCarte(
   // trait du labo. Mise en part de la boîte, la trace triplait d'épaisseur le
   // jour où la carte passait plein cadre.
   const epaisseur = Math.max(2, e.epaisseur * (c.format.width / LARGEUR_REFERENCE));
-  const liseréCouleur = c.theme.encre;
+  // LE LISERÉ EST BLANC, quel que soit le thème : ce n'est pas une encre, c'est
+  // un DÉTOURAGE — il décolle un sentier fin d'une imagerie bavarde. Pris sur
+  // l'encre du thème, il cernait la trace d'un halo sombre qui la faisait lire
+  // deux fois plus épaisse qu'elle n'est.
+  const liseréCouleur = brandColors.paper;
 
   // 3. L'ITINÉRAIRE COMPLET EN SOURDINE : c'est lui qui SITUE la journée. On
   //    peut l'éteindre — une pièce détachée destinée à un montage n'a pas
@@ -414,8 +419,8 @@ export function dessinerCarte(
     polyligne(
       ctx,
       decimerPixels(cadrage.map(projeter)),
-      rgba(c.theme.encre, 0.24),
-      epaisseur * 0.7,
+      rgba(c.theme.encre, 0.26),
+      epaisseur * 0.62,
       false,
       liseréCouleur,
     );
@@ -526,10 +531,10 @@ export function miniCarte(
   polyligne(
     ctx,
     decimerPixels(cadrage.map(projeter)),
-    rgba(c.theme.encre, 0.24),
-    epaisseur * 0.7,
+    rgba(c.theme.encre, 0.26),
+    epaisseur * 0.62,
     false,
-    c.theme.encre,
+    brandColors.paper,
   );
   if (journee && journee.coords.length > 1) {
     polyligne(
@@ -538,7 +543,7 @@ export function miniCarte(
       journee.couleur,
       epaisseur,
       true,
-      c.theme.encre,
+      brandColors.paper,
     );
   }
   ctx.restore();

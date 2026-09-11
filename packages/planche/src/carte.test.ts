@@ -13,6 +13,8 @@ import {
 import { contexteDeRendu } from "./contexte.ts";
 import { ctxFactice, type CtxFactice } from "./factice.ts";
 import { besoinsDeFond, dessinerPlanche } from "./rendu.ts";
+import { THEMES } from "./charte.ts";
+import { brandColors } from "@locomotionlab/ui/tokens";
 import { carteNeuve } from "./fabrique.ts";
 import { TILE_SIZE, cadrer, decimerPixels, normX, normY, tuilesDeLaVue } from "./projection.ts";
 import { SCHEMA } from "./types.ts";
@@ -382,5 +384,35 @@ describe("les dégradés de la carte", () => {
 
   it("une hauteur nulle aussi", () => {
     expect(voiles({ haut: 0.8, hautH: 0, bas: 0.5, basH: 0 })).toEqual([]);
+  });
+});
+
+describe("le liseré de la trace", () => {
+  /** Les couleurs de trait posées, dans l'ordre. */
+  function traits(theme: "clair" | "sombre"): string[] {
+    const ctx = ctxFactice();
+    const vus: string[] = [];
+    const cible = ctx as unknown as Record<string, (...a: unknown[]) => void>;
+    const stroke = cible.stroke!.bind(ctx);
+    cible.stroke = (...a: unknown[]) => {
+      vus.push(String(ctx.strokeStyle));
+      stroke(...a);
+    };
+    const el = carteNeuve({ x: 0, y: 0, l: 1, h: 1 });
+    const { planche, c } = monde([el]);
+    dessinerPlanche(ctx, planche, { ...c, theme: THEMES[theme] });
+    return vus;
+  }
+
+  /**
+   * Le liseré n'est pas une encre, c'est un DÉTOURAGE : il décolle un sentier
+   * fin d'une imagerie bavarde, et il reste blanc dans les deux thèmes. Pris
+   * sur l'encre, il cerne la trace d'un halo sombre qui la fait lire deux fois
+   * plus épaisse qu'elle n'est.
+   */
+  it("détoure en blanc, dans les deux thèmes", () => {
+    for (const theme of ["clair", "sombre"] as const) {
+      expect(traits(theme)).toContain(brandColors.paper);
+    }
   });
 });
