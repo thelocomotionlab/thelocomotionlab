@@ -113,8 +113,14 @@ function fenetreDeLaTrace(f: Format): { x: number; y: number; l: number; h: numb
  * ligne de chiffres collée au pied quel que soit le nombre de lignes du titre.
  * Les ordonnées rendues sont des LIGNES DE BASE ; l'appelant en déduit les
  * boîtes de ses éléments.
+ *
+ * UNE LIGNE PAR DÉFAUT, parce qu'un nom de sortie en tient une — « Tour des
+ * Écrins ». Compté sur deux, tout le bloc remontait de soixante-quinze pixels et
+ * la trace venait toucher le profil. Un nom plus long se réduit pour tenir dans
+ * sa boîte plutôt que de pousser ses voisins : c'est la boîte qui est fixe ici,
+ * là où la v1 recomposait à chaque rendu.
  */
-function pileDuBas(f: Format, lignesTitre = 2) {
+function pileDuBas(f: Format, lignesTitre = 1) {
   const pas = CORPS.titre * INTERLIGNE_TITRE;
   const chiffres = mesures(f).piedFilet - 34;
   const basTitre = chiffres - CORPS.corps * 1.9;
@@ -321,7 +327,7 @@ export const MODELES: Modele[] = [
             MARGE,
             pile.hautTitre - CORPS.titre * 0.78,
             utile(f),
-            CORPS.titre * INTERLIGNE_TITRE * 2,
+            CORPS.titre * INTERLIGNE_TITRE,
           ),
           "{nom}",
           "titre",
