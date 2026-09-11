@@ -9,7 +9,7 @@
 // barre sur grand écran mais dans l'onglet « Projet » sur téléphone : deux
 // endroits pour un même réglage, et on cherchait à chaque fois.
 
-import { Redo2, Undo2 } from "lucide-react";
+import { Maximize2, Minus, Plus, Redo2, Undo2 } from "lucide-react";
 import { FORMATS, THEMES, type CleFormat, type CleTheme } from "@locomotionlab/planche";
 
 import { ZOOMS } from "@/lib/usePosteDeTravail";
@@ -21,8 +21,9 @@ const BOUTON =
   "inline-flex h-8 items-center justify-center gap-1.5 rounded-md px-2 text-[13px] transition-colors motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-35";
 
 export default function BarreHaute({ poste }: { poste: PosteDeTravail }) {
-  const { projet, zoom, setZoom, ajuster, annuler, refaire, peutAnnuler, peutRefaire, modifier } =
+  const { projet, zoom, setZoom, ajuster, zoomer, annuler, refaire, peutAnnuler, peutRefaire } =
     poste;
+  const { modifier } = poste;
 
   return (
     <header className="z-30 flex h-12 shrink-0 items-center gap-2 border-b border-brand-field bg-brand-paper px-2.5">
@@ -117,24 +118,60 @@ export default function BarreHaute({ poste }: { poste: PosteDeTravail }) {
         <Redo2 size={16} aria-hidden />
       </button>
 
-      <label className="sr-only" htmlFor="zoom">
-        Zoom
-      </label>
-      <select
-        id="zoom"
-        value={zoom === null ? "ajuster" : String(zoom)}
-        onChange={(e) =>
-          e.target.value === "ajuster" ? ajuster() : setZoom(Number(e.target.value))
-        }
-        className="tabulaire h-8 rounded-md border border-brand-field bg-brand-bg px-2 text-[13px]"
-      >
-        <option value="ajuster">Ajuster</option>
-        {ZOOMS.map((z) => (
-          <option key={z} value={z}>
-            {Math.round(z * 100)} %
-          </option>
-        ))}
-      </select>
+      {/* Le zoom : deux boutons et une liste. La molette et le pincement font
+          la même chose, mais un bouton se voit — et se clique d'une main. */}
+      <div className="flex items-center gap-0.5">
+        <button
+          type="button"
+          onClick={() => zoomer(-1)}
+          disabled={(zoom ?? 0.5) <= ZOOMS[0]!}
+          title="Dézoomer (Ctrl+−)"
+          aria-label="Dézoomer"
+          className={`${BOUTON} hover:bg-brand-primary/12`}
+        >
+          <Minus size={16} aria-hidden />
+        </button>
+
+        <label className="sr-only" htmlFor="zoom">
+          Zoom
+        </label>
+        <select
+          id="zoom"
+          value={zoom === null ? "ajuster" : String(zoom)}
+          onChange={(e) =>
+            e.target.value === "ajuster" ? ajuster() : setZoom(Number(e.target.value))
+          }
+          className="tabulaire h-8 rounded-md border border-brand-field bg-brand-bg px-2 text-[13px]"
+        >
+          <option value="ajuster">Ajuster</option>
+          {ZOOMS.map((z) => (
+            <option key={z} value={z}>
+              {Math.round(z * 100)} %
+            </option>
+          ))}
+        </select>
+
+        <button
+          type="button"
+          onClick={() => zoomer(1)}
+          disabled={(zoom ?? 0.5) >= ZOOMS[ZOOMS.length - 1]!}
+          title="Zoomer (Ctrl++)"
+          aria-label="Zoomer"
+          className={`${BOUTON} hover:bg-brand-primary/12`}
+        >
+          <Plus size={16} aria-hidden />
+        </button>
+
+        <button
+          type="button"
+          onClick={ajuster}
+          title="Ajuster à la fenêtre et recentrer (Ctrl+0)"
+          aria-label="Ajuster à la fenêtre"
+          className={`${BOUTON} hover:bg-brand-primary/12`}
+        >
+          <Maximize2 size={15} aria-hidden />
+        </button>
+      </div>
 
       <p role="status" className="ml-auto hidden text-[12px] text-brand-muted lg:block">
         {

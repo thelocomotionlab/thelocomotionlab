@@ -201,6 +201,7 @@ function etiquette(
   y: number,
   corps: number,
   couleur: string,
+  cadre: BoitePx,
   c: ContexteRendu,
 ): void {
   const morceaux = morceauxCapitales(texte);
@@ -208,14 +209,27 @@ function etiquette(
   ctx.font = fonteDe({ texte: "" }, { police: c.police, taille: corps, graisse: 600 });
   const lettrage = 0.12;
   const largeurTexte = largeurCapitales(ctx, morceaux, corps, lettrage);
-  const cote = icone ? corps * 1.15 : 0;
-  const ecart = icone ? corps * 0.4 : 0;
+  // LA PASTILLE OU L'ICÔNE, jamais les deux : la marque à gauche du texte dit de
+  // quelle journée il s'agit. Un point plein suffit quand rien de plus précis
+  // n'a été demandé, et c'est ce qui fait lire « J1 » comme la journée fuchsia.
+  const cote = icone ? corps * 1.15 : corps * 0.5;
+  const ecart = icone ? corps * 0.4 : corps * 0.38;
   const padX = corps * 0.55;
   const padY = corps * 0.42;
   const l = largeurTexte + cote + ecart + padX * 2;
   const h = corps + padY * 2;
-  const gauche = x - l / 2;
-  const haut = y - h;
+  // L'ÉTIQUETTE RESTE DANS LE CADRE. Elle se pose au-dessus du sommet de sa
+  // journée, et un sommet près du bord haut la mettait hors de la carte, où le
+  // découpage la coupe en deux — la journée perdait son nom sans rien dire.
+  const marge = corps * 0.3;
+  const gauche = Math.min(
+    Math.max(x - l / 2, cadre.x + marge),
+    Math.max(cadre.x + marge, cadre.x + cadre.l - l - marge),
+  );
+  const haut = Math.min(
+    Math.max(y - h, cadre.y + marge),
+    Math.max(cadre.y + marge, cadre.y + cadre.h - h - marge),
+  );
 
   const r = h / 2;
   ctx.beginPath();
@@ -244,9 +258,16 @@ function etiquette(
       cote,
       couleur,
     );
-    curseur += cote + ecart;
+  } else {
+    ctx.beginPath();
+    ctx.arc(curseur + cote / 2, ligneDeBase - corps * 0.35, cote / 2, 0, Math.PI * 2);
+    ctx.fillStyle = couleur;
+    ctx.fill();
   }
-  ctx.fillStyle = couleur;
+  curseur += cote + ecart;
+  // Le texte reste à l'ENCRE : la couleur est déjà dite par la pastille et par
+  // le liseré, et un mot de la teinte du jour se lit mal sur une imagerie.
+  ctx.fillStyle = c.theme.encre;
   dessinerCapitales(ctx, morceaux, curseur, ligneDeBase, corps, lettrage, couleur);
   ctx.restore();
 }
@@ -381,6 +402,7 @@ export function dessinerCarte(
       ancre[1] + et.dy * b.h - corps * 0.5,
       corps,
       couleurDuJour(e.couleurs, seg.index),
+      b,
       c,
     );
   }
@@ -405,4 +427,51 @@ function segmentsEntiers(c: ContexteRendu): Segment[] {
       altMax: null,
     },
   ];
+}
+
+/**
+ * LA MINI-CARTE D'UNE CASE : la boucle entière en sourdine, une journée en
+ * couleur.
+ *
+ * Ce n'est pas `dessinerCarte` en petit — ni fond, ni étiquettes, ni bornes. La
+ * boucle entière revient dans CHAQUE case et c'est elle qui SITUE la journée :
+ * seule la portion colorée se déplace d'une case à l'autre, et c'est ce
+ * déplacement qui fait lire une progression. Quatre cartes recadrées sur leur
+ * propre journée se ressembleraient toutes.
+ */
+export function miniCarte(
+  ctx: Ctx2D,
+  b: BoitePx,
+  cadrage: readonly Coord[],
+  journee: { coords: readonly Coord[]; couleur: string } | null,
+  c: ContexteRendu,
+): void {
+  const vue = vueDeLaCarte(b, cadrage);
+  if (!vue) return;
+  const projeter = ([lon, lat]: Coord): [number, number] => {
+    const [x, y] = vue.project([lon, lat]);
+    return [b.x + x, b.y + y];
+  };
+  const epaisseur = Math.max(1.5, b.l * 0.022);
+
+  ctx.save();
+  polyligne(
+    ctx,
+    decimerPixels(cadrage.map(projeter)),
+    rgba(c.theme.encre, 0.24),
+    epaisseur * 0.7,
+    false,
+    c.theme.encre,
+  );
+  if (journee && journee.coords.length > 1) {
+    polyligne(
+      ctx,
+      decimerPixels(journee.coords.map(projeter)),
+      journee.couleur,
+      epaisseur,
+      true,
+      c.theme.encre,
+    );
+  }
+  ctx.restore();
 }

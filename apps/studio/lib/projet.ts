@@ -17,6 +17,7 @@ import {
   dupliquer,
   grouper,
   instancier,
+  instancierSurvol,
   photoNeuve,
   renouer,
   type CleFormat,
@@ -27,6 +28,7 @@ import {
   type Historique,
   type Media,
   type PlancheImage,
+  type PlancheSurvol,
   type Projet,
   type Tranche,
 } from "@locomotionlab/planche";
@@ -53,6 +55,11 @@ export function contexteDuProjet(p: Projet): ContexteModele {
 
 export function plancheNeuve(p: Projet, modele: CleModele = "texte"): PlancheImage {
   return instancier(modele, contexteDuProjet(p));
+}
+
+/** Une planche de Survol : la séance rejouée, avec sa durée et son montage. */
+export function survolNeuf(p: Projet): PlancheSurvol {
+  return instancierSurvol(contexteDuProjet(p));
 }
 
 /** Change le modèle d'une planche en gardant ce qui a été écrit. */

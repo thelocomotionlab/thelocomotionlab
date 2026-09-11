@@ -28,6 +28,7 @@ import {
 } from "@locomotionlab/planche";
 import { decouperTrace } from "@locomotionlab/trace";
 
+import { ZOOMS } from "@/lib/usePosteDeTravail";
 import { policeChargee, policeDuLabo } from "@/lib/police";
 import { completerLesFonds, fondsEnCache } from "@/lib/tuiles";
 import { completerLesImages, imagesEnCache, poser } from "@/lib/images";
@@ -246,6 +247,31 @@ export default function PlanDeTravail({
   ]);
 
   /**
+   * ZOOMER EN GARDANT UN POINT SOUS LE CURSEUR.
+   *
+   * Un zoom centré sur la planche envoie ailleurs ce qu'on regardait : il faut
+   * viser, zoomer, re-viser. Le point de planche `ancre` doit rester au même
+   * endroit de l'écran, ce qui impose de décaler la vue de ce que le
+   * changement d'échelle lui a fait parcourir.
+   */
+  const zoomerVers = useCallback(
+    (vers: 1 | -1, ancre: { x: number; y: number }) => {
+      const avant = zoom ?? ajuste;
+      const apres =
+        vers > 0
+          ? (ZOOMS.find((z) => z > avant + 0.001) ?? ZOOMS[ZOOMS.length - 1]!)
+          : ([...ZOOMS].reverse().find((z) => z < avant - 0.001) ?? ZOOMS[0]!);
+      if (apres === avant) return;
+      poste.setZoom(apres);
+      setVue({
+        x: vue.x + (ancre.x - format.width / 2) * (avant - apres),
+        y: vue.y + (ancre.y - format.height / 2) * (avant - apres),
+      });
+    },
+    [zoom, ajuste, vue, setVue, poste, format.width, format.height],
+  );
+
+  /**
    * L'ÉCART ET LE MILIEU DE DEUX DOIGTS.
    *
    * Le rapport des écarts donne le facteur de zoom, le déplacement du milieu
@@ -324,8 +350,11 @@ export default function PlanDeTravail({
               if (p2) pincement.current = { ...p2, zoom: echelle, vue };
               return;
             }
-            // Espace ou bouton du milieu : on déplace la VUE, pas la planche.
-            if (espace || e.button === 1) {
+            // Espace, Ctrl, ou le bouton du milieu : on déplace la VUE, pas la
+            // planche. Trois façons parce qu'aucune ne marche partout — Espace
+            // demande le clavier, Ctrl est pris par le menu contextuel sur Mac,
+            // et beaucoup de souris n'ont pas de troisième bouton.
+            if (espace || e.ctrlKey || e.metaKey || e.button === 1) {
               panoramique.current = { x: e.clientX - vue.x, y: e.clientY - vue.y };
               return;
             }
@@ -369,11 +398,21 @@ export default function PlanDeTravail({
             manip.surRelachement();
           }}
           onWheel={(e) => {
-            // La molette n'appartient à la planche QUE pendant un recadrage.
-            // Ailleurs, elle reste au navigateur.
-            if (!manip.recadrage) return;
+            // En recadrage, la molette appartient à la photo.
+            if (manip.recadrage) {
+              e.preventDefault();
+              manip.surMolette(e.deltaY);
+              return;
+            }
+            // CTRL + MOLETTE ZOOME, la molette seule déplace la vue. C'est le
+            // geste du pincement sur pavé tactile, que tous les navigateurs
+            // traduisent en `ctrlKey` — et c'est ce que fait tout éditeur.
             e.preventDefault();
-            manip.surMolette(e.deltaY);
+            if (e.ctrlKey || e.metaKey) {
+              zoomerVers(e.deltaY < 0 ? 1 : -1, pointDe(e));
+              return;
+            }
+            setVue({ x: vue.x - e.deltaX, y: vue.y - e.deltaY });
           }}
         />
         {/* La barre ne paraît QUE sur sélection, et jamais pendant qu'on est

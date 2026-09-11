@@ -20,7 +20,7 @@
 // latin des fontes du dépôt : le canvas dessinerait un carré blanc à la place
 // du séparateur de milliers.
 
-import type { Segment, Trace, Seance } from "@locomotionlab/trace";
+import type { PointSeance, Segment, Trace, Seance } from "@locomotionlab/trace";
 
 import type { Bilan, CleVariable, Tranche } from "./types.ts";
 
@@ -85,6 +85,8 @@ export const VARIABLES: FicheVariable[] = [
   { cle: "vitesse", label: "Vitesse", unite: "km/h", exigeSeance: true },
   { cle: "fc_moy", label: "FC moyenne", unite: "bpm", exigeSeance: true },
   { cle: "fc_max", label: "FC maximale", unite: "bpm", exigeSeance: true },
+  { cle: "fc", label: "FC à l'instant", unite: "bpm", exigeSeance: true },
+  { cle: "altitude", label: "Altitude à l'instant", unite: "m", exigeSeance: true },
   { cle: "cadence", label: "Cadence", unite: "spm", exigeSeance: true },
   { cle: "alt_max", label: "Altitude maximale", unite: "m", exigeSeance: false },
   { cle: "jour", label: "Numéro de journée", unite: "", exigeSeance: false },
@@ -144,6 +146,14 @@ export type Contexte = {
    */
   planche?: number;
   planches?: number;
+  /**
+   * LE POINT DE LA SÉANCE QU'ON REGARDE, sur un survol.
+   *
+   * C'est lui qui fait défiler les chiffres pendant que le point avance : la
+   * distance monte, l'allure change dans la pente, le cœur bat. Absent, les
+   * variables disent la sortie entière — ce qu'attend une planche fixe.
+   */
+  instant?: PointSeance | null;
 };
 
 /** Les journées que la tranche montre. Vide = il n'y a pas de découpage. */
@@ -156,6 +166,36 @@ export function segmentsDeLaTranche(segments: Segment[], tranche: Tranche): Segm
 }
 
 /**
+ * Ce qu'une variable vaut À UN POINT de la séance.
+ *
+ * `undefined` — et non `null` — pour « cette variable n'a pas d'instant » : il
+ * faut distinguer « le cœur ne bat pas ici » (null, on affiche un tiret) de
+ * « la date n'est pas une affaire d'instant » (on continue plus bas).
+ */
+function valeurAInstant(cle: CleVariable, p: PointSeance): string | null | undefined {
+  switch (cle) {
+    case "distance":
+      return formatKm(p.dist / 1000);
+    case "dplus":
+      return formatEntier(p.dPlus);
+    case "duree":
+      return dureeCourte(p.t);
+    case "allure":
+      return p.allure === null ? ABSENT : formatAllure(p.allure);
+    case "vitesse":
+      return formatKm(p.vitesse * 3.6);
+    case "cadence":
+      return p.cadence === null ? ABSENT : formatEntier(p.cadence);
+    case "fc":
+      return p.fc === null ? ABSENT : formatEntier(p.fc);
+    case "altitude":
+      return formatEntier(p.alt);
+    default:
+      return undefined;
+  }
+}
+
+/**
  * La valeur d'une variable, formatée et prête à poser.
  *
  * `null` quand la donnée manque : pas de séance pour une allure, pas de trace
@@ -164,19 +204,33 @@ export function segmentsDeLaTranche(segments: Segment[], tranche: Tranche): Segm
  */
 export function valeurDe(cle: CleVariable, ctx: Contexte): string | null {
   const { trace, seance, tranche } = ctx;
+
+  // L'INSTANT PASSE AVANT TOUT. Sur un survol, « distance » est le chemin
+  // parcouru jusqu'ici, pas le total de la sortie — c'est ce défilement qui
+  // fait la vidéo. Les autres variables (le nom, la date, les journées)
+  // n'ont pas d'instant et suivent leur route habituelle.
+  if (ctx.instant) {
+    const v = valeurAInstant(cle, ctx.instant);
+    if (v !== undefined) return v;
+  }
   const montres = segmentsDeLaTranche(ctx.segments, tranche);
   const jour = Math.max(0, Math.min(Math.max(0, ctx.segments.length - 1), Math.round(tranche.jour)));
   const duJour = ctx.segments[jour] ?? null;
 
+  // L'ORDRE : les journées montrées, puis la trace, puis la séance. Une
+  // planche d'étape parle de son jour ; sans découpage, du tour ; et si le
+  // projet n'a qu'une séance — un GPX chargé pour un survol —, c'est elle qui
+  // porte les chiffres. La durée lisait déjà la séance ; la distance et le
+  // dénivelé l'ignoraient, ce qui laissait un blanc là où le nombre existait.
   const sommeKm = montres.length
     ? montres.reduce((s, x) => s + x.distanceKm, 0)
-    : (trace?.totalKm ?? null);
+    : (trace?.totalKm ?? seance?.resume.distanceKm ?? null);
   const sommeDPlus = montres.length
     ? montres.reduce((s, x) => s + x.dPlusM, 0)
-    : (trace?.dPlusM ?? null);
+    : (trace?.dPlusM ?? seance?.resume.dPlusM ?? null);
   const sommeDMoins = montres.length
     ? montres.reduce((s, x) => s + x.dMinusM, 0)
-    : (trace?.dMinusM ?? null);
+    : (trace?.dMinusM ?? seance?.resume.dMinusM ?? null);
 
   switch (cle) {
     case "distance":
@@ -203,6 +257,12 @@ export function valeurDe(cle: CleVariable, ctx: Contexte): string | null {
       return seance?.resume.fcMoyenne == null ? null : String(seance.resume.fcMoyenne);
     case "fc_max":
       return seance?.resume.fcMax == null ? null : String(seance.resume.fcMax);
+    // Sans instant, ces deux-là n'ont rien à dire : une planche fixe montre une
+    // sortie entière, où « le cœur bat à 137 » ne veut rien dire. L'inspecteur
+    // le signale plutôt que de laisser un blanc.
+    case "fc":
+    case "altitude":
+      return null;
     case "cadence":
       return seance?.resume.cadenceMoyenne == null ? null : String(seance.resume.cadenceMoyenne);
     case "alt_max": {

@@ -56,11 +56,23 @@ const GROUPES: { titre: string; lignes: [string, string][] }[] = [
     ],
   },
   {
+    titre: "Survol",
+    lignes: [
+      ["▶", "Lire · le curseur saute où l'on veut"],
+      ["Double-clic sur un chiffre", "Changer sa variable dans l'inspecteur"],
+      ["Vidéo", "Exporter, image par image — garde l'onglet devant"],
+    ],
+  },
+  {
     titre: "Voir",
     lignes: [
-      ["Ctrl + 0", "Ajuster à la fenêtre"],
+      ["Ctrl + 0", "Ajuster à la fenêtre et recentrer"],
       ["Ctrl + + · Ctrl + −", "Zoomer · dézoomer"],
-      ["Espace + glissé", "Déplacer la vue"],
+      ["Ctrl + molette", "Zoomer sous le curseur"],
+      ["Molette", "Déplacer la vue"],
+      ["Ctrl + glissé", "Déplacer la vue"],
+      ["Espace + glissé", "Déplacer la vue, sans Ctrl"],
+      ["Pincement", "Zoomer et déplacer, au doigt"],
       ["Page ↑ · Page ↓", "Planche précédente · suivante"],
       ["Ctrl + E", "Exporter"],
       ["?", "Cette fiche"],

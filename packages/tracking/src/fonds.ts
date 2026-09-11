@@ -67,3 +67,23 @@ export function urlDeTuile(fond: Fond, z: number, x: number, y: number): string 
     .replace("{x}", String(x))
     .replace("{y}", String(y));
 }
+
+/**
+ * LE RELIEF, en tuiles d'altitude.
+ *
+ * AWS Terrain Tiles : libre, sans clé, avec attribution. L'encodage
+ * « terrarium » range l'altitude dans les trois canaux d'un PNG
+ * (`alt = R × 256 + G + B / 256 − 32768`), et MapLibre le lit nativement — il
+ * n'y a donc rien à décoder ici.
+ *
+ * C'est la seule source de relief du dépôt : le survol et une éventuelle carte
+ * 3D doivent bomber le terrain de la même façon, sans quoi la même montagne
+ * n'aurait pas la même forme selon l'écran.
+ */
+export const TERRAIN = {
+  tuiles: "https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png",
+  encodage: "terrarium" as const,
+  zoomMax: 15,
+  tailleTuile: 256,
+  attribution: "Relief © AWS Terrain Tiles",
+};

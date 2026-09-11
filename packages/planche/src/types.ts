@@ -232,9 +232,17 @@ export type ElementCarte = ElementCommun & {
 
 export type ElementProfil = ElementCommun & {
   type: "profil";
+  /** Une couleur pour TOUT le profil. Vide, chaque journée prend la sienne. */
   remplissage: string;
   /** Ce qu'il reste à parcourir, estompé. */
   restantEstompe: boolean;
+  /**
+   * Une aire par journée montrée, chacune dans sa couleur — les mêmes que la
+   * carte, pour qu'un même jour se retrouve d'une pièce à l'autre.
+   */
+  parJournee: boolean;
+  /** Une couleur par journée, cyclique. Vide = la palette de la charte. */
+  couleurs: string[];
 };
 
 /** Les variables qu'un texte ou un chiffre peut porter. */
@@ -247,6 +255,10 @@ export type CleVariable =
   | "vitesse"
   | "fc_moy"
   | "fc_max"
+  /** La FC et l'altitude À L'INSTANT : elles ne veulent rien dire sur une
+   *  planche fixe, et c'est le survol qui les fait battre. */
+  | "fc"
+  | "altitude"
   | "cadence"
   | "alt_max"
   | "jour"
@@ -285,12 +297,26 @@ export type ElementFiche = ElementCommun & {
   tailleValeur: number;
 };
 
+/**
+ * Ce qu'une case dit d'elle-même.
+ *
+ * `texte` vide, la journée écrit le sien — son numéro et ses chiffres. C'est un
+ * point de départ, pas un gabarit : tout le balisage y marche, et « Jour 1 »
+ * devient « Jour 1 × Rapace × Lolo » d'une frappe.
+ */
+export type CaseJournee = { jour: number; texte: string };
+
 export type ElementCases = ElementCommun & {
   type: "cases";
   colonnes: number;
   miniCarte: boolean;
   miniProfil: boolean;
   filet: boolean;
+  cases: CaseJournee[];
+  /** Le corps du texte d'une case, en pixels d'une planche de 1080 de large. */
+  taille: number;
+  /** Une couleur par journée, cyclique. Vide = la palette de la charte. */
+  couleurs: string[];
 };
 
 export type Element =

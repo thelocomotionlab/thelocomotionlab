@@ -509,8 +509,11 @@ export function instancierSurvol(c: ContexteModele = CONTEXTE_PAR_DEFAUT): Planc
       ...mobilier(f, { pied: false }),
       statNeuve(boite(f, MARGE, hautDuContenu(f), large, 120), "distance", "km"),
       statNeuve(boite(f, MARGE + large, hautDuContenu(f), large, 120), "allure", "/km"),
-      statNeuve(boite(f, MARGE + large * 2, hautDuContenu(f), large, 120), "alt_max", "m"),
-      statNeuve(boite(f, MARGE + large * 3, hautDuContenu(f), large, 120), "fc_moy", "bpm"),
+      // « altitude » et « fc », pas « alt_max » ni « fc_moy » : sur un survol
+      // les chiffres DÉFILENT, et un maximum ne défile pas. C'est ce qui fait
+      // qu'on voit le cœur monter dans la côte.
+      statNeuve(boite(f, MARGE + large * 2, hautDuContenu(f), large, 120), "altitude", "m"),
+      statNeuve(boite(f, MARGE + large * 3, hautDuContenu(f), large, 120), "fc", "bpm"),
       ...enTete(f, c, basDuContenu(f) - 320),
       profilNeuf(boite(f, MARGE, basDuContenu(f) - 140, utile(f), 140)),
     ],

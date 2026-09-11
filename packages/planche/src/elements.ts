@@ -10,9 +10,9 @@
 // Rotation, opacité et masquage sont posés par l'appelant (`dessinerAvecCadre`).
 // Ici, on dessine à plat dans une boîte droite.
 
-import { CORPS, couleurDuJour, rgba } from "./charte.ts";
+import { CORPS, LETTRAGE, couleurDuJour, rgba } from "./charte.ts";
 import type { Ctx2D } from "./canvas.ts";
-import { dessinerCarte } from "./carte.ts";
+import { coordsDeCadrage, dessinerCarte, miniCarte } from "./carte.ts";
 import { vocabulaireDIcones } from "./canvas.ts";
 import { segmentsMontres, type ContexteRendu } from "./contexte.ts";
 import {
@@ -44,12 +44,20 @@ import type {
   ElementStat,
   ElementTexte,
 } from "./types.ts";
-import type { PointProfil } from "@locomotionlab/trace";
+import type { PointProfil, Segment } from "@locomotionlab/trace";
 
-const MARQUE = "THE LOCOMOTION LAB";
+/** Le nom, tel que la navbar du site l'écrit — capitales espacées, sans « The ». */
+const MARQUE = "LOCOMOTION LAB";
 
 /** Le logo est teinté à la couleur du nom : même encre, même présence. */
 const MARQUE_OPACITE = 0.68;
+
+/** L'aire d'une journée reste transparente : les journées voisines se touchent
+ *  par leur borne, et deux aplats opaques feraient une frise de blocs. */
+const AIRE_JOURNEE = 0.46;
+
+/** La crête, elle, porte la couleur — c'est la ligne qu'on suit de l'œil. */
+const CRETE_JOURNEE = 0.9;
 
 export function dessinerElement(
   ctx: Ctx2D,
@@ -107,6 +115,8 @@ export function styleDe(e: ElementTexte, c: ContexteRendu): StyleTexte {
       : null,
     interligne: e.interligne,
     lignesDures: e.lignesDures,
+    corps: CORPS,
+    lettrages: LETTRAGE,
   };
 }
 
@@ -153,7 +163,7 @@ function dessinerTexteCapitales(
   boite: BoitePx,
   c: ContexteRendu,
   style: StyleTexte,
-): void {
+): number {
   const morceaux = morceauxCapitales(resoudre(e.contenu, c.variables));
   ctx.font = fonteDe({ texte: "" }, style);
   ctx.fillStyle = style.couleur;
@@ -173,6 +183,7 @@ function dessinerTexteCapitales(
   dessinerCapitales(ctx, morceaux, x, ligneDeBase, e.corps, e.lettrage, c.theme.accent, {
     douce: c.theme.encreDouce,
   });
+  return ligneDeBase;
 }
 
 /** L'encombrement du filet d'ouverture, écart compris. */
@@ -185,22 +196,18 @@ function dessinerTexte(ctx: Ctx2D, e: ElementTexte, boite: BoitePx, c: ContexteR
   ctx.save();
   poserOmbre(ctx, e, c);
 
-  if (e.casse === "capitales") {
-    dessinerTexteCapitales(ctx, e, boite, c, style);
-    ctx.restore();
-    return;
-  }
-
-  const texte = resoudre(e.contenu, c.variables);
-  const blocs = blocsDeTexte(ctx, texte, boite.l, style);
-  const bas = poserBlocs(ctx, blocs, boite.x, boite.y, style, {
-    align: e.alignement,
-    largeur: boite.l,
-    puce: e.puce,
-  });
+  const bas =
+    e.casse === "capitales"
+      ? dessinerTexteCapitales(ctx, e, boite, c, style)
+      : poserBlocs(ctx, blocsDeTexte(ctx, resoudre(e.contenu, c.variables), boite.l, style), boite.x, boite.y, style, {
+          align: e.alignement,
+          largeur: boite.l,
+          puce: e.puce,
+        });
 
   // Le filet court SOUS le titre — il se pose après le texte, à la place que le
-  // texte a réellement prise, pas à celle qu'on lui avait réservée.
+  // texte a réellement prise, pas à celle qu'on lui avait réservée. Un titre en
+  // capitales y a droit comme un autre : c'est le même filet.
   if (e.filetSousTitre) {
     const f = e.filetSousTitre;
     ctx.shadowColor = "rgba(0, 0, 0, 0)";
@@ -585,6 +592,36 @@ export function cheminDuProfil(
   profil: readonly { km: number; alt: number }[],
   b: BoitePx,
 ): { base: number; min: number; max: number; points: [number, number][] } | null {
+  const echelle = echelleDuProfil(profil, b);
+  if (!echelle) return null;
+  const { min, max, base, points } = echelle;
+  return { base, min, max, points: points.map((p) => [echelle.x(p.km), echelle.y(p.alt)]) };
+}
+
+/**
+ * L'ÉCHELLE D'UN PROFIL DANS SA BOÎTE : de quoi projeter n'importe quel point,
+ * y compris ceux d'une portion.
+ *
+ * C'est la pièce qui manquait pour découper. Chaque portion qui recalculait son
+ * propre minimum d'altitude se réétirait sur toute la hauteur de la boîte : une
+ * journée de fond de vallée montait aussi haut qu'une journée de crête, et la
+ * part parcourue d'un survol flottait au-dessus de la silhouette censée la
+ * porter. Une seule échelle, prise sur le profil de référence, et tout se pose
+ * au même endroit.
+ */
+type EchelleProfil = {
+  base: number;
+  min: number;
+  max: number;
+  points: readonly { km: number; alt: number }[];
+  x(km: number): number;
+  y(alt: number): number;
+};
+
+function echelleDuProfil(
+  profil: readonly { km: number; alt: number }[],
+  b: BoitePx,
+): EchelleProfil | null {
   const points = (Array.isArray(profil) ? profil : []).filter(
     (p) => Number.isFinite(p?.km) && Number.isFinite(p?.alt),
   );
@@ -606,78 +643,155 @@ export function cheminDuProfil(
     base: b.y + b.h,
     min,
     max,
-    points: points.map((p) => [
-      b.x + (Math.min(total, Math.max(0, p.km - depart)) / total) * b.l,
-      b.y + (1 - (p.alt - min) / amplitude) * b.h,
-    ]),
+    points,
+    x: (km) => b.x + (Math.min(total, Math.max(0, km - depart)) / total) * b.l,
+    y: (alt) => b.y + (1 - (alt - min) / amplitude) * b.h,
   };
 }
 
 function dessinerProfil(ctx: Ctx2D, e: ElementProfil, b: BoitePx, c: ContexteRendu): void {
   const montres = segmentsMontres(c);
-  const profil = montres.length
-    ? montres.flatMap((s) => s.profil)
-    : (c.variables.trace?.profil ?? []);
   const complet = c.variables.trace?.profil ?? [];
+
+  // SUR UN SURVOL, LA PART MONTRÉE EST CE QUI EST DÉJÀ PARCOURU. Le profil se
+  // remplit alors jusqu'au point, image après image, et dit d'un coup d'œil où
+  // l'on en est dans la sortie — ce qu'aucun chiffre ne montre aussi vite. Le
+  // reste du temps, c'est la tranche de journées qui décide, comme partout.
+  const instant = c.variables.instant;
+  const profil = instant
+    ? jusquAu(complet, instant.dist / 1000)
+    : montres.length
+      ? montres.flatMap((s) => s.profil)
+      : complet;
 
   // LE RESTANT ESTOMPÉ : la silhouette entière en sourdine, la part parcourue
   // par-dessus. C'est ce qui dit « on en est là » sans deux images — et ça n'a
   // rien à dire quand la part montrée EST le tout : on tracerait alors deux fois
   // la même courbe.
   const partiel = profil.length > 1 && profil.length < complet.length;
-  if (e.restantEstompe && partiel && complet.length > 1) {
-    const tout = cheminDuProfil(complet, b);
-    if (tout) traceProfil(ctx, tout, c.theme.profilRestant, null);
+  const estompe = e.restantEstompe && partiel && complet.length > 1;
+
+  // Toute la planche se projette sur LA MÊME échelle, celle du profil de
+  // référence : les portions s'y découpent au lieu de s'y réétirer.
+  const echelle = echelleDuProfil(estompe ? complet : profil, b);
+  if (!echelle) return;
+
+  if (estompe) traceProfil(ctx, echelle, complet, c.theme.profilRestant, null);
+
+  // UNE AIRE PAR JOURNÉE MONTRÉE, chacune dans SA couleur : c'est ce qui fait
+  // lire une progression au lieu d'un bloc d'un seul tenant. Une planche « le
+  // jour 3 seul » n'en montre qu'une, et c'est justement elle qu'on veut voir
+  // à SA couleur — la même que sur la carte juste à côté.
+  const parJournee = !instant && e.parJournee !== false && montres.length >= 1;
+  if (parJournee) {
+    for (const segment of montres) {
+      const dedans = entre(echelle.points, segment.kmDebut, segment.kmFin);
+      if (dedans.length > 1)
+        aireDeProfil(ctx, echelle, dedans, e.remplissage || couleurDuJour(e.couleurs, segment.index));
+    }
+    bornesDeJournees(ctx, echelle, montres, c.theme.filet, b);
+    return;
   }
 
-  const chemin = cheminDuProfil(profil, e.restantEstompe && partiel ? boiteDuSegment(b, complet, profil) : b);
-  if (!chemin) return;
-  traceProfil(ctx, chemin, e.remplissage || c.theme.accent, c.theme.accentAire);
+  traceProfil(ctx, echelle, profil, e.remplissage || c.theme.accent, c.theme.accentAire);
+}
+
+/** Les points d'un profil entre deux kilomètres, bornes comprises. */
+function entre(
+  points: readonly { km: number; alt: number }[],
+  kmA: number,
+  kmB: number,
+): readonly { km: number; alt: number }[] {
+  return points.filter((p) => p.km >= kmA && p.km <= kmB);
 }
 
 /**
- * La boîte d'une PORTION de profil dans la boîte du profil entier.
+ * Le profil jusqu'à un kilomètre donné, bornes comprises.
  *
- * Sans ce recalage, la part parcourue serait étirée sur toute la largeur et se
- * superposerait mal au profil complet tracé dessous — deux silhouettes de la
- * même trace qui ne se ressemblent pas.
+ * Au moins deux points : une portion d'un seul point ne se trace pas, et le
+ * profil disparaîtrait pendant la première seconde d'un survol.
  */
-function boiteDuSegment(
+function jusquAu(profil: readonly PointProfil[], km: number): PointProfil[] {
+  if (profil.length < 2) return [...profil];
+  const gardes = profil.filter((p) => p.km <= km);
+  return gardes.length >= 2 ? gardes : profil.slice(0, 2);
+}
+
+/** L'aire d'une journée et sa crête, dans la couleur de la journée. */
+function aireDeProfil(
+  ctx: Ctx2D,
+  echelle: EchelleProfil,
+  points: readonly { km: number; alt: number }[],
+  couleur: string,
+): void {
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(echelle.x(points[0]!.km), echelle.base);
+  for (const p of points) ctx.lineTo(echelle.x(p.km), echelle.y(p.alt));
+  ctx.lineTo(echelle.x(points[points.length - 1]!.km), echelle.base);
+  ctx.closePath();
+  ctx.globalAlpha = AIRE_JOURNEE;
+  ctx.fillStyle = couleur;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(echelle.x(points[0]!.km), echelle.y(points[0]!.alt));
+  for (const p of points) ctx.lineTo(echelle.x(p.km), echelle.y(p.alt));
+  ctx.globalAlpha = CRETE_JOURNEE;
+  ctx.strokeStyle = couleur;
+  ctx.lineWidth = 3;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  ctx.stroke();
+  ctx.restore();
+}
+
+/** Les bornes de journée, en pointillés discrets : c'est là qu'on dort. */
+function bornesDeJournees(
+  ctx: Ctx2D,
+  echelle: EchelleProfil,
+  segments: readonly { kmDebut: number }[],
+  couleur: string,
   b: BoitePx,
-  complet: readonly PointProfil[],
-  portion: readonly PointProfil[],
-): BoitePx {
-  if (complet.length < 2 || portion.length < 2) return b;
-  const total = complet[complet.length - 1]!.km - complet[0]!.km;
-  if (!(total > 0)) return b;
-  const debut = (portion[0]!.km - complet[0]!.km) / total;
-  const fin = (portion[portion.length - 1]!.km - complet[0]!.km) / total;
-  return { x: b.x + debut * b.l, y: b.y, l: Math.max(1, (fin - debut) * b.l), h: b.h };
+): void {
+  ctx.save();
+  ctx.setLineDash([b.h * 0.027, b.h * 0.04]);
+  ctx.strokeStyle = couleur;
+  ctx.lineWidth = Math.max(1, b.h * 0.012);
+  for (const s of segments) {
+    if (!(s.kmDebut > 0)) continue;
+    const x = echelle.x(s.kmDebut);
+    ctx.beginPath();
+    ctx.moveTo(x, b.y);
+    ctx.lineTo(x, echelle.base);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function traceProfil(
   ctx: Ctx2D,
-  chemin: { base: number; points: [number, number][] },
+  echelle: EchelleProfil,
+  points: readonly { km: number; alt: number }[],
   couleur: string,
   aire: string | null,
 ): void {
-  const pts = chemin.points;
-  if (pts.length < 2) return;
+  if (points.length < 2) return;
   ctx.save();
 
   if (aire) {
     ctx.beginPath();
-    ctx.moveTo(pts[0]![0], chemin.base);
-    for (const [x, y] of pts) ctx.lineTo(x, y);
-    ctx.lineTo(pts[pts.length - 1]![0], chemin.base);
+    ctx.moveTo(echelle.x(points[0]!.km), echelle.base);
+    for (const p of points) ctx.lineTo(echelle.x(p.km), echelle.y(p.alt));
+    ctx.lineTo(echelle.x(points[points.length - 1]!.km), echelle.base);
     ctx.closePath();
     ctx.fillStyle = `rgba(${aire}, 0.3)`;
     ctx.fill();
   }
 
   ctx.beginPath();
-  ctx.moveTo(pts[0]![0], pts[0]![1]);
-  for (const [x, y] of pts) ctx.lineTo(x, y);
+  ctx.moveTo(echelle.x(points[0]!.km), echelle.y(points[0]!.alt));
+  for (const p of points) ctx.lineTo(echelle.x(p.km), echelle.y(p.alt));
   ctx.strokeStyle = couleur;
   ctx.lineWidth = 3;
   ctx.lineJoin = "round";
@@ -689,55 +803,120 @@ function traceProfil(
 /* ------------------------------------------------------------------ cases */
 
 /**
- * LES JOURNÉES EN GRILLE : une case par journée, son numéro et ses chiffres.
+ * Ce qu'une case écrit quand personne ne l'a écrite : le numéro du jour, et les
+ * deux chiffres que la trace connaît de lui.
+ */
+export function texteDeJournee(segment: Segment): string {
+  const bouts = [
+    segment.distanceKm > 0 ? `${nombreFr(segment.distanceKm, 1)} km` : "",
+    segment.dPlusM > 0 ? `${nombreFr(segment.dPlusM, 0)} m D+` : "",
+  ].filter(Boolean);
+  return `*Jour ${segment.index + 1}*${bouts.length ? `\n${bouts.join(" · ")}` : ""}`;
+}
+
+/** Un nombre à la française — l'espace fine des milliers, la virgule décimale. */
+function nombreFr(valeur: number, decimales: number): string {
+  return valeur.toLocaleString("fr-FR", {
+    minimumFractionDigits: decimales,
+    maximumFractionDigits: decimales,
+  });
+}
+
+/**
+ * LES JOURNÉES EN GRILLE : une case par journée, sa portion de trace, son
+ * relief et ce qu'on en dit.
  *
- * La mini-carte de chaque case attend la couche cartographique ; le mini-profil,
- * lui, ne tient qu'à la silhouette et se dessine déjà.
+ * La boucle entière et la silhouette entière reviennent dans CHAQUE case, en
+ * sourdine, avec la seule journée en couleur : c'est ce qui fait qu'on lit une
+ * progression et non quatre images sans rapport.
  */
 function dessinerCases(ctx: Ctx2D, e: ElementCases, b: BoitePx, c: ContexteRendu): void {
   const segments = segmentsMontres(c);
   if (segments.length === 0) return;
 
+  const ecrites = Array.isArray(e.cases) ? e.cases : [];
   const colonnes = Math.max(1, Math.round(e.colonnes));
   const rangs = Math.ceil(segments.length / colonnes);
-  const largeur = b.l / colonnes;
-  const hauteur = b.h / rangs;
-  const marge = Math.min(largeur, hauteur) * 0.08;
+  const gouttiereX = b.l * 0.03;
+  const gouttiereY = b.h * 0.04;
+  const largeur = (b.l - (colonnes - 1) * gouttiereX) / colonnes;
+  const hauteur = (b.h - (rangs - 1) * gouttiereY) / rangs;
+  if (!(largeur > 0 && hauteur > 0)) return;
+
+  const cadrage = coordsDeCadrage(c);
+  const complet = c.variables.trace?.profil ?? [];
+  const avecCarte = e.miniCarte !== false && cadrage.length > 1;
+  const avecProfil = e.miniProfil !== false && complet.length > 1;
+
+  const style: StyleTexte = {
+    police: c.police,
+    taille: Math.max(10, e.taille || CORPS.corps),
+    couleur: c.theme.encre,
+    accent: c.theme.accent,
+    douce: c.theme.encreDouce,
+    // Une légende de case n'est pas un texte suivi : chaque ligne tapée reste
+    // une ligne (« Jour 1 × Rapace », puis « 57 km · 4 700 m D+ »).
+    lignesDures: true,
+  };
 
   segments.forEach((segment, i) => {
-    const cx = b.x + (i % colonnes) * largeur;
-    const cy = b.y + Math.floor(i / colonnes) * hauteur;
-    const dedans: BoitePx = {
-      x: cx + marge,
-      y: cy + marge,
-      l: largeur - marge * 2,
-      h: hauteur - marge * 2,
-    };
+    const col = i % colonnes;
+    const rang = Math.floor(i / colonnes);
+    const x = b.x + col * (largeur + gouttiereX);
+    const y = b.y + rang * (hauteur + gouttiereY);
+    const couleur = couleurDuJour(e.couleurs ?? [], segment.index);
 
-    if (e.filet) {
+    // Le filet de séparation, au-dessus de chaque rangée sauf la première :
+    // c'est lui qui fait une GRILLE et non des blocs posés au hasard.
+    if (e.filet && rang > 0 && col === 0) {
       ctx.save();
-      ctx.strokeStyle = c.theme.filet;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(cx, cy, largeur, hauteur);
+      ctx.fillStyle = c.theme.filet;
+      ctx.fillRect(b.x, y - gouttiereY / 2, b.l, Math.max(1, b.h * 0.002));
       ctx.restore();
     }
 
-    const corps = Math.max(10, dedans.h * 0.16);
-    ctx.save();
-    ctx.font = `700 ${corps}px ${c.police}`;
-    ctx.fillStyle = couleurDuJour([], segment.index);
-    ctx.fillText(`J${segment.index + 1}`, dedans.x, dedans.y + corps);
-    ctx.restore();
-
-    if (e.miniProfil) {
-      const boite: BoitePx = {
-        x: dedans.x,
-        y: dedans.y + dedans.h * 0.55,
-        l: dedans.l,
-        h: dedans.h * 0.45,
-      };
-      const chemin = cheminDuProfil(segment.profil, boite);
-      if (chemin) traceProfil(ctx, chemin, couleurDuJour([], segment.index), null);
+    const cote = avecCarte ? Math.min(hauteur, largeur * 0.34) : 0;
+    if (avecCarte) {
+      miniCarte(
+        ctx,
+        { x, y: y + (hauteur - cote) / 2, l: cote, h: cote },
+        cadrage,
+        { coords: segment.coords, couleur },
+        c,
+      );
     }
+
+    const ecart = avecCarte ? largeur * 0.06 : 0;
+    const xTexte = x + cote + ecart;
+    const lTexte = largeur - cote - ecart;
+    if (!(lTexte > 0)) return;
+
+    const hProfil = avecProfil ? Math.min(hauteur * 0.42, style.taille * 3) : 0;
+    const ecrite = ecrites.find((k) => k.jour === segment.index);
+    const texte = ecrite?.texte?.trim() ? ecrite.texte : texteDeJournee(segment);
+    const blocs = blocsDeTexte(ctx, resoudre(texte, c.variables), lTexte, style);
+
+    // Texte et profil se partagent la case : le texte se cale au milieu de ce
+    // qui reste, le profil garde toujours sa place en bas.
+    const dispo = hauteur - hProfil;
+    poserBlocs(
+      ctx,
+      blocs,
+      xTexte,
+      y + Math.max(0, (dispo - hauteurBlocs(blocs, style)) / 2),
+      style,
+      { align: "gauche", largeur: lTexte },
+    );
+
+    if (!avecProfil) return;
+    // LA JOURNÉE SITUÉE DANS LA COURSE : la silhouette entière au trait, la
+    // seule journée remplie. La même silhouette revient dans les quatre cases
+    // et seule la portion colorée se déplace.
+    const boite: BoitePx = { x: xTexte, y: y + hauteur - hProfil, l: lTexte, h: hProfil };
+    const echelle = echelleDuProfil(complet, boite);
+    if (!echelle) return;
+    traceProfil(ctx, echelle, complet, c.theme.profilRestant, null);
+    const dedans = entre(echelle.points, segment.kmDebut, segment.kmFin);
+    if (dedans.length > 1) aireDeProfil(ctx, echelle, dedans, couleur);
   });
 }
