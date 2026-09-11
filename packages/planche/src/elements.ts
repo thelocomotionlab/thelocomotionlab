@@ -52,6 +52,9 @@ const MARQUE = "LOCOMOTION LAB";
 /** Le logo est teinté à la couleur du nom : même encre, même présence. */
 const MARQUE_OPACITE = 0.68;
 
+/** L'interlettrage du nom dans la bande d'en-tête. */
+const LETTRAGE_MARQUE = 0.28;
+
 /** L'aire d'une journée reste transparente : les journées voisines se touchent
  *  par leur borne, et deux aplats opaques feraient une frise de blocs. */
 const AIRE_JOURNEE = 0.46;
@@ -527,7 +530,7 @@ function dessinerMarque(ctx: Ctx2D, e: ElementMarque, b: BoitePx, c: ContexteRen
   if (e.variante !== "logo") {
     ctx.font = `500 ${taille}px ${c.police}`;
     ctx.fillStyle = teinte;
-    dessinerCapitales(ctx, analyserRiche(MARQUE), x, ligneDeBase, taille, 0.16, teinte);
+    dessinerCapitales(ctx, analyserRiche(MARQUE), x, ligneDeBase, taille, LETTRAGE_MARQUE, teinte);
   }
   ctx.restore();
 }

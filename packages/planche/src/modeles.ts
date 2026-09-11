@@ -16,7 +16,7 @@
 // « REMETTRE LE MODÈLE » réaligne sans rien perdre : les contenus sont repris
 // par RÔLE, et seules les positions et les styles reviennent à la charte.
 
-import { CORPS, GRAISSES, LETTRAGE, MARGE, formatDe } from "./charte.ts";
+import { CORPS, GRAISSES, LARGEUR_REFERENCE, LETTRAGE, MARGE, formatDe } from "./charte.ts";
 import {
   carteNeuve,
   casesNeuves,
@@ -89,10 +89,15 @@ const HAUTEUR_PROFIL = 150;
  * son propre titre.
  */
 function fenetreDeLaTrace(f: Format): { x: number; y: number; l: number; h: number } {
-  const y = (f.zoneSure?.top ?? 0) + 128 + ECART_BLOCS;
-  const piedFilet = hautDuPied(f);
+  const m = mesures(f);
+  const y = m.bandeH + ECART_BLOCS;
+  const piedFilet = m.piedFilet;
   const reserve =
-    HAUTEUR_PROFIL + CORPS.surtitre * 2.4 + CORPS.titre * 1.5 + CORPS.pied * 2.3 + 56;
+    HAUTEUR_PROFIL +
+    CORPS.surtitre * 2.4 +
+    CORPS.titre * 1.5 +
+    (m.piedBase - m.piedFilet) +
+    56;
   return {
     x: MARGE,
     y,
@@ -111,7 +116,7 @@ function fenetreDeLaTrace(f: Format): { x: number; y: number; l: number; h: numb
  */
 function pileDuBas(f: Format, lignesTitre = 2) {
   const pas = CORPS.titre * INTERLIGNE_TITRE;
-  const chiffres = hautDuPied(f) - 34;
+  const chiffres = mesures(f).piedFilet - 34;
   const basTitre = chiffres - CORPS.corps * 1.9;
   const hautTitre = basTitre - (lignesTitre - 1) * pas;
   const surtitre = basTitre - lignesTitre * pas - CORPS.surtitre * 0.5;
@@ -119,35 +124,39 @@ function pileDuBas(f: Format, lignesTitre = 2) {
 }
 
 /**
- * OÙ COMMENCE ET OÙ FINIT LE MOBILIER.
+ * LES MESURES DE LA PLANCHE, celles de la charte depuis toujours.
  *
- * Le mobilier et le contenu lisent la MÊME mesure. Chacune calculée de son côté,
- * les deux se chevauchaient en story : la zone sûre d'Instagram descend l'en-tête
- * et remonte le pied, et le contenu, qui n'en tenait compte qu'à moitié, passait
- * dessous puis dessus — un titre par-dessus la pagination.
+ * Elles sont ce qui fait qu'une planche du labo se reconnaît : la bande
+ * d'en-tête se ferme à 128 px du haut de la zone sûre, le filet de pied passe
+ * à 96 px du bas, la ligne du pied à 46. Mobilier et contenu les lisent toutes
+ * deux — chacune recalculée de son côté, les deux se chevauchaient en story.
+ *
+ * `k` ramène le tout à la largeur du format : la charte s'énonce sur 1080.
  */
-function hautDeLEntete(f: Format): number {
-  return f.zoneSure ? f.zoneSure.top + 24 : MARGE;
-}
-
-/** Le bas de la bande d'en-tête, son filet compris. */
-function basDeLEntete(f: Format): number {
-  return hautDeLEntete(f) + CORPS.logo + 28;
-}
-
-/** Le haut du pied, son filet compris. */
-function hautDuPied(f: Format): number {
-  return (f.zoneSure?.bottom ?? f.height) - MARGE - CORPS.pied - 34;
+function mesures(f: Format) {
+  const k = f.width / LARGEUR_REFERENCE;
+  const haut = f.zoneSure?.top ?? 0;
+  const bas = f.zoneSure?.bottom ?? f.height;
+  return {
+    k,
+    /** Le filet qui ferme la bande d'en-tête. */
+    bandeH: Math.round(haut + 128 * k),
+    /** La ligne de base du logo et du nom. */
+    baseEntete: Math.round(haut + 128 * k - 48 * k),
+    /** Le filet du pied, et la ligne de base de sa pagination. */
+    piedFilet: Math.round(bas - 96 * k),
+    piedBase: Math.round(bas - 46 * k),
+  };
 }
 
 /** Le haut du contenu, sous la bande d'en-tête. */
 function hautDuContenu(f: Format): number {
-  return basDeLEntete(f) + ECART_BLOCS;
+  return mesures(f).bandeH + ECART_BLOCS;
 }
 
 /** Le bas du contenu, au-dessus du pied. */
 function basDuContenu(f: Format): number {
-  return hautDuPied(f) - ECART_BLOCS;
+  return mesures(f).piedFilet - ECART_BLOCS;
 }
 
 /* ------------------------------------------------------------- le mobilier */
@@ -175,12 +184,16 @@ const PIED = {
 
 export function mobilier(f: Format, o: OptionsMobilier = {}): Element[] {
   const out: Element[] = [];
-  const hautEntete = hautDeLEntete(f);
+  const m = mesures(f);
 
   if (o.entete !== false) {
-    out.push(marqueNeuve(boite(f, MARGE, hautEntete, 520, CORPS.logo), { variante: "logo-nom" }));
+    // La boîte de la marque se déduit de la LIGNE DE BASE que la charte fixe :
+    // `dessinerMarque` centre son nom dans la boîte, le logo en occupe la
+    // hauteur, et c'est la ligne des lettres qui doit tomber juste.
+    const hautMarque = m.baseEntete - CORPS.logo / 2 - CORPS.entete * 0.35;
+    out.push(marqueNeuve(boite(f, MARGE, hautMarque, 520, CORPS.logo), { variante: "logo-nom" }));
     out.push(
-      filetNeuf(boite(f, MARGE, hautEntete + CORPS.logo + 26, utile(f), 2), {
+      filetNeuf(boite(f, MARGE, m.bandeH, utile(f), 1.5), {
         remplissage: null,
         nom: "Filet d'en-tête",
       } as never),
@@ -188,9 +201,9 @@ export function mobilier(f: Format, o: OptionsMobilier = {}): Element[] {
   }
 
   if (o.pied !== false) {
-    const basPied = hautDuPied(f) + 34;
+    const basPied = m.piedBase;
     out.push(
-      filetNeuf(boite(f, MARGE, basPied - 34, utile(f), 2), {
+      filetNeuf(boite(f, MARGE, m.piedFilet, utile(f), 1.5), {
         remplissage: null,
         nom: "Filet de pied",
       } as never),
@@ -200,14 +213,16 @@ export function mobilier(f: Format, o: OptionsMobilier = {}): Element[] {
     // hiérarchie du compte, et c'est lui qui décide de ce qui suit un texte
     // quand on change de modèle — une pagination n'a rien à voler à personne.
     out.push(
-      texteNeuf(boite(f, MARGE, basPied, 320, CORPS.pied * 1.4), "{planche} / {planches}", "libre", {
-        nom: "Pagination",
-        ...PIED,
-      } as Partial<ElementTexte>),
+      texteNeuf(
+        boite(f, MARGE, basPied - CORPS.pied, 320, CORPS.pied * 1.4),
+        "{planche} / {planches}",
+        "libre",
+        { nom: "Pagination", ...PIED } as Partial<ElementTexte>,
+      ),
     );
     out.push(
       texteNeuf(
-        boite(f, f.width - MARGE - 320, basPied, 320, CORPS.pied * 1.4),
+        boite(f, f.width - MARGE - 320, basPied - CORPS.pied, 320, CORPS.pied * 1.4),
         "glisse :fleche:",
         "libre",
         { nom: "Glisse", alignement: "droite", ...PIED } as Partial<ElementTexte>,

@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { definirVocabulaireDIcones } from "./canvas.ts";
-import { FORMATS, MARGE } from "./charte.ts";
+import { CORPS, FORMATS, MARGE } from "./charte.ts";
 import { migrerProjet, trancheV1, type ProjetV1 } from "./migration.ts";
 import {
   CONTEXTE_PAR_DEFAUT,
@@ -401,4 +401,70 @@ describe("le mobilier et le contenu ne se recouvrent pas", () => {
       });
     }
   }
+});
+
+describe("le gabarit Carte tombe aux mesures de la charte", () => {
+  /**
+   * Les repères du studio d'avant, en pixels d'un carrousel 1080×1350. Ce sont
+   * EUX que les planches publiées portent : une planche refaite ailleurs ne se
+   * superpose plus à celles de la série.
+   */
+  const V1 = {
+    filetEntete: 128,
+    baseMarque: 80,
+    filetPied: 1254,
+    basePied: 1304,
+    hautProfil: 789.8,
+    basProfil: 939.8,
+    baseSurtitre: 986,
+    baseTitre: 1072.4,
+    baseChiffres: 1220,
+  };
+
+  const planche = instancier("carte", { ...CTX, format: "carrousel" });
+  const px = (nom: string) => {
+    const e = planche.elements.find((k) => k.nom === nom);
+    if (!e) throw new Error(`élément « ${nom} » absent`);
+    return enPixels(e, "carrousel");
+  };
+
+  it("ferme sa bande d'en-tête et ouvre son pied aux bonnes hauteurs", () => {
+    expect(px("Filet d'en-tête").y).toBeCloseTo(V1.filetEntete, 0);
+    expect(px("Filet de pied").y).toBeCloseTo(V1.filetPied, 0);
+  });
+
+  it("pose la marque et la pagination sur leur ligne de base", () => {
+    // `dessinerMarque` centre le nom dans la boîte ; la pagination se pose à un
+    // corps sous le haut de la sienne.
+    const marque = px("Marque");
+    expect(marque.y + marque.h / 2 + CORPS.entete * 0.35).toBeCloseTo(V1.baseMarque, 0);
+    expect(px("Pagination").y + CORPS.pied).toBeCloseTo(V1.basePied, 0);
+  });
+
+  it("empile profil, surtitre, titre et chiffres comme avant", () => {
+    const profil = px("Profil");
+    expect(profil.y).toBeCloseTo(V1.hautProfil, 0);
+    expect(profil.y + profil.h).toBeCloseTo(V1.basProfil, 0);
+    // Un surtitre en capitales se pose à un corps sous le haut de sa boîte ;
+    // un titre à 0,78 corps.
+    expect(px("Surtitre").y + CORPS.surtitre).toBeCloseTo(V1.baseSurtitre, 0);
+    expect(px("Titre").y + CORPS.titre * 0.78).toBeCloseTo(V1.baseTitre, 0);
+    expect(px("Chiffres").y + CORPS.corps * 0.78).toBeCloseTo(V1.baseChiffres, 0);
+  });
+
+  it("cadre la trace au-dessus du bloc du bas", () => {
+    const carte = planche.elements.find((e) => e.type === "carte");
+    if (!carte || carte.type !== "carte" || !carte.fenetre) throw new Error("fenêtre absente");
+    expect(carte.fenetre.y * 1350).toBeCloseTo(168, 0);
+    expect((carte.fenetre.y + carte.fenetre.h) * 1350).toBeCloseTo(847.7, 0);
+  });
+
+  it("porte le fond et le trait du labo", () => {
+    const carte = planche.elements.find((e) => e.type === "carte");
+    if (!carte || carte.type !== "carte") throw new Error("carte absente");
+    expect(carte.fond).toBe("relief");
+    expect(carte.epaisseur).toBe(7.5);
+    expect(carte.x).toBe(0);
+    expect(carte.l).toBe(1);
+  });
 });

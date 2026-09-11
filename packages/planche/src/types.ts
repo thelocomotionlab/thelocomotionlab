@@ -264,6 +264,7 @@ export type ElementCarte = ElementCommun & {
   degrades: DegradesCarte | null;
   /** Une couleur par journée, cyclique. */
   couleurs: string[];
+  /** Le trait de la trace, en pixels d'une planche de 1080 de large. */
   epaisseur: number;
   etiquettes: Etiquette[];
   depart: boolean;

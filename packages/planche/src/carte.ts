@@ -400,7 +400,11 @@ export function dessinerCarte(
     const [x, y] = vue.project(coord);
     return [b.x + x, b.y + y];
   };
-  const epaisseur = Math.max(1.5, b.l * 0.022 * (e.epaisseur / 6));
+  // L'ÉPAISSEUR EST EN PIXELS DE PLANCHE, pas en part de la boîte. Une carte
+  // plein cadre et une carte en encart doivent porter le MÊME trait : c'est le
+  // trait du labo. Mise en part de la boîte, la trace triplait d'épaisseur le
+  // jour où la carte passait plein cadre.
+  const epaisseur = Math.max(2, e.epaisseur * (c.format.width / LARGEUR_REFERENCE));
   const liseréCouleur = c.theme.encre;
 
   // 3. L'ITINÉRAIRE COMPLET EN SOURDINE : c'est lui qui SITUE la journée. On
