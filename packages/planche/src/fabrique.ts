@@ -222,6 +222,9 @@ export function carteNeuve(boite: Boite, over: Partial<ElementCarte> = {}): Elem
     depart: true,
     arrivee: true,
     itineraireSourdine: true,
+    etiquettesAuto: true,
+    fenetre: null,
+    degrades: null,
     ...over,
   };
 }

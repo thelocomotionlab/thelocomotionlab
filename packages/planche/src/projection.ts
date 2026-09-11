@@ -39,6 +39,15 @@ export type Vue = {
 export type OptionsVue = {
   zoomMin?: number;
   zoomMax?: number;
+  /**
+   * LA TOILE, quand elle est plus grande que la fenêtre de cadrage.
+   *
+   * Une carte plein cadre porte ses tuiles d'un bord à l'autre de la planche,
+   * mais n'y CADRE la trace que dans une fenêtre insérée — celle qui laisse la
+   * place au bloc de titre posé dessus. Sans cette distinction la mosaïque
+   * s'arrêtait au bord de la fenêtre et laissait le reste vide.
+   */
+  canevas?: { l: number; h: number };
 };
 
 /**
@@ -104,8 +113,8 @@ export function cadrer(
     echelle,
     originX,
     originY,
-    mosaiqueL: Math.ceil((fenetre.x + fenetre.l) / echelle),
-    mosaiqueH: Math.ceil((fenetre.y + fenetre.h) / echelle),
+    mosaiqueL: Math.ceil((options.canevas?.l ?? fenetre.x + fenetre.l) / echelle),
+    mosaiqueH: Math.ceil((options.canevas?.h ?? fenetre.y + fenetre.h) / echelle),
     project: ([lon, lat]: Coord) => [
       (normX(lon) * monde - originX) * echelle,
       (normY(lat) * monde - originY) * echelle,

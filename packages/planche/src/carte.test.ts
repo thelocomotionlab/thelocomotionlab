@@ -259,27 +259,50 @@ describe("dessiner une carte", () => {
     expect(traits(true)).toBeGreaterThan(traits(false));
   });
 
-  it("pose une étiquette par journée nommée", () => {
+  const dits = (ctx: CtxFactice) =>
+    ctx.ops.filter((o) => o.op === "fillText").map((o) => o.args[0]).join("");
+
+  it("nomme chaque journée sans qu'on ait rien à écrire", () => {
+    // Une trace découpée APRÈS la planche doit se nommer toute seule.
+    expect(dits(rendre({ ...carte(), etiquettes: [] }))).toContain("J1");
+    expect(dits(rendre({ ...carte(), etiquettes: [] }))).toContain("J2");
+  });
+
+  it("une entrée RÉÉCRIT l'étiquette de sa journée", () => {
     const ctx = rendre({
       ...carte(),
       etiquettes: [
-        { id: "e1", segment: 0, texte: "J1", icone: null, dx: 0, dy: 0 },
-        { id: "e2", segment: 1, texte: "Arsine", icone: "col", dx: 0.05, dy: -0.02 },
+        { id: "e2", segment: 1, texte: "Arsine", icone: "col", dx: 0.05, dy: -0.02, masquee: false },
       ],
     });
-    const poses = ctx.ops.filter((o) => o.op === "fillText").map((o) => o.args[0]);
-    expect(poses.join("")).toContain("J1");
-    expect(poses.join("")).toContain("ARSINE");
+    expect(dits(ctx)).toContain("ARSINE");
+    expect(dits(ctx)).toContain("J1");
+    expect(dits(ctx)).not.toContain("J2");
   });
 
-  it("une étiquette qui nomme une journée absente est ignorée, pas fatale", () => {
+  it("une entrée masquée efface celle de sa journée, et elle seule", () => {
     const ctx = rendre({
       ...carte(),
-      etiquettes: [{ id: "e9", segment: 42, texte: "Nulle part", icone: null, dx: 0, dy: 0 }],
+      etiquettes: [
+        { id: "e1", segment: 0, texte: "", icone: null, dx: 0, dy: 0, masquee: true },
+      ],
     });
-    expect(ctx.ops.filter((o) => o.op === "fillText").map((o) => o.args[0]).join("")).not.toContain(
-      "NULLE",
-    );
+    expect(dits(ctx)).not.toContain("J1");
+    expect(dits(ctx)).toContain("J2");
+  });
+
+  it("une entrée qui nomme une journée absente est ignorée, pas fatale", () => {
+    const ctx = rendre({
+      ...carte(),
+      etiquettes: [
+        { id: "e9", segment: 42, texte: "Nulle part", icone: null, dx: 0, dy: 0, masquee: false },
+      ],
+    });
+    expect(dits(ctx)).not.toContain("NULLE");
+  });
+
+  it("s'éteint d'un réglage", () => {
+    expect(dits(rendre({ ...carte(), etiquettesAuto: false }))).not.toContain("J1");
   });
 
   it("LE CADRAGE NE BOUGE PAS quand la tranche change", () => {
@@ -317,5 +340,47 @@ describe("l'aplat de la carte", () => {
   it("n'en pose aucun sur une silhouette, qui n'attend rien", () => {
     // Sinon la trace d'une story traîne une bande grise en travers de la photo.
     expect(aplats("aucun")).toBe(0);
+  });
+});
+
+describe("les dégradés de la carte", () => {
+  function carteAvec(degrades: unknown): ElementCarte {
+    return { ...carteNeuve({ x: 0, y: 0, l: 1, h: 1 }), degrades } as ElementCarte;
+  }
+
+  /** Les `fillRect` posés avec un dégradé — pas un aplat. */
+  function voiles(degrades: unknown): { y: number; h: number }[] {
+    const ctx = ctxFactice();
+    const vus: { y: number; h: number }[] = [];
+    const cible = ctx as unknown as Record<string, (...a: unknown[]) => void>;
+    const fillRect = cible.fillRect!.bind(ctx);
+    cible.fillRect = (...a: unknown[]) => {
+      if (typeof ctx.fillStyle === "object") vus.push({ y: Number(a[1]), h: Number(a[3]) });
+      fillRect(...a);
+    };
+    const el = carteAvec(degrades);
+    const { planche, c } = monde([el]);
+    dessinerPlanche(ctx, planche, c);
+    return vus;
+  }
+
+  it("n'en pose aucun quand rien n'est réglé", () => {
+    expect(voiles(null)).toEqual([]);
+  });
+
+  it("pose celui du haut depuis le bord, celui du bas jusqu'au bord", () => {
+    const vus = voiles({ haut: 0.8, hautH: 180, bas: 1, basH: 520 });
+    expect(vus.length).toBe(2);
+    expect(vus[0]!.y).toBe(0);
+    expect(vus[1]!.y + vus[1]!.h).toBeCloseTo(1350, 0);
+  });
+
+  it("une intensité nulle éteint son voile", () => {
+    expect(voiles({ haut: 0, hautH: 180, bas: 1, basH: 520 }).length).toBe(1);
+    expect(voiles({ haut: 0.8, hautH: 180, bas: 0, basH: 520 }).length).toBe(1);
+  });
+
+  it("une hauteur nulle aussi", () => {
+    expect(voiles({ haut: 0.8, hautH: 0, bas: 0.5, basH: 0 })).toEqual([]);
   });
 });
