@@ -155,7 +155,15 @@ export function formeNeuve(boite: Boite, over: Partial<ElementForme> = {}): Elem
 
 /** Le filet ambre de la charte, posable n'importe où. */
 export function filetNeuf(boite: Boite, over: Partial<ElementForme> = {}): ElementForme {
-  return formeNeuve(boite, { forme: "filet", remplissage: "", ...over, nom: "Filet" } as Partial<ElementForme>);
+  // `nom` AVANT l'étalement : forcé après, il écrasait celui de l'appelant et
+  // les deux filets d'une planche s'appelaient tous deux « Filet » dans les
+  // calques — deux lignes identiques, impossible de savoir laquelle on prend.
+  return formeNeuve(boite, {
+    nom: "Filet",
+    forme: "filet",
+    remplissage: "",
+    ...over,
+  } as Partial<ElementForme>);
 }
 
 export function iconeNeuve(boite: Boite, cle: string, over: Partial<ElementIcone> = {}): ElementIcone {
@@ -215,9 +223,11 @@ export function carteNeuve(boite: Boite, over: Partial<ElementCarte> = {}): Elem
   return {
     ...commun("carte", boite, "Carte"),
     type: "carte",
-    fond: "topo",
+    // Esri World Topo : le fond des planches du labo depuis toujours — clair,
+    // lisible sous une trace, et sans le relief ombré qui mange les couleurs.
+    fond: "relief",
     couleurs: [],
-    epaisseur: 6,
+    epaisseur: 7.5,
     etiquettes: [],
     depart: true,
     arrivee: true,
