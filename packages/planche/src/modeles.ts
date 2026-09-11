@@ -253,15 +253,43 @@ const HAUTEUR_ENTETE = CORPS.surtitre * 2.1 + CORPS.titre * 2.4;
 
 function enTete(f: Format, c: ContexteModele, y: number, surtitre?: string): Element[] {
   const mot = surtitre ?? (c.vecue ? "la sortie" : "l'itinéraire");
+  const bloc = blocDuHaut(f, y);
   return [
-    texteNeuf(boite(f, MARGE, y, utile(f), CORPS.surtitre * 1.6), mot, "surtitre"),
-    texteNeuf(
-      boite(f, MARGE, y + CORPS.surtitre * 2.1, utile(f), CORPS.titre * 2.4),
-      "{nom}",
-      "titre",
-    ),
+    texteNeuf(boite(f, MARGE, bloc.surtitre, utile(f), CORPS.surtitre * 1.6), mot, "surtitre"),
+    texteNeuf(boite(f, MARGE, bloc.titre, utile(f), CORPS.titre * INTERLIGNE_TITRE), "{nom}", "titre"),
   ];
 }
+
+/**
+ * LE BLOC SURTITRE + TITRE POSÉ DU HAUT VERS LE BAS, à partir de `y`.
+ *
+ * `y` est la LIGNE DE BASE du surtitre ; le titre descend ensuite de la hauteur
+ * de ses capitales — 0,86 em — sinon il remonte ses lettres dans le surtitre.
+ * Rend les HAUTS de boîte, et l'ordonnée où le bloc se termine.
+ */
+function blocDuHaut(f: Format, y: number) {
+  void f;
+  const baseTitre = y + CORPS.surtitre * 1.3 + CORPS.titre * 0.86;
+  return {
+    surtitre: y - CORPS.surtitre,
+    titre: baseTitre - CORPS.titre * 0.78,
+    /** Ce qui suit un titre respire de 2,2 corps — l'écart de la charte. */
+    apres: baseTitre + CORPS.titre * 0.3 + CORPS.corps * APRES_TITRE,
+  };
+}
+
+/** L'air sous un titre, en corps de ce qui suit. */
+const APRES_TITRE = 2.2;
+
+/** La part de la planche que prend le bandeau haut, et celui d'une étape. */
+const PART_BANDEAU = 0.42;
+const PART_BANDEAU_ETAPE = 0.28;
+
+/** Le titre d'une grille de journées, réduit : il annonce, il ne porte pas. */
+const ECHELLE_TITRE_GRILLE = 0.72;
+
+/** Le rayon de la marque cerclée d'une clôture, en pixels de planche. */
+const RAYON_CLOTURE = 128;
 
 /* --------------------------------------------------------------- les modèles */
 
@@ -349,17 +377,20 @@ export const MODELES: Modele[] = [
     aide: "Une photo en bandeau haut, le texte dessous.",
     elements: (f, c) => {
       const hautPhoto = f.zoneSure ? f.zoneSure.top : 0;
-      const hPhoto = Math.round(f.height * 0.42);
-      const y = hautPhoto + hPhoto + 70;
-      const yCorps = y + CORPS.surtitre * 2.1 + CORPS.titre * 2.6;
+      const hPhoto = Math.round(f.height * PART_BANDEAU);
+      const y = hautPhoto + hPhoto + 74;
+      const bloc = blocDuHaut(f, y);
       // Le corps prend ce qui RESTE : six lignes fixes passaient sous le pied en
       // story, où la zone sûre remonte celui-ci de trois cents pixels.
-      const hCorps = Math.max(CORPS.corps * 2, basDuContenu(f) - yCorps);
+      const hCorps = Math.max(CORPS.corps * 2, basDuContenu(f) - bloc.apres);
       return [
-        photoNeuve(boite(f, 0, hautPhoto, f.width, hPhoto), { nom: "Bandeau" } as never),
-        ...mobilier(f),
+        photoNeuve(boite(f, 0, hautPhoto, f.width, hPhoto), {
+          nom: "Bandeau",
+          degrades: { haut: 0.74, bas: 0, hauteur: (mesures(f).bandeH * 1.4) / f.height },
+        } as never),
+        ...mobilier(f, { entete: true }),
         ...enTete(f, c, y),
-        texteNeuf(boite(f, MARGE, yCorps, utile(f), hCorps), "", "corps"),
+        texteNeuf(boite(f, MARGE, bloc.apres, utile(f), hCorps), "", "corps"),
       ];
     },
   },
@@ -368,15 +399,29 @@ export const MODELES: Modele[] = [
     label: "Photo",
     aide: "Une photo plein cadre, le titre posé dessus.",
     elements: (f, c) => {
-      const bas = basDuContenu(f);
+      // LA MÊME PILE QUE LA CARTE, sans le profil : le titre se pose sur la
+      // ligne où la carte met ses chiffres, et le surtitre juste au-dessus.
+      const baseTitre = mesures(f).piedFilet - 34;
+      const baseSurtitre = baseTitre - CORPS.titre * INTERLIGNE_TITRE - CORPS.surtitre * 0.5;
       return [
         photoNeuve(boite(f, 0, 0, f.width, f.height), {
           fondDePlanche: true,
           nom: "Fond",
-          degrades: { haut: 0.55, bas: 0.75, hauteur: 0.38 },
+          // Le voile du bas couvre la moitié basse de la planche : un titre
+          // posé sur une photo n'a pas d'autre fond que celui qu'on lui donne.
+          degrades: { haut: 0.72, bas: 1, hauteur: 0.58 },
         } as never),
         ...mobilier(f),
-        ...enTete(f, c, bas - CORPS.titre * 2.6 - CORPS.surtitre * 2.1),
+        texteNeuf(
+          boite(f, MARGE, baseSurtitre - CORPS.surtitre, utile(f), CORPS.surtitre * 1.6),
+          c.vecue ? "la sortie" : "l'itinéraire",
+          "surtitre",
+        ),
+        texteNeuf(
+          boite(f, MARGE, baseTitre - CORPS.titre * 0.78, utile(f), CORPS.titre * INTERLIGNE_TITRE),
+          "{nom}",
+          "titre",
+        ),
       ];
     },
   },
@@ -385,18 +430,13 @@ export const MODELES: Modele[] = [
     label: "Texte",
     aide: "Un surtitre, un titre, un paragraphe.",
     elements: (f, c) => {
-      const haut = hautDuContenu(f) + 60;
+      const haut = mesures(f).bandeH + 112;
+      const bloc = blocDuHaut(f, haut);
       return [
         ...mobilier(f),
         ...enTete(f, c, haut),
         texteNeuf(
-          boite(
-            f,
-            MARGE,
-            haut + CORPS.surtitre * 2.1 + CORPS.titre * 2.6,
-            utile(f),
-            CORPS.corps * 8,
-          ),
+          boite(f, MARGE, bloc.apres, utile(f), basDuContenu(f) - bloc.apres),
           "",
           "corps",
         ),
@@ -408,14 +448,14 @@ export const MODELES: Modele[] = [
     label: "Fiche",
     aide: "Des libellés à gauche, des valeurs en gros à droite.",
     elements: (f, c) => {
-      const haut = hautDuContenu(f);
-      const yFiche = haut + CORPS.surtitre * 2.1 + CORPS.titre * 2.6;
+      const haut = mesures(f).bandeH + 118;
+      const bloc = blocDuHaut(f, haut);
       const titre = enTete(f, c, haut) as ElementTexte[];
-      titre[1]!.filetSousTitre = { largeur: 96, epaisseur: 4, couleur: "" };
+      titre[1]!.filetSousTitre = { largeur: 96, epaisseur: CORPS.filet, couleur: "" };
       return [
         ...mobilier(f),
         ...titre,
-        ficheNeuve(boite(f, MARGE, yFiche + 40, utile(f), basDuContenu(f) - yFiche - 60)),
+        ficheNeuve(boite(f, MARGE, bloc.apres, utile(f), basDuContenu(f) - bloc.apres)),
       ];
     },
   },
@@ -424,35 +464,55 @@ export const MODELES: Modele[] = [
     label: "Étape",
     aide: "Le compte rendu d'une journée : la photo fondue, le récit, la portion parcourue et ses chiffres.",
     elements: (f, c) => {
-      const bas = basDuContenu(f);
-      const hPhoto = Math.round(f.height * 0.26);
-      const hautPhoto = f.zoneSure ? f.zoneSure.top : 0;
-      const y = hautPhoto + hPhoto + 60;
-      const hCarte = Math.round(f.height * 0.2);
+      void c;
+      const m = mesures(f);
+      // LA PHOTO PART SOUS LA BANDE D'EN-TÊTE et descend d'une part de planche.
+      const hautPhoto = m.bandeH + 16;
+      const basPhoto = hautPhoto + Math.round(f.height * PART_BANDEAU_ETAPE);
+      const bloc = blocDuHaut(f, basPhoto + 60);
+
+      /* DEUX MOITIÉS, et le bloc de données se cale sur le pied. La carte était
+         posée sur une bande de 150 px de haut : une boucle des Écrins y devenait
+         un trait. En moitié de largeur elle redevient carrée, et le tableau tient
+         debout dans la colonne de droite. */
+      const basBloc = m.piedFilet - 48;
+      const moitie = Math.round(utile(f) / 2);
+      const hProfil = Math.round(Math.min((basBloc - bloc.apres) * 0.19, 84));
+      const cote = Math.max(0, Math.min(basBloc - bloc.apres - hProfil - 16, moitie));
+      const hautBloc = basBloc - cote - 16 - hProfil;
+
       return [
-        photoNeuve(boite(f, 0, hautPhoto, f.width, hPhoto), {
+        photoNeuve(boite(f, 0, hautPhoto, f.width, basPhoto - hautPhoto), {
           nom: "Photo de l'étape",
           degrades: { haut: 0, bas: 0.9, hauteur: 0.5 },
         } as never),
         ...mobilier(f),
-        texteNeuf(boite(f, MARGE, y, utile(f), CORPS.surtitre * 1.6), "jour {jour}", "surtitre"),
         texteNeuf(
-          boite(f, MARGE, y + CORPS.surtitre * 2.1, utile(f), CORPS.titre * 1.4),
+          boite(f, MARGE, bloc.surtitre, utile(f), CORPS.surtitre * 1.6),
+          "jour {jour}",
+          "surtitre",
+        ),
+        texteNeuf(
+          boite(f, MARGE, bloc.titre, utile(f), CORPS.titre * INTERLIGNE_TITRE),
           "",
           "titre",
         ),
         texteNeuf(
-          boite(f, MARGE, y + CORPS.surtitre * 2.1 + CORPS.titre * 1.6, utile(f), CORPS.corps * 5),
+          boite(f, MARGE, bloc.apres, utile(f), Math.max(CORPS.corps * 2, hautBloc - bloc.apres - 24)),
           "",
           "corps",
         ),
-        carteNeuve(boite(f, MARGE, bas - hCarte, utile(f) * 0.44, hCarte), {
+        carteNeuve(boite(f, MARGE + Math.round((moitie - cote) / 2), hautBloc, cote, cote), {
           fond: "aucun",
           nom: "Trace du jour",
+          itineraireSourdine: true,
         } as never),
+        profilNeuf(
+          boite(f, MARGE + Math.round((moitie - cote) / 2), hautBloc + cote + 16, cote, hProfil),
+        ),
         texteNeuf(
-          boite(f, MARGE + utile(f) * 0.5, bas - hCarte, utile(f) * 0.5, hCarte),
-          "{jour_distance} km\n{jour_dplus} m D+",
+          boite(f, MARGE + moitie, hautBloc, utile(f) - moitie, cote + 16 + hProfil),
+          "Distance = {jour_distance} km\nDénivelé positif = {jour_dplus} m\nMasse portée = ",
           "corps",
           { nom: "Chiffres du jour" },
         ),
@@ -464,12 +524,33 @@ export const MODELES: Modele[] = [
     label: "Journées",
     aide: "L'espace découpé en cases : une journée par case, sa portion de trace et de profil.",
     elements: (f, c) => {
-      const haut = hautDuContenu(f);
-      const yCases = haut + CORPS.surtitre * 2.1 + CORPS.titre * 1.6;
+      // LE TITRE D'UNE GRILLE EST PLUS COURT : il annonce, il ne porte pas.
+      // À pleine taille, deux lignes mangeaient une case entière.
+      const haut = mesures(f).bandeH + 60;
+      const baseSurtitre = haut;
+      const baseTitre = baseSurtitre + CORPS.surtitre * 1.4 + CORPS.titre * ECHELLE_TITRE_GRILLE * 0.86;
+      const yCases = baseTitre + 34;
+      const bas = mesures(f).piedFilet - 30;
       return [
         ...mobilier(f),
-        ...enTete(f, c, haut, "les journées"),
-        casesNeuves(boite(f, MARGE, yCases + 30, utile(f), basDuContenu(f) - yCases - 50)),
+        texteNeuf(
+          boite(f, MARGE, baseSurtitre - CORPS.surtitre, utile(f), CORPS.surtitre * 1.6),
+          "les journées",
+          "surtitre",
+        ),
+        texteNeuf(
+          boite(
+            f,
+            MARGE,
+            baseTitre - CORPS.titre * ECHELLE_TITRE_GRILLE * 0.78,
+            utile(f),
+            CORPS.titre * ECHELLE_TITRE_GRILLE * INTERLIGNE_TITRE,
+          ),
+          "{nom}",
+          "titre",
+          { corps: Math.round(CORPS.titre * ECHELLE_TITRE_GRILLE) },
+        ),
+        casesNeuves(boite(f, MARGE, yCases, utile(f), bas - yCases), { colonnes: 1 }),
       ];
     },
   },
@@ -478,15 +559,20 @@ export const MODELES: Modele[] = [
     label: "Clôture",
     aide: "La marque cerclée, et le mot de la fin.",
     elements: (f) => {
-      const cote = Math.round(f.width * 0.3);
-      const cy = Math.round(f.height * 0.4);
+      // LE BLOC EST CENTRÉ : la marque cerclée, et le mot de la fin dessous.
+      // Le cercle a le rayon de la charte — 128 px de planche —, pas une part
+      // du format : un carré et une story doivent porter la même signature.
+      const cote = RAYON_CLOTURE * 2;
+      const titre = CORPS.titre * INTERLIGNE_TITRE;
+      const hBloc = cote + CORPS.titre * 0.9 + titre;
+      const haut = Math.round((f.height - hBloc) / 2);
       return [
-        marqueNeuve(boite(f, (f.width - cote) / 2, cy - cote / 2, cote, cote), {
+        marqueNeuve(boite(f, (f.width - cote) / 2, haut, cote, cote), {
           variante: "cercle",
           nom: "Marque cerclée",
         } as never),
         texteNeuf(
-          boite(f, MARGE, cy + cote * 0.75, utile(f), CORPS.titre * 2.4),
+          boite(f, MARGE, haut + cote + CORPS.titre * 0.9, utile(f), titre),
           "",
           "titre",
           { alignement: "centre" },
