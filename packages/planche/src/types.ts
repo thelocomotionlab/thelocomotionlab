@@ -217,6 +217,15 @@ export type FondCarte = "relief" | "topo" | "satellite" | "aucun";
  */
 export type Tranche = { mode: "toutes" | "jusqua" | "seule"; jour: number };
 
+/**
+ * Ce qu'on RÉÉCRIT d'une étiquette de journée.
+ *
+ * La liste n'est pas la source des étiquettes : une carte en pose une par
+ * journée montrée, et chaque entrée ici ne fait que corriger celle de sa
+ * journée — son texte, son icône, sa place, ou son effacement. C'est ce qui
+ * fait qu'une trace découpée APRÈS la planche se nomme toute seule, au lieu de
+ * laisser une carte muette qu'il faut penser à étiqueter.
+ */
 export type Etiquette = {
   id: string;
   /** L'index de la journée nommée. */
@@ -226,11 +235,33 @@ export type Etiquette = {
   /** Le déplacement à la main depuis l'ancrage calculé, en fractions du cadre. */
   dx: number;
   dy: number;
+  masquee: boolean;
 };
+
+/**
+ * Les deux dégradés qui rendent un texte lisible par-dessus une carte.
+ *
+ * `haut` et `bas` sont des intensités (0 éteint le voile, 1 est celui de la
+ * charte) ; `hautH` et `basH` la DISTANCE sur laquelle chacun s'éteint, en
+ * pixels d'une planche de 1080 de large. Les quatre se règlent, parce qu'un
+ * fond topo change du tout au tout entre une haute vallée enneigée et un fond
+ * de forêt : un voile court et dense mange le ciel, un voile long et léger le
+ * garde tout en gardant l'en-tête lisible.
+ */
+export type DegradesCarte = { haut: number; hautH: number; bas: number; basH: number };
 
 export type ElementCarte = ElementCommun & {
   type: "carte";
   fond: FondCarte;
+  /**
+   * OÙ LA TRACE SE CADRE, en fractions de la boîte de l'élément.
+   *
+   * Les tuiles remplissent toujours la boîte ; la trace, elle, se cadre ici. Sur
+   * une carte plein cadre c'est ce qui la tient à l'écart du bloc de titre posé
+   * par-dessus. `null` — le cas courant — la cadre dans toute la boîte.
+   */
+  fenetre: Boite | null;
+  degrades: DegradesCarte | null;
   /** Une couleur par journée, cyclique. */
   couleurs: string[];
   epaisseur: number;
@@ -239,6 +270,8 @@ export type ElementCarte = ElementCommun & {
   arrivee: boolean;
   /** L'itinéraire complet, en sourdine sous la tranche montrée. */
   itineraireSourdine: boolean;
+  /** Une étiquette par journée montrée, nommée « J1 », « J2 »… */
+  etiquettesAuto: boolean;
 };
 
 export type ElementProfil = ElementCommun & {

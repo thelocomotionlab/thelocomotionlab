@@ -10,7 +10,7 @@
 // élément qu'il faut aller écrire à la main dans le fichier du projet, et c'est
 // exactement ce que le studio existe pour éviter.
 
-import { Trash2 } from "lucide-react";
+import { Eye, EyeOff, Trash2 } from "lucide-react";
 import {
   COULEURS_TEXTE,
   PALETTE_JOURS,
@@ -30,6 +30,7 @@ import {
   type ElementProfil,
   type ElementStat,
   type ElementTexte,
+  type DegradesCarte,
   type Etiquette,
   type Filet,
 } from "@locomotionlab/planche";
@@ -543,11 +544,26 @@ function ReglagesCarte({
   poser: Poser<ElementCarte>;
   ctx: Contexte;
 }) {
-  const majEtiquette = (id: string, champ: Partial<Etiquette>) =>
+  /** Une entrée RÉÉCRIT l'étiquette de sa journée ; sans entrée, « J3 ». */
+  const reecrire = (jour: number, champ: Partial<Etiquette>) =>
+    poser((x) => {
+      const dit = x.etiquettes.find((t) => t.segment === jour);
+      const neuve: Etiquette = dit
+        ? { ...dit, ...champ }
+        : { id: idNeuf("et"), segment: jour, texte: "", icone: null, dx: 0, dy: 0, masquee: false, ...champ };
+      return { ...x, etiquettes: [...x.etiquettes.filter((t) => t.segment !== jour), neuve] };
+    }, "étiquette");
+
+  const d = e.degrades;
+  const majDegrade = (champ: Partial<DegradesCarte>) =>
     poser(
-      (x) => ({ ...x, etiquettes: x.etiquettes.map((t) => (t.id === id ? { ...t, ...champ } : t)) }),
-      "étiquette",
+      (x) => ({
+        ...x,
+        degrades: { haut: 0.8, hautH: 180, bas: 1, basH: 520, ...x.degrades, ...champ },
+      }),
+      "dégradé",
     );
+
   return (
     <>
       <Choix
@@ -582,6 +598,48 @@ function ReglagesCarte({
         onChange={(v) => poser((x) => ({ ...x, itineraireSourdine: v }), "sourdine")}
       />
 
+      <Titre>Dégradés</Titre>
+      <Case
+        libelle="Voiler pour le texte"
+        coche={Boolean(d)}
+        onChange={(v) =>
+          poser(
+            (x) => ({
+              ...x,
+              degrades: v ? { haut: 0.8, hautH: 180, bas: 1, basH: 520 } : null,
+            }),
+            "dégradé",
+          )
+        }
+      />
+      {d && (
+        <div className="mb-1 border-l border-brand-hairline pl-2">
+          <Curseur
+            libelle="En-tête"
+            valeur={d.haut}
+            onChange={(n) => majDegrade({ haut: n })}
+          />
+          <Nombre
+            libelle="Sa hauteur"
+            valeur={d.hautH}
+            suffixe="px"
+            onChange={(n) => majDegrade({ hautH: Math.max(0, n) })}
+          />
+          <Curseur libelle="Pied" valeur={d.bas} onChange={(n) => majDegrade({ bas: n })} />
+          <Nombre
+            libelle="Sa hauteur"
+            valeur={d.basH}
+            suffixe="px"
+            onChange={(n) => majDegrade({ basH: Math.max(0, n) })}
+          />
+          <Aide>
+            L&rsquo;intensité MULTIPLIE le voile de la charte : 1 est celui des planches
+            d&rsquo;avant, 0 l&rsquo;éteint. La hauteur est la distance sur laquelle il
+            s&rsquo;éteint — court et dense mange le ciel, long et léger le garde.
+          </Aide>
+        </div>
+      )}
+
       <Titre>Couleurs</Titre>
       <ReglageCouleursDesJours
         couleurs={e.couleurs}
@@ -590,85 +648,64 @@ function ReglagesCarte({
       />
 
       <Titre>Étiquettes</Titre>
-      {e.etiquettes.length === 0 && (
-        <Aide>Aucune. Une étiquette nomme une journée au-dessus de son point haut.</Aide>
-      )}
-      {e.etiquettes.map((t) => (
-        <div key={t.id} className="mb-1.5 border-l border-brand-hairline pl-2">
-          <div className="flex items-center gap-1">
-            <input
-              type="text"
-              value={t.texte}
-              onChange={(ev) => majEtiquette(t.id, { texte: ev.target.value })}
-              aria-label="Texte de l'étiquette"
-              className="min-w-0 flex-1 rounded border border-brand-field bg-brand-bg px-1.5 py-1 text-[13px]"
-            />
-            <button
-              type="button"
-              onClick={() =>
-                poser(
-                  (x) => ({ ...x, etiquettes: x.etiquettes.filter((k) => k.id !== t.id) }),
-                  "étiquette",
-                )
-              }
-              aria-label="Retirer l'étiquette"
-              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-brand-field transition-colors hover:bg-brand-primary/12 motion-reduce:transition-none"
-            >
-              <Trash2 size={13} />
-            </button>
-          </div>
-          <Nombre
-            libelle="Journée"
-            valeur={t.segment + 1}
-            onChange={(n) =>
-              majEtiquette(t.id, {
-                segment: Math.max(0, Math.min(ctx.jours - 1, Math.round(n) - 1)),
-              })
-            }
-          />
-          <Choix
-            libelle="Icône"
-            valeur={t.icone ?? ""}
-            options={[{ cle: "", label: "Pastille du jour" }, ...CLES_ICONES.map((c) => ({ cle: c, label: c }))]}
-            onChange={(v) => majEtiquette(t.id, { icone: v || null })}
-          />
-          <Nombre
-            libelle="Décalage X"
-            valeur={t.dx * 100}
-            suffixe="%"
-            onChange={(n) => majEtiquette(t.id, { dx: n / 100 })}
-          />
-          <Nombre
-            libelle="Décalage Y"
-            valeur={t.dy * 100}
-            suffixe="%"
-            onChange={(n) => majEtiquette(t.id, { dy: n / 100 })}
-          />
-        </div>
-      ))}
-      <Bouton
-        onClick={() =>
-          poser(
-            (x) => ({
-              ...x,
-              etiquettes: [
-                ...x.etiquettes,
-                {
-                  id: idNeuf("et"),
-                  segment: Math.min(x.etiquettes.length, Math.max(0, ctx.jours - 1)),
-                  texte: `J${x.etiquettes.length + 1}`,
-                  icone: null,
-                  dx: 0,
-                  dy: 0,
-                },
-              ],
-            }),
-            "étiquette",
-          )
-        }
-      >
-        Ajouter une étiquette
-      </Bouton>
+      <Case
+        libelle="Une par journée"
+        coche={e.etiquettesAuto !== false}
+        onChange={(v) => poser((x) => ({ ...x, etiquettesAuto: v }), "étiquettes")}
+      />
+      {e.etiquettesAuto !== false &&
+        Array.from({ length: Math.max(1, ctx.jours) }, (_, i) => {
+          const dit = e.etiquettes.find((t) => t.segment === i);
+          return (
+            <div key={i} className="mb-1.5 border-l border-brand-hairline pl-2">
+              <div className="flex items-center gap-1">
+                <input
+                  type="text"
+                  value={dit?.texte ?? ""}
+                  placeholder={`J${i + 1}`}
+                  aria-label={`Étiquette du jour ${i + 1}`}
+                  onChange={(ev) => reecrire(i, { texte: ev.target.value })}
+                  className="min-w-0 flex-1 rounded border border-brand-field bg-brand-bg px-1.5 py-1 text-[13px]"
+                />
+                <button
+                  type="button"
+                  onClick={() => reecrire(i, { masquee: !dit?.masquee })}
+                  aria-pressed={Boolean(dit?.masquee)}
+                  aria-label={`Masquer l'étiquette du jour ${i + 1}`}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-brand-field transition-colors hover:bg-brand-primary/12 motion-reduce:transition-none"
+                >
+                  {dit?.masquee ? <EyeOff size={13} /> : <Eye size={13} />}
+                </button>
+              </div>
+              {!dit?.masquee && (
+                <>
+                  <Choix
+                    libelle="Icône"
+                    valeur={dit?.icone ?? ""}
+                    options={[
+                      { cle: "", label: "Pastille du jour" },
+                      ...CLES_ICONES.map((k) => ({ cle: k, label: k })),
+                    ]}
+                    onChange={(v) => reecrire(i, { icone: v || null })}
+                  />
+                  <Nombre
+                    libelle="Décalage X"
+                    valeur={(dit?.dx ?? 0) * 100}
+                    suffixe="%"
+                    onChange={(n) => reecrire(i, { dx: n / 100 })}
+                  />
+                  <Nombre
+                    libelle="Décalage Y"
+                    valeur={(dit?.dy ?? 0) * 100}
+                    suffixe="%"
+                    onChange={(n) => reecrire(i, { dy: n / 100 })}
+                  />
+                </>
+              )}
+            </div>
+          );
+        })}
+      <Aide>Vide, la journée porte son numéro. Attrape-la dans la planche pour la déplacer.</Aide>
     </>
   );
 }

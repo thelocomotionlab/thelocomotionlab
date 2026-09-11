@@ -264,6 +264,7 @@ export type {
   ElementProfil,
   ElementStat,
   ElementTexte,
+  DegradesCarte,
   Etiquette,
   Filet,
   FondCarte,

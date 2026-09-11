@@ -74,6 +74,50 @@ function utile(f: Format): number {
 /** L'air entre deux blocs d'une pile, en pixels de planche. */
 const ECART_BLOCS = 40;
 
+/** L'interligne d'un titre, partout. */
+const INTERLIGNE_TITRE = 1.16;
+
+/** La hauteur du profil d'une planche Carte. */
+const HAUTEUR_PROFIL = 150;
+
+/**
+ * LA FENÊTRE OÙ SE CADRE LA TRACE d'une carte plein cadre.
+ *
+ * Les tuiles couvrent la planche d'un bord à l'autre ; l'itinéraire, lui, tient
+ * dans cette fenêtre, qui réserve d'avance la place du bloc du bas — profil,
+ * surtitre, titre, chiffres — et celle du pied. Sans elle la trace passait sous
+ * son propre titre.
+ */
+function fenetreDeLaTrace(f: Format): { x: number; y: number; l: number; h: number } {
+  const y = (f.zoneSure?.top ?? 0) + 128 + ECART_BLOCS;
+  const piedFilet = hautDuPied(f);
+  const reserve =
+    HAUTEUR_PROFIL + CORPS.surtitre * 2.4 + CORPS.titre * 1.5 + CORPS.pied * 2.3 + 56;
+  return {
+    x: MARGE,
+    y,
+    l: utile(f),
+    h: Math.max(240, piedFilet - reserve - y),
+  };
+}
+
+/**
+ * LA PILE DU BAS D'UNE PLANCHE CARTE, calculée DU BAS VERS LE HAUT.
+ *
+ * Le titre pousse le profil, jamais l'inverse : c'est l'ordre qui garde la
+ * ligne de chiffres collée au pied quel que soit le nombre de lignes du titre.
+ * Les ordonnées rendues sont des LIGNES DE BASE ; l'appelant en déduit les
+ * boîtes de ses éléments.
+ */
+function pileDuBas(f: Format, lignesTitre = 2) {
+  const pas = CORPS.titre * INTERLIGNE_TITRE;
+  const chiffres = hautDuPied(f) - 34;
+  const basTitre = chiffres - CORPS.corps * 1.9;
+  const hautTitre = basTitre - (lignesTitre - 1) * pas;
+  const surtitre = basTitre - lignesTitre * pas - CORPS.surtitre * 0.5;
+  return { chiffres, hautTitre, surtitre, basProfil: surtitre - CORPS.surtitre * 2.1 };
+}
+
 /**
  * OÙ COMMENCE ET OÙ FINIT LE MOBILIER.
  *
@@ -207,7 +251,18 @@ export type Modele = {
   elements(f: Format, c: ContexteModele): Element[];
 };
 
-const LIGNE_FACTUELLE = "{distance} km  ·  {dplus} m D+  ·  {duree}";
+/**
+ * LA LIGNE DE CHIFFRES d'une planche : ce que la trace sait dire d'elle-même.
+ *
+ * La durée n'entre que sur un bilan : annoncée sur un itinéraire prévu, elle
+ * n'a personne pour la remplir et la ligne se terminait par un tiret. C'est du
+ * TEXTE, avec tout le balisage — on y écrit une date, un col, une phrase.
+ */
+function ligneFactuelle(c: ContexteModele): string {
+  const bouts = ["{distance} km", "{dplus} m D+"];
+  if (c.bilan === "apres" && c.vecue) bouts.push("{duree}");
+  return bouts.join("  ·  ");
+}
 
 export const MODELES: Modele[] = [
   {
@@ -215,23 +270,53 @@ export const MODELES: Modele[] = [
     label: "Carte",
     aide: "L'itinéraire et son profil, découpés en journées.",
     elements: (f, c) => {
-      const haut = hautDuContenu(f);
-      const bas = basDuContenu(f);
-      const titre = enTete(f, c, haut);
-      const yChiffres = haut + CORPS.surtitre * 2.1 + CORPS.titre * 2.6;
-      const yCarte = yChiffres + CORPS.corps * 2;
-      const hProfil = 150;
+      // LA CARTE OCCUPE TOUTE LA PLANCHE, et le bloc du bas se pose dessus.
+      // C'est ce qui fait la planche d'itinéraire du labo : le terrain d'un
+      // bord à l'autre, le titre dans son coin, rien d'encadré.
+      const fen = fenetreDeLaTrace(f);
+      const pile = pileDuBas(f);
       return [
+        carteNeuve(boite(f, 0, 0, f.width, f.height), {
+          nom: "Carte",
+          fenetre: {
+            x: fen.x / f.width,
+            y: fen.y / f.height,
+            l: fen.l / f.width,
+            h: fen.h / f.height,
+          },
+          // Le voile du haut s'éteint sous la bande d'en-tête, celui du bas
+          // s'ouvre à la hauteur que le bloc de titre occupe réellement.
+          degrades: {
+            haut: 0.8,
+            hautH: ((f.zoneSure?.top ?? 0) + 128) * 1.4,
+            bas: 1,
+            basH: f.height - (fen.y + fen.h),
+          },
+        } as never),
         ...mobilier(f),
-        ...titre,
+        profilNeuf(boite(f, MARGE, pile.basProfil - HAUTEUR_PROFIL, utile(f), HAUTEUR_PROFIL)),
         texteNeuf(
-          boite(f, MARGE, yChiffres, utile(f), CORPS.corps * 1.4),
-          LIGNE_FACTUELLE,
+          boite(f, MARGE, pile.surtitre - CORPS.surtitre, utile(f), CORPS.surtitre * 1.6),
+          c.vecue ? "la sortie" : "l'itinéraire",
+          "surtitre",
+        ),
+        texteNeuf(
+          boite(
+            f,
+            MARGE,
+            pile.hautTitre - CORPS.titre * 0.78,
+            utile(f),
+            CORPS.titre * INTERLIGNE_TITRE * 2,
+          ),
+          "{nom}",
+          "titre",
+        ),
+        texteNeuf(
+          boite(f, MARGE, pile.chiffres - CORPS.corps * 0.78, utile(f), CORPS.corps * 1.4),
+          ligneFactuelle(c),
           "corps",
           { nom: "Chiffres" },
         ),
-        carteNeuve(boite(f, MARGE, yCarte, utile(f), bas - yCarte - hProfil - 30)),
-        profilNeuf(boite(f, MARGE, bas - hProfil, utile(f), hProfil)),
       ];
     },
   },

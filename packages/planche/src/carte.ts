@@ -16,13 +16,13 @@
 import { FONDS, urlDeTuile, type NomDeFond } from "@locomotionlab/tracking/fonds";
 import type { Coord, Segment } from "@locomotionlab/trace";
 
-import { couleurDuJour, rgba } from "./charte.ts";
+import { LARGEUR_REFERENCE, couleurDuJour, rgba } from "./charte.ts";
 import type { Ctx2D, SourceImage } from "./canvas.ts";
 import { vocabulaireDIcones } from "./canvas.ts";
 import { cadrer, decimerPixels, tuilesDeLaVue, type Vue } from "./projection.ts";
 import { segmentsMontres, type ContexteRendu } from "./contexte.ts";
 import { dessinerCapitales, fonteDe, largeurCapitales, morceauxCapitales } from "./texte.ts";
-import type { BoitePx, ElementCarte, FondCarte } from "./types.ts";
+import type { Boite, BoitePx, DegradesCarte, ElementCarte, FondCarte } from "./types.ts";
 
 /** Une mosaïque déjà assemblée, prête à poser sous la trace. */
 export type FondPret = { image: SourceImage; coupeX: number; coupeY: number };
@@ -60,14 +60,29 @@ function margeDeCadre(b: BoitePx): number {
  * `null` quand il n'y a rien à cadrer — l'appelant dessine alors un aplat, pas
  * une erreur.
  */
-export function vueDeLaCarte(b: BoitePx, coords: readonly Coord[]): Vue | null {
+export function vueDeLaCarte(
+  b: BoitePx,
+  coords: readonly Coord[],
+  fenetre: Boite | null = null,
+): Vue | null {
   const marge = margeDeCadre(b);
-  return cadrer(coords, {
-    x: marge,
-    y: marge,
-    l: Math.max(1, b.l - marge * 2),
-    h: Math.max(1, b.h - marge * 2),
-  });
+  // Les tuiles remplissent TOUJOURS la boîte ; seule la trace se cadre dans la
+  // fenêtre. C'est ce qui donne une carte plein cadre dont l'itinéraire laisse
+  // la place au titre posé dessus.
+  const fit = fenetre
+    ? {
+        x: fenetre.x * b.l,
+        y: fenetre.y * b.h,
+        l: Math.max(1, fenetre.l * b.l),
+        h: Math.max(1, fenetre.h * b.h),
+      }
+    : {
+        x: marge,
+        y: marge,
+        l: Math.max(1, b.l - marge * 2),
+        h: Math.max(1, b.h - marge * 2),
+      };
+  return cadrer(coords, fit, { canevas: { l: b.l, h: b.h } });
 }
 
 /** Les coordonnées qui CADRENT la carte : la trace de cadrage si elle est figée. */
@@ -88,7 +103,7 @@ export function besoinDeFond(
 ): BesoinDeFond | null {
   const nom = nomDeFond(element.fond);
   if (!nom) return null;
-  const vue = vueDeLaCarte(boite, coordsDeCadrage(c));
+  const vue = vueDeLaCarte(boite, coordsDeCadrage(c), element.fenetre);
   if (!vue) return null;
 
   const m = tuilesDeLaVue(vue);
@@ -272,6 +287,45 @@ function etiquette(
   ctx.restore();
 }
 
+/**
+ * LE VOILE DU BAS ET CELUI DU HAUT.
+ *
+ * Les intensités MULTIPLIENT un dégradé de référence plutôt que de le décrire :
+ * 1 est exactement celui de la charte, 0 l'éteint. Ouvrir le réglage ne
+ * redessine donc pas les planches déjà composées.
+ */
+function degradesDeLaCarte(
+  ctx: Ctx2D,
+  d: DegradesCarte | null,
+  b: BoitePx,
+  c: ContexteRendu,
+): void {
+  if (!d) return;
+  const echelle = b.l / LARGEUR_REFERENCE;
+
+  const hautH = d.hautH * echelle;
+  if (d.haut > 0 && hautH > 0) {
+    const g = ctx.createLinearGradient(0, b.y, 0, b.y + hautH);
+    g.addColorStop(0, `rgba(${c.theme.voileTexte}, ${d.haut.toFixed(3)})`);
+    g.addColorStop(1, `rgba(${c.theme.voileTexte}, 0)`);
+    ctx.fillStyle = g;
+    ctx.fillRect(b.x, b.y, b.l, hautH);
+  }
+
+  const basH = d.basH * echelle;
+  if (d.bas > 0 && basH > 0) {
+    const depuis = b.y + b.h - basH;
+    const a = (v: number) => `rgba(${c.theme.voileTexte}, ${(v * d.bas).toFixed(3)})`;
+    const g = ctx.createLinearGradient(0, depuis, 0, b.y + b.h);
+    g.addColorStop(0, `rgba(${c.theme.voileTexte}, 0)`);
+    g.addColorStop(0.4, a(0.5));
+    g.addColorStop(0.75, a(0.82));
+    g.addColorStop(1, a(0.92));
+    ctx.fillStyle = g;
+    ctx.fillRect(b.x, depuis, b.l, basH);
+  }
+}
+
 /** Le point le plus haut d'un segment à l'écran — là où l'étiquette a du vide. */
 function sommet(
   seg: Segment,
@@ -293,7 +347,7 @@ export function dessinerCarte(
   c: ContexteRendu,
 ): void {
   const cadrage = coordsDeCadrage(c);
-  const vue = vueDeLaCarte(b, cadrage);
+  const vue = vueDeLaCarte(b, cadrage, e.fenetre);
 
   ctx.save();
   ctx.beginPath();
@@ -337,6 +391,10 @@ export function dessinerCarte(
     ctx.fillStyle = c.theme.voileCarte;
     ctx.fillRect(b.x, b.y, b.l, b.h);
   }
+
+  // 2 bis. LES DEUX DÉGRADÉS, entre la mosaïque et la trace : ils éteignent le
+  //        fond là où un texte va se poser, sans jamais toucher à l'itinéraire.
+  degradesDeLaCarte(ctx, e.degrades, b, c);
 
   const projeter = (coord: Coord): [number, number] => {
     const [x, y] = vue.project(coord);
@@ -387,24 +445,30 @@ export function dessinerCarte(
     borne(ctx, x, y, rayon, c.theme.accent, liseréCouleur);
   }
 
-  // 6. Les étiquettes, déplaçables à la main depuis leur ancrage calculé.
+  // 6. UNE ÉTIQUETTE PAR JOURNÉE MONTRÉE, déplaçable à la main depuis son
+  //    ancrage calculé. La liste de la carte ne les crée pas : elle les
+  //    RÉÉCRIT, une entrée par journée. Une trace découpée après la planche se
+  //    nomme donc toute seule.
   const corps = Math.max(11, b.l * 0.038);
-  for (const et of e.etiquettes) {
-    const seg = journees.find((s) => s.index === et.segment);
-    if (!seg) continue;
-    const ancre = sommet(seg, projeter);
-    if (!ancre) continue;
-    etiquette(
-      ctx,
-      et.texte,
-      et.icone,
-      ancre[0] + et.dx * b.l,
-      ancre[1] + et.dy * b.h - corps * 0.5,
-      corps,
-      couleurDuJour(e.couleurs, seg.index),
-      b,
-      c,
-    );
+  if (e.etiquettesAuto !== false && journees.length > 1) {
+    for (const seg of journees) {
+      const dit = e.etiquettes.find((t) => t.segment === seg.index);
+      if (dit?.masquee) continue;
+      const texte = dit?.texte?.trim() || `J${seg.index + 1}`;
+      const ancre = sommet(seg, projeter);
+      if (!ancre) continue;
+      etiquette(
+        ctx,
+        texte,
+        dit?.icone ?? null,
+        ancre[0] + (dit?.dx ?? 0) * b.l,
+        ancre[1] + (dit?.dy ?? 0) * b.h - corps * 0.5,
+        corps,
+        couleurDuJour(e.couleurs, seg.index),
+        b,
+        c,
+      );
+    }
   }
 
   ctx.restore();

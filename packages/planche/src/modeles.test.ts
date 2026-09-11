@@ -384,10 +384,12 @@ describe("le mobilier et le contenu ne se recouvrent pas", () => {
       it(`${m.cle} · ${cle}`, () => {
         const planche = instancier(m.cle, { ...CTX, format: cle });
         const poses = planche.elements.map((e) => ({ e, b: enPixels(e, cle) }));
-        // Une photo passe DESSOUS le mobilier par construction — c'est tout
-        // l'intérêt d'une marque posée sur une image. Ce qui ne doit jamais s'y
-        // superposer, c'est ce qui se lit : un texte, un chiffre, une carte.
-        const contenu = poses.filter(({ e }) => !estMobilier(e) && e.type !== "photo");
+        // UN FOND PASSE SOUS LE MOBILIER par construction — une photo, ou une
+        // carte plein cadre : c'est tout l'intérêt d'une marque posée dessus. Ce
+        // qui ne doit jamais se superposer, c'est ce qui se LIT.
+        const estFond = (e: Element) =>
+          e.type === "photo" || (e.x <= 0.01 && e.y <= 0.01 && e.l >= 0.99 && e.h >= 0.99);
+        const contenu = poses.filter(({ e }) => !estMobilier(e) && !estFond(e));
         for (const mo of poses.filter(({ e }) => estMobilier(e))) {
           for (const co of contenu) {
             expect(
