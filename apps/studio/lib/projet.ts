@@ -19,6 +19,7 @@ import {
   instancier,
   instancierSurvol,
   photoNeuve,
+  remettreLeModele,
   renouer,
   type CleFormat,
   type CleModele,
@@ -60,6 +61,38 @@ export function plancheNeuve(p: Projet, modele: CleModele = "texte"): PlancheIma
 /** Une planche de Survol : la séance rejouée, avec sa durée et son montage. */
 export function survolNeuf(p: Projet): PlancheSurvol {
   return instancierSurvol(contexteDuProjet(p));
+}
+
+/**
+ * REMET LA PLANCHE À SON MODÈLE : les positions et les styles reviennent à la
+ * charte, ce qui est écrit reste, repris par rôle.
+ *
+ * C'est la sortie de secours d'un poste de travail où tout se déplace : après
+ * dix minutes à pousser des boîtes, on veut pouvoir revenir au point de départ
+ * sans perdre son texte ni recommencer le projet.
+ */
+export function remiseAuModele(p: Projet, index: number): Projet {
+  const planche = p.planches[index];
+  if (!planche || planche.type !== "image") return p;
+  const planches = [...p.planches];
+  planches[index] = remettreLeModele(planche, contexteDuProjet(p));
+  return avecPlanches(p, planches);
+}
+
+/**
+ * RETIRE UNE PLANCHE — et quand c'est la dernière, la remplace par une neuve.
+ *
+ * Un lot vide n'existe pas : il n'y aurait plus rien à dessiner, plus rien à
+ * sélectionner, et le studio se retrouverait dans un état qu'aucun geste ne
+ * rattrape. Mais refuser de supprimer la dernière, c'est obliger à ajouter
+ * d'abord pour pouvoir jeter ensuite.
+ */
+export function sansPlanche(p: Projet, index: number): Projet {
+  const restantes = p.planches.filter((_, i) => i !== index);
+  if (restantes.length > 0) return avecPlanches(p, restantes);
+  const partie = p.planches[index];
+  const modele = partie?.type === "image" ? partie.modele : "texte";
+  return avecPlanches(p, [plancheNeuve(p, modele)]);
 }
 
 /** Change le modèle d'une planche en gardant ce qui a été écrit. */

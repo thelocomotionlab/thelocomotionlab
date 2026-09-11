@@ -9,10 +9,10 @@
 // qui permet de juger une série d'un coup d'œil, et de voir qu'une planche
 // détonne avant de l'avoir publiée.
 
-import { Copy, Plus, Trash2 } from "lucide-react";
+import { Copy, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { formatDe, themeDe, type Planche } from "@locomotionlab/planche";
 
-import { avecPlanches, plancheNeuve } from "@/lib/projet";
+import { avecPlanches, plancheNeuve, remiseAuModele, sansPlanche } from "@/lib/projet";
 import type { PosteDeTravail } from "@/lib/usePosteDeTravail";
 
 /** La hauteur d'une vignette. Les 108 px de la bande doivent porter, en plus,
@@ -78,15 +78,17 @@ export default function BandeDesPlanches({
 
   const supprimer = () =>
     modifier(
-      (p) =>
-        p.planches.length <= 1
-          ? p
-          : avecPlanches(
-              p,
-              p.planches.filter((_, i) => i !== indexPlanche),
-            ),
+      (p) => {
+        // La dernière planche se supprime aussi : elle revient neuve, au même
+        // modèle. Sinon il fallait en ajouter une pour pouvoir jeter celle-là.
+        queueMicrotask(() => setPlanche(Math.max(0, indexPlanche - 1)));
+        return sansPlanche(p, indexPlanche);
+      },
       { libelle: "supprimer la planche" },
     );
+
+  const remettre = () =>
+    modifier((p) => remiseAuModele(p, indexPlanche), { libelle: "remettre le modèle" });
 
   return (
     <footer
@@ -132,8 +134,17 @@ export default function BandeDesPlanches({
         </button>
         <button
           type="button"
+          onClick={remettre}
+          disabled={poste.plancheCourante?.type !== "image"}
+          title="Remettre le modèle — les positions reviennent à la charte, le texte reste"
+          aria-label="Remettre le modèle"
+          className={ACTION}
+        >
+          <RotateCcw size={16} aria-hidden />
+        </button>
+        <button
+          type="button"
           onClick={supprimer}
-          disabled={projet.planches.length <= 1}
           title="Supprimer"
           aria-label="Supprimer la planche"
           className={ACTION}
