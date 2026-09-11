@@ -474,3 +474,27 @@ describe("le gabarit Carte tombe aux mesures de la charte", () => {
     expect(carte.l).toBe(1);
   });
 });
+
+describe("la story se dépouille", () => {
+  /**
+   * Une story se lit en trois secondes, le pouce déjà en l'air : le surtitre y
+   * coûte plus qu'il ne rapporte. Les carrousels le gardent — là, le lecteur
+   * s'arrête.
+   */
+  const surtitres = (cle: keyof typeof FORMATS, modele: CleModele) =>
+    instancier(modele, { ...CTX, format: cle }).elements.filter(
+      (e) => e.type === "texte" && e.role === "surtitre",
+    );
+
+  for (const modele of ["carte", "photo", "texte", "fiche"] as CleModele[]) {
+    it(`${modele} : un surtitre en carrousel, aucun en story`, () => {
+      expect(surtitres("carrousel", modele).length).toBe(1);
+      expect(surtitres("story", modele).length).toBe(0);
+    });
+  }
+
+  it("garde celui qu'un modèle impose", () => {
+    // « jour 3 » n'est pas un ornement : c'est le sujet de la planche.
+    expect(surtitres("story", "etape").length).toBe(1);
+  });
+});

@@ -11,6 +11,7 @@
 //
 // La lecture est entièrement locale : le fichier ne quitte jamais le navigateur.
 
+import { Plus, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import {
   coupuresRegulieres,
@@ -117,6 +118,53 @@ export default function TiroirDonnees({ poste }: { poste: PosteDeTravail }) {
     );
   }
 
+  /** Écrit les coupures, triées et débarrassées de ce qui sort de la trace. */
+  function poserCoupures(suite: number[], libelle: string, fusion?: string) {
+    if (!trace) return;
+    const propres = [...new Set(suite.map((km) => Math.round(km * 10) / 10))]
+      .filter((km) => km > 0.1 && km < trace.totalKm - 0.1)
+      .sort((a, b) => a - b);
+    modifier((p) => ({ ...p, donnees: { ...p.donnees, coupures: propres } }), { libelle, fusion });
+  }
+
+  /**
+   * DÉPLACE LA FIN D'UNE JOURNÉE.
+   *
+   * C'est le kilomètre qu'on pose, pas la distance qu'on saisit : une étape se
+   * termine à un bivouac, à un col, à un village — un point de l'itinéraire —, et
+   * régler une distance déplacerait en cascade toutes les journées d'après.
+   */
+  function deplacerCoupure(i: number, km: number) {
+    if (!Number.isFinite(km) || !trace) return;
+    const cs = projet.donnees.coupures;
+    // BORNÉE ENTRE SES VOISINES, plutôt que retriée : passée par-dessus la
+    // suivante, la valeur changeait de ligne et c'est une AUTRE journée qui
+    // bougeait — on tape dans J1 et c'est J2 qui se déplace.
+    const min = (cs[i - 1] ?? 0) + 0.1;
+    const max = (cs[i + 1] ?? trace.totalKm) - 0.1;
+    poserCoupures(
+      cs.map((c, k) => (k === i ? Math.min(Math.max(km, min), max) : c)),
+      "déplacer une journée",
+      `coupure:${i}`,
+    );
+  }
+
+  /** Réunit une journée avec la suivante : la borne qui les sépare s'en va. */
+  function fusionner(i: number) {
+    poserCoupures(
+      projet.donnees.coupures.filter((_, k) => k !== i),
+      "réunir deux journées",
+    );
+  }
+
+  /** Une journée de plus, coupée au milieu de la dernière. */
+  function ajouterUneJournee() {
+    if (!trace) return;
+    const cs = projet.donnees.coupures;
+    const debut = cs[cs.length - 1] ?? 0;
+    poserCoupures([...cs, (debut + trace.totalKm) / 2], "ajouter une journée");
+  }
+
   function couperEn(n: number) {
     if (!trace) return;
     modifier(
@@ -206,16 +254,60 @@ export default function TiroirDonnees({ poste }: { poste: PosteDeTravail }) {
               onChange={(e) => couperEn(Number(e.target.value))}
               className={CHAMP}
             />
-            <ul className="mt-2 space-y-0.5 text-[12px] text-brand-soft">
-              {segments.map((s) => (
-                <li key={s.index} className="tabulaire flex justify-between gap-2">
-                  <span>J{s.index + 1}</span>
-                  <span>
-                    {formatKm(s.distanceKm)} km · {formatEntier(s.dPlusM)} m D+
-                  </span>
+            <p className="mt-2 mb-1 text-[11px] leading-snug text-brand-muted">
+              Chaque journée finit au kilomètre que tu poses. Le dénivelé suit : il vient du
+              terrain entre deux bornes, il ne se décrète pas.
+            </p>
+            <ul className="space-y-1.5">
+              {segments.map((s, i) => (
+                <li key={s.index} className="border-l border-brand-hairline pl-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="tabulaire w-7 shrink-0 text-[12px] text-brand-muted">
+                      J{s.index + 1}
+                    </span>
+                    <span className="tabulaire flex-1 text-[12px] text-brand-soft">
+                      {formatKm(s.distanceKm)} km · {formatEntier(s.dPlusM)} m D+
+                    </span>
+                    {i < segments.length - 1 && (
+                      <button
+                        type="button"
+                        onClick={() => fusionner(i)}
+                        title="Réunir avec la journée suivante"
+                        aria-label={`Réunir la journée ${i + 1} avec la suivante`}
+                        className="inline-flex h-6 w-6 items-center justify-center rounded border border-brand-field text-brand-muted transition-colors hover:bg-brand-primary/12 motion-reduce:transition-none"
+                      >
+                        <Trash2 size={12} aria-hidden />
+                      </button>
+                    )}
+                  </div>
+                  {i < segments.length - 1 && (
+                    <label className="mt-0.5 flex items-center gap-1.5 text-[11px] text-brand-muted">
+                      finit à
+                      <input
+                        type="number"
+                        step={0.1}
+                        min={0}
+                        max={Math.round(trace.totalKm * 10) / 10}
+                        value={Math.round(s.kmFin * 10) / 10}
+                        onChange={(e) => deplacerCoupure(i, Number(e.target.value))}
+                        onBlur={poste.sceller}
+                        aria-label={`Fin de la journée ${i + 1}, en kilomètres`}
+                        className="tabulaire w-20 rounded border border-brand-field bg-brand-bg px-1.5 py-0.5 text-right text-[12px]"
+                      />
+                      km
+                    </label>
+                  )}
                 </li>
               ))}
             </ul>
+            <button
+              type="button"
+              onClick={ajouterUneJournee}
+              className="mt-1.5 inline-flex h-7 items-center gap-1 rounded-md border border-brand-field px-2 text-[12px] transition-colors hover:bg-brand-primary/12 motion-reduce:transition-none"
+            >
+              <Plus size={13} aria-hidden />
+              Une journée de plus
+            </button>
           </section>
 
           <section>

@@ -251,12 +251,39 @@ export function mobilier(f: Format, o: OptionsMobilier = {}): Element[] {
 /** La hauteur qu'un en-tête occupe : surtitre, puis titre sur deux lignes. */
 const HAUTEUR_ENTETE = CORPS.surtitre * 2.1 + CORPS.titre * 2.4;
 
+/**
+ * UNE STORY SE LIT EN TROIS SECONDES, le pouce déjà en l'air.
+ *
+ * Le surtitre y coûte plus qu'il ne rapporte : « La sortie » n'apprend rien à
+ * qui regarde une carte, et il prend la ligne qui manquait au titre. Les
+ * carrousels le gardent — là, le lecteur s'arrête.
+ */
+function surtitreDuModele(f: Format, c: ContexteModele, impose?: string): string | null {
+  if (impose) return impose;
+  return f.cle === "story" ? null : c.vecue ? "la sortie" : "l'itinéraire";
+}
+
+/** Le surtitre d'une pile composée du bas vers le haut — ou rien, en story. */
+function surtitreOuRien(f: Format, c: ContexteModele, base: number): Element[] {
+  const mot = surtitreDuModele(f, c);
+  if (!mot) return [];
+  return [
+    texteNeuf(boite(f, MARGE, base - CORPS.surtitre, utile(f), CORPS.surtitre * 1.6), mot, "surtitre"),
+  ];
+}
+
 function enTete(f: Format, c: ContexteModele, y: number, surtitre?: string): Element[] {
-  const mot = surtitre ?? (c.vecue ? "la sortie" : "l'itinéraire");
+  const mot = surtitreDuModele(f, c, surtitre);
   const bloc = blocDuHaut(f, y);
+  const titre = texteNeuf(
+    boite(f, MARGE, mot ? bloc.titre : bloc.surtitre, utile(f), CORPS.titre * INTERLIGNE_TITRE),
+    "{nom}",
+    "titre",
+  );
+  if (!mot) return [titre];
   return [
     texteNeuf(boite(f, MARGE, bloc.surtitre, utile(f), CORPS.surtitre * 1.6), mot, "surtitre"),
-    texteNeuf(boite(f, MARGE, bloc.titre, utile(f), CORPS.titre * INTERLIGNE_TITRE), "{nom}", "titre"),
+    titre,
   ];
 }
 
@@ -346,11 +373,7 @@ export const MODELES: Modele[] = [
         } as never),
         ...mobilier(f),
         profilNeuf(boite(f, MARGE, pile.basProfil - HAUTEUR_PROFIL, utile(f), HAUTEUR_PROFIL)),
-        texteNeuf(
-          boite(f, MARGE, pile.surtitre - CORPS.surtitre, utile(f), CORPS.surtitre * 1.6),
-          c.vecue ? "la sortie" : "l'itinéraire",
-          "surtitre",
-        ),
+        ...surtitreOuRien(f, c, pile.surtitre),
         texteNeuf(
           boite(
             f,
@@ -412,11 +435,7 @@ export const MODELES: Modele[] = [
           degrades: { haut: 0.72, bas: 1, hauteur: 0.58 },
         } as never),
         ...mobilier(f),
-        texteNeuf(
-          boite(f, MARGE, baseSurtitre - CORPS.surtitre, utile(f), CORPS.surtitre * 1.6),
-          c.vecue ? "la sortie" : "l'itinéraire",
-          "surtitre",
-        ),
+        ...surtitreOuRien(f, c, baseSurtitre),
         texteNeuf(
           boite(f, MARGE, baseTitre - CORPS.titre * 0.78, utile(f), CORPS.titre * INTERLIGNE_TITRE),
           "{nom}",
@@ -450,8 +469,11 @@ export const MODELES: Modele[] = [
     elements: (f, c) => {
       const haut = mesures(f).bandeH + 118;
       const bloc = blocDuHaut(f, haut);
+      // Le titre est LE DERNIER du bloc : en story, le surtitre n'est pas posé
+      // et l'attraper par son rang le manquait.
       const titre = enTete(f, c, haut) as ElementTexte[];
-      titre[1]!.filetSousTitre = { largeur: 96, epaisseur: CORPS.filet, couleur: "" };
+      const leTitre = titre.find((e) => e.role === "titre");
+      if (leTitre) leTitre.filetSousTitre = { largeur: 96, epaisseur: CORPS.filet, couleur: "" };
       return [
         ...mobilier(f),
         ...titre,
