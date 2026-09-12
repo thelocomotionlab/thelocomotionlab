@@ -126,3 +126,12 @@ Nutrition embarquée depuis LighterPack :
   si au moins un article déclare son énergie
 - la dernière ligne d'un tableau, si elle commence par « Total », se lit en gras
 - sans .csv ou sans catégorie de nourriture, la section n'affiche que son texte
+
+Génération rapport twin :
+
+twin-engine full \
+  --training services/twin-engine/_seed/cas_validation/Val/archives \
+  --course   services/twin-engine/_seed/cas_validation/Val/courses/nice-100m-2026.gpx \
+  --race     services/twin-engine/_seed/cas_validation/Val/courses/nice-100m-2026.json \
+  --athlete "Val" \
+  --out      ~/Lab/rapports/val-nice-100m-2026
