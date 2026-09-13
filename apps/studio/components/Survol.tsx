@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Download, Pause, Play, SkipBack, X } from "lucide-react";
 import type maplibregl from "maplibre-gl";
 import {
+  cheminDuSurvol,
   contexteDuHud,
   dessinerAvecCadre,
   formatDe,
@@ -31,7 +32,7 @@ import { decouperTrace } from "@locomotionlab/trace";
 
 import { policeChargee, policeDuLabo } from "@/lib/police";
 import { imagesEnCache } from "@/lib/images";
-import { cadrer, monterScene, poserLaTrace, poserLePoint } from "@/lib/scene";
+import { cadrer, monterScene, poserLAvancee, poserLeChemin, poserLePoint } from "@/lib/scene";
 import { exporterSurvol } from "@/lib/exportSurvol";
 import { enNomDeFichier, telecharger } from "@/lib/export";
 import type { Avancement } from "@/lib/video";
@@ -80,10 +81,8 @@ export default function Survol({
   );
   const total = plan.images.length;
 
-  const coords = useMemo(
-    () => projet.donnees.trace?.coords ?? [],
-    [projet.donnees.trace],
-  );
+  // LE POINT ET SA TRACE VIENNENT DU MÊME TABLEAU : voir `cheminDuSurvol`.
+  const { chemin } = useMemo(() => cheminDuSurvol(seance), [seance]);
 
   useEffect(() => {
     let vivant = true;
@@ -151,13 +150,26 @@ export default function Survol({
     const prise = prises[image];
     if (!c || !prise) return;
     const appliquer = () => {
-      poserLaTrace(c, coords, Math.round((plan.avancement[image] ?? 0) * (coords.length - 1)));
-      poserLePoint(c, prise.lng, prise.lat);
+      poserLAvancee(c, plan.avancement[image] ?? 0, planche.scene);
+      // LE POINT EST OÙ L'ON ÉTAIT, pas où la caméra regarde : en vue
+      // d'ensemble la prise vise le milieu de l'emprise.
+      const ou = seance?.points[plan.images[image] ?? 0];
+      if (ou) poserLePoint(c, ou.lon, ou.lat);
       cadrer(c, prise);
     };
     if (c.isStyleLoaded()) appliquer();
     else c.once("load", appliquer);
-  }, [image, prises, coords, plan.avancement, scenePrete]);
+  }, [image, prises, plan.avancement, plan.images, planche.scene, seance, scenePrete]);
+
+  // LE CHEMIN NE BOUGE PAS AVEC L'IMAGE : il se pose quand la séance change, et
+  // rien de plus. Reposé à chaque image, MapLibre retuilait toute la source.
+  useEffect(() => {
+    const c = carte.current;
+    if (!c || chemin.length < 2) return;
+    const poser = () => poserLeChemin(c, chemin);
+    if (c.isStyleLoaded()) poser();
+    else c.once("load", poser);
+  }, [chemin, scenePrete]);
 
   // LA LECTURE avance dans le plan à la cadence du montage — pas à celle de
   // l'écran. Un moniteur à 120 Hz ne doit pas jouer la vidéo deux fois trop vite.

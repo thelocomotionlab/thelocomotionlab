@@ -153,6 +153,10 @@ function poserLesCouches(carte: maplibregl.Map, scene: Scene): void {
   carte.addSource(SOURCE_TRACE, {
     type: "geojson",
     data: { type: "FeatureCollection", features: [] },
+    // `lineMetrics` fait connaître à MapLibre la distance le long de la ligne :
+    // c'est ce qui permet d'avancer la trace EN PEIGNANT, sans lui repousser sa
+    // géométrie à chaque image.
+    lineMetrics: true,
   });
   carte.addSource(SOURCE_POINT, {
     type: "geojson",
@@ -171,21 +175,23 @@ function poserLesCouches(carte: maplibregl.Map, scene: Scene): void {
     layout: { "line-cap": "round", "line-join": "round" },
     paint: { "line-color": "#000000", "line-opacity": 0.35, "line-width": scene.epaisseur + 6, "line-blur": 3 },
   });
+  // LES DEUX PARTS SONT LA MÊME LIGNE, peinte deux fois : le restant sur toute
+  // sa longueur, le parcouru par-dessus, et c'est un DÉGRADÉ qui éteint chacun
+  // là où l'autre commence. Elles gardent ainsi leur épaisseur propre — ce
+  // qu'un seul dégradé ne saurait pas faire.
   carte.addLayer({
     id: "trace-restante",
     type: "line",
     source: SOURCE_TRACE,
-    filter: ["==", ["get", "part"], "restante"],
     layout: { "line-cap": "round", "line-join": "round" },
-    paint: { "line-color": restante, "line-opacity": 0.4, "line-width": 2 },
+    paint: { "line-opacity": 0.4, "line-width": 2, "line-gradient": degrade(restante, 0, false) },
   });
   carte.addLayer({
     id: "trace-parcourue",
     type: "line",
     source: SOURCE_TRACE,
-    filter: ["==", ["get", "part"], "parcourue"],
     layout: { "line-cap": "round", "line-join": "round" },
-    paint: { "line-color": parcourue, "line-width": scene.epaisseur },
+    paint: { "line-width": scene.epaisseur, "line-gradient": degrade(parcourue, 0, true) },
   });
   // Le point : un halo ambre et un cœur terracotta — le marqueur du direct.
   carte.addLayer({
@@ -207,26 +213,67 @@ function poserLesCouches(carte: maplibregl.Map, scene: Scene): void {
   });
 }
 
-/** Découpe la trace en « ce qui est fait » et « ce qui reste » à l'index donné. */
-export function poserLaTrace(carte: maplibregl.Map, coords: readonly Coord[], jusqua: number): void {
+/**
+ * Le dégradé qui éteint une ligne de part et d'autre de l'avancée.
+ *
+ * `avant` : la couleur tient jusqu'à l'avancée puis disparaît — c'est le
+ * parcouru. Sinon elle n'apparaît qu'après — c'est le restant. La coupure a une
+ * largeur minuscule mais non nulle : les paliers d'un dégradé doivent croître
+ * strictement.
+ */
+function degrade(
+  couleur: string,
+  avancee: number,
+  avant: boolean,
+): maplibregl.ExpressionSpecification {
+  const f = Math.min(0.999, Math.max(0.001, avancee));
+  const pleine = couleur;
+  const vide = "rgba(0, 0, 0, 0)";
+  return [
+    "interpolate",
+    ["linear"],
+    ["line-progress"],
+    0,
+    avant ? pleine : vide,
+    f,
+    avant ? pleine : vide,
+    Math.min(1, f + 0.0005),
+    avant ? vide : pleine,
+    1,
+    avant ? vide : pleine,
+  ] as maplibregl.ExpressionSpecification;
+}
+
+/**
+ * LE CHEMIN, POSÉ UNE SEULE FOIS.
+ *
+ * Il était repoussé à chaque image, découpé en deux morceaux — et MapLibre
+ * retuilait toute la source à chaque fois. Sur une vidéo de neuf cents images,
+ * c'est neuf cents retuilages d'une ligne de deux mille points.
+ */
+export function poserLeChemin(carte: maplibregl.Map, chemin: readonly Coord[]): void {
   const source = carte.getSource(SOURCE_TRACE) as maplibregl.GeoJSONSource | undefined;
-  if (!source) return;
-  const coupe = Math.max(1, Math.min(coords.length, jusqua + 1));
+  if (!source || chemin.length < 2) return;
   source.setData({
-    type: "FeatureCollection",
-    features: [
-      {
-        type: "Feature",
-        properties: { part: "restante" },
-        geometry: { type: "LineString", coordinates: coords.slice(Math.max(0, coupe - 1)) as number[][] },
-      },
-      {
-        type: "Feature",
-        properties: { part: "parcourue" },
-        geometry: { type: "LineString", coordinates: coords.slice(0, coupe) as number[][] },
-      },
-    ],
+    type: "Feature",
+    properties: {},
+    geometry: { type: "LineString", coordinates: chemin.map((c) => [c[0], c[1]]) },
   });
+}
+
+/**
+ * L'avancée du survol, en part de la DISTANCE parcourue.
+ *
+ * Deux propriétés de peinture, et rien d'autre : la géométrie ne bouge pas, donc
+ * rien n'est retuilé. C'est ce qui fait la différence entre une image par
+ * seconde et trente.
+ */
+export function poserLAvancee(carte: maplibregl.Map, avancee: number, scene: Scene): void {
+  const parcourue = scene.couleurParcourue || brandColors.accent;
+  const restante = scene.couleurRestante || brandColors.bg;
+  if (!carte.getLayer("trace-parcourue")) return;
+  carte.setPaintProperty("trace-parcourue", "line-gradient", degrade(parcourue, avancee, true));
+  carte.setPaintProperty("trace-restante", "line-gradient", degrade(restante, avancee, false));
 }
 
 export function poserLePoint(carte: maplibregl.Map, lng: number, lat: number): void {
