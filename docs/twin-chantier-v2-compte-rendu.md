@@ -114,8 +114,26 @@ de progression chez un second athlète (Val 2024 : +21 à +24 %).
   configs sur un décodage) ; `tools/backtest` lit `sd_rel`/`leverage` du moteur.
 - Tests : `tests/test_phase1_interval.py` (21), variantes du banc, `--set`.
 
-**En attente (banc chez Valentin, feuille du manuel §8)** : dix variantes, trois recaptures
-de Nice ; tableaux à coller en DIAGNOSTIC §10.1–10.3, décision par levier.
+**Banc reçu (2026-09-15, dix variantes, trois recaptures de Nice) et décisions
+(DIAGNOSTIC §10.1–10.4).**
+- Les leviers n'agissent qu'en régime `regression` : 9 coupures sur 30, toutes du dev_set
+  sauf deux refusées. Les deux cas frais vendus (Lolo, régime `blend`) ne bougent dans
+  aucune variante → **règle (d), aucun défaut basculé**.
+- A1 (prior −α) est le levier qui agit : la pente en durée n'est identifiée par les ultras
+  d'aucun athlète, λ = 2, 5 et 10 donnent la même chose ; levier de la cible Nice 3,0 → 0,9,
+  Winkler 80 des 13 vendus appariés 0,570 → 0,534 (linéaire) / 0,552 (log), Chianti 2025
+  devient vendable avec une bande qui couvre ; le central est tiré vers plus lent (Val 2025 :
+  +4 à +6 % trop lent ; Crasse : juste). A2 (log) seul ne gagne rien de mesurable et coûte un
+  cas de 0,4 h (Montagnhard 2026) ; retenu pour la référence comme cadre du prior. A3 seul
+  élargit (Student à ν ≈ 1 à petit n_eff) ; avec le prior il est neutre à n_eff 11 et rend
+  la couverture 80 que le prior perd à petit n. MAD et signé : rejetés (chiffres au carnet).
+- **Rapport de référence** : `examples/twin.config.reference.json` (log + prior + studentisé) ;
+  Nice 2026 : **34,33 h**, fourchette 31,98–36,87, sécurité 29,83–39,52 (28 % du central
+  contre 49 % avant), central +2,0 h par rapport aux défauts (32,33 h) — consigné comme
+  « activé pour Val, défaut non basculé ».
+- Sortis du banc : borne basse des bandes linéaires plafonnée à 0 h (MIUT studentisé donnait
+  −24,9 h ; aucun cas servi touché) ; le gabarit nomme la méthode servie.
+- Phase 1 close ; le golden déterministe et le tableau §4 sont ceux des défauts, inchangés.
 
 ## Choix faits à la place de Valentin (Phase 0)
 
@@ -169,6 +187,16 @@ de Nice ; tableaux à coller en DIAGNOSTIC §10.1–10.3, décision par levier.
     p = 3, loi de Student implémentée sans scipy (bêta incomplète, dichotomie).
 16. **Trois leviers en un commit moteur** plutôt que trois commits : ils partagent
     `predict.py`, réécrit une fois ; chaque levier a son flag et ses tests.
+17. **Pile de référence = A2A1A3** (log + prior + studentisé) plutôt que A1 linéaire, qui fait
+    0,534 contre 0,552 de Winkler 80 sur les 13 vendus appariés : l'écart est un cas à 0,4 h ;
+    le lien log est un choix de structure (prior en −α sans conversion, bandes bornées,
+    asymétrie), consigné comme tel ; le linéaire reprend si la Phase 2 creuse l'écart.
+18. **Le central de Nice bouge de +2 h sous le prior** : c'est la règle du chantier
+    (« activé pour Val, défaut non basculé ») appliquée à la lettre ; le banc dit 2 cas
+    contre 2 sur le central, il tranche la bande. La course tranchera le central.
+19. **Fichier de config partiel** (`examples/twin.config.reference.json`, trois clés) plutôt
+    qu'une copie complète de `twin.config.json` : le chargeur complète par les défauts, qui
+    sont identiques au fichier (testé), et le diff dit exactement ce qui est activé.
 
 ## Questions ouvertes
 
@@ -183,6 +211,13 @@ de Nice ; tableaux à coller en DIAGNOSTIC §10.1–10.3, décision par levier.
 - **Spec de course du rapport livré.** Arrêts imprimés 1 h 25 contre 1 h 45 attendus avec
   `examples/nice-100m.json` : la spec (et la config) servies pour le PDF du 2026-09-15 sont à
   récupérer.
+- **Degrés de liberté de l'échelle studentisée sous prior.** ν = n_eff − 3 ignore que le
+  prior fixe partiellement b ; ν = n_eff − tr(H) serait plus juste, sans effet pour Val
+  (8,1 → ≈ 8,6), resserrant à petit n_eff. À mesurer si A3 vise un jour le défaut.
+- **Le repli MC sans prior explose dans les deux liens** quand la pente n'est pas identifiée
+  (Chianti : [13,3 – 68,2] en linéaire, [0,0 – 52,6] en log). Le prior le corrige ; le repli
+  lui-même (bornes au plafond, central hors de sa bande) reste tel quel tant qu'un cas servi
+  n'y passe pas.
 - **Phase 4.** Import CSV manuel par défaut ; LiveTrail seulement après vérification de ses
   conditions d'utilisation.
 - **Annexe en ligne** : page du site (décidé) ; support à implémenter en Phase 6.
@@ -191,4 +226,13 @@ de Nice ; tableaux à coller en DIAGNOSTIC §10.1–10.3, décision par levier.
 
 ## Rejeté
 
-(rien encore — les pistes rejetées des phases suivantes seront listées ici avec leurs chiffres)
+- **Échelle studentisée MAD** (`studentized_scale_mad`) : Winkler 80 0,591 contre 0,558 (RMS)
+  sur les 13 vendus appariés, MIUT [7,5 – 105,9] — plus bruyant à n = 4–12, comme prévu.
+- **Échelle studentisée signée** : meilleur Winkler 80 du banc (0,549) mais couverture 50 à
+  23 % (Lavaredo raté de 0,16 h, Montagnhard 2026 raté), κ par côté sur 2 à 6 plis ; à
+  remesurer quand la Phase 4 apportera des plis.
+- **λ = 5 et 10 du prior de durée** : identiques à λ = 2 au dixième d'heure et au millième de
+  Winkler — la pente n'est pas identifiée, la valeur du prior compte, pas son poids.
+- **Échelle studentisée sans prior** (A3, A2A3) : couverture 80 à 100 % sur la zone d'action
+  pour un Winkler dégradé (0,789 → 0,898 / 0,856) — l'honnêteté du petit n sans l'information
+  qui manque.

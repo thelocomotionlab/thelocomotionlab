@@ -181,13 +181,18 @@ erreurs de validation croisée de l'athlète) et le rapport affiche **deux bande
 Si la dispersion est grande (> 0,35), le rapport ajoute une table de scénarios
 rapide / central / prudent. Ne jamais présenter la borne de sécurité comme un objectif.
 
-Deux variantes en cours de preuve (chantier v2, Phase 1, DIAGNOSTIC §10.1–10.3), à activer
-par `--set` ou `TWIN_CONFIG_PATH`, jamais servies par défaut tant que le banc n'a pas
-tranché : en lien log (`calibration.link=log`) les deux bandes gardent leurs couvertures
-nominales mais deviennent **asymétriques en heures**, la borne haute plus loin du central que
-la borne basse ; avec `prediction.interval_source=studentized_scale`, leurs largeurs viennent
-d'un facteur d'échelle sur les erreurs de validation croisée lu sur une loi de Student, au
-lieu du quantile empirique — même vocabulaire, mêmes usages.
+Trois leviers de la Phase 1 du chantier v2 (DIAGNOSTIC §10.1–10.4) sont livrés derrière des
+flags, **défauts inchangés** — le banc n'a touché aucun cas frais du registre, donc aucun
+défaut n'a basculé — et servis pour le **rapport de référence** par
+`examples/twin.config.reference.json` (§8) : en lien log (`calibration.link=log`) les deux
+bandes gardent leurs couvertures nominales mais deviennent **asymétriques en heures**, la
+borne haute plus loin du central que la borne basse ; le prior sur la pente en durée
+(`calibration.duration_term=prior_shrunk`) tire la pente vers −α, l'exposant de la courbe
+record, ce qui resserre les bandes en extrapolation et déplace le central vers plus lent ;
+avec `prediction.interval_source=studentized_scale`, les largeurs viennent d'un facteur
+d'échelle sur les erreurs de validation croisée lu sur une loi de Student, au lieu du
+quantile empirique — même vocabulaire, mêmes usages. Le rapport nomme la méthode servie
+(« prédiction conforme » ou « facteur d'échelle studentisé »).
 
 ### Mode objectif ([ADR 0002](./adr/0002-mode-objectif-plan-sur-cible.md))
 
@@ -329,7 +334,26 @@ twin-engine preview --training _seed/cas_validation/Val/archives --course "$NICE
 
 `compare-<nom>.md` compare chaque variante au banc servi DU MÊME passage (agrégats décodés
 identiques) ; `tableau-<nom>.md` donne ses colonnes de référence. Rien de tout cela n'entre
-dans le registre committé. `tools/backtest`,
+dans le registre committé.
+
+**Résultat de la Phase 1 (2026-09-15, DIAGNOSTIC §10.4)** : aucun défaut basculé ; les trois
+leviers sont servis pour le rapport de référence par un fichier de config partiel (les clés
+absentes gardent `twin.config.json`) :
+
+```bash
+# rapport de référence : lien log + prior de durée + échelle studentisée
+TWIN_CONFIG_PATH=examples/twin.config.reference.json twin-engine full \
+  --training _seed/cas_validation/Val/archives --course "$NICE_GPX" --race examples/nice-100m.json \
+  --athlete Val --out local-data/out/nice-2026
+# strictement équivalent, sans fichier :
+twin-engine full … --set calibration.link=log --set calibration.duration_term=prior_shrunk \
+  --set prediction.interval_source=studentized_scale
+# sans rien : les défauts (central 32,3 h, bornes 24,5–40,2) ; avec : 34,3 h, bornes 29,8–39,5
+```
+
+Le JSON du `preview` sous cette config expose ce que le rapport utilise : `calibration.link`,
+`calibration.duration_prior` (b, λ, origine), `prediction.leverage` et `sd_rel` (levier de la
+cible), `scale_kappa` et `scale_dof` (échelle et degrés de liberté de la Student). `tools/backtest`,
 `tools/diag_ultras` et `tools/passages` restent utilisables séparément ; `tools/banc` donne
 exactement les mêmes résultats (test `test_banc_one_pass_matches_the_separate_tools`).
 

@@ -176,9 +176,13 @@ moyenne de course** en fonction de la durée et du dénivelé :
 > est **analytique**, `T = exp((ln Deq − a − c·D+/km)/(1 + b))` — plus de plancher de vitesse.
 > **Prior sur la pente en durée (`duration_term=prior_shrunk`)** : b est tiré vers −α, l'exposant
 > de la courbe record de l'athlète (repli population), par une pseudo-observation ridge qui entre
-> dans le fit, la covariance et chaque pli LOO — même mécanique que le ridge terrain. Les deux sont
-> des leviers mesurés au banc (DIAGNOSTIC §10.1–10.2), défauts inchangés tant que la preuve n'est
-> pas faite.
+> dans le fit, la covariance et chaque pli LOO — même mécanique que le ridge terrain. **Mesurés au
+> banc (DIAGNOSTIC §10.1–10.2, 2026-09-15)** : la pente en durée n'est identifiée par les ultras
+> d'aucun athlète (plage de ln T de 0,1 à 0,7), le prior est l'information qui manquait — levier
+> de la cible 3,0 → 0,9 sur le cas de référence, Winkler des bandes amélioré partout où il agit,
+> central tiré vers plus lent (+2 h à 32 h). Les cas frais du registre ne sont pas touchés :
+> **défauts inchangés**, les deux leviers sont servis pour le rapport de référence par
+> `examples/twin.config.reference.json` (DIAGNOSTIC §10.4).
 >
 > **Point de généralisation crucial.** Cette régression suppose **plusieurs** vrais ultras. La plupart
 > des athlètes n'en auront pas 8. Le moteur doit donc **dégrader proprement** :
@@ -223,7 +227,10 @@ le **point fixe** :
 > sur 12, un pli fixe la borne, bandes de largeur nulle ou au plafond au registre). L'option
 > estime une échelle κ (RMS pondéré des scores studentisés) et lit les quantiles 50/80 sur une
 > Student à n_eff − p degrés de liberté, mise à l'échelle du sd prédictif de la cible. En lien
-> log les bandes en heures sont asymétriques, `T·exp(±h)`. Preuve et décision : DIAGNOSTIC §10.3.
+> log les bandes en heures sont asymétriques, `T·exp(±h)`. **Mesuré au banc (DIAGNOSTIC §10.3)** :
+> seul, il élargit à petit n_eff (Student à ν ≈ 1) ; avec le prior de durée il est neutre à
+> n_eff 11 et rattrape la couverture 80 % que le prior perd à petit n. Défaut inchangé, servi
+> pour le rapport de référence dans la pile lien log + prior + échelle studentisée (§10.4).
 
 **Cas de référence (recapture 2026-07-02)** : **T = 31,3 h**, vitesse ajustée moyenne
 **6,40 km/h ≈ 60 % de la VC** ; intervalle 80 % **30,0–32,8 h**.
@@ -291,7 +298,7 @@ Tout ce qui a pu ressembler à de l'expertise au cas par cas est en réalité l'
 
 | Type | Exemples | Statut |
 |---|---|---|
-| **Règle fixe** (même code pour tous) | lissage 150 m, écrêtage pente ±0,45, base de pente ±50 m, **base du D+ des activités = distance ~150 m (harmonisée au parcours, C1)**, plafond `f≤3`, plancher de durée VC, conditions des « vrais ultras », Δ du fade, **robustesse record** (altitude requise, plafond VC plausible, support ≥N, rejet fenêtré, dédoublonnage), **demi-vie de récence**, lien de la régression et source des bandes (flags, DIAGNOSTIC §10) | identique pour chaque athlète |
+| **Règle fixe** (même code pour tous) | lissage 150 m, écrêtage pente ±0,45, base de pente ±50 m, **base du D+ des activités = distance ~150 m (harmonisée au parcours, C1)**, plafond `f≤3`, plancher de durée VC, conditions des « vrais ultras », Δ du fade, **robustesse record** (altitude requise, plafond VC plausible, support ≥N, rejet fenêtré, dédoublonnage), **demi-vie de récence**, lien de la régression, prior de durée (−α, λ = 2) et source des bandes (flags, DIAGNOSTIC §10 ; défauts inchangés, config de référence §10.4) | identique pour chaque athlète |
 | **Ajusté à partir des données** | VC, D′, exposant E, durabilité, coefficients β de la régression **pondérée par récence**, prédiction, plan (**Δ du fade si `fade_source=durability`**) | **calculé** par athlète → individualisation automatique |
 | **Garde-fou d'honnêteté** | invalidité < 30 min, descentes techniques = plafonds, forme du jour inconnue, D′ peu fiable, marche au-delà de ±25 %, **VC non plausible → pas de « % de VC »**, **plancher N_eff** (pas de régression sûre d'elle sur trop peu d'ultras récents) | cadrage fixe + **test de suffisance** |
 

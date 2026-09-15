@@ -1016,7 +1016,7 @@ fixe de la config. La promesse d'individualisation n'est pas tenue sur le livrab
 (déjà noté en §9.3 ; jamais basculé). Correctif = levier fade de la Phase 2 (`fade_source=
 durability`, puis source `splits`), à valider sur le plan Nice avant bascule.
 
-**0.2 H2 — écoulé = mouvement + arrêts — À COLLER.** Outil `tools/diag_ultras` (une passe
+**0.2 H2 — écoulé = mouvement + arrêts.** Outil `tools/diag_ultras` (une passe
 par archive, agrégats seulement) : par effort ≥ 10 h, écoulé, mouvement (masque distance de
 `twin/stops.py`, le même que le moteur), arrêts en % et en min/h, plateaux ≥ 1 min et
 ≥ 5 min, plus long arrêt, statut au filtre vrais ultras et poids récence × maximalité ; et,
@@ -1059,7 +1059,7 @@ Lecture :
    mouvement elle serait retenue largement. C'est le cas d'école du « plancher dépendant de
    la durée » (backlog §9.11) que B4 doit régler.
 
-**0.3 Part de nuit — À COLLER.** Même outil, seconde table : part de nuit de chaque vrai
+**0.3 Part de nuit.** Même outil, seconde table : part de nuit de chaque vrai
 ultra (temps écoulé et temps en mouvement, test jour/nuit du plan, fuseau solaire de la
 longitude) et, avec `--course/--race/--hours`, part de nuit de la cible par segment via le
 plan réel. La subtilité de C2 : les ultras de calibration contiennent déjà de la nuit en
@@ -1082,7 +1082,7 @@ km 84 » sur les seuls drapeaux d'arrivée. Pour C2, le différentiel qui ajuste
 **≈ +10 points** (43 % de la cible contre 32–33 % pondérés sur les ultras de calibration
 de Val) ; le reste du facteur nuit est une redistribution à Σ conservée.
 
-**0.5 Passages réels aux points de contrôle — À COLLER.** Outil `tools/passages` :
+**0.5 Passages réels aux points de contrôle.** Outil `tools/passages` :
 l'activité du jour de course est retrouvée dans l'archive, le parcours construit comme au
 banc (spec ou découpage 10 km), et l'heure de passage à chaque borne de segment relevée par
 proximité monotone (rayon 150 m, cohérence avec la distance de la montre, approche la plus
@@ -1142,17 +1142,57 @@ est retrouvé au millionième ; point fixe analytique = itératif ; bandes multi
 symétriques et positives ; même récence dans le fit, la LOO et les bandes ; défauts intacts
 (golden, tableau §4).
 
-**Preuve au banc — À COLLER.** `tools/banc … --variant A2:calibration.link=log` (même
-décodage, calibration/prédiction rejouées) : MAE et biais des cas vendus, couvertures 50/80,
-Winkler relatif, largeur relative médiane, par athlète, contre le tableau §10.0 ; recapture
-du cas Nice sous `--set calibration.link=log`.
+**Preuve au banc (2026-09-15).** `tools/banc`, quatre manifestes, dix variantes rejouées
+sur un seul décodage par archive ; le banc servi est identique au « avant » (§10.0) à
+l'entrée près (`compare.md` : aucun écart, aucun changement de verdict). Les leviers de la
+Phase 1 n'agissent qu'en régime `regression` : **9 coupures sur 30**, dont 6 vendues dans au
+moins une variante (Val Chianti et Lavaredo 2025 ; Crasse Coursières 2026, Grand Trail du Lac
+2025, Nice 100M 2024, Montagnhard 2026) et 3 refusées partout (Crasse Chota, Lolo MIUT, Rapace
+Nivolet). **Les deux cas frais vendus (Lolo, Nice 50k 2023 et UTSM 2023) sont en régime
+`blend` et ne bougent dans aucune variante** : la règle (d) interdit tout basculement de
+défaut sur ce banc, quelle que soit la variante. Les tableaux ci-dessous sont appariés (mêmes
+coupures, mêmes agrégats décodés) ; le tableau par coupure est en §10.4.
 
-| variante | vendus n | MAE % | biais % | couv 50 | couv 80 | Winkler rel 50 / 80 | largeur rel méd 50 / 80 |
+| variante | vendus avant, appariés | MAE % | biais % | couv 50 | couv 80 | Winkler rel 50 / 80 | largeur rel méd 50 / 80 |
 |---|---|---|---|---|---|---|---|
 | avant (linéaire, conforme) | 13 | 10,3 | +2,7 | 38 % | 54 % | 0,342 / 0,570 | 8,1 % / 15,5 % |
-| A2 | | | | | | | |
+| A2 (lien log) | 13 | 10,2 | +2,6 | 31 % | 46 % | 0,344 / 0,581 | 8,6 % / 15,5 % |
 
-**Décision.** En attente du banc.
+| variante | zone d'action (6 coupures `regression` vendues quelque part) | MAE % | biais % | couv 50 | couv 80 | Winkler rel 50 / 80 | largeur rel méd 50 / 80 |
+|---|---|---|---|---|---|---|---|
+| avant | 6 | 6,7 | +4,0 | 83 % | 83 % | 0,621 / 0,789 | 20,3 % / 38,5 % |
+| A2 | 6 | 6,0 | +5,1 | 50 % | 67 % | 0,402 / 0,795 | 18,1 % / 36,5 % |
+
+**Lecture.**
+- Ce que le lien log fait seul : le point fixe analytique et l'absence de plancher retirent la
+  borne basse nulle de Lolo/MIUT ([0,0 – 51,9] → [16,4 – 39,7], largeur 200 % → 91 % du
+  central) ; Val/Chianti, central −6,3 → +2,8 %. C'est tout ce qu'il gagne de mesurable.
+- Ce qu'il coûte : **un cas**, Crasse/Montagnhard 2026 (réel 16,07 h, central 18,9) — la bande
+  log a sa borne basse plus près du central que la bande linéaire (16,4 contre 15,6), raté de
+  0,4 h aux deux niveaux. Les 7 points de couverture perdus sur les 13 sont ce seul cas ;
+  Winkler +0,002 / +0,011 : bruit.
+- Le repli MC en lien log explose autant qu'en linéaire quand la pente n'est pas identifiée :
+  Chianti (5 ultras de 10,5 à 11,3 h, ln T sur 0,08) donne [0,0 – 18,6] au 50 % pour un central
+  de 21,05 — les tirages d'une pente non identifiée envoient T vers 0 ou l'infini et le central
+  analytique tombe hors de sa propre bande MC. Le lien ne sauve pas un MC sans information sur
+  la pente ; le prior le fait (§10.2).
+- La dissymétrie du lien (borne haute plus loin du central que la borne basse) va aujourd'hui
+  **contre** le biais du central : sur la zone d'action le central est trop lent de +4 à +6 %
+  en moyenne et les ratés sont côté rapide (Montagnhard 2026, Coursières 2026, Chota).
+  L'asymétrie sera juste quand le central le sera (Phase 2 : progression, récence).
+- Recapture de Nice sous A2 : **31,89 h**, sécurité [25,96 – 39,17] (largeur 41 % du central
+  contre 49 % avant), fourchette [28,09 – 36,21], LOO 6,8 % (interpolation 7,65, extrapolation
+  3,64), σ_log 0,070, β_log (2,237, −0,0425, −0,0048), levier de la cible 3,03, sd_rel 0,146.
+  La pente libre vaut −0,04 : quasi plate, l'extrapolation à 32 h repose sur trois ultras de
+  15–21 h.
+
+**Décision.** Défaut `linear` **non basculé** (règle d : aucun cas frais touché ; au banc un
+seul cas bouge, de 0,4 h). **Activé pour le rapport de référence** comme support de A1
+(§10.2, §10.4) : c'est dans ce lien que le prior de durée s'écrit −α sans conversion par v̄,
+que les bandes sont bornées par construction et que l'asymétrie est disponible. À égalité de
+preuve (A1 linéaire fait 0,534 contre 0,552 en Winkler 80 sur les 13 appariés : un cas), le
+lien log est un choix de structure, pas de score, et il est consigné comme tel ; si le banc de
+la Phase 2 (central débiaisé) creuse l'écart dans l'autre sens, le linéaire reprend.
 
 ### 10.2 A1 — Prior sur la pente en durée, alimenté par le jumeau (flag `calibration.duration_term`, défaut `free`)
 
@@ -1176,18 +1216,69 @@ b_log ≈ −0,379/6,5 ≈ −0,06 contre −α = −0,143. Le prior tire donc v
 LENTES à 32 h. Il peut aggraver le biais de progression (§10.0, lecture 3) : c'est le banc qui
 dit si l'information réduit l'erreur ou ajoute un biais — λ balayé sur 1, 2, 5, 10.
 
-**Preuve au banc — À COLLER.** Variantes `A1` (linéaire), `A2A1`, `A2A1l5`, `A2A1l10` ; levier
-de la cible Nice avant/après (attendu ≈ 1,6 → 1,2 en sd_rel relatif) ; MAE vendue, Winkler.
+**Preuve au banc (2026-09-15).** Variantes `A1` (linéaire), `A2A1`, `A2A1l5`, `A2A1l10`
+(même banc que §10.1) ; recaptures de Nice sous `A2` (sans prior) et `A2A1`.
 
-| variante | levier cible Nice | sd_rel cible | vendus MAE % | biais % | couv 50 / 80 | Winkler rel 50 / 80 |
+| variante | levier cible Nice | sd_rel cible Nice | vendus MAE % (13 appariés) | biais % | couv 50 / 80 | Winkler rel 50 / 80 |
 |---|---|---|---|---|---|---|
-| avant | | | 10,3 | +2,7 | 38 / 54 % | 0,342 / 0,570 |
-| A1 (linéaire, λ=2) | | | | | | |
-| A2A1 (λ=2) | | | | | | |
-| A2A1 (λ=5) | | | | | | |
-| A2A1 (λ=10) | | | | | | |
+| avant (linéaire, sans prior) | non exposé | non exposé | 10,3 | +2,7 | 38 / 54 % | 0,342 / 0,570 |
+| A2 (log, sans prior) | 3,03 | 0,146 | 10,2 | +2,6 | 31 / 46 % | 0,344 / 0,581 |
+| A1 (linéaire, λ=2) | non recapturé | non recapturé | 10,2 | +3,0 | 31 / 54 % | 0,344 / 0,534 |
+| A2A1 (λ=2) | **0,93** | **0,119** | 10,2 | +2,8 | 31 / 46 % | 0,345 / 0,552 |
+| A2A1 (λ=5) | non recapturé | non recapturé | 10,2 | +2,9 | 31 / 46 % | 0,345 / 0,552 |
+| A2A1 (λ=10) | non recapturé | non recapturé | 10,2 | +2,9 | 31 / 46 % | 0,345 / 0,552 |
 
-**Décision.** En attente du banc.
+| variante | zone d'action (6) | MAE % | biais % | couv 50 | couv 80 | Winkler rel 50 / 80 | largeur rel méd 50 / 80 |
+|---|---|---|---|---|---|---|---|
+| avant | 6 | 6,7 | +4,0 | 83 % | 83 % | 0,621 / 0,789 | 20,3 % / 38,5 % |
+| A1 (linéaire) | 6 | 6,3 | +6,3 | 67 % | 83 % | 0,228 / 0,325 | 14,2 % / 23,1 % |
+| A2A1 (λ=2) | 6 | 6,1 | +5,9 | 67 % | 67 % | 0,229 / 0,377 | 12,5 % / 19,1 % |
+| A2A1 (λ=5) | 6 | 6,2 | +6,0 | 67 % | 67 % | 0,228 / 0,374 | 12,2 % / 19,1 % |
+| A2A1 (λ=10) | 6 | 6,2 | +6,0 | 67 % | 67 % | 0,228 / 0,372 | 12,1 % / 19,1 % |
+
+Levier de la cible par coupure, A2 → A2A1 (n_genuine / n_eff à la coupure) : Chianti 147,9 →
+0,70 (5 / 4,7) ; Lavaredo 1,59 → 0,73 (6 / 5,7) ; Chota 9,14 → 1,38 (5 / 4,0) ; Coursières 2026
+1,33 → 1,30 (7 / 3,7) ; Grand Trail du Lac 1,98 → 0,65 (5 / 4,0) ; Nice 2024 4,12 → 0,57
+(4 / 3,5) ; MIUT 13,6 → 3,06 (5 / 3,4) ; Nivolet 4,12 → 1,92 (4 / 3,5) ; Montagnhard 2026 2,92
+→ 2,81 (8 / 3,9).
+
+**Lecture.**
+- **C'est le levier qui agit.** Levier de la cible Nice 3,03 → 0,93 (attendu ≈ 1,6 → 1,2 en
+  sd_rel : mesuré 0,146 → 0,119), largeur 80 de Nice 41 % → 30 % du central. Sur la zone, le
+  levier tombe sous 1,4 partout sauf Montagnhard 2026 (2,8 : pente identifiée par 8 ultras dont
+  un très long, le prior n'a rien à y ajouter) et MIUT (3,1) ; Chianti passe de 148 à 0,70.
+- **Bandes.** Winkler 80 sur les 13 appariés : 0,570 → 0,534 (A1) / 0,552 (A2A1), les deux
+  meilleures valeurs du banc hors variantes A3 ; sur la zone 0,789 → 0,325 / 0,377, largeur
+  médiane 80 de 38,5 % à 23 / 19 % du central, couverture 80 conservée (A1) ou −1 cas (A2A1 :
+  Montagnhard 2026, le même 0,4 h qu'en §10.1). Crasse/Nice 2024 : sécurité [19,6 – 35,4] →
+  [24,6 – 27,8], réel 26,16 dedans, erreur +5,1 → 0,0 %. Val/Chianti : repli MC dégénéré
+  [13,3 – 68,2] → conforme [17,5 – 25,1], réel 20,48 dedans, le blocage « largeur d'intervalle »
+  tombe et le cas devient vendable 🟠 — la seule bascule de verdict du banc, dans le bon sens.
+- **Central.** MAE des 13 appariés 10,3 → 10,2, biais +2,7 → +3,0 ; zone 6,7 → 6,3 / 6,1,
+  biais +4,0 → +6,3 / +5,9 : le prior tire vers **plus lent**, comme annoncé. La réserve,
+  chiffrée : Val, deux extrapolations 2025 — Chianti +4,0 / +3,8 % et Lavaredo +7,1 / +6,1 %
+  (A1 / A2A1) contre −6,3 et +1,0 % sans prior ; Crasse — Nice 2024 0,0 / −0,5 % et Grand Trail
+  du Lac +0,5 / 0,0 % contre +5,1 et −1,9 %. Deux cas mieux, deux cas moins bien : **le banc
+  ne tranche pas le central, il tranche la bande.** Lolo/MIUT (n_eff 3,4, refusé) : +0,6 →
+  +9,4 (log) / +17,6 % (linéaire) — le prior fixe une pente que cinq ultras courts ne
+  contraignent pas, et la course a dit « plus plat que α ».
+- **λ n'est pas un réglage.** 2, 5 et 10 donnent les mêmes centraux au dixième d'heure et le
+  même Winkler au millième : la pente en durée n'est identifiée par les ultras d'aucun athlète
+  du banc (plage de ln T de 0,1 à 0,7), dès λ = 2 le prior la fixe et seule sa **valeur** (−α)
+  compte. C'est une information qui manquait, pas un lissage.
+- **Nice sous A2A1 : 34,33 h**, fourchette [31,34 – 37,61], sécurité [29,62 – 39,79] (largeur
+  30 % contre 49 % avant), β_log (2,450, −0,134, −0,0040) — b passe de −0,04 à −0,134 (prior
+  −0,143, α de Val) ; LOO 6,8 → 7,4 % (interpolation 7,65 → 8,04, extrapolation 3,64 → 5,10) :
+  sur l'historique de Val (10,5–21,3 h) la pente plate colle mieux ; à 32 h personne ne sait,
+  et c'est précisément là que le prior porte. **Central +2,0 h** par rapport à l'avant (32,33) :
+  c'est la conséquence à assumer, pas un effet de bord.
+
+**Décision.** Défaut `free` **non basculé** (règle d). **Activé pour le rapport de référence**
+(`examples/twin.config.reference.json`, §10.4), λ = 2, prior = α du jumeau. Consigné : sur les
+deux courses 2025 de Val le prior fait +4 à +6 % trop lent ; entre 34,3 h sous prior et 32,3 h
+sans, c'est Nice 2026 qui tranchera, et elle entrera au registre. La bande, elle, est
+tranchée : levier 3 → 0,9, largeur 80 de 49 % à 30 % du central, Winkler amélioré partout où
+le levier agit, MAE vendue non dégradée.
 
 ### 10.3 A3 — Facteur d'échelle studentisé à la place du quantile empirique (`prediction.interval_source=studentized_scale`)
 
@@ -1209,20 +1300,136 @@ prédit trop lent ⇒ le réel est sous la prédiction ⇒ échelle de la borne 
 l'asymétrie apprise — probablement trop bruyante à n = 12, à noter. κ et ν sont exposés
 (`Prediction.scale_kappa`, `scale_dof`).
 
-**Preuve au banc — À COLLER.** Variantes `A3` (linéaire), `A2A3`, `A2A1A3`, `A2A1A3mad`,
-`A2A1A3signed` : fin des bandes dégénérées (largeur nulle, bornes au plafond, borne basse
-nulle), couverture et Winkler par athlète contre le conforme.
+**Preuve au banc (2026-09-15).** Variantes `A3` (linéaire), `A2A3`, `A2A1A3`, `A2A1A3mad`,
+`A2A1A3signed` (même banc) ; recapture de Nice sous `A2A1A3`.
 
-| variante | vendus MAE % | couv 50 / 80 | Winkler rel 50 / 80 | largeur rel méd 50 / 80 | bandes dégénérées |
+| variante | vendus MAE % (13 appariés) | couv 50 / 80 | Winkler rel 50 / 80 | largeur rel méd 50 / 80 | bandes dégénérées (sécurité) |
 |---|---|---|---|---|---|
-| avant (conforme) | 10,3 | 38 / 54 % | 0,342 / 0,570 | 8,1 % / 15,5 % | MIUT [0,0 – 51,9], Chianti [– 68,2], Nice 50k [10,6 – 10,6] (brut) |
-| A3 | | | | | |
-| A2A3 | | | | | |
-| A2A1A3 | | | | | |
-| A2A1A3 (MAD) | | | | | |
-| A2A1A3 (signé) | | | | | |
+| avant (conforme) | 10,3 | 38 / 54 % | 0,342 / 0,570 | 8,1 % / 15,5 % | MIUT [0,0 – 51,9] ; repli MC : Chianti [13,3 – 68,2], Nivolet [5,4 – 33,5] |
+| A3 (linéaire) | 10,3 | 31 / 62 % | 0,348 / 0,621 | 8,1 % / 16,9 % | MIUT [**−24,9** – 76,8] ; Chianti et Nivolet inchangés (repli MC) |
+| A2A3 | 10,2 | 31 / 62 % | 0,353 / 0,610 | 8,1 % / 16,9 % | MIUT [8,6 – 75,4] ; Chianti [0,0 – 52,6] (MC log) |
+| A2A1A3 | 10,2 | 31 / 54 % | 0,342 / 0,558 | 8,1 % / 16,9 % | aucune sur les vendus ; MIUT [13,0 – 61,4] (refusé, n_eff 3,4) |
+| A2A1A3 (MAD) | 10,2 | 31 / 54 % | 0,345 / 0,591 | 8,1 % / 16,9 % | MIUT [7,5 – 105,9] |
+| A2A1A3 (signé) | 10,2 | 23 / 62 % | 0,334 / 0,549 | 8,1 % / 16,9 % | aucune ; Lavaredo raté au 50 % de 0,16 h ([21,4 – 25,9] pour 21,24) |
 
-**Décision.** En attente du banc. Règle : couverture jamais réduite pour flatter la largeur ;
-si la jauge (n = 2 cas frais vendus, un seul athlète) ne tranche pas, les leviers sont
-activés pour le rapport de référence via `TWIN_CONFIG_PATH` ou `--set` et consignés
-« activés pour Val, défaut non basculé ».
+| variante | zone d'action (6) | MAE % | biais % | couv 50 | couv 80 | Winkler rel 50 / 80 | largeur rel méd 50 / 80 |
+|---|---|---|---|---|---|---|---|
+| avant | 6 | 6,7 | +4,0 | 83 % | 83 % | 0,621 / 0,789 | 20,3 % / 38,5 % |
+| A3 (linéaire) | 6 | 6,7 | +4,0 | 67 % | 100 % | 0,633 / 0,898 | 22,4 % / 60,2 % |
+| A2A3 | 6 | 6,0 | +5,1 | 50 % | 100 % | 0,420 / 0,856 | 21,3 % / 57,7 % |
+| A2A1 (rappel) | 6 | 6,1 | +5,9 | 67 % | 67 % | 0,229 / 0,377 | 12,5 % / 19,1 % |
+| A2A1A3 | 6 | 6,1 | +5,9 | 67 % | 83 % | 0,220 / 0,405 | 12,7 % / 31,1 % |
+| A2A1A3 (MAD) | 6 | 6,1 | +5,9 | 67 % | 83 % | 0,223 / 0,470 | 15,3 % / 39,3 % |
+| A2A1A3 (signé) | 6 | 6,1 | +5,9 | 50 % | 100 % | 0,205 / 0,397 | 13,9 % / 35,3 % |
+
+**Lecture.**
+- **Seul, le facteur d'échelle élargit.** À n_eff ≈ 3,5–4 (Crasse : 4 à 8 ultras dont la
+  récence ne garde que 3,5 effectifs), ν = n_eff − 3 est écrêté à 1 et t₁(0,90) = 3,08 contre un
+  quantile empirique de 1,3–1,6 : Nice 2024 [19,6 – 35,4] → [16,6 – 38,4], Grand Trail du Lac
+  [9,6 – 10,7] → [9,0 – 11,4]. Couverture 80 à 100 % sur la zone, Winkler 0,789 → 0,898 :
+  l'honnêteté du petit n coûte plus au score qu'elle ne rapporte — règle (c) non satisfaite
+  seul.
+- **Avec le prior (A2A1A3), les bandes reviennent.** Winkler 80 sur les 13 : 0,558 (A2A1
+  0,552, avant 0,570), couverture 80 revenue à 54 % — Montagnhard 2026 [13,7 – 26,0] couvre le
+  cas que A2A1 ratait de 0,4 h — couverture 50 identique. Zone : couverture 80 à 83 % comme
+  avant, largeur médiane 80 à 31 % (avant 38,5 %, A2A1 19 %). A2A1A3 contre A2A1 : un cas
+  couvert de plus au 80, +0,006 de Winkler — indiscernables au banc. A2A1A3 contre avant :
+  Winkler meilleur aux deux niveaux, couvertures égales, MAE égale — règles (b) et (c)
+  satisfaites sur le dev_set.
+- **Fin des bandes dégénérées sur les cas vendus** : plus aucune borne au plafond ni nulle.
+  MIUT reste large (refusé, n_eff 3,4, levier 3,1) : à ce n, Student dit « large » et il a
+  raison.
+- **MAD** : plus bruyant à n = 4–12, comme annoncé (Winkler 80 0,591, MIUT [7,5 – 105,9]) —
+  rejeté. **Signé** : meilleur Winkler 80 du banc (0,549) **mais** couverture 50 à 23 %
+  (Lavaredo raté de 0,16 h, Montagnhard 2026 raté) et un κ par côté estimé sur 2 à 6 plis —
+  trop bruyant, rejeté pour l'instant, à remesurer quand la Phase 4 apportera des plis.
+- **Nice sous A2A1A3 : 34,33 h**, fourchette [31,98 – 36,87] (14 % du central), sécurité
+  [29,83 – 39,52] (28 %), κ = 0,85 (les erreurs LOO sont un peu plus petites que le sd du
+  modèle), ν = 8,14, asymétrie −4,5 h / +5,2 h. Contre le conforme A2A1 [29,62 – 39,79] :
+  identiques à 0,3 h près — à n_eff 11 les deux lectures se rejoignent, le studentisé n'apporte
+  que sa stabilité (le 11ᵉ score sur 12 ne fixe plus la borne).
+- **Deux points de code sortis du banc.** (1) Bande linéaire studentisée à borne négative
+  (MIUT −24,9 h) : `_bands` plafonne désormais la borne basse linéaire à 0 h — aucun cas servi
+  n'y touche (borne basse minimale du banc avant : 0,034 h ; golden intact). (2) ν = n_eff − 3
+  ignore l'information du prior (b partiellement fixé ⇒ moins de trois paramètres estimés par
+  les données) : ν = n_eff − tr(H) serait plus juste, ne change rien pour Val (8,1 → ≈ 8,6) et
+  resserrerait Crasse ; à mesurer si A3 vise un jour le défaut.
+
+**Décision.** Défaut `conformal_normalized` **non basculé** (règle d ; seul, A3 élargit).
+**Activé pour le rapport de référence** dans la pile A2A1A3 (§10.4), où il est neutre à
+n_eff 11 et rattrape le cas que le prior sur-resserre à petit n. MAD et signé : mesurés, non
+retenus (chiffres ci-dessus).
+
+
+### 10.4 Bilan de la Phase 1 — aucun défaut basculé, trois leviers activés pour le rapport de référence
+
+**Ce que le banc a dit.** Les trois leviers n'agissent qu'en régime `regression`, soit 9
+coupures sur 30 ; les deux seuls cas frais vendus (Lolo, régime `blend`) ne bougent pas :
+**règle (d), aucun défaut ne bascule**, et la jauge (8–10 cas frais vendables) reste à
+construire (Phase 4). Sur le dev_set, l'ordre est net et tient à un seul mécanisme : **la
+pente en durée n'est identifiée par les ultras d'aucun athlète** (plage de ln T de 0,1 à
+0,7 ; levier de la cible 1,3 à 148 sans prior). Le prior −α (A1) apporte l'information qui
+manquait, resserre les bandes là où elles étaient absurdes et déplace le central vers plus
+lent ; le lien log (A2) donne le cadre où ce prior s'écrit sans conversion ; l'échelle
+studentisée (A3) stabilise le quantile et rend au petit n l'honnêteté que le prior lui prend.
+
+**Par coupure, zone d'action** (central en h, erreur %, bornes de sécurité 80 % ; ✓✓ = réel
+dans la fourchette et dans les bornes ; verdict) :
+
+| athlète · course (réel) | avant | A2 | A1 (linéaire) | A2A1 | A2A1A3 | A2A1A3 signé |
+|---|---|---|---|---|---|---|
+| Val · Chianti 2025 (20,48 h) | 19,20 (−6,3) [13,3–68,2] ✓✓ 🔴 | 21,05 (+2,8) [0,0–52,6] ✗✓ 🔴 | 21,32 (+4,0) [17,5–25,1] ✓✓ 🟠 | 21,27 (+3,8) [17,2–26,3] ✓✓ 🟠 | 21,27 (+3,8) [16,5–27,4] ✓✓ 🟠 | 21,27 (+3,8) [17,9–30,2] ✓✓ 🟠 |
+| Val · Lavaredo 2025 (21,24 h) | 21,46 (+1,0) [16,9–26,1] ✓✓ 🟠 | 21,39 (+0,7) [17,1–26,7] ✓✓ 🟠 | 22,76 (+7,1) [18,2–27,3] ✓✓ 🟠 | 22,55 (+6,1) [18,1–28,1] ✓✓ 🟠 | 22,55 (+6,1) [18,6–27,3] ✓✓ 🟠 | 22,55 (+6,1) [20,0–30,6] ✗✓ 🟠 |
+| Crasse · Chota 2025 (4,93 h) | 4,43 (−10,1) [4,0–4,8] ✗✗ 🔴 | 4,24 (−14,1) [3,8–4,8] ✗✗ 🔴 | 4,65 (−5,6) [4,4–4,9] ✗✓ 🔴 | 4,52 (−8,3) [4,2–4,8] ✗✗ 🔴 | 4,52 (−8,3) [4,1–5,0] ✗✓ 🔴 | 4,52 (−8,3) [3,8–4,9] ✗✗ 🔴 |
+| Crasse · Coursières 100k 2026 (13,29 h) | 14,41 (+8,4) [13,8–15,0] ✗✗ 🟢 | 14,42 (+8,5) [13,8–15,1] ✗✗ 🟢 | 14,41 (+8,4) [13,9–15,0] ✗✗ 🟢 | 14,41 (+8,4) [13,9–15,0] ✗✗ 🟢 | 14,41 (+8,4) [13,5–15,3] ✗✗ 🟢 | 14,41 (+8,4) [12,9–15,0] ✗✓ 🟢 |
+| Crasse · Grand Trail du Lac 2025 (10,38 h) | 10,18 (−1,9) [9,6–10,7] ✓✓ 🟢 | 10,10 (−2,7) [9,5–10,8] ✓✓ 🟢 | 10,43 (+0,5) [9,8–11,0] ✓✓ 🟢 | 10,38 (0,0) [9,8–11,0] ✓✓ 🟢 | 10,38 (0,0) [9,5–11,3] ✓✓ 🟢 | 10,38 (0,0) [9,0–11,0] ✓✓ 🟢 |
+| Crasse · Nice 100M 2024 (26,16 h) | 27,49 (+5,1) [19,6–35,4] ✓✓ 🟠 | 27,10 (+3,6) [20,7–35,5] ✓✓ 🟠 | 26,17 (0,0) [24,6–27,8] ✓✓ 🟢 | 26,03 (−0,5) [24,7–27,5] ✓✓ 🟢 | 26,03 (−0,5) [23,1–29,3] ✓✓ 🟢 | 26,03 (−0,5) [22,9–29,2] ✓✓ 🟢 |
+| Crasse · Montagnhard 2026 (16,07 h) | 18,87 (+17,4) [15,6–22,1] ✓✓ 🟠 | 18,94 (+17,9) [16,4–21,8] ✗✗ 🟠 | 18,88 (+17,5) [15,7–22,1] ✗✓ 🟢 | 18,91 (+17,7) [16,5–21,6] ✗✗ 🟢 | 18,91 (+17,7) [13,7–26,0] ✗✓ 🟠 | 18,91 (+17,7) [12,8–24,0] ✗✓ 🟠 |
+| Lolo · MIUT 2026 (25,82 h) | 25,97 (+0,6) [0,0–51,9] ✓✓ 🔴 | 25,54 (−1,1) [16,4–39,7] ✓✓ 🔴 | 30,36 (+17,6) [13,9–46,8] ✓✓ 🔴 | 28,26 (+9,4) [20,9–38,2] ✓✓ 🔴 | 28,26 (+9,4) [13,0–61,4] ✓✓ 🔴 | 28,26 (+9,4) [12,7–60,5] ✓✓ 🔴 |
+| Rapace · Nivolet-Revard 2026 (7,43 h) | 9,38 (+26,3) [5,4–33,5] ✗✓ 🔴 | 9,51 (+28,0) [0,0–13,5] ✓✓ 🔴 | 8,84 (+19,1) [5,9–11,8] ✓✓ 🔴 | 8,99 (+21,1) [6,3–12,8] ✓✓ 🔴 | 8,99 (+21,1) [3,8–21,3] ✓✓ 🔴 | 8,99 (+21,1) [4,3–26,2] ✓✓ 🔴 |
+
+Par athlète, vendus avant, appariés (Val n = 4, dont trois coupures 2024 en régime `vc_e`
+insensibles aux leviers ; Crasse n = 7) :
+
+| athlète · variante | MAE % | biais % | couv 50 / 80 | Winkler rel 50 / 80 | largeur rel méd 50 / 80 |
+|---|---|---|---|---|---|
+| Val · avant | 12,9 | +12,9 | 25 / 50 % | 0,473 / 0,773 | 12,8 % / 24,8 % |
+| Val · A1 | 14,4 | +14,4 | 25 / 50 % | 0,478 / 0,772 | 12,8 % / 24,8 % |
+| Val · A2A1 | 14,1 | +14,1 | 25 / 50 % | 0,467 / 0,783 | 12,8 % / 24,8 % |
+| Val · A2A1A3 | 14,1 | +14,1 | 25 / 50 % | 0,467 / 0,767 | 12,8 % / 24,8 % |
+| Crasse · avant | 6,8 | +2,6 | 57 / 71 % | 0,191 / 0,296 | 7,1 % / 13,4 % |
+| Crasse · A1 | 5,9 | +2,2 | 43 / 71 % | 0,191 / 0,228 | 7,0 % / 13,0 % |
+| Crasse · A2A1 | 5,9 | +2,1 | 43 / 57 % | 0,199 / 0,257 | 7,0 % / 13,0 % |
+| Crasse · A2A1A3 | 5,9 | +2,1 | 43 / 71 % | 0,194 / 0,278 | 7,0 % / 15,3 % |
+
+Chez Val, la hausse de MAE (12,9 → 14,1) est Lavaredo seule (+1,0 → +6,1 %) ; Chianti, qui
+devient vendable à +3,8 %, n'entre pas dans cette paire.
+
+**Configuration de référence.** `services/twin-engine/examples/twin.config.reference.json`
+(les clés absentes gardent `twin.config.json`) : `calibration.link=log`,
+`calibration.duration_term=prior_shrunk` (λ = 2, α du jumeau),
+`prediction.interval_source=studentized_scale`. Servie par `TWIN_CONFIG_PATH=…` ou par les
+trois `--set` équivalents (manuel §8). Le golden déterministe, le tableau §4 et le registre
+committé restent ceux des défauts.
+
+| cas Nice 100M 2026 (archive fraîche dédoublonnée, 1 469 activités, 12 vrais ultras, n_eff 11,1) | avant (défauts) | référence (A2A1A3) |
+|---|---|---|
+| central | 32,33 h | **34,33 h** (+2,0 h) |
+| fourchette de course (50 %) | 27,49 – 37,17 (30 % du central) | 31,98 – 36,87 (14 %) |
+| bornes de sécurité (80 %) | 24,46 – 40,20 (49 %) | 29,83 – 39,52 (28 %), asymétrie −4,5 / +5,2 h |
+| LOO MAE (12 plis) | 6,9 % | 7,4 % (interpolation 8,0, extrapolation 5,1) |
+| levier / sd_rel de la cible | non exposés | 0,93 / 0,119 (sans prior : 3,03 / 0,146) |
+| β | (9,285, −0,379, −0,0335) km/h | (2,450, −0,134, −0,0040) en ln v ; prior b −0,143 |
+| κ / ν | — | 0,85 / 8,1 |
+| VC · E · durabilité | 9,748 km/h · 1,167 · 19,1 % | inchangés |
+
+Ce que le rapport doit dire, et que le carnet consigne : le central a bougé de +2 h par l'apport
+d'une information physiologique (l'exposant de la courbe record) là où douze ultras ne disent
+rien de la pente ; sur les deux extrapolations 2025 de Val ce prior était trop lent de 4 à 6 %,
+sur celles de Crasse il était juste. La bande, elle, est plus étroite **et** pas moins
+couvrante au banc : c'est le résultat de la phase. La course entre au registre comme tous les
+autres cas.
+
+**Ce que la Phase 1 ne règle pas**, et qui passe en Phase 2 : le biais du central (+4 à +6 %
+trop lent sur la zone d'action, +13 % sur Val 2024 : progression et récence, §10.0 lecture 3),
+les arrêts (H2, §10.0 point 0.2) et la nuit (§10.0 point 0.3).
