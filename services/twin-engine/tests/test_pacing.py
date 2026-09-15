@@ -121,12 +121,17 @@ def test_fade_source_durability_personalizes_delta():
     plan_none = build_pacing(course, pred, _race(), cfg_d, durability_pct=None)
     assert plan_none.fade_delta_used == CFG.pacing.fade_delta           # repli honnête
 
-    # un athlète qui s'use plus (X=20 % > 15,7 % implicite du défaut) part plus vite et
-    # finit plus lentement — le plan devient réellement individuel
-    assert plan_d20.segments[0].v_ga_kmh > plan_default.segments[0].v_ga_kmh
-    assert plan_d20.segments[-1].v_ga_kmh < plan_default.segments[-1].v_ga_kmh
+    # un athlète qui s'use plus que le découplage implicite du défaut (X = 30 % ⇒ Δ ≈ 0,176,
+    # contre 0,15 servi) part plus vite et finit plus lentement — le plan devient réellement
+    # individuel ; un athlète qui s'use moins (X = 20 % ⇒ Δ ≈ 0,111) fait l'inverse
+    plan_d30 = build_pacing(course, pred, _race(), cfg_d, durability_pct=30.0)
+    assert abs(plan_d30.fade_delta_used - 30.0 / 170.0) < 1e-12
+    assert plan_d30.segments[0].v_ga_kmh > plan_default.segments[0].v_ga_kmh
+    assert plan_d30.segments[-1].v_ga_kmh < plan_default.segments[-1].v_ga_kmh
+    assert plan_d20.segments[0].v_ga_kmh < plan_default.segments[0].v_ga_kmh
     # même temps de mouvement total (le fade redistribue, ne change pas la prédiction)
     assert abs(plan_d20.t_move_h - plan_default.t_move_h) < 1e-9
+    assert abs(plan_d30.t_move_h - plan_default.t_move_h) < 1e-9
 
 
 def test_arrival_windows_in_clock_time():

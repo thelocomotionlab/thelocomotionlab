@@ -245,7 +245,8 @@ class CalibrationParams:
     #   ne sont pas connus).
     stops_model: str = "carved"                          # {carved, personal, spec}
     stops_duration_elasticity: float = 0.0               # e de r(T) = r̄·(T/T̄)^e (0 = taux constant)
-    stops_rate_population: float = 0.06                  # repli quand aucun ultra ne porte d'arrêts mesurés
+    stops_rate_population: float = 0.0                   # repli quand aucun ultra ne porte d'arrêts mesurés
+    #                                                      (0 = aucun arrêt ajouté au temps de mouvement)
     # --- nuit (Phase 2, C2) -----------------------------------------------------------------
     # ``none`` (défaut) : la nuit n'entre pas dans la régression.
     # ``prior_shrunk`` : quatrième colonne (part de nuit de l'ultra − part de nuit moyenne
@@ -329,21 +330,24 @@ class PredictionParams:
 
 @dataclass(frozen=True)
 class PacingParams:
-    fade_delta: float = 0.085
+    # Δ du fade linéaire servi par défaut (vitesse 1+Δ → 1−Δ le long de la distance
+    # équivalente) ; 0,15 correspond à un découplage d'efficacité X ≈ 26 % entre les deux
+    # moitiés (Δ = X/(200−X), voir ``durability`` ci-dessous).
+    fade_delta: float = 0.15
     # --- source du fade (revue 2026-07, T3) -----------------------------------------------
     # ``config`` (défaut, comportement historique) : Δ = fade_delta identique pour tous.
     # ``durability`` : Δ dérivé du DÉCOUPLAGE MESURÉ de l'athlète — si l'efficacité chute de
     #   X % entre les deux moitiés à effort constant, la vitesse fait de même ; un fade
     #   linéaire (1+Δ → 1−Δ) réalise (1−Δ)/(1+Δ) = 1 − X/100, d'où Δ = X/(200−X), borné
     #   [fade_delta_min, fade_delta_max]. Repli sur fade_delta si durabilité non mesurable.
-    #   Contrôle de cohérence : le défaut historique Δ=0,085 correspond à X ≈ 15,7 %.
+    #   Contrôle de cohérence : Δ = 0,085 correspond à X ≈ 15,7 %, Δ = 0,15 à X ≈ 26 %.
     # ``splits`` (Phase 2) : Δ dérivé du RAPPORT DES MOITIÉS mesuré sur les vrais ultras de
     #   l'athlète (vitesse ajustée hors plateaux de la seconde moitié de Deq ÷ première),
     #   Δ_i = 2(1 − R_i)/(1 + R_i), moyenne pondérée récence × maximalité, borné ; repli sur
     #   ``durability`` puis sur ``fade_delta`` (``PacingPlan.fade_source_used`` dit lequel a servi).
     fade_source: str = "config"          # {config, durability, splits}
     fade_delta_min: float = 0.04
-    fade_delta_max: float = 0.13
+    fade_delta_max: float = 0.20
     default_stop_min: float = 5.0
     major_base_extra_min: float = 10.0
     # --- fenêtres horaires (revue C6) : ``true`` (défaut historique) met à l'échelle TOUT le

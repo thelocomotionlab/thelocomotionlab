@@ -78,7 +78,7 @@
     "duration_prior_alpha_population": 0.16,
     "stops_model": "carved",
     "stops_duration_elasticity": 0.0,
-    "stops_rate_population": 0.06,
+    "stops_rate_population": 0.0,
     "night_term": "none",
     "night_prior_log_per_share": 0.0,
     "night_shrink_lambda": 2.0
@@ -101,10 +101,10 @@
   },
 
   "pacing": {
-    "fade_delta": 0.085,
+    "fade_delta": 0.15,
     "fade_source": "config",
     "fade_delta_min": 0.04,
-    "fade_delta_max": 0.13,
+    "fade_delta_max": 0.20,
     "default_stop_min": 5.0,
     "major_base_extra_min": 10.0,
     "scale_stops": true,
