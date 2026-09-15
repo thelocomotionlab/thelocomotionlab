@@ -92,7 +92,11 @@ robuste** sur toutes les activités.
 >    moins N activités : on garde la **N-ième meilleure** (repli sur la meilleure disponible aux durées
 >    rares), jamais le pic isolé ;
 > 4. **rejet fenêtré** `record_reject_speed_ms` / `record_reject_window_s` — une activité qui soutient une
->    vitesse brute impossible pour de la course sur une fenêtre longue est **écartée** (log « skipped »).
+>    vitesse brute impossible pour de la course sur une fenêtre longue est **écartée** (log « skipped ») ;
+> 5. **dédoublonnage** `dedup_activities` — deux exports qui se recouvrent livrent la même activité deux
+>    fois (même départ à la seconde, même durée, même distance) : une seule copie compte, la plus riche
+>    (FC, altitude), sinon une copie « soutient » à elle seule un point record et compte deux fois dans la
+>    calibration (mesuré au banc v2 : Val et Lolo, DIAGNOSTIC §10.0).
 >
 > L'exposant d'endurance se lisant sur la même enveloppe, ces règles corrigent **en même temps** une VC
 > et un exposant surévalués.
@@ -270,7 +274,7 @@ Tout ce qui a pu ressembler à de l'expertise au cas par cas est en réalité l'
 
 | Type | Exemples | Statut |
 |---|---|---|
-| **Règle fixe** (même code pour tous) | lissage 150 m, écrêtage pente ±0,45, base de pente ±50 m, **base du D+ des activités = distance ~150 m (harmonisée au parcours, C1)**, plafond `f≤3`, plancher de durée VC, conditions des « vrais ultras », Δ du fade, **robustesse record** (altitude requise, plafond VC plausible, support ≥N, rejet fenêtré), **demi-vie de récence** | identique pour chaque athlète |
+| **Règle fixe** (même code pour tous) | lissage 150 m, écrêtage pente ±0,45, base de pente ±50 m, **base du D+ des activités = distance ~150 m (harmonisée au parcours, C1)**, plafond `f≤3`, plancher de durée VC, conditions des « vrais ultras », Δ du fade, **robustesse record** (altitude requise, plafond VC plausible, support ≥N, rejet fenêtré, dédoublonnage), **demi-vie de récence** | identique pour chaque athlète |
 | **Ajusté à partir des données** | VC, D′, exposant E, durabilité, coefficients β de la régression **pondérée par récence**, prédiction, plan (**Δ du fade si `fade_source=durability`**) | **calculé** par athlète → individualisation automatique |
 | **Garde-fou d'honnêteté** | invalidité < 30 min, descentes techniques = plafonds, forme du jour inconnue, D′ peu fiable, marche au-delà de ±25 %, **VC non plausible → pas de « % de VC »**, **plancher N_eff** (pas de régression sûre d'elle sur trop peu d'ultras récents) | cadrage fixe + **test de suffisance** |
 

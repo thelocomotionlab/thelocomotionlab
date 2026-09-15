@@ -76,10 +76,21 @@ suite verte (275 passés, 6 sautés).
 (20,9 % dans twin-theory §12) et que le texte dit « la dérive contrôlée du plan est faite
 pour toi ». Correctif en Phase 2 (`fade_source=durability`, puis `splits`).
 
-**En attente (voie A, chez Valentin).** Relance du banc (4 manifestes) et `--compare`
-(attendu : aucun écart), `diag_ultras` par athlète + cible Nice, `passages` sur les
-4 manifestes ; recapture de référence « avant » sur l'archive fraîche (`twin-engine
-preview`, JSON conservé hors git). Les tableaux seront collés en DIAGNOSTIC §10.0.
+**Banc rejoué (2026-09-15, chez Valentin, `tools/banc`).** Crasse, Lolo et Rapace identiques
+au chiffre près à l'instantané ; Val change parce que son archive a changé (export frais,
+55 mois). Mesures H2, nuit et passages consignées en DIAGNOSTIC §10.0 : la montre ne ment
+pas sur l'écoulé (écart ≤ 5 min), le taux d'arrêt est personnel et dispersé (Crasse
+0,2–0,7 min/h de plateaux en course, Val 4–5), la nuit de Nice vaut 43 % du mouvement
+contre 33–34 % sur les ultras de Val, ≈ 290 passages réels relevés sur 30 courses.
+
+**Découverte : doublons d'activités.** Val (toute activité depuis 2024-09) et Lolo (tous ses
+efforts longs, déjà au banc d'août) ont chaque activité en double dans leur archive — deux
+exports qui se recouvrent. Correctif activé : `twin.dedup_activities=on` (même départ,
+même durée, même distance ⇒ une copie, la plus riche ; rollback `off`), sans effet sur le
+golden ni sur les fixtures (pas d'heure de départ dans les agrégats). Conséquence : le
+banc est à rejouer sous dédoublonnage et devient le « avant » du chantier ; l'instantané
+brut est gardé sous `registre-avant-doublons.json` ; la recapture de référence de Val est
+à refaire (celle du 15/09, 32,59 h sur 22 plis doublés, ne vaut pas référence).
 
 ## Choix faits à la place de Valentin (Phase 0)
 
@@ -112,14 +123,24 @@ preview`, JSON conservé hors git). Les tableaux seront collés en DIAGNOSTIC §
    trois décodages par archive (interruptions) : `tools/banc` ouvre le flux une fois et le
    distribue au cache du banc, à la radiographie et aux passages, et écrit lui-même ses
    sorties, pour supprimer les redirections et les chemins à recopier.
+10. **Dédoublonnage activé d'emblée** (pas seulement derrière un flag) : un doublon d'export
+    n'est jamais légitime, le correctif est une règle de plomberie de données comme §9.10 et
+    §9.11, sans effet sur le golden ni les fixtures, avec rollback `off`. Clé : heure de
+    départ ISO à la seconde, durée ±5 s, distance ±2 % ; préférence FC > altitude >
+    découplage > première copie. Sans heure de départ, rien n'est fusionné.
+11. **Activité du jour de course** : durée exigée entre 0,5 et 1,5 × l'officiel (Chota 2025
+    avait retenu une sortie d'une heure).
 
 ## Questions ouvertes
 
 - **Golden réel et archive fraîche.** Les références §12 (2026-07-02, 449 activités) ne
-  correspondent plus à l'archive fraîche (891 activités : VC 9,72 km/h, E 1,18, 32,28 h,
-  LOO 6,8 %). Le golden réel ne peut être vérifié PASS que sur l'archive de juillet, si elle
-  existe encore ; sinon, la recapture « avant » sur l'archive fraîche devient la référence du
-  chantier et §12 sera recapturé avec justification.
+  correspondent plus à l'archive fraîche (55 mois, 891 activités uniques : VC 9,72 km/h,
+  E 1,18, 32,28 h, LOO 6,8 %). Le golden réel ne peut être vérifié PASS que sur l'archive
+  de juillet, si elle existe encore ; sinon, la recapture « avant » sur l'archive fraîche
+  dédoublonnée devient la référence du chantier et §12 sera recapturé avec justification.
+- **Origine des doublons de Val et de Lolo** : deux exports réunis dans une archive ? Le
+  moteur les fusionne désormais ; savoir d'où ils viennent dit si d'autres athlètes de la
+  cohorte en auront.
 - **Spec de course du rapport livré.** Arrêts imprimés 1 h 25 contre 1 h 45 attendus avec
   `examples/nice-100m.json` : la spec (et la config) servies pour le PDF du 2026-09-15 sont à
   récupérer.

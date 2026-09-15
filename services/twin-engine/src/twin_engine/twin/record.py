@@ -44,6 +44,8 @@ class ActivitySummary:
     has_hr: bool
     moving_time_s: float | None = None   # temps en mouvement (§4.4) ; None si non mesurable
     has_altitude: bool | None = None     # None = inconnu (vieux agrégats sérialisés sans ce champ)
+    start_time: str | None = None        # départ ISO 8601 (UTC) ; clé du dédoublonnage — None sur
+    #                                      les vieux agrégats (alors jamais fusionnés)
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -302,6 +304,7 @@ def process_activity(act: CanonicalActivity, cfg: Config):
         has_hr=has_hr,
         moving_time_s=moving_time_s,
         has_altitude=act.has_altitude and not slope_unusable,
+        start_time=act.start_time.isoformat() if act.start_time else None,
     )
     return summary, vga, vraw
 
@@ -378,10 +381,61 @@ def iter_contributions(
         yield ActivityContribution(day, summary, vga, vraw)
 
 
+def _richness(s: ActivitySummary) -> tuple:
+    """Ordre de préférence entre copies d'une même activité : FC, altitude, découplage."""
+    return (bool(s.has_hr), bool(s.has_altitude), s.decouple_pct is not None)
+
+
+def select_unique_contributions(
+    contributions: list[ActivityContribution], cfg: Config
+) -> tuple[list[int], list[dict]]:
+    """Indices des contributions à garder, et les doublons écartés (``{"date", "reason"}``).
+
+    Doublon = même heure de départ (ISO, à la seconde), durée à ±5 s, distance à ±2 % :
+    deux exports qui se recouvrent livrent la même activité deux fois, parfois sous deux
+    formats (l'une avec FC, l'autre sans). On garde la copie la plus riche, sinon la
+    première. Sans heure de départ (vieux agrégats), rien n'est fusionné. ``off`` ⇒ tout est
+    gardé (comportement historique)."""
+    n = len(contributions)
+    if cfg.twin.dedup_activities != "on":
+        return list(range(n)), []
+    by_start: dict[str, list[int]] = {}
+    kept: list[int] = []
+    for i, c in enumerate(contributions):
+        s = c.summary
+        if s is None or not s.start_time:
+            kept.append(i)
+            continue
+        by_start.setdefault(s.start_time, []).append(i)
+    dropped: list[dict] = []
+    for idxs in by_start.values():
+        clusters: list[list[int]] = []
+        for i in idxs:
+            s = contributions[i].summary
+            for cl in clusters:
+                r = contributions[cl[0]].summary
+                if (abs(s.duration_s - r.duration_s) <= 5.0
+                        and abs(s.dist_km - r.dist_km) <= 0.02 * max(r.dist_km, 0.1) + 0.05):
+                    cl.append(i)
+                    break
+            else:
+                clusters.append([i])
+        for cl in clusters:
+            best = max(cl, key=lambda j: (_richness(contributions[j].summary), -j))
+            kept.append(best)
+            dropped += [{"date": contributions[j].summary.date, "reason": "duplicate"}
+                        for j in cl if j != best]
+    kept.sort()
+    return kept, dropped
+
+
 def record_from_contributions(
     contributions: Iterable[ActivityContribution], cfg: Config
 ) -> tuple[RecordCurve, list[ActivitySummary]]:
-    """Phase INSTANTANÉE : agrège des contributions déjà calculées en courbe record."""
+    """Phase INSTANTANÉE : agrège des contributions déjà calculées en courbe record.
+
+    Les contributions (agrégats, quelques Ko chacune) sont matérialisées pour le
+    dédoublonnage — la mémoire 1 Hz est libérée bien avant."""
     durs = np.asarray(cfg.twin.record_durations_s, dtype=float)
     ndur = len(durs)
     # contributions éligibles par durée : (vga, vraw, date)
@@ -389,7 +443,14 @@ def record_from_contributions(
     summaries: list[ActivitySummary] = []
     skipped: list[dict] = []
 
-    for c in contributions:
+    contributions = list(contributions)
+    kept, duplicates = select_unique_contributions(contributions, cfg)
+    if duplicates:
+        logger.info("dédoublonnage : %d copie(s) d'activité écartée(s)", len(duplicates))
+        skipped += duplicates
+
+    for i in kept:
+        c = contributions[i]
         if c.summary is not None:
             summaries.append(c.summary)
         if c.skipped is not None:
@@ -474,4 +535,4 @@ def build_record_curve(
 
 __all__ = ["ActivitySummary", "ActivityContribution", "RecordPoint", "RecordCurve",
            "despike_stats", "process_activity", "build_record_curve",
-           "iter_contributions", "record_from_contributions"]
+           "iter_contributions", "record_from_contributions", "select_unique_contributions"]

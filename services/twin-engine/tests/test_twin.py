@@ -450,3 +450,50 @@ def test_despike_rescue_recovers_bursty_distance_channel():
     cfg_off = replace(CFG, twin=replace(CFG.twin, despike_rescue_floor=0.0))
     s_off, _, _ = process_activity(_bursty(5.0, 20.0), cfg_off)
     assert s_off.dist_km == pytest.approx(0.35 * 36.0, rel=0.05)    # 7 m gardés sur 20
+
+
+def _dated_run(v, dur, *, day, hr=None, dist_scale=1.0):
+    """Activité datée (heure de départ connue) — la clé du dédoublonnage."""
+    from datetime import datetime, timezone
+
+    t = list(range(dur + 1))
+    dist = [v * s * dist_scale for s in t]
+    return CanonicalActivity.from_samples(
+        timestamps=t, dist_m=dist, speed_ms=[v] * len(t), alt_m=[100.0] * len(t),
+        hr=hr if hr is not None else [None] * len(t),
+        sport="running", source_format="fit", source_name="syn",
+        start_time=datetime(2026, 5, day, 8, 0, tzinfo=timezone.utc),
+    )
+
+
+def test_duplicate_activities_are_merged_keeping_the_richest_copy():
+    """Deux exports qui se recouvrent livrent la même activité deux fois (même départ,
+    même durée), parfois l'une avec FC et l'autre sans : une seule copie compte, la plus
+    riche. Rollback ``off`` = les deux comptent (comportement historique)."""
+    with_hr = _dated_run(3.0, 3600, day=1, hr=[140.0] * 3601)
+    no_hr = _dated_run(3.0, 3600, day=1)
+    other = _dated_run(3.0, 3600, day=2)
+    twin = build_twin([no_hr, with_hr, other], CFG)
+    assert len(twin.summaries) == 2
+    kept_day1 = next(s for s in twin.summaries if s.start_time.startswith("2026-05-01"))
+    assert kept_day1.has_hr and kept_day1.start_time == "2026-05-01T08:00:00+00:00"
+    assert sum(1 for s in twin.record.skipped if s["reason"] == "duplicate") == 1
+
+    off = replace(CFG, twin=replace(CFG.twin, dedup_activities="off"))
+    assert len(build_twin([no_hr, with_hr, other], off).summaries) == 3
+    # une activité DIFFÉRENTE au même départ (autre distance) n'est pas fusionnée
+    twin2 = build_twin([with_hr, _dated_run(3.0, 3600, day=1, dist_scale=1.5)], CFG)
+    assert len(twin2.summaries) == 2
+
+
+def test_duplicate_cannot_fake_record_support():
+    """Le garde-fou « N-ième meilleure » (record_min_support=2) est neutralisé par une
+    copie : une seule activité contaminée, dupliquée, fixait le record. Plus maintenant."""
+    cfg = replace(CFG, twin=replace(CFG.twin, record_min_support=2))
+    clean = [_dated_run(2.8, 1200, day=d) for d in (3, 4, 5)]
+    fast = _dated_run(5.5, 1200, day=6)
+    twin = build_twin(clean + [fast, fast], cfg)
+    j = list(np.asarray(cfg.twin.record_durations_s, float)).index(1200)
+    assert twin.record.vga[j] < 3.0                     # la copie ne « soutient » pas le pic
+    off = replace(cfg, twin=replace(cfg.twin, dedup_activities="off"))
+    assert build_twin(clean + [fast, fast], off).record.vga[j] > 5.0   # avant : record contaminé

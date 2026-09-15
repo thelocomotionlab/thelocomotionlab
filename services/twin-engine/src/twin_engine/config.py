@@ -129,6 +129,16 @@ class TwinParams:
     # cassé, alors que dpk=0 faussait l'ancre du blend et la régression (impact banc
     # §9.11 : −0,017 km/h par m/km manquant). "zero" = rollback (D± nuls).
     despike_rescue_dplus_basis: str = "time"
+    # --- doublons d'activités (chantier v2, Phase 0, DIAGNOSTIC §10.0) ------------------
+    # Deux exports qui se recouvrent (montre + Strava, ancien + nouveau) livrent la même
+    # activité deux fois. Mesuré au banc : Val, toute activité depuis 2024-09 en double
+    # (22 « vrais ultras » pour 12 réels, n_eff 20,5) ; Lolo, TOUS ses efforts longs en
+    # double. Une copie compte deux fois dans la régression, la LOO, le N_eff et le support
+    # de la courbe record (le garde-fou « N-ième meilleure » est neutralisé par une copie).
+    # ``on`` : même heure de départ (à la seconde), durée à ±5 s, distance à ±2 % ⇒ une
+    # seule copie conservée, la plus riche (FC, puis altitude, puis découplage mesuré).
+    # Sans heure de départ (vieux agrégats), rien n'est fusionné. Rollback : ``off``.
+    dedup_activities: str = "on"              # {on, off}
 
 
 @dataclass(frozen=True)

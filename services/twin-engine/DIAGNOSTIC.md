@@ -895,10 +895,42 @@ Lecture : la ligne Val/Lavaredo 2025 est la dégénérescence pointée par l'aud
 de course ±7,5 % mais bornes de sécurité ±38 % pour un central à −0,3 % (largeur rel 76 %) :
 un seul mauvais pli fixe la borne. C'est la cible de la Phase 1 (A3).
 
-**Relance du banc sous la config servie (0.1) — À COLLER (banc chez Valentin, voie A).**
-Commandes : `docs/manuel-twin.md` §8. Attendu : `tools/registre --compare
-../../docs/archive/twin-v2/registre-avant.json` → « Changements de verdict : aucun » et
-deltas nuls ; tout écart est une information à consigner ici avant d'aller plus loin.
+**Relance du banc sous la config servie (0.1) — FAIT (2026-09-15, `tools/banc`, 4 manifestes,
+32 courses).** `--compare` contre l'instantané : Crasse, Lolo et Rapace **identiques au
+chiffre près** (deltas nuls, aucun changement de verdict) — le moteur n'a pas bougé. Val
+change partout, parce que SON ARCHIVE a changé : l'export frais couvre 55 mois (l'ancien,
+17,5 mois), et il contient des DOUBLONS (ci-dessous). Ses six lignes sont donc à rejouer
+après dédoublonnage ; en l'état : Ecotrail +23,8 % (🟠), GRF +21,0 % (🟠), Saintélyon
++1,0 % (🟢), Chianti −9,9 % (🔴, largeur), Lavaredo +1,2 % (🟢), Coursières 50k +8,6 %
+(🔴, domaine).
+
+**Doublons d'activités — découverte du banc, correctif ACTIVÉ (`twin.dedup_activities=on`,
+rollback `off`).** La radiographie (`tools/diag_ultras`) liste chaque effort ≥ 10 h : chez
+**Val, toute activité depuis le 2024-09-14 apparaît deux fois** (même départ, même durée à la
+seconde, mêmes arrêts, une copie avec FC et une sans) — 22 « vrais ultras » pour 12 réels,
+n_eff 20,5 ; chez **Lolo, TOUS les efforts longs sont doublés** (14 lignes pour 7, 10 « vrais
+ultras » pour 5), et ce depuis le banc du 2026-08-15 au moins (mêmes n_genuine dans
+l'instantané). Crasse et Rapace : aucun doublon. Cause : deux exports qui se recouvrent
+(montre + Strava, ancien + nouveau) réunis dans une même archive. Effet : chaque copie
+compte deux fois dans la régression, la LOO (les 22 erreurs LOO de Val vont par paires
+identiques), le N_eff et le support de la courbe record — le garde-fou « N-ième meilleure »
+(§2.3 de twin-theory) est neutralisé par une copie. Correctif dans `record_from_contributions`
+: même heure de départ ISO, durée à ±5 s, distance à ±2 % ⇒ une copie, la plus riche (FC,
+puis altitude, puis découplage). Sans heure de départ (vieux agrégats, fixtures) rien n'est
+fusionné : golden déterministe et tableau §4 inchangés ; tests
+`test_duplicate_activities_are_merged_keeping_the_richest_copy` et
+`test_duplicate_cannot_fake_record_support`. **Conséquence sur le protocole** : l'instantané
+`registre-avant.json` porte les lignes de Lolo doublées ; le banc rejoué avec dédoublonnage
+devient le « avant » du chantier (l'instantané brut est conservé sous
+`registre-avant-doublons.json`), et la recapture de référence de Val est à refaire.
+
+**Recapture de référence sur l'archive fraîche (moteur actuel, doublons NON fusionnés —
+à refaire).** `twin-engine preview` sur `Val/archives` + `examples/nice-100m.json` : 32,59 h,
+sécurité [28,05 – 37,14], fourchette [30,17 – 35,02], σ 0,449, LOO 5,8 % sur 22 plis (11
+paires identiques), VC 9,30 km/h, E 1,17, durabilité 19,1 %, 1 469 activités. Le PDF livré
+(891 activités, 12 ultras) disait 32,28 h, [24,65 – 39,90], [28,18 – 36,37], LOO 6,8 %,
+VC 9,72, E 1,18 : les 578 activités d'écart sont les deux années doublées. Chiffres
+consignés pour mémoire, pas de référence.
 
 **Rapport de référence livré (PDF du 2026-09-15, archive de 891 activités) — l'état « avant »
 du livrable.**
@@ -950,12 +982,41 @@ via le manifeste, l'écart **montre − officiel** (une montre en pause ment sur
 la LOO compare). C'est le préalable de B4 : la bascule `speed_basis=moving` et le modèle
 d'arrêts ne se décident que sur ces chiffres.
 
-| athlète | vrais ultras | arrêts % (méd.) | arrêts min/h (méd. · pondérée) | plateaux ≥ 5 min (méd.) | montre − officiel (méd., min) |
-|---|---|---|---|---|---|
-| Val | | | | | |
-| Crasse | | | | | |
-| Lolo | | | | | |
-| Rapace | | | | | |
+Mesuré le 2026-09-15 (`tools/banc`, arrêt = plateau de distance ≥ 60 s ; « sans mouvement »
+= incrément de distance ≤ 0,5 m/s, la définition de `moving_time_s`). Les moyennes pondérées
+(récence × maximalité) ne sont pas affectées par les doublons (copies identiques).
+
+| athlète | vrais ultras | sans mouvement, % de l'écoulé (méd. · pond.) | idem, min/h (méd. · pond.) | plateaux ≥ 1 min, min/h (méd. · pond.) | plateaux ≥ 5 min par course (méd.) | montre − officiel (méd. · max, min) |
+|---|---|---|---|---|---|---|
+| Val | 12 | 16,4 · 16,7 | 9,8 · 10,0 | 5,5 · 5,9 | 4 | +0,2 · 1,9 (5 courses) |
+| Crasse | 9 | 8,1 · 7,3 | 4,9 · 4,4 | 0,4 · 0,4 | 0 | +0,1 · 4,3 (8) |
+| Lolo | 5 | 12,8 · 17,3 | 7,7 · 10,4 | 3,8 · 6,3 | 2 | −0,4 · 1,4 (4) |
+| Rapace | 4 | 42,7 · 36,9 | 25,6 · 22,1 | 3,5 · 1,9 | 0,5 | −0,1 · 1,0 (3) |
+
+Courses de Val (les seules à peser dans la LOO) : Ecotrail 11,5 % sans mouvement (6,9 min/h),
+GRF 10,7 % (6,4), Saintélyon 11,1 % (6,7), Chianti 14,0 % (8,4), Lavaredo 15,7 % (9,4) ;
+plateaux ≥ 1 min : 4,1 à 5,2 min/h, 2 à 6 plateaux ≥ 5 min par course. Ses sorties longues
+d'entraînement s'arrêtent bien plus (18–27 %), et ses OFF avec sommeil (26,9 h et 38,3 h :
+48–50 %) restent hors calibration par le plancher `genuine_min_ga_kmh` — qui a raison.
+
+Lecture :
+1. **La montre ne ment pas sur l'écoulé** : écart montre − officiel ≤ 5 min sur les 20 courses
+   rapprochées, médiane nulle. La LOO peut comparer à l'écoulé officiel ; aucun auto-pause
+   systématique.
+2. **Le taux d'arrêt est personnel et très dispersé** : en course, Crasse s'arrête 0,2–0,7 min/h
+   (aucun plateau ≥ 5 min sur 8 courses), Val 4–5 min/h, Lolo 2–6, Rapace 3–6. Le plan
+   servi (5 min par ravito + 10 aux bases, soit 3,3 min/h sur Nice) n'est juste pour
+   personne en particulier : la matière de B4 (taux d'arrêt personnel) est là.
+3. **La mesure « sans mouvement » au seuil de vitesse est fragile sur un canal pauvre** :
+   Rapace, Saintélyon 2024 (canal distance haché, §9.11) : 74 % « sans mouvement » pour
+   6,5 min/h de plateaux ; UTBV : 32 % sans aucun plateau ≥ 1 min (incréments sous le seuil,
+   quantification du canal). B4 doit s'appuyer sur les plateaux (arrêts francs) et laisser
+   la marche lente dans le mouvement ; `speed_basis=moving` tel quel hériterait de cette
+   fragilité.
+4. **Lolo/MIUT (25,8 h, sa plus longue course) sort de la calibration à 5,48 km/h contre un
+   plancher de 5,5** — à 0,02 km/h près — alors qu'il s'est arrêté 23 % du temps : en base
+   mouvement elle serait retenue largement. C'est le cas d'école du « plancher dépendant de
+   la durée » (backlog §9.11) que B4 doit régler.
 
 **0.3 Part de nuit — À COLLER.** Même outil, seconde table : part de nuit de chaque vrai
 ultra (temps écoulé et temps en mouvement, test jour/nuit du plan, fuseau solaire de la
@@ -964,13 +1025,21 @@ plan réel. La subtilité de C2 : les ultras de calibration contiennent déjà d
 moyenne — le facteur nuit n'ajustera le total que par le **différentiel** entre la part de
 nuit de la cible et cette moyenne pondérée.
 
-| athlète | nuit % écoulé (pondérée) | nuit % mouvement (pondérée) |
+| athlète | nuit % écoulé (méd. · pond.) | nuit % mouvement (méd. · pond.) |
 |---|---|---|
-| Val | | |
-| Crasse | | |
-| Lolo | | |
-| Rapace | | |
-| **cible Nice 100M (32,28 h)** | | |
+| Val | 26,8 · 33,5 | 27,6 · 33,8 |
+| Crasse | 15,3 · 19,5 | 16,2 · 19,8 |
+| Lolo | 21,3 · 25,7 | 22,7 · 26,6 |
+| Rapace | 23,0 · 21,6 | 24,1 · 20,2 |
+| **cible Nice 100M sur 32,28 h (plan réel)** | 42,9 (horloge) | 43,2 |
+
+Nice, par segment (départ ven. 13:00, soleil 07:20–19:24) : jour jusqu'à AS3 (km 28,9,
+18:58) ; segment vers AS4 (km 38) 65 % de nuit, AS5 à AS8 (km 50 → 83,5) 100 %, vers AS9
+(km 93,8, 07:58) 75 % ; jour jusqu'à AS14 ; vers AS15 (km 156,5, 19:33) 9 % ; dernier
+segment (arrivée 21:16) 100 %. Deux nuits, pas une : le PDF livré écrivait « du km 38 au
+km 84 » sur les seuls drapeaux d'arrivée. Pour C2, le différentiel qui ajuste le total vaut
+**≈ +10 points** (43 % de la cible contre 33–34 % pondérés sur les ultras de calibration
+de Val) ; le reste du facteur nuit est une redistribution à Σ conservée.
 
 **0.5 Passages réels aux points de contrôle — À COLLER.** Outil `tools/passages` :
 l'activité du jour de course est retrouvée dans l'archive, le parcours construit comme au
@@ -980,12 +1049,17 @@ proche du premier passage). Consigné dans le registre sous `passages` (agrégat
 à des km publics), préservé par la re-fusion du banc. C'est la matière du scoring du plan
 (Phase 4) — jusqu'ici le banc ne jugeait que l'arrivée.
 
-| athlète | courses avec passages | points trouvés / attendus | écart arrivée relevée − officiel (méd., min) |
+| athlète | courses avec passages | points trouvés / attendus | écart arrivée relevée − officiel (min) |
 |---|---|---|---|
-| Val | | | |
-| Crasse | | | |
-| Lolo | | | |
-| Rapace | | | |
+| Val | 6 / 6 | 66 / 66 (1 « closest » à 206 m) | −6 à 0 (Ecotrail −6 : point d'arrivée à 148 m) |
+| Crasse | 12 / 13 | 118 / 118 (Chota 2025 : activité du jour absente, 0 h 56 seulement) | −5 à +4 |
+| Lolo | 7 / 7 | 58 / 58 | −2 à 0 |
+| Rapace | 6 / 6 | 46 / 51 (Saintélyon 2024 : 4/9, trace de parcours en quarantaine §9.12) | −1 à +2 |
+
+Soit ≈ 290 heures de passage réelles sur 30 courses, presque toutes à ≤ 15 m du point (rayon
+150 m rarement sollicité), consignées dans le registre sous `passages`. La sélection de
+l'activité du jour exige désormais une durée entre 0,5 et 1,5 × l'officiel (Chota 2025
+avait pris une sortie d'une heure). La matière du scoring du plan (Phase 4) existe.
 
 **Outils livrés en Phase 0** (tous couverts par des tests synthétiques, `tests/test_stops.py`,
 `test_backtest_tools.py`, `test_pacing.py`, `test_course.py`) : `twin/stops.py` (masque de

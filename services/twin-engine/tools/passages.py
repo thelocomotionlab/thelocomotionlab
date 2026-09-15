@@ -140,6 +140,10 @@ class PassageCollector:
         for k, rd, official in self.wanted:
             if abs((d - rd).days) > 1:
                 continue
+            # une sortie d'une heure le matin d'un 5 h n'est pas la course (cas réel :
+            # Chota 2025, 0 h 56 retenue pour 4 h 56) — entre la moitié et 1,5 × l'officiel
+            if official and not (0.5 * official <= hours <= 1.5 * official):
+                continue
             score = (abs((d - rd).days), abs(hours - official) if official else -hours)
             if k not in self.best or score < self.best[k]["score"]:
                 self.best[k] = {"score": score, "date": d.isoformat(), "hours": hours,

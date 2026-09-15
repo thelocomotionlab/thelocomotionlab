@@ -41,7 +41,7 @@ from twin_engine.pacing import build_pacing
 from twin_engine.pacing.sun import night_mask, night_share
 from twin_engine.predict import Prediction
 from twin_engine.twin.model import build_twin_from_contributions
-from twin_engine.twin.record import iter_contributions
+from twin_engine.twin.record import iter_contributions, select_unique_contributions
 from twin_engine.twin.stops import moving_mask, stop_stats
 
 from tools.backtest import parse_time_h
@@ -146,8 +146,13 @@ class DiagCollector:
         w = recency_weights(cal.genuine, cfg) * maximality_weights(cal.genuine, twin, cfg)
         genuine_w = {(g.date, round(g.hours, 2)): float(w[i]) for i, g in enumerate(cal.genuine)}
 
+        # les mêmes copies que le moteur : un doublon d'export ne fait pas deux ultras
+        kept, duplicates = select_unique_contributions(contribs, cfg)
+        kept_set = set(kept)
         rows: list[dict] = []
         for i, row in self.rows_by_idx.items():
+            if i not in kept_set:
+                continue
             summary = contribs[i].summary
             key = (row["date"], round(summary.duration_s / 3600.0, 2) if summary else None)
             if summary is None:
@@ -164,6 +169,7 @@ class DiagCollector:
         return {
             "archive": str(archive), "min_hours": self.min_h, "min_stop_s": self.min_stop_s,
             "n_activities": len(contribs), "n_skipped": n_skipped,
+            "n_duplicates": len(duplicates),
             "calibration": {"regime": cal.regime, "n_genuine": cal.n_genuine,
                             "n_eff": round(cal.n_eff, 2)},
             "rows": rows,
@@ -268,7 +274,8 @@ def render_markdown(result: dict) -> str:
     if rows is not None:
         c = result["calibration"]
         out.append(f"Archive : {result['n_activities']} activités de course "
-                   f"({result['n_skipped']} écartées à l'ingestion) · calibration {c['regime']}, "
+                   f"({result['n_skipped']} écartées à l'ingestion, "
+                   f"{result.get('n_duplicates', 0)} doublon(s) fusionné(s)) · calibration {c['regime']}, "
                    f"{c['n_genuine']} vrais ultras (n_eff {c['n_eff']}) · efforts ≥ "
                    f"{result['min_hours']:g} h : {len(rows)} · arrêt = plateau ≥ "
                    f"{result['min_stop_s']:g} s.\n")

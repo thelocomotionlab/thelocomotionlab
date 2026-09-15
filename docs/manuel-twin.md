@@ -41,6 +41,12 @@ fichier, jamais d'après son nom) ; l'archive brute est **supprimée juste aprè
 Ce qui est **écarté** dans tous les cas : vélo, natation, rando, ski, musculation, sport en salle,
 séances sans données de locomotion, et tout ce qui n'est pas une trace exploitable.
 
+Deux exports qui se recouvrent (montre + Strava, ancien + nouveau) peuvent être déposés
+ensemble : une activité présente deux fois (même départ à la seconde, même durée, même
+distance) n'est comptée qu'une fois, la copie la plus riche (FC, altitude) est gardée
+(`twin.dedup_activities`, rollback `off`). Le journal dit combien de copies ont été
+fusionnées.
+
 ## 3. Utilisation en ligne de commande (CLI)
 
 Installation dev (une fois) :
@@ -277,7 +283,10 @@ twin-engine preview --training _seed/cas_validation/Val/archives --course "$NICE
 ```
 
 Les sorties de `/tmp/p0/` sont du markdown à coller dans le carnet (DIAGNOSTIC §10.0) ;
-seuls le registre et les manifestes (agrégats, chemins) se committent. `tools/backtest`,
+seuls le registre et les manifestes (agrégats, chemins) se committent. L'instantané
+`docs/archive/twin-v2/registre-avant.json` est le banc rejoué SOUS DÉDOUBLONNAGE ; le banc
+brut du départ du chantier, où Lolo était doublé, est conservé sous
+`registre-avant-doublons.json`. `tools/backtest`,
 `tools/diag_ultras` et `tools/passages` restent utilisables séparément ; `tools/banc` donne
 exactement les mêmes résultats (test `test_banc_one_pass_matches_the_separate_tools`).
 
