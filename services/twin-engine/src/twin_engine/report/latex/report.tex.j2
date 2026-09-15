@@ -234,7 +234,7 @@ rapide que la borne basse, << interval_tail_high >>~sur~100 d'\^etre plus lent -
 \emph{logistique} : barri\`eres horaires, assistance, retour. Jamais d'objectif d'allure. La valeur
 centrale reste le sc\'enario le plus probable.<% if interval_conformal %> Les largeurs des deux
 fourchettes sont \emph{cal\'ees sur tes erreurs r\'eellement mesur\'ees} en validation crois\'ee
-(pr\'ediction conforme), pas sur la seule dispersion suppos\'ee du mod\`ele.<% endif %>
+(<% if interval_studentized %>facteur d'\'echelle studentis\'e<% else %>pr\'ediction conforme<% endif %>), pas sur la seule dispersion suppos\'ee du mod\`ele.<% endif %>
 \end{llnote}
 
 <% if width_prescription %><< width_prescription >>

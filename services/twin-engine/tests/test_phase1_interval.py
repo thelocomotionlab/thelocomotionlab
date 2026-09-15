@@ -12,7 +12,7 @@ import pytest
 from twin_engine._stats import student_t_cdf, student_t_quantile, weighted_median
 from twin_engine.calibration import build_calibration
 from twin_engine.config import load_config, override_config
-from twin_engine.predict import (_fixed_point_log, _solve_fixed_point, leave_one_out,
+from twin_engine.predict import (_bands, _fixed_point_log, _solve_fixed_point, leave_one_out,
                                  leverage_target, predict_finish, sd_rel_target)
 from twin_engine.twin.model import Twin
 from twin_engine.twin.record import ActivitySummary, RecordCurve
@@ -203,6 +203,33 @@ def test_signed_scale_is_asymmetric_when_errors_are_one_sided():
     pred = predict_finish(200.0, 53.0, biased, build_calibration(biased, cfg), cfg)
     t = pred.finish_hours
     assert pred.interval_high_h / t != pytest.approx(t / pred.interval_low_h, rel=1e-3)
+
+
+def test_linear_bands_are_floored_at_zero_hours():
+    # demi-largeur relative ≥ 1 en linéaire (banc : MIUT studentisé à −24,9 h) → borne basse 0
+    lo, hi = _bands(20.0, 1.5, 1.5, "linear")
+    assert lo == 0.0 and hi == pytest.approx(50.0)
+    lo, hi = _bands(20.0, 0.2, 0.2, "linear")
+    assert (lo, hi) == pytest.approx((16.0, 24.0))
+    lo, hi = _bands(20.0, 1.5, 1.5, "log")
+    assert 0.0 < lo < 20.0 < hi
+
+
+# ----------------------------------------------------------------------------- config de référence
+def test_reference_config_flips_only_the_three_phase_1_flags():
+    from dataclasses import asdict
+    from pathlib import Path
+    ref = load_config(Path(__file__).resolve().parents[1] / "examples" / "twin.config.reference.json")
+    assert ref.calibration.link == "log"
+    assert ref.calibration.duration_term == "prior_shrunk"
+    assert ref.prediction.interval_source == "studentized_scale"
+    for block in ("course", "twin", "calibration", "prediction", "pacing", "sufficiency",
+                  "narrative", "target"):
+        a, b = asdict(getattr(ref, block)), asdict(getattr(CFG, block))
+        changed = {k for k in a if a[k] != b[k]}
+        expected = {"calibration": {"link", "duration_term"},
+                    "prediction": {"interval_source"}}.get(block, set())
+        assert changed == expected, (block, changed)
 
 
 # ----------------------------------------------------------------------------- défauts intacts

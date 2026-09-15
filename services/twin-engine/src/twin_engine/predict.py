@@ -386,10 +386,12 @@ def _fold_scores(cv: CrossValidation, calibration: UltraCalibration):
 
 def _bands(t_point: float, half_lo: float, half_hi: float, link: str) -> tuple[float, float]:
     """Bornes en heures à partir des demi-largeurs dans les unités du lien : symétriques en
-    heures en linéaire, ``T·exp(∓h)`` en log (la borne basse ne peut plus être négative)."""
+    heures en linéaire, ``T·exp(∓h)`` en log (la borne basse ne peut plus être négative).
+    En linéaire, une demi-largeur relative ≥ 1 donnerait une borne basse négative — un temps
+    d'arrivée négatif n'a pas de sens, la borne est plafonnée à 0."""
     if link == "log":
         return t_point * float(np.exp(-half_lo)), t_point * float(np.exp(half_hi))
-    return t_point * (1.0 - half_lo), t_point * (1.0 + half_hi)
+    return max(0.0, t_point * (1.0 - half_lo)), t_point * (1.0 + half_hi)
 
 
 def _conformal_interval(
