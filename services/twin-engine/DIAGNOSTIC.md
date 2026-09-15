@@ -1433,3 +1433,209 @@ autres cas.
 **Ce que la Phase 1 ne règle pas**, et qui passe en Phase 2 : le biais du central (+4 à +6 %
 trop lent sur la zone d'action, +13 % sur Val 2024 : progression et récence, §10.0 lecture 3),
 les arrêts (H2, §10.0 point 0.2) et la nuit (§10.0 point 0.3).
+
+### 10.5 B4 — Le temps réel est mouvement + arrêts (flag `calibration.stops_model`, défaut `carved`)
+
+**Constat (§10.0, point 0.2).** La régression servie porte sur la vitesse ÉCOULÉE : les arrêts
+de chaque ultra sont dilués dans sa vga, et le plan retranche ensuite une politique uniforme
+(5 min par ravito, +10 aux bases : 1 h 45 sur Nice avec la spec, soit 3,3 min/h) d'un temps
+prédit qui contient déjà les arrêts personnels de l'athlète. Or le taux d'arrêt est personnel
+et très dispersé — en course, plateaux ≥ 1 min : Crasse 0,4 min/h, Val 5,5 · 6,0 (médiane ·
+pondérée), Lolo 3,8 · 6,3, Rapace 3,5 · 1,9 — et il est absent du modèle. Deux effets
+mesurés : Lolo/MIUT (25,8 h, 23 % du temps à l'arrêt) sort de la calibration à 5,48 km/h
+contre un plancher de 5,5, alors qu'en base hors arrêts elle est retenue largement ; et la
+mesure « sans mouvement » au seuil de vitesse est fragile sur un canal pauvre (Rapace :
+74 % sans mouvement pour 6,5 min/h de plateaux) — la base doit s'appuyer sur les plateaux
+francs, pas sur la marche lente.
+
+**Correctif (flag).** `stops_model=personal` : chaque activité porte désormais ses plateaux
+de distance ≥ `twin.stop_min_s` (60 s ; `ActivitySummary.stops_s`, `n_stops`) ; la
+calibration passe en base **hors plateaux** (écoulé − plateaux ; `GenuineUltra.elapsed_hours`,
+`stops_h`, `moving_hours`, `stops_rate`), la régression modélise la vitesse hors arrêts, et le
+temps prédit vaut mouvement × (1 + r), r = taux personnel (heures d'arrêt par heure de
+mouvement, moyenne pondérée récence × maximalité des vrais ultras ; repli population
+`stops_rate_population` = 0,06 sans mesure), avec une élasticité optionnelle à la durée,
+r(T) = r̄·(T/T̄)^e (`stops_duration_elasticity`, 0 = taux constant, T̄ = moyenne géométrique
+pondérée des heures de mouvement). La dispersion de ln(1 + r) entre ultras entre dans
+l'écart-type prédictif (et donc dans les scores conformes ou studentisés) et dans le
+Monte-Carlo ; chaque pli LOO prédit le temps de MOUVEMENT de la course retirée, y ajoute les
+arrêts au taux des AUTRES ultras, et compare au temps ÉCOULÉ réel. `stops_model=spec` : même
+base, mais les arrêts de la cible sont ceux de la politique du plan (la LOO reste au taux
+personnel, les ravitos des courses passées étant inconnus). Le plan répartit les arrêts
+personnels sur les ravitos au prorata de la politique (`PacingPlan.stops_model`,
+`stops_rate`) ; en mode objectif le taux s'applique à la cible. `Prediction.moving_hours`,
+`stops_hours`, `stops_rate` sont exposés ; le registre consigne le taux personnel de chaque
+coupure quel que soit le modèle servi (`stops_rate_personal`, `stops_ref_hours`).
+
+**Ce que B4 ne fait pas, par construction.** À taux constant, séparer mouvement et arrêts ne
+change PAS le temps écoulé prédit : la régression sur la vitesse écoulée absorbe le facteur
+1/(1 + r) dans son intercept (vérifié exactement par test en lien log). Ce que le levier
+change : la répartition du plan (sur Nice, r̄ ≈ 0,11 h/h pour Val ⇒ ≈ 3,4 h d'arrêts sur
+≈ 31 h de mouvement, contre 1 h 45 retranchées aujourd'hui : allures de segment plus rapides,
+fenêtres de passage déplacées), le domaine de calibration (MIUT retenue), la décomposition de
+la variance, et le central seulement par l'élasticité (à 32 h un athlète qui s'arrête plus
+qu'à 13 h). Le banc juge donc le central sur `B4e` et la forme sur `tools/score_plan`.
+
+**Ce qui est vérifié par test** (`tests/test_phase2_temps_reel.py`) : plateaux comptés au
+seuil (300 s oui, 30 s non) ; base hors plateaux sans invention (pas de mesure ⇒ écoulé) ;
+statistiques pondérées et repli population ; athlète de Riegel à arrêts constants retrouvé
+(β, r̄, dispersion nulle), temps écoulé identique au modèle `carved`, LOO exacte, inverse
+mouvement ↔ écoulé ; élasticité qui allonge une cible plus longue que la référence ;
+dispersion des arrêts qui élargit l'écart-type ; modèle `spec` ; plan qui répartit les arrêts
+personnels au prorata (base majeure × 3, rien à l'arrivée), y compris en mode objectif.
+
+**Preuve au banc — À COLLER.** Variantes `B4` (personnel), `B4e` (élasticité 0,5), `B4spec`,
+`RB4` (pile de référence + personnel) ; `tools/score_plan` pour la forme ; recapture de Nice
+sous `RB4`.
+
+| variante | vendus MAE % (13 appariés) | biais % | couv 50 / 80 | Winkler rel 50 / 80 | vendus n (MIUT ?) | cas frais touchés |
+|---|---|---|---|---|---|---|
+| avant | 10,3 | +2,7 | 38 / 54 % | 0,342 / 0,570 | 13 | — |
+| B4 | | | | | | |
+| B4e (e = 0,5) | | | | | | |
+| B4spec | | | | | | |
+| RB4 | | | | | | |
+
+| Nice 100M 2026 | référence (A2A1A3) | RB4 |
+|---|---|---|
+| central / mouvement / arrêts | 34,33 / 34,33 / 0 (politique 1 h 45 retranchée au plan) | |
+| taux d'arrêt personnel (min par h de mouvement) | — | |
+| bornes de sécurité | 29,83 – 39,52 | |
+| plan : mouvement + arrêts = horloge | | |
+
+**Décision.** En attente du banc.
+
+### 10.6 C2 — La nuit entre dans la régression, en écart à la nuit des ultras (flag `calibration.night_term`, défaut `none`)
+
+**Constat (§10.0, point 0.3).** Les vrais ultras de calibration contiennent déjà de la nuit :
+Val 32,7 % du mouvement (moyenne pondérée), Crasse 19,8, Lolo 26,4, Rapace 20,2 ; la cible Nice
+en contient 43,2 % (plan réel, deux nuits : km 29 → 94 et dernier segment). Le modèle ne voit
+rien de tout cela : la nuit de la cible n'ajuste ni le central ni les bandes, et le rapport
+livré n'en parlait que par les drapeaux d'arrivée (« du km 38 au km 84 », une seule nuit).
+Le seul terme honnête est un **différentiel** : la cible est plus nocturne que la moyenne des
+ultras de l'athlète de ≈ +10 points ; le reste du facteur nuit est une redistribution.
+
+**Correctif (flag).** `night_term=prior_shrunk` : chaque effort long porte sa part de nuit
+(`ActivitySummary.night_share`, test jour/nuit du plan au fuseau solaire de la longitude —
+la même mesure que la radiographie), et la régression gagne une quatrième colonne, l'écart de
+part de nuit de l'ultra à la moyenne pondérée des vrais ultras (`night_deviations` ; un ultra
+sans mesure est à l'écart nul). Le coefficient d est tiré vers `night_prior_log_per_share`
+(0 par défaut : sans a priori, l'athlète apporte lui-même la preuve de son ralentissement
+nocturne) par `night_shrink_lambda` pseudo-observations (2), dans le fit, la covariance
+(4 × 4), l'écart-type de la cible (delta-méthode sur quatre coefficients) et chaque pli LOO
+(moyenne recalculée sans le pli). La cible reçoit sa part de nuit du calendrier de course
+(départ local, position, fuseau de la spec) intégrée sur le temps ÉCOULÉ prédit : le point
+fixe est itéré (la nuit dépend du temps, qui dépend de la vitesse, qui dépend de la nuit), le
+Monte-Carlo lit la part de nuit de chaque tirage sur une grille interpolée. Sans spec, écart
+nul et prédiction inchangée. Terme de régression seulement (blend et vc_e ne le voient pas).
+Au banc, les manifestes n'ont pas de spec : le calendrier d'une course est lu dans
+l'activité du jour retenue pour les passages (départ, position médiane — des données de
+course, pas une performance), consigné sous `race_meta` ; `--no-passages` le désactive.
+
+**Ce qui est vérifié par test** : part de nuit mesurée sur un effort long (nuit de juin à
+45° N, départ 22 h), absente sur une sortie courte ; écarts centrés sur la moyenne pondérée et
+nuls sans mesure ; athlète synthétique ralenti de 20 % par unité de part de nuit retrouvé au
+millième (d = −0,200, covariance 4 × 4, LOO exacte) ; prior fort qui impose sa valeur ; terme
+inactif et signalé sans mesure ; une course de nuit prédite plus lente qu'une course de jour
+sur le même athlète, part de nuit de la cible et écart exposés, bandes finies et emboîtées ;
+sans terme de nuit le calendrier ne change rien.
+
+**Preuve au banc — À COLLER.** Variantes `C2` (prior 0, λ 2), `C2p` (prior −0,10, λ 5),
+`RC2`, `RB4C2` ; d et part de nuit moyenne par athlète (JSON du registre, `model.night_coef`,
+`night_share_mean`) ; recapture de Nice sous `RC2` (part de nuit de la cible, écart, d).
+
+| variante | vendus MAE % (13 appariés) | biais % | couv 50 / 80 | Winkler rel 50 / 80 | d par athlète (Val · Crasse · Lolo · Rapace) |
+|---|---|---|---|---|---|
+| avant | 10,3 | +2,7 | 38 / 54 % | 0,342 / 0,570 | — |
+| C2 | | | | | |
+| C2p | | | | | |
+| RC2 | | | | | |
+| RB4C2 | | | | | |
+
+| Nice 100M 2026 | référence (A2A1A3) | RC2 |
+|---|---|---|
+| part de nuit de la cible / moyenne des ultras / écart | — | |
+| d (ln v par unité de part de nuit) | — | |
+| central, bornes | 34,33 ; 29,83 – 39,52 | |
+
+**Décision.** En attente du banc.
+
+### 10.7 Fade — La dérive du plan vient des courses de l'athlète (flag `pacing.fade_source`, défaut `config`)
+
+**Constat (§10.0, point 0.4).** Le plan livré sert un Δ fixe de 0,085 (−15,7 % début → fin)
+pendant que le texte promet « la dérive contrôlée du plan est faite pour toi » ; la durabilité
+mesurée (19 %) aurait donné 0,105. Le fade ne change pas le temps d'arrivée, il déplace les
+passages : jusqu'ici aucun outil ne le jugeait, le banc ne notant que l'arrivée. La matière
+existe depuis la Phase 0 : 293 heures de passage réelles sur 31 courses.
+
+**Correctif (flag + outil).** `fade_source=splits` : chaque effort long porte son rapport des
+moitiés (`ActivitySummary.half_split_ratio` : vga hors plateaux de la seconde moitié de Deq
+÷ première) ; sur les vrais ultras, Δ_i = 2(1 − R_i)/(1 + R_i) (un fade linéaire 1 + Δ → 1 − Δ
+donne des moitiés moyennes 1 ± Δ/2), moyenne pondérée récence × maximalité
+(`fade_delta_from_splits`), bornée [0,04 ; 0,13] ; repli sur `durability` puis sur la
+constante, et `PacingPlan.fade_source_used` dit ce qui a servi (le rapport le lit). L'outil
+`tools/score_plan` rejoue, du registre seul (durabilité, Δ des moitiés et taux d'arrêt de
+chaque coupure y sont consignés), la FORME du plan de chaque course à passages : parcours
+comme au rapport, plan ANCRÉ SUR LE TEMPS OFFICIEL (l'erreur de total est retirée), trois
+sources de fade × deux modèles d'arrêts, MAE des passages (minutes, % du temps) et biais signé
+à mi-course (> 0 : l'athlète était en avance sur le plan). Cas frais (Lolo 7, Rapace 6
+courses à passages) et cas de développement séparés : la forme se juge sur un cas refusé aussi
+bien que sur un cas vendu — c'est une jauge indépendante du verdict de vente.
+
+**Ce qui est vérifié par test** : rapport des moitiés d'une course à deux vitesses (0,8 hors
+plateaux) ; Δ des moitiés pondéré, inconnu ou implausible ignoré ; chaîne de replis
+splits → durability → config avec la source servie ; borne basse pour un athlète qui accélère ;
+le scoreur retrouve exactement (MAE nulle) la forme qui a produit les passages et pénalise les
+autres.
+
+**Preuve au banc — À COLLER.** `tools/score_plan` sur les quatre manifestes après le banc de
+base (registre enrichi).
+
+| groupe | fade | arrêts | n | MAE passages, % du temps | MAE, min | biais mi-course, min |
+|---|---|---|---|---|---|---|
+| cas frais | config | carved | | | | |
+| cas frais | durability | carved | | | | |
+| cas frais | splits | carved | | | | |
+| cas frais | config | personal | | | | |
+| cas frais | splits | personal | | | | |
+| dev_set | (idem) | | | | | |
+
+**Décision.** En attente du banc. Règle propre au fade : la source retenue par défaut est
+celle qui minimise la MAE des passages SUR LES CAS FRAIS sans dégrader le dev_set, et le
+signe du biais à mi-course dit si l'athlète part trop vite ou trop lentement par rapport au
+plan — c'est ce que le rapport doit dire.
+
+### 10.8 C3 — Chaleur et altitude déclarées (flag `prediction.environment_term`, défaut `off`)
+
+**Constat.** Rien dans le modèle ne dit à quelle température ni à quelle altitude l'athlète
+a couru ses ultras de calibration, ni ce qui l'attend. Sur Nice, départ à 1 593 m, cols à
+2 700 m, arrivée au niveau de la mer ; les ultras de Val vont de la plaine (Ecotrail,
+Chianti) aux Dolomites (Lavaredo). La chaleur n'est mesurable nulle part dans l'archive.
+
+**Correctif (flag).** `environment_term=declared` : la vitesse de la cible est multipliée par
+1 − coût, coût = `heat_cost_per_c` (0,004) × max(chaleur déclarée − 15 °C, 0) +
+`altitude_cost_per_km` (0,05) × max(altitude moyenne du parcours − altitude moyenne pondérée
+des vrais ultras, 0)/1000. La chaleur est DÉCLARÉE (`heat_c` de la spec) ; l'altitude vient de
+la trace (grille lissée) et de l'archive (`ActivitySummary.mean_alt_m` sur les efforts longs,
+`GenuineUltra.mean_alt_m`) — un différentiel, comme la nuit : courir plus bas ou plus frais que
+d'habitude ne donne aucun bonus. Le facteur entre dans le point fixe (intercept en lien log,
+échelle en linéaire), le Monte-Carlo et les bandes suivent ; la LOO ne le voit pas (conditions
+des courses passées inconnues). Les coûts sont des ordres de grandeur population, écrits en
+config, jamais appris ici. `Prediction.env_factor`, `env_detail` exposés.
+
+**Ce qui est vérifié par test** : facteur 1 et détail vide par défaut ; 30 °C et +1 000 m
+donnent 1 − 0,06 − 0,05 ; plus bas et plus frais ⇒ 1 ; temps allongé de f^(−1/(1+b)) sur un
+athlète de Riegel, bornes qui suivent ; défauts intacts avec spec chaude et parcours haut.
+
+**Preuve au banc — À COLLER.** Variante `C3` (différentiel d'altitude seul, aucune chaleur
+déclarée au banc) : altitude moyenne des courses contre altitude de référence par athlète,
+effet sur les 13 vendus ; recapture de Nice (altitude du parcours, référence de Val, facteur).
+
+| variante | vendus MAE % (13 appariés) | biais % | couv 50 / 80 | Winkler rel 50 / 80 | coupures où le facteur < 1 |
+|---|---|---|---|---|---|
+| avant | 10,3 | +2,7 | 38 / 54 % | 0,342 / 0,570 | — |
+| C3 | | | | | |
+
+**Décision.** En attente du banc. La chaleur déclarée ne peut pas être un défaut (aucune
+donnée de calibration ne la porte) ; le différentiel d'altitude se décide au banc comme les
+autres leviers.

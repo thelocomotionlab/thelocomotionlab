@@ -184,6 +184,21 @@ moyenne de course** en fonction de la durée et du dénivelé :
 > **défauts inchangés**, les deux leviers sont servis pour le rapport de référence par
 > `examples/twin.config.reference.json` (DIAGNOSTIC §10.4).
 >
+> **Arrêts (chantier v2, Phase 2, flag `calibration.stops_model`, défaut `carved`).** Par défaut
+> la régression porte sur la vitesse écoulée, arrêts compris, et le plan retranche sa politique
+> de ravitos du temps prédit. En `personal`, chaque activité porte ses plateaux de distance
+> ≥ 60 s, la régression modélise la vitesse HORS plateaux, et le temps prédit vaut
+> mouvement × (1 + r), r = taux d'arrêt personnel (heures d'arrêt par heure de mouvement,
+> pondéré récence × maximalité), élasticité optionnelle à la durée ; la dispersion de ln(1 + r)
+> entre ultras entre dans l'incertitude, et chaque pli LOO ajoute au mouvement prédit les arrêts
+> au taux des autres ultras avant de comparer au temps écoulé réel. À taux constant le temps
+> écoulé prédit est le même qu'en `carved` : ce levier change la répartition du plan, le
+> domaine de calibration et la variance, pas le central. **Nuit (`night_term`, défaut
+> `none`)** : quatrième colonne de la régression, l'écart de part de nuit de l'ultra à la
+> moyenne pondérée des vrais ultras, coefficient tiré vers un prior (0 par défaut) par ridge
+> comme les autres ; la cible reçoit sa part de nuit du calendrier de course intégrée sur le
+> temps prédit (point fixe itéré). Preuve et décisions : DIAGNOSTIC §10.5–10.6.
+>
 > **Point de généralisation crucial.** Cette régression suppose **plusieurs** vrais ultras. La plupart
 > des athlètes n'en auront pas 8. Le moteur doit donc **dégrader proprement** :
 > - **≥ ~3 vrais ultras** → régression personnelle (comme le cas de référence) ;
@@ -265,6 +280,19 @@ RMSE 4,0 % (n = 8 ; 4 plis d'interpolation, 4 d'extrapolation).
   `S` normalisé pour que `Σ deq_i / v_i = T_mouvement`. **Option `fade_source=durability`** : Δ dérivé
   du **découplage mesuré** de l'athlète, `Δ = X/(200−X)` borné [0,04 ; 0,13] (le défaut Δ=0,085
   correspond à X≈15,7 % — un découplage « typique ») ; repli sur la constante si la FC manque.
+  **Option `fade_source=splits` (chantier v2, Phase 2)** : Δ mesuré sur les COURSES de l'athlète —
+  rapport des moitiés R de chaque vrai ultra (vga hors plateaux, seconde moitié de Deq ÷ première),
+  Δ_i = 2(1 − R_i)/(1 + R_i), moyenne pondérée, bornée ; repli sur `durability` puis sur la
+  constante, la source servie est consignée dans le plan et dite dans le rapport. La forme du
+  plan se juge contre les passages réels (`tools/score_plan`, DIAGNOSTIC §10.7).
+- **Arrêts** : politique du plan (5 min par ravito, +10 aux bases, rien à l'arrivée) retranchée du
+  temps prédit par défaut ; avec `calibration.stops_model=personal`, ce sont les arrêts personnels
+  de la prédiction (mouvement × taux de l'athlète) qui sont répartis sur les ravitos au prorata de
+  cette politique — le total d'horloge reste celui de la prédiction.
+- **Environnement déclaré** (`prediction.environment_term=declared`, défaut `off`) : chaleur
+  déclarée dans la spec et altitude moyenne du parcours, en écart à l'altitude habituelle des
+  ultras de l'athlète, multiplient la vitesse de la cible par 1 − coût (ordres de grandeur
+  population en config) dans le point fixe ; la LOO ne le voit pas (DIAGNOSTIC §10.8).
 - **Conversion** : par segment, temps de mouvement = `deq_i / v_ga_i` ; allure réelle = temps / distance
   réelle (montées lentes, descentes rapides).
 - **Horloge & nuit** : heure de départ + cumul (mouvement + arrêts ravitaillement) → heure de passage ;
@@ -298,8 +326,8 @@ Tout ce qui a pu ressembler à de l'expertise au cas par cas est en réalité l'
 
 | Type | Exemples | Statut |
 |---|---|---|
-| **Règle fixe** (même code pour tous) | lissage 150 m, écrêtage pente ±0,45, base de pente ±50 m, **base du D+ des activités = distance ~150 m (harmonisée au parcours, C1)**, plafond `f≤3`, plancher de durée VC, conditions des « vrais ultras », Δ du fade, **robustesse record** (altitude requise, plafond VC plausible, support ≥N, rejet fenêtré, dédoublonnage), **demi-vie de récence**, lien de la régression, prior de durée (−α, λ = 2) et source des bandes (flags, DIAGNOSTIC §10 ; défauts inchangés, config de référence §10.4) | identique pour chaque athlète |
-| **Ajusté à partir des données** | VC, D′, exposant E, durabilité, coefficients β de la régression **pondérée par récence**, prédiction, plan (**Δ du fade si `fade_source=durability`**) | **calculé** par athlète → individualisation automatique |
+| **Règle fixe** (même code pour tous) | lissage 150 m, écrêtage pente ±0,45, base de pente ±50 m, **base du D+ des activités = distance ~150 m (harmonisée au parcours, C1)**, plafond `f≤3`, plancher de durée VC, conditions des « vrais ultras », Δ du fade, **robustesse record** (altitude requise, plafond VC plausible, support ≥N, rejet fenêtré, dédoublonnage), **demi-vie de récence**, lien de la régression, prior de durée (−α, λ = 2) et source des bandes, modèle d'arrêts, terme de nuit, source du fade, environnement déclaré (flags, DIAGNOSTIC §10 ; défauts inchangés, config de référence §10.4) | identique pour chaque athlète |
+| **Ajusté à partir des données** | VC, D′, exposant E, durabilité, coefficients β de la régression **pondérée par récence**, taux d'arrêt personnel, coefficient de nuit, part de nuit et altitude moyennes des ultras, prédiction, plan (**Δ du fade si `fade_source=durability` ou `splits`**) | **calculé** par athlète → individualisation automatique |
 | **Garde-fou d'honnêteté** | invalidité < 30 min, descentes techniques = plafonds, forme du jour inconnue, D′ peu fiable, marche au-delà de ±25 %, **VC non plausible → pas de « % de VC »**, **plancher N_eff** (pas de régression sûre d'elle sur trop peu d'ultras récents) | cadrage fixe + **test de suffisance** |
 
 **Conséquence :** l'individualisation est **automatique par construction** — d'autres fichiers → d'autres

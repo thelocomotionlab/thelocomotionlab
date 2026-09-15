@@ -135,6 +135,38 @@ de progression chez un second athlète (Val 2024 : +21 à +24 %).
   −24,9 h ; aucun cas servi touché) ; le gabarit nomme la méthode servie.
 - Phase 1 close ; le golden déterministe et le tableau §4 sont ceux des défauts, inchangés.
 
+## Phase 2 — le temps réel d'un ultra (même branche `twin-v2/phase-1-intervalle`, à la demande de Valentin)
+
+**Livré, défauts inchangés (golden intact, tableau §4 intact, 310 tests).**
+- Mesures par activité (`ActivitySummary`) : plateaux de distance ≥ 60 s (`stops_s`,
+  `n_stops`), part de nuit, rapport des moitiés hors plateaux, altitude moyenne (efforts
+  ≥ 6 h) ; `GenuineUltra` porte écoulé, arrêts, nuit, moitiés, altitude.
+- B4 `calibration.stops_model=personal|spec` (+ `stops_duration_elasticity`,
+  `stops_rate_population`) : base hors plateaux, taux personnel pondéré, élasticité, dispersion
+  dans l'écart-type et le MC, LOO au taux des autres ultras contre l'écoulé réel ; plan qui
+  répartit les arrêts personnels au prorata de la politique ; `Prediction.moving_hours`,
+  `stops_hours`, `stops_rate`, `stops_model`.
+- C2 `calibration.night_term=prior_shrunk` (+ `night_prior_log_per_share`,
+  `night_shrink_lambda`) : quatrième colonne de la régression (écart de part de nuit), prior
+  ridge, covariance 4 × 4, delta-méthode, LOO ; nuit de la cible depuis le calendrier de la
+  spec, point fixe itéré, MC sur grille ; au banc, calendrier lu dans l'activité du jour
+  (`race_meta`).
+- Fade `pacing.fade_source=splits` : Δ des moitiés, replis durability → config,
+  `PacingPlan.fade_source_used` ; `tools/score_plan` : forme du plan contre les 293 passages
+  réels, ancrée sur le temps officiel, fade × arrêts, cas frais séparés.
+- C3 `prediction.environment_term=declared` (+ `heat_ref_c`, `heat_cost_per_c`,
+  `altitude_cost_per_km`) : chaleur déclarée (`RaceSpec.heat_c`) et différentiel d'altitude,
+  facteur dans le point fixe, MC et bandes.
+- Outillage : `stops_policy_min` partagé par le plan et la prédiction, `predict_race` reçoit
+  la spec, `analyze_preview` aussi ; registre enrichi (`stops_rate_personal`, `fade_delta_splits`,
+  `durability_pct`, `night_*`, `moving_h`, `stops_h`, `env_factor`) ; le rapport dit les arrêts
+  personnels.
+- Tests : `tests/test_phase2_temps_reel.py` (14).
+
+**En attente (banc chez Valentin, feuille du manuel §8)** : dix variantes, `tools/score_plan`,
+trois recaptures de Nice sous la pile de référence ; tableaux à coller en DIAGNOSTIC
+§10.5–10.8, décision par levier.
+
 ## Choix faits à la place de Valentin (Phase 0)
 
 1. **Définition d'un arrêt.** Deux vues, toutes deux imprimées : les secondes « sans
@@ -198,6 +230,33 @@ de progression chez un second athlète (Val 2024 : +21 à +24 %).
     qu'une copie complète de `twin.config.json` : le chargeur complète par les défauts, qui
     sont identiques au fichier (testé), et le diff dit exactement ce qui est activé.
 
+## Choix faits à la place de Valentin (Phase 2)
+
+20. **Base « plateaux » plutôt que `speed_basis=moving`** : les arrêts francs sont des plateaux
+    de distance ≥ 60 s, la marche lente reste du mouvement (la mesure au seuil de vitesse
+    ment sur un canal pauvre, §10.0). Un seul flag, `calibration.stops_model`, pilote la base
+    et le modèle ; `twin.speed_basis` reste l'ancien flag, inchangé.
+21. **Taux d'arrêt par heure de MOUVEMENT** (r = arrêts/mouvement), pas par heure écoulée : le
+    temps prédit s'écrit mouvement × (1 + r) et l'inverse est exact.
+22. **Élasticité des arrêts à la durée en config, pas ajustée** : 12 ultras de 10 à 21 h ne
+    disent rien de fiable sur les arrêts à 32 h ; e = 0,5 est une variante du banc, 0 le défaut
+    quand le levier est activé.
+23. **La nuit comme colonne de régression à prior ridge**, plutôt qu'un facteur appliqué après
+    coup : même mécanique que terrain et durée, donc cohérence fit / LOO / MC / bandes
+    gratuite, et le différentiel (nuit de la cible − nuit habituelle) tombe de la centrée.
+    Prior 0 par défaut : sans a priori, l'athlète apporte lui-même la preuve ; un prior
+    « littérature » (−0,10 par unité de part de nuit, λ 5) est une variante mesurée.
+24. **Calendrier des courses du banc lu dans l'activité du jour** (départ, position médiane,
+    fuseau solaire) faute de spec : ce sont des données de course, pas une performance ; consigné
+    sous `race_meta` (position au centième de degré).
+25. **Le score de forme s'ancre sur le temps officiel** : l'erreur de total appartient au banc,
+    la forme au scoreur ; mesures en % du temps et en minutes, biais signé à mi-course.
+26. **Coûts d'environnement population** (0,4 %/°C au-dessus de 15 °C, 5 %/1 000 m au-dessus
+    de l'altitude habituelle) : écrits en config comme ordres de grandeur, jamais appris ;
+    aucun bonus pour plus bas ou plus frais.
+27. **`cum_clock_exact_h` sur chaque segment du plan**, hors du JSON servi : le cumul affiché
+    est arrondi au centième d'heure, trop grossier pour juger un fade.
+
 ## Questions ouvertes
 
 - **Golden réel et archive fraîche.** Les références §12 (2026-07-02, 449 activités) ne
@@ -218,6 +277,9 @@ de progression chez un second athlète (Val 2024 : +21 à +24 %).
   (Chianti : [13,3 – 68,2] en linéaire, [0,0 – 52,6] en log). Le prior le corrige ; le repli
   lui-même (bornes au plafond, central hors de sa bande) reste tel quel tant qu'un cas servi
   n'y passe pas.
+- **Arrêts de Nice sous le modèle personnel** : r̄ ≈ 0,11 h/h pour Val donne ≈ 3,4 h d'arrêts
+  sur ≈ 31 h de mouvement, contre 1 h 45 retranchées par la politique. Le total ne bouge pas,
+  la répartition oui ; `tools/score_plan` dira si les passages réels de Val suivent ce plan.
 - **Phase 4.** Import CSV manuel par défaut ; LiveTrail seulement après vérification de ses
   conditions d'utilisation.
 - **Annexe en ligne** : page du site (décidé) ; support à implémenter en Phase 6.

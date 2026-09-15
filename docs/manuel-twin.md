@@ -194,6 +194,16 @@ d'échelle sur les erreurs de validation croisée lu sur une loi de Student, au 
 quantile empirique — même vocabulaire, mêmes usages. Le rapport nomme la méthode servie
 (« prédiction conforme » ou « facteur d'échelle studentisé »).
 
+Quatre leviers de la Phase 2 (DIAGNOSTIC §10.5–10.8), derrière des flags, défauts inchangés
+tant que le banc n'a pas parlé : `calibration.stops_model=personal` sépare le temps de
+mouvement des arrêts (taux personnel mesuré sur les ultras de l'athlète, réparti sur les
+ravitos ; le rapport le dit) ; `calibration.night_term=prior_shrunk` fait entrer la nuit de
+la cible, en écart à la nuit habituelle de ses ultras, dans le central et les bandes (il faut
+`start_time`, `lat`, `lon` dans la spec) ; `pacing.fade_source=splits` dérive la dérive du
+plan des moitiés de ses courses ; `prediction.environment_term=declared` applique une
+chaleur déclarée (`heat_c` de la spec) et l'altitude du parcours en écart à celle de ses
+ultras.
+
 ### Mode objectif ([ADR 0002](./adr/0002-mode-objectif-plan-sur-cible.md))
 
 À la demande de la cohorte (« je vise 31 h, donne-moi le plan »), le moteur sait ancrer le plan sur
@@ -356,6 +366,46 @@ Le JSON du `preview` sous cette config expose ce que le rapport utilise : `calib
 cible), `scale_kappa` et `scale_dof` (échelle et degrés de liberté de la Student). `tools/backtest`,
 `tools/diag_ultras` et `tools/passages` restent utilisables séparément ; `tools/banc` donne
 exactement les mêmes résultats (test `test_banc_one_pass_matches_the_separate_tools`).
+
+**Banc de la Phase 2 (temps réel : arrêts, nuit, fade, environnement ; DIAGNOSTIC §10.5–10.8),
+une relance pour toutes les variantes** — SANS `--no-passages` : le calendrier des courses
+(départ, position) est lu dans l'activité du jour retenue pour les passages et sert au terme
+de nuit de la cible ; le banc de base enrichit le registre (taux d'arrêt personnel, Δ des
+moitiés, durabilité de chaque coupure), à committer ensuite :
+
+```bash
+R="calibration.link=log,calibration.duration_term=prior_shrunk,prediction.interval_source=studentized_scale"
+M="_seed/manifest-val.json _seed/manifest-crasse.json _seed/manifest-lolo.json _seed/manifest-rapace.json"
+PYTHONPATH=src python -m tools.banc $M --out /tmp/p2 --no-diag \
+  --variant B4:calibration.stops_model=personal \
+  --variant B4e:calibration.stops_model=personal,calibration.stops_duration_elasticity=0.5 \
+  --variant B4spec:calibration.stops_model=spec \
+  --variant C2:calibration.night_term=prior_shrunk \
+  --variant C2p:calibration.night_term=prior_shrunk,calibration.night_prior_log_per_share=-0.1,calibration.night_shrink_lambda=5 \
+  --variant C3:prediction.environment_term=declared \
+  --variant R:$R \
+  --variant RB4:$R,calibration.stops_model=personal \
+  --variant RC2:$R,calibration.night_term=prior_shrunk \
+  --variant RB4C2:$R,calibration.stops_model=personal,calibration.night_term=prior_shrunk
+# forme du plan contre les passages réels, du registre enrichi (quelques secondes, sans archive)
+PYTHONPATH=src python -m tools.score_plan $M --out /tmp/p2/score_plan.md
+# cas de référence (la spec de Nice porte départ, position et fuseau : le terme de nuit s'y applique)
+NICE_GPX=_seed/cas_validation/Val/courses/nice-100m-2026.gpx
+for v in RB4:calibration.stops_model=personal RC2:calibration.night_term=prior_shrunk \
+         RB4C2:calibration.stops_model=personal,calibration.night_term=prior_shrunk; do
+  name=${v%%:*}; extra=${v#*:}
+  TWIN_CONFIG_PATH=examples/twin.config.reference.json twin-engine preview \
+    --training _seed/cas_validation/Val/archives --course "$NICE_GPX" --race examples/nice-100m.json \
+    $(for kv in ${extra//,/ }; do printf -- '--set %s ' "$kv"; done) > local-data/nice-$name.json
+done
+```
+
+`registre-<nom>.json` de chaque variante porte, par coupure, `model.stops_rate_personal`,
+`stops_ref_hours`, `night_share_mean`, `night_coef`, `fade_delta_splits`, `durability_pct`, et
+`prediction.moving_h`, `stops_h`, `night_share_target`, `night_dev`, `env_factor` ; le JSON de
+Nice porte `calibration.stops`, `calibration.night`, `prediction.moving_hours`, `stops_hours`,
+`night_share_target`, `env_detail`. Un rapport `full` sous `stops_model=personal` dit que les
+arrêts sont ceux de l'athlète et lit `plan.fade_source_used`.
 
 ## 9. Déploiement (rappel)
 
