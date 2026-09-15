@@ -29,7 +29,7 @@ from twin_engine.config import load_config
 from twin_engine.course import RaceSpec, build_course
 from twin_engine.ingest import iter_activities
 
-from tools.backtest import DEFAULT_REGISTRE, parse_time_h
+from tools.backtest import DEFAULT_REGISTRE, hint_missing_archive, parse_time_h
 
 _R_EARTH = 6_371_000.0
 
@@ -117,40 +117,49 @@ def passages_for_activity(t, dist_m, lat, lon, course, *, radius_m: float = 150.
     }
 
 
-def race_activities(archive: Path, races: list[dict], *, progress=None) -> dict[int, dict]:
-    """Une passe sur l'archive : pour chaque course, l'activité du jour (±1 j) dont la durée
-    est la plus proche du temps officiel. Seuls t/dist/lat/lon des candidates sont gardés."""
-    wanted: list[tuple[int, date, float | None]] = []
-    for k, r in enumerate(races):
-        try:
-            wanted.append((k, date.fromisoformat(r["date"]),
-                           None if r.get("dnf") else parse_time_h(r.get("official_time"))))
-        except (KeyError, ValueError):
-            continue
-    best: dict[int, dict] = {}
-    for act in iter_activities(archive, running_only=True, progress=progress):
+class PassageCollector:
+    """Retient, AU PASSAGE d'un flux d'activités, la meilleure candidate de chaque course
+    (jour de course ± 1 j, durée la plus proche du temps officiel) : seuls t/dist/lat/lon
+    des candidates survivent."""
+
+    def __init__(self, races: list[dict]) -> None:
+        self.wanted: list[tuple[int, date, float | None]] = []
+        for k, r in enumerate(races):
+            try:
+                self.wanted.append((k, date.fromisoformat(r["date"]),
+                                    None if r.get("dnf") else parse_time_h(r.get("official_time"))))
+            except (KeyError, ValueError):
+                continue
+        self.best: dict[int, dict] = {}
+
+    def see(self, act) -> None:
         if act.start_time is None:
-            continue
+            return
         d = act.start_time.date()
         hours = act.duration_s / 3600.0
-        for k, rd, official in wanted:
+        for k, rd, official in self.wanted:
             if abs((d - rd).days) > 1:
                 continue
             score = (abs((d - rd).days), abs(hours - official) if official else -hours)
-            if k not in best or score < best[k]["score"]:
-                best[k] = {"score": score, "date": d.isoformat(), "hours": hours,
-                           "t": act.t.copy(), "dist_m": act.dist_m.copy(),
-                           "lat": act.lat.copy(), "lon": act.lon.copy()}
-    return best
+            if k not in self.best or score < self.best[k]["score"]:
+                self.best[k] = {"score": score, "date": d.isoformat(), "hours": hours,
+                                "t": act.t.copy(), "dist_m": act.dist_m.copy(),
+                                "lat": act.lat.copy(), "lon": act.lon.copy()}
 
 
-def run_manifest(manifest_path: Path, cfg, registre: dict, *, radius_m: float = 150.0,
-                 progress=None) -> list[tuple[str, dict | None]]:
-    base = manifest_path.resolve().parent
-    man = json.loads(manifest_path.read_text(encoding="utf-8"))
+def race_activities(archive: Path, races: list[dict], *, progress=None) -> dict[int, dict]:
+    """Une passe sur l'archive : la meilleure candidate de chaque course (cf. PassageCollector)."""
+    collector = PassageCollector(races)
+    for act in iter_activities(archive, running_only=True, progress=progress):
+        collector.see(act)
+    return collector.best
+
+
+def passages_for_manifest(found: dict[int, dict], man: dict, base: Path, cfg, registre: dict,
+                          *, radius_m: float = 150.0) -> list[tuple[str, dict | None]]:
+    """Des candidates aux passages consignés : parcours construit comme au banc, entrée du
+    registre créée si absente (la fusion du banc la complètera)."""
     athlete, dev_set = man["athlete"], bool(man.get("dev_set", False))
-    print(f"  {athlete} : recherche des activités de course dans l'archive…", file=sys.stderr)
-    found = race_activities((base / man["archive"]).resolve(), man["races"], progress=progress)
     results: list[tuple[str, dict | None]] = []
     rows = registre.setdefault("entries", [])
     for k, r in enumerate(man["races"]):
@@ -176,6 +185,22 @@ def run_manifest(manifest_path: Path, cfg, registre: dict, *, radius_m: float = 
         row["passages"] = pas
         results.append((r["name"], pas))
     return results
+
+
+def run_manifest(manifest_path: Path, cfg, registre: dict, *, radius_m: float = 150.0,
+                 progress=None) -> list[tuple[str, dict | None]] | None:
+    """Toutes les courses d'un manifeste ; ``None`` si l'archive est introuvable (signalé)."""
+    base = manifest_path.resolve().parent
+    man = json.loads(manifest_path.read_text(encoding="utf-8"))
+    athlete = man["athlete"]
+    archive = (base / man["archive"]).resolve()
+    if not archive.exists():
+        print(f"  {athlete} : ARCHIVE INTROUVABLE — {archive}\n{hint_missing_archive(archive)}",
+              file=sys.stderr)
+        return None
+    print(f"  {athlete} : recherche des activités de course dans l'archive…", file=sys.stderr)
+    found = race_activities(archive, man["races"], progress=progress)
+    return passages_for_manifest(found, man, base, cfg, registre, radius_m=radius_m)
 
 
 def _hm(h: float | None) -> str:
@@ -223,18 +248,28 @@ def main(argv: list[str] | None = None) -> int:
     reg_path = Path(args.registre)
     registre = (json.loads(reg_path.read_text(encoding="utf-8")) if reg_path.exists()
                 else {"entries": []})
+    missing: list[str] = []
     for m in args.manifests:
         mp = Path(m)
         man = json.loads(mp.read_text(encoding="utf-8"))
         results = run_manifest(mp, cfg, registre, radius_m=args.radius_m, progress=_progress)
         print(file=sys.stderr)
+        if results is None:
+            missing.append(man["athlete"])
+            continue
         print(render_markdown(man["athlete"], results))
     if args.dry_run:
         print("\n(dry-run : registre non écrit)", file=sys.stderr)
-        return 0
-    reg_path.parent.mkdir(parents=True, exist_ok=True)
-    reg_path.write_text(json.dumps(registre, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"\nRegistre mis à jour : {reg_path}", file=sys.stderr)
+        return 1 if missing else 0
+    if len(missing) < len(args.manifests):
+        reg_path.parent.mkdir(parents=True, exist_ok=True)
+        reg_path.write_text(json.dumps(registre, ensure_ascii=False, indent=2) + "\n",
+                            encoding="utf-8")
+        print(f"\nRegistre mis à jour : {reg_path}", file=sys.stderr)
+    if missing:
+        print(f"\n⚠ {len(missing)} manifeste(s) ignoré(s), archive introuvable : "
+              + ", ".join(missing), file=sys.stderr)
+        return 1
     return 0
 
 

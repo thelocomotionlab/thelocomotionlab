@@ -125,51 +125,68 @@ def attach_official_times(rows: list[dict], manifest: dict) -> None:
                                 else 60.0 * (row["elapsed_h"] - official))
 
 
+class DiagCollector:
+    """Mesure les efforts longs AU PASSAGE d'un flux d'activités (un « tee »), puis conclut
+    sur les contributions agrégées : le même décodage sert au banc (cf. tools/banc)."""
+
+    def __init__(self, cfg, *, min_hours: float | None = None, min_stop_s: float = 60.0) -> None:
+        self.cfg = cfg
+        self.min_h = cfg.calibration.genuine_min_hours if min_hours is None else float(min_hours)
+        self.min_stop_s = float(min_stop_s)
+        self.rows_by_idx: dict[int, dict] = {}
+
+    def see(self, index: int, act) -> None:
+        if act.duration_s >= self.min_h * 3600:
+            self.rows_by_idx[index] = activity_row(act, self.cfg, min_stop_s=self.min_stop_s)
+
+    def finish(self, contribs: list, *, archive, n_skipped: int, manifest: dict | None = None) -> dict:
+        cfg = self.cfg
+        twin = build_twin_from_contributions(contribs, cfg)
+        cal = build_calibration(twin, cfg)
+        w = recency_weights(cal.genuine, cfg) * maximality_weights(cal.genuine, twin, cfg)
+        genuine_w = {(g.date, round(g.hours, 2)): float(w[i]) for i, g in enumerate(cal.genuine)}
+
+        rows: list[dict] = []
+        for i, row in self.rows_by_idx.items():
+            summary = contribs[i].summary
+            key = (row["date"], round(summary.duration_s / 3600.0, 2) if summary else None)
+            if summary is None:
+                row["genuine"], row["weight"], row["reasons"] = False, 0.0, ["résumé indisponible"]
+            elif key in genuine_w:
+                row["genuine"], row["weight"], row["reasons"] = True, genuine_w[key], []
+            else:
+                row["genuine"], row["weight"] = False, 0.0
+                row["reasons"] = _genuine_reasons(summary, cfg) or ["hors calibration (poids nul)"]
+            rows.append(row)
+        rows.sort(key=lambda r: r["date"] or "")
+        if manifest:
+            attach_official_times(rows, manifest)
+        return {
+            "archive": str(archive), "min_hours": self.min_h, "min_stop_s": self.min_stop_s,
+            "n_activities": len(contribs), "n_skipped": n_skipped,
+            "calibration": {"regime": cal.regime, "n_genuine": cal.n_genuine,
+                            "n_eff": round(cal.n_eff, 2)},
+            "rows": rows,
+            "aggregates": aggregate(rows),
+        }
+
+
 def scan_archive(archive: str | Path, cfg, *, min_hours: float | None = None,
                  min_stop_s: float = 60.0, manifest: dict | None = None,
                  progress=None) -> dict:
     """Une passe sur l'archive : lignes par effort long + jumeau/calibration pour le statut
     « vrai ultra » et les poids, puis agrégats."""
-    min_h = cfg.calibration.genuine_min_hours if min_hours is None else float(min_hours)
-    rows_by_idx: dict[int, dict] = {}
+    collector = DiagCollector(cfg, min_hours=min_hours, min_stop_s=min_stop_s)
     skipped: list[dict] = []
 
     def _tee(stream):
         for i, act in enumerate(stream):
-            if act.duration_s >= min_h * 3600:
-                rows_by_idx[i] = activity_row(act, cfg, min_stop_s=min_stop_s)
+            collector.see(i, act)
             yield act
 
     stream = iter_activities(archive, running_only=True, skipped=skipped, progress=progress)
     contribs = list(iter_contributions(_tee(stream), cfg))
-    twin = build_twin_from_contributions(contribs, cfg)
-    cal = build_calibration(twin, cfg)
-    w = recency_weights(cal.genuine, cfg) * maximality_weights(cal.genuine, twin, cfg)
-    genuine_w = {(g.date, round(g.hours, 2)): float(w[i]) for i, g in enumerate(cal.genuine)}
-
-    rows: list[dict] = []
-    for i, row in rows_by_idx.items():
-        summary = contribs[i].summary
-        key = (row["date"], round(summary.duration_s / 3600.0, 2) if summary else None)
-        if summary is None:
-            row["genuine"], row["weight"], row["reasons"] = False, 0.0, ["résumé indisponible"]
-        elif key in genuine_w:
-            row["genuine"], row["weight"], row["reasons"] = True, genuine_w[key], []
-        else:
-            row["genuine"], row["weight"] = False, 0.0
-            row["reasons"] = _genuine_reasons(summary, cfg) or ["hors calibration (poids nul)"]
-        rows.append(row)
-    rows.sort(key=lambda r: r["date"] or "")
-    if manifest:
-        attach_official_times(rows, manifest)
-    return {
-        "archive": str(archive), "min_hours": min_h, "min_stop_s": min_stop_s,
-        "n_activities": len(contribs), "n_skipped": len(skipped),
-        "calibration": {"regime": cal.regime, "n_genuine": cal.n_genuine,
-                        "n_eff": round(cal.n_eff, 2)},
-        "rows": rows,
-        "aggregates": aggregate(rows),
-    }
+    return collector.finish(contribs, archive=archive, n_skipped=len(skipped), manifest=manifest)
 
 
 def _wmean(vals: list[float | None], weights: list[float]) -> float | None:

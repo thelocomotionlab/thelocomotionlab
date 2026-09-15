@@ -63,6 +63,11 @@ suite verte (275 passés, 6 sautés).
   manifeste ; part de nuit de la cible par segment via le plan réel.
 - `tools/passages` : heures de passage réelles aux points de contrôle des courses passées,
   consignées dans le registre sous `passages`.
+- `tools/banc` : backtest, radiographie et passages sur un seul décodage par archive,
+  sorties markdown/JSON dans un dossier ; résultats identiques aux outils séparés.
+- `_seed/manifest-val.json` pointe sur le dossier `archives/` de Val comme les autres
+  manifestes (le nom d'archive qu'il portait n'existait plus) ; une archive introuvable est
+  signalée et sautée par `backtest`, `passages` et `banc`.
 - DIAGNOSTIC §10.0 (constats, tableau de référence, placeholders des mesures réelles),
   manuel §8 (outils et feuille de commandes), ce compte-rendu.
 
@@ -103,6 +108,10 @@ preview`, JSON conservé hors git). Les tableaux seront collés en DIAGNOSTIC §
 8. **Part de nuit de la cible.** Obtenue du plan réel (`build_pacing`, fade et arrêts
    compris) sur un temps central donné à la main (`--hours`), plutôt que d'un preview complet
    qui exigerait l'archive.
+9. **Une passe par archive.** Le premier essai du banc chez Valentin a montré le coût de
+   trois décodages par archive (interruptions) : `tools/banc` ouvre le flux une fois et le
+   distribue au cache du banc, à la radiographie et aux passages, et écrit lui-même ses
+   sorties, pour supprimer les redirections et les chemins à recopier.
 
 ## Questions ouvertes
 

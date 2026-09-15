@@ -992,4 +992,9 @@ proche du premier passage). Consigné dans le registre sous `passages` (agrégat
 mouvement partagé avec `record.py` — refactor sans effet numérique, golden intact — détection
 d'arrêts, statistiques), `pacing/sun.py::night_mask/night_share`, `CourseProfile.lat_grid/
 lon_grid` + `checkpoint_coords()` (additifs, `to_dict` inchangé), `tools/registre --tableau`
-et `--compare`, `tools/diag_ultras`, `tools/passages`.
+et `--compare`, `tools/diag_ultras`, `tools/passages`, et `tools/banc` qui enchaîne
+backtest, radiographie et passages sur UN décodage par archive (résultats identiques aux
+outils séparés, vérifié par test) — le premier essai chez Valentin avait buté sur trois
+décodages par archive et sur un manifeste (Val) pointant vers un nom d'archive périmé :
+les manifestes pointent désormais tous sur le dossier `archives/` de l'athlète, et une
+archive introuvable est signalée puis sautée au lieu d'arrêter le banc.

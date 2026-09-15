@@ -775,3 +775,77 @@ def test_passages_end_to_end_writes_and_survives_the_bench_merge(tmp_path, capsy
                    [{"race": "Course passée", "date": "2030-05-01", "prediction": None}])
     assert data["entries"][0]["passages"]["n_found"] == pas["n_found"]
     assert len(data["entries"]) == 1
+
+
+def test_backtest_skips_a_missing_archive_and_continues(tmp_path, monkeypatch, capsys):
+    """Une archive introuvable est signalée (avec ce qui existe autour) et SAUTÉE : les
+    autres manifestes tournent, le registre est écrit, le code de retour le dit."""
+    monkeypatch.setenv("DATA_DIR", str(tmp_path / "data"))
+    (tmp_path / "course.gpx").write_bytes(_course_gpx())
+    (tmp_path / "archive.gpx").write_bytes((FIX / "sample.gpx").read_bytes())
+    (tmp_path / "cas").mkdir()
+    (tmp_path / "cas" / "export.zip").write_bytes(b"pas une archive")
+    ok = {"athlete": "Présent", "archive": "archive.gpx",
+          "races": [{"name": "Course", "date": "2030-01-02", "official_time": "10:00:00",
+                     "gpx": "course.gpx"}]}
+    ko = dict(ok, athlete="Absent", archive="cas/perdu.zip")
+    (tmp_path / "ok.json").write_text(json.dumps(ok), encoding="utf-8")
+    (tmp_path / "ko.json").write_text(json.dumps(ko), encoding="utf-8")
+    registre = tmp_path / "registre.json"
+
+    rc = backtest_main([str(tmp_path / "ko.json"), str(tmp_path / "ok.json"),
+                        "--registre", str(registre)])
+    err = capsys.readouterr().err
+    assert rc == 1
+    assert "Absent : ARCHIVE INTROUVABLE" in err and "export.zip" in err
+    data = json.loads(registre.read_text(encoding="utf-8"))
+    assert [e["athlete"] for e in data["entries"]] == ["Présent"]
+
+
+def test_banc_one_pass_matches_the_separate_tools(tmp_path, monkeypatch, capsys):
+    """Un seul décodage pour le banc, la radiographie et les passages — et exactement les
+    mêmes résultats que tools/backtest, tools/diag_ultras et tools/passages lancés à part."""
+    from tools.banc import main as banc_main
+    from tools.diag_ultras import scan_archive
+    from tools.passages import main as passages_main
+    from twin_engine.config import load_config
+    from twin_engine.course import RaceSpec, build_course
+
+    monkeypatch.setenv("DATA_DIR", str(tmp_path / "data"))
+    cfg = load_config()
+    course_gpx = _course_gpx()
+    course = build_course(course_gpx, RaceSpec(name="Course passée"), cfg)
+    t, x, lat, lon = _along_course(course, 2.0, pause=(2500, 600), step_s=10)
+    d = tmp_path / "archives"
+    d.mkdir()
+    (d / "race.gpx").write_bytes(_activity_gpx_along("2030-05-01", "08:00:00", lat, lon))
+    lat2, lon2 = _eastward(40, 3.0, pause=(1200, 300))
+    (d / "nuit.gpx").write_bytes(_activity_gpx_along("2030-04-20", "21:30:00", lat2, lon2))
+    (tmp_path / "course.gpx").write_bytes(course_gpx)
+    manifest = {"athlete": "Testeur", "archive": "archives",
+                "races": [{"name": "Course passée", "date": "2030-05-01",
+                           "official_time": "1:33:20", "gpx": "course.gpx"}]}
+    mp = tmp_path / "manifest.json"
+    mp.write_text(json.dumps(manifest), encoding="utf-8")
+    out = tmp_path / "out"
+
+    reg_one = tmp_path / "reg-one.json"
+    rc = banc_main([str(mp), "--registre", str(reg_one), "--out", str(out), "--radius-m", "60",
+                    "--min-hours", "0.5", "--avant", str(tmp_path / "inexistant.json")])
+    assert rc == 0
+    reg_sep = tmp_path / "reg-sep.json"
+    assert backtest_main([str(mp), "--registre", str(reg_sep)]) == 0
+    assert passages_main([str(mp), "--registre", str(reg_sep), "--radius-m", "60"]) == 0
+    capsys.readouterr()
+
+    one = json.loads(reg_one.read_text(encoding="utf-8"))["entries"]
+    sep = json.loads(reg_sep.read_text(encoding="utf-8"))["entries"]
+    assert one == sep and one[0]["passages"]["n_found"] == len(course.segments) + 1
+    diag_one = json.loads((out / "diag-testeur.json").read_text(encoding="utf-8"))
+    diag_sep = json.loads(json.dumps(
+        scan_archive(d, cfg, min_hours=0.5, min_stop_s=60, manifest=manifest)))
+    assert diag_one["rows"] == diag_sep["rows"] and diag_one["aggregates"] == diag_sep["aggregates"]
+    names = {p.name for p in out.iterdir()}
+    assert {"backtest.md", "tableau.md", "diag-testeur.md", "passages-testeur.md"} <= names
+    assert "compare.md" not in names                       # pas de registre « avant » → pas de compare
+    assert "Course passée" in (out / "backtest.md").read_text(encoding="utf-8")

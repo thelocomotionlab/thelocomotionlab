@@ -93,11 +93,17 @@ class ArchiveCache:
     départages à égalité) — c'est ce que vérifie ``test_backtest_tools``.
     """
 
-    def __init__(self, archive: Path, cfg) -> None:
+    def __init__(self, archive: Path, cfg, *, stream=None,
+                 skipped: list[dict] | None = None) -> None:
+        """``stream`` : un flux d'activités déjà ouvert (un « tee » qui mesure autre chose au
+        passage, cf. tools/banc) — sinon le cache ouvre l'archive lui-même. ``skipped`` est
+        la liste des rejets d'ingestion du flux fourni (comptés après consommation)."""
         self.cfg = cfg
-        skipped: list[dict] = []
-        stream = iter_activities(archive, running_only=True, skipped=skipped,
-                                 progress=self._progress)
+        if skipped is None:
+            skipped = []
+        if stream is None:
+            stream = iter_activities(archive, running_only=True, skipped=skipped,
+                                     progress=self._progress)
         # on ne garde QUE des agrégats : aucun tableau 1 Hz ne survit à cette ligne
         self.contributions = list(iter_contributions(stream, cfg))
         self.n_skipped = len(skipped)
@@ -224,11 +230,30 @@ def merge_registre(registre: dict, athlete: str, dev_set: bool, entries: list[di
     return registre
 
 
-def run_manifest(manifest_path: Path, cfg, registre: dict) -> list[dict]:
+def hint_missing_archive(archive: Path) -> str:
+    """Ce qui existe autour du chemin attendu — pour corriger le manifeste sans chercher."""
+    parent = archive
+    while not parent.exists() and parent != parent.parent:
+        parent = parent.parent
+    if not parent.is_dir():
+        return "  (aucun dossier parent existant)"
+    names = sorted(x.name + ("/" if x.is_dir() else f"  ({x.stat().st_size // 1_048_576} Mo)")
+                   for x in parent.iterdir())
+    return f"  contenu de {parent} : {', '.join(names) if names else '(vide)'}"
+
+
+def run_manifest(manifest_path: Path, cfg, registre: dict) -> list[dict] | None:
+    """Rejoue toutes les courses d'un manifeste. ``None`` si l'archive est introuvable : le
+    banc le signale et passe au manifeste suivant, au lieu de tout arrêter."""
     base = manifest_path.resolve().parent
     man = json.loads(manifest_path.read_text(encoding="utf-8"))
     athlete = man["athlete"]
     archive = (base / man["archive"]).resolve()
+    if not archive.exists():
+        print(f"  {athlete} : ARCHIVE INTROUVABLE — {archive}\n{hint_missing_archive(archive)}\n"
+              f"  → corrige le champ « archive » de {manifest_path.name} (chemin relatif au "
+              "manifeste) ; ce manifeste est ignoré.", file=sys.stderr)
+        return None
     # UN décodage pour tout le manifeste, puis une coupure par course (cf. ArchiveCache)
     print(f"  {athlete} : décodage de l'archive (une seule fois)…", file=sys.stderr, flush=True)
     cache = ArchiveCache(archive, cfg)
@@ -276,10 +301,14 @@ def main(argv: list[str] | None = None) -> int:
     # tout traiter d'abord (la progression file sur stderr), puis imprimer le tableau
     # d'un bloc — sans lignes de progression intercalées entre l'en-tête et les lignes
     all_rows: list[tuple[str, dict]] = []
+    missing: list[str] = []
     for m in args.manifests:
         mp = Path(m)
         man = json.loads(mp.read_text(encoding="utf-8"))
         entries = run_manifest(mp, cfg, registre)
+        if entries is None:
+            missing.append(man["athlete"])
+            continue
         all_rows += [(man["athlete"], e) for e in entries]
 
     print("\n| athlète    | course                       | CV | prédit  | réel    | err %  | bandes [50] [80] |")
@@ -289,12 +318,18 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.dry_run:
         print("\n(dry-run : registre non écrit)", file=sys.stderr)
-        return 0
-    reg_path.parent.mkdir(parents=True, exist_ok=True)
-    reg_path.write_text(json.dumps(registre, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"\nRegistre mis à jour : {reg_path} ({len(registre['entries'])} entrée(s) au total)",
-          file=sys.stderr)
-    print("Analyse : PYTHONPATH=src python -m tools.registre", file=sys.stderr)
+        return 1 if missing else 0
+    if all_rows:
+        reg_path.parent.mkdir(parents=True, exist_ok=True)
+        reg_path.write_text(json.dumps(registre, ensure_ascii=False, indent=2) + "\n",
+                            encoding="utf-8")
+        print(f"\nRegistre mis à jour : {reg_path} ({len(registre['entries'])} entrée(s) au total)",
+              file=sys.stderr)
+        print("Analyse : PYTHONPATH=src python -m tools.registre", file=sys.stderr)
+    if missing:
+        print(f"\n⚠ {len(missing)} manifeste(s) ignoré(s), archive introuvable : "
+              + ", ".join(missing), file=sys.stderr)
+        return 1
     return 0
 
 
