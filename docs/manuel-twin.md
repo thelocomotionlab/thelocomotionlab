@@ -400,6 +400,29 @@ for v in RB4:calibration.stops_model=personal RC2:calibration.night_term=prior_s
 done
 ```
 
+**Second passage de la Phase 2 (garde des vrais ultras rétablie ; DIAGNOSTIC §10.5, §10.7)** :
+seuls les leviers d'arrêts sont relancés, le scoreur teste l'amplitude du fade en secondes.
+
+```bash
+R="calibration.link=log,calibration.duration_term=prior_shrunk,prediction.interval_source=studentized_scale"
+M="_seed/manifest-val.json _seed/manifest-crasse.json _seed/manifest-lolo.json _seed/manifest-rapace.json"
+PYTHONPATH=src python -m tools.banc $M --out /tmp/p2b --no-diag \
+  --variant B4:calibration.stops_model=personal \
+  --variant B4e:calibration.stops_model=personal,calibration.stops_duration_elasticity=0.5 \
+  --variant B4spec:calibration.stops_model=spec \
+  --variant RB4:$R,calibration.stops_model=personal
+for v in "" "--set pacing.fade_delta=0.15" "--set pacing.fade_delta=0.20" \
+         "--set pacing.fade_source=splits --set pacing.fade_delta_max=0.30" \
+         "--set pacing.fade_source=splits --set pacing.fade_delta_max=0.50"; do
+  PYTHONPATH=src python -m tools.score_plan $M $v --out "/tmp/p2b/score_plan${v//[^0-9a-z]/}.md"
+done
+NICE_GPX=_seed/cas_validation/Val/courses/nice-100m-2026.gpx
+TWIN_CONFIG_PATH=examples/twin.config.reference.json twin-engine preview \
+  --training _seed/cas_validation/Val/archives --course "$NICE_GPX" --race examples/nice-100m.json \
+  --set calibration.stops_model=personal > local-data/nice-RB4b.json
+git add ../../docs/twin-registre-couverture.json && git commit -m "Phase 2 : registre du second passage" && git push
+```
+
 `registre-<nom>.json` de chaque variante porte, par coupure, `model.stops_rate_personal`,
 `stops_ref_hours`, `night_share_mean`, `night_coef`, `fade_delta_splits`, `durability_pct`, et
 `prediction.moving_h`, `stops_h`, `night_share_target`, `night_dev`, `env_factor` ; le JSON de

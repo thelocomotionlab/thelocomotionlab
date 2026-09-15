@@ -163,9 +163,33 @@ de progression chez un second athlète (Val 2024 : +21 à +24 %).
   personnels.
 - Tests : `tests/test_phase2_temps_reel.py` (14).
 
-**En attente (banc chez Valentin, feuille du manuel §8)** : dix variantes, `tools/score_plan`,
-trois recaptures de Nice sous la pile de référence ; tableaux à coller en DIAGNOSTIC
-§10.5–10.8, décision par levier.
+**Premier banc reçu (2026-09-15, dix variantes, scoreur, trois recaptures) — DIAGNOSTIC
+§10.5–10.8.**
+- **B4 invalide au premier passage** : la base hors plateaux avait retiré la garde du plancher
+  de vitesse écoulée ; des enregistrements quasi immobiles (bivouac 38 h, journées d'étape,
+  montres laissées tourner) sont entrés comme vrais ultras (taux d'arrêt jusqu'à 1 800 min
+  par heure de mouvement, MAE des vendus à 927 %). Garde rétablie sur la vitesse écoulée, le
+  domaine ne bouge plus avec le modèle d'arrêts ; second passage demandé (B4, B4e, B4spec,
+  RB4, Nice RB4).
+- **C2** : sans a priori le coefficient de nuit est nul ou positif (Val +0,05 : ses courses
+  nocturnes sont ses plus rapides, confusion avec le type de course) ; avec un prior de
+  −10 % à pleine nuit, le prior fait tout, aide les courses de jour et dégrade les cibles
+  nocturnes. Défaut non basculé, non activé pour Val (Nice sous RC2 : 34,29 h, identique).
+- **C3** : le différentiel d'altitude dégrade 8 coupures sur 9 (MAE 10,3 → 11,8 sur les 13
+  vendus). Rejeté ; le flag reste pour une chaleur déclarée.
+- **Fade** : sur 30 courses, les athlètes sont en avance sur le plan à mi-course de 17 à
+  25 min, 27 fois sur 30 — la dérive réelle est bien plus forte que Δ = 0,085 (Crasse
+  ralentit de 22 % entre ses moitiés, Δ mesuré 0,245, écrêté à 0,13). `splits` gagne sur le
+  dev_set (2,21 → 1,80 % du temps), égalité sur les cas frais ; la répartition personnelle des
+  arrêts n'aide nulle part. Test d'amplitude à faire au scoreur (`--set`, quelques secondes)
+  avant de décider la source et la borne.
+- **Régression attrapée par le banc de base** : la LOO réécrite lisait l'écart-type des plis
+  en lien linéaire au temps prédit au lieu du point réel ; bandes déplacées de quelques
+  dixièmes d'heure à défauts inchangés. Corrigée, verrouillée par test.
+
+**En attente (second passage, feuille du manuel §8)** : B4 sur garde rétablie, scoreur avec
+`--set` pour l'amplitude du fade, Nice sous RB4 ; le registre committé après le premier
+passage porte les bandes déplacées et sera réécrit par le passage de base.
 
 ## Choix faits à la place de Valentin (Phase 0)
 
@@ -256,6 +280,12 @@ trois recaptures de Nice sous la pile de référence ; tableaux à coller en DIA
     aucun bonus pour plus bas ou plus frais.
 27. **`cum_clock_exact_h` sur chaque segment du plan**, hors du JSON servi : le cumul affiché
     est arrondi au centième d'heure, trop grossier pour juger un fade.
+28. **Le plancher de vitesse des vrais ultras se lit sur l'écoulé même en base hors plateaux** :
+    le banc a montré que la vitesse hors plateaux d'un bivouac est celle d'une course ; le
+    domaine de calibration ne dépend donc pas du modèle d'arrêts (MIUT reste dehors, son cas
+    relève du plancher dépendant de la durée).
+29. **`tools/score_plan --set`** : l'amplitude du fade se teste en secondes depuis le registre,
+    sans relancer une heure de décodage.
 
 ## Questions ouvertes
 
@@ -288,6 +318,14 @@ trois recaptures de Nice sous la pile de référence ; tableaux à coller en DIA
 
 ## Rejeté
 
+- **Différentiel d'altitude (C3)** : 0,05 par 1 000 m au-dessus de l'altitude habituelle des
+  ultras dégrade 8 coupures sur 9 (MAE des 13 vendus 10,3 → 11,8, Lavaredo +1,0 → +8,3 %) ;
+  le central est déjà biaisé vers le lent.
+- **Terme de nuit avec prior de population (C2p)** : le prior fait tout le travail (les données
+  n'identifient pas d), aide les courses de jour, dégrade les cibles nocturnes ; Winkler 50
+  dégradé.
+- **Répartition personnelle des arrêts dans le plan** : forme du plan pire ou égale sur les
+  30 courses (dev_set 2,21 → 2,74 % du temps).
 - **Échelle studentisée MAD** (`studentized_scale_mad`) : Winkler 80 0,591 contre 0,558 (RMS)
   sur les 13 vendus appariés, MIUT [7,5 – 105,9] — plus bruyant à n = 4–12, comme prévu.
 - **Échelle studentisée signée** : meilleur Winkler 80 du banc (0,549) mais couverture 50 à

@@ -1434,6 +1434,15 @@ autres cas.
 trop lent sur la zone d'action, +13 % sur Val 2024 : progression et récence, §10.0 lecture 3),
 les arrêts (H2, §10.0 point 0.2) et la nuit (§10.0 point 0.3).
 
+**Note du banc de la Phase 2 (2026-09-15) — une régression attrapée par le banc de base.**
+`compare.md` du passage de base contre l'« avant » montrait des bandes déplacées de quelques
+dixièmes d'heure à défauts inchangés (Crasse, couverture 50 : 57 → 43 % ; Winkler 80 0,296 →
+0,313 ; Val 0,773 → 0,758), sans changement de central ni de verdict. Cause : la réécriture de
+la LOO lisait, en lien linéaire, l'écart-type de chaque pli au temps PRÉDIT du pli au lieu du
+point de prédicteurs réel de l'ultra (la définition historique des scores conformes servis).
+Corrigé et verrouillé par test (`test_linear_fold_sd_is_taken_at_the_real_predictor_point`) ;
+le passage de base du second banc doit rendre un `compare.md` sans écart.
+
 ### 10.5 B4 — Le temps réel est mouvement + arrêts (flag `calibration.stops_model`, défaut `carved`)
 
 **Constat (§10.0, point 0.2).** La régression servie porte sur la vitesse ÉCOULÉE : les arrêts
@@ -1484,11 +1493,38 @@ mouvement ↔ écoulé ; élasticité qui allonge une cible plus longue que la r
 dispersion des arrêts qui élargit l'écart-type ; modèle `spec` ; plan qui répartit les arrêts
 personnels au prorata (base majeure × 3, rien à l'arrivée), y compris en mode objectif.
 
-**Preuve au banc — À COLLER.** Variantes `B4` (personnel), `B4e` (élasticité 0,5), `B4spec`,
-`RB4` (pile de référence + personnel) ; `tools/score_plan` pour la forme ; recapture de Nice
-sous `RB4`.
+**Preuve au banc (2026-09-15, premier passage — INVALIDE, corrigé).** Variantes `B4`,
+`B4e`, `B4spec`, `RB4`, `RB4C2` et recapture de Nice sous `RB4`. Le banc a rendu des temps
+absurdes (13 vendus appariés : MAE 10,3 → 927 %, tous les verdicts basculés) et la cause est
+lisible dans les registres : la base hors plateaux a retiré la seule garde qui écartait les
+enregistrements quasi immobiles. Le plancher `genuine_min_ga_kmh` se lisait sur la vitesse de
+la base servie — hors plateaux, un bivouac de 30 h avec 1 h de mouvement a une vitesse de
+course. Entrants mesurés : Crasse, Chota 2025, 5 → 8 vrais ultras et taux d'arrêt 57 min par
+heure de mouvement ; Coursières 2023, 1 → 4 et 498 min/h ; LUT 2021, 0 → 3 et 1 417 min/h ;
+Lolo, Coursières hivernal, 1 → 2 et 1 843 min/h ; Val, Nice, 12 → 16 : un OFF de 38,3 h
+avec 14,5 h d'arrêts et trois journées consécutives du 22 au 24 août 2026 à 12–15 h avec
+2,8–3,3 h d'arrêts. Nice sous `RB4` : 35,85 h [29,24 – 43,95], 16 ultras, LOO 9,5 % dont
+trois plis à −25/−32 % (les journées d'étape), taux 10,2 min/h contre 6,2 mesuré sur ses
+courses. Ce n'est pas le modèle d'arrêts qui est jugé là, c'est un filtre cassé.
 
-| variante | vendus MAE % (13 appariés) | biais % | couv 50 / 80 | Winkler rel 50 / 80 | vendus n (MIUT ?) | cas frais touchés |
+**Correctif.** Le plancher se lit sur la vitesse ÉCOULÉE dès qu'un modèle d'arrêts est servi
+(`select_genuine_ultras`) : le domaine ne bouge pas avec B4 — mêmes ultras qu'en `carved`,
+vitesse servie hors plateaux. MIUT reste dehors (5,48 contre 5,5 écoulés) : son cas relève du
+plancher dépendant de la durée (backlog §9.11), pas de B4. Testé (bivouac 30 h / 1 h refusé,
+course à 10 % d'arrêts retenue à sa vitesse hors plateaux, domaine identique). **Ce que le
+premier passage dit quand même**, lu sur le banc de base (taux sur les vrais ultras de course,
+médianes des coupures) : Val 6,2 min d'arrêt par heure de mouvement (5,7–9,4), Crasse 0,4
+(0,3–0,7), Lolo 3,4 (2,5–7,6), Rapace 5,8 (2,7–7,2). Et `tools/score_plan` (§10.7) : répartir
+les arrêts personnels au prorata de la politique n'améliore la forme du plan nulle part —
+cas frais 1,89 → 1,89 % du temps (Lolo 2,45 → 2,44, Rapace 1,10 → 1,05), dev_set 2,21 → 2,74
+(Crasse 2,18 → 2,98, Val 2,26 → 2,29). Chez Crasse, qui ne s'arrête pas, les 5 minutes de la
+politique à chaque ravito jouaient le rôle d'un fade plus fort ; enlevées, la dérive réelle
+apparaît nue (§10.7).
+
+**Preuve au banc — À COLLER (second passage, garde rétablie).** Variantes `B4`, `B4e`,
+`B4spec`, `RB4` ; Nice sous `RB4`.
+
+| variante | vendus MAE % (13 appariés) | biais % | couv 50 / 80 | Winkler rel 50 / 80 | vendus n | cas frais touchés |
 |---|---|---|---|---|---|---|
 | avant | 10,3 | +2,7 | 38 / 54 % | 0,342 / 0,570 | 13 | — |
 | B4 | | | | | | |
@@ -1496,14 +1532,15 @@ sous `RB4`.
 | B4spec | | | | | | |
 | RB4 | | | | | | |
 
-| Nice 100M 2026 | référence (A2A1A3) | RB4 |
+| Nice 100M 2026 | référence (A2A1A3) | RB4 (second passage) |
 |---|---|---|
 | central / mouvement / arrêts | 34,33 / 34,33 / 0 (politique 1 h 45 retranchée au plan) | |
 | taux d'arrêt personnel (min par h de mouvement) | — | |
 | bornes de sécurité | 29,83 – 39,52 | |
-| plan : mouvement + arrêts = horloge | | |
 
-**Décision.** En attente du banc.
+**Décision.** En attente du second passage. Ce qui est déjà acquis : le domaine de calibration
+ne bouge pas avec le modèle d'arrêts ; la répartition personnelle des arrêts n'est pas retenue
+pour la forme du plan (mesurée pire ou égale partout).
 
 ### 10.6 C2 — La nuit entre dans la régression, en écart à la nuit des ultras (flag `calibration.night_term`, défaut `none`)
 
@@ -1540,25 +1577,48 @@ inactif et signalé sans mesure ; une course de nuit prédite plus lente qu'une 
 sur le même athlète, part de nuit de la cible et écart exposés, bandes finies et emboîtées ;
 sans terme de nuit le calendrier ne change rien.
 
-**Preuve au banc — À COLLER.** Variantes `C2` (prior 0, λ 2), `C2p` (prior −0,10, λ 5),
-`RC2`, `RB4C2` ; d et part de nuit moyenne par athlète (JSON du registre, `model.night_coef`,
-`night_share_mean`) ; recapture de Nice sous `RC2` (part de nuit de la cible, écart, d).
+**Preuve au banc (2026-09-15).** Variantes `C2` (prior 0, λ 2), `C2p` (prior −0,10, λ 5),
+`RC2`, `RB4C2` (invalide, cf. §10.5) ; recapture de Nice sous `RC2`. Les manifestes n'ayant
+pas de spec, le calendrier de chaque course vient de l'activité du jour (32 coupures sur 34
+en portent un).
 
-| variante | vendus MAE % (13 appariés) | biais % | couv 50 / 80 | Winkler rel 50 / 80 | d par athlète (Val · Crasse · Lolo · Rapace) |
-|---|---|---|---|---|---|
-| avant | 10,3 | +2,7 | 38 / 54 % | 0,342 / 0,570 | — |
-| C2 | | | | | |
-| C2p | | | | | |
-| RC2 | | | | | |
-| RB4C2 | | | | | |
+| variante | vendus MAE % (13 appariés) | biais % | couv 50 / 80 | Winkler rel 50 / 80 | largeur rel méd 50 / 80 | d aux dernières coupures (Val · Crasse · Lolo · Rapace) |
+|---|---|---|---|---|---|---|
+| avant | 10,3 | +2,7 | 38 / 54 % | 0,342 / 0,570 | 8,1 % / 15,5 % | — |
+| C2 (lin., prior 0) | 10,3 | +2,7 | 31 / 54 % | 0,343 / 0,573 | 8,1 % / 15,5 % | +0,05 · −0,03 à −0,05 · −0,005 · −0,06 km/h par unité de part |
+| C2p (lin., prior −0,7 km/h, λ 5) | 9,8 | +1,8 | 31 / 54 % | 0,360 / 0,578 | 8,8 % / 15,5 % | −0,70 · −0,76 à −0,85 · −0,67 · −0,77 |
+| R (référence, rappel) | 10,2 | +2,8 | 31 / 54 % | 0,342 / 0,558 | 8,1 % / 16,9 % | — |
+| RC2 (log, prior 0) | 10,2 | +2,8 | 31 / 54 % | 0,343 / 0,562 | 8,1 % / 16,7 % | +0,006 (Val, Nice) |
 
-| Nice 100M 2026 | référence (A2A1A3) | RC2 |
-|---|---|---|
-| part de nuit de la cible / moyenne des ultras / écart | — | |
-| d (ln v par unité de part de nuit) | — | |
-| central, bornes | 34,33 ; 29,83 – 39,52 | |
+Zone d'action (6 coupures `regression` vendues quelque part) : avant MAE 6,7, Winkler
+0,621 / 0,789 ; C2 6,8, 0,626 / 0,797 ; C2p 5,9, 0,515 / 0,682 ; RC2 6,1, 0,228 / 0,459
+(R : 6,1, 0,220 / 0,405).
 
-**Décision.** En attente du banc.
+**Lecture.**
+- **Sans a priori, la nuit ne dit rien.** Le coefficient mesuré est nul ou du mauvais signe :
+  chez Val il est POSITIF (+0,05 km/h par unité de part de nuit ; en lien log sur Nice
+  +0,006) — ses deux ultras les plus nocturnes (Saintélyon 2024, 71 % ; 19 septembre 2025,
+  73 %) sont aussi ses plus rapides, des courses roulantes de nuit. À douze ultras, la part de
+  nuit est confondue avec le type de course, et la colonne D+/km ne sépare pas roulant de
+  technique. Aucun central ne bouge de plus de 0,7 %.
+- **Avec un prior « littérature »** (−10 % à pleine nuit, λ 5), le prior fait tout le travail
+  (d ≈ −0,7 km/h partout, les données n'y résistent pas) : MAE des 13 appariés 10,3 → 9,8,
+  biais +2,7 → +1,8, mais Winkler 50 dégradé (0,342 → 0,360) et couvertures égales. Il aide
+  les courses de JOUR, prédites plus vite que la moyenne nocturne de l'athlète (Crasse
+  Coursières 2026 +8,4 → +3,5 %, Montagnhard 2026 +17,4 → +14,3, Rapace Nivolet +26 → +18)
+  et dégrade les cibles nocturnes (Val Chianti −6,3 → +7,2, Lolo MIUT +0,6 → +3,9, Crasse
+  Grand Trail du Lac −1,9 → −5,0). Sur Nice, la cible est plus nocturne que l'habitude de
+  Val (46 % contre 33 %, écart +0,14) : ce prior l'allongerait d'environ 1,5 %, contre
+  l'évidence de ses propres données.
+- Les cas frais vendus (blend) ne bougent dans aucune variante.
+- **Nice sous RC2** : 34,29 h [29,72 – 39,56], d = +0,006, part de nuit de la cible 46 %,
+  moyenne des ultras 33 % : identique à la référence à 0,1 h près.
+
+**Décision.** Défaut `none` **non basculé** ; **non activé pour le rapport de référence** :
+les données de Val ne portent aucun ralentissement nocturne mesurable, et un prior de
+population l'allongerait sans preuve. Le terme reste disponible ; il ne sera reconsidéré
+qu'avec un prior mesuré sur plusieurs athlètes (Phase 4) et une colonne de roulance
+(technicité) qui lève la confusion.
 
 ### 10.7 Fade — La dérive du plan vient des courses de l'athlète (flag `pacing.fade_source`, défaut `config`)
 
@@ -1588,22 +1648,54 @@ splits → durability → config avec la source servie ; borne basse pour un ath
 le scoreur retrouve exactement (MAE nulle) la forme qui a produit les passages et pénalise les
 autres.
 
-**Preuve au banc — À COLLER.** `tools/score_plan` sur les quatre manifestes après le banc de
-base (registre enrichi).
+**Preuve au banc (2026-09-15).** `tools/score_plan` sur le registre enrichi : 30 courses à
+passages (12 cas frais, 18 de développement), trois sources de fade × deux modèles d'arrêts,
+plan ancré sur le temps officiel.
 
 | groupe | fade | arrêts | n | MAE passages, % du temps | MAE, min | biais mi-course, min |
 |---|---|---|---|---|---|---|
-| cas frais | config | carved | | | | |
-| cas frais | durability | carved | | | | |
-| cas frais | splits | carved | | | | |
-| cas frais | config | personal | | | | |
-| cas frais | splits | personal | | | | |
-| dev_set | (idem) | | | | | |
+| cas frais | config | carved | 12 | 1,89 | 14,4 | +16,6 |
+| cas frais | durability | carved | 12 | 2,02 | 15,2 | +18,8 |
+| cas frais | splits | carved | 12 | 1,91 | 14,4 | +16,6 |
+| cas frais | config | personal | 10 | 1,89 | 14,7 | +17,5 |
+| cas frais | splits | personal | 10 | 1,87 | 14,5 | +17,6 |
+| dev_set | config | carved | 18 | 2,21 | 17,7 | +24,9 |
+| dev_set | durability | carved | 18 | 2,07 | 17,0 | +23,8 |
+| dev_set | splits | carved | 18 | 1,80 | 14,1 | +17,4 |
+| dev_set | config | personal | 14 | 2,74 | 21,9 | +29,0 |
+| tous | config | carved | 30 | 2,08 | 16,4 | +21,6 |
+| tous | splits | carved | 30 | 1,84 | 14,2 | +17,1 |
 
-**Décision.** En attente du banc. Règle propre au fade : la source retenue par défaut est
-celle qui minimise la MAE des passages SUR LES CAS FRAIS sans dégrader le dev_set, et le
-signe du biais à mi-course dit si l'athlète part trop vite ou trop lentement par rapport au
-plan — c'est ce que le rapport doit dire.
+Par athlète (fade `config` → `splits`, arrêts `carved`) : Val 2,26 → 2,10 (biais +26 → +19 min),
+Crasse 2,18 → 1,64 (+24 → +17), Lolo 2,45 → 2,35 (+25 → +22), Rapace 1,10 → 1,30 (+5 → +10).
+Δ des moitiés mesuré, NON borné, médiane des coupures : Val 0,136, Crasse 0,245, Lolo 0,108,
+Rapace −0,148 ; servi par `splits` après la borne [0,04 ; 0,13] : Val 0,13, Crasse 0,13,
+Lolo 0,108, Rapace 0,04.
+
+**Lecture.**
+- **Le fait dominant n'est pas la source du fade, c'est son amplitude** : à mi-course les
+  athlètes sont EN AVANCE sur le plan de 17 à 25 minutes, 27 courses sur 30, les quatre
+  athlètes. Le plan part trop lentement et finit trop vite : la dérive réelle est plus forte
+  que Δ = 0,085 (moitiés à −8 %) — Crasse ralentit de 22 % entre ses moitiés (Δ 0,245), Val de
+  13 %, Lolo de 10 %. La borne haute 0,13 écrête Crasse à la moitié de sa mesure : `splits`
+  réduit le biais (21,6 → 17,1 min) sans le fermer.
+- `splits` gagne sur le dev_set (2,21 → 1,80, Crasse 2,18 → 1,64) et fait jeu égal sur les cas
+  frais (1,89 contre 1,91 : Lolo mieux, Rapace moins bien). Rapace a un Δ mesuré NÉGATIF
+  (il accélérerait) alors que son biais dit qu'il ralentit : le rapport des moitiés se lit sur
+  le canal distance, haché chez lui (§9.11) — mesure non fiable pour cet athlète, la borne
+  basse 0,04 l'a rattrapé.
+- La répartition personnelle des arrêts n'aide nulle part (§10.5) ; chez Crasse, la politique
+  du plan compensait par hasard la dérive manquante.
+
+**Suite immédiate, sans archive** : `tools/score_plan --set` (quelques secondes) avec
+`pacing.fade_delta=0,15` et `0,20`, et `pacing.fade_source=splits` + `pacing.fade_delta_max=0,30` :
+si le biais à mi-course se ferme sans dégrader les cas frais, c'est l'amplitude qui est en
+cause et la borne à relever ; sinon c'est la forme (fade linéaire en Deq) qu'il faudra
+revoir. **À COLLER** : les trois tables.
+
+**Décision.** Défaut `config` **non basculé** (égalité sur les cas frais, mesure de Rapace non
+fiable). Pour le rapport de référence : `splits` réduit l'erreur de forme de Val (2,26 → 2,10)
+et son biais (+26 → +19 min), décision après le test d'amplitude ci-dessus.
 
 ### 10.8 C3 — Chaleur et altitude déclarées (flag `prediction.environment_term`, défaut `off`)
 
@@ -1627,15 +1719,27 @@ config, jamais appris ici. `Prediction.env_factor`, `env_detail` exposés.
 donnent 1 − 0,06 − 0,05 ; plus bas et plus frais ⇒ 1 ; temps allongé de f^(−1/(1+b)) sur un
 athlète de Riegel, bornes qui suivent ; défauts intacts avec spec chaude et parcours haut.
 
-**Preuve au banc — À COLLER.** Variante `C3` (différentiel d'altitude seul, aucune chaleur
-déclarée au banc) : altitude moyenne des courses contre altitude de référence par athlète,
-effet sur les 13 vendus ; recapture de Nice (altitude du parcours, référence de Val, facteur).
+**Preuve au banc (2026-09-15).** Variante `C3` : différentiel d'altitude seul (aucune chaleur
+déclarée au banc), altitude moyenne de chaque parcours contre l'altitude moyenne pondérée
+des vrais ultras de l'athlète à la coupure, 0,05 par 1 000 m.
 
-| variante | vendus MAE % (13 appariés) | biais % | couv 50 / 80 | Winkler rel 50 / 80 | coupures où le facteur < 1 |
-|---|---|---|---|---|---|
-| avant | 10,3 | +2,7 | 38 / 54 % | 0,342 / 0,570 | — |
-| C3 | | | | | |
+| variante | vendus MAE % (13 appariés) | biais % | couv 50 / 80 | Winkler rel 50 / 80 | largeur rel méd 50 / 80 | coupures où le facteur < 0,99 |
+|---|---|---|---|---|---|---|
+| avant | 10,3 | +2,7 | 38 / 54 % | 0,342 / 0,570 | 8,1 % / 15,5 % | — |
+| C3 | 11,8 | +4,3 | 23 / 46 % | 0,374 / 0,596 | 8,3 % / 15,9 % | 9 sur 30 |
 
-**Décision.** En attente du banc. La chaleur déclarée ne peut pas être un défaut (aucune
-donnée de calibration ne la porte) ; le différentiel d'altitude se décide au banc comme les
-autres leviers.
+Par coupure : Val Lavaredo (facteur 0,935) +1,0 → +8,3 % ; Crasse Montagnhard 2026 (0,958)
++17,4 → +23,9, sort des bornes de sécurité ; Montagnhard 2023 (0,968) +2,0 → +6,2 ; Chota
+(0,941) −10,1 → −3,3, la seule amélioration ; Val Coursières 50k (0,973) +8,6 → +12,4 ; Lolo
+MIUT (0,983) +0,6 → +2,8 ; Rapace Nivolet (0,986) +26 → +28. Cas frais vendus intacts.
+
+**Lecture.** Un coût d'altitude en écart à l'habitude de l'athlète n'a aucun appui dans ces
+données : ses ultras de calibration couvrent déjà les altitudes où il court, et le central
+étant biaisé vers le lent (+3 à +6 % sur la zone d'action), toute pénalité supplémentaire
+aggrave. La chaleur, elle, n'est mesurable nulle part dans l'archive : le terme resterait une
+déclaration sans preuve possible.
+
+**Décision.** Défaut `off` **non basculé**, **non activé pour le rapport de référence**. Le
+flag reste pour une chaleur déclarée par le client, avec son coût population affiché comme
+tel ; le différentiel d'altitude est rejeté sur ce banc.
+
