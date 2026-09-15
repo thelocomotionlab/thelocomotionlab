@@ -20,7 +20,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import date
+from datetime import date, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
@@ -147,8 +147,24 @@ class PassageCollector:
             score = (abs((d - rd).days), abs(hours - official) if official else -hours)
             if k not in self.best or score < self.best[k]["score"]:
                 self.best[k] = {"score": score, "date": d.isoformat(), "hours": hours,
+                                "start_time": act.start_time,
                                 "t": act.t.copy(), "dist_m": act.dist_m.copy(),
                                 "lat": act.lat.copy(), "lon": act.lon.copy()}
+
+
+def race_meta_from_candidate(cand: dict | None) -> dict | None:
+    """Calendrier d'une course lu dans l'activité du jour : départ en heure locale du fuseau
+    solaire de la longitude, position médiane. None sans candidate, position ou départ."""
+    if cand is None or cand.get("start_time") is None:
+        return None
+    lat, lon = np.asarray(cand["lat"], dtype=float), np.asarray(cand["lon"], dtype=float)
+    ok = np.isfinite(lat) & np.isfinite(lon)
+    if not ok.any():
+        return None
+    la, lo = float(np.median(lat[ok])), float(np.median(lon[ok]))
+    tz = float(round(lo / 15.0))
+    start_local = cand["start_time"].astimezone(timezone(timedelta(hours=tz)))
+    return {"start_local": start_local, "lat": la, "lon": lo, "tz": tz}
 
 
 def race_activities(archive: Path, races: list[dict], *, progress=None) -> dict[int, dict]:

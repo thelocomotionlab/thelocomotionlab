@@ -840,7 +840,11 @@ def test_banc_one_pass_matches_the_separate_tools(tmp_path, monkeypatch, capsys)
 
     one = json.loads(reg_one.read_text(encoding="utf-8"))["entries"]
     sep = json.loads(reg_sep.read_text(encoding="utf-8"))["entries"]
-    assert one == sep and one[0]["passages"]["n_found"] == len(course.segments) + 1
+    # le banc en une passe connaît en plus le calendrier de la course (départ, position, lus
+    # dans l'activité du jour) ; le reste est identique au bit près
+    assert one[0]["race_meta"] is not None and sep[0]["race_meta"] is None
+    strip = lambda rows: [{k: v for k, v in r.items() if k != "race_meta"} for r in rows]
+    assert strip(one) == strip(sep) and one[0]["passages"]["n_found"] == len(course.segments) + 1
     diag_one = json.loads((out / "diag-testeur.json").read_text(encoding="utf-8"))
     diag_sep = json.loads(json.dumps(
         scan_archive(d, cfg, min_hours=0.5, min_stop_s=60, manifest=manifest)))

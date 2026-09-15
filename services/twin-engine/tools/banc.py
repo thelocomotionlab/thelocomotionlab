@@ -43,7 +43,7 @@ from tools.backtest import (DEFAULT_REGISTRE, ArchiveCache, _fmt_row, backtest_r
                             hint_missing_archive, merge_registre)
 from tools.diag_ultras import DiagCollector
 from tools.diag_ultras import render_markdown as diag_markdown
-from tools.passages import PassageCollector, passages_for_manifest
+from tools.passages import PassageCollector, passages_for_manifest, race_meta_from_candidate
 from tools.passages import render_markdown as passages_markdown
 from tools.registre import compare_markdown, tableau_markdown
 
@@ -109,11 +109,15 @@ def run_manifest_one_pass(manifest_path: Path, cfg, registre: dict, *, out_dir: 
             yield act
 
     cache = ArchiveCache(archive, cfg, stream=_tee(stream), skipped=skipped)
+    # calendrier des courses sans race_json : lu dans l'activité du jour retenue pour les
+    # passages (départ, position) — sert au terme de nuit de la cible, rien d'autre
+    metas = {k: race_meta_from_candidate(pas.best.get(k)) for k in range(len(man["races"]))} \
+        if pas is not None else {}
     entries: list[dict] = []
-    for r in man["races"]:
+    for k, r in enumerate(man["races"]):
         print(f"  {athlete} · {r['name']} ({r['date']}) — coupure la veille…",
               file=sys.stderr, flush=True)
-        entries.append(backtest_race(cache, r, cfg, base=base))
+        entries.append(backtest_race(cache, r, cfg, base=base, race_meta=metas.get(k)))
     merge_registre(registre, athlete, man.get("dev_set", False), entries)
 
     out: dict = {"athlete": athlete, "entries": entries, "variants": {}}
@@ -121,7 +125,8 @@ def run_manifest_one_pass(manifest_path: Path, cfg, registre: dict, *, out_dir: 
     for name, cfg_v in (variants or {}).items():
         cache.cfg = cfg_v
         try:
-            ev = [backtest_race(cache, r, cfg_v, base=base) for r in man["races"]]
+            ev = [backtest_race(cache, r, cfg_v, base=base, race_meta=metas.get(k))
+                  for k, r in enumerate(man["races"])]
         finally:
             cache.cfg = cfg
         if variant_registres is not None:

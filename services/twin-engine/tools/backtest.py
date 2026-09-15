@@ -41,9 +41,11 @@ from pathlib import Path
 
 import numpy as np
 
+from twin_engine.calibration import stops_statistics
 from twin_engine.config import load_config
 from twin_engine.course import RaceSpec, build_course
 from twin_engine.ingest import iter_activities
+from twin_engine.pacing.plan import fade_delta_from_splits
 from twin_engine.pipeline import analyze_preview_from_twin
 from twin_engine.twin.model import build_twin_from_contributions
 from twin_engine.twin.record import iter_contributions
@@ -106,10 +108,12 @@ class ArchiveCache:
             print(f"\r  décodage de l'archive : {n} fichiers…", end="", file=sys.stderr,
                   flush=True)
 
-    def preview_at(self, course, until: date, target_hours=None):
+    def preview_at(self, course, until: date, target_hours=None, race=None):
         """Jumeau + prédiction « ce que le moteur savait au soir du ``until`` ».
 
         Anti-fuite identique au chemin direct : postérieures ET non datées écartées.
+        ``race`` : la spec de course (calendrier, chaleur, ravitos) — donnée de course, pas
+        de l'athlète, donc hors du périmètre de la coupure.
         """
         kept = [c for c in self.contributions
                 if c.start_date is not None and c.start_date <= until]
@@ -118,13 +122,27 @@ class ArchiveCache:
         return analyze_preview_from_twin(
             twin, course, self.cfg, n_ingested=len(kept), n_skipped=self.n_skipped,
             n_excluded_until=n_excluded, analysis_date=until, target_hours=target_hours,
+            race=race,
         )
 
 
-def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path) -> dict:
+def race_spec_from_meta(name: str, meta: dict | None) -> RaceSpec:
+    """Spec minimale d'une course sans ``race_json`` : le calendrier (départ local, position,
+    fuseau solaire) lu dans les métadonnées de l'activité du jour — l'heure et le lieu d'un
+    départ de course sont des données de course, pas une performance de l'athlète. Sans
+    métadonnées : spec nominale (mode GPX-only, écart de nuit nul)."""
+    if not meta:
+        return RaceSpec(name=name)
+    return RaceSpec(name=name, start_time=meta["start_local"], lat=float(meta["lat"]),
+                    lon=float(meta["lon"]), tz_offset_h=float(meta["tz"]))
+
+
+def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path,
+                  race_meta: dict | None = None) -> dict:
     """Rejoue UNE course passée : coupure la veille (ou ``until`` du manifeste) → entrée
     de registre. Une prédiction impossible (🔴) est consignée telle quelle : le refus du
-    moteur est une information, pas un échec du banc."""
+    moteur est une information, pas un échec du banc. ``race_meta`` : calendrier de la
+    course (cf. :func:`race_spec_from_meta`) quand le manifeste n'a pas de ``race_json``."""
     race_date = date.fromisoformat(race_entry["date"])
     until = (date.fromisoformat(race_entry["until"]) if race_entry.get("until")
              else race_date - timedelta(days=1))
@@ -135,12 +153,18 @@ def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path) -
     if race_entry.get("race_json"):
         race = RaceSpec.from_json((base / race_entry["race_json"]).resolve())
     else:
-        race = RaceSpec(name=race_entry["name"])
+        race = race_spec_from_meta(race_entry["name"], race_meta)
 
     course = build_course(gpx_path.read_bytes(), race, cfg)
-    result = cache.preview_at(course, until, target_hours=race.target_hours)
+    result = cache.preview_at(course, until, target_hours=race.target_hours, race=race)
     pred = result.prediction
+    cal = result.calibration
     actual_h = None if race_entry.get("dnf") else parse_time_h(race_entry.get("official_time"))
+    # statistiques personnelles consignées QUEL QUE SOIT le modèle servi : tools/score_plan
+    # rejoue la forme du plan (arrêts personnels, fade des moitiés) depuis le registre seul
+    w = (np.asarray(cal.weights, dtype=float) if cal.weights is not None
+         else np.ones(cal.n_genuine))
+    st = stops_statistics(cal.genuine, w, cfg) if cal.n_genuine else None
 
     entry: dict = {
         "race": race_entry["name"],
@@ -167,7 +191,26 @@ def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path) -
             "n_activities_used": result.n_ingested,
             "n_excluded_until": result.n_excluded_until,
             "n_skipped_ingest": result.n_skipped,
+            # Phase 2 : ce que l'athlète apporte au plan et aux arrêts (agrégats)
+            "durability_pct": (None if result.twin.durability_pct is None
+                               else round(result.twin.durability_pct, 1)),
+            "fade_delta_splits": (None if (fs := fade_delta_from_splits(cal)) is None
+                                  else round(fs, 4)),
+            "stops_rate_personal": (None if st is None or st["origin"] != "ultras"
+                                    else round(st["rate"], 4)),
+            "stops_rate_sd_log": (None if st is None or st["origin"] != "ultras"
+                                  else round(st["sd_log"], 4)),
+            "stops_ref_hours": (None if st is None or st["ref_hours"] is None
+                                else round(st["ref_hours"], 2)),
+            "stops_model": cal.stops_model,
+            "night_share_mean": (None if cal.night_share_mean is None
+                                 else round(cal.night_share_mean, 4)),
+            "night_coef": None if cal.night_coef is None else round(cal.night_coef, 4),
         },
+        "race_meta": None if race_meta is None else {
+            "start_local": race_meta["start_local"].isoformat(),
+            "lat": round(float(race_meta["lat"]), 2), "lon": round(float(race_meta["lon"]), 2),
+            "tz": race_meta["tz"], "source": "activité du jour"},
         "prediction": None,
     }
     # cible SOUS le domaine de calibration (efforts ≥ genuine_min_hours) : la prédiction est
@@ -191,6 +234,12 @@ def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path) -
             # predict.leverage_target), une seule définition — en lien log, sd de ln T
             "sd_rel": None if pred.sd_rel is None else round(pred.sd_rel, 4),
             "leverage": None if pred.leverage is None else round(pred.leverage, 3),
+            "moving_h": None if pred.moving_hours is None else round(pred.moving_hours, 3),
+            "stops_h": None if pred.stops_hours is None else round(pred.stops_hours, 3),
+            "night_share_target": (None if pred.night_share_target is None
+                                   else round(pred.night_share_target, 4)),
+            "night_dev": None if pred.night_dev is None else round(pred.night_dev, 4),
+            "env_factor": None if pred.env_factor is None else round(pred.env_factor, 4),
             # err_pct > 0 : le moteur a prédit TROP LENT (central au-dessus du réel)
             "err_pct": err_pct,
             "in_plan": (None if actual_h is None or pred.plan_low_h is None
