@@ -83,14 +83,21 @@ pas sur l'écoulé (écart ≤ 5 min), le taux d'arrêt est personnel et dispers
 0,2–0,7 min/h de plateaux en course, Val 4–5), la nuit de Nice vaut 43 % du mouvement
 contre 33–34 % sur les ultras de Val, ≈ 290 passages réels relevés sur 30 courses.
 
-**Découverte : doublons d'activités.** Val (toute activité depuis 2024-09) et Lolo (tous ses
-efforts longs, déjà au banc d'août) ont chaque activité en double dans leur archive — deux
-exports qui se recouvrent. Correctif activé : `twin.dedup_activities=on` (même départ,
+**Découverte : doublons d'activités.** Val (toute activité depuis 2024-09, 551 copies) et
+Lolo (545 copies, déjà au banc d'août) ont chaque activité en double dans leur archive —
+deux exports qui se recouvrent. Correctif activé : `twin.dedup_activities=on` (même départ,
 même durée, même distance ⇒ une copie, la plus riche ; rollback `off`), sans effet sur le
-golden ni sur les fixtures (pas d'heure de départ dans les agrégats). Conséquence : le
-banc est à rejouer sous dédoublonnage et devient le « avant » du chantier ; l'instantané
-brut est gardé sous `registre-avant-doublons.json` ; la recapture de référence de Val est
-à refaire (celle du 15/09, 32,59 h sur 22 plis doublés, ne vaut pas référence).
+golden ni sur les fixtures (pas d'heure de départ dans les agrégats). Le banc rejoué sous
+dédoublonnage est le « avant » du chantier (`registre-avant.json`) ; l'instantané brut est
+gardé sous `registre-avant-doublons.json`.
+
+**Phase 0 close (2026-09-15).** « Avant » définitif : cas vendus n=13, MAE 10,3 %, couverture
+38 % (50 nominal) et 54 % (80 nominal), Winkler relatif 0,342 / 0,570, largeur relative
+médiane 8,1 % / 15,5 % ; cas de référence Nice : 32,33 h, fourchette ±15,0 %, sécurité
+±24,3 %, LOO 6,9 % sur 12 plis. Trois lectures pour la suite : les bandes sous-couvrent
+sur les cas vendus (la règle « jamais réduire la couverture nominale » est contraignante),
+deux bandes dégénérées à corriger (borne basse 0,0 h, borne haute au plafond), et un biais
+de progression chez un second athlète (Val 2024 : +21 à +24 %).
 
 ## Choix faits à la place de Valentin (Phase 0)
 

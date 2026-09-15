@@ -852,57 +852,99 @@ avant/après (`tools/registre --compare`). Rejoué par `tools/registre`, il repr
 exactement le banc du 2026-08-15 (§5.y : frais vendus n=2, MAE 10,6 %, couv80 50 % ; dev
 vendus n=8, MAE 6,0 %, couv80 75 %) — le moteur n'a pas bougé depuis.
 
-**Tableau de référence (`tools/registre --tableau`, registre du 2026-08-15, config servie).**
-Winkler relatif = score de Winkler ÷ temps réel (comparable entre courses de durées
-inégales) ; largeur relative = (haut − bas) ÷ central, médiane par ligne.
+**Tableau de référence — le « avant » du chantier (`tools/banc`, 2026-09-15, config servie,
+doublons fusionnés ; `docs/archive/twin-v2/registre-avant.json`).** Winkler relatif = score
+de Winkler ÷ temps réel ; largeur relative = (haut − bas) ÷ central, médiane par ligne. Le
+banc brut du départ (registre du 2026-08-15, Lolo doublé, Val sur son ancienne archive) est
+conservé sous `registre-avant-doublons.json` ; il donnait frais vendus n=2 · MAE 10,6 % ·
+couv80 50 %, dev vendus n=8 · 6,0 % · 75 %.
 
 *Cas frais (décisionnels) — VENDUS (🟢/🟠)*
 
 | athlète | n | MAE % | biais % | couv 50 | couv 80 | Winkler rel 50 | Winkler rel 80 | largeur rel méd 50 | largeur rel méd 80 |
 |---|---|---|---|---|---|---|---|---|---|
-| Lolo | 2 | 10.6 | -10.6 | 0 % | 50 % | 0.369 | 0.841 | 5.0 % | 9.5 % |
-| TOTAL | 2 | 10.6 | -10.6 | 0 % | 50 % | 0.369 | 0.841 | 5.0 % | 9.5 % |
+| Lolo | 2 | 17.2 | -17.2 | 0 % | 0 % | 0.611 | 1.125 | 8.4 % | 16.2 % |
+| TOTAL | 2 | 17.2 | -17.2 | 0 % | 0 % | 0.611 | 1.125 | 8.4 % | 16.2 % |
 
 *Cas frais — REFUSÉS (🔴)*
 
 | athlète | n | MAE % | biais % | couv 80 | motifs bloquants |
 |---|---|---|---|---|---|
-| Lolo | 4 | 7.9 | -7.1 | 50 % | Domaine de calibration ×3 · Erreur validation croisée ×1 · Largeur d'intervalle ×1 |
+| Lolo | 4 | 9.6 | -9.3 | 50 % | Domaine de calibration ×3 · Erreur validation croisée ×1 · Largeur d'intervalle ×1 |
 | Rapace | 5 | 81.7 | 81.7 | 20 % | Qualité (FC / altitude / distance) ×4 · Domaine de calibration ×2 · Efforts longs proches de la cible ×1 · Erreur validation croisée ×1 · Largeur d'intervalle ×1 |
-| TOTAL | 9 | 48.9 | 42.2 | 33 % | Domaine de calibration ×5 · Qualité (FC / altitude / distance) ×4 · Erreur validation croisée ×2 · Largeur d'intervalle ×2 · Efforts longs proches de la cible ×1 |
+| TOTAL | 9 | 49.6 | 41.3 | 33 % | Domaine de calibration ×5 · Qualité (FC / altitude / distance) ×4 · Erreur validation croisée ×2 · Largeur d'intervalle ×2 · Efforts longs proches de la cible ×1 |
 
 *Cas de développement (indicatifs) — VENDUS (🟢/🟠)*
 
 | athlète | n | MAE % | biais % | couv 50 | couv 80 | Winkler rel 50 | Winkler rel 80 | largeur rel méd 50 | largeur rel méd 80 |
 |---|---|---|---|---|---|---|---|---|---|
 | Crasse | 7 | 6.8 | 2.6 | 57 % | 71 % | 0.191 | 0.296 | 7.1 % | 13.4 % |
-| Val | 1 | 0.3 | -0.3 | 100 % | 100 % | 0.150 | 0.757 | 15.0 % | 76.0 % |
-| TOTAL | 8 | 6.0 | 2.2 | 62 % | 75 % | 0.185 | 0.354 | 7.6 % | 14.3 % |
+| Val | 4 | 12.9 | 12.9 | 25 % | 50 % | 0.473 | 0.773 | 12.8 % | 24.8 % |
+| TOTAL | 11 | 9.0 | 6.3 | 45 % | 64 % | 0.293 | 0.469 | 8.1 % | 15.5 % |
 
 *Cas de développement — REFUSÉS (🔴)*
 
 | athlète | n | MAE % | biais % | couv 80 | motifs bloquants |
 |---|---|---|---|---|---|
 | Crasse | 6 | 120.3 | 117.0 | 0 % | Domaine de calibration ×4 · Efforts longs proches de la cible ×2 |
-| Val | 5 | 7.4 | 2.2 | 80 % | Qualité (FC / altitude / distance) ×5 · Historique ×3 · Fraîcheur des données ×3 · Courses exploitables ×3 · Efforts longs proches de la cible ×2 · Domaine de calibration ×1 |
-| TOTAL | 11 | 69.0 | 64.8 | 36 % | Qualité (FC / altitude / distance) ×5 · Domaine de calibration ×5 · Efforts longs proches de la cible ×4 · Historique ×3 · Fraîcheur des données ×3 · Courses exploitables ×3 |
+| Val | 2 | 7.4 | 1.2 | 50 % | Domaine de calibration ×1 · Largeur d'intervalle ×1 |
+| TOTAL | 8 | 92.1 | 88.0 | 12 % | Domaine de calibration ×5 · Efforts longs proches de la cible ×2 · Largeur d'intervalle ×1 |
 
-*Tous les cas — VENDUS (🟢/🟠)* : Crasse 7 (MAE 6,8 %), Lolo 2 (10,6 %), Val 1 (0,3 %) ;
-TOTAL n=10, MAE 6,9 %, biais −0,3 %, couv50 50 %, couv80 70 %, Winkler rel 0,222 / 0,451,
-largeur rel méd 7,6 % / 14,3 %.
+*Tous les cas — VENDUS (🟢/🟠)* : Crasse 7 (MAE 6,8 %), Lolo 2 (17,2 %), Val 4 (12,9 %) ;
+TOTAL n=13, MAE 10,3 %, biais +2,7 %, couv50 38 %, couv80 54 %, Winkler rel 0,342 / 0,570,
+largeur rel méd 8,1 % / 15,5 %.
 
-Lecture : la ligne Val/Lavaredo 2025 est la dégénérescence pointée par l'audit — fourchette
-de course ±7,5 % mais bornes de sécurité ±38 % pour un central à −0,3 % (largeur rel 76 %) :
-un seul mauvais pli fixe la borne. C'est la cible de la Phase 1 (A3).
+**Lecture du « avant », ce que la Phase 1 doit viser.**
+1. **Sur les cas vendus, les bandes SOUS-couvrent** : 38 % dans la fourchette de course
+   (50 nominal), 54 % dans les bornes de sécurité (80 nominal). L'audit a raison sur le cas
+   de référence (bandes larges, levier d'extrapolation à 32 h) et le banc montre le revers :
+   sur les cas courts et bien encadrés, les bandes conformes sont trop étroites. Même
+   mécanique, deux symptômes — quantile empirique instable à petit n, symétrie en heures.
+   La règle « jamais réduire la couverture nominale » n'en est que plus contraignante.
+2. **Bandes dégénérées, cibles de A2/A3** : Lolo/MIUT 2026 (5 vrais ultras, 4 groupés
+   10–13 h + 1 long) → fourchette [11,6 – 40,3], sécurité [**0,0** – 51,9] pour un central
+   25,97 h juste (+0,6 %) : en lien linéaire, q·sd_rel ≥ 1 rend la borne basse négative. Val/
+   Chianti 2025 → [14,4 – 68,2] et [13,3 – 68,2] : borne haute = plafond Deq/v_floor du repli
+   MC. Val/Lavaredo (registre brut) : sécurité ±38 % pour une fourchette ±7,5 %.
+3. **Biais de progression, deuxième athlète** : Val 2024 avec son historique 2022–2023 →
+   Ecotrail +23,8 %, GRF +21,0 % ; puis Saintélyon +5,6 %, Lavaredo +1,0 %, Chianti −6,3 %
+   à mesure que les ultras récents s'accumulent. Même signature que Crasse (§5.x) : la
+   demi-vie ne le corrige pas (rejeté au banc), c'est l'information sur la pente en durée
+   (A1, puis B1) qui doit le porter.
+4. **Lolo, une fois dédoublonné, est prédit trop rapide partout** (−4 à −20 %) avec 5 vrais
+   ultras : ses deux cas vendus font la totalité de la statistique « frais vendus » (n=2).
+   La règle « jamais sur un seul athlète » s'appliquera à chaque décision de la Phase 1 :
+   les leviers seront livrés derrière flag et, si la jauge ne tranche pas, activés pour
+   le rapport de référence via `TWIN_CONFIG_PATH`, consignés « activés pour Val, défaut non
+   basculé ».
 
-**Relance du banc sous la config servie (0.1) — FAIT (2026-09-15, `tools/banc`, 4 manifestes,
-32 courses).** `--compare` contre l'instantané : Crasse, Lolo et Rapace **identiques au
-chiffre près** (deltas nuls, aucun changement de verdict) — le moteur n'a pas bougé. Val
-change partout, parce que SON ARCHIVE a changé : l'export frais couvre 55 mois (l'ancien,
-17,5 mois), et il contient des DOUBLONS (ci-dessous). Ses six lignes sont donc à rejouer
-après dédoublonnage ; en l'état : Ecotrail +23,8 % (🟠), GRF +21,0 % (🟠), Saintélyon
-+1,0 % (🟢), Chianti −9,9 % (🔴, largeur), Lavaredo +1,2 % (🟢), Coursières 50k +8,6 %
-(🔴, domaine).
+**Relance du banc sous la config servie (0.1) — FAIT deux fois (2026-09-15, `tools/banc`,
+4 manifestes, 32 courses).** Première passe, sans dédoublonnage : Crasse, Lolo et Rapace
+**identiques au chiffre près** à l'instantané brut (deltas nuls, aucun changement de verdict)
+— le moteur n'a pas bougé ; Val change partout parce que SON ARCHIVE a changé (export frais,
+55 mois au lieu de 17,5) et parce qu'elle est doublée. Seconde passe, doublons fusionnés
+(Val : 551 copies, Lolo : 545, Crasse et Rapace : 0) : c'est le tableau de référence
+ci-dessus. Effet du dédoublonnage lu au `--compare` : Lolo, 10 → 5 vrais ultras, ses erreurs
+bougent de −19,4 → −4,3 % (Coursières Hivernal) à −1,2 → −13,8 % (UTDR), −6,1 → −16,4 %
+(UTSM) ; Val, Saintélyon 2024 +1,0 → +5,6 %, Lavaredo +1,2 → +1,0 %, les coupures de 2024
+inchangées (les doublons commencent en septembre 2024).
+
+**Recapture de référence sur l'archive fraîche (moteur actuel, dédoublonnée) — le « avant »
+du cas Nice.** `twin-engine preview`, 918 activités uniques (1 469 lues, 551 copies), coupure
+au 2026-09-15 :
+
+| Grandeur | Recapture 2026-09-15 | PDF livré (même jour) |
+|---|---|---|
+| central | 32,33 h | 32 h 17 |
+| bornes de sécurité (80 %) | 24,46 – 40,20, soit ±24,3 % | 24 h 39 – 39 h 54 |
+| fourchette de course (50 %) | 27,49 – 37,17, soit ±15,0 % | 28 h 11 – 36 h 22 |
+| σ · LOO (12 plis) | 0,505 km/h · brute 6,9 %, interpolation 7,7 %, extrapolation 4,0 % | 0,50 · 6,8 / 7,6 / 4,0 |
+| VC · E · durabilité | 9,75 km/h (2,708 m/s ± 0,19) · 1,167 (α 0,143) · 19,1 % | 9,72 · 1,18 · 19 % |
+| β (lien linéaire) · n_eff · intensité | (9,285 ; −0,379 ; −0,0335) · 11,1 · 63,5 % de VC | — |
+
+Les deux colonnes concordent : le PDF avait été produit sur une archive sans doublons. Les
+références du golden RÉEL (§12, archive de juillet, 449 activités) restent celles d'une autre
+archive ; la question de leur recapture est ouverte (compte-rendu).
 
 **Doublons d'activités — découverte du banc, correctif ACTIVÉ (`twin.dedup_activities=on`,
 rollback `off`).** La radiographie (`tools/diag_ultras`) liste chaque effort ≥ 10 h : chez
@@ -982,15 +1024,14 @@ via le manifeste, l'écart **montre − officiel** (une montre en pause ment sur
 la LOO compare). C'est le préalable de B4 : la bascule `speed_basis=moving` et le modèle
 d'arrêts ne se décident que sur ces chiffres.
 
-Mesuré le 2026-09-15 (`tools/banc`, arrêt = plateau de distance ≥ 60 s ; « sans mouvement »
-= incrément de distance ≤ 0,5 m/s, la définition de `moving_time_s`). Les moyennes pondérées
-(récence × maximalité) ne sont pas affectées par les doublons (copies identiques).
+Mesuré le 2026-09-15 (`tools/banc`, banc dédoublonné ; arrêt = plateau de distance ≥ 60 s ;
+« sans mouvement » = incrément de distance ≤ 0,5 m/s, la définition de `moving_time_s`).
 
 | athlète | vrais ultras | sans mouvement, % de l'écoulé (méd. · pond.) | idem, min/h (méd. · pond.) | plateaux ≥ 1 min, min/h (méd. · pond.) | plateaux ≥ 5 min par course (méd.) | montre − officiel (méd. · max, min) |
 |---|---|---|---|---|---|---|
-| Val | 12 | 16,4 · 16,7 | 9,8 · 10,0 | 5,5 · 5,9 | 4 | +0,2 · 1,9 (5 courses) |
+| Val | 12 | 16,4 · 17,0 | 9,8 · 10,2 | 5,5 · 6,0 | 3,5 | +0,2 · 1,9 (5 courses) |
 | Crasse | 9 | 8,1 · 7,3 | 4,9 · 4,4 | 0,4 · 0,4 | 0 | +0,1 · 4,3 (8) |
-| Lolo | 5 | 12,8 · 17,3 | 7,7 · 10,4 | 3,8 · 6,3 | 2 | −0,4 · 1,4 (4) |
+| Lolo | 5 | 12,8 · 17,1 | 7,7 · 10,3 | 3,8 · 6,3 | 2 | −0,4 · 1,4 (4) |
 | Rapace | 4 | 42,7 · 36,9 | 25,6 · 22,1 | 3,5 · 1,9 | 0,5 | −0,1 · 1,0 (3) |
 
 Courses de Val (les seules à peser dans la LOO) : Ecotrail 11,5 % sans mouvement (6,9 min/h),
@@ -1027,9 +1068,9 @@ nuit de la cible et cette moyenne pondérée.
 
 | athlète | nuit % écoulé (méd. · pond.) | nuit % mouvement (méd. · pond.) |
 |---|---|---|
-| Val | 26,8 · 33,5 | 27,6 · 33,8 |
+| Val | 26,8 · 32,5 | 27,6 · 32,7 |
 | Crasse | 15,3 · 19,5 | 16,2 · 19,8 |
-| Lolo | 21,3 · 25,7 | 22,7 · 26,6 |
+| Lolo | 21,3 · 25,5 | 22,7 · 26,4 |
 | Rapace | 23,0 · 21,6 | 24,1 · 20,2 |
 | **cible Nice 100M sur 32,28 h (plan réel)** | 42,9 (horloge) | 43,2 |
 
@@ -1038,7 +1079,7 @@ Nice, par segment (départ ven. 13:00, soleil 07:20–19:24) : jour jusqu'à AS3
 (km 93,8, 07:58) 75 % ; jour jusqu'à AS14 ; vers AS15 (km 156,5, 19:33) 9 % ; dernier
 segment (arrivée 21:16) 100 %. Deux nuits, pas une : le PDF livré écrivait « du km 38 au
 km 84 » sur les seuls drapeaux d'arrivée. Pour C2, le différentiel qui ajuste le total vaut
-**≈ +10 points** (43 % de la cible contre 33–34 % pondérés sur les ultras de calibration
+**≈ +10 points** (43 % de la cible contre 32–33 % pondérés sur les ultras de calibration
 de Val) ; le reste du facteur nuit est une redistribution à Σ conservée.
 
 **0.5 Passages réels aux points de contrôle — À COLLER.** Outil `tools/passages` :
@@ -1052,14 +1093,15 @@ proche du premier passage). Consigné dans le registre sous `passages` (agrégat
 | athlète | courses avec passages | points trouvés / attendus | écart arrivée relevée − officiel (min) |
 |---|---|---|---|
 | Val | 6 / 6 | 66 / 66 (1 « closest » à 206 m) | −6 à 0 (Ecotrail −6 : point d'arrivée à 148 m) |
-| Crasse | 12 / 13 | 118 / 118 (Chota 2025 : activité du jour absente, 0 h 56 seulement) | −5 à +4 |
+| Crasse | 13 / 13 | 123 / 123 (Chota 2025 retrouvée le lendemain de la date du manifeste, à ± 1 j) | −5 à +4 |
 | Lolo | 7 / 7 | 58 / 58 | −2 à 0 |
 | Rapace | 6 / 6 | 46 / 51 (Saintélyon 2024 : 4/9, trace de parcours en quarantaine §9.12) | −1 à +2 |
 
-Soit ≈ 290 heures de passage réelles sur 30 courses, presque toutes à ≤ 15 m du point (rayon
-150 m rarement sollicité), consignées dans le registre sous `passages`. La sélection de
-l'activité du jour exige désormais une durée entre 0,5 et 1,5 × l'officiel (Chota 2025
-avait pris une sortie d'une heure). La matière du scoring du plan (Phase 4) existe.
+Soit 293 heures de passage réelles sur 298 attendues, 31 courses, presque toutes à ≤ 15 m
+du point (rayon 150 m rarement sollicité), consignées dans le registre sous `passages`. La
+sélection de l'activité du jour exige une durée entre 0,5 et 1,5 × l'officiel (au premier
+passage, Chota 2025 avait pris une sortie d'une heure). La matière du scoring du plan
+(Phase 4) existe.
 
 **Outils livrés en Phase 0** (tous couverts par des tests synthétiques, `tests/test_stops.py`,
 `test_backtest_tools.py`, `test_pacing.py`, `test_course.py`) : `twin/stops.py` (masque de
