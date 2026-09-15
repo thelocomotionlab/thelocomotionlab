@@ -278,7 +278,8 @@ def build_report_context(
         ),
         # source réellement servie : quand les bandes sont CONFORMES (calées sur les erreurs
         # LOO réelles), le rapport le dit — la largeur n'est plus la loi supposée du modèle
-        "interval_conformal": getattr(prediction, "interval_source", "mc") == "conformal_normalized",
+        "interval_conformal": getattr(prediction, "interval_source", "mc").startswith(
+            ("conformal_normalized", "studentized_scale")),
         "regime": prediction.regime,
         "regime_label": _REGIME_LABELS.get(prediction.regime, prediction.regime),
         "has_cv": cv is not None,

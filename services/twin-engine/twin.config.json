@@ -66,7 +66,14 @@
     "default_dplus_penalty_kmh_per_dpkm": -0.0170,
     "regression_min_sigma_kmh": 0.20,
     "blend_sigma_kmh": 0.45,
-    "vc_e_sigma_kmh": 0.80
+    "vc_e_sigma_kmh": 0.80,
+    "link": "linear",
+    "default_dplus_penalty_log_per_dpkm": -0.0027,
+    "regression_min_sigma_log": 0.03,
+    "duration_term": "free",
+    "duration_shrink_lambda": 2.0,
+    "duration_prior_source": "twin_alpha",
+    "duration_prior_alpha_population": 0.16
   },
 
   "prediction": {

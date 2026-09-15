@@ -70,6 +70,15 @@ class UltraCalibration:
     # filtre de maximalité (§4.1) : mode appliqué + poids de maximalité seul (pour transparence/rapport)
     maximality_mode: str = "off"
     maximality_weights: tuple[float, ...] | None = None
+    # --- lien de la régression (Phase 1, A2) : ``linear`` (β sur v, σ en km/h) ou ``log``
+    # (β sur ln v, σ relatif dans ``sigma_log`` ; ``sigma_kmh`` en est alors l'équivalent
+    # à la vitesse moyenne pondérée des ultras, pour l'affichage seulement)
+    link: str = "linear"
+    sigma_log: float | None = None
+    # --- prior sur la pente en durée (Phase 1, A1) : (valeur du prior sur b, λ) appliqué à
+    # l'identique dans le fit, la covariance et chaque pli LOO ; None = pente libre
+    duration_prior: tuple[float, float] | None = None
+    duration_prior_origin: str | None = None            # twin_alpha | population
 
     @property
     def n_genuine(self) -> int:
@@ -84,9 +93,16 @@ class UltraCalibration:
         """La validation croisée leave-one-out n'a de sens qu'avec une régression."""
         return self.regime == REGIME_REGRESSION and self.n_genuine >= 3
 
+    @property
+    def sigma_link(self) -> float:
+        """σ résiduel dans les unités du lien servi (km/h en linéaire, relatif en log)."""
+        return self.sigma_log if (self.link == "log" and self.sigma_log is not None) else self.sigma_kmh
+
     def predict_vga_kmh(self, hours: float, dplus_per_km: float) -> float | None:
         if self.regime == REGIME_REGRESSION:
             b0, b1, b2 = self.beta  # type: ignore[misc]
+            if self.link == "log":
+                return float(math.exp(b0 + b1 * math.log(hours) + b2 * dplus_per_km))
             return b0 + b1 * math.log(hours) + b2 * dplus_per_km
         if self.regime in (REGIME_BLEND, REGIME_VC_E):
             v_env = self._envelope_kmh(hours)
@@ -108,6 +124,11 @@ class UltraCalibration:
             "recency_halflife_days": self.recency_halflife_days,
             "maximality_mode": self.maximality_mode,
             "sigma_kmh": round(self.sigma_kmh, 3),
+            "link": self.link,
+            "sigma_log": None if self.sigma_log is None else round(self.sigma_log, 4),
+            "duration_prior": None if self.duration_prior is None
+            else {"b": round(self.duration_prior[0], 4), "lambda": self.duration_prior[1],
+                  "origin": self.duration_prior_origin},
             "beta": None if self.beta is None else [round(b, 5) for b in self.beta],
             "notes": self.notes,
             "genuine": [g.to_dict() for g in self.genuine],
@@ -292,10 +313,40 @@ def maximality_weights(
     return w
 
 
+def _pseudo_rows(cfg: Config | None, *, link: str, duration_prior: tuple[float, float] | None,
+                 n_cols: int) -> tuple[list[np.ndarray], list[float]]:
+    """Pseudo-observations ridge, communes au fit, à la covariance et aux plis LOO.
+
+    Terrain (``terrain_term=prior_shrunk``) : β2 tiré vers le prior population — en km/h par
+    m/km en lien linéaire, en relatif par m/km en lien log. Durée (``duration_term=
+    prior_shrunk``) : b tiré vers −α (log) ou −α·v̄ (linéaire), ``duration_prior = (valeur,
+    λ)``. Chaque pseudo-observation pèse √λ dans la régression pondérée."""
+    rows: list[np.ndarray] = []
+    targets: list[float] = []
+    term = cfg.calibration.terrain_term if cfg is not None else "free"
+    if term == "prior_shrunk" and n_cols == 3:
+        prior = (cfg.calibration.default_dplus_penalty_log_per_dpkm if link == "log"
+                 else cfg.calibration.default_dplus_penalty_kmh_per_dpkm)
+        lam = math.sqrt(max(cfg.calibration.terrain_shrink_lambda, 0.0))
+        rows.append(np.array([0.0, 0.0, lam]))
+        targets.append(lam * prior)
+    if duration_prior is not None and duration_prior[1] > 0:
+        lam_b = math.sqrt(duration_prior[1])
+        row = np.zeros(n_cols)
+        row[1] = lam_b
+        rows.append(row)
+        targets.append(lam_b * duration_prior[0])
+    return rows, targets
+
+
 def _regression_beta(
-    h: np.ndarray, v: np.ndarray, dpk: np.ndarray, weights: np.ndarray, cfg: Config | None
+    h: np.ndarray, y: np.ndarray, dpk: np.ndarray, weights: np.ndarray, cfg: Config | None,
+    *, link: str = "linear", duration_prior: tuple[float, float] | None = None,
 ) -> np.ndarray:
-    """β pondéré de ``v ~ 1 + ln(T) + β2·D+/km`` selon le mode de terrain (§4.2).
+    """β pondéré de ``y ~ 1 + ln(T) + β2·D+/km`` selon le mode de terrain (§4.2).
+
+    ``y`` = v (lien linéaire, défaut historique) ou ln v (lien log, A2) — même design
+    ``X = [1, ln T, D+/km]``, mêmes poids, mêmes pseudo-observations (:func:`_pseudo_rows`).
 
     * ``free`` : β2 libre (défaut historique, jusqu'au 2026-07-03).
     * ``none`` : β2 = 0 (la vga est **déjà** ajustée à la pente → pas de double-comptage).
@@ -306,66 +357,95 @@ def _regression_beta(
     term = cfg.calibration.terrain_term if cfg is not None else "free"
     lt = np.log(h)
     sw = np.sqrt(np.asarray(weights, dtype=float))
-    if term == "none":
-        X = np.vstack([np.ones_like(h), lt]).T
-        b, *_ = np.linalg.lstsq(X * sw[:, None], v * sw, rcond=None)
-        return np.array([float(b[0]), float(b[1]), 0.0])
-    X = np.vstack([np.ones_like(h), lt, dpk]).T
+    n_cols = 2 if term == "none" else 3
+    X = (np.vstack([np.ones_like(h), lt]).T if n_cols == 2
+         else np.vstack([np.ones_like(h), lt, dpk]).T)
     Xw = X * sw[:, None]
-    yw = v * sw
-    if term == "prior_shrunk":
-        prior = cfg.calibration.default_dplus_penalty_kmh_per_dpkm
-        lam = math.sqrt(max(cfg.calibration.terrain_shrink_lambda, 0.0))
-        Xw = np.vstack([Xw, np.array([0.0, 0.0, lam])])
-        yw = np.concatenate([yw, np.array([lam * prior])])
+    yw = y * sw
+    rows, targets = _pseudo_rows(cfg, link=link, duration_prior=duration_prior, n_cols=n_cols)
+    if rows:
+        Xw = np.vstack([Xw, np.array(rows)])
+        yw = np.concatenate([yw, np.array(targets)])
     b, *_ = np.linalg.lstsq(Xw, yw, rcond=None)
+    if n_cols == 2:
+        return np.array([float(b[0]), float(b[1]), 0.0])
     return np.asarray(b, dtype=float)
 
 
 def _beta_covariance(
-    genuine: list[GenuineUltra], weights: np.ndarray, sigma: float, cfg: Config | None
+    genuine: list[GenuineUltra], weights: np.ndarray, sigma: float, cfg: Config | None,
+    *, link: str = "linear", duration_prior: tuple[float, float] | None = None,
 ) -> np.ndarray:
     """Covariance des coefficients : σ²(XᵀWX)⁻¹ (3×3), cohérente avec le mode de terrain.
 
     C'est le terme de LEVIER de la loi prédictive (Var = σ²(1 + x₀ᵀ(XᵀWX)⁻¹x₀)) : il grandit
     quand la cible sort de l'enveloppe des (ln T, D+/km) d'entraînement — le même phénomène
     que les plis d'« extrapolation » de la LOO, jusqu'ici absent de l'intervalle vendu.
+    ``sigma`` est dans les unités du lien (km/h ou relatif).
 
     * ``none`` : β2 fixé à 0 → bloc 2×2 (β0, β1), ligne/colonne β2 nulles ;
-    * ``prior_shrunk`` : la pseudo-observation ridge entre dans XᵀWX (comme dans le fit) ;
+    * ``prior_shrunk`` / prior de durée : les pseudo-observations ridge entrent dans XᵀWX
+      (comme dans le fit) ;
     * ``pinv`` (pas ``inv``) : design mal conditionné → covariance large, jamais NaN.
     """
     h = np.array([g.hours for g in genuine])
     dpk = np.array([g.dplus_per_km for g in genuine])
     sw = np.sqrt(np.asarray(weights, dtype=float))
     term = cfg.calibration.terrain_term if cfg is not None else "free"
-    if term == "none":
-        X = np.vstack([np.ones_like(h), np.log(h)]).T * sw[:, None]
+    n_cols = 2 if term == "none" else 3
+    X = (np.vstack([np.ones_like(h), np.log(h)]).T if n_cols == 2
+         else np.vstack([np.ones_like(h), np.log(h), dpk]).T) * sw[:, None]
+    rows, _ = _pseudo_rows(cfg, link=link, duration_prior=duration_prior, n_cols=n_cols)
+    if rows:
+        X = np.vstack([X, np.array(rows)])
+    if n_cols == 2:
         cov = np.zeros((3, 3))
         cov[:2, :2] = sigma**2 * np.linalg.pinv(X.T @ X)
         return cov
-    X = np.vstack([np.ones_like(h), np.log(h), dpk]).T * sw[:, None]
-    if term == "prior_shrunk":
-        lam = math.sqrt(max(cfg.calibration.terrain_shrink_lambda, 0.0))
-        X = np.vstack([X, np.array([[0.0, 0.0, lam]])])
     return sigma**2 * np.linalg.pinv(X.T @ X)
 
 
 def _fit_regression(
-    genuine: list[GenuineUltra], weights: np.ndarray | None = None, cfg: Config | None = None
+    genuine: list[GenuineUltra], weights: np.ndarray | None = None, cfg: Config | None = None,
+    *, link: str = "linear", duration_prior: tuple[float, float] | None = None,
 ):
-    """β = lstsq **pondéré** (v ~ 1 + ln(T) + D+/km). Renvoie (beta, residuals).
+    """β = lstsq **pondéré** (v ~ 1 + ln(T) + D+/km, ou ln v en lien log). Renvoie (beta, residuals),
+    les résidus dans les unités du lien.
 
     Poids ``None`` ou égaux ⇒ moindres carrés ordinaires (le golden reste identique). Le mode de
-    terrain (``cfg.calibration.terrain_term``) est appliqué ici ET dans la LOO à l'identique."""
+    terrain (``cfg.calibration.terrain_term``) et le prior de durée sont appliqués ici ET dans la
+    LOO à l'identique."""
     h = np.array([g.hours for g in genuine])
     v = np.array([g.vga_kmh for g in genuine])
+    y = np.log(v) if link == "log" else v
     dpk = np.array([g.dplus_per_km for g in genuine])
     w = np.ones_like(h) if weights is None else np.asarray(weights, dtype=float)
-    beta = _regression_beta(h, v, dpk, w, cfg)
+    beta = _regression_beta(h, y, dpk, w, cfg, link=link, duration_prior=duration_prior)
     X = np.vstack([np.ones_like(h), np.log(h), dpk]).T
-    resid = v - X @ beta
+    resid = y - X @ beta
     return beta, resid
+
+
+def _duration_prior(
+    genuine: list[GenuineUltra], weights: np.ndarray, twin: Twin, cfg: Config, link: str
+) -> tuple[tuple[float, float] | None, str | None]:
+    """Prior sur la pente en durée (A1) : ``(valeur, λ)`` et son origine, ou ``(None, None)``.
+
+    Riegel : v ∝ T^−α ⇒ en lien log b_prior = −α ; en lien linéaire la pente est en km/h par
+    unité de ln T, soit −α·v̄ avec v̄ la vga moyenne pondérée des vrais ultras."""
+    c = cfg.calibration
+    if c.duration_term != "prior_shrunk" or c.duration_shrink_lambda <= 0:
+        return None, None
+    if c.duration_prior_source == "twin_alpha" and twin.alpha is not None and twin.alpha > 0:
+        alpha, origin = float(twin.alpha), "twin_alpha"
+    else:
+        alpha, origin = float(c.duration_prior_alpha_population), "population"
+    if link == "log":
+        return (-alpha, float(c.duration_shrink_lambda)), origin
+    sw = float(np.sum(weights))
+    v_bar = (float(np.sum(weights * np.array([g.vga_kmh for g in genuine])) / sw) if sw > 0
+             else float(np.mean([g.vga_kmh for g in genuine])))
+    return (-alpha * v_bar, float(c.duration_shrink_lambda)), origin
 
 
 def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
@@ -411,23 +491,40 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
     # sûre d'elle sur trop peu d'ultras effectifs (surconfiance) : dans ce cas on bascule
     # dans le repli « peu d'ultras » (incertitude élargie) ci-dessous.
     if n >= c.min_ultras_regression and n_eff >= c.min_ultras_regression:
-        beta, resid = _fit_regression(genuine, weights, cfg)
+        link = c.link
+        duration_prior, prior_origin = _duration_prior(genuine, weights, twin, cfg, link)
+        beta, resid = _fit_regression(genuine, weights, cfg, link=link,
+                                      duration_prior=duration_prior)
         # σ pondérée : variance résiduelle pondérée corrigée par le nb effectif de degrés de
         # liberté. Se réduit EXACTEMENT à √(Σr²/(n−3)) quand les poids sont égaux (golden intact).
         sw = float(weights.sum())
         wmse = float(np.sum(weights * resid**2) / sw) if sw > 0 else 0.0
         dof_eff = max(n_eff - 3.0, 1.0)
         sigma = float(np.sqrt(wmse * n_eff / dof_eff))
-        sigma = max(sigma, c.regression_min_sigma_kmh)
-        beta_cov = _beta_covariance(genuine, weights, sigma, cfg)
+        sigma = max(sigma, c.regression_min_sigma_log if link == "log" else c.regression_min_sigma_kmh)
+        beta_cov = _beta_covariance(genuine, weights, sigma, cfg, link=link,
+                                    duration_prior=duration_prior)
+        if link == "log":
+            # équivalent km/h pour l'affichage : σ relatif × vga moyenne pondérée des ultras
+            v_bar = float(np.sum(weights * np.array([g.vga_kmh for g in genuine])) / sw) if sw > 0 else 0.0
+            sigma_kmh, sigma_log = sigma * v_bar, sigma
+        else:
+            sigma_kmh, sigma_log = sigma, None
         notes.append(
             f"Régression personnelle pondérée par récence sur {n} vrais ultras "
             f"(≈ {n_eff:.1f} effectifs, demi-vie {c.recency_halflife_days:.0f} j)."
         )
+        if link == "log":
+            notes.append("Lien log (forme de Riegel) : erreur multiplicative, bandes asymétriques.")
+        if duration_prior is not None:
+            notes.append(
+                f"Pente en durée tirée vers {duration_prior[0]:+.3f} ({prior_origin}, "
+                f"λ = {duration_prior[1]:g})."
+            )
         return UltraCalibration(
             regime=REGIME_REGRESSION,
             genuine=genuine,
-            sigma_kmh=sigma,
+            sigma_kmh=sigma_kmh,
             notes=notes,
             beta=(float(beta[0]), float(beta[1]), float(beta[2])),
             weights=tuple(float(x) for x in weights),
@@ -436,6 +533,10 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
             recency_halflife_days=c.recency_halflife_days,
             maximality_mode=c.maximality_mode,
             maximality_weights=max_w_tuple,
+            link=link,
+            sigma_log=sigma_log,
+            duration_prior=duration_prior,
+            duration_prior_origin=prior_origin,
         )
 
     # ---------- replis VC+E (nécessitent l'enveloppe d'endurance) ----------
@@ -447,7 +548,7 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
         return UltraCalibration(
             regime=REGIME_INSUFFICIENT, genuine=genuine, sigma_kmh=float("inf"), notes=notes,
             n_eff=n_eff, recency_halflife_days=c.recency_halflife_days,
-            maximality_mode=c.maximality_mode, maximality_weights=max_w_tuple,
+            maximality_mode=c.maximality_mode, maximality_weights=max_w_tuple, link=c.link,
         )
 
     penalty = c.default_dplus_penalty_kmh_per_dpkm
@@ -495,6 +596,7 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
             recency_halflife_days=c.recency_halflife_days,
             maximality_mode=c.maximality_mode,
             maximality_weights=max_w_tuple,
+            link=c.link,
         )
 
     # ---------- régime VC+E seul (0 ultra) ----------
@@ -515,6 +617,7 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
         recency_halflife_days=c.recency_halflife_days,
         maximality_mode=c.maximality_mode,
         maximality_weights=max_w_tuple,
+        link=c.link,
     )
 
 

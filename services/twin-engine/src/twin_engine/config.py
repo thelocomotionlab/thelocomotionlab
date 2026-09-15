@@ -195,6 +195,33 @@ class CalibrationParams:
     regression_min_sigma_kmh: float = 0.20               # plancher de σ (anti-surconfiance)
     blend_sigma_kmh: float = 0.45                        # 1–2 ultras : incertitude élargie
     vc_e_sigma_kmh: float = 0.80                         # 0 ultra : extrapolation VC+E
+    # --- lien de la régression (chantier v2, Phase 1, A2) -----------------------------------
+    # ``linear`` (défaut historique) : v = β0 + β1·ln T + β2·D+/km, σ en km/h, bandes
+    #   symétriques en heures.
+    # ``log`` : ln v = a + b·ln T + c·D+/km (forme de Riegel) — l'erreur d'ultra est
+    #   multiplicative : σ relatif, point fixe ANALYTIQUE T = exp((ln Deq − a − c·D+/km)/(1+b))
+    #   (plus de plancher de vitesse), Monte-Carlo, LOO, scores conformes et β-covariance
+    #   exprimés dans ce lien, bandes en heures asymétriques T·exp(±h). Le prior terrain
+    #   devient relatif (default_dplus_penalty_log_per_dpkm) et le plancher de σ aussi.
+    link: str = "linear"                                 # {linear, log}
+    # prior terrain en lien log = β2 de référence ÷ vitesse de référence :
+    # −0,0170 km/h par m/km ÷ 6,40 km/h (twin-theory §12) = −0,00266 par m/km.
+    default_dplus_penalty_log_per_dpkm: float = -0.0027
+    regression_min_sigma_log: float = 0.03               # ≈ 0,20 km/h ÷ 6,5 km/h
+    # --- prior sur la pente en durée (Phase 1, A1) --------------------------------------------
+    # ``free`` (défaut) : b libre — identifié par 3 à 12 points dont un ou deux longs.
+    # ``prior_shrunk`` : pseudo-observation ridge de b vers −α (Riegel : v ∝ T^−α), α lu sur la
+    #   courbe record de l'athlète (``twin_alpha``, Twin.alpha, fenêtre 30 min–6 h) ou prior
+    #   population (repli si α absent). Entre dans XᵀWX du fit, de la covariance et de chaque
+    #   pli LOO, comme terrain_term. En lien linéaire le prior vaut −α × v̄ (v̄ = vga moyenne
+    #   pondérée des vrais ultras). Ce que ça ferme : l'exposant d'endurance ne servait la
+    #   prédiction qu'en régime blend/vc_e ; ici il réduit le levier de la cible.
+    duration_term: str = "free"                          # {free, prior_shrunk}
+    duration_shrink_lambda: float = 2.0                  # nb de pseudo-observations vers le prior
+    duration_prior_source: str = "twin_alpha"            # {twin_alpha, population}
+    # α population = médiane des α mesurés au banc v2 (Val 0,143 et 0,196 selon l'archive,
+    # Crasse 0,179) — ordre de grandeur, jamais une constante universelle.
+    duration_prior_alpha_population: float = 0.16
 
 
 @dataclass(frozen=True)
@@ -229,7 +256,18 @@ class PredictionParams:
     # plancher de vitesse ⇒ bornes hautes = plafond Deq/v_floor = 71,9 h pour un central 26 h).
     # Le conforme reste fini et calé sur les erreurs démontrées. Repli automatique des DEUX
     # bandes sur ``mc`` sans validation croisée (blend/vc_e) ou à moins de 4 plis. Rollback : mc.
-    interval_source: str = "conformal_normalized"        # {mc, conformal_normalized, pooled}
+    # --- facteur d'échelle studentisé (Phase 1, A3) ------------------------------------------
+    # ``studentized_scale`` : au lieu du quantile EMPIRIQUE des scores LOO (à n = 12 le 80 %
+    #   est le 11ᵉ score sur 12, un seul mauvais pli fixe la borne, largeur nulle ou au plafond
+    #   sur les registres dégénérés), on estime un facteur d'échelle κ = RMS pondéré des scores
+    #   studentisés |erreur|/sd_pred (mêmes poids récence × maximalité) et on lit les quantiles
+    #   50/80 sur une loi de Student à n_eff − p degrés de liberté, mis à l'échelle du sd
+    #   prédictif de la CIBLE. ``studentized_scale_mad`` : κ = 1,4826 × médiane pondérée des
+    #   scores (variante robuste, mesurée) ; ``studentized_scale_signed`` : κ séparé par signe
+    #   d'erreur (asymétrie apprise, mesurée). Repli MC sous 4 plis, comme le conforme.
+    interval_source: str = "conformal_normalized"        # {mc, conformal_normalized, pooled,
+    #                                                       studentized_scale, studentized_scale_mad,
+    #                                                       studentized_scale_signed}
     # --- fenêtre EMPIRIQUE groupée (``pooled`` — plomberie prête, revue §9.9) ----------------
     # Quantiles des scores normalisés |erreur|/sd_rel APPRIS DU REGISTRE (tools/registre,
     # bloc « conditions vendables ») : bandes = central × (1 ± q·sd_rel(cible)), sd_rel =
@@ -422,6 +460,43 @@ def _default_config_path() -> Path:
     return Path(__file__).resolve().parents[2] / "twin.config.json"
 
 
+def override_config(cfg: Config, spec: str) -> Config:
+    """Variante de config par surcharge « bloc.clé=valeur[,bloc.clé=valeur…] » — l'instrument
+    des A/B au banc (``tools/banc --variant``, ``twin-engine --set``). La valeur est typée
+    d'après le champ courant (bool, int, float, str) ; une clé inconnue est une erreur, jamais
+    un silence."""
+    from dataclasses import replace
+
+    out = cfg
+    for item in [x.strip() for x in spec.split(",") if x.strip()]:
+        if "=" not in item or "." not in item.split("=", 1)[0]:
+            raise ValueError(f"surcharge illisible : {item!r} (attendu bloc.clé=valeur)")
+        path, raw = item.split("=", 1)
+        block_name, key = path.strip().split(".", 1)
+        block = getattr(out, block_name, None)
+        if block is None or not hasattr(block, "__dataclass_fields__"):
+            raise ValueError(f"bloc de config inconnu : {block_name!r}")
+        if key not in block.__dataclass_fields__:
+            raise ValueError(f"clé inconnue : {block_name}.{key}")
+        current = getattr(block, key)
+        raw = raw.strip()
+        if isinstance(current, bool):
+            value: Any = raw.lower() in ("1", "true", "on", "yes", "oui")
+        elif isinstance(current, int):
+            value = int(raw)
+        elif isinstance(current, float) or current is None:
+            try:
+                value = None if raw.lower() in ("none", "null") else float(raw)
+            except ValueError:
+                value = raw
+        elif isinstance(current, tuple):
+            value = tuple(type(current[0])(x) for x in raw.split(";")) if current else tuple(raw.split(";"))
+        else:
+            value = raw
+        out = replace(out, **{block_name: replace(block, **{key: value})})
+    return out
+
+
 def load_config(config_path: str | os.PathLike[str] | None = None) -> Config:
     """Charge la configuration : env (chemins) > twin.config.json (constantes) > défauts."""
     path = Path(
@@ -454,6 +529,7 @@ def load_config(config_path: str | os.PathLike[str] | None = None) -> Config:
 
 __all__ = [
     "Config",
+    "override_config",
     "CourseParams",
     "TwinParams",
     "CalibrationParams",
