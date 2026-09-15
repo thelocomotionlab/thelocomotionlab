@@ -20,7 +20,7 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from twin_engine.calibration import _basis_hours
+from twin_engine.calibration import _basis_hours, genuine_floor_kmh, genuine_gate_failures
 from twin_engine.config import load_config
 from twin_engine.ingest import iter_activities
 from twin_engine.twin.record import despike_stats, process_activity
@@ -32,21 +32,19 @@ def _genuine_audit(act, cfg) -> str:
     if act.sport != "running":
         return (f"INVISIBLE du moteur : sport « {act.sport or 'inconnu'} » "
                 "(l'ingestion produit ne garde que la course à pied)")
-    c = cfg.calibration
     summary, _, _ = process_activity(act, cfg)
     hours = _basis_hours(summary, cfg)
     vga = summary.ga_km / hours if hours > 0 else 0.0
-    fails = []
-    if summary.duration_s < c.genuine_min_hours * 3600:
-        fails.append(f"durée {summary.duration_s / 3600:.1f} h < {c.genuine_min_hours:.0f} h")
-    if vga < c.genuine_min_ga_kmh:
-        fails.append(f"vga {vga:.2f} < {c.genuine_min_ga_kmh} km/h")
-    if summary.decouple_pct is not None and summary.decouple_pct > c.genuine_max_decouple_pct:
-        fails.append(f"découplage {summary.decouple_pct:.1f} % > {c.genuine_max_decouple_pct:.0f} %")
+    # la définition du domaine servie (durée, plancher fixe ou dépendant de la durée,
+    # découplage, plus long arrêt) — une seule, celle de la calibration
+    fails = genuine_gate_failures(summary, cfg)
+    floor = genuine_floor_kmh(summary.duration_s / 3600.0, cfg)
+    longest = summary.longest_stop_s
     raw_km = float(act.dist_m[-1]) / 1000.0 if len(act.dist_m) else 0.0
     detail = (f"brut {raw_km:.1f} km · dé-spiké {summary.dist_km:.1f} km · ga {summary.ga_km:.1f} km "
-              f"· vga {vga:.2f} km/h · découplage "
-              f"{'n/a (pas de FC)' if summary.decouple_pct is None else f'{summary.decouple_pct:.1f} %'}")
+              f"· vga {vga:.2f} km/h (plancher servi {floor:.2f}) · découplage "
+              f"{'n/a (pas de FC)' if summary.decouple_pct is None else f'{summary.decouple_pct:.1f} %'}"
+              f" · plus long arrêt {'n/a' if longest is None else f'{longest / 60:.0f} min'}")
     # canal distance : variables de décision du sauvetage §9.11 (mesurées, pas supposées)
     st = despike_stats(act, cfg)
     if st["rescued"]:

@@ -47,13 +47,20 @@
     "despike_rescue_dplus_basis": "time",
     "dedup_activities": "on",
     "stop_min_s": 60.0,
-    "long_effort_min_hours": 6.0
+    "long_effort_min_hours": 6.0,
+    "record_tail_durations_s": [36000, 43200, 50400, 57600, 72000, 86400, 108000, 129600],
+    "record_tail_from_s": 7200.0,
+    "efficiency_min_hours": 1.0,
+    "efficiency_hr_rest": 0.0
   },
 
   "calibration": {
     "genuine_min_hours": 10.0,
     "genuine_min_ga_kmh": 5.5,
     "genuine_max_decouple_pct": 30.0,
+    "genuine_floor": "fixed",
+    "genuine_floor_alpha": 0.16,
+    "genuine_max_stop_s": 0.0,
     "min_ultras_regression": 3,
     "recency_halflife_days": 365.0,
     "maximality_mode": "soft_weight",
@@ -76,6 +83,10 @@
     "duration_shrink_lambda": 2.0,
     "duration_prior_source": "twin_alpha",
     "duration_prior_alpha_population": 0.16,
+    "level_anchor": "none",
+    "level_anchor_window_days": 365.0,
+    "level_anchor_gain": 1.0,
+    "envelope_tail": "alpha",
     "stops_model": "carved",
     "stops_duration_elasticity": 0.0,
     "stops_rate_population": 0.0,

@@ -116,6 +116,16 @@ class UltraCalibration:
     night_coef: float | None = None
     night_share_mean: float | None = None
     night_prior: tuple[float, float] | None = None
+    # --- Phase 3 : recalage d'époque (P) et queue de l'enveloppe (B1/B2) ---------------------
+    # ``level_shift`` = gain × ln(VC_now ÷ VC_époque) par ultra, appliqué au fit, au recalage
+    # du blend et à chaque pli LOO ; None = terme inactif. ``tail_alpha`` = exposant de
+    # l'enveloppe des replis blend/vc_e au-delà de ``tail_from_s`` ; None = enveloppe historique.
+    level_anchor: str = "none"
+    level_shift: tuple[float, ...] | None = None
+    level_n_anchored: int = 0
+    tail_alpha: float | None = None
+    tail_from_s: float | None = None
+    tail_source: str | None = None                      # efficiency | record_tail
 
     @property
     def n_genuine(self) -> int:
@@ -181,6 +191,18 @@ class UltraCalibration:
         """σ résiduel dans les unités du lien servi (km/h en linéaire, relatif en log)."""
         return self.sigma_log if (self.link == "log" and self.sigma_log is not None) else self.sigma_kmh
 
+    @property
+    def level_shift_mean_pct(self) -> float:
+        """Décalage de niveau moyen (pondéré par les poids servis) en % de vitesse ; 0 sans terme."""
+        if not self.level_shift:
+            return 0.0
+        sh = np.asarray(self.level_shift, dtype=float)
+        w = (np.asarray(self.weights, dtype=float) if self.weights is not None and len(self.weights) == len(sh)
+             else np.ones(len(sh)))
+        sw = float(w.sum())
+        m = float(np.sum(w * sh) / sw) if sw > 0 else float(np.mean(sh))
+        return 100.0 * (math.exp(m) - 1.0)
+
     def predict_vga_kmh(self, hours: float, dplus_per_km: float,
                         night_dev: float = 0.0) -> float | None:
         """Vitesse ajustée modélisée à ``hours`` (heures de la base servie) ; ``night_dev`` =
@@ -203,7 +225,9 @@ class UltraCalibration:
     def _envelope_kmh(self, hours: float) -> float | None:
         if self.alpha is None or self.endurance_coef is None:
             return None
-        return self.endurance_coef * (hours * 3600.0) ** (-self.alpha) * 3.6
+        v_ms = _envelope_ms(self.endurance_coef, self.alpha, hours * 3600.0,
+                            self.tail_alpha, self.tail_from_s)
+        return None if v_ms is None else v_ms * 3.6
 
     def to_dict(self) -> dict:
         return {
@@ -234,9 +258,75 @@ class UltraCalibration:
                                else round(self.night_share_mean, 4)),
                 "prior": None if self.night_prior is None
                 else {"d": round(self.night_prior[0], 4), "lambda": self.night_prior[1]}},
+            "level_anchor": None if self.level_shift is None else {
+                "mode": self.level_anchor,
+                "n_anchored": self.level_n_anchored,
+                "shift_mean_pct": round(self.level_shift_mean_pct, 2),
+                "shifts_pct": [round(100.0 * (math.exp(x) - 1.0), 2) for x in self.level_shift]},
+            "envelope_tail": None if self.tail_alpha is None else {
+                "alpha": round(self.tail_alpha, 4),
+                "from_s": self.tail_from_s,
+                "source": self.tail_source},
             "notes": self.notes,
             "genuine": [g.to_dict() for g in self.genuine],
         }
+
+
+def _envelope_ms(coef: float, alpha: float, t_s: float,
+                 tail_alpha: float | None = None, tail_from_s: float | None = None) -> float:
+    """Enveloppe d'endurance (m/s) : ``coef · t^−α`` jusqu'à ``tail_from_s``, puis, avec une
+    queue servie, ``coef · tail_from^−α · (t ÷ tail_from)^−α_queue`` — continue au raccord."""
+    if tail_alpha is None or tail_from_s is None or t_s <= tail_from_s:
+        return float(coef * t_s ** (-alpha))
+    return float(coef * tail_from_s ** (-alpha) * (t_s / tail_from_s) ** (-tail_alpha))
+
+
+def envelope_tail(twin: Twin, cfg: Config) -> tuple[float | None, float | None, str | None, str | None]:
+    """Queue de l'enveloppe demandée par ``calibration.envelope_tail`` : ``(α_queue, début en
+    s, source, note)`` ; α None = enveloppe historique (mode ``alpha`` ou exposant manquant)."""
+    mode = cfg.calibration.envelope_tail
+    if mode not in ("efficiency", "record_tail"):
+        return None, None, None, None
+    a = twin.alpha_eff if mode == "efficiency" else twin.alpha_tail
+    if a is None or a <= 0:
+        return None, None, None, (f"Queue d'enveloppe « {mode} » demandée mais exposant "
+                                  "indisponible : enveloppe historique conservée.")
+    return float(a), float(cfg.twin.endurance_window_s[1]), mode, None
+
+
+def genuine_floor_kmh(elapsed_hours: float, cfg: Config) -> float:
+    """Plancher de vitesse ajustée du filtre « vrai ultra » au temps écoulé donné :
+    constant (``genuine_floor=fixed``) ou décroissant en (T ÷ genuine_min_hours)^−α
+    (``riegel``), jamais au-dessus du plancher historique."""
+    c = cfg.calibration
+    if c.genuine_floor != "riegel" or c.genuine_min_hours <= 0:
+        return float(c.genuine_min_ga_kmh)
+    ratio = max(float(elapsed_hours) / float(c.genuine_min_hours), 1.0)
+    return float(c.genuine_min_ga_kmh * ratio ** (-float(c.genuine_floor_alpha)))
+
+
+def genuine_gate_failures(s: ActivitySummary, cfg: Config) -> list[str]:
+    """Raisons pour lesquelles un effort N'EST PAS un vrai ultra (liste vide = retenu) : durée,
+    plancher de vitesse au temps écoulé, découplage, plus long plateau (garde « sommeil »,
+    ``genuine_max_stop_s`` > 0). Une seule définition du domaine, partagée par la
+    calibration, la queue de la courbe record et les outils de diagnostic."""
+    c = cfg.calibration
+    fails: list[str] = []
+    elapsed_h = s.duration_s / 3600.0
+    if s.duration_s < c.genuine_min_hours * 3600:
+        fails.append(f"durée {elapsed_h:.1f} h < {c.genuine_min_hours:g} h")
+    hours = _basis_hours(s, cfg)
+    vga_kmh = s.ga_km / hours if hours > 0 else 0.0
+    gate_kmh = (s.ga_km / elapsed_h if (c.stops_model != "carved" and elapsed_h > 0) else vga_kmh)
+    floor = genuine_floor_kmh(elapsed_h, cfg)
+    if gate_kmh < floor:
+        fails.append(f"vga {gate_kmh:.2f} < plancher {floor:.2f} km/h")
+    if s.decouple_pct is not None and s.decouple_pct > c.genuine_max_decouple_pct:
+        fails.append(f"découplage {s.decouple_pct:.1f} % > {c.genuine_max_decouple_pct:.0f} %")
+    longest = getattr(s, "longest_stop_s", None)
+    if c.genuine_max_stop_s > 0 and longest is not None and longest > c.genuine_max_stop_s:
+        fails.append(f"plus long arrêt {longest / 60:.0f} min > {c.genuine_max_stop_s / 60:.0f} min")
+    return fails
 
 
 def _basis_hours(s: ActivitySummary, cfg: Config) -> float:
@@ -268,19 +358,14 @@ def select_genuine_ultras(summaries: list[ActivitySummary], cfg: Config) -> list
     dont la vitesse hors plateaux est pourtant celle d'une course — au banc de la Phase 2,
     la base hors plateaux sans cette garde a fait entrer des « ultras » à 500 à 1 800 minutes
     d'arrêt par heure de mouvement (DIAGNOSTIC §10.5)."""
-    c = cfg.calibration
     out: list[GenuineUltra] = []
     for s in summaries:
-        if s.duration_s < c.genuine_min_hours * 3600:
+        # durée, plancher (fixe ou dépendant de la durée), découplage (reconnaissances/randos ;
+        # FC absente → non vérifiable, on garde), plus long plateau : genuine_gate_failures
+        if genuine_gate_failures(s, cfg):
             continue
         hours = _basis_hours(s, cfg)
         vga_kmh = s.ga_km / hours
-        gate_kmh = (s.ga_km / (s.duration_s / 3600.0) if c.stops_model != "carved" else vga_kmh)
-        if gate_kmh < c.genuine_min_ga_kmh:
-            continue
-        # exclut reconnaissances/randos ; FC absente → on ne peut pas vérifier (on garde, signalé)
-        if s.decouple_pct is not None and s.decouple_pct > c.genuine_max_decouple_pct:
-            continue
         stops_s = getattr(s, "stops_s", None)
         out.append(
             GenuineUltra(
@@ -436,6 +521,38 @@ def maximality_weights(
     return w
 
 
+def level_shifts(genuine: list[GenuineUltra], twin: Twin, cfg: Config
+                 ) -> tuple[np.ndarray | None, np.ndarray | None]:
+    """Décalage de niveau par ultra (Phase 3, P) : ``gain × ln(VC_now ÷ VC_époque)``, VC_époque
+    lue dans ``twin.level_marks`` à la date de l'ultra ; 0 sans VC d'époque. Rend
+    ``(décalages, masque des ultras recalés)`` ; ``(None, None)`` quand le terme n'est pas
+    servi (``level_anchor=none``). Sans VC actuelle plausible : décalages nuls, masque vide."""
+    c = cfg.calibration
+    n = len(genuine)
+    if c.level_anchor != "vc_epoch" or n == 0:
+        return None, None
+    shifts = np.zeros(n)
+    anchored = np.zeros(n, dtype=bool)
+    cs = twin.critical_speed
+    if cs is None or not cs.plausible or cs.vc_ms <= 0 or not twin.level_marks:
+        return shifts, anchored
+    for i, g in enumerate(genuine):
+        vc_epoch = twin.level_marks.get(g.date) if g.date else None
+        if vc_epoch is not None and vc_epoch > 0:
+            shifts[i] = float(c.level_anchor_gain) * math.log(cs.vc_ms / vc_epoch)
+            anchored[i] = True
+    return shifts, anchored
+
+
+def _shifted_response(v: np.ndarray, link: str, shifts: np.ndarray | None) -> np.ndarray:
+    """Réponse de la régression : ln v ou v, ramenée au niveau actuel par les décalages
+    (additifs en log, multiplicatifs en linéaire) ; identité sans décalage."""
+    if link == "log":
+        y = np.log(v)
+        return y if shifts is None else y + shifts
+    return v if shifts is None else v * np.exp(shifts)
+
+
 def _design_matrix(h: np.ndarray, dpk: np.ndarray, cfg: Config | None,
                    night_dev: np.ndarray | None = None) -> np.ndarray:
     """Colonnes de la régression : 1, ln T[, D+/km][, écart de nuit]. Le terrain manque en
@@ -564,6 +681,7 @@ def _fit_regression(
     genuine: list[GenuineUltra], weights: np.ndarray | None = None, cfg: Config | None = None,
     *, link: str = "linear", duration_prior: tuple[float, float] | None = None,
     night_dev: np.ndarray | None = None, night_prior: tuple[float, float] | None = None,
+    shifts: np.ndarray | None = None,
 ):
     """β = lstsq **pondéré** (v ~ 1 + ln(T) + D+/km [+ nuit], ou ln v en lien log). Renvoie
     (beta, residuals), les résidus dans les unités du lien.
@@ -573,7 +691,7 @@ def _fit_regression(
     appliqués ici ET dans la LOO à l'identique."""
     h = np.array([g.hours for g in genuine])
     v = np.array([g.vga_kmh for g in genuine])
-    y = np.log(v) if link == "log" else v
+    y = _shifted_response(v, link, shifts)
     dpk = np.array([g.dplus_per_km for g in genuine])
     w = np.ones_like(h) if weights is None else np.asarray(weights, dtype=float)
     beta = _regression_beta(h, y, dpk, w, cfg, link=link, duration_prior=duration_prior,
@@ -661,10 +779,19 @@ def _duration_prior(
     c = cfg.calibration
     if c.duration_term != "prior_shrunk" or c.duration_shrink_lambda <= 0:
         return None, None
-    if c.duration_prior_source == "twin_alpha" and twin.alpha is not None and twin.alpha > 0:
-        alpha, origin = float(twin.alpha), "twin_alpha"
-    else:
-        alpha, origin = float(c.duration_prior_alpha_population), "population"
+    # source demandée, puis repli honnête : efficacité-durée ou queue → α historique → population
+    candidates: list[tuple[str, float | None]] = []
+    if c.duration_prior_source == "efficiency":
+        candidates = [("efficiency", twin.alpha_eff), ("twin_alpha", twin.alpha)]
+    elif c.duration_prior_source == "record_tail":
+        candidates = [("record_tail", twin.alpha_tail), ("twin_alpha", twin.alpha)]
+    elif c.duration_prior_source == "twin_alpha":
+        candidates = [("twin_alpha", twin.alpha)]
+    alpha, origin = float(c.duration_prior_alpha_population), "population"
+    for name, value in candidates:
+        if value is not None and value > 0:
+            alpha, origin = float(value), name
+            break
     if link == "log":
         return (-alpha, float(c.duration_shrink_lambda)), origin
     sw = float(np.sum(weights))
@@ -696,6 +823,23 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
     weights = recency * maximality
     n_eff = _effective_n(weights) if n else 0.0
     w_tuple = tuple(float(x) for x in weights)
+
+    # recalage sur le niveau de l'époque (Phase 3, P) : mêmes décalages dans tous les régimes
+    shifts, anchored = level_shifts(genuine, twin, cfg)
+    level_kw: dict = {"level_anchor": c.level_anchor}
+    if shifts is not None:
+        n_anchored = int(anchored.sum())
+        level_kw.update(level_shift=tuple(float(x) for x in shifts), level_n_anchored=n_anchored)
+        if n_anchored:
+            mean_pct = 100.0 * (math.exp(float(np.mean(shifts[anchored]))) - 1.0)
+            notes.append(f"Niveau de l'époque : {n_anchored} ultra(s) sur {n} recalé(s) sur la "
+                         f"VC actuelle (décalage moyen {mean_pct:+.1f} % de vitesse).")
+        elif n:
+            notes.append("Recalage de niveau demandé mais aucune VC d'époque exploitable : "
+                         "ultras pris tels que courus.")
+    # queue de l'enveloppe des replis (Phase 3, B1/B2)
+    tail_alpha, tail_from_s, tail_source, tail_note = envelope_tail(twin, cfg)
+    tail_kw: dict = {"tail_alpha": tail_alpha, "tail_from_s": tail_from_s, "tail_source": tail_source}
 
     # modèle d'arrêts (Phase 2, B4) : mêmes statistiques dans tous les régimes
     stops_kw: dict = {"stops_model": c.stops_model}
@@ -746,7 +890,8 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
             night_prior, night_dev = None, None
         beta, resid = _fit_regression(genuine, weights, cfg, link=link,
                                       duration_prior=duration_prior,
-                                      night_dev=night_dev, night_prior=night_prior)
+                                      night_dev=night_dev, night_prior=night_prior,
+                                      shifts=shifts)
         # σ pondérée : variance résiduelle pondérée corrigée par le nb effectif de degrés de
         # liberté. Se réduit EXACTEMENT à √(Σr²/(n−3)) quand les poids sont égaux (golden intact).
         sw = float(weights.sum())
@@ -803,6 +948,7 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
             night_share_mean=night_mean if night_coef is not None else None,
             night_prior=night_prior if night_coef is not None else None,
             **stops_kw,
+            **level_kw,
         )
 
     # ---------- replis VC+E (nécessitent l'enveloppe d'endurance) ----------
@@ -819,6 +965,11 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
         )
 
     penalty = c.default_dplus_penalty_kmh_per_dpkm
+    if tail_note:
+        notes.append(tail_note)
+    elif tail_alpha is not None:
+        notes.append(f"Enveloppe : au-delà de {tail_from_s / 3600:.0f} h, décroissance en "
+                     f"t^−{tail_alpha:.3f} ({tail_source}) au lieu de t^−{twin.alpha:.3f}.")
 
     # ---------- régime mélange (1–2 ultras) : recalage du niveau ----------
     if n >= 1:
@@ -829,11 +980,12 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
         offsets: list[float] = []
         offset_w: list[float] = []
         for i, g in enumerate(genuine):
-            v_env = twin.envelope_vga_ms(g.hours * 3600.0)
-            if v_env is None:
-                continue
+            # même enveloppe (queue comprise) que la prédiction, ultra ramené au niveau actuel
+            v_env = _envelope_ms(twin.endurance_coef, twin.alpha, g.hours * 3600.0,
+                                 tail_alpha, tail_from_s)
             base = v_env * 3.6 + penalty * g.dplus_per_km
-            offsets.append(g.vga_kmh - base)
+            v_i = g.vga_kmh * (math.exp(float(shifts[i])) if shifts is not None else 1.0)
+            offsets.append(v_i - base)
             offset_w.append(float(weights[i]))
         if offsets and sum(offset_w) > 0:
             offset = float(np.average(offsets, weights=offset_w))
@@ -866,6 +1018,8 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
             link=c.link,
             weights=w_tuple,
             **stops_kw,
+            **level_kw,
+            **tail_kw,
         )
 
     # ---------- régime VC+E seul (0 ultra) ----------
@@ -888,6 +1042,7 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
         maximality_weights=max_w_tuple,
         link=c.link,
         weights=w_tuple if n else None,
+        **tail_kw,
         **stops_kw,
     )
 

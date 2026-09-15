@@ -50,6 +50,7 @@ class ActivitySummary:
     # --- mesures du chantier v2 (Phase 2), None quand non mesurables ---------------------
     stops_s: float | None = None         # secondes dans les plateaux de distance ≥ twin.stop_min_s
     n_stops: int | None = None
+    longest_stop_s: float | None = None  # plus long plateau de distance (s) — garde « sommeil »
     night_share: float | None = None     # part de nuit (0–1) de l'écoulé (efforts longs, position connue)
     half_split_ratio: float | None = None  # vga hors plateaux : seconde moitié de Deq ÷ première
     mean_alt_m: float | None = None      # altitude moyenne du canal altitude (efforts longs)
@@ -74,6 +75,11 @@ class RecordCurve:
     vraw: np.ndarray        # vitesse brute de l'effort retenu par durée (m/s)
     points: list[RecordPoint]
     skipped: list[dict] = field(default_factory=list)  # activités écartées de la courbe (+ raison)
+    # queue de la courbe (Phase 3, B2) : meilleures fenêtres LONGUES (twin.record_tail_durations_s)
+    # des vrais ultras — séparée des points historiques, que VC, exposant et figure consomment
+    tail_durations_s: np.ndarray = field(default_factory=lambda: np.zeros(0))
+    tail_vga: np.ndarray = field(default_factory=lambda: np.zeros(0))
+    tail_points: list[RecordPoint] = field(default_factory=list)
 
     @property
     def flat_points(self) -> list[RecordPoint]:
@@ -200,8 +206,21 @@ def _adjusted_distance(act: CanonicalActivity, cfg: Config):
     return draw, dga, alts, alt_f, rescued
 
 
+def tail_durations(cfg: Config) -> tuple[int, ...]:
+    """Durées de la queue de la courbe record : celles de ``record_tail_durations_s``
+    strictement au-delà de la plus longue durée historique (jamais de doublon)."""
+    top = max(cfg.twin.record_durations_s) if cfg.twin.record_durations_s else 0
+    return tuple(int(t) for t in cfg.twin.record_tail_durations_s if int(t) > top)
+
+
 def process_activity(act: CanonicalActivity, cfg: Config):
-    """→ (:class:`ActivitySummary`, vga_par_durée, vraw_par_durée)."""
+    """→ (:class:`ActivitySummary`, vga_par_durée, vraw_par_durée) — interface historique."""
+    summary, vga, vraw, _ = process_activity_full(act, cfg)
+    return summary, vga, vraw
+
+
+def process_activity_full(act: CanonicalActivity, cfg: Config):
+    """→ (:class:`ActivitySummary`, vga_par_durée, vraw_par_durée, vga_fenêtres_longues)."""
     durs = np.asarray(cfg.twin.record_durations_s, dtype=float)
     draw, dga, alts, alt_f, distance_rescued = _adjusted_distance(act, cfg)
     tg = act.t
@@ -241,6 +260,14 @@ def process_activity(act: CanonicalActivity, cfg: Config):
                 break
             vga[j] = np.nanmax((dga[T:] - dga[:-T]) / T)
             vraw[j] = np.nanmax((draw[T:] - draw[:-T]) / T)
+    # fenêtres LONGUES (Phase 3, B2) : même mesure, durées de la queue de la courbe record
+    tail = tail_durations(cfg)
+    vga_tail = np.full(len(tail), np.nan)
+    if not distance_rescued:
+        for j, T in enumerate(tail):
+            if n <= T:
+                break
+            vga_tail[j] = np.nanmax((dga[T:] - dga[:-T]) / T)
 
     # D+ / D− : sur l'altitude lissée 5 s (historique) ou sur base de DISTANCE 150 m —
     # cohérente avec le D+ du parcours, cf. C1 (le D+ étant une variation totale, l'échelle
@@ -303,6 +330,7 @@ def process_activity(act: CanonicalActivity, cfg: Config):
     stops = _detect_stops(moving_mask, cfg.twin.stop_min_s) if dd_raw.size else []
     stops_s = float(sum(st.duration_s for st in stops)) if dd_raw.size else None
     n_stops = len(stops) if dd_raw.size else None
+    longest_stop_s = float(max((st.duration_s for st in stops), default=0)) if dd_raw.size else None
 
     # mesures réservées aux efforts longs : nuit (C2), moitiés (fade), altitude moyenne (C3)
     night_share = half_split = mean_alt = None
@@ -328,11 +356,12 @@ def process_activity(act: CanonicalActivity, cfg: Config):
         start_time=act.start_time.isoformat() if act.start_time else None,
         stops_s=stops_s,
         n_stops=n_stops,
+        longest_stop_s=longest_stop_s,
         night_share=None if night_share is None else round(night_share, 4),
         half_split_ratio=None if half_split is None else round(half_split, 4),
         mean_alt_m=None if mean_alt is None else round(mean_alt),
     )
-    return summary, vga, vraw
+    return summary, vga, vraw, vga_tail
 
 
 def _night_share_of(act: CanonicalActivity) -> float | None:
@@ -410,6 +439,7 @@ class ActivityContribution:
     vga: np.ndarray | None                # None = hors courbe record (cf. ``skipped``)
     vraw: np.ndarray | None
     skipped: dict | None = None           # {"date", "reason"} si écartée de la courbe record
+    vga_tail: np.ndarray | None = None    # meilleures fenêtres LONGUES (record_tail_durations_s), Phase 3
 
 
 def iter_contributions(
@@ -428,7 +458,7 @@ def iter_contributions(
             yield ActivityContribution(day, None, None, None)
             continue
         try:
-            summary, vga, vraw = process_activity(act, cfg)
+            summary, vga, vraw, vga_tail = process_activity_full(act, cfg)
         except Exception as exc:  # noqa: BLE001 — une activité brouillonne n'arrête pas l'agrégat
             # ... mais elle doit être COMPTÉE : un diagnostic d'archive qui tait la casse ment.
             yield ActivityContribution(day, None, None, None, skipped={
@@ -446,7 +476,7 @@ def iter_contributions(
             yield ActivityContribution(day, summary, None, None,
                                        skipped={"date": summary.date, "reason": "sustained_speed"})
             continue
-        yield ActivityContribution(day, summary, vga, vraw)
+        yield ActivityContribution(day, summary, vga, vraw, vga_tail=vga_tail)
 
 
 def _richness(s: ActivitySummary) -> tuple:
@@ -517,6 +547,13 @@ def record_from_contributions(
         logger.info("dédoublonnage : %d copie(s) d'activité écartée(s)", len(duplicates))
         skipped += duplicates
 
+    # queue de la courbe (Phase 3, B2) : fenêtres longues des seuls efforts qui passent le
+    # filtre « vrai ultra » servi (un bivouac ou un OFF avec sommeil n'en fournit pas)
+    from ..calibration import genuine_gate_failures   # import différé : calibration dépend de record
+
+    tail_durs = np.asarray(tail_durations(cfg), dtype=float)
+    tail_contrib: list[list[tuple[float, str | None]]] = [[] for _ in range(len(tail_durs))]
+
     for i in kept:
         c = contributions[i]
         if c.summary is not None:
@@ -530,6 +567,12 @@ def record_from_contributions(
             if np.isfinite(vga[j]) and vga[j] > 0:
                 vr = float(vraw[j]) if np.isfinite(vraw[j]) else float("nan")
                 contrib[j].append((float(vga[j]), vr, c.summary.date))
+        vt = c.vga_tail
+        if vt is not None and len(vt) == len(tail_durs) and np.isfinite(vt).any() \
+                and not genuine_gate_failures(c.summary, cfg):
+            for j in range(len(tail_durs)):
+                if np.isfinite(vt[j]) and vt[j] > 0:
+                    tail_contrib[j].append((float(vt[j]), c.summary.date))
 
     if skipped:
         by_reason = Counter(s["reason"] for s in skipped)
@@ -576,8 +619,23 @@ def record_from_contributions(
             )
         )
 
+    # queue : même règle de support (N-ième meilleure fenêtre si assez soutenue)
+    tail_vga = np.zeros(len(tail_durs))
+    tail_points: list[RecordPoint] = []
+    for j, T in enumerate(tail_durs):
+        items = tail_contrib[j]
+        if not items:
+            continue
+        items.sort(key=lambda it: it[0], reverse=True)
+        k = min_support - 1 if len(items) >= min_support else 0
+        vga_j, date_j = items[k]
+        tail_vga[j] = vga_j
+        tail_points.append(RecordPoint(duration_s=int(T), vga=float(vga_j), vraw=float("nan"),
+                                       source_date=date_j, flat=False))
+
     return (
-        RecordCurve(durations_s=durs, vga=best_vga, vraw=best_vraw, points=points, skipped=skipped),
+        RecordCurve(durations_s=durs, vga=best_vga, vraw=best_vraw, points=points, skipped=skipped,
+                    tail_durations_s=tail_durs, tail_vga=tail_vga, tail_points=tail_points),
         summaries,
     )
 
@@ -602,5 +660,6 @@ def build_record_curve(
 
 
 __all__ = ["ActivitySummary", "ActivityContribution", "RecordPoint", "RecordCurve",
-           "despike_stats", "process_activity", "build_record_curve",
-           "iter_contributions", "record_from_contributions", "select_unique_contributions"]
+           "despike_stats", "process_activity", "process_activity_full", "tail_durations",
+           "build_record_curve", "iter_contributions", "record_from_contributions",
+           "select_unique_contributions"]

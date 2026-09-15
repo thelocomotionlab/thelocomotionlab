@@ -74,6 +74,22 @@ class TwinParams:
     # plan), rapport des moitiés (fade réel), altitude moyenne.
     stop_min_s: float = 60.0
     long_effort_min_hours: float = 6.0
+    # --- fenêtres longues de la courbe record et efficacité-durée (chantier v2, Phase 3) ----
+    # ``record_tail_durations_s`` : durées AU-DELÀ de ``record_durations_s`` (10 à 36 h) où la
+    #   meilleure fenêtre de vitesse ajustée est mesurée dans les plus longues sorties qui
+    #   passent le filtre « vrai ultra » ; elles forment la QUEUE de la courbe record
+    #   (``RecordCurve.tail_points``), séparée des points historiques (VC, exposant et figure
+    #   du rapport inchangés). ``record_tail_from_s`` : début de l'ajustement log-log de
+    #   l'exposant de queue α_queue (points historiques ≥ ce seuil + queue).
+    record_tail_durations_s: tuple[int, ...] = (36000, 43200, 50400, 57600, 72000, 86400,
+                                                 108000, 129600)
+    record_tail_from_s: float = 7200.0
+    # ``efficiency_min_hours`` : efforts avec FC qui entrent dans l'ajustement efficacité-durée
+    #   ln(vga ÷ (FC − FC0)) = c − α_eff·ln T (α_eff, jumeau), pondéré par récence. FC0 =
+    #   ordonnée à l'origine de la relation FC ~ vga de l'athlète sur ses efforts de 20 min
+    #   à 3 h (``efficiency_hr_rest`` = 0), ou valeur déclarée en bpm.
+    efficiency_min_hours: float = 1.0
+    efficiency_hr_rest: float = 0.0
     # --- robustesse de la courbe record (Problème A : VC/exposant aberrants) ---
     vc_max_plausible_ms: float = 6.0          # plafond physiologique : un point « plat » plus rapide
     #                                           est rejeté avant l'ajustement VC ; une VC au-dessus
@@ -154,6 +170,14 @@ class CalibrationParams:
     genuine_min_hours: float = 10.0
     genuine_min_ga_kmh: float = 5.5
     genuine_max_decouple_pct: float = 30.0
+    # --- plancher de vitesse dépendant de la durée (Phase 3, F) ---------------------------
+    # ``fixed`` (défaut) : plancher genuine_min_ga_kmh à toute durée. ``riegel`` : le plancher
+    #   décroît avec le temps écoulé, min_ga × (T ÷ genuine_min_hours)^(−genuine_floor_alpha)
+    #   (5,5 à 10 h, 4,7 à 26 h, 4,4 à 38 h pour α = 0,16). ``genuine_max_stop_s`` > 0 écarte
+    #   les efforts dont le plus long plateau dépasse ce seuil (sommeil, bivouac) ; 0 = off.
+    genuine_floor: str = "fixed"                         # {fixed, riegel}
+    genuine_floor_alpha: float = 0.16
+    genuine_max_stop_s: float = 0.0
     min_ultras_regression: int = 3
     # pondération par récence (Problème B : non-stationnarité des ultras sur plusieurs saisons)
     recency_halflife_days: float = 365.0                 # demi-vie de la décroissance exponentielle
@@ -226,10 +250,30 @@ class CalibrationParams:
     #   prédiction qu'en régime blend/vc_e ; ici il réduit le levier de la cible.
     duration_term: str = "free"                          # {free, prior_shrunk}
     duration_shrink_lambda: float = 2.0                  # nb de pseudo-observations vers le prior
-    duration_prior_source: str = "twin_alpha"            # {twin_alpha, population}
+    # source de l'α du prior : ``twin_alpha`` (courbe record 30 min–6 h), ``efficiency``
+    #   (α_eff, efficacité-durée, Phase 3 B1), ``record_tail`` (α_queue, fenêtres longues,
+    #   Phase 3 B2) — chacune retombe sur ``twin_alpha`` puis ``population`` quand l'exposant
+    #   demandé manque ; ``population`` = constante ci-dessous.
+    duration_prior_source: str = "twin_alpha"            # {twin_alpha, efficiency, record_tail, population}
     # α population = médiane des α mesurés au banc v2 (Val 0,143 et 0,196 selon l'archive,
     # Crasse 0,179) — ordre de grandeur, jamais une constante universelle.
     duration_prior_alpha_population: float = 0.16
+    # --- recalage sur le niveau de l'époque (Phase 3, P) -------------------------------------
+    # ``none`` (défaut) : les vrais ultras entrent tels qu'ils ont été courus. ``vc_epoch`` :
+    #   la vitesse de chaque ultra est ramenée au niveau actuel par gain × ln(VC_now ÷
+    #   VC_époque), VC_époque = vitesse critique de la courbe record des
+    #   ``level_anchor_window_days`` jours qui précèdent l'ultra (Twin.level_marks) ; sans VC
+    #   d'époque plausible, décalage nul. Même décalage dans le fit, le recalage du blend et
+    #   chaque pli LOO (qui prédit l'ultra retiré à SON époque).
+    level_anchor: str = "none"                           # {none, vc_epoch}
+    level_anchor_window_days: float = 365.0
+    level_anchor_gain: float = 1.0
+    # --- queue de l'enveloppe des replis blend et vc_e (Phase 3, B1/B2) ----------------------
+    # ``alpha`` (défaut historique) : l'exposant 30 min–6 h continue au-delà de 6 h.
+    # ``efficiency`` (α_eff) / ``record_tail`` (α_queue) : au-delà de twin.endurance_window_s[1]
+    #   l'enveloppe décroît avec l'exposant mesuré, raccord continu ; repli sur ``alpha`` quand
+    #   l'exposant demandé manque (signalé dans les notes).
+    envelope_tail: str = "alpha"                         # {alpha, efficiency, record_tail}
     # --- arrêts (Phase 2, B4) ---------------------------------------------------------------
     # ``carved`` (défaut historique) : la régression porte sur la vitesse ÉCOULÉE (arrêts
     #   compris) et le plan retranche sa politique d'arrêts (5 min par ravito, +10 aux bases)

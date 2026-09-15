@@ -325,13 +325,13 @@ def test_archive_cache_decodes_only_once(tmp_path, monkeypatch):
 
     cfg = load_config()
     calls = {"n": 0}
-    real = record_mod.process_activity
+    real = record_mod.process_activity_full
 
     def _counting(act, c):
         calls["n"] += 1
         return real(act, c)
 
-    monkeypatch.setattr(record_mod, "process_activity", _counting)
+    monkeypatch.setattr(record_mod, "process_activity_full", _counting)
 
     cache = ArchiveCache(_archive(tmp_path), cfg)
     after_load = calls["n"]
@@ -372,13 +372,13 @@ def test_ab_recency_sweeps_without_redecoding(tmp_path, monkeypatch, capsys):
     from tools.ab_recency import evaluate, report
 
     calls = {"n": 0}
-    real = record_mod.process_activity
+    real = record_mod.process_activity_full
 
     def _counting(act, c):
         calls["n"] += 1
         return real(act, c)
 
-    monkeypatch.setattr(record_mod, "process_activity", _counting)
+    monkeypatch.setattr(record_mod, "process_activity_full", _counting)
 
     grid = (90.0, 365.0, 730.0)
     rows = evaluate([_manifest(tmp_path)], grid, load_config())

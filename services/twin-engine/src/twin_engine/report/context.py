@@ -13,6 +13,36 @@ from ..feasibility import AMBITIEUX, CONFORTABLE, HORS_DOMAINE, HORS_PORTEE, IND
 from ._format import fr, french_datetime, fr_thousands, hm, tex_escape
 from .narrative import build_narrative, vc_frac_band
 
+def _pente_servie(twin, calibration, cfg) -> str | None:
+    """Phrase du rapport quand la pente au-delà de 6 h vient d'ailleurs que de l'exposant
+    historique : queue de l'enveloppe (replis), source du prior (régression), recalage sur
+    le niveau actuel (Phase 3). None quand rien de tout cela n'a servi."""
+    parts: list[str] = []
+    tail_a = getattr(calibration, "tail_alpha", None)
+    if tail_a is not None and calibration.regime in ("blend", "vc_e"):
+        src = {"efficiency": "ton efficacité à effort donné", "record_tail":
+               "tes fenêtres les plus longues (queue de ta courbe record)"}.get(
+            getattr(calibration, "tail_source", None), "tes données")
+        parts.append(f"au-delà de {int(round((calibration.tail_from_s or 0) / 3600))} h, ton "
+                     f"enveloppe décroît avec l'exposant {fr(tail_a, 3)}, lu sur {src}, au lieu "
+                     f"de {fr(twin.alpha, 3) if twin.alpha else '?'}")
+    origin = getattr(calibration, "duration_prior_origin", None)
+    if origin in ("efficiency", "record_tail") and calibration.duration_prior is not None:
+        src = {"efficiency": "ton exposant d'efficacité-durée",
+               "record_tail": "l'exposant de tes fenêtres les plus longues"}[origin]
+        parts.append(f"la pente de ta régression est tirée vers {src} "
+                     f"({fr(-calibration.duration_prior[0], 3)})")
+    n_anch = getattr(calibration, "level_n_anchored", 0)
+    if n_anch:
+        parts.append(f"{n_anch} de tes {calibration.n_genuine} ultras ont été ramenés à ton niveau "
+                     f"actuel (vitesse critique de leur époque contre aujourd'hui, "
+                     f"{fr(calibration.level_shift_mean_pct, 1)} % en moyenne)")
+    if not parts:
+        return None
+    text = " ; ".join(parts)
+    return tex_escape(text[0].upper() + text[1:] + ".")
+
+
 _REGIME_LABELS = {
     REGIME_REGRESSION: "régression personnelle sur tes vrais ultras",
     REGIME_BLEND: "mélange VC+E recalé (peu d'ultras, confiance réduite)",
@@ -322,6 +352,10 @@ def build_report_context(
         "dprime": fr(cs.dprime_m, 0) if vc_ok else None,
         "endurance_E": fr(twin.endurance_E, 3) if twin.endurance_E else None,
         "alpha": fr(twin.alpha, 3) if twin.alpha else None,
+        # Phase 3 : exposants mesurés au-delà de 6 h et ce qui a réellement servi à la pente
+        "alpha_eff": fr(twin.alpha_eff, 3) if getattr(twin, "alpha_eff", None) else None,
+        "alpha_tail": fr(twin.alpha_tail, 3) if getattr(twin, "alpha_tail", None) else None,
+        "pente_servie": _pente_servie(twin, calibration, cfg),
         "durability_pct": fr(twin.durability_pct, 0) if twin.durability_pct is not None else None,
         "n_activities": twin.summaries.__len__(),
         "n_ultras": calibration.n_genuine,

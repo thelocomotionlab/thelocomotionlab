@@ -356,6 +356,11 @@ def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation
     night = calibration.has_night_term
     shares = np.array([np.nan if u.night_share is None else float(u.night_share) for u in g])
     stops = calibration.stops_model != "carved"
+    # recalage de niveau (Phase 3, P) : les autres ultras entrent ramenés au niveau actuel,
+    # le pli est prédit à SON époque (décalage retiré) et comparé au réel de l'époque
+    shifts = (np.asarray(calibration.level_shift, dtype=float)
+              if calibration.level_shift is not None else None)
+    Y_fit = Y if shifts is None else (Y + shifts if link == "log" else V * np.exp(shifts))
     # le réel à retrouver : temps écoulé de bout en bout dès qu'un modèle d'arrêts sépare
     # mouvement et arrêts ; sinon la base de vitesse servie (historique)
     real = np.array([(u.elapsed_hours if (stops and u.elapsed_hours is not None) else u.hours)
@@ -410,14 +415,16 @@ def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation
                 dev_keep = np.zeros(len(keep))
             elif np.isfinite(shares[i]):
                 dev_i = float(shares[i] - mean_keep)
-        beta = _regression_beta(H[keep], Y[keep], dpk[keep], w[keep], cfg, link=link,
+        beta = _regression_beta(H[keep], Y_fit[keep], dpk[keep], w[keep], cfg, link=link,
                                 duration_prior=calibration.duration_prior,
                                 night_dev=dev_keep, night_prior=calibration.night_prior)
         offset = float(beta[3]) * dev_i if (night and len(beta) > 3) else 0.0
+        shift_i = float(shifts[i]) if shifts is not None else 0.0
         if link == "log":
-            tp = _fixed_point_log(deq_each[i], dpk[i], beta, offset)
+            tp = _fixed_point_log(deq_each[i], dpk[i], beta, offset - shift_i)
         else:
-            vfunc = lambda T, d, b=beta, o=offset: b[0] + b[1] * np.log(T) + b[2] * d + o
+            scale_i = float(np.exp(-shift_i))
+            vfunc = lambda T, d, b=beta, o=offset, k=scale_i: (b[0] + b[1] * np.log(T) + b[2] * d + o) * k
             tp = _solve_fixed_point(deq_each[i], dpk[i], vfunc, cfg)
         if tp is None:
             continue

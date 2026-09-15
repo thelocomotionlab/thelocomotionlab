@@ -32,8 +32,8 @@ from pathlib import Path
 
 import numpy as np
 
-from twin_engine.calibration import (_basis_hours, build_calibration, maximality_weights,
-                                     recency_weights)
+from twin_engine.calibration import (_basis_hours, build_calibration, genuine_gate_failures,
+                                     maximality_weights, recency_weights)
 from twin_engine.config import load_config
 from twin_engine.course import RaceSpec, build_course
 from twin_engine.ingest import iter_activities
@@ -85,18 +85,9 @@ def activity_row(act, cfg, *, min_stop_s: float = 60.0) -> dict:
 
 
 def _genuine_reasons(summary, cfg) -> list[str]:
-    """Pourquoi un effort long n'est PAS un vrai ultra (mêmes seuils que la calibration)."""
-    c = cfg.calibration
-    hours = _basis_hours(summary, cfg)
-    vga = summary.ga_km / hours if hours > 0 else 0.0
-    fails: list[str] = []
-    if summary.duration_s < c.genuine_min_hours * 3600:
-        fails.append(f"durée < {c.genuine_min_hours:g} h")
-    if vga < c.genuine_min_ga_kmh:
-        fails.append(f"vga {vga:.2f} < {c.genuine_min_ga_kmh:g} km/h")
-    if summary.decouple_pct is not None and summary.decouple_pct > c.genuine_max_decouple_pct:
-        fails.append(f"découplage {summary.decouple_pct:.0f} % > {c.genuine_max_decouple_pct:.0f} %")
-    return fails
+    """Pourquoi un effort long n'est PAS un vrai ultra : la définition du domaine servie par
+    la calibration (plancher fixe ou dépendant de la durée, garde du plus long arrêt)."""
+    return genuine_gate_failures(summary, cfg)
 
 
 def attach_official_times(rows: list[dict], manifest: dict) -> None:

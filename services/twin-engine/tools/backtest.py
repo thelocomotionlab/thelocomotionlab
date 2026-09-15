@@ -206,6 +206,20 @@ def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path,
             "night_share_mean": (None if cal.night_share_mean is None
                                  else round(cal.night_share_mean, 4)),
             "night_coef": None if cal.night_coef is None else round(cal.night_coef, 4),
+            # Phase 3 : les trois exposants mesurés (servis ou non) et ce qui a servi
+            "alpha": None if result.twin.alpha is None else round(result.twin.alpha, 4),
+            "alpha_eff": (None if result.twin.alpha_eff is None
+                          else round(result.twin.alpha_eff, 4)),
+            "alpha_eff_n": (result.twin.alpha_eff_detail or {}).get("n"),
+            "alpha_tail": (None if result.twin.alpha_tail is None
+                           else round(result.twin.alpha_tail, 4)),
+            "alpha_tail_n": result.twin.alpha_tail_n,
+            "duration_prior_origin": cal.duration_prior_origin,
+            "envelope_tail_alpha": None if cal.tail_alpha is None else round(cal.tail_alpha, 4),
+            "genuine_floor": cfg.calibration.genuine_floor,
+            "level_n_anchored": cal.level_n_anchored,
+            "level_shift_mean_pct": (None if cal.level_shift is None
+                                     else round(cal.level_shift_mean_pct, 2)),
         },
         "race_meta": None if race_meta is None else {
             "start_local": race_meta["start_local"].isoformat(),
