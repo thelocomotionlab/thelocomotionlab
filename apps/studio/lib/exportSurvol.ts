@@ -16,6 +16,7 @@
 
 import type maplibregl from "maplibre-gl";
 import {
+  cheminDuSurvol,
   contexteDuHud,
   dessinerAvecCadre,
   formatDe,
@@ -28,7 +29,7 @@ import { decouperTrace } from "@locomotionlab/trace";
 
 import { imagesEnCache } from "./images";
 import { policeDuLabo } from "./police";
-import { attendreCalme, cadrer, poserLaTrace, poserLePoint } from "./scene";
+import { attendreCalme, cadrer, poserLAvancee, poserLeChemin, poserLePoint } from "./scene";
 import { encoder, recetteDisponible, type Avancement } from "./video";
 import { logoDuLabo } from "./export";
 
@@ -58,7 +59,10 @@ export async function exporterSurvol(
   const prises = prisesDuPlan(seance, plan.images, planche.camera, plan.imagesParSeconde);
   if (plan.images.length === 0) return null;
 
-  const coords = projet.donnees.trace?.coords ?? [];
+  // LE POINT ET SA TRACE VIENNENT DU MÊME TABLEAU : voir `cheminDuSurvol`.
+  // Le chemin est posé UNE FOIS ; chaque image ne fait plus qu'avancer sa peinture.
+  const { chemin } = cheminDuSurvol(seance);
+  poserLeChemin(carte, chemin);
   const toile = document.createElement("canvas");
   toile.width = format.width;
   toile.height = format.height;
@@ -87,8 +91,12 @@ export async function exporterSurvol(
     const prise = prises[i];
     const index = plan.images[i] ?? 0;
     if (!prise) return;
-    poserLaTrace(carte, coords, Math.round((plan.avancement[i] ?? 0) * (coords.length - 1)));
-    poserLePoint(carte, prise.lng, prise.lat);
+    poserLAvancee(carte, plan.avancement[i] ?? 0, planche.scene);
+    // LE POINT EST OÙ L'ON ÉTAIT, pas où la caméra regarde : en vue d'ensemble
+    // la prise vise le milieu de l'emprise, et le marqueur se posait au centre
+    // de la carte, à côté de sa propre trace.
+    const ou = seance.points[index];
+    if (ou) poserLePoint(carte, ou.lon, ou.lat);
     cadrer(carte, prise);
     await attendreCalme(carte);
     // `redraw` force un dessin dans le tampon préservé : sans lui, la capture

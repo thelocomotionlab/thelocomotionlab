@@ -23,7 +23,13 @@ export type PlanDeSurvol = {
   /** `images[i]` est l'index du point à montrer à l'image `i`. */
   images: number[];
   imagesParSeconde: number;
-  /** La part de séance parcourue à chaque image, dans [0, 1]. */
+  /**
+   * La part de la DISTANCE parcourue à chaque image, dans [0, 1].
+   *
+   * En distance, pas en nombre de points : c'est elle qui coupe la trace, et un
+   * compte de points est un compte de SECONDES — sur une sortie où l'on descend
+   * vite puis monte lentement, les deux s'écartaient de dix points.
+   */
   avancement: number[];
 };
 
@@ -103,9 +109,10 @@ export function planDeSurvol(seance: Seance | null, montage: Montage): PlanDeSur
 
   const images: number[] = [];
   const avancement: number[] = [];
+  const parcours = distances[distances.length - 1] ?? 0;
   const poser = (rang: number) => {
     images.push(retenus[rang]!);
-    avancement.push(points.length > 1 ? rang / (points.length - 1) : 0);
+    avancement.push(parcours > 0 ? Math.min(1, Math.max(0, (distances[rang] ?? 0) / parcours)) : 0);
   };
 
   for (let i = 0; i < imagesTenueDebut; i += 1) poser(0);
@@ -119,6 +126,42 @@ export function planDeSurvol(seance: Seance | null, montage: Montage): PlanDeSur
   for (let i = 0; i < imagesTenueFin; i += 1) poser(points.length - 1);
 
   return { images, imagesParSeconde: ips, avancement };
+}
+
+/**
+ * LE CHEMIN QUE SURVOLE LA CAMÉRA, décimé une fois pour toutes.
+ *
+ * La part parcourue se dessinait sur les coordonnées de la TRACE, coupées à une
+ * fraction du nombre de points de la SÉANCE. Or l'une est échantillonnée au
+ * kilomètre et l'autre à la seconde : la fraction de points de séance est une
+ * fraction de TEMPS, pas de distance. Sur une sortie où l'on descend vite puis
+ * monte lentement, les deux s'écartaient de dix points de pourcentage — dix
+ * kilomètres de trace en trop ou en moins devant le point, sur un tour des
+ * Écrins.
+ *
+ * Le point et sa trace viennent donc du MÊME tableau. Décimé, parce qu'une
+ * séance d'onze heures fait quarante mille points et qu'on les repousse à la
+ * scène à chaque image.
+ *
+ * `pas` dit combien de points de séance un point de chemin représente : le rang
+ * du chemin pour l'index `i` est `min(chemin.length - 1, floor(i / pas))`.
+ */
+export function cheminDuSurvol(
+  seance: Seance | null,
+  maxPoints = 2000,
+): { chemin: [number, number][]; pas: number } {
+  const pts = seance?.points ?? [];
+  if (pts.length === 0) return { chemin: [], pas: 1 };
+  const pas = Math.max(1, Math.ceil(pts.length / Math.max(2, maxPoints)));
+  const chemin: [number, number][] = [];
+  for (let i = 0; i < pts.length; i += pas) chemin.push([pts[i]!.lon, pts[i]!.lat]);
+  // Le dernier point toujours : sans lui la trace s'arrête avant l'arrivée.
+  const dernier = pts[pts.length - 1]!;
+  const bout = chemin[chemin.length - 1];
+  if (!bout || bout[0] !== dernier.lon || bout[1] !== dernier.lat) {
+    chemin.push([dernier.lon, dernier.lat]);
+  }
+  return { chemin, pas };
 }
 
 /** Le nombre d'images qu'un montage produira — ce qu'annonce le dialogue d'export. */

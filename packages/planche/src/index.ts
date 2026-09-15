@@ -221,7 +221,12 @@ export { apparenceDe, avecApparence } from "./apparence.ts";
 export { contexteDuHud } from "./contexte.ts";
 export { capLisse, priseDe, priseDEnsemble, prisesDuPlan, zoomSelonVitesse } from "./camera.ts";
 export type { Prise } from "./camera.ts";
-export { imagesDuMontage, planDeSurvol, pointsRetenus } from "./montage.ts";
+export {
+  cheminDuSurvol,
+  imagesDuMontage,
+  planDeSurvol,
+  pointsRetenus,
+} from "./montage.ts";
 export type { PlanDeSurvol } from "./montage.ts";
 export { EXTENSION, depaqueter, empaqueter } from "./fichier.ts";
 export type { MediaEmporte } from "./fichier.ts";
