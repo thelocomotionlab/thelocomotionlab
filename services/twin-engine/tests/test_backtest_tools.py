@@ -543,3 +543,235 @@ def test_summarize_counts_refusal_motives_and_false_negatives():
     assert motifs["Fraîcheur des données"] == 1
     # deux refus à ±15 % d'erreur (+4 % et −8 %) : faux négatifs potentiels
     assert s["refuses_pourtant_justes"] == 2
+
+
+# --------------------------------------------------------------------------- #
+# Phase 0 du chantier v2 : tableau de référence, avant/après, diag_ultras, passages
+# --------------------------------------------------------------------------- #
+def _sold(e, verdict="🟠"):
+    e["model"] = {"verdict": verdict}
+    return e
+
+
+def test_athlete_rows_and_tableau_split_sold_refused():
+    """Le tableau de référence : par athlète et total, vendus/refusés, Winkler RELATIF et
+    largeur relative MÉDIANE — les colonnes de DIAGNOSTIC §10.0."""
+    from tools.registre import REFUSED, athlete_rows, tableau_markdown
+
+    entries = [_sold(_entry("A", "r1", +4.0)), _sold(_entry("A", "r2", -6.0)),
+               _entry("B", "r3", +20.0, actual=24.0)]
+    entries[2]["model"] = {"verdict": "🔴", "blocking": ["Domaine de calibration"]}
+
+    rows = athlete_rows(entries)
+    assert [r["athlete"] for r in rows] == ["A", "TOTAL"]
+    tot = rows[-1]
+    assert tot["n"] == 2 and tot["mae_pct"] == pytest.approx(5.0) and tot["bias_pct"] == pytest.approx(-1.0)
+    assert tot["plan_coverage_pct"] == 100.0 and tot["safety_coverage_pct"] == 100.0
+    # couvert → Winkler = largeur / réel ; largeur relative = largeur / central (26 et 23,5)
+    assert tot["plan_winkler_rel"] == pytest.approx(6 / 25) and tot["safety_winkler_rel"] == pytest.approx(10 / 25)
+    assert tot["plan_width_rel_med_pct"] == pytest.approx(np.median([600 / 26, 600 / 23.5]))
+    assert tot["safety_width_rel_med_pct"] == pytest.approx(np.median([1000 / 26, 1000 / 23.5]))
+
+    ref = athlete_rows(entries, verdicts=REFUSED)
+    assert ref[0]["athlete"] == "B" and ref[0]["blocking"] == [("Domaine de calibration", 1)]
+    md = tableau_markdown(entries)
+    assert "VENDUS" in md and "REFUSÉS" in md
+    assert "| A | 2 |" in md and "Domaine de calibration ×1" in md
+
+
+def test_compare_markdown_reports_deltas_and_verdict_flips():
+    """Avant → après : deltas par athlète sur les vendus, et chaque bascule de verdict
+    nommée — la pièce des règles d'adoption (MAE vendue, Winkler, largeur)."""
+    from tools.registre import compare_markdown
+
+    before = [_sold(_entry("A", "r1", +4.0)), _sold(_entry("A", "r2", -6.0))]
+    after = [_sold(_entry("A", "r1", +2.0)), _entry("A", "r2", -6.0),
+             _sold(_entry("A", "r3", +1.0), "🟢")]
+    after[1]["model"] = {"verdict": "🔴", "blocking": ["x"]}
+    md = compare_markdown(before, after)
+    assert "| TOTAL | 2 → 2 (+0) | 5.0 → 1.5 (-3.5)" in md
+    assert "4.0 → 2.0 (-2.0)" in md
+    assert "r2 (2025-06-01) : 🟠 → 🔴 (devient REFUSÉE)" in md
+    assert "r3 (2025-06-01) : apparue" in md
+    assert "aucun" not in md.split("Changements de verdict")[-1]
+
+
+def _activity_gpx_along(day: str, start_hms: str, lat, lon, step_s: int = 10) -> bytes:
+    """Activité GPX synthétique (course) : positions données, un point toutes les step_s."""
+    from datetime import datetime as _dt, timedelta as _td
+
+    t0 = _dt.fromisoformat(f"{day}T{start_hms}+00:00")
+    rows = []
+    for i, (la, lo) in enumerate(zip(lat, lon)):
+        when = (t0 + _td(seconds=i * step_s)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        rows.append(f'<trkpt lat="{la:.7f}" lon="{lo:.7f}"><ele>100.0</ele><time>{when}</time></trkpt>')
+    return ('<?xml version="1.0" encoding="UTF-8"?>'
+            '<gpx version="1.1" creator="test" xmlns="http://www.topografix.com/GPX/1/1">'
+            f'<trk><type>running</type><trkseg>{"".join(rows)}</trkseg></trk></gpx>').encode()
+
+
+def _eastward(minutes: int, v_ms: float, pause: tuple[int, int] | None, step_s: int = 10):
+    """Positions vers l'est à v_ms, avec un plateau (début s, durée s) — à Nice."""
+    lat0, lon0 = 43.70, 7.26
+    lat, lon, x = [], [], 0.0
+    for i in range(minutes * 60 // step_s + 1):
+        t = i * step_s
+        moving = not (pause and pause[0] <= t < pause[0] + pause[1])
+        if i and moving:
+            x += v_ms * step_s
+        lat.append(lat0)
+        lon.append(lon0 + x / (111_320.0 * math.cos(math.radians(lat0))))
+    return lat, lon
+
+
+def test_diag_ultras_measures_stops_night_and_official_gap(tmp_path, capsys):
+    """H2 et C2 mesurés : arrêts (plateau de distance), part de nuit (test du plan), écart
+    montre − officiel via le manifeste, statut « vrai ultra » motivé."""
+    from tools.diag_ultras import main as diag_main, render_markdown, scan_archive
+    from twin_engine.config import load_config
+
+    d = tmp_path / "archive"
+    d.mkdir()
+    lat, lon = _eastward(40, 3.0, pause=(1200, 300))          # nuit : 21:30 UTC à Nice
+    (d / "nuit.gpx").write_bytes(_activity_gpx_along("2026-06-20", "21:30:00", lat, lon))
+    lat, lon = _eastward(40, 3.0, pause=None)                 # jour : 10:00 UTC
+    (d / "jour.gpx").write_bytes(_activity_gpx_along("2026-06-21", "10:00:00", lat, lon))
+    manifest = {"athlete": "T", "archive": "archive",
+                "races": [{"name": "Nuit", "date": "2026-06-20", "official_time": "0:42:00"}]}
+
+    res = scan_archive(d, load_config(), min_hours=0.5, min_stop_s=60, manifest=manifest)
+    rows = {r["date"]: r for r in res["rows"]}
+    assert set(rows) == {"2026-06-20", "2026-06-21"}
+    nuit, jour = rows["2026-06-20"], rows["2026-06-21"]
+    assert nuit["night_pct"] == pytest.approx(100.0) and nuit["night_moving_pct"] == pytest.approx(100.0)
+    assert jour["night_pct"] == 0.0 and jour["n_stops"] == 0
+    assert nuit["n_stops"] == 1 and nuit["n_stops_5min"] == 1
+    assert nuit["stopped_min_per_h"] == pytest.approx(7.5, abs=0.5)     # 5 min sur 40 min
+    assert nuit["longest_stop_min"] == pytest.approx(5.0, abs=0.1)
+    assert nuit["genuine"] is False and any("durée" in r for r in nuit["reasons"])
+    assert nuit["race"] == "Nuit" and nuit["official_h"] == pytest.approx(0.7)
+    assert nuit["watch_gap_min"] == pytest.approx(-2.0, abs=0.5)        # montre 40 min, officiel 42
+    agg = res["aggregates"]
+    assert agg["n_long"] == 2 and agg["n_genuine"] == 0 and agg["n_races_matched"] == 1
+    assert agg["stopped_pct_wmean_genuine"] is None                     # aucun vrai ultra → pas de moyenne inventée
+    md = render_markdown(res)
+    assert "H2" in md and "C2" in md and "| 2026-06-20 | Nuit |" in md
+
+    out_json = tmp_path / "diag.json"
+    rc = diag_main([str(d), "--min-hours", "0.5", "--json", str(out_json)])
+    assert rc == 0 and json.loads(out_json.read_text(encoding="utf-8"))["aggregates"]["n_long"] == 2
+    capsys.readouterr()
+
+
+def test_target_night_uses_the_real_plan(tmp_path):
+    """La part de nuit de la cible vient du plan réel (fade, arrêts, horloge) : un départ
+    après le coucher du soleil est de nuit de bout en bout, un départ matinal ne l'est pas."""
+    from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+
+    from tools.diag_ultras import target_night
+    from twin_engine.config import load_config
+    from twin_engine.course import RaceSpec
+
+    tzinfo = _tz(_td(hours=2))
+
+    def _race(hour):
+        return RaceSpec("T", (0.0, 5.0, 10.0), ("d", "s", "a"),
+                        start_time=_dt(2026, 9, 25, hour, 0, tzinfo=tzinfo),
+                        lat=43.703, lon=7.266, tz_offset_h=2.0)
+
+    night = target_night(_course_gpx(), _race(20), 3.0, load_config())
+    assert night["night_moving_pct"] == pytest.approx(100.0)
+    assert night["night_span_km"] == (0.0, 10.0) and len(night["segments"]) == 2
+    day = target_night(_course_gpx(), _race(8), 3.0, load_config())
+    assert day["night_moving_pct"] == 0.0 and day["night_span_km"] is None
+    assert day["t_clock_h"] == pytest.approx(3.0)
+    with pytest.raises(ValueError):
+        target_night(_course_gpx(), RaceSpec("sans logistique"), 3.0, load_config())
+
+
+def _along_course(course, v_ms: float, pause: tuple[float, float] | None, step_s: int = 1):
+    """Trajectoire 1 Hz qui SUIT la trace du parcours à v_ms (horizontal), avec un plateau."""
+    total_x = float(course.x_m[-1])
+    t, x, lat, lon = [], [], [], []
+    cur, s = 0.0, 0
+    while cur <= total_x:
+        moving = not (pause and pause[0] <= s < pause[0] + pause[1])
+        if s and moving:
+            cur += v_ms * step_s
+        t.append(float(s))
+        x.append(min(cur, total_x))
+        lat.append(float(np.interp(min(cur, total_x), course.x_m, course.lat_grid)))
+        lon.append(float(np.interp(min(cur, total_x), course.x_m, course.lon_grid)))
+        s += step_s
+        if cur >= total_x:
+            break
+    return np.array(t), np.array(x), np.array(lat), np.array(lon)
+
+
+def test_match_checkpoints_radius_monotone_and_fallbacks():
+    """Passages par proximité : trouvés dans l'ordre à la bonne seconde (arrêt compris),
+    « introuvable » sans position, jamais un point inventé."""
+    from tools.passages import match_checkpoints, passages_for_activity
+    from twin_engine.config import load_config
+    from twin_engine.course import RaceSpec, build_course
+
+    course = build_course(_course_gpx(), RaceSpec("T", (0.0, 5.0, 10.0), ("d", "s", "a")),
+                          load_config())
+    cps = course.checkpoint_coords()
+    t, x, lat, lon = _along_course(course, 2.0, pause=(2500, 600))
+    hits = match_checkpoints(t, x, lat, lon, cps, radius_m=50)
+    assert [h["method"] for h in hits] == ["radius"] * 3
+    assert hits[0]["t_s"] == 0.0
+    assert hits[1]["t_s"] == pytest.approx(2500, abs=30)     # sommet à 5 km : 2500 s à 2 m/s
+    assert hits[2]["t_s"] == pytest.approx(5600, abs=30)     # + 600 s d'arrêt au sommet
+    nan = np.full(t.size, np.nan)
+    assert [h["method"] for h in match_checkpoints(t, x, nan, nan, cps)] == ["introuvable"] * 3
+    # distance de montre incohérente avec le km du point → pas de faux passage
+    assert match_checkpoints(t, x + 50_000.0, lat, lon, cps)[1]["method"] == "introuvable"
+
+    pas = passages_for_activity(t, x, lat, lon, course, radius_m=50, official_h=5600 / 3600)
+    assert pas["n_found"] == 3 and [c["name"] for c in pas["checkpoints"]] == ["d", "s", "a"]
+    assert pas["checkpoints"][1]["t_h"] == pytest.approx(2500 / 3600, abs=0.01)
+    assert abs(pas["finish_gap_min"]) < 0.6
+
+
+def test_passages_end_to_end_writes_and_survives_the_bench_merge(tmp_path, capsys):
+    """De l'archive au registre : l'activité du jour de course est retrouvée, ses passages
+    consignés sous la clé de l'entrée, et la re-fusion du banc les préserve."""
+    from tools.backtest import merge_registre
+    from tools.passages import main as passages_main
+    from twin_engine.config import load_config
+    from twin_engine.course import RaceSpec, build_course
+
+    course_gpx = _course_gpx()
+    course = build_course(course_gpx, RaceSpec(name="Course passée"), load_config())   # GPX-only
+    t, x, lat, lon = _along_course(course, 2.0, pause=(2500, 600), step_s=10)
+    d = tmp_path / "archives"
+    d.mkdir()
+    (d / "race.gpx").write_bytes(_activity_gpx_along("2030-05-01", "08:00:00", lat, lon))
+    (d / "other.gpx").write_bytes(_activity_gpx_along("2030-05-01", "18:00:00", lat[:20], lon[:20]))
+    (tmp_path / "course.gpx").write_bytes(course_gpx)
+    manifest = {"athlete": "Testeur", "archive": "archives",
+                "races": [{"name": "Course passée", "date": "2030-05-01",
+                           "official_time": "1:33:20", "gpx": "course.gpx"}]}
+    (tmp_path / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    registre = tmp_path / "registre.json"
+
+    rc = passages_main([str(tmp_path / "manifest.json"), "--registre", str(registre),
+                        "--radius-m", "60"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "Testeur · Course passée" in out and "| 10.0 |" in out
+    data = json.loads(registre.read_text(encoding="utf-8"))
+    e = data["entries"][0]
+    assert (e["athlete"], e["race"], e["date"]) == ("Testeur", "Course passée", "2030-05-01")
+    pas = e["passages"]
+    assert pas["activity_date"] == "2030-05-01" and pas["n_found"] == len(course.segments) + 1
+    assert pas["checkpoints"][-1]["t_h"] == pytest.approx(5600 / 3600, abs=0.02)
+    assert abs(pas["finish_gap_min"]) < 1.5
+
+    # la re-fusion du banc (ligne machine sans « passages ») ne les efface pas
+    merge_registre(data, "Testeur", False,
+                   [{"race": "Course passée", "date": "2030-05-01", "prediction": None}])
+    assert data["entries"][0]["passages"]["n_found"] == pas["n_found"]
+    assert len(data["entries"]) == 1

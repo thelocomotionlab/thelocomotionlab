@@ -236,6 +236,177 @@ def frontiere(entries: list[dict], *, alpha: float = 0.2, band: str = "safety",
     return out
 
 
+SOLD = ("🟢", "🟠")
+REFUSED = ("🔴",)
+_BANDS = (("plan", "plan_low_h", "plan_high_h", 0.5), ("safety", "safety_low_h", "safety_high_h", 0.2))
+
+
+def _band_metrics(rows: list[dict], lo_k: str, hi_k: str, alpha: float) -> dict:
+    """Couverture, Winkler RELATIF moyen (÷ temps réel : comparable entre courses de durées
+    inégales) et largeur relative MÉDIANE (÷ central) d'une bande, sur des cas finis."""
+    xs = [e for e in rows
+          if e["prediction"].get(lo_k) is not None and e["prediction"].get(hi_k) is not None]
+    if not xs:
+        return {"coverage_pct": None, "winkler_rel": None, "width_rel_med_pct": None}
+    inside, wk, widths = [], [], []
+    for e in xs:
+        p, y = e["prediction"], e["official_time_h"]
+        inside.append(p[lo_k] <= y <= p[hi_k])
+        wk.append(winkler(p[lo_k], p[hi_k], y, alpha) / y)
+        widths.append(100.0 * (p[hi_k] - p[lo_k]) / p["central_h"])
+    return {"coverage_pct": 100.0 * sum(inside) / len(xs),
+            "winkler_rel": float(np.mean(wk)),
+            "width_rel_med_pct": float(np.median(widths))}
+
+
+def athlete_rows(entries: list[dict], *, verdicts: tuple[str, ...] = SOLD) -> list[dict]:
+    """Une ligne par athlète + une ligne TOTAL, sur les cas finis au verdict demandé
+    (vendus 🟢/🟠 par défaut) : n, MAE et biais du central, puis par bande couverture,
+    Winkler relatif moyen et largeur relative médiane. Refusés : motifs bloquants en plus."""
+    fin = [e for e in _finished(entries)
+           if _verdict(e) in verdicts and e["prediction"].get("err_pct") is not None]
+    athletes = sorted({e["athlete"] for e in fin})
+    rows: list[dict] = []
+    for a in athletes + ["TOTAL"]:
+        sub = fin if a == "TOTAL" else [e for e in fin if e["athlete"] == a]
+        if not sub:
+            continue
+        errs = np.array([e["prediction"]["err_pct"] for e in sub], dtype=float)
+        row = {"athlete": a, "n": len(sub),
+               "mae_pct": float(np.abs(errs).mean()), "bias_pct": float(errs.mean())}
+        for band, lo_k, hi_k, alpha in _BANDS:
+            for k, v in _band_metrics(sub, lo_k, hi_k, alpha).items():
+                row[f"{band}_{k}"] = v
+        if verdicts == REFUSED:
+            c: Counter = Counter()
+            for e in sub:
+                c.update((e.get("model") or {}).get("blocking") or ["(motif non consigné)"])
+            row["blocking"] = c.most_common()
+        rows.append(row)
+    return rows
+
+
+def _f(v, nd=1, suffix="") -> str:
+    return "—" if v is None else f"{v:.{nd}f}{suffix}"
+
+
+def _md_sold(rows: list[dict]) -> str:
+    head = ("| athlète | n | MAE % | biais % | couv 50 | couv 80 | Winkler rel 50 | "
+            "Winkler rel 80 | largeur rel méd 50 | largeur rel méd 80 |\n"
+            "|---|---|---|---|---|---|---|---|---|---|")
+    lines = [head]
+    for r in rows:
+        lines.append(
+            f"| {r['athlete']} | {r['n']} | {_f(r['mae_pct'])} | {_f(r['bias_pct'], 1, '')} "
+            f"| {_f(r['plan_coverage_pct'], 0, ' %')} | {_f(r['safety_coverage_pct'], 0, ' %')} "
+            f"| {_f(r['plan_winkler_rel'], 3)} | {_f(r['safety_winkler_rel'], 3)} "
+            f"| {_f(r['plan_width_rel_med_pct'], 1, ' %')} | {_f(r['safety_width_rel_med_pct'], 1, ' %')} |")
+    return "\n".join(lines)
+
+
+def _md_refused(rows: list[dict]) -> str:
+    lines = ["| athlète | n | MAE % | biais % | couv 80 | motifs bloquants |", "|---|---|---|---|---|---|"]
+    for r in rows:
+        motifs = " · ".join(f"{m} ×{n}" for m, n in r.get("blocking", []))
+        lines.append(f"| {r['athlete']} | {r['n']} | {_f(r['mae_pct'])} | {_f(r['bias_pct'])} "
+                     f"| {_f(r['safety_coverage_pct'], 0, ' %')} | {motifs} |")
+    return "\n".join(lines)
+
+
+def _groups(entries: list[dict]) -> list[tuple[str, list[dict]]]:
+    return [("cas frais (décisionnels)", [e for e in entries if not e.get("dev_set")]),
+            ("cas de développement (indicatifs)", [e for e in entries if e.get("dev_set")]),
+            ("tous les cas", list(entries))]
+
+
+def tableau_markdown(entries: list[dict]) -> str:
+    """Le tableau de référence (DIAGNOSTIC §10.0) : par groupe, VENDUS puis REFUSÉS, par
+    athlète et total. Winkler et largeurs en relatif ; « — » = bande absente (repli sans
+    prédiction) ou aucun cas."""
+    out = [f"Registre : {len(entries)} entrées, {len(_finished(entries))} finies scorables "
+           f"(quarantaines exclues)."]
+    for label, group in _groups(entries):
+        sold = athlete_rows(group, verdicts=SOLD)
+        refused = athlete_rows(group, verdicts=REFUSED)
+        out.append(f"\n**{label} — VENDUS (🟢/🟠)**\n")
+        out.append(_md_sold(sold) if sold else "(aucun cas vendu)")
+        out.append(f"\n**{label} — REFUSÉS (🔴)**\n")
+        out.append(_md_refused(refused) if refused else "(aucun refus)")
+    return "\n".join(out)
+
+
+def _key(e: dict) -> tuple:
+    return (e.get("athlete"), e.get("race"), e.get("date"))
+
+
+def _delta_cell(b, a, nd=1, suffix="") -> str:
+    if b is None and a is None:
+        return "—"
+    if b is None or a is None:
+        return f"{_f(b, nd, suffix)} → {_f(a, nd, suffix)}"
+    return f"{b:.{nd}f} → {a:.{nd}f} ({a - b:+.{nd}f})"
+
+
+def compare_markdown(before: list[dict], after: list[dict]) -> str:
+    """AVANT → APRÈS : par groupe et par athlète sur les cas VENDUS (n, MAE, biais,
+    couvertures, Winkler, largeurs), puis les changements de verdict (vendu ↔ refusé,
+    prédiction apparue/disparue) et l'erreur du central entrée par entrée. C'est la pièce
+    à coller dans DIAGNOSTIC pour toute règle d'adoption (MAE vendue, Winkler, largeur)."""
+    out: list[str] = []
+    for (label, gb), (_, ga) in zip(_groups(before), _groups(after)):
+        rb = {r["athlete"]: r for r in athlete_rows(gb)}
+        ra = {r["athlete"]: r for r in athlete_rows(ga)}
+        names = [a for a in sorted(set(rb) | set(ra)) if a != "TOTAL"] + ["TOTAL"]
+        out.append(f"\n**{label} — VENDUS, avant → après (Δ)**\n")
+        out.append("| athlète | n | MAE % | biais % | couv 50 | couv 80 | Winkler rel 50 | "
+                   "Winkler rel 80 | largeur rel méd 50 | largeur rel méd 80 |")
+        out.append("|---|---|---|---|---|---|---|---|---|---|")
+        for a in names:
+            b, r = rb.get(a, {}), ra.get(a, {})
+            if not b and not r:
+                continue
+            out.append(
+                f"| {a} | {_delta_cell(b.get('n'), r.get('n'), 0)} "
+                f"| {_delta_cell(b.get('mae_pct'), r.get('mae_pct'))} "
+                f"| {_delta_cell(b.get('bias_pct'), r.get('bias_pct'))} "
+                f"| {_delta_cell(b.get('plan_coverage_pct'), r.get('plan_coverage_pct'), 0)} "
+                f"| {_delta_cell(b.get('safety_coverage_pct'), r.get('safety_coverage_pct'), 0)} "
+                f"| {_delta_cell(b.get('plan_winkler_rel'), r.get('plan_winkler_rel'), 3)} "
+                f"| {_delta_cell(b.get('safety_winkler_rel'), r.get('safety_winkler_rel'), 3)} "
+                f"| {_delta_cell(b.get('plan_width_rel_med_pct'), r.get('plan_width_rel_med_pct'))} "
+                f"| {_delta_cell(b.get('safety_width_rel_med_pct'), r.get('safety_width_rel_med_pct'))} |")
+
+    kb = {_key(e): e for e in before}
+    ka = {_key(e): e for e in after}
+    flips: list[str] = []
+    out.append("\n**Entrées, avant → après** (verdict, erreur du central, dans la bande 50 / 80)\n")
+    out.append("| athlète | course | date | verdict | err % | 50 | 80 |")
+    out.append("|---|---|---|---|---|---|---|")
+
+    def _flag(v):
+        return "—" if v is None else ("✓" if v else "✗")
+
+    for k in sorted(set(kb) | set(ka), key=lambda x: (str(x[0]), str(x[2]))):
+        b, a = kb.get(k), ka.get(k)
+        pb, pa = (b or {}).get("prediction") or {}, (a or {}).get("prediction") or {}
+        vb, va = (_verdict(b) if b else None), (_verdict(a) if a else None)
+        eb, ea = pb.get("err_pct"), pa.get("err_pct")
+        out.append(f"| {k[0]} | {k[1]} | {k[2]} | {vb or 'absent'} → {va or 'absent'} "
+                   f"| {_delta_cell(eb, ea)} | {_flag(pb.get('in_plan'))} → {_flag(pa.get('in_plan'))} "
+                   f"| {_flag(pb.get('in_safety'))} → {_flag(pa.get('in_safety'))} |")
+        sold_b, sold_a = vb in SOLD, va in SOLD
+        if b is None or a is None:
+            flips.append(f"{k[0]} · {k[1]} ({k[2]}) : {'apparue' if b is None else 'disparue'}")
+        elif sold_b != sold_a:
+            flips.append(f"{k[0]} · {k[1]} ({k[2]}) : {vb} → {va}"
+                         f"{' (devient VENDABLE)' if sold_a else ' (devient REFUSÉE)'}")
+        elif (pb.get("central_h") is None) != (pa.get("central_h") is None):
+            flips.append(f"{k[0]} · {k[1]} ({k[2]}) : prédiction "
+                         f"{'apparue' if pa.get('central_h') is not None else 'disparue'}")
+    out.append("\n**Changements de verdict** : " + ("; ".join(flips) if flips else "aucun."))
+    return "\n".join(out)
+
+
 def _print_frontiere(label: str, entries: list[dict], *, alpha: float, band: str,
                      nominal_pct: float, sellable_only: bool = True) -> None:
     rows = frontiere(entries, alpha=alpha, band=band, sellable_only=sellable_only)
@@ -279,6 +450,14 @@ def main(argv: list[str] | None = None) -> int:
                     help="trace la frontière finesse/calibration : couverture et score de "
                          "Winkler pour une grille de facteurs d'échelle sur les bandes "
                          "servies — dit de COMBIEN on peut resserrer sans mentir")
+    ap.add_argument("--tableau", action="store_true",
+                    help="tableau de référence en markdown (DIAGNOSTIC §10.0) : par groupe, "
+                         "vendus/refusés, par athlète et total — MAE, biais, couvertures, "
+                         "Winkler relatif, largeur relative médiane")
+    ap.add_argument("--compare", metavar="AVANT.json",
+                    help="avant → après : compare le registre AVANT à celui analysé "
+                         "(deltas par athlète sur les cas vendus, changements de verdict, "
+                         "erreur entrée par entrée)")
     ap.add_argument("--quarantine", nargs=4, metavar=("ATHLETE", "COURSE", "DATE", "MOTIF"),
                     help="met une entrée en quarantaine (exclue des stats, conservée et "
                          "visible avec son motif — jamais de suppression silencieuse)")
@@ -302,6 +481,17 @@ def main(argv: list[str] | None = None) -> int:
             e["quarantine"] = motif
         path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(f"En quarantaine : {ath} / {race} / {date} — motif : {motif}", file=sys.stderr)
+    if args.tableau:
+        print(tableau_markdown(entries))
+        return 0
+    if args.compare:
+        before_path = Path(args.compare)
+        if not before_path.exists():
+            print(f"Registre AVANT introuvable : {before_path}", file=sys.stderr)
+            return 2
+        before = json.loads(before_path.read_text(encoding="utf-8")).get("entries", [])
+        print(compare_markdown(before, entries))
+        return 0
     groups = {
         "cas frais (décisionnels)": [e for e in entries if not e.get("dev_set")],
         "cas de développement (indicatifs — le modèle a été réglé dessus)":
