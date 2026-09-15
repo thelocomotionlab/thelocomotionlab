@@ -4,8 +4,10 @@
 > La méthode scientifique (VC, exposant d'endurance, durabilité, Minetti, pacing) est dans
 > [`docs/twin-theory.md`](./twin-theory.md) — ce document-ci ne couvre que **l'usage**.
 >
-> Dernière mise à jour (2026-07-08) : mode backtest `--until`, outils de registre,
-> lecture des deux bandes (intervalles conformes par défaut depuis le 2026-07-03).
+> Dernière mise à jour (2026-09-15) : outils de la Phase 0 du chantier v2 (tableau de
+> référence et avant/après du registre, radiographie arrêts/nuit des vrais ultras, passages
+> réels aux points de contrôle). Avant : mode backtest `--until`, outils de registre, lecture
+> des deux bandes (intervalles conformes par défaut depuis le 2026-07-03).
 
 ## 1. À quoi ça sert
 
@@ -233,7 +235,48 @@ PYTHONPATH=src python -m tools.backtest <manifest> # walk-forward --until : pré
 PYTHONPATH=src python -m tools.registre [--json]   # couverture des intervalles, biais, score de Winkler
 PYTHONPATH=src python -m tools.ab_recency <manifests…>  # balaye la demi-vie de récence (biais de progression)
 PYTHONPATH=src python -m tools.registre --frontiere # jusqu'où resserrer les bandes sans perdre la couverture
+PYTHONPATH=src python -m tools.registre --tableau   # tableau de référence (markdown) : par athlète et total,
+                                                    #   vendus/refusés, MAE, biais, couvertures, Winkler relatif,
+                                                    #   largeur relative médiane — à coller dans DIAGNOSTIC
+PYTHONPATH=src python -m tools.registre --compare AVANT.json   # avant → après : deltas par athlète (vendus),
+                                                    #   changements de verdict, erreur entrée par entrée
+PYTHONPATH=src python -m tools.diag_ultras <archive> --manifest <manifeste>   # vrais ultras : arrêts (H2),
+                                                    #   part de nuit (C2), écart montre − officiel ; agrégats
+                                                    #   pondérés comme la calibration (récence × maximalité)
+PYTHONPATH=src python -m tools.diag_ultras --course <gpx> --race <spec.json> --hours 32.3   # part de nuit
+                                                    #   de la CIBLE, par segment, via le plan réel
+PYTHONPATH=src python -m tools.passages <manifestes…>   # heures de passage RÉELLES aux points de contrôle des
+                                                    #   courses passées → champ `passages` du registre
 ```
+
+> **Avant / après (chantier v2).** Le registre committé au départ du chantier est figé dans
+> `docs/archive/twin-v2/registre-avant.json`. Toute preuve d'un levier se lit par
+> `tools/registre --compare docs/archive/twin-v2/registre-avant.json` après avoir rejoué le
+> banc : MAE des cas vendus, couvertures, Winkler, largeurs — par athlète, jamais sur un seul.
+
+**Mesures préalables du chantier v2 (Phase 0), à lancer chez Valentin** — les archives
+(`_seed/cas_validation/`, ~1,9 Go) ne quittent pas sa machine ; les outils n'impriment que
+des agrégats. Depuis `services/twin-engine`, sur la branche du chantier :
+
+```bash
+M="_seed/manifest-val.json _seed/manifest-crasse.json _seed/manifest-lolo.json _seed/manifest-rapace.json"
+# 0.1 — banc complet sous la config servie (4 manifestes, toutes coupures) → registre
+PYTHONPATH=src python -m tools.backtest $M
+PYTHONPATH=src python -m tools.registre --tableau
+PYTHONPATH=src python -m tools.registre --compare ../../docs/archive/twin-v2/registre-avant.json
+# 0.2 + 0.3 — arrêts et part de nuit des vrais ultras, par athlète (une passe par archive)
+PYTHONPATH=src python -m tools.diag_ultras _seed/cas_validation/Val/archives/data_training_strava.zip --manifest _seed/manifest-val.json
+PYTHONPATH=src python -m tools.diag_ultras _seed/cas_validation/Crasse/archives --manifest _seed/manifest-crasse.json
+PYTHONPATH=src python -m tools.diag_ultras _seed/cas_validation/Lolo/archives   --manifest _seed/manifest-lolo.json
+PYTHONPATH=src python -m tools.diag_ultras _seed/cas_validation/Rapace/archives --manifest _seed/manifest-rapace.json
+# 0.3 — part de nuit de la cible (central du rapport livré : 32 h 17)
+PYTHONPATH=src python -m tools.diag_ultras --course <trace-nice-100m.gpx> --race examples/nice-100m.json --hours 32.28
+# 0.5 — passages réels aux points de contrôle → champ `passages` du registre
+PYTHONPATH=src python -m tools.passages $M
+```
+
+Les sorties sont du markdown à coller dans le carnet (DIAGNOSTIC §10.0) ; seul le registre
+(agrégats) se committe.
 
 > ⚠️ Ne **jamais** enchaîner `--dry-run` puis le run réel : le dry-run fait 100 % du calcul et
 > ne saute que l'écriture du registre — c'est deux fois le travail. Pour vérifier un manifeste

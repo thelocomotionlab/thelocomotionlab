@@ -827,3 +827,169 @@ quarantaine 1, finies 11, VENDU intact (n=5, MAE 10,2 %).
 (conversion IA, altitude aplatie) — pas l'archive de l'athlète, dont le canal distance est
 réparé par §9.11. La course redeviendra scorable quand une vraie trace GPX du parcours
 remplacera la conversion IA (à demander à Rapace).
+
+
+## 10. Chantier Twin v2 (2026-09) — resserrer honnêtement, individualiser, rendre le rapport vendable
+
+> **Cadre.** Audit externe du moteur, du rapport livré pour Nice Côte d'Azur by UTMB 100M (cas
+> de référence, Val) et de la concurrence. Diagnostic : le centre est bon (LOO ≈ 6,8 % sur
+> 12 ultras) mais les bandes valent ~2,2 × ce qu'une gaussienne au σ implicite donnerait —
+> mécanique de l'intervalle (levier d'extrapolation vers 32 h, quantile conforme à n = 12,
+> symétrie en heures), pas calibration. **Règle du chantier** : on resserre en apportant de
+> l'information dans la zone 25–35 h, en stabilisant le quantile et en cassant la symétrie ;
+> jamais en réduisant la couverture nominale, jamais en flattant la largeur. Chaque levier :
+> un flag de `twin.config.json`, défaut historique inchangé au bit près tant que la preuve
+> n'est pas faite, preuve au banc (4 manifestes, toutes coupures), décision consignée ici
+> (§10.x). Compte-rendu du chantier : `docs/twin-chantier-v2-compte-rendu.md`.
+
+### 10.0 Baselines et mesures (Phase 0 — aucun changement de comportement)
+
+**Ce qui est figé.** Aucun flag, `twin.config.json` intact. Golden déterministe inchangé au
+chiffre près (`pytest -k golden`), suite complète verte, `tools.ab_montagnhard` identique au
+tableau §4. Le registre committé au départ du chantier est copié tel quel dans
+`docs/archive/twin-v2/registre-avant.json` : c'est le « avant » de tous les tableaux
+avant/après (`tools/registre --compare`). Rejoué par `tools/registre`, il reproduit
+exactement le banc du 2026-08-15 (§5.y : frais vendus n=2, MAE 10,6 %, couv80 50 % ; dev
+vendus n=8, MAE 6,0 %, couv80 75 %) — le moteur n'a pas bougé depuis.
+
+**Tableau de référence (`tools/registre --tableau`, registre du 2026-08-15, config servie).**
+Winkler relatif = score de Winkler ÷ temps réel (comparable entre courses de durées
+inégales) ; largeur relative = (haut − bas) ÷ central, médiane par ligne.
+
+*Cas frais (décisionnels) — VENDUS (🟢/🟠)*
+
+| athlète | n | MAE % | biais % | couv 50 | couv 80 | Winkler rel 50 | Winkler rel 80 | largeur rel méd 50 | largeur rel méd 80 |
+|---|---|---|---|---|---|---|---|---|---|
+| Lolo | 2 | 10.6 | -10.6 | 0 % | 50 % | 0.369 | 0.841 | 5.0 % | 9.5 % |
+| TOTAL | 2 | 10.6 | -10.6 | 0 % | 50 % | 0.369 | 0.841 | 5.0 % | 9.5 % |
+
+*Cas frais — REFUSÉS (🔴)*
+
+| athlète | n | MAE % | biais % | couv 80 | motifs bloquants |
+|---|---|---|---|---|---|
+| Lolo | 4 | 7.9 | -7.1 | 50 % | Domaine de calibration ×3 · Erreur validation croisée ×1 · Largeur d'intervalle ×1 |
+| Rapace | 5 | 81.7 | 81.7 | 20 % | Qualité (FC / altitude / distance) ×4 · Domaine de calibration ×2 · Efforts longs proches de la cible ×1 · Erreur validation croisée ×1 · Largeur d'intervalle ×1 |
+| TOTAL | 9 | 48.9 | 42.2 | 33 % | Domaine de calibration ×5 · Qualité (FC / altitude / distance) ×4 · Erreur validation croisée ×2 · Largeur d'intervalle ×2 · Efforts longs proches de la cible ×1 |
+
+*Cas de développement (indicatifs) — VENDUS (🟢/🟠)*
+
+| athlète | n | MAE % | biais % | couv 50 | couv 80 | Winkler rel 50 | Winkler rel 80 | largeur rel méd 50 | largeur rel méd 80 |
+|---|---|---|---|---|---|---|---|---|---|
+| Crasse | 7 | 6.8 | 2.6 | 57 % | 71 % | 0.191 | 0.296 | 7.1 % | 13.4 % |
+| Val | 1 | 0.3 | -0.3 | 100 % | 100 % | 0.150 | 0.757 | 15.0 % | 76.0 % |
+| TOTAL | 8 | 6.0 | 2.2 | 62 % | 75 % | 0.185 | 0.354 | 7.6 % | 14.3 % |
+
+*Cas de développement — REFUSÉS (🔴)*
+
+| athlète | n | MAE % | biais % | couv 80 | motifs bloquants |
+|---|---|---|---|---|---|
+| Crasse | 6 | 120.3 | 117.0 | 0 % | Domaine de calibration ×4 · Efforts longs proches de la cible ×2 |
+| Val | 5 | 7.4 | 2.2 | 80 % | Qualité (FC / altitude / distance) ×5 · Historique ×3 · Fraîcheur des données ×3 · Courses exploitables ×3 · Efforts longs proches de la cible ×2 · Domaine de calibration ×1 |
+| TOTAL | 11 | 69.0 | 64.8 | 36 % | Qualité (FC / altitude / distance) ×5 · Domaine de calibration ×5 · Efforts longs proches de la cible ×4 · Historique ×3 · Fraîcheur des données ×3 · Courses exploitables ×3 |
+
+*Tous les cas — VENDUS (🟢/🟠)* : Crasse 7 (MAE 6,8 %), Lolo 2 (10,6 %), Val 1 (0,3 %) ;
+TOTAL n=10, MAE 6,9 %, biais −0,3 %, couv50 50 %, couv80 70 %, Winkler rel 0,222 / 0,451,
+largeur rel méd 7,6 % / 14,3 %.
+
+Lecture : la ligne Val/Lavaredo 2025 est la dégénérescence pointée par l'audit — fourchette
+de course ±7,5 % mais bornes de sécurité ±38 % pour un central à −0,3 % (largeur rel 76 %) :
+un seul mauvais pli fixe la borne. C'est la cible de la Phase 1 (A3).
+
+**Relance du banc sous la config servie (0.1) — À COLLER (banc chez Valentin, voie A).**
+Commandes : `docs/manuel-twin.md` §8. Attendu : `tools/registre --compare
+../../docs/archive/twin-v2/registre-avant.json` → « Changements de verdict : aucun » et
+deltas nuls ; tout écart est une information à consigner ici avant d'aller plus loin.
+
+**Rapport de référence livré (PDF du 2026-09-15, archive de 891 activités) — l'état « avant »
+du livrable.**
+
+| Grandeur | Valeur imprimée |
+|---|---|
+| central | 32 h 17 (32,28 h) |
+| fourchette de course (50 %) | 28 h 11 – 36 h 22, soit ±12,7 % |
+| bornes de sécurité (80 %) | 24 h 39 – 39 h 54, soit ±23,6 % |
+| σ résiduel · LOO | 0,50 km/h · brute 6,8 % (interpolation 7,6 %, extrapolation 4,0 %) |
+| VC · E · durabilité | 9,72 km/h (2,699 m/s ± 0,15) · 1,18 · 19 % |
+| nuit | du km 38 au km 84 (ven. 20:08 → sam. 05:34) |
+| plan | mouvement 30 h 52 + arrêts 1 h 25 ; dérive affichée « ≈ −16 % » |
+
+Deux constats de cohérence, à régler avant le recalcul final :
+1. les références du golden RÉEL (§12 de twin-theory, capture du 2026-07-02, 449 activités :
+   VC 2,952, E 1,244, 31,28 h, MAE 3,1 %) ne sont **pas** celles de l'archive fraîche
+   (891 activités : VC 2,699, E 1,18, 32,28 h, MAE 6,8 %). Le golden réel ne peut donc être
+   vérifié PASS que sur l'archive de juillet ; sur l'archive fraîche, une **recapture de
+   référence « avant »** est nécessaire en Phase 0 (`twin-engine preview` sous le moteur
+   actuel, JSON conservé hors git) — sinon aucune bascule de défaut ne pourra être jugée sur
+   le cas de référence ;
+2. arrêts 1 h 25 imprimés contre 1 h 45 attendus avec `examples/nice-100m.json`
+   (15 × 5 min + 3 bases majeures × 10 min) : la spec de course servie pour ce PDF n'est pas
+   celle du dépôt. La spec exacte (et la config) du rapport livré sont à récupérer pour que
+   le recalcul de Phase 6 compare des choses comparables.
+
+**0.4 Fade : l'incohérence narrative est confirmée dans le code et dans le PDF.**
+
+| Grandeur | Valeur |
+|---|---|
+| Δ servi (`pacing.fade_source=config`, défaut) | 0,085 |
+| dérive affichée (`context.py` : 2Δ/(1+Δ)) | −15,7 %, imprimée « ≈ −16 % » (PDF p. 9) |
+| durabilité mesurée de l'athlète | 19 % (PDF p. 3 et 7) ; 20,9 % dans twin-theory §12 |
+| Δ qu'aurait servi `fade_source=durability` (X/(200−X)) | 0,105 pour 19 % (−19,0 %) ; 0,117 pour 20,9 % (−20,9 %) |
+
+Le PDF imprime, p. 7 : « 19 % de découplage : la dérive contrôlée du plan est faite pour
+toi ». La phrase sort de `durability_pourtoi` (narrative.py) pour toute durabilité dans la
+bande « bonne » (15–25 %), alors que le plan ne lit pas ce chiffre : le fade reste le Δ
+fixe de la config. La promesse d'individualisation n'est pas tenue sur le livrable du jour J
+(déjà noté en §9.3 ; jamais basculé). Correctif = levier fade de la Phase 2 (`fade_source=
+durability`, puis source `splits`), à valider sur le plan Nice avant bascule.
+
+**0.2 H2 — écoulé = mouvement + arrêts — À COLLER.** Outil `tools/diag_ultras` (une passe
+par archive, agrégats seulement) : par effort ≥ 10 h, écoulé, mouvement (masque distance de
+`twin/stops.py`, le même que le moteur), arrêts en % et en min/h, plateaux ≥ 1 min et
+≥ 5 min, plus long arrêt, statut au filtre vrais ultras et poids récence × maximalité ; et,
+via le manifeste, l'écart **montre − officiel** (une montre en pause ment sur l'écoulé que
+la LOO compare). C'est le préalable de B4 : la bascule `speed_basis=moving` et le modèle
+d'arrêts ne se décident que sur ces chiffres.
+
+| athlète | vrais ultras | arrêts % (méd.) | arrêts min/h (méd. · pondérée) | plateaux ≥ 5 min (méd.) | montre − officiel (méd., min) |
+|---|---|---|---|---|---|
+| Val | | | | | |
+| Crasse | | | | | |
+| Lolo | | | | | |
+| Rapace | | | | | |
+
+**0.3 Part de nuit — À COLLER.** Même outil, seconde table : part de nuit de chaque vrai
+ultra (temps écoulé et temps en mouvement, test jour/nuit du plan, fuseau solaire de la
+longitude) et, avec `--course/--race/--hours`, part de nuit de la cible par segment via le
+plan réel. La subtilité de C2 : les ultras de calibration contiennent déjà de la nuit en
+moyenne — le facteur nuit n'ajustera le total que par le **différentiel** entre la part de
+nuit de la cible et cette moyenne pondérée.
+
+| athlète | nuit % écoulé (pondérée) | nuit % mouvement (pondérée) |
+|---|---|---|
+| Val | | |
+| Crasse | | |
+| Lolo | | |
+| Rapace | | |
+| **cible Nice 100M (32,28 h)** | | |
+
+**0.5 Passages réels aux points de contrôle — À COLLER.** Outil `tools/passages` :
+l'activité du jour de course est retrouvée dans l'archive, le parcours construit comme au
+banc (spec ou découpage 10 km), et l'heure de passage à chaque borne de segment relevée par
+proximité monotone (rayon 150 m, cohérence avec la distance de la montre, approche la plus
+proche du premier passage). Consigné dans le registre sous `passages` (agrégats : des heures
+à des km publics), préservé par la re-fusion du banc. C'est la matière du scoring du plan
+(Phase 4) — jusqu'ici le banc ne jugeait que l'arrivée.
+
+| athlète | courses avec passages | points trouvés / attendus | écart arrivée relevée − officiel (méd., min) |
+|---|---|---|---|
+| Val | | | |
+| Crasse | | | |
+| Lolo | | | |
+| Rapace | | | |
+
+**Outils livrés en Phase 0** (tous couverts par des tests synthétiques, `tests/test_stops.py`,
+`test_backtest_tools.py`, `test_pacing.py`, `test_course.py`) : `twin/stops.py` (masque de
+mouvement partagé avec `record.py` — refactor sans effet numérique, golden intact — détection
+d'arrêts, statistiques), `pacing/sun.py::night_mask/night_share`, `CourseProfile.lat_grid/
+lon_grid` + `checkpoint_coords()` (additifs, `to_dict` inchangé), `tools/registre --tableau`
+et `--compare`, `tools/diag_ultras`, `tools/passages`.
