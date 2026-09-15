@@ -187,9 +187,18 @@ de progression chez un second athlète (Val 2024 : +21 à +24 %).
   en lien linéaire au temps prédit au lieu du point réel ; bandes déplacées de quelques
   dixièmes d'heure à défauts inchangés. Corrigée, verrouillée par test.
 
-**En attente (second passage, feuille du manuel §8)** : B4 sur garde rétablie, scoreur avec
-`--set` pour l'amplitude du fade, Nice sous RB4 ; le registre committé après le premier
-passage porte les bandes déplacées et sera réécrit par le passage de base.
+**Second passage reçu (2026-09-15) — Phase 2 close (DIAGNOSTIC §10.5, §10.7, §10.9).**
+- Le passage de base est identique à l'« avant » : la régression des bandes est fermée.
+- **B4** sur garde rétablie : mixte. Nice 34,18 h, bande 28 → 24 %, LOO 7,4 → 6,2 % ; mais
+  MAE des 13 vendus 10,2 → 10,4, et le plan que ce modèle répartit est mesuré moins juste sur
+  les 30 courses. Élasticité et `spec` rejetés. Défaut non basculé, non activé pour Val ;
+  `stops_rate_population` = 0 (un taux inventé dégradait les replis vc_e). Les taux personnels
+  sont consignés pour la logistique (Val 6,2 min par heure de mouvement).
+- **Fade : un défaut basculé.** Δ = 0,15 (au lieu de 0,085) améliore la forme du plan sur les
+  cas frais (1,89 → 1,77 % du temps, biais à mi-course +17 → +6 min), le dev_set (2,21 → 1,68)
+  et trois athlètes sur quatre ; 0,20 dégrade les cas frais ; `splits` et `durability` ne
+  battent pas la constante. Borne haute 0,20. Le rapport affiche désormais une dérive de −26 %.
+- Configuration de référence inchangée (A2A1A3) ; le nouveau Δ s'applique à tous.
 
 ## Choix faits à la place de Valentin (Phase 0)
 
@@ -286,6 +295,14 @@ passage porte les bandes déplacées et sera réécrit par le passage de base.
     relève du plancher dépendant de la durée).
 29. **`tools/score_plan --set`** : l'amplitude du fade se teste en secondes depuis le registre,
     sans relancer une heure de décodage.
+30. **Δ du fade à 0,15 pour tous** plutôt qu'un Δ par athlète : la grille 0,085 / 0,15 / 0,20
+    ne permet pas mieux que le point médian, les optimums par athlète (0,12 à 0,20) attendent
+    les passages de la Phase 4 pour être appris là où ils se mesurent.
+31. **`stops_rate_population` = 0** : sans ultra mesuré, pas d'arrêts ajoutés — le banc a montré
+    qu'un taux inventé de 6 % dégradait tous les replis vc_e.
+32. **B4 non activé pour le rapport de référence malgré une bande plus étroite** : la règle du
+    chantier ne resserre pas ce que la forme du plan dément (arrêts personnels répartis :
+    1,90 contre 1,77 sur les cas frais).
 
 ## Questions ouvertes
 
@@ -307,9 +324,10 @@ passage porte les bandes déplacées et sera réécrit par le passage de base.
   (Chianti : [13,3 – 68,2] en linéaire, [0,0 – 52,6] en log). Le prior le corrige ; le repli
   lui-même (bornes au plafond, central hors de sa bande) reste tel quel tant qu'un cas servi
   n'y passe pas.
-- **Arrêts de Nice sous le modèle personnel** : r̄ ≈ 0,11 h/h pour Val donne ≈ 3,4 h d'arrêts
-  sur ≈ 31 h de mouvement, contre 1 h 45 retranchées par la politique. Le total ne bouge pas,
-  la répartition oui ; `tools/score_plan` dira si les passages réels de Val suivent ce plan.
+- **Arrêts de Nice** : le taux personnel de Val (7,6 min par heure de mouvement sur ses 12
+  ultras) donne 3,8 h d'arrêts sur 30,4 h de mouvement, contre 1 h 45 retranchées par la
+  politique du plan. Le rapport v2 (Phase 6) doit dire ce budget d'arrêts comme information de
+  logistique, sans en faire la répartition du plan (mesurée moins juste).
 - **Phase 4.** Import CSV manuel par défaut ; LiveTrail seulement après vérification de ses
   conditions d'utilisation.
 - **Annexe en ligne** : page du site (décidé) ; support à implémenter en Phase 6.
@@ -318,6 +336,11 @@ passage porte les bandes déplacées et sera réécrit par le passage de base.
 
 ## Rejeté
 
+- **Arrêts personnels dans le modèle de temps (B4)** : MAE des 13 vendus 10,2 → 10,4, plan
+  moins juste ; élasticité 0,5 (MIUT +12 → +20 %) et arrêts de la spec (Crasse +7,9 % de biais)
+  rejetés.
+- **Fade personnalisé (`splits`, `durability`)** : 1,91 et 2,02 contre 1,77 pour la constante
+  0,15 sur les cas frais ; `splits` sans borne dégrade Crasse (1,64 → 2,02 puis 3,08).
 - **Différentiel d'altitude (C3)** : 0,05 par 1 000 m au-dessus de l'altitude habituelle des
   ultras dégrade 8 coupures sur 9 (MAE des 13 vendus 10,3 → 11,8, Lavaredo +1,0 → +8,3 %) ;
   le central est déjà biaisé vers le lent.

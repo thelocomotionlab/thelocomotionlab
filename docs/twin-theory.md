@@ -276,10 +276,14 @@ RMSE 4,0 % (n = 8 ; 4 plis d'interpolation, 4 d'extrapolation).
 
 - **Effort ajusté constant + fade de durabilité.** On vise une **vitesse ajustée constante** (= effort
   métabolique constant grâce à l'ajustement de pente), avec une **dérive contrôlée** (~−15 % début→fin).
-  Forme : `v_i = S · g_i`, `g_i = 1 + Δ·(0,5 − p_i)·2` (p_i = fraction d'avancement en Deq, **Δ ≈ 0,085**),
+  Forme : `v_i = S · g_i`, `g_i = 1 + Δ·(0,5 − p_i)·2` (p_i = fraction d'avancement en Deq,
+  **Δ = 0,15 depuis le chantier v2** — mesuré sur les passages réels de 30 courses : avec l'ancien
+  0,085 les athlètes étaient en avance sur le plan de 17 à 25 min à mi-course, DIAGNOSTIC §10.7),
   `S` normalisé pour que `Σ deq_i / v_i = T_mouvement`. **Option `fade_source=durability`** : Δ dérivé
-  du **découplage mesuré** de l'athlète, `Δ = X/(200−X)` borné [0,04 ; 0,13] (le défaut Δ=0,085
-  correspond à X≈15,7 % — un découplage « typique ») ; repli sur la constante si la FC manque.
+  du **découplage mesuré** de l'athlète, `Δ = X/(200−X)` borné [0,04 ; 0,20] (Δ = 0,15 correspond à
+  X ≈ 26 %) ; repli sur la constante si la FC manque. Mesurée au banc des passages, cette
+  personnalisation ne bat pas la constante commune, pas plus que `splits` : le fade du plan est un
+  effort à répartir, pas une moitié de course à recopier.
   **Option `fade_source=splits` (chantier v2, Phase 2)** : Δ mesuré sur les COURSES de l'athlète —
   rapport des moitiés R de chaque vrai ultra (vga hors plateaux, seconde moitié de Deq ÷ première),
   Δ_i = 2(1 − R_i)/(1 + R_i), moyenne pondérée, bornée ; repli sur `durability` puis sur la

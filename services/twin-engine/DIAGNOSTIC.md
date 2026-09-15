@@ -1521,26 +1521,61 @@ cas frais 1,89 → 1,89 % du temps (Lolo 2,45 → 2,44, Rapace 1,10 → 1,05), d
 politique à chaque ravito jouaient le rôle d'un fade plus fort ; enlevées, la dérive réelle
 apparaît nue (§10.7).
 
-**Preuve au banc — À COLLER (second passage, garde rétablie).** Variantes `B4`, `B4e`,
-`B4spec`, `RB4` ; Nice sous `RB4`.
+**Preuve au banc (second passage, 2026-09-15, garde rétablie).** Variantes `B4`, `B4e`,
+`B4spec`, `RB4` ; Nice sous `RB4`. Le passage de base rend un `compare.md` sans écart (la
+régression de §10.4 bis est fermée). « Taux population 0 » = recombinaison hors ligne des
+registres (coupures `vc_e` reprises du banc sans arrêts) ; c'est la valeur adoptée pour
+`stops_rate_population` (§ ci-dessous).
 
-| variante | vendus MAE % (13 appariés) | biais % | couv 50 / 80 | Winkler rel 50 / 80 | vendus n | cas frais touchés |
-|---|---|---|---|---|---|---|
-| avant | 10,3 | +2,7 | 38 / 54 % | 0,342 / 0,570 | 13 | — |
-| B4 | | | | | | |
-| B4e (e = 0,5) | | | | | | |
-| B4spec | | | | | | |
-| RB4 | | | | | | |
+| variante | vendus MAE % (13 appariés) | biais % | couv 50 / 80 | Winkler rel 50 / 80 | largeur rel méd 50 / 80 |
+|---|---|---|---|---|---|
+| avant | 10,3 | +2,7 | 38 / 54 % | 0,342 / 0,570 | 8,1 % / 15,5 % |
+| B4 (linéaire) | 11,2 | +3,7 | 31 / 54 % | 0,371 / 0,619 | 10,8 % / 16,2 % |
+| B4, taux population 0 | 10,6 | +3,2 | 31 / 54 % | 0,349 / 0,568 | 10,8 % / 16,2 % |
+| B4e (élasticité 0,5) | 11,6 | +4,2 | 31 / 54 % | 0,378 / 0,627 | 11,1 % / 16,6 % |
+| B4spec | 10,8 | +4,6 | 46 / 62 % | 0,353 / 0,607 | 7,6 % / 14,5 % |
+| R (référence, rappel) | 10,2 | +2,8 | 31 / 54 % | 0,342 / 0,558 | 8,1 % / 16,9 % |
+| R + B4 | 10,9 | +3,7 | 31 / 62 % | 0,358 / 0,626 | 8,5 % / 20,4 % |
+| R + B4, taux population 0 | 10,4 | +3,1 | 31 / 62 % | 0,335 / 0,575 | 8,5 % / 20,4 % |
+
+Zone d'action (7 coupures `regression` vendues quelque part) : avant MAE 5,8, Winkler
+0,691 / 0,963 ; R 6,6, 0,268 / 0,614, couv 71 / 86 % ; R + B4 6,9, **0,218 / 0,447**, couv
+57 / **100 %**. Cas frais vendus (Lolo, blend) : 17,2 → 17,0 % ; MIUT (refusée avant)
+passe 🔴 → 🟠 à +12,2 % sous B4 — la bande [24,3 – 34,7] remplace le repli MC [8,5 – 43,4].
 
 | Nice 100M 2026 | référence (A2A1A3) | RB4 (second passage) |
 |---|---|---|
-| central / mouvement / arrêts | 34,33 / 34,33 / 0 (politique 1 h 45 retranchée au plan) | |
-| taux d'arrêt personnel (min par h de mouvement) | — | |
-| bornes de sécurité | 29,83 – 39,52 | |
+| central / mouvement / arrêts | 34,33 / 34,33 / 0 (politique 1 h 45 retranchée au plan) | 34,18 / 30,36 / 3,82 |
+| taux d'arrêt personnel (min par h de mouvement) | — | 7,6 (12 ultras, dispersion 0,044 en ln) |
+| bornes de sécurité (largeur, % du central) | 29,83 – 39,52 (28 %) | 30,35 – 38,49 (24 %) |
+| fourchette de course | 31,98 – 36,87 | 32,19 – 36,29 |
+| LOO MAE (12 plis) / σ_log / sd_rel cible | 7,4 % / 0,074 / 0,119 | 6,2 % / 0,049 / 0,087 |
 
-**Décision.** En attente du second passage. Ce qui est déjà acquis : le domaine de calibration
-ne bouge pas avec le modèle d'arrêts ; la répartition personnelle des arrêts n'est pas retenue
-pour la forme du plan (mesurée pire ou égale partout).
+**Lecture.**
+- **Le taux population inventait des arrêts** : en repli `vc_e` (aucun ultra), +6 % sur des
+  centraux déjà trop lents (Val Ecotrail +23,8 → +31,2 %, Rapace Orcières +308 → +333). Avec
+  0, B4 ne touche ni `vc_e` ni les blend à taux mesuré faible (Crasse : 0,4 min/h).
+- **En régression, la décomposition tient sa promesse chez Val** : la vitesse hors plateaux
+  est plus régulière que la vitesse écoulée (σ_log 0,074 → 0,049), la dispersion des arrêts
+  revient à part (0,044) et le total est plus étroit : LOO 7,4 → 6,2 %, bornes 28 → 24 % du
+  central, central −0,15 h. Sur la zone d'action, Winkler 0,614 → 0,447 au 80 % et couverture
+  100 %. Mais sur les 13 vendus appariés (blend et vc_e compris), MAE 10,2 → 10,4 (Crasse
+  Coursières 2026 +8,4 → +11,7 : la base hors plateaux redistribue ses points), Winkler 50
+  meilleur (0,342 → 0,335), 80 moins bon (0,558 → 0,575), couverture 80 +1 cas. **Mixte.**
+- **Élasticité** (`B4e`) : dégrade partout (MIUT +12 → +20 %, Val +15 → +16) ; Lavaredo
+  (21 h) s'arrête MOINS que la moyenne de Val, MIUT plus — aucune loi commune. Rejetée.
+- **`spec`** : plus rapide chez Val (−4,5 % de biais, par hasard sur ses cas 2024 trop lents),
+  plus lent chez Crasse (+7,9 %) qui ne prend pas les 5 minutes de la politique. Rejeté.
+- **La répartition des arrêts personnels dans le plan** (§10.7) est pire ou égale sur les
+  30 courses, y compris avec le fade corrigé (cas frais 1,90 contre 1,77).
+
+**Décision.** Défaut `carved` **non basculé** (règle b : MAE vendue non améliorée, règle d :
+cas frais intacts). **Non activé pour le rapport de référence** : le gain sur la bande de Nice
+(28 → 24 %) est réel mais le plan que ce modèle répartit est mesuré moins bon, et la règle du
+chantier interdit de resserrer ce que la forme dément. `stops_rate_population` passe à 0 :
+sans mesure, pas d'arrêts inventés. Ce qui reste acquis : le taux d'arrêt personnel de chaque
+athlète est mesuré et consigné (Val 6,2 min par heure de mouvement, Crasse 0,4, Lolo 3,4,
+Rapace 5,8) — matière de logistique pour le rapport v2 (Phase 6), pas du modèle de temps.
 
 ### 10.6 C2 — La nuit entre dans la régression, en écart à la nuit des ultras (flag `calibration.night_term`, défaut `none`)
 
@@ -1687,15 +1722,42 @@ Lolo 0,108, Rapace 0,04.
 - La répartition personnelle des arrêts n'aide nulle part (§10.5) ; chez Crasse, la politique
   du plan compensait par hasard la dérive manquante.
 
-**Suite immédiate, sans archive** : `tools/score_plan --set` (quelques secondes) avec
-`pacing.fade_delta=0,15` et `0,20`, et `pacing.fade_source=splits` + `pacing.fade_delta_max=0,30` :
-si le biais à mi-course se ferme sans dégrader les cas frais, c'est l'amplitude qui est en
-cause et la borne à relever ; sinon c'est la forme (fade linéaire en Deq) qu'il faudra
-revoir. **À COLLER** : les trois tables.
+**Test d'amplitude (second passage, `tools/score_plan --set`, quelques secondes).**
 
-**Décision.** Défaut `config` **non basculé** (égalité sur les cas frais, mesure de Rapace non
-fiable). Pour le rapport de référence : `splits` réduit l'erreur de forme de Val (2,26 → 2,10)
-et son biais (+26 → +19 min), décision après le test d'amplitude ci-dessus.
+| réglage du fade | arrêts du plan | cas frais (12) : MAE % · biais mi-course | dev_set (18) | tous (30) | Val (6) | Crasse (12) | Lolo (7) | Rapace (5) |
+|---|---|---|---|---|---|---|---|---|
+| Δ = 0,085 (défaut d'avant) | politique | 1,89 · +17 min | 2,21 · +25 | 2,08 · +22 | 2,26 · +26 | 2,18 · +24 | 2,45 · +25 | 1,10 · +5 |
+| **Δ = 0,15** | politique | **1,77 · +6** | **1,68 · +13** | **1,72 · +10** | 2,00 · +14 | 1,52 · +13 | 2,18 · +13 | 1,20 · −3 |
+| Δ = 0,20 | politique | 2,06 · −2 | 1,63 · +4 | 1,80 · +2 | 1,92 · +4 | 1,49 · +4 | 2,17 · +4 | 1,90 · −10 |
+| `splits`, borne 0,30 | politique | 1,91 · +16 | 2,03 · +3 | 1,98 · +8 | 2,06 · +18 | 2,02 · −4 | 2,34 · +21 | 1,30 · +10 |
+| `splits`, borne 0,50 | politique | 1,91 · +16 | 2,74 · −1 | 2,41 · +6 | 2,06 · +18 | 3,08 · −10 | 2,34 · +21 | 1,30 · +10 |
+| Δ = 0,15 | personnels | 1,90 · +7 | 2,04 · +16 | 1,98 · +12 | 2,08 · +12 | 2,02 · +19 | 2,12 · +15 | 1,57 · −6 |
+
+**Lecture.**
+- **C'est l'amplitude, et une constante commune fait mieux que toute personnalisation.**
+  Δ = 0,15 améliore les cas frais (1,89 → 1,77 % du temps, biais +17 → +6 min), le dev_set
+  (2,21 → 1,68) et trois athlètes sur quatre (Rapace 1,10 → 1,20, biais −3 : il ralentit
+  moins). Δ = 0,20 ferme le biais du dev_set mais dégrade les cas frais (Rapace 1,90, −10 min)
+  — au-delà de 0,15 on paie sur ce qui est décisionnel. Les optimums par athlète vont de
+  ≈ 0,12 (Rapace) à ≈ 0,20 (Val, Crasse, Lolo) : la personnalisation viendra des passages
+  eux-mêmes (Phase 4), pas d'une mesure d'archive.
+- **Le rapport des moitiés n'est pas le fade du plan** : libéré de sa borne, `splits` sert
+  0,25 à Crasse et dégrade sa forme (1,64 → 2,02, puis 3,08 avec la borne 0,50 quand la
+  mesure varie d'une coupure à l'autre). Ce que mesure une moitié de course contient le
+  parcours, la météo, les arrêts ; ce que le plan répartit est un effort ajusté. Même verdict
+  pour `durability` (2,02 sur les cas frais). Deux mesures livrées, aucune retenue.
+- **Les arrêts personnels dans le plan restent en dessous de la politique** à Δ = 0,15
+  (1,90 contre 1,77 sur les cas frais) : confirmation de §10.5.
+
+**Décision.** Règle pré-enregistrée appliquée : la source qui minimise la MAE des passages
+sur les cas frais sans dégrader le dev_set est **`config` avec Δ = 0,15** — **défaut basculé**
+(`pacing.fade_delta` 0,085 → 0,15 ; `fade_delta_max` 0,13 → 0,20, la borne au-delà de laquelle
+les cas frais se dégradent). Justification d'adoption : (a) le fade ne touche pas la
+prédiction, le golden déterministe et le registre sont intacts, la dérive affichée par le
+rapport passe de −16 % à −26 % ; (b) MAE de forme des cas frais 1,89 → 1,77 sur 12 courses de
+deux athlètes ; (c) biais à mi-course +17 → +6 min ; (d) mesuré sur 30 courses, quatre
+athlètes. `fade_source=splits` et `durability` restent des options mesurées, non retenues.
+L'ancien 0,085 reste une valeur de config valide (`--set pacing.fade_delta=0.085`).
 
 ### 10.8 C3 — Chaleur et altitude déclarées (flag `prediction.environment_term`, défaut `off`)
 
@@ -1743,3 +1805,27 @@ déclaration sans preuve possible.
 flag reste pour une chaleur déclarée par le client, avec son coût population affiché comme
 tel ; le différentiel d'altitude est rejeté sur ce banc.
 
+### 10.9 Bilan de la Phase 2 — un défaut basculé (le fade), trois leviers mesurés et non retenus
+
+| levier | flag | banc | décision |
+|---|---|---|---|
+| B4 arrêts (mouvement + arrêts) | `calibration.stops_model` | mixte : Nice 28 → 24 % de bande, LOO 7,4 → 6,2 %, mais MAE vendue 10,2 → 10,4 et plan moins juste | défaut `carved`, non activé pour Val ; taux personnels consignés pour la logistique ; `stops_rate_population` = 0 |
+| C2 nuit | `calibration.night_term` | coefficient nul ou positif sans prior, confusion avec le type de course ; prior population : aide le jour, dégrade la nuit | défaut `none`, non activé |
+| Fade | `pacing.fade_delta` | athlètes en avance sur le plan de 17–25 min à mi-course, 27 courses sur 30 ; Δ 0,15 meilleur sur cas frais, dev_set et 3 athlètes sur 4 | **défaut 0,085 → 0,15**, borne 0,20 ; `splits` et `durability` mesurés, non retenus |
+| C3 environnement | `prediction.environment_term` | différentiel d'altitude : 8 coupures sur 9 dégradées | défaut `off`, non activé ; chaleur déclarée possible, jamais benchable |
+
+**Configuration de référence** : inchangée (A2A1A3, §10.4) ; le nouveau Δ s'applique à tous
+les rapports. Nice 100M 2026 : 34,33 h, fourchette 31,98 – 36,87, sécurité 29,83 – 39,52 ;
+plan à dérive −26 % (au lieu de −16 %), arrêts de la politique (1 h 45).
+
+**Ce que la Phase 2 a appris de général.** (1) Le banc de base a servi de garde deux fois :
+une régression de bandes (§10.4 bis) et un filtre cassé (§10.5) — c'est lui, pas les tests,
+qui les a vus. (2) Une mesure d'archive n'est pas un paramètre du plan : le rapport des moitiés
+et le découplage disent quelque chose de l'athlète, pas ce que le plan doit lui faire faire ;
+seuls les passages réels jugent le plan. (3) Les leviers de la calibration n'atteignent pas les
+cas frais vendus (régime blend) : la jauge décisionnelle reste à construire (Phase 4).
+
+**Ce qui passe en Phase 3** : le biais du central (+4 à +6 % trop lent sur la zone d'action,
++13 % sur Val 2024 : progression et récence), le plancher de vitesse dépendant de la durée
+(MIUT à 5,48 contre 5,5), la queue des courses les plus longues (B2) et la courbe d'efficacité
+(B1), avec le scoreur de plan et le banc comme juges.

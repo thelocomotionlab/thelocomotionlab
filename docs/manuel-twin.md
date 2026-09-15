@@ -202,7 +202,10 @@ la cible, en écart à la nuit habituelle de ses ultras, dans le central et les 
 `start_time`, `lat`, `lon` dans la spec) ; `pacing.fade_source=splits` dérive la dérive du
 plan des moitiés de ses courses ; `prediction.environment_term=declared` applique une
 chaleur déclarée (`heat_c` de la spec) et l'altitude du parcours en écart à celle de ses
-ultras.
+ultras. Le banc a tranché (DIAGNOSTIC §10.9) : seul le Δ du fade change de défaut
+(`pacing.fade_delta` 0,085 → 0,15, `fade_delta_max` 0,13 → 0,20, le plan sert désormais une
+dérive de −26 % entre départ et arrivée) ; les trois autres leviers restent derrière leur
+flag, défaut inchangé, et la config de référence de Valentin n'en active aucun.
 
 ### Mode objectif ([ADR 0002](./adr/0002-mode-objectif-plan-sur-cible.md))
 
