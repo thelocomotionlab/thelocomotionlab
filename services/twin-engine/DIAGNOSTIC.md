@@ -1829,3 +1829,132 @@ cas frais vendus (régime blend) : la jauge décisionnelle reste à construire (
 +13 % sur Val 2024 : progression et récence), le plancher de vitesse dépendant de la durée
 (MIUT à 5,48 contre 5,5), la queue des courses les plus longues (B2) et la courbe d'efficacité
 (B1), avec le scoreur de plan et le banc comme juges.
+
+### 10.10 B1 — Efficacité-durée : la pente au-delà de 6 h lue sur toutes les sorties avec FC (flags `calibration.duration_prior_source=efficiency`, `calibration.envelope_tail=efficiency` ; défauts `twin_alpha`, `alpha`)
+
+**Constat.** Trois sources portent la pente en durée, aucune ne regarde la zone 6–35 h :
+l'exposant α de la courbe record (30 min–6 h, efforts pas tous maximaux au-delà de 2 h), la
+régression sur 3 à 12 ultras (plage de ln T de 0,1 à 0,7), et le prior A1 qui recopie le
+premier dans la seconde. Sur le cas de référence α = 0,143 contre une pente observée −0,06 :
+le prior tire vers le lent (+4 à +6 % sur la zone d'action, §10.4). En blend et vc_e — tous
+les cas frais vendus, Val 2024 à +13 % — l'enveloppe prolonge α jusqu'à 35 h sans autre
+information (§10.9, leçon 3).
+
+**Mesure (jumeau, toujours calculée, servie derrière flag).** `Twin.alpha_eff` : sur les
+efforts avec FC d'au moins 1 h (`twin.efficiency_min_hours`), ln(vga ÷ (FC − FC0)) =
+c − α_eff·ln T, pondéré par récence (même demi-vie que la calibration). La vitesse par
+battement de réserve cardiaque ne dépend de l'intensité qu'au second ordre : sa décroissance
+avec la durée est l'usure à effort donné, mesurée sur des centaines de sorties et non sur
+une poignée de vrais ultras. FC0 : déclarée (`twin.efficiency_hr_rest`) ou profilée — la
+valeur de 40 à 100 bpm qui minimise le résidu de l'ajustement, une FC0 fausse laissant dans
+le résidu une composante liée à la FC de chaque effort ; profil plat (moins de 2 %) ⇒ 60 bpm,
+signalé. Limites dites avant mesure : (1) la dérive cardiaque et les arrêts (base écoulée)
+entrent dans α_eff — cohérent avec la base des ultras de la régression ; (2) l'intensité
+soutenable décroît elle aussi avec la durée, ce qu'α_eff ne voit pas : α_eff sous-estime la
+pente MAXIMALE. C'est donc le banc, pas l'argument, qui dit si l'information vaut mieux
+que l'α court.
+
+**Correctif (flags).** `duration_prior_source=efficiency` : le prior A1 tire b vers −α_eff
+(repli α historique, puis population ; origine consignée). `envelope_tail=efficiency` : en
+blend et vc_e, l'enveloppe décroît en t^−α_eff au-delà de 6 h (raccord continu à
+`endurance_window_s[1]`) ; le recalage du blend lit la même enveloppe, si bien qu'à la durée
+de l'ultra recalant, sa vitesse est rendue à l'identique. Registre : `model.alpha_eff`,
+`alpha_eff_n`, `duration_prior_origin`, `envelope_tail_alpha`. Tests : recouvrement exact à
+FC0 déclarée, FC0 profilée retrouvée, enveloppe continue au raccord et recalage conservé,
+replis honnêtes (exposant absent ⇒ α historique ⇒ population, chacun signalé).
+
+**Preuve au banc — À COLLER** (variantes `E1` sur défauts, `RB1` et `RB1P` sur la pile de
+référence ; recapture `nice-RB1.json`). Juges : MAE et biais des cas frais vendus (Lolo, régime
+blend, enfin atteints), Val 2024 (vc_e), zone d'action (biais du central), Winkler à
+couverture égale.
+
+### 10.11 B2 — Queue de la courbe record : les fenêtres de 10 à 36 h des plus longues courses (flags `calibration.duration_prior_source=record_tail`, `calibration.envelope_tail=record_tail` ; défauts inchangés)
+
+**Constat.** La courbe record s'arrête à 8 h : les meilleures fenêtres de 10, 12, 16, 20,
+24 h — ce qu'un athlète a réellement soutenu au cœur de ses plus longues courses — ne sont
+lues nulle part, alors qu'elles sont la seule mesure directe de la zone où la cible se
+trouve. Un 24 h fournit un point à 20 h, un 21 h un point à 16 h.
+
+**Mesure (jumeau, toujours calculée).** `twin.record_tail_durations_s` (10, 12, 14, 16, 20,
+24, 30, 36 h) : la meilleure fenêtre de vitesse ajustée est mesurée dans chaque activité
+comme les durées historiques, mais rangée à part (`RecordCurve.tail_points`) : VC, α
+historique et figure du rapport ne la voient pas. N'y contribuent que les efforts qui
+passent le filtre « vrai ultra » servi (`genuine_gate_failures`) : un bivouac, un OFF avec
+sommeil ou un enregistrement immobile n'y fournissent aucune fenêtre. Même règle de support
+que le reste de la courbe (N-ième meilleure). `Twin.alpha_tail` = pente log-log des points
+historiques ≥ `record_tail_from_s` (2 h) et de la queue ; None sans fenêtre longue.
+Limite dite : la meilleure fenêtre de 12 h dans un 20 h est sous-maximale (l'athlète gérait
+20 h), donc α_queue est plus DOUX que la vraie pente maximale — direction contraire au
+prior A1, ce que le banc mesure.
+
+**Correctif (flags).** Mêmes deux entrées que B1 avec `record_tail` : prior de b tiré vers
+−α_queue, enveloppe des replis en t^−α_queue au-delà de 6 h. Registre : `model.alpha_tail`,
+`alpha_tail_n`. Tests : exposant retrouvé sur une courbe synthétique, None sans fenêtre
+longue, la queue ne vient que des vrais ultras (support 2, bivouac exclu), fenêtres
+absentes sur une sortie courte.
+
+**Preuve au banc — À COLLER** (variantes `E2` sur défauts, `RB2` sur la pile de référence ;
+recapture `nice-RB2.json`).
+
+### 10.12 P — Niveau de l'époque : chaque ultra ramené à la forme actuelle par la VC de son année (flag `calibration.level_anchor`, défaut `none`)
+
+**Constat.** Le biais de progression (Crasse Montagnhard +17 %, Val 2024 +13 %, §10.0
+lecture 3) résiste à la demi-vie (§5.x : inerte de 180 à 730 j) et le terme de tendance a été
+écarté pour la même raison — un quatrième paramètre sur trois points. L'information qui
+manque n'est pas dans les ultras : elle est dans les centaines d'efforts courts de chaque
+saison, qui datent le niveau de l'athlète bien plus finement que trois courses.
+
+**Correctif (flag).** `level_anchor=vc_epoch` : pour chaque candidat ultra, la VC de son
+époque est ajustée (sans bootstrap) sur la courbe record des `level_anchor_window_days`
+jours qui le précèdent (`Twin.level_marks`, par date, calculée depuis les contributions déjà
+décodées : aucun re-décodage, aucune fuite au banc puisque la coupure filtre les
+contributions avant). La vitesse de l'ultra entre dans la régression ramenée au niveau
+actuel : ln v + gain × ln(VC_now ÷ VC_époque) (`level_anchor_gain`, 1 par défaut ;
+multiplicatif en lien linéaire). Zéro paramètre de régression ajouté. Le même décalage
+sert au recalage du blend et à chaque pli LOO, qui prédit l'ultra retiré À SON ÉPOQUE
+(décalage retiré du point fixe) et le compare au réel de l'époque : la LOO reste honnête.
+Sans VC d'époque plausible, décalage nul et compté à part ; sans VC actuelle plausible,
+terme inactif et signalé. Les poids de maximalité lisent toujours la vitesse courue contre
+l'enveloppe actuelle (un vieil ultra progressé reste moins « maximal » qu'aujourd'hui) :
+documenté, pas corrigé. Registre : `model.level_n_anchored`, `level_shift_mean_pct`.
+Tests : athlète synthétique progressant de 12 % en deux ans — plan actuel retrouvé au
+bit près, LOO exacte ; sans recalage, central trop lent et LOO > 1 % ; VC plate ⇒
+identique au défaut ; gain 0,5 ⇒ moitié du décalage ; VC d'époque lue sans fuite dans la
+fenêtre qui précède la date.
+
+**Risque assumé.** La VC des efforts de 10 à 90 min peut ne pas suivre la forme d'ultra
+(un bloc de vitesse monte la VC sans changer l'endurance). La règle « jamais sur un seul
+athlète » s'applique : Crasse et Val ont assez d'ultras datés pour trancher, Lolo et Rapace
+disent si le levier casse quelque chose ailleurs.
+
+**Preuve au banc — À COLLER** (variantes `RP` et `RPh` (gain 0,5) sur la pile de référence,
+`RB1P` combinée ; recapture `nice-RP.json`).
+
+### 10.13 F — Plancher de vitesse dépendant de la durée et garde du plus long arrêt (flags `calibration.genuine_floor=riegel`, `calibration.genuine_max_stop_s` ; défauts `fixed`, 0)
+
+**Constat.** Le plancher 5,5 km/h est le même à 10 h et à 26 h ; Lolo/MIUT (25,8 h, sa plus
+longue course) sort de la calibration à 5,48 (§10.0, §10.5). Un plancher qui décroît avec la
+durée laisserait entrer les OFF avec sommeil de Val (26,9 h et 38,3 h), que le plancher fixe
+écartait à raison (§9.11) : il faut une seconde garde, physique — personne ne s'arrête plus
+d'une heure d'affilée dans une course.
+
+**Correctif (flags).** `genuine_floor=riegel` : plancher = 5,5 × (T ÷ 10 h)^−α_plancher
+(`genuine_floor_alpha` = 0,16, l'α population de A1) : 5,5 à 10 h, 4,73 à 25,8 h, 4,45 à 38 h,
+jamais au-dessus de 5,5 ; lu sur la vitesse ÉCOULÉE quel que soit le modèle d'arrêts
+(§10.5). `genuine_max_stop_s` (0 = off ; 3 600 s au banc) : un effort dont le plus long plateau
+de distance dépasse le seuil est écarté (`ActivitySummary.longest_stop_s`, mesuré sur toutes
+les activités ; un vieil agrégat sans la mesure n'est jamais écarté par cette garde). Une
+seule définition du domaine, `genuine_gate_failures`, sert la calibration, la queue de la
+courbe record (§10.11) et les deux outils de diagnostic (`diag_archive`, `diag_ultras`), qui
+impriment désormais le plancher servi et le plus long arrêt. Registre : `model.genuine_floor`,
+`n_genuine`. Tests : valeurs du plancher ; MIUT retenu, OFF de 38 h à 4,6 km/h retenu par le
+plancher seul et écarté par la garde, bivouac et 10 h à 5,4 dehors partout ; raisons lisibles.
+
+**Effet attendu et mesure.** Ce levier ne change une coupure que si la plus longue course
+d'un athlète précède cette coupure et se trouve entre les deux planchers : sur le banc, il
+touche Lolo après MIUT (aucune coupure vendue) et rien d'autre a priori — le `--compare`
+dit si `n_genuine` bouge quelque part. Sa valeur est d'abord celle du PROCHAIN rapport de
+Lolo : sa plus longue course entre en calibration au lieu d'être ignorée pour 0,02 km/h.
+
+**Preuve au banc — À COLLER** (variantes `F` sur défauts, `RF` sur la pile de référence ;
+recapture `nice-RF.json`).

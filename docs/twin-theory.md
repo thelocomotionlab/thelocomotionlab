@@ -137,6 +137,17 @@ plus nettement.**
 (un E plus bas tiendrait encore mieux l'allure ; un E plus haut déclinerait davantage). Le texte du
 rapport est **généré à partir de la valeur** avec ce même vocabulaire (déclin, jamais vitesse).
 
+> **Deux autres exposants, mesurés au-delà de 6 h (chantier v2, Phase 3 ; DIAGNOSTIC §10.10–10.11).**
+> `Twin.alpha_eff` (efficacité-durée) : sur tous les efforts avec FC d'au moins 1 h,
+> ln(vga ÷ (FC − FC0)) = c − α_eff·ln T, pondéré par récence — la décroissance de la vitesse par
+> battement de réserve cardiaque avec la durée, l'usure à effort donné lue sur des centaines de
+> sorties (FC0 déclarée ou profilée). `Twin.alpha_tail` (queue de la courbe record) : les
+> meilleures fenêtres de 10 à 36 h des vrais ultras (`RecordCurve.tail_points`, rangées à part :
+> VC, α et figure n'en dépendent pas) prolongent la courbe, et α_queue est la pente log-log de
+> 2 h à la plus longue fenêtre. Toujours calculés, consignés au registre ; ils ne servent la
+> prédiction que derrière flag (§3) : prior de la pente (`calibration.duration_prior_source`) et
+> queue de l'enveloppe des replis (`calibration.envelope_tail`), défauts inchangés.
+
 ### 2.6 Durabilité
 **Découplage intra-course** : baisse de l'efficacité (vitesse ajustée / FC) en seconde moitié vs première
 moitié, sur les longues sorties. **Cas de référence (recapture 2026-07-02)** : **20,9 %** (médiane des efforts ≥ 10 h).
@@ -198,6 +209,19 @@ moyenne de course** en fonction de la durée et du dénivelé :
 > moyenne pondérée des vrais ultras, coefficient tiré vers un prior (0 par défaut) par ridge
 > comme les autres ; la cible reçoit sa part de nuit du calendrier de course intégrée sur le
 > temps prédit (point fixe itéré). Preuve et décisions : DIAGNOSTIC §10.5–10.6.
+>
+> **Phase 3 du chantier v2 — l'information manquante sur la pente (flags, défauts inchangés ;
+> DIAGNOSTIC §10.10–10.13).** (1) **Sources du prior de la pente** (`duration_prior_source` :
+> `twin_alpha`, `efficiency`, `record_tail`, `population`, repli en cascade signalé) et **queue de
+> l'enveloppe** des replis blend et vc_e (`envelope_tail` : au-delà de 6 h l'enveloppe décroît
+> avec α_eff ou α_queue, raccord continu ; le recalage du blend lit la même enveloppe). (2) **Niveau
+> de l'époque** (`level_anchor=vc_epoch`) : chaque ultra entre dans la régression ramené à la forme
+> actuelle par gain × ln(VC_now ÷ VC_époque), VC_époque ajustée sur la courbe record des 365 jours
+> qui le précèdent ; zéro paramètre ajouté, même décalage dans le fit, le blend et chaque pli LOO,
+> qui prédit l'ultra retiré à son époque. (3) **Plancher dépendant de la durée**
+> (`genuine_floor=riegel`) : 5,5 × (T ÷ 10 h)^−0,16 sur la vitesse écoulée, et **garde du plus long
+> arrêt** (`genuine_max_stop_s`) contre les OFF avec sommeil ; une seule définition du domaine
+> (`genuine_gate_failures`) pour la calibration, la queue de la courbe record et les diagnostics.
 >
 > **Point de généralisation crucial.** Cette régression suppose **plusieurs** vrais ultras. La plupart
 > des athlètes n'en auront pas 8. Le moteur doit donc **dégrader proprement** :

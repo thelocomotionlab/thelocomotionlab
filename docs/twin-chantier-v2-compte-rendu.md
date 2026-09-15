@@ -200,6 +200,33 @@ de progression chez un second athlète (Val 2024 : +21 à +24 %).
   battent pas la constante. Borne haute 0,20. Le rapport affiche désormais une dérive de −26 %.
 - Configuration de référence inchangée (A2A1A3) ; le nouveau Δ s'applique à tous.
 
+## Phase 3 — l'information manquante sur la pente (même branche, sur « Fonce sur la suite »)
+
+Diagnostic d'entrée (DIAGNOSTIC §10.9) : central trop lent de 4 à 6 % sur la zone d'action,
+de 13 % sur Val 2024 (vc_e), trop rapide de 17 % chez Lolo (blend) ; aucun levier de
+calibration n'atteint les cas frais vendus. Cause commune : la pente en durée au-delà de
+6 h n'est lue nulle part. Quatre leviers, tous derrière flag, défauts inchangés, code livré
+et testé (suite complète verte, golden intact), **banc en attente** :
+
+- **B1 efficacité-durée** (`duration_prior_source=efficiency`, `envelope_tail=efficiency`) :
+  α_eff lu sur ln(vga ÷ (FC − FC0)) contre ln T, toutes les sorties avec FC ≥ 1 h, FC0
+  profilée ; prior de la pente et queue de l'enveloppe des replis. Premier levier qui touche
+  les cas frais de Lolo et les coupures 2024 de Val.
+- **B2 queue de la courbe record** (`…=record_tail`) : fenêtres de 10 à 36 h mesurées dans
+  les vrais ultras, rangées à part (VC, α, figure intacts) ; α_queue de 2 h à la plus longue.
+- **P niveau de l'époque** (`level_anchor=vc_epoch`) : chaque ultra ramené à la forme
+  actuelle par la VC des 12 mois qui le précèdent ; zéro paramètre, même décalage dans le fit,
+  le blend et chaque pli LOO (prédit à son époque).
+- **F plancher dépendant de la durée** (`genuine_floor=riegel`, `genuine_max_stop_s`) :
+  5,5 × (T ÷ 10 h)^−0,16 sur l'écoulé, garde du plus long arrêt contre le sommeil ; une seule
+  définition du domaine pour la calibration, la queue et les diagnostics.
+
+Registre enrichi (`alpha`, `alpha_eff`, `alpha_tail`, `duration_prior_origin`,
+`envelope_tail_alpha`, `level_n_anchored`, `level_shift_mean_pct`, `genuine_floor`) ; rapport :
+une note « ce qui a servi pour la pente au-delà de six heures » quand un levier est actif.
+Feuille du banc : manuel §8 (variantes E1, E2, F, RB1, RB2, RP, RPh, RF, RB1P ; recaptures
+nice-RB1/RB2/RP/RF).
+
 ## Choix faits à la place de Valentin (Phase 0)
 
 1. **Définition d'un arrêt.** Deux vues, toutes deux imprimées : les secondes « sans
@@ -303,6 +330,26 @@ de progression chez un second athlète (Val 2024 : +21 à +24 %).
 32. **B4 non activé pour le rapport de référence malgré une bande plus étroite** : la règle du
     chantier ne resserre pas ce que la forme du plan dément (arrêts personnels répartis :
     1,90 contre 1,77 sur les cas frais).
+
+## Choix faits à la place de Valentin (Phase 3)
+
+33. **FC0 profilée plutôt que régressée** : l'ordonnée à l'origine de FC ~ vga sur les efforts
+    courts est biaisée par la durée (les longues sorties sont plus lentes à FC donnée) ;
+    la FC0 qui minimise le résidu de l'ajustement efficacité-durée n'a pas ce défaut, et un
+    profil plat retombe sur 60 bpm, signalé.
+34. **Les fenêtres longues ne viennent que des vrais ultras** (filtre servi) : sans cette
+    garde, l'OFF de 38 h avec sommeil fournirait les seules fenêtres de 30 et 36 h de Val.
+35. **La queue de la courbe record est rangée à part** (`tail_points`) : VC, exposant
+    historique et figure du rapport ne bougent pas au défaut ; `record_durations_s` reste
+    intact.
+36. **Le recalage de niveau ne touche pas les poids de maximalité** : ils lisent la vitesse
+    courue contre l'enveloppe actuelle. Documenté ; à revoir si le banc adopte le levier.
+37. **α_plancher = α population de A1 (0,16)**, pas un réglage supplémentaire ; et la garde
+    du sommeil à 60 min de plateau, valeur physique (personne ne s'arrête plus d'une heure en
+    course), off par défaut.
+38. **`envelope_tail` dans le bloc calibration** et non twin : le banc refuse toute variante
+    du bloc twin (les agrégats décodés en dépendent) ; les réglages de MESURE (durées de la
+    queue, fenêtre d'efficacité, FC0 déclarée) restent dans twin et ne varient pas au banc.
 
 ## Questions ouvertes
 

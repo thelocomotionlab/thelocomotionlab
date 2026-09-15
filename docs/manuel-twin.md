@@ -207,6 +207,23 @@ ultras. Le banc a tranché (DIAGNOSTIC §10.9) : seul le Δ du fade change de d�
 dérive de −26 % entre départ et arrivée) ; les trois autres leviers restent derrière leur
 flag, défaut inchangé, et la config de référence de Valentin n'en active aucun.
 
+Quatre leviers de la Phase 3 (l'information manquante sur la pente au-delà de 6 h ;
+DIAGNOSTIC §10.10–10.13), derrière des flags, défauts inchangés tant que le banc n'a pas
+parlé : `calibration.duration_prior_source=efficiency|record_tail` fait tirer la pente de la
+régression vers l'exposant d'efficacité-durée (`Twin.alpha_eff`, toutes les sorties avec FC
+≥ 1 h) ou vers celui de la queue de la courbe record (`Twin.alpha_tail`, fenêtres de 10 à 36 h
+des vrais ultras) ; `calibration.envelope_tail=efficiency|record_tail` fait décroître
+l'enveloppe des replis blend et vc_e avec le même exposant au-delà de 6 h ;
+`calibration.level_anchor=vc_epoch` ramène chaque ultra à la forme actuelle par la VC de son
+année (`level_anchor_gain`, `level_anchor_window_days`) ; `calibration.genuine_floor=riegel`
+fait décroître le plancher des vrais ultras avec la durée (5,5 à 10 h, 4,7 à 26 h) et
+`calibration.genuine_max_stop_s=3600` écarte les efforts au plus long plateau d'une heure ou
+plus (sommeil). Les deux exposants et le plus long arrêt sont mesurés et consignés quel que
+soit le flag (JSON `twin.alpha_eff`, `twin.alpha_tail` ; registre `model.alpha_eff`,
+`alpha_tail`, `duration_prior_origin`, `envelope_tail_alpha`, `level_n_anchored`,
+`level_shift_mean_pct`, `genuine_floor`) ; `tools/diag_archive` et `tools/diag_ultras`
+impriment le plancher servi et le plus long arrêt de chaque effort long.
+
 ### Mode objectif ([ADR 0002](./adr/0002-mode-objectif-plan-sur-cible.md))
 
 À la demande de la cohorte (« je vise 31 h, donne-moi le plan »), le moteur sait ancrer le plan sur
@@ -425,6 +442,43 @@ TWIN_CONFIG_PATH=examples/twin.config.reference.json twin-engine preview \
   --set calibration.stops_model=personal > local-data/nice-RB4b.json
 git add ../../docs/twin-registre-couverture.json && git commit -m "Phase 2 : registre du second passage" && git push
 ```
+
+**Banc de la Phase 3 (information manquante sur la pente : B1 efficacité-durée, B2 queue de la
+courbe record, P niveau de l'époque, F plancher dépendant de la durée ; DIAGNOSTIC §10.10–10.13),
+une relance pour toutes les variantes** — le banc de base enrichit le registre des deux
+exposants mesurés (à committer ensuite) ; `E1`/`E2`/`F` sur les défauts, le reste sur la pile de
+référence ; quatre recaptures de Nice :
+
+```bash
+R="calibration.link=log,calibration.duration_term=prior_shrunk,prediction.interval_source=studentized_scale"
+F="calibration.genuine_floor=riegel,calibration.genuine_max_stop_s=3600"
+M="_seed/manifest-val.json _seed/manifest-crasse.json _seed/manifest-lolo.json _seed/manifest-rapace.json"
+PYTHONPATH=src python -m tools.banc $M --out /tmp/p3 --no-diag \
+  --variant E1:calibration.envelope_tail=efficiency \
+  --variant E2:calibration.envelope_tail=record_tail \
+  --variant F:$F \
+  --variant RB1:$R,calibration.duration_prior_source=efficiency,calibration.envelope_tail=efficiency \
+  --variant RB2:$R,calibration.duration_prior_source=record_tail,calibration.envelope_tail=record_tail \
+  --variant RP:$R,calibration.level_anchor=vc_epoch \
+  --variant RPh:$R,calibration.level_anchor=vc_epoch,calibration.level_anchor_gain=0.5 \
+  --variant RF:$R,$F \
+  --variant RB1P:$R,calibration.duration_prior_source=efficiency,calibration.envelope_tail=efficiency,calibration.level_anchor=vc_epoch
+NICE_GPX=_seed/cas_validation/Val/courses/nice-100m-2026.gpx
+for v in RB1:calibration.duration_prior_source=efficiency,calibration.envelope_tail=efficiency \
+         RB2:calibration.duration_prior_source=record_tail,calibration.envelope_tail=record_tail \
+         RP:calibration.level_anchor=vc_epoch RF:$F; do
+  name=${v%%:*}; extra=${v#*:}
+  TWIN_CONFIG_PATH=examples/twin.config.reference.json twin-engine preview \
+    --training _seed/cas_validation/Val/archives --course "$NICE_GPX" --race examples/nice-100m.json \
+    $(for kv in ${extra//,/ }; do printf -- '--set %s ' "$kv"; done) > local-data/nice-$name.json
+done
+git add ../../docs/twin-registre-couverture.json && git commit -m "Phase 3 : registre enrichi par le banc de base" && git push
+```
+
+Le JSON de chaque preview porte `twin.alpha_eff`, `twin.alpha_tail`, `calibration.duration_prior`
+(origine), `calibration.envelope_tail`, `calibration.level_anchor` (décalages par ultra) et, sous
+`genuine_floor=riegel`, une liste `calibration.genuine` éventuellement plus longue ; le `compare.md`
+du banc dit où `n_genuine` a bougé.
 
 `registre-<nom>.json` de chaque variante porte, par coupure, `model.stops_rate_personal`,
 `stops_ref_hours`, `night_share_mean`, `night_coef`, `fade_delta_splits`, `durability_pct`, et
