@@ -66,6 +66,14 @@ class TwinParams:
     #   automatique sur ``elapsed`` quand le temps de mouvement n'a pas pu être mesuré.
     speed_basis: str = "elapsed"
     moving_speed_threshold_ms: float = 0.5    # vitesse au-dessus de laquelle on compte « en mouvement »
+    # --- arrêts francs et mesures des efforts longs (chantier v2, Phase 2) ------------------
+    # Un arrêt = plateau de distance d'au moins ``stop_min_s`` (ravito, pause) ; la marche
+    # très lente reste du mouvement — la mesure « sans mouvement » au seuil de vitesse est
+    # fragile sur un canal pauvre (DIAGNOSTIC §10.0). ``long_effort_min_hours`` borne les
+    # mesures coûteuses ou sans objet sur les sorties courtes : part de nuit (test solaire du
+    # plan), rapport des moitiés (fade réel), altitude moyenne.
+    stop_min_s: float = 60.0
+    long_effort_min_hours: float = 6.0
     # --- robustesse de la courbe record (Problème A : VC/exposant aberrants) ---
     vc_max_plausible_ms: float = 6.0          # plafond physiologique : un point « plat » plus rapide
     #                                           est rejeté avant l'ajustement VC ; une VC au-dessus
@@ -222,6 +230,34 @@ class CalibrationParams:
     # α population = médiane des α mesurés au banc v2 (Val 0,143 et 0,196 selon l'archive,
     # Crasse 0,179) — ordre de grandeur, jamais une constante universelle.
     duration_prior_alpha_population: float = 0.16
+    # --- arrêts (Phase 2, B4) ---------------------------------------------------------------
+    # ``carved`` (défaut historique) : la régression porte sur la vitesse ÉCOULÉE (arrêts
+    #   compris) et le plan retranche sa politique d'arrêts (5 min par ravito, +10 aux bases)
+    #   du temps prédit.
+    # ``personal`` : la régression porte sur la vitesse hors plateaux (base « plateaux » :
+    #   écoulé − arrêts ≥ twin.stop_min_s) ; le temps prédit = mouvement × (1 + r), r = taux
+    #   d'arrêt PERSONNEL (heures d'arrêt par heure de mouvement, moyenne pondérée récence ×
+    #   maximalité des vrais ultras) avec une élasticité optionnelle à la durée,
+    #   r(T) = r̄ · (T/T̄)^e. Appliqué à l'identique dans chaque pli LOO (r sans le pli) ; la
+    #   dispersion de ln(1 + r) entre ultras entre dans l'écart-type prédictif.
+    # ``spec`` : même base, mais les arrêts de la cible sont ceux de la politique du plan
+    #   (ravitos de la spec) ; la LOO reste au taux personnel (les ravitos des courses passées
+    #   ne sont pas connus).
+    stops_model: str = "carved"                          # {carved, personal, spec}
+    stops_duration_elasticity: float = 0.0               # e de r(T) = r̄·(T/T̄)^e (0 = taux constant)
+    stops_rate_population: float = 0.06                  # repli quand aucun ultra ne porte d'arrêts mesurés
+    # --- nuit (Phase 2, C2) -----------------------------------------------------------------
+    # ``none`` (défaut) : la nuit n'entre pas dans la régression.
+    # ``prior_shrunk`` : quatrième colonne (part de nuit de l'ultra − part de nuit moyenne
+    #   pondérée des vrais ultras), coefficient d tiré vers ``night_prior_log_per_share`` par
+    #   ``night_shrink_lambda`` pseudo-observations, dans le fit, la covariance et chaque pli.
+    #   La cible reçoit sa part de nuit du calendrier de course (départ, position, fuseau de
+    #   la spec) intégrée sur le temps prédit — point fixe itéré ; sans spec, écart nul. En
+    #   lien linéaire le prior vaut d_pop × v̄. Un ultra sans part de nuit mesurable est à la
+    #   moyenne (écart nul).
+    night_term: str = "none"                             # {none, prior_shrunk}
+    night_prior_log_per_share: float = 0.0               # ln v par unité de part de nuit (0 = sans a priori)
+    night_shrink_lambda: float = 2.0
 
 
 @dataclass(frozen=True)
@@ -277,6 +313,18 @@ class PredictionParams:
     # l'intuition — règle pré-enregistrée de docs/twin-registre-couverture.md.
     pooled_q50: float | None = None
     pooled_q80: float | None = None
+    # --- environnement déclaré (Phase 2, C3) --------------------------------------------------
+    # ``off`` (défaut) : rien. ``declared`` : la vitesse de la cible est multipliée par
+    #   1 − coût, coût = heat_cost_per_c × max(heat_c − heat_ref_c, 0) + altitude_cost_per_km
+    #   × max(altitude moyenne du parcours − altitude moyenne pondérée des vrais ultras, 0)/1000.
+    #   La chaleur est DÉCLARÉE dans la spec (``heat_c``), l'altitude vient de la trace ; les
+    #   coûts sont des ordres de grandeur population, jamais appris ici. Central, Monte-Carlo
+    #   et bandes suivent (facteur dans le point fixe) ; la LOO ne le voit pas (conditions des
+    #   courses passées inconnues).
+    environment_term: str = "off"                        # {off, declared}
+    heat_ref_c: float = 15.0
+    heat_cost_per_c: float = 0.004
+    altitude_cost_per_km: float = 0.05
 
 
 @dataclass(frozen=True)
@@ -289,7 +337,11 @@ class PacingParams:
     #   linéaire (1+Δ → 1−Δ) réalise (1−Δ)/(1+Δ) = 1 − X/100, d'où Δ = X/(200−X), borné
     #   [fade_delta_min, fade_delta_max]. Repli sur fade_delta si durabilité non mesurable.
     #   Contrôle de cohérence : le défaut historique Δ=0,085 correspond à X ≈ 15,7 %.
-    fade_source: str = "config"          # {config, durability}
+    # ``splits`` (Phase 2) : Δ dérivé du RAPPORT DES MOITIÉS mesuré sur les vrais ultras de
+    #   l'athlète (vitesse ajustée hors plateaux de la seconde moitié de Deq ÷ première),
+    #   Δ_i = 2(1 − R_i)/(1 + R_i), moyenne pondérée récence × maximalité, borné ; repli sur
+    #   ``durability`` puis sur ``fade_delta`` (``PacingPlan.fade_source_used`` dit lequel a servi).
+    fade_source: str = "config"          # {config, durability, splits}
     fade_delta_min: float = 0.04
     fade_delta_max: float = 0.13
     default_stop_min: float = 5.0

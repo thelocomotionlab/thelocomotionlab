@@ -14,6 +14,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 from .._dt import parse_duration_h, parse_iso
 
 
@@ -54,6 +56,9 @@ class RaceSpec:
     official_dplus_m: float | None = None
     target_hours: float | None = None
     technicity_pct: float = 0.0
+    # température moyenne ATTENDUE (°C), déclarée — sert au terme d'environnement
+    # (``prediction.environment_term=declared``) ; None = non déclarée, aucun coût de chaleur
+    heat_c: float | None = None
 
     def __post_init__(self) -> None:
         if len(self.aid_km) != len(self.aid_names):
@@ -98,6 +103,7 @@ class RaceSpec:
             # mieux vaut refuser que caler un plan sur la mauvaise durée)
             target_hours=parse_duration_h(d.get("target_hours")),
             technicity_pct=float(d.get("technicity_pct") or 0.0),
+            heat_c=None if d.get("heat_c") is None else float(d["heat_c"]),
         )
 
     @classmethod
@@ -105,4 +111,18 @@ class RaceSpec:
         return cls.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
 
 
-__all__ = ["RaceSpec"]
+def stops_policy_min(n_segments: int, major_base_indices, cfg) -> np.ndarray:
+    """Politique d'arrêts du plan, en minutes par segment : ``default_stop_min`` à chaque
+    point de passage, ``major_base_extra_min`` de plus aux bases majeures, rien à l'arrivée.
+    Partagée par le plan (qui la retranche du temps prédit en modèle ``carved``) et par la
+    prédiction (arrêts de la cible en modèle ``spec``)."""
+    stops_min = np.full(int(n_segments), float(cfg.pacing.default_stop_min))
+    for k in major_base_indices:
+        if 0 <= k < n_segments:
+            stops_min[k] += float(cfg.pacing.major_base_extra_min)
+    if n_segments:
+        stops_min[-1] = 0.0
+    return stops_min
+
+
+__all__ = ["RaceSpec", "stops_policy_min"]

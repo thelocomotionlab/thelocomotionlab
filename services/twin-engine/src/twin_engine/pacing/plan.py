@@ -16,6 +16,7 @@ import numpy as np
 
 from ..config import Config
 from ..course import CourseProfile, RaceSpec
+from ..course.spec import stops_policy_min
 from ..predict import Prediction
 from .sun import is_night, sun_times
 
@@ -47,9 +48,14 @@ class SegmentPlan:
     hi_h: float
     arr_lo_clock: str | None = None   # borne basse en HEURE DE PASSAGE (ex. "sam. 18:55")
     arr_hi_clock: str | None = None   # borne haute — None si départ/position inconnus
+    # cumul NON arrondi (le cumul affiché est au centième d'heure) : sert au score de la
+    # forme du plan contre les passages réels, jamais au rapport
+    cum_clock_exact_h: float | None = None
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        d = asdict(self)
+        d.pop("cum_clock_exact_h", None)
+        return d
 
 
 @dataclass
@@ -73,12 +79,20 @@ class PacingPlan:
     anchor: str = "prediction"
     anchor_hours: float | None = None        # temps réellement réparti (= la cible si ancre cible)
     window_tolerance_pct: float | None = None  # demi-largeur servie, mode objectif seulement
+    # --- Phase 2 : ce qui a réellement servi (traçabilité du rapport) ------------------------
+    fade_source_used: str = "config"         # config | durability | splits
+    stops_model: str = "carved"              # carved (politique retranchée) | personal | spec
+    stops_rate: float | None = None          # taux personnel servi (h d'arrêt par h de mouvement)
 
     def to_dict(self) -> dict:
         return {
             "t_move_h": round(self.t_move_h, 2),
             "t_stops_h": round(self.t_stops_h, 2),
             "t_clock_h": round(self.t_clock_h, 2),
+            "fade_delta_used": round(self.fade_delta_used, 4),
+            "fade_source_used": self.fade_source_used,
+            "stops_model": self.stops_model,
+            "stops_rate": None if self.stops_rate is None else round(self.stops_rate, 4),
             "start_time": self.start_time.isoformat() if self.start_time else None,
             "sun": self.sun,
             "safety_lo_clock": self.safety_lo_clock,
@@ -97,17 +111,45 @@ def _fmt_clock(when: dt.datetime) -> str:
     return f"{_WEEKDAYS_FR[when.weekday()]} {when.hour:02d}:{when.minute:02d}"
 
 
-def _fade_delta(cfg: Config, durability_pct: float | None) -> float:
-    """Δ du fade : constante (défaut) ou dérivé de la durabilité MESURÉE de l'athlète (T3).
+def fade_delta_from_splits(calibration) -> float | None:
+    """Δ du fade mesuré sur les COURSES de l'athlète : pour chaque vrai ultra dont le rapport
+    des moitiés R (vga hors plateaux, seconde moitié de Deq ÷ première) est connu et
+    plausible (0,5–1,5), un fade linéaire (1+Δ → 1−Δ) donne des moitiés moyennes 1+Δ/2 et
+    1−Δ/2, soit R = (1−Δ/2)/(1+Δ/2) ⇔ Δ = 2(1−R)/(1+R). Moyenne pondérée par les poids de la
+    calibration (récence × maximalité) ; None sans ultra mesuré. Peut être négatif (l'athlète
+    accélère) : le plan le bornera."""
+    genuine = getattr(calibration, "genuine", None) or []
+    weights = getattr(calibration, "weights", None)
+    w = (np.asarray(weights, dtype=float) if weights is not None and len(weights) == len(genuine)
+         else np.ones(len(genuine)))
+    deltas, ws = [], []
+    for g, wi in zip(genuine, w):
+        r = getattr(g, "split_ratio", None)
+        if r is None or not (0.5 <= r <= 1.5) or wi <= 0:
+            continue
+        deltas.append(2.0 * (1.0 - r) / (1.0 + r))
+        ws.append(float(wi))
+    if not deltas:
+        return None
+    return float(np.sum(np.asarray(ws) * np.asarray(deltas)) / np.sum(ws))
+
+
+def _fade_delta(cfg: Config, durability_pct: float | None,
+                splits_delta: float | None = None) -> tuple[float, str]:
+    """Δ du fade et sa source : constante (défaut), dérivé de la durabilité MESURÉE de
+    l'athlète (T3) ou du rapport des moitiés de ses courses (Phase 2, ``splits``).
 
     Si l'efficacité chute de X % entre les deux moitiés à effort constant, la vitesse fait de
     même ; un fade linéaire (1+Δ → 1−Δ) réalise (1−Δ)/(1+Δ) = 1 − X/100 ⇔ Δ = X/(200−X).
-    Borné [fade_delta_min, fade_delta_max] ; repli sur ``fade_delta`` si non mesurable."""
+    Borné [fade_delta_min, fade_delta_max] ; ``splits`` retombe sur ``durability`` puis sur
+    ``fade_delta`` quand la mesure manque — la source servie est renvoyée."""
     p = cfg.pacing
-    if p.fade_source == "durability" and durability_pct is not None and durability_pct > 0:
+    if p.fade_source == "splits" and splits_delta is not None:
+        return float(min(max(splits_delta, p.fade_delta_min), p.fade_delta_max)), "splits"
+    if p.fade_source in ("durability", "splits") and durability_pct is not None and durability_pct > 0:
         delta = durability_pct / (200.0 - min(durability_pct, 100.0))
-        return float(min(max(delta, p.fade_delta_min), p.fade_delta_max))
-    return p.fade_delta
+        return float(min(max(delta, p.fade_delta_min), p.fade_delta_max)), "durability"
+    return p.fade_delta, "config"
 
 
 def build_pacing(
@@ -118,8 +160,15 @@ def build_pacing(
     *,
     durability_pct: float | None = None,
     anchor_hours: float | None = None,
+    splits_delta: float | None = None,
 ) -> PacingPlan:
     """Répartit un temps total sur le parcours (effort ajusté constant + fade).
+
+    ``splits_delta`` : Δ mesuré sur les courses de l'athlète (:func:`fade_delta_from_splits`),
+    servi quand ``pacing.fade_source=splits``. Les arrêts suivent le modèle de la prédiction
+    (``Prediction.stops_model``) : politique du plan retranchée du temps prédit (``carved``,
+    historique), arrêts PERSONNELS de la prédiction répartis sur les ravitos au prorata de la
+    politique (``personal``), ou politique du plan ajoutée au mouvement prédit (``spec``).
 
     ``anchor_hours`` (ADR 0002, mode objectif) remplace le temps PRÉDIT par la durée visée
     par l'athlète. Seules deux choses changent alors : le temps réparti, et la nature des
@@ -140,23 +189,33 @@ def build_pacing(
     # --- fade de durabilité sur la vitesse ajustée vs avancement en Deq ---
     cum_deq = np.cumsum(deq)
     mid = (cum_deq - deq / 2) / cum_deq[-1]
-    delta = _fade_delta(cfg, durability_pct)
+    delta, fade_used = _fade_delta(cfg, durability_pct, splits_delta)
     g = 1.0 + delta * (0.5 - mid) * 2.0
 
     # --- politique d'arrêts : base + supplément aux bases majeures, rien à l'arrivée ---
-    stops_min = np.full(n, cfg.pacing.default_stop_min)
-    for k in race.major_base_indices:
-        if 0 <= k < n:
-            stops_min[k] += cfg.pacing.major_base_extra_min
-    stops_min[-1] = 0.0
-    t_stops_h = float(stops_min.sum() / 60.0)
+    stops_min = stops_policy_min(n, race.major_base_indices, cfg)
 
     # temps total à répartir : la prédiction, ou la CIBLE de l'athlète (mode objectif)
     on_target = anchor_hours is not None
     if on_target and anchor_hours <= 0:
         raise ValueError("anchor_hours doit être strictement positif")
     tpred = float(anchor_hours) if on_target else prediction.finish_hours
-    t_move = max(tpred - t_stops_h, 0.5 * tpred)  # garde-fou si arrêts > temps réparti
+    stops_model = getattr(prediction, "stops_model", "carved") or "carved"
+    stops_rate = getattr(prediction, "stops_rate", None)
+    if stops_model == "personal" and stops_rate is not None:
+        # arrêts PERSONNELS : le total vient de la prédiction (ou du taux appliqué à la cible
+        # en mode objectif), réparti sur les ravitos au prorata de la politique du plan
+        moving = getattr(prediction, "moving_hours", None)
+        if on_target or moving is None:
+            t_move = tpred / (1.0 + float(stops_rate))
+        else:
+            t_move = float(moving)
+        total_min = max(tpred - t_move, 0.0) * 60.0
+        share = stops_min.sum()
+        stops_min = (stops_min / share * total_min if share > 0 else np.zeros(n))
+    else:
+        t_move = max(tpred - float(stops_min.sum() / 60.0), 0.5 * tpred)  # garde-fou si arrêts > temps réparti
+    t_stops_h = float(stops_min.sum() / 60.0)
 
     # --- normalisation : Σ deq_i / v_i = t_move ---
     scale = float(np.sum(deq / g) / t_move)
@@ -259,6 +318,7 @@ def build_pacing(
             hi_h=round(float(hi[i]), 2),
             arr_lo_clock=arr_lo[i],
             arr_hi_clock=arr_hi[i],
+            cum_clock_exact_h=float(cum_clock[i]),
         )
         for i in range(n)
     ]
@@ -284,7 +344,10 @@ def build_pacing(
         anchor="target" if on_target else "prediction",
         anchor_hours=float(tpred),
         window_tolerance_pct=tol_pct,
+        fade_source_used=fade_used,
+        stops_model=stops_model,
+        stops_rate=None if stops_rate is None else float(stops_rate),
     )
 
 
-__all__ = ["SegmentPlan", "PacingPlan", "build_pacing"]
+__all__ = ["SegmentPlan", "PacingPlan", "build_pacing", "fade_delta_from_splits"]

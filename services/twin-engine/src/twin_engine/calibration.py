@@ -32,15 +32,36 @@ REGIME_INSUFFICIENT = "insufficient"
 @dataclass(frozen=True)
 class GenuineUltra:
     date: str | None
-    hours: float
-    vga_kmh: float       # vitesse ajustée moyenne de course
+    hours: float         # durée de la BASE de vitesse servie (écoulé, mouvement ou hors plateaux)
+    vga_kmh: float       # vitesse ajustée moyenne de course sur cette base
     dplus_m: float
     dist_km: float
     avg_hr: float | None
+    # --- Phase 2 : ce que la course dit d'autre (None = non mesuré) --------------------
+    elapsed_hours: float | None = None   # temps écoulé de bout en bout (ce que la LOO compare)
+    stops_h: float | None = None         # heures dans les plateaux ≥ twin.stop_min_s
+    night_share: float | None = None     # part de nuit de l'écoulé (0–1)
+    split_ratio: float | None = None     # vga hors plateaux, seconde moitié ÷ première
+    mean_alt_m: float | None = None      # altitude moyenne
 
     @property
     def dplus_per_km(self) -> float:
         return self.dplus_m / self.dist_km if self.dist_km else 0.0
+
+    @property
+    def moving_hours(self) -> float | None:
+        """Heures hors plateaux (écoulé − arrêts), None sans arrêts mesurés."""
+        if self.elapsed_hours is None or self.stops_h is None:
+            return None
+        return max(self.elapsed_hours - self.stops_h, 0.0)
+
+    @property
+    def stops_rate(self) -> float | None:
+        """Taux d'arrêt personnel de la course : heures d'arrêt par heure de mouvement."""
+        mh = self.moving_hours
+        if mh is None or mh <= 0 or self.stops_h is None:
+            return None
+        return self.stops_h / mh
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -79,10 +100,72 @@ class UltraCalibration:
     # l'identique dans le fit, la covariance et chaque pli LOO ; None = pente libre
     duration_prior: tuple[float, float] | None = None
     duration_prior_origin: str | None = None            # twin_alpha | population
+    # --- arrêts (Phase 2, B4) : ``carved`` = historique (vitesse écoulée, arrêts retranchés
+    # par le plan) ; ``personal``/``spec`` = régression hors plateaux + modèle d'arrêts.
+    # ``stops_rate`` = r̄ (h d'arrêt par h de mouvement, pondéré), ``stops_rate_sd_log`` =
+    # dispersion de ln(1 + r) entre ultras, ``stops_ref_hours`` = heures de mouvement de
+    # référence (moyenne géométrique pondérée) pour l'élasticité r(T) = r̄·(T/T̄)^e.
+    stops_model: str = "carved"
+    stops_rate: float | None = None
+    stops_rate_sd_log: float | None = None
+    stops_ref_hours: float | None = None
+    stops_elasticity: float = 0.0
+    stops_rate_origin: str | None = None                # ultras | population
+    # --- nuit (Phase 2, C2) : coefficient de la 4ᵉ colonne (écart de part de nuit à la
+    # moyenne pondérée des vrais ultras), son prior (valeur, λ) ; None = terme inactif.
+    night_coef: float | None = None
+    night_share_mean: float | None = None
+    night_prior: tuple[float, float] | None = None
 
     @property
     def n_genuine(self) -> int:
         return len(self.genuine)
+
+    @property
+    def has_night_term(self) -> bool:
+        return self.night_coef is not None
+
+    @property
+    def coef_vector(self) -> np.ndarray | None:
+        """Coefficients dans l'ordre des colonnes du design : (β0, β1, β2[, d])."""
+        if self.beta is None:
+            return None
+        v = [float(b) for b in self.beta]
+        if self.night_coef is not None:
+            v.append(float(self.night_coef))
+        return np.asarray(v, dtype=float)
+
+    def stops_rate_at(self, moving_hours: float) -> float:
+        """Taux d'arrêt appliqué à ``moving_hours`` heures de mouvement (élasticité comprise) ;
+        0 en modèle ``carved``."""
+        if self.stops_model == "carved" or self.stops_rate is None:
+            return 0.0
+        r = float(self.stops_rate)
+        if self.stops_elasticity and self.stops_ref_hours and moving_hours > 0:
+            r *= (moving_hours / self.stops_ref_hours) ** self.stops_elasticity
+        return max(r, 0.0)
+
+    def elapsed_from_moving(self, moving_hours: float, *, spec_stops_h: float | None = None) -> float:
+        """Temps ÉCOULÉ prédit à partir du temps de mouvement : identité en ``carved``,
+        mouvement × (1 + r) en ``personal``, mouvement + arrêts de la spec en ``spec``
+        (repli sur le taux personnel sans spec)."""
+        if self.stops_model == "spec" and spec_stops_h is not None:
+            return moving_hours + float(spec_stops_h)
+        return moving_hours * (1.0 + self.stops_rate_at(moving_hours))
+
+    def moving_from_elapsed(self, elapsed_hours: float, *, spec_stops_h: float | None = None) -> float:
+        """Inverse d':meth:`elapsed_from_moving` (itéré quand le taux dépend de la durée)."""
+        if self.stops_model == "carved":
+            return elapsed_hours
+        if self.stops_model == "spec" and spec_stops_h is not None:
+            return max(elapsed_hours - float(spec_stops_h), 0.5 * elapsed_hours)
+        m = elapsed_hours / (1.0 + self.stops_rate_at(elapsed_hours))
+        for _ in range(50):
+            mn = elapsed_hours / (1.0 + self.stops_rate_at(m))
+            if abs(mn - m) < 1e-9:
+                return mn
+            m = mn
+        return m
 
     @property
     def can_predict(self) -> bool:
@@ -98,12 +181,18 @@ class UltraCalibration:
         """σ résiduel dans les unités du lien servi (km/h en linéaire, relatif en log)."""
         return self.sigma_log if (self.link == "log" and self.sigma_log is not None) else self.sigma_kmh
 
-    def predict_vga_kmh(self, hours: float, dplus_per_km: float) -> float | None:
+    def predict_vga_kmh(self, hours: float, dplus_per_km: float,
+                        night_dev: float = 0.0) -> float | None:
+        """Vitesse ajustée modélisée à ``hours`` (heures de la base servie) ; ``night_dev`` =
+        écart de part de nuit à la moyenne des ultras (0 hors terme de nuit)."""
         if self.regime == REGIME_REGRESSION:
             b0, b1, b2 = self.beta  # type: ignore[misc]
+            eta = b0 + b1 * math.log(hours) + b2 * dplus_per_km
+            if self.night_coef is not None:
+                eta += self.night_coef * night_dev
             if self.link == "log":
-                return float(math.exp(b0 + b1 * math.log(hours) + b2 * dplus_per_km))
-            return b0 + b1 * math.log(hours) + b2 * dplus_per_km
+                return float(math.exp(eta))
+            return float(eta)
         if self.regime in (REGIME_BLEND, REGIME_VC_E):
             v_env = self._envelope_kmh(hours)
             if v_env is None:
@@ -130,16 +219,37 @@ class UltraCalibration:
             else {"b": round(self.duration_prior[0], 4), "lambda": self.duration_prior[1],
                   "origin": self.duration_prior_origin},
             "beta": None if self.beta is None else [round(b, 5) for b in self.beta],
+            "stops": None if self.stops_model == "carved" else {
+                "model": self.stops_model,
+                "rate": None if self.stops_rate is None else round(self.stops_rate, 4),
+                "rate_sd_log": (None if self.stops_rate_sd_log is None
+                                else round(self.stops_rate_sd_log, 4)),
+                "ref_hours": (None if self.stops_ref_hours is None
+                              else round(self.stops_ref_hours, 2)),
+                "elasticity": self.stops_elasticity,
+                "origin": self.stops_rate_origin},
+            "night": None if self.night_coef is None else {
+                "coef": round(self.night_coef, 4),
+                "share_mean": (None if self.night_share_mean is None
+                               else round(self.night_share_mean, 4)),
+                "prior": None if self.night_prior is None
+                else {"d": round(self.night_prior[0], 4), "lambda": self.night_prior[1]}},
             "notes": self.notes,
             "genuine": [g.to_dict() for g in self.genuine],
         }
 
 
 def _basis_hours(s: ActivitySummary, cfg: Config) -> float:
-    """Durée de référence de l'effort : temps écoulé (défaut) ou temps de mouvement (§4.4).
+    """Durée de référence de l'effort : temps écoulé (défaut), temps de mouvement (§4.4) ou,
+    dès qu'un modèle d'arrêts est servi (``stops_model`` ≠ ``carved``), temps HORS PLATEAUX
+    (écoulé − arrêts ≥ twin.stop_min_s : les arrêts francs sortent, la marche lente reste).
 
-    ``moving`` n'est retenu que s'il a pu être mesuré (``moving_time_s`` renseigné et > 0) ;
-    sinon repli automatique sur le temps écoulé (pas d'invention de donnée)."""
+    Une base non mesurable retombe sur le temps écoulé (pas d'invention de donnée)."""
+    if cfg.calibration.stops_model != "carved":
+        st = getattr(s, "stops_s", None)
+        if st is not None and s.duration_s - st > 0:
+            return (s.duration_s - st) / 3600.0
+        return s.duration_s / 3600.0
     if cfg.twin.speed_basis == "moving":
         mt = getattr(s, "moving_time_s", None)
         if mt is not None and mt > 0:
@@ -164,6 +274,7 @@ def select_genuine_ultras(summaries: list[ActivitySummary], cfg: Config) -> list
         # exclut reconnaissances/randos ; FC absente → on ne peut pas vérifier (on garde, signalé)
         if s.decouple_pct is not None and s.decouple_pct > c.genuine_max_decouple_pct:
             continue
+        stops_s = getattr(s, "stops_s", None)
         out.append(
             GenuineUltra(
                 date=s.date,
@@ -172,6 +283,11 @@ def select_genuine_ultras(summaries: list[ActivitySummary], cfg: Config) -> list
                 dplus_m=s.dplus_m,
                 dist_km=s.dist_km,
                 avg_hr=s.avg_hr,
+                elapsed_hours=s.duration_s / 3600.0,
+                stops_h=None if stops_s is None else stops_s / 3600.0,
+                night_share=getattr(s, "night_share", None),
+                split_ratio=getattr(s, "half_split_ratio", None),
+                mean_alt_m=getattr(s, "mean_alt_m", None),
             )
         )
     return out
@@ -313,22 +429,40 @@ def maximality_weights(
     return w
 
 
+def _design_matrix(h: np.ndarray, dpk: np.ndarray, cfg: Config | None,
+                   night_dev: np.ndarray | None = None) -> np.ndarray:
+    """Colonnes de la régression : 1, ln T[, D+/km][, écart de nuit]. Le terrain manque en
+    ``terrain_term=none`` ; l'écart de nuit n'est là qu'avec ``night_dev``."""
+    term = cfg.calibration.terrain_term if cfg is not None else "free"
+    cols = [np.ones_like(h), np.log(h)]
+    if term != "none":
+        cols.append(np.asarray(dpk, dtype=float))
+    if night_dev is not None:
+        cols.append(np.asarray(night_dev, dtype=float))
+    return np.vstack(cols).T
+
+
 def _pseudo_rows(cfg: Config | None, *, link: str, duration_prior: tuple[float, float] | None,
-                 n_cols: int) -> tuple[list[np.ndarray], list[float]]:
+                 n_cols: int, night_prior: tuple[float, float] | None = None
+                 ) -> tuple[list[np.ndarray], list[float]]:
     """Pseudo-observations ridge, communes au fit, à la covariance et aux plis LOO.
 
     Terrain (``terrain_term=prior_shrunk``) : β2 tiré vers le prior population — en km/h par
     m/km en lien linéaire, en relatif par m/km en lien log. Durée (``duration_term=
     prior_shrunk``) : b tiré vers −α (log) ou −α·v̄ (linéaire), ``duration_prior = (valeur,
-    λ)``. Chaque pseudo-observation pèse √λ dans la régression pondérée."""
+    λ)``. Nuit (``night_term=prior_shrunk``) : d tiré vers ``night_prior = (valeur, λ)`` sur la
+    dernière colonne. Chaque pseudo-observation pèse √λ dans la régression pondérée."""
     rows: list[np.ndarray] = []
     targets: list[float] = []
     term = cfg.calibration.terrain_term if cfg is not None else "free"
-    if term == "prior_shrunk" and n_cols == 3:
+    has_terrain = term != "none"
+    if term == "prior_shrunk" and has_terrain:
         prior = (cfg.calibration.default_dplus_penalty_log_per_dpkm if link == "log"
                  else cfg.calibration.default_dplus_penalty_kmh_per_dpkm)
         lam = math.sqrt(max(cfg.calibration.terrain_shrink_lambda, 0.0))
-        rows.append(np.array([0.0, 0.0, lam]))
+        row = np.zeros(n_cols)
+        row[2] = lam
+        rows.append(row)
         targets.append(lam * prior)
     if duration_prior is not None and duration_prior[1] > 0:
         lam_b = math.sqrt(duration_prior[1])
@@ -336,17 +470,25 @@ def _pseudo_rows(cfg: Config | None, *, link: str, duration_prior: tuple[float, 
         row[1] = lam_b
         rows.append(row)
         targets.append(lam_b * duration_prior[0])
+    if night_prior is not None and night_prior[1] > 0:
+        lam_d = math.sqrt(night_prior[1])
+        row = np.zeros(n_cols)
+        row[-1] = lam_d
+        rows.append(row)
+        targets.append(lam_d * night_prior[0])
     return rows, targets
 
 
 def _regression_beta(
     h: np.ndarray, y: np.ndarray, dpk: np.ndarray, weights: np.ndarray, cfg: Config | None,
     *, link: str = "linear", duration_prior: tuple[float, float] | None = None,
+    night_dev: np.ndarray | None = None, night_prior: tuple[float, float] | None = None,
 ) -> np.ndarray:
-    """β pondéré de ``y ~ 1 + ln(T) + β2·D+/km`` selon le mode de terrain (§4.2).
+    """Coefficients pondérés de ``y ~ 1 + ln(T) + β2·D+/km [+ d·nuit]`` selon le mode de
+    terrain (§4.2). Rend toujours (β0, β1, β2[, d]) : β2 = 0 en ``terrain_term=none``.
 
-    ``y`` = v (lien linéaire, défaut historique) ou ln v (lien log, A2) — même design
-    ``X = [1, ln T, D+/km]``, mêmes poids, mêmes pseudo-observations (:func:`_pseudo_rows`).
+    ``y`` = v (lien linéaire, défaut historique) ou ln v (lien log, A2) — même design,
+    mêmes poids, mêmes pseudo-observations (:func:`_pseudo_rows`).
 
     * ``free`` : β2 libre (défaut historique, jusqu'au 2026-07-03).
     * ``none`` : β2 = 0 (la vga est **déjà** ajustée à la pente → pas de double-comptage).
@@ -355,75 +497,151 @@ def _regression_beta(
 
     ``cfg`` absent ⇒ ``free`` (rétro-compatibilité du golden)."""
     term = cfg.calibration.terrain_term if cfg is not None else "free"
-    lt = np.log(h)
     sw = np.sqrt(np.asarray(weights, dtype=float))
-    n_cols = 2 if term == "none" else 3
-    X = (np.vstack([np.ones_like(h), lt]).T if n_cols == 2
-         else np.vstack([np.ones_like(h), lt, dpk]).T)
+    X = _design_matrix(h, dpk, cfg, night_dev)
     Xw = X * sw[:, None]
     yw = y * sw
-    rows, targets = _pseudo_rows(cfg, link=link, duration_prior=duration_prior, n_cols=n_cols)
+    rows, targets = _pseudo_rows(cfg, link=link, duration_prior=duration_prior,
+                                 n_cols=X.shape[1], night_prior=night_prior)
     if rows:
         Xw = np.vstack([Xw, np.array(rows)])
         yw = np.concatenate([yw, np.array(targets)])
     b, *_ = np.linalg.lstsq(Xw, yw, rcond=None)
-    if n_cols == 2:
-        return np.array([float(b[0]), float(b[1]), 0.0])
-    return np.asarray(b, dtype=float)
+    b = np.asarray(b, dtype=float)
+    if term == "none":
+        b = np.concatenate([b[:2], [0.0], b[2:]])
+    return b
 
 
 def _beta_covariance(
     genuine: list[GenuineUltra], weights: np.ndarray, sigma: float, cfg: Config | None,
     *, link: str = "linear", duration_prior: tuple[float, float] | None = None,
+    night_dev: np.ndarray | None = None, night_prior: tuple[float, float] | None = None,
 ) -> np.ndarray:
-    """Covariance des coefficients : σ²(XᵀWX)⁻¹ (3×3), cohérente avec le mode de terrain.
+    """Covariance des coefficients : σ²(XᵀWX)⁻¹ (3×3, ou 4×4 avec le terme de nuit),
+    cohérente avec le mode de terrain.
 
     C'est le terme de LEVIER de la loi prédictive (Var = σ²(1 + x₀ᵀ(XᵀWX)⁻¹x₀)) : il grandit
     quand la cible sort de l'enveloppe des (ln T, D+/km) d'entraînement — le même phénomène
     que les plis d'« extrapolation » de la LOO, jusqu'ici absent de l'intervalle vendu.
     ``sigma`` est dans les unités du lien (km/h ou relatif).
 
-    * ``none`` : β2 fixé à 0 → bloc 2×2 (β0, β1), ligne/colonne β2 nulles ;
-    * ``prior_shrunk`` / prior de durée : les pseudo-observations ridge entrent dans XᵀWX
-      (comme dans le fit) ;
+    * ``none`` : β2 fixé à 0 → ligne/colonne β2 nulles ;
+    * ``prior_shrunk`` / priors de durée et de nuit : les pseudo-observations ridge entrent
+      dans XᵀWX (comme dans le fit) ;
     * ``pinv`` (pas ``inv``) : design mal conditionné → covariance large, jamais NaN.
     """
     h = np.array([g.hours for g in genuine])
     dpk = np.array([g.dplus_per_km for g in genuine])
     sw = np.sqrt(np.asarray(weights, dtype=float))
     term = cfg.calibration.terrain_term if cfg is not None else "free"
-    n_cols = 2 if term == "none" else 3
-    X = (np.vstack([np.ones_like(h), np.log(h)]).T if n_cols == 2
-         else np.vstack([np.ones_like(h), np.log(h), dpk]).T) * sw[:, None]
-    rows, _ = _pseudo_rows(cfg, link=link, duration_prior=duration_prior, n_cols=n_cols)
+    X = _design_matrix(h, dpk, cfg, night_dev) * sw[:, None]
+    rows, _ = _pseudo_rows(cfg, link=link, duration_prior=duration_prior, n_cols=X.shape[1],
+                           night_prior=night_prior)
     if rows:
         X = np.vstack([X, np.array(rows)])
-    if n_cols == 2:
-        cov = np.zeros((3, 3))
-        cov[:2, :2] = sigma**2 * np.linalg.pinv(X.T @ X)
+    core = sigma**2 * np.linalg.pinv(X.T @ X)
+    if term == "none":
+        k = core.shape[0] + 1
+        cov = np.zeros((k, k))
+        cov[:2, :2] = core[:2, :2]
+        if k > 3:
+            cov[:2, 3:] = core[:2, 2:]
+            cov[3:, :2] = core[2:, :2]
+            cov[3:, 3:] = core[2:, 2:]
         return cov
-    return sigma**2 * np.linalg.pinv(X.T @ X)
+    return core
 
 
 def _fit_regression(
     genuine: list[GenuineUltra], weights: np.ndarray | None = None, cfg: Config | None = None,
     *, link: str = "linear", duration_prior: tuple[float, float] | None = None,
+    night_dev: np.ndarray | None = None, night_prior: tuple[float, float] | None = None,
 ):
-    """β = lstsq **pondéré** (v ~ 1 + ln(T) + D+/km, ou ln v en lien log). Renvoie (beta, residuals),
-    les résidus dans les unités du lien.
+    """β = lstsq **pondéré** (v ~ 1 + ln(T) + D+/km [+ nuit], ou ln v en lien log). Renvoie
+    (beta, residuals), les résidus dans les unités du lien.
 
     Poids ``None`` ou égaux ⇒ moindres carrés ordinaires (le golden reste identique). Le mode de
-    terrain (``cfg.calibration.terrain_term``) et le prior de durée sont appliqués ici ET dans la
-    LOO à l'identique."""
+    terrain (``cfg.calibration.terrain_term``), le prior de durée et le terme de nuit sont
+    appliqués ici ET dans la LOO à l'identique."""
     h = np.array([g.hours for g in genuine])
     v = np.array([g.vga_kmh for g in genuine])
     y = np.log(v) if link == "log" else v
     dpk = np.array([g.dplus_per_km for g in genuine])
     w = np.ones_like(h) if weights is None else np.asarray(weights, dtype=float)
-    beta = _regression_beta(h, y, dpk, w, cfg, link=link, duration_prior=duration_prior)
-    X = np.vstack([np.ones_like(h), np.log(h), dpk]).T
+    beta = _regression_beta(h, y, dpk, w, cfg, link=link, duration_prior=duration_prior,
+                            night_dev=night_dev, night_prior=night_prior)
+    cols = [np.ones_like(h), np.log(h), dpk]
+    if night_dev is not None:
+        cols.append(np.asarray(night_dev, dtype=float))
+    X = np.vstack(cols).T
     resid = y - X @ beta
     return beta, resid
+
+
+def night_deviations(genuine: list[GenuineUltra], weights: np.ndarray
+                     ) -> tuple[np.ndarray, float | None]:
+    """Écart de part de nuit de chaque ultra à la moyenne PONDÉRÉE des ultras mesurés ;
+    un ultra sans mesure est à l'écart nul. ``(écarts, moyenne)`` ; moyenne None si aucun
+    ultra ne porte de part de nuit (terme inactif)."""
+    n = len(genuine)
+    shares = np.array([np.nan if g.night_share is None else float(g.night_share)
+                       for g in genuine], dtype=float)
+    known = np.isfinite(shares)
+    if not known.any():
+        return np.zeros(n), None
+    w = np.asarray(weights, dtype=float)
+    sw = float(w[known].sum())
+    mean = (float(np.sum(w[known] * shares[known]) / sw) if sw > 0
+            else float(np.mean(shares[known])))
+    dev = np.where(known, shares - mean, 0.0)
+    return dev, mean
+
+
+def _night_prior(genuine: list[GenuineUltra], weights: np.ndarray, cfg: Config, link: str
+                 ) -> tuple[float, float] | None:
+    """Prior (valeur, λ) du coefficient de nuit : ``night_prior_log_per_share`` en lien log,
+    × v̄ en lien linéaire ; None si le terme n'est pas demandé."""
+    c = cfg.calibration
+    if c.night_term != "prior_shrunk":
+        return None
+    d = float(c.night_prior_log_per_share)
+    if link != "log":
+        sw = float(np.sum(weights))
+        v_bar = (float(np.sum(weights * np.array([g.vga_kmh for g in genuine])) / sw) if sw > 0
+                 else float(np.mean([g.vga_kmh for g in genuine])))
+        d *= v_bar
+    return (d, float(c.night_shrink_lambda))
+
+
+def stops_statistics(genuine: list[GenuineUltra], weights: np.ndarray, cfg: Config
+                     ) -> dict:
+    """Taux d'arrêt personnel r̄ (h d'arrêt par h de mouvement, pondéré récence × maximalité),
+    dispersion de ln(1 + r) entre ultras (corrigée du n effectif) et heures de mouvement de
+    référence (moyenne géométrique pondérée) ; repli population sans ultra mesuré."""
+    c = cfg.calibration
+    rates, ws, mh = [], [], []
+    for g, w in zip(genuine, np.asarray(weights, dtype=float)):
+        r = g.stops_rate
+        if r is None or w <= 0:
+            continue
+        rates.append(r)
+        ws.append(float(w))
+        mh.append(float(g.moving_hours))
+    if not rates:
+        return {"rate": float(c.stops_rate_population), "sd_log": 0.0, "ref_hours": None,
+                "origin": "population", "n": 0}
+    r = np.asarray(rates)
+    w = np.asarray(ws)
+    sw = float(w.sum())
+    rate = float(np.sum(w * r) / sw)
+    lr = np.log1p(r)
+    lbar = float(np.sum(w * lr) / sw)
+    n_eff = _effective_n(w)
+    var = float(np.sum(w * (lr - lbar) ** 2) / sw)
+    sd = float(np.sqrt(var * n_eff / (n_eff - 1.0))) if n_eff > 1.0 else 0.0
+    ref = float(np.exp(np.sum(w * np.log(np.asarray(mh))) / sw))
+    return {"rate": rate, "sd_log": sd, "ref_hours": ref, "origin": "ultras", "n": len(rates)}
 
 
 def _duration_prior(
@@ -470,6 +688,23 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
 
     weights = recency * maximality
     n_eff = _effective_n(weights) if n else 0.0
+    w_tuple = tuple(float(x) for x in weights)
+
+    # modèle d'arrêts (Phase 2, B4) : mêmes statistiques dans tous les régimes
+    stops_kw: dict = {"stops_model": c.stops_model}
+    if c.stops_model != "carved":
+        st = stops_statistics(genuine, weights, cfg) if n else {
+            "rate": float(c.stops_rate_population), "sd_log": 0.0, "ref_hours": None,
+            "origin": "population", "n": 0}
+        stops_kw.update(stops_rate=st["rate"], stops_rate_sd_log=st["sd_log"],
+                        stops_ref_hours=st["ref_hours"], stops_elasticity=float(c.stops_duration_elasticity),
+                        stops_rate_origin=st["origin"])
+        if st["origin"] == "population":
+            notes.append(f"Arrêts : aucun vrai ultra n'en porte la mesure, taux population "
+                         f"{st['rate']:.3f} h/h appliqué.")
+        else:
+            notes.append(f"Arrêts personnels : {st['rate'] * 60:.1f} min par heure de mouvement "
+                         f"sur {st['n']} ultra(s), base hors plateaux.")
 
     if c.maximality_mode != "off":
         if twin.alpha is None or twin.endurance_coef is None:
@@ -493,17 +728,29 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
     if n >= c.min_ultras_regression and n_eff >= c.min_ultras_regression:
         link = c.link
         duration_prior, prior_origin = _duration_prior(genuine, weights, twin, cfg, link)
+        # terme de nuit (C2) : actif seulement si le prior est demandé ET qu'au moins un
+        # ultra porte une part de nuit mesurée (sinon la colonne serait vide)
+        night_prior = _night_prior(genuine, weights, cfg, link)
+        night_dev, night_mean = (night_deviations(genuine, weights) if night_prior is not None
+                                 else (None, None))
+        if night_prior is not None and night_mean is None:
+            notes.append("Terme de nuit demandé mais aucun vrai ultra n'a de part de nuit "
+                         "mesurable (position ou départ absents) : terme inactif.")
+            night_prior, night_dev = None, None
         beta, resid = _fit_regression(genuine, weights, cfg, link=link,
-                                      duration_prior=duration_prior)
+                                      duration_prior=duration_prior,
+                                      night_dev=night_dev, night_prior=night_prior)
         # σ pondérée : variance résiduelle pondérée corrigée par le nb effectif de degrés de
         # liberté. Se réduit EXACTEMENT à √(Σr²/(n−3)) quand les poids sont égaux (golden intact).
         sw = float(weights.sum())
         wmse = float(np.sum(weights * resid**2) / sw) if sw > 0 else 0.0
-        dof_eff = max(n_eff - 3.0, 1.0)
+        n_params = 3.0 + (1.0 if night_dev is not None else 0.0)
+        dof_eff = max(n_eff - n_params, 1.0)
         sigma = float(np.sqrt(wmse * n_eff / dof_eff))
         sigma = max(sigma, c.regression_min_sigma_log if link == "log" else c.regression_min_sigma_kmh)
         beta_cov = _beta_covariance(genuine, weights, sigma, cfg, link=link,
-                                    duration_prior=duration_prior)
+                                    duration_prior=duration_prior,
+                                    night_dev=night_dev, night_prior=night_prior)
         if link == "log":
             # équivalent km/h pour l'affichage : σ relatif × vga moyenne pondérée des ultras
             v_bar = float(np.sum(weights * np.array([g.vga_kmh for g in genuine])) / sw) if sw > 0 else 0.0
@@ -521,13 +768,21 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
                 f"Pente en durée tirée vers {duration_prior[0]:+.3f} ({prior_origin}, "
                 f"λ = {duration_prior[1]:g})."
             )
+        night_coef = None
+        if night_dev is not None and night_prior is not None:
+            night_coef = float(beta[3])
+            notes.append(
+                f"Nuit : coefficient {night_coef:+.3f} par unité de part de nuit (prior "
+                f"{night_prior[0]:+.3f}, λ = {night_prior[1]:g}), part de nuit moyenne des "
+                f"ultras {100 * night_mean:.0f} %."
+            )
         return UltraCalibration(
             regime=REGIME_REGRESSION,
             genuine=genuine,
             sigma_kmh=sigma_kmh,
             notes=notes,
             beta=(float(beta[0]), float(beta[1]), float(beta[2])),
-            weights=tuple(float(x) for x in weights),
+            weights=w_tuple,
             beta_cov=tuple(tuple(float(x) for x in row) for row in beta_cov),
             n_eff=n_eff,
             recency_halflife_days=c.recency_halflife_days,
@@ -537,6 +792,10 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
             sigma_log=sigma_log,
             duration_prior=duration_prior,
             duration_prior_origin=prior_origin,
+            night_coef=night_coef,
+            night_share_mean=night_mean if night_coef is not None else None,
+            night_prior=night_prior if night_coef is not None else None,
+            **stops_kw,
         )
 
     # ---------- replis VC+E (nécessitent l'enveloppe d'endurance) ----------
@@ -549,6 +808,7 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
             regime=REGIME_INSUFFICIENT, genuine=genuine, sigma_kmh=float("inf"), notes=notes,
             n_eff=n_eff, recency_halflife_days=c.recency_halflife_days,
             maximality_mode=c.maximality_mode, maximality_weights=max_w_tuple, link=c.link,
+            weights=w_tuple if n else None, **stops_kw,
         )
 
     penalty = c.default_dplus_penalty_kmh_per_dpkm
@@ -597,6 +857,8 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
             maximality_mode=c.maximality_mode,
             maximality_weights=max_w_tuple,
             link=c.link,
+            weights=w_tuple,
+            **stops_kw,
         )
 
     # ---------- régime VC+E seul (0 ultra) ----------
@@ -618,6 +880,8 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
         maximality_mode=c.maximality_mode,
         maximality_weights=max_w_tuple,
         link=c.link,
+        weights=w_tuple if n else None,
+        **stops_kw,
     )
 
 
@@ -628,6 +892,8 @@ __all__ = [
     "maximality_weights",
     "recency_weights",
     "build_calibration",
+    "night_deviations",
+    "stops_statistics",
     "REGIME_REGRESSION",
     "REGIME_BLEND",
     "REGIME_VC_E",

@@ -20,7 +20,8 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from ._stats import student_t_quantile, weighted_median
-from .calibration import REGIME_REGRESSION, UltraCalibration, _regression_beta
+from .calibration import (REGIME_REGRESSION, UltraCalibration, _regression_beta,
+                          night_deviations, stops_statistics)
 from .config import Config
 from .twin.model import Twin
 
@@ -95,6 +96,16 @@ class Prediction:
     # facteur d'échelle studentisé servi (A3) : κ et degrés de liberté, None sinon
     scale_kappa: float | None = None
     scale_dof: float | None = None
+    # --- Phase 2 : temps réel = mouvement + arrêts, nuit, environnement ----------------------
+    # ``finish_hours`` est le temps ÉCOULÉ ; en modèle ``carved`` mouvement = écoulé.
+    moving_hours: float | None = None
+    stops_hours: float | None = None
+    stops_model: str = "carved"            # carved | personal | spec — ce que le plan doit répartir
+    stops_rate: float | None = None        # taux d'arrêt appliqué à la cible (h par h de mouvement)
+    night_share_target: float | None = None   # part de nuit de la cible sur le temps prédit
+    night_dev: float | None = None            # écart à la part de nuit moyenne des ultras
+    env_factor: float | None = None           # facteur de vitesse d'environnement servi (1 = rien)
+    env_detail: dict | None = None
 
     def to_dict(self) -> dict:
         def _r(v, n=4):
@@ -117,6 +128,14 @@ class Prediction:
             "leverage": _r(self.leverage, 3),
             "scale_kappa": _r(self.scale_kappa, 3),
             "scale_dof": _r(self.scale_dof, 2),
+            "moving_hours": _r(self.moving_hours, 3),
+            "stops_hours": _r(self.stops_hours, 3),
+            "stops_model": self.stops_model,
+            "stops_rate": _r(self.stops_rate, 4),
+            "night_share_target": _r(self.night_share_target, 4),
+            "night_dev": _r(self.night_dev, 4),
+            "env_factor": _r(self.env_factor, 4),
+            "env_detail": self.env_detail,
             "cross_validation": None if self.cross_validation is None else self.cross_validation.to_dict(),
         }
 
@@ -141,21 +160,35 @@ def _solve_fixed_point(deq_km: float, dpk: float, vfunc, cfg: Config) -> float |
 _LOG_DENOM_FLOOR = 0.05   # 1 + b sous ce seuil : pente en durée absurde, point fixe non défini
 
 
-def _fixed_point_log(deq_km: float, dpk: float, beta) -> float | None:
-    """Point fixe ANALYTIQUE du lien log : ln T = ln Deq − a − b·ln T − c·D+/km ⇒
-    T = exp((ln Deq − a − c·D+/km)/(1 + b)). Aucun plancher de vitesse n'est nécessaire ;
-    ``1 + b ≤ 0`` (allure qui s'effondre avec la durée) n'a pas de solution → None."""
+def _fixed_point_log(deq_km: float, dpk: float, beta, offset: float = 0.0) -> float | None:
+    """Point fixe ANALYTIQUE du lien log : ln T = ln Deq − a − b·ln T − c·D+/km − offset ⇒
+    T = exp((ln Deq − a − c·D+/km − offset)/(1 + b)). ``offset`` porte les termes qui
+    s'ajoutent à l'intercept (nuit d·écart, environnement ln f). Aucun plancher de vitesse
+    n'est nécessaire ; ``1 + b ≤ 0`` (allure qui s'effondre avec la durée) n'a pas de
+    solution → None."""
     a, b, c = float(beta[0]), float(beta[1]), float(beta[2])
     denom = 1.0 + b
     if denom <= _LOG_DENOM_FLOOR:
         return None
-    return float(np.exp((np.log(deq_km) - a - c * dpk) / denom))
+    return float(np.exp((np.log(deq_km) - a - c * dpk - offset) / denom))
+
+
+def _night_grid(night_fn, t_center: float) -> tuple[np.ndarray, np.ndarray] | None:
+    """Part de nuit de la cible tabulée sur une grille de temps écoulés autour du central
+    (0,3 T à 3 T) : le Monte-Carlo l'interpole pour chaque tirage au lieu d'intégrer le
+    calendrier solaire 5 000 fois."""
+    if night_fn is None:
+        return None
+    grid = np.linspace(max(0.3 * t_center, 0.5), 3.0 * t_center, 48)
+    return grid, np.array([night_fn(float(t)) for t in grid])
 
 
 def _mc_predictive(
-    deq_km: float, dpk: float, calibration: UltraCalibration, cfg: Config, rng
+    deq_km: float, dpk: float, calibration: UltraCalibration, cfg: Config, rng,
+    *, night_dev0: float = 0.0, night_grid=None, env_log: float = 0.0,
 ) -> np.ndarray:
-    """Tirages de la LOI PRÉDICTIVE complète (mode ``mc_mode=predictive``, revue C3).
+    """Tirages de la LOI PRÉDICTIVE complète du temps de MOUVEMENT (mode
+    ``mc_mode=predictive``, revue C3).
 
     Deux termes d'incertitude que le mode historique ``sigma_only`` ignore :
       1. **paramètres** : β ~ N(β̂, σ²(XᵀWX)⁻¹) — le levier x₀ᵀ(XᵀWX)⁻¹x₀ élargit
@@ -165,21 +198,50 @@ def _mc_predictive(
          — un tirage lent allonge T donc abaisse encore v(T) (queue droite plus lourde).
 
     Lien log (A2) : le point fixe de chaque tirage est analytique, pas de plancher —
-    ``ln T = (ln Deq − a − c·D+/km − ε)/(1 + b)``.
+    ``ln T = (ln Deq − a − c·D+/km − d·écart − ln f − ε)/(1 + b)``. Le terme de nuit (C2)
+    lit l'écart de part de nuit de chaque tirage sur ``night_grid`` (part de nuit de la cible
+    en fonction du temps écoulé), re-évalué trois fois ; ``env_log`` = ln du facteur
+    d'environnement (C3). Les arrêts sont ajoutés par l'appelant.
     """
     n = cfg.prediction.mc_n
-    beta_hat = np.asarray(calibration.beta, dtype=float)
+    coef_hat = calibration.coef_vector
     cov = np.asarray(calibration.beta_cov, dtype=float)
-    betas = rng.multivariate_normal(beta_hat, cov, size=n)          # (n, 3)
+    k = cov.shape[0]
+    coefs = rng.multivariate_normal(coef_hat[:k], cov, size=n)          # (n, k)
     eps = rng.normal(0.0, calibration.sigma_link, n)
+    has_night = calibration.has_night_term and k >= 4
+    dev = np.full(n, float(night_dev0))
+    n_bar = calibration.night_share_mean or 0.0
+
+    def _dev_of(t_moving: np.ndarray) -> np.ndarray:
+        if not has_night or night_grid is None:
+            return dev
+        t_el = np.array([calibration.elapsed_from_moving(float(x)) for x in t_moving]) \
+            if calibration.stops_elasticity else t_moving * (1.0 + calibration.stops_rate_at(1.0))
+        return np.interp(t_el, night_grid[0], night_grid[1]) - n_bar
+
     if calibration.link == "log":
-        denom = np.maximum(1.0 + betas[:, 1], _LOG_DENOM_FLOOR)
-        return np.exp((np.log(deq_km) - betas[:, 0] - betas[:, 2] * dpk - eps) / denom)
+        denom = np.maximum(1.0 + coefs[:, 1], _LOG_DENOM_FLOOR)
+        base = np.log(deq_km) - coefs[:, 0] - coefs[:, 2] * dpk - env_log - eps
+        t = np.exp(base / denom)
+        if has_night and night_grid is not None:
+            for _ in range(3):
+                dev = _dev_of(t)
+                t = np.exp((base - coefs[:, 3] * dev) / denom)
+        elif has_night:
+            t = np.exp((base - coefs[:, 3] * dev) / denom)
+        return t
     floor = cfg.prediction.v_floor_kmh
+    env_f = float(np.exp(env_log))
     t = np.full(n, 20.0)
     tn = t
-    for _ in range(500):
-        v = np.maximum(betas[:, 0] + betas[:, 1] * np.log(t) + betas[:, 2] * dpk + eps, floor)
+    for it in range(500):
+        eta = coefs[:, 0] + coefs[:, 1] * np.log(t) + coefs[:, 2] * dpk + eps
+        if has_night:
+            if night_grid is not None and it % 20 == 0:
+                dev = _dev_of(t)
+            eta = eta + coefs[:, 3] * dev
+        v = np.maximum(eta * env_f, floor)
         tn = deq_km / v
         if float(np.max(np.abs(tn - t))) < 1e-5:
             return tn
@@ -194,50 +256,76 @@ def _mc_predictive(
     return t
 
 
-def _sd_log_t(t_h: float, dpk: float, calibration: UltraCalibration) -> float | None:
-    """Écart-type de ln T au point (T, D+/km) en lien log, par delta-méthode sur le point fixe
-    analytique : ln T = (ln Deq − a − c·D+/km)/(1+b) ⇒ ∂lnT/∂(a, b, c) = −(1, ln T, D+/km)/(1+b),
-    plus le résidu ε qui entre comme a. Inclut donc l'incertitude de la pente ET la
-    rétroaction du point fixe, que le lien linéaire ignore."""
+def _x_row(calibration: UltraCalibration, t_h: float, dpk: float, night_dev: float) -> np.ndarray:
+    """Vecteur de prédicteurs de la cible dans l'ordre des colonnes du design servi."""
+    x = [1.0, float(np.log(t_h)), float(dpk)]
+    if calibration.has_night_term:
+        x.append(float(night_dev))
+    return np.asarray(x)
+
+
+def _stops_var_log(calibration: UltraCalibration) -> float:
+    """Variance de ln(1 + r) entre ultras — ce que la dispersion des arrêts ajoute à
+    l'incertitude du temps écoulé ; 0 en modèle ``carved`` ou sans mesure."""
+    if calibration.stops_model == "carved" or not calibration.stops_rate_sd_log:
+        return 0.0
+    return float(calibration.stops_rate_sd_log) ** 2
+
+
+def _sd_log_t(t_h: float, dpk: float, calibration: UltraCalibration,
+              night_dev: float = 0.0) -> float | None:
+    """Écart-type de ln T (mouvement) au point (T, D+/km[, écart de nuit]) en lien log, par
+    delta-méthode sur le point fixe analytique : ln T = (ln Deq − a − c·D+/km − d·écart)/(1+b)
+    ⇒ ∂lnT/∂(a, b, c, d) = −(1, ln T, D+/km, écart)/(1+b), plus le résidu ε qui entre comme a.
+    Inclut donc l'incertitude de la pente ET la rétroaction du point fixe, que le lien
+    linéaire ignore ; la dépendance de l'écart de nuit à T est négligée (second ordre)."""
     if calibration.beta is None or calibration.beta_cov is None or t_h <= 0:
         return None
     b = float(calibration.beta[1])
     denom = 1.0 + b
     if denom <= _LOG_DENOM_FLOOR:
         return None
-    g = -np.array([1.0, np.log(t_h), dpk]) / denom
+    g = -_x_row(calibration, t_h, dpk, night_dev) / denom
     Sb = np.asarray(calibration.beta_cov, dtype=float)
     var = float(g @ Sb @ g) + (calibration.sigma_link / denom) ** 2
     return float(np.sqrt(max(var, 0.0)))
 
 
 def sd_rel_target(
-    t_point: float, v_point: float | None, dpk: float, calibration: UltraCalibration
+    t_point: float, v_point: float | None, dpk: float, calibration: UltraCalibration,
+    night_dev: float = 0.0,
 ) -> float | None:
-    """Écart-type prédictif RELATIF au point cible : levier complet x₀ᵀ(XᵀWX)⁻¹x₀ en
-    régression (β-covariance disponible), repli σ/v pour blend/vc_e — le MÊME normaliseur
-    que la fenêtre empirique groupée du registre (tools/registre). En lien log : écart-type
-    de ln T (delta-méthode, :func:`_sd_log_t`)."""
+    """Écart-type prédictif RELATIF au point cible (temps de mouvement ``t_point``) : levier
+    complet x₀ᵀ(XᵀWX)⁻¹x₀ en régression (β-covariance disponible), repli σ/v pour blend/vc_e
+    — le MÊME normaliseur que la fenêtre empirique groupée du registre (tools/registre). En
+    lien log : écart-type de ln T (delta-méthode, :func:`_sd_log_t`). La dispersion
+    personnelle des arrêts (modèle ``personal``/``spec``) s'ajoute en quadrature."""
     if v_point is None or v_point <= 0:
         return None
     if calibration.beta_cov is not None:
         if calibration.link == "log":
-            return _sd_log_t(t_point, dpk, calibration)
-        x0 = np.array([1.0, np.log(t_point), dpk])
-        Sb = np.asarray(calibration.beta_cov, dtype=float)
-        return float(np.sqrt(max(calibration.sigma_kmh**2 + x0 @ Sb @ x0, 0.0)) / v_point)
-    return float(calibration.sigma_kmh / v_point)
+            base = _sd_log_t(t_point, dpk, calibration, night_dev)
+        else:
+            x0 = _x_row(calibration, t_point, dpk, night_dev)
+            Sb = np.asarray(calibration.beta_cov, dtype=float)
+            base = float(np.sqrt(max(calibration.sigma_kmh**2 + x0 @ Sb @ x0, 0.0)) / v_point)
+    else:
+        base = float(calibration.sigma_kmh / v_point)
+    if base is None:
+        return None
+    return float(np.sqrt(base**2 + _stops_var_log(calibration)))
 
 
 _sd_rel_target = sd_rel_target   # nom historique
 
 
-def leverage_target(t_point: float, dpk: float, calibration: UltraCalibration) -> float | None:
+def leverage_target(t_point: float, dpk: float, calibration: UltraCalibration,
+                    night_dev: float = 0.0) -> float | None:
     """Levier x₀ᵀ(XᵀWX)⁻¹x₀ de la cible dans l'espace des prédicteurs — sans dimension,
     identique dans les deux liens à pseudo-observations égales (A1 le réduit)."""
     if calibration.beta_cov is None or calibration.sigma_link <= 0:
         return None
-    x0 = np.array([1.0, np.log(t_point), dpk])
+    x0 = _x_row(calibration, t_point, dpk, night_dev)
     Sb = np.asarray(calibration.beta_cov, dtype=float)
     return float(x0 @ Sb @ x0 / calibration.sigma_link**2)
 
@@ -249,7 +337,9 @@ def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation
     (dans chaque pli ET dans l'agrégation MAE/RMSE), afin que l'indice de confiance reflète le
     modèle utilisé : sur un athlète non stationnaire, les ultras récents (bien prédits) pèsent
     plus que les anciens. Poids égaux ⇒ moyenne simple (le golden reste identique).
-    Le lien et le prior de durée du modèle servi s'appliquent à chaque pli.
+    Le lien, le prior de durée, le terme de nuit et le modèle d'arrêts du modèle servi
+    s'appliquent à chaque pli : le pli prédit le temps de MOUVEMENT de l'ultra retiré, y
+    ajoute les arrêts au taux personnel des autres ultras, et compare au temps ÉCOULÉ réel.
     """
     if not calibration.supports_cross_validation:
         return None
@@ -263,6 +353,13 @@ def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation
     deq_each = V * H  # distance ajustée (Deq) de chaque course
     w = (np.asarray(calibration.weights, dtype=float)
          if calibration.weights is not None else np.ones(n))
+    night = calibration.has_night_term
+    shares = np.array([np.nan if u.night_share is None else float(u.night_share) for u in g])
+    stops = calibration.stops_model != "carved"
+    # le réel à retrouver : temps écoulé de bout en bout dès qu'un modèle d'arrêts sépare
+    # mouvement et arrêts ; sinon la base de vitesse servie (historique)
+    real = np.array([(u.elapsed_hours if (stops and u.elapsed_hours is not None) else u.hours)
+                     for u in g])
 
     # Un pli est en EXTRAPOLATION si le point retiré est au bord de l'espace des prédicteurs
     # restants — i.e. il atteint le min OU le max de ln T ou de D+/km sur l'ensemble : le reste
@@ -279,16 +376,12 @@ def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation
     # écart-type prédictif RELATIF aux points de plis (β-covariance du modèle SERVI) —
     # nourrit le conforme normalisé (S5) : score = |erreur| / sd_pred du pli
     Sb = np.asarray(calibration.beta_cov, dtype=float) if calibration.beta_cov is not None else None
-    sig = calibration.sigma_link
 
-    def _rel_sd(i: int, tp: float) -> float:
+    def _rel_sd(i: int, tp: float, dev_i: float) -> float:
         if Sb is None or V[i] <= 0:
             return float("nan")
-        if link == "log":
-            sd = _sd_log_t(tp, dpk[i], calibration)
-            return float("nan") if sd is None else sd
-        x = np.array([1.0, lnT[i], dpk[i]])
-        return float(np.sqrt(max(sig**2 + x @ Sb @ x, 0.0)) / V[i])
+        sd = sd_rel_target(tp, V[i], dpk[i], calibration, dev_i)
+        return float("nan") if sd is None else sd
 
     errors: list[float] = []
     log_errors: list[float] = []
@@ -298,22 +391,40 @@ def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation
     extrap: list[bool] = []
     for i in range(n):
         keep = [j for j in range(n) if j != i]
-        # β du pli : MÊME pondération (récence × maximalité), MÊME mode de terrain, MÊME lien
-        # et MÊME prior de durée que le fit servi
+        g_keep = [g[j] for j in keep]
+        # β du pli : MÊME pondération (récence × maximalité), MÊME mode de terrain, MÊME lien,
+        # MÊME prior de durée et MÊME terme de nuit que le fit servi
+        dev_keep, dev_i = None, 0.0
+        if night:
+            dev_keep, mean_keep = night_deviations(g_keep, w[keep])
+            if mean_keep is None:
+                dev_keep = np.zeros(len(keep))
+            elif np.isfinite(shares[i]):
+                dev_i = float(shares[i] - mean_keep)
         beta = _regression_beta(H[keep], Y[keep], dpk[keep], w[keep], cfg, link=link,
-                                duration_prior=calibration.duration_prior)
+                                duration_prior=calibration.duration_prior,
+                                night_dev=dev_keep, night_prior=calibration.night_prior)
+        offset = float(beta[3]) * dev_i if (night and len(beta) > 3) else 0.0
         if link == "log":
-            tp = _fixed_point_log(deq_each[i], dpk[i], beta)
+            tp = _fixed_point_log(deq_each[i], dpk[i], beta, offset)
         else:
-            vfunc = lambda T, d, b=beta: b[0] + b[1] * np.log(T) + b[2] * d
+            vfunc = lambda T, d, b=beta, o=offset: b[0] + b[1] * np.log(T) + b[2] * d + o
             tp = _solve_fixed_point(deq_each[i], dpk[i], vfunc, cfg)
         if tp is None:
             continue
-        errors.append(100.0 * (tp - H[i]) / H[i])
-        log_errors.append(float(np.log(tp / H[i])))
+        # arrêts du pli : taux personnel des AUTRES ultras (jamais celui de la course retirée)
+        tp_el = tp
+        if stops:
+            st = stops_statistics(g_keep, w[keep], cfg)
+            r = float(st["rate"])
+            if calibration.stops_elasticity and st["ref_hours"]:
+                r *= (tp / st["ref_hours"]) ** calibration.stops_elasticity
+            tp_el = tp * (1.0 + max(r, 0.0))
+        errors.append(100.0 * (tp_el - real[i]) / real[i])
+        log_errors.append(float(np.log(tp_el / real[i])))
         w_used.append(float(w[i]))
-        rel_sds.append(_rel_sd(i, tp))
-        points.append((float(H[i]), float(tp)))
+        rel_sds.append(_rel_sd(i, tp, dev_i))
+        points.append((float(real[i]), float(tp_el)))
         extrap.append(_is_extrap(i))
 
     if not errors:
@@ -396,11 +507,9 @@ def _bands(t_point: float, half_lo: float, half_hi: float, link: str) -> tuple[f
 
 def _conformal_interval(
     t_point: float,
-    v_point: float,
-    dpk: float,
+    sd_rel: float | None,
     cv: CrossValidation | None,
     calibration: UltraCalibration,
-    cfg: Config,
     coverage: float,
 ) -> tuple[float, float] | None:
     """Intervalle CONFORME NORMALISÉ (S5, ``interval_source=conformal_normalized``) à la
@@ -413,9 +522,11 @@ def _conformal_interval(
     (normalisation « studentisée », Vovk ; Romano & Candès) — la géométrie du levier est
     conservée (une cible en extrapolation garde un intervalle plus large que les plis
     interpolés), mais l'ÉCHELLE vient des erreurs vraies, pas de la loi supposée.
-    Rend None (⇒ repli MC) sans validation croisée exploitable (< 4 plis normalisables).
+    ``t_point`` est le temps écoulé servi, ``sd_rel`` l'écart-type prédictif relatif de la
+    cible (même normaliseur que les plis). Rend None (⇒ repli MC) sans validation croisée
+    exploitable (< 4 plis normalisables).
     """
-    if cv is None or calibration.beta_cov is None or v_point is None or v_point <= 0:
+    if cv is None or calibration.beta_cov is None or sd_rel is None:
         return None
     folds = _fold_scores(cv, calibration)
     if folds is None:
@@ -423,19 +534,13 @@ def _conformal_interval(
     err, rel, w = folds
     scores = np.abs(err) / rel
     q = _weighted_quantile(scores, w, coverage)
-    # sd prédictif relatif AU POINT CIBLE : même levier que le MC prédictif (β-cov garanti
-    # non nul par le garde du haut de fonction)
-    sd_rel = sd_rel_target(t_point, v_point, dpk, calibration)
-    if sd_rel is None:
-        return None
     half = q * sd_rel
     return _bands(t_point, half, half, calibration.link)
 
 
 def _studentized_interval(
     t_point: float,
-    v_point: float,
-    dpk: float,
+    sd_rel: float | None,
     cv: CrossValidation | None,
     calibration: UltraCalibration,
     cfg: Config,
@@ -458,7 +563,7 @@ def _studentized_interval(
       est SOUS la prédiction ⇒ échelle de la borne basse) — asymétrie apprise, repli sur le
       κ commun quand un côté a moins de 2 plis.
     Demi-largeur = t_ν(½ + couverture/2) · κ · sd_pred(cible), bornes selon le lien."""
-    if cv is None or calibration.beta_cov is None or v_point is None or v_point <= 0:
+    if cv is None or calibration.beta_cov is None or sd_rel is None:
         return None
     folds = _fold_scores(cv, calibration)
     if folds is None:
@@ -467,7 +572,7 @@ def _studentized_interval(
     s = np.abs(err) / rel
     wn = w / float(w.sum())
     n_eff = float(w.sum()) ** 2 / float(np.sum(w**2))
-    p = 2 if cfg.calibration.terrain_term == "none" else 3
+    p = (2 if cfg.calibration.terrain_term == "none" else 3) + (1 if calibration.has_night_term else 0)
     dof = max(n_eff - p, 1.0)
     tq = student_t_quantile(0.5 + coverage / 2.0, dof)
 
@@ -482,9 +587,6 @@ def _studentized_interval(
         kappa = float(np.sqrt(np.sum(wn * s**2)))
     if kappa <= 0:
         return None
-    sd_rel = sd_rel_target(t_point, v_point, dpk, calibration)
-    if sd_rel is None:
-        return None
     kappa_lo = kappa_hi = kappa
     if variant == "studentized_scale_signed":
         # erreur > 0 : prédit trop LENT, le réel est en dessous → borne BASSE
@@ -495,37 +597,149 @@ def _studentized_interval(
     return bands, kappa, dof
 
 
+def night_share_function(race, cfg: Config):
+    """Part de nuit de la cible en fonction de son temps ÉCOULÉ (heures), lue sur le
+    calendrier de la spec (départ local, position, fuseau) par le test jour/nuit du plan ;
+    None sans spec complète. Mémoïsée au centième d'heure."""
+    if race is None or race.start_time is None or race.lat is None or race.lon is None:
+        return None
+    from .pacing.sun import night_share   # import différé : pacing dépend de predict
+
+    start, lat, lon, tz = race.start_time, float(race.lat), float(race.lon), float(race.tz_offset_h)
+    cache: dict[float, float] = {}
+
+    def f(hours: float) -> float:
+        key = round(float(hours), 2)
+        if key not in cache:
+            cache[key] = night_share(start, max(key, 0.0), lat, lon, tz) if key > 0 else 0.0
+        return cache[key]
+
+    return f
+
+
+def environment_factor(course, race, calibration: UltraCalibration, cfg: Config
+                       ) -> tuple[float, dict | None]:
+    """Facteur multiplicatif de vitesse du terme d'environnement (C3, ``environment_term=
+    declared``) et son détail : chaleur DÉCLARÉE au-dessus de la référence, altitude moyenne
+    du parcours au-dessus de l'altitude moyenne pondérée des vrais ultras. (1, None) si le
+    terme est inactif ou sans entrée."""
+    p = cfg.prediction
+    if p.environment_term != "declared":
+        return 1.0, None
+    detail: dict = {"heat_c": None, "heat_cost": 0.0, "alt_course_m": None, "alt_ref_m": None,
+                    "alt_cost": 0.0}
+    heat = getattr(race, "heat_c", None) if race is not None else None
+    if heat is not None:
+        detail["heat_c"] = float(heat)
+        detail["heat_cost"] = float(p.heat_cost_per_c) * max(float(heat) - float(p.heat_ref_c), 0.0)
+    alt_grid = getattr(course, "alt_smooth_m", None)
+    if alt_grid is not None and np.size(alt_grid) and np.isfinite(alt_grid).any():
+        alt_course = float(np.nanmean(alt_grid))
+        detail["alt_course_m"] = alt_course
+        w = (np.asarray(calibration.weights, dtype=float) if calibration.weights is not None
+             else np.ones(len(calibration.genuine)))
+        alts = np.array([np.nan if g.mean_alt_m is None else float(g.mean_alt_m)
+                         for g in calibration.genuine], dtype=float)
+        ok = np.isfinite(alts) & (w > 0)
+        if ok.any():
+            alt_ref = float(np.sum(w[ok] * alts[ok]) / np.sum(w[ok]))
+            detail["alt_ref_m"] = alt_ref
+            detail["alt_cost"] = float(p.altitude_cost_per_km) * max(alt_course - alt_ref, 0.0) / 1000.0
+    factor = max(1.0 - detail["heat_cost"] - detail["alt_cost"], 0.5)
+    detail["factor"] = factor
+    return factor, detail
+
+
 def predict_finish(
     deq_km: float,
     dplus_per_km: float,
     twin: Twin,
     calibration: UltraCalibration,
     cfg: Config,
+    *,
+    night_fn=None,
+    env_factor: float = 1.0,
+    env_detail: dict | None = None,
+    spec_stops_h: float | None = None,
 ) -> Prediction | None:
+    """Prédiction du temps de course : point fixe du temps de MOUVEMENT (nuit et environnement
+    compris), arrêts selon le modèle servi, Monte-Carlo, validation croisée et bandes —
+    tout dans le même lien et avec les mêmes termes que la calibration.
+
+    ``night_fn`` : part de nuit de la cible en fonction du temps écoulé (None = écart nul) ;
+    ``env_factor`` : facteur de vitesse d'environnement (1 = rien) ; ``spec_stops_h`` :
+    arrêts de la politique du plan pour la cible (modèle ``spec``)."""
     if not calibration.can_predict:
         return None
-    if calibration.regime == REGIME_REGRESSION and calibration.link == "log":
-        t_point = _fixed_point_log(deq_km, dplus_per_km, calibration.beta)
-    else:
-        t_point = _solve_fixed_point(deq_km, dplus_per_km, calibration.predict_vga_kmh, cfg)
-    if t_point is None:
-        return None
-    v_point = calibration.predict_vga_kmh(t_point, dplus_per_km)
+    night = calibration.has_night_term and night_fn is not None
+    n_bar = calibration.night_share_mean or 0.0
+    env_log = float(np.log(env_factor)) if env_factor > 0 else 0.0
+    is_reg = calibration.regime == REGIME_REGRESSION
 
-    # --- Monte-Carlo ---
+    def _solve(dev: float) -> float | None:
+        if is_reg and calibration.link == "log":
+            offset = (float(calibration.night_coef) * dev if calibration.has_night_term else 0.0) + env_log
+            return _fixed_point_log(deq_km, dplus_per_km, calibration.beta, offset)
+        vfunc = lambda T, d: (None if (v := calibration.predict_vga_kmh(T, d, dev)) is None
+                              else v * env_factor)
+        return _solve_fixed_point(deq_km, dplus_per_km, vfunc, cfg)
+
+    # point fixe itéré sur l'écart de nuit : la part de nuit dépend du temps écoulé, qui
+    # dépend de la vitesse, qui dépend de la nuit — quelques allers-retours suffisent
+    dev = 0.0
+    t_mov = _solve(dev)
+    if t_mov is None:
+        return None
+    t_el = calibration.elapsed_from_moving(t_mov, spec_stops_h=spec_stops_h)
+    share_target = None
+    if night:
+        for _ in range(8):
+            share_target = float(night_fn(t_el))
+            dev_new = share_target - n_bar
+            if abs(dev_new - dev) < 1e-4:
+                dev = dev_new
+                break
+            dev = dev_new
+            t_new = _solve(dev)
+            if t_new is None:
+                return None
+            t_mov = t_new
+            t_el = calibration.elapsed_from_moving(t_mov, spec_stops_h=spec_stops_h)
+        share_target = float(night_fn(t_el))
+    elif night_fn is not None:
+        share_target = float(night_fn(t_el))
+    v_point = calibration.predict_vga_kmh(t_mov, dplus_per_km, dev)
+    if v_point is not None:
+        v_point *= env_factor
+    rate = calibration.stops_rate_at(t_mov)
+
+    # --- Monte-Carlo (temps de mouvement, puis arrêts) ---
     rng = np.random.default_rng(cfg.prediction.mc_seed)
     if (
         cfg.prediction.mc_mode == "predictive"
-        and calibration.regime == REGIME_REGRESSION
+        and is_reg
         and calibration.beta_cov is not None
     ):
         # loi prédictive complète : β-covariance (levier) + résidu + point fixe par tirage
-        mc = _mc_predictive(deq_km, dplus_per_km, calibration, cfg, rng)
+        grid = _night_grid(night_fn, t_el) if night else None
+        mc_mov = _mc_predictive(deq_km, dplus_per_km, calibration, cfg, rng,
+                                night_dev0=dev, night_grid=grid, env_log=env_log)
     else:
         # chemin historique (ancien défaut sigma_only ; replis blend/vc_e) — inchangé au bit près
         vp = v_point + rng.normal(0.0, calibration.sigma_kmh, cfg.prediction.mc_n)
         vp = np.maximum(vp, cfg.prediction.v_floor_kmh)
-        mc = deq_km / vp
+        mc_mov = deq_km / vp
+    if calibration.stops_model == "carved":
+        mc = mc_mov
+    else:
+        # arrêts par tirage : modèle servi × dispersion personnelle de ln(1 + r)
+        if calibration.stops_model == "spec" and spec_stops_h is not None:
+            mc = mc_mov + float(spec_stops_h)
+        else:
+            rates = np.array([calibration.stops_rate_at(float(x)) for x in mc_mov]) \
+                if calibration.stops_elasticity else np.full(mc_mov.shape, rate)
+            noise = rng.normal(0.0, float(np.sqrt(_stops_var_log(calibration))), mc_mov.shape)
+            mc = mc_mov * (1.0 + rates) * np.exp(noise)
     low = float(np.percentile(mc, cfg.prediction.interval_low_pct))
     high = float(np.percentile(mc, cfg.prediction.interval_high_pct))
 
@@ -535,6 +749,7 @@ def predict_finish(
     # nominales, mais étalonnées sur les erreurs LOO réelles — la LOO est donc calculée AVANT
     # le choix.
     cv = leave_one_out(calibration, cfg)
+    sd_rel = sd_rel_target(t_mov, v_point, dplus_per_km, calibration, dev)
     plan_low = float(np.percentile(mc, cfg.pacing.plan_window_low_pct))
     plan_high = float(np.percentile(mc, cfg.pacing.plan_window_high_pct))
     interval_source = "mc"
@@ -543,8 +758,8 @@ def predict_finish(
     cov_plan = (cfg.pacing.plan_window_high_pct - cfg.pacing.plan_window_low_pct) / 100.0
     src = cfg.prediction.interval_source
     if src == "conformal_normalized":
-        ci = _conformal_interval(t_point, v_point, dplus_per_km, cv, calibration, cfg, cov_safety)
-        pi = _conformal_interval(t_point, v_point, dplus_per_km, cv, calibration, cfg, cov_plan)
+        ci = _conformal_interval(t_el, sd_rel, cv, calibration, cov_safety)
+        pi = _conformal_interval(t_el, sd_rel, cv, calibration, cov_plan)
         if ci is not None and pi is not None:
             plan_low, plan_high = pi
             # garde-fou de COHÉRENCE : sécurité ⊇ fourchette de course (déjà garanti par
@@ -552,10 +767,8 @@ def predict_finish(
             low, high = min(ci[0], pi[0]), max(ci[1], pi[1])
             interval_source = "conformal_normalized"
     elif src in STUDENTIZED_SOURCES:
-        si = _studentized_interval(t_point, v_point, dplus_per_km, cv, calibration, cfg,
-                                   cov_safety, variant=src)
-        pi_s = _studentized_interval(t_point, v_point, dplus_per_km, cv, calibration, cfg,
-                                     cov_plan, variant=src)
+        si = _studentized_interval(t_el, sd_rel, cv, calibration, cfg, cov_safety, variant=src)
+        pi_s = _studentized_interval(t_el, sd_rel, cv, calibration, cfg, cov_plan, variant=src)
         if si is not None and pi_s is not None:
             (lo_c, hi_c), scale_kappa, scale_dof = si
             (plan_low, plan_high), _, _ = pi_s
@@ -566,10 +779,9 @@ def predict_finish(
         # vendables, tous athlètes), à l'échelle du sd prédictif de la cible. Tant que les
         # quantiles ne sont pas renseignés (jauge non atteinte), repli percentiles MC.
         pq50, pq80 = cfg.prediction.pooled_q50, cfg.prediction.pooled_q80
-        sd_rel = sd_rel_target(t_point, v_point, dplus_per_km, calibration)
         if pq50 is not None and pq80 is not None and sd_rel is not None:
-            plan_low, plan_high = _bands(t_point, pq50 * sd_rel, pq50 * sd_rel, calibration.link)
-            lo_c, hi_c = _bands(t_point, pq80 * sd_rel, pq80 * sd_rel, calibration.link)
+            plan_low, plan_high = _bands(t_el, pq50 * sd_rel, pq50 * sd_rel, calibration.link)
+            lo_c, hi_c = _bands(t_el, pq80 * sd_rel, pq80 * sd_rel, calibration.link)
             # emboîtement garanti même si q80 < q50 (mauvaise config) : min/max de blindage
             low, high = min(lo_c, plan_low), max(hi_c, plan_high)
             interval_source = "pooled"
@@ -577,11 +789,11 @@ def predict_finish(
     # % de VC seulement si la VC est plausible (sinon on n'affiche pas un ratio trompeur)
     cs = twin.critical_speed
     vc_fraction = None
-    if cs is not None and cs.plausible and cs.vc_ms:
+    if cs is not None and cs.plausible and cs.vc_ms and v_point is not None:
         vc_fraction = v_point / (cs.vc_ms * 3.6)
 
     return Prediction(
-        finish_hours=float(t_point),
+        finish_hours=float(t_el),
         v_kmh=float(v_point),
         deq_km=float(deq_km),
         dplus_per_km=float(dplus_per_km),
@@ -595,18 +807,40 @@ def predict_finish(
         interval_source=interval_source,
         plan_low_h=plan_low,
         plan_high_h=plan_high,
-        sd_rel=sd_rel_target(t_point, v_point, dplus_per_km, calibration),
-        leverage=(leverage_target(t_point, dplus_per_km, calibration)
-                  if calibration.regime == REGIME_REGRESSION else None),
+        sd_rel=sd_rel,
+        leverage=(leverage_target(t_mov, dplus_per_km, calibration, dev) if is_reg else None),
         scale_kappa=scale_kappa,
         scale_dof=scale_dof,
+        moving_hours=float(t_mov),
+        stops_hours=float(t_el - t_mov),
+        stops_model=calibration.stops_model,
+        stops_rate=(None if calibration.stops_model == "carved" else float(rate)),
+        night_share_target=share_target,
+        night_dev=(float(dev) if night else None),
+        env_factor=(None if env_detail is None else float(env_factor)),
+        env_detail=env_detail,
     )
 
 
-def predict_race(course, twin: Twin, calibration: UltraCalibration, cfg: Config) -> Prediction | None:
-    """Wrapper : prend un :class:`CourseProfile` (utilise Deq et D+/km)."""
-    return predict_finish(course.deq_km, course.dplus_per_km, twin, calibration, cfg)
+def predict_race(course, twin: Twin, calibration: UltraCalibration, cfg: Config,
+                 race=None) -> Prediction | None:
+    """Wrapper : prend un :class:`CourseProfile` (utilise Deq et D+/km) et, s'il est fourni,
+    le :class:`RaceSpec` — calendrier de course pour la nuit (C2), chaleur déclarée et
+    altitude du parcours pour l'environnement (C3), politique d'arrêts pour le modèle
+    ``spec`` (B4). Sans spec : écart de nuit nul, pas de coût, arrêts au taux personnel."""
+    from .course.spec import stops_policy_min
+
+    night_fn = night_share_function(race, cfg) if calibration.has_night_term else None
+    env_f, env_detail = environment_factor(course, race, calibration, cfg)
+    spec_stops_h = None
+    if calibration.stops_model == "spec":
+        major = race.major_base_indices if race is not None else ()
+        spec_stops_h = float(stops_policy_min(len(course.segments), major, cfg).sum() / 60.0)
+    return predict_finish(course.deq_km, course.dplus_per_km, twin, calibration, cfg,
+                          night_fn=night_fn, env_factor=env_f, env_detail=env_detail,
+                          spec_stops_h=spec_stops_h)
 
 
 __all__ = ["CrossValidation", "Prediction", "predict_finish", "predict_race", "leave_one_out",
-           "sd_rel_target", "leverage_target", "STUDENTIZED_SOURCES"]
+           "sd_rel_target", "leverage_target", "night_share_function", "environment_factor",
+           "STUDENTIZED_SOURCES"]

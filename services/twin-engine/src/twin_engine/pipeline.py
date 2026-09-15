@@ -22,6 +22,7 @@ from .course import CourseProfile, RaceSpec, build_course
 from .feasibility import TargetAssessment, assess_target
 from .ingest import CanonicalActivity, iter_activities, purge_path
 from .pacing import PacingPlan, build_pacing
+from .pacing.plan import fade_delta_from_splits
 from .predict import Prediction, predict_race
 from .sufficiency import Sufficiency, assess_sufficiency
 from .twin.model import Twin, build_twin
@@ -76,8 +77,13 @@ def analyze_preview(
     analysis_date: date | None = None,
     until: date | None = None,
     target_hours: float | None = None,
+    race: RaceSpec | None = None,
 ) -> PreviewResult:
     """Chaîne numérique complète (sans figures/PDF) → verdict + fourchette.
+
+    ``race`` (Phase 2) : la spec de course nourrit la prédiction elle-même — calendrier pour
+    la nuit, chaleur déclarée, politique d'arrêts — quand les termes correspondants sont
+    activés ; absente, la prédiction est celle de la seule géométrie du parcours.
 
     ``activities`` peut être une liste OU un flux (E1) : la courbe record consomme chaque
     activité une seule fois, les tableaux 1 Hz sont libérés au fil de l'eau — mémoire
@@ -116,6 +122,7 @@ def analyze_preview(
     return analyze_preview_from_twin(
         twin, course, cfg, n_ingested=n_seen, n_skipped=n_skipped,
         n_excluded_until=n_excluded, analysis_date=analysis_date, target_hours=target_hours,
+        race=race,
     )
 
 
@@ -129,6 +136,7 @@ def analyze_preview_from_twin(
     n_excluded_until: int = 0,
     analysis_date: date | None = None,
     target_hours: float | None = None,
+    race: RaceSpec | None = None,
 ) -> PreviewResult:
     """Aval du jumeau : calibration → prédiction → suffisance (+ verdict d'objectif).
 
@@ -137,7 +145,7 @@ def analyze_preview_from_twin(
     coûte rien, c'est le décodage qui coûte. Un seul chemin de calcul pour les deux usages.
     """
     calibration = build_calibration(twin, cfg)
-    prediction = predict_race(course, twin, calibration, cfg)
+    prediction = predict_race(course, twin, calibration, cfg, race)
     sufficiency = assess_sufficiency(
         twin, calibration, prediction, cfg, analysis_date=analysis_date or date.today()
     )
@@ -184,7 +192,7 @@ def run_preview(
     course = build_course(course_gpx, race, cfg)
     try:
         result = analyze_preview(stream, course, cfg, analysis_date=analysis_date, until=until,
-                                 target_hours=race.target_hours)
+                                 target_hours=race.target_hours, race=race)
     finally:
         if purge_source:
             purge_path(training_path)
@@ -234,7 +242,7 @@ def analyze_full(
     """
     preview = analyze_preview(activities, course, cfg, n_skipped=n_skipped,
                               analysis_date=analysis_date, until=until,
-                              target_hours=race.target_hours)
+                              target_hours=race.target_hours, race=race)
     if preview.prediction is None:
         return FullResult(preview=preview, plan=None, pdf_path=None, figures={},  # type: ignore[arg-type]
                           target=preview.target)
@@ -248,6 +256,7 @@ def analyze_full(
     plan = build_pacing(
         course, preview.prediction, race, cfg, durability_pct=preview.twin.durability_pct,
         anchor_hours=race.target_hours if (target is not None and target.plan_ok) else None,
+        splits_delta=fade_delta_from_splits(preview.calibration),
     )
 
     out_dir = Path(out_dir)

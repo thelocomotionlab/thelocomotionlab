@@ -348,7 +348,7 @@ d'arriv\'ee, pas une valeur unique.
   \label{tab:plan}
 \end{table}
 
-Total : mouvement << t_move_h >> + arr\^ets << t_stops_h >> = horloge \textbf{<< t_clock_h >>}.
+Total : mouvement << t_move_h >> + arr\^ets << t_stops_h >> = horloge \textbf{<< t_clock_h >>}.<% if stops_model == 'personal' %> Les arr\^ets sont \emph{les tiens} : << stops_rate_min_per_h >>\,min par heure de mouvement, mesur\'es sur tes ultras et r\'epartis sur les ravitos.<% endif %>
 <% if sun %> Soleil : lever << sun.sunrise >>, coucher << sun.sunset >>.<% endif %>
 
 <% if scenario_mode %>\subsection{Trois sc\'enarios de course}

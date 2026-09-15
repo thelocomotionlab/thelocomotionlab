@@ -330,6 +330,12 @@ def build_report_context(
         "t_move_h": hm(plan.t_move_h),
         "t_stops_h": hm(plan.t_stops_h),
         "t_clock_h": hm(plan.t_clock_h),
+        # Phase 2 : ce qui a servi — source du fade et modèle d'arrêts (le gabarit change de
+        # mots quand les arrêts sont ceux de l'athlète et non la politique du plan)
+        "fade_source_used": getattr(plan, "fade_source_used", "config"),
+        "stops_model": getattr(plan, "stops_model", "carved"),
+        "stops_rate_min_per_h": (None if getattr(plan, "stops_rate", None) is None
+                                 else fr(plan.stops_rate * 60.0, 0)),
         "arrival_clock": arrival_clock,
         "arrival_window": arrival_window,
         "arrival_safety_window": arrival_safety_window,

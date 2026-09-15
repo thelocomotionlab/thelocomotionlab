@@ -25,6 +25,7 @@ import numpy as np
 from ..config import Config
 from ..ingest.canonical import CanonicalActivity
 from ..minetti import grade_factor
+from .stops import detect_stops as _detect_stops
 from .stops import moving_mask as _moving_mask
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,12 @@ class ActivitySummary:
     has_altitude: bool | None = None     # None = inconnu (vieux agrégats sérialisés sans ce champ)
     start_time: str | None = None        # départ ISO 8601 (UTC) ; clé du dédoublonnage — None sur
     #                                      les vieux agrégats (alors jamais fusionnés)
+    # --- mesures du chantier v2 (Phase 2), None quand non mesurables ---------------------
+    stops_s: float | None = None         # secondes dans les plateaux de distance ≥ twin.stop_min_s
+    n_stops: int | None = None
+    night_share: float | None = None     # part de nuit (0–1) de l'écoulé (efforts longs, position connue)
+    half_split_ratio: float | None = None  # vga hors plateaux : seconde moitié de Deq ÷ première
+    mean_alt_m: float | None = None      # altitude moyenne du canal altitude (efforts longs)
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -291,6 +298,20 @@ def process_activity(act: CanonicalActivity, cfg: Config):
     # mouvement et émoussait le mode ``speed_basis=moving`` (H2, revue C2).
     moving_time_s = float(np.count_nonzero(moving_mask)) if dd_raw.size else None
 
+    # arrêts francs = plateaux de distance ≥ stop_min_s (Phase 2, B4) : la base « plateaux »
+    # de la calibration retire ces secondes-là, pas la marche lente sous le seuil de vitesse
+    stops = _detect_stops(moving_mask, cfg.twin.stop_min_s) if dd_raw.size else []
+    stops_s = float(sum(st.duration_s for st in stops)) if dd_raw.size else None
+    n_stops = len(stops) if dd_raw.size else None
+
+    # mesures réservées aux efforts longs : nuit (C2), moitiés (fade), altitude moyenne (C3)
+    night_share = half_split = mean_alt = None
+    if dur >= cfg.twin.long_effort_min_hours * 3600:
+        night_share = _night_share_of(act)
+        half_split = _half_split_ratio(dga, stops, n)
+        if act.has_altitude and not alt_unusable and np.isfinite(act.alt_m).any():
+            mean_alt = float(np.nanmean(act.alt_m))
+
     summary = ActivitySummary(
         date=act.start_time.date().isoformat() if act.start_time else None,
         sport=act.sport,
@@ -305,8 +326,55 @@ def process_activity(act: CanonicalActivity, cfg: Config):
         moving_time_s=moving_time_s,
         has_altitude=act.has_altitude and not slope_unusable,
         start_time=act.start_time.isoformat() if act.start_time else None,
+        stops_s=stops_s,
+        n_stops=n_stops,
+        night_share=None if night_share is None else round(night_share, 4),
+        half_split_ratio=None if half_split is None else round(half_split, 4),
+        mean_alt_m=None if mean_alt is None else round(mean_alt),
     )
     return summary, vga, vraw
+
+
+def _night_share_of(act: CanonicalActivity) -> float | None:
+    """Part de nuit de l'écoulé, par le test jour/nuit du plan (``pacing/sun``) au fuseau
+    solaire de la longitude — la même mesure que la radiographie des ultras. None sans
+    position ni heure de départ."""
+    if act.start_time is None:
+        return None
+    finite = np.isfinite(act.lat) & np.isfinite(act.lon)
+    if not finite.any():
+        return None
+    from datetime import timedelta, timezone
+
+    from ..pacing.sun import night_share   # import différé : pacing dépend de twin
+
+    la, lo = float(np.median(act.lat[finite])), float(np.median(act.lon[finite]))
+    tz = float(round(lo / 15.0))
+    start_local = act.start_time.astimezone(timezone(timedelta(hours=tz)))
+    return night_share(start_local, act.duration_s / 3600.0, la, lo, tz)
+
+
+def _half_split_ratio(dga: np.ndarray, stops, n: int) -> float | None:
+    """Rapport des moitiés : vitesse ajustée HORS PLATEAUX de la seconde moitié de la distance
+    ajustée ÷ celle de la première. < 1 = l'athlète ralentit (fade réel) ; None si une moitié
+    n'a pas de temps actif ou si la distance est nulle."""
+    total = float(dga[-1]) if n else 0.0
+    if total <= 0:
+        return None
+    active = np.ones(n, dtype=bool)
+    active[0] = False
+    for st in stops:
+        active[st.start_s:st.end_s] = False
+    i_half = int(np.searchsorted(dga, total / 2.0))
+    sec1 = int(np.count_nonzero(active[: i_half + 1]))
+    sec2 = int(np.count_nonzero(active[i_half + 1:]))
+    if sec1 <= 0 or sec2 <= 0:
+        return None
+    d1 = float(dga[i_half])
+    d2 = total - d1
+    if d1 <= 0 or d2 <= 0:
+        return None
+    return (d2 / sec2) / (d1 / sec1)
 
 
 def _windowed_speed_reject(vraw: np.ndarray, durs: np.ndarray, cfg: Config) -> bool:
