@@ -181,6 +181,14 @@ erreurs de validation croisée de l'athlète) et le rapport affiche **deux bande
 Si la dispersion est grande (> 0,35), le rapport ajoute une table de scénarios
 rapide / central / prudent. Ne jamais présenter la borne de sécurité comme un objectif.
 
+Deux variantes en cours de preuve (chantier v2, Phase 1, DIAGNOSTIC §10.1–10.3), à activer
+par `--set` ou `TWIN_CONFIG_PATH`, jamais servies par défaut tant que le banc n'a pas
+tranché : en lien log (`calibration.link=log`) les deux bandes gardent leurs couvertures
+nominales mais deviennent **asymétriques en heures**, la borne haute plus loin du central que
+la borne basse ; avec `prediction.interval_source=studentized_scale`, leurs largeurs viennent
+d'un facteur d'échelle sur les erreurs de validation croisée lu sur une loi de Student, au
+lieu du quantile empirique — même vocabulaire, mêmes usages.
+
 ### Mode objectif ([ADR 0002](./adr/0002-mode-objectif-plan-sur-cible.md))
 
 À la demande de la cohorte (« je vise 31 h, donne-moi le plan »), le moteur sait ancrer le plan sur
@@ -255,6 +263,10 @@ PYTHONPATH=src python -m tools.passages <manifestes…>   # heures de passage R�
                                                     #   courses passées → champ `passages` du registre
 PYTHONPATH=src python -m tools.banc <manifestes…> --out <dossier>   # les trois précédents + backtest en UNE passe
                                                     #   par archive, sorties markdown/JSON dans le dossier
+PYTHONPATH=src python -m tools.banc <manifestes…> --out <dossier> --variant NOM:bloc.clé=valeur,…
+                                                    #   + rejeu de toutes les coupures sous une config
+                                                    #   surchargée (A/B), sur le même décodage
+twin-engine preview … --set bloc.clé=valeur         # même surcharge pour un cas isolé (répétable)
 ```
 
 > **Avant / après (chantier v2).** Le registre committé au départ du chantier est figé dans
@@ -286,7 +298,38 @@ Les sorties de `/tmp/p0/` sont du markdown à coller dans le carnet (DIAGNOSTIC 
 seuls le registre et les manifestes (agrégats, chemins) se committent. L'instantané
 `docs/archive/twin-v2/registre-avant.json` est le banc rejoué SOUS DÉDOUBLONNAGE ; le banc
 brut du départ du chantier, où Lolo était doublé, est conservé sous
-`registre-avant-doublons.json`. `tools/backtest`,
+`registre-avant-doublons.json`.
+
+**Banc de la Phase 1 (leviers de l'intervalle), une relance pour toutes les variantes** —
+les variantes ne touchent que la calibration et la prédiction, donc un seul décodage :
+
+```bash
+M="_seed/manifest-val.json _seed/manifest-crasse.json _seed/manifest-lolo.json _seed/manifest-rapace.json"
+PYTHONPATH=src python -m tools.banc $M --out /tmp/p1 --no-diag --no-passages \
+  --variant A2:calibration.link=log \
+  --variant A1:calibration.duration_term=prior_shrunk \
+  --variant A2A1:calibration.link=log,calibration.duration_term=prior_shrunk \
+  --variant A2A1l5:calibration.link=log,calibration.duration_term=prior_shrunk,calibration.duration_shrink_lambda=5 \
+  --variant A2A1l10:calibration.link=log,calibration.duration_term=prior_shrunk,calibration.duration_shrink_lambda=10 \
+  --variant A3:prediction.interval_source=studentized_scale \
+  --variant A2A3:calibration.link=log,prediction.interval_source=studentized_scale \
+  --variant A2A1A3:calibration.link=log,calibration.duration_term=prior_shrunk,prediction.interval_source=studentized_scale \
+  --variant A2A1A3mad:calibration.link=log,calibration.duration_term=prior_shrunk,prediction.interval_source=studentized_scale_mad \
+  --variant A2A1A3signed:calibration.link=log,calibration.duration_term=prior_shrunk,prediction.interval_source=studentized_scale_signed
+# cas de référence sous les variantes candidates (une passe d'archive chacune)
+NICE_GPX=_seed/cas_validation/Val/courses/nice-100m-2026.gpx
+twin-engine preview --training _seed/cas_validation/Val/archives --course "$NICE_GPX" --race examples/nice-100m.json \
+  --set calibration.link=log > local-data/nice-A2.json
+twin-engine preview --training _seed/cas_validation/Val/archives --course "$NICE_GPX" --race examples/nice-100m.json \
+  --set calibration.link=log --set calibration.duration_term=prior_shrunk > local-data/nice-A2A1.json
+twin-engine preview --training _seed/cas_validation/Val/archives --course "$NICE_GPX" --race examples/nice-100m.json \
+  --set calibration.link=log --set calibration.duration_term=prior_shrunk \
+  --set prediction.interval_source=studentized_scale > local-data/nice-A2A1A3.json
+```
+
+`compare-<nom>.md` compare chaque variante au banc servi DU MÊME passage (agrégats décodés
+identiques) ; `tableau-<nom>.md` donne ses colonnes de référence. Rien de tout cela n'entre
+dans le registre committé. `tools/backtest`,
 `tools/diag_ultras` et `tools/passages` restent utilisables séparément ; `tools/banc` donne
 exactement les mêmes résultats (test `test_banc_one_pass_matches_the_separate_tools`).
 

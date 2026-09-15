@@ -1114,3 +1114,115 @@ outils séparés, vérifié par test) — le premier essai chez Valentin avait b
 décodages par archive et sur un manifeste (Val) pointant vers un nom d'archive périmé :
 les manifestes pointent désormais tous sur le dossier `archives/` de l'athlète, et une
 archive introuvable est signalée puis sautée au lieu d'arrêter le banc.
+
+### 10.1 A2 — Lien log : l'erreur d'ultra est multiplicative (flag `calibration.link`, défaut `linear`)
+
+**Constat.** La régression servie est linéaire en vitesse, v = β0 + β1·ln T + β2·D+/km,
+σ en km/h, bandes symétriques en heures autour du central. Or l'erreur d'un ultra est
+multiplicative et asymétrique — un jour lent coûte des heures, un jour rapide en rend peu —
+et le point fixe amplifie les tirages lents (§9.1). Symptômes au banc (§10.0) : Lolo/MIUT,
+borne basse de sécurité à **0,0 h** (q·sd_rel ≥ 1 en linéaire) ; les bornes hautes des replis
+MC collées au plafond Deq/v_floor.
+
+**Correctif (flag).** `calibration.link=log` : ln v = a + b·ln T + c·D+/km (forme de
+Riegel), mêmes poids récence × maximalité, même ridge terrain avec un prior devenu relatif
+(`default_dplus_penalty_log_per_dpkm` = −0,0170 ÷ 6,40 = −0,0027 par m/km, twin-theory §12),
+plancher de σ relatif (`regression_min_sigma_log` = 0,03 ≈ 0,20 ÷ 6,5). Le point fixe est
+ANALYTIQUE : T = exp((ln Deq − a − c·D+/km)/(1 + b)) — plus de plancher de vitesse, plus de
+tirages non convergés. Monte-Carlo, LOO, β-covariance et scores conformes sont exprimés dans
+ce lien ; l'écart-type prédictif de la cible est celui de ln T par delta-méthode, qui inclut
+l'incertitude de la pente ET la rétroaction du point fixe (le lien linéaire les ignore). Les
+bandes en heures deviennent T·exp(±h) : la borne basse ne peut plus être négative, et la
+borne haute est plus loin du central que la borne basse. `sigma_kmh` reste servi pour
+l'affichage (σ relatif × vga moyenne pondérée). Régimes blend/vc_e inchangés (ils ne passent
+pas par la régression).
+
+**Ce qui est vérifié par test** (`tests/test_phase1_interval.py`) : un athlète de Riegel exact
+est retrouvé au millionième ; point fixe analytique = itératif ; bandes multiplicativement
+symétriques et positives ; même récence dans le fit, la LOO et les bandes ; défauts intacts
+(golden, tableau §4).
+
+**Preuve au banc — À COLLER.** `tools/banc … --variant A2:calibration.link=log` (même
+décodage, calibration/prédiction rejouées) : MAE et biais des cas vendus, couvertures 50/80,
+Winkler relatif, largeur relative médiane, par athlète, contre le tableau §10.0 ; recapture
+du cas Nice sous `--set calibration.link=log`.
+
+| variante | vendus n | MAE % | biais % | couv 50 | couv 80 | Winkler rel 50 / 80 | largeur rel méd 50 / 80 |
+|---|---|---|---|---|---|---|---|
+| avant (linéaire, conforme) | 13 | 10,3 | +2,7 | 38 % | 54 % | 0,342 / 0,570 | 8,1 % / 15,5 % |
+| A2 | | | | | | | |
+
+**Décision.** En attente du banc.
+
+### 10.2 A1 — Prior sur la pente en durée, alimenté par le jumeau (flag `calibration.duration_term`, défaut `free`)
+
+**Constat.** La pente en durée b est identifiée par 3 à 12 vrais ultras dont un ou deux
+longs : sur le cas de référence le levier de la cible (32 h contre 10–22 h validés) vaut
+x₀ᵀ(XᵀWX)⁻¹x₀ ≈ 2 contre ≈ 0,25 pour les plis (sd_rel(cible) ≈ 1,6 × sd_rel(plis)). L'exposant
+d'endurance E, mesuré sur des dizaines de points de la courbe record (30 min–6 h), ne sert
+aujourd'hui la prédiction qu'en régime blend/vc_e.
+
+**Correctif (flag).** `duration_term=prior_shrunk` : pseudo-observation ridge de b vers −α
+(Riegel, `Twin.alpha` ; repli `duration_prior_alpha_population` = 0,16 quand α manque —
+médiane des α du banc : Val 0,143 et 0,196 selon l'archive, Crasse 0,179), poids
+`duration_shrink_lambda` (2 par défaut quand activé). En lien linéaire le prior vaut −α·v̄.
+Même mécanique que `terrain_term` : la pseudo-observation entre dans XᵀWX du fit, de la
+covariance ET de chaque pli LOO (cohérence fit/LOO/MC/conforme). `Prediction.leverage` expose
+le levier de la cible dans le JSON et le registre.
+
+**Réserve à mesurer, pas à supposer.** L'α de la courbe record (efforts ≤ 6 h, pas tous
+maximaux) est plus fort que la pente observée sur les vrais ultras : sur la recapture de Nice,
+b_log ≈ −0,379/6,5 ≈ −0,06 contre −α = −0,143. Le prior tire donc vers des prédictions PLUS
+LENTES à 32 h. Il peut aggraver le biais de progression (§10.0, lecture 3) : c'est le banc qui
+dit si l'information réduit l'erreur ou ajoute un biais — λ balayé sur 1, 2, 5, 10.
+
+**Preuve au banc — À COLLER.** Variantes `A1` (linéaire), `A2A1`, `A2A1l5`, `A2A1l10` ; levier
+de la cible Nice avant/après (attendu ≈ 1,6 → 1,2 en sd_rel relatif) ; MAE vendue, Winkler.
+
+| variante | levier cible Nice | sd_rel cible | vendus MAE % | biais % | couv 50 / 80 | Winkler rel 50 / 80 |
+|---|---|---|---|---|---|---|
+| avant | | | 10,3 | +2,7 | 38 / 54 % | 0,342 / 0,570 |
+| A1 (linéaire, λ=2) | | | | | | |
+| A2A1 (λ=2) | | | | | | |
+| A2A1 (λ=5) | | | | | | |
+| A2A1 (λ=10) | | | | | | |
+
+**Décision.** En attente du banc.
+
+### 10.3 A3 — Facteur d'échelle studentisé à la place du quantile empirique (`prediction.interval_source=studentized_scale`)
+
+**Constat.** Le conforme normalisé lit un quantile EMPIRIQUE sur n = 12 scores (correction
+n+1) : le 80 % est le 11ᵉ score sur 12, la récence réduit encore le n effectif, un seul
+mauvais pli fixe la borne. Dégénérescences au registre : largeur nulle (Lolo/Nice 50k :
+[10,6 – 10,6]), bornes au plafond, sécurité ±38 % pour une fourchette ±7,5 % (Val/Lavaredo).
+
+**Correctif (flag).** `studentized_scale` : mêmes scores studentisés |erreur|/sd_pred (mêmes
+poids récence × maximalité auto-normalisés), mais un FACTEUR D'ÉCHELLE κ = RMS pondéré des
+scores, et les quantiles 50/80 lus sur une loi de Student à ν = n_eff − p degrés de liberté
+(p = 3 coefficients ; `_stats.py`, Student sans scipy, vérifié contre les tables). Demi-largeur
+= t_ν(½ + couverture/2) · κ · sd_pred(cible), bornes selon le lien. Emboîtement 50 ⊂ 80
+garanti (même κ, t croissant), repli MC sous 4 plis comme le conforme. **Choix du RMS** : à
+n = 12, c'est l'estimateur naturel de l'échelle d'une Student et il utilise chaque pli ; le
+MAD (`studentized_scale_mad`, κ = 1,4826 × médiane pondérée) est plus robuste à un pli
+aberrant mais plus bruyant — mesuré, pas adopté. `studentized_scale_signed` (κ par signe :
+prédit trop lent ⇒ le réel est sous la prédiction ⇒ échelle de la borne basse) mesure
+l'asymétrie apprise — probablement trop bruyante à n = 12, à noter. κ et ν sont exposés
+(`Prediction.scale_kappa`, `scale_dof`).
+
+**Preuve au banc — À COLLER.** Variantes `A3` (linéaire), `A2A3`, `A2A1A3`, `A2A1A3mad`,
+`A2A1A3signed` : fin des bandes dégénérées (largeur nulle, bornes au plafond, borne basse
+nulle), couverture et Winkler par athlète contre le conforme.
+
+| variante | vendus MAE % | couv 50 / 80 | Winkler rel 50 / 80 | largeur rel méd 50 / 80 | bandes dégénérées |
+|---|---|---|---|---|---|
+| avant (conforme) | 10,3 | 38 / 54 % | 0,342 / 0,570 | 8,1 % / 15,5 % | MIUT [0,0 – 51,9], Chianti [– 68,2], Nice 50k [10,6 – 10,6] (brut) |
+| A3 | | | | | |
+| A2A3 | | | | | |
+| A2A1A3 | | | | | |
+| A2A1A3 (MAD) | | | | | |
+| A2A1A3 (signé) | | | | | |
+
+**Décision.** En attente du banc. Règle : couverture jamais réduite pour flatter la largeur ;
+si la jauge (n = 2 cas frais vendus, un seul athlète) ne tranche pas, les leviers sont
+activés pour le rapport de référence via `TWIN_CONFIG_PATH` ou `--set` et consignés
+« activés pour Val, défaut non basculé ».

@@ -170,6 +170,16 @@ moyenne de course** en fonction de la durée et du dénivelé :
 > trop peu de **récents**), on bascule dans le repli « peu d'ultras » à incertitude élargie : la récence
 > ne doit jamais fabriquer une régression sûre d'elle sur une poignée de courses récentes.
 
+> **Lien de la régression (chantier v2, flag `calibration.link`, défaut `linear`).** En lien
+> `log`, la régression porte sur ln v = a + b·ln T + c·(D+/km) (forme de Riegel) : l'erreur
+> d'ultra est multiplicative, σ est relatif, le prior terrain devient relatif, et le point fixe
+> est **analytique**, `T = exp((ln Deq − a − c·D+/km)/(1 + b))` — plus de plancher de vitesse.
+> **Prior sur la pente en durée (`duration_term=prior_shrunk`)** : b est tiré vers −α, l'exposant
+> de la courbe record de l'athlète (repli population), par une pseudo-observation ridge qui entre
+> dans le fit, la covariance et chaque pli LOO — même mécanique que le ridge terrain. Les deux sont
+> des leviers mesurés au banc (DIAGNOSTIC §10.1–10.2), défauts inchangés tant que la preuve n'est
+> pas faite.
+>
 > **Point de généralisation crucial.** Cette régression suppose **plusieurs** vrais ultras. La plupart
 > des athlètes n'en auront pas 8. Le moteur doit donc **dégrader proprement** :
 > - **≥ ~3 vrais ultras** → régression personnelle (comme le cas de référence) ;
@@ -207,6 +217,13 @@ le **point fixe** :
 > La **couverture réelle** de ces bandes est suivie sur les courses courues
 > (`docs/twin-registre-couverture.md`) — c'est le registre, pas une impression, qui décidera
 > des recalibrages futurs.
+>
+> **Facteur d'échelle studentisé (chantier v2, `interval_source=studentized_scale`, non
+> basculé).** Le quantile empirique de n ≈ 12 scores est instable (le 80 % est le 11ᵉ score
+> sur 12, un pli fixe la borne, bandes de largeur nulle ou au plafond au registre). L'option
+> estime une échelle κ (RMS pondéré des scores studentisés) et lit les quantiles 50/80 sur une
+> Student à n_eff − p degrés de liberté, mise à l'échelle du sd prédictif de la cible. En lien
+> log les bandes en heures sont asymétriques, `T·exp(±h)`. Preuve et décision : DIAGNOSTIC §10.3.
 
 **Cas de référence (recapture 2026-07-02)** : **T = 31,3 h**, vitesse ajustée moyenne
 **6,40 km/h ≈ 60 % de la VC** ; intervalle 80 % **30,0–32,8 h**.
@@ -274,7 +291,7 @@ Tout ce qui a pu ressembler à de l'expertise au cas par cas est en réalité l'
 
 | Type | Exemples | Statut |
 |---|---|---|
-| **Règle fixe** (même code pour tous) | lissage 150 m, écrêtage pente ±0,45, base de pente ±50 m, **base du D+ des activités = distance ~150 m (harmonisée au parcours, C1)**, plafond `f≤3`, plancher de durée VC, conditions des « vrais ultras », Δ du fade, **robustesse record** (altitude requise, plafond VC plausible, support ≥N, rejet fenêtré, dédoublonnage), **demi-vie de récence** | identique pour chaque athlète |
+| **Règle fixe** (même code pour tous) | lissage 150 m, écrêtage pente ±0,45, base de pente ±50 m, **base du D+ des activités = distance ~150 m (harmonisée au parcours, C1)**, plafond `f≤3`, plancher de durée VC, conditions des « vrais ultras », Δ du fade, **robustesse record** (altitude requise, plafond VC plausible, support ≥N, rejet fenêtré, dédoublonnage), **demi-vie de récence**, lien de la régression et source des bandes (flags, DIAGNOSTIC §10) | identique pour chaque athlète |
 | **Ajusté à partir des données** | VC, D′, exposant E, durabilité, coefficients β de la régression **pondérée par récence**, prédiction, plan (**Δ du fade si `fade_source=durability`**) | **calculé** par athlète → individualisation automatique |
 | **Garde-fou d'honnêteté** | invalidité < 30 min, descentes techniques = plafonds, forme du jour inconnue, D′ peu fiable, marche au-delà de ±25 %, **VC non plausible → pas de « % de VC »**, **plancher N_eff** (pas de régression sûre d'elle sur trop peu d'ultras récents) | cadrage fixe + **test de suffisance** |
 

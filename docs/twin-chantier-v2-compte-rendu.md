@@ -99,6 +99,24 @@ sur les cas vendus (la règle « jamais réduire la couverture nominale » est c
 deux bandes dégénérées à corriger (borne basse 0,0 h, borne haute au plafond), et un biais
 de progression chez un second athlète (Val 2024 : +21 à +24 %).
 
+## Phase 1 — la statistique de l'intervalle (branche `twin-v2/phase-1-intervalle`)
+
+**Livré, défauts inchangés (golden intact, tableau §4 intact).**
+- A2 `calibration.link=log` : régression sur ln v, point fixe analytique, MC sans plancher,
+  LOO/β-covariance/scores dans le lien, écart-type de ln T par delta-méthode (pente et
+  rétroaction du point fixe comprises), bandes asymétriques `T·exp(±h)`.
+- A1 `calibration.duration_term=prior_shrunk` (+ `duration_shrink_lambda`,
+  `duration_prior_source`, `duration_prior_alpha_population`) : ridge de b vers −α dans le
+  fit, la covariance et chaque pli ; `Prediction.leverage` et `sd_rel` exposés.
+- A3 `prediction.interval_source=studentized_scale` (+ `_mad`, `_signed`) : κ = RMS pondéré
+  des scores studentisés, quantiles de Student à n_eff − p ; `_stats.py` sans scipy.
+- Outillage : `override_config`, `twin-engine --set`, `tools/banc --variant` (plusieurs
+  configs sur un décodage) ; `tools/backtest` lit `sd_rel`/`leverage` du moteur.
+- Tests : `tests/test_phase1_interval.py` (21), variantes du banc, `--set`.
+
+**En attente (banc chez Valentin, feuille du manuel §8)** : dix variantes, trois recaptures
+de Nice ; tableaux à coller en DIAGNOSTIC §10.1–10.3, décision par levier.
+
 ## Choix faits à la place de Valentin (Phase 0)
 
 1. **Définition d'un arrêt.** Deux vues, toutes deux imprimées : les secondes « sans
@@ -137,6 +155,20 @@ de progression chez un second athlète (Val 2024 : +21 à +24 %).
     découplage > première copie. Sans heure de départ, rien n'est fusionné.
 11. **Activité du jour de course** : durée exigée entre 0,5 et 1,5 × l'officiel (Chota 2025
     avait retenu une sortie d'une heure).
+
+## Choix faits à la place de Valentin (Phase 1)
+
+12. **Prior terrain en lien log** : −0,0170 ÷ 6,40 = −0,0027 par m/km, dérivé du cas de
+    référence de juillet comme le prior linéaire ; plancher de σ relatif 0,03.
+13. **Écart-type de la cible en lien log par delta-méthode**, pente et rétroaction du point fixe
+    comprises ; en lien linéaire la définition historique (sd de v ÷ v) est conservée pour ne
+    pas bouger les bandes servies.
+14. **Prior de durée** : α du jumeau d'abord, population 0,16 en repli (médiane des α du banc),
+    λ = 2 quand activé, balayé 1/2/5/10 au banc ; en lien linéaire le prior vaut −α·v̄.
+15. **Échelle studentisée** : RMS pondéré plutôt que MAD (mesuré à part), ν = n_eff − p avec
+    p = 3, loi de Student implémentée sans scipy (bêta incomplète, dichotomie).
+16. **Trois leviers en un commit moteur** plutôt que trois commits : ils partagent
+    `predict.py`, réécrit une fois ; chaque levier a son flag et ses tests.
 
 ## Questions ouvertes
 
