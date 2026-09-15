@@ -64,6 +64,21 @@ class CourseProfile:
     # majoration de technicité RÉELLEMENT servie (%) — 0 = aucune. Portée par le profil pour
     # que le rapport ne puisse pas afficher un Deq majoré sans en donner la raison.
     technicity_pct: float = 0.0
+    # position (deg) sur la même grille horizontale : sert à localiser les points de
+    # découpage (passages réels, waypoints GPX) — None sur un profil construit à la main
+    lat_grid: np.ndarray | None = None
+    lon_grid: np.ndarray | None = None
+
+    def checkpoint_coords(self) -> list[tuple[float, float, float]]:
+        """(km officiel, lat, lon) de chaque point de découpage — le MÊME indice de grille
+        que celui qui borne les segments (:func:`_grid_index`)."""
+        if self.lat_grid is None or self.lon_grid is None:
+            raise ValueError("profil sans position sur la grille (lat_grid/lon_grid absents)")
+        out: list[tuple[float, float, float]] = []
+        for km in self.aid_km:
+            i = _grid_index(self.off_km_grid, float(km))
+            out.append((float(km), float(self.lat_grid[i]), float(self.lon_grid[i])))
+        return out
 
     @property
     def dplus_per_km(self) -> float:
@@ -108,6 +123,11 @@ def _parse_course_gpx(data: bytes) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     return np.array(lat), np.array(lon), np.array(ele)
 
 
+def _grid_index(off_km_grid: np.ndarray, off_km: float) -> int:
+    """Indice de grille du km officiel le plus proche (borne de segment, point de découpage)."""
+    return int(np.argmin(np.abs(off_km_grid - off_km)))
+
+
 def _auto_segmentation(total_km: float, step_km: float) -> tuple[np.ndarray, list[str]]:
     """Bornes de segments tous les ``step_km`` de 0 à ``total_km`` (dernier = arrivée).
 
@@ -149,6 +169,8 @@ def build_course(gpx_data: bytes, race: RaceSpec, cfg: Config) -> CourseProfile:
     step = cfg.course.grid_step_m
     xg = np.arange(0.0, L, step)
     eg = np.interp(xg, cum, ele)
+    lat_g = np.interp(xg, cum, lat)
+    lon_g = np.interp(xg, cum, lon)
     k = max(1, int(round(cfg.course.smooth_window_m / step)))
     egp = np.pad(eg, k, mode="reflect")
     es = np.convolve(egp, np.ones(k) / k, mode="same")[k:-k]
@@ -174,7 +196,7 @@ def build_course(gpx_data: bytes, race: RaceSpec, cfg: Config) -> CourseProfile:
         aid, names = _auto_segmentation(float(off_km_grid[-1]), cfg.course.default_segment_km)
 
     def grid_idx(off_km: float) -> int:
-        return int(np.argmin(np.abs(off_km_grid - off_km)))
+        return _grid_index(off_km_grid, off_km)
 
     segments: list[Segment] = []
     for s in range(len(aid) - 1):
@@ -218,6 +240,8 @@ def build_course(gpx_data: bytes, race: RaceSpec, cfg: Config) -> CourseProfile:
         dminus_m=float(-deg[deg < 0].sum()),
         deq_km=float(deq_grid[-1] / 1000.0),
         technicity_pct=float(race.technicity_pct),
+        lat_grid=lat_g,
+        lon_grid=lon_g,
     )
 
 

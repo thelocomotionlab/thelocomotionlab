@@ -25,6 +25,7 @@ import numpy as np
 from ..config import Config
 from ..ingest.canonical import CanonicalActivity
 from ..minetti import grade_factor
+from .stops import moving_mask as _moving_mask
 
 logger = logging.getLogger(__name__)
 
@@ -253,7 +254,7 @@ def process_activity(act: CanonicalActivity, cfg: Config):
     # masque « en mouvement » sur les incréments de distance (partagé par moving_time et le
     # découplage en base moving) — le canal vitesse, interpolé à travers les pauses, ment (C2)
     dd_raw = np.diff(act.dist_m)
-    moving_mask = np.concatenate([[False], dd_raw > cfg.twin.moving_speed_threshold_ms])
+    moving_mask = _moving_mask(act.dist_m, cfg.twin.moving_speed_threshold_ms)
 
     # découplage (durabilité) : nécessite la FC ; sinon None → signalé en aval
     decouple = None

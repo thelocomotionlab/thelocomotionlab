@@ -209,3 +209,24 @@ def test_technicity_scales_the_equivalent_distance():
     with pytest.raises(ValueError):
         RaceSpec(name="x", technicity_pct=150.0)
     assert RaceSpec.from_dict({"technicity_pct": 13}).technicity_pct == 13.0
+
+
+def test_course_carries_positions_on_the_grid_and_checkpoint_coords():
+    """Le profil porte lat/lon sur SA grille et localise ses points de découpage avec le
+    même indice que le découpage des segments (passages réels, waypoints)."""
+    from dataclasses import replace
+
+    import pytest
+
+    cfg = load_config()
+    course = build_course(_triangle_gpx(), RaceSpec("T", (0.0, 5.0, 10.0), ("d", "s", "a")), cfg)
+    assert course.lat_grid.shape == course.x_m.shape == course.lon_grid.shape
+    pts = course.checkpoint_coords()
+    assert [p[0] for p in pts] == [0.0, 5.0, 10.0]
+    assert all(abs(p[1] - 43.70) < 1e-6 for p in pts)          # trace plein est : latitude fixe
+    assert pts[0][2] == pytest.approx(7.26, abs=1e-6)
+    assert pts[0][2] < pts[1][2] < pts[2][2]
+    assert pts[1][2] == pytest.approx((pts[0][2] + pts[2][2]) / 2, abs=1e-4)   # sommet à mi-trace
+    assert "lat_grid" not in course.to_dict()                    # sortie JSON inchangée
+    with pytest.raises(ValueError):
+        replace(course, lat_grid=None).checkpoint_coords()

@@ -316,3 +316,23 @@ def test_target_anchor_rejects_nonsense():
     course = build_course(_triangle_gpx(), _race(), CFG)
     with pytest.raises(ValueError):
         build_pacing(course, _prediction(course), _race(), CFG, anchor_hours=0.0)
+
+
+def test_night_share_integrates_the_plans_day_night_test():
+    """La part de nuit intègre le MÊME test jour/nuit que le plan : sur 24 h elle vaut
+    1 − (jour/24) aux minutes près ; en plein jour 0, en pleine nuit 1."""
+    import pytest
+
+    from twin_engine.pacing import night_mask, night_share, sun_times
+
+    lat, lon, tz = 43.703, 7.266, 2.0
+    tzinfo = timezone(timedelta(hours=2))
+    start = datetime(2026, 9, 25, 13, 0, tzinfo=tzinfo)
+    sr, ss = sun_times(2026, 9, 25, lat, lon, tz)
+    assert night_share(start, 24.0, lat, lon, tz) == pytest.approx(1 - (ss - sr) / 60.0 / 24.0, abs=0.01)
+    assert night_share(start, 1.0, lat, lon, tz) == 0.0
+    assert night_share(datetime(2026, 9, 25, 23, 0, tzinfo=tzinfo), 2.0, lat, lon, tz) == 1.0
+    assert night_share(start, 0.0, lat, lon, tz) == 0.0
+    m = night_mask(start, 3600, lat, lon, tz)
+    assert m.shape == (3601,) and not m.any()
+    assert night_mask(start, -5, lat, lon, tz).size == 0
