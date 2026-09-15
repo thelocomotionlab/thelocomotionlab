@@ -1,5 +1,5 @@
 {
-  "_comment": "Instantané AVANT du chantier Twin v2 : copie du registre committé au départ de la Phase 0 (banc du 2026-08-15, config servie, cf. DIAGNOSTIC §5.y et §10.0). Référence de tous les tableaux avant/après (tools/registre --compare). Agrégats uniquement, pas de PII.",
+  "_comment": "Registre de couverture — agrégats uniquement (pas de PII). Alimenté par tools/backtest.py ; analyse par tools/registre.py ; protocole : docs/twin-registre-couverture.md.",
   "entries": [
     {
       "athlete": "Val",
@@ -15,36 +15,111 @@
         "dplus_per_km": 15.2
       },
       "model": {
-        "verdict": "🔴",
-        "blocking": [
-          "Historique",
-          "Fraîcheur des données",
-          "Courses exploitables",
-          "Efforts longs proches de la cible",
-          "Qualité (FC / altitude / distance)"
-        ],
+        "verdict": "🟠",
+        "blocking": [],
         "regime": "vc_e",
         "n_genuine": 0,
         "n_eff": 0.0,
         "sigma_kmh": 0.8,
-        "n_activities_used": 26,
-        "n_excluded_until": 496,
-        "n_skipped_ingest": 38
+        "n_activities_used": 250,
+        "n_excluded_until": 1219,
+        "n_skipped_ingest": 249
       },
       "prediction": {
-        "central_h": 10.602,
-        "plan_low_h": 9.938,
-        "plan_high_h": 11.394,
-        "safety_low_h": 9.401,
-        "safety_high_h": 12.207,
+        "central_h": 12.953,
+        "plan_low_h": 11.974,
+        "plan_high_h": 14.153,
+        "safety_low_h": 11.204,
+        "safety_high_h": 15.431,
         "interval_source": "mc",
         "cv_mae_pct": null,
         "sd_rel": null,
-        "err_pct": 1.35,
-        "in_plan": true,
-        "in_safety": true
+        "err_pct": 23.82,
+        "in_plan": false,
+        "in_safety": false
       },
-      "below_domain": false
+      "below_domain": false,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 10.464444444444444,
+        "official_time_h": 10.460833333333333,
+        "finish_h": 10.361944444444445,
+        "finish_gap_min": -5.933333333333302,
+        "n_found": 10,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 33
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 0.9541666666666667,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 1.9377777777777778,
+            "method": "radius",
+            "dist_m": 13
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 3.155,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 4.407777777777778,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 6.085,
+            "method": "radius",
+            "dist_m": 14
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 7.605833333333333,
+            "method": "radius",
+            "dist_m": 12
+          },
+          {
+            "km": 70.0,
+            "name": "km 70",
+            "t_h": 8.778888888888888,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 80.0,
+            "name": "km 80",
+            "t_h": 10.107777777777779,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 82.88592841281711,
+            "name": "Arrivée",
+            "t_h": 10.361944444444445,
+            "method": "radius",
+            "dist_m": 148
+          }
+        ],
+        "activity_date": "2024-03-16"
+      }
     },
     {
       "athlete": "Val",
@@ -62,34 +137,90 @@
       "model": {
         "verdict": "🔴",
         "blocking": [
-          "Historique",
-          "Fraîcheur des données",
-          "Domaine de calibration",
-          "Courses exploitables",
-          "Qualité (FC / altitude / distance)"
+          "Domaine de calibration"
         ],
-        "regime": "vc_e",
-        "n_genuine": 0,
-        "n_eff": 0.0,
-        "sigma_kmh": 0.8,
-        "n_activities_used": 26,
-        "n_excluded_until": 496,
-        "n_skipped_ingest": 38
+        "regime": "blend",
+        "n_genuine": 1,
+        "n_eff": 1.0,
+        "sigma_kmh": 0.45,
+        "n_activities_used": 285,
+        "n_excluded_until": 1184,
+        "n_skipped_ingest": 249
       },
       "prediction": {
-        "central_h": 6.897,
-        "plan_low_h": 6.471,
-        "plan_high_h": 7.402,
-        "safety_low_h": 6.127,
-        "safety_high_h": 7.921,
+        "central_h": 6.576,
+        "plan_low_h": 6.352,
+        "plan_high_h": 6.826,
+        "safety_low_h": 6.161,
+        "safety_high_h": 7.066,
         "interval_source": "mc",
         "cv_mae_pct": null,
         "sd_rel": null,
-        "err_pct": 13.92,
+        "err_pct": 8.63,
         "in_plan": false,
         "in_safety": false
       },
-      "below_domain": true
+      "below_domain": true,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 6.045555555555556,
+        "official_time_h": 6.053888888888888,
+        "finish_h": 6.04,
+        "finish_gap_min": -0.8333333333333037,
+        "n_found": 7,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 1
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.0844444444444445,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 2.3758333333333335,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 3.319722222222222,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 4.6691666666666665,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 5.934722222222222,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 50.957369794646965,
+            "name": "Arrivée",
+            "t_h": 6.04,
+            "method": "radius",
+            "dist_m": 5
+          }
+        ],
+        "activity_date": "2024-05-18"
+      }
     },
     {
       "athlete": "Val",
@@ -105,36 +236,118 @@
         "dplus_per_km": 19.9
       },
       "model": {
-        "verdict": "🔴",
-        "blocking": [
-          "Historique",
-          "Fraîcheur des données",
-          "Courses exploitables",
-          "Efforts longs proches de la cible",
-          "Qualité (FC / altitude / distance)"
-        ],
-        "regime": "vc_e",
-        "n_genuine": 0,
-        "n_eff": 0.0,
-        "sigma_kmh": 0.8,
-        "n_activities_used": 26,
-        "n_excluded_until": 496,
-        "n_skipped_ingest": 38
+        "verdict": "🟠",
+        "blocking": [],
+        "regime": "blend",
+        "n_genuine": 2,
+        "n_eff": 1.99,
+        "sigma_kmh": 0.45,
+        "n_activities_used": 351,
+        "n_excluded_until": 1118,
+        "n_skipped_ingest": 249
       },
       "prediction": {
-        "central_h": 12.256,
-        "plan_low_h": 11.465,
-        "plan_high_h": 13.201,
-        "safety_low_h": 10.83,
-        "safety_high_h": 14.177,
+        "central_h": 13.664,
+        "plan_low_h": 13.097,
+        "plan_high_h": 14.305,
+        "safety_low_h": 12.621,
+        "safety_high_h": 14.932,
         "interval_source": "mc",
         "cv_mae_pct": null,
         "sd_rel": null,
-        "err_pct": 8.54,
+        "err_pct": 21.0,
         "in_plan": false,
-        "in_safety": true
+        "in_safety": false
       },
-      "below_domain": false
+      "below_domain": false,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 11.323888888888888,
+        "official_time_h": 11.292222222222222,
+        "finish_h": 11.285,
+        "finish_gap_min": -0.4333333333332945,
+        "n_found": 11,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 83
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.1019444444444444,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 2.0413888888888887,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 2.9944444444444445,
+            "method": "radius",
+            "dist_m": 13
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 4.340833333333333,
+            "method": "radius",
+            "dist_m": 12
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 5.427222222222222,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 6.975555555555555,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 70.0,
+            "name": "km 70",
+            "t_h": 8.695277777777777,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 80.0,
+            "name": "km 80",
+            "t_h": 10.000833333333333,
+            "method": "radius",
+            "dist_m": 12
+          },
+          {
+            "km": 90.0,
+            "name": "km 90",
+            "t_h": 11.23,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 90.56661314714593,
+            "name": "Arrivée",
+            "t_h": 11.285,
+            "method": "radius",
+            "dist_m": 16
+          }
+        ],
+        "activity_date": "2024-09-14"
+      }
     },
     {
       "athlete": "Val",
@@ -150,32 +363,111 @@
         "dplus_per_km": 26.2
       },
       "model": {
-        "verdict": "🔴",
-        "blocking": [
-          "Qualité (FC / altitude / distance)"
-        ],
+        "verdict": "🟠",
+        "blocking": [],
         "regime": "blend",
-        "n_genuine": 1,
-        "n_eff": 1.0,
+        "n_genuine": 3,
+        "n_eff": 2.94,
         "sigma_kmh": 0.45,
-        "n_activities_used": 81,
-        "n_excluded_until": 441,
-        "n_skipped_ingest": 38
+        "n_activities_used": 472,
+        "n_excluded_until": 997,
+        "n_skipped_ingest": 249
       },
       "prediction": {
-        "central_h": 10.376,
-        "plan_low_h": 10.023,
-        "plan_high_h": 10.77,
-        "safety_low_h": 9.722,
-        "safety_high_h": 11.147,
+        "central_h": 11.685,
+        "plan_low_h": 11.24,
+        "plan_high_h": 12.187,
+        "safety_low_h": 10.863,
+        "safety_high_h": 12.673,
         "interval_source": "mc",
         "cv_mae_pct": null,
         "sd_rel": null,
-        "err_pct": -6.27,
+        "err_pct": 5.56,
         "in_plan": false,
         "in_safety": true
       },
-      "below_domain": false
+      "below_domain": false,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 11.065555555555555,
+        "official_time_h": 11.070277777777777,
+        "finish_h": 11.056111111111111,
+        "finish_gap_min": -0.849999999999973,
+        "n_found": 10,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 0
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.0269444444444444,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 2.4005555555555556,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 3.6975,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 5.149166666666667,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 6.7475,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 8.096944444444444,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 70.0,
+            "name": "km 70",
+            "t_h": 9.274444444444445,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 80.0,
+            "name": "km 80",
+            "t_h": 10.595833333333333,
+            "method": "radius",
+            "dist_m": 148
+          },
+          {
+            "km": 84.08696096482896,
+            "name": "Arrivée",
+            "t_h": 11.056111111111111,
+            "method": "radius",
+            "dist_m": 10
+          }
+        ],
+        "activity_date": "2024-11-30"
+      }
     },
     {
       "athlete": "Val",
@@ -193,30 +485,139 @@
       "model": {
         "verdict": "🔴",
         "blocking": [
-          "Qualité (FC / altitude / distance)"
+          "Largeur d'intervalle"
         ],
-        "regime": "blend",
-        "n_genuine": 3,
-        "n_eff": 2.84,
-        "sigma_kmh": 0.45,
-        "n_activities_used": 185,
-        "n_excluded_until": 337,
-        "n_skipped_ingest": 38
+        "regime": "regression",
+        "n_genuine": 5,
+        "n_eff": 4.72,
+        "sigma_kmh": 0.685,
+        "n_activities_used": 680,
+        "n_excluded_until": 789,
+        "n_skipped_ingest": 249
       },
       "prediction": {
-        "central_h": 19.108,
-        "plan_low_h": 18.344,
-        "plan_high_h": 19.97,
-        "safety_low_h": 17.7,
-        "safety_high_h": 20.81,
+        "central_h": 19.202,
+        "plan_low_h": 14.43,
+        "plan_high_h": 68.227,
+        "safety_low_h": 13.274,
+        "safety_high_h": 68.227,
         "interval_source": "mc",
-        "cv_mae_pct": null,
-        "sd_rel": null,
-        "err_pct": -6.72,
-        "in_plan": false,
+        "cv_mae_pct": 7.37,
+        "sd_rel": 1.0106,
+        "err_pct": -6.26,
+        "in_plan": true,
         "in_safety": true
       },
-      "below_domain": false
+      "below_domain": false,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 20.475,
+        "official_time_h": 20.484722222222224,
+        "finish_h": 20.458333333333332,
+        "finish_gap_min": -1.5833333333335275,
+        "n_found": 14,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.2819444444444446,
+            "method": "radius",
+            "dist_m": 25
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 2.611111111111111,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 4.034722222222222,
+            "method": "closest",
+            "dist_m": 206
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 5.381666666666667,
+            "method": "radius",
+            "dist_m": 125
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 6.957222222222223,
+            "method": "radius",
+            "dist_m": 12
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 8.780277777777778,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 70.0,
+            "name": "km 70",
+            "t_h": 10.391388888888889,
+            "method": "radius",
+            "dist_m": 12
+          },
+          {
+            "km": 80.0,
+            "name": "km 80",
+            "t_h": 12.114166666666666,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 90.0,
+            "name": "km 90",
+            "t_h": 13.901111111111112,
+            "method": "radius",
+            "dist_m": 17
+          },
+          {
+            "km": 100.0,
+            "name": "km 100",
+            "t_h": 15.878333333333334,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 110.0,
+            "name": "km 110",
+            "t_h": 18.27138888888889,
+            "method": "radius",
+            "dist_m": 14
+          },
+          {
+            "km": 120.0,
+            "name": "km 120",
+            "t_h": 20.04111111111111,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 122.75769954722678,
+            "name": "Arrivée",
+            "t_h": 20.458333333333332,
+            "method": "radius",
+            "dist_m": 14
+          }
+        ],
+        "activity_date": "2025-03-22"
+      }
     },
     {
       "athlete": "Val",
@@ -235,27 +636,136 @@
         "verdict": "🟠",
         "blocking": [],
         "regime": "regression",
-        "n_genuine": 4,
-        "n_eff": 3.82,
-        "sigma_kmh": 0.2,
-        "n_activities_used": 265,
-        "n_excluded_until": 257,
-        "n_skipped_ingest": 38
+        "n_genuine": 6,
+        "n_eff": 5.73,
+        "sigma_kmh": 0.539,
+        "n_activities_used": 840,
+        "n_excluded_until": 629,
+        "n_skipped_ingest": 249
       },
       "prediction": {
-        "central_h": 21.17,
-        "plan_low_h": 19.58,
-        "plan_high_h": 22.76,
-        "safety_low_h": 13.127,
-        "safety_high_h": 29.213,
+        "central_h": 21.464,
+        "plan_low_h": 19.216,
+        "plan_high_h": 23.712,
+        "safety_low_h": 16.872,
+        "safety_high_h": 26.056,
         "interval_source": "conformal_normalized",
-        "cv_mae_pct": 13.05,
-        "sd_rel": 0.048,
-        "err_pct": -0.34,
+        "cv_mae_pct": 7.58,
+        "sd_rel": 0.134,
+        "err_pct": 1.04,
         "in_plan": true,
         "in_safety": true
       },
-      "below_domain": false
+      "below_domain": false,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 21.252222222222223,
+        "official_time_h": 21.24277777777778,
+        "finish_h": 21.24416666666667,
+        "finish_gap_min": 0.08333333333339965,
+        "n_found": 14,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 15
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.2502777777777778,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 2.5613888888888887,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 4.0775,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 5.5616666666666665,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 7.763888888888889,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 9.148888888888889,
+            "method": "radius",
+            "dist_m": 17
+          },
+          {
+            "km": 70.0,
+            "name": "km 70",
+            "t_h": 10.88888888888889,
+            "method": "radius",
+            "dist_m": 12
+          },
+          {
+            "km": 80.0,
+            "name": "km 80",
+            "t_h": 12.54861111111111,
+            "method": "radius",
+            "dist_m": 142
+          },
+          {
+            "km": 90.0,
+            "name": "km 90",
+            "t_h": 14.791666666666666,
+            "method": "radius",
+            "dist_m": 12
+          },
+          {
+            "km": 100.0,
+            "name": "km 100",
+            "t_h": 17.361944444444443,
+            "method": "radius",
+            "dist_m": 13
+          },
+          {
+            "km": 110.0,
+            "name": "km 110",
+            "t_h": 19.860833333333332,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 120.0,
+            "name": "km 120",
+            "t_h": 21.239444444444445,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 120.08136706491737,
+            "name": "Arrivée",
+            "t_h": 21.24416666666667,
+            "method": "radius",
+            "dist_m": 9
+          }
+        ],
+        "activity_date": "2025-06-27"
+      }
     },
     {
       "athlete": "Crasse",
@@ -334,7 +844,53 @@
         "in_plan": false,
         "in_safety": false
       },
-      "below_domain": true
+      "below_domain": true,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 4.927777777777778,
+        "official_time_h": 4.930277777777778,
+        "finish_h": 4.888333333333334,
+        "finish_gap_min": -2.516666666666687,
+        "n_found": 5,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 0.9927777777777778,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 2.2475,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 4.4463888888888885,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 34.97345093714282,
+            "name": "Arrivée",
+            "t_h": 4.888333333333334,
+            "method": "radius",
+            "dist_m": 9
+          }
+        ],
+        "activity_date": "2025-02-02"
+      }
     },
     {
       "athlete": "Crasse",
@@ -373,7 +929,109 @@
         "in_plan": false,
         "in_safety": false
       },
-      "below_domain": false
+      "below_domain": false,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 15.386944444444444,
+        "official_time_h": 15.32,
+        "finish_h": 15.385555555555555,
+        "finish_gap_min": 3.9333333333333087,
+        "n_found": 13,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 0
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.053611111111111,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 2.1372222222222224,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 3.2275,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 4.639444444444444,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 5.939722222222223,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 7.198333333333333,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 70.0,
+            "name": "km 70",
+            "t_h": 8.659166666666666,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 80.0,
+            "name": "km 80",
+            "t_h": 10.123333333333333,
+            "method": "radius",
+            "dist_m": 138
+          },
+          {
+            "km": 90.0,
+            "name": "km 90",
+            "t_h": 11.858611111111111,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 100.0,
+            "name": "km 100",
+            "t_h": 13.461388888888889,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 110.0,
+            "name": "km 110",
+            "t_h": 14.876944444444444,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 113.83322647262578,
+            "name": "Arrivée",
+            "t_h": 15.385555555555555,
+            "method": "radius",
+            "dist_m": 8
+          }
+        ],
+        "activity_date": "2023-05-13"
+      }
     },
     {
       "athlete": "Crasse",
@@ -412,7 +1070,102 @@
         "in_plan": false,
         "in_safety": false
       },
-      "below_domain": false
+      "below_domain": false,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 13.290833333333333,
+        "official_time_h": 13.291944444444445,
+        "finish_h": 13.235,
+        "finish_gap_min": -3.416666666666721,
+        "n_found": 12,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 0.93,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 1.9869444444444444,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 3.316666666666667,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 4.505,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 5.5625,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 6.814444444444445,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 70.0,
+            "name": "km 70",
+            "t_h": 8.125,
+            "method": "radius",
+            "dist_m": 148
+          },
+          {
+            "km": 80.0,
+            "name": "km 80",
+            "t_h": 9.501944444444444,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 90.0,
+            "name": "km 90",
+            "t_h": 10.813888888888888,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 100.0,
+            "name": "km 100",
+            "t_h": 12.528611111111111,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 106.53614609059643,
+            "name": "Arrivée",
+            "t_h": 13.235,
+            "method": "radius",
+            "dist_m": 9
+          }
+        ],
+        "activity_date": "2026-05-09"
+      }
     },
     {
       "athlete": "Crasse",
@@ -451,7 +1204,81 @@
         "in_plan": true,
         "in_safety": true
       },
-      "below_domain": false
+      "below_domain": false,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 10.380555555555556,
+        "official_time_h": 10.381388888888889,
+        "finish_h": 10.340833333333334,
+        "finish_gap_min": -2.4333333333332874,
+        "n_found": 9,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 7
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 0.7347222222222223,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 1.9058333333333333,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 3.1033333333333335,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 4.269444444444445,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 5.538333333333333,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 7.141111111111111,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 70.0,
+            "name": "km 70",
+            "t_h": 9.427222222222222,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 76.86885186754654,
+            "name": "Arrivée",
+            "t_h": 10.340833333333334,
+            "method": "radius",
+            "dist_m": 9
+          }
+        ],
+        "activity_date": "2025-10-19"
+      }
     },
     {
       "athlete": "Crasse",
@@ -492,7 +1319,39 @@
         "in_plan": false,
         "in_safety": false
       },
-      "below_domain": true
+      "below_domain": true,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 1.5280555555555555,
+        "official_time_h": 1.5258333333333334,
+        "finish_h": 1.5272222222222223,
+        "finish_gap_min": 0.08333333333333304,
+        "n_found": 3,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 0
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 0.7875,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 18.97395953218366,
+            "name": "Arrivée",
+            "t_h": 1.5272222222222223,
+            "method": "radius",
+            "dist_m": 6
+          }
+        ],
+        "activity_date": "2021-11-06"
+      }
     },
     {
       "athlete": "Crasse",
@@ -533,7 +1392,53 @@
         "in_plan": false,
         "in_safety": false
       },
-      "below_domain": true
+      "below_domain": true,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 3.533888888888889,
+        "official_time_h": 3.5327777777777776,
+        "finish_h": 3.5325,
+        "finish_gap_min": -0.016666666666642627,
+        "n_found": 5,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 0
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 0.8383333333333334,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 1.8147222222222221,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 2.8313888888888887,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 35.95219705021264,
+            "name": "Arrivée",
+            "t_h": 3.5325,
+            "method": "radius",
+            "dist_m": 10
+          }
+        ],
+        "activity_date": "2021-11-07"
+      }
     },
     {
       "athlete": "Crasse",
@@ -572,7 +1477,109 @@
         "in_plan": true,
         "in_safety": true
       },
-      "below_domain": false
+      "below_domain": false,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 19.75861111111111,
+        "official_time_h": 19.686666666666667,
+        "finish_h": 19.7575,
+        "finish_gap_min": 4.249999999999972,
+        "n_found": 13,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 0
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.8386111111111112,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 2.908333333333333,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 4.5872222222222225,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 6.3533333333333335,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 7.745,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 9.911944444444444,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 70.0,
+            "name": "km 70",
+            "t_h": 11.8025,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 80.0,
+            "name": "km 80",
+            "t_h": 13.564166666666667,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 90.0,
+            "name": "km 90",
+            "t_h": 15.026944444444444,
+            "method": "radius",
+            "dist_m": 131
+          },
+          {
+            "km": 100.0,
+            "name": "km 100",
+            "t_h": 16.950555555555557,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 110.0,
+            "name": "km 110",
+            "t_h": 18.98777777777778,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 115.60873732724595,
+            "name": "Arrivée",
+            "t_h": 19.7575,
+            "method": "radius",
+            "dist_m": 8
+          }
+        ],
+        "activity_date": "2023-07-01"
+      }
     },
     {
       "athlete": "Crasse",
@@ -649,7 +1656,144 @@
         "in_plan": true,
         "in_safety": true
       },
-      "below_domain": false
+      "below_domain": false,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 26.16638888888889,
+        "official_time_h": 26.16333333333333,
+        "finish_h": 26.164722222222224,
+        "finish_gap_min": 0.08333333333361281,
+        "n_found": 18,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 0
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.0094444444444444,
+            "method": "radius",
+            "dist_m": 150
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 3.023888888888889,
+            "method": "radius",
+            "dist_m": 7
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 4.317777777777778,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 5.820833333333334,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 7.195277777777778,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 8.886111111111111,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 70.0,
+            "name": "km 70",
+            "t_h": 10.489444444444445,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 80.0,
+            "name": "km 80",
+            "t_h": 12.24611111111111,
+            "method": "radius",
+            "dist_m": 150
+          },
+          {
+            "km": 90.0,
+            "name": "km 90",
+            "t_h": 14.05861111111111,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 100.0,
+            "name": "km 100",
+            "t_h": 15.539444444444445,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 110.0,
+            "name": "km 110",
+            "t_h": 16.90222222222222,
+            "method": "radius",
+            "dist_m": 150
+          },
+          {
+            "km": 120.0,
+            "name": "km 120",
+            "t_h": 19.095,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 130.0,
+            "name": "km 130",
+            "t_h": 20.945555555555554,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 140.0,
+            "name": "km 140",
+            "t_h": 22.4525,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 150.0,
+            "name": "km 150",
+            "t_h": 24.19388888888889,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 160.0,
+            "name": "km 160",
+            "t_h": 25.634444444444444,
+            "method": "radius",
+            "dist_m": 144
+          },
+          {
+            "km": 163.55616874086496,
+            "name": "Arrivée",
+            "t_h": 26.164722222222224,
+            "method": "radius",
+            "dist_m": 9
+          }
+        ],
+        "activity_date": "2024-10-04"
+      }
     },
     {
       "athlete": "Crasse",
@@ -690,7 +1834,81 @@
         "in_plan": false,
         "in_safety": false
       },
-      "below_domain": true
+      "below_domain": true,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 8.693333333333333,
+        "official_time_h": 8.690555555555555,
+        "finish_h": 8.69111111111111,
+        "finish_gap_min": 0.033333333333338544,
+        "n_found": 9,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 0
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 0.9008333333333334,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 1.9830555555555556,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 3.055,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 4.375555555555556,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 5.527777777777778,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 6.627777777777778,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 70.0,
+            "name": "km 70",
+            "t_h": 7.7908333333333335,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 78.20663169782186,
+            "name": "Arrivée",
+            "t_h": 8.69111111111111,
+            "method": "radius",
+            "dist_m": 10
+          }
+        ],
+        "activity_date": "2021-11-27"
+      }
     },
     {
       "athlete": "Crasse",
@@ -731,7 +1949,74 @@
         "in_plan": false,
         "in_safety": false
       },
-      "below_domain": false
+      "below_domain": false,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 10.341666666666667,
+        "official_time_h": 10.345,
+        "finish_h": 10.34,
+        "finish_gap_min": -0.3000000000000469,
+        "n_found": 8,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 0
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.34,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 2.9966666666666666,
+            "method": "radius",
+            "dist_m": 7
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 4.181666666666667,
+            "method": "radius",
+            "dist_m": 150
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 5.857777777777778,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 7.784166666666667,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 9.3925,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 68.4822807640026,
+            "name": "Arrivée",
+            "t_h": 10.34,
+            "method": "radius",
+            "dist_m": 11
+          }
+        ],
+        "activity_date": "2022-07-10"
+      }
     },
     {
       "athlete": "Crasse",
@@ -770,7 +2055,102 @@
         "in_plan": false,
         "in_safety": true
       },
-      "below_domain": false
+      "below_domain": false,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 14.199444444444444,
+        "official_time_h": 14.195555555555556,
+        "finish_h": 14.198055555555555,
+        "finish_gap_min": 0.14999999999997016,
+        "n_found": 12,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 0
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 0.9636111111111111,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 1.9844444444444445,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 3.2216666666666667,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 4.509166666666666,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 5.983888888888889,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 7.3775,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 70.0,
+            "name": "km 70",
+            "t_h": 8.998333333333333,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 80.0,
+            "name": "km 80",
+            "t_h": 10.859166666666667,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 90.0,
+            "name": "km 90",
+            "t_h": 12.608888888888888,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 100.0,
+            "name": "km 100",
+            "t_h": 13.952777777777778,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 102.44868246851227,
+            "name": "Arrivée",
+            "t_h": 14.198055555555555,
+            "method": "radius",
+            "dist_m": 9
+          }
+        ],
+        "activity_date": "2024-02-17"
+      }
     },
     {
       "athlete": "Crasse",
@@ -811,7 +2191,46 @@
         "in_plan": false,
         "in_safety": false
       },
-      "below_domain": true
+      "below_domain": true,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 2.5413888888888887,
+        "official_time_h": 2.541111111111111,
+        "finish_h": 2.5405555555555557,
+        "finish_gap_min": -0.0333333333333119,
+        "n_found": 4,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 0
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 0.9588888888888889,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 1.8605555555555555,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 27.309465868592675,
+            "name": "Arrivée",
+            "t_h": 2.5405555555555557,
+            "method": "radius",
+            "dist_m": 9
+          }
+        ],
+        "activity_date": "2023-08-26"
+      }
     },
     {
       "athlete": "Lolo",
@@ -832,27 +2251,73 @@
           "Domaine de calibration"
         ],
         "regime": "blend",
-        "n_genuine": 2,
-        "n_eff": 2.0,
+        "n_genuine": 1,
+        "n_eff": 1.0,
         "sigma_kmh": 0.45,
         "n_activities_used": 334,
         "n_excluded_until": 766,
         "n_skipped_ingest": 5748
       },
       "prediction": {
-        "central_h": 3.167,
-        "plan_low_h": 3.085,
-        "plan_high_h": 3.257,
-        "safety_low_h": 3.014,
-        "safety_high_h": 3.341,
+        "central_h": 3.762,
+        "plan_low_h": 3.647,
+        "plan_high_h": 3.89,
+        "safety_low_h": 3.549,
+        "safety_high_h": 4.011,
         "interval_source": "mc",
         "cv_mae_pct": null,
         "sd_rel": null,
-        "err_pct": -19.42,
+        "err_pct": -4.27,
         "in_plan": false,
-        "in_safety": false
+        "in_safety": true
       },
-      "below_domain": true
+      "below_domain": true,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 3.931388888888889,
+        "official_time_h": 3.9302777777777775,
+        "finish_h": 3.930277777777778,
+        "finish_gap_min": 2.6645352591003757e-14,
+        "n_found": 5,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 0
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.07,
+            "method": "radius",
+            "dist_m": 143
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 2.386111111111111,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 3.7352777777777777,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 32.146182133742,
+            "name": "Arrivée",
+            "t_h": 3.930277777777778,
+            "method": "radius",
+            "dist_m": 10
+          }
+        ],
+        "activity_date": "2023-01-08"
+      }
     },
     {
       "athlete": "Lolo",
@@ -874,27 +2339,122 @@
           "Largeur d'intervalle"
         ],
         "regime": "regression",
-        "n_genuine": 10,
-        "n_eff": 6.39,
-        "sigma_kmh": 0.723,
+        "n_genuine": 5,
+        "n_eff": 3.4,
+        "sigma_kmh": 0.961,
         "n_activities_used": 1064,
         "n_excluded_until": 36,
         "n_skipped_ingest": 5748
       },
       "prediction": {
-        "central_h": 26.211,
-        "plan_low_h": 17.604,
-        "plan_high_h": 34.817,
-        "safety_low_h": 11.853,
-        "safety_high_h": 40.568,
+        "central_h": 25.968,
+        "plan_low_h": 11.624,
+        "plan_high_h": 40.312,
+        "safety_low_h": 0.034,
+        "safety_high_h": 51.902,
         "interval_source": "conformal_normalized",
-        "cv_mae_pct": 10.2,
-        "sd_rel": 0.3959,
-        "err_pct": 1.51,
+        "cv_mae_pct": 21.93,
+        "sd_rel": 0.6757,
+        "err_pct": 0.57,
         "in_plan": true,
         "in_safety": true
       },
-      "below_domain": false
+      "below_domain": false,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 25.79722222222222,
+        "official_time_h": 25.81972222222222,
+        "finish_h": 25.788333333333334,
+        "finish_gap_min": -1.8833333333332547,
+        "n_found": 12,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 5
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 2.0930555555555554,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 4.223611111111111,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 6.695277777777778,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 8.57611111111111,
+            "method": "radius",
+            "dist_m": 135
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 11.372222222222222,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 13.23,
+            "method": "radius",
+            "dist_m": 150
+          },
+          {
+            "km": 70.0,
+            "name": "km 70",
+            "t_h": 17.198611111111113,
+            "method": "radius",
+            "dist_m": 150
+          },
+          {
+            "km": 80.0,
+            "name": "km 80",
+            "t_h": 19.913333333333334,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 90.0,
+            "name": "km 90",
+            "t_h": 21.59,
+            "method": "radius",
+            "dist_m": 14
+          },
+          {
+            "km": 100.0,
+            "name": "km 100",
+            "t_h": 24.16138888888889,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 109.87302027853947,
+            "name": "Arrivée",
+            "t_h": 25.788333333333334,
+            "method": "radius",
+            "dist_m": 23
+          }
+        ],
+        "activity_date": "2026-04-24"
+      }
     },
     {
       "athlete": "Lolo",
@@ -910,30 +2470,97 @@
         "dplus_per_km": 54.7
       },
       "model": {
-        "verdict": "🟢",
+        "verdict": "🟠",
         "blocking": [],
-        "regime": "regression",
-        "n_genuine": 4,
-        "n_eff": 3.92,
-        "sigma_kmh": 0.2,
+        "regime": "blend",
+        "n_genuine": 2,
+        "n_eff": 1.96,
+        "sigma_kmh": 0.45,
         "n_activities_used": 436,
         "n_excluded_until": 664,
         "n_skipped_ingest": 5748
       },
       "prediction": {
-        "central_h": 10.6,
-        "plan_low_h": 10.6,
-        "plan_high_h": 10.6,
-        "safety_low_h": 10.6,
-        "safety_high_h": 10.6,
-        "interval_source": "conformal_normalized",
-        "cv_mae_pct": 0.0,
-        "sd_rel": 0.1002,
-        "err_pct": -15.04,
+        "central_h": 10.216,
+        "plan_low_h": 9.828,
+        "plan_high_h": 10.653,
+        "safety_low_h": 9.499,
+        "safety_high_h": 11.077,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": -18.12,
         "in_plan": false,
         "in_safety": false
       },
-      "below_domain": false
+      "below_domain": false,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 12.4675,
+        "official_time_h": 12.476666666666667,
+        "finish_h": 12.466388888888888,
+        "finish_gap_min": -0.6166666666667098,
+        "n_found": 8,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 0
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 2.2752777777777777,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 4.29,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 7.111944444444444,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 8.742222222222223,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 10.4725,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 12.238611111111112,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 62.3742081986547,
+            "name": "Arrivée",
+            "t_h": 12.466388888888888,
+            "method": "radius",
+            "dist_m": 9
+          }
+        ],
+        "activity_date": "2023-09-30"
+      }
     },
     {
       "athlete": "Lolo",
@@ -962,7 +2589,81 @@
         "n_skipped_ingest": 5748
       },
       "prediction": null,
-      "below_domain": false
+      "below_domain": false,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 11.454444444444444,
+        "official_time_h": 11.451388888888888,
+        "finish_h": 11.451944444444445,
+        "finish_gap_min": 0.033333333333445125,
+        "n_found": 9,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 0
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.1425,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 2.66,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 4.263333333333334,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 5.96,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 7.486666666666666,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 8.837777777777777,
+            "method": "radius",
+            "dist_m": 52
+          },
+          {
+            "km": 70.0,
+            "name": "km 70",
+            "t_h": 10.340833333333334,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 78.15174205208042,
+            "name": "Arrivée",
+            "t_h": 11.451944444444445,
+            "method": "radius",
+            "dist_m": 9
+          }
+        ],
+        "activity_date": "2022-12-03"
+      }
     },
     {
       "athlete": "Lolo",
@@ -982,28 +2683,81 @@
         "blocking": [
           "Domaine de calibration"
         ],
-        "regime": "regression",
-        "n_genuine": 4,
-        "n_eff": 3.92,
-        "sigma_kmh": 0.2,
+        "regime": "blend",
+        "n_genuine": 2,
+        "n_eff": 1.96,
+        "sigma_kmh": 0.45,
         "n_activities_used": 398,
         "n_excluded_until": 702,
         "n_skipped_ingest": 5748
       },
       "prediction": {
-        "central_h": 6.189,
-        "plan_low_h": 6.189,
-        "plan_high_h": 6.189,
-        "safety_low_h": 6.189,
-        "safety_high_h": 6.189,
-        "interval_source": "conformal_normalized",
-        "cv_mae_pct": 0.0,
-        "sd_rel": 0.1078,
-        "err_pct": -9.44,
+        "central_h": 5.494,
+        "plan_low_h": 5.325,
+        "plan_high_h": 5.68,
+        "safety_low_h": 5.181,
+        "safety_high_h": 5.857,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": -19.62,
         "in_plan": false,
         "in_safety": false
       },
-      "below_domain": true
+      "below_domain": true,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 6.833055555555555,
+        "official_time_h": 6.8341666666666665,
+        "finish_h": 6.831666666666667,
+        "finish_gap_min": -0.14999999999997016,
+        "n_found": 6,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 0
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.2575,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 2.7719444444444443,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 4.438611111111111,
+            "method": "radius",
+            "dist_m": 7
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 6.0216666666666665,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 45.39096293304308,
+            "name": "Arrivée",
+            "t_h": 6.831666666666667,
+            "method": "radius",
+            "dist_m": 10
+          }
+        ],
+        "activity_date": "2023-06-25"
+      }
     },
     {
       "athlete": "Lolo",
@@ -1023,28 +2777,81 @@
         "blocking": [
           "Domaine de calibration"
         ],
-        "regime": "regression",
-        "n_genuine": 6,
-        "n_eff": 5.8,
-        "sigma_kmh": 0.2,
+        "regime": "blend",
+        "n_genuine": 3,
+        "n_eff": 2.85,
+        "sigma_kmh": 0.45,
         "n_activities_used": 502,
         "n_excluded_until": 598,
         "n_skipped_ingest": 5748
       },
       "prediction": {
-        "central_h": 7.102,
-        "plan_low_h": 7.024,
-        "plan_high_h": 7.181,
-        "safety_low_h": 7.001,
-        "safety_high_h": 7.204,
-        "interval_source": "conformal_normalized",
-        "cv_mae_pct": 0.68,
-        "sd_rel": 0.0471,
-        "err_pct": -1.23,
+        "central_h": 6.194,
+        "plan_low_h": 5.991,
+        "plan_high_h": 6.42,
+        "safety_low_h": 5.818,
+        "safety_high_h": 6.636,
+        "interval_source": "mc",
+        "cv_mae_pct": null,
+        "sd_rel": null,
+        "err_pct": -13.85,
         "in_plan": false,
-        "in_safety": true
+        "in_safety": false
       },
-      "below_domain": true
+      "below_domain": true,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 7.189166666666667,
+        "official_time_h": 7.190555555555556,
+        "finish_h": 7.186111111111111,
+        "finish_gap_min": -0.26666666666670835,
+        "n_found": 6,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 0
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.1847222222222222,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 2.726111111111111,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 4.506388888888889,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 6.279166666666667,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 47.46313626066482,
+            "name": "Arrivée",
+            "t_h": 7.186111111111111,
+            "method": "radius",
+            "dist_m": 10
+          }
+        ],
+        "activity_date": "2024-01-14"
+      }
     },
     {
       "athlete": "Lolo",
@@ -1063,27 +2870,122 @@
         "verdict": "🟠",
         "blocking": [],
         "regime": "blend",
-        "n_genuine": 2,
-        "n_eff": 2.0,
+        "n_genuine": 1,
+        "n_eff": 1.0,
         "sigma_kmh": 0.45,
         "n_activities_used": 392,
         "n_excluded_until": 708,
         "n_skipped_ingest": 5748
       },
       "prediction": {
-        "central_h": 20.02,
-        "plan_low_h": 19.095,
-        "plan_high_h": 21.079,
-        "safety_low_h": 18.325,
-        "safety_high_h": 22.125,
+        "central_h": 17.829,
+        "plan_low_h": 17.092,
+        "plan_high_h": 18.665,
+        "safety_low_h": 16.473,
+        "safety_high_h": 19.48,
         "interval_source": "mc",
         "cv_mae_pct": null,
         "sd_rel": null,
-        "err_pct": -6.07,
+        "err_pct": -16.35,
         "in_plan": false,
-        "in_safety": true
+        "in_safety": false
       },
-      "below_domain": false
+      "below_domain": false,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 21.31111111111111,
+        "official_time_h": 21.31361111111111,
+        "finish_h": 21.309722222222224,
+        "finish_gap_min": -0.23333333333326323,
+        "n_found": 12,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 0
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.5988888888888888,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 3.1175,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 4.931666666666667,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 6.565277777777778,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 8.68361111111111,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 10.687222222222223,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 70.0,
+            "name": "km 70",
+            "t_h": 12.849444444444444,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 80.0,
+            "name": "km 80",
+            "t_h": 15.16638888888889,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 90.0,
+            "name": "km 90",
+            "t_h": 17.137777777777778,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 100.0,
+            "name": "km 100",
+            "t_h": 20.076666666666668,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 108.77707556283491,
+            "name": "Arrivée",
+            "t_h": 21.309722222222224,
+            "method": "radius",
+            "dist_m": 10
+          }
+        ],
+        "activity_date": "2023-05-05"
+      }
     },
     {
       "athlete": "Rapace",
@@ -1125,7 +3027,60 @@
         "in_plan": false,
         "in_safety": false
       },
-      "below_domain": true
+      "below_domain": true,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 6.375555555555556,
+        "official_time_h": 6.336111111111111,
+        "finish_h": 6.371388888888889,
+        "finish_gap_min": 2.116666666666678,
+        "n_found": 6,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 1
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.4552777777777777,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 3.0058333333333334,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 4.546666666666667,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 6.197222222222222,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 41.79154087085706,
+            "name": "Arrivée",
+            "t_h": 6.371388888888889,
+            "method": "radius",
+            "dist_m": 8
+          }
+        ],
+        "activity_date": "2024-08-04"
+      }
     },
     {
       "athlete": "Rapace",
@@ -1168,7 +3123,81 @@
         "in_safety": false
       },
       "below_domain": false,
-      "quarantine": "trace FIT→GPX à l'altitude aplatie (D+/km 6,3 lu vs ~26 réel sur cette course) — parcours inutilisable"
+      "quarantine": "trace FIT→GPX à l'altitude aplatie (D+/km 6,3 lu vs ~26 réel sur cette course) — parcours inutilisable",
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 10.910277777777777,
+        "official_time_h": 10.926388888888889,
+        "finish_h": 10.9075,
+        "finish_gap_min": -1.1333333333332973,
+        "n_found": 4,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": null,
+            "method": "introuvable",
+            "dist_m": 2183
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": null,
+            "method": "introuvable",
+            "dist_m": 1764
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": null,
+            "method": "introuvable",
+            "dist_m": null
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": null,
+            "method": "introuvable",
+            "dist_m": null
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": null,
+            "method": "introuvable",
+            "dist_m": null
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 9.614722222222222,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 70.0,
+            "name": "km 70",
+            "t_h": 10.713888888888889,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 72.14003974723279,
+            "name": "Arrivée",
+            "t_h": 10.9075,
+            "method": "radius",
+            "dist_m": 10
+          }
+        ],
+        "activity_date": "2024-11-30"
+      }
     },
     {
       "athlete": "Rapace",
@@ -1210,7 +3239,67 @@
         "in_plan": false,
         "in_safety": false
       },
-      "below_domain": true
+      "below_domain": true,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 6.008055555555556,
+        "official_time_h": 6.006944444444445,
+        "finish_h": 6.003055555555555,
+        "finish_gap_min": -0.2333333333333698,
+        "n_found": 7,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.0122222222222221,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 2.165,
+            "method": "radius",
+            "dist_m": 7
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 3.4044444444444446,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 4.727777777777778,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 5.883333333333334,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 51.37517207582816,
+            "name": "Arrivée",
+            "t_h": 6.003055555555555,
+            "method": "radius",
+            "dist_m": 11
+          }
+        ],
+        "activity_date": "2025-04-19"
+      }
     },
     {
       "athlete": "Rapace",
@@ -1251,7 +3340,102 @@
         "in_plan": false,
         "in_safety": false
       },
-      "below_domain": false
+      "below_domain": false,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 15.007222222222222,
+        "official_time_h": 14.991666666666665,
+        "finish_h": 14.998055555555556,
+        "finish_gap_min": 0.38333333333344655,
+        "n_found": 12,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.1966666666666668,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 2.536388888888889,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 4.095555555555555,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 5.476944444444444,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 6.671944444444445,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 8.379444444444445,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 70.0,
+            "name": "km 70",
+            "t_h": 9.866388888888888,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 80.0,
+            "name": "km 80",
+            "t_h": 11.2775,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 90.0,
+            "name": "km 90",
+            "t_h": 12.761944444444444,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 100.0,
+            "name": "km 100",
+            "t_h": 14.431111111111111,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 105.70117046238205,
+            "name": "Arrivée",
+            "t_h": 14.998055555555556,
+            "method": "radius",
+            "dist_m": 8
+          }
+        ],
+        "activity_date": "2025-05-10"
+      }
     },
     {
       "athlete": "Rapace",
@@ -1292,7 +3476,88 @@
         "in_plan": false,
         "in_safety": false
       },
-      "below_domain": false
+      "below_domain": false,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 11.688888888888888,
+        "official_time_h": 11.690555555555555,
+        "finish_h": 11.686388888888889,
+        "finish_gap_min": -0.2499999999999858,
+        "n_found": 10,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.271388888888889,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 2.609722222222222,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 3.9808333333333334,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 5.538611111111111,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 6.823055555555555,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 8.515,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 70.0,
+            "name": "km 70",
+            "t_h": 9.7725,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 80.0,
+            "name": "km 80",
+            "t_h": 11.314722222222223,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 83.71292736510732,
+            "name": "Arrivée",
+            "t_h": 11.686388888888889,
+            "method": "radius",
+            "dist_m": 9
+          }
+        ],
+        "activity_date": "2025-10-11"
+      }
     },
     {
       "athlete": "Rapace",
@@ -1335,7 +3600,67 @@
         "in_plan": false,
         "in_safety": true
       },
-      "below_domain": true
+      "below_domain": true,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 7.493333333333333,
+        "official_time_h": 7.427222222222222,
+        "finish_h": 7.451944444444444,
+        "finish_gap_min": 1.4833333333332988,
+        "n_found": 7,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.2227777777777777,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 3.0330555555555554,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 4.338055555555556,
+            "method": "radius",
+            "dist_m": 8
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 5.901666666666666,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 7.060833333333333,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 54.376625740861485,
+            "name": "Arrivée",
+            "t_h": 7.451944444444444,
+            "method": "radius",
+            "dist_m": 8
+          }
+        ],
+        "activity_date": "2026-05-03"
+      }
     },
     {
       "athlete": "Crasse",
@@ -1374,7 +3699,102 @@
         "in_plan": true,
         "in_safety": true
       },
-      "below_domain": false
+      "below_domain": false,
+      "passages": {
+        "radius_m": 150.0,
+        "watch_elapsed_h": 16.067222222222224,
+        "official_time_h": 16.06833333333333,
+        "finish_h": 15.983333333333333,
+        "finish_gap_min": -5.099999999999945,
+        "n_found": 12,
+        "checkpoints": [
+          {
+            "km": 0.0,
+            "name": "Départ",
+            "t_h": 0.0,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 10.0,
+            "name": "km 10",
+            "t_h": 1.7991666666666666,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 20.0,
+            "name": "km 20",
+            "t_h": 2.752222222222222,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 30.0,
+            "name": "km 30",
+            "t_h": 4.303333333333334,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 40.0,
+            "name": "km 40",
+            "t_h": 5.954722222222222,
+            "method": "radius",
+            "dist_m": 9
+          },
+          {
+            "km": 50.0,
+            "name": "km 50",
+            "t_h": 7.126944444444445,
+            "method": "radius",
+            "dist_m": 11
+          },
+          {
+            "km": 60.0,
+            "name": "km 60",
+            "t_h": 8.883055555555556,
+            "method": "radius",
+            "dist_m": 131
+          },
+          {
+            "km": 70.0,
+            "name": "km 70",
+            "t_h": 10.590833333333334,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 80.0,
+            "name": "km 80",
+            "t_h": 11.833055555555555,
+            "method": "radius",
+            "dist_m": 149
+          },
+          {
+            "km": 90.0,
+            "name": "km 90",
+            "t_h": 13.413333333333334,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 100.0,
+            "name": "km 100",
+            "t_h": 15.238333333333333,
+            "method": "radius",
+            "dist_m": 10
+          },
+          {
+            "km": 106.38707678646246,
+            "name": "Arrivée",
+            "t_h": 15.983333333333333,
+            "method": "radius",
+            "dist_m": 9
+          }
+        ],
+        "activity_date": "2026-07-04"
+      }
     }
   ]
 }
