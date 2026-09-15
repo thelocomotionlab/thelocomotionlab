@@ -113,6 +113,22 @@ def test_plateau_basis_removes_only_measured_stops():
     assert select_genuine_ultras([s], CFG)[0].vga_kmh == pytest.approx(7.0 / 1.1)
 
 
+def test_plateau_basis_keeps_the_elapsed_speed_gate_against_near_still_recordings():
+    """Un bivouac enregistré 30 h avec 1 h de mouvement a une vitesse hors plateaux de course :
+    seul le plancher sur la vitesse ÉCOULÉE le tient hors des vrais ultras (banc Phase 2)."""
+    race = _ultra(12, 7.0, 50, stops_frac=0.10)                  # 13,2 h écoulées, 10 % d'arrêts
+    bivouac = ActivitySummary(date="2025-07-01", sport="running", duration_s=30 * 3600,
+                              dist_km=6.0, ga_km=7.0, avg_hr=110, dplus_m=200, dminus_m=200,
+                              decouple_pct=None, has_hr=True, stops_s=29 * 3600)
+    kept = select_genuine_ultras([race, bivouac], PERSONAL)
+    assert [g.elapsed_hours for g in kept] == pytest.approx([13.2])
+    assert kept[0].vga_kmh == pytest.approx(7.0)                 # vitesse servie hors plateaux
+    assert select_genuine_ultras([race, bivouac], CFG)[0].elapsed_hours == pytest.approx(13.2)
+    # le domaine ne bouge pas avec le modèle d'arrêts : même plancher, mêmes ultras
+    slow = _ultra(12, 5.8, 50, stops_frac=0.10)                  # 5,27 km/h écoulés : dehors partout
+    assert select_genuine_ultras([slow], PERSONAL) == [] and select_genuine_ultras([slow], CFG) == []
+
+
 def test_stops_statistics_weighted_mean_dispersion_and_population_fallback():
     gen = select_genuine_ultras([_ultra(12, 7.0, 50, stops_frac=0.05),
                                  _ultra(20, 6.5, 55, stops_frac=0.15),
@@ -372,10 +388,32 @@ def test_score_plan_finds_the_shape_that_produced_the_passages(tmp_path):
     out = tmp_path / "score.md"
     assert score_main([str(mp), "--registre", str(reg_path), "--out", str(out)]) == 0
     text = out.read_text(encoding="utf-8")
-    assert "cas frais" in text and "| config | carved |" in text
+    assert "cas frais" in text and "| config | carved |" in text and "Δ moitiés" in text
+    # --set : une dérive plus forte change la forme scorée, une clé inconnue est refusée
+    out2 = tmp_path / "score2.md"
+    assert score_main([str(mp), "--registre", str(reg_path), "--out", str(out2),
+                       "--set", "pacing.fade_delta=0.2"]) == 0
+    assert out2.read_text(encoding="utf-8") != text
+    assert score_main([str(mp), "--registre", str(reg_path), "--set", "pacing.nope=1"]) == 2
 
 
 # ----------------------------------------------------------------------------- défauts intacts
+def test_linear_fold_sd_is_taken_at_the_real_predictor_point():
+    """Lien linéaire, défaut : le sd de chaque pli LOO se lit au point de prédicteurs RÉEL de
+    l'ultra (ln T réel), pas au temps prédit — la définition historique des scores conformes.
+    (Le banc de la Phase 2 avait bougé des bandes de quelques dixièmes d'heure en la perdant.)"""
+    rng = np.random.default_rng(5)
+    twin = _twin([_ultra(h, _riegel(h, d) * (1 + 0.03 * rng.normal()), d) for h, d in _GRID])
+    cal = build_calibration(twin, CFG)
+    cv = leave_one_out(cal, CFG)
+    assert cv is not None
+    Sb = np.asarray(cal.beta_cov)
+    for g, sd in zip(cal.genuine, cv.fold_rel_sd):
+        x = np.array([1.0, math.log(g.hours), g.dplus_per_km])
+        expected = math.sqrt(cal.sigma_kmh**2 + x @ Sb @ x) / g.vga_kmh
+        assert sd == pytest.approx(expected, rel=1e-12)
+
+
 def test_phase_2_defaults_are_untouched():
     assert CFG.calibration.stops_model == "carved" and CFG.calibration.night_term == "none"
     assert CFG.prediction.environment_term == "off" and CFG.pacing.fade_source == "config"

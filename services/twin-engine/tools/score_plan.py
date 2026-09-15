@@ -31,7 +31,7 @@ from pathlib import Path
 
 import numpy as np
 
-from twin_engine.config import load_config
+from twin_engine.config import load_config, override_config
 from twin_engine.course import RaceSpec, build_course
 from twin_engine.pacing import build_pacing
 from twin_engine.predict import Prediction
@@ -131,6 +131,9 @@ def score_registre(registre: dict, manifests: list[Path], cfg) -> list[dict]:
             continue
         rows.append({"athlete": key[0], "race": key[1], "date": key[2],
                      "dev_set": bool(e.get("dev_set")), "official_h": float(official),
+                     "splits_delta": m.get("fade_delta_splits"),
+                     "durability_pct": m.get("durability_pct"),
+                     "stops_rate": m.get("stops_rate_personal"),
                      "scores": scores})
     return rows
 
@@ -162,6 +165,21 @@ def render_markdown(rows: list[dict]) -> str:
     out: list[str] = []
     if not rows:
         return "Aucune course scorable (passages, temps officiel et trace requis)."
+    # ce que les athlètes apportent au fade et aux arrêts (médianes des coupures scorées)
+    out.append("**Mesures par athlète (médianes des coupures scorées)** : Δ des moitiés NON borné, "
+               "durabilité, taux d'arrêt personnel\n")
+    out.append("| athlète | n | Δ moitiés | Δ servi par `splits` (borné) | durabilité % | arrêts, min par h de mouvement |")
+    out.append("|---|---|---|---|---|---|")
+    for ath in sorted({r["athlete"] for r in rows}):
+        sub = [r for r in rows if r["athlete"] == ath]
+        fd = [r["splits_delta"] for r in sub if r.get("splits_delta") is not None]
+        du = [r["durability_pct"] for r in sub if r.get("durability_pct") is not None]
+        sr = [60.0 * r["stops_rate"] for r in sub if r.get("stops_rate") is not None]
+        served = [r["scores"][("splits", "carved")]["fade_delta"] for r in sub
+                  if ("splits", "carved") in r["scores"]]
+        out.append(f"| {ath} | {len(sub)} | {_f(float(np.median(fd)), 3) if fd else '—'} "
+                   f"| {_f(float(np.median(served)), 3) if served else '—'} "
+                   f"| {_f(float(np.median(du))) if du else '—'} | {_f(float(np.median(sr))) if sr else '—'} |")
     groups = [("cas frais (décisionnels)", [r for r in rows if not r["dev_set"]]),
               ("cas de développement (indicatifs)", [r for r in rows if r["dev_set"]]),
               ("tous les cas", rows)]
@@ -204,8 +222,19 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("manifests", nargs="+", help="manifeste(s) JSON (chemins des traces et specs)")
     ap.add_argument("--registre", default=str(DEFAULT_REGISTRE))
     ap.add_argument("--out", help="écrit le markdown à ce chemin (sinon stdout)")
+    ap.add_argument("--set", action="append", default=[], metavar="BLOC.CLÉ=VALEUR",
+                    help="surcharge de config appliquée à TOUTES les variantes du scoreur "
+                         "(répétable) — ex. --set pacing.fade_delta=0.2 ou "
+                         "--set pacing.fade_delta_max=0.3 pour tester une dérive plus forte "
+                         "en quelques secondes, sans archive")
     args = ap.parse_args(argv)
     cfg = load_config()
+    try:
+        for spec in args.set:
+            cfg = override_config(cfg, spec)
+    except ValueError as exc:
+        print(f"--set : {exc}", file=sys.stderr)
+        return 2
     reg_path = Path(args.registre)
     if not reg_path.exists():
         print(f"Registre introuvable : {reg_path}", file=sys.stderr)

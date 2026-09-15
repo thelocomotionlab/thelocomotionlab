@@ -376,12 +376,21 @@ def leave_one_out(calibration: UltraCalibration, cfg: Config) -> CrossValidation
     # écart-type prédictif RELATIF aux points de plis (β-covariance du modèle SERVI) —
     # nourrit le conforme normalisé (S5) : score = |erreur| / sd_pred du pli
     Sb = np.asarray(calibration.beta_cov, dtype=float) if calibration.beta_cov is not None else None
+    sig = calibration.sigma_link
 
     def _rel_sd(i: int, tp: float, dev_i: float) -> float:
+        """sd prédictif relatif du pli : en lien log au temps PRÉDIT du pli (delta-méthode
+        sur le point fixe), en lien linéaire au point de prédicteurs RÉEL de l'ultra
+        (ln T réel, D+/km) — la définition historique, que les scores conformes servis
+        depuis 2026-07 utilisent au bit près."""
         if Sb is None or V[i] <= 0:
             return float("nan")
-        sd = sd_rel_target(tp, V[i], dpk[i], calibration, dev_i)
-        return float("nan") if sd is None else sd
+        if link == "log":
+            sd = sd_rel_target(tp, V[i], dpk[i], calibration, dev_i)
+            return float("nan") if sd is None else sd
+        x = _x_row(calibration, H[i], dpk[i], dev_i)
+        base = float(np.sqrt(max(sig**2 + x @ Sb @ x, 0.0)) / V[i])
+        return float(np.sqrt(base**2 + _stops_var_log(calibration)))
 
     errors: list[float] = []
     log_errors: list[float] = []

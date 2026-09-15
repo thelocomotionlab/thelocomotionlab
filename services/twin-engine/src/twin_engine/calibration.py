@@ -261,7 +261,13 @@ def select_genuine_ultras(summaries: list[ActivitySummary], cfg: Config) -> list
     """Vrais ultras engagés : durée > seuil, vitesse ajustée ≥ seuil, découplage < seuil.
 
     Le filtre de durée porte sur le temps ÉCOULÉ (un 10 h avec de longs arrêts reste un ultra) ;
-    la vitesse ajustée est calculée sur la base de durée configurée (écoulé/mouvement, §4.4)."""
+    la vitesse ajustée servie est calculée sur la base de durée configurée (écoulé, mouvement
+    §4.4, ou hors plateaux dès qu'un modèle d'arrêts est servi). Le PLANCHER de vitesse, lui,
+    se lit sur la vitesse écoulée dès qu'un modèle d'arrêts est servi : c'est lui qui écarte
+    les enregistrements quasi immobiles (bivouac, montre laissée tourner, journées d'étape),
+    dont la vitesse hors plateaux est pourtant celle d'une course — au banc de la Phase 2,
+    la base hors plateaux sans cette garde a fait entrer des « ultras » à 500 à 1 800 minutes
+    d'arrêt par heure de mouvement (DIAGNOSTIC §10.5)."""
     c = cfg.calibration
     out: list[GenuineUltra] = []
     for s in summaries:
@@ -269,7 +275,8 @@ def select_genuine_ultras(summaries: list[ActivitySummary], cfg: Config) -> list
             continue
         hours = _basis_hours(s, cfg)
         vga_kmh = s.ga_km / hours
-        if vga_kmh < c.genuine_min_ga_kmh:
+        gate_kmh = (s.ga_km / (s.duration_s / 3600.0) if c.stops_model != "carved" else vga_kmh)
+        if gate_kmh < c.genuine_min_ga_kmh:
             continue
         # exclut reconnaissances/randos ; FC absente → on ne peut pas vérifier (on garde, signalé)
         if s.decouple_pct is not None and s.decouple_pct > c.genuine_max_decouple_pct:
