@@ -849,3 +849,38 @@ def test_banc_one_pass_matches_the_separate_tools(tmp_path, monkeypatch, capsys)
     assert {"backtest.md", "tableau.md", "diag-testeur.md", "passages-testeur.md"} <= names
     assert "compare.md" not in names                       # pas de registre « avant » → pas de compare
     assert "Course passée" in (out / "backtest.md").read_text(encoding="utf-8")
+
+
+def test_banc_variants_replay_on_one_decode_and_refuse_twin_overrides(tmp_path, monkeypatch, capsys):
+    """--variant : mêmes agrégats décodés, calibration/prédiction rejouées sous surcharge ;
+    sorties par variante ; un bloc twin/course surchargé est refusé (il faudrait re-décoder)."""
+    from tools.banc import main as banc_main, parse_variants
+    from twin_engine.config import load_config
+
+    monkeypatch.setenv("DATA_DIR", str(tmp_path / "data"))
+    cfg = load_config()
+    with pytest.raises(ValueError):
+        parse_variants(["dedup:twin.dedup_activities=off"], cfg)
+    with pytest.raises(ValueError):
+        parse_variants(["A:calibration.link=log", "A:calibration.link=log"], cfg)
+    v = parse_variants(["A2:calibration.link=log", "A3:prediction.interval_source=studentized_scale"], cfg)
+    assert v["A2"].calibration.link == "log" and v["A3"].prediction.interval_source == "studentized_scale"
+
+    archive, gpx = _archive(tmp_path), _course_gpx()
+    (tmp_path / "course.gpx").write_bytes(gpx)
+    manifest = {"athlete": "Testeur", "archive": "archives",
+                "races": [{"name": "Course passée", "date": "2026-04-10",
+                           "official_time": "2:00:00", "gpx": "course.gpx"}]}
+    mp = tmp_path / "manifest.json"
+    mp.write_text(json.dumps(manifest), encoding="utf-8")
+    out = tmp_path / "out"
+    rc = banc_main([str(mp), "--registre", str(tmp_path / "reg.json"), "--out", str(out),
+                    "--no-diag", "--no-passages", "--avant", str(tmp_path / "nope.json"),
+                    "--variant", "A2:calibration.link=log"])
+    capsys.readouterr()
+    assert rc == 0
+    names = {p.name for p in out.iterdir()}
+    assert {"registre-A2.json", "backtest-A2.md", "tableau-A2.md", "compare-A2.md"} <= names
+    base = json.loads((tmp_path / "reg.json").read_text(encoding="utf-8"))["entries"]
+    var = json.loads((out / "registre-A2.json").read_text(encoding="utf-8"))["entries"]
+    assert len(base) == len(var) == 1 and var[0]["model"].get("link") == "log"

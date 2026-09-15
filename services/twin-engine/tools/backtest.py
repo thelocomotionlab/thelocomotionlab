@@ -70,17 +70,6 @@ def parse_time_h(value) -> float | None:
     raise ValueError(f"temps officiel illisible : {value!r} (attendu HH:MM[:SS], 26h30 ou heures)")
 
 
-def _sd_rel(calibration, prediction) -> float | None:
-    """Écart-type prédictif RELATIF au point cible (même levier que le conforme, S5) —
-    stocké pour la future fenêtre empirique groupée (normalisation inter-cas)."""
-    if calibration.beta_cov is None or prediction is None or prediction.v_kmh <= 0:
-        return None
-    x0 = np.array([1.0, np.log(prediction.finish_hours), prediction.dplus_per_km])
-    Sb = np.asarray(calibration.beta_cov, dtype=float)
-    var = calibration.sigma_kmh**2 + float(x0 @ Sb @ x0)
-    return float(np.sqrt(max(var, 0.0)) / prediction.v_kmh)
-
-
 class ArchiveCache:
     """L'archive décodée UNE fois, rejouable à N coupures temporelles.
 
@@ -171,6 +160,7 @@ def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path) -
             # garde-fou marche » et « le garde-fou refuse mes meilleurs cas ».
             "blocking": [c.name for c in result.sufficiency.criteria if c.level == "🔴"],
             "regime": result.calibration.regime,
+            "link": result.calibration.link,
             "n_genuine": result.calibration.n_genuine,
             "n_eff": round(result.calibration.n_eff, 2),
             "sigma_kmh": round(result.calibration.sigma_kmh, 3),
@@ -197,7 +187,10 @@ def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path) -
             "safety_high_h": round(pred.interval_high_h, 3),
             "interval_source": pred.interval_source,
             "cv_mae_pct": None if cv is None else round(cv.mae_pct, 2),
-            "sd_rel": (lambda v: None if v is None else round(v, 4))(_sd_rel(result.calibration, pred)),
+            # sd prédictif relatif et levier de la cible : ceux du moteur (predict.sd_rel_target,
+            # predict.leverage_target), une seule définition — en lien log, sd de ln T
+            "sd_rel": None if pred.sd_rel is None else round(pred.sd_rel, 4),
+            "leverage": None if pred.leverage is None else round(pred.leverage, 3),
             # err_pct > 0 : le moteur a prédit TROP LENT (central au-dessus du réel)
             "err_pct": err_pct,
             "in_plan": (None if actual_h is None or pred.plan_low_h is None

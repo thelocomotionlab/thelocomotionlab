@@ -10,6 +10,13 @@ banc (agrégats), le collecteur de la radiographie (efforts longs) et celui des 
     PYTHONPATH=src python -m tools.banc manifest-a.json [manifest-b.json …] --out /tmp/p0
         [--registre <chemin.json>] [--avant <registre-avant.json>]
         [--no-diag] [--no-passages] [--min-hours 10] [--min-stop-s 60] [--radius-m 150] [--dry-run]
+        [--variant NOM:bloc.clé=valeur[,bloc.clé=valeur…]] …
+
+``--variant`` (répétable) rejoue TOUTES les coupures sous une config surchargée, sur le même
+décodage — l'instrument des A/B de calibration/prédiction/pacing (les blocs ``twin`` et
+``course``, qui changent les agrégats décodés, ne peuvent pas varier ici). Chaque variante
+écrit ``backtest-<nom>.md``, ``tableau-<nom>.md``, ``compare-<nom>.md`` (contre AVANT) et
+``registre-<nom>.json`` dans le dossier — jamais dans le registre committé.
 
 Écrit dans ``--out`` : ``backtest.md`` (prédit vs réel), ``diag-<athlète>.md`` + ``.json``,
 ``passages-<athlète>.md``, ``tableau.md`` (= ``tools/registre --tableau``) et ``compare.md``
@@ -27,7 +34,9 @@ import sys
 import unicodedata
 from pathlib import Path
 
-from twin_engine.config import load_config
+import copy
+
+from twin_engine.config import load_config, override_config
 from twin_engine.ingest import iter_activities
 
 from tools.backtest import (DEFAULT_REGISTRE, ArchiveCache, _fmt_row, backtest_race,
@@ -46,10 +55,32 @@ def _slug(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", ascii_.lower()).strip("-") or "athlete"
 
 
+def parse_variants(specs: list[str], cfg) -> dict[str, object]:
+    """« NOM:bloc.clé=valeur,… » → {nom: Config}. Refuse un nom en double et toute surcharge
+    des blocs ``twin``/``course`` (les agrégats décodés en dépendent : il faudrait
+    re-décoder, ce que le banc ne fait pas)."""
+    out: dict[str, object] = {}
+    for spec in specs:
+        if ":" not in spec:
+            raise ValueError(f"variante illisible : {spec!r} (attendu NOM:bloc.clé=valeur,…)")
+        name, overrides = spec.split(":", 1)
+        name = name.strip()
+        if not name or name in out:
+            raise ValueError(f"nom de variante vide ou en double : {name!r}")
+        cfg_v = override_config(cfg, overrides)
+        if cfg_v.twin != cfg.twin or cfg_v.course != cfg.course:
+            raise ValueError(f"variante {name!r} : les blocs twin/course ne peuvent pas varier "
+                             "sans re-décoder l'archive")
+        out[name] = cfg_v
+    return out
+
+
 def run_manifest_one_pass(manifest_path: Path, cfg, registre: dict, *, out_dir: Path,
                           do_diag: bool = True, do_passages: bool = True,
                           min_hours: float | None = None, min_stop_s: float = 60.0,
-                          radius_m: float = 150.0) -> dict | None:
+                          radius_m: float = 150.0,
+                          variants: dict[str, object] | None = None,
+                          variant_registres: dict[str, dict] | None = None) -> dict | None:
     """Un manifeste, un décodage, trois produits. ``None`` si l'archive est introuvable."""
     base = manifest_path.resolve().parent
     man = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -85,7 +116,18 @@ def run_manifest_one_pass(manifest_path: Path, cfg, registre: dict, *, out_dir: 
         entries.append(backtest_race(cache, r, cfg, base=base))
     merge_registre(registre, athlete, man.get("dev_set", False), entries)
 
-    out: dict = {"athlete": athlete, "entries": entries}
+    out: dict = {"athlete": athlete, "entries": entries, "variants": {}}
+    # variantes de config : mêmes agrégats décodés, calibration/prédiction rejouées
+    for name, cfg_v in (variants or {}).items():
+        cache.cfg = cfg_v
+        try:
+            ev = [backtest_race(cache, r, cfg_v, base=base) for r in man["races"]]
+        finally:
+            cache.cfg = cfg
+        if variant_registres is not None:
+            merge_registre(variant_registres.setdefault(name, copy.deepcopy(registre)),
+                           athlete, man.get("dev_set", False), ev)
+        out["variants"][name] = ev
     slug = _slug(athlete)
     if diag is not None:
         res = diag.finish(cache.contributions, archive=archive, n_skipped=len(skipped),
@@ -116,6 +158,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--min-stop-s", type=float, default=60.0)
     ap.add_argument("--radius-m", type=float, default=150.0)
     ap.add_argument("--dry-run", action="store_true", help="n'écrit pas le registre")
+    ap.add_argument("--variant", action="append", default=[], metavar="NOM:BLOC.CLÉ=VALEUR,…",
+                    help="rejoue le banc sous une config surchargée (répétable) — sorties "
+                         "backtest-/tableau-/compare-/registre-<nom> dans --out")
     args = ap.parse_args(argv)
 
     cfg = load_config()
@@ -128,6 +173,15 @@ def main(argv: list[str] | None = None) -> int:
                                   "protocole : docs/twin-registre-couverture.md.",
                       "entries": []})
 
+    try:
+        variants = parse_variants(args.variant, cfg)
+    except ValueError as exc:
+        ap.error(str(exc))
+    # chaque variante part d'une copie du registre chargé : un athlète non rejoué garde ses
+    # lignes, un athlète rejoué les voit remplacées par celles de la variante
+    variant_registres: dict[str, dict] = {name: copy.deepcopy(registre) for name in variants}
+    variant_rows: dict[str, list[tuple[str, dict]]] = {name: [] for name in variants}
+
     rows: list[tuple[str, dict]] = []
     missing: list[str] = []
     for m in args.manifests:
@@ -136,12 +190,15 @@ def main(argv: list[str] | None = None) -> int:
             mp, cfg, registre, out_dir=out_dir, do_diag=not args.no_diag,
             do_passages=not args.no_passages, min_hours=args.min_hours,
             min_stop_s=args.min_stop_s, radius_m=args.radius_m,
+            variants=variants, variant_registres=variant_registres,
         )
         print(file=sys.stderr)
         if res is None:
             missing.append(json.loads(mp.read_text(encoding="utf-8"))["athlete"])
             continue
         rows += [(res["athlete"], e) for e in res["entries"]]
+        for name, ev in res["variants"].items():
+            variant_rows[name] += [(res["athlete"], e) for e in ev]
 
     head = ("| athlète    | course                       | CV | prédit  | réel    | err %  | bandes [50] [80] |\n"
             "|------------|------------------------------|----|---------|---------|--------|------------------|")
@@ -158,10 +215,23 @@ def main(argv: list[str] | None = None) -> int:
     entries = registre.get("entries", [])
     (out_dir / "tableau.md").write_text(tableau_markdown(entries) + "\n", encoding="utf-8")
     avant = Path(args.avant) if args.avant else None
-    if avant is not None and avant.exists():
-        before = json.loads(avant.read_text(encoding="utf-8")).get("entries", [])
+    before = (json.loads(avant.read_text(encoding="utf-8")).get("entries", [])
+              if avant is not None and avant.exists() else None)
+    if before is not None:
         (out_dir / "compare.md").write_text(compare_markdown(before, entries) + "\n",
                                             encoding="utf-8")
+    for name, reg_v in variant_registres.items():
+        ev = reg_v.get("entries", [])
+        (out_dir / f"registre-{name}.json").write_text(
+            json.dumps(reg_v, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        (out_dir / f"backtest-{name}.md").write_text(
+            head + "\n" + "\n".join(_fmt_row(a, e) for a, e in variant_rows[name]) + "\n",
+            encoding="utf-8")
+        (out_dir / f"tableau-{name}.md").write_text(tableau_markdown(ev) + "\n", encoding="utf-8")
+        # l'avant d'une variante = le banc servi de CE passage (registre courant), à défaut
+        # l'instantané : l'effet du levier se lit à agrégats décodés identiques
+        (out_dir / f"compare-{name}.md").write_text(
+            compare_markdown(entries, ev) + "\n", encoding="utf-8")
     written = sorted(p.name for p in out_dir.iterdir())
     print(f"\nSorties dans {out_dir} : {', '.join(written)}", file=sys.stderr)
     if missing:

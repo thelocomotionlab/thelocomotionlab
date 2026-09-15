@@ -16,7 +16,7 @@ import json
 import sys
 from pathlib import Path
 
-from .config import load_config
+from .config import load_config, override_config
 from .course import RaceSpec
 from .pipeline import run_full, run_preview
 
@@ -98,6 +98,11 @@ def _build_parser() -> argparse.ArgumentParser:
                              "pour un parcours ~13 %% plus coûteux, à pente égale, que les "
                              "courses de référence de l'athlète. Défaut 0 : le moteur ne "
                              "devine pas. Prioritaire sur le champ technicity_pct de --race.")
+        sp.add_argument("--set", action="append", default=[], metavar="BLOC.CLÉ=VALEUR",
+                        help="surcharge de config pour un A/B (répétable, ex. --set "
+                             "calibration.link=log --set prediction.interval_source="
+                             "studentized_scale) ; même sémantique que TWIN_CONFIG_PATH, "
+                             "sans fichier")
         sp.add_argument("--until", default=None, metavar="AAAA-MM-JJ",
                         help="mode BACKTEST : écarte toute activité postérieure à cette date "
                              "(et les non datées — anti-fuite) ; la fraîcheur est jugée à "
@@ -112,6 +117,12 @@ def _build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     cfg = load_config()
+    for spec in args.set:
+        try:
+            cfg = override_config(cfg, spec)
+        except ValueError as exc:
+            print(f"--set : {exc}", file=sys.stderr)
+            return 2
 
     if args.race:
         race_path = Path(args.race)

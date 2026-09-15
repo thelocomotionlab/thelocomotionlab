@@ -130,3 +130,13 @@ def test_cli_without_target_is_unchanged(tmp_path, capsys, monkeypatch):
     out = capsys.readouterr()
     assert json.loads(out.out)["target"] is None
     assert "Objectif demandé" not in out.err
+
+
+def test_cli_set_overrides_config_and_rejects_unknown_key(tmp_path, monkeypatch, capsys):
+    """--set bloc.clé=valeur : la même surcharge que TWIN_CONFIG_PATH, sans fichier."""
+    from twin_engine.cli import main as cli_main
+
+    monkeypatch.setenv("DATA_DIR", str(tmp_path / "data"))
+    rc = cli_main(["preview", "--training", str(FIX / "sample.gpx"), "--course", str(tmp_path / "c.gpx"),
+                   "--set", "calibration.nope=1"])
+    assert rc == 2 and "clé inconnue" in capsys.readouterr().err
