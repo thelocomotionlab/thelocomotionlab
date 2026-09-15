@@ -32,7 +32,17 @@
         "stops_ref_hours": null,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.2114,
+        "alpha_eff": 0.0337,
+        "alpha_eff_n": 56,
+        "alpha_tail": null,
+        "alpha_tail_n": 6,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2024-03-16T10:55:19+00:00",
@@ -176,7 +186,17 @@
         "stops_ref_hours": 9.56,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.1933,
+        "alpha_eff": 0.0997,
+        "alpha_eff_n": 70,
+        "alpha_tail": 0.1983,
+        "alpha_tail_n": 8,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2024-05-18T08:59:53+00:00",
@@ -297,7 +317,17 @@
         "stops_ref_hours": 9.42,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.1559,
+        "alpha_eff": 0.1532,
+        "alpha_eff_n": 108,
+        "alpha_tail": 0.3372,
+        "alpha_tail_n": 8,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2024-09-14T04:33:15+00:00",
@@ -446,7 +476,17 @@
         "stops_ref_hours": 9.79,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.1306,
+        "alpha_eff": 0.1409,
+        "alpha_eff_n": 130,
+        "alpha_tail": 0.2056,
+        "alpha_tail_n": 8,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2024-11-30T23:11:16+00:00",
@@ -590,7 +630,17 @@
         "stops_ref_hours": 9.97,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.1306,
+        "alpha_eff": 0.0858,
+        "alpha_eff_n": 166,
+        "alpha_tail": 0.2056,
+        "alpha_tail_n": 8,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2025-03-22T04:01:59+01:00",
@@ -760,7 +810,17 @@
         "stops_ref_hours": 11.31,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.136,
+        "alpha_eff": 0.065,
+        "alpha_eff_n": 200,
+        "alpha_tail": 0.2158,
+        "alpha_tail_n": 12,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2025-06-27T22:05:46+01:00",
@@ -970,7 +1030,17 @@
         "stops_ref_hours": 18.46,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.1795,
+        "alpha_eff": 0.1727,
+        "alpha_eff_n": 509,
+        "alpha_tail": 0.2395,
+        "alpha_tail_n": 13,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2025-02-02T05:00:18-05:00",
@@ -1077,7 +1147,17 @@
         "stops_ref_hours": 10.23,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.1681,
+        "alpha_eff": 0.2618,
+        "alpha_eff_n": 283,
+        "alpha_tail": 0.2192,
+        "alpha_tail_n": 8,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2023-05-13T01:58:35+00:00",
@@ -1240,7 +1320,17 @@
         "stops_ref_hours": 14.33,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.1792,
+        "alpha_eff": 0.139,
+        "alpha_eff_n": 672,
+        "alpha_tail": 0.2395,
+        "alpha_tail_n": 13,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2026-05-09T03:00:34+00:00",
@@ -1396,7 +1486,17 @@
         "stops_ref_hours": 18.46,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.1794,
+        "alpha_eff": 0.1522,
+        "alpha_eff_n": 592,
+        "alpha_tail": 0.2398,
+        "alpha_tail_n": 13,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2025-10-19T03:00:19+00:00",
@@ -1533,7 +1633,17 @@
         "stops_ref_hours": null,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.4654,
+        "alpha_eff": 0.5034,
+        "alpha_eff_n": 199,
+        "alpha_tail": null,
+        "alpha_tail_n": 7,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2021-11-06T18:58:50+00:00",
@@ -1628,7 +1738,17 @@
         "stops_ref_hours": null,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.4817,
+        "alpha_eff": 0.5041,
+        "alpha_eff_n": 200,
+        "alpha_tail": null,
+        "alpha_tail_n": 7,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2021-11-07T06:36:33+00:00",
@@ -1735,7 +1855,17 @@
         "stops_ref_hours": 13.26,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.1681,
+        "alpha_eff": 0.226,
+        "alpha_eff_n": 296,
+        "alpha_tail": 0.2192,
+        "alpha_tail_n": 10,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2023-07-01T02:58:56+00:00",
@@ -1936,7 +2066,17 @@
         "stops_ref_hours": 15.01,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.1793,
+        "alpha_eff": 0.1772,
+        "alpha_eff_n": 470,
+        "alpha_tail": 0.2434,
+        "alpha_tail_n": 11,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2024-10-04T10:00:25+00:00",
@@ -2136,7 +2276,17 @@
         "stops_ref_hours": null,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.476,
+        "alpha_eff": 0.4844,
+        "alpha_eff_n": 205,
+        "alpha_tail": null,
+        "alpha_tail_n": 7,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2021-11-27T23:00:51+00:00",
@@ -2273,7 +2423,17 @@
         "stops_ref_hours": null,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.3106,
+        "alpha_eff": 0.3941,
+        "alpha_eff_n": 241,
+        "alpha_tail": null,
+        "alpha_tail_n": 7,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2022-07-10T03:00:10+00:00",
@@ -2401,7 +2561,17 @@
         "stops_ref_hours": 15.56,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.1749,
+        "alpha_eff": 0.1729,
+        "alpha_eff_n": 352,
+        "alpha_tail": 0.2597,
+        "alpha_tail_n": 11,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2024-02-17T16:02:58+00:00",
@@ -2559,7 +2729,17 @@
         "stops_ref_hours": 15.54,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.1681,
+        "alpha_eff": 0.1731,
+        "alpha_eff_n": 302,
+        "alpha_tail": 0.2494,
+        "alpha_tail_n": 11,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2023-08-26T07:00:17+00:00",
@@ -2661,7 +2841,17 @@
         "stops_ref_hours": 11.0,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 1.3187,
+        "alpha_eff": 0.5159,
+        "alpha_eff_n": 89,
+        "alpha_tail": null,
+        "alpha_tail_n": 8,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2023-01-08T07:30:48+00:00",
@@ -2771,7 +2961,17 @@
         "stops_ref_hours": 11.98,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.3011,
+        "alpha_eff": 0.2031,
+        "alpha_eff_n": 300,
+        "alpha_tail": 0.405,
+        "alpha_tail_n": 12,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2026-04-24T22:01:34-01:00",
@@ -2927,7 +3127,17 @@
         "stops_ref_hours": 15.47,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.3376,
+        "alpha_eff": 0.285,
+        "alpha_eff_n": 121,
+        "alpha_tail": 0.384,
+        "alpha_tail_n": 12,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2023-09-30T06:21:39+00:00",
@@ -3057,7 +3267,17 @@
         "stops_ref_hours": null,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 1.3187,
+        "alpha_eff": 0.6537,
+        "alpha_eff_n": 87,
+        "alpha_tail": null,
+        "alpha_tail_n": 7,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2022-12-03T23:27:35+00:00",
@@ -3176,7 +3396,17 @@
         "stops_ref_hours": 15.47,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.3651,
+        "alpha_eff": 0.2881,
+        "alpha_eff_n": 110,
+        "alpha_tail": 0.3747,
+        "alpha_tail_n": 12,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2023-06-25T05:30:35+00:00",
@@ -3292,7 +3522,17 @@
         "stops_ref_hours": 13.42,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.3384,
+        "alpha_eff": 0.2369,
+        "alpha_eff_n": 136,
+        "alpha_tail": 0.3893,
+        "alpha_tail_n": 12,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2024-01-14T08:40:25+00:00",
@@ -3406,7 +3646,17 @@
         "stops_ref_hours": 11.0,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 1.0732,
+        "alpha_eff": 0.369,
+        "alpha_eff_n": 109,
+        "alpha_tail": null,
+        "alpha_tail_n": 8,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2023-05-05T21:00:17+00:00",
@@ -3565,7 +3815,17 @@
         "stops_ref_hours": null,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.3713,
+        "alpha_eff": null,
+        "alpha_eff_n": 0,
+        "alpha_tail": null,
+        "alpha_tail_n": 4,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2024-08-04T04:28:55+00:00",
@@ -3682,7 +3942,17 @@
         "stops_ref_hours": null,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.3632,
+        "alpha_eff": null,
+        "alpha_eff_n": 0,
+        "alpha_tail": null,
+        "alpha_tail_n": 6,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2024-11-30T23:11:16+00:00",
@@ -3821,7 +4091,17 @@
         "stops_ref_hours": 9.74,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.2884,
+        "alpha_eff": null,
+        "alpha_eff_n": 0,
+        "alpha_tail": null,
+        "alpha_tail_n": 6,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2025-04-19T05:08:00+00:00",
@@ -3944,7 +4224,17 @@
         "stops_ref_hours": 9.74,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.2,
+        "alpha_eff": null,
+        "alpha_eff_n": 0,
+        "alpha_tail": null,
+        "alpha_tail_n": 6,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2025-05-10T03:00:03+00:00",
@@ -4102,7 +4392,17 @@
         "stops_ref_hours": 12.8,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.1866,
+        "alpha_eff": null,
+        "alpha_eff_n": 0,
+        "alpha_tail": 0.1291,
+        "alpha_tail_n": 10,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2025-10-11T02:59:38+00:00",
@@ -4248,7 +4548,17 @@
         "stops_ref_hours": 12.17,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.2009,
+        "alpha_eff": null,
+        "alpha_eff_n": 0,
+        "alpha_tail": 0.1873,
+        "alpha_tail_n": 10,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2026-05-03T05:26:12+00:00",
@@ -4369,7 +4679,17 @@
         "stops_ref_hours": 13.81,
         "stops_model": "carved",
         "night_share_mean": null,
-        "night_coef": null
+        "night_coef": null,
+        "alpha": 0.1792,
+        "alpha_eff": 0.129,
+        "alpha_eff_n": 686,
+        "alpha_tail": 0.2387,
+        "alpha_tail_n": 13,
+        "duration_prior_origin": null,
+        "envelope_tail_alpha": null,
+        "genuine_floor": "fixed",
+        "level_n_anchored": 0,
+        "level_shift_mean_pct": null
       },
       "race_meta": {
         "start_local": "2026-07-04T03:00:46+00:00",
