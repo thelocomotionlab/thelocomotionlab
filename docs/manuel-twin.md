@@ -228,6 +228,15 @@ impriment le plancher servi et le plus long arrêt de chaque effort long. Le ban
 cinq clés (`examples/twin.config.reference.json`) ; B2, P et F restent derrière leur flag,
 non activés.
 
+Levier de la Phase 5 (coût de pente personnel, C1 ; DIAGNOSTIC §10.15), derrière flag, défaut
+inchangé : `calibration.slope_cost=personal` remet le surcoût de pente de Minetti à l'échelle
+de l'athlète (κ montée et descente, `twin.slope_kappa_up/down`, mesurés sur ses secondes en
+pente avec FC ; `slope_cost_min_hours`, `slope_kappa_min/max`), sur la vitesse ajustée de ses
+efforts comme sur le Deq du parcours ; les réglages de mesure (`twin.slope_bin_pct`,
+`slope_max_pct`, `slope_hr_min_bpm`, `slope_hr_lag_s`) ne varient pas au banc. Le rapport
+porte alors une note « ton coût de pente, mesuré » ; le registre porte `model.slope_kappa_*`,
+`slope_hours_*`, `slope_cost` et `course.slope_kappa`.
+
 ### Mode objectif ([ADR 0002](./adr/0002-mode-objectif-plan-sur-cible.md))
 
 À la demande de la cohorte (« je vise 31 h, donne-moi le plan »), le moteur sait ancrer le plan sur
@@ -483,6 +492,25 @@ Le JSON de chaque preview porte `twin.alpha_eff`, `twin.alpha_tail`, `calibratio
 (origine), `calibration.envelope_tail`, `calibration.level_anchor` (décalages par ultra) et, sous
 `genuine_floor=riegel`, une liste `calibration.genuine` éventuellement plus longue ; le `compare.md`
 du banc dit où `n_genuine` a bougé.
+
+**Banc de la Phase 5 (coût de pente personnel ; DIAGNOSTIC §10.15), une relance** — `C1` sur
+défauts, `RC1` sur la pile de référence à cinq clés ; le scoreur de plan rejoue la forme sous le
+coût personnel depuis le registre ; recapture de Nice :
+
+```bash
+R5="calibration.link=log,calibration.duration_term=prior_shrunk,prediction.interval_source=studentized_scale,calibration.duration_prior_source=efficiency,calibration.envelope_tail=efficiency"
+M="_seed/manifest-val.json _seed/manifest-crasse.json _seed/manifest-lolo.json _seed/manifest-rapace.json"
+PYTHONPATH=src python -m tools.banc $M --out /tmp/p5 --no-diag \
+  --variant C1:calibration.slope_cost=personal \
+  --variant RC1:$R5,calibration.slope_cost=personal
+PYTHONPATH=src python -m tools.score_plan $M --out /tmp/p5/score_plan.md
+PYTHONPATH=src python -m tools.score_plan $M --set calibration.slope_cost=personal --out /tmp/p5/score_plan_C1.md
+NICE_GPX=_seed/cas_validation/Val/courses/nice-100m-2026.gpx
+TWIN_CONFIG_PATH=examples/twin.config.reference.json twin-engine preview \
+  --training _seed/cas_validation/Val/archives --course "$NICE_GPX" --race examples/nice-100m.json \
+  --set calibration.slope_cost=personal > local-data/nice-RC1.json
+git add ../../docs/twin-registre-couverture.json && git commit -m "Phase 5 : registre enrichi par le banc de base" && git push
+```
 
 `registre-<nom>.json` de chaque variante porte, par coupure, `model.stops_rate_personal`,
 `stops_ref_hours`, `night_share_mean`, `night_coef`, `fade_delta_splits`, `durability_pct`, et

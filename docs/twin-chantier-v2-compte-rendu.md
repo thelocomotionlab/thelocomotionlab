@@ -256,6 +256,21 @@ course pour le domaine (F, §10.13), le fade appris du terrain, la garde du doma
 demande du parcours, la jauge décisionnelle par la cohorte. On passe à la Phase 5, le coût
 de pente personnel (C1).
 
+## Phase 5 — le coût de pente personnel (C1, même branche, sur « fonce vers le développement »)
+
+Constat : une seule loi de pente pour tous, corrigée après coup par un terme de terrain
+identifié sur trois à douze ultras. Levier, derrière `calibration.slope_cost=personal`,
+défaut inchangé, code livré et testé (suite verte, golden intact), **banc en attente** :
+- deux facteurs personnels κ_montée, κ_descente sur le surcoût de Minetti, mesurés sur toutes
+  les secondes en pente avec FC (écart intra-activité de vitesse par battement de réserve
+  cardiaque entre chaque tranche de pente et le plat), sommes par tranche calculées au
+  décodage et rejouables au banc sans re-décoder ;
+- décomposition exacte de l'équivalent plat de chaque effort et du Deq du parcours en brut +
+  surcoût de montée + surcoût de descente : κ s'applique aux deux côtés de la prédiction,
+  segments et plan compris ; VC, exposants et courbe record gardent la loi ;
+- registre, JSON et rapport disent les facteurs et les heures de mesure.
+Feuille du banc : manuel §8 (variantes C1, RC1 ; scoreur sous C1 ; recapture nice-RC1).
+
 ## Choix faits à la place de Valentin (Phase 0)
 
 1. **Définition d'un arrêt.** Deux vues, toutes deux imprimées : les secondes « sans
@@ -387,6 +402,22 @@ de pente personnel (C1).
 40. **Les mesures rejetées restent mesurées** (α_queue, VC d'époque via le flag, plus long
     arrêt) : un registre qui les porte permet de les relire quand la Phase 4 apportera les
     passages et le signal de course, sans relancer un décodage.
+
+## Choix faits à la place de Valentin (Phase 5)
+
+41. **Deux facteurs, pas une courbe** : κ par côté sur le surcoût de la loi plutôt qu'un
+    facteur libre par tranche de pente ; la loi garde sa forme, l'athlète en règle
+    l'amplitude, et deux nombres se lisent dans un rapport.
+42. **Écarts intra-activité** plutôt que moyennes brutes par tranche : la forme du jour et
+    la fatigue s'annulent entre les tranches d'une même sortie.
+43. **FC décalée de 30 s** et FC ≥ 100 bpm : constantes de mesure dans le bloc twin, hors
+    banc ; la FC0 profilée de B1 sert de réserve cardiaque, corrigée au premier ordre depuis
+    des sommes prises à 60 bpm.
+44. **La courbe record reste sous la loi** : VC, exposants et maximalité ne changent pas
+    avec κ ; le levier vise la calibration et le parcours, là où le coût de pente entre
+    dans la prédiction.
+45. **Le Deq personnalisé est porté par le profil de parcours** (`with_slope_cost`) et non par
+    la prédiction : prédiction, plan, figures, rapport et scoreur lisent le même parcours.
 
 ## Questions ouvertes
 

@@ -76,6 +76,16 @@ Pour comparer des efforts sur terrains différents, chaque seconde est convertie
 > calculer la pente sur une **base de distance de ±50 m** (pas par seconde), **plafonner `f` à 3,0**
 > (≈ +25 % ; au-delà on marche), écrêter la vitesse brute, léger lissage d'altitude. *Règles fixes.*
 
+> **Coût de pente personnel (chantier v2, Phase 5, C1 ; flag `calibration.slope_cost`, défaut
+> `minetti` ; DIAGNOSTIC §10.15).** La loi reste la référence, mais son SURCOÛT est remis à
+> l'échelle de l'athlète : f_p(i) = 1 + κ_montée·(f(i) − 1) en montée, κ_descente en descente,
+> κ mesurés sur toutes ses secondes en pente avec FC (écart de vitesse par battement de réserve
+> cardiaque entre chaque tranche de pente et le plat, à l'intérieur de chaque sortie, mis en
+> commun sur l'archive). L'équivalent plat de chaque effort et le Deq du parcours sont
+> décomposés exactement en brut + surcoût de montée + surcoût de descente, si bien que κ
+> s'applique aux deux côtés de la prédiction sans re-décoder. Toujours mesuré (jumeau,
+> registre), servi derrière le flag ; la courbe record, VC et exposants gardent la loi.
+
 ### 2.3 Courbe record ajustée
 On accumule la **distance ajustée** `d_ga = Σ f·Δdist`, puis pour chaque durée `T` la meilleure moyenne
 glissante de chaque activité `v_ga(T) = max_t (d_ga[t+T] − d_ga[t]) / T`, agrégées en une **enveloppe

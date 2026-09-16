@@ -2121,3 +2121,61 @@ parcours ; le golden réel §12 à recapturer sur l'archive fraîche à la clôt
 **Phase 4 abandonnée (2026-09-16, décision de Valentin : pas d'export CSV par course).** Le
 signal de course, le fade appris du terrain et la garde du domaine sur la demande du parcours
 restent au backlog ; la suite est la Phase 5, le coût de pente personnel (C1).
+
+### 10.15 C1 — Coût de pente personnel : le surcoût de Minetti à l'échelle de l'athlète (flag `calibration.slope_cost`, défaut `minetti`)
+
+**Constat.** Chaque seconde d'archive et chaque mètre de parcours passent par la même loi fixe
+(Minetti 2002) : un mètre à la pente i vaut f(i) mètres à plat, pour tout le monde. La seule
+correction personnelle est le terme de terrain de la régression, β2·D+/km, identifié sur 3 à
+12 ultras et tiré vers un prior population négatif (−0,0170 km/h par m/km, −0,0027 en log) :
+les ultras vallonnés sont plus lents en vitesse ajustée que les plats, donc la loi crédite
+trop la pente à allure d'ultra, ou pas assez la descente. Ce qui manque n'est pas un autre
+prior sur trois points : c'est la mesure, sur les centaines d'heures de pente avec FC de
+chaque archive, de combien CET athlète est plus lent en montée et plus rapide en descente
+que sur le plat à effort égal.
+
+**Mesure (jumeau, toujours calculée ; servie derrière flag).** Au décodage, pour chaque
+seconde en mouvement avec FC ≥ 100 bpm et pente exploitable, la vitesse brute et la FC lue
+30 s plus tard (`twin.slope_hr_lag_s`, retard de la réponse cardiaque) sont sommées par
+tranche de pente de 2,5 % jusqu'à ±30 % (`ActivitySummary.slope_bins` : secondes, Σ ln v,
+Σ ln(FC − 60), Σ 1/(FC − 60) — la correction au premier ordre vers la FC0 profilée de B1) ;
+aucun tableau 1 Hz conservé, le banc rejoue sans re-décoder. `fit_slope_cost` : pour chaque
+activité avec au moins 10 min de plat, l'écart intra-activité d_b = ⟨ln v − ln(FC − FC0)⟩_b −
+⟨…⟩_plat, mis en commun pondéré par les secondes ; f_personnel(b) = exp(−D_b) ; κ = pente
+des moindres carrés de f_personnel − 1 sur f_Minetti − 1, par côté, pondérée par les
+secondes ; None sous `slope_cost_min_hours` (20 h) de mesure par côté, borné dans
+[0,5 ; 2] (valeur brute au détail). En parallèle, l'équivalent plat de chaque activité est
+décomposé exactement en brut + surcoût de montée + surcoût de descente
+(`ga_up_excess_km`, `ga_down_excess_km`), et le Deq du parcours de même sur sa grille
+(`CourseProfile.base_grid_m`, `excess_up_grid_m`, `excess_down_grid_m`, par segment
+`excess_up_km`, `excess_down_km`).
+
+**Correctif (flag).** `slope_cost=personal` : la vitesse ajustée de chaque effort de la
+calibration vaut (brut + κ_montée × surcoût de montée + κ_descente × surcoût de descente) ÷
+durée, le plancher du domaine la juge ainsi, et le parcours est servi sous les mêmes
+facteurs (`CourseProfile.with_slope_cost`, technicité comprise, segments et plan
+recalculés) — un seul coût de pente des deux côtés de la prédiction. Les fenêtres de la
+courbe record gardent Minetti : VC, exposants et poids de maximalité ne bougent pas
+(documenté : la maximalité compare une vitesse personnelle à une enveloppe de loi).
+Un côté non mesuré vaut 1, signalé ; sans FC (Rapace), loi conservée, signalé. Registre :
+`model.slope_kappa_up/down`, `slope_hours_up/down`, `slope_cost`, `course.slope_kappa` ;
+JSON : `twin.slope_kappa_*`, `calibration.slope_cost`, `course.slope_kappa` ; rapport : une
+note « ton coût de pente, mesuré » (heures, écart à ±10 %, facteurs, Deq servi) quand le
+levier est servi. Tests : identité de la décomposition, κ retrouvés au bit près depuis des
+sommes exactes et à 0,03 près par le chemin de décodage (pente sur base ±50 m, FC décalée),
+loi rendue à κ = (1, 1), calibration et domaine sous κ, parcours sous κ (identité, segments,
+technicité, profil sans décomposition rendu tel quel), pipeline servi derrière le flag seul.
+
+**Limites dites avant mesure.** (1) Le décalage de 30 s est une constante physiologique
+moyenne : les débuts de montée sont bruités, pas biaisés à l'échelle de centaines
+d'heures. (2) En descente le facteur mesure une limite mécanique et technique (quadriceps,
+terrain), pas un coût énergétique — c'est ce que la prédiction doit savoir. (3) Sur un
+parcours dont la pente sort de la plage mesurée (> 30 %), la loi reprend. (4) Le levier
+change le Deq de la cible ET la vitesse des ultras : son effet net sur le central dépend
+de l'écart de profil entre la cible et les courses de l'athlète, ce que seul le banc dit.
+
+**Preuve au banc — À COLLER** (variantes `C1` sur défauts, `RC1` sur la pile de référence à
+cinq clés ; `tools/score_plan --set calibration.slope_cost=personal` ; recapture
+`nice-RC1.json`). Lecture attendue en plus des juges habituels : si β2 tombe vers 0 sous C1,
+le terrain était un coût de pente mal spécifié ; les κ de chaque athlète, par coupure, sont au
+registre quel que soit le flag.
