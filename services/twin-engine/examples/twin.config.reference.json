@@ -1,8 +1,10 @@
 {
-  "_comment": "Configuration du rapport de référence (chantier Twin v2, Phase 1) : les trois leviers de l'intervalle activés — lien log, prior sur la pente en durée, échelle studentisée. Les clés absentes gardent les valeurs de twin.config.json. Usage : TWIN_CONFIG_PATH=examples/twin.config.reference.json twin-engine full … (équivalent à trois --set). Preuve et décision : DIAGNOSTIC §10.1–10.4.",
+  "_comment": "Configuration du rapport de référence (chantier Twin v2) : les trois leviers de l'intervalle de la Phase 1 — lien log, prior sur la pente en durée, échelle studentisée — et, depuis la Phase 3, la pente lue sur l'efficacité-durée de l'athlète (prior de la régression et queue de l'enveloppe des replis). Les clés absentes gardent les valeurs de twin.config.json. Usage : TWIN_CONFIG_PATH=examples/twin.config.reference.json twin-engine full … (équivalent à cinq --set). Preuve et décision : DIAGNOSTIC §10.1–10.4, §10.10, §10.14.",
   "calibration": {
     "link": "log",
-    "duration_term": "prior_shrunk"
+    "duration_term": "prior_shrunk",
+    "duration_prior_source": "efficiency",
+    "envelope_tail": "efficiency"
   },
   "prediction": {
     "interval_source": "studentized_scale"

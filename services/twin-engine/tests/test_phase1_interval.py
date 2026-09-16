@@ -216,18 +216,22 @@ def test_linear_bands_are_floored_at_zero_hours():
 
 
 # ----------------------------------------------------------------------------- config de référence
-def test_reference_config_flips_only_the_three_phase_1_flags():
+def test_reference_config_flips_only_the_reference_flags():
+    """Les trois leviers de l'intervalle (Phase 1) et la pente lue sur l'efficacité-durée
+    (Phase 3, B1) : rien d'autre ne diffère des défauts."""
     from dataclasses import asdict
     from pathlib import Path
     ref = load_config(Path(__file__).resolve().parents[1] / "examples" / "twin.config.reference.json")
     assert ref.calibration.link == "log"
     assert ref.calibration.duration_term == "prior_shrunk"
+    assert ref.calibration.duration_prior_source == "efficiency"
+    assert ref.calibration.envelope_tail == "efficiency"
     assert ref.prediction.interval_source == "studentized_scale"
     for block in ("course", "twin", "calibration", "prediction", "pacing", "sufficiency",
                   "narrative", "target"):
         a, b = asdict(getattr(ref, block)), asdict(getattr(CFG, block))
         changed = {k for k in a if a[k] != b[k]}
-        expected = {"calibration": {"link", "duration_term"},
+        expected = {"calibration": {"link", "duration_term", "duration_prior_source", "envelope_tail"},
                     "prediction": {"interval_source"}}.get(block, set())
         assert changed == expected, (block, changed)
 
