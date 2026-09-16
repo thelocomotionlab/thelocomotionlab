@@ -96,6 +96,10 @@ Le `preview` imprime un JSON (verdict, prédiction, jumeau, parcours) + un résu
 | `plan.gpx` | la trace avec un point de passage horodaté par point d'assistance |
 | `annexe.json` | l'annexe en ligne |
 
+Le dossier de sortie se réutilise sans précaution : les auxiliaires LaTeX de la compilation
+précédente sont effacés avant chaque passe (un `.aux` d'un ancien gabarit faisait mourir XeLaTeX
+sur « Undefined control sequence » en accusant le document neuf).
+
 `--ref` fixe la référence du rapport ; sans elle, elle est **tirée au hasard** — c'est elle qui rend
 l'adresse de l'annexe non devinable. Pour publier l'annexe : copier `annexe.json` dans
 `apps/site/public/twin-annexes/<référence>.json` et déployer le site ; la page

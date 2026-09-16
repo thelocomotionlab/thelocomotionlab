@@ -209,6 +209,29 @@ def test_pdf_v2_compiles_on_the_golden_scenario(tmp_path):
     assert pdf.exists() and pdf.stat().st_size > 100_000
 
 
+@pytest.mark.skipif(not HAS_TEX, reason="XeLaTeX/biber absents (validés dans l'image Docker)")
+def test_a_stale_aux_from_a_previous_run_does_not_break_the_build(tmp_path):
+    """Un dossier de sortie réutilisé garde les auxiliaires de la compilation d'avant. Le .aux
+    est RELU au démarrage : s'il appelle une macro d'un gabarit qui n'est plus chargé, XeLaTeX
+    meurt sur « Undefined control sequence » en accusant le document neuf."""
+    from twin_engine.report.render import clean_aux
+
+    ctx, (course, twin, cal, pred, plan, race, _) = context()
+    fig_dir = tmp_path / "figures"
+    generate_figures(course, twin, cal, pred, plan, race, fig_dir, cfg=CFG)
+    tex_dir = tmp_path / "tex"
+    tex_dir.mkdir()
+    (tex_dir / "main.aux").write_text(
+        "\\relax\n\\nicematrix@redefine@check@rerun\n", encoding="utf-8")
+    (tex_dir / "main.bcf").write_text("<vestige/>", encoding="utf-8")
+    pdf = build_pdf(ctx, fig_dir, tex_dir)
+    assert pdf.exists() and pdf.stat().st_size > 100_000
+
+    clean_aux(tex_dir, "main")
+    assert not (tex_dir / "main.aux").exists()
+    clean_aux(tex_dir, "absent")          # idempotent : aucun fichier, aucune erreur
+
+
 @pytest.mark.skipif(not HAS_TEX, reason="XeLaTeX absent")
 def test_fiche_and_bracelet_compile(tmp_path):
     ctx, _ = context()
