@@ -2174,8 +2174,51 @@ parcours dont la pente sort de la plage mesurée (> 30 %), la loi reprend. (4) L
 change le Deq de la cible ET la vitesse des ultras : son effet net sur le central dépend
 de l'écart de profil entre la cible et les courses de l'athlète, ce que seul le banc dit.
 
-**Preuve au banc — À COLLER** (variantes `C1` sur défauts, `RC1` sur la pile de référence à
-cinq clés ; `tools/score_plan --set calibration.slope_cost=personal` ; recapture
-`nice-RC1.json`). Lecture attendue en plus des juges habituels : si β2 tombe vers 0 sous C1,
-le terrain était un coût de pente mal spécifié ; les κ de chaque athlète, par coupure, sont au
-registre quel que soit le flag.
+**Preuve au banc (2026-09-16 ; `C1` sur défauts, `RC1` sur la pile de référence à cinq clés
+R5 = A2A1A3 + B1 ; scoreur sous C1 ; recapture `nice-RC1.json`).** Base identique au « avant ».
+
+Les facteurs mesurés (registre `model.slope_kappa_*`, dernière coupure de chaque athlète ;
+heures de mesure avec FC en montée / descente) :
+
+| athlète | κ montée | κ descente | heures montée / descente | lecture |
+|---|---|---|---|---|
+| Val | 0,63 → 0,55 (Nice 2026) | **0,50 (borne)** | 196 / 149 (382 / 280 à Nice) | à réserve cardiaque égale, il monte bien plus vite que la loi ne l'attend et ne descend pas plus vite que sur le plat |
+| Crasse | 0,50 → 0,72 (2021 → 2026) | **0,50 (borne)** | 372 / 282 | même signature ; le facteur de montée croît avec les années (marche en côte → course) |
+| Lolo | 0,50 → 0,63 | **0,50 (borne)** | 196 / 160 | idem |
+| Rapace | — | — | 0 / 0 (pas de FC) | loi conservée, signalé |
+
+Trois athlètes sur trois : κ_descente COLLÉ à la borne basse 0,5 — la « remise » de Minetti en
+descente (f = 0,60 à −10 %) n'existe pas sur le terrain, l'athlète descend à peine plus vite
+que sur le plat ; et κ_montée entre 0,5 et 0,7 : la loi de la course surestime le coût des
+côtes quand on y marche. Le Deq de Nice passe de 200,1 à 184,8 km (−7,6 %) et la vga des
+ultras vallonnés baisse d'autant (2025-03-01 : 7,18 → 6,72 km/h) : les deux côtés bougent
+ensemble, le central ne bouge presque pas.
+
+| variante | 13 vendus appariés : MAE / biais / couv 50 / couv 80 / Winkler 50 / 80 | Lolo frais | plan (cas frais, MAE % · biais mi-course) |
+|---|---|---|---|
+| base | 10,3 / +2,7 / 38 / 54 / 0,342 / 0,570 | −18,1 · −16,4 | 1,77 · +6 min |
+| C1 | 10,3 / +2,9 / 54 / 62 / 0,367 / 0,626 | −23,6 (🔴) · −18,0 | 1,83 · −2,5 min |
+| R5 | 8,6 / +1,7 / 31 / 77 / 0,281 / 0,485 | −16,3 · −18,5 | — |
+| RC1 | 9,0 / +2,2 / 46 / 69 / 0,316 / 0,567 | −21,4 (🔴) · −20,1 | — |
+
+Par athlète (RC1 contre R5) : Val 9,0 → 9,7 (Winkler 80 0,542 → 0,598), Crasse 5,9 → 5,2
+(0,265 → 0,289), Lolo 17,4 → 20,7. Zone d'action : Chianti +0,6 → +2,0, Lavaredo +2,5 →
++3,2, MIUT +0,5 → −4,2, Nice 2024 −0,6 → −0,5, Montagnhard +16,8 → +15,7. Verdicts : Lolo
+Nice 50k 2023 vendu → refusé ; sous C1 seul, Crasse Tour des 8 Refuges 2022 (10,35 h réels,
+prédit 16,5 h au lieu de 20,4) passe de 🔴 à 🟠 à +60 % — encore une garde qui lit une
+prédiction (« efforts longs proches de la cible » : la moitié d'une cible plus courte). Sur
+la régression, σ et le levier montent partout (Val Lavaredo : levier 0,72 → 0,82, sd_rel
+0,113 → 0,117 ; MIUT 3,0 → 3,3) : la vitesse personnelle est jugée par les poids de
+maximalité contre une enveloppe restée sous la loi, n_eff baisse (Nice : 11,1 → 9,6).
+Recapture de Nice sous RC1 : 32,53 h (32,43 sous R5), sécurité 27,84 – 38,01 (31 % au lieu
+de 25 %), LOO 7,8 % (6,4), levier 1,39 (0,90), β2 −0,0066 (−0,0046 : le terrain ne tombe
+pas vers 0, il grossit).
+
+**Lecture.** Le levier mesure quelque chose de vrai et de stable (trois athlètes, même
+signature, des centaines d'heures), mais tel qu'il est écrit il dégrade tout ce qu'on juge :
+Winkler, cas frais, forme du plan, largeur. Deux raisons lisibles : (1) la forme de la loi
+n'est pas la bonne en descente — un facteur sur le surcoût de Minetti ne peut pas dire
+« pas de remise du tout », il bute sur sa borne ; (2) la vitesse personnelle entre dans une
+calibration dont l'enveloppe, la maximalité et le prior de terrain sont restés sous la loi.
+**Décision différée au retour de Nice** (consigne de Valentin, 2026-09-16) : défaut
+`minetti`, non activé pour la référence ; κ restent mesurés et consignés à chaque coupure.

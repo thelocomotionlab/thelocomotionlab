@@ -271,6 +271,18 @@ défaut inchangé, code livré et testé (suite verte, golden intact), **banc en
 - registre, JSON et rapport disent les facteurs et les heures de mesure.
 Feuille du banc : manuel §8 (variantes C1, RC1 ; scoreur sous C1 ; recapture nice-RC1).
 
+**Banc reçu (2026-09-16) — décision différée au retour de Nice (consigne de Valentin).**
+Mesure nette et stable : trois athlètes sur trois montent bien plus vite que la loi ne
+l'attend à réserve cardiaque égale (κ montée 0,55 à 0,72) et ne descendent pas plus vite
+que sur le plat (κ descente collé à la borne 0,5) ; Nice passe de 200,1 à 184,8 km
+équivalents et la vga des ultras vallonnés baisse d'autant, le central ne bouge pas
+(32,43 → 32,53 h). Mais tel qu'écrit le levier dégrade tout ce qu'on juge : Winkler 80 des
+13 vendus 0,485 → 0,567 sous la référence, cas frais −16 / −19 → −21 / −20, forme du plan
+1,77 → 1,83, bandes plus larges, LOO de Nice 6,4 → 7,8 %. Deux causes lisibles, consignées
+(DIAGNOSTIC §10.15) : la loi n'a pas la bonne forme en descente, et la vitesse personnelle
+entre dans une calibration restée sous la loi (maximalité, enveloppe, prior de terrain).
+Défaut `minetti`, non activé ; κ mesurés et consignés à chaque coupure.
+
 ## Choix faits à la place de Valentin (Phase 0)
 
 1. **Définition d'un arrêt.** Deux vues, toutes deux imprimées : les secondes « sans
