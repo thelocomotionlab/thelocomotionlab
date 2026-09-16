@@ -98,6 +98,9 @@ Règles :
 4. L'outil consigne : central, deux bandes, source (mc/conforme), sd prédictif relatif
    (normalisation de la future fenêtre groupée), temps réel, erreur signée, couvert ou non,
    n ultras et verdict à la coupure. Un refus de prédire (🔴) est consigné tel quel.
+   Une course À VENIR (sans `official_time`) donne une entrée **préparée** : tout est consigné
+   sauf le réel, et elle reste hors des statistiques jusqu'à ce que le temps soit renseigné et
+   le banc relancé.
 5. **Quarantaine, jamais de suppression silencieuse** : une entrée aux données d'ENTRÉE
    fausses (ex. trace de parcours corrompue) se met en quarantaine avec son motif —
    `python -m tools.registre --quarantine "Athlète" "Course" "AAAA-MM-JJ" "motif"` — elle

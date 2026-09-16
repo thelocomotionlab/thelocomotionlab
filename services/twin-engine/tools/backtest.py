@@ -17,6 +17,9 @@ Manifeste JSON (un fichier par athlète ; chemins relatifs = relatifs au manifes
          "gpx": "traces/x-trail.gpx",
          "race_json": "carnets/x-trail.json",   // optionnel (sans : mode GPX-only)
          "until": "2025-06-10",                 // optionnel (défaut : veille de la course)
+         // official_time absent = course À VENIR : l'entrée est PRÉPARÉE (central, bandes,
+         // source, verdict à la coupure) et reste hors des statistiques ; après la course,
+         // on renseigne le temps et on relance — l'entrée est écrasée, complète.
          "dnf": false}                          // true = abandon (consigné, exclu des quantiles)
       ]
     }

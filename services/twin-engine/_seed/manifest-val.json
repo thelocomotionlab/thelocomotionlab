@@ -38,6 +38,13 @@
       "date": "2025-06-27",
       "official_time": "21:14:34",
       "gpx": "cas_validation/Val/traces/lavaredo-2025.gpx"
+    },
+    {
+      "name": "Nice 100M 2026",
+      "date": "2026-09-25",
+      "_comment": "Course à venir : entrée PRÉPARÉE (Décision 5.3). Sans official_time, le banc consigne le central, les deux bandes, leur source et le verdict à la coupure, et l'entrée reste hors des statistiques. Après la course : renseigner official_time et relancer tools/backtest — l'entrée est écrasée, complète.",
+      "gpx": "cas_validation/Val/courses/nice-100m-2026.gpx",
+      "race_json": "../examples/nice-100m.json"
     }
   ]
 }
