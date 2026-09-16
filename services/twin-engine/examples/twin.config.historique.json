@@ -1,0 +1,12 @@
+{
+  "_comment": "Rollback nommé : les défauts servis jusqu'à la Décision 1 du chantier Twin v2 (2026-09-16) — lien linéaire, pente en durée libre, α court de la courbe record, enveloppe historique, bandes conformes normalisées. Les clés absentes gardent les valeurs de twin.config.json. Usage : TWIN_CONFIG_PATH=examples/twin.config.historique.json twin-engine … (équivalent à cinq --set). Règle de retour pré-enregistrée : docs/twin-registre-couverture.md ; preuve : DIAGNOSTIC §10.16.",
+  "calibration": {
+    "link": "linear",
+    "duration_term": "free",
+    "duration_prior_source": "twin_alpha",
+    "envelope_tail": "alpha"
+  },
+  "prediction": {
+    "interval_source": "conformal_normalized"
+  }
+}

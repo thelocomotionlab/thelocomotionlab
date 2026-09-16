@@ -25,7 +25,10 @@ from twin_engine.twin.model import Twin
 from twin_engine.twin.record import ActivitySummary, RecordCurve, process_activity
 
 CFG = load_config()
-LOG = override_config(CFG, "calibration.link=log")
+# leviers testés depuis les anciens défauts (lien linéaire, pente libre, bandes conformes),
+# isolés ; LOG y ajoute le seul lien log (Décision 1 : CFG est la pile de référence complète)
+HIST = override_config(CFG, "calibration.link=linear,calibration.duration_term=free,calibration.duration_prior_source=twin_alpha,calibration.envelope_tail=alpha,prediction.interval_source=conformal_normalized")
+LOG = override_config(HIST, "calibration.link=log")
 PERSONAL = override_config(LOG, "calibration.stops_model=personal")
 
 
@@ -404,8 +407,8 @@ def test_linear_fold_sd_is_taken_at_the_real_predictor_point():
     (Le banc de la Phase 2 avait bougé des bandes de quelques dixièmes d'heure en la perdant.)"""
     rng = np.random.default_rng(5)
     twin = _twin([_ultra(h, _riegel(h, d) * (1 + 0.03 * rng.normal()), d) for h, d in _GRID])
-    cal = build_calibration(twin, CFG)
-    cv = leave_one_out(cal, CFG)
+    cal = build_calibration(twin, HIST)
+    cv = leave_one_out(cal, HIST)
     assert cv is not None
     Sb = np.asarray(cal.beta_cov)
     for g, sd in zip(cal.genuine, cv.fold_rel_sd):

@@ -26,10 +26,13 @@ from twin_engine.twin.record import (ActivityContribution, ActivitySummary, Reco
                                      record_from_contributions, tail_durations)
 
 CFG = load_config()
-LOG = override_config(CFG, "calibration.link=log")
+# leviers testés depuis les anciens défauts (lien linéaire, pente libre, α court, enveloppe
+# historique, bandes conformes), isolés (Décision 1 : CFG est la pile de référence complète)
+HIST = override_config(CFG, "calibration.link=linear,calibration.duration_term=free,calibration.duration_prior_source=twin_alpha,calibration.envelope_tail=alpha,prediction.interval_source=conformal_normalized")
+LOG = override_config(HIST, "calibration.link=log")
 EXACT = override_config(
-    CFG, "calibration.recency_halflife_days=0,calibration.maximality_mode=off,"
-         "calibration.terrain_term=free")
+    HIST, "calibration.recency_halflife_days=0,calibration.maximality_mode=off,"
+          "calibration.terrain_term=free")
 EXACT_LOG = override_config(EXACT, "calibration.link=log")
 
 
@@ -363,5 +366,6 @@ def test_reference_config_and_overrides_accept_the_new_keys():
     assert (cfg.calibration.envelope_tail, cfg.calibration.duration_prior_source) == ("efficiency", "record_tail")
     # défauts : rien de tout cela n'est servi
     assert (CFG.calibration.genuine_floor, CFG.calibration.genuine_max_stop_s) == ("fixed", 0.0)
-    assert (CFG.calibration.level_anchor, CFG.calibration.envelope_tail) == ("none", "alpha")
-    assert CFG.calibration.duration_prior_source == "twin_alpha"
+    assert (CFG.calibration.level_anchor, CFG.calibration.envelope_tail) == ("none", "efficiency")
+    assert CFG.calibration.duration_prior_source == "efficiency"      # Décision 1
+    assert (HIST.calibration.envelope_tail, HIST.calibration.duration_prior_source) == ("alpha", "twin_alpha")

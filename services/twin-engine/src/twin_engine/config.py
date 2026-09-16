@@ -238,33 +238,36 @@ class CalibrationParams:
     blend_sigma_kmh: float = 0.45                        # 1–2 ultras : incertitude élargie
     vc_e_sigma_kmh: float = 0.80                         # 0 ultra : extrapolation VC+E
     # --- lien de la régression (chantier v2, Phase 1, A2) -----------------------------------
-    # ``linear`` (défaut historique) : v = β0 + β1·ln T + β2·D+/km, σ en km/h, bandes
-    #   symétriques en heures.
-    # ``log`` : ln v = a + b·ln T + c·D+/km (forme de Riegel) — l'erreur d'ultra est
-    #   multiplicative : σ relatif, point fixe ANALYTIQUE T = exp((ln Deq − a − c·D+/km)/(1+b))
-    #   (plus de plancher de vitesse), Monte-Carlo, LOO, scores conformes et β-covariance
-    #   exprimés dans ce lien, bandes en heures asymétriques T·exp(±h). Le prior terrain
-    #   devient relatif (default_dplus_penalty_log_per_dpkm) et le plancher de σ aussi.
-    link: str = "linear"                                 # {linear, log}
+    # ``log`` (DÉFAUT depuis la Décision 1 du chantier v2, 2026-09-16 ; rollback nommé
+    #   examples/twin.config.historique.json) : ln v = a + b·ln T + c·D+/km (forme de Riegel)
+    #   — l'erreur d'ultra est multiplicative : σ relatif, point fixe ANALYTIQUE
+    #   T = exp((ln Deq − a − c·D+/km)/(1+b)) (plus de plancher de vitesse), Monte-Carlo, LOO,
+    #   scores conformes et β-covariance exprimés dans ce lien, bandes en heures asymétriques
+    #   T·exp(±h). Le prior terrain devient relatif (default_dplus_penalty_log_per_dpkm) et le
+    #   plancher de σ aussi.
+    # ``linear`` (défaut jusqu'à la Décision 1) : v = β0 + β1·ln T + β2·D+/km, σ en km/h,
+    #   bandes symétriques en heures.
+    link: str = "log"                                    # {linear, log}
     # prior terrain en lien log = β2 de référence ÷ vitesse de référence :
     # −0,0170 km/h par m/km ÷ 6,40 km/h (twin-theory §12) = −0,00266 par m/km.
     default_dplus_penalty_log_per_dpkm: float = -0.0027
     regression_min_sigma_log: float = 0.03               # ≈ 0,20 km/h ÷ 6,5 km/h
     # --- prior sur la pente en durée (Phase 1, A1) --------------------------------------------
-    # ``free`` (défaut) : b libre — identifié par 3 à 12 points dont un ou deux longs.
-    # ``prior_shrunk`` : pseudo-observation ridge de b vers −α (Riegel : v ∝ T^−α), α lu sur la
+    # ``free`` (défaut jusqu'à la Décision 1) : b libre — identifié par 3 à 12 points dont un
+    #   ou deux longs.
+    # ``prior_shrunk`` (DÉFAUT) : pseudo-observation ridge de b vers −α (Riegel : v ∝ T^−α), α lu sur la
     #   courbe record de l'athlète (``twin_alpha``, Twin.alpha, fenêtre 30 min–6 h) ou prior
     #   population (repli si α absent). Entre dans XᵀWX du fit, de la covariance et de chaque
     #   pli LOO, comme terrain_term. En lien linéaire le prior vaut −α × v̄ (v̄ = vga moyenne
     #   pondérée des vrais ultras). Ce que ça ferme : l'exposant d'endurance ne servait la
     #   prédiction qu'en régime blend/vc_e ; ici il réduit le levier de la cible.
-    duration_term: str = "free"                          # {free, prior_shrunk}
+    duration_term: str = "prior_shrunk"                  # {free, prior_shrunk}
     duration_shrink_lambda: float = 2.0                  # nb de pseudo-observations vers le prior
-    # source de l'α du prior : ``twin_alpha`` (courbe record 30 min–6 h), ``efficiency``
-    #   (α_eff, efficacité-durée, Phase 3 B1), ``record_tail`` (α_queue, fenêtres longues,
-    #   Phase 3 B2) — chacune retombe sur ``twin_alpha`` puis ``population`` quand l'exposant
-    #   demandé manque ; ``population`` = constante ci-dessous.
-    duration_prior_source: str = "twin_alpha"            # {twin_alpha, efficiency, record_tail, population}
+    # source de l'α du prior : ``efficiency`` (DÉFAUT : α_eff, efficacité-durée, Phase 3 B1),
+    #   ``twin_alpha`` (courbe record 30 min–6 h, défaut jusqu'à la Décision 1), ``record_tail``
+    #   (α_queue, fenêtres longues, Phase 3 B2) — chacune retombe sur ``twin_alpha`` puis
+    #   ``population`` quand l'exposant demandé manque ; ``population`` = constante ci-dessous.
+    duration_prior_source: str = "efficiency"            # {twin_alpha, efficiency, record_tail, population}
     # α population = médiane des α mesurés au banc v2 (Val 0,143 et 0,196 selon l'archive,
     # Crasse 0,179) — ordre de grandeur, jamais une constante universelle.
     duration_prior_alpha_population: float = 0.16
@@ -279,11 +282,11 @@ class CalibrationParams:
     level_anchor_window_days: float = 365.0
     level_anchor_gain: float = 1.0
     # --- queue de l'enveloppe des replis blend et vc_e (Phase 3, B1/B2) ----------------------
-    # ``alpha`` (défaut historique) : l'exposant 30 min–6 h continue au-delà de 6 h.
-    # ``efficiency`` (α_eff) / ``record_tail`` (α_queue) : au-delà de twin.endurance_window_s[1]
-    #   l'enveloppe décroît avec l'exposant mesuré, raccord continu ; repli sur ``alpha`` quand
-    #   l'exposant demandé manque (signalé dans les notes).
-    envelope_tail: str = "alpha"                         # {alpha, efficiency, record_tail}
+    # ``efficiency`` (DÉFAUT : α_eff) / ``record_tail`` (α_queue) : au-delà de
+    #   twin.endurance_window_s[1] l'enveloppe décroît avec l'exposant mesuré, raccord continu ;
+    #   repli sur ``alpha`` quand l'exposant demandé manque (signalé dans les notes).
+    # ``alpha`` (défaut jusqu'à la Décision 1) : l'exposant 30 min–6 h continue au-delà de 6 h.
+    envelope_tail: str = "efficiency"                    # {alpha, efficiency, record_tail}
     # --- coût de pente personnel (Phase 5, C1) -----------------------------------------------
     # ``minetti`` (défaut) : la loi fixe pour tous. ``personal`` : le surcoût de pente de la loi
     #   est multiplié par κ_montée en montée et κ_descente en descente, mesurés sur les secondes
@@ -359,7 +362,9 @@ class PredictionParams:
     # Le conforme reste fini et calé sur les erreurs démontrées. Repli automatique des DEUX
     # bandes sur ``mc`` sans validation croisée (blend/vc_e) ou à moins de 4 plis. Rollback : mc.
     # --- facteur d'échelle studentisé (Phase 1, A3) ------------------------------------------
-    # ``studentized_scale`` : au lieu du quantile EMPIRIQUE des scores LOO (à n = 12 le 80 %
+    # ``studentized_scale`` (DÉFAUT depuis la Décision 1 du chantier v2, 2026-09-16 ; le
+    #   conforme normalisé reste le rollback nommé, examples/twin.config.historique.json) :
+    #   au lieu du quantile EMPIRIQUE des scores LOO (à n = 12 le 80 %
     #   est le 11ᵉ score sur 12, un seul mauvais pli fixe la borne, largeur nulle ou au plafond
     #   sur les registres dégénérés), on estime un facteur d'échelle κ = RMS pondéré des scores
     #   studentisés |erreur|/sd_pred (mêmes poids récence × maximalité) et on lit les quantiles
@@ -367,7 +372,7 @@ class PredictionParams:
     #   prédictif de la CIBLE. ``studentized_scale_mad`` : κ = 1,4826 × médiane pondérée des
     #   scores (variante robuste, mesurée) ; ``studentized_scale_signed`` : κ séparé par signe
     #   d'erreur (asymétrie apprise, mesurée). Repli MC sous 4 plis, comme le conforme.
-    interval_source: str = "conformal_normalized"        # {mc, conformal_normalized, pooled,
+    interval_source: str = "studentized_scale"           # {mc, conformal_normalized, pooled,
     #                                                       studentized_scale, studentized_scale_mad,
     #                                                       studentized_scale_signed}
     # --- fenêtre EMPIRIQUE groupée (``pooled`` — plomberie prête, revue §9.9) ----------------

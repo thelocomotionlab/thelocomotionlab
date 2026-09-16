@@ -28,7 +28,15 @@ def test_defaults_from_shipped_json():
     # sont calées sur les erreurs LOO réelles — le MC prédictif dégénère sur les calibrations
     # faiblement identifiées (cas MIUT : bornes = plafond Deq/v_floor — DIAGNOSTIC §9.8).
     # Rollback : "mc".
-    assert cfg.prediction.interval_source == "conformal_normalized"
+    # Décision 1 du chantier v2 (2026-09-16) : la pile de référence est le défaut servi —
+    # lien log, prior sur la pente lu sur l'efficacité-durée, queue d'enveloppe sur
+    # l'efficacité-durée, échelle studentisée (DIAGNOSTIC §10.16). Rollback nommé :
+    # examples/twin.config.historique.json (linear / free / twin_alpha / alpha /
+    # conformal_normalized).
+    assert cfg.prediction.interval_source == "studentized_scale"
+    assert cfg.calibration.link == "log" and cfg.calibration.duration_term == "prior_shrunk"
+    assert cfg.calibration.duration_prior_source == "efficiency"
+    assert cfg.calibration.envelope_tail == "efficiency"
     assert (cfg.pacing.plan_window_low_pct, cfg.pacing.plan_window_high_pct) == (25, 75)
     # §9.9 : garde-fou domaine ACTIF (banc : +59 à +308 % sur cibles courtes, deux vendues 🟠) ;
     # fenêtre empirique groupée = plomberie prête, quantiles PAS ENCORE appris (jauge)

@@ -18,7 +18,12 @@ from twin_engine.twin.model import Twin
 from twin_engine.twin.record import ActivitySummary, RecordCurve
 
 CFG = load_config()
-LOG = override_config(CFG, "calibration.link=log")
+# Chaque levier de la Phase 1 se teste depuis les ANCIENS défauts (lien linéaire, pente libre,
+# α court, enveloppe historique, bandes conformes), isolé des autres : HIST est ce point de
+# départ, LOG y ajoute le seul lien log. Depuis la Décision 1 du chantier v2, CFG (les défauts
+# servis) est la pile de référence complète.
+HIST = override_config(CFG, "calibration.link=linear,calibration.duration_term=free,calibration.duration_prior_source=twin_alpha,calibration.envelope_tail=alpha,prediction.interval_source=conformal_normalized")
+LOG = override_config(HIST, "calibration.link=log")
 
 
 def _ultra(hours, vga_kmh, dpk, date="2025-06-01"):
@@ -67,7 +72,7 @@ def test_student_t_quantiles_match_tables():
 def test_override_config_types_and_rejects_unknown_keys():
     cfg = override_config(CFG, "calibration.link=log, prediction.mc_n=100,pacing.scale_stops=false")
     assert cfg.calibration.link == "log" and cfg.prediction.mc_n == 100
-    assert cfg.pacing.scale_stops is False and CFG.calibration.link == "linear"
+    assert cfg.pacing.scale_stops is False and HIST.calibration.link == "linear"
     assert override_config(CFG, "calibration.duration_shrink_lambda=5").calibration.duration_shrink_lambda == 5.0
     assert override_config(CFG, "prediction.pooled_q50=1.2").prediction.pooled_q50 == 1.2
     for bad in ("calibration.link", "nope.link=log", "calibration.nope=1", "link=log"):
@@ -85,7 +90,7 @@ def test_log_link_recovers_a_riegel_athlete_exactly():
     assert cal.sigma_log == pytest.approx(LOG.calibration.regression_min_sigma_log)   # résidu nul → plancher
     assert cal.sigma_kmh > 0 and cal.to_dict()["link"] == "log"
     # le lien linéaire, lui, ne peut pas être exact sur une loi de puissance
-    lin = build_calibration(_riegel_twin(), CFG)
+    lin = build_calibration(_riegel_twin(), HIST)
     assert lin.link == "linear" and lin.sigma_log is None
 
 
@@ -158,13 +163,13 @@ def test_duration_prior_falls_back_to_population_and_applies_in_loo():
     free = build_calibration(twin, LOG)
     assert leave_one_out(cal, cfg).errors_pct != leave_one_out(free, LOG).errors_pct
     # en lien linéaire, le prior est −α·v̄ (km/h par unité de ln T)
-    lin = build_calibration(twin, override_config(CFG, "calibration.duration_term=prior_shrunk"))
+    lin = build_calibration(twin, override_config(HIST, "calibration.duration_term=prior_shrunk"))
     v_bar = float(np.average([g.vga_kmh for g in lin.genuine], weights=lin.weights))
-    assert lin.duration_prior[0] == pytest.approx(-CFG.calibration.duration_prior_alpha_population * v_bar)
+    assert lin.duration_prior[0] == pytest.approx(-HIST.calibration.duration_prior_alpha_population * v_bar)
 
 
 # ----------------------------------------------------------------------------- A3 : échelle studentisée
-@pytest.mark.parametrize("link_cfg", [CFG, LOG])
+@pytest.mark.parametrize("link_cfg", [HIST, LOG])
 def test_studentized_scale_gives_finite_nested_bands(link_cfg):
     twin = _riegel_twin(pert=0.04)
     for variant in ("studentized_scale", "studentized_scale_mad", "studentized_scale_signed"):
@@ -179,7 +184,7 @@ def test_studentized_scale_gives_finite_nested_bands(link_cfg):
 
 def test_studentized_scale_uses_student_quantiles_and_falls_back_below_four_folds():
     twin = _riegel_twin(pert=0.04)
-    cfg = override_config(CFG, "prediction.interval_source=studentized_scale")
+    cfg = override_config(HIST, "prediction.interval_source=studentized_scale")   # lien linéaire : demi-largeurs en heures
     cal = build_calibration(twin, cfg)
     pred = predict_finish(200.0, 53.0, twin, cal, cfg)
     half80 = (pred.interval_high_h - pred.finish_hours) / pred.finish_hours
@@ -216,34 +221,43 @@ def test_linear_bands_are_floored_at_zero_hours():
 
 
 # ----------------------------------------------------------------------------- config de référence
-def test_reference_config_flips_only_the_reference_flags():
-    """Les trois leviers de l'intervalle (Phase 1) et la pente lue sur l'efficacité-durée
-    (Phase 3, B1) : rien d'autre ne diffère des défauts."""
+def test_reference_config_equals_the_defaults_and_the_rollback_flips_exactly_five_keys():
+    """Décision 1 du chantier v2 (2026-09-16) : la pile de référence (lien log, prior sur la
+    pente lu sur l'efficacité-durée, queue d'enveloppe, échelle studentisée) est le défaut ;
+    ``examples/twin.config.reference.json`` ne change plus rien, et le rollback nommé
+    ``examples/twin.config.historique.json`` rend exactement les cinq anciennes valeurs."""
     from dataclasses import asdict
     from pathlib import Path
-    ref = load_config(Path(__file__).resolve().parents[1] / "examples" / "twin.config.reference.json")
-    assert ref.calibration.link == "log"
-    assert ref.calibration.duration_term == "prior_shrunk"
-    assert ref.calibration.duration_prior_source == "efficiency"
-    assert ref.calibration.envelope_tail == "efficiency"
-    assert ref.prediction.interval_source == "studentized_scale"
-    for block in ("course", "twin", "calibration", "prediction", "pacing", "sufficiency",
-                  "narrative", "target"):
-        a, b = asdict(getattr(ref, block)), asdict(getattr(CFG, block))
+    ex = Path(__file__).resolve().parents[1] / "examples"
+    ref = load_config(ex / "twin.config.reference.json")
+    hist = load_config(ex / "twin.config.historique.json")
+    blocks = ("course", "twin", "calibration", "prediction", "pacing", "sufficiency", "narrative", "target")
+    for block in blocks:
+        assert asdict(getattr(ref, block)) == asdict(getattr(CFG, block)), block
+    for block in blocks:
+        a, b = asdict(getattr(hist, block)), asdict(getattr(CFG, block))
         changed = {k for k in a if a[k] != b[k]}
         expected = {"calibration": {"link", "duration_term", "duration_prior_source", "envelope_tail"},
                     "prediction": {"interval_source"}}.get(block, set())
         assert changed == expected, (block, changed)
+    assert (hist.calibration.link, hist.calibration.duration_term) == ("linear", "free")
+    assert (hist.calibration.duration_prior_source, hist.calibration.envelope_tail) == ("twin_alpha", "alpha")
+    assert hist.prediction.interval_source == "conformal_normalized"
 
 
-# ----------------------------------------------------------------------------- défauts intacts
-def test_defaults_are_untouched_by_phase_1():
-    assert CFG.calibration.link == "linear" and CFG.calibration.duration_term == "free"
-    assert CFG.prediction.interval_source == "conformal_normalized"
+# ----------------------------------------------------------------------------- défauts servis
+def test_defaults_are_the_reference_stack_and_the_rollback_restores_the_old_ones():
+    assert CFG.calibration.link == "log" and CFG.calibration.duration_term == "prior_shrunk"
+    assert CFG.prediction.interval_source == "studentized_scale"
     twin = _riegel_twin(pert=0.04)
-    cal = build_calibration(twin, CFG)
+    cal_new = build_calibration(twin, CFG)
+    assert cal_new.link == "log" and cal_new.duration_prior is not None and cal_new.sigma_log is not None
+    pred_new = predict_finish(200.0, 53.0, twin, cal_new, CFG)
+    assert pred_new.interval_source == "studentized_scale" and pred_new.scale_kappa is not None
+    # le rollback nommé rend le comportement historique
+    cal = build_calibration(twin, HIST)
     assert cal.link == "linear" and cal.duration_prior is None and cal.sigma_log is None
-    pred = predict_finish(200.0, 53.0, twin, cal, CFG)
+    pred = predict_finish(200.0, 53.0, twin, cal, HIST)
     assert pred.scale_kappa is None
     # sd_rel linéaire = levier complet ÷ v, la définition historique du registre
     x0 = np.array([1.0, np.log(pred.finish_hours), 53.0])

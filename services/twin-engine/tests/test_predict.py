@@ -14,12 +14,16 @@ from twin_engine.calibration import (
     recency_weights,
     select_genuine_ultras,
 )
-from twin_engine.config import load_config
+from twin_engine.config import load_config, override_config
 from twin_engine.predict import _solve_fixed_point, leave_one_out, predict_finish
 from twin_engine.twin.model import CriticalSpeed, Twin
 from twin_engine.twin.record import ActivitySummary, RecordCurve
 
 CFG = load_config()
+# anciens défauts (lien linéaire, pente libre, bandes conformes), le comportement historique
+# que plusieurs tests ci-dessous épinglent (Décision 1 du chantier v2 : les défauts servis
+# sont la pile de référence — lien log, prior, échelle studentisée)
+HIST = override_config(CFG, "calibration.link=linear,calibration.duration_term=free,calibration.duration_prior_source=twin_alpha,calibration.envelope_tail=alpha,prediction.interval_source=conformal_normalized")
 
 
 def _ultra(hours, vga_kmh, dpk):
@@ -73,8 +77,8 @@ def test_monte_carlo_deterministic():
 
 def test_leave_one_out_perfect_plane_is_near_zero():
     twin = _twin([_ultra(h, _plane(h, dpk), dpk) for h, dpk in [(12, 50), (20, 55), (15, 45), (24, 53)]])
-    cal = build_calibration(twin, CFG)
-    cv = leave_one_out(cal, CFG)
+    cal = build_calibration(twin, HIST)          # plan LINÉAIRE parfait : lien linéaire, pente libre
+    cv = leave_one_out(cal, HIST)
     assert cv is not None and cv.n == 4
     # données parfaitement sur le plan → erreur hors-échantillon quasi nulle
     assert cv.mae_pct < 0.5
@@ -118,12 +122,12 @@ def test_predictive_mc_widens_more_in_extrapolation():
     from dataclasses import replace
 
     twin = _twin(_noisy_ultras())
-    cal = build_calibration(twin, CFG)
+    cal = build_calibration(twin, HIST)
     # les deux modes sont demandés EXPLICITEMENT (le défaut livré est « predictive » depuis
-    # le 2026-07-02 — verrouillé dans test_config) ; on teste la machine MONTE-CARLO, donc
-    # l'intervalle affiché est épinglé sur ses percentiles (le défaut servi est conforme)
-    cfg_s = replace(CFG, prediction=replace(CFG.prediction, mc_mode="sigma_only", interval_source="mc"))
-    cfg_p = replace(CFG, prediction=replace(CFG.prediction, mc_mode="predictive", interval_source="mc"))
+    # le 2026-07-02 — verrouillé dans test_config) ; on teste la machine MONTE-CARLO du lien
+    # linéaire, donc l'intervalle affiché est épinglé sur ses percentiles
+    cfg_s = replace(HIST, prediction=replace(HIST.prediction, mc_mode="sigma_only", interval_source="mc"))
+    cfg_p = replace(HIST, prediction=replace(HIST.prediction, mc_mode="predictive", interval_source="mc"))
 
     def relw(pred):
         return (pred.interval_high_h - pred.interval_low_h) / pred.finish_hours
@@ -211,21 +215,23 @@ def test_equal_dates_weighting_is_neutral():
     cal = build_calibration(twin, CFG)
     assert cal.weights is not None and np.allclose(cal.weights, 1.0)
     assert abs(cal.n_eff - len(genuine)) < 1e-9
-    # sans poids, MÊME mode de terrain que le fit servi (on teste la neutralité des POIDS)
-    beta_unweighted, _ = _fit_regression(genuine, cfg=CFG)
+    # sans poids, MÊME mode de terrain, MÊME lien et MÊME prior que le fit servi (on teste la
+    # neutralité des POIDS)
+    beta_unweighted, _ = _fit_regression(genuine, cfg=CFG, link=cal.link,
+                                         duration_prior=cal.duration_prior)
     assert np.allclose(cal.beta, beta_unweighted, atol=1e-9)
 
 
 def test_conformal_interval_calibrated_on_loo_with_guard_and_fallback():
-    """S5 : ``interval_source=conformal_normalized`` (défaut) — les DEUX bandes servies
-    (bornes de sécurité 80 % ET fourchette de course 50 %) sont étalonnées sur les erreurs
-    LOO réelles (scores studentisés × sd prédictif de la cible), emboîtées ; repli MC des
-    deux bandes à < 4 plis."""
+    """S5 : ``interval_source=conformal_normalized`` (défaut jusqu'à la Décision 1 du chantier
+    v2, rollback nommé depuis) — les DEUX bandes servies (bornes de sécurité 80 % ET fourchette
+    de course 50 %) sont étalonnées sur les erreurs LOO réelles (scores studentisés × sd
+    prédictif de la cible), emboîtées ; repli MC des deux bandes à < 4 plis."""
     pts = [(12, 50, 0.05), (20, 55, -0.08), (16, 45, 0.03), (24, 53, -0.02), (18, 52, 0.06)]
     twin = _twin([_ultra(h, _plane(h, dpk) + p, dpk) for h, dpk, p in pts])
-    cfg_m = replace(CFG, prediction=replace(CFG.prediction, interval_source="mc"))
-    cal = build_calibration(twin, CFG)
-    pred_c = predict_finish(200.0, 53.0, twin, cal, CFG)
+    cfg_m = replace(HIST, prediction=replace(HIST.prediction, interval_source="mc"))
+    cal = build_calibration(twin, HIST)
+    pred_c = predict_finish(200.0, 53.0, twin, cal, HIST)
     pred_m = predict_finish(200.0, 53.0, twin, cal, cfg_m)
     assert pred_m.interval_source == "mc"
     assert pred_c.interval_source == "conformal_normalized"
@@ -264,8 +270,9 @@ def test_pooled_interval_source_scales_learned_quantiles_with_fallbacks():
 
     pts = [(12, 50, 0.05), (20, 55, -0.08), (16, 45, 0.03), (24, 53, -0.02), (18, 52, 0.06)]
     twin = _twin([_ultra(h, _plane(h, dpk) + p, dpk) for h, dpk, p in pts])
-    cfg_p = replace(CFG, prediction=replace(CFG.prediction, interval_source="pooled",
-                                            pooled_q50=0.7, pooled_q80=1.7))
+    # bandes linéaires central × (1 ± q·sd) : le lien linéaire des anciens défauts
+    cfg_p = replace(HIST, prediction=replace(HIST.prediction, interval_source="pooled",
+                                             pooled_q50=0.7, pooled_q80=1.7))
     cal = build_calibration(twin, cfg_p)
     pred = predict_finish(200.0, 53.0, twin, cal, cfg_p)
     assert pred.interval_source == "pooled"
@@ -283,6 +290,6 @@ def test_pooled_interval_source_scales_learned_quantiles_with_fallbacks():
     assert pred1.plan_high_h == pytest.approx(pred1.finish_hours * (1 + 0.7 * sd1), rel=1e-6)
 
     # quantiles non appris (défaut None) → repli percentiles MC, tracé honnêtement
-    cfg_none = replace(CFG, prediction=replace(CFG.prediction, interval_source="pooled"))
+    cfg_none = replace(HIST, prediction=replace(HIST.prediction, interval_source="pooled"))
     pred_none = predict_finish(200.0, 53.0, twin, build_calibration(twin, cfg_none), cfg_none)
     assert pred_none.interval_source == "mc"

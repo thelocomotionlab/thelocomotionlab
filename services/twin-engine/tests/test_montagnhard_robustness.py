@@ -64,7 +64,9 @@ def _baseline_cfg():
     en repartant explicitement du baseline — ils restent valides quel que soit le défaut livré."""
     return replace(
         CFG,
-        calibration=replace(CFG.calibration, maximality_mode="off", terrain_term="free"),
+        calibration=replace(CFG.calibration, maximality_mode="off", terrain_term="free",
+                            link="linear", duration_term="free", duration_prior_source="twin_alpha",
+                            envelope_tail="alpha"),  # anciens défauts, épinglés (Décision 1)
         sufficiency=replace(CFG.sufficiency, gate_policy="strict"),
         prediction=replace(CFG.prediction, mc_mode="sigma_only",
                            interval_source="mc"),  # baseline historique (pré-conforme)
