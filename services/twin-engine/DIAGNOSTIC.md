@@ -2442,3 +2442,60 @@ historiques du 🟢 passent une date d'analyse (sans date, 🟠 est le bon verdi
 **Sur le site.** La page `/services/twin` dit le périmètre en trois phrases avant le dépôt
 d'archive (compte-rendu, Décision 3).
 
+### 10.19 Décision 4 — Phase 6 : le rapport v2 (2026-09-16)
+
+**Consigne.** Un rapport vendable : squelette imposé (couverture d'une phrase avec badge de
+confiance en mots et verdict · « Ta course en une page » · le plan sur deux pages, table à trois
+scénarios et consigne par segment, figure du cumul avec bande · fiche d'assistance détachable
+(au plus tôt / central / au plus tard par point d'accès, `crew_access_indices`) + bracelet + ICS +
+GPX à points de passage · « Ton profil » en quatre jauges · « Pourquoi tu peux y croire » : nuage
+LOO, quatre limites, un encadré d'honnêteté, les hypothèses déclarées · QR vers l'annexe).
+Aucun résumé, aucun mot-clé, aucune table des matières ; « une course sur deux » et jamais « 50 % » ;
+tutoiement. Charte : les tokens exacts de `packages/ui/src/styles/theme.css` dans la classe, la
+fiche, le bracelet et les figures ; grammaire visuelle de `refonte_studio.md` §0 ; correspondance
+token → macro documentée dans la classe. Polices : instances statiques d'Ubuntu Sans par
+`fonttools varLib.instancer`, abandon d'UbuntuMono au profit des chiffres tabulaires. Trois points
+du banc : le budget d'arrêts personnel dit comme information de logistique à côté de la politique
+du plan ; la dérive justifiée en une phrase ; la note « pente » de la Phase 3 déplacée vers
+l'annexe. Tests : le PDF v2, la fiche et le bracelet compilent sur un scénario déterministe, et
+chaque chiffre des deux premières pages vient du contexte calculé.
+
+**Ce qui a été fait.** `tools/instance_fonts.py` produit huit instances statiques (Light → ExtraBold,
+romain et italique) depuis la police variable de la charte, sous-ensemble latin ; les douze TTF
+Ubuntu/UbuntuMono historiques sont retirés. `report/charte.py` porte les 33 tokens de `theme.css`
+(source unique côté Python) et la table `nom LaTeX → token` ; `locomotionreport.cls` (v2.0) définit
+ses couleurs depuis ces tokens, chacune citant le sien en commentaire, avec la correspondance en
+tête de fichier et les anciens noms conservés en `\colorlet` ; `figures.py` lit la même source. La
+classe gagne `\LLpage`, `\LLtitre`, `\LLetiquette`, `\LLkpi`, `\LLgauge`, `\LLbadge`, `\LLqr`,
+`llhonnete`, `llverdict`, la couverture à phrase + badge + verdict, et le « mono » de la charte
+(Ubuntu Sans Medium en chiffres tabulaires, jamais une seconde police). Trois gabarits :
+`report.tex.j2` (six pages), `fiche_assistance.tex.j2`, `bracelet.tex.j2`, rendus par un
+`build_document` commun. `report/livrables.py` : points d'assistance (`crew_access_indices`, repli
+bases majeures puis tous les points), ICS conforme au repli RFC 5545, GPX (trace + un point de
+passage horodaté par point d'assistance), lecture du `.bib`, et l'annexe `annexe.json` — méthode,
+calibration ultra par ultra, validation croisée course par course, pente au-delà de six heures,
+plan complet avec consignes, glossaire, références, figures en `data:`. `context.py` calcule la
+phrase de couverture, le verdict en mots, les quatre jauges, les consignes par segment, la
+politique d'arrêts, le budget personnel, les quatre limites, l'encadré d'honnêteté et les
+hypothèses. Côté site : `apps/site/lib/twinAnnexes.mjs` + `app/services/twin/annexe/[ref]/page.jsx`
+(prérendue, `noindex`, hors plan de site et hors recherche), alimentée par un dépôt de fichier.
+
+**Trois choses supprimées, parce que la v2 les rend fausses.** Le résumé de tête et les mots-clés
+(le rapport n'est pas un article) ; la table des matières (six pages) ; la table « scénarios »
+conditionnelle et son seuil `pacing.scenario_rel_width` — le plan v2 sert les trois colonnes
+**toujours**, et le seuil devient `pacing.wide_interval_rel_width`, qui ne pilote plus que la
+phrase assumant des bornes larges.
+
+**Ce qui reste vrai et vérifié.** Les probabilités se disent en courses (`courses_sur`) ; le mode
+objectif garde son vocabulaire (fenêtre de passage, tolérance d'exécution, la prédiction jamais
+masquée) ; la VC non plausible reste masquée ; la technicité déclarée reste dite comme une
+hypothèse. Tests : `tests/test_report_v2.py` (14) — scénario déterministe vendu 🟢, clés du
+contexte, **aucun chiffre des pages 1 et 2 hors du contexte** (vérifié entre marqueurs
+`LL:BEGIN`/`LL:END`), compilation du rapport, de la fiche et du bracelet, repli des points
+d'assistance, ICS (fenêtres, repli de lignes, pas de calendrier sans départ), GPX, livrables sans
+LaTeX, charte (tokens = `theme.css` = classe = figures), polices — plus `tests/test_report.py`
+réécrit sur la v2 et `apps/site/lib/twinAnnexes.test.js`.
+
+**Reste à faire (hors de cette session).** Le rendu du PDF de référence sur l'archive de Valentin
+(Décision 5.1) et sa relecture à l'œil ; le dépôt de la première annexe et le déploiement du site.
+

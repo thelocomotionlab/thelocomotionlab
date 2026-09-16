@@ -518,6 +518,35 @@ historiques du 🟢 passent désormais une date d'analyse. La page du site : voi
     clients perdus dans `tableau.md`.
 53. **`on` reste accepté comme synonyme de `predicted`** : aucune config existante ne casse.
 
+**Décision 4 — livrée (2026-09-16), DIAGNOSTIC §10.19.** Le rapport v2 : six pages (couverture à
+phrase et badge de confiance en mots · Ta course en une page · le plan en deux pages, trois
+scénarios et une consigne par segment · Ton profil en quatre jauges · Pourquoi tu peux y croire),
+sans résumé, sans mots-clés, sans table des matières ; les probabilités se disent en courses.
+Autour : fiche d'assistance détachable, bracelet, `plan.ics`, `plan.gpx`, `annexe.json`. La charte
+vient de `packages/ui` par `report/charte.py` (33 tokens, la classe cite le token de chaque
+couleur) ; les polices sont huit instances statiques d'Ubuntu Sans produites par
+`tools/instance_fonts.py`, UbuntuMono retiré. L'annexe en ligne est une page prérendue du site,
+`noindex`, hors plan de site et hors recherche, alimentée en déposant `annexe.json` sous
+`apps/site/public/twin-annexes/<référence>.json` ; la référence est tirée au hasard (`--ref` pour
+la fixer), c'est elle qui rend l'adresse non devinable. Suite 362 passés (dont 14 pour la v2).
+
+## Choix faits à la place de Valentin (Décision 4)
+
+54. **L'annexe est prérendue depuis un fichier déposé, pas servie par une API** : le site est en
+    SSR Cloudflare et toutes ses routes dynamiques sont prérendues (`dynamicParams = false`) ; une
+    page par référence déposée, avec le garde-fou « jamais de liste vide » de `lib/ateliers.mjs`.
+    Aucun service à exploiter, aucune donnée d'athlète en ligne hors l'annexe elle-même.
+55. **Lien non devinable plutôt que page publique** (la question était ouverte) : référence
+    aléatoire, `noindex`, hors navigation, hors plan de site, hors recherche.
+56. **Le budget d'arrêts personnel est une information, pas la répartition du plan** : il est dit à
+    côté de la politique (« si tu fais comme d'habitude »), conformément au banc — la répartition
+    personnelle avait été mesurée moins juste.
+57. **La table « scénarios » conditionnelle disparaît** : le plan v2 sert les trois colonnes
+    toujours ; `pacing.scenario_rel_width` devient `wide_interval_rel_width` et ne pilote plus que
+    la phrase qui assume des bornes larges.
+58. **Une seule police** : le « mono » de la charte est Ubuntu Sans Medium en chiffres tabulaires,
+    comme sur le site (`theme.css`) — jamais une seconde famille.
+
 ## Questions ouvertes
 
 - **Chantier suivant : trails courts et route.** Valentin a des demandes pour du trail court et
@@ -552,9 +581,10 @@ historiques du 🟢 passent désormais une date d'analyse. La page du site : voi
   logistique, sans en faire la répartition du plan (mesurée moins juste).
 - **Phase 4.** Import CSV manuel par défaut ; LiveTrail seulement après vérification de ses
   conditions d'utilisation.
-- **Annexe en ligne** : page du site (décidé) ; support à implémenter en Phase 6.
-- **Polices** : instances statiques Ubuntu Sans produites par `fonttools varLib.instancer`,
-  abandon d'UbuntuMono au profit des chiffres tabulaires (décidé) ; à faire en Phase 6.
+- **Publication de l'annexe** : le dépôt est manuel (copier `annexe.json` sous
+  `apps/site/public/twin-annexes/<référence>.json`, déployer). Un rapport livré par l'API
+  (`/jobs`) n'a donc pas encore d'annexe en ligne automatique — à trancher quand la cohorte
+  passera par le service plutôt que par la ligne de commande.
 
 ## Rejeté
 

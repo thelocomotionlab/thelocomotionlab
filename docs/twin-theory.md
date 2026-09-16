@@ -360,10 +360,11 @@ RMSE 4,0 % (n = 8 ; 4 plis d'interpolation, 4 d'extrapolation).
   **fourchette de course** (bandes Monte-Carlo interquartiles, cf. §4), pas une valeur unique
   (meilleure tenue psychologique en course). L'arrivée finale porte en plus les **bornes de
   sécurité** en heures de passage.
-- **Scénarios de course** : quand les bornes de sécurité sont larges relativement à la prédiction
-  (`pacing.scenario_rel_width`, défaut 0,35), le rapport ajoute une table **rapide / central /
-  prudent** par segment (bornes de la fourchette de course) et la consigne de **recalage** :
-  identifier tôt sa colonne et la suivre, plutôt que courir après la colonne centrale.
+- **Scénarios de course** : le plan du rapport v2 décline **toujours** trois colonnes par segment
+  — *rapide*, *central*, *prudent* (bornes de la fourchette de course) — avec la consigne de
+  **recalage** : identifier tôt sa colonne et la suivre, plutôt que courir après la centrale.
+  Quand les bornes de sécurité sont larges relativement à la prédiction
+  (`pacing.wide_interval_rel_width`, défaut 0,35), le rapport **assume la largeur** en une phrase.
 
 **Cas de référence (recapture 2026-07-02)** : mouvement 29,5 h + arrêts 1,75 h = **31,3 h**
 d'horloge ; départ ven. 13:00, arrivée sam. ~20:17 ; **section de nuit à relire sur le prochain
@@ -371,11 +372,29 @@ rapport full** (dépend du nouveau profil horaire).
 
 ---
 
-## 7. Rapport
+## 7. Rapport (v2, Phase 6 — DIAGNOSTIC §10.19)
 
-Rendu **LaTeX** (template `locomotionreport`, police **Ubuntu**, XeLaTeX + biber), figures matplotlib
-aux couleurs de la marque. Contient : synthèse, parcours, jumeau (pédagogique), prédiction + validation,
-plan par segment, intensité/durabilité, **limites assumées**, recommandations.
+Rendu **LaTeX** (classe `locomotionreport`, **Ubuntu Sans** en instances statiques, XeLaTeX + biber),
+figures matplotlib aux couleurs de la charte (`packages/ui/src/styles/theme.css`, source unique :
+`report/charte.py`). **Six pages, pas de résumé ni de table des matières** :
+
+1. **Couverture** — une phrase (« tu arrives autour de X, une course sur deux entre A et B »), le
+   badge de confiance EN MOTS (confiance pleine / réduite / pas vendable) et ce qui le fonde.
+2. **Ta course en une page** — trois chiffres (arrivée, fourchette de course, bornes de sécurité),
+   le profil, ce que le parcours demande, le verdict.
+3–4. **Le plan** — dérive assumée et sa preuve, politique d'arrêts (+ budget personnel en
+   information), table par segment avec **trois scénarios** (rapide / central / prudent) et une
+   **consigne** par segment, figure du cumul, section objectif s'il y en a un.
+5. **Ton profil** — quatre jauges (vitesse critique, endurance, durabilité, arrêts), une phrase
+   chacune, la courbe record.
+6. **Pourquoi tu peux y croire** — validation croisée, **encadré d'honnêteté**, quatre limites,
+   ce que le plan suppose, **QR vers l'annexe en ligne**.
+
+**Autour du PDF** : `fiche.pdf` (fiche d'assistance détachable : au plus tôt / central / au plus tard
+par point d'assistance, l'arrivée dans ses bornes de sécurité), `bracelet.pdf` (bande à découper),
+`plan.ics` (un événement par point d'assistance), `plan.gpx` (trace + points de passage horodatés),
+`annexe.json` (l'annexe en ligne). Les probabilités se disent **en courses** (« une course sur deux »),
+jamais en pourcentage sec.
 
 ---
 

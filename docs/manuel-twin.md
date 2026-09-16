@@ -85,7 +85,25 @@ twin-engine full \
 ```
 
 Le `preview` imprime un JSON (verdict, prédiction, jumeau, parcours) + un résumé lisible. Le `full`
-écrit les figures et le PDF dans `--out`.
+écrit les figures et le PDF dans `--out`, plus ce qui accompagne le rapport (v2) :
+
+| fichier | ce que c'est |
+|---|---|
+| `tex/main.pdf` | le rapport, six pages |
+| `fiche.pdf` | la fiche d'assistance détachable (au plus tôt / central / au plus tard) |
+| `bracelet.pdf` | la bande à découper (heures centrales) |
+| `plan.ics` | le calendrier : un événement par point d'assistance |
+| `plan.gpx` | la trace avec un point de passage horodaté par point d'assistance |
+| `annexe.json` | l'annexe en ligne |
+
+`--ref` fixe la référence du rapport ; sans elle, elle est **tirée au hasard** — c'est elle qui rend
+l'adresse de l'annexe non devinable. Pour publier l'annexe : copier `annexe.json` dans
+`apps/site/public/twin-annexes/<référence>.json` et déployer le site ; la page
+`/services/twin/annexe/<référence>` est prérendue, en `noindex`, hors navigation, hors plan de site et
+hors recherche. La retirer, c'est supprimer le fichier et redéployer.
+
+Les points d'assistance viennent de `crew_access_indices` dans la spec de course (§6) ; sans eux, les
+bases majeures ; sans bases majeures, tous les points de passage.
 
 > `--race` est **optionnel** (défaut : aucun → mode GPX-only, distance issue de la trace et
 > découpage automatique en segments). `examples/nice-100m.json` est un exemple de spec : pour une
@@ -147,6 +165,10 @@ horaires réels. Tous les champs sont **optionnels** — ne mets que ce que tu v
 | `major_base_indices` | indices des bases-vie majeures (arrêts longs) | aucune base majeure |
 | `technicity_pct` | **majoration de coût déclarée** pour la technicité du terrain (%) | 0 — le moteur ne devine pas |
 
+Champ `crew_access_indices` (rapport v2) : les segments dont la **fin** est ouverte à l'assistance.
+La fiche détachable, le calendrier et les points GPX s'y calent. Absent, le moteur prend les bases
+majeures (`major_base_indices`), et à défaut tous les points de passage.
+
 ### Technicité du terrain (`technicity_pct` / `--technicity`)
 
 Le GPX ne porte que la **géométrie**. Minetti traduit la **pente** en coût métabolique en
@@ -169,6 +191,11 @@ Ordre de grandeur : un écart de X % sur le temps visé correspond à ~X % de ma
 La **trace GPX du parcours** est fournie à part (`--course`) et n'est pas committée.
 
 ## 7. Lire la fourchette : les deux bandes
+
+> **Le rapport v2** (six pages, fiche d'assistance, bracelet, ICS, GPX, annexe en ligne) est décrit
+> dans `docs/twin-theory.md` §7 ; sa charte vient de `packages/ui` via `report/charte.py`, et ses
+> polices sont des instances statiques d'Ubuntu Sans régénérables par
+> `PYTHONPATH=src python -m tools.instance_fonts`.
 
 > **Le verdict 🟢 est conditionnel** (Décision 3, DIAGNOSTIC §10.18) : il n'est servi que si le
 > parcours est dans le domaine de calibration, si l'archive compte au moins trois vrais ultras
