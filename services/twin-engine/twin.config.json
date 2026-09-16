@@ -51,7 +51,11 @@
     "record_tail_durations_s": [36000, 43200, 50400, 57600, 72000, 86400, 108000, 129600],
     "record_tail_from_s": 7200.0,
     "efficiency_min_hours": 1.0,
-    "efficiency_hr_rest": 0.0
+    "efficiency_hr_rest": 0.0,
+    "slope_bin_pct": 2.5,
+    "slope_max_pct": 30.0,
+    "slope_hr_min_bpm": 100.0,
+    "slope_hr_lag_s": 30
   },
 
   "calibration": {
@@ -87,6 +91,10 @@
     "level_anchor_window_days": 365.0,
     "level_anchor_gain": 1.0,
     "envelope_tail": "alpha",
+    "slope_cost": "minetti",
+    "slope_cost_min_hours": 20.0,
+    "slope_kappa_min": 0.5,
+    "slope_kappa_max": 2.0,
     "stops_model": "carved",
     "stops_duration_elasticity": 0.0,
     "stops_rate_population": 0.0,

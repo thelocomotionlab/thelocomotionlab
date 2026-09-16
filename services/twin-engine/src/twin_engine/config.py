@@ -90,6 +90,16 @@ class TwinParams:
     #   à 3 h (``efficiency_hr_rest`` = 0), ou valeur déclarée en bpm.
     efficiency_min_hours: float = 1.0
     efficiency_hr_rest: float = 0.0
+    # --- coût de pente personnel : sommes par tranche de pente (chantier v2, Phase 5, C1) ---
+    # À chaque seconde en mouvement avec FC (≥ slope_hr_min_bpm), la vitesse brute et la FC
+    # lue ``slope_hr_lag_s`` plus tard (la FC répond à la charge avec retard) sont sommées
+    # par tranche de pente de ``slope_bin_pct`` jusqu'à ±``slope_max_pct`` : de quoi lire, à
+    # réserve cardiaque égale, de combien l'athlète est plus lent ou plus rapide à chaque
+    # pente que sur le plat (Twin.slope_kappa_up / _down), sans conserver de tableau 1 Hz.
+    slope_bin_pct: float = 2.5
+    slope_max_pct: float = 30.0
+    slope_hr_min_bpm: float = 100.0
+    slope_hr_lag_s: int = 30
     # --- robustesse de la courbe record (Problème A : VC/exposant aberrants) ---
     vc_max_plausible_ms: float = 6.0          # plafond physiologique : un point « plat » plus rapide
     #                                           est rejeté avant l'ajustement VC ; une VC au-dessus
@@ -274,6 +284,17 @@ class CalibrationParams:
     #   l'enveloppe décroît avec l'exposant mesuré, raccord continu ; repli sur ``alpha`` quand
     #   l'exposant demandé manque (signalé dans les notes).
     envelope_tail: str = "alpha"                         # {alpha, efficiency, record_tail}
+    # --- coût de pente personnel (Phase 5, C1) -----------------------------------------------
+    # ``minetti`` (défaut) : la loi fixe pour tous. ``personal`` : le surcoût de pente de la loi
+    #   est multiplié par κ_montée en montée et κ_descente en descente, mesurés sur les secondes
+    #   avec FC de l'athlète (Twin.slope_kappa_*), et appliqué à la vitesse ajustée de chaque
+    #   effort de la calibration ET au Deq du parcours (décomposition exacte : plat + surcoût
+    #   de montée + surcoût de descente). Un côté sans ``slope_cost_min_hours`` heures de
+    #   mesure garde κ = 1 ; κ est borné dans [slope_kappa_min, slope_kappa_max] (signalé).
+    slope_cost: str = "minetti"                          # {minetti, personal}
+    slope_cost_min_hours: float = 20.0
+    slope_kappa_min: float = 0.5
+    slope_kappa_max: float = 2.0
     # --- arrêts (Phase 2, B4) ---------------------------------------------------------------
     # ``carved`` (défaut historique) : la régression porte sur la vitesse ÉCOULÉE (arrêts
     #   compris) et le plan retranche sa politique d'arrêts (5 min par ravito, +10 aux bases)

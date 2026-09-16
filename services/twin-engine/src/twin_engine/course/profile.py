@@ -9,7 +9,7 @@ fixes) et :class:`RaceSpec` (géométrie de la course) — aucun chemin ni nombr
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 
 import numpy as np
 
@@ -37,6 +37,11 @@ class Segment:
     alt_end_m: float
     alt_min_m: float
     alt_max_m: float
+    # surcoût de pente du segment sous la loi de Minetti, en km équivalents : montée (≥ 0) et
+    # descente (≤ 0, la descente coûte moins qu'à plat) — deq = horizontal + montée + descente,
+    # avant majoration de technicité ; c'est ce que le coût de pente personnel remet à l'échelle
+    excess_up_km: float = 0.0
+    excess_down_km: float = 0.0
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -68,6 +73,33 @@ class CourseProfile:
     # découpage (passages réels, waypoints GPX) — None sur un profil construit à la main
     lat_grid: np.ndarray | None = None
     lon_grid: np.ndarray | None = None
+    # décomposition du Deq (Phase 5, C1) sur la grille, hors technicité : distance de base
+    # cumulée, surcoût de montée cumulé (≥ 0), surcoût de descente cumulé (≤ 0) ; None sur un
+    # profil construit à la main. ``slope_kappa`` = facteurs (montée, descente) réellement
+    # servis, None = loi de Minetti telle quelle.
+    base_grid_m: np.ndarray | None = None
+    excess_up_grid_m: np.ndarray | None = None
+    excess_down_grid_m: np.ndarray | None = None
+    slope_kappa: tuple[float, float] | None = None
+
+    def with_slope_cost(self, kappa_up: float, kappa_down: float) -> "CourseProfile":
+        """Le même parcours sous un coût de pente personnel : le surcoût de montée est
+        multiplié par ``kappa_up``, celui de descente par ``kappa_down`` (1, 1 rend le profil
+        de Minetti au bit près, technicité comprise). Segments, Deq total et facteur de pente
+        sont recalculés ; un profil sans décomposition est rendu tel quel."""
+        if self.base_grid_m is None or self.excess_up_grid_m is None or self.excess_down_grid_m is None:
+            return self
+        ku, kd = float(kappa_up), float(kappa_down)
+        tech = 1.0 + self.technicity_pct / 100.0
+        deq_grid = (self.base_grid_m + ku * self.excess_up_grid_m + kd * self.excess_down_grid_m) * tech
+        f = np.where(self.grade > 0, 1.0 + ku * (self.grade_factor - 1.0),
+                     np.where(self.grade < 0, 1.0 + kd * (self.grade_factor - 1.0), self.grade_factor))
+        segments = []
+        for seg in self.segments:
+            i0, i1 = _grid_index(self.off_km_grid, seg.off0), _grid_index(self.off_km_grid, seg.off1)
+            segments.append(replace(seg, deq_km=float((deq_grid[i1] - deq_grid[i0]) / 1000.0)))
+        return replace(self, deq_grid_m=deq_grid, grade_factor=f, segments=segments,
+                       deq_km=float(deq_grid[-1] / 1000.0), slope_kappa=(ku, kd))
 
     def checkpoint_coords(self) -> list[tuple[float, float, float]]:
         """(km officiel, lat, lon) de chaque point de découpage — le MÊME indice de grille
@@ -94,6 +126,7 @@ class CourseProfile:
             "deq_km": self.deq_km,
             "dplus_per_km": self.dplus_per_km,
             "technicity_pct": self.technicity_pct,
+            "slope_kappa": None if self.slope_kappa is None else [round(k, 4) for k in self.slope_kappa],
             "segments": [s.to_dict() for s in self.segments],
         }
 
@@ -184,6 +217,12 @@ def build_course(gpx_data: bytes, race: RaceSpec, cfg: Config) -> CourseProfile:
     # coût par mètre : « ce parcours se comporte comme (1+τ) fois sa distance équivalente ».
     # τ=0 (défaut) → aucun effet, le Deq est celui d'avant à l'octet près.
     deq_grid = np.cumsum(f * step) * (1.0 + race.technicity_pct / 100.0)
+    # décomposition exacte du Deq (hors technicité) : base + surcoût de montée + surcoût de
+    # descente, cumulés sur la grille — ce que le coût de pente personnel remet à l'échelle
+    excess = (f - 1.0) * step
+    base_grid = np.cumsum(np.full_like(f, step))
+    up_grid = np.cumsum(np.where(grad > 0, excess, 0.0))
+    down_grid = np.cumsum(np.where(grad < 0, excess, 0.0))
 
     dist3d_grid = np.interp(xg, cum, dist3d)
     off_km_grid = dist3d_grid * scale / 1000.0
@@ -221,6 +260,8 @@ def build_course(gpx_data: bytes, race: RaceSpec, cfg: Config) -> CourseProfile:
                 alt_end_m=float(seg_e[-1]),
                 alt_min_m=float(seg_e.min()),
                 alt_max_m=float(seg_e.max()),
+                excess_up_km=float((up_grid[i1] - up_grid[i0]) / 1000.0),
+                excess_down_km=float((down_grid[i1] - down_grid[i0]) / 1000.0),
             )
         )
 
@@ -242,6 +283,9 @@ def build_course(gpx_data: bytes, race: RaceSpec, cfg: Config) -> CourseProfile:
         technicity_pct=float(race.technicity_pct),
         lat_grid=lat_g,
         lon_grid=lon_g,
+        base_grid_m=base_grid,
+        excess_up_grid_m=up_grid,
+        excess_down_grid_m=down_grid,
     )
 
 

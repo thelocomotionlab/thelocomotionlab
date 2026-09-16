@@ -43,6 +43,34 @@ def _pente_servie(twin, calibration, cfg) -> str | None:
     return tex_escape(text[0].upper() + text[1:] + ".")
 
 
+def _cout_de_pente(twin, course, cfg) -> str | None:
+    """Phrase du rapport quand le parcours et la calibration sont servis sous le coût de pente
+    personnel de l'athlète (Phase 5) : ce qui a été mesuré, ce que ça change à ±10 %, la
+    distance équivalente qui en résulte. None sous la loi de Minetti."""
+    kappa = getattr(course, "slope_kappa", None)
+    if kappa is None:
+        return None
+    from ..minetti import grade_factor
+
+    ku, kd = kappa
+    det = getattr(twin, "slope_detail", None) or {}
+    f_up = float(grade_factor(0.10, cfg.course.cr0))
+    f_down = float(grade_factor(-0.10, cfg.course.cr0))
+    up_pct = 100.0 * ((1.0 + ku * (f_up - 1.0)) / f_up - 1.0)
+    down_pct = 100.0 * ((1.0 + kd * (f_down - 1.0)) / f_down - 1.0)
+
+    def _vs(pct: float) -> str:
+        return f"{fr(abs(pct), 0)} % de {'plus' if pct >= 0 else 'moins'} que la loi"
+
+    txt = (f"Mesuré sur {fr(det.get('hours_up', 0.0), 0)} h de montée et "
+           f"{fr(det.get('hours_down', 0.0), 0)} h de descente avec fréquence cardiaque : à effort "
+           f"égal, un mètre à +10 % te coûte {_vs(up_pct)}, un mètre à 10 % de descente "
+           f"{_vs(down_pct)}. Le moteur applique ces facteurs ({fr(ku, 2)} sur le surcoût de "
+           f"montée, {fr(kd, 2)} sur celui de descente) à tes courses comme à ce parcours, dont "
+           f"la distance équivalente vaut {fr(course.deq_km, 1)} km.")
+    return tex_escape(txt)
+
+
 _REGIME_LABELS = {
     REGIME_REGRESSION: "régression personnelle sur tes vrais ultras",
     REGIME_BLEND: "mélange VC+E recalé (peu d'ultras, confiance réduite)",
@@ -356,6 +384,7 @@ def build_report_context(
         "alpha_eff": fr(twin.alpha_eff, 3) if getattr(twin, "alpha_eff", None) else None,
         "alpha_tail": fr(twin.alpha_tail, 3) if getattr(twin, "alpha_tail", None) else None,
         "pente_servie": _pente_servie(twin, calibration, cfg),
+        "cout_de_pente": _cout_de_pente(twin, course, cfg),
         "durability_pct": fr(twin.durability_pct, 0) if twin.durability_pct is not None else None,
         "n_activities": twin.summaries.__len__(),
         "n_ultras": calibration.n_genuine,

@@ -144,6 +144,11 @@ def analyze_preview_from_twin(
     (une coupure par course) à partir d'un SEUL décodage d'archive — tout ce qui suit ne
     coûte rien, c'est le décodage qui coûte. Un seul chemin de calcul pour les deux usages.
     """
+    # coût de pente personnel (Phase 5, C1) : le parcours est servi sous les mêmes facteurs
+    # que la vitesse ajustée des efforts de la calibration ; None = loi de Minetti, profil intact
+    slope = twin.slope_factors(cfg)
+    if slope is not None:
+        course = course.with_slope_cost(*slope)
     calibration = build_calibration(twin, cfg)
     prediction = predict_race(course, twin, calibration, cfg, race)
     sufficiency = assess_sufficiency(
@@ -253,6 +258,8 @@ def analyze_full(
     # affichée et consignée : le mode s'ajoute, il ne remplace pas.
     target = preview.target
 
+    # le parcours SERVI (coût de pente personnel compris) est celui du preview
+    course = preview.course
     plan = build_pacing(
         course, preview.prediction, race, cfg, durability_pct=preview.twin.durability_pct,
         anchor_hours=race.target_hours if (target is not None and target.plan_ok) else None,

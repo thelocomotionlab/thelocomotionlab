@@ -126,6 +126,9 @@ class UltraCalibration:
     tail_alpha: float | None = None
     tail_from_s: float | None = None
     tail_source: str | None = None                      # efficiency | record_tail
+    # --- Phase 5 : coût de pente servi (``minetti`` ou ``personal`` avec ses facteurs) -------
+    slope_cost: str = "minetti"
+    slope_kappa: tuple[float, float] | None = None       # (montée, descente) ; None = loi fixe
 
     @property
     def n_genuine(self) -> int:
@@ -267,6 +270,9 @@ class UltraCalibration:
                 "alpha": round(self.tail_alpha, 4),
                 "from_s": self.tail_from_s,
                 "source": self.tail_source},
+            "slope_cost": None if self.slope_kappa is None else {
+                "kappa_up": round(self.slope_kappa[0], 4),
+                "kappa_down": round(self.slope_kappa[1], 4)},
             "notes": self.notes,
             "genuine": [g.to_dict() for g in self.genuine],
         }
@@ -305,19 +311,35 @@ def genuine_floor_kmh(elapsed_hours: float, cfg: Config) -> float:
     return float(c.genuine_min_ga_kmh * ratio ** (-float(c.genuine_floor_alpha)))
 
 
-def genuine_gate_failures(s: ActivitySummary, cfg: Config) -> list[str]:
+def adjusted_km(s: ActivitySummary, slope: tuple[float, float] | None = None) -> float:
+    """Équivalent plat de l'effort : celui de la loi de Minetti (``s.ga_km``), ou, sous un coût
+    de pente personnel ``slope = (κ_montée, κ_descente)``, brut + κ_montée × surcoût de montée
+    + κ_descente × surcoût de descente — repli sur la loi quand la décomposition manque."""
+    if slope is None:
+        return float(s.ga_km)
+    up = getattr(s, "ga_up_excess_km", None)
+    down = getattr(s, "ga_down_excess_km", None)
+    if up is None or down is None:
+        return float(s.ga_km)
+    return float(s.dist_km + slope[0] * up + slope[1] * down)
+
+
+def genuine_gate_failures(s: ActivitySummary, cfg: Config,
+                          slope: tuple[float, float] | None = None) -> list[str]:
     """Raisons pour lesquelles un effort N'EST PAS un vrai ultra (liste vide = retenu) : durée,
     plancher de vitesse au temps écoulé, découplage, plus long plateau (garde « sommeil »,
     ``genuine_max_stop_s`` > 0). Une seule définition du domaine, partagée par la
-    calibration, la queue de la courbe record et les outils de diagnostic."""
+    calibration, la queue de la courbe record et les outils de diagnostic. ``slope`` :
+    coût de pente personnel servi (la vitesse ajustée en dépend)."""
     c = cfg.calibration
     fails: list[str] = []
     elapsed_h = s.duration_s / 3600.0
     if s.duration_s < c.genuine_min_hours * 3600:
         fails.append(f"durée {elapsed_h:.1f} h < {c.genuine_min_hours:g} h")
     hours = _basis_hours(s, cfg)
-    vga_kmh = s.ga_km / hours if hours > 0 else 0.0
-    gate_kmh = (s.ga_km / elapsed_h if (c.stops_model != "carved" and elapsed_h > 0) else vga_kmh)
+    ga = adjusted_km(s, slope)
+    vga_kmh = ga / hours if hours > 0 else 0.0
+    gate_kmh = (ga / elapsed_h if (c.stops_model != "carved" and elapsed_h > 0) else vga_kmh)
     floor = genuine_floor_kmh(elapsed_h, cfg)
     if gate_kmh < floor:
         fails.append(f"vga {gate_kmh:.2f} < plancher {floor:.2f} km/h")
@@ -347,7 +369,8 @@ def _basis_hours(s: ActivitySummary, cfg: Config) -> float:
     return s.duration_s / 3600.0
 
 
-def select_genuine_ultras(summaries: list[ActivitySummary], cfg: Config) -> list[GenuineUltra]:
+def select_genuine_ultras(summaries: list[ActivitySummary], cfg: Config,
+                          slope: tuple[float, float] | None = None) -> list[GenuineUltra]:
     """Vrais ultras engagés : durée > seuil, vitesse ajustée ≥ seuil, découplage < seuil.
 
     Le filtre de durée porte sur le temps ÉCOULÉ (un 10 h avec de longs arrêts reste un ultra) ;
@@ -362,10 +385,10 @@ def select_genuine_ultras(summaries: list[ActivitySummary], cfg: Config) -> list
     for s in summaries:
         # durée, plancher (fixe ou dépendant de la durée), découplage (reconnaissances/randos ;
         # FC absente → non vérifiable, on garde), plus long plateau : genuine_gate_failures
-        if genuine_gate_failures(s, cfg):
+        if genuine_gate_failures(s, cfg, slope):
             continue
         hours = _basis_hours(s, cfg)
-        vga_kmh = s.ga_km / hours
+        vga_kmh = adjusted_km(s, slope) / hours
         stops_s = getattr(s, "stops_s", None)
         out.append(
             GenuineUltra(
@@ -802,8 +825,24 @@ def _duration_prior(
 
 def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
     c = cfg.calibration
-    genuine = select_genuine_ultras(twin.summaries, cfg)
+    # coût de pente personnel (Phase 5, C1) : la vitesse ajustée de chaque effort, et le
+    # plancher qui la juge, portent les mêmes facteurs que le parcours servi
+    slope = twin.slope_factors(cfg)
+    genuine = select_genuine_ultras(twin.summaries, cfg, slope=slope)
     notes: list[str] = []
+    slope_kw: dict = {"slope_cost": c.slope_cost, "slope_kappa": slope}
+    if c.slope_cost == "personal":
+        if slope is None:
+            notes.append("Coût de pente personnel demandé mais non mesurable (pas assez de "
+                         "secondes en pente avec FC) : loi de Minetti conservée.")
+        else:
+            det = twin.slope_detail or {}
+            missing = [side for side, k in (("montée", twin.slope_kappa_up),
+                                             ("descente", twin.slope_kappa_down)) if k is None]
+            notes.append(f"Coût de pente personnel : surcoût de montée × {slope[0]:.2f}, de "
+                         f"descente × {slope[1]:.2f} ({det.get('hours_up', 0):.0f} h et "
+                         f"{det.get('hours_down', 0):.0f} h de mesure avec FC)"
+                         + (f" ; {' et '.join(missing)} non mesurable, loi conservée." if missing else "."))
 
     # Poids : récence (non-stationnarité) × maximalité (hétérogénéité d'intention). Les deux sont
     # appliqués À L'IDENTIQUE dans le fit ET la LOO → l'indice de confiance reflète le modèle servi.
@@ -948,6 +987,7 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
             night_share_mean=night_mean if night_coef is not None else None,
             night_prior=night_prior if night_coef is not None else None,
             **stops_kw,
+            **slope_kw,
             **level_kw,
         )
 
@@ -962,6 +1002,7 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
             n_eff=n_eff, recency_halflife_days=c.recency_halflife_days,
             maximality_mode=c.maximality_mode, maximality_weights=max_w_tuple, link=c.link,
             weights=w_tuple if n else None, **stops_kw,
+            **slope_kw,
         )
 
     penalty = c.default_dplus_penalty_kmh_per_dpkm
@@ -1018,6 +1059,7 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
             link=c.link,
             weights=w_tuple,
             **stops_kw,
+            **slope_kw,
             **level_kw,
             **tail_kw,
         )
@@ -1044,6 +1086,7 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
         weights=w_tuple if n else None,
         **tail_kw,
         **stops_kw,
+            **slope_kw,
     )
 
 

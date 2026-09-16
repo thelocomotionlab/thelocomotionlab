@@ -51,6 +51,11 @@ class ActivitySummary:
     stops_s: float | None = None         # secondes dans les plateaux de distance ≥ twin.stop_min_s
     n_stops: int | None = None
     longest_stop_s: float | None = None  # plus long plateau de distance (s) — garde « sommeil »
+    # --- coût de pente (Phase 5, C1) : ga = dist + surcoût de montée + surcoût de descente
+    # (loi de Minetti, km) ; sommes par tranche de pente des secondes en mouvement avec FC
+    ga_up_excess_km: float | None = None
+    ga_down_excess_km: float | None = None
+    slope_bins: dict | None = None
     night_share: float | None = None     # part de nuit (0–1) de l'écoulé (efforts longs, position connue)
     half_split_ratio: float | None = None  # vga hors plateaux : seconde moitié de Deq ÷ première
     mean_alt_m: float | None = None      # altitude moyenne du canal altitude (efforts longs)
@@ -203,7 +208,50 @@ def _adjusted_distance(act: CanonicalActivity, cfg: Config):
     grad = np.clip(grad, -cfg.course.grade_clip, cfg.course.grade_clip)
     f = grade_factor(grad, cfg.course.cr0, cap=cfg.twin.f_cap)
     dga = np.concatenate([[0.0], np.cumsum(f[:-1] * dd)])
-    return draw, dga, alts, alt_f, rescued
+    return draw, dga, alts, alt_f, rescued, grad, f, dd
+
+
+_HR_REF = 60.0   # FC de référence des sommes par tranche de pente (ln(FC − 60), 1/(FC − 60))
+
+
+def slope_bin_centers(cfg: Config) -> np.ndarray:
+    """Centres des tranches de pente (%), de −slope_max_pct à +slope_max_pct par slope_bin_pct,
+    la tranche centrale à 0 (le plat)."""
+    tw = cfg.twin
+    k = int(round(tw.slope_max_pct / tw.slope_bin_pct))
+    return np.arange(-k, k + 1) * float(tw.slope_bin_pct)
+
+
+def _slope_bins(dd: np.ndarray, grad: np.ndarray, hr: np.ndarray, moving: np.ndarray,
+                cfg: Config) -> dict | None:
+    """Sommes par tranche de pente (Phase 5, C1) sur les incréments en mouvement avec FC :
+    secondes, Σ ln(vitesse brute), Σ ln(FC − 60), Σ 1/(FC − 60) — la FC lue ``slope_hr_lag_s``
+    plus tard que l'incrément (retard de la réponse cardiaque). La matière du coût de pente
+    personnel, sans tableau 1 Hz ; None sans incrément exploitable."""
+    tw = cfg.twin
+    centers = slope_bin_centers(cfg)
+    nb = len(centers)
+    m = dd.size
+    lag = max(int(tw.slope_hr_lag_s), 0)
+    hr_l = np.full(m, np.nan)
+    if lag < m:
+        hr_l[: m - lag] = hr[1 + lag: 1 + m]
+    with np.errstate(invalid="ignore"):
+        ok = (moving & (dd > 0) & np.isfinite(hr_l) & (hr_l >= tw.slope_hr_min_bpm)
+              & np.isfinite(grad) & (hr_l > _HR_REF))
+    if not ok.any():
+        return None
+    idx = np.rint(grad * 100.0 / tw.slope_bin_pct).astype(int) + nb // 2
+    ok &= (idx >= 0) & (idx < nb)
+    if not ok.any():
+        return None
+    idx, v, h = idx[ok], dd[ok], hr_l[ok] - _HR_REF
+    return {
+        "n": np.bincount(idx, minlength=nb).tolist(),
+        "sum_lnv": np.bincount(idx, weights=np.log(v), minlength=nb).tolist(),
+        "sum_lnh": np.bincount(idx, weights=np.log(h), minlength=nb).tolist(),
+        "sum_invh": np.bincount(idx, weights=1.0 / h, minlength=nb).tolist(),
+    }
 
 
 def tail_durations(cfg: Config) -> tuple[int, ...]:
@@ -222,7 +270,7 @@ def process_activity(act: CanonicalActivity, cfg: Config):
 def process_activity_full(act: CanonicalActivity, cfg: Config):
     """→ (:class:`ActivitySummary`, vga_par_durée, vraw_par_durée, vga_fenêtres_longues)."""
     durs = np.asarray(cfg.twin.record_durations_s, dtype=float)
-    draw, dga, alts, alt_f, distance_rescued = _adjusted_distance(act, cfg)
+    draw, dga, alts, alt_f, distance_rescued, grad, f_slope, dd_used = _adjusted_distance(act, cfg)
     tg = act.t
     n = act.n
 
@@ -247,6 +295,15 @@ def process_activity_full(act: CanonicalActivity, cfg: Config):
     slope_unusable = alt_unusable or distance_rescued
     if distance_rescued:
         dga = draw
+    # décomposition exacte de l'équivalent plat (Phase 5, C1) : brut + surcoût de montée +
+    # surcoût de descente sous la loi de Minetti ; nuls quand la pente n'est pas exploitable
+    if slope_unusable:
+        ga_up_excess = ga_down_excess = 0.0
+    else:
+        exc = (f_slope[:-1] - 1.0) * dd_used
+        g_inc = grad[:-1]
+        ga_up_excess = float(np.sum(exc[g_inc > 0])) / 1000.0
+        ga_down_excess = float(np.sum(exc[g_inc < 0])) / 1000.0
 
     vga = np.full(len(durs), np.nan)
     vraw = np.full(len(durs), np.nan)
@@ -325,6 +382,12 @@ def process_activity_full(act: CanonicalActivity, cfg: Config):
     # mouvement et émoussait le mode ``speed_basis=moving`` (H2, revue C2).
     moving_time_s = float(np.count_nonzero(moving_mask)) if dd_raw.size else None
 
+    # sommes par tranche de pente (Phase 5, C1) : secondes en mouvement avec FC, pente
+    # exploitable et canal distance sain
+    slope_bins = None
+    if has_hr and not slope_unusable and dd_raw.size:
+        slope_bins = _slope_bins(dd_used, grad[:-1], hr, moving_mask[1:], cfg)
+
     # arrêts francs = plateaux de distance ≥ stop_min_s (Phase 2, B4) : la base « plateaux »
     # de la calibration retire ces secondes-là, pas la marche lente sous le seuil de vitesse
     stops = _detect_stops(moving_mask, cfg.twin.stop_min_s) if dd_raw.size else []
@@ -357,6 +420,9 @@ def process_activity_full(act: CanonicalActivity, cfg: Config):
         stops_s=stops_s,
         n_stops=n_stops,
         longest_stop_s=longest_stop_s,
+        ga_up_excess_km=round(ga_up_excess, 4),
+        ga_down_excess_km=round(ga_down_excess, 4),
+        slope_bins=slope_bins,
         night_share=None if night_share is None else round(night_share, 4),
         half_split_ratio=None if half_split is None else round(half_split, 4),
         mean_alt_m=None if mean_alt is None else round(mean_alt),
@@ -661,5 +727,6 @@ def build_record_curve(
 
 __all__ = ["ActivitySummary", "ActivityContribution", "RecordPoint", "RecordCurve",
            "despike_stats", "process_activity", "process_activity_full", "tail_durations",
+           "slope_bin_centers",
            "build_record_curve", "iter_contributions", "record_from_contributions",
            "select_unique_contributions"]

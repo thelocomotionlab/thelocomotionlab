@@ -16,8 +16,9 @@ import numpy as np
 
 from ..config import Config
 from ..ingest.canonical import CanonicalActivity
-from .record import (ActivitySummary, RecordCurve, iter_contributions,
-                     record_from_contributions)
+from ..minetti import grade_factor
+from .record import (_HR_REF, ActivitySummary, RecordCurve, iter_contributions,
+                     record_from_contributions, slope_bin_centers)
 
 
 @dataclass(frozen=True)
@@ -52,10 +53,24 @@ class Twin:
     alpha_tail: float | None = None           # exposant de la queue de la courbe record (≥ record_tail_from_s)
     alpha_tail_n: int = 0                     # points de l'ajustement de queue
     level_marks: dict[str, float] | None = None   # VC (m/s) de l'époque des candidats ultras, par date
+    # --- Phase 5 : coût de pente personnel (mesuré ; servi derrière calibration.slope_cost)
+    slope_kappa_up: float | None = None       # surcoût de montée de Minetti × κ (None = non mesurable)
+    slope_kappa_down: float | None = None     # surcoût de descente × κ
+    slope_detail: dict | None = None          # FC0, heures par côté, tranches (f personnel / f loi)
 
     @property
     def vc_ms(self) -> float | None:
         return self.critical_speed.vc_ms if self.critical_speed else None
+
+    def slope_factors(self, cfg: Config) -> tuple[float, float] | None:
+        """Facteurs (montée, descente) du coût de pente à servir : None hors
+        ``calibration.slope_cost=personal`` ou sans aucune mesure ; un côté non mesuré vaut 1."""
+        if cfg.calibration.slope_cost != "personal":
+            return None
+        if self.slope_kappa_up is None and self.slope_kappa_down is None:
+            return None
+        return (1.0 if self.slope_kappa_up is None else float(self.slope_kappa_up),
+                1.0 if self.slope_kappa_down is None else float(self.slope_kappa_down))
 
     def envelope_vga_ms(self, t_s: float) -> float | None:
         """Enveloppe d'endurance (vitesse ajustée, m/s) extrapolée à la durée ``t_s``.
@@ -83,6 +98,8 @@ class Twin:
             "n_activities": len(self.summaries),
             "alpha_eff": None if self.alpha_eff is None else round(self.alpha_eff, 4),
             "alpha_tail": None if self.alpha_tail is None else round(self.alpha_tail, 4),
+            "slope_kappa_up": None if self.slope_kappa_up is None else round(self.slope_kappa_up, 4),
+            "slope_kappa_down": None if self.slope_kappa_down is None else round(self.slope_kappa_down, 4),
         }
 
 
@@ -285,6 +302,78 @@ def fit_record_tail_exponent(record: RecordCurve, cfg: Config) -> tuple[float | 
     return alpha, len(pts)
 
 
+def fit_slope_cost(summaries: list[ActivitySummary], cfg: Config, hr0: float | None
+                   ) -> tuple[float | None, float | None, dict]:
+    """Coût de pente personnel (Phase 5, C1) : ``(κ_montée, κ_descente, détail)``.
+
+    Pour chaque activité qui porte des sommes par tranche de pente et au moins 10 min de
+    plat, l'écart intra-activité ``d_b = ⟨ln v − ln(FC − FC0)⟩_b − ⟨…⟩_plat`` dit de combien
+    l'athlète est plus lent (montée) ou plus rapide (descente) à réserve cardiaque égale ;
+    les écarts sont mis en commun pondérés par les secondes (poids n_b·n_plat ÷ (n_b + n_plat)),
+    d'où un facteur personnel ``f_p(b) = exp(−D_b)`` par tranche. κ est la pente des moindres
+    carrés de ``f_p − 1`` sur ``f_Minetti − 1``, par côté, pondérée par les secondes ; None
+    sous ``slope_cost_min_hours`` heures de mesure ; borné dans [slope_kappa_min,
+    slope_kappa_max] (valeur brute conservée dans le détail). FC0 : celle de l'efficacité-
+    durée (profil) ou 60 bpm — les sommes portent la correction au premier ordre."""
+    tw, c = cfg.twin, cfg.calibration
+    centers = slope_bin_centers(cfg)
+    nb = len(centers)
+    flat = int(np.argmin(np.abs(centers)))
+    h0 = _HR_REF if hr0 is None else float(hr0)
+    D = np.zeros(nb)
+    W = np.zeros(nb)
+    N = np.zeros(nb)
+    n_act = 0
+    for s_ in summaries:
+        b = getattr(s_, "slope_bins", None)
+        if not b or len(b.get("n", ())) != nb:
+            continue
+        n = np.asarray(b["n"], dtype=float)
+        if n[flat] < 600:
+            continue
+        lnv = np.asarray(b["sum_lnv"], dtype=float)
+        lnh = np.asarray(b["sum_lnh"], dtype=float) - (h0 - _HR_REF) * np.asarray(b["sum_invh"], dtype=float)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            y = (lnv - lnh) / n
+        d = y - y[flat]
+        w = n * n[flat] / (n + n[flat])
+        m = (n >= 60) & np.isfinite(d)
+        m[flat] = False
+        D[m] += w[m] * d[m]
+        W[m] += w[m]
+        N[m] += n[m]
+        n_act += 1
+    ok = W > 0
+    with np.errstate(divide="ignore", invalid="ignore"):
+        f_p = np.where(ok, np.exp(-D / np.where(ok, W, 1.0)), np.nan)
+    f_m = np.asarray(grade_factor(centers / 100.0, cfg.course.cr0, cap=tw.f_cap), dtype=float)
+
+    def _side(mask: np.ndarray):
+        sel = mask & ok & np.isfinite(f_p)
+        hours = float(N[sel].sum() / 3600.0)
+        if hours < c.slope_cost_min_hours:
+            return None, hours, None
+        x, yv, w = f_m[sel] - 1.0, f_p[sel] - 1.0, N[sel]
+        den = float(np.sum(w * x * x))
+        if den <= 0:
+            return None, hours, None
+        raw = float(np.sum(w * x * yv) / den)
+        return float(np.clip(raw, c.slope_kappa_min, c.slope_kappa_max)), hours, raw
+
+    ku, hu, ku_raw = _side(centers > 0)
+    kd, hd, kd_raw = _side(centers < 0)
+    detail = {
+        "hr0": round(h0, 1), "n_activities": n_act,
+        "hours_up": round(hu, 1), "hours_down": round(hd, 1),
+        "kappa_up_raw": None if ku_raw is None else round(ku_raw, 4),
+        "kappa_down_raw": None if kd_raw is None else round(kd_raw, 4),
+        "bins": [{"grade_pct": float(centers[i]), "f_personal": round(float(f_p[i]), 4),
+                  "f_minetti": round(float(f_m[i]), 4), "hours": round(float(N[i] / 3600.0), 2)}
+                 for i in range(nb) if ok[i] and np.isfinite(f_p[i])],
+    }
+    return ku, kd, detail
+
+
 def vc_at_epoch(contributions, day: _date, cfg: Config) -> float | None:
     """Vitesse critique de l'ÉPOQUE ``day`` : courbe record des ``level_anchor_window_days``
     jours qui précèdent (bornes ]day − fenêtre, day]), fit VC sans bootstrap ; None sans
@@ -358,6 +447,7 @@ def _twin_from_record(record, summaries, cfg: Config, contributions=None) -> Twi
     dur = estimate_durability(summaries, cfg)
     alpha_eff, eff_detail = fit_efficiency_exponent(summaries, cfg)
     alpha_tail, tail_n = fit_record_tail_exponent(record, cfg)
+    kappa_up, kappa_down, slope_detail = fit_slope_cost(summaries, cfg, eff_detail.get("hr0"))
     marks = None
     if cfg.calibration.level_anchor == "vc_epoch" and contributions is not None:
         marks = level_marks(contributions, summaries, cfg)
@@ -374,6 +464,9 @@ def _twin_from_record(record, summaries, cfg: Config, contributions=None) -> Twi
         alpha_tail=alpha_tail,
         alpha_tail_n=tail_n,
         level_marks=marks,
+        slope_kappa_up=kappa_up,
+        slope_kappa_down=kappa_down,
+        slope_detail=slope_detail,
     )
 
 
@@ -385,6 +478,7 @@ __all__ = [
     "fit_endurance_exponent",
     "fit_efficiency_exponent",
     "fit_record_tail_exponent",
+    "fit_slope_cost",
     "vc_at_epoch",
     "level_marks",
     "estimate_durability",

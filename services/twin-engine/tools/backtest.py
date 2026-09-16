@@ -176,6 +176,8 @@ def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path,
             "length_km": round(result.course.length_km, 1),
             "deq_km": round(result.course.deq_km, 1),
             "dplus_per_km": round(result.course.dplus_per_km, 1),
+            "slope_kappa": (None if result.course.slope_kappa is None
+                            else [round(k, 4) for k in result.course.slope_kappa]),
         },
         "model": {
             "verdict": result.sufficiency.verdict,
@@ -220,6 +222,14 @@ def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path,
             "level_n_anchored": cal.level_n_anchored,
             "level_shift_mean_pct": (None if cal.level_shift is None
                                      else round(cal.level_shift_mean_pct, 2)),
+            # Phase 5 : coût de pente personnel mesuré (servi ou non) et ce qui a servi
+            "slope_cost": cal.slope_cost,
+            "slope_kappa_up": (None if result.twin.slope_kappa_up is None
+                               else round(result.twin.slope_kappa_up, 4)),
+            "slope_kappa_down": (None if result.twin.slope_kappa_down is None
+                                 else round(result.twin.slope_kappa_down, 4)),
+            "slope_hours_up": (result.twin.slope_detail or {}).get("hours_up"),
+            "slope_hours_down": (result.twin.slope_detail or {}).get("hours_down"),
         },
         "race_meta": None if race_meta is None else {
             "start_local": race_meta["start_local"].isoformat(),

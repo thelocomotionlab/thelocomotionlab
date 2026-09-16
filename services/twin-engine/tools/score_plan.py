@@ -123,6 +123,13 @@ def score_registre(registre: dict, manifests: list[Path], cfg) -> list[dict]:
                             "lat": meta["lat"], "lon": meta["lon"], "tz": meta["tz"]})
         course = build_course(gpx.read_bytes(), race, cfg)
         m = e.get("model") or {}
+        # coût de pente personnel (Phase 5) : les facteurs mesurés de la coupure, consignés au
+        # registre, personnalisent le parcours comme le moteur l'aurait servi
+        if cfg.calibration.slope_cost == "personal":
+            ku, kd = m.get("slope_kappa_up"), m.get("slope_kappa_down")
+            if ku is not None or kd is not None:
+                course = course.with_slope_cost(1.0 if ku is None else float(ku),
+                                                1.0 if kd is None else float(kd))
         scores = score_course(course, race, float(official), pas, cfg,
                               durability_pct=m.get("durability_pct"),
                               splits_delta=m.get("fade_delta_splits"),
