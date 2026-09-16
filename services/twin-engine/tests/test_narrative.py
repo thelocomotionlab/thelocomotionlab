@@ -224,9 +224,9 @@ def test_caption_validation_band_follows_config():
 
 
 def test_interval_label_derived_from_percentiles():
-    """R6 : le « 50 % » de la légende du cumul est dérivé des percentiles de PACING
-    (la bande tracée est la fourchette de course des segments, plus l'intervalle de
-    la prédiction depuis la double bande)."""
+    """R6 : la bande de la légende du cumul est dérivée des percentiles de PACING (c'est la
+    fourchette de course des segments) — et le rapport v2 la DIT en courses, pas en
+    pourcentage sec."""
     from dataclasses import replace
 
     from twin_engine.config import load_config
@@ -234,9 +234,10 @@ def test_interval_label_derived_from_percentiles():
     base = load_config()
     cfg = replace(base, pacing=replace(base.pacing, plan_window_low_pct=10,
                                        plan_window_high_pct=90))
-    assert "80" in N.caption_cumul(cfg)
-    assert "50" in N.caption_cumul(base)
+    assert "quatre courses sur cinq" in N.caption_cumul(cfg)
+    assert "une course sur deux" in N.caption_cumul(base)
     assert "fourchette de course" in N.caption_cumul(base)
+    assert "50" not in N.caption_cumul(base)
 
 
 def test_aid_station_names_are_latex_escaped():

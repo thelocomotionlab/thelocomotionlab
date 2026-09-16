@@ -19,16 +19,19 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg  # noqa: E402
 from matplotlib.figure import Figure  # noqa: E402
 from matplotlib.ticker import MultipleLocator  # noqa: E402
 
-# palette Locomotion Lab
-SAGE = "#8CB9BD"
-GOLD = "#EFB159"
-GOLDINK = "#D89A2E"
-TERRA = "#B67352"
-TEXT = "#333333"
-BG = "#FEFBF6"
-GRID = "#E7E0D4"
-DEEPGRID = "#D8CFBE"
-GREEN = "#3F8F5B"
+from .charte import FONT_FAMILY, FONT_FILES, hexa  # noqa: E402
+
+# palette : les tokens de la charte (report/charte.py = theme.css), jamais une valeur en dur
+SAGE = hexa("primary")
+GOLD = hexa("accent")
+GOLDINK = hexa("accent_ink")
+TERRA = hexa("deep")
+TEXT = hexa("text")
+BG = hexa("bg")
+GRID = hexa("hairline")
+DEEPGRID = hexa("gauge_full")
+GREEN = hexa("success")
+FAINT = hexa("faint")
 
 _FONTS_DIR = Path(__file__).parent / "latex" / "template" / "fonts"
 
@@ -41,16 +44,16 @@ def _init_style() -> None:
     entrelaçaient leurs figures (corruption). Après l'import, rcParams n'est plus jamais
     muté — seulement lu à la création des figures."""
     try:
-        for f in ("Ubuntu-R.ttf", "Ubuntu-M.ttf", "Ubuntu-B.ttf"):
+        for f in FONT_FILES:
             fp = _FONTS_DIR / f
             if fp.exists():
                 fm.fontManager.addfont(str(fp))
-        matplotlib.rcParams["font.family"] = "Ubuntu"
+        matplotlib.rcParams["font.family"] = FONT_FAMILY
     except Exception:  # noqa: BLE001 — police = cosmétique, on dégrade
         pass
     matplotlib.rcParams.update({
         "font.size": 10, "text.color": TEXT, "axes.labelcolor": TEXT,
-        "xtick.color": TEXT, "ytick.color": TEXT, "axes.edgecolor": "#B9B2A4",
+        "xtick.color": TEXT, "ytick.color": TEXT, "axes.edgecolor": FAINT,
         "figure.facecolor": BG, "axes.facecolor": BG, "savefig.facecolor": BG,
         "axes.linewidth": 0.8, "axes.grid": True, "grid.color": GRID, "grid.linewidth": 0.7,
     })
@@ -96,7 +99,7 @@ def _fig_record(twin, calibration, ax) -> None:
     cont = [(p.duration_s, p.vga) for p in rec.points if not p.flat]
     if cont:
         c = np.array(cont)
-        ax.scatter(c[:, 0] / 60, c[:, 1] * 3.6, s=20, color="#C9BCA6",
+        ax.scatter(c[:, 0] / 60, c[:, 1] * 3.6, s=20, color=DEEPGRID,
                    label="courbe record (ajustée pente)", zorder=3)
     if flat:
         fl = np.array(flat)

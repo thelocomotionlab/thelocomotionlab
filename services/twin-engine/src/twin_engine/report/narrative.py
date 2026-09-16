@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from ..config import NarrativeParams
 from ..minetti import grade_factor
-from ._format import fr, hm, tex_escape
+from ._format import courses_sur, fr, hm, tex_escape
 
 # --- seuils de PRÉSENTATION ----------------------------------------------------
 # Exposant de Riegel = DÉCLIN de l'allure quand la durée s'allonge (orthogonal à la VC, qui mesure
@@ -437,9 +437,9 @@ def caption_cumul(cfg=None, plan=None) -> str:
         )
     return (
         f"\\`A lire : ton heure de passage cumul\\'ee. La bande est la \\textbf{{fourchette de "
-        f"course}} ({_plan_band_pct(cfg)}\\,{PCT} central) : elle s'\\'elargit avec les heures "
-        "parce que l'incertitude porte sur ton \\emph{sc\\'enario d'ensemble} — un jour lent "
-        "l'est du d\\'ebut \\`a la fin, pas segment par segment."
+        f"course}} ({courses_sur(_plan_band_pct(cfg))} s'y joue) : elle s'\\'elargit avec les "
+        "heures parce que l'incertitude porte sur ton \\emph{sc\\'enario d'ensemble} — un jour "
+        "lent l'est du d\\'ebut \\`a la fin, pas segment par segment."
     )
 
 
@@ -450,31 +450,18 @@ def _rel_width(prediction) -> float:
 
 
 def width_prescription(prediction, cfg=None) -> str | None:
-    """Phrase qui ASSUME un intervalle de sécurité large (au-delà du seuil scénarios) : la
-    largeur est une information sur l'historique de l'athlète face à ce parcours, pas un
-    défaut du plan. None quand l'intervalle est ordinaire — le mode d'emploi des deux
-    fourchettes est déjà donné par la note fixe du rapport, inutile de le répéter."""
+    """Phrase qui ASSUME des bornes de sécurité larges : la largeur est une information sur
+    l'historique de l'athlète face à ce parcours, pas un défaut du plan. None quand
+    l'intervalle est ordinaire — le plan dit déjà comment lire ses trois colonnes."""
     pace = getattr(cfg, "pacing", None)
-    thresh = pace.scenario_rel_width if pace else 0.35
+    thresh = pace.wide_interval_rel_width if pace else 0.35
     if _rel_width(prediction) <= thresh:
         return None
     return (
         "Sur un parcours comme celui-ci, tes courses pass\\'ees ne permettent pas de resserrer "
         "davantage les bornes de s\\'ecurit\\'e : c'est une information honn\\^ete, pas un "
-        "d\\'efaut du plan. Pilote sur la fourchette de course ; le tableau de sc\\'enarios du "
-        "plan de pacing sert \\`a te recaler en course."
-    )
-
-
-def scenario_intro(cfg=None) -> str:
-    """Chapeau du tableau de scénarios (affiché seulement quand l'intervalle est large)."""
-    return (
-        "L'incertitude sur ce parcours est trop large pour piloter sur une seule heure cible. "
-        "Le plan se d\\'ecline donc en \\textbf{trois sc\\'enarios} — \\emph{rapide} et "
-        f"\\emph{{prudent}} sont les bornes de la fourchette de course ({_plan_band_pct(cfg)}\\,{PCT} "
-        "central). D\\`es les premiers ravitaillements, rep\\`ere la colonne dont tes heures de "
-        "passage sont les plus proches : c'est elle qui devient ta r\\'ef\\'erence pour la suite, "
-        "pas la colonne centrale."
+        "d\\'efaut du plan. Pilote sur la fourchette de course, et rep\\`ere t\\^ot la colonne "
+        "du plan dont tes heures de passage sont les plus proches."
     )
 
 
@@ -521,7 +508,6 @@ def build_narrative(course, twin, calibration, prediction, plan, race, cfg) -> d
         "prediction_pourtoi": prediction_pourtoi(prediction) if prediction else None,
         "intensity_feeling": intensity_feeling(prediction, cfg) if prediction else None,
         "width_prescription": width_prescription(prediction, cfg) if prediction else None,
-        "scenario_intro": scenario_intro(cfg),
         "cv_pourtoi": cv_pourtoi(prediction) if prediction else None,
         "demande_key": demande_key_sentence(course),
         "strategy": race_strategy(course, plan) if plan else [],

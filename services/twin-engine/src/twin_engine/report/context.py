@@ -8,9 +8,13 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta
 
-from ..calibration import REGIME_BLEND, REGIME_REGRESSION, REGIME_VC_E
+import numpy as np
+
+from ..calibration import REGIME_BLEND, REGIME_REGRESSION, REGIME_VC_E, stops_statistics
 from ..feasibility import AMBITIEUX, CONFORTABLE, HORS_DOMAINE, HORS_PORTEE, INDECIDABLE, NOMINAL
-from ._format import fr, french_datetime, fr_thousands, hm, tex_escape
+from ..sufficiency import GREEN, ORANGE, RED
+from ._format import courses_sur, fr, french_datetime, fr_thousands, hm, tex_escape
+from .livrables import crew_points, finish_point
 from .narrative import build_narrative, vc_frac_band
 
 def _pente_servie(twin, calibration, cfg) -> str | None:
@@ -183,7 +187,7 @@ def build_report_context(
     cfg,
     athlete: str,
     report_ref: str = "LL-TWIN",
-    report_version: str = "v1.0",
+    report_version: str | None = None,
     report_date: datetime | None = None,
     target=None,
 ) -> dict:
@@ -191,6 +195,8 @@ def build_report_context(
     # (analyze_full s'arrête au preview si prediction is None) — on le rend explicite.
     if prediction is None:
         raise ValueError("build_report_context requiert une prédiction (depth full uniquement)")
+    if report_version is None:
+        report_version = cfg.report.version
     cs = twin.critical_speed
     cv = prediction.cross_validation
 
@@ -264,35 +270,10 @@ def build_report_context(
     plan_low = hm(last.lo_h) if last else None
     plan_high = hm(last.hi_h) if last else None
 
-    # mode SCÉNARIOS : quand l'intervalle de sécurité est LARGE relativement à la prédiction
-    # (largeur relative > pacing.scenario_rel_width), une valeur centrale unique sur-promet ;
-    # le tableau bascule alors en trois scénarios nommés (les bornes de la fourchette de
-    # course + le central), que l'athlète RECALE en course : « je passe plus près de la
-    # colonne prudente → je vise l'arrivée prudente ».
-    rel_width = (
-        (prediction.interval_high_h - prediction.interval_low_h) / prediction.finish_hours
-        if prediction.finish_hours > 0 else 0.0
-    )
-    # MODE OBJECTIF (ADR 0002) : les scénarios déclinent la dispersion PRÉDICTIVE — hors sujet
-    # quand le plan est ancré sur une durée choisie. On les neutralise plutôt que de laisser
-    # trois colonnes probabilistes cohabiter avec une consigne d'exécution.
+    # MODE OBJECTIF (ADR 0002) : le plan est ancré sur une durée CHOISIE — les colonnes du plan
+    # cessent d'être trois scénarios probabilistes pour devenir les bornes d'une tolérance
+    # d'exécution. Le gabarit LIT ce drapeau avant de choisir ses mots.
     on_target = getattr(plan, "anchor", "prediction") == "target"
-    scenario_mode = bool(rel_width > cfg.pacing.scenario_rel_width) and not on_target
-
-    def _clock_or_h(clock: str | None, hours: float) -> str:
-        return tex_escape(clock) if clock else f"{fr(hours, 1)}\\,h"
-
-    scenario_rows = [
-        {
-            "idx": s.index,
-            "to": tex_escape(s.to),
-            "fast": _clock_or_h(s.arr_lo_clock, s.lo_h),
-            "central": _clock_or_h(s.arr_clock, s.cum_clock_h),
-            "cautious": _clock_or_h(s.arr_hi_clock, s.hi_h),
-            "night": s.night,
-        }
-        for s in plan.segments
-    ] if scenario_mode else []
 
     night = _main_night_span(plan)
     weeks = _recent_weeks(twin.summaries, n_weeks=cfg.narrative.recent_weeks)
@@ -402,8 +383,6 @@ def build_report_context(
         "arrival_clock": arrival_clock,
         "arrival_window": arrival_window,
         "arrival_safety_window": arrival_safety_window,
-        "scenario_mode": scenario_mode,
-        "scenario_rows": scenario_rows,
         # --- mode OBJECTIF (ADR 0002) ------------------------------------------------------
         # « demandé » ≠ « servi » : une cible refusée reste affichée (avec l'écart chiffré),
         # seul target_mode dit que le PLAN est ancré dessus. Les fenêtres des segments ne
@@ -471,7 +450,303 @@ def build_report_context(
     }
     # couche pédagogique (textes générés à partir des valeurs calculées, jamais en dur)
     ctx.update(build_narrative(course, twin, calibration, prediction, plan, race, cfg))
+    # rapport v2 : couverture, verdict en mots, jauges, consignes, limites, assistance, annexe
+    ctx.update(_v2_context(ctx, course=course, twin=twin, calibration=calibration,
+                           prediction=prediction, plan=plan, race=race,
+                           sufficiency=sufficiency, cfg=cfg, athlete=athlete,
+                           report_ref=report_ref, target=target))
     return ctx
+
+
+# --------------------------------------------------------------------------- #
+# Rapport v2 (Phase 6) : ce que les six pages disent, dérivé des objets calculés.
+# --------------------------------------------------------------------------- #
+_CONFIDENCE = {
+    GREEN: ("confiance pleine", "LLSuccess"),
+    ORANGE: ("confiance réduite", "LLAccentInk"),
+    RED: ("pas vendable en l'état", "LLDeepDark"),
+}
+
+
+def _clamp(x: float) -> float:
+    return float(min(max(x, 0.0), 1.0))
+
+
+def _consigne(seg, cfg) -> str:
+    """Consigne d'un segment, lue sur sa pente moyenne et sur la nuit."""
+    steep, gentle = cfg.report.consigne_steep_pct, cfg.report.consigne_gentle_pct
+    g = seg.mean_grade_pct
+    if g >= steep:
+        base = "marche dès que ça grimpe, mange en montant"
+    elif g >= gentle:
+        base = "petites foulées, sans forcer"
+    elif g <= -steep:
+        base = "foulée courte, cadence haute, protège tes quadriceps"
+    elif g <= -gentle:
+        base = "laisse rouler sans freiner"
+    else:
+        base = "allure régulière, bois et mange"
+    return base + (" · frontale" if seg.night else "")
+
+
+def _gauges(ctx: dict, twin, calibration, plan, cfg, stops_budget: dict | None) -> list[dict]:
+    r = cfg.report
+    cs = twin.critical_speed
+    vc_ok = cs is not None and cs.plausible
+    lo, hi = r.gauge_vc_kmh
+    e_hi, e_lo = r.gauge_endurance_e
+    pw, dw = ctx.get("profile_word"), ctx.get("durability_word")
+    gauges = [{
+        "label": "Vitesse critique",
+        "value": f"{fr(cs.vc_kmh, 1)} km/h" if vc_ok else "non affichée",
+        "fraction": _clamp((cs.vc_kmh - lo) / (hi - lo)) if vc_ok else 0.0,
+        "sentence": ("ta frontière entre « je tiens longtemps » et « ça brûle », mesurée sur tes "
+                     "efforts plats" if vc_ok else
+                     "estimation hors du plausible : ni affichée ni utilisée"),
+    }, {
+        "label": "Endurance",
+        "value": f"E = {fr(twin.endurance_E, 2)}" if twin.endurance_E else "non mesurée",
+        "fraction": _clamp((e_hi - twin.endurance_E) / (e_hi - e_lo)) if twin.endurance_E else 0.0,
+        "sentence": {"diesel": "ton allure baisse peu quand la durée s'allonge : un profil diesel",
+                     "équilibré": "ton allure baisse comme celle de la plupart des ultra-traileurs",
+                     "fade": "ton allure baisse nettement avec la durée : garde de la marge tôt"}.get(
+            pw or "", "à quelle vitesse ton allure soutenable baisse quand la durée s'allonge"),
+    }, {
+        "label": "Durabilité",
+        "value": (f"{fr(twin.durability_pct, 0)} % de découplage" if twin.durability_pct is not None
+                  else "non chiffrée"),
+        "fraction": (_clamp(1.0 - twin.durability_pct / r.gauge_durability_pct)
+                     if twin.durability_pct is not None else 0.0),
+        "sentence": {"excellente": "ton efficacité tient jusqu'au bout de tes longues sorties",
+                     "bonne": "ton efficacité baisse modérément en fin de longue sortie",
+                     "à surveiller": "ton efficacité chute nettement en fin d'effort : le point à gérer"}.get(
+            dw or "", "la fréquence cardiaque manque sur tes longues sorties"),
+    }, {
+        "label": "Arrêts",
+        "value": (f"{fr(stops_budget['rate_min_per_h'], 0)} min par heure" if stops_budget
+                  else "non mesurés"),
+        "fraction": (_clamp(1.0 - stops_budget["rate_min_per_h"] / r.gauge_stops_min_per_h)
+                     if stops_budget else 0.0),
+        "sentence": (f"mesurés sur {stops_budget['n']} de tes ultras : le temps que tu passes "
+                     "aux ravitos et à l'arrêt" if stops_budget else
+                     "aucun ultra avec des arrêts mesurés dans ton archive"),
+    }]
+    return [{**g, "label": tex_escape(g["label"]), "value": tex_escape(g["value"]),
+             "sentence": tex_escape(g["sentence"]), "fraction": round(g["fraction"], 3)}
+            for g in gauges]
+
+
+def _stops_budget(calibration, plan, cfg) -> dict | None:
+    """Le budget d'arrêts PERSONNEL (taux mesuré sur les ultras × mouvement du plan) :
+    une information de logistique à côté de la politique du plan, jamais sa répartition."""
+    genuine = list(calibration.genuine)
+    if not genuine:
+        return None
+    w = (np.asarray(calibration.weights, dtype=float)
+         if calibration.weights is not None and len(calibration.weights) == len(genuine)
+         else np.ones(len(genuine)))
+    st = stops_statistics(genuine, w, cfg)
+    if st.get("origin") != "ultras" or not st.get("n"):
+        return None
+    hours = float(st["rate"]) * float(plan.t_move_h)
+    return {"rate_min_per_h": float(st["rate"]) * 60.0, "hours": hours, "n": int(st["n"]),
+            "hours_hm": hm(hours)}
+
+
+def _verdict_sentence(sufficiency, calibration, twin) -> str:
+    """Ce qui fonde le verdict, dit en une ligne sous le badge de la couverture."""
+    n = calibration.n_genuine
+    n_hr = sum(1 for g in calibration.genuine if g.avg_hr is not None)
+    parts = [f"{n} vrai{'s' if n > 1 else ''} ultra{'s' if n > 1 else ''}"
+             + (f" dont {n_hr} avec fréquence cardiaque" if n else "")]
+    fresh = next((c for c in sufficiency.criteria if c.name == "Fraîcheur des données"), None)
+    if fresh is not None and fresh.value is not None:
+        parts.append(f"dernière sortie il y a {int(fresh.value)} j")
+    dom = getattr(sufficiency, "domain", None)
+    if dom is not None:
+        parts.append("parcours hors du domaine" if dom.below else "parcours dans le domaine")
+    blocking = [c.name for c in sufficiency.criteria if c.level == RED]
+    if blocking:
+        parts.append("bloquant : " + ", ".join(b.lower() for b in blocking))
+    return tex_escape(" · ".join(parts))
+
+
+def _limits(ctx: dict, sufficiency, race, cfg) -> list[str]:
+    """Les quatre limites de la dernière page (toujours quatre, dans cet ordre)."""
+    fresh = next((c for c in sufficiency.criteria if c.name == "Fraîcheur des données"), None)
+    if fresh is not None and fresh.value is not None:
+        forme = (f"Forme du jour : tes données s'arrêtent {int(fresh.value)} jour"
+                 f"{'s' if fresh.value > 1 else ''} avant cette analyse ; la prédiction suppose "
+                 "ta forme du moment et se recalcule à l'approche de la course.")
+    else:
+        forme = ("Forme du jour : la prédiction suppose ta forme du moment ; si tes données "
+                 "s'arrêtent avant la course, recalcule à l'approche.")
+    tech = ctx.get("technicity_pct")
+    if tech:
+        terrain = (f"Technicité : +{tech} % déclarés, pas mesurés. Le moteur ne distingue pas une "
+                   "piste d'une arête à D+ égal ; ce chiffre vient de la connaissance du parcours "
+                   "et porte l'écart si le terrain surprend.")
+    else:
+        terrain = ("Technicité du terrain non prise en compte : à D+ égal, une piste roulante et "
+                   "une arête chaotique sont traitées pareil. Sur un parcours très technique, les "
+                   "temps réels sont plus lents que prédit.")
+    descentes = ("Descentes : les allures servies sont des plafonds métaboliques, et la loi de "
+                 "Minetti perd sa validité au-delà de ±25 à 30 % de pente (marche active).")
+    meteo = "Météo, chaleur et nutrition ne sont pas modélisées"
+    if race.heat_c is not None:
+        meteo = (f"Nutrition non modélisée ; la chaleur déclarée ({fr(race.heat_c, 0)} °C) entre "
+                 "dans la prédiction, la météo du jour non")
+    return [tex_escape(forme), tex_escape(terrain), tex_escape(descentes), tex_escape(meteo + ".")]
+
+
+def _honesty(prediction, cfg) -> str:
+    cv = prediction.cross_validation
+    if cv is None:
+        return tex_escape(
+            "Moins de trois vrais ultras dans ton archive : rien ne valide encore la méthode sur "
+            "toi. Prends la fourchette, pas le chiffre, et recalcule après ton prochain ultra.")
+    interp = (f", {fr(cv.mae_interpolation_pct, 1)} % en interpolation"
+              if cv.mae_interpolation_pct is not None else "")
+    return tex_escape(
+        f"Sur tes {cv.n} ultras passés, rejoués en aveugle (chacun prédit sans lui-même), "
+        f"l'erreur moyenne est de {fr(cv.mae_pct, 1)} %{interp}. Les fourchettes de ce rapport "
+        "sont calées sur ces erreurs mesurées, pas sur la seule dispersion supposée du modèle.")
+
+
+def _assumptions(ctx: dict, plan, race, cfg, stops_policy: dict) -> list[str]:
+    """Ce que le plan suppose et ce qui a été déclaré — des morceaux LaTeX-sûrs assemblés
+    (les durées ``hm`` portent déjà leurs espaces fines)."""
+    out = [tex_escape("Arrêts : ") + stops_policy["sentence"] + "."]
+    fade_src = {"config": "la dérive du plan est la valeur commune",
+                "durability": "la dérive du plan est dérivée de ta durabilité mesurée",
+                "splits": "la dérive du plan est mesurée sur les moitiés de tes ultras"}
+    out.append(tex_escape(f"Dérive : {fade_src.get(ctx.get('fade_source_used', 'config'))}, ")
+               + f"$-${ctx['fade_pct']}\\,\\% du d\\'ebut \\`a la fin.")
+    if ctx.get("technicity_pct"):
+        out.append(tex_escape("Terrain : +") + f"{ctx['technicity_pct']}\\,\\% "
+                   + tex_escape("de technicité déclarés."))
+    else:
+        out.append(tex_escape("Terrain : aucune technicité déclarée, sol comparable à tes "
+                              "courses de référence."))
+    if race.heat_c is not None:
+        out.append(tex_escape(f"Chaleur : {fr(race.heat_c, 0)} °C déclarés."))
+    if ctx.get("target_requested"):
+        out.append(tex_escape("Objectif demandé : ") + f"{ctx['target_hm']} ({ctx['target_regime_label']}).")
+    return out
+
+
+def _v2_context(ctx: dict, *, course, twin, calibration, prediction, plan, race, sufficiency,
+                cfg, athlete: str, report_ref: str, target) -> dict:
+    conf_word, conf_color = _CONFIDENCE[sufficiency.verdict]
+    plan_band = cfg.pacing.plan_window_high_pct - cfg.pacing.plan_window_low_pct
+    interval = cfg.prediction.interval_high_pct - cfg.prediction.interval_low_pct
+    plan_word, safety_word = courses_sur(plan_band), courses_sur(interval)
+
+    if ctx["plan_low"] and ctx["plan_high"]:
+        cover = (f"Tu arrives autour de {ctx['pred_central']}, {plan_word} entre "
+                 f"{ctx['plan_low']} et {ctx['plan_high']}.")
+    else:
+        cover = (f"Tu arrives autour de {ctx['pred_central']}, {safety_word} entre "
+                 f"{ctx['interval_low']} et {ctx['interval_high']}.")
+    if sufficiency.verdict == RED:
+        cover = ("Ce rapport n'est pas vendable en l'état : tes données ne suffisent pas à "
+                 "engager une prédiction. Il dit pourquoi, et ce qui manque.")
+
+    # politique d'arrêts du plan : ce que le plan retranche, et d'où ça vient
+    n_seg = len(plan.segments)
+    majors = [i for i in race.major_base_indices if 0 <= i < n_seg - 1]
+    n_points = max(n_seg - 1, 0)
+    if plan.stops_model == "personal":
+        policy_tail = (f" d'arrêts, ton taux personnel réparti sur les {n_points} points de "
+                       "passage au prorata de la politique du plan")
+    else:
+        policy_tail = (f" retranchées du temps prédit : {n_points} points de passage à "
+                       f"{fr(cfg.pacing.default_stop_min, 0)} min"
+                       + (f", dont {len(majors)} base{'s' if len(majors) > 1 else ''} majeure"
+                          f"{'s' if len(majors) > 1 else ''} à "
+                          f"{fr(cfg.pacing.default_stop_min + cfg.pacing.major_base_extra_min, 0)} min"
+                          if majors else ""))
+    # la phrase LaTeX (durée ``hm`` avec ses espaces fines) et sa version lisible (annexe)
+    policy_sentence = hm(plan.t_stops_h) + tex_escape(policy_tail)
+    policy_plain = hm(plan.t_stops_h).replace("\\,", "\u202f") + policy_tail
+    stops_policy = {"model": plan.stops_model, "n_points": n_points, "n_major": len(majors),
+                    "default_min": float(cfg.pacing.default_stop_min),
+                    "extra_min": float(cfg.pacing.major_base_extra_min),
+                    "total_h": round(plan.t_stops_h, 2), "total_hm": hm(plan.t_stops_h),
+                    "sentence": policy_sentence}
+    budget = _stops_budget(calibration, plan, cfg)
+
+    points = crew_points(plan, race)
+    finish = finish_point(plan, prediction)
+    consignes = [_consigne(s, cfg) for s in plan.segments]
+
+    def _clock_or_h(clock: str | None, hours: float) -> str:
+        return tex_escape(clock) if clock else f"{fr(hours, 1)}\\,h"
+
+    for row, seg, consigne in zip(ctx["plan_rows"], plan.segments, consignes):
+        row["consigne"] = tex_escape(consigne)
+        row["fast"] = _clock_or_h(seg.arr_lo_clock, seg.lo_h)
+        row["central"] = _clock_or_h(seg.arr_clock, seg.cum_clock_h)
+        row["cautious"] = _clock_or_h(seg.arr_hi_clock, seg.hi_h)
+    crew_rows = [{
+        "name": tex_escape(p.name), "km": fr(p.km, 1), "earliest": tex_escape(p.earliest_clock),
+        "central": tex_escape(p.central_clock), "latest": tex_escape(p.latest_clock),
+        "stop": fr(p.stop_min, 0), "night": p.night, "major": p.is_major,
+    } for p in points]
+    finish_row = None if finish is None else {
+        "name": tex_escape(finish.name), "km": fr(finish.km, 1),
+        "earliest": tex_escape(finish.earliest_clock), "central": tex_escape(finish.central_clock),
+        "latest": tex_escape(finish.latest_clock), "night": finish.night,
+    }
+    bracelet_rows = [{"km": fr(s.off1, 0), "name": tex_escape(s.to[:14]),
+                      "clock": tex_escape(s.arr_clock.split(" ", 1)[1] if s.arr_clock and " " in s.arr_clock
+                                          else (s.arr_clock or f"{fr(s.cum_clock_h, 1)} h")),
+                      "night": s.night}
+                     for s in plan.segments]
+
+    limits = _limits(ctx, sufficiency, race, cfg)
+    honesty = _honesty(prediction, cfg)
+    assumptions = _assumptions(ctx, plan, race, cfg, stops_policy)
+    n_hr = sum(1 for g in calibration.genuine if g.avg_hr is not None)
+    fade_pct_plain = int(round(2 * plan.fade_delta_used / (1 + plan.fade_delta_used) * 100))
+
+    return {
+        "athlete_plain": athlete,
+        "annex_ref": report_ref,
+        "annex_url": f"{cfg.report.annex_base_url.rstrip('/')}/{report_ref}",
+        "confidence_word": tex_escape(conf_word),
+        "confidence_plain": conf_word,
+        "confidence_color": conf_color,
+        "verdict_sentence": _verdict_sentence(sufficiency, calibration, twin),
+        "verdict_reasons": [tex_escape(r.replace("🟢", "confiance pleine").replace("🟠", "confiance réduite")
+                                       .replace("🔴", "non vendu")) for r in sufficiency.reasons],
+        "cover_sentence": tex_escape(cover) if sufficiency.verdict == RED else cover,
+        "plan_band_word": plan_word,
+        "safety_word": safety_word,
+        "gauges": _gauges(ctx, twin, calibration, plan, cfg, budget),
+        "n_ultras_hr": n_hr,
+        "stops_policy": stops_policy,
+        "stops_policy_plain": {**stops_policy, "sentence": policy_plain,
+                               "total_hm": policy_plain.split(" ", 1)[0]},
+        "stops_budget": None if budget is None else {
+            "rate_min_per_h": fr(budget["rate_min_per_h"], 0), "hours_hm": budget["hours_hm"],
+            "n": budget["n"]},
+        "stops_budget_plain": budget,
+        "fade_pct_plain": fade_pct_plain,
+        "fade_evidence": tex_escape(cfg.report.fade_evidence),
+        "consignes_plain": consignes,
+        "crew_rows": crew_rows,
+        "finish_row": finish_row,
+        "bracelet_rows": bracelet_rows,
+        "limits": limits,
+        "honesty": honesty,
+        "assumptions": assumptions,
+        # bande du bracelet : une colonne par point de passage, bornée au format A4 paysage
+        "bracelet_width_mm": int(min(285, max(120, 15 * len(plan.segments) + 24))),
+        "has_domain_reading": getattr(sufficiency, "domain", None) is not None,
+        "domain_expected_h": (fr(sufficiency.domain.expected_hours, 1)
+                              if getattr(sufficiency, "domain", None) is not None else None),
+    }
 
 
 __all__ = ["build_report_context"]

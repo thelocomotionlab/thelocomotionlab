@@ -88,12 +88,13 @@ def test_render_has_no_unresolved_placeholders():
 
 
 def test_vc_low_conditions_intensity_claim():
-    """L'affirmation « le moteur n'est pas la limite » dépend de l'intensité calculée."""
+    """L'affirmation « la vitesse n'est pas le sujet » dépend de l'intensité calculée."""
     ctx = _context()
     low = render_tex({**ctx, "vc_low": True})
     high = render_tex({**ctx, "vc_low": False})
-    assert "ana\\'erobie" in low and "ana\\'erobie" not in high
-    assert "restent d\\'ecisives" in high
+    assert "la vitesse ne sera pas le sujet" in low
+    assert "la vitesse ne sera pas le sujet" not in high
+    assert "la régularité et la durabilité décideront" in high
 
 
 def test_context_french_date_and_new_fields():
@@ -151,16 +152,18 @@ def test_implausible_vc_hidden_with_honest_note():
     assert "min/km" not in tex or "\\VC =" not in tex  # pas d'encadré VC rendu
 
 
-def test_abstract_uses_gate_consistent_mae():
-    """R5 : la MAE affichée en tête est celle du verdict (interpolation en gate honnête)."""
+def test_honesty_box_states_the_measured_error():
+    """R5 : l'erreur mesurée est dite une fois, dans l'encadré d'honnêteté, avec ses deux
+    lectures (brute et interpolation) — le rapport v2 n'a plus de résumé de tête."""
     ctx = _context()
     # cohérence du contexte : sans plis d'interpolation, gate = brute
     if not ctx["cv_gate_is_interp"]:
         assert ctx["cv_gate_mae"] == ctx["cv_mae"]
-    # chemin template : quand le gate est l'interpolation, l'abstract l'affiche ET garde la brute
-    tex = render_tex({**ctx, "cv_gate_is_interp": True, "cv_gate_mae": "3,0",
-                      "cv_extrap_mae": "9,9"})
-    assert "en interpolation" in tex and "erreur brute" in tex and "9,9" in tex
+    assert ctx["cv_mae"] in ctx["honesty"]
+    assert "rejoués en aveugle" in ctx["honesty"]
+    tex = render_tex(ctx)
+    assert ctx["honesty"] in tex and "llhonnete" in tex
+    assert "llabstract" not in tex                       # plus de résumé, plus de mots-clés
 
 
 def test_plan_windows_and_arrival_in_clock_time():
@@ -173,21 +176,27 @@ def test_plan_windows_and_arrival_in_clock_time():
     for row in ctx["plan_rows"]:
         assert ":" in row["window"]          # fenêtre horaire, pas des heures cumulées
     tex = render_tex(ctx)
-    # la synthèse imprime les deux fourchettes, étiquetées par leur usage
-    assert "fourchette de course" in tex
-    assert "s\\'ecurit\\'e" in tex
+    # « Ta course en une page » imprime les deux bandes, étiquetées par leur usage
+    assert "Fourchette de course" in tex and "Bornes de sécurité" in tex
 
 
 def test_context_interval_labels_from_config():
-    """R6 : les libellés « 80 % », « 50 % » et « 1 chance sur 10 » sont dérivés de la config."""
+    """R6 : les bandes sont dérivées de la config, et le rapport v2 les DIT en courses
+    (« une course sur deux »), jamais en pourcentage sec."""
     ctx = _context()
     assert ctx["interval_pct"] == "80"
     assert ctx["plan_band_pct"] == "50"
     assert ctx["interval_tail_low"] == "10" and ctx["interval_tail_high"] == "10"
+    assert ctx["plan_band_word"] == "une course sur deux"
+    assert ctx["safety_word"] == "quatre courses sur cinq"
     tex = render_tex(ctx)
-    assert "80\\,\\%" in tex             # rendu final : le libellé apparaît, injecté
-    assert "50\\,\\%" in tex
-    assert "chances sur 100" in tex
+    assert "une course sur deux" in tex and "quatre courses sur cinq" in tex
+    assert "50\\,\\%" not in tex and "80\\,\\%" not in tex
+
+    from dataclasses import replace
+
+    cfg = replace(CFG, prediction=replace(CFG.prediction, interval_low_pct=5, interval_high_pct=95))
+    assert _context(cfg)["safety_word"] == "neuf courses sur dix"
 
 
 def test_window_day_prefix_kept_when_any_bound_crosses_midnight():
@@ -206,24 +215,27 @@ def test_window_day_prefix_kept_when_any_bound_crosses_midnight():
     assert "sam. 20:13" in out and "dim. 09:07" in out
 
 
-def test_scenario_table_gated_by_relative_width():
-    """La table « trois scénarios » n'apparaît que si l'intervalle de sécurité est LARGE
-    relativement à la prédiction (pacing.scenario_rel_width) — pas sur les cas étroits."""
+def test_three_scenarios_are_always_columns_of_the_plan():
+    """Le plan v2 décline TOUJOURS rapide / central / prudent par segment : plus de table
+    conditionnelle, la dispersion est un outil de pilotage dans tous les cas."""
+    ctx = _context()
+    for row in ctx["plan_rows"]:
+        assert row["fast"] and row["central"] and row["cautious"]
+        assert row["fast"] != row["cautious"]
+    tex = render_tex(ctx)
+    assert "Trois scénarios de course" in tex
+    assert "Repère tôt la colonne qui te correspond" in tex
+
+
+def test_wide_interval_is_owned_in_one_sentence():
+    """Bornes larges : le rapport l'assume en une phrase (pacing.wide_interval_rel_width)."""
     from dataclasses import replace
 
-    cfg_on = replace(CFG, pacing=replace(CFG.pacing, scenario_rel_width=0.0))
-    ctx_on = _context(cfg_on)
-    assert ctx_on["scenario_mode"]
-    assert len(ctx_on["scenario_rows"]) == len(ctx_on["plan_rows"])
-    row = ctx_on["scenario_rows"][0]
-    assert row["fast"] and row["central"] and row["cautious"]
-    tex_on = render_tex(ctx_on)
-    assert "Trois sc\\'enarios" in tex_on and "sc\\'enario prudent" in tex_on
-
-    cfg_off = replace(CFG, pacing=replace(CFG.pacing, scenario_rel_width=99.0))
-    ctx_off = _context(cfg_off)
-    assert not ctx_off["scenario_mode"] and ctx_off["scenario_rows"] == []
-    assert "Trois sc\\'enarios" not in render_tex(ctx_off)
+    ctx_wide = _context(replace(CFG, pacing=replace(CFG.pacing, wide_interval_rel_width=0.0)))
+    assert ctx_wide["width_prescription"] is not None
+    assert ctx_wide["width_prescription"] in render_tex(ctx_wide)
+    ctx_narrow = _context(replace(CFG, pacing=replace(CFG.pacing, wide_interval_rel_width=99.0)))
+    assert ctx_narrow["width_prescription"] is None
 
 
 def test_figures_generated(tmp_path):
@@ -315,11 +327,12 @@ def test_target_mode_switches_the_vocabulary_and_never_hides_the_prediction():
     for token in ("<<", ">>", "<%", "%>"):
         assert token not in tex
     # le mot juste : tolérance d'exécution, jamais une probabilité
-    assert "fen\\^etre de passage" in tex
-    assert "tol\\'erance d'ex\\'ecution" in tex
+    assert "fenêtre de passage" in tex
+    assert "tolérance d'exécution" in tex
+    assert "au plus tôt" in tex and "au plus tard" in tex     # les colonnes changent de nom
     # la PRÉDICTION reste affichée — c'est le garde-fou central de l'ADR
     assert ctx["pred_central"] in tex
-    assert "le mod\\`ele te situe" in tex
+    assert "le modèle te situe" in tex
     # et la limite obligatoire est là
     assert "il ne le rend pas tenable" in tex
 
@@ -334,20 +347,21 @@ def test_refused_target_serves_the_gap_not_a_plan():
     assert ctx["target_requested"] and not ctx["target_mode"]
     assert plan.anchor == "prediction"          # le plan reste celui du moteur
     assert "Pas de plan sur cet objectif" in tex
-    assert "objectif d'entra\\^inement" in tex
+    assert "objectif d'entraînement" in tex
     # le vocabulaire du plan n'a PAS basculé : c'est bien la fourchette de course qui pilote
-    assert "fen\\^etre de passage" not in tex
+    assert "fenêtre de passage" not in tex
+    assert "une course sur deux" in tex
 
 
-def test_target_mode_neutralises_scenarios():
-    """Les scénarios déclinent la dispersion PRÉDICTIVE : hors sujet autour d'une cible."""
+def test_target_mode_renames_the_scenario_columns():
+    """Les trois colonnes restent, mais autour d'une cible elles cessent d'être une
+    probabilité : ce sont les bornes d'une tolérance d'exécution."""
     course, twin, cal, pred, _p, _r, _s = _scenario()
     ctx, _t, _pred, _plan = _target_context(_nominal_target(pred))
-    assert ctx["scenario_mode"] is False
-    # ... même en forçant une dispersion énorme, qui l'aurait déclenché en mode prédiction
-    forced = {**ctx, "scenario_mode": True}
-    assert "sc\\'enarios de course" in render_tex(forced)   # le bloc existe toujours
-    assert "sc\\'enarios de course" not in render_tex(ctx)  # simplement pas servi ici
+    tex = render_tex(ctx)
+    assert ctx["target_mode"]
+    assert "au plus tôt" in tex and "rapide" not in tex.split("Trois scénarios")[0].split("Le plan")[-1]
+    assert "tolérance d'exécution" in tex
 
 
 def test_no_target_renders_exactly_as_before():
@@ -429,11 +443,13 @@ def test_declared_technicity_is_disclosed_in_the_report():
                                plan=plan_t, race=race_t, sufficiency=suf, cfg=CFG, athlete="A")
     tex = render_tex(ctx)
     assert ctx["technicity_pct"] == "13"
-    assert "Technicit\\'e d\\'eclar\\'ee" in tex
-    assert "hypoth\\`ese assum\\'ee" in tex          # jamais présentée comme une mesure
-    assert "d\\'eclar\\'es}, pas mesur\\'es" in tex   # ... et rappelée dans les limites
+    assert "Technicité déclarée" in tex                  # dite sur « Ta course en une page »
+    assert "pas mesurés" in tex                          # ... et dans les quatre limites
+    assert any("technicité déclarés" in a for a in ctx["assumptions"])
 
-    # sans déclaration : l'encadré disparaît, la limite devient l'avertissement inverse
-    tex0 = render_tex(_context())
-    assert "Technicit\\'e d\\'eclar\\'ee" not in tex0
-    assert "Technicit\\'e du terrain non prise en compte" in tex0
+    # sans déclaration : la limite devient l'avertissement inverse
+    ctx0 = _context()
+    tex0 = render_tex(ctx0)
+    assert "Technicité déclarée" not in tex0
+    assert "Technicité du terrain non prise en compte" in tex0
+    assert any("aucune technicité déclarée" in a for a in ctx0["assumptions"])

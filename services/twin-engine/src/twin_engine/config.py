@@ -434,11 +434,12 @@ class PacingParams:
     # (percentiles MC ou conforme normalisé) suit ``prediction.interval_source``.
     plan_window_low_pct: int = 25
     plan_window_high_pct: int = 75
-    # au-delà de cette largeur relative des bornes de sécurité ((hi−lo)/T), le rapport ajoute
-    # la table « scénarios de course » (rapide/central/prudent par segment) : la dispersion
-    # devient un outil de pilotage. 0 = toujours affichée ; très grand = jamais. Cas étroits
-    # (réf. Nice ~0,19) : non affichée.
-    scenario_rel_width: float = 0.35
+    # au-delà de cette largeur relative des bornes de sécurité ((hi−lo)/T), le rapport ASSUME
+    # la largeur en une phrase (une dispersion large est une information sur l'historique de
+    # l'athlète face à ce parcours, pas un défaut du plan). Les trois scénarios, eux, sont
+    # toujours servis : le plan v2 les décline en colonnes. Cas étroits (réf. Nice ~0,19) :
+    # pas de phrase.
+    wide_interval_rel_width: float = 0.35
 
 
 @dataclass(frozen=True)
@@ -578,6 +579,28 @@ class TargetParams:
 
 
 @dataclass(frozen=True)
+class ReportParams:
+    """Livraison du rapport (Phase 6, rapport v2) : version du gabarit, adresse de l'annexe
+    en ligne, bornes de PRÉSENTATION des jauges de « Ton profil » (la barre pleine = la borne
+    « meilleure »), et la preuve empirique de la dérive du plan dite en une phrase."""
+
+    version: str = "v2.0"
+    # une page par référence de rapport ; la référence est non devinable (aléa) et la page
+    # n'est ni indexée ni listée — le lien est le secret
+    annex_base_url: str = "https://www.thelocomotionlab.com/services/twin/annexe"
+    gauge_vc_kmh: tuple[float, float] = (6.0, 14.0)         # vitesse critique : vide → pleine
+    gauge_endurance_e: tuple[float, float] = (1.35, 1.05)   # exposant E : haut = vide, bas = pleine
+    gauge_durability_pct: float = 40.0                       # découplage 40 % = vide, 0 = pleine
+    gauge_stops_min_per_h: float = 15.0                      # 15 min/h d'arrêt = vide, 0 = pleine
+    fade_evidence: str = ("sur 30 courses, les coureurs sont en avance sur un plan plat à "
+                          "mi-course 27 fois sur 30")
+    # consigne par segment (page du plan) : pente moyenne au-delà de laquelle on marche, et
+    # en deçà de laquelle le segment se court à allure régulière
+    consigne_steep_pct: float = 8.0
+    consigne_gentle_pct: float = 3.0
+
+
+@dataclass(frozen=True)
 class Config:
     data_dir: Path
     course: CourseParams = field(default_factory=CourseParams)
@@ -588,6 +611,7 @@ class Config:
     sufficiency: SufficiencyParams = field(default_factory=SufficiencyParams)
     narrative: NarrativeParams = field(default_factory=NarrativeParams)
     target: TargetParams = field(default_factory=TargetParams)
+    report: ReportParams = field(default_factory=ReportParams)
 
 
 # --------------------------------------------------------------------------- #
@@ -678,6 +702,7 @@ def load_config(config_path: str | os.PathLike[str] | None = None) -> Config:
         sufficiency=_build(SufficiencyParams, raw.get("sufficiency")),
         narrative=_build(NarrativeParams, raw.get("narrative")),
         target=_build(TargetParams, raw.get("target")),
+        report=_build(ReportParams, raw.get("report")),
     )
 
 
@@ -692,5 +717,6 @@ __all__ = [
     "SufficiencyParams",
     "NarrativeParams",
     "TargetParams",
+    "ReportParams",
     "load_config",
 ]

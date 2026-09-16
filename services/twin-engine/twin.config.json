@@ -129,7 +129,7 @@
     "scale_stops": true,
     "plan_window_low_pct": 25,
     "plan_window_high_pct": 75,
-    "scenario_rel_width": 0.35
+    "wide_interval_rel_width": 0.35
   },
 
   "sufficiency": {
@@ -164,6 +164,19 @@
     "_comment": "Mode OBJECTIF (ADR 0002) : plan ancré sur la cible de l'athlète, jamais en remplacement de la prédiction. tolerance_pct est la demi-largeur de la FENÊTRE DE PASSAGE (tolérance d'exécution) — sans rapport avec les bandes de probabilité de pacing.plan_window_*. Valeur provisoire, à recaler sur l'écart réel plan/passages quand la cohorte l'aura fourni.",
     "tolerance_pct": 2.5,
     "refuse_outside_safety": true
+  },
+
+  "report": {
+    "_comment": "Livraison du rapport v2 : version, adresse de l'annexe en ligne (une page par référence, non indexée), bornes de présentation des jauges, preuve empirique de la dérive du plan.",
+    "version": "v2.0",
+    "annex_base_url": "https://www.thelocomotionlab.com/services/twin/annexe",
+    "gauge_vc_kmh": [6.0, 14.0],
+    "gauge_endurance_e": [1.35, 1.05],
+    "gauge_durability_pct": 40.0,
+    "gauge_stops_min_per_h": 15.0,
+    "fade_evidence": "sur 30 courses, les coureurs sont en avance sur un plan plat à mi-course 27 fois sur 30",
+    "consigne_steep_pct": 8.0,
+    "consigne_gentle_pct": 3.0
   },
 
   "narrative": {

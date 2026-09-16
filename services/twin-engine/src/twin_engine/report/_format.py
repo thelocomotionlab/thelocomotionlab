@@ -75,4 +75,50 @@ def tex_escape(s: str | None) -> str:
     return "".join(_TEX_SPECIAL.get(c, c) for c in str(s))
 
 
-__all__ = ["fr", "fr_thousands", "hm", "tex_escape"]
+_DETEX_ACCENTS = {
+    "\\'e": "é", "\\`e": "è", "\\^e": "ê", '\\"e': "ë",
+    "\\`a": "à", "\\^a": "â", "\\^i": "î", '\\"i': "ï", "\\^o": "ô", "\\^u": "û",
+    "\\`u": "ù", '\\"u': "ü", "\\c{c}": "ç", "\\c c": "ç", "\\'E": "É", "\\`A": "À",
+    "\\^E": "Ê", "\\^I": "Î", "\\^O": "Ô",
+}
+
+
+def detex(s: str | None) -> str:
+    """Le texte d'une phrase du rapport rendu lisible hors LaTeX (annexe en ligne, ICS) :
+    accents composés, gras/italique dégroupés, guillemets français, espaces fines, échappements."""
+    import re
+
+    if not s:
+        return ""
+    out = str(s)
+    for k, v in _DETEX_ACCENTS.items():
+        out = out.replace(k, v)
+    out = out.replace("\\og~", "« ").replace("~\\fg\\", " »").replace("~\\fg", " »")
+    out = out.replace("\\og ", "« ").replace("\\fg", "»")
+    out = re.sub(r"\\(?:textbf|emph|textit|textsc|mathrm)\{([^{}]*)\}", r"\1", out)
+    out = re.sub(r"\\(?:textbf|emph|textit)\{([^{}]*)\}", r"\1", out)   # imbrication simple
+    out = out.replace("\\,", "\u202f").replace("~", "\u00a0").replace("\\ ", " ")
+    out = out.replace("$-$", "−").replace("$\\approx$", "≈").replace("$\\pm$", "±")
+    out = out.replace("\\%", "%").replace("\\&", "&").replace("\\_", "_").replace("\\#", "#")
+    out = out.replace("\\textperiodcentered{}", "·").replace("\\textperiodcentered", "·")
+    out = out.replace("\\textbackslash{}", "\\").replace("\\Deq", "Deq").replace("\\VC", "VC")
+    out = out.replace("{", "").replace("}", "").replace("$", "")
+    out = re.sub(r"\\\\(\[[^\]]*\])?", " ", out)
+    return re.sub(r"[ \t]+", " ", out).strip()
+
+
+def courses_sur(pct: float | int | str) -> str:
+    """Une probabilité dite en courses : 50 → « une course sur deux », 80 → « quatre courses
+    sur cinq », 90 → « neuf courses sur dix » ; sinon le pourcentage en clair. Accepte un
+    nombre déjà formaté à la française (« 50 », « 79,5 »), ce que servent les contextes."""
+    try:
+        value = float(str(pct).replace(",", ".").replace("\u202f", "").replace("\\,", ""))
+    except ValueError:
+        return str(pct)
+    table = {50: "une course sur deux", 66: "deux courses sur trois", 67: "deux courses sur trois",
+             75: "trois courses sur quatre", 80: "quatre courses sur cinq",
+             90: "neuf courses sur dix", 95: "dix-neuf courses sur vingt"}
+    return table.get(int(round(value)), f"{fr(value, 0)} % des courses")
+
+
+__all__ = ["fr", "fr_thousands", "hm", "tex_escape", "detex", "courses_sur"]

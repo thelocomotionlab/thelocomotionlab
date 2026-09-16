@@ -1,18 +1,42 @@
 %% locomotionreport.cls
 %% -----------------------------------------------------------------------------
-%% Classe LaTeX « Locomotion Lab » pour rapports techniques / scientifiques.
-%% Reprend les couleurs, la police (Ubuntu) et la logique de logo du thème
-%% Beamer "LocomotionLab" (reference_beamer/beamerThemeLocomotionLab.sty).
+%% Classe LaTeX « Locomotion Lab » : rapport Locomotion Twin (v2), fiche d'assistance,
+%% bracelet, fiche participant·e des ateliers.
 %%
-%% Compiler avec XeLaTeX ou LuaLaTeX (police Ubuntu via fontspec) + biber.
-%% Voir README.md pour les commandes disponibles.
+%% La charte vient de packages/ui et de nulle part ailleurs : chaque couleur ci-dessous est
+%% un token de packages/ui/src/styles/theme.css, cité en commentaire ; la police est Ubuntu
+%% Sans (instances statiques dans fonts/, produites par tools/instance_fonts.py depuis la
+%% police variable 300 → 800 de la charte). Une seule famille : la hiérarchie vient de la
+%% graisse, de la casse et de l'interlettrage, jamais d'une seconde police — le « mono » de la
+%% charte est Ubuntu Sans Medium en chiffres tabulaires et capitales espacées.
+%%
+%% Correspondance token → macro (documentation, vérifiée par tests/test_report_v2.py) :
+%%   --color-brand-bg            LLBg           fond de page
+%%   --color-brand-primary       LLPrimary      bandeau, filets bleu-vert, en-têtes de tableaux
+%%   --color-brand-primary-dark  LLPrimaryDark  jauges, sélection, éléments actifs
+%%   --color-brand-accent        LLAccent       filets ocre (jamais du texte)
+%%   --color-brand-accent-ink    LLAccentInk    le seul ocre autorisé en texte
+%%   --color-brand-deep          LLDeep         titres, chiffres clés (terracotta)
+%%   --color-brand-deep-dark     LLDeepDark     survol / renfort du terracotta
+%%   --color-brand-text          LLText         corps de texte
+%%   --color-brand-paper         LLPaper        cartes, encadrés
+%%   --color-brand-grid          LLGrid         fonds discrets
+%%   --color-brand-success       LLSuccess      confiance pleine, variations positives
+%%   --color-brand-mist/-line    LLMist, LLMistLine   encadré « verdict »
+%%   --color-brand-hairline      LLHairline     filets fins
+%%   --color-brand-gauge/-full   LLGauge, LLGaugeFull  fond et plein des jauges
+%%   --color-brand-muted/soft/ink/faint  LLMuted, LLSoft, LLInk, LLFaint  gris de lecture
+%%   --color-brand-sensations    LLSensations   zébrure des tableaux
+%%   --color-brand-slate/-dark   LLSlate, LLSlateDark  étiquettes bleu-vert
+%% Les noms historiques (LLMetaLabel, LLCaption…) sont des alias de ces tokens (\colorlet).
+%%
+%% Compiler avec XeLaTeX (fontspec) ; biber optionnel.
 %% -----------------------------------------------------------------------------
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{locomotionreport}[2026/06/24 v1.0 Locomotion Lab report class]
+\ProvidesClass{locomotionreport}[2026/09/16 v2.0 Locomotion Lab report class]
 
 % --- Options de classe -------------------------------------------------------
-% [systemfonts] : utilise la police système "Ubuntu" au lieu des .ttf fournis
-%                 dans fonts/ (utile si Ubuntu est installée sur la machine).
+% [systemfonts] : police système « Ubuntu Sans » au lieu des instances de fonts/.
 \newif\ifLL@systemfonts \LL@systemfontsfalse
 \DeclareOption{systemfonts}{\LL@systemfontstrue}
 \DeclareOption*{\PassOptionsToClass{\CurrentOption}{article}}
@@ -21,46 +45,59 @@
 \LoadClass[11pt,a4paper]{article}
 
 % =============================================================================
-% 1. Moteur & polices (Ubuntu / Ubuntu Mono) — cf. README §1, thème beamer
+% 1. Moteur & polices (Ubuntu Sans, une seule famille)
 % =============================================================================
 \RequirePackage{iftex}
 \ifPDFTeX
-  % Repli pdfLaTeX : Ubuntu indisponible via fontspec -> Latin Modern.
+  % Repli pdfLaTeX : fontspec indisponible -> Latin Modern.
   \RequirePackage[T1]{fontenc}
   \RequirePackage[utf8]{inputenc}
   \RequirePackage{lmodern}
-  \newcommand{\LLmono}{\ttfamily}
+  \newcommand{\LLmonofont}{\ttfamily}
   \newcommand{\LLmediumfont}{\mdseries}
+  \newcommand{\LLsemiboldfont}{\bfseries}
+  \newcommand{\LLextraboldfont}{\bfseries}
   \newcommand{\LLlightfont}{\mdseries}
   \newcommand{\LLtracked}[1]{#1}
+  \newcommand{\LLtabular}{}
 \else
   \RequirePackage{fontspec}
   \ifLL@systemfonts
-    % --- Polices système -----------------------------------------------------
-    \setmainfont{Ubuntu}
-    \setsansfont{Ubuntu}
-    \setmonofont{Ubuntu Mono}
-    \newfontfamily\LLmono{Ubuntu Mono}
-    \newfontfamily\LLmediumfont{Ubuntu Medium}
-    \newfontfamily\LLlightfont{Ubuntu Light}
+    \setmainfont{Ubuntu Sans}[Numbers=Lining]
+    \setsansfont{Ubuntu Sans}[Numbers=Lining]
+    \setmonofont{Ubuntu Sans}[Numbers={Monospaced,Lining}]
+    \newfontfamily\LLmonofont{Ubuntu Sans Medium}[Numbers={Monospaced,Lining}]
+    \newfontfamily\LLmediumfont{Ubuntu Sans Medium}
+    \newfontfamily\LLsemiboldfont{Ubuntu Sans SemiBold}
+    \newfontfamily\LLextraboldfont{Ubuntu Sans ExtraBold}
+    \newfontfamily\LLlightfont{Ubuntu Sans Light}
   \else
-    % --- Polices embarquées (fonts/) : compilation reproductible -------------
-    \setmainfont{Ubuntu}[Path=fonts/, Extension=.ttf,
-      UprightFont=*-R, BoldFont=*-B, ItalicFont=*-RI, BoldItalicFont=*-BI]
-    \setsansfont{Ubuntu}[Path=fonts/, Extension=.ttf,
-      UprightFont=*-R, BoldFont=*-B, ItalicFont=*-RI, BoldItalicFont=*-BI]
-    \setmonofont{UbuntuMono}[Path=fonts/, Extension=.ttf,
-      UprightFont=*-R, BoldFont=*-B, ItalicFont=*-RI, BoldItalicFont=*-BI]
-    \newfontfamily\LLmono{UbuntuMono}[Path=fonts/, Extension=.ttf,
-      UprightFont=*-R, BoldFont=*-B, ItalicFont=*-RI, BoldItalicFont=*-BI]
-    \newfontfamily\LLmediumfont{Ubuntu}[Path=fonts/, Extension=.ttf,
-      UprightFont=*-M, ItalicFont=*-MI]
-    \newfontfamily\LLlightfont{Ubuntu}[Path=fonts/, Extension=.ttf,
-      UprightFont=*-L, ItalicFont=*-LI]
+    % --- Instances embarquées (fonts/) : compilation reproductible --------------
+    \defaultfontfeatures{Path=fonts/, Extension=.ttf}
+    \setmainfont{UbuntuSans}[UprightFont=*-Regular, BoldFont=*-Bold,
+      ItalicFont=*-Italic, BoldItalicFont=*-BoldItalic, Numbers=Lining]
+    \setsansfont{UbuntuSans}[UprightFont=*-Regular, BoldFont=*-Bold,
+      ItalicFont=*-Italic, BoldItalicFont=*-BoldItalic, Numbers=Lining]
+    \setmonofont{UbuntuSans}[UprightFont=*-Medium, BoldFont=*-Bold,
+      ItalicFont=*-Italic, BoldItalicFont=*-BoldItalic, Numbers={Monospaced,Lining}]
+    \newfontfamily\LLmonofont{UbuntuSans}[UprightFont=*-Medium, BoldFont=*-Bold,
+      ItalicFont=*-Italic, BoldItalicFont=*-BoldItalic, Numbers={Monospaced,Lining}]
+    \newfontfamily\LLmediumfont{UbuntuSans}[UprightFont=*-Medium, BoldFont=*-Bold,
+      ItalicFont=*-Italic, BoldItalicFont=*-BoldItalic]
+    \newfontfamily\LLsemiboldfont{UbuntuSans}[UprightFont=*-SemiBold, BoldFont=*-ExtraBold,
+      ItalicFont=*-BoldItalic, BoldItalicFont=*-BoldItalic]
+    \newfontfamily\LLextraboldfont{UbuntuSans}[UprightFont=*-ExtraBold, BoldFont=*-ExtraBold,
+      ItalicFont=*-BoldItalic, BoldItalicFont=*-BoldItalic]
+    \newfontfamily\LLlightfont{UbuntuSans}[UprightFont=*-Light, BoldFont=*-Regular,
+      ItalicFont=*-Italic, BoldItalicFont=*-BoldItalic]
   \fi
-  % Interlettrage (tracking) pour les eyebrows / libellés mono.
+  % capitales espacées (l'étiquette de la charte : --tracking-etiquette)
   \newcommand{\LLtracked}[1]{{\addfontfeature{LetterSpace=14.0}#1}}
+  % chiffres tabulaires sur la police courante (tableaux, chiffres alignés)
+  \newcommand{\LLtabular}{\addfontfeature{Numbers={Monospaced,Lining}}}
 \fi
+% le « mono » de la charte = Ubuntu Sans Medium en chiffres tabulaires (jamais une 2e police)
+\newcommand{\LLmono}{\LLmonofont}
 
 % =============================================================================
 % 2. Paquets
@@ -71,59 +108,73 @@
 \RequirePackage{tikz}
 \usetikzlibrary{calc,shadows.blur,patterns}
 \RequirePackage[most]{tcolorbox}
-\tcbuselibrary{listings,skins,breakable}
+\tcbuselibrary{skins,breakable}
 \RequirePackage{array}
 \RequirePackage{booktabs}
 \RequirePackage{caption}
 \RequirePackage{enumitem}
 \RequirePackage{ragged2e}
 \RequirePackage{titlesec}
-\RequirePackage{titletoc}
 \RequirePackage{fancyhdr}
 \RequirePackage[french]{babel}
-% babel-french met « Figure / Table » en petites capitales : on revient en
-% casse normale, conformément à la maquette (« Figure 2.1 — … »).
 \renewcommand*{\FBfigtabshape}{}
 \RequirePackage{microtype}
-% Support mathématique (math.tex reprend ces commandes).
 \RequirePackage{amsmath,amssymb,mathtools,bm,stmaryrd}
 \RequirePackage{needspace}
+\RequirePackage{float}
+\RequirePackage{qrcode}
 \RequirePackage[backend=biber,style=numeric,sorting=none]{biblatex}
 \RequirePackage[hidelinks]{hyperref}
 
 % =============================================================================
-% 3. Palette (identique au thème beamer + nuances de la maquette) — README §2
+% 3. Palette = les tokens de theme.css (voir la table en tête de fichier)
 % =============================================================================
-\definecolor{LLBg}{HTML}{FEFBF6}        % fond « blanc os »
-\definecolor{LLPrimary}{HTML}{8CB9BD}   % bleu sauge
-\definecolor{LLAccent}{HTML}{EFB159}    % doré (filets / aplats)
-\definecolor{LLAccentInk}{HTML}{D89A2E} % doré assombri (TEXTE orange)
-\definecolor{LLDeep}{HTML}{B67352}      % terracotta
-\definecolor{LLText}{HTML}{333333}      % corps de texte
-\definecolor{LLPaper}{HTML}{FFFFFF}     % fond cartes / encadrés
-\definecolor{LLGrid}{HTML}{F3EEE6}      % code inline, fonds discrets
-% Nuances de gris / accents de la maquette
-\definecolor{LLCoverSub}{HTML}{6E6A62}  % sous-titre couverture
-\definecolor{LLMetaVal}{HTML}{55524C}   % valeurs méta
-\definecolor{LLMetaLabel}{HTML}{9A9890} % libellés méta
-\definecolor{LLFootMono}{HTML}{A59C8C}  % mono pied de page / pages sous-entrées
-\definecolor{LLCaption}{HTML}{6B6458}   % légendes
-\definecolor{LLDelta}{HTML}{3F8F5B}     % variations positives (tableaux)
-\definecolor{LLCodeBg}{HTML}{33312E}    % fond blocs de code
-\definecolor{LLCodeFg}{HTML}{E8E2D6}    % texte code
-\definecolor{LLCodeNum}{HTML}{CDB892}   % nombres dans le code
-\definecolor{LLAttnLabel}{HTML}{C8902F} % libellé « Attention »
-\definecolor{LLRowAlt}{HTML}{F7F1E8}    % zébrure tableaux
-\definecolor{LLTocRule}{HTML}{ECE4D6}   % filet sous entrées TOC
-\definecolor{LLTocPage}{HTML}{8A8275}   % n° de page TOC (niveau 1)
-\definecolor{LLTocDot}{HTML}{CBC1B0}    % points de suite TOC (niveau 1)
-\definecolor{LLTocDotSub}{HTML}{D8CFBE} % points de suite TOC (sous-entrées)
-\definecolor{LLTocSub}{HTML}{5F5849}    % texte sous-entrées TOC
-\definecolor{LLCoverMetaRule}{HTML}{DCDAD6} % filet du bloc méta (couverture)
-\definecolor{LLAbstractText}{HTML}{444444}  % texte du résumé
+\definecolor{LLBg}{HTML}{FEFBF6}% --color-brand-bg
+\definecolor{LLPrimary}{HTML}{8CB9BD}% --color-brand-primary
+\definecolor{LLPrimaryLight}{HTML}{A8CDD0}% --color-brand-primary-light
+\definecolor{LLPrimaryDark}{HTML}{6E9CA0}% --color-brand-primary-dark
+\definecolor{LLAccent}{HTML}{EFB159}% --color-brand-accent
+\definecolor{LLAccentLight}{HTML}{F4C480}% --color-brand-accent-light
+\definecolor{LLAccentDark}{HTML}{D89A3D}% --color-brand-accent-dark
+\definecolor{LLAccentInk}{HTML}{C08327}% --color-brand-accent-ink
+\definecolor{LLDeep}{HTML}{B67352}% --color-brand-deep
+\definecolor{LLDeepLight}{HTML}{C68F76}% --color-brand-deep-light
+\definecolor{LLDeepDark}{HTML}{9A6044}% --color-brand-deep-dark
+\definecolor{LLText}{HTML}{333333}% --color-brand-text
+\definecolor{LLPaper}{HTML}{FFFFFF}% --color-brand-paper
+\definecolor{LLPlancheFond}{HTML}{1A1C18}% --color-brand-planche-fond
+\definecolor{LLPlancheEncre}{HTML}{22241E}% --color-brand-planche-encre
+\definecolor{LLTrace}{HTML}{D6246E}% --color-brand-trace
+\definecolor{LLGrid}{HTML}{F3EEE6}% --color-brand-grid
+\definecolor{LLSuccess}{HTML}{3F8F5B}% --color-brand-success
+\definecolor{LLWash}{HTML}{D3E2E3}% --color-brand-wash
+\definecolor{LLSlate}{HTML}{5B8286}% --color-brand-slate
+\definecolor{LLSlateDark}{HTML}{4E767A}% --color-brand-slate-dark
+\definecolor{LLMist}{HTML}{EBF0ED}% --color-brand-mist
+\definecolor{LLMistLine}{HTML}{D9E4E4}% --color-brand-mist-line
+\definecolor{LLHairline}{HTML}{E5DFD3}% --color-brand-hairline
+\definecolor{LLField}{HTML}{E2DCD0}% --color-brand-field
+\definecolor{LLGauge}{HTML}{F0EAE0}% --color-brand-gauge
+\definecolor{LLGaugeFull}{HTML}{D6D0C4}% --color-brand-gauge-full
+\definecolor{LLWashLine}{HTML}{C9D8D9}% --color-brand-wash-line
+\definecolor{LLMuted}{HTML}{6B7280}% --color-brand-muted
+\definecolor{LLSoft}{HTML}{4B5563}% --color-brand-soft
+\definecolor{LLInk}{HTML}{374151}% --color-brand-ink
+\definecolor{LLFaint}{HTML}{9CA3AF}% --color-brand-faint
+\definecolor{LLSensations}{HTML}{FAF5EC}% --color-brand-sensations
+% Alias historiques (fiche participant·e, macros anciennes) : des tokens, jamais une valeur.
+\colorlet{LLMetaLabel}{LLMuted}
+\colorlet{LLMetaVal}{LLInk}
+\colorlet{LLCaption}{LLSoft}
+\colorlet{LLFootMono}{LLMuted}
+\colorlet{LLCoverSub}{LLSoft}
+\colorlet{LLDelta}{LLSuccess}
+\colorlet{LLAttnLabel}{LLAccentInk}
+\colorlet{LLRowAlt}{LLSensations}
+\colorlet{LLCoverMetaRule}{LLHairline}
 
 % =============================================================================
-% 4. Métadonnées du rapport — README §"API"
+% 4. Métadonnées du document
 % =============================================================================
 \newcommand{\LL@subtitle}{}
 \newcommand{\subtitle}[1]{\renewcommand{\LL@subtitle}{#1}}
@@ -135,16 +186,22 @@
 \newcommand{\reportclient}[1]{\renewcommand{\LL@reportclient}{#1}}
 \newcommand{\LL@reporttype}{Rapport technique}
 \newcommand{\reporttype}[1]{\renewcommand{\LL@reporttype}{#1}}
+% couverture v2 : la phrase, le badge de confiance, la ligne de verdict
+\newcommand{\LL@coversentence}{}
+\newcommand{\coversentence}[1]{\renewcommand{\LL@coversentence}{#1}}
+\newcommand{\LL@coverbadge}{}
+\newcommand{\LL@coverbadgecolor}{LLPrimaryDark}
+\newcommand{\coverbadge}[2]{\renewcommand{\LL@coverbadge}{#1}\renewcommand{\LL@coverbadgecolor}{#2}}
+\newcommand{\LL@coververdict}{}
+\newcommand{\coververdict}[1]{\renewcommand{\LL@coververdict}{#1}}
 
 % =============================================================================
-% 5. Logos : résolution multi-format robuste (reprise du thème beamer) — §"Assets"
+% 5. Logos : résolution multi-format
 % =============================================================================
-% Chemins SANS extension ; surchargeables dans main.tex via \renewcommand.
-\newcommand{\LLCoverLogoPath}{assets/logo_primary_deep} % couverture (fond clair)
-\newcommand{\LLHeaderLogoPath}{assets/logo_full_white}  % bandeau d'en-tête (sauge)
+\newcommand{\LLCoverLogoPath}{assets/logo_primary_deep}
+\newcommand{\LLHeaderLogoPath}{assets/logo_full_white}
 \newcommand{\LLCoverLogoFile}{}
 \newcommand{\LLHeaderLogoFile}{}
-% Résout #1 (chemin sans ext) en cherchant pdf/png/jpg/jpeg ; stocke dans #2.
 \newcommand{\LLresolvelogo}[2]{%
   \def#2{}%
   \IfFileExists{#1.pdf}{\def#2{#1.pdf}}{%
@@ -172,64 +229,52 @@
 \setlength{\parskip}{0.55\baselineskip}
 \linespread{1.08}
 
-% Puces d'itemize aux couleurs du labo.
 \setlist[itemize,1]{label={\textcolor{LLAccent}{\small$\diamond$}}, leftmargin=1.5em, itemsep=2pt, topsep=2pt}
 \setlist[itemize,2]{label={\textcolor{LLPrimary}{\small$\diamond$}}, leftmargin=1.4em, itemsep=1pt}
 \setlist[enumerate,1]{label={\textcolor{LLDeep}{\bfseries\arabic*.}}, leftmargin=1.7em, itemsep=2pt, topsep=2pt}
 
-% Profondeur de numérotation / table des matières (sections -> 2.1.1 ; TOC -> 2.1)
 \setcounter{secnumdepth}{3}
-\setcounter{tocdepth}{2}
-
-% Figures & tableaux numérotés par section (Figure 2.1, Table 3.1) — README §8/§9
 \counterwithin{figure}{section}
 \counterwithin{table}{section}
 
 % =============================================================================
-% 7. Dimensions de la charte (modifiables)
+% 7. Dimensions de la charte
 % =============================================================================
-\newlength{\LLbandH}     \setlength{\LLbandH}{13.8mm}   % hauteur bandeau sauge (~46px)
-\newlength{\LLgoldH}     \setlength{\LLgoldH}{1.2mm}    % filet doré sous bandeau (~4px)
-\newlength{\LLbandinset} \setlength{\LLbandinset}{14mm} % marge int. du bandeau
-\newcommand{\LLHeaderLogoHeight}{7.4mm}                 % hauteur logo en-tête (~26px)
-% Couverture
-\newlength{\LLcoversidebar} \setlength{\LLcoversidebar}{16.2mm} % barre sauge (~54px)
-\newlength{\LLcovergold}    \setlength{\LLcovergold}{1.5mm}     % liseré doré (~5px)
-\newlength{\LLcovercontentx}\setlength{\LLcovercontentx}{33mm}  % marge contenu (~110px)
-\newlength{\LLcoverlogoy}   \setlength{\LLcoverlogoy}{24mm}     % logo : y (~80px)
-\newlength{\LLcoverlogow}   \setlength{\LLcoverlogow}{62mm}     % logo : largeur (~230px)
-\newlength{\LLcovertitley}  \setlength{\LLcovertitley}{112mm}   % bloc titre : y (~360px)
-\newlength{\LLcovertextw}   \setlength{\LLcovertextw}{153mm}    % largeur bloc contenu
-\newlength{\LLcovermetay}   \setlength{\LLcovermetay}{24mm}     % bloc méta : y depuis le bas
+\newlength{\LLbandH}     \setlength{\LLbandH}{13.8mm}
+\newlength{\LLgoldH}     \setlength{\LLgoldH}{1.2mm}
+\newlength{\LLbandinset} \setlength{\LLbandinset}{14mm}
+\newcommand{\LLHeaderLogoHeight}{7.4mm}
+\newlength{\LLcoversidebar} \setlength{\LLcoversidebar}{16.2mm}
+\newlength{\LLcovergold}    \setlength{\LLcovergold}{1.5mm}
+\newlength{\LLcovercontentx}\setlength{\LLcovercontentx}{33mm}
+\newlength{\LLcoverlogoy}   \setlength{\LLcoverlogoy}{24mm}
+\newlength{\LLcoverlogow}   \setlength{\LLcoverlogow}{62mm}
+\newlength{\LLcovertitley}  \setlength{\LLcovertitley}{96mm}
+\newlength{\LLcovertextw}   \setlength{\LLcovertextw}{153mm}
+\newlength{\LLcovermetay}   \setlength{\LLcovermetay}{24mm}
 
 % =============================================================================
-% 8. En-tête (bandeau sauge + filet doré + logo blanc + section) — README §5
+% 8. En-tête (bandeau bleu-vert + filet ocre + logo blanc + titre courant)
 % =============================================================================
-% La section courante est stockée dans \leftmark via \markboth.
 \renewcommand{\sectionmark}[1]{\markboth{\thesection~\textperiodcentered~#1}{}}
-% En-tête « libre » (résumé/TOC, etc.) :
 \newcommand{\LLrunninghead}[1]{\markboth{#1}{}}
 
 \newcommand{\LL@headertext}{%
-  {\sffamily\bfseries\fontsize{11.5}{13}\selectfont\color{LLBg}\leftmark}%
+  {\LLsemiboldfont\fontsize{11}{13}\selectfont\color{LLBg}\leftmark}%
 }
 \newcommand{\LLheaderband}{%
   \begin{tikzpicture}[remember picture,overlay]
-    % Bandeau sauge pleine largeur, à fleur du bord supérieur
     \fill[LLPrimary]
       (current page.north west) rectangle
       ([yshift=-\LLbandH]current page.north east);
-    % Filet doré sous le bandeau
     \fill[LLAccent]
       ([yshift=-\LLbandH]current page.north west) rectangle
       ([yshift=-\dimexpr\LLbandH+\LLgoldH\relax]current page.north east);
-    % Logo blanc à gauche
     \ifx\LLHeaderLogoFile\@empty\else
       \node[anchor=west,inner sep=0]
         at ([xshift=\LLbandinset,yshift=-\dimexpr\LLbandH/2\relax]current page.north west)
         {\includegraphics[height=\LLHeaderLogoHeight]{\LLHeaderLogoFile}};
     \fi
-    % « N · Titre de section » à droite
     \node[anchor=east,inner sep=0]
       at ([xshift=-\LLbandinset,yshift=-\dimexpr\LLbandH/2\relax]current page.north east)
       {\LL@headertext};
@@ -237,19 +282,18 @@
 }
 
 % =============================================================================
-% 9. Pied de page stylisé (sans bande pleine) — README §6
+% 9. Pied de page
 % =============================================================================
 \newsavebox{\LLpagenumbox}
 \newcommand{\LLfooterband}{%
-  \sbox{\LLpagenumbox}{\LLmono\fontsize{11}{12}\selectfont\bfseries\color{LLDeep}\thepage}%
+  \sbox{\LLpagenumbox}{\LLmonofont\fontsize{11}{12}\selectfont\bfseries\color{LLDeep}\thepage}%
   \begin{minipage}{\textwidth}%
     {\color{LLAccent}\rule{\textwidth}{1.6pt}}\par
     \vspace{4pt}%
     \noindent\hbox to \textwidth{%
-      {\LLmono\fontsize{8.4}{10}\selectfont\color{LLFootMono}%
+      {\LLmonofont\fontsize{8.4}{10}\selectfont\color{LLMuted}%
         \LLtracked{\MakeUppercase{Locomotion Lab\ \textperiodcentered\ \LL@reportref}}}%
       \hfil
-      % Pastille sauge : centre vertical aligné sur le centre du numéro de page.
       \raisebox{0.5\ht\LLpagenumbox}{\tikz[baseline=0pt]{\fill[LLPrimary] (0,0) circle (2.3pt);}}%
       \hspace{6pt}%
       \usebox{\LLpagenumbox}%
@@ -257,7 +301,6 @@
   \end{minipage}%
 }
 
-% Style de page « corps » (bandeau + pied).
 \fancypagestyle{LLmain}{%
   \fancyhf{}%
   \renewcommand{\headrulewidth}{0pt}%
@@ -265,151 +308,126 @@
   \fancyhead[L]{\LLheaderband}%
   \fancyfoot[L]{\LLfooterband}%
 }
-% Style « avant-propos » : même habillage, sans numéro/dot impertinent ? -> identique.
 \pagestyle{LLmain}
 
 % =============================================================================
-% 10. Page de couverture — README §4
+% 10. Couverture v2 : une phrase, un badge de confiance, le verdict
 % =============================================================================
 \newcommand{\LLmetaitem}[2]{%
-  {\LLmono\fontsize{8.5}{11}\selectfont\color{LLMetaLabel}\LLtracked{\MakeUppercase{#1}}}\par
+  {\LLmonofont\fontsize{8.5}{11}\selectfont\color{LLMuted}\LLtracked{\MakeUppercase{#1}}}\par
   \vspace{4pt}%
-  {\fontsize{10.5}{13}\selectfont\bfseries\color{LLMetaVal}#2}%
+  {\LLsemiboldfont\fontsize{10.5}{13}\selectfont\color{LLInk}#2}%
 }
+% badge : capitales espacées blanches sur aplat de la couleur donnée
+\newtcbox{\LL@badgebox}[1]{on line, box align=base, colback=#1, colframe=#1, boxrule=0pt,
+  arc=8pt, left=8pt, right=8pt, top=3pt, bottom=3pt,
+  fontupper=\LLsemiboldfont\fontsize{9}{11}\selectfont\color{LLPaper}}
+\newcommand{\LLbadge}[2]{\LL@badgebox{#2}{\LLtracked{\MakeUppercase{#1}}}}
+
 \newcommand{\makecover}{%
   \begingroup
   \thispagestyle{empty}%
-  \null% ancre la page
+  \null
   \begin{tikzpicture}[remember picture,overlay]
-    % Fond blanc os
     \fill[LLBg] (current page.south west) rectangle (current page.north east);
-    % Barre latérale sauge + liseré doré
     \fill[LLPrimary]
       (current page.north west) rectangle
       ([xshift=\LLcoversidebar]current page.south west);
     \fill[LLAccent]
       ([xshift=\LLcoversidebar]current page.north west) rectangle
       ([xshift=\dimexpr\LLcoversidebar+\LLcovergold\relax]current page.south west);
-    % Logo couleur en haut à gauche
     \ifx\LLCoverLogoFile\@empty\else
       \node[anchor=north west,inner sep=0]
         at ([xshift=\LLcovercontentx,yshift=-\LLcoverlogoy]current page.north west)
         {\includegraphics[width=\LLcoverlogow]{\LLCoverLogoFile}};
     \fi
-    % Bloc titre
     \node[anchor=north west,inner sep=0]
       at ([xshift=\LLcovercontentx,yshift=-\LLcovertitley]current page.north west)
       {\begin{minipage}[t]{\LLcovertextw}
         \raggedright
-        {\LLmono\fontsize{10}{13}\selectfont\color{LLPrimary}%
-          \LLtracked{\MakeUppercase{\LL@reporttype\ \textperiodcentered\ R\'ef.\ \LL@reportref\ \textperiodcentered\ \LL@reportversion}}}\par
-        \vspace{16pt}
-        {\sffamily\bfseries\fontsize{37}{41}\selectfont\color{LLDeep}\@title\par}
+        {\LLmonofont\fontsize{10}{13}\selectfont\color{LLPrimaryDark}%
+          \LLtracked{\MakeUppercase{\LL@reporttype\ \textperiodcentered\ \LL@reportref}}}\par
+        \vspace{14pt}
+        {\LLextraboldfont\fontsize{34}{38}\selectfont\color{LLDeep}\@title\par}
+        \ifx\LL@subtitle\@empty\else
+          \vspace{6pt}
+          {\LLmediumfont\fontsize{14}{18}\selectfont\color{LLSoft}\LL@subtitle\par}
+        \fi
         \vspace{12pt}
         {\color{LLAccent}\rule{33mm}{1.5mm}}\par
-        \vspace{12pt}
-        {\LLlightfont\fontsize{15}{20}\selectfont\color{LLCoverSub}\LL@subtitle\par}
+        \ifx\LL@coversentence\@empty\else
+          \vspace{14pt}
+          {\LLlightfont\fontsize{16}{22}\selectfont\color{LLText}\LL@coversentence\par}
+        \fi
+        \ifx\LL@coverbadge\@empty\else
+          \vspace{16pt}
+          \LLbadge{\LL@coverbadge}{\LL@coverbadgecolor}%
+          \ifx\LL@coververdict\@empty\else
+            \hspace{8pt}{\fontsize{10.5}{14}\selectfont\color{LLSoft}\LL@coververdict}%
+          \fi
+          \par
+        \fi
       \end{minipage}};
-    % Bloc méta en bas
     \node[anchor=south west,inner sep=0]
       at ([xshift=\LLcovercontentx,yshift=\LLcovermetay]current page.south west)
       {\begin{minipage}[t]{\LLcovertextw}
-        {\color{LLCoverMetaRule}\rule{\LLcovertextw}{0.4pt}}\par
+        {\color{LLHairline}\rule{\LLcovertextw}{0.4pt}}\par
         \vspace{12pt}
         \noindent
-        \begin{minipage}[t]{0.36\LLcovertextw}\LLmetaitem{Auteurs}{\@author}\end{minipage}%
+        \begin{minipage}[t]{0.36\LLcovertextw}\LLmetaitem{Pour}{\LL@reportclient}\end{minipage}%
         \begin{minipage}[t]{0.26\LLcovertextw}\LLmetaitem{Date}{\@date}\end{minipage}%
-        \begin{minipage}[t]{0.36\LLcovertextw}\LLmetaitem{Destinataire}{\LL@reportclient}\end{minipage}%
+        \begin{minipage}[t]{0.36\LLcovertextw}\LLmetaitem{Par}{\@author}\end{minipage}%
       \end{minipage}};
   \end{tikzpicture}%
   \clearpage
   \endgroup
 }
-% \maketitle = couverture (README : « \maketitle (ou \makecover) »)
 \renewcommand{\maketitle}{\makecover}
 
 % =============================================================================
-% 11. Hiérarchie des titres — README §3
+% 11. Titres : pages du rapport v2 (sans numéro) et sections numérotées (fiches)
 % =============================================================================
-% Eyebrow « SECTION N » placé dans l'argument LABEL : il n'apparaît donc PAS
-% pour les sections étoilées (\section*) — pratique pour « Références ».
+% \LLpage{surtitre}{Titre} : nouvelle page, surtitre en capitales espacées, titre, filet ocre.
+\newcommand{\LLpage}[2]{%
+  \clearpage
+  \LLrunninghead{#2}%
+  {\LLmonofont\fontsize{9.5}{12}\selectfont\color{LLPrimaryDark}\LLtracked{\MakeUppercase{#1}}}\par
+  \vspace{3pt}%
+  {\LLextraboldfont\fontsize{25}{29}\selectfont\color{LLDeep}#2\par}
+  \vspace{5pt}{\color{LLAccent}\rule{19mm}{1.2mm}}\par
+  \vspace{9pt}%
+}
+% \LLtitre{Titre} : intertitre dans une page (bleu-vert, sans numéro)
+\newcommand{\LLtitre}[1]{%
+  \par\needspace{4\baselineskip}\vspace{6pt}%
+  {\LLsemiboldfont\fontsize{13}{16}\selectfont\color{LLSlateDark}#1\par}
+  \vspace{1pt}%
+}
+% \LLetiquette{texte} : étiquette en capitales espacées (le style « mono » de la charte)
+\newcommand{\LLetiquette}[1]{{\LLmonofont\fontsize{8}{10}\selectfont\color{LLMuted}\LLtracked{\MakeUppercase{#1}}}}
+
 \titleformat{\section}[display]
   {\normalfont\sffamily}
-  {\LLmono\fontsize{9.5}{12}\selectfont\color{LLDeep}%
+  {\LLmonofont\fontsize{9.5}{12}\selectfont\color{LLDeep}%
      \LLtracked{\MakeUppercase{Section\nobreakspace\thesection}}}
   {5pt}
-  {\bfseries\fontsize{24}{28}\selectfont\color{LLDeep}}
+  {\LLextraboldfont\fontsize{24}{28}\selectfont\color{LLDeep}}
   [{\nobreak\vspace{5pt}\titleline[l]{\color{LLAccent}\rule{19mm}{1.2mm}}}]
 \titlespacing*{\section}{0pt}{20pt}{12pt}
-
 \titleformat{\subsection}[block]
-  {\sffamily\bfseries\fontsize{15}{19}\selectfont\color{LLPrimary}}
+  {\LLsemiboldfont\fontsize{15}{19}\selectfont\color{LLPrimaryDark}}
   {\thesubsection\,\textemdash\,}{0pt}{}
 \titlespacing*{\subsection}{0pt}{15pt}{6pt}
-
 \titleformat{\subsubsection}[block]
-  {\sffamily\bfseries\fontsize{13}{17}\selectfont\color{LLAccentInk}}
+  {\LLsemiboldfont\fontsize{13}{17}\selectfont\color{LLAccentInk}}
   {\thesubsubsection\,\textemdash\,}{0pt}{}
 \titlespacing*{\subsubsection}{0pt}{11pt}{4pt}
 
 % =============================================================================
-% 12. Table des matières — README §11
-% =============================================================================
-\newcommand{\LLtocname}{Table des mati\`eres}
-\newcommand{\LLtoc}{%
-  {\LLmono\small\color{LLDeep}\LLtracked{\MakeUppercase{\LLtocname}}}\par
-  \vspace{10pt}%
-  \begingroup
-    \setlength{\parskip}{0pt}%
-    \@starttoc{toc}%
-  \endgroup
-}
-% Entrées de niveau 1 : numéro sauge gras, points de suite, page mono ; filet dessous.
-\titlecontents{section}[0pt]
-  {\addvspace{5pt}\sffamily}
-  {\bfseries\color{LLPrimary}\makebox[1.9em][l]{\thecontentslabel}\bfseries\color{LLText}}
-  {\bfseries\color{LLPrimary}}
-  {\nobreak\hspace{7pt}\titlerule*[5pt]{\color{LLTocDot}\bfseries.}\hspace{7pt}%
-     \LLmono\color{LLTocPage}\thecontentspage}
-  [{\vspace{3pt}{\color{LLTocRule}\hrule height 0.4pt}}]
-% Sous-entrées : numéro mono terracotta, texte gris, page mono.
-\titlecontents{subsection}[2.6em]
-  {\addvspace{2pt}\sffamily\small\color{LLTocSub}}
-  {\LLmono\color{LLDeep}\makebox[2.7em][l]{\thecontentslabel}\normalfont\small\color{LLTocSub}}
-  {}
-  {\nobreak\hspace{6pt}\titlerule*[5pt]{\color{LLTocDotSub}.}\hspace{6pt}%
-     \LLmono\color{LLFootMono}\thecontentspage}
-  []
-
-% =============================================================================
-% 13. Résumé / Abstract — README §12
-% =============================================================================
-\newcommand{\LLabstractname}{R\'esum\'e}
-\newtcolorbox{LL@abstractbox}{%
-  enhanced, breakable,
-  colback=LLPaper, colframe=LLPaper, boxrule=0pt,
-  arc=8pt, outer arc=8pt,
-  left=20pt, right=20pt, top=15pt, bottom=15pt,
-  drop fuzzy shadow={black!15},
-  before skip=4pt, after skip=18pt,
-  before upper={%
-    {\sffamily\bfseries\fontsize{15}{18}\selectfont\color{LLDeep}\LLabstractname}\par
-    \vspace{8pt}\setlength{\parindent}{0pt}\color{LLAbstractText}},
-}
-\newenvironment{llabstract}
-  {\LLrunninghead{\LLabstractname}\LL@abstractbox}
-  {\endLL@abstractbox}
-% Ligne « Mots-clés : … »
-\newcommand{\keywords}[1]{%
-  \par\vspace{10pt}%
-  {\LLmono\footnotesize\textcolor{LLDeep}{\textbf{Mots-cl\'es :}}\ \textcolor{LLFootMono}{#1}}%
-}
-
-% =============================================================================
-% 14. Encadrés note / attention / exemple — README §7
+% 12. Encadrés : note, attention, exemple, honnêteté, verdict
 % =============================================================================
 \newcommand{\LLboxlabel}[2]{%
-  {\sffamily\fontsize{9}{11}\selectfont\bfseries\color{#1}\LLtracked{\MakeUppercase{#2}}}%
+  {\LLsemiboldfont\fontsize{9}{11}\selectfont\color{#1}\LLtracked{\MakeUppercase{#2}}}%
 }
 \tcbset{LL@boxbase/.style={
   enhanced, breakable,
@@ -421,114 +439,83 @@
 }}
 \newtcolorbox[]{llnote}[1][Note]{LL@boxbase,
   borderline west={4pt}{0pt}{LLPrimary},
-  before upper={\LLboxlabel{LLPrimary}{#1}\par\vspace{4pt}}}
+  before upper={\LLboxlabel{LLPrimaryDark}{#1}\par\vspace{4pt}}}
 \newtcolorbox[]{llattention}[1][Attention]{LL@boxbase,
   borderline west={4pt}{0pt}{LLAccent},
-  before upper={\LLboxlabel{LLAttnLabel}{#1}\par\vspace{4pt}}}
+  before upper={\LLboxlabel{LLAccentInk}{#1}\par\vspace{4pt}}}
 \newtcolorbox[]{llexemple}[1][Exemple]{LL@boxbase,
   borderline west={4pt}{0pt}{LLDeep},
   before upper={\LLboxlabel{LLDeep}{#1}\par\vspace{4pt}}}
+% l'encadré d'honnêteté : ce que le moteur ne sait pas, dit en une fois
+\newtcolorbox[]{llhonnete}[1][Ce que ce rapport ne sait pas]{LL@boxbase,
+  colback=LLSensations, borderline west={4pt}{0pt}{LLAccentInk},
+  before upper={\LLboxlabel{LLAccentInk}{#1}\par\vspace{4pt}}}
+% le verdict : carte brume, liseré bleu-vert
+\newtcolorbox[]{llverdict}[1][Verdict]{enhanced, breakable,
+  colback=LLMist, colframe=LLMistLine, boxrule=0.6pt, arc=8pt,
+  left=16pt, right=16pt, top=10pt, bottom=11pt, before skip=8pt, after skip=10pt,
+  before upper={\LLboxlabel{LLSlate}{#1}\par\vspace{4pt}}}
 
 % =============================================================================
-% 15. Figures & légendes — README §8
+% 13. Chiffres clés et jauges
+% =============================================================================
+% \LLkpi{valeur}{étiquette}{sous-texte} : carte blanche, chiffre en gros (dans une minipage)
+\newcommand{\LLkpi}[3]{%
+  \begin{tcolorbox}[enhanced, colback=LLPaper, frame hidden, boxrule=0pt, arc=6pt,
+      left=10pt, right=10pt, top=8pt, bottom=8pt, drop fuzzy shadow={black!10},
+      nobeforeafter, width=\linewidth]
+    \LLetiquette{#2}\par\vspace{3pt}%
+    {\LLextraboldfont\LLtabular\fontsize{17}{20}\selectfont\color{LLDeep}#1}\par\vspace{2pt}%
+    {\fontsize{8.5}{11}\selectfont\color{LLSoft}#3\par}
+  \end{tcolorbox}}
+% \LLgauge{étiquette}{valeur}{fraction 0–1}{phrase} : barre pleine à la fraction donnée
+\newcommand{\LLgauge}[4]{%
+  \noindent\begin{minipage}[t]{\linewidth}
+    \LLetiquette{#1}\hfill
+    {\LLsemiboldfont\LLtabular\fontsize{12}{14}\selectfont\color{LLText}#2}\par\vspace{3pt}%
+    \begin{tikzpicture}
+      \fill[LLGauge, rounded corners=1.5pt] (0,0) rectangle (\linewidth, 5pt);
+      \fill[LLPrimaryDark, rounded corners=1.5pt] (0,0) rectangle (#3\linewidth, 5pt);
+    \end{tikzpicture}\par\vspace{2pt}%
+    {\fontsize{9}{12}\selectfont\color{LLSoft}#4\par}
+  \end{minipage}\par\vspace{10pt}}
+% \LLqr{url} : QR vers l'annexe en ligne
+\newcommand{\LLqr}[1]{\qrcode[height=22mm,level=M]{#1}}
+
+% =============================================================================
+% 14. Figures & légendes
 % =============================================================================
 \DeclareCaptionLabelSeparator{LLdash}{\ \textemdash\ }
 \captionsetup{
-  font={small,color=LLCaption},
+  font={small,color=LLSoft},
   labelfont={bf,color=LLDeep},
   labelsep=LLdash,
+  labelformat=empty,
   justification=raggedright, singlelinecheck=false,
 }
-% Placeholder « figure » (gabarit hachuré 45°, comme la maquette).
-\newcommand{\LLfigureplaceholder}[2][45mm]{%
-  \begin{tikzpicture}
-    \node[minimum width=\linewidth, minimum height=#1, inner sep=0,
-          rounded corners=6pt] (LLph) {};
-    \begin{scope}
-      \clip[rounded corners=6pt] (LLph.south west) rectangle (LLph.north east);
-      \fill[LLBg] (LLph.south west) rectangle (LLph.north east);
-      \fill[pattern=north east lines, pattern color=LLGrid]
-        (LLph.south west) rectangle (LLph.north east);
-    \end{scope}
-    \draw[rounded corners=6pt, draw=LLGrid!60!LLCaption, line width=0.4pt]
-      (LLph.south west) rectangle (LLph.north east);
-    \node at (LLph) {\LLmono\small\color{LLCaption}#2};
-  \end{tikzpicture}%
-}
 
 % =============================================================================
-% 16. Tableaux — README §9
+% 15. Tableaux
 % =============================================================================
-\newcommand{\LLnum}[1]{{\LLmono #1}}                 % valeur numérique (mono)
-\newcommand{\LLpos}[1]{{\LLmono\color{LLDelta}#1}}   % variation positive (vert)
-% En-tête de tableau : fond sauge, texte blanc os, gras.
+\newcommand{\LLnum}[1]{{\LLmonofont #1}}
+\newcommand{\LLpos}[1]{{\LLmonofont\color{LLSuccess}#1}}
 \newcommand{\LLthead}[1]{\textcolor{LLBg}{\textbf{#1}}}
 \newcommand{\LLheaderrow}{\rowcolor{LLPrimary}}
-% Active la zébrure blanc / sable à partir de la ligne courante.
-\newcommand{\LLzebra}{\rowcolors{2}{LLPaper}{LLRowAlt}}
+\newcommand{\LLzebra}{\rowcolors{2}{LLPaper}{LLSensations}}
 
 % =============================================================================
-% 17. Code / listings — README §10
+% 16. Bibliographie et liens
 % =============================================================================
-\lstdefinestyle{locomotion}{
-  basicstyle=\LLmono\fontsize{10.5}{14}\selectfont\color{LLCodeFg},
-  keywordstyle=[1]\color{LLAccent},
-  keywordstyle=[2]\color{LLPrimary},
-  keywords=[1]{import,as,return,for,while,if,elif,else,in,from,not,and,or,with,yield,pass,break,continue,raise,try,except,finally,assert,global,True,False,None},
-  keywords=[2]{def,class,lambda,self},
-  stringstyle=\color{LLCodeNum},
-  commentstyle=\color{LLFootMono}\itshape,
-  showstringspaces=false,
-  keepspaces=true,
-  columns=fullflexible,
-  breaklines=true, breakatwhitespace=true,
-  upquote=true,
-  literate=%
-    {0}{{\color{LLCodeNum}0}}1 {1}{{\color{LLCodeNum}1}}1 {2}{{\color{LLCodeNum}2}}1
-    {3}{{\color{LLCodeNum}3}}1 {4}{{\color{LLCodeNum}4}}1 {5}{{\color{LLCodeNum}5}}1
-    {6}{{\color{LLCodeNum}6}}1 {7}{{\color{LLCodeNum}7}}1 {8}{{\color{LLCodeNum}8}}1
-    {9}{{\color{LLCodeNum}9}}1
-    {é}{{\'e}}1 {è}{{\`e}}1 {ê}{{\^e}}1 {à}{{\`a}}1 {ç}{{\c c}}1,
-}
-% Bloc de code (fond sombre, coins arrondis).
-\newtcblisting{llcode}[1][]{%
-  listing engine=listings,
-  listing only,
-  listing options={style=locomotion},
-  enhanced, breakable,
-  colback=LLCodeBg, colframe=LLCodeBg, boxrule=0pt,
-  arc=6pt, outer arc=6pt,
-  left=12pt, right=12pt, top=10pt, bottom=10pt,
-  before skip=12pt, after skip=14pt,
-  #1
-}
-% Code inline (fond sable, petit radius).
-\newtcbox{\llinline}{%
-  on line, box align=base,
-  colback=LLGrid, colframe=LLGrid, boxrule=0pt,
-  arc=2.5pt, left=3pt, right=3pt, top=1pt, bottom=1pt,
-  fontupper=\LLmono\small\color{LLText},
-}
-
-% =============================================================================
-% 18. Bibliographie — README §13
-% =============================================================================
-% Repère [n] en mono terracotta ; titres en italique.
-\DeclareFieldFormat{labelnumberwidth}{\LLmono\textcolor{LLDeep}{[#1]}}
+\DeclareFieldFormat{labelnumberwidth}{\LLmonofont\textcolor{LLDeep}{[#1]}}
 \DeclareFieldFormat*{title}{\textit{#1}}
 \DeclareFieldFormat*{citetitle}{\textit{#1}}
 \setlength{\biblabelsep}{1.2em}
-% Noms de famille : on conserve les petites capitales (convention française) mais
-% on remplace \textnohyphenation (qui insère un U+200B absent d'Ubuntu, d'où un
-% avertissement « Missing character ») par une simple interdiction de césure.
 \protected\long\def\LL@mkbibnamefamily#1{%
   \textsc{{\hyphenpenalty=\@M\exhyphenpenalty=\@M\relax #1}}}
 \AtBeginDocument{\let\mkbibnamefamily\LL@mkbibnamefamily}
-
-% Liens internes discrets (couleurs maison).
 \hypersetup{
   colorlinks=true,
-  linkcolor=LLText, citecolor=LLDeep, urlcolor=LLPrimary,
+  linkcolor=LLText, citecolor=LLDeep, urlcolor=LLPrimaryDark,
   linktoc=all,
 }
 

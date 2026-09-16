@@ -111,6 +111,10 @@ def _build_parser() -> argparse.ArgumentParser:
         if name == "full":
             sp.add_argument("--out", required=True, help="dossier de sortie (figures + PDF)")
             sp.add_argument("--no-pdf", action="store_true", help="ne pas compiler le PDF")
+            sp.add_argument("--ref", default=None, metavar="RÉFÉRENCE",
+                            help="référence du rapport (pied de page, QR et adresse de "
+                                 "l'annexe en ligne). Par défaut une référence tirée au "
+                                 "hasard : l'adresse de l'annexe n'est pas devinable.")
     return p
 
 
@@ -179,19 +183,30 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     from datetime import datetime
+    from secrets import token_hex
+
+    # la référence EST le secret de l'annexe en ligne : tirée au hasard faute de --ref
+    report_ref = args.ref or f"LL-TWIN-{token_hex(4).upper()}"
 
     result = run_full(
         training_path=args.training, course_gpx=course_gpx, race=race, cfg=cfg,
         out_dir=Path(args.out), athlete=args.athlete, purge_source=args.purge,
         render_pdf=not args.no_pdf, report_date=datetime.now(), progress=_progress,
-        until=until,
+        until=until, report_ref=report_ref,
     )
     if until is not None:
         print(f"\n  Coupure --until {until.isoformat()} : "
               f"{result.preview.n_excluded_until} activité(s) écartée(s).", file=sys.stderr)
     _print_summary(result.preview)
     if result.pdf_path:
-        print(f"\n  Rapport PDF : {result.pdf_path}", file=sys.stderr)
+        print(f"\n  Rapport PDF : {result.pdf_path}  (référence {result.report_ref})",
+              file=sys.stderr)
+    for nom, chemin in sorted(result.livrables.items()):
+        print(f"  {nom:<12} {chemin}", file=sys.stderr)
+    if "annexe.json" in result.livrables:
+        print(f"\n  Annexe en ligne : déposer {result.livrables['annexe.json']} sous "
+              f"apps/site/public/twin-annexes/{result.report_ref}.json, puis déployer le site.",
+              file=sys.stderr)
     return 0
 
 

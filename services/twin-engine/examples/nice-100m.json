@@ -13,5 +13,7 @@
   "lon": 7.266,
   "tz_offset_h": 2.0,
   "major_base_indices": [4, 8, 11],
+  "_crew_access": "segments dont la FIN est ouverte à l'assistance (fiche, calendrier, GPX) ; à ajuster selon le règlement de l'édition — par défaut les bases de vie",
+  "crew_access_indices": [4, 8, 11],
   "official_dplus_m": 8900
 }

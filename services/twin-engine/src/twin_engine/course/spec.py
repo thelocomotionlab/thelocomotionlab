@@ -31,7 +31,9 @@ class RaceSpec:
     Champs de géométrie (module course) : ``aid_km``, ``aid_names``.
     Champs de logistique (module pacing) : ``start_time``, ``lat``, ``lon``,
     ``tz_offset_h``, ``major_base_indices`` (segments dont la FIN est une base majeure,
-    arrêt rallongé).
+    arrêt rallongé), ``crew_access_indices`` (segments dont la FIN est accessible à
+    l'assistance : la fiche d'assistance, le calendrier et les points GPX du rapport v2 s'y
+    calent ; vide = les bases majeures, et sans base majeure tous les points de passage).
     Champ de TERRAIN : ``technicity_pct`` — majoration de coût DÉCLARÉE pour la technicité
     (pierriers, chaos, mains courantes, single technique). Le moteur ne la mesure pas : le GPX
     ne porte que la géométrie, et Minetti convertit la PENTE en coût métabolique en supposant
@@ -53,6 +55,7 @@ class RaceSpec:
     lon: float | None = None
     tz_offset_h: float = 0.0
     major_base_indices: tuple[int, ...] = ()
+    crew_access_indices: tuple[int, ...] = ()
     official_dplus_m: float | None = None
     target_hours: float | None = None
     technicity_pct: float = 0.0
@@ -98,6 +101,7 @@ class RaceSpec:
             lon=d.get("lon"),
             tz_offset_h=float(d.get("tz_offset_h", 0.0)),
             major_base_indices=tuple(int(i) for i in d.get("major_base_indices", ())),
+            crew_access_indices=tuple(int(i) for i in d.get("crew_access_indices", ())),
             official_dplus_m=d.get("official_dplus_m"),
             # "31h", "31h30", "31:00:00" ou un nombre d'heures (illisible → ValueError :
             # mieux vaut refuser que caler un plan sur la mauvaise durée)

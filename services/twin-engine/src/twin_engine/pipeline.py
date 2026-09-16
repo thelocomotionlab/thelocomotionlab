@@ -10,7 +10,7 @@ brutes.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime
 from pathlib import Path
 
@@ -214,6 +214,9 @@ class FullResult:
     # mode OBJECTIF (ADR 0002) : présent dès qu'une cible a été demandée, y compris quand
     # elle est REFUSÉE (le refus est un livrable). None = rapport en mode prédiction.
     target: TargetAssessment | None = None
+    # rapport v2 : ce qui accompagne le PDF (fiche, bracelet, ICS, GPX, annexe), {nom: chemin}
+    livrables: dict[str, Path] = field(default_factory=dict)
+    report_ref: str = "LL-TWIN"
 
     def to_dict(self) -> dict:
         d = self.preview.to_dict()
@@ -221,6 +224,8 @@ class FullResult:
         d["pdf"] = str(self.pdf_path) if self.pdf_path else None
         d["figures"] = self.figures
         d["target"] = None if self.target is None else self.target.to_dict()
+        d["livrables"] = {k: str(v) for k, v in self.livrables.items()}
+        d["report_ref"] = self.report_ref
         return d
 
 
@@ -234,13 +239,13 @@ def analyze_full(
     athlete: str,
     n_skipped: int = 0,
     report_ref: str = "LL-TWIN",
-    report_version: str = "v1.0",
+    report_version: str | None = None,
     report_date: datetime | None = None,
     render_pdf: bool = True,
     analysis_date: date | None = None,
     until: date | None = None,
 ) -> FullResult:
-    """Chaîne complète jusqu'au PDF (pacing + figures + rapport LaTeX).
+    """Chaîne complète jusqu'au PDF (pacing + figures + rapport LaTeX + livrables).
 
     Import paresseux du module report (matplotlib/jinja) : la profondeur preview ne le
     charge pas. Si la prédiction est impossible (🔴), on s'arrête au preview sans PDF.
@@ -269,8 +274,9 @@ def analyze_full(
     out_dir = Path(out_dir)
     figures: dict = {}
     pdf_path: Path | None = None
+    livrables: dict[str, Path] = {}
     if render_pdf:
-        from .report import build_pdf, build_report_context, generate_figures
+        from .report import build_pdf, build_report_context, generate_figures, write_livrables
 
         fig_dir = out_dir / "figures"
         figures = generate_figures(
@@ -284,9 +290,15 @@ def analyze_full(
             report_date=report_date, target=target,
         )
         pdf_path = build_pdf(context, fig_dir, out_dir / "tex")
+        # ce qui accompagne le rapport : fiche d'assistance, bracelet, calendrier, GPX, annexe
+        livrables = write_livrables(
+            context=context, course=course, twin=preview.twin, calibration=preview.calibration,
+            prediction=preview.prediction, plan=plan, race=race, sufficiency=preview.sufficiency,
+            cfg=cfg, out_dir=out_dir, figures_dir=fig_dir, generated_at=report_date,
+        )
 
     return FullResult(preview=preview, plan=plan, pdf_path=pdf_path, figures=figures,
-                      target=target)
+                      target=target, livrables=livrables, report_ref=report_ref)
 
 
 def run_full(
@@ -300,7 +312,7 @@ def run_full(
     purge_source: bool = True,
     render_pdf: bool = True,
     report_ref: str = "LL-TWIN",
-    report_version: str = "v1.0",
+    report_version: str | None = None,
     report_date: datetime | None = None,
     progress=None,
     analysis_date: date | None = None,
