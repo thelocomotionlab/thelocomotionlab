@@ -127,7 +127,8 @@ de progression chez un second athlète (Val 2024 : +21 à +24 %).
   cas de 0,4 h (Montagnhard 2026) ; retenu pour la référence comme cadre du prior. A3 seul
   élargit (Student à ν ≈ 1 à petit n_eff) ; avec le prior il est neutre à n_eff 11 et rend
   la couverture 80 que le prior perd à petit n. MAD et signé : rejetés (chiffres au carnet).
-- **Rapport de référence** : `examples/twin.config.reference.json` (log + prior + studentisé) ;
+- **Rapport de référence** : `examples/twin.config.reference.json` (log + prior + studentisé ;
+  depuis la Phase 3, prior et queue d'enveloppe lus sur l'efficacité-durée) ;
   Nice 2026 : **34,33 h**, fourchette 31,98–36,87, sécurité 29,83–39,52 (28 % du central
   contre 49 % avant), central +2,0 h par rapport aux défauts (32,33 h) — consigné comme
   « activé pour Val, défaut non basculé ».
@@ -226,6 +227,26 @@ Registre enrichi (`alpha`, `alpha_eff`, `alpha_tail`, `duration_prior_origin`,
 une note « ce qui a servi pour la pente au-delà de six heures » quand un levier est actif.
 Feuille du banc : manuel §8 (variantes E1, E2, F, RB1, RB2, RP, RPh, RF, RB1P ; recaptures
 nice-RB1/RB2/RP/RF).
+
+**Banc reçu (2026-09-16) — Phase 3 close (DIAGNOSTIC §10.10–10.14).** Base identique à
+l'« avant » ; treize vendus appariés, cas frais, zone d'action, Val 2024, quatre recaptures.
+- **B1 efficacité-durée : activé pour la référence, défaut non basculé.** 13 vendus : MAE
+  10,3 → 8,6, Winkler 80 0,570 → 0,485, couverture 80 54 → 77 % ; zone d'action +4 à +6 % →
+  +1 à +2 % (Chianti +3,8 → +0,6, Lavaredo +6,1 → +2,5, MIUT +9,4 → +0,5) ; Val Ecotrail 2024
+  (vc_e) +23,8 → +6,9. Les cas frais restent à leur biais (17,2 → 17,4), et la queue
+  d'enveloppe fait passer un cas hors domaine (3,5 h réels, prédit 10,06 h) au travers d'une
+  garde qui lit le temps prédit contre 10 h : pas de défaut. Nice : 34,33 → **32,43 h**,
+  sécurité 28,69 – 36,65 (25 %), LOO 6,4 %.
+- **B2 queue de la courbe record : rejeté.** α_queue plus raide que l'α court (0,22 contre
+  0,14 chez Val, 0,40 contre 0,30 chez Lolo) : les fenêtres longues mesurent l'usure d'une
+  course entière, pas le plafond ; plus lent partout, bandes plus larges, un vendu de moins.
+- **P niveau de l'époque : rejeté.** Trois athlètes sur quatre dégradés (13 vendus MAE 16,2,
+  Lolo frais −34 / −46 %) : la VC d'une fenêtre de 12 mois mesure la pratique courte de
+  l'année, pas la forme d'ultra (décalages de −10 à +45 %). Gain 0,5 : mêmes signes.
+- **F plancher dépendant de la durée : non retenu.** Règle MIUT (+9,4 → +4,7 sous R) et
+  laisse entrer chez Val une journée de montagne de 15,5 h (pli LOO −18 %) que la garde du
+  sommeil ne voit pas ; attend un signal de course (Phase 4).
+- Toutes les mesures (α_eff, α_queue, plus long arrêt) restent au registre et au JSON.
 
 ## Choix faits à la place de Valentin (Phase 0)
 
@@ -350,8 +371,22 @@ nice-RB1/RB2/RP/RF).
 38. **`envelope_tail` dans le bloc calibration** et non twin : le banc refuse toute variante
     du bloc twin (les agrégats décodés en dépendent) ; les réglages de MESURE (durées de la
     queue, fenêtre d'efficacité, FC0 déclarée) restent dans twin et ne varient pas au banc.
+39. **B1 activé pour la référence sans bascule du défaut** : mieux ou égal sur trois
+    athlètes et sans effet sur le quatrième, mais les cas frais vendus sont neutres et la
+    règle « jamais sur dev_set seul » tient ; la garde du domaine, qui lâche un cas hors
+    domaine dès que la prédiction franchit 10 h, n'est pas corrigée dans cette phase (elle
+    relève du chantier « trails courts » et d'un signal de course).
+40. **Les mesures rejetées restent mesurées** (α_queue, VC d'époque via le flag, plus long
+    arrêt) : un registre qui les porte permet de les relire quand la Phase 4 apportera les
+    passages et le signal de course, sans relancer un décodage.
 
 ## Questions ouvertes
+
+- **Garde du domaine de calibration.** Elle lit le temps PRÉDIT contre 10 h : un cas hors
+  domaine (36 km, 3,5 h réels) prédit 9,76 h est refusé, prédit 10,06 h il est vendu à +185 %
+  d'erreur (Phase 3, E1). La garde doit lire la demande du parcours (Deq, durée attendue à
+  l'allure de l'athlète) et non la sortie du modèle ; à traiter avec le chantier « trails
+  courts » ou dès que la Phase 4 apporte un signal de course.
 
 - **Golden réel et archive fraîche.** Les références §12 (2026-07-02, 449 activités) ne
   correspondent plus à l'archive fraîche (55 mois, 891 activités uniques : VC 9,72 km/h,

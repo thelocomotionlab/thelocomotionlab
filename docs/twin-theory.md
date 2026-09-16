@@ -193,7 +193,11 @@ moyenne de course** en fonction de la durée et du dénivelé :
 > de la cible 3,0 → 0,9 sur le cas de référence, Winkler des bandes amélioré partout où il agit,
 > central tiré vers plus lent (+2 h à 32 h). Les cas frais du registre ne sont pas touchés :
 > **défauts inchangés**, les deux leviers sont servis pour le rapport de référence par
-> `examples/twin.config.reference.json` (DIAGNOSTIC §10.4).
+> `examples/twin.config.reference.json` (DIAGNOSTIC §10.4). **Depuis la Phase 3, la source du
+> prior y est l'exposant d'efficacité-durée** (`duration_prior_source=efficiency`, α_eff 0,067
+> contre 0,143 pour l'α court chez Val) et l'enveloppe des replis en prend la queue
+> (`envelope_tail=efficiency`) : le biais du central de la zone d'action tombe de +4 à +6 % à
+> +1 à +2 %, Nice 34,33 → 32,43 h (DIAGNOSTIC §10.10, §10.14).
 >
 > **Arrêts (chantier v2, Phase 2, flag `calibration.stops_model`, défaut `carved`).** Par défaut
 > la régression porte sur la vitesse écoulée, arrêts compris, et le plan retranche sa politique
@@ -222,6 +226,12 @@ moyenne de course** en fonction de la durée et du dénivelé :
 > (`genuine_floor=riegel`) : 5,5 × (T ÷ 10 h)^−0,16 sur la vitesse écoulée, et **garde du plus long
 > arrêt** (`genuine_max_stop_s`) contre les OFF avec sommeil ; une seule définition du domaine
 > (`genuine_gate_failures`) pour la calibration, la queue de la courbe record et les diagnostics.
+> **Mesuré au banc (DIAGNOSTIC §10.10–10.14, 2026-09-16)** : seule l'efficacité-durée porte sur
+> la pente (activée pour le rapport de référence, défaut non basculé : cas frais neutres) ; la
+> queue de la courbe record est plus raide que l'α court (elle mesure l'usure en course, pas le
+> plafond à durée donnée) ; la VC d'une année n'est pas un niveau (décalages de −10 à +45 % sans
+> rapport avec la forme d'ultra) ; le plancher dépendant de la durée règle MIUT et laisse entrer
+> une journée de montagne — il attend un signal de course (Phase 4).
 >
 > **Point de généralisation crucial.** Cette régression suppose **plusieurs** vrais ultras. La plupart
 > des athlètes n'en auront pas 8. Le moteur doit donc **dégrader proprement** :

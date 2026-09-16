@@ -1863,10 +1863,78 @@ de l'ultra recalant, sa vitesse est rendue à l'identique. Registre : `model.alp
 FC0 déclarée, FC0 profilée retrouvée, enveloppe continue au raccord et recalage conservé,
 replis honnêtes (exposant absent ⇒ α historique ⇒ population, chacun signalé).
 
-**Preuve au banc — À COLLER** (variantes `E1` sur défauts, `RB1` et `RB1P` sur la pile de
-référence ; recapture `nice-RB1.json`). Juges : MAE et biais des cas frais vendus (Lolo, régime
-blend, enfin atteints), Val 2024 (vc_e), zone d'action (biais du central), Winkler à
-couverture égale.
+**Preuve au banc (2026-09-16, `tools/banc`, 4 manifestes, 30 courses ; variantes `E1` sur
+défauts, `RB1` sur la pile de référence R = A2A1A3 ; recapture `nice-RB1.json`).** Le banc de
+base est identique au « avant » (compare.md sans écart : défauts inchangés). Les exposants
+mesurés, par athlète et par coupure (registre `model.alpha_eff`, n = efforts avec FC ≥ 1 h) :
+
+| athlète | α (30 min–6 h) | α_eff, première coupure → dernière | ce que ça dit |
+|---|---|---|---|
+| Val | 0,13–0,21 | 0,034 (n 56, 2024-03) → 0,065 (n 200, 2025-06) ; 0,067 aujourd'hui | à effort donné, Val décline moitié moins que sa courbe record courte ne le dit |
+| Crasse | 0,17–0,18 | 0,50 (n 199, 2021) → 0,17 (2024) → 0,13 (n 686, 2026) | l'exposant se stabilise quand les efforts longs s'accumulent ; en 2021 il ne mesurait que 1 à 3 h |
+| Lolo | 0,30–1,32 | 0,65 (n 87, 2022) → 0,29 (2023) → 0,20 (n 300, 2026) | même convergence, sur un athlète dont l'α court est absurde (1,3) |
+| Rapace | 0,19–0,37 | absent (aucune FC) | le levier ne le touche pas : repli α, signalé |
+
+Treize cas vendus de base, appariés (même liste quel que soit le verdict de la variante) :
+
+| variante | MAE % | biais % | couv 50 / 80 | Winkler rel 50 / 80 | largeur rel méd 50 / 80 |
+|---|---|---|---|---|---|
+| base (défauts) | 10,3 | +2,7 | 38 / 54 % | 0,342 / 0,570 | 8,1 / 15,5 % |
+| E1 (défauts + queue efficacité) | 9,0 | +1,9 | 38 / 69 % | 0,287 / 0,507 | 8,3 / 15,8 % |
+| R (A2A1A3, §10.4) | 10,2 | +2,8 | 31 / 46 % | 0,345 / 0,552 | 12,5 / 19,1 % (zone) |
+| RB1 (R + prior efficacité + queue) | **8,6** | +1,7 | 31 / **77 %** | 0,281 / **0,485** | 8,2 / 16,9 % |
+
+Par athlète (appariés) : Val 12,9 → 8,6 (E1) et 9,0 (RB1) contre 14,1 sous R, couverture 80
+50 → 75 %, Winkler 80 0,773 → 0,542 ; Crasse 6,8 → 6,7 (E1) et 5,9 (RB1, comme R),
+Winkler 80 0,296 → 0,265, couverture 80 71 → 100 % au prix d'une largeur 13,4 → 20,7 % ;
+Lolo (les deux cas frais vendus, blend) 17,2 → 17,4 : Nice 50k −18,1 → −16,3, UTSM −16,4 →
+−18,5 — le premier levier qui atteint ces cas les laisse à leur biais ; Rapace inchangé (pas
+de FC). Val 2024 et zone d'action (erreur du central, base → E1 / RB1 ; R rappelé) :
+
+| coupure (réel) | base | E1 | R | RB1 |
+|---|---|---|---|---|
+| Val · Ecotrail 2024 (10,46 h, vc_e) | +23,8 | **+6,9** | +23,8 | **+6,9** |
+| Val · Coursières 50k 2024 (6,05 h, blend, hors domaine) | +8,6 | +13,5 | +8,6 | +13,5 |
+| Val · GRF 2024 (11,29 h, blend) | +21,0 | +20,9 | +21,0 | +20,9 |
+| Val · Saintélyon 2024 (11,07 h, blend) | +5,6 | +5,6 | +5,6 | +5,6 |
+| Val · Chianti 2025 (20,48 h) | −6,3 | −6,3 | +3,8 | **+0,6** |
+| Val · Lavaredo 2025 (21,24 h) | +1,0 | +1,0 | +6,1 | +2,5 |
+| Crasse · Nice 100M 2024 (26,16 h) | +5,1 | +5,1 | −0,5 | −0,6 |
+| Crasse · Chota 2025 (4,93 h) | −10,1 | −10,1 | −8,3 | −7,4 |
+| Crasse · Grand Trail du Lac 2025 (10,38 h) | −1,9 | −1,9 | 0,0 | +1,7 |
+| Crasse · Coursières 100k 2026 (13,29 h) | +8,4 | +8,4 | +8,4 | +8,0 |
+| Crasse · Montagnhard 2026 (16,07 h) | +17,4 | +17,4 | +17,7 | +16,8 |
+| Lolo · MIUT 2026 (25,82 h) | +0,6 | +0,6 | +9,4 | +0,5 |
+| Rapace · Nivolet-Revard 2026 (7,43 h) | +26,3 | +26,3 | +21,1 | +21,1 |
+
+Le biais du central de la zone d'action, +4 à +6 % sous R, tombe à +1 à +2 % sous RB1 (Val
+Chianti +3,8 → +0,6, Lavaredo +6,1 → +2,5, MIUT +9,4 → +0,5) : le prior A1 tirait vers le
+lent parce que l'α court est trop fort ; l'α d'efficacité-durée, plus doux, est celui que la
+pente observée demandait. Ecotrail 2024 (vc_e) passe de +23,8 à +6,9 % : la queue de
+l'enveloppe à 0,034 corrige l'extrapolation de l'α court 0,21. GRF 2024 ne bouge pas (blend
+recalé sur un ultra : l'enveloppe n'y compte que pour la forme).
+
+**Ce que le banc a aussi montré, et qui interdit un défaut.** (1) Les cas frais vendus ne
+bougent pas (17,2 → 17,4) : la règle « jamais sur dev_set seul » n'est pas satisfaite. (2)
+Sous E1 (défauts), Crasse · Lut 36k 2021 (3,5 h réels, prédite 9,76 h) passe de 🔴 à 🟠 : la
+garde du domaine de calibration lit le temps PRÉDIT contre 10 h, et la queue d'enveloppe
+déplace ce temps à 10,06 h — la garde lâche un cas à +185 % d'erreur. Ce n'est pas B1 qui
+vend ce cas, c'est une garde qui tient à un seuil sur la prédiction au lieu de lire la
+demande du parcours ; consigné pour le chantier « trails courts » (§9.9), rien de changé ici.
+
+**Cas de référence (recapture `nice-RB1.json`)** : central **32,43 h** (34,33 sous R : −1,9 h ;
+31,89 sous A2 sans prior), fourchette 30,48 – 34,50 (12 %), sécurité 28,69 – 36,65 (25 % ;
+asymétrie −3,7 / +4,2 h), LOO 6,4 % (interpolation 7,4, extrapolation 3,2 ; 7,4 / 8,0 / 5,1
+sous R), levier 0,90, sd_rel 0,103 (0,93 / 0,119 sous R), κ 0,85, ν 8,1, prior b −0,067
+(efficacité, λ 2), β (2,289, −0,065, −0,0046). Les 12 vrais ultras et le jumeau (VC 9,748,
+E 1,167, durabilité 19,1 %) sont ceux de R.
+
+**Décision.** Défaut non basculé (cas frais neutres, garde du domaine). **Activé pour le
+rapport de référence** : `examples/twin.config.reference.json` porte désormais
+`calibration.duration_prior_source=efficiency` et `calibration.envelope_tail=efficiency`
+(cinq clés), consigné « activé pour Val, défaut non basculé » — mieux ou égal sur trois
+athlètes (Val, Crasse, Lolo), sans effet sur le quatrième. La combinaison avec P (`RB1P`) est
+rejetée avec P (§10.12).
 
 ### 10.11 B2 — Queue de la courbe record : les fenêtres de 10 à 36 h des plus longues courses (flags `calibration.duration_prior_source=record_tail`, `calibration.envelope_tail=record_tail` ; défauts inchangés)
 
@@ -1893,8 +1961,28 @@ prior A1, ce que le banc mesure.
 longue, la queue ne vient que des vrais ultras (support 2, bivouac exclu), fenêtres
 absentes sur une sortie courte.
 
-**Preuve au banc — À COLLER** (variantes `E2` sur défauts, `RB2` sur la pile de référence ;
-recapture `nice-RB2.json`).
+**Preuve au banc (2026-09-16 ; variantes `E2` sur défauts, `RB2` sur R ; recapture
+`nice-RB2.json`).** α_queue mesuré (registre `model.alpha_tail`, n = points de 2 h à la plus
+longue fenêtre) : Val 0,20–0,34 (dernière coupure 0,22, n 12), Crasse 0,22–0,26 (0,24, n 13),
+Lolo 0,38–0,40 (n 12), Rapace 0,13–0,19 (n 10) ; absent chez tous avant leur première course
+de 10 h et plus (pas de fenêtre longue). La limite annoncée était à contresens : α_queue est
+plus RAIDE que l'α court (0,22 contre 0,14 chez Val, 0,40 contre 0,30 chez Lolo), pas plus
+doux — les fenêtres de 2 à 8 h sont les meilleures portions de courses fraîches, les fenêtres
+de 10 à 24 h sont des courses entières avec leurs arrêts et leur nuit ; la pente qui les
+joint est celle de l'usure d'une course, pas celle du plafond à durée donnée.
+
+| variante | 13 vendus appariés : MAE / biais / couv 80 / Winkler 80 | Lolo frais | zone d'action |
+|---|---|---|---|
+| base | 10,3 / +2,7 / 54 % / 0,570 | −18,1 · −16,4 | Chianti −6,3, Lavaredo +1,0, MIUT +0,6 |
+| E2 | 11,1 / +3,4 / 54 % / 0,630 | −19,7 · −16,4 | inchangée (régression sans prior) |
+| R | 10,2 / +2,8 / 46 % / 0,552 | −18,1 · −16,4 | Chianti +3,8, Lavaredo +6,1, MIUT +9,4 |
+| RB2 | 12,1 / +4,1 / 62 % / 0,641 | −19,7 · −16,4 | Chianti +10,5, Lavaredo +11,1, MIUT +23,4, Crasse GTL 🟢 → 🔴 |
+
+Val 2024 : Ecotrail inchangé (pas de fenêtre longue avant mars 2024 : repli α), GRF +21,0 →
++28,0. Recapture de Nice sous RB2 : 36,68 h, sécurité 30,95 – 43,46 (34 %), LOO 8,7 %, prior
+b −0,219. **Rejeté** : plus lent partout où il agit, bandes plus larges, un vendu de moins.
+La mesure reste au registre (elle décrit l'usure en course de chaque athlète, information
+pour la Phase 4, pas pour la pente) ; les flags restent, défaut inchangé, non activé.
 
 ### 10.12 P — Niveau de l'époque : chaque ultra ramené à la forme actuelle par la VC de son année (flag `calibration.level_anchor`, défaut `none`)
 
@@ -1927,8 +2015,34 @@ fenêtre qui précède la date.
 athlète » s'applique : Crasse et Val ont assez d'ultras datés pour trancher, Lolo et Rapace
 disent si le levier casse quelque chose ailleurs.
 
-**Preuve au banc — À COLLER** (variantes `RP` et `RPh` (gain 0,5) sur la pile de référence,
-`RB1P` combinée ; recapture `nice-RP.json`).
+**Preuve au banc (2026-09-16 ; `RP` et `RPh` (gain 0,5) sur R, `RB1P` combinée ; recapture
+`nice-RP.json`).** Tous les ultras de toutes les coupures ont trouvé une VC d'époque (aucun
+décalage nul), et c'est là que le levier casse : la VC d'époque n'est pas un niveau.
+
+| variante | 13 vendus appariés : MAE / biais / Winkler 80 | Lolo frais | Val Chianti · Lavaredo | Crasse Maquisards 2024 |
+|---|---|---|---|---|
+| R | 10,2 / +2,8 / 0,552 | −18,1 · −16,4 | +3,8 · +6,1 | −5,6 |
+| RP | 16,2 / −2,9 / 1,348 | −34,1 · −45,9 | +7,4 · +10,1 | −25,5 |
+| RPh | 13,2 / −0,3 / 0,956 | −26,3 · −33,0 | +5,6 · +8,1 | −16,3 |
+| RB1P | 13,7 / −3,9 / 1,243 | −32,3 · −46,0 | +3,9 · +6,1 | — |
+
+Les décalages mesurés disent le mécanisme : Lolo · UTSM 2023, l'unique ultra du blend est
+« recalé » de **+44,6 %** (sa VC des 12 mois précédents vaut les deux tiers de sa VC à la
+coupure) et la prédiction passe de −16,4 à −45,9 % ; Crasse · Trace des Maquisards 2024,
++24,1 % de décalage moyen, −5,6 → −25,5 % ; Val, décalages **négatifs** de −2 à −10 % (sa VC
+d'aujourd'hui est sous celle de 2024–2025), Chianti −6,3 → +7,4, Lavaredo +1,0 → +10,1, Nice
+36,71 h (sécurité 31,23 – 43,14, LOO 8,8 %). Trois athlètes sur quatre dégradés ; Rapace
+seul s'améliore (+29 → +7,5, +36 → +9), sur un cas 🔴 et une VC sans FC. Verdicts : trois
+vendus perdus (Crasse Montagnhard 2026 et Nice 2024, Lolo Nice 50k). Le gain 0,5 divise les
+dégâts par deux, il ne change pas le signe.
+
+**Pourquoi.** La VC d'une fenêtre de 12 mois dépend de ce que l'athlète a couru de court et
+de plat cette année-là (courses de 10 à 90 min, blocs de vitesse), pas de sa forme d'ultra :
+elle bouge de 20 à 45 % là où les ultras, eux, n'ont pas bougé. Le §5.x l'avait dit
+autrement : la progression ne se lit pas dans ce que le moteur mesure aujourd'hui.
+**Rejeté** ; flag conservé (la mécanique fit / blend / LOO est juste et testée), défaut
+inchangé, non activé. La voie qui reste pour le biais de progression est celle du §5.x :
+la cohorte et les passages de la Phase 4.
 
 ### 10.13 F — Plancher de vitesse dépendant de la durée et garde du plus long arrêt (flags `calibration.genuine_floor=riegel`, `calibration.genuine_max_stop_s` ; défauts `fixed`, 0)
 
@@ -1956,5 +2070,50 @@ touche Lolo après MIUT (aucune coupure vendue) et rien d'autre a priori — le 
 dit si `n_genuine` bouge quelque part. Sa valeur est d'abord celle du PROCHAIN rapport de
 Lolo : sa plus longue course entre en calibration au lieu d'être ignorée pour 0,02 km/h.
 
-**Preuve au banc — À COLLER** (variantes `F` sur défauts, `RF` sur la pile de référence ;
-recapture `nice-RF.json`).
+**Preuve au banc (2026-09-16 ; `F` sur défauts, `RF` sur R ; recapture `nice-RF.json`).**
+Une seule coupure change de domaine : Lolo · MIUT 2026, 5 → 6 vrais ultras (un effort de
+Lolo entre les deux planchers entre en calibration avant MIUT). Erreur du central : +0,6 →
++3,0 % sous F (défauts), +9,4 → +4,7 % sous RF (contre R). Rien d'autre ne bouge au banc
+(13 vendus appariés : 10,3 → 10,3 sous F ; RF = R au chiffre près sauf MIUT). Recapture de
+Nice sous RF : 13 vrais ultras au lieu de 12 — entre un effort du 2026-08-22 (15,5 h,
+62 km, 4 782 m D+, 5,35 km/h écoulés contre un plancher de 5,13 à cette durée, 3 h 16
+d'arrêts, altitude moyenne 1 740 m), dont le pli LOO vaut −18 % : ce n'est pas une course
+mais une journée de montagne, que le plancher fixe écartait et que la garde du sommeil ne
+voit pas (aucun plateau d'une heure). Central 34,38 h (34,33 sous R), sécurité 29,85 –
+39,60, LOO 7,4 % (extrapolation 5,1 → 6,3).
+
+**Décision.** Le levier fait ce qu'il doit sur le cas d'école (MIUT) et laisse entrer ce
+qu'il ne doit pas chez Val : la garde du sommeil ne suffit pas à dire « course ». Défaut
+inchangé, non activé ; flags conservés. Ce qui manque est un signal de course, pas de
+vitesse : la Phase 4 (données publiques de la course) saura dire qu'un effort est une
+course inscrite — c'est là que le plancher dépendant de la durée trouvera sa garde.
+
+### 10.14 Bilan de la Phase 3 — un levier activé pour la référence (B1), trois mesurés et non retenus
+
+| levier | flags | banc | décision |
+|---|---|---|---|
+| B1 efficacité-durée | `duration_prior_source=efficiency`, `envelope_tail=efficiency` | 13 vendus : MAE 10,3 → 8,6, Winkler 80 0,570 → 0,485, couverture 80 54 → 77 % ; zone d'action +4 à +6 % → +1 à +2 % ; Val Ecotrail +23,8 → +6,9 ; cas frais neutres (17,2 → 17,4) | défaut non basculé ; **activé pour le rapport de référence** |
+| B2 queue de la courbe record | `…=record_tail` | plus raide que l'α court, plus lent partout, bandes plus larges | rejeté ; mesure conservée au registre |
+| P niveau de l'époque | `level_anchor=vc_epoch` | trois athlètes sur quatre dégradés, décalages de −10 à +45 % sans rapport avec la forme d'ultra | rejeté |
+| F plancher dépendant de la durée | `genuine_floor=riegel`, `genuine_max_stop_s` | MIUT +9,4 → +4,7 sous R ; une journée de montagne de Val entre en calibration | non retenu ; attend un signal de course (Phase 4) |
+
+**Configuration de référence** : A2A1A3 + B1 (cinq clés). Nice 100M 2026 : **32,43 h**,
+fourchette 30,48 – 34,50, sécurité 28,69 – 36,65 (25 %), LOO 6,4 % ; plan à dérive −26 %,
+arrêts de la politique. Le central a bougé de −1,9 h par rapport à R : le prior sur la
+pente reste, sa source change — l'exposant lu sur des centaines d'efforts à effort donné
+(0,067) remplace celui de la courbe record courte (0,143), et il est du côté que douze
+ultras réclamaient.
+
+**Ce que la Phase 3 a appris de général.** (1) L'information sur la pente au-delà de 6 h
+existe dans l'archive, mais une seule des deux lectures est la bonne : la vitesse par
+battement de réserve cardiaque (à effort donné) porte sur la pente ; les fenêtres
+longues portent sur l'usure en course. (2) La VC d'une année n'est pas le niveau d'un
+athlète : elle mesure sa pratique courte. (3) Le domaine de calibration a besoin d'un
+signal de course, pas d'un plancher plus fin — et la garde du domaine, qui lit un temps
+prédit contre 10 h, tient à un seuil. (4) Les cas frais vendus restent au même biais sous
+tous les leviers : ce qui les fera bouger n'est plus dans l'archive de l'athlète.
+
+**Ce qui passe en Phase 4** : les données publiques de la course (B3, import CSV manuel
+d'abord) — signal de course pour le domaine, passages réels pour le fade par athlète,
+cohorte pour la jauge décisionnelle ; la garde du domaine à reprendre sur la demande du
+parcours ; le golden réel §12 à recapturer sur l'archive fraîche à la clôture du chantier.

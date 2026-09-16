@@ -222,7 +222,11 @@ plus (sommeil). Les deux exposants et le plus long arrêt sont mesurés et consi
 soit le flag (JSON `twin.alpha_eff`, `twin.alpha_tail` ; registre `model.alpha_eff`,
 `alpha_tail`, `duration_prior_origin`, `envelope_tail_alpha`, `level_n_anchored`,
 `level_shift_mean_pct`, `genuine_floor`) ; `tools/diag_archive` et `tools/diag_ultras`
-impriment le plancher servi et le plus long arrêt de chaque effort long.
+impriment le plancher servi et le plus long arrêt de chaque effort long. Le banc a tranché
+(DIAGNOSTIC §10.14) : aucun défaut basculé ; B1 (`duration_prior_source=efficiency`,
+`envelope_tail=efficiency`) est activé pour le rapport de référence, qui porte désormais
+cinq clés (`examples/twin.config.reference.json`) ; B2, P et F restent derrière leur flag,
+non activés.
 
 ### Mode objectif ([ADR 0002](./adr/0002-mode-objectif-plan-sur-cible.md))
 
