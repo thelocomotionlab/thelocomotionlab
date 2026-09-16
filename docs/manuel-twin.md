@@ -278,7 +278,10 @@ vocabulaire des fenêtres (voir ci-dessous). Sans objectif, tout est **exactemen
   `target.tolerance_pct`), plus une bande de probabilité — donc jamais de « 50 % » ni « 80 % » à
   leur sujet ;
 - une cible plus rapide que la borne de sécurité basse ne donne **pas** de plan mais un écart chiffré
-  (objectif d'entraînement), et `sufficiency.domain_gate` reste prioritaire sur toute cible.
+  (objectif d'entraînement), et la garde du domaine (`sufficiency.domain_gate`) reste prioritaire sur
+  toute cible : elle lit la **demande du parcours** (Deq ÷ vitesse de référence de l'athlète, contre
+  10 h majorées de `domain_margin_pct`), un parcours sous le domaine est `hors_domaine` quel que soit
+  l'objectif, et un objectif court sur un parcours long est `hors_portee`, pas hors domaine.
 
 ## 8. Développement & tests
 
@@ -525,6 +528,25 @@ git add ../../docs/twin-registre-couverture.json && git commit -m "Phase 5 : reg
 Nice porte `calibration.stops`, `calibration.night`, `prediction.moving_hours`, `stops_hours`,
 `night_share_target`, `env_detail`. Un rapport `full` sous `stops_model=personal` dit que les
 arrêts sont ceux de l'athlète et lit `plan.fade_source_used`.
+
+**Banc de la Décision 2 (garde du domaine sur la demande du parcours ; DIAGNOSTIC §10.17), une
+relance** — le défaut `demand` rejoue le registre ; `ENV` lit l'enveloppe servie à 10 h au lieu
+de la médiane des vrais ultras, `PRED` l'ancienne lecture (temps prédit). Les deux comptes de la
+ligne « garde du domaine (sur l'oracle) » de `tableau.md` doivent valoir 0 sous le défaut :
+
+```bash
+M="_seed/manifest-val.json _seed/manifest-crasse.json _seed/manifest-lolo.json _seed/manifest-rapace.json"
+PYTHONPATH=src python -m tools.banc $M --out /tmp/d2 --no-diag \
+  --variant ENV:sufficiency.domain_speed=envelope \
+  --variant PRED:sufficiency.domain_gate=predicted
+grep -h "garde du domaine" /tmp/d2/tableau.md /tmp/d2/tableau-ENV.md /tmp/d2/tableau-PRED.md
+PYTHONPATH=src python -m tools.registre --compare ../../docs/archive/twin-v2/registre-avant.json > /tmp/d2/compare-D2.md
+git add ../../docs/twin-registre-couverture.json && git commit -m "Décision 2 : registre rejoué sous la garde du domaine sur la demande" && git push
+```
+
+Chaque entrée du registre porte `domain_demand` (durée attendue, vitesse de référence et son
+origine — `ultras`, `plancher` ou `enveloppe` —, seuil, `below`) à côté de l'oracle
+`below_domain` (temps réel sous 10 h) ; le JSON d'un `preview` porte `sufficiency.domain`.
 
 ## 9. Déploiement (rappel)
 

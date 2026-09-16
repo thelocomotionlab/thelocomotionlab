@@ -426,6 +426,15 @@ Calculé **avant paiement**, sur la donnée normalisée :
 > (`cv_missing_policy=cap_orange`) — jamais 🟢 sans indice de confiance, mais vendable en prévenant.
 > C'est la lecture qui réconcilie ce tableau avec §3 (« 1–2 ultras → souvent 🟠 »).
 
+> **Domaine de calibration** (Décision 2, DIAGNOSTIC §10.17). Le moteur est calibré sur les efforts
+> ≥ 10 h. La garde lit la **demande du parcours**, jamais la sortie du modèle : durée attendue =
+> Deq ÷ vitesse de référence de l'athlète (médiane de la vitesse ajustée écoulée de ses vrais
+> ultras, jamais sous le plancher de 5,5 km/h ; sans vrai ultra, le plancher), contre 10 h majorées
+> de 5 %. En dessous : 🔴, on ne vend pas, quel que soit le temps prédit ou l'objectif visé — un
+> seuil posé sur la prédiction bougeait avec le modèle. `sufficiency.domain_gate=demand` ;
+> `predicted` = ancienne lecture (le temps prédit), `off` désactive ; `domain_speed=envelope`
+> lit l'enveloppe servie à 10 h (variante du banc).
+
 ---
 
 ## 11. Ce qui reste à durcir (zones de fragilité connues)

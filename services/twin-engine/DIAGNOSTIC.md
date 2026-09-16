@@ -2303,3 +2303,95 @@ Ecotrail +6,9 (🟠, ✓80), Coursières 50k 🔴 +13,5 (hors domaine), GRF +20,
 Grand Trail du Lac +1,7, Coursières 2026 +8,0, Lut 36k 2021 🟠 +184,6 ; Lolo · Nice 50k
 −16,3, UTSM −18,5, MIUT 🔴 +0,5 (erreur de validation croisée, largeur) ; Rapace 6/6 🔴.
 Décision 1 close.
+
+### 10.17 Décision 2 (2026-09-16) — la garde du domaine lit la demande du parcours (flag `sufficiency.domain_gate`, défaut `demand`)
+
+**Constat (consigne de Valentin).** La garde du domaine de calibration (§9.9) lisait le temps
+PRÉDIT contre 10 h. Un seuil posé sur la sortie du modèle bouge avec le modèle : au banc de la
+Phase 3 (§10.10), la queue d'enveloppe a déplacé la prédiction de Crasse · Lut 36k 2021 (39,4
+km-éq, 3,53 h réels) de 9,76 à 10,06 h et la garde a lâché un cas vendu 🟠 à +185 % ; sous les
+nouveaux défauts (registre rejoué, §10.16) il est toujours vendu, +184,6 %. La garde doit lire
+la demande du parcours, jamais la sortie du modèle.
+
+**Règle servie.** Durée attendue = Deq ÷ vitesse de référence de l'athlète ; hors domaine
+(critère 🔴 « Domaine de calibration », on ne vend pas) si elle est sous `genuine_min_hours`
+majoré de `sufficiency.domain_margin_pct` (défaut 5 % : seuil 10,5 h). Trois lectures derrière
+`sufficiency.domain_gate` : `demand` (défaut), `predicted` (ancienne lecture, `on` accepté
+comme synonyme), `off`. La vitesse de référence, `sufficiency.domain_speed` : `observed`
+(défaut) = médiane de la vitesse ajustée ÉCOULÉE des vrais ultras de l'athlète — même filtre
+que la calibration, base écoulée parce que le seuil est un temps écoulé — jamais sous le
+plancher « vrai ultra » ; sans vrai ultra, le plancher lui-même (5,5 km/h). `envelope` =
+l'enveloppe servie à 10 h (queue comprise), repli sur `observed` sans enveloppe : c'est la
+consigne initiale (`Twin.envelope_vga_ms` à 10 h), gardée comme variante du banc. Une seule
+fonction, `calibration.domain_demand`, sert la suffisance et le mode objectif : `hors_domaine`
+se juge désormais sur le parcours, plus sur la cible — un objectif de 6 h sur un parcours de
+100 km-éq est `hors_portee`, pas hors domaine. Le registre consigne la lecture (`domain_demand`
+: durée attendue, vitesse de référence, origine, seuil) à côté de l'oracle `below_domain`
+(temps réel < 10 h), et `tools/registre` compte les deux lectures exigées par la consigne dans
+`tableau.md` : hors domaine vendus, dans le domaine refusés pour ce seul motif.
+
+**Pourquoi la lecture observée plutôt que l'enveloppe à 10 h (écart à la consigne).** Chez les
+athlètes qui posent le problème, l'enveloppe est précisément ce qui est faux : Crasse 2021 n'a
+aucun vrai ultra, son régime est vc_e, et la prédiction EST l'enveloppe à la pénalité de D+
+près. Lire l'enveloppe à 10 h, c'est relire la sortie du modèle sous un autre nom : pour Lut
+36k 2021 elle donne ≈ 3,9 km/h, ≈ 10,1 h attendues, et la garde laisserait passer le cas —
+seule la marge le rattraperait, c'est-à-dire une décision au bord. Le plancher, lui, est la
+définition du domaine : aucun athlète calibré ne court un ultra sous 5,5 km/h, donc 39,4 km-éq
+font au plus 7,2 h — pas un ultra, quel que soit le modèle. La médiane des vrais ultras est la
+lecture observée la plus stable ; le maximum refuserait Grand Trail du Lac 2025 (🟢, +1,7 %)
+à 10,3 h attendues.
+
+**Marge — lecture papier sur le registre rejoué** (34 entrées ; proxy : faute des vrais ultras
+de l'archive, la vitesse de référence est la médiane des courses ≥ 10 h de l'athlète déjà au
+registre avant la coupure, plancher 5,5 sans course ; le banc dira les vrais chiffres) :
+
+| lecture | cas hors domaine (temps réel < 10 h, n = 12) | cas dans le domaine (n = 22) |
+|---|---|---|
+| durées attendues | Crasse 3,7 · 7,2 · 14,9 (*) · 3,7 · 5,5 ; Lolo 4,9 · 8,0 · 8,8 ; Rapace 9,4 · 9,1 · 8,6 ; Val 6,9 | de 10,7 à 23,3 h |
+| les plus proches du seuil | 9,4 h (Rapace · Maratour 2024, 6,3 h réels) | 10,7 (Val · Saintélyon 2024, 🟠 +5,6), 10,9 (Crasse · Grand Trail du Lac 2025, 🟢 +1,7), 11,7 (Val · GRF), 11,9 (Lolo · Nice 50k) |
+
+(*) Crasse · Saintelyon 2021 : 82 km-éq en 8,69 h sans aucun vrai ultra → plancher → 14,9 h
+attendues ; la demande ne l'attrape pas (l'athlète est plus rapide que tout ce que son archive
+montre alors), il est refusé par « Efforts longs ». La garde n'est pas la seule ligne de
+défense. Marge 10 % (seuil 11 h, celle du plan initial) : refuserait Grand Trail du Lac 2025 et
+Saintélyon 2024, deux vendus justes — la consigne l'interdit. Marge 0 : passe, à 0,6 h du plus
+proche des deux côtés. Marge 5 % (10,5 h) : au milieu de l'intervalle [9,4 ; 10,7]. Défaut 5 %.
+
+**Ce qui change dans le code.** `config.py`/`twin.config.json` : `domain_gate=demand`,
+`domain_speed=observed`, `domain_margin_pct=5`. `calibration.py` : `DomainDemand`,
+`domain_demand(deq_km, twin, cfg)`. `sufficiency.py` : le critère porte la durée attendue, la
+vitesse de référence et son origine ; `Sufficiency.domain` exporté (`to_dict["domain"]`).
+`feasibility.py` : même lecture. `tools/backtest.py` : `domain_demand` par entrée.
+`tools/registre.py` : `garde_domaine`, dans `summarize` et `tableau_markdown`. Tests :
+`tests/test_decision2_domaine.py` (réplique E1 : archive sans ultra, enveloppe jouet qui
+prédit 10,7 h pour 39,4 km-éq — laissée passer par `predicted` et `on`, refusée par `demand`
+à 7,2 h attendues, `off` la désactive ; parcours dans le domaine intact et lecture consignée ;
+frontière 70 km-éq ≈ 10,4 h : refusé à 5 %, accepté à 0 % ; plancher, médiane, enveloppe et
+repli ; la lecture est identique sous la pile historique et la pile servie ; le registre
+compte fuites et clients perdus) ; la lecture historique reste épinglée sous `predicted` dans
+`test_sufficiency`, `test_feasibility` et `test_pipeline` jugent le parcours et non plus la
+cible. Suite : 344 passés, 1 sauté (golden réel).
+
+**Attendu au banc (chez Valentin) — depuis la lecture papier.** Un seul changement de verdict
+sur le registre rejoué : Crasse · Lut 36k 2021 🟠 → 🔴 (le cas E1) ; 11 des 12 cas hors domaine
+refusés par la demande, le 12e (Saintelyon 2021) refusé par ailleurs ; aucun cas dans le
+domaine refusé pour ce seul motif. Les prédictions ne bougent pas (la garde ne touche pas au
+modèle), donc le compare se déduit du registre rejoué en retirant ce cas des vendus :
+
+| groupe (vendus) | n | MAE % | biais % | couv 50 / 80 | Winkler rel 50 / 80 | largeur rel méd 50 / 80 |
+|---|---|---|---|---|---|---|
+| frais (Lolo), avant → D2 | 2 → 2 | 17,2 → 17,4 | −17,2 → −17,4 | 0 / 0 → 0 / 0 | 0,611 / 1,125 → 0,617 / 1,143 | 8,4 / 16,2 → 8,4 / 16,1 |
+| dev · Crasse, avant → D2 | 7 → 7 | 6,8 → 5,9 | +2,6 → +3,1 | 57 / 71 → 29 / 100 | 0,191 / 0,296 → 0,174 / 0,265 | 7,1 / 13,4 → 7,6 / 20,7 |
+| tous, avant → D2 | 13 → 14 | 10,3 → 8,1 | +2,7 → +1,7 | 38 / 54 → 36 / 79 | 0,342 / 0,570 → 0,275 / 0,485 | 8,1 / 15,5 → 8,3 / 18,8 |
+| tous, D1 (rejoué) → D2 | 15 → 14 | 19,8 → 8,1 | +13,9 → +1,7 | 33 / 73 → 36 / 79 | 0,712 / 1,402 → 0,275 / 0,485 | 8,3 / 20,7 → 8,3 / 18,8 |
+
+Lecture : les 13 vendus de l'« avant » restent vendus, Val · Chianti 2025 s'y ajoute (+0,6 %),
+et la pile servie fait 8,1 % de MAE et 0,485 de Winkler 80 sur les 14 — c'est le chiffre de
+§10.10 sur les 13 appariés, désormais sans l'artefact. La ligne « garde du domaine (sur
+l'oracle) » de `tableau.md` doit lire 0 · 0 ; sur le registre rejoué avant cette décision elle
+lit 1 · 0 (Lut 36k 2021, vendu hors domaine). La variante `ENV` (enveloppe à 10 h) est attendue
+avec Lut 36k 2021 de nouveau vendu ; `PRED` reproduit le registre rejoué à l'identique.
+
+**Décision.** `demand` en défaut, lecture observée, marge 5 % ; `predicted` et `envelope`
+restent des variantes pour le banc et le rollback. Officiel après la relance du banc de base et
+du `--compare` chez Valentin.

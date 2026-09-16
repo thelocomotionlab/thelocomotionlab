@@ -306,6 +306,22 @@ contre `registre-avant.json` est identique, au chiffre près, à l'attendu RB1 c
 (vendus 13 → 15 : Val · Chianti 🔴 → 🟠 à +0,6 %, Crasse · Lut 36k 2021 🔴 → 🟠 à +185 %,
 l'artefact que la Décision 2 corrige). **Décision 1 close.**
 
+**Décision 2 — livrée (2026-09-16), DIAGNOSTIC §10.17.** La garde du domaine lit la demande du
+parcours : durée attendue = Deq ÷ vitesse de référence de l'athlète, hors domaine sous 10 h
+majorées de 5 % (`sufficiency.domain_gate=demand`, défaut ; `predicted` = ancienne lecture, `on`
+synonyme ; `off`). Vitesse de référence `sufficiency.domain_speed=observed` : médiane de la
+vitesse ajustée écoulée des vrais ultras, jamais sous le plancher de 5,5 km/h, le plancher sans
+vrai ultra ; `envelope` (l'enveloppe à 10 h de la consigne) gardée en variante du banc. Une seule
+lecture (`calibration.domain_demand`) pour la suffisance et le mode objectif ; le registre
+consigne la lecture à côté de l'oracle, `tools/registre` compte les deux lectures exigées
+(hors domaine vendus, dans le domaine refusés pour ce seul motif). Test dédié sur la réplique du
+cas E1 ; suite 344 passés, 1 sauté. Valentin n'avait pas tranché entre l'enveloppe à 10 h et la lecture
+observée quand la session a repris : livrée avec la lecture observée en défaut (§10.17 dit
+pourquoi l'enveloppe relit le modèle) et l'enveloppe en variante, pour que le banc tranche.
+Reste chez Valentin : la relance du banc (feuille « Banc de la Décision 2 » du manuel) ;
+attendu : un seul changement de verdict, Crasse · Lut 36k 2021 🟠 → 🔴, vendus 15 → 14, MAE
+19,8 → 8,1 %, Winkler 80 1,402 → 0,485, ligne « garde du domaine » à 0 · 0.
+
 ## Choix faits à la place de Valentin (Phase 0)
 
 1. **Définition d'un arrêt.** Deux vues, toutes deux imprimées : les secondes « sans
@@ -467,13 +483,26 @@ l'artefact que la Décision 2 corrige). **Décision 1 close.**
     teste isolé de la pile, sinon le prior fausse la récupération exacte d'un athlète de
     Riegel et le lien log fausse celle d'un plan linéaire.
 
-## Questions ouvertes
+## Choix faits à la place de Valentin (Décision 2)
 
-- **Garde du domaine de calibration.** Elle lit le temps PRÉDIT contre 10 h : un cas hors
-  domaine (36 km, 3,5 h réels) prédit 9,76 h est refusé, prédit 10,06 h il est vendu à +185 %
-  d'erreur (Phase 3, E1). La garde doit lire la demande du parcours (Deq, durée attendue à
-  l'allure de l'athlète) et non la sortie du modèle ; à traiter avec le chantier « trails
-  courts » ou dès que la Phase 4 apporte un signal de course.
+49. **Vitesse de référence observée plutôt que l'enveloppe à 10 h de la consigne** : chez les
+    athlètes sans vrai ultra, l'enveloppe est la prédiction elle-même, donc une lecture du
+    modèle ; la médiane des vrais ultras (plancher sans ultra) est la lecture qui ne bouge pas
+    avec la calibration. L'enveloppe reste une variante (`domain_speed=envelope`) pour que le
+    banc compare les deux.
+50. **Marge 5 % et non 10 % (annoncée dans le plan)** : la lecture papier du registre montre que
+    10 % refuserait deux vendus justes (Grand Trail du Lac 2025 🟢, Saintélyon 2024) ; 5 % tombe
+    au milieu de l'intervalle entre le cas hors domaine le plus long (9,4 h) et le cas dans le
+    domaine le plus court (10,7 h).
+51. **Une seule lecture pour la suffisance et le mode objectif** : `hors_domaine` se juge sur
+    le parcours ; un objectif court sur un parcours long est `hors_portee`. Les tests du mode
+    objectif jugent désormais des parcours dans le domaine.
+52. **Le registre garde l'oracle et ajoute la lecture** : `below_domain` (temps réel) reste la
+    vérité, `domain_demand` dit ce que la garde a lu ; `tools/registre` compte fuites et
+    clients perdus dans `tableau.md`.
+53. **`on` reste accepté comme synonyme de `predicted`** : aucune config existante ne casse.
+
+## Questions ouvertes
 
 - **Golden réel et archive fraîche.** Les références §12 (2026-07-02, 449 activités) ne
   correspondent plus à l'archive fraîche (55 mois, 891 activités uniques : VC 9,72 km/h,
