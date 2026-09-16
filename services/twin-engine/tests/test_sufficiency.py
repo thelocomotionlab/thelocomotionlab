@@ -46,12 +46,12 @@ def _twin(summaries):
                 durability_pct=20.0, record=rec, summaries=summaries)
 
 
-def _assess(summaries, cfg=None):
+def _assess(summaries, cfg=None, analysis_date=None):
     cfg = cfg or CFG
     twin = _twin(summaries)
     cal = build_calibration(twin, cfg)
     pred = predict_finish(200.0, 53.0, twin, cal, cfg)
-    return assess_sufficiency(twin, cal, pred, cfg), pred
+    return assess_sufficiency(twin, cal, pred, cfg, analysis_date=analysis_date), pred
 
 
 def test_green_when_everything_strong():
@@ -59,7 +59,9 @@ def test_green_when_everything_strong():
     summaries = [_run(int(i * 210 / 130), 3600) for i in range(130)]
     summaries += [_ultra(d, h, dpk) for d, (h, dpk) in
                   zip((20, 80, 140, 200), [(12, 50), (20, 55), (16, 45), (24, 53)])]
-    suf, pred = _assess(summaries)
+    # analysé le lendemain de la dernière sortie : la fraîcheur fait partie de la zone d'action
+    # du 🟢 (Décision 3), sans date d'analyse le verdict serait plafonné à 🟠
+    suf, pred = _assess(summaries, analysis_date=D0 + timedelta(days=211))
     assert pred is not None and pred.cross_validation is not None
     assert suf.verdict == GREEN and suf.sellable
 
@@ -120,7 +122,9 @@ def test_cv_missing_caps_verdict_at_orange():
 def test_cv_missing_policy_ignore_restores_old_behaviour():
     from dataclasses import replace
 
-    cfg = replace(CFG, sufficiency=replace(CFG.sufficiency, cv_missing_policy="ignore"))
+    # ancien comportement complet : ni plafond CV, ni zone d'action du 🟢 (Décision 3)
+    cfg = replace(CFG, sufficiency=replace(CFG.sufficiency, cv_missing_policy="ignore",
+                                            green_policy="criteria"))
     twin = _twin(_all_green_but_no_cv())
     cal = build_calibration(twin, cfg)
     pred = predict_finish(200.0, 53.0, twin, cal, cfg)
@@ -240,7 +244,7 @@ def test_domain_gate_caps_below_domain_targets():
         dom = [c for c in suf.criteria if c.name == "Domaine de calibration"]
         assert dom and dom[0].level == RED
         assert dom[0].value == round(pred_short.finish_hours, 1)   # c'est le temps prédit qui est lu
-        assert suf.verdict == RED and suf.sellable is False and suf.domain is None
+        assert suf.verdict == RED and suf.sellable is False and suf.domain is not None
 
     pred_ultra = predict_finish(200.0, 53.0, twin, cal, cfg_pred)    # ≈ 30 h : dans le domaine
     suf_u = assess_sufficiency(twin, cal, pred_ultra, cfg_pred)

@@ -46,7 +46,9 @@ class Sufficiency:
     sellable: bool
     criteria: list[Criterion]
     reasons: list[str] = field(default_factory=list)
-    domain: DomainDemand | None = None      # lecture de la demande du parcours (gate ``demand``)
+    # lecture de la demande du parcours : toujours lue quand une prédiction existe (le 🟢
+    # conditionnel et le registre s'en servent), bloquante sous ``domain_gate=demand`` seulement
+    domain: DomainDemand | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -82,6 +84,26 @@ def _higher_is_better(value, green, orange) -> str:
 
 def _lower_is_better(value, green, orange) -> str:
     return GREEN if value <= green else ORANGE if value <= orange else RED
+
+
+def _green_gaps(domain: DomainDemand | None, calibration: UltraCalibration,
+                criteria: list[Criterion], s) -> list[str]:
+    """Ce qui manque à la zone d'action du 🟢 (liste vide = 🟢 mérité)."""
+    gaps: list[str] = []
+    if domain is None or domain.below:
+        gaps.append("parcours hors du domaine de calibration")
+    n_hr = sum(1 for g in calibration.genuine if g.avg_hr is not None)
+    if calibration.n_genuine < s.green_min_genuine or n_hr < s.green_min_genuine_hr:
+        gaps.append(
+            f"{calibration.n_genuine} vrai(s) ultra(s) dont {n_hr} avec FC, il en faut "
+            f"{s.green_min_genuine} dont {s.green_min_genuine_hr} avec FC"
+        )
+    fresh = next((c for c in criteria if c.name == "Fraîcheur des données"), None)
+    if fresh is None:
+        gaps.append("fraîcheur des données non évaluée")
+    elif fresh.level != GREEN:
+        gaps.append("données pas assez fraîches")
+    return gaps
 
 
 def assess_sufficiency(
@@ -139,11 +161,10 @@ def assess_sufficiency(
     #     attendue à la vitesse de référence de l'athlète, calibration.domain_demand) : la
     #     garde ne dépend d'aucune sortie du modèle. ``predicted`` (ancien ``on``) lit le temps
     #     prédit contre le seuil. Rollback : domain_gate=off.
-    domain: DomainDemand | None = None
+    domain = None if prediction is None else domain_demand(prediction.deq_km, twin, cfg)
     gate = "predicted" if s.domain_gate == "on" else s.domain_gate
     min_hours = cfg.calibration.genuine_min_hours
-    if gate == "demand" and prediction is not None:
-        domain = domain_demand(prediction.deq_km, twin, cfg)
+    if gate == "demand" and domain is not None:
         if domain.below:
             criteria.append(
                 Criterion(
@@ -303,6 +324,18 @@ def assess_sufficiency(
                 "Verdict plafonné à 🟠 : sans validation croisée possible (moins de 3 vrais "
                 "ultras), la fiabilité de la prédiction ne peut pas être établie sur tes courses."
             )
+        # 🟢 conditionnel (Décision 3, §10.18) : le 🟢 est l'engagement de confiance, servi dans
+        # la seule zone d'action mesurée au banc — parcours dans le domaine, assez de vrais
+        # ultras dont un avec FC, données fraîches. Un plafond, comme cap_orange : les critères
+        # gardent leur sens et leur décompte au registre.
+        if verdict == GREEN and s.green_policy == "zone_action":
+            gaps = _green_gaps(domain, calibration, criteria, s)
+            if gaps:
+                verdict = ORANGE
+                reasons.append(
+                    "Verdict plafonné à 🟠, hors de la zone d'action où la confiance est mesurée : "
+                    + " ; ".join(gaps) + "."
+                )
 
     if verdict == GREEN:
         reasons.append("Données suffisantes pour un rapport complet.")

@@ -81,7 +81,8 @@ def test_replique_e1_refusee_par_la_demande_et_non_par_la_prediction():
 
     for gate in ("predicted", "on"):
         suf_pred = assess_sufficiency(twin, cal, pred, _cfg(domain_gate=gate))
-        assert not _domain_criteria(suf_pred) and suf_pred.domain is None
+        assert not _domain_criteria(suf_pred)
+        assert suf_pred.domain is not None and suf_pred.domain.below      # lue, pas bloquante
 
     suf = assess_sufficiency(twin, cal, pred, CFG)                      # défaut servi : demand
     dom = _domain_criteria(suf)
@@ -97,7 +98,7 @@ def test_replique_e1_refusee_par_la_demande_et_non_par_la_prediction():
     assert any("Parcours plus court que le domaine" in r for r in suf.reasons)
 
     suf_off = assess_sufficiency(twin, cal, pred, _cfg(domain_gate="off"))
-    assert not _domain_criteria(suf_off) and suf_off.domain is None
+    assert not _domain_criteria(suf_off) and suf_off.domain is not None
 
 
 # --------------------------------------------------------------------------- #

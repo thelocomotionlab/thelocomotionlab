@@ -529,6 +529,16 @@ class SufficiencyParams:
     # 5 % (10,5 h) passe entre le cas hors domaine le plus long du registre (9,4 h attendues)
     # et le cas dans le domaine le plus court (10,7 h) ; 10 % refuserait deux vendus justes.
     domain_margin_pct: float = 5.0
+    # --- 🟢 conditionnel (Décision 3, DIAGNOSTIC §10.18) --------------------------------------
+    # Le 🟢 est l'engagement de confiance : il n'est servi que dans la zone d'action mesurée au
+    # banc — parcours dans le domaine, au moins green_min_genuine vrais ultras dont
+    # green_min_genuine_hr avec fréquence cardiaque (durabilité, coût de pente et efficacité-
+    # durée en dépendent), fraîcheur des données 🟢. En dessous, 🟠 au mieux : on vend, on
+    # prévient. Un plafond dans l'esprit de §5.y, aucun critère recâblé. ``criteria`` = ancien
+    # comportement (le pire des critères décide seul).
+    green_policy: str = "zone_action"                    # {zone_action, criteria}
+    green_min_genuine: int = 3
+    green_min_genuine_hr: int = 1
     # --- fraîcheur des données (revue C8) -----------------------------------------------------
     # Jours entre la DERNIÈRE activité datée et la date d'analyse. Aucun critère ne portait le
     # garde-fou « forme du jour inconnue » (twin-theory §2.7/§9) : une archive s'arrêtant il y a

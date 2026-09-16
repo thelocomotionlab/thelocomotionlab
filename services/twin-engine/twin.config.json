@@ -154,7 +154,10 @@
     "freshness_days_orange": 90.0,
     "domain_gate": "demand",
     "domain_speed": "observed",
-    "domain_margin_pct": 5.0
+    "domain_margin_pct": 5.0,
+    "green_policy": "zone_action",
+    "green_min_genuine": 3,
+    "green_min_genuine_hr": 1
   },
 
   "target": {
