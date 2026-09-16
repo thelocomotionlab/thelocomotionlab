@@ -248,6 +248,14 @@ l'« avant » ; treize vendus appariés, cas frais, zone d'action, Val 2024, qua
   sommeil ne voit pas ; attend un signal de course (Phase 4).
 - Toutes les mesures (α_eff, α_queue, plus long arrêt) restent au registre et au JSON.
 
+## Phase 4 — abandonnée (décision de Valentin, 2026-09-16)
+
+Les données publiques de la course demandaient un export CSV manuel par course ; Valentin
+ne veut pas de ce coût. Aucun code écrit. Ce qui en dépendait reste ouvert : le signal de
+course pour le domaine (F, §10.13), le fade appris du terrain, la garde du domaine sur la
+demande du parcours, la jauge décisionnelle par la cohorte. On passe à la Phase 5, le coût
+de pente personnel (C1).
+
 ## Choix faits à la place de Valentin (Phase 0)
 
 1. **Définition d'un arrêt.** Deux vues, toutes deux imprimées : les secondes « sans

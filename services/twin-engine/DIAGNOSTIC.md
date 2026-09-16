@@ -2117,3 +2117,7 @@ tous les leviers : ce qui les fera bouger n'est plus dans l'archive de l'athlèt
 d'abord) — signal de course pour le domaine, passages réels pour le fade par athlète,
 cohorte pour la jauge décisionnelle ; la garde du domaine à reprendre sur la demande du
 parcours ; le golden réel §12 à recapturer sur l'archive fraîche à la clôture du chantier.
+
+**Phase 4 abandonnée (2026-09-16, décision de Valentin : pas d'export CSV par course).** Le
+signal de course, le fade appris du terrain et la garde du domaine sur la demande du parcours
+restent au backlog ; la suite est la Phase 5, le coût de pente personnel (C1).
