@@ -199,8 +199,8 @@ def main(argv: list[str] | None = None) -> int:
               f"{result.preview.n_excluded_until} activité(s) écartée(s).", file=sys.stderr)
     _print_summary(result.preview)
     if result.pdf_path:
-        print(f"\n  Rapport PDF : {result.pdf_path}  (référence {result.report_ref})",
-              file=sys.stderr)
+        print(f"\n  Référence {result.report_ref}", file=sys.stderr)
+        print(f"  {'rapport.pdf':<12} {result.pdf_path}", file=sys.stderr)
     for nom, chemin in sorted(result.livrables.items()):
         print(f"  {nom:<12} {chemin}", file=sys.stderr)
     if "annexe.json" in result.livrables:

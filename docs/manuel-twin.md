@@ -89,7 +89,7 @@ Le `preview` imprime un JSON (verdict, prédiction, jumeau, parcours) + un résu
 
 | fichier | ce que c'est |
 |---|---|
-| `tex/main.pdf` | le rapport, six pages |
+| `rapport.pdf` | le rapport, six pages (sa source reste dans `tex/`) |
 | `fiche.pdf` | la fiche d'assistance détachable (au plus tôt / central / au plus tard) |
 | `bracelet.pdf` | la bande à découper (heures centrales) |
 | `plan.ics` | le calendrier : un événement par point d'assistance |

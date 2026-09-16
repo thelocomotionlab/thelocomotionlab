@@ -10,6 +10,7 @@ brutes.
 
 from __future__ import annotations
 
+import shutil
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from pathlib import Path
@@ -289,7 +290,11 @@ def analyze_full(
             cfg=cfg, athlete=athlete, report_ref=report_ref, report_version=report_version,
             report_date=report_date, target=target,
         )
-        pdf_path = build_pdf(context, fig_dir, out_dir / "tex")
+        # le rapport se pose À CÔTÉ de ce qui l'accompagne (fiche, bracelet, calendrier,
+        # trace, annexe) ; le dossier tex/ ne garde que la source et les journaux
+        pdf_path = shutil.copy(build_pdf(context, fig_dir, out_dir / "tex"),
+                               out_dir / "rapport.pdf")
+        pdf_path = Path(pdf_path)
         # ce qui accompagne le rapport : fiche d'assistance, bracelet, calendrier, GPX, annexe
         livrables = write_livrables(
             context=context, course=course, twin=preview.twin, calibration=preview.calibration,
