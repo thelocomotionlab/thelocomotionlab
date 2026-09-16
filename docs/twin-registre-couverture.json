@@ -77,6 +77,15 @@
         "in_safety": true
       },
       "below_domain": false,
+      "domain_demand": {
+        "deq_km": 83.8,
+        "v_ref_kmh": 5.5,
+        "origin": "plancher",
+        "n_ultras": 0,
+        "expected_hours": 15.23,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 10.464444444444444,
@@ -237,6 +246,15 @@
         "in_safety": false
       },
       "below_domain": true,
+      "domain_demand": {
+        "deq_km": 55.4,
+        "v_ref_kmh": 8.077,
+        "origin": "ultras",
+        "n_ultras": 1,
+        "expected_hours": 6.86,
+        "threshold_hours": 10.5,
+        "below": true
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 6.045555555555556,
@@ -374,6 +392,15 @@
         "in_safety": false
       },
       "below_domain": false,
+      "domain_demand": {
+        "deq_km": 94.0,
+        "v_ref_kmh": 7.022,
+        "origin": "ultras",
+        "n_ultras": 2,
+        "expected_hours": 13.38,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 11.323888888888888,
@@ -539,6 +566,15 @@
         "in_safety": true
       },
       "below_domain": false,
+      "domain_demand": {
+        "deq_km": 87.6,
+        "v_ref_kmh": 8.077,
+        "origin": "ultras",
+        "n_ultras": 3,
+        "expected_hours": 10.85,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 11.065555555555555,
@@ -697,6 +733,15 @@
         "in_safety": true
       },
       "below_domain": false,
+      "domain_demand": {
+        "deq_km": 136.5,
+        "v_ref_kmh": 7.967,
+        "origin": "ultras",
+        "n_ultras": 5,
+        "expected_hours": 17.13,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 20.475,
@@ -883,6 +928,15 @@
         "in_safety": true
       },
       "below_domain": false,
+      "domain_demand": {
+        "deq_km": 139.5,
+        "v_ref_kmh": 7.576,
+        "origin": "ultras",
+        "n_ultras": 6,
+        "expected_hours": 18.42,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 21.252222222222223,
@@ -1109,6 +1163,15 @@
         "in_safety": true
       },
       "below_domain": true,
+      "domain_demand": {
+        "deq_km": 45.2,
+        "v_ref_kmh": 8.162,
+        "origin": "ultras",
+        "n_ultras": 5,
+        "expected_hours": 5.53,
+        "threshold_hours": 10.5,
+        "below": true
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 4.927777777777778,
@@ -1232,6 +1295,15 @@
         "in_safety": true
       },
       "below_domain": false,
+      "domain_demand": {
+        "deq_km": 127.0,
+        "v_ref_kmh": 8.802,
+        "origin": "ultras",
+        "n_ultras": 1,
+        "expected_hours": 14.43,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 15.386944444444444,
@@ -1411,6 +1483,15 @@
         "in_safety": true
       },
       "below_domain": false,
+      "domain_demand": {
+        "deq_km": 118.1,
+        "v_ref_kmh": 8.162,
+        "origin": "ultras",
+        "n_ultras": 7,
+        "expected_hours": 14.47,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 13.290833333333333,
@@ -1583,6 +1664,15 @@
         "in_safety": true
       },
       "below_domain": false,
+      "domain_demand": {
+        "deq_km": 90.0,
+        "v_ref_kmh": 8.162,
+        "origin": "ultras",
+        "n_ultras": 5,
+        "expected_hours": 11.03,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 10.380555555555556,
@@ -1736,6 +1826,15 @@
         "in_safety": false
       },
       "below_domain": true,
+      "domain_demand": {
+        "deq_km": 20.4,
+        "v_ref_kmh": 5.5,
+        "origin": "plancher",
+        "n_ultras": 0,
+        "expected_hours": 3.72,
+        "threshold_hours": 10.5,
+        "below": true
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 1.5280555555555555,
@@ -1784,8 +1883,10 @@
         "slope_kappa": null
       },
       "model": {
-        "verdict": "🟠",
-        "blocking": [],
+        "verdict": "🔴",
+        "blocking": [
+          "Domaine de calibration"
+        ],
         "regime": "vc_e",
         "link": "log",
         "n_genuine": 0,
@@ -1845,6 +1946,15 @@
         "in_safety": false
       },
       "below_domain": true,
+      "domain_demand": {
+        "deq_km": 39.4,
+        "v_ref_kmh": 5.5,
+        "origin": "plancher",
+        "n_ultras": 0,
+        "expected_hours": 7.16,
+        "threshold_hours": 10.5,
+        "below": true
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 3.533888888888889,
@@ -1968,6 +2078,15 @@
         "in_safety": true
       },
       "below_domain": false,
+      "domain_demand": {
+        "deq_km": 152.4,
+        "v_ref_kmh": 8.54,
+        "origin": "ultras",
+        "n_ultras": 2,
+        "expected_hours": 17.84,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 19.75861111111111,
@@ -2185,6 +2304,15 @@
         "in_safety": true
       },
       "below_domain": false,
+      "domain_demand": {
+        "deq_km": 191.5,
+        "v_ref_kmh": 8.22,
+        "origin": "ultras",
+        "n_ultras": 4,
+        "expected_hours": 23.29,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 26.16638888888889,
@@ -2401,6 +2529,15 @@
         "in_safety": false
       },
       "below_domain": true,
+      "domain_demand": {
+        "deq_km": 82.1,
+        "v_ref_kmh": 5.5,
+        "origin": "plancher",
+        "n_ultras": 0,
+        "expected_hours": 14.93,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 8.693333333333333,
@@ -2554,6 +2691,15 @@
         "in_safety": false
       },
       "below_domain": false,
+      "domain_demand": {
+        "deq_km": 88.3,
+        "v_ref_kmh": 5.5,
+        "origin": "plancher",
+        "n_ultras": 0,
+        "expected_hours": 16.05,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 10.341666666666667,
@@ -2698,6 +2844,15 @@
         "in_safety": true
       },
       "below_domain": false,
+      "domain_demand": {
+        "deq_km": 116.1,
+        "v_ref_kmh": 8.278,
+        "origin": "ultras",
+        "n_ultras": 3,
+        "expected_hours": 14.02,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 14.199444444444444,
@@ -2872,6 +3027,15 @@
         "in_safety": false
       },
       "below_domain": true,
+      "domain_demand": {
+        "deq_km": 31.0,
+        "v_ref_kmh": 8.278,
+        "origin": "ultras",
+        "n_ultras": 3,
+        "expected_hours": 3.74,
+        "threshold_hours": 10.5,
+        "below": true
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 2.5413888888888887,
@@ -2990,6 +3154,15 @@
         "in_safety": true
       },
       "below_domain": true,
+      "domain_demand": {
+        "deq_km": 35.5,
+        "v_ref_kmh": 7.487,
+        "origin": "ultras",
+        "n_ultras": 1,
+        "expected_hours": 4.74,
+        "threshold_hours": 10.5,
+        "below": true
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 3.931388888888889,
@@ -3116,6 +3289,15 @@
         "in_safety": true
       },
       "below_domain": false,
+      "domain_demand": {
+        "deq_km": 143.8,
+        "v_ref_kmh": 6.374,
+        "origin": "ultras",
+        "n_ultras": 5,
+        "expected_hours": 22.56,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 25.79722222222222,
@@ -3288,6 +3470,15 @@
         "in_safety": false
       },
       "below_domain": false,
+      "domain_demand": {
+        "deq_km": 76.9,
+        "v_ref_kmh": 6.808,
+        "origin": "ultras",
+        "n_ultras": 2,
+        "expected_hours": 11.29,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 12.4675,
@@ -3416,6 +3607,7 @@
       },
       "prediction": null,
       "below_domain": false,
+      "domain_demand": null,
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 11.454444444444444,
@@ -3569,6 +3761,15 @@
         "in_safety": false
       },
       "below_domain": true,
+      "domain_demand": {
+        "deq_km": 51.7,
+        "v_ref_kmh": 6.808,
+        "origin": "ultras",
+        "n_ultras": 2,
+        "expected_hours": 7.59,
+        "threshold_hours": 10.5,
+        "below": true
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 6.833055555555555,
@@ -3701,6 +3902,15 @@
         "in_safety": true
       },
       "below_domain": true,
+      "domain_demand": {
+        "deq_km": 54.4,
+        "v_ref_kmh": 6.374,
+        "origin": "ultras",
+        "n_ultras": 3,
+        "expected_hours": 8.53,
+        "threshold_hours": 10.5,
+        "below": true
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 7.189166666666667,
@@ -3831,6 +4041,15 @@
         "in_safety": false
       },
       "below_domain": false,
+      "domain_demand": {
+        "deq_km": 123.0,
+        "v_ref_kmh": 7.487,
+        "origin": "ultras",
+        "n_ultras": 1,
+        "expected_hours": 16.42,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 21.31111111111111,
@@ -3944,6 +4163,7 @@
       "model": {
         "verdict": "🔴",
         "blocking": [
+          "Domaine de calibration",
           "Efforts longs proches de la cible",
           "Qualité (FC / altitude / distance)"
         ],
@@ -4006,6 +4226,15 @@
         "in_safety": false
       },
       "below_domain": true,
+      "domain_demand": {
+        "deq_km": 51.7,
+        "v_ref_kmh": 5.5,
+        "origin": "plancher",
+        "n_ultras": 0,
+        "expected_hours": 9.4,
+        "threshold_hours": 10.5,
+        "below": true
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 6.375555555555556,
@@ -4139,6 +4368,15 @@
         "in_safety": false
       },
       "below_domain": false,
+      "domain_demand": {
+        "deq_km": 67.4,
+        "v_ref_kmh": 5.5,
+        "origin": "plancher",
+        "n_ultras": 0,
+        "expected_hours": 12.26,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "quarantine": "trace FIT→GPX à l'altitude aplatie (D+/km 6,3 lu vs ~26 réel sur cette course) — parcours inutilisable",
       "passages": {
         "radius_m": 150.0,
@@ -4294,6 +4532,15 @@
         "in_safety": false
       },
       "below_domain": true,
+      "domain_demand": {
+        "deq_km": 56.2,
+        "v_ref_kmh": 6.557,
+        "origin": "ultras",
+        "n_ultras": 1,
+        "expected_hours": 8.57,
+        "threshold_hours": 10.5,
+        "below": true
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 6.008055555555556,
@@ -4433,6 +4680,15 @@
         "in_safety": false
       },
       "below_domain": false,
+      "domain_demand": {
+        "deq_km": 116.9,
+        "v_ref_kmh": 6.557,
+        "origin": "ultras",
+        "n_ultras": 1,
+        "expected_hours": 17.82,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 15.007222222222222,
@@ -4607,6 +4863,15 @@
         "in_safety": false
       },
       "below_domain": false,
+      "domain_demand": {
+        "deq_km": 95.6,
+        "v_ref_kmh": 7.227,
+        "origin": "ultras",
+        "n_ultras": 2,
+        "expected_hours": 13.23,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 11.688888888888888,
@@ -4769,6 +5034,15 @@
         "in_safety": true
       },
       "below_domain": true,
+      "domain_demand": {
+        "deq_km": 67.0,
+        "v_ref_kmh": 7.227,
+        "origin": "ultras",
+        "n_ultras": 4,
+        "expected_hours": 9.27,
+        "threshold_hours": 10.5,
+        "below": true
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 7.493333333333333,
@@ -4906,6 +5180,15 @@
         "in_safety": true
       },
       "below_domain": false,
+      "domain_demand": {
+        "deq_km": 140.5,
+        "v_ref_kmh": 8.22,
+        "origin": "ultras",
+        "n_ultras": 8,
+        "expected_hours": 17.09,
+        "threshold_hours": 10.5,
+        "below": false
+      },
       "passages": {
         "radius_m": 150.0,
         "watch_elapsed_h": 16.067222222222224,
