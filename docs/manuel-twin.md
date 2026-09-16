@@ -170,8 +170,17 @@ La **trace GPX du parcours** est fournie à part (`--course`) et n'est pas commi
 
 ## 7. Lire la fourchette : les deux bandes
 
-Depuis juillet 2026, les intervalles sont **conformes normalisés** par défaut (calibrés sur les
-erreurs de validation croisée de l'athlète) et le rapport affiche **deux bandes, deux usages** :
+Depuis le 2026-09-16 (Décision 1 du chantier v2, DIAGNOSTIC §10.16), les intervalles servis
+par défaut sont **studentisés** en **lien log** : la régression porte sur le logarithme de la
+vitesse avec un prior sur la pente en durée lu sur l'efficacité-durée de l'athlète, la
+largeur des bandes est un facteur d'échelle κ sur les erreurs de validation croisée, lu sur
+une loi de Student à ν degrés de liberté (n_eff − 3), et les bandes sont **asymétriques en
+heures** (la borne haute plus loin du central que la borne basse : T·exp(±h)). Le JSON dit
+`prediction.scale_kappa`, `scale_dof`, `sd_rel`, `leverage` ; le rapport nomme la méthode. Le
+comportement de juillet 2026 (lien linéaire, pente libre, bandes **conformes normalisées**) est
+le rollback nommé : `TWIN_CONFIG_PATH=examples/twin.config.historique.json` (ou cinq `--set`) ;
+la règle de retour est pré-enregistrée dans `docs/twin-registre-couverture.md`. Dans les deux
+cas le rapport affiche **deux bandes, deux usages** :
 
 - **Fourchette de course (25–75 %)** — la bande de PILOTAGE : c'est dans cette fenêtre qu'on
   construit le pacing et qu'on juge « en avance / en retard » pendant la course.
@@ -181,10 +190,9 @@ erreurs de validation croisée de l'athlète) et le rapport affiche **deux bande
 Si la dispersion est grande (> 0,35), le rapport ajoute une table de scénarios
 rapide / central / prudent. Ne jamais présenter la borne de sécurité comme un objectif.
 
-Trois leviers de la Phase 1 du chantier v2 (DIAGNOSTIC §10.1–10.4) sont livrés derrière des
-flags, **défauts inchangés** — le banc n'a touché aucun cas frais du registre, donc aucun
-défaut n'a basculé — et servis pour le **rapport de référence** par
-`examples/twin.config.reference.json` (§8) : en lien log (`calibration.link=log`) les deux
+Trois leviers de la Phase 1 du chantier v2 (DIAGNOSTIC §10.1–10.4) ont été livrés derrière des
+flags et servis d'abord pour le seul **rapport de référence** (`examples/twin.config.reference.json`,
+§8) ; ils sont les défauts depuis la Décision 1 : en lien log (`calibration.link=log`) les deux
 bandes gardent leurs couvertures nominales mais deviennent **asymétriques en heures**, la
 borne haute plus loin du central que la borne basse ; le prior sur la pente en durée
 (`calibration.duration_term=prior_shrunk`) tire la pente vers −α, l'exposant de la courbe
@@ -223,10 +231,9 @@ soit le flag (JSON `twin.alpha_eff`, `twin.alpha_tail` ; registre `model.alpha_e
 `alpha_tail`, `duration_prior_origin`, `envelope_tail_alpha`, `level_n_anchored`,
 `level_shift_mean_pct`, `genuine_floor`) ; `tools/diag_archive` et `tools/diag_ultras`
 impriment le plancher servi et le plus long arrêt de chaque effort long. Le banc a tranché
-(DIAGNOSTIC §10.14) : aucun défaut basculé ; B1 (`duration_prior_source=efficiency`,
-`envelope_tail=efficiency`) est activé pour le rapport de référence, qui porte désormais
-cinq clés (`examples/twin.config.reference.json`) ; B2, P et F restent derrière leur flag,
-non activés.
+(DIAGNOSTIC §10.14) : B1 (`duration_prior_source=efficiency`, `envelope_tail=efficiency`) a
+d'abord été activé pour le rapport de référence, puis est passé en défaut avec la pile de
+référence (Décision 1, §10.16) ; B2, P et F restent derrière leur flag, non activés.
 
 Levier de la Phase 5 (coût de pente personnel, C1 ; DIAGNOSTIC §10.15), derrière flag, défaut
 inchangé : `calibration.slope_cost=personal` remet le surcoût de pente de Minetti à l'échelle

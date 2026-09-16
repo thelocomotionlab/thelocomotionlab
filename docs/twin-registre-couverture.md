@@ -16,6 +16,15 @@
 > le « conforme groupé » : mêmes scores studentisés, pool sur tous les athlètes). Sinon, ne
 > rien toucher. On ne recalibre JAMAIS sur moins de 8 cas ni sans score propre.
 >
+> **Règle de retour pré-enregistrée (2026-09-16, Décision 1 du chantier v2).** Les défauts
+> servis sont la pile de référence du chantier (lien log, prior sur la pente lu sur
+> l'efficacité-durée, queue d'enveloppe sur l'efficacité-durée, échelle studentisée) ; les
+> anciens défauts sont le rollback nommé `examples/twin.config.historique.json`. À **10
+> nouvelles courses COURUES par des athlètes hors dev_set**, on rejoue le banc à l'identique
+> sous les deux configurations : si la MAE des vendus OU le Winkler 80 sont pires sous les
+> nouveaux défauts que sous les anciens, on revient aux anciens. Aucune autre condition,
+> aucun cas isolé.
+>
 > **PII.** Uniquement des agrégats (pas de trace, pas d'archive) : pseudonyme, course,
 > chiffres du rapport, temps officiel public.
 

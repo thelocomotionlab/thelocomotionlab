@@ -258,6 +258,17 @@ le **point fixe** :
 
 `T = Deq / v(T)`,  avec `v(T) = β0 + β1·ln(T) + β2·(D+/km du parcours)`
 
+> **Pile servie depuis la Décision 1 du chantier v2 (2026-09-16 ; DIAGNOSTIC §10.16).** La
+> régression porte sur `ln v = a + b·ln T + c·(D+/km)` (lien log, A2) avec un prior ridge sur
+> la pente `b → −α_eff` (A1, α lu sur l'efficacité-durée de l'athlète, B1 ; λ = 2) : le point
+> fixe est **analytique**, `T = exp((ln Deq − a − c·D+/km)/(1 + b))`, sans plancher de vitesse,
+> et l'incertitude de la cible est l'écart-type de ln T par delta-méthode (pente et rétroaction
+> du point fixe comprises). Les bandes servies sont **studentisées** (A3) : facteur d'échelle κ
+> sur les scores |erreur|/sd de la validation croisée, quantiles de Student à ν = n_eff − 3,
+> bandes `T·exp(±h)` asymétriques en heures. La forme linéaire ci-dessus, la pente libre et les
+> bandes conformes normalisées restent le rollback nommé (`examples/twin.config.historique.json`),
+> avec une règle de retour pré-enregistrée (`docs/twin-registre-couverture.md`).
+
 **Incertitude** par **Monte-Carlo** (tirages de `v` dans sa loi prédictive, résidu σ inclus) → intervalle.
 
 > **Deux fourchettes, deux usages (2026-07-03).** Le rapport présente l'incertitude en deux bandes
@@ -374,7 +385,7 @@ Tout ce qui a pu ressembler à de l'expertise au cas par cas est en réalité l'
 
 | Type | Exemples | Statut |
 |---|---|---|
-| **Règle fixe** (même code pour tous) | lissage 150 m, écrêtage pente ±0,45, base de pente ±50 m, **base du D+ des activités = distance ~150 m (harmonisée au parcours, C1)**, plafond `f≤3`, plancher de durée VC, conditions des « vrais ultras », Δ du fade, **robustesse record** (altitude requise, plafond VC plausible, support ≥N, rejet fenêtré, dédoublonnage), **demi-vie de récence**, lien de la régression, prior de durée (−α, λ = 2) et source des bandes, modèle d'arrêts, terme de nuit, source du fade, environnement déclaré (flags, DIAGNOSTIC §10 ; défauts inchangés, config de référence §10.4) | identique pour chaque athlète |
+| **Règle fixe** (même code pour tous) | lissage 150 m, écrêtage pente ±0,45, base de pente ±50 m, **base du D+ des activités = distance ~150 m (harmonisée au parcours, C1)**, plafond `f≤3`, plancher de durée VC, conditions des « vrais ultras », Δ du fade, **robustesse record** (altitude requise, plafond VC plausible, support ≥N, rejet fenêtré, dédoublonnage), **demi-vie de récence**, **lien log de la régression, prior de durée (−α_eff, λ = 2), queue d'enveloppe sur l'efficacité-durée et bandes studentisées (défauts depuis la Décision 1, DIAGNOSTIC §10.16 ; rollback nommé `twin.config.historique.json`)**, modèle d'arrêts, terme de nuit, Δ du fade 0,15, environnement déclaré, coût de pente (flags, DIAGNOSTIC §10) | identique pour chaque athlète |
 | **Ajusté à partir des données** | VC, D′, exposant E, durabilité, coefficients β de la régression **pondérée par récence**, taux d'arrêt personnel, coefficient de nuit, part de nuit et altitude moyennes des ultras, prédiction, plan (**Δ du fade si `fade_source=durability` ou `splits`**) | **calculé** par athlète → individualisation automatique |
 | **Garde-fou d'honnêteté** | invalidité < 30 min, descentes techniques = plafonds, forme du jour inconnue, D′ peu fiable, marche au-delà de ±25 %, **VC non plausible → pas de « % de VC »**, **plancher N_eff** (pas de régression sûre d'elle sur trop peu d'ultras récents) | cadrage fixe + **test de suffisance** |
 
@@ -432,7 +443,29 @@ Calculé **avant paiement**, sur la donnée normalisée :
 
 ## 12. Valeurs de référence (golden test — Valentin, Nice 100M)
 
-| Grandeur | Valeur (recapture 2026-07-02, post-C1) |
+| Grandeur | Valeur (recapture 2026-09-16 — Décision 1 : archive fraîche dédoublonnée, défauts = pile de référence) |
+|---|---|
+| Parcours | 167,2 km officiels / 8 874 m D+ lissé / 10 461 m D− / Deq 200,1 km / D+/km 53,1 |
+| Activités exploitables | 918 uniques (1 469 ingérées, 249 écartées, doublons fusionnés) · 55 mois · 12 vrais ultras (n_eff 11,1) |
+| VC | 2,708 m/s (9,748 km/h) ±0,19 |
+| D′ | ~2 039 m ±652 (peu fiable) |
+| Exposant E | 1,167 (α = 0,143) · α_eff = 0,067 (efficacité-durée, prior de la pente) · α_queue = 0,219 (mesuré, non servi) |
+| Durabilité | découplage 19,1 % (médiane des ≥ 10 h) |
+| Régression ultra | ln v = 2,289 − 0,065·ln(h) − 0,0046·(D+/km), σ_log 0,070, prior b −0,067 (λ 2), levier de la cible 0,90, sd_rel 0,103 |
+| Prédiction | **32,43 h** · 6,17 km/h ajustée · 63 % VC |
+| Fourchette de course (50 %) | 30,48 – 34,50 h (studentisée, κ 0,85, ν 8,1) |
+| Bornes de sécurité (80 %) | 28,69 – 36,65 h (25 % du central ; asymétrie −3,7 / +4,2 h) |
+| Validation croisée | MAE 6,4 % (interpolation 7,4 %, extrapolation 3,2 %) · RMSE 7,7 % (n = 12, 9 interp / 3 extrap) |
+| Plan | dérive −26 % (Δ 0,15), arrêts de la politique 1 h 45 ; budget d'arrêts personnel mesuré 7,6 min par heure de mouvement (information, non servi) |
+
+> **Recapture du 2026-09-16 (Décision 1)** — deux causes d'écart avec la recapture de juillet
+> ci-dessous, séparées en DIAGNOSTIC §10.16 : l'**archive** (449 → 918 activités, 8 → 12 ultras,
+> doublons fusionnés) explique VC 2,952 → 2,708, E 1,244 → 1,167, durabilité 20,9 → 19,1 % et
+> 31,28 → 32,33 h sous les anciens défauts ; les **défauts** (lien log, prior sur la pente lu sur
+> l'efficacité-durée, échelle studentisée) expliquent 32,33 → 32,43 h et des bandes deux fois
+> plus étroites (sécurité 49 → 25 % du central) à couverture mesurée meilleure au banc.
+
+| Grandeur | Valeur (recapture 2026-07-02, post-C1 — HISTORIQUE : archive de juillet, anciens défauts) |
 |---|---|
 | Parcours | 165 km (167,2 officiels) / 8 874 m D+ lissé / 10 461 m D− / Deq 200,1 km / D+/km 53,1 |
 | Activités exploitables | 419 / 449 · 17,5 mois · fraîcheur 10 j à l'analyse |

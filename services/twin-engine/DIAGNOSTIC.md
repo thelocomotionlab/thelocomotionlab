@@ -2222,3 +2222,78 @@ n'est pas la bonne en descente — un facteur sur le surcoût de Minetti ne peut
 calibration dont l'enveloppe, la maximalité et le prior de terrain sont restés sous la loi.
 **Décision différée au retour de Nice** (consigne de Valentin, 2026-09-16) : défaut
 `minetti`, non activé pour la référence ; κ restent mesurés et consignés à chaque coupure.
+
+### 10.16 Décision 1 (2026-09-16) — la pile de référence devient le défaut servi
+
+**Constat (consigne de Valentin).** La règle d'adoption du chantier (« jamais sur le seul
+dev_set, jamais sur un athlète ») est insatisfaisable avec quatre athlètes et deux cas frais
+vendables : elle a figé tous les défauts alors que la pile de référence — A2 lien log, A1
+prior sur la pente, A3 échelle studentisée, B1 efficacité-durée — améliore chaque métrique
+sur les 13 vendus (MAE 10,3 → 8,6 %, couverture 80 54 → 77 %, Winkler 80 0,570 → 0,485,
+§10.10) et n'est rejetée nulle part. Ce n'est pas une dérogation à la méthode, c'est une
+décision sur le régime de décision : les cinq clés passent en défaut, les anciennes valeurs
+restent un rollback nommé, et une règle de retour est pré-enregistrée.
+
+**Ce qui change.** `twin.config.json` et `config.py` : `calibration.link=log`,
+`duration_term=prior_shrunk`, `duration_prior_source=efficiency`, `envelope_tail=efficiency`,
+`prediction.interval_source=studentized_scale`. Rollback nommé :
+`examples/twin.config.historique.json` (linear, free, twin_alpha, alpha, conformal_normalized) ;
+`examples/twin.config.reference.json` est désormais identique aux défauts et ne change plus
+rien (gardé comme trace). Les baselines historiques — `tools/ab_montagnhard`,
+`tools/regen_montagnhard_fixture`, `tests/test_montagnhard_robustness` — épinglent
+explicitement les cinq anciennes clés : le tableau §4 est reproduit à l'identique (vérifié,
+2026-09-16). Les tests de chaque levier (Phases 1, 2, 3) repartent d'un `HIST` = anciens
+défauts, pour continuer à isoler chaque levier ; les tests des défauts servis disent la
+nouvelle pile ; suite 338 passés, 1 sauté (golden réel, archive absente ici).
+
+**Golden déterministe (recapturé).** Le fixture est un PLAN LINÉAIRE parfait (cinq agrégats
+de même date, `_plane`, α = 0,18) : sous les nouveaux défauts un modèle en log avec prior sur
+la pente ne peut pas le reproduire au bit près — la MAE LOO passe de 0,74 à 2,63 %, et c'est
+attendu (le prior tire b vers −0,18 sur des données dont la pente log vaut ≈ −0,06 ; α_eff est
+absent sur des agrégats, le prior lit donc α du jumeau). Nouvelles valeurs : β (2,437, −0,168,
+−0,0009) en ln v, prior b −0,18 (λ 2), 33,05 h (31,01 sous les anciens défauts), 6,055 km/h,
+bandes studentisées κ 0,77, ν 2 : sécurité 30,80 – 35,46, fourchette 32,05 – 34,07. Les
+anciennes valeurs (β 9,011 / −0,457 / −0,0186, 31,01 h, conforme 30,38 – 31,64, MAE 0,74 %)
+restent épinglées par `test_prediction_chain_golden_historique` sous le rollback : le
+rollback rend l'ancien comportement au chiffre près.
+
+**Golden réel §12 (recapturé sur l'archive fraîche dédoublonnée, `nice-RB1.json` = les
+nouveaux défauts).** Deux causes d'écart avec la référence de juillet, séparées :
+
+| grandeur | juillet 2026 (449 activités, anciens défauts) | archive fraîche, anciens défauts (« avant », §10.0) | archive fraîche, nouveaux défauts (§12 recapturé) |
+|---|---|---|---|
+| activités exploitées · vrais ultras | 449 · 8 | 918 · 12 | 918 · 12 |
+| VC | 2,952 m/s (10,63 km/h) | 2,708 m/s (9,748 km/h) | 2,708 m/s |
+| E (α) · durabilité | 1,244 (0,196) · 20,9 % | 1,167 (0,143) · 19,1 % | 1,167 (0,143) · 19,1 % |
+| central | 31,28 h | 32,33 h | **32,43 h** |
+| fourchette de course | — | 27,49 – 37,17 (30 %) | 30,48 – 34,50 (12 %) |
+| sécurité 80 % | 29,95 – 32,77 (MC) | 24,46 – 40,20 (49 %) | 28,69 – 36,65 (25 %) |
+| LOO | 3,1 % (n 8) | 6,9 % (n 12) | 6,4 % (interpolation 7,4, extrapolation 3,2) |
+| pente servie | linéaire, libre | linéaire, libre | log, prior −0,067 (efficacité-durée, λ 2), levier 0,90, κ 0,85, ν 8,1 |
+
+L'ARCHIVE explique VC, E et durabilité (deux fois plus d'activités, 55 mois, doublons
+fusionnés) et le passage de 31,28 à 32,33 h ; les DÉFAUTS expliquent 32,33 → 32,43 h et les
+bandes deux fois plus étroites à couverture mesurée meilleure (§10.10). Le test
+`test_nice_100m_reference` porte ces valeurs (tolérances inchangées) ; il sera vérifié PASS
+chez Valentin sur l'archive fraîche (voie A).
+
+**Règle de retour pré-enregistrée** (`docs/twin-registre-couverture.md`) : à 10 nouvelles
+courses COURUES par des athlètes hors dev_set, si la MAE des vendus ou le Winkler 80 sont
+pires sous les nouveaux défauts que sous les anciens (rejoués au banc à l'identique), on
+revient aux anciens ; aucune autre condition, aucun cas isolé.
+
+**Registre rejoué sous les nouveaux défauts — attendu.** La relance du banc de base après
+merge (chez Valentin) reproduira la variante `RB1` de la Phase 3, config identique ;
+`tools/registre --compare docs/archive/twin-v2/registre-avant.json` sur cette variante :
+
+| groupe (vendus) | n | MAE % | biais % | couv 50 / 80 | Winkler rel 50 / 80 | largeur rel méd 50 / 80 |
+|---|---|---|---|---|---|---|
+| frais (Lolo) | 2 → 2 | 17,2 → 17,4 | −17,2 → −17,4 | 0 / 0 → 0 / 0 | 0,611 / 1,125 → 0,617 / 1,143 | 8,4 / 16,2 → 8,4 / 16,1 |
+| dev · Val | 4 → 5 | 12,9 → 7,3 | +12,9 → +7,3 | 25 / 50 → 60 / 80 | 0,473 / 0,773 → 0,280 / 0,530 | 12,8 / 24,8 → 14,5 / 28,0 |
+| dev · Crasse | 7 → 8 | 6,8 → 28,3 | +2,6 → +25,8 | 57 / 71 → 25 / 88 | 0,191 / 0,296 → 1,006 / 2,012 | 7,1 / 13,4 → 7,7 / 22,0 |
+| tous | 13 → 15 | 10,3 → 19,8 | +2,7 → +13,9 | 38 / 54 → 33 / 73 | 0,342 / 0,570 → 0,712 / 1,402 | 8,1 / 15,5 → 8,3 / 20,7 |
+
+Lecture : les deux vendus de plus sont Val · Chianti 2025 (🔴 → 🟠, +0,6 %, un vrai gain) et
+Crasse · Lut 36k 2021 (🔴 → 🟠, +185 %, l'artefact de la garde du domaine décrit en §10.10,
+que la Décision 2 corrige) ; sur les 13 vendus de l'« avant », appariés, la pile fait 8,6 %
+de MAE et 0,485 de Winkler 80 (§10.10). Le tableau officiel sera celui de la relance.

@@ -283,6 +283,26 @@ que sur le plat (κ descente collé à la borne 0,5) ; Nice passe de 200,1 à 18
 entre dans une calibration restée sous la loi (maximalité, enveloppe, prior de terrain).
 Défaut `minetti`, non activé ; κ mesurés et consignés à chaque coupure.
 
+## Suite du chantier (consigne de Valentin, 2026-09-16) — cinq décisions
+
+Décision 1 (pile de référence en défaut) → Décision 2 (garde du domaine sur la demande du
+parcours) → Décision 5.1 (rapport de référence recalculé) → Décision 3 (périmètre vendu =
+zone d'action, trois phrases sur le site) → Décision 4 (Phase 6, rapport v2) → Décisions
+5.2–5.3 (Nice à J-2, entrée de registre). Le banc de C1 attend le retour de Nice.
+
+**Décision 1 — livrée (2026-09-16), DIAGNOSTIC §10.16.** Les cinq clés de la référence sont
+les défauts (`link=log`, `duration_term=prior_shrunk`, `duration_prior_source=efficiency`,
+`envelope_tail=efficiency`, `interval_source=studentized_scale`) ; rollback nommé
+`examples/twin.config.historique.json` ; golden déterministe recapturé (33,05 h, MAE 2,63 %
+sur un plan linéaire mesuré par un modèle en log) et ancien golden épinglé sous le rollback ;
+golden réel §12 recapturé depuis `nice-RB1.json` (VC 2,708 m/s, E 1,167, durabilité 19,1 %,
+32,43 h, LOO 6,4 %), les deux causes d'écart avec juillet séparées (archive / défauts) ;
+`ab_montagnhard`, la régénération du fixture et les tests de robustesse épinglent les anciens
+défauts, tableau §4 reproduit ; règle de retour pré-enregistrée dans
+`docs/twin-registre-couverture.md` ; théorie §4, §8, §12 et manuel §7 mis à jour. Reste chez
+Valentin : le golden réel à vérifier PASS et le banc de base à relancer (registre rejoué,
+`--compare` officiel ; l'attendu est la variante RB1, collé en §10.16).
+
 ## Choix faits à la place de Valentin (Phase 0)
 
 1. **Définition d'un arrêt.** Deux vues, toutes deux imprimées : les secondes « sans
@@ -430,6 +450,19 @@ Défaut `minetti`, non activé ; κ mesurés et consignés à chaque coupure.
     dans la prédiction.
 45. **Le Deq personnalisé est porté par le profil de parcours** (`with_slope_cost`) et non par
     la prédiction : prédiction, plan, figures, rapport et scoreur lisent le même parcours.
+
+## Choix faits à la place de Valentin (Décision 1)
+
+46. **Le golden déterministe est recapturé tel quel, pas remplacé** : le fixture (un plan
+    linéaire parfait) mesuré par un modèle en log avec prior donne une MAE LOO de 2,63 % au
+    lieu de 0,74 ; c'est le comportement attendu du modèle servi, épinglé comme tel, et le
+    rollback rend l'ancien chiffre au bit près dans un second test.
+47. **Le fichier de référence reste** (identique aux défauts) plutôt que supprimé : c'est la
+    trace de ce qui a été servi à Valentin entre les Phases 1 et 5 ; le rollback est un
+    fichier séparé, nommé « historique ».
+48. **Les tests de chaque levier repartent des anciens défauts** (`HIST`) : un levier se
+    teste isolé de la pile, sinon le prior fausse la récupération exacte d'un athlète de
+    Riegel et le lien log fausse celle d'un plan linéaire.
 
 ## Questions ouvertes
 
