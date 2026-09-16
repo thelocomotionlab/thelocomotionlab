@@ -90,7 +90,19 @@ export default function TwinPage() {
           ))}
         </dl>
 
-        <section className="mt-10 rounded-[14px] border border-brand-wash-line bg-brand-mist px-7 py-6 shadow-mist">
+        <section className="mt-10 rounded-[14px] border border-brand-hairline bg-brand-paper px-7 py-6 shadow-bloc">
+          <div className="font-mono text-xxs font-bold uppercase tracking-etiquette text-brand-slate">
+            Le périmètre
+          </div>
+          <p className="m-0 mt-2.5 max-w-[40em] font-sans text-lecture font-lecture leading-lecture text-brand-ink [text-wrap:pretty]">
+            Le Twin est calibré sur les efforts de dix heures et plus : sous cette durée, il ne
+            vend pas. Il donne sa pleine confiance quand ton archive contient au moins trois
+            vrais ultras, dont un avec fréquence cardiaque, et des données fraîches. En dessous,
+            tu reçois quand même ton rapport, avec la liste écrite de ce qui manque.
+          </p>
+        </section>
+
+        <section className="mt-6 rounded-[14px] border border-brand-wash-line bg-brand-mist px-7 py-6 shadow-mist">
           <div className="font-mono text-xxs font-bold uppercase tracking-etiquette text-brand-slate">
             Ce que ça coûte
           </div>
