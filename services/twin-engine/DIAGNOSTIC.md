@@ -2392,6 +2392,53 @@ l'oracle) » de `tableau.md` doit lire 0 · 0 ; sur le registre rejoué avant ce
 lit 1 · 0 (Lut 36k 2021, vendu hors domaine). La variante `ENV` (enveloppe à 10 h) est attendue
 avec Lut 36k 2021 de nouveau vendu ; `PRED` reproduit le registre rejoué à l'identique.
 
+**Banc relancé chez Valentin (2026-09-16, registre b33ed39) — officiel.** Sous le défaut, la
+ligne « garde du domaine (sur l'oracle) » lit **0 · 0** sur les trois groupes ; un seul changement
+de verdict, Crasse · Lut 36k 2021 🟠 → 🔴 ; le `--compare` contre l'« avant » est identique au
+chiffre près au tableau attendu ci-dessus (vendus 13 → 14, MAE 10,3 → 8,1 %, Winkler 80 0,570 →
+0,485, couverture 80 54 → 79 %). Les deux variantes disent pourquoi la lecture observée est la
+bonne : `ENV` (enveloppe servie à 10 h, la consigne initiale) **échoue sur les deux lectures** —
+elle vend un cas hors domaine (Lolo · Coursières Hivernal 2023, 3,9 h réels) et refuse trois cas
+dans le domaine pour ce seul motif (Val · Saintélyon 2024, Crasse · Grand Trail du Lac 2025 🟢,
+Lolo · Nice 50k 2023, un cas frais) ; `PRED` (temps prédit) reproduit le registre rejoué de la
+Décision 1, Lut 36k vendu. Lectures consignées par entrée : Val · Ecotrail 2024 lu 15,2 h au
+plancher (aucun vrai ultra), Coursières 50k 6,9 h à 8,08 km/h (un vrai ultra), Saintélyon 2024
+10,85 h (le cas dans le domaine le plus près du seuil 10,5 h, à 8,08 km/h sur trois ultras) ;
+Rapace · Maratour 9,4 h au plancher (le cas hors domaine le plus près).
+
 **Décision.** `demand` en défaut, lecture observée, marge 5 % ; `predicted` et `envelope`
-restent des variantes pour le banc et le rollback. Officiel après la relance du banc de base et
-du `--compare` chez Valentin.
+restent des variantes pour le banc et le rollback. Décision 2 close.
+
+### 10.18 Décision 3 (2026-09-16) — le 🟢 conditionnel : la zone d'action (flag `sufficiency.green_policy`, défaut `zone_action`)
+
+**Constat (consigne de Valentin).** Le 🟢 est l'engagement de confiance du produit, et le banc
+ne l'a mesuré que dans une zone précise : parcours dans le domaine, athlète avec des vrais
+ultras dont la FC est connue (durabilité, efficacité-durée B1 et coût de pente C1 en dépendent),
+données fraîches. Hors de cette zone, le verdict « pire des critères » pouvait rendre 🟢 à une
+archive sans FC sur ses ultras, ou à une analyse sans date. Consigne : 🟢 seulement si le
+parcours est dans le domaine, au moins trois vrais ultras dont un avec FC, fraîcheur 🟢 ;
+en dessous, 🟠 au mieux ; ajuster `sufficiency`, ne pas recâbler les critères (§5.y).
+
+**Règle servie.** Un plafond, dans l'esprit de §5.y (prévenir, pas refuser) et comme
+`cv_missing_policy=cap_orange` : quand le pire des critères rend 🟢, `_green_gaps` liste ce qui
+manque à la zone d'action — parcours hors du domaine (lecture `domain_demand`, toujours calculée
+quand une prédiction existe, bloquante sous `domain_gate=demand` seulement), moins de
+`green_min_genuine` (3) vrais ultras ou moins de `green_min_genuine_hr` (1) avec FC, fraîcheur
+non 🟢 ou non évaluée — et le verdict passe 🟠 avec la liste en raison. Aucun critère ne change :
+le registre garde ses motifs, le rapport ses cinq lignes. `green_policy=criteria` restaure
+l'ancien verdict. Trois clés, `twin.config.json` en miroir.
+
+**Ce que ça change au registre (lecture depuis le registre rejoué b33ed39).** Rien : les
+trois 🟢 (Crasse · Nice 2024, Grand Trail du Lac 2025, Coursières 100k 2026) ont 4 à 7 vrais
+ultras avec FC (le coût de pente de Crasse est mesuré, donc la FC y est), sont dans le domaine et
+analysés la veille. Les cas à moins de trois vrais ultras étaient déjà 🟠 par le plafond CV. Le
+plafond mord sur ce que le banc n'a pas : une archive sans FC sur ses ultras, une analyse sans
+date, un parcours hors domaine servi sous `domain_gate=off`. Tests
+`tests/test_decision3_zone_action.py` (zone complète → 🟢 ; ultras sans FC → 🟠 avec le pourquoi,
+critères intacts ; fraîcheur non évaluée → 🟠 ; parcours court sous garde désactivée → 🟠 ;
+deux ultras longs sans plafond CV → 🟠 ; `criteria` → 🟢 ; seuils configurables). Les tests
+historiques du 🟢 passent une date d'analyse (sans date, 🟠 est le bon verdict).
+
+**Sur le site.** La page `/services/twin` dit le périmètre en trois phrases avant le dépôt
+d'archive (compte-rendu, Décision 3).
+

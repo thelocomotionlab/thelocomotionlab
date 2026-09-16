@@ -435,6 +435,12 @@ Calculé **avant paiement**, sur la donnée normalisée :
 > `predicted` = ancienne lecture (le temps prédit), `off` désactive ; `domain_speed=envelope`
 > lit l'enveloppe servie à 10 h (variante du banc).
 
+> **🟢 conditionnel** (Décision 3, DIAGNOSTIC §10.18). Le 🟢 n'est servi que dans la zone d'action
+> où la confiance a été mesurée : parcours dans le domaine, **au moins trois vrais ultras dont un
+> avec FC**, fraîcheur 🟢. Sinon le verdict est plafonné à 🟠 avec la liste de ce qui manque — on
+> vend, on prévient. Aucun critère ne change (`sufficiency.green_policy=zone_action` ;
+> `criteria` = ancien verdict, le pire des critères seul).
+
 ---
 
 ## 11. Ce qui reste à durcir (zones de fragilité connues)

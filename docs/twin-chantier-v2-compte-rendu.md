@@ -318,9 +318,25 @@ consigne la lecture à côté de l'oracle, `tools/registre` compte les deux lect
 cas E1 ; suite 344 passés, 1 sauté. Valentin n'avait pas tranché entre l'enveloppe à 10 h et la lecture
 observée quand la session a repris : livrée avec la lecture observée en défaut (§10.17 dit
 pourquoi l'enveloppe relit le modèle) et l'enveloppe en variante, pour que le banc tranche.
-Reste chez Valentin : la relance du banc (feuille « Banc de la Décision 2 » du manuel) ;
-attendu : un seul changement de verdict, Crasse · Lut 36k 2021 🟠 → 🔴, vendus 15 → 14, MAE
-19,8 → 8,1 %, Winkler 80 1,402 → 0,485, ligne « garde du domaine » à 0 · 0.
+Banc relancé chez Valentin (registre b33ed39) : ligne « garde du domaine » à 0 · 0, un seul
+changement de verdict (Crasse · Lut 36k 2021 🟠 → 🔴), `--compare` identique à l'attendu
+(vendus 13 → 14 contre l'« avant », MAE 10,3 → 8,1 %, Winkler 80 0,570 → 0,485). La variante
+`ENV` (enveloppe à 10 h, la consigne initiale) échoue sur les deux lectures : un cas hors domaine
+vendu (Lolo · Coursières Hivernal 2023), trois cas dans le domaine refusés pour ce seul motif
+(Val · Saintélyon 2024, Crasse · Grand Trail du Lac 2025, Lolo · Nice 50k 2023) ; `PRED`
+reproduit l'ancien registre. **Décision 2 close.** Valentin a demandé, à la lecture du banc,
+si l'erreur pouvait être lue en relatif : elle l'est déjà partout (registre, validation croisée,
+largeur), et les deux cas cités (Ecotrail 🟠 sans vrai ultra à la coupure, Coursières 50k 🔴
+par la seule garde du domaine) ne tiennent pas à l'erreur ; la vente des courses sous 10 h est
+remise à plus tard (« on verra ça après »).
+
+**Décision 3 — moteur livré (2026-09-16), DIAGNOSTIC §10.18.** Le 🟢 n'est servi que dans la
+zone d'action mesurée au banc : parcours dans le domaine, au moins trois vrais ultras dont un
+avec FC, fraîcheur 🟢 ; sinon 🟠 avec la liste de ce qui manque, vendu. Un plafond
+(`sufficiency.green_policy=zone_action`, `green_min_genuine=3`, `green_min_genuine_hr=1`) dans
+l'esprit de §5.y, aucun critère recâblé ; `criteria` restaure l'ancien verdict. Sans effet sur
+le registre rejoué (les trois 🟢 de Crasse satisfont les trois conditions) ; les tests
+historiques du 🟢 passent désormais une date d'analyse. La page du site : voir ci-dessous.
 
 ## Choix faits à la place de Valentin (Phase 0)
 
@@ -503,6 +519,14 @@ attendu : un seul changement de verdict, Crasse · Lut 36k 2021 🟠 → 🔴, v
 53. **`on` reste accepté comme synonyme de `predicted`** : aucune config existante ne casse.
 
 ## Questions ouvertes
+
+- **Chantier suivant : trails courts et route.** Valentin a des demandes pour du trail court et
+  pour de la route (10 km). Le moteur est calibré sur les efforts ≥ 10 h et la garde du domaine
+  refuse en dessous ; le registre montre que les courses sous 10 h sont bien prédites quand
+  l'athlète a des vrais ultras (MAE ≈ 12,5 % sur 8 cas) et catastrophiques sans (+59 à +372 %).
+  Élargir le planificateur est un chantier à part : courbe record aux durées courtes (VC, D′),
+  domaine de calibration par format, plan sans arrêts, route sans pente. Option intermédiaire
+  discutée et remise à plus tard : vendre sous 10 h en 🟠 quand l'athlète a ≥ 3 vrais ultras.
 
 - **Golden réel et archive fraîche.** Les références §12 (2026-07-02, 449 activités) ne
   correspondent plus à l'archive fraîche (55 mois, 891 activités uniques : VC 9,72 km/h,

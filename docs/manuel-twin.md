@@ -170,6 +170,12 @@ La **trace GPX du parcours** est fournie à part (`--course`) et n'est pas commi
 
 ## 7. Lire la fourchette : les deux bandes
 
+> **Le verdict 🟢 est conditionnel** (Décision 3, DIAGNOSTIC §10.18) : il n'est servi que si le
+> parcours est dans le domaine de calibration, si l'archive compte au moins trois vrais ultras
+> dont un avec fréquence cardiaque, et si les données sont fraîches. Sinon 🟠, vendu, avec la
+> raison écrite dans `sufficiency.reasons`. Clés `sufficiency.green_policy` (`zone_action` /
+> `criteria`), `green_min_genuine`, `green_min_genuine_hr`.
+
 Depuis le 2026-09-16 (Décision 1 du chantier v2, DIAGNOSTIC §10.16), les intervalles servis
 par défaut sont **studentisés** en **lien log** : la régression porte sur le logarithme de la
 vitesse avec un prior sur la pente en durée lu sur l'efficacité-durée de l'athlète, la
