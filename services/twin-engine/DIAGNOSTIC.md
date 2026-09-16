@@ -2282,9 +2282,10 @@ courses COURUES par des athlètes hors dev_set, si la MAE des vendus ou le Winkl
 pires sous les nouveaux défauts que sous les anciens (rejoués au banc à l'identique), on
 revient aux anciens ; aucune autre condition, aucun cas isolé.
 
-**Registre rejoué sous les nouveaux défauts — attendu.** La relance du banc de base après
-merge (chez Valentin) reproduira la variante `RB1` de la Phase 3, config identique ;
-`tools/registre --compare docs/archive/twin-v2/registre-avant.json` sur cette variante :
+**Registre rejoué sous les nouveaux défauts — officiel (banc de base relancé chez Valentin
+le 2026-09-16, registre e1743c3).** Le golden réel `test_nice_100m_reference` est PASS sur
+l'archive fraîche (469 s). `tools/registre --compare docs/archive/twin-v2/registre-avant.json`
+sur le registre rejoué rend, au chiffre près, la variante `RB1` de la Phase 3 (même config) :
 
 | groupe (vendus) | n | MAE % | biais % | couv 50 / 80 | Winkler rel 50 / 80 | largeur rel méd 50 / 80 |
 |---|---|---|---|---|---|---|
@@ -2296,4 +2297,9 @@ merge (chez Valentin) reproduira la variante `RB1` de la Phase 3, config identiq
 Lecture : les deux vendus de plus sont Val · Chianti 2025 (🔴 → 🟠, +0,6 %, un vrai gain) et
 Crasse · Lut 36k 2021 (🔴 → 🟠, +185 %, l'artefact de la garde du domaine décrit en §10.10,
 que la Décision 2 corrige) ; sur les 13 vendus de l'« avant », appariés, la pile fait 8,6 %
-de MAE et 0,485 de Winkler 80 (§10.10). Le tableau officiel sera celui de la relance.
+de MAE et 0,485 de Winkler 80 (§10.10). Par course, le rejoué reproduit RB1 : Val ·
+Ecotrail +6,9 (🟠, ✓80), Coursières 50k 🔴 +13,5 (hors domaine), GRF +20,9, Saintélyon
++5,6, Chianti +0,6, Lavaredo +2,5 ; Crasse · Nice 2024 🟢 −0,6,
+Grand Trail du Lac +1,7, Coursières 2026 +8,0, Lut 36k 2021 🟠 +184,6 ; Lolo · Nice 50k
+−16,3, UTSM −18,5, MIUT 🔴 +0,5 (erreur de validation croisée, largeur) ; Rapace 6/6 🔴.
+Décision 1 close.

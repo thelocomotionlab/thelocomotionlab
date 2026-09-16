@@ -299,9 +299,12 @@ golden réel §12 recapturé depuis `nice-RB1.json` (VC 2,708 m/s, E 1,167, dura
 32,43 h, LOO 6,4 %), les deux causes d'écart avec juillet séparées (archive / défauts) ;
 `ab_montagnhard`, la régénération du fixture et les tests de robustesse épinglent les anciens
 défauts, tableau §4 reproduit ; règle de retour pré-enregistrée dans
-`docs/twin-registre-couverture.md` ; théorie §4, §8, §12 et manuel §7 mis à jour. Reste chez
-Valentin : le golden réel à vérifier PASS et le banc de base à relancer (registre rejoué,
-`--compare` officiel ; l'attendu est la variante RB1, collé en §10.16).
+`docs/twin-registre-couverture.md` ; théorie §4, §8, §12 et manuel §7 mis à jour. Vérifié
+chez Valentin le 2026-09-16 : golden réel PASS sur l'archive fraîche (469 s), banc de base
+relancé et registre rejoué sous les nouveaux défauts (e1743c3) ; le `--compare` officiel
+contre `registre-avant.json` est identique, au chiffre près, à l'attendu RB1 collé en §10.16
+(vendus 13 → 15 : Val · Chianti 🔴 → 🟠 à +0,6 %, Crasse · Lut 36k 2021 🔴 → 🟠 à +185 %,
+l'artefact que la Décision 2 corrige). **Décision 1 close.**
 
 ## Choix faits à la place de Valentin (Phase 0)
 
