@@ -70,12 +70,26 @@ def prepare_workdir(work_dir: str | Path, figures_dir: str | Path | None = None)
     return work_dir
 
 
+# Fichiers auxiliaires que LaTeX RELIT au démarrage : un reste de compilation précédente y
+# référence des macros du gabarit d'alors, et la passe suivante meurt sur « Undefined control
+# sequence » dans le .aux — une erreur qui accuse le document neuf pour un vestige de l'ancien.
+_AUX_SUFFIXES = (".aux", ".bbl", ".bcf", ".blg", ".log", ".out", ".run.xml", ".toc",
+                 ".lof", ".lot", ".synctex.gz")
+
+
+def clean_aux(work_dir: Path, name: str) -> None:
+    """Efface les auxiliaires de ``name`` dans ``work_dir`` (dossier de sortie réutilisé)."""
+    for suffix in _AUX_SUFFIXES:
+        (work_dir / f"{name}{suffix}").unlink(missing_ok=True)
+
+
 def build_document(template: str, context: dict, work_dir: str | Path, *, name: str,
                    figures_dir: str | Path | None = None, biber: bool = False,
                    passes: int = 2) -> Path:
     """Compile un gabarit en ``<work_dir>/<name>.pdf`` ; ``biber`` pour le rapport (références),
     deux passes pour les documents sans bibliographie (TikZ « remember picture »)."""
     work_dir = prepare_workdir(work_dir, figures_dir)
+    clean_aux(work_dir, name)
     (work_dir / f"{name}.tex").write_text(render_template(template, context), encoding="utf-8")
     xelatex = ["xelatex", "-interaction=nonstopmode", "-halt-on-error", f"{name}.tex"]
     _run(xelatex, work_dir)
@@ -95,5 +109,5 @@ def build_pdf(context: dict, figures_dir: str | Path, work_dir: str | Path) -> P
                           figures_dir=figures_dir, biber=True, passes=3)
 
 
-__all__ = ["render_template", "render_tex", "prepare_workdir", "build_document", "build_pdf",
-           "REPORT_TEMPLATE", "FICHE_TEMPLATE", "BRACELET_TEMPLATE"]
+__all__ = ["render_template", "render_tex", "prepare_workdir", "clean_aux", "build_document",
+           "build_pdf", "REPORT_TEMPLATE", "FICHE_TEMPLATE", "BRACELET_TEMPLATE"]
