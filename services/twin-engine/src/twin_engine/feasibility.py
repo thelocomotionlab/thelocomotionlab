@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from .calibration import domain_demand
 from .config import Config
 from .course import CourseProfile
 from .predict import Prediction
@@ -125,11 +126,23 @@ def assess_target(
         )
         return _out(INDECIDABLE, False)
 
-    # 2) Garde-fou DOMAINE (DIAGNOSTIC §9.9) — prioritaire sur la cible : le moteur est
-    #    calibré sur les efforts ≥ genuine_min_hours ; en dessous, il est hors périmètre,
-    #    que l'athlète ait un chiffre en tête ou non.
-    if (cfg.sufficiency.domain_gate == "on"
-            and target_hours < cfg.calibration.genuine_min_hours):
+    # 2) Garde-fou DOMAINE (DIAGNOSTIC §9.9, Décision 2 §10.17) — prioritaire sur la cible :
+    #    le moteur est calibré sur les efforts ≥ genuine_min_hours ; en dessous, il est hors
+    #    périmètre, que l'athlète ait un chiffre en tête ou non. ``demand`` lit ce que le
+    #    PARCOURS demande à l'athlète (calibration.domain_demand, même lecture que la
+    #    suffisance) ; ``predicted`` (ancien ``on``) lit la cible elle-même.
+    gate = "predicted" if cfg.sufficiency.domain_gate == "on" else cfg.sufficiency.domain_gate
+    if gate == "demand":
+        demand = domain_demand(course.deq_km, twin, cfg)
+        if demand.below:
+            reasons.append(
+                f"Parcours de {demand.deq_km:.0f} km-équivalent, ≈ {demand.expected_hours:.1f} h "
+                "à ton allure d'ultra : sous le domaine de calibration du moteur (efforts ≥ "
+                f"{cfg.calibration.genuine_min_hours:.0f} h) — hors périmètre actuel, quel que "
+                "soit l'objectif."
+            )
+            return _out(HORS_DOMAINE, False)
+    elif gate == "predicted" and target_hours < cfg.calibration.genuine_min_hours:
         reasons.append(
             f"Objectif de {target_hours:.1f} h : sous le domaine de calibration du moteur "
             f"(efforts ≥ {cfg.calibration.genuine_min_hours:.0f} h) — hors périmètre actuel."

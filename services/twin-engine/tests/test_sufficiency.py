@@ -216,9 +216,11 @@ def test_quality_degrades_when_altitude_missing():
 
 
 def test_domain_gate_caps_below_domain_targets():
-    """Garde-fou domaine (§9.9) : une cible sous le domaine de calibration (efforts ≥ 10 h)
-    plafonne le verdict à 🔴 — mesuré au banc : +59 à +308 % d'erreur sur cibles < 8 h,
-    dont deux VENDUES 🟠. Une cible ultra n'est pas touchée ; domain_gate=off restaure."""
+    """Garde-fou domaine (§9.9), lecture historique ``predicted`` : une cible PRÉDITE sous le
+    domaine de calibration (efforts ≥ 10 h) plafonne le verdict à 🔴 — mesuré au banc : +59 à
+    +308 % d'erreur sur cibles < 8 h, dont deux VENDUES 🟠. Une cible ultra n'est pas touchée ;
+    ``on`` reste le synonyme de ``predicted`` ; domain_gate=off restaure. La lecture servie
+    (``demand``, Décision 2) est testée dans test_decision2_domaine.py."""
     from dataclasses import replace
 
     summaries = [_run(i * 3, 3600) for i in range(120)] + [
@@ -228,16 +230,20 @@ def test_domain_gate_caps_below_domain_targets():
                 durability_pct=20.0, record=RecordCurve(np.array([]), np.array([]), np.array([]), []),
                 summaries=summaries)
     cal = build_calibration(twin, CFG)
+    cfg_pred = replace(CFG, sufficiency=replace(CFG.sufficiency, domain_gate="predicted"))
+    cfg_on = replace(CFG, sufficiency=replace(CFG.sufficiency, domain_gate="on"))
 
-    pred_short = predict_finish(45.0, 40.0, twin, cal, CFG)     # ≈ 6-7 h : sous le domaine
+    pred_short = predict_finish(45.0, 40.0, twin, cal, cfg_pred)     # ≈ 6-7 h : sous le domaine
     assert pred_short.finish_hours < CFG.calibration.genuine_min_hours
-    suf = assess_sufficiency(twin, cal, pred_short, CFG)
-    dom = [c for c in suf.criteria if c.name == "Domaine de calibration"]
-    assert dom and dom[0].level == RED
-    assert suf.verdict == RED and suf.sellable is False
+    for cfg in (cfg_pred, cfg_on):
+        suf = assess_sufficiency(twin, cal, pred_short, cfg)
+        dom = [c for c in suf.criteria if c.name == "Domaine de calibration"]
+        assert dom and dom[0].level == RED
+        assert dom[0].value == round(pred_short.finish_hours, 1)   # c'est le temps prédit qui est lu
+        assert suf.verdict == RED and suf.sellable is False and suf.domain is None
 
-    pred_ultra = predict_finish(200.0, 53.0, twin, cal, CFG)    # ≈ 30 h : dans le domaine
-    suf_u = assess_sufficiency(twin, cal, pred_ultra, CFG)
+    pred_ultra = predict_finish(200.0, 53.0, twin, cal, cfg_pred)    # ≈ 30 h : dans le domaine
+    suf_u = assess_sufficiency(twin, cal, pred_ultra, cfg_pred)
     assert not [c for c in suf_u.criteria if c.name == "Domaine de calibration"]
 
     cfg_off = replace(CFG, sufficiency=replace(CFG.sufficiency, domain_gate="off"))

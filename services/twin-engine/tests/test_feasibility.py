@@ -41,8 +41,11 @@ def _gpx(n=300, climb_m=1000.0, half_km=8.0):
             f'<trk><trkseg>{"".join(rows)}</trkseg></trk></gpx>').encode()
 
 
-def _course():
-    return build_course(_gpx(), RaceSpec(name="Test"), CFG)
+def _course(*, half_km=40.0, climb_m=2000.0):
+    """Parcours jouet DANS le domaine par défaut (≈ 100 km-équivalent : la garde du domaine lit
+    la demande du parcours, pas la cible — un parcours de 16 km serait hors périmètre quel que
+    soit l'objectif)."""
+    return build_course(_gpx(n=800, half_km=half_km, climb_m=climb_m), RaceSpec(name="Test"), CFG)
 
 
 def _twin(*, vc_ms=2.9, coef=10.0, alpha=0.18):
@@ -107,15 +110,24 @@ def test_frontieres_exactes_appartiennent_au_regime_le_moins_dur():
 # --------------------------------------------------------------------------- #
 # Garde-fous : ils priment sur la cible.
 def test_garde_fou_domaine_prime_sur_la_cible():
-    """Sous genuine_min_hours, le moteur est hors périmètre — même avec un objectif."""
-    course = _course()
-    a = assess_target(6.0, course, _twin(), _prediction(course, 6.5), CFG)
-    assert a.regime == HORS_DOMAINE and a.plan_ok is False
+    """Sous genuine_min_hours, le moteur est hors périmètre — même avec un objectif. Lecture
+    servie (``demand``) : c'est le PARCOURS qui est sous le domaine, pas la cible ; lecture
+    historique (``predicted``) : la cible elle-même."""
     assert CFG.calibration.genuine_min_hours == 10.0
+    court = _course(half_km=8.0, climb_m=1000.0)            # ≈ 26 km-éq : < 5 h au plancher
+    a = assess_target(31.0, court, _twin(), _prediction(court, 30.0), CFG)
+    assert a.regime == HORS_DOMAINE and a.plan_ok is False   # quel que soit l'objectif
+    assert any("quel que soit l'objectif" in r for r in a.reasons)
+    long = _course()
+    a = assess_target(6.0, long, _twin(), _prediction(long, 20.0), CFG)
+    assert a.regime == HORS_PORTEE                           # un vœu ne définit pas le domaine
+    cfg_pred = dataclasses.replace(CFG, sufficiency=dataclasses.replace(CFG.sufficiency, domain_gate="predicted"))
+    a = assess_target(6.0, long, _twin(), _prediction(long, 6.5), cfg_pred)
+    assert a.regime == HORS_DOMAINE and a.plan_ok is False
 
 
 def test_garde_fou_domaine_desactivable_par_config():
-    course = _course()
+    course = _course(half_km=8.0, climb_m=1000.0)
     cfg = dataclasses.replace(CFG, sufficiency=dataclasses.replace(CFG.sufficiency, domain_gate="off"))
     a = assess_target(6.0, course, _twin(), _prediction(course, 6.5), cfg)
     assert a.regime != HORS_DOMAINE

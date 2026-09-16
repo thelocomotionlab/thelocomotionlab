@@ -52,6 +52,25 @@ def _verdict(e: dict) -> str | None:
     return (e.get("model") or {}).get("verdict")
 
 
+def garde_domaine(entries: list[dict]) -> dict:
+    """La garde du domaine jugée sur l'ORACLE (``below_domain`` : temps réel sous le seuil
+    ultra) : un cas hors domaine VENDU est une fuite, un cas dans le domaine REFUSÉ pour ce
+    seul motif est un client perdu sans raison. Les deux comptes doivent valoir 0 (Décision 2,
+    DIAGNOSTIC §10.17) ; ``cas`` nomme les entrées fautives."""
+    fin = _finished(entries)
+    fuites = [e for e in fin if e.get("below_domain") and _verdict(e) in ("🟢", "🟠")]
+    perdus = [e for e in fin if e.get("below_domain") is False
+              and (e.get("model") or {}).get("blocking") == ["Domaine de calibration"]]
+    return {
+        "hors_domaine_vendus": len(fuites),
+        "dans_domaine_refuses_seul_motif": len(perdus),
+        "cas": ([f"{e.get('athlete', '?')} · {e.get('race', '?')} (vendu hors domaine)"
+                 for e in fuites]
+                + [f"{e.get('athlete', '?')} · {e.get('race', '?')} (refusé dans le domaine)"
+                   for e in perdus]),
+    }
+
+
 def _sd_rel_of(e: dict) -> float | None:
     """sd prédictif relatif de l'entrée : celui stocké (régression, β-covariance), sinon
     REPLI σ/v reconstruit depuis les agrégats consignés (blend/vc_e n'ont pas de β-cov —
@@ -144,6 +163,7 @@ def summarize(entries: list[dict]) -> dict:
         out["below_domain"] = {"n": len(below), "mae_pct": round(float(np.abs(eb).mean()), 2)}
         if len(ei):
             out["mae_in_domain_pct"] = round(float(np.abs(ei).mean()), 2)
+    out["garde_domaine"] = garde_domaine(fin)
 
     for band, alpha, lo_k, hi_k in (("plan", 0.5, "plan_low_h", "plan_high_h"),
                                     ("safety", 0.2, "safety_low_h", "safety_high_h")):
@@ -332,7 +352,14 @@ def tableau_markdown(entries: list[dict]) -> str:
         out.append(_md_sold(sold) if sold else "(aucun cas vendu)")
         out.append(f"\n**{label} — REFUSÉS (🔴)**\n")
         out.append(_md_refused(refused) if refused else "(aucun refus)")
+        out.append(f"\n**{label} — {_garde_line(garde_domaine(group))}")
     return "\n".join(out)
+
+
+def _garde_line(g: dict) -> str:
+    cas = f" — {', '.join(g['cas'])}" if g.get("cas") else ""
+    return (f"garde du domaine (sur l'oracle) : hors domaine vendus {g['hors_domaine_vendus']} · "
+            f"dans le domaine refusés pour ce seul motif {g['dans_domaine_refuses_seul_motif']}{cas}")
 
 
 def _key(e: dict) -> tuple:
@@ -545,6 +572,8 @@ def main(argv: list[str] | None = None) -> int:
             in_dom = (f" · MAE dans le domaine : {s['mae_in_domain_pct']:.1f} %"
                       if "mae_in_domain_pct" in s else "")
             print(f"  hors domaine (< seuil ultra) : n={bd['n']} · MAE {bd['mae_pct']:.1f} %{in_dom}")
+        if "garde_domaine" in s:
+            print("  " + _garde_line(s["garde_domaine"]))
         for band, nominal in (("plan", "50"), ("safety", "80")):
             if band in s:
                 b = s[band]

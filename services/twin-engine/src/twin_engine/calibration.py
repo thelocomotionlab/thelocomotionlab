@@ -311,6 +311,66 @@ def genuine_floor_kmh(elapsed_hours: float, cfg: Config) -> float:
     return float(c.genuine_min_ga_kmh * ratio ** (-float(c.genuine_floor_alpha)))
 
 
+@dataclass(frozen=True)
+class DomainDemand:
+    """Ce que le parcours demande à l'athlète, lu sans le modèle : la durée attendue à sa
+    vitesse de référence, face au seuil du domaine de calibration."""
+    deq_km: float
+    v_ref_kmh: float
+    origin: str            # "ultras" (médiane des vrais ultras), "plancher", "enveloppe"
+    n_ultras: int
+    expected_hours: float
+    threshold_hours: float
+
+    @property
+    def below(self) -> bool:
+        return self.expected_hours < self.threshold_hours
+
+    def to_dict(self) -> dict:
+        return {
+            "deq_km": round(self.deq_km, 1),
+            "v_ref_kmh": round(self.v_ref_kmh, 3),
+            "origin": self.origin,
+            "n_ultras": self.n_ultras,
+            "expected_hours": round(self.expected_hours, 2),
+            "threshold_hours": round(self.threshold_hours, 2),
+            "below": self.below,
+        }
+
+
+def domain_demand(deq_km: float, twin: Twin, cfg: Config) -> DomainDemand:
+    """Garde du domaine sur la DEMANDE du parcours (``sufficiency.domain_gate=demand``).
+
+    Durée attendue = Deq ÷ vitesse de référence, comparée à ``genuine_min_hours`` majoré de
+    ``sufficiency.domain_margin_pct``. La vitesse de référence ne sort pas de la calibration
+    (``sufficiency.domain_speed``) :
+
+    * ``observed`` — médiane de la vitesse ajustée ÉCOULÉE des vrais ultras (même filtre que
+      la calibration ; base écoulée parce que le seuil est un temps écoulé), jamais sous le
+      plancher « vrai ultra » ; sans vrai ultra, le plancher lui-même ;
+    * ``envelope`` — l'enveloppe servie à ``genuine_min_hours`` (queue comprise), repli sur
+      ``observed`` quand le jumeau n'a pas d'enveloppe.
+    """
+    c = cfg.calibration
+    floor = genuine_floor_kmh(c.genuine_min_hours, cfg)
+    genuine = select_genuine_ultras(twin.summaries, cfg, slope=twin.slope_factors(cfg))
+    v_ref, origin = floor, "plancher"
+    if genuine:
+        elapsed = [g.vga_kmh * g.hours / (g.elapsed_hours or g.hours) for g in genuine]
+        v_ref, origin = max(float(np.median(elapsed)), floor), "ultras"
+    if (cfg.sufficiency.domain_speed == "envelope"
+            and twin.alpha is not None and twin.endurance_coef is not None):
+        tail_alpha, tail_from, _, _ = envelope_tail(twin, cfg)
+        v_ref = 3.6 * _envelope_ms(twin.endurance_coef, twin.alpha,
+                                   c.genuine_min_hours * 3600.0, tail_alpha, tail_from)
+        origin = "enveloppe"
+    threshold = c.genuine_min_hours * (1.0 + cfg.sufficiency.domain_margin_pct / 100.0)
+    return DomainDemand(
+        deq_km=float(deq_km), v_ref_kmh=float(v_ref), origin=origin, n_ultras=len(genuine),
+        expected_hours=float(deq_km) / float(v_ref), threshold_hours=float(threshold),
+    )
+
+
 def adjusted_km(s: ActivitySummary, slope: tuple[float, float] | None = None) -> float:
     """Équivalent plat de l'effort : celui de la loi de Minetti (``s.ga_km``), ou, sous un coût
     de pente personnel ``slope = (κ_montée, κ_descente)``, brut + κ_montée × surcoût de montée
@@ -1093,6 +1153,8 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
 __all__ = [
     "GenuineUltra",
     "UltraCalibration",
+    "DomainDemand",
+    "domain_demand",
     "select_genuine_ultras",
     "maximality_weights",
     "recency_weights",

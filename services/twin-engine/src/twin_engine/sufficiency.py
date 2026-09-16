@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 
-from .calibration import REGIME_INSUFFICIENT, UltraCalibration
+from .calibration import REGIME_INSUFFICIENT, DomainDemand, UltraCalibration, domain_demand
 from .config import Config
 from .predict import Prediction
 from .twin.model import Twin
@@ -22,6 +22,11 @@ GREEN = "🟢"
 ORANGE = "🟠"
 RED = "🔴"
 _RANK = {RED: 0, ORANGE: 1, GREEN: 2}
+_DOMAIN_ORIGINS = {
+    "ultras": "médiane de tes vrais ultras",
+    "plancher": "plancher du domaine, aucun vrai ultra dans l'archive",
+    "enveloppe": "enveloppe d'endurance servie",
+}
 
 
 @dataclass(frozen=True)
@@ -41,6 +46,7 @@ class Sufficiency:
     sellable: bool
     criteria: list[Criterion]
     reasons: list[str] = field(default_factory=list)
+    domain: DomainDemand | None = None      # lecture de la demande du parcours (gate ``demand``)
 
     def to_dict(self) -> dict:
         return {
@@ -48,6 +54,7 @@ class Sufficiency:
             "sellable": self.sellable,
             "criteria": [c.to_dict() for c in self.criteria],
             "reasons": self.reasons,
+            "domain": None if self.domain is None else self.domain.to_dict(),
         }
 
 
@@ -125,18 +132,40 @@ def assess_sufficiency(
             reasons.append("Fraîcheur inconnue (activités non datées) : recalcul recommandé "
                            "à l'approche de la course.")
 
-    # 1c) Domaine de calibration (banc d'essai 2026-07, DIAGNOSTIC §9.9) : le moteur est
-    #     calibré sur les efforts ≥ genuine_min_hours — une cible nettement plus courte est
-    #     une extrapolation vers le bas HORS PÉRIMÈTRE. Mesuré au banc : +59 à +308 %
-    #     d'erreur sur des cibles < 8 h, dont deux vendues 🟠. Verdict plafonné à 🔴 tant
-    #     que le chantier « trails courts » n'est pas livré (rollback : domain_gate=off).
-    if (s.domain_gate == "on" and prediction is not None
-            and prediction.finish_hours < cfg.calibration.genuine_min_hours):
+    # 1c) Domaine de calibration (DIAGNOSTIC §9.9, Décision 2 §10.17) : le moteur est calibré
+    #     sur les efforts ≥ genuine_min_hours — une cible nettement plus courte est une
+    #     extrapolation vers le bas HORS PÉRIMÈTRE (mesuré au banc : +59 à +308 % d'erreur sur
+    #     des cibles < 8 h, dont deux vendues 🟠). ``demand`` lit la demande du parcours (durée
+    #     attendue à la vitesse de référence de l'athlète, calibration.domain_demand) : la
+    #     garde ne dépend d'aucune sortie du modèle. ``predicted`` (ancien ``on``) lit le temps
+    #     prédit contre le seuil. Rollback : domain_gate=off.
+    domain: DomainDemand | None = None
+    gate = "predicted" if s.domain_gate == "on" else s.domain_gate
+    min_hours = cfg.calibration.genuine_min_hours
+    if gate == "demand" and prediction is not None:
+        domain = domain_demand(prediction.deq_km, twin, cfg)
+        if domain.below:
+            criteria.append(
+                Criterion(
+                    "Domaine de calibration", RED, round(domain.expected_hours, 1),
+                    f"parcours de {domain.deq_km:.0f} km-équivalent ≈ {domain.expected_hours:.1f} h "
+                    f"à {domain.v_ref_kmh:.1f} km/h ({_DOMAIN_ORIGINS[domain.origin]}) : sous le "
+                    f"domaine de calibration (efforts ≥ {min_hours:.0f} h, seuil "
+                    f"{domain.threshold_hours:.1f} h) — hors périmètre actuel",
+                )
+            )
+            reasons.append(
+                "Parcours plus court que le domaine de calibration du moteur : à ton allure "
+                f"d'ultra, il se court en {domain.expected_hours:.0f} h environ, sous les "
+                f"{min_hours:.0f} h sur lesquelles le moteur est calibré — prédiction non fiable "
+                "sur ce format à ce stade."
+            )
+    elif gate == "predicted" and prediction is not None and prediction.finish_hours < min_hours:
         criteria.append(
             Criterion(
                 "Domaine de calibration", RED, round(prediction.finish_hours, 1),
                 f"cible ≈ {prediction.finish_hours:.1f} h : sous le domaine de calibration "
-                f"(efforts ≥ {cfg.calibration.genuine_min_hours:.0f} h) — hors périmètre actuel",
+                f"(efforts ≥ {min_hours:.0f} h) — hors périmètre actuel",
             )
         )
         reasons.append(
@@ -282,7 +311,8 @@ def assess_sufficiency(
     else:
         reasons.append("Données insuffisantes : on ne vend pas (🔴).")
 
-    return Sufficiency(verdict=verdict, sellable=(verdict != RED), criteria=criteria, reasons=reasons)
+    return Sufficiency(verdict=verdict, sellable=(verdict != RED), criteria=criteria,
+                       reasons=reasons, domain=domain)
 
 
 __all__ = ["GREEN", "ORANGE", "RED", "Criterion", "Sufficiency", "assess_sufficiency"]

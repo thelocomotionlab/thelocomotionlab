@@ -152,7 +152,9 @@
     "long_effort_min_ga_fraction": 0.5,
     "freshness_days_green": 30.0,
     "freshness_days_orange": 90.0,
-    "domain_gate": "on"
+    "domain_gate": "demand",
+    "domain_speed": "observed",
+    "domain_margin_pct": 5.0
   },
 
   "target": {

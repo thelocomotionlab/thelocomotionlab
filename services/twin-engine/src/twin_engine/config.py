@@ -504,13 +504,31 @@ class SufficiencyParams:
     # ``cv_gated`` (DÉFAUT) : non bloquante SI une validation croisée existe, bloquante sinon.
     # ``cap_orange`` : jamais bloquante.  ``red`` : ancien comportement (rollback).
     quality_policy: str = "cv_gated"                     # {cv_gated, cap_orange, red}
-    # --- garde-fou DOMAINE (banc d'essai 2026-07, DIAGNOSTIC §9.9) --------------------------
+    # --- garde-fou DOMAINE (banc d'essai 2026-07, DIAGNOSTIC §9.9 ; Décision 2, §10.17) ------
     # Le moteur est calibré sur les efforts ≥ calibration.genuine_min_hours ; une cible
     # nettement plus courte est une extrapolation vers le bas HORS PÉRIMÈTRE. Mesuré au banc :
-    # erreurs +59 à +308 % sur des cibles < 8 h, dont deux VENDUES 🟠. ``on`` (défaut) ajoute
-    # un critère 🔴 quand la cible est sous le domaine → verdict plafonné, vente refusée,
-    # tant que le chantier « trails courts » n'est pas livré. Rollback : off.
-    domain_gate: str = "on"                              # {on, off}
+    # erreurs +59 à +308 % sur des cibles < 8 h, dont deux VENDUES 🟠.
+    # ``demand`` (DÉFAUT) lit la DEMANDE du parcours : durée attendue = Deq ÷ vitesse de
+    #   référence de l'athlète (calibration.domain_demand), comparée au seuil majoré de
+    #   domain_margin_pct. La garde ne dépend d'aucune sortie du modèle : un changement de
+    #   calibration ne peut plus ouvrir ni fermer le domaine (au banc, une queue d'enveloppe
+    #   avait déplacé un temps prédit de 9,76 à 10,06 h et vendu, à +185 % d'erreur, un 36 km
+    #   couru en 3,5 h).
+    # ``predicted`` (ancien comportement ; ``on`` accepté comme synonyme) lit le temps PRÉDIT
+    #   contre le seuil. ``off`` désactive.
+    domain_gate: str = "demand"                          # {demand, predicted, off}
+    # Vitesse de référence de la demande. ``observed`` : médiane de la vitesse ajustée ÉCOULÉE
+    # des vrais ultras de l'athlète (même filtre que la calibration, même base que le seuil),
+    # jamais sous le plancher « vrai ultra » ; sans vrai ultra, le plancher lui-même
+    # (calibration.genuine_min_ga_kmh) — la définition du domaine : un parcours qu'aucun ultra
+    # calibré ne mettrait genuine_min_hours à couvrir n'est pas un ultra. ``envelope`` :
+    # l'enveloppe servie à genuine_min_hours (queue comprise), repli sur ``observed`` sans
+    # enveloppe — hors régression c'est la prédiction elle-même, donc une lecture du modèle.
+    domain_speed: str = "observed"                       # {observed, envelope}
+    # Marge sur le seuil : hors domaine si durée attendue < genuine_min_hours × (1 + marge).
+    # 5 % (10,5 h) passe entre le cas hors domaine le plus long du registre (9,4 h attendues)
+    # et le cas dans le domaine le plus court (10,7 h) ; 10 % refuserait deux vendus justes.
+    domain_margin_pct: float = 5.0
     # --- fraîcheur des données (revue C8) -----------------------------------------------------
     # Jours entre la DERNIÈRE activité datée et la date d'analyse. Aucun critère ne portait le
     # garde-fou « forme du jour inconnue » (twin-theory §2.7/§9) : une archive s'arrêtant il y a

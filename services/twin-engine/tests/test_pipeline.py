@@ -21,12 +21,13 @@ def _flat_run(v, dur):
     )
 
 
-def _triangle_gpx(n=300):
+def _triangle_gpx(n=300, length_m=10000.0):
     lat0, lon0 = 43.70, 7.26
     rows = []
+    half = length_m / 2.0
     for i in range(n + 1):
-        x = 10000.0 * i / n
-        ele = 1000.0 * (x / 5000.0) if x <= 5000 else 1000.0 * (2 - x / 5000.0)
+        x = length_m * i / n
+        ele = 1000.0 * (x / half) if x <= half else 1000.0 * (2 - x / half)
         dlon = x / (111_320.0 * math.cos(math.radians(lat0)))
         rows.append(f'<trkpt lat="{lat0:.6f}" lon="{lon0 + dlon:.6f}"><ele>{ele:.1f}</ele></trkpt>')
     return ('<?xml version="1.0"?><gpx xmlns="http://www.topografix.com/GPX/1/1">'
@@ -119,11 +120,14 @@ def _ultras():
             _flat_run(2.4, 14 * 3600), _flat_run(2.7, 10 * 3600 + 600)]
 
 
-def _full(target_hours, tmp_path):
+def _full(target_hours, tmp_path, *, length_m=100_000.0):
+    """Parcours DANS le domaine par défaut (≈ 110 km-éq, ≈ 12 h aux allures des ultras jouets) :
+    la garde du domaine lit la demande du parcours, un 10 km serait hors périmètre quel que soit
+    l'objectif."""
     from twin_engine.pipeline import analyze_full
 
     race = RaceSpec("T", (0.0, 5.0, 10.0), ("d", "s", "a"), target_hours=target_hours)
-    course = build_course(_triangle_gpx(), race, CFG)
+    course = build_course(_triangle_gpx(n=1000, length_m=length_m), race, CFG)
     return analyze_full(_ultras(), course, race, CFG, out_dir=tmp_path, athlete="X",
                         render_pdf=False)
 
@@ -131,7 +135,7 @@ def _full(target_hours, tmp_path):
 def test_target_in_race_spec_anchors_the_plan(tmp_path):
     result = _full(13.0, tmp_path)
     assert result.preview.prediction is not None
-    assert result.target is not None and result.target.plan_ok
+    assert result.target is not None and result.target.plan_ok, result.target
     assert result.plan.anchor == "target" and result.plan.anchor_hours == 13.0
     # la PRÉDICTION reste calculée et exposée : le mode s'ajoute, il ne remplace pas
     d = result.to_dict()
@@ -140,8 +144,9 @@ def test_target_in_race_spec_anchors_the_plan(tmp_path):
 
 
 def test_refused_target_leaves_the_plan_on_the_prediction(tmp_path):
-    """Cible sous le domaine de calibration : le garde-fou §9.9 interdit l'ancrage."""
-    result = _full(2.0, tmp_path)
+    """Parcours sous le domaine de calibration (10 km) : le garde-fou §9.9 interdit l'ancrage,
+    quel que soit l'objectif."""
+    result = _full(2.0, tmp_path, length_m=10_000.0)
     assert result.target is not None and result.target.plan_ok is False
     assert result.target.regime == "hors_domaine"
     assert result.plan.anchor == "prediction"      # le refus n'ampute pas le rapport

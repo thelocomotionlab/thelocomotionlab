@@ -242,6 +242,9 @@ def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path,
     ref_h = actual_h if actual_h is not None else (pred.finish_hours if pred else None)
     entry["below_domain"] = (None if ref_h is None
                              else bool(ref_h < cfg.calibration.genuine_min_hours))
+    # ce que la garde du domaine a LU (demande du parcours) — à confronter à l'oracle ci-dessus
+    dom = result.sufficiency.domain
+    entry["domain_demand"] = None if dom is None else dom.to_dict()
     if pred is not None:
         cv = pred.cross_validation
         err_pct = (None if actual_h is None

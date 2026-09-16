@@ -39,8 +39,11 @@ def test_defaults_from_shipped_json():
     assert cfg.calibration.envelope_tail == "efficiency"
     assert (cfg.pacing.plan_window_low_pct, cfg.pacing.plan_window_high_pct) == (25, 75)
     # §9.9 : garde-fou domaine ACTIF (banc : +59 à +308 % sur cibles courtes, deux vendues 🟠) ;
+    # Décision 2 (§10.17) : il lit la DEMANDE du parcours, jamais la sortie du modèle ;
     # fenêtre empirique groupée = plomberie prête, quantiles PAS ENCORE appris (jauge)
-    assert cfg.sufficiency.domain_gate == "on"
+    assert cfg.sufficiency.domain_gate == "demand"
+    assert cfg.sufficiency.domain_speed == "observed"
+    assert cfg.sufficiency.domain_margin_pct == 5.0
     assert cfg.prediction.pooled_q50 is None and cfg.prediction.pooled_q80 is None
     # §9.10 : garde-fou d'altitude corrompue (cas réel : course prise pour une rando lente)
     assert cfg.twin.ga_plausibility_floor == 0.7
