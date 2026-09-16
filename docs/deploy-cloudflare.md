@@ -39,6 +39,13 @@ Puis **Settings → Variables and Secrets** (build) :
 | --- | --- | --- |
 | `NODE_VERSION` | `22` | aligne le build sur l'environnement local (Node 22) |
 
+> **Les adresses publiques ne sont PAS des variables de build.** Une URL de service qui n'existe
+> que dans l'environnement finit par manquer : le build part sans elle et la page se désactive
+> toute seule, sans que rien n'échoue. Le dépôt d'archives de la cohorte y a laissé des semaines —
+> son adresse vit désormais dans `apps/site/lib/twinDepot.mjs`, comme l'hôte du site dans
+> `lib/site.mjs`. `NEXT_PUBLIC_TWIN_DEPOT_API` reste lue, mais seulement pour SURCHARGER
+> (développement local, staging).
+
 > **pnpm** : l'image de build Cloudflare (v2) lit le champ `packageManager` du `package.json`
 > **racine** (`pnpm@10.33.0`) via corepack et installe avec pnpm. Le `pnpm-lock.yaml` (racine) doit
 > rester **committé et à jour** (il l'est). Comme Cloudflare clone **tout** le repo, `pnpm install`

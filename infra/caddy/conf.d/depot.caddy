@@ -13,10 +13,13 @@
 {$DEPOT_DOMAIN} {
 	encode zstd gzip
 
-	# Borne dure côté proxy, en phase avec maxArchiveMo du service (2 Go) —
-	# en dessous, le service répond un 413 JSON plus parlant pour la page.
+	# Borne dure côté proxy, au-DESSUS de maxArchiveMo du service (2048 Mio) :
+	# « 2GB » valait 2×10⁹ octets, soit 1,86 Gio — les archives entre 1,86 et
+	# 2 Gio étaient coupées ici, sans en-tête CORS ni corps JSON, donc vues du
+	# navigateur comme une panne réseau. C'est au service de refuser, avec son
+	# 413 JSON que la page sait traduire.
 	request_body {
-		max_size 2GB
+		max_size 2112MiB
 	}
 
 	@twin path /twin/healthz /twin/depots /twin/depots/*

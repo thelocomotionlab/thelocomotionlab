@@ -26,6 +26,7 @@ const arborescence = {
 const { pages, index, erreurs } = construireContenu(arborescence);
 
 const parSlug = (slug) => pages.find((p) => p.frontmatter.slug === slug);
+const publiees = pages.filter((p) => p.frontmatter.statut === "publie");
 
 describe("content/", () => {
   it("ne produit aucune erreur de build", () => {
@@ -41,10 +42,16 @@ describe("content/", () => {
 
   it("laisse en brouillon ce qui n'est pas écrit", () => {
     expect(parSlug("reunion-2025").frontmatter.statut).toBe("publie");
-    // Le récit des Écrins n'est qu'une amorce, l'article sur le froid n'a
-    // aucun corps : ni l'un ni l'autre n'est routé.
-    expect(parSlug("tour-des-ecrins-80-heures").frontmatter.statut).toBe("brouillon");
+    // L'article sur le froid n'a aucun corps : il n'est ni routé, ni indexé.
     expect(parSlug("exposition-au-froid").frontmatter.statut).toBe("brouillon");
+    // La règle, pas la liste : ce qui est marqué brouillon reste hors des pages
+    // publiées, quel que soit le contenu du jour. Nommer une page précise ferait
+    // échouer ce test — et avec lui le déploiement — le jour où elle est écrite.
+    const brouillons = pages.filter((p) => p.frontmatter.statut === "brouillon");
+    expect(brouillons.length, "aucun brouillon : le garde-fou ne prouve plus rien").toBeGreaterThan(0);
+    for (const page of brouillons) {
+      expect(publiees, `brouillon routé : ${page.frontmatter.slug}`).not.toContain(page);
+    }
   });
 });
 

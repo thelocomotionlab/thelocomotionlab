@@ -7,12 +7,12 @@
 //   * étape 2 — dépôt de l'archive (glisser-déposer ou sélecteur) ;
 //   * étape 3 — identité + objectifs + consentement, puis envoi.
 //
-// L'envoi part en multipart vers le service twin-depot du VPS
-// (NEXT_PUBLIC_TWIN_DEPOT_API, derrière Caddy) — XMLHttpRequest et non
-// fetch : les archives font des centaines de Mo, la barre de progression
-// (upload.onprogress) n'est pas négociable. Sans API configurée, le
-// formulaire reste visible mais l'envoi renvoie vers /contact (aucune
-// casse au build, pattern NEXT_PUBLIC_ATELIER_API).
+// L'envoi part en multipart vers le service twin-depot du VPS (adresse dans
+// lib/twinDepot.mjs, derrière Caddy) — XMLHttpRequest et non fetch : les
+// archives font des centaines de Mo, la barre de progression
+// (upload.onprogress) n'est pas négociable. Quand le service refuse, on dit
+// POURQUOI : le code d'erreur du service est traduit, et un envoi qui n'arrive
+// jamais (réseau, origine refusée) ne se confond plus avec un refus.
 //
 // Garde-fous côté client : validation « Il manque : … » qui nomme les
 // étapes, extension et taille de l'archive vérifiées au dépôt, honeypot
@@ -29,8 +29,16 @@ import {
   MARQUES,
   MAX_ARCHIVE_MO,
 } from "@/lib/twinCohorte.mjs";
+import { messageDErreur, urlDepots } from "@/lib/twinDepot.mjs";
 
-const API_BASE = process.env.NEXT_PUBLIC_TWIN_DEPOT_API || "";
+// Résolue au module : `process.env.NEXT_PUBLIC_*` est remplacé littéralement au
+// build, il n'existe plus à l'exécution dans le navigateur.
+const URL_DEPOT = urlDepots({
+  NEXT_PUBLIC_TWIN_DEPOT_API: process.env.NEXT_PUBLIC_TWIN_DEPOT_API,
+});
+// Au-delà, on rend la main : une archive de 2 Go sur un lien lent, c'est long,
+// mais pas infini (30 min laissent passer ~1 Mo/s).
+const DELAI_MAX_MS = 30 * 60 * 1000;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Mêmes champs que le formulaire d'inscription atelier (source du pattern).
@@ -126,7 +134,7 @@ export default function CohorteForm() {
       return;
     }
 
-    if (!API_BASE) {
+    if (!URL_DEPOT) {
       poserErreur(
         "Le dépôt en ligne n'est pas encore ouvert — écris-moi via la page contact et on s'organise.",
         true,
@@ -158,28 +166,35 @@ export default function CohorteForm() {
         setProgression(Math.min(100, (e.loaded / e.total) * 100));
       }
     });
+    // Le service dit toujours pourquoi il refuse : on le traduit plutôt que de
+    // renvoyer tout le monde vers « vérifie ta connexion ». Le code technique
+    // reste affiché en fin de message : c'est lui qu'on me recopie.
+    const echouer = (statut, corps) => {
+      const { message, contact, code } = messageDErreur(statut, corps);
+      poserErreur(`${message} (code : ${code})`, contact);
+    };
     xhr.addEventListener("load", () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         setProgression(100);
         setStatut("succes");
         window.scrollTo({ top: 0, behavior: "smooth" });
-      } else if (xhr.status === 413) {
-        poserErreur(
-          `Ton archive dépasse la taille maximale acceptée (${Math.round(MAX_ARCHIVE_MO / 1024)} Go) — écris-moi via la page contact et on s'organise.`,
-          true,
-        );
-      } else if (xhr.status === 429) {
-        poserErreur(
-          "Trop d'envois rapprochés — patiente quelques minutes et réessaie.",
-        );
       } else {
-        poserErreur("L'envoi a échoué. Vérifie ta connexion et réessaie.");
+        echouer(xhr.status, xhr.responseText);
       }
     });
-    xhr.addEventListener("error", () => {
-      poserErreur("L'envoi a échoué. Vérifie ta connexion et réessaie.");
-    });
-    xhr.open("POST", `${API_BASE}/depots`);
+    // `error` couvre l'envoi qui n'arrive jamais (réseau coupé, service
+    // injoignable, origine refusée par le service) : xhr.status y vaut 0.
+    xhr.addEventListener("error", () => echouer(0, ""));
+    xhr.addEventListener("timeout", () =>
+      poserErreur(
+        "L'envoi a dépassé le temps maximal — sur une connexion lente, réessaie depuis une " +
+          "meilleure liaison, ou écris-moi via la page contact. (code : delai)",
+        true,
+      ),
+    );
+    xhr.addEventListener("abort", () => echouer(0, ""));
+    xhr.timeout = DELAI_MAX_MS;
+    xhr.open("POST", URL_DEPOT);
     xhr.send(data);
   }
 
