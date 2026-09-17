@@ -63,10 +63,13 @@ def test_opening_avoids_jargon_and_gender():
 
 
 def test_opening_flags_reduced_confidence_when_no_cv():
+    """Le récit d'ouverture décrit le PROFIL : l'arrivée prédite est dite une seule fois, en
+    première page. Sans validation croisée, il le dit."""
     confident = N.opening_narrative(_twin(), None, _pred(mae=2.8))      # cv présent
     cautious = N.opening_narrative(_twin(), None, _pred(mae=None))      # cv None (régime faible)
-    assert "confirmer" not in confident
-    assert "confirmer" in cautious
+    assert "valid" not in confident and "ordre de grandeur" not in confident
+    assert "valid" in cautious and "ordre de grandeur" in cautious
+    assert "arriv" not in confident      # pas de second endroit où l'arrivée se répète
 
 
 def test_glossary_covers_six_concepts():
@@ -114,15 +117,20 @@ def test_race_strategy_uses_computed_night_and_segments():
     ]
     course = SimpleNamespace(segments=segs_course)
     plan_segs = [
-        SimpleNamespace(off1=10, night=False, arr_clock="ven. 18:00"),
-        SimpleNamespace(off1=40, night=True, arr_clock="ven. 21:00"),
-        SimpleNamespace(off1=70, night=True, arr_clock="sam. 05:00"),
+        SimpleNamespace(index=1, off1=10, night=False, arr_clock="ven. 18:00",
+                        to="Col", t_move_min=90, stop_min=5),
+        SimpleNamespace(index=2, off1=40, night=True, arr_clock="ven. 21:00",
+                        to="Vallée", t_move_min=180, stop_min=5),
+        SimpleNamespace(index=3, off1=70, night=True, arr_clock="sam. 05:00",
+                        to="Arrivée", t_move_min=480, stop_min=0),
     ]
-    plan = SimpleNamespace(segments=plan_segs)
+    plan = SimpleNamespace(segments=plan_segs,
+                           night_runs=[[plan_segs[1], plan_segs[2]]])
     items = N.race_strategy(course, plan)
     blob = " ".join(i["body"] for i in items)
     assert "Col" in blob and "Vall" in blob          # segments-clés réels
-    assert "21:00" in blob and "05:00" in blob        # heures de nuit calculées
+    # la nuit part de la FIN du segment de jour qui la précède (18:00) et va jusqu'à 05:00
+    assert "18:00" in blob and "05:00" in blob
 
 
 def test_durability_pourtoi_handles_missing_hr():
@@ -135,8 +143,8 @@ def test_caption_record_qualitative_follows_fraction():
     twin = _twin(vc_kmh=10.0)
     low = N.caption_record(twin, SimpleNamespace(genuine=[SimpleNamespace(vga_kmh=6.0)]))   # 60 %
     high = N.caption_record(twin, SimpleNamespace(genuine=[SimpleNamespace(vga_kmh=9.5)]))   # 95 %
-    assert "loin sous le plafond" in low
-    assert "proche de ton seuil" in high and "loin sous le plafond" not in high
+    assert "loin du plafond" in low
+    assert "proche de ton seuil" in high and "loin du plafond" not in high
 
 
 def test_caption_record_suppresses_vc_fraction_when_implausible():
@@ -181,10 +189,12 @@ def test_caption_record_mentions_terracotta_only_with_flat_points():
 
 
 def test_caption_record_labels_past_ultras_distinctly():
-    """R4 : le « % de ta VC » des ultras PASSÉS est étiqueté comme tel (≠ intensité cible)."""
+    """R4 : le « % de ta VC » des ultras PASSÉS est étiqueté comme tel (≠ intensité cible),
+    sans renvoyer à une section du rapport qui n'existe plus."""
     txt = N.caption_record(_twin(vc_kmh=10.0),
                            SimpleNamespace(genuine=[SimpleNamespace(vga_kmh=6.0)]))
-    assert "pass\\'es" in txt and "distinguer" in txt
+    assert "pass\\'es" in txt
+    assert "Synth" not in txt and "page" not in txt
 
 
 def test_presentation_thresholds_come_from_config():

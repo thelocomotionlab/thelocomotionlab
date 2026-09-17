@@ -1,8 +1,8 @@
-"""Rendu des documents LaTeX du rapport v2 : Jinja2 → .tex → PDF (XeLaTeX, biber pour le
-rapport). Trois gabarits, un même dossier de travail : ``report.tex.j2`` (le rapport, six
-pages), ``fiche_assistance.tex.j2`` (la fiche détachable) et ``bracelet.tex.j2`` (la bande à
-découper). Classe, polices, logos et figures sont copiés à côté du .tex — la classe charge ses
-polices en chemin relatif (``Path=fonts/``)."""
+"""Rendu des documents LaTeX du rapport v3 : Jinja2 → .tex → PDF (XeLaTeX, biber pour le
+rapport). Deux gabarits, un même dossier de travail : ``report.tex.j2`` (le rapport, trois
+pages) et ``feuille.tex.j2`` (la feuille à emporter, A4 paysage recto-verso, détachable).
+Classe, polices, marque et figures sont copiés à côté du .tex — la classe charge ses polices
+en chemin relatif (``Path=fonts/``)."""
 
 from __future__ import annotations
 
@@ -15,8 +15,7 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined
 _LATEX_DIR = Path(__file__).parent / "latex"
 _TEMPLATE_SUPPORT = ("locomotionreport.cls", "math.tex", "references.bib")
 REPORT_TEMPLATE = "report.tex.j2"
-FICHE_TEMPLATE = "fiche_assistance.tex.j2"
-BRACELET_TEMPLATE = "bracelet.tex.j2"
+FEUILLE_TEMPLATE = "feuille.tex.j2"
 
 
 def _jinja_env() -> Environment:
@@ -109,5 +108,11 @@ def build_pdf(context: dict, figures_dir: str | Path, work_dir: str | Path) -> P
                           figures_dir=figures_dir, biber=True, passes=3)
 
 
+def build_feuille(context: dict, figures_dir: str | Path, work_dir: str | Path) -> Path:
+    """Compile la feuille à emporter (deux pages A4 paysage) ; renvoie le chemin du PDF."""
+    return build_document(FEUILLE_TEMPLATE, context, work_dir, name="feuille",
+                          figures_dir=figures_dir, passes=2)
+
+
 __all__ = ["render_template", "render_tex", "prepare_workdir", "clean_aux", "build_document",
-           "build_pdf", "REPORT_TEMPLATE", "FICHE_TEMPLATE", "BRACELET_TEMPLATE"]
+           "build_pdf", "build_feuille", "REPORT_TEMPLATE", "FEUILLE_TEMPLATE"]

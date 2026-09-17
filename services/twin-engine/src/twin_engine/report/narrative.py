@@ -16,6 +16,7 @@ from __future__ import annotations
 from ..config import NarrativeParams
 from ..minetti import grade_factor
 from ._format import courses_sur, fr, hm, tex_escape
+from .feuille import night_sections
 
 # --- seuils de PRÉSENTATION ----------------------------------------------------
 # Exposant de Riegel = DÉCLIN de l'allure quand la durée s'allonge (orthogonal à la VC, qui mesure
@@ -102,7 +103,11 @@ _DURABILITY_EXPLAIN = {
 
 
 def opening_narrative(twin, calibration, prediction, cfg=None) -> str:
-    """2–3 phrases qui synthétisent le profil et annoncent la suite, en langage clair."""
+    """Le profil de l'athlète en deux phrases, en langage clair.
+
+    L'arrivée prédite et son intervalle sont dits UNE fois, sur la première page : les répéter
+    ici donnerait deux fois le même chiffre à deux endroits, et un jour ils divergeraient.
+    """
     parts: list[str] = []
     pw = _profile_word(twin, cfg)
     if pw:
@@ -115,20 +120,12 @@ def opening_narrative(twin, calibration, prediction, cfg=None) -> str:
             f"R\\'esistance \\`a la fatigue : \\textbf{{{dw}}}, avec {_pct(twin.durability_pct)} "
             f"de perte d'efficacit\\'e en fin de longue sortie — {_DURABILITY_EXPLAIN[dw]}."
         )
-    if prediction is not None:
-        closing = f"On pr\\'edit ton arriv\\'ee autour de \\textbf{{{hm(prediction.finish_hours)}}}"
-        if vc_frac_band(prediction.vc_fraction, cfg) == "low":
-            closing += (
-                f", \\`a {_pct(prediction.vc_fraction * 100)} de ta vitesse critique seulement : "
-                "la vitesse ne sera pas le sujet. L'endurance, la durabilit\\'e et le "
-                "ravitaillement d\\'ecideront"
-            )
-        if prediction.cross_validation is None:
-            closing += " (\\`a confirmer : peu d'ultras comparables pour valider la m\\'ethode sur toi)"
-        closing += (". La suite d\\'ecoupe l'effort segment par segment, avec des fen\\^etres "
-                    "horaires plut\\^ot que des heures s\\`eches.")
-        parts.append(closing)
-    else:
+    if prediction is not None and prediction.cross_validation is None:
+        parts.append(
+            "Peu d'ultras comparables dans ton archive : la m\\'ethode n'a pas encore pu \\^etre "
+            "valid\\'ee sur toi, et les chiffres qui suivent sont un ordre de grandeur."
+        )
+    elif prediction is None:
         parts.append(
             "Faute d'assez d'ultras comparables, la pr\\'ediction reste prudente : "
             "prends les chiffres qui suivent comme un ordre de grandeur, pas comme un plan ferme."
@@ -206,7 +203,13 @@ def endurance_pourtoi(twin, cfg=None) -> str | None:
     return f"Ton exposant vaut \\textbf{{{fr(twin.endurance_E, 2)}}} — {tail}"
 
 
-def durability_pourtoi(twin, cfg=None) -> str | None:
+def durability_pourtoi(twin, cfg=None, fade_source: str = "config") -> str | None:
+    """Ce que le découplage mesuré demande, et ce que le plan en a RÉELLEMENT fait.
+
+    ``fade_source`` est la source du fade servie par le plan (``plan.fade_source_used``) :
+    sans elle, le conseil promettait une dérive « faite pour toi » alors que le plan tournait
+    sur la valeur commune — deux pages du même rapport se contredisaient.
+    """
     if twin.durability_pct is None:
         return (
             "Ta durabilit\\'e n'a pas pu \\^etre chiffr\\'ee (fr\\'equence cardiaque absente de la "
@@ -215,11 +218,17 @@ def durability_pourtoi(twin, cfg=None) -> str | None:
     dw = _durability_word(twin, cfg)
     advice = {
         "excellente": "tu peux viser une d\\'erive tr\\`es l\\'eg\\`ere : tiens ton allure, elle paiera.",
-        "bonne": "la d\\'erive contr\\^ol\\'ee du plan est faite pour toi : pars sans t'emballer.",
+        "bonne": "pars sans t'emballer, l'usure viendra progressivement.",
         "à surveiller": "\\textbf{garde de la marge au d\\'epart} : ta fin de course se jouera surtout sur la gestion.",
     }.get(dw, "")
+    plan_says = {
+        "splits": " La d\\'erive du plan est mesur\\'ee sur les moiti\\'es de tes propres courses.",
+        "durability": " La d\\'erive du plan est r\\'egl\\'ee sur ce d\\'ecouplage.",
+        "config": " La d\\'erive du plan, elle, reste la valeur commune : tes donn\\'ees n'en disent "
+                  "pas encore assez pour la r\\'egler sur toi.",
+    }.get(fade_source, "")
     return (
-        f"\\textbf{{{_pct(twin.durability_pct)}}} de d\\'ecouplage : {advice} "
+        f"\\textbf{{{_pct(twin.durability_pct)}}} de d\\'ecouplage : {advice}{plan_says} "
         "Avec le ravitaillement, c'est ce qui d\\'ecide vraiment d'un ultra."
     )
 
@@ -290,36 +299,25 @@ def demande_key_sentence(course) -> str:
     )
 
 
-def _night_clock(plan):
-    """(heure de début, heure de fin) de la plus longue section de nuit, ou None."""
-    runs, cur = [], []
-    for s in plan.segments:
-        if s.night:
-            cur.append(s)
-        elif cur:
-            runs.append(cur)
-            cur = []
-    if cur:
-        runs.append(cur)
-    if not runs:
-        return None
-    longest = max(runs, key=len)
-    return longest[0].arr_clock, longest[-1].arr_clock, longest[0].off1, longest[-1].off1
-
-
 def race_strategy(course, plan) -> list[dict]:
     """Recommandations opérationnelles GÉNÉRÉES : nuit, plus grosse montée/descente, ravito."""
     items: list[dict] = []
-    night = _night_clock(plan)
-    if night:
-        h0, h1, km0, km1 = night
-        when = f" ({h0} \\`a {h1})" if h0 and h1 else ""
+    # les sections de nuit viennent du plan (PacingPlan.night_runs) : la même lecture que la
+    # feuille et que le reste du rapport, y compris quand la course en traverse deux
+    sections = night_sections(plan)
+    if sections:
+        where = " ; ".join(
+            f"km\\,{n['from_km']} \\`a {n['to_km']}"
+            + (f" ({tex_escape(n['from_clock'])} \\`a {tex_escape(n['to_clock'])})"
+               if n["from_clock"] and n["to_clock"] else "")
+            for n in sections
+        )
         items.append({
             "title": "\\'Eclairage et nuit",
             "body": (
-                f"Section de nuit autour du \\textbf{{km\\,{fr(km0, 0)} au km\\,{fr(km1, 0)}}}{when} : "
-                "frontale charg\\'ee \\textbf{+ batterie/pile de rechange}, et de quoi avoir chaud "
-                "(la temp\\'erature chute la nuit, surtout en altitude)."
+                f"{'Deux sections' if len(sections) > 1 else 'Section'} de nuit "
+                f"\\textbf{{{where}}} : frontale charg\\'ee \\textbf{{+ batterie/pile de rechange}}, "
+                "et de quoi avoir chaud (la temp\\'erature chute la nuit, surtout en altitude)."
             ),
         })
     k = key_segments(course)
@@ -374,32 +372,28 @@ def caption_record(twin, calibration, cfg=None) -> str:
         frac = mean_ultra / cs.vc_kmh
         # « % de ta VC » des ULTRAS PASSÉS (moyenne historique) — à ne pas confondre avec
         # l'intensité CIBLE de la course prédite, affichée ailleurs : on le dit explicitement.
+        # « % de ta VC » des ULTRAS PASSÉS (moyenne historique) — à ne pas confondre avec
+        # l'intensité CIBLE de la course prédite, affichée sur la première page.
         base += (
-            f" En moyenne, ces ultras pass\\'es se sont courus \\`a \\textbf{{{_pct(frac * 100)}}} "
-            "de ta VC (\\`a distinguer de l'intensit\\'e cible de TA course, en Synth\\`ese)"
-        )
-        # l'affirmation qualitative suit la valeur (pas d'« en dessous » si la fraction est haute)
-        base += (
-            " : un ultra se court tr\\`es loin sous le plafond."
-            if vc_frac_band(frac, cfg) == "low"
-            else " : d\\'ej\\`a proche de ton seuil pour des efforts aussi longs."
+            f" Tes ultras pass\\'es se sont courus \\`a \\textbf{{{_pct(frac * 100)}}} de ta VC"
+            + (" : tr\\`es loin du plafond."
+               if vc_frac_band(frac, cfg) == "low"
+               else " : d\\'ej\\`a proche de ton seuil pour des efforts aussi longs.")
         )
     return base
 
 
 def caption_validation(prediction, cfg=None) -> str:
-    cv = prediction.cross_validation
+    """Le nombre de l'erreur est dit une seule fois, dans l'encadré de confiance : ici on ne
+    donne que la lecture de la figure et la bande qu'elle trace."""
     base = (
         "\\`A lire : chaque point est un de tes ultras, pr\\'edit \\emph{sans lui}. "
         "Plus c'est proche de la diagonale, mieux la m\\'ethode te conna\\^it."
     )
-    if cv:
+    if prediction.cross_validation:
         # la bande tracée par la figure = le seuil 🟢 de la validation croisée (config, pas en dur)
         band = getattr(getattr(cfg, "sufficiency", None), "cv_error_green_pct", 5.0)
-        base += (
-            f" Ici, \\`a \\textbf{{{_pct(cv.mae_pct, 1)}}} pr\\`es en moyenne "
-            f"(bande $\\pm${fr(band, 0)}\\,{PCT})."
-        )
+        base += f" La bande est le seuil de confiance pleine ($\\pm${fr(band, 0)}\\,{PCT})."
     return base
 
 
@@ -504,7 +498,8 @@ def build_narrative(course, twin, calibration, prediction, plan, race, cfg) -> d
         "deq_pourtoi": deq_pourtoi(course),
         "endurance_intuition": endurance_intuition(),
         "endurance_pourtoi": endurance_pourtoi(twin, cfg),
-        "durability_pourtoi": durability_pourtoi(twin, cfg),
+        "durability_pourtoi": durability_pourtoi(
+            twin, cfg, fade_source=getattr(plan, "fade_source_used", "config") if plan else "config"),
         "prediction_pourtoi": prediction_pourtoi(prediction) if prediction else None,
         "intensity_feeling": intensity_feeling(prediction, cfg) if prediction else None,
         "width_prescription": width_prescription(prediction, cfg) if prediction else None,

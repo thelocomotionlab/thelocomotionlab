@@ -345,11 +345,19 @@ export default async function AnnexePage({ params }) {
               ["Mouvement / arrêts / horloge", `${duree(plan.t_move_h)} / ${duree(plan.t_stops_h)} / ${duree(plan.t_clock_h)}`],
               ["Arrêts", plan.stops_policy?.sentence],
               [
-                "Budget d’arrêts personnel",
-                plan.stops_budget
-                  ? `${n(plan.stops_budget.rate_min_per_h, 0, "min par heure de mouvement")}, soit ${duree(
-                      plan.stops_budget.hours,
-                    )} sur cette course (${plan.stops_budget.n} ultras)`
+                "Taux d’arrêt du plan",
+                plan.stops
+                  ? `${n(plan.stops.rate_min_per_h, 0, "min par heure de mouvement")}${
+                      plan.stops.measured ? ` (mesuré sur ${plan.stops.n} de tes ultras)` : ""
+                    }`
+                  : null,
+              ],
+              [
+                "Nuit",
+                plan.nuit?.sections?.length
+                  ? plan.nuit.sections
+                      .map((s) => `km ${s.from_km} → ${s.to_km}`)
+                      .join(" ; ") + ` — ${plan.nuit.heures} (${plan.nuit.part_pct} %)`
                   : null,
               ],
               ["Dérive", `−${plan.fade_pct} % du début à la fin (${plan.fade_source_used})`],

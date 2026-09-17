@@ -9,6 +9,7 @@ chargeable depuis un JSON (cf. examples/nice-100m.json).
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -17,6 +18,51 @@ from typing import Any
 import numpy as np
 
 from .._dt import parse_duration_h, parse_iso
+
+
+@dataclass(frozen=True)
+class CrewAccess:
+    """Un point où l'assistance a le DROIT d'être (règlement de course), et ce qu'elle y prépare.
+
+    ``aid_index`` indexe ``RaceSpec.aid_names`` : 0 = le départ, n = le n-ième point de passage.
+    ``note`` est libre — vide, la feuille imprime une case à remplir au stylo."""
+
+    aid_index: int
+    note: str = ""
+
+
+@dataclass(frozen=True)
+class Nutrition:
+    """Débits DÉCLARÉS par l'athlète. Rien n'est deviné : sans les deux, les colonnes eau et
+    ravito du tableau de marche sortent vides, prêtes à être remplies à la main."""
+
+    water_l_per_h: float | None = None
+    carbs_g_per_h: float | None = None
+
+    @property
+    def declared(self) -> bool:
+        return self.water_l_per_h is not None and self.carbs_g_per_h is not None
+
+
+@dataclass(frozen=True)
+class Phase:
+    """Une partie de la course dans la langue de l'athlète. ``from_aid_index`` indexe
+    ``aid_names`` : la partie commence à ce point de passage (0 = le départ)."""
+
+    name: str
+    note: str = ""
+    from_aid_index: int = 0
+
+
+# Un nom de ravitaillement BOUCHON : « AS3 », « AS3 km28.9 », « PC 12 », ou le kilomètre répété
+# dans le nom. Un plan dont les lieux n'ont pas de nom n'est pas vendable — on ne laisse pas
+# partir un rapport où l'athlète cherche « AS7 » sur le terrain.
+_PLACEHOLDER_AID = re.compile(r"^\s*(AS|PC|CP|R)\s*\d+\b|\bkm\s*\d+([.,]\d+)?\s*$", re.I)
+
+
+def placeholder_aid_names(race: "RaceSpec") -> list[str]:
+    """Les noms de ravitaillement qui ressemblent à des bouchons (liste vide = tout va bien)."""
+    return [n for n in race.aid_names if n and _PLACEHOLDER_AID.search(n)]
 
 
 @dataclass(frozen=True)
@@ -56,6 +102,13 @@ class RaceSpec:
     tz_offset_h: float = 0.0
     major_base_indices: tuple[int, ...] = ()
     crew_access_indices: tuple[int, ...] = ()
+    # points d'assistance du RÈGLEMENT (rapport v3) : ils priment sur crew_access_indices,
+    # qui reste lu pour les specs écrites avant
+    crew: tuple[CrewAccess, ...] = ()
+    nutrition: Nutrition = Nutrition()
+    # parties de course nommées par l'athlète ; vide → le moteur coupe en deux à la moitié du
+    # temps prévu (report/context.py)
+    phases: tuple[Phase, ...] = ()
     official_dplus_m: float | None = None
     target_hours: float | None = None
     technicity_pct: float = 0.0
@@ -75,6 +128,11 @@ class RaceSpec:
                 raise ValueError("au moins le départ et l'arrivée sont requis")
             if list(self.aid_km) != sorted(self.aid_km):
                 raise ValueError("aid_km doit être croissant (km cumulés officiels)")
+
+    @property
+    def crew_aid_indices(self) -> tuple[int, ...]:
+        """Les points d'assistance, en index de ``aid_names`` (vide = non déclarés)."""
+        return tuple(c.aid_index for c in self.crew)
 
     @property
     def has_aid_stations(self) -> bool:
@@ -102,6 +160,19 @@ class RaceSpec:
             tz_offset_h=float(d.get("tz_offset_h", 0.0)),
             major_base_indices=tuple(int(i) for i in d.get("major_base_indices", ())),
             crew_access_indices=tuple(int(i) for i in d.get("crew_access_indices", ())),
+            crew=tuple(
+                CrewAccess(aid_index=int(c["aid_index"]), note=str(c.get("note") or ""))
+                for c in d.get("crew", ())
+            ),
+            nutrition=Nutrition(
+                water_l_per_h=_optional_float((d.get("nutrition") or {}).get("water_l_per_h")),
+                carbs_g_per_h=_optional_float((d.get("nutrition") or {}).get("carbs_g_per_h")),
+            ),
+            phases=tuple(
+                Phase(name=str(f["name"]), note=str(f.get("note") or ""),
+                      from_aid_index=int(f.get("from_aid_index", 0)))
+                for f in d.get("phases", ())
+            ),
             official_dplus_m=d.get("official_dplus_m"),
             # "31h", "31h30", "31:00:00" ou un nombre d'heures (illisible → ValueError :
             # mieux vaut refuser que caler un plan sur la mauvaise durée)
@@ -113,6 +184,13 @@ class RaceSpec:
     @classmethod
     def from_json(cls, path: str | Path) -> "RaceSpec":
         return cls.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
+
+
+def _optional_float(value) -> float | None:
+    """Nombre déclaré, ou None — une clé absente, nulle ou vide n'invente pas de valeur."""
+    if value is None or value == "":
+        return None
+    return float(value)
 
 
 def stops_policy_min(n_segments: int, major_base_indices, cfg) -> np.ndarray:
@@ -129,4 +207,5 @@ def stops_policy_min(n_segments: int, major_base_indices, cfg) -> np.ndarray:
     return stops_min
 
 
-__all__ = ["RaceSpec", "stops_policy_min"]
+__all__ = ["CrewAccess", "Nutrition", "Phase", "RaceSpec", "placeholder_aid_names",
+           "stops_policy_min"]

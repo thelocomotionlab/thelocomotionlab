@@ -18,6 +18,7 @@ from pathlib import Path
 import numpy as np
 
 from ._format import detex, fr, hm
+from .feuille import contact_points, safety_ratios
 
 _WEEKDAYS_FR = ["lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim."]
 
@@ -73,15 +74,9 @@ def _clock(when: datetime | None, hours: float) -> str:
 
 
 def crew_indices(race, n_segments: int) -> tuple[int, ...]:
-    """Segments dont la fin est un point d'assistance : ceux de la spec, sinon les bases
-    majeures, sinon tous les points de passage (l'arrivée exclue : elle est servie à part)."""
-    declared = tuple(i for i in race.crew_access_indices if 0 <= i < n_segments - 1)
-    if declared:
-        return declared
-    majors = tuple(i for i in race.major_base_indices if 0 <= i < n_segments - 1)
-    if majors:
-        return majors
-    return tuple(range(max(n_segments - 1, 0)))
+    """Segments dont la fin est un point d'assistance (cf. :func:`feuille.contact_points`,
+    qui dit en plus si ces points sont déclarés ou seulement supposés)."""
+    return contact_points(race, n_segments)[0]
 
 
 def _point(seg, start, *, is_major: bool, is_finish: bool, lo_h: float, hi_h: float) -> CrewPoint:
@@ -96,13 +91,21 @@ def _point(seg, start, *, is_major: bool, is_finish: bool, lo_h: float, hi_h: fl
     )
 
 
-def crew_points(plan, race) -> list[CrewPoint]:
-    """Les points d'assistance du plan (fourchette de course de chaque segment)."""
+def crew_points(plan, race, prediction=None) -> list[CrewPoint]:
+    """Les points d'assistance du plan, dans leurs BORNES DE SÉCURITÉ.
+
+    Avec la prédiction, les bornes de sécurité de l'arrivée sont étalées sur le temps cumulé
+    de chaque passage : l'assistance lit partout la même fenêtre que la première page, et la
+    dernière ligne redonne exactement l'arrivée « au plus tôt / au plus tard ». Sans elle, on
+    retombe sur la fourchette de course des segments.
+    """
     segs = plan.segments
     start = plan.start_time
     majors = set(race.major_base_indices)
+    lo_r, hi_r = safety_ratios(plan, prediction) if prediction is not None else (None, None)
     return [_point(segs[i], start, is_major=(i in majors), is_finish=False,
-                   lo_h=segs[i].lo_h, hi_h=segs[i].hi_h)
+                   lo_h=segs[i].cum_clock_h * lo_r if lo_r else segs[i].lo_h,
+                   hi_h=segs[i].cum_clock_h * hi_r if hi_r else segs[i].hi_h)
             for i in crew_indices(race, len(segs))]
 
 
@@ -377,7 +380,13 @@ def annex_payload(*, ctx: dict, course, twin, calibration, prediction, plan, rac
             **{k: v for k, v in plan.to_dict().items() if k != "segments"},
             "fade_pct": ctx["fade_pct_plain"], "fade_evidence": cfg.report.fade_evidence,
             "stops_policy": ctx["stops_policy_plain"],
-            "stops_budget": ctx["stops_budget_plain"],
+            "stops": ctx["stops_plain"],
+            "nuit": {
+                "sections": [{k: detex(v) if isinstance(v, str) else v for k, v in n.items()}
+                             for n in ctx["night_sections"]],
+                "heures": detex(ctx["night_hours_hm"]), "part_pct": ctx["night_share_pct"]},
+            "parties": [{k: detex(v) if isinstance(v, str) else v for k, v in p.items()}
+                        for p in ctx["feuille_parts"]],
             "segments": [{**s.to_dict(), "consigne": detex(c)} for s, c in
                          zip(plan.segments, ctx["consignes_plain"])],
         },
@@ -416,20 +425,20 @@ def write_annex(payload: dict, path: Path) -> Path:
     return path
 
 
-LIVRABLES = ("fiche.pdf", "bracelet.pdf", "plan.ics", "plan.gpx", "annexe.json")
+LIVRABLES = ("feuille.pdf", "plan.ics", "plan.gpx", "annexe.json")
 
 
 def write_livrables(*, context: dict, course, twin, calibration, prediction, plan, race,
                     sufficiency, cfg, out_dir: Path, figures_dir: Path | None,
                     render_pdf: bool = True, generated_at: datetime | None = None) -> dict[str, Path]:
-    """Écrit à côté du rapport ce qui l'accompagne : ``fiche.pdf``, ``bracelet.pdf``,
+    """Écrit à côté du rapport ce qui l'accompagne : ``feuille.pdf`` (la feuille à emporter),
     ``plan.ics``, ``plan.gpx``, ``annexe.json``. Renvoie {nom: chemin} pour ce qui a pu être
     produit (pas de calendrier sans heure de départ, pas de GPX sans coordonnées)."""
-    from .render import BRACELET_TEMPLATE, FICHE_TEMPLATE, build_document
+    from .render import build_feuille
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    points = crew_points(plan, race)
+    points = crew_points(plan, race, prediction)
     finish = finish_point(plan, prediction)
     ref = context["annex_ref"]
     athlete = context["athlete_plain"]
@@ -453,13 +462,9 @@ def write_livrables(*, context: dict, course, twin, calibration, prediction, pla
     written["annexe.json"] = write_annex(payload, out_dir / "annexe.json")
 
     if render_pdf:
-        fiche = build_document(FICHE_TEMPLATE, context, out_dir / "tex-fiche", name="fiche")
-        shutil_copy(fiche, out_dir / "fiche.pdf")
-        written["fiche.pdf"] = out_dir / "fiche.pdf"
-        bracelet = build_document(BRACELET_TEMPLATE, context, out_dir / "tex-bracelet",
-                                  name="bracelet")
-        shutil_copy(bracelet, out_dir / "bracelet.pdf")
-        written["bracelet.pdf"] = out_dir / "bracelet.pdf"
+        feuille = build_feuille(context, figures_dir, out_dir / "tex-feuille")
+        shutil_copy(feuille, out_dir / "feuille.pdf")
+        written["feuille.pdf"] = out_dir / "feuille.pdf"
     return written
 
 

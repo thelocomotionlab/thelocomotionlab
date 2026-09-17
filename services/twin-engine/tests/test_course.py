@@ -86,12 +86,20 @@ def test_dplus_per_km():
 
 
 def test_nice_spec_loads_from_json():
+    """La spec servie est le carnet de course officiel 2026 : noms réels, kilomètres réels,
+    points d'assistance du règlement."""
+    from twin_engine.course.spec import placeholder_aid_names
+
     race = RaceSpec.from_json(EXAMPLES / "nice-100m.json")
     assert race.n_segments == 16
-    assert race.official_finish_km == 167.2
-    assert race.major_base_indices == (4, 8, 11)
+    assert race.official_finish_km == 169.7
+    assert race.major_base_indices == (3, 7, 10)
     assert race.start_time is not None and race.start_time.hour == 13
     assert race.lat == 43.703
+    assert race.aid_names[0] == "Auron (départ)" and race.aid_names[-1] == "Nice"
+    assert placeholder_aid_names(race) == []
+    assert race.crew_aid_indices == (4, 6, 8, 10, 11, 13, 14)
+    assert not race.nutrition.declared        # aucun débit déclaré : les cases restent vides
 
 
 def test_spec_validation_rejects_mismatch():

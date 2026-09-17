@@ -17,9 +17,10 @@ import matplotlib.font_manager as fm  # noqa: E402
 import numpy as np  # noqa: E402
 from matplotlib.backends.backend_agg import FigureCanvasAgg  # noqa: E402
 from matplotlib.figure import Figure  # noqa: E402
-from matplotlib.ticker import MultipleLocator  # noqa: E402
+from matplotlib.ticker import FuncFormatter, NullFormatter  # noqa: E402
 
 from .charte import FONT_FAMILY, FONT_FILES, hexa  # noqa: E402
+from .feuille import contact_points  # noqa: E402
 
 # palette : les tokens de la charte (report/charte.py = theme.css), jamais une valeur en dur
 SAGE = hexa("primary")
@@ -69,7 +70,37 @@ _init_style()
 _RENDER_LOCK = threading.Lock()
 
 
-def _fig_profil(course, ax) -> None:
+def fr_num(x: float, decimals: int = 1) -> str:
+    """Nombre à la française : virgule décimale, espace fine aux milliers, zéros de fin
+    retirés. Toutes les graduations, légendes et titres des figures passent par ici — c'est
+    ce qui garantit qu'une même grandeur ne sorte pas deux fois arrondie autrement."""
+    s = f"{x:,.{decimals}f}".replace(",", "\u202f").replace(".", ",")
+    return s.rstrip("0").rstrip(",") if "," in s else s
+
+
+def _fr_axes(*axes, x: int = 0, y: int = 0) -> None:
+    """Graduations à la française sur les axes donnés (x/y = nombre de décimales)."""
+    for ax in axes:
+        ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _p, n=x: fr_num(v, n)))
+        ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _p, n=y: fr_num(v, n)))
+
+
+def _night_bands(ax, plan, x_of) -> bool:
+    """Trame des sections de nuit du plan, en fond. ``x_of(segment)`` donne l'abscisse de fin
+    d'un segment ; la bande part de la fin du segment précédent. Renvoie True si trame il y a."""
+    if plan is None:
+        return False
+    drawn = False
+    for run in plan.night_runs:
+        first, last = run[0], run[-1]
+        i0 = plan.segments.index(first)
+        x0 = x_of(plan.segments[i0 - 1]) if i0 > 0 else 0.0
+        ax.axvspan(x0, x_of(last), color=SAGE, alpha=0.16, lw=0, zorder=0)
+        drawn = True
+    return drawn
+
+
+def _fig_profil(course, ax, plan=None, *, title: bool = True) -> None:
     off = course.off_km_grid
     es = course.alt_smooth_m
     aid = course.aid_km
@@ -84,13 +115,16 @@ def _fig_profil(course, ax) -> None:
     ax.set_xlim(float(off.min()), float(off.max()))
     ax.set_ylim(ymin, ymax + pad)
     ax.margins(x=0)
+    _night_bands(ax, plan, lambda seg: seg.off1)
     ax.set_xlabel("distance officielle (km)")
     ax.set_ylabel("altitude (m)")
-    ax.set_title(
-        f"Profil altimétrique — {course.name} "
-        f"({course.length_km:.0f} km, {course.dplus_m:.0f} m D+)",
-        fontsize=10.5, color=TERRA, weight="bold", loc="left",
-    )
+    _fr_axes(ax)
+    if title:
+        ax.set_title(
+            f"Profil altimétrique — {course.name} "
+            f"({fr_num(course.length_km, 0)} km, {fr_num(course.dplus_m, 0)} m D+)",
+            fontsize=10.5, color=TERRA, weight="bold", loc="left",
+        )
 
 
 def _fig_record(twin, calibration, ax) -> None:
@@ -109,7 +143,7 @@ def _fig_record(twin, calibration, ax) -> None:
     if cs is not None:
         tt = np.linspace(600, 21600, 200)
         ax.plot(tt / 60, (cs.vc_ms * tt + cs.dprime_m) / tt * 3.6, color=GOLDINK, lw=1.6,
-                label=f"modèle VC = {cs.vc_kmh:.2f} km/h")
+                label=f"modèle VC = {fr_num(cs.vc_kmh, 1)} km/h")
         ax.axhline(cs.vc_kmh, color=SAGE, lw=1.2, ls=(0, (4, 3)))
     if calibration.genuine:
         g = np.array([(u.hours * 60, u.vga_kmh) for u in calibration.genuine])
@@ -118,52 +152,13 @@ def _fig_record(twin, calibration, ax) -> None:
     ax.set_xscale("log")
     ax.set_xlabel("durée (min, log)")
     ax.set_ylabel("vitesse ajustée (km/h)")
+    _fr_axes(ax, y=1)
+    ax.xaxis.set_minor_formatter(NullFormatter())
     ax.legend(fontsize=7.4, framealpha=0.9, edgecolor=GRID, loc="upper right")
     ax.set_title("Courbe record ajustée et vitesse critique", fontsize=10.5,
                  color=TERRA, weight="bold", loc="left")
 
 
-def _fig_demande(course, ax1, ax2) -> None:
-    segs = course.segments
-    idx = [s.index for s in segs]
-    ax1.bar(idx, [s.dplus_m for s in segs], color=TERRA, alpha=0.85, width=0.7)
-    ax1.set_ylabel("D+ (m)")
-    ax1.set_title("Demande par segment : dénivelé positif", fontsize=10, color=TERRA,
-                  weight="bold", loc="left")
-    ax1.grid(axis="x", alpha=0)
-    ax2.bar(idx, [s.deq_km for s in segs], color=SAGE, alpha=0.9, width=0.7, label="Deq")
-    ax2.bar(idx, [s.off_len for s in segs], color=GOLD, alpha=0.5, width=0.4, label="distance réelle")
-    ax2.set_ylabel("km")
-    ax2.set_xlabel("segment")
-    ax2.legend(fontsize=8, edgecolor=GRID)
-    ax2.set_title("Distance réelle vs équivalent plat", fontsize=10, color=TERRA,
-                  weight="bold", loc="left")
-    ax2.grid(axis="x", alpha=0)
-    ax2.xaxis.set_major_locator(MultipleLocator(1))
-
-
-def _fig_pacing(plan, twin, ax) -> None:
-    segs = plan.segments
-    idx = [s.index for s in segs]
-    vgas = [s.v_ga_kmh for s in segs]
-    ax.plot(idx, vgas, "-o", color=TERRA, lw=1.6, ms=4, label="vitesse ajustée cible")
-    ax.set_ylabel("vitesse ajustée (km/h)", color=TERRA)
-    ax.tick_params(axis="y", labelcolor=TERRA)
-    ax.set_xlabel("segment")
-    ax.xaxis.set_major_locator(MultipleLocator(1))
-    cs = twin.critical_speed
-    if cs is not None:
-        ax.axhline(cs.vc_kmh, color=SAGE, lw=1.0, ls=(0, (4, 3)))
-    ax2 = ax.twinx()
-    ax2.bar(idx, [s.pace_min_km for s in segs], color=GOLD, alpha=0.30, width=0.6,
-            label="allure réelle (min/km)")
-    ax2.set_ylabel("allure réelle (min/km)", color=GOLDINK)
-    ax2.tick_params(axis="y", labelcolor=GOLDINK)
-    ax2.grid(False)
-    ax2.invert_yaxis()
-    ax.set_title("Plan de pacing : allure ajustée (fade) + allure réelle terrain",
-                 fontsize=10, color=TERRA, weight="bold", loc="left")
-    ax.legend(fontsize=7.6, loc="upper right", edgecolor=GRID)
 
 
 def _fig_cumul(plan, prediction, race, ax, interval_label: str = "50") -> None:
@@ -178,7 +173,7 @@ def _fig_cumul(plan, prediction, race, ax, interval_label: str = "50") -> None:
     tol = getattr(plan, "window_tolerance_pct", None)
     lo = [s.lo_h for s in segs]
     hi = [s.hi_h for s in segs]
-    band_label = (f"fenêtre de passage (±{tol:.1f} %)".replace(".", ",")
+    band_label = (f"fenêtre de passage (±{fr_num(tol, 1)} %)"
                   if on_target and tol is not None else
                   f"fourchette de course ({interval_label} %)")
     ax.fill_between(offs, lo, hi, color=SAGE, alpha=0.30, lw=0, label=band_label)
@@ -189,14 +184,49 @@ def _fig_cumul(plan, prediction, race, ax, interval_label: str = "50") -> None:
     if on_target and prediction is not None:
         ax.axhline(prediction.finish_hours, color=DEEPGRID, lw=1.2, ls=(0, (5, 3)),
                    label="prédiction du moteur")
+    _night_bands(ax, plan, lambda seg: seg.off1)
     ax.set_xlabel("distance officielle (km)")
     ax.set_ylabel("temps depuis le départ (h)")
+    _fr_axes(ax)
     ax.legend(fontsize=8, loc="upper left", edgecolor=GRID)
     ax.set_title(
         "Temps de passage cumulé sur ton objectif" if on_target
         else "Temps de passage cumulé et incertitude",
         fontsize=10, color=TERRA, weight="bold", loc="left",
     )
+
+
+def _fig_profil_feuille(course, plan, names, crew_idx, ax) -> None:
+    """Profil schématique de la feuille : une ligne brisée de ravito en ravito, les sections
+    de nuit en fond, les points de contact marqués et nommés. Pas d'axe : ça se lit à bout de
+    bras, la nuit, pas à la loupe."""
+    aid = np.asarray(course.aid_km, dtype=float)
+    alt = np.interp(aid, course.off_km_grid, course.alt_smooth_m)
+    ymin, ymax = float(alt.min()), float(alt.max())
+    span = max(ymax - ymin, 1.0)
+
+    _night_bands(ax, plan, lambda seg: seg.off1)
+    ax.fill_between(aid, alt, ymin - 0.10 * span, color=SAGE, alpha=0.34, lw=0)
+    ax.plot(aid, alt, color=TERRA, lw=1.8, solid_joinstyle="round")
+
+    crew = sorted(i for i in crew_idx if 0 <= i < len(aid))
+    if crew:
+        ax.scatter(aid[crew], alt[crew], s=54, color=GOLD, edgecolor=GOLDINK,
+                   linewidth=1.1, zorder=6)
+    for i in crew:
+        ax.annotate(f"{names[i]}\n{fr_num(aid[i], 0)} km", (aid[i], alt[i]),
+                    textcoords="offset points", xytext=(0, 11), ha="center",
+                    fontsize=7.4, color=TEXT, linespacing=1.25)
+
+    ax.set_xlim(float(aid.min()), float(aid.max()))
+    ax.set_ylim(ymin - 0.10 * span, ymax + 0.34 * span)
+    for side in ("top", "right", "left", "bottom"):
+        ax.spines[side].set_visible(False)
+    ax.grid(False)
+    ax.set_yticks([])
+    ax.set_xticks(list(aid[:: max(1, len(aid) // 8)]))
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _p: f"{fr_num(v, 0)}"))
+    ax.tick_params(axis="x", length=0, labelsize=7.4, colors=hexa("muted"), pad=2)
 
 
 def _fig_validation(prediction, ax, band_pct: float = 5.0) -> bool:
@@ -215,6 +245,7 @@ def _fig_validation(prediction, ax, band_pct: float = 5.0) -> bool:
     ax.scatter(actual, pred, s=42, color=TERRA, zorder=4)
     ax.set_xlabel("temps réel (h)")
     ax.set_ylabel("temps prédit, hors-échantillon (h)")
+    _fr_axes(ax)
     ax.set_xlim(lo, hi)
     ax.set_ylim(lo, hi)
     ax.set_aspect("equal")
@@ -249,31 +280,32 @@ def generate_figures(
         fig.savefig(out_dir / f"{name}.png", dpi=170)
         figures[name] = f"{name}.png"
 
+    names = list(race.aid_names) or [s.to for s in course.segments]
+    contacts, _ = contact_points(race, len(plan.segments))
+    crew_aid = [i + 1 for i in contacts]
+
     with _RENDER_LOCK:
-        fig = _new((7.4, 3.3))
-        _fig_profil(course, fig.subplots())
+        # page 1 : la page porte déjà le nom de la course et ses chiffres — pas de titre
+        fig = _new((7.4, 2.6))
+        _fig_profil(course, fig.subplots(), plan=plan, title=False)
         _save(fig, "profil")
 
         fig = _new((7.4, 3.5))
         _fig_record(twin, calibration, fig.subplots())
         _save(fig, "record")
 
-        fig = _new((7.4, 4.0))
-        ax1, ax2 = fig.subplots(2, 1, sharex=True)
-        _fig_demande(course, ax1, ax2)
-        _save(fig, "demande")
-
-        fig = _new((7.4, 3.4))
-        _fig_pacing(plan, twin, fig.subplots())
-        _save(fig, "pacing")
-
-        fig = _new((7.4, 3.4))
+        fig = _new((7.4, 2.9))
         _fig_cumul(plan, prediction, race, fig.subplots(), interval_label=interval_label)
         _save(fig, "cumul")
 
         fig = _new((4.6, 4.2))
         if _fig_validation(prediction, fig.subplots(), band_pct=band_pct):
             _save(fig, "validation")
+
+        # profil de la feuille : format paysage, sans axes, lisible à bout de bras
+        fig = _new((10.6, 1.75))
+        _fig_profil_feuille(course, plan, names, crew_aid, fig.subplots())
+        _save(fig, "profil_feuille")
 
     return figures
 

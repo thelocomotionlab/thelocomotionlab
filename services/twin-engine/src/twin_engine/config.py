@@ -580,11 +580,11 @@ class TargetParams:
 
 @dataclass(frozen=True)
 class ReportParams:
-    """Livraison du rapport (Phase 6, rapport v2) : version du gabarit, adresse de l'annexe
-    en ligne, bornes de PRÉSENTATION des jauges de « Ton profil » (la barre pleine = la borne
-    « meilleure »), et la preuve empirique de la dérive du plan dite en une phrase."""
+    """Livraison du rapport v3 : version du gabarit, adresse de l'annexe en ligne, bornes de
+    PRÉSENTATION des jauges de « Ton profil » (la barre pleine = la borne « meilleure »), la
+    preuve empirique de la dérive du plan dite en une phrase, et les seuils de la feuille."""
 
-    version: str = "v2.0"
+    version: str = "v3.0"
     # une page par référence de rapport ; la référence est non devinable (aléa) et la page
     # n'est ni indexée ni listée — le lien est le secret
     annex_base_url: str = "https://www.thelocomotionlab.com/services/twin/annexe"
@@ -594,10 +594,12 @@ class ReportParams:
     gauge_stops_min_per_h: float = 15.0                      # 15 min/h d'arrêt = vide, 0 = pleine
     fade_evidence: str = ("sur 30 courses, les coureurs sont en avance sur un plan plat à "
                           "mi-course 27 fois sur 30")
-    # consigne par segment (page du plan) : pente moyenne au-delà de laquelle on marche, et
-    # en deçà de laquelle le segment se court à allure régulière
-    consigne_steep_pct: float = 8.0
-    consigne_gentle_pct: float = 3.0
+    # consigne par segment : au-delà de ces dénivelés, le segment est mis en avant
+    # (terracotta) et porte la consigne qui va avec
+    strong_dplus_m: float = 800.0
+    strong_dminus_m: float = 1000.0
+    # longueur maximale d'une consigne : elle se lit d'un coup d'œil, la nuit, à bout de bras
+    consigne_max_chars: int = 60
 
 
 @dataclass(frozen=True)

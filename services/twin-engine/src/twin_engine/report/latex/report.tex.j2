@@ -1,154 +1,119 @@
-% Gabarit du rapport Locomotion Twin v2 (classe locomotionreport, Ubuntu Sans).
+% Gabarit du rapport Locomotion Twin v3 (classe locomotionreport, Ubuntu Sans).
 % Délimiteurs Jinja : chevrons doubles (variables), chevron-pourcent (blocs), chevron-dièse
-% (commentaires) — rendu par twin_engine.report.render. Six pages : couverture · ta course en une page · le plan (deux
-% pages) · ton profil · pourquoi tu peux y croire. Aucun résumé, aucune table des matières,
-% aucun chiffre en dur sur les deux premières pages : tout vient du contexte calculé
-% (tests/test_report_v2.py le vérifie entre les marqueurs LL:BEGIN / LL:END).
+% (commentaires) — rendu par twin_engine.report.render. Trois pages : ta course · le plan ·
+% ton profil et la preuve. La feuille à emporter est un document à part (feuille.tex.j2).
+% Aucun chiffre en dur : tout vient du contexte calculé (tests/test_report_v3.py le vérifie
+% entre les marqueurs LL:BEGIN / LL:END).
 \documentclass{locomotionreport}
-
-\renewcommand{\LLCoverLogoPath}{assets/logo_primary_deep}
-\renewcommand{\LLHeaderLogoPath}{assets/logo_full_white}
 
 \captionsetup{justification=raggedright, singlelinecheck=false}
 \addbibresource{references.bib}
 
-% LL:BEGIN cover
-\title{<< race_name >>}
-\subtitle{<< length_km >>\,km \textperiodcentered{} << dplus_m >>\,m\,D+ \textperiodcentered{} << dminus_m >>\,m\,D−}
-\author{The Locomotion Lab}
-\date{<< report_date >>}
-\reporttype{Rapport Locomotion Twin \textperiodcentered{} << report_version >>}
-\reportref{<< report_ref >>}
-\reportclient{<< athlete >>}
-\coversentence{<< cover_sentence >>}
-\coverbadge{<< confidence_word >>}{<< confidence_color >>}
-\coververdict{<< verdict_sentence >>}
+\LLheaddoc{<< race_name >>}{Plan de course pour << athlete >> \textperiodcentered{} << report_date >>}
 
 \begin{document}
 
-\makecover
-% LL:END cover
-
 % =====================================================================
-% LL:BEGIN une-page
-\LLpage{Ta course en une page}{<< race_name >>}
+% LL:BEGIN page-course
+\LLpage{<% if start_time_short %><< start_time_short >><% else %>Départ à préciser<% endif %>}{<< race_name >>}
+\LLfootleft{Le plan segment par segment est page 2 ; la feuille à emporter se détache à part.}
 
-\noindent\begin{minipage}[t]{0.315\linewidth}
-  \LLkpi{<< pred_central >>}{Arrivée prédite}{<% if arrival_clock %>le << arrival_clock >><% else %>temps de course, départ à préciser<% endif %>}
-\end{minipage}\hfill
-\begin{minipage}[t]{0.315\linewidth}
-  <% if plan_low %>\LLkpi{<< plan_low >> – << plan_high >>}{Fourchette de course}{<< plan_band_word >><% if arrival_window %> : << arrival_window >><% endif %>}<% else %>\LLkpi{<< interval_low >> – << interval_high >>}{Intervalle}{<< safety_word >>}<% endif %>
-\end{minipage}\hfill
-\begin{minipage}[t]{0.315\linewidth}
-  \LLkpi{<< interval_low >> – << interval_high >>}{Bornes de sécurité}{<< safety_word >><% if arrival_safety_window %> : << arrival_safety_window >><% endif %>}
-\end{minipage}
+{\fontsize{10.5}{14}\selectfont\color{LLSoft}%
+<< length_km >>\,km \textperiodcentered{} << dplus_m >>\,m\,D+ \textperiodcentered{}
+<< dminus_m >>\,m\,D− \textperiodcentered{} << n_segments >> segments\par}
+
+\vspace{8pt}
+\LLhero{<% if plan_low %>Tu arrives autour de \textbf{<< pred_central >>}<% if arrival_clock %>, le << arrival_clock >><% endif %>.\\
+<< plan_band_word|capitalize >> se joue entre \textbf{<< plan_low >>} et \textbf{<< plan_high >>}.<% else %>Tu arrives autour de \textbf{<< pred_central >>}<% if arrival_clock %>, le << arrival_clock >><% endif %>.\\
+<< safety_word|capitalize >> se joue entre \textbf{<< interval_low >>} et \textbf{<< interval_high >>}.<% endif %>}
+
+\vspace{10pt}
+\noindent\begin{minipage}[t]{0.235\linewidth}\LLtile{<% if target_mode %>Au plus tôt<% else %>Rapide<% endif %>}{<< plan_low >>}{<% if arrival_fast_clock %><< arrival_fast_clock >><% else %>départ à préciser<% endif %>}\end{minipage}\hfill
+\begin{minipage}[t]{0.235\linewidth}\LLtileaccent{<% if target_mode %>Ton objectif<% else %>Prévu<% endif %>}{<< pred_central >>}{<% if arrival_clock %><< arrival_clock >><% else %>départ à préciser<% endif %>}\end{minipage}\hfill
+\begin{minipage}[t]{0.235\linewidth}\LLtile{<% if target_mode %>Au plus tard<% else %>Prudent<% endif %>}{<< plan_high >>}{<% if arrival_cautious_clock %><< arrival_cautious_clock >><% else %>départ à préciser<% endif %>}\end{minipage}\hfill
+\begin{minipage}[t]{0.255\linewidth}\LLtilecrew{Pour l'assistance}{<% if arrival_safety_lo_clock %><< arrival_safety_lo_clock >>\LLfleche << arrival_safety_hi_clock >><% else %><< interval_low >>\LLfleche << interval_high >><% endif %>}{<< safety_word >>}\end{minipage}
+
+\vspace{14pt}
+\noindent\includegraphics[width=\linewidth]{figures/profil.png}
 
 \vspace{6pt}
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\linewidth]{figures/profil.png}
-\end{figure}
-
 \noindent\begin{minipage}[t]{0.47\linewidth}
   \LLetiquette{Le parcours}\par\vspace{3pt}
-  << length_km >>\,km, << dplus_m >>\,m de D+ et << dminus_m >>\,m de D−, soit
-  \textbf{<< deq_km >>\,km à plat} une fois la pente convertie en effort, en
-  << n_segments >>~segments entre points de passage.<% if technicity_pct %> Technicité déclarée :
-  +<< technicity_pct >>\,\%.<% endif %><% if start_time %> Départ << start_time >>.<% endif %>
-\end{minipage}\hfill
+  \textbf{<< deq_km >>\,km à plat} une fois la pente convertie en effort.<% if technicity_pct %> Technicité déclarée : +<< technicity_pct >>\,\%.<% endif %>
+<% for n in night_sections %>  <% if loop.first %><% if night_sections|length > 1 %>Deux sections de nuit<% else %>Nuit<% endif %><% else %>puis<% endif %> du km\,<< n.from_km >> au km\,<< n.to_km >><% if loop.last %>, << night_hours_hm >> en tout, soit << night_share_pct >>\,\% de ta course.<% endif %>
+<% endfor %>\end{minipage}\hfill
 \begin{minipage}[t]{0.47\linewidth}
-  \LLetiquette{Ce que ça te demande}\par\vspace{3pt}
-  <% if vc_fraction_pct %>Environ << vc_fraction_pct >>\,\% de ta vitesse critique, tenus avec une
-  dérive maîtrisée<% if vc_low %> : la vitesse ne sera pas le sujet, l'endurance et le
-  ravitaillement décideront<% else %> : la régularité et la durabilité décideront<% endif %>.<% else %>Une
-  allure très loin de tout seuil : l'endurance, la durabilité et le ravitaillement décideront.<% endif %>
-  <% if night_from_km %>Nuit du km\,<< night_from_km >> au km\,<< night_to_km >> environ : frontale.<% endif %>
-  Modèle servi : << regime_label >>.
+  \LLetiquette{Ce qui décidera}\par\vspace{3pt}
+<% if vc_fraction_pct %>  Environ << vc_fraction_pct >>\,\% de ta vitesse critique<% if vc_low %> : la vitesse ne sera pas le sujet, l'endurance et le ravitaillement décideront<% else %> : la régularité et la durabilité décideront<% endif %>.
+<% else %>  Une allure très loin de tout seuil : l'endurance, la durabilité et le ravitaillement décideront.
+<% endif %>  Mouvement << t_move_h >> + arrêts << stops.hours_hm >> = horloge \textbf{<< t_clock_h >>}.
 \end{minipage}
 
-\begin{llverdict}[<< confidence_word >>]
-<< verdict_sentence >>.\par\vspace{2pt}
-<% for r in verdict_reasons %><< r >>\par
-<% endfor %>\end{llverdict}
-% LL:END une-page
+\vspace{4pt}
+\begin{llverdict}[Confiance]
+\LLbadge{<< confidence_word >>}{<< confidence_color >>}\hspace{8pt}<< verdict_sentence >>\par\vspace{4pt}
+<< honesty >><% if width_prescription %>\par\vspace{3pt}<< width_prescription >><% endif %>
+\end{llverdict}
+% LL:END page-course
 
 % =====================================================================
-\LLpage{Le plan}{Ton allure, segment par segment}
+% LL:BEGIN page-plan
+\LLpage{Segment par segment}{Le plan}
+\LLfootleft{Mouvement << t_move_h >> + arrêts << stops.hours_hm >> = horloge << t_clock_h >>.}
 
-\textbf{Effort ajusté constant, dérive assumée.} Tu vises une vitesse \emph{ajustée à la pente}
-constante : ralentir en montée, accélérer en descente, au même coût. Le plan part un peu au-dessus
-de ta moyenne et finit un peu en dessous ($-$<< fade_pct >>\,\% du début à la fin), parce que
-<< fade_evidence >>.
-<% if target_mode %>\textbf{Sur ton objectif.} Le temps réparti ici est \textbf{ton objectif}
-(<< target_hm >>), pas la prédiction : les fenêtres sont une \textbf{tolérance d'exécution} de
-$\pm$<< target_tolerance_pct >>\,\% sur le temps cumulé, pas une probabilité. Pour mémoire,
-le modèle te situe à \textbf{<< pred_central >>}.
+Tu vises une vitesse \emph{ajustée à la pente} constante : ralentir en montée, accélérer en
+descente, au même coût. Le plan part au-dessus de ta moyenne et finit en dessous
+($-$<< fade_pct >>\,\% du début à la fin), parce que << fade_evidence >>.
+<% if target_mode %>Le temps réparti ici est \textbf{ton objectif} (<< target_hm >>), pas la
+prédiction : les fenêtres sont une tolérance d'exécution de $\pm$<< target_tolerance_pct >>\,\%,
+pas une probabilité. Pour mémoire, le modèle te situe à \textbf{<< pred_central >>}.
 <% endif %>
 
-\textbf{Arrêts.} << stops_policy.sentence >>.<% if stops_budget %> À titre d'information : sur
-<< stops_budget.n >> de tes ultras, tu t'arrêtes << stops_budget.rate_min_per_h >>\,min par heure
-de mouvement, soit << stops_budget.hours_hm >> sur cette course si tu fais comme d'habitude ; le
-plan n'en retranche que la politique ci-dessus, à toi de voir.<% endif %>
+\textbf{Arrêts.} << stops_policy.sentence >>.
 
 \begin{table}[H]
   \centering \scriptsize \setlength{\tabcolsep}{3.2pt}
   \LLzebra \renewcommand{\arraystretch}{1.3}
-  \begin{tabular}{@{}clrrlccccp{34mm}@{}}
+  \begin{tabularx}{\linewidth}{@{}clrrlccc>{\raggedright\arraybackslash}X@{}}
     \LLheaderrow
-    \LLthead{\#} & \LLthead{Vers} & \LLthead{km} & \LLthead{v.\,aj.} & \LLthead{allure} & \LLthead{<% if target_mode %>au plus tôt<% else %>rapide<% endif %>} & \LLthead{central} & \LLthead{<% if target_mode %>au plus tard<% else %>prudent<% endif %>} & \LLthead{nuit} & \LLthead{consigne} \\
-     & & & \scriptsize(km/h) & \scriptsize(/km) & & & & & \\
-<% for s in plan_rows %>    << s.idx >> & << s.to >> & \LLnum{<< s.off1 >>} & \LLnum{<< s.vga >>} & \LLnum{<< s.pace >>} & \LLnum{<< s.fast >>} & \LLnum{\textbf{<< s.central >>}} & \LLnum{<< s.cautious >>} & <% if s.night %>$\bullet$<% endif %> & << s.consigne >> \\
-<% endfor %>  \end{tabular}
-  \caption{Trois scénarios de course, segment par segment : \emph{rapide} et \emph{prudent} sont
-  les bornes de la <% if target_mode %>fenêtre de passage ($\pm$<< target_tolerance_pct >>\,\% du
-  temps cumulé, tolérance d'exécution)<% else %>fourchette de course (<< plan_band_word >>)<% endif %>.
-  Repère tôt la colonne qui te correspond et suis-la. $\bullet$ = section de nuit.}
+    \LLthead{\#} & \LLthead{Vers} & \LLthead{km} & \LLthead{D+} & \LLthead{allure} & \LLthead{<< clock_titles.fast >>} & \LLthead{<< clock_titles.central >>} & \LLthead{<< clock_titles.cautious >>} & \LLthead{Sur ce segment} \\
+<% for p in feuille_parts %>    \LLphase<% if loop.first %>un<% else %>deux<% endif %>{9}{<< p.name >>}{<< p.note >>} \\
+<% for s in feuille_rows[p.first:p.last + 1] %><% if s.night %>    \rowcolor{LLNightRow} <% else %>    <% endif %><< s.idx >> & << s.to >> & \LLnum{<< s.km >>} & <% if s.strong_dplus %>\LLfort{<< s.dplus >>}<% else %>\LLnum{<< s.dplus >>}<% endif %> & \LLnum{<< s.pace >>} & \LLnum{<% if s.fast.day %><< s.fast.day >> <% endif %><< s.fast.hour >>} & \LLctr{<% if s.central.day %><< s.central.day >> <% endif %><< s.central.hour >>} & \LLnum{<% if s.cautious.day %><< s.cautious.day >> <% endif %><< s.cautious.hour >>} & << s.marche >> \\
+<% endfor %><% endfor %>  \end{tabularx}
+  \caption{Les trois colonnes sont titrées par leur heure d'arrivée : repère tôt celle qui te correspond et suis-la.<% if target_mode %> Autour d'un objectif, ce sont les bornes d'une fenêtre de passage — une tolérance d'exécution de $\pm$<< target_tolerance_pct >>\,\%, pas une probabilité.<% else %> Entre la première et la dernière, << plan_band_word >>.<% endif %>}
 \end{table}
-
-Total : mouvement << t_move_h >> + arrêts << t_stops_h >> = horloge \textbf{<< t_clock_h >>}.<% if sun %> Soleil : lever << sun.sunrise >>, coucher << sun.sunset >>.<% endif %>
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=\linewidth]{figures/cumul.png}
   \caption{<< caption_cumul >>}
 \end{figure}
-
-<% if target_requested %>\LLtitre{Ton objectif face à ton jumeau}
-Tu as demandé un plan pour \textbf{<< target_hm >>}. Le verdict : \textbf{<< target_regime_label >>}.
-\begin{table}[H]
-  \centering \small \setlength{\tabcolsep}{7pt}
-  \LLzebra \renewcommand{\arraystretch}{1.28}
-  \begin{tabular}{@{}lr@{}}
-    \LLheaderrow
-    \LLthead{Ce que l'objectif exige} & \LLthead{valeur} \\
-    Vitesse ajustée moyenne à tenir & \LLnum{<< target_required_v >>}\,km/h \\
-<% if target_vc_pct %>    Intensité correspondante & \LLnum{<< target_vc_pct >>}\,\% de ta vitesse critique \\
-<% endif %><% if target_envelope_pct %>    Part de ton enveloppe d'endurance à cette durée & \LLnum{<< target_envelope_pct >>}\,\% \\
-<% endif %><% if target_gap_pct %>    Écart avec la prédiction (<< pred_central >>) & << target_gap_pct >>\,\% plus <% if target_faster_than_central %>rapide<% else %>lent<% endif %> \\
-<% endif %><% if target_speed_gain_pct %>    Vitesse à <% if target_faster_than_central %>gagner<% else %>céder<% endif %> vs ton niveau actuel & << target_speed_gain_pct >>\,\% \\
-<% endif %>  \end{tabular}
-\end{table}
-<% if target_reasons %>\begin{itemize}[leftmargin=1.4em]
-<% for r in target_reasons %>\item << r >>
-<% endfor %>\end{itemize}
-<% endif %><% if not target_plan_ok %>\begin{llattention}[Pas de plan sur cet objectif]
+<% if target_requested %>
+\LLtitre{Ton objectif face à ton jumeau}
+Tu as demandé un plan pour \textbf{<< target_hm >>} : \textbf{<< target_regime_label >>}.
+Il faudrait tenir \LLnum{<< target_required_v >>}\,km/h ajustés<% if target_vc_pct %>, soit
+<< target_vc_pct >>\,\% de ta vitesse critique<% endif %><% if target_gap_pct %>, ce qui te situe
+<< target_gap_pct >>\,\% plus <% if target_faster_than_central %>rapide<% else %>lent<% endif %>
+que la prédiction<% endif %>.
+<% if not target_plan_ok %>\begin{llattention}[Pas de plan sur cet objectif]
 Cette cible sort de ce que tes données permettent : un plan calé dessus ferait partir trop vite
 et coûterait la fin de course. Le plan ci-dessus reste ancré sur la prédiction ; l'écart chiffré
 est un objectif d'entraînement pour la saison.
 \end{llattention}
 <% else %>\begin{llattention}[Ce plan suppose ton objectif tenable]
-Il répartit au mieux la durée que tu as choisie, en respectant ta courbe de fatigue ;
-il ne le rend pas tenable.
-La référence de ce qui est probable reste la prédiction et ses bornes de sécurité.
+Il répartit au mieux la durée que tu as choisie en respectant ta courbe de fatigue ; il ne le rend pas tenable. La référence de ce qui est probable reste la prédiction et ses bornes de sécurité.
 \end{llattention}
 <% endif %><% endif %>
+% LL:END page-plan
 
 % =====================================================================
-\LLpage{Ton profil}{Ce que tes données disent de toi}
+% LL:BEGIN page-profil
+\LLpage{La preuve}{Ton profil}
+\LLfootleft{Le détail complet — méthode, calibration, plan intégral — est dans l'annexe en ligne.}
 
 << opening >>
 
-\vspace{8pt}
+\par\vspace{4pt}
 \noindent\begin{minipage}[t]{0.47\linewidth}
 <% for g in gauges[:2] %>\LLgauge{<< g.label >>}{<< g.value >>}{<< g.fraction >>}{<< g.sentence >>}
 <% endfor %>\end{minipage}\hfill
@@ -156,67 +121,47 @@ La référence de ce qui est probable reste la prédiction et ses bornes de séc
 <% for g in gauges[2:] %>\LLgauge{<< g.label >>}{<< g.value >>}{<< g.fraction >>}{<< g.sentence >>}
 <% endfor %>\end{minipage}
 
-<% if durability_pourtoi %>\begin{llnote}[Ce que ça change pour toi]
-<< durability_pourtoi >>
-\end{llnote}
+<% if durability_pourtoi %>\par\vspace{-2pt}
+<< durability_pourtoi >>\par
 <% endif %><% if vc_implausible %>\begin{llattention}[Vitesse critique non affichée]
 L'estimation de ta vitesse critique ressort au-dessus du plafond physiologique plausible : elle
 trahit des données suspectes plutôt qu'un vrai seuil. Ni sa valeur ni aucun « \% de VC » ne sont
 utilisés dans ce rapport ; la prédiction, elle, n'en dépend pas.
 \end{llattention}
-<% endif %><% if vc_kmh %>\begin{figure}[H]
-  \centering
-  \includegraphics[width=\linewidth,height=0.27\textheight,keepaspectratio]{figures/record.png}
-  \caption{<< caption_record >>}
-\end{figure}
 <% endif %>
-
-% =====================================================================
-\LLpage{Pourquoi tu peux y croire}{La preuve et les limites}
-
-<% if has_cv %>\noindent\begin{minipage}[t]{0.4\linewidth}
-  \vspace{0pt}
-  \includegraphics[width=\linewidth]{figures/validation.png}
-\end{minipage}\hfill
-\begin{minipage}[t]{0.56\linewidth}
-  \vspace{0pt}
-  \LLetiquette{Validation croisée}\par\vspace{3pt}
-  << caption_validation >>\par\vspace{4pt}
-  <% if cv_pourtoi %><< cv_pourtoi >><% endif %>
+\par\vspace{4pt}
+\noindent\begin{minipage}{\linewidth}
+\begin{minipage}[t]{0.655\linewidth}\vspace{0pt}
+<% if vc_kmh %>\includegraphics[width=\linewidth]{figures/record.png}\par\vspace{2pt}
+{\fontsize{7.4}{9.4}\selectfont\color{LLSoft}<< caption_record >>\par}
+<% endif %>\end{minipage}\hfill
+\begin{minipage}[t]{0.305\linewidth}\vspace{0pt}
+<% if has_cv %>\includegraphics[width=\linewidth]{figures/validation.png}\par\vspace{2pt}
+{\fontsize{7.4}{9.4}\selectfont\color{LLSoft}<< caption_validation >>\par}
+<% else %>\LLetiquette{Validation impossible}\par\vspace{3pt}
+{\fontsize{8.4}{11}\selectfont\color{LLText}Moins de trois vrais ultras : la validation croisée
+n'est pas calculable et la prédiction repose sur une extrapolation (<< regime_label >>). Un ordre
+de grandeur, pas une cible ferme.\par}
+<% endif %>\end{minipage}
 \end{minipage}
-<% else %>\begin{llattention}[Validation impossible]
-Moins de trois vrais ultras : la validation croisée n'est pas calculable et la prédiction repose
-sur une extrapolation (<< regime_label >>). Un ordre de grandeur, pas une cible ferme.
-\end{llattention}
-<% endif %>
 
 \begin{llhonnete}
-<< honesty >><% if width_prescription %>\par\vspace{4pt}<< width_prescription >><% endif %>
+{\fontsize{9}{12}\selectfont
+<% for l in limits_short %>\textbf{<< l.lead >>} \textemdash{} << l.short >><% if not loop.last %>\par<% endif %>
+<% endfor %>}\par\vspace{5pt}
+{\color{LLHairline}\hrule height 0.4pt}\par\vspace{5pt}
+\noindent\begin{minipage}[t]{0.87\linewidth}\vspace{0pt}
+  \LLetiquette{Ce que le plan suppose}\par\vspace{2pt}
+  {\fontsize{8.2}{10.6}\selectfont\ignorespaces
+  <% for a in assumptions %><< a >><% if not loop.last %> <% endif %><% endfor %>
+  {\color{LLSoft}Le code ouvre l'annexe en ligne : méthode, calibration course par course,
+  validation croisée, plan complet, glossaire et références.}\par}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.1\linewidth}\vspace{0pt}
+  \LLqr{<< annex_url >>}
+\end{minipage}
 \end{llhonnete}
 
-\noindent\begin{minipage}[t]{0.48\linewidth}
-\LLtitre{Quatre limites}
-\begin{itemize}[leftmargin=1.2em, itemsep=1pt, topsep=1pt]
-<% for l in limits %>\item << l >>
-<% endfor %>\end{itemize}
-\end{minipage}\hfill
-\begin{minipage}[t]{0.48\linewidth}
-\LLtitre{Ce que le plan suppose}
-\begin{itemize}[leftmargin=1.2em, itemsep=1pt, topsep=1pt]
-<% for a in assumptions %>\item << a >>
-<% endfor %>\end{itemize}
-\end{minipage}
-
-\vspace{8pt}
-\noindent\begin{minipage}[c]{0.2\linewidth}
-  \LLqr{<< annex_url >>}
-\end{minipage}\hfill
-\begin{minipage}[c]{0.76\linewidth}
-  \LLetiquette{L'annexe en ligne}\par\vspace{3pt}
-  Tout le détail que ce rapport ne montre pas : la méthode, ta calibration course par course, la
-  validation croisée, ce qui a servi pour la pente au-delà de six heures, le plan complet, le
-  glossaire et les références.\par\vspace{2pt}
-  {\LLmonofont\small\color{LLPrimaryDark}\url{<< annex_url >>}}
-\end{minipage}
+% LL:END page-profil
 
 \end{document}

@@ -1,19 +1,89 @@
 {
-  "_comment": "Course cible de référence (cas Valentin / golden test). Données PUBLIQUES de course (carnet de route officiel), pas de donnée personnelle. Sert au CLI de replay et aux tests. La trace GPX du parcours est fournie à part (non committée par défaut).",
+  "_comment": "Course cible de référence (cas Valentin / golden test). Données PUBLIQUES de course (carnet de route officiel de l'édition 2026), pas de donnée personnelle. Sert au CLI de replay et aux tests. La trace GPX du parcours est fournie à part (non committée par défaut).",
   "name": "Nice Côte d'Azur by UTMB · 100M",
-  "aid_km": [0.0, 8.1, 16.5, 28.9, 38.0, 50.1, 63.7, 68.4, 83.5, 93.8, 109.8, 121.8, 128.3, 140.4, 147.4, 156.5, 167.2],
+  "aid_km": [
+    0.0,
+    8.1,
+    16.5,
+    30.3,
+    38.9,
+    51.4,
+    65.0,
+    69.7,
+    84.8,
+    95.1,
+    112.4,
+    124.4,
+    130.9,
+    142.9,
+    150.0,
+    159.1,
+    169.7
+  ],
   "aid_names": [
-    "Auron (départ)", "AS1 km8.1", "AS2 km16.5", "AS3 km28.9", "AS4 km38",
-    "AS5 km50.1", "AS6 km63.7", "AS7 km68.4", "AS8 km83.5", "AS9 km93.8",
-    "AS10 km109.8", "AS11 km121.8", "AS12 km128.3", "AS13 km140.4",
-    "AS14 km147.4", "AS15 km156.5", "Arrivée Nice km167.2"
+    "Auron (départ)",
+    "St-Étienne de Tinée",
+    "Cabane des chasseurs",
+    "Collefongue",
+    "Isola",
+    "Pont de Paule",
+    "St-Sauveur sur Tinée",
+    "Rimplas",
+    "Venanson",
+    "Granges de la Brasque",
+    "Utelle",
+    "Levens",
+    "Chapelle St-Michel",
+    "Tourrette-Levens",
+    "Drap",
+    "Plateau St-Michel",
+    "Nice"
   ],
   "start_time": "2026-09-25T13:00:00+02:00",
   "lat": 43.703,
   "lon": 7.266,
   "tz_offset_h": 2.0,
-  "major_base_indices": [4, 8, 11],
-  "_crew_access": "segments dont la FIN est ouverte à l'assistance (fiche, calendrier, GPX) ; à ajuster selon le règlement de l'édition — par défaut les bases de vie",
-  "crew_access_indices": [4, 8, 11],
+  "_major_base": "Segments dont la FIN est une base majeure : l'arrêt du plan y est rallongé. Indices de SEGMENT (le segment k finit au point de passage k+1).",
+  "major_base_indices": [
+    3,
+    7,
+    10
+  ],
+  "_crew": "Points où l'assistance a le droit d'être, entourés en pointillés sur le profil officiel. Indices de aid_names. « note » libre : vide, la feuille imprime une case à remplir.",
+  "crew": [
+    {
+      "aid_index": 4,
+      "note": ""
+    },
+    {
+      "aid_index": 6,
+      "note": ""
+    },
+    {
+      "aid_index": 8,
+      "note": ""
+    },
+    {
+      "aid_index": 10,
+      "note": ""
+    },
+    {
+      "aid_index": 11,
+      "note": ""
+    },
+    {
+      "aid_index": 13,
+      "note": ""
+    },
+    {
+      "aid_index": 14,
+      "note": ""
+    }
+  ],
+  "_nutrition": "Débits DÉCLARÉS par l'athlète. Sans les deux, les colonnes eau et ravito du tableau de marche sortent vides : le moteur n'invente aucun débit.",
+  "nutrition": {
+    "water_l_per_h": null,
+    "carbs_g_per_h": null
+  },
   "official_dplus_m": 8900
 }

@@ -2499,3 +2499,81 @@ réécrit sur la v2 et `apps/site/lib/twinAnnexes.test.js`.
 **Reste à faire (hors de cette session).** Le rendu du PDF de référence sur l'archive de Valentin
 (Décision 5.1) et sa relecture à l'œil ; le dépôt de la première annexe et le déploiement du site.
 
+
+### 10.20 Rapport v3 — épurer, et livrer une feuille à emporter (2026-09-17)
+
+**Consigne.** Quatre corrections dures (la marque du site reproduite à l'identique, les vrais noms
+de ravitaillement avec un garde-fou, le numéro de rapport hors du PDF, six incohérences), deux
+champs de spec (`crew`, `nutrition`), une structure de trois pages plus une feuille détachable, un
+registre resserré (titres simples, pas de formules, un chiffre par idée), et la règle de méthode :
+tout chiffre imprimé vient du contexte calculé.
+
+**La marque.** Le lockup bitmap est remplacé par le signe circulaire monochrome (`logo-mark-512.png`,
+copié depuis `apps/site/public/images/assets/`) suivi du mot-symbole **composé en texte** : Ubuntu
+Sans SemiBold, capitales, interlettrage 0,22 em (`\LLbrand`, `\LLwordtracked`). La couverture pleine
+page disparaît : l'en-tête de chaque page porte la marque à gauche et le document à droite, sur fond
+crème, séparés par un filet fin — la composition du site tient sur le papier. Les trois PNG du
+lockup sont retirés du dépôt.
+
+**Les noms de lieux.** `examples/nice-100m.json` reprend le carnet de course officiel 2026 : dix-sept
+points nommés d'Auron à Nice, arrivée à 169,7 km (l'ancienne spec en donnait 167,2 et nommait le
+quinzième point « Villefranche-sur-Mer » là où le carnet dit « Plateau St-Michel »), sept points
+d'assistance déclarés. `course.spec.placeholder_aid_names` reconnaît un nom bouchon (`AS3`, `PC 12`,
+un kilomètre répété) et `build_report_context` **refuse de rendre** un rapport qui en contient : sur
+le terrain, l'athlète chercherait un panneau qui n'existe pas.
+
+**Le numéro de rapport.** La clé `report_ref` sort du contexte : elle ne peut plus être imprimée. La
+référence reste côté moteur — nom de fichier, registre, adresse de l'annexe — et n'apparaît dans le
+PDF qu'encodée dans le QR.
+
+**Les six incohérences, et leur cause.**
+
+| Ce qui était faux | Cause | Ce qui a changé |
+|---|---|---|
+| « la dérive contrôlée du plan est faite pour toi » (p. 5) contre « la dérive du plan est la valeur commune » (p. 6) | le conseil de durabilité ignorait la source du fade réellement servie | `durability_pourtoi(twin, cfg, fade_source)` lit `plan.fade_source_used` et dit ce que le plan a vraiment fait |
+| « nuit du km 38 au km 84 » alors que la table marquait aussi les segments 15-16 | deux lectures de la nuit, dont une ne gardait que le plus long passage | `PacingPlan.night_runs` est la source unique ; `feuille.night_sections` publie **toutes** les sections, le contexte et le récit les lisent là |
+| les arrêts en trois valeurs (7 min/h, 3 h 28, 1 h 45) | le taux brut mesuré sur les ultras était republié à côté de ce que le plan retranche | `_stops_reading` a une seule source — le plan — et le taux en découle ; la calibration ne fournit plus que la provenance |
+| « modèle VC = 9.75 km/h » contre « 9,7 km/h » | libellés matplotlib en notation machine, et deux arrondis pour la même grandeur | `figures.fr_num` + `_fr_axes` : virgule décimale et un seul arrondi sur toutes les graduations, légendes et titres |
+| renvoi « en Synthèse » vers une section supprimée | légende écrite quand la Synthèse existait | le renvoi disparaît ; la distinction se dit sans adresse |
+| espace manquante après « décideront. » | `trim_blocks` mange le retour à la ligne après un `<% endif %>` | la phrase n'est plus coupée par un retour à la ligne dans le gabarit |
+
+**Deux champs de spec.** `crew` : une liste de `{aid_index, note}` indexée sur `aid_names` ; sans
+note, la feuille imprime une case à remplir au stylo ; sans le champ, on retombe sur
+`major_base_indices` et le verso **dit** que ces points sont supposés. `nutrition` :
+`{water_l_per_h, carbs_g_per_h}`, vide par défaut ; les colonnes eau et ravito existent toujours,
+blanches et pointillées tant que rien n'est déclaré. Le moteur n'invente ni un débit ni une valeur
+de population.
+
+**La structure.** Trois pages — *Ta course* (couverture et synthèse fondues : la phrase de
+prédiction, quatre tuiles, le profil avec ses sections de nuit, ce que le parcours demande, ce qui
+décidera, l'encadré de confiance), *Le plan* (la table et la courbe cumulée sur la même page),
+*Ton profil* (quatre jauges, courbe record, nuage LOO, les quatre limites, les hypothèses, l'annexe
+en QR) — plus la feuille à emporter, A4 paysage recto-verso, PDF séparé (`feuille.pdf`,
+`--feuille-seule`). La fiche d'assistance et le bracelet disparaissent : la feuille les remplace.
+
+**La feuille.** Recto : une ligne par segment — `#`, ravitaillement, km cumulé, km du segment, D+ et
+D− du segment (mis en avant au-delà de 800 m / 1 000 m), allure terrain, les trois heures de
+passage, arrêt, eau, ravito, et une consigne. Les trois colonnes sont titrées par **leur heure
+d'arrivée**, la colonne prévue teintée sur toute sa hauteur ; le préfixe de jour ne se répète qu'au
+changement de jour ; les segments de nuit portent une trame sage ; deux bandes coupent la table
+(les deux parties de la course, chacune avec une ligne qui dit pourquoi). Une consigne par segment,
+déduite de ses chiffres, jamais deux fois la même, et **vide** quand rien de spécifique n'en sort.
+Verso : la table de l'assistance, le profil schématique par ravitaillement, la nuit (où prendre,
+ranger, reprendre la frontale ; sa part), comment lire les trois colonnes, et les quatre limites.
+Les fenêtres « au plus tôt / au plus tard » sont les bornes de sécurité étalées sur le temps cumulé :
+à l'arrivée, elles redonnent **exactement** la fenêtre de la première page (vérifié par un test).
+
+**Le registre.** Les titres-formules (« Ce que ça te demande », « Ce que ce rapport ne sait pas »,
+« Pourquoi tu peux y croire », « Ce que tes données disent de toi ») deviennent *Le plan*,
+*Ton profil*, *La preuve*, *Les limites* ; les quatre encadrés « Ce que ça change pour toi » passent
+en texte courant ; les incises entre parenthèses disparaissent ; le badge de confiance nomme **son**
+critère bloquant, en une ligne et lui seul ; l'arrivée prédite n'est plus répétée sur la page du
+profil ; l'erreur LOO n'est chiffrée qu'une fois.
+
+**Tests.** `tests/test_report_v3.py` (28) : aucun chiffre en dur sur les deux premières pages **ni sur
+la feuille**, la référence absente du PDF, un nom bouchon qui fait échouer le rendu, une seule lecture
+de la nuit et les deux sections publiées, une seule source d'arrêts, la dérive annoncée qui correspond
+à celle servie, une consigne par segment jamais répétée et sous les soixante caractères, le préfixe de
+jour non répété, les colonnes titrées par leur arrivée, la fenêtre de l'assistance qui redonne
+l'arrivée de la page 1, la nutrition blanche sans déclaration, le repli des points de contact annoncé,
+la coupe en deux parties, et le compte de pages (trois et deux) sur le scénario déterministe.

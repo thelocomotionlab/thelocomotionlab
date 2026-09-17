@@ -111,6 +111,9 @@ def _build_parser() -> argparse.ArgumentParser:
         if name == "full":
             sp.add_argument("--out", required=True, help="dossier de sortie (figures + PDF)")
             sp.add_argument("--no-pdf", action="store_true", help="ne pas compiler le PDF")
+            sp.add_argument("--feuille-seule", action="store_true",
+                            help="ne compiler que la feuille à emporter (recto-verso A4 "
+                                 "paysage), sans les trois pages du rapport")
             sp.add_argument("--ref", default=None, metavar="RÉFÉRENCE",
                             help="référence du rapport (pied de page, QR et adresse de "
                                  "l'annexe en ligne). Par défaut une référence tirée au "
@@ -191,8 +194,8 @@ def main(argv: list[str] | None = None) -> int:
     result = run_full(
         training_path=args.training, course_gpx=course_gpx, race=race, cfg=cfg,
         out_dir=Path(args.out), athlete=args.athlete, purge_source=args.purge,
-        render_pdf=not args.no_pdf, report_date=datetime.now(), progress=_progress,
-        until=until, report_ref=report_ref,
+        render_pdf=not args.no_pdf, feuille_only=args.feuille_seule,
+        report_date=datetime.now(), progress=_progress, until=until, report_ref=report_ref,
     )
     if until is not None:
         print(f"\n  Coupure --until {until.isoformat()} : "

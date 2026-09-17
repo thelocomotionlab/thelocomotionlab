@@ -547,6 +547,53 @@ la fixer), c'est elle qui rend l'adresse non devinable. Suite 362 passés (dont 
 58. **Une seule police** : le « mono » de la charte est Ubuntu Sans Medium en chiffres tabulaires,
     comme sur le site (`theme.css`) — jamais une seconde famille.
 
+## Rapport v3 — épurer, et livrer une feuille à emporter (2026-09-17)
+
+Consigne de Valentin, après lecture du premier rapport v2 sorti sur son archive : quatre
+corrections dures, deux champs de spec, une structure resserrée, un registre épuré. Preuves et
+détail dans `DIAGNOSTIC.md` §10.20.
+
+**Ce qui a changé.** La marque du site reproduite à l'identique dans la classe (signe circulaire en
+image + mot-symbole composé en texte, Ubuntu Sans SemiBold capitales interlettrées) ; plus de
+couverture pleine page. Les vrais noms du carnet de course 2026 dans `examples/nice-100m.json`
+(arrivée à 169,7 km, dix-sept points, sept points d'assistance déclarés), et un garde-fou qui
+**refuse de rendre** un rapport dont un nom de ravitaillement ressemble à un bouchon. Le numéro de
+rapport disparaît du PDF (il reste au nom de fichier, au registre et dans le QR). Six incohérences
+corrigées, chacune à sa cause : la dérive annoncée qui ignorait la source réellement servie, deux
+lectures de la nuit, trois chiffres pour les mêmes arrêts, deux arrondis et un point décimal anglais
+sur les figures, un renvoi vers une section supprimée, une espace mangée par `trim_blocks`. Deux
+champs de spec : `crew` (points d'assistance du règlement, avec une note facultative) et
+`nutrition` (débits déclarés — sans eux, les colonnes eau et ravito restent blanches). Trois pages
+au lieu de six, plus une feuille à emporter A4 paysage recto-verso, imprimable seule
+(`--feuille-seule`) ; la fiche d'assistance et le bracelet disparaissent, la feuille les remplace.
+
+**Ce qui a été supprimé.** Les trois PNG du lockup, les gabarits `fiche_assistance.tex.j2` et
+`bracelet.tex.j2`, les figures « demande » et « pacing » (plus affichées), la couverture de la
+classe et ses macros, les seuils `report.consigne_steep_pct` / `consigne_gentle_pct` (la consigne
+se lit désormais sur le dénivelé du segment, pas sur sa pente moyenne), et le budget d'arrêts
+republié à côté de la politique du plan.
+
+## Choix faits à la place de Valentin (rapport v3)
+
+59. **Les consignes du rapport et de la feuille sont les mêmes.** Deux jeux de consignes (une par
+    pente moyenne pour la page du plan, une par chiffres pour la feuille) auraient été une
+    incohérence de plus : il n'en reste qu'un, celui de la feuille, servi aussi page 2 et à l'annexe.
+60. **Les quatre limites existent en deux longueurs, même source.** La version courte (amorce +
+    une clause) est servie sur la page du profil et au verso de la feuille ; la version longue va à
+    l'annexe. Sans cela, la page 3 débordait.
+61. **Le récit d'ouverture ne répète plus l'arrivée prédite.** Elle est dite une fois, en première
+    page ; deux endroits pour le même chiffre finissent toujours par diverger.
+62. **La coupure en deux parties tombe au ravitaillement le plus proche de la mi-temps prédite**,
+    et les parties s'appellent « Retenue » puis « Exécution ». Une spec qui déclare ses `phases`
+    impose ses noms et ses coupures à la place.
+63. **Les fenêtres de l'assistance sont les bornes de sécurité étalées sur le temps cumulé**, et
+    non la fourchette de course des segments : c'est la seule construction qui redonne exactement,
+    à l'arrivée, la fenêtre annoncée en première page. L'ICS et le GPX lisent la même chose.
+64. **L'espacement automatique de la ponctuation haute de babel est désactivé** : les heures
+    sortaient « 13 :57 ». Les espaces avant « : ; ! ? » sont désormais écrites par le moteur.
+65. **La flèche « au plus tôt → au plus tard » est tracée**, pas composée : Ubuntu Sans n'a pas de
+    glyphe U+2192, et la charte interdit une seconde police.
+
 ## Questions ouvertes
 
 - **Chantier suivant : trails courts et route.** Valentin a des demandes pour du trail court et

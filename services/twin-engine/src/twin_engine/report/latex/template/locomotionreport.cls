@@ -106,10 +106,11 @@
 \RequirePackage{graphicx}
 \RequirePackage{geometry}
 \RequirePackage{tikz}
-\usetikzlibrary{calc,shadows.blur,patterns}
+\usetikzlibrary{calc,shadows.blur,patterns,arrows.meta}
 \RequirePackage[most]{tcolorbox}
 \tcbuselibrary{skins,breakable}
 \RequirePackage{array}
+\RequirePackage{tabularx}
 \RequirePackage{booktabs}
 \RequirePackage{caption}
 \RequirePackage{enumitem}
@@ -118,6 +119,10 @@
 \RequirePackage{fancyhdr}
 \RequirePackage[french]{babel}
 \renewcommand*{\FBfigtabshape}{}
+% Les espaces devant « : ; ! ? » sont écrits par le moteur : sans ça babel en ajoute une
+% devant chaque deux-points et les heures sortent « 13 :57 ».
+\@ifundefined{frenchsetup}{\frenchbsetup{AutoSpacePunctuation=false}}%
+  {\frenchsetup{AutoSpacePunctuation=false}}
 \RequirePackage{microtype}
 \RequirePackage{amsmath,amssymb,mathtools,bm,stmaryrd}
 \RequirePackage{needspace}
@@ -186,34 +191,40 @@
 \newcommand{\reportclient}[1]{\renewcommand{\LL@reportclient}{#1}}
 \newcommand{\LL@reporttype}{Rapport technique}
 \newcommand{\reporttype}[1]{\renewcommand{\LL@reporttype}{#1}}
-% couverture v2 : la phrase, le badge de confiance, la ligne de verdict
-\newcommand{\LL@coversentence}{}
-\newcommand{\coversentence}[1]{\renewcommand{\LL@coversentence}{#1}}
-\newcommand{\LL@coverbadge}{}
-\newcommand{\LL@coverbadgecolor}{LLPrimaryDark}
-\newcommand{\coverbadge}[2]{\renewcommand{\LL@coverbadge}{#1}\renewcommand{\LL@coverbadgecolor}{#2}}
-\newcommand{\LL@coververdict}{}
-\newcommand{\coververdict}[1]{\renewcommand{\LL@coververdict}{#1}}
 
 % =============================================================================
-% 5. Logos : résolution multi-format
+% 5. La marque : le signe circulaire (image) + le mot-symbole (texte)
 % =============================================================================
-\newcommand{\LLCoverLogoPath}{assets/logo_primary_deep}
-\newcommand{\LLHeaderLogoPath}{assets/logo_full_white}
-\newcommand{\LLCoverLogoFile}{}
-\newcommand{\LLHeaderLogoFile}{}
+% Exactement ce que porte le site (apps/site/components/Navbar.jsx) : la marque
+% circulaire monochrome terracotta, puis « LOCOMOTION LAB » COMPOSÉ en Ubuntu Sans,
+% capitales, demi-gras, interlettrage 0,22 em. Jamais un lockup bitmap : le mot
+% s'aligne sur la police du document et reste net à toute taille.
+\newcommand{\LLMarkPath}{assets/logo-mark-512}
+\newcommand{\LLMarkFile}{}
 \newcommand{\LLresolvelogo}[2]{%
   \def#2{}%
   \IfFileExists{#1.pdf}{\def#2{#1.pdf}}{%
     \IfFileExists{#1.png}{\def#2{#1.png}}{%
       \IfFileExists{#1.jpg}{\def#2{#1.jpg}}{%
         \IfFileExists{#1.jpeg}{\def#2{#1.jpeg}}{%
-          \ClassWarning{locomotionreport}{Logo introuvable : #1.(pdf|png|jpg|jpeg)}}}}}%
+          \ClassWarning{locomotionreport}{Marque introuvable : #1.(pdf|png|jpg|jpeg)}}}}}%
 }
-\AtBeginDocument{%
-  \LLresolvelogo{\LLCoverLogoPath}{\LLCoverLogoFile}%
-  \LLresolvelogo{\LLHeaderLogoPath}{\LLHeaderLogoFile}%
-}
+\AtBeginDocument{\LLresolvelogo{\LLMarkPath}{\LLMarkFile}}
+% interlettrage du mot-symbole (0,22 em), distinct de celui des étiquettes (0,14 em)
+\ifPDFTeX
+  \newcommand{\LLwordtracked}[1]{#1}
+\else
+  \newcommand{\LLwordtracked}[1]{{\addfontfeature{LetterSpace=22.0}#1}}
+\fi
+% \LLmark{hauteur} : le signe seul.  \LLbrand{hauteur}{taille du mot} : signe + mot.
+\newcommand{\LLmark}[1]{\ifx\LLMarkFile\@empty\else\includegraphics[height=#1]{\LLMarkFile}\fi}
+\newcommand{\LLbrand}[2]{%
+  \begingroup
+  \setlength{\fboxsep}{0pt}%
+  \raisebox{-0.30\height}{\LLmark{#1}}\hspace{0.62em}%
+  {\LLsemiboldfont\fontsize{#2}{#2}\selectfont\color{LLText}%
+    \LLwordtracked{\MakeUppercase{Locomotion Lab}}}%
+  \endgroup}
 
 % =============================================================================
 % 6. Géométrie, fond de page, réglages généraux
@@ -240,63 +251,49 @@
 % =============================================================================
 % 7. Dimensions de la charte
 % =============================================================================
-\newlength{\LLbandH}     \setlength{\LLbandH}{13.8mm}
-\newlength{\LLgoldH}     \setlength{\LLgoldH}{1.2mm}
-\newlength{\LLbandinset} \setlength{\LLbandinset}{14mm}
-\newcommand{\LLHeaderLogoHeight}{7.4mm}
-\newlength{\LLcoversidebar} \setlength{\LLcoversidebar}{16.2mm}
-\newlength{\LLcovergold}    \setlength{\LLcovergold}{1.5mm}
-\newlength{\LLcovercontentx}\setlength{\LLcovercontentx}{33mm}
-\newlength{\LLcoverlogoy}   \setlength{\LLcoverlogoy}{24mm}
-\newlength{\LLcoverlogow}   \setlength{\LLcoverlogow}{62mm}
-\newlength{\LLcovertitley}  \setlength{\LLcovertitley}{96mm}
-\newlength{\LLcovertextw}   \setlength{\LLcovertextw}{153mm}
-\newlength{\LLcovermetay}   \setlength{\LLcovermetay}{24mm}
+\newcommand{\LLHeadMarkHeight}{8.4mm}   % le signe en en-tête (le mot fait 10,5 pt)
 
 % =============================================================================
-% 8. En-tête (bandeau bleu-vert + filet ocre + logo blanc + titre courant)
+% 8. En-tête : la marque à gauche, le document à droite, un filet fin dessous
 % =============================================================================
+% Plus de bandeau plein : la composition du site (fond crème, marque, filet) tient
+% aussi sur le papier, et laisse la couleur aux chiffres plutôt qu'au décor.
+\newcommand{\LL@headright}{\leftmark}
+\newcommand{\LLheadright}[1]{\renewcommand{\LL@headright}{#1}}
+\newcommand{\LLheaderband}{%
+  \begin{minipage}{\textwidth}%
+    \noindent\hbox to \textwidth{%
+      \LLbrand{\LLHeadMarkHeight}{10.5}%
+      \hfil
+      \vbox{\hbox to 0pt{\hss\LL@headright}}%
+    }\par
+    \vspace{3pt}{\color{LLHairline}\hrule height 0.4pt}%
+  \end{minipage}%
+}
+% Titre courant du rapport : le nom de la course en terracotta, une ligne dessous.
+\newcommand{\LLheaddoc}[2]{%
+  \LLheadright{\vbox{\hbox to 0pt{\hss{\LLsemiboldfont\fontsize{11}{13}\selectfont\color{LLDeep}#1}}%
+    \vskip 1.5pt\hbox to 0pt{\hss{\fontsize{9.5}{11}\selectfont\color{LLSoft}#2}}}}%
+}
 \renewcommand{\sectionmark}[1]{\markboth{\thesection~\textperiodcentered~#1}{}}
 \newcommand{\LLrunninghead}[1]{\markboth{#1}{}}
 
-\newcommand{\LL@headertext}{%
-  {\LLsemiboldfont\fontsize{11}{13}\selectfont\color{LLBg}\leftmark}%
-}
-\newcommand{\LLheaderband}{%
-  \begin{tikzpicture}[remember picture,overlay]
-    \fill[LLPrimary]
-      (current page.north west) rectangle
-      ([yshift=-\LLbandH]current page.north east);
-    \fill[LLAccent]
-      ([yshift=-\LLbandH]current page.north west) rectangle
-      ([yshift=-\dimexpr\LLbandH+\LLgoldH\relax]current page.north east);
-    \ifx\LLHeaderLogoFile\@empty\else
-      \node[anchor=west,inner sep=0]
-        at ([xshift=\LLbandinset,yshift=-\dimexpr\LLbandH/2\relax]current page.north west)
-        {\includegraphics[height=\LLHeaderLogoHeight]{\LLHeaderLogoFile}};
-    \fi
-    \node[anchor=east,inner sep=0]
-      at ([xshift=-\LLbandinset,yshift=-\dimexpr\LLbandH/2\relax]current page.north east)
-      {\LL@headertext};
-  \end{tikzpicture}%
-}
-
 % =============================================================================
-% 9. Pied de page
+% 9. Pied de page : un filet ocre, une ligne de service, le folio
 % =============================================================================
-\newsavebox{\LLpagenumbox}
+\newcommand{\LL@footleft}{}
+\newcommand{\LLfootleft}[1]{\renewcommand{\LL@footleft}{#1}}
+% À droite, le folio par défaut ; une feuille détachable y met sa propre ligne de service.
+\newcommand{\LL@footright}{\LLmonofont\thepage}
+\newcommand{\LLfootright}[1]{\renewcommand{\LL@footright}{#1}}
 \newcommand{\LLfooterband}{%
-  \sbox{\LLpagenumbox}{\LLmonofont\fontsize{11}{12}\selectfont\bfseries\color{LLDeep}\thepage}%
   \begin{minipage}{\textwidth}%
-    {\color{LLAccent}\rule{\textwidth}{1.6pt}}\par
+    {\color{LLAccent}\rule{\textwidth}{1.5pt}}\par
     \vspace{4pt}%
     \noindent\hbox to \textwidth{%
-      {\LLmonofont\fontsize{8.4}{10}\selectfont\color{LLMuted}%
-        \LLtracked{\MakeUppercase{Locomotion Lab\ \textperiodcentered\ \LL@reportref}}}%
+      {\fontsize{9}{11}\selectfont\color{LLSoft}\LL@footleft}%
       \hfil
-      \raisebox{0.5\ht\LLpagenumbox}{\tikz[baseline=0pt]{\fill[LLPrimary] (0,0) circle (2.3pt);}}%
-      \hspace{6pt}%
-      \usebox{\LLpagenumbox}%
+      {\fontsize{9}{11}\selectfont\color{LLSoft}\LL@footright}%
     }%
   \end{minipage}%
 }
@@ -311,78 +308,14 @@
 \pagestyle{LLmain}
 
 % =============================================================================
-% 10. Couverture v2 : une phrase, un badge de confiance, le verdict
+% 10. Le badge de confiance
 % =============================================================================
-\newcommand{\LLmetaitem}[2]{%
-  {\LLmonofont\fontsize{8.5}{11}\selectfont\color{LLMuted}\LLtracked{\MakeUppercase{#1}}}\par
-  \vspace{4pt}%
-  {\LLsemiboldfont\fontsize{10.5}{13}\selectfont\color{LLInk}#2}%
-}
-% badge : capitales espacées blanches sur aplat de la couleur donnée
+% Il n'y a plus de page de couverture : la page 1 du rapport EST la synthèse, avec
+% l'en-tête courant. Le badge, lui, reste — il nomme la confiance en toutes lettres.
 \newtcbox{\LL@badgebox}[1]{on line, box align=base, colback=#1, colframe=#1, boxrule=0pt,
   arc=8pt, left=8pt, right=8pt, top=3pt, bottom=3pt,
   fontupper=\LLsemiboldfont\fontsize{9}{11}\selectfont\color{LLPaper}}
 \newcommand{\LLbadge}[2]{\LL@badgebox{#2}{\LLtracked{\MakeUppercase{#1}}}}
-
-\newcommand{\makecover}{%
-  \begingroup
-  \thispagestyle{empty}%
-  \null
-  \begin{tikzpicture}[remember picture,overlay]
-    \fill[LLBg] (current page.south west) rectangle (current page.north east);
-    \fill[LLPrimary]
-      (current page.north west) rectangle
-      ([xshift=\LLcoversidebar]current page.south west);
-    \fill[LLAccent]
-      ([xshift=\LLcoversidebar]current page.north west) rectangle
-      ([xshift=\dimexpr\LLcoversidebar+\LLcovergold\relax]current page.south west);
-    \ifx\LLCoverLogoFile\@empty\else
-      \node[anchor=north west,inner sep=0]
-        at ([xshift=\LLcovercontentx,yshift=-\LLcoverlogoy]current page.north west)
-        {\includegraphics[width=\LLcoverlogow]{\LLCoverLogoFile}};
-    \fi
-    \node[anchor=north west,inner sep=0]
-      at ([xshift=\LLcovercontentx,yshift=-\LLcovertitley]current page.north west)
-      {\begin{minipage}[t]{\LLcovertextw}
-        \raggedright
-        {\LLmonofont\fontsize{10}{13}\selectfont\color{LLPrimaryDark}%
-          \LLtracked{\MakeUppercase{\LL@reporttype\ \textperiodcentered\ \LL@reportref}}}\par
-        \vspace{14pt}
-        {\LLextraboldfont\fontsize{34}{38}\selectfont\color{LLDeep}\@title\par}
-        \ifx\LL@subtitle\@empty\else
-          \vspace{6pt}
-          {\LLmediumfont\fontsize{14}{18}\selectfont\color{LLSoft}\LL@subtitle\par}
-        \fi
-        \vspace{12pt}
-        {\color{LLAccent}\rule{33mm}{1.5mm}}\par
-        \ifx\LL@coversentence\@empty\else
-          \vspace{14pt}
-          {\LLlightfont\fontsize{16}{22}\selectfont\color{LLText}\LL@coversentence\par}
-        \fi
-        \ifx\LL@coverbadge\@empty\else
-          \vspace{16pt}
-          \LLbadge{\LL@coverbadge}{\LL@coverbadgecolor}%
-          \ifx\LL@coververdict\@empty\else
-            \hspace{8pt}{\fontsize{10.5}{14}\selectfont\color{LLSoft}\LL@coververdict}%
-          \fi
-          \par
-        \fi
-      \end{minipage}};
-    \node[anchor=south west,inner sep=0]
-      at ([xshift=\LLcovercontentx,yshift=\LLcovermetay]current page.south west)
-      {\begin{minipage}[t]{\LLcovertextw}
-        {\color{LLHairline}\rule{\LLcovertextw}{0.4pt}}\par
-        \vspace{12pt}
-        \noindent
-        \begin{minipage}[t]{0.36\LLcovertextw}\LLmetaitem{Pour}{\LL@reportclient}\end{minipage}%
-        \begin{minipage}[t]{0.26\LLcovertextw}\LLmetaitem{Date}{\@date}\end{minipage}%
-        \begin{minipage}[t]{0.36\LLcovertextw}\LLmetaitem{Par}{\@author}\end{minipage}%
-      \end{minipage}};
-  \end{tikzpicture}%
-  \clearpage
-  \endgroup
-}
-\renewcommand{\maketitle}{\makecover}
 
 % =============================================================================
 % 11. Titres : pages du rapport v2 (sans numéro) et sections numérotées (fiches)
@@ -447,7 +380,7 @@
   borderline west={4pt}{0pt}{LLDeep},
   before upper={\LLboxlabel{LLDeep}{#1}\par\vspace{4pt}}}
 % l'encadré d'honnêteté : ce que le moteur ne sait pas, dit en une fois
-\newtcolorbox[]{llhonnete}[1][Ce que ce rapport ne sait pas]{LL@boxbase,
+\newtcolorbox[]{llhonnete}[1][Les limites]{LL@boxbase,
   colback=LLSensations, borderline west={4pt}{0pt}{LLAccentInk},
   before upper={\LLboxlabel{LLAccentInk}{#1}\par\vspace{4pt}}}
 % le verdict : carte brume, liseré bleu-vert
@@ -478,9 +411,9 @@
       \fill[LLPrimaryDark, rounded corners=1.5pt] (0,0) rectangle (#3\linewidth, 5pt);
     \end{tikzpicture}\par\vspace{2pt}%
     {\fontsize{9}{12}\selectfont\color{LLSoft}#4\par}
-  \end{minipage}\par\vspace{10pt}}
+  \end{minipage}\par\vspace{7pt}}
 % \LLqr{url} : QR vers l'annexe en ligne
-\newcommand{\LLqr}[1]{\qrcode[height=22mm,level=M]{#1}}
+\newcommand{\LLqr}[1]{\qrcode[height=17mm,level=M]{#1}}
 
 % =============================================================================
 % 14. Figures & légendes
@@ -502,6 +435,72 @@
 \newcommand{\LLthead}[1]{\textcolor{LLBg}{\textbf{#1}}}
 \newcommand{\LLheaderrow}{\rowcolor{LLPrimary}}
 \newcommand{\LLzebra}{\rowcolors{2}{LLPaper}{LLSensations}}
+
+% =============================================================================
+% 15 bis. Le tableau de marche : trames, bandes de phase, cases à remplir
+% =============================================================================
+% Les trames dérivent des tokens : aucune valeur hexadécimale nouvelle n'entre ici.
+\colorlet{LLNightRow}{LLPrimary!26!LLPaper}     % segment de nuit, sur toute la ligne
+\colorlet{LLCentralCol}{LLAccent!22!LLPaper}    % la colonne de l'heure prévue
+\colorlet{LLFillCell}{LLAccent!7!LLPaper}       % case à remplir au stylo
+\colorlet{LLFillRule}{LLGaugeFull}              % son filet pointillé
+\colorlet{LLPhaseOne}{LLDeep!12!LLPaper}
+\colorlet{LLPhaseTwo}{LLPrimary!16!LLPaper}
+
+% \LLctr{valeur} : cellule de la colonne centrale (la trame ambre passe AVANT la trame de
+% ligne — \cellcolor l'emporte sur \rowcolor, c'est ce qu'on veut sur un segment de nuit).
+\newcommand{\LLctr}[1]{\cellcolor{LLCentralCol}{\LLsemiboldfont\LLtabular #1}}
+% \LLfort{valeur} : un chiffre qui doit sauter aux yeux (D+ et D− marqués).
+\newcommand{\LLfort}[1]{{\LLsemiboldfont\LLtabular\color{LLDeep}#1}}
+% \LLcasevide : la case qu'on remplit au stylo (fond lavé, filet pointillé pour écrire dessus).
+\newcommand{\LLcasevide}{\cellcolor{LLFillCell}%
+  \textcolor{LLFillRule}{\makebox[\LLcaselargeur]{\dotfill}}}
+\newcommand{\LLcaselargeur}{7mm}
+\colorlet{LLPhaseOneInk}{LLDeepDark}
+\colorlet{LLPhaseTwoInk}{LLSlateDark}
+
+% \LL@phase{colonnes}{trame}{encre}{titre}{pourquoi} : la bande qui coupe le tableau.
+\newcommand{\LL@phase}[5]{%
+  \noalign{\vspace{1.5pt}}%
+  \multicolumn{#1}{@{}l@{}}{%
+    \cellcolor{#2}\rule{0pt}{2.6ex}\hspace{4pt}%
+    {\LLsemiboldfont\fontsize{8.6}{10}\selectfont\color{#3}\LLtracked{\MakeUppercase{#4}}}%
+    \hspace{7pt}{\fontsize{8.4}{10}\selectfont\color{LLSoft}#5}}%
+}
+% Les deux parties de la course, dans l'ordre : \LLphaseun puis \LLphasedeux.
+\newcommand{\LLphaseun}[3]{\LL@phase{#1}{LLPhaseOne}{LLPhaseOneInk}{#2}{#3}}
+\newcommand{\LLphasedeux}[3]{\LL@phase{#1}{LLPhaseTwo}{LLPhaseTwoInk}{#2}{#3}}
+% \LLfleche : la flèche « au plus tôt → au plus tard ». Tracée, parce qu'Ubuntu Sans
+% n'a pas de glyphe U+2192 ; elle prend la couleur courante.
+\newcommand{\LLfleche}{\,\raisebox{0.18ex}{\tikz{\draw[line width=0.55pt,
+  -{Straight Barb[length=2.1pt, width=3.2pt]}] (0,0) -- (0.85em,0);}}\,}
+% \LLhero{texte} : la phrase de prédiction de la page 1.
+\newcommand{\LLhero}[1]{{\fontsize{18}{26}\selectfont\color{LLText}#1\par}}
+% \LLtile{étiquette}{valeur}{sous-texte} et sa variante mise en avant.
+% #4 fond, #5 filet, #6 corps de la valeur ; « equal height group » aligne les quatre
+% tuiles d'une même rangée (tcolorbox a besoin de la deuxième passe pour ça).
+\newcommand{\LL@tile}[6]{%
+  \begin{tcolorbox}[enhanced, colback=#4, colframe=#5, boxrule=0.6pt, arc=5pt,
+      left=8pt, right=8pt, top=6pt, bottom=6pt, nobeforeafter, width=\linewidth,
+      equal height group=LLtuiles]
+    \LLetiquette{#1}\par\vspace{2pt}%
+    {\LLextraboldfont\LLtabular\fontsize{#6}{#6}\selectfont\color{LLText}#2}\par\vspace{3pt}%
+    {\fontsize{8.4}{10.5}\selectfont\color{LLSoft}#3\par}
+  \end{tcolorbox}}
+\newcommand{\LLtile}[3]{\LL@tile{#1}{#2}{#3}{LLPaper}{LLHairline}{15}}
+% \LLbloc… : un bloc de texte teinté, étiqueté — la brique du verso de la feuille. Pas de
+% groupe de hauteur : chaque bloc fait la taille de son contenu.
+\newcommand{\LL@bloc}[4]{%
+  \begin{tcolorbox}[enhanced, colback=#2, colframe=#3, boxrule=0.6pt, arc=5pt,
+      left=7pt, right=7pt, top=5pt, bottom=6pt, nobeforeafter, width=\linewidth]
+    \LLetiquette{#1}\par\vspace{3pt}%
+    {\fontsize{8.6}{11.4}\selectfont\color{LLText}#4\par}
+  \end{tcolorbox}}
+\newcommand{\LLblocnuit}[2]{\LL@bloc{#1}{LLNightRow}{LLMistLine}{#2}}
+\newcommand{\LLblocambre}[2]{\LL@bloc{#1}{LLCentralCol}{LLAccentInk}{#2}}
+\newcommand{\LLblocpapier}[2]{\LL@bloc{#1}{LLPaper}{LLHairline}{#2}}
+\newcommand{\LLtileaccent}[3]{\LL@tile{#1}{#2}{#3}{LLCentralCol}{LLAccentInk}{15}}
+\newcommand{\LLtilecrew}[3]{\LL@tile{#1}{#2}{#3}{LLMist}{LLMistLine}{10.5}}
 
 % =============================================================================
 % 16. Bibliographie et liens

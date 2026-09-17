@@ -243,6 +243,7 @@ def analyze_full(
     report_version: str | None = None,
     report_date: datetime | None = None,
     render_pdf: bool = True,
+    feuille_only: bool = False,
     analysis_date: date | None = None,
     until: date | None = None,
 ) -> FullResult:
@@ -290,12 +291,14 @@ def analyze_full(
             cfg=cfg, athlete=athlete, report_ref=report_ref, report_version=report_version,
             report_date=report_date, target=target,
         )
-        # le rapport se pose À CÔTÉ de ce qui l'accompagne (fiche, bracelet, calendrier,
-        # trace, annexe) ; le dossier tex/ ne garde que la source et les journaux
-        pdf_path = shutil.copy(build_pdf(context, fig_dir, out_dir / "tex"),
-                               out_dir / "rapport.pdf")
-        pdf_path = Path(pdf_path)
-        # ce qui accompagne le rapport : fiche d'assistance, bracelet, calendrier, GPX, annexe
+        # le rapport se pose À CÔTÉ de ce qui l'accompagne (feuille, calendrier, trace,
+        # annexe) ; le dossier tex/ ne garde que la source et les journaux.
+        # ``feuille_only`` : la feuille à emporter seule, pour une réimpression de dernière
+        # minute sans refaire les trois pages.
+        if not feuille_only:
+            pdf_path = Path(shutil.copy(build_pdf(context, fig_dir, out_dir / "tex"),
+                                        out_dir / "rapport.pdf"))
+        # ce qui accompagne le rapport : feuille à emporter, calendrier, GPX, annexe
         livrables = write_livrables(
             context=context, course=course, twin=preview.twin, calibration=preview.calibration,
             prediction=preview.prediction, plan=plan, race=race, sufficiency=preview.sufficiency,
@@ -316,6 +319,7 @@ def run_full(
     athlete: str,
     purge_source: bool = True,
     render_pdf: bool = True,
+    feuille_only: bool = False,
     report_ref: str = "LL-TWIN",
     report_version: str | None = None,
     report_date: datetime | None = None,
@@ -332,8 +336,9 @@ def run_full(
     try:
         full = analyze_full(
             stream, course, race, cfg, out_dir=Path(out_dir), athlete=athlete,
-            render_pdf=render_pdf, report_ref=report_ref, report_version=report_version,
-            report_date=report_date, analysis_date=analysis_date, until=until,
+            render_pdf=render_pdf, feuille_only=feuille_only, report_ref=report_ref,
+            report_version=report_version, report_date=report_date,
+            analysis_date=analysis_date, until=until,
         )
     finally:
         if purge_source:

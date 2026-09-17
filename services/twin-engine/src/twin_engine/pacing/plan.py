@@ -84,6 +84,31 @@ class PacingPlan:
     stops_model: str = "carved"              # carved (politique retranchée) | personal | spec
     stops_rate: float | None = None          # taux personnel servi (h d'arrêt par h de mouvement)
 
+    @property
+    def night_runs(self) -> list[list[SegmentPlan]]:
+        """Les sections de nuit, dans l'ordre : une liste de segments contigus par section.
+
+        Source unique du rapport pour tout ce qui parle de nuit — un parcours peut en compter
+        deux (une nuit pleine puis la tombée du jour suivant), et les lire séparément évite de
+        reporter un min→max qui laisserait croire à une nuit de bout en bout."""
+        runs: list[list[SegmentPlan]] = []
+        cur: list[SegmentPlan] = []
+        for s in self.segments:
+            if s.night:
+                cur.append(s)
+            elif cur:
+                runs.append(cur)
+                cur = []
+        if cur:
+            runs.append(cur)
+        return runs
+
+    @property
+    def night_hours(self) -> float:
+        """Heures passées de nuit (mouvement + arrêts des segments de nuit)."""
+        return sum((s.t_move_min + s.stop_min) / 60.0
+                   for run in self.night_runs for s in run)
+
     def to_dict(self) -> dict:
         return {
             "t_move_h": round(self.t_move_h, 2),

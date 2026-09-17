@@ -81,17 +81,17 @@ twin-engine full \
   --course   chemin/vers/parcours.gpx \
   --out      chemin/vers/sortie/ \
   --athlete  "Prénom Nom"
-  # --no-pdf pour s'arrêter aux figures (sans compiler le PDF)
+  # --no-pdf         pour s'arrêter aux figures (sans compiler le PDF)
+  # --feuille-seule  pour ne compiler que la feuille à emporter (réimpression de dernière minute)
 ```
 
 Le `preview` imprime un JSON (verdict, prédiction, jumeau, parcours) + un résumé lisible. Le `full`
-écrit les figures et le PDF dans `--out`, plus ce qui accompagne le rapport (v2) :
+écrit les figures et le PDF dans `--out`, plus ce qui accompagne le rapport (v3) :
 
 | fichier | ce que c'est |
 |---|---|
-| `rapport.pdf` | le rapport, six pages (sa source reste dans `tex/`) |
-| `fiche.pdf` | la fiche d'assistance détachable (au plus tôt / central / au plus tard) |
-| `bracelet.pdf` | la bande à découper (heures centrales) |
+| `rapport.pdf` | le rapport, trois pages (sa source reste dans `tex/`) |
+| `feuille.pdf` | la feuille à emporter : A4 paysage recto-verso, détachable (tableau de marche au recto, assistance / nuit / limites au verso) |
 | `plan.ics` | le calendrier : un événement par point d'assistance |
 | `plan.gpx` | la trace avec un point de passage horodaté par point d'assistance |
 | `annexe.json` | l'annexe en ligne |
@@ -106,8 +106,13 @@ l'adresse de l'annexe non devinable. Pour publier l'annexe : copier `annexe.json
 `/services/twin/annexe/<référence>` est prérendue, en `noindex`, hors navigation, hors plan de site et
 hors recherche. La retirer, c'est supprimer le fichier et redéployer.
 
-Les points d'assistance viennent de `crew_access_indices` dans la spec de course (§6) ; sans eux, les
-bases majeures ; sans bases majeures, tous les points de passage.
+Les points d'assistance viennent de `crew` dans la spec de course (§6), puis de
+`crew_access_indices` ; sans déclaration, le moteur prend les bases majeures et la feuille **dit**
+que ces points sont supposés.
+
+Un rapport ne se rend pas avec des noms de ravitaillement bouchons (« AS3 », « PC 12 », un kilomètre
+répété) : le rendu s'arrête avec la liste des noms fautifs. Mets les vrais noms du carnet de course
+dans `aid_names`.
 
 > `--race` est **optionnel** (défaut : aucun → mode GPX-only, distance issue de la trace et
 > découpage automatique en segments). `examples/nice-100m.json` est un exemple de spec : pour une
@@ -168,10 +173,16 @@ horaires réels. Tous les champs sont **optionnels** — ne mets que ce que tu v
 | `lat`, `lon`, `tz_offset_h` | point de départ + décalage horaire (soleil/nuit) | idem |
 | `major_base_indices` | indices des bases-vie majeures (arrêts longs) | aucune base majeure |
 | `technicity_pct` | **majoration de coût déclarée** pour la technicité du terrain (%) | 0 — le moteur ne devine pas |
+| `crew` | points d'assistance du **règlement**, `[{aid_index, note}]` indexés sur `aid_names` | repli sur `crew_access_indices`, puis sur les bases majeures, annoncé comme supposé |
+| `nutrition` | débits **déclarés** `{water_l_per_h, carbs_g_per_h}` | colonnes eau et ravito vides, à remplir au stylo |
+| `phases` | découpe de la course, `[{name, note, from_aid_index}]` | deux parties, coupées au ravitaillement le plus proche de la mi-temps prédite |
 
-Champ `crew_access_indices` (rapport v2) : les segments dont la **fin** est ouverte à l'assistance.
-La fiche détachable, le calendrier et les points GPX s'y calent. Absent, le moteur prend les bases
-majeures (`major_base_indices`), et à défaut tous les points de passage.
+`crew` prime sur `crew_access_indices` (les segments dont la **fin** est ouverte à l'assistance) :
+la feuille, le calendrier et les points GPX s'y calent. Une `note` vide imprime une case à remplir.
+
+`nutrition` n'est jamais devinée : sans les **deux** débits, le moteur ne calcule rien et les
+colonnes restent blanches. Avec les deux, il calcule par segment sur la durée prévue (arrêts
+compris) et donne les totaux au verso de la feuille.
 
 ### Technicité du terrain (`technicity_pct` / `--technicity`)
 
@@ -196,8 +207,9 @@ La **trace GPX du parcours** est fournie à part (`--course`) et n'est pas commi
 
 ## 7. Lire la fourchette : les deux bandes
 
-> **Le rapport v2** (six pages, fiche d'assistance, bracelet, ICS, GPX, annexe en ligne) est décrit
-> dans `docs/twin-theory.md` §7 ; sa charte vient de `packages/ui` via `report/charte.py`, et ses
+> **Le rapport v3** (trois pages, feuille à emporter, ICS, GPX, annexe en ligne) est décrit
+> dans `docs/twin-theory.md` §7 et dans `DIAGNOSTIC.md` §10.20 ; sa charte vient de `packages/ui`
+> via `report/charte.py`, et ses
 > polices sont des instances statiques d'Ubuntu Sans régénérables par
 > `PYTHONPATH=src python -m tools.instance_fonts`.
 

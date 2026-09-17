@@ -109,16 +109,20 @@ def test_context_french_date_and_new_fields():
     assert "cum_dplus" in last and "cum_dminus" in last
 
 
-def test_night_span_is_contiguous_not_minmax():
-    """Régression : la nuit ne doit pas s'étaler du 1er au dernier segment de nuit isolés."""
+def test_night_sections_are_contiguous_runs_not_minmax():
+    """Régression : la nuit ne s'étale pas du 1er au dernier segment de nuit isolés — et les
+    DEUX sections sont publiées, pas seulement la plus longue."""
     from types import SimpleNamespace
 
-    from twin_engine.report.context import _main_night_span
+    from twin_engine.report.feuille import night_sections
 
-    segs = [SimpleNamespace(off1=k, night=n) for k, n in
-            [(10, False), (20, True), (30, True), (40, False), (90, True)]]
-    # plus long passage contigu = [20,30] → (20, 30), pas (20, 90)
-    assert _main_night_span(SimpleNamespace(segments=segs)) == (20, 30)
+    segs = [SimpleNamespace(index=i + 1, off1=k, night=n, arr_clock=None, to=f"P{i}",
+                            t_move_min=60, stop_min=0)
+            for i, (k, n) in enumerate([(10, False), (20, True), (30, True), (40, False), (90, True)])]
+    plan = SimpleNamespace(segments=segs, start_time=None,
+                           night_runs=[[segs[1], segs[2]], [segs[4]]])
+    sections = night_sections(plan)
+    assert [(s["from_km"], s["to_km"]) for s in sections] == [("10", "30"), ("40", "90")]
 
 
 def test_report_date_is_real_and_injectable():
@@ -176,8 +180,11 @@ def test_plan_windows_and_arrival_in_clock_time():
     for row in ctx["plan_rows"]:
         assert ":" in row["window"]          # fenêtre horaire, pas des heures cumulées
     tex = render_tex(ctx)
-    # « Ta course en une page » imprime les deux bandes, étiquetées par leur usage
-    assert "Fourchette de course" in tex and "Bornes de sécurité" in tex
+    # la première page imprime les deux bandes, chacune dite par son usage : les trois
+    # scénarios en tuiles, les bornes de sécurité dans la tuile de l'assistance
+    assert "Rapide" in tex and "Prudent" in tex and "Pour l'assistance" in tex
+    assert ctx["plan_band_word"] in tex and ctx["safety_word"] in tex
+    assert ctx["arrival_safety_lo_clock"] in tex
 
 
 def test_context_interval_labels_from_config():
@@ -223,8 +230,10 @@ def test_three_scenarios_are_always_columns_of_the_plan():
         assert row["fast"] and row["central"] and row["cautious"]
         assert row["fast"] != row["cautious"]
     tex = render_tex(ctx)
-    assert "Trois scénarios de course" in tex
-    assert "Repère tôt la colonne qui te correspond" in tex
+    # les colonnes sont titrées par LEUR heure d'arrivée (v3), plus par « rapide / prudent »
+    for key in ("fast", "central", "cautious"):
+        assert ctx["clock_titles"][key] in tex
+    assert "repère tôt celle qui te correspond" in tex
 
 
 def test_wide_interval_is_owned_in_one_sentence():
@@ -241,7 +250,7 @@ def test_wide_interval_is_owned_in_one_sentence():
 def test_figures_generated(tmp_path):
     course, twin, cal, pred, plan, race, _ = _scenario()
     figs = generate_figures(course, twin, cal, pred, plan, race, tmp_path)
-    for name in ("profil", "record", "demande", "pacing", "cumul", "validation"):
+    for name in ("profil", "record", "cumul", "validation", "profil_feuille"):
         assert name in figs
         assert (tmp_path / f"{name}.png").stat().st_size > 1000
 
@@ -329,7 +338,7 @@ def test_target_mode_switches_the_vocabulary_and_never_hides_the_prediction():
     # le mot juste : tolérance d'exécution, jamais une probabilité
     assert "fenêtre de passage" in tex
     assert "tolérance d'exécution" in tex
-    assert "au plus tôt" in tex and "au plus tard" in tex     # les colonnes changent de nom
+    assert "Au plus tôt" in tex and "Au plus tard" in tex     # les tuiles changent de nom
     # la PRÉDICTION reste affichée — c'est le garde-fou central de l'ADR
     assert ctx["pred_central"] in tex
     assert "le modèle te situe" in tex
@@ -360,8 +369,10 @@ def test_target_mode_renames_the_scenario_columns():
     ctx, _t, _pred, _plan = _target_context(_nominal_target(pred))
     tex = render_tex(ctx)
     assert ctx["target_mode"]
-    assert "au plus tôt" in tex and "rapide" not in tex.split("Trois scénarios")[0].split("Le plan")[-1]
-    assert "tolérance d'exécution" in tex
+    # aucune tuile ne parle de « rapide » ou « prudent » : ce sont les bornes d'une tolérance
+    assert "Au plus tôt" in tex and "Au plus tard" in tex
+    assert "Rapide" not in tex and "Prudent" not in tex
+    assert "tolérance d'exécution" in tex and "pas une probabilité" in tex
 
 
 def test_no_target_renders_exactly_as_before():
@@ -443,7 +454,7 @@ def test_declared_technicity_is_disclosed_in_the_report():
                                plan=plan_t, race=race_t, sufficiency=suf, cfg=CFG, athlete="A")
     tex = render_tex(ctx)
     assert ctx["technicity_pct"] == "13"
-    assert "Technicité déclarée" in tex                  # dite sur « Ta course en une page »
+    assert "Technicité déclarée : +13" in tex            # dite sur la première page
     assert "pas mesurés" in tex                          # ... et dans les quatre limites
     assert any("technicité déclarés" in a for a in ctx["assumptions"])
 
@@ -451,5 +462,5 @@ def test_declared_technicity_is_disclosed_in_the_report():
     ctx0 = _context()
     tex0 = render_tex(ctx0)
     assert "Technicité déclarée" not in tex0
-    assert "Technicité du terrain non prise en compte" in tex0
+    assert "piste roulante et arête sont traitées pareil" in tex0
     assert any("aucune technicité déclarée" in a for a in ctx0["assumptions"])

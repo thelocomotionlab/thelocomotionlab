@@ -16,6 +16,11 @@ def french_datetime(dt: datetime) -> str:
     return f"{_JOURS[dt.weekday()]} {dt.day} {_MOIS[dt.month - 1]} {dt.year} à {dt.hour}h{dt.minute:02d}"
 
 
+def french_datetime_short(dt: datetime) -> str:
+    """``vendredi 25 septembre, 13h00`` — sans l'année, pour un surtitre de page."""
+    return f"{_JOURS[dt.weekday()]} {dt.day} {_MOIS[dt.month - 1]}, {dt.hour}h{dt.minute:02d}"
+
+
 def fr(x: float | int | None, decimals: int = 0) -> str:
     """Nombre à la française : décimale = virgule, pas de séparateur de milliers."""
     if x is None:
@@ -52,6 +57,13 @@ def hm(hours: float | None) -> str:
         h += 1
         m = 0
     return f"{h}\\,h\\,{m:02d}"
+
+
+def hm_plain(hours: float | None) -> str:
+    """Durée en heures → « 30 h 24 », en espaces ordinaires. Pour une durée insérée DANS une
+    phrase qui sera échappée (Ubuntu Sans n'a pas de glyphe d'espace fine insécable : une
+    U+202F sortirait en tofu dans le PDF)."""
+    return hm(hours).replace("\\,", " ")
 
 
 _TEX_SPECIAL = {
@@ -121,4 +133,5 @@ def courses_sur(pct: float | int | str) -> str:
     return table.get(int(round(value)), f"{fr(value, 0)} % des courses")
 
 
-__all__ = ["fr", "fr_thousands", "hm", "tex_escape", "detex", "courses_sur"]
+__all__ = ["fr", "fr_thousands", "french_datetime", "french_datetime_short", "hm",
+           "hm_plain", "tex_escape", "detex", "courses_sur"]
