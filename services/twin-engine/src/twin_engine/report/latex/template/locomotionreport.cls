@@ -128,6 +128,7 @@
 \RequirePackage{needspace}
 \RequirePackage{float}
 \RequirePackage{qrcode}
+\RequirePackage{lastpage}
 \RequirePackage[backend=biber,style=numeric,sorting=none]{biblatex}
 \RequirePackage[hidelinks]{hyperref}
 
@@ -270,10 +271,10 @@
     \vspace{3pt}{\color{LLHairline}\hrule height 0.4pt}%
   \end{minipage}%
 }
-% Titre courant du rapport : le nom de la course en terracotta, une ligne dessous.
-\newcommand{\LLheaddoc}[2]{%
-  \LLheadright{\vbox{\hbox to 0pt{\hss{\LLsemiboldfont\fontsize{11}{13}\selectfont\color{LLDeep}#1}}%
-    \vskip 1.5pt\hbox to 0pt{\hss{\fontsize{9.5}{11}\selectfont\color{LLSoft}#2}}}}%
+% Titre courant : le nom de la course, en terracotta. Rien d'autre — le reste est sur la
+% couverture, et une en-tête chargée se relit à chaque page pour rien.
+\newcommand{\LLheaddoc}[1]{%
+  \LLheadright{{\LLsemiboldfont\fontsize{11}{13}\selectfont\color{LLDeep}#1}}%
 }
 \renewcommand{\sectionmark}[1]{\markboth{\thesection~\textperiodcentered~#1}{}}
 \newcommand{\LLrunninghead}[1]{\markboth{#1}{}}
@@ -304,6 +305,15 @@
   \renewcommand{\footrulewidth}{0pt}%
   \fancyhead[L]{\LLheaderband}%
   \fancyfoot[L]{\LLfooterband}%
+}
+% Style de la feuille détachable : même en-tête, et en pied le seul folio « n/N ».
+\fancypagestyle{LLfeuille}{%
+  \fancyhf{}%
+  \renewcommand{\headrulewidth}{0pt}%
+  \renewcommand{\footrulewidth}{0pt}%
+  \fancyhead[L]{\LLheaderband}%
+  \fancyfoot[L]{\makebox[\textwidth]{%
+    {\LLtabular\fontsize{9}{11}\selectfont\color{LLSoft}\thepage/\pageref{LastPage}}}}%
 }
 \pagestyle{LLmain}
 
@@ -434,73 +444,74 @@
 \newcommand{\LLpos}[1]{{\LLmonofont\color{LLSuccess}#1}}
 \newcommand{\LLthead}[1]{\textcolor{LLBg}{\textbf{#1}}}
 \newcommand{\LLheaderrow}{\rowcolor{LLPrimary}}
-\newcommand{\LLzebra}{\rowcolors{2}{LLPaper}{LLSensations}}
+% Zébrure d'une ligne sur deux : la fiche participant·e des ateliers l'utilise encore ; les
+% tableaux de course, eux, se lisent aux filets (cf. \LLtableau).
+\newcommand{\LLzebra}{\rowcolors{2}{LLPaper}{LLRowAlt}}
 
 % =============================================================================
-% 15 bis. Le tableau de marche : trames, bandes de phase, cases à remplir
+% 15 bis. Les tableaux : une seule couleur, des filets, tout centré
 % =============================================================================
-% Les trames dérivent des tokens : aucune valeur hexadécimale nouvelle n'entre ici.
-\colorlet{LLNightRow}{LLPrimary!26!LLPaper}     % segment de nuit, sur toute la ligne
-\colorlet{LLCentralCol}{LLAccent!22!LLPaper}    % la colonne de l'heure prévue
-\colorlet{LLFillCell}{LLAccent!7!LLPaper}       % case à remplir au stylo
-\colorlet{LLFillRule}{LLGaugeFull}              % son filet pointillé
-\colorlet{LLPhaseOne}{LLDeep!12!LLPaper}
-\colorlet{LLPhaseTwo}{LLPrimary!16!LLPaper}
+% Un tableau de course se lit à bout de bras : une couleur d'en-tête, des filets pour suivre
+% la ligne, et une seule ligne teintée — celle où l'assistance attend.
+\colorlet{LLTableRule}{LLGaugeFull}
+\colorlet{LLAssistRow}{LLAccent!16!LLPaper}   % la seule ligne colorée du tableau
+\colorlet{LLFillRule}{LLGaugeFull}            % le pointillé d'une case à remplir
 
-% \LLctr{valeur} : cellule de la colonne centrale (la trame ambre passe AVANT la trame de
-% ligne — \cellcolor l'emporte sur \rowcolor, c'est ce qu'on veut sur un segment de nuit).
-\newcommand{\LLctr}[1]{\cellcolor{LLCentralCol}{\LLsemiboldfont\LLtabular #1}}
+\newcommand{\LLtableau}{%
+  \arrayrulecolor{LLTableRule}%
+  \setlength{\arrayrulewidth}{0.4pt}%
+  \LLtabular}
+% \LLassist : la ligne d'un ravitaillement où l'assistance est autorisée.
+\newcommand{\LLassist}{\rowcolor{LLAssistRow}}
+% \LLprevu{valeur} : la colonne de l'heure prévue — en gras, sans trame.
+\newcommand{\LLprevu}[1]{{\LLsemiboldfont #1}}
 % \LLfort{valeur} : un chiffre qui doit sauter aux yeux (D+ et D− marqués).
-\newcommand{\LLfort}[1]{{\LLsemiboldfont\LLtabular\color{LLDeep}#1}}
-% \LLcasevide : la case qu'on remplit au stylo (fond lavé, filet pointillé pour écrire dessus).
-\newcommand{\LLcasevide}{\cellcolor{LLFillCell}%
-  \textcolor{LLFillRule}{\makebox[\LLcaselargeur]{\dotfill}}}
-\newcommand{\LLcaselargeur}{7mm}
-\colorlet{LLPhaseOneInk}{LLDeepDark}
-\colorlet{LLPhaseTwoInk}{LLSlateDark}
+\newcommand{\LLfort}[1]{{\LLsemiboldfont #1}}
+% \LLcasevide : la case qu'on remplit au stylo, un simple pointillé.
+\newcommand{\LLcaselargeur}{16mm}
+\newcommand{\LLcasevide}{\textcolor{LLFillRule}{\makebox[\LLcaselargeur]{\dotfill}}}
+% \LLnuit : le point qui dit « il fait nuit sur ce segment ».
+\newcommand{\LLnuit}{\textcolor{LLSlate}{$\bullet$}}
 
-% \LL@phase{colonnes}{trame}{encre}{titre}{pourquoi} : la bande qui coupe le tableau.
-\newcommand{\LL@phase}[5]{%
-  \noalign{\vspace{1.5pt}}%
-  \multicolumn{#1}{@{}l@{}}{%
-    \cellcolor{#2}\rule{0pt}{2.6ex}\hspace{4pt}%
-    {\LLsemiboldfont\fontsize{8.6}{10}\selectfont\color{#3}\LLtracked{\MakeUppercase{#4}}}%
-    \hspace{7pt}{\fontsize{8.4}{10}\selectfont\color{LLSoft}#5}}%
-}
-% Les deux parties de la course, dans l'ordre : \LLphaseun puis \LLphasedeux.
-\newcommand{\LLphaseun}[3]{\LL@phase{#1}{LLPhaseOne}{LLPhaseOneInk}{#2}{#3}}
-\newcommand{\LLphasedeux}[3]{\LL@phase{#1}{LLPhaseTwo}{LLPhaseTwoInk}{#2}{#3}}
-% \LLfleche : la flèche « au plus tôt → au plus tard ». Tracée, parce qu'Ubuntu Sans
-% n'a pas de glyphe U+2192 ; elle prend la couleur courante.
-\newcommand{\LLfleche}{\,\raisebox{0.18ex}{\tikz{\draw[line width=0.55pt,
-  -{Straight Barb[length=2.1pt, width=3.2pt]}] (0,0) -- (0.85em,0);}}\,}
+% \LLcouverture{surtitre}{titre}{méta}{bloc du bas} : la première page. La marque en grand,
+% beaucoup d'air, le titre bas, et ce que l'athlète doit retenir avant d'ouvrir. La classe ne
+% décide d'aucun texte : elle pose.
+\newcommand{\LLcouverture}[4]{%
+  \thispagestyle{empty}%
+  \null\vspace{6mm}
+  {\LLbrand{20mm}{17}}\par
+  \vspace{34mm}
+  {\LLmonofont\fontsize{10}{13}\selectfont\color{LLPrimaryDark}\LLtracked{\MakeUppercase{#1}}\par}
+  \vspace{5mm}
+  {\LLextraboldfont\fontsize{38}{44}\selectfont\color{LLDeep}#2\par}
+  \vspace{5mm}
+  {\color{LLAccent}\rule{26mm}{1.6mm}}\par
+  \vspace{6mm}
+  {\fontsize{11.5}{16}\selectfont\color{LLSoft}#3\par}
+  \vfill
+  #4
+  \clearpage}
+
 % \LLhero{texte} : la phrase de prédiction de la page 1.
 \newcommand{\LLhero}[1]{{\fontsize{18}{26}\selectfont\color{LLText}#1\par}}
-% \LLtile{étiquette}{valeur}{sous-texte} et sa variante mise en avant.
-% #4 fond, #5 filet, #6 corps de la valeur ; « equal height group » aligne les quatre
-% tuiles d'une même rangée (tcolorbox a besoin de la deuxième passe pour ça).
+% \LLtile{étiquette}{valeur}{sous-texte} : carte blanche à filet ; la variante « accent »
+% ne change que la couleur du filet. « equal height group » aligne les tuiles d'une rangée
+% (tcolorbox a besoin de la deuxième passe pour ça).
 \newcommand{\LL@tile}[6]{%
-  \begin{tcolorbox}[enhanced, colback=#4, colframe=#5, boxrule=0.6pt, arc=5pt,
+  \begin{tcolorbox}[enhanced, colback=LLPaper, colframe=#4, boxrule=#5, arc=5pt,
       left=8pt, right=8pt, top=6pt, bottom=6pt, nobeforeafter, width=\linewidth,
       equal height group=LLtuiles]
     \LLetiquette{#1}\par\vspace{2pt}%
     {\LLextraboldfont\LLtabular\fontsize{#6}{#6}\selectfont\color{LLText}#2}\par\vspace{3pt}%
     {\fontsize{8.4}{10.5}\selectfont\color{LLSoft}#3\par}
   \end{tcolorbox}}
-\newcommand{\LLtile}[3]{\LL@tile{#1}{#2}{#3}{LLPaper}{LLHairline}{15}}
-% \LLbloc… : un bloc de texte teinté, étiqueté — la brique du verso de la feuille. Pas de
-% groupe de hauteur : chaque bloc fait la taille de son contenu.
-\newcommand{\LL@bloc}[4]{%
-  \begin{tcolorbox}[enhanced, colback=#2, colframe=#3, boxrule=0.6pt, arc=5pt,
-      left=7pt, right=7pt, top=5pt, bottom=6pt, nobeforeafter, width=\linewidth]
-    \LLetiquette{#1}\par\vspace{3pt}%
-    {\fontsize{8.6}{11.4}\selectfont\color{LLText}#4\par}
-  \end{tcolorbox}}
-\newcommand{\LLblocnuit}[2]{\LL@bloc{#1}{LLNightRow}{LLMistLine}{#2}}
-\newcommand{\LLblocambre}[2]{\LL@bloc{#1}{LLCentralCol}{LLAccentInk}{#2}}
-\newcommand{\LLblocpapier}[2]{\LL@bloc{#1}{LLPaper}{LLHairline}{#2}}
-\newcommand{\LLtileaccent}[3]{\LL@tile{#1}{#2}{#3}{LLCentralCol}{LLAccentInk}{15}}
-\newcommand{\LLtilecrew}[3]{\LL@tile{#1}{#2}{#3}{LLMist}{LLMistLine}{10.5}}
+\newcommand{\LLtile}[3]{\LL@tile{#1}{#2}{#3}{LLHairline}{0.6pt}{15}}
+\newcommand{\LLtileaccent}[3]{\LL@tile{#1}{#2}{#3}{LLAccentInk}{1.1pt}{15}}
+\newcommand{\LLtilecrew}[3]{\LL@tile{#1}{#2}{#3}{LLMistLine}{0.6pt}{9.5}}
+% \LLfleche : la flèche « au plus tôt → au plus tard ». Tracée, parce qu'Ubuntu Sans
+% n'a pas de glyphe U+2192 ; elle prend la couleur courante.
+\newcommand{\LLfleche}{\,\raisebox{0.18ex}{\tikz{\draw[line width=0.55pt,
+  -{Straight Barb[length=2.1pt, width=3.2pt]}] (0,0) -- (0.85em,0);}}\,}
 
 % =============================================================================
 % 16. Bibliographie et liens

@@ -114,30 +114,22 @@ def parts(plan, race) -> list[dict]:
 # --------------------------------------------------------------------------- #
 
 
-def _candidates(seg, *, night_in: bool, night_out: bool, note: str, is_contact: bool,
-                is_longest: bool, cfg) -> list[str]:
+def _candidates(seg, *, note: str, is_longest: bool, cfg) -> list[str]:
     """Consignes possibles pour un segment, de la plus utile à la moins utile.
 
-    Chacune dit ce que les colonnes voisines ne disent pas ; les colonnes km, D+, D− et
-    arrêt portent déjà les chiffres bruts.
+    Chacune dit ce que les colonnes voisines ne disent pas : le kilométrage, le dénivelé,
+    l'arrêt et la nuit ont déjà leur colonne, une consigne qui les répète ne sert à rien.
     """
     r = cfg.report
     out: list[str] = []
-    if night_in:
-        out.append("frontale dès la sortie du ravito")
-    if night_out:
-        out.append("jour levé, range la frontale")
     if note:
         out.append(note)
     if seg.dplus_m >= r.strong_dplus_m and seg.dplus_m >= seg.dminus_m:
-        out.append(f"+{fr(seg.dplus_m, 0)} m : marche et mange en montant")
+        out.append(f"+{fr(seg.dplus_m, 0)} m : marche, mange en montant")
     if seg.dminus_m >= r.strong_dminus_m and seg.dminus_m > seg.dplus_m:
-        out.append(f"−{fr(seg.dminus_m, 0)} m : foulée courte, cadence haute")
+        out.append(f"−{fr(seg.dminus_m, 0)} m : foulée courte, cadence")
     if is_longest:
-        out.append("le plus long du parcours : "
-                   f"{hm_plain(seg.t_move_min / 60.0)} de marche")
-    if is_contact:
-        out.append("ton assistance t'attend ici")
+        out.append(f"le plus long : {hm_plain(seg.t_move_min / 60.0)} de marche")
     return out
 
 
@@ -148,8 +140,6 @@ def consignes(plan, race, cfg) -> list[str]:
     segs = plan.segments
     if not segs:
         return []
-    starts = {run[0].index for run in plan.night_runs}
-    contacts, _ = contact_points(race, len(segs))
     notes = contact_notes(race)
     longest = max(range(len(segs)), key=lambda i: segs[i].t_move_min)
     limit = cfg.report.consigne_max_chars
@@ -157,16 +147,8 @@ def consignes(plan, race, cfg) -> list[str]:
     used: set[str] = set()
     out: list[str] = []
     for i, seg in enumerate(segs):
-        prev_night = segs[i - 1].night if i > 0 else False
-        cands = _candidates(
-            seg,
-            night_in=seg.index in starts,
-            night_out=(prev_night and not seg.night),
-            note=notes.get(seg.index, ""),
-            is_contact=i in contacts,
-            is_longest=(i == longest),
-            cfg=cfg,
-        )
+        cands = _candidates(seg, note=notes.get(seg.index, ""),
+                            is_longest=(i == longest), cfg=cfg)
         pick = next((c for c in cands if len(c) <= limit and c not in used), "")
         if pick:
             used.add(pick)
@@ -180,7 +162,7 @@ def consignes(plan, race, cfg) -> list[str]:
 
 
 def _split_clock(clock: str | None) -> tuple[str, str]:
-    """« sam. 19:28 » → (« sam. », « 19:28 ») ; une heure sans jour reste telle quelle."""
+    """« sam. 19h28 » → (« sam. », « 19h28 ») ; une heure sans jour reste telle quelle."""
     if not clock:
         return "", "—"
     day, _, hour = clock.partition(" ")
@@ -231,7 +213,7 @@ def night_sections(plan) -> list[dict]:
         i0 = segs.index(run[0])
         km0 = segs[i0 - 1].off1 if i0 > 0 else 0.0
         start_clock = segs[i0 - 1].arr_clock if i0 > 0 else (
-            f"{plan.start_time:%a %H:%M}" if plan.start_time else None)
+            f"{plan.start_time:%a %Hh%M}" if plan.start_time else None)
         hours = sum((s.t_move_min + s.stop_min) / 60.0 for s in run)
         out.append({
             "from_km": fr(km0, 0), "to_km": fr(run[-1].off1, 0),

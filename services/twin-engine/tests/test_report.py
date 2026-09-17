@@ -174,11 +174,11 @@ def test_plan_windows_and_arrival_in_clock_time():
     """La table du plan affiche la fenêtre en HEURES DE PASSAGE, et la synthèse donne
     l'arrivée centrale + ses DEUX fenêtres (fourchette de course + bornes de sécurité)."""
     ctx = _context()
-    assert ctx["arrival_clock"] and ":" in ctx["arrival_clock"]
+    assert ctx["arrival_clock"] and "h" in ctx["arrival_clock"]
     assert ctx["arrival_window"] and "–" in ctx["arrival_window"]
     assert ctx["arrival_safety_window"] and "–" in ctx["arrival_safety_window"]
     for row in ctx["plan_rows"]:
-        assert ":" in row["window"]          # fenêtre horaire, pas des heures cumulées
+        assert "h" in row["window"]          # fenêtre horaire, pas des heures cumulées
     tex = render_tex(ctx)
     # la première page imprime les deux bandes, chacune dite par son usage : les trois
     # scénarios en tuiles, les bornes de sécurité dans la tuile de l'assistance
@@ -250,7 +250,7 @@ def test_wide_interval_is_owned_in_one_sentence():
 def test_figures_generated(tmp_path):
     course, twin, cal, pred, plan, race, _ = _scenario()
     figs = generate_figures(course, twin, cal, pred, plan, race, tmp_path)
-    for name in ("profil", "record", "cumul", "validation", "profil_feuille"):
+    for name in ("profil", "record", "cumul", "validation"):
         assert name in figs
         assert (tmp_path / f"{name}.png").stat().st_size > 1000
 

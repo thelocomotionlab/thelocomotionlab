@@ -90,8 +90,8 @@ Le `preview` imprime un JSON (verdict, prédiction, jumeau, parcours) + un résu
 
 | fichier | ce que c'est |
 |---|---|
-| `rapport.pdf` | le rapport, trois pages (sa source reste dans `tex/`) |
-| `feuille.pdf` | la feuille à emporter : A4 paysage recto-verso, détachable (tableau de marche au recto, assistance / nuit / limites au verso) |
+| `rapport.pdf` | le rapport, quatre pages — couverture, ta course, le plan, ton profil (sa source reste dans `tex/`) |
+| `feuille.pdf` | la feuille à emporter : A4 paysage recto-verso, deux tableaux et rien d'autre (marche au recto, assistance au verso) |
 | `plan.ics` | le calendrier : un événement par point d'assistance |
 | `plan.gpx` | la trace avec un point de passage horodaté par point d'assistance |
 | `annexe.json` | l'annexe en ligne |
@@ -207,7 +207,7 @@ La **trace GPX du parcours** est fournie à part (`--course`) et n'est pas commi
 
 ## 7. Lire la fourchette : les deux bandes
 
-> **Le rapport v3** (trois pages, feuille à emporter, ICS, GPX, annexe en ligne) est décrit
+> **Le rapport v3** (quatre pages, feuille à emporter, ICS, GPX, annexe en ligne) est décrit
 > dans `docs/twin-theory.md` §7 et dans `DIAGNOSTIC.md` §10.20 ; sa charte vient de `packages/ui`
 > via `report/charte.py`, et ses
 > polices sont des instances statiques d'Ubuntu Sans régénérables par

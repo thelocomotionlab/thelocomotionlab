@@ -2577,3 +2577,29 @@ de la nuit et les deux sections publiées, une seule source d'arrêts, la dériv
 jour non répété, les colonnes titrées par leur arrivée, la fenêtre de l'assistance qui redonne
 l'arrivée de la page 1, la nutrition blanche sans déclaration, le repli des points de contact annoncé,
 la coupe en deux parties, et le compte de pages (trois et deux) sur le scénario déterministe.
+
+**Deuxième passe (2026-09-17, après relecture de Valentin sur son archive).** La sobriété d'abord :
+un seul bleu-vert pour les en-têtes de tableau, des filets sur toutes les cellules, tout centré, et
+une seule ligne teintée — celle d'un ravitaillement ouvert à l'assistance. Les trames de nuit
+disparaissent (lignes, bandes des figures) : la nuit tient dans une colonne de points sur la feuille,
+et les consignes « frontale » sautent — un coureur sait qu'il fait nuit. Les bandes de phase
+(RETENUE / EXÉCUTION) sautent aussi ; la découpe en deux parties reste dans l'annexe. Les heures de
+passage s'écrivent « 19h23 » et non « 19:23 », partout, depuis ``pacing.plan._fmt_clock``.
+
+La feuille devient ce qu'elle prétend être : **deux tableaux et rien d'autre**. Recto le tableau de
+marche (la colonne « eau » disparaît, « ravito » devient « type de ravito » et reste une case à
+remplir), verso le tableau d'assistance — « point de contact » s'appelle désormais « Assistance ».
+Plus de profil, plus d'encadrés, plus de ligne de service en pied : le folio « 1/2 » seul, centré.
+L'en-tête ne porte plus que le nom de la course. L'avertissement « points d'assistance supposés »
+migre vers la page du plan, dans le rapport : la feuille ne peut plus le porter, le rapport le doit.
+
+Le rapport reprend une **couverture** (``\LLcouverture``) : la marque en grand, le titre, ce que
+l'athlète doit retenir, le badge et son critère bloquant — quatre pages au total. Ce critère se dit
+maintenant en français (``_blocking_sentence``) plutôt qu'en dump de suffisance : « Rejoués en
+aveugle, tes ultras passés sortent à 7,4 % d'erreur ; sous 5 %, on engage la confiance pleine. » Le
+badge passe sur sa propre ligne, la phrase dessous.
+
+**Reste ouvert.** Personnaliser le tableau (arrêts, nutrition, notes d'assistance) depuis la page de
+l'annexe : aujourd'hui ces valeurs se déclarent dans la spec JSON et se recalculent en ligne de
+commande. Une page qui les édite demande un service (écriture, persistance, authentification) — un
+chantier à part.

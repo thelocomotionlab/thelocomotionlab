@@ -133,7 +133,8 @@ _WEEKDAYS_FR = ["lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim."]
 
 
 def _fmt_clock(when: dt.datetime) -> str:
-    return f"{_WEEKDAYS_FR[when.weekday()]} {when.hour:02d}:{when.minute:02d}"
+    """« sam. 19h23 » — l'heure comme on l'écrit en français, partout dans le rapport."""
+    return f"{_WEEKDAYS_FR[when.weekday()]} {when.hour:02d}h{when.minute:02d}"
 
 
 def fade_delta_from_splits(calibration) -> float | None:
@@ -352,8 +353,8 @@ def build_pacing(
     if can_clock and start is not None:
         sr, ss = sun_times(start.year, start.month, start.day, race.lat, race.lon, race.tz_offset_h)
         sun = {
-            "sunrise": f"{int(sr // 60):02d}:{int(sr % 60):02d}",
-            "sunset": f"{int(ss // 60):02d}:{int(ss % 60):02d}",
+            "sunrise": f"{int(sr // 60):02d}h{int(sr % 60):02d}",
+            "sunset": f"{int(ss // 60):02d}h{int(ss % 60):02d}",
         }
 
     return PacingPlan(

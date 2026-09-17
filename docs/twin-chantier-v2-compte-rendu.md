@@ -594,7 +594,31 @@ republié à côté de la politique du plan.
 65. **La flèche « au plus tôt → au plus tard » est tracée**, pas composée : Ubuntu Sans n'a pas de
     glyphe U+2192, et la charte interdit une seconde police.
 
+## Choix faits à la place de Valentin (rapport v3, deuxième passe)
+
+66. **Une seule couleur dans un tableau, et des filets.** L'en-tête en bleu-vert, les filets sur
+    toutes les cellules, tout centré ; la seule ligne teintée est celle d'un ravitaillement ouvert
+    à l'assistance. La colonne de l'heure prévue est en gras, plus en trame — un repère qui ne
+    coûte pas une couleur de plus.
+67. **La nuit tient dans une colonne de points.** Plus de trame de ligne, plus de bande sur les
+    figures, plus de consigne « frontale » : un coureur sait qu'il fait nuit. La part de nuit et les
+    sections restent dans l'annexe.
+68. **L'avertissement « points d'assistance supposés » passe dans le rapport.** La feuille ne porte
+    plus que ses deux tableaux ; mais donner des points supposés pour des points officiels serait
+    malhonnête, donc la page du plan le dit.
+69. **Les heures s'écrivent « 19h23 » à la source** (`pacing.plan._fmt_clock`) : le rapport, la
+    feuille, le GPX et l'annexe lisent le même format, il n'y a pas deux écritures d'une heure.
+70. **Le critère bloquant se dit en français.** Le badge affichait le `detail` du critère de
+    suffisance, écrit pour le registre : « erreur d'interpolation 7,4% (brute 6,4%, extrapolation
+    3,2%) ». Une phrase par critère le remplace, qui dit ce qui est mesuré, où on en est, et ce
+    qu'il faudrait.
+
 ## Questions ouvertes
+
+- **Personnaliser le tableau depuis l'annexe.** Les arrêts, la nutrition et les notes
+  d'assistance se déclarent aujourd'hui dans la spec JSON, et le rapport se recalcule en ligne de
+  commande. Les éditer depuis la page de l'annexe demande un service qui écrit (persistance,
+  authentification, re-rendu) : à chiffrer comme un chantier à part.
 
 - **Chantier suivant : trails courts et route.** Valentin a des demandes pour du trail court et
   pour de la route (10 km). Le moteur est calibré sur les efforts ≥ 10 h et la garde du domaine

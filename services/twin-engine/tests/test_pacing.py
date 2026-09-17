@@ -141,7 +141,7 @@ def test_arrival_windows_in_clock_time():
     plan = build_pacing(course, _prediction(course, finish=10.0), _race(), CFG)
     for s in plan.segments:
         assert s.arr_lo_clock and s.arr_hi_clock
-        assert ":" in s.arr_lo_clock and ":" in s.arr_hi_clock
+        assert "h" in s.arr_lo_clock and "h" in s.arr_hi_clock
     # départ 13:00 + borne basse du 1er segment → l'heure affichée suit lo_h ; tolérance
     # = arrondi de lo_h (2 déc. ⇒ ±0,3 min) + minutes TRONQUÉES par l'horloge (< 1 min)
     s1 = plan.segments[0]
@@ -175,8 +175,8 @@ def test_segment_windows_use_plan_band_not_safety_interval():
     p90 = float(np.percentile(plan.t_clock_h * mult, CFG.prediction.interval_high_pct))
     assert (last.hi_h - last.lo_h) < (p90 - p10)
     # bornes de sécurité = intervalle de la PRÉDICTION converti en heures de passage
-    assert plan.safety_lo_clock and ":" in plan.safety_lo_clock
-    assert plan.safety_hi_clock and ":" in plan.safety_hi_clock
+    assert plan.safety_lo_clock and "h" in plan.safety_lo_clock
+    assert plan.safety_hi_clock and "h" in plan.safety_hi_clock
 
 
 def test_segment_windows_follow_served_plan_band():

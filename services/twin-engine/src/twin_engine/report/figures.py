@@ -20,7 +20,6 @@ from matplotlib.figure import Figure  # noqa: E402
 from matplotlib.ticker import FuncFormatter, NullFormatter  # noqa: E402
 
 from .charte import FONT_FAMILY, FONT_FILES, hexa  # noqa: E402
-from .feuille import contact_points  # noqa: E402
 
 # palette : les tokens de la charte (report/charte.py = theme.css), jamais une valeur en dur
 SAGE = hexa("primary")
@@ -85,22 +84,8 @@ def _fr_axes(*axes, x: int = 0, y: int = 0) -> None:
         ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _p, n=y: fr_num(v, n)))
 
 
-def _night_bands(ax, plan, x_of) -> bool:
-    """Trame des sections de nuit du plan, en fond. ``x_of(segment)`` donne l'abscisse de fin
-    d'un segment ; la bande part de la fin du segment précédent. Renvoie True si trame il y a."""
-    if plan is None:
-        return False
-    drawn = False
-    for run in plan.night_runs:
-        first, last = run[0], run[-1]
-        i0 = plan.segments.index(first)
-        x0 = x_of(plan.segments[i0 - 1]) if i0 > 0 else 0.0
-        ax.axvspan(x0, x_of(last), color=SAGE, alpha=0.16, lw=0, zorder=0)
-        drawn = True
-    return drawn
 
-
-def _fig_profil(course, ax, plan=None, *, title: bool = True) -> None:
+def _fig_profil(course, ax, *, title: bool = True) -> None:
     off = course.off_km_grid
     es = course.alt_smooth_m
     aid = course.aid_km
@@ -115,7 +100,6 @@ def _fig_profil(course, ax, plan=None, *, title: bool = True) -> None:
     ax.set_xlim(float(off.min()), float(off.max()))
     ax.set_ylim(ymin, ymax + pad)
     ax.margins(x=0)
-    _night_bands(ax, plan, lambda seg: seg.off1)
     ax.set_xlabel("distance officielle (km)")
     ax.set_ylabel("altitude (m)")
     _fr_axes(ax)
@@ -184,7 +168,6 @@ def _fig_cumul(plan, prediction, race, ax, interval_label: str = "50") -> None:
     if on_target and prediction is not None:
         ax.axhline(prediction.finish_hours, color=DEEPGRID, lw=1.2, ls=(0, (5, 3)),
                    label="prédiction du moteur")
-    _night_bands(ax, plan, lambda seg: seg.off1)
     ax.set_xlabel("distance officielle (km)")
     ax.set_ylabel("temps depuis le départ (h)")
     _fr_axes(ax)
@@ -195,38 +178,6 @@ def _fig_cumul(plan, prediction, race, ax, interval_label: str = "50") -> None:
         fontsize=10, color=TERRA, weight="bold", loc="left",
     )
 
-
-def _fig_profil_feuille(course, plan, names, crew_idx, ax) -> None:
-    """Profil schématique de la feuille : une ligne brisée de ravito en ravito, les sections
-    de nuit en fond, les points de contact marqués et nommés. Pas d'axe : ça se lit à bout de
-    bras, la nuit, pas à la loupe."""
-    aid = np.asarray(course.aid_km, dtype=float)
-    alt = np.interp(aid, course.off_km_grid, course.alt_smooth_m)
-    ymin, ymax = float(alt.min()), float(alt.max())
-    span = max(ymax - ymin, 1.0)
-
-    _night_bands(ax, plan, lambda seg: seg.off1)
-    ax.fill_between(aid, alt, ymin - 0.10 * span, color=SAGE, alpha=0.34, lw=0)
-    ax.plot(aid, alt, color=TERRA, lw=1.8, solid_joinstyle="round")
-
-    crew = sorted(i for i in crew_idx if 0 <= i < len(aid))
-    if crew:
-        ax.scatter(aid[crew], alt[crew], s=54, color=GOLD, edgecolor=GOLDINK,
-                   linewidth=1.1, zorder=6)
-    for i in crew:
-        ax.annotate(f"{names[i]}\n{fr_num(aid[i], 0)} km", (aid[i], alt[i]),
-                    textcoords="offset points", xytext=(0, 11), ha="center",
-                    fontsize=7.4, color=TEXT, linespacing=1.25)
-
-    ax.set_xlim(float(aid.min()), float(aid.max()))
-    ax.set_ylim(ymin - 0.10 * span, ymax + 0.34 * span)
-    for side in ("top", "right", "left", "bottom"):
-        ax.spines[side].set_visible(False)
-    ax.grid(False)
-    ax.set_yticks([])
-    ax.set_xticks(list(aid[:: max(1, len(aid) // 8)]))
-    ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _p: f"{fr_num(v, 0)}"))
-    ax.tick_params(axis="x", length=0, labelsize=7.4, colors=hexa("muted"), pad=2)
 
 
 def _fig_validation(prediction, ax, band_pct: float = 5.0) -> bool:
@@ -280,14 +231,10 @@ def generate_figures(
         fig.savefig(out_dir / f"{name}.png", dpi=170)
         figures[name] = f"{name}.png"
 
-    names = list(race.aid_names) or [s.to for s in course.segments]
-    contacts, _ = contact_points(race, len(plan.segments))
-    crew_aid = [i + 1 for i in contacts]
-
     with _RENDER_LOCK:
         # page 1 : la page porte déjà le nom de la course et ses chiffres — pas de titre
-        fig = _new((7.4, 2.6))
-        _fig_profil(course, fig.subplots(), plan=plan, title=False)
+        fig = _new((7.4, 3.1))
+        _fig_profil(course, fig.subplots(), title=False)
         _save(fig, "profil")
 
         fig = _new((7.4, 3.5))
@@ -301,11 +248,6 @@ def generate_figures(
         fig = _new((4.6, 4.2))
         if _fig_validation(prediction, fig.subplots(), band_pct=band_pct):
             _save(fig, "validation")
-
-        # profil de la feuille : format paysage, sans axes, lisible à bout de bras
-        fig = _new((10.6, 1.75))
-        _fig_profil_feuille(course, plan, names, crew_aid, fig.subplots())
-        _save(fig, "profil_feuille")
 
     return figures
 

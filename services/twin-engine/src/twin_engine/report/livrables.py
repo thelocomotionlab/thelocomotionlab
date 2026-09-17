@@ -70,7 +70,7 @@ class CrewPoint:
 def _clock(when: datetime | None, hours: float) -> str:
     if when is None:
         return f"{fr(hours, 1)} h"
-    return f"{_WEEKDAYS_FR[when.weekday()]} {when.hour:02d}:{when.minute:02d}"
+    return f"{_WEEKDAYS_FR[when.weekday()]} {when.hour:02d}h{when.minute:02d}"
 
 
 def crew_indices(race, n_segments: int) -> tuple[int, ...]:

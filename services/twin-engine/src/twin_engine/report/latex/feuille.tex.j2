@@ -1,80 +1,56 @@
 % La feuille à emporter (rapport Locomotion Twin v3) : A4 paysage, recto-verso, détachable.
-% Recto = le tableau de marche, une ligne par segment. Verso = l'assistance, le profil, la nuit,
-% comment lire les trois colonnes, les limites. Elle se compile seule (--feuille-seule) ou à
-% côté du rapport : mêmes valeurs, même contexte calculé, aucun chiffre en dur.
+% Deux tableaux et rien d'autre — le tableau de marche au recto, celui de l'assistance au verso.
+% Elle se compile seule (--feuille-seule) ou à côté du rapport : mêmes valeurs, même contexte
+% calculé, aucun chiffre en dur.
 \documentclass{locomotionreport}
 
-\geometry{a4paper, landscape, top=20mm, bottom=18mm, left=11mm, right=11mm,
-          headsep=7mm, footskip=11mm}
+\geometry{a4paper, landscape, top=20mm, bottom=16mm, left=11mm, right=11mm,
+          headsep=7mm, footskip=10mm}
 
-\LLheaddoc{<< race_name >>}{<< athlete >> \textperiodcentered{} << length_km >>\,km \textperiodcentered{} << dplus_m >>\,m\,D+<% if start_time %> \textperiodcentered{} départ << start_time >><% endif %>}
+\LLheaddoc{<< race_name >>}
+\pagestyle{LLfeuille}
 
 \begin{document}
 
 % =====================================================================
 % LL:BEGIN feuille-recto
-\LLfootleft{Mouvement << t_move_h >> + arrêts << stops.hours_hm >> = horloge << t_clock_h >> \textperiodcentered{} << dplus_m >>\,m\,D+ \textperiodcentered{} << dminus_m >>\,m\,D−}
-\LLfootright{<% if nutrition %>Eau << nutrition.water_l >>\,L et << nutrition.carbs_g >>\,g de glucides sur la course<% else %>Colonnes eau et ravito à remplir<% endif %><% if sun %> \textperiodcentered{} coucher << sun.sunset >> \textperiodcentered{} lever << sun.sunrise >><% endif %>}
-
-\vspace{2pt}
-{\LLmonofont\fontsize{9.5}{12}\selectfont\color{LLPrimaryDark}\LLtracked{\MakeUppercase{À emporter}}}\par
-\vspace{2pt}
-{\LLextraboldfont\fontsize{19}{22}\selectfont\color{LLDeep}Tableau de marche\par}
-\vspace{6pt}
-
-\noindent\begin{minipage}[t]{0.20\linewidth}\LLtile{Rapide}{<< clock_titles.fast >>}{<% if arrival_fast_clock %><< arrival_fast_clock >><% else %>départ à préciser<% endif %>}\end{minipage}\hfill
-\begin{minipage}[t]{0.20\linewidth}\LLtileaccent{Prévu}{<< clock_titles.central >>}{<% if arrival_clock %><< arrival_clock >><% else %>départ à préciser<% endif %>}\end{minipage}\hfill
-\begin{minipage}[t]{0.20\linewidth}\LLtile{Prudent}{<< clock_titles.cautious >>}{<% if arrival_cautious_clock %><< arrival_cautious_clock >><% else %>départ à préciser<% endif %>}\end{minipage}\hfill
-\begin{minipage}[t]{0.36\linewidth}\vspace{6pt}{\fontsize{10}{13.5}\selectfont\color{LLText}Trois courses possibles. Tu choisis ta colonne dans les premières heures, et tu la suis.\par}\end{minipage}
-
+\vspace{5pt}
+{\LLextraboldfont\fontsize{17}{20}\selectfont\color{LLDeep}Tableau de marche\par}
 \vspace{9pt}
-{\fontsize{8.6}{8.6}\selectfont\LLtabular
-\setlength{\tabcolsep}{2.6pt}\renewcommand{\arraystretch}{1.62}
-\LLzebra
-\begin{tabularx}{\linewidth}{@{}c >{\raggedright\arraybackslash}p{38mm} r r r r c c c c c c c >{\raggedright\arraybackslash}X@{}}
+
+{\fontsize{9.4}{9.4}\selectfont\LLtableau
+\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{2.0}
+\begin{tabularx}{\linewidth}{|c|>{\centering\arraybackslash}p{34mm}|c|c|c|c|c|c|c|c|c|c|>{\centering\arraybackslash}p{26mm}|>{\centering\arraybackslash}X|}
+  \hline
   \LLheaderrow
-  \LLthead{\#} & \LLthead{Ravitaillement} & \LLthead{km} & \LLthead{seg.} & \LLthead{D+} & \LLthead{D−} & \LLthead{min/km} & \LLthead{<< clock_titles.fast >>} & \LLthead{<< clock_titles.central >>} & \LLthead{<< clock_titles.cautious >>} & \LLthead{arrêt} & \LLthead{eau} & \LLthead{ravito} & \LLthead{Sur ce segment} \\
-<% for p in feuille_parts %>  \LLphase<% if loop.first %>un<% else %>deux<% endif %>{14}{<< p.name >>}{<< p.note >>} \\
-<% for s in feuille_rows[p.first:p.last + 1] %><% if s.night %>  \rowcolor{LLNightRow} <% else %>  <% endif %><< s.idx >> & << s.to >> & \LLnum{<< s.km >>} & \LLnum{<< s.seg_km >>} & <% if s.strong_dplus %>\LLfort{<< s.dplus >>}<% else %>\LLnum{<< s.dplus >>}<% endif %> & <% if s.strong_dminus %>\LLfort{<< s.dminus >>}<% else %>\LLnum{<< s.dminus >>}<% endif %> & \LLnum{<< s.pace >>} & \LLnum{<% if s.fast.day %><< s.fast.day >> <% endif %><< s.fast.hour >>} & \LLctr{<% if s.central.day %><< s.central.day >> <% endif %><< s.central.hour >>} & \LLnum{<% if s.cautious.day %><< s.cautious.day >> <% endif %><< s.cautious.hour >>} & <% if s.stop %>\LLnum{<% if s.base %>\textbf{<< s.stop >>'}<% else %><< s.stop >>'<% endif %>}<% endif %> & <% if s.water %>\LLnum{<< s.water >>}<% else %>\LLcasevide<% endif %> & <% if s.carbs %>\LLnum{<< s.carbs >>}<% else %>\LLcasevide<% endif %> & << s.marche >> \\
-<% endfor %><% endfor %>\end{tabularx}\par}
+  \LLthead{\#} & \LLthead{Ravitaillement} & \LLthead{km} & \LLthead{seg.} & \LLthead{D+} & \LLthead{D−} & \LLthead{min/km} & \LLthead{<< clock_titles.fast >>} & \LLthead{<< clock_titles.central >>} & \LLthead{<< clock_titles.cautious >>} & \LLthead{arrêt} & \LLthead{nuit} & \LLthead{type de ravito} & \LLthead{Sur ce segment} \\
+  \hline
+<% for s in feuille_rows %><% if s.contact %>  \LLassist
+<% endif %>  << s.idx >> & << s.to >> & \LLnum{<< s.km >>} & \LLnum{<< s.seg_km >>} & <% if s.strong_dplus %>\LLfort{<< s.dplus >>}<% else %>\LLnum{<< s.dplus >>}<% endif %> & <% if s.strong_dminus %>\LLfort{<< s.dminus >>}<% else %>\LLnum{<< s.dminus >>}<% endif %> & \LLnum{<< s.pace >>} & \LLnum{<% if s.fast.day %><< s.fast.day >> <% endif %><< s.fast.hour >>} & \LLprevu{\LLnum{<% if s.central.day %><< s.central.day >> <% endif %><< s.central.hour >>}} & \LLnum{<% if s.cautious.day %><< s.cautious.day >> <% endif %><< s.cautious.hour >>} & <% if s.stop %>\LLnum{<< s.stop >>'}<% endif %> & <% if s.night %>\LLnuit<% endif %> & \LLcasevide & << s.marche >> \\
+  \hline
+<% endfor %>\end{tabularx}\par}
 % LL:END feuille-recto
 
 % =====================================================================
 % LL:BEGIN feuille-verso
 \clearpage
-\LLfootleft{<% if arrival_clock %>Arrivée prévue << arrival_clock >><% if arrival_safety_lo_clock %> \textperiodcentered{} au plus tôt << arrival_safety_lo_clock >> \textperiodcentered{} au plus tard << arrival_safety_hi_clock >><% endif %><% else %>Arrivée prévue << pred_central >> \textperiodcentered{} entre << interval_low >> et << interval_high >><% endif %>}
-\LLfootright{<< safety_word|capitalize >> tient dans cette fenêtre}
+\vspace{5pt}
+{\LLextraboldfont\fontsize{17}{20}\selectfont\color{LLDeep}Assistance\par}
+\vspace{9pt}
 
-\vspace{4pt}
-{\LLextraboldfont\fontsize{18}{21}\selectfont\color{LLDeep}Ton assistance\par}
-\vspace{6pt}
-
-{\fontsize{8.8}{8.8}\selectfont\LLtabular
-\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.5}
-\LLzebra
-\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{56mm} r c c c >{\raggedright\arraybackslash}X@{}}
+{\fontsize{10.5}{10.5}\selectfont\LLtableau
+\setlength{\tabcolsep}{6pt}\renewcommand{\arraystretch}{2.4}
+\begin{tabularx}{\linewidth}{|>{\centering\arraybackslash}p{52mm}|c|c|c|c|>{\centering\arraybackslash}X|}
+  \hline
   \LLheaderrow
-  \LLthead{Point de contact} & \LLthead{km} & \LLthead{au plus tôt} & \LLthead{prévu} & \LLthead{au plus tard} & \LLthead{À prévoir} \\
-<% for c in crew_rows %><% if c.night %>  \rowcolor{LLNightRow} <% else %>  <% endif %><< c.name >> & \LLnum{<< c.km >>} & \LLnum{<< c.earliest >>} & \LLctr{<< c.central >>} & \LLnum{<< c.latest >>} & <% if c.note %><< c.note >><% else %>\LLcasevide<% endif %> \\
-<% endfor %><% if finish_row %>  << finish_row.name >> & \LLnum{<< finish_row.km >>} & \LLnum{<< finish_row.earliest >>} & \LLctr{<< finish_row.central >>} & \LLnum{<< finish_row.latest >>} & \LLcasevide \\
+  \LLthead{Assistance} & \LLthead{km} & \LLthead{au plus tôt} & \LLthead{prévu} & \LLthead{au plus tard} & \LLthead{À prévoir} \\
+  \hline
+<% for c in crew_rows %>  \LLassist
+  << c.name >> & \LLnum{<< c.km >>} & \LLnum{<< c.earliest >>} & \LLprevu{\LLnum{<< c.central >>}} & \LLnum{<< c.latest >>} & <% if c.note %><< c.note >><% else %>\LLcasevide<% endif %> \\
+  \hline
+<% endfor %><% if finish_row %>  << finish_row.name >> & \LLnum{<< finish_row.km >>} & \LLnum{<< finish_row.earliest >>} & \LLprevu{\LLnum{<< finish_row.central >>}} & \LLnum{<< finish_row.latest >>} & \LLcasevide \\
+  \hline
 <% endif %>\end{tabularx}\par}
-
-\vspace{3pt}
-{\fontsize{8.6}{11}\selectfont\color{LLSoft}<% if crew_declared %>Points de contact déclarés au règlement de course.<% else %>Points de contact \textbf{supposés} : la spec de course n'en déclare aucun, ce sont les bases majeures du parcours. À vérifier au carnet de course avant de les donner à ton assistance.<% endif %> Les fenêtres « au plus tôt » et « au plus tard » sont les bornes de sécurité étalées le long du parcours : << safety_word >> y tient, arrivée comprise.\par}
-
-\vspace{4pt}
-\noindent\includegraphics[width=\linewidth]{figures/profil_feuille.png}
-
-\vspace{2pt}
-\noindent\begin{minipage}[t]{0.325\linewidth}\vspace{0pt}
-\LLblocnuit{La nuit}{<% if night_hours_hm %>\textbf{<< night_hours_hm >>} de nuit, soit << night_share_pct >>\,\% de ta course. <% endif %><% for n in night_sections %>Frontale à \textbf{<< n.from_name >>}<% if n.from_clock %>, << n.from_clock >><% endif %><% if finish_row and n.to_name == finish_row.name %> — et tu finis de nuit<% else %> ; rangée à \textbf{<< n.to_name >>}<% if n.to_clock %>, << n.to_clock >><% endif %><% endif %>.<% if not loop.last %> <% endif %><% endfor %><% if not night_sections %>Aucune section de nuit sur ce plan : tu arrives avant la tombée du jour.<% endif %>}
-\end{minipage}\hfill
-\begin{minipage}[t]{0.325\linewidth}\vspace{0pt}
-\LLblocambre{Comment lire les trois colonnes}{Ce ne sont pas trois objectifs mais trois courses possibles, et << plan_band_word >> se joue entre la première et la dernière. Tu prends celle qui colle à tes passages réels dans les premières heures, et tu ne changes plus.}
-\end{minipage}\hfill
-\begin{minipage}[t]{0.325\linewidth}\vspace{0pt}
-\LLblocpapier{Ce que ce plan ne sait pas}{<% for l in limits_short %>\textbf{<< l.lead >>} \textemdash{} << l.short >><% if not loop.last %>\par\vspace{2pt}<% endif %><% endfor %>}
-\end{minipage}
 % LL:END feuille-verso
 
 \end{document}

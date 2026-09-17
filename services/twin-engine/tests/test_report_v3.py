@@ -178,9 +178,11 @@ def test_the_night_is_read_once_and_reports_every_section():
     # la part de nuit est celle du plan, pas un second calcul
     assert abs(plan.night_hours - sum((s.t_move_min + s.stop_min) / 60.0
                                       for r in runs for s in r)) < 1e-9
-    tex = render_tex(ctx)
-    for section in ctx["night_sections"]:
-        assert f"km\\,{section['from_km']} au km\\,{section['to_km']}" in tex
+    # sur la feuille, la nuit tient dans une colonne : un point par segment concerné
+    de_nuit = {s.index for run in runs for s in run}
+    assert [r["night"] for r in ctx["feuille_rows"]] == [
+        s.index in de_nuit for s in plan.segments]
+    assert render_template(FEUILLE_TEMPLATE, ctx).count("\\LLnuit") == len(de_nuit)
 
 
 def test_two_night_sections_are_both_published():
@@ -297,7 +299,9 @@ def test_contact_points_fall_back_and_say_so():
     assert supposes == (2, 4) and sur is False            # bases majeures : une hypothèse
     ctx, _ = context(race=race_spec(crew=(), crew_access_indices=()))
     assert ctx["crew_declared"] is False
-    assert "suppos" in render_template(FEUILLE_TEMPLATE, ctx)
+    # la feuille ne porte que ses deux tableaux : l'avertissement est dans le rapport
+    assert "suppos" in render_tex(ctx)
+    assert "suppos" not in render_template(FEUILLE_TEMPLATE, ctx)
 
 
 def test_the_course_is_cut_in_two_parts():
@@ -393,7 +397,7 @@ def test_render_has_no_residual_delimiters():
 
 
 @pytest.mark.skipif(not HAS_TEX, reason="XeLaTeX/biber absents (validés dans l'image Docker)")
-def test_the_report_is_three_pages_and_the_sheet_two(tmp_path):
+def test_the_report_is_four_pages_and_the_sheet_two(tmp_path):
     PdfReader = pytest.importorskip("pypdf").PdfReader   # extra « dev » du pyproject
 
     ctx, (course, twin, cal, pred, plan, race, _) = context()
@@ -401,7 +405,8 @@ def test_the_report_is_three_pages_and_the_sheet_two(tmp_path):
     generate_figures(course, twin, cal, pred, plan, race, fig_dir, cfg=CFG)
     rapport = build_pdf(ctx, fig_dir, tmp_path / "tex")
     feuille = build_feuille(ctx, fig_dir, tmp_path / "tex-feuille")
-    assert len(PdfReader(str(rapport)).pages) == 3
+    # couverture + ta course + le plan + ton profil ; la feuille, ses deux tableaux
+    assert len(PdfReader(str(rapport)).pages) == 4
     assert len(PdfReader(str(feuille)).pages) == 2
 
 
@@ -410,11 +415,11 @@ def test_pdf_v3_compiles_on_the_golden_scenario(tmp_path):
     ctx, (course, twin, cal, pred, plan, race, _) = context()
     fig_dir = tmp_path / "figures"
     figs = generate_figures(course, twin, cal, pred, plan, race, fig_dir, cfg=CFG)
-    assert set(figs) == {"profil", "record", "cumul", "validation", "profil_feuille"}
+    assert set(figs) == {"profil", "record", "cumul", "validation"}
     pdf = build_pdf(ctx, fig_dir, tmp_path / "tex")
     assert pdf.exists() and pdf.stat().st_size > 100_000
     feuille = build_feuille(ctx, fig_dir, tmp_path / "tex-feuille")
-    assert feuille.exists() and feuille.stat().st_size > 60_000
+    assert feuille.exists() and feuille.stat().st_size > 30_000
 
 
 @pytest.mark.skipif(not HAS_TEX, reason="XeLaTeX/biber absents (validés dans l'image Docker)")

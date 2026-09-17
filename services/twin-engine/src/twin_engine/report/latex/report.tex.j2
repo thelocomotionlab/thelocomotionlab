@@ -1,6 +1,6 @@
 % Gabarit du rapport Locomotion Twin v3 (classe locomotionreport, Ubuntu Sans).
 % Délimiteurs Jinja : chevrons doubles (variables), chevron-pourcent (blocs), chevron-dièse
-% (commentaires) — rendu par twin_engine.report.render. Trois pages : ta course · le plan ·
+% (commentaires) — rendu par twin_engine.report.render. Couverture · ta course · le plan ·
 % ton profil et la preuve. La feuille à emporter est un document à part (feuille.tex.j2).
 % Aucun chiffre en dur : tout vient du contexte calculé (tests/test_report_v3.py le vérifie
 % entre les marqueurs LL:BEGIN / LL:END).
@@ -9,25 +9,36 @@
 \captionsetup{justification=raggedright, singlelinecheck=false}
 \addbibresource{references.bib}
 
-\LLheaddoc{<< race_name >>}{Plan de course pour << athlete >> \textperiodcentered{} << report_date >>}
+\LLheaddoc{<< race_name >>}
 
 \begin{document}
 
 % =====================================================================
+% LL:BEGIN couverture
+\LLcouverture
+  {Plan de course \textperiodcentered{} << report_date >>}
+  {<< race_name >>}
+  {Pour \textbf{<< athlete >>} \textperiodcentered{} << length_km >>\,km \textperiodcentered{}
+   << dplus_m >>\,m\,D+ \textperiodcentered{} << dminus_m >>\,m\,D−<% if start_time %>\\
+   Départ << start_time >><% endif %>}
+  {%
+    {\fontsize{16}{23}\selectfont\color{LLText}%
+<% if plan_low %>    Tu arrives autour de \textbf{<< pred_central >>}<% if arrival_clock %>, le << arrival_clock >><% endif %>.\\
+    << plan_band_word|capitalize >> se joue entre \textbf{<< plan_low >>} et \textbf{<< plan_high >>}.
+<% else %>    Tu arrives autour de \textbf{<< pred_central >>}<% if arrival_clock %>, le << arrival_clock >><% endif %>.\\
+    << safety_word|capitalize >> se joue entre \textbf{<< interval_low >>} et \textbf{<< interval_high >>}.
+<% endif %>    \par}
+    \vspace{7mm}
+    \LLbadge{<< confidence_word >>}{<< confidence_color >>}\par\vspace{3mm}
+    {\fontsize{10}{14}\selectfont\color{LLSoft}<< verdict_sentence >>\par}
+  }
+% LL:END couverture
+
+% =====================================================================
 % LL:BEGIN page-course
-\LLpage{<% if start_time_short %><< start_time_short >><% else %>Départ à préciser<% endif %>}{<< race_name >>}
-\LLfootleft{Le plan segment par segment est page 2 ; la feuille à emporter se détache à part.}
+\LLpage{<% if start_time_short %><< start_time_short >><% else %>Départ à préciser<% endif %>}{Ta course}
+\LLfootleft{Le plan segment par segment est page 3 ; la feuille à emporter se détache à part.}
 
-{\fontsize{10.5}{14}\selectfont\color{LLSoft}%
-<< length_km >>\,km \textperiodcentered{} << dplus_m >>\,m\,D+ \textperiodcentered{}
-<< dminus_m >>\,m\,D− \textperiodcentered{} << n_segments >> segments\par}
-
-\vspace{8pt}
-\LLhero{<% if plan_low %>Tu arrives autour de \textbf{<< pred_central >>}<% if arrival_clock %>, le << arrival_clock >><% endif %>.\\
-<< plan_band_word|capitalize >> se joue entre \textbf{<< plan_low >>} et \textbf{<< plan_high >>}.<% else %>Tu arrives autour de \textbf{<< pred_central >>}<% if arrival_clock %>, le << arrival_clock >><% endif %>.\\
-<< safety_word|capitalize >> se joue entre \textbf{<< interval_low >>} et \textbf{<< interval_high >>}.<% endif %>}
-
-\vspace{10pt}
 \noindent\begin{minipage}[t]{0.235\linewidth}\LLtile{<% if target_mode %>Au plus tôt<% else %>Rapide<% endif %>}{<< plan_low >>}{<% if arrival_fast_clock %><< arrival_fast_clock >><% else %>départ à préciser<% endif %>}\end{minipage}\hfill
 \begin{minipage}[t]{0.235\linewidth}\LLtileaccent{<% if target_mode %>Ton objectif<% else %>Prévu<% endif %>}{<< pred_central >>}{<% if arrival_clock %><< arrival_clock >><% else %>départ à préciser<% endif %>}\end{minipage}\hfill
 \begin{minipage}[t]{0.235\linewidth}\LLtile{<% if target_mode %>Au plus tard<% else %>Prudent<% endif %>}{<< plan_high >>}{<% if arrival_cautious_clock %><< arrival_cautious_clock >><% else %>départ à préciser<% endif %>}\end{minipage}\hfill
@@ -39,9 +50,8 @@
 \vspace{6pt}
 \noindent\begin{minipage}[t]{0.47\linewidth}
   \LLetiquette{Le parcours}\par\vspace{3pt}
-  \textbf{<< deq_km >>\,km à plat} une fois la pente convertie en effort.<% if technicity_pct %> Technicité déclarée : +<< technicity_pct >>\,\%.<% endif %>
-<% for n in night_sections %>  <% if loop.first %><% if night_sections|length > 1 %>Deux sections de nuit<% else %>Nuit<% endif %><% else %>puis<% endif %> du km\,<< n.from_km >> au km\,<< n.to_km >><% if loop.last %>, << night_hours_hm >> en tout, soit << night_share_pct >>\,\% de ta course.<% endif %>
-<% endfor %>\end{minipage}\hfill
+  << length_km >>\,km et << dplus_m >>\,m de D+ font \textbf{<< deq_km >>\,km à plat} une fois la pente convertie en effort.<% if technicity_pct %> Technicité déclarée : +<< technicity_pct >>\,\%.<% endif %>
+\end{minipage}\hfill
 \begin{minipage}[t]{0.47\linewidth}
   \LLetiquette{Ce qui décidera}\par\vspace{3pt}
 <% if vc_fraction_pct %>  Environ << vc_fraction_pct >>\,\% de ta vitesse critique<% if vc_low %> : la vitesse ne sera pas le sujet, l'endurance et le ravitaillement décideront<% else %> : la régularité et la durabilité décideront<% endif %>.
@@ -49,9 +59,10 @@
 <% endif %>  Mouvement << t_move_h >> + arrêts << stops.hours_hm >> = horloge \textbf{<< t_clock_h >>}.
 \end{minipage}
 
-\vspace{4pt}
+\vspace{6pt}
 \begin{llverdict}[Confiance]
-\LLbadge{<< confidence_word >>}{<< confidence_color >>}\hspace{8pt}<< verdict_sentence >>\par\vspace{4pt}
+\LLbadge{<< confidence_word >>}{<< confidence_color >>}\par\vspace{5pt}
+<< verdict_sentence >>\par\vspace{4pt}
 << honesty >><% if width_prescription %>\par\vspace{3pt}<< width_prescription >><% endif %>
 \end{llverdict}
 % LL:END page-course
@@ -70,17 +81,24 @@ pas une probabilité. Pour mémoire, le modèle te situe à \textbf{<< pred_cent
 <% endif %>
 
 \textbf{Arrêts.} << stops_policy.sentence >>.
-
+<% if not crew_declared %>
+\textbf{Assistance.} La spec de course ne déclare aucun point d'assistance : les lignes teintées
+sont \textbf{supposées}, ce sont les bases majeures du parcours. À vérifier au carnet de course
+avant de les donner à ton assistance.
+<% endif %>
 \begin{table}[H]
   \centering \scriptsize \setlength{\tabcolsep}{3.2pt}
-  \LLzebra \renewcommand{\arraystretch}{1.3}
-  \begin{tabularx}{\linewidth}{@{}clrrlccc>{\raggedright\arraybackslash}X@{}}
+  \LLtableau \renewcommand{\arraystretch}{1.5}
+  \begin{tabularx}{\linewidth}{|c|>{\centering\arraybackslash}p{26mm}|c|c|c|c|c|c|c|>{\centering\arraybackslash}X|}
+    \hline
     \LLheaderrow
-    \LLthead{\#} & \LLthead{Vers} & \LLthead{km} & \LLthead{D+} & \LLthead{allure} & \LLthead{<< clock_titles.fast >>} & \LLthead{<< clock_titles.central >>} & \LLthead{<< clock_titles.cautious >>} & \LLthead{Sur ce segment} \\
-<% for p in feuille_parts %>    \LLphase<% if loop.first %>un<% else %>deux<% endif %>{9}{<< p.name >>}{<< p.note >>} \\
-<% for s in feuille_rows[p.first:p.last + 1] %><% if s.night %>    \rowcolor{LLNightRow} <% else %>    <% endif %><< s.idx >> & << s.to >> & \LLnum{<< s.km >>} & <% if s.strong_dplus %>\LLfort{<< s.dplus >>}<% else %>\LLnum{<< s.dplus >>}<% endif %> & \LLnum{<< s.pace >>} & \LLnum{<% if s.fast.day %><< s.fast.day >> <% endif %><< s.fast.hour >>} & \LLctr{<% if s.central.day %><< s.central.day >> <% endif %><< s.central.hour >>} & \LLnum{<% if s.cautious.day %><< s.cautious.day >> <% endif %><< s.cautious.hour >>} & << s.marche >> \\
-<% endfor %><% endfor %>  \end{tabularx}
-  \caption{Les trois colonnes sont titrées par leur heure d'arrivée : repère tôt celle qui te correspond et suis-la.<% if target_mode %> Autour d'un objectif, ce sont les bornes d'une fenêtre de passage — une tolérance d'exécution de $\pm$<< target_tolerance_pct >>\,\%, pas une probabilité.<% else %> Entre la première et la dernière, << plan_band_word >>.<% endif %>}
+    \LLthead{\#} & \LLthead{Vers} & \LLthead{km} & \LLthead{D+} & \LLthead{D−} & \LLthead{allure} & \LLthead{<< clock_titles.fast >>} & \LLthead{<< clock_titles.central >>} & \LLthead{<< clock_titles.cautious >>} & \LLthead{Sur ce segment} \\
+    \hline
+<% for s in feuille_rows %><% if s.contact %>    \LLassist
+<% endif %>    << s.idx >> & << s.to >> & \LLnum{<< s.km >>} & <% if s.strong_dplus %>\LLfort{<< s.dplus >>}<% else %>\LLnum{<< s.dplus >>}<% endif %> & <% if s.strong_dminus %>\LLfort{<< s.dminus >>}<% else %>\LLnum{<< s.dminus >>}<% endif %> & \LLnum{<< s.pace >>} & \LLnum{<% if s.fast.day %><< s.fast.day >> <% endif %><< s.fast.hour >>} & \LLprevu{\LLnum{<% if s.central.day %><< s.central.day >> <% endif %><< s.central.hour >>}} & \LLnum{<% if s.cautious.day %><< s.cautious.day >> <% endif %><< s.cautious.hour >>} & << s.marche >> \\
+    \hline
+<% endfor %>  \end{tabularx}
+  \caption{Les trois colonnes sont titrées par leur heure d'arrivée : repère tôt celle qui te correspond et suis-la. Les lignes teintées sont les ravitaillements ouverts à ton assistance.<% if target_mode %> Autour d'un objectif, ce sont les bornes d'une fenêtre de passage — une tolérance d'exécution de $\pm$<< target_tolerance_pct >>\,\%, pas une probabilité.<% else %> Entre la première et la dernière, << plan_band_word >>.<% endif %>}
 \end{table}
 
 \begin{figure}[H]
@@ -161,7 +179,6 @@ de grandeur, pas une cible ferme.\par}
   \LLqr{<< annex_url >>}
 \end{minipage}
 \end{llhonnete}
-
 % LL:END page-profil
 
 \end{document}

@@ -500,7 +500,7 @@ def _gauges(ctx: dict, twin, calibration, plan, cfg, stops: dict) -> list[dict]:
         "label": "Vitesse critique",
         "value": f"{fr(cs.vc_kmh, 1)} km/h" if vc_ok else "non affichée",
         "fraction": _clamp((cs.vc_kmh - lo) / (hi - lo)) if vc_ok else 0.0,
-        "sentence": ("ta frontière entre « je tiens longtemps » et « ça brûle », mesurée sur tes "
+        "sentence": ("l'allure au-delà de laquelle l'effort se paie vite, mesurée sur tes "
                      "efforts plats" if vc_ok else
                      "estimation hors du plausible : ni affichée ni utilisée"),
     }, {
@@ -569,23 +569,54 @@ def _fr_decimals(text: str) -> str:
     return _DECIMAL.sub(r"\1,\2", text)
 
 
-def _verdict_sentence(sufficiency, calibration, twin) -> str:
-    """LE critère qui retient le verdict, en une ligne — et lui seul.
+def _blocking_sentence(c, cfg) -> str:
+    """Le critère qui retient le verdict, dit comme on le dirait à voix haute : ce qui est
+    mesuré, où en sont les données, ce qu'il faudrait. Les détails techniques du critère
+    restent pour le registre et l'annexe."""
+    s = cfg.sufficiency
+    v = c.value
+    if c.name == "Erreur validation croisée" and v is not None:
+        return (f"Rejoués en aveugle, tes ultras passés sortent à {fr(v, 1)}\\,\\% d'erreur ; "
+                f"sous {fr(s.cv_error_green_pct, 0)}\\,\\%, on engage la confiance pleine.")
+    if c.name == "Courses exploitables" and v is not None:
+        return (f"{int(v)} courses exploitables dans ton archive ; il en faut "
+                f"{s.usable_green} pour la confiance pleine.")
+    if c.name in ("Efforts longs proches de la cible", "Historique") and v is not None:
+        return (f"{int(v)} effort{'s' if v > 1 else ''} long{'s' if v > 1 else ''} comparable"
+                f"{'s' if v > 1 else ''} à cette course ; il en faut "
+                f"{s.long_efforts_green}.")
+    if c.name.startswith("Qualité") and v is not None:
+        return (f"{fr(v * 100, 0)}\\,\\% de tes sorties portent une fréquence cardiaque ; "
+                f"il en faut {fr(s.quality_green_frac * 100, 0)}\\,\\% pour lire ta durabilité.")
+    if c.name == "Fraîcheur des données" and v is not None:
+        return (f"Ta dernière sortie remonte à {int(v)} jours : le plan suppose ta forme "
+                "d'alors, recalcule-le à l'approche de la course.")
+    if c.name == "Domaine de calibration" and v is not None:
+        return (f"À ton allure d'ultra, ce parcours se court en {fr(v, 0)}\\,h — sous les "
+                f"{fr(cfg.calibration.genuine_min_hours, 0)}\\,h sur lesquelles le moteur "
+                "est calibré.")
+    if c.name == "Largeur d'intervalle" and v is not None:
+        return (f"La fourchette fait {fr(v * 100, 0)}\\,\\% du temps prédit ; il faudrait "
+                f"descendre sous {fr(s.interval_rel_width_green * 100, 0)}\\,\\%.")
+    return _fr_decimals(f"{c.name} : {c.detail}.")
+
+
+def _verdict_sentence(sufficiency, calibration, twin, cfg) -> str:
+    """LE critère qui retient le verdict, en une phrase — et lui seul.
 
     Un badge qui énumère cinq chiffres ne dit pas ce qui bloque. En 🟢 rien ne bloque, et la
     ligne dit ce que le vert engage plutôt que d'inventer une réserve.
     """
     if sufficiency.verdict == GREEN:
-        return tex_escape("Rien ne retient ce rapport : tes données passent tous les critères.")
+        return tex_escape("Tes données passent tous les critères.")
     blocking = [c for c in sufficiency.criteria if c.level == RED]
     if not blocking:
         blocking = [c for c in sufficiency.criteria if c.level == ORANGE]
     if blocking:
-        c = blocking[0]
-        return tex_escape(_fr_decimals(f"{c.name} : {c.detail}."))
+        return _blocking_sentence(blocking[0], cfg)
     # verdict plafonné sans critère au rouge ni à l'orange : le plafond EST le motif
     cap = next((r for r in sufficiency.reasons if "plafonné" in r), None)
-    return tex_escape(_fr_decimals(cap or sufficiency.reasons[-1] if sufficiency.reasons else ""))
+    return tex_escape(_fr_decimals(cap or (sufficiency.reasons[-1] if sufficiency.reasons else "")))
 
 
 def _limits(ctx: dict, sufficiency, race, cfg) -> list[dict]:
@@ -782,7 +813,7 @@ def _v3_context(ctx: dict, *, course, twin, calibration, prediction, plan, race,
         "confidence_word": tex_escape(conf_word),
         "confidence_plain": conf_word,
         "confidence_color": conf_color,
-        "verdict_sentence": _verdict_sentence(sufficiency, calibration, twin),
+        "verdict_sentence": _verdict_sentence(sufficiency, calibration, twin, cfg),
         "verdict_reasons": [tex_escape(r.replace("🟢", "confiance pleine").replace("🟠", "confiance réduite")
                                        .replace("🔴", "non vendu")) for r in sufficiency.reasons],
         "cover_sentence": tex_escape(cover) if sufficiency.verdict == RED else cover,

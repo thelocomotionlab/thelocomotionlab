@@ -92,7 +92,7 @@ _PROFILE_HEADLINE = {
 }
 _PROFILE_EXPLAIN = {
     "diesel": "ton allure baisse tr\\`es peu quand les heures s'accumulent. C'est le moteur d'endurance qu'il faut pour le tr\\`es long",
-    "équilibré": "ton allure baisse peu quand l'effort s'allonge, un d\\'eclin mod\\'er\\'e et pr\\'evisible",
+    "équilibré": "ton allure baisse peu quand l'effort s'allonge",
     "fade": "ton allure baisse plus vite que la moyenne quand la course s'\\'etire. Il faudra rationner l'effort d\\`es le d\\'epart",
 }
 _DURABILITY_EXPLAIN = {
@@ -228,8 +228,7 @@ def durability_pourtoi(twin, cfg=None, fade_source: str = "config") -> str | Non
                   "pas encore assez pour la r\\'egler sur toi.",
     }.get(fade_source, "")
     return (
-        f"\\textbf{{{_pct(twin.durability_pct)}}} de d\\'ecouplage : {advice}{plan_says} "
-        "Avec le ravitaillement, c'est ce qui d\\'ecide vraiment d'un ultra."
+        f"\\textbf{{{_pct(twin.durability_pct)}}} de d\\'ecouplage : {advice}{plan_says}"
     )
 
 

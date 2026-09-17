@@ -377,34 +377,33 @@ rapport full** (dépend du nouveau profil horaire).
 
 Rendu **LaTeX** (classe `locomotionreport`, **Ubuntu Sans** en instances statiques, XeLaTeX + biber),
 figures matplotlib aux couleurs de la charte (`packages/ui/src/styles/theme.css`, source unique :
-`report/charte.py`). La marque est le signe circulaire suivi du mot-symbole composé en texte, en
-en-tête de chaque page — pas de couverture pleine page. **Trois pages, puis une feuille détachable ;
-ni résumé, ni mots-clés, ni table des matières, ni glossaire** (tout cela est à l'annexe en ligne) :
+`report/charte.py`). La marque est le signe circulaire suivi du mot-symbole composé en texte ; en
+en-tête de page, seul le nom de la course l'accompagne. **Quatre pages, et ni résumé, ni mots-clés,
+ni table des matières, ni glossaire** (tout cela est à l'annexe en ligne) :
 
-1. **Ta course** — la phrase de prédiction (« tu arrives autour de X, une course sur deux entre A
-   et B »), quatre tuiles (les trois scénarios et la fenêtre de l'assistance), le profil avec ses
-   sections de nuit, ce que le parcours demande, ce qui décidera, et l'encadré de confiance : le
-   badge EN MOTS, **le** critère qui bloque en une ligne, la preuve LOO.
-2. **Le plan** — dérive assumée et sa preuve, politique d'arrêts, la table par segment (trois
-   colonnes titrées par leur heure d'arrivée, une consigne par segment) et la courbe du cumul sur
-   la même page ; la section objectif s'il y en a un.
-3. **Ton profil** — quatre jauges (vitesse critique, endurance, durabilité, arrêts), la courbe
-   record, le nuage de validation croisée, les quatre limites, ce que le plan suppose, **QR vers
-   l'annexe en ligne**.
+1. **Couverture** — la marque en grand, le titre, ce que l'athlète doit retenir avant d'ouvrir : la
+   phrase de prédiction, le badge de confiance EN MOTS et **le** critère qui le retient, en une ligne.
+2. **Ta course** — quatre tuiles (les trois scénarios et la fenêtre de l'assistance), le profil, ce
+   que le parcours demande, ce qui décidera, et l'encadré de confiance avec la preuve LOO.
+3. **Le plan** — dérive assumée et sa preuve, politique d'arrêts, la table par segment (trois
+   colonnes titrées par leur heure d'arrivée, une consigne par segment, les ravitaillements ouverts
+   à l'assistance teintés) et la courbe du cumul ; la section objectif s'il y en a un.
+4. **Ton profil** — quatre jauges, la courbe record, le nuage de validation croisée, les quatre
+   limites, ce que le plan suppose, **QR vers l'annexe en ligne**.
 
 **La feuille à emporter** (`feuille.pdf`, A4 paysage recto-verso, imprimable seule par
-`--feuille-seule`) : au recto le tableau de marche, une ligne par segment — km cumulé et km du
-segment, D+ et D− du segment, allure terrain, les trois heures de passage (la colonne prévue
-teintée, le préfixe de jour non répété), arrêt prévu, eau et ravito à remplir, une consigne déduite
-des chiffres du segment et jamais répétée ; les segments de nuit sont tramés, deux bandes coupent
-la table aux deux parties de la course. Au verso : la table de l'assistance (au plus tôt / prévu /
-au plus tard, les bornes de sécurité étalées le long du parcours — à l'arrivée elles redonnent
-exactement la fenêtre de la première page), le profil schématique par ravitaillement, la nuit (où
-prendre et ranger la frontale, sa part), comment lire les trois colonnes, et les quatre limites.
+`--feuille-seule`) ne porte que deux tableaux. Recto, le tableau de marche : une ligne par segment,
+km cumulé et km du segment, D+ et D− du segment, allure terrain, les trois heures de passage (la
+prévue en gras, le préfixe de jour non répété), arrêt, un point quand le segment est de nuit, une
+case « type de ravito » à remplir, et une consigne déduite des chiffres du segment, jamais répétée.
+Verso, le tableau d'assistance : au plus tôt / prévu / au plus tard, bornes de sécurité étalées le
+long du parcours — à l'arrivée elles redonnent exactement la fenêtre de la couverture. Une seule
+couleur d'en-tête, des filets, tout centré, et la seule ligne teintée est celle où l'assistance
+attend. En pied, le folio seul.
 
 **Autour du PDF** : `plan.ics` (un événement par point d'assistance), `plan.gpx` (trace + points de
 passage horodatés), `annexe.json` (l'annexe en ligne). Les probabilités se disent **en courses**
-(« une course sur deux »), jamais en pourcentage sec ; le numéro de rapport ne s'imprime pas.
+(« une course sur deux »), les heures « 19h23 », et le numéro de rapport ne s'imprime pas.
 
 ---
 
