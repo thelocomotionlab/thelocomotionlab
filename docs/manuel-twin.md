@@ -100,11 +100,20 @@ Le dossier de sortie se réutilise sans précaution : les auxiliaires LaTeX de l
 précédente sont effacés avant chaque passe (un `.aux` d'un ancien gabarit faisait mourir XeLaTeX
 sur « Undefined control sequence » en accusant le document neuf).
 
-`--ref` fixe la référence du rapport ; sans elle, elle est **tirée au hasard** — c'est elle qui rend
-l'adresse de l'annexe non devinable. Pour publier l'annexe : copier `annexe.json` dans
+`--ref` fixe la référence du rapport ; sans elle, le moteur en compose une du genre
+`LL-NICE26-VAL-A3F9C1` : course, année de la course, athlète — et **six caractères tirés au hasard**.
+Les trois premières parts servent à retrouver un rapport dans un dossier ou au registre ; la dernière,
+et elle seule, rend l'adresse de l'annexe non devinable. Pour publier l'annexe : copier `annexe.json` dans
 `apps/site/public/twin-annexes/<référence>.json` et déployer le site ; la page
 `/services/twin/annexe/<référence>` est prérendue, en `noindex`, hors navigation, hors plan de site et
 hors recherche. La retirer, c'est supprimer le fichier et redéployer.
+
+La page d'annexe porte un **formulaire** qui personnalise le tableau de marche : temps d'arrêt et
+recommandation de chaque portion, débits de nutrition, ce que l'assistance prépare. Les heures de
+passage se recalculent à la frappe, avec la règle d'arrêts du moteur (`apps/site/lib/twinTableauMarche.js`
+rejoue `build_pacing`) : ce qui s'affiche est ce que le prochain PDF imprimera. La page est prérendue
+et n'écrit rien : le formulaire rend le tableau à imprimer, et un bloc `{reglages, crew, nutrition}`
+(§6) à recoller dans la spec de course avant de relancer le rendu.
 
 Les points d'assistance viennent de `crew` dans la spec de course (§6), puis de
 `crew_access_indices` ; sans déclaration, le moteur prend les bases majeures et la feuille **dit**
@@ -176,6 +185,7 @@ horaires réels. Tous les champs sont **optionnels** — ne mets que ce que tu v
 | `crew` | points d'assistance du **règlement**, `[{aid_index, note}]` indexés sur `aid_names` | repli sur `crew_access_indices`, puis sur les bases majeures, annoncé comme supposé |
 | `nutrition` | débits **déclarés** `{water_l_per_h, carbs_g_per_h}` | colonnes eau et ravito vides, à remplir au stylo |
 | `phases` | découpe de la course, `[{name, note, from_aid_index}]` | deux parties, coupées au ravitaillement le plus proche de la mi-temps prédite |
+| `reglages` | ce que l'athlète **écrit** point par point, `[{aid_index, stop_min, consigne}]` | arrêts de la politique du plan, consignes déduites des chiffres du segment |
 
 `crew` prime sur `crew_access_indices` (les segments dont la **fin** est ouverte à l'assistance) :
 la feuille, le calendrier et les points GPX s'y calent. Une `note` vide imprime une case à remplir.
@@ -183,6 +193,14 @@ la feuille, le calendrier et les points GPX s'y calent. Une `note` vide imprime 
 `nutrition` n'est jamais devinée : sans les **deux** débits, le moteur ne calcule rien et les
 colonnes restent blanches. Avec les deux, il calcule par segment sur la durée prévue (arrêts
 compris) et donne les totaux au verso de la feuille.
+
+`reglages` est la voix de l'athlète sur son propre tableau : un `stop_min` remplace l'arrêt que la
+politique du plan aurait posé à ce ravitaillement, une `consigne` remplace celle que le moteur aurait
+déduite des chiffres du segment. Ce que le total devient dépend du modèle d'arrêts de la prédiction :
+en `spec` les arrêts s'ajoutent au mouvement (l'arrivée recule d'autant) ; en `personal` le budget
+vient des courses passées de l'athlète, l'arrêt écrit est retenu tel quel et le reste se répartit sur
+les autres points ; en `carved` l'horloge **est** le temps prédit et un arrêt plus long, c'est autant
+de moins en mouvement. Le formulaire de la page d'annexe (§3) écrit exactement ce bloc.
 
 ### Technicité du terrain (`technicity_pct` / `--technicity`)
 

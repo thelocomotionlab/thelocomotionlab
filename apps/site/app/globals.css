@@ -935,3 +935,22 @@ mark.search-highlight {
 .md-split .ll-map-profil {
   display: none;
 }
+
+/* IMPRIMER LE SEUL TABLEAU DE MARCHE, depuis l'annexe d'un rapport Twin. Le bouton
+   pose `impression-tableau` sur le body le temps de l'impression : tout disparaît
+   sauf la zone du tableau, qui remonte en haut de la feuille. */
+@media print {
+  body.impression-tableau * {
+    visibility: hidden;
+  }
+  body.impression-tableau .zone-impression,
+  body.impression-tableau .zone-impression * {
+    visibility: visible;
+  }
+  body.impression-tableau .zone-impression {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+}

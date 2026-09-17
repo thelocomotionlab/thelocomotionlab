@@ -10,6 +10,8 @@ import { notFound } from "next/navigation";
 
 import { REF_AUCUNE_ANNEXE, annexeRefParams, getAnnexe } from "@/lib/twinAnnexes.mjs";
 
+import FormulairePlan from "./FormulairePlan";
+
 export const dynamicParams = false;
 
 export function generateStaticParams() {
@@ -145,7 +147,7 @@ export default async function AnnexePage({ params }) {
             {c.name}
           </h1>
           <p className={`m-0 mt-3 max-w-[46ch] text-xl font-light leading-snug text-brand-deep-dark ${LECTURE}`}>
-            {a.athlete} · {duree(p.central_h)} · {a.verdict?.confiance}
+            {a.athlete} · {duree(p.central_h)} · confiance {a.verdict?.confiance}
           </p>
           <div className="mt-5 h-[3px] w-16 rounded-full bg-brand-accent" aria-hidden="true" />
           <p className={`m-0 mt-5 max-w-[40em] text-brand-soft ${LECTURE}`}>
@@ -157,7 +159,7 @@ export default async function AnnexePage({ params }) {
 
         <Section titre="Le verdict">
           <p className={`m-0 max-w-[40em] text-brand-ink ${LECTURE}`}>
-            {a.verdict?.confiance}
+            Confiance {a.verdict?.confiance}
             {a.verdict?.sellable === false ? " — ce rapport n’est pas vendu en l’état." : "."}
           </p>
           <ul className={`mt-3 max-w-[40em] list-disc pl-5 text-brand-soft ${LECTURE}`}>
@@ -336,6 +338,17 @@ export default async function AnnexePage({ params }) {
               prédiction repose sur une extrapolation.
             </p>
           )}
+        </Section>
+
+        <Section titre="Personnaliser ton tableau">
+          <p className={`m-0 ${LECTURE}`}>
+            Le temps que tu comptes passer à chaque ravitaillement, ce que tu veux lire sur
+            chaque portion, tes débits de boisson et de sucre, ce que ton assistance prépare :
+            règle-les ici. Les heures de passage se recalculent à mesure. Tu peux imprimer le
+            tableau tel quel, ou récupérer tes réglages pour que le moteur les reprenne au
+            prochain rendu du PDF.
+          </p>
+          <FormulairePlan plan={a.plan} course={a.course} assistance={a.assistance} />
         </Section>
 
         <Section titre="Le plan complet">

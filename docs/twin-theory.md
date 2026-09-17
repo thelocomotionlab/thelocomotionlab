@@ -381,21 +381,26 @@ figures matplotlib aux couleurs de la charte (`packages/ui/src/styles/theme.css`
 en-tête de page, seul le nom de la course l'accompagne. **Quatre pages, et ni résumé, ni mots-clés,
 ni table des matières, ni glossaire** (tout cela est à l'annexe en ligne) :
 
-1. **Couverture** — la marque en grand, le titre, ce que l'athlète doit retenir avant d'ouvrir : la
-   phrase de prédiction, le badge de confiance EN MOTS et **le** critère qui le retient, en une ligne.
+1. **Couverture** — bande verticale bleu-vert et liseré ocre au bord gauche, la marque en grand, le
+   titre, ce que l'athlète doit retenir avant d'ouvrir : la phrase de prédiction, le badge de
+   confiance EN UN MOT (« pleine », « réduite », « insuffisante ») sous son titre, et **le** critère
+   qui le retient, en une ligne.
 2. **Ta course** — quatre tuiles (les trois scénarios et la fenêtre de l'assistance), le profil, ce
    que le parcours demande, ce qui décidera, et l'encadré de confiance avec la preuve LOO.
 3. **Le plan** — dérive assumée et sa preuve, politique d'arrêts, la table par segment (trois
    colonnes titrées par leur heure d'arrivée, une consigne par segment, les ravitaillements ouverts
    à l'assistance teintés) et la courbe du cumul ; la section objectif s'il y en a un.
 4. **Ton profil** — quatre jauges, la courbe record, le nuage de validation croisée, les quatre
-   limites, ce que le plan suppose, **QR vers l'annexe en ligne**.
+   limites, ce que le plan suppose, **QR vers l'annexe en ligne** et, dessous, la même adresse en
+   clair pour qui n'a pas de téléphone.
 
 **La feuille à emporter** (`feuille.pdf`, A4 paysage recto-verso, imprimable seule par
 `--feuille-seule`) ne porte que deux tableaux. Recto, le tableau de marche : une ligne par segment,
 km cumulé et km du segment, D+ et D− du segment, allure terrain, les trois heures de passage (la
 prévue en gras, le préfixe de jour non répété), arrêt, un point quand le segment est de nuit, une
-case « type de ravito » à remplir, et une consigne déduite des chiffres du segment, jamais répétée.
+case « type de ravito » à remplir, et une consigne déduite des chiffres du segment (ou écrite par
+l'athlète, `RaceSpec.reglages`), jamais répétée. Chaque case porte son filet, toutes ont la même
+largeur, et la colonne de l'heure prévue est encadrée en pointillé ocre, expliquée par une légende.
 Verso, le tableau d'assistance : au plus tôt / prévu / au plus tard, bornes de sécurité étalées le
 long du parcours — à l'arrivée elles redonnent exactement la fenêtre de la couverture. Une seule
 couleur d'en-tête, des filets, tout centré, et la seule ligne teintée est celle où l'assistance
@@ -403,7 +408,12 @@ attend. En pied, le folio seul.
 
 **Autour du PDF** : `plan.ics` (un événement par point d'assistance), `plan.gpx` (trace + points de
 passage horodatés), `annexe.json` (l'annexe en ligne). Les probabilités se disent **en courses**
-(« une course sur deux »), les heures « 19h23 », et le numéro de rapport ne s'imprime pas.
+(« une course sur deux »), les heures « 19h23 », et la référence du rapport ne s'imprime que portée
+par l'adresse de l'annexe.
+
+La page d'annexe personnalise le tableau de marche (arrêts, recommandations, nutrition, assistance)
+sans rien écrire : elle rejoue côté navigateur la règle d'arrêts de `build_pacing` pour afficher les
+heures du prochain PDF, et rend un bloc `{reglages, crew, nutrition}` à recoller dans la spec.
 
 ---
 

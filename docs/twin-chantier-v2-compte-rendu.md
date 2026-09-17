@@ -613,12 +613,32 @@ republié à côté de la politique du plan.
     3,2%) ». Une phrase par critère le remplace, qui dit ce qui est mesuré, où on en est, et ce
     qu'il faudrait.
 
-## Questions ouvertes
+## Choix faits à la place de Valentin (rapport v3, troisième passe)
 
-- **Personnaliser le tableau depuis l'annexe.** Les arrêts, la nutrition et les notes
-  d'assistance se déclarent aujourd'hui dans la spec JSON, et le rapport se recalcule en ligne de
-  commande. Les éditer depuis la page de l'annexe demande un service qui écrit (persistance,
-  authentification, re-rendu) : à chiffrer comme un chantier à part.
+71. **Le troisième mot de confiance devient « insuffisante ».** L'étiquette ne porte plus que
+    l'adjectif, sous le titre *Confiance* ; « non vendable » n'en était pas un. Le fait de ne pas
+    vendre reste dit par le verdict et par `sellable` dans l'annexe.
+72. **La colonne de l'heure prévue est encadrée en pointillé ocre, avec une légende.** Le cadre
+    demande de mesurer le tableau (`savebox`) et de calculer l'abscisse de la colonne depuis les
+    largeurs, les gouttières et les filets : c'est le prix d'une grille à colonnes fixes, qui est
+    aussi ce qui rend toutes les cases de même largeur.
+73. **L'adresse de l'annexe s'imprime en clair sous le QR.** Une page qu'on ne peut ouvrir qu'avec
+    un téléphone n'est pas une page : la même adresse se tape au clavier, et le PDF la rend
+    cliquable.
+74. **La référence du rapport se lit.** `LL-NICE26-VAL-A3F9C1` : course, année, athlète, puis six
+    caractères tirés au hasard. Les trois premières parts servent à retrouver un rapport dans un
+    dossier ou au registre ; la dernière reste le secret de l'annexe. Un rapport ne porte toujours
+    pas sa référence ailleurs que dans l'adresse de son annexe.
+75. **Le formulaire de l'annexe rejoue la règle d'arrêts du moteur, il ne l'approxime pas.** Un
+    formulaire qui additionne naïvement les arrêts annonçait une arrivée que le PDF suivant
+    démentait. La règle des trois modèles est reprise dans un module testé
+    (`apps/site/lib/twinTableauMarche.js`), et l'identité est tenue par un test : sans rien changer,
+    le formulaire redonne les heures du rapport.
+76. **Les listes du fragment de spec sortent entières.** `crew` déclare aussi *où* l'assistance est
+    autorisée, et `reglages` porte ce qui avait déjà été écrit : n'émettre que les lignes modifiées
+    aurait effacé le reste à la première recollade.
+
+## Questions ouvertes
 
 - **Chantier suivant : trails courts et route.** Valentin a des demandes pour du trail court et
   pour de la route (10 km). Le moteur est calibré sur les efforts ≥ 10 h et la garde du domaine
