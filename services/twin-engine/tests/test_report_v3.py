@@ -394,7 +394,7 @@ def test_render_has_no_residual_delimiters():
 
 @pytest.mark.skipif(not HAS_TEX, reason="XeLaTeX/biber absents (validés dans l'image Docker)")
 def test_the_report_is_three_pages_and_the_sheet_two(tmp_path):
-    from pypdf import PdfReader  # noqa: PLC0415 — dépendance de test seulement
+    PdfReader = pytest.importorskip("pypdf").PdfReader   # extra « dev » du pyproject
 
     ctx, (course, twin, cal, pred, plan, race, _) = context()
     fig_dir = tmp_path / "figures"

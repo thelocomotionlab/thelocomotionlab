@@ -31,7 +31,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "httpx>=0.27"]
+# pypdf : compter les pages des PDF produits (le rapport en fait trois, la feuille deux)
+dev = ["pytest>=8", "httpx>=0.27", "pypdf>=4"]
 
 [project.scripts]
 # CLI du moteur (preview / full / backtest — cf. docs/manuel-twin.md).
