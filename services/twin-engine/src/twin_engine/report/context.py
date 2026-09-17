@@ -478,10 +478,11 @@ def build_report_context(
 # --------------------------------------------------------------------------- #
 # Rapport v3 : ce que les trois pages et la feuille disent, dérivé des objets calculés.
 # --------------------------------------------------------------------------- #
+# L'étiquette porte le mot seul : elle est toujours lue sous le titre « Confiance ».
 _CONFIDENCE = {
-    GREEN: ("confiance pleine", "LLSuccess"),
-    ORANGE: ("confiance réduite", "LLAccentInk"),
-    RED: ("pas vendable en l'état", "LLDeepDark"),
+    GREEN: ("pleine", "LLSuccess"),
+    ORANGE: ("réduite", "LLAccentInk"),
+    RED: ("insuffisante", "LLDeepDark"),
 }
 
 
@@ -838,6 +839,9 @@ def _v3_context(ctx: dict, *, course, twin, calibration, prediction, plan, race,
         "feuille_rows": feuille_rows,
         "feuille_parts": parts,
         "clock_titles": clocks["titles"],
+        # les seuils de mise en avant, dits par la légende du tableau
+        "strong_dplus_m": fr_thousands(r.strong_dplus_m, 0),
+        "strong_dminus_m": fr_thousands(r.strong_dminus_m, 0),
         "nutrition": None if nutri_total is None else {
             k: tex_escape(v) for k, v in nutri_total.items()},
         "limits": [x["full"] for x in limits],

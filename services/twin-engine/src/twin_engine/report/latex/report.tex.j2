@@ -29,6 +29,7 @@
     << safety_word|capitalize >> se joue entre \textbf{<< interval_low >>} et \textbf{<< interval_high >>}.
 <% endif %>    \par}
     \vspace{7mm}
+    \LLetiquette{Confiance}\par\vspace{3pt}
     \LLbadge{<< confidence_word >>}{<< confidence_color >>}\par\vspace{3mm}
     {\fontsize{10}{14}\selectfont\color{LLSoft}<< verdict_sentence >>\par}
   }
@@ -89,14 +90,15 @@ avant de les donner à ton assistance.
 \begin{table}[H]
   \centering \scriptsize \setlength{\tabcolsep}{3.2pt}
   \LLtableau \renewcommand{\arraystretch}{1.5}
+  \renewcommand{\LLsepfactor}{1.5}\setlength{\LLseplarg}{\linewidth}
   \begin{tabularx}{\linewidth}{|c|>{\centering\arraybackslash}p{26mm}|c|c|c|c|c|c|c|>{\centering\arraybackslash}X|}
-    \hline
+    \LLfilet{10}
     \LLheaderrow
     \LLthead{\#} & \LLthead{Vers} & \LLthead{km} & \LLthead{D+} & \LLthead{D−} & \LLthead{allure} & \LLthead{<< clock_titles.fast >>} & \LLthead{<< clock_titles.central >>} & \LLthead{<< clock_titles.cautious >>} & \LLthead{Sur ce segment} \\
-    \hline
+    \LLfilet{10}
 <% for s in feuille_rows %><% if s.contact %>    \LLassist
-<% endif %>    << s.idx >> & << s.to >> & \LLnum{<< s.km >>} & <% if s.strong_dplus %>\LLfort{<< s.dplus >>}<% else %>\LLnum{<< s.dplus >>}<% endif %> & <% if s.strong_dminus %>\LLfort{<< s.dminus >>}<% else %>\LLnum{<< s.dminus >>}<% endif %> & \LLnum{<< s.pace >>} & \LLnum{<% if s.fast.day %><< s.fast.day >> <% endif %><< s.fast.hour >>} & \LLprevu{\LLnum{<% if s.central.day %><< s.central.day >> <% endif %><< s.central.hour >>}} & \LLnum{<% if s.cautious.day %><< s.cautious.day >> <% endif %><< s.cautious.hour >>} & << s.marche >> \\
-    \hline
+<% endif %>    << s.idx >> & << s.to >> & \LLnum{<< s.km >>} & <% if s.strong_dplus %>\LLfort{<< s.dplus >>}<% else %>\LLnum{<< s.dplus >>}<% endif %> & <% if s.strong_dminus %>\LLfort{<< s.dminus >>}<% else %>\LLnum{<< s.dminus >>}<% endif %> & \LLnum{<< s.pace >>} & \LLnum{<% if s.fast.day %><< s.fast.day >> <% endif %><< s.fast.hour >>} & \LLprevu{\LLnum{<% if s.central.day %><< s.central.day >> <% endif %><< s.central.hour >>}} & \LLnum{<% if s.cautious.day %><< s.cautious.day >> <% endif %><< s.cautious.hour >>} & <% if s.contact %>\LLsepfin{<< s.marche >>}<% else %><< s.marche >><% endif %> \\
+    \LLfilet{10}
 <% endfor %>  \end{tabularx}
   \caption{Les trois colonnes sont titrées par leur heure d'arrivée : repère tôt celle qui te correspond et suis-la. Les lignes teintées sont les ravitaillements ouverts à ton assistance.<% if target_mode %> Autour d'un objectif, ce sont les bornes d'une fenêtre de passage — une tolérance d'exécution de $\pm$<< target_tolerance_pct >>\,\%, pas une probabilité.<% else %> Entre la première et la dernière, << plan_band_word >>.<% endif %>}
 \end{table}
@@ -173,11 +175,14 @@ de grandeur, pas une cible ferme.\par}
   {\fontsize{8.2}{10.6}\selectfont\ignorespaces
   <% for a in assumptions %><< a >><% if not loop.last %> <% endif %><% endfor %>
   {\color{LLSoft}Le code ouvre l'annexe en ligne : méthode, calibration course par course,
-  validation croisée, plan complet, glossaire et références.}\par}
+  validation croisée, plan complet, et le formulaire qui personnalise ton tableau de marche.}\par}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.1\linewidth}\vspace{0pt}
   \LLqr{<< annex_url >>}
 \end{minipage}
+\par\vspace{5pt}
+{\fontsize{8.2}{10.6}\selectfont\color{LLSoft}Sans téléphone :
+{\LLmonofont\fontsize{8}{10}\selectfont\color{LLPrimaryDark}\url{<< annex_url >>}}\par}
 \end{llhonnete}
 % LL:END page-profil
 

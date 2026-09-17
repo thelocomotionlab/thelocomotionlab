@@ -124,7 +124,7 @@ def test_scenario_is_sold_with_full_confidence():
 
 def test_context_v3_keys():
     ctx, (course, _, _, _, plan, race, _) = context()
-    assert ctx["confidence_word"] == "confiance pleine" and ctx["confidence_color"] == "LLSuccess"
+    assert ctx["confidence_word"] == "pleine" and ctx["confidence_color"] == "LLSuccess"
     assert ctx["annex_url"].endswith("/LL-TWIN-GOLDEN01") and ctx["annex_ref"] == "LL-TWIN-GOLDEN01"
     assert ctx["report_version"] == CFG.report.version
     assert len(ctx["gauges"]) == 4 and all(0.0 <= g["fraction"] <= 1.0 for g in ctx["gauges"])
@@ -141,16 +141,17 @@ def test_context_v3_keys():
     assert ctx["stops_policy"]["n_major"] == 2
 
 
-def test_the_report_number_never_reaches_the_pdf():
-    """La référence reste côté moteur (nom de fichier, registre, adresse de l'annexe) : elle
-    n'a rien à faire sur une page que l'athlète lit."""
+def test_the_report_number_only_travels_inside_the_annex_address():
+    """La référence reste côté moteur (nom de fichier, registre) : elle n'apparaît sur une page
+    que portée par l'adresse de l'annexe — le QR, et la même adresse en clair juste dessous pour
+    qui n'a pas de téléphone. Jamais comme un numéro de rapport."""
     ctx, _ = context(ref="LL-TWIN-SECRET7")
     assert "report_ref" not in ctx
     tex = render_tex(ctx)
     feuille = render_template(FEUILLE_TEMPLATE, ctx)
-    # seule l'adresse du QR porte la référence, et elle ne s'imprime pas en clair
-    assert tex.count("LL-TWIN-SECRET7") == 1
-    assert "\\LLqr{" in tex and "\\url{" not in tex
+    assert "\\LLqr{" in tex and "\\url{" in tex
+    assert tex.count(ctx["annex_url"]) == 2
+    assert "LL-TWIN-SECRET7" not in tex.replace(ctx["annex_url"], "")
     assert "LL-TWIN-SECRET7" not in feuille
 
 
@@ -182,7 +183,9 @@ def test_the_night_is_read_once_and_reports_every_section():
     de_nuit = {s.index for run in runs for s in run}
     assert [r["night"] for r in ctx["feuille_rows"]] == [
         s.index in de_nuit for s in plan.segments]
-    assert render_template(FEUILLE_TEMPLATE, ctx).count("\\LLnuit") == len(de_nuit)
+    tableau = _slice(render_template(FEUILLE_TEMPLATE, ctx), "feuille-recto")
+    tableau = tableau[:tableau.index("\\end{tabularx}")]
+    assert tableau.count("\\LLnuit") == len(de_nuit)
 
 
 def test_two_night_sections_are_both_published():
@@ -351,8 +354,8 @@ def test_no_number_is_hard_coded_in_what_the_athlete_reads_in_the_race():
     def _reste(body: str) -> list[str]:
         # dimensions de mise en page : corps de police, largeurs de colonne, ressorts
         body = re.sub(r"\\fontsize\{[\d.]+\}\{[\d.]+\}", "", body)
-        body = re.sub(r"\\renewcommand\{\\arraystretch\}\{[\d.]+\}", "", body)
-        body = re.sub(r"\\LLphase(?:un|deux)\{\d+\}", "", body)   # nombre de colonnes
+        body = re.sub(r"\\renewcommand\{\\(arraystretch|LLsepfactor)\}\{[\d.]+\}", "", body)
+        body = re.sub(r"\\LLfilet\{\d+\}", "", body)              # nombre de colonnes
         body = re.sub(r"[\d.]+\\(linewidth|textwidth|textheight|height)", "", body)
         body = re.sub(r"-?\d+(\.\d+)?\s*(pt|mm|cm|em|ex)", "", body)
         body = re.sub(r"\\(LL\w+|vspace|hspace|includegraphics|begin|end|selectfont"
@@ -501,7 +504,7 @@ def test_write_livrables_without_latex(tmp_path):
     for key in ("course", "prediction", "verdict", "jumeau", "calibration", "validation", "pente",
                 "plan", "assistance", "arrivee", "textes", "glossaire", "references", "figures"):
         assert key in annexe, key
-    assert annexe["verdict"]["confiance"] == "confiance pleine"
+    assert annexe["verdict"]["confiance"] == "pleine"
     assert len(annexe["calibration"]["ultras"]) == 5
     assert len(annexe["validation"]["points"]) == 5
     assert len(annexe["assistance"]) == 3 and annexe["arrivee"]["is_finish"]

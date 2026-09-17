@@ -267,6 +267,7 @@ def annex_payload(*, ctx: dict, course, twin, calibration, prediction, plan, rac
     cs = twin.critical_speed
     vc_ok = cs is not None and cs.plausible
     genuine = list(calibration.genuine)
+    notes_crew = {c.aid_index: c.note for c in race.crew}
     cv_points = []
     if cv is not None and cv.points:
         for k, (actual, pred) in enumerate(cv.points):
@@ -387,10 +388,19 @@ def annex_payload(*, ctx: dict, course, twin, calibration, prediction, plan, rac
                 "heures": detex(ctx["night_hours_hm"]), "part_pct": ctx["night_share_pct"]},
             "parties": [{k: detex(v) if isinstance(v, str) else v for k, v in p.items()}
                         for p in ctx["feuille_parts"]],
+            # ce que le formulaire de l'annexe peut reprendre et renvoyer à la spec
+            "reglages": [{"aid_index": r.aid_index, "stop_min": r.stop_min,
+                          "consigne": r.consigne} for r in race.reglages],
+            "nutrition": ({"water_l_per_h": race.nutrition.water_l_per_h,
+                           "carbs_g_per_h": race.nutrition.carbs_g_per_h}
+                          if race.nutrition.declared else None),
+            "crew": [{"aid_index": c.aid_index, "note": c.note} for c in race.crew],
             "segments": [{**s.to_dict(), "consigne": detex(c)} for s, c in
                          zip(plan.segments, ctx["consignes_plain"])],
         },
-        "assistance": [p.to_dict() for p in points],
+        # la note d'assistance voyage avec le point : c'est elle que le formulaire de
+        # l'annexe repropose à l'édition
+        "assistance": [{**p.to_dict(), "note": notes_crew.get(p.index, "")} for p in points],
         "arrivee": None if finish is None else finish.to_dict(),
         "target": None if ctx.get("target_requested") is False or not ctx.get("target_requested") else {
             "hm": detex(ctx["target_hm"]), "regime": ctx["target_regime"],

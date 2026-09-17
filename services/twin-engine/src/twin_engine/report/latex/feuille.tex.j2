@@ -1,56 +1,92 @@
 % La feuille à emporter (rapport Locomotion Twin v3) : A4 paysage, recto-verso, détachable.
 % Deux tableaux et rien d'autre — le tableau de marche au recto, celui de l'assistance au verso.
-% Elle se compile seule (--feuille-seule) ou à côté du rapport : mêmes valeurs, même contexte
-% calculé, aucun chiffre en dur.
+% Colonnes à largeur fixe (c'est ce qui rend la grille régulière et le cadre de la colonne
+% prévue exact). Elle se compile seule (--feuille-seule) ou à côté du rapport : mêmes valeurs,
+% même contexte calculé, aucun chiffre en dur.
 \documentclass{locomotionreport}
 
-\geometry{a4paper, landscape, top=20mm, bottom=16mm, left=11mm, right=11mm,
-          headsep=7mm, footskip=10mm}
+\geometry{a4paper, landscape, top=26mm, bottom=16mm, left=11mm, right=11mm,
+          headsep=6mm, footskip=10mm}
 
 \LLheaddoc{<< race_name >>}
 \pagestyle{LLfeuille}
+
+% Largeurs de la grille : une seule pour les chiffres, une seule pour les heures. Le bord
+% gauche de la colonne encadrée s'en déduit (gouttières et filets compris).
+% Des LONGUEURS, pas des macros : « 5\LLchiffre » doit valoir cinq fois douze millimètres,
+% pas la dimension « 512 mm » qu'une macro de texte produirait.
+\newlength{\LLchiffre} \setlength{\LLchiffre}{12mm}
+\newlength{\LLheure}   \setlength{\LLheure}{18mm}
+\newlength{\LLcolprevu}
+\newlength{\LLcolcrew}
+% Abscisse du filet gauche de la colonne encadrée : les largeurs des colonnes qui la précèdent,
+% leurs gouttières (deux tabcolsep chacune) et leurs filets. Les deux macros se calculent APRÈS
+% le réglage de \tabcolsep du tableau concerné — sinon elles mesurent une autre grille.
+\newlength{\LLlargprevu}
+\newlength{\LLlargcrew}
+% le tableau de marche : la colonne « prévu » est la neuvième
+\newcommand{\LLgrillemarche}{%
+  \setlength{\LLcolprevu}{\dimexpr 44mm + 5\LLchiffre + \LLheure
+    + 16\tabcolsep + 8\arrayrulewidth\relax}%
+  \setlength{\LLlargprevu}{\dimexpr \LLheure + 2\tabcolsep + \arrayrulewidth\relax}}
+% le tableau d'assistance : la colonne « prévu » est la quatrième
+\newcommand{\LLgrilleassistance}{%
+  \setlength{\LLcolcrew}{\dimexpr 98mm + 6\tabcolsep + 3\arrayrulewidth\relax}%
+  \setlength{\LLlargcrew}{\dimexpr 26mm + 2\tabcolsep + \arrayrulewidth\relax}}
 
 \begin{document}
 
 % =====================================================================
 % LL:BEGIN feuille-recto
-\vspace{5pt}
+\vspace{2pt}
 {\LLextraboldfont\fontsize{17}{20}\selectfont\color{LLDeep}Tableau de marche\par}
 \vspace{9pt}
 
 {\fontsize{9.4}{9.4}\selectfont\LLtableau
-\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{2.0}
-\begin{tabularx}{\linewidth}{|c|>{\centering\arraybackslash}p{34mm}|c|c|c|c|c|c|c|c|c|c|>{\centering\arraybackslash}p{26mm}|>{\centering\arraybackslash}X|}
-  \hline
+\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{2.0}\LLgrillemarche
+\renewcommand{\LLsepfactor}{2.0}\setlength{\LLseplarg}{\linewidth}
+\LLtableencadree{\LLcolprevu}{\LLlargprevu}{%
+\begin{tabularx}{\linewidth}{|>{\centering\arraybackslash}p{10mm}|>{\centering\arraybackslash}p{34mm}|>{\centering\arraybackslash}p{\LLchiffre}|>{\centering\arraybackslash}p{\LLchiffre}|>{\centering\arraybackslash}p{\LLchiffre}|>{\centering\arraybackslash}p{\LLchiffre}|>{\centering\arraybackslash}p{\LLchiffre}|>{\centering\arraybackslash}p{\LLheure}|>{\centering\arraybackslash}p{\LLheure}|>{\centering\arraybackslash}p{\LLheure}|>{\centering\arraybackslash}p{\LLchiffre}|>{\centering\arraybackslash}p{22mm}|>{\centering\arraybackslash}X|}
+  \LLfilet{13}
   \LLheaderrow
-  \LLthead{\#} & \LLthead{Ravitaillement} & \LLthead{km} & \LLthead{seg.} & \LLthead{D+} & \LLthead{D−} & \LLthead{min/km} & \LLthead{<< clock_titles.fast >>} & \LLthead{<< clock_titles.central >>} & \LLthead{<< clock_titles.cautious >>} & \LLthead{arrêt} & \LLthead{nuit} & \LLthead{type de ravito} & \LLthead{Sur ce segment} \\
-  \hline
+  \LLthead{\#} & \LLthead{Ravitaillement} & \LLthead{km} & \LLthead{seg.} & \LLthead{D+} & \LLthead{D−} & \LLthead{min/km} & \LLthead{<< clock_titles.fast >>} & \LLthead{<< clock_titles.central >>} & \LLthead{<< clock_titles.cautious >>} & \LLthead{arrêt} & \LLthead{type de ravito} & \LLthead{Sur ce segment} \\
+  \LLfilet{13}
 <% for s in feuille_rows %><% if s.contact %>  \LLassist
-<% endif %>  << s.idx >> & << s.to >> & \LLnum{<< s.km >>} & \LLnum{<< s.seg_km >>} & <% if s.strong_dplus %>\LLfort{<< s.dplus >>}<% else %>\LLnum{<< s.dplus >>}<% endif %> & <% if s.strong_dminus %>\LLfort{<< s.dminus >>}<% else %>\LLnum{<< s.dminus >>}<% endif %> & \LLnum{<< s.pace >>} & \LLnum{<% if s.fast.day %><< s.fast.day >> <% endif %><< s.fast.hour >>} & \LLprevu{\LLnum{<% if s.central.day %><< s.central.day >> <% endif %><< s.central.hour >>}} & \LLnum{<% if s.cautious.day %><< s.cautious.day >> <% endif %><< s.cautious.hour >>} & <% if s.stop %>\LLnum{<< s.stop >>'}<% endif %> & <% if s.night %>\LLnuit<% endif %> & \LLcasevide & << s.marche >> \\
-  \hline
-<% endfor %>\end{tabularx}\par}
+<% endif %>  << s.idx >><% if s.night %>\LLnuit<% endif %> & << s.to >> & \LLnum{<< s.km >>} & \LLnum{<< s.seg_km >>} & <% if s.strong_dplus %>\LLfort{<< s.dplus >>}<% else %>\LLnum{<< s.dplus >>}<% endif %> & <% if s.strong_dminus %>\LLfort{<< s.dminus >>}<% else %>\LLnum{<< s.dminus >>}<% endif %> & \LLnum{<< s.pace >>} & \LLnum{<% if s.fast.day %><< s.fast.day >> <% endif %><< s.fast.hour >>} & \LLprevu{\LLnum{<% if s.central.day %><< s.central.day >> <% endif %><< s.central.hour >>}} & \LLnum{<% if s.cautious.day %><< s.cautious.day >> <% endif %><< s.cautious.hour >>} & <% if s.stop %>\LLnum{<< s.stop >>'}<% endif %> & \LLcasevide & <% if s.contact %>\LLsepfin{<< s.marche >>}<% else %><< s.marche >><% endif %> \\
+  \LLfilet{13}
+<% endfor %>\end{tabularx}}\par}
+\LLlegende{\textcolor{LLAccentInk}{Colonne encadrée} : l'heure prévue, celle que tu suis par
+défaut \textperiodcentered{} \colorbox{LLAssistRow}{\strut ligne teintée} : ton assistance est
+autorisée à ce ravitaillement \textperiodcentered{} \LLnuit{} après le numéro : le segment se
+court de nuit \textperiodcentered{} en gras : plus de << strong_dplus_m >>\,m de D+ ou de
+<< strong_dminus_m >>\,m de D− sur un seul segment.}
 % LL:END feuille-recto
 
 % =====================================================================
 % LL:BEGIN feuille-verso
 \clearpage
-\vspace{5pt}
+\vspace{2pt}
 {\LLextraboldfont\fontsize{17}{20}\selectfont\color{LLDeep}Assistance\par}
 \vspace{9pt}
 
 {\fontsize{10.5}{10.5}\selectfont\LLtableau
-\setlength{\tabcolsep}{6pt}\renewcommand{\arraystretch}{2.4}
-\begin{tabularx}{\linewidth}{|>{\centering\arraybackslash}p{52mm}|c|c|c|c|>{\centering\arraybackslash}X|}
-  \hline
+\setlength{\tabcolsep}{6pt}\renewcommand{\arraystretch}{2.4}\LLgrilleassistance
+\renewcommand{\LLsepfactor}{2.4}\setlength{\LLseplarg}{\linewidth}
+\LLtableencadree{\LLcolcrew}{\LLlargcrew}{%
+\begin{tabularx}{\linewidth}{|>{\centering\arraybackslash}p{56mm}|>{\centering\arraybackslash}p{16mm}|>{\centering\arraybackslash}p{26mm}|>{\centering\arraybackslash}p{26mm}|>{\centering\arraybackslash}p{26mm}|>{\centering\arraybackslash}X|}
+  \LLfilet{6}
   \LLheaderrow
   \LLthead{Assistance} & \LLthead{km} & \LLthead{au plus tôt} & \LLthead{prévu} & \LLthead{au plus tard} & \LLthead{À prévoir} \\
-  \hline
+  \LLfilet{6}
 <% for c in crew_rows %>  \LLassist
-  << c.name >> & \LLnum{<< c.km >>} & \LLnum{<< c.earliest >>} & \LLprevu{\LLnum{<< c.central >>}} & \LLnum{<< c.latest >>} & <% if c.note %><< c.note >><% else %>\LLcasevide<% endif %> \\
-  \hline
+  << c.name >> & \LLnum{<< c.km >>} & \LLnum{<< c.earliest >>} & \LLprevu{\LLnum{<< c.central >>}} & \LLnum{<< c.latest >>} & \LLsepfin{<% if c.note %><< c.note >><% else %>\LLcasevide<% endif %>} \\
+  \LLfilet{6}
 <% endfor %><% if finish_row %>  << finish_row.name >> & \LLnum{<< finish_row.km >>} & \LLnum{<< finish_row.earliest >>} & \LLprevu{\LLnum{<< finish_row.central >>}} & \LLnum{<< finish_row.latest >>} & \LLcasevide \\
-  \hline
-<% endif %>\end{tabularx}\par}
+  \LLfilet{6}
+<% endif %>\end{tabularx}}\par}
+\LLlegende{\textcolor{LLAccentInk}{Colonne encadrée} : l'heure prévue \textperiodcentered{}
+« au plus tôt » et « au plus tard » sont les bornes de sécurité étalées le long du parcours,
+<< safety_word >> y tient, arrivée comprise.}
 % LL:END feuille-verso
 
 \end{document}

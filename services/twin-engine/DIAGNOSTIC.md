@@ -2599,7 +2599,44 @@ maintenant en français (``_blocking_sentence``) plutôt qu'en dump de suffisanc
 aveugle, tes ultras passés sortent à 7,4 % d'erreur ; sous 5 %, on engage la confiance pleine. » Le
 badge passe sur sa propre ligne, la phrase dessous.
 
-**Reste ouvert.** Personnaliser le tableau (arrêts, nutrition, notes d'assistance) depuis la page de
-l'annexe : aujourd'hui ces valeurs se déclarent dans la spec JSON et se recalculent en ligne de
-commande. Une page qui les édite demande un service (écriture, persistance, authentification) — un
-chantier à part.
+**Troisième passe (2026-09-17, seconde relecture de Valentin).** L'étiquette de confiance ne porte
+plus que son mot — « pleine », « réduite », « insuffisante » — sous le titre *Confiance* qui la
+précède, en couverture comme page 2. La couverture et les en-têtes reprennent la mise en page de
+l'ancienne version : bandeau bleu-vert pleine largeur, liseré ocre, la marque à gauche et le nom de
+la course à droite ; en couverture, la bande verticale bleu-vert et son liseré ocre tiennent le bord
+gauche.
+
+Sur la feuille, chaque case porte son filet et toutes ont la même largeur (colonnes à dimension fixe,
+`\LLfilet` sur `hhline`). La colonne « nuit » disparaît : un point suit le numéro du ravitaillement.
+La colonne de l'heure prévue n'est plus teintée mais **encadrée en pointillé ocre** (`\LLtableencadree` :
+le tableau est mesuré dans un `savebox`, le cadre tracé en TikZ à l'abscisse calculée depuis les
+largeurs de colonnes, leurs gouttières et leurs filets) et une légende dit ce que le cadre, la ligne
+teintée, le point de nuit et le gras signifient.
+
+La page 4 débordait sur une cinquième : l'encadré des limites se coupait au filet et son bloc
+« Ce que le plan suppose » partait seul. Les deux figures de la preuve ont maigri (record 7,4 × 3,0 ;
+validation 4,6 × 3,7) — le compte de pages est testé. L'adresse de l'annexe s'imprime maintenant en
+clair **sous** le QR (« Sans téléphone : … ») : on la tape au clavier quand on n'a pas de téléphone.
+
+La référence du rapport se lit : `LL-NICE26-VAL-A3F9C1` — course, année, athlète, puis six caractères
+tirés au hasard qui restent le secret de l'annexe (`cli.build_report_ref`).
+
+**Le formulaire de l'annexe.** La page `/services/twin/annexe/<référence>` édite désormais le tableau
+de marche : l'arrêt et la recommandation de chaque portion, les débits de nutrition, ce que
+l'assistance prépare. Elle est prérendue et n'écrit rien : elle rend le tableau à imprimer (le bouton
+n'imprime que lui) et un bloc `{reglages, crew, nutrition}` à recoller dans la spec de course. Les
+listes sortent entières — recoller un fragment partiel effacerait les points qu'on n'a pas touchés.
+
+Côté moteur, `RaceSpec.reglages` porte ces valeurs : un `stop_min` remplace l'arrêt de la politique
+du plan, une `consigne` remplace celle que le moteur aurait déduite. Côté navigateur,
+`apps/site/lib/twinTableauMarche.js` rejoue la règle d'arrêts de `build_pacing` — `spec` (les arrêts
+s'ajoutent), `personal` (budget des courses passées, arrêt écrit retenu, reste réparti au prorata),
+`carved` (l'horloge est le temps prédit, un arrêt plus long c'est autant de moins en mouvement) — et
+dit en une phrase ce que le choix coûte. Vérifié de bout en bout sur le scénario doré : +20 min
+d'arrêt à la Crête donnent les mêmes sept heures de passage à la minute dans le formulaire et dans le
+plan recalculé par le moteur. Dix tests (`apps/site/lib/twinTableauMarche.test.js`) tiennent la règle,
+dont l'identité : sans rien changer, le formulaire redonne les heures du rapport.
+
+**Reste ouvert.** Le formulaire ne persiste rien : il rend un bloc à recoller et le rendu se relance
+en ligne de commande. Une annexe qui écrit demanderait un service (persistance, authentification,
+re-rendu) — un chantier à part.

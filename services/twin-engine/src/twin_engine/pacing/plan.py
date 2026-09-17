@@ -219,7 +219,7 @@ def build_pacing(
     g = 1.0 + delta * (0.5 - mid) * 2.0
 
     # --- politique d'arrêts : base + supplément aux bases majeures, rien à l'arrivée ---
-    stops_min = stops_policy_min(n, race.major_base_indices, cfg)
+    stops_min = stops_policy_min(n, race.major_base_indices, cfg, race.reglages)
 
     # temps total à répartir : la prédiction, ou la CIBLE de l'athlète (mode objectif)
     on_target = anchor_hours is not None
@@ -237,8 +237,18 @@ def build_pacing(
         else:
             t_move = float(moving)
         total_min = max(tpred - t_move, 0.0) * 60.0
-        share = stops_min.sum()
-        stops_min = (stops_min / share * total_min if share > 0 else np.zeros(n))
+        # un arrêt IMPOSÉ par l'athlète ne se redistribue pas : on le retient, et le reste
+        # du budget se répartit au prorata sur les autres points de passage.
+        fixed = np.zeros(n, dtype=bool)
+        for r in race.reglages:
+            k = r.aid_index - 1
+            if r.stop_min is not None and 0 <= k < n:
+                fixed[k] = True
+        reste = max(total_min - float(stops_min[fixed].sum()), 0.0)
+        share = float(stops_min[~fixed].sum())
+        libre = (stops_min[~fixed] / share * reste if share > 0 else np.zeros(int((~fixed).sum())))
+        stops_min = stops_min.copy()
+        stops_min[~fixed] = libre
     else:
         t_move = max(tpred - float(stops_min.sum() / 60.0), 0.5 * tpred)  # garde-fou si arrêts > temps réparti
     t_stops_h = float(stops_min.sum() / 60.0)

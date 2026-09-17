@@ -121,6 +121,36 @@ def _build_parser() -> argparse.ArgumentParser:
     return p
 
 
+_SLUG_ND = str.maketrans("ÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝàáâãäåçèéêëìíîïñòóôõöùúûüý",
+                        "AAAAAACEEEEIIIINOOOOOUUUUYaaaaaaceeeeiiiinooooouuuuy")
+
+
+def _slug(text: str, n: int) -> str:
+    """Le PREMIER mot d'un nom, en capitales sans accent, tronqué à ``n`` caractères.
+
+    Le premier mot suffit à reconnaître une course (« Nice Côte d'Azur by UTMB » → NICE) et
+    évite les collages illisibles qu'une troncature sur la chaîne entière produirait.
+    """
+    mots = [m for m in str(text).translate(_SLUG_ND).split() if any(c.isalnum() for c in m)]
+    keep = "".join(c for c in (mots[0] if mots else "") if c.isalnum())
+    return keep.upper()[:n]
+
+
+def build_report_ref(race, athlete: str) -> str:
+    """Référence d'un rapport : ``LL-NICE26-VAL-A3F9C1``.
+
+    Les trois premières parts se lisent (course, année de la course, athlète) — c'est ce qui
+    permet de retrouver un rapport dans un dossier ou au registre. La dernière est tirée au
+    hasard : c'est elle, et elle seule, qui rend l'adresse de l'annexe non devinable.
+    """
+    from secrets import token_hex
+
+    course = _slug(race.name, 6) or "COURSE"
+    annee = f"{race.start_time.year % 100:02d}" if race.start_time else ""
+    qui = _slug(athlete, 3) or "ATH"
+    return f"LL-{course}{annee}-{qui}-{token_hex(3).upper()}"
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     cfg = load_config()
@@ -186,10 +216,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     from datetime import datetime
-    from secrets import token_hex
 
-    # la référence EST le secret de l'annexe en ligne : tirée au hasard faute de --ref
-    report_ref = args.ref or f"LL-TWIN-{token_hex(4).upper()}"
+    # la référence EST le secret de l'annexe en ligne : sa dernière part est tirée au hasard.
+    # Le reste se lit (course, année, athlète) pour retrouver un rapport dans un dossier.
+    report_ref = args.ref or build_report_ref(race, args.athlete)
 
     result = run_full(
         training_path=args.training, course_gpx=course_gpx, race=race, cfg=cfg,

@@ -140,3 +140,23 @@ def test_cli_set_overrides_config_and_rejects_unknown_key(tmp_path, monkeypatch,
     rc = cli_main(["preview", "--training", str(FIX / "sample.gpx"), "--course", str(tmp_path / "c.gpx"),
                    "--set", "calibration.nope=1"])
     assert rc == 2 and "clé inconnue" in capsys.readouterr().err
+
+
+def test_report_ref_reads_like_the_race_and_keeps_a_secret():
+    """La référence d'un rapport se lit (course, année, athlète) mais garde une part tirée au
+    hasard : c'est elle qui rend l'adresse de l'annexe non devinable."""
+    import re
+    from datetime import datetime, timedelta, timezone
+
+    from twin_engine.course import RaceSpec
+    from twin_engine.cli import build_report_ref
+
+    race = RaceSpec(name="Nice Côte d'Azur by UTMB",
+                    start_time=datetime(2026, 9, 25, 5, 0, tzinfo=timezone(timedelta(hours=2))))
+    ref = build_report_ref(race, "Valentin Ferreira")
+    assert re.fullmatch(r"LL-NICE26-VAL-[0-9A-F]{6}", ref), ref
+    assert build_report_ref(race, "Valentin Ferreira") != ref     # le secret change à chaque fois
+
+    # sans date ni nom exploitable, la référence reste valide comme adresse
+    nue = build_report_ref(RaceSpec(name="  "), "")
+    assert re.fullmatch(r"LL-COURSE-ATH-[0-9A-F]{6}", nue), nue

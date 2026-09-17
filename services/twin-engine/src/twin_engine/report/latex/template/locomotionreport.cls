@@ -106,11 +106,12 @@
 \RequirePackage{graphicx}
 \RequirePackage{geometry}
 \RequirePackage{tikz}
-\usetikzlibrary{calc,shadows.blur,patterns,arrows.meta}
+\usetikzlibrary{calc,shadows.blur,patterns,arrows.meta,tikzmark}
 \RequirePackage[most]{tcolorbox}
 \tcbuselibrary{skins,breakable}
 \RequirePackage{array}
 \RequirePackage{tabularx}
+\RequirePackage{hhline}
 \RequirePackage{booktabs}
 \RequirePackage{caption}
 \RequirePackage{enumitem}
@@ -210,7 +211,8 @@
         \IfFileExists{#1.jpeg}{\def#2{#1.jpeg}}{%
           \ClassWarning{locomotionreport}{Marque introuvable : #1.(pdf|png|jpg|jpeg)}}}}}%
 }
-\AtBeginDocument{\LLresolvelogo{\LLMarkPath}{\LLMarkFile}}
+\AtBeginDocument{\LLresolvelogo{\LLMarkPath}{\LLMarkFile}%
+  \LLresolvelogo{\LLMarkWhitePath}{\LLMarkWhiteFile}}
 % interlettrage du mot-symbole (0,22 em), distinct de celui des étiquettes (0,14 em)
 \ifPDFTeX
   \newcommand{\LLwordtracked}[1]{#1}
@@ -218,7 +220,19 @@
   \newcommand{\LLwordtracked}[1]{{\addfontfeature{LetterSpace=22.0}#1}}
 \fi
 % \LLmark{hauteur} : le signe seul.  \LLbrand{hauteur}{taille du mot} : signe + mot.
+\newcommand{\LLMarkWhitePath}{assets/logo-mark-512-blanc}
+\newcommand{\LLMarkWhiteFile}{}
 \newcommand{\LLmark}[1]{\ifx\LLMarkFile\@empty\else\includegraphics[height=#1]{\LLMarkFile}\fi}
+\newcommand{\LLmarkwhite}[1]{%
+  \ifx\LLMarkWhiteFile\@empty\else\includegraphics[height=#1]{\LLMarkWhiteFile}\fi}
+% \LLbrandwhite : la marque sur un fond coloré — le signe clair, le mot en blanc.
+\newcommand{\LLbrandwhite}[2]{%
+  \begingroup
+  \setlength{\fboxsep}{0pt}%
+  \raisebox{-0.30\height}{\LLmarkwhite{#1}}\hspace{0.62em}%
+  {\LLsemiboldfont\fontsize{#2}{#2}\selectfont\color{LLBg}%
+    \LLwordtracked{\MakeUppercase{Locomotion Lab}}}%
+  \endgroup}
 \newcommand{\LLbrand}[2]{%
   \begingroup
   \setlength{\fboxsep}{0pt}%
@@ -252,7 +266,14 @@
 % =============================================================================
 % 7. Dimensions de la charte
 % =============================================================================
-\newcommand{\LLHeadMarkHeight}{8.4mm}   % le signe en en-tête (le mot fait 10,5 pt)
+\newcommand{\LLHeadMarkHeight}{7.4mm}   % le signe en en-tête (le mot fait 10,5 pt)
+\newlength{\LLbandH}     \setlength{\LLbandH}{13.8mm}   % hauteur du bandeau bleu-vert
+\newlength{\LLgoldH}     \setlength{\LLgoldH}{1.2mm}    % filet ocre sous le bandeau
+\newlength{\LLbandinset} \setlength{\LLbandinset}{14mm} % marge intérieure du bandeau
+\newlength{\LLcoverbar}  \setlength{\LLcoverbar}{16.2mm}% barre latérale de la couverture
+\newlength{\LLcovergold} \setlength{\LLcovergold}{1.5mm}% son liseré ocre
+\newlength{\LLcoverx}    \setlength{\LLcoverx}{33mm}    % marge du contenu de la couverture
+\newlength{\LLcoverw}    \setlength{\LLcoverw}{153mm}   % largeur du bloc de contenu
 
 % =============================================================================
 % 8. En-tête : la marque à gauche, le document à droite, un filet fin dessous
@@ -261,20 +282,26 @@
 % aussi sur le papier, et laisse la couleur aux chiffres plutôt qu'au décor.
 \newcommand{\LL@headright}{\leftmark}
 \newcommand{\LLheadright}[1]{\renewcommand{\LL@headright}{#1}}
+% Bandeau bleu-vert à fleur du bord, filet ocre dessous, la marque en clair à gauche et le
+% document à droite — la composition du site, sur le papier.
 \newcommand{\LLheaderband}{%
-  \begin{minipage}{\textwidth}%
-    \noindent\hbox to \textwidth{%
-      \LLbrand{\LLHeadMarkHeight}{10.5}%
-      \hfil
-      \vbox{\hbox to 0pt{\hss\LL@headright}}%
-    }\par
-    \vspace{3pt}{\color{LLHairline}\hrule height 0.4pt}%
-  \end{minipage}%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[LLPrimary] (current page.north west)
+      rectangle ([yshift=-\LLbandH]current page.north east);
+    \fill[LLAccent] ([yshift=-\LLbandH]current page.north west)
+      rectangle ([yshift=-\dimexpr\LLbandH+\LLgoldH\relax]current page.north east);
+    \node[anchor=west, inner sep=0]
+      at ([xshift=\LLbandinset, yshift=-\dimexpr\LLbandH/2\relax]current page.north west)
+      {\LLbrandwhite{\LLHeadMarkHeight}{10.5}};
+    \node[anchor=east, inner sep=0]
+      at ([xshift=-\LLbandinset, yshift=-\dimexpr\LLbandH/2\relax]current page.north east)
+      {\LL@headright};
+  \end{tikzpicture}%
 }
 % Titre courant : le nom de la course, en terracotta. Rien d'autre — le reste est sur la
 % couverture, et une en-tête chargée se relit à chaque page pour rien.
 \newcommand{\LLheaddoc}[1]{%
-  \LLheadright{{\LLsemiboldfont\fontsize{11}{13}\selectfont\color{LLDeep}#1}}%
+  \LLheadright{{\LLsemiboldfont\fontsize{11}{13}\selectfont\color{LLBg}#1}}%
 }
 \renewcommand{\sectionmark}[1]{\markboth{\thesection~\textperiodcentered~#1}{}}
 \newcommand{\LLrunninghead}[1]{\markboth{#1}{}}
@@ -461,36 +488,92 @@
   \arrayrulecolor{LLTableRule}%
   \setlength{\arrayrulewidth}{0.4pt}%
   \LLtabular}
+% \LLfilet{n colonnes} : le filet horizontal d'un tableau à n colonnes. hhline et non \hline,
+% parce qu'un \rowcolor recouvre le filet de la ligne du dessus — entre deux lignes teintées,
+% la séparation disparaissait.
+\newcommand{\LLfilet}[1]{\noalign{}\hhline{*{#1}{|-}|}}
 % \LLassist : la ligne d'un ravitaillement où l'assistance est autorisée.
+%
+% colortbl peint le fond d'une ligne PAR-DESSUS le filet qui la surmonte : entre deux lignes
+% teintées qui se suivent, la séparation disparaissait. On la redessine donc comme du contenu,
+% posé APRÈS les fonds : dans la DERNIÈRE cellule de la ligne, la seule qu'aucun fond ne
+% recouvrira ensuite.
+% \LLsepfactor = l'interligne du tableau (\arraystretch) ; \LLseplarg = sa largeur.
+\newcommand{\LLsepfactor}{2.0}
+\newlength{\LLseplarg}
+% \LLsepfin{contenu de la cellule} : la cellule est composée dans une boîte de la largeur de
+% la colonne (avec sa réglette, sans quoi une cellule vide donne une boîte de largeur nulle),
+% pour que le filet parte du bord gauche du tableau quelle que soit la longueur du texte.
+\newcommand{\LLsepfin}[1]{%
+  \parbox[t]{\linewidth}{\centering\strut #1}%
+  \rlap{\hspace*{-\dimexpr\LLseplarg-\tabcolsep-\arrayrulewidth\relax}%
+    \raisebox{\dimexpr\LLsepfactor\ht\strutbox\relax}[0pt][0pt]{%
+      \textcolor{LLTableRule}{\rule{\LLseplarg}{\arrayrulewidth}}}}}
 \newcommand{\LLassist}{\rowcolor{LLAssistRow}}
-% \LLprevu{valeur} : la colonne de l'heure prévue — en gras, sans trame.
+% \LLprevu{valeur} : la colonne de l'heure prévue — en gras, sans trame : elle est repérée
+% par un cadre pointillé ocre, pas par un aplat de couleur de plus.
 \newcommand{\LLprevu}[1]{{\LLsemiboldfont #1}}
+% \LLtableencadree{x du bord gauche}{largeur}{tableau} : pose le tableau dans une boîte, puis
+% trace le cadre pointillé ocre d'une de ses colonnes. La boîte donne sa hauteur exacte, et
+% l'abscisse se calcule sur les largeurs de la grille — d'où des colonnes à largeur fixe.
+\newsavebox{\LL@tablebox}
+\newcommand{\LLtableencadree}[3]{%
+  \sbox{\LL@tablebox}{#3}%
+  \noindent\begin{tikzpicture}
+    \node[inner sep=0, outer sep=0, anchor=north west] (LL@t) at (0,0) {\usebox{\LL@tablebox}};
+    \draw[LLAccentInk, dash pattern=on 2.2pt off 2.2pt, line width=0.9pt, rounded corners=1pt]
+      ([xshift=#1, yshift=1.5pt]LL@t.north west)
+      rectangle ([xshift=\dimexpr#1+#2\relax, yshift=-1.5pt]LL@t.south west);
+  \end{tikzpicture}\par}
+
+% \LLnuit : le point qui dit « il fait nuit sur ce segment », posé à côté du numéro.
+\newcommand{\LLnuit}{\,\textcolor{LLSlate}{$\bullet$}}
+% \LLlegende{texte} : la ligne qui dit ce que veulent dire les repères du tableau.
+\newcommand{\LLlegende}[1]{%
+  \par\vspace{5pt}{\fontsize{8.4}{11}\selectfont\color{LLSoft}#1\par}}
 % \LLfort{valeur} : un chiffre qui doit sauter aux yeux (D+ et D− marqués).
 \newcommand{\LLfort}[1]{{\LLsemiboldfont #1}}
 % \LLcasevide : la case qu'on remplit au stylo, un simple pointillé.
 \newcommand{\LLcaselargeur}{16mm}
 \newcommand{\LLcasevide}{\textcolor{LLFillRule}{\makebox[\LLcaselargeur]{\dotfill}}}
-% \LLnuit : le point qui dit « il fait nuit sur ce segment ».
-\newcommand{\LLnuit}{\textcolor{LLSlate}{$\bullet$}}
 
-% \LLcouverture{surtitre}{titre}{méta}{bloc du bas} : la première page. La marque en grand,
-% beaucoup d'air, le titre bas, et ce que l'athlète doit retenir avant d'ouvrir. La classe ne
-% décide d'aucun texte : elle pose.
+% \LLcouverture{surtitre}{titre}{méta}{bloc du bas} : la première page. Barre latérale
+% bleu-vert et son liseré ocre sur toute la hauteur, la marque en haut, le titre, et ce que
+% l'athlète doit retenir avant d'ouvrir. La classe ne décide d'aucun texte : elle pose.
 \newcommand{\LLcouverture}[4]{%
+  \begingroup
   \thispagestyle{empty}%
-  \null\vspace{6mm}
-  {\LLbrand{20mm}{17}}\par
-  \vspace{34mm}
-  {\LLmonofont\fontsize{10}{13}\selectfont\color{LLPrimaryDark}\LLtracked{\MakeUppercase{#1}}\par}
-  \vspace{5mm}
-  {\LLextraboldfont\fontsize{38}{44}\selectfont\color{LLDeep}#2\par}
-  \vspace{5mm}
-  {\color{LLAccent}\rule{26mm}{1.6mm}}\par
-  \vspace{6mm}
-  {\fontsize{11.5}{16}\selectfont\color{LLSoft}#3\par}
-  \vfill
-  #4
-  \clearpage}
+  \null
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[LLPrimary] (current page.north west)
+      rectangle ([xshift=\LLcoverbar]current page.south west);
+    \fill[LLAccent] ([xshift=\LLcoverbar]current page.north west)
+      rectangle ([xshift=\dimexpr\LLcoverbar+\LLcovergold\relax]current page.south west);
+    \node[anchor=north west, inner sep=0]
+      at ([xshift=\LLcoverx, yshift=-24mm]current page.north west)
+      {\LLbrand{17mm}{15}};
+    \node[anchor=north west, inner sep=0]
+      at ([xshift=\LLcoverx, yshift=-96mm]current page.north west)
+      {\begin{minipage}[t]{\LLcoverw}\raggedright
+        {\LLmonofont\fontsize{10}{13}\selectfont\color{LLPrimaryDark}%
+          \LLtracked{\MakeUppercase{#1}}\par}
+        \vspace{5mm}
+        {\LLextraboldfont\fontsize{37}{41}\selectfont\color{LLDeep}#2\par}
+        \vspace{5mm}
+        {\color{LLAccent}\rule{33mm}{1.5mm}}\par
+        \vspace{6mm}
+        {\fontsize{11.5}{16}\selectfont\color{LLSoft}#3\par}
+      \end{minipage}};
+    \node[anchor=south west, inner sep=0]
+      at ([xshift=\LLcoverx, yshift=26mm]current page.south west)
+      {\begin{minipage}[t]{\LLcoverw}\raggedright
+        {\color{LLHairline}\rule{\LLcoverw}{0.4pt}}\par
+        \vspace{7mm}
+        #4
+      \end{minipage}};
+  \end{tikzpicture}%
+  \clearpage
+  \endgroup}
 
 % \LLhero{texte} : la phrase de prédiction de la page 1.
 \newcommand{\LLhero}[1]{{\fontsize{18}{26}\selectfont\color{LLText}#1\par}}

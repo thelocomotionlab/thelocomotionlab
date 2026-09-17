@@ -237,7 +237,7 @@ def generate_figures(
         _fig_profil(course, fig.subplots(), title=False)
         _save(fig, "profil")
 
-        fig = _new((7.4, 3.5))
+        fig = _new((7.4, 3.0))
         _fig_record(twin, calibration, fig.subplots())
         _save(fig, "record")
 
@@ -245,7 +245,7 @@ def generate_figures(
         _fig_cumul(plan, prediction, race, fig.subplots(), interval_label=interval_label)
         _save(fig, "cumul")
 
-        fig = _new((4.6, 4.2))
+        fig = _new((4.6, 3.7))
         if _fig_validation(prediction, fig.subplots(), band_pct=band_pct):
             _save(fig, "validation")
 

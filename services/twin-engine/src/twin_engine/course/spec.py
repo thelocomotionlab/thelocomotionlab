@@ -45,6 +45,20 @@ class Nutrition:
 
 
 @dataclass(frozen=True)
+class Reglage:
+    """Ce que l'athlète impose à un ravitaillement, depuis le formulaire de l'annexe.
+
+    ``aid_index`` indexe ``aid_names``. ``stop_min`` remplace l'arrêt calculé par la
+    politique du plan ; ``consigne`` remplace la recommandation déduite des chiffres du
+    segment. Les deux sont facultatifs : ce qui n'est pas déclaré reste calculé.
+    """
+
+    aid_index: int
+    stop_min: float | None = None
+    consigne: str = ""
+
+
+@dataclass(frozen=True)
 class Phase:
     """Une partie de la course dans la langue de l'athlète. ``from_aid_index`` indexe
     ``aid_names`` : la partie commence à ce point de passage (0 = le départ)."""
@@ -105,6 +119,7 @@ class RaceSpec:
     # points d'assistance du RÈGLEMENT (rapport v3) : ils priment sur crew_access_indices,
     # qui reste lu pour les specs écrites avant
     crew: tuple[CrewAccess, ...] = ()
+    reglages: tuple[Reglage, ...] = ()
     nutrition: Nutrition = Nutrition()
     # parties de course nommées par l'athlète ; vide → le moteur coupe en deux à la moitié du
     # temps prévu (report/context.py)
@@ -160,6 +175,12 @@ class RaceSpec:
             tz_offset_h=float(d.get("tz_offset_h", 0.0)),
             major_base_indices=tuple(int(i) for i in d.get("major_base_indices", ())),
             crew_access_indices=tuple(int(i) for i in d.get("crew_access_indices", ())),
+            reglages=tuple(
+                Reglage(aid_index=int(r["aid_index"]),
+                        stop_min=_optional_float(r.get("stop_min")),
+                        consigne=str(r.get("consigne") or ""))
+                for r in d.get("reglages", ()) or ()
+            ),
             crew=tuple(
                 CrewAccess(aid_index=int(c["aid_index"]), note=str(c.get("note") or ""))
                 for c in d.get("crew", ())
@@ -193,19 +214,27 @@ def _optional_float(value) -> float | None:
     return float(value)
 
 
-def stops_policy_min(n_segments: int, major_base_indices, cfg) -> np.ndarray:
+def stops_policy_min(n_segments: int, major_base_indices, cfg, reglages=()) -> np.ndarray:
     """Politique d'arrêts du plan, en minutes par segment : ``default_stop_min`` à chaque
     point de passage, ``major_base_extra_min`` de plus aux bases majeures, rien à l'arrivée.
     Partagée par le plan (qui la retranche du temps prédit en modèle ``carved``) et par la
-    prédiction (arrêts de la cible en modèle ``spec``)."""
+    prédiction (arrêts de la cible en modèle ``spec``).
+
+    Un ``Reglage`` qui porte un ``stop_min`` remplace la valeur calculée à ce point : c'est
+    l'athlète qui décide du temps qu'il compte y passer, pas la politique par défaut.
+    """
     stops_min = np.full(int(n_segments), float(cfg.pacing.default_stop_min))
     for k in major_base_indices:
         if 0 <= k < n_segments:
             stops_min[k] += float(cfg.pacing.major_base_extra_min)
     if n_segments:
         stops_min[-1] = 0.0
+    for r in reglages or ():
+        k = r.aid_index - 1          # le segment k finit au ravitaillement k+1
+        if r.stop_min is not None and 0 <= k < n_segments:
+            stops_min[k] = max(float(r.stop_min), 0.0)
     return stops_min
 
 
-__all__ = ["CrewAccess", "Nutrition", "Phase", "RaceSpec", "placeholder_aid_names",
-           "stops_policy_min"]
+__all__ = ["CrewAccess", "Nutrition", "Phase", "RaceSpec", "Reglage",
+           "placeholder_aid_names", "stops_policy_min"]

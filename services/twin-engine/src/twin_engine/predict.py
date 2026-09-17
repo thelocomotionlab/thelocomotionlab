@@ -851,7 +851,8 @@ def predict_race(course, twin: Twin, calibration: UltraCalibration, cfg: Config,
     spec_stops_h = None
     if calibration.stops_model == "spec":
         major = race.major_base_indices if race is not None else ()
-        spec_stops_h = float(stops_policy_min(len(course.segments), major, cfg).sum() / 60.0)
+        spec_stops_h = float(stops_policy_min(len(course.segments), major, cfg,
+                                              getattr(race, "reglages", ())).sum() / 60.0)
     return predict_finish(course.deq_km, course.dplus_per_km, twin, calibration, cfg,
                           night_fn=night_fn, env_factor=env_f, env_detail=env_detail,
                           spec_stops_h=spec_stops_h)

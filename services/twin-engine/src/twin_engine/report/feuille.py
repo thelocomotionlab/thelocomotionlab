@@ -136,17 +136,23 @@ def _candidates(seg, *, note: str, is_longest: bool, cfg) -> list[str]:
 def consignes(plan, race, cfg) -> list[str]:
     """Une consigne par segment, déduite de ses chiffres. Deux segments ne portent jamais la
     même ; quand rien de spécifique ne sort, la case reste vide — mieux vaut du blanc que du
-    remplissage."""
+    remplissage. Une consigne ÉCRITE par l'athlète (``RaceSpec.reglages``) remplace celle que
+    le moteur aurait déduite : c'est sa course."""
     segs = plan.segments
     if not segs:
         return []
     notes = contact_notes(race)
+    ecrites = {r.aid_index: r.consigne.strip()
+               for r in race.reglages if r.consigne and r.consigne.strip()}
     longest = max(range(len(segs)), key=lambda i: segs[i].t_move_min)
     limit = cfg.report.consigne_max_chars
 
-    used: set[str] = set()
+    used: set[str] = set(ecrites.values())
     out: list[str] = []
     for i, seg in enumerate(segs):
+        if seg.index in ecrites:
+            out.append(ecrites[seg.index])
+            continue
         cands = _candidates(seg, note=notes.get(seg.index, ""),
                             is_longest=(i == longest), cfg=cfg)
         pick = next((c for c in cands if len(c) <= limit and c not in used), "")
