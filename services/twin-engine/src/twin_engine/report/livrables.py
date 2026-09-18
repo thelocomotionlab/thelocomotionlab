@@ -17,6 +17,7 @@ from pathlib import Path
 
 import numpy as np
 
+from ..course.montees import montees, pentes
 from ._format import detex, fr, hm
 from .feuille import contact_points, safety_ratios
 
@@ -293,6 +294,10 @@ def annex_payload(*, ctx: dict, course, twin, calibration, prediction, plan, rac
             "technicity_pct": float(getattr(course, "technicity_pct", 0.0) or 0.0),
             "start_time": race.start_time.isoformat() if race.start_time else None,
             "n_segments": len(course.segments),
+            # ce que demande le parcours, mesuré sur le profil : pentes et montées classées
+            "pentes": {k: round(v, 2) for k, v in pentes(course).items()},
+            "montees": [{k: (round(v, 2) if isinstance(v, float) else v)
+                         for k, v in m.to_dict().items()} for m in montees(course)],
             "segments": [{"index": s.index, "to": s.to, "km": round(s.off1, 1),
                           "dist_km": round(s.off_len, 1), "dplus_m": round(s.dplus_m),
                           "dminus_m": round(s.dminus_m), "deq_km": round(s.deq_km, 1),

@@ -638,6 +638,25 @@ republié à côté de la politique du plan.
     autorisée, et `reglages` porte ce qui avait déjà été écrit : n'émettre que les lignes modifiées
     aurait effacé le reste à la première recollade.
 
+## Choix faits à la place de Valentin (rapport v3, quatrième passe)
+
+77. **Le verdict de suffisance survit à la disparition de l'indice.** Ce que l'athlète lit n'est
+    plus une note mais les erreurs mesurées ; la garde continue de refuser un rapport non vendable,
+    et le mot (« pleine », « réduite », « insuffisante ») reste dans l'annexe et au registre, comme
+    étiquette de dossier.
+78. **Les bornes de sécurité quittent le rapport pour la feuille.** La tuile « Pour l'assistance »
+    partait ; les bornes ne pouvaient pas disparaître avec elle, c'est ce que l'assistance attend.
+    Elles vivent au verso de la feuille, dans l'ICS et le GPX — là où elles servent.
+79. **Une montée continue est celle qu'une descente de moins de 40 m ne coupe pas**, et on ne
+    raconte pas une montée sous 250 m de D+. Deux réglages, pas des vérités : ils sont dans
+    `course/montees.py`, nommés, et la légende du rapport les lit au lieu de les réécrire.
+80. **Le kilomètre vertical se classe au demi le plus proche.** 740 m est un demi-KV, 760 m un KV :
+    une montée porte le nom de ce qu'elle coûte à peu près, pas une décimale qui n'a pas de sens
+    sur un profil lissé.
+81. **La courbe du cumul suit la prédiction.** Elle était sur la page du plan ; elle montre la
+    prédiction et sa bande, elle est donc passée sur la page des prédictions, qui sans elle était
+    vide aux deux tiers.
+
 ## Questions ouvertes
 
 - **Chantier suivant : trails courts et route.** Valentin a des demandes pour du trail court et

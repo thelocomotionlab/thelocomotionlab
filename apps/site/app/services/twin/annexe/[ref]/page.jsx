@@ -147,7 +147,7 @@ export default async function AnnexePage({ params }) {
             {c.name}
           </h1>
           <p className={`m-0 mt-3 max-w-[46ch] text-xl font-light leading-snug text-brand-deep-dark ${LECTURE}`}>
-            {a.athlete} · {duree(p.central_h)} · confiance {a.verdict?.confiance}
+            {a.athlete} · {duree(p.central_h)}
           </p>
           <div className="mt-5 h-[3px] w-16 rounded-full bg-brand-accent" aria-hidden="true" />
           <p className={`m-0 mt-5 max-w-[40em] text-brand-soft ${LECTURE}`}>
@@ -157,11 +157,12 @@ export default async function AnnexePage({ params }) {
           </p>
         </header>
 
-        <Section titre="Le verdict">
-          <p className={`m-0 max-w-[40em] text-brand-ink ${LECTURE}`}>
-            Confiance {a.verdict?.confiance}
-            {a.verdict?.sellable === false ? " — ce rapport n’est pas vendu en l’état." : "."}
-          </p>
+        <Section titre="La suffisance des données">
+          {a.verdict?.sellable === false ? (
+            <p className={`m-0 max-w-[40em] text-brand-ink ${LECTURE}`}>
+              Ce rapport n’est pas vendu en l’état.
+            </p>
+          ) : null}
           <ul className={`mt-3 max-w-[40em] list-disc pl-5 text-brand-soft ${LECTURE}`}>
             {(a.verdict?.reasons ?? []).map((r) => (
               <li key={r}>{r}</li>
@@ -183,6 +184,39 @@ export default async function AnnexePage({ params }) {
               {n(a.verdict.domain.v_ref_kmh, 1, "km/h")}, le seuil étant de{" "}
               {n(a.verdict.domain.threshold_hours, 1, "h")}.
             </p>
+          ) : null}
+        </Section>
+
+        <Section titre="Le parcours">
+          <Chiffres
+            lignes={[
+              ["Distance", n(c.length_km, 1, "km")],
+              ["Dénivelé", `${n(c.dplus_m, 0, "m")} D+ / ${n(c.dminus_m, 0, "m")} D−`],
+              ["Distance équivalente à plat", n(c.deq_km, 1, "km")],
+              ["Pente moyenne en montée", n(c.pentes?.up_pct, 1, "%")],
+              ["Pente moyenne en descente", n(Math.abs(c.pentes?.down_pct), 1, "%")],
+              [
+                "Part de la distance",
+                c.pentes
+                  ? `${n(c.pentes.part_up_pct, 0, "%")} en montée, ${n(c.pentes.part_down_pct, 0, "%")} en descente`
+                  : null,
+              ],
+            ]}
+          />
+          {(c.montees ?? []).length > 0 ? (
+            <Tableau
+              colonnes={["#", "du km", "au km", "longueur", "D+", "pente", "sommet", "classe"]}
+              lignes={c.montees.map((m) => [
+                m.index,
+                n(m.from_km, 0),
+                n(m.to_km, 0),
+                n(m.length_km, 1, "km"),
+                n(m.dplus_m, 0, "m"),
+                n(m.grade_pct, 1, "%"),
+                n(m.alt_top_m, 0, "m"),
+                m.label,
+              ])}
+            />
           ) : null}
         </Section>
 

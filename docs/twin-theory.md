@@ -378,21 +378,30 @@ rapport full** (dépend du nouveau profil horaire).
 Rendu **LaTeX** (classe `locomotionreport`, **Ubuntu Sans** en instances statiques, XeLaTeX + biber),
 figures matplotlib aux couleurs de la charte (`packages/ui/src/styles/theme.css`, source unique :
 `report/charte.py`). La marque est le signe circulaire suivi du mot-symbole composé en texte ; en
-en-tête de page, seul le nom de la course l'accompagne. **Quatre pages, et ni résumé, ni mots-clés,
-ni table des matières, ni glossaire** (tout cela est à l'annexe en ligne) :
+en-tête de page, seul le nom de la course l'accompagne. **Cinq pages, et ni résumé, ni mots-clés,
+ni table des matières, ni glossaire** (tout cela est à l'annexe en ligne) ; en pied, un filet ocre
+et le folio, rien d'autre :
 
 1. **Couverture** — bande verticale bleu-vert et liseré ocre au bord gauche, la marque en grand, le
-   titre, ce que l'athlète doit retenir avant d'ouvrir : la phrase de prédiction, le badge de
-   confiance EN UN MOT (« pleine », « réduite », « insuffisante ») sous son titre, et **le** critère
-   qui le retient, en une ligne.
-2. **Ta course** — quatre tuiles (les trois scénarios et la fenêtre de l'assistance), le profil, ce
-   que le parcours demande, ce qui décidera, et l'encadré de confiance avec la preuve LOO.
-3. **Le plan** — dérive assumée et sa preuve, politique d'arrêts, la table par segment (trois
+   titre, et ce que l'athlète doit retenir avant d'ouvrir : la phrase de prédiction et sa bande.
+2. **Caractéristiques de la course** — ce que demande le parcours, avant toute prédiction :
+   distance, dénivelé, pente moyenne en montée et en descente avec la part de distance de chacune,
+   le profil où les **montées classées en kilomètres verticaux** sont teintées et nommées, et leur
+   table (du km au km, longueur, D+, pente, sommet, classe). Une montée continue est celle qu'une
+   descente de moins de 40 m ne coupe pas ; le KV se compte par demi (`course/montees.py`).
+3. **Prédictions par jumeau numérique** — trois tuiles (rapide, centrale, prudent), ce que ça
+   donne, ce qui décidera, la courbe du cumul et sa bande, et l'encadré qui dit ce que valent ces
+   chiffres (erreur LOO mesurée).
+4. **Le plan** — dérive assumée et sa preuve, politique d'arrêts, la table par segment (trois
    colonnes titrées par leur heure d'arrivée, une consigne par segment, les ravitaillements ouverts
-   à l'assistance teintés) et la courbe du cumul ; la section objectif s'il y en a un.
-4. **Ton profil** — quatre jauges, la courbe record, le nuage de validation croisée, les quatre
+   à l'assistance teintés) ; la section objectif s'il y en a un.
+5. **Ton profil** — quatre jauges, la courbe record, le nuage de validation croisée, les quatre
    limites, ce que le plan suppose, **QR vers l'annexe en ligne** et, dessous, la même adresse en
    clair pour qui n'a pas de téléphone.
+
+**Aucun indice de confiance ne s'imprime.** La garde de suffisance décide toujours si un rapport
+est vendable (🔴 = on ne vend pas) et son verdict reste au registre et à l'annexe ; ce que
+l'athlète lit, ce sont les erreurs mesurées, pas une note.
 
 **La feuille à emporter** (`feuille.pdf`, A4 paysage recto-verso, imprimable seule par
 `--feuille-seule`) ne porte que deux tableaux. Recto, le tableau de marche : une ligne par segment,

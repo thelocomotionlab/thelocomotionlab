@@ -2637,6 +2637,35 @@ d'arrêt à la Crête donnent les mêmes sept heures de passage à la minute dan
 plan recalculé par le moteur. Dix tests (`apps/site/lib/twinTableauMarche.test.js`) tiennent la règle,
 dont l'identité : sans rien changer, le formulaire redonne les heures du rapport.
 
+**Quatrième passe (2026-09-18, troisième relecture de Valentin).** L'indice de confiance disparaît
+du rapport — couverture et page de prédiction : la garde de suffisance décide toujours si on vend,
+son verdict reste au registre et à l'annexe, mais l'athlète ne lit plus une note, il lit des erreurs
+mesurées. Le badge (`\LLbadge`) quitte la classe avec lui. Le pied de page ne porte plus que le
+filet ocre et le folio, point bleu-vert devant. Les encadrés reprennent la carte de l'ancien
+rapport : fond clair, liseré de 4 pt à gauche, ombre douce — `llverdict` et `llhonnete` rejoignent
+`llnote` et `llattention`.
+
+La page « Ta course » devient **Prédictions par jumeau numérique**, la tuile de l'assistance part
+(les bornes de sécurité restent au verso de la feuille, sous les yeux de qui s'en sert) et le
+scénario central s'appelle « centrale », plus « prévu ».
+
+**Ce que demande le parcours, avant la prédiction.** Nouvelle page (`page-parcours`) et nouveau
+module, `course/montees.py` : le profil se découpe en montées continues par une marche à hystérésis
+— une descente de moins de 40 m ne coupe pas une montée, sous 250 m de D+ ce n'est pas une montée
+qu'on raconte — et chaque montée se classe au demi-kilomètre vertical le plus proche : demi-KV, KV,
+KV et demi, double KV, puis « 2,5 KV », « 3 KV ». La page en tire quatre tuiles (distance,
+dénivelé, pente moyenne en montée et en descente avec la part de distance de chacune), le profil où
+les montées sont teintées et nommées à leur place sur la trace, la table des montées (du km au km,
+longueur, D+, pente, sommet, classe) et une phrase qui dit où elles tombent. La définition du KV et
+la tolérance sortent du module, pas de la légende : le test « aucun chiffre en dur » couvre aussi
+cette page. Sept tests (`tests/test_montees.py`) tiennent le découpage — un creux de 25 m ne coupe
+pas, un de 300 m coupe, une bosse de 150 m ne compte pas.
+
+Le rapport passe à cinq pages. L'annexe emporte les mêmes mesures (`course.pentes`,
+`course.montees`) et la page d'annexe en rend une section « Le parcours » ; elle n'affiche plus le
+mot de confiance non plus.
+
 **Reste ouvert.** Le formulaire ne persiste rien : il rend un bloc à recoller et le rendu se relance
 en ligne de commande. Une annexe qui écrit demanderait un service (persistance, authentification,
-re-rendu) — un chantier à part.
+re-rendu) — un chantier à part. La structure du rapport, elle, est maintenant un squelette qui se
+réordonne à la main : `docs/manuel-twin.md` §7 dit comment.

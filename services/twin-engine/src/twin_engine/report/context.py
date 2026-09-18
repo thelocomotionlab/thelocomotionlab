@@ -12,6 +12,8 @@ from datetime import date, datetime, timedelta
 import numpy as np
 
 from ..calibration import REGIME_BLEND, REGIME_REGRESSION, REGIME_VC_E, stops_statistics
+from ..course.montees import (KV_M, MIN_DPLUS_M, TOLERANCE_M, compte_par_classe,
+                              montees, pentes)
 from ..course.spec import placeholder_aid_names
 from ..feasibility import AMBITIEUX, CONFORTABLE, HORS_DOMAINE, HORS_PORTEE, INDECIDABLE, NOMINAL
 from ..sufficiency import GREEN, ORANGE, RED
@@ -343,6 +345,7 @@ def build_report_context(
         "technicity_pct": (fr(course.technicity_pct, 0)
                            if getattr(course, "technicity_pct", 0) else None),
         "n_segments": len(course.segments),
+        "caracteristiques": _caracteristiques(course),
         "demande_rows": demande_rows,
         # jumeau — la VC n'est affichée que plausible (sinon note d'honnêteté via vc_implausible)
         "vc_kmh": fr(cs.vc_kmh, 2) if vc_ok else None,
@@ -478,12 +481,9 @@ def build_report_context(
 # --------------------------------------------------------------------------- #
 # Rapport v3 : ce que les trois pages et la feuille disent, dérivé des objets calculés.
 # --------------------------------------------------------------------------- #
-# L'étiquette porte le mot seul : elle est toujours lue sous le titre « Confiance ».
-_CONFIDENCE = {
-    GREEN: ("pleine", "LLSuccess"),
-    ORANGE: ("réduite", "LLAccentInk"),
-    RED: ("insuffisante", "LLDeepDark"),
-}
+# Le mot de la confiance : il ne s'imprime plus sur le rapport, il classe le dossier
+# (registre, annexe) à côté du verdict de suffisance.
+_CONFIDENCE = {GREEN: "pleine", ORANGE: "réduite", RED: "insuffisante"}
 
 
 def _clamp(x: float) -> float:
@@ -620,6 +620,75 @@ def _verdict_sentence(sufficiency, calibration, twin, cfg) -> str:
     return tex_escape(_fr_decimals(cap or (sufficiency.reasons[-1] if sufficiency.reasons else "")))
 
 
+def _caracteristiques(course) -> dict:
+    """Ce que le parcours demande, avant toute prédiction : ses pentes et ses montées.
+
+    Un coureur lit un parcours en montées, pas en mètres cumulés. On classe donc chaque
+    montée continue en kilomètres verticaux (``course.montees``) et on dit où elle tombe.
+    Tout est mesuré sur le profil : rien n'est déclaré, rien n'est arrondi à la main.
+    """
+    liste = montees(course)
+    p = pentes(course)
+    seuil = fr_thousands(MIN_DPLUS_M, 0)
+    part = sum(m.dplus_m for m in liste) / (float(course.dplus_m) or 1.0)
+    part_txt = fr(100 * part, 0)
+    moitie = course.length_km / 2.0
+    classes = compte_par_classe(liste)
+    enum = ", ".join(f"{c['n']} \\texttimes{{}} {c['label']}" if c["n"] > 1 else c["label"]
+                     for c in classes)
+
+    if not liste:
+        resume = (f"Aucune montée continue de plus de {seuil}\\,m : le D+ de ce parcours se "
+                  "prend par bosses courtes.")
+        plus_dure = ""
+    elif len(liste) == 1:
+        m = liste[0]
+        resume = (f"Une seule montée de plus de {seuil}\\,m, {m.label}, et elle porte "
+                  f"{part_txt}\\,\\% du D+ du parcours.")
+        plus_dure = ""
+    else:
+        apres = sum(1 for m in liste if m.from_km >= moitie)
+        ou = ("toutes dans la première moitié" if apres == 0 else
+              "toutes après la mi-course" if apres == len(liste) else
+              f"dont {apres} après la mi-course")
+        resume = (f"{len(liste)} montées de plus de {seuil}\\,m : {enum}. Elles portent "
+                  f"{part_txt}\\,\\% du D+ du parcours, {ou}.")
+        dure = max(liste, key=lambda m: m.dplus_m)
+        plus_dure = (f"La plus dure part du km {fr(dure.from_km, 0)} : "
+                     f"{fr_thousands(dure.dplus_m, 0)}\\,m à {fr(dure.grade_pct, 1)}\\,\\% "
+                     f"sur {fr(dure.length_km, 1)}\\,km.")
+
+    return {
+        "pente_montee": fr(p["up_pct"], 1),
+        "pente_descente": fr(abs(p["down_pct"]), 1),
+        "part_montee": fr(p["part_up_pct"], 0),
+        "part_descente": fr(p["part_down_pct"], 0),
+        "part_plat": fr(p["part_flat_pct"], 0),
+        "seuil_m": seuil,
+        # la définition sort d'ici, pas du gabarit : le KV et la tolérance sont des réglages
+        # du découpage, ils ne se réécrivent pas à la main dans une légende
+        "legende": (f"Une montée continue est une montée qu'une descente de moins de "
+                    f"{fr_thousands(TOLERANCE_M, 0)}\\,m ne coupe pas : c'est ce qui se monte "
+                    f"d'une traite. Le kilomètre vertical se compte par demi — "
+                    f"{fr_thousands(KV_M / 2, 0)}\\,m un demi-KV, {fr_thousands(KV_M, 0)}\\,m "
+                    f"un KV, {fr_thousands(2 * KV_M, 0)}\\,m un double KV."),
+        "montees": [{
+            "idx": m.index,
+            "from_km": fr(m.from_km, 0), "to_km": fr(m.to_km, 0),
+            "length_km": fr(m.length_km, 1),
+            "dplus": fr_thousands(m.dplus_m, 0),
+            "grade": fr(m.grade_pct, 1),
+            "alt_top": fr_thousands(m.alt_top_m, 0),
+            "label": m.label,
+        } for m in liste],
+        "classes": classes,
+        "n_montees": len(liste),
+        "part_dplus": part_txt,
+        "resume": resume,
+        "plus_dure": plus_dure,
+    }
+
+
 def _limits(ctx: dict, sufficiency, race, cfg) -> list[dict]:
     """Les quatre limites, toujours quatre et dans cet ordre, en deux longueurs.
 
@@ -702,7 +771,7 @@ def _assumptions(ctx: dict, plan, race, cfg, stops_policy: dict) -> list[str]:
 
 def _v3_context(ctx: dict, *, course, twin, calibration, prediction, plan, race, sufficiency,
                 cfg, athlete: str, report_ref: str, target) -> dict:
-    conf_word, conf_color = _CONFIDENCE[sufficiency.verdict]
+    conf_word = _CONFIDENCE[sufficiency.verdict]
     plan_band = cfg.pacing.plan_window_high_pct - cfg.pacing.plan_window_low_pct
     interval = cfg.prediction.interval_high_pct - cfg.prediction.interval_low_pct
     plan_word, safety_word = courses_sur(plan_band), courses_sur(interval)
@@ -811,9 +880,10 @@ def _v3_context(ctx: dict, *, course, twin, calibration, prediction, plan, race,
         "athlete_plain": athlete,
         "annex_ref": report_ref,
         "annex_url": f"{cfg.report.annex_base_url.rstrip('/')}/{report_ref}",
-        "confidence_word": tex_escape(conf_word),
+        # Le mot de confiance et le critère qui le retient ne s'impriment plus : ils restent
+        # au registre et à l'annexe, où ils servent d'étiquette de dossier — pas de note
+        # donnée à l'athlète. La garde de suffisance, elle, décide toujours si on vend.
         "confidence_plain": conf_word,
-        "confidence_color": conf_color,
         "verdict_sentence": _verdict_sentence(sufficiency, calibration, twin, cfg),
         "verdict_reasons": [tex_escape(r.replace("🟢", "confiance pleine").replace("🟠", "confiance réduite")
                                        .replace("🔴", "non vendu")) for r in sufficiency.reasons],

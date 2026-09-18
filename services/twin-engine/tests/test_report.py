@@ -14,7 +14,9 @@ from twin_engine.config import load_config
 from twin_engine.course import RaceSpec, build_course
 from twin_engine.pacing import build_pacing
 from twin_engine.predict import predict_finish
-from twin_engine.report import build_report_context, generate_figures, render_tex
+from twin_engine.report import (build_report_context, generate_figures, render_template,
+                                render_tex)
+from twin_engine.report.render import FEUILLE_TEMPLATE
 from twin_engine.sufficiency import assess_sufficiency
 from twin_engine.twin.model import CriticalSpeed, Twin
 from twin_engine.twin.record import ActivitySummary, RecordCurve, RecordPoint
@@ -180,11 +182,12 @@ def test_plan_windows_and_arrival_in_clock_time():
     for row in ctx["plan_rows"]:
         assert "h" in row["window"]          # fenêtre horaire, pas des heures cumulées
     tex = render_tex(ctx)
-    # la première page imprime les deux bandes, chacune dite par son usage : les trois
-    # scénarios en tuiles, les bornes de sécurité dans la tuile de l'assistance
-    assert "Rapide" in tex and "Prudent" in tex and "Pour l'assistance" in tex
-    assert ctx["plan_band_word"] in tex and ctx["safety_word"] in tex
-    assert ctx["arrival_safety_lo_clock"] in tex
+    feuille = render_template(FEUILLE_TEMPLATE, ctx)
+    # chaque bande est dite là où elle sert : les trois scénarios en tuiles dans le rapport,
+    # les bornes de sécurité au verso de la feuille, sous les yeux de l'assistance
+    assert "Rapide" in tex and "Centrale" in tex and "Prudent" in tex
+    assert ctx["plan_band_word"] in tex
+    assert ctx["safety_word"] in feuille and ctx["arrival_safety_lo_clock"] in feuille
 
 
 def test_context_interval_labels_from_config():
@@ -197,8 +200,13 @@ def test_context_interval_labels_from_config():
     assert ctx["plan_band_word"] == "une course sur deux"
     assert ctx["safety_word"] == "quatre courses sur cinq"
     tex = render_tex(ctx)
-    assert "une course sur deux" in tex and "quatre courses sur cinq" in tex
-    assert "50\\,\\%" not in tex and "80\\,\\%" not in tex
+    assert "une course sur deux" in tex
+    assert "quatre courses sur cinq" in render_template(FEUILLE_TEMPLATE, ctx)
+    # les bandes ne se disent jamais en pourcentage sec — la page des caractéristiques, elle,
+    # a le droit d'écrire des pentes et des parts de distance en pour cent
+    import re
+    sans_parcours = re.sub(r"% LL:BEGIN page-parcours.*?% LL:END page-parcours", "", tex, flags=re.S)
+    assert "50\\,\\%" not in sans_parcours and "80\\,\\%" not in sans_parcours
 
     from dataclasses import replace
 

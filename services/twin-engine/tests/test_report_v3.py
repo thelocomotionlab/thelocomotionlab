@@ -124,7 +124,9 @@ def test_scenario_is_sold_with_full_confidence():
 
 def test_context_v3_keys():
     ctx, (course, _, _, _, plan, race, _) = context()
-    assert ctx["confidence_word"] == "pleine" and ctx["confidence_color"] == "LLSuccess"
+    # l'indice de confiance ne s'imprime plus : il reste au dossier (annexe, registre)
+    assert "confidence_word" not in ctx and "confidence_color" not in ctx
+    assert ctx["confidence_plain"] == "pleine"
     assert ctx["annex_url"].endswith("/LL-TWIN-GOLDEN01") and ctx["annex_ref"] == "LL-TWIN-GOLDEN01"
     assert ctx["report_version"] == CFG.report.version
     assert len(ctx["gauges"]) == 4 and all(0.0 <= g["fraction"] <= 1.0 for g in ctx["gauges"])
@@ -368,7 +370,7 @@ def test_no_number_is_hard_coded_in_what_the_athlete_reads_in_the_race():
         return re.findall(r"\d[\d,.:]*", body)
 
     tex = render_tex(ctx)
-    for name in ("page-course", "page-plan"):
+    for name in ("page-parcours", "page-course", "page-plan"):
         assert not _reste(_slice(tex, name)), f"chiffres hors contexte sur {name}"
     feuille = render_template(FEUILLE_TEMPLATE, ctx)
     for name in ("feuille-recto", "feuille-verso"):
@@ -386,7 +388,8 @@ def test_render_has_no_residual_delimiters():
     assert "Camille \\& L" in tex
     assert "\\LLtoc" not in tex and "llabstract" not in tex and "keywords" not in tex
     # les titres-formules du v2 ont disparu, remplacés par des titres simples
-    for page in ("Le plan", "Ton profil", "La preuve"):
+    for page in ("Caractéristiques de la course", "Prédictions par jumeau numérique",
+                 "Le plan", "Ton profil", "La preuve"):
         assert page in tex
     cls = (TEMPLATE_DIR / "locomotionreport.cls").read_text(encoding="utf-8")
     assert "{llhonnete}[1][Les limites]" in cls
@@ -394,13 +397,17 @@ def test_render_has_no_residual_delimiters():
                     "Pourquoi tu peux y croire", "Ce que tes données disent de toi",
                     "Ce que ça change pour toi", "(on prévient)"):
         assert formule not in tex, formule
-    assert "une course sur deux" in tex and "quatre courses sur cinq" in tex
+    # le rapport dit la fourchette de course ; les bornes de sécurité sont au verso de la
+    # feuille, là où l'assistance les lit
+    assert "une course sur deux" in tex and "quatre courses sur cinq" not in tex
+    assert "quatre courses sur cinq" in render_template(FEUILLE_TEMPLATE, ctx)
+    assert "\\LLbadge" not in tex and "Confiance" not in tex
     assert CFG.report.fade_evidence.split(",")[0] in tex
     assert "en Synth" not in tex                      # plus aucun renvoi mort
 
 
 @pytest.mark.skipif(not HAS_TEX, reason="XeLaTeX/biber absents (validés dans l'image Docker)")
-def test_the_report_is_four_pages_and_the_sheet_two(tmp_path):
+def test_the_report_is_five_pages_and_the_sheet_two(tmp_path):
     PdfReader = pytest.importorskip("pypdf").PdfReader   # extra « dev » du pyproject
 
     ctx, (course, twin, cal, pred, plan, race, _) = context()
@@ -408,8 +415,9 @@ def test_the_report_is_four_pages_and_the_sheet_two(tmp_path):
     generate_figures(course, twin, cal, pred, plan, race, fig_dir, cfg=CFG)
     rapport = build_pdf(ctx, fig_dir, tmp_path / "tex")
     feuille = build_feuille(ctx, fig_dir, tmp_path / "tex-feuille")
-    # couverture + ta course + le plan + ton profil ; la feuille, ses deux tableaux
-    assert len(PdfReader(str(rapport)).pages) == 4
+    # couverture + caractéristiques + prédictions + le plan + ton profil ; la feuille, ses
+    # deux tableaux
+    assert len(PdfReader(str(rapport)).pages) == 5
     assert len(PdfReader(str(feuille)).pages) == 2
 
 

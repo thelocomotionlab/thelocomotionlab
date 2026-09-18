@@ -90,7 +90,7 @@ Le `preview` imprime un JSON (verdict, prédiction, jumeau, parcours) + un résu
 
 | fichier | ce que c'est |
 |---|---|
-| `rapport.pdf` | le rapport, quatre pages — couverture, ta course, le plan, ton profil (sa source reste dans `tex/`) |
+| `rapport.pdf` | le rapport, cinq pages — couverture, caractéristiques de la course, prédictions, le plan, ton profil (sa source reste dans `tex/`) |
 | `feuille.pdf` | la feuille à emporter : A4 paysage recto-verso, deux tableaux et rien d'autre (marche au recto, assistance au verso) |
 | `plan.ics` | le calendrier : un événement par point d'assistance |
 | `plan.gpx` | la trace avec un point de passage horodaté par point d'assistance |
@@ -225,11 +225,43 @@ La **trace GPX du parcours** est fournie à part (`--course`) et n'est pas commi
 
 ## 7. Lire la fourchette : les deux bandes
 
-> **Le rapport v3** (quatre pages, feuille à emporter, ICS, GPX, annexe en ligne) est décrit
+> **Le rapport v3** (cinq pages, feuille à emporter, ICS, GPX, annexe en ligne) est décrit
 > dans `docs/twin-theory.md` §7 et dans `DIAGNOSTIC.md` §10.20 ; sa charte vient de `packages/ui`
 > via `report/charte.py`, et ses
 > polices sont des instances statiques d'Ubuntu Sans régénérables par
 > `PYTHONPATH=src python -m tools.instance_fonts`.
+
+### Changer la structure du rapport (le squelette)
+
+Le squelette est **un seul fichier** : `src/twin_engine/report/latex/report.tex.j2`. Chaque page y
+est bornée par deux marqueurs — `% LL:BEGIN page-parcours` … `% LL:END page-parcours` — et l'ordre
+des blocs dans le fichier EST l'ordre des pages. Déplacer une page, la couper en deux, en ajouter
+une : c'est du copier-coller entre marqueurs, sans toucher au moteur.
+
+Trois règles tiennent l'ensemble :
+
+1. **Aucun chiffre ni aucune date ne s'écrit dans le gabarit.** Tout vient du contexte calculé
+   (`report/context.py`), en `<< clé >>`. Un test le vérifie page par page
+   (`tests/test_report_v3.py::test_no_number_is_hard_coded_in_what_the_athlete_reads_in_the_race`) :
+   il retire du gabarit rendu toutes les valeurs du contexte et toutes les dimensions de mise en
+   page, et échoue s'il reste un chiffre. C'est ce qui garantit qu'un rapport ne peut pas mentir.
+2. **La mise en page vient de la classe**, `latex/template/locomotionreport.cls` : `\LLpage` (titre
+   de page), `\LLtile` / `\LLtileaccent` (tuiles), `\LLetiquette` (intertitre), `\llnote`,
+   `\llattention`, `\llhonnete`, `\llverdict` (encadrés), `\LLtableau` + `\LLfilet` +
+   `\LLheaderrow` (tableaux), `\LLgauge` (jauges). Aucune couleur ni police en dur : la charte
+   vient de `packages/ui`.
+3. **Un bloc qui a besoin d'un chiffre que le moteur ne calcule pas encore** demande deux lignes :
+   la mesure dans le moteur (par exemple `course/montees.py`), et la clé dans `report/context.py`.
+   Le gabarit ne fait que poser.
+
+Exemple, le bloc « caractéristiques de la course » : `course/montees.py` découpe le profil en
+montées continues et les classe en kilomètres verticaux ; `context.py` en fait
+`caracteristiques` (pentes moyennes, lignes du tableau, phrase de résumé, légende) ; le gabarit
+écrit `<< caracteristiques.resume >>` et boucle sur `<< caracteristiques.montees >>`. Pour ajouter
+une colonne au tableau des montées, il suffit de la lire dans `Montee` — elle est déjà calculée.
+
+Pour voir le résultat sans relancer toute la chaîne :
+`PYTHONPATH=src python -m twin_engine.cli report … --out local-data/out` recompile les deux PDF.
 
 > **Le verdict 🟢 est conditionnel** (Décision 3, DIAGNOSTIC §10.18) : il n'est servi que si le
 > parcours est dans le domaine de calibration, si l'archive compte au moins trois vrais ultras

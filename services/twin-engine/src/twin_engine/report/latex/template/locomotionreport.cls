@@ -307,22 +307,18 @@
 \newcommand{\LLrunninghead}[1]{\markboth{#1}{}}
 
 % =============================================================================
-% 9. Pied de page : un filet ocre, une ligne de service, le folio
+% 9. Pied de page : un filet ocre et le folio, rien d'autre
 % =============================================================================
-\newcommand{\LL@footleft}{}
-\newcommand{\LLfootleft}[1]{\renewcommand{\LL@footleft}{#1}}
-% À droite, le folio par défaut ; une feuille détachable y met sa propre ligne de service.
-\newcommand{\LL@footright}{\LLmonofont\thepage}
-\newcommand{\LLfootright}[1]{\renewcommand{\LL@footright}{#1}}
+% Le folio : un point bleu-vert, le numéro en ocre. Aucune ligne de service — ce qui est
+% utile est dans la page, pas sous elle.
+\newcommand{\LLfolio}{%
+  {\fontsize{9}{11}\selectfont\color{LLPrimary}\textbullet}\hspace{5pt}%
+  {\LLsemiboldfont\fontsize{11}{13}\selectfont\color{LLAccentInk}\thepage}}
 \newcommand{\LLfooterband}{%
   \begin{minipage}{\textwidth}%
     {\color{LLAccent}\rule{\textwidth}{1.5pt}}\par
     \vspace{4pt}%
-    \noindent\hbox to \textwidth{%
-      {\fontsize{9}{11}\selectfont\color{LLSoft}\LL@footleft}%
-      \hfil
-      {\fontsize{9}{11}\selectfont\color{LLSoft}\LL@footright}%
-    }%
+    \noindent\hbox to \textwidth{\hfil\LLfolio}%
   \end{minipage}%
 }
 
@@ -345,17 +341,7 @@
 \pagestyle{LLmain}
 
 % =============================================================================
-% 10. Le badge de confiance
-% =============================================================================
-% Il n'y a plus de page de couverture : la page 1 du rapport EST la synthèse, avec
-% l'en-tête courant. Le badge, lui, reste — il nomme la confiance en toutes lettres.
-\newtcbox{\LL@badgebox}[1]{on line, box align=base, colback=#1, colframe=#1, boxrule=0pt,
-  arc=8pt, left=8pt, right=8pt, top=3pt, bottom=3pt,
-  fontupper=\LLsemiboldfont\fontsize{9}{11}\selectfont\color{LLPaper}}
-\newcommand{\LLbadge}[2]{\LL@badgebox{#2}{\LLtracked{\MakeUppercase{#1}}}}
-
-% =============================================================================
-% 11. Titres : pages du rapport v2 (sans numéro) et sections numérotées (fiches)
+% 10. Titres : pages du rapport v2 (sans numéro) et sections numérotées (fiches)
 % =============================================================================
 % \LLpage{surtitre}{Titre} : nouvelle page, surtitre en capitales espacées, titre, filet ocre.
 \newcommand{\LLpage}[2]{%
@@ -394,7 +380,7 @@
 \titlespacing*{\subsubsection}{0pt}{11pt}{4pt}
 
 % =============================================================================
-% 12. Encadrés : note, attention, exemple, honnêteté, verdict
+% 11. Encadrés : note, attention, exemple, honnêteté, verdict
 % =============================================================================
 \newcommand{\LLboxlabel}[2]{%
   {\LLsemiboldfont\fontsize{9}{11}\selectfont\color{#1}\LLtracked{\MakeUppercase{#2}}}%
@@ -418,16 +404,15 @@
   before upper={\LLboxlabel{LLDeep}{#1}\par\vspace{4pt}}}
 % l'encadré d'honnêteté : ce que le moteur ne sait pas, dit en une fois
 \newtcolorbox[]{llhonnete}[1][Les limites]{LL@boxbase,
-  colback=LLSensations, borderline west={4pt}{0pt}{LLAccentInk},
+  borderline west={4pt}{0pt}{LLAccentInk},
   before upper={\LLboxlabel{LLAccentInk}{#1}\par\vspace{4pt}}}
-% le verdict : carte brume, liseré bleu-vert
-\newtcolorbox[]{llverdict}[1][Verdict]{enhanced, breakable,
-  colback=LLMist, colframe=LLMistLine, boxrule=0.6pt, arc=8pt,
-  left=16pt, right=16pt, top=10pt, bottom=11pt, before skip=8pt, after skip=10pt,
-  before upper={\LLboxlabel{LLSlate}{#1}\par\vspace{4pt}}}
+% ce que valent les chiffres : même carte que les autres, liseré bleu-vert
+\newtcolorbox[]{llverdict}[1][Verdict]{LL@boxbase,
+  borderline west={4pt}{0pt}{LLPrimary},
+  before upper={\LLboxlabel{LLPrimaryDark}{#1}\par\vspace{4pt}}}
 
 % =============================================================================
-% 13. Chiffres clés et jauges
+% 12. Chiffres clés et jauges
 % =============================================================================
 % \LLkpi{valeur}{étiquette}{sous-texte} : carte blanche, chiffre en gros (dans une minipage)
 \newcommand{\LLkpi}[3]{%
@@ -453,7 +438,7 @@
 \newcommand{\LLqr}[1]{\qrcode[height=17mm,level=M]{#1}}
 
 % =============================================================================
-% 14. Figures & légendes
+% 13. Figures & légendes
 % =============================================================================
 \DeclareCaptionLabelSeparator{LLdash}{\ \textemdash\ }
 \captionsetup{
@@ -465,7 +450,7 @@
 }
 
 % =============================================================================
-% 15. Tableaux
+% 14. Tableaux
 % =============================================================================
 \newcommand{\LLnum}[1]{{\LLmonofont #1}}
 \newcommand{\LLpos}[1]{{\LLmonofont\color{LLSuccess}#1}}
@@ -584,7 +569,7 @@
   \begin{tcolorbox}[enhanced, colback=LLPaper, colframe=#4, boxrule=#5, arc=5pt,
       left=8pt, right=8pt, top=6pt, bottom=6pt, nobeforeafter, width=\linewidth,
       equal height group=LLtuiles]
-    \LLetiquette{#1}\par\vspace{2pt}%
+    \raggedright\LLetiquette{#1}\par\vspace{2pt}%
     {\LLextraboldfont\LLtabular\fontsize{#6}{#6}\selectfont\color{LLText}#2}\par\vspace{3pt}%
     {\fontsize{8.4}{10.5}\selectfont\color{LLSoft}#3\par}
   \end{tcolorbox}}
@@ -597,7 +582,7 @@
   -{Straight Barb[length=2.1pt, width=3.2pt]}] (0,0) -- (0.85em,0);}}\,}
 
 % =============================================================================
-% 16. Bibliographie et liens
+% 15. Bibliographie et liens
 % =============================================================================
 \DeclareFieldFormat{labelnumberwidth}{\LLmonofont\textcolor{LLDeep}{[#1]}}
 \DeclareFieldFormat*{title}{\textit{#1}}
