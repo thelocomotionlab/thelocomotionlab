@@ -270,7 +270,7 @@ des segments, **jamais** les totaux ; un total qui bouge accuse la trace ou la f
 lissage.
 
 Pour voir le résultat sans relancer toute la chaîne :
-`PYTHONPATH=src python -m twin_engine.cli report … --out local-data/out` recompile les deux PDF.
+`twin-engine full --training … --course … --race … --out local-data/out` recompile les deux PDF.
 
 > **Le verdict 🟢 est conditionnel** (Décision 3, DIAGNOSTIC §10.18) : il n'est servi que si le
 > parcours est dans le domaine de calibration, si l'archive compte au moins trois vrais ultras
