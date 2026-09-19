@@ -84,21 +84,22 @@ def _durability_word(twin, cfg=None) -> str | None:
     return "à surveiller"
 
 
-# « headline » (mis en gras) + explication, tous deux sur l'axe du DÉCLIN, jamais la vitesse.
-_PROFILE_HEADLINE = {
-    "diesel": "tr\\`es endurant",
-    "équilibré": "bien endurant",
-    "fade": "moins endurant sur la dur\\'ee",
+# UNE SEULE TABLE de mots par classe, lue par le récit d'ouverture ET par les jauges du
+# profil. Deux tables, c'était deux phrases pour le même athlète : « ton allure baisse peu »
+# d'un côté, « ton allure baisse comme celle de la plupart » de l'autre. Ce que dit la classe
+# « équilibré », c'est la PLACE de l'exposant dans la population : au milieu.
+PROFIL_ENDURANCE = {
+    "diesel": ("très endurant",
+               "ton allure baisse très peu quand les heures s'accumulent"),
+    "équilibré": ("dans la moyenne",
+                  "ton allure baisse comme celle de la plupart des ultra-traileurs"),
+    "fade": ("moins endurant sur la durée",
+             "ton allure baisse plus vite que la moyenne quand la course s'étire"),
 }
-_PROFILE_EXPLAIN = {
-    "diesel": "ton allure baisse tr\\`es peu quand les heures s'accumulent. C'est le moteur d'endurance qu'il faut pour le tr\\`es long",
-    "équilibré": "ton allure baisse peu quand l'effort s'allonge",
-    "fade": "ton allure baisse plus vite que la moyenne quand la course s'\\'etire. Il faudra rationner l'effort d\\`es le d\\'epart",
-}
-_DURABILITY_EXPLAIN = {
-    "excellente": "ton efficacité tient, même après de longues heures",
-    "bonne": "l'usure existe mais elle reste progressive et prévisible",
-    "à surveiller": "ton efficacité chute nettement en fin d'effort, c'est le point à gérer en course",
+PROFIL_DURABILITE = {
+    "excellente": "ton efficacité tient jusqu'au bout de tes longues sorties",
+    "bonne": "ton efficacité baisse modérément en fin de longue sortie",
+    "à surveiller": "ton efficacité chute nettement en fin d'effort",
 }
 
 
@@ -112,13 +113,14 @@ def opening_narrative(twin, calibration, prediction, cfg=None) -> str:
     pw = _profile_word(twin, cfg)
     if pw:
         # headline masculin (s'accorde avec « profil ») → aucun genre supposé sur l'athlète
-        parts.append(f"Ton profil est \\textbf{{{_PROFILE_HEADLINE[pw]}}} : {_PROFILE_EXPLAIN[pw]}.")
+        titre, explication = PROFIL_ENDURANCE[pw]
+        parts.append(f"Ton profil est \\textbf{{{titre}}} : {explication}.")
     dw = _durability_word(twin, cfg)
     if dw and twin.durability_pct is not None:
         # en Synthèse on évite le jargon « découplage » (défini plus loin) : langage clair
         parts.append(
             f"R\\'esistance \\`a la fatigue : \\textbf{{{dw}}}, avec {_pct(twin.durability_pct)} "
-            f"de perte d'efficacit\\'e en fin de longue sortie — {_DURABILITY_EXPLAIN[dw]}."
+            f"de perte d'efficacit\\'e en fin de longue sortie — {PROFIL_DURABILITE[dw]}."
         )
     if prediction is not None and prediction.cross_validation is None:
         parts.append(

@@ -89,14 +89,15 @@ def test_render_has_no_unresolved_placeholders():
     assert "Valentin \\& co" in tex          # nom échappé pour LaTeX
 
 
-def test_vc_low_conditions_intensity_claim():
-    """L'affirmation « la vitesse n'est pas le sujet » dépend de l'intensité calculée."""
+def test_the_intensity_is_stated_as_a_measurement_not_a_verdict():
+    """L'intensité se dit en chiffres — celle de cette course, celle de ses ultras passés, et
+    le rang de l'une dans l'autre — jamais par une phrase en balancier."""
     ctx = _context()
-    low = render_tex({**ctx, "vc_low": True})
-    high = render_tex({**ctx, "vc_low": False})
-    assert "la vitesse ne sera pas le sujet" in low
-    assert "la vitesse ne sera pas le sujet" not in high
-    assert "la régularité et la durabilité décideront" in high
+    i = ctx["faits"]["intensites"]
+    assert i and i["course"] and i["ultras"] and i["n"] >= 1
+    tex = render_tex(ctx)
+    assert i["phrase"] in tex
+    assert "la vitesse ne sera pas le sujet" not in tex
 
 
 def test_context_french_date_and_new_fields():
@@ -462,7 +463,7 @@ def test_declared_technicity_is_disclosed_in_the_report():
                                plan=plan_t, race=race_t, sufficiency=suf, cfg=CFG, athlete="A")
     tex = render_tex(ctx)
     assert ctx["technicity_pct"] == "13"
-    assert "Technicité déclarée : +13" in tex            # dite sur la première page
+    assert any("13" in a and "technicité" in a for a in ctx["assumptions"])  # dans les hypothèses
     assert "pas mesurés" in tex                          # ... et dans les quatre limites
     assert any("technicité déclarés" in a for a in ctx["assumptions"])
 

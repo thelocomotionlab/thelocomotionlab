@@ -203,19 +203,22 @@ export default async function AnnexePage({ params }) {
               ],
             ]}
           />
-          {(c.montees ?? []).length > 0 ? (
+          {(c.montees ?? []).length > 0 || (c.descentes ?? []).length > 0 ? (
             <Tableau
-              colonnes={["#", "du km", "au km", "longueur", "D+", "pente", "sommet", "classe"]}
-              lignes={c.montees.map((m) => [
-                m.index,
-                n(m.from_km, 0),
-                n(m.to_km, 0),
-                n(m.length_km, 1, "km"),
-                n(m.dplus_m, 0, "m"),
-                n(m.grade_pct, 1, "%"),
-                n(m.alt_top_m, 0, "m"),
-                m.label,
-              ])}
+              colonnes={["sens", "du km", "au km", "longueur", "dénivelé", "pente"]}
+              lignes={[
+                ...(c.montees ?? []).map((m) => ["montée", m]),
+                ...(c.descentes ?? []).map((m) => ["descente", m]),
+              ]
+                .sort((a, b) => a[1].from_km - b[1].from_km)
+                .map(([sens, m]) => [
+                  sens,
+                  n(m.from_km, 0),
+                  n(m.to_km, 0),
+                  n(m.length_km, 1, "km"),
+                  n(m.denivele_m, 0, "m"),
+                  n(Math.abs(m.grade_pct), 1, "%"),
+                ])}
             />
           ) : null}
         </Section>

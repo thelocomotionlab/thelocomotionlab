@@ -129,7 +129,9 @@ def test_context_v3_keys():
     assert ctx["confidence_plain"] == "pleine"
     assert ctx["annex_url"].endswith("/LL-TWIN-GOLDEN01") and ctx["annex_ref"] == "LL-TWIN-GOLDEN01"
     assert ctx["report_version"] == CFG.report.version
-    assert len(ctx["gauges"]) == 4 and all(0.0 <= g["fraction"] <= 1.0 for g in ctx["gauges"])
+    # une jauge par mesure DISPONIBLE : sans arrêts mesurés, la jauge des arrêts n'existe pas
+    assert len(ctx["gauges"]) == (4 if ctx["stops"]["measured"] else 3)
+    assert all(0.0 <= g["fraction"] <= 1.0 for g in ctx["gauges"])
     assert len(ctx["limits"]) == 4 and len(ctx["limits_short"]) == 4
     assert ctx["honesty"].startswith("Sur tes 5 ultras")
     assert ctx["assumptions"][0].startswith("Arr")
@@ -185,9 +187,13 @@ def test_the_night_is_read_once_and_reports_every_section():
     de_nuit = {s.index for run in runs for s in run}
     assert [r["night"] for r in ctx["feuille_rows"]] == [
         s.index in de_nuit for s in plan.segments]
+    # sur la feuille, la nuit est une trame de fond de ligne — sauf là où l'ocre de
+    # l'assistance passe devant, parce qu'elle, elle demande une action
     tableau = _slice(render_template(FEUILLE_TEMPLATE, ctx), "feuille-recto")
     tableau = tableau[:tableau.index("\\end{tabularx}")]
-    assert tableau.count("\\LLnuit") == len(de_nuit)
+    teintees = sum(1 for r in ctx["feuille_rows"] if r["night"] and not r["contact"])
+    assert tableau.count("\\LLnuitrow") == teintees
+    assert "\\LLnuit}" not in tableau                      # plus de point après le numéro
 
 
 def test_two_night_sections_are_both_published():
@@ -211,6 +217,9 @@ def test_stops_have_one_source_and_one_rounding():
     stops = ctx["stops_plain"]
     assert stops["hours"] == plan.t_stops_h
     assert abs(stops["rate_min_per_h"] - plan.t_stops_h / plan.t_move_h * 60.0) < 1e-9
+    if not ctx["stops"]["measured"]:
+        assert all(g["label"] != "Arrêts" for g in ctx["gauges"])
+        return
     gauge = next(g for g in ctx["gauges"] if g["label"] == "Arrêts")
     assert gauge["value"] == ctx["stops"]["rate_text"]
     assert ctx["stops"]["hours_hm"] == ctx["t_stops_h"]
@@ -360,17 +369,19 @@ def test_no_number_is_hard_coded_in_what_the_athlete_reads_in_the_race():
         body = re.sub(r"\\LLfilet\{\d+\}", "", body)              # nombre de colonnes
         body = re.sub(r"[\d.]+\\(linewidth|textwidth|textheight|height)", "", body)
         body = re.sub(r"-?\d+(\.\d+)?\s*(pt|mm|cm|em|ex)", "", body)
-        body = re.sub(r"\\(LL\w+|vspace|hspace|includegraphics|begin|end|selectfont"
-                      r"|setlength|renewcommand|arraystretch|rowcolor|cellcolor|multicolumn"
-                      r"|colorlet|rule|hrule|qrcode)(\[[^\]]*\])?", "", body)
+        # les valeurs du contexte D'ABORD : certaines contiennent une macro (une flèche
+        # tracée, par exemple), et les retirer avant casserait la correspondance
         for v in values:
             if len(v) >= 2:
                 body = body.replace(v, " ")
+        body = re.sub(r"\\(LL\w+|vspace|hspace|includegraphics|begin|end|selectfont"
+                      r"|setlength|renewcommand|arraystretch|rowcolor|cellcolor|multicolumn"
+                      r"|colorlet|rule|hrule|qrcode)(\[[^\]]*\])?", "", body)
         body = re.sub(r"(?<![\d,.:])\d(?![\d,.:])", " ", body)
         return re.findall(r"\d[\d,.:]*", body)
 
     tex = render_tex(ctx)
-    for name in ("page-parcours", "page-course", "page-plan"):
+    for name in ("page-vivre", "page-temps", "page-plan", "page-preuve"):
         assert not _reste(_slice(tex, name)), f"chiffres hors contexte sur {name}"
     feuille = render_template(FEUILLE_TEMPLATE, ctx)
     for name in ("feuille-recto", "feuille-verso"):
@@ -388,8 +399,7 @@ def test_render_has_no_residual_delimiters():
     assert "Camille \\& L" in tex
     assert "\\LLtoc" not in tex and "llabstract" not in tex and "keywords" not in tex
     # les titres-formules du v2 ont disparu, remplacés par des titres simples
-    for page in ("Caractéristiques de la course", "Prédictions par jumeau numérique",
-                 "Le plan", "Ton profil", "La preuve"):
+    for page in ("Où passe le temps", "Le plan", "Ton profil", "La preuve"):
         assert page in tex
     cls = (TEMPLATE_DIR / "locomotionreport.cls").read_text(encoding="utf-8")
     assert "{llhonnete}[1][Les limites]" in cls
@@ -397,9 +407,9 @@ def test_render_has_no_residual_delimiters():
                     "Pourquoi tu peux y croire", "Ce que tes données disent de toi",
                     "Ce que ça change pour toi", "(on prévient)"):
         assert formule not in tex, formule
-    # le rapport dit la fourchette de course ; les bornes de sécurité sont au verso de la
-    # feuille, là où l'assistance les lit
-    assert "une course sur deux" in tex and "quatre courses sur cinq" not in tex
+    # chaque bande est dite par son usage : la fourchette de course pour l'athlète, les
+    # bornes de sécurité dans la tuile de l'assistance et au verso de la feuille
+    assert "une course sur deux" in tex and "quatre courses sur cinq" in tex
     assert "quatre courses sur cinq" in render_template(FEUILLE_TEMPLATE, ctx)
     assert "\\LLbadge" not in tex and "Confiance" not in tex
     assert CFG.report.fade_evidence.split(",")[0] in tex
@@ -407,7 +417,7 @@ def test_render_has_no_residual_delimiters():
 
 
 @pytest.mark.skipif(not HAS_TEX, reason="XeLaTeX/biber absents (validés dans l'image Docker)")
-def test_the_report_is_five_pages_and_the_sheet_two(tmp_path):
+def test_the_report_is_four_pages_and_the_sheet_two(tmp_path):
     PdfReader = pytest.importorskip("pypdf").PdfReader   # extra « dev » du pyproject
 
     ctx, (course, twin, cal, pred, plan, race, _) = context()
@@ -415,9 +425,9 @@ def test_the_report_is_five_pages_and_the_sheet_two(tmp_path):
     generate_figures(course, twin, cal, pred, plan, race, fig_dir, cfg=CFG)
     rapport = build_pdf(ctx, fig_dir, tmp_path / "tex")
     feuille = build_feuille(ctx, fig_dir, tmp_path / "tex-feuille")
-    # couverture + caractéristiques + prédictions + le plan + ton profil ; la feuille, ses
-    # deux tableaux
-    assert len(PdfReader(str(rapport)).pages) == 5
+    # ce que tu vas vivre + où passe le temps + le plan + ton profil ; la feuille, ses deux
+    # tableaux
+    assert len(PdfReader(str(rapport)).pages) == 4
     assert len(PdfReader(str(feuille)).pages) == 2
 
 

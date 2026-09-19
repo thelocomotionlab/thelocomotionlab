@@ -1,11 +1,11 @@
-% Gabarit du rapport Locomotion Twin v3 (classe locomotionreport, Ubuntu Sans).
+% Gabarit du rapport Locomotion Twin v4 (classe locomotionreport, Ubuntu Sans).
 % Délimiteurs Jinja : chevrons doubles (variables), chevron-pourcent (blocs), chevron-dièse
-% (commentaires) — rendu par twin_engine.report.render. Couverture · caractéristiques de la
-% course · prédictions · le plan · ton profil. Chaque page est bornée par LL:BEGIN / LL:END :
-% c'est le squelette, on le réordonne ou on en ajoute sans toucher au moteur.
-% La feuille à emporter est un document à part (feuille.tex.j2).
+% (commentaires) — rendu par twin_engine.report.render.
+%
+% Quatre pages, chacune bornée par LL:BEGIN / LL:END : ce qu'on vivra · où passe le temps ·
+% le plan · le profil et la preuve. L'ordre des blocs dans ce fichier EST l'ordre des pages.
 % Aucun chiffre en dur : tout vient du contexte calculé (tests/test_report_v3.py le vérifie
-% entre les marqueurs LL:BEGIN / LL:END).
+% page par page). La feuille à emporter est un document à part (feuille.tex.j2).
 \documentclass{locomotionreport}
 
 \captionsetup{justification=raggedright, singlelinecheck=false}
@@ -16,84 +16,76 @@
 \begin{document}
 
 % =====================================================================
-% LL:BEGIN couverture
-\LLcouverture
+% LL:BEGIN page-vivre
+\begin{llpremierepage}
   {Plan de course \textperiodcentered{} << report_date >>}
   {<< race_name >>}
   {Pour \textbf{<< athlete >>} \textperiodcentered{} << length_km >>\,km \textperiodcentered{}
-   << dplus_m >>\,m\,D+ \textperiodcentered{} << dminus_m >>\,m\,D−<% if start_time %>\\
+   << dplus_m >>\,m\,D+ \textperiodcentered{} << dminus_m >>\,m\,D−<% if dplus_officiel %>
+   (<< dplus_officiel >>\,m au carnet de route, << dplus_ecart_pct >>\,\%)<% endif %><% if start_time %>\\
    Départ << start_time >><% endif %>}
-  {%
-    {\fontsize{16}{23}\selectfont\color{LLText}%
-<% if plan_low %>    Tu arrives autour de \textbf{<< pred_central >>}<% if arrival_clock %>, le << arrival_clock >><% endif %>.\\
-    << plan_band_word|capitalize >> se joue entre \textbf{<< plan_low >>} et \textbf{<< plan_high >>}.
-<% else %>    Tu arrives autour de \textbf{<< pred_central >>}<% if arrival_clock %>, le << arrival_clock >><% endif %>.\\
-    << safety_word|capitalize >> se joue entre \textbf{<< interval_low >>} et \textbf{<< interval_high >>}.
-<% endif %>    \par}
-  }
-% LL:END couverture
 
-% =====================================================================
-% LL:BEGIN page-parcours
-\LLpage{Ce qu'il y a à monter}{Caractéristiques de la course}
+{\fontsize{15}{21}\selectfont\color{LLText}%
+<% if plan_low %>Tu arrives autour de \textbf{<< pred_central >>}<% if arrival_clock %>, le << arrival_clock >><% endif %>.\\
+<< plan_band_word|capitalize >> se joue entre \textbf{<< plan_low >>} et \textbf{<< plan_high >>}.
+<% else %>Tu arrives autour de \textbf{<< pred_central >>}<% if arrival_clock %>, le << arrival_clock >><% endif %>.\\
+<< safety_word|capitalize >> se joue entre \textbf{<< interval_low >>} et \textbf{<< interval_high >>}.
+<% endif %>\par}
 
-\noindent\begin{minipage}[t]{0.235\linewidth}\LLtile{Distance}{<< length_km >>\,km}{<< deq_km >>\,km à plat, pente convertie en effort}\end{minipage}\hfill
-\begin{minipage}[t]{0.235\linewidth}\LLtile{Dénivelé positif}{<< dplus_m >>\,m}{<< dplus_per_km >>\,m par kilomètre}\end{minipage}\hfill
-\begin{minipage}[t]{0.235\linewidth}\LLtile{En montée}{<< caracteristiques.pente_montee >>\,\%}{pente moyenne, sur << caracteristiques.part_montee >>\,\% de la distance}\end{minipage}\hfill
-\begin{minipage}[t]{0.235\linewidth}\LLtile{En descente}{<< caracteristiques.pente_descente >>\,\%}{pente moyenne, sur << caracteristiques.part_descente >>\,\% de la distance}\end{minipage}
+\vspace{8pt}
+\noindent\begin{minipage}[t]{0.235\linewidth}\LLtile{<% if target_mode %>Au plus tôt<% else %>Rapide<% endif %>}{<< plan_low >>}{<% if arrival_fast_clock %><< arrival_fast_clock >><% else %>départ à préciser<% endif %>}\end{minipage}\hfill
+\begin{minipage}[t]{0.235\linewidth}\LLtileaccent{<% if target_mode %>Ton objectif<% else %>Centrale<% endif %>}{<< pred_central >>}{<% if arrival_clock %><< arrival_clock >><% else %>départ à préciser<% endif %>}\end{minipage}\hfill
+\begin{minipage}[t]{0.235\linewidth}\LLtile{<% if target_mode %>Au plus tard<% else %>Prudent<% endif %>}{<< plan_high >>}{<% if arrival_cautious_clock %><< arrival_cautious_clock >><% else %>départ à préciser<% endif %>}\end{minipage}\hfill
+\begin{minipage}[t]{0.255\linewidth}\LLtilecrew{Pour l'assistance}{<% if arrival_safety_lo_clock %><< arrival_safety_lo_clock >>\LLfleche << arrival_safety_hi_clock >><% else %><< interval_low >>\LLfleche << interval_high >><% endif %>}{<< safety_word >>}\end{minipage}
 
+<% if faits.passe %>
 \vspace{12pt}
-\noindent\includegraphics[width=\linewidth]{figures/profil.png}
-
-\vspace{2pt}
-<< caracteristiques.resume >><% if caracteristiques.plus_dure %> << caracteristiques.plus_dure >><% endif %><% if technicity_pct %> Technicité déclarée : +<< technicity_pct >>\,\% de coût à pente égale.<% endif %>
-<% if caracteristiques.montees %>
-\begin{table}[H]
-  \centering \small \setlength{\tabcolsep}{5pt}
-  \LLtableau \renewcommand{\arraystretch}{1.6}
-  \begin{tabularx}{\linewidth}{|c|>{\centering\arraybackslash}X|c|c|c|c|>{\centering\arraybackslash}p{28mm}|}
-    \LLfilet{7}
-    \LLheaderrow
-    \LLthead{\#} & \LLthead{du km \LLfleche au km} & \LLthead{longueur} & \LLthead{D+} & \LLthead{pente} & \LLthead{sommet} & \LLthead{classe} \\
-    \LLfilet{7}
-<% for m in caracteristiques.montees %>    << m.idx >> & \LLnum{<< m.from_km >>} \LLfleche \LLnum{<< m.to_km >>} & \LLnum{<< m.length_km >>\,km} & \LLnum{<< m.dplus >>\,m} & \LLnum{<< m.grade >>\,\%} & \LLnum{<< m.alt_top >>\,m} & \LLfort{<< m.label >>} \\
-    \LLfilet{7}
-<% endfor %>  \end{tabularx}
-  \caption{<< caracteristiques.legende >>}
-\end{table}
-<% endif %>% LL:END page-parcours
+\begin{llnote}[Ton passé]
+{\fontsize{10}{14}\selectfont
+<% for l in faits.passe %><< l.phrase >><% if not loop.last %>\par<% endif %>
+<% endfor %>}
+\end{llnote}
+<% endif %><% if faits.intensites %>
+\begin{llverdict}[L'intensité]
+{\fontsize{10}{14}\selectfont << faits.intensites.phrase >>\par}
+\end{llverdict}
+<% endif %>\end{llpremierepage}
+% LL:END page-vivre
 
 % =====================================================================
-% LL:BEGIN page-course
-\LLpage{<% if start_time_short %><< start_time_short >><% else %>Départ à préciser<% endif %>}{Prédictions par jumeau numérique}
+% LL:BEGIN page-temps
+\LLpage{<% if start_time_short %><< start_time_short >><% else %>Départ à préciser<% endif %>}{Où passe le temps}
 
-\noindent\begin{minipage}[t]{0.315\linewidth}\LLtile{<% if target_mode %>Au plus tôt<% else %>Rapide<% endif %>}{<< plan_low >>}{<% if arrival_fast_clock %><< arrival_fast_clock >><% else %>départ à préciser<% endif %>}\end{minipage}\hfill
-\begin{minipage}[t]{0.315\linewidth}\LLtileaccent{<% if target_mode %>Ton objectif<% else %>Centrale<% endif %>}{<< pred_central >>}{<% if arrival_clock %><< arrival_clock >><% else %>départ à préciser<% endif %>}\end{minipage}\hfill
-\begin{minipage}[t]{0.315\linewidth}\LLtile{<% if target_mode %>Au plus tard<% else %>Prudent<% endif %>}{<< plan_high >>}{<% if arrival_cautious_clock %><< arrival_cautious_clock >><% else %>départ à préciser<% endif %>}\end{minipage}
-
-\vspace{10pt}
-\noindent\begin{minipage}[t]{0.47\linewidth}
-  \LLetiquette{Ce que ça donne}\par\vspace{3pt}
-  << plan_band_word|capitalize >> se joue entre \textbf{<< plan_low >>} et \textbf{<< plan_high >>}. Mouvement << t_move_h >> + arrêts << stops.hours_hm >> = horloge \textbf{<< t_clock_h >>}.
-\end{minipage}\hfill
-\begin{minipage}[t]{0.47\linewidth}
-  \LLetiquette{Ce qui décidera}\par\vspace{3pt}
-<% if vc_fraction_pct %>  Environ << vc_fraction_pct >>\,\% de ta vitesse critique<% if vc_low %> : la vitesse ne sera pas le sujet, l'endurance et le ravitaillement décideront<% else %> : la régularité et la durabilité décideront<% endif %>.
-<% else %>  Une allure très loin de tout seuil : l'endurance, la durabilité et le ravitaillement décideront.
-<% endif %>\end{minipage}
-
-\vspace{4pt}
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\linewidth]{figures/cumul.png}
-  \caption{<< caption_cumul >>}
-\end{figure}
-
+\noindent\includegraphics[width=\linewidth]{figures/profil.png}
 \vspace{2pt}
-\begin{llverdict}[Ce que valent ces chiffres]
-<< honesty >><% if width_prescription %>\par\vspace{3pt}<< width_prescription >><% endif %>
-\end{llverdict}
-% LL:END page-course
+{\fontsize{8.4}{11}\selectfont\color{LLSoft}Les traits verticaux sont les ravitaillements ; la trame sombre, les heures de nuit.\par}
+<% if faits.ventilation %>
+\vspace{10pt}
+\LLetiquette{Le temps prévu}\par\vspace{5pt}
+\noindent<% for p in faits.ventilation.parts %>\LLtroncon{<< p.fraction >>}{<% if p.cle == 'montee' %>LLAccentInk<% elif p.cle == 'descente' %>LLPrimary<% elif p.cle == 'roulant' %>LLAccent<% else %>LLMistLine<% endif %>}<% endfor %>\par
+\vspace{5pt}
+{\fontsize{9}{12}\selectfont<% for p in faits.ventilation.parts %>\LLpuce{<% if p.cle == 'montee' %>LLAccentInk<% elif p.cle == 'descente' %>LLPrimary<% elif p.cle == 'roulant' %>LLAccent<% else %>LLMistLine<% endif %>}<< p.quoi >> \textbf{<< p.hm >>} (<< p.pct >>\,\%)<% if not loop.last %>\hfill<% endif %><% endfor %>\par}
+\vspace{3pt}
+{\fontsize{8.4}{11}\selectfont\color{LLSoft}<< faits.ventilation.legende >>\par}
+<% endif %><% if faits.moments %>
+\vspace{12pt}
+\LLetiquette{Les trois moments qui décident}\par\vspace{5pt}
+{\fontsize{9.4}{9.4}\selectfont\LLtableau
+\setlength{\tabcolsep}{5pt}\renewcommand{\arraystretch}{1.9}
+\begin{tabularx}{\linewidth}{|>{\raggedright\arraybackslash}p{38mm}|>{\raggedright\arraybackslash}X|>{\centering\arraybackslash}p{34mm}|>{\centering\arraybackslash}p{16mm}|}
+  \LLfilet{4}
+  \LLheaderrow
+  \LLthead{} & \LLthead{où} & \LLthead{quand} & \LLthead{durée} \\
+  \LLfilet{4}
+<% for m in faits.moments %>  \LLfort{<< m.quoi >>} & << m.ou >> \newline {\color{LLSoft}<< m.detail >>} & << m.quand >> & \LLprevu{<< m.duree >>} \\
+  \LLfilet{4}
+<% endfor %>\end{tabularx}\par}
+<% endif %><% if faits.lever %>
+\vspace{10pt}
+\begin{llnote}[Le lever du jour]
+{\fontsize{10}{14}\selectfont << faits.lever.phrase >>\par}
+\end{llnote}
+<% endif %>% LL:END page-temps
 
 % =====================================================================
 % LL:BEGIN page-plan
@@ -123,13 +115,24 @@ avant de les donner à ton assistance.
     \LLthead{\#} & \LLthead{Vers} & \LLthead{km} & \LLthead{D+} & \LLthead{D−} & \LLthead{allure} & \LLthead{<< clock_titles.fast >>} & \LLthead{<< clock_titles.central >>} & \LLthead{<< clock_titles.cautious >>} & \LLthead{Sur ce segment} \\
     \LLfilet{10}
 <% for s in feuille_rows %><% if s.contact %>    \LLassist
+<% elif s.night %>    \LLnuitrow
 <% endif %>    << s.idx >> & << s.to >> & \LLnum{<< s.km >>} & <% if s.strong_dplus %>\LLfort{<< s.dplus >>}<% else %>\LLnum{<< s.dplus >>}<% endif %> & <% if s.strong_dminus %>\LLfort{<< s.dminus >>}<% else %>\LLnum{<< s.dminus >>}<% endif %> & \LLnum{<< s.pace >>} & \LLnum{<% if s.fast.day %><< s.fast.day >> <% endif %><< s.fast.hour >>} & \LLprevu{\LLnum{<% if s.central.day %><< s.central.day >> <% endif %><< s.central.hour >>}} & \LLnum{<% if s.cautious.day %><< s.cautious.day >> <% endif %><< s.cautious.hour >>} & <% if s.contact %>\LLsepfin{<< s.marche >>}<% else %><< s.marche >><% endif %> \\
     \LLfilet{10}
 <% endfor %>  \end{tabularx}
   \caption{Les trois colonnes sont titrées par leur heure d'arrivée : repère tôt celle qui te correspond et suis-la. Les lignes teintées sont les ravitaillements ouverts à ton assistance.<% if target_mode %> Autour d'un objectif, ce sont les bornes d'une fenêtre de passage — une tolérance d'exécution de $\pm$<< target_tolerance_pct >>\,\%, pas une probabilité.<% else %> Entre la première et la dernière, << plan_band_word >>.<% endif %>}
 \end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{figures/cumul.png}
+  \caption{<< caption_cumul >>}
+\end{figure}
+
+\begin{llattention}[Le coût d'un écart]
+{\fontsize{9}{12}\selectfont << faits.erreur.forme >>\par\vspace{3pt}<< faits.erreur.depart >>\par}
+\end{llattention}
 <% if target_requested %>
-\LLtitre{Ton objectif face à ton jumeau}
+\LLtitre{Ton objectif}
 Tu as demandé un plan pour \textbf{<< target_hm >>} : \textbf{<< target_regime_label >>}.
 Il faudrait tenir \LLnum{<< target_required_v >>}\,km/h ajustés<% if target_vc_pct %>, soit
 << target_vc_pct >>\,\% de ta vitesse critique<% endif %><% if target_gap_pct %>, ce qui te situe
@@ -143,11 +146,10 @@ est un objectif d'entraînement pour la saison.
 <% else %>\begin{llattention}[Ce plan suppose ton objectif tenable]
 Il répartit au mieux la durée que tu as choisie en respectant ta courbe de fatigue ; il ne le rend pas tenable. La référence de ce qui est probable reste la prédiction et ses bornes de sécurité.
 \end{llattention}
-<% endif %><% endif %>
-% LL:END page-plan
+<% endif %><% endif %>% LL:END page-plan
 
 % =====================================================================
-% LL:BEGIN page-profil
+% LL:BEGIN page-preuve
 \LLpage{La preuve}{Ton profil}
 
 << opening >>
@@ -160,29 +162,25 @@ Il répartit au mieux la durée que tu as choisie en respectant ta courbe de fat
 <% for g in gauges[2:] %>\LLgauge{<< g.label >>}{<< g.value >>}{<< g.fraction >>}{<< g.sentence >>}
 <% endfor %>\end{minipage}
 
-<% if durability_pourtoi %>\par\vspace{-2pt}
-<< durability_pourtoi >>\par
-<% endif %><% if vc_implausible %>\begin{llattention}[Vitesse critique non affichée]
+<% if vc_implausible %>\begin{llattention}[Vitesse critique non affichée]
 L'estimation de ta vitesse critique ressort au-dessus du plafond physiologique plausible : elle
 trahit des données suspectes plutôt qu'un vrai seuil. Ni sa valeur ni aucun « \% de VC » ne sont
 utilisés dans ce rapport ; la prédiction, elle, n'en dépend pas.
 \end{llattention}
 <% endif %>
 \par\vspace{4pt}
-\noindent\begin{minipage}{\linewidth}
-\begin{minipage}[t]{0.655\linewidth}\vspace{0pt}
-<% if vc_kmh %>\includegraphics[width=\linewidth]{figures/record.png}\par\vspace{2pt}
-{\fontsize{7.4}{9.4}\selectfont\color{LLSoft}<< caption_record >>\par}
-<% endif %>\end{minipage}\hfill
-\begin{minipage}[t]{0.305\linewidth}\vspace{0pt}
-<% if has_cv %>\includegraphics[width=\linewidth]{figures/validation.png}\par\vspace{2pt}
-{\fontsize{7.4}{9.4}\selectfont\color{LLSoft}<< caption_validation >>\par}
+<% if has_cv %>\noindent\begin{minipage}[t]{0.60\linewidth}\vspace{0pt}
+\includegraphics[width=\linewidth]{figures/validation.png}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.36\linewidth}\vspace{2pt}
+{\fontsize{8.6}{11.5}\selectfont\color{LLSoft}<< caption_validation >>\par\vspace{5pt}
+\color{LLText}<< honesty >><% if width_prescription %> << width_prescription >><% endif %>\par}
+\end{minipage}
 <% else %>\LLetiquette{Validation impossible}\par\vspace{3pt}
-{\fontsize{8.4}{11}\selectfont\color{LLText}Moins de trois vrais ultras : la validation croisée
+{\fontsize{9}{12}\selectfont\color{LLText}Moins de trois vrais ultras : la validation croisée
 n'est pas calculable et la prédiction repose sur une extrapolation (<< regime_label >>). Un ordre
 de grandeur, pas une cible ferme.\par}
-<% endif %>\end{minipage}
-\end{minipage}
+<% endif %>
 
 \begin{llhonnete}
 {\fontsize{9}{12}\selectfont
@@ -190,19 +188,17 @@ de grandeur, pas une cible ferme.\par}
 <% endfor %>}\par\vspace{5pt}
 {\color{LLHairline}\hrule height 0.4pt}\par\vspace{5pt}
 \noindent\begin{minipage}[t]{0.87\linewidth}\vspace{0pt}
-  \LLetiquette{Ce que le plan suppose}\par\vspace{2pt}
+  \LLetiquette{Les hypothèses}\par\vspace{2pt}
   {\fontsize{8.2}{10.6}\selectfont\ignorespaces
   <% for a in assumptions %><< a >><% if not loop.last %> <% endif %><% endfor %>
-  {\color{LLSoft}Le code ouvre l'annexe en ligne : méthode, calibration course par course,
-  validation croisée, plan complet, et le formulaire qui personnalise ton tableau de marche.}\par}
+  {\color{LLSoft}Le code ouvre l'annexe : méthode, calibration, courbe record, plan complet,
+  et le formulaire qui personnalise ton tableau de marche. Sans téléphone,
+  {\LLmonofont\fontsize{7.6}{10}\selectfont\color{LLPrimaryDark}\url{<< annex_url >>}}}\par}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.1\linewidth}\vspace{0pt}
   \LLqr{<< annex_url >>}
 \end{minipage}
-\par\vspace{5pt}
-{\fontsize{8.2}{10.6}\selectfont\color{LLSoft}Sans téléphone :
-{\LLmonofont\fontsize{8}{10}\selectfont\color{LLPrimaryDark}\url{<< annex_url >>}}\par}
 \end{llhonnete}
-% LL:END page-profil
+% LL:END page-preuve
 
 \end{document}

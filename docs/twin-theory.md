@@ -373,56 +373,61 @@ rapport full** (dépend du nouveau profil horaire).
 
 ---
 
-## 7. Rapport (v3 — DIAGNOSTIC §10.19 et §10.20)
+## 7. Rapport (v4 — DIAGNOSTIC §10.19 à §10.21)
 
-Rendu **LaTeX** (classe `locomotionreport`, **Ubuntu Sans** en instances statiques, XeLaTeX + biber),
-figures matplotlib aux couleurs de la charte (`packages/ui/src/styles/theme.css`, source unique :
-`report/charte.py`). La marque est le signe circulaire suivi du mot-symbole composé en texte ; en
-en-tête de page, seul le nom de la course l'accompagne. **Cinq pages, et ni résumé, ni mots-clés,
-ni table des matières, ni glossaire** (tout cela est à l'annexe en ligne) ; en pied, un filet ocre
-et le folio, rien d'autre :
+Rendu **LaTeX** (classe `locomotionreport`, **Ubuntu Sans** en instances statiques, XeLaTeX +
+biber), figures matplotlib aux couleurs de la charte (`packages/ui/src/styles/theme.css`,
+source unique : `report/charte.py`). **Quatre pages**, chacune bornée par des marqueurs dans
+le gabarit ; en pied, un filet ocre et le folio, rien d'autre.
 
-1. **Couverture** — bande verticale bleu-vert et liseré ocre au bord gauche, la marque en grand, le
-   titre, et ce que l'athlète doit retenir avant d'ouvrir : la phrase de prédiction et sa bande.
-2. **Caractéristiques de la course** — ce que demande le parcours, avant toute prédiction :
-   distance, dénivelé, pente moyenne en montée et en descente avec la part de distance de chacune,
-   le profil où les **montées classées en kilomètres verticaux** sont teintées et nommées, et leur
-   table (du km au km, longueur, D+, pente, sommet, classe). Une montée continue est celle qu'une
-   descente de moins de 40 m ne coupe pas ; le KV se compte par demi (`course/montees.py`).
-3. **Prédictions par jumeau numérique** — trois tuiles (rapide, centrale, prudent), ce que ça
-   donne, ce qui décidera, la courbe du cumul et sa bande, et l'encadré qui dit ce que valent ces
-   chiffres (erreur LOO mesurée).
-4. **Le plan** — dérive assumée et sa preuve, politique d'arrêts, la table par segment (trois
-   colonnes titrées par leur heure d'arrivée, une consigne par segment, les ravitaillements ouverts
-   à l'assistance teintés) ; la section objectif s'il y en a un.
-5. **Ton profil** — quatre jauges, la courbe record, le nuage de validation croisée, les quatre
-   limites, ce que le plan suppose, **QR vers l'annexe en ligne** et, dessous, la même adresse en
-   clair pour qui n'a pas de téléphone.
+**La règle du rapport : rien ne s'imprime qui ne se calcule.** Aucune catégorie, aucune
+échelle, aucun barème n'est inventé ; un mot du trail garde son sens du terrain ; une mesure
+absente des fichiers de l'athlète ne produit pas de ligne et n'est jamais remplacée par une
+valeur de population. Un test refuse tout chiffre écrit dans un gabarit.
 
-**Aucun indice de confiance ne s'imprime.** La garde de suffisance décide toujours si un rapport
-est vendable (🔴 = on ne vend pas) et son verdict reste au registre et à l'annexe ; ce que
-l'athlète lit, ce sont les erreurs mesurées, pas une note.
+1. **Ce que tu vas vivre** — garde et prédiction fondues : la marque, la course, le départ, la
+   phrase de prédiction, les trois scénarios et la fenêtre de l'assistance. Puis la course
+   mise en regard de son passé (durée, D+, plus longue descente continue, nuits — la même
+   règle de mesure des deux côtés) et les deux intensités sur la même échelle, avec le rang de
+   cette course dans sa série d'ultras.
+2. **Où passe le temps** — le profil (ravitaillements et trame de nuit, aucune annotation de
+   catégorie), la ventilation du temps prévu en montée / terrain roulant / descente / arrêts
+   (seuil déclaré `course.flat_grade_pct`, somme = l'horloge du plan), les trois moments qui
+   décident (plus gros D+ continu, plus grosse D− continue, segment le plus long prévu) et le
+   lever du jour.
+3. **Le plan** — dérive assumée et sa preuve, politique d'arrêts, la table par segment, la
+   courbe du cumul, et le coût d'un écart : la journée à −10 % de forme rejoue le point fixe
+   (c'est une prédiction), le départ 10 % trop vite n'est qu'une arithmétique et le rapport le
+   dit — le moteur ne modélise pas ce que coûte une explosion.
+4. **Ton profil et la preuve** — les jauges (une par mesure disponible ; une jauge alimentée
+   par un défaut n'existe pas), la validation croisée en grand avec l'erreur mesurée, les
+   quatre limites, les hypothèses, le QR et l'adresse en clair. La courbe record et le plan
+   intégral vivent à l'annexe.
+
+**Aucun indice de confiance ne s'imprime.** La garde de suffisance décide toujours si un
+rapport est vendable (🔴 = on ne vend pas) et son verdict reste au registre et à l'annexe ; ce
+que l'athlète lit, ce sont les erreurs mesurées.
 
 **La feuille à emporter** (`feuille.pdf`, A4 paysage recto-verso, imprimable seule par
-`--feuille-seule`) ne porte que deux tableaux. Recto, le tableau de marche : une ligne par segment,
-km cumulé et km du segment, D+ et D− du segment, allure terrain, les trois heures de passage (la
-prévue en gras, le préfixe de jour non répété), arrêt, un point quand le segment est de nuit, une
-case « type de ravito » à remplir, et une consigne déduite des chiffres du segment (ou écrite par
-l'athlète, `RaceSpec.reglages`), jamais répétée. Chaque case porte son filet, toutes ont la même
-largeur, et la colonne de l'heure prévue est encadrée en pointillé ocre, expliquée par une légende.
-Verso, le tableau d'assistance : au plus tôt / prévu / au plus tard, bornes de sécurité étalées le
-long du parcours — à l'arrivée elles redonnent exactement la fenêtre de la couverture. Une seule
-couleur d'en-tête, des filets, tout centré, et la seule ligne teintée est celle où l'assistance
-attend. En pied, le folio seul.
+`--feuille-seule`) ne porte que deux tableaux. Recto, le tableau de marche : une ligne par
+segment, les trois heures de passage, et une colonne de consignes qui ne porte que des moments
+**singuliers** (l'entrée et la sortie de nuit, le segment le plus long, la plus grosse montée,
+la plus grosse descente, ce que l'athlète et son assistance ont écrit) — ailleurs la case est
+vide, et c'est de la place pour écrire. Trois encodages seulement : colonne encadrée = l'heure
+prévue, ligne ocre = assistance, ligne grise = de nuit. Verso, le tableau d'assistance, où les
+lignes grises sont les postes de nuit.
 
-**Autour du PDF** : `plan.ics` (un événement par point d'assistance), `plan.gpx` (trace + points de
-passage horodatés), `annexe.json` (l'annexe en ligne). Les probabilités se disent **en courses**
-(« une course sur deux »), les heures « 19h23 », et la référence du rapport ne s'imprime que portée
-par l'adresse de l'annexe.
+**Autour du PDF** : `plan.ics`, `plan.gpx`, `annexe.json`. Les probabilités se disent **en
+courses** (« une course sur deux »), les heures « 19h23 », et la référence du rapport ne
+s'imprime que portée par l'adresse de l'annexe.
 
-La page d'annexe personnalise le tableau de marche (arrêts, recommandations, nutrition, assistance)
-sans rien écrire : elle rejoue côté navigateur la règle d'arrêts de `build_pacing` pour afficher les
-heures du prochain PDF, et rend un bloc `{reglages, crew, nutrition}` à recoller dans la spec.
+La page d'annexe personnalise le tableau de marche (arrêts, recommandations, nutrition,
+assistance) sans rien écrire : elle rejoue côté navigateur la règle d'arrêts de `build_pacing`
+pour afficher les heures du prochain PDF, et rend un bloc `{reglages, crew, nutrition}` à
+recoller dans la spec.
+
+**Le squelette se réordonne à la main** : `docs/maquettes/rapport-v4/canevas.md` dit quel bloc
+lit quelle clé, `docs/manuel-twin.md` §7 dit comment le déplacer.
 
 ---
 

@@ -2669,3 +2669,74 @@ mot de confiance non plus.
 en ligne de commande. Une annexe qui écrit demanderait un service (persistance, authentification,
 re-rendu) — un chantier à part. La structure du rapport, elle, est maintenant un squelette qui se
 réordonne à la main : `docs/manuel-twin.md` §7 dit comment.
+
+### 10.21 Rapport v4 — ne dire que ce que les données savent (2026-09-19)
+
+**La régression de géométrie, élucidée.** Entre le rapport du 16/09 et celui du 18/09, la
+distance passait de 167,2 à 169,7 km, le D+ de 8 874 à 9 111 m, et l'arrivée prédite prenait
+une heure. `course/profile.py` n'avait pas bougé depuis le 8 septembre : c'est
+`examples/nice-100m.json` qui a été réécrit le 17/09 (commit `8dd4fca`), le carnet de route de
+l'édition 2026 remplaçant celui de la précédente — réécriture déclenchée par la garde « pas de
+nom de ravitaillement bouchon » posée le même jour.
+
+Ce que ça explique, mesuré sur une trace synthétique et épinglé par un test : changer le carnet
+change la distance affichée (`length_km = aid_km[-1]`) et déplace toutes les bornes de segment,
+donc les D+/D− par segment ; **mais jamais les totaux**, calculés sur toute la grille avant tout
+recalage. Un D+ total qui bouge ne peut venir que de la trace ou du lissage — et le lissage n'a
+pas changé (il faudrait descendre la fenêtre de 150 à ~65 m pour gagner 2,7 %). La trace a donc
+changé elle aussi. Les six chiffres par segment des deux rapports ne sont pas comparables : ils
+ne mesurent pas le même bout de montagne.
+
+Le « 1 m de D− sur 4,7 km » du segment de Rimplas n'est pas un bug : ce segment va de
+St-Sauveur (km 65,0) à Rimplas (km 69,7), c'est une montée continue. Une montée régulière
+n'affiche de la descente que si ses ondulations redescendent plus fort qu'elle ne monte ; un
+test le fixe (`test_a_continuous_climb_shows_no_descent`).
+
+`tests/test_geometrie.py` épingle désormais la géométrie d'un parcours de référence
+déterministe — distance, D+, D−, Deq et le D+/D− de chaque segment, avec des tolérances
+déclarées (un pour mille sur les totaux, un demi pour cent ou deux mètres sur un segment) —
+et celle du parcours réel dès que sa trace et ses références sont posées
+(`tools/diag_parcours.py --references`). Le D+ du carnet de route, jusque-là inutilisé,
+s'affiche à côté du D+ mesuré avec son écart : le moteur garde ce qu'il mesure (c'est lui que
+Minetti intègre), et l'écart s'explique au lieu de surprendre.
+
+**Les pages KV sont retirées.** Une montée de 332 m classée « demi-KV » était gonflée de 50 %
+par l'arrondi ; un kilomètre vertical est un format de course (≈1 000 m en 5 km), pas une unité
+de mesure ; la classe n'ajoutait rien à la colonne D+ qui la précédait ; et les étiquettes se
+chevauchaient sur le profil. Le découpage en montées continues, lui, est un calcul valable : il
+reste dans le moteur (`course/montees.py`, sans nomenclature, avec son miroir en descente) et
+sert à nommer les trois moments qui décident.
+
+**Six faits, chacun un calcul** (`report/faits.py`, dix tests) : la course comparée à ses
+propres ultras (durée, D+, plus longue descente continue, nuits — une ligne par mesure
+disponible, aucune valeur de population en repli) ; les deux intensités sur la même échelle et
+le rang de la course dans sa série ; la ventilation du temps prévu en montée, terrain roulant,
+descente et arrêts (seuil déclaré `course.flat_grade_pct = 5 %`, sa somme redonne l'horloge du
+plan) ; le coût d'un écart — la journée à −10 % de forme rejoue le point fixe, le départ 10 %
+trop vite n'est qu'une arithmétique et le dit ; les trois moments choisis par trois critères
+explicites ; le lever du jour et l'endroit où il tombe. Deux mesures nouvelles sur les
+activités, calculées par la MÊME règle que sur un parcours : plus longue montée et plus longue
+descente continues, et le nombre de nuits traversées.
+
+**Quatre pages** : ce que tu vas vivre (garde et prédiction fondues) · où passe le temps · le
+plan · ton profil et la preuve. Une seule figure reste dans le rapport, la validation croisée ;
+la courbe record part à l'annexe.
+
+**Les textes.** Une seule table de mots par classe de profil : le récit d'ouverture et la jauge
+lisaient deux tables différentes et se contredisaient (« ton allure baisse peu » contre « comme
+celle de la plupart »). La classe « équilibré » dit maintenant ce qu'elle mesure — la place de
+l'exposant dans la population. Les titres-formules et les phrases en balancier sont retirés, et
+`tests/test_narrative.py` tient une liste noire vérifiée sur le contexte rendu et sur les deux
+gabarits. Une jauge n'affiche que du mesuré : sans taux d'arrêt mesuré, la jauge des arrêts
+n'existe pas, l'hypothèse va au bloc des hypothèses.
+
+**La feuille.** Les consignes ne portent plus que des moments singuliers (cinq ou six au plus) ;
+partout ailleurs la case est vide, et la légende le dit. La nuit quitte le point après le numéro
+pour une trame de fond de ligne ; sur le verso, la teinte dit les postes de nuit. La colonne
+« type de ravito » devient « eau / ravito » et disparaît quand la nutrition n'est pas déclarée.
+
+**Reste ouvert.** La trace de Nice n'est pas dans le dépôt : la cause de l'écart de D+ est
+établie par le code et par les tests, elle sera confirmée en rejouant les deux traces
+(`tools/diag_parcours.py a.gpx --contre b.gpx --race examples/nice-100m.json`). Tant que la
+trace n'est pas posée, le cas de référence ne peut pas être recalculé ici.
+

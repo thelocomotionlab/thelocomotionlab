@@ -19,8 +19,8 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg  # noqa: E402
 from matplotlib.figure import Figure  # noqa: E402
 from matplotlib.ticker import FuncFormatter, NullFormatter  # noqa: E402
 
-from ..course.montees import montees  # noqa: E402
 from .charte import FONT_FAMILY, FONT_FILES, hexa  # noqa: E402
+from .feuille import night_km_ranges  # noqa: E402
 
 # palette : les tokens de la charte (report/charte.py = theme.css), jamais une valeur en dur
 SAGE = hexa("primary")
@@ -86,21 +86,18 @@ def _fr_axes(*axes, x: int = 0, y: int = 0) -> None:
 
 
 
-def _fig_profil(course, ax, *, title: bool = True, climbs: bool = True) -> None:
+def _fig_profil(course, ax, *, title: bool = True, nuits: tuple = ()) -> None:
+    """Le profil : la trace, les points de passage, et les heures de nuit. Rien d'autre —
+    aucune catégorie, aucune étiquette posée sur le relief."""
     off = course.off_km_grid
     es = course.alt_smooth_m
     aid = course.aid_km
     ymin, ymax = float(es.min()), float(es.max())
-    # les montées classées, à leur place sur la trace : c'est la répartition, lue d'un coup.
-    # Leurs étiquettes tiennent dans une bande d'air au-dessus du profil, jamais sur lui.
-    liste = montees(course) if climbs else []
-    pad = (ymax - ymin) * (0.20 if liste else 0.08)
+    pad = (ymax - ymin) * 0.08  # un peu d'air en haut seulement
     ax.fill_between(off, es, ymin, color=SAGE, alpha=0.30, lw=0)
-    for m in liste:
-        bande = (off >= m.from_km) & (off <= m.to_km)
-        ax.fill_between(off[bande], es[bande], ymin, color=GOLD, alpha=0.35, lw=0)
-        ax.annotate(m.label, xy=((m.from_km + m.to_km) / 2, ymax + pad * 0.60),
-                    ha="center", va="center", fontsize=7.4, color=GOLDINK, weight="bold")
+    # la nuit : une trame sombre du sol au plafond, elle se comprend sans légende
+    for km0, km1 in nuits:
+        ax.axvspan(km0, km1, color=TERRA, alpha=0.10, lw=0, zorder=0)
     ax.plot(off, es, color=TERRA, lw=1.3)
     for a in aid[1:-1]:
         ax.axvline(a, color=DEEPGRID, lw=0.7, ls=(0, (3, 3)), zorder=0)
@@ -243,18 +240,20 @@ def generate_figures(
     with _RENDER_LOCK:
         # page 1 : la page porte déjà le nom de la course et ses chiffres — pas de titre
         fig = _new((7.4, 3.1))
-        _fig_profil(course, fig.subplots(), title=False)
+        _fig_profil(course, fig.subplots(), title=False, nuits=tuple(night_km_ranges(plan)))
         _save(fig, "profil")
 
         fig = _new((7.4, 3.0))
         _fig_record(twin, calibration, fig.subplots())
         _save(fig, "record")
 
-        fig = _new((7.4, 2.9))
+        fig = _new((7.4, 2.1))
         _fig_cumul(plan, prediction, race, fig.subplots(), interval_label=interval_label)
         _save(fig, "cumul")
 
-        fig = _new((4.6, 3.7))
+        # la seule figure du rapport : son aire de données reste carrée (la diagonale est
+        # son message), la toile est juste assez large pour que les axes restent lisibles
+        fig = _new((5.4, 3.4))
         if _fig_validation(prediction, fig.subplots(), band_pct=band_pct):
             _save(fig, "validation")
 

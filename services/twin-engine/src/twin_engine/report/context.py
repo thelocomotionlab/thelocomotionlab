@@ -12,16 +12,15 @@ from datetime import date, datetime, timedelta
 import numpy as np
 
 from ..calibration import REGIME_BLEND, REGIME_REGRESSION, REGIME_VC_E, stops_statistics
-from ..course.montees import (KV_M, MIN_DPLUS_M, TOLERANCE_M, compte_par_classe,
-                              montees, pentes)
 from ..course.spec import placeholder_aid_names
 from ..feasibility import AMBITIEUX, CONFORTABLE, HORS_DOMAINE, HORS_PORTEE, INDECIDABLE, NOMINAL
 from ..sufficiency import GREEN, ORANGE, RED
-from . import feuille
+from . import faits, feuille
 from ._format import (courses_sur, fr, french_datetime, french_datetime_short,
                       fr_thousands, hm, hm_plain, tex_escape)
 from .livrables import crew_points, finish_point
-from .narrative import build_narrative, vc_frac_band
+from .narrative import (PROFIL_DURABILITE, PROFIL_ENDURANCE, build_narrative,
+                        vc_frac_band)
 
 def _pente_servie(twin, calibration, cfg) -> str | None:
     """Phrase du rapport quand la pente au-delà de 6 h vient d'ailleurs que de l'exposant
@@ -340,12 +339,17 @@ def build_report_context(
         "dminus_m": fr_thousands(course.dminus_m, 0),
         "deq_km": fr_thousands(course.deq_km, 1),
         "dplus_per_km": fr(course.dplus_per_km, 0),
+        # D+ DU CARNET DE ROUTE : le moteur garde ce qu'il mesure sur la trace (c'est lui que
+        # Minetti intègre ; l'aligner reviendrait à redresser l'altimétrie et à fausser le
+        # Deq). Quand l'organisateur en annonce un autre, le rapport affiche les deux et nomme
+        # l'écart : un chiffre qui ne colle pas à l'affiche doit s'expliquer tout seul.
+        **_dplus_officiel(course, race),
         # TERRAIN DÉCLARÉ : le Deq affiché est majoré — le rapport doit le dire, sinon il
         # présente une hypothèse d'entrée comme une mesure du moteur.
         "technicity_pct": (fr(course.technicity_pct, 0)
                            if getattr(course, "technicity_pct", 0) else None),
         "n_segments": len(course.segments),
-        "caracteristiques": _caracteristiques(course),
+        "faits": _faits(prediction, course, plan, twin, calibration, race, cfg),
         "demande_rows": demande_rows,
         # jumeau — la VC n'est affichée que plausible (sinon note d'honnêteté via vc_implausible)
         "vc_kmh": fr(cs.vc_kmh, 2) if vc_ok else None,
@@ -491,6 +495,12 @@ def _clamp(x: float) -> float:
 
 
 def _gauges(ctx: dict, twin, calibration, plan, cfg, stops: dict) -> list[dict]:
+    """Les jauges du profil : UNE MESURE PAR JAUGE, et rien d'autre.
+
+    Une jauge alimentée par un défaut de config donnerait à un réglage l'allure d'une
+    caractéristique de l'athlète. Quand la mesure n'existe pas, la jauge n'existe pas —
+    l'hypothèse va dans le bloc des hypothèses, où elle est nommée comme telle.
+    """
     r = cfg.report
     cs = twin.critical_speed
     vc_ok = cs is not None and cs.plausible
@@ -508,29 +518,26 @@ def _gauges(ctx: dict, twin, calibration, plan, cfg, stops: dict) -> list[dict]:
         "label": "Endurance",
         "value": f"E = {fr(twin.endurance_E, 2)}" if twin.endurance_E else "non mesurée",
         "fraction": _clamp((e_hi - twin.endurance_E) / (e_hi - e_lo)) if twin.endurance_E else 0.0,
-        "sentence": {"diesel": "ton allure baisse peu quand la durée s'allonge : un profil diesel",
-                     "équilibré": "ton allure baisse comme celle de la plupart des ultra-traileurs",
-                     "fade": "ton allure baisse nettement avec la durée : garde de la marge tôt"}.get(
-            pw or "", "à quelle vitesse ton allure soutenable baisse quand la durée s'allonge"),
+        # la MÊME phrase que le récit d'ouverture : une seule table (narrative.PROFIL_ENDURANCE)
+        "sentence": (PROFIL_ENDURANCE[pw][1] if pw in PROFIL_ENDURANCE else
+                     "à quelle vitesse ton allure soutenable baisse quand la durée s'allonge"),
     }, {
         "label": "Durabilité",
         "value": (f"{fr(twin.durability_pct, 0)} % de découplage" if twin.durability_pct is not None
                   else "non chiffrée"),
         "fraction": (_clamp(1.0 - twin.durability_pct / r.gauge_durability_pct)
                      if twin.durability_pct is not None else 0.0),
-        "sentence": {"excellente": "ton efficacité tient jusqu'au bout de tes longues sorties",
-                     "bonne": "ton efficacité baisse modérément en fin de longue sortie",
-                     "à surveiller": "ton efficacité chute nettement en fin d'effort : le point à gérer"}.get(
-            dw or "", "la fréquence cardiaque manque sur tes longues sorties"),
-    }, {
-        "label": "Arrêts",
-        "value": stops["rate_text"],
-        "fraction": _clamp(1.0 - stops["rate_min_per_h"] / r.gauge_stops_min_per_h),
-        "sentence": (f"ton taux mesuré sur {stops['n']} de tes ultras, appliqué à ce parcours : "
-                     f"{stops['hours_plain']} en tout"
-                     if stops["measured"] else
-                     "la politique du plan, faute d'ultra avec des arrêts mesurés"),
+        "sentence": (PROFIL_DURABILITE[dw] if dw in PROFIL_DURABILITE else
+                     "la fréquence cardiaque manque sur tes longues sorties"),
     }]
+    if stops["measured"]:
+        gauges.append({
+            "label": "Arrêts",
+            "value": stops["rate_text"],
+            "fraction": _clamp(1.0 - stops["rate_min_per_h"] / r.gauge_stops_min_per_h),
+            "sentence": (f"ton taux mesuré sur {stops['n']} de tes ultras, appliqué à ce "
+                         f"parcours : {stops['hours_plain']} en tout"),
+        })
     return [{**g, "label": tex_escape(g["label"]), "value": tex_escape(g["value"]),
              "sentence": tex_escape(g["sentence"]), "fraction": round(g["fraction"], 3)}
             for g in gauges]
@@ -620,72 +627,150 @@ def _verdict_sentence(sufficiency, calibration, twin, cfg) -> str:
     return tex_escape(_fr_decimals(cap or (sufficiency.reasons[-1] if sufficiency.reasons else "")))
 
 
-def _caracteristiques(course) -> dict:
-    """Ce que le parcours demande, avant toute prédiction : ses pentes et ses montées.
+def _faits(prediction, course, plan, twin, calibration, race, cfg) -> dict:
+    """Les six faits du rapport, mis en phrases. Le calcul est dans ``report.faits`` ; ici on
+    ne fait que choisir les mots et poser les virgules. Ce qui ne se calcule pas ne rend
+    aucune clé : le gabarit n'imprime alors rien, il n'a pas de repli à inventer."""
+    # les six clés existent toujours, vides quand la mesure manque : le gabarit teste, il ne
+    # cherche pas une clé qui pourrait ne pas être là
+    out: dict = {"passe": [], "intensites": None, "ventilation": None, "erreur": None,
+                 "moments": [], "lever": None}
 
-    Un coureur lit un parcours en montées, pas en mètres cumulés. On classe donc chaque
-    montée continue en kilomètres verticaux (``course.montees``) et on dit où elle tombe.
-    Tout est mesuré sur le profil : rien n'est déclaré, rien n'est arrondi à la main.
+    # 1. la course contre son passé
+    mots = {
+        "duree": lambda f: (
+            f"\\textbf{{{hm(f['valeur'])}}}, c'est {hm(abs(f['ecart']))} de "
+            f"{'plus' if f['ecart'] > 0 else 'moins'} que {f['quoi']} "
+            f"({hm(f['record'])}{_en(f['quand'])})."),
+        "dplus": lambda f: (
+            f"\\textbf{{{fr_thousands(f['valeur'], 0)}\\,m de D+}}, c'est "
+            f"{_combien(f['ratio'])} {f['quoi']} "
+            f"({fr_thousands(f['record'], 0)}\\,m{_en(f['quand'])})."),
+        "descente": lambda f: (
+            f"La plus longue descente d'une traite fait \\textbf{{{fr_thousands(f['valeur'], 0)}"
+            f"\\,m}}, soit {_combien(f['ratio'])} {f['quoi']} "
+            f"({fr_thousands(f['record'], 0)}\\,m{_en(f['quand'])})."),
+        "nuits": lambda f: (
+            f"\\textbf{{{_nuits_mot(f['valeur'])}}} dehors ; ton maximum est "
+            f"{_nuits_mot(f['record'])}."),
+    }
+    passe = []
+    for f in faits.contre_son_passe(prediction, course, plan, calibration):
+        phrase = mots.get(f["cle"])
+        if phrase is None:
+            continue
+        passe.append({**f, "phrase": _fr_decimals(phrase(f))})
+    out["passe"] = passe
+
+    # 2. les deux intensités
+    i = faits.deux_intensites(prediction, twin, calibration)
+    if i:
+        plus = i["plus_forts"]
+        rang = ("plus fort que tout ce que tu as couru en ultra" if plus == 0 else
+                f"plus fort que {i['n'] - plus} de tes {i['n']} ultras" if plus < i["n"] else
+                f"plus doux que tes {i['n']} ultras")
+        out["intensites"] = {
+            "course": fr(i["course_pct"], 0), "ultras": fr(i["ultras_pct"], 0),
+            "mini": fr(i["mini_pct"], 0), "maxi": fr(i["maxi_pct"], 0), "n": i["n"],
+            "phrase": _fr_decimals(
+                f"Cette course demande \\textbf{{{fr(i['course_pct'], 0)}\\,\\%}} de ta "
+                f"vitesse critique. Tes {i['n']} ultras se sont courus entre "
+                f"{fr(i['mini_pct'], 0)} et {fr(i['maxi_pct'], 0)}\\,\\% : c'est {rang}."),
+        }
+
+    # 3. où passe le temps
+    v = faits.ventilation(plan, course, cfg)
+    if v:
+        out["ventilation"] = {
+            "seuil": fr(v["seuil_pct"], 0),
+            "parts": [{"cle": p["cle"], "quoi": p["quoi"], "hm": hm(p["heures"]),
+                       "pct": fr(p["part_pct"], 0), "fraction": p["part_pct"] / 100.0}
+                      for p in v["parts"]],
+            "legende": _fr_decimals(
+                f"Montée et descente au-delà de {fr(v['seuil_pct'], 0)}\\,\\% de pente ; "
+                "entre les deux, le terrain est roulant."),
+        }
+
+    # 4. le coût d'une erreur
+    c = faits.cout_dune_erreur(prediction, plan, course, twin, calibration, cfg)
+    out["erreur"] = {
+        "forme": _fr_decimals(
+            f"Une journée à \\textbf{{{fr(c['forme_pct'], 0)}\\,\\% sous ta forme}} "
+            f"t'amène à \\textbf{{{hm(c['forme']['heures'])}}}, soit "
+            f"{hm(abs(c['forme']['ecart_h']))} de plus."),
+        "depart": _fr_decimals(
+            f"Partir \\textbf{{{fr(c['depart_pct'], 0)}\\,\\% trop vite}} sur "
+            f"{fr(c['depart_heures'], 0)}\\,h te fait gagner "
+            f"{fr(c['depart']['gagne_min'], 0)}\\,min ; pour finir à l'heure prévue il "
+            f"faudrait ensuite tenir {fr(c['depart']['ralentir_pct'], 1)}\\,\\% plus lent "
+            f"sur {fr(c['depart']['reste_h'], 0)}\\,h. Ce second chiffre est une "
+            "arithmétique, pas une prédiction : le moteur ne modélise pas ce que coûte un "
+            "départ raté."),
+    }
+
+    # 5. les trois moments
+    out["moments"] = [{
+        "quoi": m["quoi"],
+        "ou": (f"km {fr(m['from_km'], 0)}\\LLfleche{{}}{fr(m['to_km'], 0)}, vers "
+               f"{tex_escape(m['vers'])}"),
+        "quand": (f"{tex_escape(m['debut_clock'])}\\LLfleche{{}}{tex_escape(m['fin_clock'])}"
+                  if m["debut_clock"] else ""),
+        "duree": hm(m["heures"]),
+        "detail": _fr_decimals(
+            f"{fr_thousands(abs(m['denivele_m']), 0)}\\,m sur {fr(m['longueur_km'], 1)}\\,km "
+            f"à {fr(abs(m['pente_pct']), 1)}\\,\\%"),
+        "nuit": bool(m["nuit"]),
+    } for m in faits.trois_moments(plan, course)]
+
+    # 6. le lever du jour
+    lv = faits.lever_du_jour(plan, race)
+    if lv:
+        out["lever"] = {
+            "heure": lv["heure"], "km": fr(lv["km"], 0), "vers": tex_escape(lv["vers"]),
+            "phrase": _fr_decimals(
+                f"Le jour se lève à \\textbf{{{lv['heure']}}}, vers le km "
+                f"{fr(lv['km'], 0)} — entre {tex_escape(lv['apres'])} et "
+                f"{tex_escape(lv['vers'])}." if lv["apres"] else
+                f"Le jour se lève à \\textbf{{{lv['heure']}}}, vers le km {fr(lv['km'], 0)}."),
+        }
+    return out
+
+
+def _combien(ratio: float) -> str:
+    """« 1,6 fois » au-dessus, « 43 % de » en dessous : un ratio sous 1 ne se lit pas en fois."""
+    if ratio >= 1.0:
+        return f"{fr(ratio, 1)}\\,\\texttimes{{}}"
+    return f"{fr(100 * ratio, 0)}\\,\\% de"
+
+
+def _en(quand: str | None) -> str:
+    """« , en 2025 » quand la date du record est connue."""
+    return f", en {quand[:4]}" if quand and len(quand) >= 4 and quand[:4].isdigit() else ""
+
+
+def _nuits_mot(n: float) -> str:
+    """« une nuit », « deux nuits » — un compte qui se lit, pas un chiffre isolé."""
+    mots = {0: "aucune nuit", 1: "une nuit", 2: "deux nuits", 3: "trois nuits"}
+    k = int(round(n))
+    return mots.get(k, f"{k} nuits")
+
+
+def _dplus_officiel(course, race) -> dict:
+    """Le D+ annoncé par l'organisateur et son écart au D+ mesuré, quand il est déclaré.
+
+    Sous un demi pour cent l'écart n'est pas une information — deux arrondis se rencontrent —
+    et les clés sortent vides : le rapport n'affiche alors que le D+ mesuré.
     """
-    liste = montees(course)
-    p = pentes(course)
-    seuil = fr_thousands(MIN_DPLUS_M, 0)
-    part = sum(m.dplus_m for m in liste) / (float(course.dplus_m) or 1.0)
-    part_txt = fr(100 * part, 0)
-    moitie = course.length_km / 2.0
-    classes = compte_par_classe(liste)
-    enum = ", ".join(f"{c['n']} \\texttimes{{}} {c['label']}" if c["n"] > 1 else c["label"]
-                     for c in classes)
-
-    if not liste:
-        resume = (f"Aucune montée continue de plus de {seuil}\\,m : le D+ de ce parcours se "
-                  "prend par bosses courtes.")
-        plus_dure = ""
-    elif len(liste) == 1:
-        m = liste[0]
-        resume = (f"Une seule montée de plus de {seuil}\\,m, {m.label}, et elle porte "
-                  f"{part_txt}\\,\\% du D+ du parcours.")
-        plus_dure = ""
-    else:
-        apres = sum(1 for m in liste if m.from_km >= moitie)
-        ou = ("toutes dans la première moitié" if apres == 0 else
-              "toutes après la mi-course" if apres == len(liste) else
-              f"dont {apres} après la mi-course")
-        resume = (f"{len(liste)} montées de plus de {seuil}\\,m : {enum}. Elles portent "
-                  f"{part_txt}\\,\\% du D+ du parcours, {ou}.")
-        dure = max(liste, key=lambda m: m.dplus_m)
-        plus_dure = (f"La plus dure part du km {fr(dure.from_km, 0)} : "
-                     f"{fr_thousands(dure.dplus_m, 0)}\\,m à {fr(dure.grade_pct, 1)}\\,\\% "
-                     f"sur {fr(dure.length_km, 1)}\\,km.")
-
+    officiel = getattr(race, "official_dplus_m", None)
+    mesure = float(course.dplus_m)
+    if not officiel or mesure <= 0:
+        return {"dplus_officiel": None, "dplus_ecart_pct": None}
+    ecart = 100.0 * (mesure - float(officiel)) / float(officiel)
+    if abs(ecart) < 0.5:
+        return {"dplus_officiel": None, "dplus_ecart_pct": None}
     return {
-        "pente_montee": fr(p["up_pct"], 1),
-        "pente_descente": fr(abs(p["down_pct"]), 1),
-        "part_montee": fr(p["part_up_pct"], 0),
-        "part_descente": fr(p["part_down_pct"], 0),
-        "part_plat": fr(p["part_flat_pct"], 0),
-        "seuil_m": seuil,
-        # la définition sort d'ici, pas du gabarit : le KV et la tolérance sont des réglages
-        # du découpage, ils ne se réécrivent pas à la main dans une légende
-        "legende": (f"Une montée continue est une montée qu'une descente de moins de "
-                    f"{fr_thousands(TOLERANCE_M, 0)}\\,m ne coupe pas : c'est ce qui se monte "
-                    f"d'une traite. Le kilomètre vertical se compte par demi — "
-                    f"{fr_thousands(KV_M / 2, 0)}\\,m un demi-KV, {fr_thousands(KV_M, 0)}\\,m "
-                    f"un KV, {fr_thousands(2 * KV_M, 0)}\\,m un double KV."),
-        "montees": [{
-            "idx": m.index,
-            "from_km": fr(m.from_km, 0), "to_km": fr(m.to_km, 0),
-            "length_km": fr(m.length_km, 1),
-            "dplus": fr_thousands(m.dplus_m, 0),
-            "grade": fr(m.grade_pct, 1),
-            "alt_top": fr_thousands(m.alt_top_m, 0),
-            "label": m.label,
-        } for m in liste],
-        "classes": classes,
-        "n_montees": len(liste),
-        "part_dplus": part_txt,
-        "resume": resume,
-        "plus_dure": plus_dure,
+        "dplus_officiel": fr_thousands(float(officiel), 0),
+        "dplus_ecart_pct": ("+" if ecart > 0 else "\u2212") + fr(abs(ecart), 0),
     }
 
 

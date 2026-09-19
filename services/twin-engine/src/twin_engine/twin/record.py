@@ -57,6 +57,12 @@ class ActivitySummary:
     ga_down_excess_km: float | None = None
     slope_bins: dict | None = None
     night_share: float | None = None     # part de nuit (0–1) de l'écoulé (efforts longs, position connue)
+    n_nights: int | None = None          # nombre de nuits traversées (blocs de nuit)
+    # plus longue montée / descente CONTINUE de l'activité, mesurées comme sur un parcours
+    # (même grille, même lissage, même hystérésis) : c'est ce qui rend comparable « la plus
+    # grosse descente de ta course » et « la plus grosse que tu aies déjà descendue »
+    longest_climb_m: float | None = None
+    longest_descent_m: float | None = None
     half_split_ratio: float | None = None  # vga hors plateaux : seconde moitié de Deq ÷ première
     mean_alt_m: float | None = None      # altitude moyenne du canal altitude (efforts longs)
 
@@ -397,8 +403,11 @@ def process_activity_full(act: CanonicalActivity, cfg: Config):
 
     # mesures réservées aux efforts longs : nuit (C2), moitiés (fade), altitude moyenne (C3)
     night_share = half_split = mean_alt = None
+    n_nights = longest_climb = longest_descent = None
     if dur >= cfg.twin.long_effort_min_hours * 3600:
         night_share = _night_share_of(act)
+        n_nights = _nights_of(act)
+        longest_climb, longest_descent = _plus_longs_reliefs(act.dist_m, act.alt_m, cfg)
         half_split = _half_split_ratio(dga, stops, n)
         if act.has_altitude and not alt_unusable and np.isfinite(act.alt_m).any():
             mean_alt = float(np.nanmean(act.alt_m))
@@ -424,6 +433,9 @@ def process_activity_full(act: CanonicalActivity, cfg: Config):
         ga_down_excess_km=round(ga_down_excess, 4),
         slope_bins=slope_bins,
         night_share=None if night_share is None else round(night_share, 4),
+        n_nights=n_nights,
+        longest_climb_m=None if longest_climb is None else round(longest_climb),
+        longest_descent_m=None if longest_descent is None else round(longest_descent),
         half_split_ratio=None if half_split is None else round(half_split, 4),
         mean_alt_m=None if mean_alt is None else round(mean_alt),
     )
@@ -447,6 +459,59 @@ def _night_share_of(act: CanonicalActivity) -> float | None:
     tz = float(round(lo / 15.0))
     start_local = act.start_time.astimezone(timezone(timedelta(hours=tz)))
     return night_share(start_local, act.duration_s / 3600.0, la, lo, tz)
+
+
+def _nights_of(act: CanonicalActivity) -> int | None:
+    """Nombre de nuits traversées : les blocs de nuit du même masque que le plan. Un départ
+    de nuit compte pour une nuit. None sans position ni heure de départ."""
+    from datetime import timedelta, timezone
+
+    if act.start_time is None:
+        return None
+    finite = np.isfinite(act.lat) & np.isfinite(act.lon)
+    if not finite.any():
+        return None
+    from ..pacing.sun import night_mask   # import différé : pacing dépend de twin
+
+    la, lo = float(np.median(act.lat[finite])), float(np.median(act.lon[finite]))
+    tz = float(round(lo / 15.0))
+    start_local = act.start_time.astimezone(timezone(timedelta(hours=tz)))
+    mask = night_mask(start_local, act.duration_s, la, lo, tz, step_s=300)
+    if mask.size == 0:
+        return None
+    debuts = int(np.count_nonzero(np.diff(mask.astype(np.int8)) == 1))
+    return debuts + (1 if bool(mask[0]) else 0)
+
+
+def _plus_longs_reliefs(dist_m: np.ndarray, alt_m: np.ndarray, cfg: Config):
+    """(plus longue montée, plus longue descente) continues, en mètres de dénivelé.
+
+    Même chaîne que pour un parcours : grille de distance au pas de la config, lissage à la
+    fenêtre de la config, puis l'hystérésis de ``course.montees``. Sans altitude exploitable
+    ou sous un kilomètre, (None, None).
+    """
+    from ..course.montees import TOLERANCE_M, bornes   # module sans dépendance lourde
+
+    ok = np.isfinite(dist_m) & np.isfinite(alt_m)
+    if int(ok.sum()) < 10:
+        return None, None
+    d, a = np.asarray(dist_m, float)[ok], np.asarray(alt_m, float)[ok]
+    d = d - d[0]
+    total = float(d[-1])
+    if total < 1000.0 or not np.all(np.diff(d) >= 0):
+        d, a = np.maximum.accumulate(d), a
+        total = float(d[-1])
+        if total < 1000.0:
+            return None, None
+    step = float(cfg.course.grid_step_m)
+    xg = np.arange(0.0, total, step)
+    eg = np.interp(xg, d, a)
+    k = max(1, int(round(cfg.course.smooth_window_m / step)))
+    es = np.convolve(np.pad(eg, k, mode="reflect"), np.ones(k) / k, mode="same")[k:-k]
+    haut, bas = bornes(es, TOLERANCE_M)
+    up = max((float(es[i1] - es[i0]) for i0, i1 in haut if i1 > i0), default=0.0)
+    down = max((float(es[i0] - es[i1]) for i0, i1 in bas if i1 > i0), default=0.0)
+    return up, down
 
 
 def _half_split_ratio(dga: np.ndarray, stops, n: int) -> float | None:

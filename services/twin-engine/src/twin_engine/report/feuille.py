@@ -12,6 +12,7 @@ s'injectent telles quelles.
 
 from __future__ import annotations
 
+from ..pacing.plan import fmt_clock
 from ._format import fr, hm, hm_plain
 
 # --------------------------------------------------------------------------- #
@@ -114,52 +115,56 @@ def parts(plan, race) -> list[dict]:
 # --------------------------------------------------------------------------- #
 
 
-def _candidates(seg, *, note: str, is_longest: bool, cfg) -> list[str]:
-    """Consignes possibles pour un segment, de la plus utile à la moins utile.
-
-    Chacune dit ce que les colonnes voisines ne disent pas : le kilométrage, le dénivelé,
-    l'arrêt et la nuit ont déjà leur colonne, une consigne qui les répète ne sert à rien.
-    """
-    r = cfg.report
-    out: list[str] = []
-    if note:
-        out.append(note)
-    if seg.dplus_m >= r.strong_dplus_m and seg.dplus_m >= seg.dminus_m:
-        out.append(f"+{fr(seg.dplus_m, 0)} m : marche, mange en montant")
-    if seg.dminus_m >= r.strong_dminus_m and seg.dminus_m > seg.dplus_m:
-        out.append(f"−{fr(seg.dminus_m, 0)} m : foulée courte, cadence")
-    if is_longest:
-        out.append(f"le plus long : {hm_plain(seg.t_move_min / 60.0)} de marche")
-    return out
-
-
 def consignes(plan, race, cfg) -> list[str]:
-    """Une consigne par segment, déduite de ses chiffres. Deux segments ne portent jamais la
-    même ; quand rien de spécifique ne sort, la case reste vide — mieux vaut du blanc que du
-    remplissage. Une consigne ÉCRITE par l'athlète (``RaceSpec.reglages``) remplace celle que
-    le moteur aurait déduite : c'est sa course."""
+    """Une poignée de consignes SINGULIÈRES, et des cases vides partout ailleurs.
+
+    Une colonne qui répète cinq fois « marche, mange en montant » ne dit rien : l'œil cesse
+    de la lire. N'y figurent donc que des moments uniques sur la feuille :
+
+      * ce que l'athlète a écrit lui-même (``RaceSpec.reglages``) et ce que son assistance
+        prépare (``crew``) — sa voix passe avant tout le reste ;
+      * l'entrée dans la nuit et le retour du jour ;
+      * le segment le plus long, avec sa durée ;
+      * la plus grosse montée et la plus grosse descente du parcours.
+
+    Partout ailleurs la case est vide, et c'est voulu : c'est de la place pour écrire.
+    """
     segs = plan.segments
     if not segs:
         return []
-    notes = contact_notes(race)
-    ecrites = {r.aid_index: r.consigne.strip()
-               for r in race.reglages if r.consigne and r.consigne.strip()}
-    longest = max(range(len(segs)), key=lambda i: segs[i].t_move_min)
-    limit = cfg.report.consigne_max_chars
+    out: list[str] = [""] * len(segs)
 
-    used: set[str] = set(ecrites.values())
-    out: list[str] = []
-    for i, seg in enumerate(segs):
-        if seg.index in ecrites:
-            out.append(ecrites[seg.index])
-            continue
-        cands = _candidates(seg, note=notes.get(seg.index, ""),
-                            is_longest=(i == longest), cfg=cfg)
-        pick = next((c for c in cands if len(c) <= limit and c not in used), "")
-        if pick:
-            used.add(pick)
-        out.append(pick)
-    return out
+    def _poser(i: int, texte: str) -> None:
+        if 0 <= i < len(segs) and not out[i] and texte:
+            out[i] = texte
+
+    # la voix de l'athlète et de son assistance, d'abord
+    for r in race.reglages:
+        if r.consigne and r.consigne.strip():
+            _poser(r.aid_index - 1, r.consigne.strip())
+    for idx, note in contact_notes(race).items():
+        _poser(idx - 1, note)
+
+    # la nuit : deux bascules, pas une trame de plus
+    for run in plan.night_runs:
+        i0 = segs.index(run[0])
+        _poser(i0, "la nuit commence")
+        i1 = segs.index(run[-1])
+        if i1 + 1 < len(segs):
+            _poser(i1 + 1, "le jour revient")
+
+    # le segment le plus long, la plus grosse montée, la plus grosse descente
+    i_long = max(range(len(segs)), key=lambda i: segs[i].t_move_min + segs[i].stop_min)
+    _poser(i_long, f"le plus long : {hm_plain(segs[i_long].t_move_min / 60.0)} de marche")
+    i_up = max(range(len(segs)), key=lambda i: segs[i].dplus_m)
+    if segs[i_up].dplus_m > 0:
+        _poser(i_up, f"la plus grosse montée : +{fr(segs[i_up].dplus_m, 0)} m")
+    i_down = max(range(len(segs)), key=lambda i: segs[i].dminus_m)
+    if segs[i_down].dminus_m > 0:
+        _poser(i_down, f"la plus grosse descente : −{fr(segs[i_down].dminus_m, 0)} m")
+
+    limite = cfg.report.consigne_max_chars
+    return [c if len(c) <= limite else c[:limite - 1].rstrip() + "…" for c in out]
 
 
 # --------------------------------------------------------------------------- #
@@ -207,6 +212,17 @@ def clock_columns(plan, prediction) -> dict:
 # --------------------------------------------------------------------------- #
 
 
+def night_km_ranges(plan) -> list[tuple[float, float]]:
+    """Les sections de nuit en kilomètres (du km, au km) — la matière brute du profil."""
+    segs = plan.segments
+    out: list[tuple[float, float]] = []
+    for run in plan.night_runs:
+        i0 = segs.index(run[0])
+        km0 = segs[i0 - 1].off1 if i0 > 0 else 0.0
+        out.append((float(km0), float(run[-1].off1)))
+    return out
+
+
 def night_sections(plan) -> list[dict]:
     """Les sections de nuit, dans l'ordre, avec leurs bornes en km et en heure de passage.
 
@@ -219,7 +235,7 @@ def night_sections(plan) -> list[dict]:
         i0 = segs.index(run[0])
         km0 = segs[i0 - 1].off1 if i0 > 0 else 0.0
         start_clock = segs[i0 - 1].arr_clock if i0 > 0 else (
-            f"{plan.start_time:%a %Hh%M}" if plan.start_time else None)
+            fmt_clock(plan.start_time) if plan.start_time else None)
         hours = sum((s.t_move_min + s.stop_min) / 60.0 for s in run)
         out.append({
             "from_km": fr(km0, 0), "to_km": fr(run[-1].off1, 0),
@@ -278,5 +294,6 @@ def nutrition_rows(plan, race) -> tuple[list[dict], dict | None]:
     }
 
 
-__all__ = ["clock_columns", "consignes", "contact_notes", "contact_points", "night_sections",
+__all__ = ["clock_columns", "consignes", "contact_notes", "contact_points",
+           "night_km_ranges", "night_sections",
            "nutrition_rows", "parts", "safety_ratios"]

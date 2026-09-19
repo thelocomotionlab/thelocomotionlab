@@ -495,6 +495,10 @@
     \raisebox{\dimexpr\LLsepfactor\ht\strutbox\relax}[0pt][0pt]{%
       \textcolor{LLTableRule}{\rule{\LLseplarg}{\arrayrulewidth}}}}}
 \newcommand{\LLassist}{\rowcolor{LLAssistRow}}
+% La nuit : une trame froide sur toute la ligne. Elle se comprend sans légende — et sur une
+% ligne d'assistance, l'ocre passe devant : c'est elle qui demande une action.
+\colorlet{LLNightRow}{LLSlate!13!LLPaper}
+\newcommand{\LLnuitrow}{\rowcolor{LLNightRow}}
 % \LLprevu{valeur} : la colonne de l'heure prévue — en gras, sans trame : elle est repérée
 % par un cadre pointillé ocre, pas par un aplat de couleur de plus.
 \newcommand{\LLprevu}[1]{{\LLsemiboldfont #1}}
@@ -512,7 +516,6 @@
   \end{tikzpicture}\par}
 
 % \LLnuit : le point qui dit « il fait nuit sur ce segment », posé à côté du numéro.
-\newcommand{\LLnuit}{\,\textcolor{LLSlate}{$\bullet$}}
 % \LLlegende{texte} : la ligne qui dit ce que veulent dire les repères du tableau.
 \newcommand{\LLlegende}[1]{%
   \par\vspace{5pt}{\fontsize{8.4}{11}\selectfont\color{LLSoft}#1\par}}
@@ -522,43 +525,37 @@
 \newcommand{\LLcaselargeur}{16mm}
 \newcommand{\LLcasevide}{\textcolor{LLFillRule}{\makebox[\LLcaselargeur]{\dotfill}}}
 
-% \LLcouverture{surtitre}{titre}{méta}{bloc du bas} : la première page. Barre latérale
-% bleu-vert et son liseré ocre sur toute la hauteur, la marque en haut, le titre, et ce que
-% l'athlète doit retenir avant d'ouvrir. La classe ne décide d'aucun texte : elle pose.
-\newcommand{\LLcouverture}[4]{%
-  \begingroup
+% llpremierepage{surtitre}{titre}{méta} : la première page, barre latérale bleu-vert et son
+% liseré ocre sur toute la hauteur, la marque en haut, le titre — puis la page CONTINUE : ce
+% que l'athlète doit retenir se lit sous le titre, pas sur une page de garde qui ne dit rien.
+% Le contenu est décalé de \LLcoverdecal pour dégager la barre. La classe ne décide d'aucun
+% texte : elle pose.
+\newlength{\LLcoverdecal}
+\setlength{\LLcoverdecal}{11mm}
+\newenvironment{llpremierepage}[3]{%
   \thispagestyle{empty}%
-  \null
-  \begin{tikzpicture}[remember picture, overlay]
+  \noindent\begin{tikzpicture}[remember picture, overlay]
     \fill[LLPrimary] (current page.north west)
       rectangle ([xshift=\LLcoverbar]current page.south west);
     \fill[LLAccent] ([xshift=\LLcoverbar]current page.north west)
       rectangle ([xshift=\dimexpr\LLcoverbar+\LLcovergold\relax]current page.south west);
     \node[anchor=north west, inner sep=0]
-      at ([xshift=\LLcoverx, yshift=-24mm]current page.north west)
-      {\LLbrand{17mm}{15}};
-    \node[anchor=north west, inner sep=0]
-      at ([xshift=\LLcoverx, yshift=-96mm]current page.north west)
-      {\begin{minipage}[t]{\LLcoverw}\raggedright
-        {\LLmonofont\fontsize{10}{13}\selectfont\color{LLPrimaryDark}%
-          \LLtracked{\MakeUppercase{#1}}\par}
-        \vspace{5mm}
-        {\LLextraboldfont\fontsize{37}{41}\selectfont\color{LLDeep}#2\par}
-        \vspace{5mm}
-        {\color{LLAccent}\rule{33mm}{1.5mm}}\par
-        \vspace{6mm}
-        {\fontsize{11.5}{16}\selectfont\color{LLSoft}#3\par}
-      \end{minipage}};
-    \node[anchor=south west, inner sep=0]
-      at ([xshift=\LLcoverx, yshift=26mm]current page.south west)
-      {\begin{minipage}[t]{\LLcoverw}\raggedright
-        {\color{LLHairline}\rule{\LLcoverw}{0.4pt}}\par
-        \vspace{7mm}
-        #4
-      \end{minipage}};
-  \end{tikzpicture}%
-  \clearpage
-  \endgroup}
+      at ([xshift=\LLcoverx, yshift=-22mm]current page.north west)
+      {\LLbrand{15mm}{13}};
+  \end{tikzpicture}\par
+  \vspace*{24mm}%
+  \noindent\hspace*{\LLcoverdecal}\begin{minipage}{\dimexpr\linewidth-\LLcoverdecal\relax}%
+    \raggedright
+    {\LLmonofont\fontsize{10}{13}\selectfont\color{LLPrimaryDark}%
+      \LLtracked{\MakeUppercase{#1}}\par}
+    \vspace{4mm}
+    {\LLextraboldfont\fontsize{31}{35}\selectfont\color{LLDeep}#2\par}
+    \vspace{4mm}
+    {\color{LLAccent}\rule{33mm}{1.5mm}}\par
+    \vspace{5mm}
+    {\fontsize{11}{15}\selectfont\color{LLSoft}#3\par}
+    \vspace{7mm}%
+}{\end{minipage}\clearpage}
 
 % \LLhero{texte} : la phrase de prédiction de la page 1.
 \newcommand{\LLhero}[1]{{\fontsize{18}{26}\selectfont\color{LLText}#1\par}}
@@ -576,6 +573,13 @@
 \newcommand{\LLtile}[3]{\LL@tile{#1}{#2}{#3}{LLHairline}{0.6pt}{15}}
 \newcommand{\LLtileaccent}[3]{\LL@tile{#1}{#2}{#3}{LLAccentInk}{1.1pt}{15}}
 \newcommand{\LLtilecrew}[3]{\LL@tile{#1}{#2}{#3}{LLMistLine}{0.6pt}{9.5}}
+% La barre empilée : où passe le temps. Une largeur totale, quatre tronçons, aucune échelle
+% inventée — chaque tronçon est sa part du temps prévu.
+\newlength{\LLbarrelargeur}
+\setlength{\LLbarrelargeur}{\linewidth}
+\newcommand{\LLtroncon}[2]{\textcolor{#2}{\rule{#1\LLbarrelargeur}{9pt}}}
+\newcommand{\LLpuce}[1]{\textcolor{#1}{\rule[0.6pt]{7pt}{7pt}}\hspace{3pt}}
+
 % \LLfleche : la flèche « au plus tôt → au plus tard ». Tracée, parce qu'Ubuntu Sans
 % n'a pas de glyphe U+2192 ; elle prend la couleur courante.
 \newcommand{\LLfleche}{\,\raisebox{0.18ex}{\tikz{\draw[line width=0.55pt,

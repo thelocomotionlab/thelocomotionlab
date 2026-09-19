@@ -90,7 +90,7 @@ Le `preview` imprime un JSON (verdict, prédiction, jumeau, parcours) + un résu
 
 | fichier | ce que c'est |
 |---|---|
-| `rapport.pdf` | le rapport, cinq pages — couverture, caractéristiques de la course, prédictions, le plan, ton profil (sa source reste dans `tex/`) |
+| `rapport.pdf` | le rapport, quatre pages — ce que tu vas vivre, où passe le temps, le plan, ton profil et la preuve (sa source reste dans `tex/`) |
 | `feuille.pdf` | la feuille à emporter : A4 paysage recto-verso, deux tableaux et rien d'autre (marche au recto, assistance au verso) |
 | `plan.ics` | le calendrier : un événement par point d'assistance |
 | `plan.gpx` | la trace avec un point de passage horodaté par point d'assistance |
@@ -225,8 +225,9 @@ La **trace GPX du parcours** est fournie à part (`--course`) et n'est pas commi
 
 ## 7. Lire la fourchette : les deux bandes
 
-> **Le rapport v3** (cinq pages, feuille à emporter, ICS, GPX, annexe en ligne) est décrit
-> dans `docs/twin-theory.md` §7 et dans `DIAGNOSTIC.md` §10.20 ; sa charte vient de `packages/ui`
+> **Le rapport v4** (quatre pages, feuille à emporter, ICS, GPX, annexe en ligne) est décrit
+> dans `docs/twin-theory.md` §7, dans `DIAGNOSTIC.md` §10.21 et, bloc par bloc, dans
+> `docs/maquettes/rapport-v4/canevas.md` ; sa charte vient de `packages/ui`
 > via `report/charte.py`, et ses
 > polices sont des instances statiques d'Ubuntu Sans régénérables par
 > `PYTHONPATH=src python -m tools.instance_fonts`.
@@ -254,11 +255,19 @@ Trois règles tiennent l'ensemble :
    la mesure dans le moteur (par exemple `course/montees.py`), et la clé dans `report/context.py`.
    Le gabarit ne fait que poser.
 
-Exemple, le bloc « caractéristiques de la course » : `course/montees.py` découpe le profil en
-montées continues et les classe en kilomètres verticaux ; `context.py` en fait
-`caracteristiques` (pentes moyennes, lignes du tableau, phrase de résumé, légende) ; le gabarit
-écrit `<< caracteristiques.resume >>` et boucle sur `<< caracteristiques.montees >>`. Pour ajouter
-une colonne au tableau des montées, il suffit de la lire dans `Montee` — elle est déjà calculée.
+Exemple, les trois moments qui décident : `course/montees.py` découpe le profil en montées et
+descentes continues, `report/faits.py` en choisit trois par trois critères explicites et leur
+ajoute leur fenêtre horaire, `context.py` en fait des phrases, et le gabarit boucle sur
+`<< faits.moments >>`. Pour ajouter une colonne, il suffit de la lire dans `Section` — elle est
+déjà calculée.
+
+**La géométrie d'un parcours** se vérifie avec `PYTHONPATH=src python -m tools.diag_parcours
+trace.gpx --race examples/nice-100m.json` : distance, D+, D−, Deq et le détail par segment,
+avec `--contre autre.gpx` pour comparer deux traces et `--references` pour épingler la
+géométrie servie (`tests/test_geometrie.py` la relit et refuse toute dérive silencieuse).
+Rappel de ce qui déplace quoi : le carnet de route change la distance affichée et les bornes
+des segments, **jamais** les totaux ; un total qui bouge accuse la trace ou la fenêtre de
+lissage.
 
 Pour voir le résultat sans relancer toute la chaîne :
 `PYTHONPATH=src python -m twin_engine.cli report … --out local-data/out` recompile les deux PDF.

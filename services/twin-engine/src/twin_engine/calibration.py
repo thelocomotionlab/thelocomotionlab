@@ -43,6 +43,11 @@ class GenuineUltra:
     night_share: float | None = None     # part de nuit de l'écoulé (0–1)
     split_ratio: float | None = None     # vga hors plateaux, seconde moitié ÷ première
     mean_alt_m: float | None = None      # altitude moyenne
+    # --- ce que la course a demandé (None = non mesuré) : de quoi mettre la course cible en
+    # regard du passé de l'athlète, avec la MÊME règle des deux côtés
+    n_nights: int | None = None
+    longest_climb_m: float | None = None
+    longest_descent_m: float | None = None
 
     @property
     def dplus_per_km(self) -> float:
@@ -463,6 +468,9 @@ def select_genuine_ultras(summaries: list[ActivitySummary], cfg: Config,
                 night_share=getattr(s, "night_share", None),
                 split_ratio=getattr(s, "half_split_ratio", None),
                 mean_alt_m=getattr(s, "mean_alt_m", None),
+                n_nights=getattr(s, "n_nights", None),
+                longest_climb_m=getattr(s, "longest_climb_m", None),
+                longest_descent_m=getattr(s, "longest_descent_m", None),
             )
         )
     return out

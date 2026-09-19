@@ -45,8 +45,8 @@ def test_durability_word_follows_decoupling():
 def test_opening_narrative_changes_with_profile():
     a = N.opening_narrative(_twin(E=1.05), None, _pred())   # diesel (décline peu)
     b = N.opening_narrative(_twin(E=1.35), None, _pred())   # décline plus nettement
-    assert "moteur d'endurance" in a    # explication « diesel »
-    assert "rationner l'effort" in b    # explication « fade » (axe déclin, jamais vitesse)
+    assert "baisse très peu" in a       # explication « diesel »
+    assert "plus vite que la moyenne" in b   # explication « fade » (axe déclin, jamais vitesse)
     assert a != b                       # le texte suit la valeur
 
 
@@ -261,3 +261,98 @@ def test_aid_station_names_are_latex_escaped():
     assert "Bar \\& Tabac" in txt          # & échappé (montée)
     assert "Refuge\\_Nord" in txt          # _ échappé (descente)
     assert "Bar \\& Tabac" in N.caption_profil(course)
+
+
+# --------------------------------------------------------------------------- #
+# Le style : ce qui a été retiré ne doit pas pouvoir revenir en silence
+# --------------------------------------------------------------------------- #
+# Deux familles de tournures, retirées au fil des relectures et qui revenaient :
+#   * les TITRES-FORMULES — un titre est un nom de chose, pas une promesse de contenu ;
+#   * les PHRASES EN BALANCIER — « pas ceci, mais cela », qui disent deux fois rien.
+# Le vocabulaire interne (« jumeau numérique ») n'a pas sa place dans un document client.
+TOURNURES_INTERDITES = (
+    "Ce que ça donne",
+    "Ce que ça change pour toi",
+    "Ce que ça te demande",
+    "Ce qui décidera",
+    "Ce que valent ces chiffres",
+    "Ce que le plan suppose",
+    "Ce qu'il y a à monter",
+    "Ce que ce rapport ne sait pas",
+    "Pourquoi tu peux y croire",
+    "Ce que tes données disent de toi",
+    "jumeau numérique",
+    "la vitesse ne sera pas le sujet",
+    "progressive et prévisible",
+    "l'usure existe mais",
+    "(on prévient)",
+)
+
+
+def _tous_les_textes(ctx) -> str:
+    """Tout ce qu'un athlète peut lire : le contexte rendu, plus les deux gabarits."""
+    from twin_engine.report import render_template, render_tex
+    from twin_engine.report.render import FEUILLE_TEMPLATE
+
+    morceaux = [render_tex(ctx), render_template(FEUILLE_TEMPLATE, ctx)]
+
+    def _ramasse(v):
+        if isinstance(v, str):
+            morceaux.append(v)
+        elif isinstance(v, dict):
+            for x in v.values():
+                _ramasse(x)
+        elif isinstance(v, (list, tuple)):
+            for x in v:
+                _ramasse(x)
+
+    _ramasse(ctx)
+    return "\n".join(morceaux)
+
+
+def test_no_formula_title_and_no_see_saw_sentence_comes_back():
+    """Liste noire vérifiée sur le contexte rendu ET sur les deux gabarits."""
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).parent))
+    from test_report_v3 import context
+
+    textes = _tous_les_textes(context()[0])
+    for tournure in TOURNURES_INTERDITES:
+        assert tournure not in textes, f"tournure retirée, revenue : « {tournure} »"
+
+
+def test_one_sentence_per_profile_class():
+    """Une classe de profil, UNE phrase : le récit d'ouverture et la jauge lisent la même
+    table. Deux tables, c'était « ton allure baisse peu » d'un côté et « comme la plupart »
+    de l'autre, pour le même athlète."""
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).parent))
+    from test_report_v3 import context
+    from twin_engine.report.narrative import PROFIL_DURABILITE, PROFIL_ENDURANCE
+
+    ctx = context()[0]
+    endurance = next(g for g in ctx["gauges"] if "ndurance" in g["label"])
+    phrase = PROFIL_ENDURANCE[ctx["profile_word"]][1]
+    assert endurance["sentence"] == phrase
+    assert phrase in ctx["opening"].replace("\\'", "'").replace("\\`", "")
+    durabilite = next(g for g in ctx["gauges"] if "urabilit" in g["label"])
+    assert durabilite["sentence"] == PROFIL_DURABILITE[ctx["durability_word"]]
+
+
+def test_a_gauge_only_shows_what_is_measured():
+    """La jauge des arrêts n'existe que si le taux d'arrêt est MESURÉ sur ses ultras : sinon
+    elle afficherait un réglage de config sous l'apparence d'une caractéristique de l'athlète."""
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).parent))
+    from test_report_v3 import context
+
+    ctx = context()[0]
+    labels = [g["label"] for g in ctx["gauges"]]
+    if ctx["stops"]["measured"]:
+        assert "Arrêts" in labels
+    else:
+        assert "Arrêts" not in labels
+    assert all(g["sentence"] for g in ctx["gauges"])

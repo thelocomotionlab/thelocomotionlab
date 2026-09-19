@@ -132,7 +132,7 @@ class PacingPlan:
 _WEEKDAYS_FR = ["lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim."]
 
 
-def _fmt_clock(when: dt.datetime) -> str:
+def fmt_clock(when: dt.datetime) -> str:
     """« sam. 19h23 » — l'heure comme on l'écrit en français, partout dans le rapport."""
     return f"{_WEEKDAYS_FR[when.weekday()]} {when.hour:02d}h{when.minute:02d}"
 
@@ -272,7 +272,7 @@ def build_pacing(
             # s'écoule ensuite (l'ancien calcul imprimait l'heure de DÉPART du ravito,
             # décalant heure affichée, fenêtres et drapeau nuit de la durée de l'arrêt).
             arrival = clock + dt.timedelta(hours=t_move_h[i])
-            arr_clocks.append(_fmt_clock(arrival))
+            arr_clocks.append(fmt_clock(arrival))
             nights.append(is_night(arrival, race.lat, race.lon, race.tz_offset_h))
             clock = arrival + dt.timedelta(minutes=float(stops_min[i]))
         else:
@@ -323,10 +323,10 @@ def build_pacing(
     # bornes de la fenêtre en HEURES DE PASSAGE (le plan ne sert pas qu'une valeur centrale :
     # l'athlète lit directement « j'arriverai à ce ravito entre 18:55 et 20:20 »)
     if can_clock and start is not None:
-        arr_lo = [_fmt_clock(start + dt.timedelta(hours=float(lo[i]))) for i in range(n)]
-        arr_hi = [_fmt_clock(start + dt.timedelta(hours=float(hi[i]))) for i in range(n)]
-        safety_lo = _fmt_clock(start + dt.timedelta(hours=float(prediction.interval_low_h)))
-        safety_hi = _fmt_clock(start + dt.timedelta(hours=float(prediction.interval_high_h)))
+        arr_lo = [fmt_clock(start + dt.timedelta(hours=float(lo[i]))) for i in range(n)]
+        arr_hi = [fmt_clock(start + dt.timedelta(hours=float(hi[i]))) for i in range(n)]
+        safety_lo = fmt_clock(start + dt.timedelta(hours=float(prediction.interval_low_h)))
+        safety_hi = fmt_clock(start + dt.timedelta(hours=float(prediction.interval_high_h)))
     else:
         arr_lo = [None] * n
         arr_hi = [None] * n

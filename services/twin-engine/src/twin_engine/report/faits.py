@@ -1,0 +1,315 @@
+"""Les faits du rapport : six calculs sur des données existantes, et rien d'autre.
+
+Chaque fonction rend des valeurs BRUTES (nombres, textes en clair) ou ``None`` quand la
+mesure n'existe pas. Aucune n'invente de catégorie, d'échelle ni de barème : ce qui ne se
+calcule pas ne s'écrit pas. La mise en forme (virgule française, échappement LaTeX) se fait
+à l'injection, dans ``context``.
+
+  1. ``contre_son_passe`` — la course en regard des ultras de calibration de l'athlète.
+  2. ``deux_intensites``  — l'intensité de cette course et celle de ses ultras passés.
+  3. ``ventilation``      — où passe le temps prévu : montée, terrain roulant, descente, arrêts.
+  4. ``cout_dune_erreur`` — ce que coûtent une journée sans forme et un départ trop rapide.
+  5. ``trois_moments``    — la plus grosse montée, la plus grosse descente, le plus long segment.
+  6. ``lever_du_jour``    — où l'athlète sera au lever du soleil, et à quelle heure.
+"""
+
+from __future__ import annotations
+
+import datetime as dt
+
+import numpy as np
+
+from ..course.montees import descentes, montees
+from ..pacing.plan import fmt_clock
+from ..pacing.sun import sun_times
+
+
+# --------------------------------------------------------------------------- #
+# 1. La course comparée à son propre passé
+# --------------------------------------------------------------------------- #
+def contre_son_passe(prediction, course, plan, calibration) -> list[dict]:
+    """Ce que cette course demande, en multiples de ce que l'athlète a déjà fait.
+
+    Une ligne par mesure disponible sur SES ultras de calibration : durée, D+, plus longue
+    descente continue, nuits. Une mesure absente de ses fichiers ne donne pas de ligne — on
+    ne comble pas un trou par une valeur de population.
+    """
+    ultras = list(getattr(calibration, "genuine", ()) or ())
+    if not ultras:
+        return []
+    out: list[dict] = []
+
+    def _ligne(cle: str, quoi: str, valeur: float, records: list[float], unite: str,
+               quand: str | None = None) -> None:
+        if not records:
+            return
+        record = max(records)
+        if record <= 0:
+            return
+        out.append({"cle": cle, "quoi": quoi, "valeur": float(valeur), "record": float(record),
+                    "ratio": float(valeur) / float(record), "ecart": float(valeur) - float(record),
+                    "unite": unite, "quand": quand})
+
+    def _date(records: list[tuple[float, str | None]]) -> str | None:
+        if not records:
+            return None
+        return max(records, key=lambda r: r[0])[1]
+
+    durees = [(u.elapsed_hours or u.hours, u.date) for u in ultras]
+    _ligne("duree", "ton plus long ultra", prediction.finish_hours,
+           [d for d, _ in durees], "h", _date(durees))
+
+    dplus = [(float(u.dplus_m), u.date) for u in ultras if u.dplus_m]
+    _ligne("dplus", "ton plus gros dénivelé", float(course.dplus_m),
+           [d for d, _ in dplus], "m", _date(dplus))
+
+    desc = [(float(u.longest_descent_m), u.date) for u in ultras
+            if getattr(u, "longest_descent_m", None)]
+    plus_longue = max((d.denivele_m for d in descentes(course)), default=0.0)
+    if plus_longue > 0:
+        _ligne("descente", "ta plus longue descente", plus_longue,
+               [d for d, _ in desc], "m", _date(desc))
+
+    nuits_course = len(plan.night_runs)
+    nuits = [(float(u.n_nights), u.date) for u in ultras if getattr(u, "n_nights", None) is not None]
+    if nuits_course > 0:
+        _ligne("nuits", "ton maximum de nuits", float(nuits_course),
+               [n for n, _ in nuits], "nuit", _date(nuits))
+    return out
+
+
+# --------------------------------------------------------------------------- #
+# 2. Les deux intensités
+# --------------------------------------------------------------------------- #
+def deux_intensites(prediction, twin, calibration) -> dict | None:
+    """L'intensité prévue de cette course et celle de ses ultras passés, sur la même échelle.
+
+    Rien sans vitesse critique plausible : sans elle, aucun « % de VC » n'est affichable.
+    Le rang dit combien de ses ultras se sont courus PLUS FORT que ce que cette course demande.
+    """
+    cs = getattr(twin, "critical_speed", None)
+    ultras = list(getattr(calibration, "genuine", ()) or ())
+    if cs is None or not getattr(cs, "plausible", True) or not cs.vc_kmh or not ultras:
+        return None
+    if prediction.vc_fraction is None:
+        return None
+    parts = sorted((u.vga_kmh / cs.vc_kmh for u in ultras), reverse=True)
+    course = float(prediction.vc_fraction)
+    return {
+        "course_pct": 100.0 * course,
+        "ultras_pct": 100.0 * float(np.mean(parts)),
+        "mini_pct": 100.0 * parts[-1],
+        "maxi_pct": 100.0 * parts[0],
+        "n": len(parts),
+        "plus_forts": sum(1 for p in parts if p > course),
+        "vc_kmh": float(cs.vc_kmh),
+    }
+
+
+# --------------------------------------------------------------------------- #
+# 3. Où passe le temps
+# --------------------------------------------------------------------------- #
+def ventilation(plan, course, cfg) -> dict | None:
+    """Le temps prévu ventilé en montée, terrain roulant, descente et arrêts.
+
+    Le plan donne une vitesse ajustée par segment ; la grille donne, point par point, la
+    distance équivalente et la pente. Le temps d'un point est donc sa distance équivalente
+    divisée par la vitesse ajustée de son segment — la somme redonne exactement le temps de
+    mouvement du plan. Le seuil qui sépare les trois terrains est ``course.flat_grade_pct``,
+    un choix déclaré que le rapport nomme.
+    """
+    segs = plan.segments
+    if not segs:
+        return None
+    deq = np.asarray(course.deq_grid_m, float)
+    grade = np.asarray(course.grade, float) * 100.0
+    off = np.asarray(course.off_km_grid, float)
+    seuil = float(cfg.course.flat_grade_pct)
+
+    heures = np.zeros(grade.size, dtype=float)
+    debut = 0
+    for seg in segs:
+        fin = int(np.argmin(np.abs(off - seg.off1)))
+        if fin <= debut or seg.v_ga_kmh <= 0:
+            debut = max(fin, debut)
+            continue
+        pas_km = np.diff(deq[debut:fin + 1]) / 1000.0
+        heures[debut + 1:fin + 1] = pas_km / seg.v_ga_kmh
+        debut = fin
+
+    monte, descend = grade > seuil, grade < -seuil
+    roulant = ~monte & ~descend
+    t_move = float(heures.sum())
+    t_stops = float(plan.t_stops_h)
+    total = t_move + t_stops
+    if total <= 0:
+        return None
+    parts = [
+        ("montee", "en montée", float(heures[monte].sum()), float(100.0 * monte.sum() / grade.size)),
+        ("roulant", "sur terrain roulant", float(heures[roulant].sum()),
+         float(100.0 * roulant.sum() / grade.size)),
+        ("descente", "en descente", float(heures[descend].sum()),
+         float(100.0 * descend.sum() / grade.size)),
+        ("arrets", "à l'arrêt", t_stops, 0.0),
+    ]
+    return {
+        "seuil_pct": seuil,
+        "total_h": total,
+        "parts": [{"cle": c, "quoi": q, "heures": h, "part_pct": 100.0 * h / total,
+                   "part_distance_pct": d} for c, q, h, d in parts],
+    }
+
+
+# --------------------------------------------------------------------------- #
+# 4. Le coût d'une erreur
+# --------------------------------------------------------------------------- #
+def cout_dune_erreur(prediction, plan, course, twin, calibration, cfg, *,
+                     forme_pct: float = 10.0, depart_pct: float = 10.0,
+                     depart_heures: float = 4.0) -> dict:
+    """Deux écarts au plan, chacun dans ce que le moteur sait vraiment calculer.
+
+    * **La journée sans forme** est une prédiction : le point fixe rejoué avec toutes les
+      vitesses multipliées par (1 − forme), arrêts et nuit compris. C'est le même calcul que
+      la prédiction servie, sur un athlète un peu plus lent.
+    * **Le départ trop rapide** est une ARITHMÉTIQUE, pas une prédiction : le moteur n'a
+      aucun modèle de ce que coûte une explosion. On dit ce qui est vrai — les minutes
+      gagnées, et le ralentissement qu'il faudrait tenir ensuite pour finir à l'heure —
+      et ``modele`` reste faux pour que le rapport ne le présente jamais comme une prévision.
+    """
+    from ..predict import predict_finish
+
+    out: dict = {"forme_pct": forme_pct, "depart_pct": depart_pct, "depart_heures": depart_heures}
+
+    env = getattr(prediction, "env_factor", None) or 1.0
+    lent = predict_finish(course.deq_km, course.dplus_per_km, twin, calibration, cfg,
+                          env_factor=env * (1.0 - forme_pct / 100.0),
+                          spec_stops_h=getattr(prediction, "stops_hours", None))
+    out["forme"] = {
+        "heures": float(lent.finish_hours),
+        "ecart_h": float(lent.finish_hours - prediction.finish_hours),
+        "modele": True,
+    }
+
+    # arithmétique du départ trop vite : le temps gagné sur les premières heures, et le
+    # ralentissement qu'il faudrait tenir sur le reste pour rentrer dans le temps prévu
+    t_move = float(plan.t_move_h)
+    h0 = min(float(depart_heures), t_move)
+    gagne_h = h0 * (depart_pct / 100.0) / (1.0 + depart_pct / 100.0)
+    reste_h = max(t_move - (h0 - gagne_h), 0.0)
+    out["depart"] = {
+        "gagne_min": 60.0 * gagne_h,
+        "reste_h": reste_h,
+        "ralentir_pct": 100.0 * gagne_h / reste_h if reste_h > 0 else 0.0,
+        "modele": False,
+    }
+    return out
+
+
+def _horloge(plan, km: float) -> tuple[str | None, float]:
+    """(heure de passage au kilomètre donné, heures depuis le départ), par interpolation du
+    cumul du plan. Une seule lecture de l'horloge, partagée par les moments et le lever."""
+    segs = plan.segments
+    kms = [0.0] + [s.off1 for s in segs]
+    cums = [0.0] + [s.cum_clock_h for s in segs]
+    h = float(np.interp(km, kms, cums))
+    clock = fmt_clock(plan.start_time + dt.timedelta(hours=h)) if plan.start_time else None
+    return clock, h
+
+
+# --------------------------------------------------------------------------- #
+# 5. Les trois moments qui décident
+# --------------------------------------------------------------------------- #
+def trois_moments(plan, course) -> list[dict]:
+    """Trois moments, choisis par trois critères explicites et rien d'autre :
+
+    1. la plus grosse montée continue (dénivelé) ;
+    2. la plus grosse descente continue (dénivelé) ;
+    3. le segment dont la durée prévue est la plus longue.
+
+    Un moment déjà retenu ne se répète pas : si la plus longue durée tombe dans la plus
+    grosse montée, on prend le segment suivant par durée.
+    """
+    segs = plan.segments
+    if not segs:
+        return []
+
+    def _fenetre(km0: float, km1: float) -> dict:
+        """Ce que le plan dit d'un morceau borné en km : quand on y entre, quand on en sort,
+        combien de temps il prend. Les heures sont interpolées sur le cumul du plan, aux
+        kilomètres exacts du morceau — un morceau qui finit au milieu d'un segment ne se voit
+        pas prêter l'heure du ravitaillement suivant."""
+        debut, h0 = _horloge(plan, km0)
+        fin, h1 = _horloge(plan, km1)
+        dedans = [s for s in segs
+                  if s.off1 > km0 + 1e-6 and (s.off1 - s.off_len_km) < km1 - 1e-6]
+        suivant = next((s for s in segs if s.off1 >= km1 - 1e-6), segs[-1])
+        return {
+            "from_km": km0, "to_km": km1,
+            "debut_clock": debut, "fin_clock": fin,
+            "heures": max(h1 - h0, 0.0),
+            "nuit": any(s.night for s in dedans) if dedans else bool(suivant.night),
+            "vers": suivant.to,
+        }
+
+    out: list[dict] = []
+    haut = max(montees(course), key=lambda m: m.denivele_m, default=None)
+    if haut is not None:
+        out.append({"cle": "montee", "quoi": "La plus grosse montée",
+                    "denivele_m": haut.denivele_m, "longueur_km": haut.length_km,
+                    "pente_pct": haut.grade_pct, **_fenetre(haut.from_km, haut.to_km)})
+    bas = max(descentes(course), key=lambda d: d.denivele_m, default=None)
+    if bas is not None:
+        out.append({"cle": "descente", "quoi": "La plus grosse descente",
+                    "denivele_m": bas.denivele_m, "longueur_km": bas.length_km,
+                    "pente_pct": bas.grade_pct, **_fenetre(bas.from_km, bas.to_km)})
+
+    pris = [(m["from_km"], m["to_km"]) for m in out]
+    for seg in sorted(segs, key=lambda s: s.t_move_min + s.stop_min, reverse=True):
+        km0 = seg.off1 - seg.off_len_km
+        if any(km0 >= a - 1e-6 and seg.off1 <= b + 1e-6 for a, b in pris):
+            continue
+        out.append({"cle": "segment", "quoi": "Le plus long segment",
+                    "denivele_m": seg.dplus_m, "longueur_km": seg.off_len_km,
+                    "pente_pct": seg.mean_grade_pct, **_fenetre(km0, seg.off1)})
+        break
+    return out
+
+
+# --------------------------------------------------------------------------- #
+# 6. Le lever du jour
+# --------------------------------------------------------------------------- #
+def lever_du_jour(plan, race) -> dict | None:
+    """Le premier lever de soleil de la course : l'heure, et où l'athlète sera alors.
+
+    None si le départ, la position ou l'arrivée ne sont pas connus, ou si la course se
+    termine avant le lever.
+    """
+    start = plan.start_time
+    if start is None or race.lat is None or race.lon is None or not plan.segments:
+        return None
+    tz = float(race.tz_offset_h or 0.0)
+    total_h = float(plan.segments[-1].cum_clock_h)
+    for jour in range(0, int(total_h // 24) + 2):
+        d = (start + dt.timedelta(days=jour)).date()
+        sr, _ = sun_times(d.year, d.month, d.day, race.lat, race.lon, tz)
+        lever = dt.datetime.combine(d, dt.time(int(sr // 60), int(sr % 60)), tzinfo=start.tzinfo)
+        depuis = (lever - start).total_seconds() / 3600.0
+        if 0.0 < depuis < total_h:
+            segs = plan.segments
+            kms = [0.0] + [s.off1 for s in segs]
+            cums = [0.0] + [s.cum_clock_h for s in segs]
+            km = float(np.interp(depuis, cums, kms))
+            i = min(int(np.searchsorted([s.cum_clock_h for s in segs], depuis)), len(segs) - 1)
+            return {
+                "heure": f"{int(sr // 60):02d}h{int(sr % 60):02d}",
+                "depuis_h": depuis,
+                "km": km,
+                "vers": segs[i].to,
+                "apres": segs[i - 1].to if i > 0 else None,
+                "jour": jour,
+            }
+    return None
+
+
+__all__ = ["contre_son_passe", "cout_dune_erreur", "deux_intensites", "lever_du_jour",
+           "trois_moments", "ventilation"]

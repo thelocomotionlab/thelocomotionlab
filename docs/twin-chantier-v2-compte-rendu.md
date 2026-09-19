@@ -657,6 +657,33 @@ republié à côté de la politique du plan.
     prédiction et sa bande, elle est donc passée sur la page des prédictions, qui sans elle était
     vide aux deux tiers.
 
+## Choix faits à la place de Valentin (rapport v4)
+
+82. **Le moteur garde le D+ qu'il mesure, et affiche celui du carnet à côté.** S'aligner sur
+    l'organisateur voudrait dire redresser l'altimétrie de la trace, donc fausser le Deq et la
+    prédiction qui en dépendent. Sous un demi pour cent d'écart, rien ne s'affiche : deux
+    arrondis qui se rencontrent ne sont pas une information.
+83. **Le seuil qui sépare montée, roulant et descente est à ±5 %, déclaré dans la config et
+    nommé dans la légende.** La convention interne existante (±1,25 %, la tranche centrale des
+    `slope_bins`) donne ~0 % de plat sur une course de montagne : vraie, mais illisible dans
+    une barre. Cinq pour cent est un choix, il est dit comme tel.
+84. **Le départ trop rapide n'est pas prédit, il est calculé.** Le moteur n'a aucun modèle de
+    ce que coûte une explosion : le rapport donne les minutes gagnées et le ralentissement
+    qu'il faudrait tenir ensuite, et écrit noir sur blanc que c'est une arithmétique. La
+    journée sans forme, elle, est une vraie prédiction (le point fixe rejoué).
+85. **La plus longue montée et la plus longue descente d'un ultra passé se mesurent avec la
+    règle du parcours.** Même grille, même lissage, même hystérésis des deux côtés : sans ça,
+    « ta plus longue descente » et « celle de cette course » ne seraient pas comparables. Deux
+    champs de plus sur les agrégats, recalculés au prochain run.
+86. **Le nombre de nuits se compte, il ne s'estime pas.** Les blocs de nuit du même masque que
+    le plan, appliqués à la trace de chaque ultra. Un départ de nuit compte pour une nuit.
+87. **Sur la feuille, l'ocre de l'assistance passe devant la trame de nuit.** Les deux peuvent
+    tomber sur la même ligne ; celle qui demande une action gagne, et la nuit reste lisible par
+    ses voisines.
+88. **La validation croisée est la figure qui reste, la courbe record part à l'annexe.** C'est
+    la preuve qu'un acheteur a besoin de voir ; l'aire de données du nuage reste carrée — la
+    diagonale est son message — et sa légende se lit à côté, pas dessous.
+
 ## Questions ouvertes
 
 - **Chantier suivant : trails courts et route.** Valentin a des demandes pour du trail court et

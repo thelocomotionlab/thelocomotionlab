@@ -33,6 +33,9 @@ class CourseParams:
     cr0: float = 3.6
     # Découpage automatique quand la course ne fournit pas de ravitaillements (mode GPX-only).
     default_segment_km: float = 10.0
+    # Seuil qui sépare montée, terrain roulant et descente quand le rapport ventile le temps
+    # prévu. C'est un CHOIX déclaré, pas une mesure : le rapport le nomme dans sa légende.
+    flat_grade_pct: float = 5.0
 
 
 @dataclass(frozen=True)
