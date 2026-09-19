@@ -121,7 +121,7 @@ def finish_point(plan, prediction) -> CrewPoint | None:
 
 # --------------------------------------------------------------------------- ICS
 def _ics_escape(s: str) -> str:
-    return (str(s).replace("\\", "\\\\").replace(";", "\;").replace(",", "\\,")
+    return (str(s).replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,")
             .replace("\r\n", "\\n").replace("\n", "\\n"))
 
 

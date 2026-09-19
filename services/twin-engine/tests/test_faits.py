@@ -38,12 +38,19 @@ def test_the_race_is_compared_to_his_own_ultras(cas):
 
 
 def test_a_missing_measure_gives_no_line(cas):
-    """Les agrégats du scénario doré n'ont ni plus longue descente ni nombre de nuits : ces
-    deux lignes n'existent pas. Personne n'invente une valeur de population à la place."""
+    """Une mesure absente des agrégats ne produit pas de ligne : personne n'invente une valeur
+    de population à la place. On efface la plus longue descente et les nuits de ses ultras —
+    les deux lignes disparaissent, les deux autres restent."""
+    from dataclasses import replace
+
     course, twin, cal, pred, plan, race, _ = cas
-    cles = {x["cle"] for x in faits.contre_son_passe(pred, course, plan, cal)}
-    assert "descente" not in cles and "nuits" not in cles
-    assert all(getattr(u, "longest_descent_m", None) is None for u in cal.genuine)
+    complet = {x["cle"] for x in faits.contre_son_passe(pred, course, plan, cal)}
+    assert complet == {"duree", "dplus", "descente", "nuits"}
+
+    sans = type("Cal", (), {"genuine": [replace(u, longest_descent_m=None, n_nights=None)
+                                        for u in cal.genuine]})()
+    cles = {x["cle"] for x in faits.contre_son_passe(pred, course, plan, sans)}
+    assert cles == {"duree", "dplus"}
 
 
 def test_without_any_ultra_nothing_is_compared(cas):

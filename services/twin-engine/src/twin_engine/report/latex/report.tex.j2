@@ -42,7 +42,7 @@
 \vspace{12pt}
 \begin{llnote}[Ton passé]
 {\fontsize{10}{14}\selectfont
-<% for l in faits.passe %><< l.phrase >><% if not loop.last %>\par<% endif %>
+<% for l in faits.passe %><< l.phrase >><% if not loop.last %>\par{}<% endif %>
 <% endfor %>}
 \end{llnote}
 <% endif %><% if faits.intensites %>
@@ -184,7 +184,7 @@ de grandeur, pas une cible ferme.\par}
 
 \begin{llhonnete}
 {\fontsize{9}{12}\selectfont
-<% for l in limits_short %>\textbf{<< l.lead >>} \textemdash{} << l.short >><% if not loop.last %>\par<% endif %>
+<% for l in limits_short %>\textbf{<< l.lead >>} \textemdash{} << l.short >><% if not loop.last %>\par{}<% endif %>
 <% endfor %>}\par\vspace{5pt}
 {\color{LLHairline}\hrule height 0.4pt}\par\vspace{5pt}
 \noindent\begin{minipage}[t]{0.87\linewidth}\vspace{0pt}

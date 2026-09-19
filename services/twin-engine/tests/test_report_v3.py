@@ -64,9 +64,17 @@ def _run(day, dur_s):
 
 
 def _ultra(day, h, dpk, pert):
+    """Un vrai ultra de l'archive — avec ce qu'un fichier réel porte vraiment : sa plus longue
+    montée et sa plus longue descente continues, et le nombre de nuits traversées. Sans elles,
+    le scénario doré ne produit que deux des quatre lignes de comparaison, et une régression de
+    gabarit sur les deux autres passe inaperçue."""
     dist = _plane(h, dpk) * h / 1.2
+    dplus = dpk * dist
     return ActivitySummary((D0 + timedelta(days=day)).isoformat(), "running", h * 3600, dist,
-                           (_plane(h, dpk) + pert) * h, 142, dpk * dist, dpk * dist, 19, True)
+                           (_plane(h, dpk) + pert) * h, 142, dplus, dplus, 19, True,
+                           longest_climb_m=round(dplus * 0.22),
+                           longest_descent_m=round(dplus * 0.25),
+                           n_nights=1 if h < 22 else 2)
 
 
 ULTRAS = [(30, 12, 50, 0.05), (80, 20, 55, -0.08), (140, 16, 45, 0.03), (200, 24, 53, -0.02),
@@ -386,6 +394,18 @@ def test_no_number_is_hard_coded_in_what_the_athlete_reads_in_the_race():
     feuille = render_template(FEUILLE_TEMPLATE, ctx)
     for name in ("feuille-recto", "feuille-verso"):
         assert not _reste(_slice(feuille, name)), f"chiffres hors contexte sur {name}"
+
+
+def test_no_macro_is_glued_to_the_next_word():
+    """`trim_blocks` mange la fin de ligne d'un bloc Jinja : un « \\par » posé juste avant
+    devient « \\parLa » si la phrase suivante commence par une lettre — macro indéfinie, et
+    le PDF ne compile plus. Le scénario doré ne l'avait pas vu parce que ses deux phrases
+    commençaient par une commande ; la troisième, chez un vrai athlète, l'a révélé."""
+    ctx, _ = context()
+    for nom, tex in (("rapport", render_tex(ctx)),
+                     ("feuille", render_template(FEUILLE_TEMPLATE, ctx))):
+        colles = re.findall(r"\\(par|hfill|bigskip|medskip|smallskip|noindent)[A-Za-zÀ-ÿ]", tex)
+        assert not colles, f"{nom} : macro collée au mot suivant ({colles[:3]})"
 
 
 def test_render_has_no_residual_delimiters():
