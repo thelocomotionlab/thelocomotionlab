@@ -96,19 +96,88 @@ def test_the_flat_threshold_moves_the_breakdown(cas):
     assert roulant(large) > roulant(serre)
 
 
-def test_a_bad_day_is_a_prediction_and_a_fast_start_is_arithmetic(cas):
-    """Deux natures, dites comme telles : la forme rejoue le point fixe (``modele`` vrai),
-    le départ trop rapide n'est qu'une arithmétique (``modele`` faux) — le moteur ne
-    modélise pas ce que coûte une explosion, et le rapport ne fait pas semblant."""
+def test_the_two_form_scenarios_are_two_real_predictions(cas):
+    """Les deux scénarios rejouent le point fixe avec toutes les vitesses décalées — ce sont
+    deux vraies prédictions, pas deux règles de trois, donc l'écart n'est pas symétrique :
+    dix pour cent de forme en moins coûtent plus que dix pour cent de plus ne rapportent."""
     course, twin, cal, pred, plan, race, _ = cas
-    c = faits.cout_dune_erreur(pred, plan, course, twin, cal, CFG)
-    assert c["forme"]["modele"] is True and c["depart"]["modele"] is False
-    assert c["forme"]["heures"] > pred.finish_hours
-    assert c["forme"]["ecart_h"] == pytest.approx(c["forme"]["heures"] - pred.finish_hours)
-    # 4 h à +10 % : le temps gagné, puis le ralentissement qui le rend sur le reste
-    assert 0 < c["depart"]["gagne_min"] < 4 * 60
-    assert c["depart"]["ralentir_pct"] == pytest.approx(
-        100 * (c["depart"]["gagne_min"] / 60) / c["depart"]["reste_h"], rel=1e-6)
+    s = faits.deux_scenarios(pred, course, twin, cal, CFG)
+    assert s["forme_pct"] == 10.0
+    assert s["moins"]["heures"] > pred.finish_hours > s["plus"]["heures"]
+    for cle in ("moins", "plus"):
+        assert s[cle]["ecart_h"] == pytest.approx(s[cle]["heures"] - pred.finish_hours)
+    assert abs(s["moins"]["ecart_h"]) > abs(s["plus"]["ecart_h"])
+
+    # un décalage plus grand coûte plus cher : le bloc suit bien la forme qu'on lui donne
+    large = faits.deux_scenarios(pred, course, twin, cal, CFG, forme_pct=20.0)
+    assert large["moins"]["heures"] > s["moins"]["heures"]
+
+
+def test_the_stops_risk_needs_his_own_measured_stops(cas):
+    """Le plus gros écart évitable d'un plan se chiffre — mais seulement sur SES arrêts à lui.
+
+    Sans plateau mesuré dans ses fichiers, ``stops_statistics`` se replie sur une valeur de
+    population : le bloc ne s'imprime alors pas du tout, plutôt que de comparer le plan à la
+    moyenne de gens qu'il ne connaît pas."""
+    from dataclasses import replace
+
+    course, twin, cal, pred, plan, race, _ = cas
+    assert faits.risque_des_arrets(plan, cal, CFG) is None      # aucun arrêt mesuré au doré
+
+    # le même athlète, avec 7 min d'arrêt par heure de mouvement dans ses fichiers
+    taux = 7.0 / 60.0
+    mesures = [replace(u, stops_h=u.hours * taux / (1.0 + taux)) for u in cal.genuine]
+    mesure = type("Cal", (), {"genuine": mesures, "weights": cal.weights})()
+
+    a = faits.risque_des_arrets(plan, mesure, CFG)
+    assert a["n_ultras"] == len(mesures)
+    assert a["mesure_min_par_h"] == pytest.approx(7.0, abs=0.01)
+    assert a["plan_h"] == pytest.approx(plan.t_stops_h)
+    assert a["plan_n"] == sum(1 for s in plan.segments if s.stop_min > 0)
+    assert a["mesure_h"] == pytest.approx(taux * plan.t_move_h)
+    assert a["ecart_h"] == pytest.approx(a["mesure_h"] - a["plan_h"])
+    assert a["ecart_h"] > 0                                      # le plan retranche trop peu
+
+
+def test_the_start_is_given_as_a_watch_pace(cas):
+    """« Ça va te paraître trop facile » ne dit rien sans le chiffre de la montre. On donne
+    l'allure terrain du premier segment, et l'écart se mesure en allure AJUSTÉE — la seule
+    comparable entre un départ en montée et la moyenne de ses ultras."""
+    course, twin, cal, pred, plan, race, _ = cas
+    d = faits.depart_concret(plan, cal)
+    seg = plan.segments[0]
+    assert d["km"] == pytest.approx(seg.off1) and d["vers"] == seg.to
+    assert d["pace_terrain_min_km"] == pytest.approx(seg.pace_min_km)
+    assert d["pace_ajustee_min_km"] == pytest.approx(60.0 / seg.v_ga_kmh)
+    moyenne = sum(u.vga_kmh for u in cal.genuine) / len(cal.genuine)
+    assert d["ultras_ajustee_min_km"] == pytest.approx(60.0 / moyenne)
+    assert d["ecart_min_km"] == pytest.approx(d["pace_ajustee_min_km"] - d["ultras_ajustee_min_km"])
+    assert d["n_ultras"] == len(cal.genuine)
+    # l'allure terrain d'un départ en montée est plus lente que son équivalent plat
+    assert d["pace_terrain_min_km"] > d["pace_ajustee_min_km"]
+
+    vide = type("Cal", (), {"genuine": []})()
+    assert faits.depart_concret(plan, vide) is None
+
+
+def test_a_stretch_is_never_named_after_a_point_it_does_not_reach(cas):
+    """Nommer le ravitaillement SUIVANT ferait croire que la montée y monte encore. Un
+    morceau ne prend le nom d'un point que s'il y finit vraiment ; sinon il se situe par
+    rapport au dernier point FRANCHI."""
+    course, twin, cal, pred, plan, race, _ = cas
+    segs = plan.segments
+
+    pile = faits._ou(plan, segs[3].off1)
+    assert pile["vers"] == segs[3].to and pile["apres"] is None
+
+    milieu = (segs[3].off1 + segs[4].off1) / 2.0
+    entre = faits._ou(plan, milieu)
+    assert entre["vers"] is None
+    assert entre["apres"] == segs[3].to                          # celui d'avant, pas celui d'après
+    assert entre["km_apres"] == pytest.approx(milieu - segs[3].off1)
+
+    avant_le_premier = faits._ou(plan, segs[0].off1 / 2.0)
+    assert avant_le_premier["vers"] is None and avant_le_premier["apres"] is None
 
 
 def test_three_moments_chosen_by_three_explicit_criteria(cas):
@@ -147,3 +216,61 @@ def test_nothing_is_computed_without_a_start_time():
     course, twin, cal, pred, plan, race, _ = scenario(race=race_spec(start_time=None))
     assert faits.lever_du_jour(plan, race) is None
     assert faits.trois_moments(plan, course)          # les moments restent, sans horloge
+
+
+def test_the_rank_is_counted_from_the_side_the_race_falls_on(cas):
+    """« Plus fort qu'un seul de tes douze ultras » dit l'inverse de ce qui compte quand la
+    course tombe tout en bas de l'échelle. Le rang se compte du côté où elle tombe."""
+    from dataclasses import replace
+
+    course, twin, cal, pred, plan, race, _ = cas
+
+    def _rang(fraction):
+        p = replace(pred, vc_fraction=fraction)
+        return faits.deux_intensites(p, twin, cal)
+
+    parts = sorted(u.vga_kmh / twin.critical_speed.vc_kmh for u in cal.genuine)
+
+    # au-dessus de tous : la plus forte, comptée par le haut
+    haut = _rang(parts[-1] + 0.02)
+    assert haut["plus_forts"] == 0 and haut["rang"] == 1 and haut["par_le_bas"] is False
+
+    # sous tous sauf un : la deuxième plus BASSE, comptée par le bas
+    bas = _rang((parts[0] + parts[1]) / 2.0)
+    assert bas["plus_bas"] == 1 and bas["rang"] == 2 and bas["par_le_bas"] is True
+    assert bas["plus_forts"] == len(parts) - 1
+
+    # tout en bas : la plus basse
+    fond = _rang(parts[0] - 0.02)
+    assert fond["plus_bas"] == 0 and fond["rang"] == 1 and fond["par_le_bas"] is True
+
+
+def test_the_sheet_and_page_two_print_the_same_numbers():
+    """La garde anti-contradiction : la feuille à emporter et la page 2 lisent les MÊMES
+    objets. Que la feuille recalcule de son côté — le D+ du segment là où la page 2 donne la
+    montée continue, le temps de mouvement là où la page 2 donne l'horloge — et le document
+    annonce deux « plus grosse montée » qui ne se ressemblent pas."""
+    from test_report_v3 import context
+
+    from twin_engine.report.feuille import consignes
+
+    ctx, (course, twin, cal, pred, plan, race, _) = context()
+    moments = faits.trois_moments(plan, course)
+    par_cle = {m["cle"]: m for m in moments}
+    page2 = {m["quoi"]: m for m in ctx["faits"]["moments"]}
+    textes = " | ".join(consignes(plan, race, CFG, moments=moments))
+
+    def _brut(tex: str) -> str:
+        """Le même nombre, sans les espaces fines de LaTeX : la feuille est du texte brut."""
+        return tex.replace("\\,", " ")
+
+    for cle, quoi, mot in (("montee", "La plus grosse montée", "montée"),
+                           ("descente", "La plus grosse descente", "descente")):
+        m = par_cle[cle]
+        assert (f"{mot} de {_brut(page2[quoi]['detail']).split(' m ')[0]} m jusqu'au km "
+                f"{int(round(m['to_km']))}") in textes
+
+    # la durée du plus long segment : la même horloge des deux côtés. Sa consigne tombe ici
+    # sur une case déjà prise par la descente — on la pose seule pour lire ce qu'elle écrit.
+    seul = " | ".join(consignes(plan, race, CFG, moments=[par_cle["segment"]]))
+    assert f"le plus long : {_brut(page2['Le plus long segment']['duree'])}" in seul

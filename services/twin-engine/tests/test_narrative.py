@@ -42,12 +42,21 @@ def test_durability_word_follows_decoupling():
     assert N._durability_word(_twin(durab=None)) is None
 
 
-def test_opening_narrative_changes_with_profile():
-    a = N.opening_narrative(_twin(E=1.05), None, _pred())   # diesel (décline peu)
-    b = N.opening_narrative(_twin(E=1.35), None, _pred())   # décline plus nettement
-    assert "baisse très peu" in a       # explication « diesel »
-    assert "plus vite que la moyenne" in b   # explication « fade » (axe déclin, jamais vitesse)
-    assert a != b                       # le texte suit la valeur
+def test_the_opening_does_not_repeat_the_gauges_below_it():
+    """Le profil d'endurance et la durabilité se lisent sur les jauges, chiffre et phrase
+    compris. Le paragraphe d'ouverture ne les recopie pas : un texte qui n'est que la
+    concaténation des légendes du dessous n'apprend rien, il fait relire deux fois.
+
+    Quand la méthode est validée sur l'athlète, l'ouverture n'a donc rien à dire — et elle
+    ne dit rien. Il ne reste d'ouverture que pour CADRER : quand la validation manque."""
+    for E in (1.05, 1.22, 1.35):
+        assert N.opening_narrative(_twin(E=E), None, _pred()) == ""
+        mot = N._profile_word(_twin(E=E))
+        assert N.PROFIL_ENDURANCE[mot][1]                 # la phrase existe, dans la table
+
+    # sans validation croisée, la seule chose que l'ouverture ait à dire : la prudence
+    sans_cv = N.opening_narrative(_twin(), None, _pred(mae=None))
+    assert "ordre de grandeur" in sans_cv
 
 
 def test_opening_narrative_degrades_without_prediction():
@@ -322,6 +331,56 @@ def test_no_formula_title_and_no_see_saw_sentence_comes_back():
         assert tournure not in textes, f"tournure retirée, revenue : « {tournure} »"
 
 
+def test_the_rank_is_said_from_the_side_it_plays_on():
+    """« Plus fort qu'un seul de tes douze ultras » dit l'inverse de ce qui compte quand la
+    course tombe tout en bas de la série : ce qui compte, c'est qu'il n'a couru aussi bas
+    qu'une fois. Le rang se dit donc du côté où il se joue, et le compte d'ultras ne
+    s'écrit qu'une fois dans la phrase."""
+    from twin_engine.report.context import _majuscule, _rang
+
+    def _dit(n, rang, bas):
+        return _majuscule(_rang({"n": n, "rang": rang, "par_le_bas": bas}))
+
+    assert _dit(12, 2, True) == ("C'est la deuxième intensité la plus basse de tes 12 ultras "
+                                 "— tu n'as couru aussi bas qu'une seule fois")
+    assert _dit(5, 1, False) == "C'est l'intensité la plus forte de tes 5 ultras"
+    assert _dit(12, 1, True) == "C'est l'intensité la plus basse de tes 12 ultras"
+    assert _dit(12, 3, False).endswith("tu n'as couru aussi fort que 2 fois")
+    assert _dit(1, 1, True) == "C'est plus doux que le seul ultra que tu aies couru"
+
+
+def test_the_breakdown_reading_says_what_a_percentage_cannot():
+    """La lecture de la barre dit deux choses qu'un pourcentage ne dit pas : le temps ne se
+    répartit pas comme la distance, et la montée prend plusieurs fois ce que la descente
+    rend — y compris sur un parcours qui descend plus qu'il ne monte."""
+    from types import SimpleNamespace
+
+    from twin_engine.report.context import _lecture_ventilation
+
+    def _v(monte_h, descend_h):
+        return {"parts": [
+            {"cle": "montee", "heures": monte_h, "part_pct": 55.0, "part_distance_pct": 42.0},
+            {"cle": "descente", "heures": descend_h, "part_pct": 18.0, "part_distance_pct": 45.0},
+        ]}
+
+    boucle = SimpleNamespace(dplus_m=3000.0, dminus_m=3000.0)
+    point_a_point = SimpleNamespace(dplus_m=9111.0, dminus_m=10200.0)
+
+    # sous une fois et demie, le rapport est banal : on n'en fait pas une phrase
+    banal = _lecture_ventilation(_v(6.0, 5.0), boucle)
+    assert "55\\,\\%" in banal and "42\\,\\%" in banal
+    assert "plus de temps \u00e0 monter" not in banal
+
+    franc = _lecture_ventilation(_v(9.0, 3.0), point_a_point)
+    assert "3\\,\\texttimes{}" in franc        # un rapport franc se dit en entier
+    assert "alors que tu descends plus que tu ne montes" in franc
+
+    # une boucle rend exactement ce qu'elle monte : la remarque n'a pas lieu d'être
+    assert "descends plus" not in _lecture_ventilation(_v(9.0, 3.0), boucle)
+    # entre les deux, une décimale
+    assert "1,6\\,\\texttimes{}" in _lecture_ventilation(_v(8.0, 5.0), boucle)
+
+
 def test_one_sentence_per_profile_class():
     """Une classe de profil, UNE phrase : le récit d'ouverture et la jauge lisent la même
     table. Deux tables, c'était « ton allure baisse peu » d'un côté et « comme la plupart »
@@ -336,9 +395,11 @@ def test_one_sentence_per_profile_class():
     endurance = next(g for g in ctx["gauges"] if "ndurance" in g["label"])
     phrase = PROFIL_ENDURANCE[ctx["profile_word"]][1]
     assert endurance["sentence"] == phrase
-    assert phrase in ctx["opening"].replace("\\'", "'").replace("\\`", "")
     durabilite = next(g for g in ctx["gauges"] if "urabilit" in g["label"])
     assert durabilite["sentence"] == PROFIL_DURABILITE[ctx["durability_word"]]
+    # et la phrase ne se dit qu'UNE fois : le paragraphe au-dessus ne la recopie pas
+    for p in (phrase, PROFIL_DURABILITE[ctx["durability_word"]]):
+        assert p not in ctx["opening"].replace("\\'", "'").replace("\\`", "")
 
 
 def test_a_gauge_only_shows_what_is_measured():

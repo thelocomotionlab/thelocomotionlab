@@ -24,6 +24,7 @@ from twin_engine.report import (build_feuille, build_pdf, build_report_context,
                                 generate_figures, render_template, render_tex,
                                 write_livrables)
 from twin_engine.report.charte import CLS_COLORS, FONT_FILES, TOKENS, hexa
+from twin_engine.report.faits import trois_moments
 from twin_engine.report.feuille import consignes as consignes_feuille
 from twin_engine.report.livrables import (crew_indices, crew_points, finish_point,
                                           gpx_text, ics_text)
@@ -249,15 +250,38 @@ def test_the_fade_claim_matches_what_the_plan_actually_served():
     assert attendu in ctx["durability_pourtoi"]
 
 
+def test_an_official_climb_that_differs_is_said_and_never_replaces_the_measure():
+    """Le rapport ne peut pas annoncer un D+ supérieur à celui de l'organisateur sans le dire.
+
+    Le chiffre affiché reste le D+ MESURÉ sur la trace — c'est lui qui fait la prédiction —
+    mais le carnet de route est nommé à côté, avec l'écart. Sous un demi pour cent, deux
+    arrondis se rencontrent : il n'y a rien à expliquer, et rien ne s'imprime."""
+    from twin_engine.report._format import fr_thousands
+
+    ctx, (course, *_) = context()
+    assert ctx["dplus_officiel"] is None and ctx["dplus_ecart_pct"] is None   # rien de déclaré
+
+    mesure = float(course.dplus_m)
+    ecarte, _ = context(race=race_spec(official_dplus_m=round(mesure / 1.03)))
+    assert ecarte["dplus_m"] == fr_thousands(mesure, 0)      # le mesuré reste le mesuré
+    assert ecarte["dplus_officiel"] == fr_thousands(round(mesure / 1.03), 0)
+    assert ecarte["dplus_ecart_pct"].startswith("+")
+    assert "au carnet de route" in render_tex(ecarte)
+
+    proche, _ = context(race=race_spec(official_dplus_m=round(mesure * 1.002)))
+    assert proche["dplus_officiel"] is None
+
+
 def test_one_instruction_per_segment_never_twice_the_same():
-    ctx, (_, _, _, _, plan, race, _) = context()
+    ctx, (course, _, _, _, plan, race, _) = context()
     marches = [r["marche"] for r in ctx["feuille_rows"]]
     assert len(marches) == len(plan.segments)
     pleines = [m for m in marches if m]
     assert pleines and len(set(pleines)) == len(pleines)
     assert all(len(m) <= CFG.report.consigne_max_chars for m in pleines)
-    # une note d'assistance déclarée devient une consigne quand rien de plus urgent ne sort
-    brutes = consignes_feuille(plan, race, CFG)
+    # une note d'assistance déclarée devient une consigne quand rien de plus urgent ne sort.
+    # La feuille reçoit les MÊMES moments que la page 2 : elle n'en recalcule aucun.
+    brutes = consignes_feuille(plan, race, CFG, moments=trois_moments(plan, course))
     assert [r["marche"] for r in ctx["feuille_rows"]] == [m.replace("&", "\\&") for m in brutes]
 
 

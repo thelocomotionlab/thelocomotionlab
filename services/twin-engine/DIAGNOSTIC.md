@@ -2707,14 +2707,14 @@ chevauchaient sur le profil. Le découpage en montées continues, lui, est un ca
 reste dans le moteur (`course/montees.py`, sans nomenclature, avec son miroir en descente) et
 sert à nommer les trois moments qui décident.
 
-**Six faits, chacun un calcul** (`report/faits.py`, dix tests) : la course comparée à ses
+**Les faits, chacun un calcul** (`report/faits.py`, quinze tests) : la course comparée à ses
 propres ultras (durée, D+, plus longue descente continue, nuits — une ligne par mesure
 disponible, aucune valeur de population en repli) ; les deux intensités sur la même échelle et
 le rang de la course dans sa série ; la ventilation du temps prévu en montée, terrain roulant,
 descente et arrêts (seuil déclaré `course.flat_grade_pct = 5 %`, sa somme redonne l'horloge du
-plan) ; le coût d'un écart — la journée à −10 % de forme rejoue le point fixe, le départ 10 %
-trop vite n'est qu'une arithmétique et le dit ; les trois moments choisis par trois critères
-explicites ; le lever du jour et l'endroit où il tombe. Deux mesures nouvelles sur les
+plan) ; deux scénarios de forme — le point fixe rejoué à −10 % puis à +10 %, arrêts et nuit
+compris ; le risque des arrêts ; l'allure du départ ; les trois moments choisis par trois
+critères explicites ; le lever du jour et l'endroit où il tombe. Deux mesures nouvelles sur les
 activités, calculées par la MÊME règle que sur un parcours : plus longue montée et plus longue
 descente continues, et le nombre de nuits traversées.
 
@@ -2735,8 +2735,51 @@ partout ailleurs la case est vide, et la légende le dit. La nuit quitte le poin
 pour une trame de fond de ligne ; sur le verso, la teinte dit les postes de nuit. La colonne
 « type de ravito » devient « eau / ravito » et disparaît quand la nutrition n'est pas déclarée.
 
+**Quatre contradictions numériques, une seule cause.** La feuille recalculait de son côté ce
+que la page 2 calculait déjà : le D+ du segment au lieu du dénivelé de la montée continue
+(1 360 m contre 1 567 m sous la même étiquette), le temps de mouvement au lieu de l'horloge
+(3 h 03 contre 3 h 08), la plus longue descente lue sur deux bornes différentes (1 682 m contre
+1 759 m). `feuille.consignes` reçoit désormais les objets de `faits.trois_moments`, ceux-là
+mêmes qu'imprime la page 2 ; un test compare les deux surfaces chiffre par chiffre
+(`test_the_sheet_and_page_two_print_the_same_numbers`).
+
+La quatrième était un lieu, pas un chiffre : une montée finissant au km 19 s'annonçait « vers
+Collefongue », le ravitaillement du km 28,9 — le plus proche, mais celui d'après. `faits._ou`
+ne nomme un point de passage que si le morceau y finit vraiment (à moins d'un kilomètre) ;
+sinon il situe par rapport au dernier point FRANCHI (« km 0→50, 9 km après Base 1 »), qui est
+ce que le coureur vient de voir.
+
+**Trois textes creux.** L'ouverture de la page 4 était mot pour mot la concaténation des
+légendes des jauges posées dessous : elle est vide quand la validation croisée existe, et ne
+sert plus qu'au cadrage quand elle manque. Le rang de l'intensité se comptait toujours par le
+haut — « plus fort qu'un seul de tes douze ultras » dit l'inverse de ce qui compte quand la
+course tombe tout en bas ; il se dit maintenant du côté où il se joue (« la deuxième intensité
+la plus basse de tes 12 ultras — tu n'as couru aussi bas qu'une seule fois »), et le compte
+d'ultras n'apparaît qu'une fois dans la phrase. « Le coût d'un écart » promettait un coût puis
+expliquait que le moteur ne le modélise pas : le bloc s'appelle « Deux scénarios » et ne porte
+que ce qui se calcule — deux points fixes rejoués. Le paragraphe qui manquait est parti dans la
+docstring de `deux_scenarios` : le moteur mesure le découplage d'un effort mené normalement et
+prescrit une dérive ; ni l'un ni l'autre ne dit ce qu'une erreur de rythme fait payer, et le
+chiffrer demanderait un barème qu'aucune donnée ne soutient.
+
+**Trois chiffres qui manquaient.** Le risque des arrêts (`risque_des_arrets`) : ce que le plan
+retranche, contre le taux d'arrêt mesuré sur les ultras de l'athlète appliqué à son temps de
+mouvement. C'est le plus gros écart évitable d'un plan d'ultra, et il est mesurable ; il ne
+s'imprime que si `stops_statistics` sert des arrêts VRAIMENT mesurés (origine `ultras`), jamais
+sur le repli de population. Le départ en chiffres de montre (`depart_concret`) : l'allure
+terrain du premier segment, et l'écart en allure AJUSTÉE à la pente — la seule comparable d'un
+terrain à l'autre — avec la moyenne de ses ultras ; « ça va te paraître trop facile » ne veut
+rien dire sans ce chiffre. Et la lecture de la barre de ventilation : la part du temps contre la
+part de la distance, puis le rapport montée/descente, avec sa réserve quand le parcours descend
+plus qu'il ne monte.
+
 **Reste ouvert.** La trace de Nice n'est pas dans le dépôt : la cause de l'écart de D+ est
 établie par le code et par les tests, elle sera confirmée en rejouant les deux traces
-(`tools/diag_parcours.py a.gpx --contre b.gpx --race examples/nice-100m.json`). Tant que la
-trace n'est pas posée, le cas de référence ne peut pas être recalculé ici.
+(`tools/diag_parcours.py a.gpx --contre b.gpx --race examples/nice-100m.json`), et
+`--profil KM0 KM1` imprime l'altitude lissée tous les 250 m pour lire un morceau à la main.
+Tant que la trace n'est pas posée, le cas de référence ne peut pas être recalculé ici.
+
+La ligne du D+ officiel ne s'imprime que si le fichier de course porte `official_dplus_m` :
+`examples/nice-100m.json` le porte (8 900 m), un carnet de route personnel doit le déclarer
+pour que l'écart s'explique au lieu de surprendre.
 

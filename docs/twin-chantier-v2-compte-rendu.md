@@ -667,10 +667,12 @@ republié à côté de la politique du plan.
     nommé dans la légende.** La convention interne existante (±1,25 %, la tranche centrale des
     `slope_bins`) donne ~0 % de plat sur une course de montagne : vraie, mais illisible dans
     une barre. Cinq pour cent est un choix, il est dit comme tel.
-84. **Le départ trop rapide n'est pas prédit, il est calculé.** Le moteur n'a aucun modèle de
-    ce que coûte une explosion : le rapport donne les minutes gagnées et le ralentissement
-    qu'il faudrait tenir ensuite, et écrit noir sur blanc que c'est une arithmétique. La
-    journée sans forme, elle, est une vraie prédiction (le point fixe rejoué).
+84. **Le coût d'un départ trop rapide n'est pas dit du tout.** Le moteur n'a aucun modèle de
+    ce que coûte une explosion : il mesure le découplage d'un effort mené normalement et
+    prescrit une dérive de plan ; ni l'un ni l'autre ne chiffre une erreur de rythme. Le bloc
+    s'appelle donc « Deux scénarios » et ne porte que deux points fixes rejoués, à −10 % puis
+    +10 % de forme. Un bloc qui promet un coût et explique ensuite qu'il ne sait pas le calculer
+    vaut moins que pas de bloc.
 85. **La plus longue montée et la plus longue descente d'un ultra passé se mesurent avec la
     règle du parcours.** Même grille, même lissage, même hystérésis des deux côtés : sans ça,
     « ta plus longue descente » et « celle de cette course » ne seraient pas comparables. Deux
@@ -683,6 +685,29 @@ republié à côté de la politique du plan.
 88. **La validation croisée est la figure qui reste, la courbe record part à l'annexe.** C'est
     la preuve qu'un acheteur a besoin de voir ; l'aire de données du nuage reste carrée — la
     diagonale est son message — et sa légende se lit à côté, pas dessous.
+
+## Choix faits à la place de Valentin (rapport v4, deuxième passe)
+
+89. **La feuille ne recalcule rien : elle reçoit les objets de la page 2.** Quatre chiffres se
+    contredisaient d'une page à l'autre parce que les deux surfaces calculaient chacune de leur
+    côté — le D+ du segment contre le dénivelé de la montée continue, le temps de mouvement
+    contre l'horloge. `feuille.consignes` prend `moments=` en paramètre plutôt que de refaire le
+    calcul, et un test compare les deux surfaces chiffre par chiffre.
+90. **Un morceau ne prend le nom d'un ravitaillement que s'il y finit vraiment.** Le point le
+    plus PROCHE peut être celui d'après : une montée qui s'arrête au km 19 annoncée « vers
+    Collefongue » (km 28,9) fait croire qu'elle y monte encore. À moins d'un kilomètre, on nomme
+    le point ; au-delà, on situe après le dernier FRANCHI — ce que le coureur vient de voir.
+91. **Le rang d'intensité se dit du côté où il tombe.** « Plus fort qu'un seul de tes douze
+    ultras » est vrai et dit l'inverse de ce qui compte. En bas de série on compte par le bas
+    (« la deuxième intensité la plus basse — tu n'as couru aussi bas qu'une seule fois »), en
+    haut par le haut. Le basculement se fait à la médiane, sans seuil à régler.
+92. **Le risque des arrêts ne s'imprime que sur des arrêts mesurés.** `stops_statistics` sert
+    un repli de population quand aucun ultra n'a de plateaux mesurés ; comparer le plan à ce
+    repli reviendrait à opposer l'athlète à des gens qu'il ne connaît pas. Sans mesure, pas de
+    bloc — et la même règle vaut pour la jauge des arrêts.
+93. **Le paragraphe d'ouverture de la page 4 disparaît quand il n'a rien à dire.** Il était la
+    concaténation des légendes des jauges posées dessous. Il ne reste que pour cadrer une
+    prédiction non validée ; sinon la clé est vide et le gabarit n'imprime rien.
 
 ## Questions ouvertes
 

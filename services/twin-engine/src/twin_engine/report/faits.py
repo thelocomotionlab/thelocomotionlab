@@ -95,13 +95,20 @@ def deux_intensites(prediction, twin, calibration) -> dict | None:
         return None
     parts = sorted((u.vga_kmh / cs.vc_kmh for u in ultras), reverse=True)
     course = float(prediction.vc_fraction)
+    plus_bas = sum(1 for p in parts if p < course)      # ultras courus MOINS fort
+    plus_forts = sum(1 for p in parts if p > course)
     return {
         "course_pct": 100.0 * course,
         "ultras_pct": 100.0 * float(np.mean(parts)),
         "mini_pct": 100.0 * parts[-1],
         "maxi_pct": 100.0 * parts[0],
         "n": len(parts),
-        "plus_forts": sum(1 for p in parts if p > course),
+        "plus_forts": plus_forts,
+        "plus_bas": plus_bas,
+        # le rang se compte du côté où la course tombe : dire « plus fort qu'un seul de tes
+        # douze » quand elle est tout en bas, c'est dire l'inverse de ce qui compte
+        "rang": plus_bas + 1 if plus_bas <= plus_forts else plus_forts + 1,
+        "par_le_bas": plus_bas <= plus_forts,
         "vc_kmh": float(cs.vc_kmh),
     }
 
@@ -161,48 +168,120 @@ def ventilation(plan, course, cfg) -> dict | None:
 
 
 # --------------------------------------------------------------------------- #
-# 4. Le coût d'une erreur
+# 4. Deux scénarios de forme, et le risque des arrêts
 # --------------------------------------------------------------------------- #
-def cout_dune_erreur(prediction, plan, course, twin, calibration, cfg, *,
-                     forme_pct: float = 10.0, depart_pct: float = 10.0,
-                     depart_heures: float = 4.0) -> dict:
-    """Deux écarts au plan, chacun dans ce que le moteur sait vraiment calculer.
+def deux_scenarios(prediction, course, twin, calibration, cfg, *,
+                   forme_pct: float = 10.0) -> dict:
+    """La même prédiction sur un athlète un peu moins bien, puis un peu mieux.
 
-    * **La journée sans forme** est une prédiction : le point fixe rejoué avec toutes les
-      vitesses multipliées par (1 − forme), arrêts et nuit compris. C'est le même calcul que
-      la prédiction servie, sur un athlète un peu plus lent.
-    * **Le départ trop rapide** est une ARITHMÉTIQUE, pas une prédiction : le moteur n'a
-      aucun modèle de ce que coûte une explosion. On dit ce qui est vrai — les minutes
-      gagnées, et le ralentissement qu'il faudrait tenir ensuite pour finir à l'heure —
-      et ``modele`` reste faux pour que le rapport ne le présente jamais comme une prévision.
+    C'est le point fixe rejoué avec toutes les vitesses multipliées par (1 ∓ forme), arrêts
+    et nuit compris : deux vraies prédictions, pas deux règles de trois.
+
+    Ce que ce bloc ne contient PAS, et pourquoi : le coût d'un départ trop rapide. Le moteur
+    mesure le découplage d'un effort mené normalement et prescrit une dérive de plan ; ni
+    l'un ni l'autre ne dit ce qu'une erreur de rythme fait payer. Le chiffrer demanderait un
+    barème qu'aucune donnée ici ne soutient.
     """
     from ..predict import predict_finish
 
-    out: dict = {"forme_pct": forme_pct, "depart_pct": depart_pct, "depart_heures": depart_heures}
-
     env = getattr(prediction, "env_factor", None) or 1.0
-    lent = predict_finish(course.deq_km, course.dplus_per_km, twin, calibration, cfg,
-                          env_factor=env * (1.0 - forme_pct / 100.0),
-                          spec_stops_h=getattr(prediction, "stops_hours", None))
-    out["forme"] = {
-        "heures": float(lent.finish_hours),
-        "ecart_h": float(lent.finish_hours - prediction.finish_hours),
-        "modele": True,
+    stops = getattr(prediction, "stops_hours", None)
+    out = {"forme_pct": forme_pct}
+    for cle, signe in (("moins", -1.0), ("plus", +1.0)):
+        p = predict_finish(course.deq_km, course.dplus_per_km, twin, calibration, cfg,
+                           env_factor=env * (1.0 + signe * forme_pct / 100.0),
+                           spec_stops_h=stops)
+        out[cle] = {"heures": float(p.finish_hours),
+                    "ecart_h": float(p.finish_hours - prediction.finish_hours)}
+    return out
+
+
+def risque_des_arrets(plan, calibration, cfg) -> dict | None:
+    """Ce que le plan retranche pour les arrêts, contre ce que l'athlète s'arrête vraiment.
+
+    C'est le plus gros écart évitable d'un plan d'ultra, et il est mesurable : la politique
+    du plan d'un côté, le taux d'arrêt mesuré sur ses propres ultras de l'autre, appliqué à
+    son temps de mouvement. None quand aucun de ses ultras n'a d'arrêts mesurés — on ne
+    compare pas un plan à une valeur de population.
+    """
+    import numpy as np
+
+    from ..calibration import stops_statistics
+
+    genuine = list(getattr(calibration, "genuine", ()) or ())
+    if not genuine:
+        return None
+    w = (np.asarray(calibration.weights, dtype=float)
+         if getattr(calibration, "weights", None) is not None
+         and len(calibration.weights) == len(genuine) else np.ones(len(genuine)))
+    st = stops_statistics(genuine, w, cfg)
+    if st.get("origin") != "ultras" or not st.get("n"):
+        return None
+
+    plan_h = float(plan.t_stops_h)
+    move_h = float(plan.t_move_h)
+    mesure_h = float(st["rate"]) * move_h
+    n_arrets = sum(1 for s in plan.segments if s.stop_min > 0)
+    return {
+        "plan_h": plan_h,
+        "plan_n": n_arrets,
+        "mesure_h": mesure_h,
+        "mesure_min_par_h": 60.0 * float(st["rate"]),
+        "n_ultras": int(st["n"]),
+        "ecart_h": mesure_h - plan_h,
     }
 
-    # arithmétique du départ trop vite : le temps gagné sur les premières heures, et le
-    # ralentissement qu'il faudrait tenir sur le reste pour rentrer dans le temps prévu
-    t_move = float(plan.t_move_h)
-    h0 = min(float(depart_heures), t_move)
-    gagne_h = h0 * (depart_pct / 100.0) / (1.0 + depart_pct / 100.0)
-    reste_h = max(t_move - (h0 - gagne_h), 0.0)
-    out["depart"] = {
-        "gagne_min": 60.0 * gagne_h,
-        "reste_h": reste_h,
-        "ralentir_pct": 100.0 * gagne_h / reste_h if reste_h > 0 else 0.0,
-        "modele": False,
+
+def depart_concret(plan, calibration) -> dict | None:
+    """À quoi ressemble le départ, en allure, et de combien il est plus lent que ses ultras.
+
+    « Ça va te paraître trop facile » ne veut rien dire tant qu'on ne donne pas le chiffre de
+    la montre. On donne les deux : l'allure terrain du premier segment (ce que la montre
+    affiche) et l'écart en allure AJUSTÉE à la pente — la seule comparable d'un terrain à
+    l'autre — avec la moyenne de ses ultras.
+    """
+    segs = plan.segments
+    ultras = [u for u in getattr(calibration, "genuine", ()) or () if u.vga_kmh > 0]
+    if not segs or not ultras:
+        return None
+    seg = segs[0]
+    if seg.v_ga_kmh <= 0:
+        return None
+    moyenne_vga = sum(u.vga_kmh for u in ultras) / len(ultras)
+    plan_ajuste = 60.0 / seg.v_ga_kmh
+    ultras_ajuste = 60.0 / moyenne_vga
+    return {
+        "km": float(seg.off1),
+        "vers": seg.to,
+        "pace_terrain_min_km": float(seg.pace_min_km),
+        "pace_ajustee_min_km": plan_ajuste,
+        "ultras_ajustee_min_km": ultras_ajuste,
+        "ecart_min_km": plan_ajuste - ultras_ajuste,
+        "n_ultras": len(ultras),
     }
-    return out
+
+
+# À moins de ce kilométrage d'un point de passage, un morceau « finit » à ce point ; au-delà,
+# il se situe par rapport au dernier point franchi.
+PRES_KM = 1.0
+
+
+def _ou(plan, km: float) -> dict:
+    """Où tombe un kilomètre, dans les mots du carnet de route.
+
+    ``{"vers": nom}`` quand le morceau finit au point lui-même, ``{"apres": nom, "km_apres":
+    distance}`` quand il s'arrête entre deux points — nommer le ravitaillement SUIVANT ferait
+    croire que la montée y monte encore.
+    """
+    segs = plan.segments
+    fin = min(segs, key=lambda s: abs(s.off1 - km))
+    if abs(fin.off1 - km) <= PRES_KM:
+        return {"vers": fin.to, "apres": None, "km_apres": 0.0}
+    passes = [s for s in segs if s.off1 <= km - 1e-6]
+    if passes:
+        dernier = passes[-1]
+        return {"vers": None, "apres": dernier.to, "km_apres": km - dernier.off1}
+    return {"vers": None, "apres": None, "km_apres": km}
 
 
 def _horloge(plan, km: float) -> tuple[str | None, float]:
@@ -235,9 +314,14 @@ def trois_moments(plan, course) -> list[dict]:
 
     def _fenetre(km0: float, km1: float) -> dict:
         """Ce que le plan dit d'un morceau borné en km : quand on y entre, quand on en sort,
-        combien de temps il prend. Les heures sont interpolées sur le cumul du plan, aux
-        kilomètres exacts du morceau — un morceau qui finit au milieu d'un segment ne se voit
-        pas prêter l'heure du ravitaillement suivant."""
+        combien de temps il prend, et OÙ il finit.
+
+        Les heures sont interpolées sur le cumul du plan aux kilomètres exacts du morceau —
+        un morceau qui s'arrête au milieu d'un segment ne se voit pas prêter l'heure du
+        ravitaillement suivant. Le lieu obéit à la même règle : on ne nomme un point de
+        passage que si le morceau y finit vraiment (à moins de ``PRES_KM``) ; sinon on situe
+        par rapport au dernier point franchi, qui est ce que le coureur vient de voir.
+        """
         debut, h0 = _horloge(plan, km0)
         fin, h1 = _horloge(plan, km1)
         dedans = [s for s in segs
@@ -248,7 +332,7 @@ def trois_moments(plan, course) -> list[dict]:
             "debut_clock": debut, "fin_clock": fin,
             "heures": max(h1 - h0, 0.0),
             "nuit": any(s.night for s in dedans) if dedans else bool(suivant.night),
-            "vers": suivant.to,
+            **_ou(plan, km1),
         }
 
     out: list[dict] = []
@@ -311,5 +395,5 @@ def lever_du_jour(plan, race) -> dict | None:
     return None
 
 
-__all__ = ["contre_son_passe", "cout_dune_erreur", "deux_intensites", "lever_du_jour",
-           "trois_moments", "ventilation"]
+__all__ = ["contre_son_passe", "depart_concret", "deux_intensites", "deux_scenarios",
+           "lever_du_jour", "risque_des_arrets", "trois_moments", "ventilation"]

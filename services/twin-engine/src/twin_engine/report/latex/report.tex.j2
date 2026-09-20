@@ -65,14 +65,16 @@
 \noindent<% for p in faits.ventilation.parts %>\LLtroncon{<< p.fraction >>}{<% if p.cle == 'montee' %>LLAccentInk<% elif p.cle == 'descente' %>LLPrimary<% elif p.cle == 'roulant' %>LLAccent<% else %>LLMistLine<% endif %>}<% endfor %>\par
 \vspace{5pt}
 {\fontsize{9}{12}\selectfont<% for p in faits.ventilation.parts %>\LLpuce{<% if p.cle == 'montee' %>LLAccentInk<% elif p.cle == 'descente' %>LLPrimary<% elif p.cle == 'roulant' %>LLAccent<% else %>LLMistLine<% endif %>}<< p.quoi >> \textbf{<< p.hm >>} (<< p.pct >>\,\%)<% if not loop.last %>\hfill<% endif %><% endfor %>\par}
+\vspace{4pt}
+<% if faits.ventilation.lecture %>{\fontsize{10}{14}\selectfont<< faits.ventilation.lecture >>\par}
 \vspace{3pt}
-{\fontsize{8.4}{11}\selectfont\color{LLSoft}<< faits.ventilation.legende >>\par}
+<% endif %>{\fontsize{8.4}{11}\selectfont\color{LLSoft}<< faits.ventilation.legende >>\par}
 <% endif %><% if faits.moments %>
 \vspace{12pt}
 \LLetiquette{Les trois moments qui décident}\par\vspace{5pt}
 {\fontsize{9.4}{9.4}\selectfont\LLtableau
 \setlength{\tabcolsep}{5pt}\renewcommand{\arraystretch}{1.9}
-\begin{tabularx}{\linewidth}{|>{\raggedright\arraybackslash}p{38mm}|>{\raggedright\arraybackslash}X|>{\centering\arraybackslash}p{34mm}|>{\centering\arraybackslash}p{16mm}|}
+\begin{tabularx}{\linewidth}{|>{\raggedright\arraybackslash}p{38mm}|>{\raggedright\arraybackslash}X|>{\centering\arraybackslash}p{44mm}|>{\centering\arraybackslash}p{16mm}|}
   \LLfilet{4}
   \LLheaderrow
   \LLthead{} & \LLthead{où} & \LLthead{quand} & \LLthead{durée} \\
@@ -99,6 +101,8 @@ prédiction : les fenêtres sont une tolérance d'exécution de $\pm$<< target_t
 pas une probabilité. Pour mémoire, le modèle te situe à \textbf{<< pred_central >>}.
 <% endif %>
 
+<% if faits.depart %><< faits.depart >>
+<% endif %>
 \textbf{Arrêts.} << stops_policy.sentence >>.
 <% if not crew_declared %>
 \textbf{Assistance.} La spec de course ne déclare aucun point d'assistance : les lignes teintées
@@ -128,9 +132,12 @@ avant de les donner à ton assistance.
   \caption{<< caption_cumul >>}
 \end{figure}
 
-\begin{llattention}[Le coût d'un écart]
-{\fontsize{9}{12}\selectfont << faits.erreur.forme >>\par\vspace{3pt}<< faits.erreur.depart >>\par}
+<% if faits.arrets %>\begin{llattention}[Le risque des arrêts]
+{\fontsize{9}{12}\selectfont << faits.arrets >>\par}
 \end{llattention}
+<% endif %>\begin{llverdict}[Deux scénarios]
+{\fontsize{9}{12}\selectfont << faits.scenarios.moins >>\par\vspace{3pt}<< faits.scenarios.plus >>\par}
+\end{llverdict}
 <% if target_requested %>
 \LLtitre{Ton objectif}
 Tu as demandé un plan pour \textbf{<< target_hm >>} : \textbf{<< target_regime_label >>}.
@@ -151,9 +158,9 @@ Il répartit au mieux la durée que tu as choisie en respectant ta courbe de fat
 % =====================================================================
 % LL:BEGIN page-preuve
 \LLpage{La preuve}{Ton profil}
-
+<% if opening %>
 << opening >>
-
+<% endif %>
 \par\vspace{4pt}
 \noindent\begin{minipage}[t]{0.47\linewidth}
 <% for g in gauges[:2] %>\LLgauge{<< g.label >>}{<< g.value >>}{<< g.fraction >>}{<< g.sentence >>}

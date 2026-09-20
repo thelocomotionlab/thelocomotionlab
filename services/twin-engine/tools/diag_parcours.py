@@ -49,6 +49,31 @@ def _table(a: dict, b: dict | None) -> str:
     return "\n".join(lignes)
 
 
+def _profil(gpx: Path, race: RaceSpec, cfg, km0: float, km1: float, pas_m: float = 250.0) -> str:
+    """L'altitude lissée le long d'un morceau, tous les ``pas_m`` — de quoi trancher à l'œil
+    si un D− quasi nul est une montée continue ou un bug."""
+    import numpy as np
+
+    c = build_course(gpx.read_bytes(), race, cfg)
+    off = np.asarray(c.off_km_grid, float)
+    alt = np.asarray(c.alt_smooth_m, float)
+    i0, i1 = int(np.argmin(abs(off - km0))), int(np.argmin(abs(off - km1)))
+    if i1 <= i0:
+        return "(morceau vide)"
+    pas = max(int(round(pas_m / cfg.course.grid_step_m)), 1)
+    lignes = ["| km | altitude | Δ depuis le point précédent |", "|---|---|---|"]
+    precedent = None
+    for i in range(i0, i1 + 1, pas):
+        delta = "" if precedent is None else f"{alt[i] - precedent:+.0f} m"
+        lignes.append(f"| {off[i]:.2f} | {alt[i]:.0f} m | {delta} |")
+        precedent = alt[i]
+    seg = alt[i0:i1 + 1]
+    d = np.diff(seg)
+    lignes.append(f"\nsur ce morceau : D+ {d[d > 0].sum():.0f} m, D− {-d[d < 0].sum():.0f} m, "
+                  f"{off[i1] - off[i0]:.2f} km")
+    return "\n".join(lignes)
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Géométrie d'un parcours (et comparaison de deux traces)")
     p.add_argument("gpx", type=Path)
@@ -57,6 +82,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--references", action="store_true",
                    help=f"écrire les valeurs épinglées dans {REFS.name}")
     p.add_argument("--json", type=Path)
+    p.add_argument("--profil", nargs=2, type=float, metavar=("KM0", "KM1"),
+                   help="altitude lissée le long d'un morceau, tous les 250 m")
     args = p.parse_args(argv)
 
     cfg = load_config()
@@ -75,6 +102,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  D+ au carnet {race.official_dplus_m:.0f} m → écart mesuré {ecart:+.1f} %")
     print()
     print(_table(a, b))
+    if args.profil:
+        km0, km1 = args.profil
+        print(f"\n## profil lissé, km {km0:g} → {km1:g}\n")
+        print(_profil(args.gpx, race, cfg, km0, km1))
 
     if args.json:
         args.json.write_text(json.dumps({"a": a, "b": b}, ensure_ascii=False, indent=1),

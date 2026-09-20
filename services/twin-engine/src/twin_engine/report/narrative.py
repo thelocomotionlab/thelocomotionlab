@@ -110,18 +110,9 @@ def opening_narrative(twin, calibration, prediction, cfg=None) -> str:
     ici donnerait deux fois le même chiffre à deux endroits, et un jour ils divergeraient.
     """
     parts: list[str] = []
-    pw = _profile_word(twin, cfg)
-    if pw:
-        # headline masculin (s'accorde avec « profil ») → aucun genre supposé sur l'athlète
-        titre, explication = PROFIL_ENDURANCE[pw]
-        parts.append(f"Ton profil est \\textbf{{{titre}}} : {explication}.")
-    dw = _durability_word(twin, cfg)
-    if dw and twin.durability_pct is not None:
-        # en Synthèse on évite le jargon « découplage » (défini plus loin) : langage clair
-        parts.append(
-            f"R\\'esistance \\`a la fatigue : \\textbf{{{dw}}}, avec {_pct(twin.durability_pct)} "
-            f"de perte d'efficacit\\'e en fin de longue sortie — {PROFIL_DURABILITE[dw]}."
-        )
+    # Ni le profil d'endurance ni la durabilité ne sont répétés ici : les jauges les disent
+    # juste en dessous, chiffre et phrase compris. Un paragraphe qui les recopie n'apprend
+    # rien au lecteur — il lui fait relire deux fois la même chose.
     if prediction is not None and prediction.cross_validation is None:
         parts.append(
             "Peu d'ultras comparables dans ton archive : la m\\'ethode n'a pas encore pu \\^etre "

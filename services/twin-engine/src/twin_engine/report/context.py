@@ -633,8 +633,8 @@ def _faits(prediction, course, plan, twin, calibration, race, cfg) -> dict:
     aucune clé : le gabarit n'imprime alors rien, il n'a pas de repli à inventer."""
     # les six clés existent toujours, vides quand la mesure manque : le gabarit teste, il ne
     # cherche pas une clé qui pourrait ne pas être là
-    out: dict = {"passe": [], "intensites": None, "ventilation": None, "erreur": None,
-                 "moments": [], "lever": None}
+    out: dict = {"passe": [], "intensites": None, "ventilation": None, "scenarios": None,
+                 "arrets": None, "depart": None, "moments": [], "lever": None}
 
     # 1. la course contre son passé
     mots = {
@@ -665,17 +665,15 @@ def _faits(prediction, course, plan, twin, calibration, race, cfg) -> dict:
     # 2. les deux intensités
     i = faits.deux_intensites(prediction, twin, calibration)
     if i:
-        plus = i["plus_forts"]
-        rang = ("plus fort que tout ce que tu as couru en ultra" if plus == 0 else
-                f"plus fort que {i['n'] - plus} de tes {i['n']} ultras" if plus < i["n"] else
-                f"plus doux que tes {i['n']} ultras")
         out["intensites"] = {
             "course": fr(i["course_pct"], 0), "ultras": fr(i["ultras_pct"], 0),
             "mini": fr(i["mini_pct"], 0), "maxi": fr(i["maxi_pct"], 0), "n": i["n"],
+            # le nombre d'ultras ne se dit qu'une fois : le rang le porte déjà
             "phrase": _fr_decimals(
                 f"Cette course demande \\textbf{{{fr(i['course_pct'], 0)}\\,\\%}} de ta "
-                f"vitesse critique. Tes {i['n']} ultras se sont courus entre "
-                f"{fr(i['mini_pct'], 0)} et {fr(i['maxi_pct'], 0)}\\,\\% : c'est {rang}."),
+                f"vitesse critique ; tes ultras passés se sont courus entre "
+                f"{fr(i['mini_pct'], 0)} et {fr(i['maxi_pct'], 0)}\\,\\%. "
+                f"{_majuscule(_rang(i))}."),
         }
 
     # 3. où passe le temps
@@ -689,30 +687,51 @@ def _faits(prediction, course, plan, twin, calibration, race, cfg) -> dict:
             "legende": _fr_decimals(
                 f"Montée et descente au-delà de {fr(v['seuil_pct'], 0)}\\,\\% de pente ; "
                 "entre les deux, le terrain est roulant."),
+            "lecture": _lecture_ventilation(v, course),
         }
 
-    # 4. le coût d'une erreur
-    c = faits.cout_dune_erreur(prediction, plan, course, twin, calibration, cfg)
-    out["erreur"] = {
-        "forme": _fr_decimals(
-            f"Une journée à \\textbf{{{fr(c['forme_pct'], 0)}\\,\\% sous ta forme}} "
-            f"t'amène à \\textbf{{{hm(c['forme']['heures'])}}}, soit "
-            f"{hm(abs(c['forme']['ecart_h']))} de plus."),
-        "depart": _fr_decimals(
-            f"Partir \\textbf{{{fr(c['depart_pct'], 0)}\\,\\% trop vite}} sur "
-            f"{fr(c['depart_heures'], 0)}\\,h te fait gagner "
-            f"{fr(c['depart']['gagne_min'], 0)}\\,min ; pour finir à l'heure prévue il "
-            f"faudrait ensuite tenir {fr(c['depart']['ralentir_pct'], 1)}\\,\\% plus lent "
-            f"sur {fr(c['depart']['reste_h'], 0)}\\,h. Ce second chiffre est une "
-            "arithmétique, pas une prédiction : le moteur ne modélise pas ce que coûte un "
-            "départ raté."),
+    # 4. deux scénarios de forme, le risque des arrêts, et à quoi ressemble le départ
+    c = faits.deux_scenarios(prediction, course, twin, calibration, cfg)
+    pct = fr(c["forme_pct"], 0)
+    out["scenarios"] = {
+        "moins": _fr_decimals(
+            f"À \\textbf{{{pct}\\,\\% sous ta forme}} — un jour sans, de la chaleur, une "
+            f"nuit courte — tu arrives à \\textbf{{{hm(c['moins']['heures'])}}}, soit "
+            f"{hm(abs(c['moins']['ecart_h']))} de plus."),
+        "plus": _fr_decimals(
+            f"À \\textbf{{{pct}\\,\\% au-dessus}}, tu arrives à "
+            f"\\textbf{{{hm(c['plus']['heures'])}}}, soit "
+            f"{hm(abs(c['plus']['ecart_h']))} de moins."),
     }
+
+    a = faits.risque_des_arrets(plan, calibration, cfg)
+    if a:
+        sens = "de plus" if a["ecart_h"] >= 0 else "de moins"
+        out["arrets"] = _fr_decimals(
+            f"Le plan retranche \\textbf{{{hm(a['plan_h'])}}} d'arrêts ({a['plan_n']} points "
+            f"de passage). Ton taux mesuré sur {a['n_ultras']} de tes ultras — "
+            f"{fr(a['mesure_min_par_h'], 0)}\\,min par heure de mouvement — en donnerait "
+            f"\\textbf{{{hm(a['mesure_h'])}}}, soit {hm(abs(a['ecart_h']))} {sens}. "
+            "C'est le plus gros écart évitable de ce plan : il se joue aux ravitaillements, "
+            "pas sur l'allure.")
+
+    d = faits.depart_concret(plan, calibration)
+    if d:
+        sens = "de plus" if d["ecart_min_km"] >= 0 else "de moins"
+        out["depart"] = _fr_decimals(
+            f"Sur les {fr(d['km'], 0)} premiers kilomètres, jusqu'à "
+            f"{tex_escape(d['vers'])}, tu vises \\textbf{{{_allure(d['pace_terrain_min_km'])}"
+            f"/km}}. En allure ajustée à la pente, c'est "
+            f"{_allure(abs(d['ecart_min_km']))} au kilomètre {sens} que la moyenne de tes "
+            f"{d['n_ultras']} ultras.")
 
     # 5. les trois moments
     out["moments"] = [{
         "quoi": m["quoi"],
-        "ou": (f"km {fr(m['from_km'], 0)}\\LLfleche{{}}{fr(m['to_km'], 0)}, vers "
-               f"{tex_escape(m['vers'])}"),
+        "ou": (f"km {fr(m['from_km'], 0)}\\LLfleche{{}}{fr(m['to_km'], 0)}, "
+               + (f"jusqu'à {tex_escape(m['vers'])}" if m["vers"] else
+                  f"{fr(m['km_apres'], 0)}\\,km après {tex_escape(m['apres'])}"
+                  if m["apres"] else "depuis le départ")),
         "quand": (f"{tex_escape(m['debut_clock'])}\\LLfleche{{}}{tex_escape(m['fin_clock'])}"
                   if m["debut_clock"] else ""),
         "duree": hm(m["heures"]),
@@ -734,6 +753,68 @@ def _faits(prediction, course, plan, twin, calibration, race, cfg) -> dict:
                 f"Le jour se lève à \\textbf{{{lv['heure']}}}, vers le km {fr(lv['km'], 0)}."),
         }
     return out
+
+
+_ORDINAUX = {2: "deuxième", 3: "troisième", 4: "quatrième", 5: "cinquième",
+             6: "sixième", 7: "septième", 8: "huitième", 9: "neuvième", 10: "dixième"}
+
+
+def _majuscule(phrase: str) -> str:
+    """La même phrase, capitale en tête — ``str.capitalize`` rabaisserait tout le reste."""
+    return phrase[:1].upper() + phrase[1:]
+
+
+def _allure(min_km: float) -> str:
+    """Une allure en minutes décimales → « 7:58 », comme sur une montre."""
+    total = max(float(min_km), 0.0)
+    m = int(total)
+    sec = int(round((total - m) * 60))
+    if sec == 60:
+        m, sec = m + 1, 0
+    return f"{m}:{sec:02d}"
+
+
+def _lecture_ventilation(v: dict, course) -> str:
+    """Ce que la barre dit et qu'un pourcentage ne dit pas : le temps ne se répartit pas
+    comme la distance, et la montée coûte plusieurs fois ce que la descente rend."""
+    parts = {p["cle"]: p for p in v["parts"]}
+    monte, descend = parts.get("montee"), parts.get("descente")
+    if not monte or not descend or monte["heures"] <= 0:
+        return ""
+    bouts = [(f"\\textbf{{{fr(monte['part_pct'], 0)}\\,\\%}} du temps en montée pour "
+              f"{fr(monte['part_distance_pct'], 0)}\\,\\% de la distance")]
+    if descend["heures"] > 0:
+        fois = monte["heures"] / descend["heures"]
+        if fois >= 1.5:
+            plus = (f"{fr(fois, 1)}\\,\\texttimes{{}} plus de temps à monter qu'à descendre"
+                    if fois < 2.5 else
+                    f"{fr(fois, 0)}\\,\\texttimes{{}} plus de temps à monter qu'à descendre")
+            if course.dminus_m > course.dplus_m * 1.02:
+                plus += ", alors que tu descends plus que tu ne montes"
+            bouts.append(plus)
+    return _fr_decimals(" — ".join(bouts) + ".")
+
+
+def _rang(i: dict) -> str:
+    """Le rang de cette course dans sa série d'ultras, dit du côté où il se joue.
+
+    « Plus fort qu'un seul de tes douze » quand la course tombe tout en bas de la série, c'est
+    dire l'inverse de ce qui compte : ce qui compte, c'est qu'il n'a couru aussi bas qu'une
+    fois.
+    """
+    n, rang, bas = i["n"], i["rang"], i["par_le_bas"]
+    cote = "basse" if bas else "forte"
+    if n == 1:
+        return f"c'est plus {'doux' if bas else 'fort'} que le seul ultra que tu aies couru"
+    if rang == 1:
+        return f"c'est l'intensité la plus {cote} de tes {n} ultras"
+    ordinal = _ORDINAUX.get(rang, f"{rang}\\ieme{{}}")
+    combien = rang - 1
+    aussi = ("tu n'as couru aussi bas qu'une seule fois" if bas and combien == 1 else
+             f"tu n'as couru aussi bas que {combien} fois" if bas else
+             "tu n'as couru aussi fort qu'une seule fois" if combien == 1 else
+             f"tu n'as couru aussi fort que {combien} fois")
+    return f"c'est la {ordinal} intensité la plus {cote} de tes {n} ultras — {aussi}"
 
 
 def _combien(ratio: float) -> str:
@@ -898,7 +979,9 @@ def _v3_context(ctx: dict, *, course, twin, calibration, prediction, plan, race,
     points = crew_points(plan, race, prediction)
     finish = finish_point(plan, prediction)
     # une seule série de consignes : le rapport, la feuille et l'annexe disent la même chose
-    consignes = feuille.consignes(plan, race, cfg)
+    # la feuille lit les MÊMES moments que la page 2 : un seul calcul, donc un seul chiffre
+    moments = faits.trois_moments(plan, course)
+    consignes = feuille.consignes(plan, race, cfg, moments=moments)
 
     def _clock_or_h(clock: str | None, hours: float) -> str:
         return tex_escape(clock) if clock else f"{fr(hours, 1)}\\,h"

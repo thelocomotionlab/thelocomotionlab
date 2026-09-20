@@ -203,13 +203,20 @@ def test_context_interval_labels_from_config():
     tex = render_tex(ctx)
     assert "une course sur deux" in tex
     assert "quatre courses sur cinq" in render_template(FEUILLE_TEMPLATE, ctx)
-    # les bandes ne se disent jamais en pourcentage sec — la page des caractéristiques, elle,
-    # a le droit d'écrire des pentes et des parts de distance en pour cent
-    import re
-    sans_parcours = re.sub(r"% LL:BEGIN page-parcours.*?% LL:END page-parcours", "", tex, flags=re.S)
-    assert "50\\,\\%" not in sans_parcours and "80\\,\\%" not in sans_parcours
-
+    # Les bandes ne se disent jamais en pourcentage sec. On le vérifie sur des largeurs que
+    # rien d'autre dans le document ne peut produire : le rapport mesure aussi des pentes,
+    # des parts de distance et des parts de temps, qui tombent volontiers sur 50 ou 80.
     from dataclasses import replace
+
+    decale = replace(
+        CFG,
+        prediction=replace(CFG.prediction, interval_low_pct=3, interval_high_pct=96),
+        pacing=replace(CFG.pacing, plan_window_low_pct=31, plan_window_high_pct=68),
+    )
+    autre = _context(decale)
+    assert autre["interval_pct"] == "93" and autre["plan_band_pct"] == "37"
+    pages = render_tex(autre) + render_template(FEUILLE_TEMPLATE, autre)
+    assert "93\\,\\%" not in pages and "37\\,\\%" not in pages
 
     cfg = replace(CFG, prediction=replace(CFG.prediction, interval_low_pct=5, interval_high_pct=95))
     assert _context(cfg)["safety_word"] == "neuf courses sur dix"

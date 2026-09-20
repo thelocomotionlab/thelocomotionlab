@@ -33,25 +33,26 @@ garde et la prédiction sont fondues : on ne gaspille pas une page pour un titre
 | bloc | contenu | source |
 |---|---|---|
 | profil | altimétrie, ravitaillements, **trame sombre sur les heures de nuit** — aucune annotation de catégorie | `figures/profil.png` |
-| **Le temps prévu** | barre empilée montée / roulant / descente / arrêts, sa légende chiffrée et son seuil | `faits.ventilation.parts[]`, `.legende` |
-| **Les trois moments qui décident** | plus grosse montée, plus grosse descente, plus long segment : où, quand, durée | `faits.moments[]` |
+| **Le temps prévu** | barre empilée montée / roulant / descente / arrêts, sa légende chiffrée, la lecture (part du temps contre part de la distance, rapport montée/descente) et son seuil | `faits.ventilation.parts[]`, `.lecture`, `.legende` |
+| **Les trois moments qui décident** | plus grosse montée, plus grosse descente, plus long segment : où, quand, durée. Le « où » ne nomme un ravitaillement que si le morceau y finit vraiment ; sinon il se situe après le dernier franchi | `faits.moments[]` |
 | **Le lever du jour** | l'heure et l'endroit | `faits.lever.phrase` |
 
 ## Page 3 — `page-plan`
 
 | bloc | contenu | source |
 |---|---|---|
-| l'allure visée | dérive assumée et sa preuve, politique d'arrêts | `fade_pct`, `fade_evidence`, `stops_policy.sentence` |
+| l'allure visée | dérive assumée et sa preuve, **l'allure du départ en chiffres de montre**, politique d'arrêts | `fade_pct`, `fade_evidence`, `faits.depart`, `stops_policy.sentence` |
 | tableau | une ligne par segment, trois colonnes d'heures titrées par leur arrivée | `feuille_rows[]`, `clock_titles` |
 | cumul | temps cumulé et sa bande | `figures/cumul.png`, `caption_cumul` |
-| **Le coût d'un écart** | la journée sans forme (prédiction) et le départ trop rapide (arithmétique) | `faits.erreur.forme`, `.depart` |
+| **Le risque des arrêts** | ce que le plan retranche contre le taux d'arrêt mesuré sur ses ultras ; rien sans arrêts mesurés | `faits.arrets` |
+| **Deux scénarios** | la journée à −10 % de forme et celle à +10 %, deux points fixes rejoués | `faits.scenarios.moins`, `.plus` |
 
 ## Page 4 — `page-preuve`
 
 | bloc | contenu | source |
 |---|---|---|
-| ouverture | le profil de l'athlète en deux phrases | `opening` |
-| jauges | **une jauge par mesure disponible** — pas de jauge alimentée par un défaut | `gauges[]` |
+| ouverture | le cadrage, **et rien d'autre** : sans validation croisée, la prudence ; avec, la clé est vide et le bloc ne s'imprime pas — les jauges disent déjà le profil | `opening` |
+| jauges | **une jauge par mesure disponible** — pas de jauge alimentée par un défaut ; sa phrase est celle de la table de profil, dite une seule fois dans le document | `gauges[]` |
 | validation croisée | la figure (seule du rapport), sa légende et l'erreur mesurée à côté | `figures/validation.png`, `caption_validation`, `honesty` |
 | **Les limites** | les quatre limites, les hypothèses, le QR et l'adresse en clair | `limits_short[]`, `assumptions[]`, `annex_url` |
 
@@ -80,6 +81,11 @@ Le gras des forts dénivelés reste, sans légende.
 feuille : ce que l'athlète a écrit, ce que son assistance prépare, l'entrée dans la nuit, le
 retour du jour, le segment le plus long avec sa durée, la plus grosse montée, la plus grosse
 descente. Partout ailleurs la case est **vide et c'est voulu** : de la place pour écrire.
+
+Les trois moments arrivent de `faits.trois_moments` — **les mêmes objets que la page 2**, donc
+les mêmes chiffres. Les recalculer ici (le D+ du segment au lieu de la montée continue, le temps
+de mouvement au lieu de l'horloge) donnerait deux « plus grosse montée » qui ne se ressemblent
+pas ; un test l'interdit.
 
 **Verso — tableau d'assistance.** Un poste par ligne : nom, km, au plus tôt, prévu, au plus
 tard, à prévoir. **Les lignes grises sont les postes de nuit.**

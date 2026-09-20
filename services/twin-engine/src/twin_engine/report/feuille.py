@@ -115,7 +115,7 @@ def parts(plan, race) -> list[dict]:
 # --------------------------------------------------------------------------- #
 
 
-def consignes(plan, race, cfg) -> list[str]:
+def consignes(plan, race, cfg, *, moments=()) -> list[str]:
     """Une poignée de consignes SINGULIÈRES, et des cases vides partout ailleurs.
 
     Une colonne qui répète cinq fois « marche, mange en montant » ne dit rien : l'œil cesse
@@ -124,8 +124,12 @@ def consignes(plan, race, cfg) -> list[str]:
       * ce que l'athlète a écrit lui-même (``RaceSpec.reglages``) et ce que son assistance
         prépare (``crew``) — sa voix passe avant tout le reste ;
       * l'entrée dans la nuit et le retour du jour ;
-      * le segment le plus long, avec sa durée ;
-      * la plus grosse montée et la plus grosse descente du parcours.
+      * les trois moments qui décident, posés là où ils COMMENCENT.
+
+    ``moments`` vient de ``report.faits.trois_moments`` : la feuille et la page 2 lisent les
+    mêmes objets, donc les mêmes chiffres. Les calculer ici une seconde fois — par exemple le
+    D+ du segment au lieu de la montée continue — donnerait deux « plus grosse montée » qui ne
+    se ressemblent pas, et le lecteur y verrait une erreur.
 
     Partout ailleurs la case est vide, et c'est voulu : c'est de la place pour écrire.
     """
@@ -153,15 +157,26 @@ def consignes(plan, race, cfg) -> list[str]:
         if i1 + 1 < len(segs):
             _poser(i1 + 1, "le jour revient")
 
-    # le segment le plus long, la plus grosse montée, la plus grosse descente
-    i_long = max(range(len(segs)), key=lambda i: segs[i].t_move_min + segs[i].stop_min)
-    _poser(i_long, f"le plus long : {hm_plain(segs[i_long].t_move_min / 60.0)} de marche")
-    i_up = max(range(len(segs)), key=lambda i: segs[i].dplus_m)
-    if segs[i_up].dplus_m > 0:
-        _poser(i_up, f"la plus grosse montée : +{fr(segs[i_up].dplus_m, 0)} m")
-    i_down = max(range(len(segs)), key=lambda i: segs[i].dminus_m)
-    if segs[i_down].dminus_m > 0:
-        _poser(i_down, f"la plus grosse descente : −{fr(segs[i_down].dminus_m, 0)} m")
+    # les trois moments, au segment où ils commencent, avec les chiffres de la page 2.
+    # Les milliers se séparent par une espace ORDINAIRE : la consigne est du texte brut,
+    # échappé à l'injection, où une espace fine LaTeX ressortirait en toutes lettres.
+    def _m(v: float) -> str:
+        return f"{int(round(v)):,}".replace(",", " ")
+
+    mots = {
+        "montee": lambda m: f"montée de {_m(m['denivele_m'])} m jusqu'au km {fr(m['to_km'], 0)}",
+        "descente": lambda m: (f"descente de {_m(m['denivele_m'])} m jusqu'au km "
+                               f"{fr(m['to_km'], 0)}"),
+        "segment": lambda m: f"le plus long : {hm_plain(m['heures'])}",
+    }
+    for m in moments:
+        texte = mots.get(m.get("cle"))
+        if texte is None:
+            continue
+        depart = next((i for i, s in enumerate(segs)
+                       if s.off1 - s.off_len_km <= m["from_km"] + 1e-6 < s.off1), None)
+        if depart is not None:
+            _poser(depart, texte(m))
 
     limite = cfg.report.consigne_max_chars
     return [c if len(c) <= limite else c[:limite - 1].rstrip() + "…" for c in out]

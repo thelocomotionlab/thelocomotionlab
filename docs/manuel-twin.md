@@ -263,8 +263,10 @@ déjà calculée.
 
 **La géométrie d'un parcours** se vérifie avec `PYTHONPATH=src python -m tools.diag_parcours
 trace.gpx --race examples/nice-100m.json` : distance, D+, D−, Deq et le détail par segment,
-avec `--contre autre.gpx` pour comparer deux traces et `--references` pour épingler la
-géométrie servie (`tests/test_geometrie.py` la relit et refuse toute dérive silencieuse).
+avec `--contre autre.gpx` pour comparer deux traces, `--references` pour épingler la
+géométrie servie (`tests/test_geometrie.py` la relit et refuse toute dérive silencieuse) et
+`--profil KM0 KM1` pour lire l'altitude lissée tous les 250 m sur un morceau, quand un D+ ou un
+D− de segment surprend.
 Rappel de ce qui déplace quoi : le carnet de route change la distance affichée et les bornes
 des segments, **jamais** les totaux ; un total qui bouge accuse la trace ou la fenêtre de
 lissage.
