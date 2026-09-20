@@ -763,8 +763,7 @@ def _faits(prediction, course, plan, twin, calibration, race, cfg) -> dict:
     # les six clés existent toujours, vides quand la mesure manque : le gabarit teste, il ne
     # cherche pas une clé qui pourrait ne pas être là
     out: dict = {"passe": [], "intensites": None, "ventilation": None, "scenarios": None,
-                 "arrets": None, "depart": None, "moments": [], "lourds": None,
-                 "lever": None}
+                 "arrets": None, "depart": None, "moments": []}
 
     # 1. la course contre son passé
     mots = {
@@ -822,27 +821,6 @@ def _faits(prediction, course, plan, twin, calibration, race, cfg) -> dict:
             "lecture": _lecture_ventilation(v, course),
         }
 
-    # les segments qui pèsent le plus : le découpage que le tableau du plan ne montre pas
-    l = faits.segments_lourds(plan, combien=cfg.report.heavy_segments)
-    if l:
-        out["lourds"] = {
-            "cumul": hm(l["cumul_h"]), "cumul_pct": fr(l["cumul_pct"], 0),
-            "n": l["n"], "n_mot": _mot_nombre(l["n"]), "n_total": l["n_total"],
-            "phrase": _fr_decimals(
-                f"{_majuscule(_mot_nombre(l['n']))} segments sur {_mot_nombre(l['n_total'])} "
-                f"pèsent \\textbf{{{hm(l['cumul_h'])}}}, soit "
-                f"\\textbf{{{fr(l['cumul_pct'], 0)}\\,\\%}} de ta course. Ce sont eux qu'il "
-                "faut découper à l'avance : c'est là que le retard s'installe sans qu'on le "
-                "voie."),
-            "lignes": [{
-                "nom": tex_escape(x["nom"]),
-                "km": _fr_decimals(f"km {fr(x['from_km'], 1)}\\LLfleche{{}}{fr(x['to_km'], 1)}"),
-                "duree": hm(x["heures"]),
-                "part": _fr_decimals(f"{fr(x['part_pct'], 0)}\\,\\%"),
-                "fraction": round(x["fraction"], 3),
-            } for x in l["lignes"]],
-        }
-
     # 4. deux scénarios de forme, le risque des arrêts, et à quoi ressemble le départ
     c = faits.deux_scenarios(prediction, course, twin, calibration, cfg)
     pct = fr(c["forme_pct"], 0)
@@ -894,17 +872,6 @@ def _faits(prediction, course, plan, twin, calibration, race, cfg) -> dict:
         "nuit": bool(m["nuit"]),
     } for m in faits.trois_moments(plan, course)]
 
-    # 6. le lever du jour
-    lv = faits.lever_du_jour(plan, race)
-    if lv:
-        out["lever"] = {
-            "heure": lv["heure"], "km": fr(lv["km"], 0), "vers": tex_escape(lv["vers"]),
-            "phrase": _fr_decimals(
-                f"Le jour se lève à \\textbf{{{lv['heure']}}}, vers le km "
-                f"{fr(lv['km'], 0)} — entre {tex_escape(lv['apres'])} et "
-                f"{tex_escape(lv['vers'])}." if lv["apres"] else
-                f"Le jour se lève à \\textbf{{{lv['heure']}}}, vers le km {fr(lv['km'], 0)}."),
-        }
     return out
 
 

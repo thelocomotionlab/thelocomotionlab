@@ -2839,3 +2839,43 @@ l'adresse de l'annexe, jamais en pied de chaque page — un test le tient.
 **Les bandes se disent en courses ET en pour cent.** « une course sur deux y tombe —
 intervalle à 50 % ». La règle du v2 (« jamais en pourcentage sec ») tient toujours : le test
 vérifie désormais que le pour cent n'arrive qu'APRÈS le nombre de courses, jamais seul.
+
+### 10.23 Relecture de la maquette — la page du parcours, et deux règles de tableau (2026-09-20)
+
+Valentin a relu le document imprimé. Ce qu'il a demandé, et ce que ça a coûté.
+
+**La page « Où passe le temps » devient « Le parcours ».** Elle portait cinq blocs ; elle en
+porte trois, aérés : le profil, le temps prévu, l'heure de passage. La courbe du temps cumulé
+quitte la page du plan pour venir ici — elle parle du parcours, pas de l'allure. Les cinq
+segments qui pèsent le plus et le lever du jour sont retirés du rapport ; leurs calculs
+(`faits.segments_lourds`, `faits.lever_du_jour`) quittent le moteur avec eux, faute de
+lecteur. Le bloc du temps prévu est posé sur un panneau crème (`\LLpanneau`, token
+`--color-brand-grid`) : la seule couleur de fond du rapport, qui sépare un bloc de ses voisins
+sans filet ni cadre.
+
+**Le profil perd ses verticales.** Seize traits — un par ravitaillement — hachaient la
+montagne en seize tranches et cachaient ce qu'il fallait lire. La graduation vit maintenant
+SOUS l'axe, à pas rond (5, 10, 20, 25 ou 50 km, choisi pour donner six à neuf repères), et le
+kilomètre d'arrivée se lit à droite, sans le mot.
+
+**Deux règles de tableau, et pourquoi elles n'étaient pas évidentes.** Les lignes du plan
+n'avaient pas toutes la même hauteur, et un nom trop long emportait le point de nuit à la
+ligne suivante. Deux causes :
+
+* une colonne `p` aligne par le HAUT ; une ligne plus haute que les autres laissait ses
+  voisines accrochées en haut. Toutes les colonnes des tableaux de course sont désormais des
+  `m` (centrage vertical) — ce que le `X` de `tabularx` ne sait pas faire, d'où le passage à
+  `tabular` avec une dernière colonne calculée (`\LLgrilleplan`, `\LLgrillemarche`,
+  `\LLgrilleassistance`) ;
+* cette largeur restante se mesure APRÈS le `\tabcolsep` du tableau. Mesurée au préambule,
+  elle comptait la gouttière par défaut (6 pt au lieu de 2) et la dernière colonne perdait
+  trente millimètres.
+
+`\LLtient{largeur}{contenu}` garantit la ligne unique : le contenu se rétrécit s'il déborde,
+et les colonnes sont taillées pour que ça ne serve presque jamais. `\LLnomseg` colle le point
+de nuit au bord droit de la colonne, sur la même ligne, toujours.
+
+**En-tête et pied.** Le bandeau passe à 15 mm, le pied réserve 9 mm sous son filet, et les
+deux centrent leur contenu. La marque était adossée à la ligne de base : signe et mot sont
+maintenant centrés dessus (`\LLcentre`), donc le lockup a une boîte symétrique et tout ce qui
+le centre le centre vraiment.

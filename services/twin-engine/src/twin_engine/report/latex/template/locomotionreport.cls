@@ -226,20 +226,21 @@
 \newcommand{\LLmarkwhite}[1]{%
   \ifx\LLMarkWhiteFile\@empty\else\includegraphics[height=#1]{\LLMarkWhiteFile}\fi}
 % \LLbrandwhite : la marque sur un fond coloré — le signe clair, le mot en blanc.
-\newcommand{\LLbrandwhite}[2]{%
+%
+% Le signe ET le mot sont centrés sur la ligne de base : le lockup a donc une boîte
+% symétrique, et tout ce qui le centre — le bandeau, une cellule — le centre vraiment.
+% Adossé à la ligne de base, il remontait d'une demi-hauteur de capitale.
+\newcommand{\LL@brand}[3]{%
   \begingroup
   \setlength{\fboxsep}{0pt}%
-  \raisebox{-0.30\height}{\LLmarkwhite{#1}}\hspace{0.62em}%
-  {\LLsemiboldfont\fontsize{#2}{#2}\selectfont\color{LLBg}%
+  \LLcentre{#2}\hspace{0.62em}%
+  \LLcentre{\LLsemiboldfont\fontsize{#1}{#1}\selectfont\color{#3}%
     \LLwordtracked{\MakeUppercase{Locomotion Lab}}}%
   \endgroup}
-\newcommand{\LLbrand}[2]{%
-  \begingroup
-  \setlength{\fboxsep}{0pt}%
-  \raisebox{-0.30\height}{\LLmark{#1}}\hspace{0.62em}%
-  {\LLsemiboldfont\fontsize{#2}{#2}\selectfont\color{LLText}%
-    \LLwordtracked{\MakeUppercase{Locomotion Lab}}}%
-  \endgroup}
+% \LLcentre{contenu} : le contenu centré sur la ligne de base, pour qu'un nœud le centre.
+\newcommand{\LLcentre}[1]{\raisebox{-0.5\height}{\hbox{#1}}}
+\newcommand{\LLbrandwhite}[2]{\LL@brand{#2}{\LLmarkwhite{#1}}{LLBg}}
+\newcommand{\LLbrand}[2]{\LL@brand{#2}{\LLmark{#1}}{LLText}}
 
 % =============================================================================
 % 6. Géométrie, fond de page, réglages généraux
@@ -269,8 +270,8 @@
 % =============================================================================
 % 7. Dimensions de la charte
 % =============================================================================
-\newcommand{\LLHeadMarkHeight}{4.8mm}   % le signe en en-tête (le mot fait 7 pt)
-\newlength{\LLbandH}     \setlength{\LLbandH}{12.7mm}   % hauteur du bandeau bleu-vert
+\newcommand{\LLHeadMarkHeight}{5.4mm}   % le signe en en-tête (le mot fait 7,6 pt)
+\newlength{\LLbandH}     \setlength{\LLbandH}{15mm}     % hauteur du bandeau bleu-vert
 \newlength{\LLgoldH}     \setlength{\LLgoldH}{1.05mm}   % filet ocre sous le bandeau
 \newlength{\LLbandinset} \setlength{\LLbandinset}{14.8mm}% marge intérieure du bandeau
 \newlength{\LLcoverbar}  \setlength{\LLcoverbar}{16.1mm}% barre latérale de la couverture
@@ -296,16 +297,16 @@
       rectangle ([yshift=-\dimexpr\LLbandH+\LLgoldH\relax]current page.north east);
     \node[anchor=west, inner sep=0]
       at ([xshift=\LLbandinset, yshift=-\dimexpr\LLbandH/2\relax]current page.north west)
-      {\LLbrandwhite{\LLHeadMarkHeight}{10.5}};
+      {\LLbrandwhite{\LLHeadMarkHeight}{7.6}};
     \node[anchor=east, inner sep=0]
       at ([xshift=-\LLbandinset, yshift=-\dimexpr\LLbandH/2\relax]current page.north east)
-      {\LL@headright};
+      {\LLcentre{\LL@headright}};
   \end{tikzpicture}%
 }
 % Titre courant : le nom de la course, en terracotta. Rien d'autre — le reste est sur la
 % couverture, et une en-tête chargée se relit à chaque page pour rien.
 \newcommand{\LLheaddoc}[1]{%
-  \LLheadright{{\LLsemiboldfont\fontsize{11}{13}\selectfont\color{LLBg}#1}}%
+  \LLheadright{{\LLsemiboldfont\fontsize{9}{11}\selectfont\color{LLBg}#1}}%
 }
 \renewcommand{\sectionmark}[1]{\markboth{\thesection~\textperiodcentered~#1}{}}
 \newcommand{\LLrunninghead}[1]{\markboth{#1}{}}
@@ -322,15 +323,15 @@
 \newcommand{\LLfolio}{%
   {\fontsize{9}{11}\selectfont\color{LLAccent}\textbullet}\hspace{5pt}%
   {\LLtabular\fontsize{11}{13}\selectfont\color{LLText}\thepage}}
+\newlength{\LLpiedH} \setlength{\LLpiedH}{9mm}  % hauteur du bloc sous le filet
 \newcommand{\LLpied}[1]{%
   \begin{minipage}{\textwidth}%
     {\color{LLAccent}\rule{\textwidth}{\LLpiedfilet}}\par
-    \vspace{4pt}%
     \noindent\hbox to \textwidth{%
-      \begin{minipage}[t]{0.86\textwidth}\raggedright
-        {\fontsize{7.6}{10}\selectfont\color{LLSoft}#1\par}
+      \begin{minipage}[c][\LLpiedH][c]{0.84\textwidth}\raggedright
+        {\fontsize{7.6}{10.5}\selectfont\color{LLSoft}#1\par}
       \end{minipage}\hfill
-      \begin{minipage}[t]{0.1\textwidth}\raggedleft\LLfolio\end{minipage}}%
+      \begin{minipage}[c][\LLpiedH][c]{0.1\textwidth}\raggedleft\LLfolio\end{minipage}}%
   \end{minipage}%
 }
 % Légende de pied : posée par la page, relue par le pied. Une page qui n'en pose pas garde
@@ -368,12 +369,6 @@
   {\LLsemiboldfont\fontsize{27}{30}\selectfont\color{LLText}#1\par}
   \vspace{4mm}{\color{LLAccent}\rule{25.4mm}{1.3mm}}\par
   \vspace{4mm}%
-}
-% \LLtitre{Titre} : intertitre dans une page (bleu-vert, sans numéro)
-\newcommand{\LLtitre}[1]{%
-  \par\needspace{4\baselineskip}\vspace{6pt}%
-  {\LLsemiboldfont\fontsize{13}{16}\selectfont\color{LLSlateDark}#1\par}
-  \vspace{1pt}%
 }
 % \LLetiquette{texte} : étiquette en capitales espacées (le style « mono » de la charte)
 \newcommand{\LLetiquette}[1]{{\LLmonofont\fontsize{8}{10}\selectfont\color{LLMuted}\LLtracked{\MakeUppercase{#1}}}}
@@ -506,6 +501,9 @@
 % s'alignent. La couleur et la graisse se déclarent donc ICI, pas dans la cellule.
 \newcommand{\LLcell}{\centering\arraybackslash\leavevmode}
 \newcommand{\LLcellg}{\raggedright\arraybackslash\leavevmode}
+% Les colonnes des tableaux de course sont des « m » (array) et non des « p » : le contenu
+% y est centré VERTICALEMENT dans la ligne. Avec des « p », une ligne plus haute que les
+% autres laissait ses voisines accrochées en haut, et le tableau se lisait de travers.
 % \LLtetehoraire{couleur}{texte} : l'en-tête d'une colonne horaire — un trait épais de sa
 % couleur, puis l'heure d'arrivée. C'est ce trait qui fait le lien avec la légende.
 \newcommand{\LLtetehoraire}[2]{%
@@ -517,6 +515,20 @@
 % \LLtete{texte} : l'en-tête d'une colonne ordinaire.
 \newcommand{\LLtete}[1]{%
   {\LLsemiboldfont\fontsize{6.8}{8}\selectfont\color{LLText}\LLtracked{\MakeUppercase{#1}}}}
+% \LLtient{largeur}{contenu} : le contenu sur UNE ligne, rétréci s'il déborde.
+%
+% C'est ce qui donne au tableau des lignes de hauteur égale : un nom de ravitaillement long
+% passait à la ligne, la ligne doublait de hauteur, et le point de nuit se retrouvait seul en
+% dessous. Les colonnes sont taillées pour que le rétrécissement ne serve presque jamais.
+\newsavebox{\LL@tientbox}
+\newcommand{\LLtient}[2]{%
+  \sbox{\LL@tientbox}{#2}%
+  \ifdim\wd\LL@tientbox>#1\relax \resizebox{#1}{!}{\usebox{\LL@tientbox}}%
+  \else\usebox{\LL@tientbox}\fi}
+% \LLnomseg{nom}{repère} : le nom d'un ravitaillement, son repère de nuit collé au bord droit
+% de la colonne — sur la même ligne, toujours.
+\newcommand{\LLnomseg}[2]{%
+  \hbox to \linewidth{\LLtient{\dimexpr\linewidth-4mm\relax}{\mbox{#1}}\hfill #2}}
 % \LLmargecrew : la première colonne d'une ligne où l'assistance est autorisée — un filet
 % terracotta en marge, sur toute la hauteur de la ligne.
 % Un filet tracé, et non un fond de cellule : colortbl peint le fond sur la hauteur qu'il
@@ -645,29 +657,12 @@
       {\fontsize{8.25}{10}\selectfont\color{LLSoft}#5};
   \end{tikzpicture}}
 
-% \LLlourd{nom}{km}{fraction}{durée}{part} : une ligne des segments qui pèsent le plus.
-% La barre est la durée du segment RAPPORTÉE au plus long des cinq : c'est un classement,
-% pas une échelle absolue — et la durée est écrite à côté.
-\newlength{\LLlourdnom}  \setlength{\LLlourdnom}{49.2mm}
-\newlength{\LLlourdkm}   \setlength{\LLlourdkm}{27.5mm}
-\newlength{\LLlourddur}  \setlength{\LLlourddur}{22.2mm}
-\newlength{\LLlourdpart} \setlength{\LLlourdpart}{15.9mm}
-\newcommand{\LL@lourd}[6]{%
-  \noindent\begin{minipage}[c]{\LLlourdnom}\raggedright
-    {\LLsemiboldfont\fontsize{9.4}{12}\selectfont\color{LLText}#1\par}\end{minipage}%
-  \begin{minipage}[c]{\dimexpr\linewidth-\LLlourdnom-\LLlourdkm-\LLlourddur-\LLlourdpart\relax}
-    {\color{LLDeep}\rule{#3\dimexpr\linewidth-3mm\relax}{3.4mm}}%
-  \end{minipage}%
-  \begin{minipage}[c]{\LLlourdkm}\raggedright
-    {\fontsize{8.25}{10}\selectfont\color{LLSoft}#2\par}\end{minipage}%
-  \begin{minipage}[c]{\LLlourddur}\raggedleft
-    {\LLsemiboldfont\LLtabular\fontsize{10.5}{13}\selectfont\color{LLText}#4\par}\end{minipage}%
-  \begin{minipage}[c]{\LLlourdpart}\raggedleft
-    {\LLtabular\fontsize{8.6}{11}\selectfont\color{LLSoft}#5\par}\end{minipage}%
-  \par\vspace{5pt}#6}
-\newcommand{\LLlourd}[5]{%
-  \LL@lourd{#1}{#2}{#3}{#4}{#5}{{\color{LLHairline}\hrule height 0.4pt}\vspace{5pt}}}
-\newcommand{\LLlourdfin}[5]{\LL@lourd{#1}{#2}{#3}{#4}{#5}{}}
+% \LLpanneau{contenu} : un bloc posé sur un fond crème un peu plus chaud que la page. La
+% seule couleur de fond du rapport — elle sépare un bloc de ses voisins sans filet ni cadre.
+\newcommand{\LLpanneau}[1]{%
+  \setlength{\fboxsep}{7mm}%
+  \noindent\colorbox{LLGrid}{%
+    \begin{minipage}{\dimexpr\linewidth-14mm\relax}#1\end{minipage}}\par}
 
 % \LLcadredecoupe{contenu} : le liseré pointillé terracotta qui dit où couper, avec son
 % étiquette posée sur le trait, en haut à droite.

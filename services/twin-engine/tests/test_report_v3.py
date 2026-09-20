@@ -23,7 +23,6 @@ from twin_engine.predict import predict_finish
 from twin_engine.report import (build_feuille, build_pdf, build_report_context,
                                 generate_figures, render_template, render_tex,
                                 write_livrables)
-from twin_engine.report._format import hm
 from twin_engine.report.charte import CLS_COLORS, FONT_FILES, TOKENS, hexa
 from twin_engine.report.faits import trois_moments
 from twin_engine.report.feuille import consignes as consignes_feuille
@@ -198,26 +197,6 @@ def test_every_page_carries_the_same_footer():
     assert "\\thispagestyle{empty}" in cls
 
 
-def test_the_heaviest_segments_are_the_longest_in_clock_time():
-    """Le critère est la durée d'horloge du segment, arrêt compris — pas son dénivelé ni sa
-    longueur. Et ce que les cinq pèsent ENSEMBLE est la somme de ce qui est affiché."""
-    ctx, (_, _, _, _, plan, _, _) = context()
-    lourds = ctx["faits"]["lourds"]
-    assert lourds["n"] == min(CFG.report.heavy_segments, len(plan.segments))
-    assert lourds["n_total"] == len(plan.segments)
-
-    cum, durees = 0.0, []
-    for s in plan.segments:
-        durees.append(s.cum_clock_h - cum)
-        cum = s.cum_clock_h
-    attendu = sorted(durees, reverse=True)[:lourds["n"]]
-    assert [l["duree"] for l in lourds["lignes"]] == [hm(d) for d in attendu]
-    assert lourds["cumul"] == hm(sum(attendu))
-    # la barre est un classement, pas une échelle absolue : la plus longue vaut 1
-    assert lourds["lignes"][0]["fraction"] == 1.0
-    assert all(0 < l["fraction"] <= 1.0 for l in lourds["lignes"])
-
-
 def test_the_crew_cards_are_the_crew_table_read_twice():
     """Une fiche par poste, arrivée comprise, avec les MÊMES heures que le verso : la fiche
     ne recalcule rien, elle recoupe l'heure prévue pour qu'elle se lise d'un coup d'œil."""
@@ -296,7 +275,7 @@ def test_the_night_is_read_once_and_reports_every_section():
     # sur la feuille, la nuit est un point d'encre posé à côté du nom : une ligne teintée de
     # plus se serait battue avec le filet de l'assistance, qui demande une action
     tableau = _slice(render_template(FEUILLE_TEMPLATE, ctx), "feuille-recto")
-    tableau = tableau[tableau.index("\\begin{tabularx}"):tableau.index("\\end{tabularx}")]
+    tableau = tableau[tableau.index("\\begin{tabular}"):tableau.index("\\end{tabular}")]
     assert tableau.count("\\LLnuitpoint") == sum(1 for r in ctx["feuille_rows"] if r["night"])
     assert "\\LLnuitrow" not in tableau                    # plus de ligne teintée
 
@@ -506,7 +485,7 @@ def test_no_number_is_hard_coded_in_what_the_athlete_reads_in_the_race():
         return re.findall(r"\d[\d,.:]*", body)
 
     tex = render_tex(ctx)
-    for name in ("page-garde", "page-course", "page-temps", "page-plan", "page-preuve"):
+    for name in ("page-garde", "page-course", "page-parcours", "page-plan", "page-preuve"):
         assert not _reste(_slice(tex, name)), f"chiffres hors contexte sur {name}"
     feuille = render_template(FEUILLE_TEMPLATE, ctx)
     for name in ("feuille-recto", "feuille-verso"):
@@ -539,7 +518,7 @@ def test_render_has_no_residual_delimiters():
     assert "Camille \\& L" in tex
     assert "\\LLtoc" not in tex and "llabstract" not in tex and "keywords" not in tex
     # les titres-formules du v2 ont disparu, remplacés par des titres simples
-    for page in ("Ta course", "Où passe le temps", "Le plan", "Ton profil et la preuve"):
+    for page in ("Ta course", "Le parcours", "Le plan", "Ton profil"):
         assert page in tex
     cls = (TEMPLATE_DIR / "locomotionreport.cls").read_text(encoding="utf-8")
     for formule in ("Ce que ça te demande", "Ce que ce rapport ne sait pas",

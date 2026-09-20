@@ -45,14 +45,15 @@ dans le bas. Elle classe le dossier ; elle n'annonce aucun chiffre de prédictio
 | **Comment c'est prédit** | les mesures servies, leur application, et la validation croisée | `recit.methode` |
 | **Les fourchettes** | les deux bandes, dites en courses ET en pour cent | `recit.fourchettes[]` |
 
-## Page 2 — `page-temps`
+## Page 2 — `page-parcours`
+
+Trois blocs et de l'air : ce que le terrain demande, où le temps passe, et quand on passe où.
 
 | bloc | contenu | source |
 |---|---|---|
-| **Le profil** | altimétrie, ravitaillements, **trame diagonale sur les heures de nuit** — aucune annotation de catégorie | `figures/profil.png` |
-| **Le temps prévu** | barre empilée montée / roulant / descente / arrêts, sa légende chiffrée en deux colonnes, la lecture (part du temps contre part de la distance, rapport montée/descente) et son seuil | `faits.ventilation.parts[]`, `.lecture`, `.legende` |
-| **Les cinq segments qui pèsent le plus** | ce qu'ils pèsent ensemble, puis une ligne par segment : nom, barre de durée, bornes en km, durée, part | `faits.lourds.phrase`, `.lignes[]` |
-| **Le lever du jour** | l'heure et l'endroit | `faits.lever.phrase` |
+| **Le profil** | altimétrie et **trame diagonale sur les heures de nuit**. Aucune verticale dans l'aire de tracé : la graduation vit sous l'axe, à pas régulier, et le kilomètre d'arrivée se lit à droite | `figures/profil.png` |
+| **Le temps prévu** | sur un panneau crème — la seule couleur de fond du rapport : barre empilée montée / roulant / descente / arrêts, sa légende chiffrée en deux colonnes, la lecture (part du temps contre part de la distance, rapport montée/descente) et son seuil | `faits.ventilation.parts[]`, `.lecture`, `.legende` |
+| **L'heure de passage** | le temps cumulé et sa bande | `figures/cumul.png`, `caption_cumul` |
 
 ## Page 3 — `page-plan`
 
@@ -60,15 +61,16 @@ dans le bas. Elle classe le dossier ; elle n'annonce aucun chiffre de prédictio
 |---|---|---|
 | l'allure visée | dérive assumée et sa preuve, **l'allure du départ en chiffres de montre**, politique d'arrêts | `fade_pct`, `fade_evidence`, `faits.depart`, `stops_policy.sentence` |
 | tableau | une ligne par segment ; **trois colonnes horaires teintées**, titrées par leur heure d'arrivée ; **filet terracotta en marge** quand l'assistance est autorisée ; **point d'encre** à côté du nom quand le segment se court de nuit | `feuille_rows[]`, `clock_titles` |
-| cumul | temps cumulé et sa bande | `figures/cumul.png`, `caption_cumul` |
 | **Le risque des arrêts** | ce que le plan retranche contre le taux d'arrêt mesuré sur ses ultras ; rien sans arrêts mesurés | `faits.arrets` |
 | **Deux scénarios** | la journée à −10 % de forme et celle à +10 %, deux points fixes rejoués | `faits.scenarios.moins`, `.plus` |
 
 ## Page 4 — `page-preuve`
 
+Titre : **Ton profil**.
+
 | bloc | contenu | source |
 |---|---|---|
-| **Ton profil** | trois lignes : la mesure, sa valeur, ce qu'elle est et ce qu'elle vaut chez lui. Une mesure absente le dit | `profil_lignes[]` |
+| les trois mesures | trois lignes : la mesure, sa valeur, ce qu'elle est et ce qu'elle vaut chez lui. Une mesure absente le dit | `profil_lignes[]` |
 | **L'intensité** | le rang de cette course dans sa série, le rappel de ce que la VC veut dire, et la barre qui place la course sur l'étendue de ses ultras | `faits.intensites.phrase`, `.rappel`, `.barre` |
 | **La validation croisée** | la figure (seule du rapport), sa lecture, l'erreur mesurée, et l'encadré des quatre limites | `figures/validation.png`, `caption_validation`, `honesty`, `limits_short[]` |
 | **Les hypothèses** | ce que le plan suppose, le QR et l'adresse en clair | `assumptions[]`, `annex_url` |

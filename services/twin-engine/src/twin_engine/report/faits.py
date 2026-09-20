@@ -1,4 +1,4 @@
-"""Les faits du rapport : six calculs sur des données existantes, et rien d'autre.
+"""Les faits du rapport : des calculs sur des données existantes, et rien d'autre.
 
 Chaque fonction rend des valeurs BRUTES (nombres, textes en clair) ou ``None`` quand la
 mesure n'existe pas. Aucune n'invente de catégorie, d'échelle ni de barème : ce qui ne se
@@ -8,10 +8,10 @@ calcule pas ne s'écrit pas. La mise en forme (virgule française, échappement 
   1. ``contre_son_passe`` — la course en regard des ultras de calibration de l'athlète.
   2. ``deux_intensites``  — l'intensité de cette course et celle de ses ultras passés.
   3. ``ventilation``      — où passe le temps prévu : montée, terrain roulant, descente, arrêts.
-  4. ``cout_dune_erreur`` — ce que coûtent une journée sans forme et un départ trop rapide.
-  5. ``trois_moments``    — la plus grosse montée, la plus grosse descente, le plus long segment.
-  6. ``segments_lourds``  — les segments qui prennent le plus de temps, et ce qu'ils pèsent.
-  6. ``lever_du_jour``    — où l'athlète sera au lever du soleil, et à quelle heure.
+  4. ``deux_scenarios``   — la même course à dix pour cent de forme en moins, puis en plus.
+  5. ``risque_des_arrets``— ce que le plan retranche contre son taux d'arrêt mesuré.
+  6. ``depart_concret``   — l'allure du premier segment, en chiffres de montre.
+  7. ``trois_moments``    — la plus grosse montée, la plus grosse descente, le plus long segment.
 """
 
 from __future__ import annotations
@@ -22,7 +22,6 @@ import numpy as np
 
 from ..course.montees import descentes, montees
 from ..pacing.plan import fmt_clock
-from ..pacing.sun import sun_times
 
 
 # --------------------------------------------------------------------------- #
@@ -287,7 +286,7 @@ def _ou(plan, km: float) -> dict:
 
 def _horloge(plan, km: float) -> tuple[str | None, float]:
     """(heure de passage au kilomètre donné, heures depuis le départ), par interpolation du
-    cumul du plan. Une seule lecture de l'horloge, partagée par les moments et le lever."""
+    cumul du plan. Une seule lecture de l'horloge pour tous les morceaux du parcours."""
     segs = plan.segments
     kms = [0.0] + [s.off1 for s in segs]
     cums = [0.0] + [s.cum_clock_h for s in segs]
@@ -360,79 +359,5 @@ def trois_moments(plan, course) -> list[dict]:
     return out
 
 
-# --------------------------------------------------------------------------- #
-# Les segments qui pèsent le plus
-# --------------------------------------------------------------------------- #
-def segments_lourds(plan, *, combien: int = 5) -> dict | None:
-    """Les segments qui prennent le plus de temps, et ce qu'ils pèsent ensemble.
-
-    Le critère est la durée d'HORLOGE prévue du segment, arrêt compris : c'est le temps que
-    la course prend vraiment. Ni le dénivelé ni la longueur n'entrent en compte — ils sont
-    déjà dans le tableau du plan, et un long segment plat ne demande pas le même découpage
-    qu'une montée courte.
-    """
-    segs = plan.segments
-    if not segs:
-        return None
-    total = float(segs[-1].cum_clock_h)
-    if total <= 0:
-        return None
-    lignes, precedent = [], 0.0
-    for s in segs:
-        cum = float(s.cum_clock_h)
-        lignes.append({"nom": s.to, "from_km": float(s.off1 - s.off_len_km),
-                       "to_km": float(s.off1), "heures": max(cum - precedent, 0.0)})
-        precedent = cum
-    top = sorted(lignes, key=lambda x: x["heures"], reverse=True)[:max(combien, 1)]
-    maxi = top[0]["heures"]
-    cumul = sum(x["heures"] for x in top)
-    return {
-        "n": len(top),
-        "n_total": len(segs),
-        "total_h": total,
-        "cumul_h": cumul,
-        "cumul_pct": 100.0 * cumul / total,
-        "lignes": [{**x, "part_pct": 100.0 * x["heures"] / total,
-                    "fraction": x["heures"] / maxi if maxi > 0 else 0.0} for x in top],
-    }
-
-
-# --------------------------------------------------------------------------- #
-# 6. Le lever du jour
-# --------------------------------------------------------------------------- #
-def lever_du_jour(plan, race) -> dict | None:
-    """Le premier lever de soleil de la course : l'heure, et où l'athlète sera alors.
-
-    None si le départ, la position ou l'arrivée ne sont pas connus, ou si la course se
-    termine avant le lever.
-    """
-    start = plan.start_time
-    if start is None or race.lat is None or race.lon is None or not plan.segments:
-        return None
-    tz = float(race.tz_offset_h or 0.0)
-    total_h = float(plan.segments[-1].cum_clock_h)
-    for jour in range(0, int(total_h // 24) + 2):
-        d = (start + dt.timedelta(days=jour)).date()
-        sr, _ = sun_times(d.year, d.month, d.day, race.lat, race.lon, tz)
-        lever = dt.datetime.combine(d, dt.time(int(sr // 60), int(sr % 60)), tzinfo=start.tzinfo)
-        depuis = (lever - start).total_seconds() / 3600.0
-        if 0.0 < depuis < total_h:
-            segs = plan.segments
-            kms = [0.0] + [s.off1 for s in segs]
-            cums = [0.0] + [s.cum_clock_h for s in segs]
-            km = float(np.interp(depuis, cums, kms))
-            i = min(int(np.searchsorted([s.cum_clock_h for s in segs], depuis)), len(segs) - 1)
-            return {
-                "heure": f"{int(sr // 60):02d}h{int(sr % 60):02d}",
-                "depuis_h": depuis,
-                "km": km,
-                "vers": segs[i].to,
-                "apres": segs[i - 1].to if i > 0 else None,
-                "jour": jour,
-            }
-    return None
-
-
 __all__ = ["contre_son_passe", "depart_concret", "deux_intensites", "deux_scenarios",
-           "lever_du_jour", "risque_des_arrets", "segments_lourds", "trois_moments",
-           "ventilation"]
+           "risque_des_arrets", "trois_moments", "ventilation"]

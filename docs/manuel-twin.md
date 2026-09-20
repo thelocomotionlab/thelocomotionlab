@@ -90,7 +90,7 @@ Le `preview` imprime un JSON (verdict, prédiction, jumeau, parcours) + un résu
 
 | fichier | ce que c'est |
 |---|---|
-| `rapport.pdf` | le rapport : une page de garde et quatre pages — ta course, où passe le temps, le plan, ton profil et la preuve (sa source reste dans `tex/`) |
+| `rapport.pdf` | le rapport : une page de garde et quatre pages — ta course, le parcours, le plan, ton profil (sa source reste dans `tex/`) |
 | `feuille.pdf` | la feuille à emporter : A4 paysage recto-verso, deux tableaux et rien d'autre (marche au recto, assistance au verso) |
 | `fiches.pdf` | une fiche par poste d'assistance, à découper et à donner (A4 portrait, deux colonnes de quatre) |
 | `plan.ics` | le calendrier : un événement par point d'assistance |
@@ -228,7 +228,7 @@ La **trace GPX du parcours** est fournie à part (`--course`) et n'est pas commi
 
 > **Le rapport** (une garde et quatre pages, la feuille à emporter, les fiches d'assistance,
 > ICS, GPX, annexe en ligne) est décrit dans `docs/twin-theory.md` §7, dans `DIAGNOSTIC.md`
-> §10.21 et §10.22 et, bloc par bloc, dans
+> §10.21 à §10.23 et, bloc par bloc, dans
 > `docs/maquettes/rapport-v4/canevas.md` ; sa charte vient de `packages/ui`
 > via `report/charte.py`, et ses
 > polices sont des instances statiques d'Ubuntu Sans régénérables par
@@ -237,7 +237,7 @@ La **trace GPX du parcours** est fournie à part (`--course`) et n'est pas commi
 ### Changer la structure du rapport (le squelette)
 
 Le squelette est **un seul fichier** : `src/twin_engine/report/latex/report.tex.j2`. Chaque page y
-est bornée par deux marqueurs — `% LL:BEGIN page-temps` … `% LL:END page-temps` — et l'ordre
+est bornée par deux marqueurs — `% LL:BEGIN page-parcours` … `% LL:END page-parcours` — et l'ordre
 des blocs dans le fichier EST l'ordre des pages. Déplacer une page, la couper en deux, en ajouter
 une : c'est du copier-coller entre marqueurs, sans toucher au moteur.
 

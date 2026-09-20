@@ -730,6 +730,19 @@ republié à côté de la politique du plan.
     c'est le temps que la course prend. Le dénivelé et la longueur sont déjà dans le tableau
     du plan, et un long segment plat ne demande pas le même découpage qu'une montée courte.
 
+99. **Les colonnes des tableaux de course sont des « m », pas des « p ».** Le centrage
+    vertical ne se rattrape pas au cas par cas : c'est la colonne qui le porte. Conséquence
+    assumée : plus de `tabularx`, et la dernière colonne se calcule — avec le `\tabcolsep`
+    du tableau, pas celui du préambule.
+100. **Une ligne de tableau ne passe jamais à la ligne.** `\LLtient` rétrécit le rare
+    contenu trop long plutôt que de casser la hauteur de la ligne et d'emporter le point de
+    nuit avec lui.
+101. **Le profil n'a plus de verticale par ravitaillement.** Seize traits cachaient le
+    relief. La graduation vit sous l'axe, à pas rond choisi pour donner six à neuf repères.
+102. **Deux faits quittent le moteur avec leur bloc.** Les cinq segments qui pèsent le plus
+    et le lever du jour ne s'impriment plus : leurs calculs partent aussi. Un fait sans
+    lecteur est du code mort, pas une réserve.
+
 ## Questions ouvertes
 
 - **Chantier suivant : trails courts et route.** Valentin a des demandes pour du trail court et

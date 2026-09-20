@@ -591,9 +591,6 @@ class ReportParams:
     # une page par référence de rapport ; la référence est non devinable (aléa) et la page
     # n'est ni indexée ni listée — le lien est le secret
     annex_base_url: str = "https://www.thelocomotionlab.com/services/twin/annexe"
-    # combien de segments la page « Où passe le temps » met en avant : ceux qui prennent le
-    # plus de temps d'horloge. Au-delà d'une poignée, la liste cesse d'être un repère.
-    heavy_segments: int = 5
     # la barre d'intensité : marge laissée de part et d'autre de l'étendue des ultras, en
     # fraction de cette étendue — sans elle, un repère tombe pile sur le bord de l'axe
     intensity_axis_margin: float = 0.2

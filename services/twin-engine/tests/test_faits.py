@@ -8,7 +8,6 @@ repli de population ne vient combler le trou.
 from __future__ import annotations
 
 import sys
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -196,26 +195,14 @@ def test_three_moments_chosen_by_three_explicit_criteria(cas):
     assert len({(x["from_km"], x["to_km"]) for x in m}) == 3
 
 
-def test_sunrise_is_where_the_plan_says_he_will_be():
-    """Le lever du jour : l'heure vient du soleil, la position du cumul du plan. Aucune
-    course ne traverse le lever ? Alors rien ne s'imprime."""
-    tot = timezone(timedelta(hours=2))
-    matin = scenario(race=race_spec(start_time=datetime(2026, 9, 25, 4, 0, tzinfo=tot)))
-    lv = faits.lever_du_jour(matin[4], matin[5])
-    assert lv and 0 < lv["depuis_h"] < matin[4].segments[-1].cum_clock_h
-    assert 0 < lv["km"] < matin[0].length_km
-    assert lv["vers"] in [s.to for s in matin[4].segments]
-    assert lv["heure"].endswith(tuple("0123456789")) and "h" in lv["heure"]
-
-    # une course qui finit avant le lever n'en parle pas
-    course, twin, cal, pred, plan, race, _ = scenario()
-    assert faits.lever_du_jour(plan, race) is None
-
-
 def test_nothing_is_computed_without_a_start_time():
+    """Sans heure de départ, aucun moment ne porte d'horloge — mais les moments restent :
+    leurs kilomètres et leurs dénivelés, eux, ne dépendent pas de l'heure."""
     course, twin, cal, pred, plan, race, _ = scenario(race=race_spec(start_time=None))
-    assert faits.lever_du_jour(plan, race) is None
-    assert faits.trois_moments(plan, course)          # les moments restent, sans horloge
+    moments = faits.trois_moments(plan, course)
+    assert moments
+    assert all(m["debut_clock"] is None and m["fin_clock"] is None for m in moments)
+    assert all(m["denivele_m"] and m["to_km"] > m["from_km"] for m in moments)
 
 
 def test_the_rank_is_counted_from_the_side_the_race_falls_on(cas):

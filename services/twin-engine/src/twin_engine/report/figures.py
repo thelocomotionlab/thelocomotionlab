@@ -112,16 +112,33 @@ def _nue(ax, *, grilles: list[float], etiquettes: list[str] | None = None,
                         fontsize=6.8, color=SOFT, va="bottom", ha="left", annotation_clip=False)
 
 
-def _graduations_x(ax, valeurs: list[float], textes: list[str], *, fin: str | None = None) -> None:
-    """Les kilomètres, écrits SOUS la ligne de sol — pas d'ergots, pas d'axe nommé."""
+def _graduations_x(ax, valeurs: list[float], textes: list[str], *, fin: str | None = None,
+                   ergots: bool = True) -> None:
+    """Les kilomètres : un ergot sous la ligne de sol et sa valeur dessous.
+
+    La graduation vit SOUS l'axe, jamais dans l'aire de tracé : une verticale par
+    ravitaillement hachait le relief en seize tranches et cachait ce qu'il fallait lire.
+    """
     y0 = ax.get_ylim()[0]
+    if ergots:
+        ax.set_xticks(list(valeurs))
+        ax.tick_params(axis="x", bottom=True, length=2.4, width=0.8, color=SOFT,
+                       labelbottom=False)
     for i, (v, t) in enumerate(zip(valeurs, textes)):
-        ax.annotate(t, xy=(v, y0), xytext=(0, -9), textcoords="offset points",
+        ax.annotate(t, xy=(v, y0), xytext=(0, -8), textcoords="offset points",
                     fontsize=6.8, color=SOFT, va="top",
                     ha="left" if i == 0 else "center", annotation_clip=False)
     if fin:
-        ax.annotate(fin, xy=(ax.get_xlim()[1], y0), xytext=(0, -9), textcoords="offset points",
+        ax.annotate(fin, xy=(ax.get_xlim()[1], y0), xytext=(0, -8), textcoords="offset points",
                     fontsize=6.8, color=SOFT, va="top", ha="right", annotation_clip=False)
+
+
+def _pas_km(longueur: float) -> float:
+    """Un pas de graduation rond qui donne six à neuf repères : 5, 10, 20, 25 ou 50 km."""
+    for pas in (5.0, 10.0, 20.0, 25.0, 50.0, 100.0):
+        if longueur / pas <= 9:
+            return pas
+    return 100.0
 
 
 def _paliers(lo: float, hi: float, combien: int = 3) -> list[float]:
@@ -143,11 +160,11 @@ def _paliers(lo: float, hi: float, combien: int = 3) -> list[float]:
 
 
 def _fig_profil(course, ax, *, title: bool = True, nuits: tuple = ()) -> None:
-    """Le profil : la trace, les points de passage, et les heures de nuit. Rien d'autre —
-    aucune catégorie, aucune étiquette posée sur le relief."""
+    """Le profil : le relief et les heures de nuit. Rien d'autre — ni catégorie, ni étiquette
+    posée sur le relief, ni verticale par ravitaillement : seize traits hachaient la montagne
+    en seize tranches et cachaient ce qu'il fallait lire."""
     off = np.asarray(course.off_km_grid, float)
     es = np.asarray(course.alt_smooth_m, float)
-    aid = np.asarray(course.aid_km, float)
     ymin, ymax = float(es.min()), float(es.max())
     pad = (ymax - ymin) * 0.08
     ax.set_xlim(float(off.min()), float(off.max()))
@@ -158,13 +175,14 @@ def _fig_profil(course, ax, *, title: bool = True, nuits: tuple = ()) -> None:
         ax.axvspan(km0, km1, facecolor="none", edgecolor=SAGE, hatch="///", lw=0,
                    alpha=0.55, zorder=2)
     ax.plot(off, es, color=TERRA, lw=1.4, zorder=4, solid_joinstyle="round")
-    for a in aid[1:-1]:
-        ax.axvline(a, color=SOFT, lw=0.5, zorder=3)
     _nue(ax, grilles=_paliers(ymin, ymax + pad),
          etiquettes=[f"{fr_num(v, 0)} m" for v in _paliers(ymin, ymax + pad)])
-    pas = _paliers(0.0, float(off.max()), combien=4)
-    _graduations_x(ax, [0.0] + pas, ["km 0"] + [fr_num(v, 0) for v in pas],
-                   fin=f"arrivée km {fr_num(course.length_km, 1)}")
+    fin = float(off.max())
+    pas = _pas_km(fin)
+    # la dernière graduation ronde s'efface si elle vient toucher le kilomètre d'arrivée
+    marques = [v for v in np.arange(pas, fin, pas) if fin - v > pas * 0.45]
+    _graduations_x(ax, [0.0, *marques], ["km 0", *(fr_num(v, 0) for v in marques)],
+                   fin=fr_num(course.length_km, 1))
 
 
 def _fig_record(twin, calibration, ax) -> None:
@@ -220,9 +238,11 @@ def _fig_cumul(plan, prediction, race, ax, interval_label: str = "50") -> None:
         ax.axhline(prediction.finish_hours, color=SOFT, lw=1.0, ls=(0, (5, 3)), zorder=2)
     paliers = _paliers(0.0, max(hi) * 1.06, combien=3)
     _nue(ax, grilles=paliers, etiquettes=[f"{fr_num(v, 0)} h" for v in paliers])
-    pas = _paliers(0.0, max(offs), combien=4)
-    _graduations_x(ax, [0.0] + pas, ["km 0"] + [fr_num(v, 0) for v in pas],
-                   fin=fr_num(max(offs), 1))
+    fin = max(offs)
+    pas = _pas_km(fin)
+    marques = [v for v in np.arange(pas, fin, pas) if fin - v > pas * 0.45]
+    _graduations_x(ax, [0.0, *marques], ["km 0", *(fr_num(v, 0) for v in marques)],
+                   fin=fr_num(fin, 1))
 
 
 def _fig_validation(prediction, ax, band_pct: float = 5.0) -> bool:
