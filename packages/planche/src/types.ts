@@ -52,7 +52,8 @@ export type TypeElement =
   | "profil"
   | "stat"
   | "fiche"
-  | "cases";
+  | "cases"
+  | "semaines";
 
 /**
  * Ce que tout élément porte.
@@ -364,6 +365,52 @@ export type ElementCases = ElementCommun & {
   couleurs: string[];
 };
 
+/** Ce qu'une semaine d'entraînement pèse. Le temps est en MINUTES : une durée
+ *  écrite en heures décimales ne se lit pas (« 7,25 h »), et en secondes elle
+ *  se saisit mal. */
+export type MetriqueSemaine = "km" | "dplus" | "minutes";
+
+export type SemaineEntrainement = {
+  /** L'abscisse : « S1 », « 12 janv. », ce qu'on veut. */
+  label: string;
+  km: number;
+  dplus: number;
+  minutes: number;
+  /**
+   * LA COULEUR DE CETTE BARRE-LÀ. Vide = celle de la série.
+   *
+   * C'est elle qui raconte le plan : un bloc de charge, une semaine d'affûtage,
+   * une course. Sans elle, dix-neuf barres identiques ne disent que le volume.
+   */
+  couleur: string;
+};
+
+export type LigneLegende = { couleur: string; texte: string };
+
+/**
+ * LES SEMAINES D'ENTRAÎNEMENT — le volume, en barres, sur une saison.
+ *
+ * DEUX SÉRIES AU PLUS, et c'est délibéré : une métrique en barres, une seconde
+ * en courbe sur son propre axe. Au-delà, une planche lue au pouce en trois
+ * secondes ne se lit plus. La troisième métrique reste à un réglage près.
+ */
+export type ElementSemaines = ElementCommun & {
+  type: "semaines";
+  lignes: SemaineEntrainement[];
+  barres: MetriqueSemaine;
+  /** La courbe, sur un axe à droite — ou rien. */
+  courbe: MetriqueSemaine | null;
+  couleurBarres: string;
+  couleurCourbe: string;
+  /** Une étiquette d'abscisse sur N : dix-neuf « S » ne tiennent pas. */
+  pasDesLabels: number;
+  /** Les graduations chiffrées, à gauche et à droite. */
+  axes: boolean;
+  legende: LigneLegende[];
+  /** Le corps des étiquettes, en pixels d'une planche de 1080 de large. */
+  taille: number;
+};
+
 export type Element =
   | ElementTexte
   | ElementPhoto
@@ -374,7 +421,8 @@ export type Element =
   | ElementProfil
   | ElementStat
   | ElementFiche
-  | ElementCases;
+  | ElementCases
+  | ElementSemaines;
 
 /* ------------------------------------------------------------- les planches */
 

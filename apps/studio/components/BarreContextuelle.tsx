@@ -25,7 +25,7 @@ import {
   Type,
 } from "lucide-react";
 import { GRAISSES, brandColors } from "@locomotionlab/planche";
-import type { BoitePx, Element, ElementTexte, Theme } from "@locomotionlab/planche";
+import type { BoitePx, Element, ElementSemaines, ElementTexte, Theme } from "@locomotionlab/planche";
 
 /** La hauteur de la barre, et l'air qu'elle garde au-dessus de la sélection. */
 const HAUTEUR = 40;
@@ -54,6 +54,7 @@ export default function BarreContextuelle({
   onDupliquer,
   onSupprimer,
   onOrdre,
+  barreVisee,
 }: {
   choisis: Element[];
   cadre: BoitePx;
@@ -63,8 +64,14 @@ export default function BarreContextuelle({
   onDupliquer: () => void;
   onSupprimer: () => void;
   onOrdre: (vers: "devant" | "derriere") => void;
+  /** La barre de semaines qu'on vient de viser, s'il y en a une. */
+  barreVisee: number | null;
 }) {
   const texte = choisis.length === 1 && choisis[0]!.type === "texte" ? (choisis[0] as ElementTexte) : null;
+  const semaines =
+    choisis.length === 1 && choisis[0]!.type === "semaines" && barreVisee !== null
+      ? (choisis[0] as ElementSemaines)
+      : null;
 
   // La barre se pose au-dessus de la sélection, centrée. Si le haut manque, elle
   // passe dessous : hors du plan de travail, elle ne servirait à rien.
@@ -93,6 +100,44 @@ export default function BarreContextuelle({
       // désélectionnerait l'élément qu'on règle.
       onPointerDown={(e) => e.stopPropagation()}
     >
+      {semaines && barreVisee !== null && (
+        <div className="flex items-center gap-1" role="group" aria-label="Couleur de la semaine">
+          <span className="px-1 text-[12px] text-brand-muted">
+            {semaines.lignes[barreVisee]?.label || `S${barreVisee + 1}`}
+          </span>
+          {palette(theme).map((c) => (
+            <button
+              key={c.valeur || "serie"}
+              type="button"
+              title={c.valeur ? c.nom : "Couleur de la série"}
+              aria-label={c.valeur ? c.nom : "Couleur de la série"}
+              aria-pressed={(semaines.lignes[barreVisee]?.couleur ?? "") === c.valeur}
+              onClick={() =>
+                onRegler(
+                  (e) =>
+                    e.type === "semaines"
+                      ? {
+                          ...e,
+                          lignes: e.lignes.map((l, i) =>
+                            i === barreVisee ? { ...l, couleur: c.valeur } : l,
+                          ),
+                        }
+                      : e,
+                  "couleur de la semaine",
+                )
+              }
+              className={`h-5 w-5 rounded-full border transition-transform motion-reduce:transition-none ${
+                (semaines.lignes[barreVisee]?.couleur ?? "") === c.valeur
+                  ? "scale-110 border-brand-primary-dark"
+                  : "border-brand-field hover:scale-110"
+              }`}
+              style={{ background: c.valeur || semaines.couleurBarres || brandColors.primary }}
+            />
+          ))}
+          <Separateur />
+        </div>
+      )}
+
       {texte && (
         <>
           <label className="flex items-center gap-1" title="Corps">

@@ -78,6 +78,14 @@ export function usePosteDeTravail() {
    * sélection, et un seul écouteur doit pouvoir en décider.
    */
   const [recadrage, setRecadrage] = useState<string | null>(null);
+  /**
+   * LA BARRE VISÉE d'un graphique de semaines.
+   *
+   * Elle vit ici et non dans le graphique parce que c'est un état de GESTE, pas
+   * de document : ce qu'on vient de cliquer n'a rien à faire dans un fichier de
+   * projet, et doit s'effacer dès qu'on sélectionne autre chose.
+   */
+  const [barreVisee, setBarreVisee] = useState<{ id: string; index: number } | null>(null);
   const [raccourcisOuverts, setRaccourcis] = useState(false);
 
   const projet = histoire.present;
@@ -196,6 +204,8 @@ export function usePosteDeTravail() {
       vue,
       outil,
       recadrage,
+      barreVisee,
+      setBarreVisee,
       exportOuvert,
       raccourcisOuverts,
       sauvegarde,
@@ -229,6 +239,8 @@ export function usePosteDeTravail() {
       vue,
       outil,
       recadrage,
+      barreVisee,
+      setBarreVisee,
       exportOuvert,
       raccourcisOuverts,
       sauvegarde,

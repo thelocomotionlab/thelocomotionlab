@@ -432,6 +432,11 @@ export default function PlanDeTravail({
             cadre={manip.cadre}
             echelle={echelle}
             theme={theme}
+            barreVisee={
+              poste.barreVisee && poste.barreVisee.id === manip.choisis[0]?.id
+                ? poste.barreVisee.index
+                : null
+            }
             onRegler={(transforme, libelle) =>
               poste.modifier(
                 (p) => surSelection(p, indexPlanche, poste.selection, transforme),

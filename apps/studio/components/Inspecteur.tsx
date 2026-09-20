@@ -32,6 +32,7 @@ const NOMS: Record<Element["type"], string> = {
   stat: "Chiffre",
   fiche: "Fiche",
   cases: "Journées",
+  semaines: "Semaines",
 };
 
 function Section({ titre, children }: { titre: string; children: React.ReactNode }) {

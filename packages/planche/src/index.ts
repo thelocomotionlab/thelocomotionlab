@@ -203,6 +203,7 @@ export {
   marqueNeuve,
   photoNeuve,
   profilNeuf,
+  semainesNeuves,
   formeNeuve,
   statNeuve,
   styleDuRole,
@@ -221,6 +222,13 @@ export { apparenceDe, avecApparence } from "./apparence.ts";
 export { contexteDuHud } from "./contexte.ts";
 export { capLisse, priseDe, priseDEnsemble, prisesDuPlan, zoomSelonVitesse } from "./camera.ts";
 export type { Prise } from "./camera.ts";
+export {
+  barreSous,
+  cadreDesSemaines,
+  graduationDe,
+  plafondDe,
+  uniteDe,
+} from "./semaines.ts";
 export {
   cheminDuSurvol,
   imagesDuMontage,
@@ -270,7 +278,11 @@ export type {
   ElementStat,
   ElementTexte,
   DegradesCarte,
+  ElementSemaines,
   Etiquette,
+  LigneLegende,
+  MetriqueSemaine,
+  SemaineEntrainement,
   Filet,
   FondCarte,
   LigneFiche,
