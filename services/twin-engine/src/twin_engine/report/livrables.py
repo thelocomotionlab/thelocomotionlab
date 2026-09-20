@@ -443,16 +443,17 @@ def write_annex(payload: dict, path: Path) -> Path:
     return path
 
 
-LIVRABLES = ("feuille.pdf", "plan.ics", "plan.gpx", "annexe.json")
+LIVRABLES = ("feuille.pdf", "fiches.pdf", "plan.ics", "plan.gpx", "annexe.json")
 
 
 def write_livrables(*, context: dict, course, twin, calibration, prediction, plan, race,
                     sufficiency, cfg, out_dir: Path, figures_dir: Path | None,
                     render_pdf: bool = True, generated_at: datetime | None = None) -> dict[str, Path]:
     """Écrit à côté du rapport ce qui l'accompagne : ``feuille.pdf`` (la feuille à emporter),
-    ``plan.ics``, ``plan.gpx``, ``annexe.json``. Renvoie {nom: chemin} pour ce qui a pu être
-    produit (pas de calendrier sans heure de départ, pas de GPX sans coordonnées)."""
-    from .render import build_feuille
+    ``fiches.pdf`` (une fiche par poste d'assistance, à découper), ``plan.ics``, ``plan.gpx``,
+    ``annexe.json``. Renvoie {nom: chemin} pour ce qui a pu être produit (pas de calendrier
+    sans heure de départ, pas de GPX sans coordonnées, pas de fiches sans poste)."""
+    from .render import build_feuille, build_fiches
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -483,6 +484,10 @@ def write_livrables(*, context: dict, course, twin, calibration, prediction, pla
         feuille = build_feuille(context, figures_dir, out_dir / "tex-feuille")
         shutil_copy(feuille, out_dir / "feuille.pdf")
         written["feuille.pdf"] = out_dir / "feuille.pdf"
+        if context.get("fiches"):
+            fiches = build_fiches(context, figures_dir, out_dir / "tex-fiches")
+            shutil_copy(fiches, out_dir / "fiches.pdf")
+            written["fiches.pdf"] = out_dir / "fiches.pdf"
     return written
 
 

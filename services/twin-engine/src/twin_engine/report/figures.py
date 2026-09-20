@@ -33,6 +33,7 @@ GRID = hexa("hairline")
 DEEPGRID = hexa("gauge_full")
 GREEN = hexa("success")
 FAINT = hexa("faint")
+SOFT = hexa("soft")
 
 _FONTS_DIR = Path(__file__).parent / "latex" / "template" / "fonts"
 
@@ -57,6 +58,7 @@ def _init_style() -> None:
         "xtick.color": TEXT, "ytick.color": TEXT, "axes.edgecolor": FAINT,
         "figure.facecolor": BG, "axes.facecolor": BG, "savefig.facecolor": BG,
         "axes.linewidth": 0.8, "axes.grid": True, "grid.color": GRID, "grid.linewidth": 0.7,
+        "hatch.linewidth": 0.7,
     })
 
 
@@ -86,35 +88,83 @@ def _fr_axes(*axes, x: int = 0, y: int = 0) -> None:
 
 
 
+def _nue(ax, *, grilles: list[float], etiquettes: list[str] | None = None,
+         axe_bas: bool = True) -> None:
+    """La toile des figures du rapport : pas de cadre, pas de graduations, rien qu'une ligne
+    de sol et quelques filets horizontaux annotés dans la figure.
+
+    Une figure de rapport n'est pas une planche scientifique : le cadre, les ergots et les
+    axes nommés prennent la place et n'apprennent rien de plus qu'un chiffre posé sur le
+    filet qu'il mesure.
+    """
+    for bord in ("top", "right", "left"):
+        ax.spines[bord].set_visible(False)
+    ax.spines["bottom"].set_visible(axe_bas)
+    ax.spines["bottom"].set_color(TEXT)
+    ax.spines["bottom"].set_linewidth(0.9)
+    ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
+    ax.grid(False)
+    x0, x1 = ax.get_xlim()
+    for i, y in enumerate(grilles):
+        ax.axhline(y, color=GRID, lw=0.7, zorder=0)
+        if etiquettes:
+            ax.annotate(etiquettes[i], xy=(x0, y), xytext=(2, 3), textcoords="offset points",
+                        fontsize=6.8, color=SOFT, va="bottom", ha="left", annotation_clip=False)
+
+
+def _graduations_x(ax, valeurs: list[float], textes: list[str], *, fin: str | None = None) -> None:
+    """Les kilomètres, écrits SOUS la ligne de sol — pas d'ergots, pas d'axe nommé."""
+    y0 = ax.get_ylim()[0]
+    for i, (v, t) in enumerate(zip(valeurs, textes)):
+        ax.annotate(t, xy=(v, y0), xytext=(0, -9), textcoords="offset points",
+                    fontsize=6.8, color=SOFT, va="top",
+                    ha="left" if i == 0 else "center", annotation_clip=False)
+    if fin:
+        ax.annotate(fin, xy=(ax.get_xlim()[1], y0), xytext=(0, -9), textcoords="offset points",
+                    fontsize=6.8, color=SOFT, va="top", ha="right", annotation_clip=False)
+
+
+def _paliers(lo: float, hi: float, combien: int = 3) -> list[float]:
+    """Trois ou quatre valeurs rondes entre deux bornes : 500, 1 000, 2 000, 5 000..."""
+    span = max(hi - lo, 1e-9)
+    brut = span / (combien + 1)
+    exposant = 10.0 ** np.floor(np.log10(brut))
+    for m in (1, 2, 2.5, 5, 10):
+        pas = m * exposant
+        if span / pas <= combien + 1.4:
+            break
+    valeurs = []
+    v = np.ceil(lo / pas) * pas
+    while v < hi and len(valeurs) < combien + 1:
+        if v > lo:
+            valeurs.append(float(v))
+        v += pas
+    return valeurs
+
+
 def _fig_profil(course, ax, *, title: bool = True, nuits: tuple = ()) -> None:
     """Le profil : la trace, les points de passage, et les heures de nuit. Rien d'autre —
     aucune catégorie, aucune étiquette posée sur le relief."""
-    off = course.off_km_grid
-    es = course.alt_smooth_m
-    aid = course.aid_km
+    off = np.asarray(course.off_km_grid, float)
+    es = np.asarray(course.alt_smooth_m, float)
+    aid = np.asarray(course.aid_km, float)
     ymin, ymax = float(es.min()), float(es.max())
-    pad = (ymax - ymin) * 0.08  # un peu d'air en haut seulement
-    ax.fill_between(off, es, ymin, color=SAGE, alpha=0.30, lw=0)
-    # la nuit : une trame sombre du sol au plafond, elle se comprend sans légende
-    for km0, km1 in nuits:
-        ax.axvspan(km0, km1, color=TERRA, alpha=0.10, lw=0, zorder=0)
-    ax.plot(off, es, color=TERRA, lw=1.3)
-    for a in aid[1:-1]:
-        ax.axvline(a, color=DEEPGRID, lw=0.7, ls=(0, (3, 3)), zorder=0)
-    ax.scatter(aid[1:-1], np.interp(aid[1:-1], off, es), s=14, color=GOLDINK, zorder=5)
-    # la courbe colle aux axes (pas de marge en bas / gauche / droite)
+    pad = (ymax - ymin) * 0.08
     ax.set_xlim(float(off.min()), float(off.max()))
     ax.set_ylim(ymin, ymax + pad)
-    ax.margins(x=0)
-    ax.set_xlabel("distance officielle (km)")
-    ax.set_ylabel("altitude (m)")
-    _fr_axes(ax)
-    if title:
-        ax.set_title(
-            f"Profil altimétrique — {course.name} "
-            f"({fr_num(course.length_km, 0)} km, {fr_num(course.dplus_m, 0)} m D+)",
-            fontsize=10.5, color=TERRA, weight="bold", loc="left",
-        )
+    ax.fill_between(off, es, ymin, color=GRID, lw=0, zorder=1)
+    # la nuit : une trame diagonale bleu-vert, du sol au plafond ; elle se lit sans légende
+    for km0, km1 in nuits:
+        ax.axvspan(km0, km1, facecolor="none", edgecolor=SAGE, hatch="///", lw=0,
+                   alpha=0.55, zorder=2)
+    ax.plot(off, es, color=TERRA, lw=1.4, zorder=4, solid_joinstyle="round")
+    for a in aid[1:-1]:
+        ax.axvline(a, color=SOFT, lw=0.5, zorder=3)
+    _nue(ax, grilles=_paliers(ymin, ymax + pad),
+         etiquettes=[f"{fr_num(v, 0)} m" for v in _paliers(ymin, ymax + pad)])
+    pas = _paliers(0.0, float(off.max()), combien=4)
+    _graduations_x(ax, [0.0] + pas, ["km 0"] + [fr_num(v, 0) for v in pas],
+                   fin=f"arrivée km {fr_num(course.length_km, 1)}")
 
 
 def _fig_record(twin, calibration, ax) -> None:
@@ -152,62 +202,64 @@ def _fig_record(twin, calibration, ax) -> None:
 
 
 def _fig_cumul(plan, prediction, race, ax, interval_label: str = "50") -> None:
+    """L'heure de passage cumulée et sa bande. Ce que la bande est se dit dans la légende de
+    la page, pas dans un cartouche posé sur la courbe."""
     segs = plan.segments
-    offs = [s.off1 for s in segs]
-    cum = [s.cum_clock_h for s in segs]
-    # lo_h/hi_h = FOURCHETTE DE COURSE des segments (bande de planification, défaut
-    # interquartile) — le libellé doit venir des percentiles de pacing, pas de la prédiction.
-    # MODE OBJECTIF (ADR 0002) : même géométrie, tout autre sens — tolérance d'exécution
-    # autour d'une durée CHOISIE. La légende doit le dire, sinon la figure ment.
+    offs = [0.0] + [s.off1 for s in segs]
+    cum = [0.0] + [s.cum_clock_h for s in segs]
+    lo = [0.0] + [s.lo_h for s in segs]
+    hi = [0.0] + [s.hi_h for s in segs]
     on_target = getattr(plan, "anchor", "prediction") == "target"
-    tol = getattr(plan, "window_tolerance_pct", None)
-    lo = [s.lo_h for s in segs]
-    hi = [s.hi_h for s in segs]
-    band_label = (f"fenêtre de passage (±{fr_num(tol, 1)} %)"
-                  if on_target and tol is not None else
-                  f"fourchette de course ({interval_label} %)")
-    ax.fill_between(offs, lo, hi, color=SAGE, alpha=0.30, lw=0, label=band_label)
-    ax.plot(offs, cum, "-o", color=TERRA, lw=1.6, ms=3.5,
-            label="plan sur objectif" if on_target else "temps cumulé (médian)")
-    # En mode objectif, on RAPPELLE la prédiction sur la même figure : l'athlète doit voir
-    # d'un coup d'œil l'écart entre ce qu'il vise et ce que ses données disent.
+    ax.set_xlim(0.0, max(offs))
+    ax.set_ylim(0.0, max(hi) * 1.06)
+    ax.fill_between(offs, lo, hi, color=SAGE, alpha=0.45, lw=0, zorder=1)
+    ax.plot(offs, cum, color=TERRA, lw=1.6, zorder=3, solid_joinstyle="round")
+    ax.scatter(offs[1:], cum[1:], s=10, color=TERRA, zorder=4)
+    # en mode objectif, la prédiction reste sur la même figure : l'écart doit se voir
     if on_target and prediction is not None:
-        ax.axhline(prediction.finish_hours, color=DEEPGRID, lw=1.2, ls=(0, (5, 3)),
-                   label="prédiction du moteur")
-    ax.set_xlabel("distance officielle (km)")
-    ax.set_ylabel("temps depuis le départ (h)")
-    _fr_axes(ax)
-    ax.legend(fontsize=8, loc="upper left", edgecolor=GRID)
-    ax.set_title(
-        "Temps de passage cumulé sur ton objectif" if on_target
-        else "Temps de passage cumulé et incertitude",
-        fontsize=10, color=TERRA, weight="bold", loc="left",
-    )
-
+        ax.axhline(prediction.finish_hours, color=SOFT, lw=1.0, ls=(0, (5, 3)), zorder=2)
+    paliers = _paliers(0.0, max(hi) * 1.06, combien=3)
+    _nue(ax, grilles=paliers, etiquettes=[f"{fr_num(v, 0)} h" for v in paliers])
+    pas = _paliers(0.0, max(offs), combien=4)
+    _graduations_x(ax, [0.0] + pas, ["km 0"] + [fr_num(v, 0) for v in pas],
+                   fin=fr_num(max(offs), 1))
 
 
 def _fig_validation(prediction, ax, band_pct: float = 5.0) -> bool:
+    """Chaque ultra prédit sans lui-même, contre son temps réel. L'aire de données est carrée :
+    la diagonale est le message."""
     cv = prediction.cross_validation
     if cv is None or not cv.points:
         return False
     actual = np.array([p[0] for p in cv.points])
     pred = np.array([p[1] for p in cv.points])
-    lo, hi = float(min(actual.min(), pred.min())) - 1, float(max(actual.max(), pred.max())) + 1
-    ax.plot([lo, hi], [lo, hi], color=DEEPGRID, lw=1.0, ls=(0, (4, 3)))
-    # bande = seuil 🟢 de la validation croisée (cfg.sufficiency.cv_error_green_pct) : la même
-    # valeur que la légende — plus de « ±5 % » en dur qui mentirait si la config change
+    lo = float(min(actual.min(), pred.min())) - 1
+    hi = float(max(actual.max(), pred.max())) + 1
     b = band_pct / 100.0
     ax.fill_between([lo, hi], [lo * (1 - b), hi * (1 - b)], [lo * (1 + b), hi * (1 + b)],
-                    color=SAGE, alpha=0.18, lw=0)
-    ax.scatter(actual, pred, s=42, color=TERRA, zorder=4)
-    ax.set_xlabel("temps réel (h)")
-    ax.set_ylabel("temps prédit, hors-échantillon (h)")
-    _fr_axes(ax)
+                    color=SAGE, alpha=0.35, lw=0, zorder=1)
+    ax.plot([lo, hi], [lo, hi], color=SOFT, lw=0.9, ls=(0, (5, 4)), zorder=2)
+    ax.scatter(actual, pred, s=30, color=TERRA, zorder=4)
     ax.set_xlim(lo, hi)
     ax.set_ylim(lo, hi)
     ax.set_aspect("equal")
-    ax.set_title(f"Validation croisée (leave-one-out, n={cv.n})", fontsize=10,
-                 color=TERRA, weight="bold", loc="left")
+    for bord in ("top", "right"):
+        ax.spines[bord].set_visible(False)
+    for bord in ("left", "bottom"):
+        ax.spines[bord].set_visible(True)
+        ax.spines[bord].set_color(TEXT)
+        ax.spines[bord].set_linewidth(0.9)
+    ax.grid(False)
+    ax.tick_params(length=2.5, width=0.8, color=SOFT, labelsize=7, labelcolor=SOFT, pad=2)
+    pas = _paliers(lo, hi, combien=3)
+    ax.set_xticks(pas)
+    ax.set_yticks(pas)
+    _fr_axes(ax)
+    ax.annotate("temps réel (h)", xy=(hi, lo), xytext=(0, -16), textcoords="offset points",
+                fontsize=6.8, color=SOFT, ha="right", va="top", annotation_clip=False)
+    ax.annotate("temps prédit, hors-échantillon (h)", xy=(lo, hi), xytext=(-2, 6),
+                textcoords="offset points", fontsize=6.8, color=SOFT, ha="left", va="bottom",
+                annotation_clip=False)
     return True
 
 
@@ -233,13 +285,13 @@ def generate_figures(
         return fig
 
     def _save(fig: Figure, name: str) -> None:
-        fig.tight_layout()
+        fig.tight_layout(pad=0.35)
         fig.savefig(out_dir / f"{name}.png", dpi=170)
         figures[name] = f"{name}.png"
 
     with _RENDER_LOCK:
         # page 1 : la page porte déjà le nom de la course et ses chiffres — pas de titre
-        fig = _new((7.4, 3.1))
+        fig = _new((7.1, 1.95))
         _fig_profil(course, fig.subplots(), title=False, nuits=tuple(night_km_ranges(plan)))
         _save(fig, "profil")
 
@@ -247,13 +299,13 @@ def generate_figures(
         _fig_record(twin, calibration, fig.subplots())
         _save(fig, "record")
 
-        fig = _new((7.4, 2.1))
+        fig = _new((7.1, 1.85))
         _fig_cumul(plan, prediction, race, fig.subplots(), interval_label=interval_label)
         _save(fig, "cumul")
 
         # la seule figure du rapport : son aire de données reste carrée (la diagonale est
         # son message), la toile est juste assez large pour que les axes restent lisibles
-        fig = _new((5.4, 3.4))
+        fig = _new((2.9, 2.9))
         if _fig_validation(prediction, fig.subplots(), band_pct=band_pct):
             _save(fig, "validation")
 

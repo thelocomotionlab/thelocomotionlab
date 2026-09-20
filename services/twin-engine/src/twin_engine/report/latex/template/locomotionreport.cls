@@ -244,10 +244,13 @@
 % =============================================================================
 % 6. Géométrie, fond de page, réglages généraux
 % =============================================================================
+% Le bandeau est à fleur du bord (il se dessine en overlay) : la marge haute ne réserve que
+% sa hauteur et l'air sous son filet ocre. Les côtés valent la marge intérieure du bandeau,
+% pour que le titre s'aligne sur la marque.
 \geometry{
   a4paper,
-  top=27mm, bottom=24mm, left=22mm, right=22mm,
-  headheight=14pt, headsep=11mm, footskip=14mm,
+  top=21mm, bottom=19mm, left=14.8mm, right=14.8mm,
+  headheight=14pt, headsep=7mm, footskip=12mm,
 }
 \AtBeginDocument{\pagecolor{LLBg}\color{LLText}}
 
@@ -266,14 +269,15 @@
 % =============================================================================
 % 7. Dimensions de la charte
 % =============================================================================
-\newcommand{\LLHeadMarkHeight}{7.4mm}   % le signe en en-tête (le mot fait 10,5 pt)
-\newlength{\LLbandH}     \setlength{\LLbandH}{13.8mm}   % hauteur du bandeau bleu-vert
-\newlength{\LLgoldH}     \setlength{\LLgoldH}{1.2mm}    % filet ocre sous le bandeau
-\newlength{\LLbandinset} \setlength{\LLbandinset}{14mm} % marge intérieure du bandeau
-\newlength{\LLcoverbar}  \setlength{\LLcoverbar}{16.2mm}% barre latérale de la couverture
-\newlength{\LLcovergold} \setlength{\LLcovergold}{1.5mm}% son liseré ocre
-\newlength{\LLcoverx}    \setlength{\LLcoverx}{33mm}    % marge du contenu de la couverture
-\newlength{\LLcoverw}    \setlength{\LLcoverw}{153mm}   % largeur du bloc de contenu
+\newcommand{\LLHeadMarkHeight}{4.8mm}   % le signe en en-tête (le mot fait 7 pt)
+\newlength{\LLbandH}     \setlength{\LLbandH}{12.7mm}   % hauteur du bandeau bleu-vert
+\newlength{\LLgoldH}     \setlength{\LLgoldH}{1.05mm}   % filet ocre sous le bandeau
+\newlength{\LLbandinset} \setlength{\LLbandinset}{14.8mm}% marge intérieure du bandeau
+\newlength{\LLcoverbar}  \setlength{\LLcoverbar}{16.1mm}% barre latérale de la couverture
+\newlength{\LLcovergold} \setlength{\LLcovergold}{1.05mm}% son liseré ocre
+\newlength{\LLcoverx}    \setlength{\LLcoverx}{33.9mm}  % marge du contenu de la couverture
+\newlength{\LLcoverw}    \setlength{\LLcoverw}{148mm}   % largeur du bloc de contenu
+\newlength{\LLpiedfilet} \setlength{\LLpiedfilet}{0.8mm}% filet ocre du pied de page
 
 % =============================================================================
 % 8. En-tête : la marque à gauche, le document à droite, un filet fin dessous
@@ -311,32 +315,44 @@
 % =============================================================================
 % Le folio : un point bleu-vert, le numéro en ocre. Aucune ligne de service — ce qui est
 % utile est dans la page, pas sous elle.
+% Le folio : un point ocre, le numéro en encre. Le MÊME pied sur toutes les pages — filet
+% ocre, folio à droite — parce qu'un pied qui change de page en page se remarque plus que
+% ce qu'il porte. \LLpied{gauche} pose une légende à gauche du folio quand la page en a une
+% (la feuille à emporter) ; sans elle, la place reste vide et le folio ne bouge pas.
 \newcommand{\LLfolio}{%
-  {\fontsize{9}{11}\selectfont\color{LLPrimary}\textbullet}\hspace{5pt}%
-  {\LLsemiboldfont\fontsize{11}{13}\selectfont\color{LLAccentInk}\thepage}}
-\newcommand{\LLfooterband}{%
+  {\fontsize{9}{11}\selectfont\color{LLAccent}\textbullet}\hspace{5pt}%
+  {\LLtabular\fontsize{11}{13}\selectfont\color{LLText}\thepage}}
+\newcommand{\LLpied}[1]{%
   \begin{minipage}{\textwidth}%
-    {\color{LLAccent}\rule{\textwidth}{1.5pt}}\par
+    {\color{LLAccent}\rule{\textwidth}{\LLpiedfilet}}\par
     \vspace{4pt}%
-    \noindent\hbox to \textwidth{\hfil\LLfolio}%
+    \noindent\hbox to \textwidth{%
+      \begin{minipage}[t]{0.86\textwidth}\raggedright
+        {\fontsize{7.6}{10}\selectfont\color{LLSoft}#1\par}
+      \end{minipage}\hfill
+      \begin{minipage}[t]{0.1\textwidth}\raggedleft\LLfolio\end{minipage}}%
   \end{minipage}%
 }
+% Légende de pied : posée par la page, relue par le pied. Une page qui n'en pose pas garde
+% le pied nu — et exactement le même filet, la même hauteur, le même folio.
+\newcommand{\LL@piedlegende}{}
+\newcommand{\LLpiedlegende}[1]{\gdef\LL@piedlegende{#1}}
 
 \fancypagestyle{LLmain}{%
   \fancyhf{}%
   \renewcommand{\headrulewidth}{0pt}%
   \renewcommand{\footrulewidth}{0pt}%
   \fancyhead[L]{\LLheaderband}%
-  \fancyfoot[L]{\LLfooterband}%
+  \fancyfoot[L]{\LLpied{\LL@piedlegende}}%
 }
 % Style de la feuille détachable : même en-tête, et en pied le seul folio « n/N ».
+% La feuille détachable : le même en-tête, le même pied — avec sa légende à gauche.
 \fancypagestyle{LLfeuille}{%
   \fancyhf{}%
   \renewcommand{\headrulewidth}{0pt}%
   \renewcommand{\footrulewidth}{0pt}%
   \fancyhead[L]{\LLheaderband}%
-  \fancyfoot[L]{\makebox[\textwidth]{%
-    {\LLtabular\fontsize{9}{11}\selectfont\color{LLSoft}\thepage/\pageref{LastPage}}}}%
+  \fancyfoot[L]{\LLpied{\LL@piedlegende}}%
 }
 \pagestyle{LLmain}
 
@@ -344,14 +360,14 @@
 % 10. Titres : pages du rapport v2 (sans numéro) et sections numérotées (fiches)
 % =============================================================================
 % \LLpage{surtitre}{Titre} : nouvelle page, surtitre en capitales espacées, titre, filet ocre.
-\newcommand{\LLpage}[2]{%
+% \LLpage{Titre} : nouvelle page, titre en encre, filet ocre dessous. Le surtitre a disparu
+% avec la page de garde : chaque page porte son nom, et le bandeau dit déjà la course.
+\newcommand{\LLpage}[1]{%
   \clearpage
-  \LLrunninghead{#2}%
-  {\LLmonofont\fontsize{9.5}{12}\selectfont\color{LLPrimaryDark}\LLtracked{\MakeUppercase{#1}}}\par
-  \vspace{3pt}%
-  {\LLextraboldfont\fontsize{25}{29}\selectfont\color{LLDeep}#2\par}
-  \vspace{5pt}{\color{LLAccent}\rule{19mm}{1.2mm}}\par
-  \vspace{9pt}%
+  \LLrunninghead{#1}%
+  {\LLsemiboldfont\fontsize{27}{30}\selectfont\color{LLText}#1\par}
+  \vspace{4mm}{\color{LLAccent}\rule{25.4mm}{1.3mm}}\par
+  \vspace{4mm}%
 }
 % \LLtitre{Titre} : intertitre dans une page (bleu-vert, sans numéro)
 \newcommand{\LLtitre}[1]{%
@@ -412,30 +428,31 @@
   before upper={\LLboxlabel{LLPrimaryDark}{#1}\par\vspace{4pt}}}
 
 % =============================================================================
-% 12. Chiffres clés et jauges
+% 12. Les trois tuiles de la prédiction
 % =============================================================================
-% \LLkpi{valeur}{étiquette}{sous-texte} : carte blanche, chiffre en gros (dans une minipage)
-\newcommand{\LLkpi}[3]{%
-  \begin{tcolorbox}[enhanced, colback=LLPaper, frame hidden, boxrule=0pt, arc=6pt,
-      left=10pt, right=10pt, top=8pt, bottom=8pt, drop fuzzy shadow={black!10},
-      nobeforeafter, width=\linewidth]
-    \LLetiquette{#2}\par\vspace{3pt}%
-    {\LLextraboldfont\LLtabular\fontsize{17}{20}\selectfont\color{LLDeep}#1}\par\vspace{2pt}%
-    {\fontsize{8.5}{11}\selectfont\color{LLSoft}#3\par}
-  \end{tcolorbox}}
-% \LLgauge{étiquette}{valeur}{fraction 0–1}{phrase} : barre pleine à la fraction donnée
-\newcommand{\LLgauge}[4]{%
-  \noindent\begin{minipage}[t]{\linewidth}
-    \LLetiquette{#1}\hfill
-    {\LLsemiboldfont\LLtabular\fontsize{12}{14}\selectfont\color{LLText}#2}\par\vspace{3pt}%
-    \begin{tikzpicture}
-      \fill[LLGauge, rounded corners=1.5pt] (0,0) rectangle (\linewidth, 5pt);
-      \fill[LLPrimaryDark, rounded corners=1.5pt] (0,0) rectangle (#3\linewidth, 5pt);
-    \end{tikzpicture}\par\vspace{2pt}%
-    {\fontsize{9}{12}\selectfont\color{LLSoft}#4\par}
-  \end{minipage}\par\vspace{7pt}}
+% Un seul encadré, divisé en trois par des filets : rapide, centrale, prudent. La centrale
+% se distingue par la GRAISSE et la couleur de son étiquette, pas par un cadre de plus.
+\newlength{\LLtuileW}
+\newcommand{\LL@tuile}[7]{%
+  \begin{minipage}[t]{\LLtuileW}\centering\vspace{4.5mm}
+    {#4\fontsize{7.5}{9}\selectfont\color{#5}\LLtracked{\MakeUppercase{#1}}\par}
+    \vspace{2.5mm}
+    {#6\LLtabular\fontsize{23}{25}\selectfont\color{LLText}#2\par}
+    \vspace{1.5mm}
+    {#6\fontsize{9.75}{12}\selectfont\color{#7}#3\par}
+    \vspace{4.5mm}
+  \end{minipage}}
+\newcommand{\LLtuile}[3]{\LL@tuile{#1}{#2}{#3}{\LLsemiboldfont}{LLSoft}{}{LLSoft}}
+\newcommand{\LLtuileforte}[3]{%
+  \LL@tuile{#1}{#2}{#3}{\LLextraboldfont}{LLDeep}{\LLsemiboldfont}{LLText}}
+\newcommand{\LLtuiles}[1]{%
+  \setlength{\LLtuileW}{\dimexpr(\linewidth-1.6pt)/3\relax}%
+  \setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}%
+  \noindent{\color{LLHairline}\fbox{\color{LLText}%
+    \hbox{\color{LLTableRule}\vrule width 0pt #1}}}\par}
+\newcommand{\LLtuilesep}{{\color{LLTableRule}\vrule width 0.4pt}}
 % \LLqr{url} : QR vers l'annexe en ligne
-\newcommand{\LLqr}[1]{\qrcode[height=17mm,level=M]{#1}}
+\newcommand{\LLqr}[1]{\qrcode[height=24.3mm,level=M]{#1}}
 
 % =============================================================================
 % 13. Figures & légendes
@@ -461,12 +478,16 @@
 \newcommand{\LLzebra}{\rowcolors{2}{LLPaper}{LLRowAlt}}
 
 % =============================================================================
-% 15 bis. Les tableaux : une seule couleur, des filets, tout centré
+% 15 bis. Les tableaux : une grille fine, trois colonnes teintées, deux repères
 % =============================================================================
-% Un tableau de course se lit à bout de bras : une couleur d'en-tête, des filets pour suivre
-% la ligne, et une seule ligne teintée — celle où l'assistance attend.
-\colorlet{LLTableRule}{LLGaugeFull}
-\colorlet{LLAssistRow}{LLAccent!16!LLPaper}   % la seule ligne colorée du tableau
+% Un tableau de course se lit à bout de bras. La grille est un filet fin et régulier ; la
+% couleur ne sert qu'aux TROIS COLONNES horaires, pour qu'on retrouve la sienne d'un coup
+% d'œil. Les deux repères qui restent se lisent en marge et à côté du nom : un filet
+% terracotta (l'assistance est autorisée), un point d'encre (le segment se court de nuit).
+\colorlet{LLTableRule}{LLSoft}
+\colorlet{LLColRapide}{LLPrimary!12!LLBg}
+\colorlet{LLColCentrale}{LLDeep!38!LLBg}
+\colorlet{LLColPrudent}{LLAccent!40!LLBg}
 \colorlet{LLFillRule}{LLGaugeFull}            % le pointillé d'une case à remplir
 
 \newcommand{\LLtableau}{%
@@ -474,111 +495,259 @@
   \setlength{\arrayrulewidth}{0.4pt}%
   \LLtabular}
 % \LLfilet{n colonnes} : le filet horizontal d'un tableau à n colonnes. hhline et non \hline,
-% parce qu'un \rowcolor recouvre le filet de la ligne du dessus — entre deux lignes teintées,
-% la séparation disparaissait.
+% parce qu'un fond de cellule recouvre le filet de la ligne du dessus.
 \newcommand{\LLfilet}[1]{\noalign{}\hhline{*{#1}{|-}|}}
-% \LLassist : la ligne d'un ravitaillement où l'assistance est autorisée.
+% \LLcell / \LLcellg : le préfixe de toute colonne « p » d'un tableau de course.
 %
-% colortbl peint le fond d'une ligne PAR-DESSUS le filet qui la surmonte : entre deux lignes
-% teintées qui se suivent, la séparation disparaissait. On la redessine donc comme du contenu,
-% posé APRÈS les fonds : dans la DERNIÈRE cellule de la ligne, la seule qu'aucun fond ne
-% recouvrira ensuite.
-% \LLsepfactor = l'interligne du tableau (\arraystretch) ; \LLseplarg = sa largeur.
-\newcommand{\LLsepfactor}{2.0}
-\newlength{\LLseplarg}
-% \LLsepfin{contenu de la cellule} : la cellule est composée dans une boîte de la largeur de
-% la colonne (avec sa réglette, sans quoi une cellule vide donne une boîte de largeur nulle),
-% pour que le filet parte du bord gauche du tableau quelle que soit la longueur du texte.
-\newcommand{\LLsepfin}[1]{%
-  \parbox[t]{\linewidth}{\centering\strut #1}%
-  \rlap{\hspace*{-\dimexpr\LLseplarg-\tabcolsep-\arrayrulewidth\relax}%
-    \raisebox{\dimexpr\LLsepfactor\ht\strutbox\relax}[0pt][0pt]{%
-      \textcolor{LLTableRule}{\rule{\LLseplarg}{\arrayrulewidth}}}}}
-\newcommand{\LLassist}{\rowcolor{LLAssistRow}}
-% La nuit : une trame froide sur toute la ligne. Elle se comprend sans légende — et sur une
-% ligne d'assistance, l'ocre passe devant : c'est elle qui demande une action.
-\colorlet{LLNightRow}{LLSlate!13!LLPaper}
-\newcommand{\LLnuitrow}{\rowcolor{LLNightRow}}
-% \LLprevu{valeur} : la colonne de l'heure prévue — en gras, sans trame : elle est repérée
-% par un cadre pointillé ocre, pas par un aplat de couleur de plus.
+% Une colonne « p » est un \vtop : sa hauteur est celle de sa PREMIÈRE BOÎTE. Une cellule qui
+% commence par un changement de couleur pose d'abord un whatsit, la hauteur tombe à zéro et
+% la cellule descend d'une ligne — le tableau se lisait alors en escalier. \leavevmode ouvre
+% le paragraphe avant tout le reste, la première boîte existe, et toutes les colonnes
+% s'alignent. La couleur et la graisse se déclarent donc ICI, pas dans la cellule.
+\newcommand{\LLcell}{\centering\arraybackslash\leavevmode}
+\newcommand{\LLcellg}{\raggedright\arraybackslash\leavevmode}
+% \LLtetehoraire{couleur}{texte} : l'en-tête d'une colonne horaire — un trait épais de sa
+% couleur, puis l'heure d'arrivée. C'est ce trait qui fait le lien avec la légende.
+\newcommand{\LLtetehoraire}[2]{%
+  \begin{minipage}[b]{\linewidth}\centering
+    {\color{#1}\rule{\linewidth}{1.3mm}}\par\vspace{2pt}%
+    {\LLsemiboldfont\fontsize{6.8}{8}\selectfont\color{LLText}\LLtracked{\MakeUppercase{#2}}\par}
+    \vspace{1pt}%
+  \end{minipage}}
+% \LLtete{texte} : l'en-tête d'une colonne ordinaire.
+\newcommand{\LLtete}[1]{%
+  {\LLsemiboldfont\fontsize{6.8}{8}\selectfont\color{LLText}\LLtracked{\MakeUppercase{#1}}}}
+% \LLmargecrew : la première colonne d'une ligne où l'assistance est autorisée — un filet
+% terracotta en marge, sur toute la hauteur de la ligne.
+% Un filet tracé, et non un fond de cellule : colortbl peint le fond sur la hauteur qu'il
+% calcule, laquelle ne coïncide pas avec la ligne quand l'interligne du tableau est étiré.
+% La réglette du tableau (\@arstrutbox), elle, EST la hauteur de la ligne.
+\newcommand{\LLmargecrew}{%
+  \rule[-\dp\@arstrutbox]{\linewidth}{\dimexpr\ht\@arstrutbox+\dp\@arstrutbox\relax}}
+% \LLnuitpoint : le point d'encre qui dit « ce segment se court de nuit », posé après le nom.
+\newcommand{\LLnuitpoint}{\raisebox{0.15ex}{\tikz\fill[LLText] (0,0) circle (0.85mm);}}
+% \LLprevu{valeur} : la colonne de l'heure prévue, en gras dans sa teinte.
 \newcommand{\LLprevu}[1]{{\LLsemiboldfont #1}}
-% \LLtableencadree{x du bord gauche}{largeur}{tableau} : pose le tableau dans une boîte, puis
-% trace le cadre pointillé ocre d'une de ses colonnes. La boîte donne sa hauteur exacte, et
-% l'abscisse se calcule sur les largeurs de la grille — d'où des colonnes à largeur fixe.
-\newsavebox{\LL@tablebox}
-\newcommand{\LLtableencadree}[3]{%
-  \sbox{\LL@tablebox}{#3}%
-  \noindent\begin{tikzpicture}
-    \node[inner sep=0, outer sep=0, anchor=north west] (LL@t) at (0,0) {\usebox{\LL@tablebox}};
-    \draw[LLAccentInk, dash pattern=on 2.2pt off 2.2pt, line width=0.9pt, rounded corners=1pt]
-      ([xshift=#1, yshift=1.5pt]LL@t.north west)
-      rectangle ([xshift=\dimexpr#1+#2\relax, yshift=-1.5pt]LL@t.south west);
-  \end{tikzpicture}\par}
-
-% \LLnuit : le point qui dit « il fait nuit sur ce segment », posé à côté du numéro.
-% \LLlegende{texte} : la ligne qui dit ce que veulent dire les repères du tableau.
-\newcommand{\LLlegende}[1]{%
-  \par\vspace{5pt}{\fontsize{8.4}{11}\selectfont\color{LLSoft}#1\par}}
 % \LLfort{valeur} : un chiffre qui doit sauter aux yeux (D+ et D− marqués).
 \newcommand{\LLfort}[1]{{\LLsemiboldfont #1}}
+% \LLlegende{texte} : la ligne qui dit ce que veulent dire les repères du tableau.
+\newcommand{\LLlegende}[1]{%
+  \par\vspace{5pt}{\fontsize{7.6}{10}\selectfont\color{LLSoft}#1\par}}
+% \LLtraitlegende{couleur} : le rectangle de légende qui rappelle un filet du tableau.
+\newcommand{\LLtraitlegende}[1]{\textcolor{#1}{\rule[0.5ex]{3.7mm}{1.05mm}}}
 % \LLcasevide : la case qu'on remplit au stylo, un simple pointillé.
 \newcommand{\LLcaselargeur}{16mm}
 \newcommand{\LLcasevide}{\textcolor{LLFillRule}{\makebox[\LLcaselargeur]{\dotfill}}}
+% \LLcaseecrire : la ligne pointillée bleu-vert d'une case laissée à remplir, dans le
+% tableau de marche — elle prend toute la largeur de la colonne.
+\newcommand{\LLcaseecrire}{%
+  \makebox[\linewidth]{\textcolor{LLPrimary}{\LLpointille}}}
 
-% llpremierepage{surtitre}{titre}{méta} : la première page, barre latérale bleu-vert et son
-% liseré ocre sur toute la hauteur, la marque en haut, le titre — puis la page CONTINUE : ce
-% que l'athlète doit retenir se lit sous le titre, pas sur une page de garde qui ne dit rien.
-% Le contenu est décalé de \LLcoverdecal pour dégager la barre. La classe ne décide d'aucun
-% texte : elle pose.
-\newlength{\LLcoverdecal}
-\setlength{\LLcoverdecal}{11mm}
-\newenvironment{llpremierepage}[3]{%
+% \LLcouverture{surtitre}{titre}{pour}{méta}{pied gauche}{pied droit} : la page de garde.
+% Barre bleu-vert et son liseré ocre sur toute la hauteur, la marque en haut, le titre posé
+% dans le bas de la page, et une ligne de pied qui porte la date d'édition et la référence.
+% La classe ne décide d'aucun texte : elle pose.
+\newcommand{\LLcouverture}[6]{%
   \thispagestyle{empty}%
-  \noindent\begin{tikzpicture}[remember picture, overlay]
+  \null
+  \begin{tikzpicture}[remember picture, overlay]
     \fill[LLPrimary] (current page.north west)
       rectangle ([xshift=\LLcoverbar]current page.south west);
     \fill[LLAccent] ([xshift=\LLcoverbar]current page.north west)
       rectangle ([xshift=\dimexpr\LLcoverbar+\LLcovergold\relax]current page.south west);
     \node[anchor=north west, inner sep=0]
-      at ([xshift=\LLcoverx, yshift=-22mm]current page.north west)
-      {\LLbrand{15mm}{13}};
-  \end{tikzpicture}\par
-  \vspace*{24mm}%
-  \noindent\hspace*{\LLcoverdecal}\begin{minipage}{\dimexpr\linewidth-\LLcoverdecal\relax}%
-    \raggedright
-    {\LLmonofont\fontsize{10}{13}\selectfont\color{LLPrimaryDark}%
-      \LLtracked{\MakeUppercase{#1}}\par}
-    \vspace{4mm}
-    {\LLextraboldfont\fontsize{31}{35}\selectfont\color{LLDeep}#2\par}
-    \vspace{4mm}
-    {\color{LLAccent}\rule{33mm}{1.5mm}}\par
-    \vspace{5mm}
-    {\fontsize{11}{15}\selectfont\color{LLSoft}#3\par}
-    \vspace{7mm}%
-}{\end{minipage}\clearpage}
+      at ([xshift=\LLcoverx, yshift=-23.3mm]current page.north west)
+      {\LLbrand{14.3mm}{11}};
+    \node[anchor=south west, inner sep=0, text width=\LLcoverw, align=left]
+      at ([xshift=\LLcoverx, yshift=78mm]current page.south west)
+      {\begin{minipage}{\LLcoverw}\raggedright
+        {\LLsemiboldfont\fontsize{8.3}{11}\selectfont\color{LLDeep}%
+          \LLtracked{\MakeUppercase{#1}}\par}
+        \vspace{6mm}
+        {\LLsemiboldfont\fontsize{45}{47}\selectfont\color{LLText}#2\par}
+        \vspace{8mm}
+        {\color{LLAccent}\rule{25.4mm}{1.3mm}}\par
+        \vspace{8mm}
+        {\LLlightfont\fontsize{19.5}{24}\selectfont\color{LLText}#3\par}
+        \vspace{3mm}
+        {\fontsize{11.25}{19}\selectfont\color{LLSoft}#4\par}
+      \end{minipage}};
+    \node[anchor=south west, inner sep=0, text width=\dimexpr\paperwidth-\LLcoverx-14.8mm\relax]
+      at ([xshift=\LLcoverx, yshift=17mm]current page.south west)
+      {\hbox to \dimexpr\paperwidth-\LLcoverx-14.8mm\relax{%
+        {\LLsemiboldfont\fontsize{7.1}{9}\selectfont\color{LLSoft}\LLtracked{\MakeUppercase{#5}}}%
+        \hfill
+        {\LLsemiboldfont\fontsize{7.1}{9}\selectfont\color{LLSoft}\LLtracked{\MakeUppercase{#6}}}}};
+  \end{tikzpicture}%
+  \clearpage}
 
-% \LLhero{texte} : la phrase de prédiction de la page 1.
-\newcommand{\LLhero}[1]{{\fontsize{18}{26}\selectfont\color{LLText}#1\par}}
-% \LLtile{étiquette}{valeur}{sous-texte} : carte blanche à filet ; la variante « accent »
-% ne change que la couleur du filet. « equal height group » aligne les tuiles d'une rangée
-% (tcolorbox a besoin de la deuxième passe pour ça).
-\newcommand{\LL@tile}[6]{%
-  \begin{tcolorbox}[enhanced, colback=LLPaper, colframe=#4, boxrule=#5, arc=5pt,
-      left=8pt, right=8pt, top=6pt, bottom=6pt, nobeforeafter, width=\linewidth,
-      equal height group=LLtuiles]
-    \raggedright\LLetiquette{#1}\par\vspace{2pt}%
-    {\LLextraboldfont\LLtabular\fontsize{#6}{#6}\selectfont\color{LLText}#2}\par\vspace{3pt}%
-    {\fontsize{8.4}{10.5}\selectfont\color{LLSoft}#3\par}
-  \end{tcolorbox}}
-\newcommand{\LLtile}[3]{\LL@tile{#1}{#2}{#3}{LLHairline}{0.6pt}{15}}
-\newcommand{\LLtileaccent}[3]{\LL@tile{#1}{#2}{#3}{LLAccentInk}{1.1pt}{15}}
-\newcommand{\LLtilecrew}[3]{\LL@tile{#1}{#2}{#3}{LLMistLine}{0.6pt}{9.5}}
+% \LLbloc{étiquette} : l'étiquette terracotta qui ouvre un bloc de page. Elle ferme d'abord
+% le paragraphe courant : posée après une minipage, elle se retrouvait sinon à la suite de la
+% ligne précédente, et son premier mot restait accroché au bloc d'avant.
+\newcommand{\LLbloc}[1]{%
+  \par\noindent{\LLsemiboldfont\fontsize{7.5}{10}\selectfont\color{LLDeep}%
+    \LLtracked{\MakeUppercase{#1}}}\par}
+
+% \LLchiffregeant{valeur}{suite} : l'heure d'arrivée, en grand, et ce qui la suit en ligne.
+% À 78 points, l'espace fine d'une durée (« 14\,h\,40 ») fait treize points et le chiffre se
+% disloque : elle se resserre ici, et nulle part ailleurs.
+\newcommand{\LLchiffregeant}[2]{%
+  \noindent{\LLlightfont\LLtabular\fontsize{78}{78}\selectfont\color{LLText}%
+    \def\,{\kern0.05em}#1}%
+  \hspace{5mm}{\fontsize{15}{18}\selectfont\color{LLText}#2}\par}
+
+% \LLdefligne{étiquette}{texte} : une ligne de définition — l'étiquette à gauche, le
+% paragraphe à droite, un filet fin dessous. \LLdeffin pour la dernière (pas de filet).
+\newlength{\LLdeflab} \setlength{\LLdeflab}{39.7mm}
+\newcommand{\LL@defligne}[3]{%
+  \noindent\begin{minipage}[t]{\LLdeflab}\vspace{0pt}\raggedright\LLbloc{#1}\end{minipage}%
+  \hspace{5.8mm}%
+  \begin{minipage}[t]{\dimexpr\linewidth-\LLdeflab-5.8mm\relax}\vspace{-2pt}
+    {\fontsize{9.4}{15}\selectfont\color{LLText}#2\par}
+  \end{minipage}\par\vspace{7pt}%
+  #3}
+\newcommand{\LLdefligne}[2]{\LL@defligne{#1}{#2}{{\color{LLHairline}\hrule height 0.4pt}\vspace{7pt}}}
+\newcommand{\LLdeffin}[2]{\LL@defligne{#1}{#2}{}}
+
+% \LLprofilligne{mesure}{valeur}{texte} : une ligne de « Ton profil ».
+\newlength{\LLproflab} \setlength{\LLproflab}{45.5mm}
+\newlength{\LLprofval} \setlength{\LLprofval}{34mm}
+\newcommand{\LL@profilligne}[4]{%
+  \noindent\begin{minipage}[c]{\LLproflab}\centering
+    {\LLsemiboldfont\fontsize{7.5}{10}\selectfont\color{LLText}\LLtracked{\MakeUppercase{#1}}\par}
+  \end{minipage}%
+  \begin{minipage}[c]{\LLprofval}\centering
+    {\LLlightfont\LLtabular\fontsize{19.5}{22}\selectfont\color{LLText}#2\par}
+  \end{minipage}%
+  \begin{minipage}[c]{\dimexpr\linewidth-\LLproflab-\LLprofval-4mm\relax}
+    \hspace{4mm}\begin{minipage}{\dimexpr\linewidth-4mm\relax}
+      {\fontsize{9.4}{14}\selectfont\color{LLSoft}#3\par}
+    \end{minipage}%
+  \end{minipage}\par\vspace{7pt}%
+  #4}
+\newcommand{\LLprofilligne}[3]{%
+  \LL@profilligne{#1}{#2}{#3}{{\color{LLHairline}\hrule height 0.4pt}\vspace{7pt}}}
+\newcommand{\LLprofilfin}[3]{\LL@profilligne{#1}{#2}{#3}{}}
+
+% \LLbarreintensite{mini}{maxi}{course}{txt mini}{txt maxi}{txt course} : l'étendue des
+% ultras en bleu-vert, le repère de cette course en terracotta. Les trois premiers sont des
+% FRACTIONS de l'axe, calculées par le contexte — la classe n'a aucune échelle à elle.
+\newcommand{\LLbarreintensite}[6]{%
+  \begin{tikzpicture}[x=\linewidth, y=1mm]
+    \draw[LLHairline, line width=0.3pt] (0,0) -- (1,0);
+    \fill[LLPrimary] (#1,-1.7) rectangle (#2,1.7);
+    \fill[LLDeep] (#3,-4.4) rectangle ($(#3,4.4)+(0.5pt,0)$);
+    \node[anchor=south, inner sep=1pt] at (#3,4.6)
+      {\LLsemiboldfont\fontsize{9.75}{11}\selectfont\color{LLDeep}#6};
+    \node[anchor=north, inner sep=2pt] at (#1,-2.2)
+      {\fontsize{8.25}{10}\selectfont\color{LLSoft}#4};
+    \node[anchor=north, inner sep=2pt] at (#2,-2.2)
+      {\fontsize{8.25}{10}\selectfont\color{LLSoft}#5};
+  \end{tikzpicture}}
+
+% \LLlourd{nom}{km}{fraction}{durée}{part} : une ligne des segments qui pèsent le plus.
+% La barre est la durée du segment RAPPORTÉE au plus long des cinq : c'est un classement,
+% pas une échelle absolue — et la durée est écrite à côté.
+\newlength{\LLlourdnom}  \setlength{\LLlourdnom}{49.2mm}
+\newlength{\LLlourdkm}   \setlength{\LLlourdkm}{27.5mm}
+\newlength{\LLlourddur}  \setlength{\LLlourddur}{22.2mm}
+\newlength{\LLlourdpart} \setlength{\LLlourdpart}{15.9mm}
+\newcommand{\LL@lourd}[6]{%
+  \noindent\begin{minipage}[c]{\LLlourdnom}\raggedright
+    {\LLsemiboldfont\fontsize{9.4}{12}\selectfont\color{LLText}#1\par}\end{minipage}%
+  \begin{minipage}[c]{\dimexpr\linewidth-\LLlourdnom-\LLlourdkm-\LLlourddur-\LLlourdpart\relax}
+    {\color{LLDeep}\rule{#3\dimexpr\linewidth-3mm\relax}{3.4mm}}%
+  \end{minipage}%
+  \begin{minipage}[c]{\LLlourdkm}\raggedright
+    {\fontsize{8.25}{10}\selectfont\color{LLSoft}#2\par}\end{minipage}%
+  \begin{minipage}[c]{\LLlourddur}\raggedleft
+    {\LLsemiboldfont\LLtabular\fontsize{10.5}{13}\selectfont\color{LLText}#4\par}\end{minipage}%
+  \begin{minipage}[c]{\LLlourdpart}\raggedleft
+    {\LLtabular\fontsize{8.6}{11}\selectfont\color{LLSoft}#5\par}\end{minipage}%
+  \par\vspace{5pt}#6}
+\newcommand{\LLlourd}[5]{%
+  \LL@lourd{#1}{#2}{#3}{#4}{#5}{{\color{LLHairline}\hrule height 0.4pt}\vspace{5pt}}}
+\newcommand{\LLlourdfin}[5]{\LL@lourd{#1}{#2}{#3}{#4}{#5}{}}
+
+% \LLcadredecoupe{contenu} : le liseré pointillé terracotta qui dit où couper, avec son
+% étiquette posée sur le trait, en haut à droite.
+\newsavebox{\LL@decoupebox}
+\newcommand{\LLcadredecoupe}[1]{%
+  \sbox{\LL@decoupebox}{\begin{minipage}{\dimexpr\linewidth-7mm\relax}#1\end{minipage}}%
+  \noindent\begin{tikzpicture}
+    \node[inner sep=3.5mm, outer sep=0, anchor=north west,
+          draw=LLDeep, dash pattern=on 2.4pt off 2.4pt, line width=0.7pt]
+      (LL@d) at (0,0) {\usebox{\LL@decoupebox}};
+    \node[anchor=east, inner sep=0, fill=LLBg, inner xsep=2mm]
+      at ([xshift=-9mm]LL@d.north east)
+      {\LLsemiboldfont\fontsize{6}{8}\selectfont\color{LLDeep}\LLtracked{\MakeUppercase{À découper}}};
+  \end{tikzpicture}\par}
+
+% Les fiches d'assistance : une par poste, à découper et à donner. \LLficheW et \LLficheH
+% sont les dimensions de la CASE (trait de coupe compris) ; le contenu respire de \LLfichepad.
+\newlength{\LLficheW}   \setlength{\LLficheW}{90mm}
+\newlength{\LLficheH}   \setlength{\LLficheH}{64mm}
+\newlength{\LLfichepad} \setlength{\LLfichepad}{5mm}
+% \LLfichecase{1 ou 0 : trait à droite}{1 ou 0 : trait en bas}{contenu} : une case de la
+% planche, avec les traits de coupe qu'elle partage avec ses voisines.
+\newcommand{\LLfichecase}[3]{%
+  \begin{tikzpicture}
+    \node[inner xsep=\LLfichepad, inner ysep=\LLfichepad, outer sep=0, anchor=north west,
+          minimum width=\LLficheW, minimum height=\LLficheH, align=left] (LL@f) at (0,0)
+      {\begin{minipage}[t][\dimexpr\LLficheH-2\LLfichepad\relax][t]%
+         {\dimexpr\LLficheW-2\LLfichepad\relax}#3\end{minipage}};
+    \ifnum#1=1\relax\draw[LLDeep, dash pattern=on 2.4pt off 2.4pt, line width=0.7pt]
+      (LL@f.north east) -- (LL@f.south east);\fi
+    \ifnum#2=1\relax\draw[LLDeep, dash pattern=on 2.4pt off 2.4pt, line width=0.7pt]
+      (LL@f.south west) -- (LL@f.south east);\fi
+  \end{tikzpicture}}
+% \LLfichecrew{nom}{km}{au plus tôt}{heure prévue}{jour prévu}{au plus tard}{pour qui}{nuit}
+% Le nom, le kilomètre, les trois heures, deux lignes à remplir. Elle se découpe et se donne
+% — d'où le pied qui rappelle pour qui elle est et si le poste tombe de nuit.
+\newcommand{\LLfichecrew}[8]{%
+  \setlength{\parskip}{0pt}%
+  \hbox to \linewidth{%
+    {\LLsemiboldfont\fontsize{16.5}{18}\selectfont\color{LLText}#1}\hfill
+    {\LLsemiboldfont\fontsize{9.75}{12}\selectfont\color{LLDeep}km #2}}\par
+  \vspace{4.5mm}
+  \hbox to \linewidth{%
+    \begin{minipage}[b]{0.30\linewidth}\centering
+      {\LLsemiboldfont\fontsize{6.4}{8}\selectfont\color{LLSoft}\LLtracked{\MakeUppercase{Au plus tôt}}\par}
+      \vspace{1.5mm}{\LLtabular\fontsize{10.5}{12}\selectfont\color{LLText}#3\par}
+    \end{minipage}\hfill
+    {\color{LLTableRule}\vrule width 0.4pt height 11mm depth 0pt}\hfill
+    \begin{minipage}[b]{0.33\linewidth}\centering
+      {\LLextraboldfont\fontsize{6.4}{8}\selectfont\color{LLDeep}\LLtracked{\MakeUppercase{Prévu}}\par}
+      \vspace{1mm}{\LLsemiboldfont\LLtabular\fontsize{15.75}{17}\selectfont\color{LLText}#4\par}
+      {\fontsize{7.5}{9}\selectfont\color{LLSoft}#5\par}
+    \end{minipage}\hfill
+    {\color{LLTableRule}\vrule width 0.4pt height 11mm depth 0pt}\hfill
+    \begin{minipage}[b]{0.30\linewidth}\centering
+      {\LLsemiboldfont\fontsize{6.4}{8}\selectfont\color{LLSoft}\LLtracked{\MakeUppercase{Au plus tard}}\par}
+      \vspace{1.5mm}{\LLtabular\fontsize{10.5}{12}\selectfont\color{LLText}#6\par}
+    \end{minipage}}\par
+  \vspace{4.5mm}
+  {\LLsemiboldfont\fontsize{6.4}{8}\selectfont\color{LLSoft}\LLtracked{\MakeUppercase{À prévoir}}\par}
+  \vspace{3mm}
+  {\color{LLPrimary}\LLpointille}\par\vspace{3.5mm}{\color{LLPrimary}\LLpointille}\par
+  \vfill
+  \hbox to \linewidth{%
+    {\LLsemiboldfont\fontsize{6}{8}\selectfont\color{LLSoft}\LLtracked{\MakeUppercase{#7}}}\hfill
+    {\fontsize{6}{8}\selectfont\color{LLSoft}#8}}}
+% le pointillé d'une ligne à remplir, sur toute la largeur courante
+\newcommand{\LLpointille}{%
+  \leavevmode\leaders\hbox to 2.2pt{\hss\rule[1pt]{0.6pt}{0.6pt}\hss}\hfill\kern0pt}
+
 % La barre empilée : où passe le temps. Une largeur totale, quatre tronçons, aucune échelle
-% inventée — chaque tronçon est sa part du temps prévu.
+% inventée — chaque tronçon est sa part du temps prévu. \LLbarre{...} l'encadre d'un filet
+% fin pour que le tronçon le plus clair se voie quand même.
 \newlength{\LLbarrelargeur}
-\setlength{\LLbarrelargeur}{\linewidth}
-\newcommand{\LLtroncon}[2]{\textcolor{#2}{\rule{#1\LLbarrelargeur}{9pt}}}
-\newcommand{\LLpuce}[1]{\textcolor{#1}{\rule[0.6pt]{7pt}{7pt}}\hspace{3pt}}
+\newcommand{\LLtroncon}[2]{\textcolor{#2}{\rule{#1\LLbarrelargeur}{8mm}}}
+\newcommand{\LLbarre}[1]{%
+  \setlength{\LLbarrelargeur}{\dimexpr\linewidth-0.8pt\relax}%
+  \setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}%
+  \noindent{\color{LLHairline}\fbox{\hbox{#1}}}\par}
+\newcommand{\LLpuce}[1]{\textcolor{#1}{\rule[-0.1ex]{2.9mm}{2.9mm}}\hspace{4pt}}
 
 % \LLfleche : la flèche « au plus tôt → au plus tard ». Tracée, parce qu'Ubuntu Sans
 % n'a pas de glyphe U+2192 ; elle prend la couleur courante.

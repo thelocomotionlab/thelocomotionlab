@@ -23,6 +23,7 @@ from twin_engine.predict import predict_finish
 from twin_engine.report import (build_feuille, build_pdf, build_report_context,
                                 generate_figures, render_template, render_tex,
                                 write_livrables)
+from twin_engine.report._format import hm
 from twin_engine.report.charte import CLS_COLORS, FONT_FILES, TOKENS, hexa
 from twin_engine.report.faits import trois_moments
 from twin_engine.report.feuille import consignes as consignes_feuille
@@ -138,9 +139,10 @@ def test_context_v3_keys():
     assert ctx["confidence_plain"] == "pleine"
     assert ctx["annex_url"].endswith("/LL-TWIN-GOLDEN01") and ctx["annex_ref"] == "LL-TWIN-GOLDEN01"
     assert ctx["report_version"] == CFG.report.version
-    # une jauge par mesure DISPONIBLE : sans arrêts mesurés, la jauge des arrêts n'existe pas
-    assert len(ctx["gauges"]) == (4 if ctx["stops"]["measured"] else 3)
-    assert all(0.0 <= g["fraction"] <= 1.0 for g in ctx["gauges"])
+    # trois mesures de profil, trois lignes — et chacune dit ce qu'elle est avant ce qu'elle vaut
+    assert [l["label"] for l in ctx["profil_lignes"]] == ["Vitesse critique", "Endurance",
+                                                          "Durabilité"]
+    assert all(l["value"] and l["texte"] for l in ctx["profil_lignes"])
     assert len(ctx["limits"]) == 4 and len(ctx["limits_short"]) == 4
     assert ctx["honesty"].startswith("Sur tes 5 ultras")
     assert ctx["assumptions"][0].startswith("Arr")
@@ -164,8 +166,103 @@ def test_the_report_number_only_travels_inside_the_annex_address():
     feuille = render_template(FEUILLE_TEMPLATE, ctx)
     assert "\\LLqr{" in tex and "\\url{" in tex
     assert tex.count(ctx["annex_url"]) == 2
-    assert "LL-TWIN-SECRET7" not in tex.replace(ctx["annex_url"], "")
+    # la référence ne voyage que deux fois : sur la page de garde, où elle classe le
+    # dossier, et dans l'adresse de l'annexe — jamais en pied de chaque page
+    assert tex.replace(ctx["annex_url"], "").count("LL-TWIN-SECRET7") == 1
     assert "LL-TWIN-SECRET7" not in feuille
+
+
+def test_the_cover_carries_the_reference_the_date_and_nothing_else():
+    """La page de garde classe le dossier : la course, pour qui, ce qu'elle demande, la date
+    d'édition et la référence. Pas de chiffre de prédiction — il ouvre la page suivante."""
+    ctx, _ = context(ref="LL-TWIN-GARDE1")
+    garde = _slice(render_tex(ctx), "page-garde")
+    assert "\\LLcouverture" in garde
+    assert ctx["race_name"] in garde and ctx["athlete"] in garde
+    assert ctx["length_km"] in garde and ctx["dplus_m"] in garde
+    assert ctx["report_date"] in garde and "LL-TWIN-GARDE1" in garde
+    assert ctx["pred_central"] not in garde
+
+
+def test_every_page_carries_the_same_footer():
+    """Le pied de page est le MÊME partout : un filet ocre, une légende s'il y en a une, le
+    folio à droite. Deux pieds écrits à deux endroits finissent par diverger — celui de la
+    feuille l'avait déjà fait. Un seul est défini, et les gabarits n'en posent aucun."""
+    cls = (TEMPLATE_DIR / "locomotionreport.cls").read_text(encoding="utf-8")
+    assert cls.count("\\newcommand{\\LLpied}") == 1
+    assert cls.count("\\fancyfoot[L]{\\LLpied") == 2      # LLmain et LLfeuille
+    for nom in ("report.tex.j2", FEUILLE_TEMPLATE, "fiches.tex.j2"):
+        source = (TEMPLATE_DIR.parent / nom).read_text(encoding="utf-8")
+        assert "\\fancyfoot" not in source and "\\fancypagestyle" not in source
+    # seule la garde n'en porte pas : elle n'a pas de folio à donner
+    assert "\\thispagestyle{empty}" in cls
+
+
+def test_the_heaviest_segments_are_the_longest_in_clock_time():
+    """Le critère est la durée d'horloge du segment, arrêt compris — pas son dénivelé ni sa
+    longueur. Et ce que les cinq pèsent ENSEMBLE est la somme de ce qui est affiché."""
+    ctx, (_, _, _, _, plan, _, _) = context()
+    lourds = ctx["faits"]["lourds"]
+    assert lourds["n"] == min(CFG.report.heavy_segments, len(plan.segments))
+    assert lourds["n_total"] == len(plan.segments)
+
+    cum, durees = 0.0, []
+    for s in plan.segments:
+        durees.append(s.cum_clock_h - cum)
+        cum = s.cum_clock_h
+    attendu = sorted(durees, reverse=True)[:lourds["n"]]
+    assert [l["duree"] for l in lourds["lignes"]] == [hm(d) for d in attendu]
+    assert lourds["cumul"] == hm(sum(attendu))
+    # la barre est un classement, pas une échelle absolue : la plus longue vaut 1
+    assert lourds["lignes"][0]["fraction"] == 1.0
+    assert all(0 < l["fraction"] <= 1.0 for l in lourds["lignes"])
+
+
+def test_the_crew_cards_are_the_crew_table_read_twice():
+    """Une fiche par poste, arrivée comprise, avec les MÊMES heures que le verso : la fiche
+    ne recalcule rien, elle recoupe l'heure prévue pour qu'elle se lise d'un coup d'œil."""
+    ctx, _ = context()
+    fiches, postes = ctx["fiches"], ctx["crew_rows"]
+    assert len(fiches) == len(postes) + (1 if ctx["finish_row"] else 0)
+    assert [f["name"] for f in fiches][:len(postes)] == [p["name"] for p in postes]
+    for f, p in zip(fiches, postes):
+        assert f["central"] == p["central"]
+        assert f["prevu_jour"] and f["prevu_heure"]
+        assert f["central"] == f"{f['prevu_jour']} {f['prevu_heure']}"
+        assert f["nuit_texte"] == ("poste de nuit" if p["night"] else "de jour")
+
+
+def test_the_first_page_paragraphs_only_say_what_is_computed():
+    """Les quatre paragraphes de la page « Ta course » ne portent aucune mesure nouvelle :
+    ils remettent en phrases ce qui est déjà calculé. Sans ultra, l'historique n'existe pas
+    et la méthode ne se raconte pas."""
+    ctx, (course, twin, cal, pred, plan, race, suf) = context()
+    recit = ctx["recit"]
+    assert recit["course"] and recit["historique"] and recit["methode"]
+    assert ctx["length_km"] in recit["course"] and ctx["dplus_m"] in recit["course"]
+    # le compte s'écrit en toutes lettres, pas en chiffres
+    assert recit["historique"].startswith("Cinq ultras enregistrés.")
+    assert len(recit["fourchettes"]) == 2
+
+    from dataclasses import replace as dc_replace
+
+    vide = dc_replace(cal, genuine=[], weights=None)
+    sans = build_report_context(course=course, twin=twin, calibration=vide, prediction=pred,
+                                plan=plan, race=race, sufficiency=suf, cfg=CFG,
+                                athlete="Val", report_ref="LL-TWIN-VIDE")
+    assert sans["recit"]["historique"] is None and sans["recit"]["methode"] is None
+    assert sans["recit"]["course"]                            # le parcours, lui, se calcule
+
+
+def test_the_intensity_bar_places_the_race_on_the_axis_of_his_ultras():
+    """Les trois repères de la barre sont des FRACTIONS d'un axe déclaré : la classe ne
+    connaît aucune échelle, et une course hors de l'étendue reste dans l'axe."""
+    ctx, _ = context()
+    b = ctx["faits"]["intensites"]["barre"]
+    assert 0.0 <= b["mini"] < b["maxi"] <= 1.0
+    assert 0.0 <= b["course"] <= 1.0
+    for cle in ("mini_txt", "maxi_txt", "course_txt"):
+        assert b[cle].endswith("\\,\\%")
 
 
 def test_placeholder_aid_names_refuse_to_be_sold():
@@ -196,13 +293,12 @@ def test_the_night_is_read_once_and_reports_every_section():
     de_nuit = {s.index for run in runs for s in run}
     assert [r["night"] for r in ctx["feuille_rows"]] == [
         s.index in de_nuit for s in plan.segments]
-    # sur la feuille, la nuit est une trame de fond de ligne — sauf là où l'ocre de
-    # l'assistance passe devant, parce qu'elle, elle demande une action
+    # sur la feuille, la nuit est un point d'encre posé à côté du nom : une ligne teintée de
+    # plus se serait battue avec le filet de l'assistance, qui demande une action
     tableau = _slice(render_template(FEUILLE_TEMPLATE, ctx), "feuille-recto")
-    tableau = tableau[:tableau.index("\\end{tabularx}")]
-    teintees = sum(1 for r in ctx["feuille_rows"] if r["night"] and not r["contact"])
-    assert tableau.count("\\LLnuitrow") == teintees
-    assert "\\LLnuit}" not in tableau                      # plus de point après le numéro
+    tableau = tableau[tableau.index("\\begin{tabularx}"):tableau.index("\\end{tabularx}")]
+    assert tableau.count("\\LLnuitpoint") == sum(1 for r in ctx["feuille_rows"] if r["night"])
+    assert "\\LLnuitrow" not in tableau                    # plus de ligne teintée
 
 
 def test_two_night_sections_are_both_published():
@@ -226,11 +322,8 @@ def test_stops_have_one_source_and_one_rounding():
     stops = ctx["stops_plain"]
     assert stops["hours"] == plan.t_stops_h
     assert abs(stops["rate_min_per_h"] - plan.t_stops_h / plan.t_move_h * 60.0) < 1e-9
-    if not ctx["stops"]["measured"]:
-        assert all(g["label"] != "Arrêts" for g in ctx["gauges"])
-        return
-    gauge = next(g for g in ctx["gauges"] if g["label"] == "Arrêts")
-    assert gauge["value"] == ctx["stops"]["rate_text"]
+    # le risque des arrêts ne s'imprime QUE sur des arrêts mesurés sur ses propres ultras
+    assert (ctx["faits"]["arrets"] is None) == (not ctx["stops"]["measured"])
     assert ctx["stops"]["hours_hm"] == ctx["t_stops_h"]
     assert "stops_budget" not in ctx
 
@@ -413,7 +506,7 @@ def test_no_number_is_hard_coded_in_what_the_athlete_reads_in_the_race():
         return re.findall(r"\d[\d,.:]*", body)
 
     tex = render_tex(ctx)
-    for name in ("page-vivre", "page-temps", "page-plan", "page-preuve"):
+    for name in ("page-garde", "page-course", "page-temps", "page-plan", "page-preuve"):
         assert not _reste(_slice(tex, name)), f"chiffres hors contexte sur {name}"
     feuille = render_template(FEUILLE_TEMPLATE, ctx)
     for name in ("feuille-recto", "feuille-verso"):
@@ -428,7 +521,10 @@ def test_no_macro_is_glued_to_the_next_word():
     ctx, _ = context()
     for nom, tex in (("rapport", render_tex(ctx)),
                      ("feuille", render_template(FEUILLE_TEMPLATE, ctx))):
-        colles = re.findall(r"\\(par|hfill|bigskip|medskip|smallskip|noindent)[A-Za-zÀ-ÿ]", tex)
+        # (?![a-zA-Z]{2,}) : « \\parskip » est une autre macro, pas un « \\par » collé
+        colles = re.findall(
+            r"\\(par|hfill|bigskip|medskip|smallskip|noindent)(?=[A-Za-zÀ-ÿ])(?!skip|indent|box|agraph)",
+            tex)
         assert not colles, f"{nom} : macro collée au mot suivant ({colles[:3]})"
 
 
@@ -443,10 +539,9 @@ def test_render_has_no_residual_delimiters():
     assert "Camille \\& L" in tex
     assert "\\LLtoc" not in tex and "llabstract" not in tex and "keywords" not in tex
     # les titres-formules du v2 ont disparu, remplacés par des titres simples
-    for page in ("Où passe le temps", "Le plan", "Ton profil", "La preuve"):
+    for page in ("Ta course", "Où passe le temps", "Le plan", "Ton profil et la preuve"):
         assert page in tex
     cls = (TEMPLATE_DIR / "locomotionreport.cls").read_text(encoding="utf-8")
-    assert "{llhonnete}[1][Les limites]" in cls
     for formule in ("Ce que ça te demande", "Ce que ce rapport ne sait pas",
                     "Pourquoi tu peux y croire", "Ce que tes données disent de toi",
                     "Ce que ça change pour toi", "(on prévient)"):
@@ -461,18 +556,22 @@ def test_render_has_no_residual_delimiters():
 
 
 @pytest.mark.skipif(not HAS_TEX, reason="XeLaTeX/biber absents (validés dans l'image Docker)")
-def test_the_report_is_four_pages_and_the_sheet_two(tmp_path):
+def test_the_report_is_a_cover_and_four_pages(tmp_path):
     PdfReader = pytest.importorskip("pypdf").PdfReader   # extra « dev » du pyproject
+
+    from twin_engine.report import build_fiches
 
     ctx, (course, twin, cal, pred, plan, race, _) = context()
     fig_dir = tmp_path / "figures"
     generate_figures(course, twin, cal, pred, plan, race, fig_dir, cfg=CFG)
     rapport = build_pdf(ctx, fig_dir, tmp_path / "tex")
     feuille = build_feuille(ctx, fig_dir, tmp_path / "tex-feuille")
-    # ce que tu vas vivre + où passe le temps + le plan + ton profil ; la feuille, ses deux
-    # tableaux
-    assert len(PdfReader(str(rapport)).pages) == 4
+    fiches = build_fiches(ctx, fig_dir, tmp_path / "tex-fiches")
+    # la garde + ta course + où passe le temps + le plan + ton profil et la preuve ; la
+    # feuille, ses deux tableaux ; la planche, une page de fiches à découper
+    assert len(PdfReader(str(rapport)).pages) == 5
     assert len(PdfReader(str(feuille)).pages) == 2
+    assert len(PdfReader(str(fiches)).pages) == 1
 
 
 @pytest.mark.skipif(not HAS_TEX, reason="XeLaTeX/biber absents (validés dans l'image Docker)")

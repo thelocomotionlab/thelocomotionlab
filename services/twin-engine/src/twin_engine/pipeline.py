@@ -293,12 +293,12 @@ def analyze_full(
         )
         # le rapport se pose À CÔTÉ de ce qui l'accompagne (feuille, calendrier, trace,
         # annexe) ; le dossier tex/ ne garde que la source et les journaux.
-        # ``feuille_only`` : la feuille à emporter seule, pour une réimpression de dernière
-        # minute sans refaire les trois pages.
+        # ``feuille_only`` : la feuille à emporter et les fiches seules, pour une
+        # réimpression de dernière minute sans refaire les pages du rapport.
         if not feuille_only:
             pdf_path = Path(shutil.copy(build_pdf(context, fig_dir, out_dir / "tex"),
                                         out_dir / "rapport.pdf"))
-        # ce qui accompagne le rapport : feuille à emporter, calendrier, GPX, annexe
+        # ce qui accompagne le rapport : feuille, fiches d'assistance, calendrier, GPX, annexe
         livrables = write_livrables(
             context=context, course=course, twin=preview.twin, calibration=preview.calibration,
             prediction=preview.prediction, plan=plan, race=race, sufficiency=preview.sufficiency,

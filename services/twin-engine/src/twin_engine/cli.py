@@ -113,7 +113,8 @@ def _build_parser() -> argparse.ArgumentParser:
             sp.add_argument("--no-pdf", action="store_true", help="ne pas compiler le PDF")
             sp.add_argument("--feuille-seule", action="store_true",
                             help="ne compiler que la feuille à emporter (recto-verso A4 "
-                                 "paysage), sans les trois pages du rapport")
+                                 "paysage) et les fiches d'assistance, sans les pages du "
+                                 "rapport")
             sp.add_argument("--ref", default=None, metavar="RÉFÉRENCE",
                             help="référence du rapport (pied de page, QR et adresse de "
                                  "l'annexe en ligne). Par défaut une référence tirée au "

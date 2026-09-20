@@ -382,38 +382,44 @@ def test_the_breakdown_reading_says_what_a_percentage_cannot():
 
 
 def test_one_sentence_per_profile_class():
-    """Une classe de profil, UNE phrase : le récit d'ouverture et la jauge lisent la même
-    table. Deux tables, c'était « ton allure baisse peu » d'un côté et « comme la plupart »
-    de l'autre, pour le même athlète."""
+    """Une classe de profil, UNE phrase : la ligne « Endurance » lit la table, le paragraphe
+    d'ouverture ne la recopie pas. Deux tables, c'était « ton allure baisse peu » d'un côté
+    et « comme la plupart » de l'autre, pour le même athlète."""
     import sys
     from pathlib import Path
     sys.path.insert(0, str(Path(__file__).parent))
     from test_report_v3 import context
-    from twin_engine.report.narrative import PROFIL_DURABILITE, PROFIL_ENDURANCE
+    from twin_engine.report.narrative import PROFIL_DEFINITION, PROFIL_ENDURANCE
 
     ctx = context()[0]
-    endurance = next(g for g in ctx["gauges"] if "ndurance" in g["label"])
+    endurance = next(l for l in ctx["profil_lignes"] if "ndurance" in l["label"])
     phrase = PROFIL_ENDURANCE[ctx["profile_word"]][1]
-    assert endurance["sentence"] == phrase
-    durabilite = next(g for g in ctx["gauges"] if "urabilit" in g["label"])
-    assert durabilite["sentence"] == PROFIL_DURABILITE[ctx["durability_word"]]
-    # et la phrase ne se dit qu'UNE fois : le paragraphe au-dessus ne la recopie pas
-    for p in (phrase, PROFIL_DURABILITE[ctx["durability_word"]]):
-        assert p not in ctx["opening"].replace("\\'", "'").replace("\\`", "")
+    assert PROFIL_DEFINITION["endurance"] in endurance["texte"]
+    assert phrase in endurance["texte"]
+    # et la phrase ne se dit qu'UNE fois dans le document
+    assert phrase not in ctx["opening"].replace("\\'", "'").replace("\\`", "")
 
 
-def test_a_gauge_only_shows_what_is_measured():
-    """La jauge des arrêts n'existe que si le taux d'arrêt est MESURÉ sur ses ultras : sinon
-    elle afficherait un réglage de config sous l'apparence d'une caractéristique de l'athlète."""
+def test_a_profile_row_only_shows_what_is_measured():
+    """Une mesure absente le DIT : elle ne se remplace pas par un réglage de config. La
+    durabilité sans fréquence cardiaque n'est pas « 0 % », elle n'est pas chiffrée."""
     import sys
+    from dataclasses import replace
     from pathlib import Path
     sys.path.insert(0, str(Path(__file__).parent))
-    from test_report_v3 import context
+    from test_report_v3 import context, scenario
+    from twin_engine.report import build_report_context
 
     ctx = context()[0]
-    labels = [g["label"] for g in ctx["gauges"]]
-    if ctx["stops"]["measured"]:
-        assert "Arrêts" in labels
-    else:
-        assert "Arrêts" not in labels
-    assert all(g["sentence"] for g in ctx["gauges"])
+    assert [l["label"] for l in ctx["profil_lignes"]] == ["Vitesse critique", "Endurance",
+                                                          "Durabilité"]
+    assert all(l["value"] and l["texte"] for l in ctx["profil_lignes"])
+
+    course, twin, cal, pred, plan, race, suf = scenario()
+    aveugle = build_report_context(
+        course=course, twin=replace(twin, durability_pct=None), calibration=cal,
+        prediction=pred, plan=plan, race=race, sufficiency=suf, cfg=CFG,
+        athlete="Val", report_ref="LL-TWIN-TEST")
+    durabilite = next(l for l in aveugle["profil_lignes"] if "urabilit" in l["label"])
+    assert durabilite["value"] == "non chiffrée"
+    assert "n'est pas chiffr" in durabilite["texte"]

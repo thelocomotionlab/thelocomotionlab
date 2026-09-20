@@ -16,6 +16,7 @@ _LATEX_DIR = Path(__file__).parent / "latex"
 _TEMPLATE_SUPPORT = ("locomotionreport.cls", "math.tex", "references.bib")
 REPORT_TEMPLATE = "report.tex.j2"
 FEUILLE_TEMPLATE = "feuille.tex.j2"
+FICHES_TEMPLATE = "fiches.tex.j2"
 
 
 def _jinja_env() -> Environment:
@@ -114,5 +115,17 @@ def build_feuille(context: dict, figures_dir: str | Path, work_dir: str | Path) 
                           figures_dir=figures_dir, passes=2)
 
 
+def build_fiches(context: dict, figures_dir: str | Path, work_dir: str | Path) -> Path:
+    """Compile la planche de fiches d'assistance (A4 portrait, une fiche par poste).
+
+    Document à part et non troisième page de la feuille : celle-ci est en paysage, et une
+    orientation ne se change pas en cours de document sans casser la géométrie des deux
+    premières pages.
+    """
+    return build_document(FICHES_TEMPLATE, context, work_dir, name="fiches",
+                          figures_dir=figures_dir, passes=2)
+
+
 __all__ = ["render_template", "render_tex", "prepare_workdir", "clean_aux", "build_document",
-           "build_pdf", "build_feuille", "REPORT_TEMPLATE", "FEUILLE_TEMPLATE"]
+           "build_pdf", "build_feuille", "build_fiches", "REPORT_TEMPLATE", "FEUILLE_TEMPLATE",
+           "FICHES_TEMPLATE"]

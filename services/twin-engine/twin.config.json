@@ -199,19 +199,11 @@
     "refuse_outside_safety": true
   },
   "report": {
-    "_comment": "Livraison du rapport v2 : version, adresse de l'annexe en ligne (une page par référence, non indexée), bornes de présentation des jauges, preuve empirique de la dérive du plan.",
+    "_comment": "Livraison du rapport : version, adresse de l'annexe en ligne (une page par référence, non indexée), réglages de présentation des pages, preuve empirique de la dérive du plan.",
     "version": "v2.0",
     "annex_base_url": "https://www.thelocomotionlab.com/services/twin/annexe",
-    "gauge_vc_kmh": [
-      6.0,
-      14.0
-    ],
-    "gauge_endurance_e": [
-      1.35,
-      1.05
-    ],
-    "gauge_durability_pct": 40.0,
-    "gauge_stops_min_per_h": 15.0,
+    "heavy_segments": 5,
+    "intensity_axis_margin": 0.2,
     "fade_evidence": "sur 30 courses, les coureurs sont en avance sur un plan plat à mi-course 27 fois sur 30",
     "consigne_steep_pct": 8.0,
     "consigne_gentle_pct": 3.0

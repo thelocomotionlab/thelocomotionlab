@@ -709,6 +709,27 @@ republié à côté de la politique du plan.
     concaténation des légendes des jauges posées dessous. Il ne reste que pour cadrer une
     prédiction non validée ; sinon la clé est vide et le gabarit n'imprime rien.
 
+## Choix faits à la place de Valentin (maquette v5)
+
+94. **Les fiches d'assistance sont un troisième document.** La maquette les dessine en A4
+    portrait, la feuille est en paysage : une orientation ne se change pas en cours de
+    document sans casser la géométrie des pages précédentes. `fiches.pdf` rejoint donc
+    `feuille.pdf` dans les livrables, et `--feuille-seule` compile les deux.
+95. **Un seul pied de page, défini une fois.** C'est le défaut que Valentin a nommé. Deux
+    pieds écrits à deux endroits finissent par diverger ; la classe n'en définit qu'un et un
+    test refuse qu'un gabarit en pose un autre.
+96. **La couleur et la graisse se déclarent dans la colonne, pas dans la cellule.** Une
+    cellule `p` qui commence par `\color` a une hauteur nulle et descend d'une ligne. La
+    règle vaut pour tous les tableaux de course : `\LLcell` ouvre le paragraphe, le reste
+    suit.
+97. **Les bornes de présentation des jauges quittent la config.** Quatre réglages décidaient
+    de la longueur d'une barre sans rien mesurer ; les jauges ont disparu, eux aussi. Restent
+    deux réglages de présentation qui, eux, servent : le nombre de segments mis en avant et
+    la marge de l'axe de la barre d'intensité.
+98. **Les segments qui pèsent le plus se classent à l'horloge.** Arrêt compris, parce que
+    c'est le temps que la course prend. Le dénivelé et la longueur sont déjà dans le tableau
+    du plan, et un long segment plat ne demande pas le même découpage qu'une montée courte.
+
 ## Questions ouvertes
 
 - **Chantier suivant : trails courts et route.** Valentin a des demandes pour du trail court et

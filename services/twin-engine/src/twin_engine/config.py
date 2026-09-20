@@ -583,18 +583,20 @@ class TargetParams:
 
 @dataclass(frozen=True)
 class ReportParams:
-    """Livraison du rapport v3 : version du gabarit, adresse de l'annexe en ligne, bornes de
-    PRÉSENTATION des jauges de « Ton profil » (la barre pleine = la borne « meilleure »), la
-    preuve empirique de la dérive du plan dite en une phrase, et les seuils de la feuille."""
+    """Livraison du rapport : version du gabarit, adresse de l'annexe en ligne, réglages de
+    PRÉSENTATION des pages (segments mis en avant, marge de la barre d'intensité), la preuve
+    empirique de la dérive du plan dite en une phrase, et les seuils de la feuille."""
 
     version: str = "v3.0"
     # une page par référence de rapport ; la référence est non devinable (aléa) et la page
     # n'est ni indexée ni listée — le lien est le secret
     annex_base_url: str = "https://www.thelocomotionlab.com/services/twin/annexe"
-    gauge_vc_kmh: tuple[float, float] = (6.0, 14.0)         # vitesse critique : vide → pleine
-    gauge_endurance_e: tuple[float, float] = (1.35, 1.05)   # exposant E : haut = vide, bas = pleine
-    gauge_durability_pct: float = 40.0                       # découplage 40 % = vide, 0 = pleine
-    gauge_stops_min_per_h: float = 15.0                      # 15 min/h d'arrêt = vide, 0 = pleine
+    # combien de segments la page « Où passe le temps » met en avant : ceux qui prennent le
+    # plus de temps d'horloge. Au-delà d'une poignée, la liste cesse d'être un repère.
+    heavy_segments: int = 5
+    # la barre d'intensité : marge laissée de part et d'autre de l'étendue des ultras, en
+    # fraction de cette étendue — sans elle, un repère tombe pile sur le bord de l'axe
+    intensity_axis_margin: float = 0.2
     fade_evidence: str = ("sur 30 courses, les coureurs sont en avance sur un plan plat à "
                           "mi-course 27 fois sur 30")
     # consigne par segment : au-delà de ces dénivelés, le segment est mis en avant

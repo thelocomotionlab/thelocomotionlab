@@ -10,6 +10,7 @@ calcule pas ne s'écrit pas. La mise en forme (virgule française, échappement 
   3. ``ventilation``      — où passe le temps prévu : montée, terrain roulant, descente, arrêts.
   4. ``cout_dune_erreur`` — ce que coûtent une journée sans forme et un départ trop rapide.
   5. ``trois_moments``    — la plus grosse montée, la plus grosse descente, le plus long segment.
+  6. ``segments_lourds``  — les segments qui prennent le plus de temps, et ce qu'ils pèsent.
   6. ``lever_du_jour``    — où l'athlète sera au lever du soleil, et à quelle heure.
 """
 
@@ -360,6 +361,43 @@ def trois_moments(plan, course) -> list[dict]:
 
 
 # --------------------------------------------------------------------------- #
+# Les segments qui pèsent le plus
+# --------------------------------------------------------------------------- #
+def segments_lourds(plan, *, combien: int = 5) -> dict | None:
+    """Les segments qui prennent le plus de temps, et ce qu'ils pèsent ensemble.
+
+    Le critère est la durée d'HORLOGE prévue du segment, arrêt compris : c'est le temps que
+    la course prend vraiment. Ni le dénivelé ni la longueur n'entrent en compte — ils sont
+    déjà dans le tableau du plan, et un long segment plat ne demande pas le même découpage
+    qu'une montée courte.
+    """
+    segs = plan.segments
+    if not segs:
+        return None
+    total = float(segs[-1].cum_clock_h)
+    if total <= 0:
+        return None
+    lignes, precedent = [], 0.0
+    for s in segs:
+        cum = float(s.cum_clock_h)
+        lignes.append({"nom": s.to, "from_km": float(s.off1 - s.off_len_km),
+                       "to_km": float(s.off1), "heures": max(cum - precedent, 0.0)})
+        precedent = cum
+    top = sorted(lignes, key=lambda x: x["heures"], reverse=True)[:max(combien, 1)]
+    maxi = top[0]["heures"]
+    cumul = sum(x["heures"] for x in top)
+    return {
+        "n": len(top),
+        "n_total": len(segs),
+        "total_h": total,
+        "cumul_h": cumul,
+        "cumul_pct": 100.0 * cumul / total,
+        "lignes": [{**x, "part_pct": 100.0 * x["heures"] / total,
+                    "fraction": x["heures"] / maxi if maxi > 0 else 0.0} for x in top],
+    }
+
+
+# --------------------------------------------------------------------------- #
 # 6. Le lever du jour
 # --------------------------------------------------------------------------- #
 def lever_du_jour(plan, race) -> dict | None:
@@ -396,4 +434,5 @@ def lever_du_jour(plan, race) -> dict | None:
 
 
 __all__ = ["contre_son_passe", "depart_concret", "deux_intensites", "deux_scenarios",
-           "lever_du_jour", "risque_des_arrets", "trois_moments", "ventilation"]
+           "lever_du_jour", "risque_des_arrets", "segments_lourds", "trois_moments",
+           "ventilation"]

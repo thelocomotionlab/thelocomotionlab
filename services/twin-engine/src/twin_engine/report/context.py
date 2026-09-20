@@ -19,8 +19,7 @@ from . import faits, feuille
 from ._format import (courses_sur, fr, french_datetime, french_datetime_short,
                       fr_thousands, hm, hm_plain, tex_escape)
 from .livrables import crew_points, finish_point
-from .narrative import (PROFIL_DURABILITE, PROFIL_ENDURANCE, build_narrative,
-                        vc_frac_band)
+from .narrative import (PROFIL_DEFINITION, PROFIL_ENDURANCE, build_narrative, vc_frac_band)
 
 def _pente_servie(twin, calibration, cfg) -> str | None:
     """Phrase du rapport quand la pente au-delà de 6 h vient d'ailleurs que de l'exposant
@@ -494,53 +493,183 @@ def _clamp(x: float) -> float:
     return float(min(max(x, 0.0), 1.0))
 
 
-def _gauges(ctx: dict, twin, calibration, plan, cfg, stops: dict) -> list[dict]:
-    """Les jauges du profil : UNE MESURE PAR JAUGE, et rien d'autre.
+def _profil_lignes(ctx: dict, twin, cfg) -> list[dict]:
+    """Les trois mesures du profil : ce que chacune EST, puis ce qu'elle vaut chez lui.
 
-    Une jauge alimentée par un défaut de config donnerait à un réglage l'allure d'une
-    caractéristique de l'athlète. Quand la mesure n'existe pas, la jauge n'existe pas —
-    l'hypothèse va dans le bloc des hypothèses, où elle est nommée comme telle.
+    Une mesure par ligne, et rien d'autre. La définition vient d'une table fixe
+    (``narrative.PROFIL_DEFINITION``) ; la phrase qui suit est CALCULÉE — la classe de
+    profil pour l'endurance, la valeur mesurée pour la durabilité. Une mesure absente le
+    dit et ne se remplace pas par un réglage de config.
     """
-    r = cfg.report
     cs = twin.critical_speed
     vc_ok = cs is not None and cs.plausible
-    lo, hi = r.gauge_vc_kmh
-    e_hi, e_lo = r.gauge_endurance_e
-    pw, dw = ctx.get("profile_word"), ctx.get("durability_word")
-    gauges = [{
-        "label": "Vitesse critique",
-        "value": f"{fr(cs.vc_kmh, 1)} km/h" if vc_ok else "non affichée",
-        "fraction": _clamp((cs.vc_kmh - lo) / (hi - lo)) if vc_ok else 0.0,
-        "sentence": ("l'allure au-delà de laquelle l'effort se paie vite, mesurée sur tes "
-                     "efforts plats" if vc_ok else
-                     "estimation hors du plausible : ni affichée ni utilisée"),
-    }, {
-        "label": "Endurance",
-        "value": f"E = {fr(twin.endurance_E, 2)}" if twin.endurance_E else "non mesurée",
-        "fraction": _clamp((e_hi - twin.endurance_E) / (e_hi - e_lo)) if twin.endurance_E else 0.0,
-        # la MÊME phrase que le récit d'ouverture : une seule table (narrative.PROFIL_ENDURANCE)
-        "sentence": (PROFIL_ENDURANCE[pw][1] if pw in PROFIL_ENDURANCE else
-                     "à quelle vitesse ton allure soutenable baisse quand la durée s'allonge"),
-    }, {
-        "label": "Durabilité",
-        "value": (f"{fr(twin.durability_pct, 0)} % de découplage" if twin.durability_pct is not None
-                  else "non chiffrée"),
-        "fraction": (_clamp(1.0 - twin.durability_pct / r.gauge_durability_pct)
-                     if twin.durability_pct is not None else 0.0),
-        "sentence": (PROFIL_DURABILITE[dw] if dw in PROFIL_DURABILITE else
-                     "la fréquence cardiaque manque sur tes longues sorties"),
-    }]
+    pw = ctx.get("profile_word")
+
+    vc_suite = ("" if vc_ok else tex_escape(
+        " Ton estimation ressort au-dessus du plafond physiologique plausible : elle n'est ni "
+        "affichée ni utilisée, et la prédiction n'en dépend pas."))
+    endurance_suite = (
+        tex_escape(f" À {fr(twin.endurance_E, 2)}, {PROFIL_ENDURANCE[pw][1]}.")
+        if twin.endurance_E and pw in PROFIL_ENDURANCE else
+        tex_escape(" Ton archive ne porte pas assez de durées différentes pour la mesurer."))
+    durabilite_suite = (
+        tex_escape(" À effort cardiaque égal, tu avances ")
+        + f"{fr(twin.durability_pct, 0)}\\,\\%"
+        + tex_escape(" moins vite après plusieurs heures qu'au début.")
+        if twin.durability_pct is not None else
+        tex_escape(" La fréquence cardiaque manque sur tes longues sorties : elle n'est pas "
+                   "chiffrée."))
+
+    lignes = [
+        ("Vitesse critique", f"{fr(cs.vc_kmh, 1)} km/h" if vc_ok else "non affichée",
+         tex_escape(PROFIL_DEFINITION["vc"]) + vc_suite),
+        ("Endurance", f"E = {fr(twin.endurance_E, 2)}" if twin.endurance_E else "non mesurée",
+         tex_escape(PROFIL_DEFINITION["endurance"]) + endurance_suite),
+        ("Durabilité",
+         f"{fr(twin.durability_pct, 0)}\\,\\%" if twin.durability_pct is not None
+         else "non chiffrée",
+         tex_escape(PROFIL_DEFINITION["durabilite"]) + durabilite_suite),
+    ]
+    # ``value`` n'est fait que de chiffres et d'unités : il porte déjà son espace fine LaTeX
+    # et ne repasse pas par l'échappement, qui la transformerait en texte.
+    return [{"label": tex_escape(lab), "value": val, "texte": _fr_decimals(txt)}
+            for lab, val, txt in lignes]
+
+
+_NOMBRES = {1: "un", 2: "deux", 3: "trois", 4: "quatre", 5: "cinq", 6: "six", 7: "sept",
+            8: "huit", 9: "neuf", 10: "dix", 11: "onze", 12: "douze", 13: "treize",
+            14: "quatorze", 15: "quinze", 16: "seize", 17: "dix-sept", 18: "dix-huit",
+            19: "dix-neuf", 20: "vingt"}
+
+
+def _mot_nombre(n: int) -> str:
+    """« douze » jusqu'à vingt, le chiffre au-delà : un compte qui se lit dans une phrase."""
+    return _NOMBRES.get(int(n), str(int(n)))
+
+
+def _recit(ctx: dict, *, course, plan, race, calibration, prediction, stops: dict,
+           lignes_passe: list[dict], plan_word: str, safety_word: str) -> dict:
+    """Les quatre paragraphes de la première page : la course, son passé, la méthode, les
+    fourchettes. Aucun n'ajoute de mesure — ils remettent en phrases ce qui est déjà calculé,
+    et ce qui manque ne s'écrit pas."""
+    out: dict = {"course": None, "historique": None, "methode": None, "fourchettes": []}
+
+    # --- la course : ce qu'elle demande, en une phrase ---------------------------------
+    bouts = [f"{ctx['length_km']}\\,km, {ctx['dplus_m']}\\,m de montée et "
+             f"{ctx['dminus_m']}\\,m de descente, {_mot_nombre(len(course.segments))} segments "
+             "d'un ravitaillement au suivant."]
+    depart = []
+    if plan.start_time is not None:
+        jour = _JOURS_SEMAINE[plan.start_time.weekday()]
+        depart.append(f"Départ le {jour} à {plan.start_time.hour}h"
+                      f"{plan.start_time.minute:02d}")
+    nuits = len(plan.night_runs)
+    if nuits:
+        depart.append(f"{_nuits_mot(nuits)} dehors")
+    v = ctx.get("faits", {}).get("ventilation")
+    if v:
+        monte = next((x for x in v["parts"] if x["cle"] == "montee"), None)
+        if monte:
+            depart.append(f"et {monte['pct']}\\,\\% du temps passé à monter")
+    if depart:
+        bouts.append(", ".join(depart) + ".")
+    out["course"] = _fr_decimals(" ".join(bouts))
+
+    # --- son passé : les records qui servent de repère ---------------------------------
+    par_cle = {x["cle"]: x for x in lignes_passe}
+    n_ultras = len(getattr(calibration, "genuine", ()) or ())
+    if n_ultras:
+        phrases = [f"{_majuscule(_mot_nombre(n_ultras))} ultras enregistrés."
+                   if n_ultras > 1 else "Un seul ultra enregistré."]
+        records, annees = [], []
+        duree, dplus = par_cle.get("duree"), par_cle.get("dplus")
+        if duree:
+            records.append(f"le plus long a duré {hm(duree['record'])}")
+            annees.append((duree.get("quand") or "")[:4])
+        if dplus:
+            records.append(f"le plus montagneux comptait {fr_thousands(dplus['record'], 0)}"
+                           "\\,m de dénivelé positif")
+            annees.append((dplus.get("quand") or "")[:4])
+        vraies = [a for a in annees if a.isdigit()]
+        quand = ""
+        if len(vraies) == len(records) and vraies:
+            quand = (f", tous deux en {vraies[0]}" if len(set(vraies)) == 1 and len(vraies) > 1
+                     else f", en {vraies[0]}" if len(vraies) == 1
+                     else f", en {' et '.join(vraies)}")
+        if records:
+            phrases.append(_majuscule(", ".join(records)) + quand + ".")
+        demande = []
+        if dplus:
+            demande.append(f"{_combien(dplus['ratio'])} ce dénivelé")
+        if duree:
+            sens = "de plus" if duree["ecart"] > 0 else "de moins"
+            demande.append(f"{hm(abs(duree['ecart']))} {sens}")
+        if demande:
+            phrases.append(f"{tex_escape(race.name)} demande {' et '.join(demande)}.")
+        nuit = par_cle.get("nuits")
+        if nuit:
+            phrases.append(
+                f"{_majuscule(_nuits_mot(nuit['valeur']))}, en revanche, tu l'as déjà fait."
+                if nuit["record"] >= nuit["valeur"] else
+                f"{_majuscule(_nuits_mot(nuit['valeur']))} dehors : ton maximum est "
+                f"{_nuits_mot(nuit['record'])}.")
+        out["historique"] = _fr_decimals(" ".join(phrases))
+
+    # --- la méthode : trois mesures, appliquées, puis vérifiées ------------------------
+    mesures = ["la vitesse que tu tiens longtemps",
+               "la façon dont ton allure baisse avec les heures"]
     if stops["measured"]:
-        gauges.append({
-            "label": "Arrêts",
-            "value": stops["rate_text"],
-            "fraction": _clamp(1.0 - stops["rate_min_per_h"] / r.gauge_stops_min_per_h),
-            "sentence": (f"ton taux mesuré sur {stops['n']} de tes ultras, appliqué à ce "
-                         f"parcours : {stops['hours_plain']} en tout"),
-        })
-    return [{**g, "label": tex_escape(g["label"]), "value": tex_escape(g["value"]),
-             "sentence": tex_escape(g["sentence"]), "fraction": round(g["fraction"], 3)}
-            for g in gauges]
+        mesures.append("le temps que tu passes à l'arrêt")
+    compte = "trois choses" if len(mesures) == 3 else "deux choses"
+    methode = [f"Tes {_mot_nombre(n_ultras)} courses servent à mesurer {compte} : "
+               f"{', '.join(mesures[:-1])}, et {mesures[-1]}. Ces "
+               f"{'trois' if len(mesures) == 3 else 'deux'} valeurs sont appliquées segment "
+               f"par segment au profil de {tex_escape(race.name)}."] if n_ultras else []
+    cv = getattr(prediction, "cross_validation", None)
+    if methode and cv is not None:
+        methode.append("Pour savoir ce que vaut le résultat, chaque course passée est rejouée "
+                       f"sans elle-même : l'erreur moyenne est de {fr(cv.mae_pct, 1)}\\,\\%, et "
+                       "ce sont ces écarts mesurés qui fixent les fourchettes.")
+    elif methode:
+        methode.append("Trop peu d'ultras comparables pour rejouer la méthode en aveugle : les "
+                       "fourchettes reposent sur la dispersion du modèle, pas sur des écarts "
+                       "mesurés sur toi.")
+    if methode:
+        out["methode"] = _fr_decimals(" ".join(methode))
+
+    # --- les fourchettes : la même largeur dite en courses ET en pour cent -------------
+    def _tombe(mot: str) -> str:
+        return f"{mot} y {'tombe' if mot.startswith('une ') else 'tombent'}"
+
+    if ctx.get("plan_low") and ctx.get("plan_high"):
+        out["fourchettes"].append({
+            "valeur": f"{ctx['plan_low']} – {ctx['plan_high']}",
+            "phrase": _fr_decimals(f"{_tombe(plan_word)} — intervalle à "
+                                   f"{ctx['plan_band_pct']}\\,\\%")})
+    if ctx.get("interval_low") and ctx.get("interval_high"):
+        out["fourchettes"].append({
+            "valeur": f"{ctx['interval_low']} – {ctx['interval_high']}",
+            "phrase": _fr_decimals(f"{_tombe(safety_word)} — intervalle à "
+                                   f"{ctx['interval_pct']}\\,\\%")})
+    return out
+
+
+_JOURS_SEMAINE = ("lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche")
+
+
+def _fiches(crew_rows: list[dict], finish_row: dict | None) -> list[dict]:
+    """Une fiche par poste d'assistance, arrivée comprise : de quoi découper et distribuer.
+
+    Même source que le tableau du verso — l'heure prévue y est coupée en deux (le jour à
+    part) parce qu'une fiche se lit d'un coup d'œil, la main tendue par la vitre.
+    """
+    out = []
+    for row in [*crew_rows, *( [finish_row] if finish_row else [] )]:
+        prevu = row["central"]
+        jour, _, heure = prevu.rpartition(" ")
+        out.append({**row, "prevu_heure": heure or prevu, "prevu_jour": jour,
+                    "nuit_texte": "poste de nuit" if row.get("night") else "de jour"})
+    return out
 
 
 def _stops_reading(calibration, plan, cfg) -> dict:
@@ -634,7 +763,8 @@ def _faits(prediction, course, plan, twin, calibration, race, cfg) -> dict:
     # les six clés existent toujours, vides quand la mesure manque : le gabarit teste, il ne
     # cherche pas une clé qui pourrait ne pas être là
     out: dict = {"passe": [], "intensites": None, "ventilation": None, "scenarios": None,
-                 "arrets": None, "depart": None, "moments": [], "lever": None}
+                 "arrets": None, "depart": None, "moments": [], "lourds": None,
+                 "lever": None}
 
     # 1. la course contre son passé
     mots = {
@@ -668,12 +798,14 @@ def _faits(prediction, course, plan, twin, calibration, race, cfg) -> dict:
         out["intensites"] = {
             "course": fr(i["course_pct"], 0), "ultras": fr(i["ultras_pct"], 0),
             "mini": fr(i["mini_pct"], 0), "maxi": fr(i["maxi_pct"], 0), "n": i["n"],
+            "barre": _barre_intensite(i, cfg),
             # le nombre d'ultras ne se dit qu'une fois : le rang le porte déjà
             "phrase": _fr_decimals(
                 f"Cette course demande \\textbf{{{fr(i['course_pct'], 0)}\\,\\%}} de ta "
                 f"vitesse critique ; tes ultras passés se sont courus entre "
                 f"{fr(i['mini_pct'], 0)} et {fr(i['maxi_pct'], 0)}\\,\\%. "
                 f"{_majuscule(_rang(i))}."),
+            "rappel": _rappel_intensite(i, prediction, cfg),
         }
 
     # 3. où passe le temps
@@ -688,6 +820,27 @@ def _faits(prediction, course, plan, twin, calibration, race, cfg) -> dict:
                 f"Montée et descente au-delà de {fr(v['seuil_pct'], 0)}\\,\\% de pente ; "
                 "entre les deux, le terrain est roulant."),
             "lecture": _lecture_ventilation(v, course),
+        }
+
+    # les segments qui pèsent le plus : le découpage que le tableau du plan ne montre pas
+    l = faits.segments_lourds(plan, combien=cfg.report.heavy_segments)
+    if l:
+        out["lourds"] = {
+            "cumul": hm(l["cumul_h"]), "cumul_pct": fr(l["cumul_pct"], 0),
+            "n": l["n"], "n_mot": _mot_nombre(l["n"]), "n_total": l["n_total"],
+            "phrase": _fr_decimals(
+                f"{_majuscule(_mot_nombre(l['n']))} segments sur {_mot_nombre(l['n_total'])} "
+                f"pèsent \\textbf{{{hm(l['cumul_h'])}}}, soit "
+                f"\\textbf{{{fr(l['cumul_pct'], 0)}\\,\\%}} de ta course. Ce sont eux qu'il "
+                "faut découper à l'avance : c'est là que le retard s'installe sans qu'on le "
+                "voie."),
+            "lignes": [{
+                "nom": tex_escape(x["nom"]),
+                "km": _fr_decimals(f"km {fr(x['from_km'], 1)}\\LLfleche{{}}{fr(x['to_km'], 1)}"),
+                "duree": hm(x["heures"]),
+                "part": _fr_decimals(f"{fr(x['part_pct'], 0)}\\,\\%"),
+                "fraction": round(x["fraction"], 3),
+            } for x in l["lignes"]],
         }
 
     # 4. deux scénarios de forme, le risque des arrêts, et à quoi ressemble le départ
@@ -815,6 +968,47 @@ def _rang(i: dict) -> str:
              "tu n'as couru aussi fort qu'une seule fois" if combien == 1 else
              f"tu n'as couru aussi fort que {combien} fois")
     return f"c'est la {ordinal} intensité la plus {cote} de tes {n} ultras — {aussi}"
+
+
+def _barre_intensite(i: dict, cfg) -> dict:
+    """Où tombe cette course sur l'échelle de ses ultras, en fractions d'un axe déclaré.
+
+    L'axe s'étend de part et d'autre de l'étendue mesurée d'une marge proportionnelle à cette
+    étendue (``report.intensity_axis_margin``) : sans elle, un repère qui tombe sur un extrême
+    se collerait au bord et ne se lirait plus. L'étendue inclut la course — l'axe la contient
+    donc toujours, même quand elle sort de ce qu'il a déjà couru.
+    """
+    lo_mesure = min(i["mini_pct"], i["course_pct"])
+    hi_mesure = max(i["maxi_pct"], i["course_pct"])
+    marge = max(hi_mesure - lo_mesure, 1e-6) * float(cfg.report.intensity_axis_margin)
+    lo, hi = lo_mesure - marge, hi_mesure + marge
+
+    def _f(x: float) -> float:
+        return round(_clamp((x - lo) / (hi - lo)), 4)
+
+    return {"mini": _f(i["mini_pct"]), "maxi": _f(i["maxi_pct"]),
+            "course": _f(i["course_pct"]),
+            "mini_txt": _fr_decimals(f"{fr(i['mini_pct'], 0)}\\,\\%"),
+            "maxi_txt": _fr_decimals(f"{fr(i['maxi_pct'], 0)}\\,\\%"),
+            "course_txt": _fr_decimals(f"{fr(i['course_pct'], 0)}\\,\\%")}
+
+
+def _rappel_intensite(i: dict, prediction, cfg) -> str:
+    """Ce que « 63 % de ta vitesse critique » veut dire quand on court aussi longtemps."""
+    debut = (tex_escape("Rappel : ta vitesse critique, ")
+             + f"{fr(i['vc_kmh'], 1)}\\,km/h"
+             + tex_escape(", est la vitesse que tu tiens des heures sans t'écrouler."))
+    pct = f"{fr(i['course_pct'], 0)}\\,\\%"
+    if vc_frac_band(i["course_pct"] / 100.0, cfg) == "low":
+        suite = (tex_escape(" Courir à ") + pct + tex_escape(" laisse de la marge — sur ")
+                 + hm(prediction.finish_hours)
+                 + tex_escape(", c'est le ravitaillement et non l'allure qui décide."))
+    else:
+        suite = (tex_escape(" Courir à ") + pct
+                 + tex_escape(" est déjà soutenu pour la distance : sur ")
+                 + hm(prediction.finish_hours)
+                 + tex_escape(", la régularité décidera plus que la vitesse."))
+    return _fr_decimals(debut + suite)
 
 
 def _combien(ratio: float) -> str:
@@ -1058,7 +1252,12 @@ def _v3_context(ctx: dict, *, course, twin, calibration, prediction, plan, race,
         "cover_sentence": tex_escape(cover) if sufficiency.verdict == RED else cover,
         "plan_band_word": plan_word,
         "safety_word": safety_word,
-        "gauges": _gauges(ctx, twin, calibration, plan, cfg, stops),
+        "profil_lignes": _profil_lignes(ctx, twin, cfg),
+        "recit": _recit(ctx, course=course, plan=plan, race=race, calibration=calibration,
+                        prediction=prediction, stops=stops,
+                        lignes_passe=ctx.get("faits", {}).get("passe", []),
+                        plan_word=plan_word, safety_word=safety_word),
+        "fiches": _fiches(crew_rows, finish_row),
         "n_ultras_hr": n_hr,
         "stops_policy": stops_policy,
         "stops_policy_plain": {**stops_policy, "sentence": policy_plain,

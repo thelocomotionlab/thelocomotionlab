@@ -96,10 +96,15 @@ PROFIL_ENDURANCE = {
     "fade": ("moins endurant sur la durée",
              "ton allure baisse plus vite que la moyenne quand la course s'étire"),
 }
-PROFIL_DURABILITE = {
-    "excellente": "ton efficacité tient jusqu'au bout de tes longues sorties",
-    "bonne": "ton efficacité baisse modérément en fin de longue sortie",
-    "à surveiller": "ton efficacité chute nettement en fin d'effort",
+# Ce que chaque mesure du profil EST, dit une fois et en clair. La phrase qui la suit est
+# CALCULÉE (classe de profil, valeur mesurée) et s'écrit à la suite : le contexte assemble
+# les deux, le gabarit ne fait qu'imprimer.
+PROFIL_DEFINITION = {
+    "vc": ("La vitesse que tu tiens des heures sans que la fatigue s'emballe. Au-dessus, "
+           "l'effort se paie vite. Mesurée sur tes efforts à plat, elle sert de référence à "
+           "tout le plan."),
+    "endurance": "De combien ton allure baisse à mesure que la course s'allonge.",
+    "durabilite": "Ce qu'il te reste en fin de longue sortie.",
 }
 
 

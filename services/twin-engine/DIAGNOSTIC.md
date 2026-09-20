@@ -2783,3 +2783,59 @@ La ligne du D+ officiel ne s'imprime que si le fichier de course porte `official
 `examples/nice-100m.json` le porte (8 900 m), un carnet de route personnel doit le déclarer
 pour que l'écart s'explique au lieu de surprendre.
 
+### 10.22 Maquette v5 — la mise en page vient du dessin, le moteur la remplit (2026-09-20)
+
+Valentin a dessiné le document dans Claude Design et demandé qu'on l'implémente. Le squelette
+est donc décidé ailleurs que dans le code ; le carnet ne garde ici que ce que l'implémentation
+a dû trancher, et les défauts de la maquette qui ont été corrigés au passage.
+
+**Cinq pages, trois documents.** Une page de garde (barre bleu-vert pleine hauteur, le titre
+dans le bas, la date d'édition et la référence en pied) puis quatre pages : ta course · où
+passe le temps · le plan · ton profil et la preuve. La feuille à emporter reste un document à
+part (A4 paysage, recto-verso), et les fiches d'assistance en deviennent un troisième
+(`fiches.pdf`, A4 portrait, une fiche par poste, à découper). Troisième document et non
+troisième page de la feuille : l'orientation ne se change pas en cours de document sans casser
+la géométrie des deux premières pages.
+
+**Le pied de page, le défaut nommé.** La maquette n'en donnait pas le même à toutes les pages
+— la planche de fiches n'en avait aucune. Il n'en existe plus qu'un seul dans la classe
+(`\LLpied`), les deux styles de page s'en servent, et un test refuse qu'un gabarit en pose un
+autre. Il porte un filet ocre, la légende de la page quand elle en a une, et le folio à droite.
+
+**Le tableau du plan et le tableau de marche changent de repères.** Les lignes teintées (ocre
+pour l'assistance, gris pour la nuit) sont remplacées par trois colonnes horaires teintées —
+sauge, terracotta, ambre, chacune titrée par son heure d'arrivée — un filet terracotta en
+marge pour l'assistance et un point d'encre à côté du nom pour la nuit. Deux aplats de ligne
+qui se disputaient la même ligne deviennent deux repères qui ne se croisent jamais.
+
+**Deux pièges de composition, et leur règle.** Une colonne `p` est un `\vtop` : sa hauteur est
+celle de sa PREMIÈRE BOÎTE. Une cellule qui commence par un changement de couleur pose d'abord
+un whatsit, la hauteur tombe à zéro, et la cellule descend d'une ligne — le tableau se lisait
+en escalier. D'où `\LLcell` : `\leavevmode` ouvre le paragraphe avant tout le reste, et la
+couleur comme la graisse se déclarent dans la SPÉCIFICATION de colonne, plus dans la cellule.
+De même, `\cellcolor` peint sur la hauteur que colortbl calcule, laquelle ne coïncide pas avec
+la ligne quand l'interligne est étiré : le filet de marge est donc une règle tracée sur la
+hauteur de `\@arstrutbox`, qui EST la ligne.
+
+**Les jauges disparaissent.** « Ton profil » devient trois lignes — la mesure, sa valeur, ce
+qu'elle est puis ce qu'elle vaut chez lui. Une barre pleine à une fraction demandait deux
+bornes de présentation par mesure (`gauge_vc_kmh`, `gauge_endurance_e`, …) : quatre réglages
+de config qui décidaient de la longueur d'une barre sans rien mesurer. La valeur écrite dit
+mieux, et la règle « une mesure absente le DIT » se garde telle quelle.
+
+**Les figures se dénudent.** Plus de cadre, plus d'ergots, plus de titre : une ligne de sol,
+trois ou quatre filets horizontaux annotés dans la figure, les kilomètres écrits dessous. Une
+figure de rapport n'est pas une planche scientifique ; le cadre prenait la place et n'apprenait
+rien de plus qu'un chiffre posé sur le filet qu'il mesure.
+
+**Un fait de plus.** « Les cinq segments qui pèsent le plus » (`faits.segments_lourds`) : le
+critère est la durée d'HORLOGE du segment, arrêt compris — pas son dénivelé, pas sa longueur.
+Ce sont ceux-là qu'il faut découper à l'avance, et le tableau du plan ne les montre pas.
+
+**La référence revient sur la page de garde.** Le v3 l'avait retirée du PDF ; la maquette la
+remet là où elle classe le dossier. Elle ne voyage que deux fois : sur la garde et dans
+l'adresse de l'annexe, jamais en pied de chaque page — un test le tient.
+
+**Les bandes se disent en courses ET en pour cent.** « une course sur deux y tombe —
+intervalle à 50 % ». La règle du v2 (« jamais en pourcentage sec ») tient toujours : le test
+vérifie désormais que le pour cent n'arrive qu'APRÈS le nombre de courses, jamais seul.

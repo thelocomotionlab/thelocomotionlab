@@ -1,0 +1,26 @@
+% Les fiches d'assistance : une par poste, à découper et à donner. A4 portrait, deux
+% colonnes de quatre. Mêmes valeurs que le verso de la feuille — le même contexte calculé,
+% lu deux fois, jamais recalculé.
+\documentclass{locomotionreport}
+
+\LLheaddoc{<< race_name >>}
+\pagestyle{LLfeuille}
+
+% Chaque bloc pose son propre air : le ressaut de paragraphe global ferait
+% doublon avec les \vspace des macros de page.
+\setlength{\parskip}{0pt}
+
+\begin{document}
+% =====================================================================
+% LL:BEGIN fiches
+<% if fiches %>\LLpiedlegende{Une fiche par poste : découpe-les et donne-les. L'heure « prévu » est celle
+que suit le plan ; les deux autres sont les bornes de sécurité.}
+\LLheadright{{\LLsemiboldfont\fontsize{7}{9}\selectfont\color{LLBg}\LLtracked{\MakeUppercase{Fiches assistance \textperiodcentered{} une par poste \textperiodcentered{} à découper}}}}
+\setlength{\LLficheW}{\dimexpr\linewidth/2\relax}
+\setlength{\LLficheH}{\dimexpr(\textheight - 2mm)/4\relax}
+\noindent<% for f in fiches %>\LLfichecase{<% if loop.index % 2 == 1 %>1<% else %>0<% endif %>}{<% if loop.index < fiches|length - 1 %>1<% else %>0<% endif %>}{%
+\LLfichecrew{<< f.name >>}{<< f.km >>}{<< f.earliest >>}{<< f.prevu_heure >>}{<< f.prevu_jour >>}{<< f.latest >>}{Locomotion Lab \textperiodcentered{} << athlete >>}{<< f.nuit_texte >>}}<% if loop.index % 2 == 0 %>\par\nointerlineskip<% endif %><% endfor %>
+<% endif %>% LL:END fiches
+
+
+\end{document}

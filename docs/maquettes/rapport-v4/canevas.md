@@ -1,7 +1,7 @@
-# Canevas du rapport v4
+# Canevas du rapport
 
-Le squelette du rapport et de la feuille, bloc par bloc, avec **ce qui alimente chaque bloc**.
-C'est la référence : on discute d'un bloc en le nommant, on le déplace dans
+Le squelette du rapport, de la feuille et des fiches, bloc par bloc, avec **ce qui alimente
+chaque bloc**. C'est la référence : on discute d'un bloc en le nommant, on le déplace dans
 `services/twin-engine/src/twin_engine/report/latex/report.tex.j2` entre ses marqueurs
 `% LL:BEGIN` / `% LL:END`, et l'ordre des blocs dans le fichier est l'ordre des pages.
 
@@ -10,31 +10,48 @@ contexte calculé (`report/context.py`), et un test refuse le rapport si un chif
 ailleurs (`tests/test_report_v3.py::test_no_number_is_hard_coded_…`). Un bloc dont la mesure
 n'existe pas ne s'imprime pas : il n'a pas de valeur de repli.
 
-Rendu de référence : `local-data/out/rapport.pdf` et `local-data/out/feuille.pdf`.
+Trois documents : `rapport.pdf` (A4 portrait, une garde et quatre pages), `feuille.pdf`
+(A4 paysage, recto-verso, à découper) et `fiches.pdf` (A4 portrait, une fiche par poste
+d'assistance, à découper). Rendu de référence : `local-data/out/`.
+
+**Le décor est le même partout** : bandeau bleu-vert à fleur du bord avec son filet ocre, la
+marque à gauche, le nom de la course à droite ; en pied, un filet ocre, la légende de la page
+s'il y en a une, et le folio à droite. Un seul pied est défini dans la classe
+(`\LLpied`), les deux styles de page s'en servent, et aucun gabarit n'en pose un autre.
 
 ---
 
-## Page 1 — `page-vivre`
+## Page de garde — `page-garde`
 
-Barre verticale bleu-vert + liseré ocre sur toute la hauteur, marque en haut. La page de
-garde et la prédiction sont fondues : on ne gaspille pas une page pour un titre.
+Barre verticale bleu-vert + liseré ocre sur toute la hauteur, la marque en haut, le titre
+dans le bas. Elle classe le dossier ; elle n'annonce aucun chiffre de prédiction.
 
 | bloc | contenu | source |
 |---|---|---|
-| en-tête | surtitre, titre de course, filet ocre | `report_date`, `race_name` |
-| méta | athlète, distance, D+, D− **et le D+ du carnet de route quand il diffère**, départ | `athlete`, `length_km`, `dplus_m`, `dminus_m`, `dplus_officiel`, `dplus_ecart_pct`, `start_time` |
-| la phrase | l'arrivée prédite et sa fourchette, en grand | `pred_central`, `arrival_clock`, `plan_low/high`, `plan_band_word` |
-| quatre tuiles | rapide · centrale · prudent · la fenêtre de l'assistance | `plan_low`, `pred_central`, `plan_high`, `arrival_safety_*`, `safety_word` |
-| **Ton passé** | une ligne par comparaison disponible : durée, D+, plus longue descente, nuits | `faits.passe[].phrase` |
-| **L'intensité** | % de VC de cette course, celui de ses ultras, et le rang | `faits.intensites.phrase` |
+| marque | signe + mot-symbole | `\LLbrand` |
+| titre | surtitre, nom de course, filet ocre, « Pour … » | `race_name`, `athlete` |
+| méta | distance, D+, D− **et le D+ du carnet de route quand il diffère**, départ | `length_km`, `dplus_m`, `dminus_m`, `dplus_officiel`, `dplus_ecart_pct`, `start_time` |
+| pied | date d'édition, référence du rapport | `report_date`, `annex_ref` |
+
+## Page 1 — `page-course`
+
+| bloc | contenu | source |
+|---|---|---|
+| méta | athlète, distance, D+, D−, départ | `athlete`, `length_km`, `dplus_m`, `dminus_m`, `start_time` |
+| l'arrivée | l'heure prédite en très grand, le jour à côté, puis la fourchette de course | `pred_central`, `arrival_clock`, `plan_low/high`, `plan_band_word` |
+| trois tuiles | rapide · centrale · prudent, dans un seul encadré divisé par des filets | `plan_low`, `pred_central`, `plan_high`, `arrival_*_clock` |
+| **La course** | ce que le parcours demande, en une phrase | `recit.course` |
+| **Ton historique** | ses records qui servent de repère, et ce que cette course demande en plus | `recit.historique` |
+| **Comment c'est prédit** | les mesures servies, leur application, et la validation croisée | `recit.methode` |
+| **Les fourchettes** | les deux bandes, dites en courses ET en pour cent | `recit.fourchettes[]` |
 
 ## Page 2 — `page-temps`
 
 | bloc | contenu | source |
 |---|---|---|
-| profil | altimétrie, ravitaillements, **trame sombre sur les heures de nuit** — aucune annotation de catégorie | `figures/profil.png` |
-| **Le temps prévu** | barre empilée montée / roulant / descente / arrêts, sa légende chiffrée, la lecture (part du temps contre part de la distance, rapport montée/descente) et son seuil | `faits.ventilation.parts[]`, `.lecture`, `.legende` |
-| **Les trois moments qui décident** | plus grosse montée, plus grosse descente, plus long segment : où, quand, durée. Le « où » ne nomme un ravitaillement que si le morceau y finit vraiment ; sinon il se situe après le dernier franchi | `faits.moments[]` |
+| **Le profil** | altimétrie, ravitaillements, **trame diagonale sur les heures de nuit** — aucune annotation de catégorie | `figures/profil.png` |
+| **Le temps prévu** | barre empilée montée / roulant / descente / arrêts, sa légende chiffrée en deux colonnes, la lecture (part du temps contre part de la distance, rapport montée/descente) et son seuil | `faits.ventilation.parts[]`, `.lecture`, `.legende` |
+| **Les cinq segments qui pèsent le plus** | ce qu'ils pèsent ensemble, puis une ligne par segment : nom, barre de durée, bornes en km, durée, part | `faits.lourds.phrase`, `.lignes[]` |
 | **Le lever du jour** | l'heure et l'endroit | `faits.lever.phrase` |
 
 ## Page 3 — `page-plan`
@@ -42,7 +59,7 @@ garde et la prédiction sont fondues : on ne gaspille pas une page pour un titre
 | bloc | contenu | source |
 |---|---|---|
 | l'allure visée | dérive assumée et sa preuve, **l'allure du départ en chiffres de montre**, politique d'arrêts | `fade_pct`, `fade_evidence`, `faits.depart`, `stops_policy.sentence` |
-| tableau | une ligne par segment, trois colonnes d'heures titrées par leur arrivée | `feuille_rows[]`, `clock_titles` |
+| tableau | une ligne par segment ; **trois colonnes horaires teintées**, titrées par leur heure d'arrivée ; **filet terracotta en marge** quand l'assistance est autorisée ; **point d'encre** à côté du nom quand le segment se court de nuit | `feuille_rows[]`, `clock_titles` |
 | cumul | temps cumulé et sa bande | `figures/cumul.png`, `caption_cumul` |
 | **Le risque des arrêts** | ce que le plan retranche contre le taux d'arrêt mesuré sur ses ultras ; rien sans arrêts mesurés | `faits.arrets` |
 | **Deux scénarios** | la journée à −10 % de forme et celle à +10 %, deux points fixes rejoués | `faits.scenarios.moins`, `.plus` |
@@ -51,10 +68,10 @@ garde et la prédiction sont fondues : on ne gaspille pas une page pour un titre
 
 | bloc | contenu | source |
 |---|---|---|
-| ouverture | le cadrage, **et rien d'autre** : sans validation croisée, la prudence ; avec, la clé est vide et le bloc ne s'imprime pas — les jauges disent déjà le profil | `opening` |
-| jauges | **une jauge par mesure disponible** — pas de jauge alimentée par un défaut ; sa phrase est celle de la table de profil, dite une seule fois dans le document | `gauges[]` |
-| validation croisée | la figure (seule du rapport), sa légende et l'erreur mesurée à côté | `figures/validation.png`, `caption_validation`, `honesty` |
-| **Les limites** | les quatre limites, les hypothèses, le QR et l'adresse en clair | `limits_short[]`, `assumptions[]`, `annex_url` |
+| **Ton profil** | trois lignes : la mesure, sa valeur, ce qu'elle est et ce qu'elle vaut chez lui. Une mesure absente le dit | `profil_lignes[]` |
+| **L'intensité** | le rang de cette course dans sa série, le rappel de ce que la VC veut dire, et la barre qui place la course sur l'étendue de ses ultras | `faits.intensites.phrase`, `.rappel`, `.barre` |
+| **La validation croisée** | la figure (seule du rapport), sa lecture, l'erreur mesurée, et l'encadré des quatre limites | `figures/validation.png`, `caption_validation`, `honesty`, `limits_short[]` |
+| **Les hypothèses** | ce que le plan suppose, le QR et l'adresse en clair | `assumptions[]`, `annex_url` |
 
 La courbe record et le plan intégral vivent à l'annexe en ligne.
 
@@ -62,30 +79,41 @@ La courbe record et le plan intégral vivent à l'annexe en ligne.
 
 ## Feuille détachable — `feuille-recto` / `feuille-verso`
 
-A4 paysage, deux tableaux et rien d'autre. En pied : le folio seul.
+A4 paysage, un tableau par face, dans un liseré pointillé qui dit où couper.
 
-**Recto — tableau de marche.** Une ligne par segment. Colonnes : `#`, ravitaillement, km
-cumulé, km du segment, D+, D−, allure, les trois heures, arrêt, *eau / ravito* (seulement si
-la nutrition est déclarée), et la colonne des consignes.
+**Recto — tableau de marche.** Une ligne par segment. Colonnes : marge, `#`, ravitaillement,
+km cumulé, km du segment, D+, D−, les trois heures, arrêt, *eau / ravito* (seulement si la
+nutrition est déclarée), et la colonne des consignes.
 
-Trois encodages, pas un de plus :
+Trois repères, pas un de plus :
 
-- **colonne encadrée en pointillé ocre** — l'heure prévue ;
-- **ligne ocre** — l'assistance est autorisée à ce ravitaillement ;
-- **ligne grise** — le segment se court de nuit (l'ocre passe devant quand les deux
-  coïncident : c'est elle qui demande une action).
+- **colonnes horaires teintées** — sauge = rapide, terracotta = centrale, ambre = prudent ;
+- **filet terracotta en marge** — l'assistance est autorisée à ce ravitaillement ;
+- **point d'encre à côté du nom** — le segment se court de nuit.
 
 Le gras des forts dénivelés reste, sans légende.
 
 **La colonne des consignes ne porte que des moments singuliers** — au plus cinq ou six sur la
 feuille : ce que l'athlète a écrit, ce que son assistance prépare, l'entrée dans la nuit, le
 retour du jour, le segment le plus long avec sa durée, la plus grosse montée, la plus grosse
-descente. Partout ailleurs la case est **vide et c'est voulu** : de la place pour écrire.
+descente. Partout ailleurs, une ligne pointillée : **de la place pour écrire**.
 
 Les trois moments arrivent de `faits.trois_moments` — **les mêmes objets que la page 2**, donc
 les mêmes chiffres. Les recalculer ici (le D+ du segment au lieu de la montée continue, le temps
 de mouvement au lieu de l'horloge) donnerait deux « plus grosse montée » qui ne se ressemblent
 pas ; un test l'interdit.
 
-**Verso — tableau d'assistance.** Un poste par ligne : nom, km, au plus tôt, prévu, au plus
-tard, à prévoir. **Les lignes grises sont les postes de nuit.**
+**Verso — tableau d'assistance.** Un poste par ligne : nom (avec son point d'encre s'il tombe
+de nuit), km, au plus tôt, **prévu** (la colonne teintée), au plus tard, à prévoir.
+
+## Fiches d'assistance — `fiches`
+
+A4 portrait, deux colonnes de quatre, traits de coupe pointillés. Une fiche par poste, arrivée
+comprise : le nom, le kilomètre, les trois heures (l'heure prévue en grand, son jour dessous),
+deux lignes à remplir, et un pied qui rappelle pour qui elle est et si le poste tombe de nuit.
+Même source que le verso (`fiches[]`, dérivé de `crew_rows` et `finish_row`) : la fiche ne
+recalcule rien.
+
+Document à part et non troisième page de la feuille : celle-ci est en paysage, et une
+orientation ne se change pas en cours de document sans casser la géométrie des deux premières
+pages.

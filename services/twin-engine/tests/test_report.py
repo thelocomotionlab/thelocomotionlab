@@ -155,7 +155,10 @@ def test_implausible_vc_hidden_with_honest_note():
     assert ctx["vc_kmh"] is None and ctx["vc_implausible"] is True
     assert ctx["vc_fraction_pct"] is None          # aucun « % de VC »
     tex = render_tex(ctx)
-    assert "Vitesse critique non affich" in tex     # la note explique le masquage
+    # la ligne « Vitesse critique » de la page profil dit le masquage et pourquoi
+    ligne = next(l for l in ctx["profil_lignes"] if "Vitesse" in l["label"])
+    assert ligne["value"] == "non affichée"
+    assert "plafond physiologique plausible" in ligne["texte"] and ligne["texte"] in tex
     assert "min/km" not in tex or "\\VC =" not in tex  # pas d'encadré VC rendu
 
 
@@ -169,7 +172,8 @@ def test_honesty_box_states_the_measured_error():
     assert ctx["cv_mae"] in ctx["honesty"]
     assert "rejoués en aveugle" in ctx["honesty"]
     tex = render_tex(ctx)
-    assert ctx["honesty"] in tex and "llhonnete" in tex
+    # l'erreur mesurée se lit à côté de la figure de validation, une seule fois
+    assert tex.count(ctx["honesty"]) == 1
     assert "llabstract" not in tex                       # plus de résumé, plus de mots-clés
 
 
@@ -203,9 +207,8 @@ def test_context_interval_labels_from_config():
     tex = render_tex(ctx)
     assert "une course sur deux" in tex
     assert "quatre courses sur cinq" in render_template(FEUILLE_TEMPLATE, ctx)
-    # Les bandes ne se disent jamais en pourcentage sec. On le vérifie sur des largeurs que
-    # rien d'autre dans le document ne peut produire : le rapport mesure aussi des pentes,
-    # des parts de distance et des parts de temps, qui tombent volontiers sur 50 ou 80.
+    # Une bande ne se dit JAMAIS en pourcentage seul : le pour cent n'arrive qu'après le
+    # nombre de courses, au bloc « Les fourchettes », qui donne les deux lectures côte à côte.
     from dataclasses import replace
 
     decale = replace(
@@ -215,8 +218,12 @@ def test_context_interval_labels_from_config():
     )
     autre = _context(decale)
     assert autre["interval_pct"] == "93" and autre["plan_band_pct"] == "37"
+    phrases = [f["phrase"] for f in autre["recit"]["fourchettes"]]
+    assert any("37\\,\\%" in p and "y tombe" in p for p in phrases)
     pages = render_tex(autre) + render_template(FEUILLE_TEMPLATE, autre)
-    assert "93\\,\\%" not in pages and "37\\,\\%" not in pages
+    for sec in ("93\\,\\%", "37\\,\\%"):
+        for morceau in pages.split(sec)[:-1]:
+            assert morceau.rstrip().endswith("intervalle à"), "bande dite en pourcentage seul"
 
     cfg = replace(CFG, prediction=replace(CFG.prediction, interval_low_pct=5, interval_high_pct=95))
     assert _context(cfg)["safety_word"] == "neuf courses sur dix"
@@ -359,7 +366,7 @@ def test_target_mode_switches_the_vocabulary_and_never_hides_the_prediction():
     assert ctx["pred_central"] in tex
     assert "le modèle te situe" in tex
     # et la limite obligatoire est là
-    assert "il ne le rend pas tenable" in tex
+    assert "il ne la rend pas tenable" in tex
 
 
 def test_refused_target_serves_the_gap_not_a_plan():
@@ -387,7 +394,7 @@ def test_target_mode_renames_the_scenario_columns():
     assert ctx["target_mode"]
     # aucune tuile ne parle de « rapide » ou « prudent » : ce sont les bornes d'une tolérance
     assert "Au plus tôt" in tex and "Au plus tard" in tex
-    assert "Rapide" not in tex and "Prudent" not in tex
+    assert "\\LLtuile{Rapide}" not in tex and "\\LLtuile{Prudent}" not in tex
     assert "tolérance d'exécution" in tex and "pas une probabilité" in tex
 
 
