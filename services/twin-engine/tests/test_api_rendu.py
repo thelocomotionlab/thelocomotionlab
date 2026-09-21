@@ -73,6 +73,16 @@ def test_an_amended_report_comes_back_whole(client, payload_dossier):
 
 
 @SANS_TEX
+def test_only_the_sheet_when_that_is_all_that_is_asked(client, payload_dossier):
+    """Réimpression de dernière minute : la feuille et les fiches, sans refaire les pages du
+    livret. C'est ce qu'on veut à minuit la veille, quand un arrêt vient de bouger."""
+    r = client.post("/rendu", json={"dossier": payload_dossier, "feuille_seule": True})
+    assert r.status_code == 200, r.text
+    assert "rapport.pdf" not in _noms(r)
+    assert {"feuille.pdf", "fiches.pdf"} <= set(_noms(r))
+
+
+@SANS_TEX
 def test_the_amendment_reaches_the_documents(client, payload_dossier):
     """Un arrêt allongé change les documents — sinon l'athlète cliquerait dans le vide."""
     sans = client.post("/rendu", json={"dossier": payload_dossier})
