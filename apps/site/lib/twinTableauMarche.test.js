@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import { depart, duree, heure, nombre, recalcule } from "@/lib/twinTableauMarche.js";
@@ -106,5 +109,63 @@ describe("heures de la course", () => {
     expect(duree(-5)).toBe("0 h 00");
     expect(nombre("12,5")).toBe(12.5);
     expect(nombre("")).toBe(null);
+  });
+});
+
+// --------------------------------------------------------------------------------------- //
+// LA GARDE ANTI-DÉRIVE.
+//
+// Ce module rejoue une règle qui vit ailleurs, dans un autre langage : `build_pacing`
+// (services/twin-engine/src/twin_engine/pacing/plan.py). Rien n'empêche l'une des deux de
+// bouger sans l'autre — sauf ceci. Le moteur fige ce qu'il calcule après amendement dans une
+// fiche partagée ; on la rejoue ici. Si elle ne passe plus, c'est que les deux ont divergé :
+// il faut regarder laquelle a raison, pas relever la tolérance.
+//
+// La fiche se refait côté moteur :
+//   TWIN_REGENERE_LA_FICHE=1 ./.venv/bin/python -m pytest tests/test_tableau_de_marche.py
+const FICHE = JSON.parse(
+  readFileSync(
+    fileURLToPath(new URL("../../../services/twin-engine/tests/fixtures/tableau-de-marche.json", import.meta.url)),
+    "utf8",
+  ),
+);
+
+describe("le moteur et l'aperçu disent la même chose", () => {
+  for (const cas of FICHE.cas) {
+    it(`modèle « ${cas.modele} », ${cas.amendement}`, () => {
+      // ce que le formulaire renvoie : un arrêt écrit à un point de passage
+      const ecrits = new Map(cas.reglages.map((r) => [r.aid_index - 1, r.stop_min]));
+      const arrets = cas.segments.map((s, i) => String(ecrits.has(i) ? ecrits.get(i) : s.stop_min));
+      const figes = cas.segments.map((_, i) => ecrits.has(i));
+
+      const r = recalcule({
+        segments: cas.segments,
+        arrets,
+        figes,
+        modele: cas.modele,
+        horlogeMin: cas.horloge_min,
+      });
+
+      // L'écart toléré est celui de la PUBLICATION : l'annexe sert le mouvement au dixième
+      // de minute et l'arrêt à la minute, et l'aperçu recalcule sur ces valeurs-là. Au-delà,
+      // ce n'est plus un arrondi, c'est une règle qui a bougé.
+      const tol = FICHE.ecart_tolere_min;
+      expect(r.lignes).toHaveLength(cas.attendu.cumul.length);
+      for (const [i, l] of r.lignes.entries()) {
+        expect(Math.abs(l.mouvement - cas.attendu.mouvement[i])).toBeLessThan(tol);
+        expect(Math.abs(l.arret - cas.attendu.arret[i])).toBeLessThan(tol);
+        expect(Math.abs(l.cumul - cas.attendu.cumul[i])).toBeLessThan(tol);
+      }
+      expect(Math.abs(r.arrivee - cas.attendu.arrivee)).toBeLessThan(tol);
+      // ce que ça vaut pour l'athlète : l'heure qu'il lit à l'écran et celle qu'il lit sur
+      // son PDF ne s'écartent jamais de plus d'une minute, nulle part sur le parcours
+      for (const [i, l] of r.lignes.entries()) {
+        expect(Math.abs(Math.round(l.cumul) - Math.round(cas.attendu.cumul[i]))).toBeLessThanOrEqual(1);
+      }
+    });
+  }
+
+  it("la fiche exerce bien les trois modèles d'arrêts", () => {
+    expect(new Set(FICHE.cas.map((c) => c.modele))).toEqual(new Set(["carved", "personal", "spec"]));
   });
 });

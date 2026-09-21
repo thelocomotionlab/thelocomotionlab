@@ -238,14 +238,45 @@ def _spec_to_dict(race) -> dict:
     }
 
 
+def _politique(race, n_segments: int, cfg) -> tuple:
+    """La politique d'arrêts que ce carnet de route impose, en minutes par segment."""
+    from .course.spec import stops_policy_min
+
+    return tuple(stops_policy_min(n_segments, race.major_base_indices, cfg, race.reglages))
+
+
+def prediction_amendee(d: Dossier, race, course, cfg):
+    """La prédiction du dossier, refaite SEULEMENT si l'amendement la touche.
+
+    Le temps prévu ne dépend du carnet de route que par la politique d'arrêts, et seulement
+    en modèle ``spec`` : là, il EST le mouvement plus ces arrêts, donc allonger un arrêt
+    recule l'arrivée. Ailleurs (``carved``, ``personal``) les arrêts se répartissent dans un
+    temps que l'archive fixe — s'arrêter cinq minutes de plus ne change pas ce que l'athlète
+    sait faire, et la prédiction se relit telle quelle.
+
+    Refaire la prédiction coûte un Monte-Carlo et une validation croisée, tous deux
+    déterministes : sur la même politique elle redonne les mêmes chiffres. On ne la refait
+    donc que quand la politique a bougé.
+    """
+    from .predict import predict_race
+
+    if getattr(d.prediction, "stops_model", "carved") != "spec":
+        return d.prediction
+    n = len(course.segments)
+    if _politique(d.race, n, cfg) == _politique(race, n, cfg):
+        return d.prediction
+    return predict_race(course, d.twin, d.calibration, cfg, race) or d.prediction
+
+
 def regenerer(d: Dossier, fragment: dict | None, *, cfg, out_dir, report_date=None,
               feuille_only: bool = False) -> dict:
     """Refait les documents d'un rapport, amendés — sans l'archive d'entraînement.
 
     Rejoue la MÊME chaîne que la production d'origine (``pipeline.rendre_documents``) :
     le plan, les figures, le contexte, le rapport, la feuille, les fiches et les livrables.
-    Le jumeau, la calibration et la prédiction sont relus tels quels — les amender
-    demanderait l'archive, et aucun réglage de la page ne les touche.
+    Le jumeau et la calibration sont relus tels quels : les amender demanderait l'archive,
+    et aucun réglage de la page ne les touche. La suffisance aussi — elle juge l'archive,
+    pas le plan. La prédiction suit :func:`prediction_amendee`.
 
     Rend {nom de fichier: chemin}, rapport compris.
     """
@@ -258,12 +289,13 @@ def regenerer(d: Dossier, fragment: dict | None, *, cfg, out_dir, report_date=No
     pente = d.twin.slope_factors(cfg)
     if pente is not None:
         course = course.with_slope_cost(*pente)
-    target = (assess_target(race.target_hours, course, d.twin, d.prediction, cfg)
+    prediction = prediction_amendee(d, race, course, cfg)
+    target = (assess_target(race.target_hours, course, d.twin, prediction, cfg)
               if race.target_hours else None)
 
     out = Path(out_dir)
     _, pdf, _, livrables = rendre_documents(
-        course=course, twin=d.twin, calibration=d.calibration, prediction=d.prediction,
+        course=course, twin=d.twin, calibration=d.calibration, prediction=prediction,
         sufficiency=d.sufficiency, target=target, race=race, cfg=cfg, out_dir=out,
         athlete=d.athlete, report_ref=d.report_ref,
         report_date=report_date or d.report_date, feuille_only=feuille_only,
@@ -275,4 +307,4 @@ def regenerer(d: Dossier, fragment: dict | None, *, cfg, out_dir, report_date=No
 
 
 __all__ = ["AMENDABLE", "VERSION", "Dossier", "appliquer", "ecrire", "from_payload", "lire",
-           "regenerer", "to_payload"]
+           "prediction_amendee", "regenerer", "to_payload"]

@@ -170,3 +170,41 @@ def test_the_target_survives_the_round_trip(tmp_path):
     cible = assess_target(d.race.target_hours, course, d.twin, d.prediction, CFG)
     assert cible.regime and isinstance(cible.plan_ok, bool)
     assert plan.segments                                   # le scénario a bien un plan
+
+
+def test_only_the_spec_model_re_predicts_when_a_stop_moves():
+    """Ce que le temps prévu doit à l'amendement, et rien de plus.
+
+    En modèle ``spec`` le temps prévu EST le mouvement plus les arrêts de la politique :
+    allonger un arrêt recule l'arrivée, et la prédiction doit suivre. Ailleurs (``carved``,
+    ``personal``) les arrêts se répartissent dans un temps que l'archive fixe — s'arrêter
+    cinq minutes de plus ne change pas ce que l'athlète sait faire, et refaire la prédiction
+    coûterait un Monte-Carlo pour redonner le même chiffre.
+    """
+    from _tableau_de_marche import config_pour   # noqa: E402
+
+    from twin_engine.calibration import build_calibration   # noqa: E402
+    from twin_engine.predict import predict_race            # noqa: E402
+
+    _, twin, *_ = scenario()
+    fragment = {"reglages": [{"aid_index": 6, "stop_min": 25.0}]}
+    for modele in ("carved", "personal", "spec"):
+        cfg = config_pour(modele, CFG)
+        race = race_spec()
+        course = build_course(_triangle_gpx(), race, cfg)
+        cal = build_calibration(twin, cfg)
+        pred = predict_race(course, twin, cal, cfg, race)
+        d = dossier.Dossier(course_gpx=_triangle_gpx(), race=race, twin=twin, calibration=cal,
+                            prediction=pred, sufficiency=None, athlete="Val",
+                            report_ref="LL-X", report_date=DATE)
+        amende = dossier.appliquer(race, fragment)
+        refaite = dossier.prediction_amendee(d, amende, course, cfg)
+        if modele == "spec":
+            # vingt minutes de plus à un ravitaillement : vingt minutes de plus au total
+            assert refaite is not pred
+            assert refaite.finish_hours - pred.finish_hours == pytest.approx(20 / 60, abs=1e-6)
+            assert refaite.moving_hours == pytest.approx(pred.moving_hours, abs=1e-9)
+        else:
+            assert refaite is pred, f"{modele} : la prédiction a été refaite pour rien"
+        # sans amendement, aucun modèle ne refait la prédiction
+        assert dossier.prediction_amendee(d, race, course, cfg) is pred
