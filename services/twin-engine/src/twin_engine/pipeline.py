@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from pathlib import Path
 
-from typing import Iterable
+from typing import Any, Iterable
 
 from .calibration import UltraCalibration, build_calibration
 from .config import Config
@@ -266,11 +266,34 @@ def analyze_full(
     target = preview.target
 
     # le parcours SERVI (coût de pente personnel compris) est celui du preview
-    course = preview.course
+    plan, pdf_path, figures, livrables = rendre_documents(
+        course=preview.course, twin=preview.twin, calibration=preview.calibration,
+        prediction=preview.prediction, sufficiency=preview.sufficiency, target=target,
+        race=race, cfg=cfg, out_dir=out_dir, athlete=athlete, report_ref=report_ref,
+        report_version=report_version, report_date=report_date, render_pdf=render_pdf,
+        feuille_only=feuille_only,
+    )
+    return FullResult(preview=preview, plan=plan, pdf_path=pdf_path, figures=figures,
+                      target=target, livrables=livrables, report_ref=report_ref)
+
+
+def rendre_documents(
+    *, course, twin, calibration, prediction, sufficiency, target, race: RaceSpec, cfg: Config,
+    out_dir: Path, athlete: str, report_ref: str = "LL-TWIN", report_version: str | None = None,
+    report_date: datetime | None = None, render_pdf: bool = True, feuille_only: bool = False,
+) -> tuple[Any, Path | None, dict, dict]:
+    """Du plan aux documents : pacing, figures, contexte, rapport, feuille, fiches, livrables.
+
+    Un SEUL chemin de code pour le document d'origine et pour le document refait après
+    amendement (``dossier.regenerer``) : deux chemins finiraient par ne plus dire la même
+    chose, et c'est exactement ce qu'on passe son temps à traquer dans ce rapport.
+
+    Rend ``(plan, chemin du rapport, figures, livrables)``.
+    """
     plan = build_pacing(
-        course, preview.prediction, race, cfg, durability_pct=preview.twin.durability_pct,
+        course, prediction, race, cfg, durability_pct=twin.durability_pct,
         anchor_hours=race.target_hours if (target is not None and target.plan_ok) else None,
-        splits_delta=fade_delta_from_splits(preview.calibration),
+        splits_delta=fade_delta_from_splits(calibration),
     )
 
     out_dir = Path(out_dir)
@@ -281,15 +304,13 @@ def analyze_full(
         from .report import build_pdf, build_report_context, generate_figures, write_livrables
 
         fig_dir = out_dir / "figures"
-        figures = generate_figures(
-            course, preview.twin, preview.calibration, preview.prediction, plan, race, fig_dir,
-            cfg=cfg,
-        )
+        figures = generate_figures(course, twin, calibration, prediction, plan, race, fig_dir,
+                                   cfg=cfg)
         context = build_report_context(
-            course=course, twin=preview.twin, calibration=preview.calibration,
-            prediction=preview.prediction, plan=plan, race=race, sufficiency=preview.sufficiency,
-            cfg=cfg, athlete=athlete, report_ref=report_ref, report_version=report_version,
-            report_date=report_date, target=target,
+            course=course, twin=twin, calibration=calibration, prediction=prediction,
+            plan=plan, race=race, sufficiency=sufficiency, cfg=cfg, athlete=athlete,
+            report_ref=report_ref, report_version=report_version, report_date=report_date,
+            target=target,
         )
         # le rapport se pose À CÔTÉ de ce qui l'accompagne (feuille, calendrier, trace,
         # annexe) ; le dossier tex/ ne garde que la source et les journaux.
@@ -300,13 +321,11 @@ def analyze_full(
                                         out_dir / "rapport.pdf"))
         # ce qui accompagne le rapport : feuille, fiches d'assistance, calendrier, GPX, annexe
         livrables = write_livrables(
-            context=context, course=course, twin=preview.twin, calibration=preview.calibration,
-            prediction=preview.prediction, plan=plan, race=race, sufficiency=preview.sufficiency,
+            context=context, course=course, twin=twin, calibration=calibration,
+            prediction=prediction, plan=plan, race=race, sufficiency=sufficiency,
             cfg=cfg, out_dir=out_dir, figures_dir=fig_dir, generated_at=report_date,
         )
-
-    return FullResult(preview=preview, plan=plan, pdf_path=pdf_path, figures=figures,
-                      target=target, livrables=livrables, report_ref=report_ref)
+    return plan, pdf_path, figures, livrables
 
 
 def run_full(
@@ -344,6 +363,22 @@ def run_full(
         if purge_source:
             purge_path(training_path)
     full.preview.n_skipped = len(skipped)
+
+    # Le dossier rejouable, posé à côté des livrables : il porte l'état du calcul (trace,
+    # carnet de route, jumeau, calibration, prédiction, suffisance) pour que le document
+    # puisse être REFAIT après amendement sans redemander l'archive. Sans prédiction, il
+    # n'y a rien à rejouer.
+    if render_pdf and full.preview.prediction is not None:
+        from . import dossier as _dossier
+
+        chemin = _dossier.ecrire(
+            Path(out_dir) / "dossier.json", course_gpx=course_gpx, race=race,
+            twin=full.preview.twin, calibration=full.preview.calibration,
+            prediction=full.preview.prediction, sufficiency=full.preview.sufficiency,
+            athlete=athlete, report_ref=report_ref,
+            report_date=report_date or datetime.now(),
+        )
+        full.livrables["dossier.json"] = chemin
     return full
 
 

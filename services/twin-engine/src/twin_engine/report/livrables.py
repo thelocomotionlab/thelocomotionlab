@@ -443,7 +443,8 @@ def write_annex(payload: dict, path: Path) -> Path:
     return path
 
 
-LIVRABLES = ("feuille.pdf", "fiches.pdf", "plan.ics", "plan.gpx", "annexe.json")
+LIVRABLES = ("feuille.pdf", "fiches.pdf", "plan.ics", "plan.gpx", "annexe.json",
+             "dossier.json")
 
 
 def write_livrables(*, context: dict, course, twin, calibration, prediction, plan, race,
