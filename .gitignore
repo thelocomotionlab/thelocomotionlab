@@ -69,6 +69,9 @@ services/twin-engine/_seed/cas_validation/
 # est une donnée client, l'historique en a déjà porté un par erreur, retiré le 2026-07-02)
 /out_nice/
 /out-*/
+# le dossier de travail des courses : fiches (scripts/course.sh) et dossiers livrés.
+# Seule l'annexe en sort, déposée dans apps/site/public/twin-annexes.
+/local-data/
 
 # arbre static listmonk assemblé par infra/listmonk/build-static.sh
 # (officiel épinglé + surcharges) — artefact de déploiement, jamais committé

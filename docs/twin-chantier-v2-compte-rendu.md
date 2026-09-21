@@ -743,6 +743,16 @@ republié à côté de la politique du plan.
     et le lever du jour ne s'impriment plus : leurs calculs partent aussi. Un fait sans
     lecteur est du code mort, pas une réserve.
 
+103. **La référence d'un rapport se fige à la course, pas au run.** Le QR imprimé sur une
+    feuille doit rester valable quand on refabrique le dossier : `scripts/course.sh` tire la
+    référence une fois, à l'init, la garde dans la fiche de la course et la repasse au CLI
+    avec `--ref`. Sans ça, chaque `full` tirait une adresse neuve et la feuille de la veille
+    pointait dans le vide.
+104. **Le dossier de travail d'une course est hors du dépôt.** `local-data/` rejoint le
+    `.gitignore` : un rapport est une donnée d'athlète. Seule l'annexe en sort, déposée dans
+    `apps/site/public/twin-annexes/` — elle ne porte que des agrégats, des phrases et les
+    figures, et c'est elle qui doit être committée pour que la page se prérende.
+
 ## Questions ouvertes
 
 - **Chantier suivant : trails courts et route.** Valentin a des demandes pour du trail court et

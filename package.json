@@ -16,7 +16,8 @@
     "lint:site": "pnpm -F site lint",
     "deploy:site": "pnpm -F site deploy:cf",
     "deploy:site:staging": "pnpm -F site deploy:staging",
-    "ship": "bash scripts/ship.sh"
+    "ship": "bash scripts/ship.sh",
+    "course": "bash scripts/course.sh"
   },
   "devDependencies": {
     "turbo": "^2.5.0"

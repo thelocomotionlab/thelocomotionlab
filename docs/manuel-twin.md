@@ -395,6 +395,67 @@ vocabulaire des fenêtres (voir ci-dessous). Sans objectif, tout est **exactemen
   10 h majorées de `domain_margin_pct`), un parcours sous le domaine est `hors_domaine` quel que soit
   l'objectif, et un objectif court sur un parcours long est `hors_portee`, pas hors domaine.
 
+## 7 bis. Le jour de course : fabriquer, publier, recommencer
+
+Trois commandes, depuis la racine du dépôt. Elles enveloppent le CLI, gardent la **référence**
+stable d'un run à l'autre et déposent l'annexe au bon endroit.
+
+```bash
+pnpm course init nice        # crée la fiche local-data/courses/nice.conf et TIRE la référence
+pnpm course rapport nice     # (re)fabrique rapport, feuille, fiches, ICS, GPX, annexe
+pnpm course publier nice     # dépose l'annexe, commit, déploie le site
+pnpm course nice             # les deux ; « liste » montre les courses déclarées
+```
+
+### Pourquoi une fiche, et pourquoi elle tient la référence
+
+La référence (`LL-NICE26-VAL-A3F9C1`) est **le QR imprimé sur le rapport** et **l'adresse de la
+page en ligne**. Sans fiche, chaque `full` en tire une neuve : la feuille imprimée la veille
+pointerait vers une page qui n'existe pas. La fiche la fige à l'init, et `rapport` la repasse au
+CLI avec `--ref` — refabriquer le dossier dix fois ne change ni le QR, ni l'adresse.
+
+La fiche vit dans `local-data/`, **hors du dépôt** : un rapport est une donnée d'athlète. Seule
+l'annexe en sort, déposée dans `apps/site/public/twin-annexes/` — elle ne porte que des agrégats,
+des phrases et les figures.
+
+```bash
+ATHLETE="Val"
+TRAINING="../archives/val-strava.zip"      # chemins relatifs à la racine du dépôt
+COURSE="../courses/nice-100m-2026.gpx"
+RACE="../courses/nice-100m-2026.json"
+TARGET="30h"        # vide = le plan suit la prédiction
+TOLERANCE="3.34"    # demi-largeur de la fenêtre, en % du temps CUMULÉ
+TECHNICITE=""
+REF="LL-NICE26-VAL-A3F9C1"
+```
+
+### La boucle : amender puis refabriquer
+
+1. `pnpm course rapport <nom>` → le dossier dans `local-data/out/<nom>/`.
+2. `pnpm course publier <nom>` → la page `…/annexe/<référence>` en ligne, avec son formulaire.
+3. Sur cette page, **le formulaire ne change que ce que tu vois** : arrêts par ravitaillement,
+   consignes, eau et glucides, notes d'assistance. Il recalcule le tableau de marche dans le
+   navigateur et s'imprime tel quel. Il n'écrit rien côté serveur — c'est un brouillon.
+4. Ce qui te convient, tu le reportes **dans la spec de course** (`reglages`, `crew`,
+   `nutrition`) ou dans la fiche (`TARGET`, `TOLERANCE`, `TECHNICITE`), puis tu relances les
+   deux commandes. Même référence, même QR, page mise à jour au même endroit.
+
+### Ce que la fenêtre d'objectif fait aux trois colonnes
+
+En mode objectif, les trois colonnes horaires cessent d'être une bande de probabilité : ce sont
+les **bornes d'une tolérance d'exécution**, `TARGET × (1 ∓ TOLERANCE %)`, appliquée au temps
+cumulé. Une cible de 30 h à 3,34 % titre donc les colonnes **29 h 00 · 30 h 00 · 31 h 00**, et la
+fenêtre s'élargit avec la course (± 30 min à mi-parcours, ± 1 h à l'arrivée) — c'est ce qui permet
+de choisir sa colonne en route.
+
+Deux refus possibles, et ils ne se contournent pas à la légère :
+
+- **cible plus rapide que la borne de sécurité basse** → régime `hors_portee`, aucun plan sur la
+  cible, le plan reste ancré sur la prédiction et le rapport sert l'écart chiffré. Remède : viser
+  moins vite. Le rollback (`--set target.refuse_outside_safety=false`) existe, il sert un plan
+  pour un objectif que les données ne soutiennent pas ;
+- **parcours sous le domaine de calibration** → `hors_domaine`, quel que soit l'objectif.
+
 ## 8. Développement & tests
 
 ```bash
