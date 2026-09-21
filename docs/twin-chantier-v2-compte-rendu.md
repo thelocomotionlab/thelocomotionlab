@@ -753,6 +753,43 @@ republié à côté de la politique du plan.
     `apps/site/public/twin-annexes/` — elle ne porte que des agrégats, des phrases et les
     figures, et c'est elle qui doit être committée pour que la page se prérende.
 
+## Choix faits à la place de Valentin (boucle d'amendement)
+
+105. **Amender ne demande pas l'archive.** Tout ce que le formulaire touche — arrêts,
+    consignes, assistance, nutrition — est en aval du jumeau. La prédiction, la calibration
+    et la validation croisée sont déjà calculées ; le parcours se reconstruit de sa trace.
+    Le dossier écrit ces objets-là et rien d'autre : la promesse « archives supprimées après
+    analyse » tient, et l'athlète peut quand même refaire son document en novembre.
+106. **Un seul chemin de code fait le document d'origine et le document amendé.**
+    `rendre_documents` sort de `analyze_full` pour que les deux l'appellent. Un test vérifie
+    qu'un dossier rejoué rend le même `.tex` au caractère près, sur les trois gabarits — sans
+    quoi les deux chemins auraient divergé, et l'athlète aurait eu deux documents à croire.
+107. **La règle d'arrêts se recalcule à deux endroits, et une fiche partagée les tient.**
+    Le moteur fait le document, la page fait l'aperçu instantané — elle est prérendue,
+    personne n'y a de moteur sous la main. Le moteur fige ce qu'il calcule après amendement
+    sous les trois modèles ; les deux suites rejouent cette fiche. Ce qui reste d'écart est
+    l'arrondi de publication : l'heure lue à l'écran et celle lue sur le PDF ne s'écartent
+    jamais d'une minute.
+108. **La garde a trouvé une divergence réelle, en modèle « spec ».** Le temps prévu y EST le
+    mouvement plus les arrêts de la politique : allonger un arrêt recule l'arrivée. Le rejeu
+    gardait la prédiction telle quelle et raccourcissait le mouvement à la place. Il la refait
+    désormais — et seulement là, et seulement si la politique a bougé.
+109. **`/rendu` rend tout le jeu, pas le livret seul.** Livret, feuille à emporter, fiches
+    d'assistance, calendrier, trace. Une feuille qui dirait autre chose que le livret, c'est
+    le doute au kilomètre 70, de nuit.
+110. **La page ne se souvient de rien, et le moteur non plus.** Valentin l'a tranché : pas
+    d'état. Le moteur reçoit une référence et un amendement, rend un ZIP, et oublie — le
+    répertoire de travail disparaît avec la requête. Rouvrir la page, c'est repartir du plan
+    du rapport ; le fichier téléchargé, lui, est à l'athlète.
+111. **Un seul chemin du moteur s'ouvre au dehors, et il se garde lui-même.** La route Caddy
+    ne laisse passer que `POST /rendu` : l'ingestion et les jobs, qui reçoivent des archives,
+    restent internes. Le service borne la taille sur l'entête avant de lire le corps, n'accepte
+    qu'un rendu à la fois, filtre la référence avant d'en faire un chemin, et refuse tout
+    champ hors des trois du formulaire.
+112. **Le dossier ne va ni dans le dépôt ni sur le site.** Il porte le jumeau, la calibration
+    et les résumés d'activité — plus que ce que l'annexe publie. Il se dépose sur le volume du
+    moteur, et `publier` montre la commande avant de la lancer.
+
 ## Questions ouvertes
 
 - **Chantier suivant : trails courts et route.** Valentin a des demandes pour du trail court et

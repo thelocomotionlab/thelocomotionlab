@@ -2879,3 +2879,65 @@ de nuit au bord droit de la colonne, sur la même ligne, toujours.
 deux centrent leur contenu. La marque était adossée à la ligne de base : signe et mot sont
 maintenant centrés dessus (`\LLcentre`), donc le lockup a une boîte symétrique et tout ce qui
 le centre le centre vraiment.
+
+### 10.24 La boucle d'amendement — amender sur la page, récupérer les documents (2026-09-21)
+
+Valentin a posé le cahier des charges en une phrase : « une fois amendé sur le site, ça le
+regénère à nouveau ». Pas « on va bouger la spec et relancer le CLI » — ça, c'est la procédure
+de l'atelier. Celle de l'athlète, c'est un bouton.
+
+**Ce qu'amender demande, et ce que ça ne demande pas.** Tout ce que le formulaire touche —
+arrêts, consignes, assistance, nutrition — est en AVAL du jumeau. S'arrêter cinq minutes de
+plus à un ravitaillement ne change pas ce qu'un coureur sait faire. La prédiction, la
+calibration et la validation croisée sont déjà calculées ; le parcours se reconstruit de sa
+trace. Refaire le document ne demande donc pas l'archive, qui n'existe plus — et la promesse
+« archives supprimées après analyse » tient sans empêcher un amendement en novembre.
+
+D'où le **dossier** (`dossier.py`, ~200 Kio) : la trace du parcours compressée, le carnet de
+route, le jumeau, la calibration, la prédiction, la suffisance. Aucune donnée brute d'activité.
+Trente mille points d'altitude pèsent plus que la trace qui les porte, donc le profil se
+recalcule au lieu de se sérialiser.
+
+**Un seul chemin de code.** `rendre_documents` sort de `analyze_full` pour que le document
+d'origine et le document amendé l'appellent tous les deux. Un test vérifie qu'un dossier
+rejoué rend le même `.tex` au caractère près, sur les trois gabarits. Sans lui, les deux
+chemins auraient divergé un jour, et l'athlète aurait eu deux documents à croire.
+
+**La garde entre le moteur et l'aperçu.** Le tableau de marche se recalcule à deux endroits,
+dans deux langages : `build_pacing` fait le document, `apps/site/lib/twinTableauMarche.js` fait
+l'aperçu instantané (la page est prérendue, personne n'y a de moteur sous la main). Rien
+n'empêchait l'une de bouger sans l'autre. Le moteur fige maintenant, dans
+`tests/fixtures/tableau-de-marche.json`, ce qu'il calcule après amendement sous les trois
+modèles d'arrêts ; les deux suites rejouent cette fiche.
+
+Ce qui reste d'écart est l'arrondi de PUBLICATION : l'annexe sert le mouvement au dixième de
+minute et l'arrêt à la minute, l'aperçu recalcule sur ces valeurs-là. Mesuré sur les six cas :
+au plus 0,34 min sur un arrêt, 0,32 sur un cumul. L'heure lue à l'écran et celle lue sur le
+PDF ne s'écartent jamais d'une minute. Au-delà de la demi-minute, le test tombe — ce n'est
+plus un arrondi, c'est une règle qui a bougé.
+
+**Elle a trouvé une divergence réelle, en modèle `spec`.** Là, le temps prévu EST le mouvement
+plus les arrêts de la politique : allonger un arrêt recule l'arrivée. Le rejeu, lui, gardait la
+prédiction telle quelle et raccourcissait le mouvement à la place — le comportement de
+`carved`. Il refait désormais la prédiction, et seulement là, et seulement si la politique a
+bougé (`dossier.prediction_amendee`). Le modèle servi étant `carved`, ce chemin ne coûte rien
+aujourd'hui ; il était faux, il ne l'est plus.
+
+**`POST /rendu`.** Rendu SANS ÉTAT sur le modèle de `POST /fiche` : un dossier — ou la
+référence d'un dossier déposé sur `/data/dossiers/` — plus l'amendement, et le moteur rend le
+jeu complet en ZIP (livret, feuille, fiches, calendrier, trace). Il ne lit aucune archive,
+n'écrit rien, ne garde rien : le répertoire de travail disparaît avec la requête.
+
+C'est le seul chemin du moteur destiné à un navigateur, donc le seul à ouvrir au dehors. La
+route Caddy (`infra/caddy/conf.d/api.caddy`, `@twin_rendu`) ne laisse passer que lui :
+l'ingestion et les jobs, qui reçoivent des archives d'entraînement, restent internes. Le
+service se garde lui-même, puisqu'il est devant : taille du corps refusée sur l'entête avant
+lecture (un middleware — FastAPI charge le corps pour le passer au gestionnaire, une borne
+posée là arriverait trop tard), un rendu à la fois et douze par minute, référence filtrée avant
+de composer un chemin, allowlist d'origines, et seuls les trois champs du formulaire sont
+amendables — tout autre champ est un 422, jamais un silence.
+
+**Pas d'état, tranché par Valentin.** La page ne se souvient pas des amendements, le moteur
+non plus. Rouvrir l'annexe, c'est repartir du plan du rapport ; le fichier téléchargé est à
+l'athlète. Une base de données pour retenir des brouillons aurait ajouté une donnée d'athlète
+à garder, à purger et à protéger, pour un gain que personne n'avait demandé.

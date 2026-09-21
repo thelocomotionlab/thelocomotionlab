@@ -134,10 +134,11 @@ passée pour comparer sa prédiction au temps réel. C'est l'outil du registre d
 
 ## 4. Utilisation via l'API (HTTP)
 
-L'API FastAPI est **interne** en prod (l'app `twin` qui la consommera n'existe pas encore —
-côté site, seuls la page `/services/twin` et la page de dépôt de la cohorte
-`/services/twin/cohorte` sont en ligne ; les archives déposées arrivent sur le VPS via le
-service `twin-depot`, pas par cette API). En local, on l'expose pour tester :
+L'API FastAPI est **interne** en prod, à une exception près : `POST /rendu`, que la page
+d'annexe appelle depuis le navigateur pour refaire les documents d'un rapport amendé. Tout le
+reste — ingestion, jobs, qui reçoivent des archives d'entraînement — n'est pas routé au dehors
+(les archives de la cohorte arrivent sur le VPS par le service `twin-depot`, pas par cette
+API). En local, on expose le tout pour tester :
 
 ```bash
 docker compose -f services/twin-engine/compose.local.yml up --build
@@ -154,9 +155,35 @@ Endpoints :
 | `POST /jobs` | lance une analyse **complète** en tâche de fond → renvoie un `job_id` |
 | `GET /jobs/{id}` | état du job + résultat (quand prêt) |
 | `GET /jobs/{id}/report` | télécharge le **PDF** du rapport |
+| `POST /fiche` | rendu **sans état** : le JSON d'une fiche d'atelier → son PDF, rien de gardé |
+| `POST /rendu` | rendu **sans état** : un dossier (ou la référence d'un dossier déposé) + l'amendement de la page → les documents refaits, en ZIP |
 
 Les jobs et leurs sorties vivent dans le volume de données (`/data` : `jobs.sqlite` + PDF). Les
 archives brutes envoyées sont purgées après parsing.
+
+### `POST /rendu` — refaire un rapport amendé
+
+```jsonc
+{
+  "ref": "LL-NICE26-VAL-A3F9C1",       // ou "dossier": { … } pour l'envoyer en clair
+  "amendement": {                       // facultatif ; null = le jeu du rapport tel quel
+    "reglages":  [{ "aid_index": 6, "stop_min": 20, "consigne": "bâtons" }],
+    "crew":      [{ "aid_index": 3, "note": "soupe" }],
+    "nutrition": { "water_l_per_h": 0.5, "carbs_g_per_h": 60 }
+  },
+  "feuille_seule": false                // true = feuille + fiches, sans les pages du livret
+}
+```
+
+Rend un ZIP (`rapport.pdf`, `feuille.pdf`, `fiches.pdf`, `plan.ics`, `plan.gpx`). Il ne lit
+aucune archive, n'écrit rien et ne garde rien : le répertoire de travail disparaît avec la
+requête. Le dossier est cherché dans `/data/dossiers/<référence>.json` (cf. §7 bis).
+
+**Trois champs seulement sont amendables** — `reglages`, `crew`, `nutrition`, ceux du
+formulaire. Tout autre champ est un **422**, jamais un silence : une page ne change pas la
+prédiction, l'objectif ou le parcours d'un athlète. Le reste des refus : **404** référence
+inconnue, **413** corps trop gros, **429** trop de rendus (un à la fois, douze par minute).
+Origines autorisées, bornes et débits sont dans `twin.config.json`, bloc `api`.
 
 ## 5. Où vont les données / confidentialité
 
@@ -165,6 +192,11 @@ archives brutes envoyées sont purgées après parsing.
 - Les **noms de fichiers sont anonymisés** à l'ingestion (les exports RGPD peuvent contenir l'e-mail
   de l'athlète) ; poids, notes privées, descriptions et identifiants d'appareil ne sont **jamais lus**.
 - En local, les données de test vont dans `services/twin-engine/local-data/` (git-ignoré).
+- Le **dossier** d'un rapport (`dossier.json`, cf. §7 bis) survit à l'archive, parce que la page
+  d'annexe doit pouvoir refaire les documents. Il ne porte aucune donnée brute d'activité : ses
+  résumés sont les agrégats que l'annexe publie déjà. Il vit sur le volume du moteur
+  (`/data/dossiers/`), jamais dans le dépôt ni sur le site, et se supprime comme le reste quand
+  le SAV est clos (`rm /data/dossiers/<référence>.json`).
 
 ## 6. Décrire une course cible (`--race`, optionnel)
 
@@ -403,7 +435,7 @@ stable d'un run à l'autre et déposent l'annexe au bon endroit.
 ```bash
 pnpm course init nice        # crée la fiche local-data/courses/nice.conf et TIRE la référence
 pnpm course rapport nice     # (re)fabrique rapport, feuille, fiches, ICS, GPX, annexe
-pnpm course publier nice     # dépose l'annexe, commit, déploie le site
+pnpm course publier nice     # dépose l'annexe et le dossier, commit, déploie le site
 pnpm course nice             # les deux ; « liste » montre les courses déclarées
 ```
 
@@ -429,16 +461,46 @@ TECHNICITE=""
 REF="LL-NICE26-VAL-A3F9C1"
 ```
 
-### La boucle : amender puis refabriquer
+### La boucle : amender depuis la page, récupérer les documents refaits
 
-1. `pnpm course rapport <nom>` → le dossier dans `local-data/out/<nom>/`.
-2. `pnpm course publier <nom>` → la page `…/annexe/<référence>` en ligne, avec son formulaire.
-3. Sur cette page, **le formulaire ne change que ce que tu vois** : arrêts par ravitaillement,
+1. `pnpm course rapport <nom>` → les sorties dans `local-data/out/<nom>/`.
+2. `pnpm course publier <nom>` → la page `…/annexe/<référence>` en ligne avec son formulaire,
+   **et** `dossier.json` posé sur le volume du moteur sous cette référence.
+3. Sur cette page, le formulaire ne change que ce que tu vois : arrêts par ravitaillement,
    consignes, eau et glucides, notes d'assistance. Il recalcule le tableau de marche dans le
-   navigateur et s'imprime tel quel. Il n'écrit rien côté serveur — c'est un brouillon.
-4. Ce qui te convient, tu le reportes **dans la spec de course** (`reglages`, `crew`,
-   `nutrition`) ou dans la fiche (`TARGET`, `TOLERANCE`, `TECHNICITE`), puis tu relances les
-   deux commandes. Même référence, même QR, page mise à jour au même endroit.
+   navigateur, à la règle d'arrêts du moteur — l'heure affichée est celle du prochain PDF.
+4. **« Refaire mes documents »** renvoie ces réglages au moteur, qui rend le jeu complet en
+   un fichier compressé : livret, feuille à emporter, fiches d'assistance, calendrier, trace.
+   Ce sont les documents, pas un aperçu : ils sortent du même code que le rapport d'origine.
+5. La page ne retient rien. En la rouvrant, tu repars du plan du rapport ; le fichier
+   téléchargé, lui, est à toi. Autant d'allers-retours que tu veux, même la veille au soir.
+
+Ce que ce chemin ne peut pas changer : la prédiction, le jumeau, la validation croisée, le
+parcours, l'objectif. Tout cela vient de l'archive, qui n'est plus là — et c'est voulu :
+s'arrêter cinq minutes de plus à un ravitaillement ne change pas ce que tu sais faire. Pour
+ces choses-là, il faut refabriquer : reporte dans la spec de course ou dans la fiche
+(`TARGET`, `TOLERANCE`, `TECHNICITE`) et relance les deux commandes. Même référence, même QR,
+page mise à jour au même endroit.
+
+#### Le dossier, et où il va
+
+Le **dossier** (`dossier.json`, ~200 Kio) porte ce qu'il faut pour refaire le document sans
+l'archive : la trace du parcours compressée, le carnet de route, le jumeau, la calibration, la
+prédiction et la garde de suffisance. Aucune donnée brute d'activité — ses résumés sont les
+agrégats que l'annexe publie déjà.
+
+Il ne va **ni dans le dépôt ni sur le site** : il se dépose sur le volume du moteur, où
+`POST /rendu` le retrouve sous la référence. `publier` s'en charge si `TWIN_VPS` est posé
+(cf. [`secrets.md`](./secrets.md)) ; sinon il affiche la commande et ne touche à rien.
+
+Deux choses à ouvrir une fois pour que le bouton fonctionne en ligne :
+
+- la route `@twin_rendu` dans `infra/caddy/conf.d/api.caddy`, **commentée** par défaut. Elle
+  n'expose qu'un chemin du moteur — l'ingestion et les jobs, qui reçoivent des archives,
+  restent internes. Décommenter, puis `./deploy.sh` sur le VPS ;
+- rien côté site : l'adresse de l'API vit en clair dans `apps/site/lib/twinRendu.mjs`
+  (`NEXT_PUBLIC_TWIN_RENDU_API` la surcharge en développement, une valeur vide éteint le
+  bouton et laisse le téléchargement des réglages en JSON comme repli).
 
 ### Ce que la fenêtre d'objectif fait aux trois colonnes
 

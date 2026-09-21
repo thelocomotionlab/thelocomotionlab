@@ -15,6 +15,7 @@
 | `VALENTIN_CHAT_ID` | `services/live-journal` (filtre « seul Valentin alimente le journal » + destinataire des messages privés) | `chat_id` Telegram personnel de Valentin (le bot `@userinfobot` le donne). Pas un secret cryptographique, mais on le traite comme tel : il désigne la boîte de réception privée. | **`infra/.env`** (non versionné). |
 | `ATELIER_ADMIN_TOKEN` | `services/atelier-api` (routes admin : listing + purge des inscriptions aux ateliers) | Bearer token des routes admin — donne accès aux prénoms/emails des inscrits. À inventer : `openssl rand -hex 24`. Vide → routes admin désactivées. | **`infra/.env`** (non versionné). |
 | `SMTP_USER` / `SMTP_PASS` | `services/atelier-api` (email récapitulatif d'inscription avec la fiche PDF) | Identifiants SMTP du relais d'envoi (Brevo — la clé SMTP se génère dans Brevo → SMTP & API). À régénérer chez Brevo au moindre doute. `SMTP_HOST`/`SMTP_PORT`/`SMTP_FROM` les accompagnent (non secrets). | **`infra/.env`** (non versionné). |
+| `TWIN_VPS` | `scripts/course.sh publier` (dépôt du dossier d'un rapport sur le volume du moteur, pour que `POST /rendu` le retrouve quand l'athlète amende son plan) | Hôte SSH du VPS, sous la forme `utilisateur@adresse`. Pas un secret cryptographique : une adresse d'infrastructure, qu'on garde hors du dépôt comme les autres. Vide → `publier` affiche la commande à lancer et ne touche à rien. `TWIN_ENGINE_CONTENEUR` l'accompagne (non secret, défaut `twin-engine`). | Ton environnement de travail (shell, `direnv`), **jamais** dans le dépôt. |
 
 ### Pas de secret côté app web
 
