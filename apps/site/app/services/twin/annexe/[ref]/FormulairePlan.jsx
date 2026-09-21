@@ -5,15 +5,20 @@
 // La page est prérendue et ne peut rien écrire : ce formulaire travaille dans le navigateur.
 // Il recalcule les heures de passage à chaque changement d'arrêt — avec la règle d'arrêts du
 // moteur (lib/twinTableauMarche.js), pour que ce qui s'affiche ici soit ce que le prochain
-// PDF imprimera — et rend deux choses : le tableau à imprimer tel quel, et le fragment de
-// spec à recoller dans le JSON de course pour que le moteur reprenne ces réglages.
+// PDF imprimera — et rend trois choses : le tableau à imprimer tel quel, le jeu de documents
+// refait par le moteur, et le fragment de spec à recoller dans le JSON de course.
 //
 // Ce qui se règle : le temps d'arrêt et la recommandation de chaque portion, les débits de
 // nutrition, et ce que l'assistance doit préparer. Rien n'est deviné : un champ vide garde
 // la valeur du rapport.
+//
+// Et une fois réglé, « Refaire mes documents » envoie le fragment au moteur, qui rend le jeu
+// complet — livret, feuille, fiches, calendrier, trace — fait par le même code que le rapport
+// d'origine. Le moteur ne garde rien : rouvrir cette page, c'est repartir du plan du rapport.
 
 import { useMemo, useState } from "react";
 
+import { nomDuZip, refaireDocuments, urlRendu } from "@/lib/twinRendu.mjs";
 import { depart, duree, heure, nombre, recalcule } from "@/lib/twinTableauMarche.js";
 
 const ETIQUETTE =
@@ -36,13 +41,23 @@ function imprimer() {
   window.print();
 }
 
+/** Provoque le téléchargement d'un contenu produit dans le navigateur. */
+function descendre(blob, nom) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = nom;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 /** Minutes → « +20 min » / « −5 min ». */
 function ecartMin(minutes) {
   const m = Math.round(minutes);
   return `${m > 0 ? "+" : "−"}${Math.abs(m)} min`;
 }
 
-export default function FormulairePlan({ plan, course, assistance }) {
+export default function FormulairePlan({ plan, course, assistance, reference }) {
   const segments = useMemo(() => plan?.segments ?? [], [plan]);
   const points = useMemo(() => assistance ?? [], [assistance]);
   const reglesServis = useMemo(() => plan?.reglages ?? [], [plan]);
@@ -59,6 +74,9 @@ export default function FormulairePlan({ plan, course, assistance }) {
   const [notes, setNotes] = useState(() =>
     Object.fromEntries((assistance ?? []).map((p) => [p.index, p.note ?? ""])),
   );
+  const [rendu, setRendu] = useState({ etat: "repos" });
+  // sans référence ou sans adresse d'API, le bouton n'a rien à joindre : il ne s'affiche pas
+  const enLigne = Boolean(reference) && Boolean(urlRendu());
 
   // Les réglages ÉCRITS, ceux que le moteur retiendra tels quels : ceux que la spec portait
   // déjà, plus ceux qu'on pose ici. La liste sort entière — recoller un fragment partiel
@@ -127,13 +145,19 @@ export default function FormulairePlan({ plan, course, assistance }) {
   const vide = Object.keys(spec).length === 0;
 
   function telecharger() {
-    const blob = new Blob([JSON.stringify(spec, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "reglages-course.json";
-    a.click();
-    URL.revokeObjectURL(url);
+    descendre(new Blob([JSON.stringify(spec, null, 2)], { type: "application/json" }),
+              "reglages-course.json");
+  }
+
+  async function refaire() {
+    setRendu({ etat: "en cours" });
+    const r = await refaireDocuments({ ref: reference, amendement: vide ? null : spec });
+    if (r.ok) {
+      descendre(r.blob, nomDuZip(reference));
+      setRendu({ etat: "fait" });
+    } else {
+      setRendu({ etat: "erreur", message: r.message });
+    }
   }
 
   if (!segments.length) return null;
@@ -280,18 +304,46 @@ export default function FormulairePlan({ plan, course, assistance }) {
       )}
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
+        {enLigne && (
+          <button
+            type="button"
+            className={`${BOUTON} border-brand-accent-ink text-brand-ink`}
+            onClick={refaire}
+            disabled={rendu.etat === "en cours"}
+          >
+            {rendu.etat === "en cours" ? "Le moteur travaille…" : "Refaire mes documents"}
+          </button>
+        )}
         <button type="button" className={BOUTON} onClick={imprimer}>
           Imprimer ce tableau
         </button>
         <button type="button" className={BOUTON} onClick={telecharger} disabled={vide}>
           Télécharger mes réglages
         </button>
-        <span className="font-sans text-meta text-brand-soft">
-          {vide
-            ? "Rien de modifié pour l’instant."
-            : "À recoller dans le JSON de course, puis relancer le rendu pour un PDF à jour."}
-        </span>
       </div>
+
+      <p className="m-0 mt-3 font-sans text-meta leading-snug text-brand-soft" aria-live="polite">
+        {rendu.etat === "erreur" ? (
+          <span className="text-brand-deep">{rendu.message}</span>
+        ) : rendu.etat === "en cours" ? (
+          "Le moteur refait le livret, la feuille à emporter, les fiches d’assistance, le " +
+          "calendrier et la trace. Une trentaine de secondes."
+        ) : rendu.etat === "fait" ? (
+          "C’est descendu : un dossier compressé avec le livret, la feuille, les fiches, le " +
+          "calendrier et la trace. Cette page, elle, ne retient rien — en la rouvrant tu " +
+          "repartiras du plan du rapport."
+        ) : enLigne ? (
+          vide
+            ? "Rien de modifié pour l’instant : « Refaire mes documents » te rendrait le jeu " +
+              "du rapport à l’identique."
+            : "« Refaire mes documents » renvoie ces réglages au moteur et te rend le jeu " +
+              "complet, refait avec eux."
+        ) : vide ? (
+          "Rien de modifié pour l’instant."
+        ) : (
+          "À recoller dans le JSON de course, puis relancer le rendu pour un PDF à jour."
+        )}
+      </p>
 
       {!vide && (
         <pre className="mt-3 overflow-x-auto rounded-[10px] border border-brand-hairline bg-brand-paper p-3 font-mono text-xxs leading-snug text-brand-ink">

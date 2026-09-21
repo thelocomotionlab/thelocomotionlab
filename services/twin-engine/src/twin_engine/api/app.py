@@ -6,22 +6,35 @@ Endpoints :
   * ``POST /jobs``             — crée un job `full` (arrière-plan in-process) → renvoie l'id.
   * ``GET  /jobs/{id}``        — état + résultat du job.
   * ``GET  /jobs/{id}/report`` — télécharge le PDF (quand prêt).
+  * ``POST /fiche``            — rendu sans état : JSON en entrée, PDF en sortie.
+  * ``POST /rendu``            — rendu sans état : un rapport amendé, refait en entier.
 
 Stockage local : SQLite pour l'état, dossier de données (volume) pour les fichiers.
+
+``/rendu`` est le seul endpoint destiné à un NAVIGATEUR : l'athlète amende ses arrêts sur
+la page de son rapport et récupère les documents refaits. Il ne lit pas d'archive, n'écrit
+rien et ne garde rien. Le reste de l'API est interne (cf.
+``infra/caddy/conf.d/twin-engine.caddy.disabled``).
 """
 
 from __future__ import annotations
 
+import io
 import json
+import re
 import shutil
 import tempfile
+import threading
+import time
+import zipfile
 from dataclasses import replace
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, Response
 
+from .. import dossier as dossier_mod
 from .._dt import parse_duration_h
 from ..config import Config, load_config
 from ..course import RaceSpec
@@ -55,6 +68,51 @@ def _parse_race(raw: bytes, target_hours: str | None = None) -> RaceSpec:
         raise HTTPException(status_code=422, detail=f"spec de course invalide: {exc}") from exc
 
 
+# Ce qu'un athlète emporte : les trois documents, le calendrier de son assistance et la
+# trace. L'annexe et le dossier sont de la machinerie d'atelier, ils ne descendent pas.
+RENDU_LIVRABLES = ("rapport.pdf", "feuille.pdf", "fiches.pdf", "plan.ics", "plan.gpx")
+
+_REF_OK = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}")
+
+
+class _Debit:
+    """Garde-fou de débit d'un rendu : un à la fois, et pas plus de N sur la minute écoulée.
+
+    Un rendu, c'est XeLaTeX plus biber — quelques secondes de processeur. L'endpoint étant
+    le seul joignable depuis un navigateur, il se protège lui-même plutôt que de compter
+    sur ce qu'il y a devant.
+    """
+
+    def __init__(self, simultanes: int, par_minute: int):
+        self._places = threading.Semaphore(max(1, simultanes))
+        self._par_minute = max(1, par_minute)
+        self._recents: list[float] = []
+        self._verrou = threading.Lock()
+
+    def prendre(self) -> bool:
+        maintenant = time.monotonic()
+        with self._verrou:
+            self._recents = [t for t in self._recents if maintenant - t < 60.0]
+            if len(self._recents) >= self._par_minute:
+                return False
+            self._recents.append(maintenant)
+        return self._places.acquire(timeout=30.0)
+
+    def rendre(self) -> None:
+        self._places.release()
+
+
+def _zip_des(livrables: dict) -> bytes:
+    """Les documents refaits, dans un seul fichier — l'athlète en télécharge un, pas cinq."""
+    tampon = io.BytesIO()
+    with zipfile.ZipFile(tampon, "w", zipfile.ZIP_DEFLATED) as z:
+        for nom in RENDU_LIVRABLES:
+            chemin = livrables.get(nom)
+            if chemin is not None and Path(chemin).exists():
+                z.write(chemin, arcname=nom)
+    return tampon.getvalue()
+
+
 def create_app(cfg: Config | None = None) -> FastAPI:
     cfg = cfg or load_config()
     store = JobStore(cfg.data_dir / "jobs.sqlite")
@@ -77,6 +135,24 @@ def create_app(cfg: Config | None = None) -> FastAPI:
     )
     app.state.store = store
     app.state.cfg = cfg
+    # les dossiers rejouables déposés sous leur référence (cf. scripts/course.sh publier)
+    dossiers_root = cfg.data_dir / "dossiers"
+    debit = _Debit(cfg.api.rendu_simultanes, cfg.api.rendu_par_minute)
+
+    @app.middleware("http")
+    async def borne_la_taille_du_rendu(request: Request, suivant):
+        """Un corps trop gros est refusé sur son entête, avant d'être chargé en mémoire.
+
+        FastAPI convertit le corps en dict pour le passer au gestionnaire : une borne posée
+        dans le gestionnaire arriverait trop tard. Un dossier de rapport pèse ~200 Kio ;
+        bien au-delà, ce n'est plus un dossier.
+        """
+        if request.url.path == "/rendu":
+            taille = request.headers.get("content-length")
+            if taille and taille.isdigit() and int(taille) > cfg.api.rendu_max_kio * 1024:
+                return Response(status_code=413, media_type="application/json",
+                                content=json.dumps({"detail": "payload trop gros pour un dossier"}))
+        return await suivant(request)
 
     @app.get("/health")
     def health() -> dict:
@@ -174,6 +250,87 @@ def create_app(cfg: Config | None = None) -> FastAPI:
                 "X-Fiche-Empreinte": fiche_empreinte(payload),
             },
         )
+
+    # ----------------------------------------------------------------------------------- #
+    # /rendu — la boucle d'amendement : la page renvoie ce que l'athlète a changé, le
+    # moteur lui rend SES documents refaits. Sans archive (le dossier porte déjà tout ce
+    # que le calcul demande), sans rien garder, et par le même chemin de code que la
+    # production d'origine — deux chemins finiraient par ne plus dire la même chose.
+    # ----------------------------------------------------------------------------------- #
+    def _cors(origin: str | None) -> dict:
+        """Les entêtes CORS, et seulement pour une origine de la liste."""
+        if origin and origin in cfg.api.rendu_origins:
+            return {"Access-Control-Allow-Origin": origin,
+                    "Vary": "Origin",
+                    "Access-Control-Allow-Headers": "content-type",
+                    "Access-Control-Allow-Methods": "POST, OPTIONS",
+                    "Access-Control-Max-Age": "86400"}
+        return {}
+
+    @app.options("/rendu")
+    def rendu_preflight(request: Request) -> Response:
+        return Response(status_code=204, headers=_cors(request.headers.get("origin")))
+
+    def _dossier_du(payload: dict):
+        """Le dossier à rejouer : celui que le payload porte, ou celui déposé sous sa
+        référence. La référence est filtrée — elle sert à composer un chemin."""
+        brut = payload.get("dossier")
+        if isinstance(brut, dict):
+            return brut
+        ref = payload.get("ref")
+        if not isinstance(ref, str) or not _REF_OK.fullmatch(ref):
+            raise HTTPException(status_code=422,
+                                detail="payload : « dossier » ou « ref » attendu")
+        chemin = dossiers_root / f"{ref}.json"
+        if not chemin.exists():
+            raise HTTPException(status_code=404, detail=f"aucun dossier déposé pour {ref}")
+        try:
+            return json.loads(chemin.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise HTTPException(status_code=500, detail=f"dossier illisible: {exc}") from exc
+
+    @app.post("/rendu")
+    def rendu(payload: dict, request: Request) -> Response:
+        """Refait les documents d'un rapport, amendés des réglages que la page renvoie.
+
+        Payload : ``{"ref" | "dossier", "amendement": {reglages?, crew?, nutrition?},
+        "feuille_seule": bool}``. Rend un ZIP des documents. Rien n'est écrit ni gardé :
+        ce qui entre est un dossier, ce qui sort est un PDF, et le répertoire de travail
+        disparaît avec la requête.
+        """
+        entetes = _cors(request.headers.get("origin"))
+        brut = _dossier_du(payload)
+        fragment = payload.get("amendement") or None
+        if fragment is not None and not isinstance(fragment, dict):
+            raise HTTPException(status_code=422, detail="payload.amendement : objet attendu")
+        try:
+            d = dossier_mod.from_payload(brut)
+        except (KeyError, TypeError, ValueError) as exc:
+            raise HTTPException(status_code=422, detail=f"dossier illisible: {exc}") from exc
+
+        if not debit.prendre():
+            raise HTTPException(status_code=429, detail="trop de rendus en cours, réessaie",
+                                headers={**entetes, "Retry-After": "30"})
+        try:
+            with tempfile.TemporaryDirectory(dir=cfg.data_dir, prefix="rendu-") as out:
+                try:
+                    livrables = dossier_mod.regenerer(
+                        d, fragment, cfg=cfg, out_dir=Path(out),
+                        feuille_only=bool(payload.get("feuille_seule")),
+                    )
+                except ValueError as exc:      # amendement refusé (champ non amendable)
+                    raise HTTPException(status_code=422, detail=str(exc)) from exc
+                except Exception as exc:       # rendu/compilation — détail utile au client
+                    raise HTTPException(status_code=500, detail=f"rendu: {exc}") from exc
+                data = _zip_des(livrables)
+        finally:
+            debit.rendre()
+
+        nom = f"locomotion-twin-{d.report_ref}.zip"
+        return Response(content=data, media_type="application/zip",
+                        headers={**entetes,
+                                 "X-Rendu-Reference": d.report_ref,
+                                 "Content-Disposition": f'attachment; filename="{nom}"'})
 
     return app
 

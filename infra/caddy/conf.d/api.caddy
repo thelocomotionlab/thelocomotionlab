@@ -72,6 +72,27 @@
 		reverse_proxy atelier-api:3000
 	}
 
+	# === /twin/rendu — refaire un rapport amendé (moteur Twin) ===============
+	# DÉSACTIVÉE : décommenter pour ouvrir la boucle d'amendement au dehors, puis
+	# `./deploy.sh`. Vérif : `docker compose exec caddy caddy validate --config /etc/caddy/Caddyfile`.
+	#
+	# Un SEUL chemin du moteur est exposé : POST /rendu, qui refait les documents d'un
+	# rapport à partir du dossier déposé sous sa référence. Il ne lit aucune archive,
+	# n'écrit rien et ne garde rien. L'ingestion et les jobs (qui, eux, reçoivent des
+	# archives d'entraînement) restent INTERNES — `handle` ne laisse passer que ce chemin.
+	# CORS géré PAR LE SERVICE (allowlist d'origines dans twin.config.json, bloc api),
+	# comme /ateliers et /journal/message. La borne de corps double celle du service
+	# (twin.config.json : api.rendu_max_kio) — un dossier pèse ~200 Kio.
+	#
+	# @twin_rendu path /twin/rendu
+	# handle @twin_rendu {
+	# 	request_body {
+	# 		max_size 4MB
+	# 	}
+	# 	uri strip_prefix /twin
+	# 	reverse_proxy twin-engine:8000
+	# }
+
 	handle {
 		respond 404
 	}

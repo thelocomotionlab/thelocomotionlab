@@ -217,5 +217,12 @@
     "vc_frac_sustained": 0.85,
     "recent_weeks": 4,
     "minetti_example_grade": 0.15
+  },
+  "api": {
+    "_comment": "Ce que l'API laisse joindre depuis un navigateur : /rendu seul (refaire les documents d'un rapport amendé). Le reste est interne.",
+    "rendu_origins": ["https://www.thelocomotionlab.com", "https://thelocomotionlab.com"],
+    "rendu_max_kio": 4096,
+    "rendu_simultanes": 1,
+    "rendu_par_minute": 12
   }
 }

@@ -605,6 +605,26 @@ class ReportParams:
 
 
 @dataclass(frozen=True)
+class ApiParams:
+    """Ce que l'API laisse joindre depuis un navigateur.
+
+    Un seul endpoint est fait pour ça : ``/rendu``, qui refait les documents d'un rapport
+    amendé — sans archive, sans rien garder. Tout le reste (ingestion, jobs) est interne et
+    n'est pas routé au dehors (cf. ``infra/caddy/conf.d/twin-engine.caddy.disabled``).
+    """
+
+    # origines autorisées à appeler /rendu depuis un navigateur
+    rendu_origins: tuple[str, ...] = ("https://www.thelocomotionlab.com",
+                                      "https://thelocomotionlab.com")
+    # un dossier de rapport pèse ~200 Kio ; bien au-delà, ce n'est plus un dossier
+    rendu_max_kio: int = 4096
+    # un rendu coûte quelques secondes de XeLaTeX : un seul à la fois, et pas plus de
+    # rendu_par_minute sur la minute écoulée — c'est un service, pas une ferme de calcul
+    rendu_simultanes: int = 1
+    rendu_par_minute: int = 12
+
+
+@dataclass(frozen=True)
 class Config:
     data_dir: Path
     course: CourseParams = field(default_factory=CourseParams)
@@ -616,6 +636,7 @@ class Config:
     narrative: NarrativeParams = field(default_factory=NarrativeParams)
     target: TargetParams = field(default_factory=TargetParams)
     report: ReportParams = field(default_factory=ReportParams)
+    api: ApiParams = field(default_factory=ApiParams)
 
 
 # --------------------------------------------------------------------------- #
@@ -707,10 +728,12 @@ def load_config(config_path: str | os.PathLike[str] | None = None) -> Config:
         narrative=_build(NarrativeParams, raw.get("narrative")),
         target=_build(TargetParams, raw.get("target")),
         report=_build(ReportParams, raw.get("report")),
+        api=_build(ApiParams, raw.get("api")),
     )
 
 
 __all__ = [
+    "ApiParams",
     "Config",
     "override_config",
     "CourseParams",

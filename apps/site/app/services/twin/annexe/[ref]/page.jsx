@@ -385,7 +385,12 @@ export default async function AnnexePage({ params }) {
             tableau tel quel, ou récupérer tes réglages pour que le moteur les reprenne au
             prochain rendu du PDF.
           </p>
-          <FormulairePlan plan={a.plan} course={a.course} assistance={a.assistance} />
+          <FormulairePlan
+            plan={a.plan}
+            course={a.course}
+            assistance={a.assistance}
+            reference={a.ref}
+          />
         </Section>
 
         <Section titre="Le plan complet">
