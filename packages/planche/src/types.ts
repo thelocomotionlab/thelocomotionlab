@@ -365,47 +365,57 @@ export type ElementCases = ElementCommun & {
   couleurs: string[];
 };
 
-/** Ce qu'une semaine d'entraînement pèse. Le temps est en MINUTES : une durée
- *  écrite en heures décimales ne se lit pas (« 7,25 h »), et en secondes elle
- *  se saisit mal. */
-export type MetriqueSemaine = "km" | "dplus" | "minutes";
-
-export type SemaineEntrainement = {
-  /** L'abscisse : « S1 », « 12 janv. », ce qu'on veut. */
-  label: string;
-  km: number;
-  dplus: number;
-  minutes: number;
-  /**
-   * LA COULEUR DE CETTE BARRE-LÀ. Vide = celle de la série.
-   *
-   * C'est elle qui raconte le plan : un bloc de charge, une semaine d'affûtage,
-   * une course. Sans elle, dix-neuf barres identiques ne disent que le volume.
-   */
-  couleur: string;
+/**
+ * UNE SÉRIE DE CHIFFRES, nommée et unitée.
+ *
+ * Nommée, parce que c'est le nom qui s'écrit sur l'axe et dans la légende ;
+ * unitée, parce que « 4 500 » ne dit pas s'il s'agit de mètres ou de minutes, et
+ * que l'axe doit le dire.
+ */
+export type SerieChiffree = {
+  nom: string;
+  unite: string;
+  valeurs: number[];
 };
 
 export type LigneLegende = { couleur: string; texte: string };
 
 /**
- * LES SEMAINES D'ENTRAÎNEMENT — le volume, en barres, sur une saison.
+ * LES SEMAINES D'ENTRAÎNEMENT — un volume de saison, en barres.
  *
- * DEUX SÉRIES AU PLUS, et c'est délibéré : une métrique en barres, une seconde
- * en courbe sur son propre axe. Au-delà, une planche lue au pouce en trois
- * secondes ne se lit plus. La troisième métrique reste à un réglage près.
+ * DES SÉRIES LIBRES, pas trois métriques fixes : c'est l'auteur qui dit ce qu'il
+ * mesure et dans quelle unité. Distance, dénivelé, temps, charge, sommeil — le
+ * graphique n'a pas à connaître la liste.
+ *
+ * DEUX SÉRIES MONTRÉES AU PLUS, et c'est délibéré : une en barres, une en
+ * courbe sur son propre axe. Trois échelles sans rapport — cent kilomètres, cinq
+ * mille mètres, huit heures — ne se superposent pas sans mentir sur l'une
+ * d'elles.
  */
 export type ElementSemaines = ElementCommun & {
   type: "semaines";
-  lignes: SemaineEntrainement[];
-  barres: MetriqueSemaine;
-  /** La courbe, sur un axe à droite — ou rien. */
-  courbe: MetriqueSemaine | null;
+  /** Les étiquettes de l'axe horizontal : « S1 », « 12 janv. », ce qu'on veut. */
+  abscisse: string[];
+  series: SerieChiffree[];
+  /** L'index de la série dessinée en barres. */
+  barres: number;
+  /** Celle dessinée en courbe, sur un axe à droite — ou rien. */
+  courbe: number | null;
   couleurBarres: string;
   couleurCourbe: string;
-  /** Une étiquette d'abscisse sur N : dix-neuf « S » ne tiennent pas. */
+  /**
+   * LA COULEUR D'UNE BARRE, par position. Vide = celle de la série.
+   *
+   * C'est elle qui raconte le plan : un bloc de charge, une semaine d'affûtage,
+   * une course. Sans elle, dix-sept barres identiques ne disent que le volume.
+   */
+  couleurs: string[];
+  /** Une étiquette d'abscisse sur N : dix-sept « S » ne tiennent pas. */
   pasDesLabels: number;
   /** Les graduations chiffrées, à gauche et à droite. */
   axes: boolean;
+  /** Le nom de chaque série montrée, écrit en tête de son axe. */
+  titresAxes: boolean;
   legende: LigneLegende[];
   /** Le corps des étiquettes, en pixels d'une planche de 1080 de large. */
   taille: number;

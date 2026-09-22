@@ -54,7 +54,16 @@ const APPARENCE: Record<Element["type"], readonly string[]> = {
   cases: ["colonnes", "miniCarte", "miniProfil", "filet", "taille", "couleurs"],
   // Ni `lignes` ni `legende` : copier une APPARENCE ne recopie pas les chiffres
   // de quelqu'un d'autre, ni ce qu'il en dit.
-  semaines: ["barres", "courbe", "couleurBarres", "couleurCourbe", "pasDesLabels", "axes", "taille"],
+  semaines: [
+    "barres",
+    "courbe",
+    "couleurBarres",
+    "couleurCourbe",
+    "pasDesLabels",
+    "axes",
+    "titresAxes",
+    "taille",
+  ],
 };
 
 export type Apparence = { type: Element["type"]; valeurs: Record<string, unknown> };

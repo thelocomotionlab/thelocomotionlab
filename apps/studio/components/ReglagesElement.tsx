@@ -14,6 +14,9 @@ import { useState } from "react";
 import { Eye, EyeOff, Trash2 } from "lucide-react";
 import {
   COULEURS_TEXTE,
+  brandColors,
+  ecrireLesSeries,
+  lireLesSeries,
   PALETTE_JOURS,
   PUCES_SIMPLES,
   VARIABLES,
@@ -35,8 +38,6 @@ import {
   type DegradesCarte,
   type Etiquette,
   type LigneLegende,
-  type MetriqueSemaine,
-  type SemaineEntrainement,
   type Filet,
 } from "@locomotionlab/planche";
 import { CLES_ICONES } from "@locomotionlab/ui/icones";
@@ -943,55 +944,14 @@ function ReglagesCases({
 
 /* --------------------------------------------------------------- semaines */
 
-const METRIQUES: { cle: MetriqueSemaine; label: string }[] = [
-  { cle: "km", label: "Distance (km)" },
-  { cle: "dplus", label: "Dénivelé (m D+)" },
-  { cle: "minutes", label: "Temps (h)" },
-];
-
 /**
- * LES CHIFFRES SE COLLENT, ILS NE SE TAPENT PAS.
+ * LE BLOC DE DONNÉES SE TAPE, il ne se saisit pas champ par champ.
  *
- * Dix-neuf semaines à quatre colonnes, c'est soixante-seize champs : personne
- * ne les saisit un par un. On colle ce qu'on a — le `data.csv` du site, une
- * sélection de tableur — et on relit ce qui a été compris.
- *
- * Virgules OU tabulations OU points-virgules : on ne demande pas à quelqu'un
- * qui copie depuis LibreOffice de savoir ce que son presse-papiers contient.
+ * Dix-sept semaines sur deux séries, c'est trente-six cases : personne ne les
+ * remplit une par une. On écrit — ou on colle — le bloc entier, on relit ce qui
+ * a été compris, et les couleurs déjà posées survivent, parce qu'on recolle
+ * souvent juste pour corriger un chiffre.
  */
-function lireLesSemaines(brut: string): SemaineEntrainement[] {
-  const lignes = brut
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter(Boolean);
-  const out: SemaineEntrainement[] = [];
-  for (const ligne of lignes) {
-    const cases = ligne.split(/[\t;,]/).map((c) => c.trim());
-    if (cases.length < 2) continue;
-    const nombre = (i: number) => {
-      // La virgule décimale d'un tableur français, une fois les colonnes
-      // découpées sur les tabulations.
-      const v = Number.parseFloat((cases[i] ?? "").replace(",", "."));
-      return Number.isFinite(v) ? v : 0;
-    };
-    // Une première ligne d'en-têtes se reconnaît à ce qu'elle ne chiffre pas.
-    if (!Number.isFinite(Number.parseFloat((cases[1] ?? "").replace(",", ".")))) continue;
-    out.push({
-      label: cases[0] ?? "",
-      km: nombre(1),
-      dplus: nombre(2),
-      minutes: nombre(3),
-      couleur: "",
-    });
-  }
-  return out;
-}
-
-/** Ce qu'on remet dans le champ pour relire ce qui a été compris. */
-function ecrireLesSemaines(lignes: readonly SemaineEntrainement[]): string {
-  return lignes.map((s) => `${s.label},${s.km},${s.dplus},${s.minutes}`).join("\n");
-}
-
 function ReglagesSemaines({
   e,
   poser,
@@ -1000,23 +960,31 @@ function ReglagesSemaines({
   poser: Poser<ElementSemaines>;
 }) {
   const [brut, setBrut] = useState<string | null>(null);
-  const texte = brut ?? ecrireLesSemaines(e.lignes);
+  const texte = brut ?? ecrireLesSeries(e);
+  const lu = lireLesSeries(texte);
 
-  const coller = (v: string) => {
+  const ecrire = (v: string) => {
     setBrut(v);
-    const lues = lireLesSemaines(v);
-    if (lues.length > 0) {
-      poser(
-        (x) => ({
-          ...x,
-          // LES COULEURS SURVIVENT AU COLLAGE : on recolle souvent pour corriger
-          // un chiffre, et reperdre ses blocs à chaque fois serait absurde.
-          lignes: lues.map((l, i) => ({ ...l, couleur: x.lignes[i]?.couleur ?? "" })),
-        }),
-        "semaines",
-      );
-    }
+    const { abscisse, series } = lireLesSeries(v);
+    if (series.length === 0 && abscisse.length === 0) return;
+    poser(
+      (x) => ({
+        ...x,
+        abscisse,
+        series,
+        // Les index montrés restent valides : une série retirée ne doit pas
+        // laisser le graphique pointer dans le vide.
+        barres: Math.min(x.barres, Math.max(0, series.length - 1)),
+        courbe: x.courbe === null ? null : Math.min(x.courbe, series.length - 1),
+      }),
+      "données",
+    );
   };
+
+  const optionsSeries = e.series.map((s, i) => ({
+    cle: String(i),
+    label: s.unite ? `${s.nom} (${s.unite})` : s.nom || `Série ${i + 1}`,
+  }));
 
   const majLegende = (i: number, champ: Partial<LigneLegende>) =>
     poser(
@@ -1029,40 +997,38 @@ function ReglagesSemaines({
       <Titre>Données</Titre>
       <textarea
         value={texte}
-        onChange={(ev) => coller(ev.target.value)}
+        onChange={(ev) => ecrire(ev.target.value)}
         onBlur={() => setBrut(null)}
-        rows={5}
+        rows={9}
         spellCheck={false}
-        aria-label="Les semaines, une par ligne"
+        aria-label="Le bloc de données"
         className="w-full resize-y rounded-md border border-brand-field bg-brand-bg px-2 py-1.5 font-mono text-[11px] leading-snug"
       />
       <Aide>
-        Une semaine par ligne : <em>étiquette, km, D+, minutes</em>. Colle depuis un tableur —
-        virgules, tabulations ou points-virgules, peu importe. {e.lignes.length} semaine
-        {e.lignes.length > 1 ? "s" : ""} lue{e.lignes.length > 1 ? "s" : ""}.
+        {lu.abscisse.length} étiquette{lu.abscisse.length > 1 ? "s" : ""} et {lu.series.length}{" "}
+        série{lu.series.length > 1 ? "s" : ""} lue{lu.series.length > 1 ? "s" : ""}. Une accolade
+        oubliée ne fait pas perdre le reste.
       </Aide>
 
-      <Titre>Séries</Titre>
+      <Titre>Ce qu&apos;on montre</Titre>
       <Choix
         libelle="En barres"
-        valeur={e.barres}
-        options={METRIQUES}
-        onChange={(v) => poser((x) => ({ ...x, barres: v }), "série")}
+        valeur={String(e.barres)}
+        options={optionsSeries}
+        onChange={(v) => poser((x) => ({ ...x, barres: Number(v) }), "série")}
       />
       <Choix
         libelle="En courbe"
-        valeur={e.courbe ?? ""}
-        options={[{ cle: "", label: "Aucune" }, ...METRIQUES.map((m) => ({ cle: m.cle as string, label: m.label }))]}
-        onChange={(v) =>
-          poser((x) => ({ ...x, courbe: (v || null) as MetriqueSemaine | null }), "série")
-        }
+        valeur={e.courbe === null ? "" : String(e.courbe)}
+        options={[{ cle: "", label: "Aucune" }, ...optionsSeries]}
+        onChange={(v) => poser((x) => ({ ...x, courbe: v === "" ? null : Number(v) }), "série")}
       />
       <Couleur
         libelle="Barres"
         valeur={e.couleurBarres}
         onChange={(v) => poser((x) => ({ ...x, couleurBarres: v }), "couleur")}
       />
-      {e.courbe && (
+      {e.courbe !== null && (
         <Couleur
           libelle="Courbe"
           valeur={e.couleurCourbe}
@@ -1085,6 +1051,11 @@ function ReglagesSemaines({
         coche={e.axes}
         onChange={(v) => poser((x) => ({ ...x, axes: v }), "axes")}
       />
+      <Case
+        libelle="Nom des séries sur les axes"
+        coche={e.titresAxes}
+        onChange={(v) => poser((x) => ({ ...x, titresAxes: v }), "axes")}
+      />
       <Nombre
         libelle="Corps"
         valeur={e.taille}
@@ -1092,13 +1063,11 @@ function ReglagesSemaines({
         onChange={(n) => poser((x) => ({ ...x, taille: Math.max(8, n) }), "corps")}
       />
 
-      <Titre>Couleurs des semaines</Titre>
+      <Titre>Couleurs des barres</Titre>
       <Aide>Clique une barre dans la planche pour la colorer.</Aide>
-      {e.lignes.some((l) => l.couleur) && (
+      {e.couleurs.some(Boolean) && (
         <Bouton
-          onClick={() =>
-            poser((x) => ({ ...x, lignes: x.lignes.map((l) => ({ ...l, couleur: "" })) }), "couleurs")
-          }
+          onClick={() => poser((x) => ({ ...x, couleurs: [] }), "couleurs")}
           titre="Toutes les barres reprennent la couleur de la série"
         >
           Tout remettre à la série
@@ -1111,7 +1080,7 @@ function ReglagesSemaines({
         <div key={i} className="mb-1 flex items-center gap-1">
           <input
             type="color"
-            value={l.couleur || "#8CB9BD"}
+            value={l.couleur || brandColors.primary}
             aria-label={`Couleur de la ligne ${i + 1}`}
             onChange={(ev) => majLegende(i, { couleur: ev.target.value })}
             className="h-7 w-8 shrink-0 cursor-pointer rounded border border-brand-field bg-brand-bg"
@@ -1139,7 +1108,7 @@ function ReglagesSemaines({
       <Bouton
         onClick={() =>
           poser(
-            (x) => ({ ...x, legende: [...x.legende, { couleur: "#8CB9BD", texte: "" }] }),
+            (x) => ({ ...x, legende: [...x.legende, { couleur: brandColors.primary, texte: "" }] }),
             "légende",
           )
         }

@@ -277,23 +277,32 @@ export function semainesNeuves(
   boite: Boite,
   over: Partial<ElementSemaines> = {},
 ): ElementSemaines {
-  const lignes = Array.from({ length: 12 }, (_, i) => ({
-    label: `S${i + 1}`,
-    km: 30 + Math.round(Math.sin(i / 2) * 18 + i * 3),
-    dplus: 800 + Math.round(Math.cos(i / 2) * 500 + i * 90),
-    minutes: 180 + Math.round(Math.sin(i / 3) * 70 + i * 14),
-    couleur: "",
-  }));
+  const n = 12;
+  const rang = Array.from({ length: n }, (_, i) => i);
   return {
     ...commun("semaines", boite, "Semaines"),
     type: "semaines",
-    lignes,
-    barres: "km",
-    courbe: "dplus",
+    abscisse: rang.map((i) => `S${i + 1}`),
+    series: [
+      {
+        nom: "Distance",
+        unite: "km",
+        valeurs: rang.map((i) => 30 + Math.round(Math.sin(i / 2) * 18 + i * 3)),
+      },
+      {
+        nom: "Dénivelé positif",
+        unite: "m",
+        valeurs: rang.map((i) => 800 + Math.round(Math.cos(i / 2) * 500 + i * 90)),
+      },
+    ],
+    barres: 0,
+    courbe: 1,
     couleurBarres: "",
     couleurCourbe: "",
+    couleurs: [],
     pasDesLabels: 2,
     axes: true,
+    titresAxes: true,
     legende: [],
     taille: CORPS.pied,
     ...over,

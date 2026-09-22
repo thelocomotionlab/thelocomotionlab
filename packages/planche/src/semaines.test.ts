@@ -4,7 +4,14 @@ import { definirVocabulaireDIcones } from "./canvas.ts";
 import { THEMES } from "./charte.ts";
 import { ctxFactice, type CtxFactice } from "./factice.ts";
 import { semainesNeuves } from "./fabrique.ts";
-import { barreSous, cadreDesSemaines, graduationDe, plafondDe } from "./semaines.ts";
+import {
+  barreSous,
+  cadreDesSemaines,
+  ecrireLesSeries,
+  graduationDe,
+  lireLesSeries,
+  plafondDe,
+} from "./semaines.ts";
 import { dessinerSemaines } from "./semaines.ts";
 import type { BoitePx, ElementSemaines } from "./types.ts";
 
@@ -23,6 +30,55 @@ const contexte = {
   theme: THEMES.sombre,
 } as unknown as Parameters<typeof dessinerSemaines>[3];
 
+describe("lire le bloc de données", () => {
+  const BLOC = `
+      abscisse: ["S1", "S2", "S3", "S4"]
+      series:
+        - { nom: "Distance", unite: "km", valeurs: [77, 84, 94, 102] }
+        - { nom: "Dénivelé positif", unite: "m", valeurs: [3200, 3600, 4500, 7100] }
+  `;
+
+  it("lit l'abscisse et les séries", () => {
+    const lu = lireLesSeries(BLOC);
+    expect(lu.abscisse).toEqual(["S1", "S2", "S3", "S4"]);
+    expect(lu.series).toHaveLength(2);
+    expect(lu.series[0]).toEqual({ nom: "Distance", unite: "km", valeurs: [77, 84, 94, 102] });
+    expect(lu.series[1]!.nom).toBe("Dénivelé positif");
+  });
+
+  /**
+   * LA LECTURE EST TOLÉRANTE, et c'est le point : ce bloc se tape à la main, et
+   * il y manque une accolade une fois sur deux. Refuser tout le bloc pour un
+   * crochet oublié ferait perdre dix-sept valeurs à qui voulait en corriger une.
+   */
+  it("pardonne une accolade et un crochet oubliés en fin de bloc", () => {
+    const lu = lireLesSeries(`
+      abscisse: ["S1", "S2"]
+      series:
+        - { nom: "Distance", unite: "km", valeurs: [77, 84] }
+        - { nom: "Dénivelé", unite: "m", valeurs: [3200, 3600]
+    `);
+    expect(lu.series).toHaveLength(2);
+    expect(lu.series[1]!.valeurs).toEqual([3200, 3600]);
+  });
+
+  it("accepte la virgule décimale d'un tableur français", () => {
+    expect(lireLesSeries('series:\n - { nom: "D", unite: "km", valeurs: [77,5] }')).toBeTruthy();
+    const lu = lireLesSeries('abscisse: ["A"]\nseries:\n  - { nom: "D", unite: "h", valeurs: [7.5] }');
+    expect(lu.series[0]!.valeurs).toEqual([7.5]);
+  });
+
+  it("ne rend rien plutôt que de jeter sur un bloc vide", () => {
+    expect(lireLesSeries("")).toEqual({ abscisse: [], series: [] });
+    expect(lireLesSeries("n'importe quoi")).toEqual({ abscisse: [], series: [] });
+  });
+
+  it("se relit : ce qu'on écrit se relit à l'identique", () => {
+    const lu = lireLesSeries(BLOC);
+    expect(lireLesSeries(ecrireLesSeries(lu))).toEqual(lu);
+  });
+});
+
 describe("le plafond d'un axe", () => {
   /** Un axe qui s'arrête pile sur le maximum colle la plus haute barre au bord
    *  et donne une graduation qu'on ne lit pas. */
@@ -40,14 +96,12 @@ describe("le plafond d'un axe", () => {
 });
 
 describe("les graduations", () => {
-  it("dit les minutes en heures", () => {
-    // « 480 » ne veut rien dire d'une semaine ; « 8 » se lit d'un coup.
-    expect(graduationDe(480, "minutes")).toBe("8");
-  });
-
-  it("abrège les milliers de mètres", () => {
-    expect(graduationDe(4500, "dplus")).toBe("4.5k");
-    expect(graduationDe(800, "dplus")).toBe("800");
+  it("abrège au-delà du millier", () => {
+    // « 12800 » prend la largeur de deux barres et ne se lit pas mieux.
+    expect(graduationDe(12800)).toBe("12.8k");
+    expect(graduationDe(4500)).toBe("4.5k");
+    expect(graduationDe(5000)).toBe("5k");
+    expect(graduationDe(800)).toBe("800");
   });
 });
 
@@ -73,7 +127,7 @@ describe("viser une barre", () => {
   });
 
   it("ne vise rien quand il n'y a pas de semaine", () => {
-    expect(barreSous(semaines({ lignes: [] }), BOITE, 500, 400)).toBeNull();
+    expect(barreSous(semaines({ abscisse: [], series: [] }), BOITE, 500, 400)).toBeNull();
   });
 });
 
@@ -111,8 +165,8 @@ describe("le dessin", () => {
   });
 
   it("donne à une barre SA couleur", () => {
-    const e = semaines({ axes: false, courbe: null });
-    e.lignes[3]!.couleur = "#D6246E";
+    const e = semaines({ axes: false, courbe: null, couleurs: [] });
+    e.couleurs[3] = "#D6246E";
     const ctx = ctxFactice();
     const vus: string[] = [];
     const cible = ctx as unknown as Record<string, (...a: unknown[]) => void>;
@@ -137,7 +191,8 @@ describe("le dessin", () => {
   });
 
   it("ne dessine rien sans semaine, plutôt que de jeter", () => {
-    expect(() => rendre(semaines({ lignes: [] }))).not.toThrow();
-    expect(rendre(semaines({ lignes: [] })).ops.length).toBe(0);
+    const vide = semaines({ abscisse: [], series: [] });
+    expect(() => rendre(vide)).not.toThrow();
+    expect(rendre(vide).ops.length).toBe(0);
   });
 });
