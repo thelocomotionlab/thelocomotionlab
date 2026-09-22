@@ -11,7 +11,7 @@ date: 2026-09-22T08:02:37Z
 - BadgeEtat (packages/ui/src/components/contenu/BadgeEtat.tsx) : pastilles de statut à venir / en cours / derrière nous.
 
 ## Screen map
-| Écran (Console Locomotion Twin.dc.html) | Fichiers du dépôt |
+| Écran (Tableau de bord Locomotion Twin.dc.html) | Fichiers du dépôt |
 |---|---|
 | File, Athlète, Bibliothèque, Registre | apps/studio/components/BarreHaute.tsx, Inspecteur.tsx, Controles.tsx ; packages/ui/src/styles/theme.css ; docs/twin-registre-couverture.md |
 | Éditeur de course (Trace, Ravitaillements, Course) | apps/studio/components/Rail.tsx, Inspecteur.tsx ; services/twin-engine/examples/nice-100m.json ; services/twin-engine/_seed/analyse/segments.json |

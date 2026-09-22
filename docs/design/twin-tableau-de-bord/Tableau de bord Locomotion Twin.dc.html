@@ -22,16 +22,16 @@ input:focus,textarea:focus{outline:2px solid #8CB9BD;outline-offset:-1px}
 <main style="display:grid;grid-template-columns:repeat(2,max-content);gap:64px 72px;padding:64px;align-items:start;justify-content:start">
 <header style="grid-column:1/-1;max-width:900px;display:flex;flex-direction:column;gap:16px">
 <div style="display:flex;align-items:center;gap:10px"><span style="width:12px;height:12px;border-radius:50%;background:#B67352"></span><span style="font-size:12px;font-weight:700;letter-spacing:.22em">LOCOMOTION LAB</span></div>
-<h1 style="margin:0;font-size:30px;font-weight:300;letter-spacing:-.01em">Console Locomotion Twin et page athlète</h1>
-<p style="margin:0;font-size:14px;line-height:1.6;max-width:760px;text-wrap:pretty">Une direction, douze planches : huit pour la console (1440 × 900, l'éditeur de course en trois), quatre pour la page de l'athlète (1440 et 390, avant et après la course). Toutes les valeurs sont celles du cas de référence — Nice Côte d'Azur by UTMB · 100M, Val, arrivée prévue 33 h 38 — ou en sont calculées : profil altimétrique, bandes de nuit, barre de temps. Ce que le cas ne fournit pas (email, montre, archive, objectif annoncé, technicité, nutrition) reste vide, avec son repère.</p>
+<h1 style="margin:0;font-size:30px;font-weight:300;letter-spacing:-.01em">Tableau de bord Locomotion Twin et page athlète</h1>
+<p style="margin:0;font-size:14px;line-height:1.6;max-width:760px;text-wrap:pretty">Une direction, douze planches : huit pour le tableau de bord (1440 × 900, l'éditeur de course en trois), quatre pour la page de l'athlète (1440 et 390, avant et après la course). Toutes les valeurs sont celles du cas de référence — Nice Côte d'Azur by UTMB · 100M, Val, arrivée prévue 33 h 38 — ou en sont calculées : profil altimétrique, bandes de nuit, barre de temps. Ce que le cas ne fournit pas (email, montre, archive, objectif annoncé, technicité, nutrition) reste vide, avec son repère.</p>
 <ul style="margin:0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:6px 32px;font-size:12.5px;line-height:1.5;color:rgba(51,51,51,.72);max-width:760px">
 <li>Niveau de Val : Plan calibré, commutable dans les réglages.</li>
-<li>États vide, en cours, erreur : propriété de chaque planche console, dans les réglages et au-dessus de la planche.</li>
+<li>États vide, en cours, erreur : propriété de chaque planche du tableau de bord, dans les réglages et au-dessus de la planche.</li>
 <li>D+ officiel : le carnet de route 2026 (8 900 m) ; aucune distance officielle, l'écart n'est calculé que sur le D+.</li>
 <li>Interactions légères : ravitaillement choisi, mode du plan, amendements, saisie du temps.</li>
 </ul>
 </header>
-<p style="grid-column:1/-1;margin:0;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(51,51,51,.62)">Console · desktop 1440 × 900</p>
+<p style="grid-column:1/-1;margin:0;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(51,51,51,.62)">Tableau de bord · desktop 1440 × 900</p>
 <section id="file" style="display:flex;flex-direction:column;gap:12px">
 <div style="display:flex;align-items:center;gap:20px;height:24px"><h2 style="margin:0;font-size:14px;font-weight:600">File</h2>
 <sc-if value="{{ montrerEtats }}" hint-placeholder-val="{{ true }}"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(51,51,51,.62);margin-right:4px">État</span><sc-for list="{{ commutFile }}" as="c" hint-placeholder-count="4"><button onClick="{{ c.on }}" style="{{ c.style }}">{{ c.label }}</button></sc-for></div></sc-if></div>
@@ -39,7 +39,7 @@ input:focus,textarea:focus{outline:2px solid #8CB9BD;outline-offset:-1px}
 <header style="height:48px;flex:none;display:flex;align-items:center;gap:32px;padding:0 24px;background:#fff;border-bottom:1px solid #E5DFD3">
 <div style="display:flex;align-items:center;gap:10px"><span style="width:12px;height:12px;border-radius:50%;background:#B67352"></span><span style="font-size:12px;font-weight:700;letter-spacing:.22em">LOCOMOTION LAB</span></div>
 <nav style="display:flex;gap:24px;font-size:13px;color:rgba(51,51,51,.62);height:48px;align-items:stretch"><span style="color:#333;font-weight:600;border-bottom:2px solid #B67352;display:flex;align-items:center">File</span><span style="display:flex;align-items:center">Athlètes</span><span style="display:flex;align-items:center">Courses</span><span style="display:flex;align-items:center">Registre</span></nav>
-<span style="margin-left:auto;font-size:12px;color:rgba(51,51,51,.62)">Console Twin · privée</span>
+<span style="margin-left:auto;font-size:12px;color:rgba(51,51,51,.62)">Tableau de bord Twin · privé</span>
 </header>
 <div style="flex:1;display:flex;flex-direction:column;padding:28px 32px;gap:24px;min-height:0">
 <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:32px">
@@ -65,7 +65,7 @@ input:focus,textarea:focus{outline:2px solid #8CB9BD;outline-offset:-1px}
 <div style="display:flex;align-items:center;gap:10px"><span style="width:12px;height:12px;border-radius:50%;background:#B67352"></span><span style="font-size:12px;font-weight:700;letter-spacing:.22em">LOCOMOTION LAB</span></div>
 <nav style="display:flex;gap:24px;font-size:13px;color:rgba(51,51,51,.62);height:48px;align-items:stretch"><span style="display:flex;align-items:center">File</span><span style="color:#333;font-weight:600;border-bottom:2px solid #B67352;display:flex;align-items:center">Athlètes</span><span style="display:flex;align-items:center">Courses</span><span style="display:flex;align-items:center">Registre</span></nav>
 <span style="font-size:13px;color:rgba(51,51,51,.62)">Athlètes <span style="margin:0 6px">›</span> <span style="color:#333">Val</span></span>
-<span style="margin-left:auto;font-size:12px;color:rgba(51,51,51,.62)">Console Twin · privée</span>
+<span style="margin-left:auto;font-size:12px;color:rgba(51,51,51,.62)">Tableau de bord Twin · privé</span>
 </header>
 <div style="flex:1;display:grid;grid-template-columns:300px 1fr 296px;min-height:0">
 <aside style="border-right:1px solid #E5DFD3;background:#fff;padding:28px 24px;display:flex;flex-direction:column;gap:22px">
@@ -99,7 +99,7 @@ input:focus,textarea:focus{outline:2px solid #8CB9BD;outline-offset:-1px}
 <div style="margin-top:18px;display:flex;align-items:baseline;gap:14px;padding:14px 18px;background:#fff;border:1px solid #E5DFD3;border-radius:6px"><span style="font-size:15px;font-weight:600;white-space:nowrap">{{ niveau }}</span><span style="font-size:13px;color:rgba(51,51,51,.72)">{{ raisons }}</span></div>
 </sc-if>
 <sc-if value="{{ athVide }}" hint-placeholder-val="{{ false }}"><div style="border:1px dashed #E5DFD3;border-radius:6px;padding:40px;text-align:center;font-size:13.5px;line-height:1.6;color:rgba(51,51,51,.72)">Pas encore de jumeau.<br>Ingère l'archive : les quatre chiffres et le niveau se calculent en quelques minutes.</div></sc-if>
-<sc-if value="{{ athEnCours }}" hint-placeholder-val="{{ false }}"><div style="border:1px dashed #E5DFD3;border-radius:6px;padding:40px;text-align:center;font-size:13.5px;line-height:1.6;color:rgba(51,51,51,.72)">Le jumeau se calcule.<br>La console reste utilisable ; la fiche se remplit toute seule.</div></sc-if>
+<sc-if value="{{ athEnCours }}" hint-placeholder-val="{{ false }}"><div style="border:1px dashed #E5DFD3;border-radius:6px;padding:40px;text-align:center;font-size:13.5px;line-height:1.6;color:rgba(51,51,51,.72)">Le jumeau se calcule.<br>Le tableau de bord reste utilisable ; la fiche se remplit toute seule.</div></sc-if>
 <sc-if value="{{ athErreur }}" hint-placeholder-val="{{ false }}"><div style="border:1px solid #B67352;border-radius:6px;padding:40px;text-align:center;font-size:13.5px;line-height:1.6"><span style="color:#B67352;font-weight:600">Aucun jumeau : l'archive n'a pas pu être lue.</span><br><span style="color:rgba(51,51,51,.72)">Redemander l'archive, puis relancer l'ingestion.</span></div></sc-if>
 </div>
 <div><p style="margin:0 0 12px;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(51,51,51,.62)">Plans</p>
@@ -133,7 +133,7 @@ input:focus,textarea:focus{outline:2px solid #8CB9BD;outline-offset:-1px}
 <header style="height:48px;flex:none;display:flex;align-items:center;gap:32px;padding:0 24px;background:#fff;border-bottom:1px solid #E5DFD3">
 <div style="display:flex;align-items:center;gap:10px"><span style="width:12px;height:12px;border-radius:50%;background:#B67352"></span><span style="font-size:12px;font-weight:700;letter-spacing:.22em">LOCOMOTION LAB</span></div>
 <nav style="display:flex;gap:24px;font-size:13px;color:rgba(51,51,51,.62);height:48px;align-items:stretch"><span style="display:flex;align-items:center">File</span><span style="display:flex;align-items:center">Athlètes</span><span style="color:#333;font-weight:600;border-bottom:2px solid #B67352;display:flex;align-items:center">Courses</span><span style="display:flex;align-items:center">Registre</span></nav>
-<span style="margin-left:auto;font-size:12px;color:rgba(51,51,51,.62)">Console Twin · privée</span>
+<span style="margin-left:auto;font-size:12px;color:rgba(51,51,51,.62)">Tableau de bord Twin · privé</span>
 </header>
 <div style="flex:1;display:flex;flex-direction:column;padding:28px 32px;gap:24px;min-height:0">
 <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:32px">
@@ -381,7 +381,7 @@ input:focus,textarea:focus{outline:2px solid #8CB9BD;outline-offset:-1px}
 <header style="height:48px;flex:none;display:flex;align-items:center;gap:32px;padding:0 24px;background:#fff;border-bottom:1px solid #E5DFD3">
 <div style="display:flex;align-items:center;gap:10px"><span style="width:12px;height:12px;border-radius:50%;background:#B67352"></span><span style="font-size:12px;font-weight:700;letter-spacing:.22em">LOCOMOTION LAB</span></div>
 <nav style="display:flex;gap:24px;font-size:13px;color:rgba(51,51,51,.62);height:48px;align-items:stretch"><span style="display:flex;align-items:center">File</span><span style="display:flex;align-items:center">Athlètes</span><span style="display:flex;align-items:center">Courses</span><span style="color:#333;font-weight:600;border-bottom:2px solid #B67352;display:flex;align-items:center">Registre</span></nav>
-<span style="margin-left:auto;font-size:12px;color:rgba(51,51,51,.62)">Console Twin · privée</span>
+<span style="margin-left:auto;font-size:12px;color:rgba(51,51,51,.62)">Tableau de bord Twin · privé</span>
 </header>
 <div style="flex:1;display:flex;flex-direction:column;padding:28px 32px;gap:24px;min-height:0">
 <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:32px">
