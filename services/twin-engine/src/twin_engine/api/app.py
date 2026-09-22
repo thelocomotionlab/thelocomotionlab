@@ -34,7 +34,9 @@ from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi import (
+    BackgroundTasks, Depends, FastAPI, File, Form, HTTPException, Request, UploadFile,
+)
 from fastapi.responses import FileResponse, Response
 
 from .. import dossier as dossier_mod
@@ -48,6 +50,8 @@ from ..pipeline import run_preview
 from ..tableau_de_bord.magasin import Magasin
 from ..tableau_de_bord.objets import JOB_GENERATION
 from ..tableau_de_bord.reference import reference_de_rapport
+from ..tableau_de_bord.routes import routeur_admin
+from ..tableau_de_bord.serrures import Serrures, Tentatives, adresse_du_visiteur
 
 
 def _safe_name(filename: str | None, default: str) -> str:
@@ -74,6 +78,13 @@ def _parse_race(raw: bytes, target_hours: str | None = None) -> RaceSpec:
 RENDU_LIVRABLES = ("rapport.pdf", "feuille.pdf", "fiches.pdf", "plan.ics", "plan.gpx")
 
 _REF_OK = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}")
+
+# Les trois familles de routes que Caddy laisse entrer (infra/caddy/conf.d/api.caddy),
+# vues d'ici — c'est-à-dire APRÈS le retrait du préfixe /twin. Tout appel les concernant
+# vient d'un navigateur, sur un autre domaine que le site : il est croisé.
+PREFIXE_ADMIN = "/tableau-de-bord"
+PREFIXE_PLANS = "/plans"
+_CROISEES = (PREFIXE_ADMIN, PREFIXE_PLANS, "/jobs", "/rendu")
 
 
 class _Debit:
@@ -139,9 +150,52 @@ def create_app(cfg: Config | None = None) -> FastAPI:
     app.state.store = store
     app.state.magasin = magasin
     app.state.cfg = cfg
+    # Les secrets viennent de l'environnement, jamais du dépôt (docs/secrets.md).
+    serrures = Serrures.depuis_environnement()
+    tentatives = Tentatives(par_ip=cfg.api.plans_tentatives_par_ip,
+                            fenetre_s=cfg.api.plans_fenetre_s)
+    app.state.serrures = serrures
+    app.state.tentatives = tentatives
+    app.include_router(routeur_admin())
     # les dossiers rejouables déposés sous leur référence (cf. scripts/course.sh publier)
     dossiers_root = cfg.data_dir / "dossiers"
     debit = _Debit(cfg.api.rendu_simultanes, cfg.api.rendu_par_minute)
+
+    def _entetes_croisees(origin: str | None) -> dict:
+        """Les entêtes CORS, et seulement pour une origine de l'allowlist.
+
+        ``Authorization`` y figure parce que le tableau de bord porte son jeton dans cet
+        en-tête — et c'est lui qui rend le préflight obligatoire, même sur un GET."""
+        if not origin or origin not in cfg.api.origins:
+            return {}
+        return {"Access-Control-Allow-Origin": origin,
+                "Vary": "Origin",
+                "Access-Control-Allow-Headers": "content-type, authorization",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Max-Age": "86400"}
+
+    @app.middleware("http")
+    async def ouvre_aux_origines_connues(request: Request, suivant):
+        """Le site et l'API sont sur deux domaines : tout appel de page est croisé.
+
+        Les entêtes se posent ICI plutôt que route par route, pour qu'une réponse
+        d'erreur les porte aussi — sans quoi le navigateur cache le message et le client
+        n'affiche qu'un échec réseau, ce qui est le pire moment pour perdre le détail.
+
+        Le préflight se sert ici aussi, et surtout PAS par une route en ``{chemin:path}``
+        : une telle route ferait répondre 405 « méthode non autorisée » à un GET sur un
+        chemin inexistant, ce qui avoue que le préfixe existe. Une référence inconnue
+        doit rendre 404, et rien d'autre (récapitulatif §4.2).
+        """
+        croisee = request.url.path.startswith(_CROISEES)
+        if croisee and request.method == "OPTIONS":
+            reponse = Response(status_code=204)
+        else:
+            reponse = await suivant(request)
+        if croisee:
+            for nom, valeur in _entetes_croisees(request.headers.get("origin")).items():
+                reponse.headers[nom] = valeur
+        return reponse
 
     @app.middleware("http")
     async def borne_la_taille_du_rendu(request: Request, suivant):
@@ -269,20 +323,6 @@ def create_app(cfg: Config | None = None) -> FastAPI:
     # que le calcul demande), sans rien garder, et par le même chemin de code que la
     # production d'origine — deux chemins finiraient par ne plus dire la même chose.
     # ----------------------------------------------------------------------------------- #
-    def _cors(origin: str | None) -> dict:
-        """Les entêtes CORS, et seulement pour une origine de la liste."""
-        if origin and origin in cfg.api.rendu_origins:
-            return {"Access-Control-Allow-Origin": origin,
-                    "Vary": "Origin",
-                    "Access-Control-Allow-Headers": "content-type",
-                    "Access-Control-Allow-Methods": "POST, OPTIONS",
-                    "Access-Control-Max-Age": "86400"}
-        return {}
-
-    @app.options("/rendu")
-    def rendu_preflight(request: Request) -> Response:
-        return Response(status_code=204, headers=_cors(request.headers.get("origin")))
-
     def _dossier_du(payload: dict):
         """Le dossier à rejouer : celui que le payload porte, ou celui déposé sous sa
         référence. La référence est filtrée — elle sert à composer un chemin."""
@@ -302,7 +342,7 @@ def create_app(cfg: Config | None = None) -> FastAPI:
             raise HTTPException(status_code=500, detail=f"dossier illisible: {exc}") from exc
 
     @app.post("/rendu")
-    def rendu(payload: dict, request: Request) -> Response:
+    def rendu(payload: dict) -> Response:
         """Refait les documents d'un rapport, amendés des réglages que la page renvoie.
 
         Payload : ``{"ref" | "dossier", "amendement": {reglages?, crew?, nutrition?},
@@ -310,7 +350,6 @@ def create_app(cfg: Config | None = None) -> FastAPI:
         ce qui entre est un dossier, ce qui sort est un PDF, et le répertoire de travail
         disparaît avec la requête.
         """
-        entetes = _cors(request.headers.get("origin"))
         brut = _dossier_du(payload)
         fragment = payload.get("amendement") or None
         if fragment is not None and not isinstance(fragment, dict):
@@ -322,7 +361,7 @@ def create_app(cfg: Config | None = None) -> FastAPI:
 
         if not debit.prendre():
             raise HTTPException(status_code=429, detail="trop de rendus en cours, réessaie",
-                                headers={**entetes, "Retry-After": "30"})
+                                headers={"Retry-After": "30"})
         try:
             with tempfile.TemporaryDirectory(dir=cfg.data_dir, prefix="rendu-") as out:
                 try:
@@ -340,8 +379,7 @@ def create_app(cfg: Config | None = None) -> FastAPI:
 
         nom = f"locomotion-twin-{d.report_ref}.zip"
         return Response(content=data, media_type="application/zip",
-                        headers={**entetes,
-                                 "X-Rendu-Reference": d.report_ref,
+                        headers={"X-Rendu-Reference": d.report_ref,
                                  "Content-Disposition": f'attachment; filename="{nom}"'})
 
     return app
