@@ -177,7 +177,7 @@ cf. [`secrets.md`](./secrets.md) et `infra/.env.example`) :
 
 | Variable | Sans elle |
 |---|---|
-| `TWIN_ADMIN_TOKEN` | les routes `/tableau-de-bord/*` répondent **404** : elles n'existent pas |
+| `TWIN_ADMIN_TOKEN` | les routes `/tableau-de-bord/*` répondent **404** : elles n'existent pas. C'est la SEULE serrure de l'API : Cloudflare Access ne couvre que les pages, sur un autre domaine |
 | `TWIN_KEYS_SECRET` | aucune clé de plan n'est posée, aucune page d'athlète ne répond |
 | `TWIN_INTERNAL_SECRET` | le dépôt ne peut plus prévenir le moteur ; la File rattrape au « rafraîchir » |
 | `TWIN_DEPOT_ADMIN_TOKEN` | le moteur ne peut pas aller chercher une archive sur le dépôt |
@@ -247,9 +247,11 @@ domaine, et c'est le jeton qui la garde — d'où les deux serrures.
 ### Les écrans
 
 Les pages vivent sous `apps/site/app/services/twin/tableau-de-bord/` et sont **entièrement
-clientes** : rien n'est prérendu, tout se lit sur l'API. Le jeton se colle une fois et vit en
-`sessionStorage` — il disparaît à la fermeture de l'onglet, et n'entre jamais dans une URL (où
-il finirait dans l'historique, les journaux du proxy et le `Referer` de la première image).
+clientes** : rien n'est prérendu, tout se lit sur l'API. Le jeton se colle **une fois** et
+reste sur la machine (`localStorage`) — c'est Cloudflare Access, devant la page, qui rend ce
+choix tenable. Il n'entre jamais dans une URL, où il finirait dans l'historique, les journaux
+du proxy et le `Referer` de la première image. Le bouton « Tableau de bord Twin · privé », en
+haut à droite, l'efface de la machine.
 
 | Écran | Adresse |
 |---|---|

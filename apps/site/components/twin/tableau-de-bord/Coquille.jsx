@@ -30,13 +30,9 @@ export { ETIQUETTE };
 
 function BarreHaute({ actif, sousTitre, surOubli }) {
   return (
-    <header className="flex h-12 flex-none items-center gap-8 border-b border-brand-hairline bg-brand-paper px-6">
-      <div className="flex items-center gap-2.5">
-        <span className="size-3 rounded-full bg-brand-deep" aria-hidden="true" />
-        <span className="font-mono text-xxs font-bold uppercase tracking-etiquette">
-          Locomotion Lab
-        </span>
-      </div>
+    <header className="flex h-12 flex-none items-center gap-6 border-b border-brand-hairline bg-brand-paper px-6">
+      {/* Pas de logo ici : la barre du site, juste au-dessus, le porte déjà. Le répéter
+          à trois centimètres d'intervalle ne dit rien de plus et vole la place des onglets. */}
       <nav className="flex h-12 items-stretch gap-6 text-sm">
         {ONGLETS.map(({ href, libelle }) => (
           <Link
@@ -74,8 +70,8 @@ function Porte({ surJeton, message }) {
         Colle ton jeton
       </h1>
       <p className="mt-3 text-sm leading-relaxed text-brand-soft">
-        Il vit le temps de l&rsquo;onglet, et rien de plus. Il se lit dans
-        <code className="mx-1 font-mono text-xs">infra/.env</code>, sous
+        Une fois collé, il reste sur cette machine — tu ne le retaperas plus. Il se lit
+        dans <code className="mx-1 font-mono text-xs">infra/.env</code>, sous
         <code className="mx-1 font-mono text-xs">TWIN_ADMIN_TOKEN</code>.
       </p>
       <form
@@ -137,7 +133,7 @@ export default function Coquille({ actif, sousTitre, chemin, children }) {
     void recharger();
   }, [recharger]);
 
-  if (jeton === null) return null; // premier rendu : sessionStorage n'est pas encore lu
+  if (jeton === null) return null; // premier rendu : le stockage du navigateur n'est pas encore lu
   if (!jeton) {
     return (
       <Porte

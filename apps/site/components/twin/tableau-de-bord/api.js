@@ -2,14 +2,22 @@
 //
 // LE CLIENT DE L'API, et le jeton qui l'ouvre.
 //
-// Le jeton se colle une fois et vit en `sessionStorage` : il disparaît à la fermeture
-// de l'onglet. Pas `localStorage`, qui le garderait des mois sur la machine ; pas
-// l'URL, qui l'écrirait dans l'historique, les journaux du proxy et le `Referer` de la
-// première image chargée.
+// Le jeton se colle UNE FOIS et reste : il vit en `localStorage`, donc il survit à la
+// fermeture de l'onglet et du navigateur. Ce choix se paie et s'assume — c'est
+// Cloudflare Access qui le rend tenable. Sans Access, garder un jeton
+// d'administration sur la machine serait imprudent : quiconque ouvre ce navigateur
+// entrerait. Avec Access devant la page, il faut d'abord passer l'identité.
 //
-// Deux serrures gardent ces pages, et il en faut deux : Cloudflare Access devant la
-// PAGE (elle est servie avec le reste du site, donc publique sans lui), le jeton
-// devant l'API (elle est sur un autre domaine, qu'Access ne couvre pas).
+// Ce qu'on ne fera jamais, en revanche : le mettre dans l'URL. Il y finirait dans
+// l'historique, dans les journaux du proxy, et dans le `Referer` du premier appel
+// sortant de la page.
+//
+// Et il faut bien DEUX serrures, pas une : Access garde la PAGE — qui ne contient
+// aucune donnée — et le jeton garde l'API, qui les contient toutes. L'API vit sur un
+// autre domaine (`api.thelocomotionlab.com`) qu'Access ne couvre pas et ne peut pas
+// couvrir : il intercepterait le préflight CORS, que le navigateur envoie sans cookie,
+// et plus rien ne se lirait. Retirer le jeton laisserait donc l'API entièrement
+// ouverte, à tout l'internet.
 
 export const CLE_JETON = "twin.tableau-de-bord.jeton";
 
@@ -19,7 +27,7 @@ export const API =
 
 export function lireLeJeton() {
   try {
-    return sessionStorage.getItem(CLE_JETON) || "";
+    return localStorage.getItem(CLE_JETON) || "";
   } catch {
     // Navigation privée verrouillée, stockage bloqué : la page demande le jeton à
     // chaque fois plutôt que de tomber.
@@ -29,14 +37,20 @@ export function lireLeJeton() {
 
 export function poserLeJeton(jeton) {
   try {
-    sessionStorage.setItem(CLE_JETON, jeton);
+    localStorage.setItem(CLE_JETON, jeton);
   } catch {
     /* rien à faire : le jeton vivra le temps de la page */
   }
 }
 
+/** Oublier le jeton sur cette machine. C'est ce que fait « Tableau de bord Twin ·
+ *  privé » en haut à droite — le geste à faire sur un ordinateur qui n'est pas le
+ *  tien, ou quand on régénère le jeton sur le VPS. */
 export function oublierLeJeton() {
   try {
+    localStorage.removeItem(CLE_JETON);
+    // Un jeton posé par une version antérieure vivait là : on le balaie aussi, sinon
+    // il ressusciterait au prochain onglet.
     sessionStorage.removeItem(CLE_JETON);
   } catch {
     /* déjà oublié */
