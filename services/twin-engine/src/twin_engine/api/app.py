@@ -9,7 +9,9 @@ Endpoints :
   * ``POST /fiche``            — rendu sans état : JSON en entrée, PDF en sortie.
   * ``POST /rendu``            — rendu sans état : un rapport amendé, refait en entier.
 
-Stockage local : SQLite pour l'état, dossier de données (volume) pour les fichiers.
+Stockage local : des fichiers JSON sur le volume de données, pour l'état comme pour les
+documents (récapitulatif §3.5 — pas de base de données). Le fichier est la vérité ;
+l'index en mémoire se reconstruit au démarrage.
 
 ``/rendu`` est le seul endpoint destiné à un NAVIGATEUR : l'athlète amende ses arrêts sur
 la page de son rapport et récupère les documents refaits. Il ne lit pas d'archive, n'écrit
@@ -28,6 +30,7 @@ import threading
 import time
 import zipfile
 from dataclasses import replace
+from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 
@@ -42,11 +45,9 @@ from ..fiche import build_pdf as build_fiche_pdf
 from ..fiche import empreinte as fiche_empreinte
 from ..jobs import JobStore, run_job
 from ..pipeline import run_preview
-
-_PUBLIC_FIELDS = (
-    "id", "status", "depth", "athlete", "race_name", "verdict", "error",
-    "created_at", "updated_at",
-)
+from ..tableau_de_bord.magasin import Magasin
+from ..tableau_de_bord.objets import JOB_GENERATION
+from ..tableau_de_bord.reference import reference_de_rapport
 
 
 def _safe_name(filename: str | None, default: str) -> str:
@@ -115,15 +116,17 @@ def _zip_des(livrables: dict) -> bytes:
 
 def create_app(cfg: Config | None = None) -> FastAPI:
     cfg = cfg or load_config()
-    store = JobStore(cfg.data_dir / "jobs.sqlite")
-    jobs_root = cfg.data_dir / "jobs"
-    jobs_root.mkdir(parents=True, exist_ok=True)
+    # Les objets du tableau de bord et la file de travail : des fichiers JSON sur le
+    # volume, relus ici une fois pour toutes (récapitulatif §3.5).
+    magasin = Magasin(cfg.data_dir)
+    store = JobStore(cfg.data_dir)
+    jobs_root = store.racine
 
     # Balayage de démarrage : un crash (SIGKILL/OOM) court-circuite les purges `finally` —
-    # les jobs restés « running » sont clos en erreur et leurs uploads (PII) supprimés,
-    # ainsi que les dossiers preview-* orphelins. La promesse « archives supprimées
-    # immédiatement après analyse » doit tenir AUSSI après un crash.
-    for job_id in store.sweep_stale_running("interrompu par un redémarrage du service"):
+    # les jobs restés en file ou en cours sont clos en échec et leurs uploads (PII)
+    # supprimés, ainsi que les dossiers preview-* orphelins. La promesse « archives
+    # supprimées immédiatement après analyse » doit tenir AUSSI après un crash.
+    for job_id in store.balayer_interrompus("interrompu par un redémarrage du service"):
         shutil.rmtree(jobs_root / job_id / "upload", ignore_errors=True)
     for stray in cfg.data_dir.glob("preview-*"):
         shutil.rmtree(stray, ignore_errors=True)
@@ -134,6 +137,7 @@ def create_app(cfg: Config | None = None) -> FastAPI:
         description="Du fichier d'entraînement multi-marques à une prédiction validée et un plan de pacing.",
     )
     app.state.store = store
+    app.state.magasin = magasin
     app.state.cfg = cfg
     # les dossiers rejouables déposés sous leur référence (cf. scripts/course.sh publier)
     dossiers_root = cfg.data_dir / "dossiers"
@@ -196,30 +200,38 @@ def create_app(cfg: Config | None = None) -> FastAPI:
         tpath = job_dir / "upload" / _safe_name(training.filename, "training.bin")
         tpath.write_bytes(await training.read())
 
-        store.create(job_id, depth="full", athlete=athlete, race_name=race_spec.name)
+        # La référence se construit comme au CLI — même fonction, même forme. Elle ne
+        # dérive JAMAIS de l'id du job : un job est un passage, une référence désigne un
+        # rapport (récapitulatif §3.3).
+        store.creer(job_id, type=JOB_GENERATION)
         background.add_task(
             run_job, job_id=job_id, store=store, cfg=cfg, job_dir=job_dir,
             training_path=tpath, course_gpx=gpx, race=race_spec, athlete=athlete,
+            report_ref=reference_de_rapport(race_spec, athlete),
+            report_date=datetime.now(),
         )
-        return {"id": job_id, "status": "queued"}
+        return store.public(job_id)
 
     @app.get("/jobs/{job_id}")
     def get_job(job_id: str) -> dict:
-        row = store.get(job_id)
-        if row is None:
+        """L'état d'un passage (récapitulatif §5.7).
+
+        Le tableau de bord sonde cette route pendant qu'un job tourne et montre
+        ``avancement`` tel quel. Il n'annonce aucune durée : personne ne sait combien de
+        temps prend une archive avant de l'avoir lue."""
+        job = store.lire(job_id)
+        if job is None:
             raise HTTPException(status_code=404, detail="job inconnu")
-        out = {k: row[k] for k in _PUBLIC_FIELDS}
-        if row.get("result_json"):
-            out["result"] = json.loads(row["result_json"])
-        out["report_url"] = f"/jobs/{job_id}/report" if row.get("pdf_path") else None
-        return out
+        vu = store.rendre_public(job)
+        vu["rapport_url"] = f"/jobs/{job_id}/report" if job.get("pdf") else None
+        return vu
 
     @app.get("/jobs/{job_id}/report")
     def get_report(job_id: str) -> FileResponse:
-        row = store.get(job_id)
-        if row is None:
+        job = store.lire(job_id)
+        if job is None:
             raise HTTPException(status_code=404, detail="job inconnu")
-        pdf = row.get("pdf_path")
+        pdf = job.get("pdf")
         if not pdf or not Path(pdf).exists():
             raise HTTPException(status_code=404, detail="rapport non disponible (job non terminé ou 🔴)")
         return FileResponse(pdf, media_type="application/pdf", filename="rapport-locomotion-twin.pdf")

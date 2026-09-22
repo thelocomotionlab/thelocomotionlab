@@ -70,18 +70,30 @@ def test_job_lifecycle(client, tmp_path):
     r = client.post("/jobs", files=_files(), data={"athlete": "Test"})
     assert r.status_code == 200
     job_id = r.json()["id"]
-    assert r.json()["status"] == "queued"
+    assert r.json()["statut"] == "en_file"
+    assert r.json()["type"] == "generation"
 
     got = client.get(f"/jobs/{job_id}")
     assert got.status_code == 200
     body = got.json()
-    assert body["status"] in {"done", "error", "running"}
-    assert body["verdict"] in {"🟢", "🟠", "🔴", None}
+    assert body["statut"] in {"fini", "echec", "en_cours"}
 
     # Exigence de confidentialité (CLAUDE.md) : l'archive d'entraînement brute
     # est purgée dès la fin du job — upload/ ne doit plus exister.
-    if body["status"] in {"done", "error"}:
+    if body["statut"] in {"fini", "echec"}:
         assert not (tmp_path / "data" / "jobs" / job_id / "upload").exists()
+
+
+def test_job_reference_ne_vient_jamais_de_son_id(client):
+    """§3.3 : la référence du rapport se lit (course, année, athlète), elle ne reprend
+    pas l'id du job — un job est un passage, une référence désigne un rapport."""
+    r = client.post("/jobs", files=_files(), data={"athlete": "Valentin"})
+    job_id = r.json()["id"]
+    resultat = client.get(f"/jobs/{job_id}").json().get("resultat") or {}
+    ref = resultat.get("report_ref")
+    if ref is not None:            # 🔴 s'arrête au preview, sans rapport ni référence
+        assert ref.startswith("LL-COURSE-VAL-")
+        assert job_id[:8].upper() not in ref
 
 
 def test_unknown_job_404(client):
@@ -98,9 +110,9 @@ def test_startup_sweeps_orphan_jobs_and_previews(tmp_path, monkeypatch):
     from twin_engine.jobs import JobStore
 
     cfg = load_config()
-    store = JobStore(cfg.data_dir / "jobs.sqlite")
-    store.create("orphan", depth="full", athlete="X", race_name="Y")
-    store.update("orphan", status="running")
+    store = JobStore(cfg.data_dir)
+    store.creer("orphan")
+    store.modifier("orphan", statut="en_cours")
     upload = cfg.data_dir / "jobs" / "orphan" / "upload"
     upload.mkdir(parents=True)
     (upload / "archive.zip").write_bytes(b"pii")
@@ -109,7 +121,7 @@ def test_startup_sweeps_orphan_jobs_and_previews(tmp_path, monkeypatch):
 
     client = TestClient(create_app(load_config()))
     body = client.get("/jobs/orphan").json()
-    assert body["status"] == "error" and "redémarrage" in body["error"]
+    assert body["statut"] == "echec" and "redémarrage" in body["erreur"]
     assert not upload.exists() and not stray.exists()
 
 
@@ -119,26 +131,28 @@ def test_job_error_is_sanitized(client):
     files["course_gpx"] = ("course.gpx", b"<gpx></gpx>", "application/gpx+xml")  # → ValueError
     r = client.post("/jobs", files=files, data={"athlete": "T"})
     body = client.get(f"/jobs/{r.json()['id']}").json()
-    assert body["status"] == "error"
-    assert "journaux du serveur" in body["error"]
-    assert "/" not in body["error"]                 # aucun chemin interne divulgué
+    assert body["statut"] == "echec"
+    assert "journaux du serveur" in body["erreur"]
+    assert "/" not in body["erreur"]                # aucun chemin interne divulgué
 
 
 def test_report_served_when_pdf_present(client, tmp_path):
     """Le PDF est servi quand le job en a un (plomberie testée sans XeLaTeX)."""
     store = client.app.state.store
     job_id = "fakejob"
-    store.create(job_id, depth="full", athlete="Test", race_name="Course")
+    store.creer(job_id)
     dummy = tmp_path / "report.pdf"
     dummy.write_bytes(b"%PDF-1.5\n%fake\n")
-    store.update(job_id, status="done", verdict="🟢", pdf_path=str(dummy))
+    store.modifier(job_id, statut="fini", pdf=str(dummy))
 
     r = client.get(f"/jobs/{job_id}/report")
     assert r.status_code == 200
     assert r.headers["content-type"] == "application/pdf"
     assert r.content.startswith(b"%PDF")
-    # le job expose bien l'URL de rapport
-    assert client.get(f"/jobs/{job_id}").json()["report_url"] == f"/jobs/{job_id}/report"
+    # le job expose bien l'URL de rapport, et jamais le chemin serveur du PDF
+    public = client.get(f"/jobs/{job_id}").json()
+    assert public["rapport_url"] == f"/jobs/{job_id}/report"
+    assert "pdf" not in public
 
 
 # --------------------------------------------------------------------------- #

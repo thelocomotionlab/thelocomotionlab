@@ -103,7 +103,7 @@ def test_the_render_leaves_nothing_behind(client, payload_dossier, tmp_path):
     assert client.post("/rendu", json={"dossier": payload_dossier}).status_code == 200
     apres = sorted(p.name for p in data.iterdir())
     assert not [n for n in apres if n.startswith("rendu-")], "un répertoire de rendu est resté"
-    assert apres == avant or set(apres) - set(avant) <= {"jobs", "jobs.sqlite"}
+    assert apres == avant or set(apres) - set(avant) <= {"jobs"}
 
 
 @SANS_TEX

@@ -158,8 +158,10 @@ Endpoints :
 | `POST /fiche` | rendu **sans état** : le JSON d'une fiche d'atelier → son PDF, rien de gardé |
 | `POST /rendu` | rendu **sans état** : un dossier (ou la référence d'un dossier déposé) + l'amendement de la page → les documents refaits, en ZIP |
 
-Les jobs et leurs sorties vivent dans le volume de données (`/data` : `jobs.sqlite` + PDF). Les
-archives brutes envoyées sont purgées après parsing.
+Les jobs et leurs sorties vivent dans le volume de données, un répertoire par job
+(`/data/jobs/{id}/` : `job.json` + le PDF). Aucune base de données : le fichier est la vérité,
+et l'index en mémoire se reconstruit au démarrage. Les archives brutes envoyées sont purgées
+après parsing.
 
 ### `POST /rendu` — refaire un rapport amendé
 

@@ -1,4 +1,4 @@
-"""État des jobs (SQLite) + exécution en arrière-plan in-process."""
+"""La file de travail : état en fichiers JSON + exécution en arrière-plan in-process."""
 
 from __future__ import annotations
 
