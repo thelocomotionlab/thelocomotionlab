@@ -25,6 +25,7 @@ import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest }
 
 import type { Config } from "./config";
 import { createTransport, envoyerConfirmation, envoyerNotification, mailEnv } from "./mailer";
+import { moteurEnv, prevenirLeMoteur } from "./moteur";
 import { IpRateLimiter } from "./ratelimit";
 import { nettoyerNomFichier, type Depot, type DepotStore } from "./store";
 
@@ -68,6 +69,11 @@ export interface ServerDeps {
   notifier?: ((depot: Depot) => Promise<void>) | null;
   /** Confirmation au déposant — injectable en test. null = désactivée. */
   confirmer?: ((depot: Depot) => Promise<void>) | null;
+  /**
+   * Prévenir le moteur qu'un dépôt est arrivé — injectable en test. null = désactivé.
+   * Rend `true` si le moteur a bien reçu l'appel.
+   */
+  prevenir?: ((depotId: string) => Promise<boolean>) | null;
 }
 
 function safeEqual(a: string, b: string): boolean {
@@ -95,6 +101,15 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     },
   });
 
+  // Le moteur à prévenir. Sans TWIN_INTERNAL_SECRET, moteurEnv() rend null et on ne
+  // tente rien : un dépôt reste parfaitement valide, il attend le « rafraîchir ».
+  const moteurCfg = moteurEnv();
+  const prevenir =
+    deps.prevenir !== undefined
+      ? deps.prevenir
+      : moteurCfg
+        ? (depotId: string) => prevenirLeMoteur(moteurCfg, depotId)
+        : null;
   const smtp = mailEnv();
   const notifier =
     deps.notifier !== undefined
@@ -281,6 +296,21 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
         );
         archive = null; // le tmp n'existe plus (rename) : plus rien à purger
 
+        // Prévenir le moteur : il crée l'athlète et met l'ingestion en file. Best-effort
+        // comme les emails — le dépôt est déjà acquis quoi qu'il arrive, et la File a un
+        // bouton « rafraîchir » qui rattrape un moteur qui était tombé.
+        let moteur = "non_configure";
+        if (prevenir) {
+          let prevenu = false;
+          try {
+            prevenu = await prevenir(depot.id);
+          } catch (err) {
+            req.log.error({ err, reference: depot.reference }, "moteur : appel impossible");
+          }
+          store.noterMoteurPrevenu(depot.id, prevenu);
+          moteur = prevenu ? "prevenu" : "echec";
+        }
+
         // Emails best-effort : le dépôt est déjà acquis quoi qu'il arrive.
         let notification = "non_configuree";
         if (notifier) {
@@ -307,7 +337,14 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
         }
 
         req.log.info(
-          { reference: depot.reference, montre, taille: depot.taille, notification, confirmation },
+          {
+            reference: depot.reference,
+            montre,
+            taille: depot.taille,
+            notification,
+            confirmation,
+            moteur,
+          },
           "dépôt enregistré",
         );
         return { ok: true, reference: depot.reference };

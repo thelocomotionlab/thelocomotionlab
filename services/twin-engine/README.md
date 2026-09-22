@@ -38,7 +38,7 @@ pytest services/twin-engine
 ```
 
 Le dossier de données (`DATA_DIR`, défaut `/data`) porte les archives **transitoires**,
-`jobs.sqlite` et les sorties. Les archives brutes sont **purgées dès la fin du parsing** ;
+les objets du tableau de bord en JSON et les sorties. Les archives brutes sont **purgées dès la fin du parsing** ;
 on ne conserve que le rapport (le temps du SAV) et le minimum de métadonnées.
 
 ## Configuration

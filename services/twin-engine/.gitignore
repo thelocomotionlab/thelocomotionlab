@@ -7,7 +7,7 @@ __pycache__/
 *.egg-info/
 .mypy_cache/
 
-# Dossier de données LOCAL (volume monté en prod) : archives transitoires, jobs.sqlite,
+# Dossier de données LOCAL (volume monté en prod) : archives transitoires, objets JSON,
 # sorties (PDF/figures). JAMAIS committé — données utilisateur, purgées après analyse.
 data/
 local-data/

@@ -1,5 +1,5 @@
 # Route API du VPS : {$API_DOMAIN} (api.thelocomotionlab.com) — UN préfixe par service.
-# Aujourd'hui : /journal/* → service live-journal (journal de bord du live, chantier 2).
+# Aujourd'hui : /journal/* → live-journal, /ateliers/* → atelier-api, /twin/* → twin-engine.
 # Les futurs services s'ajoutent ICI avec leur propre préfixe (pas de nouveau fichier :
 # Caddy n'accepte qu'un bloc par adresse de site).
 #
@@ -72,26 +72,47 @@
 		reverse_proxy atelier-api:3000
 	}
 
-	# === /twin/rendu — refaire un rapport amendé (moteur Twin) ===============
-	# DÉSACTIVÉE : décommenter pour ouvrir la boucle d'amendement au dehors, puis
-	# `./deploy.sh`. Vérif : `docker compose exec caddy caddy validate --config /etc/caddy/Caddyfile`.
+	# === /twin/* — moteur Locomotion Twin =====================================
+	# TROIS familles de chemins sortent, et elles seules :
 	#
-	# Un SEUL chemin du moteur est exposé : POST /rendu, qui refait les documents d'un
-	# rapport à partir du dossier déposé sous sa référence. Il ne lit aucune archive,
-	# n'écrit rien et ne garde rien. L'ingestion et les jobs (qui, eux, reçoivent des
-	# archives d'entraînement) restent INTERNES — `handle` ne laisse passer que ce chemin.
-	# CORS géré PAR LE SERVICE (allowlist d'origines dans twin.config.json, bloc api),
-	# comme /ateliers et /journal/message. La borne de corps double celle du service
-	# (twin.config.json : api.rendu_max_kio) — un dossier pèse ~200 Kio.
+	#   /twin/tableau-de-bord/*  l'outil de Valentin — jeton Bearer TWIN_ADMIN_TOKEN
+	#                            côté service, ET Cloudflare Access devant les PAGES
+	#                            (thelocomotionlab.com/services/twin/tableau-de-bord*).
+	#   /twin/plans/*            la page d'un athlète — une clé HMAC dans le lien (?k=).
+	#                            Mauvaise clé ou référence inconnue : 404, jamais 403.
+	#   /twin/jobs/*             l'état d'un passage, que les deux écrans sondent.
 	#
-	# @twin_rendu path /twin/rendu
-	# handle @twin_rendu {
-	# 	request_body {
-	# 		max_size 4MB
-	# 	}
-	# 	uri strip_prefix /twin
-	# 	reverse_proxy twin-engine:8000
-	# }
+	# Ce qui NE sort pas : l'ingestion, les archives, /twin/internal/* (le dépôt
+	# prévient le moteur par le réseau Docker) et /preview, /jobs (POST), /fiche —
+	# `handle` ne laisse passer que ce qui est listé, le reste tombe sur le 404 final.
+	#
+	# `uri strip_prefix /twin` : le moteur sert /tableau-de-bord/*, /plans/* et
+	# /jobs/* — c'est ce qui réconcilie les chemins du récapitulatif §5 avec ceux de
+	# l'internet. CORS géré PAR LE SERVICE (allowlist twin.config.json, bloc api),
+	# comme /ateliers et /journal/message.
+	#
+	# ADRESSE DU VISITEUR : le moteur compte les essais de clé par adresse, et cette
+	# adresse doit être celle du visiteur, pas celle du proxy — sinon la limite est
+	# globale et le premier venu ferme la porte à tout le monde. Ce sous-domaine est
+	# PROXIFIÉ par Cloudflare (nuage orange), qui pose CF-Connecting-IP et l'écrase à
+	# chaque passage : c'est cet en-tête que le service lit en premier, comme
+	# atelier-api. X-Forwarded-For ne sert que de repli, et n'est digne de foi QUE
+	# parce que rien n'atteint Caddy sans passer par Cloudflare (docs/cloudflare-vps.md).
+	#
+	# Vérif : `docker compose exec caddy caddy validate --config /etc/caddy/Caddyfile`.
+
+	@twin path /twin/tableau-de-bord/* /twin/plans/* /twin/jobs/*
+	handle @twin {
+		# Un corps de cette API est du JSON de réglages, une trace GPX ou un dossier de
+		# rapport (~200 Kio). Les archives d'entraînement, elles, ne passent pas par
+		# ici : elles entrent par {$DEPOT_DOMAIN} et le moteur va les chercher tout seul
+		# sur le réseau Docker. Cette borne double celle du service.
+		request_body {
+			max_size 32MiB
+		}
+		uri strip_prefix /twin
+		reverse_proxy twin-engine:8000
+	}
 
 	handle {
 		respond 404

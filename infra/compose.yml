@@ -128,20 +128,47 @@ services:
     networks:
       - web
 
-  # Moteur Locomotion Twin (Python/FastAPI + TeXLive). INTERNE : pas de port hôte,
-  # joint seulement par l'app twin (et la CLI via `docker compose exec`). La route
-  # publique existe en draft (caddy/conf.d/twin-engine.caddy.disabled) si on l'expose
-  # un jour. Données (jobs.sqlite + sorties) dans le volume `twin_engine_data` ; les
-  # archives brutes sont purgées dès la fin du parsing (jamais conservées).
+  # Moteur Locomotion Twin (Python/FastAPI + TeXLive). Pas de port hôte : Caddy en
+  # expose TROIS préfixes sous {$API_DOMAIN}/twin/* (tableau de bord, pages d'athlète,
+  # file de travail — cf. caddy/conf.d/api.caddy) ; l'ingestion, les archives et les
+  # routes internes ne sortent pas du réseau `web`. Données (objets JSON + sorties) dans
+  # le volume `twin_engine_data` ; les archives brutes sont purgées dès la fin du parsing.
   twin-engine:
     image: ${TWIN_ENGINE_IMAGE:-ghcr.io/thelocomotionlab/twin-engine:latest}
     restart: unless-stopped
+    # Les trois secrets du tableau de bord (TWIN_ADMIN_TOKEN, TWIN_KEYS_SECRET,
+    # TWIN_INTERNAL_SECRET) + TWIN_DEPOT_ADMIN_TOKEN, avec lequel le moteur va chercher
+    # une archive sur twin-depot. Tous absents → les routes n'existent pas (404).
+    env_file: .env
     environment:
       - DATA_DIR=/data
     expose:
       - "8000"
     volumes:
       - twin_engine_data:/data
+    # BORNES — VPS à 4 vCores / 8 Go, qui porte AUSSI Traccar (JVM, sur l'hôte et non
+    # conteneurisé), Caddy, Listmonk + sa base Postgres et quatre services Node.
+    #
+    # 2 CPU : une passe d'archive, c'est numpy et matplotlib à fond. Sans borne, elle
+    # prend les quatre cœurs et le direct se met à saccader pendant qu'un plan se
+    # calcule — le tracking et le journal sont les seules choses du VPS qui ne peuvent
+    # pas attendre. Deux cœurs laissent la moitié de la machine au reste.
+    #
+    # 3 Go : le pic n'est pas l'API, c'est le job — les activités d'une archive en
+    # mémoire, puis XeLaTeX. Trop bas, le conteneur est tué par l'OOM AU MILIEU d'un
+    # rendu, ce qui est le pire moment : le balayage de démarrage rattrape le job, mais
+    # Valentin ne voit qu'un échec. La file ne laisse tourner qu'un job à la fois, donc
+    # ce pic est celui d'un seul passage.
+    #
+    # ⚠ À VÉRIFIER SUR LA VRAIE MACHINE : `docker stats` pendant une ingestion et un
+    # rendu. Si la mémoire frôle les 3 Go, c'est le chiffre qui est faux, pas l'archive.
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 3G
+        reservations:
+          memory: 512M
     networks:
       - web
 
@@ -249,7 +276,8 @@ volumes:
   # sources originales (private/). PRÉCIEUX et irremplaçable pendant l'aventure :
   # sauvegarde quotidienne requise (cf. README § Sauvegardes).
   live_journal_data:
-  # Données du moteur Twin : jobs.sqlite + sorties (PDF/figures). Archives brutes purgées.
+  # Données du moteur Twin : objets JSON (athlètes, courses, plans, file) + sorties
+  # (PDF/figures). Archives brutes purgées dès la fin du parsing.
   twin_engine_data:
   # Dépôts de la cohorte Twin : archives d'entraînement (données perso VOLUMINEUSES,
   # positions GPS + FC) en attente d'analyse + depots.json. Purgé dépôt par dépôt

@@ -220,8 +220,11 @@ class FullResult:
     report_ref: str = "LL-TWIN"
 
     def to_dict(self) -> dict:
+        # Sans prédiction (verdict 🔴), il n'y a pas de plan : le résultat existe quand
+        # même et dit pourquoi. Le rendre ici en exception ferait passer une archive
+        # trop maigre pour une panne du service — deux choses très différentes à lire.
         d = self.preview.to_dict()
-        d["plan"] = self.plan.to_dict()
+        d["plan"] = None if self.plan is None else self.plan.to_dict()
         d["pdf"] = str(self.pdf_path) if self.pdf_path else None
         d["figures"] = self.figures
         d["target"] = None if self.target is None else self.target.to_dict()
@@ -246,18 +249,25 @@ def analyze_full(
     feuille_only: bool = False,
     analysis_date: date | None = None,
     until: date | None = None,
+    etape=None,
 ) -> FullResult:
     """Chaîne complète jusqu'au PDF (pacing + figures + rapport LaTeX + livrables).
 
     Import paresseux du module report (matplotlib/jinja) : la profondeur preview ne le
     charge pas. Si la prédiction est impossible (🔴), on s'arrête au preview sans PDF.
+
+    ``etape`` reçoit le nom de la phase qui COMMENCE, en trois mots au présent. C'est ce
+    que la file de travail montre pendant qu'elle travaille (récapitulatif §5.7) ; sans
+    lui, rien n'est appelé et le chemin est celui d'avant, à l'octet près.
     """
     preview = analyze_preview(activities, course, cfg, n_skipped=n_skipped,
                               analysis_date=analysis_date, until=until,
                               target_hours=race.target_hours, race=race)
     if preview.prediction is None:
+        # La référence désigne le RAPPORT, pas sa réussite : elle suit le résultat même
+        # quand il n'y a rien à rendre, sinon le job revient sans nom (récapitulatif §3.3).
         return FullResult(preview=preview, plan=None, pdf_path=None, figures={},  # type: ignore[arg-type]
-                          target=preview.target)
+                          target=preview.target, report_ref=report_ref)
 
     # MODE OBJECTIF (ADR 0002) : la cible n'ancre le plan que si le verdict de faisabilité
     # (calculé au preview) l'autorise — un objectif hors des bornes de sécurité se rend en
@@ -265,6 +275,8 @@ def analyze_full(
     # affichée et consignée : le mode s'ajoute, il ne remplace pas.
     target = preview.target
 
+    if etape is not None:
+        etape("écriture des documents")
     # le parcours SERVI (coût de pente personnel compris) est celui du preview
     plan, pdf_path, figures, livrables = rendre_documents(
         course=preview.course, twin=preview.twin, calibration=preview.calibration,
@@ -345,9 +357,16 @@ def run_full(
     progress=None,
     analysis_date: date | None = None,
     until: date | None = None,
+    etape=None,
 ) -> FullResult:
-    """De l'archive brute au PDF. **Purge l'archive** après analyse (flux E1, cf. run_preview)."""
+    """De l'archive brute au PDF. **Purge l'archive** après analyse (flux E1, cf. run_preview).
+
+    ``etape`` : cf. ``analyze_full``. Trois frontières, trois phrases vraies au moment
+    où elles s'écrivent — jamais une durée, qu'on ne connaît pas avant d'avoir lu
+    l'archive."""
     skipped: list[dict] = []
+    if etape is not None:
+        etape("lecture de l'archive")
     stream = iter_activities(
         training_path, running_only=True, progress=progress, skipped=skipped
     )
@@ -357,7 +376,7 @@ def run_full(
             stream, course, race, cfg, out_dir=Path(out_dir), athlete=athlete,
             render_pdf=render_pdf, feuille_only=feuille_only, report_ref=report_ref,
             report_version=report_version, report_date=report_date,
-            analysis_date=analysis_date, until=until,
+            analysis_date=analysis_date, until=until, etape=etape,
         )
     finally:
         if purge_source:
@@ -370,6 +389,9 @@ def run_full(
     # n'y a rien à rejouer.
     if render_pdf and full.preview.prediction is not None:
         from . import dossier as _dossier
+
+        if etape is not None:
+            etape("rangement du dossier")
 
         chemin = _dossier.ecrire(
             Path(out_dir) / "dossier.json", course_gpx=course_gpx, race=race,

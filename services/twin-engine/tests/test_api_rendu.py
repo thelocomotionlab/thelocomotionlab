@@ -103,7 +103,7 @@ def test_the_render_leaves_nothing_behind(client, payload_dossier, tmp_path):
     assert client.post("/rendu", json={"dossier": payload_dossier}).status_code == 200
     apres = sorted(p.name for p in data.iterdir())
     assert not [n for n in apres if n.startswith("rendu-")], "un répertoire de rendu est resté"
-    assert apres == avant or set(apres) - set(avant) <= {"jobs", "jobs.sqlite"}
+    assert apres == avant or set(apres) - set(avant) <= {"jobs"}
 
 
 @SANS_TEX
@@ -172,7 +172,7 @@ def test_an_oversized_payload_is_refused_before_it_is_read(client, payload_dossi
 
 def test_the_browser_only_gets_cors_from_a_known_origin(client, payload_dossier):
     """L'allowlist vit dans la config du service (twin.config.json, bloc api)."""
-    connue = load_config().api.rendu_origins[0]
+    connue = load_config().api.origins[0]
     r = client.options("/rendu", headers={"origin": connue})
     assert r.status_code == 204 and r.headers["access-control-allow-origin"] == connue
     autre = client.options("/rendu", headers={"origin": "https://ailleurs.example"})

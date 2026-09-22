@@ -134,11 +134,20 @@ passée pour comparer sa prédiction au temps réel. C'est l'outil du registre d
 
 ## 4. Utilisation via l'API (HTTP)
 
-L'API FastAPI est **interne** en prod, à une exception près : `POST /rendu`, que la page
-d'annexe appelle depuis le navigateur pour refaire les documents d'un rapport amendé. Tout le
-reste — ingestion, jobs, qui reçoivent des archives d'entraînement — n'est pas routé au dehors
-(les archives de la cohorte arrivent sur le VPS par le service `twin-depot`, pas par cette
-API). En local, on expose le tout pour tester :
+L'API FastAPI est **interne** en prod, sauf trois familles de chemins, servis sous
+`api.thelocomotionlab.com/twin/*` (cf. `infra/caddy/conf.d/api.caddy`) :
+
+| Servi au dehors | Pour qui | Serrure |
+|---|---|---|
+| `/twin/tableau-de-bord/*` | Valentin | `Authorization: Bearer $TWIN_ADMIN_TOKEN` + Cloudflare Access devant les pages (§4 bis) |
+| `/twin/plans/*` | l'athlète | une clé HMAC dans son lien (`?k=…`) |
+| `/twin/jobs/*` | les deux écrans | rien : un id de job ne se devine pas, et ce qu'il rend ne porte ni archive ni chemin |
+
+Caddy retire le préfixe `/twin` au passage : le moteur, lui, sert `/tableau-de-bord/*`,
+`/plans/*` et `/jobs/*`. **Tout le reste** — `POST /preview`, `POST /jobs`, `POST /fiche`,
+l'ingestion et les archives — n'est joignable que depuis le réseau Docker (les archives de la
+cohorte arrivent sur le VPS par le service `twin-depot`, jamais par cette API). En local, on
+expose le tout pour tester :
 
 ```bash
 docker compose -f services/twin-engine/compose.local.yml up --build
@@ -157,9 +166,31 @@ Endpoints :
 | `GET /jobs/{id}/report` | télécharge le **PDF** du rapport |
 | `POST /fiche` | rendu **sans état** : le JSON d'une fiche d'atelier → son PDF, rien de gardé |
 | `POST /rendu` | rendu **sans état** : un dossier (ou la référence d'un dossier déposé) + l'amendement de la page → les documents refaits, en ZIP |
+| `GET /tableau-de-bord/file` | ce qui attend, la course la plus proche en tête : compteurs, dossiers et demandes ouvertes (Phase 1) |
 
-Les jobs et leurs sorties vivent dans le volume de données (`/data` : `jobs.sqlite` + PDF). Les
-archives brutes envoyées sont purgées après parsing.
+Les routes du tableau de bord arrivent par phases ; celles qui existent sont ci-dessus.
+Le contrat complet — objets, noms de champs, routes par écran — est dans
+[`twin-tableau-de-bord-api.md`](./twin-tableau-de-bord-api.md).
+
+**Variables d'environnement du moteur** (aucune valeur par défaut, aucune dans le dépôt —
+cf. [`secrets.md`](./secrets.md) et `infra/.env.example`) :
+
+| Variable | Sans elle |
+|---|---|
+| `TWIN_ADMIN_TOKEN` | les routes `/tableau-de-bord/*` répondent **404** : elles n'existent pas |
+| `TWIN_KEYS_SECRET` | aucune clé de plan n'est posée, aucune page d'athlète ne répond |
+| `TWIN_INTERNAL_SECRET` | le dépôt ne peut plus prévenir le moteur ; la File rattrape au « rafraîchir » |
+| `TWIN_DEPOT_ADMIN_TOKEN` | le moteur ne peut pas aller chercher une archive sur le dépôt |
+
+Une route d'administration sans jeton ou avec un mauvais jeton répond **401 sans détail**. Une
+page d'athlète avec une mauvaise clé, ou une référence inconnue, répond **404** — jamais 403 :
+un 403 confirmerait que la référence existe. Les essais ratés sont comptés par adresse
+(`twin.config.json`, bloc `api`) ; passé la borne, la même 404, sans rien dire de plus.
+
+Les jobs et leurs sorties vivent dans le volume de données, un répertoire par job
+(`/data/jobs/{id}/` : `job.json` + le PDF). Aucune base de données : le fichier est la vérité,
+et l'index en mémoire se reconstruit au démarrage. Les archives brutes envoyées sont purgées
+après parsing.
 
 ### `POST /rendu` — refaire un rapport amendé
 
@@ -184,6 +215,59 @@ formulaire. Tout autre champ est un **422**, jamais un silence : une page ne cha
 prédiction, l'objectif ou le parcours d'un athlète. Le reste des refus : **404** référence
 inconnue, **413** corps trop gros, **429** trop de rendus (un à la fois, douze par minute).
 Origines autorisées, bornes et débits sont dans `twin.config.json`, bloc `api`.
+
+## 4 bis. Cloudflare Access devant les pages du tableau de bord
+
+Le jeton `TWIN_ADMIN_TOKEN` garde l'**API**. Il ne garde pas les **pages** : elles sont servies
+par Cloudflare Pages avec le reste du site, et sans Access, n'importe qui peut les ouvrir — il
+ne verra rien (aucun appel ne passe sans le jeton), mais il verra l'outil. Access est la
+première serrure, le jeton la seconde ; ni l'une ni l'autre ne suffit seule.
+
+**Claude ne peut pas le configurer** : c'est dans le tableau de bord Cloudflare (Zero Trust).
+Trois étapes, une fois pour toutes.
+
+1. **Zero Trust → Access → Applications → Add an application → Self-hosted.**
+   Nom : `Tableau de bord Twin`. Domaine : `thelocomotionlab.com`, chemin `services/twin/tableau-de-bord`.
+   ⚠ Cloudflare applique la règle au chemin **et à tout ce qu'il contient** : une application
+   posée sur `services/twin` prendrait aussi la page de dépôt de la cohorte, qui doit rester
+   ouverte. Poser le chemin exact.
+2. **Policy** : `Allow`, Include → **Emails** → l'adresse de Valentin. Une seule règle, une
+   seule adresse. Session : 24 h suffit ; au-delà, un poste laissé ouvert reste ouvert.
+3. **Identity** : le *One-time PIN* (code par email) suffit et n'ajoute aucun compte tiers.
+
+Vérification : ouvrir `https://thelocomotionlab.com/services/twin/tableau-de-bord` dans une
+fenêtre privée. Access doit demander l'email **avant** que la page s'affiche. Puis ouvrir
+`https://thelocomotionlab.com/services/twin/cohorte` dans la même fenêtre : elle doit s'afficher
+**sans** rien demander — sinon l'application couvre trop large, et les athlètes ne peuvent plus
+déposer.
+
+Ce qu'Access ne fait pas : il ne protège pas `api.thelocomotionlab.com`. L'API est sur un autre
+domaine, et c'est le jeton qui la garde — d'où les deux serrures.
+
+### Les écrans
+
+Les pages vivent sous `apps/site/app/services/twin/tableau-de-bord/` et sont **entièrement
+clientes** : rien n'est prérendu, tout se lit sur l'API. Le jeton se colle une fois et vit en
+`sessionStorage` — il disparaît à la fermeture de l'onglet, et n'entre jamais dans une URL (où
+il finirait dans l'historique, les journaux du proxy et le `Referer` de la première image).
+
+| Écran | Adresse |
+|---|---|
+| File | `/services/twin/tableau-de-bord` |
+| Athlète | `/services/twin/tableau-de-bord/athletes?id=…` |
+
+L'identifiant d'un athlète est dans la query et non dans le chemin : une route dynamique
+demanderait au build d'énumérer les athlètes, qui arrivent après lui.
+
+**Non-indexation** : balise `robots` dans chaque page, `X-Robots-Tag` et
+`Referrer-Policy: no-referrer` dans `apps/site/public/_headers`, préfixe interdit dans
+`robots.txt`, absent du plan de site, et aucun lien depuis le site public. Les quatre gardes
+sont tenues par `apps/site/lib/nonIndexation.test.js`.
+
+**Charte** : `apps/site/lib/charteTableauDeBord.test.js` refuse toute couleur, police, ombre ou
+arrondi en dur dans ces fichiers, et toute annonce de durée pour une ingestion. Il est scopé au
+tableau de bord : le reste du site porte des valeurs calculées (cartes, planches, SVG) qui
+passent par le miroir JS des tokens, et qu'une garde à la lettre condamnerait à tort.
 
 ## 5. Où vont les données / confidentialité
 
@@ -489,18 +573,22 @@ l'archive : la trace du parcours compressée, le carnet de route, le jumeau, la 
 prédiction et la garde de suffisance. Aucune donnée brute d'activité — ses résumés sont les
 agrégats que l'annexe publie déjà.
 
-Il ne va **ni dans le dépôt ni sur le site** : il se dépose sur le volume du moteur, où
-`POST /rendu` le retrouve sous la référence. `publier` s'en charge si `TWIN_VPS` est posé
-(cf. [`secrets.md`](./secrets.md)) ; sinon il affiche la commande et ne touche à rien.
+Il ne va **ni dans le dépôt ni sur le site** : `publier` l'**importe dans le tableau de bord**
+(`POST /twin/tableau-de-bord/plans/import`), avec les documents que l'athlète emporte. Le plan
+fabriqué ici entre alors comme s'il y était né — publiable, envoyable, amendable — et le moteur
+ne recalcule rien : le dossier fait foi.
 
-Deux choses à ouvrir une fois pour que le bouton fonctionne en ligne :
+Il faut `TWIN_ADMIN_TOKEN` dans l'environnement (cf. [`secrets.md`](./secrets.md)) ; sans lui,
+`publier` dit ce qu'il aurait envoyé et ne touche à rien. `TWIN_API` surcharge l'adresse de
+l'API en développement.
 
-- la route `@twin_rendu` dans `infra/caddy/conf.d/api.caddy`, **commentée** par défaut. Elle
-  n'expose qu'un chemin du moteur — l'ingestion et les jobs, qui reçoivent des archives,
-  restent internes. Décommenter, puis `./deploy.sh` sur le VPS ;
-- rien côté site : l'adresse de l'API vit en clair dans `apps/site/lib/twinRendu.mjs`
-  (`NEXT_PUBLIC_TWIN_RENDU_API` la surcharge en développement, une valeur vide éteint le
-  bouton et laisse le téléchargement des réglages en JSON comme repli).
+> Avant le tableau de bord, `publier` posait le dossier par `ssh` et un `docker exec` à
+> distance. C'était une porte de plus à garder, sur le poste de travail, pour faire ce qu'une
+> route fait mieux — et c'est pour ça qu'elle n'est plus là.
+
+Côté site, rien à ouvrir : l'adresse de l'API vit en clair dans `apps/site/lib/twinRendu.mjs`
+(`NEXT_PUBLIC_TWIN_RENDU_API` la surcharge en développement, une valeur vide éteint le bouton
+et laisse le téléchargement des réglages en JSON comme repli).
 
 ### Ce que la fenêtre d'objectif fait aux trois colonnes
 

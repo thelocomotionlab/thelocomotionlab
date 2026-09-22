@@ -36,7 +36,15 @@ function makeApp(overrides: Partial<Config> = {}, deps: Partial<ServerDeps> = {}
     ...overrides,
   };
   const store = new DepotStore(config.dataDir);
-  const app = buildServer({ config, store, logger: false, notifier: null, confirmer: null, ...deps });
+  const app = buildServer({
+    config,
+    store,
+    logger: false,
+    notifier: null,
+    confirmer: null,
+    prevenir: null,
+    ...deps,
+  });
   cleanups.push(async () => {
     await app.close();
     fs.rmSync(dir, { recursive: true, force: true });
@@ -273,13 +281,49 @@ describe("POST /twin/depots", () => {
     expect(enEchec).toHaveBeenCalledOnce();
   });
 
-  it("dépôt refusé (honeypot) → aucun email ne part", async () => {
+  it("prévient le moteur, et note qu'il l'a fait", async () => {
+    const vus: string[] = [];
+    const { app, store } = makeApp({}, { prevenir: async (id) => (vus.push(id), true) });
+    await deposer(app, champsValides(), PETITE_ARCHIVE);
+    expect(vus).toHaveLength(1);
+    expect(vus[0]).toBe(store.list()[0].id);
+    expect(store.list()[0].moteurPrevenu).toBe(true);
+  });
+
+  it("moteur injoignable : le dépôt tient, et l'échec est noté", async () => {
+    // C'est ce que rattrape le bouton « rafraîchir » de la File : sans cette note, un
+    // moteur tombé pendant un upload perdrait l'athlète sans que personne le sache.
+    const { app, store } = makeApp({}, { prevenir: async () => false });
+    const res = await deposer(app, champsValides(), PETITE_ARCHIVE);
+    expect(res.statusCode).toBe(200);
+    expect(store.count()).toBe(1);
+    expect(store.list()[0].moteurPrevenu).toBe(false);
+  });
+
+  it("moteur qui lève : le dépôt tient quand même", async () => {
+    const quiLeve = vi.fn().mockRejectedValue(new Error("réseau coupé"));
+    const { app, store } = makeApp({}, { prevenir: quiLeve });
+    const res = await deposer(app, champsValides(), PETITE_ARCHIVE);
+    expect(res.statusCode).toBe(200);
+    expect(store.count()).toBe(1);
+    expect(store.list()[0].moteurPrevenu).toBe(false);
+    expect(quiLeve).toHaveBeenCalledOnce();
+  });
+
+  it("la note survit au redémarrage du service", async () => {
+    const { app, store, dir } = makeApp({}, { prevenir: async () => false });
+    await deposer(app, champsValides(), PETITE_ARCHIVE);
+    expect(new DepotStore(dir).list()[0].moteurPrevenu).toBe(false);
+  });
+
+  it("dépôt refusé (honeypot) → aucun email ne part, et le moteur n'est pas dérangé", async () => {
     const appels: string[] = [];
     const { app, store } = makeApp(
       {},
       {
         notifier: async () => void appels.push("notification"),
         confirmer: async () => void appels.push("confirmation"),
+        prevenir: async () => (appels.push("moteur"), true),
       },
     );
     const res = await deposer(app, champsValides({ website: "spam" }), PETITE_ARCHIVE);

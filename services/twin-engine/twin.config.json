@@ -219,8 +219,8 @@
     "minetti_example_grade": 0.15
   },
   "api": {
-    "_comment": "Ce que l'API laisse joindre depuis un navigateur : /rendu seul (refaire les documents d'un rapport amendé). Le reste est interne.",
-    "rendu_origins": ["https://www.thelocomotionlab.com", "https://thelocomotionlab.com"],
+    "_comment": "Ce que l'API laisse joindre depuis un navigateur : le tableau de bord, la page de l'athlète et la file de travail. Le reste (ingestion, archives, routes internes) ne sort pas du réseau Docker.",
+    "origins": ["https://www.thelocomotionlab.com", "https://thelocomotionlab.com"],
     "rendu_max_kio": 4096,
     "rendu_simultanes": 1,
     "rendu_par_minute": 12

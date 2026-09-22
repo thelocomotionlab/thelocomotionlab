@@ -1,4 +1,4 @@
-# L'API de la tableau de bord Locomotion Twin — récapitulatif à valider
+# L'API du tableau de bord Locomotion Twin — récapitulatif à valider
 
 Ce document décrit ce que le tableau de bord et la page athlète demanderont au serveur, comment chaque demande est protégée, et ce qui se passe derrière. Il part de ce qui existe déjà sur la branche `twin-v2/rapport-v4` et ne le remplace pas : il l'organise.
 
@@ -6,9 +6,9 @@ Ce document décrit ce que le tableau de bord et la page athlète demanderont au
 
 ## 1. Le principe en trois phrases
 
-**Le tableau de bord écrit des carnets de route et lit des dossiers.** Elle ne touche ni au moteur, ni au gabarit du rapport, ni au format de la spec. Le PDF sort du même `run_job` que le CLI.
+**Le tableau de bord écrit des carnets de route et lit des dossiers.** Il ne touche ni au moteur, ni au gabarit du rapport, ni au format de la spec. Le PDF sort du même `run_job` que le CLI.
 
-**Un seul objet fait foi : le dossier.** Produit par l'ingestion puis la génération, il contient tout ce qu'il faut pour refaire les documents sans l'archive. Qu'il vienne de le tableau de bord ou de ton ordinateur, c'est le même fichier.
+**Un seul objet fait foi : le dossier.** Produit par l'ingestion puis la génération, il contient tout ce qu'il faut pour refaire les documents sans l'archive. Qu'il vienne du tableau de bord ou de ton ordinateur, c'est le même fichier.
 
 **Deux publics, deux serrures.** Toi, par un jeton d'administration sur des routes `/tableau-de-bord/…`. L'athlète, par une clé dans le lien de sa page, sur des routes `/plans/…`. Rien d'autre n'est exposé.
 
@@ -226,11 +226,11 @@ Chaque dossier porte l'athlète, la course visée, le départ, le statut et **le
 
 ## 7. Ce que le tableau de bord ne fait jamais
 
-- Elle n'ouvre pas `report.tex.j2`, ne modifie ni le moteur ni le format de `RaceSpec` ni celui du dossier. Les cinq pages du rapport sont identiques à celles du CLI ; le PDF livré les assemble avec la feuille et les fiches, sans les toucher.
-- Elle n'invente aucune valeur : un champ vide reste vide, jusque dans le PDF.
-- Elle n'expose ni archive, ni job, ni ingestion à l'extérieur.
-- Elle ne décide pas du niveau : le moteur le pose à l'ingestion, le tableau de bord l’affiche.
-- Elle n'envoie rien sans que tu aies cliqué « Envoyer ».
+- Il n'ouvre pas `report.tex.j2`, ne modifie ni le moteur ni le format de `RaceSpec` ni celui du dossier. Les cinq pages du rapport sont identiques à celles du CLI ; le PDF livré les assemble avec la feuille et les fiches, sans les toucher.
+- Il n'invente aucune valeur : un champ vide reste vide, jusque dans le PDF.
+- Il n'expose ni archive, ni job, ni ingestion à l'extérieur.
+- Il ne décide pas du niveau : le moteur le pose à l'ingestion, le tableau de bord l’affiche.
+- Il n'envoie rien sans que tu aies cliqué « Envoyer ».
 
 ---
 

@@ -608,20 +608,30 @@ class ReportParams:
 class ApiParams:
     """Ce que l'API laisse joindre depuis un navigateur.
 
-    Un seul endpoint est fait pour ça : ``/rendu``, qui refait les documents d'un rapport
-    amendé — sans archive, sans rien garder. Tout le reste (ingestion, jobs) est interne et
-    n'est pas routé au dehors (cf. ``infra/caddy/conf.d/twin-engine.caddy.disabled``).
+    Trois familles de routes sont faites pour ça, et elles seules sont routées au dehors
+    (``infra/caddy/conf.d/api.caddy``) : le tableau de bord, la page de l'athlète et la
+    file de travail. L'ingestion, les archives et les routes internes restent dans le
+    réseau Docker.
+
+    Les pages du site vivent sur un autre domaine que l'API : tout appel est donc
+    CROISÉ, et l'en-tête ``Authorization`` du tableau de bord force un préflight. D'où
+    une allowlist d'origines, unique pour toutes ces routes.
     """
 
-    # origines autorisées à appeler /rendu depuis un navigateur
-    rendu_origins: tuple[str, ...] = ("https://www.thelocomotionlab.com",
-                                      "https://thelocomotionlab.com")
+    # origines autorisées à appeler l'API depuis un navigateur
+    origins: tuple[str, ...] = ("https://www.thelocomotionlab.com",
+                                "https://thelocomotionlab.com")
     # un dossier de rapport pèse ~200 Kio ; bien au-delà, ce n'est plus un dossier
     rendu_max_kio: int = 4096
     # un rendu coûte quelques secondes de XeLaTeX : un seul à la fois, et pas plus de
     # rendu_par_minute sur la minute écoulée — c'est un service, pas une ferme de calcul
     rendu_simultanes: int = 1
     rendu_par_minute: int = 12
+    # Essais RATÉS tolérés sur /plans/* par adresse, et la fenêtre qui les compte. Vingt
+    # essais sur cinq minutes : large pour un athlète qui s'est trompé de lien, dérisoire
+    # face aux 2^128 valeurs d'une clé.
+    plans_tentatives_par_ip: int = 20
+    plans_fenetre_s: float = 300.0
 
 
 @dataclass(frozen=True)
