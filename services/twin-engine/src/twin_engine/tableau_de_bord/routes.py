@@ -17,6 +17,7 @@ import json
 import re
 import shutil
 import tempfile
+import unicodedata
 from pathlib import Path
 from uuid import uuid4
 
@@ -25,27 +26,45 @@ from fastapi import (
 )
 
 from .. import dossier as dossier_mod
+from ..course import RaceSpec
 from ..jobs import run_ingestion
 from . import file as _file
 from .depot import DepotIndisponible
-from .magasin import Magasin
+from .magasin import Magasin, ecrire_json
 from .objets import (
+    COURSE_BROUILLON,
+    COURSE_PUBLIEE,
     INGESTION_RECU,
     PLAN_GENERE,
     Archive,
     Athlete,
+    Course,
+    Geometrie,
+    Gpx,
     Ingestion,
     JOB_INGESTION,
     Plan,
+    Soleil,
     maintenant,
 )
 from .plan import resumer_la_prediction
+from .trace import lire_la_trace, parse_depart
+from .traduction import course_vers_racespec, racespec_vers_course
 from .serrures import Serrures, Tentatives, adresse_du_visiteur
 
 
 # Une référence sert à composer un chemin sur le volume : même filtre que celui de
 # `/rendu` (api/app.py), et pour la même raison.
 _REF_SURE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}")
+
+
+def _slug_de(nom: str, edition: int | None) -> str:
+    """« Nice Côte d'Azur by UTMB · 100M », 2026 → « nice-cote-d-azur-by-utmb-100m-2026 ».
+
+    Lisible dans une URL et dans un nom de fichier, sans accent ni ponctuation."""
+    sans_accent = unicodedata.normalize("NFKD", nom).encode("ascii", "ignore").decode()
+    mots = re.sub(r"[^a-z0-9]+", "-", sans_accent.lower()).strip("-")
+    return f"{mots}-{edition}" if edition else mots
 
 
 def identifiant_dathlete(email: str) -> str:
@@ -280,6 +299,188 @@ def routeur_admin() -> APIRouter:
             shutil.rmtree(temporaire, ignore_errors=True)
             raise HTTPException(status_code=500, detail=f"écriture impossible : {exc}") from exc
         return {"job_id": _mettre_en_file(request, fond, athlete_id, archive_locale=chemin)}
+
+    # --- Bibliothèque et éditeur de course (§5.3) ---------------------------- #
+    def _course_ou_404(request: Request, course_id: str) -> Course:
+        brut = request.app.state.magasin.courses.lire(course_id)
+        if brut is None:
+            raise HTTPException(status_code=404, detail="course inconnue")
+        return Course.from_dict(brut)
+
+    def _plans_de(magasin: Magasin, course_id: str) -> list[dict]:
+        return [p for p in magasin.plans.lister() if p.get("course_id") == course_id]
+
+    @routeur.get("/courses")
+    def lister_les_courses(request: Request) -> dict:
+        """La bibliothèque. Chaque course dit combien d'athlètes la courent — c'est ce
+        qui fait la différence entre une course qu'on peut jeter et une qu'on ne peut
+        plus toucher."""
+        magasin: Magasin = request.app.state.magasin
+        courses = sorted(magasin.courses.lister(), key=lambda c: c.get("depart_le") or "9999")
+        for course in courses:
+            course["athletes"] = len(_plans_de(magasin, course["id"]))
+        return {"courses": courses}
+
+    @routeur.post("/courses")
+    def creer_une_course(charge: dict, request: Request) -> dict:
+        """Une course naît en BROUILLON, de son identité seule : nom, édition, départ.
+
+        La trace vient après — c'est l'ordre de l'éditeur, et c'est le bon : sans nom ni
+        date, une trace n'est qu'une ligne sur une carte.
+
+        ``race_spec`` (facultatif) ouvre l'autre porte : une spec écrite au CLI entre
+        telle quelle, ravitaillements compris. Le §5.3 ne la liste pas ; elle ne change
+        rien au contrat documenté et évite de resaisir à la main dix-sept
+        ravitaillements qu'un fichier porte déjà."""
+        magasin: Magasin = request.app.state.magasin
+        course_id = uuid4().hex[:12]
+
+        brut = charge.get("race_spec")
+        if brut is not None:
+            try:
+                spec = RaceSpec.from_dict(brut)
+            except (ValueError, KeyError, TypeError) as exc:
+                raise HTTPException(status_code=422, detail=f"spec illisible : {exc}") from exc
+            course = racespec_vers_course(spec, id=course_id, edition=charge.get("edition"))
+            course.slug = _slug_de(course.nom, course.edition)
+        else:
+            nom = str(charge.get("nom") or "").strip()
+            if not nom:
+                raise HTTPException(status_code=422, detail="le nom est requis")
+            course = Course(
+                id=course_id,
+                nom=nom,
+                edition=charge.get("edition"),
+                depart_le=str(charge.get("depart_le") or ""),
+                slug=_slug_de(nom, charge.get("edition")),
+            )
+        magasin.courses.ecrire(course.to_dict())
+        return {"id": course.id, "slug": course.slug, "statut": course.statut}
+
+    @routeur.get("/courses/{course_id}")
+    def lire_une_course(course_id: str, request: Request) -> dict:
+        vue = _course_ou_404(request, course_id).to_dict()
+        vue["athletes"] = len(_plans_de(request.app.state.magasin, course_id))
+        return vue
+
+    @routeur.put("/courses/{course_id}")
+    def enregistrer_une_course(course_id: str, charge: dict, request: Request) -> dict:
+        """L'objet entier, à chaque enregistrement (§5.3).
+
+        L'éditeur sauve à chaque changement : envoyer la course complète plutôt qu'un
+        fragment évite qu'un enregistrement perdu laisse un objet à moitié d'une version
+        et à moitié de l'autre.
+
+        Ce qui NE se remplace pas ici : l'id, le statut et la géométrie. Le statut se
+        change par ``/publish``, et la géométrie se calcule depuis la trace — l'écran
+        n'a pas à pouvoir affirmer un D+ que le moteur n'a pas mesuré."""
+        magasin: Magasin = request.app.state.magasin
+        ancienne = _course_ou_404(request, course_id)
+        try:
+            nouvelle = Course.from_dict({**charge, "id": course_id})
+        except (TypeError, ValueError, KeyError) as exc:
+            raise HTTPException(status_code=422, detail=f"course illisible : {exc}") from exc
+
+        nouvelle.statut = ancienne.statut
+        nouvelle.geometrie = ancienne.geometrie
+        nouvelle.gpx = ancienne.gpx
+        nouvelle.slug = ancienne.slug or _slug_de(nouvelle.nom, nouvelle.edition)
+
+        # Une course qu'on ne peut pas traduire est une course qui ne fera jamais de
+        # plan : on le dit à l'enregistrement, pas à la génération.
+        try:
+            course_vers_racespec(nouvelle)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+        return magasin.courses.ecrire(nouvelle.to_dict())
+
+    @routeur.post("/courses/{course_id}/gpx")
+    async def poser_la_trace(course_id: str, request: Request,
+                             gpx: UploadFile = File(...)) -> dict:
+        """La trace : profil lissé, géométrie, waypoints trouvés, position, soleil (§5.3).
+
+        Le calcul passe par ``build_course``, celui-là même qui fait les rapports : deux
+        lectures de GPX finiraient par ne plus dire la même chose."""
+        magasin: Magasin = request.app.state.magasin
+        course = _course_ou_404(request, course_id)
+        donnees = await gpx.read()
+        try:
+            vu = lire_la_trace(donnees, cfg=request.app.state.cfg,
+                               race=course_vers_racespec(course))
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=f"trace illisible : {exc}") from exc
+
+        repertoire = magasin.courses.repertoire(course_id)
+        repertoire.mkdir(parents=True, exist_ok=True)
+        (repertoire / "trace.gpx").write_bytes(donnees)
+        ecrire_json(repertoire / "profil.json", vu["profil"])
+
+        course.gpx = Gpx(nom=Path(gpx.filename or "trace.gpx").name,
+                         points=vu["points"], avec_altitude=vu["avec_altitude"])
+        course.geometrie = Geometrie(**vu["geometrie"])
+        course.lat, course.lon = vu["lat"], vu["lon"]
+        course.soleil = Soleil(**vu["soleil"])
+        magasin.courses.ecrire(course.to_dict())
+        return vu
+
+    @routeur.post("/courses/{course_id}/publish")
+    def publier_une_course(course_id: str, request: Request) -> dict:
+        """La course sort du brouillon. Les plans existants gardent leur version."""
+        course = _course_ou_404(request, course_id)
+        if not course.ravitaillements:
+            raise HTTPException(
+                status_code=409,
+                detail="une course sans ravitaillement ne fait pas de carnet de route",
+            )
+        course.statut = COURSE_PUBLIEE
+        return request.app.state.magasin.courses.ecrire(course.to_dict())
+
+    @routeur.post("/courses/{course_id}/duplicate")
+    def dupliquer_en_edition_suivante(course_id: str, charge: dict, request: Request) -> dict:
+        """La même trace et les mêmes ravitaillements, une édition plus loin (§5.3).
+
+        Un parcours bouge peu d'une année sur l'autre ; la date, elle, bouge toujours.
+        La copie naît en brouillon — c'est ce qui laisse corriger avant de servir."""
+        magasin: Magasin = request.app.state.magasin
+        source = _course_ou_404(request, course_id)
+        neuve = Course.from_dict(source.to_dict())
+        neuve.id = uuid4().hex[:12]
+        neuve.statut = COURSE_BROUILLON
+        neuve.edition = charge.get("edition") or (
+            (source.edition + 1) if source.edition else None
+        )
+        neuve.depart_le = str(charge.get("depart_le") or "")
+        neuve.soleil = Soleil()   # une autre date, d'autres heures de soleil
+        neuve.slug = _slug_de(neuve.nom, neuve.edition)
+        magasin.courses.ecrire(neuve.to_dict())
+
+        # La trace suit : c'est tout l'intérêt de dupliquer.
+        ancien = magasin.courses.repertoire(course_id)
+        nouveau = magasin.courses.repertoire(neuve.id)
+        nouveau.mkdir(parents=True, exist_ok=True)
+        for fichier in ("trace.gpx", "profil.json"):
+            if (ancien / fichier).exists():
+                shutil.copy(ancien / fichier, nouveau / fichier)
+        return {"id": neuve.id, "slug": neuve.slug, "edition": neuve.edition}
+
+    @routeur.delete("/courses/{course_id}", status_code=204)
+    def supprimer_une_course(course_id: str, request: Request) -> None:
+        """Refusée si un plan y est rattaché (§5.3).
+
+        Un plan garde son dossier et peut refaire ses documents sans sa course ; mais la
+        bibliothèque mentirait, et le registre ne saurait plus de quelle épreuve il
+        parle. On supprime les plans d'abord, sciemment."""
+        magasin: Magasin = request.app.state.magasin
+        _course_ou_404(request, course_id)
+        rattaches = _plans_de(magasin, course_id)
+        if rattaches:
+            raise HTTPException(
+                status_code=409,
+                detail=f"{len(rattaches)} plan(s) rattaché(s) : "
+                       f"{', '.join(p['ref'] for p in rattaches[:3])}",
+            )
+        magasin.courses.supprimer(course_id)
 
     # --- Plans ------------------------------------------------------------- #
     # Les documents qu'un import accepte : ceux que l'athlète emporte, et eux seuls.

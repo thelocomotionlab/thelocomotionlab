@@ -166,7 +166,20 @@ Endpoints :
 | `GET /jobs/{id}/report` | télécharge le **PDF** du rapport |
 | `POST /fiche` | rendu **sans état** : le JSON d'une fiche d'atelier → son PDF, rien de gardé |
 | `POST /rendu` | rendu **sans état** : un dossier (ou la référence d'un dossier déposé) + l'amendement de la page → les documents refaits, en ZIP |
-| `GET /tableau-de-bord/file` | ce qui attend, la course la plus proche en tête : compteurs, dossiers et demandes ouvertes (Phase 1) |
+| `GET /tableau-de-bord/file` | ce qui attend, la course la plus proche en tête : compteurs, dossiers et demandes ouvertes |
+| `GET /tableau-de-bord/athletes/{id}` · `POST …/ingest` · `POST …/archive` · `DELETE` | la fiche d'un athlète, son ingestion, sa suppression |
+| `GET · POST /tableau-de-bord/courses` | la bibliothèque ; `POST` crée un brouillon (`nom`, `edition`, `depart_le`) ou importe une spec du CLI (`race_spec`) |
+| `GET · PUT /tableau-de-bord/courses/{id}` | l'objet entier, à chaque enregistrement |
+| `POST /tableau-de-bord/courses/{id}/gpx` | la trace → profil lissé, géométrie, waypoints trouvés, position, heures de soleil |
+| `POST …/publish` · `POST …/duplicate` · `DELETE` | sortir du brouillon ; dupliquer en édition suivante ; supprimer (refusé si un plan y est rattaché) |
+| `POST /tableau-de-bord/plans/import` | un dossier fait au CLI entre comme s'il était né ici |
+
+**Une surprise à connaître dans l'éditeur : la distance change quand on saisit le carnet
+de route.** Sans ravitaillements, le moteur fait confiance à la longueur en trois dimensions
+de la trace ; avec, il la **recale sur le kilométrage officiel** — le GPS dérive, le carnet
+non. Avant, c'est ce que le GPS a mesuré ; après, ce que l'organisateur annonce. Le D+, lui,
+ne se recale sur rien : il se mesure, et c'est pourquoi l'écart avec le carnet officiel ne se
+calcule que sur lui.
 
 Les routes du tableau de bord arrivent par phases ; celles qui existent sont ci-dessus.
 Le contrat complet — objets, noms de champs, routes par écran — est dans
