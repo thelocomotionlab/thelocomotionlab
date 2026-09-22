@@ -29,6 +29,7 @@ const NOMS: Record<Element["type"], string> = {
   stat: "Chiffre",
   fiche: "Fiche",
   cases: "Journées",
+  semaines: "Semaines",
 };
 
 /** Ce qu'on lit dans la liste : le contenu s'il y en a, le type sinon. */

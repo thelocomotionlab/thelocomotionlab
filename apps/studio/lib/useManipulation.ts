@@ -29,6 +29,7 @@ import {
   elementSous,
   elementsDans,
   enFractions,
+  barreSous,
   enPixels,
   glisserLeCadrage,
   englobante,
@@ -82,7 +83,7 @@ const DOUBLE_CLIC = 400;
 export function useManipulation(poste: PosteDeTravail) {
   const { projet, plancheCourante, indexPlanche, selection, setSelection, modifier, sceller } =
     poste;
-  const { outil, setOutil, recadrage, setRecadrage } = poste;
+  const { outil, setOutil, recadrage, setRecadrage, barreVisee, setBarreVisee } = poste;
   const geste = useRef<Geste | null>(null);
   const bouge = useRef(false);
   const dernierClic = useRef<{ id: string; le: number } | null>(null);
@@ -217,6 +218,18 @@ export function useManipulation(poste: PosteDeTravail) {
         setEtat((s) => ({ ...s, geste: "recadrer" }));
         return;
       }
+      // UNE BARRE DE SEMAINES SE VISE AU CLIC, sur un graphique déjà pris :
+      // le premier clic prend l'élément, le suivant désigne la barre. Sans ce
+      // partage, on ne pourrait plus déplacer le graphique sans le colorer.
+      if (vise.type === "semaines") {
+        const deja = selection.length === 1 && selection[0] === vise.id;
+        const boite = enPixels(vise, format);
+        const index = deja ? barreSous(vise, boite, p.x, p.y) : null;
+        setBarreVisee(index === null ? null : { id: vise.id, index });
+      } else if (barreVisee) {
+        setBarreVisee(null);
+      }
+
       if (edition !== null && edition !== vise.id) setEdition(null);
 
       // DANS le recadrage, un enfoncement sur la photo la fait glisser sous son
@@ -267,6 +280,8 @@ export function useManipulation(poste: PosteDeTravail) {
       outil,
       recadrage,
       setRecadrage,
+      barreVisee,
+      setBarreVisee,
     ],
   );
 

@@ -14,6 +14,7 @@ import { CORPS, LETTRAGE, couleurDuJour, rgba } from "./charte.ts";
 import type { Ctx2D } from "./canvas.ts";
 import { coordsDeCadrage, dessinerCarte, miniCarte } from "./carte.ts";
 import { vocabulaireDIcones } from "./canvas.ts";
+import { dessinerSemaines } from "./semaines.ts";
 import { segmentsMontres, type ContexteRendu } from "./contexte.ts";
 import {
   blocsDeTexte,
@@ -86,6 +87,8 @@ export function dessinerElement(
       return dessinerFiche(ctx, element, boite, c);
     case "profil":
       return dessinerProfil(ctx, element, boite, c);
+    case "semaines":
+      return dessinerSemaines(ctx, element, boite, c);
     case "cases":
       return dessinerCases(ctx, element, boite, c);
     case "carte":

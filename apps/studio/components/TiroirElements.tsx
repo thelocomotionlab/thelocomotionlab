@@ -23,6 +23,7 @@ import {
   iconeNeuve,
   marqueNeuve,
   profilNeuf,
+  semainesNeuves,
 } from "@locomotionlab/planche";
 import type { Element, PlancheImage, Projet } from "@locomotionlab/planche";
 
@@ -162,6 +163,13 @@ export default function TiroirElements({ poste }: { poste: PosteDeTravail }) {
             onClick={() => poser(profilNeuf({ x: 0.06, y: 0.7, l: 0.88, h: 0.11 }))}
           >
             Profil
+          </button>
+          <button
+            type="button"
+            className={BOUTON}
+            onClick={() => poser(semainesNeuves({ x: 0.06, y: 0.34, l: 0.88, h: 0.4 }))}
+          >
+            Semaines
           </button>
           <button
             type="button"

@@ -23,6 +23,7 @@ import type {
   ElementMarque,
   ElementPhoto,
   ElementProfil,
+  ElementSemaines,
   ElementStat,
   ElementTexte,
   RoleTexte,
@@ -262,6 +263,39 @@ export function casesNeuves(boite: Boite, over: Partial<ElementCases> = {}): Ele
     cases: [],
     taille: 30,
     couleurs: [],
+    ...over,
+  };
+}
+
+/**
+ * Des semaines neuves, avec de quoi voir de quoi il s'agit.
+ *
+ * Un graphique vide ne se règle pas : on ne sait ni où il commence, ni ce que
+ * ses couleurs feront. Douze semaines factices se remplacent d'un collage.
+ */
+export function semainesNeuves(
+  boite: Boite,
+  over: Partial<ElementSemaines> = {},
+): ElementSemaines {
+  const lignes = Array.from({ length: 12 }, (_, i) => ({
+    label: `S${i + 1}`,
+    km: 30 + Math.round(Math.sin(i / 2) * 18 + i * 3),
+    dplus: 800 + Math.round(Math.cos(i / 2) * 500 + i * 90),
+    minutes: 180 + Math.round(Math.sin(i / 3) * 70 + i * 14),
+    couleur: "",
+  }));
+  return {
+    ...commun("semaines", boite, "Semaines"),
+    type: "semaines",
+    lignes,
+    barres: "km",
+    courbe: "dplus",
+    couleurBarres: "",
+    couleurCourbe: "",
+    pasDesLabels: 2,
+    axes: true,
+    legende: [],
+    taille: CORPS.pied,
     ...over,
   };
 }

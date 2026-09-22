@@ -10,6 +10,7 @@
 // élément qu'il faut aller écrire à la main dans le fichier du projet, et c'est
 // exactement ce que le studio existe pour éviter.
 
+import { useState } from "react";
 import { Eye, EyeOff, Trash2 } from "lucide-react";
 import {
   COULEURS_TEXTE,
@@ -27,11 +28,15 @@ import {
   type ElementIcone,
   type ElementMarque,
   type ElementPhoto,
+  type ElementSemaines,
   type ElementProfil,
   type ElementStat,
   type ElementTexte,
   type DegradesCarte,
   type Etiquette,
+  type LigneLegende,
+  type MetriqueSemaine,
+  type SemaineEntrainement,
   type Filet,
 } from "@locomotionlab/planche";
 import { CLES_ICONES } from "@locomotionlab/ui/icones";
@@ -936,6 +941,215 @@ function ReglagesCases({
   );
 }
 
+/* --------------------------------------------------------------- semaines */
+
+const METRIQUES: { cle: MetriqueSemaine; label: string }[] = [
+  { cle: "km", label: "Distance (km)" },
+  { cle: "dplus", label: "Dénivelé (m D+)" },
+  { cle: "minutes", label: "Temps (h)" },
+];
+
+/**
+ * LES CHIFFRES SE COLLENT, ILS NE SE TAPENT PAS.
+ *
+ * Dix-neuf semaines à quatre colonnes, c'est soixante-seize champs : personne
+ * ne les saisit un par un. On colle ce qu'on a — le `data.csv` du site, une
+ * sélection de tableur — et on relit ce qui a été compris.
+ *
+ * Virgules OU tabulations OU points-virgules : on ne demande pas à quelqu'un
+ * qui copie depuis LibreOffice de savoir ce que son presse-papiers contient.
+ */
+function lireLesSemaines(brut: string): SemaineEntrainement[] {
+  const lignes = brut
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const out: SemaineEntrainement[] = [];
+  for (const ligne of lignes) {
+    const cases = ligne.split(/[\t;,]/).map((c) => c.trim());
+    if (cases.length < 2) continue;
+    const nombre = (i: number) => {
+      // La virgule décimale d'un tableur français, une fois les colonnes
+      // découpées sur les tabulations.
+      const v = Number.parseFloat((cases[i] ?? "").replace(",", "."));
+      return Number.isFinite(v) ? v : 0;
+    };
+    // Une première ligne d'en-têtes se reconnaît à ce qu'elle ne chiffre pas.
+    if (!Number.isFinite(Number.parseFloat((cases[1] ?? "").replace(",", ".")))) continue;
+    out.push({
+      label: cases[0] ?? "",
+      km: nombre(1),
+      dplus: nombre(2),
+      minutes: nombre(3),
+      couleur: "",
+    });
+  }
+  return out;
+}
+
+/** Ce qu'on remet dans le champ pour relire ce qui a été compris. */
+function ecrireLesSemaines(lignes: readonly SemaineEntrainement[]): string {
+  return lignes.map((s) => `${s.label},${s.km},${s.dplus},${s.minutes}`).join("\n");
+}
+
+function ReglagesSemaines({
+  e,
+  poser,
+}: {
+  e: ElementSemaines;
+  poser: Poser<ElementSemaines>;
+}) {
+  const [brut, setBrut] = useState<string | null>(null);
+  const texte = brut ?? ecrireLesSemaines(e.lignes);
+
+  const coller = (v: string) => {
+    setBrut(v);
+    const lues = lireLesSemaines(v);
+    if (lues.length > 0) {
+      poser(
+        (x) => ({
+          ...x,
+          // LES COULEURS SURVIVENT AU COLLAGE : on recolle souvent pour corriger
+          // un chiffre, et reperdre ses blocs à chaque fois serait absurde.
+          lignes: lues.map((l, i) => ({ ...l, couleur: x.lignes[i]?.couleur ?? "" })),
+        }),
+        "semaines",
+      );
+    }
+  };
+
+  const majLegende = (i: number, champ: Partial<LigneLegende>) =>
+    poser(
+      (x) => ({ ...x, legende: x.legende.map((l, k) => (k === i ? { ...l, ...champ } : l)) }),
+      "légende",
+    );
+
+  return (
+    <>
+      <Titre>Données</Titre>
+      <textarea
+        value={texte}
+        onChange={(ev) => coller(ev.target.value)}
+        onBlur={() => setBrut(null)}
+        rows={5}
+        spellCheck={false}
+        aria-label="Les semaines, une par ligne"
+        className="w-full resize-y rounded-md border border-brand-field bg-brand-bg px-2 py-1.5 font-mono text-[11px] leading-snug"
+      />
+      <Aide>
+        Une semaine par ligne : <em>étiquette, km, D+, minutes</em>. Colle depuis un tableur —
+        virgules, tabulations ou points-virgules, peu importe. {e.lignes.length} semaine
+        {e.lignes.length > 1 ? "s" : ""} lue{e.lignes.length > 1 ? "s" : ""}.
+      </Aide>
+
+      <Titre>Séries</Titre>
+      <Choix
+        libelle="En barres"
+        valeur={e.barres}
+        options={METRIQUES}
+        onChange={(v) => poser((x) => ({ ...x, barres: v }), "série")}
+      />
+      <Choix
+        libelle="En courbe"
+        valeur={e.courbe ?? ""}
+        options={[{ cle: "", label: "Aucune" }, ...METRIQUES.map((m) => ({ cle: m.cle as string, label: m.label }))]}
+        onChange={(v) =>
+          poser((x) => ({ ...x, courbe: (v || null) as MetriqueSemaine | null }), "série")
+        }
+      />
+      <Couleur
+        libelle="Barres"
+        valeur={e.couleurBarres}
+        onChange={(v) => poser((x) => ({ ...x, couleurBarres: v }), "couleur")}
+      />
+      {e.courbe && (
+        <Couleur
+          libelle="Courbe"
+          valeur={e.couleurCourbe}
+          onChange={(v) => poser((x) => ({ ...x, couleurCourbe: v }), "couleur")}
+        />
+      )}
+      <Aide>
+        Deux séries au plus : trois échelles sans rapport — cent kilomètres, cinq mille
+        mètres, huit heures — ne se superposent pas sans mentir sur l&rsquo;une d&rsquo;elles.
+      </Aide>
+
+      <Titre>Axes</Titre>
+      <Nombre
+        libelle="Une étiquette sur"
+        valeur={e.pasDesLabels}
+        onChange={(n) => poser((x) => ({ ...x, pasDesLabels: Math.max(1, Math.round(n)) }), "axes")}
+      />
+      <Case
+        libelle="Graduations chiffrées"
+        coche={e.axes}
+        onChange={(v) => poser((x) => ({ ...x, axes: v }), "axes")}
+      />
+      <Nombre
+        libelle="Corps"
+        valeur={e.taille}
+        suffixe="px"
+        onChange={(n) => poser((x) => ({ ...x, taille: Math.max(8, n) }), "corps")}
+      />
+
+      <Titre>Couleurs des semaines</Titre>
+      <Aide>Clique une barre dans la planche pour la colorer.</Aide>
+      {e.lignes.some((l) => l.couleur) && (
+        <Bouton
+          onClick={() =>
+            poser((x) => ({ ...x, lignes: x.lignes.map((l) => ({ ...l, couleur: "" })) }), "couleurs")
+          }
+          titre="Toutes les barres reprennent la couleur de la série"
+        >
+          Tout remettre à la série
+        </Bouton>
+      )}
+
+      <Titre>Légende</Titre>
+      {e.legende.length === 0 && <Aide>Aucune. Elle dit ce que les couleurs racontent.</Aide>}
+      {e.legende.map((l, i) => (
+        <div key={i} className="mb-1 flex items-center gap-1">
+          <input
+            type="color"
+            value={l.couleur || "#8CB9BD"}
+            aria-label={`Couleur de la ligne ${i + 1}`}
+            onChange={(ev) => majLegende(i, { couleur: ev.target.value })}
+            className="h-7 w-8 shrink-0 cursor-pointer rounded border border-brand-field bg-brand-bg"
+          />
+          <input
+            type="text"
+            value={l.texte}
+            placeholder="ce que dit cette couleur"
+            aria-label={`Texte de la ligne ${i + 1}`}
+            onChange={(ev) => majLegende(i, { texte: ev.target.value })}
+            className="min-w-0 flex-1 rounded border border-brand-field bg-brand-bg px-1.5 py-1 text-[13px]"
+          />
+          <button
+            type="button"
+            onClick={() =>
+              poser((x) => ({ ...x, legende: x.legende.filter((_, k) => k !== i) }), "légende")
+            }
+            aria-label={`Retirer la ligne ${i + 1}`}
+            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-brand-field transition-colors hover:bg-brand-primary/12 motion-reduce:transition-none"
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
+      ))}
+      <Bouton
+        onClick={() =>
+          poser(
+            (x) => ({ ...x, legende: [...x.legende, { couleur: "#8CB9BD", texte: "" }] }),
+            "légende",
+          )
+        }
+      >
+        Ajouter une ligne
+      </Bouton>
+    </>
+  );
+}
+
 /* --------------------------------------------------------------- l'aiguillage */
 
 export default function ReglagesElement({
@@ -976,6 +1190,8 @@ export default function ReglagesElement({
       return <ReglagesFiche e={element} poser={poser<ElementFiche>("fiche")} />;
     case "cases":
       return <ReglagesCases e={element} poser={poser<ElementCases>("cases")} ctx={ctx} />;
+    case "semaines":
+      return <ReglagesSemaines e={element} poser={poser<ElementSemaines>("semaines")} />;
     default:
       return null;
   }
