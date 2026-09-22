@@ -215,9 +215,22 @@ class Ravitaillement:
 
 @dataclass
 class PhaseCourse:
+    """Une partie de la course dans la langue de l'athlète.
+
+    ``du_km`` et ``au_km`` tombent TOUJOURS sur un ravitaillement : le rapport découpe
+    les phases par segments (``report/feuille.py``), et un segment va d'un ravitaillement
+    au suivant. Une phase qui commencerait entre les deux ne serait pas mal rendue, elle
+    serait irreprésentable — l'éditeur aimante donc les bandes aux ravitaillements, et
+    la traduction vers le moteur n'a plus rien à arrondir.
+
+    ``note`` est le mot pour l'athlète sur cette partie. Le §3.2 ne le liste pas ; sans
+    lui, importer une spec qui en porte un le perdrait (``RaceSpec.Phase.note``).
+    """
+
     nom: str = ""
     du_km: float = 0.0
     au_km: float = 0.0
+    note: str = ""
 
 
 @dataclass
