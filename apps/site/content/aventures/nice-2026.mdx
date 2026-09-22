@@ -4,29 +4,47 @@ titre: "Nice Côte d'Azur by UTMB · 100M"
 slug: "nice-2026"
 statut: publie
 chapeau: "Le seul dossard de la saison 2026, et le jalon vers lequel converge tout le bloc d'entraînement."
-etat: en-preparation
+etat: en-cours
 campagne: { debut: 2026-05-17, fin: 2026-09-26 }
 cover: "/images/articles/nice-by-utmb-2026/south_alps_covers.webp"
 resume:
-  - "165 km"
-  - "9 000 m D+"
+  - { label: "Type de projet", valeur: "Dossard" }
+  - { label: "Distance", valeur: "167 km" }
+  - { label: "Dénivelé", valeur: "10 000 m" }
 sections:
   - type: caracteristiques
     champs:
-      - { label: "Distance", valeur: "165 km" }
-      - { label: "Dénivelé positif", valeur: "9 000 m" }
-      - { label: "Départ", valeur: "25/09/2026" }
-      - { label: "Préparation", valeur: "Un plan sur 5 mois, du 17/05 à fin septembre" }
+      - { label: "Distance", valeur: "167 km" }
+      - { label: "Dénivelé positif", valeur: "9 500 m" }
+      - { label: "Dénivelé négatif", valeur: "10 700 m" }
+      - { label: "Type de trace", valeur: "Aller simple" }
+      - { label: "Conditions", valeur: "Dossard avec assistance" }      
+
+  - type: geo
+    id: "trace"
+    titre: "Trace"
+    gpx: "nice-100m-2026.gpx"
+    colonnes: ["Point", "km", "D+", "D−"]    
+    lignes:
+      - ["Auron", "0", "0 m", "0 m"]
+      - ["Nice", "167,5", "9 500 m", "11 000 m"]
+
+
 
   - type: preparation
+    id: "preparation"
+    graphe:
+      abscisse: ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "S11", "S12", "S13", "S14", "S15", "S16", "S17"]
+      series:
+        - { nom: "Distance", unite: "km", valeurs: [77, 84, 94, 102, 41, 92, 112, 121, 0, 86, 79, 48, 108, 55, 198, 44, 79] }
+        - { nom: "Dénivelé positif", unite: "m", valeurs: [3200, 3600, 4500, 7100, 1900, 4300, 6700, 6800, 0, 2700, 4200, 1400, 6600, 1000, 12800, 700, 3500] }  
     seances:
-      colonnes: ["Date", "Sortie", "km", "D+", "Sac", "Ce qu'on éprouvait", "Billet"]
+      colonnes: ["Date", "Sortie", "km", "Dénivelé", "Remarque", "Billet"]
       lignes:
-        - ["06/06/2026", "WEC Aravis", "86", "6 700 m", "TODO", "Trois jours de haute montagne", "wec-aravis"]
-        - ["05/07/2026", "Pic de volume", "233", "13 500 m", "TODO", "Deux semaines à plus de 110 km", "pic-de-volume"]
-        - ["27/07/2026", "4x2000 m de Chartreuse", "49", "TODO", "TODO", "Brèche Arnaud et hyperthermie", "systeme-nerveux-en-alerte"]
-        - ["09/08/2026", "Croix de Belledonne", "24", "2 700 m", "TODO", "Terrain technique, temps frais", "reprise-apaisee-et-ancree"]
-        - ["22/08/2026", "Tour des Écrins", "198", "12 767 m", "10,1 kg", "Test final en autonomie", ""]
+        - ["06/06/2026", "WEC Aravis", "86", "6 700 m", "Trois jours de haute montagne", "wec-aravis"]
+        - ["27/07/2026", "4x2000 m de Chartreuse", "49", "Conditions fastpacking", "Brèche Arnaud et hyperthermie", "systeme-nerveux-en-alerte"]
+        - ["09/08/2026", "Croix de Belledonne", "24", "2 700 m", "Terrain très technique, temps frais", "reprise-apaisee-et-ancree"]
+        - ["22/08/2026", "Tour des Écrins", "198", "12 767 m", "Week-end choc", ""]
     protocoles:
       - "footing-a-jeun-prolonge"
       - "jeune-cetogene-apres-midi"
@@ -34,3 +52,10 @@ sections:
       - "train-low-eat-low"
       - "sortie-longue-cetogene"
 ---
+
+
+<SectionLibre id="preparation">
+
+La préparation de cette course a débuté le
+
+</SectionLibre>
