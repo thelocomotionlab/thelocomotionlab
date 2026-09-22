@@ -22,11 +22,17 @@ const AI_BOTS = [
   "cohere-ai",
 ];
 
+// Les outils privés du labo. Ils ne sont liés de nulle part et portent déjà leur
+// balise `robots` ; on les nomme quand même ici, parce qu'un chemin deviné une fois
+// (un lien collé dans un chat, un `Referer` qui fuit) suffit à le faire indexer.
+// Une page de tableau de bord dans un résultat de recherche, c'est une porte annoncée.
+const PRIVE = ["/services/twin/tableau-de-bord"];
+
 export default function robots() {
   return {
     rules: [
-      { userAgent: "*", allow: "/" },
-      ...AI_BOTS.map((bot) => ({ userAgent: bot, allow: "/" })),
+      { userAgent: "*", allow: "/", disallow: PRIVE },
+      ...AI_BOTS.map((bot) => ({ userAgent: bot, allow: "/", disallow: PRIVE })),
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,

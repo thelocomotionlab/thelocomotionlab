@@ -244,6 +244,31 @@ déposer.
 Ce qu'Access ne fait pas : il ne protège pas `api.thelocomotionlab.com`. L'API est sur un autre
 domaine, et c'est le jeton qui la garde — d'où les deux serrures.
 
+### Les écrans
+
+Les pages vivent sous `apps/site/app/services/twin/tableau-de-bord/` et sont **entièrement
+clientes** : rien n'est prérendu, tout se lit sur l'API. Le jeton se colle une fois et vit en
+`sessionStorage` — il disparaît à la fermeture de l'onglet, et n'entre jamais dans une URL (où
+il finirait dans l'historique, les journaux du proxy et le `Referer` de la première image).
+
+| Écran | Adresse |
+|---|---|
+| File | `/services/twin/tableau-de-bord` |
+| Athlète | `/services/twin/tableau-de-bord/athletes?id=…` |
+
+L'identifiant d'un athlète est dans la query et non dans le chemin : une route dynamique
+demanderait au build d'énumérer les athlètes, qui arrivent après lui.
+
+**Non-indexation** : balise `robots` dans chaque page, `X-Robots-Tag` et
+`Referrer-Policy: no-referrer` dans `apps/site/public/_headers`, préfixe interdit dans
+`robots.txt`, absent du plan de site, et aucun lien depuis le site public. Les quatre gardes
+sont tenues par `apps/site/lib/nonIndexation.test.js`.
+
+**Charte** : `apps/site/lib/charteTableauDeBord.test.js` refuse toute couleur, police, ombre ou
+arrondi en dur dans ces fichiers, et toute annonce de durée pour une ingestion. Il est scopé au
+tableau de bord : le reste du site porte des valeurs calculées (cartes, planches, SVG) qui
+passent par le miroir JS des tokens, et qu'une garde à la lettre condamnerait à tort.
+
 ## 5. Où vont les données / confidentialité
 
 - **Archives d'entraînement supprimées immédiatement après analyse** (garde-fou CLAUDE.md). On ne

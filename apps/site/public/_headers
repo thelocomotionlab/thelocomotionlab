@@ -19,3 +19,17 @@
 # Les traces et journaux d'un direct archivé bougent encore un peu.
 /replays/*
   Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+
+# Le tableau de bord Twin : outil privé, servi avec le reste du site.
+#
+# `X-Robots-Tag` double la balise `robots` de la page — la balise ne vaut que si le
+# robot exécute le HTML, l'en-tête vaut aussi pour ce qu'il télécharge sans le lire.
+# `Referrer-Policy: no-referrer` empêche l'adresse de la page de partir dans l'en-tête
+# Referer du premier appel sortant : c'est par là qu'un chemin privé s'échappe.
+/services/twin/tableau-de-bord/*
+  X-Robots-Tag: noindex, nofollow
+  Referrer-Policy: no-referrer
+
+/services/twin/tableau-de-bord
+  X-Robots-Tag: noindex, nofollow
+  Referrer-Policy: no-referrer
