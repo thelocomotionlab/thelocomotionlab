@@ -112,4 +112,51 @@ def _run_job_locked(
         shutil.rmtree(job_dir / "upload", ignore_errors=True)
 
 
-__all__ = ["run_job"]
+def run_ingestion(
+    *,
+    job_id: str,
+    store: JobStore,
+    magasin,
+    cfg: Config,
+    athlete_id: str,
+    archive_locale: Path | None = None,
+    depot=None,
+) -> None:
+    """Ingère l'archive d'un athlète — même file, même place unique que la génération.
+
+    Une ingestion, c'est le décodage d'une archive entière : c'est le plus gros poste de
+    mémoire et de processeur du service. Elle passe donc par le MÊME verrou qu'un rendu,
+    pas par un second à côté — sinon deux d'entre eux se rencontrent un jour, et le
+    conteneur meurt de l'addition."""
+    # Import local : l'ingestion tire numpy et tout le moteur ; le module de la file, lui,
+    # est importé au démarrage de l'API.
+    from ..tableau_de_bord.ingestion import ingerer_un_athlete
+
+    with _UNE_PLACE:
+        store.modifier(job_id, statut=JOB_EN_COURS)
+        try:
+            athlete = ingerer_un_athlete(
+                athlete_id=athlete_id, magasin=magasin, cfg=cfg,
+                archive_locale=archive_locale, depot=depot,
+                avancer=lambda texte: store.avancer(job_id, texte),
+            )
+            store.modifier(
+                job_id, statut=JOB_FINI, avancement="",
+                resultat={"athlete_id": athlete_id,
+                          "niveau": (athlete.get("niveau") or {}).get("nom"),
+                          "jumeau": athlete.get("jumeau")},
+            )
+        except Exception as exc:  # noqa: BLE001 — l'erreur vit dans l'état du job
+            logger.exception("ingestion %s en échec", job_id)
+            store.modifier(
+                job_id, statut=JOB_ECHEC, avancement="",
+                erreur=f"{type(exc).__name__} : échec de l'ingestion "
+                       "(détails dans les journaux du serveur)",
+            )
+        finally:
+            if archive_locale is not None:
+                # L'archive envoyée à la main ne survit pas non plus à son analyse.
+                shutil.rmtree(archive_locale.parent, ignore_errors=True)
+
+
+__all__ = ["run_ingestion", "run_job"]

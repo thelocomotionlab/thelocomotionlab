@@ -47,10 +47,11 @@ from ..fiche import build_pdf as build_fiche_pdf
 from ..fiche import empreinte as fiche_empreinte
 from ..jobs import JobStore, run_job
 from ..pipeline import run_preview
+from ..tableau_de_bord.depot import Depot
 from ..tableau_de_bord.magasin import Magasin
 from ..tableau_de_bord.objets import JOB_GENERATION
 from ..tableau_de_bord.reference import reference_de_rapport
-from ..tableau_de_bord.routes import routeur_admin
+from ..tableau_de_bord.routes import routeur_admin, routeur_interne
 from ..tableau_de_bord.serrures import Serrures, Tentatives, adresse_du_visiteur
 
 
@@ -156,7 +157,11 @@ def create_app(cfg: Config | None = None) -> FastAPI:
                             fenetre_s=cfg.api.plans_fenetre_s)
     app.state.serrures = serrures
     app.state.tentatives = tentatives
+    # Le client du service de dépôt, posé sur l'app pour qu'un test puisse le remplacer
+    # par un faux — sinon il faudrait un twin-depot vivant pour tester une ingestion.
+    app.state.depot = Depot()
     app.include_router(routeur_admin())
+    app.include_router(routeur_interne())
     # les dossiers rejouables déposés sous leur référence (cf. scripts/course.sh publier)
     dossiers_root = cfg.data_dir / "dossiers"
     debit = _Debit(cfg.api.rendu_simultanes, cfg.api.rendu_par_minute)

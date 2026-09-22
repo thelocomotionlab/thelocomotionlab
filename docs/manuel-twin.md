@@ -548,18 +548,22 @@ l'archive : la trace du parcours compressée, le carnet de route, le jumeau, la 
 prédiction et la garde de suffisance. Aucune donnée brute d'activité — ses résumés sont les
 agrégats que l'annexe publie déjà.
 
-Il ne va **ni dans le dépôt ni sur le site** : il se dépose sur le volume du moteur, où
-`POST /rendu` le retrouve sous la référence. `publier` s'en charge si `TWIN_VPS` est posé
-(cf. [`secrets.md`](./secrets.md)) ; sinon il affiche la commande et ne touche à rien.
+Il ne va **ni dans le dépôt ni sur le site** : `publier` l'**importe dans le tableau de bord**
+(`POST /twin/tableau-de-bord/plans/import`), avec les documents que l'athlète emporte. Le plan
+fabriqué ici entre alors comme s'il y était né — publiable, envoyable, amendable — et le moteur
+ne recalcule rien : le dossier fait foi.
 
-Deux choses à ouvrir une fois pour que le bouton fonctionne en ligne :
+Il faut `TWIN_ADMIN_TOKEN` dans l'environnement (cf. [`secrets.md`](./secrets.md)) ; sans lui,
+`publier` dit ce qu'il aurait envoyé et ne touche à rien. `TWIN_API` surcharge l'adresse de
+l'API en développement.
 
-- la route `@twin_rendu` dans `infra/caddy/conf.d/api.caddy`, **commentée** par défaut. Elle
-  n'expose qu'un chemin du moteur — l'ingestion et les jobs, qui reçoivent des archives,
-  restent internes. Décommenter, puis `./deploy.sh` sur le VPS ;
-- rien côté site : l'adresse de l'API vit en clair dans `apps/site/lib/twinRendu.mjs`
-  (`NEXT_PUBLIC_TWIN_RENDU_API` la surcharge en développement, une valeur vide éteint le
-  bouton et laisse le téléchargement des réglages en JSON comme repli).
+> Avant le tableau de bord, `publier` posait le dossier par `ssh` et un `docker exec` à
+> distance. C'était une porte de plus à garder, sur le poste de travail, pour faire ce qu'une
+> route fait mieux — et c'est pour ça qu'elle n'est plus là.
+
+Côté site, rien à ouvrir : l'adresse de l'API vit en clair dans `apps/site/lib/twinRendu.mjs`
+(`NEXT_PUBLIC_TWIN_RENDU_API` la surcharge en développement, une valeur vide éteint le bouton
+et laisse le téléchargement des réglages en JSON comme repli).
 
 ### Ce que la fenêtre d'objectif fait aux trois colonnes
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .runner import run_job
+from .runner import run_ingestion, run_job
 from .store import JobStore
 
-__all__ = ["JobStore", "run_job"]
+__all__ = ["JobStore", "run_ingestion", "run_job"]

@@ -4,7 +4,7 @@
 #
 #   pnpm course init nice        crée la fiche de la course et TIRE SA RÉFÉRENCE
 #   pnpm course rapport nice     (re)fabrique rapport, feuille, fiches, ICS, GPX, annexe
-#   pnpm course publier nice     dépose l'annexe en ligne, le dossier sur le VPS, déploie
+#   pnpm course publier nice     dépose l'annexe en ligne, importe le plan, déploie
 #   pnpm course nice             rapport puis publier
 #   pnpm course liste            les courses déclarées
 #
@@ -20,10 +20,12 @@
 # apps/site/public/twin-annexes).
 #
 # LE DOSSIER, lui, ne va NI dans le dépôt NI sur le site : il porte le jumeau, la
-# calibration et les résumés d'activité. Il se dépose sur le volume du moteur, où
-# POST /rendu le retrouve sous la référence quand l'athlète amende son plan depuis
-# la page. Sans TWIN_VPS dans l'environnement, publier dit la commande à lancer et
-# ne touche à rien.
+# calibration et les résumés d'activité. Il s'IMPORTE dans le tableau de bord, par
+# l'API : le plan fabriqué ici entre alors comme s'il y était né — publiable,
+# envoyable, amendable. Il n'y a plus de ssh dans ce script : une commande docker
+# lancée à distance depuis un poste de travail était une porte de plus à garder, pour
+# faire ce qu'une route fait mieux. Sans TWIN_ADMIN_TOKEN dans l'environnement,
+# publier dit ce qu'il aurait envoyé et ne touche à rien.
 set -euo pipefail
 
 racine="$(git rev-parse --show-toplevel)"
@@ -34,9 +36,9 @@ SORTIES="local-data/out"
 ANNEXES="apps/site/public/twin-annexes"
 MOTEUR="services/twin-engine"
 SITE="https://www.thelocomotionlab.com/services/twin/annexe"
-# L'hôte SSH du VPS (ex. « ubuntu@203.0.113.7 »), hors du dépôt : cf. docs/secrets.md.
-VPS="${TWIN_VPS:-}"
-CONTENEUR="${TWIN_ENGINE_CONTENEUR:-twin-engine}"
+# Le tableau de bord et son jeton, hors du dépôt : cf. docs/secrets.md.
+API="${TWIN_API:-https://api.thelocomotionlab.com}"
+JETON="${TWIN_ADMIN_TOKEN:-}"
 
 # ── de quoi parler ──────────────────────────────────────────────────────────────
 rouge() { printf '\033[31m%s\033[0m\n' "$*" >&2; }
@@ -133,30 +135,36 @@ cmd_rapport() {
   info "Page en ligne (après publication) : $SITE/$REF"
 }
 
-# La commande DISTANTE qui pose le dossier sur le volume du moteur. Construite une
-# fois : ce qui s'affiche est exactement ce qui se lance — une commande sur le VPS se
-# montre avant de partir.
-commande_distante() {
-  printf 'docker exec -i %s sh -c "mkdir -p /data/dossiers && cat > /data/dossiers/%s.json"' \
-    "$CONTENEUR" "$REF"
-}
-
-deposer_le_dossier() {
-  local source="$1" nom="$2"
+# L'import du plan dans le tableau de bord : le dossier, plus les documents que
+# l'athlète emporte. Le moteur ne recalcule rien — c'est le dossier qui fait foi.
+importer_le_plan() {
+  local out="$1" nom="$2" source="$out/dossier.json"
   if [ ! -f "$source" ]; then
     info "pas de dossier dans la sortie — ce rapport date d'avant la boucle d'amendement"
     info "(refais-le : pnpm course rapport $nom)"
     return 0
   fi
-  if [ -z "$VPS" ]; then
-    info "TWIN_VPS n'est pas posé — le dossier reste ici. Pour le déposer à la main :"
+  if [ -z "$JETON" ]; then
+    info "TWIN_ADMIN_TOKEN n'est pas posé — le plan reste ici. Pour l'importer à la main :"
     info ""
-    info "  ssh <TWIN_VPS> '$(commande_distante)' < $source"
+    info "  TWIN_ADMIN_TOKEN=… pnpm course publier $nom"
     return 0
   fi
-  # shellcheck disable=SC2029  # la référence est expansée ICI, c'est voulu
-  ssh "$VPS" "$(commande_distante)" < "$source"
-  info "déposé : /data/dossiers/$REF.json"
+
+  local args=(--fail --silent --show-error -X POST
+    -H "Authorization: Bearer $JETON"
+    -F "dossier=@$source;type=application/json")
+  local f
+  for f in rapport.pdf feuille.pdf plan.ics plan.gpx; do
+    [ -f "$out/$f" ] && args+=(-F "documents=@$out/$f")
+  done
+
+  if curl "${args[@]}" "$API/twin/tableau-de-bord/plans/import" > /dev/null; then
+    info "importé : $REF"
+  else
+    rouge "✗ import refusé — le plan reste ici, rien n'est perdu"
+    return 1
+  fi
 }
 
 cmd_publier() {
@@ -170,12 +178,12 @@ cmd_publier() {
   info "  → $cible"
   info "  → $SITE/$REF"
   info ""
-  info "et le dossier, pour que la page puisse refaire les documents :"
+  info "et le plan, pour qu'il vive dans le tableau de bord :"
   if [ -f "$dossier" ]; then
     info "$dossier ($(du -h "$dossier" | cut -f1))"
-    info "  → ${VPS:-<TWIN_VPS non posé>}:/data/dossiers/$REF.json"
+    info "  → ${JETON:+$API}${JETON:-<TWIN_ADMIN_TOKEN non posé>}/twin/tableau-de-bord/plans/import"
   else
-    info "absent de la sortie — rien à déposer"
+    info "absent de la sortie — rien à importer"
   fi
   if [ "$force" != "--oui" ]; then
     printf '  Déposer, committer et déployer le site ? [o/N] ' >&2
@@ -192,8 +200,8 @@ cmd_publier() {
     info "annexe inchangée — rien à committer"
   fi
 
-  titre "dépôt du dossier"
-  deposer_le_dossier "$dossier" "$nom"
+  titre "import du plan"
+  importer_le_plan "$SORTIES/$nom" "$nom"
 
   titre "déploiement du site"
   pnpm -F site deploy:cf

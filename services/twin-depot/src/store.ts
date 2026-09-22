@@ -46,6 +46,12 @@ export interface Depot {
   sha256: string;
   createdAt: string;
   ip: string;
+  /**
+   * Le moteur a-t-il été prévenu de ce dépôt ? `false` = les trois essais ont échoué,
+   * l'archive attend qu'on clique « rafraîchir » dans la File. Absent sur les dépôts
+   * d'avant le tableau de bord.
+   */
+  moteurPrevenu?: boolean;
 }
 
 interface FileShape {
@@ -137,6 +143,14 @@ export class DepotStore {
     this.depots.push(depot);
     this.persist();
     return depot;
+  }
+
+  /** Note si le moteur a bien été prévenu (appel best-effort, cf. moteur.ts). */
+  noterMoteurPrevenu(id: string, prevenu: boolean): void {
+    const depot = this.find(id);
+    if (!depot) return;
+    depot.moteurPrevenu = prevenu;
+    this.persist();
   }
 
   /** Purge d'un dépôt analysé : archive supprimée du disque + index. */
