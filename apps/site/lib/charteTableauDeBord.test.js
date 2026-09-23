@@ -29,6 +29,7 @@ const SURVEILLES = [
   "app/services/twin/plan",
   "components/twin/ProfilAltimetrique.jsx",
   "components/twin/useJob.js",
+  "components/twin/ErreurDePage.jsx",
 ];
 
 function fichiersDe(dossier) {
