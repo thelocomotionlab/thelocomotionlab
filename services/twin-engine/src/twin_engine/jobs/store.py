@@ -50,7 +50,8 @@ class JobStore:
         return self.racine / job_id
 
     def creer(self, job_id: str, *, type: str = JOB_GENERATION,
-              athlete_id: str = "", plan_ref: str = "", avancement: str = "") -> dict:
+              athlete_id: str = "", plan_ref: str = "", avancement: str = "",
+              numero: int | None = None) -> dict:
         now = maintenant()
         return self._jobs.ecrire({
             "id": job_id,
@@ -61,6 +62,9 @@ class JobStore:
             "erreur": "",
             "athlete_id": athlete_id,
             "plan_ref": plan_ref,
+            # la version qu'un amendement refait — deux amendements de la même version,
+            # pas encore commencés, n'en font qu'un
+            "numero": numero,
             "pdf": "",
             "cree_le": now,
             "maj_le": now,
@@ -90,6 +94,19 @@ class JobStore:
     def public(self, job_id: str) -> dict | None:
         job = self._jobs.lire(job_id)
         return None if job is None else self.rendre_public(job)
+
+    def en_attente(self, *, plan_ref: str = "", athlete_id: str = "",
+                   type: str = "") -> list[dict]:
+        """Les passages pas encore finis d'un plan ou d'un athlète, les plus anciens
+        d'abord — c'est ce qu'un écran rouvert reprend à suivre."""
+        return sorted(
+            (j for j in self._jobs.lister()
+             if j.get("statut") in _EN_ATTENTE
+             and (not plan_ref or j.get("plan_ref") == plan_ref)
+             and (not athlete_id or j.get("athlete_id") == athlete_id)
+             and (not type or j.get("type") == type)),
+            key=lambda j: j.get("cree_le") or "",
+        )
 
     def balayer_interrompus(self, erreur: str) -> list[str]:
         """Clôt en échec les jobs restés en file ou en cours (orphelins d'un crash).

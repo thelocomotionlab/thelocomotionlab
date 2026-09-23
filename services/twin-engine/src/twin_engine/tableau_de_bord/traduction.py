@@ -177,4 +177,44 @@ def racespec_vers_course(spec: RaceSpec, *, id: str, slug: str = "",
     )
 
 
-__all__ = ["TOLERANCE_KM", "course_vers_racespec", "racespec_vers_course"]
+# --------------------------------------------------------------------------- #
+# RaceSpec → JSON : la spec qu'on donnerait au CLI
+# --------------------------------------------------------------------------- #
+def racespec_en_json(spec: RaceSpec) -> dict:
+    """Le carnet de route au format des fichiers ``examples/*.json`` — ce que
+    ``RaceSpec.from_dict`` relit à l'identique.
+
+    C'est ce qui permet de rejouer au CLI, à l'octet près, un plan composé dans le tableau
+    de bord : le golden s'en sert, et un carnet se télécharge ainsi pour être gardé à côté
+    d'un rapport."""
+    def optionnel(cle: str, valeur) -> dict:
+        return {} if valeur is None else {cle: valeur}
+
+    return {
+        "name": spec.name,
+        "aid_km": [float(km) for km in spec.aid_km],
+        "aid_names": list(spec.aid_names),
+        **optionnel("start_time", spec.start_time.isoformat() if spec.start_time else None),
+        **optionnel("lat", spec.lat),
+        **optionnel("lon", spec.lon),
+        "tz_offset_h": float(spec.tz_offset_h),
+        "major_base_indices": [int(k) for k in spec.major_base_indices],
+        **({"crew_access_indices": [int(k) for k in spec.crew_access_indices]}
+           if spec.crew_access_indices else {}),
+        "crew": [{"aid_index": c.aid_index, "note": c.note} for c in spec.crew],
+        "reglages": [{"aid_index": r.aid_index,
+                      **optionnel("stop_min", r.stop_min),
+                      **({"consigne": r.consigne} if r.consigne else {})}
+                     for r in spec.reglages],
+        "nutrition": {"water_l_per_h": spec.nutrition.water_l_per_h,
+                      "carbs_g_per_h": spec.nutrition.carbs_g_per_h},
+        "phases": [{"name": ph.name, "note": ph.note, "from_aid_index": ph.from_aid_index}
+                   for ph in spec.phases],
+        **optionnel("official_dplus_m", spec.official_dplus_m),
+        **optionnel("target_hours", spec.target_hours),
+        "technicity_pct": float(spec.technicity_pct),
+        **optionnel("heat_c", spec.heat_c),
+    }
+
+
+__all__ = ["TOLERANCE_KM", "course_vers_racespec", "racespec_en_json", "racespec_vers_course"]

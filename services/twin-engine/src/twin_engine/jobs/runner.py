@@ -159,4 +159,60 @@ def run_ingestion(
                 shutil.rmtree(archive_locale.parent, ignore_errors=True)
 
 
-__all__ = ["run_ingestion", "run_job"]
+def _message_sur(exc: Exception, quoi: str) -> str:
+    """Ce que le client lit d'un échec. Les refus du tableau de bord sont écrits pour
+    Valentin (« la course n'a pas de trace… ») et ne portent aucun chemin : ils passent
+    tels quels. Le reste — une compilation LaTeX, un fichier illisible — peut porter
+    l'intérieur du conteneur, et reste dans les journaux."""
+    from ..tableau_de_bord.generation import GenerationImpossible
+    from ..tableau_de_bord.jumeau import JumeauIllisible
+
+    if isinstance(exc, (GenerationImpossible, JumeauIllisible)):
+        return str(exc)
+    return f"{type(exc).__name__} : échec {quoi} (détails dans les journaux du serveur)"
+
+
+def run_generation(*, job_id: str, store: JobStore, magasin, cfg: Config, ref: str,
+                   report_date: datetime | None = None) -> None:
+    """Une version de plus pour un plan, depuis le jumeau gardé (récapitulatif §5.4)."""
+    from ..tableau_de_bord.generation import generer_une_version
+
+    with _UNE_PLACE:
+        store.modifier(job_id, statut=JOB_EN_COURS)
+        try:
+            plan = generer_une_version(
+                ref=ref, magasin=magasin, cfg=cfg, report_date=report_date,
+                etape=lambda texte: store.avancer(job_id, texte),
+            )
+            store.modifier(job_id, statut=JOB_FINI, avancement="",
+                           resultat={"ref": ref, "version": plan.get("version"),
+                                     "prediction": plan.get("prediction")})
+        except Exception as exc:  # noqa: BLE001 — l'erreur vit dans l'état du job
+            logger.exception("génération %s (%s) en échec", job_id, ref)
+            store.modifier(job_id, statut=JOB_ECHEC, avancement="",
+                           erreur=_message_sur(exc, "de la génération"))
+
+
+def run_amendement(*, job_id: str, store: JobStore, magasin, cfg: Config, ref: str,
+                   numero: int | None = None) -> None:
+    """Les documents d'une version refaits avec les amendements de l'athlète (§5.8)."""
+    from ..tableau_de_bord.generation import amender_la_version
+
+    with _UNE_PLACE:
+        store.modifier(job_id, statut=JOB_EN_COURS)
+        try:
+            plan = amender_la_version(
+                ref=ref, magasin=magasin, cfg=cfg, numero=numero,
+                etape=lambda texte: store.avancer(job_id, texte),
+            )
+            store.modifier(job_id, statut=JOB_FINI, avancement="",
+                           resultat={"ref": ref,
+                                     "version": numero or plan.get("version_publiee")
+                                     or plan.get("version")})
+        except Exception as exc:  # noqa: BLE001 — l'erreur vit dans l'état du job
+            logger.exception("amendement %s (%s) en échec", job_id, ref)
+            store.modifier(job_id, statut=JOB_ECHEC, avancement="",
+                           erreur=_message_sur(exc, "de l'amendement"))
+
+
+__all__ = ["run_amendement", "run_generation", "run_ingestion", "run_job"]

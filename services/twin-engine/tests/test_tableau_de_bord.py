@@ -100,7 +100,8 @@ def test_course_porte_les_champs_du_recapitulatif():
 
 def test_plan_porte_les_champs_du_recapitulatif():
     d = O.Plan(ref="LL-X").to_dict()
-    assert set(d) == {"id", "ref", "athlete_id", "course_id", "version", "statut",
+    assert set(d) == {"id", "ref", "athlete_id", "course_id", "version",
+                      "version_publiee", "depart_le", "statut",
                       "reglages", "amendements", "prediction", "documents",
                       "publie_le", "envoye_le", "cles", "resultat"}
     assert set(d["reglages"]) == {"mode", "cible_h", "politique_arrets", "assistance",
@@ -115,7 +116,8 @@ def test_plan_porte_les_champs_du_recapitulatif():
 
 def test_demande_porte_les_champs_du_recapitulatif():
     assert set(O.Demande(id="d1").to_dict()) == {"id", "plan_ref", "quoi", "pourquoi",
-                                                 "recue_le", "statut"}
+                                                 "recue_le", "statut", "reponse",
+                                                 "repondue_le"}
 
 
 def test_un_objet_se_relit_tel_quil_a_ete_ecrit():
