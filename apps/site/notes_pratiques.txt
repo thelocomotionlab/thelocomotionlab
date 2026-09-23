@@ -106,11 +106,11 @@ Icônes des repères de trace (champ `icone` d'un repère, section geo) :
   limite           livre            loupe            mental           message          micro
   microscope       montagne         neige            nuage            nuit             oeil
   orage            panneau          partage          pharmacie        photo            physiologie
-  pluie            plume            poids            pouls            pousse           question
-  ravitaillement   recharge         refuge           regle            repas            repere
-  riviere          route            sablier          sac              salade           sandales
-  secours          sentier          soleil           sommet           temperature      tortue
-  valide           velo             vent             video            village
+  pluie            plume            poids            pouls            pousse           puzzle
+  question         ravitaillement   recharge         refuge           regle            repas
+  repere           riviere          route            sablier          sac              salade
+  sandales         secours          sentier          soleil           sommet           temperature
+  tortue           valide           velo             vent             video            village
 
 Nutrition embarquée depuis LighterPack :
 - dans la fiche d'aventure, la section nutrition s'écrit
