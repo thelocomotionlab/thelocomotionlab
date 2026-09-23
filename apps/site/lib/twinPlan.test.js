@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   amendementsDuFormulaire,
+  arriveesDuPlan,
   cibleDeLaFenetre,
   fenetreDeLaCible,
   heureApres,
@@ -22,6 +23,12 @@ describe("une heure de passage", () => {
     expect(heureApres(DEPART, 0)).toBe("ven. 13h00");
     expect(heureApres(DEPART, 31.47)).toBe("sam. 20h28");
     expect(heureApres(DEPART, 35.85)).toBe("dim. 00h51");
+  });
+
+  it("tombe à la minute la plus proche : 31 h à ±3,3333 % reste 20h00", () => {
+    expect(heureApres(DEPART, 30 * (1 + 3.3333 / 100))).toBe("sam. 20h00");
+    expect(heureApres(DEPART, 29.999999)).toBe("sam. 19h00");
+    expect(heureApres(DEPART, 10.9999)).toBe("sam. 00h00");
   });
 
   it("ne devine rien sans départ", () => {
@@ -104,5 +111,36 @@ describe("la fenêtre d'objectif", () => {
     expect(cibleDeLaFenetre(31, 29)).toBe(null);
     expect(cibleDeLaFenetre(null, 31)).toBe(null);
     expect(fenetreDeLaCible(30, null)).toBe(null);
+  });
+});
+
+describe("les arrivées que la page annonce", () => {
+  const prediction = {
+    central_h: 32, plan_low_h: 31, plan_high_h: 33, interval_low_h: 29.5, interval_high_h: 35,
+  };
+  const segments = [
+    { index: 1, cum_clock_h: 10, lo_h: 9.6667, hi_h: 10.3333 },
+    { index: 2, cum_clock_h: 30, lo_h: 29, hi_h: 31 },
+  ];
+
+  it("sur un plan calé sur l'objectif, se lisent sur le plan, assistance comprise", () => {
+    const a = arriveesDuPlan({
+      prediction,
+      plan: { anchor: "target", window_tolerance_pct: 3.3333, segments },
+    });
+    expect(a).toMatchObject({ surObjectif: true, bas: 29, centre: 30, haut: 31, tolerancePct: 3.3333 });
+    expect(a.assistance).toEqual([29, 31]);
+    expect(a.predit).toBe(32);
+  });
+
+  it("sinon, restent celles de la prédiction, bornes de sécurité pour l'assistance", () => {
+    const a = arriveesDuPlan({ prediction, plan: { anchor: "prediction", segments } });
+    expect(a).toMatchObject({ surObjectif: false, bas: 31, centre: 32, haut: 33 });
+    expect(a.assistance).toEqual([29.5, 35]);
+  });
+
+  it("un plan sans segments ne se lit pas sur lui-même", () => {
+    expect(arriveesDuPlan({ prediction, plan: { anchor: "target", segments: [] } }).surObjectif).toBe(false);
+    expect(arriveesDuPlan(null).surObjectif).toBe(false);
   });
 });

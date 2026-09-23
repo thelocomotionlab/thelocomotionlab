@@ -642,15 +642,21 @@ def _recit(ctx: dict, *, course, plan, race, calibration, prediction, stops: dic
     def _tombe(mot: str) -> str:
         return f"{mot} y {'tombe' if mot.startswith('une ') else 'tombent'}"
 
+    # Autour d'un objectif, la première bande est une tolérance d'exécution : elle ne se dit
+    # jamais en courses sur tant, et la seconde redevient ce qu'elle est, la prédiction.
+    sur_cible = bool(ctx.get("target_mode"))
     if ctx.get("plan_low") and ctx.get("plan_high"):
         out["fourchettes"].append({
             "valeur": f"{ctx['plan_low']} – {ctx['plan_high']}",
-            "phrase": _fr_decimals(f"{_tombe(plan_word)} — intervalle à "
-                                   f"{ctx['plan_band_pct']}\\,\\%")})
+            "phrase": (f"ta fenêtre de passage — $\\pm$\\,{ctx['target_tolerance_pct']}\\,\\% "
+                       "autour de ton objectif, pas une probabilité" if sur_cible else
+                       _fr_decimals(f"{_tombe(plan_word)} — intervalle à "
+                                    f"{ctx['plan_band_pct']}\\,\\%"))})
     if ctx.get("interval_low") and ctx.get("interval_high"):
         out["fourchettes"].append({
             "valeur": f"{ctx['interval_low']} – {ctx['interval_high']}",
-            "phrase": _fr_decimals(f"{_tombe(safety_word)} — intervalle à "
+            "phrase": _fr_decimals(("ta prédiction : " if sur_cible else "")
+                                   + f"{_tombe(safety_word)} — intervalle à "
                                    f"{ctx['interval_pct']}\\,\\%")})
     return out
 

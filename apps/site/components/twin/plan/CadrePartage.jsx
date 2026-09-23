@@ -12,7 +12,7 @@ import { useState } from "react";
 import { BoutonTexte } from "@locomotionlab/ui";
 
 import { duree, nombre } from "@/lib/twinTableauDeBord.mjs";
-import { heureApres, nuitsEnKm } from "@/lib/twinPlan.mjs";
+import { arriveesDuPlan, heureApres, nuitsEnKm } from "@/lib/twinPlan.mjs";
 import ProfilAltimetrique from "@/components/twin/ProfilAltimetrique";
 
 import { lienDuDocument } from "./api";
@@ -59,7 +59,7 @@ function Scenario({ titre, heures, depart, accent }) {
   );
 }
 
-function Assistance({ postes, arrivee }) {
+function Assistance({ postes, arrivee, surObjectif }) {
   const lignes = [...postes, ...(arrivee ? [{ ...arrivee, note: arrivee.note ?? "" }] : [])];
   if (!lignes.length) {
     return <p className="text-sm text-brand-muted">Aucun poste d&rsquo;assistance déclaré sur cette course.</p>;
@@ -111,7 +111,8 @@ function Assistance({ postes, arrivee }) {
         ))}
       </ul>
       <p className="mt-2 text-xs leading-relaxed text-brand-muted">
-        « Prévu » est l&rsquo;heure que suit l&rsquo;athlète ; les deux autres sont les bornes de sécurité. Point
+        « Prévu » est l&rsquo;heure que suit l&rsquo;athlète ; les deux autres{" "}
+        {surObjectif ? "bornent la fenêtre de son plan" : "sont les bornes de sécurité"}. Point
         d&rsquo;encre : poste de nuit, prévoir de quoi éclairer et avoir chaud.
       </p>
     </>
@@ -148,7 +149,7 @@ export function Documents({ reference, cle, documents, fige, version }) {
 
 export default function CadrePartage({ vue, reference, cle, titre, lienDePartage }) {
   const depart = vue.plan?.start_time || vue.course?.start_time || vue.depart_le;
-  const p = vue.prediction ?? {};
+  const a = arriveesDuPlan(vue);
   const nuits = nuitsEnKm({
     depart,
     sun: vue.plan?.sun,
@@ -169,13 +170,23 @@ export default function CadrePartage({ vue, reference, cle, titre, lienDePartage
       </div>
 
       <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Scenario titre="Rapide" heures={p.plan_low_h} depart={depart} />
-        <Scenario titre="Centrale" heures={p.central_h} depart={depart} accent />
-        <Scenario titre="Prudent" heures={p.plan_high_h} depart={depart} />
+        <Scenario titre={a.surObjectif ? "Au plus tôt" : "Rapide"} heures={a.bas} depart={depart} />
+        <Scenario titre={a.surObjectif ? "Objectif" : "Centrale"} heures={a.centre} depart={depart} accent />
+        <Scenario titre={a.surObjectif ? "Au plus tard" : "Prudent"} heures={a.haut} depart={depart} />
       </div>
       <p className="mt-3 text-sm leading-relaxed text-brand-soft">
-        Les bornes de sécurité, {duree(p.interval_low_h)} – {duree(p.interval_high_h)}&nbsp;: quatre courses sur
-        cinq y tiennent, arrivée comprise. C&rsquo;est la fenêtre que l&rsquo;assistance étale le long du parcours.
+        {a.surObjectif ? (
+          <>
+            La fenêtre du plan, {duree(a.assistance[0])} – {duree(a.assistance[1])}
+            {a.tolerancePct !== null ? <>&nbsp;: ±{nombre(a.tolerancePct, 1)}&nbsp;% autour de l&rsquo;objectif</> : null}. C&rsquo;est
+            la fenêtre que l&rsquo;assistance étale le long du parcours.
+          </>
+        ) : (
+          <>
+            Les bornes de sécurité, {duree(a.assistance[0])} – {duree(a.assistance[1])}&nbsp;: quatre courses sur
+            cinq y tiennent, arrivée comprise. C&rsquo;est la fenêtre que l&rsquo;assistance étale le long du parcours.
+          </>
+        )}
       </p>
 
       <div className="mt-8">
@@ -225,7 +236,7 @@ export default function CadrePartage({ vue, reference, cle, titre, lienDePartage
       <div className="mt-8">
         <TitreDeSection>L&rsquo;assistance</TitreDeSection>
         <div className="mt-4">
-          <Assistance postes={vue.assistance ?? []} arrivee={vue.arrivee} />
+          <Assistance postes={vue.assistance ?? []} arrivee={vue.arrivee} surObjectif={a.surObjectif} />
         </div>
       </div>
 

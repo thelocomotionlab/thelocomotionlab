@@ -18,10 +18,9 @@ from pathlib import Path
 import numpy as np
 
 from ..course.montees import descentes, montees, pentes
+from ..pacing.plan import fmt_clock
 from ._format import detex, fr, hm
-from .feuille import contact_points, safety_ratios
-
-_WEEKDAYS_FR = ["lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim."]
+from .feuille import contact_points, exact_hours, safety_ratios
 
 
 @dataclass(frozen=True)
@@ -71,7 +70,7 @@ class CrewPoint:
 def _clock(when: datetime | None, hours: float) -> str:
     if when is None:
         return f"{fr(hours, 1)} h"
-    return f"{_WEEKDAYS_FR[when.weekday()]} {when.hour:02d}h{when.minute:02d}"
+    return fmt_clock(when)
 
 
 def crew_indices(race, n_segments: int) -> tuple[int, ...]:
@@ -81,42 +80,69 @@ def crew_indices(race, n_segments: int) -> tuple[int, ...]:
 
 
 def _point(seg, start, *, is_major: bool, is_finish: bool, lo_h: float, hi_h: float) -> CrewPoint:
-    central = start + timedelta(hours=seg.cum_clock_h) if start else None
+    central_h = exact_hours(seg, "cum_clock")
+    central = start + timedelta(hours=central_h) if start else None
     earliest = start + timedelta(hours=lo_h) if start else None
     latest = start + timedelta(hours=hi_h) if start else None
     return CrewPoint(
         index=seg.index, name=seg.to, km=float(seg.off1), is_major=is_major,
         is_finish=is_finish, night=bool(seg.night), stop_min=float(seg.stop_min),
-        central_h=float(seg.cum_clock_h), lo_h=float(lo_h), hi_h=float(hi_h),
+        central_h=central_h, lo_h=float(lo_h), hi_h=float(hi_h),
         central=central, earliest=earliest, latest=latest,
     )
 
 
+def crew_follows_plan(plan) -> bool:
+    """Un plan calé sur l'objectif de l'athlète : son assistance lit la fenêtre de ce plan
+    (les colonnes au plus tôt / au plus tard du tableau de marche), pas l'intervalle de la
+    prédiction, qui ne dit rien de l'allure qu'il s'est choisie."""
+    return getattr(plan, "anchor", "prediction") == "target"
+
+
+def crew_window_label(plan) -> str:
+    """Le nom de la fenêtre que l'assistance lit, pour le calendrier et le GPX."""
+    return "fenêtre du plan" if crew_follows_plan(plan) else "bornes de sécurité"
+
+
 def crew_points(plan, race, prediction=None) -> list[CrewPoint]:
-    """Les points d'assistance du plan, dans leurs BORNES DE SÉCURITÉ.
+    """Les points d'assistance du plan, dans la fenêtre que l'assistance lit.
 
     Avec la prédiction, les bornes de sécurité de l'arrivée sont étalées sur le temps cumulé
     de chaque passage : l'assistance lit partout la même fenêtre que la première page, et la
-    dernière ligne redonne exactement l'arrivée « au plus tôt / au plus tard ». Sans elle, on
-    retombe sur la fourchette de course des segments.
+    dernière ligne redonne exactement l'arrivée « au plus tôt / au plus tard ». Sur un plan
+    calé sur l'objectif, ou sans prédiction, c'est la fenêtre de chaque segment du plan.
     """
     segs = plan.segments
     start = plan.start_time
     majors = set(race.major_base_indices)
-    lo_r, hi_r = safety_ratios(plan, prediction) if prediction is not None else (None, None)
-    return [_point(segs[i], start, is_major=(i in majors), is_finish=False,
-                   lo_h=segs[i].cum_clock_h * lo_r if lo_r else segs[i].lo_h,
-                   hi_h=segs[i].cum_clock_h * hi_r if hi_r else segs[i].hi_h)
-            for i in crew_indices(race, len(segs))]
+    lo_r, hi_r = ((None, None) if prediction is None or crew_follows_plan(plan)
+                  else safety_ratios(plan, prediction))
+
+    def bornes(seg) -> tuple[float, float]:
+        if lo_r is None:
+            return exact_hours(seg, "lo"), exact_hours(seg, "hi")
+        cumul = exact_hours(seg, "cum_clock")
+        return cumul * lo_r, cumul * hi_r
+
+    points = []
+    for i in crew_indices(race, len(segs)):
+        lo_h, hi_h = bornes(segs[i])
+        points.append(_point(segs[i], start, is_major=(i in majors), is_finish=False,
+                             lo_h=lo_h, hi_h=hi_h))
+    return points
 
 
 def finish_point(plan, prediction) -> CrewPoint | None:
-    """L'arrivée, encadrée par les BORNES DE SÉCURITÉ de la prédiction (logistique, pas pilotage)."""
+    """L'arrivée, encadrée par les BORNES DE SÉCURITÉ de la prédiction (logistique, pas
+    pilotage) — ou, sur un plan calé sur l'objectif, par la fenêtre de ce plan."""
     if not plan.segments:
         return None
     last = plan.segments[-1]
-    return _point(last, plan.start_time, is_major=False, is_finish=True,
-                  lo_h=float(prediction.interval_low_h), hi_h=float(prediction.interval_high_h))
+    if crew_follows_plan(plan):
+        lo_h, hi_h = exact_hours(last, "lo"), exact_hours(last, "hi")
+    else:
+        lo_h, hi_h = float(prediction.interval_low_h), float(prediction.interval_high_h)
+    return _point(last, plan.start_time, is_major=False, is_finish=True, lo_h=lo_h, hi_h=hi_h)
 
 
 # --------------------------------------------------------------------------- ICS
@@ -146,9 +172,11 @@ def _ics_dt(when: datetime) -> str:
 
 
 def ics_text(points: list[CrewPoint], finish: CrewPoint | None, *, race_name: str,
-             athlete: str, ref: str, now: datetime | None = None) -> str | None:
+             athlete: str, ref: str, now: datetime | None = None,
+             window: str = "bornes de sécurité") -> str | None:
     """Un événement par point d'assistance : du plus tôt au plus tard, le central dans le
-    titre. None sans heure de départ (rien à mettre au calendrier)."""
+    titre. ``window`` nomme la fenêtre (:func:`crew_window_label`). None sans heure de
+    départ (rien à mettre au calendrier)."""
     items = [p for p in points if p.earliest and p.latest] + (
         [finish] if finish and finish.earliest and finish.latest else [])
     if not items:
@@ -159,7 +187,6 @@ def ics_text(points: list[CrewPoint], finish: CrewPoint | None, *, race_name: st
              "METHOD:PUBLISH", f"X-WR-CALNAME:{_ics_escape(race_name)} · {_ics_escape(athlete)}"]
     for p in items:
         what = "Arrivée" if p.is_finish else f"km {fr(p.km, 1)} · {p.name}"
-        window = "bornes de sécurité" if p.is_finish else "fourchette de course"
         desc = (f"{athlete} · {race_name}\n"
                 f"Passage prévu {p.central_clock} ({window} : {p.earliest_clock} – {p.latest_clock})"
                 + ("" if p.is_finish else f"\nArrêt prévu par le plan : {fr(p.stop_min, 0)} min")
@@ -187,9 +214,11 @@ def _xml(s: str) -> str:
 
 
 def gpx_text(course, points: list[CrewPoint], finish: CrewPoint | None, *, race_name: str,
-             athlete: str, ref: str, max_track_points: int = 2000) -> str | None:
+             athlete: str, ref: str, max_track_points: int = 2000,
+             window: str = "bornes de sécurité") -> str | None:
     """La trace du parcours et un point de passage par point d'assistance (heure prévue dans la
-    description). None si la trace n'a pas de coordonnées."""
+    description, et sa fenêtre sous le nom ``window``). None si la trace n'a pas de
+    coordonnées."""
     lat = getattr(course, "lat_grid", None)
     lon = getattr(course, "lon_grid", None)
     if lat is None or lon is None or len(lat) == 0:
@@ -207,7 +236,6 @@ def gpx_text(course, points: list[CrewPoint], finish: CrewPoint | None, *, race_
         la = float(np.interp(p.km, off, lat))
         lo = float(np.interp(p.km, off, lon))
         el = float(np.interp(p.km, off, alt))
-        window = "bornes de sécurité" if p.is_finish else "fourchette de course"
         desc = (f"passage prévu {p.central_clock} ({window} {p.earliest_clock} – {p.latest_clock})"
                 + ("" if p.is_finish else f" · arrêt {fr(p.stop_min, 0)} min")
                 + (" · nuit" if p.night else ""))
@@ -497,12 +525,14 @@ def write_livrables(*, context: dict, course, twin, calibration, prediction, pla
     athlete = context["athlete_plain"]
     written: dict[str, Path] = {}
 
+    window = crew_window_label(plan)
     ics = ics_text(points, finish, race_name=course.name, athlete=athlete, ref=ref,
-                   now=generated_at)
+                   now=generated_at, window=window)
     if ics:
         (out_dir / "plan.ics").write_text(ics, encoding="utf-8")
         written["plan.ics"] = out_dir / "plan.ics"
-    gpx = gpx_text(course, points, finish, race_name=course.name, athlete=athlete, ref=ref)
+    gpx = gpx_text(course, points, finish, race_name=course.name, athlete=athlete, ref=ref,
+                   window=window)
     if gpx:
         (out_dir / "plan.gpx").write_text(gpx, encoding="utf-8")
         written["plan.gpx"] = out_dir / "plan.gpx"
@@ -531,5 +561,6 @@ def shutil_copy(src: Path, dst: Path) -> None:
     shutil.copy(src, dst)
 
 
-__all__ = ["CrewPoint", "LIVRABLES", "crew_indices", "crew_points", "finish_point", "ics_text",
-           "gpx_text", "bibliography", "annex_payload", "write_annex", "write_livrables"]
+__all__ = ["CrewPoint", "LIVRABLES", "crew_follows_plan", "crew_indices", "crew_points",
+           "crew_window_label", "finish_point", "ics_text", "gpx_text", "bibliography",
+           "annex_payload", "write_annex", "write_livrables"]

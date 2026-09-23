@@ -54,11 +54,12 @@
 << dminus_m >>\,m\,D−<% if start_time %> \textperiodcentered{} départ << start_time >><% endif %>\par}
 
 \vspace{7mm}
-\LLbloc{Tu arrives autour de}\vspace{3mm}
-\LLchiffregeant{<< pred_central >>}{<% if arrival_clock %>le << arrival_clock >><% endif %>}
+\LLbloc{<% if target_mode %>Tu vises<% else %>Tu arrives autour de<% endif %>}\vspace{3mm}
+\LLchiffregeant{<% if target_mode %><< target_hm >><% else %><< pred_central >><% endif %>}{<% if arrival_clock %>le << arrival_clock >><% endif %>}
 \vspace{4mm}
 {\fontsize{14.25}{21}\selectfont\color{LLText}%
-<% if plan_low %><< plan_band_word|capitalize >> se joue entre \textbf{<< plan_low >>} et \textbf{<< plan_high >>}.
+<% if target_mode %>Ta fenêtre de passage va de \textbf{<< plan_low >>} à \textbf{<< plan_high >>}. Ton jumeau te situe à \textbf{<< pred_central >>}.
+<% elif plan_low %><< plan_band_word|capitalize >> se joue entre \textbf{<< plan_low >>} et \textbf{<< plan_high >>}.
 <% else %><< safety_word|capitalize >> se joue entre \textbf{<< interval_low >>} et \textbf{<< interval_high >>}.
 <% endif %>\par}
 
@@ -66,7 +67,7 @@
 \LLtuiles{%
   \LLtuile{<% if target_mode %>Au plus tôt<% else %>Rapide<% endif %>}{<< plan_low >>}{<% if arrival_fast_clock %><< arrival_fast_clock >><% else %>départ à préciser<% endif %>}%
   \LLtuilesep
-  \LLtuileforte{<% if target_mode %>Ton objectif<% else %>Centrale<% endif %>}{<< pred_central >>}{<% if arrival_clock %><< arrival_clock >><% else %>départ à préciser<% endif %>}%
+  \LLtuileforte{<% if target_mode %>Ton objectif<% else %>Centrale<% endif %>}{<% if target_mode %><< target_hm >><% else %><< pred_central >><% endif %>}{<% if arrival_clock %><< arrival_clock >><% else %>départ à préciser<% endif %>}%
   \LLtuilesep
   \LLtuile{<% if target_mode %>Au plus tard<% else %>Prudent<% endif %>}{<< plan_high >>}{<% if arrival_cautious_clock %><< arrival_cautious_clock >><% else %>départ à préciser<% endif %>}}
 

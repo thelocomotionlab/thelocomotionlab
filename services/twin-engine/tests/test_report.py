@@ -398,6 +398,71 @@ def test_target_mode_renames_the_scenario_columns():
     assert "tolérance d'exécution" in tex and "pas une probabilité" in tex
 
 
+def test_target_mode_page_one_reads_the_objective():
+    """La première page d'un plan calé sur l'objectif annonce l'objectif et sa fenêtre, et
+    garde la prédiction à côté — jamais la prédiction dans la tuile de l'objectif, jamais
+    une probabilité pour une tolérance."""
+    course, twin, cal, pred, _p, _r, _s = _scenario()
+    ctx, _t, _pred, _plan = _target_context(_nominal_target(pred))
+    tex = render_tex(ctx)
+    page = tex[tex.find("LL:BEGIN page-course"):tex.find("LL:END page-course")]
+    assert ctx["target_hm"] != ctx["pred_central"]
+    assert f"\\LLtuileforte{{Ton objectif}}{{{ctx['target_hm']}}}" in page
+    assert f"\\LLchiffregeant{{{ctx['target_hm']}}}" in page and "Tu vises" in page
+    assert ctx["pred_central"] in page                 # la prédiction reste dite
+    assert "course sur deux" not in page and "courses sur deux" not in page
+    assert "ta prédiction : " in page and "pas une probabilité" in page
+
+
+def test_target_mode_crew_follows_the_plan_window():
+    """Calé sur l'objectif, l'assistance lit la fenêtre du plan : les bornes de chaque poste
+    et de l'arrivée sont celles des colonnes au plus tôt / au plus tard du tableau de marche,
+    pas l'intervalle de la prédiction."""
+    from twin_engine.report.livrables import (crew_points, crew_window_label, finish_point,
+                                              ics_text)
+
+    course, twin, cal, pred, _p, race, _s = _scenario()
+    ctx, _t, _pred, plan = _target_context(_nominal_target(pred))
+    assert plan.anchor == "target"
+    segments = {s.index: s for s in plan.segments}
+    points = crew_points(plan, race, pred)
+    assert points
+    for point in points:
+        seg = segments[point.index]
+        assert (point.lo_h, point.hi_h) == (seg.lo_exact_h, seg.hi_exact_h)
+        # à la minute près, les heures que lit l'assistance sont celles du tableau de marche
+        assert (point.earliest_clock, point.central_clock, point.latest_clock) == (
+            seg.arr_lo_clock, seg.arr_clock, seg.arr_hi_clock)
+    last = plan.segments[-1]
+    finish = finish_point(plan, pred)
+    assert (finish.lo_h, finish.hi_h) == (last.lo_exact_h, last.hi_exact_h)
+    assert ctx["finish_row"]["earliest"] == ctx["arrival_fast_clock"]
+    assert ctx["finish_row"]["latest"] == ctx["arrival_cautious_clock"]
+
+    assert crew_window_label(plan) == "fenêtre du plan"
+    ics = ics_text(points, finish, race_name="x", athlete="y", ref="z",
+                   window=crew_window_label(plan))
+    assert "fenêtre du plan" in ics and "bornes de sécurité" not in ics
+    verso = render_template(FEUILLE_TEMPLATE, ctx)
+    verso = verso[verso.find("LL:BEGIN feuille-verso"):verso.find("LL:END feuille-verso")]
+    assert "bornent la fenêtre de ton plan" in verso and "bornes de sécurité" not in verso
+    recto = render_template(FEUILLE_TEMPLATE, ctx)
+    recto = recto[recto.find("LL:BEGIN feuille-recto"):recto.find("LL:END feuille-recto")]
+    assert "= au plus tôt" in recto and "= prudent" not in recto
+
+
+def test_prediction_mode_crew_keeps_the_safety_bounds():
+    """Sans objectif servi, rien ne change : l'assistance lit les bornes de sécurité."""
+    from twin_engine.report.livrables import crew_window_label, finish_point
+
+    course, twin, cal, pred, plan, race, _s = _scenario()
+    assert plan.anchor == "prediction"
+    finish = finish_point(plan, pred)
+    assert (finish.lo_h, finish.hi_h) == (pytest.approx(pred.interval_low_h),
+                                          pytest.approx(pred.interval_high_h))
+    assert crew_window_label(plan) == "bornes de sécurité"
+
+
 def test_no_target_renders_exactly_as_before():
     """Sans cible, le rapport est celui d'avant : aucune section, aucun mot en plus."""
     tex = render_tex(_context())

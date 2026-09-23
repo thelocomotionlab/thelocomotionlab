@@ -13,13 +13,14 @@ function decalageMinutes(iso) {
 
 const JOURS = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
 
-/** L'heure de passage `heures` après le départ, dans le fuseau de la course :
- *  « sam. 20h33 ». */
+/** L'heure de passage `heures` après le départ, dans le fuseau de la course, à la minute la
+ *  plus proche comme le moteur l'imprime : « sam. 20h33 ». */
 export function heureApres(isoDepart, heures) {
   if (!isoDepart || heures === null || heures === undefined) return "";
   const depart = new Date(isoDepart);
   if (Number.isNaN(depart.getTime())) return "";
-  const local = new Date(depart.getTime() + (Number(heures) * 60 + decalageMinutes(isoDepart)) * 60_000);
+  const minutes = Math.round(depart.getTime() / 60_000 + Number(heures) * 60);
+  const local = new Date((minutes + decalageMinutes(isoDepart)) * 60_000);
   const hh = String(local.getUTCHours()).padStart(2, "0");
   const mm = String(local.getUTCMinutes()).padStart(2, "0");
   return `${JOURS[local.getUTCDay()]} ${hh}h${mm}`;
@@ -140,4 +141,38 @@ export function cibleDeLaFenetre(debutH, finH) {
 export function fenetreDeLaCible(cibleH, tolerancePct) {
   if (!(cibleH > 0) || tolerancePct === null || tolerancePct === undefined) return null;
   return { debut_h: cibleH * (1 - tolerancePct / 100), fin_h: cibleH * (1 + tolerancePct / 100) };
+}
+
+/**
+ * Les trois arrivées que la page annonce, et la fenêtre que l'assistance suit.
+ *
+ * Un plan calé sur l'objectif de l'athlète (`plan.anchor === "target"`) se lit sur lui-même :
+ * au plus tôt, l'objectif, au plus tard, et l'assistance suit cette même fenêtre. Sinon, ce
+ * sont les chiffres de la prédiction : la fourchette de course, et les bornes de sécurité
+ * pour l'assistance. `predit` garde toujours le central du jumeau.
+ */
+export function arriveesDuPlan(vue) {
+  const p = vue?.prediction ?? {};
+  const segments = vue?.plan?.segments ?? [];
+  const dernier = segments.length ? segments[segments.length - 1] : null;
+  if (vue?.plan?.anchor === "target" && dernier) {
+    return {
+      surObjectif: true,
+      bas: dernier.lo_h,
+      centre: dernier.cum_clock_h,
+      haut: dernier.hi_h,
+      assistance: [dernier.lo_h, dernier.hi_h],
+      tolerancePct: vue.plan.window_tolerance_pct ?? null,
+      predit: p.central_h ?? null,
+    };
+  }
+  return {
+    surObjectif: false,
+    bas: p.plan_low_h,
+    centre: p.central_h,
+    haut: p.plan_high_h,
+    assistance: [p.interval_low_h, p.interval_high_h],
+    tolerancePct: null,
+    predit: p.central_h ?? null,
+  };
 }

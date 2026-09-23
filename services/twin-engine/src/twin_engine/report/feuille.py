@@ -268,6 +268,13 @@ def night_sections(plan) -> list[dict]:
 # --------------------------------------------------------------------------- #
 
 
+def exact_hours(seg, champ: str) -> float:
+    """``cum_clock``, ``lo`` ou ``hi`` d'un segment, non arrondi quand le plan le porte : le
+    tableau de marche imprime ses heures depuis ces valeurs-là."""
+    exact = getattr(seg, f"{champ}_exact_h", None)
+    return float(exact if exact is not None else getattr(seg, f"{champ}_h"))
+
+
 def safety_ratios(plan, prediction) -> tuple[float, float]:
     """(ratio au plus tôt, ratio au plus tard) appliqués au cumul de chaque passage.
 
@@ -275,7 +282,7 @@ def safety_ratios(plan, prediction) -> tuple[float, float]:
     l'intervalle de la prédiction à l'arrivée — c'est ce qui garantit que la feuille et la
     première page annoncent la même fenêtre.
     """
-    total = plan.segments[-1].cum_clock_h if plan.segments else 0.0
+    total = exact_hours(plan.segments[-1], "cum_clock") if plan.segments else 0.0
     if total <= 0:
         return 1.0, 1.0
     return prediction.interval_low_h / total, prediction.interval_high_h / total
@@ -309,6 +316,6 @@ def nutrition_rows(plan, race) -> tuple[list[dict], dict | None]:
     }
 
 
-__all__ = ["clock_columns", "consignes", "contact_notes", "contact_points",
+__all__ = ["clock_columns", "consignes", "contact_notes", "contact_points", "exact_hours",
            "night_km_ranges", "night_sections",
            "nutrition_rows", "parts", "safety_ratios"]

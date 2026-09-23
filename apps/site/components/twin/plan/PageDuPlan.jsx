@@ -13,7 +13,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { NIVEAUX, departLisible, duree, jourLisible, nombre } from "@/lib/twinTableauDeBord.mjs";
-import { heureApres } from "@/lib/twinPlan.mjs";
+import { arriveesDuPlan, heureApres } from "@/lib/twinPlan.mjs";
 
 import ApresLaCourse from "./ApresLaCourse";
 import CadrePartage, { Documents, ETIQUETTE } from "./CadrePartage";
@@ -39,7 +39,7 @@ function Entete({ vue }) {
 }
 
 function Introduction({ vue }) {
-  const p = vue.prediction ?? {};
+  const a = arriveesDuPlan(vue);
   const c = vue.course ?? {};
   const depart = vue.plan?.start_time || vue.depart_le;
   const prive = vue.acces === "prive";
@@ -51,8 +51,22 @@ function Introduction({ vue }) {
       </h1>
       <p className="mt-3 max-w-3xl text-lecture leading-lecture text-brand-text [text-wrap:pretty]">
         {c.name}, départ {quand}.{" "}
-        {prive ? "Tu arrives" : `${vue.athlete} arrive`} autour de <strong>{duree(p.central_h)}</strong>, {heureApres(depart, p.central_h).replace(/^(\S+)/, "le $1")} ;
-        une course sur deux se joue entre <strong>{duree(p.plan_low_h)}</strong> et <strong>{duree(p.plan_high_h)}</strong>.
+        {a.surObjectif ? (
+          <>
+            {prive ? "Tu vises" : `${vue.athlete} vise`} <strong>{duree(a.centre)}</strong>, {heureApres(depart, a.centre).replace(/^(\S+)/, "le $1")} ;{" "}
+            {prive ? "ta" : "sa"} fenêtre de passage va de <strong>{duree(a.bas)}</strong> à <strong>{duree(a.haut)}</strong>.
+            {prive && a.predit ? (
+              <>
+                {" "}Ton jumeau te situe à <strong>{duree(a.predit)}</strong>.
+              </>
+            ) : null}
+          </>
+        ) : (
+          <>
+            {prive ? "Tu arrives" : `${vue.athlete} arrive`} autour de <strong>{duree(a.centre)}</strong>, {heureApres(depart, a.centre).replace(/^(\S+)/, "le $1")} ;
+            une course sur deux se joue entre <strong>{duree(a.bas)}</strong> et <strong>{duree(a.haut)}</strong>.
+          </>
+        )}
       </p>
       <p className="mt-2 text-sm text-brand-muted">
         {nombre(c.length_km, 0)} km · {nombre(c.dplus_m, 0)} m D+ · {nombre(c.dminus_m, 0)} m D− · édité le{" "}

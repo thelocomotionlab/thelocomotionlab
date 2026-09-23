@@ -48,13 +48,17 @@ class SegmentPlan:
     hi_h: float
     arr_lo_clock: str | None = None   # borne basse en HEURE DE PASSAGE (ex. "sam. 18:55")
     arr_hi_clock: str | None = None   # borne haute — None si départ/position inconnus
-    # cumul NON arrondi (le cumul affiché est au centième d'heure) : sert au score de la
-    # forme du plan contre les passages réels, jamais au rapport
+    # cumul et bornes NON arrondis (ceux qu'on sert sont au centième d'heure, 36 s) : le
+    # score de la forme du plan contre les passages réels, et les heures de l'assistance,
+    # qui doivent tomber à la minute sur celles du tableau de marche
     cum_clock_exact_h: float | None = None
+    lo_exact_h: float | None = None
+    hi_exact_h: float | None = None
 
     def to_dict(self) -> dict:
         d = asdict(self)
-        d.pop("cum_clock_exact_h", None)
+        for exact in ("cum_clock_exact_h", "lo_exact_h", "hi_exact_h"):
+            d.pop(exact, None)
         return d
 
 
@@ -133,7 +137,11 @@ _WEEKDAYS_FR = ["lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim."]
 
 
 def fmt_clock(when: dt.datetime) -> str:
-    """« sam. 19h23 » — l'heure comme on l'écrit en français, partout dans le rapport."""
+    """« sam. 19h23 » — l'heure comme on l'écrit en français, partout dans le rapport, à la
+    minute la PLUS PROCHE. Tronquée, une arrivée calée sur une durée ronde (30 h pile) qui
+    tombe à quelques microsecondes sous la minute s'imprimait une minute plus tôt, et pas
+    forcément au même endroit selon le chemin du calcul."""
+    when = (when + dt.timedelta(seconds=30)).replace(second=0, microsecond=0)
     return f"{_WEEKDAYS_FR[when.weekday()]} {when.hour:02d}h{when.minute:02d}"
 
 
@@ -355,6 +363,8 @@ def build_pacing(
             arr_lo_clock=arr_lo[i],
             arr_hi_clock=arr_hi[i],
             cum_clock_exact_h=float(cum_clock[i]),
+            lo_exact_h=float(lo[i]),
+            hi_exact_h=float(hi[i]),
         )
         for i in range(n)
     ]

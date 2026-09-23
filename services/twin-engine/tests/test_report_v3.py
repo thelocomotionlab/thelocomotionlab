@@ -386,10 +386,23 @@ def test_the_crew_window_gives_back_the_arrival_of_page_one():
     assert abs(finish.lo_h - pred.interval_low_h) < 1e-9
     assert abs(finish.hi_h - pred.interval_high_h) < 1e-9
     # dernier point d'assistance : la fenêtre est bien un étalement du même intervalle
-    ratio_lo = pred.interval_low_h / plan.segments[-1].cum_clock_h
+    ratio_lo = pred.interval_low_h / plan.segments[-1].cum_clock_exact_h
     for p in points:
         assert abs(p.lo_h - p.central_h * ratio_lo) < 1e-9
     assert ctx["finish_row"]["earliest"] == ctx["arrival_safety_lo_clock"]
+
+
+def test_the_crew_expects_the_runner_at_the_minute_of_the_marching_table():
+    """« Prévu » au verso, sur les fiches et au calendrier : l'heure du tableau de marche, à
+    la minute. Recalculée depuis le cumul arrondi au centième d'heure, elle glissait d'une
+    minute sur certains postes."""
+    _, (_, _, _, pred, plan, race, _) = context()
+    segments = {s.index: s for s in plan.segments}
+    points = crew_points(plan, race, pred)
+    assert points
+    for p in points:
+        assert p.central_clock == segments[p.index].arr_clock
+    assert finish_point(plan, pred).central_clock == plan.segments[-1].arr_clock
 
 
 def test_nutrition_stays_blank_until_the_athlete_declares_it():

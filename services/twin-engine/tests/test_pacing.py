@@ -272,6 +272,24 @@ def test_target_anchor_distributes_the_requested_time():
     assert plan.fade_delta_used == ref.fade_delta_used
 
 
+def test_a_passage_clock_falls_on_the_nearest_minute():
+    """Un plan calé sur 12 h pile arrive à 01h00 pile : quelques microsecondes sous la
+    minute ne doivent pas l'imprimer à 00h59, ni la borne haute d'une fenêtre à ±3,3333 %
+    une minute avant l'heure ronde qu'elle vise."""
+    from twin_engine.pacing.plan import fmt_clock
+
+    tz = timezone(timedelta(hours=2))
+    assert fmt_clock(datetime(2026, 9, 26, 18, 59, 59, 999_000, tzinfo=tz)) == "sam. 19h00"
+    assert fmt_clock(datetime(2026, 9, 26, 19, 0, 29, tzinfo=tz)) == "sam. 19h00"
+    assert fmt_clock(datetime(2026, 9, 26, 19, 0, 30, tzinfo=tz)) == "sam. 19h01"
+    assert fmt_clock(datetime(2026, 9, 26, 23, 59, 45, tzinfo=tz)) == "dim. 00h00"
+
+    course = build_course(_triangle_gpx(), _race(), CFG)
+    plan = build_pacing(course, _prediction(course, finish=10.0), _race(), CFG,
+                        anchor_hours=12.0)
+    assert plan.segments[-1].arr_clock == "sam. 01h00"
+
+
 def test_target_windows_are_a_fixed_execution_tolerance():
     """Les fenêtres cessent d'être une bande de probabilité : demi-largeur fixe (en % du
     cumul), donc croissante en valeur absolue le long de la course."""

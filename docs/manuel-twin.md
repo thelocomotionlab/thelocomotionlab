@@ -564,8 +564,10 @@ vocabulaire des fenêtres (voir ci-dessous). Sans objectif, tout est **exactemen
 - la **prédiction n'est jamais remplacée** — le mode objectif s'ajoute à côté d'elle, et le registre
   de couverture continue de ne consigner que la prédiction ;
 - les fenêtres par segment changent de nature : **fenêtre de passage** (tolérance d'exécution fixe,
-  `target.tolerance_pct`), plus une bande de probabilité — donc jamais de « 50 % » ni « 80 % » à
-  leur sujet ;
+  `target.tolerance_pct`, ou celle que le plan choisit au tableau de bord), plus une bande de
+  probabilité — donc jamais de « 50 % » ni « 80 % » à leur sujet ;
+- l'assistance suit le plan : le verso de la feuille, les fiches, le calendrier, le GPX et la page de
+  l'athlète lisent cette fenêtre de passage, et plus les bornes de sécurité de la prédiction ;
 - une cible plus rapide que la borne de sécurité basse ne donne **pas** de plan mais un écart chiffré
   (objectif d'entraînement), et la garde du domaine (`sufficiency.domain_gate`) reste prioritaire sur
   toute cible : elle lit la **demande du parcours** (Deq ÷ vitesse de référence de l'athlète, contre

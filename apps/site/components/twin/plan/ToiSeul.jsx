@@ -14,7 +14,7 @@ import { useCallback, useState } from "react";
 import { BoutonTexte, Button, ChampCompact, Field } from "@locomotionlab/ui";
 
 import { departLisible, duree, jourLisible, nombre } from "@/lib/twinTableauDeBord.mjs";
-import { amendementsDuFormulaire } from "@/lib/twinPlan.mjs";
+import { amendementsDuFormulaire, arriveesDuPlan } from "@/lib/twinPlan.mjs";
 import useJob from "@/components/twin/useJob";
 
 import { amender, demander, lireLAmendement } from "./api";
@@ -127,7 +127,7 @@ export default function ToiSeul({ vue, reference, cle, recharger }) {
   const annexe = vue.annexe ?? {};
   const jumeau = annexe.jumeau ?? {};
   const textes = annexe.textes ?? {};
-  const p = vue.prediction ?? {};
+  const a = arriveesDuPlan(vue);
 
   const lire = useCallback((id) => lireLAmendement(reference, cle, id), [reference, cle]);
   const job = useJob(
@@ -212,9 +212,9 @@ export default function ToiSeul({ vue, reference, cle, recharger }) {
                 <th className="hidden px-2 py-2 text-right font-semibold md:table-cell">D+</th>
                 <th className="hidden px-2 py-2 text-right font-semibold md:table-cell">D−</th>
                 <th className="hidden px-2 py-2 text-right font-semibold md:table-cell">Allure</th>
-                <th className="px-2 py-2 text-right font-semibold">{duree(p.plan_low_h)}</th>
-                <th className="px-2 py-2 text-right font-semibold text-brand-text">{duree(p.central_h)}</th>
-                <th className="px-2 py-2 text-right font-semibold">{duree(p.plan_high_h)}</th>
+                <th className="px-2 py-2 text-right font-semibold">{duree(a.bas)}</th>
+                <th className="px-2 py-2 text-right font-semibold text-brand-text">{duree(a.centre)}</th>
+                <th className="px-2 py-2 text-right font-semibold">{duree(a.haut)}</th>
                 <th className="px-2 py-2 text-right font-semibold">Arrêt</th>
               </tr>
             </thead>
@@ -249,8 +249,8 @@ export default function ToiSeul({ vue, reference, cle, recharger }) {
         </div>
         <div className="mt-4 sm:hidden">
           <p className="text-xs text-brand-muted">
-            Arrivées en {duree(p.plan_low_h)} · <span className="font-semibold text-brand-text">{duree(p.central_h)}</span> ·{" "}
-            {duree(p.plan_high_h)}
+            Arrivées en {duree(a.bas)} · <span className="font-semibold text-brand-text">{duree(a.centre)}</span> ·{" "}
+            {duree(a.haut)}
           </p>
           <ol className="mt-2 flex list-none flex-col gap-2 p-0">
             {segments.map((s, i) => {

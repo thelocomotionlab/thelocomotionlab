@@ -14,7 +14,7 @@
 % =====================================================================
 % LL:BEGIN fiches
 <% if fiches %>\LLpiedlegende{Une fiche par poste : découpe-les et donne-les. L'heure « prévu » est celle
-que suit le plan ; les deux autres sont les bornes de sécurité.}
+que suit le plan ; les deux autres <% if target_mode %>bornent la fenêtre du plan<% else %>sont les bornes de sécurité<% endif %>.}
 \LLheadright{{\LLsemiboldfont\fontsize{7}{9}\selectfont\color{LLBg}\LLtracked{\MakeUppercase{Fiches assistance \textperiodcentered{} une par poste \textperiodcentered{} à découper}}}}
 \setlength{\LLficheW}{\dimexpr\linewidth/2\relax}
 \setlength{\LLficheH}{\dimexpr(\textheight - 2mm)/4\relax}

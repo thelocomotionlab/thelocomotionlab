@@ -45,8 +45,9 @@
 
 % =====================================================================
 % LL:BEGIN feuille-recto
-\LLpiedlegende{Colonnes horaires : \textcolor{LLPrimary}{sauge} = rapide,
-\textcolor{LLDeep}{terracotta} = centrale, \textcolor{LLAccentDark}{ambre} = prudent
+\LLpiedlegende{Colonnes horaires : <% if target_mode %>\textcolor{LLPrimary}{sauge} = au plus tôt,
+\textcolor{LLDeep}{terracotta} = ton objectif, \textcolor{LLAccentDark}{ambre} = au plus tard<% else %>\textcolor{LLPrimary}{sauge} = rapide,
+\textcolor{LLDeep}{terracotta} = centrale, \textcolor{LLAccentDark}{ambre} = prudent<% endif %>
 \textperiodcentered{} \LLtraitlegende{LLDeep} filet en marge : assistance autorisée
 \textperiodcentered{} \LLnuitpoint{} point d'encre : segment de nuit \textperiodcentered{}
 cases vides : de la place pour écrire.}
@@ -72,7 +73,7 @@ cases vides : de la place pour écrire.}
 \textcolor{LLDeep}{terracotta} = prévu, l'heure que tu suis, \textcolor{LLAccentDark}{ambre} = au plus tard
 \textperiodcentered{} \LLnuitpoint{} point d'encre : poste de nuit, prévoir de quoi éclairer
 et avoir chaud.}
-\LLtitrefeuille{Assistance}{« au plus tôt » et « au plus tard » sont les bornes de sécurité étalées le long du parcours, << safety_word >> y tient, arrivée comprise.}
+\LLtitrefeuille{Assistance}{<% if target_mode %>« au plus tôt » et « au plus tard » bornent la fenêtre de ton plan, $\pm$<< target_tolerance_pct >>\,\% autour de ton objectif, étalée le long du parcours, arrivée comprise.<% else %>« au plus tôt » et « au plus tard » sont les bornes de sécurité étalées le long du parcours, << safety_word >> y tient, arrivée comprise.<% endif %>}
 
 \LLcadredecoupe{%
 {\fontsize{12}{12}\selectfont\LLtableau
