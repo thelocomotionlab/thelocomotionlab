@@ -71,6 +71,8 @@ lui, prend toute la largeur du profil.
    - :cible: affûtage, S16 → S17
    ```
 
+   Les icônes des puces prennent la couleur du texte ; pour les avoir en ocre : **Couleur des
+   puces** → `#C08327`.
 3. Dans le rail de gauche, **Éléments** — pas **Données** : ce tiroir-là ne sert qu'à la trace GPX —
    puis, dans sa rubrique **DONNÉES**, **Semaines**. Le graphique se pose sur la planche, déjà
    choisi. Dans l'inspecteur, à droite : **POSITION → Y `700`, Hauteur `540`**.
@@ -96,12 +98,13 @@ lui, prend toute la largeur du profil.
    **AXE DE LA COURBE** : même chose pour le dénivelé (vide, il donne 0 · 5k · 10k · 15k).
    **DESSIN** : les lignes de grille, la largeur des barres (72 % de la colonne par défaut), les
    pastilles sur la courbe.
-7. **La couleur d'une barre** : le graphique choisi, **clique la barre** dans la planche. La barre
-   contextuelle au-dessus affiche son étiquette (« S15 ») et cinq pastilles — Thème (la couleur de la
+7. **La couleur d'une barre** : **clique la barre** dans la planche — un seul clic, que le graphique
+   soit déjà choisi ou non. La barre contextuelle au-dessus affiche son étiquette (« S15 ») et cinq
+   pastilles — Thème (la couleur de la
    série), Accent, Bleu-vert, Terracotta, Fuchsia. Pour le WEC : S15 → Fuchsia ; pour l'affûtage :
    S16 et S17 → Accent. **Tout remettre à la série** dans l'inspecteur annule d'un coup.
-8. **LÉGENDE → Ajouter une ligne**, trois fois : la couleur et le mot — `montée en charge`, `WEC`,
-   `affûtage`. Elle s'écrit sous le graphique.
+8. **LÉGENDE → Ajouter une ligne**, trois fois : la couleur et le mot — `montée en charge` en
+   `#8CB9BD`, `WEC` en `#D6246E`, `affûtage` en `#C08327`. Elle s'écrit sous le graphique.
 
 Ce graphique est celui d'aujourd'hui. Les pistes pour le redessiner (phases en frise, dénivelé en
 montagne sur la barre, deux histogrammes en miroir) changent le dessin, pas la saisie : le bloc de

@@ -19,6 +19,8 @@ import {
   carteNeuve,
   casesNeuves,
   filetNeuf,
+  flecheDuPied,
+  formatDe,
   formeNeuve,
   iconeNeuve,
   marqueNeuve,
@@ -103,6 +105,22 @@ export default function TiroirElements({ poste }: { poste: PosteDeTravail }) {
             onClick={() => poser(filetNeuf({ x: 0.06, y: 0.5, l: 0.1, h: 0.0074 }))}
           >
             Filet ambre
+          </button>
+        </div>
+      </section>
+
+      <section>
+        <h3 className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-brand-muted">
+          Pied de page
+        </h3>
+        <div className="grid grid-cols-2 gap-1.5">
+          <button
+            type="button"
+            title="La flèche seule, en bas à droite, à la place et dans l'encre du pied"
+            className={BOUTON}
+            onClick={() => poser(flecheDuPied(formatDe(projet.format)))}
+          >
+            Flèche →
           </button>
         </div>
       </section>

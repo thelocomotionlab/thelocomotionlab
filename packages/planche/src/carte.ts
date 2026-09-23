@@ -194,15 +194,35 @@ function polyligne(
   ctx.stroke();
 }
 
-/** Le marqueur de départ ou d'arrivée : un disque cerclé, à la couleur du jour. */
-function borne(ctx: Ctx2D, x: number, y: number, rayon: number, couleur: string, liseré: string) {
+/** Une borne qui porte une icône grandit d'autant : le pictogramme doit y tenir. */
+const RAYON_BORNE_ICONE = 1.8;
+
+/**
+ * UNE BORNE : la pastille à la couleur de la trace, cerclée du liseré. Avec une
+ * icône, elle grandit et l'icône s'y dessine à l'encre du liseré — posé seul
+ * sur une imagerie, un pictogramme ne se lirait pas.
+ */
+function borne(
+  ctx: Ctx2D,
+  x: number,
+  y: number,
+  rayon: number,
+  couleur: string,
+  liseré: string,
+  icone = "",
+) {
+  const r = icone ? rayon * RAYON_BORNE_ICONE : rayon;
   ctx.beginPath();
-  ctx.arc(x, y, rayon, 0, Math.PI * 2);
+  ctx.arc(x, y, r, 0, Math.PI * 2);
   ctx.fillStyle = couleur;
   ctx.fill();
   ctx.lineWidth = Math.max(1.5, rayon * 0.35);
   ctx.strokeStyle = liseré;
   ctx.stroke();
+  if (icone) {
+    const cote = r * 1.15;
+    vocabulaireDIcones().dessiner(ctx, icone, x - cote / 2, y - cote / 2, cote, liseré);
+  }
 }
 
 /**
@@ -440,17 +460,20 @@ export function dessinerCarte(
     );
   }
 
-  // 5. Les bornes de départ et d'arrivée, sur la portion montrée.
+  // 5. LES BORNES DE DÉPART ET D'ARRIVÉE, sur la portion montrée, chacune à la
+  //    couleur de la journée qu'elle ouvre ou qu'elle ferme : une pastille
+  //    appartient à la ligne sur laquelle elle est posée. Sur une trace d'un
+  //    seul tenant, c'est la même aux deux bouts.
   const rayon = Math.max(4, epaisseur * 1.5);
   const premier = journees[0];
   const dernier = journees[journees.length - 1];
   if (e.depart && premier && premier.coords.length > 0) {
     const [x, y] = projeter(premier.coords[0]!);
-    borne(ctx, x, y, rayon, couleurDuJour(e.couleurs, premier.index), liseréCouleur);
+    borne(ctx, x, y, rayon, couleurDuJour(e.couleurs, premier.index), liseréCouleur, e.iconeDepart);
   }
   if (e.arrivee && dernier && dernier.coords.length > 0) {
     const [x, y] = projeter(dernier.coords[dernier.coords.length - 1]!);
-    borne(ctx, x, y, rayon, c.theme.accent, liseréCouleur);
+    borne(ctx, x, y, rayon, couleurDuJour(e.couleurs, dernier.index), liseréCouleur, e.iconeArrivee);
   }
 
   // 6. UNE ÉTIQUETTE PAR JOURNÉE MONTRÉE, déplaçable à la main depuis son
