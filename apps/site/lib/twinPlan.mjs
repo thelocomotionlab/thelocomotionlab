@@ -126,3 +126,18 @@ export function placeDuReel(reelH, fourchette, bornes) {
   }
   return reelH < (b1 ?? reelH) ? "plus rapide que les bornes de sécurité" : "au-delà des bornes de sécurité";
 }
+
+/**
+ * Une fenêtre d'objectif « entre 29 h et 31 h » : la cible au milieu, la tolérance en
+ * demi-largeur relative — ce que le moteur lit (30 h, ±3,33 % du temps cumulé).
+ */
+export function cibleDeLaFenetre(debutH, finH) {
+  if (!(debutH > 0) || !(finH > debutH)) return null;
+  return { cible_h: (debutH + finH) / 2, tolerance_pct: (100 * (finH - debutH)) / (finH + debutH) };
+}
+
+/** Et l'inverse : l'arrivée au plus tôt et au plus tard qu'une cible et sa tolérance donnent. */
+export function fenetreDeLaCible(cibleH, tolerancePct) {
+  if (!(cibleH > 0) || tolerancePct === null || tolerancePct === undefined) return null;
+  return { debut_h: cibleH * (1 - tolerancePct / 100), fin_h: cibleH * (1 + tolerancePct / 100) };
+}

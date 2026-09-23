@@ -60,6 +60,14 @@ def _nutrition_declaree(n) -> bool:
     return n.eau_l_h is not None or n.glucides_g_h is not None
 
 
+def cfg_de_la_fenetre(cfg: Config, tolerance_pct: float | None) -> Config:
+    """La config du moteur, avec la fenêtre d'objectif que ce plan a choisie. Le dossier
+    ne la garde pas : chaque rendu d'une version la reçoit d'ici."""
+    if tolerance_pct is None:
+        return cfg
+    return replace(cfg, target=replace(cfg.target, tolerance_pct=float(tolerance_pct)))
+
+
 def base_du_plan(course: Course, plan: Plan, *,
                  arrets_politique: dict[int, float] | None = None) -> RaceSpec:
     """La course et les réglages de Valentin — SANS les amendements de l'athlète.
@@ -275,6 +283,8 @@ def generer_une_version(*, ref: str, magasin: Magasin, cfg: Config,
         raise GenerationImpossible(f"plan inconnu : {ref}")
     plan = Plan.from_dict(brut)
     athlete, course, gpx, twin, calibration = _materiaux(magasin, plan)
+    cfg = cfg_de_la_fenetre(
+        cfg, plan.reglages.tolerance_pct if plan.reglages.mode == "objectif" else None)
 
     arrets_politique = None
     if plan.reglages.politique_arrets == POLITIQUE_MESUREE:
@@ -385,6 +395,13 @@ def amender_la_version(*, ref: str, magasin: Magasin, cfg: Config, numero: int |
 
     d = _dossier.lire(version / "dossier.json")
     resume = lire_json(version / "version.json") or {}
+    # La fenêtre de CETTE version : celle de ses réglages, ou, pour un plan importé du CLI,
+    # celle que son annexe dit avoir servie.
+    tolerance = (resume.get("reglages") or {}).get("tolerance_pct")
+    if tolerance is None:
+        tolerance = ((lire_json(version / "annexe.json") or {}).get("plan") or {}).get(
+            "window_tolerance_pct")
+    cfg = cfg_de_la_fenetre(cfg, tolerance)
     # Une version importée du CLI n'a pas de base gardée : son carnet de route EST sa
     # base, aucun amendement de l'athlète n'y a encore été posé.
     base = _dossier.appliquer(d.race, resume["base"]) if resume.get("base") else d.race

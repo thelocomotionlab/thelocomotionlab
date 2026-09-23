@@ -50,7 +50,7 @@ function FilDAriane({ athlete, course, plan }) {
 /** Un plan qui existe. */
 function EcranPlan({ vue, recharger }) {
   const { plan, athlete, course } = vue;
-  const [ecran, setEcran] = useState(() => reglagesDeLEcran(plan.reglages));
+  const [ecran, setEcran] = useState(() => reglagesDeLEcran(plan.reglages, vue.fenetre_defaut_pct));
   const [jobId, setJobId] = useState(vue.jobs?.[0]?.id || "");
   const [erreur, setErreur] = useState("");
   const [lancement, setLancement] = useState(false);

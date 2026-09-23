@@ -362,6 +362,39 @@ def test_un_amendement_refait_la_version_et_se_retire(deux_chemins):
     assert 4 not in stop_de()
 
 
+@pdf_requis
+def test_la_fenetre_dobjectif_du_plan_est_servie_et_survit_a_lamendement(deux_chemins):
+    """29 h – 31 h, c'est une cible de 30 h à ±3,33 % : la config n'en sait rien, le plan
+    si — et chaque rendu de la version la reçoit, amendement compris."""
+    magasin = deux_chemins["magasin"]
+    central = json.loads((deux_chemins["v1"] / "version.json").read_text())["prediction"]
+    ref = "LL-NICE26-VAL-FENETRE"
+    fenetre = 100 / 30
+    magasin.plans.ecrire(O.Plan(ref=ref, athlete_id="val", course_id="nice", reglages=O.Reglages(
+        mode="objectif", cible_h=round(central["central_h"]), tolerance_pct=fenetre,
+        politique_arrets=G.POLITIQUE_STANDARD)).to_dict())
+    G.generer_une_version(ref=ref, magasin=magasin, cfg=CFG, report_date=EDITE_LE,
+                          analysis_date=ANALYSE_LE)
+    v1 = magasin.plans.repertoire(ref) / "v1"
+
+    def servie():
+        return json.loads((v1 / "annexe.json").read_text())["plan"]
+
+    assert CFG.target.tolerance_pct != pytest.approx(fenetre)
+    assert servie()["anchor"] == "target"
+    assert servie()["window_tolerance_pct"] == pytest.approx(fenetre, abs=0.01)
+    # l'arrivée tombe sur les deux bornes demandées, arrêts compris
+    cible = round(central["central_h"])
+    arrivee = servie()["segments"][-1]
+    assert arrivee["lo_h"] == pytest.approx(cible * (1 - fenetre / 100), abs=0.02)
+    assert arrivee["hi_h"] == pytest.approx(cible * (1 + fenetre / 100), abs=0.02)
+
+    magasin.plans.modifier(ref, version_publiee=1, amendements={
+        "arrets": {"4": 12}, "notes": {}, "nutrition": {"eau_l_h": None, "glucides_g_h": None}})
+    G.amender_la_version(ref=ref, magasin=magasin, cfg=CFG)
+    assert servie()["window_tolerance_pct"] == pytest.approx(fenetre, abs=0.01)
+
+
 def test_un_plan_sans_trace_ne_se_genere_pas(tmp_path):
     magasin = Magasin(tmp_path)
     magasin.athletes.ecrire(O.Athlete(id="val").to_dict())

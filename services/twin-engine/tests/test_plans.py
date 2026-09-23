@@ -141,6 +141,8 @@ def test_un_plan_demande_une_trace(client):
     ({"politique_arrets": "au feeling"}, "politique"),
     ({"nutrition": {"eau_l_h": 9}}, "eau"),
     ({"assistance": [{"index": 1, "note": "ici"}]}, "assistance"),
+    ({"mode": "objectif", "cible_h": "30h", "tolerance_pct": 50}, "fenêtre"),
+    ({"mode": "objectif", "cible_h": "30h", "tolerance_pct": "large"}, "fenêtre illisible"),
 ])
 def test_des_reglages_illisibles_sont_refuses_en_entier(reglages, motif):
     course = racespec_vers_course(RaceSpec.from_json(NICE), id="nice")
@@ -158,6 +160,13 @@ def test_les_reglages_se_lisent_comme_un_humain_les_ecrit():
     assert [(a.index, a.note) for a in r.assistance] == [(4, "frontale")]
     assert lire_les_reglages({"cible_h": 30}, course).cible_h is None, \
         "une cible sans le mode objectif ne se glisse pas dans une prédiction"
+    # 29 h – 31 h : une cible de 30 h, une fenêtre de ±3,33 %
+    fenetre = lire_les_reglages({"mode": "objectif", "cible_h": 30, "tolerance_pct": "3,3333"},
+                                course)
+    assert fenetre.tolerance_pct == pytest.approx(3.3333)
+    assert lire_les_reglages({"mode": "prediction", "tolerance_pct": 3}, course).tolerance_pct \
+        is None, "une fenêtre ne vaut qu'avec sa cible"
+    assert lire_les_reglages({"mode": "objectif", "cible_h": 30}, course).tolerance_pct is None
 
 
 def test_le_resultat_se_lit_en_heures_ou_en_abandon():

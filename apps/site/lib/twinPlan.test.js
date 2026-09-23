@@ -6,7 +6,14 @@
 
 import { describe, expect, it } from "vitest";
 
-import { amendementsDuFormulaire, heureApres, nuitsEnKm, placeDuReel } from "./twinPlan.mjs";
+import {
+  amendementsDuFormulaire,
+  cibleDeLaFenetre,
+  fenetreDeLaCible,
+  heureApres,
+  nuitsEnKm,
+  placeDuReel,
+} from "./twinPlan.mjs";
 
 const DEPART = "2026-09-25T13:00:00+02:00";
 
@@ -80,5 +87,22 @@ describe("la place du réel", () => {
     expect(placeDuReel(30, [31.5, 35.8], [29.6, 38.1])).toBe("plus rapide que la fourchette, dans les bornes");
     expect(placeDuReel(40, [31.5, 35.8], [29.6, 38.1])).toBe("au-delà des bornes de sécurité");
     expect(placeDuReel(null, [1, 2], [0, 3])).toBe("");
+  });
+});
+
+describe("la fenêtre d'objectif", () => {
+  it("29 h – 31 h, c'est 30 h à ±3,33 %", () => {
+    const { cible_h, tolerance_pct } = cibleDeLaFenetre(29, 31);
+    expect(cible_h).toBe(30);
+    expect(tolerance_pct).toBeCloseTo(3.3333, 4);
+    const { debut_h, fin_h } = fenetreDeLaCible(cible_h, tolerance_pct);
+    expect(debut_h).toBeCloseTo(29, 9);
+    expect(fin_h).toBeCloseTo(31, 9);
+  });
+
+  it("une fenêtre à l'envers ou incomplète ne donne rien", () => {
+    expect(cibleDeLaFenetre(31, 29)).toBe(null);
+    expect(cibleDeLaFenetre(null, 31)).toBe(null);
+    expect(fenetreDeLaCible(30, null)).toBe(null);
   });
 });

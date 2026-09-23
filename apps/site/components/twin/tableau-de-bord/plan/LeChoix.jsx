@@ -12,6 +12,7 @@
 import { Button, Choix, Segments } from "@locomotionlab/ui";
 
 import { NIVEAUX, duree, lireUneDuree, nombre } from "@/lib/twinTableauDeBord.mjs";
+import { cibleDeLaFenetre, fenetreDeLaCible } from "@/lib/twinPlan.mjs";
 
 import { ETIQUETTE } from "../Coquille";
 import { Case, ChampCourt } from "../editeur/commun";
@@ -20,12 +21,22 @@ function minutesEnHeures(minutes) {
   return minutes === null || minutes === undefined ? "—" : duree(minutes / 60);
 }
 
-/** Les réglages tels que l'écran les tient : des chaînes, tant qu'on tape. */
-export function reglagesDeLEcran(reglages) {
+const enClair = (heures) => duree(heures).replace(/\s/g, "");
+
+/** La fenêtre que l'écran montre, lue sur ce qu'il tient : `null` tant qu'elle est incomplète. */
+export function fenetreDeLEcran(ecran) {
+  return cibleDeLaFenetre(lireUneDuree(ecran.debut), lireUneDuree(ecran.fin));
+}
+
+/** Les réglages tels que l'écran les tient : des chaînes, tant qu'on tape. Une fenêtre
+ *  jamais choisie se montre telle que le moteur la servirait (`fenetreDefautPct`). */
+export function reglagesDeLEcran(reglages, fenetreDefautPct = null) {
   const r = reglages ?? {};
+  const fenetre = r.cible_h ? fenetreDeLaCible(r.cible_h, r.tolerance_pct ?? fenetreDefautPct) : null;
   return {
     mode: r.mode || "prediction",
-    cible: r.cible_h ? duree(r.cible_h).replace(/\s/g, "") : "",
+    debut: fenetre ? enClair(fenetre.debut_h) : "",
+    fin: fenetre ? enClair(fenetre.fin_h) : "",
     politique_arrets: r.politique_arrets || "standard",
     notes: Object.fromEntries((r.assistance ?? []).map((a) => [a.index, a.note])),
     eau: r.nutrition?.eau_l_h ?? "",
@@ -36,9 +47,11 @@ export function reglagesDeLEcran(reglages) {
 /** Et ce qui part au moteur. */
 export function reglagesPourLeMoteur(ecran) {
   const vers = (v) => (v === "" || v === null || v === undefined ? null : Number(String(v).replace(",", ".")));
+  const fenetre = ecran.mode === "objectif" ? fenetreDeLEcran(ecran) : null;
   return {
     mode: ecran.mode,
-    cible_h: ecran.mode === "objectif" ? lireUneDuree(ecran.cible) : null,
+    cible_h: fenetre ? fenetre.cible_h : null,
+    tolerance_pct: fenetre ? Math.round(fenetre.tolerance_pct * 10_000) / 10_000 : null,
     politique_arrets: ecran.politique_arrets,
     assistance: Object.entries(ecran.notes)
       .filter(([, note]) => note && note.trim())
@@ -62,7 +75,8 @@ export default function LeChoix({
   fige,
 }) {
   const postes = (course?.ravitaillements ?? []).filter((r) => r.assistance);
-  const cibleIllisible = ecran.mode === "objectif" && lireUneDuree(ecran.cible) === null;
+  const fenetre = fenetreDeLEcran(ecran);
+  const cibleIllisible = ecran.mode === "objectif" && fenetre === null;
 
   return (
     <aside className="flex flex-col gap-6 border-r border-brand-hairline bg-brand-paper px-6 py-7">
@@ -114,18 +128,32 @@ export default function LeChoix({
         <p className="text-xs leading-relaxed text-brand-muted">
           {ecran.mode === "prediction"
             ? "Le plan suit le jumeau ; la cible n'est qu'un repère."
-            : "Le plan se cale sur la cible ; le rapport dit ce qu'elle exige du jumeau."}
+            : "Le plan se cale sur la fenêtre ; le rapport dit ce qu'elle exige du jumeau."}
         </p>
         {ecran.mode === "objectif" ? (
-          <ChampCourt
-            label="Cible"
-            type="text"
-            unite="heures"
-            placeholder="31h30"
-            value={ecran.cible}
-            onChange={(v) => changer({ cible: v })}
-            aide={cibleIllisible ? "Le mode objectif demande une cible : 31h30, 31:30 ou 31,5." : ""}
-          />
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <ChampCourt
+                label="Arrivée, au plus tôt"
+                type="text"
+                placeholder="29h00"
+                value={ecran.debut}
+                onChange={(v) => changer({ debut: v })}
+              />
+              <ChampCourt
+                label="au plus tard"
+                type="text"
+                placeholder="31h00"
+                value={ecran.fin}
+                onChange={(v) => changer({ fin: v })}
+              />
+            </div>
+            <p className={`text-xs leading-relaxed ${cibleIllisible ? "text-brand-deep-dark" : "text-brand-muted"}`}>
+              {fenetre
+                ? `Le plan se cale sur ${duree(fenetre.cible_h)} ; la fenêtre, ±${nombre(fenetre.tolerance_pct, 1)} % du temps cumulé, s'étale le long du parcours.`
+                : "Le mode objectif demande une fenêtre : 29h00 et 31h00, 29:00 et 31:00, ou 29 et 31."}
+            </p>
+          </>
         ) : null}
       </div>
 

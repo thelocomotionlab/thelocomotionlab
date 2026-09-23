@@ -104,6 +104,12 @@ def lire_la_nutrition(brut) -> NutritionReglage:
     )
 
 
+# La fenêtre d'objectif : plus étroite qu'une demi-heure sur trente, elle ne se tient
+# pas ; plus large que ±20 %, ce n'est plus un objectif.
+TOLERANCE_MIN_PCT = 0.5
+TOLERANCE_MAX_PCT = 20.0
+
+
 def lire_les_reglages(brut, course: Course | None) -> Reglages:
     """Les réglages de Valentin, vérifiés. Un réglage illisible est refusé en entier :
     générer une version à moitié réglée serait pire que de ne rien générer."""
@@ -117,6 +123,18 @@ def lire_les_reglages(brut, course: Course | None) -> Reglages:
     cible = parse_duration_h(brut.get("cible_h"))
     if mode == "objectif" and cible is None:
         raise ValueError("le mode objectif demande une durée visée")
+    tolerance = brut.get("tolerance_pct")
+    if tolerance in (None, ""):
+        tolerance = None
+    else:
+        try:
+            tolerance = float(str(tolerance).replace(",", "."))
+        except ValueError:
+            raise ValueError(f"fenêtre illisible : {tolerance}") from None
+        if not TOLERANCE_MIN_PCT <= tolerance <= TOLERANCE_MAX_PCT:
+            raise ValueError(
+                f"fenêtre de ±{tolerance:g} % : elle se règle entre ±{TOLERANCE_MIN_PCT:g} et "
+                f"±{TOLERANCE_MAX_PCT:g} % du temps visé")
     politique = str(brut.get("politique_arrets") or POLITIQUE_STANDARD)
     if politique not in POLITIQUES:
         raise ValueError(f"politique d'arrêts inconnue : {politique}")
@@ -135,6 +153,7 @@ def lire_les_reglages(brut, course: Course | None) -> Reglages:
             assistance.append(AssistanceReglage(index=index, note=note))
 
     return Reglages(mode=mode, cible_h=cible if mode == "objectif" else None,
+                    tolerance_pct=tolerance if mode == "objectif" else None,
                     politique_arrets=politique, assistance=assistance,
                     nutrition=lire_la_nutrition(brut.get("nutrition")))
 
@@ -279,6 +298,8 @@ def vue_du_plan(request: Request, plan: Plan) -> dict:
         "fige": est_parti(brut, course),
         "arrets_mesures": _arrets_mesures(magasin, cfg, plan, course),
         "politique_standard": _politique_standard(cfg, plan, course),
+        # la fenêtre d'objectif quand le plan n'en choisit pas : celle de la config
+        "fenetre_defaut_pct": cfg.target.tolerance_pct,
         "jobs": [request.app.state.store.rendre_public(j)
                  for j in request.app.state.store.en_attente(plan_ref=plan.ref)],
         "demandes": [d for d in magasin.demandes.lister() if d.get("plan_ref") == plan.ref],

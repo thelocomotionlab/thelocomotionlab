@@ -312,6 +312,9 @@ class Reglages:
 
     mode: str = "prediction"          # prediction | objectif
     cible_h: float | None = None
+    # Demi-largeur de la fenêtre de passage en mode objectif, en % du temps cumulé : 30 h à
+    # 3,33 % titre les colonnes 29 h · 30 h · 31 h. Vide : celle de la config du moteur.
+    tolerance_pct: float | None = None
     politique_arrets: str = ""
     assistance: list[AssistanceReglage] = field(default_factory=list)
     nutrition: NutritionReglage = field(default_factory=NutritionReglage)
@@ -410,6 +413,7 @@ class Plan:
             reglages=Reglages(
                 mode=str((brut.get("reglages") or {}).get("mode") or "prediction"),
                 cible_h=(brut.get("reglages") or {}).get("cible_h"),
+                tolerance_pct=(brut.get("reglages") or {}).get("tolerance_pct"),
                 politique_arrets=str((brut.get("reglages") or {}).get("politique_arrets") or ""),
                 assistance=[
                     _depuis(AssistanceReglage, a)
