@@ -26,7 +26,7 @@ la page de l'athlète `/services/twin/plan/[ref]` et ses amendements · le regis
 
 **Vert à la fin** : `pytest services/twin-engine` 695 passés / 2 sautés (XeLaTeX présent),
 golden tableau de bord contre CLI tenu à l'octet ; `pnpm -F site lint test build` 556 passés ;
-`npx @cloudflare/next-on-pages` construit, `/services/twin/plan/[ref]` en route edge ;
+`pnpm -F site build:cf` construit, `/services/twin/plan/[ref]` en route edge ;
 `packages/ui` tsc et 16 tests ; `apps/studio` tsc.
 
 ### Ce qui a divergé
@@ -58,7 +58,6 @@ golden tableau de bord contre CLI tenu à l'octet ; `pnpm -F site lint test buil
 | Choix | Pourquoi |
 |---|---|
 | La page de l'athlète en runtime **edge** | C'est la seule route dynamique du site : la référence arrive après le build. `next-on-pages` l'exige en edge ; ses en-têtes (`noindex`, `no-referrer`, `no-store`) viennent donc de `next.config.mjs`, `public/_headers` ne s'appliquant qu'aux fichiers statiques. |
-| `vercel@50.44.0` épinglé en devDependency du site | `next-on-pages` lance `npx vercel build`, qui prend la version locale si elle existe, la dernière sinon. La 59.x rejette toutes les routes : le build du site cassait, route edge ou pas. Le studio a le même script et n'est pas épinglé. |
 | Le QR du rapport porte la **clé privée** | Sans clé, le QR menait à une page qui répond 404. Le CLI la dérive de `TWIN_KEYS_SECRET` et prévient quand il ne l'a pas. |
 | Un seul PDF (rapport, feuille, fiches) assemblé par `pypdf` | Un fichier à joindre, un seul à imprimer ; la feuille seule reste téléchargeable. |
 | `course.sh publier` ne fait plus qu'importer | Le dossier, les documents et l'annexe entrent dans le tableau de bord ; « Publier » se fait depuis l'écran Plan, comme pour un plan généré. |
@@ -217,5 +216,5 @@ plusieurs centaines de Mo jusqu'au rapatriement. C'est là que ça se remplira e
   l'accord de Valentin, parce que c'est une suppression : `apps/site/app/services/twin/annexe/`,
   `apps/site/lib/twinAnnexes.mjs`, `apps/site/public/twin-annexes/`, et côté moteur la route
   `POST /rendu` avec ses bornes (`tests/test_api_rendu.py`).
-- `@cloudflare/next-on-pages` est déprécié au profit d'OpenNext : l'épinglage de la CLI Vercel
-  tient le build aujourd'hui, pas indéfiniment.
+- `@cloudflare/next-on-pages` est déprécié au profit d'OpenNext : la version de la CLI Vercel
+  que fixe `build:cf` tient le build aujourd'hui, pas indéfiniment.
