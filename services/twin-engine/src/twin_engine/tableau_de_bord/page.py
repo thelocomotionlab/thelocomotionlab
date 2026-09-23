@@ -20,10 +20,10 @@ from .cycle import a_un_resultat, depart_du_plan, est_parti, statut_lu
 
 # Ce que la clé de partage lit de l'annexe, et rien d'autre.
 _COURSE_PARTAGEE = ("name", "length_km", "dplus_m", "dminus_m", "start_time", "n_segments",
-                    "segments")
+                    "segments", "profil")
 _PLAN_PARTAGE = ("segments", "nuit", "parties", "crew", "nutrition", "stops_policy",
                  "anchor", "t_clock_h", "t_move_h", "t_stops_h", "safety_lo_clock",
-                 "safety_hi_clock", "window_tolerance_pct")
+                 "safety_hi_clock", "window_tolerance_pct", "sun", "start_time")
 _PREDICTION_PARTAGEE = ("central_h", "central", "plan_low_h", "plan_high_h",
                         "interval_low_h", "interval_high_h")
 _FIGURES_PARTAGEES = ("profil", "pacing")
@@ -51,6 +51,7 @@ def vue_commune(plan: dict, course: dict | None, annexe: dict, *, documents: lis
         "assistance": list(annexe.get("assistance") or []),
         "arrivee": annexe.get("arrivee"),
         "target": annexe.get("target"),
+        "ventilation": annexe.get("ventilation"),
         "figures": _garder(annexe.get("figures"), _FIGURES_PARTAGEES),
         # Ceux que la version publiée porte vraiment : pas de calendrier sans heure de
         # départ, pas de trace sans coordonnées.
@@ -72,6 +73,8 @@ def vue_privee(plan: dict, course: dict | None, annexe: dict, *, documents: list
     return {
         **commune,
         "acces": "prive",
+        # Le niveau servi se lit dans le verdict : il reste au dossier, pas au lien de partage.
+        "niveau": (plan.get("prediction") or {}).get("niveau") or "",
         # L'annexe entière : méthode, calibration course par course, validation, textes,
         # glossaire, références, toutes les figures. C'est son dossier.
         "annexe": annexe,

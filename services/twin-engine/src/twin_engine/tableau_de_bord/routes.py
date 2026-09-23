@@ -58,7 +58,7 @@ from .generation import (
     ranger_une_version,
 )
 from .plan import resumer_la_prediction
-from .routes_plans import REF_SURE, ajouter_les_routes_de_plan
+from .routes_plans import REF_SURE, ajouter_les_routes_de_plan, course_du_plan
 from .serrures import Serrures, Tentatives, adresse_du_visiteur
 from .trace import lire_la_trace
 from .traduction import course_vers_racespec, racespec_vers_course
@@ -265,8 +265,7 @@ def routeur_admin() -> APIRouter:
         athlete = magasin.athletes.lire(athlete_id)
         if athlete is None:
             raise HTTPException(status_code=404, detail="athlète inconnu")
-        athlete["plans"] = [p for p in (magasin.plans.lire(ref) for ref in athlete["plans"])
-                            if p is not None]
+        athlete["plans"] = _file.plans_de_lathlete(athlete_id, magasin.plans.lister())
         return athlete
 
     @routeur.post("/athletes/{athlete_id}/ingest")
@@ -395,11 +394,38 @@ def routeur_admin() -> APIRouter:
         # Une course qu'on ne peut pas traduire est une course qui ne fera jamais de
         # plan : on le dit à l'enregistrement, pas à la génération.
         try:
-            course_vers_racespec(nouvelle)
+            race = course_vers_racespec(nouvelle)
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
 
+        # La géométrie et le soleil suivent ce qui vient de changer : les ravitaillements
+        # recalent la distance sur le carnet de route, le départ déplace le coucher et le
+        # lever. Relire la trace coûte un dixième de seconde ; afficher des chiffres d'avant
+        # coûterait un plan faux.
+        trace = magasin.courses.repertoire(course_id) / "trace.gpx"
+        if trace.exists():
+            vu = lire_la_trace(trace.read_bytes(), cfg=request.app.state.cfg, race=race)
+            nouvelle.geometrie = Geometrie(**vu["geometrie"])
+            nouvelle.soleil = Soleil(**vu["soleil"])
+            nouvelle.lat, nouvelle.lon = vu["lat"], vu["lon"]
+
         return magasin.courses.ecrire(nouvelle.to_dict())
+
+    @routeur.get("/courses/{course_id}/trace")
+    def relire_la_trace(course_id: str, request: Request) -> dict:
+        """Le profil et les waypoints de la trace déjà posée, recalculés avec les
+        ravitaillements d'aujourd'hui — ceux de la pose ont pu bouger depuis."""
+        magasin: Magasin = request.app.state.magasin
+        course = _course_ou_404(request, course_id)
+        trace = magasin.courses.repertoire(course_id) / "trace.gpx"
+        if not trace.exists():
+            raise HTTPException(status_code=404, detail="pas encore de trace")
+        try:
+            vu = lire_la_trace(trace.read_bytes(), cfg=request.app.state.cfg,
+                               race=course_vers_racespec(course))
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=f"trace illisible : {exc}") from exc
+        return {**vu, "nom": course.gpx.nom}
 
     @routeur.post("/courses/{course_id}/gpx")
     async def poser_la_trace(course_id: str, request: Request,
@@ -591,16 +617,29 @@ def routeur_admin() -> APIRouter:
 
     @routeur.delete("/athletes/{athlete_id}", status_code=204)
     def supprimer_un_athlete(athlete_id: str, request: Request) -> None:
-        """Archive, jumeau, plans, page : tout est supprimé (§5.2).
+        """Archive, jumeau, plans, demandes, page : tout est supprimé (§5.2).
 
         Le registre garde ses entrées sous pseudonyme — c'est la couverture du moteur, pas
         le dossier d'une personne ; elle ne se reconstitue pas depuis une erreur en heures.
         """
+        from . import registre
+
         magasin: Magasin = request.app.state.magasin
         athlete = magasin.athletes.lire(athlete_id)
         if athlete is None:
             raise HTTPException(status_code=404, detail="athlète inconnu")
-        for ref in athlete.get("plans") or ():
+        if request.app.state.store.en_attente(athlete_id=athlete_id):
+            raise HTTPException(status_code=409,
+                                detail="un travail tourne pour cet athlète : attends qu'il finisse")
+        plans = _file.plans_de_lathlete(athlete_id, magasin.plans.lister())
+        refs = {p["ref"] for p in plans}
+        for plan in plans:
+            registre.garder(magasin, request.app.state.cfg, plan,
+                            course_du_plan(magasin, plan), athlete)
+        for demande in magasin.demandes.lister():
+            if demande.get("plan_ref") in refs:
+                magasin.demandes.supprimer(demande["id"])
+        for ref in refs:
             magasin.plans.supprimer(ref)
         magasin.athletes.supprimer(athlete_id)
 

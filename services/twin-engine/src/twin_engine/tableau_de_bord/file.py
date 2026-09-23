@@ -104,6 +104,25 @@ def dossier(athlete: dict, plan: dict | None, course: dict | None, maintenant=No
 _JAMAIS = "9999"
 
 
+def plans_de_lathlete(athlete_id: str, plans) -> list[dict]:
+    """Les plans d'un athlète, le départ le plus proche en tête.
+
+    C'est ``athlete_id`` du plan qui fait foi : la liste ``plans`` de l'athlète n'en est
+    qu'un reflet, et un reflet qui a manqué une écriture ne doit pas cacher un plan."""
+    siens = [p for p in plans if athlete_id and p.get("athlete_id") == athlete_id]
+    return sorted(siens, key=lambda p: (p.get("depart_le") or _JAMAIS, p.get("ref") or ""))
+
+
+def plan_du_dossier(plans: list[dict], courses: dict, maintenant=None) -> dict | None:
+    """Le plan qui donne sa ligne au dossier : le premier qui attend encore quelque chose,
+    à défaut le dernier couru. Une course passée sans résultat passe donc avant la
+    suivante : c'est elle qui attend un geste."""
+    for plan in plans:
+        if statut_lu(plan, courses.get(plan.get("course_id")), maintenant) != PLAN_RESULTAT:
+            return plan
+    return plans[-1] if plans else None
+
+
 def construire(*, athletes, plans, courses) -> dict:
     """La File entière : les compteurs et les dossiers, la course la plus proche en tête.
 
@@ -112,8 +131,7 @@ def construire(*, athletes, plans, courses) -> dict:
     """
     dossiers = []
     for athlete in athletes:
-        refs = athlete.get("plans") or []
-        plan = plans.get(refs[-1]) if refs else None
+        plan = plan_du_dossier(plans_de_lathlete(athlete.get("id"), plans.values()), courses)
         course = courses.get(plan["course_id"]) if plan and plan.get("course_id") else None
         dossiers.append(dossier(athlete, plan, course))
     dossiers.sort(key=lambda d: (d["depart_le"] or _JAMAIS, d["prenom"]))
@@ -121,4 +139,5 @@ def construire(*, athletes, plans, courses) -> dict:
 
 
 __all__ = ["CASES", "COMPOSER", "COMPTEURS", "ENVOYER", "INGERER", "PUBLIER", "RIEN",
-           "SAISIR_RESULTAT", "compter", "construire", "dossier", "verbe_suivant"]
+           "SAISIR_RESULTAT", "compter", "construire", "dossier", "plan_du_dossier",
+           "plans_de_lathlete", "verbe_suivant"]

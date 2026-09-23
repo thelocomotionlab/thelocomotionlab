@@ -171,12 +171,37 @@ def _courus(magasin: Magasin, maintenant: datetime | None):
             yield plan, course, athlete
 
 
+def garder(magasin: Magasin, cfg, plan: dict, course: dict | None,
+           athlete: dict | None) -> bool:
+    """Met de côté l'entrée d'un plan couru, juste avant que le plan ne soit supprimé.
+
+    Seuls les chiffres restent — le pseudo, la course, ce qui a été promis et ce qui a été
+    fait ; le dossier et le jumeau partent avec le plan. Un plan sans résultat n'a pas
+    d'entrée : il n'y a rien à garder."""
+    if not a_un_resultat(plan):
+        return False
+    e = entree(magasin, cfg, plan, course, athlete)
+    if e is None:
+        return False
+    magasin.registre.ecrire({"id": plan["ref"], "entree": e,
+                             "ligne": ligne(plan, course, athlete, e)})
+    return True
+
+
+def _gardees(magasin: Magasin, vivants: set[str]) -> list[dict]:
+    """Les entrées mises de côté, sauf celles dont le plan existe de nouveau (un import
+    du CLI qui reprend la même référence) : la ligne vivante fait alors foi."""
+    return [g for g in magasin.registre.lister() if g.get("id") not in vivants]
+
+
 def calculer(magasin: Magasin, cfg, maintenant: datetime | None = None) -> dict:
     """La vue de l'écran Registre (§5.6)."""
     lignes = []
     for plan, course, athlete in _courus(magasin, maintenant):
         e = entree(magasin, cfg, plan, course, athlete) if a_un_resultat(plan) else None
         lignes.append(ligne(plan, course, athlete, e))
+    vivants = {p["ref"] for p in magasin.plans.lister()}
+    lignes += [{**g["ligne"], "gardee": True} for g in _gardees(magasin, vivants) if g.get("ligne")]
     lignes.sort(key=lambda l: (l["date"] or "", l["athlete"]), reverse=True)
     return {
         **{niveau: resumer([l for l in lignes if l["niveau"] == niveau]) for niveau in NIVEAUX},
@@ -190,8 +215,10 @@ def exporter(magasin: Magasin, cfg) -> dict:
                            for plan, course, athlete in _courus(magasin, None)
                            if a_un_resultat(plan))
                if e is not None]
+    vivants = {p["ref"] for p in magasin.plans.lister()}
+    entrees += [g["entree"] for g in _gardees(magasin, vivants) if g.get("entree")]
     entrees.sort(key=lambda e: (e["date"], e["athlete"]))
     return {"_comment": COMMENTAIRE, "entries": entrees}
 
 
-__all__ = ["NIVEAUX", "calculer", "entree", "exporter", "ligne", "resumer"]
+__all__ = ["NIVEAUX", "calculer", "entree", "exporter", "garder", "ligne", "resumer"]

@@ -244,6 +244,85 @@ def test_sans_depart_aucune_heure_de_soleil_nest_inventee(client):
     assert vu["soleil"] == {"coucher": "", "lever": ""}
 
 
+def _triangle_avec_carnet(client, **course) -> str:
+    ident = client.post("/tableau-de-bord/courses", headers=ADMIN, json={"race_spec": {
+        "name": "Avec carnet", "aid_km": [0.0, 6.0, 12.0],
+        "aid_names": ["Départ", "Sommet", "Arrivée"], **course,
+    }}).json()["id"]
+    r = client.post(f"/tableau-de-bord/courses/{ident}/gpx", headers=ADMIN,
+                    files={"gpx": ("t.gpx", _gpx_triangle(), "application/gpx+xml")})
+    assert r.status_code == 200, r.text
+    return ident
+
+
+def test_les_segments_suivent_les_ravitaillements(client):
+    """L'inspecteur d'un ravitaillement montre SON segment, mesuré sur la trace entière."""
+    vu = client.get(f"/tableau-de-bord/courses/{_triangle_avec_carnet(client)}/trace",
+                    headers=ADMIN).json()
+    montee, descente = vu["segments"]
+    assert (montee["de"], montee["vers"]) == ("Départ", "Sommet")
+    assert montee["du_km"] == 0.0 and montee["au_km"] == pytest.approx(6.0, abs=0.05)
+    assert montee["dplus_m"] == pytest.approx(1185, abs=10) and montee["dminus_m"] < 20
+    assert descente["dminus_m"] == pytest.approx(1185, abs=10) and descente["dplus_m"] < 20
+    assert montee["alt_fin_m"] == pytest.approx(1200, abs=20)
+
+
+def test_sans_ravitaillement_pas_de_segment(client):
+    ident = client.post("/tableau-de-bord/courses", headers=ADMIN,
+                        json={"nom": "Triangle"}).json()["id"]
+    vu = client.post(f"/tableau-de-bord/courses/{ident}/gpx", headers=ADMIN,
+                     files={"gpx": ("t.gpx", _gpx_triangle(), "application/gpx+xml")}).json()
+    assert vu["segments"] == []
+
+
+def test_la_trace_se_relit_avec_les_ravitaillements_du_jour(client):
+    """Rouvrir l'éditeur relit la trace posée : ses segments sont ceux d'aujourd'hui."""
+    ident = _triangle_avec_carnet(client)
+    course = client.get(f"/tableau-de-bord/courses/{ident}", headers=ADMIN).json()
+    course["ravitaillements"][1]["km"] = 4.0
+    assert client.put(f"/tableau-de-bord/courses/{ident}", headers=ADMIN,
+                      json=course).status_code == 200
+
+    vu = client.get(f"/tableau-de-bord/courses/{ident}/trace", headers=ADMIN).json()
+    assert vu["nom"] == "t.gpx" and 2 <= len(vu["profil"]) <= 600
+    assert vu["segments"][0]["au_km"] == pytest.approx(4.0, abs=0.05)
+
+
+def test_relire_une_trace_absente_est_un_404(client):
+    ident = client.post("/tableau-de-bord/courses", headers=ADMIN,
+                        json={"nom": "Sans trace"}).json()["id"]
+    assert client.get(f"/tableau-de-bord/courses/{ident}/trace",
+                      headers=ADMIN).status_code == 404
+    assert client.get("/tableau-de-bord/courses/inconnue/trace",
+                      headers=ADMIN).status_code == 404
+
+
+def test_enregistrer_recalcule_la_geometrie_et_le_soleil(client):
+    """Le carnet recale la distance, le départ déplace le soleil : l'écran relit les
+    chiffres du moteur à chaque enregistrement, jamais ceux d'avant."""
+    ident = client.post("/tableau-de-bord/courses", headers=ADMIN, json={
+        "nom": "Triangle", "depart_le": "2026-06-21T06:00:00+02:00",
+    }).json()["id"]
+    avant = client.post(f"/tableau-de-bord/courses/{ident}/gpx", headers=ADMIN,
+                        files={"gpx": ("t.gpx", _gpx_triangle(), "application/gpx+xml")}).json()
+    assert avant["geometrie"]["distance_km"] == pytest.approx(12.22, abs=0.05)
+
+    course = client.get(f"/tableau-de-bord/courses/{ident}", headers=ADMIN).json()
+    course["ravitaillements"] = [
+        {"nom": "Départ", "km": 0.0}, {"nom": "Sommet", "km": 6.0},
+        {"nom": "Arrivée", "km": 12.0},
+    ]
+    course["depart_le"] = "2026-12-21T06:00:00+01:00"
+    relu = client.put(f"/tableau-de-bord/courses/{ident}", headers=ADMIN, json=course).json()
+
+    assert relu["geometrie"]["distance_km"] == pytest.approx(12.0, abs=0.05)
+    # au solstice d'hiver le soleil se couche bien plus tôt qu'à celui d'été
+    assert relu["soleil"]["coucher"] < avant["soleil"]["coucher"]
+    assert relu["lat"] == pytest.approx(43.70, abs=0.01)
+    assert client.get(f"/tableau-de-bord/courses/{ident}",
+                      headers=ADMIN).json()["geometrie"] == relu["geometrie"]
+
+
 # --------------------------------------------------------------------------- #
 # Publier, dupliquer, supprimer
 # --------------------------------------------------------------------------- #

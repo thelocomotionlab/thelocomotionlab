@@ -102,6 +102,53 @@ def test_le_modele_dune_version_se_garde_a_cote_de_son_dossier(client, dossier_d
     assert garde.stat().st_mtime_ns == avant, "relu, pas recalculé"
 
 
+def test_supprimer_lathlete_garde_son_entree_au_registre(client, dossier_du_cli):
+    """Archive, jumeau et plans partent ; la couverture du moteur reste (§5.2)."""
+    plan = _plan_couru(client, dossier_du_cli, officiel_h=31.5)
+    avant = client.get("/tableau-de-bord/registre", headers=ADMIN).json()
+    export_avant = client.get("/tableau-de-bord/registre/export", headers=ADMIN).json()
+    assert client.delete(f"/tableau-de-bord/athletes/{plan['athlete_id']}",
+                         headers=ADMIN).status_code == 204
+    assert client.app.state.magasin.plans.lire(REF_CLI) is None
+
+    apres = client.get("/tableau-de-bord/registre", headers=ADMIN).json()
+    [ligne] = apres["lignes"]
+    assert ligne["gardee"] is True and ligne["athlete"] == "Val"
+    assert {k: v for k, v in ligne.items() if k != "gardee"} == avant["lignes"][0]
+    niveau = plan["prediction"]["niveau"]
+    assert apres[niveau] == avant[niveau]
+    assert client.get("/tableau-de-bord/registre/export",
+                      headers=ADMIN).json() == export_avant
+
+
+def test_supprimer_un_plan_couru_garde_son_entree(client, dossier_du_cli):
+    _plan_couru(client, dossier_du_cli, abandon=True)
+    assert client.delete(f"/tableau-de-bord/plans/{REF_CLI}", headers=ADMIN).status_code == 204
+    [ligne] = client.get("/tableau-de-bord/registre", headers=ADMIN).json()["lignes"]
+    assert ligne["abandon"] is True and ligne["gardee"] is True
+
+
+def test_un_plan_sans_resultat_ne_laisse_rien_au_registre(client, dossier_du_cli):
+    _importer(client, dossier_du_cli)
+    assert client.delete(f"/tableau-de-bord/plans/{REF_CLI}", headers=ADMIN).status_code == 204
+    assert client.app.state.magasin.registre.lister() == []
+    assert client.get("/tableau-de-bord/registre", headers=ADMIN).json()["lignes"] == []
+
+
+def test_un_plan_reimporte_reprend_la_main_sur_son_entree_gardee(client, dossier_du_cli):
+    """Le CLI réimporte parfois la même référence : une seule ligne, la vivante."""
+    _plan_couru(client, dossier_du_cli, officiel_h=31.5)
+    client.delete(f"/tableau-de-bord/plans/{REF_CLI}", headers=ADMIN)
+    _importer(client, dossier_du_cli)
+    client.put(f"/tableau-de-bord/plans/{REF_CLI}/result", headers=ADMIN,
+               json={"officiel_h": 30.0})
+    [ligne] = client.get("/tableau-de-bord/registre", headers=ADMIN).json()["lignes"]
+    assert ligne["officiel_h"] == 30.0 and "gardee" not in ligne
+    [entree] = client.get("/tableau-de-bord/registre/export",
+                          headers=ADMIN).json()["entries"]
+    assert entree["official_time_h"] == 30.0
+
+
 def test_le_resume_compte_la_couverture_des_deux_bandes():
     lignes = [
         {"a_saisir": False, "abandon": False, "err_pct": 5.0, "in_plan": True, "in_safety": True},

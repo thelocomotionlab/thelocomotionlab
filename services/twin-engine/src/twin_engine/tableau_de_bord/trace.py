@@ -136,6 +136,16 @@ def lire_la_trace(gpx: bytes, *, cfg: Config, race: RaceSpec) -> dict:
         "soleil": _heures_de_soleil(race.start_time, depart_lat, depart_lon),
         "points": len(profil.off_km_grid),
         "avec_altitude": bool(len(altitudes)),
+        # Les segments tels que le moteur les découpe — d'un ravitaillement au suivant,
+        # avec leur dénivelé mesuré sur la trace entière, pas sur le profil allégé de
+        # l'écran : c'est ce que l'inspecteur montre d'un ravitaillement choisi.
+        "segments": [
+            {"index": seg.index, "de": seg.frm, "vers": seg.to,
+             "du_km": round(seg.off0, 2), "au_km": round(seg.off1, 2),
+             "dplus_m": round(seg.dplus_m), "dminus_m": round(seg.dminus_m),
+             "alt_debut_m": round(seg.alt_start_m), "alt_fin_m": round(seg.alt_end_m)}
+            for seg in profil.segments
+        ] if race.has_aid_stations else [],
     }
 
 

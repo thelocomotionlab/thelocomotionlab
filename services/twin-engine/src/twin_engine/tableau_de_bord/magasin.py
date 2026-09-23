@@ -152,7 +152,11 @@ class Collection:
 
 
 class Magasin:
-    """Les cinq collections du tableau de bord, sur le volume ``twin_engine_data``."""
+    """Les collections du tableau de bord, sur le volume ``twin_engine_data``.
+
+    ``registre`` garde les entrées des plans courus dont le plan a été supprimé : le
+    registre se calcule depuis les plans, et sans elles une suppression effacerait la
+    couverture du moteur avec le dossier de la personne."""
 
     def __init__(self, data_dir: str | Path):
         racine = Path(data_dir)
@@ -161,9 +165,11 @@ class Magasin:
         self.plans = Collection(racine / "plans", fichier="plan.json")
         self.demandes = Collection(racine / "requests")
         self.jobs = Collection(racine / "jobs", fichier="job.json")
+        self.registre = Collection(racine / "registre")
 
     def recharger(self) -> None:
-        for collection in (self.athletes, self.courses, self.plans, self.demandes, self.jobs):
+        for collection in (self.athletes, self.courses, self.plans, self.demandes, self.jobs,
+                           self.registre):
             collection.recharger()
 
 

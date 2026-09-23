@@ -285,13 +285,41 @@ def test_la_course_la_plus_proche_est_en_tete():
         O.Athlete(id="a2", pseudo="Bo", plans=["LL-B"]).to_dict(),
         O.Athlete(id="a3", pseudo="Cy").to_dict(),          # pas encore de course
     ]
-    plans = {"LL-A": {"id": "LL-A", "ref": "LL-A", "course_id": "c2"},
-             "LL-B": {"id": "LL-B", "ref": "LL-B", "course_id": "c1"}}
+    plans = {"LL-A": {"id": "LL-A", "ref": "LL-A", "athlete_id": "a1", "course_id": "c2"},
+             "LL-B": {"id": "LL-B", "ref": "LL-B", "athlete_id": "a2", "course_id": "c1"}}
     courses = {"c1": {"id": "c1", "nom": "Tôt", "depart_le": "2026-04-01T06:00:00+02:00"},
                "c2": {"id": "c2", "nom": "Tard", "depart_le": "2026-09-25T13:00:00+02:00"}}
     vue = F.construire(athletes=athletes, plans=plans, courses=courses)
     assert [d["prenom"] for d in vue["dossiers"]] == ["Bo", "Ana", "Cy"]
     assert sum(vue["compteurs"].values()) == 3
+
+
+def test_un_plan_se_retrouve_par_son_athlete_meme_sans_le_reflet():
+    """La liste ``plans`` de l'athlète n'est qu'un reflet : c'est le plan qui dit à qui il
+    est. Un reflet vide ne doit pas renvoyer un athlète servi à « composer »."""
+    athletes = [O.Athlete(id="a1", pseudo="Ana",
+                          ingestion=O.Ingestion(statut=O.INGESTION_INGERE)).to_dict()]
+    plans = {"LL-A": {"id": "LL-A", "ref": "LL-A", "athlete_id": "a1", "course_id": "c1",
+                      "statut": O.PLAN_PUBLIE, "version": 1, "version_publiee": 1}}
+    courses = {"c1": {"id": "c1", "nom": "Nice", "depart_le": "2999-09-25T13:00:00+02:00"}}
+    [dossier] = F.construire(athletes=athletes, plans=plans, courses=courses)["dossiers"]
+    assert dossier["plan_ref"] == "LL-A" and dossier["suivant"] == F.ENVOYER
+
+
+def test_le_dossier_suit_le_plan_qui_attend_encore():
+    """Deux plans : la course courue sans résultat passe avant la suivante."""
+    fini = {"id": "LL-1", "ref": "LL-1", "athlete_id": "a1", "course_id": "c1",
+            "statut": O.PLAN_RESULTAT, "depart_le": "2025-06-01T06:00:00+02:00"}
+    sans_resultat = {"id": "LL-2", "ref": "LL-2", "athlete_id": "a1", "course_id": "c2",
+                     "statut": O.PLAN_ENVOYE, "depart_le": "2026-04-01T06:00:00+02:00",
+                     "envoye_le": "2026-03-01T10:00:00+00:00"}
+    a_venir = {"id": "LL-3", "ref": "LL-3", "athlete_id": "a1", "course_id": "",
+               "statut": O.PLAN_A_COMPOSER, "depart_le": "2999-01-01T06:00:00+02:00"}
+    plans = F.plans_de_lathlete("a1", [a_venir, fini, sans_resultat])
+    assert [p["ref"] for p in plans] == ["LL-1", "LL-2", "LL-3"]
+    assert F.plan_du_dossier(plans, {})["ref"] == "LL-2"
+    assert F.plan_du_dossier([fini], {})["ref"] == "LL-1"
+    assert F.plan_du_dossier([], {}) is None
 
 
 def test_la_file_vide_ne_ment_pas(client):

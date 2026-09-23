@@ -289,13 +289,27 @@ def test_supprimer_emporte_tout(client):
     magasin = client.app.state.magasin
     magasin.plans.ecrire(O.Plan(ref="LL-X", athlete_id=athlete_id).to_dict())
     magasin.athletes.modifier(athlete_id, plans=["LL-X"])
+    # un plan que le reflet a manqué part quand même : c'est le plan qui dit à qui il est
+    magasin.plans.ecrire(O.Plan(ref="LL-Y", athlete_id=athlete_id).to_dict())
+    magasin.plans.ecrire(O.Plan(ref="LL-AUTRE", athlete_id="quelquun").to_dict())
+    magasin.demandes.ecrire(O.Demande(id="d1", plan_ref="LL-Y", quoi="x").to_dict())
     repertoire = magasin.athletes.repertoire(athlete_id)
 
     assert client.delete(f"/tableau-de-bord/athletes/{athlete_id}",
                          headers=ADMIN).status_code == 204
     assert magasin.athletes.lire(athlete_id) is None
-    assert magasin.plans.lire("LL-X") is None
+    assert magasin.plans.lire("LL-X") is None and magasin.plans.lire("LL-Y") is None
+    assert magasin.demandes.lire("d1") is None, "ses demandes restaient, notes comprises"
+    assert magasin.plans.lire("LL-AUTRE") is not None
     assert not repertoire.exists(), "le jumeau et la calibration restaient sur le disque"
+
+
+def test_on_ne_supprime_pas_un_athlete_en_plein_travail(client):
+    athlete_id = _prevenir(client).json()["athlete_id"]
+    client.app.state.store.creer("job-1", type="ingestion", athlete_id=athlete_id)
+    assert client.delete(f"/tableau-de-bord/athletes/{athlete_id}",
+                         headers=ADMIN).status_code == 409
+    assert client.app.state.magasin.athletes.lire(athlete_id) is not None
 
 
 def test_la_file_montre_le_dossier_et_son_verbe(client):

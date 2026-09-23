@@ -228,6 +228,30 @@ def _arrets_mesures(magasin: Magasin, cfg, plan: Plan, course: dict | None) -> d
     return vue
 
 
+def _politique_standard(cfg, plan: Plan, course: dict | None) -> dict | None:
+    """Ce que la politique du moteur pose sur cette course : combien de points, combien
+    de minutes en tout. Lu dans la config du moteur, pas recopié dans l'écran."""
+    from ..course.spec import stops_policy_min
+
+    if course is None:
+        return None
+    try:
+        race = base_du_plan(Course.from_dict(course), plan)
+    except ValueError:
+        return None
+    n = race.n_segments
+    if n < 1:
+        return None
+    arrets = stops_policy_min(n, race.major_base_indices, cfg, race.reglages)
+    return {
+        "par_point_min": cfg.pacing.default_stop_min,
+        "bases_en_plus_min": cfg.pacing.major_base_extra_min,
+        "points": max(n - 1, 0),
+        "bases": len([k for k in race.major_base_indices if 0 <= k < n - 1]),
+        "total_min": round(float(sum(arrets))),
+    }
+
+
 def vue_du_plan(request: Request, plan: Plan) -> dict:
     """Tout ce que l'écran Plan montre, en un appel (§5.4)."""
     magasin: Magasin = request.app.state.magasin
@@ -254,6 +278,7 @@ def vue_du_plan(request: Request, plan: Plan) -> dict:
         "liens": liens_du_plan(request, plan.ref) if publiee else {},
         "fige": est_parti(brut, course),
         "arrets_mesures": _arrets_mesures(magasin, cfg, plan, course),
+        "politique_standard": _politique_standard(cfg, plan, course),
         "jobs": [request.app.state.store.rendre_public(j)
                  for j in request.app.state.store.en_attente(plan_ref=plan.ref)],
         "demandes": [d for d in magasin.demandes.lister() if d.get("plan_ref") == plan.ref],
@@ -501,12 +526,18 @@ def ajouter_les_routes_de_plan(routeur: APIRouter) -> None:
 
     @routeur.delete("/plans/{ref}", status_code=204)
     def supprimer_un_plan(ref: str, request: Request) -> None:
-        """Le plan, ses versions et sa page. Ses demandes partent avec lui."""
+        """Le plan, ses versions et sa page. Ses demandes partent avec lui ; s'il a été
+        couru, son entrée reste au registre."""
+        from . import registre
+
         magasin: Magasin = request.app.state.magasin
         plan = plan_ou_404(request, ref)
         if request.app.state.store.en_attente(plan_ref=ref):
             raise HTTPException(status_code=409,
                                 detail="un travail tourne sur ce plan : attends qu'il finisse")
+        brut = magasin.plans.lire(ref) or plan.to_dict()
+        registre.garder(magasin, request.app.state.cfg, brut, course_du_plan(magasin, brut),
+                        magasin.athletes.lire(plan.athlete_id) if plan.athlete_id else None)
         for demande in magasin.demandes.lister():
             if demande.get("plan_ref") == ref:
                 magasin.demandes.supprimer(demande["id"])

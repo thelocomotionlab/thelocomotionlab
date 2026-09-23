@@ -275,6 +275,11 @@ def test_1_creer_un_plan_genere_sa_version_1(nice):
     assert vu["documents"] == ["pdf", "feuille.pdf", "ics", "gpx"]
     assert vu["liens"] == {}, "pas de lien avant « Publier »"
     assert vu["arrets_mesures"] is not None and "taux" in vu["arrets_mesures"]
+    # la politique du moteur, dite en chiffres : lue dans sa config, pas recopiée à l'écran
+    pol = vu["politique_standard"]
+    assert pol["points"] == 15 and pol["bases"] >= 1
+    assert pol["total_min"] == (pol["points"] * pol["par_point_min"]
+                                + pol["bases"] * pol["bases_en_plus_min"])
     assert client.get("/tableau-de-bord/athletes/" + nice["athlete_id"],
                       headers=ADMIN).json()["plans"][0]["ref"] == ref
 
@@ -322,10 +327,14 @@ def test_5_la_cle_de_partage_ne_lit_que_la_partie_partageable(nice):
     assert vu["acces"] == "partage" and vu["version"] == 1 and not vu["fige"]
     assert vu["plan"]["segments"] and vu["assistance"]
     assert {a["index"]: a.get("note") for a in vu["assistance"]}[4] == "bidons + frontale"
-    for prive in ("annexe", "amendements", "demandes", "resultat", "lien_de_partage"):
+    for prive in ("annexe", "amendements", "demandes", "resultat", "lien_de_partage",
+                  "niveau"):
         assert prive not in vu, prive
     assert "calibration" not in json.dumps(vu)
     assert set(vu["figures"]) <= {"profil", "pacing"}
+    # ce que la page dessine sans rien recalculer : le profil, la nuit, où passe le temps
+    assert 2 <= len(vu["course"]["profil"]) <= 600 and vu["plan"]["sun"]
+    assert vu["ventilation"]["parts"] and "\\" not in vu["ventilation"]["lecture"]
     pdf = nice["client"].get(f"/plans/{nice['ref']}/pdf", params={"k": _cle(nice["ref"], "partage")})
     assert pdf.status_code == 200 and pdf.content.startswith(b"%PDF")
 
@@ -334,6 +343,7 @@ def test_5_la_cle_de_partage_ne_lit_que_la_partie_partageable(nice):
 def test_6_la_cle_privee_lit_tout(nice):
     vu = _page(nice, "prive").json()
     assert vu["acces"] == "prive" and vu["peut_amender"] and not vu["peut_saisir_le_resultat"]
+    assert vu["niveau"] in (O.NIVEAU_BASE, O.NIVEAU_CALIBRE)
     assert vu["annexe"]["calibration"] and vu["annexe"]["ref"] == nice["ref"]
     assert vu["lien_de_partage"].endswith(_cle(nice["ref"], "partage"))
     assert vu["amendements"] == {"arrets": {}, "notes": {}, "nutrition":
