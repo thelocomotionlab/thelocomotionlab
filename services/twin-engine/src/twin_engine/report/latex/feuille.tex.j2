@@ -68,7 +68,8 @@ cases vides : de la place pour écrire.}
 % =====================================================================
 % LL:BEGIN feuille-verso
 \clearpage
-\LLpiedlegende{Colonne \textcolor{LLDeep}{« prévu »} : l'heure que tu suis
+\LLpiedlegende{Colonnes horaires : \textcolor{LLPrimary}{sauge} = au plus tôt,
+\textcolor{LLDeep}{terracotta} = prévu, l'heure que tu suis, \textcolor{LLAccentDark}{ambre} = au plus tard
 \textperiodcentered{} \LLnuitpoint{} point d'encre : poste de nuit, prévoir de quoi éclairer
 et avoir chaud.}
 \LLtitrefeuille{Assistance}{« au plus tôt » et « au plus tard » sont les bornes de sécurité étalées le long du parcours, << safety_word >> y tient, arrivée comprise.}
@@ -77,9 +78,9 @@ et avoir chaud.}
 {\fontsize{12}{12}\selectfont\LLtableau
 \setlength{\tabcolsep}{5pt}\renewcommand{\arraystretch}{3.1}
 \LLgrilleassistance
-\begin{tabular}{|>{\LLcell\LLsemiboldfont\fontsize{14.25}{16}\selectfont}m{62mm}|>{\LLcell\color{LLSoft}}m{18mm}|>{\LLcell\color{LLSoft}}m{38mm}|>{\columncolor{LLColCentrale}\LLcell\LLsemiboldfont\fontsize{15.75}{17}\selectfont}m{40mm}|>{\LLcell\color{LLSoft}}m{38mm}|>{\LLcell\fontsize{10.5}{12}\selectfont\color{LLSoft}}m{\LLaprevoir}|}
+\begin{tabular}{|>{\LLcell\LLsemiboldfont\fontsize{14.25}{16}\selectfont}m{62mm}|>{\LLcell\color{LLSoft}}m{18mm}|>{\columncolor{LLColRapide}\LLcell\color{LLSoft}}m{38mm}|>{\columncolor{LLColCentrale}\LLcell\LLsemiboldfont\fontsize{15.75}{17}\selectfont}m{40mm}|>{\columncolor{LLColPrudent}\LLcell\color{LLSoft}}m{38mm}|>{\LLcell\fontsize{10.5}{12}\selectfont\color{LLSoft}}m{\LLaprevoir}|}
   \LLfilet{6}
-  {\normalsize\LLtete{Assistance}} & {\normalsize\color{LLText}\LLtete{km}} & {\normalsize\color{LLText}\LLtete{au plus tôt}} & \LLtetehoraire{LLDeep}{prévu} & {\normalsize\color{LLText}\LLtete{au plus tard}} & {\normalsize\color{LLText}\LLtete{À prévoir}} \\
+  {\normalsize\LLtete{Assistance}} & {\normalsize\color{LLText}\LLtete{km}} & \LLtetehoraire{LLPrimary}{au plus tôt} & \LLtetehoraire{LLDeep}{prévu} & \LLtetehoraire{LLAccent}{au plus tard} & {\normalsize\color{LLText}\LLtete{À prévoir}} \\
   \LLfilet{6}
 <% for c in crew_rows %>  \LLnomseg{<< c.name >>}{<% if c.night %>\LLnuitpoint<% endif %>} & << c.km >> & << c.earliest >> & << c.central >> & << c.latest >> & <% if c.note %><< c.note >><% else %>\LLcaseecrire<% endif %> \\
   \LLfilet{6}
