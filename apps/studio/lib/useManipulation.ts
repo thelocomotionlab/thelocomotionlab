@@ -218,13 +218,14 @@ export function useManipulation(poste: PosteDeTravail) {
         setEtat((s) => ({ ...s, geste: "recadrer" }));
         return;
       }
-      // UNE BARRE DE SEMAINES SE VISE AU CLIC, sur un graphique déjà pris :
-      // le premier clic prend l'élément, le suivant désigne la barre. Sans ce
-      // partage, on ne pourrait plus déplacer le graphique sans le colorer.
-      if (vise.type === "semaines") {
-        const deja = selection.length === 1 && selection[0] === vise.id;
-        const boite = enPixels(vise, format);
-        const index = deja ? barreSous(vise, boite, p.x, p.y) : null;
+      // UNE BARRE DE SEMAINES SE VISE DÈS LE PREMIER CLIC : le clic prend le
+      // graphique ET désigne la barre sous le pointeur. Viser n'est pas colorer
+      // — la barre contextuelle propose les couleurs, rien ne change tant qu'on
+      // n'en choisit pas une, et le graphique se déplace comme avant. Un clic
+      // hors des barres (axes, légende) ne vise rien ; un clic qui ajoute à la
+      // sélection non plus : les couleurs ne s'y proposent qu'à un seul élément.
+      if (vise.type === "semaines" && !opts.ajoute) {
+        const index = barreSous(vise, enPixels(vise, format), p.x, p.y);
         setBarreVisee(index === null ? null : { id: vise.id, index });
       } else if (barreVisee) {
         setBarreVisee(null);
