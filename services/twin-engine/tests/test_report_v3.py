@@ -23,6 +23,7 @@ from twin_engine.predict import predict_finish
 from twin_engine.report import (build_feuille, build_pdf, build_report_context,
                                 generate_figures, render_template, render_tex,
                                 write_livrables)
+from twin_engine.report._format import detex, hm
 from twin_engine.report.charte import CLS_COLORS, FONT_FILES, TOKENS, hexa
 from twin_engine.report.faits import trois_moments
 from twin_engine.report.feuille import consignes as consignes_feuille
@@ -657,6 +658,38 @@ def test_write_livrables_without_latex(tmp_path):
     assert pleines and len(set(pleines)) == len(pleines)
     assert annexe["plan"]["stops"]["hours"] and annexe["plan"]["nuit"]["sections"]
     assert len(annexe["plan"]["parties"]) == 2
+    assert annexe["ventilation"]["parts"] and annexe["ventilation"]["lecture"]
+    assert 2 <= len(annexe["course"]["profil"]) <= 600
+    # la page écrit ces heures à la minute : elles doivent tomber sur celles du PDF
+    for cle, valeur in (("central_h", pred.finish_hours), ("plan_low_h", pred.plan_low_h),
+                        ("plan_high_h", pred.plan_high_h),
+                        ("interval_low_h", pred.interval_low_h),
+                        ("interval_high_h", pred.interval_high_h)):
+        assert annexe["prediction"][cle] == pytest.approx(valeur, abs=1e-4), cle
+        assert hm(annexe["prediction"][cle]) == hm(valeur), cle
+
+
+def test_the_annex_carries_no_latex_left_over(tmp_path):
+    """La page de l'athlète met l'annexe en page telle quelle : une macro qui reste s'y lit
+    en toutes lettres (« 3\\texttimes plus de temps »)."""
+    ctx, (course, twin, cal, pred, plan, race, suf) = context()
+    write_livrables(context=ctx, course=course, twin=twin, calibration=cal, prediction=pred,
+                    plan=plan, race=race, sufficiency=suf, cfg=CFG, out_dir=tmp_path,
+                    figures_dir=tmp_path / "figures", render_pdf=False,
+                    generated_at=datetime(2026, 9, 16, 8, 0))
+    annexe = json.loads((tmp_path / "annexe.json").read_text(encoding="utf-8"))
+    textes: list[str] = []
+    _flatten({k: v for k, v in annexe.items() if k != "figures"}, textes)
+    restes = [t for t in textes if re.search(r"\\[A-Za-z]|[{}$]", t)]
+    assert restes == []
+
+
+def test_detex_reads_every_macro_the_report_writes():
+    assert detex("3\\,\\texttimes{} plus de temps") == "3\u202f× plus de temps"
+    assert detex("(\\textasciitilde{}9,9\\,km/h)") == "(~9,9\u202fkm/h)"
+    assert detex("km 12\\LLfleche{}25") == "km 12\u202f→\u202f25"
+    assert detex("le 3\\ieme{} ultra") == "le 3ᵉ ultra"
+    assert detex("a\\textasciicircum{}b~c") == "a^b\u00a0c"
 
 
 # --------------------------------------------------------------------------- #

@@ -305,13 +305,18 @@ def annex_payload(*, ctx: dict, course, twin, calibration, prediction, plan, rac
                           "dist_km": round(s.off_len, 1), "dplus_m": round(s.dplus_m),
                           "dminus_m": round(s.dminus_m), "deq_km": round(s.deq_km, 1),
                           "alt_end_m": round(s.alt_end_m)} for s in course.segments],
+            # le profil, allégé pour un écran : la page de l'athlète le dessine sans rien
+            # recalculer, avec la nuit par-dessus
+            "profil": profil_allege(course),
         },
+        # Les heures gardent quatre décimales : la page de l'athlète les écrit à la minute,
+        # et deux décimales (36 s) suffisent à la décaler d'une minute sur le PDF.
         "prediction": {
-            "central_h": round(prediction.finish_hours, 2), "central": detex(hm(prediction.finish_hours)),
-            "plan_low_h": None if prediction.plan_low_h is None else round(prediction.plan_low_h, 2),
-            "plan_high_h": None if prediction.plan_high_h is None else round(prediction.plan_high_h, 2),
-            "interval_low_h": round(prediction.interval_low_h, 2),
-            "interval_high_h": round(prediction.interval_high_h, 2),
+            "central_h": round(prediction.finish_hours, 4), "central": detex(hm(prediction.finish_hours)),
+            "plan_low_h": None if prediction.plan_low_h is None else round(prediction.plan_low_h, 4),
+            "plan_high_h": None if prediction.plan_high_h is None else round(prediction.plan_high_h, 4),
+            "interval_low_h": round(prediction.interval_low_h, 4),
+            "interval_high_h": round(prediction.interval_high_h, 4),
             "interval_pct": cfg.prediction.interval_high_pct - cfg.prediction.interval_low_pct,
             "plan_band_pct": cfg.pacing.plan_window_high_pct - cfg.pacing.plan_window_low_pct,
             "interval_source": prediction.interval_source,
@@ -385,6 +390,8 @@ def annex_payload(*, ctx: dict, course, twin, calibration, prediction, plan, rac
         },
         "pente": {"servie": detex(ctx.get("pente_servie")) or None,
                   "cout_personnel": detex(ctx.get("cout_de_pente")) or None},
+        # où passe le temps prévu : les chiffres de la page « faits » du rapport, en clair
+        "ventilation": _ventilation_en_clair(ctx.get("faits", {}).get("ventilation")),
         "plan": {
             **{k: v for k, v in plan.to_dict().items() if k != "segments"},
             "fade_pct": ctx["fade_pct_plain"], "fade_evidence": cfg.report.fade_evidence,
@@ -429,6 +436,32 @@ def annex_payload(*, ctx: dict, course, twin, calibration, prediction, plan, rac
         "glossaire": [{"terme": detex(t), "definition": detex(d)} for t, d in ctx.get("glossary", [])],
         "references": bibliography(bib_path) if bib_path else [],
         "figures": figs,
+    }
+
+
+# Assez de points pour qu'un col se voie, assez peu pour que l'annexe reste légère.
+POINTS_DE_PROFIL = 600
+
+
+def profil_allege(course) -> list[list[float]]:
+    """Le profil altimétrique en couples [km, altitude], sous-échantillonné pour un écran."""
+    km = getattr(course, "off_km_grid", None)
+    alt = getattr(course, "alt_smooth_m", None)
+    if km is None or alt is None or len(km) == 0 or len(alt) != len(km):
+        return []
+    km, alt = np.asarray(km, dtype=float), np.asarray(alt, dtype=float)
+    indices = np.unique(np.linspace(0, len(km) - 1, min(POINTS_DE_PROFIL, len(km))).astype(int))
+    return [[round(float(km[i]), 3), round(float(alt[i]), 1)] for i in indices]
+
+
+def _ventilation_en_clair(v: dict | None) -> dict | None:
+    if not v:
+        return None
+    return {
+        "parts": [{"cle": p["cle"], "quoi": p["quoi"], "hm": detex(p["hm"]),
+                   "pct": detex(p["pct"]), "fraction": p["fraction"]} for p in v["parts"]],
+        "legende": detex(v.get("legende")),
+        "lecture": detex(v.get("lecture")),
     }
 
 

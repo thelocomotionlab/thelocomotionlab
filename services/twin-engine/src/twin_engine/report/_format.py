@@ -110,6 +110,12 @@ def detex(s: str | None) -> str:
     out = re.sub(r"\\(?:textbf|emph|textit|textsc|mathrm)\{([^{}]*)\}", r"\1", out)
     out = re.sub(r"\\(?:textbf|emph|textit)\{([^{}]*)\}", r"\1", out)   # imbrication simple
     out = out.replace("\\,", "\u202f").replace("~", "\u00a0").replace("\\ ", " ")
+    # après l'insécable : ces macros écrivent un « ~ » qui, lui, doit rester un tilde
+    out = re.sub(r"\\textasciitilde(?:\{\})?", "~", out)
+    out = re.sub(r"\\textasciicircum(?:\{\})?", "^", out)
+    out = re.sub(r"\\texttimes(?:\{\})?", "×", out)
+    out = re.sub(r"\\LLfleche(?:\{\})?", "\u202f→\u202f", out)
+    out = re.sub(r"\\ieme(?:\{\})?", "ᵉ", out)
     out = out.replace("$-$", "−").replace("$\\approx$", "≈").replace("$\\pm$", "±")
     out = out.replace("\\%", "%").replace("\\&", "&").replace("\\_", "_").replace("\\#", "#")
     out = out.replace("\\textperiodcentered{}", "·").replace("\\textperiodcentered", "·")
