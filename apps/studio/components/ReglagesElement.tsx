@@ -201,6 +201,13 @@ function ReglagesTexte({ e, poser }: { e: ElementTexte; poser: Poser<ElementText
         decimales={2}
         onChange={(n) => poser((x) => ({ ...x, interligne: Math.max(0.6, n) }), "interligne")}
       />
+      <Nombre
+        libelle="Entre les points"
+        valeur={e.entreItems ?? 0.35}
+        pas={0.05}
+        decimales={2}
+        onChange={(n) => poser((x) => ({ ...x, entreItems: Math.max(0, n) }), "interligne")}
+      />
       <Case
         libelle="Réduire pour tenir dans le cadre"
         coche={e.ajuster !== false}
@@ -952,13 +959,6 @@ function ReglagesCases({
  * a été compris, et les couleurs déjà posées survivent, parce qu'on recolle
  * souvent juste pour corriger un chiffre.
  */
-function ReglagesSemaines({
-  e,
-  poser,
-}: {
-  e: ElementSemaines;
-  poser: Poser<ElementSemaines>;
-}) {
 /** Un nombre tapé dans un champ texte — vide, c'est « auto ». */
 function nombreOuRien(v: string): number | null {
   if (v.trim() === "") return null;
@@ -970,6 +970,13 @@ function texteDuNombre(n: number | null | undefined): string {
   return n === null || n === undefined ? "" : String(n);
 }
 
+function ReglagesSemaines({
+  e,
+  poser,
+}: {
+  e: ElementSemaines;
+  poser: Poser<ElementSemaines>;
+}) {
   const [brut, setBrut] = useState<string | null>(null);
   const texte = brut ?? ecrireLesSeries(e);
   const lu = lireLesSeries(texte);
@@ -1085,13 +1092,6 @@ function texteDuNombre(n: number | null | undefined): string {
         onChange={(n) => poser((x) => ({ ...x, taille: Math.max(8, n) }), "corps")}
       />
 
-      <Titre>Couleurs des barres</Titre>
-      <Aide>Clique une barre dans la planche pour la colorer.</Aide>
-      {e.couleurs.some(Boolean) && (
-        <Bouton
-          onClick={() => poser((x) => ({ ...x, couleurs: [] }), "couleurs")}
-          titre="Toutes les barres reprennent la couleur de la série"
-        >
       <Titre>Axe des barres</Titre>
       <Mot
         libelle="Maximum"
@@ -1149,6 +1149,13 @@ function texteDuNombre(n: number | null | undefined): string {
         />
       )}
 
+      <Titre>Couleurs des barres</Titre>
+      <Aide>Clique une barre dans la planche pour la colorer.</Aide>
+      {e.couleurs.some(Boolean) && (
+        <Bouton
+          onClick={() => poser((x) => ({ ...x, couleurs: [] }), "couleurs")}
+          titre="Toutes les barres reprennent la couleur de la série"
+        >
           Tout remettre à la série
         </Bouton>
       )}

@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { definirVocabulaireDIcones } from "./canvas.ts";
+import { brandColors } from "@locomotionlab/ui/tokens";
 import { CORPS, FORMATS, MARGE } from "./charte.ts";
 import { migrerProjet, trancheV1, type ProjetV1 } from "./migration.ts";
 import {
@@ -35,13 +36,15 @@ const roles = (p: PlancheImage) => textes(p).map((e) => e.role);
 const types = (p: PlancheImage) => [...new Set(p.elements.map((e) => e.type))];
 
 describe("les modèles", () => {
-  it("en compte dix pour l'image, plus Survol", () => {
-    expect(MODELES).toHaveLength(10);
+  it("en compte douze pour l'image, plus Survol", () => {
+    expect(MODELES).toHaveLength(12);
     expect(MODELES.map((m) => m.cle)).toEqual([
       "carte",
+      "trace",
       "bandeau",
       "photo",
       "texte",
+      "intentions",
       "fiche",
       "etape",
       "journees",
@@ -199,6 +202,25 @@ describe("changer de modèle", () => {
     expect(surtitre.contenu.trim()).not.toBe("");
     const apres = changerModele(texte, "cloture", CTX);
     expect(textes(apres).some((e) => e.role === "surtitre")).toBe(false);
+  });
+
+  it("ne laisse pas le « {nom} » d'une planche Texte écraser la rubrique « Intentions »", () => {
+    const texte = instancier("texte", CTX);
+    const apres = changerModele(texte, "intentions", CTX);
+    expect(textes(apres).filter((e) => e.nom === "Rubrique").map((e) => e.contenu)).toEqual([
+      "Intentions",
+      "Mantras",
+    ]);
+    // …alors qu'un titre écrit par l'auteur devient la première rubrique.
+    const reecrite: PlancheImage = {
+      ...texte,
+      elements: texte.elements.map((e) =>
+        e.type === "texte" && e.role === "titre" ? ({ ...e, contenu: "Objectifs" } as Element) : e,
+      ),
+    };
+    expect(textes(changerModele(reecrite, "intentions", CTX)).find((e) => e.nom === "Rubrique")!.contenu).toBe(
+      "Objectifs",
+    );
   });
 
   it("…mais un surtitre réécrit par l'auteur survit", () => {
@@ -495,6 +517,38 @@ describe("le gabarit Carte tombe aux mesures de la charte", () => {
     expect(carte.epaisseur).toBe(7.5);
     expect(carte.x).toBe(0);
     expect(carte.l).toBe(1);
+  });
+});
+
+describe("le gabarit Trace", () => {
+  it("cadre la trace à la largeur du profil, fond ses deux bords, et n'écrit rien", () => {
+    const p = instancier("trace", CTX);
+    const f = FORMATS.carrousel;
+    const carte = p.elements.find((e) => e.type === "carte");
+    const profil = p.elements.find((e) => e.type === "profil");
+    if (!carte || carte.type !== "carte" || !profil) throw new Error("la carte ou le profil manque");
+    expect(carte.fenetre).not.toBeNull();
+    expect(carte.fenetre!.x * f.width).toBeCloseTo(profil.x * f.width, 0);
+    expect(carte.fenetre!.l * f.width).toBeCloseTo(profil.l * f.width, 0);
+    expect(carte.degrades).toEqual(expect.objectContaining({ haut: 1, bas: 1 }));
+    expect(carte.etiquettesAuto).toBe(false);
+    // La bande laisse le haut de la planche au papier.
+    expect(carte.y).toBeGreaterThan(0.3);
+    expect(textes(p).filter((e) => e.role !== "libre")).toHaveLength(0);
+  });
+});
+
+describe("le gabarit Intentions tombe aux mesures de la planche relevée", () => {
+  it("deux rubriques terracotta à 295 et 817, leurs listes 111 dessous, aérées", () => {
+    const p = instancier("intentions", CTX);
+    const f = FORMATS.carrousel;
+    const rubriques = textes(p).filter((e) => e.nom === "Rubrique");
+    const listes = textes(p).filter((e) => e.nom === "Liste");
+    expect(rubriques.map((e) => Math.round(e.y * f.height + CORPS.titre * 0.78))).toEqual([295, 817]);
+    expect(listes.map((e) => Math.round(e.y * f.height + CORPS.corps * 0.78))).toEqual([406, 928]);
+    expect(rubriques.every((e) => e.couleur === brandColors.deep && e.role === "titre")).toBe(true);
+    expect(listes.every((e) => e.entreItems === 0.8 && e.role === "corps")).toBe(true);
+    expect(listes[0]!.x * f.width).toBe(MARGE);
   });
 });
 

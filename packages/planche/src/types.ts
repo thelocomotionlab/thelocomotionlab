@@ -155,6 +155,8 @@ export type ElementTexte = ElementCommun & {
   couleur: string;
   alignement: Alignement;
   interligne: number;
+  /** L'espace entre deux points d'une liste, en parts du corps — `null` : celui de la charte. */
+  entreItems: number | null;
   /** Interlettrage, en em. */
   lettrage: number;
   ombre: Ombre | null;
@@ -414,8 +416,6 @@ export type ElementSemaines = ElementCommun & {
   pasDesLabels: number;
   /** L'angle des étiquettes d'abscisse, en degrés : 0 droites, 45 en biais. */
   inclinaison: number;
-  /** Les graduations chiffrées, à gauche et à droite. */
-  axes: boolean;
   /** Le haut de l'axe des barres — `null` : un cran rond au-dessus du maximum. */
   plafondBarres: number | null;
   /** L'écart entre deux graduations des barres — `null` : de trois à six, rondes. */
@@ -428,6 +428,8 @@ export type ElementSemaines = ElementCommun & {
   largeurBarre: number;
   /** Les pastilles posées sur la courbe. */
   pastilles: boolean;
+  /** Les graduations chiffrées, à gauche et à droite. */
+  axes: boolean;
   /** Le nom de chaque série montrée, écrit en tête de son axe. */
   titresAxes: boolean;
   legende: LigneLegende[];
@@ -452,9 +454,11 @@ export type Element =
 
 export type CleModele =
   | "carte"
+  | "trace"
   | "bandeau"
   | "photo"
   | "texte"
+  | "intentions"
   | "fiche"
   | "etape"
   | "journees"
