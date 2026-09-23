@@ -13,7 +13,7 @@ import {
 import { contexteDeRendu } from "./contexte.ts";
 import { ctxFactice, type CtxFactice } from "./factice.ts";
 import { besoinsDeFond, dessinerPlanche } from "./rendu.ts";
-import { PALETTE_JOURS, THEMES } from "./charte.ts";
+import { PALETTE_JOURS, THEMES, couleurDuJour } from "./charte.ts";
 import { brandColors } from "@locomotionlab/ui/tokens";
 import { carteNeuve } from "./fabrique.ts";
 import { TILE_SIZE, cadrer, decimerPixels, normX, normY, tuilesDeLaVue } from "./projection.ts";
@@ -253,6 +253,55 @@ describe("dessiner une carte", () => {
     const sans = rendre({ ...carte(), depart: false, arrivee: false });
     const arcs = (c: CtxFactice) => c.ops.filter((o) => o.op === "arc").length;
     expect(arcs(avec)).toBe(arcs(sans) + 2);
+  });
+
+  /** Les encres des pastilles, dans l'ordre : sans étiquettes, seules les bornes remplissent un disque. */
+  function encresDesBornes(e: ElementCarte): string[] {
+    const ctx = ctxFactice();
+    const vues: string[] = [];
+    const cible = ctx as unknown as Record<string, (...a: unknown[]) => void>;
+    const fill = cible.fill!.bind(ctx);
+    cible.fill = (...a: unknown[]) => {
+      vues.push(String(ctx.fillStyle));
+      fill(...a);
+    };
+    const { planche, c } = monde([{ ...e, etiquettesAuto: false }]);
+    dessinerPlanche(ctx, planche, c);
+    return vues;
+  }
+
+  it("pose l'arrivée à la couleur de la journée qu'elle ferme, pas à l'accent du thème", () => {
+    const e = { ...carte(), depart: true, arrivee: true };
+    // Trois journées : le départ ouvre la première, l'arrivée ferme la dernière.
+    expect(encresDesBornes(e)).toEqual([couleurDuJour(e.couleurs, 0), couleurDuJour(e.couleurs, 2)]);
+    // Une trace d'une seule couleur : la même pastille aux deux bouts.
+    expect(encresDesBornes({ ...e, couleurs: ["#D6246E"] })).toEqual(["#D6246E", "#D6246E"]);
+  });
+
+  it("pose l'icône demandée dans sa borne, à l'encre du liseré, et agrandit la borne", () => {
+    const vues: string[] = [];
+    definirVocabulaireDIcones({
+      connue: () => true,
+      dessiner: (_ctx, cle) => {
+        vues.push(cle);
+        return true;
+      },
+    });
+    try {
+      const rayons = (e: ElementCarte) =>
+        rendre({ ...e, etiquettesAuto: false }).ops
+          .filter((o) => o.op === "arc")
+          .map((o) => o.args[2] as number);
+      const nue = { ...carte(), depart: true, arrivee: true };
+      rendre({ ...nue, iconeDepart: "depart", iconeArrivee: "arrivee", etiquettesAuto: false });
+      expect(vues).toEqual(["depart", "arrivee"]);
+      const avec = rayons({ ...nue, iconeArrivee: "arrivee" });
+      const sans = rayons(nue);
+      expect(avec[1]!).toBeGreaterThan(sans[1]!);
+      expect(avec[0]).toBe(sans[0]);
+    } finally {
+      definirVocabulaireDIcones({ connue: (c) => c === "col", dessiner: () => true });
+    }
   });
 
   it("l'itinéraire en sourdine SITUE la journée, et s'éteint", () => {

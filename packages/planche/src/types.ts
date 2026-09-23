@@ -274,6 +274,12 @@ export type ElementCarte = ElementCommun & {
   etiquettes: Etiquette[];
   depart: boolean;
   arrivee: boolean;
+  /**
+   * L'icône posée dans la borne de départ, et celle de l'arrivée — une clé du
+   * vocabulaire. Vide : la pastille seule.
+   */
+  iconeDepart: string;
+  iconeArrivee: string;
   /** L'itinéraire complet, en sourdine sous la tranche montrée. */
   itineraireSourdine: boolean;
   /** Une étiquette par journée montrée, nommée « J1 », « J2 »… */

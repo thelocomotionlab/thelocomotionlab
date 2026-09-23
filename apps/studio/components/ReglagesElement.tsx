@@ -553,6 +553,12 @@ function ReglagesMarque({ e, poser }: { e: ElementMarque; poser: Poser<ElementMa
 
 /* ------------------------------------------------------------------ carte */
 
+/** Ce qu'une borne de départ ou d'arrivée peut porter : rien, ou une icône du vocabulaire. */
+const ICONES_DE_BORNE = [
+  { cle: "", label: "Aucune — la pastille seule" },
+  ...CLES_ICONES.map((k) => ({ cle: k, label: k })),
+];
+
 function ReglagesCarte({
   e,
   poser,
@@ -605,11 +611,27 @@ function ReglagesCarte({
         coche={e.depart}
         onChange={(v) => poser((x) => ({ ...x, depart: v }), "départ")}
       />
+      {e.depart && (
+        <Choix
+          libelle="Icône du départ"
+          valeur={e.iconeDepart ?? ""}
+          options={ICONES_DE_BORNE}
+          onChange={(v) => poser((x) => ({ ...x, iconeDepart: v }), "départ")}
+        />
+      )}
       <Case
         libelle="Marqueur d'arrivée"
         coche={e.arrivee}
         onChange={(v) => poser((x) => ({ ...x, arrivee: v }), "arrivée")}
       />
+      {e.arrivee && (
+        <Choix
+          libelle="Icône de l'arrivée"
+          valeur={e.iconeArrivee ?? ""}
+          options={ICONES_DE_BORNE}
+          onChange={(v) => poser((x) => ({ ...x, iconeArrivee: v }), "arrivée")}
+        />
+      )}
       <Case
         libelle="Itinéraire entier en sourdine"
         coche={e.itineraireSourdine}

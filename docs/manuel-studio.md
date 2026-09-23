@@ -81,7 +81,8 @@ Clique un élément : l'inspecteur montre **tout ce qui le concerne**, et rien d
 ses propres réglages, sous **RÉGLAGES** :
 
 - **Carte** — le fond (aucun, relief, topo, satellite), l'épaisseur du trait, les marqueurs de départ
-  et d'arrivée, l'itinéraire entier en sourdine, les couleurs des journées, et les **étiquettes** :
+  et d'arrivée (à la couleur de la trace, avec une icône au choix : `depart`, `arrivee`…),
+  l'itinéraire entier en sourdine, les couleurs des journées, et les **étiquettes** :
   une par journée, avec sa pastille (ou une icône à la place), son texte et son décalage à la main si
   elle tombe mal.
 - **Profil** — le restant estompé, une couleur par journée, ou une couleur imposée qui passe devant.
