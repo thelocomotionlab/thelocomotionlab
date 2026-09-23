@@ -225,9 +225,12 @@ export type { Prise } from "./camera.ts";
 export {
   barreSous,
   cadreDesSemaines,
+  ecrireLesSeries,
   graduationDe,
+  lireLesSeries,
+  nombreDeBarres,
   plafondDe,
-  uniteDe,
+  serieDe,
 } from "./semaines.ts";
 export {
   cheminDuSurvol,
@@ -281,8 +284,7 @@ export type {
   ElementSemaines,
   Etiquette,
   LigneLegende,
-  MetriqueSemaine,
-  SemaineEntrainement,
+  SerieChiffree,
   Filet,
   FondCarte,
   LigneFiche,

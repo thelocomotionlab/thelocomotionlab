@@ -12,9 +12,8 @@ const monorepoRoot = resolve(appDir, "../..");
 //
 //   • `next dev` (Turbopack) → racine = MONOREPO, sans quoi Turbopack ne suit
 //     pas le symlink pnpm vers les paquets partagés et rien ne compile ;
-//   • `next build --webpack` (en local ET via @cloudflare/next-on-pages) →
-//     racine = APP, sinon le builder lancé DANS apps/studio dédouble le chemin
-//     de sortie en « apps/studio/apps/studio/.next ».
+//   • `next build --webpack` → racine = APP, pour que le suivi des fichiers
+//     parte de l'app et non du monorepo entier.
 const PHASE_PRODUCTION_BUILD = "phase-production-build"; // cf. next/constants
 
 /** @type {(phase: string) => NextConfig} */
@@ -24,6 +23,13 @@ export default function nextConfig(phase: string): NextConfig {
   return {
     reactStrictMode: true,
     poweredByHeader: false,
+
+    // LE STUDIO EST UN EXPORT STATIQUE : rien n'y tourne sur un serveur — la
+    // trace, les photos, le projet restent dans le navigateur. Le build sort un
+    // dossier `out/` de fichiers, que Cloudflare Pages sert tel quel. Pas de
+    // Functions, donc pas de `headers()` ici : les en-têtes, pages comprises,
+    // vivent dans public/_headers.
+    output: "export",
 
     turbopack: { root },
     outputFileTracingRoot: root,
@@ -44,31 +50,6 @@ export default function nextConfig(phase: string): NextConfig {
 
     experimental: {
       optimizePackageImports: ["lucide-react"],
-    },
-
-    async headers() {
-      return [
-        {
-          source: "/(.*)",
-          headers: [
-            // Le studio n'est lié de nulle part et ne doit pas s'indexer : il
-            // n'y a rien à y trouver pour un lecteur, et tout à y perdre en
-            // référencement.
-            { key: "X-Robots-Tag", value: "noindex, nofollow" },
-            { key: "X-Content-Type-Options", value: "nosniff" },
-            { key: "X-Frame-Options", value: "SAMEORIGIN" },
-            { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-            {
-              key: "Permissions-Policy",
-              value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
-            },
-            {
-              key: "Strict-Transport-Security",
-              value: "max-age=63072000; includeSubDomains; preload",
-            },
-          ],
-        },
-      ];
     },
   };
 }

@@ -55,6 +55,10 @@ d'un coup, en **une seule étape d'historique** (un Ctrl+Z les retire toutes). C
 réglée sur sa journée, et les vignettes de la bande du bas disent **J1, J2, J3** plutôt que quatre
 fois le même nom de modèle.
 
+**Changer l'ordre** : fais glisser une vignette de la bande à gauche ou à droite — un trait montre
+où elle tombera. Les flèches ← → à droite de la bande déplacent la planche courante d'un rang. Un
+déplacement est une seule étape d'historique : Ctrl+Z le défait.
+
 ### 1.4 La tranche de journées
 
 C'est le réglage qui fait une planche d'étape, et il vit dans l'**inspecteur** quand rien n'est
@@ -89,7 +93,8 @@ ses propres réglages, sous **RÉGLAGES** :
 - **Chiffre** — la variable, son libellé, son corps, et une **valeur écrite à la main** qui remplace
   le calcul : la montre a toujours raison sur son propre fichier.
 - **Fiche** — les lignes, chacune tirant sa valeur d'une variable ou d'un texte écrit.
-- **Texte, forme, icône, marque** — alignement, casse, interlettrage, encre, filets, plaque, ombre ;
+- **Texte, forme, icône, marque** — alignement, casse, interlettrage, encre, puce et couleur des
+  puces (par défaut, celle du texte), filets, plaque, ombre ;
   forme et coins ; clé d'icône ; variante de la marque.
 
 Partout, le bouton **Thème** à côté d'un sélecteur de couleur rend le réglage au thème — c'est ce qui

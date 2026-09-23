@@ -8,11 +8,13 @@
 // trois secondes au pouce, rien de tout ça n'arrive — il faut des barres
 // épaisses, trois graduations, et des étiquettes qu'on lise de loin.
 //
-// DEUX SÉRIES AU PLUS. Une métrique en barres, une seconde en courbe sur son
-// propre axe. Trois échelles sans rapport — cent kilomètres, cinq mille mètres,
-// huit heures — ne se superposent pas sans mentir sur l'une d'elles.
+// DES SÉRIES LIBRES, pas trois métriques fixes : c'est l'auteur qui dit ce
+// qu'il mesure et dans quelle unité. Mais DEUX MONTRÉES AU PLUS — une en
+// barres, une en courbe. Trois échelles sans rapport — cent kilomètres, cinq
+// mille mètres, huit heures — ne se superposent pas sans mentir sur l'une
+// d'elles.
 //
-// LA COULEUR D'UNE BARRE EST UNE PHRASE. Dix-neuf barres de la même teinte ne
+// LA COULEUR D'UNE BARRE EST UNE PHRASE. Dix-sept barres de la même teinte ne
 // disent que le volume ; deux bleues, quatre ocre et une fuchsia racontent un
 // bloc, un affûtage et une course. D'où la couleur par barre, et la légende qui
 // la nomme.
@@ -21,34 +23,79 @@ import { CORPS, LARGEUR_REFERENCE, rgba } from "./charte.ts";
 import { brandColors } from "@locomotionlab/ui/tokens";
 import type { Ctx2D } from "./canvas.ts";
 import type { ContexteRendu } from "./contexte.ts";
-import type {
-  BoitePx,
-  ElementSemaines,
-  MetriqueSemaine,
-  SemaineEntrainement,
-} from "./types.ts";
+import type { BoitePx, ElementSemaines, SerieChiffree } from "./types.ts";
 
-/** Ce que vaut une semaine pour la métrique demandée. */
-export function valeurDe(s: SemaineEntrainement, quoi: MetriqueSemaine): number {
-  const v = quoi === "km" ? s.km : quoi === "dplus" ? s.dplus : s.minutes;
-  return Number.isFinite(v) ? Math.max(0, v) : 0;
-}
-
-/** L'unité qu'on écrit sur l'axe d'une métrique. */
-export function uniteDe(quoi: MetriqueSemaine): string {
-  return quoi === "km" ? "km" : quoi === "dplus" ? "m D+" : "h";
-}
+/* ------------------------------------------------------------- les chiffres */
 
 /**
- * La graduation écrite pour une valeur.
+ * LE BLOC DE DONNÉES, tel qu'on l'écrit à la main.
  *
- * Les minutes se disent en HEURES sur un axe : « 480 » ne veut rien dire quand
- * on parle d'une semaine d'entraînement, « 8 h » se lit d'un coup.
+ *     abscisse: ["S1", "S2", "S3"]
+ *     series:
+ *       - { nom: "Distance", unite: "km", valeurs: [77, 84, 94] }
+ *       - { nom: "Dénivelé", unite: "m", valeurs: [3200, 3600, 4500] }
+ *
+ * LA LECTURE EST TOLÉRANTE, et c'est le point : ce bloc se tape et se recolle à
+ * la main, et il y manque une accolade une fois sur deux. Refuser tout le bloc
+ * pour un crochet oublié ferait perdre dix-sept valeurs à quelqu'un qui voulait
+ * en corriger une. On lit donc ce qu'on comprend et on laisse le reste.
  */
-export function graduationDe(valeur: number, quoi: MetriqueSemaine): string {
-  if (quoi === "minutes") return `${Math.round(valeur / 60)}`;
-  if (quoi === "dplus") return valeur >= 1000 ? `${(valeur / 1000).toFixed(1)}k` : `${Math.round(valeur)}`;
-  return `${Math.round(valeur)}`;
+export function lireLesSeries(brut: string): { abscisse: string[]; series: SerieChiffree[] } {
+  const texte = typeof brut === "string" ? brut : "";
+  const abscisse = listeDe(texte.match(/abscisse\s*:\s*\[([^\]]*)\]?/)?.[1] ?? "").map(sansGuillemets);
+
+  const series: SerieChiffree[] = [];
+  // Chaque entrée commence par un tiret de liste. On découpe là-dessus plutôt
+  // que d'analyser du YAML : le format est le nôtre, il tient en trois clés.
+  for (const bloc of texte.split(/^\s*-\s/m).slice(1)) {
+    const valeurs = listeDe(bloc.match(/valeurs\s*:\s*\[([^\]]*)\]?/)?.[1] ?? "")
+      .map((v) => Number.parseFloat(v.replace(",", ".")))
+      .map((v) => (Number.isFinite(v) ? v : 0));
+    if (valeurs.length === 0) continue;
+    series.push({
+      nom: sansGuillemets(bloc.match(/nom\s*:\s*("[^"]*"|'[^']*'|[^,}\n]*)/)?.[1] ?? ""),
+      unite: sansGuillemets(bloc.match(/unite\s*:\s*("[^"]*"|'[^']*'|[^,}\n]*)/)?.[1] ?? ""),
+      valeurs,
+    });
+  }
+  return { abscisse, series };
+}
+
+function listeDe(brut: string): string[] {
+  return brut
+    .split(",")
+    .map((v) => v.trim())
+    .filter((v) => v !== "");
+}
+
+function sansGuillemets(v: string): string {
+  return v.trim().replace(/^["']|["']$/g, "").trim();
+}
+
+/** Le bloc réécrit depuis l'élément — c'est lui qu'affiche le champ. */
+export function ecrireLesSeries(e: {
+  abscisse: readonly string[];
+  series: readonly SerieChiffree[];
+}): string {
+  const lignes = [`abscisse: [${e.abscisse.map((a) => `"${a}"`).join(", ")}]`, "series:"];
+  for (const s of e.series) {
+    lignes.push(`  - { nom: "${s.nom}", unite: "${s.unite}", valeurs: [${s.valeurs.join(", ")}] }`);
+  }
+  return lignes.join("\n");
+}
+
+/* ------------------------------------------------------------ la géométrie */
+
+/** La série montrée à cet index, si elle existe. */
+export function serieDe(e: ElementSemaines, index: number | null): SerieChiffree | null {
+  if (index === null) return null;
+  return e.series[index] ?? null;
+}
+
+/** Combien de barres le graphique porte : l'abscisse, ou la série à défaut. */
+export function nombreDeBarres(e: ElementSemaines): number {
+  const serie = serieDe(e, e.barres);
+  return Math.max(e.abscisse.length, serie?.valeurs.length ?? 0);
 }
 
 /**
@@ -67,11 +114,67 @@ export function plafondDe(max: number): number {
   return 10 * ordre;
 }
 
+/**
+ * La graduation écrite pour une valeur.
+ *
+ * Au-delà du millier on abrège — « 12.8k » plutôt que « 12800 », qui prend la
+ * largeur de deux barres et qu'on ne lit pas mieux.
+ */
+export function graduationDe(valeur: number): string {
+  const v = Math.round(valeur);
+  if (Math.abs(v) >= 1000) return `${(v / 1000).toFixed(1).replace(/\.0$/, "")}k`;
+  return `${v}`;
+}
+
 /** La part de la boîte réservée à la légende, sous le graphique. */
 const PART_LEGENDE = 0.16;
 
-/** Les trois graduations d'un axe — zéro compris. */
-const GRADUATIONS = 3;
+/** Un axe : son plafond, et l'écart entre deux graduations. */
+export type Axe = { plafond: number; pas: number };
+
+/**
+ * L'AXE D'UNE SÉRIE.
+ *
+ * Le plafond est un cran rond au-dessus du maximum, sauf si l'auteur l'impose ;
+ * le pas donne de trois à six graduations rondes, sauf s'il l'impose. Un pas
+ * imposé sans plafond pousse le plafond au multiple suivant : la dernière
+ * graduation tombe sur le haut de l'axe, jamais un peu en dessous.
+ */
+export function axeDe(max: number, plafondVoulu: number | null, pasVoulu: number | null): Axe {
+  const plafondImpose = plafondVoulu !== null && plafondVoulu > 0 ? plafondVoulu : null;
+  const pasImpose = pasVoulu !== null && pasVoulu > 0 ? pasVoulu : null;
+  if (pasImpose !== null && plafondImpose === null) {
+    const plafond = Math.max(pasImpose, Math.ceil(Math.max(0, max) / pasImpose) * pasImpose);
+    return { plafond, pas: pasImpose };
+  }
+  const plafond = plafondImpose ?? plafondDe(max);
+  return { plafond, pas: pasImpose ?? pasJoli(plafond) };
+}
+
+/**
+ * Le plus grand pas rond — 1, 2, 2,5 ou 5 fois une puissance de dix — qui
+ * découpe le plafond en trois à six graduations entières. « 0 · 67 · 133 · 200 »
+ * se lisait comme une erreur de calcul ; « 0 · 50 · 100 · 150 · 200 » se lit.
+ */
+function pasJoli(plafond: number): number {
+  if (!(plafond > 0)) return 1;
+  const ordre = 10 ** Math.ceil(Math.log10(plafond));
+  for (let k = ordre; k >= ordre / 1000; k /= 10) {
+    for (const cran of [5, 2.5, 2, 1]) {
+      const pas = cran * k;
+      const n = plafond / pas;
+      if (Math.abs(n - Math.round(n)) < 1e-9 && n >= 3 && n <= 6) return pas;
+    }
+  }
+  return plafond / 3;
+}
+
+/** Les graduations d'un axe, de zéro au plafond. */
+export function graduationsDe(axe: Axe): number[] {
+  const out: number[] = [];
+  for (let k = 0; k * axe.pas <= axe.plafond + 1e-9 && k < 1000; k += 1) out.push(k * axe.pas);
+  return out;
+}
 
 export type Cadre = {
   /** La zone où les barres se dessinent, hors axes et légende. */
@@ -82,7 +185,11 @@ export type Cadre = {
   barre: number;
   hautBarres: number;
   hautCourbe: number;
+  axeBarres: Axe;
+  axeCourbe: Axe;
   corps: number;
+  /** La place sous l'axe : les étiquettes, droites ou en biais. */
+  reserveBas: number;
 };
 
 /**
@@ -93,37 +200,77 @@ export type Cadre = {
  * différentes pour le même point.
  */
 export function cadreDesSemaines(e: ElementSemaines, b: BoitePx): Cadre | null {
-  const n = e.lignes.length;
+  const n = nombreDeBarres(e);
   if (n === 0 || b.l <= 0 || b.h <= 0) return null;
   const corps = Math.max(9, (e.taille || CORPS.pied) * (b.l / LARGEUR_REFERENCE));
 
   const legende = e.legende.length > 0 ? Math.max(corps * 2.2, b.h * PART_LEGENDE) : 0;
-  const bas = corps * 2.2;
+  const bas = reserveDesEtiquettes(e, corps);
   const gauche = e.axes ? corps * 2.6 : 0;
-  const droite = e.axes && e.courbe ? corps * 2.6 : 0;
-
+  const courbe = serieDe(e, e.courbe);
+  const droite = e.axes && courbe ? corps * 2.6 : 0;
   // L'AIR DU HAUT : la graduation la plus haute s'écrit AU-DESSUS de sa ligne,
-  // et sans cette réserve elle sortait de la boîte, coupée en deux.
-  const haut = e.axes ? corps * 0.6 : 0;
+  // et sans cette réserve elle sortait de la boîte, coupée en deux. Le nom de
+  // la série, quand il est écrit, prend une ligne de plus.
+  const haut = e.axes ? corps * (e.titresAxes ? 1.9 : 0.6) : 0;
+
   const trace: BoitePx = {
     x: b.x + gauche,
     y: b.y + haut,
     l: Math.max(1, b.l - gauche - droite),
     h: Math.max(1, b.h - haut - legende - bas),
   };
-  const colonne = trace.l / n;
+  const serieBarres = serieDe(e, e.barres);
+  const axeBarres = axeDe(
+    Math.max(0, ...(serieBarres?.valeurs ?? [])),
+    e.plafondBarres ?? null,
+    e.pasBarres ?? null,
+  );
+  const axeCourbe = axeDe(
+    Math.max(0, ...(courbe?.valeurs ?? [])),
+    e.plafondCourbe ?? null,
+    e.pasCourbe ?? null,
+  );
+  // Une gouttière d'un quart par défaut : plus serré, les barres se touchent ;
+  // plus large, la saison se lit comme des bâtons épars.
+  const largeur = Math.min(1, Math.max(0.2, e.largeurBarre || 0.72));
   return {
     trace,
-    colonne,
-    // Une gouttière d'un sixième : plus serré, les barres se touchent ; plus
-    // large, la saison se lit comme des bâtons épars.
-    barre: Math.max(1, colonne * 0.72),
-    hautBarres: plafondDe(Math.max(...e.lignes.map((s) => valeurDe(s, e.barres)))),
-    hautCourbe: e.courbe
-      ? plafondDe(Math.max(...e.lignes.map((s) => valeurDe(s, e.courbe!))))
-      : 1,
+    colonne: trace.l / n,
+    barre: Math.max(1, (trace.l / n) * largeur),
+    hautBarres: axeBarres.plafond,
+    hautCourbe: axeCourbe.plafond,
+    axeBarres,
+    axeCourbe,
     corps,
+    reserveBas: bas,
   };
+}
+
+/**
+ * LA PLACE SOUS L'AXE pour les étiquettes.
+ *
+ * Droites, une ligne suffit. En biais, la plus longue descend de sa largeur
+ * fois le sinus de l'angle — et ici, sans contexte, on ne peut pas la mesurer :
+ * on l'estime à 0,56 corps par caractère, la chasse moyenne d'Ubuntu Sans en
+ * chiffres et en capitales.
+ */
+function reserveDesEtiquettes(e: ElementSemaines, corps: number): number {
+  const angle = angleDe(e);
+  if (angle === 0) return corps * 2.2;
+  const pas = Math.max(1, Math.round(e.pasDesLabels));
+  const plusLongue = Math.max(
+    0,
+    ...e.abscisse.filter((_, i) => i % pas === 0).map((l) => l.length),
+  );
+  const largeur = plusLongue * corps * 0.56;
+  return corps * 1.15 + largeur * Math.sin(angle) + corps * 0.25 * Math.cos(angle) + corps * 0.6;
+}
+
+/** L'angle en radians, borné à 90° : au-delà, l'étiquette se lirait à l'envers. */
+function angleDe(e: ElementSemaines): number {
+  const degres = Number.isFinite(e.inclinaison) ? Math.max(0, Math.min(90, e.inclinaison)) : 0;
+  return (degres * Math.PI) / 180;
 }
 
 /** La barre sous un point, ou `null` — c'est elle qu'on colore au clic. */
@@ -133,8 +280,10 @@ export function barreSous(e: ElementSemaines, b: BoitePx, x: number, y: number):
   const { trace, colonne } = cadre;
   if (y < trace.y || y > trace.y + trace.h) return null;
   if (x < trace.x || x > trace.x + trace.l) return null;
-  return Math.max(0, Math.min(e.lignes.length - 1, Math.floor((x - trace.x) / colonne)));
+  return Math.max(0, Math.min(nombreDeBarres(e) - 1, Math.floor((x - trace.x) / colonne)));
 }
+
+/* --------------------------------------------------------------- le dessin */
 
 export function dessinerSemaines(
   ctx: Ctx2D,
@@ -144,58 +293,85 @@ export function dessinerSemaines(
 ): void {
   const cadre = cadreDesSemaines(e, b);
   if (!cadre) return;
-  const { trace, colonne, barre, hautBarres, hautCourbe, corps } = cadre;
+  const { trace, colonne, barre, hautBarres, hautCourbe, axeBarres, axeCourbe, corps, reserveBas } =
+    cadre;
+  const serieBarres = serieDe(e, e.barres);
+  const serieCourbe = serieDe(e, e.courbe);
   const teinteBarres = e.couleurBarres || brandColors.primary;
   const teinteCourbe = e.couleurCourbe || brandColors.accent;
   const base = trace.y + trace.h;
+  const n = nombreDeBarres(e);
 
   ctx.save();
+  ctx.font = `500 ${corps}px ${c.police}`;
 
-  // 1. LES GRADUATIONS, en filets à peine posés. Trois, pas neuf : sur une
-  //    planche, une grille dense se lit comme du bruit.
+  // 1. LES GRADUATIONS, en filets à peine posés — de trois à six, pas neuf :
+  //    sur une planche, une grille dense se lit comme du bruit. Les filets
+  //    suivent l'axe des barres ; la courbe n'a que ses chiffres, à droite :
+  //    deux grilles qui ne tombent pas aux mêmes hauteurs se liraient comme
+  //    une erreur.
   if (e.axes) {
-    ctx.font = `500 ${corps}px ${c.police}`;
-    for (let k = 0; k <= GRADUATIONS; k += 1) {
-      const part = k / GRADUATIONS;
-      const y = base - part * trace.h;
+    const yDe = (v: number, axe: Axe) => base - (v / axe.plafond) * trace.h;
+    if (e.grille !== false) {
+      const principal = serieBarres ? axeBarres : axeCourbe;
       ctx.fillStyle = c.theme.filet;
-      ctx.fillRect(trace.x, y, trace.l, Math.max(1, corps * 0.045));
-
-      ctx.fillStyle = c.theme.encreFaible;
-      const gauche = graduationDe(part * hautBarres, e.barres);
-      ctx.fillText(gauche, b.x, y + corps * 0.35);
-      if (e.courbe) {
-        const droite = graduationDe(part * hautCourbe, e.courbe);
-        const large = ctx.measureText(droite).width;
-        ctx.fillText(droite, b.x + b.l - large, y + corps * 0.35);
+      for (const v of graduationsDe(principal)) {
+        ctx.fillRect(trace.x, yDe(v, principal), trace.l, Math.max(1, corps * 0.045));
+      }
+    }
+    ctx.fillStyle = c.theme.encreFaible;
+    if (serieBarres) {
+      for (const v of graduationsDe(axeBarres)) {
+        ctx.fillText(graduationDe(v), b.x, yDe(v, axeBarres) + corps * 0.35);
+      }
+    }
+    if (serieCourbe) {
+      for (const v of graduationsDe(axeCourbe)) {
+        const droite = graduationDe(v);
+        ctx.fillText(droite, b.x + b.l - ctx.measureText(droite).width, yDe(v, axeCourbe) + corps * 0.35);
+      }
+    }
+    // Le NOM de chaque série en tête de son axe : « 4 500 » ne dit pas s'il
+    // s'agit de mètres ou de minutes.
+    if (e.titresAxes) {
+      const y = trace.y - corps * 0.9;
+      if (serieBarres) {
+        ctx.fillStyle = teinteBarres;
+        ctx.fillText(titreDe(serieBarres), b.x, y);
+      }
+      if (serieCourbe) {
+        ctx.fillStyle = teinteCourbe;
+        const titre = titreDe(serieCourbe);
+        ctx.fillText(titre, b.x + b.l - ctx.measureText(titre).width, y);
       }
     }
   }
 
   // 2. LES BARRES, chacune à sa couleur.
-  e.lignes.forEach((s, i) => {
-    const valeur = valeurDe(s, e.barres);
-    const haut = (valeur / hautBarres) * trace.h;
-    if (!(haut > 0)) return;
-    const x = trace.x + i * colonne + (colonne - barre) / 2;
-    ctx.fillStyle = s.couleur || teinteBarres;
-    ctx.fillRect(x, base - haut, barre, haut);
-  });
+  if (serieBarres) {
+    for (let i = 0; i < n; i += 1) {
+      const valeur = Math.max(0, serieBarres.valeurs[i] ?? 0);
+      const haut = (valeur / hautBarres) * trace.h;
+      if (!(haut > 0)) continue;
+      ctx.fillStyle = e.couleurs[i] || teinteBarres;
+      ctx.fillRect(trace.x + i * colonne + (colonne - barre) / 2, base - haut, barre, haut);
+    }
+  }
 
   // 3. LA LIGNE DE SOL : sans elle, des barres flottent.
   ctx.fillStyle = rgba(c.theme.encre, 0.35);
   ctx.fillRect(trace.x, base, trace.l, Math.max(1, corps * 0.06));
 
   // 4. LA COURBE et ses pastilles, sur l'axe de droite.
-  if (e.courbe) {
-    const quoi = e.courbe;
-    const points = e.lignes.map((s, i) => {
-      const valeur = valeurDe(s, quoi);
-      return [
+  if (serieCourbe) {
+    const points: [number, number][] = [];
+    for (let i = 0; i < n; i += 1) {
+      const valeur = Math.max(0, serieCourbe.valeurs[i] ?? 0);
+      points.push([
         trace.x + i * colonne + colonne / 2,
         base - (valeur / hautCourbe) * trace.h,
-      ] as [number, number];
-    });
+      ]);
+    }
     if (points.length > 1) {
       ctx.beginPath();
       ctx.moveTo(points[0]![0], points[0]![1]);
@@ -207,7 +383,7 @@ export function dessinerSemaines(
       ctx.stroke();
     }
     const rayon = Math.max(2, corps * 0.3);
-    for (const [x, y] of points) {
+    for (const [x, y] of e.pastilles === false ? [] : points) {
       ctx.beginPath();
       ctx.arc(x, y, rayon, 0, Math.PI * 2);
       ctx.fillStyle = brandColors.deep;
@@ -218,19 +394,31 @@ export function dessinerSemaines(
     }
   }
 
-  // 5. LES ÉTIQUETTES D'ABSCISSE, une sur `pasDesLabels`.
+  // 5. LES ÉTIQUETTES D'ABSCISSE, une sur `pasDesLabels`, droites ou en biais.
   const pas = Math.max(1, Math.round(e.pasDesLabels));
-  ctx.font = `500 ${corps}px ${c.police}`;
+  const angle = angleDe(e);
   ctx.fillStyle = c.theme.encreDouce;
-  e.lignes.forEach((s, i) => {
-    if (i % pas !== 0 || !s.label) return;
-    const large = ctx.measureText(s.label).width;
-    ctx.fillText(s.label, trace.x + i * colonne + (colonne - large) / 2, base + corps * 1.5);
-  });
+  for (let i = 0; i < n; i += 1) {
+    const label = e.abscisse[i];
+    if (i % pas !== 0 || !label) continue;
+    const large = ctx.measureText(label).width;
+    const centre = trace.x + i * colonne + colonne / 2;
+    if (angle === 0) {
+      ctx.fillText(label, centre - large / 2, base + corps * 1.5);
+      continue;
+    }
+    // En biais, c'est la FIN du mot qui se cale sous sa colonne et le mot
+    // descend vers la gauche : l'œil le remonte jusqu'à la barre qu'il nomme.
+    ctx.save();
+    ctx.translate(centre, base + corps * 1.15);
+    ctx.rotate(-angle);
+    ctx.fillText(label, -large, 0);
+    ctx.restore();
+  }
 
   // 6. LA LÉGENDE, qui dit ce que les couleurs racontent.
   if (e.legende.length > 0) {
-    const y = base + corps * 3.1;
+    const y = base + reserveBas + corps * 0.9;
     const cote = corps * 0.82;
     let x = trace.x;
     for (const l of e.legende) {
@@ -243,4 +431,9 @@ export function dessinerSemaines(
     }
   }
   ctx.restore();
+}
+
+/** « Distance (km) » — le nom, et l'unité entre parenthèses quand il y en a une. */
+function titreDe(s: SerieChiffree): string {
+  return s.unite ? `${s.nom} (${s.unite})` : s.nom;
 }

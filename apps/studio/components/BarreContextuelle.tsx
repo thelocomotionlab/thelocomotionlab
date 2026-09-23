@@ -101,41 +101,7 @@ export default function BarreContextuelle({
       onPointerDown={(e) => e.stopPropagation()}
     >
       {semaines && barreVisee !== null && (
-        <div className="flex items-center gap-1" role="group" aria-label="Couleur de la semaine">
-          <span className="px-1 text-[12px] text-brand-muted">
-            {semaines.lignes[barreVisee]?.label || `S${barreVisee + 1}`}
-          </span>
-          {palette(theme).map((c) => (
-            <button
-              key={c.valeur || "serie"}
-              type="button"
-              title={c.valeur ? c.nom : "Couleur de la série"}
-              aria-label={c.valeur ? c.nom : "Couleur de la série"}
-              aria-pressed={(semaines.lignes[barreVisee]?.couleur ?? "") === c.valeur}
-              onClick={() =>
-                onRegler(
-                  (e) =>
-                    e.type === "semaines"
-                      ? {
-                          ...e,
-                          lignes: e.lignes.map((l, i) =>
-                            i === barreVisee ? { ...l, couleur: c.valeur } : l,
-                          ),
-                        }
-                      : e,
-                  "couleur de la semaine",
-                )
-              }
-              className={`h-5 w-5 rounded-full border transition-transform motion-reduce:transition-none ${
-                (semaines.lignes[barreVisee]?.couleur ?? "") === c.valeur
-                  ? "scale-110 border-brand-primary-dark"
-                  : "border-brand-field hover:scale-110"
-              }`}
-              style={{ background: c.valeur || semaines.couleurBarres || brandColors.primary }}
-            />
-          ))}
-          <Separateur />
-        </div>
+        <CouleurDeLaBarre semaines={semaines} rang={barreVisee} theme={theme} onRegler={onRegler} />
       )}
 
       {texte && (
@@ -261,6 +227,61 @@ export default function BarreContextuelle({
       </button>
     </div>
   );
+}
+
+/**
+ * LES CINQ ENCRES DE PREMIER RANG, POSÉES SUR UNE SEULE BARRE.
+ *
+ * Isolée pour que `rang` reste un nombre jusque dans les gestionnaires de clic :
+ * dans le corps de la barre, `barreVisee` redevient un `number | null` sitôt
+ * qu'on entre dans une fonction.
+ */
+function CouleurDeLaBarre({
+  semaines,
+  rang,
+  theme,
+  onRegler,
+}: {
+  semaines: ElementSemaines;
+  rang: number;
+  theme: Theme;
+  onRegler: (transforme: (e: Element) => Element, libelle: string) => void;
+}) {
+  const posee = semaines.couleurs[rang] ?? "";
+  return (
+    <div className="flex items-center gap-1" role="group" aria-label="Couleur de la barre">
+      <span className="px-1 text-[12px] text-brand-muted">{semaines.abscisse[rang] || `#${rang + 1}`}</span>
+      {palette(theme).map((c) => (
+        <button
+          key={c.valeur || "serie"}
+          type="button"
+          title={c.valeur ? c.nom : "Couleur de la série"}
+          aria-label={c.valeur ? c.nom : "Couleur de la série"}
+          aria-pressed={posee === c.valeur}
+          onClick={() =>
+            onRegler(
+              (e) =>
+                e.type === "semaines" ? { ...e, couleurs: avecCouleur(e.couleurs, rang, c.valeur) } : e,
+              "couleur de la barre",
+            )
+          }
+          className={`h-5 w-5 rounded-full border transition-transform motion-reduce:transition-none ${
+            posee === c.valeur ? "scale-110 border-brand-primary-dark" : "border-brand-field hover:scale-110"
+          }`}
+          style={{ background: c.valeur || semaines.couleurBarres || brandColors.primary }}
+        />
+      ))}
+      <Separateur />
+    </div>
+  );
+}
+
+/** La couleur posée à un rang, dans une liste qui peut s'arrêter avant lui. */
+function avecCouleur(couleurs: readonly string[], rang: number, valeur: string): string[] {
+  const suite = [...couleurs];
+  while (suite.length <= rang) suite.push("");
+  suite[rang] = valeur;
+  return suite;
 }
 
 function Separateur() {
