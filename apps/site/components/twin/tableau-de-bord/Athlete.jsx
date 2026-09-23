@@ -40,12 +40,15 @@ const INGESTION_DIT = {
   illisible: "Aucun jumeau : l'archive n'a pas pu être lue.",
 };
 
+/** Une ligne de la fiche. Une valeur trop longue pour la colonne (un email, le nom d'une
+ *  archive) se coupe à sa largeur ; elle se lit en entier au survol. */
 function Ligne({ terme, children }) {
   return (
     <>
       <dt className="text-brand-muted">{terme}</dt>
       <dd
-        className={`m-0 text-right ${children ? "text-brand-text" : "text-brand-faint"}`}
+        className={`m-0 min-w-0 truncate text-right ${children ? "text-brand-text" : "text-brand-faint"}`}
+        title={typeof children === "string" ? children : undefined}
       >
         {children || "—"}
       </dd>
@@ -342,7 +345,7 @@ export default function Athlete({ athleteId }) {
                 {athlete.pseudo || athlete.prenom || "Sans nom"}
               </h1>
             </div>
-            <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+            <dl className="m-0 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">
               <Ligne terme="Email">{athlete.email}</Ligne>
               <Ligne terme="Montre">{athlete.montre}</Ligne>
               <Ligne terme="Dépôt">{athlete.depot_id}</Ligne>
