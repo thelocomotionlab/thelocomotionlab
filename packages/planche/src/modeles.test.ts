@@ -193,6 +193,29 @@ describe("changer de modèle", () => {
     expect(dits).toContain("Un récit écrit à la main.");
   });
 
+  it("laisse au modèle ce que LE MODÈLE avait écrit : le surtitre d'une planche Texte ne suit pas sur une clôture", () => {
+    const texte = instancier("texte", CTX);
+    const surtitre = textes(texte).find((e) => e.role === "surtitre")!;
+    expect(surtitre.contenu.trim()).not.toBe("");
+    const apres = changerModele(texte, "cloture", CTX);
+    expect(textes(apres).some((e) => e.role === "surtitre")).toBe(false);
+  });
+
+  it("…mais un surtitre réécrit par l'auteur survit", () => {
+    const texte = instancier("texte", CTX);
+    const reecrite: PlancheImage = {
+      ...texte,
+      elements: texte.elements.map((e) =>
+        e.type === "texte" && e.role === "surtitre"
+          ? ({ ...e, contenu: "chapitre deux" } as Element)
+          : e,
+      ),
+    };
+    expect(textes(changerModele(reecrite, "cloture", CTX)).map((e) => e.contenu)).toContain(
+      "chapitre deux",
+    );
+  });
+
   it("garde la tranche de journées de la planche", () => {
     const p = { ...ecrite(), tranche: { mode: "seule", jour: 2 } as const };
     expect(changerModele(p, "etape", CTX).tranche).toEqual({ mode: "seule", jour: 2 });

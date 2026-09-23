@@ -806,6 +806,14 @@ export function changerModele(
   c: ContexteModele = CONTEXTE_PAR_DEFAUT,
 ): PlancheImage {
   const neuve = instancier(cle, c, planche.tranche);
+  // Ce que l'ANCIEN modèle avait écrit lui-même. Un surtitre « l'itinéraire »
+  // posé par le modèle Texte n'est pas un mot de l'auteur : il n'a rien à faire
+  // au coin d'une clôture, qui n'a pas de surtitre.
+  const ecritsParLeModele = new Set(
+    instancier(planche.modele, c, planche.tranche)
+      .elements.filter((e): e is ElementTexte => e.type === "texte")
+      .map((e) => `${signature(e)}=${e.contenu.trim()}`),
+  );
   const restants = new Map<string, Element[]>();
   for (const e of planche.elements) {
     const s = signature(e);
@@ -821,7 +829,10 @@ export function changerModele(
 
   // Ce qui portait un contenu et n'a pas trouvé de place le garde : un texte
   // écrit ne disparaît pas parce qu'on a changé de modèle.
-  const orphelins = [...restants.values()].flat().filter(porteQuelqueChose);
+  const orphelins = [...restants.values()]
+    .flat()
+    .filter(porteQuelqueChose)
+    .filter((e) => e.type !== "texte" || !ecritsParLeModele.has(`${signature(e)}=${e.contenu.trim()}`));
 
   return { ...planche, modele: cle, elements: [...elements, ...orphelins] };
 }
