@@ -74,6 +74,7 @@ import {
   NotebookPen,
   PawPrint,
   Pill,
+  Puzzle,
   Rabbit,
   Ruler,
   Salad,
@@ -227,6 +228,7 @@ export const WAYPOINT_ICONES: Record<string, LucideIcon> = {
   eclat: Sparkles,
   valide: CircleCheck,
   question: CircleHelp,
+  puzzle: Puzzle,
   ancre: Anchor,
   // Signalement
   photo: Camera,
