@@ -108,6 +108,7 @@ export function texteNeuf(
     role,
     ajuster: role === "titre" || role === "surtitre",
     puce: "point",
+    couleurPuce: "",
     corps: CORPS.corps,
     graisse: GRAISSES.courant,
     italique: false,

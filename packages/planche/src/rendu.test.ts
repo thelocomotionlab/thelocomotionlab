@@ -7,11 +7,13 @@ import { PALETTE_JOURS, THEMES } from "./charte.ts";
 import {
   cadrageCouverture,
   cheminDuProfil,
+  dessinerElement,
   etendueDeLaPhoto,
   glisserLeCadrage,
   valeurAffichee,
 } from "./elements.ts";
 import { ctxFactice, type CtxFactice } from "./factice.ts";
+import { marqueNeuve } from "./fabrique.ts";
 import { contexteDeRendu, dessinerAvecCadre, dessinerPlanche } from "./rendu.ts";
 import { resoudre, valeurDe } from "./variables.ts";
 import { SCHEMA } from "./types.ts";
@@ -148,6 +150,37 @@ function espionner<T>(
   };
   return () => vue;
 }
+
+describe("les encres par défaut", () => {
+  /** La première encre posée quand `methode` est appelée. */
+  function encreA(elements: Element[], methode: "fillText" | "fill"): unknown {
+    const ctx = ctxFactice();
+    const { p, planche } = projet(elements);
+    const c = contexteDeRendu(p, planche, { police: "Ubuntu" });
+    let vue: unknown = null;
+    const cible = ctx as unknown as Record<string, (...a: unknown[]) => void>;
+    const original = cible[methode]!.bind(ctx);
+    cible[methode] = (...a: unknown[]) => {
+      if (vue === null) vue = ctx.fillStyle;
+      original(...a);
+    };
+    for (const e of elements) dessinerElement(ctx, e, { x: 64, y: 64, l: 600, h: 300 }, c);
+    return vue;
+  }
+
+  it("écrit le nom de la marque à l'encre du pied de page", () => {
+    const nom = marqueNeuve({ x: 0, y: 0, l: 0.5, h: 0.04 }, { variante: "nom" });
+    expect(encreA([nom], "fillText")).toBe(THEMES.sombre.encreFaible);
+    // Une teinte réglée passe devant.
+    expect(encreA([{ ...nom, teinte: "#123456" }], "fillText")).toBe("#123456");
+  });
+
+  it("pose les puces à l'encre du texte, sauf couleur réglée", () => {
+    const liste = texte({ contenu: "- un\n- deux", role: "corps", couleur: "#111111", puce: "point" });
+    expect(encreA([liste], "fill")).toBe("#111111");
+    expect(encreA([{ ...liste, couleurPuce: "#D6246E" }], "fill")).toBe("#D6246E");
+  });
+});
 
 describe("dessinerPlanche", () => {
   it("pose le fond, puis les éléments", () => {

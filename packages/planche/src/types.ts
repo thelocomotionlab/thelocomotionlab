@@ -145,6 +145,8 @@ export type ElementTexte = ElementCommun & {
   ajuster: boolean;
   /** La puce des points de liste — une forme tracée ou une clé d'icône. */
   puce: string;
+  /** Sa couleur. Vide = l'encre du texte. */
+  couleurPuce: string;
   /** En pixels d'une planche de 1080 de large. */
   corps: number;
   /** 300 → 800 : c'est elle qui fait la hiérarchie, pas une seconde fonte. */
@@ -203,7 +205,7 @@ export type ElementIcone = ElementCommun & {
 export type ElementMarque = ElementCommun & {
   type: "marque";
   variante: "logo" | "nom" | "logo-nom" | "cercle";
-  /** Vide = l'ambre du thème : le logo est ambre, pas à l'encre du texte. */
+  /** Vide = l'encre du thème : pleine pour le cercle, faible — celle du pied — pour le nom. */
   teinte: string;
 };
 

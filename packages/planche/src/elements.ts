@@ -127,6 +127,7 @@ export function styleDe(e: ElementTexte, c: ContexteRendu): StyleTexte {
     couleur: encreDuTexte(e, c),
     accent: c.theme.accent,
     douce: c.theme.encreDouce,
+    ...(e.couleurPuce ? { couleurPuce: e.couleurPuce } : {}),
     plaque: e.plaque
       ? {
           rgb: e.plaque.couleur || c.theme.voileTexte,
@@ -517,10 +518,12 @@ function dessinerIcone(ctx: Ctx2D, e: ElementIcone, b: BoitePx, c: ContexteRendu
 /* ----------------------------------------------------------------- marque */
 
 function dessinerMarque(ctx: Ctx2D, e: ElementMarque, b: BoitePx, c: ContexteRendu): void {
-  // LA MARQUE S'ÉCRIT COMME LA NAVBAR DU SITE : à l'encre, en demi-gras, très
-  // espacée. En ambre elle se lisait comme un accent de la planche, alors que
-  // c'est une signature — elle ne doit rien prendre au titre.
+  // LA MARQUE S'ÉCRIT COMME LA NAVBAR DU SITE : en demi-gras, très espacée. Le
+  // NOM prend l'encre faible du pied de page — l'en-tête et le pied encadrent
+  // la planche d'une même voix, et une signature ne prend rien au titre. Le
+  // CERCLE de la clôture, seul sur sa planche, garde l'encre pleine.
   const teinte = e.teinte || c.theme.encre;
+  const encreDuNom = e.teinte || c.theme.encreFaible;
   ctx.save();
 
   if (e.variante === "cercle") {
@@ -557,8 +560,8 @@ function dessinerMarque(ctx: Ctx2D, e: ElementMarque, b: BoitePx, c: ContexteRen
   }
   if (e.variante !== "logo") {
     ctx.font = `${GRAISSE_MARQUE} ${taille}px ${c.police}`;
-    ctx.fillStyle = teinte;
-    dessinerCapitales(ctx, analyserRiche(MARQUE), x, ligneDeBase, taille, LETTRAGE_MARQUE, teinte);
+    ctx.fillStyle = encreDuNom;
+    dessinerCapitales(ctx, analyserRiche(MARQUE), x, ligneDeBase, taille, LETTRAGE_MARQUE, encreDuNom);
   }
   ctx.restore();
 }

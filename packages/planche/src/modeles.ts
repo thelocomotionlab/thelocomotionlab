@@ -229,14 +229,6 @@ export function mobilier(f: Format, o: OptionsMobilier = {}): Element[] {
         { nom: "Pagination", ...PIED } as Partial<ElementTexte>,
       ),
     );
-    out.push(
-      texteNeuf(
-        boite(f, f.width - MARGE - 320, basPied - CORPS.pied, 320, CORPS.pied * 1.4),
-        "glisse :fleche:",
-        "libre",
-        { nom: "Glisse", alignement: "droite", ...PIED } as Partial<ElementTexte>,
-      ),
-    );
   }
   return out;
 }

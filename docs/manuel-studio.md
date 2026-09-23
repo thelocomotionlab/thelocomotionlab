@@ -89,7 +89,8 @@ ses propres réglages, sous **RÉGLAGES** :
 - **Chiffre** — la variable, son libellé, son corps, et une **valeur écrite à la main** qui remplace
   le calcul : la montre a toujours raison sur son propre fichier.
 - **Fiche** — les lignes, chacune tirant sa valeur d'une variable ou d'un texte écrit.
-- **Texte, forme, icône, marque** — alignement, casse, interlettrage, encre, filets, plaque, ombre ;
+- **Texte, forme, icône, marque** — alignement, casse, interlettrage, encre, puce et couleur des
+  puces (par défaut, celle du texte), filets, plaque, ombre ;
   forme et coins ; clé d'icône ; variante de la marque.
 
 Partout, le bouton **Thème** à côté d'un sélecteur de couleur rend le réglage au thème — c'est ce qui

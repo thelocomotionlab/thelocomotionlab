@@ -229,6 +229,11 @@ function ReglagesTexte({ e, poser }: { e: ElementTexte; poser: Poser<ElementText
         options={PUCES_SIMPLES.map((p) => ({ cle: p.cle as string, label: p.label }))}
         onChange={(v) => poser((x) => ({ ...x, puce: v }), "puce")}
       />
+      <Couleur
+        libelle="Couleur des puces"
+        valeur={e.couleurPuce ?? ""}
+        onChange={(v) => poser((x) => ({ ...x, couleurPuce: v }), "puce")}
+      />
 
       <Titre>Filets</Titre>
       <ReglageFilet

@@ -239,6 +239,8 @@ export type StyleTexte = {
   corps?: Record<string, number>;
   /** Et leur interlettrage, en em — c'est lui qui fait des capitales espacées. */
   lettrages?: Record<string, number>;
+  /** L'encre des puces de liste. Absente : celle du texte. */
+  couleurPuce?: string;
   couleurLabel?: string;
   couleurValeur?: string;
   tailleLabel?: number;
@@ -1217,7 +1219,7 @@ function dessinerPuce(
   baseLigne: number,
   base: StyleTexte,
 ): void {
-  const couleur = base.accent;
+  const couleur = base.couleurPuce || base.couleur;
   const t = base.taille;
   const cy = baseLigne - t * CENTRE_CAPITALES; // centre optique des capitales
   const trait = Math.max(1.5, t * 0.06);
