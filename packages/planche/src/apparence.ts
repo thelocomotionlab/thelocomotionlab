@@ -21,6 +21,7 @@ const APPARENCE: Record<Element["type"], readonly string[]> = {
     "role",
     "ajuster",
     "puce",
+    "couleurPuce",
     "corps",
     "graisse",
     "italique",

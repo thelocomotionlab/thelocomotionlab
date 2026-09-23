@@ -95,6 +95,21 @@ export function sansPlanche(p: Projet, index: number): Projet {
   return avecPlanches(p, [plancheNeuve(p, modele)]);
 }
 
+/**
+ * Déplace une planche de `de` à `vers` — `vers` est son rang une fois posée.
+ * Un rang hors du lot est ramené au bord : glisser au-delà de la dernière
+ * vignette la pose en dernier.
+ */
+export function avecPlancheDeplacee(p: Projet, de: number, vers: number): Projet {
+  if (de < 0 || de >= p.planches.length) return p;
+  const cible = Math.max(0, Math.min(p.planches.length - 1, vers));
+  if (cible === de) return p;
+  const planches = [...p.planches];
+  const [prise] = planches.splice(de, 1);
+  planches.splice(cible, 0, prise!);
+  return avecPlanches(p, planches);
+}
+
 /** Change le modèle d'une planche en gardant ce qui a été écrit. */
 export function avecModele(p: Projet, index: number, modele: CleModele): Projet {
   const planche = p.planches[index];

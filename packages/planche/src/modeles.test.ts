@@ -119,6 +119,16 @@ describe("les modèles", () => {
     }
   });
 
+  it("ne pose plus de « glisse → » au pied : la pagination seule", () => {
+    for (const m of MODELES) {
+      const noms = instancier(m.cle, { ...CTX, format: m.formats?.[0] ?? "carrousel" }).elements.map(
+        (e) => e.nom,
+      );
+      expect(noms, m.cle).not.toContain("Glisse");
+    }
+    expect(instancier("texte", CTX).elements.map((e) => e.nom)).toContain("Pagination");
+  });
+
   it("pose le mobilier de la charte, sauf là où il n'a pas lieu d'être", () => {
     // Une clôture ne se numérote pas et n'invite pas à glisser.
     const noms = (cle: CleModele) => instancier(cle, CTX).elements.map((e) => e.nom);
