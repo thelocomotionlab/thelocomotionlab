@@ -12,6 +12,7 @@ from datetime import date, datetime, timedelta
 import numpy as np
 
 from ..calibration import REGIME_BLEND, REGIME_REGRESSION, REGIME_VC_E, stops_statistics
+from ..cles import lien_du_plan
 from ..course.spec import placeholder_aid_names
 from ..feasibility import AMBITIEUX, CONFORTABLE, HORS_DOMAINE, HORS_PORTEE, INDECIDABLE, NOMINAL
 from ..sufficiency import GREEN, ORANGE, RED
@@ -1208,7 +1209,10 @@ def _v3_context(ctx: dict, *, course, twin, calibration, prediction, plan, race,
     return {
         "athlete_plain": athlete,
         "annex_ref": report_ref,
-        "annex_url": f"{cfg.report.annex_base_url.rstrip('/')}/{report_ref}",
+        # La page du plan, clé PRIVÉE comprise : le QR ouvre le formulaire qui amende le
+        # plan, et c'est cette clé-là qui l'ouvre. Le rapport est le document de
+        # l'athlète ; ce qu'il donne à son assistance, c'est la feuille, qui n'a pas de QR.
+        "annex_url": lien_du_plan(cfg.report.annex_base_url, report_ref),
         # Le mot de confiance et le critère qui le retient ne s'impriment plus : ils restent
         # au registre et à l'annexe, où ils servent d'étiquette de dossier — pas de note
         # donnée à l'athlète. La garde de suffisance, elle, décide toujours si on vend.

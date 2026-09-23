@@ -146,7 +146,9 @@ def to_payload(*, course_gpx: bytes, race, twin, calibration, prediction, suffic
         "athlete": athlete,
         "report_ref": report_ref,
         "report_date": _encode(report_date),
-        "course_gpx_gz": base64.b64encode(gzip.compress(course_gpx, 9)).decode("ascii"),
+        # mtime=0 : l'en-tête gzip porte sinon l'heure de compression, et deux dossiers du
+        # même calcul ne seraient plus identiques à l'octet — le golden les compare.
+        "course_gpx_gz": base64.b64encode(gzip.compress(course_gpx, 9, mtime=0)).decode("ascii"),
         "race": _encode(race),
         "twin": _encode(twin),
         "calibration": _encode(calibration),

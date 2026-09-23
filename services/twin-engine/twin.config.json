@@ -201,7 +201,7 @@
   "report": {
     "_comment": "Livraison du rapport : version, adresse de l'annexe en ligne (une page par référence, non indexée), réglages de présentation des pages, preuve empirique de la dérive du plan.",
     "version": "v2.0",
-    "annex_base_url": "https://www.thelocomotionlab.com/services/twin/annexe",
+    "annex_base_url": "https://www.thelocomotionlab.com/services/twin/plan",
     "intensity_axis_margin": 0.2,
     "fade_evidence": "sur 30 courses, les coureurs sont en avance sur un plan plat à mi-course 27 fois sur 30",
     "consigne_steep_pct": 8.0,
