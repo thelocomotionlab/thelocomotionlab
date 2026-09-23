@@ -35,7 +35,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import (
-    BackgroundTasks, Depends, FastAPI, File, Form, HTTPException, Request, UploadFile,
+    BackgroundTasks, FastAPI, File, Form, HTTPException, Request, UploadFile,
 )
 from fastapi.responses import FileResponse, Response
 
@@ -51,8 +51,10 @@ from ..tableau_de_bord.depot import Depot
 from ..tableau_de_bord.magasin import Magasin
 from ..tableau_de_bord.objets import JOB_GENERATION
 from ..tableau_de_bord.reference import reference_de_rapport
+from ..tableau_de_bord.courrier import Courrier
 from ..tableau_de_bord.routes import routeur_admin, routeur_interne
-from ..tableau_de_bord.serrures import Serrures, Tentatives, adresse_du_visiteur
+from ..tableau_de_bord.routes_athlete import routeur_athlete
+from ..tableau_de_bord.serrures import Serrures, Tentatives
 
 
 def _safe_name(filename: str | None, default: str) -> str:
@@ -80,12 +82,12 @@ RENDU_LIVRABLES = ("rapport.pdf", "feuille.pdf", "fiches.pdf", "plan.ics", "plan
 
 _REF_OK = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}")
 
-# Les trois familles de routes que Caddy laisse entrer (infra/caddy/conf.d/api.caddy),
-# vues d'ici — c'est-à-dire APRÈS le retrait du préfixe /twin. Tout appel les concernant
-# vient d'un navigateur, sur un autre domaine que le site : il est croisé.
+# Les familles de routes qu'un navigateur appelle (infra/caddy/conf.d/api.caddy), vues
+# d'ici — c'est-à-dire APRÈS le retrait du préfixe /twin. Tout appel les concernant vient
+# d'un autre domaine que celui de l'API : il est croisé.
 PREFIXE_ADMIN = "/tableau-de-bord"
 PREFIXE_PLANS = "/plans"
-_CROISEES = (PREFIXE_ADMIN, PREFIXE_PLANS, "/jobs", "/rendu")
+_CROISEES = (PREFIXE_ADMIN, PREFIXE_PLANS, "/rendu")
 
 
 class _Debit:
@@ -142,6 +144,11 @@ def create_app(cfg: Config | None = None) -> FastAPI:
         shutil.rmtree(jobs_root / job_id / "upload", ignore_errors=True)
     for stray in cfg.data_dir.glob("preview-*"):
         shutil.rmtree(stray, ignore_errors=True)
+    # Les versions se construisent à part, puis prennent leur place d'un geste : ce qui
+    # traîne encore à côté d'un plan est un rendu qu'un crash a coupé en route.
+    for stray in (magasin.plans.racine).glob("*/.[ria]*-*"):
+        if stray.is_dir() and stray.name.split("-", 1)[0] in (".rendu", ".amende", ".import"):
+            shutil.rmtree(stray, ignore_errors=True)
 
     app = FastAPI(
         title="Locomotion Twin Engine",
@@ -160,7 +167,10 @@ def create_app(cfg: Config | None = None) -> FastAPI:
     # Le client du service de dépôt, posé sur l'app pour qu'un test puisse le remplacer
     # par un faux — sinon il faudrait un twin-depot vivant pour tester une ingestion.
     app.state.depot = Depot()
+    # Le relais SMTP, lui aussi remplaçable par un faux : un test n'envoie pas d'email.
+    app.state.courrier = Courrier.depuis_environnement()
     app.include_router(routeur_admin())
+    app.include_router(routeur_athlete())
     app.include_router(routeur_interne())
     # les dossiers rejouables déposés sous leur référence (cf. scripts/course.sh publier)
     dossiers_root = cfg.data_dir / "dossiers"

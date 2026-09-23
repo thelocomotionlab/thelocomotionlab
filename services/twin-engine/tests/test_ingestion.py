@@ -372,30 +372,55 @@ def dossier_du_cli() -> bytes:
     return json.dumps(charge, ensure_ascii=False).encode("utf-8")
 
 
-def _importer(client, dossier_octets, documents=(), **donnees):
+def _pdf(pages: int, largeur: float = 595) -> bytes:
+    """Un vrai PDF, minuscule : l'import assemble le PDF unique, il doit pouvoir le lire."""
+    from pypdf import PdfWriter
+
+    ecrivain, tampon = PdfWriter(), io.BytesIO()
+    for _ in range(pages):
+        ecrivain.add_blank_page(width=largeur, height=842)
+    ecrivain.write(tampon)
+    return tampon.getvalue()
+
+
+RAPPORT = ("rapport.pdf", _pdf(5))
+
+
+def _importer(client, dossier_octets, documents=(RAPPORT,), **donnees):
     fichiers = [("dossier", ("dossier.json", dossier_octets, "application/json"))]
-    fichiers += [("documents", (nom, contenu, "application/pdf")) for nom, contenu in documents]
+    fichiers += [("documents", (nom, contenu, "application/octet-stream"))
+                 for nom, contenu in documents]
     return client.post("/tableau-de-bord/plans/import", headers=ADMIN,
                        files=fichiers, data=donnees)
 
 
 def test_un_plan_fait_au_cli_entre_comme_sil_y_etait_ne(client, dossier_du_cli):
+    from pypdf import PdfReader
+
     r = _importer(client, dossier_du_cli,
-                  documents=[("rapport.pdf", b"%PDF-1.5\nrapport\n"),
-                             ("feuille.pdf", b"%PDF-1.5\nfeuille\n")])
+                  documents=[RAPPORT, ("feuille.pdf", _pdf(1, 500)),
+                             ("fiches.pdf", _pdf(2, 400)),
+                             ("annexe.json", b'{"ref": "LL-TRIA26-VAL-IMPORT"}')])
     assert r.status_code == 200, r.text
     assert r.json() == {"ref": REF_CLI, "version": 1,
-                        "documents": ["feuille_pdf", "pdf"]}
+                        "documents": ["annexe.json", "feuille.pdf", "fiches.pdf",
+                                      "rapport.pdf"]}
 
     plan = client.app.state.magasin.plans.lire(REF_CLI)
     assert plan["statut"] == O.PLAN_GENERE
-    assert plan["documents"]["pdf"] == "v1/rapport.pdf"
+    assert plan["documents"]["pdf"] == "v1/plan.pdf"
+    assert plan["documents"]["feuille_pdf"] == "v1/feuille.pdf"
     assert plan["prediction"]["central_h"] is not None
     assert plan["prediction"]["niveau"] in {O.NIVEAU_BASE, O.NIVEAU_CALIBRE}
+    assert plan["depart_le"].startswith("2026-09-25T13:00")
 
     v1 = client.app.state.magasin.plans.repertoire(REF_CLI) / "v1"
-    assert (v1 / "dossier.json").exists()
-    assert (v1 / "rapport.pdf").read_bytes().startswith(b"%PDF")
+    assert sorted(p.name for p in v1.iterdir()) == [
+        "annexe.json", "dossier.json", "feuille.pdf", "plan.pdf", "version.json"]
+    # le PDF unique : le rapport, puis la feuille, puis les fiches — comme une génération
+    largeurs = [float(p.mediabox.width) for p in PdfReader(v1 / "plan.pdf").pages]
+    assert largeurs == [595] * 5 + [500] + [400] * 2
+    assert json.loads((v1 / "version.json").read_text())["origine"] == "import"
 
 
 def test_la_reference_du_papier_est_celle_du_plan(client, dossier_du_cli):
@@ -409,6 +434,14 @@ def test_reimporter_fait_une_version_de_plus(client, dossier_du_cli):
     assert _importer(client, dossier_du_cli).json()["version"] == 2
     v2 = client.app.state.magasin.plans.repertoire(REF_CLI) / "v2" / "dossier.json"
     assert v2.exists(), "chaque version garde son dossier"
+
+
+def test_reimporter_apres_une_restauration_necrase_pas_une_version(client, dossier_du_cli):
+    _importer(client, dossier_du_cli)
+    _importer(client, dossier_du_cli)
+    assert client.post(f"/tableau-de-bord/plans/{REF_CLI}/restore/1",
+                       headers=ADMIN).status_code == 200
+    assert _importer(client, dossier_du_cli).json()["version"] == 3
 
 
 def test_limport_se_rattache_a_un_athlete(client, dossier_du_cli):
@@ -426,19 +459,35 @@ def test_un_athlete_inconnu_arrete_limport(client, dossier_du_cli):
     assert client.app.state.magasin.plans.lire(REF_CLI) is None
 
 
+def test_une_course_inconnue_arrete_limport(client, dossier_du_cli):
+    assert _importer(client, dossier_du_cli, course_id="nulle-part").status_code == 404
+
+
 def test_un_dossier_illisible_est_un_422(client):
     assert _importer(client, b"{ pas du json").status_code == 422
     assert _importer(client, json.dumps({"version": 999}).encode()).status_code == 422
 
 
+def test_sans_rapport_pas_dimport(client, dossier_du_cli):
+    r = _importer(client, dossier_du_cli, documents=[("feuille.pdf", _pdf(1))])
+    assert r.status_code == 422
+    assert client.app.state.magasin.plans.lire(REF_CLI) is None
+    assert not list(client.app.state.magasin.plans.racine.glob("*/.import-*"))
+
+
+def test_un_pdf_illisible_est_un_422_pas_un_500(client, dossier_du_cli):
+    r = _importer(client, dossier_du_cli, documents=[("rapport.pdf", b"%PDF-1.5\nrien\n")])
+    assert r.status_code == 422
+    assert "illisible" in r.json()["detail"]
+
+
 def test_un_document_inattendu_nest_pas_deballe(client, dossier_du_cli):
     """Un import ne déballe pas n'importe quoi dans un répertoire du volume."""
     r = _importer(client, dossier_du_cli,
-                  documents=[("../../evade.pdf", b"%PDF"), ("notes.txt", b"bonjour"),
-                             ("rapport.pdf", b"%PDF-1.5\n")])
-    assert r.json()["documents"] == ["pdf"]
+                  documents=[("../../evade.pdf", b"%PDF"), ("notes.txt", b"bonjour"), RAPPORT])
+    assert r.json()["documents"] == ["rapport.pdf"]
     v1 = client.app.state.magasin.plans.repertoire(REF_CLI) / "v1"
-    assert sorted(p.name for p in v1.iterdir()) == ["dossier.json", "rapport.pdf"]
+    assert sorted(p.name for p in v1.iterdir()) == ["dossier.json", "plan.pdf", "version.json"]
 
 
 def test_la_fourchette_et_les_bornes_ne_se_confondent_pas(client, dossier_du_cli):

@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import threading
 from pathlib import Path
 from typing import Any, Iterator
@@ -45,6 +46,18 @@ def lire_json(chemin: Path) -> Any | None:
         return None
 
 
+# Un identifiant compose un chemin sur le volume : ni séparateur, ni « .. », ni fichier
+# caché. Les ids du service (empreintes, uuid, références LL-…) passent tous.
+_ID_SUR = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}")
+
+
+def _sur(oid: str) -> str:
+    oid = str(oid)
+    if not _ID_SUR.fullmatch(oid) or ".." in oid:
+        raise ValueError(f"identifiant inutilisable : {oid!r}")
+    return oid
+
+
 class Collection:
     """Une famille d'objets rangée sous une racine, avec son index en mémoire.
 
@@ -66,9 +79,10 @@ class Collection:
     # -- emplacements ------------------------------------------------------- #
     def repertoire(self, oid: str) -> Path:
         """Le répertoire de l'objet — celui qui porte ses fichiers compagnons."""
-        return self.racine / oid if self.fichier else self.racine
+        return self.racine / _sur(oid) if self.fichier else self.racine
 
     def chemin(self, oid: str) -> Path:
+        oid = _sur(oid)
         return self.racine / oid / self.fichier if self.fichier else self.racine / f"{oid}.json"
 
     # -- lecture ------------------------------------------------------------ #
@@ -127,6 +141,7 @@ class Collection:
         """Efface l'objet ET ses fichiers compagnons. Sans retour possible."""
         import shutil
 
+        oid = _sur(oid)
         with self._verrou:
             present = self._index.pop(oid, None) is not None
         if self.fichier:

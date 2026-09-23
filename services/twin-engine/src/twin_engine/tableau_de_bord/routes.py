@@ -14,10 +14,12 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import os
 import re
 import shutil
 import tempfile
 import unicodedata
+from dataclasses import asdict
 from pathlib import Path
 from uuid import uuid4
 
@@ -35,7 +37,7 @@ from .objets import (
     COURSE_BROUILLON,
     COURSE_PUBLIEE,
     INGESTION_RECU,
-    PLAN_GENERE,
+    PLAN_RESULTAT,
     Archive,
     Athlete,
     Course,
@@ -47,15 +49,19 @@ from .objets import (
     Soleil,
     maintenant,
 )
+from .cycle import statut_apres_changement
+from .generation import (
+    FICHIERS_DUNE_VERSION,
+    GenerationImpossible,
+    documents_dune_version,
+    prochain_numero,
+    ranger_une_version,
+)
 from .plan import resumer_la_prediction
-from .trace import lire_la_trace, parse_depart
-from .traduction import course_vers_racespec, racespec_vers_course
+from .routes_plans import REF_SURE, ajouter_les_routes_de_plan
 from .serrures import Serrures, Tentatives, adresse_du_visiteur
-
-
-# Une référence sert à composer un chemin sur le volume : même filtre que celui de
-# `/rendu` (api/app.py), et pour la même raison.
-_REF_SURE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}")
+from .trace import lire_la_trace
+from .traduction import course_vers_racespec, racespec_vers_course
 
 
 def _slug_de(nom: str, edition: int | None) -> str:
@@ -483,11 +489,11 @@ def routeur_admin() -> APIRouter:
         magasin.courses.supprimer(course_id)
 
     # --- Plans ------------------------------------------------------------- #
-    # Les documents qu'un import accepte : ceux que l'athlète emporte, et eux seuls.
-    # Tout ce qui arrive sous un autre nom est ignoré — un import ne déballe pas une
+    # Les documents qu'un import accepte : ceux que le CLI écrit à côté du dossier, et eux
+    # seuls. Tout ce qui arrive sous un autre nom est ignoré — un import ne déballe pas une
     # archive quelconque dans un répertoire du volume.
-    DOCUMENTS = {"rapport.pdf": "pdf", "feuille.pdf": "feuille_pdf",
-                 "plan.ics": "ics", "plan.gpx": "gpx"}
+    DOCUMENTS = ("rapport.pdf", "feuille.pdf", "fiches.pdf", "plan.ics", "plan.gpx",
+                 "annexe.json")
 
     @routeur.post("/plans/import")
     async def importer_un_plan(
@@ -495,12 +501,15 @@ def routeur_admin() -> APIRouter:
         dossier: UploadFile = File(...),
         documents: list[UploadFile] = File(default=[]),
         athlete_id: str = Form(""),
+        course_id: str = Form(""),
     ) -> dict:
         """Un dossier fait au CLI entre dans le tableau de bord (§5.4).
 
         C'est le chemin « lancer depuis mon ordinateur » : le CLI reste un chemin de
         premier rang, et ce qu'il produit doit pouvoir être publié et envoyé comme le
-        reste. Le moteur ne recalcule rien — le dossier fait foi, c'est son métier."""
+        reste. Le moteur ne recalcule rien — le dossier fait foi, c'est son métier. La
+        version se range comme une version générée ici : le PDF unique, l'annexe que la
+        page lit, et son résumé."""
         magasin: Magasin = request.app.state.magasin
         try:
             d = dossier_mod.from_payload(json.loads(await dossier.read()))
@@ -510,39 +519,66 @@ def routeur_admin() -> APIRouter:
         # La référence du dossier EST celle du plan : elle est déjà imprimée sur le
         # rapport et dans son QR code. En tirer une autre ici casserait le papier.
         ref = d.report_ref
-        if not _REF_SURE.fullmatch(ref):
+        if not REF_SURE.fullmatch(ref):
             raise HTTPException(status_code=422, detail="référence de dossier inutilisable")
         if athlete_id and not magasin.athletes.existe(athlete_id):
             raise HTTPException(status_code=404, detail="athlète inconnu")
+        if course_id and not magasin.courses.existe(course_id):
+            raise HTTPException(status_code=404, detail="course inconnue")
 
         ancien = magasin.plans.lire(ref)
-        version = int((ancien or {}).get("version") or 0) + 1
-        repertoire = magasin.plans.repertoire(ref) / f"v{version}"
-        repertoire.mkdir(parents=True, exist_ok=True)
-        (repertoire / "dossier.json").write_bytes(
-            json.dumps(dossier_mod.to_payload(
-                course_gpx=d.course_gpx, race=d.race, twin=d.twin,
-                calibration=d.calibration, prediction=d.prediction,
-                sufficiency=d.sufficiency, athlete=d.athlete,
-                report_ref=d.report_ref, report_date=d.report_date,
-            ), ensure_ascii=False).encode("utf-8")
-        )
+        numero = prochain_numero(magasin, ref)
+        racine = magasin.plans.repertoire(ref)
+        racine.mkdir(parents=True, exist_ok=True)
+        rendu = Path(tempfile.mkdtemp(dir=racine, prefix=".import-"))
+        try:
+            (rendu / "dossier.json").write_bytes(
+                json.dumps(dossier_mod.to_payload(
+                    course_gpx=d.course_gpx, race=d.race, twin=d.twin,
+                    calibration=d.calibration, prediction=d.prediction,
+                    sufficiency=d.sufficiency, athlete=d.athlete,
+                    report_ref=d.report_ref, report_date=d.report_date,
+                ), ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+            )
+            recus = []
+            for envoye in documents:
+                nom = Path(envoye.filename or "").name
+                if nom in DOCUMENTS:
+                    (rendu / nom).write_bytes(await envoye.read())
+                    recus.append(nom)
+            if "rapport.pdf" not in recus:
+                raise HTTPException(status_code=422,
+                                    detail="il manque rapport.pdf : pas de plan sans rapport")
+            try:
+                ranger_une_version(rendu, rendu)
+            except GenerationImpossible as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+            for reste in rendu.iterdir():
+                if reste.name not in FICHIERS_DUNE_VERSION:
+                    reste.unlink()
 
-        porte = {}
-        for envoye in documents:
-            nom = Path(envoye.filename or "").name
-            if nom not in DOCUMENTS:
-                continue
-            (repertoire / nom).write_bytes(await envoye.read())
-            porte[DOCUMENTS[nom]] = f"v{version}/{nom}"
+            prediction = resumer_la_prediction(d)
+            documents_v = documents_dune_version(rendu, numero)
+            depart = d.race.start_time.isoformat() if d.race.start_time else ""
+            ecrire_json(rendu / "version.json", {
+                "n": numero, "cree_le": maintenant(), "origine": "import",
+                "reglages": None, "amendements": None,
+                "prediction": asdict(prediction), "documents": asdict(documents_v),
+            })
+            os.replace(rendu, racine / f"v{numero}")
+        except BaseException:
+            shutil.rmtree(rendu, ignore_errors=True)
+            raise
 
         plan = Plan.from_dict(ancien) if ancien else Plan(ref=ref)
         plan.athlete_id = athlete_id or plan.athlete_id
-        plan.version = version
-        plan.statut = PLAN_GENERE
-        plan.prediction = resumer_la_prediction(d)
-        for champ, chemin in porte.items():
-            setattr(plan.documents, champ, chemin)
+        plan.course_id = course_id or plan.course_id
+        plan.version = numero
+        plan.prediction = prediction
+        plan.documents = documents_v
+        plan.depart_le = depart
+        if plan.statut != PLAN_RESULTAT:
+            plan.statut = statut_apres_changement(plan.to_dict())
         magasin.plans.ecrire(plan.to_dict())
 
         if plan.athlete_id:
@@ -551,7 +587,7 @@ def routeur_admin() -> APIRouter:
                 magasin.athletes.modifier(
                     plan.athlete_id, plans=[*(athlete.get("plans") or []), ref]
                 )
-        return {"ref": ref, "version": version, "documents": sorted(porte)}
+        return {"ref": ref, "version": numero, "documents": sorted(recus)}
 
     @routeur.delete("/athletes/{athlete_id}", status_code=204)
     def supprimer_un_athlete(athlete_id: str, request: Request) -> None:
@@ -568,6 +604,8 @@ def routeur_admin() -> APIRouter:
             magasin.plans.supprimer(ref)
         magasin.athletes.supprimer(athlete_id)
 
+    # Le Plan, les Demandes et les Jobs : la même serrure, posée par ce routeur.
+    ajouter_les_routes_de_plan(routeur)
     return routeur
 
 
