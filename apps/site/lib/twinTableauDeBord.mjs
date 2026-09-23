@@ -148,10 +148,23 @@ export function tailleLisible(octets) {
   return `${valeur.toFixed(fin).replace(".", ",")} ${unites[rang]}`;
 }
 
-/** Un nombre à la française, ou un tiret quand la donnée manque. */
+const FORMATS = new Map();
+
+function formatA(decimales) {
+  if (!FORMATS.has(decimales)) {
+    FORMATS.set(
+      decimales,
+      new Intl.NumberFormat("fr-FR", { minimumFractionDigits: decimales, maximumFractionDigits: decimales }),
+    );
+  }
+  return FORMATS.get(decimales);
+}
+
+/** Un nombre à la française — virgule décimale, milliers séparés par une espace fine —,
+ * ou un tiret quand la donnée manque. */
 export function nombre(valeur, decimales = 0, unite = "") {
   if (valeur === null || valeur === undefined || Number.isNaN(Number(valeur))) return "—";
-  const texte = Number(valeur).toFixed(decimales).replace(".", ",");
+  const texte = formatA(decimales).format(Number(valeur));
   return unite ? `${texte} ${unite}` : texte;
 }
 
@@ -161,4 +174,105 @@ export function duree(heures) {
   const h = Math.floor(heures);
   const m = Math.round((heures - h) * 60);
   return m === 60 ? `${h + 1} h 00` : `${h} h ${String(m).padStart(2, "0")}`;
+}
+
+/** Le statut d'un plan seul, en un mot et un ton (écran Plan, Registre, fiche). */
+export function statutDuPlan(statut) {
+  return PLAN[statut] ?? { mot: statut || "—", ton: "annonce" };
+}
+
+/**
+ * Une durée saisie par un humain, en heures décimales — ou `null` si elle ne se lit pas.
+ *
+ * Accepte ce qu'on recopie d'un classement : « 34h12 », « 34 h 12 », « 34:12 »,
+ * « 34:12:05 », « 34h », ou un nombre d'heures (« 34,5 »). Une saisie illisible rend
+ * `null` plutôt qu'un zéro : un temps de course inventé fausserait le registre.
+ */
+export function lireUneDuree(texte) {
+  const s = String(texte ?? "").trim().toLowerCase().replace(/\s+/g, "");
+  if (!s) return null;
+  const horloge = /^(\d{1,3})[h:](\d{1,2})?(?::(\d{1,2}))?(?:min|m)?$/.exec(s);
+  if (horloge) {
+    const [, h, m = "0", sec = "0"] = horloge;
+    if (Number(m) >= 60 || Number(sec) >= 60) return null;
+    const heures = Number(h) + Number(m) / 60 + Number(sec) / 3600;
+    return heures > 0 ? heures : null;
+  }
+  const decimal = /^(\d+(?:[.,]\d+)?)$/.exec(s);
+  if (decimal) {
+    const heures = Number(decimal[1].replace(",", "."));
+    return heures > 0 ? heures : null;
+  }
+  return null;
+}
+
+/** Un instant ISO en heure de passage : « sam. 22h37 », dans le fuseau de la course. */
+export function heureDePassage(iso) {
+  const d = iso ? dansSonFuseau(iso) : null;
+  if (d === null) return "";
+  const jour = d.toLocaleDateString("fr-FR", { ...EN_UTC, weekday: "short" });
+  const heure = d.toLocaleTimeString("fr-FR", { ...EN_UTC, hour: "2-digit", minute: "2-digit" });
+  return `${jour} ${heure.replace(":", "h")}`;
+}
+
+/** Un écart en pourcentage, signé : « +2,4 % ». `null` si l'une des deux valeurs manque. */
+export function ecartEnPourcent(calcule, reference) {
+  if (calcule === null || calcule === undefined || !reference) return null;
+  return (100 * (Number(calcule) - Number(reference))) / Number(reference);
+}
+
+/** Un nombre signé à la française : « +2,4 », « −1,0 ». */
+export function signe(valeur, decimales = 1) {
+  if (valeur === null || valeur === undefined || Number.isNaN(Number(valeur))) return "—";
+  const texte = Math.abs(Number(valeur)).toFixed(decimales).replace(".", ",");
+  return `${Number(valeur) < 0 ? "−" : "+"}${texte}`;
+}
+
+/** La valeur de `liste` la plus proche de `valeur` — l'aimant des bornes de phase. */
+export function lePlusProche(valeur, liste) {
+  let meilleur = null;
+  for (const candidat of liste) {
+    if (meilleur === null || Math.abs(candidat - valeur) < Math.abs(meilleur - valeur)) {
+      meilleur = candidat;
+    }
+  }
+  return meilleur;
+}
+
+/**
+ * L'échelle d'un profil altimétrique : les deux fonctions qui placent un kilomètre et une
+ * altitude dans un cadre `largeur × hauteur`, et les deux chemins SVG du profil (le trait
+ * et l'aire sous lui). `profil` est la liste de couples [km, altitude] que le moteur rend.
+ *
+ * L'altitude part du minimum arrondi à la centaine sous lui : un parcours qui ne descend
+ * jamais sous 500 m ne gaspille pas le tiers bas du cadre.
+ */
+export function echelleDuProfil(profil, { largeur = 1000, hauteur = 300, marge = 8 } = {}) {
+  const points = (profil ?? []).filter((p) => Array.isArray(p) && p.length >= 2);
+  const kmMax = points.length ? Math.max(...points.map((p) => p[0])) : 1;
+  const altitudes = points.map((p) => p[1]);
+  const altMin = altitudes.length ? Math.floor(Math.min(...altitudes) / 100) * 100 : 0;
+  const altMax = altitudes.length ? Math.ceil(Math.max(...altitudes) / 100) * 100 : 1;
+  const x = (km) => (Math.max(0, Math.min(km, kmMax)) / (kmMax || 1)) * largeur;
+  const y = (alt) =>
+    marge + (1 - (alt - altMin) / (altMax - altMin || 1)) * (hauteur - 2 * marge);
+  const ligne = points
+    .map((p, i) => `${i ? "L" : "M"}${x(p[0]).toFixed(1)} ${y(p[1]).toFixed(1)}`)
+    .join(" ");
+  const aire = points.length
+    ? `${ligne} L${x(points[points.length - 1][0]).toFixed(1)} ${hauteur} L${x(points[0][0]).toFixed(1)} ${hauteur} Z`
+    : "";
+  /** L'altitude du profil à un kilomètre donné, par interpolation. */
+  const altitudeA = (km) => {
+    if (!points.length) return altMin;
+    for (let i = 1; i < points.length; i += 1) {
+      if (points[i][0] >= km) {
+        const [k0, a0] = points[i - 1];
+        const [k1, a1] = points[i];
+        return k1 === k0 ? a1 : a0 + ((a1 - a0) * (km - k0)) / (k1 - k0);
+      }
+    }
+    return points[points.length - 1][1];
+  };
+  return { x, y, ligne, aire, kmMax, altMin, altMax, altitudeA, largeur, hauteur };
 }

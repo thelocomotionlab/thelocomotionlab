@@ -57,11 +57,14 @@ export function oublierLeJeton() {
   }
 }
 
-/** Ce que l'API a refusé, avec de quoi l'afficher. */
+/** Ce que l'API a refusé, avec de quoi l'afficher — et, quand le refus désigne un
+ *  objet (« ce plan existe déjà », « une génération est déjà en file »), de quoi y aller. */
 export class ErreurAPI extends Error {
-  constructor(statut, message) {
+  constructor(statut, message, detail = {}) {
     super(message);
     this.statut = statut;
+    this.ref = detail.ref ?? null;
+    this.jobId = detail.job_id ?? null;
   }
 }
 
@@ -91,20 +94,60 @@ export async function appeler(chemin, { methode = "GET", corps, fichiers, jeton 
 
   const charge = await reponse.json().catch(() => null);
   if (!reponse.ok) {
-    throw new ErreurAPI(reponse.status, messageDe(reponse.status, charge));
+    const detail = charge?.detail && typeof charge.detail === "object" ? charge.detail : {};
+    throw new ErreurAPI(reponse.status, messageDe(reponse.status, charge), detail);
   }
   return charge;
 }
 
-/** L'état d'un job, que les écrans sondent pendant qu'il tourne. */
+/** L'état d'un job, que les écrans sondent pendant qu'il tourne — sous le jeton, comme
+ *  le reste : un job porte le nom d'un athlète et la référence de son plan. */
 export async function lireLeJob(jobId) {
-  const reponse = await fetch(`${API}/twin/jobs/${encodeURIComponent(jobId)}`);
-  if (!reponse.ok) throw new ErreurAPI(reponse.status, "Ce travail est introuvable.");
-  return reponse.json();
+  return appeler(`/jobs/${encodeURIComponent(jobId)}`);
+}
+
+/**
+ * Un fichier du tableau de bord (PDF, feuille, calendrier, trace), en objet local.
+ *
+ * Un lien simple ne porterait pas le jeton : le fichier se télécharge donc par `fetch`,
+ * puis s'ouvre depuis la mémoire du navigateur. L'adresse rendue ne vaut que dans cet
+ * onglet ; `URL.revokeObjectURL` la libère.
+ */
+export async function lireUnFichier(chemin, { jeton } = {}) {
+  const cle = jeton ?? lireLeJeton();
+  let reponse;
+  try {
+    reponse = await fetch(`${API}/twin/tableau-de-bord${chemin}`, {
+      headers: { Authorization: `Bearer ${cle}` },
+    });
+  } catch {
+    throw new ErreurAPI(0, "L'API ne répond pas. Vérifie ta connexion, puis réessaie.");
+  }
+  if (!reponse.ok) {
+    const charge = await reponse.json().catch(() => null);
+    throw new ErreurAPI(reponse.status, messageDe(reponse.status, charge));
+  }
+  const disposition = reponse.headers.get("content-disposition") || "";
+  const nom = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition)?.[1] || "document";
+  return { url: URL.createObjectURL(await reponse.blob()), nom: decodeURIComponent(nom) };
+}
+
+/** Télécharge un fichier du tableau de bord sous son nom. */
+export async function telecharger(chemin) {
+  const { url, nom } = await lireUnFichier(chemin);
+  const lien = document.createElement("a");
+  lien.href = url;
+  lien.download = nom;
+  document.body.appendChild(lien);
+  lien.click();
+  lien.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 function messageDe(statut, charge) {
-  const detail = typeof charge?.detail === "string" ? charge.detail : "";
+  const brut = charge?.detail;
+  const detail =
+    typeof brut === "string" ? brut : typeof brut?.message === "string" ? brut.message : "";
   if (statut === 401) return "Jeton refusé.";
   if (statut === 404 && !detail) {
     return "Le tableau de bord n'est pas ouvert côté serveur (TWIN_ADMIN_TOKEN manquant).";

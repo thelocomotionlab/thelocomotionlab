@@ -18,9 +18,31 @@ import { Button, Field } from "@locomotionlab/ui";
 
 import { appeler, lireLeJeton, oublierLeJeton, poserLeJeton } from "./api";
 
+const RACINE = "/services/twin/tableau-de-bord";
+
+// Les écrans ne sont pas des routes dynamiques : leurs objets naissent après le build
+// et sont privés. L'identifiant voyage donc dans la query (cf. AthleteDepuisLURL).
+const ECRANS = {
+  file: RACINE,
+  athletes: `${RACINE}/athletes`,
+  courses: `${RACINE}/courses`,
+  plan: `${RACINE}/plan`,
+  registre: `${RACINE}/registre`,
+};
+
+/** L'adresse d'un écran du tableau de bord, avec ses paramètres. */
+export function lienVers(ecran, parametres = {}) {
+  const query = new URLSearchParams(
+    Object.entries(parametres).filter(([, valeur]) => valeur !== undefined && valeur !== ""),
+  ).toString();
+  return query ? `${ECRANS[ecran]}?${query}` : ECRANS[ecran];
+}
+
 const ONGLETS = [
-  { href: "/services/twin/tableau-de-bord", libelle: "File" },
-  { href: "/services/twin/tableau-de-bord/athletes", libelle: "Athlètes" },
+  { href: ECRANS.file, libelle: "File" },
+  { href: ECRANS.athletes, libelle: "Athlètes" },
+  { href: ECRANS.courses, libelle: "Courses" },
+  { href: ECRANS.registre, libelle: "Registre" },
 ];
 
 const ETIQUETTE =
@@ -28,7 +50,7 @@ const ETIQUETTE =
 
 export { ETIQUETTE };
 
-function BarreHaute({ actif, sousTitre, surOubli }) {
+function BarreHaute({ actif, surOubli }) {
   return (
     <header className="flex h-12 flex-none items-center gap-6 border-b border-brand-hairline bg-brand-paper px-6">
       {/* Pas de logo ici : la barre du site, juste au-dessus, le porte déjà. Le répéter
@@ -48,7 +70,6 @@ function BarreHaute({ actif, sousTitre, surOubli }) {
           </Link>
         ))}
       </nav>
-      {sousTitre ? <span className="text-sm text-brand-muted">{sousTitre}</span> : null}
       <button
         type="button"
         onClick={surOubli}
@@ -102,7 +123,7 @@ function Porte({ surJeton, message }) {
  * La coquille. `children` reçoit `(donnees, recharger)` — le rendu n'a lieu qu'une
  * fois les données là, ce qui évite à chaque écran de traiter le cas « pas encore ».
  */
-export default function Coquille({ actif, sousTitre, chemin, children }) {
+export default function Coquille({ actif, chemin, children }) {
   const [jeton, setJeton] = useState(null); // null = on ne sait pas encore
   const [donnees, setDonnees] = useState(null);
   const [erreur, setErreur] = useState("");
@@ -151,7 +172,6 @@ export default function Coquille({ actif, sousTitre, chemin, children }) {
     <div className="flex min-h-screen flex-col bg-brand-bg">
       <BarreHaute
         actif={actif}
-        sousTitre={sousTitre}
         surOubli={() => {
           oublierLeJeton();
           setJeton("");

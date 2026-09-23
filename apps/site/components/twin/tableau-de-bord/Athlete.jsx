@@ -13,7 +13,8 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useState } from "react";
 import { Button } from "@locomotionlab/ui";
 import { BadgeEtat, Tableau } from "@locomotionlab/ui/contenu";
 
@@ -24,11 +25,13 @@ import {
   jourLisible,
   nombre,
   statutDuDossier,
+  statutDuPlan,
   tailleLisible,
 } from "@/lib/twinTableauDeBord.mjs";
 
-import { appeler, lireLeJob } from "./api";
-import Coquille, { ETIQUETTE } from "./Coquille";
+import { appeler } from "./api";
+import Coquille, { ETIQUETTE, lienVers } from "./Coquille";
+import useJob from "./useJob";
 
 const INGESTION_DIT = {
   recu: "Archive reçue, pas encore lue.",
@@ -136,50 +139,28 @@ function Plans({ plans }) {
   }
   return (
     <Tableau
-      colonnes={["Référence", "Niveau", "Statut", "Version"]}
+      colonnes={["Référence", "Niveau", "Statut", "Version", "Arrivée prévue"]}
       cles={plans.map((plan) => plan.ref)}
       lignes={plans.map((plan) => {
-        const { mot, ton } = statutDuDossier({ ingestion: "ingere", plan_statut: plan.statut });
+        const { mot, ton } = statutDuPlan(plan.statut);
         return [
-          plan.ref,
+          <Link
+            key="ref"
+            href={lienVers("plan", { ref: plan.ref })}
+            className="font-semibold text-brand-text underline decoration-brand-hairline underline-offset-4 hover:decoration-brand-deep"
+          >
+            {plan.ref}
+          </Link>,
           NIVEAUX[plan.prediction?.niveau] ?? "",
           <BadgeEtat key="s" ton={ton}>
             {mot}
           </BadgeEtat>,
-          `v${plan.version}`,
+          plan.version ? `v${plan.version}` : "—",
+          plan.prediction?.central_h ? duree(plan.prediction.central_h) : "",
         ];
       })}
     />
   );
-}
-
-/** Suit un job jusqu'à ce qu'il retombe, puis recharge la fiche. */
-function useJob(jobId, quandFini) {
-  const [job, setJob] = useState(null);
-
-  useEffect(() => {
-    if (!jobId) return undefined;
-    let vivant = true;
-    const minuteur = setInterval(async () => {
-      try {
-        const vu = await lireLeJob(jobId);
-        if (!vivant) return;
-        setJob(vu);
-        if (vu.statut === "fini" || vu.statut === "echec") {
-          clearInterval(minuteur);
-          quandFini(vu);
-        }
-      } catch {
-        clearInterval(minuteur);
-      }
-    }, 2000);
-    return () => {
-      vivant = false;
-      clearInterval(minuteur);
-    };
-  }, [jobId, quandFini]);
-
-  return job;
 }
 
 function Actions({ athlete, recharger }) {
@@ -201,9 +182,28 @@ function Actions({ athlete, recharger }) {
     }
   };
 
+  const ingere = athlete.ingestion.statut === "ingere";
+
   return (
     <aside className="flex flex-col gap-5 border-l border-brand-hairline bg-brand-paper px-6 py-7">
       <p className={ETIQUETTE}>Actions</p>
+
+      <div className="flex flex-col gap-2">
+        {ingere ? (
+          <Button as={Link} href={lienVers("plan", { athlete: athlete.id })} size="sm">
+            Nouveau plan
+          </Button>
+        ) : (
+          <Button size="sm" disabled>
+            Nouveau plan
+          </Button>
+        )}
+        <p className="text-xs leading-relaxed text-brand-muted">
+          {ingere
+            ? "Une course de la bibliothèque, des réglages, et la version 1 se génère."
+            : "Un plan se compose une fois l'archive ingérée."}
+        </p>
+      </div>
 
       <div className="flex flex-col gap-2">
         <Button
@@ -273,25 +273,66 @@ function Actions({ athlete, recharger }) {
   );
 }
 
+/** Sans athlète choisi : tous ceux du laboratoire, par ordre alphabétique. */
+function ListeDesAthletes({ dossiers }) {
+  const tries = [...dossiers].sort((a, b) =>
+    (a.prenom || "").localeCompare(b.prenom || "", "fr"),
+  );
+  if (!tries.length) {
+    return (
+      <p className="text-sm text-brand-muted">
+        Aucun athlète. Un athlète naît de son dépôt d&rsquo;archive.
+      </p>
+    );
+  }
+  return (
+    <section className="rounded-lg border border-brand-hairline bg-brand-paper px-5 py-2">
+      <Tableau
+        colonnes={["Athlète", "Niveau", "Statut", "Course visée"]}
+        cles={tries.map((d) => d.athlete_id)}
+        lignes={tries.map((d) => {
+          const { mot, ton } = statutDuDossier(d);
+          return [
+            <Link
+              key="nom"
+              href={lienVers("athletes", { id: d.athlete_id })}
+              className="font-semibold text-brand-text underline decoration-brand-hairline underline-offset-4 hover:decoration-brand-deep"
+            >
+              {d.prenom || "—"}
+            </Link>,
+            NIVEAUX[d.niveau] ?? "",
+            <BadgeEtat key="s" ton={ton}>
+              {mot}
+            </BadgeEtat>,
+            d.course || "",
+          ];
+        })}
+      />
+    </section>
+  );
+}
+
 export default function Athlete({ athleteId }) {
   if (!athleteId) {
     return (
       <Coquille actif="Athlètes" chemin="/file">
-        {() => (
-          <p className="text-sm text-brand-muted">
-            Choisis un athlète dans la File.
-          </p>
+        {(vue) => (
+          <>
+            <div>
+              <h1 className="font-heading text-[22px] font-bold text-brand-text">Athlètes</h1>
+              <p className="mt-1 text-sm text-brand-muted">
+                Un athlète est durable : sa deuxième course ne redemande rien.
+              </p>
+            </div>
+            <ListeDesAthletes dossiers={vue.dossiers} />
+          </>
         )}
       </Coquille>
     );
   }
 
   return (
-    <Coquille
-      actif="Athlètes"
-      chemin={`/athletes/${encodeURIComponent(athleteId)}`}
-      sousTitre="Athlètes ›"
-    >
+    <Coquille actif="Athlètes" chemin={`/athletes/${encodeURIComponent(athleteId)}`}>
       {(athlete, recharger) => (
         <div className="-mx-8 -my-7 grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[300px_1fr_296px]">
           <aside className="flex flex-col gap-6 border-r border-brand-hairline bg-brand-paper px-6 py-7">

@@ -12,10 +12,17 @@ import {
   VERBES,
   departLisible,
   duree,
+  echelleDuProfil,
+  ecartEnPourcent,
+  heureDePassage,
   jourLisible,
+  lePlusProche,
+  lireUneDuree,
   nombre,
   pasFranchis,
+  signe,
   statutDuDossier,
+  statutDuPlan,
   tailleLisible,
 } from "./twinTableauDeBord.mjs";
 
@@ -120,6 +127,10 @@ describe("les chiffres", () => {
 
   it("écrivent à la française", () => {
     expect(nombre(9.72, 1, "km/h")).toBe("9,7 km/h");
+    // les milliers se séparent d'une espace fine insécable : « 9111 m » se lit mal
+    expect(nombre(9111, 0, "m")).toBe("9\u202f111 m");
+    expect(nombre(10698.4, 1)).toBe("10\u202f698,4");
+    expect(nombre(169.7, 1)).toBe("169,7");
     expect(duree(21.25)).toBe("21 h 15");
     expect(duree(9.999)).toBe("10 h 00");
   });
@@ -130,5 +141,83 @@ describe("les chiffres", () => {
     expect(tailleLisible(1024)).toBe("1 Ko");
     expect(tailleLisible(1_234_567)).toBe("1,2 Mo");
     expect(tailleLisible(12 * 1024 ** 3)).toBe("12 Go");
+  });
+});
+
+
+describe("un temps saisi à la main", () => {
+  it("se lit comme on le recopie d'un classement", () => {
+    expect(lireUneDuree("34h12")).toBeCloseTo(34.2, 6);
+    expect(lireUneDuree("34 h 12")).toBeCloseTo(34.2, 6);
+    expect(lireUneDuree("34:12")).toBeCloseTo(34.2, 6);
+    expect(lireUneDuree("31:38:12")).toBeCloseTo(31 + 38 / 60 + 12 / 3600, 6);
+    expect(lireUneDuree("34h")).toBe(34);
+    expect(lireUneDuree("34,5")).toBe(34.5);
+  });
+
+  it("ne devine rien de ce qui ne se lit pas", () => {
+    // un temps inventé fausserait le registre : mieux vaut ne rien lire
+    for (const illisible of ["", "  ", "trente", "34h75", "0", "0:00", "12:30:99", null]) {
+      expect(lireUneDuree(illisible), String(illisible)).toBe(null);
+    }
+  });
+});
+
+describe("une heure de passage", () => {
+  it("se lit dans le fuseau de la course, jour compris", () => {
+    expect(heureDePassage("2026-09-26T20:28:12+02:00")).toBe("sam. 20h28");
+    expect(heureDePassage("")).toBe("");
+  });
+});
+
+describe("un écart", () => {
+  it("se dit signé, à la française", () => {
+    expect(ecartEnPourcent(9111, 8900)).toBeCloseTo(2.37, 2);
+    expect(signe(ecartEnPourcent(9111, 8900))).toBe("+2,4");
+    expect(signe(-1)).toBe("−1,0");
+    expect(ecartEnPourcent(9111, null)).toBe(null);
+    expect(signe(null)).toBe("—");
+  });
+});
+
+describe("l'aimant des phases", () => {
+  it("rend le ravitaillement le plus proche", () => {
+    expect(lePlusProche(36, [0, 8.1, 37.6, 50.1])).toBe(37.6);
+    expect(lePlusProche(3, [])).toBe(null);
+  });
+});
+
+describe("le profil altimétrique", () => {
+  const profil = [[0, 1593], [8.1, 1152], [16.5, 2436], [169.7, 6]];
+
+  it("occupe tout le cadre, du premier au dernier kilomètre", () => {
+    const e = echelleDuProfil(profil, { largeur: 1000, hauteur: 300, marge: 0 });
+    expect(e.x(0)).toBe(0);
+    expect(e.x(169.7)).toBe(1000);
+    expect(e.altMin).toBe(0);
+    expect(e.altMax).toBe(2500);
+    expect(e.y(2500)).toBe(0);
+    expect(e.y(0)).toBe(300);
+    expect(e.ligne.startsWith("M0.0 ")).toBe(true);
+    expect(e.aire.endsWith("Z")).toBe(true);
+  });
+
+  it("interpole l'altitude entre deux points", () => {
+    const e = echelleDuProfil(profil);
+    expect(e.altitudeA(4.05)).toBeCloseTo((1593 + 1152) / 2, 6);
+    expect(e.altitudeA(500)).toBe(6);
+  });
+
+  it("ne tombe pas sur un profil vide", () => {
+    const e = echelleDuProfil([]);
+    expect(e.ligne).toBe("");
+    expect(e.aire).toBe("");
+  });
+});
+
+describe("le statut d'un plan", () => {
+  it("a toujours un mot et un ton", () => {
+    expect(statutDuPlan("fige")).toEqual({ mot: "figé", ton: "derriere" });
+    expect(statutDuPlan("inconnu").ton).toBe("annonce");
   });
 });

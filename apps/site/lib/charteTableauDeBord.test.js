@@ -20,14 +20,21 @@ import { describe, expect, it } from "vitest";
 
 const RACINE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
+// Le tableau de bord, la page de plan des athlètes et ce qu'ils partagent (le profil
+// altimétrique, le suivi des jobs).
 const SURVEILLES = [
   "components/twin/tableau-de-bord",
   "app/services/twin/tableau-de-bord",
+  "components/twin/plan",
+  "app/services/twin/plan",
+  "components/twin/ProfilAltimetrique.jsx",
+  "components/twin/useJob.js",
 ];
 
 function fichiersDe(dossier) {
   const complet = path.join(RACINE, dossier);
   if (!fs.existsSync(complet)) return [];
+  if (fs.statSync(complet).isFile()) return [complet];
   return fs
     .readdirSync(complet, { withFileTypes: true, recursive: true })
     .filter((e) => e.isFile() && /\.(jsx?|tsx?)$/.test(e.name))
@@ -70,6 +77,9 @@ describe("la charte du tableau de bord", () => {
     expect(FICHIERS.length).toBeGreaterThan(0);
     expect(FICHIERS.some((f) => f.endsWith("File.jsx"))).toBe(true);
     expect(FICHIERS.some((f) => f.endsWith("Athlete.jsx"))).toBe(true);
+    expect(FICHIERS.some((f) => f.endsWith("EtapeRavitaillements.jsx"))).toBe(true);
+    expect(FICHIERS.some((f) => f.endsWith("PageDuPlan.jsx"))).toBe(true);
+    expect(FICHIERS.some((f) => f.endsWith("ProfilAltimetrique.jsx"))).toBe(true);
   });
 
   it.each(FICHIERS)("%s ne porte aucune valeur de charte en dur", (chemin) => {
@@ -82,14 +92,25 @@ describe("la charte du tableau de bord", () => {
     }
   });
 
-  it("les actions passent par Button et les champs par Field", () => {
-    const interactifs = FICHIERS.filter((f) => /components\/twin/.test(f)).map(codeDe);
-    const avecBouton = interactifs.filter((code) => /<button\b/.test(code));
-    // Une exception, et une seule : le bandeau du haut, dont le bouton « privé » est
-    // du texte cliquable et non une action — lui donner l'allure d'un CTA mentirait
-    // sur ce qu'il fait.
-    expect(avecBouton).toHaveLength(1);
-    expect(interactifs.some((code) => /<Field\b/.test(code))).toBe(true);
+  it("les actions et les champs passent par les composants de la charte", () => {
+    // Button et Field pour les pages ; BoutonTexte, ChampCompact, Case, Choix, Segments
+    // et Etapes pour les outils (packages/ui, components/formulaire). Deux exceptions,
+    // nommées : le bouton « privé » du bandeau, du texte cliquable qui oublie le jeton,
+    // et les marqueurs du profil, des points posés sur une courbe qu'on saisit et
+    // qu'on glisse. Un fichier déposé passe par l'input du navigateur, qu'aucun
+    // composant ne remplace.
+    const EXCEPTIONS = ["Coquille.jsx", "ProfilAltimetrique.jsx"];
+    const interactifs = FICHIERS.filter((f) => /components\/twin/.test(f));
+    const avecBouton = interactifs.filter((f) => /<button\b/.test(codeDe(f)));
+    expect(avecBouton.map((f) => path.basename(f)).sort()).toEqual(EXCEPTIONS);
+    for (const fichier of interactifs) {
+      const code = codeDe(fichier);
+      const brut = [...code.matchAll(/<(input|select|textarea)\b[^>]*/g)]
+        .map((m) => m[0])
+        .filter((balise) => !/type="file"/.test(balise));
+      expect(brut, `${path.relative(RACINE, fichier)} porte un champ brut`).toEqual([]);
+    }
+    expect(interactifs.some((f) => /<Field\b/.test(codeDe(f)))).toBe(true);
   });
 
   it("aucun écran n'annonce de durée pour une ingestion", () => {
