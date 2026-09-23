@@ -48,6 +48,7 @@ from ..fiche import empreinte as fiche_empreinte
 from ..jobs import JobStore, run_job
 from ..pipeline import run_preview
 from ..tableau_de_bord.depot import Depot
+from ..tableau_de_bord.ingestion import recalculer_les_niveaux
 from ..tableau_de_bord.magasin import Magasin
 from ..tableau_de_bord.objets import JOB_GENERATION
 from ..tableau_de_bord.reference import reference_de_rapport
@@ -149,6 +150,12 @@ def create_app(cfg: Config | None = None) -> FastAPI:
     for stray in (magasin.plans.racine).glob("*/.[ria]*-*"):
         if stray.is_dir() and stray.name.split("-", 1)[0] in (".rendu", ".amende", ".import"):
             shutil.rmtree(stray, ignore_errors=True)
+    # Le niveau d'un athlète se déduit de son jumeau : une règle qui change le met à jour
+    # ici, sans ré-ingérer. Une erreur n'empêche pas le service de démarrer.
+    try:
+        recalculer_les_niveaux(magasin, cfg)
+    except Exception:  # noqa: BLE001
+        pass
 
     app = FastAPI(
         title="Locomotion Twin Engine",

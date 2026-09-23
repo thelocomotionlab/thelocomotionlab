@@ -348,4 +348,134 @@ def assess_sufficiency(
                        reasons=reasons, domain=domain)
 
 
-__all__ = ["GREEN", "ORANGE", "RED", "Criterion", "Sufficiency", "assess_sufficiency"]
+def assess_athlete(twin: Twin, calibration: UltraCalibration, cfg: Config, *,
+                   analysis_date: date | None = None) -> Sufficiency:
+    """Ce que l'archive d'un athlète permet, AVANT qu'un parcours ne s'en mêle.
+
+    ``assess_sufficiency`` juge un plan : sans prédiction, il rend 🔴 d'office, ce qui est
+    juste pour un plan et faux pour une fiche d'athlète. Ici, mêmes seuils et mêmes règles,
+    sur les seuls critères qui ne dépendent d'aucun parcours — l'historique, la fraîcheur,
+    les activités exploitables, les vrais ultras, la qualité FC/altitude — et la validation
+    croisée, qui se calcule sur les propres ultras de l'athlète (``leave_one_out``). Le
+    domaine, les efforts comparables à la cible et la largeur de la fourchette appartiennent
+    au plan : sa génération les juge, et c'est son verdict qui est servi.
+    """
+    from .predict import leave_one_out
+
+    s = cfg.sufficiency
+    summaries = twin.summaries
+    criteria: list[Criterion] = []
+    reasons: list[str] = []
+
+    months = _history_months(summaries)
+    criteria.append(Criterion(
+        "Historique", _higher_is_better(months, s.history_months_green, s.history_months_orange),
+        round(months, 1), f"{months:.1f} mois de données"))
+
+    if analysis_date is not None and s.freshness_days_green > 0:
+        dates = _parsed_dates(summaries)
+        if dates:
+            gap_days = (analysis_date - max(dates)).days
+            criteria.append(Criterion(
+                "Fraîcheur des données",
+                _lower_is_better(gap_days, s.freshness_days_green, s.freshness_days_orange),
+                gap_days, f"dernière activité il y a {gap_days} j"))
+        else:
+            criteria.append(Criterion("Fraîcheur des données", None, None,
+                                      "activités non datées → fraîcheur non évaluable"))
+            reasons.append("Fraîcheur inconnue (activités non datées) : recalcul recommandé "
+                           "à l'approche de la course.")
+
+    usable = len(summaries)
+    criteria.append(Criterion(
+        "Courses exploitables", _higher_is_better(usable, s.usable_green, s.usable_orange),
+        usable, f"{usable} activité{'s' if usable > 1 else ''} de course "
+                f"exploitée{'s' if usable > 1 else ''}"))
+
+    criteria.append(Criterion(
+        "Vrais ultras",
+        _higher_is_better(calibration.n_genuine, s.long_efforts_green, s.long_efforts_orange),
+        calibration.n_genuine,
+        f"{calibration.n_genuine} vrai{'s' if calibration.n_genuine > 1 else ''} "
+        f"ultra{'s' if calibration.n_genuine > 1 else ''}"))
+
+    cv = leave_one_out(calibration, cfg)
+
+    frac_hr = (sum(1 for a in summaries if a.has_hr) / len(summaries)) if summaries else 0.0
+    alt_known = [a for a in summaries if getattr(a, "has_altitude", None) is not None]
+    frac_alt = (sum(1 for a in alt_known if a.has_altitude) / len(alt_known)
+                if alt_known else None)
+    lvl_hr = _higher_is_better(frac_hr, s.quality_green_frac, s.quality_orange_frac)
+    if frac_alt is None:
+        quality_level, quality_value = lvl_hr, round(frac_hr, 2)
+        quality_detail = f"{frac_hr * 100:.0f}% des activités avec FC"
+    else:
+        lvl_alt = _higher_is_better(frac_alt, s.quality_green_frac, s.quality_orange_frac)
+        quality_level = min((lvl_hr, lvl_alt), key=lambda lv: _RANK[lv])
+        quality_value = round(min(frac_hr, frac_alt), 2)
+        quality_detail = (f"{frac_hr * 100:.0f}% des activités avec FC · "
+                          f"{frac_alt * 100:.0f}% avec altitude")
+    quality_blocks = (s.quality_policy == "red"
+                      or (s.quality_policy == "cv_gated" and cv is None))
+    if quality_level == RED and not quality_blocks:
+        quality_level = ORANGE
+        quality_detail += " — signalé, pas bloquant (validation croisée disponible)"
+        reasons.append("Couverture FC/altitude faible sur l'archive : signalée, non bloquante "
+                       "— la validation croisée sur tes propres courses mesure ce que vaut "
+                       "la prédiction.")
+    criteria.append(Criterion("Qualité (FC / altitude / distance)", quality_level,
+                              quality_value, quality_detail))
+
+    if cv is not None:
+        honest = s.gate_policy == "honest" and cv.mae_interpolation_pct is not None
+        gate_mae = cv.mae_interpolation_pct if honest else cv.mae_pct
+        criteria.append(Criterion(
+            "Erreur validation croisée",
+            _lower_is_better(gate_mae, s.cv_error_green_pct, s.cv_error_orange_pct),
+            round(gate_mae, 1),
+            f"erreur {'d’interpolation' if honest else 'moyenne hors-échantillon'} "
+            f"{gate_mae:.1f}% sur tes vrais ultras"))
+    else:
+        criteria.append(Criterion("Erreur validation croisée", None, None,
+                                  "non calculable (moins de 3 vrais ultras)"))
+        reasons.append("Validation croisée indisponible : moins de trois vrais ultras pour "
+                       "vérifier le moteur sur tes propres courses.")
+
+    if calibration.regime == REGIME_INSUFFICIENT:
+        verdict = RED
+        reasons.append("Pas assez de courses longues pour caler le moteur sur toi : ni "
+                       "régression ultra ni enveloppe.")
+    else:
+        evaluated = [c.level for c in criteria if c.level is not None]
+        verdict = min(evaluated, key=lambda lv: _RANK[lv]) if evaluated else RED
+        if cv is None and s.cv_missing_policy == "cap_orange" and verdict == GREEN:
+            verdict = ORANGE
+            reasons.append("Plafonné à 🟠 : sans validation croisée, la fiabilité ne peut pas "
+                           "être établie sur tes courses.")
+        if verdict == GREEN and s.green_policy == "zone_action":
+            # Le domaine se lit sur un parcours : il n'est pas encore un manque.
+            gaps = [g for g in _green_gaps(None, calibration, criteria, s)
+                    if "domaine" not in g]
+            if gaps:
+                verdict = ORANGE
+                reasons.append("Plafonné à 🟠, hors de la zone d'action où la confiance est "
+                               "mesurée : " + " ; ".join(gaps) + ".")
+
+    # La fiche ne montre que les raisons : ce qui fait baisser le niveau s'y lit en clair.
+    for c in criteria:
+        if c.level in (RED, ORANGE) and verdict != GREEN:
+            reasons.append(f"{c.name} {c.level} : {c.detail}.")
+
+    if verdict == GREEN:
+        reasons.append("Archive suffisante pour un plan calibré ; le parcours le confirmera.")
+    elif verdict == ORANGE:
+        reasons.append("Archive limite : plan calibré, avec une confiance réduite qu'on dit.")
+    else:
+        reasons.append("Archive insuffisante pour calibrer : plan de base.")
+
+    return Sufficiency(verdict=verdict, sellable=(verdict != RED), criteria=criteria,
+                       reasons=reasons, domain=None)
+
+
+__all__ = ["GREEN", "ORANGE", "RED", "Criterion", "Sufficiency", "assess_athlete",
+           "assess_sufficiency"]

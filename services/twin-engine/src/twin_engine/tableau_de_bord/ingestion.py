@@ -3,14 +3,15 @@
 Le jumeau, la calibration et le niveau ne dépendent d'**aucune course** : ce sont les
 propriétés de l'athlète, et c'est bien pour ça que le récapitulatif les range sur
 l'Athlète (§3.1) et pas sur le Plan. On appelle donc les briques du moteur directement
-— ``build_twin``, ``build_calibration``, ``assess_sufficiency`` — plutôt que
+— ``build_twin``, ``build_calibration``, ``assess_athlete`` — plutôt que
 ``run_preview``, qui exige une trace de course qu'on n'a pas encore.
 
 Conséquence sur le niveau : il est posé ici **sans prédiction**, donc sans le critère
 « domaine de calibration », qui compare le parcours au domaine du moteur. Ce critère-là
 appartient au plan, pas à l'athlète — un même athlète peut être calibré pour un 100 miles
 et hors domaine pour un trail de six heures. Le niveau de la fiche dit une seule chose :
-*cette archive porte-t-elle de quoi calibrer ?*
+*cette archive porte-t-elle de quoi calibrer ?* — ``assess_sufficiency`` jugerait un plan,
+et sans prédiction il rendrait 🔴 d'office.
 
 L'archive vit dans un répertoire temporaire du volume et disparaît en ``finally``. La
 promesse « archives supprimées immédiatement après analyse » doit tenir aussi quand
@@ -27,10 +28,10 @@ from pathlib import Path
 from ..calibration import build_calibration
 from ..config import Config
 from ..ingest import iter_activities
-from ..sufficiency import assess_sufficiency
+from ..sufficiency import assess_athlete
 from ..twin.model import build_twin
 from .depot import Depot
-from .jumeau import ecrire_le_jumeau
+from .jumeau import ecrire_le_jumeau, lire_la_calibration, lire_le_jumeau
 from .magasin import Magasin
 from .objets import (
     INGESTION_ILLISIBLE,
@@ -103,8 +104,8 @@ def analyser_larchive(archive: Path, *, cfg: Config, avancer=None,
     if avancer:
         avancer("calcul du jumeau")
     calibration = build_calibration(twin, cfg)
-    suffisance = assess_sufficiency(
-        twin, calibration, None, cfg, analysis_date=analysis_date or date.today()
+    suffisance = assess_athlete(
+        twin, calibration, cfg, analysis_date=analysis_date or date.today()
     )
     return twin, calibration, suffisance, len(ecartees)
 
@@ -169,5 +170,30 @@ def ingerer_un_athlete(
         shutil.rmtree(temporaire, ignore_errors=True)
 
 
+def recalculer_les_niveaux(magasin: Magasin, cfg: Config,
+                           analysis_date: date | None = None) -> list[str]:
+    """Le niveau se déduit du jumeau gardé : il se recalcule avec les règles du moteur en
+    place, sans ré-ingérer une archive qui n'est plus là. Rend les athlètes dont le niveau
+    a changé. Un jumeau illisible garde son niveau : c'est l'ingestion qui le dira."""
+    changes = []
+    for brut in magasin.athletes.lister():
+        if (brut.get("ingestion") or {}).get("statut") != INGESTION_INGERE:
+            continue
+        repertoire = magasin.athletes.repertoire(brut["id"])
+        try:
+            suffisance = assess_athlete(
+                lire_le_jumeau(repertoire), lire_la_calibration(repertoire), cfg,
+                analysis_date=analysis_date or date.today(),
+            )
+        except Exception:
+            continue
+        niveau = {"nom": niveau_du_verdict(suffisance.verdict),
+                  "raisons": list(suffisance.reasons)}
+        if niveau != brut.get("niveau"):
+            magasin.athletes.modifier(brut["id"], niveau=niveau)
+            changes.append(brut["id"])
+    return changes
+
+
 __all__ = ["ArchiveIllisible", "analyser_larchive", "ingerer_un_athlete",
-           "resumer_le_jumeau"]
+           "recalculer_les_niveaux", "resumer_le_jumeau"]

@@ -325,6 +325,48 @@ def test_la_file_montre_le_dossier_et_son_verbe(client):
 # --------------------------------------------------------------------------- #
 # Le niveau ne dépend d'aucune course
 # --------------------------------------------------------------------------- #
+def test_le_niveau_dun_athlete_ne_se_juge_pas_comme_un_plan_sans_prediction():
+    """Sans course, le verdict d'un PLAN est 🔴 d'office — c'était le niveau de chaque fiche,
+    douze ultras ou pas. Celui de l'athlète se juge sur son archive seule."""
+    sys.path.insert(0, str(Path(__file__).parent))
+    from test_report_v3 import CFG, scenario
+
+    from twin_engine.sufficiency import assess_athlete, assess_sufficiency
+
+    _, twin, cal, *_ = scenario()
+    assert assess_sufficiency(twin, cal, None, CFG).verdict == "🔴"
+    athlete = assess_athlete(twin, cal, CFG)
+    assert athlete.verdict in {"🟢", "🟠"}
+    assert O.niveau_du_verdict(athlete.verdict) == O.NIVEAU_CALIBRE
+    assert {c.name for c in athlete.criteria} >= {"Vrais ultras", "Erreur validation croisée"}
+    assert not any(c.name == "Domaine de calibration" for c in athlete.criteria)
+
+
+def test_le_niveau_se_recalcule_depuis_le_jumeau_garde(tmp_path):
+    """Une règle qui change met la fiche à jour au démarrage, sans ré-ingérer."""
+    sys.path.insert(0, str(Path(__file__).parent))
+    from test_report_v3 import CFG, scenario
+
+    from twin_engine.tableau_de_bord.ingestion import recalculer_les_niveaux
+    from twin_engine.tableau_de_bord.jumeau import ecrire_le_jumeau
+    from twin_engine.tableau_de_bord.magasin import Magasin
+
+    _, twin, cal, *_ = scenario()
+    magasin = Magasin(tmp_path)
+    magasin.athletes.ecrire(O.Athlete(
+        id="a1", ingestion=O.Ingestion(statut=O.INGESTION_INGERE),
+        niveau=O.Niveau(nom=O.NIVEAU_BASE, raisons=["ancienne règle"])).to_dict())
+    ecrire_le_jumeau(magasin.athletes.repertoire("a1"), twin, cal)
+    magasin.athletes.ecrire(O.Athlete(id="a2").to_dict())   # pas ingéré : on n'y touche pas
+
+    # le lendemain de la dernière activité : la fraîcheur ne s'en mêle pas
+    dernier = max(date.fromisoformat(a.date) for a in twin.summaries if a.date)
+    assert recalculer_les_niveaux(magasin, CFG, analysis_date=dernier) == ["a1"]
+    assert magasin.athletes.lire("a1")["niveau"]["nom"] == O.NIVEAU_CALIBRE
+    assert recalculer_les_niveaux(magasin, CFG, analysis_date=dernier) == [], \
+        "rien ne change deux fois"
+
+
 def test_le_niveau_se_pose_sans_course():
     """C'est une propriété de l'ARCHIVE : l'athlète n'a pas encore choisi sa course.
 
