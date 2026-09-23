@@ -368,6 +368,15 @@ class Plan:
     athlete_id: str = ""
     course_id: str = ""
     version: int = 0
+    # La version que la page de l'athlète sert. Le §3.3 ne la liste pas, et sans elle
+    # « Publier » ne garderait rien : générer une v2 pour essayer un réglage la montrerait
+    # aussitôt à l'athlète, avant que Valentin l'ait regardée. La page suit donc la
+    # version PUBLIÉE ; le tableau de bord, la version courante.
+    version_publiee: int = 0
+    # Le départ que vise la version courante, recopié à chaque génération ou import. La
+    # course en bibliothèque fait foi quand elle existe ; un plan importé du CLI n'en a pas
+    # toujours, et sans départ il ne saurait jamais qu'il est figé.
+    depart_le: str = ""
     statut: str = PLAN_A_COMPOSER
     reglages: Reglages = field(default_factory=Reglages)
     amendements: Amendements = field(default_factory=Amendements)
@@ -395,6 +404,8 @@ class Plan:
             athlete_id=str(brut.get("athlete_id") or ""),
             course_id=str(brut.get("course_id") or ""),
             version=int(brut.get("version") or 0),
+            version_publiee=int(brut.get("version_publiee") or 0),
+            depart_le=str(brut.get("depart_le") or ""),
             statut=str(brut.get("statut") or PLAN_A_COMPOSER),
             reglages=Reglages(
                 mode=str((brut.get("reglages") or {}).get("mode") or "prediction"),
@@ -437,6 +448,10 @@ class Demande:
     pourquoi: str = ""
     recue_le: str = field(default_factory=maintenant)
     statut: str = DEMANDE_OUVERTE
+    # La réponse de Valentin, partie par email et gardée ici : la page de l'athlète la
+    # remontre sous sa demande. Le §3.4 ne les liste pas.
+    reponse: str = ""
+    repondue_le: str = ""
 
     def to_dict(self) -> dict:
         return _en_json(self)

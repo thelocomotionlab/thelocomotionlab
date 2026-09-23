@@ -87,7 +87,8 @@ def test_une_spec_du_cli_entre_telle_quelle(client, spec_de_nice):
     assert len(course["ravitaillements"]) == 17
     assert course["ravitaillements"][0]["nom"] == "Auron (départ)"
     assert course["officiel"]["dplus_m"] == 8900
-    assert [r_["index"] for r_ in course["ravitaillements"] if r_["base_majeure"]] == [3, 7, 10]
+    assert [r_["nom"] for r_ in course["ravitaillements"] if r_["base_majeure"]] == \
+        ["Isola", "Venanson", "Levens"]
     assert sum(1 for r_ in course["ravitaillements"] if r_["assistance"]) == 7
 
 

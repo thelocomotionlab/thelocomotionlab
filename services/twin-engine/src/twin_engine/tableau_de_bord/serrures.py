@@ -25,16 +25,10 @@ import hmac
 import os
 import threading
 import time
-from hashlib import sha256
 
-# Les deux usages, tels que le plan les range (récapitulatif §3.3 : `cles`).
-USAGE_PARTAGE = "partage"
-USAGE_PRIVE = "prive"
-USAGES = (USAGE_PARTAGE, USAGE_PRIVE)
-
-# Longueur d'une clé : 32 caractères hexadécimaux, soit 128 bits d'empreinte. Tronquer
-# un HMAC est sûr ; 128 bits ne se devinent pas, et une clé se colle dans un lien.
-LONGUEUR_CLE = 32
+# La dérivation vit à côté du rapport, qui imprime la clé dans son QR code : une seule
+# fonction pour la poser et pour la vérifier.
+from ..cles import LONGUEUR_CLE, USAGE_PARTAGE, USAGE_PRIVE, USAGES, cle_du_plan
 
 
 class Serrures:
@@ -78,13 +72,7 @@ class Serrures:
 
     def cle(self, ref: str, usage: str) -> str:
         """La clé d'un plan pour un usage : HMAC-SHA256 de ``ref + usage``."""
-        if usage not in USAGES:
-            raise ValueError(f"usage inconnu : {usage!r} (attendus : {', '.join(USAGES)})")
-        if not self.keys_secret:
-            raise RuntimeError("TWIN_KEYS_SECRET manquant : aucune clé ne peut être posée")
-        empreinte = hmac.new(self.keys_secret.encode("utf-8"),
-                             f"{ref}{usage}".encode("utf-8"), sha256)
-        return empreinte.hexdigest()[:LONGUEUR_CLE]
+        return cle_du_plan(self.keys_secret, ref, usage)
 
     def les_deux_cles(self, ref: str) -> dict[str, str]:
         return {usage: self.cle(ref, usage) for usage in USAGES}

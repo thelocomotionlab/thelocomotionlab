@@ -234,7 +234,8 @@ def _athlete(statut=O.INGESTION_INGERE, plans=()):
     (O.INGESTION_EN_COURS, None, F.INGERER),
     (O.INGESTION_ILLISIBLE, None, F.INGERER),
     (O.INGESTION_INGERE, None, F.COMPOSER),
-    (O.INGESTION_INGERE, {"statut": O.PLAN_A_COMPOSER}, F.PUBLIER),
+    # un plan créé dont la version 1 n'est pas (encore) faite : rien à publier
+    (O.INGESTION_INGERE, {"statut": O.PLAN_A_COMPOSER}, F.COMPOSER),
     (O.INGESTION_INGERE, {"statut": O.PLAN_GENERE}, F.PUBLIER),
     (O.INGESTION_INGERE, {"statut": O.PLAN_PUBLIE}, F.ENVOYER),
     (O.INGESTION_INGERE, {"statut": O.PLAN_ENVOYE}, F.RIEN),
@@ -244,6 +245,21 @@ def _athlete(statut=O.INGESTION_INGERE, plans=()):
 ])
 def test_le_verbe_suivant_est_le_prochain_geste(ingestion, plan, attendu):
     assert F.verbe_suivant(_athlete(ingestion), plan) == attendu
+
+
+def test_au_depart_un_plan_envoye_attend_son_resultat():
+    """Personne ne range « figé » : c'est l'heure du départ qui le décide."""
+    from datetime import datetime, timezone
+
+    plan = {"statut": O.PLAN_ENVOYE}
+    course = {"depart_le": "2026-09-25T13:00:00+02:00"}
+    avant = datetime(2026, 9, 25, 10, 0, tzinfo=timezone.utc)
+    apres = datetime(2026, 9, 25, 12, 0, tzinfo=timezone.utc)
+    assert F.verbe_suivant(_athlete(), plan, course, avant) == F.RIEN
+    assert F.verbe_suivant(_athlete(), plan, course, apres) == F.SAISIR_RESULTAT
+    # un plan importé sans course en bibliothèque se fige à son propre départ
+    assert F.verbe_suivant(_athlete(), {**plan, "depart_le": course["depart_le"]}, None,
+                           apres) == F.SAISIR_RESULTAT
 
 
 def test_les_compteurs_partitionnent():

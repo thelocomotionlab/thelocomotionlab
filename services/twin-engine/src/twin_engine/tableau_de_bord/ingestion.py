@@ -30,7 +30,8 @@ from ..ingest import iter_activities
 from ..sufficiency import assess_sufficiency
 from ..twin.model import build_twin
 from .depot import Depot
-from .magasin import Magasin, ecrire_json
+from .jumeau import ecrire_le_jumeau
+from .magasin import Magasin
 from .objets import (
     INGESTION_ILLISIBLE,
     INGESTION_INGERE,
@@ -143,8 +144,8 @@ def ingerer_un_athlete(
 
         if avancer:
             avancer("écriture du jumeau")
-        ecrire_json(repertoire / "jumeau.json", twin.to_dict())
-        ecrire_json(repertoire / "calibration.json", calibration.to_dict())
+        # Entiers, et relisibles : chaque plan repartira d'eux, l'archive n'étant plus là.
+        ecrire_le_jumeau(repertoire, twin, calibration)
 
         athlete.jumeau = resumer_le_jumeau(twin, calibration)
         athlete.niveau = Niveau(

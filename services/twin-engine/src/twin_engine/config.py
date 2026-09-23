@@ -588,9 +588,9 @@ class ReportParams:
     empirique de la dérive du plan dite en une phrase, et les seuils de la feuille."""
 
     version: str = "v3.0"
-    # une page par référence de rapport ; la référence est non devinable (aléa) et la page
-    # n'est ni indexée ni listée — le lien est le secret
-    annex_base_url: str = "https://www.thelocomotionlab.com/services/twin/annexe"
+    # la page du plan, une par référence ; la clé du lien (cles.py) est ce qui l'ouvre, la
+    # page n'est ni indexée ni listée
+    annex_base_url: str = "https://www.thelocomotionlab.com/services/twin/plan"
     # la barre d'intensité : marge laissée de part et d'autre de l'étendue des ultras, en
     # fraction de cette étendue — sans elle, un repère tombe pile sur le bord de l'axe
     intensity_axis_margin: float = 0.2

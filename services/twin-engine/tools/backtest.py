@@ -39,17 +39,15 @@ import argparse
 import json
 import re
 import sys
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from pathlib import Path
 
-import numpy as np
-
-from twin_engine.calibration import stops_statistics
 from twin_engine.config import load_config
 from twin_engine.course import RaceSpec, build_course
 from twin_engine.ingest import iter_activities
-from twin_engine.pacing.plan import fade_delta_from_splits
 from twin_engine.pipeline import analyze_preview_from_twin
+from twin_engine.registre import (bloc_course, bloc_domaine, bloc_modele, bloc_prediction,
+                                  sous_le_domaine)
 from twin_engine.twin.model import build_twin_from_contributions
 from twin_engine.twin.record import iter_contributions
 
@@ -161,122 +159,32 @@ def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path,
     course = build_course(gpx_path.read_bytes(), race, cfg)
     result = cache.preview_at(course, until, target_hours=race.target_hours, race=race)
     pred = result.prediction
-    cal = result.calibration
     actual_h = None if race_entry.get("dnf") else parse_time_h(race_entry.get("official_time"))
-    # statistiques personnelles consignées QUEL QUE SOIT le modèle servi : tools/score_plan
-    # rejoue la forme du plan (arrêts personnels, fade des moitiés) depuis le registre seul
-    w = (np.asarray(cal.weights, dtype=float) if cal.weights is not None
-         else np.ones(cal.n_genuine))
-    st = stops_statistics(cal.genuine, w, cfg) if cal.n_genuine else None
 
+    # Les blocs de l'entrée viennent du moteur (twin_engine.registre) : le tableau de bord
+    # consigne ses courses courues par les mêmes fonctions, donc dans les mêmes unités.
     entry: dict = {
         "race": race_entry["name"],
         "date": race_entry["date"],
         "until": until.isoformat(),
         "dnf": bool(race_entry.get("dnf", False)),
         "official_time_h": None if actual_h is None else round(actual_h, 3),
-        "course": {
-            "length_km": round(result.course.length_km, 1),
-            "deq_km": round(result.course.deq_km, 1),
-            "dplus_per_km": round(result.course.dplus_per_km, 1),
-            "slope_kappa": (None if result.course.slope_kappa is None
-                            else [round(k, 4) for k in result.course.slope_kappa]),
-        },
-        "model": {
-            "verdict": result.sufficiency.verdict,
-            # POURQUOI le moteur refuse : sans ce champ, un 🔴 est un mur — on voit que la
-            # vente est bloquée, jamais par quel critère. C'est la différence entre « le
-            # garde-fou marche » et « le garde-fou refuse mes meilleurs cas ».
-            "blocking": [c.name for c in result.sufficiency.criteria if c.level == "🔴"],
-            "regime": result.calibration.regime,
-            "link": result.calibration.link,
-            "n_genuine": result.calibration.n_genuine,
-            "n_eff": round(result.calibration.n_eff, 2),
-            "sigma_kmh": round(result.calibration.sigma_kmh, 3),
-            "n_activities_used": result.n_ingested,
-            "n_excluded_until": result.n_excluded_until,
-            "n_skipped_ingest": result.n_skipped,
-            # Phase 2 : ce que l'athlète apporte au plan et aux arrêts (agrégats)
-            "durability_pct": (None if result.twin.durability_pct is None
-                               else round(result.twin.durability_pct, 1)),
-            "fade_delta_splits": (None if (fs := fade_delta_from_splits(cal)) is None
-                                  else round(fs, 4)),
-            "stops_rate_personal": (None if st is None or st["origin"] != "ultras"
-                                    else round(st["rate"], 4)),
-            "stops_rate_sd_log": (None if st is None or st["origin"] != "ultras"
-                                  else round(st["sd_log"], 4)),
-            "stops_ref_hours": (None if st is None or st["ref_hours"] is None
-                                else round(st["ref_hours"], 2)),
-            "stops_model": cal.stops_model,
-            "night_share_mean": (None if cal.night_share_mean is None
-                                 else round(cal.night_share_mean, 4)),
-            "night_coef": None if cal.night_coef is None else round(cal.night_coef, 4),
-            # Phase 3 : les trois exposants mesurés (servis ou non) et ce qui a servi
-            "alpha": None if result.twin.alpha is None else round(result.twin.alpha, 4),
-            "alpha_eff": (None if result.twin.alpha_eff is None
-                          else round(result.twin.alpha_eff, 4)),
-            "alpha_eff_n": (result.twin.alpha_eff_detail or {}).get("n"),
-            "alpha_tail": (None if result.twin.alpha_tail is None
-                           else round(result.twin.alpha_tail, 4)),
-            "alpha_tail_n": result.twin.alpha_tail_n,
-            "duration_prior_origin": cal.duration_prior_origin,
-            "envelope_tail_alpha": None if cal.tail_alpha is None else round(cal.tail_alpha, 4),
-            "genuine_floor": cfg.calibration.genuine_floor,
-            "level_n_anchored": cal.level_n_anchored,
-            "level_shift_mean_pct": (None if cal.level_shift is None
-                                     else round(cal.level_shift_mean_pct, 2)),
-            # Phase 5 : coût de pente personnel mesuré (servi ou non) et ce qui a servi
-            "slope_cost": cal.slope_cost,
-            "slope_kappa_up": (None if result.twin.slope_kappa_up is None
-                               else round(result.twin.slope_kappa_up, 4)),
-            "slope_kappa_down": (None if result.twin.slope_kappa_down is None
-                                 else round(result.twin.slope_kappa_down, 4)),
-            "slope_hours_up": (result.twin.slope_detail or {}).get("hours_up"),
-            "slope_hours_down": (result.twin.slope_detail or {}).get("hours_down"),
-        },
+        "course": bloc_course(result.course),
+        "model": bloc_modele(twin=result.twin, calibration=result.calibration,
+                             sufficiency=result.sufficiency, cfg=cfg,
+                             n_activities_used=result.n_ingested,
+                             n_excluded_until=result.n_excluded_until,
+                             n_skipped_ingest=result.n_skipped),
         "race_meta": None if race_meta is None else {
             "start_local": race_meta["start_local"].isoformat(),
             "lat": round(float(race_meta["lat"]), 2), "lon": round(float(race_meta["lon"]), 2),
             "tz": race_meta["tz"], "source": "activité du jour"},
         "prediction": None,
     }
-    # cible SOUS le domaine de calibration (efforts ≥ genuine_min_hours) : la prédiction est
-    # une extrapolation vers le bas — consignée et analysée À PART (tools/registre)
-    ref_h = actual_h if actual_h is not None else (pred.finish_hours if pred else None)
-    entry["below_domain"] = (None if ref_h is None
-                             else bool(ref_h < cfg.calibration.genuine_min_hours))
-    # ce que la garde du domaine a LU (demande du parcours) — à confronter à l'oracle ci-dessus
-    dom = result.sufficiency.domain
-    entry["domain_demand"] = None if dom is None else dom.to_dict()
+    entry["below_domain"] = sous_le_domaine(actual_h, pred, cfg)
+    entry["domain_demand"] = bloc_domaine(result.sufficiency)
     if pred is not None:
-        cv = pred.cross_validation
-        err_pct = (None if actual_h is None
-                   else round(100.0 * (pred.finish_hours - actual_h) / actual_h, 2))
-        entry["prediction"] = {
-            "central_h": round(pred.finish_hours, 3),
-            "plan_low_h": None if pred.plan_low_h is None else round(pred.plan_low_h, 3),
-            "plan_high_h": None if pred.plan_high_h is None else round(pred.plan_high_h, 3),
-            "safety_low_h": round(pred.interval_low_h, 3),
-            "safety_high_h": round(pred.interval_high_h, 3),
-            "interval_source": pred.interval_source,
-            "cv_mae_pct": None if cv is None else round(cv.mae_pct, 2),
-            # sd prédictif relatif et levier de la cible : ceux du moteur (predict.sd_rel_target,
-            # predict.leverage_target), une seule définition — en lien log, sd de ln T
-            "sd_rel": None if pred.sd_rel is None else round(pred.sd_rel, 4),
-            "leverage": None if pred.leverage is None else round(pred.leverage, 3),
-            "moving_h": None if pred.moving_hours is None else round(pred.moving_hours, 3),
-            "stops_h": None if pred.stops_hours is None else round(pred.stops_hours, 3),
-            "night_share_target": (None if pred.night_share_target is None
-                                   else round(pred.night_share_target, 4)),
-            "night_dev": None if pred.night_dev is None else round(pred.night_dev, 4),
-            "env_factor": None if pred.env_factor is None else round(pred.env_factor, 4),
-            # err_pct > 0 : le moteur a prédit TROP LENT (central au-dessus du réel)
-            "err_pct": err_pct,
-            "in_plan": (None if actual_h is None or pred.plan_low_h is None
-                        else bool(pred.plan_low_h <= actual_h <= pred.plan_high_h)),
-            "in_safety": (None if actual_h is None
-                          else bool(pred.interval_low_h <= actual_h <= pred.interval_high_h)),
-        }
+        entry["prediction"] = bloc_prediction(pred, actual_h)
     return entry
 
 

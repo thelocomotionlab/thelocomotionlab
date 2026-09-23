@@ -21,6 +21,18 @@ Trois points où « sans perte » a demandé une décision :
 * **Ce qui n'appartient pas à la Course.** Les notes d'assistance, la nutrition et
   l'objectif sont propres à UN athlète : ils vivent sur le Plan, et le moteur les reçoit
   au moment de la génération. La Course ne dit que ce qui est vrai pour tout le monde.
+
+⚠️ **Deux conventions d'index cohabitent dans RaceSpec**, et les confondre ne se voit
+pas à l'aller-retour — l'erreur est symétrique, elle revient intacte :
+
+* ``crew``, ``reglages``, ``phases`` comptent des **ravitaillements** (``aid_index`` :
+  0 = le départ) ;
+* ``major_base_indices`` et l'ancien ``crew_access_indices`` comptent des **segments**
+  (« segments dont la FIN est une base majeure ») : le segment k finit au
+  ravitaillement k + 1.
+
+Sur Nice, ``major_base_indices = [3, 7, 10]`` désigne donc Isola, Venanson et Levens —
+pas Collelongue, Rimplas et Utelle. `test_traduction` le fixe par les NOMS.
 """
 
 from __future__ import annotations
@@ -86,7 +98,9 @@ def course_vers_racespec(course: Course) -> RaceSpec:
         lat=course.lat,
         lon=course.lon,
         tz_offset_h=_decalage_h(depart),
-        major_base_indices=tuple(i for i, r in enumerate(ravitos) if r.base_majeure),
+        # Une base majeure est un RAVITAILLEMENT ; le moteur la désigne par le SEGMENT qui y
+        # arrive. Le départ (0) n'est la fin d'aucun segment : il ne peut pas en être une.
+        major_base_indices=tuple(i - 1 for i, r in enumerate(ravitos) if r.base_majeure and i >= 1),
         # `crew_access_indices` est l'ancienne façon de dire l'assistance ; `crew` la
         # remplace et prime. On n'écrit que la neuve, pour n'en avoir qu'une à lire.
         crew=tuple(CrewAccess(aid_index=i) for i, r in enumerate(ravitos) if r.assistance),
@@ -112,9 +126,11 @@ def racespec_vers_course(spec: RaceSpec, *, id: str, slug: str = "",
     ``edition`` se déduit de l'année du départ quand elle n'est pas donnée — c'est ce
     que porte la référence d'un plan, et une spec n'a pas de champ pour elle."""
     kms = list(spec.aid_km)
-    assistance = set(spec.crew_aid_indices) or set(spec.crew_access_indices)
+    # `crew` compte des ravitaillements ; l'ancien `crew_access_indices`, des segments.
+    assistance = set(spec.crew_aid_indices) or {k + 1 for k in spec.crew_access_indices}
     arrets = {r.aid_index: r.stop_min for r in spec.reglages if r.stop_min is not None}
-    bases = set(spec.major_base_indices)
+    # Le segment k finit au ravitaillement k + 1 : c'est lui, la base.
+    bases = {k + 1 for k in spec.major_base_indices}
 
     ravitos = [
         Ravitaillement(
@@ -161,4 +177,44 @@ def racespec_vers_course(spec: RaceSpec, *, id: str, slug: str = "",
     )
 
 
-__all__ = ["TOLERANCE_KM", "course_vers_racespec", "racespec_vers_course"]
+# --------------------------------------------------------------------------- #
+# RaceSpec → JSON : la spec qu'on donnerait au CLI
+# --------------------------------------------------------------------------- #
+def racespec_en_json(spec: RaceSpec) -> dict:
+    """Le carnet de route au format des fichiers ``examples/*.json`` — ce que
+    ``RaceSpec.from_dict`` relit à l'identique.
+
+    C'est ce qui permet de rejouer au CLI, à l'octet près, un plan composé dans le tableau
+    de bord : le golden s'en sert, et un carnet se télécharge ainsi pour être gardé à côté
+    d'un rapport."""
+    def optionnel(cle: str, valeur) -> dict:
+        return {} if valeur is None else {cle: valeur}
+
+    return {
+        "name": spec.name,
+        "aid_km": [float(km) for km in spec.aid_km],
+        "aid_names": list(spec.aid_names),
+        **optionnel("start_time", spec.start_time.isoformat() if spec.start_time else None),
+        **optionnel("lat", spec.lat),
+        **optionnel("lon", spec.lon),
+        "tz_offset_h": float(spec.tz_offset_h),
+        "major_base_indices": [int(k) for k in spec.major_base_indices],
+        **({"crew_access_indices": [int(k) for k in spec.crew_access_indices]}
+           if spec.crew_access_indices else {}),
+        "crew": [{"aid_index": c.aid_index, "note": c.note} for c in spec.crew],
+        "reglages": [{"aid_index": r.aid_index,
+                      **optionnel("stop_min", r.stop_min),
+                      **({"consigne": r.consigne} if r.consigne else {})}
+                     for r in spec.reglages],
+        "nutrition": {"water_l_per_h": spec.nutrition.water_l_per_h,
+                      "carbs_g_per_h": spec.nutrition.carbs_g_per_h},
+        "phases": [{"name": ph.name, "note": ph.note, "from_aid_index": ph.from_aid_index}
+                   for ph in spec.phases],
+        **optionnel("official_dplus_m", spec.official_dplus_m),
+        **optionnel("target_hours", spec.target_hours),
+        "technicity_pct": float(spec.technicity_pct),
+        **optionnel("heat_c", spec.heat_c),
+    }
+
+
+__all__ = ["TOLERANCE_KM", "course_vers_racespec", "racespec_en_json", "racespec_vers_course"]

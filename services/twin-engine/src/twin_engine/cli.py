@@ -16,6 +16,7 @@ import json
 import sys
 from pathlib import Path
 
+from .cles import VARIABLE_DU_SECRET, secret_de_lenvironnement
 from .config import load_config, override_config
 from .course import RaceSpec
 from .pipeline import run_full, run_preview
@@ -210,10 +211,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  {'rapport.pdf':<12} {result.pdf_path}", file=sys.stderr)
     for nom, chemin in sorted(result.livrables.items()):
         print(f"  {nom:<12} {chemin}", file=sys.stderr)
-    if "annexe.json" in result.livrables:
-        print(f"\n  Annexe en ligne : déposer {result.livrables['annexe.json']} sous "
-              f"apps/site/public/twin-annexes/{result.report_ref}.json, puis déployer le site.",
-              file=sys.stderr)
+    if "dossier.json" in result.livrables:
+        print("\n  Page en ligne : importer le dossier dans le tableau de bord "
+              "(pnpm course publier), puis « Publier » depuis l'écran Plan.", file=sys.stderr)
+        if not secret_de_lenvironnement():
+            # Sans le secret du serveur, le QR du rapport pointe vers la page SANS clé,
+            # qui répond 404 : le papier imprimé ne mènerait nulle part.
+            print(f"  ⚠ {VARIABLE_DU_SECRET} n'est pas posé : le QR du rapport n'a pas de "
+                  "clé et n'ouvrira pas la page. Pose-le (même valeur que sur le serveur) "
+                  "et refais le rapport avant de l'imprimer.", file=sys.stderr)
     return 0
 
 

@@ -16,11 +16,14 @@ sinon les quatre chiffres mentent sur ce que porte la liste.
 
 from __future__ import annotations
 
+from .cycle import statut_lu
 from .objets import (
     INGESTION_INGERE,
+    PLAN_A_COMPOSER,
     PLAN_ENVOYE,
     PLAN_FIGE,
     PLAN_PUBLIE,
+    PLAN_RESULTAT,
 )
 
 # Les cinq verbes, dans l'ordre où ils se présentent.
@@ -44,21 +47,28 @@ COMPTEURS = ("a_ingerer", "a_composer", "a_publier_ou_envoyer", "resultat_a_sais
              "en_attente")
 
 
-def verbe_suivant(athlete: dict, plan: dict | None) -> str:
-    """Ce qu'il reste à faire sur ce dossier — un seul geste, le prochain."""
+def verbe_suivant(athlete: dict, plan: dict | None, course: dict | None = None,
+                  maintenant=None) -> str:
+    """Ce qu'il reste à faire sur ce dossier — un seul geste, le prochain.
+
+    Le statut est LU (``cycle.statut_lu``) : un plan envoyé dont la course est partie est
+    figé, et c'est son résultat qui attend — personne n'a eu à le ranger à l'heure dite."""
     if (athlete.get("ingestion") or {}).get("statut") != INGESTION_INGERE:
         return INGERER
     if plan is None:
         return COMPOSER
-    statut = plan.get("statut") or ""
-    if statut not in (PLAN_PUBLIE, PLAN_ENVOYE, PLAN_FIGE):
+    statut = statut_lu(plan, course, maintenant)
+    if statut == PLAN_A_COMPOSER:
+        return COMPOSER
+    if statut == PLAN_RESULTAT:
+        return RIEN
+    if statut == PLAN_FIGE:
+        # Le résultat ne se saisit qu'une fois la course courue : avant, il n'existe pas.
+        return SAISIR_RESULTAT
+    if statut not in (PLAN_PUBLIE, PLAN_ENVOYE):
         return PUBLIER
     if statut == PLAN_PUBLIE:
         return ENVOYER
-    resultat = plan.get("resultat") or {}
-    if resultat.get("officiel_h") is None and not resultat.get("abandon"):
-        # Le résultat ne se saisit qu'une fois la course courue : avant, il n'existe pas.
-        return SAISIR_RESULTAT if statut == PLAN_FIGE else RIEN
     return RIEN
 
 
@@ -70,22 +80,22 @@ def compter(dossiers) -> dict[str, int]:
     return compteurs
 
 
-def dossier(athlete: dict, plan: dict | None, course: dict | None) -> dict:
+def dossier(athlete: dict, plan: dict | None, course: dict | None, maintenant=None) -> dict:
     """Une ligne de la File, telle que l'écran la lit."""
     return {
         "athlete_id": athlete.get("id"),
         "prenom": athlete.get("pseudo") or athlete.get("prenom") or "",
         "course": (course or {}).get("nom") or "",
         "course_id": (course or {}).get("id") or "",
-        "depart_le": (course or {}).get("depart_le") or "",
+        "depart_le": (course or {}).get("depart_le") or (plan or {}).get("depart_le") or "",
         "objectif_annonce": (plan or {}).get("reglages", {}).get("cible_h"),
         "archive": (athlete.get("archive") or {}).get("taille") or None,
         "ingestion": (athlete.get("ingestion") or {}).get("statut") or "",
         "erreur": (athlete.get("ingestion") or {}).get("erreur") or "",
         "niveau": (athlete.get("niveau") or {}).get("nom") or "",
         "plan_ref": (plan or {}).get("ref") or "",
-        "plan_statut": (plan or {}).get("statut") or "",
-        "suivant": verbe_suivant(athlete, plan),
+        "plan_statut": statut_lu(plan, course, maintenant) if plan else "",
+        "suivant": verbe_suivant(athlete, plan, course, maintenant),
     }
 
 
