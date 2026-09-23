@@ -128,7 +128,7 @@ repo — cf. `docs/secrets.md`).
 Aucune de ces quatre commandes n'entraîne les autres, et aucun workflow CI ne déploie la
 passerelle ni le studio.
 
-> `--legacy-peer-deps` dans les deux scripts `deploy:cf` n'est pas décoratif : sur un cache npm
+> `--legacy-peer-deps` dans le script `deploy:cf` du site n'est pas décoratif : sur un cache npm
 > froid — une machine neuve, un runner CI — `npx @cloudflare/next-on-pages` échoue en `ERESOLVE`.
 > `wrangler` 4 déclare `@cloudflare/workers-types@^5` en pair optionnel, `next-on-pages` le veut
 > en `^4`, et npm refuse d'arbitrer deux pairs *optionnels*. Le flag lui dit de passer outre, ce
@@ -140,17 +140,31 @@ passerelle ni le studio.
 
 `thelocomotionlab.com/studio` sert le studio **v1**, qui est une route du site. Le studio v2 est
 une app Next à part (`apps/studio`) : elle a son propre build, et il lui faut donc son propre
-projet Pages. Deux sorties `.vercel/output/static` ne tiennent pas dans un seul projet.
+projet Pages. Deux sorties ne tiennent pas dans un seul projet.
 
 Ce qui justifie l'app séparée : maplibre, le terrain 3D et l'encodeur vidéo n'entrent que dans
 *son* bundle, jamais dans celui du site ; et le site reste en JavaScript quand le studio est en
 TypeScript.
+
+### Un export statique, pas un worker
+
+Le studio tourne entièrement dans le navigateur : rien n'y est calculé sur un serveur. Il sort
+donc en **export statique** (`output: "export"` dans `next.config.ts`) — un dossier `out/` de
+fichiers, que `wrangler` envoie tel quel. Pas de `@cloudflare/next-on-pages`, pas de Functions,
+pas de `nodejs_compat`.
+
+Ce n'est pas qu'une simplification : `next-on-pages` fait tourner le builder Vercel, téléchargé
+**à chaque build**, et lit sa sortie. Avec Next 16.2 cette sortie a changé (les routes
+`.segments/*` et `_global-error`) et `next-on-pages`, en maintenance, s'arrête sur « routes not
+configured to run with the Edge Runtime » — pour une app qui n'a pas une seule route dynamique.
+L'export statique n'a aucune de ces deux pièces mobiles.
 
 ### La mise en ligne, une fois
 
 ```bash
 pnpm install
 pnpm -F studio deploy:cf
+# = pnpm run build && npx wrangler pages deploy out --project-name=thelocomotionlab-studio
 ```
 
 `wrangler` propose de **créer** `thelocomotionlab-studio` s'il n'existe pas — il demande le nom et
@@ -164,13 +178,15 @@ Cloudflare, l'enregistrement se pose tout seul.
 
 | | site | studio |
 | --- | --- | --- |
-| Compatibility flag `nodejs_compat` | requis | requis (Production **et** Preview) |
+| sortie | `.vercel/output/static` (worker + fichiers) | `out/` (fichiers seuls) |
+| Compatibility flag `nodejs_compat` | requis | inutile : pas de Functions |
 | `NODE_VERSION` | 22 | 22 — seulement pour l'intégration Git, inutile en déploiement manuel |
-| en-têtes des fichiers statiques | `apps/site/public/_headers` | `apps/studio/public/_headers` |
+| en-têtes | `headers()` pour les pages, `apps/site/public/_headers` pour les fichiers | `apps/studio/public/_headers`, **pour tout** |
 | indexation | indexé | `X-Robots-Tag: noindex` sur **tout**, page comme fichier |
 
-Le `_headers` du studio pose le `noindex` sur `/*` parce que les règles `headers()` de
-`next.config.ts` n'atteignent pas les fichiers de `public/` (cf. le piège n° 2 plus bas).
+En export statique, Pages sert tout — pages et fichiers — depuis `out/`, et `_headers` est la
+seule source d'en-têtes : le `noindex`, `nosniff`, `X-Frame-Options`, la `Permissions-Policy`,
+le HSTS et le cache immuable des bundles `/_next/static/*` y sont.
 
 ---
 
