@@ -416,6 +416,18 @@ export type ElementSemaines = ElementCommun & {
   inclinaison: number;
   /** Les graduations chiffrées, à gauche et à droite. */
   axes: boolean;
+  /** Le haut de l'axe des barres — `null` : un cran rond au-dessus du maximum. */
+  plafondBarres: number | null;
+  /** L'écart entre deux graduations des barres — `null` : de trois à six, rondes. */
+  pasBarres: number | null;
+  plafondCourbe: number | null;
+  pasCourbe: number | null;
+  /** Les filets horizontaux, un par graduation. */
+  grille: boolean;
+  /** La part de sa colonne qu'une barre occupe, de 0,2 à 1. */
+  largeurBarre: number;
+  /** Les pastilles posées sur la courbe. */
+  pastilles: boolean;
   /** Le nom de chaque série montrée, écrit en tête de son axe. */
   titresAxes: boolean;
   legende: LigneLegende[];

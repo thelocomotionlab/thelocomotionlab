@@ -129,8 +129,52 @@ export function graduationDe(valeur: number): string {
 /** La part de la boîte réservée à la légende, sous le graphique. */
 const PART_LEGENDE = 0.16;
 
-/** Les trois graduations d'un axe — zéro compris. */
-const GRADUATIONS = 3;
+/** Un axe : son plafond, et l'écart entre deux graduations. */
+export type Axe = { plafond: number; pas: number };
+
+/**
+ * L'AXE D'UNE SÉRIE.
+ *
+ * Le plafond est un cran rond au-dessus du maximum, sauf si l'auteur l'impose ;
+ * le pas donne de trois à six graduations rondes, sauf s'il l'impose. Un pas
+ * imposé sans plafond pousse le plafond au multiple suivant : la dernière
+ * graduation tombe sur le haut de l'axe, jamais un peu en dessous.
+ */
+export function axeDe(max: number, plafondVoulu: number | null, pasVoulu: number | null): Axe {
+  const plafondImpose = plafondVoulu !== null && plafondVoulu > 0 ? plafondVoulu : null;
+  const pasImpose = pasVoulu !== null && pasVoulu > 0 ? pasVoulu : null;
+  if (pasImpose !== null && plafondImpose === null) {
+    const plafond = Math.max(pasImpose, Math.ceil(Math.max(0, max) / pasImpose) * pasImpose);
+    return { plafond, pas: pasImpose };
+  }
+  const plafond = plafondImpose ?? plafondDe(max);
+  return { plafond, pas: pasImpose ?? pasJoli(plafond) };
+}
+
+/**
+ * Le plus grand pas rond — 1, 2, 2,5 ou 5 fois une puissance de dix — qui
+ * découpe le plafond en trois à six graduations entières. « 0 · 67 · 133 · 200 »
+ * se lisait comme une erreur de calcul ; « 0 · 50 · 100 · 150 · 200 » se lit.
+ */
+function pasJoli(plafond: number): number {
+  if (!(plafond > 0)) return 1;
+  const ordre = 10 ** Math.ceil(Math.log10(plafond));
+  for (let k = ordre; k >= ordre / 1000; k /= 10) {
+    for (const cran of [5, 2.5, 2, 1]) {
+      const pas = cran * k;
+      const n = plafond / pas;
+      if (Math.abs(n - Math.round(n)) < 1e-9 && n >= 3 && n <= 6) return pas;
+    }
+  }
+  return plafond / 3;
+}
+
+/** Les graduations d'un axe, de zéro au plafond. */
+export function graduationsDe(axe: Axe): number[] {
+  const out: number[] = [];
+  for (let k = 0; k * axe.pas <= axe.plafond + 1e-9 && k < 1000; k += 1) out.push(k * axe.pas);
+  return out;
+}
 
 export type Cadre = {
   /** La zone où les barres se dessinent, hors axes et légende. */
@@ -141,6 +185,8 @@ export type Cadre = {
   barre: number;
   hautBarres: number;
   hautCourbe: number;
+  axeBarres: Axe;
+  axeCourbe: Axe;
   corps: number;
   /** La place sous l'axe : les étiquettes, droites ou en biais. */
   reserveBas: number;
@@ -175,14 +221,27 @@ export function cadreDesSemaines(e: ElementSemaines, b: BoitePx): Cadre | null {
     h: Math.max(1, b.h - haut - legende - bas),
   };
   const serieBarres = serieDe(e, e.barres);
+  const axeBarres = axeDe(
+    Math.max(0, ...(serieBarres?.valeurs ?? [])),
+    e.plafondBarres ?? null,
+    e.pasBarres ?? null,
+  );
+  const axeCourbe = axeDe(
+    Math.max(0, ...(courbe?.valeurs ?? [])),
+    e.plafondCourbe ?? null,
+    e.pasCourbe ?? null,
+  );
+  // Une gouttière d'un quart par défaut : plus serré, les barres se touchent ;
+  // plus large, la saison se lit comme des bâtons épars.
+  const largeur = Math.min(1, Math.max(0.2, e.largeurBarre || 0.72));
   return {
     trace,
     colonne: trace.l / n,
-    // Une gouttière d'un quart : plus serré, les barres se touchent ; plus
-    // large, la saison se lit comme des bâtons épars.
-    barre: Math.max(1, (trace.l / n) * 0.72),
-    hautBarres: plafondDe(Math.max(0, ...(serieBarres?.valeurs ?? []))),
-    hautCourbe: plafondDe(Math.max(0, ...(courbe?.valeurs ?? []))),
+    barre: Math.max(1, (trace.l / n) * largeur),
+    hautBarres: axeBarres.plafond,
+    hautCourbe: axeCourbe.plafond,
+    axeBarres,
+    axeCourbe,
     corps,
     reserveBas: bas,
   };
@@ -234,7 +293,8 @@ export function dessinerSemaines(
 ): void {
   const cadre = cadreDesSemaines(e, b);
   if (!cadre) return;
-  const { trace, colonne, barre, hautBarres, hautCourbe, corps, reserveBas } = cadre;
+  const { trace, colonne, barre, hautBarres, hautCourbe, axeBarres, axeCourbe, corps, reserveBas } =
+    cadre;
   const serieBarres = serieDe(e, e.barres);
   const serieCourbe = serieDe(e, e.courbe);
   const teinteBarres = e.couleurBarres || brandColors.primary;
@@ -245,20 +305,30 @@ export function dessinerSemaines(
   ctx.save();
   ctx.font = `500 ${corps}px ${c.police}`;
 
-  // 1. LES GRADUATIONS, en filets à peine posés. Trois, pas neuf : sur une
-  //    planche, une grille dense se lit comme du bruit.
+  // 1. LES GRADUATIONS, en filets à peine posés — de trois à six, pas neuf :
+  //    sur une planche, une grille dense se lit comme du bruit. Les filets
+  //    suivent l'axe des barres ; la courbe n'a que ses chiffres, à droite :
+  //    deux grilles qui ne tombent pas aux mêmes hauteurs se liraient comme
+  //    une erreur.
   if (e.axes) {
-    for (let k = 0; k <= GRADUATIONS; k += 1) {
-      const part = k / GRADUATIONS;
-      const y = base - part * trace.h;
+    const yDe = (v: number, axe: Axe) => base - (v / axe.plafond) * trace.h;
+    if (e.grille !== false) {
+      const principal = serieBarres ? axeBarres : axeCourbe;
       ctx.fillStyle = c.theme.filet;
-      ctx.fillRect(trace.x, y, trace.l, Math.max(1, corps * 0.045));
-
-      ctx.fillStyle = c.theme.encreFaible;
-      if (serieBarres) ctx.fillText(graduationDe(part * hautBarres), b.x, y + corps * 0.35);
-      if (serieCourbe) {
-        const droite = graduationDe(part * hautCourbe);
-        ctx.fillText(droite, b.x + b.l - ctx.measureText(droite).width, y + corps * 0.35);
+      for (const v of graduationsDe(principal)) {
+        ctx.fillRect(trace.x, yDe(v, principal), trace.l, Math.max(1, corps * 0.045));
+      }
+    }
+    ctx.fillStyle = c.theme.encreFaible;
+    if (serieBarres) {
+      for (const v of graduationsDe(axeBarres)) {
+        ctx.fillText(graduationDe(v), b.x, yDe(v, axeBarres) + corps * 0.35);
+      }
+    }
+    if (serieCourbe) {
+      for (const v of graduationsDe(axeCourbe)) {
+        const droite = graduationDe(v);
+        ctx.fillText(droite, b.x + b.l - ctx.measureText(droite).width, yDe(v, axeCourbe) + corps * 0.35);
       }
     }
     // Le NOM de chaque série en tête de son axe : « 4 500 » ne dit pas s'il
@@ -313,7 +383,7 @@ export function dessinerSemaines(
       ctx.stroke();
     }
     const rayon = Math.max(2, corps * 0.3);
-    for (const [x, y] of points) {
+    for (const [x, y] of e.pastilles === false ? [] : points) {
       ctx.beginPath();
       ctx.arc(x, y, rayon, 0, Math.PI * 2);
       ctx.fillStyle = brandColors.deep;

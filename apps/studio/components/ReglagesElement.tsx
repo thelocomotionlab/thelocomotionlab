@@ -959,6 +959,17 @@ function ReglagesSemaines({
   e: ElementSemaines;
   poser: Poser<ElementSemaines>;
 }) {
+/** Un nombre tapé dans un champ texte — vide, c'est « auto ». */
+function nombreOuRien(v: string): number | null {
+  if (v.trim() === "") return null;
+  const n = Number(v.trim().replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+}
+
+function texteDuNombre(n: number | null | undefined): string {
+  return n === null || n === undefined ? "" : String(n);
+}
+
   const [brut, setBrut] = useState<string | null>(null);
   const texte = brut ?? ecrireLesSeries(e);
   const lu = lireLesSeries(texte);
@@ -1081,6 +1092,63 @@ function ReglagesSemaines({
           onClick={() => poser((x) => ({ ...x, couleurs: [] }), "couleurs")}
           titre="Toutes les barres reprennent la couleur de la série"
         >
+      <Titre>Axe des barres</Titre>
+      <Mot
+        libelle="Maximum"
+        valeur={texteDuNombre(e.plafondBarres)}
+        placeholder="auto"
+        onChange={(v) => poser((x) => ({ ...x, plafondBarres: nombreOuRien(v) }), "axes")}
+      />
+      <Mot
+        libelle="Une graduation tous les"
+        valeur={texteDuNombre(e.pasBarres)}
+        placeholder="auto"
+        onChange={(v) => poser((x) => ({ ...x, pasBarres: nombreOuRien(v) }), "axes")}
+      />
+      {e.courbe !== null && (
+        <>
+          <Titre>Axe de la courbe</Titre>
+          <Mot
+            libelle="Maximum"
+            valeur={texteDuNombre(e.plafondCourbe)}
+            placeholder="auto"
+            onChange={(v) => poser((x) => ({ ...x, plafondCourbe: nombreOuRien(v) }), "axes")}
+          />
+          <Mot
+            libelle="Une graduation tous les"
+            valeur={texteDuNombre(e.pasCourbe)}
+            placeholder="auto"
+            onChange={(v) => poser((x) => ({ ...x, pasCourbe: nombreOuRien(v) }), "axes")}
+          />
+        </>
+      )}
+      <Aide>
+        Vide, c&rsquo;est automatique : un cran rond au-dessus de la plus haute valeur, et de
+        trois à six graduations rondes.
+      </Aide>
+
+      <Titre>Dessin</Titre>
+      <Case
+        libelle="Lignes de grille"
+        coche={e.grille !== false}
+        onChange={(v) => poser((x) => ({ ...x, grille: v }), "grille")}
+      />
+      <Nombre
+        libelle="Largeur des barres"
+        valeur={Math.round((e.largeurBarre || 0.72) * 100)}
+        suffixe="%"
+        onChange={(n) =>
+          poser((x) => ({ ...x, largeurBarre: Math.min(1, Math.max(0.2, n / 100)) }), "barres")
+        }
+      />
+      {e.courbe !== null && (
+        <Case
+          libelle="Pastilles sur la courbe"
+          coche={e.pastilles !== false}
+          onChange={(v) => poser((x) => ({ ...x, pastilles: v }), "courbe")}
+        />
+      )}
+
           Tout remettre à la série
         </Bouton>
       )}

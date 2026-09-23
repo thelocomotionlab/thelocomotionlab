@@ -5,10 +5,12 @@ import { THEMES } from "./charte.ts";
 import { ctxFactice, type CtxFactice } from "./factice.ts";
 import { semainesNeuves } from "./fabrique.ts";
 import {
+  axeDe,
   barreSous,
   cadreDesSemaines,
   ecrireLesSeries,
   graduationDe,
+  graduationsDe,
   lireLesSeries,
   plafondDe,
 } from "./semaines.ts";
@@ -92,6 +94,57 @@ describe("le plafond d'un axe", () => {
   it("ne rend jamais zéro, même sans données", () => {
     expect(plafondDe(0)).toBe(1);
     expect(plafondDe(-4)).toBe(1);
+  });
+});
+
+describe("les axes", () => {
+  it("choisissent un pas rond qui tombe sur le plafond", () => {
+    // « 0 · 67 · 133 · 200 » se lisait comme une erreur de calcul.
+    expect(axeDe(198, null, null)).toEqual({ plafond: 200, pas: 50 });
+    expect(axeDe(12800, null, null)).toEqual({ plafond: 15000, pas: 5000 });
+    expect(axeDe(121, null, null)).toEqual({ plafond: 125, pas: 25 });
+  });
+
+  it("suivent un plafond imposé ; un pas imposé pousse le plafond au multiple suivant", () => {
+    expect(axeDe(198, 250, null)).toEqual({ plafond: 250, pas: 50 });
+    expect(axeDe(198, null, 60)).toEqual({ plafond: 240, pas: 60 });
+    expect(axeDe(198, 300, 100)).toEqual({ plafond: 300, pas: 100 });
+  });
+
+  it("énumèrent les graduations de zéro au plafond", () => {
+    expect(graduationsDe({ plafond: 200, pas: 50 })).toEqual([0, 50, 100, 150, 200]);
+    expect(graduationsDe(axeDe(0, null, null)).length).toBeGreaterThan(1);
+  });
+});
+
+describe("les réglages du dessin", () => {
+  const rendre = (e: ElementSemaines): CtxFactice => {
+    const ctx = ctxFactice();
+    dessinerSemaines(ctx, e, BOITE, contexte);
+    return ctx;
+  };
+  const combien = (ctx: CtxFactice, op: string) => ctx.ops.filter((o) => o.op === op).length;
+
+  it("la grille se coupe sans emporter les chiffres des axes", () => {
+    const avec = rendre(semaines({ axes: true, grille: true, courbe: null, legende: [] }));
+    const sans = rendre(semaines({ axes: true, grille: false, courbe: null, legende: [] }));
+    expect(combien(sans, "fillRect")).toBeLessThan(combien(avec, "fillRect"));
+    expect(combien(sans, "fillText")).toBe(combien(avec, "fillText"));
+  });
+
+  it("la largeur des barres suit le réglage, bornée à la colonne", () => {
+    const etroit = cadreDesSemaines(semaines({ largeurBarre: 0.4 }), BOITE)!;
+    const large = cadreDesSemaines(semaines({ largeurBarre: 1 }), BOITE)!;
+    expect(large.barre).toBeCloseTo(large.colonne);
+    expect(etroit.barre).toBeCloseTo(large.colonne * 0.4);
+  });
+
+  it("les pastilles s'éteignent, la courbe reste", () => {
+    const avec = rendre(semaines({ pastilles: true, axes: false, legende: [] }));
+    const sans = rendre(semaines({ pastilles: false, axes: false, legende: [] }));
+    expect(combien(avec, "arc")).toBe(12);
+    expect(combien(sans, "arc")).toBe(0);
+    expect(combien(sans, "stroke")).toBeGreaterThan(0);
   });
 });
 
