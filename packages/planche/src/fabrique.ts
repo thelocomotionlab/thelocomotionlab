@@ -234,6 +234,8 @@ export function carteNeuve(boite: Boite, over: Partial<ElementCarte> = {}): Elem
     etiquettes: [],
     depart: true,
     arrivee: true,
+    iconeDepart: "",
+    iconeArrivee: "",
     itineraireSourdine: true,
     etiquettesAuto: true,
     fenetre: null,

@@ -46,6 +46,8 @@ const APPARENCE: Record<Element["type"], readonly string[]> = {
     "epaisseur",
     "depart",
     "arrivee",
+    "iconeDepart",
+    "iconeArrivee",
     "itineraireSourdine",
     "etiquettesAuto",
     "degrades",
