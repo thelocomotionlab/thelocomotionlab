@@ -68,23 +68,93 @@ export function remettre(ravitaillements, retire) {
   return rangerEnSuivant([...ravitaillements, { ...retire, _suivi: true }]);
 }
 
+// Une mention en fin de nom, entre parenthèses ou crochets : « Isola (assistance) »,
+// « Venanson [base, assistance] ».
+const MENTION = /\s*[([]([^)\]]*)[)\]]\s*$/;
+const sansAccents = (texte) => texte.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
 /**
- * Les waypoints du GPX ajoutés à ce qui est déjà posé. Un waypoint qui tombe sur un
- * ravitaillement existant (à moins de cent mètres) ne le double pas : c'est le même
- * point, et le nom saisi à la main l'emporte sur celui du fichier.
+ * Le nom d'un waypoint et ce qu'il déclare. « Isola (assistance) » devient le
+ * ravitaillement « Isola », ouvert à l'assistance ; « (base) » en fait une base majeure.
+ * Une parenthèse qui ne dit ni l'un ni l'autre fait partie du nom et reste.
+ */
+export function lireLeWaypoint(nom) {
+  const brut = String(nom ?? "").trim();
+  const mention = MENTION.exec(brut);
+  const mots = mention ? sansAccents(mention[1]) : "";
+  const assistance = /assist|crew/.test(mots);
+  const base = /\bbase/.test(mots);
+  return {
+    nom: assistance || base ? brut.slice(0, mention.index).trim() : brut,
+    assistance,
+    base_majeure: base,
+  };
+}
+
+// Les noms que l'éditeur pose de lui-même : un waypoint nommé les remplace.
+const NOM_PAR_DEFAUT = /^Ravitaillement( km [\d,.]+)?$/;
+
+/**
+ * Les waypoints du GPX versés dans ce qui est déjà posé.
+ *
+ * Un waypoint qui tombe sur un ravitaillement existant (à moins de cent mètres) ne le
+ * double pas : c'est le même point. Il le complète — l'assistance ou la base qu'il
+ * déclare, son nom quand l'existant n'a que celui que l'éditeur lui avait donné — sans
+ * rien retirer de ce qui a été saisi. Rend la liste et le bilan, que l'écran annonce.
  */
 export function importerLesWaypoints(ravitaillements, waypoints, distanceKm) {
-  const liste = [...ravitaillements];
-  const existe = (km) => liste.some((r) => Math.abs(r.km - km) < MEME_POINT_KM);
-  if (!existe(0)) liste.push({ nom: "Départ", km: 0, base_majeure: false, assistance: false, arret_min: null });
+  const liste = ravitaillements.map((r) => ({ ...r }));
+  const bilan = { lus: 0, ajoutes: 0, completes: 0, deja: 0, assistance: 0 };
+  const proche = (km) => liste.find((r) => Math.abs(r.km - km) < MEME_POINT_KM);
+  if (!proche(0)) liste.push({ nom: "Départ", km: 0, base_majeure: false, assistance: false, arret_min: null });
   for (const w of waypoints ?? []) {
-    if (w.km === null || w.km === undefined || existe(w.km)) continue;
-    liste.push({ nom: w.nom || "Ravitaillement", km: w.km, base_majeure: false, assistance: false, arret_min: null });
+    if (w.km === null || w.km === undefined) continue;
+    bilan.lus += 1;
+    const lu = lireLeWaypoint(w.nom);
+    if (lu.assistance) bilan.assistance += 1;
+    const existant = proche(w.km);
+    if (!existant) {
+      liste.push({
+        nom: lu.nom || "Ravitaillement",
+        km: w.km,
+        base_majeure: lu.base_majeure,
+        assistance: lu.assistance,
+        arret_min: null,
+      });
+      bilan.ajoutes += 1;
+      continue;
+    }
+    const avant = JSON.stringify(existant);
+    if (lu.assistance) existant.assistance = true;
+    if (lu.base_majeure) existant.base_majeure = true;
+    // Un nom par défaut, ou le même nom encore porteur de sa mention (un import
+    // d'avant la lecture des mentions), prend le nom propre du waypoint.
+    if (lu.nom && (NOM_PAR_DEFAUT.test(existant.nom ?? "") || lireLeWaypoint(existant.nom).nom === lu.nom)) {
+      existant.nom = lu.nom;
+    }
+    if (JSON.stringify(existant) === avant) bilan.deja += 1;
+    else bilan.completes += 1;
   }
-  if (distanceKm && !existe(distanceKm) && liste.every((r) => r.km < distanceKm - MEME_POINT_KM)) {
+  if (distanceKm && !proche(distanceKm) && liste.every((r) => r.km < distanceKm - MEME_POINT_KM)) {
     liste.push({ nom: "Arrivée", km: distanceKm, base_majeure: false, assistance: false, arret_min: null });
   }
-  return trier(liste);
+  return { liste: trier(liste), bilan };
+}
+
+const compte = (n, un, plusieurs) => `${n} ${n > 1 ? plusieurs : un}`;
+
+/** Ce que l'import a fait, en une phrase. */
+export function direLImport(bilan) {
+  if (!bilan.lus) return "La trace ne porte aucun waypoint placé sur le parcours.";
+  const lus = compte(bilan.lus, "waypoint lu", "waypoints lus");
+  if (!bilan.ajoutes && !bilan.completes) return `${lus} : tous déjà posés, rien à changer.`;
+  const parts = [
+    bilan.ajoutes ? compte(bilan.ajoutes, "ajouté", "ajoutés") : "",
+    bilan.completes ? compte(bilan.completes, "complété", "complétés") : "",
+    bilan.deja ? compte(bilan.deja, "déjà posé", "déjà posés") : "",
+  ].filter(Boolean);
+  const assistance = bilan.assistance ? ` — ${compte(bilan.assistance, "marqué", "marqués")} assistance` : "";
+  return `${lus} : ${parts.join(", ")}${assistance}.`;
 }
 
 /** Ce que la liste dit en une ligne : combien, combien ouverts à l'assistance, combien de bases.

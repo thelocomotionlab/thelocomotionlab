@@ -213,6 +213,7 @@ export default function Editeur({ initiale, etapeInitiale }) {
 
       <BandeauAnnuler
         message={bandeau?.message}
+        annulable={Boolean(bandeau?.annuler)}
         surAnnuler={() => {
           bandeau?.annuler?.();
           setBandeau(null);

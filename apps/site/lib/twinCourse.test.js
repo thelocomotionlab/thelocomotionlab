@@ -13,7 +13,9 @@ import {
   decomposerLeDepart,
   deplacer,
   estUneExtremite,
+  direLImport,
   importerLesWaypoints,
+  lireLeWaypoint,
   poser,
   poserUnePhase,
   remettre,
@@ -60,12 +62,67 @@ describe("les ravitaillements", () => {
   });
 
   it("les waypoints s'ajoutent sans doubler un point déjà posé", () => {
-    const liste = importerLesWaypoints(
+    const { liste, bilan } = importerLesWaypoints(
       [r("Départ", 0), r("Isola (saisi)", 37.6)],
       [{ nom: "Isola", km: 37.65 }, { nom: "Rimplas", km: 68.4 }, { nom: "sans km", km: null }],
       169.7,
     );
     expect(liste.map((x) => x.nom)).toEqual(["Départ", "Isola (saisi)", "Rimplas", "Arrivée"]);
+    expect(bilan).toEqual({ lus: 2, ajoutes: 1, completes: 0, deja: 1, assistance: 0 });
+  });
+
+  it("lisent l'assistance et la base que déclare le nom d'un waypoint", () => {
+    expect(lireLeWaypoint("Isola (assistance)")).toEqual({ nom: "Isola", assistance: true, base_majeure: false });
+    expect(lireLeWaypoint("Venanson [Base, assistance]")).toEqual({ nom: "Venanson", assistance: true, base_majeure: true });
+    expect(lireLeWaypoint("Chapelle (St Michel)")).toEqual({ nom: "Chapelle (St Michel)", assistance: false, base_majeure: false });
+    expect(lireLeWaypoint(undefined).nom).toBe("");
+  });
+
+  it("un GPX sur une course vide pose tout, assistance comprise", () => {
+    const { liste, bilan } = importerLesWaypoints(
+      [],
+      [{ nom: "St-Étienne de Tinée", km: 8.16 }, { nom: "Isola (assistance)", km: 39.15 }],
+      170.7,
+    );
+    expect(liste.map((x) => [x.nom, x.assistance])).toEqual([
+      ["Départ", false], ["St-Étienne de Tinée", false], ["Isola", true], ["Arrivée", false],
+    ]);
+    expect(bilan).toMatchObject({ lus: 2, ajoutes: 2, assistance: 1 });
+    expect(direLImport(bilan)).toBe("2 waypoints lus : 2 ajoutés — 1 marqué assistance.");
+  });
+
+  it("un waypoint complète le point déjà posé sans rien retirer de ce qui a été saisi", () => {
+    const { liste, bilan } = importerLesWaypoints(
+      [
+        r("Départ", 0),
+        r("Ravitaillement km 39,1", 39.1),
+        r("Venanson (assistance)", 85.3),
+        r("Levens", 125.2, { base_majeure: true, assistance: true, arret_min: 20 }),
+        r("Nice", 169.7),
+      ],
+      [
+        { nom: "Isola (assistance)", km: 39.15 },
+        { nom: "Venanson (assistance)", km: 85.31 },
+        { nom: "Levens", km: 125.22 },
+      ],
+      169.7,
+    );
+    expect(liste.map((x) => [x.nom, x.assistance, x.base_majeure])).toEqual([
+      ["Départ", false, false],
+      ["Isola", true, false],
+      ["Venanson", true, false],
+      ["Levens", true, true],
+      ["Nice", false, false],
+    ]);
+    expect(liste[3].arret_min).toBe(20);
+    expect(bilan).toMatchObject({ lus: 3, ajoutes: 0, completes: 2, deja: 1 });
+  });
+
+  it("disent quand il n'y avait rien à faire", () => {
+    const { bilan } = importerLesWaypoints([r("Départ", 0), r("Isola", 39.1, { assistance: true })],
+      [{ nom: "Isola (assistance)", km: 39.15 }], 0);
+    expect(direLImport(bilan)).toBe("1 waypoint lu : tous déjà posés, rien à changer.");
+    expect(direLImport({ lus: 0 })).toMatch(/aucun waypoint/);
   });
 
   it("se résument en une ligne", () => {

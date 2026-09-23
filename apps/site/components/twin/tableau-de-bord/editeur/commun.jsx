@@ -73,10 +73,10 @@ export function Inspecteur({ titre, children }) {
 }
 
 /**
- * Le bandeau qui suit une suppression. Rien n'est définitif pendant qu'il est là :
- * « Annuler » remet l'objet à sa place, à l'identique.
+ * Le bandeau qui suit une suppression ou un import. Rien n'est définitif pendant qu'il
+ * est là : « Annuler » remet la liste à l'identique. Sans rien à défaire, il annonce.
  */
-export function BandeauAnnuler({ message, surAnnuler, surFermer, duree = 8000 }) {
+export function BandeauAnnuler({ message, surAnnuler, surFermer, annulable = true, duree = 8000 }) {
   useEffect(() => {
     if (!message) return undefined;
     const minuteur = setTimeout(surFermer, duree);
@@ -90,9 +90,11 @@ export function BandeauAnnuler({ message, surAnnuler, surFermer, duree = 8000 })
       className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-full bg-brand-text px-5 py-2.5 text-sm text-brand-paper shadow-card"
     >
       <span>{message}</span>
-      <Button variant="secondary" size="sm" onClick={surAnnuler}>
-        Annuler
-      </Button>
+      {annulable ? (
+        <Button variant="secondary" size="sm" onClick={surAnnuler}>
+          Annuler
+        </Button>
+      ) : null}
     </div>
   );
 }

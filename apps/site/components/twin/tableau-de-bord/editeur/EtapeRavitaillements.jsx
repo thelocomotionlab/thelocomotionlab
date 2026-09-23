@@ -15,6 +15,7 @@ import { Button } from "@locomotionlab/ui";
 import { nombre } from "@/lib/twinTableauDeBord.mjs";
 import {
   deplacer,
+  direLImport,
   estUneExtremite,
   importerLesWaypoints,
   poser,
@@ -26,8 +27,21 @@ import ProfilAltimetrique from "@/components/twin/ProfilAltimetrique";
 
 import { Bloc, Case, ChampCourt, Inspecteur, Titre } from "./commun";
 
-function Rail({ course, trace, modifier }) {
+function Rail({ course, trace, modifier, annoncer }) {
   const waypoints = trace?.waypoints ?? [];
+
+  // Le geste part de la liste affichée, et se défait d'un clic.
+  const importer = () => {
+    const avant = course.ravitaillements ?? [];
+    const { liste, bilan } = importerLesWaypoints(avant, waypoints, course.geometrie?.distance_km);
+    if (bilan.ajoutes || bilan.completes || liste.length !== avant.length) {
+      modifier({ ravitaillements: liste });
+      annoncer(direLImport(bilan), () => modifier({ ravitaillements: avant }));
+    } else {
+      annoncer(direLImport(bilan));
+    }
+  };
+
   return (
     <div className="mt-5 flex flex-col gap-6">
       <Bloc titre="Poser">
@@ -35,25 +49,12 @@ function Rail({ course, trace, modifier }) {
           Un clic sur le profil pose un ravitaillement au kilomètre visé. Un glisser le
           déplace ; le kilomètre se recalcule.
         </p>
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={!waypoints.length}
-          onClick={() =>
-            modifier((c) => ({
-              ravitaillements: importerLesWaypoints(
-                c.ravitaillements ?? [],
-                waypoints,
-                c.geometrie?.distance_km,
-              ),
-            }))
-          }
-        >
+        <Button variant="secondary" size="sm" disabled={!waypoints.length} onClick={importer}>
           Importer les waypoints du GPX
         </Button>
-        <p className="text-xs text-brand-muted">
+        <p className="text-xs leading-relaxed text-brand-muted">
           {waypoints.length
-            ? `${waypoints.length} waypoint(s) dans la trace. Un point déjà posé n'est pas doublé.`
+            ? `${waypoints.length} waypoint${waypoints.length > 1 ? "s" : ""} dans la trace. « (assistance) » ou « (base) » en fin de nom ouvre le point à l'assistance ou en fait une base. Un point déjà posé n'est pas doublé : le waypoint le complète.`
             : course.gpx?.nom
               ? "La trace ne porte pas de waypoint."
               : "Pose d'abord la trace."}
