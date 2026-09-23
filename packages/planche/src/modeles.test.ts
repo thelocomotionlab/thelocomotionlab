@@ -8,6 +8,7 @@ import {
   CONTEXTE_PAR_DEFAUT,
   MODELES,
   changerModele,
+  flecheDuPied,
   instancier,
   instancierSurvol,
   modeleDe,
@@ -116,6 +117,22 @@ describe("les modèles", () => {
         expect(b.y, `${cle}/${e.nom}`).toBeGreaterThanOrEqual(f.zoneSure!.top - 0.5);
         expect(b.y + b.h, `${cle}/${e.nom}`).toBeLessThanOrEqual(f.zoneSure!.bottom + 0.5);
       }
+    }
+  });
+
+  it("pose la flèche du pied, seule, sur la ligne de la pagination et à droite", () => {
+    for (const cle of ["carrousel", "story"] as const) {
+      const f = FORMATS[cle];
+      const fleche = flecheDuPied(f);
+      const pagination = instancier("texte", { ...CTX, format: cle }).elements.find(
+        (e) => e.nom === "Pagination",
+      )!;
+      expect(fleche.contenu).toBe(":fleche:");
+      expect(fleche.alignement).toBe("droite");
+      expect(fleche.y).toBeCloseTo(pagination.y, 6);
+      expect(fleche.couleur).toBe((pagination as ElementTexte).couleur);
+      expect((fleche.x + fleche.l) * f.width).toBeCloseTo(f.width - MARGE, 6);
+      expect(fleche.x).toBeGreaterThan(pagination.x + pagination.l);
     }
   });
 

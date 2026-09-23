@@ -186,6 +186,7 @@ export {
   instancier,
   instancierSurvol,
   mobilier,
+  flecheDuPied,
   modeleDe,
   modelesPour,
   remettreLeModele,
