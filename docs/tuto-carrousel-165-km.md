@@ -71,8 +71,11 @@ lui, prend toute la largeur du profil.
    - :cible: affûtage, S16 → S17
    ```
 
-3. **Éléments → Semaines**, puis **POSITION → Y `700`, Hauteur `540`**.
-4. **DONNÉES** : colle ton bloc tel quel dans le champ —
+3. Dans le rail de gauche, **Éléments** — pas **Données** : ce tiroir-là ne sert qu'à la trace GPX —
+   puis, dans sa rubrique **DONNÉES**, **Semaines**. Le graphique se pose sur la planche, déjà
+   choisi. Dans l'inspecteur, à droite : **POSITION → Y `700`, Hauteur `540`**.
+4. **Toujours dans l'inspecteur, à droite** : **RÉGLAGES → DONNÉES**, le grand champ de texte en
+   tête. Remplace ce qu'il contient par ton bloc, tel quel —
 
    ```
    abscisse: ["S1", "S2", "S3", …, "S17"]
