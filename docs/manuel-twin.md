@@ -4,10 +4,10 @@
 > La méthode scientifique (VC, exposant d'endurance, durabilité, Minetti, pacing) est dans
 > [`docs/twin-theory.md`](./twin-theory.md) — ce document-ci ne couvre que **l'usage**.
 >
-> Dernière mise à jour (2026-09-15) : outils de la Phase 0 du chantier v2 (tableau de
-> référence et avant/après du registre, radiographie arrêts/nuit des vrais ultras, passages
-> réels aux points de contrôle). Avant : mode backtest `--until`, outils de registre, lecture
-> des deux bandes (intervalles conformes par défaut depuis le 2026-07-03).
+> Dernière mise à jour (2026-09-23) : le tableau de bord complet — courses, plans, page de
+> l'athlète, registre vivant (§4, §4 bis, §7 bis). Avant (2026-09-15) : outils de la Phase 0
+> du chantier v2 (tableau de référence et avant/après du registre, radiographie arrêts/nuit
+> des vrais ultras, passages réels aux points de contrôle).
 
 ## 1. À quoi ça sert
 
@@ -95,7 +95,7 @@ Le `preview` imprime un JSON (verdict, prédiction, jumeau, parcours) + un résu
 | `fiches.pdf` | une fiche par poste d'assistance, à découper et à donner (A4 portrait, deux colonnes de quatre) |
 | `plan.ics` | le calendrier : un événement par point d'assistance |
 | `plan.gpx` | la trace avec un point de passage horodaté par point d'assistance |
-| `annexe.json` | l'annexe en ligne |
+| `annexe.json` | ce que la page de l'athlète met en page : les chiffres du rapport, ses phrases, ses figures, le profil allégé |
 
 Le dossier de sortie se réutilise sans précaution : les auxiliaires LaTeX de la compilation
 précédente sont effacés avant chaque passe (un `.aux` d'un ancien gabarit faisait mourir XeLaTeX
@@ -103,18 +103,15 @@ sur « Undefined control sequence » en accusant le document neuf).
 
 `--ref` fixe la référence du rapport ; sans elle, le moteur en compose une du genre
 `LL-NICE26-VAL-A3F9C1` : course, année de la course, athlète — et **six caractères tirés au hasard**.
-Les trois premières parts servent à retrouver un rapport dans un dossier ou au registre ; la dernière,
-et elle seule, rend l'adresse de l'annexe non devinable. Pour publier l'annexe : copier `annexe.json` dans
-`apps/site/public/twin-annexes/<référence>.json` et déployer le site ; la page
-`/services/twin/annexe/<référence>` est prérendue, en `noindex`, hors navigation, hors plan de site et
-hors recherche. La retirer, c'est supprimer le fichier et redéployer.
+Les trois premières parts servent à retrouver un rapport dans un dossier ou au registre ; la dernière
+rend la référence difficile à deviner — mais ce n'est plus elle qui garde la page : c'est la **clé**
+que le lien porte (`?k=…`), dérivée de la référence par `TWIN_KEYS_SECRET`. Pour publier : `pnpm
+course publier` importe le plan dans le tableau de bord, et « Publier » (écran Plan) ouvre la page
+`/services/twin/plan/<référence>` — en `noindex`, hors navigation, hors plan de site (§7 bis).
 
-La page d'annexe porte un **formulaire** qui personnalise le tableau de marche : temps d'arrêt et
-recommandation de chaque portion, débits de nutrition, ce que l'assistance prépare. Les heures de
-passage se recalculent à la frappe, avec la règle d'arrêts du moteur (`apps/site/lib/twinTableauMarche.js`
-rejoue `build_pacing`) : ce qui s'affiche est ce que le prochain PDF imprimera. La page est prérendue
-et n'écrit rien : le formulaire rend le tableau à imprimer, et un bloc `{reglages, crew, nutrition}`
-(§6) à recoller dans la spec de course avant de relancer le rendu.
+Sur sa page, l'athlète règle son tableau de marche — temps d'arrêt de chaque ravitaillement,
+notes de son assistance, débits de nutrition — puis « Refaire mes documents » : le moteur rejoue
+ces réglages sur le dossier de la version publiée, avec le même code que le rapport d'origine.
 
 Les points d'assistance viennent de `crew` dans la spec de course (§6), puis de
 `crew_access_indices` ; sans déclaration, le moteur prend les bases majeures et la feuille **dit**
@@ -134,20 +131,21 @@ passée pour comparer sa prédiction au temps réel. C'est l'outil du registre d
 
 ## 4. Utilisation via l'API (HTTP)
 
-L'API FastAPI est **interne** en prod, sauf trois familles de chemins, servis sous
+L'API FastAPI est **interne** en prod, sauf deux familles de chemins, servis sous
 `api.thelocomotionlab.com/twin/*` (cf. `infra/caddy/conf.d/api.caddy`) :
 
 | Servi au dehors | Pour qui | Serrure |
 |---|---|---|
 | `/twin/tableau-de-bord/*` | Valentin | `Authorization: Bearer $TWIN_ADMIN_TOKEN` + Cloudflare Access devant les pages (§4 bis) |
 | `/twin/plans/*` | l'athlète | une clé HMAC dans son lien (`?k=…`) |
-| `/twin/jobs/*` | les deux écrans | rien : un id de job ne se devine pas, et ce qu'il rend ne porte ni archive ni chemin |
 
-Caddy retire le préfixe `/twin` au passage : le moteur, lui, sert `/tableau-de-bord/*`,
-`/plans/*` et `/jobs/*`. **Tout le reste** — `POST /preview`, `POST /jobs`, `POST /fiche`,
-l'ingestion et les archives — n'est joignable que depuis le réseau Docker (les archives de la
-cohorte arrivent sur le VPS par le service `twin-depot`, jamais par cette API). En local, on
-expose le tout pour tester :
+Caddy retire le préfixe `/twin` au passage : le moteur, lui, sert `/tableau-de-bord/*` et
+`/plans/*`. Un job se suit sous la serrure de celui qui l'a lancé —
+`/tableau-de-bord/jobs/{id}` pour Valentin, `/plans/{ref}/jobs/{id}?k=…` pour l'athlète qui a
+amendé son plan ; `/jobs/*` ne sort plus. **Tout le reste** — `POST /preview`, `POST /jobs`,
+`POST /fiche`, l'ingestion et les archives — n'est joignable que depuis le réseau Docker (les
+archives de la cohorte arrivent sur le VPS par le service `twin-depot`, jamais par cette API).
+En local, on expose le tout pour tester :
 
 ```bash
 docker compose -f services/twin-engine/compose.local.yml up --build
@@ -171,8 +169,19 @@ Endpoints :
 | `GET · POST /tableau-de-bord/courses` | la bibliothèque ; `POST` crée un brouillon (`nom`, `edition`, `depart_le`) ou importe une spec du CLI (`race_spec`) |
 | `GET · PUT /tableau-de-bord/courses/{id}` | l'objet entier, à chaque enregistrement |
 | `POST /tableau-de-bord/courses/{id}/gpx` | la trace → profil lissé, géométrie, waypoints trouvés, position, heures de soleil |
+| `GET /tableau-de-bord/courses/{id}/trace` | la trace déjà posée, relue avec les ravitaillements du jour : profil, waypoints, segments |
 | `POST …/publish` · `POST …/duplicate` · `DELETE` | sortir du brouillon ; dupliquer en édition suivante ; supprimer (refusé si un plan y est rattaché) |
 | `POST /tableau-de-bord/plans/import` | un dossier fait au CLI entre comme s'il était né ici |
+| `GET · POST /tableau-de-bord/plans` · `GET · DELETE …/plans/{ref}` | les plans ; `POST` crée le plan et lance sa version 1 ; `GET` rend tout l'écran Plan en un appel |
+| `POST …/plans/{ref}/generate` · `POST …/restore/{n}` | une nouvelle version avec d'autres réglages ; revenir à une version antérieure |
+| `POST …/plans/{ref}/publish` · `POST …/send` | poser les deux liens ; envoyer l'email avec le PDF joint (`{lien}` obligatoire dans le corps) |
+| `PUT …/plans/{ref}/result` | le temps officiel ou l'abandon, après le départ |
+| `GET …/plans/{ref}/{pdf,feuille.pdf,ics,gpx}?version=n` | les documents d'une version |
+| `GET /tableau-de-bord/requests` · `POST …/requests/{id}/answer` | les demandes des athlètes, et la réponse qui repart par email |
+| `GET /tableau-de-bord/registre` · `…/registre/export` | le registre vivant ; l'export au format de `docs/twin-registre-couverture.json` |
+| `GET /tableau-de-bord/jobs/{id}` | l'état d'une génération, d'un amendement ou d'une ingestion |
+| `GET /plans/{ref}?k=…` et ses documents | la page de l'athlète : la clé de partage lit le cadre partagé, la clé privée lit tout |
+| `POST /plans/{ref}/amend` · `…/requests` · `PUT …/result` (clé privée) | amender ses arrêts, notes et débits ; demander autre chose ; saisir son temps |
 
 **Une surprise à connaître dans l'éditeur : la distance change quand on saisit le carnet
 de route.** Sans ravitaillements, le moteur fait confiance à la longueur en trois dimensions
@@ -181,7 +190,6 @@ non. Avant, c'est ce que le GPS a mesuré ; après, ce que l'organisateur annonc
 ne se recale sur rien : il se mesure, et c'est pourquoi l'écart avec le carnet officiel ne se
 calcule que sur lui.
 
-Les routes du tableau de bord arrivent par phases ; celles qui existent sont ci-dessus.
 Le contrat complet — objets, noms de champs, routes par écran — est dans
 [`twin-tableau-de-bord-api.md`](./twin-tableau-de-bord-api.md).
 
@@ -191,9 +199,10 @@ cf. [`secrets.md`](./secrets.md) et `infra/.env.example`) :
 | Variable | Sans elle |
 |---|---|
 | `TWIN_ADMIN_TOKEN` | les routes `/tableau-de-bord/*` répondent **404** : elles n'existent pas. C'est la SEULE serrure de l'API : Cloudflare Access ne couvre que les pages, sur un autre domaine |
-| `TWIN_KEYS_SECRET` | aucune clé de plan n'est posée, aucune page d'athlète ne répond |
+| `TWIN_KEYS_SECRET` | aucune clé de plan n'est posée, aucune page d'athlète ne répond. Le CLI la lit aussi : sans elle, le QR d'un rapport fabriqué en local mène à la page **sans** clé, donc à une 404 (le CLI le signale) |
 | `TWIN_INTERNAL_SECRET` | le dépôt ne peut plus prévenir le moteur ; la File rattrape au « rafraîchir » |
 | `TWIN_DEPOT_ADMIN_TOKEN` | le moteur ne peut pas aller chercher une archive sur le dépôt |
+| `SMTP_HOST` · `SMTP_PORT` · `SMTP_USER` · `SMTP_PASS` · `SMTP_FROM` | « Envoyer » et la réponse à une demande répondent **502** ; rien n'est marqué envoyé |
 
 Une route d'administration sans jeton ou avec un mauvais jeton répond **401 sans détail**. Une
 page d'athlète avec une mauvaise clé, ou une référence inconnue, répond **404** — jamais 403 :
@@ -204,6 +213,14 @@ Les jobs et leurs sorties vivent dans le volume de données, un répertoire par 
 (`/data/jobs/{id}/` : `job.json` + le PDF). Aucune base de données : le fichier est la vérité,
 et l'index en mémoire se reconstruit au démarrage. Les archives brutes envoyées sont purgées
 après parsing.
+
+Un plan vit sous `/data/plans/{ref}/` : `plan.json`, et un répertoire par version (`v1/`,
+`v2/`…) qui porte son `dossier.json`, le PDF unique (rapport, feuille, fiches), la feuille
+seule, l'ICS, le GPX, l'`annexe.json` que lit la page de l'athlète et un `version.json` (les
+réglages, les amendements et la composition de base sur laquelle ils se rejouent). La page de
+l'athlète sert la version **publiée** ; le tableau de bord montre la version **courante** —
+une nouvelle génération ne se voit pas dehors avant « Publier ». Les entrées de registre des
+plans courus puis supprimés restent sous `/data/registre/{ref}.json`.
 
 ### `POST /rendu` — refaire un rapport amendé
 
@@ -245,11 +262,14 @@ Trois étapes, une fois pour toutes.
    posée sur `services/twin` prendrait aussi la page de dépôt de la cohorte, qui doit rester
    ouverte. Poser le chemin exact.
 2. **Policy** : `Allow`, Include → **Emails** → l'adresse de Valentin. Une seule règle, une
-   seule adresse. Session : 24 h suffit ; au-delà, un poste laissé ouvert reste ouvert.
-3. **Identity** : le *One-time PIN* (code par email) suffit et n'ajoute aucun compte tiers.
+   seule adresse. *Policy session duration* : 1 mois — c'est elle qui fait foi sur les durées
+   de l'application et du compte.
+3. **Identity** : Google (un fournisseur OAuth ajouté dans Zero Trust → Settings →
+   Authentication). Le *One-time PIN* marche aussi, mais redemande un code par email à chaque
+   session.
 
 Vérification : ouvrir `https://thelocomotionlab.com/services/twin/tableau-de-bord` dans une
-fenêtre privée. Access doit demander l'email **avant** que la page s'affiche. Puis ouvrir
+fenêtre privée. Access doit demander la connexion **avant** que la page s'affiche. Puis ouvrir
 `https://thelocomotionlab.com/services/twin/cohorte` dans la même fenêtre : elle doit s'afficher
 **sans** rien demander — sinon l'application couvre trop large, et les athlètes ne peuvent plus
 déposer.
@@ -269,15 +289,33 @@ haut à droite, l'efface de la machine.
 | Écran | Adresse |
 |---|---|
 | File | `/services/twin/tableau-de-bord` |
-| Athlète | `/services/twin/tableau-de-bord/athletes?id=…` |
+| Athlètes, et la fiche d'un athlète | `/services/twin/tableau-de-bord/athletes`, `…/athletes?id=…` |
+| Courses, et l'éditeur | `/services/twin/tableau-de-bord/courses`, `…/courses?id=…&etape=trace\|ravitaillements\|horloge` |
+| Plan | `/services/twin/tableau-de-bord/plan?ref=…` ; un nouveau plan : `…/plan?athlete=…` |
+| Registre | `/services/twin/tableau-de-bord/registre` |
+
+L'éditeur enregistre seul, à chaque changement (l'objet entier, 800 ms après la dernière
+frappe) ; le moteur renvoie la géométrie et les heures de soleil recalculées, que l'écran
+reprend telles quelles. « Enregistrer » ne fait que sortir la course du brouillon.
+
+**La page de l'athlète** vit ailleurs : `/services/twin/plan/{ref}?k=…`, hors du chemin que
+couvre Access — l'athlète et son assistance l'ouvrent sans compte. C'est la seule route
+dynamique du site (runtime edge) : elle lit l'API à chaque ouverture. La clé de partage ouvre
+le cadre partagé (les trois arrivées, la nuit sur le profil, où passe le temps, les postes
+d'assistance, les documents) ; la clé privée y ajoute « Toi seul » (le tableau de marche et
+ses arrêts à régler, les notes d'assistance, les débits, une demande au laboratoire, le
+jumeau) et, après le départ, la saisie du temps. Le QR du rapport porte la clé privée.
 
 L'identifiant d'un athlète est dans la query et non dans le chemin : une route dynamique
 demanderait au build d'énumérer les athlètes, qui arrivent après lui.
 
 **Non-indexation** : balise `robots` dans chaque page, `X-Robots-Tag` et
 `Referrer-Policy: no-referrer` dans `apps/site/public/_headers`, préfixe interdit dans
-`robots.txt`, absent du plan de site, et aucun lien depuis le site public. Les quatre gardes
-sont tenues par `apps/site/lib/nonIndexation.test.js`.
+`robots.txt`, absent du plan de site, et aucun lien depuis le site public. La page de
+l'athlète est une fonction, pas un fichier statique : `_headers` ne s'applique pas à ses
+réponses, ses en-têtes (`X-Robots-Tag`, `Referrer-Policy`, `Cache-Control: private,
+no-store`) viennent de `next.config.mjs` (`PAGES_DE_PLAN`). Toutes ces gardes sont tenues par
+`apps/site/lib/nonIndexation.test.js`.
 
 **Charte** : `apps/site/lib/charteTableauDeBord.test.js` refuse toute couleur, police, ombre ou
 arrondi en dur dans ces fichiers, et toute annonce de durée pour une ingestion. Il est scopé au
@@ -292,10 +330,13 @@ passent par le miroir JS des tokens, et qu'une garde à la lettre condamnerait �
   de l'athlète) ; poids, notes privées, descriptions et identifiants d'appareil ne sont **jamais lus**.
 - En local, les données de test vont dans `services/twin-engine/local-data/` (git-ignoré).
 - Le **dossier** d'un rapport (`dossier.json`, cf. §7 bis) survit à l'archive, parce que la page
-  d'annexe doit pouvoir refaire les documents. Il ne porte aucune donnée brute d'activité : ses
-  résumés sont les agrégats que l'annexe publie déjà. Il vit sur le volume du moteur
-  (`/data/dossiers/`), jamais dans le dépôt ni sur le site, et se supprime comme le reste quand
-  le SAV est clos (`rm /data/dossiers/<référence>.json`).
+  de l'athlète doit pouvoir refaire les documents. Il ne porte aucune donnée brute d'activité :
+  ses résumés sont les agrégats que l'annexe publie déjà. Il vit sur le volume du moteur, dans
+  la version du plan (`/data/plans/<référence>/v<n>/`), jamais dans le dépôt ni sur le site, et
+  part avec le plan quand on le supprime depuis l'écran Plan ou la fiche de l'athlète.
+- **Supprimer un athlète** emporte son archive, son jumeau, ses plans, leurs demandes et leurs
+  pages. Le registre garde les entrées de ses courses courues, sous son pseudonyme
+  (`/data/registre/`) : c'est la couverture du moteur, pas son dossier.
 
 ## 6. Décrire une course cible (`--race`, optionnel)
 
@@ -332,7 +373,7 @@ déduite des chiffres du segment. Ce que le total devient dépend du modèle d'a
 en `spec` les arrêts s'ajoutent au mouvement (l'arrivée recule d'autant) ; en `personal` le budget
 vient des courses passées de l'athlète, l'arrêt écrit est retenu tel quel et le reste se répartit sur
 les autres points ; en `carved` l'horloge **est** le temps prédit et un arrêt plus long, c'est autant
-de moins en mouvement. Le formulaire de la page d'annexe (§3) écrit exactement ce bloc.
+de moins en mouvement. Les amendements de la page de l'athlète (§7 bis) écrivent exactement ce bloc.
 
 ### Technicité du terrain (`technicity_pct` / `--technicity`)
 
@@ -528,26 +569,37 @@ vocabulaire des fenêtres (voir ci-dessous). Sans objectif, tout est **exactemen
 
 ## 7 bis. Le jour de course : fabriquer, publier, recommencer
 
-Trois commandes, depuis la racine du dépôt. Elles enveloppent le CLI, gardent la **référence**
-stable d'un run à l'autre et déposent l'annexe au bon endroit.
+Deux chemins mènent au même plan. **Le tableau de bord** (écran Plan) le génère depuis le
+jumeau gardé à l'ingestion : c'est le chemin ordinaire. **Le CLI** le fabrique en local depuis
+l'archive, et l'importe ensuite — utile quand on veut une option que l'écran n'expose pas
+(`TOLERANCE`, un `--set`). Un plan importé entre comme s'il était né dans le tableau de bord :
+publiable, envoyable, amendable. Le golden (`tests/test_generation.py`) tient que les deux
+chemins donnent le même dossier à l'octet et les mêmes pages de rapport.
+
+Côté CLI, trois commandes, depuis la racine du dépôt. Elles enveloppent le CLI et gardent la
+**référence** stable d'un run à l'autre.
 
 ```bash
 pnpm course init nice        # crée la fiche local-data/courses/nice.conf et TIRE la référence
 pnpm course rapport nice     # (re)fabrique rapport, feuille, fiches, ICS, GPX, annexe
-pnpm course publier nice     # dépose l'annexe et le dossier, commit, déploie le site
+pnpm course publier nice     # importe le plan dans le tableau de bord (une version de plus)
 pnpm course nice             # les deux ; « liste » montre les courses déclarées
 ```
 
 ### Pourquoi une fiche, et pourquoi elle tient la référence
 
 La référence (`LL-NICE26-VAL-A3F9C1`) est **le QR imprimé sur le rapport** et **l'adresse de la
-page en ligne**. Sans fiche, chaque `full` en tire une neuve : la feuille imprimée la veille
-pointerait vers une page qui n'existe pas. La fiche la fige à l'init, et `rapport` la repasse au
-CLI avec `--ref` — refabriquer le dossier dix fois ne change ni le QR, ni l'adresse.
+page en ligne** (`/services/twin/plan/<référence>?k=<clé privée>`). Sans fiche, chaque `full` en
+tire une neuve : la feuille imprimée la veille pointerait vers une page qui n'existe pas. La
+fiche la fige à l'init, et `rapport` la repasse au CLI avec `--ref` — refabriquer le dossier dix
+fois ne change ni le QR, ni l'adresse.
 
-La fiche vit dans `local-data/`, **hors du dépôt** : un rapport est une donnée d'athlète. Seule
-l'annexe en sort, déposée dans `apps/site/public/twin-annexes/` — elle ne porte que des agrégats,
-des phrases et les figures.
+Le QR porte la clé privée : le rapport doit être fabriqué avec `TWIN_KEYS_SECRET` dans
+l'environnement, la même valeur que sur le serveur. Sans elle, le CLI le dit, et le QR mène à
+une page qui répond 404.
+
+La fiche vit dans `local-data/`, **hors du dépôt** : un rapport est une donnée d'athlète. Rien
+de ce que fabrique `rapport` ne va dans le dépôt ni sur le site.
 
 ```bash
 ATHLETE="Val"
@@ -558,28 +610,31 @@ TARGET="30h"        # vide = le plan suit la prédiction
 TOLERANCE="3.34"    # demi-largeur de la fenêtre, en % du temps CUMULÉ
 TECHNICITE=""
 REF="LL-NICE26-VAL-A3F9C1"
+ATHLETE_ID=""       # facultatif : rattache le plan à un athlète du tableau de bord
+COURSE_ID=""        # facultatif : rattache le plan à une course de la bibliothèque
 ```
 
-### La boucle : amender depuis la page, récupérer les documents refaits
+### La boucle : publier, envoyer, laisser l'athlète amender
 
 1. `pnpm course rapport <nom>` → les sorties dans `local-data/out/<nom>/`.
-2. `pnpm course publier <nom>` → la page `…/annexe/<référence>` en ligne avec son formulaire,
-   **et** `dossier.json` posé sur le volume du moteur sous cette référence.
-3. Sur cette page, le formulaire ne change que ce que tu vois : arrêts par ravitaillement,
-   consignes, eau et glucides, notes d'assistance. Il recalcule le tableau de marche dans le
-   navigateur, à la règle d'arrêts du moteur — l'heure affichée est celle du prochain PDF.
-4. **« Refaire mes documents »** renvoie ces réglages au moteur, qui rend le jeu complet en
-   un fichier compressé : livret, feuille à emporter, fiches d'assistance, calendrier, trace.
-   Ce sont les documents, pas un aperçu : ils sortent du même code que le rapport d'origine.
-5. La page ne retient rien. En la rouvrant, tu repars du plan du rapport ; le fichier
-   téléchargé, lui, est à toi. Autant d'allers-retours que tu veux, même la veille au soir.
+2. `pnpm course publier <nom>` → `POST /twin/tableau-de-bord/plans/import` : le dossier, le
+   PDF unique (rapport, feuille, fiches), la feuille seule, l'ICS, le GPX et l'annexe. Chaque
+   import fait une version de plus ; rien n'est encore visible dehors.
+3. Écran Plan → **Publier** : la page de l'athlète sert désormais cette version, et les deux
+   liens (privé, partage) sont posés. **Envoyer** part par email, PDF joint.
+4. Sur sa page, l'athlète change ce qu'il voit : ses arrêts, les notes de son assistance, ses
+   débits. **« Refaire mes documents »** refait le jeu complet de la version publiée depuis son
+   dossier — même numéro de version, mêmes liens. L'amendement se garde à part de la
+   composition de Valentin : il se rejoue sur la version suivante quand elle est publiée, et
+   l'athlète peut le retirer.
+5. Après le départ, la page se fige ; l'athlète (ou Valentin, qui fait foi) saisit le temps
+   officiel, et la course entre au registre.
 
-Ce que ce chemin ne peut pas changer : la prédiction, le jumeau, la validation croisée, le
-parcours, l'objectif. Tout cela vient de l'archive, qui n'est plus là — et c'est voulu :
-s'arrêter cinq minutes de plus à un ravitaillement ne change pas ce que tu sais faire. Pour
-ces choses-là, il faut refabriquer : reporte dans la spec de course ou dans la fiche
-(`TARGET`, `TOLERANCE`, `TECHNICITE`) et relance les deux commandes. Même référence, même QR,
-page mise à jour au même endroit.
+Ce que la page ne peut pas changer : la prédiction, le jumeau, la validation croisée, le
+parcours, l'objectif. S'arrêter cinq minutes de plus à un ravitaillement ne change pas ce que
+tu sais faire. Pour ces choses-là, l'athlète envoie une **demande** depuis sa page ; elle entre
+dans la File, et la réponse repart par email. Valentin relance alors une version (écran Plan,
+ou `rapport` puis `publier`), la regarde, et la publie.
 
 #### Le dossier, et où il va
 
@@ -588,22 +643,18 @@ l'archive : la trace du parcours compressée, le carnet de route, le jumeau, la 
 prédiction et la garde de suffisance. Aucune donnée brute d'activité — ses résumés sont les
 agrégats que l'annexe publie déjà.
 
-Il ne va **ni dans le dépôt ni sur le site** : `publier` l'**importe dans le tableau de bord**
-(`POST /twin/tableau-de-bord/plans/import`), avec les documents que l'athlète emporte. Le plan
-fabriqué ici entre alors comme s'il y était né — publiable, envoyable, amendable — et le moteur
-ne recalcule rien : le dossier fait foi.
+Il ne va **ni dans le dépôt ni sur le site** : il vit sur le volume du moteur, dans la version
+du plan qui l'a produit (`/data/plans/<référence>/v<n>/dossier.json`), et part avec le plan
+quand on le supprime.
 
-Il faut `TWIN_ADMIN_TOKEN` dans l'environnement (cf. [`secrets.md`](./secrets.md)) ; sans lui,
-`publier` dit ce qu'il aurait envoyé et ne touche à rien. `TWIN_API` surcharge l'adresse de
+`publier` demande `TWIN_ADMIN_TOKEN` dans l'environnement (cf. [`secrets.md`](./secrets.md)) ;
+sans lui, il dit ce qu'il aurait envoyé et ne touche à rien. `TWIN_API` surcharge l'adresse de
 l'API en développement.
 
 > Avant le tableau de bord, `publier` posait le dossier par `ssh` et un `docker exec` à
-> distance. C'était une porte de plus à garder, sur le poste de travail, pour faire ce qu'une
-> route fait mieux — et c'est pour ça qu'elle n'est plus là.
-
-Côté site, rien à ouvrir : l'adresse de l'API vit en clair dans `apps/site/lib/twinRendu.mjs`
-(`NEXT_PUBLIC_TWIN_RENDU_API` la surcharge en développement, une valeur vide éteint le bouton
-et laisse le téléchargement des réglages en JSON comme repli).
+> distance, et déposait l'annexe dans `apps/site/public/twin-annexes/` pour la page
+> `…/annexe/<référence>`. La page de l'athlète (`…/plan/<référence>`) la remplace ; l'ancienne
+> page et la route `POST /rendu` restent en place jusqu'à leur retrait.
 
 ### Ce que la fenêtre d'objectif fait aux trois colonnes
 

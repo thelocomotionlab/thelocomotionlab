@@ -18,6 +18,93 @@ File et Athlète.
 golden déterministe intact ; `pnpm -F twin-depot build` et `test` 34 passés ;
 `pnpm -F site build lint test` 496 passés ; `packages/ui` tsc et 16 tests.
 
+## Phases 2 à 4 — courses, plans, page de l'athlète, registre (branche `claude/compassionate-mccarthy-bespjj`)
+
+La bibliothèque et l'éditeur de course (Trace, Ravitaillements, Horloge et terrain) · la
+génération depuis le jumeau gardé, les versions, « Publier », « Envoyer », le PDF unique ·
+la page de l'athlète `/services/twin/plan/[ref]` et ses amendements · le registre vivant.
+
+**Vert à la fin** : `pytest services/twin-engine` 695 passés / 2 sautés (XeLaTeX présent),
+golden tableau de bord contre CLI tenu à l'octet ; `pnpm -F site lint test build` 556 passés ;
+`npx @cloudflare/next-on-pages` construit, `/services/twin/plan/[ref]` en route edge ;
+`packages/ui` tsc et 16 tests ; `apps/studio` tsc.
+
+### Ce qui a divergé
+
+- **Les phases** (question ouverte de la Phase 1) : une phase commence **sur un
+  ravitaillement** — l'éditeur aimante le glisser au plus proche — et court jusqu'à la
+  suivante ou à l'arrivée ; `au_km` se déduit. La traduction vers `RaceSpec.Phase` est donc
+  sans perte, et une phase hors ravitaillement est refusée à l'enregistrement (422), pas à la
+  génération.
+- **`version_publiee`**, absent du §3.3 : sans lui, générer une v2 pour essayer un réglage la
+  montrerait aussitôt à l'athlète. La page sert la version publiée, le tableau de bord la
+  courante.
+- **`depart_le` sur le Plan** : un plan importé du CLI n'a pas toujours de course en
+  bibliothèque, et sans départ il ne saurait jamais qu'il est figé.
+- **La base et les amendements** : `version.json` garde la composition de Valentin à part
+  des amendements de l'athlète. Ils se rejouent sur la version suivante quand elle est
+  publiée, et l'athlète peut en retirer un sans effacer ce que Valentin a posé.
+- **Des routes que le contrat ne nomme pas** : `GET /courses/{id}/trace` (rouvrir l'éditeur
+  relit la trace avec les ravitaillements du jour), `GET /tableau-de-bord/jobs/{id}` et
+  `GET /plans/{ref}/jobs/{id}?k=…` (un job se suit sous la serrure de celui qui l'a lancé).
+  `/twin/jobs/*` ne sort plus par Caddy.
+- **`niveau` hors du lien de partage** : il se lit dans le verdict, que le §5.8 réserve à la
+  clé privée.
+- **La maquette comptait « 16 posés » pour Nice**, dont la liste porte 17 points : le départ
+  ne se compte pas. L'éditeur et la bibliothèque disent maintenant le même nombre.
+
+### Ce que Claude a choisi à la place de Valentin
+
+| Choix | Pourquoi |
+|---|---|
+| La page de l'athlète en runtime **edge** | C'est la seule route dynamique du site : la référence arrive après le build. `next-on-pages` l'exige en edge ; ses en-têtes (`noindex`, `no-referrer`, `no-store`) viennent donc de `next.config.mjs`, `public/_headers` ne s'appliquant qu'aux fichiers statiques. |
+| `vercel@50.44.0` épinglé en devDependency du site | `next-on-pages` lance `npx vercel build`, qui prend la version locale si elle existe, la dernière sinon. La 59.x rejette toutes les routes : le build du site cassait, route edge ou pas. Le studio a le même script et n'est pas épinglé. |
+| Le QR du rapport porte la **clé privée** | Sans clé, le QR menait à une page qui répond 404. Le CLI la dérive de `TWIN_KEYS_SECRET` et prévient quand il ne l'a pas. |
+| Un seul PDF (rapport, feuille, fiches) assemblé par `pypdf` | Un fichier à joindre, un seul à imprimer ; la feuille seule reste téléchargeable. |
+| `course.sh publier` ne fait plus qu'importer | Le dossier, les documents et l'annexe entrent dans le tableau de bord ; « Publier » se fait depuis l'écran Plan, comme pour un plan généré. |
+| Des primitives de formulaire dans `packages/ui` (`BoutonTexte`, `Segments`, `ChampCompact`, `Case`, `Choix`, `Etapes`) | La charte vient de `packages/ui` et de nulle part ailleurs ; le test de charte refuse maintenant les `<button>` et `<input>` bruts dans les écrans du tableau de bord (sauf le champ fichier, la coquille et le profil). |
+| La politique d'arrêts du moteur dite en chiffres par le moteur (`politique_standard`) | L'écran Plan ne recopie aucune constante de la config. |
+| L'annexe garde le profil allégé (600 points) et « où passe le temps » en clair | La page met en page, elle ne recalcule rien. |
+
+### Trouvé en chemin, et corrigé
+
+- **Les bases majeures tombaient un ravitaillement trop tôt** : Collelongue, Rimplas et
+  Utelle au lieu d'Isola, Venanson et Levens. `RaceSpec` compte `major_base_indices` en
+  **segments** (le segment k finit au ravitaillement k+1), là où `crew`, `reglages` et
+  `phases` comptent en ravitaillements ; la traduction confondait les deux. L'erreur étant
+  symétrique, l'aller-retour revenait intact et les tests passaient. Un test fixe maintenant
+  le sens par les noms.
+- **Le dossier n'était pas identique à l'octet** entre deux fabrications : l'en-tête gzip
+  de la trace portait l'heure. `mtime=0`, et le golden tient.
+- **La File et la fiche perdaient un plan** dont l'athlète n'avait pas le reflet dans sa
+  liste `plans` : l'athlète repassait « à composer » avec un plan publié. C'est désormais
+  l'`athlete_id` du plan qui fait foi ; la liste n'est plus qu'un reflet.
+- **Supprimer un athlète laissait ses demandes** (et leurs notes) sur le volume, et effaçait
+  ses entrées de registre alors que le contrat dit qu'elles restent. Les demandes partent ;
+  les entrées des courses courues sont gardées sous `/data/registre/`, sous pseudonyme — de
+  même quand on supprime un plan couru. La suppression attend qu'aucun job ne tourne.
+- **Du LaTeX sur la page de l'athlète** : « 3\texttimes plus de temps »,
+  « \textasciitilde 9,9 km/h ». `detex` connaît maintenant `\texttimes`,
+  `\textasciitilde`, `\textasciicircum`, `\LLfleche` et `\ieme`, et un test balaie toute
+  l'annexe.
+- **Une minute d'écart entre la page et le PDF** : l'annexe arrondissait les heures à deux
+  décimales (36 s). Elle en garde quatre.
+- **Un identifiant pouvait sortir du volume** (`supprimer("..")`) : les collections refusent
+  maintenant tout id qui compose un chemin.
+
+## À vérifier sur la vraie machine (Phases 2 à 4)
+
+- **L'envoi** : le moteur lit `SMTP_*` dans `infra/.env`, comme `atelier-api`. Un plan
+  envoyé à soi-même le prouve ; sans relais, « Envoyer » répond 502 et rien n'est marqué
+  envoyé.
+- **Access ne couvre pas la page de l'athlète** : `/services/twin/plan/…` doit s'ouvrir dans
+  une fenêtre privée sans rien demander.
+- **`docker stats` pendant une génération** : XeLaTeX puis l'assemblage du PDF, sous la même
+  borne de 3 Go que l'ingestion.
+- **L'ordre du déploiement** : le moteur (image) et Caddy (`api.caddy` a changé) **avant** le
+  site — la page de l'athlète et les nouveaux écrans appellent des routes que l'ancien moteur
+  n'a pas.
+
 ---
 
 ## Ce qui a divergé
@@ -123,10 +210,12 @@ plusieurs centaines de Mo jusqu'au rapatriement. C'est là que ça se remplira e
 
 ## Reste à faire
 
-- **Cloudflare Access** : à configurer par Valentin (les trois étapes sont dans
-  `manuel-twin.md` §4 bis). Sans lui, les pages sont visibles — pas les données, mais l'outil.
-- Les trois secrets à poser dans `infra/.env` : `TWIN_ADMIN_TOKEN`, `TWIN_KEYS_SECRET`,
-  `TWIN_INTERNAL_SECRET`. Aucun n'a de défaut ; sans eux les routes n'existent pas.
-- Le golden « tableau de bord contre CLI » du §0 s'écrira en Phase 3 : il compare deux plans
-  générés, et la génération n'existe pas encore. En Phase 1, la stabilité de la référence est
-  testée (`test_tableau_de_bord.py`).
+- ~~Cloudflare Access~~ : posé par Valentin (Google, une adresse) ; ~~les trois secrets~~ :
+  posés. ~~Le golden tableau de bord contre CLI~~ : écrit en Phase 3
+  (`tests/test_generation.py`).
+- **Retirer l'ancienne page d'annexe**, remplacée par la page de l'athlète — en attente de
+  l'accord de Valentin, parce que c'est une suppression : `apps/site/app/services/twin/annexe/`,
+  `apps/site/lib/twinAnnexes.mjs`, `apps/site/public/twin-annexes/`, et côté moteur la route
+  `POST /rendu` avec ses bornes (`tests/test_api_rendu.py`).
+- `@cloudflare/next-on-pages` est déprécié au profit d'OpenNext : l'épinglage de la CLI Vercel
+  tient le build aujourd'hui, pas indéfiniment.

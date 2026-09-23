@@ -129,9 +129,9 @@ services:
       - web
 
   # Moteur Locomotion Twin (Python/FastAPI + TeXLive). Pas de port hôte : Caddy en
-  # expose TROIS préfixes sous {$API_DOMAIN}/twin/* (tableau de bord, pages d'athlète,
-  # file de travail — cf. caddy/conf.d/api.caddy) ; l'ingestion, les archives et les
-  # routes internes ne sortent pas du réseau `web`. Données (objets JSON + sorties) dans
+  # expose DEUX préfixes sous {$API_DOMAIN}/twin/* (tableau de bord, pages d'athlète —
+  # cf. caddy/conf.d/api.caddy) ; l'ingestion, les archives et les routes internes ne
+  # sortent pas du réseau `web`. Données (objets JSON + sorties) dans
   # le volume `twin_engine_data` ; les archives brutes sont purgées dès la fin du parsing.
   twin-engine:
     image: ${TWIN_ENGINE_IMAGE:-ghcr.io/thelocomotionlab/twin-engine:latest}
@@ -139,6 +139,8 @@ services:
     # Les trois secrets du tableau de bord (TWIN_ADMIN_TOKEN, TWIN_KEYS_SECRET,
     # TWIN_INTERNAL_SECRET) + TWIN_DEPOT_ADMIN_TOKEN, avec lequel le moteur va chercher
     # une archive sur twin-depot. Tous absents → les routes n'existent pas (404).
+    # SMTP_* (le même relais qu'atelier-api) : « Envoyer » un plan et répondre à une
+    # demande d'athlète ; SMTP_HOST vide → ces deux gestes répondent 502.
     env_file: .env
     environment:
       - DATA_DIR=/data
