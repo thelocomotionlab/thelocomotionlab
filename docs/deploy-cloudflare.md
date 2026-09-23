@@ -29,7 +29,7 @@ Dashboard Cloudflare → **Workers & Pages** → projet `thelocomotionlab-websit
 | Champ | Valeur |
 | --- | --- |
 | **Framework preset** | `Next.js` (ou *None* — la commande ci‑dessous suffit) |
-| **Build command** | `npx @cloudflare/next-on-pages` |
+| **Build command** | `pnpm run build:cf` |
 | **Build output directory** | `.vercel/output/static` |
 | **Root directory** *(Advanced)* | `apps/site` |
 
@@ -63,8 +63,8 @@ déjà configuré, **ne touche à rien**. Sinon : **Settings → Functions → C
 
 ## Build du site dans le monorepo : webpack + racine par phase (`next.config.mjs`)
 
-Next 16 compile par défaut avec **Turbopack**. Mais sous le builder Vercel utilisé par
-`@cloudflare/next-on-pages` (qui lance `vercel build` **dans** `apps/site/`), Turbopack **infère mal
+Next 16 compile par défaut avec **Turbopack**. Mais sous la CLI Vercel que lance `build:cf`
+(`vercel build`, **dans** `apps/site/`), Turbopack **infère mal
 la racine** du workspace pnpm : il se confine à `apps/site/` et ne peut plus suivre les symlinks vers
 les `node_modules` hoistés à la racine → échec « *inferred your workspace root… couldn't find
 next/package.json* ». Deux réglages, déjà committés, règlent ça :
@@ -93,7 +93,7 @@ Garder **Root directory = (vide / racine du repo)** et viser `apps/site` depuis 
 
 | Champ | Valeur |
 | --- | --- |
-| **Build command** | `pnpm install && cd apps/site && npx @cloudflare/next-on-pages` |
+| **Build command** | `pnpm install && cd apps/site && pnpm run build:cf` |
 | **Build output directory** | `apps/site/.vercel/output/static` |
 | **Root directory** | *(vide)* |
 
@@ -102,16 +102,37 @@ installe tout le workspace, puis ne fait que `cd` pour builder le site.
 
 ---
 
-## Déploiement manuel depuis le local (inchangé)
+## Déploiement manuel depuis le local
 
-Le script `deploy:cf` du site fonctionne toujours, lancé **dans le contexte du package `site`** :
+Le script `deploy:cf` du site, lancé **dans le contexte du package `site`** :
 
 ```bash
 pnpm install
 pnpm --filter site deploy:cf
-# = npx @cloudflare/next-on-pages && npx wrangler pages deploy .vercel/output/static \
+# = pnpm run build:cf && npx wrangler pages deploy .vercel/output/static \
 #     --project-name=thelocomotionlab-website
+# build:cf = node scripts/projet-vercel.mjs && pnpm dlx vercel@59.15.1 build \
+#     && npx --legacy-peer-deps @cloudflare/next-on-pages --skip-build
 ```
+
+### Pourquoi `build:cf` fixe la version de la CLI Vercel
+
+`next-on-pages` fait construire le site par la CLI Vercel, puis transforme ce qu'elle produit en
+worker Cloudflare. Laissé à lui-même, il télécharge la **dernière** CLI à chaque build. Celle du
+22 septembre 2026 (59.25.4) produit, pour Next 16, des routes que `next-on-pages` 1.13.16 refuse —
+« routes not configured to run with the Edge Runtime », 440 routes refusées ; celle de la mise en
+ligne du studio (59.15.1) passe. `build:cf` lance donc la CLI lui-même, dans cette version, puis
+`next-on-pages --skip-build` sur ce qu'elle a produit. La version s'écrit à ce seul endroit.
+
+- L'épingler dans les `devDependencies` ne suffit pas : pour savoir si le projet a sa propre CLI,
+  `next-on-pages` lit `pnpm list`, dont pnpm 10 a changé l'affichage — il ne la voit jamais et
+  télécharge quand même la dernière.
+- `--skip-build` saute aussi la préparation où `next-on-pages` écrivait `.vercel/project.json` ;
+  sans ce fichier, `vercel build` s'arrête sur « No Project Settings found locally ».
+  `scripts/projet-vercel.mjs` l'écrit à sa place s'il manque.
+
+`next-on-pages` n'a plus de version depuis septembre 2025. Le jour où une version de Next ne passera
+plus avec cette CLI, le site aura besoin d'un autre chemin vers Cloudflare.
 
 `wrangler` te demandera de te connecter au compte Cloudflare la première fois (jamais de token dans le
 repo — cf. `docs/secrets.md`).
@@ -128,7 +149,7 @@ repo — cf. `docs/secrets.md`).
 Aucune de ces quatre commandes n'entraîne les autres, et aucun workflow CI ne déploie la
 passerelle ni le studio.
 
-> `--legacy-peer-deps` dans les deux scripts `deploy:cf` n'est pas décoratif : sur un cache npm
+> `--legacy-peer-deps` dans le script `deploy:cf` du site n'est pas décoratif : sur un cache npm
 > froid — une machine neuve, un runner CI — `npx @cloudflare/next-on-pages` échoue en `ERESOLVE`.
 > `wrangler` 4 déclare `@cloudflare/workers-types@^5` en pair optionnel, `next-on-pages` le veut
 > en `^4`, et npm refuse d'arbitrer deux pairs *optionnels*. Le flag lui dit de passer outre, ce
@@ -140,17 +161,34 @@ passerelle ni le studio.
 
 `thelocomotionlab.com/studio` sert le studio **v1**, qui est une route du site. Le studio v2 est
 une app Next à part (`apps/studio`) : elle a son propre build, et il lui faut donc son propre
-projet Pages. Deux sorties `.vercel/output/static` ne tiennent pas dans un seul projet.
+projet Pages. Deux sorties ne tiennent pas dans un seul projet.
 
 Ce qui justifie l'app séparée : maplibre, le terrain 3D et l'encodeur vidéo n'entrent que dans
 *son* bundle, jamais dans celui du site ; et le site reste en JavaScript quand le studio est en
 TypeScript.
+
+### Un export statique, pas un worker
+
+Le studio tourne entièrement dans le navigateur : rien n'y est calculé sur un serveur. Il sort
+donc en **export statique** (`output: "export"` dans `next.config.ts`) — un dossier `out/` de
+fichiers, que `wrangler` envoie tel quel. Pas de `@cloudflare/next-on-pages`, pas de Functions,
+pas de `nodejs_compat`.
+
+Ce n'est pas qu'une simplification : `next-on-pages` fait tourner la CLI Vercel — **téléchargée
+à chaque build, dans sa dernière version** — et lit ce qu'elle produit. Quatorze versions de
+cette CLI sont sorties en deux semaines ; l'une d'elles a changé sa sortie, et `next-on-pages`,
+plus mis à jour depuis un an, s'arrête sur « routes not configured to run with the Edge Runtime »
+— pour une app qui n'a pas une seule route dynamique. Rejoué sur le code qui se déployait sans
+erreur : l'ancienne commande échoue avec la CLI 59.25.4 et passe avec la 59.15.1, celle de la
+mise en ligne. Next n'y est pour rien : c'était la même version (16.2.9) des deux côtés.
+L'export statique n'a aucune de ces deux pièces mobiles.
 
 ### La mise en ligne, une fois
 
 ```bash
 pnpm install
 pnpm -F studio deploy:cf
+# = pnpm run build && npx wrangler pages deploy out --project-name=thelocomotionlab-studio
 ```
 
 `wrangler` propose de **créer** `thelocomotionlab-studio` s'il n'existe pas — il demande le nom et
@@ -164,13 +202,15 @@ Cloudflare, l'enregistrement se pose tout seul.
 
 | | site | studio |
 | --- | --- | --- |
-| Compatibility flag `nodejs_compat` | requis | requis (Production **et** Preview) |
+| sortie | `.vercel/output/static` (worker + fichiers) | `out/` (fichiers seuls) |
+| Compatibility flag `nodejs_compat` | requis | inutile : pas de Functions |
 | `NODE_VERSION` | 22 | 22 — seulement pour l'intégration Git, inutile en déploiement manuel |
-| en-têtes des fichiers statiques | `apps/site/public/_headers` | `apps/studio/public/_headers` |
+| en-têtes | `headers()` pour les pages, `apps/site/public/_headers` pour les fichiers | `apps/studio/public/_headers`, **pour tout** |
 | indexation | indexé | `X-Robots-Tag: noindex` sur **tout**, page comme fichier |
 
-Le `_headers` du studio pose le `noindex` sur `/*` parce que les règles `headers()` de
-`next.config.ts` n'atteignent pas les fichiers de `public/` (cf. le piège n° 2 plus bas).
+En export statique, Pages sert tout — pages et fichiers — depuis `out/`, et `_headers` est la
+seule source d'en-têtes : le `noindex`, `nosniff`, `X-Frame-Options`, la `Permissions-Policy`,
+le HSTS et le cache immuable des bundles `/_next/static/*` y sont.
 
 ---
 
@@ -203,7 +243,7 @@ un motif générique (`.*\.pages\.dev`) est impossible — il faut nommer chaque
 ## Checklist de migration (à faire une seule fois)
 
 - [ ] Mettre **Root directory = `apps/site`** (option A) **ou** adapter la build command (option B).
-- [ ] Vérifier **Build command** = `npx @cloudflare/next-on-pages` et **Output** = `.vercel/output/static`.
+- [ ] Vérifier **Build command** = `pnpm run build:cf` et **Output** = `.vercel/output/static`.
 - [ ] Ajouter la variable de build **`NODE_VERSION=22`**.
 - [ ] Vérifier que **`nodejs_compat`** est présent (Production + Preview).
 - [ ] Lancer un déploiement (push sur la branche de prod ou *Retry deployment*) et vérifier le rendu.
