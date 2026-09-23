@@ -73,23 +73,26 @@
 	}
 
 	# === /twin/* — moteur Locomotion Twin =====================================
-	# TROIS familles de chemins sortent, et elles seules :
+	# DEUX familles de chemins sortent, et elles seules :
 	#
 	#   /twin/tableau-de-bord/*  l'outil de Valentin — jeton Bearer TWIN_ADMIN_TOKEN
 	#                            côté service, ET Cloudflare Access devant les PAGES
 	#                            (thelocomotionlab.com/services/twin/tableau-de-bord*).
 	#   /twin/plans/*            la page d'un athlète — une clé HMAC dans le lien (?k=).
 	#                            Mauvaise clé ou référence inconnue : 404, jamais 403.
-	#   /twin/jobs/*             l'état d'un passage, que les deux écrans sondent.
+	#
+	# L'état d'un passage se lit PAR ces deux portes, jamais à côté : le tableau de
+	# bord sous son jeton (/tableau-de-bord/jobs/{id}), l'athlète sous sa clé et pour
+	# son seul plan (/plans/{ref}/jobs/{id}).
 	#
 	# Ce qui NE sort pas : l'ingestion, les archives, /twin/internal/* (le dépôt
-	# prévient le moteur par le réseau Docker) et /preview, /jobs (POST), /fiche —
+	# prévient le moteur par le réseau Docker), /jobs, /preview, /fiche, /rendu —
 	# `handle` ne laisse passer que ce qui est listé, le reste tombe sur le 404 final.
 	#
-	# `uri strip_prefix /twin` : le moteur sert /tableau-de-bord/*, /plans/* et
-	# /jobs/* — c'est ce qui réconcilie les chemins du récapitulatif §5 avec ceux de
-	# l'internet. CORS géré PAR LE SERVICE (allowlist twin.config.json, bloc api),
-	# comme /ateliers et /journal/message.
+	# `uri strip_prefix /twin` : le moteur sert /tableau-de-bord/* et /plans/* —
+	# c'est ce qui réconcilie les chemins du récapitulatif §5 avec ceux de l'internet.
+	# CORS géré PAR LE SERVICE (allowlist twin.config.json, bloc api), comme
+	# /ateliers et /journal/message.
 	#
 	# ADRESSE DU VISITEUR : le moteur compte les essais de clé par adresse, et cette
 	# adresse doit être celle du visiteur, pas celle du proxy — sinon la limite est
@@ -101,7 +104,7 @@
 	#
 	# Vérif : `docker compose exec caddy caddy validate --config /etc/caddy/Caddyfile`.
 
-	@twin path /twin/tableau-de-bord/* /twin/plans/* /twin/jobs/*
+	@twin path /twin/tableau-de-bord/* /twin/plans/*
 	handle @twin {
 		# Un corps de cette API est du JSON de réglages, une trace GPX ou un dossier de
 		# rapport (~200 Kio). Les archives d'entraînement, elles, ne passent pas par

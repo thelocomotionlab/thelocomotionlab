@@ -4,7 +4,7 @@
 #
 #   pnpm course init nice        crée la fiche de la course et TIRE SA RÉFÉRENCE
 #   pnpm course rapport nice     (re)fabrique rapport, feuille, fiches, ICS, GPX, annexe
-#   pnpm course publier nice     dépose l'annexe en ligne, importe le plan, déploie
+#   pnpm course publier nice     importe le plan dans le tableau de bord
 #   pnpm course nice             rapport puis publier
 #   pnpm course liste            les courses déclarées
 #
@@ -14,18 +14,19 @@
 # valable, et la page en ligne se met à jour au même endroit. C'est tout l'intérêt
 # d'une fiche : sans elle, chaque run tirerait une adresse neuve.
 #
-# La fiche vit dans local-data/courses/<nom>.conf — hors du dépôt, comme les
-# rapports (un rapport est une donnée d'athlète). Seule l'annexe est committée :
-# elle ne porte que des agrégats, des phrases et les figures (cf. le README de
-# apps/site/public/twin-annexes).
+# Le QR porte aussi la CLÉ privée de la page : pour qu'il ouvre quelque chose, le
+# rapport doit être fabriqué avec TWIN_KEYS_SECRET dans l'environnement, la même
+# valeur que sur le serveur. Sans elle, le CLI le dit.
 #
-# LE DOSSIER, lui, ne va NI dans le dépôt NI sur le site : il porte le jumeau, la
-# calibration et les résumés d'activité. Il s'IMPORTE dans le tableau de bord, par
-# l'API : le plan fabriqué ici entre alors comme s'il y était né — publiable,
-# envoyable, amendable. Il n'y a plus de ssh dans ce script : une commande docker
-# lancée à distance depuis un poste de travail était une porte de plus à garder, pour
-# faire ce qu'une route fait mieux. Sans TWIN_ADMIN_TOKEN dans l'environnement,
-# publier dit ce qu'il aurait envoyé et ne touche à rien.
+# La fiche vit dans local-data/courses/<nom>.conf — hors du dépôt, comme les
+# rapports (un rapport est une donnée d'athlète).
+#
+# Rien de ce que produit ce script ne va dans le dépôt : le dossier porte le jumeau,
+# la calibration et les résumés d'activité. Il s'IMPORTE dans le tableau de bord,
+# par l'API, avec les documents et l'annexe que la page de l'athlète affiche : le
+# plan fabriqué ici entre alors comme s'il y était né — publiable, envoyable,
+# amendable. « Publier » se fait ensuite depuis l'écran Plan. Sans TWIN_ADMIN_TOKEN
+# dans l'environnement, publier dit ce qu'il aurait envoyé et ne touche à rien.
 set -euo pipefail
 
 racine="$(git rev-parse --show-toplevel)"
@@ -33,9 +34,8 @@ cd "$racine"
 
 FICHES="local-data/courses"
 SORTIES="local-data/out"
-ANNEXES="apps/site/public/twin-annexes"
 MOTEUR="services/twin-engine"
-SITE="https://www.thelocomotionlab.com/services/twin/annexe"
+SITE="https://www.thelocomotionlab.com/services/twin/plan"
 # Le tableau de bord et son jeton, hors du dépôt : cf. docs/secrets.md.
 API="${TWIN_API:-https://api.thelocomotionlab.com}"
 JETON="${TWIN_ADMIN_TOKEN:-}"
@@ -63,6 +63,7 @@ charger() {
   local f; f="$(fiche "$1")"
   [ -f "$f" ] || { rouge "✗ pas de fiche pour « $1 ». Lance : pnpm course init $1"; exit 1; }
   ATHLETE=""; TRAINING=""; COURSE=""; RACE=""; TARGET=""; TOLERANCE=""; TECHNICITE=""; REF=""
+  ATHLETE_ID=""; COURSE_ID=""
   # shellcheck disable=SC1090
   . "$f"
   local manque=0
@@ -104,6 +105,11 @@ TECHNICITE=""
 
 # Tirée à l'init, ne change plus : c'est le QR du rapport et l'adresse en ligne.
 REF="LL-${slug:-COURSE}-${alea}"
+
+# Facultatifs : l'athlète et la course du tableau de bord auxquels rattacher le plan
+# importé (leurs identifiants se lisent dans l'adresse de leurs écrans).
+ATHLETE_ID=""
+COURSE_ID=""
 CONF
   titre "fiche créée"
   info "$f"
@@ -132,7 +138,7 @@ cmd_rapport() {
     [ -f "$out/$f" ] && info "$out/$f"
   done
   info ""
-  info "Page en ligne (après publication) : $SITE/$REF"
+  info "Page en ligne (après import puis « Publier ») : $SITE/$REF"
 }
 
 # L'import du plan dans le tableau de bord : le dossier, plus les documents que
@@ -154,8 +160,10 @@ importer_le_plan() {
   local args=(--fail --silent --show-error -X POST
     -H "Authorization: Bearer $JETON"
     -F "dossier=@$source;type=application/json")
+  [ -n "$ATHLETE_ID" ] && args+=(-F "athlete_id=$ATHLETE_ID")
+  [ -n "$COURSE_ID" ] && args+=(-F "course_id=$COURSE_ID")
   local f
-  for f in rapport.pdf feuille.pdf plan.ics plan.gpx; do
+  for f in rapport.pdf feuille.pdf fiches.pdf plan.ics plan.gpx annexe.json; do
     [ -f "$out/$f" ] && args+=(-F "documents=@$out/$f")
   done
 
@@ -169,43 +177,21 @@ importer_le_plan() {
 
 cmd_publier() {
   local nom="$1" force="${2:-}"; charger "$nom"
-  local source="$SORTIES/$nom/annexe.json" cible="$ANNEXES/$REF.json"
   local dossier="$SORTIES/$nom/dossier.json"
-  [ -f "$source" ] || { rouge "✗ $source manque — lance d'abord : pnpm course rapport $nom"; exit 1; }
+  [ -f "$dossier" ] || { rouge "✗ $dossier manque — lance d'abord : pnpm course rapport $nom"; exit 1; }
 
-  titre "publication de l'annexe"
-  info "$source"
-  info "  → $cible"
-  info "  → $SITE/$REF"
-  info ""
-  info "et le plan, pour qu'il vive dans le tableau de bord :"
-  if [ -f "$dossier" ]; then
-    info "$dossier ($(du -h "$dossier" | cut -f1))"
-    info "  → ${JETON:+$API}${JETON:-<TWIN_ADMIN_TOKEN non posé>}/twin/tableau-de-bord/plans/import"
-  else
-    info "absent de la sortie — rien à importer"
-  fi
-  if [ "$force" != "--oui" ]; then
-    printf '  Déposer, committer et déployer le site ? [o/N] ' >&2
+  titre "import du plan dans le tableau de bord"
+  info "$dossier ($(du -h "$dossier" | cut -f1)) et ses documents"
+  info "  → ${JETON:+$API}${JETON:-<TWIN_ADMIN_TOKEN non posé>}/twin/tableau-de-bord/plans/import"
+  if [ "$force" != "--oui" ] && [ -n "$JETON" ]; then
+    printf '  Importer ? [o/N] ' >&2
     read -r reponse
     case "$reponse" in [oO]*) ;; *) rouge "✗ annulé."; exit 1 ;; esac
   fi
-
-  cp "$source" "$cible"
-  if [ -n "$(git status --porcelain "$cible")" ]; then
-    git add "$cible"
-    git commit -q -m "Twin : annexe en ligne de $REF"
-    info "committé"
-  else
-    info "annexe inchangée — rien à committer"
-  fi
-
-  titre "import du plan"
   importer_le_plan "$SORTIES/$nom" "$nom"
 
-  titre "déploiement du site"
-  pnpm -F site deploy:cf
-  titre "en ligne"
+  titre "ensuite"
+  info "Écran Plan du tableau de bord → « Publier » : la page répond à ses deux liens."
   info "$SITE/$REF"
 }
 
