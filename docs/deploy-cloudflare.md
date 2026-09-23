@@ -153,10 +153,13 @@ donc en **export statique** (`output: "export"` dans `next.config.ts`) — un do
 fichiers, que `wrangler` envoie tel quel. Pas de `@cloudflare/next-on-pages`, pas de Functions,
 pas de `nodejs_compat`.
 
-Ce n'est pas qu'une simplification : `next-on-pages` fait tourner le builder Vercel, téléchargé
-**à chaque build**, et lit sa sortie. Avec Next 16.2 cette sortie a changé (les routes
-`.segments/*` et `_global-error`) et `next-on-pages`, en maintenance, s'arrête sur « routes not
-configured to run with the Edge Runtime » — pour une app qui n'a pas une seule route dynamique.
+Ce n'est pas qu'une simplification : `next-on-pages` fait tourner la CLI Vercel — **téléchargée
+à chaque build, dans sa dernière version** — et lit ce qu'elle produit. Quatorze versions de
+cette CLI sont sorties en deux semaines ; l'une d'elles a changé sa sortie, et `next-on-pages`,
+plus mis à jour depuis un an, s'arrête sur « routes not configured to run with the Edge Runtime »
+— pour une app qui n'a pas une seule route dynamique. Rejoué sur le code qui se déployait sans
+erreur : l'ancienne commande échoue avec la CLI 59.25.4 et passe avec la 59.15.1, celle de la
+mise en ligne. Next n'y est pour rien : c'était la même version (16.2.9) des deux côtés.
 L'export statique n'a aucune de ces deux pièces mobiles.
 
 ### La mise en ligne, une fois
