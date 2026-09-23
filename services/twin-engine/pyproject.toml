@@ -28,11 +28,16 @@ dependencies = [
   "jinja2>=3.1",
   "python-multipart>=0.0.9",
   "pydantic>=2.6",
+  # Assembler le PDF unique d'une version (rapport, puis feuille, puis fiches) SANS
+  # toucher aux pages : on les recopie telles quelles d'un fichier dans l'autre.
+  # Pur Python, aucune dépendance système — l'image n'a pas besoin de qpdf ni de poppler.
+  "pypdf>=4",
 ]
 
 [project.optional-dependencies]
-# pypdf : compter les pages des PDF produits (le rapport en fait trois, la feuille deux)
-dev = ["pytest>=8", "httpx>=0.27", "pypdf>=4"]
+# pypdf est aussi une dépendance d'exécution (assemblage du PDF unique) ; les tests
+# s'en servent pour compter et comparer les pages produites.
+dev = ["pytest>=8", "httpx>=0.27"]
 
 [project.scripts]
 # CLI du moteur (preview / full / backtest — cf. docs/manuel-twin.md).

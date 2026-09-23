@@ -263,6 +263,55 @@ def analyze_full(
     preview = analyze_preview(activities, course, cfg, n_skipped=n_skipped,
                               analysis_date=analysis_date, until=until,
                               target_hours=race.target_hours, race=race)
+    return _documents_du_preview(
+        preview, race, cfg, out_dir=out_dir, athlete=athlete, report_ref=report_ref,
+        report_version=report_version, report_date=report_date, render_pdf=render_pdf,
+        feuille_only=feuille_only, etape=etape,
+    )
+
+
+def analyze_full_from_twin(
+    twin,
+    course: CourseProfile,
+    race: RaceSpec,
+    cfg: Config,
+    *,
+    out_dir: Path,
+    athlete: str,
+    n_ingested: int = 0,
+    report_ref: str = "LL-TWIN",
+    report_version: str | None = None,
+    report_date: datetime | None = None,
+    render_pdf: bool = True,
+    feuille_only: bool = False,
+    analysis_date: date | None = None,
+    etape=None,
+) -> FullResult:
+    """:func:`analyze_full`, à partir d'un jumeau déjà construit.
+
+    C'est le chemin du tableau de bord : l'archive a été lue une fois, à l'ingestion, puis
+    supprimée — le jumeau, lui, est gardé. Tout ce qui suit le jumeau est le MÊME code que
+    celui du CLI (:func:`analyze_preview_from_twin` puis :func:`_documents_du_preview`),
+    exactement comme :func:`analyze_preview_from_twin` sert à la fois le preview et le
+    banc. Deux chemins finiraient par ne plus dire la même chose ; il n'y en a qu'un."""
+    preview = analyze_preview_from_twin(
+        twin, course, cfg, n_ingested=n_ingested, analysis_date=analysis_date,
+        target_hours=race.target_hours, race=race,
+    )
+    return _documents_du_preview(
+        preview, race, cfg, out_dir=out_dir, athlete=athlete, report_ref=report_ref,
+        report_version=report_version, report_date=report_date, render_pdf=render_pdf,
+        feuille_only=feuille_only, etape=etape,
+    )
+
+
+def _documents_du_preview(
+    preview: PreviewResult, race: RaceSpec, cfg: Config, *, out_dir: Path, athlete: str,
+    report_ref: str, report_version: str | None, report_date: datetime | None,
+    render_pdf: bool, feuille_only: bool, etape=None,
+) -> FullResult:
+    """Du verdict aux documents — le tronc commun de :func:`analyze_full` et de
+    :func:`analyze_full_from_twin`."""
     if preview.prediction is None:
         # La référence désigne le RAPPORT, pas sa réussite : elle suit le résultat même
         # quand il n'y a rien à rendre, sinon le job revient sans nom (récapitulatif §3.3).
@@ -382,27 +431,71 @@ def run_full(
         if purge_source:
             purge_path(training_path)
     full.preview.n_skipped = len(skipped)
-
-    # Le dossier rejouable, posé à côté des livrables : il porte l'état du calcul (trace,
-    # carnet de route, jumeau, calibration, prédiction, suffisance) pour que le document
-    # puisse être REFAIT après amendement sans redemander l'archive. Sans prédiction, il
-    # n'y a rien à rejouer.
-    if render_pdf and full.preview.prediction is not None:
-        from . import dossier as _dossier
-
-        if etape is not None:
-            etape("rangement du dossier")
-
-        chemin = _dossier.ecrire(
-            Path(out_dir) / "dossier.json", course_gpx=course_gpx, race=race,
-            twin=full.preview.twin, calibration=full.preview.calibration,
-            prediction=full.preview.prediction, sufficiency=full.preview.sufficiency,
-            athlete=athlete, report_ref=report_ref,
-            report_date=report_date or datetime.now(),
-        )
-        full.livrables["dossier.json"] = chemin
+    _poser_le_dossier(full, course_gpx=course_gpx, race=race, out_dir=out_dir,
+                      athlete=athlete, report_ref=report_ref, report_date=report_date,
+                      render_pdf=render_pdf, etape=etape)
     return full
 
 
+def run_full_from_twin(
+    *,
+    twin,
+    course_gpx: bytes,
+    race: RaceSpec,
+    cfg: Config,
+    out_dir: Path,
+    athlete: str,
+    render_pdf: bool = True,
+    feuille_only: bool = False,
+    report_ref: str = "LL-TWIN",
+    report_version: str | None = None,
+    report_date: datetime | None = None,
+    analysis_date: date | None = None,
+    etape=None,
+) -> FullResult:
+    """:func:`run_full`, à partir d'un jumeau déjà construit — sans archive à lire.
+
+    Le parcours se construit de la même trace, par la même fonction ; le jumeau prend la
+    place de l'archive ; tout le reste — prédiction, suffisance, documents, dossier — est
+    le code de :func:`run_full`."""
+    course = build_course(course_gpx, race, cfg)
+    full = analyze_full_from_twin(
+        twin, course, race, cfg, out_dir=Path(out_dir), athlete=athlete,
+        n_ingested=len(getattr(twin, "summaries", ()) or ()),
+        render_pdf=render_pdf, feuille_only=feuille_only, report_ref=report_ref,
+        report_version=report_version, report_date=report_date,
+        analysis_date=analysis_date, etape=etape,
+    )
+    _poser_le_dossier(full, course_gpx=course_gpx, race=race, out_dir=out_dir,
+                      athlete=athlete, report_ref=report_ref, report_date=report_date,
+                      render_pdf=render_pdf, etape=etape)
+    return full
+
+
+def _poser_le_dossier(full: FullResult, *, course_gpx: bytes, race: RaceSpec, out_dir: Path,
+                      athlete: str, report_ref: str, report_date: datetime | None,
+                      render_pdf: bool, etape=None) -> None:
+    """Le dossier rejouable, posé à côté des livrables : il porte l'état du calcul (trace,
+    carnet de route, jumeau, calibration, prédiction, suffisance) pour que le document
+    puisse être REFAIT après amendement sans redemander l'archive. Sans prédiction, il
+    n'y a rien à rejouer."""
+    if not (render_pdf and full.preview.prediction is not None):
+        return
+    from . import dossier as _dossier
+
+    if etape is not None:
+        etape("rangement du dossier")
+
+    chemin = _dossier.ecrire(
+        Path(out_dir) / "dossier.json", course_gpx=course_gpx, race=race,
+        twin=full.preview.twin, calibration=full.preview.calibration,
+        prediction=full.preview.prediction, sufficiency=full.preview.sufficiency,
+        athlete=athlete, report_ref=report_ref,
+        report_date=report_date or datetime.now(),
+    )
+    full.livrables["dossier.json"] = chemin
+
+
 __all__ = ["PreviewResult", "FullResult", "analyze_preview", "analyze_preview_from_twin",
-           "analyze_full", "run_preview", "run_full"]
+           "analyze_full", "analyze_full_from_twin", "run_preview", "run_full",
+           "run_full_from_twin"]

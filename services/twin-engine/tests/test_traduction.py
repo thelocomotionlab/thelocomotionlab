@@ -88,8 +88,34 @@ def test_lassistance_de_nice_retrouve_ses_sept_points(nice):
 
 
 def test_les_bases_majeures_de_nice_sont_les_bonnes(nice):
+    """Le test qui fixe le SENS, pas seulement l'aller-retour.
+
+    `major_base_indices` compte des SEGMENTS (« segments dont la FIN est une base
+    majeure ») ; une traduction qui les prend pour des ravitaillements revient intacte
+    de l'aller-retour — l'erreur est symétrique — et marque Collelongue, Rimplas et Utelle
+    à la place des trois grandes bases d'assistance. Seuls les noms le trahissent."""
     course = racespec_vers_course(nice, id="c1")
-    assert [r.index for r in course.ravitaillements if r.base_majeure] == [3, 7, 10]
+    bases = [r.nom for r in course.ravitaillements if r.base_majeure]
+    assert bases == ["Isola", "Venanson", "Levens"]
+
+
+def test_une_base_majeure_rallonge_larret_du_bon_ravitaillement(nice):
+    """Le moteur, lui, le dit par la politique d'arrêts : 15 min là où il y a une base."""
+    from twin_engine.config import load_config
+    from twin_engine.course.spec import stops_policy_min
+
+    spec = _aller_retour(nice)
+    arrets = stops_policy_min(spec.n_segments, spec.major_base_indices, load_config())
+    longs = [spec.aid_names[k + 1] for k, m in enumerate(arrets) if m > 5.0]
+    assert longs == ["Isola", "Venanson", "Levens"]
+
+
+def test_lancienne_assistance_par_segment_se_lit_en_ravitaillements():
+    """`crew_access_indices` (l'ancienne forme) compte des segments, comme les bases."""
+    spec = RaceSpec(name="X", aid_km=(0.0, 10.0, 20.0, 30.0),
+                    aid_names=("Départ", "A", "B", "Arrivée"), crew_access_indices=(1,))
+    course = racespec_vers_course(spec, id="c1")
+    assert [r.nom for r in course.ravitaillements if r.assistance] == ["B"]
 
 
 def test_ledition_se_deduit_de_lannee_du_depart(nice):
