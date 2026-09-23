@@ -83,6 +83,7 @@ import {
   Search,
   Share2,
   Signpost,
+  Slice,
   Snowflake,
   Soup,
   Sparkles,
@@ -123,6 +124,7 @@ export const WAYPOINT_ICONES: Record<string, LucideIcon> = {
   poids: Weight,
   batterie: Battery,
   pharmacie: Pill,
+  couteau: Slice,
   // Manger
   repas: Sandwich,
   chaud: Soup,
