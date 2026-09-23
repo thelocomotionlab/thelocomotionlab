@@ -412,6 +412,8 @@ export type ElementSemaines = ElementCommun & {
   couleurs: string[];
   /** Une étiquette d'abscisse sur N : dix-sept « S » ne tiennent pas. */
   pasDesLabels: number;
+  /** L'angle des étiquettes d'abscisse, en degrés : 0 droites, 45 en biais. */
+  inclinaison: number;
   /** Les graduations chiffrées, à gauche et à droite. */
   axes: boolean;
   /** Le nom de chaque série montrée, écrit en tête de son axe. */

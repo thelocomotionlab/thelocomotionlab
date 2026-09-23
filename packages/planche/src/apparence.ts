@@ -60,6 +60,7 @@ const APPARENCE: Record<Element["type"], readonly string[]> = {
     "couleurBarres",
     "couleurCourbe",
     "pasDesLabels",
+    "inclinaison",
     "axes",
     "titresAxes",
     "taille",

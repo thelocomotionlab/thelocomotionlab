@@ -146,6 +146,43 @@ describe("l'air du haut", () => {
   });
 });
 
+describe("les étiquettes en biais", () => {
+  it("réservent plus de place sous l'axe que les droites", () => {
+    const droites = cadreDesSemaines(semaines({ inclinaison: 0 }), BOITE)!;
+    const biais = cadreDesSemaines(semaines({ inclinaison: 45 }), BOITE)!;
+    expect(biais.reserveBas).toBeGreaterThan(droites.reserveBas);
+    expect(biais.trace.h).toBeLessThan(droites.trace.h);
+  });
+
+  it("tournent chaque étiquette écrite, et aucune de plus", () => {
+    const ctx = ctxFactice();
+    dessinerSemaines(
+      ctx,
+      semaines({ inclinaison: 45, pasDesLabels: 3, axes: false, legende: [] }),
+      BOITE,
+      contexte,
+    );
+    const rotations = ctx.ops.filter((o) => o.op === "rotate");
+    expect(rotations.length).toBe(4);
+    expect(rotations[0]!.args[0]).toBeCloseTo(-Math.PI / 4);
+  });
+
+  it("ne tournent rien quand elles sont droites", () => {
+    const ctx = ctxFactice();
+    dessinerSemaines(ctx, semaines({ inclinaison: 0, axes: false, legende: [] }), BOITE, contexte);
+    expect(ctx.ops.some((o) => o.op === "rotate")).toBe(false);
+  });
+
+  it("posent la légende sous les étiquettes, quelle que soit leur pente", () => {
+    const ctx = ctxFactice();
+    const e = semaines({ inclinaison: 60, axes: false, legende: [{ couleur: "", texte: "WEC" }] });
+    dessinerSemaines(ctx, e, BOITE, contexte);
+    const cadre = cadreDesSemaines(e, BOITE)!;
+    const legende = ctx.ops.find((o) => o.op === "fillText" && o.args[0] === "WEC")!;
+    expect(legende.args[2] as number).toBeGreaterThan(cadre.trace.y + cadre.trace.h + cadre.reserveBas);
+  });
+});
+
 describe("le dessin", () => {
   function rendre(e: ElementSemaines): CtxFactice {
     const ctx = ctxFactice();

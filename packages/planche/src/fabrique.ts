@@ -301,6 +301,7 @@ export function semainesNeuves(
     couleurCourbe: "",
     couleurs: [],
     pasDesLabels: 2,
+    inclinaison: 0,
     axes: true,
     titresAxes: true,
     legende: [],

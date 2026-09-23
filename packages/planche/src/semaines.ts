@@ -142,6 +142,8 @@ export type Cadre = {
   hautBarres: number;
   hautCourbe: number;
   corps: number;
+  /** La place sous l'axe : les étiquettes, droites ou en biais. */
+  reserveBas: number;
 };
 
 /**
@@ -157,7 +159,7 @@ export function cadreDesSemaines(e: ElementSemaines, b: BoitePx): Cadre | null {
   const corps = Math.max(9, (e.taille || CORPS.pied) * (b.l / LARGEUR_REFERENCE));
 
   const legende = e.legende.length > 0 ? Math.max(corps * 2.2, b.h * PART_LEGENDE) : 0;
-  const bas = corps * 2.2;
+  const bas = reserveDesEtiquettes(e, corps);
   const gauche = e.axes ? corps * 2.6 : 0;
   const courbe = serieDe(e, e.courbe);
   const droite = e.axes && courbe ? corps * 2.6 : 0;
@@ -182,7 +184,34 @@ export function cadreDesSemaines(e: ElementSemaines, b: BoitePx): Cadre | null {
     hautBarres: plafondDe(Math.max(0, ...(serieBarres?.valeurs ?? []))),
     hautCourbe: plafondDe(Math.max(0, ...(courbe?.valeurs ?? []))),
     corps,
+    reserveBas: bas,
   };
+}
+
+/**
+ * LA PLACE SOUS L'AXE pour les étiquettes.
+ *
+ * Droites, une ligne suffit. En biais, la plus longue descend de sa largeur
+ * fois le sinus de l'angle — et ici, sans contexte, on ne peut pas la mesurer :
+ * on l'estime à 0,56 corps par caractère, la chasse moyenne d'Ubuntu Sans en
+ * chiffres et en capitales.
+ */
+function reserveDesEtiquettes(e: ElementSemaines, corps: number): number {
+  const angle = angleDe(e);
+  if (angle === 0) return corps * 2.2;
+  const pas = Math.max(1, Math.round(e.pasDesLabels));
+  const plusLongue = Math.max(
+    0,
+    ...e.abscisse.filter((_, i) => i % pas === 0).map((l) => l.length),
+  );
+  const largeur = plusLongue * corps * 0.56;
+  return corps * 1.15 + largeur * Math.sin(angle) + corps * 0.25 * Math.cos(angle) + corps * 0.6;
+}
+
+/** L'angle en radians, borné à 90° : au-delà, l'étiquette se lirait à l'envers. */
+function angleDe(e: ElementSemaines): number {
+  const degres = Number.isFinite(e.inclinaison) ? Math.max(0, Math.min(90, e.inclinaison)) : 0;
+  return (degres * Math.PI) / 180;
 }
 
 /** La barre sous un point, ou `null` — c'est elle qu'on colore au clic. */
@@ -205,7 +234,7 @@ export function dessinerSemaines(
 ): void {
   const cadre = cadreDesSemaines(e, b);
   if (!cadre) return;
-  const { trace, colonne, barre, hautBarres, hautCourbe, corps } = cadre;
+  const { trace, colonne, barre, hautBarres, hautCourbe, corps, reserveBas } = cadre;
   const serieBarres = serieDe(e, e.barres);
   const serieCourbe = serieDe(e, e.courbe);
   const teinteBarres = e.couleurBarres || brandColors.primary;
@@ -295,19 +324,31 @@ export function dessinerSemaines(
     }
   }
 
-  // 5. LES ÉTIQUETTES D'ABSCISSE, une sur `pasDesLabels`.
+  // 5. LES ÉTIQUETTES D'ABSCISSE, une sur `pasDesLabels`, droites ou en biais.
   const pas = Math.max(1, Math.round(e.pasDesLabels));
+  const angle = angleDe(e);
   ctx.fillStyle = c.theme.encreDouce;
   for (let i = 0; i < n; i += 1) {
     const label = e.abscisse[i];
     if (i % pas !== 0 || !label) continue;
     const large = ctx.measureText(label).width;
-    ctx.fillText(label, trace.x + i * colonne + (colonne - large) / 2, base + corps * 1.5);
+    const centre = trace.x + i * colonne + colonne / 2;
+    if (angle === 0) {
+      ctx.fillText(label, centre - large / 2, base + corps * 1.5);
+      continue;
+    }
+    // En biais, c'est la FIN du mot qui se cale sous sa colonne et le mot
+    // descend vers la gauche : l'œil le remonte jusqu'à la barre qu'il nomme.
+    ctx.save();
+    ctx.translate(centre, base + corps * 1.15);
+    ctx.rotate(-angle);
+    ctx.fillText(label, -large, 0);
+    ctx.restore();
   }
 
   // 6. LA LÉGENDE, qui dit ce que les couleurs racontent.
   if (e.legende.length > 0) {
-    const y = base + corps * 3.1;
+    const y = base + reserveBas + corps * 0.9;
     const cote = corps * 0.82;
     let x = trace.x;
     for (const l of e.legende) {

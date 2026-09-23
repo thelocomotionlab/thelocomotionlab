@@ -1046,6 +1046,17 @@ function ReglagesSemaines({
         valeur={e.pasDesLabels}
         onChange={(n) => poser((x) => ({ ...x, pasDesLabels: Math.max(1, Math.round(n)) }), "axes")}
       />
+      <Choix
+        libelle="Étiquettes"
+        valeur={String(e.inclinaison || 0)}
+        options={[
+          { cle: "0", label: "Droites" },
+          { cle: "30", label: "En biais · 30°" },
+          { cle: "45", label: "En biais · 45°" },
+          { cle: "60", label: "En biais · 60°" },
+        ]}
+        onChange={(v) => poser((x) => ({ ...x, inclinaison: Number(v) }), "axes")}
+      />
       <Case
         libelle="Graduations chiffrées"
         coche={e.axes}
