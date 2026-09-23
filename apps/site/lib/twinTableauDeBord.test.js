@@ -13,7 +13,6 @@ import {
   departLisible,
   duree,
   echelleDuProfil,
-  ecartEnPourcent,
   heureDePassage,
   jourLisible,
   lePlusProche,
@@ -24,6 +23,7 @@ import {
   statutDuDossier,
   statutDuPlan,
   tailleLisible,
+  versionRemplacee,
 } from "./twinTableauDeBord.mjs";
 
 describe("l'heure d'un départ", () => {
@@ -172,10 +172,8 @@ describe("une heure de passage", () => {
 
 describe("un écart", () => {
   it("se dit signé, à la française", () => {
-    expect(ecartEnPourcent(9111, 8900)).toBeCloseTo(2.37, 2);
-    expect(signe(ecartEnPourcent(9111, 8900))).toBe("+2,4");
+    expect(signe(2.37)).toBe("+2,4");
     expect(signe(-1)).toBe("−1,0");
-    expect(ecartEnPourcent(9111, null)).toBe(null);
     expect(signe(null)).toBe("—");
   });
 });
@@ -219,5 +217,16 @@ describe("le statut d'un plan", () => {
   it("a toujours un mot et un ton", () => {
     expect(statutDuPlan("fige")).toEqual({ mot: "figé", ton: "derriere" });
     expect(statutDuPlan("inconnu").ton).toBe("annonce");
+  });
+});
+
+describe("une page ouverte avant un redéploiement", () => {
+  it("se reconnaît à ses fichiers manquants, et à rien d'autre", () => {
+    const manque = new Error("Loading chunk 4823 failed.\n(error: https://www.thelocomotionlab.com/_next/static/chunks/4823.js)");
+    manque.name = "ChunkLoadError";
+    expect(versionRemplacee(manque)).toBe(true);
+    expect(versionRemplacee(new TypeError("Failed to fetch dynamically imported module: /x.js"))).toBe(true);
+    expect(versionRemplacee(new TypeError("Cannot read properties of undefined (reading 'map')"))).toBe(false);
+    expect(versionRemplacee(undefined)).toBe(false);
   });
 });

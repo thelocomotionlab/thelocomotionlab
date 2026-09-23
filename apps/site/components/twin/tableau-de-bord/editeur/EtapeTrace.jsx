@@ -1,24 +1,20 @@
 // components/twin/tableau-de-bord/editeur/EtapeTrace.jsx
 //
-// ÉTAPE 1 — LA TRACE : le GPX du parcours, le profil qu'il donne, et ses chiffres face
-// aux chiffres officiels.
+// ÉTAPE 1 — LA TRACE : le GPX du parcours, le profil qu'il donne, et ses chiffres.
 //
-// Distance et D+ sont CALCULÉS par le moteur depuis la trace ; les chiffres officiels
-// sont SAISIS, jamais devinés. L'écart ne se calcule que sur ce qui est renseigné, et se
-// signale au-delà du seuil — le rapport imprime alors le D+ du carnet de route à côté.
+// Distance, D+ et D− sont CALCULÉS par le moteur depuis la trace ; l'écran ne fait que
+// les montrer.
 
 "use client";
 
 import { useState } from "react";
 
-import { ecartEnPourcent, nombre, signe, tailleLisible } from "@/lib/twinTableauDeBord.mjs";
+import { nombre, tailleLisible } from "@/lib/twinTableauDeBord.mjs";
 import { composerLeDepart, decomposerLeDepart } from "@/lib/twinCourse.mjs";
 import ProfilAltimetrique from "@/components/twin/ProfilAltimetrique";
 
 import { appeler } from "../api";
 import { Bloc, ChampCourt, Chiffre, Inspecteur, Titre } from "./commun";
-
-const nombreOuVide = (texte) => (texte === "" ? null : Number(String(texte).replace(",", ".")));
 
 function Rail({ course, modifier, surTrace }) {
   const [lecture, setLecture] = useState(false);
@@ -110,34 +106,14 @@ function Rail({ course, modifier, surTrace }) {
   );
 }
 
-function Ecart({ calcule, officiel, seuil, unite, decimales }) {
-  const pct = ecartEnPourcent(calcule, officiel);
-  if (pct === null) {
-    return <Chiffre titre="Écart" valeur="—" legende={officiel ? "" : "rien d'officiel à comparer"} />;
-  }
-  const signale = Math.abs(pct) > (seuil ?? 5);
-  return (
-    <Chiffre
-      titre={signale ? "Écart signalé" : "Écart"}
-      valeur={`${signe(pct)} %`}
-      ton={signale ? "alerte" : ""}
-      legende={`${signe(calcule - officiel, decimales)} ${unite} · ${
-        signale ? `au-delà du seuil de ${nombre(seuil, 0)} %` : `sous le seuil de ${nombre(seuil, 0)} %`
-      }`}
-    />
-  );
-}
-
-export default function EtapeTrace({ course, trace, modifier }) {
+export default function EtapeTrace({ course, trace }) {
   const g = course.geometrie ?? {};
-  const o = course.officiel ?? {};
   const profil = trace?.profil ?? [];
-  const officiel = (champ, v) => modifier((c) => ({ officiel: { ...c.officiel, [champ]: nombreOuVide(v) } }));
 
   return (
     <>
       <section className="flex flex-col gap-6 px-8 py-7">
-        <Titre sousTitre="Le profil calculé depuis le GPX, et ses chiffres face aux chiffres officiels.">
+        <Titre sousTitre="Le profil et les chiffres calculés depuis le GPX.">
           Trace
         </Titre>
 
@@ -172,37 +148,15 @@ export default function EtapeTrace({ course, trace, modifier }) {
         )}
 
         <div className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-3">
-          <Chiffre titre="Distance calculée" valeur={g.distance_km ? nombre(g.distance_km, 1, "km") : "—"} />
-          <Chiffre
-            titre="Officielle"
-            valeur={o.distance_km ? nombre(o.distance_km, 1, "km") : "—"}
-            legende={o.distance_km ? "" : "aucune distance officielle"}
-          />
-          <Ecart calcule={g.distance_km} officiel={o.distance_km} seuil={course.seuil_ecart_pct} unite="km" decimales={1} />
-          <Chiffre titre="D+ calculé" valeur={g.dplus_m ? nombre(g.dplus_m, 0, "m") : "—"} />
-          <Chiffre titre="Officiel" valeur={o.dplus_m ? nombre(o.dplus_m, 0, "m") : "—"} />
-          <Ecart calcule={g.dplus_m} officiel={o.dplus_m} seuil={course.seuil_ecart_pct} unite="m" decimales={0} />
+          <Chiffre titre="Distance" valeur={g.distance_km ? nombre(g.distance_km, 1, "km") : "—"} />
+          <Chiffre titre="D+" valeur={g.dplus_m ? nombre(g.dplus_m, 0, "m") : "—"} />
+          <Chiffre titre="D−" valeur={g.dminus_m ? nombre(g.dminus_m, 0, "m") : "—"} />
         </div>
       </section>
 
-      <Inspecteur titre="Chiffres officiels">
-        <ChampCourt label="Distance" unite="km" step="0.1" value={o.distance_km ?? ""} onChange={(v) => officiel("distance_km", v)} />
-        <ChampCourt label="D+" unite="m" value={o.dplus_m ?? ""} onChange={(v) => officiel("dplus_m", v)} />
-        <ChampCourt label="D−" unite="m" value={o.dminus_m ?? ""} onChange={(v) => officiel("dminus_m", v)} />
-        <ChampCourt
-          label="Seuil d'écart"
-          unite="%"
-          step="0.5"
-          value={course.seuil_ecart_pct ?? 5}
-          onChange={(v) => modifier({ seuil_ecart_pct: v === "" ? 5 : Number(v) })}
-          aide="Au-delà du seuil, l'écart est signalé ici et dans le rapport, qui imprime le D+ du carnet de route à côté du calculé."
-        />
-
-        <div className="mt-2 border-t border-brand-grid pt-4">
-          <p className="text-xs font-semibold uppercase tracking-etiquette text-brand-muted">Lecture de la trace</p>
-          <dl className="mt-3 grid grid-cols-[1fr_auto] gap-x-4 gap-y-1.5 text-sm">
-            <dt className="text-brand-muted">D− calculé</dt>
-            <dd className="m-0 text-right">{g.dminus_m ? nombre(g.dminus_m, 0, "m") : "—"}</dd>
+      <Inspecteur titre="Lecture de la trace">
+        <div>
+          <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1.5 text-sm">
             <dt className="text-brand-muted">Altitude max.</dt>
             <dd className="m-0 text-right">{g.alt_max !== null && g.alt_max !== undefined ? nombre(g.alt_max, 0, "m") : "—"}</dd>
             <dt className="text-brand-muted">Altitude min.</dt>

@@ -215,12 +215,6 @@ export function heureDePassage(iso) {
   return `${jour} ${heure.replace(":", "h")}`;
 }
 
-/** Un écart en pourcentage, signé : « +2,4 % ». `null` si l'une des deux valeurs manque. */
-export function ecartEnPourcent(calcule, reference) {
-  if (calcule === null || calcule === undefined || !reference) return null;
-  return (100 * (Number(calcule) - Number(reference))) / Number(reference);
-}
-
 /** Un nombre signé à la française : « +2,4 », « −1,0 ». */
 export function signe(valeur, decimales = 1) {
   if (valeur === null || valeur === undefined || Number.isNaN(Number(valeur))) return "—";
@@ -275,4 +269,14 @@ export function echelleDuProfil(profil, { largeur = 1000, hauteur = 300, marge =
     return points[points.length - 1][1];
   };
   return { x, y, ligne, aire, kmMax, altMin, altMax, altitudeA, largeur, hauteur };
+}
+
+// Les messages des navigateurs et de webpack quand un morceau de JavaScript manque.
+const VERSION_REMPLACEE =
+  /ChunkLoadError|Loading (CSS )?chunk|dynamically imported module|Importing a module script failed/i;
+
+/** L'erreur d'une page ouverte avant un redéploiement : elle réclame des fichiers de
+ *  l'ancienne version, que le nouveau déploiement ne sert plus. */
+export function versionRemplacee(erreur) {
+  return VERSION_REMPLACEE.test(`${erreur?.name ?? ""} ${erreur?.message ?? ""}`);
 }

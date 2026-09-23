@@ -3,8 +3,7 @@
 // LA BIBLIOTHÈQUE DES COURSES : une course se décrit une fois ; ses athlètes s'y
 // inscrivent, son édition suivante se duplique.
 //
-// Distance et D+ sont ceux calculés depuis la trace, jamais ceux qu'on a tapés : l'écart
-// avec les chiffres officiels se lit dans l'éditeur, qui le signale.
+// Distance et D+ sont ceux calculés depuis la trace, jamais ceux qu'on a tapés.
 
 "use client";
 
@@ -222,9 +221,8 @@ export default function Bibliotheque() {
           </section>
 
           <p className="text-xs text-brand-muted">
-            Distance et D+ sont ceux calculés depuis la trace ; l&rsquo;éditeur signale
-            l&rsquo;écart avec les chiffres officiels. Une course qui porte un plan ne se
-            supprime pas.
+            Distance et D+ sont ceux calculés depuis la trace. Une course qui porte un plan
+            ne se supprime pas.
           </p>
         </>
       )}

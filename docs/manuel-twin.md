@@ -187,8 +187,13 @@ Endpoints :
 de route.** Sans ravitaillements, le moteur fait confiance à la longueur en trois dimensions
 de la trace ; avec, il la **recale sur le kilométrage officiel** — le GPS dérive, le carnet
 non. Avant, c'est ce que le GPS a mesuré ; après, ce que l'organisateur annonce. Le D+, lui,
-ne se recale sur rien : il se mesure, et c'est pourquoi l'écart avec le carnet officiel ne se
-calcule que sur lui.
+ne se recale sur rien : il se mesure. L'éditeur ne demande aucun chiffre officiel ; une spec
+du CLI qui en porte un le garde, et le rapport le cite quand l'écart dépasse le seuil.
+
+« Importer les waypoints du GPX » lit la fin de leur nom : « Isola (assistance) » pose le
+ravitaillement « Isola », ouvert à l'assistance ; « (base) » en fait une base majeure. Un
+waypoint qui tombe à moins de cent mètres d'un point déjà posé le complète sans le doubler, et
+le bandeau dit ce que l'import a fait, avec « Annuler ».
 
 Le contrat complet — objets, noms de champs, routes par écran — est dans
 [`twin-tableau-de-bord-api.md`](./twin-tableau-de-bord-api.md).
