@@ -15,6 +15,10 @@
 @source "../../../packages/ui/src/components/Field.tsx";
 @source "../../../packages/ui/src/components/CarteDOffre.tsx";
 
+/* Les primitives des outils (tableau de bord Twin, page de plan) : champs courts,
+   actions en texte, choix côte à côte, étapes. */
+@source "../../../packages/ui/src/components/formulaire";
+
 /* Les composants des pages de contenu (blocs, sections d'aventure, transverses)
    vivent dans packages/ui : Tailwind doit scanner tout le dossier pour générer
    leurs classes de marque. */

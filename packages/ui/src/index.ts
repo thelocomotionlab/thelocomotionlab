@@ -18,3 +18,7 @@ export type { PageShellProps } from "./components/PageShell";
 
 // Couleurs de marque en JS (SVG / maplibre / cssText — miroir de theme.css).
 export { brandColors } from "./tokens";
+
+// Les primitives des outils (tableau de bord, page de plan) : champs courts, actions en
+// texte, choix côte à côte, étapes.
+export * from "./components/formulaire";
