@@ -12,8 +12,9 @@
 // Et `Referrer-Policy: no-referrer`, parce qu'un chemin privé s'échappe surtout par
 // l'en-tête Referer du premier appel sortant de la page.
 //
-// Les pages de plan des athlètes (/services/twin/plan/*) rejoindront ces gardes quand
-// elles existeront : ce test grandira avec elles.
+// Les pages de plan des athlètes (/services/twin/plan/*) ont les mêmes gardes, avec une
+// raison de plus : leur adresse porte une clé. Elles sont rendues par une fonction Edge,
+// que public/_headers n'atteint pas — leurs en-têtes viennent de next.config.mjs.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -23,6 +24,7 @@ import { describe, expect, it } from "vitest";
 
 import robots from "../app/robots";
 import sitemap from "../app/sitemap";
+import nextConfig, { PAGES_DE_PLAN } from "../next.config.mjs";
 
 const RACINE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PREFIXE = "/services/twin/tableau-de-bord";
@@ -85,5 +87,70 @@ describe("le tableau de bord n'est pas indexable", () => {
       parcourir(path.join(RACINE, racine));
     }
     expect(liens).toEqual([]);
+  });
+});
+
+
+describe("la page d'un plan n'est pas indexable, et sa clé ne fuit pas", () => {
+  const PLAN = "/services/twin/plan";
+  const PAGE = "app/services/twin/plan/[ref]/page.jsx";
+
+  it("robots.txt l'interdit à tous les agents", () => {
+    for (const regle of robots().rules) {
+      expect(regle.disallow, `${regle.userAgent} n'est pas couvert`).toContain(PLAN);
+    }
+  });
+
+  it("next.config.mjs pose noindex, no-referrer et no-store sur toute page de plan", async () => {
+    const regles = await nextConfig("phase-production-build").headers();
+    const index = regles.indexOf(PAGES_DE_PLAN);
+    expect(index, "la règle des pages de plan est servie").toBeGreaterThan(-1);
+    const valeurs = Object.fromEntries(PAGES_DE_PLAN.headers.map((h) => [h.key, h.value]));
+    expect(valeurs["X-Robots-Tag"]).toContain("noindex");
+    expect(valeurs["Referrer-Policy"]).toBe("no-referrer");
+    expect(valeurs["Cache-Control"]).toContain("no-store");
+    expect(PAGES_DE_PLAN.source.startsWith(`${PLAN}/`)).toBe(true);
+    // À clé égale, la dernière règle l'emporte : la générale (strict-origin…) doit
+    // passer AVANT, sinon elle rendrait le Referer à une page qui porte une clé.
+    const generale = regles.findIndex(
+      (r) => r.source === "/(.*)" && r.headers.some((h) => h.key === "Referrer-Policy"),
+    );
+    expect(generale).toBeGreaterThan(-1);
+    expect(index).toBeGreaterThan(generale);
+  });
+
+  it("la page se déclare noindex et no-referrer, et se rend à la demande", () => {
+    const source = fs.readFileSync(path.join(RACINE, PAGE), "utf8");
+    expect(source).toMatch(/robots:\s*\{\s*index:\s*false,\s*follow:\s*false/);
+    expect(source).toMatch(/referrer:\s*"no-referrer"/);
+    expect(source).toMatch(/export const runtime = "edge"/);
+  });
+
+  it("aucun lien du site public n'y mène", () => {
+    const liens = [];
+    const parcourir = (dossier) => {
+      for (const entree of fs.readdirSync(dossier, { withFileTypes: true })) {
+        const complet = path.join(dossier, entree.name);
+        if (entree.isDirectory()) {
+          if (entree.name !== "node_modules") parcourir(complet);
+        } else if (/\.(jsx?|tsx?|mjs)$/.test(entree.name) && !entree.name.includes(".test.")) {
+          const source = fs.readFileSync(complet, "utf8");
+          if (new RegExp(`href=["'\`]${PLAN}`).test(source)) liens.push(path.relative(RACINE, complet));
+        }
+      }
+    };
+    for (const racine of ["app", "components", "lib"]) parcourir(path.join(RACINE, racine));
+    expect(liens).toEqual([]);
+  });
+
+  it("le bouton de partage du site n'y apparaît pas", () => {
+    // Il partagerait l'adresse courante — clé privée comprise.
+    const source = fs.readFileSync(path.join(RACINE, "components/ChromeDuSite.jsx"), "utf8");
+    expect(source).toMatch(new RegExp(`PLEIN_ECRAN = \\[[^\\]]*"${PLAN}"`));
+  });
+
+  it("les appels à l'API ne portent pas de Referer", () => {
+    const source = fs.readFileSync(path.join(RACINE, "components/twin/plan/api.js"), "utf8");
+    expect(source).toContain('referrerPolicy: "no-referrer"');
   });
 });

@@ -18,8 +18,10 @@
 
 import { usePathname } from "next/navigation";
 
-/** Les routes qui prennent tout l'écran. */
-const PLEIN_ECRAN = ["/studio"];
+/** Les routes qui prennent tout l'écran. La page d'un plan en est : elle porte son propre
+ *  en-tête, et le bouton de partage du site y partagerait une adresse qui contient une
+ *  clé privée. */
+const PLEIN_ECRAN = ["/studio", "/services/twin/plan"];
 
 export default function ChromeDuSite({ children }) {
   const chemin = usePathname() ?? "";

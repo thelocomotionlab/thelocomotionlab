@@ -33,3 +33,9 @@
 /services/twin/tableau-de-bord
   X-Robots-Tag: noindex, nofollow
   Referrer-Policy: no-referrer
+
+# La page d'un plan d'athlète. Rendue par une fonction Edge, elle reçoit ses en-têtes de
+# next.config.mjs ; ceux-ci ne valent que si Pages la sert un jour en fichier statique.
+/services/twin/plan/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Referrer-Policy: no-referrer

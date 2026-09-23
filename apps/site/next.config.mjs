@@ -35,6 +35,20 @@ const PREVISUALISATIONS_HORS_INDEX = HOTES_HORS_INDEX.map((hote) => ({
   headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
 }));
 
+// La page d'un plan est rendue à la demande (fonction Edge) : public/_headers ne
+// l'atteint pas, ce sont ces règles-ci qui comptent. Son adresse porte la clé de
+// l'athlète : `no-referrer` pour qu'elle ne parte dans aucun en-tête Referer, `no-store`
+// pour qu'aucun cache intermédiaire ne la garde. Posée APRÈS la règle générale : à clé
+// égale, la dernière règle l'emporte.
+export const PAGES_DE_PLAN = {
+  source: "/services/twin/plan/:ref*",
+  headers: [
+    { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+    { key: "Referrer-Policy", value: "no-referrer" },
+    { key: "Cache-Control", value: "private, no-store" },
+  ],
+};
+
 // Ce fichier vit dans apps/site/ ; la racine du monorepo est deux niveaux au-dessus.
 const appDir = dirname(fileURLToPath(import.meta.url));
 const monorepoRoot = resolve(appDir, "../..");
@@ -135,6 +149,7 @@ export default function nextConfig(phase) {
             },
           ],
         },
+        PAGES_DE_PLAN,
       ];
     },
 

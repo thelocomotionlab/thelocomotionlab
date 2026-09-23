@@ -22,11 +22,12 @@ const AI_BOTS = [
   "cohere-ai",
 ];
 
-// Les outils privés du labo. Ils ne sont liés de nulle part et portent déjà leur
-// balise `robots` ; on les nomme quand même ici, parce qu'un chemin deviné une fois
-// (un lien collé dans un chat, un `Referer` qui fuit) suffit à le faire indexer.
-// Une page de tableau de bord dans un résultat de recherche, c'est une porte annoncée.
-const PRIVE = ["/services/twin/tableau-de-bord"];
+// Les outils privés du labo, et les pages de plan des athlètes. Ils ne sont liés de
+// nulle part et portent déjà leur balise `robots` ; on les nomme quand même ici, parce
+// qu'un chemin deviné une fois (un lien collé dans un chat, un `Referer` qui fuit)
+// suffit à le faire indexer. Une page de tableau de bord dans un résultat de recherche,
+// c'est une porte annoncée ; une page de plan, c'est le dossier d'une personne.
+const PRIVE = ["/services/twin/tableau-de-bord", "/services/twin/plan"];
 
 export default function robots() {
   return {
