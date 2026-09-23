@@ -16,6 +16,7 @@
 // « REMETTRE LE MODÈLE » réaligne sans rien perdre : les contenus sont repris
 // par RÔLE, et seules les positions et les styles reviennent à la charte.
 
+import { brandColors } from "@locomotionlab/ui/tokens";
 import { CORPS, GRAISSES, LARGEUR_REFERENCE, LETTRAGE, MARGE, formatDe } from "./charte.ts";
 import {
   carteNeuve,
@@ -310,6 +311,21 @@ const APRES_TITRE = 2.2;
 
 /** La part de la planche que prend le bandeau haut, et celui d'une étape. */
 const PART_BANDEAU = 0.42;
+
+/* Les mesures de la planche Intentions, relevées sur un carrousel publié. */
+/** La ligne de base de la première rubrique, sous le filet d'en-tête. */
+const BASE_RUBRIQUE = 167;
+/** De la ligne de base d'une rubrique à celle de son premier point. */
+const RUBRIQUE_A_LISTE = 111;
+/** D'une rubrique à la suivante. */
+const ECART_RUBRIQUES = 522;
+/** L'espace entre deux points, en parts du corps — la charte en met 0,35. */
+const ENTRE_POINTS_AERES = 0.8;
+
+/** La bande de la planche Trace commence à cette part de la hauteur. */
+const PART_HAUTE_TRACE = 0.4;
+/** La hauteur sur laquelle ses bords se fondent dans le papier. */
+const FONDU_TRACE = 200;
 const PART_BANDEAU_ETAPE = 0.28;
 
 /** Le titre d'une grille de journées, réduit : il annonce, il ne porte pas. */
@@ -395,6 +411,36 @@ export const MODELES: Modele[] = [
     },
   },
   {
+    cle: "trace",
+    label: "Trace",
+    aide: "La carte en bande, la trace et son profil — rien d'écrit.",
+    elements: (f) => {
+      // LA BANDE PREND LA MOITIÉ BASSE et se fond dans le papier par ses deux
+      // bords ; le haut reste libre pour ce que l'auteur écrit au-dessus. La
+      // trace se cadre à la largeur du profil, posé au pied de la bande.
+      const haut = Math.round(f.height * PART_HAUTE_TRACE);
+      const bas = basDuContenu(f);
+      const h = bas - haut;
+      const yProfil = bas - HAUTEUR_PROFIL;
+      const yTrace = haut + FONDU_TRACE * 0.7;
+      return [
+        carteNeuve(boite(f, 0, haut, f.width, h), {
+          nom: "Carte",
+          etiquettesAuto: false,
+          fenetre: {
+            x: MARGE / f.width,
+            y: (yTrace - haut) / h,
+            l: utile(f) / f.width,
+            h: (yProfil - ECART_BLOCS - yTrace) / h,
+          },
+          degrades: { haut: 1, hautH: FONDU_TRACE, bas: 1, basH: HAUTEUR_PROFIL + FONDU_TRACE * 0.6 },
+        } as never),
+        ...mobilier(f),
+        profilNeuf(boite(f, MARGE, yProfil, utile(f), HAUTEUR_PROFIL)),
+      ];
+    },
+  },
+  {
     cle: "bandeau",
     label: "Bandeau",
     aide: "Une photo en bandeau haut, le texte dessous.",
@@ -458,6 +504,49 @@ export const MODELES: Modele[] = [
           boite(f, MARGE, bloc.apres, utile(f), basDuContenu(f) - bloc.apres),
           "",
           "corps",
+        ),
+      ];
+    },
+  },
+  {
+    cle: "intentions",
+    label: "Intentions",
+    aide: "Deux rubriques en terracotta, chacune sa liste à icônes.",
+    elements: (f) => {
+      // DEUX RUBRIQUES, UNE LISTE SOUS CHACUNE — la planche « Intentions /
+      // Mantras » des carrousels d'avant, relevée au pixel : la rubrique en
+      // titre terracotta, ses points aérés de deux fois l'écart de la charte,
+      // et la seconde rubrique passé le milieu de la planche.
+      const m = mesures(f);
+      const base1 = m.bandeH + BASE_RUBRIQUE;
+      const base2 = base1 + ECART_RUBRIQUES;
+      const rubrique = (base: number, texte: string) =>
+        texteNeuf(
+          boite(f, MARGE, base - CORPS.titre * 0.78, utile(f), CORPS.titre * INTERLIGNE_TITRE),
+          texte,
+          "titre",
+          { couleur: brandColors.deep, nom: "Rubrique" },
+        );
+      const liste = (base: number, bas: number, texte: string) => {
+        const y = base - CORPS.corps * 0.78;
+        return texteNeuf(boite(f, MARGE, y, utile(f), bas - y), texte, "corps", {
+          entreItems: ENTRE_POINTS_AERES,
+          nom: "Liste",
+        });
+      };
+      return [
+        ...mobilier(f),
+        rubrique(base1, "Intentions"),
+        liste(
+          base1 + RUBRIQUE_A_LISTE,
+          base2 - CORPS.titre * 0.78 - ECART_BLOCS,
+          "- :coeur: la première intention, son mot fort en *gras*\n- :choc: la deuxième\n- :amis: la troisième",
+        ),
+        rubrique(base2, "Mantras"),
+        liste(
+          base2 + RUBRIQUE_A_LISTE,
+          basDuContenu(f),
+          "- :animal: un mantra par ligne\n- :explorer: court, à la première personne\n- :loupe: le mot qui compte en *gras*",
         ),
       ];
     },
@@ -806,6 +895,16 @@ export function changerModele(
   c: ContexteModele = CONTEXTE_PAR_DEFAUT,
 ): PlancheImage {
   const neuve = instancier(cle, c, planche.tranche);
+  // Ce que l'ANCIEN modèle avait écrit lui-même. Un surtitre « l'itinéraire »
+  // posé par le modèle Texte n'est pas un mot de l'auteur : il n'a rien à faire
+  // au coin d'une clôture, qui n'a pas de surtitre.
+  const cleDe = (e: ElementTexte) => `${signature(e)}=${e.contenu.trim()}`;
+  const ecritsParLeModele = new Set(
+    instancier(planche.modele, c, planche.tranche)
+      .elements.filter((e): e is ElementTexte => e.type === "texte")
+      .map(cleDe),
+  );
+  const duModele = (e: Element) => e.type === "texte" && ecritsParLeModele.has(cleDe(e));
   const restants = new Map<string, Element[]>();
   for (const e of planche.elements) {
     const s = signature(e);
@@ -813,15 +912,18 @@ export function changerModele(
     restants.get(s)!.push(e);
   }
 
+  // Ce que l'ancien modèle avait écrit ne remplace pas ce que le nouveau écrit :
+  // le « {nom} » d'une planche Texte n'a rien à dire à une rubrique
+  // « Intentions ». Ce que l'auteur a écrit, si.
   const elements = neuve.elements.map((neuf) => {
     const file = restants.get(signature(neuf));
     const ancien = file?.shift();
-    return ancien ? reprendre(neuf, ancien) : neuf;
+    return ancien && !duModele(ancien) ? reprendre(neuf, ancien) : neuf;
   });
 
   // Ce qui portait un contenu et n'a pas trouvé de place le garde : un texte
   // écrit ne disparaît pas parce qu'on a changé de modèle.
-  const orphelins = [...restants.values()].flat().filter(porteQuelqueChose);
+  const orphelins = [...restants.values()].flat().filter(porteQuelqueChose).filter((e) => !duModele(e));
 
   return { ...planche, modele: cle, elements: [...elements, ...orphelins] };
 }

@@ -139,6 +139,7 @@ export function styleDe(e: ElementTexte, c: ContexteRendu): StyleTexte {
         }
       : null,
     interligne: e.interligne,
+    ...(e.entreItems !== null && e.entreItems !== undefined ? { entreItems: e.entreItems } : {}),
     lignesDures: e.lignesDures,
     corps: CORPS,
     lettrages: LETTRAGE,
