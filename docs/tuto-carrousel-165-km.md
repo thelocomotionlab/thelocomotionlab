@@ -28,19 +28,14 @@ planche. La section **POSITION** en bas prend des pixels de planche : X, Y, Larg
 
 ## 1. Planche 2 — la course
 
-*Des puces en haut sur le papier, la carte en dessous qui se fond dans le blanc, le profil dessus.*
+*Des puces en haut sur le papier, la carte en bande dessous — la trace et son profil, rien d'écrit.*
 
-1. La première planche naît en modèle **Carte** : la carte occupe toute la planche, le bloc
-   « L'ITINÉRAIRE / nom / km · D+ » et le profil sont posés en bas.
-2. **Clique la carte** (au milieu, là où il n'y a pas de texte) et descends-la : **POSITION → Y `560`,
-   Hauteur `790`**. Elle garde toute la largeur ; le haut de la planche redevient du papier.
-3. Toujours sur la carte, **DÉGRADÉS** (« Voiler pour le texte » est déjà coché) :
-   **En-tête → `100 %`**, **Sa hauteur → `260` px**. Le bord haut de la carte se fond dans le blanc
-   labo sur 260 px. Le **Pied** reste tel quel : c'est lui qui porte le bloc de titre.
-4. **ÉTIQUETTES → décoche « Une par journée »** : plus de pastille « J1 » sur la trace.
-5. **Texte → + Titre**, puis **POSITION → Y `190`, Hauteur `90`**. Écris-le (double-clic dans la
+1. **Modèles → Trace.** La carte prend la moitié basse de la planche et se fond dans le papier par
+   ses deux bords ; la trace se cadre à la largeur du profil, posé au pied de la bande. Pas de
+   titre, pas de chiffres : le haut de la planche est à toi.
+2. **Texte → + Titre**, puis **POSITION → Y `190`, Hauteur `90`**. Écris-le (double-clic dans la
    planche, ou le champ de texte en haut de l'inspecteur).
-6. **Texte → + Liste**, puis **Y `300`, Hauteur `250`**. Une puce par ligne, une icône en tête :
+3. **Texte → + Liste**, puis **Y `300`, Hauteur `250`**. Une puce par ligne, une icône en tête :
 
    ```
    - :montagne: 165 km · 9 800 m D+
@@ -52,11 +47,12 @@ planche. La section **POSITION** en bas prend des pixels de planche : X, Y, Larg
    Icônes qui vont bien ici : `montagne` `sommet` `chrono` `calendrier` `sac` `ravitaillement`
    `refuge` `secours` `eau` `gourde` `coeur` `cible` `lievre` `tortue`. La liste complète est dans
    **Éléments → Icônes**, avec un champ de recherche.
-7. En bas, le modèle a déjà écrit **L'ITINÉRAIRE**, le nom de la trace et `{distance} km · {dplus}
-   m D+`. Double-clic pour changer le titre ; les chiffres viennent du GPX.
+4. Pour monter ou descendre la bande : clique la carte, **POSITION → Y et Hauteur**. Les fondus
+   suivent ses bords ; **DÉGRADÉS → Sa hauteur** dit sur combien de pixels chacun s'éteint. Le
+   profil se prend à part : clique-le et déplace-le.
 
-Si tu veux la carte plus haute ou plus basse, ne touche qu'à **Y** et **Hauteur** de la carte : la
-trace se recadre toute seule dans la partie visible, le profil et le titre ne bougent pas.
+Une boucle reste une boucle : elle ne s'élargit pas pour remplir la bande. Un parcours en ligne,
+lui, prend toute la largeur du profil.
 
 ---
 
@@ -92,6 +88,11 @@ trace se recadre toute seule dans la partie visible, le profil et le titre ne bo
    série ; le bouton **Thème** rend celle de la charte.
 6. **AXES** : **Une étiquette sur `1`** (toutes les semaines), **Étiquettes → En biais · 45°**,
    les deux cases cochées (graduations chiffrées, nom des séries sur les axes), **Corps `22`**.
+   Puis **AXE DES BARRES → Une graduation tous les `50`** : l'axe s'écrit 0 · 50 · 100 · 150 · 200.
+   Le **Maximum** reste vide — automatique, un cran rond au-dessus de ta plus grosse semaine.
+   **AXE DE LA COURBE** : même chose pour le dénivelé (vide, il donne 0 · 5k · 10k · 15k).
+   **DESSIN** : les lignes de grille, la largeur des barres (72 % de la colonne par défaut), les
+   pastilles sur la courbe.
 7. **La couleur d'une barre** : le graphique choisi, **clique la barre** dans la planche. La barre
    contextuelle au-dessus affiche son étiquette (« S15 ») et cinq pastilles — Thème (la couleur de la
    série), Accent, Bleu-vert, Terracotta, Fuchsia. Pour le WEC : S15 → Fuchsia ; pour l'affûtage :
@@ -105,24 +106,31 @@ données, les couleurs par barre et la légende restent les mêmes gestes.
 
 ---
 
-## 3. Planche 4 — la quête et les mantras
+## 3. Planche 4 — intentions et mantras
 
-1. **« + »** : une planche **Texte**.
-2. **Surtitre** → `la quête`. **Titre** → `Pourquoi 165 km`. **Corps** → le texte, avec le balisage :
+*La planche « Intentions / Mantras » de ton carrousel d'avant, relevée au pixel.*
+
+1. **« + »**, puis **Modèles → Intentions** : deux rubriques en terracotta, une liste à icônes sous
+   chacune — aux mesures de ta planche (rubriques à 295 et 817 px, points aérés).
+2. Clique la première liste et écris :
 
    ```
-   Parce que le rêve tient en une ligne : [finir], et rentrer raconter.
-
-   *Un pas après l'autre.*
-   *La nuit finit toujours.*
-   *Manger avant d'avoir faim.*
+   - :physiologie: Cultiver la *robustesse* physiologique
+   - :choc: *Choquer* mon organisme un mois avant Nice by UTMB
+   - :amis: Passer du temps entre *amis* dans l'effort
    ```
 
-   `[mot]` le met en ambre, `*mot*` en gras, une ligne vide fait un paragraphe, `| ` en début de
-   ligne centre la ligne. Les mantras en gras, un par ligne : ils se lisent comme une liste sans
-   puce.
-3. Pour un mantra qui porte toute la planche : **Texte → + Titre**, pose-le au milieu, **Centré** dans
-   la barre contextuelle, et laisse le corps du modèle pour le reste.
+3. La seconde :
+
+   ```
+   - :animal: J'épouse l'inconfort en montagne avec *animalité*
+   - :explorer: Je ne m'agenouille pas devant la *peur* mais navigue au travers
+   - :loupe: *J'enquête* sur mes propres capacités d'adaptation
+   ```
+
+4. « Intentions » et « Mantras » sont les mots du modèle : ils se réécrivent comme n'importe quel
+   titre. L'air entre deux points se règle sur la liste, **MISE EN PAGE → Entre les points** — 0,8
+   ici, 0,35 dans la charte.
 
 ---
 
@@ -150,6 +158,10 @@ Téléchargements reçoit une image par planche, numérotée dans l'ordre du car
 
 Les quatre planches ont été bâties par script dans le studio, exactement avec les gestes ci-dessus,
 et capturées. Le GPX utilisé est celui du GR54 (la trace de la course n'est pas dans le dépôt), et
-les mots des puces sont des exemples — les tiens vont à leur place. Dans l'environnement de
-vérification les tuiles de carte ne se chargent pas : sur ta machine, le fond Esri apparaît sous la
-trace, comme sur les planches d'avant.
+les mots des puces de la planche 2 sont des exemples — les tiens vont à leur place. Dans
+l'environnement de vérification les tuiles de carte ne se chargent pas : sur ta machine, le fond
+Esri apparaît sous la trace, comme sur les planches d'avant.
+
+La planche Intentions a été mesurée ligne par ligne contre l'original : rubriques, points et
+pied tombent à 2 px près ; seule la seconde liste est 8 px plus haute que sur l'original, où les
+deux rubriques n'avaient pas tout à fait le même corps.
