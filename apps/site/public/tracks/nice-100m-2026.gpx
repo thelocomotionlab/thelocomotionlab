@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gpx creator="Garmin Connect" version="1.1" schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/11.xsd" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd http://www.garmin.com/xmlschemas/PowerExtension/v1 http://www.garmin.com/xmlschemas/PowerExtensionv1.xsd http://www.topografix.com/GPX/gpx_style/0/2 http://www.topografix.com/GPX/gpx_style/0/2/gpx_style.xsd" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3" xmlns:gpxpx="http://www.garmin.com/xmlschemas/PowerExtension/v1" xmlns:gpx_style="http://www.topografix.com/GPX/gpx_style/0/2">
   <metadata>
-    <name>100M Auron-Nice par Collelongue-Venanson et baisse Combe</name>
+    <name>nice-100m-2026</name>
     <author>
       <name>gpx.studio</name>
       <link href="https://gpx.studio"/>
@@ -11,8 +11,68 @@
     </link>
     <time>2025-11-02T17:25:21.000Z</time>
   </metadata>
+  <wpt lat="44.255614" lon="6.925727">
+    <ele>1147.060727682521</ele>
+    <name>St-Étienne de Tinée</name>
+  </wpt>
+  <wpt lat="44.2716" lon="6.974362">
+    <ele>2473.0221387537376</ele>
+    <name>Cabane de chasseurs</name>
+  </wpt>
+  <wpt lat="44.223973" lon="7.030559">
+    <ele>2522.9754056119773</ele>
+    <name>Collelongue</name>
+  </wpt>
+  <wpt lat="44.186452" lon="7.051912">
+    <ele>872.9760902412035</ele>
+    <name>Isola (assistance)</name>
+  </wpt>
+  <wpt lat="44.122312" lon="7.09072">
+    <ele>659.832516329828</ele>
+    <name>Pont de Paule</name>
+  </wpt>
+  <wpt lat="44.083212" lon="7.104785">
+    <ele>489.2216611903424</ele>
+    <name>St-Sauveur sur Tinée (assistance)</name>
+  </wpt>
+  <wpt lat="44.063854" lon="7.131457">
+    <ele>1009.5386615995267</ele>
+    <name>Rimplas</name>
+  </wpt>
+  <wpt lat="44.05343" lon="7.253822">
+    <ele>1158.9920686496403</ele>
+    <name>Venanson (assistance)</name>
+  </wpt>
+  <wpt lat="44.009191" lon="7.247594">
+    <ele>1683.5844897284767</ele>
+    <name>Grange de la Brasque</name>
+  </wpt>
+  <wpt lat="43.917181" lon="7.247482">
+    <ele>800.99055566124</ele>
+    <name>Utelle (assistance)</name>
+  </wpt>
+  <wpt lat="43.860772" lon="7.230059">
+    <ele>521.3608137281376</ele>
+    <name>Levens (assistance)</name>
+  </wpt>
+  <wpt lat="43.859115" lon="7.272208">
+    <ele>1257.2077565923673</ele>
+    <name>Chapelle St Michel</name>
+  </wpt>
+  <wpt lat="43.786788" lon="7.275909">
+    <ele>393.6506694871889</ele>
+    <name>Tourrette-Levens (assistance)</name>
+  </wpt>
+  <wpt lat="43.754" lon="7.320156">
+    <ele>87.65552312353586</ele>
+    <name>Drap (assistance)</name>
+  </wpt>
+  <wpt lat="43.71517" lon="7.325393">
+    <ele>385.1748320898664</ele>
+    <name>Plateau St Michel</name>
+  </wpt>
   <trk>
-    <name>100M Auron-Nice par Collelongue-Venanson et baisse Combe</name>
+    <name>nice-100m-2026</name>
     <trkseg>
       <trkpt lat="44.224869925528765" lon="6.931589925661683">
         <ele>1591.0074414333883</ele>
