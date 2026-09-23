@@ -59,6 +59,9 @@ fois le même nom de modèle.
 où elle tombera. Les flèches ← → à droite de la bande déplacent la planche courante d'un rang. Un
 déplacement est une seule étape d'historique : Ctrl+Z le défait.
 
+**La flèche du pied** : le pied ne pose plus « glisse → ». Pour la flèche seule en bas à droite,
+**Éléments → Pied de page → Flèche →**, planche par planche — la dernière n'en a pas besoin.
+
 ### 1.4 La tranche de journées
 
 C'est le réglage qui fait une planche d'étape, et il vit dans l'**inspecteur** quand rien n'est

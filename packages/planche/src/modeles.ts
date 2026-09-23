@@ -234,6 +234,23 @@ export function mobilier(f: Format, o: OptionsMobilier = {}): Element[] {
 }
 
 /**
+ * LA FLÈCHE DU PIED, SEULE : l'invitation à glisser, sans le mot.
+ *
+ * Le pied ne la pose plus de lui-même — la dernière planche d'un carrousel n'a
+ * rien à faire glisser. Elle se pose à la main, planche par planche, à la
+ * place et dans l'encre qu'elle avait : alignée à droite sur la ligne de la
+ * pagination.
+ */
+export function flecheDuPied(f: Format): ElementTexte {
+  return texteNeuf(
+    boite(f, f.width - MARGE - 320, mesures(f).piedBase - CORPS.pied, 320, CORPS.pied * 1.4),
+    ":fleche:",
+    "libre",
+    { nom: "Flèche", alignement: "droite", ...PIED } as Partial<ElementTexte>,
+  );
+}
+
+/**
  * Le surtitre et le titre, le bloc d'entrée du regard.
  *
  * Le titre part sur `{nom}` plutôt que sur le nom recopié à l'instanciation :
