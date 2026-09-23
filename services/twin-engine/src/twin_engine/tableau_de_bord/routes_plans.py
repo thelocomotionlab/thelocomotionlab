@@ -47,6 +47,7 @@ from .objets import (
     PLAN_A_COMPOSER,
     PLAN_RESULTAT,
     AssistanceReglage,
+    ConsigneReglage,
     Cles,
     Course,
     Documents,
@@ -155,7 +156,36 @@ def lire_les_reglages(brut, course: Course | None) -> Reglages:
     return Reglages(mode=mode, cible_h=cible if mode == "objectif" else None,
                     tolerance_pct=tolerance if mode == "objectif" else None,
                     politique_arrets=politique, assistance=assistance,
-                    nutrition=lire_la_nutrition(brut.get("nutrition")))
+                    nutrition=lire_la_nutrition(brut.get("nutrition")),
+                    consignes=lire_les_consignes(brut.get("consignes"), course))
+
+
+def lire_les_consignes(brut, course: Course | None) -> list[ConsigneReglage]:
+    """Les lignes « Sur ce segment » que Valentin a écrites, une par segment au plus.
+
+    Une ligne se désigne par le ravitaillement qui la ferme : 1 pour la première, le
+    nombre de ravitaillements moins un pour l'arrivée. Le texte tient sur une ligne du
+    tableau : les retours à la ligne et les espaces en trop disparaissent. Une ligne vide
+    n'est pas gardée, et le moteur y remet son propre texte."""
+    lignes = None
+    if course is not None:
+        lignes = max(len(course.ravitaillements) - 1, 0)
+    textes: dict[int, str] = {}
+    for c in brut or ():
+        if not isinstance(c, dict):
+            raise ValueError("ligne du tableau de marche illisible")
+        try:
+            index = int(c.get("index"))
+        except (TypeError, ValueError):
+            raise ValueError(f"ligne du tableau de marche illisible : {c.get('index')}") from None
+        if index < 1 or (lignes is not None and index > lignes):
+            raise ValueError(f"la ligne {index} n'existe pas sur ce tableau de marche")
+        texte = " ".join(str(c.get("texte") or "").split())[:NOTE_MAX]
+        if texte:
+            textes[index] = texte
+        else:
+            textes.pop(index, None)
+    return [ConsigneReglage(index=i, texte=t) for i, t in sorted(textes.items())]
 
 
 def lire_le_resultat(brut, *, saisi_par: str) -> Resultat:
@@ -271,6 +301,18 @@ def _politique_standard(cfg, plan: Plan, course: dict | None) -> dict | None:
     }
 
 
+def textes_auto_des_lignes(magasin: Magasin, plan: Plan) -> dict[str, str]:
+    """Ce que la dernière version a posé d'elle-même sur chaque ligne du tableau de marche
+    (nuit, montée, note d'assistance), par numéro de ligne. Une version antérieure à ce
+    relevé ne dit que ce qu'elle a imprimé."""
+    if not plan.version:
+        return {}
+    annexe = lire_json(repertoire_de_version(magasin, plan.ref, plan.version) / "annexe.json")
+    segments = ((annexe or {}).get("plan") or {}).get("segments") or []
+    return {str(s.get("index")): str(s.get("consigne_auto", s.get("consigne")) or "")
+            for s in segments}
+
+
 def vue_du_plan(request: Request, plan: Plan) -> dict:
     """Tout ce que l'écran Plan montre, en un appel (§5.4)."""
     magasin: Magasin = request.app.state.magasin
@@ -300,6 +342,10 @@ def vue_du_plan(request: Request, plan: Plan) -> dict:
         "politique_standard": _politique_standard(cfg, plan, course),
         # la fenêtre d'objectif quand le plan n'en choisit pas : celle de la config
         "fenetre_defaut_pct": cfg.target.tolerance_pct,
+        # les lignes « Sur ce segment » : le texte du moteur, et la longueur au-delà de
+        # laquelle la feuille coupe
+        "lignes_auto": textes_auto_des_lignes(magasin, plan),
+        "ligne_max": cfg.report.consigne_max_chars,
         "jobs": [request.app.state.store.rendre_public(j)
                  for j in request.app.state.store.en_attente(plan_ref=plan.ref)],
         "demandes": [d for d in magasin.demandes.lister() if d.get("plan_ref") == plan.ref],

@@ -280,3 +280,28 @@ const VERSION_REMPLACEE =
 export function versionRemplacee(erreur) {
   return VERSION_REMPLACEE.test(`${erreur?.name ?? ""} ${erreur?.message ?? ""}`);
 }
+
+/**
+ * Les lignes « Sur ce segment » du tableau de marche, telles que l'écran les tient :
+ * {numéro de ligne: texte}. Une ligne se désigne par le ravitaillement qui la ferme.
+ */
+export function lignesDeLEcran(consignes) {
+  return Object.fromEntries((consignes ?? []).map((c) => [c.index, c.texte]));
+}
+
+/** Et ce qui part au moteur : les seules lignes écrites, chacune sur une ligne. */
+export function lignesPourLeMoteur(lignes) {
+  return Object.entries(lignes ?? {})
+    .map(([index, texte]) => ({ index: Number(index), texte: String(texte ?? "").replace(/\s+/g, " ").trim() }))
+    .filter((c) => c.texte)
+    .sort((a, b) => a.index - b.index);
+}
+
+/**
+ * Les caractères qu'une ligne de la feuille imprime à pleine taille, mesurés sur la feuille
+ * compilée : au-delà, le texte rétrécit pour tenir sur la ligne. La colonne perd de la place
+ * quand les colonnes eau et ravito s'impriment, c'est-à-dire quand les deux débits sont déclarés.
+ */
+export function longueurQuiTient(nutritionDeclaree) {
+  return nutritionDeclaree ? 25 : 40;
+}

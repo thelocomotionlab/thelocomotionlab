@@ -98,6 +98,8 @@ function EcranPlan({ vue, recharger }) {
           surLancer={lancer}
           lancement={lancement || Boolean(jobId)}
           fige={vue.fige}
+          lignesAuto={vue.lignes_auto}
+          ligneMax={vue.ligne_max}
         />
         <Apercu
           plan={plan}

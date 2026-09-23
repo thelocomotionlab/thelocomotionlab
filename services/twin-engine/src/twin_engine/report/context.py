@@ -7,6 +7,7 @@ calculé ici puis injecté dans report.tex.j2 — le template ne fait que de la 
 from __future__ import annotations
 
 import re
+from dataclasses import replace
 from datetime import date, datetime, timedelta
 
 import numpy as np
@@ -1150,6 +1151,11 @@ def _v3_context(ctx: dict, *, course, twin, calibration, prediction, plan, race,
     # la feuille lit les MÊMES moments que la page 2 : un seul calcul, donc un seul chiffre
     moments = faits.trois_moments(plan, course)
     consignes = feuille.consignes(plan, race, cfg, moments=moments)
+    # ce que le moteur poserait sur chaque ligne sans la voix de l'athlète : le tableau de
+    # bord le montre en exemple dans le champ d'une ligne que Valentin n'a pas écrite
+    consignes_auto = feuille.consignes(
+        plan, replace(race, reglages=tuple(replace(r, consigne="") for r in race.reglages)),
+        cfg, moments=moments)
 
     def _clock_or_h(clock: str | None, hours: float) -> str:
         return tex_escape(clock) if clock else f"{fr(hours, 1)}\\,h"
@@ -1246,6 +1252,7 @@ def _v3_context(ctx: dict, *, course, twin, calibration, prediction, plan, race,
         "fade_pct_plain": fade_pct_plain,
         "fade_evidence": tex_escape(cfg.report.fade_evidence),
         "consignes_plain": consignes,
+        "consignes_auto_plain": consignes_auto,
         "crew_rows": crew_rows,
         "crew_declared": contacts_declared,
         "finish_row": finish_row,

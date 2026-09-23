@@ -16,7 +16,10 @@ import {
   heureDePassage,
   jourLisible,
   lePlusProche,
+  lignesDeLEcran,
+  lignesPourLeMoteur,
   lireUneDuree,
+  longueurQuiTient,
   nombre,
   pasFranchis,
   signe,
@@ -228,5 +231,26 @@ describe("une page ouverte avant un redéploiement", () => {
     expect(versionRemplacee(new TypeError("Failed to fetch dynamically imported module: /x.js"))).toBe(true);
     expect(versionRemplacee(new TypeError("Cannot read properties of undefined (reading 'map')"))).toBe(false);
     expect(versionRemplacee(undefined)).toBe(false);
+  });
+});
+
+describe("les lignes « Sur ce segment »", () => {
+  it("font l'aller-retour entre le moteur et l'écran", () => {
+    const consignes = [
+      { index: 2, texte: "bâtons sortis" },
+      { index: 16, texte: "tout donner" },
+    ];
+    const ecran = lignesDeLEcran(consignes);
+    expect(ecran).toEqual({ 2: "bâtons sortis", 16: "tout donner" });
+    expect(lignesPourLeMoteur(ecran)).toEqual(consignes);
+    expect(lignesDeLEcran(undefined)).toEqual({});
+  });
+
+  it("une ligne vidée rend la main au moteur, une ligne écrite tient sur une ligne", () => {
+    expect(lignesPourLeMoteur({ 9: "  gel\n puis   soupe ", 4: "   ", 2: "" })).toEqual([{ index: 9, texte: "gel puis soupe" }]);
+  });
+
+  it("tiennent moins de caractères quand la nutrition est déclarée", () => {
+    expect(longueurQuiTient(true)).toBeLessThan(longueurQuiTient(false));
   });
 });

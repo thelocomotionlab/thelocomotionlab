@@ -105,7 +105,7 @@ def test_plan_porte_les_champs_du_recapitulatif():
                       "reglages", "amendements", "prediction", "documents",
                       "publie_le", "envoye_le", "cles", "resultat"}
     assert set(d["reglages"]) == {"mode", "cible_h", "tolerance_pct", "politique_arrets", "assistance",
-                                  "nutrition"}
+                                  "nutrition", "consignes"}
     assert set(d["prediction"]) == {"central_h", "fourchette", "bornes", "arrivee_le",
                                     "niveau"}
     assert set(d["cles"]) == {"partage", "prive"}

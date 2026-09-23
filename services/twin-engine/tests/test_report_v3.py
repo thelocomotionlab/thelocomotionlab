@@ -18,6 +18,7 @@ import pytest
 from twin_engine.calibration import build_calibration
 from twin_engine.config import load_config
 from twin_engine.course import CrewAccess, Nutrition, RaceSpec, build_course
+from twin_engine.course.spec import Reglage
 from twin_engine.pacing import build_pacing
 from twin_engine.predict import predict_finish
 from twin_engine.report import (build_feuille, build_pdf, build_report_context,
@@ -403,6 +404,17 @@ def test_the_crew_expects_the_runner_at_the_minute_of_the_marching_table():
     for p in points:
         assert p.central_clock == segments[p.index].arr_clock
     assert finish_point(plan, pred).central_clock == plan.segments[-1].arr_clock
+
+
+def test_a_line_written_by_the_athlete_replaces_the_engine_text_and_keeps_it_aside():
+    """Une ligne « Sur ce segment » écrite à la main s'imprime à la place du texte du moteur ;
+    celui-ci reste à côté, pour que l'écran le montre en exemple sur une ligne vide."""
+    auto, _ = context()
+    assert auto["consignes_plain"][0].startswith("montée de")
+    ctx, _ = context(race=race_spec(reglages=(Reglage(aid_index=1, consigne="bâtons au Col"),)))
+    assert ctx["consignes_plain"][0] == "bâtons au Col"
+    assert ctx["feuille_rows"][0]["marche"] == "bâtons au Col"
+    assert ctx["consignes_auto_plain"] == auto["consignes_plain"]
 
 
 def test_nutrition_stays_blank_until_the_athlete_declares_it():

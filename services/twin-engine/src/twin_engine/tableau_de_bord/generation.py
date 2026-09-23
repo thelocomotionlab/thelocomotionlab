@@ -75,7 +75,8 @@ def base_du_plan(course: Course, plan: Plan, *,
     Deux sources, la plus personnelle en dernier :
 
     * la COURSE : ravitaillements, bases, points d'assistance, arrêts qu'elle impose ;
-    * le PLAN : mode et cible, politique d'arrêts, notes d'assistance, nutrition.
+    * le PLAN : mode et cible, politique d'arrêts, notes d'assistance, nutrition, et les
+      lignes « Sur ce segment » que Valentin a écrites.
 
     Gardée à part dans chaque version (``version.json``, clé ``base``) : c'est ce qui
     permet à l'athlète de RETIRER un amendement. Si la version ne gardait que le carnet
@@ -97,6 +98,7 @@ def base_du_plan(course: Course, plan: Plan, *,
     arrets: dict[int, float] = dict(arrets_politique or {})
     arrets.update({r.aid_index: r.stop_min for r in base.reglages if r.stop_min is not None})
     consignes = {r.aid_index: r.consigne for r in base.reglages if r.consigne}
+    consignes.update({c.index: c.texte for c in reglages.consignes if c.texte})
     reglages_moteur = tuple(
         Reglage(aid_index=i, stop_min=arrets.get(i), consigne=consignes.get(i, ""))
         for i in sorted(set(arrets) | set(consignes))

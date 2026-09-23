@@ -307,6 +307,15 @@ class AssistanceReglage:
 
 
 @dataclass
+class ConsigneReglage:
+    """Ce que Valentin écrit sur une ligne du tableau de marche, colonne « Sur ce segment ».
+    ``index`` est celui du ravitaillement qui ferme le segment (1 = la première ligne)."""
+
+    index: int = 0
+    texte: str = ""
+
+
+@dataclass
 class Reglages:
     """Ce que Valentin compose. Distinct des amendements, qui viennent de l'athlète."""
 
@@ -318,6 +327,8 @@ class Reglages:
     politique_arrets: str = ""
     assistance: list[AssistanceReglage] = field(default_factory=list)
     nutrition: NutritionReglage = field(default_factory=NutritionReglage)
+    # Une ligne sans texte ici garde celui que le moteur y pose (nuit, montée, …).
+    consignes: list[ConsigneReglage] = field(default_factory=list)
 
 
 @dataclass
@@ -422,6 +433,10 @@ class Plan:
                 nutrition=_depuis(
                     NutritionReglage, (brut.get("reglages") or {}).get("nutrition")
                 ),
+                consignes=[
+                    _depuis(ConsigneReglage, c)
+                    for c in (brut.get("reglages") or {}).get("consignes") or ()
+                ],
             ),
             amendements=Amendements(
                 arrets=dict((brut.get("amendements") or {}).get("arrets") or {}),
@@ -466,7 +481,7 @@ class Demande:
 
 
 __all__ = [
-    "Amendements", "Archive", "AssistanceReglage", "Athlete", "Cles", "Course",
+    "Amendements", "Archive", "AssistanceReglage", "Athlete", "Cles", "ConsigneReglage", "Course",
     "Demande", "Documents", "Geometrie", "Gpx", "Ingestion", "Jumeau", "Niveau",
     "NutritionReglage", "Officiel", "PhaseCourse", "Plan", "Prediction",
     "Ravitaillement", "Reglages", "Resultat", "Soleil",

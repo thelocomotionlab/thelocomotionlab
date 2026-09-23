@@ -11,7 +11,15 @@
 
 import { Button, Choix, Segments } from "@locomotionlab/ui";
 
-import { NIVEAUX, duree, lireUneDuree, nombre } from "@/lib/twinTableauDeBord.mjs";
+import {
+  NIVEAUX,
+  duree,
+  lignesDeLEcran,
+  lignesPourLeMoteur,
+  lireUneDuree,
+  longueurQuiTient,
+  nombre,
+} from "@/lib/twinTableauDeBord.mjs";
 import { cibleDeLaFenetre, fenetreDeLaCible } from "@/lib/twinPlan.mjs";
 
 import { ETIQUETTE } from "../Coquille";
@@ -39,6 +47,7 @@ export function reglagesDeLEcran(reglages, fenetreDefautPct = null) {
     fin: fenetre ? enClair(fenetre.fin_h) : "",
     politique_arrets: r.politique_arrets || "standard",
     notes: Object.fromEntries((r.assistance ?? []).map((a) => [a.index, a.note])),
+    lignes: lignesDeLEcran(r.consignes),
     eau: r.nutrition?.eau_l_h ?? "",
     glucides: r.nutrition?.glucides_g_h ?? "",
   };
@@ -57,7 +66,33 @@ export function reglagesPourLeMoteur(ecran) {
       .filter(([, note]) => note && note.trim())
       .map(([index, note]) => ({ index: Number(index), note: note.trim() })),
     nutrition: { eau_l_h: vers(ecran.eau), glucides_g_h: vers(ecran.glucides) },
+    consignes: lignesPourLeMoteur(ecran.lignes),
   };
+}
+
+/** Les lignes du tableau de marche : une par segment, fermée par son ravitaillement. Le
+ *  numéro est la place de ce ravitaillement dans la course, départ compté 0. */
+function lignesDeLaCourse(course) {
+  return [...(course?.ravitaillements ?? [])]
+    .sort((a, b) => a.km - b.km)
+    .map((r, place) => ({ index: place, nom: r.nom, km: r.km }))
+    .slice(1);
+}
+
+/** Une ligne « Sur ce segment » : vide, le texte du moteur (en gris) ; écrite, le sien. */
+function LigneDuSegment({ ligne, texte, auto, connu, tient, max, changer }) {
+  const longueur = texte.trim().length;
+  return (
+    <ChampCourt
+      label={`${ligne.index} · ${ligne.nom}`}
+      type="text"
+      value={texte}
+      maxLength={max ?? undefined}
+      placeholder={connu ? auto || "case vide, pour le stylo" : "le texte du moteur, s'il en pose un"}
+      onChange={changer}
+      aide={longueur > tient ? `${longueur} caractères : la ligne rétrécira à l'impression, elle en tient ${tient}.` : ""}
+    />
+  );
 }
 
 export default function LeChoix({
@@ -73,8 +108,14 @@ export default function LeChoix({
   surLancer,
   lancement,
   fige,
+  lignesAuto,
+  ligneMax,
 }) {
   const postes = (course?.ravitaillements ?? []).filter((r) => r.assistance);
+  const lignes = lignesDeLaCourse(course);
+  const autoConnu = Boolean(lignesAuto && Object.keys(lignesAuto).length);
+  const tient = longueurQuiTient(ecran.eau !== "" && ecran.glucides !== "");
+  const ecrites = lignes.filter((l) => (ecran.lignes?.[l.index] ?? "").trim()).length;
   const fenetre = fenetreDeLEcran(ecran);
   const cibleIllisible = ecran.mode === "objectif" && fenetre === null;
 
@@ -210,6 +251,29 @@ export default function LeChoix({
           />
         ))}
         {postes.length ? null : <p className="text-xs text-brand-muted">La course ne déclare aucun poste d&rsquo;assistance.</p>}
+      </div>
+
+      <div className="flex flex-col gap-2 text-sm">
+        <span className="text-brand-muted">
+          Sur ce segment · {ecrites ? `${ecrites} ligne${ecrites > 1 ? "s" : ""} écrite${ecrites > 1 ? "s" : ""} sur ${lignes.length}` : `${lignes.length} lignes`}
+        </span>
+        <p className="text-xs leading-relaxed text-brand-muted">
+          Vide, une ligne garde le texte du moteur, en gris. Écrite, elle le remplace sur la feuille et sur la page de
+          l&rsquo;athlète.
+        </p>
+        {lignes.map((ligne) => (
+          <LigneDuSegment
+            key={ligne.index}
+            ligne={ligne}
+            texte={ecran.lignes?.[ligne.index] ?? ""}
+            auto={lignesAuto?.[ligne.index] ?? ""}
+            connu={autoConnu}
+            tient={tient}
+            max={ligneMax}
+            changer={(v) => changer({ lignes: { ...ecran.lignes, [ligne.index]: v } })}
+          />
+        ))}
+        {lignes.length ? null : <p className="text-xs text-brand-muted">La course n&rsquo;a pas encore de ravitaillements.</p>}
       </div>
 
       <div className="flex flex-col gap-2 text-sm">

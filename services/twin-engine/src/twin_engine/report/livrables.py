@@ -438,8 +438,10 @@ def annex_payload(*, ctx: dict, course, twin, calibration, prediction, plan, rac
                            "carbs_g_per_h": race.nutrition.carbs_g_per_h}
                           if race.nutrition.declared else None),
             "crew": [{"aid_index": c.aid_index, "note": c.note} for c in race.crew],
-            "segments": [{**s.to_dict(), "consigne": detex(c)} for s, c in
-                         zip(plan.segments, ctx["consignes_plain"])],
+            "segments": [{**s.to_dict(), "consigne": detex(c), "consigne_auto": detex(a)}
+                         for s, c, a in zip(plan.segments, ctx["consignes_plain"],
+                                            ctx.get("consignes_auto_plain")
+                                            or ctx["consignes_plain"])],
         },
         # la note d'assistance voyage avec le point : c'est elle que le formulaire de
         # l'annexe repropose à l'édition

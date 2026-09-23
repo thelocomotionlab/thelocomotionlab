@@ -119,6 +119,22 @@ def test_une_consigne_survit_a_lamendement_de_son_arret():
     assert amende.reglages == (Reglage(aid_index=4, stop_min=9.0, consigne="marcher la montée"),)
 
 
+def test_les_lignes_ecrites_par_valentin_vont_au_moteur_et_survivent_aux_arrets():
+    """Une ligne « Sur ce segment » écrite au plan devient la consigne du ravitaillement qui
+    la ferme ; l'athlète qui change son arrêt au même endroit ne l'efface pas."""
+    course = _course_nice()
+    plan = _plan(consignes=[O.ConsigneReglage(index=2, texte="bâtons sortis"),
+                            O.ConsigneReglage(index=16, texte="tout donner")])
+    base = G.base_du_plan(course, plan, arrets_politique={2: 5.0})
+    consignes = {r.aid_index: r.consigne for r in base.reglages if r.consigne}
+    assert consignes == {2: "bâtons sortis", 16: "tout donner"}
+    amende = G.appliquer_les_amendements(base, O.Amendements(arrets={"2": 9}))
+    assert {r.aid_index: (r.stop_min, r.consigne) for r in amende.reglages}[2] == (
+        9.0, "bâtons sortis")
+    relu = dossier_mod.appliquer(RaceSpec.from_json(NICE), G.fragment_de(amende))
+    assert relu.reglages == amende.reglages
+
+
 def test_le_fragment_se_relit_par_le_dossier_a_lidentique():
     course = _course_nice()
     plan = _plan(nutrition=O.NutritionReglage(eau_l_h=0.6, glucides_g_h=70),
@@ -363,16 +379,21 @@ def test_un_amendement_refait_la_version_et_se_retire(deux_chemins):
 
 
 @pdf_requis
-def test_la_fenetre_dobjectif_du_plan_est_servie_et_survit_a_lamendement(deux_chemins):
+def test_la_fenetre_et_les_lignes_du_plan_sont_servies_et_survivent_a_lamendement(
+        deux_chemins):
     """29 h – 31 h, c'est une cible de 30 h à ±3,33 % : la config n'en sait rien, le plan
-    si — et chaque rendu de la version la reçoit, amendement compris."""
+    si — et chaque rendu de la version la reçoit, amendement compris. Même chose pour une
+    ligne « Sur ce segment » écrite au plan."""
+    from twin_engine.tableau_de_bord.routes_plans import textes_auto_des_lignes
+
     magasin = deux_chemins["magasin"]
     central = json.loads((deux_chemins["v1"] / "version.json").read_text())["prediction"]
     ref = "LL-NICE26-VAL-FENETRE"
     fenetre = 100 / 30
     magasin.plans.ecrire(O.Plan(ref=ref, athlete_id="val", course_id="nice", reglages=O.Reglages(
         mode="objectif", cible_h=round(central["central_h"]), tolerance_pct=fenetre,
-        politique_arrets=G.POLITIQUE_STANDARD)).to_dict())
+        politique_arrets=G.POLITIQUE_STANDARD,
+        consignes=[O.ConsigneReglage(index=2, texte="bâtons sortis")])).to_dict())
     G.generer_une_version(ref=ref, magasin=magasin, cfg=CFG, report_date=EDITE_LE,
                           analysis_date=ANALYSE_LE)
     v1 = magasin.plans.repertoire(ref) / "v1"
@@ -389,10 +410,16 @@ def test_la_fenetre_dobjectif_du_plan_est_servie_et_survit_a_lamendement(deux_ch
     assert arrivee["lo_h"] == pytest.approx(cible * (1 - fenetre / 100), abs=0.02)
     assert arrivee["hi_h"] == pytest.approx(cible * (1 + fenetre / 100), abs=0.02)
 
+    ligne = servie()["segments"][1]
+    assert ligne["consigne"] == "bâtons sortis" and ligne["consigne_auto"] != "bâtons sortis"
+    plan = O.Plan.from_dict(magasin.plans.lire(ref))
+    assert textes_auto_des_lignes(magasin, plan)["2"] == ligne["consigne_auto"]
+
     magasin.plans.modifier(ref, version_publiee=1, amendements={
         "arrets": {"4": 12}, "notes": {}, "nutrition": {"eau_l_h": None, "glucides_g_h": None}})
     G.amender_la_version(ref=ref, magasin=magasin, cfg=CFG)
     assert servie()["window_tolerance_pct"] == pytest.approx(fenetre, abs=0.01)
+    assert servie()["segments"][1]["consigne"] == "bâtons sortis"
 
 
 def test_un_plan_sans_trace_ne_se_genere_pas(tmp_path):

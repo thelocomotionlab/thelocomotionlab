@@ -143,6 +143,10 @@ def test_un_plan_demande_une_trace(client):
     ({"assistance": [{"index": 1, "note": "ici"}]}, "assistance"),
     ({"mode": "objectif", "cible_h": "30h", "tolerance_pct": 50}, "fenêtre"),
     ({"mode": "objectif", "cible_h": "30h", "tolerance_pct": "large"}, "fenêtre illisible"),
+    ({"consignes": [{"index": 0, "texte": "départ"}]}, "ligne 0"),
+    ({"consignes": [{"index": 17, "texte": "après l'arrivée"}]}, "ligne 17"),
+    ({"consignes": [{"index": "deux", "texte": "x"}]}, "illisible"),
+    ({"consignes": ["bâtons"]}, "illisible"),
 ])
 def test_des_reglages_illisibles_sont_refuses_en_entier(reglages, motif):
     course = racespec_vers_course(RaceSpec.from_json(NICE), id="nice")
@@ -167,6 +171,12 @@ def test_les_reglages_se_lisent_comme_un_humain_les_ecrit():
     assert lire_les_reglages({"mode": "prediction", "tolerance_pct": 3}, course).tolerance_pct \
         is None, "une fenêtre ne vaut qu'avec sa cible"
     assert lire_les_reglages({"mode": "objectif", "cible_h": 30}, course).tolerance_pct is None
+    # une ligne par segment, sur une ligne ; vide, elle rend la main au moteur
+    lignes = lire_les_reglages({"consignes": [
+        {"index": 2, "texte": "  bâtons\n sortis  "}, {"index": 16, "texte": "tout donner"},
+        {"index": 5, "texte": "   "}, {"index": 2, "texte": "bâtons sortis, gel"}]}, course)
+    assert [(c.index, c.texte) for c in lignes.consignes] == [(2, "bâtons sortis, gel"),
+                                                            (16, "tout donner")]
 
 
 def test_le_resultat_se_lit_en_heures_ou_en_abandon():
