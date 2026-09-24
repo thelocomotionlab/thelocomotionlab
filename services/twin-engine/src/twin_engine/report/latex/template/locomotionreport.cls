@@ -515,6 +515,10 @@
 % \LLtete{texte} : l'en-tête d'une colonne ordinaire.
 \newcommand{\LLtete}[1]{%
   {\LLsemiboldfont\fontsize{6.8}{8}\selectfont\color{LLText}\LLtracked{\MakeUppercase{#1}}}}
+% \LLteteindice{texte}{indice} : le même en-tête, suivi d'un indice en bas de casse (KM\textsubscript{tot}).
+\newcommand{\LLteteindice}[2]{%
+  {\LLsemiboldfont\fontsize{6.8}{8}\selectfont\color{LLText}\LLtracked{\MakeUppercase{#1}}%
+   \textsubscript{\fontsize{5.6}{6}\selectfont #2}}}
 % \LLtient{largeur}{contenu} : le contenu sur UNE ligne, rétréci s'il déborde.
 %
 % C'est ce qui donne au tableau des lignes de hauteur égale : un nom de ravitaillement long

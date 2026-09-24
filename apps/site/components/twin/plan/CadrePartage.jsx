@@ -72,7 +72,13 @@ function Assistance({ postes, arrivee, surObjectif }) {
             <tr className="text-left text-xs uppercase tracking-etiquette text-brand-muted">
               {["Poste", "km", "Au plus tôt", "Prévu", "Au plus tard", "À prévoir"].map((c) => (
                 <th key={c} className="px-3 py-2 font-semibold">
-                  {c}
+                  {c === "km" ? (
+                    <>
+                      km<sub className="normal-case">tot</sub>
+                    </>
+                  ) : (
+                    c
+                  )}
                 </th>
               ))}
             </tr>

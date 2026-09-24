@@ -20,11 +20,13 @@ import useJob from "@/components/twin/useJob";
 import { amender, demander, lireLAmendement } from "./api";
 import { ETIQUETTE, TitreDeSection } from "./CadrePartage";
 
-function allure(minutesParKm) {
-  if (!minutesParKm) return "—";
-  const m = Math.floor(minutesParKm);
-  const s = Math.round((minutesParKm - m) * 60);
-  return s === 60 ? `${m + 1}:00` : `${m}:${String(s).padStart(2, "0")}`;
+/** « km » et son indice en bas de casse, dans un en-tête en capitales : le kilomètre cumulé. */
+function KmTot() {
+  return (
+    <>
+      km<sub className="normal-case">tot</sub>
+    </>
+  );
 }
 
 /** Ce que la page montrait à l'ouverture, en chaînes — le point de comparaison. */
@@ -208,10 +210,12 @@ export default function ToiSeul({ vue, reference, cle, recharger }) {
               <tr className="text-left text-xs uppercase tracking-etiquette text-brand-muted">
                 <th className="px-2 py-2 font-semibold">#</th>
                 <th className="px-2 py-2 font-semibold">Vers</th>
+                <th className="px-2 py-2 text-right font-semibold">
+                  <KmTot />
+                </th>
                 <th className="px-2 py-2 text-right font-semibold">km</th>
                 <th className="hidden px-2 py-2 text-right font-semibold md:table-cell">D+</th>
                 <th className="hidden px-2 py-2 text-right font-semibold md:table-cell">D−</th>
-                <th className="hidden px-2 py-2 text-right font-semibold md:table-cell">Allure</th>
                 <th className="px-2 py-2 text-right font-semibold">{duree(a.bas)}</th>
                 <th className="px-2 py-2 text-right font-semibold text-brand-text">{duree(a.centre)}</th>
                 <th className="px-2 py-2 text-right font-semibold">{duree(a.haut)}</th>
@@ -232,9 +236,9 @@ export default function ToiSeul({ vue, reference, cle, recharger }) {
                       {s.consigne ? <span className="block text-xs text-brand-muted">{s.consigne}</span> : null}
                     </td>
                     <td className="px-2 py-1.5 text-right tabular-nums">{nombre(s.off1, 1)}</td>
+                    <td className="px-2 py-1.5 text-right tabular-nums">{nombre(s.off_len_km, 1)}</td>
                     <td className="hidden px-2 py-1.5 text-right tabular-nums text-brand-soft md:table-cell">{nombre(s.dplus_m)}</td>
                     <td className="hidden px-2 py-1.5 text-right tabular-nums text-brand-soft md:table-cell">{nombre(s.dminus_m)}</td>
-                    <td className="hidden px-2 py-1.5 text-right tabular-nums text-brand-soft md:table-cell">{allure(s.pace_min_km)}</td>
                     <td className="px-2 py-1.5 text-right tabular-nums text-brand-soft">{s.arr_lo_clock || "—"}</td>
                     <td className="px-2 py-1.5 text-right font-semibold tabular-nums text-brand-text">{s.arr_clock || "—"}</td>
                     <td className="px-2 py-1.5 text-right tabular-nums text-brand-soft">{s.arr_hi_clock || "—"}</td>
@@ -270,7 +274,9 @@ export default function ToiSeul({ vue, reference, cle, recharger }) {
                       </span>{" "}
                       {s.to}
                     </span>
-                    <span className="whitespace-nowrap tabular-nums text-brand-muted">km {nombre(s.off1, 1)}</span>
+                    <span className="whitespace-nowrap tabular-nums text-brand-muted">
+                      <KmTot /> {nombre(s.off1, 1)} · km {nombre(s.off_len_km, 1)}
+                    </span>
                   </p>
                   {s.consigne ? <p className="m-0 mt-0.5 text-xs text-brand-muted">{s.consigne}</p> : null}
                   <div className="mt-2 grid grid-cols-3 gap-2 whitespace-nowrap text-sm tabular-nums">
@@ -291,8 +297,12 @@ export default function ToiSeul({ vue, reference, cle, recharger }) {
         </div>
         <p className="mt-2 text-xs leading-relaxed text-brand-muted">
           Les trois colonnes sont titrées par leur heure d&rsquo;arrivée : repère tôt celle qui te correspond et
-          suis-la. Entre la première et la dernière, une course sur deux. Filet ambre : ravitaillement ouvert à ton
-          assistance ; point d&rsquo;encre : segment de nuit.
+          suis-la.{" "}
+          {a.surObjectif
+            ? "La première et la dernière bornent la fenêtre de ton plan, autour de ton objectif."
+            : "Entre la première et la dernière, une course sur deux."}{" "}
+          km<sub>tot</sub> : depuis le départ ; km : sur le segment. Filet ambre : ravitaillement ouvert à ton assistance ;
+          point d&rsquo;encre : segment de nuit.
         </p>
       </div>
 
