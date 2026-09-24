@@ -15,6 +15,7 @@ import { Eye, EyeOff, Trash2 } from "lucide-react";
 import {
   COULEURS_TEXTE,
   brandColors,
+  avecTexteDuGraphique,
   ecrireLesSeries,
   lireLesSeries,
   PALETTE_JOURS,
@@ -38,6 +39,7 @@ import {
   type DegradesCarte,
   type Etiquette,
   type LigneLegende,
+  type PartDuGraphique,
   type Filet,
 } from "@locomotionlab/planche";
 import { CLES_ICONES } from "@locomotionlab/ui/icones";
@@ -986,6 +988,14 @@ function ReglagesCases({
  * a été compris, et les couleurs déjà posées survivent, parce qu'on recolle
  * souvent juste pour corriger un chiffre.
  */
+/** Les quatre textes d'un graphique de semaines, dans l'ordre de l'inspecteur. */
+const TEXTES_DU_GRAPHIQUE: { part: PartDuGraphique; libelle: string; encre: string }[] = [
+  { part: "abscisse", libelle: "Abscisses", encre: "Encre des abscisses" },
+  { part: "ordonnees", libelle: "Ordonnées", encre: "Encre des ordonnées" },
+  { part: "titres", libelle: "Titres des axes", encre: "Encre des titres" },
+  { part: "legende", libelle: "Légende", encre: "Encre de la légende" },
+];
+
 /** Un nombre tapé dans un champ texte — vide, c'est « auto ». */
 function nombreOuRien(v: string): number | null {
   if (v.trim() === "") return null;
@@ -1112,12 +1122,36 @@ function ReglagesSemaines({
         coche={e.titresAxes}
         onChange={(v) => poser((x) => ({ ...x, titresAxes: v }), "axes")}
       />
+
+      <Titre>Textes</Titre>
       <Nombre
-        libelle="Corps"
+        libelle="Corps commun"
         valeur={e.taille}
         suffixe="px"
         onChange={(n) => poser((x) => ({ ...x, taille: Math.max(8, n) }), "corps")}
       />
+      {TEXTES_DU_GRAPHIQUE.map(({ part, libelle, encre }) => (
+        <div key={part} className="mb-1 border-l border-brand-hairline pl-2">
+          <Nombre
+            libelle={libelle}
+            valeur={e.textes?.[part]?.taille ?? e.taille}
+            suffixe="px"
+            onChange={(n) =>
+              poser((x) => avecTexteDuGraphique(x, part, { taille: Math.max(8, n) }), "textes")
+            }
+          />
+          <Couleur
+            libelle={encre}
+            valeur={e.textes?.[part]?.couleur ?? ""}
+            onChange={(v) => poser((x) => avecTexteDuGraphique(x, part, { couleur: v }), "textes")}
+          />
+        </div>
+      ))}
+      <Aide>
+        Le corps commun règle les quatre textes à la fois ; chacun peut ensuite prendre le sien.
+        « Thème » garde l&rsquo;encre de la charte : douce pour les abscisses et la légende, faible
+        pour les ordonnées, la couleur de sa série pour chaque titre.
+      </Aide>
 
       <Titre>Axe des barres</Titre>
       <Mot

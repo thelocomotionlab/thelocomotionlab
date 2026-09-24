@@ -382,6 +382,12 @@ export type ElementCases = ElementCommun & {
  * unitée, parce que « 4 500 » ne dit pas s'il s'agit de mètres ou de minutes, et
  * que l'axe doit le dire.
  */
+/** Les quatre textes d'un graphique de semaines. */
+export type PartDuGraphique = "abscisse" | "ordonnees" | "titres" | "legende";
+
+/** La taille et l'encre d'un texte du graphique. `null` et vide : le réglage commun. */
+export type TexteDuGraphique = { taille: number | null; couleur: string };
+
 export type SerieChiffree = {
   nom: string;
   unite: string;
@@ -441,8 +447,16 @@ export type ElementSemaines = ElementCommun & {
   /** Le nom de chaque série montrée, écrit en tête de son axe. */
   titresAxes: boolean;
   legende: LigneLegende[];
-  /** Le corps des étiquettes, en pixels d'une planche de 1080 de large. */
+  /** Le corps commun des textes, en pixels d'une planche de 1080 de large. */
   taille: number;
+  /**
+   * CHAQUE TEXTE PEUT PRENDRE SA TAILLE ET SON ENCRE : les étiquettes
+   * d'abscisse, les graduations, les titres des axes, la légende. Une taille
+   * `null` suit le corps commun ; une encre vide garde celle du thème — douce
+   * pour les abscisses et la légende, faible pour les graduations, la couleur de
+   * sa série pour chaque titre.
+   */
+  textes: Record<PartDuGraphique, TexteDuGraphique>;
 };
 
 export type Element =

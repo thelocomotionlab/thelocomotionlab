@@ -317,6 +317,12 @@ export function semainesNeuves(
     titresAxes: true,
     legende: [],
     taille: CORPS.pied,
+    textes: {
+      abscisse: { taille: null, couleur: "" },
+      ordonnees: { taille: null, couleur: "" },
+      titres: { taille: null, couleur: "" },
+      legende: { taille: null, couleur: "" },
+    },
     ...over,
   };
 }

@@ -5,6 +5,7 @@ import { THEMES } from "./charte.ts";
 import { ctxFactice, type CtxFactice } from "./factice.ts";
 import { semainesNeuves } from "./fabrique.ts";
 import {
+  avecTexteDuGraphique,
   axeDe,
   barreSous,
   cadreDesSemaines,
@@ -196,6 +197,118 @@ describe("l'air du haut", () => {
     const cadre = cadreDesSemaines(semaines({ axes: false, legende: [] }), BOITE)!;
     expect(cadre.trace.y).toBe(BOITE.y);
     expect(cadre.trace.h).toBeLessThan(BOITE.h);
+  });
+});
+
+describe("les textes du graphique", () => {
+  const k = BOITE.l / 1080;
+  const avec = (textes: Partial<ElementSemaines["textes"]>, over: Partial<ElementSemaines> = {}) => {
+    const e = semaines(over);
+    return { ...e, textes: { ...e.textes, ...textes } };
+  };
+
+  /** Des graduations de trois caractères au plus : « 200 » à gauche, « 15k » à droite. */
+  const troisCaracteres = {
+    abscisse: ["S1", "S2", "S3"],
+    series: [
+      { nom: "Distance", unite: "km", valeurs: [77, 198, 44] },
+      { nom: "Dénivelé positif", unite: "m", valeurs: [3200, 12800, 700] },
+    ],
+  };
+
+  it("gardent par défaut la géométrie d'avant", () => {
+    const e = semaines({ ...troisCaracteres, axes: true, titresAxes: true, courbe: 1, inclinaison: 0 });
+    const cadre = cadreDesSemaines(e, BOITE)!;
+    const c = 22 * k;
+    expect(cadre.trace.y - BOITE.y).toBeCloseTo(c * 1.9, 6);
+    expect(cadre.trace.x - BOITE.x).toBeCloseTo(c * 2.6, 6);
+    expect(BOITE.x + BOITE.l - (cadre.trace.x + cadre.trace.l)).toBeCloseTo(c * 2.6, 6);
+    expect(cadre.reserveBas).toBeCloseTo(c * 2.2, 6);
+  });
+
+  it("élargissent la marge d'un axe dont les graduations sont plus longues", () => {
+    const e = semaines({ ...troisCaracteres, axes: true, courbe: 1 });
+    const court = cadreDesSemaines(e, BOITE)!;
+    // « 2.5k » : quatre caractères, la marge de 2,6 corps ne suffit plus.
+    const long = cadreDesSemaines({ ...e, plafondCourbe: 2500, pasCourbe: 500 }, BOITE)!;
+    expect(long.trace.l).toBeLessThan(court.trace.l);
+    expect(long.trace.x).toBeCloseTo(court.trace.x, 6);
+  });
+
+  it("font suivre les marges à leur corps", () => {
+    const base = cadreDesSemaines(semaines({ axes: true, titresAxes: true }), BOITE)!;
+    const ord = cadreDesSemaines(avec({ ordonnees: { taille: 40, couleur: "" } }, { axes: true }), BOITE)!;
+    expect(ord.trace.x).toBeGreaterThan(base.trace.x);
+    expect(ord.trace.y).toBeGreaterThan(base.trace.y);
+    const tit = cadreDesSemaines(avec({ titres: { taille: 40, couleur: "" } }, { axes: true }), BOITE)!;
+    expect(tit.trace.y).toBeGreaterThan(base.trace.y);
+    expect(tit.trace.x).toBeCloseTo(base.trace.x, 6);
+    const abs = cadreDesSemaines(avec({ abscisse: { taille: 40, couleur: "" } }), BOITE)!;
+    expect(abs.reserveBas).toBeGreaterThan(base.reserveBas);
+    const leg = (taille: number | null) =>
+      cadreDesSemaines(
+        avec({ legende: { taille, couleur: "" } }, { legende: [{ couleur: "", texte: "WEC" }] }),
+        BOITE,
+      )!.trace.h;
+    expect(leg(60)).toBeLessThan(leg(null));
+  });
+
+  it("posent chaque texte à son corps et à son encre", () => {
+    const vus: { texte: string; encre: string; fonte: string }[] = [];
+    const ctx = ctxFactice();
+    const cible = ctx as unknown as Record<string, (...a: unknown[]) => void>;
+    const fillText = cible.fillText!.bind(ctx);
+    cible.fillText = (...a: unknown[]) => {
+      vus.push({ texte: String(a[0]), encre: String(ctx.fillStyle), fonte: String(ctx.font) });
+      fillText(...a);
+    };
+    const e = avec(
+      {
+        abscisse: { taille: 30, couleur: "#111111" },
+        ordonnees: { taille: 26, couleur: "#222222" },
+        titres: { taille: 34, couleur: "#333333" },
+        legende: { taille: 28, couleur: "#444444" },
+      },
+      { axes: true, titresAxes: true, courbe: 1, legende: [{ couleur: "", texte: "WEC" }] },
+    );
+    dessinerSemaines(ctx, e, BOITE, contexte);
+    const cadre = cadreDesSemaines(e, BOITE)!;
+    const de = (texte: string) => vus.find((v) => v.texte === texte)!;
+    expect(de("S1")).toMatchObject({ encre: "#111111" });
+    expect(de("S1").fonte).toContain(`${cadre.tailles.abscisse}px`);
+    expect(de("0")).toMatchObject({ encre: "#222222" });
+    expect(de("0").fonte).toContain(`${cadre.tailles.ordonnees}px`);
+    expect(de("Distance (km)")).toMatchObject({ encre: "#333333" });
+    expect(de("Dénivelé positif (m)")).toMatchObject({ encre: "#333333" });
+    expect(de("Distance (km)").fonte).toContain(`${cadre.tailles.titres}px`);
+    expect(de("WEC")).toMatchObject({ encre: "#444444" });
+    expect(de("WEC").fonte).toContain(`${cadre.tailles.legende}px`);
+  });
+
+  it("se règlent un par un, même sur un graphique posé avant qu'ils se règlent", () => {
+    const { textes: _, ...ancien } = semaines();
+    const regle = avecTexteDuGraphique(ancien as ElementSemaines, "titres", { taille: 34 });
+    expect(regle.textes.titres).toEqual({ taille: 34, couleur: "" });
+    expect(regle.textes.abscisse).toEqual({ taille: null, couleur: "" });
+    const encre = avecTexteDuGraphique(regle, "titres", { couleur: "#333333" });
+    expect(encre.textes.titres).toEqual({ taille: 34, couleur: "#333333" });
+  });
+
+  it("gardent par défaut les encres du thème, et la couleur de sa série pour chaque titre", () => {
+    const vus = new Map<string, string>();
+    const ctx = ctxFactice();
+    const cible = ctx as unknown as Record<string, (...a: unknown[]) => void>;
+    const fillText = cible.fillText!.bind(ctx);
+    cible.fillText = (...a: unknown[]) => {
+      if (!vus.has(String(a[0]))) vus.set(String(a[0]), String(ctx.fillStyle));
+      fillText(...a);
+    };
+    const e = semaines({ axes: true, titresAxes: true, courbe: 1, couleurBarres: "#8CB9BD", couleurCourbe: "#EFB159" });
+    dessinerSemaines(ctx, e, BOITE, contexte);
+    expect(vus.get("S1")).toBe(THEMES.sombre.encreDouce);
+    expect(vus.get("0")).toBe(THEMES.sombre.encreFaible);
+    expect(vus.get("Distance (km)")).toBe("#8CB9BD");
+    expect(vus.get("Dénivelé positif (m)")).toBe("#EFB159");
   });
 });
 

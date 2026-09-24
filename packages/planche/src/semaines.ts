@@ -23,7 +23,13 @@ import { CORPS, LARGEUR_REFERENCE, rgba } from "./charte.ts";
 import { brandColors } from "@locomotionlab/ui/tokens";
 import type { Ctx2D } from "./canvas.ts";
 import type { ContexteRendu } from "./contexte.ts";
-import type { BoitePx, ElementSemaines, SerieChiffree } from "./types.ts";
+import type {
+  BoitePx,
+  ElementSemaines,
+  PartDuGraphique,
+  SerieChiffree,
+  TexteDuGraphique,
+} from "./types.ts";
 
 /* ------------------------------------------------------------- les chiffres */
 
@@ -187,10 +193,51 @@ export type Cadre = {
   hautCourbe: number;
   axeBarres: Axe;
   axeCourbe: Axe;
+  /** Le corps commun, en pixels de la boîte : il règle les traits et les pastilles. */
   corps: number;
+  /** Le corps de chaque texte, en pixels de la boîte. */
+  tailles: Record<PartDuGraphique, number>;
   /** La place sous l'axe : les étiquettes, droites ou en biais. */
   reserveBas: number;
 };
+
+/**
+ * Règle la taille ou l'encre d'un texte du graphique. Un graphique posé avant
+ * que ses textes se règlent n'en porte aucun : les trois autres naissent alors
+ * au réglage commun.
+ */
+export function avecTexteDuGraphique(
+  e: ElementSemaines,
+  part: PartDuGraphique,
+  champ: Partial<TexteDuGraphique>,
+): ElementSemaines {
+  const commun: TexteDuGraphique = { taille: null, couleur: "" };
+  const portes: Partial<Record<PartDuGraphique, TexteDuGraphique>> = e.textes ?? {};
+  const textes: Record<PartDuGraphique, TexteDuGraphique> = {
+    abscisse: portes.abscisse ?? commun,
+    ordonnees: portes.ordonnees ?? commun,
+    titres: portes.titres ?? commun,
+    legende: portes.legende ?? commun,
+  };
+  return { ...e, textes: { ...textes, [part]: { ...textes[part], ...champ } } };
+}
+
+/** Le corps d'un texte du graphique à l'échelle de la boîte : le sien, sinon le commun. */
+function tailleDe(e: ElementSemaines, part: PartDuGraphique, echelle: number): number {
+  const propre = e.textes?.[part]?.taille;
+  const px = propre !== null && propre !== undefined && propre > 0 ? propre : e.taille || CORPS.pied;
+  return Math.max(9, px * echelle);
+}
+
+/**
+ * La largeur d'une colonne de graduations : la plus longue, à 0,56 corps par
+ * caractère, plus l'air qui la sépare des barres. Jamais moins de 2,6 corps —
+ * la marge qu'avaient « 200 » et « 15k ».
+ */
+function margeDesGraduations(axe: Axe, taille: number): number {
+  const plusLongue = Math.max(0, ...graduationsDe(axe).map((v) => graduationDe(v).length));
+  return Math.max(taille * 2.6, plusLongue * taille * 0.56 + taille * 0.9);
+}
 
 /**
  * La géométrie du graphique dans sa boîte.
@@ -202,24 +249,16 @@ export type Cadre = {
 export function cadreDesSemaines(e: ElementSemaines, b: BoitePx): Cadre | null {
   const n = nombreDeBarres(e);
   if (n === 0 || b.l <= 0 || b.h <= 0) return null;
-  const corps = Math.max(9, (e.taille || CORPS.pied) * (b.l / LARGEUR_REFERENCE));
-
-  const legende = e.legende.length > 0 ? Math.max(corps * 2.2, b.h * PART_LEGENDE) : 0;
-  const bas = reserveDesEtiquettes(e, corps);
-  const gauche = e.axes ? corps * 2.6 : 0;
-  const courbe = serieDe(e, e.courbe);
-  const droite = e.axes && courbe ? corps * 2.6 : 0;
-  // L'AIR DU HAUT : la graduation la plus haute s'écrit AU-DESSUS de sa ligne,
-  // et sans cette réserve elle sortait de la boîte, coupée en deux. Le nom de
-  // la série, quand il est écrit, prend une ligne de plus.
-  const haut = e.axes ? corps * (e.titresAxes ? 1.9 : 0.6) : 0;
-
-  const trace: BoitePx = {
-    x: b.x + gauche,
-    y: b.y + haut,
-    l: Math.max(1, b.l - gauche - droite),
-    h: Math.max(1, b.h - haut - legende - bas),
+  const echelle = b.l / LARGEUR_REFERENCE;
+  const corps = Math.max(9, (e.taille || CORPS.pied) * echelle);
+  const tailles: Record<PartDuGraphique, number> = {
+    abscisse: tailleDe(e, "abscisse", echelle),
+    ordonnees: tailleDe(e, "ordonnees", echelle),
+    titres: tailleDe(e, "titres", echelle),
+    legende: tailleDe(e, "legende", echelle),
   };
+
+  const courbe = serieDe(e, e.courbe);
   const serieBarres = serieDe(e, e.barres);
   const axeBarres = axeDe(
     Math.max(0, ...(serieBarres?.valeurs ?? [])),
@@ -231,6 +270,27 @@ export function cadreDesSemaines(e: ElementSemaines, b: BoitePx): Cadre | null {
     e.plafondCourbe ?? null,
     e.pasCourbe ?? null,
   );
+
+  const legende =
+    e.legende.length > 0 ? Math.max(tailles.legende * 2.2, b.h * PART_LEGENDE) : 0;
+  const bas = reserveDesEtiquettes(e, tailles.abscisse);
+  const gauche = e.axes ? margeDesGraduations(axeBarres, tailles.ordonnees) : 0;
+  const droite = e.axes && courbe ? margeDesGraduations(axeCourbe, tailles.ordonnees) : 0;
+  // L'AIR DU HAUT : la graduation la plus haute s'écrit AU-DESSUS de sa ligne,
+  // et sans cette réserve elle sortait de la boîte, coupée en deux. Le nom de
+  // la série, quand il est écrit, prend une ligne de plus — à SON corps.
+  const haut = e.axes
+    ? e.titresAxes
+      ? tailles.ordonnees * 0.37 + tailles.titres * 1.53
+      : tailles.ordonnees * 0.6
+    : 0;
+
+  const trace: BoitePx = {
+    x: b.x + gauche,
+    y: b.y + haut,
+    l: Math.max(1, b.l - gauche - droite),
+    h: Math.max(1, b.h - haut - legende - bas),
+  };
   // Une gouttière d'un quart par défaut : plus serré, les barres se touchent ;
   // plus large, la saison se lit comme des bâtons épars.
   const largeur = Math.min(1, Math.max(0.2, e.largeurBarre || 0.72));
@@ -243,6 +303,7 @@ export function cadreDesSemaines(e: ElementSemaines, b: BoitePx): Cadre | null {
     axeBarres,
     axeCourbe,
     corps,
+    tailles,
     reserveBas: bas,
   };
 }
@@ -295,15 +356,17 @@ export function dessinerSemaines(
   if (!cadre) return;
   const { trace, colonne, barre, hautBarres, hautCourbe, axeBarres, axeCourbe, corps, reserveBas } =
     cadre;
+  const { tailles } = cadre;
   const serieBarres = serieDe(e, e.barres);
   const serieCourbe = serieDe(e, e.courbe);
   const teinteBarres = e.couleurBarres || brandColors.primary;
   const teinteCourbe = e.couleurCourbe || brandColors.accent;
   const base = trace.y + trace.h;
   const n = nombreDeBarres(e);
+  const encre = (part: PartDuGraphique, parDefaut: string) => e.textes?.[part]?.couleur || parDefaut;
+  const fonte = (part: PartDuGraphique) => `500 ${tailles[part]}px ${c.police}`;
 
   ctx.save();
-  ctx.font = `500 ${corps}px ${c.police}`;
 
   // 1. LES GRADUATIONS, en filets à peine posés — de trois à six, pas neuf :
   //    sur une planche, une grille dense se lit comme du bruit. Les filets
@@ -319,28 +382,32 @@ export function dessinerSemaines(
         ctx.fillRect(trace.x, yDe(v, principal), trace.l, Math.max(1, corps * 0.045));
       }
     }
-    ctx.fillStyle = c.theme.encreFaible;
+    const tOrd = tailles.ordonnees;
+    ctx.font = fonte("ordonnees");
+    ctx.fillStyle = encre("ordonnees", c.theme.encreFaible);
     if (serieBarres) {
       for (const v of graduationsDe(axeBarres)) {
-        ctx.fillText(graduationDe(v), b.x, yDe(v, axeBarres) + corps * 0.35);
+        ctx.fillText(graduationDe(v), b.x, yDe(v, axeBarres) + tOrd * 0.35);
       }
     }
     if (serieCourbe) {
       for (const v of graduationsDe(axeCourbe)) {
         const droite = graduationDe(v);
-        ctx.fillText(droite, b.x + b.l - ctx.measureText(droite).width, yDe(v, axeCourbe) + corps * 0.35);
+        ctx.fillText(droite, b.x + b.l - ctx.measureText(droite).width, yDe(v, axeCourbe) + tOrd * 0.35);
       }
     }
     // Le NOM de chaque série en tête de son axe : « 4 500 » ne dit pas s'il
-    // s'agit de mètres ou de minutes.
+    // s'agit de mètres ou de minutes. Sa ligne se pose au-dessus de la plus
+    // haute graduation, quels que soient les deux corps.
     if (e.titresAxes) {
-      const y = trace.y - corps * 0.9;
+      const y = trace.y - tOrd * 0.37 - tailles.titres * 0.53;
+      ctx.font = fonte("titres");
       if (serieBarres) {
-        ctx.fillStyle = teinteBarres;
+        ctx.fillStyle = encre("titres", teinteBarres);
         ctx.fillText(titreDe(serieBarres), b.x, y);
       }
       if (serieCourbe) {
-        ctx.fillStyle = teinteCourbe;
+        ctx.fillStyle = encre("titres", teinteCourbe);
         const titre = titreDe(serieCourbe);
         ctx.fillText(titre, b.x + b.l - ctx.measureText(titre).width, y);
       }
@@ -397,20 +464,22 @@ export function dessinerSemaines(
   // 5. LES ÉTIQUETTES D'ABSCISSE, une sur `pasDesLabels`, droites ou en biais.
   const pas = Math.max(1, Math.round(e.pasDesLabels));
   const angle = angleDe(e);
-  ctx.fillStyle = c.theme.encreDouce;
+  const tAbs = tailles.abscisse;
+  ctx.font = fonte("abscisse");
+  ctx.fillStyle = encre("abscisse", c.theme.encreDouce);
   for (let i = 0; i < n; i += 1) {
     const label = e.abscisse[i];
     if (i % pas !== 0 || !label) continue;
     const large = ctx.measureText(label).width;
     const centre = trace.x + i * colonne + colonne / 2;
     if (angle === 0) {
-      ctx.fillText(label, centre - large / 2, base + corps * 1.5);
+      ctx.fillText(label, centre - large / 2, base + tAbs * 1.5);
       continue;
     }
     // En biais, c'est la FIN du mot qui se cale sous sa colonne et le mot
     // descend vers la gauche : l'œil le remonte jusqu'à la barre qu'il nomme.
     ctx.save();
-    ctx.translate(centre, base + corps * 1.15);
+    ctx.translate(centre, base + tAbs * 1.15);
     ctx.rotate(-angle);
     ctx.fillText(label, -large, 0);
     ctx.restore();
@@ -418,16 +487,18 @@ export function dessinerSemaines(
 
   // 6. LA LÉGENDE, qui dit ce que les couleurs racontent.
   if (e.legende.length > 0) {
-    const y = base + reserveBas + corps * 0.9;
-    const cote = corps * 0.82;
+    const tLeg = tailles.legende;
+    const y = base + reserveBas + tLeg * 0.9;
+    const cote = tLeg * 0.82;
+    ctx.font = fonte("legende");
     let x = trace.x;
     for (const l of e.legende) {
       if (!l.texte) continue;
       ctx.fillStyle = l.couleur || teinteBarres;
       ctx.fillRect(x, y - cote * 0.82, cote, cote);
-      ctx.fillStyle = c.theme.encreDouce;
+      ctx.fillStyle = encre("legende", c.theme.encreDouce);
       ctx.fillText(l.texte, x + cote * 1.4, y);
-      x += cote * 1.4 + ctx.measureText(l.texte).width + corps * 1.4;
+      x += cote * 1.4 + ctx.measureText(l.texte).width + tLeg * 1.4;
     }
   }
   ctx.restore();
