@@ -98,8 +98,8 @@ lui, prend toute la largeur du profil.
    **AXE DE LA COURBE** : même chose pour le dénivelé (vide, il donne 0 · 5k · 10k · 15k).
    **DESSIN** : les lignes de grille, la largeur des barres (72 % de la colonne par défaut), les
    pastilles sur la courbe. **TEXTES** : le corps commun (`22`), puis les abscisses, les ordonnées,
-   les titres des axes et la légende, chacun avec sa taille et son encre ; « Thème » garde celle de
-   la charte.
+   les titres des axes et la légende, chacun avec sa taille, sa graisse et son encre ; « Thème »
+   garde celle de la charte. Les titres en gras : **Graisse des titres → 700 · gras**.
 7. **La couleur d'une barre** : **clique la barre** dans la planche — un seul clic, que le graphique
    soit déjà choisi ou non. La barre contextuelle au-dessus affiche son étiquette (« S15 ») et cinq
    pastilles — Thème (la couleur de la
