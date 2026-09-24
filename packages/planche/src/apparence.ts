@@ -68,6 +68,7 @@ const APPARENCE: Record<Element["type"], readonly string[]> = {
     "grille",
     "largeurBarre",
     "pastilles",
+    "textes",
     "axes",
     "titresAxes",
     "taille",

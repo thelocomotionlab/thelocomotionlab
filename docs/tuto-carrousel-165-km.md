@@ -92,12 +92,14 @@ lui, prend toute la largeur du profil.
    **Aucune** pour ne montrer que les kilomètres. **Barres** et **Courbe** règlent la couleur de la
    série ; le bouton **Thème** rend celle de la charte.
 6. **AXES** : **Une étiquette sur `1`** (toutes les semaines), **Étiquettes → En biais · 45°**,
-   les deux cases cochées (graduations chiffrées, nom des séries sur les axes), **Corps `22`**.
+   les deux cases cochées (graduations chiffrées, nom des séries sur les axes).
    Puis **AXE DES BARRES → Une graduation tous les `50`** : l'axe s'écrit 0 · 50 · 100 · 150 · 200.
    Le **Maximum** reste vide — automatique, un cran rond au-dessus de ta plus grosse semaine.
    **AXE DE LA COURBE** : même chose pour le dénivelé (vide, il donne 0 · 5k · 10k · 15k).
    **DESSIN** : les lignes de grille, la largeur des barres (72 % de la colonne par défaut), les
-   pastilles sur la courbe.
+   pastilles sur la courbe. **TEXTES** : le corps commun (`22`), puis les abscisses, les ordonnées,
+   les titres des axes et la légende, chacun avec sa taille et son encre ; « Thème » garde celle de
+   la charte.
 7. **La couleur d'une barre** : **clique la barre** dans la planche — un seul clic, que le graphique
    soit déjà choisi ou non. La barre contextuelle au-dessus affiche son étiquette (« S15 ») et cinq
    pastilles — Thème (la couleur de la
