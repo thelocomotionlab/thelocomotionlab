@@ -19,7 +19,7 @@
 // bloc, un affûtage et une course. D'où la couleur par barre, et la légende qui
 // la nomme.
 
-import { CORPS, LARGEUR_REFERENCE, rgba } from "./charte.ts";
+import { CORPS, GRAISSES, LARGEUR_REFERENCE, rgba } from "./charte.ts";
 import { brandColors } from "@locomotionlab/ui/tokens";
 import type { Ctx2D } from "./canvas.ts";
 import type { ContexteRendu } from "./contexte.ts";
@@ -202,16 +202,16 @@ export type Cadre = {
 };
 
 /**
- * Règle la taille ou l'encre d'un texte du graphique. Un graphique posé avant
- * que ses textes se règlent n'en porte aucun : les trois autres naissent alors
- * au réglage commun.
+ * Règle la taille, la graisse ou l'encre d'un texte du graphique. Un graphique
+ * posé avant que ses textes se règlent n'en porte aucun : les trois autres
+ * naissent alors au réglage commun.
  */
 export function avecTexteDuGraphique(
   e: ElementSemaines,
   part: PartDuGraphique,
   champ: Partial<TexteDuGraphique>,
 ): ElementSemaines {
-  const commun: TexteDuGraphique = { taille: null, couleur: "" };
+  const commun: TexteDuGraphique = { taille: null, graisse: null, couleur: "" };
   const portes: Partial<Record<PartDuGraphique, TexteDuGraphique>> = e.textes ?? {};
   const textes: Record<PartDuGraphique, TexteDuGraphique> = {
     abscisse: portes.abscisse ?? commun,
@@ -230,9 +230,21 @@ function tailleDe(e: ElementSemaines, part: PartDuGraphique, echelle: number): n
 }
 
 /**
+ * La graisse d'un texte du graphique : la sienne, sinon 500. Bornée à celles de
+ * la police, 300 → 800 : hors de 1 → 1000, `ctx.font` refuserait toute la
+ * déclaration sans rien dire et le texte garderait la fonte d'avant.
+ */
+function graisseDe(e: ElementSemaines, part: PartDuGraphique): number {
+  const propre = e.textes?.[part]?.graisse;
+  if (!propre || !Number.isFinite(propre)) return GRAISSES.appuye;
+  return Math.max(GRAISSES.leger, Math.min(GRAISSES.lourd, Math.round(propre)));
+}
+
+/**
  * La largeur d'une colonne de graduations : la plus longue, à 0,56 corps par
  * caractère, plus l'air qui la sépare des barres. Jamais moins de 2,6 corps —
- * la marge qu'avaient « 200 » et « 15k ».
+ * la marge qu'avaient « 200 » et « 15k ». Les chiffres d'Ubuntu Sans ont la
+ * même chasse à toutes les graisses : le gras n'élargit pas cette colonne.
  */
 function margeDesGraduations(axe: Axe, taille: number): number {
   const plusLongue = Math.max(0, ...graduationsDe(axe).map((v) => graduationDe(v).length));
@@ -314,7 +326,8 @@ export function cadreDesSemaines(e: ElementSemaines, b: BoitePx): Cadre | null {
  * Droites, une ligne suffit. En biais, la plus longue descend de sa largeur
  * fois le sinus de l'angle — et ici, sans contexte, on ne peut pas la mesurer :
  * on l'estime à 0,56 corps par caractère, la chasse moyenne d'Ubuntu Sans en
- * chiffres et en capitales.
+ * chiffres et en capitales. En 800, les lettres s'élargissent de 2 % : l'air
+ * sous l'étiquette l'absorbe.
  */
 function reserveDesEtiquettes(e: ElementSemaines, corps: number): number {
   const angle = angleDe(e);
@@ -364,7 +377,7 @@ export function dessinerSemaines(
   const base = trace.y + trace.h;
   const n = nombreDeBarres(e);
   const encre = (part: PartDuGraphique, parDefaut: string) => e.textes?.[part]?.couleur || parDefaut;
-  const fonte = (part: PartDuGraphique) => `500 ${tailles[part]}px ${c.police}`;
+  const fonte = (part: PartDuGraphique) => `${graisseDe(e, part)} ${tailles[part]}px ${c.police}`;
 
   ctx.save();
 

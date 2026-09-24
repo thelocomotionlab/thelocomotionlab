@@ -237,17 +237,17 @@ describe("les textes du graphique", () => {
 
   it("font suivre les marges à leur corps", () => {
     const base = cadreDesSemaines(semaines({ axes: true, titresAxes: true }), BOITE)!;
-    const ord = cadreDesSemaines(avec({ ordonnees: { taille: 40, couleur: "" } }, { axes: true }), BOITE)!;
+    const ord = cadreDesSemaines(avec({ ordonnees: { taille: 40, graisse: null, couleur: "" } }, { axes: true }), BOITE)!;
     expect(ord.trace.x).toBeGreaterThan(base.trace.x);
     expect(ord.trace.y).toBeGreaterThan(base.trace.y);
-    const tit = cadreDesSemaines(avec({ titres: { taille: 40, couleur: "" } }, { axes: true }), BOITE)!;
+    const tit = cadreDesSemaines(avec({ titres: { taille: 40, graisse: null, couleur: "" } }, { axes: true }), BOITE)!;
     expect(tit.trace.y).toBeGreaterThan(base.trace.y);
     expect(tit.trace.x).toBeCloseTo(base.trace.x, 6);
-    const abs = cadreDesSemaines(avec({ abscisse: { taille: 40, couleur: "" } }), BOITE)!;
+    const abs = cadreDesSemaines(avec({ abscisse: { taille: 40, graisse: null, couleur: "" } }), BOITE)!;
     expect(abs.reserveBas).toBeGreaterThan(base.reserveBas);
     const leg = (taille: number | null) =>
       cadreDesSemaines(
-        avec({ legende: { taille, couleur: "" } }, { legende: [{ couleur: "", texte: "WEC" }] }),
+        avec({ legende: { taille, graisse: null, couleur: "" } }, { legende: [{ couleur: "", texte: "WEC" }] }),
         BOITE,
       )!.trace.h;
     expect(leg(60)).toBeLessThan(leg(null));
@@ -264,10 +264,10 @@ describe("les textes du graphique", () => {
     };
     const e = avec(
       {
-        abscisse: { taille: 30, couleur: "#111111" },
-        ordonnees: { taille: 26, couleur: "#222222" },
-        titres: { taille: 34, couleur: "#333333" },
-        legende: { taille: 28, couleur: "#444444" },
+        abscisse: { taille: 30, graisse: null, couleur: "#111111" },
+        ordonnees: { taille: 26, graisse: null, couleur: "#222222" },
+        titres: { taille: 34, graisse: null, couleur: "#333333" },
+        legende: { taille: 28, graisse: null, couleur: "#444444" },
       },
       { axes: true, titresAxes: true, courbe: 1, legende: [{ couleur: "", texte: "WEC" }] },
     );
@@ -288,10 +288,53 @@ describe("les textes du graphique", () => {
   it("se règlent un par un, même sur un graphique posé avant qu'ils se règlent", () => {
     const { textes: _, ...ancien } = semaines();
     const regle = avecTexteDuGraphique(ancien as ElementSemaines, "titres", { taille: 34 });
-    expect(regle.textes.titres).toEqual({ taille: 34, couleur: "" });
-    expect(regle.textes.abscisse).toEqual({ taille: null, couleur: "" });
+    expect(regle.textes.titres).toEqual({ taille: 34, graisse: null, couleur: "" });
+    expect(regle.textes.abscisse).toEqual({ taille: null, graisse: null, couleur: "" });
     const encre = avecTexteDuGraphique(regle, "titres", { couleur: "#333333" });
-    expect(encre.textes.titres).toEqual({ taille: 34, couleur: "#333333" });
+    expect(encre.textes.titres).toEqual({ taille: 34, graisse: null, couleur: "#333333" });
+    const gras = avecTexteDuGraphique(encre, "titres", { graisse: 700 });
+    expect(gras.textes.titres).toEqual({ taille: 34, graisse: 700, couleur: "#333333" });
+  });
+
+  it("prennent chacun leur graisse, 500 sans réglage", () => {
+    const fontes = new Map<string, string>();
+    const ctx = ctxFactice();
+    const cible = ctx as unknown as Record<string, (...a: unknown[]) => void>;
+    const fillText = cible.fillText!.bind(ctx);
+    cible.fillText = (...a: unknown[]) => {
+      if (!fontes.has(String(a[0]))) fontes.set(String(a[0]), String(ctx.font));
+      fillText(...a);
+    };
+    const e = avecTexteDuGraphique(
+      semaines({ axes: true, titresAxes: true, courbe: 1, legende: [{ couleur: "", texte: "WEC" }] }),
+      "titres",
+      { graisse: 700 },
+    );
+    dessinerSemaines(ctx, e, BOITE, contexte);
+    expect(fontes.get("Distance (km)")).toMatch(/^700 /);
+    expect(fontes.get("Dénivelé positif (m)")).toMatch(/^700 /);
+    expect(fontes.get("S1")).toMatch(/^500 /);
+    expect(fontes.get("0")).toMatch(/^500 /);
+    expect(fontes.get("WEC")).toMatch(/^500 /);
+  });
+
+  it("gardent une graisse que la police sait dessiner", () => {
+    const fonteDuTitre = (graisse: number) => {
+      let fonte = "";
+      const ctx = ctxFactice();
+      const cible = ctx as unknown as Record<string, (...a: unknown[]) => void>;
+      const fillText = cible.fillText!.bind(ctx);
+      cible.fillText = (...a: unknown[]) => {
+        if (String(a[0]) === "Distance (km)") fonte = String(ctx.font);
+        fillText(...a);
+      };
+      const e = avecTexteDuGraphique(semaines({ axes: true, titresAxes: true }), "titres", { graisse });
+      dessinerSemaines(ctx, e, BOITE, contexte);
+      return fonte;
+    };
+    expect(fonteDuTitre(1500)).toMatch(/^800 /);
+    expect(fonteDuTitre(100)).toMatch(/^300 /);
+    expect(fonteDuTitre(Number.NaN)).toMatch(/^500 /);
   });
 
   it("gardent par défaut les encres du thème, et la couleur de sa série pour chaque titre", () => {

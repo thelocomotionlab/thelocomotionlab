@@ -318,10 +318,10 @@ export function semainesNeuves(
     legende: [],
     taille: CORPS.pied,
     textes: {
-      abscisse: { taille: null, couleur: "" },
-      ordonnees: { taille: null, couleur: "" },
-      titres: { taille: null, couleur: "" },
-      legende: { taille: null, couleur: "" },
+      abscisse: { taille: null, graisse: null, couleur: "" },
+      ordonnees: { taille: null, graisse: null, couleur: "" },
+      titres: { taille: null, graisse: null, couleur: "" },
+      legende: { taille: null, graisse: null, couleur: "" },
     },
     ...over,
   };

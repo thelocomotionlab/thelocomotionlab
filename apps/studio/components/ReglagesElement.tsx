@@ -14,6 +14,7 @@ import { useState } from "react";
 import { Eye, EyeOff, Trash2 } from "lucide-react";
 import {
   COULEURS_TEXTE,
+  GRAISSES,
   brandColors,
   avecTexteDuGraphique,
   ecrireLesSeries,
@@ -989,12 +990,18 @@ function ReglagesCases({
  * souvent juste pour corriger un chiffre.
  */
 /** Les quatre textes d'un graphique de semaines, dans l'ordre de l'inspecteur. */
-const TEXTES_DU_GRAPHIQUE: { part: PartDuGraphique; libelle: string; encre: string }[] = [
-  { part: "abscisse", libelle: "Abscisses", encre: "Encre des abscisses" },
-  { part: "ordonnees", libelle: "Ordonnées", encre: "Encre des ordonnées" },
-  { part: "titres", libelle: "Titres des axes", encre: "Encre des titres" },
-  { part: "legende", libelle: "Légende", encre: "Encre de la légende" },
+const TEXTES_DU_GRAPHIQUE: { part: PartDuGraphique; libelle: string; graisse: string; encre: string }[] = [
+  { part: "abscisse", libelle: "Abscisses", graisse: "Graisse des abscisses", encre: "Encre des abscisses" },
+  { part: "ordonnees", libelle: "Ordonnées", graisse: "Graisse des ordonnées", encre: "Encre des ordonnées" },
+  { part: "titres", libelle: "Titres des axes", graisse: "Graisse des titres", encre: "Encre des titres" },
+  { part: "legende", libelle: "Légende", graisse: "Graisse de la légende", encre: "Encre de la légende" },
 ];
+
+/** Les graisses de la police, telles que la barre contextuelle les propose. */
+const OPTIONS_DE_GRAISSE = Object.entries(GRAISSES).map(([nom, poids]) => ({
+  cle: String(poids),
+  label: `${poids} · ${nom}`,
+}));
 
 /** Un nombre tapé dans un champ texte — vide, c'est « auto ». */
 function nombreOuRien(v: string): number | null {
@@ -1130,7 +1137,7 @@ function ReglagesSemaines({
         suffixe="px"
         onChange={(n) => poser((x) => ({ ...x, taille: Math.max(8, n) }), "corps")}
       />
-      {TEXTES_DU_GRAPHIQUE.map(({ part, libelle, encre }) => (
+      {TEXTES_DU_GRAPHIQUE.map(({ part, libelle, graisse, encre }) => (
         <div key={part} className="mb-1 border-l border-brand-hairline pl-2">
           <Nombre
             libelle={libelle}
@@ -1140,6 +1147,12 @@ function ReglagesSemaines({
               poser((x) => avecTexteDuGraphique(x, part, { taille: Math.max(8, n) }), "textes")
             }
           />
+          <Choix
+            libelle={graisse}
+            valeur={String(e.textes?.[part]?.graisse ?? GRAISSES.appuye)}
+            options={OPTIONS_DE_GRAISSE}
+            onChange={(v) => poser((x) => avecTexteDuGraphique(x, part, { graisse: Number(v) }), "textes")}
+          />
           <Couleur
             libelle={encre}
             valeur={e.textes?.[part]?.couleur ?? ""}
@@ -1148,8 +1161,8 @@ function ReglagesSemaines({
         </div>
       ))}
       <Aide>
-        Le corps commun règle les quatre textes à la fois ; chacun peut ensuite prendre le sien.
-        « Thème » garde l&rsquo;encre de la charte : douce pour les abscisses et la légende, faible
+        Le corps commun règle les quatre textes à la fois ; chacun peut ensuite prendre le sien,
+        sa graisse et son encre. « Thème » garde l&rsquo;encre de la charte : douce pour les abscisses et la légende, faible
         pour les ordonnées, la couleur de sa série pour chaque titre.
       </Aide>
 
