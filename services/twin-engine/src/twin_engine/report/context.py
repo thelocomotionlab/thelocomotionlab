@@ -1190,7 +1190,6 @@ def _v3_context(ctx: dict, *, course, twin, calibration, prediction, plan, race,
     clocks = feuille.clock_columns(plan, prediction)
     nutri_rows, nutri_total = feuille.nutrition_rows(plan, race)
     majors = set(race.major_base_indices)
-    r = cfg.report
     feuille_rows = []
     for i, seg in enumerate(plan.segments):
         feuille_rows.append({
@@ -1200,8 +1199,6 @@ def _v3_context(ctx: dict, *, course, twin, calibration, prediction, plan, race,
             "seg_km": fr(seg.off_len_km, 1),
             "dplus": fr(seg.dplus_m, 0),
             "dminus": fr(seg.dminus_m, 0),
-            "strong_dplus": seg.dplus_m >= r.strong_dplus_m,
-            "strong_dminus": seg.dminus_m >= r.strong_dminus_m,
             "pace": _pace_str(seg.pace_min_km),
             "fast": clocks["rows"]["fast"][i],
             "central": clocks["rows"]["central"][i],
@@ -1260,9 +1257,6 @@ def _v3_context(ctx: dict, *, course, twin, calibration, prediction, plan, race,
         "feuille_rows": feuille_rows,
         "feuille_parts": parts,
         "clock_titles": clocks["titles"],
-        # les seuils de mise en avant, dits par la légende du tableau
-        "strong_dplus_m": fr_thousands(r.strong_dplus_m, 0),
-        "strong_dminus_m": fr_thousands(r.strong_dminus_m, 0),
         "nutrition": None if nutri_total is None else {
             k: tex_escape(v) for k, v in nutri_total.items()},
         "limits": [x["full"] for x in limits],

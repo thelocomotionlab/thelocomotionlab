@@ -596,10 +596,6 @@ class ReportParams:
     intensity_axis_margin: float = 0.2
     fade_evidence: str = ("sur 30 courses, les coureurs sont en avance sur un plan plat à "
                           "mi-course 27 fois sur 30")
-    # consigne par segment : au-delà de ces dénivelés, le segment est mis en avant
-    # (terracotta) et porte la consigne qui va avec
-    strong_dplus_m: float = 800.0
-    strong_dminus_m: float = 1000.0
     # longueur maximale d'une consigne : elle se lit d'un coup d'œil, la nuit, à bout de bras
     consigne_max_chars: int = 60
 

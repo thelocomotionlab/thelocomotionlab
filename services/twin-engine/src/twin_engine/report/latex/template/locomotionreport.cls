@@ -473,16 +473,18 @@
 \newcommand{\LLzebra}{\rowcolors{2}{LLPaper}{LLRowAlt}}
 
 % =============================================================================
-% 15 bis. Les tableaux : une grille fine, trois colonnes teintées, deux repères
+% 15 bis. Les tableaux : une grille fine, des colonnes teintées, deux repères
 % =============================================================================
 % Un tableau de course se lit à bout de bras. La grille est un filet fin et régulier ; la
-% couleur ne sert qu'aux TROIS COLONNES horaires, pour qu'on retrouve la sienne d'un coup
-% d'œil. Les deux repères qui restent se lisent en marge et à côté du nom : un filet
-% terracotta (l'assistance est autorisée), un point d'encre (le segment se court de nuit).
+% couleur sert aux TROIS COLONNES horaires, pour qu'on retrouve la sienne d'un coup d'œil,
+% et une teinte neutre, celle de la grille, à la longueur de la section. Les deux repères
+% qui restent se lisent en marge et à côté du nom : un filet terracotta (l'assistance est
+% autorisée), un point d'encre (le segment se court de nuit).
 \colorlet{LLTableRule}{LLSoft}
 \colorlet{LLColRapide}{LLPrimary!12!LLBg}
 \colorlet{LLColCentrale}{LLDeep!38!LLBg}
 \colorlet{LLColPrudent}{LLAccent!40!LLBg}
+\colorlet{LLColSection}{LLGrid}
 \colorlet{LLFillRule}{LLGaugeFull}            % le pointillé d'une case à remplir
 
 \newcommand{\LLtableau}{%
