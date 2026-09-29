@@ -52,6 +52,8 @@ export default function MapEmbed({
   const [mapStyle, setMapStyle] = useState(resolveMapStyle(null));
   const [dynamicHeight, setDynamicHeight] = useState(defaultMinHeight);
   const [gpxError, setGpxError] = useState(false);
+  // Sans GPX, rien à cadrer : la carte se montre tout de suite.
+  const [cadree, setCadree] = useState(!gpx);
   // Profil du GPX (lib/gpxStats), pour le bandeau altimétrique sous la carte.
   const [reference, setReference] = useState(null);
   const hoverRef = useRef(null);
@@ -197,12 +199,13 @@ export default function MapEmbed({
             map.setPaintProperty("gpx-track-casing", "line-width", lineWeight + 3.5);
           }
 
+          // Premier cadrage sans animation : la carte, restée invisible
+          // jusque-là, apparaît directement sur la trace au lieu de glisser
+          // depuis le centre par défaut.
           if (trackBoundsRef.current) {
-            map.fitBounds(trackBoundsRef.current, {
-              padding: 40,
-              duration: 1000,
-            });
+            map.fitBounds(trackBoundsRef.current, { padding: 40, duration: 0 });
           }
+          setCadree(true);
         };
 
         if (map.isStyleLoaded()) {
@@ -213,6 +216,7 @@ export default function MapEmbed({
       } catch (err) {
         console.error("Erreur GPX:", err);
         setGpxError(true);
+        setCadree(true);
       }
     }
 
@@ -308,7 +312,12 @@ export default function MapEmbed({
         ref={mapContainer}
         role="application"
         aria-label="Carte interactive du parcours GPX"
-        style={{ width: "100%", height: "100%" }}
+        style={{
+          width: "100%",
+          height: "100%",
+          opacity: cadree ? 1 : 0,
+          transition: "opacity 0.3s ease",
+        }}
       />
 
       {/* Icônes des repères, portées dans les éléments que maplibre positionne. */}
