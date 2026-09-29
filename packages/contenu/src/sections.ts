@@ -110,6 +110,32 @@ export const SectionGeo = z
 // Quatre éléments indépendants et TOUS facultatifs : une préparation peut
 // n'avoir que des stresseurs.
 
+/**
+ * Les jetons de la charte qu'une barre peut prendre. Le nom, jamais la valeur :
+ * c'est le site qui le traduit par `brandColors` (packages/ui).
+ */
+export const COULEURS_DE_PHASE = [
+  "primary",
+  "primaryDark",
+  "accent",
+  "accentDark",
+  "accentInk",
+  "deep",
+  "deepDark",
+  "trace",
+] as const;
+
+/**
+ * Une phase colore certaines barres et se nomme dans la légende : un bloc de
+ * charge, un week-end choc, un affûtage. `points` reprend les étiquettes de
+ * l'abscisse.
+ */
+const Phase = z.strictObject({
+  nom: z.string().min(1),
+  couleur: z.enum(COULEURS_DE_PHASE),
+  points: z.array(z.string().min(1)).min(1),
+});
+
 const Graphe = z
   .strictObject({
     abscisse: z.array(z.string().min(1)).min(1),
@@ -122,8 +148,29 @@ const Graphe = z
         }),
       )
       .min(1),
+    phases: z.array(Phase).min(1).optional(),
   })
   .superRefine((valeur, ctx) => {
+    const dejaColores = new Map<string, string>();
+    valeur.phases?.forEach((phase, index) => {
+      for (const point of phase.points) {
+        if (!valeur.abscisse.includes(point)) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["phases", index, "points"],
+            message: `graphe : la phase « ${phase.nom} » cite « ${point} », absent de l'abscisse`,
+          });
+        } else if (dejaColores.has(point)) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["phases", index, "points"],
+            message: `graphe : « ${point} » est à la fois dans « ${dejaColores.get(point)} » et « ${phase.nom} »`,
+          });
+        } else {
+          dejaColores.set(point, phase.nom);
+        }
+      }
+    });
     valeur.series.forEach((serie, index) => {
       if (serie.valeurs.length !== valeur.abscisse.length) {
         ctx.addIssue({

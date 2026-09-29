@@ -90,6 +90,60 @@ describe("sections", () => {
     expect(Object.keys(SCHEMAS_DE_SECTION).sort()).toEqual([...TYPES_DE_SECTION].sort());
   });
 
+  const GRAPHE = {
+    abscisse: ["S1", "S2", "S3"],
+    series: [{ nom: "Distance", unite: "km", valeurs: [10, 20, 30] }],
+  };
+
+  it("accepte un graphe sans phases, comme avant", () => {
+    const section = SCHEMAS_DE_SECTION.preparation.parse({ type: "preparation", graphe: GRAPHE });
+    expect(section.graphe!.phases).toBeUndefined();
+  });
+
+  it("accepte des phases qui colorent des points de l'abscisse", () => {
+    const section = SCHEMAS_DE_SECTION.preparation.parse({
+      type: "preparation",
+      graphe: {
+        ...GRAPHE,
+        phases: [
+          { nom: "Week-end choc", couleur: "trace", points: ["S2"] },
+          { nom: "Affûtage", couleur: "accentInk", points: ["S3"] },
+        ],
+      },
+    });
+    expect(section.graphe!.phases).toHaveLength(2);
+  });
+
+  it("refuse une phase qui cite un point absent de l'abscisse", () => {
+    const resultat = SCHEMAS_DE_SECTION.preparation.safeParse({
+      type: "preparation",
+      graphe: { ...GRAPHE, phases: [{ nom: "Choc", couleur: "trace", points: ["S9"] }] },
+    });
+    expect(resultat.success).toBe(false);
+  });
+
+  it("refuse un point colorié par deux phases", () => {
+    const resultat = SCHEMAS_DE_SECTION.preparation.safeParse({
+      type: "preparation",
+      graphe: {
+        ...GRAPHE,
+        phases: [
+          { nom: "Choc", couleur: "trace", points: ["S2"] },
+          { nom: "Affûtage", couleur: "accentInk", points: ["S2"] },
+        ],
+      },
+    });
+    expect(resultat.success).toBe(false);
+  });
+
+  it("refuse une couleur hors de la charte", () => {
+    const resultat = SCHEMAS_DE_SECTION.preparation.safeParse({
+      type: "preparation",
+      graphe: { ...GRAPHE, phases: [{ nom: "Choc", couleur: "#ff00aa", points: ["S2"] }] },
+    });
+    expect(resultat.success).toBe(false);
+  });
+
   it("accepte une préparation qui n'a que des stresseurs", () => {
     const section = SCHEMAS_DE_SECTION.preparation.parse({
       type: "preparation",

@@ -127,6 +127,25 @@ Nutrition embarquée depuis LighterPack :
 - la dernière ligne d'un tableau, si elle commence par « Total », se lit en gras
 - sans .csv ou sans catégorie de nourriture, la section n'affiche que son texte
 
+
+Graphe de préparation avec des phases colorées (section preparation) :
+- sous `series`, ajouter `phases` ; sans lui, le graphe reste bleu-vert uni
+    graphe:
+      abscisse: ["S1", "S2", "S3", "S4"]
+      series:
+        - { nom: "Distance", unite: "km", valeurs: [77, 84, 94, 102] }
+        - { nom: "Dénivelé positif", unite: "m", valeurs: [3200, 3600, 4500, 7100] }
+      phases:
+        - { nom: "Week-end choc", couleur: "trace", points: ["S4"] }
+        - { nom: "Affûtage", couleur: "accentInk", points: ["S3"] }
+- `points` reprend les étiquettes de l'abscisse, telles qu'écrites
+- chaque phase colore ses barres et apparaît dans la légende sous le graphe
+- `couleur` est un jeton de la charte, jamais un code couleur :
+    primary, primaryDark, accent, accentDark, accentInk, deep, deepDark, trace
+    (trace = le fuchsia, accentInk = l'ocre, comme sur la planche Insta)
+- le build refuse une semaine absente de l'abscisse, une semaine dans deux
+  phases, ou une couleur hors de la liste
+
 Génération rapport twin :
 
 twin-engine full \
