@@ -179,5 +179,35 @@
         "doi": "10.1242/jeb.004481",
         "issn": "0022-0949",
         "issbn": ""
+    },
+    "demorree2012": {
+        "type": "article",
+        "author": "de Morree, Helma M., Klein, Christoph, Marcora, Samuele M.",
+        "year": "2012",
+        "title": "Perception of effort reflects central motor command during movement execution",
+        "journal": "Psychophysiology",
+        "publisher": "Wiley",
+        "volume": "49",
+        "issue": "9",
+        "pages": "1242-1253",
+        "doi": "10.1111/j.1469-8986.2012.01399.x",
+        "link": "https://doi.org/10.1111/j.1469-8986.2012.01399.x",
+        "issn": "1469-8986",
+        "issbn": ""
+    },
+    "tucker2009": {
+        "type": "article",
+        "author": "Tucker, Ross",
+        "year": "2009",
+        "title": "The anticipatory regulation of performance: the physiological basis for pacing strategies and the development of a perception-based model for exercise performance",
+        "journal": "British Journal of Sports Medicine",
+        "publisher": "BMJ Publishing Group",
+        "volume": "43",
+        "issue": "6",
+        "pages": "392-400",
+        "doi": "10.1136/bjsm.2008.050799",
+        "link": "https://doi.org/10.1136/bjsm.2008.050799",
+        "issn": "0306-3674",
+        "issbn": ""
     }
 }
