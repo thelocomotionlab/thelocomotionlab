@@ -16,7 +16,7 @@ import EnTeteDIndex from "@/components/contenu/EnTeteDIndex";
 import { partageDIndex } from "@/lib/seo";
 
 const DESCRIPTION =
-  "Itinéraires, préparations, paquetages, nutrition, protocoles, et plus encore !";
+  "Détails de préparations, itinéraires, paquetages, nutrition, protocoles, et plus encore !";
 
 export const metadata = {
   title: "Aventures",

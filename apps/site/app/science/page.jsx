@@ -22,7 +22,7 @@ import { minutesDeLecture } from "@/lib/lisible";
 import EnTeteDIndex from "@/components/contenu/EnTeteDIndex";
 import { partageDIndex } from "@/lib/seo";
 
-const DESCRIPTION = "Des documents vivants : sourcés, datés, révisés.";
+const DESCRIPTION = "Se poser des questions et voir comment la science y répond.";
 
 export const metadata = {
   title: "Science",
