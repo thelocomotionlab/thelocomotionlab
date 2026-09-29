@@ -15,6 +15,7 @@ import { parSorte, parSlug, bibliographie } from "@/lib/contenu";
 import { dateLisible, minutesDeLecture } from "@/lib/lisible";
 import Corps from "@/components/contenu/Corps";
 import DonneesStructurees from "@/components/DonneesStructurees";
+import ImagesPleinEcran from "@/components/ImagesPleinEcran";
 import FilDAriane from "@/components/contenu/FilDAriane";
 import RetourAIndex from "@/components/contenu/RetourAIndex";
 import { referencesDePage } from "@/components/contenu/references";
@@ -131,6 +132,7 @@ export default async function ArticlePage({ params }) {
 
         <div className="mx-auto mt-10 max-w-[40em] text-lecture">
           <Corps page={page} citation={citation} appelDeReference={Ref} />
+          <ImagesPleinEcran />
 
           {frontmatter.revisions.length > 0 ? (
             <aside className="mt-8 rounded-lg border border-brand-wash-line bg-brand-wash/30 px-4.5 py-3.5">

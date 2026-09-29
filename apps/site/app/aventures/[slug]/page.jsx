@@ -15,6 +15,7 @@ import { Accroche, BadgeEtat, Sommaire, SectionsAventure } from "@locomotionlab/
 import { parSorte, parSlug } from "@/lib/contenu";
 import { ETATS, campagneLisible, rendusDe } from "@/lib/aventure";
 import DonneesStructurees from "@/components/DonneesStructurees";
+import ImagesPleinEcran from "@/components/ImagesPleinEcran";
 import FilDAriane from "@/components/contenu/FilDAriane";
 import Corps from "@/components/contenu/Corps";
 import MapEmbed from "@/components/MapEmbedLazy";
@@ -145,6 +146,7 @@ export default async function AventurePage({ params }) {
           />
 
           <SectionsAventure sections={frontmatter.sections} rendus={rendus} />
+          <ImagesPleinEcran />
 
           <RetourAIndex href="/aventures" label="Retour aux aventures" />
         </div>

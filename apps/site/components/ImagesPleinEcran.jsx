@@ -15,6 +15,9 @@
 // posée par markdown/remarkImageOptions sur les seules images venues du
 // markdown. Les cartes, replays et graphiques n'en portent pas.
 //
+// Une page peut avoir plusieurs corps de texte — une aventure en a un par
+// section libre : la galerie les parcourt tous, dans l'ordre de la page.
+//
 // La légende reprise dans la visionneuse est celle qui suit l'image dans le
 // texte — le paragraphe en italique, `p.md-caption` sur les projets — à
 // défaut, le texte alternatif.
@@ -24,6 +27,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import MediaLightbox from "@/components/live/MediaLightbox";
+import { adresseEnTailleReelle } from "@/lib/tailleReelle";
 
 /** Le texte d'un paragraphe qui n'est qu'une légende en italique, sinon "". */
 function legendeDuParagraphe(el) {
@@ -46,6 +50,8 @@ function legendeDuParagraphe(el) {
  *   ![Alt](img.webp)          séparés par une ligne vide, deux paragraphes ;
  *                             c'est la forme que ProjetBody marque md-caption.
  *   *La légende.*
+ *
+ * Les deux images d'un :::split partagent la légende écrite sous le bloc.
  */
 function legendeDe(img) {
   const paragraphe = img.closest("p");
@@ -65,7 +71,12 @@ function legendeDe(img) {
   }
 
   // Forme 2 — la légende est le paragraphe suivant.
-  return legendeDuParagraphe(paragraphe.nextElementSibling);
+  const suivante = legendeDuParagraphe(paragraphe.nextElementSibling);
+  if (suivante) return suivante;
+
+  // Forme 3 — l'image est dans un bloc :::split, dont la légende commune suit
+  // le bloc.
+  return legendeDuParagraphe(img.closest(".md-split")?.nextElementSibling);
 }
 
 /** La galerie, lue dans le DOM au moment où on en a besoin. */
@@ -73,9 +84,9 @@ function galerie(images) {
   return images.map((img, i) => ({
     id: `image-${i}`,
     type: "photo",
-    // `currentSrc` retomberait sur la variante servie au navigateur ;
-    // `src` est le fichier d'origine, c'est-à-dire la taille réelle.
-    src: img.getAttribute("src") ?? img.src,
+    // `src` et `currentSrc` sont la variante servie au navigateur ; la taille
+    // réelle est la plus large du srcset.
+    src: adresseEnTailleReelle(img.getAttribute("srcset"), img.getAttribute("src") ?? img.src),
     alt: img.alt || "",
     legende: legendeDe(img),
   }));
@@ -89,10 +100,9 @@ export default function ImagesPleinEcran({ targetSelector = ".article-body" }) {
   const [ouverture, setOuverture] = useState(null);
 
   useEffect(() => {
-    const cible = document.querySelector(targetSelector);
-    if (!cible) return;
-
-    const images = [...cible.querySelectorAll("img[data-zoomable]")];
+    const images = [...document.querySelectorAll(targetSelector)].flatMap((cible) => [
+      ...cible.querySelectorAll("img[data-zoomable]"),
+    ]);
     if (!images.length) return;
     imagesRef.current = images;
 

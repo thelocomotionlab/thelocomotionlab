@@ -15,6 +15,7 @@ import { amorce } from "@/lib/blog";
 import { TYPES } from "@/lib/blogRegistre";
 import Corps from "@/components/contenu/Corps";
 import DonneesStructurees from "@/components/DonneesStructurees";
+import ImagesPleinEcran from "@/components/ImagesPleinEcran";
 import FilDAriane from "@/components/contenu/FilDAriane";
 import RetourAIndex from "@/components/contenu/RetourAIndex";
 import { referencesDePage } from "@/components/contenu/references";
@@ -92,6 +93,7 @@ export default async function BilletPage({ params }) {
 
         <div className="mt-9">
           <Corps page={page} citation={citation} appelDeReference={Ref} />
+          <ImagesPleinEcran />
         </div>
 
         <Bibliographie registre={registre} entrees={bibliographie} id="references" />

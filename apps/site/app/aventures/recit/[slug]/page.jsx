@@ -16,6 +16,7 @@ import { parSorte, parSlug, aventureDe, bibliographie, urlDe } from "@/lib/conte
 import { dateLisible, minutesDeLecture } from "@/lib/lisible";
 import Corps from "@/components/contenu/Corps";
 import DonneesStructurees from "@/components/DonneesStructurees";
+import ImagesPleinEcran from "@/components/ImagesPleinEcran";
 import FilDAriane from "@/components/contenu/FilDAriane";
 import { referencesDePage } from "@/components/contenu/references";
 import { filDAriane, pageDeContenu } from "@/lib/jsonld";
@@ -117,6 +118,7 @@ export default async function RecitPage({ params }) {
 
         <article className="mx-auto mt-12 max-w-[42em] pb-6 text-lecture">
           <Corps page={recit} citation={citation} appelDeReference={Ref} />
+          <ImagesPleinEcran />
           <Bibliographie registre={registre} entrees={bibliographie} id="references" />
 
           {campagne ? (
