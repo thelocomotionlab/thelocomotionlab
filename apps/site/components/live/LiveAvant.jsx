@@ -13,6 +13,7 @@ import dynamic from "next/dynamic";
 import { liveConfig } from "@/lib/liveConfig";
 import { reperesSurCarte, reperesSurProfil } from "@/lib/liveWaypoints";
 import { useReferenceTrack } from "@/lib/useReferenceTrack";
+import CarteSure from "@/components/CarteSure";
 import Countdown from "./Countdown";
 import EmailCaptureCard from "./EmailCaptureCard";
 import ItineraireLine from "./ItineraireLine";
@@ -70,14 +71,16 @@ export default function LiveAvant() {
           <MapStyleSwitch value={mapStyle} onChange={setMapStyle} variant="header" />
         </div>
         <div className="relative h-[280px] overflow-hidden border border-brand-text/10 sm:h-[380px]">
-          <LiveMap
-            referenceCoords={reference?.coords}
-            doneCoords={[]}
-            mapStyle={mapStyle}
-            markerMode="depart"
-            hoverPoint={hoverPoint}
-            waypoints={reperesCarte}
-          />
+          <CarteSure plein>
+            <LiveMap
+              referenceCoords={reference?.coords}
+              doneCoords={[]}
+              mapStyle={mapStyle}
+              markerMode="depart"
+              hoverPoint={hoverPoint}
+              waypoints={reperesCarte}
+            />
+          </CarteSure>
         </div>
       </div>
 

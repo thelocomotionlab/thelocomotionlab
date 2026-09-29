@@ -29,6 +29,7 @@ import { avancementSurTrace } from "@/lib/progression";
 import { useJournal } from "@/lib/useJournal";
 import { useLivePositions } from "@/lib/useLivePositions";
 import { useReferenceTrack } from "@/lib/useReferenceTrack";
+import CarteSure from "@/components/CarteSure";
 import BatteriePill from "./BatteriePill";
 import ChronoBadge from "./ChronoBadge";
 import EmailCaptureCard from "./EmailCaptureCard";
@@ -165,13 +166,15 @@ export default function LiveEnCours({ timer, archive = null }) {
           </div>
 
           <div className="relative order-1 h-[380px] max-lg:-mx-4 sm:max-lg:-mx-6 lg:order-none lg:h-[520px] lg:flex-none lg:overflow-hidden lg:border lg:border-brand-text/10">
-            <LiveMap
-              referenceCoords={reference?.coords}
-              doneCoords={doneCoords}
-              mapStyle={mapStyle}
-              hoverPoint={hoverPoint}
-              waypoints={reperesCarte}
-            />
+            <CarteSure plein>
+              <LiveMap
+                referenceCoords={reference?.coords}
+                doneCoords={doneCoords}
+                mapStyle={mapStyle}
+                hoverPoint={hoverPoint}
+                waypoints={reperesCarte}
+              />
+            </CarteSure>
             <div className="absolute right-3 top-3 z-[5] lg:hidden">
               <MapStyleSwitch value={mapStyle} onChange={setMapStyle} />
             </div>
