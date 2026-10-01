@@ -328,11 +328,23 @@ class CalibrationParams:
     #   avec FC de l'athlète (Twin.slope_kappa_*), et appliqué à la vitesse ajustée de chaque
     #   effort de la calibration ET au Deq du parcours (décomposition exacte : plat + surcoût
     #   de montée + surcoût de descente). Un côté sans ``slope_cost_min_hours`` heures de
-    #   mesure garde κ = 1 ; κ est borné dans [slope_kappa_min, slope_kappa_max] (signalé).
-    slope_cost: str = "minetti"                          # {minetti, personal}
+    #   mesure garde κ = 1 ; κ est borné dans [slope_kappa_min, slope_kappa_max] (signalé),
+    #   κ_descente dans [slope_kappa_down_min, slope_kappa_max] quand cette borne est donnée
+    #   — à 0, la descente peut ne valoir aucune remise sur le plat.
+    # ``personal_pacing`` : la loi personnelle ne sert qu'à la RÉPARTITION du plan ; la
+    #   calibration et le total de la cible restent sous la loi de Minetti.
+    # ``slope_curve`` : forme de la loi servie à la répartition — ``kappa`` (surcoût de la loi
+    #   × κ par côté) ou ``bins`` (facteur mesuré par tranche de pente, rétréci vers la loi
+    #   avec le poids h ÷ (h + slope_bins_shrink_hours), h = heures de mesure de la tranche ;
+    #   au-delà de la dernière tranche mesurée, le rapport à la loi de la tranche extrême).
+    #   Sous ``personal``, le total reste en κ (la calibration n'a pas les tranches).
+    slope_cost: str = "minetti"                          # {minetti, personal, personal_pacing}
     slope_cost_min_hours: float = 20.0
     slope_kappa_min: float = 0.5
     slope_kappa_max: float = 2.0
+    slope_kappa_down_min: float | None = None           # None : slope_kappa_min
+    slope_curve: str = "kappa"                           # {kappa, bins}
+    slope_bins_shrink_hours: float = 5.0
     # --- arrêts (Phase 2, B4) ---------------------------------------------------------------
     # ``carved`` (défaut historique) : la régression porte sur la vitesse ÉCOULÉE (arrêts
     #   compris) et le plan retranche sa politique d'arrêts (5 min par ravito, +10 aux bases)

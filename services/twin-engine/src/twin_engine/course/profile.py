@@ -81,6 +81,11 @@ class CourseProfile:
     excess_up_grid_m: np.ndarray | None = None
     excess_down_grid_m: np.ndarray | None = None
     slope_kappa: tuple[float, float] | None = None
+    # loi de pente servie à la seule RÉPARTITION du plan quand elle diffère de celle du total
+    # (``twin.pente``) : Deq de chaque segment sous cette loi, et sa description ; None = le
+    # plan répartit sur ``Segment.deq_km``.
+    repartition_km: np.ndarray | None = None
+    repartition: dict | None = None
 
     def with_slope_cost(self, kappa_up: float, kappa_down: float) -> "CourseProfile":
         """Le même parcours sous un coût de pente personnel : le surcoût de montée est
@@ -100,6 +105,18 @@ class CourseProfile:
             segments.append(replace(seg, deq_km=float((deq_grid[i1] - deq_grid[i0]) / 1000.0)))
         return replace(self, deq_grid_m=deq_grid, grade_factor=f, segments=segments,
                        deq_km=float(deq_grid[-1] / 1000.0), slope_kappa=(ku, kd))
+
+    def with_repartition(self, facteur: np.ndarray, loi: dict) -> "CourseProfile":
+        """Le même parcours, dont le plan répartit le temps sous une autre loi de pente que
+        celle du total : ``facteur`` est le coût par mètre de cette loi sur la grille (1 =
+        plat). Deq, segments et facteur de pente restent ceux du profil ; seuls les poids de
+        répartition changent (technicité comprise)."""
+        step = float(self.x_m[1] - self.x_m[0]) if self.x_m.size > 1 else 0.0
+        grille = np.cumsum(np.asarray(facteur, dtype=float) * step) * (1.0 + self.technicity_pct / 100.0)
+        poids = np.array([
+            (grille[_grid_index(self.off_km_grid, s.off1)] - grille[_grid_index(self.off_km_grid, s.off0)]) / 1000.0
+            for s in self.segments])
+        return replace(self, repartition_km=poids, repartition=dict(loi))
 
     def checkpoint_coords(self) -> list[tuple[float, float, float]]:
         """(km officiel, lat, lon) de chaque point de découpage — le MÊME indice de grille
@@ -127,6 +144,7 @@ class CourseProfile:
             "dplus_per_km": self.dplus_per_km,
             "technicity_pct": self.technicity_pct,
             "slope_kappa": None if self.slope_kappa is None else [round(k, 4) for k in self.slope_kappa],
+            "repartition": self.repartition,
             "segments": [s.to_dict() for s in self.segments],
         }
 

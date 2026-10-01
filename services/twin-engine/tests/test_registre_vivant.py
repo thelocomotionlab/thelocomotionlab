@@ -69,7 +69,9 @@ def test_lexport_a_la_forme_du_fichier_committe(client, dossier_du_cli):
     # le statut de l'athlète quand l'entrée a été figée
     assert set(entree) - set(committe) == {"niveau", "source", "statut"}
     assert set(committe) - set(entree) == set()
-    assert set(entree["model"]) == set(committe["model"])
+    # le run committé est figé : les mesures ajoutées depuis n'y sont pas, l'export les porte
+    assert set(committe["model"]) <= set(entree["model"])
+    assert {"slope_kappa_up_raw", "slope_kappa_down_raw", "slope_bins"} <= set(entree["model"])
     assert set(entree["prediction"]) == set(committe["prediction"])
     assert entree["official_time_h"] == 31.5 and entree["dnf"] is False
     assert entree["athlete"] == "Val" and entree["statut"] == "frais"

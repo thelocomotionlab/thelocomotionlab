@@ -313,7 +313,8 @@ def fit_slope_cost(summaries: list[ActivitySummary], cfg: Config, hr0: float | N
     d'où un facteur personnel ``f_p(b) = exp(−D_b)`` par tranche. κ est la pente des moindres
     carrés de ``f_p − 1`` sur ``f_Minetti − 1``, par côté, pondérée par les secondes ; None
     sous ``slope_cost_min_hours`` heures de mesure ; borné dans [slope_kappa_min,
-    slope_kappa_max] (valeur brute conservée dans le détail). FC0 : celle de l'efficacité-
+    slope_kappa_max], κ_descente sous ``slope_kappa_down_min`` quand elle est donnée (valeur
+    brute conservée dans le détail). FC0 : celle de l'efficacité-
     durée (profil) ou 60 bpm — les sommes portent la correction au premier ordre."""
     tw, c = cfg.twin, cfg.calibration
     centers = slope_bin_centers(cfg)
@@ -348,7 +349,7 @@ def fit_slope_cost(summaries: list[ActivitySummary], cfg: Config, hr0: float | N
         f_p = np.where(ok, np.exp(-D / np.where(ok, W, 1.0)), np.nan)
     f_m = np.asarray(grade_factor(centers / 100.0, cfg.course.cr0, cap=tw.f_cap), dtype=float)
 
-    def _side(mask: np.ndarray):
+    def _side(mask: np.ndarray, floor: float):
         sel = mask & ok & np.isfinite(f_p)
         hours = float(N[sel].sum() / 3600.0)
         if hours < c.slope_cost_min_hours:
@@ -358,10 +359,11 @@ def fit_slope_cost(summaries: list[ActivitySummary], cfg: Config, hr0: float | N
         if den <= 0:
             return None, hours, None
         raw = float(np.sum(w * x * yv) / den)
-        return float(np.clip(raw, c.slope_kappa_min, c.slope_kappa_max)), hours, raw
+        return float(np.clip(raw, floor, c.slope_kappa_max)), hours, raw
 
-    ku, hu, ku_raw = _side(centers > 0)
-    kd, hd, kd_raw = _side(centers < 0)
+    ku, hu, ku_raw = _side(centers > 0, c.slope_kappa_min)
+    kd, hd, kd_raw = _side(centers < 0, c.slope_kappa_min if c.slope_kappa_down_min is None
+                           else c.slope_kappa_down_min)
     detail = {
         "hr0": round(h0, 1), "n_activities": n_act,
         "hours_up": round(hu, 1), "hours_down": round(hd, 1),

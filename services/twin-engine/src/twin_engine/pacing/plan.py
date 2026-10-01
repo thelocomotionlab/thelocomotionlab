@@ -219,10 +219,15 @@ def build_pacing(
     n = len(seg)
     deq = np.array([s.deq_km for s in seg])
     off_len = np.array([s.off_len for s in seg])
+    # poids de répartition : le Deq du total, ou celui d'une loi de pente servie à la seule
+    # répartition (``CourseProfile.repartition_km``) ; la vitesse ajustée affichée reste
+    # rapportée au Deq du total
+    rep = getattr(course, "repartition_km", None)
+    poids = deq if rep is None else np.asarray(rep, dtype=float)
 
     # --- fade de durabilité sur la vitesse ajustée vs avancement en Deq ---
-    cum_deq = np.cumsum(deq)
-    mid = (cum_deq - deq / 2) / cum_deq[-1]
+    cum_deq = np.cumsum(poids)
+    mid = (cum_deq - poids / 2) / cum_deq[-1]
     delta, fade_used = _fade_delta(cfg, durability_pct, splits_delta)
     g = 1.0 + delta * (0.5 - mid) * 2.0
 
@@ -261,10 +266,10 @@ def build_pacing(
         t_move = max(tpred - float(stops_min.sum() / 60.0), 0.5 * tpred)  # garde-fou si arrêts > temps réparti
     t_stops_h = float(stops_min.sum() / 60.0)
 
-    # --- normalisation : Σ deq_i / v_i = t_move ---
-    scale = float(np.sum(deq / g) / t_move)
-    v_ga = scale * g
-    t_move_h = deq / v_ga
+    # --- normalisation : Σ poids_i / v_i = t_move ---
+    scale = float(np.sum(poids / g) / t_move)
+    t_move_h = poids / (scale * g)
+    v_ga = deq / t_move_h
     real_speed = off_len / t_move_h
     pace = 60.0 / real_speed
 

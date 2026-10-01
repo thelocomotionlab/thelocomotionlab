@@ -285,12 +285,10 @@ def regenerer(d: Dossier, fragment: dict | None, *, cfg, out_dir, report_date=No
     from .course import build_course
     from .feasibility import assess_target
     from .pipeline import rendre_documents
+    from .twin.pente import servir_parcours
 
     race = appliquer(d.race, fragment)
-    course = build_course(d.course_gpx, race, cfg)
-    pente = d.twin.slope_factors(cfg)
-    if pente is not None:
-        course = course.with_slope_cost(*pente)
+    course = servir_parcours(build_course(d.course_gpx, race, cfg), d.twin, cfg)
     prediction = prediction_amendee(d, race, course, cfg)
     target = (assess_target(race.target_hours, course, d.twin, prediction, cfg)
               if race.target_hours else None)

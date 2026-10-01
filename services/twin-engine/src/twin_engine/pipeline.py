@@ -27,6 +27,7 @@ from .pacing.plan import fade_delta_from_splits
 from .predict import Prediction, predict_race
 from .sufficiency import Sufficiency, assess_sufficiency
 from .twin.model import Twin, build_twin
+from .twin.pente import servir_parcours
 
 
 @dataclass
@@ -145,11 +146,9 @@ def analyze_preview_from_twin(
     (une coupure par course) à partir d'un SEUL décodage d'archive — tout ce qui suit ne
     coûte rien, c'est le décodage qui coûte. Un seul chemin de calcul pour les deux usages.
     """
-    # coût de pente personnel (Phase 5, C1) : le parcours est servi sous les mêmes facteurs
-    # que la vitesse ajustée des efforts de la calibration ; None = loi de Minetti, profil intact
-    slope = twin.slope_factors(cfg)
-    if slope is not None:
-        course = course.with_slope_cost(*slope)
+    # coût de pente personnel : au total sous les mêmes facteurs que la vitesse ajustée des
+    # efforts de la calibration, et/ou à la seule répartition du plan (twin.pente)
+    course = servir_parcours(course, twin, cfg)
     calibration = build_calibration(twin, cfg)
     prediction = predict_race(course, twin, calibration, cfg, race)
     sufficiency = assess_sufficiency(

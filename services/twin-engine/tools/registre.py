@@ -586,12 +586,10 @@ def entree_servie(dossier_path: Path, depot: Depot, cfg, *, athlete: str, course
     from twin_engine.course import build_course
     from twin_engine.registre import (bloc_course, bloc_domaine, bloc_forme, bloc_modele,
                                       bloc_prediction, statut_a_la_date)
+    from twin_engine.twin.pente import servir_parcours
 
     d = _dossier.lire(dossier_path)
-    parcours = build_course(d.course_gpx, d.race, cfg)
-    pente = d.twin.slope_factors(cfg)
-    if pente is not None:
-        parcours = parcours.with_slope_cost(*pente)
+    parcours = servir_parcours(build_course(d.course_gpx, d.race, cfg), d.twin, cfg)
     nom = course or d.race.name
     jour = jour or (d.race.start_time.date().isoformat() if d.race.start_time else None)
     if not jour:

@@ -44,16 +44,14 @@ def construire() -> dict:
     from twin_engine.course import build_course
     from twin_engine.pacing.plan import build_pacing
     from twin_engine.predict import predict_race
+    from twin_engine.twin.pente import servir_parcours
 
     _, twin, *_ = scenario()
     cas = []
     for modele in ("carved", "personal", "spec"):
         cfg = config_pour(modele, CFG)
         race = race_spec()
-        course = build_course(_triangle_gpx(), race, cfg)
-        pente = twin.slope_factors(cfg)
-        if pente is not None:
-            course = course.with_slope_cost(*pente)
+        course = servir_parcours(build_course(_triangle_gpx(), race, cfg), twin, cfg)
         cal = build_calibration(twin, cfg)
         pred = predict_race(course, twin, cal, cfg, race)
         plan = build_pacing(course, pred, race, cfg)

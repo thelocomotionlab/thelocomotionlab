@@ -544,6 +544,19 @@ efforts comme sur le Deq du parcours ; les réglages de mesure (`twin.slope_bin_
 porte alors une note « ton coût de pente, mesuré » ; le registre porte `model.slope_kappa_*`,
 `slope_hours_*`, `slope_cost` et `course.slope_kappa`.
 
+Leviers de répartition (chantier terrain ; DIAGNOSTIC §10.28), derrière flag, défauts
+inchangés : `calibration.slope_cost=personal_pacing` sert la loi mesurée à la seule
+répartition du plan — calibration, Deq et total restent sous Minetti ;
+`calibration.slope_kappa_down_min` (vide : `slope_kappa_min`) laisse κ_descente descendre
+jusqu'à 0, la descente sans aucune remise sur le plat ; `calibration.slope_curve=bins` sert
+le facteur mesuré par tranche de pente au lieu de κ, rétréci vers la loi avec le poids
+h ÷ (h + `slope_bins_shrink_hours`). Sous `personal`, le total reste en κ. Le parcours servi
+porte la loi de répartition (`course.repartition`, au registre et au JSON) ; la vitesse
+ajustée affichée par segment reste rapportée au Deq de la loi, elle n'est donc plus
+constante. Le registre garde la mesure entière (`model.slope_kappa_*_raw`,
+`model.slope_bins`) : `tools/score_plan --set calibration.slope_cost=personal_pacing …`
+rejoue la forme du plan sous n'importe quelle loi, sans archive.
+
 ### Mode objectif ([ADR 0002](./adr/0002-mode-objectif-plan-sur-cible.md))
 
 À la demande de la cohorte (« je vise 31 h, donne-moi le plan »), le moteur sait ancrer le plan sur

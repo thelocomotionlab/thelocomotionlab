@@ -23,6 +23,7 @@ def bloc_course(course) -> dict:
         "dplus_per_km": round(course.dplus_per_km, 1),
         "slope_kappa": (None if course.slope_kappa is None
                         else [round(k, 4) for k in course.slope_kappa]),
+        "repartition": getattr(course, "repartition", None),
     }
 
 
@@ -82,6 +83,13 @@ def bloc_modele(*, twin, calibration, sufficiency, cfg, n_activities_used: int,
                              else round(twin.slope_kappa_down, 4)),
         "slope_hours_up": (twin.slope_detail or {}).get("hours_up"),
         "slope_hours_down": (twin.slope_detail or {}).get("hours_down"),
+        # la mesure entière, pour rejouer la répartition sous une autre loi sans archive
+        # (tools/score_plan, twin.pente.detail_du_registre) : κ bruts et tranches
+        # [pente %, facteur personnel, heures]
+        "slope_kappa_up_raw": (twin.slope_detail or {}).get("kappa_up_raw"),
+        "slope_kappa_down_raw": (twin.slope_detail or {}).get("kappa_down_raw"),
+        "slope_bins": [[b["grade_pct"], b["f_personal"], b["hours"]]
+                       for b in (twin.slope_detail or {}).get("bins", [])],
     }
 
 

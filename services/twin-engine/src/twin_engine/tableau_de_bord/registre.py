@@ -65,12 +65,10 @@ def _modele_de_la_version(magasin: Magasin, cfg, plan: dict) -> dict | None:
         return deja
 
     from ..course import build_course
+    from ..twin.pente import servir_parcours
 
     d = _dossier.lire(source)
-    course = build_course(d.course_gpx, d.race, cfg)
-    pente = d.twin.slope_factors(cfg)
-    if pente is not None:
-        course = course.with_slope_cost(*pente)
+    course = servir_parcours(build_course(d.course_gpx, d.race, cfg), d.twin, cfg)
     dates = sorted(s.date for s in d.twin.summaries if s.date)
     p = d.prediction
     modele = {

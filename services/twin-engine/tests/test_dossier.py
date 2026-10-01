@@ -24,6 +24,7 @@ from twin_engine.course import build_course                          # noqa: E40
 from twin_engine.pipeline import rendre_documents                    # noqa: E402
 from twin_engine.report import build_report_context, render_template  # noqa: E402
 from twin_engine.report.render import FEUILLE_TEMPLATE, FICHES_TEMPLATE, REPORT_TEMPLATE  # noqa: E402
+from twin_engine.twin.pente import servir_parcours                   # noqa: E402
 
 DATE = dt.datetime(2026, 9, 16, 10, 0)
 GABARITS = (REPORT_TEMPLATE, FEUILLE_TEMPLATE, FICHES_TEMPLATE)
@@ -54,10 +55,7 @@ def _tex_direct(cas) -> dict[str, str]:
 
 def _tex_rejeu(d, fragment=None, tmp_path=None) -> dict[str, str]:
     race = dossier.appliquer(d.race, fragment)
-    course = build_course(d.course_gpx, race, CFG)
-    pente = d.twin.slope_factors(CFG)
-    if pente is not None:
-        course = course.with_slope_cost(*pente)
+    course = servir_parcours(build_course(d.course_gpx, race, CFG), d.twin, CFG)
     plan, _, _, _ = rendre_documents(
         course=course, twin=d.twin, calibration=d.calibration, prediction=d.prediction,
         sufficiency=d.sufficiency, target=None, race=race, cfg=CFG,

@@ -112,6 +112,12 @@ archive mesure tout :
   **Chez Valentin** : déposer le fichier de montre de Nice sous
   `_seed/cas_validation/Val/courses/nice-100m-2026-montre.gpx` (chemin du manifeste, temps
   officiel 35:05:00 à corriger à la seconde si besoin), puis le run 1.
+- 2026-10-01 — **loi de pente servie à la répartition** (DIAGNOSTIC §10.28) :
+  `calibration.slope_cost=personal_pacing` (le total reste sous Minetti),
+  `slope_kappa_down_min` (descente sans remise), `slope_curve=bins` (facteur par tranche
+  rétréci vers la loi) ; le registre garde la mesure entière, le scoreur rejoue toute loi
+  sans archive. Écart de définition de pente activités ↔ parcours mesuré : du second ordre.
+  La fatigue de descente attend le détecteur, dont elle tire son paramètre.
 
 ## Choix faits à la place de Valentin
 
@@ -133,3 +139,10 @@ archive mesure tout :
   la même convention.
 - Les définitions du script (mouvement, arrêt, marche) vivent à côté du masque historique du
   jumeau sans le remplacer : la calibration n'en dépend pas, la prédiction ne bouge pas.
+- Sous une loi de pente servie à la seule répartition, le plan affiche la vitesse ajustée
+  rapportée au Deq de la loi (elle varie d'un segment à l'autre) plutôt qu'un Deq personnel
+  qui ne serait pas celui du total annoncé ailleurs dans le rapport.
+- Rétrécissement des tranches vers la loi : 5 h par défaut (une tranche mesurée 5 h compte
+  pour moitié) ; c'est un réglage de variante, le banc dira s'il faut le bouger.
+- `slope_kappa_down_min` vide par défaut (la borne de montée s'applique, comme avant), pour
+  qu'une configuration qui ne règle que `slope_kappa_min` garde son comportement.

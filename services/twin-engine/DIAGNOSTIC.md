@@ -3074,3 +3074,58 @@ depuis un dossier.
 
 **Chez Valentin** : les passages de Nice 2026 (fichier de course), puis son entrée servie ;
 les relevés des quatre manifestes viennent avec le run 1.
+
+### 10.28 Chantier terrain — la loi de pente servie à la répartition (2026-10-01)
+
+**Constat.** Servi au total (§10.15), le coût de pente personnel déplace les deux côtés de
+la prédiction (vitesse des ultras passés, Deq de la cible) et a dégradé le banc (Val : LOO
+6,4 → 7,8 %). Ce qu'il dit pourtant de vrai porte sur la répartition : à Nice, la forme du
+plan sous mouvement réel imposé passe de 19 / 48 / 51 min (erreur moyenne / pire tronçon /
+pire cumul, Minetti) à 9 / 26 / 26 sous les κ mesurés avant la course, et à 7 / 16 / 19
+quand κ_descente n'est plus borné (sortie 8 de l'analyse de référence). La borne 0,5 empêche
+la loi de dire « aucune remise en descente » : les trois athlètes avec FC y sont collés.
+
+**Ce qui change (drapeaux, défauts inchangés).**
+- `calibration.slope_cost=personal_pacing` : la loi personnelle répartit le plan, le total
+  reste sous Minetti — même calibration, même Deq, même prédiction au bit près, même temps
+  de mouvement ; seuls les temps par segment bougent (`CourseProfile.repartition_km`,
+  `twin.pente.servir_parcours`, un seul point de service pour le pipeline, le dossier, le
+  tableau de bord et `tools/registre --servir`).
+- `calibration.slope_kappa_down_min` : borne basse propre à la descente (vide : celle de la
+  montée, comportement d'avant) ; à 0, la descente vaut le plat.
+- `calibration.slope_curve=bins` : le facteur mesuré par tranche de 2,5 %, rétréci vers la
+  loi (poids h ÷ (h + `slope_bins_shrink_hours`), 5 h par défaut), au lieu d'une pente κ par
+  côté ; un côté sous `slope_cost_min_hours` garde la loi ; au-delà de la dernière tranche,
+  le rapport à la loi de la tranche extrême ; entre le plat et la première tranche, le
+  rapport s'interpole. Sous `personal`, le total reste en κ (la calibration n'a pas les
+  tranches) et seule la répartition suit les tranches.
+- Registre : `course.repartition` (loi servie), `model.slope_kappa_up_raw`,
+  `slope_kappa_down_raw`, `slope_bins` ([pente, facteur personnel, heures]) ;
+  `tools/score_plan` rejoue la répartition sous la loi de sa configuration depuis ces champs
+  (une entrée d'avant les tranches rend ses κ servis comme valeurs brutes).
+
+**Même définition de pente des deux côtés, mesurée.** Les facteurs sont lus sur la pente des
+activités (base ±50 m, altitude lissée 5 s), la loi s'applique à celle du parcours (lissage
+150 m). Recalculer le parcours à la définition des activités : Nice 2026 (trace du site),
+Deq 205,7 → 208,1 km (+1,2 %), part d'un tronçon dans le Deq au plus 0,08 point, grille
+sous −20 % 9,2 → 9,8 % ; MDL 65 km, +0,2 % et 0,03 point. L'écart est du second ordre devant
+celui des lois : pas de seconde définition.
+
+**Limites.** (1) La vitesse ajustée affichée par segment reste rapportée au Deq de la loi :
+sous une loi personnelle elle n'est plus constante, et le rapport ne dit pas pourquoi (la
+note de coût de pente n'existe que sous `personal` ; les pages du rapport sont hors
+périmètre). (2) Le fade se lit sur l'avancement dans le Deq de répartition. (3) Le facteur
+de descente est une limite mécanique et technique, pas un coût : la fatigue de descente et le
+terrain (étapes suivantes) s'y ajoutent, ils ne s'en déduisent pas.
+
+**Tests** (`tests/test_repartition_pente.py`) : κ_descente retrouvé sous la borne propre, la
+montée intacte ; la loi elle-même rend le plan au bit près (technicité comprise, sous un
+total personnel aussi) ; `personal_pacing` ne bouge que les temps par segment, total et
+horloge identiques, le temps passe des côtes aux descentes sous (0,6 ; 0) ; tranches
+rétrécies à λ = 0, 5 h, ∞, côté sous le minimum ; chaque mode sert ce qu'il dit ; registre
+complet et rejoué ; le scoreur retrouve depuis le registre la répartition qui a produit des
+passages.
+
+**Chez Valentin (run 1)** : `tools/banc` sous les variantes de répartition et
+`tools/score_plan` sous chaque loi, sur toutes les courses avec passages ; la décision suit
+la règle du prompt (forme du plan au-delà de Nice, total des cas frais intact).

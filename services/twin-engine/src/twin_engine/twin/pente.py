@@ -1,0 +1,158 @@
+"""La loi de pente personnelle servie au parcours : au total, à la répartition, ou à rien.
+
+Le jumeau mesure, sur les secondes avec FC de l'archive, de combien l'athlète est plus lent
+en montée et plus rapide en descente que sur le plat à réserve cardiaque égale
+(:func:`~twin_engine.twin.model.fit_slope_cost` : un facteur par tranche de pente, et κ par
+côté, pente des moindres carrés du surcoût personnel sur celui de la loi de Minetti). Ce
+module dit ce qui en est servi au parcours, selon le bloc ``calibration`` :
+
+* ``slope_cost=minetti`` — rien ;
+* ``slope_cost=personal`` — κ au total (la calibration juge les ultras passés sous les mêmes
+  facteurs, :meth:`Twin.slope_factors`) et à la répartition ;
+* ``slope_cost=personal_pacing`` — à la seule répartition du plan : le total reste sous la
+  loi de Minetti, des deux côtés de la prédiction.
+
+``slope_curve`` choisit la forme de la loi servie à la répartition : ``kappa`` (surcoût de
+la loi × κ par côté) ou ``bins`` (facteur mesuré par tranche, rétréci vers la loi avec le
+poids h ÷ (h + λ), λ = ``slope_bins_shrink_hours``). Une tranche ne compte que si son côté
+(montée ou descente) totalise ``slope_cost_min_hours`` heures de mesure, comme κ.
+
+La loi s'applique à la pente du parcours (lissage ``course.smooth_window_m``) ; les facteurs
+ont été mesurés sur celle des activités (base ±``twin.grade_base_m``) : deux définitions
+voisines, dont l'écart est mesuré au carnet (DIAGNOSTIC §10.28).
+"""
+
+from __future__ import annotations
+
+import numpy as np
+
+from ..config import Config
+from ..minetti import grade_factor
+
+
+def kappas_servis(detail: dict | None, cfg: Config) -> tuple[float, float] | None:
+    """κ (montée, descente) recalculés depuis les valeurs brutes du détail et les bornes de
+    ``cfg`` ; un côté non mesuré vaut 1 ; None sans aucune mesure."""
+    if not detail:
+        return None
+    c = cfg.calibration
+    ku, kd = detail.get("kappa_up_raw"), detail.get("kappa_down_raw")
+    if ku is None and kd is None:
+        return None
+    bas = c.slope_kappa_min if c.slope_kappa_down_min is None else c.slope_kappa_down_min
+    return (1.0 if ku is None else float(np.clip(ku, c.slope_kappa_min, c.slope_kappa_max)),
+            1.0 if kd is None else float(np.clip(kd, bas, c.slope_kappa_max)))
+
+
+def rapports_par_tranche(detail: dict | None, cfg: Config) -> tuple[np.ndarray, np.ndarray] | None:
+    """(pentes en %, rapport facteur servi ÷ facteur de la loi) aux tranches mesurées, le plat
+    à 1 ; None sans tranche exploitable. Facteur servi = loi + (personnel − loi)·h ÷ (h + λ)."""
+    if not detail or not detail.get("bins"):
+        return None
+    c = cfg.calibration
+    lam = max(float(c.slope_bins_shrink_hours), 0.0)
+    assez = {+1: (detail.get("hours_up") or 0.0) >= c.slope_cost_min_hours,
+             -1: (detail.get("hours_down") or 0.0) >= c.slope_cost_min_hours}
+    g, r = [0.0], [1.0]
+    for b in detail["bins"]:
+        pente, fp, fm, h = (float(b["grade_pct"]), b.get("f_personal"), b.get("f_minetti"),
+                            float(b.get("hours") or 0.0))
+        if pente == 0.0 or not assez[1 if pente > 0 else -1]:
+            continue
+        if fp is None or fm is None or not (fp > 0 and fm > 0) or h <= 0:
+            continue
+        w = h / (h + lam)
+        g.append(pente)
+        r.append((fm + w * (fp - fm)) / fm)
+    if len(g) == 1:
+        return None
+    ordre = np.argsort(g)
+    return np.asarray(g, dtype=float)[ordre], np.asarray(r, dtype=float)[ordre]
+
+
+def loi_de_repartition(detail: dict | None, cfg: Config) -> dict | None:
+    """La loi servie à la répartition sous ``calibration.slope_curve`` ; None sans mesure."""
+    if cfg.calibration.slope_curve == "bins":
+        rp = rapports_par_tranche(detail, cfg)
+        if rp is None:
+            return None
+        return {"curve": "bins", "shrink_hours": float(cfg.calibration.slope_bins_shrink_hours),
+                "grade_pct": [round(float(x), 2) for x in rp[0]],
+                "ratio": [round(float(x), 4) for x in rp[1]]}
+    k = kappas_servis(detail, cfg)
+    return None if k is None else {"curve": "kappa", "kappa": [round(k[0], 4), round(k[1], 4)]}
+
+
+def facteur_de_minetti(course) -> np.ndarray | None:
+    """Coût par mètre de la loi de Minetti sur la grille du parcours (1 = plat), relu dans sa
+    décomposition — indépendant d'un coût personnel déjà servi au total ; None sans
+    décomposition."""
+    if course.excess_up_grid_m is None or course.excess_down_grid_m is None or course.x_m.size < 2:
+        return None
+    step = float(course.x_m[1] - course.x_m[0])
+    surcout = np.diff(course.excess_up_grid_m + course.excess_down_grid_m, prepend=0.0)
+    return 1.0 + surcout / step
+
+
+def facteur_sur_la_grille(course, loi: dict) -> np.ndarray | None:
+    """Coût par mètre de la loi ``loi`` sur la grille du parcours ; None sans décomposition."""
+    f = facteur_de_minetti(course)
+    if f is None:
+        return None
+    pente = np.asarray(course.grade, dtype=float)
+    if loi["curve"] == "bins":
+        out = f * np.interp(100.0 * pente, loi["grade_pct"], loi["ratio"])
+    else:
+        ku, kd = loi["kappa"]
+        out = np.where(pente > 0, 1.0 + ku * (f - 1.0), np.where(pente < 0, 1.0 + kd * (f - 1.0), f))
+    # un coût par mètre nul ou négatif (κ_descente proche de 2 sous la loi) n'a pas de sens
+    return np.maximum(out, 1e-3)
+
+
+def servir_parcours(course, twin, cfg: Config):
+    """Le parcours tel que le moteur le sert à l'athlète : total sous κ si
+    ``slope_cost=personal``, répartition sous la loi de ``slope_curve`` si une loi
+    personnelle est servie et diffère de celle du total."""
+    c = cfg.calibration
+    if c.slope_cost == "personal":
+        k = twin.slope_factors(cfg)
+        if k is not None:
+            course = course.with_slope_cost(*k)
+        if c.slope_curve != "bins":
+            return course
+    elif c.slope_cost != "personal_pacing":
+        return course
+    return repartir(course, getattr(twin, "slope_detail", None), cfg)
+
+
+def repartir(course, detail: dict | None, cfg: Config):
+    """Le parcours dont le plan répartit sous la loi de ``slope_curve`` mesurée dans
+    ``detail`` ; tel quel sans mesure ou sans décomposition."""
+    loi = loi_de_repartition(detail, cfg)
+    if loi is None:
+        return course
+    f = facteur_sur_la_grille(course, loi)
+    return course if f is None else course.with_repartition(f, loi)
+
+
+def detail_du_registre(modele: dict | None, cfg: Config) -> dict | None:
+    """Le détail de la mesure tel que le registre le garde (bloc ``model``) : valeurs brutes
+    de κ, heures par côté, tranches. Une entrée qui ne porte que les κ servis (registre
+    d'avant les tranches) les rend comme valeurs brutes."""
+    if not modele:
+        return None
+    tranches = modele.get("slope_bins") or []
+    bins = [{"grade_pct": float(g), "f_personal": float(fp),
+             "f_minetti": float(grade_factor(float(g) / 100.0, cfg.course.cr0, cap=cfg.twin.f_cap)),
+             "hours": float(h)} for g, fp, h in tranches]
+    ku = modele.get("slope_kappa_up_raw", modele.get("slope_kappa_up"))
+    kd = modele.get("slope_kappa_down_raw", modele.get("slope_kappa_down"))
+    if ku is None and kd is None and not bins:
+        return None
+    return {"kappa_up_raw": ku, "kappa_down_raw": kd,
+            "hours_up": modele.get("slope_hours_up"), "hours_down": modele.get("slope_hours_down"),
+            "bins": bins}
+
+
+__all__ = ["detail_du_registre", "facteur_de_minetti", "facteur_sur_la_grille", "kappas_servis",
+           "loi_de_repartition", "rapports_par_tranche", "repartir", "servir_parcours"]
