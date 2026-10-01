@@ -20,6 +20,7 @@ import shutil
 import tempfile
 import unicodedata
 from dataclasses import asdict
+from datetime import date
 from pathlib import Path
 from uuid import uuid4
 
@@ -29,7 +30,7 @@ from fastapi import (
 
 from .. import dossier as dossier_mod
 from ..course import RaceSpec
-from ..jobs import run_ingestion
+from ..jobs import run_banc, run_ingestion
 from . import conservation as _conservation
 from . import file as _file
 from . import purge as _purge
@@ -286,6 +287,50 @@ def routeur_admin() -> APIRouter:
             athlete.get("archive") or {}).get("purgee_le")
         athlete["plans"] = plans
         return athlete
+
+    @routeur.get("/athletes/{athlete_id}/ultras")
+    def lire_les_ultras(athlete_id: str, request: Request) -> dict:
+        """Les vrais ultras retenus par la calibration, et ce que le banc en a dit (§5.2)."""
+        from . import banc
+
+        magasin: Magasin = request.app.state.magasin
+        athlete = magasin.athletes.lire(athlete_id)
+        if athlete is None:
+            raise HTTPException(status_code=404, detail="athlète inconnu")
+        return {"ultras": banc.ultras(magasin, request.app.state.cfg, athlete_id),
+                "archive_conservee": bool(athlete.get("depot_id")) and not (
+                    athlete.get("archive") or {}).get("purgee_le")}
+
+    @routeur.post("/athletes/{athlete_id}/banc")
+    def rejouer_au_banc(athlete_id: str, charge: dict, request: Request,
+                        fond: BackgroundTasks) -> dict:
+        """Rejoue au banc les ultras demandés (``{"courses": [{date, officiel | abandon,
+        nom?}]}``) sur l'archive conservée de l'athlète."""
+        from ..registre.walkforward import parse_time_h
+
+        magasin: Magasin = request.app.state.magasin
+        athlete = magasin.athletes.lire(athlete_id)
+        if athlete is None:
+            raise HTTPException(status_code=404, detail="athlète inconnu")
+        if not athlete.get("depot_id") or (athlete.get("archive") or {}).get("purgee_le"):
+            raise HTTPException(status_code=409, detail="l'archive n'est plus conservée")
+        courses = (charge or {}).get("courses") if isinstance(charge, dict) else None
+        if not isinstance(courses, list) or not courses:
+            raise HTTPException(status_code=422, detail="« courses » attendu : une liste")
+        for c in courses:
+            try:
+                date.fromisoformat(str((c or {}).get("date")))
+                if not c.get("abandon") and parse_time_h(c.get("officiel")) is None:
+                    raise ValueError("temps officiel manquant")
+            except (ValueError, TypeError) as exc:
+                raise HTTPException(status_code=422, detail=f"course illisible : {exc}") from exc
+        store = request.app.state.store
+        job_id = uuid4().hex
+        store.creer(job_id, type="banc", athlete_id=athlete_id)
+        fond.add_task(run_banc, job_id=job_id, store=store, magasin=magasin,
+                      cfg=request.app.state.cfg, athlete_id=athlete_id, courses=courses,
+                      depot=request.app.state.depot)
+        return {"job_id": job_id}
 
     @routeur.get("/conservation")
     def lire_la_conservation(request: Request) -> dict:

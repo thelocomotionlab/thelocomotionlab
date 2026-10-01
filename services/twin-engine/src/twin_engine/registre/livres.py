@@ -224,6 +224,15 @@ class Depot:
                 and (not sans_drapeau or not r.get("drapeaux"))]
         return runs[-1]["id"] if runs else None
 
+    def importer_run(self, entete: dict, entrees: list[dict]) -> bool:
+        """Range tel quel un run venu d'ailleurs (le livre banc du tableau de bord) ; False
+        s'il est déjà là sous son identifiant."""
+        chemin = self.banc / f"{entete['id']}.json"
+        if chemin.exists():
+            return False
+        _ecrire(chemin, {"run": entete, "entries": entrees})
+        return True
+
     def ecrire_run(self, entete: dict, entrees: list[dict]) -> Path:
         """Écrit un nouveau run. Un run ne se réécrit jamais : si l'identifiant est déjà pris
         (deux passes dans la même seconde), il reçoit un suffixe ``-2``, ``-3``…"""

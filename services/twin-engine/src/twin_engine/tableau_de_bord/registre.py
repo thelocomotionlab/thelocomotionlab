@@ -294,7 +294,21 @@ def exporter(magasin: Magasin, cfg) -> dict:
                 for g in _rangees_orphelines(magasin, vivants) if g.get("pseudo")}
     athletes.update({a["pseudo"]: a.get("registre") or vide
                      for a in magasin.athletes.lister() if a.get("pseudo")})
-    return {"_comment": COMMENTAIRE, "entries": entrees, "athletes": dict(sorted(athletes.items()))}
+    return {"_comment": COMMENTAIRE, "entries": entrees, "athletes": dict(sorted(athletes.items())),
+            "banc": _runs_du_banc(cfg)}
+
+
+def _runs_du_banc(cfg) -> list[dict]:
+    """Les runs du livre banc du tableau de bord (« Rejouer au banc »), sans l'identifiant
+    interne des athlètes."""
+    from .banc import registre_du_tableau_de_bord
+
+    out = []
+    for chemin in sorted(registre_du_tableau_de_bord(cfg).banc.glob("*.json")):
+        entete, entrees = _registre.lire_entrees(chemin)
+        out.append({"run": entete, "entries": [{k: v for k, v in e.items() if k != "athlete_id"}
+                                               for e in entrees]})
+    return out
 
 
 __all__ = ["NIVEAUX", "ResultatFige", "STATUTS", "calculer", "entree", "exporter", "figee",

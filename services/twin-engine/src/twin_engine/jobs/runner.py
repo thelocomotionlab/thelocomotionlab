@@ -216,3 +216,27 @@ def run_amendement(*, job_id: str, store: JobStore, magasin, cfg: Config, ref: s
 
 
 __all__ = ["run_amendement", "run_generation", "run_ingestion", "run_job"]
+
+
+def run_banc(*, job_id: str, store: JobStore, magasin, cfg: Config, athlete_id: str,
+             courses: list[dict], depot=None) -> None:
+    """Rejoue au banc des ultras d'un athlète sur son archive conservée (même place unique :
+    c'est un décodage d'archive entière)."""
+    from ..tableau_de_bord.banc import BancImpossible, rejouer
+
+    with _UNE_PLACE:
+        store.modifier(job_id, statut=JOB_EN_COURS)
+        try:
+            fait = rejouer(athlete_id=athlete_id, courses=courses, magasin=magasin, cfg=cfg,
+                           depot=depot, avancer=lambda texte: store.avancer(job_id, texte))
+            store.modifier(job_id, statut=JOB_FINI, avancement="",
+                           resultat={"athlete_id": athlete_id, "run": fait["run"],
+                                     "courses": [e["date"] for e in fait["entrees"]]})
+        except BancImpossible as exc:
+            store.modifier(job_id, statut=JOB_ECHEC, avancement="", erreur=str(exc))
+        except Exception as exc:  # noqa: BLE001 — l'erreur vit dans l'état du job
+            logger.exception("banc %s en échec", job_id)
+            store.modifier(job_id, statut=JOB_ECHEC, avancement="",
+                           erreur=f"{type(exc).__name__} : échec du banc "
+                                  "(détails dans les journaux du serveur)")
+

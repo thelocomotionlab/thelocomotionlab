@@ -105,7 +105,10 @@ def effacer_un_athlete(magasin: Magasin, cfg: Config, athlete: dict, *, depot,
     refs = {p["ref"] for p in plans}
     for plan in plans:
         _registre.garder(magasin, cfg, plan, course_du_plan(magasin, plan), athlete)
-    n_anonymes = anonymiser(magasin, refs, f"anonyme-{secrets.token_hex(4)}")
+    from .banc import anonymiser as anonymiser_le_banc
+
+    opaque = f"anonyme-{secrets.token_hex(4)}"
+    n_anonymes = anonymiser(magasin, refs, opaque) + anonymiser_le_banc(cfg, athlete["id"], opaque)
     for demande in magasin.demandes.lister():
         if demande.get("plan_ref") in refs:
             magasin.demandes.supprimer(demande["id"])

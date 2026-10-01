@@ -734,10 +734,13 @@ def entree_servie(dossier_path: Path, depot: Depot, cfg, *, athlete: str, course
 
 def importer(export: Path, depot: Depot) -> dict:
     """Fusionne un export du tableau de bord : ses entrées au livre servi (une entrée au
-    résultat saisi ne change plus, sauf correction motivée), ses statuts au journal."""
+    résultat saisi ne change plus, sauf correction motivée), ses statuts au journal, et les
+    runs de son livre banc (« Rejouer au banc ») qui ne sont pas encore là."""
     brut = json.loads(export.read_text(encoding="utf-8"))
     rapport = depot.importer_servi(brut.get("entries") or [])
     rapport["statuts_bouges"] = depot.fusionner_statuts(brut.get("athletes") or {})
+    rapport["runs_importes"] = [r["run"]["id"] for r in brut.get("banc") or []
+                                if r.get("run") and depot.importer_run(r["run"], r.get("entries") or [])]
     return rapport
 
 
