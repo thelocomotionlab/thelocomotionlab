@@ -75,6 +75,7 @@
     "despike_rescue_min_bursts": 3,
     "despike_rescue_dplus_basis": "time",
     "dedup_activities": "on",
+    "gpx_distance": "haversine",
     "stop_min_s": 60.0,
     "long_effort_min_hours": 6.0,
     "record_tail_durations_s": [

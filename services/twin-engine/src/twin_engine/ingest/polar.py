@@ -10,7 +10,8 @@ Structure exploitée (le reste est ignoré, cf. confidentialité ci-dessous) :
 * ``sport.id``            identifiant de sport (``"1"`` = course) — **peut être chaîne ou entier** ;
 * ``startTime``          horodatage ISO de départ ;
 * ``exercises[].samples.samples``  canaux parallèles ``{type, intervalMillis, values[]}`` de même
-  longueur (``HEART_RATE`` bpm, ``SPEED`` **km/h**, ``DISTANCE`` m cumulée, ``ALTITUDE`` m, …),
+  longueur (``HEART_RATE`` bpm, ``SPEED`` **km/h**, ``DISTANCE`` m cumulée, ``ALTITUDE`` m,
+  ``CADENCE``, …),
   à reconstruire sur une base de temps commune (``i · intervalMillis``) ;
 * ``exercises[].routes.route.wayPoints``  trace GPS séparée ``{latitude, longitude, altitude,
   elapsedMillis}`` — **fusionnée** sur la timeline des échantillons par interpolation.
@@ -43,12 +44,14 @@ _POLAR_SPORT = {
     "34": "hiit",
 }
 
-# Canaux Polar → champ canonique (+ facteur d'unité). SPEED est en km/h → m/s.
+# Canaux Polar → champ canonique (+ facteur d'unité). SPEED est en km/h → m/s. CADENCE est
+# lue telle quelle : le schéma canonique en reconnaît l'unité sur les données.
 _CHANNELS: dict[str, tuple[str, float]] = {
     "HEART_RATE": ("hr", 1.0),
     "SPEED": ("speed_ms", 1.0 / 3.6),
     "DISTANCE": ("dist_m", 1.0),
     "ALTITUDE": ("alt_m", 1.0),
+    "CADENCE": ("cadence", 1.0),
 }
 
 

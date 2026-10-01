@@ -2941,3 +2941,54 @@ amendables — tout autre champ est un 422, jamais un silence.
 non plus. Rouvrir l'annexe, c'est repartir du plan du rapport ; le fichier téléchargé est à
 l'athlète. Une base de données pour retenir des brouillons aurait ajouté une donnée d'athlète
 à garder, à purger et à protéger, pour un gain que personne n'avait demandé.
+
+### 10.25 Chantier terrain — étape 1 : le fichier de course se décode entier (2026-10-01)
+
+**Constat.** Le fichier de Nice 2026 (GPX COROS à la seconde) porte, dans ses extensions
+`gpxdata`, la FC, la cadence et la distance calculée par la montre. Le moteur n'en lisait que
+la FC : aucun format ne remontait la cadence (le schéma canonique n'avait pas de canal pour
+elle), et la distance d'un GPX était l'haversine de la trace. Le même fichier porte trois
+accidents d'horloge (horodatage isolé aberrant, recul, les deux enchaînés) ; le
+rééchantillonnage à la seconde (`np.interp`) suppose un temps croissant et rendait, sur un
+temps qui recule, des canaux faux sans rien signaler.
+
+**Ce qui change.**
+- **Cadence** dans le schéma canonique (`cadence_spm`, pas par minute pour les deux pieds),
+  lue par les quatre adaptateurs : FIT (`cadence` + `fractional_cadence`), TCX
+  (`RunCadence`, à défaut `Cadence`), GPX (`gpxtpx:cad`, `gpxdata:cadence`), Polar
+  (`CADENCE`). L'unité de la source se lit sur les données de chaque activité : médiane en
+  course franche (≥ 2,5 m/s) sous 125 ⇒ valeurs par pied, ou, à défaut, médiane en marche
+  (0,7–1,8 m/s) sous 80 ; l'unité déclarée par le format ne départage que les activités sans
+  ni l'une ni l'autre. Vérifié sur les exports réels committés : FIT Garmin (6 courses,
+  médianes de course 159–170 pas/min), FIT Strava (4, 174–180), GPX Strava (178), Polar (3,
+  186–190) — toutes écrites par pied à la source (`cadence_unit = par_pied`).
+- **Distance de la montre** d'un GPX gardée à part (`dist_device_m`) ; servie sous
+  `twin.gpx_distance=device`. Défaut `haversine` : rien ne change tant que le banc n'a pas
+  parlé. Un FIT de la même activité sert déjà la distance de la montre.
+- **Horloge réparée** pour tous les formats avant le rééchantillonnage
+  (`ingest.canonical.repair_clock`, la règle de l'analyse de référence) : point isolé à plus
+  de `CLOCK_JUMP_S` (1 h) de ses deux voisins qui, eux, se suivent ⇒ interpolé ; recul ⇒ tout
+  ce qui précède est recalé linéairement ; départ et arrivée conservés. Une pause de deux
+  heures n'est pas prise pour un accident. Les réparations sont gardées
+  (`CanonicalActivity.clock_notes`) et comptées par activité (`ActivitySummary.clock_repairs`).
+- **Trous d'enregistrement** portés sur la grille (`gap_s`, durée de l'intervalle source qui
+  contient chaque seconde) : la règle « pas de mouvement après un trou de plus de 10 s » de
+  l'analyse de référence se lit désormais sur l'activité décodée.
+- **L'analyse de référence** (`tools/analyses/nice_2026_descentes.py`) lit le fichier par le
+  décodeur du moteur (`--brut` garde la lecture point par point) et rend ses huit sorties en
+  nombres (`analyser`). Ses définitions sont inchangées ; la cadence y est exprimée en pas
+  par minute pour les deux pieds (148, soit 74 par pied).
+
+**Effet attendu au registre : aucun.** Défauts inchangés ; la réparation d'horloge ne touche
+que les fichiers dont le temps recule ou saute, qui étaient faux auparavant — le banc dira
+combien d'activités des quatre archives en portent (`clock_repairs`).
+
+**Tests** (`tests/test_decodage_course.py`, `tests/test_nice_2026_descentes.py`) : horloge
+propre intacte ; chaque accident réparé, départ et arrivée conservés ; longue pause non
+réparée ; GPX COROS synthétique à deux accidents décodé entier (FC, cadence × 2, distance de
+la montre, résumé `clock_repairs = 2`) ; distance servie sous le drapeau seulement ; trou de
+31 s porté sur la grille ; unité de cadence lue sur les données dans les quatre cas et
+repli sur l'unité déclarée ; cadence absente = NaN ; TCX `RunCadence` ; exports réels
+Garmin, Strava et Polar ; analyse de référence sur une course synthétique par ses deux
+lectures. Les huit sorties de Nice sont épinglées dans un test actif si `TWIN_NICE2026_GPX`
+désigne le fichier de course : à lancer chez Valentin.

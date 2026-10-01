@@ -176,6 +176,12 @@ class TwinParams:
     # seule copie conservée, la plus riche (FC, puis altitude, puis découplage mesuré).
     # Sans heure de départ (vieux agrégats), rien n'est fusionné. Rollback : ``off``.
     dedup_activities: str = "on"              # {on, off}
+    # --- distance d'un GPX ------------------------------------------------------------------
+    # Un GPX ne porte d'ordinaire que des positions : la distance est l'haversine de la trace
+    # (``haversine``, comportement historique). Quand le fichier porte aussi la distance que
+    # la montre a calculée (``gpxdata:distance`` de COROS), ``device`` sert celle-là — c'est
+    # elle que lit un FIT de la même activité.
+    gpx_distance: str = "haversine"           # {haversine, device}
 
 
 @dataclass(frozen=True)

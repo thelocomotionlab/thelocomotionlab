@@ -1,9 +1,12 @@
 """Adaptateur ``.gpx`` (Polar, Strava, montres diverses) → schéma canonique.
 
 Le GPX porte rarement vitesse ou distance : la distance est reconstruite par
-haversine sur lat/lon (dans :meth:`CanonicalActivity.from_samples`). La FC, quand
-présente, vit dans les extensions (``gpxtpx:hr`` / ``ns3:hr``). Le sport est souvent
-absent → laissé à ``None`` (le bundle Strava le renseigne via activities.csv).
+haversine sur lat/lon (dans :meth:`CanonicalActivity.from_samples`). La FC et la
+cadence, quand présentes, vivent dans les extensions (``gpxtpx:hr`` / ``gpxtpx:cad``
+de Garmin et Strava, ``gpxdata:hr`` / ``gpxdata:cadence`` de COROS). La distance que
+la montre a calculée (``gpxdata:distance``) est gardée à part, dans ``dist_device_m`` :
+le moteur choisit laquelle servir (``twin.gpx_distance``). Le sport est souvent absent
+→ laissé à ``None`` (le bundle Strava le renseigne via activities.csv).
 """
 
 from __future__ import annotations
@@ -16,6 +19,17 @@ from ._xml import child, descendant, localname, parse_iso_time, text_of
 from .canonical import CanonicalActivity
 
 
+def _number(el) -> float:
+    """Valeur numérique d'une extension, ``NaN`` si absente ou illisible."""
+    txt = text_of(el)
+    if txt is None:
+        return np.nan
+    try:
+        return float(txt)
+    except ValueError:
+        return np.nan
+
+
 def parse_gpx(data: bytes, source_name: str) -> CanonicalActivity:
     root = ET.fromstring(data)
 
@@ -24,6 +38,8 @@ def parse_gpx(data: bytes, source_name: str) -> CanonicalActivity:
     lat: list[float] = []
     lon: list[float] = []
     hr: list[float] = []
+    cad: list[float] = []
+    dist: list[float] = []
 
     # sport éventuel : <trk><type>…</type>
     sport = None
@@ -44,8 +60,10 @@ def parse_gpx(data: bytes, source_name: str) -> CanonicalActivity:
         ele = text_of(child(pt, "ele"))
         alt.append(float(ele) if ele is not None else np.nan)
         timestamps.append(parse_iso_time(text_of(child(pt, "time"))))
-        hr_el = descendant(pt, "hr")
-        hr.append(float(hr_el.text) if (hr_el is not None and hr_el.text) else np.nan)
+        hr.append(_number(descendant(pt, "hr")))
+        cad_el = descendant(pt, "cad")
+        cad.append(_number(cad_el if cad_el is not None else descendant(pt, "cadence")))
+        dist.append(_number(descendant(pt, "distance")))
 
     # sans horodatage par point, pas de grille 1 Hz fiable (cas trace « parcours »
     # sans temps → c'est le module course/, pas une activité d'entraînement).
@@ -58,6 +76,9 @@ def parse_gpx(data: bytes, source_name: str) -> CanonicalActivity:
         lat=lat,
         lon=lon,
         hr=hr,
+        cadence=cad,
+        cadence_per_foot=True,
+        dist_device_m=dist,
         sport=sport,
         source_format="gpx",
         source_name=source_name,

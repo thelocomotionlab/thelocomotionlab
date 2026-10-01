@@ -65,6 +65,7 @@ class ActivitySummary:
     longest_descent_m: float | None = None
     half_split_ratio: float | None = None  # vga hors plateaux : seconde moitié de Deq ÷ première
     mean_alt_m: float | None = None      # altitude moyenne du canal altitude (efforts longs)
+    clock_repairs: int | None = None     # réparations d'horloge faites au décodage (repair_clock)
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -163,6 +164,16 @@ def despike_stats(act: CanonicalActivity, cfg: Config) -> dict:
         "rescued": rescued,
         "refus": refus,
     }
+
+
+def activity_distance(act: CanonicalActivity, cfg: Config) -> CanonicalActivity:
+    """L'activité avec la distance servie : celle de la montre quand ``twin.gpx_distance``
+    vaut ``device`` et que le fichier la porte, celle du format sinon (rendue telle quelle)."""
+    if cfg.twin.gpx_distance != "device" or not act.has_device_distance:
+        return act
+    from dataclasses import replace
+
+    return replace(act, dist_m=np.asarray(act.dist_device_m, dtype=float))
 
 
 def _adjusted_distance(act: CanonicalActivity, cfg: Config):
@@ -275,6 +286,7 @@ def process_activity(act: CanonicalActivity, cfg: Config):
 
 def process_activity_full(act: CanonicalActivity, cfg: Config):
     """→ (:class:`ActivitySummary`, vga_par_durée, vraw_par_durée, vga_fenêtres_longues)."""
+    act = activity_distance(act, cfg)
     durs = np.asarray(cfg.twin.record_durations_s, dtype=float)
     draw, dga, alts, alt_f, distance_rescued, grad, f_slope, dd_used = _adjusted_distance(act, cfg)
     tg = act.t
@@ -438,6 +450,7 @@ def process_activity_full(act: CanonicalActivity, cfg: Config):
         longest_descent_m=None if longest_descent is None else round(longest_descent),
         half_split_ratio=None if half_split is None else round(half_split, 4),
         mean_alt_m=None if mean_alt is None else round(mean_alt),
+        clock_repairs=len(act.clock_notes),
     )
     return summary, vga, vraw, vga_tail
 
@@ -791,7 +804,8 @@ def build_record_curve(
 
 
 __all__ = ["ActivitySummary", "ActivityContribution", "RecordPoint", "RecordCurve",
-           "despike_stats", "process_activity", "process_activity_full", "tail_durations",
+           "activity_distance", "despike_stats", "process_activity", "process_activity_full",
+           "tail_durations",
            "slope_bin_centers",
            "build_record_curve", "iter_contributions", "record_from_contributions",
            "select_unique_contributions"]

@@ -45,6 +45,7 @@ def parse_fit(data: bytes, source_name: str) -> CanonicalActivity:
     alt: list[float] = []
     lat: list[float] = []
     lon: list[float] = []
+    cad: list[float] = []
     sport = sub_sport = None
     start_time = None
 
@@ -75,6 +76,10 @@ def parse_fit(data: bytes, source_name: str) -> CanonicalActivity:
                     lo = fields.get("position_long")
                     lat.append(la * _SEMICIRCLE if la is not None else np.nan)
                     lon.append(lo * _SEMICIRCLE if lo is not None else np.nan)
+                    # cadence de course : cycles par minute d'UN pied, la fraction à part
+                    c = _num(fields.get("cadence"))
+                    frac = _num(fields.get("fractional_cadence"))
+                    cad.append(c + (frac if np.isfinite(frac) else 0.0))
 
     if len(t) < 2:
         raise ValueError(f"FIT sans enregistrements exploitables: {source_name!r}")
@@ -87,6 +92,8 @@ def parse_fit(data: bytes, source_name: str) -> CanonicalActivity:
         alt_m=alt,
         lat=lat,
         lon=lon,
+        cadence=cad,
+        cadence_per_foot=True,
         sport=sport,
         sub_sport=sub_sport,
         start_time=start_time,

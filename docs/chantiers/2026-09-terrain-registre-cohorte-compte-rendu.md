@@ -89,3 +89,19 @@ archive mesure tout :
 
 - 2026-10-01 — chantier posé : prompt, compte-rendu, script de référence
   `services/twin-engine/tools/analyses/nice_2026_descentes.py` (tel que reçu).
+- 2026-10-01 — **étape 1** (DIAGNOSTIC §10.25) : cadence dans le schéma canonique et les quatre
+  adaptateurs, unité lue sur les données (vérifiée par pied sur les exports réels Garmin, Strava,
+  Polar) ; distance de la montre d'un GPX gardée à part (`twin.gpx_distance`, défaut inchangé) ;
+  horloge réparée pour tous les formats, réparations comptées par activité ; trous
+  d'enregistrement portés sur la grille ; script de référence branché sur le décodeur, huit
+  sorties épinglées (test actif avec `TWIN_NICE2026_GPX`). Suite : 698 passés, 43 sautés.
+  **Chez Valentin** : le test épinglé de Nice.
+
+## Choix faits à la place de Valentin
+
+- Unité canonique de la cadence : pas par minute pour les deux pieds (le script disait 74 par
+  pied, il dit désormais 148).
+- La réparation d'horloge s'applique à tous les formats sans drapeau : elle ne touche que des
+  fichiers dont le temps recule ou saute, que le rééchantillonnage rendait faux en silence.
+- La distance de la montre d'un GPX reste derrière un drapeau (défaut : l'haversine, comme
+  avant), parce qu'elle change les résultats de toute archive en GPX COROS.

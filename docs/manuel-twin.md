@@ -47,6 +47,16 @@ distance) n'est comptée qu'une fois, la copie la plus riche (FC, altitude) est 
 (`twin.dedup_activities`, rollback `off`). Le journal dit combien de copies ont été
 fusionnées.
 
+Chaque format livre aussi, quand il la porte, la **cadence** : FIT (`cadence`), TCX
+(`RunCadence`), GPX (`gpxtpx:cad` de Garmin et Strava, `gpxdata:cadence` de COROS), Polar
+(`CADENCE`). Le moteur la range en pas par minute pour les deux pieds ; l'unité de la
+source (le plus souvent par pied) se lit sur les données de chaque activité. Un GPX COROS
+porte en plus la distance calculée par la montre (`gpxdata:distance`) : elle est gardée à
+part et servie à la place de l'haversine de la trace sous `twin.gpx_distance=device`
+(défaut `haversine`). Les horodatages passent par une réparation avant tout calcul — point
+isolé à plus d'une heure de ses deux voisins, recul d'horloge — et le résumé de chaque
+activité compte les réparations faites (`clock_repairs`).
+
 ## 3. Utilisation en ligne de commande (CLI)
 
 Installation dev (une fois) :
@@ -694,6 +704,15 @@ TWIN_NICE_ARCHIVE=/chemin/archive.zip TWIN_NICE_GPX=/chemin/parcours.gpx \
 
 Les fixtures d'ingestion (Garmin/Polar/Strava, anonymisées) sont committées dans
 `services/twin-engine/tests/fixtures/` et tournent en CI sans données réelles.
+
+**L'analyse de référence de Nice 2026** (`tools/analyses/nice_2026_descentes.py`) lit le
+fichier de course par le décodeur du moteur ; `--brut` le relit point par point. Ses huit
+sorties sont épinglées dans un test qui ne s'active qu'avec le fichier :
+
+```bash
+PYTHONPATH=src python -m tools.analyses.nice_2026_descentes /chemin/nice-2026.gpx [--brut]
+TWIN_NICE2026_GPX=/chemin/nice-2026.gpx pytest services/twin-engine -k nice_2026
+```
 
 **Outils d'évaluation** (depuis `services/twin-engine`) :
 

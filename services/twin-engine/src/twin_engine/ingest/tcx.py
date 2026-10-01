@@ -40,6 +40,7 @@ def parse_tcx(data: bytes, source_name: str) -> CanonicalActivity:
     speed: list[float] = []
     lat: list[float] = []
     lon: list[float] = []
+    cad: list[float] = []
 
     for tp in root.iter():
         if localname(tp.tag) != "Trackpoint":
@@ -63,6 +64,10 @@ def parse_tcx(data: bytes, source_name: str) -> CanonicalActivity:
             lon.append(np.nan)
         # vitesse éventuelle : Extensions/…/Speed
         speed.append(_float_or_nan(descendant(tp, "Speed")))
+        # cadence de course : Extensions/…/RunCadence (par pied) ; à défaut <Cadence>, que
+        # certains exports remplissent aussi en course
+        run_cad = _float_or_nan(descendant(tp, "RunCadence"))
+        cad.append(run_cad if np.isfinite(run_cad) else _float_or_nan(child(tp, "Cadence")))
 
     if len(timestamps) < 2:
         raise ValueError(f"TCX sans Trackpoint exploitable: {source_name!r}")
@@ -75,6 +80,8 @@ def parse_tcx(data: bytes, source_name: str) -> CanonicalActivity:
         hr=hr,
         lat=lat,
         lon=lon,
+        cadence=cad,
+        cadence_per_foot=True,
         sport=sport,
         source_format="tcx",
         source_name=source_name,
