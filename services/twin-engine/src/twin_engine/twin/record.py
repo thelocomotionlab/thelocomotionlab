@@ -66,6 +66,9 @@ class ActivitySummary:
     half_split_ratio: float | None = None  # vga hors plateaux : seconde moitié de Deq ÷ première
     mean_alt_m: float | None = None      # altitude moyenne du canal altitude (efforts longs)
     clock_repairs: int | None = None     # réparations d'horloge faites au décodage (repair_clock)
+    # descentes de l'activité, pour le détecteur de descentes hachées (twin.descentes) :
+    # cellules, reste, histogramme de cadence ; None sans cadence ni altitude exploitable
+    descente: dict | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -406,6 +409,13 @@ def process_activity_full(act: CanonicalActivity, cfg: Config):
     if has_hr and not slope_unusable and dd_raw.size:
         slope_bins = _slope_bins(dd_used, grad[:-1], hr, moving_mask[1:], cfg)
 
+    # descentes hachées (chantier terrain) : résumé par cellules, sans tableau 1 Hz
+    descente = None
+    if not slope_unusable and dd_raw.size:
+        from .descentes import resume_descentes
+
+        descente = resume_descentes(act, cfg)
+
     # arrêts francs = plateaux de distance ≥ stop_min_s (Phase 2, B4) : la base « plateaux »
     # de la calibration retire ces secondes-là, pas la marche lente sous le seuil de vitesse
     stops = _detect_stops(moving_mask, cfg.twin.stop_min_s) if dd_raw.size else []
@@ -451,6 +461,7 @@ def process_activity_full(act: CanonicalActivity, cfg: Config):
         half_split_ratio=None if half_split is None else round(half_split, 4),
         mean_alt_m=None if mean_alt is None else round(mean_alt),
         clock_repairs=len(act.clock_notes),
+        descente=descente,
     )
     return summary, vga, vraw, vga_tail
 

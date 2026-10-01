@@ -90,6 +90,8 @@ def bloc_modele(*, twin, calibration, sufficiency, cfg, n_activities_used: int,
         "slope_kappa_down_raw": (twin.slope_detail or {}).get("kappa_down_raw"),
         "slope_bins": [[b["grade_pct"], b["f_personal"], b["hours"]]
                        for b in (twin.slope_detail or {}).get("bins", [])],
+        # traits du détecteur de descentes hachées (servis ou non)
+        "terrain": getattr(twin, "terrain", None),
     }
 
 

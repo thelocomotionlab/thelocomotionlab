@@ -118,6 +118,12 @@ archive mesure tout :
   rétréci vers la loi) ; le registre garde la mesure entière, le scoreur rejoue toute loi
   sans archive. Écart de définition de pente activités ↔ parcours mesuré : du second ordre.
   La fatigue de descente attend le détecteur, dont elle tire son paramètre.
+- 2026-10-01 — **étape 4, détecteur** (DIAGNOSTIC §10.29) : résumé de descentes au décodage
+  (fenêtres du script, identiques au test), traits du jumeau (vitesses fraîches / fatiguées,
+  pénalité de marche, fatigue de descente absolue et relative, seuil de cadence personnel,
+  probabilité de marcher en descente), levier `pacing.descent_fatigue=dminus`, outil
+  `tools/terrain` (archive face à un fichier de course). **Chez Valentin** : les traits de son
+  archive à la veille de Nice face au fichier de course, au carnet.
 
 ## Choix faits à la place de Valentin
 
@@ -146,3 +152,10 @@ archive mesure tout :
   pour moitié) ; c'est un réglage de variante, le banc dira s'il faut le bouger.
 - `slope_kappa_down_min` vide par défaut (la borne de montée s'applique, comme avant), pour
   qu'une configuration qui ne règle que `slope_kappa_min` garde son comportement.
+- Frontière frais / fatigué des traits : 3000 m de dénivelé négatif déjà descendu (au-delà de
+  la plupart des sorties d'entraînement, en deçà de la mi-course d'un 100 miles) ; le script
+  coupait Nice au km 100. Minimum d'heures et rétrécissement à 1 h : des réglages de départ
+  que les runs diront.
+- Fatigue de descente servie au plan : la **relative** (au-delà du ralentissement du reste
+  de la sortie au même D−), pour ne pas compter deux fois ce que le fade général dit déjà.
+- Seuil de cadence personnel consigné, pas servi : le servir demande de re-décoder.

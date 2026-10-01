@@ -39,7 +39,7 @@ from twin_engine.config import load_config, override_config
 from twin_engine.course import RaceSpec, build_course
 from twin_engine.pacing import build_pacing
 from twin_engine.predict import Prediction
-from twin_engine.twin.pente import detail_du_registre, repartir
+from twin_engine.twin.pente import detail_du_registre, fatigue_servie, repartir
 
 from twin_engine.registre import DEFAULT_RACINE, Depot
 
@@ -131,11 +131,12 @@ def score_registre(registre: dict, manifests: list[Path], cfg) -> list[dict]:
                             "lat": meta["lat"], "lon": meta["lon"], "tz": meta["tz"]})
         course = build_course(gpx.read_bytes(), race, cfg)
         m = e.get("model") or {}
-        # coût de pente personnel : la mesure de la coupure, consignée au registre, répartit le
-        # plan sous la loi de la configuration du scoreur (le total est ancré, seule la
-        # répartition compte ici)
-        if cfg.calibration.slope_cost in ("personal", "personal_pacing"):
-            course = repartir(course, detail_du_registre(m, cfg), cfg)
+        # coût de pente personnel et fatigue de descente : les mesures de la coupure,
+        # consignées au registre, répartissent le plan sous la configuration du scoreur (le
+        # total est ancré, seule la répartition compte ici)
+        detail = (detail_du_registre(m, cfg) or {}
+                  if cfg.calibration.slope_cost in ("personal", "personal_pacing") else None)
+        course = repartir(course, detail, cfg, phi=fatigue_servie(m.get("terrain"), cfg))
         scores = score_course(course, race, float(official), pas, cfg,
                               durability_pct=m.get("durability_pct"),
                               splits_delta=m.get("fade_delta_splits"),

@@ -17,6 +17,10 @@ la loi × κ par côté) ou ``bins`` (facteur mesuré par tranche, rétréci ver
 poids h ÷ (h + λ), λ = ``slope_bins_shrink_hours``). Une tranche ne compte que si son côté
 (montée ou descente) totalise ``slope_cost_min_hours`` heures de mesure, comme κ.
 
+Sous ``pacing.descent_fatigue=dminus``, la répartition porte en plus la fatigue de descente
+du jumeau (:mod:`.descentes`) : le temps des descentes tardives s'allonge avec le dénivelé
+négatif déjà descendu, le reste se raccourcit d'autant (le total ne bouge pas).
+
 La loi s'applique à la pente du parcours (lissage ``course.smooth_window_m``) ; les facteurs
 ont été mesurés sur celle des activités (base ±``twin.grade_base_m``) : deux définitions
 voisines, dont l'écart est mesuré au carnet (DIAGNOSTIC §10.28).
@@ -109,30 +113,61 @@ def facteur_sur_la_grille(course, loi: dict) -> np.ndarray | None:
     return np.maximum(out, 1e-3)
 
 
+def fatigue_servie(terrain: dict | None, cfg: Config) -> float | None:
+    """φ servi sous ``pacing.descent_fatigue=dminus`` : la fatigue de descente RELATIVE du
+    jumeau (rétrécie), en ln-vitesse par km de D− ; None hors du drapeau ou sans mesure."""
+    if cfg.pacing.descent_fatigue != "dminus" or not terrain:
+        return None
+    rel = (terrain.get("fatigue_descente") or {}).get("relative") or {}
+    return rel.get("valeur")
+
+
+def facteur_de_fatigue(course, phi: float, cfg: Config) -> np.ndarray:
+    """Multiplicateur du temps par mètre sur la grille : exp(−φ·D−) dans les descentes (pente
+    ≤ ``twin.terrain_descent_grade``), D− le dénivelé négatif déjà descendu (km, altitude
+    lissée du parcours), 1 ailleurs. φ < 0 (l'athlète ralentit) allonge les descentes tardives."""
+    alt = np.asarray(course.alt_smooth_m, dtype=float)
+    dminus = np.concatenate([[0.0], np.cumsum(np.maximum(-np.diff(alt), 0.0))]) / 1000.0
+    descente = np.asarray(course.grade, dtype=float) <= cfg.twin.terrain_descent_grade
+    return np.where(descente, np.exp(-float(phi) * dminus), 1.0)
+
+
 def servir_parcours(course, twin, cfg: Config):
     """Le parcours tel que le moteur le sert à l'athlète : total sous κ si
-    ``slope_cost=personal``, répartition sous la loi de ``slope_curve`` si une loi
-    personnelle est servie et diffère de celle du total."""
+    ``slope_cost=personal`` ; répartition sous la loi de ``slope_curve`` si une loi
+    personnelle est servie à la répartition et diffère de celle du total, et sous la
+    fatigue de descente si ``pacing.descent_fatigue=dminus``."""
     c = cfg.calibration
     if c.slope_cost == "personal":
         k = twin.slope_factors(cfg)
         if k is not None:
             course = course.with_slope_cost(*k)
-        if c.slope_curve != "bins":
-            return course
-    elif c.slope_cost != "personal_pacing":
-        return course
-    return repartir(course, getattr(twin, "slope_detail", None), cfg)
+    detail = None
+    if c.slope_cost == "personal_pacing" or (c.slope_cost == "personal" and c.slope_curve == "bins"):
+        detail = getattr(twin, "slope_detail", None)
+        if detail is None:
+            detail = {}
+    return repartir(course, detail, cfg, phi=fatigue_servie(getattr(twin, "terrain", None), cfg))
 
 
-def repartir(course, detail: dict | None, cfg: Config):
+def repartir(course, detail: dict | None, cfg: Config, *, phi: float | None = None):
     """Le parcours dont le plan répartit sous la loi de ``slope_curve`` mesurée dans
-    ``detail`` ; tel quel sans mesure ou sans décomposition."""
-    loi = loi_de_repartition(detail, cfg)
-    if loi is None:
+    ``detail`` (``None`` : la loi du total) et sous la fatigue de descente ``phi`` ; tel
+    quel sans rien de tout cela, ou sans décomposition."""
+    loi = loi_de_repartition(detail, cfg) if detail is not None else None
+    if loi is None and phi is None:
         return course
-    f = facteur_sur_la_grille(course, loi)
-    return course if f is None else course.with_repartition(f, loi)
+    if loi is None:
+        f = None if facteur_de_minetti(course) is None else np.asarray(course.grade_factor, dtype=float)
+        loi = {"curve": "total"}
+    else:
+        f = facteur_sur_la_grille(course, loi)
+    if f is None:
+        return course
+    if phi is not None:
+        f = f * facteur_de_fatigue(course, phi, cfg)
+        loi = {**loi, "descent_fatigue": round(float(phi), 5)}
+    return course.with_repartition(f, loi)
 
 
 def detail_du_registre(modele: dict | None, cfg: Config) -> dict | None:
@@ -154,5 +189,6 @@ def detail_du_registre(modele: dict | None, cfg: Config) -> dict | None:
             "bins": bins}
 
 
-__all__ = ["detail_du_registre", "facteur_de_minetti", "facteur_sur_la_grille", "kappas_servis",
-           "loi_de_repartition", "rapports_par_tranche", "repartir", "servir_parcours"]
+__all__ = ["detail_du_registre", "facteur_de_fatigue", "facteur_de_minetti", "facteur_sur_la_grille",
+           "fatigue_servie", "kappas_servis", "loi_de_repartition", "rapports_par_tranche",
+           "repartir", "servir_parcours"]

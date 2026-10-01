@@ -94,6 +94,9 @@
     ],
     "terrain_dminus_step_m": 1000.0,
     "terrain_dminus_max_m": 10000.0,
+    "terrain_fatigue_dminus_m": 3000.0,
+    "terrain_trait_min_hours": 1.0,
+    "terrain_trait_shrink_hours": 1.0,
     "stop_min_s": 60.0,
     "long_effort_min_hours": 6.0,
     "record_tail_durations_s": [
@@ -186,7 +189,8 @@
     "scale_stops": true,
     "plan_window_low_pct": 25,
     "plan_window_high_pct": 75,
-    "wide_interval_rel_width": 0.35
+    "wide_interval_rel_width": 0.35,
+    "descent_fatigue": "none"
   },
   "sufficiency": {
     "history_months_green": 6.0,

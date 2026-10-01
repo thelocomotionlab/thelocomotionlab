@@ -557,6 +557,26 @@ constante. Le registre garde la mesure entière (`model.slope_kappa_*_raw`,
 `model.slope_bins`) : `tools/score_plan --set calibration.slope_cost=personal_pacing …`
 rejoue la forme du plan sous n'importe quelle loi, sans archive.
 
+Détecteur de descentes hachées (chantier terrain ; DIAGNOSTIC §10.29), toujours calculé :
+au décodage, toute activité avec cadence et altitude reçoit un résumé de ses descentes
+(`ActivitySummary.descente` : fenêtres de 250 m de l'analyse de référence, rangées par classe
+de pente × courable / haché × dénivelé négatif déjà descendu × nuit), et le jumeau en tire
+ses traits (`twin.terrain` au JSON, `model.terrain` au registre) : vitesses fraîches et
+fatiguées par classe, pénalité de marche (1 − v haché ÷ v courable), fatigue de descente
+absolue et relative au reste de la sortie, seuil de cadence personnel (mélange de deux
+allures, à côté du seuil fixe de 148 pas/min qui reste la définition) et probabilité de
+marcher en descente (classe, D−, nuit). Réglages `twin.terrain_*` (frontière frais /
+fatigué, minimum d'heures, rétrécissement). Levier derrière flag, défaut inchangé :
+`pacing.descent_fatigue=dminus` allonge les descentes tardives selon la fatigue de descente
+relative de l'athlète, le total ne bouge pas. `tools/terrain` met les traits d'une archive
+(au registre ou décodée sur place) face au fichier d'une course :
+
+```bash
+PYTHONPATH=src python -m tools.terrain --activite <course.gpx> --athlete Val \
+  --course "Nice 100M 2026" --date 2026-09-25        # archive : dernier run du banc
+PYTHONPATH=src python -m tools.terrain --activite <course.gpx> --archive <archive> --until 2026-09-24
+```
+
 ### Mode objectif ([ADR 0002](./adr/0002-mode-objectif-plan-sur-cible.md))
 
 À la demande de la cohorte (« je vise 31 h, donne-moi le plan »), le moteur sait ancrer le plan sur

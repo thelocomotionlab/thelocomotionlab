@@ -208,6 +208,13 @@ class TwinParams:
     terrain_grade_classes: tuple[float, ...] = (-0.25, -0.18, -0.13, -0.08)
     terrain_dminus_step_m: float = 1000.0
     terrain_dminus_max_m: float = 10000.0
+    # Traits du jumeau lus sur ces résumés (``twin.descentes``) : « frais » sous
+    # ``terrain_fatigue_dminus_m`` de dénivelé négatif déjà descendu, « fatigué » au-delà ;
+    # un trait vaut None sous ``terrain_trait_min_hours`` heures de mesure et se rétrécit
+    # vers 0 avec le poids h ÷ (h + ``terrain_trait_shrink_hours``).
+    terrain_fatigue_dminus_m: float = 3000.0
+    terrain_trait_min_hours: float = 1.0
+    terrain_trait_shrink_hours: float = 1.0
 
 
 @dataclass(frozen=True)
@@ -487,6 +494,13 @@ class PacingParams:
     # toujours servis : le plan v2 les décline en colonnes. Cas étroits (réf. Nice ~0,19) :
     # pas de phrase.
     wide_interval_rel_width: float = 0.35
+    # --- fatigue de descente (chantier terrain) -------------------------------------------
+    # ``none`` (défaut) : le fade s'applique pareil à tout le parcours. ``dminus`` : le temps
+    # des descentes (pente ≤ twin.terrain_descent_grade) est multiplié par exp(−φ·D−), D− le
+    # dénivelé négatif déjà descendu (km), φ la fatigue de descente RELATIVE de l'athlète
+    # (Twin.terrain : ralentissement des descentes courues par km de D−, au-delà de celui du
+    # reste de ses sorties au même D−) ; le total ne change pas, seule la répartition.
+    descent_fatigue: str = "none"        # {none, dminus}
 
 
 @dataclass(frozen=True)

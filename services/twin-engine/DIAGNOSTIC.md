@@ -3129,3 +3129,75 @@ passages.
 **Chez Valentin (run 1)** : `tools/banc` sous les variantes de répartition et
 `tools/score_plan` sous chaque loi, sur toutes les courses avec passages ; la décision suit
 la règle du prompt (forme du plan au-delà de Nice, total des cas frais intact).
+
+### 10.29 Chantier terrain — étape 4 : le détecteur de descentes hachées et les traits du jumeau (2026-10-01)
+
+**Constat.** À Nice, après le km 100, Val a marché 35 % de ses descentes (7 % avant) ;
+69 % des fenêtres de descente y sont « hachées » (20 % avant), et à pente égale ses descentes
+courables ralentissent de 10 à 25 %, ses hachées de 30 à 35 % (sorties 3 à 5 de l'analyse de
+référence). Le moteur ne savait rien de tout cela : ni la cadence (avant l'étape 1), ni la
+marche, ni le dénivelé déjà descendu.
+
+**Ce qui change.**
+- **Résumé au décodage** (`twin.descentes.resume_descentes`, `ActivitySummary.descente`) pour
+  toute activité avec cadence et altitude : les fenêtres de 250 m de l'analyse de référence
+  (pente sur ±25 m d'une altitude lissée 55 m, mouvement et marche de `twin.mouvement`,
+  « haché » à 1 bascule par minute ou 15 % du temps marché), rangées en cellules classe de
+  pente (≤ −25, ]−25 ; −18], ]−18 ; −13], ]−13 ; −8] %) × courable / haché × D− déjà descendu
+  (par 1000 m jusqu'à 10 000) × nuit : secondes, distance, secondes marchées, bascules, FC,
+  nombre de fenêtres ; pour les fenêtres hors descente, secondes et distance ajustée par
+  tranche de D− ; histogramme de la cadence lissée en mouvement ; unité de cadence de la
+  source. Aucun tableau à la seconde. Le test synthétique retrouve exactement les fenêtres
+  du script (nombre, secondes, hachées, secondes marchées, bascules).
+- **Traits du jumeau** (`twin.descentes.traits_terrain`, `Twin.terrain`, registre
+  `model.terrain`), None sous `terrain_trait_min_hours` (1 h) et rétrécis vers 0 avec le
+  poids h ÷ (h + `terrain_trait_shrink_hours`) (1 h) :
+  - vitesses par classe comparable, fraîches et fatiguées (frontière
+    `terrain_fatigue_dminus_m`, 3000 m de D− déjà descendu), courables et hachées ;
+  - **pénalité de marche** 1 − v(haché) ÷ v(courable) à classe égale, fraîche et fatiguée,
+    classes pondérées par les heures hachées. Une fenêtre est hachée parce que l'athlète y
+    marche : le trait mesure ce que coûte la marche en descente, quelle qu'en soit la cause
+    — d'où son nom (le prompt disait « sensibilité au terrain » ; la sensibilité au terrain se
+    mesurera contre la carte, variable indépendante de l'athlète) ;
+  - **fatigue de descente** : pente de ln v des descentes courues sur le D− déjà descendu
+    (par km), dans une même activité et une même classe, *absolue* et *relative* à la
+    vitesse ajustée du reste de la sortie au même D− — la relative est ce que le fade
+    général du plan ne dit pas déjà ;
+  - **seuil de cadence personnel** : mélange de deux gaussiennes (marche, course) sur
+    l'histogramme, seuil à postériori égal, refusé sans deux allures nettes (poids ≥ 5 %,
+    séparation d'Ashman ≥ 2) ; consigné à côté du seuil fixe, avec la part du mouvement
+    tombée entre les deux. Le servir demande de re-décoder sous `twin.terrain_run_cadence_spm`
+    (bloc `twin`, hors des variantes du banc) ;
+  - **probabilité de marcher en descente** : logistique sur la classe, le D− déjà descendu
+    et la nuit (si connue), sur les secondes en mouvement des descentes — la matière du
+    modèle à deux allures et de la consigne « N min prévues à la marche » (étape 7).
+- **Levier** `pacing.descent_fatigue=dminus` : dans le plan, le temps des descentes (≤ −8 %)
+  est multiplié par exp(−φ·D−), φ la fatigue relative servie ; le total ne change pas, les
+  montées et le plat cèdent le temps que prennent les descentes tardives. Le registre garde
+  les traits, `tools/score_plan` rejoue le levier sans archive.
+- `tools/terrain` : les traits d'une archive (au registre, ou décodée sur place) face à ceux
+  du fichier d'une course, sous les mêmes définitions.
+
+**Limites.** (1) Une douleur aux quadriceps produit aussi de la marche et des arrêts courts
+en descente : le détecteur ne la distingue pas du terrain. (2) Dans une activité, le D−
+déjà descendu avance avec le temps : la fatigue absolue mêle fatigue générale et fatigue de
+descente, la relative les sépare au premier ordre (même D−, même moment). (3) Le modèle de
+marche mêle des activités de terrains différents : sa pente sur le D− se lit entre
+activités autant que dans chacune (les longues sorties sont aussi les plus techniques). (4) Le
+D− du parcours se lit sur l'altitude lissée du profil (150 m), celui des activités sur 55 m :
+le parcours en compte un peu moins à pente égale. (5) Une seconde sans cadence lisible
+compte comme de la marche, comme dans le script.
+
+**Tests** (`tests/test_descentes.py`) : fenêtres identiques à celles du script ; pas de
+résumé sans cadence ou sans altitude ; pénalité de marche et fatigue retrouvées sur des
+sorties fabriquées (2 % de vitesse perdue par descente de 150 m de D− : ln 0,98 ÷ 0,15 par km
+à 35 % près), rétrécissement, minimum d'heures ; seuil de cadence entre deux allures
+fabriquées et refusé sur une seule ; la nuit dans le modèle de marche ; le levier allonge
+les descentes tardives sans toucher au total ; l'outil met une archive face à un fichier de
+course.
+
+**Chez Valentin** : les traits de son archive à la veille de Nice, face à ceux du fichier de
+course (`tools/terrain --activite … --athlete Val --course "Nice 100M 2026" --date
+2026-09-25`), au carnet ; la pénalité de marche fatiguée de Nice (sortie 7 : 18 %) donne
+l'ordre de grandeur attendu sous les mêmes définitions, à ceci près que le script coupe au
+km 100 et le jumeau à 3000 m de D−.

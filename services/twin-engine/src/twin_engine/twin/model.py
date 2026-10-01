@@ -17,6 +17,7 @@ import numpy as np
 from ..config import Config
 from ..ingest.canonical import CanonicalActivity
 from ..minetti import grade_factor
+from .descentes import traits_terrain
 from .record import (_HR_REF, ActivitySummary, RecordCurve, iter_contributions,
                      record_from_contributions, slope_bin_centers)
 
@@ -57,6 +58,9 @@ class Twin:
     slope_kappa_up: float | None = None       # surcoût de montée de Minetti × κ (None = non mesurable)
     slope_kappa_down: float | None = None     # surcoût de descente × κ
     slope_detail: dict | None = None          # FC0, heures par côté, tranches (f personnel / f loi)
+    # --- chantier terrain : traits lus par le détecteur de descentes hachées (twin.descentes) :
+    # vitesses par classe, pénalité de marche, fatigue de descente, seuil de cadence, marche
+    terrain: dict | None = None
 
     @property
     def vc_ms(self) -> float | None:
@@ -100,6 +104,7 @@ class Twin:
             "alpha_tail": None if self.alpha_tail is None else round(self.alpha_tail, 4),
             "slope_kappa_up": None if self.slope_kappa_up is None else round(self.slope_kappa_up, 4),
             "slope_kappa_down": None if self.slope_kappa_down is None else round(self.slope_kappa_down, 4),
+            "terrain": self.terrain,
         }
 
 
@@ -469,6 +474,7 @@ def _twin_from_record(record, summaries, cfg: Config, contributions=None) -> Twi
         slope_kappa_up=kappa_up,
         slope_kappa_down=kappa_down,
         slope_detail=slope_detail,
+        terrain=traits_terrain(summaries, cfg),
     )
 
 
