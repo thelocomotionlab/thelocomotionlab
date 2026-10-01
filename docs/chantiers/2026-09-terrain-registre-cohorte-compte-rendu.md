@@ -207,6 +207,23 @@ Nice. La décision suit la règle du prompt : un défaut bascule si le plan s'am
 de Nice sans dégrader le total sur les cas frais — or aucun athlète n'est frais aujourd'hui :
 au mieux, un levier entre dans la configuration de référence de Val.
 
+## Run 2 chez Valentin (après le run 1)
+
+La carte et le terrain se mesurent ensuite, une passe de plus par archive (manuel,
+« Carte de technicité » puis « Terrain dans le plan et la calibration ») :
+
+1. installer l'extra `carte` et poser les extraits Geofabrik des régions des archives ;
+2. `tools/carte` sur Nice : la trace, le fichier de la montre (les tronçons hachés), le modèle
+   de Val arrêté la veille et son application à Nice ;
+3. `tools/carte banc` sur les quatre manifestes : un terrain par course, chacun à sa coupure ;
+   le tableau dit, course par course, si la carte a un signal hors échantillon ;
+4. `tools/banc --terrain` sous les variantes de terrain (répartition, total, calibration,
+   prior de β2 réduit), comparées au run de base ;
+5. me rapporter les sorties markdown ; committer le registre.
+
+La décision suit la règle du prompt. Sans signal de carte, les variantes de carte rendent le
+run de base : la réponse est alors « la carte ne dit rien pour cet athlète », pas un échec.
+
 ## Choix faits à la place de Valentin
 
 - Unité canonique de la cadence : pas par minute pour les deux pieds (le script disait 74 par
