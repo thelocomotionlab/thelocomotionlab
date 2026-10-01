@@ -8,6 +8,12 @@ async function main(): Promise<void> {
   const config = loadConfig();
   const store = new DepotStore(config.dataDir);
   const app = buildServer({ config, store });
+  if (config.archiveKey) {
+    const chiffrees = await store.chiffrerLesArchivesEnClair(config.archiveKey);
+    if (chiffrees.length) app.log.info({ chiffrees }, "archives en clair chiffrées au démarrage");
+  } else {
+    app.log.error("TWIN_DEPOT_ARCHIVE_KEY absente : les dépôts sont refusés");
+  }
 
   await app.listen({ port: config.port, host: "0.0.0.0" });
   app.log.info(

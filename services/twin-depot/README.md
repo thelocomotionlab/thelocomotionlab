@@ -76,15 +76,31 @@ n'annule jamais le dépôt (logs pour rattrapage via le listing admin) :
    reçue, référence `LL-TWIN-…`, rappel de la suppression après analyse —
    c'est la trace écrite de la promesse de l'écran de succès du site.
 
-## Données personnelles (règle du labo)
+## Données personnelles
 
 Une archive d'entraînement est une donnée personnelle **volumineuse et
-sensible** (positions GPS, fréquence cardiaque). Cycle de vie strict :
-déposée → téléchargée pour analyse → **supprimée immédiatement après**
-(`DELETE` admin ci-dessus). On ne conserve que le rapport (le temps du SAV)
-et le minimum de métadonnées. Pas de sauvegarde du volume — il ne doit
-jamais rien contenir de durable — mais **surveiller l'espace disque** tant
-que des dépôts attendent l'analyse.
+sensible** (positions GPS, fréquence cardiaque). Cycle de vie :
+
+- **déposée chiffrée** : le flux de l'upload traverse un chiffrement AES-256-GCM
+  (`src/chiffre.ts`) avant d'atteindre le volume ; la clé (`TWIN_DEPOT_ARCHIVE_KEY`) ne
+  vit que dans l'environnement. Sans clé, le service refuse les dépôts (503). Les
+  archives d'avant le chiffrement sont chiffrées au premier démarrage avec la clé ;
+- **lue par le moteur** : la route admin de téléchargement déchiffre au fil de l'eau ;
+  le moteur vérifie le SHA-256 du clair, ingère dans un répertoire temporaire et le
+  supprime aussitôt — le volume du dépôt est le seul endroit où l'archive vit ;
+- **purgée par le moteur** (`DELETE` admin) à l'échéance de conservation que porte
+  l'athlète au tableau de bord (`cohorte.conservation_jours` du moteur, 183 jours par
+  défaut, pour un consentement à la conservation ; aussitôt ingérée pour un
+  consentement d'avant, qui promettait la suppression après analyse).
+
+Le dépôt garde la version du texte de consentement accepté
+(`consentementVersion`, une des `consentementVersions` de la configuration ; un
+formulaire qui n'en envoie pas vaut la première). Pas de sauvegarde du volume —
+une sauvegarde serait un second endroit — mais **surveiller l'espace disque**.
+
+`scripts/rapatrier-depots.py` télécharge une copie EN CLAIR de chaque archive puis
+purge le VPS : il date d'avant la conservation, et une copie rapatriée est un second
+endroit hors du chiffrement et de la purge.
 
 ## Analyse d'un dépôt (côté Valentin)
 

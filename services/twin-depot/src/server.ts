@@ -5,9 +5,11 @@
 // X-Forwarded-For posé par Caddy.
 //
 // L'archive est STREAMÉE vers un fichier temporaire du volume (jamais en
-// mémoire), SHA-256 calculé au fil de l'eau, puis rename atomique dans
-// archives/<id>/ une fois le formulaire validé. Tout chemin d'échec purge le
-// temporaire ; les tmp orphelins d'un crash sont purgés au démarrage (store).
+// mémoire), SHA-256 du clair calculé au fil de l'eau, CHIFFRÉE avant d'atteindre le
+// disque (chiffre.ts), puis rename atomique dans archives/<id>/ une fois le formulaire
+// validé. Sans clé, le service refuse les dépôts plutôt que d'écrire en clair. Tout
+// chemin d'échec purge le temporaire ; les tmp orphelins d'un crash sont purgés au
+// démarrage (store).
 //
 // Garde-fous (pattern atelier-api) : CORS restreint aux origines du site pour
 // le POST, honeypot `website` (robot → faux succès, rien d'écrit), limite de
@@ -23,6 +25,7 @@ import { pipeline } from "node:stream/promises";
 import multipart from "@fastify/multipart";
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
 
+import { chiffreur, fluxDechiffre } from "./chiffre";
 import type { Config } from "./config";
 import { createTransport, envoyerConfirmation, envoyerNotification, mailEnv } from "./mailer";
 import { moteurEnv, prevenirLeMoteur } from "./moteur";
@@ -35,6 +38,7 @@ const MAX_PRENOM_LENGTH = 80;
 const MAX_NOM_LENGTH = 80;
 const MAX_OBJECTIFS_LENGTH = 4000;
 const MAX_OBJECTIF_CIBLE_LENGTH = 20;
+const MAX_CONSENTEMENT_VERSION_LENGTH = 40;
 
 /**
  * Durée visée telle qu'un humain l'écrit → heures décimales. `null` = champ vide,
@@ -123,7 +127,8 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     deps.confirmer !== undefined
       ? deps.confirmer
       : smtp
-        ? (depot: Depot) => envoyerConfirmation(createTransport(smtp), smtp.from, depot)
+        ? (depot: Depot) =>
+            envoyerConfirmation(createTransport(smtp), smtp.from, depot, config.conservationJours)
         : null;
 
   /** ACAO uniquement pour les origines du site ; sans Origin (curl, tests) on
@@ -154,6 +159,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     depots: store.count(),
     notification: notifier ? "active" : "non_configuree",
     confirmation: confirmer ? "active" : "non_configuree",
+    chiffrement: config.archiveKey ? "actif" : "non_configure",
   }));
 
   app.options("/twin/depots", async (req, reply) => {
@@ -177,6 +183,12 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
 
       if (!limiter.allow(req.ip)) {
         return reply.code(429).send({ ok: false, error: "trop_de_requetes" });
+      }
+      const cle = config.archiveKey;
+      if (!cle) {
+        // jamais une archive en clair sur le volume : sans clé, pas de dépôt
+        req.log.error("TWIN_DEPOT_ARCHIVE_KEY absente : dépôt refusé");
+        return reply.code(503).send({ ok: false, error: "chiffrement_non_configure" });
       }
       if (!req.isMultipart()) {
         return reply.code(400).send({ ok: false, error: "multipart_requis" });
@@ -212,7 +224,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
               hash.update(chunk);
               taille += chunk.length;
             });
-            await pipeline(part.file, fs.createWriteStream(tmp));
+            await pipeline(part.file, chiffreur(cle), fs.createWriteStream(tmp));
             if (part.file.truncated) {
               fs.rmSync(tmp, { force: true });
               archiveTronquee = true;
@@ -256,6 +268,8 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
         const montre = (champs.get("montre") ?? "").trim();
         const objectifs = (champs.get("objectifs") ?? "").trim();
         const objectifCible = (champs.get("objectifCible") ?? "").trim();
+        const consentementVersion =
+          (champs.get("consentementVersion") ?? "").trim() || config.consentementVersions[0];
 
         const invalide = (code: string) => {
           purgerTmp();
@@ -275,6 +289,12 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
         const objectifHeures = parseDureeHeures(objectifCible);
         if (objectifHeures === undefined) return invalide("objectif_invalide");
         if (champs.get("consent") !== "oui") return invalide("consentement_requis");
+        if (
+          consentementVersion.length > MAX_CONSENTEMENT_VERSION_LENGTH ||
+          !config.consentementVersions.includes(consentementVersion)
+        ) {
+          return invalide("consentement_inconnu");
+        }
 
         const fini: { tmp: string; nomFichier: string; taille: number; sha256: string } = archive;
         const depot = store.add(
@@ -287,6 +307,8 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
             objectifCible,
             objectifHeures,
             consent: true,
+            consentementVersion,
+            chiffre: true,
             nomFichier: fini.nomFichier,
             taille: fini.taille,
             sha256: fini.sha256,
@@ -375,12 +397,26 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     if (!fs.existsSync(chemin)) {
       return reply.code(410).send({ ok: false, error: "archive_absente" });
     }
+    let flux;
+    if (depot.chiffre) {
+      if (!config.archiveKey) {
+        return reply.code(503).send({ ok: false, error: "chiffrement_non_configure" });
+      }
+      try {
+        flux = fluxDechiffre(chemin, config.archiveKey);
+      } catch (err) {
+        req.log.error({ err, reference: depot.reference }, "archive chiffrée illisible");
+        return reply.code(500).send({ ok: false, error: "archive_illisible" });
+      }
+    } else {
+      flux = fs.createReadStream(chemin);
+    }
     void reply.headers({
       "content-type": "application/octet-stream",
       "content-length": String(depot.taille),
       "content-disposition": `attachment; filename="${depot.reference}-${depot.nomFichier}"`,
     });
-    return reply.send(fs.createReadStream(chemin));
+    return reply.send(flux);
   });
 
   app.delete("/twin/depots/:id", async (req, reply) => {

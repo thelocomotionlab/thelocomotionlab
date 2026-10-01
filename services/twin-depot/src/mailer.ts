@@ -71,10 +71,14 @@ export async function envoyerNotification(
       : "(Pas d'objectif chiffré.)",
     depot.objectifs ? `Courses passées / objectif :\n${depot.objectifs}` : "(Pas d'objectifs renseignés.)",
     "",
-    "Récupération en une commande (télécharge, vérifie le SHA-256, purge) :",
-    "  TWIN_DEPOT_ADMIN_TOKEN=… services/twin-depot/scripts/rapatrier-depots.py",
-    "(ou à la main : GET /twin/depots, GET /twin/depots/<id>/archive,",
-    "DELETE /twin/depots/<id> — règle du labo : purge immédiate après analyse).",
+    `Consentement : version ${depot.consentementVersion ?? "?"}${
+      depot.consentementVersion && depot.consentementVersion !== CONSENTEMENT_SUPPRESSION
+        ? " (conservation, purge à l'échéance)"
+        : " (suppression après analyse)"
+    }`,
+    "",
+    "L'archive est chiffrée sur le volume du dépôt ; le moteur la lit (tableau de bord,",
+    "File) et la purge à l'échéance que porte l'athlète.",
   ].join("\n");
 
   await transporter.sendMail({
@@ -85,13 +89,35 @@ export async function envoyerNotification(
   });
 }
 
-/** Confirmation au déposant — reprend mot pour mot les promesses de l'écran
- *  de succès du site (CohorteForm) : archive bien arrivée, recontact à cette
- *  adresse, suppression après analyse. Texte sobre, réponse = SAV. */
+/** La version du texte de consentement qui promettait la suppression après analyse. */
+export const CONSENTEMENT_SUPPRESSION = "2026-07";
+
+/** Le paragraphe de la confirmation qui dit ce que devient l'archive, selon le texte de
+ *  consentement que le déposant a accepté. */
+export function paragrapheConservation(depot: Depot, conservationJours: number): string[] {
+  if (!depot.consentementVersion || depot.consentementVersion === CONSENTEMENT_SUPPRESSION) {
+    return [
+      "Conformément à la règle du labo, ton archive est supprimée immédiatement",
+      "après analyse — seuls ton rapport et quelques métadonnées sont conservés.",
+    ];
+  }
+  const fin = new Date(Date.parse(depot.createdAt) + conservationJours * 86_400_000);
+  const jusquau = fin.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  return [
+    "Comme tu l'as accepté, ton archive est conservée chiffrée pour développer le",
+    `Twin, jusqu'au ${jusquau} ; elle est ensuite supprimée, avec ton jumeau, tes plans`,
+    "et ta page. Ce qui reste au registre du labo est anonyme.",
+  ];
+}
+
+/** Confirmation au déposant — reprend les promesses de l'écran de succès du site
+ *  (CohorteForm) : archive bien arrivée, recontact à cette adresse, ce que devient
+ *  l'archive selon le consentement accepté. Texte sobre, réponse = SAV. */
 export async function envoyerConfirmation(
   transporter: Transporter,
   from: string,
   depot: Depot,
+  conservationJours = 183,
 ): Promise<void> {
   const texte = [
     `Bonjour ${depot.prenom},`,
@@ -104,8 +130,7 @@ export async function envoyerConfirmation(
     "te recontacte à cette adresse dès qu'il est prêt, avec ton plan de course",
     "gratuit.",
     "",
-    "Conformément à la règle du labo, ton archive est supprimée immédiatement",
-    "après analyse — seuls ton rapport et quelques métadonnées sont conservés.",
+    ...paragrapheConservation(depot, conservationJours),
     "",
     "Une question, un détail à ajouter ? Réponds simplement à cet email.",
     "",

@@ -6,6 +6,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { cleDArchive } from "./chiffre";
+
 export interface Config {
   port: number;
   dataDir: string;
@@ -22,6 +24,15 @@ export interface Config {
   montres: string[];
   /** Destinataire de la notification « nouveau dépôt ». Vide → pas d'email. */
   notifyEmail: string;
+  /** Clé de chiffrement des archives au repos (TWIN_DEPOT_ARCHIVE_KEY). null → le service
+   *  refuse les dépôts plutôt que d'écrire une archive en clair. */
+  archiveKey: Buffer | null;
+  /** Versions du texte de consentement que le site peut envoyer ; la première est celle
+   *  d'un formulaire qui n'en envoie pas. En phase avec apps/site/lib/twinCohorte.mjs. */
+  consentementVersions: string[];
+  /** Durée de conservation annoncée au déposant, en jours — en phase avec
+   *  cohorte.conservation_jours du moteur, qui décide de la purge. */
+  conservationJours: number;
 }
 
 interface FileConfig {
@@ -30,6 +41,8 @@ interface FileConfig {
   ratePerHour?: number;
   maxArchiveMo?: number;
   montres?: string[];
+  consentementVersions?: string[];
+  conservationJours?: number;
 }
 
 export function loadConfig(root = process.cwd()): Config {
@@ -60,5 +73,10 @@ export function loadConfig(root = process.cwd()): Config {
     maxArchiveMo,
     montres,
     notifyEmail: process.env.TWIN_DEPOT_NOTIFY_EMAIL ?? "",
+    archiveKey: cleDArchive(process.env.TWIN_DEPOT_ARCHIVE_KEY),
+    consentementVersions: raw.consentementVersions?.length
+      ? raw.consentementVersions
+      : ["2026-07"],
+    conservationJours: raw.conservationJours ?? 183,
   };
 }

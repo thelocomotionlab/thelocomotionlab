@@ -12,6 +12,7 @@ import { buildServer, parseDureeHeures, type ServerDeps } from "../src/server";
 import { DepotStore, type Depot } from "../src/store";
 
 const ORIGIN = "https://ok.test";
+const CLE = crypto.randomBytes(32);
 
 const cleanups: Array<() => Promise<void> | void> = [];
 
@@ -33,6 +34,9 @@ function makeApp(overrides: Partial<Config> = {}, deps: Partial<ServerDeps> = {}
     maxArchiveMo: 1,
     montres: ["garmin", "polar", "strava", "coros", "suunto"],
     notifyEmail: "",
+    archiveKey: CLE,
+    consentementVersions: ["2026-07", "2026-10"],
+    conservationJours: 183,
     ...overrides,
   };
   const store = new DepotStore(config.dataDir);
@@ -130,6 +134,7 @@ describe("healthz", () => {
       depots: 0,
       notification: "non_configuree",
       confirmation: "non_configuree",
+      chiffrement: "actif",
     });
   });
 });
@@ -174,8 +179,37 @@ describe("POST /twin/depots", () => {
     expect(depot.sha256).toBe(
       crypto.createHash("sha256").update(PETITE_ARCHIVE.content).digest("hex"),
     );
-    expect(fs.readFileSync(store.archivePath(depot))).toEqual(PETITE_ARCHIVE.content);
+    // chiffrée au repos : rien du clair sur le disque
+    const surDisque = fs.readFileSync(store.archivePath(depot));
+    expect(depot.chiffre).toBe(true);
+    expect(surDisque.subarray(0, 5).toString()).toBe("LLTD1");
+    expect(surDisque.includes(PETITE_ARCHIVE.content)).toBe(false);
+    expect(depot.consentementVersion).toBe("2026-07");
     expect(res.headers["access-control-allow-origin"]).toBe(ORIGIN);
+  });
+
+  it("sans clé de chiffrement : 503, rien d'écrit", async () => {
+    const { app, store, dir } = makeApp({ archiveKey: null });
+    const res = await deposer(app, champsValides(), PETITE_ARCHIVE);
+    expect(res.statusCode).toBe(503);
+    expect(res.json()).toEqual({ ok: false, error: "chiffrement_non_configure" });
+    expect(store.count()).toBe(0);
+    expect(fs.readdirSync(path.join(dir, "archives"))).toEqual([]);
+    const sante = await app.inject({ method: "GET", url: "/twin/healthz" });
+    expect((sante.json() as { chiffrement: string }).chiffrement).toBe("non_configure");
+  });
+
+  it("garde la version du texte de consentement, refuse une version inconnue", async () => {
+    const { app, store } = makeApp();
+    expect(
+      (await deposer(app, champsValides({ consentementVersion: "2026-10" }), PETITE_ARCHIVE))
+        .statusCode,
+    ).toBe(200);
+    expect(store.list()[0].consentementVersion).toBe("2026-10");
+    const res = await deposer(app, champsValides({ consentementVersion: "1999" }), PETITE_ARCHIVE);
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toEqual({ ok: false, error: "consentement_inconnu" });
+    expect(store.count()).toBe(1);
   });
 
   it("accepte une archive au-dessus du Mio (bodyLimit de route relevé)", async () => {
@@ -374,13 +408,40 @@ describe("routes admin", () => {
     });
     expect(dl.statusCode).toBe(200);
     expect(dl.headers["content-disposition"]).toContain(depot.reference);
-    expect(dl.rawPayload).toEqual(PETITE_ARCHIVE.content);
+    expect(dl.rawPayload).toEqual(PETITE_ARCHIVE.content);   // déchiffrée au fil de l'eau
+
 
     expect(
       (
         await app.inject({ method: "GET", url: "/twin/depots/inconnu/archive", headers: auth })
       ).statusCode,
     ).toBe(404);
+  });
+
+  it("sert une archive d'avant le chiffrement telle quelle, et la chiffre au démarrage", async () => {
+    const { app, store } = makeApp();
+    const tmp = store.tmpPath();
+    fs.writeFileSync(tmp, PETITE_ARCHIVE.content);
+    const ancien = store.add(
+      {
+        prenom: "A", nom: "", email: "a@test.fr", montre: "garmin", objectifs: "",
+        objectifCible: "", objectifHeures: null, consent: true, nomFichier: "a.zip",
+        taille: PETITE_ARCHIVE.content.length, sha256: "x", ip: "1.1.1.1",
+      },
+      tmp,
+    );
+    const auth = { authorization: "Bearer jeton-test" };
+    const url = `/twin/depots/${ancien.id}/archive`;
+    expect((await app.inject({ method: "GET", url, headers: auth })).rawPayload).toEqual(
+      PETITE_ARCHIVE.content,
+    );
+    expect(await store.chiffrerLesArchivesEnClair(CLE)).toEqual([ancien.reference]);
+    expect(store.find(ancien.id)?.chiffre).toBe(true);
+    expect(fs.readFileSync(store.archivePath(ancien)).includes(PETITE_ARCHIVE.content)).toBe(false);
+    expect((await app.inject({ method: "GET", url, headers: auth })).rawPayload).toEqual(
+      PETITE_ARCHIVE.content,
+    );
+    expect(await store.chiffrerLesArchivesEnClair(CLE)).toEqual([]);
   });
 
   it("purge un dépôt analysé (archive supprimée du disque)", async () => {

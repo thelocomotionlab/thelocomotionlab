@@ -5,13 +5,16 @@
 // Mo — l'archive ne passe JAMAIS par la mémoire (streaming côté serveur vers
 // un fichier temporaire du volume, puis rename atomique ici).
 //
-// Cycle de vie d'une archive (règle du labo, CLAUDE.md § Données utilisateur) :
-// déposée → analysée par Valentin (téléchargement admin) → PURGÉE (route
-// admin DELETE). Le volume ne garde rien d'autre.
+// Cycle de vie d'une archive : déposée (chiffrée au fil de l'upload, cf. chiffre.ts) →
+// lue par le moteur (téléchargement admin, déchiffrée au fil de l'eau) → PURGÉE (route
+// admin DELETE) quand le moteur l'a décidé (conservation de la cohorte). Le volume ne
+// garde rien d'autre.
 
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+
+import { chiffrerSurPlace, estChiffre } from "./chiffre";
 
 export interface Depot {
   id: string;
@@ -38,6 +41,12 @@ export interface Depot {
   objectifHeures: number | null;
   /** Preuve du consentement coché (texte affiché versionné côté site). */
   consent: boolean;
+  /** Version du texte de consentement accepté (config.consentementVersions). Absente sur
+   *  les dépôts d'avant le versionnage : la première version. */
+  consentementVersion?: string;
+  /** L'archive est-elle chiffrée au repos ? Absent ou false : archive d'avant le
+   *  chiffrement, chiffrée au prochain démarrage du service qui a la clé. */
+  chiffre?: boolean;
   /** Nom de fichier nettoyé, tel que stocké dans archives/<id>/. */
   nomFichier: string;
   /** Taille de l'archive en octets. */
@@ -151,6 +160,23 @@ export class DepotStore {
     if (!depot) return;
     depot.moteurPrevenu = prevenu;
     this.persist();
+  }
+
+  /** Chiffre les archives encore en clair (dépôts d'avant le chiffrement). Rend les
+   *  références chiffrées. Une archive absente ou déjà chiffrée est seulement marquée. */
+  async chiffrerLesArchivesEnClair(cle: Buffer): Promise<string[]> {
+    const faites: string[] = [];
+    for (const depot of this.depots) {
+      if (depot.chiffre) continue;
+      const chemin = this.archivePath(depot);
+      if (fs.existsSync(chemin) && !estChiffre(chemin)) {
+        await chiffrerSurPlace(chemin, cle);
+        faites.push(depot.reference);
+      }
+      if (fs.existsSync(chemin)) depot.chiffre = true;
+    }
+    if (faites.length) this.persist();
+    return faites;
   }
 
   /** Purge d'un dépôt analysé : archive supprimée du disque + index. */
