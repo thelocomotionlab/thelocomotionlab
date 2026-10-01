@@ -34,6 +34,10 @@ NICE = ICI.parents[0] / "examples" / "nice-100m.json"
 TRACE_NICE = ICI.parents[2] / "apps" / "site" / "public" / "tracks" / "nice-100m-2026.gpx"
 HAS_TEX = shutil.which("xelatex") is not None and shutil.which("biber") is not None
 pdf_requis = pytest.mark.skipif(not HAS_TEX, reason="XeLaTeX et biber requis pour rendre")
+# Le plan suivi de bout en bout vise une course qui part dans un mois, à 13 h (UTC+2) comme
+# Nice : le carnet de route garde la date de l'édition courue, et un départ passé fige le plan.
+DEPART_NICE = (datetime.now(timezone(timedelta(hours=2))) + timedelta(days=30)).replace(
+    hour=13, minute=0, second=0, microsecond=0).isoformat()
 
 JETON = "jeton-des-plans-0123456789"
 SECRET = "secret-des-cles-des-plans"
@@ -95,8 +99,10 @@ def _athlete_ingere(client) -> str:
     return r.json()["athlete_id"]
 
 
-def _course_nice(client, *, trace: bool = True) -> str:
+def _course_nice(client, *, trace: bool = True, depart: str | None = None) -> str:
     spec = json.loads(NICE.read_text(encoding="utf-8"))
+    if depart:
+        spec["start_time"] = depart
     r = client.post("/tableau-de-bord/courses", headers=ADMIN, json={"race_spec": spec})
     course_id = r.json()["id"]
     if trace:
@@ -256,7 +262,7 @@ def nice(tmp_path_factory):
     try:
         client = _application(tmp_path_factory.mktemp("plans"), patch)
         athlete_id = _athlete_ingere(client)
-        course_id = _course_nice(client)
+        course_id = _course_nice(client, depart=DEPART_NICE)
         r = client.post("/tableau-de-bord/plans", headers=ADMIN, json={
             "athlete_id": athlete_id, "course_id": course_id,
             "reglages": {"mode": "prediction", "politique_arrets": "standard",
@@ -280,14 +286,14 @@ def _page(nice, usage: str, **params):
 @pdf_requis
 def test_1_creer_un_plan_genere_sa_version_1(nice):
     client, ref = nice["client"], nice["ref"]
-    assert ref.startswith("LL-NICE26-VAL-")
+    assert ref.startswith(f"LL-NICE{DEPART_NICE[2:4]}-VAL-")
     job = client.get(f"/tableau-de-bord/jobs/{nice['job_id']}", headers=ADMIN).json()
     assert job["statut"] == O.JOB_FINI, job
     assert job["type"] == O.JOB_GENERATION and job["plan_ref"] == ref
 
     vu = _plan(nice)
     assert vu["plan"]["version"] == 1 and vu["plan"]["statut"] == O.PLAN_GENERE
-    assert vu["plan"]["depart_le"].startswith("2026-09-25T13:00")
+    assert vu["plan"]["depart_le"].startswith(DEPART_NICE[:16])
     p = vu["plan"]["prediction"]
     assert p["central_h"] and len(p["fourchette"]) == 2 and len(p["bornes"]) == 2
     assert [v["n"] for v in vu["versions"]] == [1]
