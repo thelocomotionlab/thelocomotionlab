@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tools.analyses import nice_2026_descentes as nice  # noqa: E402
 from twin_engine.config import load_config, override_config  # noqa: E402
 from twin_engine.ingest.canonical import CanonicalActivity  # noqa: E402
-from twin_engine.twin.descentes import resume_descentes, traits_terrain  # noqa: E402
+from twin_engine.twin.descentes import fenetres_de_descente, resume_descentes, traits_terrain  # noqa: E402
 from twin_engine.twin.record import process_activity_full  # noqa: E402
 
 CFG = load_config()
@@ -235,3 +235,18 @@ def test_the_terrain_tool_sets_an_archive_against_a_race_file(tmp_path, capsys):
     assert main(["--activite", str(course), "--json"]) == 0
     traits = json.loads(capsys.readouterr().out)
     assert traits["archive"] is None and traits["course"]["n_activites"] == 1
+
+
+def test_the_descent_windows_one_by_one_add_up_to_the_summary_cells():
+    act = _sortie(reps=8, hachee_apres=4)
+    cellules = _cellules(resume_descentes(act, CFG))
+    fen = fenetres_de_descente(act, CFG)
+    assert len(fen) == sum(c["fenetres"] for c in cellules)
+    for classe, hache in {(c["classe"], c["hache"]) for c in cellules}:
+        s = sum(f["s"] for f in fen if f["classe"] == classe and int(f["hache"]) == hache)
+        assert s == sum(c["s"] for c in cellules if c["classe"] == classe and c["hache"] == hache)
+    assert all(f["debut_m"] < f["fin_m"] and f["pente"] <= CFG.twin.terrain_descent_grade for f in fen)
+    hachees = [f for f in fen if f["hache"]]
+    assert hachees and min(f["debut_m"] for f in hachees) > 4 * 1500.0
+    assert all(f["nuit"] is False for f in fen)
+    assert fenetres_de_descente(_sortie(reps=1, v_course=3.0), override_config(CFG, "twin.terrain_window_m=1e9")) == []

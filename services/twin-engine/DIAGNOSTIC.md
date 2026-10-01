@@ -3250,3 +3250,109 @@ n'envoie rien) ; la page publique sert toujours la version « 2026-07 ».
 sans clé, version du consentement, archives d'avant), `tests/test_conservation.py`
 (échéances, simulation, purge active et anonymat, ancien consentement, dépôt en panne,
 périmés, nouveau dépôt), `tests/test_banc_tableau_de_bord.py`, `apps/site/lib`.
+
+### 10.31 Chantier terrain — étape 5 : la carte de technicité, et ce qu'elle dit de Nice (2026-10-01)
+
+**Constat.** La technicité du moteur est un pourcentage déclaré, uniforme du départ à
+l'arrivée (`technicity_pct`). L'étape 5 demande une carte par tranche de 50 m, tirée de
+données ouvertes, et un modèle régularisé qui en apprend le coût sur les fenêtres que le
+détecteur étiquette, validé activité par activité.
+
+**Ce qui change** (paquet `twin_engine.carte`, extra `carte` : osmium, rasterio).
+- **Tranches** de `carte.pas_m` (50 m) d'un parcours (grille du `CourseProfile`, km officiel
+  compris) ou d'une activité (sa distance) : position, altitude lissée, pente, cap, D− déjà
+  descendu. **Géométrie** de la trace seule, sur 250 m centrés : virage cumulé (°/100 m),
+  lacets (changements de cap de plus de 60° par km), écart type de la pente.
+- **OpenStreetMap** : voies d'un extrait Geofabrik (osmium, gardées près des traces) ou de
+  réponses Overpass ; recalage sur le segment le plus proche à moins de 15 m dont le cap
+  s'écarte de moins de 45°, à défaut à moins de 7,5 m sans condition de cap (lacet serré) ;
+  `highway` (dont `steps`), `sac_scale`, `mtb:scale`, `surface`, `smoothness`,
+  `trail_visibility`, `tracktype`, distance de recalage. Une étiquette absente est une
+  modalité.
+- **Relief** : Copernicus GLO-30 lu à distance par plages HTTP, ou des dalles locales (RGE
+  ALTI 1 m, `.asc` sans système de coordonnées : `--mnt-crs EPSG:2154`, ou une mosaïque VRT) :
+  TRI (Riley) et écart type de la pente des mailles sur un disque de 30 m. Le TRI dépend du
+  pas du MNT : un modèle s'applique à une carte du même MNT, l'outil le vérifie.
+- **Occupation du sol** (ESA WorldCover 10 m) : classe principale du disque et part de sol nu ;
+  **géologie** facultative depuis une couche GeoJSON (carte harmonisée du BRGM exportée en
+  WGS 84), propriété choisie.
+- Couverture par variable (trace entière, descentes), attributions portées par la carte,
+  carte gardée en JSON hors git (`services/twin-engine/local-data/carte`), clé : tranches,
+  réglages, sources.
+- **Modèle** (`carte.modele`) : les fenêtres de descente du détecteur, désormais exposées une
+  à une (`twin.descentes.fenetres_de_descente`, même découpage que le résumé), reçoivent les
+  variables des tranches qu'elles couvrent (moyennes, part recalée, modalité principale).
+  logit P(hachée) = contrôles (classe de pente, D− déjà descendu, nuit : ceux du modèle de
+  marche) + carte (numériques centrées-réduites avec indicatrice de manque, une indicatrice
+  par modalité, rares — moins de 20 fenêtres — rangées dans « autre »), pénalité L2 sur la
+  seule carte, sa force choisie par validation croisée sur des activités entières.
+  Validation hors échantillon par plis d'activités entières et par région entière (activités
+  à moins de 30 km de proche en proche), contre les contrôles seuls ; **signal** quand la carte
+  réduit la perte logarithmique hors échantillon d'au moins deux erreurs types (groupées par
+  activité) dans les deux validations. Sans signal, le modèle le dit. Le modèle ne contient
+  aucune position ; les fenêtres d'apprentissage restent dans le cache.
+- **Application** (`probabilites`) : P(hachée) de chaque tranche en descente d'un parcours sur
+  la fenêtre de 250 m centrée sur elle, « fraîche » (D− et nuit à zéro : le terrain seul) ou au
+  D− du parcours.
+- `tools/carte` : `parcours` (couverture, deux parties de part et d'autre d'un km officiel,
+  P(hachée) par partie et par segment avec un modèle), `activite` (tronçons hachés du fichier
+  d'une course face à la carte ; fenêtres hachées contre courables : moyennes, AUC, parts des
+  modalités ; avant / après une coupure), `modele` (une archive jusqu'à une date → le modèle
+  JSON et sa validation).
+
+**Nice, la trace du site** (`tools/carte parcours … --coupure-km 100`, MNT Copernicus,
+WorldCover 2021, voies OSM des réponses Overpass gardées en session : aucune pour les km ~88–100
+de la trace, recalés à 45 % sur les km 90–100, à 83–100 % sur chaque autre dizaine) :
+
+| Descentes ≤ −8 % (tranches de 50 m, profil lissé) | avant km 100 | après km 100 |
+|---|---|---|
+| longueur ; pente moyenne | 29,5 km ; −18,9 % | 22,8 km ; −14,9 % |
+| altitude moyenne | 1 503 m | 695 m |
+| recalées sur une voie OSM (hors km 88–100) | 90 % | 100 % |
+| `sac_scale` renseigné ; parmi les renseignées | 48 % ; T1 53, T2 25, T3 22 % | 43 % ; T1 83, T2 17, T3 0 % |
+| `mtb:scale` renseigné ; parmi les renseignées | 12 % ; S0 24, S1 68, S3 8 % | 81 % ; S1 35, S2 55, S3 10 % |
+| `surface` renseigné | 2 % | 22 % (`dirt` 64 %) |
+| `smoothness` renseigné | 0 % | 0 % |
+| TRI moyen (MNT 30 m, disque de 30 m) | 11,3 m | 9,3 m |
+| occupation principale : arbres · arbustes · prairie | 57 · 1 · 35 % | 76 · 14 · 4 % |
+| part de sol nu dans le disque | 4,9 % | 0,1 % |
+| virage cumulé ; lacets | 52°/100 m ; 2,1 par km | 56°/100 m ; 2,5 par km |
+
+**Lecture.** Aucune variable renseignée sur les deux moitiés ne rend la seconde plus
+technique : l'échelle SAC (difficulté de randonnée en montagne) la dit plus facile (aucun T3,
+83 % de T1), le relief à 30 m y est moins rugueux, les descentes y sont moins raides, plus
+basses, sous forêt et maquis. La seule étiquette qui décrive les pierres, `mtb:scale` (S1 :
+petites pierres, sol meuble ; S2 : grosses pierres, marches ; S3 : blocs), n'est renseignée
+presque qu'après le km 100 (81 % contre 12 %) ; là où elle l'est, 65 % des descentes sont en
+S2 ou S3. C'est cohérent avec la caillasse, mais ça ne compare pas les deux moitiés : la
+présence de l'étiquette suit ceux qui cartographient (les vététistes de l'arrière-pays
+niçois), pas le terrain. La carte seule, telle quelle, n'explique donc pas que les fenêtres
+hachées passent de 20 % à 69 % après le km 100 ; le D− déjà descendu reste l'autre candidat,
+et seul le modèle appris sur l'archive de l'athlète sépare les deux.
+
+**Chez Valentin** (recette au manuel, « Carte de technicité ») : (1) les treize tronçons
+hachés — `tools/carte activite` sur le fichier de la montre ; un tronçon haché y est une suite
+de fenêtres de descente hachées consécutives : si l'outil n'en trouve pas treize, l'ébauche
+les définissait autrement ; (2) le modèle sur l'archive de Val arrêtée la veille de Nice :
+la carte prédit-elle ses fenêtres hachées hors échantillon ? (3) ce modèle appliqué à Nice,
+avant / après le km 100, frais et au D− du parcours.
+
+**Limites.** (1) Un MNT à 30 m mesure la rugosité du versant, pas les pierres du sentier ; le
+RGE ALTI 1 m s'en approche, il n'a pas pu être lu depuis la session (IGN injoignable) et ne se
+compare pas au Copernicus. (2) Les étiquettes OSM sont renseignées inégalement ; la modalité
+« absente » en absorbe une partie, la validation par région dit si ce qui est appris
+voyage. (3) La géométrie d'une activité vient du GPS, celle d'un parcours d'une trace
+dessinée : les variables de géométrie peuvent ne pas se transposer à l'identique — à
+vérifier en comparant la carte du fichier de Val à celle de la trace. (4) L'étiquette est un
+comportement (la marche) : le modèle prédit la marche de l'athlète en descente, une douleur aux
+quadriceps comprise. (5) Le modèle est personnel ; la cohorte pourra le mettre en commun.
+
+**Tests** (`tests/test_carte.py`) : tranches et géométrie (lacets) ; recalage (cap, lacet
+serré, rayon), extrait `.osm` lu par osmium et filtré, caches JSON ; TRI sur un tableau connu,
+rugosité et occupation du sol sur des GeoTIFF fabriqués (géographique, projeté sans système
+de coordonnées), source illisible ; géologie avec trous et multipolygones ; couverture et
+parties ; le modèle trouve une étiquette fabriquée hors échantillon (activités et régions),
+ne trouve rien sans lien, refuse sous le minimum, s'applique aux seules descentes ; l'outil sur
+un fichier de course fabriqué, un modèle appris sur une archive puis appliqué à un parcours,
+refusé sur un autre MNT. `tests/test_descentes.py` : les fenêtres une à une refont les
+cellules du résumé.

@@ -259,5 +259,34 @@
     "versions_conservation": [
       "2026-10"
     ]
+  },
+  "carte": {
+    "pas_m": 50.0,
+    "rayon_recalage_m": 15.0,
+    "angle_cap_max_deg": 45.0,
+    "rayon_rugosite_m": 30.0,
+    "fenetre_geometrie_m": 250.0,
+    "etiquettes": [
+      "highway",
+      "sac_scale",
+      "mtb:scale",
+      "surface",
+      "smoothness",
+      "trail_visibility",
+      "tracktype"
+    ],
+    "modalite_min_fenetres": 20,
+    "l2_grille": [
+      0.3,
+      1.0,
+      3.0,
+      10.0,
+      30.0,
+      100.0
+    ],
+    "plis": 10,
+    "region_km": 30.0,
+    "modele_min_fenetres": 30,
+    "signal_z": 2.0
   }
 }

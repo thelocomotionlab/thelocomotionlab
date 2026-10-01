@@ -82,6 +82,12 @@ archive mesure tout :
   depuis le 2026-09-17) ne décrivent pas les mêmes points de passage. Les sorties 2 et 8
   dépendent de celui qui fait foi ; le plan réellement porté le 25/09 reste à fixer.
 - Durée exacte de conservation et ce qui survit à la purge (défauts du prompt en attendant).
+- **Les treize tronçons hachés** de l'ébauche ne sont définis nulle part dans le dépôt ;
+  `tools/carte activite` en compte selon la définition ci-dessous (« Choix faits ») : si le
+  compte diffère, dis-moi d'où venait treize.
+- Le RGE ALTI 1 m, l'API IGN, le BRGM, Geofabrik et Overpass ne se joignent pas depuis la
+  session : la lecture du RGE ALTI n'est testée que sur des dalles fabriquées, la géologie
+  sur une couche fabriquée.
 - Texte public de la page cohorte (relecture juridique), et lecture de la clause 4.6 de l'ODbL
   pour les chiffres tirés d'OSM remis à un athlète. Le brouillon « 2026-10 » se relit dans le
   tableau de bord (`/services/twin/tableau-de-bord/cohorte`) ; le publier, c'est passer
@@ -151,6 +157,16 @@ archive mesure tout :
   ses entrées du registre anonymes ; jumeaux périmés ré-ingérés un à la fois ; « Rejouer au
   banc » depuis l'écran Athlète ; brouillon de la page cohorte et de sa case (texte
   « 2026-10 ») en aperçu dans le tableau de bord, **pas publié**.
+- 2026-10-01 — **étape 5, carte de technicité** (DIAGNOSTIC §10.31) : paquet `twin_engine.carte`
+  (tranches de 50 m, géométrie, OSM recalé avec continuité de cap, rugosité Copernicus ou RGE
+  ALTI, WorldCover, géologie GeoJSON, couverture, attributions, cache hors git), fenêtres du
+  détecteur exposées une à une, modèle logistique régularisé P(hachée) = contrôles + carte,
+  validé hors échantillon par activités et par régions, `tools/carte` (parcours, activité,
+  modèle). Nice, trace du site : aucune variable renseignée sur les deux moitiés ne rend la
+  seconde plus technique (SAC plus facile, relief moins rugueux, descentes moins raides) ;
+  seule `mtb:scale`, renseignée presque uniquement après le km 100, y décrit 65 % de S2–S3.
+  Suite : 766 passés, 43 sautés. **Chez Valentin** : les tronçons hachés du fichier de la
+  montre, le modèle sur son archive et son application à Nice.
 
 ## Run 1 chez Valentin (à lancer)
 
@@ -165,7 +181,11 @@ Une passe par archive mesure tout ce qui précède. La recette complète est au 
 4. `tools/score_plan` sous chaque loi ;
 5. `tools/terrain` (Val face à Nice) et `tools/registre --servir` (le dossier du plan du
    20/09) ;
-6. committer `docs/twin-registre/` et me rapporter `/tmp/run1/` (markdown seulement).
+6. la carte de technicité (manuel, « Carte de technicité ») : la trace de Nice, le fichier de
+   la montre, le modèle de Val arrêté la veille, appliqué à Nice — il faut l'extra `carte` et
+   les extraits Geofabrik des régions de son archive ;
+7. committer `docs/twin-registre/` et me rapporter `/tmp/run1/` (markdown, et le modèle de la
+   carte, qui ne contient aucune position).
 
 Ce que j'en tirerai : l'effet du décodage seul sur le banc (horloges réparées, cadence), la
 forme du plan sous chaque loi hors Nice, les traits de terrain des quatre archives, Val face à
@@ -219,3 +239,13 @@ au mieux, un levier entre dans la configuration de référence de Val.
   la purge — avant, elles restaient sous pseudonyme.
 - Le brouillon de la page cohorte se relit derrière la serrure du tableau de bord, formulaire
   en aperçu (il n'envoie rien) ; la case nomme positions, fréquence cardiaque et cadence.
+- Carte : un « tronçon haché » est une suite de fenêtres de descente hachées consécutives ; le
+  modèle a les contrôles du modèle de marche (pente, D− déjà descendu, nuit), une pénalité L2 sur
+  la seule carte choisie par validation croisée sur des activités entières, des régions de
+  30 km de proche en proche, une modalité rare (moins de 20 fenêtres) rangée dans « autre ».
+  « Signal » demande deux erreurs types de gain hors échantillon (groupées par activité) dans
+  les deux validations : un gain plus petit ne distingue pas la carte du hasard.
+- MNT par défaut du modèle : Copernicus, lisible partout ; le RGE ALTI (France seule) ne se
+  mélange pas avec lui, le TRI dépendant du pas du MNT.
+- Les cartes se gardent dans `services/twin-engine/local-data/carte` (ignoré par git) ; le
+  modèle ne porte aucune position, les fenêtres d'apprentissage restent dans ce cache.

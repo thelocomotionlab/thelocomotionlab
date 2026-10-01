@@ -18,6 +18,9 @@ résumé sans tableau à la seconde, selon les définitions de l'analyse de réf
   ajustée à la pente (loi de Minetti) par tranche de dénivelé négatif ; histogramme de la
   cadence lissée en mouvement.
 
+Les fenêtres de descente une par une, avec leur place sur la distance de l'activité
+(:func:`fenetres_de_descente`), servent la carte de technicité (``carte.modele``).
+
 **Dans le jumeau** (:func:`traits_terrain`), sur toutes les activités résumées :
 
 * vitesses par classe de pente, fraîches et fatiguées (sous / au-delà de
@@ -106,9 +109,9 @@ def _nuit_par_seconde(act) -> np.ndarray | None:
     return m[: act.n]
 
 
-def resume_descentes(act, cfg: Config) -> dict | None:
-    """Le résumé des descentes d'une activité décodée (cf. module) ; None sans cadence,
-    altitude ou mouvement."""
+def _fenetres(act, cfg: Config) -> dict | None:
+    """Les fenêtres de distance d'une activité décodée et ce que le résumé en garde (cf.
+    module) ; None sans cadence, altitude ou mouvement."""
     tw = cfg.twin
     if act.n < 2 or not act.has_cadence or not act.has_altitude:
         return None
@@ -130,7 +133,6 @@ def resume_descentes(act, cfg: Config) -> dict | None:
     lisse = lisse[np.isfinite(lisse) & (lisse >= _CAD_MIN) & (lisse < _CAD_MAX)]
     hist = np.bincount(((lisse - _CAD_MIN) // _CAD_PAS).astype(int),
                        minlength=int((_CAD_MAX - _CAD_MIN) / _CAD_PAS))
-    cadence = [[int(i), int(c)] for i, c in enumerate(hist) if c]
 
     # fenêtres de distance sur les secondes en mouvement
     w = (d[m] // tw.terrain_window_m).astype(int)
@@ -161,28 +163,66 @@ def resume_descentes(act, cfg: Config) -> dict | None:
     hache = ((bascules / (T / 60.0) >= tw.terrain_choppy_switches_per_min)
              | (marche / T >= tw.terrain_choppy_walk_share))
     valide = T >= _FENETRE_MIN_S
-    descente = valide & (g_moy <= tw.terrain_descent_grade)
+    return {
+        "hist": hist, "T": T, "g_moy": g_moy, "marche": marche, "bascules": bascules,
+        "fc_somme": fc_somme, "fc_s": fc_s, "dist": dist, "dist_ajustee": dist_ajustee,
+        "classe": classe, "hache": hache, "tranche": tranche, "valide": valide,
+        "descente": valide & (g_moy <= tw.terrain_descent_grade),
+        "nuit": None if nuit is None else nuit[milieu].astype(bool),
+        "debut_m": d[m][premiers], "fin_m": d[m][derniers], "dminus_m": dminus[m][premiers],
+    }
 
+
+def resume_descentes(act, cfg: Config) -> dict | None:
+    """Le résumé des descentes d'une activité décodée (cf. module) ; None sans cadence,
+    altitude ou mouvement."""
+    f = _fenetres(act, cfg)
+    if f is None:
+        return None
     cellules: dict[tuple, list[float]] = {}
-    for i in np.flatnonzero(descente):
-        cle = (int(classe[i]), int(hache[i]), int(tranche[i]),
-               0 if nuit is None else int(nuit[milieu[i]]))
+    for i in np.flatnonzero(f["descente"]):
+        cle = (int(f["classe"][i]), int(f["hache"][i]), int(f["tranche"][i]),
+               0 if f["nuit"] is None else int(f["nuit"][i]))
         c = cellules.setdefault(cle, [0.0] * 7)
-        for j, v in enumerate((T[i], dist[i], marche[i], bascules[i], fc_somme[i], fc_s[i], 1.0)):
+        for j, v in enumerate((f["T"][i], f["dist"][i], f["marche"][i], f["bascules"][i],
+                               f["fc_somme"][i], f["fc_s"][i], 1.0)):
             c[j] += float(v)
     reste: dict[int, list[float]] = {}
-    for i in np.flatnonzero(valide & ~descente):
-        r = reste.setdefault(int(tranche[i]), [0.0, 0.0])
-        r[0] += float(T[i])
-        r[1] += float(dist_ajustee[i])
+    for i in np.flatnonzero(f["valide"] & ~f["descente"]):
+        r = reste.setdefault(int(f["tranche"][i]), [0.0, 0.0])
+        r[0] += float(f["T"][i])
+        r[1] += float(f["dist_ajustee"][i])
     return {
         "cellules": [[*cle, round(v[0]), round(v[1], 1), round(v[2]), round(v[3]),
                       round(v[4]), round(v[5]), round(v[6])] for cle, v in sorted(cellules.items())],
         "reste": [[b, round(v[0]), round(v[1], 1)] for b, v in sorted(reste.items())],
-        "cadence": cadence,
-        "nuit_connue": nuit is not None,
+        "cadence": [[int(i), int(c)] for i, c in enumerate(f["hist"]) if c],
+        "nuit_connue": f["nuit"] is not None,
         "unite": getattr(act, "cadence_unit", None),
     }
+
+
+def fenetres_de_descente(act, cfg: Config) -> list[dict]:
+    """Les fenêtres de descente d'une activité décodée, une par une, avec leur place sur la
+    distance de l'activité (``debut_m``, ``fin_m`` : première et dernière seconde en
+    mouvement) : durée, pente moyenne et sa classe, hachée ou non, part marchée, bascules par
+    minute, D− déjà descendu au début, nuit (None si inconnue). Liste vide sans cadence,
+    altitude ou mouvement."""
+    f = _fenetres(act, cfg)
+    if f is None:
+        return []
+    out = []
+    for i in np.flatnonzero(f["descente"]):
+        T = float(f["T"][i])
+        out.append({
+            "debut_m": round(float(f["debut_m"][i]), 1), "fin_m": round(float(f["fin_m"][i]), 1),
+            "s": int(T), "pente": round(float(f["g_moy"][i]), 4), "classe": int(f["classe"][i]),
+            "hache": bool(f["hache"][i]), "part_marche": round(float(f["marche"][i]) / T, 4),
+            "bascules_min": round(float(f["bascules"][i]) / (T / 60.0), 3),
+            "dminus_m": round(float(f["dminus_m"][i]), 1),
+            "nuit": None if f["nuit"] is None else bool(f["nuit"][i]),
+        })
+    return out
 
 
 # --------------------------------------------------------------------------- traits
@@ -413,4 +453,4 @@ def traits_terrain(summaries, cfg: Config) -> dict | None:
     }
 
 
-__all__ = ["pente_et_denivele", "resume_descentes", "traits_terrain"]
+__all__ = ["fenetres_de_descente", "pente_et_denivele", "resume_descentes", "traits_terrain"]

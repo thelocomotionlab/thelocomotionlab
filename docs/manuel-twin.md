@@ -1096,6 +1096,53 @@ verdicts, forme du plan), `passages-<athlète>.md` (mouvement, arrêts, marche p
 `score_plan*.md`, `terrain-nice.md` — du markdown à coller au carnet ; seuls le registre et
 les manifestes se committent.
 
+**Carte de technicité (DIAGNOSTIC §10.31)** — par tranche de 50 m d'une trace : géométrie,
+étiquettes OpenStreetMap, rugosité du relief, occupation du sol, géologie si on la donne ; puis
+un modèle par athlète, appris sur ses fenêtres de descente hachées ou courables. Il faut l'extra
+`carte` (`pip install -e '.[carte]'` : osmium, rasterio) et des sources :
+
+- **OpenStreetMap** : un ou plusieurs extraits régionaux Geofabrik (`*-latest.osm.pbf`, licence
+  ODbL) qui couvrent la course et les activités, `--osm` répété ; le pays entier se lit aussi
+  mais demande beaucoup de mémoire. Seules les voies près des traces sont gardées.
+- **Relief** : `--mnt copernicus` lit les tuiles GLO-30 à distance (rien à télécharger). Le
+  RGE ALTI 1 m de l'IGN (France seulement) se donne en mosaïque :
+  `gdalbuildvrt -a_srs EPSG:2154 rgealti.vrt dalles/*.asc`, puis `--mnt rgealti.vrt`. Un
+  modèle ne s'applique qu'à une carte du même MNT : pour des activités hors de France,
+  Copernicus partout.
+- **Occupation du sol** : `--sol worldcover` (ESA, lu à distance). **Géologie** :
+  `--geologie couche.geojson --propriete NOM` (polygones en WGS 84, par exemple la carte
+  harmonisée du BRGM exportée par `ogr2ogr -f GeoJSON -t_srs EPSG:4326`).
+
+Les cartes se gardent dans `services/twin-engine/local-data/carte` (hors git) : un second
+passage ne relit rien. Les sorties impriment les attributions (OSM sous ODbL, Copernicus, ESA,
+IGN, BRGM). Derrière un proxy qui réécrit le TLS, GDAL prend le magasin de certificats donné
+par `CURL_CA_BUNDLE`.
+
+```bash
+SRC="--osm ~/osm/provence-alpes-cote-d-azur-latest.osm.pbf --osm ~/osm/<régions des activités>.osm.pbf \
+     --mnt copernicus --sol worldcover"
+# 1. la trace de Nice : couverture, descentes avant / après le km 100
+PYTHONPATH=src python -m tools.carte parcours --course ../../apps/site/public/tracks/nice-100m-2026.gpx \
+  --race examples/nice-100m.json --coupure-km 100 $SRC > /tmp/run1/carte-nice.md
+# 2. le fichier de la montre : tronçons hachés, fenêtres hachées contre courables face à la carte
+PYTHONPATH=src python -m tools.carte activite --activite $NICE_MONTRE --distance-officielle 167.2 \
+  --coupure-km 100 $SRC > /tmp/run1/carte-nice-montre.md
+# 3. le modèle de Val sur son archive arrêtée la veille, validé hors échantillon
+PYTHONPATH=src python -m tools.carte modele --archive _seed/cas_validation/Val/archives \
+  --until 2026-09-24 --out /tmp/run1/carte-modele-val.json $SRC > /tmp/run1/carte-modele-val.md
+# 4. ce modèle appliqué à Nice : P(hachée) par partie et par segment, frais et au D− du parcours
+PYTHONPATH=src python -m tools.carte parcours --course ../../apps/site/public/tracks/nice-100m-2026.gpx \
+  --race examples/nice-100m.json --coupure-km 100 --modele /tmp/run1/carte-modele-val.json $SRC \
+  > /tmp/run1/carte-nice-val.md
+```
+
+Le modèle (`carte-modele-val.json`) ne contient aucune position : variables retenues,
+coefficients, validation (perte hors échantillon de la carte contre celle des seuls contrôles
+— classe de pente, D− déjà descendu, nuit —, par activités puis par régions, écart réduit
+`z`, AUC) et `signal`. Sans signal, la carte ne dit rien de la technicité pour cet athlète ;
+le plan n'a pas à s'en servir. Les fenêtres d'apprentissage, qui portent les centres des
+activités, restent dans le cache.
+
 ## 9. Déploiement (rappel)
 
 L'infra est **du code** (`infra/`). Le service `twin-engine` est déjà décrit dans `infra/compose.yml`

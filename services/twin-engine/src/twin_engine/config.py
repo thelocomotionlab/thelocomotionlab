@@ -689,6 +689,38 @@ class ApiParams:
 
 
 @dataclass(frozen=True)
+class CarteParams:
+    """La carte de technicité (``twin_engine.carte``), par tranche de ``pas_m`` mètres d'une
+    trace : recalage sur la voie OpenStreetMap la plus proche à moins de
+    ``rayon_recalage_m`` dont le cap ne s'écarte pas de plus de ``angle_cap_max_deg`` (dans un
+    lacet serré, la moitié du rayon et sans condition de cap), étiquettes ``etiquettes`` lues
+    sur la voie ; rugosité du relief sur un disque de ``rayon_rugosite_m`` autour de la
+    tranche ; géométrie de la trace sur ``fenetre_geometrie_m`` centrés sur la tranche.
+    Les variables d'entrée seulement : leur coût s'estime sur des données (``carte.modele``).
+
+    Le modèle (``carte.modele``) : une modalité vue dans moins de ``modalite_min_fenetres``
+    fenêtres rejoint « autre » ; force de la pénalité L2 choisie dans ``l2_grille`` sur
+    ``plis`` plis d'activités entières ; régions de validation : activités à moins de
+    ``region_km`` de proche en proche ; pas de modèle sous ``modele_min_fenetres`` fenêtres
+    hachées ou courables ; signal quand la carte réduit la perte hors échantillon d'au moins
+    ``signal_z`` erreurs types."""
+
+    pas_m: float = 50.0
+    rayon_recalage_m: float = 15.0
+    angle_cap_max_deg: float = 45.0
+    rayon_rugosite_m: float = 30.0
+    fenetre_geometrie_m: float = 250.0
+    etiquettes: tuple[str, ...] = ("highway", "sac_scale", "mtb:scale", "surface", "smoothness",
+                                   "trail_visibility", "tracktype")
+    modalite_min_fenetres: int = 20
+    l2_grille: tuple[float, ...] = (0.3, 1.0, 3.0, 10.0, 30.0, 100.0)
+    plis: int = 10
+    region_km: float = 30.0
+    modele_min_fenetres: int = 30
+    signal_z: float = 2.0
+
+
+@dataclass(frozen=True)
 class CohorteParams:
     """Conservation des données de la cohorte (tableau de bord, ``tableau_de_bord.conservation``).
 
@@ -725,6 +757,7 @@ class Config:
     report: ReportParams = field(default_factory=ReportParams)
     api: ApiParams = field(default_factory=ApiParams)
     cohorte: CohorteParams = field(default_factory=CohorteParams)
+    carte: CarteParams = field(default_factory=CarteParams)
 
 
 # --------------------------------------------------------------------------- #
@@ -818,11 +851,13 @@ def load_config(config_path: str | os.PathLike[str] | None = None) -> Config:
         report=_build(ReportParams, raw.get("report")),
         api=_build(ApiParams, raw.get("api")),
         cohorte=_build(CohorteParams, raw.get("cohorte")),
+        carte=_build(CarteParams, raw.get("carte")),
     )
 
 
 __all__ = [
     "ApiParams",
+    "CarteParams",
     "CohorteParams",
     "Config",
     "override_config",
