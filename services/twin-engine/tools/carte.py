@@ -149,6 +149,38 @@ def _couverture(c: Carte) -> list[str]:
     return out
 
 
+def couverture_des_sorties(cartes: dict[str, Carte]) -> tuple[dict[str, dict], int]:
+    """La couverture de toutes les sorties ensemble, chaque tranche comptant pour une, et le
+    nombre de sorties qu'aucune voie des extraits OSM donnés ne recale (hors des extraits)."""
+    sommes: dict[str, list[float]] = {}
+    sans_voie = 0
+    for c in cartes.values():
+        n, nd = c.tranches.n, int((c.tranches.pente <= -0.08).sum())
+        for nom, v in c.couverture().items():
+            s = sommes.setdefault(nom, [0.0, 0, 0.0, 0])
+            if v["toute"] is not None:
+                s[0], s[1] = s[0] + v["toute"] * n, s[1] + n
+            if v["descentes"] is not None:
+                s[2], s[3] = s[2] + v["descentes"] * nd, s[3] + nd
+        if c.sources.get("osm") and not any(c.variables.get("recale") or []):
+            sans_voie += 1
+    cov = {nom: {"toute": round(a / na, 3) if na else None, "descentes": round(d / nd, 3) if nd else None}
+           for nom, (a, na, d, nd) in sommes.items()}
+    return cov, sans_voie
+
+
+def _couverture_des_sorties(cartes: dict[str, Carte]) -> list[str]:
+    cov, sans_voie = couverture_des_sorties(cartes)
+    out = ["| variable | toutes les sorties | descentes |", "|---|---|---|"]
+    for nom, v in cov.items():
+        out.append(f"| {nom} | {_f(None if v['toute'] is None else 100 * v['toute'], 0)} % "
+                   f"| {_f(None if v['descentes'] is None else 100 * v['descentes'], 0)} % |")
+    if any(c.sources.get("osm") for c in cartes.values()):
+        out += ["", f"Sorties sans aucune voie OSM recalée : {sans_voie} sur {len(cartes)} "
+                    "(hors des extraits donnés : leurs étiquettes OSM manquent au modèle)."]
+    return out
+
+
 def _parties(p: dict, coupure_km: float, modalites: int = 4) -> list[str]:
     out = []
     for zone, titre in (("toute", "toute la trace"), ("descentes", "descentes (≤ −8 %)")):
@@ -519,7 +551,8 @@ def _modele(args, cfg: Config) -> int:
     if args.json:
         print(json.dumps(modele, ensure_ascii=False, indent=2))
         return 0
-    print("\n".join(_resume_modele(modele)))
+    print("\n".join(_resume_modele(modele) + ["", "## Couverture des sorties", "",
+                                               *_couverture_des_sorties(cartes)]))
     return 0
 
 
@@ -579,8 +612,9 @@ def _banc(args, cfg: Config) -> int:
     from tools.banc import _slug
 
     sortie = Path(args.out)
-    lignes = ["| athlète | course | coupure | fenêtres (hachées) | signal | z activités | z régions |",
-              "|---|---|---|---|---|---|---|"]
+    lignes = ["| athlète | course | coupure | fenêtres (hachées) | descentes sur une voie OSM "
+              "| signal | z activités | z régions |",
+              "|---|---|---|---|---|---|---|---|"]
     for m in args.manifestes:
         mp = Path(m)
         base = mp.resolve().parent
@@ -617,9 +651,11 @@ def _banc(args, cfg: Config) -> int:
                 v = mo.get("validation") or {}
                 za = (v.get("activites") or {}).get("z")
                 zr = (v.get("regions") or {}).get("z")
+                cov, _ = couverture_des_sorties({a.cle: cartes[a.cle] for a in acts if a.jour <= until})
+                osm = (cov.get("recale") or {}).get("descentes")
                 lignes.append(f"| {man['athlete']} | {r['name']} | {until} | {mo['n_fenetres']} "
-                              f"({mo['n_hachees']}) | {'oui' if mo.get('signal') else 'non'} | "
-                              f"{_f(za, 2)} | {_f(zr, 2)} |")
+                              f"({mo['n_hachees']}) | {_f(None if osm is None else 100 * osm, 0)} % | "
+                              f"{'oui' if mo.get('signal') else 'non'} | {_f(za, 2)} | {_f(zr, 2)} |")
         finally:
             lecteur.fermer()
     print("\n".join(lignes))

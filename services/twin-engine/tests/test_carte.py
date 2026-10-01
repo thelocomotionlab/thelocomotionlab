@@ -290,6 +290,21 @@ def test_the_map_measures_its_coverage_and_compares_two_parts():
     assert p["descentes"]["avant"]["sac_scale"] == {"hiking": 1.0}
 
 
+def test_the_coverage_of_the_training_runs_counts_every_slice_and_the_runs_off_the_extracts():
+    from tools.carte import _couverture_des_sorties, couverture_des_sorties
+
+    couverte = _carte_simple()
+    hors = dresser(tranches_de(*_nord(1000.0, est_m=50_000.0), CFG), CFG, voies=osm_.voies_overpass([]))
+    cov, sans_voie = couverture_des_sorties({"a": couverte, "b": hors})
+    assert sans_voie == 1 and cov["virage_deg_100m"]["toute"] == 1.0
+    assert cov["recale"]["descentes"] == pytest.approx(couverte.couverture()["recale"]["descentes"] / 2,
+                                                       abs=0.01)
+    assert "Sorties sans aucune voie OSM recalée : 1 sur 2" in "\n".join(
+        _couverture_des_sorties({"a": couverte, "b": hors}))
+    # sans extrait OSM du tout, il n'y a pas de sortie « hors des extraits » à compter
+    assert "Sorties sans" not in "\n".join(_couverture_des_sorties({"b": dresser(hors.tranches, CFG)}))
+
+
 def test_the_map_round_trips_through_its_cache(tmp_path):
     c = _carte_simple()
     cle = cle_de_cache(c.tranches, CFG, ["osm:test"])
@@ -454,7 +469,9 @@ def test_the_tool_learns_a_model_from_an_archive_and_applies_it_to_a_course(tmp_
                 "--osm", str(tmp_path / "osm.json")]
     assert main(["modele", "--archive", str(archive), "--until", "2026-06-30",
                  "--out", str(tmp_path / "modele.json"), *reglages]) == 0
-    assert "Modèle de la carte — 4 activités" in capsys.readouterr().out
+    sortie = capsys.readouterr().out
+    assert "Modèle de la carte — 4 activités" in sortie
+    assert "## Couverture des sorties" in sortie and "Sorties sans aucune voie OSM recalée : 0 sur 4" in sortie
     modele = json.loads((tmp_path / "modele.json").read_text())
     assert modele["n_activites"] == 4 and modele["until"] == "2026-06-30"
     assert '"lat' not in json.dumps(modele) and "centre" not in json.dumps(modele)

@@ -1153,8 +1153,10 @@ Le modèle (`carte-modele-val.json`) ne contient aucune position : variables ret
 coefficients, validation (perte hors échantillon de la carte contre celle des seuls contrôles
 — classe de pente, D− déjà descendu, nuit —, par activités puis par régions, écart réduit
 `z`, AUC) et `signal`. Sans signal, la carte ne dit rien de la technicité pour cet athlète ;
-le plan n'a pas à s'en servir. Les fenêtres d'apprentissage, qui portent les centres des
-activités, restent dans le cache. `parcours --modele … --vecu local-data/carte/exemples.json`
+le plan n'a pas à s'en servir. Le résumé dit aussi la couverture des sorties d'entraînement :
+une sortie sans aucune voie OSM recalée est hors des extraits donnés, et ses étiquettes OSM
+manquent au modèle tant que l'extrait de sa région n'est pas passé par `--osm`. Les fenêtres d'apprentissage, qui portent
+les centres des activités, restent dans le cache. `parcours --modele … --vecu local-data/carte/exemples.json`
 ajoute la demande de la course contre le vécu des 183 derniers jours, par tranche de D−.
 
 **Terrain dans le plan et la calibration (DIAGNOSTIC §10.32)** — trois drapeaux, éteints par
@@ -1185,8 +1187,9 @@ PYTHONPATH=src python -m tools.banc $M --out /tmp/run2 --label run2 --terrain /t
   --variant TA5:calibration.terrain_adjust=deq,calibration.terrain_dplus_prior_scale=0.5
 ```
 
-`carte-banc.md` dit, course par course, si le modèle de l'athlète a un signal à la coupure :
-sans signal, les variantes de carte rendent le run de base, et c'est la réponse.
+`carte-banc.md` dit, course par course, si le modèle de l'athlète a un signal à la coupure, et
+quelle part de ses descentes d'entraînement tombe sur une voie OSM : sans signal, les variantes
+de carte rendent le run de base, et c'est la réponse.
 
 **Profils de configuration** — un plan sert l'un de trois profils : `defaut`
 (`twin.config.json` tel quel), `reference` et `experimental`, deux listes de surcharges
