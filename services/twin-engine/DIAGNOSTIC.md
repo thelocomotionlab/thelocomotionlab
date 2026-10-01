@@ -3036,3 +3036,41 @@ Lolo et Rapace (13 entrées, 2 vendus à 17,4 % de MAE), soit le groupe « frais
 **Reste à faire chez Valentin** : les deux runs de départ sur les quatre manifestes
 (défauts, configuration de référence) et l'entrée servie de Nice 2026 (plan du 20/09,
 35 h 05, passages), après l'étape des mesures par segment.
+
+### 10.27 Chantier terrain — mesures par tronçon : mouvement, arrêts, marche (2026-10-01)
+
+**Constat.** Le registre jugeait l'arrivée et les heures de passage ; il ne savait pas ce
+qui s'était passé entre deux points. À Nice, l'écart d'arrivée vient des arrêts (4 h 13
+réels contre 1 h 15 au plan) et l'erreur de forme du plan vient de la loi de pente : deux
+causes qu'un écart d'heure de passage confond.
+
+**Ce qui change.**
+- **Définitions de l'analyse de référence** dans la configuration (`twin.terrain_*` :
+  mouvement à ≥ 0,3 m/s hors trou de plus de 10 s, arrêt à partir de 60 s continues, marche
+  sous 148 pas/min sur une cadence lissée 10 s) et dans le moteur
+  (`twin_engine.twin.mouvement`). Elles sont distinctes du masque historique du jumeau
+  (`twin.stops`), que la calibration garde : rien ne change dans la prédiction.
+- **Passages par tronçon** (`tools/passages`) : entre deux points trouvés, temps écoulé,
+  arrêts, mouvement (écoulé − arrêts) et minutes marchées (si la cadence est lue), sommes
+  sur la course, définitions recopiées dans chaque relevé. Un arrêt à un ravitaillement
+  compte dans le tronçon qui en repart, comme dans le plan. Sous `twin.gpx_distance=device`,
+  les passages lisent la distance de la montre.
+- **Bloc `forme`** (`registre.bloc_forme`) sur toute entrée dont la course a ses passages —
+  banc (`tools/backtest`, `tools/banc`, y compris ses variantes) et livre servi :
+  *mouvement réel imposé* (le plan répartit le mouvement réellement passé ; erreur moyenne,
+  pire tronçon, pire cumul, en minutes, tronçon par tronçon avec la marche réelle), *total
+  prédit* (écart des heures de passage, biais à mi-course, écart à l'arrivée), arrêts et
+  mouvement du plan contre le réel.
+- **Livre servi depuis un dossier** (`tools/registre --servir`) : un plan servi avant le
+  tableau de bord entre au livre servi depuis le dossier de sa version, avec le statut de
+  l'athlète au jour de la course et sa forme si les passages sont au registre.
+
+**Tests** (`tests/test_mesures_par_troncon.py`) : définitions du masque (seuil de vitesse,
+trou d'enregistrement, pause de 59 s contre arrêt de 60 s, marche lue sur cadence lissée) ;
+course synthétique de 10 km à 2 m/s avec dix minutes de marche dans la montée et dix
+minutes d'arrêt au sommet : chaque tronçon porte exactement ce qui s'y est passé ; le plan
+réparti sur le mouvement réel a pour somme le mouvement réel ; entrée servie fabriquée
+depuis un dossier.
+
+**Chez Valentin** : les passages de Nice 2026 (fichier de course), puis son entrée servie ;
+les relevés des quatre manifestes viennent avec le run 1.

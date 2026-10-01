@@ -103,6 +103,16 @@ archive mesure tout :
   passages communs aux runs ; ancien fichier archivé et rangé comme run historique ; écrans
   Athlète (bouton) et Registre (statut × niveau). Aucun athlète frais aujourd'hui.
 
+- 2026-10-01 — **mesures par tronçon** (DIAGNOSTIC §10.27) : définitions de l'analyse de
+  référence en configuration (`twin.terrain_*`) et dans le moteur ; passages enrichis du
+  mouvement, des arrêts et des minutes marchées de chaque tronçon ; bloc `forme` (mouvement
+  réel imposé, total prédit) sur les entrées du banc et du livre servi ; entrée servie
+  fabriquée depuis le dossier d'une version (`tools/registre --servir`) ; course lue dans le
+  fichier de la montre quand l'archive ne la contient pas. Suite : 711 passés, 43 sautés.
+  **Chez Valentin** : déposer le fichier de montre de Nice sous
+  `_seed/cas_validation/Val/courses/nice-100m-2026-montre.gpx` (chemin du manifeste, temps
+  officiel 35:05:00 à corriger à la seconde si besoin), puis le run 1.
+
 ## Choix faits à la place de Valentin
 
 - Unité canonique de la cadence : pas par minute pour les deux pieds (le script disait 74 par
@@ -118,3 +128,8 @@ archive mesure tout :
 - Une entrée servie se fige au résultat du **labo** (celui qui fait foi) ; celui de l'athlète
   reste provisoire. Une correction reste possible avec un motif, gardée en historique —
   plutôt qu'une immuabilité absolue qui rendrait une faute de frappe définitive.
+- Un arrêt à un ravitaillement compte dans le tronçon qui en repart (arrivée à arrivée),
+  comme le plan compte ses arrêts ; les mesures par tronçon du script de référence suivent
+  la même convention.
+- Les définitions du script (mouvement, arrêt, marche) vivent à côté du masque historique du
+  jumeau sans le remplacer : la calibration n'en dépend pas, la prédiction ne bouge pas.

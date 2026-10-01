@@ -721,6 +721,30 @@ drapeaux hors défaut ; le livre servi ; le statut `dev` / `frais` de chaque ath
 quarantaines et les passages, communs à tous les runs. Toute lecture sépare livre × statut ×
 niveau.
 
+**Les passages d'une course** (`tools/passages`, ou la passe des passages de `tools/banc`)
+portent, en plus des heures aux points de contrôle, chaque tronçon entre deux points trouvés :
+temps de mouvement, arrêts et, si la cadence est lue, minutes marchées — définitions de
+l'analyse de référence, constantes `twin.terrain_*` (en mouvement à ≥ 0,3 m/s hors trou de plus
+de 10 s ; arrêt à partir de 60 s continues ; marche sous 148 pas/min, cadence lissée sur 10 s).
+Un arrêt à un ravitaillement compte dans le tronçon qui en repart, comme dans le plan. Une
+course absente de l'archive se lit dans le fichier de la montre que désigne son entrée du
+manifeste (`"activite": "chemin/vers/la-course.gpx"`, comme Nice 2026 dans
+`_seed/manifest-val.json`). Une entrée de banc dont la course a ses passages porte le bloc `forme` : la répartition du plan
+jugée contre le réel, sous le mouvement réel imposé (le plan répartit le temps de mouvement
+réellement passé : il ne reste que la forme) et sous le total prédit (écart des heures de
+passage, biais à mi-course), avec arrêts, mouvement et marche réels contre ceux du plan.
+
+**Un plan servi puis couru** entre au livre servi par le tableau de bord (résultat saisi
+par le laboratoire), ou depuis le dossier de sa version quand il a été servi avant le
+tableau de bord. La configuration effective (`TWIN_CONFIG_PATH`) refait le parcours et le
+plan : la même que celle qui a servi.
+
+```bash
+TWIN_CONFIG_PATH=examples/twin.config.reference.json PYTHONPATH=src python -m tools.registre \
+  --servir local-data/out/nice-2026/dossier.json --athlete Val --course "Nice 100M 2026" \
+  --date 2026-09-25 --officiel 35:05:00
+```
+
 **Outils d'évaluation** (depuis `services/twin-engine`) :
 
 ```bash
@@ -733,6 +757,8 @@ PYTHONPATH=src python -m tools.registre --runs     # les runs, leur commit, leur
 PYTHONPATH=src python -m tools.registre --decision 2026-10-01  # restreint aux athlètes frais à cette date
 PYTHONPATH=src python -m tools.registre --marquer Lolo dev "motif"   # statut au registre, journalisé
 PYTHONPATH=src python -m tools.registre --importer export.json  # fusionne l'export du tableau de bord
+PYTHONPATH=src python -m tools.registre --servir dossier.json --athlete A --officiel 35:05:00   # plan servi
+                                                    #   depuis le dossier de sa version → livre servi
 PYTHONPATH=src python -m tools.ab_recency <manifests…>  # balaye la demi-vie de récence (biais de progression)
 PYTHONPATH=src python -m tools.registre --frontiere # jusqu'où resserrer les bandes sans perdre la couverture
 PYTHONPATH=src python -m tools.registre --tableau   # tableau de référence (markdown) : par livre × statut,

@@ -78,8 +78,10 @@ def run_manifest_one_pass(manifest_path: Path, cfg, *, out_dir: Path,
                           do_diag: bool = True, do_passages: bool = True,
                           min_hours: float | None = None, min_stop_s: float = 60.0,
                           radius_m: float = 150.0,
-                          variants: dict[str, object] | None = None) -> dict | None:
-    """Un manifeste, un décodage, trois produits. ``None`` si l'archive est introuvable."""
+                          variants: dict[str, object] | None = None,
+                          connus: dict | None = None) -> dict | None:
+    """Un manifeste, un décodage, trois produits. ``None`` si l'archive est introuvable.
+    ``connus`` : les passages déjà au registre, servis quand la passe ne les relève pas."""
     base = manifest_path.resolve().parent
     man = json.loads(manifest_path.read_text(encoding="utf-8"))
     athlete = man["athlete"]
@@ -107,16 +109,26 @@ def run_manifest_one_pass(manifest_path: Path, cfg, *, out_dir: Path,
             yield act
 
     cache = ArchiveCache(archive, cfg, stream=_tee(stream), skipped=skipped)
+    if pas is not None:
+        pas.fichiers(man["races"], base)
     # calendrier des courses sans race_json : lu dans l'activité du jour retenue pour les
     # passages (départ, position) — sert au terme de nuit de la cible, rien d'autre
     metas = {k: race_meta_from_candidate(pas.best.get(k)) for k in range(len(man["races"]))} \
         if pas is not None else {}
+    # passages de la course (activité du jour) : la forme du plan de chaque entrée se juge
+    # contre eux ; sans passe des passages, ceux déjà au registre
+    results = (passages_for_manifest(pas.best, man, base, cfg, radius_m=radius_m)
+               if pas is not None else None)
+    par_course = ({k: p for k, (_, p) in enumerate(results)} if results is not None
+                  else {k: (connus or {}).get((athlete, r["name"], r["date"]))
+                        for k, r in enumerate(man["races"])})
     entries: list[dict] = []
     for k, r in enumerate(man["races"]):
         print(f"  {athlete} · {r['name']} ({r['date']}) — coupure la veille…",
               file=sys.stderr, flush=True)
         entries.append({"athlete": athlete,
-                        **backtest_race(cache, r, cfg, base=base, race_meta=metas.get(k))})
+                        **backtest_race(cache, r, cfg, base=base, race_meta=metas.get(k),
+                                        passages=par_course.get(k))})
 
     out: dict = {"athlete": athlete, "courses": len(man["races"]), "entries": entries,
                  "variants": {}, "passages": []}
@@ -125,7 +137,9 @@ def run_manifest_one_pass(manifest_path: Path, cfg, *, out_dir: Path,
         cache.cfg = cfg_v
         try:
             out["variants"][name] = [
-                {"athlete": athlete, **backtest_race(cache, r, cfg_v, base=base, race_meta=metas.get(k))}
+                {"athlete": athlete, **backtest_race(cache, r, cfg_v, base=base,
+                                                     race_meta=metas.get(k),
+                                                     passages=par_course.get(k))}
                 for k, r in enumerate(man["races"])]
         finally:
             cache.cfg = cfg
@@ -137,8 +151,7 @@ def run_manifest_one_pass(manifest_path: Path, cfg, *, out_dir: Path,
         (out_dir / f"diag-{slug}.json").write_text(
             json.dumps(res, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         out["diag"] = res
-    if pas is not None:
-        results = passages_for_manifest(pas.best, man, base, cfg, radius_m=radius_m)
+    if results is not None:
         (out_dir / f"passages-{slug}.md").write_text(passages_markdown(athlete, results) + "\n",
                                                      encoding="utf-8")
         out["passages"] = lignes_de_passages(man, results)
@@ -206,6 +219,7 @@ def main(argv: list[str] | None = None) -> int:
             mp, cfg, out_dir=out_dir, do_diag=not args.no_diag,
             do_passages=not args.no_passages, min_hours=args.min_hours,
             min_stop_s=args.min_stop_s, radius_m=args.radius_m, variants=variants,
+            connus=depot.passages(),
         )
         print(file=sys.stderr)
         if res is None:

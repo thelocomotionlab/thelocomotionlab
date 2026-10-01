@@ -39,7 +39,7 @@ from pathlib import Path
 import numpy as np
 
 from twin_engine.registre import (DEFAULT_RACINE, LIVRE_BANC, LIVRE_SERVI, STATUT_DEV,
-                                  STATUT_FRAIS, Depot, cle, frais_a_la_date, lire_entrees)
+                                  STATUT_FRAIS, Depot, frais_a_la_date, lire_entrees)
 
 
 def winkler(lo: float, hi: float, y: float, alpha: float) -> float:
@@ -577,6 +577,55 @@ def migrer(ancien: Path, depot: Depot, *, statuts: list[tuple[str, str, str, str
             "statuts": len(statuts)}
 
 
+def entree_servie(dossier_path: Path, depot: Depot, cfg, *, athlete: str, course: str | None,
+                  jour: str | None, officiel_h: float | None, dnf: bool = False) -> dict:
+    """L'entrée du livre servi d'un plan, fabriquée depuis son dossier (``dossier.json`` de la
+    version servie) : ce que le plan promettait, le résultat, le statut de l'athlète au jour
+    de la course, et la forme du plan si ses passages sont au registre."""
+    from twin_engine import dossier as _dossier
+    from twin_engine.course import build_course
+    from twin_engine.registre import (bloc_course, bloc_domaine, bloc_forme, bloc_modele,
+                                      bloc_prediction, statut_a_la_date)
+
+    d = _dossier.lire(dossier_path)
+    parcours = build_course(d.course_gpx, d.race, cfg)
+    pente = d.twin.slope_factors(cfg)
+    if pente is not None:
+        parcours = parcours.with_slope_cost(*pente)
+    nom = course or d.race.name
+    jour = jour or (d.race.start_time.date().isoformat() if d.race.start_time else None)
+    if not jour:
+        raise ValueError("date de course inconnue : passe --date")
+    reel = None if dnf else officiel_h
+    dates = sorted(x.date for x in d.twin.summaries if x.date)
+    verdict = getattr(d.sufficiency, "verdict", None)
+    entree = {
+        "athlete": athlete,
+        "statut": statut_a_la_date(depot.athletes().get(athlete), jour),
+        "race": nom,
+        "date": jour,
+        "until": dates[-1] if dates else None,
+        "dnf": bool(dnf),
+        "official_time_h": None if reel is None else round(float(reel), 3),
+        "course": bloc_course(parcours),
+        "model": bloc_modele(twin=d.twin, calibration=d.calibration, sufficiency=d.sufficiency,
+                             cfg=cfg, n_activities_used=len(d.twin.summaries)),
+        "race_meta": None,
+        "prediction": bloc_prediction(d.prediction, reel),
+        "below_domain": bool((reel if reel is not None else d.prediction.finish_hours)
+                             < cfg.calibration.genuine_min_hours),
+        "domain_demand": bloc_domaine(d.sufficiency),
+        "niveau": "calibre" if verdict in ("🟢", "🟠") else "base",
+        "source": "dossier",
+        "reference": d.report_ref,
+    }
+    forme = bloc_forme(parcours, d.race, d.prediction, cfg,
+                       depot.passages().get((athlete, nom, jour)))
+    if forme is not None:
+        entree["forme"] = forme
+    return entree
+
+
 def importer(export: Path, depot: Depot) -> dict:
     """Fusionne un export du tableau de bord : ses entrées au livre servi (une entrée au
     résultat saisi ne change plus, sauf correction motivée), ses statuts au journal."""
@@ -645,6 +694,14 @@ def main(argv: list[str] | None = None) -> int:
                     help="fusionne un export du tableau de bord (livre servi, statuts)")
     ap.add_argument("--migrer", metavar="ANCIEN.json",
                     help="range un registre à l'ancien format dans le registre committé")
+    ap.add_argument("--servir", metavar="DOSSIER.json",
+                    help="ajoute au livre servi l'entrée d'un plan servi, depuis le dossier de "
+                         "sa version (avec --athlete, --officiel ou --dnf, --course, --date)")
+    ap.add_argument("--athlete", help="pseudonyme de l'athlète (avec --servir)")
+    ap.add_argument("--course", help="nom de la course au registre (avec --servir)")
+    ap.add_argument("--date", help="date de la course, AAAA-MM-JJ (avec --servir)")
+    ap.add_argument("--officiel", help="temps officiel, 35:05:12 ou 35h05 (avec --servir)")
+    ap.add_argument("--dnf", action="store_true", help="abandon (avec --servir)")
     args = ap.parse_args(argv)
 
     depot = Depot(args.depot)
@@ -666,6 +723,30 @@ def main(argv: list[str] | None = None) -> int:
         rapport = importer(Path(args.importer), depot)
         for k, v in rapport.items():
             print(f"  {k} : {len(v)}{' — ' + ', '.join(v) if v else ''}", file=sys.stderr)
+        return 1 if rapport.get("refusees") else 0
+    if args.servir:
+        from twin_engine.config import load_config
+
+        from tools.backtest import parse_time_h
+
+        if not args.athlete or not (args.officiel or args.dnf):
+            print("--servir demande --athlete et --officiel (ou --dnf)", file=sys.stderr)
+            return 2
+        try:
+            e = entree_servie(Path(args.servir), depot, load_config(), athlete=args.athlete,
+                              course=args.course, jour=args.date,
+                              officiel_h=parse_time_h(args.officiel), dnf=args.dnf)
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        rapport = depot.importer_servi([e])
+        for k, v in rapport.items():
+            if v:
+                print(f"  {k} : {', '.join(v)}", file=sys.stderr)
+        p = e["prediction"]
+        print(f"{e['athlete']} · {e['race']} ({e['date']}) : prédit {p['central_h']:.2f} h, "
+              f"réel {e['official_time_h']}, écart {p['err_pct']} %, statut {e['statut']}"
+              f"{', forme jugée' if 'forme' in e else ''}", file=sys.stderr)
         return 1 if rapport.get("refusees") else 0
     if args.migrer:
         print("--migrer : utiliser migrer() depuis Python, avec les statuts initiaux",

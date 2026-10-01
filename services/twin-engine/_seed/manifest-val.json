@@ -42,8 +42,10 @@
     {
       "name": "Nice 100M 2026",
       "date": "2026-09-25",
-      "_comment": "Course à venir : entrée PRÉPARÉE (Décision 5.3). Sans official_time, le banc consigne le central, les deux bandes, leur source et le verdict à la coupure, et l'entrée reste hors des statistiques. Après la course : renseigner official_time et relancer tools/backtest — l'entrée est écrasée, complète.",
+      "official_time": "35:05:00",
+      "_comment": "Les passages se lisent dans le fichier de la montre (« activite »), qu'il soit ou non dans l'archive.",
       "gpx": "cas_validation/Val/courses/nice-100m-2026.gpx",
+      "activite": "cas_validation/Val/courses/nice-100m-2026-montre.gpx",
       "race_json": "../examples/nice-100m.json"
     }
   ]

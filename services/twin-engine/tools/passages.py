@@ -8,6 +8,9 @@ l'heure de passage à chaque point de découpage est relevée par PROXIMITÉ mon
 distance de la montre ; à défaut, l'approche la plus proche, signalée comme telle. Un point
 jamais approché est consigné « introuvable » — rien n'est inventé.
 
+Une course absente de l'archive (exportée avant elle) se lit dans son fichier, désigné par
+le manifeste : ``"activite": "chemin/vers/la-course.gpx"`` dans l'entrée de la course.
+
 Consigné dans ``docs/twin-registre/passages.json`` (clé athlète/course/date), commun à
 tous les runs qui rejouent la course et à son entrée servie. Agrégats seulement : des heures
 à des km publics.
@@ -95,9 +98,12 @@ def match_checkpoints(t, dist_m, lat, lon, checkpoints, *, radius_m: float = 150
 
 
 def passages_for_activity(t, dist_m, lat, lon, course, *, radius_m: float = 150.0,
-                          official_h: float | None = None) -> dict:
+                          official_h: float | None = None, cadence=None, gap=None,
+                          cfg=None) -> dict:
     """Passages d'une activité sur un parcours : heures depuis le passage de la ligne de
-    départ (point 0), écart montre − officiel à l'arrivée."""
+    départ (point 0), écart montre − officiel à l'arrivée. Avec ``cfg``, chaque tronçon entre
+    deux points trouvés porte en plus son mouvement, ses arrêts et, si la cadence est là, ses
+    minutes de marche (définitions ``twin.terrain_*``)."""
     coords = course.checkpoint_coords()
     names = [s.frm for s in course.segments] + [course.segments[-1].to]
     hits = match_checkpoints(t, dist_m, lat, lon, coords, radius_m=radius_m)
@@ -108,7 +114,7 @@ def passages_for_activity(t, dist_m, lat, lon, course, *, radius_m: float = 150.
                     "t_h": None if h["t_s"] is None else (h["t_s"] - t0) / 3600.0,
                     "method": h["method"], "dist_m": h["dist_m"]})
     finish_h = cps[-1]["t_h"] if cps else None
-    return {
+    out = {
         "radius_m": float(radius_m),
         "watch_elapsed_h": float(t[-1]) / 3600.0 if len(t) else None,
         "official_time_h": official_h,
@@ -117,6 +123,40 @@ def passages_for_activity(t, dist_m, lat, lon, course, *, radius_m: float = 150.
                            else 60.0 * (finish_h - official_h)),
         "n_found": sum(1 for c in cps if c["t_h"] is not None),
         "checkpoints": cps,
+    }
+    if cfg is not None:
+        out.update(_mouvement_par_troncon(np.asarray(t, dtype=float), dist_m, gap, cadence,
+                                          hits, names, cfg))
+    return out
+
+
+def _mouvement_par_troncon(t, dist_m, gap, cadence, hits, names, cfg) -> dict:
+    """Mouvement, arrêts et marche entre deux points de passage trouvés (arrivée à arrivée :
+    l'arrêt à un ravitaillement compte dans le tronçon qui en repart, comme dans le plan)."""
+    from twin_engine.twin.mouvement import bilan_par_troncon
+
+    bornes = [None if h["t_s"] is None else int(np.clip(np.searchsorted(t, h["t_s"]), 0, len(t) - 1))
+              for h in hits]
+    bilans = bilan_par_troncon(dist_m, gap, cadence, bornes, cfg)
+    segments = [None if b is None else {"de": names[k], "a": names[k + 1],
+                                        **{c: (None if v is None else round(v, 4))
+                                           for c, v in b.items()}}
+                for k, b in enumerate(bilans)]
+    complets = [s for s in segments if s is not None]
+
+    def _somme(cle):
+        vals = [s[cle] for s in complets]
+        return None if not vals or any(v is None for v in vals) else round(float(sum(vals)), 4)
+
+    tw = cfg.twin
+    return {
+        "segments": segments,
+        "mouvement_h": _somme("mouvement_h"),
+        "arrets_h": _somme("arrets_h"),
+        "marche_h": _somme("marche_h"),
+        "definitions": {"vitesse_ms": tw.terrain_moving_ms, "trou_max_s": tw.terrain_gap_max_s,
+                        "arret_min_s": tw.terrain_stop_min_s,
+                        "cadence_course_spm": tw.terrain_run_cadence_spm},
     }
 
 
@@ -149,10 +189,35 @@ class PassageCollector:
                 continue
             score = (abs((d - rd).days), abs(hours - official) if official else -hours)
             if k not in self.best or score < self.best[k]["score"]:
-                self.best[k] = {"score": score, "date": d.isoformat(), "hours": hours,
-                                "start_time": act.start_time,
-                                "t": act.t.copy(), "dist_m": act.dist_m.copy(),
-                                "lat": act.lat.copy(), "lon": act.lon.copy()}
+                self.best[k] = _candidate(act, score)
+
+    def fichiers(self, races: list[dict], base: Path) -> None:
+        """Une course dont le manifeste désigne le fichier (``"activite"``, chemin relatif au
+        manifeste) se lit dans ce fichier : il prime sur l'archive, et son sport n'est pas
+        filtré — le manifeste dit que c'est la course."""
+        for k, r in enumerate(races):
+            if not r.get("activite"):
+                continue
+            chemin = (base / r["activite"]).resolve()
+            acts = ([a for a in iter_activities(chemin) if a.start_time is not None]
+                    if chemin.exists() else [])
+            if not acts:
+                print(f"  {r['name']} : fichier de course introuvable ou illisible — {chemin}",
+                      file=sys.stderr)
+                continue
+            act = max(acts, key=lambda a: a.duration_s)
+            self.best[k] = _candidate(act, (-1, 0.0))
+
+
+def _candidate(act, score) -> dict:
+    """Ce que les passages gardent d'une activité : la grille et ses canaux, rien d'autre."""
+    return {"score": score, "date": act.start_time.date().isoformat(),
+            "hours": act.duration_s / 3600.0, "start_time": act.start_time,
+            "t": act.t.copy(), "dist_m": act.dist_m.copy(),
+            "dist_device_m": np.asarray(act.dist_device_m).copy(),
+            "lat": act.lat.copy(), "lon": act.lon.copy(),
+            "cadence_spm": np.asarray(act.cadence_spm).copy(),
+            "gap_s": np.asarray(act.gap_s).copy()}
 
 
 def race_meta_from_candidate(cand: dict | None) -> dict | None:
@@ -170,11 +235,15 @@ def race_meta_from_candidate(cand: dict | None) -> dict | None:
     return {"start_local": start_local, "lat": la, "lon": lo, "tz": tz}
 
 
-def race_activities(archive: Path, races: list[dict], *, progress=None) -> dict[int, dict]:
-    """Une passe sur l'archive : la meilleure candidate de chaque course (cf. PassageCollector)."""
+def race_activities(archive: Path, races: list[dict], *, progress=None,
+                    base: Path | None = None) -> dict[int, dict]:
+    """Une passe sur l'archive : la meilleure candidate de chaque course (cf. PassageCollector),
+    puis les fichiers de course désignés par le manifeste (relatifs à ``base``)."""
     collector = PassageCollector(races)
     for act in iter_activities(archive, running_only=True, progress=progress):
         collector.see(act)
+    if base is not None:
+        collector.fichiers(races, base)
     return collector.best
 
 
@@ -195,8 +264,15 @@ def passages_for_manifest(found: dict[int, dict], man: dict, base: Path, cfg,
                 else RaceSpec(name=r["name"]))
         course = build_course((base / r["gpx"]).resolve().read_bytes(), race, cfg)
         official = None if r.get("dnf") else parse_time_h(r.get("official_time"))
-        pas = passages_for_activity(cand["t"], cand["dist_m"], cand["lat"], cand["lon"], course,
-                                    radius_m=radius_m, official_h=official)
+        dist = cand["dist_m"]
+        device = cand.get("dist_device_m")
+        if (cfg.twin.gpx_distance == "device" and device is not None
+                and np.isfinite(device).any()):
+            dist = device
+        pas = passages_for_activity(cand["t"], dist, cand["lat"], cand["lon"], course,
+                                    radius_m=radius_m, official_h=official,
+                                    cadence=cand.get("cadence_spm"), gap=cand.get("gap_s"),
+                                    cfg=cfg)
         pas["activity_date"] = cand["date"]
         results.append((r["name"], pas))
     return results
@@ -220,7 +296,7 @@ def run_manifest(manifest_path: Path, cfg, *, radius_m: float = 150.0,
               file=sys.stderr)
         return None
     print(f"  {athlete} : recherche des activités de course dans l'archive…", file=sys.stderr)
-    found = race_activities(archive, man["races"], progress=progress)
+    found = race_activities(archive, man["races"], progress=progress, base=base)
     return passages_for_manifest(found, man, base, cfg, radius_m=radius_m)
 
 
@@ -243,11 +319,24 @@ def render_markdown(athlete: str, results: list[tuple[str, dict | None]]) -> str
                    f"arrivée relevée {_hm(pas['finish_h'])} (écart {gap_txt}), "
                    f"{pas['n_found']}/{len(pas['checkpoints'])} points trouvés, "
                    f"rayon {pas['radius_m']:.0f} m\n")
-        out.append("| km | point | passage | méthode | écart m |")
-        out.append("|---|---|---|---|---|")
-        for c in pas["checkpoints"]:
+        segs = pas.get("segments")
+        if segs is None:
+            out.append("| km | point | passage | méthode | écart m |")
+            out.append("|---|---|---|---|---|")
+            for c in pas["checkpoints"]:
+                out.append(f"| {c['km']:.1f} | {c['name']} | {_hm(c['t_h'])} | {c['method']} "
+                           f"| {'—' if c['dist_m'] is None else c['dist_m']} |")
+            continue
+        out.append("| km | point | passage | méthode | écart m | mouvement | arrêts | marche |")
+        out.append("|---|---|---|---|---|---|---|---|")
+        for k, c in enumerate(pas["checkpoints"]):
+            seg = segs[k - 1] if k > 0 else None
+            cells = (["—", "—", "—"] if seg is None else
+                     [_hm(seg["mouvement_h"]), _hm(seg["arrets_h"]), _hm(seg["marche_h"])])
             out.append(f"| {c['km']:.1f} | {c['name']} | {_hm(c['t_h'])} | {c['method']} "
-                       f"| {'—' if c['dist_m'] is None else c['dist_m']} |")
+                       f"| {'—' if c['dist_m'] is None else c['dist_m']} | " + " | ".join(cells) + " |")
+        out.append(f"\nMouvement {_hm(pas.get('mouvement_h'))} · arrêts {_hm(pas.get('arrets_h'))}"
+                   f" · marche {_hm(pas.get('marche_h'))} (entre le premier et le dernier point trouvés).")
     return "\n".join(out)
 
 

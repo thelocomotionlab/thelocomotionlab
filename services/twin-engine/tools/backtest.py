@@ -49,7 +49,8 @@ from twin_engine.course import RaceSpec, build_course
 from twin_engine.ingest import iter_activities
 from twin_engine.pipeline import analyze_preview_from_twin
 from twin_engine.registre import (DEFAULT_RACINE, LIVRE_BANC, Depot, bloc_course, bloc_domaine,
-                                  bloc_modele, bloc_prediction, entete_de_run, sous_le_domaine)
+                                  bloc_forme, bloc_modele, bloc_prediction, entete_de_run,
+                                  sous_le_domaine)
 from twin_engine.twin.model import build_twin_from_contributions
 from twin_engine.twin.record import iter_contributions
 
@@ -138,11 +139,13 @@ def race_spec_from_meta(name: str, meta: dict | None) -> RaceSpec:
 
 
 def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path,
-                  race_meta: dict | None = None) -> dict:
+                  race_meta: dict | None = None, passages: dict | None = None) -> dict:
     """Rejoue UNE course passée : coupure la veille (ou ``until`` du manifeste) → entrée
     de registre. Une prédiction impossible (🔴) est consignée telle quelle : le refus du
     moteur est une information, pas un échec du banc. ``race_meta`` : calendrier de la
-    course (cf. :func:`race_spec_from_meta`) quand le manifeste n'a pas de ``race_json``."""
+    course (cf. :func:`race_spec_from_meta`) quand le manifeste n'a pas de ``race_json``.
+    ``passages`` : ceux de la course, quand on les a — l'entrée porte alors la forme du plan
+    jugée contre eux (``forme``)."""
     race_date = date.fromisoformat(race_entry["date"])
     until = (date.fromisoformat(race_entry["until"]) if race_entry.get("until")
              else race_date - timedelta(days=1))
@@ -184,6 +187,9 @@ def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path,
     entry["domain_demand"] = bloc_domaine(result.sufficiency)
     if pred is not None:
         entry["prediction"] = bloc_prediction(pred, actual_h)
+        forme = bloc_forme(result.course, race, pred, cfg, passages)
+        if forme is not None:
+            entry["forme"] = forme
     return entry
 
 
@@ -199,7 +205,7 @@ def hint_missing_archive(archive: Path) -> str:
     return f"  contenu de {parent} : {', '.join(names) if names else '(vide)'}"
 
 
-def run_manifest(manifest_path: Path, cfg) -> list[dict] | None:
+def run_manifest(manifest_path: Path, cfg, passages: dict | None = None) -> list[dict] | None:
     """Rejoue toutes les courses d'un manifeste ; les entrées portent le pseudonyme de
     l'athlète. ``None`` si l'archive est introuvable : le banc le signale et passe au
     manifeste suivant, au lieu de tout arrêter."""
@@ -219,7 +225,9 @@ def run_manifest(manifest_path: Path, cfg) -> list[dict] | None:
     for r in man["races"]:
         print(f"  {athlete} · {r['name']} ({r['date']}) — coupure la veille…",
               file=sys.stderr, flush=True)
-        entries.append({"athlete": athlete, **backtest_race(cache, r, cfg, base=base)})
+        pas = (passages or {}).get((athlete, r["name"], r["date"]))
+        entries.append({"athlete": athlete, **backtest_race(cache, r, cfg, base=base,
+                                                             passages=pas)})
     return entries
 
 
@@ -273,7 +281,7 @@ def main(argv: list[str] | None = None) -> int:
     for m in args.manifests:
         mp = Path(m)
         man = json.loads(mp.read_text(encoding="utf-8"))
-        entries = run_manifest(mp, cfg)
+        entries = run_manifest(mp, cfg, depot.passages())
         if entries is None:
             missing.append(man["athlete"])
             continue

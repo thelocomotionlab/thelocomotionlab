@@ -182,6 +182,32 @@ class TwinParams:
     # la montre a calculée (``gpxdata:distance`` de COROS), ``device`` sert celle-là — c'est
     # elle que lit un FIT de la même activité.
     gpx_distance: str = "haversine"           # {haversine, device}
+    # --- mouvement, arrêts, marche et descentes hachées (définitions de l'analyse de
+    # référence ``tools/analyses/nice_2026_descentes``) ------------------------------------
+    # En mouvement : incrément de distance ≥ ``terrain_moving_ms`` sur une seconde qui
+    # n'est pas dans un trou d'enregistrement de plus de ``terrain_gap_max_s`` ; un arrêt
+    # compte à partir de ``terrain_stop_min_s`` secondes continues hors mouvement. Course à
+    # pied : cadence lissée sur ``terrain_cadence_smooth_s`` au-dessus de
+    # ``terrain_run_cadence_spm`` (pas par minute, deux pieds), marche en dessous.
+    terrain_moving_ms: float = 0.3
+    terrain_gap_max_s: float = 10.0
+    terrain_stop_min_s: float = 60.0
+    terrain_run_cadence_spm: float = 148.0
+    terrain_cadence_smooth_s: int = 10
+    # Pente des descentes : mesurée sur ±``terrain_grade_half_base_m`` de distance, altitude
+    # lissée ; descente sous ``terrain_descent_grade``. Fenêtres de ``terrain_window_m``,
+    # « hachées » à ``terrain_choppy_switches_per_min`` bascules course↔marche par minute ou
+    # ``terrain_choppy_walk_share`` du temps marché ; classes de pente des comparaisons à
+    # pente égale ``terrain_grade_classes`` ; dénivelé négatif déjà descendu rangé par pas de
+    # ``terrain_dminus_step_m`` jusqu'à ``terrain_dminus_max_m``.
+    terrain_grade_half_base_m: float = 25.0
+    terrain_descent_grade: float = -0.08
+    terrain_window_m: float = 250.0
+    terrain_choppy_switches_per_min: float = 1.0
+    terrain_choppy_walk_share: float = 0.15
+    terrain_grade_classes: tuple[float, ...] = (-0.25, -0.18, -0.13, -0.08)
+    terrain_dminus_step_m: float = 1000.0
+    terrain_dminus_max_m: float = 10000.0
 
 
 @dataclass(frozen=True)
