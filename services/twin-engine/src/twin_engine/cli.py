@@ -69,6 +69,14 @@ def _print_summary(preview, out=None) -> None:
     if tech:
         print(f"\n  Technicité déclarée : +{tech:.0f} % de coût (majoration d'entrée, "
               "non mesurée par le moteur)", file=out)
+    terrain = getattr(preview.course, "terrain", None)
+    if terrain:
+        if terrain.get("servi", True):
+            print(f"\n  Terrain de la carte au total ({terrain['total']}) : "
+                  f"{terrain['deq_ajoute_km']:+.1f} km de Deq", file=out)
+        else:
+            print(f"\n  Terrain de la carte demandé ({terrain['total']}), non servi : "
+                  f"{terrain.get('raison')}", file=out)
 
     # mode OBJECTIF : le verdict s'affiche À CÔTÉ de la prédiction, jamais à sa place
     tgt = getattr(preview, "target", None)
@@ -107,6 +115,10 @@ def _build_parser() -> argparse.ArgumentParser:
                              "calibration.link=log --set prediction.interval_source="
                              "studentized_scale) ; même sémantique que TWIN_CONFIG_PATH, "
                              "sans fichier")
+        sp.add_argument("--terrain", default=None, metavar="FICHIER",
+                        help="terrain de la carte (tools/carte : profil du parcours et magasin "
+                             "des ultras), servi selon pacing.terrain, prediction.terrain_total "
+                             "et calibration.terrain_adjust")
         sp.add_argument("--until", default=None, metavar="AAAA-MM-JJ",
                         help="mode BACKTEST : écarte toute activité postérieure à cette date "
                              "(et les non datées — anti-fuite) ; la fraîcheur est jugée à "
@@ -178,10 +190,18 @@ def main(argv: list[str] | None = None) -> int:
             print(f"--until : date invalide « {args.until} » (attendu AAAA-MM-JJ)", file=sys.stderr)
             return 2
 
+    terrain = None
+    if args.terrain:
+        try:
+            terrain = json.loads(Path(args.terrain).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"--terrain : {exc}", file=sys.stderr)
+            return 2
+
     if args.cmd == "preview":
         result = run_preview(
             training_path=args.training, course_gpx=course_gpx, race=race, cfg=cfg,
-            purge_source=args.purge, progress=_progress, until=until,
+            purge_source=args.purge, progress=_progress, until=until, terrain=terrain,
         )
         if until is not None:
             print(f"\n  Coupure --until {until.isoformat()} : "
@@ -201,6 +221,7 @@ def main(argv: list[str] | None = None) -> int:
         out_dir=Path(args.out), athlete=args.athlete, purge_source=args.purge,
         render_pdf=not args.no_pdf, feuille_only=args.feuille_seule,
         report_date=datetime.now(), progress=_progress, until=until, report_ref=report_ref,
+        terrain=terrain,
     )
     if until is not None:
         print(f"\n  Coupure --until {until.isoformat()} : "

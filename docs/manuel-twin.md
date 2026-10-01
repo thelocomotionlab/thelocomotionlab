@@ -1141,7 +1141,42 @@ coefficients, validation (perte hors échantillon de la carte contre celle des s
 — classe de pente, D− déjà descendu, nuit —, par activités puis par régions, écart réduit
 `z`, AUC) et `signal`. Sans signal, la carte ne dit rien de la technicité pour cet athlète ;
 le plan n'a pas à s'en servir. Les fenêtres d'apprentissage, qui portent les centres des
-activités, restent dans le cache.
+activités, restent dans le cache. `parcours --modele … --vecu local-data/carte/exemples.json`
+ajoute la demande de la course contre le vécu des 183 derniers jours, par tranche de D−.
+
+**Terrain dans le plan et la calibration (DIAGNOSTIC §10.32)** — trois drapeaux, éteints par
+défaut : `pacing.terrain` (`declared` : la technicité déclarée reportée sur les descentes ;
+`map` : le surcoût de la carte, répartition seulement), `prediction.terrain_total=differential`
+(le surcoût de la carte dans le Deq de la cible) et `calibration.terrain_adjust=deq` (dans le
+Deq de chaque vrai ultra aussi ; `calibration.terrain_dplus_prior_scale` règle le prior de β2).
+Les termes de carte demandent le **terrain** de la course : modèle arrêté à la coupure, profil
+du parcours, magasin des profils des ultras. Pour une course à venir :
+
+```bash
+PYTHONPATH=src python -m tools.carte terrain --archive <archive> --until <veille> \
+  --course trace.gpx --race course.json --out /tmp/terrain.json $SRC
+twin-engine preview --training <archive> --course trace.gpx --race course.json \
+  --terrain /tmp/terrain.json --set pacing.terrain=map
+```
+
+Au banc (run 2) : un terrain par course des manifestes, chacun à sa coupure, puis le banc sous
+les variantes de terrain, comparées au run de base du même passage :
+
+```bash
+PYTHONPATH=src python -m tools.carte banc $M --out /tmp/terrains $SRC > /tmp/run2/carte-banc.md
+PYTHONPATH=src python -m tools.banc $M --out /tmp/run2 --label run2 --terrain /tmp/terrains \
+  --variant PTM:pacing.terrain=map \
+  --variant PTD:pacing.terrain=declared \
+  --variant TT:prediction.terrain_total=differential \
+  --variant TA:calibration.terrain_adjust=deq \
+  --variant TA5:calibration.terrain_adjust=deq,calibration.terrain_dplus_prior_scale=0.5
+```
+
+`carte-banc.md` dit, course par course, si le modèle de l'athlète a un signal à la coupure :
+sans signal, les variantes de carte rendent le run de base, et c'est la réponse. Les entrées
+portent `course.terrain` (km ajoutés au Deq, ou la raison du refus), `model.terrain_adjust`
+et ses ultras porteurs, et, avec des passages, `forme.marche_descente` : la marche prévue en
+descente contre la marche mesurée, tronçon par tronçon.
 
 ## 9. Déploiement (rappel)
 

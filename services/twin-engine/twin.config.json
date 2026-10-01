@@ -162,7 +162,9 @@
     "stops_rate_population": 0.0,
     "night_term": "none",
     "night_prior_log_per_share": 0.0,
-    "night_shrink_lambda": 2.0
+    "night_shrink_lambda": 2.0,
+    "terrain_adjust": "off",
+    "terrain_dplus_prior_scale": 1.0
   },
   "prediction": {
     "mc_n": 5000,
@@ -177,7 +179,8 @@
     "environment_term": "off",
     "heat_ref_c": 15.0,
     "heat_cost_per_c": 0.004,
-    "altitude_cost_per_km": 0.05
+    "altitude_cost_per_km": 0.05,
+    "terrain_total": "off"
   },
   "pacing": {
     "fade_delta": 0.15,
@@ -190,7 +193,8 @@
     "plan_window_low_pct": 25,
     "plan_window_high_pct": 75,
     "wide_interval_rel_width": 0.35,
-    "descent_fatigue": "none"
+    "descent_fatigue": "none",
+    "terrain": "none"
   },
   "sufficiency": {
     "history_months_green": 6.0,

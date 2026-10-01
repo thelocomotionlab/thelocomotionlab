@@ -24,7 +24,8 @@ Les fenêtres de descente une par une, avec leur place sur la distance de l'acti
 **Dans le jumeau** (:func:`traits_terrain`), sur toutes les activités résumées :
 
 * vitesses par classe de pente, fraîches et fatiguées (sous / au-delà de
-  ``terrain_fatigue_dminus_m`` de D− déjà descendu), courables et hachées ;
+  ``terrain_fatigue_dminus_m`` de D− déjà descendu), courables et hachées, et la part
+  marchée de chacune ;
 * **pénalité de marche** : 1 − v(haché) ÷ v(courable) à classe égale, fraîche et fatiguée.
   Une fenêtre est hachée parce que l'athlète y marche : ce trait mesure ce que coûte la
   marche en descente, quelle qu'en soit la cause (terrain, quadriceps, nuit) ;
@@ -173,6 +174,27 @@ def _fenetres(act, cfg: Config) -> dict | None:
     }
 
 
+def secondes_en_descente(dist_m, alt_m, gap_s, cfg: Config) -> np.ndarray | None:
+    """Vrai à chaque seconde en mouvement d'une fenêtre de descente — les fenêtres du
+    résumé (distance, pente moyenne, durée minimale) ; None sans altitude exploitable."""
+    tw = cfg.twin
+    d = np.maximum.accumulate(np.nan_to_num(np.asarray(dist_m, dtype=float)))
+    pd = pente_et_denivele(d, alt_m, cfg)
+    if pd is None:
+        return None
+    pente, _ = pd
+    m = np.flatnonzero(masque_mouvement(d, gap_s, cfg))
+    out = np.zeros(d.size, dtype=bool)
+    if m.size == 0:
+        return out
+    w = (d[m] // tw.terrain_window_m).astype(int)
+    _, premiers, comptes = np.unique(w, return_index=True, return_counts=True)
+    g_moy = np.add.reduceat(pente[m], premiers) / comptes
+    descente = (comptes >= _FENETRE_MIN_S) & (g_moy <= tw.terrain_descent_grade)
+    out[m] = np.repeat(descente, comptes)
+    return out
+
+
 def resume_descentes(act, cfg: Config) -> dict | None:
     """Le résumé des descentes d'une activité décodée (cf. module) ; None sans cadence,
     altitude ou mouvement."""
@@ -247,7 +269,8 @@ def _retreci(x: float | None, heures: float, cfg: Config) -> float | None:
 
 def _vitesses(cells, cfg: Config) -> list[dict]:
     """Par classe de pente comparable (entre deux bords de ``terrain_grade_classes``), les
-    vitesses fraîches et fatiguées, courables et hachées (km/h), et leurs heures."""
+    vitesses fraîches et fatiguées, courables et hachées (km/h), leurs heures et la part de
+    leurs secondes marchées."""
     tw = cfg.twin
     bords = list(tw.terrain_grade_classes)
     seuil = int(tw.terrain_fatigue_dminus_m // tw.terrain_dminus_step_m)
@@ -263,6 +286,8 @@ def _vitesses(cells, cfg: Config) -> list[dict]:
                 ligne[f"{etat}_{allure}_kmh"] = (round(3.6 * sum(x["m"] for x in sel) / s, 3)
                                                  if s > 0 and n >= 2 else None)
                 ligne[f"{etat}_{allure}_h"] = round(s / 3600.0, 3)
+                ligne[f"{etat}_{allure}_marche"] = (round(sum(x["marche_s"] for x in sel) / s, 4)
+                                                    if s > 0 and n >= 2 else None)
         out.append(ligne)
     return out
 
@@ -453,4 +478,5 @@ def traits_terrain(summaries, cfg: Config) -> dict | None:
     }
 
 
-__all__ = ["fenetres_de_descente", "pente_et_denivele", "resume_descentes", "traits_terrain"]
+__all__ = ["fenetres_de_descente", "pente_et_denivele", "resume_descentes", "secondes_en_descente",
+           "traits_terrain"]

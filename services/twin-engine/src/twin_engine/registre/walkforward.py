@@ -78,12 +78,14 @@ class ArchiveCache:
             print(f"\r  décodage de l'archive : {n} fichiers…", end="", file=sys.stderr,
                   flush=True)
 
-    def preview_at(self, course, until: date, target_hours=None, race=None):
+    def preview_at(self, course, until: date, target_hours=None, race=None, terrain=None):
         """Jumeau + prédiction « ce que le moteur savait au soir du ``until`` ».
 
         Anti-fuite identique au chemin direct : postérieures ET non datées écartées.
         ``race`` : la spec de course (calendrier, chaleur, ravitos) — donnée de course, pas
-        de l'athlète, donc hors du périmètre de la coupure.
+        de l'athlète, donc hors du périmètre de la coupure. ``terrain`` : le terrain de la
+        carte de cette course (cf. :func:`~twin_engine.pipeline.analyze_preview_from_twin`),
+        fabriqué avec un modèle arrêté à la même coupure.
         """
         kept = [c for c in self.contributions
                 if c.start_date is not None and c.start_date <= until]
@@ -92,7 +94,7 @@ class ArchiveCache:
         return analyze_preview_from_twin(
             twin, course, self.cfg, n_ingested=len(kept), n_skipped=self.n_skipped,
             n_excluded_until=n_excluded, analysis_date=until, target_hours=target_hours,
-            race=race,
+            race=race, terrain=terrain,
         )
 
 
@@ -108,13 +110,15 @@ def race_spec_from_meta(name: str, meta: dict | None) -> RaceSpec:
 
 
 def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path,
-                  race_meta: dict | None = None, passages: dict | None = None) -> dict:
+                  race_meta: dict | None = None, passages: dict | None = None,
+                  terrain: dict | None = None) -> dict:
     """Rejoue UNE course passée : coupure la veille (ou ``until`` du manifeste) → entrée
     de registre. Une prédiction impossible (🔴) est consignée telle quelle : le refus du
     moteur est une information, pas un échec du banc. ``race_meta`` : calendrier de la
     course (cf. :func:`race_spec_from_meta`) quand le manifeste n'a pas de ``race_json``.
     ``passages`` : ceux de la course, quand on les a — l'entrée porte alors la forme du plan
-    jugée contre eux (``forme``)."""
+    jugée contre eux (``forme``). ``terrain`` : le terrain de la carte de la course (profil du
+    parcours, magasin des ultras), servi selon les drapeaux."""
     race_date = date.fromisoformat(race_entry["date"])
     until = (date.fromisoformat(race_entry["until"]) if race_entry.get("until")
              else race_date - timedelta(days=1))
@@ -128,7 +132,8 @@ def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path,
         race = race_spec_from_meta(race_entry["name"], race_meta)
 
     course = build_course(gpx_path.read_bytes(), race, cfg)
-    result = cache.preview_at(course, until, target_hours=race.target_hours, race=race)
+    result = cache.preview_at(course, until, target_hours=race.target_hours, race=race,
+                              terrain=terrain)
     pred = result.prediction
     actual_h = None if race_entry.get("dnf") else parse_time_h(race_entry.get("official_time"))
 
@@ -156,7 +161,9 @@ def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path,
     entry["domain_demand"] = bloc_domaine(result.sufficiency)
     if pred is not None:
         entry["prediction"] = bloc_prediction(pred, actual_h)
-        forme = bloc_forme(result.course, race, pred, cfg, passages)
+        forme = bloc_forme(result.course, race, pred, cfg, passages,
+                           terrain=getattr(result.twin, "terrain", None),
+                           profil=(terrain or {}).get("parcours"))
         if forme is not None:
             entry["forme"] = forme
     return entry

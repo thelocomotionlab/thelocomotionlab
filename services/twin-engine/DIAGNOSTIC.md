@@ -3356,3 +3356,75 @@ ne trouve rien sans lien, refuse sous le minimum, s'applique aux seules descente
 un fichier de course fabriqué, un modèle appris sur une archive puis appliqué à un parcours,
 refusé sur un autre MNT. `tests/test_descentes.py` : les fenêtres une à une refont les
 cellules du résumé.
+
+### 10.32 Chantier terrain — étape 6 : le terrain dans le plan, le total et la calibration (2026-10-01)
+
+**Constat.** Le moteur ne savait servir la technicité qu'en majoration déclarée, uniforme sur
+chaque mètre, au total comme à la répartition. L'étape 6 demande chaque terme derrière son
+drapeau ; les leviers de pente et la fatigue de descente sont livrés (§10.28, §10.29), restent
+le surcoût de terrain et le terrain dans la calibration.
+
+**Ce qui change** (`twin.terrain`, tous les drapeaux éteints par défaut).
+- `pacing.terrain=declared` : la technicité déclarée se reporte sur les descentes, au prorata
+  de la probabilité de marcher de l'athlète à cet endroit (modèle de marche du détecteur :
+  classe de pente, D− déjà descendu) ; même surcharge totale, déplacée ; uniforme sur les
+  descentes sans modèle de marche. Le total ne change pas.
+- `pacing.terrain=map` : chaque mètre de descente coûte (1 + P_carte·r) ÷ (1 + P_réf·r),
+  r = p ÷ (1 − p), p la pénalité de marche fraîche ou fatiguée du jumeau ; P_carte et P_réf
+  viennent du profil de terrain du parcours (`carte.modele.profil_de_terrain`) : P(hachée)
+  sous la carte, et sur le terrain habituel de l'athlète (la part de la carte dans le logit
+  remplacée par sa moyenne d'apprentissage, `eta_carte_moyen`), à la même pente et au même
+  D−. Répartition seulement.
+- `prediction.terrain_total=differential` : le même facteur entre dans le Deq du parcours
+  cible (`CourseProfile.with_terrain`, `course.terrain` dit les km ajoutés) ; la calibration
+  reste intacte.
+- `calibration.terrain_adjust=deq` : le Deq de chaque vrai ultra porte son surcoût de terrain
+  (magasin des profils des activités, par heure de départ), le parcours cible aussi ; la
+  sélection des ultras ne le voit pas ; le prior de β2 (D+/km) est multiplié par
+  `terrain_dplus_prior_scale` (1 par défaut), puisqu'une part de ce que le prior population
+  prête aux parcours montagneux est désormais dans le Deq.
+- Rien n'est servi d'un modèle de carte sans signal hors échantillon, d'un profil d'une autre
+  trace, sans pénalité de marche : facteur 1, et la raison dans `course.terrain`. Un terrain
+  servi au total est gardé par toute loi de répartition, qui sinon le perdrait.
+- **Marche prévue** (`twin.terrain.marche_prevue`, le modèle à deux allures) : minutes de
+  marche en descente par segment du plan — le temps du segment réparti sur ses mètres au
+  prorata de leur coût, × probabilité de marcher (modèle de marche, nuit du segment) ; avec un
+  profil de carte, P(hachée) × part marchée des fenêtres hachées + (1 − P) × part marchée des
+  courables (nouveau : les parts marchées dans les vitesses du détecteur). Au registre, le bloc
+  `forme` met la marche prévue de chaque tronçon (sous le mouvement réel imposé) face à la
+  marche mesurée en descente — les passages mesurent désormais, par tronçon, le temps et la
+  marche dans les fenêtres de descente du détecteur.
+- **Demande contre vécu** (`tools/carte parcours --modele … --vecu exemples.json`) : par
+  tranche de 1000 m de D− déjà descendu, les km de descente et les km hachés prévus de la
+  course, face aux km de descente et aux km hachés mesurés dans les 183 derniers jours de
+  l'athlète.
+- Outils : `tools/carte terrain` (le terrain d'une course pour `--terrain` de preview et
+  full : modèle arrêté à la coupure, profil du parcours, magasin des ultras), `tools/carte
+  banc` (un terrain par course de manifestes, chacun à sa coupure), `tools/banc --terrain`
+  (servi selon les drapeaux, variantes comprises).
+
+**Chez Valentin, run 2** (recette au manuel, « Terrain dans le plan et la calibration ») :
+`tools/carte banc` sur les quatre manifestes, puis `tools/banc --terrain` sous les variantes
+carte (répartition, total, calibration, calibration avec prior de β2 réduit) ; la décision
+suit la règle du prompt. Un athlète dont le modèle de carte n'a pas de signal ne bouge sous
+aucune variante carte : c'est attendu, et c'est une réponse.
+
+**Limites.** (1) Sans signal, tous les termes de carte sont inertes — probable pour un
+athlète dont les régions sont peu étiquetées. (2) Le magasin ne couvre que les activités d'au
+moins `genuine_min_hours` avec positions et descentes ; un ultra sans profil garde son Deq,
+et le mélange peut biaiser β (la note de calibration les compte). (3) Le terrain habituel est
+la moyenne des fenêtres d'apprentissage (toutes les sorties), pas celle des seuls ultras.
+(4) La marche prévue ne compte que les descentes ; la marche en montée reste hors du modèle.
+(5) Les probabilités de carte sont celles de jour ; seul le modèle de marche porte la nuit.
+(6) Un rapport refait depuis un dossier du tableau de bord ne garde pas le terrain de carte
+(la technicité déclarée, si).
+
+**Tests** (`tests/test_terrain_plan.py`) : facteur de marche, profil refusé (sans signal,
+autre trace, sans pénalité), technicité déclarée reportée sur les descentes à surcharge égale ;
+la carte à la répartition déplace le temps vers la descente technique sans toucher au total ;
+au total, elle allonge la cible sans toucher à la calibration, et une loi de répartition la
+garde ; dans la calibration, chaque ultra porte son surcoût et σ baisse quand le sol expliquait
+l'écart ; prior de β2 ; marche prévue (D−, carte) ; forme du plan contre la marche mesurée ;
+secondes en descente des passages ; les outils, de l'archive au banc, sur des sorties dont les
+descentes hachées tombent là où la carte l'annonce dans les deux sens de la ligne (le modèle y
+trouve son signal).

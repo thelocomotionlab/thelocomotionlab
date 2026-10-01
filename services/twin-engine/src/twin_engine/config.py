@@ -381,6 +381,14 @@ class CalibrationParams:
     night_term: str = "none"                             # {none, prior_shrunk}
     night_prior_log_per_share: float = 0.0               # ln v par unité de part de nuit (0 = sans a priori)
     night_shrink_lambda: float = 2.0
+    # --- terrain de la carte (chantier terrain, ``twin.terrain``) ---------------------------
+    # ``off`` (défaut) : rien. ``deq`` : le Deq de chaque vrai ultra porte son surcoût de
+    #   terrain (profil de carte de son activité, pénalité de marche du jumeau), comme il porte
+    #   la pente, et le parcours cible pareil ; un ultra sans profil garde son Deq. Le prior de
+    #   β2 (D+/km) est multiplié par ``terrain_dplus_prior_scale`` : une part de ce que le
+    #   prior population prête aux parcours montagneux est désormais dans le Deq.
+    terrain_adjust: str = "off"                          # {off, deq}
+    terrain_dplus_prior_scale: float = 1.0
 
 
 @dataclass(frozen=True)
@@ -450,6 +458,11 @@ class PredictionParams:
     heat_ref_c: float = 15.0
     heat_cost_per_c: float = 0.004
     altitude_cost_per_km: float = 0.05
+    # --- terrain de la carte au total (chantier terrain, ``twin.terrain``) ---------------------
+    # ``off`` (défaut) : rien. ``differential`` : le Deq du parcours cible porte le surcoût de
+    #   terrain de son profil de carte, relatif au terrain habituel de l'athlète ; la
+    #   calibration reste intacte (en alternative à ``calibration.terrain_adjust=deq``).
+    terrain_total: str = "off"                           # {off, differential}
 
 
 @dataclass(frozen=True)
@@ -501,6 +514,13 @@ class PacingParams:
     # (Twin.terrain : ralentissement des descentes courues par km de D−, au-delà de celui du
     # reste de ses sorties au même D−) ; le total ne change pas, seule la répartition.
     descent_fatigue: str = "none"        # {none, dminus}
+    # --- surcoût de terrain à la répartition (chantier terrain, ``twin.terrain``) ------------
+    # ``none`` (défaut) : rien. ``declared`` : la technicité déclarée de la course se reporte
+    #   sur les descentes, au prorata de la probabilité de marcher de l'athlète (classe de
+    #   pente, D− déjà descendu). ``map`` : le profil de carte du parcours (P(hachée) sous la
+    #   carte contre le terrain habituel) × la pénalité de marche de l'athlète, fraîche ou
+    #   fatiguée. Le total ne change pas, seule la répartition.
+    terrain: str = "none"                # {none, declared, map}
 
 
 @dataclass(frozen=True)

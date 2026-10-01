@@ -21,6 +21,10 @@ Sous ``pacing.descent_fatigue=dminus``, la répartition porte en plus la fatigue
 du jumeau (:mod:`.descentes`) : le temps des descentes tardives s'allonge avec le dénivelé
 négatif déjà descendu, le reste se raccourcit d'autant (le total ne bouge pas).
 
+Le terrain (:mod:`.terrain`) s'y ajoute : à la répartition sous ``pacing.terrain``, au total
+sous ``prediction.terrain_total=differential`` ou ``calibration.terrain_adjust=deq`` — un
+terrain servi au total l'est aussi à toute répartition, qui sinon le perdrait.
+
 La loi s'applique à la pente du parcours (lissage ``course.smooth_window_m``) ; les facteurs
 ont été mesurés sur celle des activités (base ±``twin.grade_base_m``) : deux définitions
 voisines, dont l'écart est mesuré au carnet (DIAGNOSTIC §10.28).
@@ -132,30 +136,61 @@ def facteur_de_fatigue(course, phi: float, cfg: Config) -> np.ndarray:
     return np.where(descente, np.exp(-float(phi) * dminus), 1.0)
 
 
-def servir_parcours(course, twin, cfg: Config):
+def servir_parcours(course, twin, cfg: Config, profil: dict | None = None):
     """Le parcours tel que le moteur le sert à l'athlète : total sous κ si
-    ``slope_cost=personal`` ; répartition sous la loi de ``slope_curve`` si une loi
-    personnelle est servie à la répartition et diffère de celle du total, et sous la
-    fatigue de descente si ``pacing.descent_fatigue=dminus``."""
+    ``slope_cost=personal`` ; total sous le terrain de la carte (``profil``, le profil de
+    terrain du parcours) si ``prediction.terrain_total=differential`` ou
+    ``calibration.terrain_adjust=deq`` ; répartition sous la loi de ``slope_curve`` si une loi
+    personnelle est servie à la répartition et diffère de celle du total, sous la fatigue de
+    descente si ``pacing.descent_fatigue=dminus``, sous le terrain si ``pacing.terrain`` le
+    demande."""
+    from dataclasses import replace
+
+    from .terrain import facteur_carte, facteur_declare, penalites, profil_compatible
+
     c = cfg.calibration
     if c.slope_cost == "personal":
         k = twin.slope_factors(cfg)
         if k is not None:
             course = course.with_slope_cost(*k)
+    traits = getattr(twin, "terrain", None)
+    mode_total = ("deq" if c.terrain_adjust == "deq"
+                  else "differential" if cfg.prediction.terrain_total == "differential" else None)
+    f_carte = None
+    if mode_total is not None or cfg.pacing.terrain == "map":
+        f_carte = facteur_carte(course, profil, traits, cfg)
+    if mode_total is not None:
+        if f_carte is not None:
+            course = course.with_terrain(f_carte, {"source": "carte", "total": mode_total})
+        else:
+            raison = (profil_compatible(profil, course) or
+                      ("pénalité de marche inconnue" if penalites(traits) is None else None))
+            course = replace(course, terrain={"source": "carte", "total": mode_total, "servi": False,
+                                              "raison": raison})
+    f_pacing = None
+    if cfg.pacing.terrain == "map":
+        f_pacing = f_carte
+    elif cfg.pacing.terrain == "declared":
+        f_pacing = facteur_declare(course, traits, cfg)
+    garde = f_carte if (mode_total is not None and cfg.pacing.terrain != "map") else None
     detail = None
     if c.slope_cost == "personal_pacing" or (c.slope_cost == "personal" and c.slope_curve == "bins"):
         detail = getattr(twin, "slope_detail", None)
         if detail is None:
             detail = {}
-    return repartir(course, detail, cfg, phi=fatigue_servie(getattr(twin, "terrain", None), cfg))
+    return repartir(course, detail, cfg, phi=fatigue_servie(traits, cfg),
+                    terrain=f_pacing, terrain_total=garde)
 
 
-def repartir(course, detail: dict | None, cfg: Config, *, phi: float | None = None):
+def repartir(course, detail: dict | None, cfg: Config, *, phi: float | None = None,
+             terrain: np.ndarray | None = None, terrain_total: np.ndarray | None = None):
     """Le parcours dont le plan répartit sous la loi de ``slope_curve`` mesurée dans
-    ``detail`` (``None`` : la loi du total) et sous la fatigue de descente ``phi`` ; tel
-    quel sans rien de tout cela, ou sans décomposition."""
+    ``detail`` (``None`` : la loi du total), sous la fatigue de descente ``phi`` et sous le
+    facteur de terrain ``terrain`` (``pacing.terrain``) ; ``terrain_total`` : le facteur que
+    le total porte déjà, gardé dans toute répartition. Tel quel sans loi, sans fatigue ni
+    terrain de répartition, ou sans décomposition."""
     loi = loi_de_repartition(detail, cfg) if detail is not None else None
-    if loi is None and phi is None:
+    if loi is None and phi is None and terrain is None:
         return course
     if loi is None:
         f = None if facteur_de_minetti(course) is None else np.asarray(course.grade_factor, dtype=float)
@@ -167,6 +202,11 @@ def repartir(course, detail: dict | None, cfg: Config, *, phi: float | None = No
     if phi is not None:
         f = f * facteur_de_fatigue(course, phi, cfg)
         loi = {**loi, "descent_fatigue": round(float(phi), 5)}
+    if terrain is not None:
+        f = f * np.asarray(terrain, dtype=float)
+        loi = {**loi, "terrain": cfg.pacing.terrain}
+    if terrain_total is not None:
+        f = f * np.asarray(terrain_total, dtype=float)
     return course.with_repartition(f, loi)
 
 

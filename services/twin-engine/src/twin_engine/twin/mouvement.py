@@ -72,10 +72,14 @@ def course_a_pied(cadence_spm: np.ndarray | None, cfg: Config) -> np.ndarray | N
 
 def bilan_par_troncon(dist_m: np.ndarray, gap_s: np.ndarray | None,
                       cadence_spm: np.ndarray | None, bornes: list[int | None],
-                      cfg: Config) -> list[dict | None]:
+                      cfg: Config, descente: np.ndarray | None = None) -> list[dict | None]:
     """Pour chaque tronçon entre deux bornes consécutives (indices de seconde) : temps
     écoulé, arrêts, mouvement (écoulé − arrêts) et marche (secondes en mouvement à cadence
-    de marche ; ``None`` sans cadence), en heures. ``None`` quand une borne manque."""
+    de marche ; ``None`` sans cadence), en heures. ``None`` quand une borne manque.
+
+    ``descente`` (masque par seconde des fenêtres de descente du détecteur,
+    ``twin.descentes.secondes_en_descente``) : en plus, le temps en mouvement en descente et
+    la marche en descente du tronçon."""
     mouvement = masque_mouvement(dist_m, gap_s, cfg)
     arret = episodes_arret(mouvement, cfg)
     court = course_a_pied(cadence_spm, cfg)
@@ -88,9 +92,15 @@ def bilan_par_troncon(dist_m: np.ndarray, gap_s: np.ndarray | None,
         arrets = float(np.count_nonzero(arret[i0:i1]))
         marche = (None if court is None
                   else float(np.count_nonzero(mouvement[i0:i1] & ~court[i0:i1])))
-        out.append({"ecoule_h": ecoule / 3600.0, "arrets_h": arrets / 3600.0,
-                    "mouvement_h": (ecoule - arrets) / 3600.0,
-                    "marche_h": None if marche is None else marche / 3600.0})
+        b = {"ecoule_h": ecoule / 3600.0, "arrets_h": arrets / 3600.0,
+             "mouvement_h": (ecoule - arrets) / 3600.0,
+             "marche_h": None if marche is None else marche / 3600.0}
+        if descente is not None:
+            dm = mouvement[i0:i1] & descente[i0:i1]
+            b["descente_h"] = float(np.count_nonzero(dm)) / 3600.0
+            b["marche_descente_h"] = (None if court is None
+                                      else float(np.count_nonzero(dm & ~court[i0:i1])) / 3600.0)
+        out.append(b)
     return out
 
 

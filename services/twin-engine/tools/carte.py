@@ -12,6 +12,12 @@
     # le modèle d'un athlète : ses activités avec cadence jusqu'à --until, une carte chacune
     PYTHONPATH=src python -m tools.carte modele --archive <archive> --until 2026-09-24 \\
         --osm <extrait.osm.pbf> --mnt copernicus --out modele.json
+    # le terrain d'une course pour le moteur (--terrain de preview/full) : modèle arrêté au
+    # --until, profil du parcours, magasin des ultras de l'archive
+    PYTHONPATH=src python -m tools.carte terrain --archive <archive> --until 2026-09-24 \\
+        --course trace.gpx --race course.json --osm … --mnt copernicus --out terrain.json
+    # le terrain de chaque course de manifestes, à sa coupure, pour tools/banc --terrain
+    PYTHONPATH=src python -m tools.carte banc manifest-a.json … --out <dossier> --osm … --mnt copernicus
 
 ``--mnt`` : ``copernicus`` (tuiles GLO-30 lues à distance), un fichier (GeoTIFF, mosaïque
 VRT de dalles RGE ALTI), ou un dossier de dalles (``--mnt-crs EPSG:2154`` pour des ``.asc``
@@ -28,7 +34,8 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import date
+from dataclasses import dataclass
+from datetime import date, timedelta
 from pathlib import Path
 
 import numpy as np
@@ -190,6 +197,11 @@ def _parcours(args, cfg: Config) -> int:
                   "le modèle ne s'applique pas", file=sys.stderr)
             return 2
         sortie["technicite"] = _technicite(c, modele, cfg, course, args.coupure_km)
+        if args.vecu:
+            ex = Exemples.depuis_json(json.loads(Path(args.vecu).read_text(encoding="utf-8")))
+            fin = date.fromisoformat(args.vecu_jusqua) if args.vecu_jusqua else None
+            sortie["demande_contre_vecu"] = demande_contre_vecu(c, modele, cfg, ex, fin,
+                                                                int(args.vecu_jours))
     if args.json:
         print(json.dumps(sortie, ensure_ascii=False, indent=2))
         return 0
@@ -204,9 +216,48 @@ def _parcours(args, cfg: Config) -> int:
             lignes.append(f"| {nom} | {v['km']} | {_f(v['p_frais'], 3)} | {_f(v['p_course'], 3)} |")
         for s in tech["segments"]:
             lignes.append(f"| {s['segment']} | {s['km']} | {_f(s['p_frais'], 3)} | {_f(s['p_course'], 3)} |")
+    if "demande_contre_vecu" in sortie:
+        dv = sortie["demande_contre_vecu"]
+        lignes += ["", f"**Demande contre vécu** — descentes par D− déjà descendu ; vécu : "
+                       f"{dv['jours']} jours jusqu'au {dv['jusqua']} ({dv['activites']} activités)", "",
+                   "| D− déjà descendu | km de descente (course) | km hachés prévus | "
+                   "km de descente (vécu) | km hachés vécus |", "|---|---|---|---|---|"]
+        for b in dv["tranches"]:
+            lignes.append(f"| {b['dminus_m'][0]:.0f}–{b['dminus_m'][1]:.0f} m | {b['course_km']} | "
+                          f"{b['course_haches_km']} | {b['vecu_km']} | {b['vecu_haches_km']} |")
     lignes += ["", "Sources : " + " · ".join(c.attributions)]
     print("\n".join(lignes))
     return 0
+
+
+def demande_contre_vecu(c: Carte, modele: dict, cfg: Config, ex: Exemples, jusqua: date | None,
+                        jours: int) -> dict:
+    """La course contre les dernières semaines de l'athlète, par tranche de D− déjà descendu
+    (``twin.terrain_dminus_step_m``) : km de descente et km hachés — prévus sur la course
+    (Σ P(hachée) × longueur, au D− du parcours), mesurés dans les fenêtres du vécu."""
+    pas = float(cfg.twin.terrain_dminus_step_m)
+    pr = probabilites(c, modele, cfg)
+    t = c.tranches
+    desc = pr["descente"]
+    if jusqua is None:
+        jusqua = max((date.fromisoformat(j) for j in ex.jour.values()), default=date.today())
+    debut = jusqua - timedelta(days=jours)
+    vecu = {a for a, j in ex.jour.items() if debut < date.fromisoformat(j) <= jusqua}
+    sel = [i for i, a in enumerate(ex.activite) if a in vecu]
+    n_bins = int(max(float(t.dminus_m.max()) if t.n else 0.0,
+                     max((ex.dminus_km[i] * 1000.0 for i in sel), default=0.0)) // pas) + 1
+    tranches = []
+    for b in range(n_bins):
+        dans = desc & (t.dminus_m >= b * pas) & (t.dminus_m < (b + 1) * pas)
+        v = [i for i in sel if b * pas <= ex.dminus_km[i] * 1000.0 < (b + 1) * pas]
+        longueurs = [ex.longueur_m[i] if i < len(ex.longueur_m) else 0.0 for i in v]
+        tranches.append({
+            "dminus_m": [b * pas, (b + 1) * pas],
+            "course_km": round(float(dans.sum() * t.pas_m / 1000.0), 2),
+            "course_haches_km": round(float(np.nansum(pr["p"][dans]) * t.pas_m / 1000.0), 2),
+            "vecu_km": round(float(sum(longueurs)) / 1000.0, 2),
+            "vecu_haches_km": round(float(sum(lg for lg, i in zip(longueurs, v) if ex.hache[i])) / 1000.0, 2)})
+    return {"jusqua": jusqua.isoformat(), "jours": jours, "activites": len(vecu), "tranches": tranches}
 
 
 def _technicite(c: Carte, modele: dict, cfg: Config, course, coupure_km) -> dict:
@@ -364,15 +415,28 @@ def _contraste(lignes_fen: list[tuple[dict, dict]], coupure_km, echelle: float) 
 
 
 # --------------------------------------------------------------------------- modèle
-def _modele(args, cfg: Config) -> int:
+@dataclass
+class Activite:
+    """Ce que la carte garde d'une activité de l'archive : sa clé (heure de départ, celle des
+    résumés du jumeau), son jour, sa durée, ses tranches et ses fenêtres de descente."""
+
+    cle: str
+    jour: date
+    duree_h: float
+    tranches: object
+    fenetres: list[dict]
+
+
+def activites_de_l_archive(archive: Path, cfg: Config, until: date | None = None) -> list[Activite]:
+    """Les activités de course de l'archive avec cadence, altitude exploitable, positions et
+    au moins une fenêtre de descente, datées jusqu'au ``until`` inclus."""
     from twin_engine.ingest import iter_activities
     from twin_engine.twin.descentes import fenetres_de_descente
     from twin_engine.twin.record import activity_distance, process_activity_full
 
-    until = date.fromisoformat(args.until) if args.until else None
-    entrees = []
-    for act in iter_activities(Path(args.archive), running_only=True):
-        if until is not None and (act.start_time is None or act.start_time.date() > until):
+    out = []
+    for act in iter_activities(Path(archive), running_only=True):
+        if act.start_time is None or (until is not None and act.start_time.date() > until):
             continue
         if process_activity_full(act, cfg)[0].descente is None:
             continue
@@ -383,34 +447,182 @@ def _modele(args, cfg: Config) -> int:
         d = np.maximum.accumulate(np.nan_to_num(np.asarray(a.dist_m, dtype=float)))
         t = tranches_de(a.lat, a.lon, a.alt_m, cfg, x_m=d)
         if t.n:
-            entrees.append((f"a{len(entrees) + 1:05d}", t, fen))
-    if not entrees:
+            out.append(Activite(act.start_time.isoformat(), act.start_time.date(),
+                                act.duration_s / 3600.0, t, fen))
+    return out
+
+
+def cartes_des_activites(acts: list[Activite], lecteur: Lecteur) -> dict[str, Carte]:
+    cartes = {}
+    for k, a in enumerate(acts, start=1):
+        cartes[a.cle] = lecteur.carte(a.tranches)
+        if k % 25 == 0:
+            print(f"  cartes : {k}/{len(acts)}", file=sys.stderr)
+    return cartes
+
+
+def exemples_de(acts: list[Activite], cartes: dict[str, Carte]) -> Exemples:
+    """Les fenêtres étiquetées de toutes les activités, sous des identifiants anonymes."""
+    ex = Exemples()
+    for k, a in enumerate(acts, start=1):
+        ex.ajouter(f"a{k:05d}", a.fenetres, cartes[a.cle], jour=a.jour.isoformat())
+    return ex
+
+
+def modele_jusqua(ex: Exemples, until: date | None, cfg: Config, sources: dict | None) -> dict:
+    """Le modèle appris sur les seules activités datées jusqu'au ``until`` inclus."""
+    garder = {a for a, j in ex.jour.items() if until is None or date.fromisoformat(j) <= until}
+    modele = apprendre(ex.sous_ensemble(garder), cfg, sources=sources)
+    modele["until"] = None if until is None else until.isoformat()
+    return modele
+
+
+def magasin_des_ultras(acts: list[Activite], cartes: dict[str, Carte], modele: dict, cfg: Config,
+                       until: date | None = None) -> dict:
+    """Le magasin des profils de terrain des activités assez longues pour être de vrais
+    ultras (``calibration.genuine_min_hours``), datées jusqu'au ``until`` : par heure de
+    départ, leurs tranches en descente (Deq, P sous la carte, P sur le terrain habituel, D−)."""
+    from twin_engine.carte.modele import identite
+    from twin_engine.twin.terrain import tranches_pour_le_magasin
+
+    activites = {}
+    if modele.get("coefficients"):
+        for a in acts:
+            if a.duree_h < cfg.calibration.genuine_min_hours or (until is not None and a.jour > until):
+                continue
+            pr = probabilites(cartes[a.cle], modele, cfg)
+            activites[a.cle] = tranches_pour_le_magasin(a.tranches, pr["p"], pr["p_ref"],
+                                                        pr["descente"], cfg)
+    return {"version": 1, "modele": identite(modele), "activites": activites}
+
+
+def _modele(args, cfg: Config) -> int:
+    until = date.fromisoformat(args.until) if args.until else None
+    acts = activites_de_l_archive(Path(args.archive), cfg, until)
+    if not acts:
         print("Aucune activité avec cadence, altitude, positions et descentes.", file=sys.stderr)
         return 1
-    print(f"{len(entrees)} activités avec des descentes ; cartes…", file=sys.stderr)
-    lecteur = Lecteur(args, cfg, [(t.lat, t.lon) for _, t, _ in entrees])
-    ex = Exemples()
-    sources = None
+    print(f"{len(acts)} activités avec des descentes ; cartes…", file=sys.stderr)
+    lecteur = Lecteur(args, cfg, [(a.tranches.lat, a.tranches.lon) for a in acts])
     try:
-        for k, (nom, t, fen) in enumerate(entrees, start=1):
-            c = lecteur.carte(t)
-            sources = c.sources
-            ex.ajouter(nom, fen, c)
-            if k % 25 == 0:
-                print(f"  {k}/{len(entrees)}", file=sys.stderr)
+        cartes = cartes_des_activites(acts, lecteur)
     finally:
         lecteur.fermer()
+    ex = exemples_de(acts, cartes)
     cache = Path(args.cache)
     cache.mkdir(parents=True, exist_ok=True)
     (cache / "exemples.json").write_text(json.dumps(ex.to_json(), ensure_ascii=False), encoding="utf-8")
-    modele = apprendre(ex, cfg, sources=sources)
-    modele["until"] = args.until
+    sources = next(iter(cartes.values())).sources
+    modele = modele_jusqua(ex, until, cfg, sources)
     if args.out:
         Path(args.out).write_text(json.dumps(modele, ensure_ascii=False, indent=2), encoding="utf-8")
     if args.json:
         print(json.dumps(modele, ensure_ascii=False, indent=2))
         return 0
     print("\n".join(_resume_modele(modele)))
+    return 0
+
+
+def _parcours_de(gpx: Path, race_json: Path | None, nom: str, cfg: Config):
+    from twin_engine.course.profile import build_course
+    from twin_engine.course.spec import RaceSpec
+
+    race = RaceSpec.from_json(race_json) if race_json else RaceSpec(name=nom)
+    return build_course(Path(gpx).read_bytes(), race, cfg)
+
+
+def terrain_d_une_course(course, acts: list[Activite], cartes: dict[str, Carte], ex: Exemples,
+                         until: date | None, lecteur: Lecteur, cfg: Config) -> dict:
+    """Le terrain d'une course pour le moteur (``--terrain``) : modèle arrêté au ``until``,
+    profil du parcours, magasin des ultras jusqu'au ``until``."""
+    from twin_engine.carte.modele import profil_de_terrain
+
+    sources = next(iter(cartes.values())).sources if cartes else None
+    modele = modele_jusqua(ex, until, cfg, sources)
+    bundle: dict = {"version": 1, "modele": modele, "parcours": None,
+                    "ultras": magasin_des_ultras(acts, cartes, modele, cfg, until)}
+    if modele.get("coefficients"):
+        c = lecteur.carte(tranches_du_parcours(course, cfg))
+        bundle["parcours"] = profil_de_terrain(c, modele, cfg, nom=course.name,
+                                               longueur_km=round(float(course.length_km), 3))
+    return bundle
+
+
+def _terrain(args, cfg: Config) -> int:
+    until = date.fromisoformat(args.until) if args.until else None
+    course = _parcours_de(Path(args.course), Path(args.race) if args.race else None,
+                          Path(args.course).stem, cfg)
+    acts = activites_de_l_archive(Path(args.archive), cfg, until)
+    if not acts:
+        print("Aucune activité avec cadence, altitude, positions et descentes.", file=sys.stderr)
+        return 1
+    traces = [(a.tranches.lat, a.tranches.lon) for a in acts]
+    t = tranches_du_parcours(course, cfg)
+    lecteur = Lecteur(args, cfg, traces + [(t.lat, t.lon)])
+    try:
+        cartes = cartes_des_activites(acts, lecteur)
+        bundle = terrain_d_une_course(course, acts, cartes, exemples_de(acts, cartes), until, lecteur, cfg)
+    finally:
+        lecteur.fermer()
+    Path(args.out).write_text(json.dumps(bundle, ensure_ascii=False), encoding="utf-8")
+    m = bundle["modele"]
+    print(f"{course.name} : {len(bundle['ultras']['activites'])} ultra(s) au magasin, profil "
+          f"{'écrit' if bundle['parcours'] else 'absent'} — "
+          + ("signal" if m.get("signal") else f"pas de signal ({m.get('raison') or 'gain hors échantillon insuffisant'})"),
+          file=sys.stderr)
+    return 0
+
+
+def _banc(args, cfg: Config) -> int:
+    """Le terrain de chaque course des manifestes, à la coupure de la course : un fichier par
+    course, ``<sortie>/<athlète>/<date>.json``, que ``tools/banc --terrain`` lit."""
+    from tools.banc import _slug
+
+    sortie = Path(args.out)
+    lignes = ["| athlète | course | coupure | fenêtres (hachées) | signal | z activités | z régions |",
+              "|---|---|---|---|---|---|---|"]
+    for m in args.manifestes:
+        mp = Path(m)
+        base = mp.resolve().parent
+        man = json.loads(mp.read_text(encoding="utf-8"))
+        archive = (base / man["archive"]).resolve()
+        if not archive.exists():
+            print(f"  {man['athlete']} : archive introuvable — {archive}", file=sys.stderr)
+            continue
+        courses = []
+        for r in man["races"]:
+            jour = date.fromisoformat(r["date"])
+            until = date.fromisoformat(r["until"]) if r.get("until") else jour - timedelta(days=1)
+            course = _parcours_de(base / r["gpx"], (base / r["race_json"]) if r.get("race_json") else None,
+                                  r["name"], cfg)
+            courses.append((r, until, course))
+        dernier = max((u for _, u, _ in courses), default=None)
+        acts = activites_de_l_archive(archive, cfg, dernier)
+        if not acts:
+            print(f"  {man['athlete']} : aucune activité avec des descentes", file=sys.stderr)
+            continue
+        parcours_t = [tranches_du_parcours(c, cfg) for _, _, c in courses]
+        lecteur = Lecteur(args, cfg, [(a.tranches.lat, a.tranches.lon) for a in acts]
+                          + [(t.lat, t.lon) for t in parcours_t])
+        try:
+            cartes = cartes_des_activites(acts, lecteur)
+            ex = exemples_de(acts, cartes)
+            for r, until, course in courses:
+                bundle = terrain_d_une_course(course, acts, cartes, ex, until, lecteur, cfg)
+                dossier = sortie / _slug(man["athlete"])
+                dossier.mkdir(parents=True, exist_ok=True)
+                (dossier / f"{r['date']}.json").write_text(json.dumps(bundle, ensure_ascii=False),
+                                                           encoding="utf-8")
+                mo = bundle["modele"]
+                v = mo.get("validation") or {}
+                za = (v.get("activites") or {}).get("z")
+                zr = (v.get("regions") or {}).get("z")
+                lignes.append(f"| {man['athlete']} | {r['name']} | {until} | {mo['n_fenetres']} "
+                              f"({mo['n_hachees']}) | {'oui' if mo.get('signal') else 'non'} | "
+                              f"{_f(za, 2)} | {_f(zr, 2)} |")
+        finally:
+            lecteur.fermer()
+    print("\n".join(lignes))
     return 0
 
 
@@ -463,6 +675,10 @@ def main(argv: list[str] | None = None) -> int:
     sp.add_argument("--race", help="spécification de la course (JSON : ravitaillements, km officiels)")
     sp.add_argument("--coupure-km", type=float, help="km officiel qui sépare les deux parties comparées")
     sp.add_argument("--modele", help="modèle d'athlète (sortie de la commande modele)")
+    sp.add_argument("--vecu", help="fenêtres d'apprentissage de l'athlète (exemples.json du cache) : "
+                                   "la course contre ses dernières semaines, avec --modele")
+    sp.add_argument("--vecu-jusqua", help="fin de la période vécue, AAAA-MM-JJ (défaut : sa dernière activité)")
+    sp.add_argument("--vecu-jours", type=int, default=183, help="longueur de la période vécue (jours)")
     _sources_args(sp)
     sa = sub.add_parser("activite", help="la carte du fichier de la montre d'une course")
     sa.add_argument("--activite", required=True)
@@ -474,6 +690,17 @@ def main(argv: list[str] | None = None) -> int:
     sm.add_argument("--until", help="dernière date d'activité retenue, AAAA-MM-JJ (incluse)")
     sm.add_argument("--out", help="fichier JSON du modèle")
     _sources_args(sm)
+    st = sub.add_parser("terrain", help="le terrain d'une course pour le moteur (--terrain)")
+    st.add_argument("--archive", required=True)
+    st.add_argument("--until", help="coupure du modèle et du magasin des ultras, AAAA-MM-JJ")
+    st.add_argument("--course", required=True, help="trace GPX du parcours")
+    st.add_argument("--race", help="spécification de la course (JSON)")
+    st.add_argument("--out", required=True, help="fichier du terrain, pour --terrain du moteur")
+    _sources_args(st)
+    sb = sub.add_parser("banc", help="le terrain de chaque course des manifestes, pour tools/banc --terrain")
+    sb.add_argument("manifestes", nargs="+")
+    sb.add_argument("--out", required=True, help="dossier des terrains (<athlète>/<date>.json)")
+    _sources_args(sb)
     args = ap.parse_args(argv)
     cfg = load_config()
     try:
@@ -487,6 +714,10 @@ def main(argv: list[str] | None = None) -> int:
             return _parcours(args, cfg)
         if args.commande == "activite":
             return _activite(args, cfg)
+        if args.commande == "terrain":
+            return _terrain(args, cfg)
+        if args.commande == "banc":
+            return _banc(args, cfg)
         return _modele(args, cfg)
     except FileNotFoundError as exc:
         print(str(exc), file=sys.stderr)

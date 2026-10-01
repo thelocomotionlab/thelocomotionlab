@@ -99,11 +99,12 @@ def match_checkpoints(t, dist_m, lat, lon, checkpoints, *, radius_m: float = 150
 
 def passages_for_activity(t, dist_m, lat, lon, course, *, radius_m: float = 150.0,
                           official_h: float | None = None, cadence=None, gap=None,
-                          cfg=None) -> dict:
+                          cfg=None, alt=None) -> dict:
     """Passages d'une activité sur un parcours : heures depuis le passage de la ligne de
     départ (point 0), écart montre − officiel à l'arrivée. Avec ``cfg``, chaque tronçon entre
     deux points trouvés porte en plus son mouvement, ses arrêts et, si la cadence est là, ses
-    minutes de marche (définitions ``twin.terrain_*``)."""
+    minutes de marche (définitions ``twin.terrain_*``) ; avec l'altitude ``alt``, son temps
+    et sa marche en descente (fenêtres du détecteur)."""
     coords = course.checkpoint_coords()
     names = [s.frm for s in course.segments] + [course.segments[-1].to]
     hits = match_checkpoints(t, dist_m, lat, lon, coords, radius_m=radius_m)
@@ -126,18 +127,21 @@ def passages_for_activity(t, dist_m, lat, lon, course, *, radius_m: float = 150.
     }
     if cfg is not None:
         out.update(_mouvement_par_troncon(np.asarray(t, dtype=float), dist_m, gap, cadence,
-                                          hits, names, cfg))
+                                          hits, names, cfg, alt=alt))
     return out
 
 
-def _mouvement_par_troncon(t, dist_m, gap, cadence, hits, names, cfg) -> dict:
+def _mouvement_par_troncon(t, dist_m, gap, cadence, hits, names, cfg, *, alt=None) -> dict:
     """Mouvement, arrêts et marche entre deux points de passage trouvés (arrivée à arrivée :
-    l'arrêt à un ravitaillement compte dans le tronçon qui en repart, comme dans le plan)."""
+    l'arrêt à un ravitaillement compte dans le tronçon qui en repart, comme dans le plan) ;
+    descente et marche en descente avec l'altitude."""
+    from twin_engine.twin.descentes import secondes_en_descente
     from twin_engine.twin.mouvement import bilan_par_troncon
 
     bornes = [None if h["t_s"] is None else int(np.clip(np.searchsorted(t, h["t_s"]), 0, len(t) - 1))
               for h in hits]
-    bilans = bilan_par_troncon(dist_m, gap, cadence, bornes, cfg)
+    descente = None if alt is None else secondes_en_descente(dist_m, alt, gap, cfg)
+    bilans = bilan_par_troncon(dist_m, gap, cadence, bornes, cfg, descente=descente)
     segments = [None if b is None else {"de": names[k], "a": names[k + 1],
                                         **{c: (None if v is None else round(v, 4))
                                            for c, v in b.items()}}
@@ -149,11 +153,12 @@ def _mouvement_par_troncon(t, dist_m, gap, cadence, hits, names, cfg) -> dict:
         return None if not vals or any(v is None for v in vals) else round(float(sum(vals)), 4)
 
     tw = cfg.twin
+    sommes = {"segments": segments, "mouvement_h": _somme("mouvement_h"),
+              "arrets_h": _somme("arrets_h"), "marche_h": _somme("marche_h")}
+    if descente is not None:
+        sommes["marche_descente_h"] = _somme("marche_descente_h")
     return {
-        "segments": segments,
-        "mouvement_h": _somme("mouvement_h"),
-        "arrets_h": _somme("arrets_h"),
-        "marche_h": _somme("marche_h"),
+        **sommes,
         "definitions": {"vitesse_ms": tw.terrain_moving_ms, "trou_max_s": tw.terrain_gap_max_s,
                         "arret_min_s": tw.terrain_stop_min_s,
                         "cadence_course_spm": tw.terrain_run_cadence_spm},
@@ -216,6 +221,7 @@ def _candidate(act, score) -> dict:
             "t": act.t.copy(), "dist_m": act.dist_m.copy(),
             "dist_device_m": np.asarray(act.dist_device_m).copy(),
             "lat": act.lat.copy(), "lon": act.lon.copy(),
+            "alt_m": np.asarray(act.alt_m).copy(),
             "cadence_spm": np.asarray(act.cadence_spm).copy(),
             "gap_s": np.asarray(act.gap_s).copy()}
 
@@ -272,7 +278,7 @@ def passages_for_manifest(found: dict[int, dict], man: dict, base: Path, cfg,
         pas = passages_for_activity(cand["t"], dist, cand["lat"], cand["lon"], course,
                                     radius_m=radius_m, official_h=official,
                                     cadence=cand.get("cadence_spm"), gap=cand.get("gap_s"),
-                                    cfg=cfg)
+                                    cfg=cfg, alt=cand.get("alt_m"))
         pas["activity_date"] = cand["date"]
         results.append((r["name"], pas))
     return results

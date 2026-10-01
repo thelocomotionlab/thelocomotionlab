@@ -81,6 +81,8 @@ class Exemples:
     nuit: list[int | None] = field(default_factory=list)
     activite: list[str] = field(default_factory=list)
     centre: dict[str, tuple[float, float]] = field(default_factory=dict)   # activité → (lat, lon)
+    jour: dict[str, str] = field(default_factory=dict)                      # activité → date ISO
+    longueur_m: list[float] = field(default_factory=list)
 
     def __len__(self) -> int:
         return len(self.hache)
@@ -91,7 +93,7 @@ class Exemples:
             self._brut = _colonnes_brutes(self.lignes)
         return self._brut
 
-    def ajouter(self, activite: str, fenetres: list[dict], c: Carte) -> int:
+    def ajouter(self, activite: str, fenetres: list[dict], c: Carte, jour: str | None = None) -> int:
         """Ajoute les fenêtres d'une activité sur sa carte ; rend le nombre ajouté."""
         if c.tranches.n == 0:
             return 0
@@ -103,21 +105,41 @@ class Exemples:
             self.dminus_km.append(float(f["dminus_m"]) / 1000.0)
             self.nuit.append(None if f.get("nuit") is None else int(bool(f["nuit"])))
             self.activite.append(activite)
+            self.longueur_m.append(max(float(f["fin_m"]) - float(f["debut_m"]), 0.0))
             n += 1
         if n:
             self.centre[activite] = (float(np.mean(c.tranches.lat)), float(np.mean(c.tranches.lon)))
+            if jour is not None:
+                self.jour[activite] = jour
         return n
+
+    def sous_ensemble(self, activites: set[str]) -> "Exemples":
+        """Les seules fenêtres des activités données."""
+        e = Exemples()
+        noms = ["lignes", "hache", "classe", "dminus_km", "nuit", "activite"]
+        if len(self.longueur_m) == len(self):
+            noms.append("longueur_m")
+        for i, a in enumerate(self.activite):
+            if a in activites:
+                for nom in noms:
+                    getattr(e, nom).append(getattr(self, nom)[i])
+        e.centre = {a: v for a, v in self.centre.items() if a in activites}
+        e.jour = {a: v for a, v in self.jour.items() if a in activites}
+        return e
 
     def to_json(self) -> dict:
         return {"lignes": self.lignes, "hache": self.hache, "classe": self.classe,
                 "dminus_km": self.dminus_km, "nuit": self.nuit, "activite": self.activite,
-                "centre": {k: list(v) for k, v in self.centre.items()}}
+                "longueur_m": self.longueur_m, "centre": {k: list(v) for k, v in self.centre.items()},
+                "jour": self.jour}
 
     @classmethod
     def depuis_json(cls, brut: dict) -> "Exemples":
         e = cls(**{k: list(brut[k]) for k in ("lignes", "hache", "classe", "dminus_km", "nuit",
                                                "activite")})
+        e.longueur_m = list(brut.get("longueur_m") or [])
         e.centre = {k: (float(v[0]), float(v[1])) for k, v in (brut.get("centre") or {}).items()}
+        e.jour = dict(brut.get("jour") or {})
         return e
 
 
@@ -410,6 +432,9 @@ def apprendre(ex: Exemples, cfg: Config, sources: dict | None = None) -> dict:
     ctrl, carte = enc.colonnes()
     X = enc.matrice(ex.brut(), ex.classe, ex.dminus_km, ex.nuit)
     beta = ajuster(X, y, len(ctrl), l2)
+    # le terrain habituel de l'athlète : la part moyenne de la carte dans le logit de ses
+    # fenêtres d'apprentissage (référence des surcoûts de terrain, twin.terrain)
+    eta_moyen = float(np.mean(X[:, len(ctrl):] @ beta[len(ctrl):])) if carte else 0.0
     validations = [par_activites] + ([par_regions] if par_regions is not None else [])
     signal = all((v["z"] or 0.0) >= float(cfg.carte.signal_z) for v in validations)
     return {
@@ -417,6 +442,7 @@ def apprendre(ex: Exemples, cfg: Config, sources: dict | None = None) -> dict:
         "pertes_par_l2": {str(k): round(v, 5) for k, v in pertes.items()},
         "encodage": enc.to_json(), "colonnes": ctrl + carte,
         "coefficients": [round(float(b), 6) for b in beta],
+        "eta_carte_moyen": round(eta_moyen, 6),
         "validation": {"activites": par_activites, "regions": par_regions},
         "signal": bool(signal),
     }
@@ -449,9 +475,11 @@ def fenetres_du_parcours(c: Carte, cfg: Config) -> dict:
 
 def probabilites(c: Carte, modele: dict, cfg: Config, *, nuit=None, frais: bool = False,
                  fenetres: dict | None = None) -> dict:
-    """P(hachée) de chaque tranche en descente d'une carte de parcours (NaN ailleurs), et la
-    part de la seule carte dans le logit (``eta_carte``). ``frais`` : D− déjà descendu et
-    nuit à zéro, pour comparer des parties de parcours sur le seul terrain."""
+    """P(hachée) de chaque tranche en descente d'une carte de parcours (NaN ailleurs) ; la
+    part de la seule carte dans le logit (``eta_carte``) ; ``p_ref``, P(hachée) à la même
+    pente et au même D− sur le terrain habituel de l'athlète (la part de la carte remplacée
+    par sa moyenne d'apprentissage). ``frais`` : D− déjà descendu et nuit à zéro, pour
+    comparer des parties de parcours sur le seul terrain."""
     if not modele.get("coefficients"):
         raise ValueError("modèle sans coefficients : " + str(modele.get("raison", "")))
     t = c.tranches
@@ -459,9 +487,34 @@ def probabilites(c: Carte, modele: dict, cfg: Config, *, nuit=None, frais: bool 
     dminus = np.zeros(t.n) if frais else t.dminus_m / 1000.0
     n = [0] * t.n if (frais or nuit is None) else [int(bool(x)) for x in nuit]
     eta, eta_carte = _lineaire(modele, f["lignes"], f["classe"], dminus, n)
-    p = np.where(f["descente"], _sigmoide(eta), np.nan)
-    return {"p": p, "eta_carte": np.where(f["descente"], eta_carte, np.nan),
+    eta_ref = eta - eta_carte + float(modele.get("eta_carte_moyen") or 0.0)
+    return {"p": np.where(f["descente"], _sigmoide(eta), np.nan),
+            "p_ref": np.where(f["descente"], _sigmoide(eta_ref), np.nan),
+            "eta_carte": np.where(f["descente"], eta_carte, np.nan),
             "descente": f["descente"]}
+
+
+def identite(modele: dict) -> dict:
+    """Ce qu'un profil de terrain garde du modèle qui l'a fait."""
+    return {k: modele.get(k) for k in ("sources", "until", "signal", "n_fenetres", "n_hachees",
+                                       "n_activites", "l2")}
+
+
+def profil_de_terrain(c: Carte, modele: dict, cfg: Config, *, nom: str | None = None,
+                      longueur_km: float | None = None) -> dict:
+    """Le profil de terrain d'un parcours pour le moteur (``twin.terrain``) : km officiel de
+    chaque tranche, descente, P(hachée) sous la carte et sur le terrain habituel, au D− du
+    parcours, de jour."""
+    pr = probabilites(c, modele, cfg)
+    t = c.tranches
+
+    def _l(a):
+        return [None if not np.isfinite(x) else round(float(x), 4) for x in a]
+
+    return {"version": 1, "course": nom, "longueur_km": longueur_km, "pas_m": t.pas_m,
+            "km": [round(float(x), 4) for x in t.km], "descente": [bool(x) for x in pr["descente"]],
+            "p_carte": _l(pr["p"]), "p_ref": _l(pr["p_ref"]), "modele": identite(modele),
+            "attributions": list(c.attributions)}
 
 
 def sources_compatibles(modele: dict, c: Carte) -> list[str]:
@@ -470,5 +523,6 @@ def sources_compatibles(modele: dict, c: Carte) -> list[str]:
     return sorted(k for k in set(a) | set(b) if a.get(k) != b.get(k))
 
 
-__all__ = ["Encodage", "Exemples", "ajuster", "apprendre", "auc", "fenetres_du_parcours",
-           "probabilites", "regions", "sources_compatibles", "variables_de_fenetre"]
+__all__ = ["Encodage", "Exemples", "ajuster", "apprendre", "auc", "fenetres_du_parcours", "identite",
+           "probabilites", "profil_de_terrain", "regions", "sources_compatibles",
+           "variables_de_fenetre"]

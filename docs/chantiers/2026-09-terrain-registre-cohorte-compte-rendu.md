@@ -167,6 +167,14 @@ archive mesure tout :
   seule `mtb:scale`, renseignée presque uniquement après le km 100, y décrit 65 % de S2–S3.
   Suite : 766 passés, 43 sautés. **Chez Valentin** : les tronçons hachés du fichier de la
   montre, le modèle sur son archive et son application à Nice.
+- 2026-10-01 — **étape 6, terrain dans le plan et la calibration** (DIAGNOSTIC §10.32) :
+  `pacing.terrain` (`declared` reporte la technicité déclarée sur les descentes, `map` sert le
+  surcoût de la carte), `prediction.terrain_total=differential`, `calibration.terrain_adjust=deq`
+  (avec `terrain_dplus_prior_scale` pour le prior de β2) ; rien n'est servi d'un modèle sans
+  signal. Marche prévue en descente par segment (modèle à deux allures) face à la marche
+  mesurée dans le bloc `forme` ; passages enrichis du temps et de la marche en descente ;
+  demande contre vécu ; `tools/carte terrain` et `banc`, `tools/banc --terrain`. **Chez
+  Valentin** : le run 2 (manuel, « Terrain dans le plan et la calibration »).
 
 ## Run 1 chez Valentin (à lancer)
 
@@ -247,5 +255,15 @@ au mieux, un levier entre dans la configuration de référence de Val.
   les deux validations : un gain plus petit ne distingue pas la carte du hasard.
 - MNT par défaut du modèle : Copernicus, lisible partout ; le RGE ALTI (France seule) ne se
   mélange pas avec lui, le TRI dépendant du pas du MNT.
+- Surcoût de terrain : (1 + P_carte·r) ÷ (1 + P_réf·r), la pénalité de marche pour
+  sensibilité ; le terrain habituel (P_réf) est la moyenne des fenêtres d'apprentissage. Les
+  probabilités de carte sont de jour : la nuit reste au modèle de marche et au terme de nuit.
+- « Déclaré » à la répartition garde la surcharge totale déclarée et la déplace vers les
+  descentes au prorata de la probabilité de marcher — sans modèle de marche, uniformément.
+- Sous `terrain_adjust=deq`, la sélection des vrais ultras ne voit pas le terrain (mêmes
+  ultras qu'avant), seule leur vitesse servie le porte ; le prior de β2 garde sa valeur par
+  défaut (échelle 1) : la variante TA5 du run 2 dira s'il faut la réduire.
+- La marche prévue ne compte que les descentes (la consigne de l'écran Plan parle de
+  descentes) ; les passages mesurent la marche en descente dans les mêmes fenêtres.
 - Les cartes se gardent dans `services/twin-engine/local-data/carte` (ignoré par git) ; le
   modèle ne porte aucune position, les fenêtres d'apprentissage restent dans ce cache.

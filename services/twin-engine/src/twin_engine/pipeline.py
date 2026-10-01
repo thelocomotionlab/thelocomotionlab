@@ -80,6 +80,7 @@ def analyze_preview(
     until: date | None = None,
     target_hours: float | None = None,
     race: RaceSpec | None = None,
+    terrain: dict | None = None,
 ) -> PreviewResult:
     """Chaîne numérique complète (sans figures/PDF) → verdict + fourchette.
 
@@ -124,7 +125,7 @@ def analyze_preview(
     return analyze_preview_from_twin(
         twin, course, cfg, n_ingested=n_seen, n_skipped=n_skipped,
         n_excluded_until=n_excluded, analysis_date=analysis_date, target_hours=target_hours,
-        race=race,
+        race=race, terrain=terrain,
     )
 
 
@@ -139,17 +140,24 @@ def analyze_preview_from_twin(
     analysis_date: date | None = None,
     target_hours: float | None = None,
     race: RaceSpec | None = None,
+    terrain: dict | None = None,
 ) -> PreviewResult:
     """Aval du jumeau : calibration → prédiction → suffisance (+ verdict d'objectif).
 
     Séparé d':func:`analyze_preview` pour le banc walk-forward, qui construit N jumeaux
     (une coupure par course) à partir d'un SEUL décodage d'archive — tout ce qui suit ne
     coûte rien, c'est le décodage qui coûte. Un seul chemin de calcul pour les deux usages.
+
+    ``terrain`` : le terrain de la carte (``tools/carte``) — ``parcours``, le profil du
+    parcours cible ; ``ultras``, le magasin des profils des activités de l'archive —, servi
+    selon les drapeaux ``pacing.terrain``, ``prediction.terrain_total`` et
+    ``calibration.terrain_adjust`` (``twin.terrain``).
     """
+    terrain = terrain or {}
     # coût de pente personnel : au total sous les mêmes facteurs que la vitesse ajustée des
-    # efforts de la calibration, et/ou à la seule répartition du plan (twin.pente)
-    course = servir_parcours(course, twin, cfg)
-    calibration = build_calibration(twin, cfg)
+    # efforts de la calibration, et/ou à la seule répartition du plan (twin.pente) ; terrain
+    course = servir_parcours(course, twin, cfg, terrain.get("parcours"))
+    calibration = build_calibration(twin, cfg, terrain=terrain.get("ultras"))
     prediction = predict_race(course, twin, calibration, cfg, race)
     sufficiency = assess_sufficiency(
         twin, calibration, prediction, cfg, analysis_date=analysis_date or date.today()
@@ -184,6 +192,7 @@ def run_preview(
     progress=None,
     analysis_date: date | None = None,
     until: date | None = None,
+    terrain: dict | None = None,
 ) -> PreviewResult:
     """De l'archive brute + la trace de course au verdict. **Purge l'archive** après analyse.
 
@@ -197,7 +206,7 @@ def run_preview(
     course = build_course(course_gpx, race, cfg)
     try:
         result = analyze_preview(stream, course, cfg, analysis_date=analysis_date, until=until,
-                                 target_hours=race.target_hours, race=race)
+                                 target_hours=race.target_hours, race=race, terrain=terrain)
     finally:
         if purge_source:
             purge_path(training_path)
@@ -249,6 +258,7 @@ def analyze_full(
     analysis_date: date | None = None,
     until: date | None = None,
     etape=None,
+    terrain: dict | None = None,
 ) -> FullResult:
     """Chaîne complète jusqu'au PDF (pacing + figures + rapport LaTeX + livrables).
 
@@ -261,7 +271,7 @@ def analyze_full(
     """
     preview = analyze_preview(activities, course, cfg, n_skipped=n_skipped,
                               analysis_date=analysis_date, until=until,
-                              target_hours=race.target_hours, race=race)
+                              target_hours=race.target_hours, race=race, terrain=terrain)
     return _documents_du_preview(
         preview, race, cfg, out_dir=out_dir, athlete=athlete, report_ref=report_ref,
         report_version=report_version, report_date=report_date, render_pdf=render_pdf,
@@ -406,6 +416,7 @@ def run_full(
     analysis_date: date | None = None,
     until: date | None = None,
     etape=None,
+    terrain: dict | None = None,
 ) -> FullResult:
     """De l'archive brute au PDF. **Purge l'archive** après analyse (flux E1, cf. run_preview).
 
@@ -424,7 +435,7 @@ def run_full(
             stream, course, race, cfg, out_dir=Path(out_dir), athlete=athlete,
             render_pdf=render_pdf, feuille_only=feuille_only, report_ref=report_ref,
             report_version=report_version, report_date=report_date,
-            analysis_date=analysis_date, until=until, etape=etape,
+            analysis_date=analysis_date, until=until, etape=etape, terrain=terrain,
         )
     finally:
         if purge_source:

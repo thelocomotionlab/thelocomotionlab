@@ -24,6 +24,7 @@ def bloc_course(course) -> dict:
         "slope_kappa": (None if course.slope_kappa is None
                         else [round(k, 4) for k in course.slope_kappa]),
         "repartition": getattr(course, "repartition", None),
+        "terrain": getattr(course, "terrain", None),
     }
 
 
@@ -92,6 +93,11 @@ def bloc_modele(*, twin, calibration, sufficiency, cfg, n_activities_used: int,
                        for b in (twin.slope_detail or {}).get("bins", [])],
         # traits du détecteur de descentes hachées (servis ou non)
         "terrain": getattr(twin, "terrain", None),
+        # terrain de la carte dans la calibration (``calibration.terrain_adjust``)
+        "terrain_adjust": getattr(cal, "terrain_adjust", "off"),
+        "terrain_ultras_n": getattr(cal, "terrain_n", 0),
+        "terrain_ultras_km_moyen": (None if getattr(cal, "terrain_km_mean", None) is None
+                                    else round(cal.terrain_km_mean, 3)),
     }
 
 
