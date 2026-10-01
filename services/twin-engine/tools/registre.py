@@ -796,7 +796,8 @@ def _imprimer_runs(depot: Depot) -> None:
         texte = "—" if drapeaux is None else (", ".join(f"{k}={v}" for k, v in drapeaux.items())
                                               or "aucun")
         modifie = " (modifié)" if r.get("modifie") else ""
-        print(f"| {r['id']} | {r.get('label')} | {r.get('le')} | {r.get('commit') or '—'}{modifie} "
+        variante = f" (variante de {r['variante_de']})" if r.get("variante_de") else ""
+        print(f"| {r['id']} | {r.get('label')}{variante} | {r.get('le')} | {r.get('commit') or '—'}{modifie} "
               f"| {r.get('config_empreinte') or '—'} | {texte} |")
 
 

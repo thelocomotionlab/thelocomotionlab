@@ -263,7 +263,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\nRun écrit : {chemin}", file=sys.stderr)
         for name, cfg_v in variants.items():
             ev = [e for _, e in variant_rows[name]]
-            entete_v = entete_de_run(cfg_v, livre=LIVRE_BANC, label=name, manifestes=manifestes)
+            entete_v = {**entete_de_run(cfg_v, livre=LIVRE_BANC, label=name, manifestes=manifestes),
+                        "variante_de": chemin.stem}
             print(f"Run écrit : {depot.ecrire_run(entete_v, ev)}", file=sys.stderr)
     entries = depot.annoter([e for _, e in rows], LIVRE_BANC)
     (out_dir / "tableau.md").write_text(tableau_markdown(entries) + "\n", encoding="utf-8")

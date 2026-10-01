@@ -97,6 +97,23 @@ def test_a_run_is_never_rewritten(tmp_path):
     assert premier[0]["official_time_h"] == 25.0                       # l'ancien run n'a pas bougé
 
 
+def test_the_last_run_is_the_base_of_a_pass_not_one_of_its_variants(tmp_path):
+    from datetime import datetime
+
+    from twin_engine.config import load_config
+    from twin_engine.registre import entete_de_run
+
+    depot = Depot(tmp_path)
+    e1 = _entry("A", "Course X", 5.0)
+    base = _run(depot, "run1", [e1], "2026-10-01T08:00:00+00:00")
+    entete = entete_de_run(load_config(), livre="banc", label="zz",
+                           le=datetime.fromisoformat("2026-10-01T08:00:00+00:00"))
+    variante = depot.ecrire_run({**entete, "variante_de": base.stem}, [e1])
+    assert variante.stem > base.stem                    # même seconde, identifiant rangé après
+    assert depot.dernier_run() == base.stem
+    assert depot.dernier_run(label="zz") == variante.stem
+
+
 def test_curation_and_passages_apply_to_every_run(tmp_path):
     """Une quarantaine et des passages se posent une fois, hors des runs : chaque run qui
     rejoue la course les voit — jamais de disparition silencieuse à la relance du banc."""
@@ -939,6 +956,8 @@ def test_banc_variants_replay_on_one_decode_and_refuse_twin_overrides(tmp_path, 
     assert runs["defauts"]["drapeaux"] == {}
     assert runs["A2"]["drapeaux"] == {"calibration.link": "linear"}
     assert runs["A2"]["config_empreinte"] != runs["defauts"]["config_empreinte"]
+    assert runs["A2"]["variante_de"] == runs["defauts"]["id"] and "variante_de" not in runs["defauts"]
+    assert depot.dernier_run() == runs["defauts"]["id"] and depot.dernier_run(label="A2") == runs["A2"]["id"]
     base = lire_entrees(depot.chemin_du_run(runs["defauts"]["id"]))[1]
     var = lire_entrees(depot.chemin_du_run(runs["A2"]["id"]))[1]
     assert len(base) == len(var) == 1 and var[0]["model"].get("link") == "linear"

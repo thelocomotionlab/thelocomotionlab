@@ -218,9 +218,11 @@ class Depot:
 
     def dernier_run(self, *, label: str | None = None, sans_drapeau: bool = False) -> str | None:
         """L'identifiant du run le plus récent (de cette étiquette, ou sans aucun drapeau hors
-        défaut) ; ``None`` sans run."""
+        défaut) ; ``None`` sans run. Sans étiquette demandée, les variantes d'un passage
+        (``variante_de``) ne comptent pas : écrites après le run de base, parfois dans la même
+        seconde, elles le masqueraient selon l'ordre de leurs identifiants."""
         runs = [r for r in self.runs()
-                if (label is None or r.get("label") == label)
+                if (r.get("label") == label if label is not None else not r.get("variante_de"))
                 and (not sans_drapeau or not r.get("drapeaux"))]
         return runs[-1]["id"] if runs else None
 

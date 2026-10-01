@@ -832,7 +832,8 @@ PYTHONPATH=src python -m tools.banc <manifestes…> --out <dossier>   # les troi
                                                     #   par archive : un run au livre banc, sorties markdown
 PYTHONPATH=src python -m tools.banc <manifestes…> --out <dossier> --variant NOM:bloc.clé=valeur,…
                                                     #   + un run par variante (config surchargée), sur le
-                                                    #   même décodage, comparé au run de base du passage
+                                                    #   même décodage, comparé au run de base du passage ;
+                                                    #   « le dernier run » des lectures reste ce run de base
 twin-engine preview … --set bloc.clé=valeur         # même surcharge pour un cas isolé (répétable)
 ```
 
