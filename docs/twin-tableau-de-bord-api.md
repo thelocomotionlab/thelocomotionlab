@@ -23,7 +23,7 @@ Ce document décrit ce que le tableau de bord et la page athlète demanderont au
 | `POST /preview` — lire un GPX, en tirer le profil | moteur | sert l'éditeur de course (étape Trace) |
 | `POST /fiche` — feuille seule | moteur | intégrée à la génération, plus de route à part |
 | `POST /twin/depots` (upload), `GET /twin/depots`, `GET /twin/depots/{id}/archive`, `DELETE /twin/depots/{id}` | service de dépôt (Node) | inchangés ; le moteur les appelle en interne |
-| `docs/twin-registre-couverture.json` | fichier committé | devient une vue calculée depuis les plans ; le fichier committé reste la version publiée |
+| `docs/twin-registre/` | registre committé | le livre servi s'y fusionne depuis l'export du tableau de bord ; le livre banc s'y écrit run par run |
 | `dossier.py` (version 1) | moteur | inchangé ; c'est le format pivot |
 
 Rien de ce qui existe n'est réécrit. On ajoute une couche « tableau de bord » devant.
@@ -49,6 +49,8 @@ Athlete
                     plus_long_h, plus_gros_dplus_m }         — vide tant que non ingéré
   niveau          { nom: base | calibre, raisons: [ … ] }   — calculé à l'ingestion
   plans           [ ref, … ]
+  registre        { statut: frais | dev, depuis, journal: [ { le, statut, par, motif }, … ] }
+                                                           — statut au registre, journalisé
 ```
 
 Sur le disque : `athletes/{id}/athlete.json`, `jumeau.json`, `calibration.json`. L'archive vit dans le dépôt le temps de l'ingestion, puis chez toi (rapatriement), jamais durablement sur le VPS.
@@ -154,6 +156,7 @@ Chaque dossier porte l'athlète, la course visée, le départ, le statut et **le
 `POST /tableau-de-bord/athletes/{id}/ingest` — toi → `{ job_id }` — l'archive est lue depuis le dépôt (ou depuis le fichier déjà rapatrié si tu la renvoies), le jumeau et la calibration se calculent, le niveau est posé. Une ingestion à la fois sur le VPS ; les suivantes attendent.
 `DELETE /tableau-de-bord/athletes/{id}` — toi → 204 — archive, jumeau, plans, page : tout est supprimé. Le registre garde ses entrées sous pseudonyme.
 `POST /tableau-de-bord/athletes/{id}/archive` — toi — un fichier → `{ job_id }` — pour ré-ingérer avec une archive que tu as chez toi, quand le moteur a changé.
+`POST /tableau-de-bord/athletes/{id}/statut` `{ statut: dev | frais, motif }` → l'objet complet — le statut au registre change, daté, et le journal gagne une ligne ; sans motif, 422.
 
 ### 5.3 Bibliothèque et éditeur de course
 
@@ -172,7 +175,7 @@ Chaque dossier porte l'athlète, la course visée, le départ, le statut et **le
 `POST /tableau-de-bord/plans/{ref}/publish` → les deux clés sont posées, la page répond. Rien ne part.
 `POST /tableau-de-bord/plans/{ref}/send` `{ objet, corps }` → un email à l'athlète, PDF joint, `{lien}` remplacé par le lien privé. Refusé si non publié.
 `POST /tableau-de-bord/plans/{ref}/restore/{version}` → la version choisie redevient courante, ses documents avec.
-`PUT /tableau-de-bord/plans/{ref}/result` `{ officiel_h | abandon }` → l'entrée de registre se crée.
+`PUT /tableau-de-bord/plans/{ref}/result` `{ officiel_h | abandon, correction? }` → l'entrée de registre se fige. Une entrée déjà figée ne change qu'avec `correction` (le motif) : sinon 409 ; l'ancienne entrée reste dans l'historique.
 `GET /tableau-de-bord/plans/{ref}/pdf` (et `feuille.pdf`, `ics`, `gpx`) → les fichiers de la version courante.
 `POST /tableau-de-bord/plans/import` — un `dossier.json` et ses PDF produits **chez toi par le CLI** → `{ ref }` — c'est le chemin « lancer depuis mon ordi » : le plan entre dans le tableau de bord comme s'il y était né.
 
@@ -182,7 +185,8 @@ Chaque dossier porte l'athlète, la course visée, le départ, le statut et **le
 
 ### 5.6 Registre
 
-`GET /tableau-de-bord/registre` → `{ base: { entrees, erreur_moyenne, fourchette, bornes }, calibre: { … }, lignes: [ … ] }` — calculé depuis les plans qui ont un résultat, par niveau servi. Un export JSON dans le format du fichier committé.
+`GET /tableau-de-bord/registre` → `{ base: { entrees, erreur_moyenne, fourchette, bornes }, calibre: { … }, par_statut: { frais: { base, calibre }, dev: { base, calibre } }, lignes: [ … ] }` — le livre servi, calculé depuis les plans qui ont un résultat (l'entrée figée quand le labo a saisi), par niveau servi et par statut de l'athlète ; chaque ligne porte son `statut`.
+`GET /tableau-de-bord/registre/export` → `{ entries, athletes }` — les entrées au format du livre servi committé (`docs/twin-registre/servi.json`) et les statuts des athlètes sous leur pseudonyme ; `tools/registre --importer` les fusionne.
 
 ### 5.7 Jobs
 

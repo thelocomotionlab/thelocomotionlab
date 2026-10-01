@@ -2992,3 +2992,47 @@ repli sur l'unité déclarée ; cadence absente = NaN ; TCX `RunCadence` ; expor
 Garmin, Strava et Polar ; analyse de référence sur une course synthétique par ses deux
 lectures. Les huit sorties de Nice sont épinglées dans un test actif si `TWIN_NICE2026_GPX`
 désigne le fichier de course : à lancer chez Valentin.
+
+### 10.26 Chantier terrain — étape 2 : le registre refait, deux livres et des statuts datés (2026-10-01)
+
+**Constat.** Le registre était un seul fichier (`docs/twin-registre-couverture.json`) qui
+mélangeait ce qu'on rejoue (le banc) et ce qu'on a promis (les plans servis), qu'un nouveau
+passage du banc écrasait entrée par entrée, sans dire sous quel code ni quelle
+configuration. Le statut d'un athlète tenait dans un `dev_set` par manifeste, et le tableau
+de bord écrivait `dev_set: false` en dur pour toute entrée.
+
+**Ce qui change.**
+- **Rangement** (`docs/twin-registre/`, paquet `twin_engine.registre`) : `banc/<run>.json`,
+  un fichier par run, jamais réécrit (deux passes dans la même seconde reçoivent un suffixe) ;
+  `servi.json` ; `athletes.json` ; `quarantaines.json` et `passages.json`, communs à tous les
+  runs — une quarantaine ou des passages posés une fois valent pour chaque run qui rejoue la
+  course (la re-fusion qui faisait réapparaître une quarantaine n'existe plus).
+- **En-tête de run** (`registre.runs`) : date, commit (`git`, ou `TWIN_COMMIT` posé par la CI
+  dans l'image), drapeau « modifié », empreinte de la configuration effective (12 caractères,
+  chemins exclus), drapeaux hors défaut (`bloc.clé` qui diffèrent de `twin.config.json`).
+  `tools/backtest` et `tools/banc` écrivent un run ; chaque variante du banc est un run.
+- **Statuts** (`registre.statuts`) : `dev` / `frais`, datés, journalisés avec un motif exigé ;
+  le statut à une date se lit sur le journal. Val (2026-07-03), Crasse (2026-07-15), Lolo et
+  Rapace (2026-10-01) sont `dev`. `tools/registre --decision JOUR` restreint aux athlètes
+  frais à ce jour et les nomme.
+- **Livre servi** : une entrée se fige quand le labo saisit le résultat ; la changer demande
+  une correction motivée, l'ancienne gardée dans `corrections` (au tableau de bord comme dans
+  `servi.json` via `tools/registre --importer`). Le résultat de l'athlète reste provisoire.
+- **Tableau de bord** : l'athlète porte son statut (`registre`), changé par
+  `POST …/athletes/{id}/statut` (bouton « Marquer comme cas de développement ») ; l'écran
+  Registre sépare statut × niveau ; l'export porte les statuts sous pseudonyme, y compris
+  ceux des athlètes supprimés.
+- **Lectures** : `tools/registre`, `--tableau`, `--compare RUN_A RUN_B` séparent livre ×
+  statut × niveau ; `tools/score_plan` lit un run et ses passages.
+- **Migration** : l'ancien fichier est archivé tel quel
+  (`docs/archive/twin-registre-couverture-2026-09.json`) et rangé comme run
+  `20260916-000000-registre-migre` (35 entrées) ; 32 passages et 3 quarantaines extraits.
+
+**Vérifié sur le registre migré.** La lecture rend les chiffres de la Décision 2 (§10.17) :
+14 vendus, MAE 8,1 %, couverture 80 % à 79 %. Avec les statuts du jour, aucun athlète n'est
+frais : aucune décision ne peut s'appuyer sur le banc actuel. `--decision 2026-09-16` retrouve
+Lolo et Rapace (13 entrées, 2 vendus à 17,4 % de MAE), soit le groupe « frais » d'avant.
+
+**Reste à faire chez Valentin** : les deux runs de départ sur les quatre manifestes
+(défauts, configuration de référence) et l'entrée servie de Nice 2026 (plan du 20/09,
+35 h 05, passages), après l'étape des mesures par segment.

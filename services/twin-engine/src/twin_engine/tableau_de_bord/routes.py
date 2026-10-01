@@ -268,6 +268,25 @@ def routeur_admin() -> APIRouter:
         athlete["plans"] = _file.plans_de_lathlete(athlete_id, magasin.plans.lister())
         return athlete
 
+    @routeur.post("/athletes/{athlete_id}/statut")
+    def changer_le_statut(athlete_id: str, charge: dict, request: Request) -> dict:
+        """Le statut de l'athlète au registre : ``dev`` quand on règle le moteur sur ses
+        données, ``frais`` sinon. Daté et journalisé ; le motif est exigé."""
+        from ..registre.statuts import basculer
+
+        magasin: Magasin = request.app.state.magasin
+        athlete = magasin.athletes.lire(athlete_id)
+        if athlete is None:
+            raise HTTPException(status_code=404, detail="athlète inconnu")
+        charge = charge if isinstance(charge, dict) else {}
+        try:
+            fiche = basculer(athlete.get("registre"), str(charge.get("statut") or ""),
+                             le=maintenant(), par="Valentin", motif=str(charge.get("motif") or ""))
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        magasin.athletes.modifier(athlete_id, registre=fiche)
+        return lire_un_athlete(athlete_id, request)
+
     @routeur.post("/athletes/{athlete_id}/ingest")
     def ingerer(athlete_id: str, request: Request, fond: BackgroundTasks) -> dict:
         """Met une ingestion en file ; l'archive est lue depuis le dépôt (§5.2)."""

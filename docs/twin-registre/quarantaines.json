@@ -1,0 +1,26 @@
+{
+  "_comment": "Entrées sorties des statistiques, avec leur motif ; valables pour tous les runs qui les rejouent.",
+  "quarantaines": [
+    {
+      "athlete": "Crasse",
+      "race": "Montagnhard 2026",
+      "date": "2023-07-04",
+      "motif": "doublon de « Trace Montagnhard » (même course, même temps 16:04:06) avec date erronée 2023 → coupure absurde",
+      "le": "2026-09-16T20:08:47+00:00"
+    },
+    {
+      "athlete": "Crasse",
+      "race": "Trace Montagnhard",
+      "date": "2026-07-01",
+      "motif": "doublon de « Montagnhard 2026 » (même course, même temps 16:04:06) — date corrigée au 04/07",
+      "le": "2026-09-16T20:08:47+00:00"
+    },
+    {
+      "athlete": "Rapace",
+      "race": "Saintelyon 2024",
+      "date": "2024-11-30",
+      "motif": "trace FIT→GPX à l'altitude aplatie (D+/km 6,3 lu vs ~26 réel sur cette course) — parcours inutilisable",
+      "le": "2026-09-16T20:08:47+00:00"
+    }
+  ]
+}

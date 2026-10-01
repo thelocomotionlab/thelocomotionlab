@@ -567,9 +567,20 @@ def ajouter_les_routes_de_plan(routeur: APIRouter) -> None:
 
     @routeur.put("/plans/{ref}/result")
     def saisir_le_resultat(ref: str, charge: dict, request: Request) -> dict:
-        """Le temps officiel, ou l'abandon — l'entrée de registre se crée (§5.4, §6.3)."""
+        """Le temps officiel, ou l'abandon — l'entrée de registre se fige (§5.4, §6.3).
+
+        Une entrée figée ne change plus : une nouvelle saisie demande ``correction`` (le
+        motif), et l'ancienne entrée reste dans l'historique de l'entrée."""
+        from . import registre
+
         magasin: Magasin = request.app.state.magasin
         plan = plan_ou_404(request, ref)
+        correction = str((charge or {}).get("correction") or "").strip() \
+            if isinstance(charge, dict) else ""
+        if registre.figee(magasin, ref) is not None and not correction:
+            raise HTTPException(status_code=409,
+                                detail="le résultat est consigné au registre : une correction "
+                                       "demande un motif (champ « correction »)")
         try:
             plan.resultat = lire_le_resultat(charge, saisi_par="labo")
         except (ValueError, TypeError) as exc:
@@ -579,6 +590,10 @@ def ajouter_les_routes_de_plan(routeur: APIRouter) -> None:
         elif plan.statut == PLAN_RESULTAT:
             plan.statut = statut_apres_changement(plan.to_dict())
         magasin.plans.ecrire(plan.to_dict())
+        brut = magasin.plans.lire(ref)
+        registre.figer(magasin, request.app.state.cfg, brut, course_du_plan(magasin, brut),
+                       magasin.athletes.lire(plan.athlete_id) if plan.athlete_id else None,
+                       correction=correction)
         return plan.to_dict()
 
     @routeur.get("/plans/{ref}/{nom}")

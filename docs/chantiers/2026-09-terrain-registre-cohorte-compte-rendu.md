@@ -97,6 +97,12 @@ archive mesure tout :
   sorties épinglées (test actif avec `TWIN_NICE2026_GPX`). Suite : 698 passés, 43 sautés.
   **Chez Valentin** : le test épinglé de Nice.
 
+- 2026-10-01 — **étape 2** (DIAGNOSTIC §10.26) : registre refait sous `docs/twin-registre/` —
+  livre banc (un run par passage, commit, empreinte, drapeaux hors défaut), livre servi figé au
+  résultat du labo (correction motivée), statuts dev/frais datés et journalisés, quarantaines et
+  passages communs aux runs ; ancien fichier archivé et rangé comme run historique ; écrans
+  Athlète (bouton) et Registre (statut × niveau). Aucun athlète frais aujourd'hui.
+
 ## Choix faits à la place de Valentin
 
 - Unité canonique de la cadence : pas par minute pour les deux pieds (le script disait 74 par
@@ -105,3 +111,10 @@ archive mesure tout :
   fichiers dont le temps recule ou saute, que le rééchantillonnage rendait faux en silence.
 - La distance de la montre d'un GPX reste derrière un drapeau (défaut : l'haversine, comme
   avant), parce qu'elle change les résultats de toute archive en GPX COROS.
+- L'ancien registre est rangé comme run historique en plus d'être archivé, pour que
+  `--compare` et les lectures fonctionnent avant les deux runs de départ.
+- Dates des statuts : Val au 2026-07-03 (règle pré-enregistrée qui le nomme cas de
+  référence), Crasse au 2026-07-15 (notes d'étiquetage), Lolo et Rapace au 2026-10-01.
+- Une entrée servie se fige au résultat du **labo** (celui qui fait foi) ; celui de l'athlète
+  reste provisoire. Une correction reste possible avec un motif, gardée en historique —
+  plutôt qu'une immuabilité absolue qui rendrait une faute de frappe définitive.

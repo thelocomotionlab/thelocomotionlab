@@ -1,0 +1,53 @@
+{
+  "_comment": "Statut de chaque athlète au registre (dev / frais), daté et journalisé. Une décision ne compte que les athlètes frais à sa date.",
+  "athletes": {
+    "Crasse": {
+      "statut": "dev",
+      "depuis": "2026-07-15",
+      "journal": [
+        {
+          "le": "2026-07-15",
+          "statut": "dev",
+          "par": "Valentin",
+          "motif": "filtre de maximalité et réglages mis au point sur son fixture (Montagnhard)"
+        }
+      ]
+    },
+    "Lolo": {
+      "statut": "dev",
+      "depuis": "2026-10-01",
+      "journal": [
+        {
+          "le": "2026-10-01",
+          "statut": "dev",
+          "par": "Valentin",
+          "motif": "examiné au fil des chantiers v2 et terrain (MIUT) ; passé en développement à la demande de Valentin"
+        }
+      ]
+    },
+    "Rapace": {
+      "statut": "dev",
+      "depuis": "2026-10-01",
+      "journal": [
+        {
+          "le": "2026-10-01",
+          "statut": "dev",
+          "par": "Valentin",
+          "motif": "examiné au fil des chantiers v2 et terrain ; passé en développement à la demande de Valentin"
+        }
+      ]
+    },
+    "Val": {
+      "statut": "dev",
+      "depuis": "2026-07-03",
+      "journal": [
+        {
+          "le": "2026-07-03",
+          "statut": "dev",
+          "par": "Valentin",
+          "motif": "cas de référence du moteur : rapport de Nice et golden réel"
+        }
+      ]
+    }
+  }
+}

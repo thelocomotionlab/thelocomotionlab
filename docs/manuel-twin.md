@@ -185,10 +185,11 @@ Endpoints :
 | `GET · POST /tableau-de-bord/plans` · `GET · DELETE …/plans/{ref}` | les plans ; `POST` crée le plan et lance sa version 1 ; `GET` rend tout l'écran Plan en un appel |
 | `POST …/plans/{ref}/generate` · `POST …/restore/{n}` | une nouvelle version avec d'autres réglages ; revenir à une version antérieure |
 | `POST …/plans/{ref}/publish` · `POST …/send` | poser les deux liens ; envoyer l'email avec le PDF joint (`{lien}` obligatoire dans le corps) |
-| `PUT …/plans/{ref}/result` | le temps officiel ou l'abandon, après le départ |
+| `PUT …/plans/{ref}/result` | le temps officiel ou l'abandon, après le départ ; l'entrée de registre se fige, une correction demande un motif |
 | `GET …/plans/{ref}/{pdf,feuille.pdf,ics,gpx}?version=n` | les documents d'une version |
 | `GET /tableau-de-bord/requests` · `POST …/requests/{id}/answer` | les demandes des athlètes, et la réponse qui repart par email |
-| `GET /tableau-de-bord/registre` · `…/registre/export` | le registre vivant ; l'export au format de `docs/twin-registre-couverture.json` |
+| `GET /tableau-de-bord/registre` · `…/registre/export` | le registre vivant (livre servi), par statut × niveau ; l'export au format de `docs/twin-registre/servi.json`, avec les statuts des athlètes |
+| `POST /tableau-de-bord/athletes/{id}/statut` | marque un athlète comme cas de développement (ou frais), daté, motif exigé |
 | `GET /tableau-de-bord/jobs/{id}` | l'état d'une génération, d'un amendement ou d'une ingestion |
 | `GET /plans/{ref}?k=…` et ses documents | la page de l'athlète : la clé de partage lit le cadre partagé, la clé privée lit tout |
 | `POST /plans/{ref}/amend` · `…/requests` · `PUT …/result` (clé privée) | amender ses arrêts, notes et débits ; demander autre chose ; saisir son temps |
@@ -350,8 +351,8 @@ passent par le miroir JS des tokens, et qu'une garde à la lettre condamnerait �
   la version du plan (`/data/plans/<référence>/v<n>/`), jamais dans le dépôt ni sur le site, et
   part avec le plan quand on le supprime depuis l'écran Plan ou la fiche de l'athlète.
 - **Supprimer un athlète** emporte son archive, son jumeau, ses plans, leurs demandes et leurs
-  pages. Le registre garde les entrées de ses courses courues, sous son pseudonyme
-  (`/data/registre/`) : c'est la couverture du moteur, pas son dossier.
+  pages. Le registre garde les entrées de ses courses courues et son statut au registre, sous
+  son pseudonyme (`/data/registre/`) : c'est la couverture du moteur, pas son dossier.
 
 ## 6. Décrire une course cible (`--race`, optionnel)
 
@@ -714,18 +715,30 @@ PYTHONPATH=src python -m tools.analyses.nice_2026_descentes /chemin/nice-2026.gp
 TWIN_NICE2026_GPX=/chemin/nice-2026.gpx pytest services/twin-engine -k nice_2026
 ```
 
+**Le registre** vit sous `docs/twin-registre/` (protocole : `docs/twin-registre-couverture.md`) :
+le livre banc, un fichier par run marqué du commit, de l'empreinte de configuration et des
+drapeaux hors défaut ; le livre servi ; le statut `dev` / `frais` de chaque athlète ; les
+quarantaines et les passages, communs à tous les runs. Toute lecture sépare livre × statut ×
+niveau.
+
 **Outils d'évaluation** (depuis `services/twin-engine`) :
 
 ```bash
 PYTHONPATH=src python -m tools.ab_montagnhard      # A/B σ/MAE/interp/extrap — preuve obligatoire avant merge
-PYTHONPATH=src python -m tools.backtest <manifest> # walk-forward --until : prédiction veille de course vs réel
+PYTHONPATH=src python -m tools.backtest <manifest> [--label NOM] [--set bloc.clé=valeur]
+                                                    # walk-forward --until → un run au livre banc
 PYTHONPATH=src python -m tools.registre [--json]   # couverture des intervalles, biais, score de Winkler
+                                                    #   (dernier run du banc + livre servi ; --run, --livre)
+PYTHONPATH=src python -m tools.registre --runs     # les runs, leur commit, leur empreinte, leurs drapeaux
+PYTHONPATH=src python -m tools.registre --decision 2026-10-01  # restreint aux athlètes frais à cette date
+PYTHONPATH=src python -m tools.registre --marquer Lolo dev "motif"   # statut au registre, journalisé
+PYTHONPATH=src python -m tools.registre --importer export.json  # fusionne l'export du tableau de bord
 PYTHONPATH=src python -m tools.ab_recency <manifests…>  # balaye la demi-vie de récence (biais de progression)
 PYTHONPATH=src python -m tools.registre --frontiere # jusqu'où resserrer les bandes sans perdre la couverture
-PYTHONPATH=src python -m tools.registre --tableau   # tableau de référence (markdown) : par athlète et total,
+PYTHONPATH=src python -m tools.registre --tableau   # tableau de référence (markdown) : par livre × statut,
                                                     #   vendus/refusés, MAE, biais, couvertures, Winkler relatif,
                                                     #   largeur relative médiane — à coller dans DIAGNOSTIC
-PYTHONPATH=src python -m tools.registre --compare AVANT.json   # avant → après : deltas par athlète (vendus),
+PYTHONPATH=src python -m tools.registre --compare RUN_A RUN_B   # avant → après : deltas par athlète (vendus),
                                                     #   changements de verdict, erreur entrée par entrée
 PYTHONPATH=src python -m tools.diag_ultras <archive> --manifest <manifeste>   # vrais ultras : arrêts (H2),
                                                     #   part de nuit (C2), écart montre − officiel ; agrégats
@@ -733,19 +746,23 @@ PYTHONPATH=src python -m tools.diag_ultras <archive> --manifest <manifeste>   # 
 PYTHONPATH=src python -m tools.diag_ultras --course <gpx> --race <spec.json> --hours 32.3   # part de nuit
                                                     #   de la CIBLE, par segment, via le plan réel
 PYTHONPATH=src python -m tools.passages <manifestes…>   # heures de passage RÉELLES aux points de contrôle des
-                                                    #   courses passées → champ `passages` du registre
+                                                    #   courses passées → docs/twin-registre/passages.json
 PYTHONPATH=src python -m tools.banc <manifestes…> --out <dossier>   # les trois précédents + backtest en UNE passe
-                                                    #   par archive, sorties markdown/JSON dans le dossier
+                                                    #   par archive : un run au livre banc, sorties markdown
 PYTHONPATH=src python -m tools.banc <manifestes…> --out <dossier> --variant NOM:bloc.clé=valeur,…
-                                                    #   + rejeu de toutes les coupures sous une config
-                                                    #   surchargée (A/B), sur le même décodage
+                                                    #   + un run par variante (config surchargée), sur le
+                                                    #   même décodage, comparé au run de base du passage
 twin-engine preview … --set bloc.clé=valeur         # même surcharge pour un cas isolé (répétable)
 ```
 
-> **Avant / après (chantier v2).** Le registre committé au départ du chantier est figé dans
-> `docs/archive/twin-v2/registre-avant.json`. Toute preuve d'un levier se lit par
-> `tools/registre --compare docs/archive/twin-v2/registre-avant.json` après avoir rejoué le
-> banc : MAE des cas vendus, couvertures, Winkler, largeurs — par athlète, jamais sur un seul.
+> **Avant / après.** Toute preuve d'un levier se lit par `tools/registre --compare RUN_A
+> RUN_B` entre deux runs du banc (ou un ancien registre : `docs/archive/twin-v2/registre-avant.json`,
+> `docs/archive/twin-registre-couverture-2026-09.json`) : MAE des cas vendus, couvertures,
+> Winkler, largeurs — par athlète, jamais sur un seul.
+>
+> Les recettes des phases du chantier v2 ci-dessous écrivaient le registre à l'ancien format
+> (`--registre`, un seul fichier) ; avec les outils d'aujourd'hui, `--depot` remplace
+> `--registre` et chaque passage écrit un run.
 
 **Mesures préalables du chantier v2 (Phase 0), à lancer chez Valentin** — les archives
 (`_seed/cas_validation/<Athlète>/archives/`, une archive par dossier, ~1,9 Go en tout) ne

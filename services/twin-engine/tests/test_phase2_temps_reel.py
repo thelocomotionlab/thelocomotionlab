@@ -386,18 +386,26 @@ def test_score_plan_finds_the_shape_that_produced_the_passages(tmp_path):
     assert sc[("durability", "carved")]["mae_min"] > 0.05 and sc[("splits", "carved")]["mae_min"] > 0.05
     assert sc[("config", "personal")]["mae_min"] > 0.05        # d'autres arrêts, d'autres passages
     assert sc[("config", "carved")]["fade_used"] == "config"
-    reg_path = tmp_path / "reg.json"
-    reg_path.write_text(json.dumps(registre), encoding="utf-8")
+    from twin_engine.registre import Depot, entete_de_run
+
+    depot = Depot(tmp_path / "registre")
+    entree = {k: v for k, v in registre["entries"][0].items() if k not in ("dev_set", "passages")}
+    depot.ecrire_run(entete_de_run(CFG, livre="banc"), [entree])
+    depot.ecrire_passages([("T", "Test", "2026-09-25", registre["entries"][0]["passages"])])
     out = tmp_path / "score.md"
-    assert score_main([str(mp), "--registre", str(reg_path), "--out", str(out)]) == 0
+    assert score_main([str(mp), "--depot", str(depot.racine), "--out", str(out)]) == 0
     text = out.read_text(encoding="utf-8")
     assert "cas frais" in text and "| config | carved |" in text and "Δ moitiés" in text
     # --set : une dérive plus forte change la forme scorée, une clé inconnue est refusée
     out2 = tmp_path / "score2.md"
-    assert score_main([str(mp), "--registre", str(reg_path), "--out", str(out2),
+    assert score_main([str(mp), "--depot", str(depot.racine), "--out", str(out2),
                        "--set", "pacing.fade_delta=0.2"]) == 0
     assert out2.read_text(encoding="utf-8") != text
-    assert score_main([str(mp), "--registre", str(reg_path), "--set", "pacing.nope=1"]) == 2
+    assert score_main([str(mp), "--depot", str(depot.racine), "--set", "pacing.nope=1"]) == 2
+    # un athlète marqué « dev » au registre passe dans les cas de développement
+    depot.marquer("T", "dev", le="2026-10-01", par="Valentin", motif="test")
+    assert score_main([str(mp), "--depot", str(depot.racine), "--out", str(out)]) == 0
+    assert "cas de développement" in out.read_text(encoding="utf-8")
 
 
 # ----------------------------------------------------------------------------- défauts intacts

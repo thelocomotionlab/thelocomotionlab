@@ -18,7 +18,11 @@ biais signé à mi-course (plan − réel, en minutes : > 0 = l'athlète était 
 plan à mi-parcours, donc le plan le faisait partir trop lentement / finir trop vite).
 Agrégées par athlète × variante, cas de développement et cas frais séparés.
 
-    PYTHONPATH=src python -m tools.score_plan <manifestes…> [--registre r.json] [--out score.md]
+    PYTHONPATH=src python -m tools.score_plan <manifestes…> [--run ID] [--depot <dossier>]
+        [--out score.md] [--set bloc.clé=valeur …]
+
+Les entrées sont celles d'un run du livre banc (le dernier par défaut), annotées de leurs
+passages (``docs/twin-registre/passages.json``) et du statut de leur athlète.
 """
 
 from __future__ import annotations
@@ -36,7 +40,10 @@ from twin_engine.course import RaceSpec, build_course
 from twin_engine.pacing import build_pacing
 from twin_engine.predict import Prediction
 
-from tools.backtest import DEFAULT_REGISTRE, race_spec_from_meta
+from twin_engine.registre import DEFAULT_RACINE, Depot
+
+from tools.backtest import race_spec_from_meta
+from tools.registre import charger, statut
 
 FADE_SOURCES = ("config", "durability", "splits")
 STOPS_MODELS = ("carved", "personal")
@@ -137,7 +144,7 @@ def score_registre(registre: dict, manifests: list[Path], cfg) -> list[dict]:
         if not scores:
             continue
         rows.append({"athlete": key[0], "race": key[1], "date": key[2],
-                     "dev_set": bool(e.get("dev_set")), "official_h": float(official),
+                     "dev_set": statut(e) == "dev", "official_h": float(official),
                      "splits_delta": m.get("fade_delta_splits"),
                      "durability_pct": m.get("durability_pct"),
                      "stops_rate": m.get("stops_rate_personal"),
@@ -227,7 +234,8 @@ def render_markdown(rows: list[dict]) -> str:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="score_plan", description=__doc__.split("\n")[0])
     ap.add_argument("manifests", nargs="+", help="manifeste(s) JSON (chemins des traces et specs)")
-    ap.add_argument("--registre", default=str(DEFAULT_REGISTRE))
+    ap.add_argument("--depot", default=str(DEFAULT_RACINE))
+    ap.add_argument("--run", help="run du livre banc (défaut : le dernier)")
     ap.add_argument("--out", help="écrit le markdown à ce chemin (sinon stdout)")
     ap.add_argument("--set", action="append", default=[], metavar="BLOC.CLÉ=VALEUR",
                     help="surcharge de config appliquée à TOUTES les variantes du scoreur "
@@ -242,12 +250,12 @@ def main(argv: list[str] | None = None) -> int:
     except ValueError as exc:
         print(f"--set : {exc}", file=sys.stderr)
         return 2
-    reg_path = Path(args.registre)
-    if not reg_path.exists():
-        print(f"Registre introuvable : {reg_path}", file=sys.stderr)
+    try:
+        entries, _ = charger(Depot(args.depot), livre_="banc", run=args.run)
+    except LookupError as exc:
+        print(str(exc), file=sys.stderr)
         return 2
-    registre = json.loads(reg_path.read_text(encoding="utf-8"))
-    rows = score_registre(registre, [Path(m) for m in args.manifests], cfg)
+    rows = score_registre({"entries": entries}, [Path(m) for m in args.manifests], cfg)
     md = render_markdown(rows)
     if args.out:
         Path(args.out).write_text(md + "\n", encoding="utf-8")

@@ -15,7 +15,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Button } from "@locomotionlab/ui";
+import { Button, ChampCompact } from "@locomotionlab/ui";
 import { BadgeEtat, Tableau } from "@locomotionlab/ui/contenu";
 
 import {
@@ -166,6 +166,75 @@ function Plans({ plans }) {
   );
 }
 
+/** Le statut au registre : frais tant que le moteur n'a pas été réglé sur ses données.
+ *  Une décision au registre ne compte que les athlètes frais à sa date ; le passage en
+ *  développement se journalise avec son motif et ne se défait pas. */
+function StatutAuRegistre({ athlete, recharger }) {
+  const fiche = athlete.registre ?? { statut: "frais", depuis: null, journal: [] };
+  const [motif, setMotif] = useState("");
+  const [ouvert, setOuvert] = useState(false);
+  const [message, setMessage] = useState("");
+  const dev = fiche.statut === "dev";
+
+  const marquer = async () => {
+    setMessage("");
+    try {
+      await appeler(`/athletes/${encodeURIComponent(athlete.id)}/statut`, {
+        methode: "POST",
+        corps: { statut: "dev", motif },
+      });
+      setOuvert(false);
+      setMotif("");
+      await recharger();
+    } catch (leve) {
+      setMessage(leve.message);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-brand-grid pt-5">
+      <p className={ETIQUETTE}>Registre</p>
+      <p className="text-sm text-brand-text">
+        {dev
+          ? `Cas de développement depuis le ${jourLisible(fiche.depuis)}.`
+          : "Athlète frais : ses courses comptent dans les décisions."}
+      </p>
+      {fiche.journal?.length ? (
+        <ul className="m-0 flex list-none flex-col gap-1 p-0 text-xs leading-relaxed text-brand-muted">
+          {fiche.journal.map((l) => (
+            <li key={`${l.le}-${l.statut}`}>
+              {jourLisible(l.le)} — {l.statut === "dev" ? "développement" : "frais"} : {l.motif}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {dev ? null : ouvert ? (
+        <>
+          <ChampCompact
+            label="Pourquoi ce passage en développement"
+            value={motif}
+            placeholder="réglages mis au point sur ses courses"
+            onChange={(evenement) => setMotif(evenement.target.value)}
+          />
+          <div className="flex gap-2">
+            <Button size="sm" variant="secondary" disabled={!motif.trim()} onClick={marquer}>
+              Confirmer
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setOuvert(false)}>
+              Annuler
+            </Button>
+          </div>
+        </>
+      ) : (
+        <Button size="sm" variant="secondary" onClick={() => setOuvert(true)}>
+          Marquer comme cas de développement
+        </Button>
+      )}
+      {message ? <p className="text-xs text-brand-deep-dark">{message}</p> : null}
+    </div>
+  );
+}
+
 function Actions({ athlete, recharger }) {
   const [jobId, setJobId] = useState("");
   const [message, setMessage] = useState("");
@@ -228,6 +297,8 @@ function Actions({ athlete, recharger }) {
       </div>
 
       {message ? <p className="text-xs text-brand-deep-dark">{message}</p> : null}
+
+      <StatutAuRegistre athlete={athlete} recharger={recharger} />
 
       <div className="mt-auto border-t border-brand-grid pt-5">
         {aConfirmer ? (

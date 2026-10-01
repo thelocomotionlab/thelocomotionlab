@@ -78,7 +78,9 @@ def test_la_reference_est_toujours_un_chemin_sur(nom, pseudo):
 def test_athlete_porte_les_champs_du_recapitulatif():
     d = O.Athlete(id="a1").to_dict()
     assert set(d) == {"id", "pseudo", "email", "prenom", "montre", "consent_at",
-                      "depot_id", "archive", "ingestion", "jumeau", "niveau", "plans"}
+                      "depot_id", "archive", "ingestion", "jumeau", "niveau", "plans",
+                      "registre"}
+    assert d["registre"] == {"statut": "frais", "depuis": None, "journal": []}
     assert set(d["archive"]) == {"nom", "taille", "sha256", "recue_le"}
     assert set(d["ingestion"]) == {"statut", "le", "erreur"}
     assert set(d["jumeau"]) == {"vc_kmh", "E", "durabilite_pct", "n_vrais_ultras",

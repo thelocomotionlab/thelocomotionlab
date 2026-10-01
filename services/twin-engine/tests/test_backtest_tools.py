@@ -1,9 +1,9 @@
 """Banc d'essai rétrospectif (tools/backtest + tools/registre) : fonctions pures + plomberie.
 
 Le banc complet tourne sur les archives réelles (chez Valentin) ; ici on verrouille le
-parsing, la fusion idempotente du registre, le score de Winkler, les quantiles groupés,
-et un bout-en-bout minimal sur la fixture GPX (prédiction impossible → consignée, pas
-d'erreur — le refus du moteur est une information).
+parsing, les runs du registre (jamais réécrits, curation commune à tous les runs), le score
+de Winkler, les quantiles groupés, et un bout-en-bout minimal sur la fixture GPX
+(prédiction impossible → consignée, pas d'erreur — le refus du moteur est une information).
 """
 
 from __future__ import annotations
@@ -19,7 +19,8 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # racine twin-engine → tools/
 
 from tools.backtest import main as backtest_main  # noqa: E402
-from tools.backtest import merge_registre, parse_time_h  # noqa: E402
+from tools.backtest import parse_time_h  # noqa: E402
+from twin_engine.registre import Depot, lire_entrees  # noqa: E402
 from tools.registre import conformal_order_quantile, pooled_scores, summarize, winkler  # noqa: E402
 
 FIX = Path(__file__).parent / "fixtures"
@@ -70,29 +71,78 @@ def _entry(athlete, race, err_pct, sd_rel=0.10, lo=20.0, hi=30.0, actual=25.0, d
     }
 
 
-def test_merge_registre_is_idempotent_on_key():
-    reg = {"entries": []}
-    e1 = {k: v for k, v in _entry("A", "Course X", 5.0).items()
-          if k not in ("athlete", "dev_set")}
-    merge_registre(reg, "A", False, [e1])
-    merge_registre(reg, "A", False, [dict(e1, official_time_h=26.0)])   # même clé → mise à jour
-    merge_registre(reg, "A", False, [dict(e1, race="Course Y")])        # autre clé → ajout
-    assert len(reg["entries"]) == 2
-    assert reg["entries"][0]["official_time_h"] == 26.0
+def _run(depot, label, entries, le):
+    from datetime import datetime
+
+    from twin_engine.config import load_config
+    from twin_engine.registre import entete_de_run
+
+    entete = entete_de_run(load_config(), livre="banc", label=label,
+                           le=datetime.fromisoformat(le))
+    return depot.ecrire_run(entete, entries)
 
 
-def test_merge_registre_preserves_manual_curation():
-    """Une quarantaine (ou toute annotation manuelle) SURVIT à la re-fusion — cas réel :
-    la re-fusion Rapace avait fait re-rentrer dans les stats une course quarantainée
-    pour parcours inutilisable (protocole : jamais de disparition silencieuse)."""
-    reg = {"entries": []}
-    e1 = {k: v for k, v in _entry("A", "Course X", 5.0).items()
-          if k not in ("athlete", "dev_set")}
-    merge_registre(reg, "A", False, [e1])
-    reg["entries"][0]["quarantine"] = "parcours inutilisable (test)"    # curation manuelle
-    merge_registre(reg, "A", False, [dict(e1, official_time_h=26.0)])   # re-fusion machine
-    assert reg["entries"][0]["official_time_h"] == 26.0                 # màj machine appliquée
-    assert reg["entries"][0]["quarantine"] == "parcours inutilisable (test)"
+def test_a_run_is_never_rewritten(tmp_path):
+    depot = Depot(tmp_path)
+    e1 = _entry("A", "Course X", 5.0)
+    premier = _run(depot, "defauts", [e1], "2026-10-01T08:00:00+00:00")
+    meme_seconde = _run(depot, "defauts", [dict(e1, official_time_h=27.0)], "2026-10-01T08:00:00+00:00")
+    assert meme_seconde != premier and meme_seconde.stem == premier.stem + "-2"
+    _run(depot, "defauts", [dict(e1, official_time_h=26.0)], "2026-10-01T09:00:00+00:00")
+    runs = depot.runs()
+    assert [r["label"] for r in runs] == ["defauts", "defauts", "defauts"]
+    assert len({r["id"] for r in runs}) == 3
+    assert depot.dernier_run() == runs[-1]["id"]
+    _, premier = lire_entrees(depot.chemin_du_run(runs[0]["id"]))
+    assert premier[0]["official_time_h"] == 25.0                       # l'ancien run n'a pas bougé
+
+
+def test_curation_and_passages_apply_to_every_run(tmp_path):
+    """Une quarantaine et des passages se posent une fois, hors des runs : chaque run qui
+    rejoue la course les voit — jamais de disparition silencieuse à la relance du banc."""
+    depot = Depot(tmp_path)
+    e1 = {k: v for k, v in _entry("A", "Course X", 5.0).items() if k != "dev_set"}
+    for heure in ("08", "09"):
+        _run(depot, "defauts", [e1], f"2026-10-01T{heure}:00:00+00:00")
+    depot.mettre_en_quarantaine("A", "Course X", "2025-06-01", "parcours inutilisable", "2026-10-01")
+    depot.ecrire_passages([("A", "Course X", "2025-06-01", {"n_found": 3})])
+    for r in depot.runs():
+        _, brutes = lire_entrees(depot.chemin_du_run(r["id"]))
+        [e] = depot.annoter(brutes, "banc")
+        assert e["quarantine"] == "parcours inutilisable"
+        assert e["passages"] == {"n_found": 3} and e["livre"] == "banc"
+
+
+def test_status_is_read_at_the_decision_date(tmp_path):
+    from tools.registre import decision
+
+    depot = Depot(tmp_path)
+    depot.marquer("A", "dev", le="2026-07-15", par="Valentin", motif="réglé sur ses données")
+    depot.marquer("B", "dev", le="2026-10-01", par="Valentin", motif="examiné")
+    with pytest.raises(ValueError):
+        depot.marquer("C", "dev", le="2026-10-01", par="Valentin", motif=" ")
+    entries = depot.annoter([_entry("A", "a", 1.0), _entry("B", "b", 2.0), _entry("C", "c", 3.0)],
+                            "banc", jour="2026-09-16")
+    assert [e["statut"] for e in entries] == ["dev", "frais", "frais"]
+    noms, gardes = decision(entries, depot.athletes(), "2026-09-16")
+    assert noms == ["B", "C"] and [e["athlete"] for e in gardes] == ["B", "C"]
+    noms, gardes = decision(entries, depot.athletes(), "2026-10-02")
+    assert noms == ["C"]
+
+
+def test_served_book_is_frozen_once_the_result_is_entered(tmp_path):
+    depot = Depot(tmp_path)
+    prepare = {"athlete": "A", "race": "Course", "date": "2026-11-01", "official_time_h": None,
+               "dnf": False, "prediction": {"central_h": 30.0}}
+    assert depot.importer_servi([prepare])["ajoutees"] == ["A · Course · 2026-11-01"]
+    couru = dict(prepare, official_time_h=31.0)
+    assert depot.importer_servi([couru])["completees"] == ["A · Course · 2026-11-01"]
+    assert depot.importer_servi([dict(couru, official_time_h=29.0)])["refusees"]
+    assert depot.servi()[0]["official_time_h"] == 31.0
+    rapport = depot.importer_servi([dict(couru, official_time_h=29.0, correction="saisie erronée")])
+    assert rapport["corrigees"]
+    [e] = depot.servi()
+    assert e["official_time_h"] == 29.0 and e["corrections"][0]["official_time_h"] == 31.0
 
 
 def test_summarize_coverage_bias_and_pooled_grouping():
@@ -164,15 +214,20 @@ def test_backtest_end_to_end_records_refusal(tmp_path, monkeypatch, capsys):
                    "official_time": "10:00:00", "gpx": "course.gpx"}],
     }
     (tmp_path / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-    registre = tmp_path / "registre.json"
+    depot = Depot(tmp_path / "registre")
 
-    for _ in range(2):   # idempotence : deux passages → une seule entrée
-        rc = backtest_main([str(tmp_path / "manifest.json"), "--registre", str(registre)])
+    for label in ("defauts", "relance"):   # deux passages → deux runs, aucun réécrit
+        rc = backtest_main([str(tmp_path / "manifest.json"), "--depot", str(depot.racine),
+                            "--label", label])
         assert rc == 0
         capsys.readouterr()
-    data = json.loads(registre.read_text(encoding="utf-8"))
-    assert len(data["entries"]) == 1
-    e = data["entries"][0]
+    runs = depot.runs()
+    assert [r["label"] for r in runs] == ["defauts", "relance"]
+    assert runs[0]["drapeaux"] == {} and runs[0]["config_empreinte"]
+    assert runs[0]["manifestes"] == [{"athlete": "Testeur", "courses": 1}]
+    _, entries = lire_entrees(depot.chemin_du_run(runs[-1]["id"]))
+    assert len(entries) == 1
+    e = entries[0]
     assert e["athlete"] == "Testeur" and e["until"] == "2030-01-01"
     assert e["prediction"] is None                       # refus consigné, pas d'invention
     assert e["model"]["verdict"] == "🔴"
@@ -511,12 +566,9 @@ def test_ab_recency_honours_the_quarantine(tmp_path):
     assert {r["race"] for r in filtre} == {"Course B"}
 
     # la liste se lit dans le registre committé, pas dans le manifeste
-    reg = tmp_path / "registre.json"
-    reg.write_text(json.dumps({"entries": [
-        {"athlete": "Test", "race": "Course A", "date": "2026-03-01", "quarantine": "motif"},
-        {"athlete": "Test", "race": "Course B", "date": "2025-08-01"},
-    ]}), encoding="utf-8")
-    assert quarantined(reg) == {("Test", "Course A", "2026-03-01")}
+    depot = Depot(tmp_path / "registre")
+    depot.mettre_en_quarantaine("Test", "Course A", "2026-03-01", "motif", "2026-10-01")
+    assert quarantined(depot.racine) == {("Test", "Course A", "2026-03-01")}
 
 
 def test_summarize_counts_refusal_motives_and_false_negatives():
@@ -735,10 +787,9 @@ def test_match_checkpoints_radius_monotone_and_fallbacks():
     assert abs(pas["finish_gap_min"]) < 0.6
 
 
-def test_passages_end_to_end_writes_and_survives_the_bench_merge(tmp_path, capsys):
+def test_passages_end_to_end_writes_and_every_run_sees_them(tmp_path, capsys):
     """De l'archive au registre : l'activité du jour de course est retrouvée, ses passages
-    consignés sous la clé de l'entrée, et la re-fusion du banc les préserve."""
-    from tools.backtest import merge_registre
+    consignés sous la clé de la course, et tout run qui la rejoue les lit."""
     from tools.passages import main as passages_main
     from twin_engine.config import load_config
     from twin_engine.course import RaceSpec, build_course
@@ -755,26 +806,22 @@ def test_passages_end_to_end_writes_and_survives_the_bench_merge(tmp_path, capsy
                 "races": [{"name": "Course passée", "date": "2030-05-01",
                            "official_time": "1:33:20", "gpx": "course.gpx"}]}
     (tmp_path / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-    registre = tmp_path / "registre.json"
+    depot = Depot(tmp_path / "registre")
 
-    rc = passages_main([str(tmp_path / "manifest.json"), "--registre", str(registre),
+    rc = passages_main([str(tmp_path / "manifest.json"), "--depot", str(depot.racine),
                         "--radius-m", "60"])
     assert rc == 0
     out = capsys.readouterr().out
     assert "Testeur · Course passée" in out and "| 10.0 |" in out
-    data = json.loads(registre.read_text(encoding="utf-8"))
-    e = data["entries"][0]
-    assert (e["athlete"], e["race"], e["date"]) == ("Testeur", "Course passée", "2030-05-01")
-    pas = e["passages"]
+    pas = depot.passages()[("Testeur", "Course passée", "2030-05-01")]
     assert pas["activity_date"] == "2030-05-01" and pas["n_found"] == len(course.segments) + 1
     assert pas["checkpoints"][-1]["t_h"] == pytest.approx(5600 / 3600, abs=0.02)
     assert abs(pas["finish_gap_min"]) < 1.5
 
-    # la re-fusion du banc (ligne machine sans « passages ») ne les efface pas
-    merge_registre(data, "Testeur", False,
-                   [{"race": "Course passée", "date": "2030-05-01", "prediction": None}])
-    assert data["entries"][0]["passages"]["n_found"] == pas["n_found"]
-    assert len(data["entries"]) == 1
+    # une entrée de run sans « passages » les reçoit à la lecture
+    [e] = depot.annoter([{"athlete": "Testeur", "race": "Course passée", "date": "2030-05-01",
+                          "prediction": None}], "banc")
+    assert e["passages"]["n_found"] == pas["n_found"]
 
 
 def test_backtest_skips_a_missing_archive_and_continues(tmp_path, monkeypatch, capsys):
@@ -791,15 +838,15 @@ def test_backtest_skips_a_missing_archive_and_continues(tmp_path, monkeypatch, c
     ko = dict(ok, athlete="Absent", archive="cas/perdu.zip")
     (tmp_path / "ok.json").write_text(json.dumps(ok), encoding="utf-8")
     (tmp_path / "ko.json").write_text(json.dumps(ko), encoding="utf-8")
-    registre = tmp_path / "registre.json"
+    depot = Depot(tmp_path / "registre")
 
     rc = backtest_main([str(tmp_path / "ko.json"), str(tmp_path / "ok.json"),
-                        "--registre", str(registre)])
+                        "--depot", str(depot.racine)])
     err = capsys.readouterr().err
     assert rc == 1
     assert "Absent : ARCHIVE INTROUVABLE" in err and "export.zip" in err
-    data = json.loads(registre.read_text(encoding="utf-8"))
-    assert [e["athlete"] for e in data["entries"]] == ["Présent"]
+    _, entries = lire_entrees(depot.chemin_du_run(depot.dernier_run()))
+    assert [e["athlete"] for e in entries] == ["Présent"]
 
 
 def test_banc_one_pass_matches_the_separate_tools(tmp_path, monkeypatch, capsys):
@@ -829,29 +876,31 @@ def test_banc_one_pass_matches_the_separate_tools(tmp_path, monkeypatch, capsys)
     mp.write_text(json.dumps(manifest), encoding="utf-8")
     out = tmp_path / "out"
 
-    reg_one = tmp_path / "reg-one.json"
-    rc = banc_main([str(mp), "--registre", str(reg_one), "--out", str(out), "--radius-m", "60",
-                    "--min-hours", "0.5", "--avant", str(tmp_path / "inexistant.json")])
+    dep_one = Depot(tmp_path / "reg-one")
+    rc = banc_main([str(mp), "--depot", str(dep_one.racine), "--out", str(out), "--radius-m", "60",
+                    "--min-hours", "0.5"])
     assert rc == 0
-    reg_sep = tmp_path / "reg-sep.json"
-    assert backtest_main([str(mp), "--registre", str(reg_sep)]) == 0
-    assert passages_main([str(mp), "--registre", str(reg_sep), "--radius-m", "60"]) == 0
+    dep_sep = Depot(tmp_path / "reg-sep")
+    assert backtest_main([str(mp), "--depot", str(dep_sep.racine)]) == 0
+    assert passages_main([str(mp), "--depot", str(dep_sep.racine), "--radius-m", "60"]) == 0
     capsys.readouterr()
 
-    one = json.loads(reg_one.read_text(encoding="utf-8"))["entries"]
-    sep = json.loads(reg_sep.read_text(encoding="utf-8"))["entries"]
+    one = lire_entrees(dep_one.chemin_du_run(dep_one.dernier_run()))[1]
+    sep = lire_entrees(dep_sep.chemin_du_run(dep_sep.dernier_run()))[1]
     # le banc en une passe connaît en plus le calendrier de la course (départ, position, lus
     # dans l'activité du jour) ; le reste est identique au bit près
     assert one[0]["race_meta"] is not None and sep[0]["race_meta"] is None
     strip = lambda rows: [{k: v for k, v in r.items() if k != "race_meta"} for r in rows]
-    assert strip(one) == strip(sep) and one[0]["passages"]["n_found"] == len(course.segments) + 1
+    assert strip(one) == strip(sep)
+    assert dep_one.passages() == dep_sep.passages()
+    assert dep_one.passages()[("Testeur", "Course passée", "2030-05-01")]["n_found"] == len(course.segments) + 1
     diag_one = json.loads((out / "diag-testeur.json").read_text(encoding="utf-8"))
     diag_sep = json.loads(json.dumps(
         scan_archive(d, cfg, min_hours=0.5, min_stop_s=60, manifest=manifest)))
     assert diag_one["rows"] == diag_sep["rows"] and diag_one["aggregates"] == diag_sep["aggregates"]
     names = {p.name for p in out.iterdir()}
     assert {"backtest.md", "tableau.md", "diag-testeur.md", "passages-testeur.md"} <= names
-    assert "compare.md" not in names                       # pas de registre « avant » → pas de compare
+    assert "compare.md" not in names                       # aucun run « avant » → pas de compare
     assert "Course passée" in (out / "backtest.md").read_text(encoding="utf-8")
 
 
@@ -878,13 +927,24 @@ def test_banc_variants_replay_on_one_decode_and_refuse_twin_overrides(tmp_path, 
     mp = tmp_path / "manifest.json"
     mp.write_text(json.dumps(manifest), encoding="utf-8")
     out = tmp_path / "out"
-    rc = banc_main([str(mp), "--registre", str(tmp_path / "reg.json"), "--out", str(out),
-                    "--no-diag", "--no-passages", "--avant", str(tmp_path / "nope.json"),
-                    "--variant", "A2:calibration.link=log"])
+    depot = Depot(tmp_path / "registre")
+    rc = banc_main([str(mp), "--depot", str(depot.racine), "--out", str(out),
+                    "--no-diag", "--no-passages", "--variant", "A2:calibration.link=linear"])
     capsys.readouterr()
     assert rc == 0
     names = {p.name for p in out.iterdir()}
-    assert {"registre-A2.json", "backtest-A2.md", "tableau-A2.md", "compare-A2.md"} <= names
-    base = json.loads((tmp_path / "reg.json").read_text(encoding="utf-8"))["entries"]
-    var = json.loads((out / "registre-A2.json").read_text(encoding="utf-8"))["entries"]
-    assert len(base) == len(var) == 1 and var[0]["model"].get("link") == "log"
+    assert {"backtest-A2.md", "tableau-A2.md", "compare-A2.md"} <= names
+    runs = {r["label"]: r for r in depot.runs()}
+    assert set(runs) == {"defauts", "A2"}
+    assert runs["defauts"]["drapeaux"] == {}
+    assert runs["A2"]["drapeaux"] == {"calibration.link": "linear"}
+    assert runs["A2"]["config_empreinte"] != runs["defauts"]["config_empreinte"]
+    base = lire_entrees(depot.chemin_du_run(runs["defauts"]["id"]))[1]
+    var = lire_entrees(depot.chemin_du_run(runs["A2"]["id"]))[1]
+    assert len(base) == len(var) == 1 and var[0]["model"].get("link") == "linear"
+
+    # la passe suivante se compare d'elle-même au dernier run de même étiquette
+    rc = banc_main([str(mp), "--depot", str(depot.racine), "--out", str(tmp_path / "out2"),
+                    "--no-diag", "--no-passages"])
+    capsys.readouterr()
+    assert rc == 0 and (tmp_path / "out2" / "compare.md").exists()

@@ -8,11 +8,12 @@ l'heure de passage à chaque point de découpage est relevée par PROXIMITÉ mon
 distance de la montre ; à défaut, l'approche la plus proche, signalée comme telle. Un point
 jamais approché est consigné « introuvable » — rien n'est inventé.
 
-Consigné dans le registre sous ``passages`` (clé athlète/course/date), agrégats seulement :
-des heures à des km publics. La fusion du banc (``merge_registre``) les préserve.
+Consigné dans ``docs/twin-registre/passages.json`` (clé athlète/course/date), commun à
+tous les runs qui rejouent la course et à son entrée servie. Agrégats seulement : des heures
+à des km publics.
 
     PYTHONPATH=src python -m tools.passages manifest-a.json [manifest-b.json …]
-        [--registre <chemin.json>] [--radius-m 150] [--dry-run]
+        [--depot <dossier>] [--radius-m 150] [--dry-run]
 """
 
 from __future__ import annotations
@@ -29,7 +30,9 @@ from twin_engine.config import load_config
 from twin_engine.course import RaceSpec, build_course
 from twin_engine.ingest import iter_activities
 
-from tools.backtest import DEFAULT_REGISTRE, hint_missing_archive, parse_time_h
+from twin_engine.registre import DEFAULT_RACINE, Depot
+
+from tools.backtest import hint_missing_archive, parse_time_h
 
 _R_EARTH = 6_371_000.0
 
@@ -175,13 +178,12 @@ def race_activities(archive: Path, races: list[dict], *, progress=None) -> dict[
     return collector.best
 
 
-def passages_for_manifest(found: dict[int, dict], man: dict, base: Path, cfg, registre: dict,
+def passages_for_manifest(found: dict[int, dict], man: dict, base: Path, cfg,
                           *, radius_m: float = 150.0) -> list[tuple[str, dict | None]]:
-    """Des candidates aux passages consignés : parcours construit comme au banc, entrée du
-    registre créée si absente (la fusion du banc la complètera)."""
-    athlete, dev_set = man["athlete"], bool(man.get("dev_set", False))
+    """Des candidates aux passages : parcours construit comme au banc, une ligne par course
+    du manifeste (``None`` quand l'activité du jour est introuvable)."""
+    athlete = man["athlete"]
     results: list[tuple[str, dict | None]] = []
-    rows = registre.setdefault("entries", [])
     for k, r in enumerate(man["races"]):
         cand = found.get(k)
         if cand is None:
@@ -196,18 +198,17 @@ def passages_for_manifest(found: dict[int, dict], man: dict, base: Path, cfg, re
         pas = passages_for_activity(cand["t"], cand["dist_m"], cand["lat"], cand["lon"], course,
                                     radius_m=radius_m, official_h=official)
         pas["activity_date"] = cand["date"]
-        key = (athlete, r["name"], r["date"])
-        row = next((e for e in rows if (e.get("athlete"), e.get("race"), e.get("date")) == key),
-                   None)
-        if row is None:
-            row = {"athlete": athlete, "dev_set": dev_set, "race": r["name"], "date": r["date"]}
-            rows.append(row)
-        row["passages"] = pas
         results.append((r["name"], pas))
     return results
 
 
-def run_manifest(manifest_path: Path, cfg, registre: dict, *, radius_m: float = 150.0,
+def lignes_de_passages(man: dict, results: list[tuple[str, dict | None]]):
+    """Les passages trouvés, prêts pour ``Depot.ecrire_passages``."""
+    dates = {r["name"]: r["date"] for r in man["races"]}
+    return [(man["athlete"], name, dates[name], pas) for name, pas in results if pas is not None]
+
+
+def run_manifest(manifest_path: Path, cfg, *, radius_m: float = 150.0,
                  progress=None) -> list[tuple[str, dict | None]] | None:
     """Toutes les courses d'un manifeste ; ``None`` si l'archive est introuvable (signalé)."""
     base = manifest_path.resolve().parent
@@ -220,7 +221,7 @@ def run_manifest(manifest_path: Path, cfg, registre: dict, *, radius_m: float = 
         return None
     print(f"  {athlete} : recherche des activités de course dans l'archive…", file=sys.stderr)
     found = race_activities(archive, man["races"], progress=progress)
-    return passages_for_manifest(found, man, base, cfg, registre, radius_m=radius_m)
+    return passages_for_manifest(found, man, base, cfg, radius_m=radius_m)
 
 
 def _hm(h: float | None) -> str:
@@ -258,34 +259,33 @@ def _progress(n: int, name: str) -> None:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="passages", description=__doc__.split("\n")[0])
     ap.add_argument("manifests", nargs="+", help="manifeste(s) de backtest, un par athlète")
-    ap.add_argument("--registre", default=str(DEFAULT_REGISTRE))
+    ap.add_argument("--depot", default=str(DEFAULT_RACINE))
     ap.add_argument("--radius-m", type=float, default=150.0,
                     help="rayon de détection d'un passage (défaut 150 m)")
-    ap.add_argument("--dry-run", action="store_true", help="n'écrit pas le registre")
+    ap.add_argument("--dry-run", action="store_true", help="n'écrit pas les passages")
     args = ap.parse_args(argv)
 
     cfg = load_config()
-    reg_path = Path(args.registre)
-    registre = (json.loads(reg_path.read_text(encoding="utf-8")) if reg_path.exists()
-                else {"entries": []})
+    depot = Depot(args.depot)
     missing: list[str] = []
+    lignes = []
     for m in args.manifests:
         mp = Path(m)
         man = json.loads(mp.read_text(encoding="utf-8"))
-        results = run_manifest(mp, cfg, registre, radius_m=args.radius_m, progress=_progress)
+        results = run_manifest(mp, cfg, radius_m=args.radius_m, progress=_progress)
         print(file=sys.stderr)
         if results is None:
             missing.append(man["athlete"])
             continue
         print(render_markdown(man["athlete"], results))
+        lignes += lignes_de_passages(man, results)
     if args.dry_run:
-        print("\n(dry-run : registre non écrit)", file=sys.stderr)
+        print("\n(dry-run : passages non écrits)", file=sys.stderr)
         return 1 if missing else 0
-    if len(missing) < len(args.manifests):
-        reg_path.parent.mkdir(parents=True, exist_ok=True)
-        reg_path.write_text(json.dumps(registre, ensure_ascii=False, indent=2) + "\n",
-                            encoding="utf-8")
-        print(f"\nRegistre mis à jour : {reg_path}", file=sys.stderr)
+    if lignes:
+        depot.ecrire_passages(lignes)
+        print(f"\nPassages écrits : {depot.racine / 'passages.json'} ({len(lignes)} course(s))",
+              file=sys.stderr)
     if missing:
         print(f"\n⚠ {len(missing)} manifeste(s) ignoré(s), archive introuvable : "
               + ", ".join(missing), file=sys.stderr)

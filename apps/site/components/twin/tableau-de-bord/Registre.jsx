@@ -1,11 +1,13 @@
 // components/twin/tableau-de-bord/Registre.jsx
 //
-// LE REGISTRE DE COUVERTURE : chaque plan servi est une promesse falsifiable ; le
-// registre consigne où le réel est tombé (récapitulatif §5.6).
+// LE REGISTRE DE COUVERTURE, livre servi : chaque plan servi est une promesse falsifiable ;
+// le registre consigne où le réel est tombé (récapitulatif §5.6).
 //
-// Il se calcule côté moteur depuis les plans qui ont un résultat, par niveau servi — un
-// plan de base et un plan calibré ne promettent pas la même chose, ils se comptent à
-// part. La saisie se fait ici, en ligne ; l'athlète peut aussi saisir depuis sa page.
+// Il se calcule côté moteur depuis les plans qui ont un résultat, par statut de
+// l'athlète (frais : décisionnel ; développement : le moteur a été réglé sur ses données)
+// et par niveau servi — un plan de base et un plan calibré ne promettent pas la même
+// chose, ils se comptent à part. La saisie se fait ici, en ligne ; l'athlète peut aussi
+// saisir depuis sa page. Le résultat du labo fige l'entrée.
 
 "use client";
 
@@ -88,7 +90,7 @@ export default function Registre() {
         <>
           <div className="flex items-end justify-between gap-8">
             <div>
-              <h1 className="font-heading text-[22px] font-bold text-brand-text">Registre de couverture</h1>
+              <h1 className="font-heading text-[22px] font-bold text-brand-text">Registre de couverture · livre servi</h1>
               <p className="mt-1 text-sm text-brand-muted">
                 Chaque plan servi est une promesse falsifiable ; le registre consigne où le réel est tombé.
               </p>
@@ -115,17 +117,25 @@ export default function Registre() {
           </div>
           {message ? <p className="text-sm text-brand-deep-dark">{message}</p> : null}
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <Resume titre="Plan de base" chiffres={registre.base} />
-            <Resume titre="Plan calibré" chiffres={registre.calibre} />
-          </div>
+          {[
+            ["frais", "Athlètes frais — décisionnels"],
+            ["dev", "Cas de développement — indicatifs"],
+          ].map(([statut, titre]) => (
+            <section key={statut} className="flex flex-col gap-3">
+              <p className={ETIQUETTE}>{titre}</p>
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <Resume titre="Plan de base" chiffres={registre.par_statut[statut].base} />
+                <Resume titre="Plan calibré" chiffres={registre.par_statut[statut].calibre} />
+              </div>
+            </section>
+          ))}
 
           <section className="overflow-x-auto rounded-lg border border-brand-hairline bg-brand-paper">
             {registre.lignes.length ? (
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr className="text-left text-xs uppercase tracking-etiquette text-brand-muted">
-                    {["Athlète", "Course", "Date", "Niveau servi", "Prédit", "Réel", "Écart", "Fourchette", "Bornes"].map((c) => (
+                    {["Athlète", "Statut", "Course", "Date", "Niveau servi", "Prédit", "Réel", "Écart", "Fourchette", "Bornes"].map((c) => (
                       <th key={c} className="px-4 py-2.5 font-semibold">
                         {c}
                       </th>
@@ -139,6 +149,7 @@ export default function Registre() {
                         {l.athlete || "—"}
                         {l.gardee ? <span className="block text-xs font-normal text-brand-muted">plan supprimé</span> : null}
                       </td>
+                      <td className="px-4 py-2">{l.statut === "dev" ? "développement" : "frais"}</td>
                       <td className="px-4 py-2">{l.course}</td>
                       <td className="px-4 py-2 tabular-nums">{jourLisible(l.date)}</td>
                       <td className="px-4 py-2">
@@ -172,7 +183,7 @@ export default function Registre() {
 
           <p className="text-xs leading-relaxed text-brand-muted">
             Format libre : 34h12, 34:12 ou 34 h 12. L&rsquo;écart, la fourchette et les bornes se
-            calculent à la saisie. Fourchette de course : une course sur deux ; bornes de sécurité :
+            calculent à la saisie ; l&rsquo;entrée se fige alors, et une correction demande un motif. Fourchette de course : une course sur deux ; bornes de sécurité :
             quatre courses sur cinq. Pour un système bien calibré, la moitié des réels tombent près
             du central : un réel proche du prédit est le comportement attendu, pas la preuve
             d&rsquo;une fourchette trop large. Aucune recalibration sous huit entrées.

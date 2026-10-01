@@ -1,8 +1,9 @@
 """Analyse du registre de couverture — la SEULE instance qui tranche la calibration.
 
-Lit le registre JSON alimenté par ``tools/backtest.py`` (+ les courses réelles au fil de
-l'eau) et imprime, séparément pour les cas de développement (Nice, Montagnhard — le modèle
-a été réglé dessus) et les cas FRAIS :
+Lit le registre committé (``docs/twin-registre/`` : le livre banc, un fichier par run ; le
+livre servi ; les statuts des athlètes) et imprime, toujours séparément par LIVRE (banc
+rétrospectif, servi prospectif), par STATUT de l'athlète (frais : décisionnel ; dev : le
+modèle a été réglé sur ses données) et par NIVEAU (calibré 🟢/🟠, vendu ; de base 🔴, refusé) :
 
   * couverture empirique des deux bandes (fourchette de course 50 %, sécurité 80 %) ;
   * biais et erreur du central (moyenne signée, MAE, médiane |err|) ;
@@ -13,9 +14,17 @@ a été réglé dessus) et les cas FRAIS :
     courses d'un même athlète ne sont pas indépendantes).
 
 Règle pré-enregistrée (docs/twin-registre-couverture.md) : AUCUNE recalibration sous
-8-10 cas frais ; décision au score, jamais sur un cas isolé.
+8-10 cas frais ; décision au score, jamais sur un cas isolé ; une décision ne compte que les
+athlètes frais à sa date, et les nomme (``--decision``).
 
-Lancement :  PYTHONPATH=src python -m tools.registre [<chemin.json>] [--json]
+Lancement :
+
+    PYTHONPATH=src python -m tools.registre [--livre banc|servi|tous] [--run ID] [--json]
+        [--tableau] [--frontiere] [--decision AAAA-MM-JJ] [--compare RUN_A [RUN_B]] [--runs]
+    PYTHONPATH=src python -m tools.registre --marquer ATHLÈTE dev|frais "motif"
+    PYTHONPATH=src python -m tools.registre --quarantine ATHLÈTE COURSE DATE "motif"
+    PYTHONPATH=src python -m tools.registre --importer export-tableau-de-bord.json
+    PYTHONPATH=src python -m tools.registre --migrer ancien-registre.json
 """
 
 from __future__ import annotations
@@ -24,11 +33,13 @@ import argparse
 import json
 import sys
 from collections import Counter
+from datetime import date
 from pathlib import Path
 
 import numpy as np
 
-DEFAULT_REGISTRE = Path(__file__).resolve().parents[3] / "docs" / "twin-registre-couverture.json"
+from twin_engine.registre import (DEFAULT_RACINE, LIVRE_BANC, LIVRE_SERVI, STATUT_DEV,
+                                  STATUT_FRAIS, Depot, cle, frais_a_la_date, lire_entrees)
 
 
 def winkler(lo: float, hi: float, y: float, alpha: float) -> float:
@@ -333,10 +344,28 @@ def _md_refused(rows: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def statut(e: dict) -> str:
+    """Le statut de l'athlète porté par l'entrée annotée ; à défaut, l'ancien ``dev_set``."""
+    return e.get("statut") or (STATUT_DEV if e.get("dev_set") else STATUT_FRAIS)
+
+
+def livre(e: dict) -> str:
+    return e.get("livre") or LIVRE_BANC
+
+
 def _groups(entries: list[dict]) -> list[tuple[str, list[dict]]]:
-    return [("cas frais (décisionnels)", [e for e in entries if not e.get("dev_set")]),
-            ("cas de développement (indicatifs)", [e for e in entries if e.get("dev_set")]),
-            ("tous les cas", list(entries))]
+    """Livre × statut : par livre présent, les cas frais (décisionnels), les cas de
+    développement (indicatifs), puis tous. Le niveau (calibré / de base) se sépare dans
+    chaque groupe."""
+    out: list[tuple[str, list[dict]]] = []
+    for nom in sorted({livre(e) for e in entries}):
+        sub = [e for e in entries if livre(e) == nom]
+        out += [(f"livre {nom} · athlètes frais (décisionnels)",
+                 [e for e in sub if statut(e) == STATUT_FRAIS]),
+                (f"livre {nom} · athlètes de développement (indicatifs)",
+                 [e for e in sub if statut(e) == STATUT_DEV]),
+                (f"livre {nom} · tous les athlètes", sub)]
+    return out
 
 
 def tableau_markdown(entries: list[dict]) -> str:
@@ -348,9 +377,9 @@ def tableau_markdown(entries: list[dict]) -> str:
     for label, group in _groups(entries):
         sold = athlete_rows(group, verdicts=SOLD)
         refused = athlete_rows(group, verdicts=REFUSED)
-        out.append(f"\n**{label} — VENDUS (🟢/🟠)**\n")
+        out.append(f"\n**{label} — niveau calibré, VENDUS (🟢/🟠)**\n")
         out.append(_md_sold(sold) if sold else "(aucun cas vendu)")
-        out.append(f"\n**{label} — REFUSÉS (🔴)**\n")
+        out.append(f"\n**{label} — niveau de base, REFUSÉS (🔴)**\n")
         out.append(_md_refused(refused) if refused else "(aucun refus)")
         out.append(f"\n**{label} — {_garde_line(garde_domaine(group))}")
     return "\n".join(out)
@@ -380,7 +409,11 @@ def compare_markdown(before: list[dict], after: list[dict]) -> str:
     prédiction apparue/disparue) et l'erreur du central entrée par entrée. C'est la pièce
     à coller dans DIAGNOSTIC pour toute règle d'adoption (MAE vendue, Winkler, largeur)."""
     out: list[str] = []
-    for (label, gb), (_, ga) in zip(_groups(before), _groups(after)):
+    groupes_b, groupes_a = dict(_groups(before)), dict(_groups(after))
+    for label in [g for g, _ in _groups(before + after)]:
+        gb, ga = groupes_b.get(label, []), groupes_a.get(label, [])
+        if not gb and not ga:
+            continue
         rb = {r["athlete"]: r for r in athlete_rows(gb)}
         ra = {r["athlete"]: r for r in athlete_rows(ga)}
         names = [a for a in sorted(set(rb) | set(ra)) if a != "TOTAL"] + ["TOTAL"]
@@ -469,61 +502,212 @@ def _print_frontiere(label: str, entries: list[dict], *, alpha: float, band: str
               "(les bandes servies sont trop étroites pour ce qu'elles promettent).")
 
 
+# --------------------------------------------------------------------------- #
+# Lecture du registre committé
+# --------------------------------------------------------------------------- #
+def charger(depot: Depot, *, livre_: str = LIVRE_BANC, run: str | None = None,
+            jour: str | None = None) -> tuple[list[dict], dict | None]:
+    """Les entrées annotées (livre, statut au ``jour``, quarantaine, passages) d'un livre —
+    pour le banc, celles du run demandé (identifiant, début d'identifiant ou chemin) ou du
+    dernier run — et l'en-tête du run lu."""
+    entrees: list[dict] = []
+    entete = None
+    if livre_ in (LIVRE_BANC, "tous"):
+        ref = run or depot.dernier_run()
+        if ref is not None:
+            entete, brutes = lire_entrees(depot.chemin_du_run(ref))
+            entrees += depot.annoter(brutes, LIVRE_BANC, jour=jour)
+    if livre_ in (LIVRE_SERVI, "tous"):
+        entrees += depot.annoter(depot.servi(), LIVRE_SERVI, jour=jour)
+    return entrees, entete
+
+
+def charger_source(depot: Depot, ref: str, *, jour: str | None = None) -> list[dict]:
+    """Une source de comparaison : ``servi``, un run (identifiant ou chemin), ou un registre
+    à l'ancien format (fichier unique, livre banc)."""
+    if ref == LIVRE_SERVI:
+        return depot.annoter(depot.servi(), LIVRE_SERVI, jour=jour)
+    chemin = Path(ref) if Path(ref).exists() else depot.chemin_du_run(ref)
+    _, brutes = lire_entrees(chemin)
+    return depot.annoter(brutes, LIVRE_BANC, jour=jour)
+
+
+def _aujourdhui() -> str:
+    return date.today().isoformat()
+
+
+def migrer(ancien: Path, depot: Depot, *, statuts: list[tuple[str, str, str, str]],
+           le: str, commit: str | None) -> dict:
+    """Range un registre à l'ancien format (un seul fichier) dans le registre committé :
+
+    * ses passages vont dans ``passages.json``, ses quarantaines dans ``quarantaines.json`` ;
+    * ses entrées deviennent un run historique du livre banc (étiqueté « registre-migre »,
+      commit du fichier, sans empreinte : la configuration d'alors n'est pas reconstituable) ;
+    * ``statuts`` (athlète, statut, date, motif) ouvre le journal de chaque athlète.
+
+    Rend le décompte de ce qui a été rangé. Le fichier d'origine n'est pas touché."""
+    _, entrees = lire_entrees(ancien)
+    passages = [(e["athlete"], e["race"], e["date"], e["passages"]) for e in entrees
+                if e.get("passages")]
+    if passages:
+        depot.ecrire_passages(passages)
+    n_q = 0
+    for e in entrees:
+        if e.get("quarantine"):
+            depot.mettre_en_quarantaine(e["athlete"], e["race"], e["date"], e["quarantine"], le)
+            n_q += 1
+    for athlete, st, quand, motif in statuts:
+        depot.marquer(athlete, st, le=quand, par="Valentin", motif=motif)
+    propres = [{k: v for k, v in e.items() if k not in ("passages", "quarantine", "dev_set")}
+               for e in entrees]
+    entete = {
+        "id": f"{le[:10].replace('-', '')}-000000-registre-migre",
+        "livre": LIVRE_BANC,
+        "label": "registre-migre",
+        "le": le,
+        "commit": commit,
+        "modifie": None,
+        "config_empreinte": None,
+        "drapeaux": None,
+        "manifestes": sorted({e["athlete"] for e in entrees}),
+        "source": str(ancien.name),
+    }
+    depot.ecrire_run(entete, propres)
+    return {"entrees": len(entrees), "passages": len(passages), "quarantaines": n_q,
+            "statuts": len(statuts)}
+
+
+def importer(export: Path, depot: Depot) -> dict:
+    """Fusionne un export du tableau de bord : ses entrées au livre servi (une entrée au
+    résultat saisi ne change plus, sauf correction motivée), ses statuts au journal."""
+    brut = json.loads(export.read_text(encoding="utf-8"))
+    rapport = depot.importer_servi(brut.get("entries") or [])
+    rapport["statuts_bouges"] = depot.fusionner_statuts(brut.get("athletes") or {})
+    return rapport
+
+
+def decision(entries: list[dict], fiches: dict, jour: str) -> tuple[list[str], list[dict]]:
+    """Les athlètes frais au ``jour`` (nommés) et leurs seules entrées."""
+    frais = frais_a_la_date(fiches, jour)
+    connus = set(fiches)
+    gardes = [e for e in entries
+              if (e.get("athlete") in frais) or (e.get("athlete") not in connus
+                                                 and statut(e) == STATUT_FRAIS)]
+    noms = sorted(set(frais) | {e["athlete"] for e in gardes})
+    return noms, gardes
+
+
+def _imprimer_runs(depot: Depot) -> None:
+    runs = depot.runs()
+    if not runs:
+        print("Aucun run au livre banc.")
+        return
+    print("| run | étiquette | le | commit | empreinte | drapeaux hors défaut |")
+    print("|---|---|---|---|---|---|")
+    for r in runs:
+        drapeaux = r.get("drapeaux")
+        texte = "—" if drapeaux is None else (", ".join(f"{k}={v}" for k, v in drapeaux.items())
+                                              or "aucun")
+        modifie = " (modifié)" if r.get("modifie") else ""
+        print(f"| {r['id']} | {r.get('label')} | {r.get('le')} | {r.get('commit') or '—'}{modifie} "
+              f"| {r.get('config_empreinte') or '—'} | {texte} |")
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="registre", description=__doc__.split("\n")[0])
-    ap.add_argument("registre", nargs="?", default=str(DEFAULT_REGISTRE))
+    ap.add_argument("source", nargs="?", default=None,
+                    help="un fichier de run ou un registre à l'ancien format (sinon le "
+                         "registre committé, livre et run choisis par les options)")
+    ap.add_argument("--depot", default=str(DEFAULT_RACINE))
+    ap.add_argument("--livre", choices=(LIVRE_BANC, LIVRE_SERVI, "tous"), default="tous")
+    ap.add_argument("--run", help="run du livre banc (identifiant ou son début ; défaut : le dernier)")
+    ap.add_argument("--runs", action="store_true", help="liste les runs du livre banc")
     ap.add_argument("--json", action="store_true", help="sortie JSON brute")
     ap.add_argument("--frontiere", action="store_true",
                     help="trace la frontière finesse/calibration : couverture et score de "
                          "Winkler pour une grille de facteurs d'échelle sur les bandes "
                          "servies — dit de COMBIEN on peut resserrer sans mentir")
     ap.add_argument("--tableau", action="store_true",
-                    help="tableau de référence en markdown (DIAGNOSTIC §10.0) : par groupe, "
-                         "vendus/refusés, par athlète et total — MAE, biais, couvertures, "
-                         "Winkler relatif, largeur relative médiane")
-    ap.add_argument("--compare", metavar="AVANT.json",
-                    help="avant → après : compare le registre AVANT à celui analysé "
-                         "(deltas par athlète sur les cas vendus, changements de verdict, "
-                         "erreur entrée par entrée)")
+                    help="tableau de référence en markdown : par livre et statut, vendus "
+                         "(niveau calibré) / refusés (niveau de base), par athlète et total")
+    ap.add_argument("--compare", nargs="+", metavar="RUN",
+                    help="RUN_A [RUN_B] : avant → après (identifiants de run, chemins, ou "
+                         "« servi ») ; RUN_B par défaut = la sélection courante")
+    ap.add_argument("--decision", metavar="AAAA-MM-JJ",
+                    help="restreint aux athlètes frais à cette date et les nomme")
     ap.add_argument("--quarantine", nargs=4, metavar=("ATHLETE", "COURSE", "DATE", "MOTIF"),
-                    help="met une entrée en quarantaine (exclue des stats, conservée et "
-                         "visible avec son motif — jamais de suppression silencieuse)")
+                    help="met une entrée en quarantaine (exclue des stats de tous les runs, "
+                         "conservée et visible avec son motif)")
+    ap.add_argument("--marquer", nargs=3, metavar=("ATHLETE", "STATUT", "MOTIF"),
+                    help="change le statut d'un athlète (dev ou frais), daté du jour et "
+                         "journalisé avec son motif")
+    ap.add_argument("--importer", metavar="EXPORT.json",
+                    help="fusionne un export du tableau de bord (livre servi, statuts)")
+    ap.add_argument("--migrer", metavar="ANCIEN.json",
+                    help="range un registre à l'ancien format dans le registre committé")
     args = ap.parse_args(argv)
 
-    path = Path(args.registre)
-    if not path.exists():
-        print(f"Registre introuvable : {path} (lance d'abord tools/backtest.py)", file=sys.stderr)
-        return 2
-    data = json.loads(path.read_text(encoding="utf-8"))
-    entries = data.get("entries", [])
-
-    if args.quarantine:
-        ath, race, date, motif = args.quarantine
-        hits = [e for e in entries
-                if e.get("athlete") == ath and e.get("race") == race and e.get("date") == date]
-        if not hits:
-            print(f"Entrée introuvable : {ath} / {race} / {date}", file=sys.stderr)
+    depot = Depot(args.depot)
+    if args.marquer:
+        athlete, st, motif = args.marquer
+        try:
+            fiche = depot.marquer(athlete, st, le=_aujourdhui(), par="Valentin", motif=motif)
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
             return 2
-        for e in hits:
-            e["quarantine"] = motif
-        path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        print(f"En quarantaine : {ath} / {race} / {date} — motif : {motif}", file=sys.stderr)
+        print(f"{athlete} : {fiche['statut']} depuis le {fiche['depuis']} — {motif}", file=sys.stderr)
+        return 0
+    if args.quarantine:
+        ath, race, jour, motif = args.quarantine
+        depot.mettre_en_quarantaine(ath, race, jour, motif, _aujourdhui())
+        print(f"En quarantaine : {ath} / {race} / {jour} — motif : {motif}", file=sys.stderr)
+        return 0
+    if args.importer:
+        rapport = importer(Path(args.importer), depot)
+        for k, v in rapport.items():
+            print(f"  {k} : {len(v)}{' — ' + ', '.join(v) if v else ''}", file=sys.stderr)
+        return 1 if rapport.get("refusees") else 0
+    if args.migrer:
+        print("--migrer : utiliser migrer() depuis Python, avec les statuts initiaux",
+              file=sys.stderr)
+        return 2
+    if args.runs:
+        _imprimer_runs(depot)
+        return 0
+
+    jour = args.decision
+    if args.source:
+        entete, brutes = lire_entrees(Path(args.source))
+        entries = depot.annoter(brutes, LIVRE_BANC, jour=jour)
+    else:
+        try:
+            entries, entete = charger(depot, livre_=args.livre, run=args.run, jour=jour)
+        except LookupError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+    if entete is not None:
+        print(f"Run {entete['id']} (étiquette {entete.get('label')}, commit "
+              f"{entete.get('commit') or '—'}, empreinte {entete.get('config_empreinte') or '—'})",
+              file=sys.stderr)
+    if jour:
+        noms, entries = decision(entries, depot.athletes(), jour)
+        print(f"Décision au {jour} : athlètes frais — {', '.join(noms) if noms else 'aucun'}"
+              f" ({len(entries)} entrée(s))", file=sys.stderr)
+
     if args.tableau:
         print(tableau_markdown(entries))
         return 0
     if args.compare:
-        before_path = Path(args.compare)
-        if not before_path.exists():
-            print(f"Registre AVANT introuvable : {before_path}", file=sys.stderr)
+        try:
+            before = charger_source(depot, args.compare[0], jour=jour)
+            after = (charger_source(depot, args.compare[1], jour=jour) if len(args.compare) > 1
+                     else entries)
+        except LookupError as exc:
+            print(str(exc), file=sys.stderr)
             return 2
-        before = json.loads(before_path.read_text(encoding="utf-8")).get("entries", [])
-        print(compare_markdown(before, entries))
+        print(compare_markdown(before, after))
         return 0
-    groups = {
-        "cas frais (décisionnels)": [e for e in entries if not e.get("dev_set")],
-        "cas de développement (indicatifs — le modèle a été réglé dessus)":
-            [e for e in entries if e.get("dev_set")],
-    }
+    groups = dict(_groups(entries))
     if args.json:
         payload = {k: summarize(v) for k, v in groups.items()}
         if args.frontiere:
@@ -554,11 +738,12 @@ def main(argv: list[str] | None = None) -> int:
             continue
         print(f"  central : biais {s['bias_pct']:+.1f} % · MAE {s['mae_pct']:.1f} % · "
               f"médiane |err| {s['median_abs_err_pct']:.1f} %")
-        for key, label in (("vendable", "VENDU (🟢/🟠)"), ("refuse", "refusé (🔴)")):
+        for key, lib in (("vendable", "niveau calibré, VENDU (🟢/🟠)"),
+                         ("refuse", "niveau de base, refusé (🔴)")):
             if key in s:
                 b = s[key]
                 cov = "—" if b["coverage80_pct"] is None else f"{b['coverage80_pct']:.0f} %"
-                print(f"  {label} : n={b['n']} · MAE {b['mae_pct']:.1f} % · couv80 {cov}")
+                print(f"  {lib} : n={b['n']} · MAE {b['mae_pct']:.1f} % · couv80 {cov}")
         if "blocking" in s:
             motifs = " · ".join(f"{nom} ×{n}" for nom, n in s["blocking"])
             print(f"  motifs de REFUS : {motifs}")
@@ -590,7 +775,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  scores groupés CONDITIONS VENDABLES (base de calibration des bandes) : "
                   f"n={pv['n_scores']} sur {pv['n_athletes']} athlète(s) · "
                   f"q50={pv['q50']} · q80={pv['q80']}")
-    n_fresh_fin = summarize(groups["cas frais (décisionnels)"]).get("n_finished", 0)
+    fresh = [e for e in entries if statut(e) == STATUT_FRAIS]
+    n_fresh_fin = summarize(fresh).get("n_finished", 0)
     if n_fresh_fin < 8:
         print(f"\n⚠ {n_fresh_fin} cas frais finis < 8 : la règle pré-enregistrée INTERDIT toute "
               "recalibration à ce stade (collecter, ne pas conclure).")

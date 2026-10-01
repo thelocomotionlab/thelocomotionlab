@@ -8,21 +8,23 @@ banc (agrégats), le collecteur de la radiographie (efforts longs) et celui des 
 (activités du jour de course). Résultats identiques aux outils séparés (vérifié par test).
 
     PYTHONPATH=src python -m tools.banc manifest-a.json [manifest-b.json …] --out /tmp/p0
-        [--registre <chemin.json>] [--avant <registre-avant.json>]
+        [--depot <dossier>] [--label NOM] [--set bloc.clé=valeur …] [--avant <run>]
         [--no-diag] [--no-passages] [--min-hours 10] [--min-stop-s 60] [--radius-m 150] [--dry-run]
         [--variant NOM:bloc.clé=valeur[,bloc.clé=valeur…]] …
 
-``--variant`` (répétable) rejoue TOUTES les coupures sous une config surchargée, sur le même
-décodage — l'instrument des A/B de calibration/prédiction/pacing (les blocs ``twin`` et
-``course``, qui changent les agrégats décodés, ne peuvent pas varier ici). Chaque variante
-écrit ``backtest-<nom>.md``, ``tableau-<nom>.md``, ``compare-<nom>.md`` (contre AVANT) et
-``registre-<nom>.json`` dans le dossier — jamais dans le registre committé.
+Chaque passage écrit au livre banc du registre (``docs/twin-registre/banc/``) un run pour la
+configuration de base et un run par variante, horodatés et marqués du commit, de
+l'empreinte de configuration et des drapeaux hors défaut ; les passages réels vont dans
+``docs/twin-registre/passages.json``. ``--variant`` (répétable) rejoue TOUTES les coupures
+sous une config surchargée, sur le même décodage — l'instrument des A/B de
+calibration/prédiction/pacing (les blocs ``twin`` et ``course``, qui changent les agrégats
+décodés, ne peuvent pas varier ici).
 
 Écrit dans ``--out`` : ``backtest.md`` (prédit vs réel), ``diag-<athlète>.md`` + ``.json``,
-``passages-<athlète>.md``, ``tableau.md`` (= ``tools/registre --tableau``) et ``compare.md``
-(= ``--compare AVANT``, si le registre « avant » existe). Le registre est mis à jour comme
-par ``tools/backtest`` puis ``tools/passages``. Une archive introuvable est signalée et
-sautée, jamais fatale.
+``passages-<athlète>.md``, ``tableau.md`` (= ``tools/registre --tableau``), ``compare.md``
+(contre le run ``--avant``, par défaut le dernier run de même étiquette avant ce passage) et,
+par variante, ``backtest-<nom>.md``, ``tableau-<nom>.md``, ``compare-<nom>.md`` (contre le run
+de base de ce passage). Une archive introuvable est signalée et sautée, jamais fatale.
 """
 
 from __future__ import annotations
@@ -34,20 +36,17 @@ import sys
 import unicodedata
 from pathlib import Path
 
-import copy
-
-from twin_engine.config import load_config, override_config
+from twin_engine.config import override_config
 from twin_engine.ingest import iter_activities
+from twin_engine.registre import DEFAULT_RACINE, LIVRE_BANC, Depot, entete_de_run, lire_entrees
 
-from tools.backtest import (DEFAULT_REGISTRE, ArchiveCache, _fmt_row, backtest_race,
-                            hint_missing_archive, merge_registre)
+from tools.backtest import ArchiveCache, _fmt_row, backtest_race, config_du_banc, hint_missing_archive
 from tools.diag_ultras import DiagCollector
 from tools.diag_ultras import render_markdown as diag_markdown
-from tools.passages import PassageCollector, passages_for_manifest, race_meta_from_candidate
+from tools.passages import (PassageCollector, lignes_de_passages, passages_for_manifest,
+                            race_meta_from_candidate)
 from tools.passages import render_markdown as passages_markdown
 from tools.registre import compare_markdown, tableau_markdown
-
-DEFAULT_AVANT = Path(__file__).resolve().parents[3] / "docs" / "archive" / "twin-v2" / "registre-avant.json"
 
 
 def _slug(name: str) -> str:
@@ -75,12 +74,11 @@ def parse_variants(specs: list[str], cfg) -> dict[str, object]:
     return out
 
 
-def run_manifest_one_pass(manifest_path: Path, cfg, registre: dict, *, out_dir: Path,
+def run_manifest_one_pass(manifest_path: Path, cfg, *, out_dir: Path,
                           do_diag: bool = True, do_passages: bool = True,
                           min_hours: float | None = None, min_stop_s: float = 60.0,
                           radius_m: float = 150.0,
-                          variants: dict[str, object] | None = None,
-                          variant_registres: dict[str, dict] | None = None) -> dict | None:
+                          variants: dict[str, object] | None = None) -> dict | None:
     """Un manifeste, un décodage, trois produits. ``None`` si l'archive est introuvable."""
     base = manifest_path.resolve().parent
     man = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -117,22 +115,20 @@ def run_manifest_one_pass(manifest_path: Path, cfg, registre: dict, *, out_dir: 
     for k, r in enumerate(man["races"]):
         print(f"  {athlete} · {r['name']} ({r['date']}) — coupure la veille…",
               file=sys.stderr, flush=True)
-        entries.append(backtest_race(cache, r, cfg, base=base, race_meta=metas.get(k)))
-    merge_registre(registre, athlete, man.get("dev_set", False), entries)
+        entries.append({"athlete": athlete,
+                        **backtest_race(cache, r, cfg, base=base, race_meta=metas.get(k))})
 
-    out: dict = {"athlete": athlete, "entries": entries, "variants": {}}
+    out: dict = {"athlete": athlete, "courses": len(man["races"]), "entries": entries,
+                 "variants": {}, "passages": []}
     # variantes de config : mêmes agrégats décodés, calibration/prédiction rejouées
     for name, cfg_v in (variants or {}).items():
         cache.cfg = cfg_v
         try:
-            ev = [backtest_race(cache, r, cfg_v, base=base, race_meta=metas.get(k))
-                  for k, r in enumerate(man["races"])]
+            out["variants"][name] = [
+                {"athlete": athlete, **backtest_race(cache, r, cfg_v, base=base, race_meta=metas.get(k))}
+                for k, r in enumerate(man["races"])]
         finally:
             cache.cfg = cfg
-        if variant_registres is not None:
-            merge_registre(variant_registres.setdefault(name, copy.deepcopy(registre)),
-                           athlete, man.get("dev_set", False), ev)
-        out["variants"][name] = ev
     slug = _slug(athlete)
     if diag is not None:
         res = diag.finish(cache.contributions, archive=archive, n_skipped=len(skipped),
@@ -142,66 +138,82 @@ def run_manifest_one_pass(manifest_path: Path, cfg, registre: dict, *, out_dir: 
             json.dumps(res, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         out["diag"] = res
     if pas is not None:
-        results = passages_for_manifest(pas.best, man, base, cfg, registre, radius_m=radius_m)
+        results = passages_for_manifest(pas.best, man, base, cfg, radius_m=radius_m)
         (out_dir / f"passages-{slug}.md").write_text(passages_markdown(athlete, results) + "\n",
                                                      encoding="utf-8")
-        out["passages"] = results
+        out["passages"] = lignes_de_passages(man, results)
     return out
+
+
+def _avant(depot: Depot, ref: str | None, label: str) -> list[dict] | None:
+    """Les entrées du run de comparaison : ``ref`` (identifiant ou chemin), sinon le dernier
+    run de même étiquette déjà au registre ; ``None`` s'il n'y en a pas."""
+    try:
+        if ref:
+            chemin = Path(ref) if Path(ref).exists() else depot.chemin_du_run(ref)
+        else:
+            dernier = depot.dernier_run(label=label)
+            if dernier is None:
+                return None
+            chemin = depot.chemin_du_run(dernier)
+    except LookupError:
+        return None
+    _, entrees = lire_entrees(chemin)
+    return depot.annoter(entrees, LIVRE_BANC)
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="banc", description=__doc__.split("\n")[0])
     ap.add_argument("manifests", nargs="+", help="manifeste(s) JSON, un par athlète")
     ap.add_argument("--out", required=True, help="dossier des sorties markdown/JSON")
-    ap.add_argument("--registre", default=str(DEFAULT_REGISTRE))
-    ap.add_argument("--avant", default=str(DEFAULT_AVANT),
-                    help="registre « avant » pour compare.md (ignoré s'il n'existe pas)")
+    ap.add_argument("--depot", default=str(DEFAULT_RACINE))
+    ap.add_argument("--label", default="defauts", help="étiquette du run de base")
+    ap.add_argument("--set", action="append", default=[], metavar="BLOC.CLÉ=VALEUR",
+                    help="surcharge de la configuration de base (répétable)")
+    ap.add_argument("--avant", default=None,
+                    help="run de comparaison (identifiant ou chemin) ; défaut : le dernier "
+                         "run de même étiquette")
     ap.add_argument("--no-diag", action="store_true", help="sans radiographie arrêts/nuit")
     ap.add_argument("--no-passages", action="store_true", help="sans passages réels")
     ap.add_argument("--min-hours", type=float, default=None,
                     help="seuil des efforts longs de la radiographie (défaut : vrais ultras)")
     ap.add_argument("--min-stop-s", type=float, default=60.0)
     ap.add_argument("--radius-m", type=float, default=150.0)
-    ap.add_argument("--dry-run", action="store_true", help="n'écrit pas le registre")
+    ap.add_argument("--dry-run", action="store_true", help="n'écrit rien au registre")
     ap.add_argument("--variant", action="append", default=[], metavar="NOM:BLOC.CLÉ=VALEUR,…",
-                    help="rejoue le banc sous une config surchargée (répétable) — sorties "
-                         "backtest-/tableau-/compare-/registre-<nom> dans --out")
+                    help="rejoue le banc sous une config surchargée (répétable) — un run de "
+                         "plus au registre, sorties backtest-/tableau-/compare-<nom> dans --out")
     args = ap.parse_args(argv)
 
-    cfg = load_config()
-    out_dir = Path(args.out)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    reg_path = Path(args.registre)
-    registre = (json.loads(reg_path.read_text(encoding="utf-8")) if reg_path.exists()
-                else {"_comment": "Registre de couverture — agrégats uniquement (pas de PII). "
-                                  "Alimenté par tools/backtest.py ; analyse par tools/registre.py ; "
-                                  "protocole : docs/twin-registre-couverture.md.",
-                      "entries": []})
-
     try:
+        cfg = config_du_banc(args.set)
         variants = parse_variants(args.variant, cfg)
     except ValueError as exc:
         ap.error(str(exc))
-    # chaque variante part d'une copie du registre chargé : un athlète non rejoué garde ses
-    # lignes, un athlète rejoué les voit remplacées par celles de la variante
-    variant_registres: dict[str, dict] = {name: copy.deepcopy(registre) for name in variants}
-    variant_rows: dict[str, list[tuple[str, dict]]] = {name: [] for name in variants}
+    out_dir = Path(args.out)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    depot = Depot(args.depot)
+    avant = _avant(depot, args.avant, args.label)
 
     rows: list[tuple[str, dict]] = []
+    variant_rows: dict[str, list[tuple[str, dict]]] = {name: [] for name in variants}
+    manifestes: list[dict] = []
+    passages: list = []
     missing: list[str] = []
     for m in args.manifests:
         mp = Path(m)
         res = run_manifest_one_pass(
-            mp, cfg, registre, out_dir=out_dir, do_diag=not args.no_diag,
+            mp, cfg, out_dir=out_dir, do_diag=not args.no_diag,
             do_passages=not args.no_passages, min_hours=args.min_hours,
-            min_stop_s=args.min_stop_s, radius_m=args.radius_m,
-            variants=variants, variant_registres=variant_registres,
+            min_stop_s=args.min_stop_s, radius_m=args.radius_m, variants=variants,
         )
         print(file=sys.stderr)
         if res is None:
             missing.append(json.loads(mp.read_text(encoding="utf-8"))["athlete"])
             continue
+        manifestes.append({"athlete": res["athlete"], "courses": res["courses"]})
         rows += [(res["athlete"], e) for e in res["entries"]]
+        passages += res["passages"]
         for name, ev in res["variants"].items():
             variant_rows[name] += [(res["athlete"], e) for e in ev]
 
@@ -212,29 +224,28 @@ def main(argv: list[str] | None = None) -> int:
     print(table)
 
     if rows and not args.dry_run:
-        reg_path.parent.mkdir(parents=True, exist_ok=True)
-        reg_path.write_text(json.dumps(registre, ensure_ascii=False, indent=2) + "\n",
-                            encoding="utf-8")
-        print(f"\nRegistre mis à jour : {reg_path} ({len(registre['entries'])} entrée(s))",
-              file=sys.stderr)
-    entries = registre.get("entries", [])
+        if passages:
+            depot.ecrire_passages(passages)
+        entete = entete_de_run(cfg, livre=LIVRE_BANC, label=args.label, manifestes=manifestes)
+        chemin = depot.ecrire_run(entete, [e for _, e in rows])
+        print(f"\nRun écrit : {chemin}", file=sys.stderr)
+        for name, cfg_v in variants.items():
+            ev = [e for _, e in variant_rows[name]]
+            entete_v = entete_de_run(cfg_v, livre=LIVRE_BANC, label=name, manifestes=manifestes)
+            print(f"Run écrit : {depot.ecrire_run(entete_v, ev)}", file=sys.stderr)
+    entries = depot.annoter([e for _, e in rows], LIVRE_BANC)
     (out_dir / "tableau.md").write_text(tableau_markdown(entries) + "\n", encoding="utf-8")
-    avant = Path(args.avant) if args.avant else None
-    before = (json.loads(avant.read_text(encoding="utf-8")).get("entries", [])
-              if avant is not None and avant.exists() else None)
-    if before is not None:
-        (out_dir / "compare.md").write_text(compare_markdown(before, entries) + "\n",
+    if avant is not None:
+        (out_dir / "compare.md").write_text(compare_markdown(avant, entries) + "\n",
                                             encoding="utf-8")
-    for name, reg_v in variant_registres.items():
-        ev = reg_v.get("entries", [])
-        (out_dir / f"registre-{name}.json").write_text(
-            json.dumps(reg_v, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    for name in variants:
+        ev = depot.annoter([e for _, e in variant_rows[name]], LIVRE_BANC)
         (out_dir / f"backtest-{name}.md").write_text(
             head + "\n" + "\n".join(_fmt_row(a, e) for a, e in variant_rows[name]) + "\n",
             encoding="utf-8")
         (out_dir / f"tableau-{name}.md").write_text(tableau_markdown(ev) + "\n", encoding="utf-8")
-        # l'avant d'une variante = le banc servi de CE passage (registre courant), à défaut
-        # l'instantané : l'effet du levier se lit à agrégats décodés identiques
+        # l'avant d'une variante = le run de base de CE passage : l'effet du levier se lit
+        # à agrégats décodés identiques
         (out_dir / f"compare-{name}.md").write_text(
             compare_markdown(entries, ev) + "\n", encoding="utf-8")
     written = sorted(p.name for p in out_dir.iterdir())

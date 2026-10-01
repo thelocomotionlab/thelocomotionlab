@@ -60,6 +60,12 @@ RUN useradd --create-home --uid 10001 app \
     && chown -R app:app /data /tmp/matplotlib
 USER app
 
+# Le commit du moteur, que le registre et le jumeau portent (twin_engine.registre.runs) :
+# l'image n'a pas de dépôt git, la CI le passe en argument de construction. Posé en
+# dernier, il n'invalide aucune couche coûteuse.
+ARG TWIN_COMMIT=""
+ENV TWIN_COMMIT=${TWIN_COMMIT}
+
 EXPOSE 8000
 # API FastAPI servie par uvicorn (fabrique d'app : lit DATA_DIR à l'amorçage).
 CMD ["uvicorn", "twin_engine.api:get_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]

@@ -11,7 +11,6 @@ Manifeste JSON (un fichier par athlète ; chemins relatifs = relatifs au manifes
     {
       "athlete": "Pseudo",
       "archive": "archives/export.zip",
-      "dev_set": false,                    // true = cas de développement (Nice, Montagnhard)
       "races": [
         {"name": "X-Trail 2025", "date": "2025-06-14", "official_time": "26:30:00",
          "gpx": "traces/x-trail.gpx",
@@ -27,10 +26,13 @@ Manifeste JSON (un fichier par athlète ; chemins relatifs = relatifs au manifes
 Lancement :
 
     PYTHONPATH=src python -m tools.backtest manifest-athlete1.json [manifest-athlete2.json ...]
-        [--registre <chemin.json>] [--dry-run]
+        [--depot <dossier>] [--label NOM] [--set bloc.clé=valeur …] [--dry-run]
 
-Les archives ne sont JAMAIS purgées (copies locales de travail). Chaque (athlète, course,
-date) est une clé : relancer le banc MET À JOUR l'entrée, sans doublon.
+Chaque lancement écrit UN run au livre banc du registre (``docs/twin-registre/banc/``),
+horodaté et marqué du commit, de l'empreinte de configuration et des drapeaux hors défaut ;
+un run précédent n'est jamais réécrit. Les archives ne sont JAMAIS purgées (copies locales
+de travail). Le statut dev/frais d'un athlète vit dans ``docs/twin-registre/athletes.json`` :
+le champ ``dev_set`` d'un manifeste n'est plus lu.
 """
 
 from __future__ import annotations
@@ -42,17 +44,14 @@ import sys
 from datetime import date, timedelta
 from pathlib import Path
 
-from twin_engine.config import load_config
+from twin_engine.config import load_config, override_config
 from twin_engine.course import RaceSpec, build_course
 from twin_engine.ingest import iter_activities
 from twin_engine.pipeline import analyze_preview_from_twin
-from twin_engine.registre import (bloc_course, bloc_domaine, bloc_modele, bloc_prediction,
-                                  sous_le_domaine)
+from twin_engine.registre import (DEFAULT_RACINE, LIVRE_BANC, Depot, bloc_course, bloc_domaine,
+                                  bloc_modele, bloc_prediction, entete_de_run, sous_le_domaine)
 from twin_engine.twin.model import build_twin_from_contributions
 from twin_engine.twin.record import iter_contributions
-
-# registre par défaut : docs/ à la racine du monorepo (surchargable par --registre)
-DEFAULT_REGISTRE = Path(__file__).resolve().parents[3] / "docs" / "twin-registre-couverture.json"
 
 
 def parse_time_h(value) -> float | None:
@@ -188,28 +187,6 @@ def backtest_race(cache: "ArchiveCache", race_entry: dict, cfg, *, base: Path,
     return entry
 
 
-def merge_registre(registre: dict, athlete: str, dev_set: bool, entries: list[dict]) -> dict:
-    """Fusion idempotente : la clé (athlete, race, date) met à jour l'entrée existante.
-
-    Les champs de CURATION portés par l'ancienne ligne et que la machine ne régénère pas
-    (``quarantine``, annotations futures) SURVIVENT à la re-fusion : une quarantaine ne
-    disparaît jamais silencieusement (protocole du registre — leçon du 2026-07-16, où une
-    re-fusion avait fait re-rentrer dans les stats une course au parcours inutilisable)."""
-    rows = registre.setdefault("entries", [])
-    index = {(r.get("athlete"), r.get("race"), r.get("date")): i for i, r in enumerate(rows)}
-    for e in entries:
-        row = {"athlete": athlete, "dev_set": bool(dev_set), **e}
-        key = (athlete, e["race"], e["date"])
-        if key in index:
-            old = rows[index[key]]
-            extras = {k: v for k, v in old.items() if k not in row}
-            rows[index[key]] = {**row, **extras}
-        else:
-            index[key] = len(rows)
-            rows.append(row)
-    return registre
-
-
 def hint_missing_archive(archive: Path) -> str:
     """Ce qui existe autour du chemin attendu — pour corriger le manifeste sans chercher."""
     parent = archive
@@ -222,9 +199,10 @@ def hint_missing_archive(archive: Path) -> str:
     return f"  contenu de {parent} : {', '.join(names) if names else '(vide)'}"
 
 
-def run_manifest(manifest_path: Path, cfg, registre: dict) -> list[dict] | None:
-    """Rejoue toutes les courses d'un manifeste. ``None`` si l'archive est introuvable : le
-    banc le signale et passe au manifeste suivant, au lieu de tout arrêter."""
+def run_manifest(manifest_path: Path, cfg) -> list[dict] | None:
+    """Rejoue toutes les courses d'un manifeste ; les entrées portent le pseudonyme de
+    l'athlète. ``None`` si l'archive est introuvable : le banc le signale et passe au
+    manifeste suivant, au lieu de tout arrêter."""
     base = manifest_path.resolve().parent
     man = json.loads(manifest_path.read_text(encoding="utf-8"))
     athlete = man["athlete"]
@@ -241,8 +219,7 @@ def run_manifest(manifest_path: Path, cfg, registre: dict) -> list[dict] | None:
     for r in man["races"]:
         print(f"  {athlete} · {r['name']} ({r['date']}) — coupure la veille…",
               file=sys.stderr, flush=True)
-        entries.append(backtest_race(cache, r, cfg, base=base))
-    merge_registre(registre, athlete, man.get("dev_set", False), entries)
+        entries.append({"athlete": athlete, **backtest_race(cache, r, cfg, base=base)})
     return entries
 
 
@@ -262,33 +239,45 @@ def _fmt_row(athlete: str, e: dict) -> str:
             f"[{p['safety_low_h']:.1f}-{p['safety_high_h']:.1f}] {flags}{dom} |")
 
 
+def config_du_banc(sets: list[str]):
+    """La configuration du run : ``TWIN_CONFIG_PATH`` (ou ``twin.config.json``), puis chaque
+    surcharge ``--set bloc.clé=valeur``."""
+    cfg = load_config()
+    for spec in sets:
+        cfg = override_config(cfg, spec)
+    return cfg
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="backtest", description=__doc__.split("\n")[0])
     ap.add_argument("manifests", nargs="+", help="manifeste(s) JSON, un par athlète")
-    ap.add_argument("--registre", default=str(DEFAULT_REGISTRE),
-                    help=f"registre JSON à alimenter (défaut : {DEFAULT_REGISTRE})")
-    ap.add_argument("--dry-run", action="store_true", help="n'écrit pas le registre")
+    ap.add_argument("--depot", default=str(DEFAULT_RACINE),
+                    help=f"registre committé (défaut : {DEFAULT_RACINE})")
+    ap.add_argument("--label", default="defauts", help="étiquette du run (défaut : defauts)")
+    ap.add_argument("--set", action="append", default=[], metavar="BLOC.CLÉ=VALEUR",
+                    help="surcharge de configuration du run (répétable)")
+    ap.add_argument("--dry-run", action="store_true", help="n'écrit pas le run")
     args = ap.parse_args(argv)
 
-    cfg = load_config()
-    reg_path = Path(args.registre)
-    registre = (json.loads(reg_path.read_text(encoding="utf-8")) if reg_path.exists()
-                else {"_comment": "Registre de couverture — agrégats uniquement (pas de PII). "
-                                  "Alimenté par tools/backtest.py ; analyse par tools/registre.py ; "
-                                  "protocole : docs/twin-registre-couverture.md.",
-                      "entries": []})
+    try:
+        cfg = config_du_banc(args.set)
+    except ValueError as exc:
+        ap.error(str(exc))
+    depot = Depot(args.depot)
 
     # tout traiter d'abord (la progression file sur stderr), puis imprimer le tableau
     # d'un bloc — sans lignes de progression intercalées entre l'en-tête et les lignes
     all_rows: list[tuple[str, dict]] = []
     missing: list[str] = []
+    manifestes: list[dict] = []
     for m in args.manifests:
         mp = Path(m)
         man = json.loads(mp.read_text(encoding="utf-8"))
-        entries = run_manifest(mp, cfg, registre)
+        entries = run_manifest(mp, cfg)
         if entries is None:
             missing.append(man["athlete"])
             continue
+        manifestes.append({"athlete": man["athlete"], "courses": len(man["races"])})
         all_rows += [(man["athlete"], e) for e in entries]
 
     print("\n| athlète    | course                       | CV | prédit  | réel    | err %  | bandes [50] [80] |")
@@ -297,14 +286,13 @@ def main(argv: list[str] | None = None) -> int:
         print(_fmt_row(athlete, e))
 
     if args.dry_run:
-        print("\n(dry-run : registre non écrit)", file=sys.stderr)
+        print("\n(dry-run : run non écrit)", file=sys.stderr)
         return 1 if missing else 0
     if all_rows:
-        reg_path.parent.mkdir(parents=True, exist_ok=True)
-        reg_path.write_text(json.dumps(registre, ensure_ascii=False, indent=2) + "\n",
-                            encoding="utf-8")
-        print(f"\nRegistre mis à jour : {reg_path} ({len(registre['entries'])} entrée(s) au total)",
-              file=sys.stderr)
+        entete = entete_de_run(cfg, livre=LIVRE_BANC, label=args.label, manifestes=manifestes)
+        chemin = depot.ecrire_run(entete, [e for _, e in all_rows])
+        print(f"\nRun écrit : {chemin} ({len(all_rows)} entrée(s), empreinte "
+              f"{entete['config_empreinte']}, commit {entete['commit']})", file=sys.stderr)
         print("Analyse : PYTHONPATH=src python -m tools.registre", file=sys.stderr)
     if missing:
         print(f"\n⚠ {len(missing)} manifeste(s) ignoré(s), archive introuvable : "

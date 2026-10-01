@@ -1,10 +1,9 @@
-"""Une entrée du registre de couverture : ce que le moteur a promis, et où le réel est tombé.
+"""Les blocs d'une entrée du registre : ce que le moteur a promis, et où le réel est tombé.
 
 Deux producteurs écrivent ces entrées : le banc (``tools/backtest.py``), qui rejoue les
 courses passées d'une archive, et le tableau de bord, qui consigne les courses COURUES
-avec le plan qu'il a servi. Ils passent tous deux par ce module : deux fabriques
-finiraient par ne plus compter la même chose, et c'est le registre qui tranche les
-débats de calibration (``docs/twin-registre-couverture.md``).
+avec le plan qu'il a servi. Ils passent tous deux par ces fonctions : deux fabriques
+finiraient par ne plus compter la même chose.
 
 Agrégats seulement : aucune trace, aucune archive, aucun nom.
 """
@@ -13,8 +12,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from .calibration import stops_statistics
-from .pacing.plan import fade_delta_from_splits
+from ..calibration import stops_statistics
+from ..pacing.plan import fade_delta_from_splits
 
 
 def bloc_course(course) -> dict:

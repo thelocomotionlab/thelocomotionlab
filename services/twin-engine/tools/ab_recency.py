@@ -39,7 +39,9 @@ import numpy as np
 from twin_engine.config import load_config
 from twin_engine.course import RaceSpec, build_course
 
-from tools.backtest import DEFAULT_REGISTRE, ArchiveCache, parse_time_h
+from twin_engine.registre import DEFAULT_RACINE, Depot
+
+from tools.backtest import ArchiveCache, parse_time_h
 from tools.registre import winkler
 
 DEFAULT_GRID = (90.0, 180.0, 270.0, 365.0, 548.0, 730.0)
@@ -55,20 +57,15 @@ def _cfg_with_halflife(cfg, halflife_days: float):
                                             recency_halflife_days=float(halflife_days)))
 
 
-def quarantined(registre_path: Path | None = None) -> set[tuple[str, str, str]]:
-    """Clés (athlète, course, date) mises en quarantaine dans le registre.
+def quarantined(depot: Path | None = None) -> set[tuple[str, str, str]]:
+    """Clés (athlète, course, date) mises en quarantaine au registre committé.
 
     Le balayage part des MANIFESTES, qui ignorent tout de la curation : sans ce filtre il
     re-score des entrées écartées pour données d'ENTRÉE fausses (ex. trace de parcours à
     l'altitude aplatie) et pollue les agrégats — exactement ce que la quarantaine existe
     pour empêcher.
     """
-    path = registre_path or DEFAULT_REGISTRE
-    if not Path(path).exists():
-        return set()
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
-    return {(e.get("athlete"), e.get("race"), e.get("date"))
-            for e in data.get("entries", []) if e.get("quarantine")}
+    return set(Depot(depot or DEFAULT_RACINE).quarantaines())
 
 
 def evaluate(manifests: list[Path], grid: tuple[float, ...], cfg,

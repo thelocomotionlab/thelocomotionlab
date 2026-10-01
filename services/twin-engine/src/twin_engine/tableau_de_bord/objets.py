@@ -150,6 +150,10 @@ class Athlete:
     jumeau: Jumeau = field(default_factory=Jumeau)
     niveau: Niveau = field(default_factory=Niveau)
     plans: list[str] = field(default_factory=list)
+    # Le statut au registre (``twin_engine.registre.statuts``) : frais tant que le moteur
+    # n'a pas été réglé sur ses données, avec le journal de chaque bascule.
+    registre: dict = field(default_factory=lambda: {"statut": "frais", "depuis": None,
+                                                    "journal": []})
 
     def to_dict(self) -> dict:
         return _en_json(self)
@@ -169,6 +173,8 @@ class Athlete:
             jumeau=_depuis(Jumeau, brut.get("jumeau")),
             niveau=_depuis(Niveau, brut.get("niveau")),
             plans=list(brut.get("plans") or ()),
+            registre=(dict(brut["registre"]) if isinstance(brut.get("registre"), dict)
+                      else {"statut": "frais", "depuis": None, "journal": []}),
         )
 
 
