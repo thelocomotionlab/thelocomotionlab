@@ -115,6 +115,9 @@ def _build_parser() -> argparse.ArgumentParser:
                              "calibration.link=log --set prediction.interval_source="
                              "studentized_scale) ; même sémantique que TWIN_CONFIG_PATH, "
                              "sans fichier")
+        sp.add_argument("--profil", default="defaut", choices=("defaut", "reference", "experimental"),
+                        help="profil de configuration servi (bloc « profils » de twin.config.json), "
+                             "avant les --set")
         sp.add_argument("--terrain", default=None, metavar="FICHIER",
                         help="terrain de la carte (tools/carte : profil du parcours et magasin "
                              "des ultras), servi selon pacing.terrain, prediction.terrain_total "
@@ -141,6 +144,14 @@ def _build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     cfg = load_config()
+    if args.profil != "defaut":
+        from .profils import config_du_profil
+
+        try:
+            cfg = config_du_profil(cfg, args.profil)
+        except ValueError as exc:
+            print(f"--profil : {exc}", file=sys.stderr)
+            return 2
     for spec in args.set:
         try:
             cfg = override_config(cfg, spec)

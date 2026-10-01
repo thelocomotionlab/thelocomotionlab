@@ -1173,7 +1173,15 @@ PYTHONPATH=src python -m tools.banc $M --out /tmp/run2 --label run2 --terrain /t
 ```
 
 `carte-banc.md` dit, course par course, si le modèle de l'athlète a un signal à la coupure :
-sans signal, les variantes de carte rendent le run de base, et c'est la réponse. Les entrées
+sans signal, les variantes de carte rendent le run de base, et c'est la réponse.
+
+**Profils de configuration** — un plan sert l'un de trois profils : `defaut`
+(`twin.config.json` tel quel), `reference` et `experimental`, deux listes de surcharges
+« bloc.clé=valeur » du bloc `profils` de `twin.config.json` (hors de la configuration
+effective : l'empreinte du défaut n'en dépend pas). La référence reçoit les drapeaux qu'un run
+garde hors du défaut faute de preuve sur les cas frais ; l'expérimental porte les leviers à
+l'essai qui se servent sans carte. En ligne de commande, `twin-engine preview|full --profil
+experimental` (les `--set` s'appliquent après) ; au tableau de bord, l'écran Plan. Les entrées
 portent `course.terrain` (km ajoutés au Deq, ou la raison du refus), `model.terrain_adjust`
 et ses ultras porteurs, et, avec des passages, `forme.marche_descente` : la marche prévue en
 descente contre la marche mesurée, tronçon par tronçon.

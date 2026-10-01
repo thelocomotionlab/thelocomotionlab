@@ -40,6 +40,7 @@ from twin_engine.course import RaceSpec, build_course
 from twin_engine.pacing import build_pacing
 from twin_engine.predict import Prediction
 from twin_engine.twin.pente import detail_du_registre, fatigue_servie, repartir
+from twin_engine.twin.terrain import facteur_declare
 
 from twin_engine.registre import DEFAULT_RACINE, Depot
 
@@ -136,7 +137,12 @@ def score_registre(registre: dict, manifests: list[Path], cfg) -> list[dict]:
         # total est ancré, seule la répartition compte ici)
         detail = (detail_du_registre(m, cfg) or {}
                   if cfg.calibration.slope_cost in ("personal", "personal_pacing") else None)
-        course = repartir(course, detail, cfg, phi=fatigue_servie(m.get("terrain"), cfg))
+        # technicité déclarée reportée sur les descentes (pacing.terrain=declared) : le modèle
+        # de marche est au registre ; le terrain de carte, lui, demande le profil du parcours
+        terrain = (facteur_declare(course, m.get("terrain"), cfg)
+                   if cfg.pacing.terrain == "declared" else None)
+        course = repartir(course, detail, cfg, phi=fatigue_servie(m.get("terrain"), cfg),
+                          terrain=terrain)
         scores = score_course(course, race, float(official), pas, cfg,
                               durability_pct=m.get("durability_pct"),
                               splits_delta=m.get("fade_delta_splits"),

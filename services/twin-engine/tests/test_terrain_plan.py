@@ -34,9 +34,9 @@ from twin_engine.pipeline import analyze_preview_from_twin  # noqa: E402
 from twin_engine.registre.forme import bloc_forme  # noqa: E402
 from twin_engine.twin.descentes import secondes_en_descente  # noqa: E402
 from twin_engine.twin.mouvement import bilan_par_troncon  # noqa: E402
-from twin_engine.twin.terrain import (facteur_carte, facteur_de_marche, facteur_declare,  # noqa: E402
-                                      marche_prevue, penalites, profil_compatible, surcout_km,
-                                      surcouts_des_ultras)
+from twin_engine.twin.terrain import (consignes_de_marche, facteur_carte, facteur_de_marche,  # noqa: E402
+                                      facteur_declare, marche_prevue, penalites, profil_compatible,
+                                      segments_techniques, surcout_km, surcouts_des_ultras)
 
 CFG = load_config()
 RACE = RaceSpec("Dent", (0.0, 4.0, 8.0, 12.0, 16.0), ("d", "m", "s", "m2", "a"))
@@ -236,6 +236,16 @@ def test_the_walking_planned_in_descents_follows_the_walk_model_and_the_map():
     plat = marche_prevue(res.course, plan, TRAITS, CFG, profil=_profil(course, p_tech=0.2))
     assert carte[3] > plat[3] and carte[2] == pytest.approx(plat[2])
     assert marche_prevue(res.course, plan, {}, CFG) is None
+    # la consigne « Sur ce segment » : rien sous une minute, « descente technique » où la carte le dit
+    techniques = segments_techniques(res.course, _profil(course))
+    assert techniques == [False, False, False, True]
+    consignes = consignes_de_marche(carte, techniques)
+    assert consignes[0] is None and consignes[2].startswith("descentes : environ ")
+    assert consignes[3].startswith("descente technique : environ ") and consignes[3].endswith(
+        " min prévues à la marche")
+    assert consignes_de_marche([0.4, 7.4, 12.6]) == [
+        None, "descentes : environ 7 min prévues à la marche", "descentes : environ 15 min prévues à la marche"]
+    assert segments_techniques(res.course, None) is None
 
 
 def test_the_plan_shape_sets_planned_against_measured_walking_in_descents():
@@ -354,6 +364,19 @@ def test_the_tools_make_the_terrain_of_a_race_and_the_bench_serves_it(tmp_path, 
     assert np.nanmean(pc[km > 7.0]) > np.nanmean(pr[km > 7.0]) > np.nanmean(pc[km < 5.0])
     assert bundle["ultras"]["activites"] == {}
     assert '"lat' not in json.dumps(bundle)
+
+    # la demande de la course contre le vécu des dernières semaines, par tranche de D−
+    assert carte_main(["modele", "--archive", str(archive), "--until", "2026-05-31",
+                       "--out", str(tmp_path / "m.json"), *sources]) == 0
+    capsys.readouterr()
+    assert carte_main(["parcours", "--course", str(tmp_path / "course.gpx"), "--modele", str(tmp_path / "m.json"),
+                       "--vecu", str(tmp_path / "cache" / "exemples.json"), "--json", *sources]) == 0
+    dv = json.loads(capsys.readouterr().out)["demande_contre_vecu"]
+    assert dv["jusqua"] == "2026-05-15" and dv["activites"] == 8 and dv["jours"] == 183
+    assert dv["tranches"][0]["dminus_m"] == [0.0, 1000.0]
+    assert sum(b["course_km"] for b in dv["tranches"]) > 2.0
+    assert sum(b["vecu_haches_km"] for b in dv["tranches"]) > 0.0
+    assert all(b["course_haches_km"] <= b["course_km"] for b in dv["tranches"])
 
     # le moteur le sert sous le drapeau, et le dit
     from twin_engine.cli import main as cli_main

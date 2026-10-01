@@ -265,5 +265,14 @@ au mieux, un levier entre dans la configuration de référence de Val.
   défaut (échelle 1) : la variante TA5 du run 2 dira s'il faut la réduire.
 - La marche prévue ne compte que les descentes (la consigne de l'écran Plan parle de
   descentes) ; les passages mesurent la marche en descente dans les mêmes fenêtres.
+- Profils de configuration : posés dans `twin.config.json` (bloc `profils`, hors de la
+  configuration effective : l'empreinte du défaut n'en dépend pas). La **référence** est vide
+  tant qu'aucun run n'a gardé de drapeau hors du défaut ; l'**expérimental** porte les leviers
+  du chantier qui se servent sans carte (loi de pente à la répartition, descente sans remise,
+  fatigue de descente, technicité déclarée sur les descentes). Les termes de carte n'y sont pas :
+  le tableau de bord n'a pas de carte.
+- La consigne « Sur ce segment » dit « descentes : environ N min prévues à la marche » dès une
+  minute prévue (à la minute sous 10 min, aux 5 min au-delà) ; « descente technique » seulement
+  là où un profil de carte rend les descentes plus hachées que le terrain habituel.
 - Les cartes se gardent dans `services/twin-engine/local-data/carte` (ignoré par git) ; le
   modèle ne porte aucune position, les fenêtres d'apprentissage restent dans ce cache.

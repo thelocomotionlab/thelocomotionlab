@@ -273,6 +273,40 @@ def marche_prevue(course, plan, terrain: dict | None, cfg: Config, *,
     return out
 
 
-__all__ = ["facteur_carte", "facteur_de_marche", "facteur_declare", "marche_prevue", "penalites",
-           "profil_compatible", "surcout_d_une_activite", "surcout_km", "surcouts_des_ultras",
-           "tranches_pour_le_magasin"]
+def _environ(minutes: float) -> int:
+    """Un ordre de grandeur lisible : à la minute sous 10 min, aux 5 min au-delà."""
+    return int(round(minutes)) if minutes < 10 else int(5 * round(minutes / 5.0))
+
+
+def segments_techniques(course, profil: dict | None) -> list[bool] | None:
+    """Par segment, vrai quand la carte y rend les descentes plus hachées que le terrain
+    habituel de l'athlète (P_carte > P_réf en moyenne) ; None sans profil applicable."""
+    if profil_compatible(profil, course) is not None:
+        return None
+    desc, pc, pr = _sur_la_grille(profil, course)
+    off = np.asarray(course.off_km_grid, dtype=float)
+    out = []
+    for seg in course.segments:
+        sel = desc & (off >= seg.off0) & (off < seg.off1)
+        out.append(bool(sel.any() and float(np.mean(pc[sel] - pr[sel])) > 0.0))
+    return out
+
+
+def consignes_de_marche(marche: list[float | None] | None,
+                        techniques: list[bool] | None = None) -> list[str | None]:
+    """La consigne « Sur ce segment » de chaque segment : les minutes de marche prévues en
+    descente (:func:`marche_prevue`), dès qu'elles atteignent une minute ; « descente
+    technique » là où la carte le dit (:func:`segments_techniques`). None sinon."""
+    out: list[str | None] = []
+    for k, m in enumerate(marche or []):
+        if m is None or m < 0.5:
+            out.append(None)
+            continue
+        quoi = "descente technique" if techniques and techniques[k] else "descentes"
+        out.append(f"{quoi} : environ {_environ(m)} min prévues à la marche")
+    return out
+
+
+__all__ = ["consignes_de_marche", "facteur_carte", "facteur_de_marche", "facteur_declare",
+           "marche_prevue", "penalites", "profil_compatible", "segments_techniques",
+           "surcout_d_une_activite", "surcout_km", "surcouts_des_ultras", "tranches_pour_le_magasin"]

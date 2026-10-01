@@ -292,5 +292,21 @@
     "region_km": 30.0,
     "modele_min_fenetres": 30,
     "signal_z": 2.0
+  },
+  "profils": {
+    "_comment": "Profils de configuration qu'un plan peut servir (twin_engine.profils), choisis sur l'écran Plan et retenus par le registre. Le défaut est ce fichier tel quel ; chaque profil est une liste de surcharges bloc.clé=valeur.",
+    "reference": {
+      "description": "Les drapeaux gardés hors du défaut faute de preuve sur les cas frais, servis à l'athlète dont ils améliorent le plan.",
+      "drapeaux": []
+    },
+    "experimental": {
+      "description": "Les leviers à l'essai qui se servent sans carte : loi de pente personnelle à la répartition, descente sans remise, fatigue de descente, technicité déclarée reportée sur les descentes.",
+      "drapeaux": [
+        "calibration.slope_cost=personal_pacing",
+        "calibration.slope_kappa_down_min=0",
+        "pacing.descent_fatigue=dminus",
+        "pacing.terrain=declared"
+      ]
+    }
   }
 }

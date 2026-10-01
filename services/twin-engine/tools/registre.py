@@ -71,7 +71,9 @@ def forme_rows(entries: list[dict]) -> list[dict]:
     total, sur les cas qui comptent, vendus comme refusés : moyennes par course de l'erreur
     du plan sous mouvement réel imposé (moyenne, pire tronçon, pire cumul, en minutes, et
     l'erreur moyenne en % du temps moyen d'un tronçon), du plan servi (erreur moyenne des
-    heures de passage, biais à mi-course), et des arrêts (plan − réel, en heures)."""
+    heures de passage, biais à mi-course), des arrêts (plan − réel, en heures) et de la
+    marche en descente (prévue par le modèle à deux allures contre mesurée : minutes par
+    course, erreur moyenne par tronçon)."""
     fin = [e for e in _finished(entries) if e.get("forme")]
     rows: list[dict] = []
     for a in sorted({e["athlete"] for e in fin}) + ["TOTAL"]:
@@ -82,6 +84,7 @@ def forme_rows(entries: list[dict]) -> list[dict]:
         tot = [e["forme"]["total_predit"] for e in sub if e["forme"].get("total_predit")]
         arr = [e["forme"]["arrets"]["plan_h"] - e["forme"]["arrets"]["reel_h"] for e in sub
                if (e["forme"].get("arrets") or {}).get("reel_h") is not None]
+        mar = [e["forme"]["marche_descente"] for e in sub if e["forme"].get("marche_descente")]
 
         def _m(vals):
             vals = [v for v in vals if v is not None]
@@ -99,20 +102,28 @@ def forme_rows(entries: list[dict]) -> list[dict]:
                      "impose_cumul_min": _m([i.get("pire_cumul_min") for i in imp]),
                      "servi_moy_min": _m([t.get("erreur_moyenne_min") for t in tot]),
                      "servi_mi_course_min": _m([t.get("biais_mi_course_min") for t in tot]),
-                     "arrets_ecart_h": _m(arr)})
+                     "arrets_ecart_h": _m(arr),
+                     "n_marche": len(mar),
+                     "marche_prevue_min": _m([m.get("prevue_min") for m in mar]),
+                     "marche_reelle_min": _m([m.get("reelle_min") for m in mar]),
+                     "marche_erreur_min": _m([m.get("erreur_moyenne_min") for m in mar])})
     return rows
 
 
 def _md_forme(rows: list[dict]) -> str:
     lines = ["| athlète | n | imposé : erreur moy. min | imposé : % d'un tronçon | imposé : pire "
              "tronçon min | imposé : pire cumul min | servi : erreur moy. min | servi : biais "
-             "mi-course min | arrêts plan − réel, h |",
-             "|---|---|---|---|---|---|---|---|---|"]
+             "mi-course min | arrêts plan − réel, h | marche en descente : prévue / réelle min "
+             "(erreur moy. par tronçon) |",
+             "|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
+        marche = ("—" if not r.get("n_marche") else
+                  f"{_f(r['marche_prevue_min'])} / {_f(r['marche_reelle_min'])} "
+                  f"({_f(r['marche_erreur_min'])})")
         lines.append(f"| {r['athlete']} | {r['n']} | {_f(r['impose_moy_min'])} "
                      f"| {_f(r['impose_moy_pct'], 1, ' %')} | {_f(r['impose_pire_min'])} "
                      f"| {_f(r['impose_cumul_min'])} | {_f(r['servi_moy_min'])} "
-                     f"| {_f(r['servi_mi_course_min'])} | {_f(r['arrets_ecart_h'], 2)} |")
+                     f"| {_f(r['servi_mi_course_min'])} | {_f(r['arrets_ecart_h'], 2)} | {marche} |")
     return "\n".join(lines)
 
 
@@ -524,8 +535,9 @@ def compare_markdown(before: list[dict], after: list[dict]) -> str:
         if fb or fa:
             out.append(f"\n**{label} — forme du plan, avant → après (Δ)**\n")
             out.append("| athlète | n | imposé : erreur moy. min | imposé : pire cumul min | "
-                       "servi : erreur moy. min | servi : biais mi-course min |")
-            out.append("|---|---|---|---|---|---|")
+                       "servi : erreur moy. min | servi : biais mi-course min | marche en descente : "
+                       "erreur moy. par tronçon min |")
+            out.append("|---|---|---|---|---|---|---|")
             for a in [x for x in sorted(set(fb) | set(fa)) if x != "TOTAL"] + ["TOTAL"]:
                 b, r = fb.get(a, {}), fa.get(a, {})
                 if not b and not r:
@@ -534,7 +546,8 @@ def compare_markdown(before: list[dict], after: list[dict]) -> str:
                            f"| {_delta_cell(b.get('impose_moy_min'), r.get('impose_moy_min'))} "
                            f"| {_delta_cell(b.get('impose_cumul_min'), r.get('impose_cumul_min'))} "
                            f"| {_delta_cell(b.get('servi_moy_min'), r.get('servi_moy_min'))} "
-                           f"| {_delta_cell(b.get('servi_mi_course_min'), r.get('servi_mi_course_min'))} |")
+                           f"| {_delta_cell(b.get('servi_mi_course_min'), r.get('servi_mi_course_min'))} "
+                           f"| {_delta_cell(b.get('marche_erreur_min'), r.get('marche_erreur_min'))} |")
 
     a_part_b = [e for e in before if e.get("a_part")]
     a_part_a = [e for e in after if e.get("a_part")]
@@ -726,7 +739,8 @@ def entree_servie(dossier_path: Path, depot: Depot, cfg, *, athlete: str, course
         "reference": d.report_ref,
     }
     forme = bloc_forme(parcours, d.race, d.prediction, cfg,
-                       depot.passages().get((athlete, nom, jour)))
+                       depot.passages().get((athlete, nom, jour)),
+                       terrain=getattr(d.twin, "terrain", None))
     if forme is not None:
         entree["forme"] = forme
     return entree
