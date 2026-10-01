@@ -327,6 +327,16 @@ def test_a_trace_off_the_extracts_is_kept_out_of_learning_and_refused_the_map():
     assert list(ex.jour.values()) == ["2026-05-01"] and len(ex) == 1
 
 
+def test_the_osm_fingerprint_does_not_depend_on_the_order_of_the_extracts(tmp_path):
+    from tools.carte import lire_voies
+
+    a, b = tmp_path / "a.json", tmp_path / "b.json"
+    a.write_text(json.dumps({"elements": [_voie(5.0, tags={"highway": "path"})]}))
+    b.write_text(json.dumps({"elements": [_voie(50.0, tags={"highway": "track"})]}))
+    traces = [(np.array([LAT0]), np.array([LON0]))]
+    assert lire_voies([str(a), str(b)], traces)[1] == lire_voies([str(b), str(a)], traces)[1]
+
+
 def test_the_map_round_trips_through_its_cache(tmp_path):
     c = _carte_simple()
     cle = cle_de_cache(c.tranches, CFG, ["osm:test"])

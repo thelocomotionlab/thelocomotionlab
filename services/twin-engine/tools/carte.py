@@ -79,7 +79,8 @@ def lire_voies(specs: list[str], traces) -> tuple[_osm.Voies, str]:
             lues = _osm.voies_overpass(_elements_overpass(chemin))
         for tags, geom in zip(lues.tags, lues.geometries):
             voies.ajouter(tags, geom)
-    return voies, "+".join(empreintes)
+    # triée : l'ordre des --osm ne change ni les voies lues ni, donc, les cartes gardées
+    return voies, "+".join(sorted(empreintes))
 
 
 def _sources_raster(spec: str | None, url, crs: str | None) -> tuple[_raster.Sources | None, str | None]:

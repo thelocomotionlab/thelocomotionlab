@@ -187,7 +187,8 @@ archive mesure tout :
   un banc à variantes, « le dernier run » lu par `score_plan`, `terrain` et `registre` pouvait
   être une variante ; une trace hors des extraits OSM donnés recevait la carte comme si toutes
   ses étiquettes étaient « absentes ». Les trois sont corrigés ; `tools/carte modele` et `banc`
-  disent la couverture OSM des sorties d'entraînement. Suite : 787 passés, 43 sautés.
+  disent la couverture OSM des sorties d'entraînement, et l'ordre des `--osm` ne change plus
+  le cache des cartes. Suite : 788 passés, 43 sautés.
 
 ## Run 1 chez Valentin (à lancer)
 
