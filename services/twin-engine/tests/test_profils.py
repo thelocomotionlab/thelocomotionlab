@@ -40,9 +40,21 @@ def test_profiles_come_from_the_configuration_file(tmp_path):
                                                             "drapeaux": ["pacing.fade_delta=0.1"]}}}))
     assert surcharges("reference", chemin) == ["pacing.fade_delta=0.1"]
     assert config_du_profil(CFG, "reference", chemin).pacing.fade_delta == 0.1
-    assert surcharges("experimental", chemin) == []
+    # un profil que le fichier ne nomme pas reste celui de twin.config.json ; nommé vide, il l'est
+    assert surcharges("experimental", chemin) == surcharges("experimental") != []
     assert lister(chemin)[1]["description"] == "Val"
-    assert surcharges("reference", tmp_path / "absent.json") == []
+    assert surcharges("reference", tmp_path / "absent.json") == surcharges("reference")
+    chemin.write_text(json.dumps({"profils": {"experimental": {"drapeaux": []}}}))
+    assert surcharges("experimental", chemin) == []
+
+
+def test_a_partial_configuration_file_keeps_the_shipped_profiles(tmp_path, monkeypatch):
+    partiel = tmp_path / "twin.config.reference.json"
+    partiel.write_text(json.dumps({"calibration": {"link": "log"}}))
+    monkeypatch.setenv("TWIN_CONFIG_PATH", str(partiel))
+    assert surcharges("experimental") == surcharges("experimental", Path(
+        __file__).resolve().parents[1] / "twin.config.json") != []
+    assert [p["drapeaux"] for p in lister()][2] == surcharges("experimental")
 
 
 # --------------------------------------------------------------------------- tableau de bord

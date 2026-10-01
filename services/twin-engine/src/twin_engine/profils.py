@@ -10,6 +10,9 @@ effective : ni l'empreinte ni les drapeaux d'un run du défaut n'en dépendent) 
 
 Le profil d'un plan se choisit sur l'écran Plan ; le registre le retient avec l'entrée servie
 (nom, et drapeaux effectivement hors défaut).
+
+Un fichier de configuration partiel (``TWIN_CONFIG_PATH``) garde les profils de
+``twin.config.json`` qu'il ne redéfinit pas, comme il garde les autres clés absentes.
 """
 
 from __future__ import annotations
@@ -24,12 +27,22 @@ PROFILS = ("defaut", "reference", "experimental")
 TITRES = {"defaut": "Défaut", "reference": "Référence", "experimental": "Expérimental"}
 
 
-def _bloc(chemin: str | os.PathLike[str] | None = None) -> dict:
-    path = Path(chemin or os.environ.get("TWIN_CONFIG_PATH") or _default_config_path())
+def _lire(path: Path) -> dict:
     try:
         return dict(json.loads(path.read_text(encoding="utf-8")).get("profils") or {})
     except (OSError, json.JSONDecodeError):
         return {}
+
+
+def _bloc(chemin: str | os.PathLike[str] | None = None) -> dict:
+    # Le bloc ``profils`` n'a pas de valeurs par défaut dans ``Config`` : sans la lecture du
+    # fichier livré, un fichier partiel viderait en silence les profils qu'il ne nomme pas.
+    livre = _default_config_path()
+    path = Path(chemin or os.environ.get("TWIN_CONFIG_PATH") or livre)
+    bloc = _lire(livre)
+    if path.resolve() != livre.resolve():
+        bloc.update(_lire(path))
+    return bloc
 
 
 def surcharges(nom: str, chemin: str | os.PathLike[str] | None = None) -> list[str]:

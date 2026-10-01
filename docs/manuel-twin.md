@@ -1191,7 +1191,8 @@ sans signal, les variantes de carte rendent le run de base, et c'est la réponse
 **Profils de configuration** — un plan sert l'un de trois profils : `defaut`
 (`twin.config.json` tel quel), `reference` et `experimental`, deux listes de surcharges
 « bloc.clé=valeur » du bloc `profils` de `twin.config.json` (hors de la configuration
-effective : l'empreinte du défaut n'en dépend pas). La référence reçoit les drapeaux qu'un run
+effective : l'empreinte du défaut n'en dépend pas ; un fichier partiel passé par
+`TWIN_CONFIG_PATH` garde les profils qu'il ne redéfinit pas). La référence reçoit les drapeaux qu'un run
 garde hors du défaut faute de preuve sur les cas frais ; l'expérimental porte les leviers à
 l'essai qui se servent sans carte. En ligne de commande, `twin-engine preview|full --profil
 experimental` (les `--set` s'appliquent après) ; au tableau de bord, l'écran Plan ; au livre
