@@ -58,6 +58,27 @@ const PLAN = {
 /** Les deux mots du niveau servi. */
 export const NIVEAUX = { base: "Plan de base", calibre: "Plan calibré" };
 
+/** Les profils de configuration qu'un plan peut servir, en clair. */
+export const PROFILS = { defaut: "Défaut", reference: "Référence", experimental: "Expérimental" };
+
+/** Le nom d'un profil en clair ; un plan d'avant les profils sert le défaut. */
+export function titreDuProfil(nom) {
+  return PROFILS[nom || "defaut"] ?? nom;
+}
+
+/**
+ * Ce que l'écran Plan dit d'un profil sous son nom : sa description et le nombre de
+ * réglages qu'il change, ou, vide, qu'il ne change rien au défaut.
+ */
+export function aideDuProfil(profil) {
+  if (!profil || profil.nom === "defaut") return "La configuration du moteur telle qu'elle est livrée.";
+  const n = (profil.drapeaux ?? []).length;
+  const description = profil.description ? `${profil.description} ` : "";
+  return n
+    ? `${description}${n} réglage${n > 1 ? "s" : ""} hors défaut : ${profil.drapeaux.join(" · ")}.`
+    : `${description}Aucun réglage pour l'instant : il sert le défaut.`;
+}
+
 /**
  * Le statut d'un dossier, en un mot et un ton. Tant que l'archive n'est pas lue,
  * c'est l'ingestion qui parle ; après, c'est le plan.

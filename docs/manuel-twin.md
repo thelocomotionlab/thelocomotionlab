@@ -314,6 +314,19 @@ L'éditeur enregistre seul, à chaque changement (l'objet entier, 800 ms après 
 frappe) ; le moteur renvoie la géométrie et les heures de soleil recalculées, que l'écran
 reprend telles quelles. « Enregistrer » ne fait que sortir la course du brouillon.
 
+Sur l'écran Plan, **« Profil du moteur »** choisit la configuration que la prochaine version
+sert : défaut, référence ou expérimental (bloc `profils` de `twin.config.json`, chaque profil
+avec ses réglages hors défaut). La version garde le profil, ses surcharges, l'empreinte de la
+configuration et ses drapeaux (`version.json`, clé `configuration`) ; un amendement la refait
+sous les mêmes surcharges ; le livre servi les retient (`configuration` de l'entrée, colonne
+« Profil » de l'écran Registre). Sous le profil expérimental, la colonne « Sur ce segment »
+reçoit, sur le segment libre où elle est la plus longue, la marche prévue en descente
+(« descentes : environ N min prévues à la marche » ; « descente technique » quand une carte a
+servi le parcours) — l'écran la montre en gris dans la ligne, comme les autres textes du
+moteur. Une carte qui a servi le parcours imprime ses sources (OpenStreetMap sous ODbL, MNT,
+occupation du sol) sous le profil du rapport, dans la légende de la feuille, dans l'annexe et
+sur la page de l'athlète.
+
 **La page de l'athlète** vit ailleurs : `/services/twin/plan/{ref}?k=…`, hors du chemin que
 couvre Access — l'athlète et son assistance l'ouvrent sans compte. C'est la seule route
 dynamique du site (runtime edge) : elle lit l'API à chaque ouverture. La clé de partage ouvre
@@ -1181,7 +1194,8 @@ sans signal, les variantes de carte rendent le run de base, et c'est la réponse
 effective : l'empreinte du défaut n'en dépend pas). La référence reçoit les drapeaux qu'un run
 garde hors du défaut faute de preuve sur les cas frais ; l'expérimental porte les leviers à
 l'essai qui se servent sans carte. En ligne de commande, `twin-engine preview|full --profil
-experimental` (les `--set` s'appliquent après) ; au tableau de bord, l'écran Plan. Les entrées
+experimental` (les `--set` s'appliquent après) ; au tableau de bord, l'écran Plan ; au livre
+servi, `tools/registre --servir … --profil experimental` quand la version ne le garde pas. Les entrées
 portent `course.terrain` (km ajoutés au Deq, ou la raison du refus), `model.terrain_adjust`
 et ses ultras porteurs, et, avec des passages, `forme.marche_descente` : la marche prévue en
 descente contre la marche mesurée, tronçon par tronçon.

@@ -1104,6 +1104,21 @@ def _assumptions(ctx: dict, plan, race, cfg, stops_policy: dict) -> list[str]:
     return out
 
 
+def _marche_par_segment(course, plan, twin, cfg) -> list[tuple[int, float, str]] | None:
+    """(segment, minutes, consigne) de la marche prévue en descente sur chaque segment qui en
+    porte une (``twin.terrain``), sous ``report.consignes_marche`` ; None sinon."""
+    if cfg.report.consignes_marche <= 0:
+        return None
+    from ..twin.terrain import consignes_de_marche, marche_prevue
+
+    minutes = marche_prevue(course, plan, getattr(twin, "terrain", None), cfg)
+    if not minutes:
+        return None
+    textes = consignes_de_marche(minutes, (getattr(course, "terrain", None) or {}).get(
+        "segments_techniques"))
+    return [(i, float(m), t) for i, (m, t) in enumerate(zip(minutes, textes)) if t]
+
+
 def _v3_context(ctx: dict, *, course, twin, calibration, prediction, plan, race, sufficiency,
                 cfg, athlete: str, report_ref: str, target) -> dict:
     conf_word = _CONFIDENCE[sufficiency.verdict]
@@ -1150,12 +1165,16 @@ def _v3_context(ctx: dict, *, course, twin, calibration, prediction, plan, race,
     # une seule série de consignes : le rapport, la feuille et l'annexe disent la même chose
     # la feuille lit les MÊMES moments que la page 2 : un seul calcul, donc un seul chiffre
     moments = faits.trois_moments(plan, course)
-    consignes = feuille.consignes(plan, race, cfg, moments=moments)
+    marche = _marche_par_segment(course, plan, twin, cfg)
+    consignes = feuille.consignes(plan, race, cfg, moments=moments, marche=marche)
     # ce que le moteur poserait sur chaque ligne sans la voix de l'athlète : le tableau de
     # bord le montre en exemple dans le champ d'une ligne que Valentin n'a pas écrite
     consignes_auto = feuille.consignes(
         plan, replace(race, reglages=tuple(replace(r, consigne="") for r in race.reglages)),
-        cfg, moments=moments)
+        cfg, moments=moments, marche=marche)
+    # une carte a servi le parcours (twin.terrain) : ses sources s'impriment avec le plan
+    terrain = getattr(course, "terrain", None) or {}
+    attributions = list(terrain.get("attributions") or []) if terrain.get("servi", True) else []
 
     def _clock_or_h(clock: str | None, hours: float) -> str:
         return tex_escape(clock) if clock else f"{fr(hours, 1)}\\,h"
@@ -1250,6 +1269,9 @@ def _v3_context(ctx: dict, *, course, twin, calibration, prediction, plan, race,
         "fade_evidence": tex_escape(cfg.report.fade_evidence),
         "consignes_plain": consignes,
         "consignes_auto_plain": consignes_auto,
+        # les sources d'une carte qui a servi le parcours (vide sinon)
+        "attributions_carte": [tex_escape(a) for a in attributions],
+        "attributions_carte_plain": attributions,
         "crew_rows": crew_rows,
         "crew_declared": contacts_declared,
         "finish_row": finish_row,

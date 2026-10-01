@@ -235,7 +235,8 @@
     "intensity_axis_margin": 0.2,
     "fade_evidence": "sur 30 courses, les coureurs sont en avance sur un plan plat à mi-course 27 fois sur 30",
     "consigne_steep_pct": 8.0,
-    "consigne_gentle_pct": 3.0
+    "consigne_gentle_pct": 3.0,
+    "consignes_marche": 0
   },
   "narrative": {
     "_comment": "Seuils de PRÉSENTATION (choix des mots du rapport, pas de la science).",
@@ -300,12 +301,13 @@
       "drapeaux": []
     },
     "experimental": {
-      "description": "Les leviers à l'essai qui se servent sans carte : loi de pente personnelle à la répartition, descente sans remise, fatigue de descente, technicité déclarée reportée sur les descentes.",
+      "description": "Les leviers à l'essai qui se servent sans carte : loi de pente personnelle à la répartition, descente sans remise, fatigue de descente, technicité déclarée reportée sur les descentes, et la marche prévue en descente dans la colonne « Sur ce segment ».",
       "drapeaux": [
         "calibration.slope_cost=personal_pacing",
         "calibration.slope_kappa_down_min=0",
         "pacing.descent_fatigue=dminus",
-        "pacing.terrain=declared"
+        "pacing.terrain=declared",
+        "report.consignes_marche=1"
       ]
     }
   }

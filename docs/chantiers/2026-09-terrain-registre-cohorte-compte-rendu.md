@@ -175,6 +175,12 @@ archive mesure tout :
   mesurée dans le bloc `forme` ; passages enrichis du temps et de la marche en descente ;
   demande contre vécu ; `tools/carte terrain` et `banc`, `tools/banc --terrain`. **Chez
   Valentin** : le run 2 (manuel, « Terrain dans le plan et la calibration »).
+- 2026-10-01 — **étape 7, exposition** (DIAGNOSTIC §10.33) : profils de configuration
+  (défaut, référence vide, expérimental) choisis sur l'écran Plan et en ligne de commande,
+  gardés par chaque version et retenus au livre servi (colonne « Profil » du Registre) ;
+  consigne « Sur ce segment » de marche prévue en descente (expérimental seulement) ;
+  attribution des sources d'une carte (ODbL) sur la feuille, l'annexe, la page de l'athlète
+  quand une carte a servi. **Décision** : après le run 2 et les courses servies.
 
 ## Run 1 chez Valentin (à lancer)
 

@@ -3428,3 +3428,51 @@ l'écart ; prior de β2 ; marche prévue (D−, carte) ; forme du plan contre la
 secondes en descente des passages ; les outils, de l'archive au banc, sur des sorties dont les
 descentes hachées tombent là où la carte l'annonce dans les deux sens de la ligne (le modèle y
 trouve son signal).
+
+### 10.33 Chantier terrain — étape 7 : profils de configuration, consigne de marche, ODbL (2026-10-01)
+
+**Constat.** L'étape 7 demande l'exposition : sur l'écran Plan, une consigne « Sur ce segment »
+calculée par le terrain et un choix de profil de configuration (défaut, référence, expérimental)
+que le registre retient ; l'attribution ODbL sur toute donnée OpenStreetMap imprimée ; et la
+décision, au registre, après les runs.
+
+**Ce qui change.**
+- **Profils** (`twin_engine.profils`, bloc `profils` de `twin.config.json`, hors de la
+  configuration effective : l'empreinte du défaut n'en dépend pas) : `defaut` (le fichier tel
+  quel), `reference` (vide : aucun run n'a encore gardé de drapeau hors du défaut),
+  `experimental` (loi de pente à la répartition, descente sans remise, fatigue de descente,
+  technicité déclarée sur les descentes, consigne de marche — les leviers qui se servent sans
+  carte). `twin-engine --profil`, et l'écran Plan : le profil est un réglage du plan ; la
+  version garde le profil, ses surcharges, l'empreinte et les drapeaux hors défaut (comptés
+  contre la configuration du service, pas contre un fichier que l'image n'a pas) ; un
+  amendement rejoue les surcharges gardées, même si le profil a changé depuis ; le livre servi
+  les retient (`configuration` de l'entrée, au tableau de bord comme par `tools/registre
+  --servir`, colonne « Profil » de l'écran Registre).
+- **Consigne de marche** (`report.consignes_marche`, 0 par défaut, 1 dans l'expérimental) : la
+  marche prévue en descente (§10.32) entre dans les consignes singulières de la feuille — après
+  la voix de l'athlète, la nuit et les trois moments —, au segment libre où elle est la plus
+  longue : « descentes : environ N min prévues à la marche », « descente technique » là où un
+  profil de carte rend les descentes plus hachées que le terrain habituel. Même texte sur la
+  feuille, l'annexe, la page de l'athlète, et en gris dans la ligne de l'écran Plan.
+- **ODbL** : quand une carte a servi le parcours (`course.terrain`, avec les sources du
+  profil), ses attributions s'impriment sous le profil du rapport, dans la légende de la
+  feuille, dans l'annexe (`plan.attributions`) et sur la page de l'athlète ; rien quand aucune
+  carte n'a servi, ou quand elle a été demandée sans être servie. Le tableau de bord ne sert
+  pas de carte : seul `twin-engine full --terrain` peut en imprimer.
+- **Registre** : les tableaux de forme mettent la marche en descente prévue face à la mesurée
+  (moyennes par course, erreur moyenne par tronçon), avant → après ; `tools/score_plan`
+  rejoue la technicité déclarée reportée sur les descentes.
+
+**Décision** : aucune ici. Les défauts ne basculent qu'au vu du registre (règle du prompt) :
+le run 2 (§10.32) puis la saisie des courses servies sous chaque profil.
+
+**Limite** : un plan fait en ligne de commande puis importé au tableau de bord n'emporte pas
+son profil (le dossier ne le garde pas) : le livre servi le compte au défaut, sauf entrée par
+`tools/registre --servir … --profil`.
+
+**Tests** : `tests/test_profils.py` (profils, surcharges, empreinte et drapeaux ; réglage du
+plan refusé s'il est inconnu ; version rejouée sous ses surcharges ; profil retenu au livre
+servi et sur la ligne du Registre), `tests/test_consigne_marche.py` (consigne posée une fois, au
+segment libre le plus long, sous son seul réglage ; « descente technique » et sources de carte
+dans le contexte et l'annexe ; rien sans carte servie), `apps/site/lib/twinTableauDeBord.test.js`
+(profil en clair, aide du profil).

@@ -72,11 +72,14 @@ def _print_summary(preview, out=None) -> None:
     terrain = getattr(preview.course, "terrain", None)
     if terrain:
         if terrain.get("servi", True):
-            print(f"\n  Terrain de la carte au total ({terrain['total']}) : "
-                  f"{terrain['deq_ajoute_km']:+.1f} km de Deq", file=out)
+            ou = []
+            if terrain.get("total"):
+                ou.append(f"au total ({terrain['total']}, {terrain['deq_ajoute_km']:+.1f} km de Deq)")
+            if terrain.get("repartition"):
+                ou.append("à la répartition")
+            print(f"\n  Terrain de la carte servi {' et '.join(ou)}", file=out)
         else:
-            print(f"\n  Terrain de la carte demandé ({terrain['total']}), non servi : "
-                  f"{terrain.get('raison')}", file=out)
+            print(f"\n  Terrain de la carte demandé, non servi : {terrain.get('raison')}", file=out)
 
     # mode OBJECTIF : le verdict s'affiche À CÔTÉ de la prédiction, jamais à sa place
     tgt = getattr(preview, "target", None)

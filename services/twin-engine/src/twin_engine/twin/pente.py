@@ -146,7 +146,9 @@ def servir_parcours(course, twin, cfg: Config, profil: dict | None = None):
     demande."""
     from dataclasses import replace
 
-    from .terrain import facteur_carte, facteur_declare, penalites, profil_compatible
+    from ..carte.osm import ATTRIBUTION as ATTRIBUTION_OSM
+    from .terrain import (facteur_carte, facteur_declare, penalites, profil_compatible,
+                          segments_techniques)
 
     c = cfg.calibration
     if c.slope_cost == "personal":
@@ -159,14 +161,18 @@ def servir_parcours(course, twin, cfg: Config, profil: dict | None = None):
     f_carte = None
     if mode_total is not None or cfg.pacing.terrain == "map":
         f_carte = facteur_carte(course, profil, traits, cfg)
-    if mode_total is not None:
+        # ce que le parcours dit de la carte servie (ou pourquoi elle ne l'est pas) : les
+        # documents en tirent l'attribution des données et les descentes techniques
+        info = {"source": "carte", "total": mode_total, "repartition": cfg.pacing.terrain == "map"}
         if f_carte is not None:
-            course = course.with_terrain(f_carte, {"source": "carte", "total": mode_total})
+            info.update(segments_techniques=segments_techniques(course, profil),
+                        attributions=list(profil.get("attributions") or [ATTRIBUTION_OSM]))
+            course = (course.with_terrain(f_carte, info) if mode_total is not None
+                      else replace(course, terrain=info))
         else:
             raison = (profil_compatible(profil, course) or
                       ("pénalité de marche inconnue" if penalites(traits) is None else None))
-            course = replace(course, terrain={"source": "carte", "total": mode_total, "servi": False,
-                                              "raison": raison})
+            course = replace(course, terrain={**info, "servi": False, "raison": raison})
     f_pacing = None
     if cfg.pacing.terrain == "map":
         f_pacing = f_carte

@@ -15,7 +15,7 @@ import { useState } from "react";
 import { BoutonTexte, Button, ChampCompact } from "@locomotionlab/ui";
 import { BadgeEtat } from "@locomotionlab/ui/contenu";
 
-import { NIVEAUX, duree, jourLisible, lireUneDuree, nombre, signe } from "@/lib/twinTableauDeBord.mjs";
+import { NIVEAUX, duree, jourLisible, lireUneDuree, nombre, signe, titreDuProfil } from "@/lib/twinTableauDeBord.mjs";
 
 import { appeler, lireUnFichier } from "./api";
 import Coquille, { ETIQUETTE } from "./Coquille";
@@ -135,7 +135,7 @@ export default function Registre() {
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr className="text-left text-xs uppercase tracking-etiquette text-brand-muted">
-                    {["Athlète", "Statut", "Course", "Date", "Niveau servi", "Prédit", "Réel", "Écart", "Fourchette", "Bornes"].map((c) => (
+                    {["Athlète", "Statut", "Course", "Date", "Niveau servi", "Profil", "Prédit", "Réel", "Écart", "Fourchette", "Bornes"].map((c) => (
                       <th key={c} className="px-4 py-2.5 font-semibold">
                         {c}
                       </th>
@@ -155,6 +155,7 @@ export default function Registre() {
                       <td className="px-4 py-2">
                         <BadgeEtat ton={l.niveau === "calibre" ? "deroule" : "annonce"}>{NIVEAUX[l.niveau] ?? l.niveau}</BadgeEtat>
                       </td>
+                      <td className="px-4 py-2">{titreDuProfil(l.profil)}</td>
                       <td className="px-4 py-2 tabular-nums">{duree(l.central_h)}</td>
                       <td className="px-4 py-2 tabular-nums">
                         {l.a_saisir ? (

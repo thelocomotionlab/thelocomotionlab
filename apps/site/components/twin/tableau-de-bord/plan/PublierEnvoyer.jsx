@@ -13,7 +13,7 @@ import { useState } from "react";
 import { BoutonTexte, Button, Field } from "@locomotionlab/ui";
 import { BadgeEtat } from "@locomotionlab/ui/contenu";
 
-import { departLisible, duree, jourLisible, lireUneDuree } from "@/lib/twinTableauDeBord.mjs";
+import { departLisible, duree, jourLisible, lireUneDuree, titreDuProfil } from "@/lib/twinTableauDeBord.mjs";
 
 import { appeler } from "../api";
 import { ETIQUETTE, lienVers } from "../Coquille";
@@ -265,6 +265,9 @@ export default function PublierEnvoyer({ vue, recharger, surJob }) {
               <li key={v.n} className="flex flex-wrap items-center gap-2">
                 <span className="text-brand-text">
                   Version {v.n} · {jourLisible(v.cree_le)} · {v.origine === "import" ? "importée" : "générée"}
+                  {v.configuration?.profil && v.configuration.profil !== "defaut"
+                    ? ` · profil ${titreDuProfil(v.configuration.profil).toLowerCase()}`
+                    : ""}
                 </span>
                 {v.n === plan.version ? <BadgeEtat ton="annonce">courante</BadgeEtat> : null}
                 {v.n === plan.version_publiee ? <BadgeEtat ton="deroule">publiée</BadgeEtat> : null}

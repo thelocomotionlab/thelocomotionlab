@@ -304,6 +304,9 @@ export default function ToiSeul({ vue, reference, cle, recharger }) {
           km<sub>tot</sub> : depuis le départ ; km : sur le segment. Filet ambre : ravitaillement ouvert à ton assistance ;
           point d&rsquo;encre : segment de nuit.
         </p>
+        {vue.plan?.attributions?.length ? (
+          <p className="mt-1 text-xs leading-relaxed text-brand-muted">Terrain : {vue.plan.attributions.join(" ; ")}.</p>
+        ) : null}
       </div>
 
       <div>

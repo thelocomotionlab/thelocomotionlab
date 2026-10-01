@@ -699,16 +699,30 @@ def migrer(ancien: Path, depot: Depot, *, statuts: list[tuple[str, str, str, str
 
 
 def entree_servie(dossier_path: Path, depot: Depot, cfg, *, athlete: str, course: str | None,
-                  jour: str | None, officiel_h: float | None, dnf: bool = False) -> dict:
+                  jour: str | None, officiel_h: float | None, dnf: bool = False,
+                  profil: str | None = None) -> dict:
     """L'entrée du livre servi d'un plan, fabriquée depuis son dossier (``dossier.json`` de la
     version servie) : ce que le plan promettait, le résultat, le statut de l'athlète au jour
-    de la course, et la forme du plan si ses passages sont au registre."""
+    de la course, la configuration qui l'a servi, et la forme du plan si ses passages sont au
+    registre. La configuration est celle que garde la version (``version.json`` à côté du
+    dossier) ; à défaut, celle du profil ``profil`` (défaut sinon)."""
     from twin_engine import dossier as _dossier
     from twin_engine.course import build_course
     from twin_engine.registre import (bloc_course, bloc_domaine, bloc_forme, bloc_modele,
                                       bloc_prediction, statut_a_la_date)
+    from twin_engine.tableau_de_bord.generation import cfg_de_la_version, configuration_de_la_version
     from twin_engine.twin.pente import servir_parcours
 
+    try:
+        resume = json.loads((Path(dossier_path).parent / "version.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        resume = {}
+    if resume.get("configuration"):
+        configuration = {k: v for k, v in resume["configuration"].items() if k != "surcharges"}
+        cfg = cfg_de_la_version(cfg, resume)
+    else:
+        cfg, configuration = configuration_de_la_version(cfg, profil or "defaut")
+        configuration = {k: v for k, v in configuration.items() if k != "surcharges"}
     d = _dossier.lire(dossier_path)
     parcours = servir_parcours(build_course(d.course_gpx, d.race, cfg), d.twin, cfg)
     nom = course or d.race.name
@@ -737,6 +751,7 @@ def entree_servie(dossier_path: Path, depot: Depot, cfg, *, athlete: str, course
         "niveau": "calibre" if verdict in ("🟢", "🟠") else "base",
         "source": "dossier",
         "reference": d.report_ref,
+        "configuration": configuration,
     }
     forme = bloc_forme(parcours, d.race, d.prediction, cfg,
                        depot.passages().get((athlete, nom, jour)),
@@ -828,6 +843,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--date", help="date de la course, AAAA-MM-JJ (avec --servir)")
     ap.add_argument("--officiel", help="temps officiel, 35:05:12 ou 35h05 (avec --servir)")
     ap.add_argument("--dnf", action="store_true", help="abandon (avec --servir)")
+    ap.add_argument("--profil", choices=("defaut", "reference", "experimental"),
+                    help="profil de configuration qui a servi le plan (avec --servir), quand la "
+                         "version ne le garde pas")
     args = ap.parse_args(argv)
 
     depot = Depot(args.depot)
@@ -866,7 +884,8 @@ def main(argv: list[str] | None = None) -> int:
         try:
             e = entree_servie(Path(args.servir), depot, load_config(), athlete=args.athlete,
                               course=args.course, jour=args.date,
-                              officiel_h=parse_time_h(args.officiel), dnf=args.dnf)
+                              officiel_h=parse_time_h(args.officiel), dnf=args.dnf,
+                              profil=args.profil)
         except ValueError as exc:
             print(str(exc), file=sys.stderr)
             return 2

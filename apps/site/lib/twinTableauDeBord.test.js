@@ -9,6 +9,9 @@ import {
   COMPTEURS,
   NIVEAUX,
   PAS,
+  PROFILS,
+  aideDuProfil,
+  titreDuProfil,
   VERBES,
   conservationDit,
   departLisible,
@@ -254,6 +257,24 @@ describe("les lignes « Sur ce segment »", () => {
 
   it("tiennent moins de caractères quand la nutrition est déclarée", () => {
     expect(longueurQuiTient(true)).toBeLessThan(longueurQuiTient(false));
+  });
+});
+
+describe("les profils de configuration", () => {
+  it("se disent en clair, le défaut pour un plan d'avant les profils", () => {
+    expect(titreDuProfil("experimental")).toBe("Expérimental");
+    expect(titreDuProfil(undefined)).toBe(PROFILS.defaut);
+    expect(titreDuProfil("autre")).toBe("autre");
+  });
+
+  it("disent ce qu'ils changent au défaut, ou qu'ils n'y changent rien", () => {
+    expect(aideDuProfil({ nom: "defaut", drapeaux: [] })).toMatch(/telle qu'elle est livrée/);
+    expect(aideDuProfil({ nom: "reference", description: "Les drapeaux gardés.", drapeaux: [] })).toBe(
+      "Les drapeaux gardés. Aucun réglage pour l'instant : il sert le défaut.",
+    );
+    expect(
+      aideDuProfil({ nom: "experimental", description: "À l'essai.", drapeaux: ["pacing.terrain=declared", "report.consignes_marche=1"] }),
+    ).toBe("À l'essai. 2 réglages hors défaut : pacing.terrain=declared · report.consignes_marche=1.");
   });
 });
 

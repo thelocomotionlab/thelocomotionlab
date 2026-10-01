@@ -115,7 +115,7 @@ def parts(plan, race) -> list[dict]:
 # --------------------------------------------------------------------------- #
 
 
-def consignes(plan, race, cfg, *, moments=()) -> list[str]:
+def consignes(plan, race, cfg, *, moments=(), marche=None) -> list[str]:
     """Une poignée de consignes SINGULIÈRES, et des cases vides partout ailleurs.
 
     Une colonne qui répète cinq fois « marche, mange en montant » ne dit rien : l'œil cesse
@@ -124,7 +124,9 @@ def consignes(plan, race, cfg, *, moments=()) -> list[str]:
       * ce que l'athlète a écrit lui-même (``RaceSpec.reglages``) et ce que son assistance
         prépare (``crew``) — sa voix passe avant tout le reste ;
       * l'entrée dans la nuit et le retour du jour ;
-      * les trois moments qui décident, posés là où ils COMMENCENT.
+      * les trois moments qui décident, posés là où ils COMMENCENT ;
+      * la marche prévue en descente (``marche`` : segment, minutes, consigne), aux
+        ``report.consignes_marche`` segments où elle est la plus longue et encore libres.
 
     ``moments`` vient de ``report.faits.trois_moments`` : la feuille et la page 2 lisent les
     mêmes objets, donc les mêmes chiffres. Les calculer ici une seconde fois — par exemple le
@@ -177,6 +179,14 @@ def consignes(plan, race, cfg, *, moments=()) -> list[str]:
                        if s.off1 - s.off_len_km <= m["from_km"] + 1e-6 < s.off1), None)
         if depart is not None:
             _poser(depart, texte(m))
+
+    poses = 0
+    for i, _minutes, texte in sorted(marche or (), key=lambda x: -x[1]):
+        if poses >= cfg.report.consignes_marche:
+            break
+        if 0 <= i < len(segs) and not out[i] and texte:
+            out[i] = texte
+            poses += 1
 
     limite = cfg.report.consigne_max_chars
     return [c if len(c) <= limite else c[:limite - 1].rstrip() + "…" for c in out]

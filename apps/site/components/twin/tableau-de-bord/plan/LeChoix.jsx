@@ -1,7 +1,8 @@
 // components/twin/tableau-de-bord/plan/LeChoix.jsx
 //
 // LA COLONNE « LE CHOIX » de l'écran Plan : la course, le mode, la cible, la politique
-// d'arrêts, les notes des postes d'assistance, la nutrition — puis « Lancer ».
+// d'arrêts, le profil du moteur, les notes des postes d'assistance, la nutrition — puis
+// « Lancer ».
 //
 // Rien ici ne calcule : les chiffres de la politique d'arrêts viennent du moteur
 // (`politique_standard`, `arrets_mesures`), qui les lit dans sa configuration et dans
@@ -13,6 +14,7 @@ import { Button, Choix, Segments } from "@locomotionlab/ui";
 
 import {
   NIVEAUX,
+  aideDuProfil,
   duree,
   lignesDeLEcran,
   lignesPourLeMoteur,
@@ -50,6 +52,7 @@ export function reglagesDeLEcran(reglages, fenetreDefautPct = null) {
     lignes: lignesDeLEcran(r.consignes),
     eau: r.nutrition?.eau_l_h ?? "",
     glucides: r.nutrition?.glucides_g_h ?? "",
+    profil: r.profil || "defaut",
   };
 }
 
@@ -67,6 +70,7 @@ export function reglagesPourLeMoteur(ecran) {
       .map(([index, note]) => ({ index: Number(index), note: note.trim() })),
     nutrition: { eau_l_h: vers(ecran.eau), glucides_g_h: vers(ecran.glucides) },
     consignes: lignesPourLeMoteur(ecran.lignes),
+    profil: ecran.profil || "defaut",
   };
 }
 
@@ -110,6 +114,7 @@ export default function LeChoix({
   fige,
   lignesAuto,
   ligneMax,
+  profils,
 }) {
   const postes = (course?.ravitaillements ?? []).filter((r) => r.assistance);
   const lignes = lignesDeLaCourse(course);
@@ -235,6 +240,26 @@ export default function LeChoix({
           }
         />
       </div>
+
+      {profils?.length ? (
+        <div className="flex flex-col gap-2 text-sm">
+          <span className="text-brand-muted">Profil du moteur</span>
+          {profils.map((p) => (
+            <Case
+              key={p.nom}
+              label={p.titre}
+              radio
+              name="profil"
+              checked={(ecran.profil || "defaut") === p.nom}
+              onChange={() => changer({ profil: p.nom })}
+              aide={aideDuProfil(p)}
+            />
+          ))}
+          <p className="text-xs leading-relaxed text-brand-muted">
+            Le registre garde le profil qui a servi chaque version.
+          </p>
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-2 text-sm">
         <span className="text-brand-muted">

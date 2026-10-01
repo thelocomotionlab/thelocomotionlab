@@ -60,6 +60,29 @@ def _nutrition_declaree(n) -> bool:
     return n.eau_l_h is not None or n.glucides_g_h is not None
 
 
+def configuration_de_la_version(cfg: Config, profil: str) -> tuple[Config, dict]:
+    """La config du moteur sous le profil que ce plan sert, et ce qu'une version en garde :
+    le nom du profil, ses surcharges, l'empreinte de la configuration et les drapeaux hors
+    défaut (comptés contre ``cfg``, la configuration du service)."""
+    from ..profils import config_du_profil, surcharges
+    from ..registre.runs import drapeaux_hors_defaut, empreinte_config
+
+    servie = config_du_profil(cfg, profil)
+    return servie, {"profil": profil, "surcharges": surcharges(profil),
+                    "empreinte": empreinte_config(servie),
+                    "drapeaux": drapeaux_hors_defaut(servie, defauts=cfg)}
+
+
+def cfg_de_la_version(cfg: Config, resume: dict) -> Config:
+    """La config sous laquelle une version a été générée : les surcharges qu'elle garde
+    (``version.json``, clé ``configuration``), rejouées telles quelles même si le profil a
+    changé depuis ; aucune pour une version d'avant les profils."""
+    from ..config import override_config
+
+    spec = ",".join((resume.get("configuration") or {}).get("surcharges") or ())
+    return override_config(cfg, spec) if spec else cfg
+
+
 def cfg_de_la_fenetre(cfg: Config, tolerance_pct: float | None) -> Config:
     """La config du moteur, avec la fenêtre d'objectif que ce plan a choisie. Le dossier
     ne la garde pas : chaque rendu d'une version la reçoit d'ici."""
@@ -285,6 +308,7 @@ def generer_une_version(*, ref: str, magasin: Magasin, cfg: Config,
         raise GenerationImpossible(f"plan inconnu : {ref}")
     plan = Plan.from_dict(brut)
     athlete, course, gpx, twin, calibration = _materiaux(magasin, plan)
+    cfg, configuration = configuration_de_la_version(cfg, plan.reglages.profil)
     cfg = cfg_de_la_fenetre(
         cfg, plan.reglages.tolerance_pct if plan.reglages.mode == "objectif" else None)
 
@@ -344,6 +368,7 @@ def generer_une_version(*, ref: str, magasin: Magasin, cfg: Config,
             "base": fragment_de(base),
             "prediction": asdict(prediction),
             "documents": asdict(documents),
+            "configuration": configuration,
         })
         os.replace(rendu, racine / f"v{numero}")   # la version prend sa place d'un geste
     except BaseException:
@@ -397,6 +422,9 @@ def amender_la_version(*, ref: str, magasin: Magasin, cfg: Config, numero: int |
 
     d = _dossier.lire(version / "dossier.json")
     resume = lire_json(version / "version.json") or {}
+    # la configuration de CETTE version : les surcharges de son profil, telles qu'elle les a
+    # servies
+    cfg = cfg_de_la_version(cfg, resume)
     # La fenêtre de CETTE version : celle de ses réglages, ou, pour un plan importé du CLI,
     # celle que son annexe dit avoir servie.
     tolerance = (resume.get("reglages") or {}).get("tolerance_pct")

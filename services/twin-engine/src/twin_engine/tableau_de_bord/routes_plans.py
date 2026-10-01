@@ -18,6 +18,8 @@ from fastapi.responses import FileResponse
 from .._dt import parse_duration_h
 from ..cles import USAGE_PARTAGE, USAGE_PRIVE, lien_du_plan
 from ..jobs import run_amendement, run_generation
+from ..profils import PROFILS
+from ..profils import lister as lister_les_profils
 from .courrier import CourrierIndisponible, destinataire, piece_pdf
 from .cycle import (
     a_un_resultat,
@@ -139,6 +141,9 @@ def lire_les_reglages(brut, course: Course | None) -> Reglages:
     politique = str(brut.get("politique_arrets") or POLITIQUE_STANDARD)
     if politique not in POLITIQUES:
         raise ValueError(f"politique d'arrêts inconnue : {politique}")
+    profil = str(brut.get("profil") or "defaut")
+    if profil not in PROFILS:
+        raise ValueError(f"profil de configuration inconnu : {profil}")
 
     points = None
     if course is not None:
@@ -157,7 +162,7 @@ def lire_les_reglages(brut, course: Course | None) -> Reglages:
                     tolerance_pct=tolerance if mode == "objectif" else None,
                     politique_arrets=politique, assistance=assistance,
                     nutrition=lire_la_nutrition(brut.get("nutrition")),
-                    consignes=lire_les_consignes(brut.get("consignes"), course))
+                    consignes=lire_les_consignes(brut.get("consignes"), course), profil=profil)
 
 
 def lire_les_consignes(brut, course: Course | None) -> list[ConsigneReglage]:
@@ -346,6 +351,8 @@ def vue_du_plan(request: Request, plan: Plan) -> dict:
         # laquelle la feuille coupe
         "lignes_auto": textes_auto_des_lignes(magasin, plan),
         "ligne_max": cfg.report.consigne_max_chars,
+        # les profils de configuration que le plan peut servir, et leurs surcharges
+        "profils": lister_les_profils(),
         "jobs": [request.app.state.store.rendre_public(j)
                  for j in request.app.state.store.en_attente(plan_ref=plan.ref)],
         "demandes": [d for d in magasin.demandes.lister() if d.get("plan_ref") == plan.ref],

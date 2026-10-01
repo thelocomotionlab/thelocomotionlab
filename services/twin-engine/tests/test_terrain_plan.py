@@ -128,6 +128,8 @@ def test_the_map_in_the_distribution_moves_time_to_the_technical_descent_only():
     carte = analyze_preview_from_twin(twin, course, cfg, n_ingested=5, terrain={"parcours": _profil(course)})
     assert carte.prediction.finish_hours == base.prediction.finish_hours
     assert carte.course.deq_km == base.course.deq_km and carte.course.repartition["terrain"] == "map"
+    assert carte.course.terrain["repartition"] is True and carte.course.terrain["total"] is None
+    assert carte.course.terrain["attributions"]
     p0 = build_pacing(base.course, base.prediction, RACE, CFG)
     p1 = build_pacing(carte.course, carte.prediction, RACE, cfg)
     assert p1.t_move_h == pytest.approx(p0.t_move_h, abs=1e-9)
@@ -145,8 +147,10 @@ def test_the_map_in_the_total_lengthens_the_target_and_leaves_the_calibration_al
     tot = analyze_preview_from_twin(twin, course, cfg, n_ingested=5, terrain={"parcours": _profil(course)})
     ajout = surcout_km(course, facteur_carte(course, _profil(course), TRAITS, CFG))
     assert tot.course.deq_km == pytest.approx(base.course.deq_km + ajout, abs=1e-6)
-    assert tot.course.terrain == {"source": "carte", "total": "differential",
-                                  "deq_ajoute_km": round(ajout, 3)}
+    assert {k: tot.course.terrain[k] for k in ("source", "total", "repartition", "deq_ajoute_km")} == {
+        "source": "carte", "total": "differential", "repartition": False, "deq_ajoute_km": round(ajout, 3)}
+    assert tot.course.terrain["segments_techniques"] == [False, False, False, True]
+    assert "ODbL" in tot.course.terrain["attributions"][0]
     assert tot.course.segments[3].deq_km > base.course.segments[3].deq_km
     assert tot.course.segments[0].deq_km == pytest.approx(base.course.segments[0].deq_km)
     assert tot.prediction.finish_hours > base.prediction.finish_hours

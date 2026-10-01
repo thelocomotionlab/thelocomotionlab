@@ -61,12 +61,16 @@ def _modele_de_la_version(magasin: Magasin, cfg, plan: dict) -> dict | None:
     if not source.exists():
         return None
     deja = lire_json(garde)
-    if isinstance(deja, dict) and deja.get("_dossier_mtime") == source.stat().st_mtime_ns:
+    if (isinstance(deja, dict) and deja.get("_dossier_mtime") == source.stat().st_mtime_ns
+            and "configuration" in deja):
         return deja
 
     from ..course import build_course
     from ..twin.pente import servir_parcours
+    from .generation import cfg_de_la_version
 
+    resume = lire_json(repertoire / "version.json") or {}
+    cfg = cfg_de_la_version(cfg, resume)
     d = _dossier.lire(source)
     course = servir_parcours(build_course(d.course_gpx, d.race, cfg), d.twin, cfg)
     dates = sorted(s.date for s in d.twin.summaries if s.date)
@@ -82,6 +86,10 @@ def _modele_de_la_version(magasin: Magasin, cfg, plan: dict) -> dict | None:
         "prediction": _registre.bloc_prediction(p, None),
         "domain_demand": _registre.bloc_domaine(d.sufficiency),
         "genuine_min_hours": cfg.calibration.genuine_min_hours,
+        # le profil de configuration que la version a servi (défaut pour une version d'avant
+        # les profils, ou importée du CLI)
+        "configuration": {k: v for k, v in (resume.get("configuration") or {
+            "profil": "defaut", "drapeaux": {}}).items() if k != "surcharges"},
     }
     ecrire_json(garde, modele)
     return modele
@@ -126,9 +134,11 @@ def entree(magasin: Magasin, cfg, plan: dict, course: dict | None,
         "prediction": prediction,
         "below_domain": bool(ref_h < modele["genuine_min_hours"]),
         "domain_demand": modele["domain_demand"],
-        # ce que le banc n'a pas : le niveau SERVI et d'où vient la ligne
+        # ce que le banc n'a pas : le niveau SERVI, d'où vient la ligne, et sous quelle
+        # configuration (le banc la porte à l'en-tête de son run)
         "niveau": (plan.get("prediction") or {}).get("niveau") or NIVEAU_BASE,
         "source": "tableau-de-bord",
+        "configuration": modele.get("configuration") or {"profil": "defaut", "drapeaux": {}},
     }
 
 
@@ -155,6 +165,7 @@ def ligne(plan: dict, course: dict | None, athlete: dict | None, e: dict | None)
         "err_pct": ecarts.get("err_pct"),
         "in_plan": ecarts.get("in_plan"),
         "in_safety": ecarts.get("in_safety"),
+        "profil": ((e or {}).get("configuration") or {}).get("profil") or "defaut",
     }
 
 

@@ -418,6 +418,7 @@ export default async function AnnexePage({ params }) {
               ["Dérive", `−${plan.fade_pct} % du début à la fin (${plan.fade_source_used})`],
               ["Preuve de la dérive", plan.fade_evidence],
               ["Soleil", plan.sun?.sunrise ? `lever ${plan.sun.sunrise}, coucher ${plan.sun.sunset}` : null],
+              ["Terrain", plan.attributions?.length ? plan.attributions.join(" ; ") : null],
             ]}
           />
           <Tableau

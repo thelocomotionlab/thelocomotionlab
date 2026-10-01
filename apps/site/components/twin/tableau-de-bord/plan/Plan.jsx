@@ -100,6 +100,7 @@ function EcranPlan({ vue, recharger }) {
           fige={vue.fige}
           lignesAuto={vue.lignes_auto}
           ligneMax={vue.ligne_max}
+          profils={vue.profils}
         />
         <Apercu
           plan={plan}

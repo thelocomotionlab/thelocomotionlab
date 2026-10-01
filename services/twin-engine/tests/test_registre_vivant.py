@@ -66,8 +66,10 @@ def test_lexport_a_la_forme_du_fichier_committe(client, dossier_du_cli):
     [entree] = export["entries"]
     committe = json.loads(REGISTRE_COMMITTE.read_text(encoding="utf-8"))["entries"][0]
     # mêmes clés que le banc, plus ce que le banc ne sait pas : le niveau servi, la source,
-    # le statut de l'athlète quand l'entrée a été figée
-    assert set(entree) - set(committe) == {"niveau", "source", "statut"}
+    # le statut de l'athlète quand l'entrée a été figée, la configuration qui a servi le plan
+    # (le banc la porte à l'en-tête de son run)
+    assert set(entree) - set(committe) == {"niveau", "source", "statut", "configuration"}
+    assert entree["configuration"] == {"profil": "defaut", "drapeaux": {}}
     assert set(committe) - set(entree) == set()
     # le run committé est figé : les mesures ajoutées depuis n'y sont pas, l'export les porte
     assert set(committe["model"]) <= set(entree["model"])

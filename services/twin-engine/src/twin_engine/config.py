@@ -676,6 +676,11 @@ class ReportParams:
                           "mi-course 27 fois sur 30")
     # longueur maximale d'une consigne : elle se lit d'un coup d'œil, la nuit, à bout de bras
     consigne_max_chars: int = 60
+    # la marche prévue en descente (``twin.terrain.marche_prevue``) dans la colonne « Sur ce
+    # segment » : le nombre de segments, ceux où elle est la plus longue, qui la reçoivent
+    # (s'ils sont encore libres après la voix de l'athlète, la nuit et les trois moments) ;
+    # 0 = aucun
+    consignes_marche: int = 0
 
 
 @dataclass(frozen=True)

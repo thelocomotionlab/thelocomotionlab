@@ -350,6 +350,9 @@ class Reglages:
     nutrition: NutritionReglage = field(default_factory=NutritionReglage)
     # Une ligne sans texte ici garde celui que le moteur y pose (nuit, montée, …).
     consignes: list[ConsigneReglage] = field(default_factory=list)
+    # Le profil de configuration du moteur que ce plan sert (``twin_engine.profils``) :
+    # defaut, reference ou experimental.
+    profil: str = "defaut"
 
 
 @dataclass
@@ -458,6 +461,7 @@ class Plan:
                     _depuis(ConsigneReglage, c)
                     for c in (brut.get("reglages") or {}).get("consignes") or ()
                 ],
+                profil=str((brut.get("reglages") or {}).get("profil") or "defaut"),
             ),
             amendements=Amendements(
                 arrets=dict((brut.get("amendements") or {}).get("arrets") or {}),
