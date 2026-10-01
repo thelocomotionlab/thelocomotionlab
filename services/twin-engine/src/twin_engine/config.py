@@ -689,6 +689,29 @@ class ApiParams:
 
 
 @dataclass(frozen=True)
+class CohorteParams:
+    """Conservation des données de la cohorte (tableau de bord, ``tableau_de_bord.conservation``).
+
+    Un athlète qui a accepté un texte de consentement de ``versions_conservation`` voit son
+    archive (chiffrée, sur le service de dépôt), son jumeau, sa calibration, ses plans et
+    sa page conservés ``conservation_jours`` jours après son consentement, puis purgés ; ses
+    entrées du registre deviennent anonymes. Avec ``prolonger_apres_course``, l'échéance
+    recule jusqu'à ``prolongation_jours`` après la course visée la plus tardive. Un
+    consentement d'une autre version (le texte d'avant, qui promettait la suppression après
+    analyse) voit son archive purgée dès qu'elle est ingérée ; le reste suit la même
+    échéance.
+
+    ``purge`` : ``simulation`` (défaut) — la passe quotidienne calcule et consigne ce
+    qu'elle purgerait sans rien effacer ; ``active`` — elle efface."""
+
+    purge: str = "simulation"                            # {simulation, active}
+    conservation_jours: int = 183
+    prolonger_apres_course: bool = False
+    prolongation_jours: int = 30
+    versions_conservation: tuple[str, ...] = ("2026-10",)
+
+
+@dataclass(frozen=True)
 class Config:
     data_dir: Path
     course: CourseParams = field(default_factory=CourseParams)
@@ -701,6 +724,7 @@ class Config:
     target: TargetParams = field(default_factory=TargetParams)
     report: ReportParams = field(default_factory=ReportParams)
     api: ApiParams = field(default_factory=ApiParams)
+    cohorte: CohorteParams = field(default_factory=CohorteParams)
 
 
 # --------------------------------------------------------------------------- #
@@ -793,11 +817,13 @@ def load_config(config_path: str | os.PathLike[str] | None = None) -> Config:
         target=_build(TargetParams, raw.get("target")),
         report=_build(ReportParams, raw.get("report")),
         api=_build(ApiParams, raw.get("api")),
+        cohorte=_build(CohorteParams, raw.get("cohorte")),
     )
 
 
 __all__ = [
     "ApiParams",
+    "CohorteParams",
     "Config",
     "override_config",
     "CourseParams",

@@ -51,6 +51,7 @@ class FauxDepot:
         self.archive = archive or (FIX / "sample.gpx")
         self.panne = panne
         self.telechargements: list[str] = []
+        self.supprimes: list[str] = []
 
     def lister(self):
         if self.panne:
@@ -60,7 +61,15 @@ class FauxDepot:
     def trouver(self, depot_id):
         return next((d for d in self.lister() if d["id"] == depot_id), None)
 
-    def telecharger(self, depot_id, destination: Path):
+    def supprimer(self, depot_id):
+        if self.panne:
+            raise DepotIndisponible("dépôt injoignable : pour de faux")
+        self.supprimes.append(depot_id)
+        avant = len(self.depots)
+        self.depots = [d for d in self.depots if d["id"] != depot_id]
+        return len(self.depots) < avant
+
+    def telecharger(self, depot_id, destination: Path, sha256=None):
         if self.panne:
             raise DepotIndisponible("archive illisible : pour de faux")
         self.telechargements.append(depot_id)
@@ -302,6 +311,10 @@ def test_supprimer_emporte_tout(client):
     assert magasin.demandes.lire("d1") is None, "ses demandes restaient, notes comprises"
     assert magasin.plans.lire("LL-AUTRE") is not None
     assert not repertoire.exists(), "le jumeau et la calibration restaient sur le disque"
+    # l'archive part du dépôt, et « Rafraîchir » ne recrée pas l'athlète
+    assert client.app.state.depot.supprimes == [DEPOT["id"]]
+    assert client.post("/tableau-de-bord/file/refresh", headers=ADMIN).json()["rattrapes"] == []
+    assert client.app.state.store.en_attente(athlete_id=athlete_id) == []
 
 
 def test_on_ne_supprime_pas_un_athlete_en_plein_travail(client):

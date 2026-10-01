@@ -13,13 +13,18 @@ et hors domaine pour un trail de six heures. Le niveau de la fiche dit une seule
 *cette archive porte-t-elle de quoi calibrer ?* — ``assess_sufficiency`` jugerait un plan,
 et sans prédiction il rendrait 🔴 d'office.
 
-L'archive vit dans un répertoire temporaire du volume et disparaît en ``finally``. La
-promesse « archives supprimées immédiatement après analyse » doit tenir aussi quand
-l'ingestion échoue au milieu.
+La copie de l'archive vit dans un répertoire temporaire du volume et disparaît en
+``finally``, que l'ingestion réussisse ou échoue au milieu : l'archive elle-même reste
+chiffrée sur le service de dépôt jusqu'à son échéance (``conservation``), seul endroit où
+elle vit.
+
+Le jumeau garde ce qui l'a produit — commit du moteur, empreinte de la configuration — :
+un jumeau d'un autre moteur est périmé, et se ré-ingère tant que l'archive est conservée.
 """
 
 from __future__ import annotations
 
+import functools
 import shutil
 import tempfile
 from datetime import date
@@ -30,6 +35,7 @@ from ..config import Config
 from ..ingest import iter_activities
 from ..sufficiency import assess_athlete
 from ..twin.model import build_twin
+from . import conservation
 from .depot import Depot
 from .jumeau import ecrire_le_jumeau, lire_la_calibration, lire_le_jumeau
 from .magasin import Magasin
@@ -110,6 +116,34 @@ def analyser_larchive(archive: Path, *, cfg: Config, avancer=None,
     return twin, calibration, suffisance, len(ecartees)
 
 
+@functools.lru_cache(maxsize=1)
+def _moteur() -> tuple[str | None, bool | None]:
+    """Le commit du moteur qui tourne : il ne change pas pendant la vie du processus."""
+    from ..registre import version_du_moteur
+
+    v = version_du_moteur()
+    return v["commit"], v["modifie"]
+
+
+def provenance(cfg: Config) -> dict:
+    """Ce qui produit un jumeau : le commit du moteur et l'empreinte de sa configuration."""
+    from ..registre import empreinte_config
+
+    commit, modifie = _moteur()
+    return {"commit": commit, "modifie": modifie, "empreinte": empreinte_config(cfg)}
+
+
+def est_perime(athlete: dict, cfg: Config) -> bool:
+    """Le jumeau de l'athlète vient-il d'un autre moteur que celui-ci ? Un jumeau sans
+    provenance (d'avant qu'on la garde) l'est."""
+    if (athlete.get("ingestion") or {}).get("statut") != INGESTION_INGERE:
+        return False
+    garde = athlete.get("jumeau_produit_par") or {}
+    courant = provenance(cfg)
+    return (garde.get("commit") != courant["commit"]
+            or garde.get("empreinte") != courant["empreinte"])
+
+
 def ingerer_un_athlete(
     *, athlete_id: str, magasin: Magasin, cfg: Config, depot: Depot | None = None,
     archive_locale: Path | None = None, avancer=None,
@@ -136,7 +170,8 @@ def ingerer_un_athlete(
                 avancer("récupération de l'archive")
             nom = athlete.archive.nom or "archive.zip"
             archive = (depot or Depot()).telecharger(
-                athlete.depot_id, temporaire / Path(nom).name
+                athlete.depot_id, temporaire / Path(nom).name,
+                sha256=athlete.archive.sha256 or None,
             )
 
         twin, calibration, suffisance, _ = analyser_larchive(
@@ -145,8 +180,10 @@ def ingerer_un_athlete(
 
         if avancer:
             avancer("écriture du jumeau")
-        # Entiers, et relisibles : chaque plan repartira d'eux, l'archive n'étant plus là.
-        ecrire_le_jumeau(repertoire, twin, calibration)
+        # Entiers, et relisibles : chaque plan repartira d'eux, sans relire l'archive.
+        produit_par = provenance(cfg)
+        ecrire_le_jumeau(repertoire, twin, calibration, produit_par=produit_par)
+        athlete.jumeau_produit_par = produit_par
 
         athlete.jumeau = resumer_le_jumeau(twin, calibration)
         athlete.niveau = Niveau(
@@ -154,7 +191,14 @@ def ingerer_un_athlete(
             raisons=list(suffisance.reasons),
         )
         athlete.ingestion = Ingestion(statut=INGESTION_INGERE, le=maintenant())
-        return magasin.athletes.ecrire(athlete.to_dict())
+        ecrit = magasin.athletes.ecrire(athlete.to_dict())
+        # le texte d'avant la conservation promettait la suppression après analyse
+        if cfg.cohorte.purge == "active" and not conservation.conserve(ecrit, cfg):
+            from .purge import purger_larchive
+
+            purger_larchive(magasin, ecrit, depot=depot or Depot())
+            ecrit = magasin.athletes.lire(athlete_id) or ecrit
+        return ecrit
     except Exception as exc:
         # Ce que Valentin lira dans la File. Le détail technique reste au journal : ici on
         # dit ce qui s'est passé, pas la pile d'appels. Une archive illisible parle
@@ -195,5 +239,5 @@ def recalculer_les_niveaux(magasin: Magasin, cfg: Config,
     return changes
 
 
-__all__ = ["ArchiveIllisible", "analyser_larchive", "ingerer_un_athlete",
-           "recalculer_les_niveaux", "resumer_le_jumeau"]
+__all__ = ["ArchiveIllisible", "analyser_larchive", "est_perime", "ingerer_un_athlete",
+           "provenance", "recalculer_les_niveaux", "resumer_le_jumeau"]

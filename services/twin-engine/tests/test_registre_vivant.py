@@ -117,12 +117,20 @@ def test_supprimer_lathlete_garde_son_entree_au_registre(client, dossier_du_cli)
 
     apres = client.get("/tableau-de-bord/registre", headers=ADMIN).json()
     [ligne] = apres["lignes"]
-    assert ligne["gardee"] is True and ligne["athlete"] == "Val"
-    assert {k: v for k, v in ligne.items() if k != "gardee"} == avant["lignes"][0]
+    # l'entrée reste, anonyme : ni pseudo ni référence de plan (elle contient le pseudo)
+    assert ligne["gardee"] is True and ligne["athlete"].startswith("anonyme-")
+    assert ligne["ref"].startswith(ligne["athlete"]) and "VAL" not in ligne["ref"]
+    sans = ("gardee", "athlete", "ref")
+    assert ({k: v for k, v in ligne.items() if k not in sans}
+            == {k: v for k, v in avant["lignes"][0].items() if k not in sans})
     niveau = plan["prediction"]["niveau"]
     assert apres[niveau] == avant[niveau]
-    assert client.get("/tableau-de-bord/registre/export",
-                      headers=ADMIN).json() == export_avant
+    export = client.get("/tableau-de-bord/registre/export", headers=ADMIN).json()
+    [e], [e_avant] = export["entries"], export_avant["entries"]
+    assert e["athlete"] == ligne["athlete"] and "Val" not in export["athletes"]
+    assert ({k: v for k, v in e.items() if k != "athlete"}
+            == {k: v for k, v in e_avant.items() if k != "athlete"})
+    assert export["athletes"][ligne["athlete"]]["statut"] == "frais"
 
 
 def test_supprimer_un_plan_couru_garde_son_entree(client, dossier_du_cli):

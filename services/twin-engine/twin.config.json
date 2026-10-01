@@ -250,5 +250,14 @@
     "rendu_max_kio": 4096,
     "rendu_simultanes": 1,
     "rendu_par_minute": 12
+  },
+  "cohorte": {
+    "purge": "simulation",
+    "conservation_jours": 183,
+    "prolonger_apres_course": false,
+    "prolongation_jours": 30,
+    "versions_conservation": [
+      "2026-10"
+    ]
   }
 }

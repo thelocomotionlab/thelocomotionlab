@@ -30,7 +30,9 @@ from fastapi import (
 from .. import dossier as dossier_mod
 from ..course import RaceSpec
 from ..jobs import run_ingestion
+from . import conservation as _conservation
 from . import file as _file
+from . import purge as _purge
 from .depot import DepotIndisponible
 from .magasin import Magasin, ecrire_json
 from .objets import (
@@ -50,6 +52,7 @@ from .objets import (
     maintenant,
 )
 from .cycle import statut_apres_changement
+from .ingestion import est_perime
 from .generation import (
     FICHIERS_DUNE_VERSION,
     GenerationImpossible,
@@ -58,7 +61,7 @@ from .generation import (
     ranger_une_version,
 )
 from .plan import resumer_la_prediction
-from .routes_plans import REF_SURE, ajouter_les_routes_de_plan, course_du_plan
+from .routes_plans import REF_SURE, ajouter_les_routes_de_plan
 from .serrures import Serrures, Tentatives, adresse_du_visiteur
 from .trace import lire_la_trace
 from .traduction import course_vers_racespec, racespec_vers_course
@@ -97,6 +100,10 @@ def _athlete_depuis_un_depot(depot: dict) -> Athlete:
         # La case cochée et l'horodatage du dépôt : la date du consentement est celle du
         # geste. Sans la case, pas de date — on ne suppose pas un accord.
         consent_at=str(depot.get("createdAt") or "") if depot.get("consent") else "",
+        # la version du texte accepté décide de la conservation (``conservation``) ; un
+        # dépôt d'avant le versionnage n'en porte pas
+        consentement_version=str(depot.get("consentementVersion") or "") if depot.get("consent") else "",
+        consentement_le=str(depot.get("createdAt") or "") if depot.get("consent") else "",
         depot_id=str(depot.get("id") or ""),
         archive=Archive(
             nom=str(depot.get("nomFichier") or ""),
@@ -111,14 +118,16 @@ def _athlete_depuis_un_depot(depot: dict) -> Athlete:
 def accueillir_un_depot(depot: dict, magasin: Magasin) -> Athlete:
     """Crée l'Athlète, ou met à jour celui qui revient avec une nouvelle archive.
 
-    Ce qu'un athlète a déjà — ses plans, le pseudo qu'on lui a donné — ne se perd pas
-    parce qu'il redépose : seuls l'archive, le dépôt et l'état d'ingestion changent."""
+    Ce qu'un athlète a déjà — ses plans, le pseudo qu'on lui a donné, son statut au
+    registre — ne se perd pas parce qu'il redépose : l'archive, le dépôt, l'état
+    d'ingestion et le consentement (celui du nouveau dépôt) changent."""
     venu = _athlete_depuis_un_depot(depot)
     existant = magasin.athletes.lire(venu.id)
     if existant is not None:
         ancien = Athlete.from_dict(existant)
         venu.pseudo = ancien.pseudo or venu.pseudo
         venu.plans = ancien.plans
+        venu.registre = ancien.registre
     magasin.athletes.ecrire(venu.to_dict())
     return venu
 
@@ -250,8 +259,11 @@ def routeur_admin() -> APIRouter:
             raise HTTPException(status_code=502, detail=str(exc)) from exc
 
         rattrapes = []
+        effaces = set(_purge.en_attente_de_purge(magasin))
         for depot in depots:
             if magasin.athletes.existe(identifiant_dathlete(str(depot.get("email") or ""))):
+                continue
+            if str(depot.get("id") or "") in effaces:
                 continue
             athlete = accueillir_un_depot(depot, magasin)
             rattrapes.append({"athlete_id": athlete.id,
@@ -265,8 +277,62 @@ def routeur_admin() -> APIRouter:
         athlete = magasin.athletes.lire(athlete_id)
         if athlete is None:
             raise HTTPException(status_code=404, detail="athlète inconnu")
-        athlete["plans"] = _file.plans_de_lathlete(athlete_id, magasin.plans.lister())
+        plans = _file.plans_de_lathlete(athlete_id, magasin.plans.lister())
+        cfg = request.app.state.cfg
+        courses = {c["id"]: c for c in magasin.courses.lister()}
+        athlete["conservation"] = _conservation.etat(athlete, plans, courses, cfg)
+        athlete["perime"] = est_perime(athlete, cfg)
+        athlete["archive_conservee"] = bool(athlete.get("depot_id")) and not (
+            athlete.get("archive") or {}).get("purgee_le")
+        athlete["plans"] = plans
         return athlete
+
+    @routeur.get("/conservation")
+    def lire_la_conservation(request: Request) -> dict:
+        """Les échéances de chaque athlète, les jumeaux périmés, le journal des purges."""
+        magasin: Magasin = request.app.state.magasin
+        cfg = request.app.state.cfg
+        courses = {c["id"]: c for c in magasin.courses.lister()}
+        tous = magasin.plans.lister()
+        lignes = []
+        for a in magasin.athletes.lister():
+            plans = _file.plans_de_lathlete(a["id"], tous)
+            lignes.append({"id": a["id"], "pseudo": a.get("pseudo") or "",
+                           **_conservation.etat(a, plans, courses, cfg),
+                           "perime": est_perime(a, cfg),
+                           "archive_conservee": bool(a.get("depot_id")) and not (
+                               a.get("archive") or {}).get("purgee_le")})
+        lignes.sort(key=lambda l: (l["jusquau"] or "9999", l["pseudo"]))
+        return {"mode": cfg.cohorte.purge, "conservation_jours": cfg.cohorte.conservation_jours,
+                "athletes": lignes, "journal": _purge.journal(magasin)[-30:]}
+
+    @routeur.post("/conservation/purge")
+    def purger_maintenant(request: Request) -> dict:
+        """Une passe de purge tout de suite (en simulation tant que ``cohorte.purge`` ne
+        vaut pas ``active``)."""
+        if request.app.state.store.en_attente():
+            raise HTTPException(status_code=409, detail="un travail tourne : attends qu'il finisse")
+        return _purge.purger(request.app.state.magasin, request.app.state.cfg,
+                             depot=request.app.state.depot, jobs=request.app.state.store)
+
+    @routeur.post("/athletes/reingerer-un-perime")
+    def reingerer_un_perime(request: Request, fond: BackgroundTasks) -> dict:
+        """Ré-ingère le premier athlète dont le jumeau vient d'un autre moteur et dont
+        l'archive est encore conservée — un à la fois : la file n'en fait tourner qu'un."""
+        magasin: Magasin = request.app.state.magasin
+        cfg = request.app.state.cfg
+        store = request.app.state.store
+        if store.en_attente(type=JOB_INGESTION):
+            raise HTTPException(status_code=409, detail="une ingestion tourne déjà")
+        perimes = [a for a in magasin.athletes.lister()
+                   if est_perime(a, cfg) and a.get("depot_id")
+                   and not (a.get("archive") or {}).get("purgee_le")]
+        if not perimes:
+            return {"athlete_id": None, "job_id": None, "restants": 0}
+        perimes.sort(key=lambda a: (a.get("ingestion") or {}).get("le") or "")
+        cible = perimes[0]["id"]
+        return {"athlete_id": cible, "job_id": _mettre_en_file(request, fond, cible),
+                "restants": len(perimes) - 1}
 
     @routeur.post("/athletes/{athlete_id}/statut")
     def changer_le_statut(athlete_id: str, charge: dict, request: Request) -> dict:
@@ -636,13 +702,12 @@ def routeur_admin() -> APIRouter:
 
     @routeur.delete("/athletes/{athlete_id}", status_code=204)
     def supprimer_un_athlete(athlete_id: str, request: Request) -> None:
-        """Archive, jumeau, plans, demandes, page : tout est supprimé (§5.2).
+        """Archive (sur le dépôt), jumeau, plans, demandes, jobs, page : tout est supprimé
+        (§5.2, ``purge.effacer_un_athlete``).
 
-        Le registre garde ses entrées sous pseudonyme — c'est la couverture du moteur, pas
-        le dossier d'une personne ; elle ne se reconstitue pas depuis une erreur en heures.
+        Le registre garde ses entrées, anonymes — c'est la couverture du moteur, pas le
+        dossier d'une personne ; elle ne se reconstitue pas depuis une erreur en heures.
         """
-        from . import registre
-
         magasin: Magasin = request.app.state.magasin
         athlete = magasin.athletes.lire(athlete_id)
         if athlete is None:
@@ -650,17 +715,8 @@ def routeur_admin() -> APIRouter:
         if request.app.state.store.en_attente(athlete_id=athlete_id):
             raise HTTPException(status_code=409,
                                 detail="un travail tourne pour cet athlète : attends qu'il finisse")
-        plans = _file.plans_de_lathlete(athlete_id, magasin.plans.lister())
-        refs = {p["ref"] for p in plans}
-        for plan in plans:
-            registre.garder(magasin, request.app.state.cfg, plan,
-                            course_du_plan(magasin, plan), athlete)
-        for demande in magasin.demandes.lister():
-            if demande.get("plan_ref") in refs:
-                magasin.demandes.supprimer(demande["id"])
-        for ref in refs:
-            magasin.plans.supprimer(ref)
-        magasin.athletes.supprimer(athlete_id)
+        _purge.effacer_un_athlete(magasin, request.app.state.cfg, athlete,
+                                  depot=request.app.state.depot, jobs=request.app.state.store)
 
     # Le Plan, les Demandes et les Jobs : la même serrure, posée par ce routeur.
     ajouter_les_routes_de_plan(routeur)

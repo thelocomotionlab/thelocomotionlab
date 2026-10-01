@@ -108,6 +108,17 @@ class JobStore:
             key=lambda j: j.get("cree_le") or "",
         )
 
+    def supprimer_ceux_de(self, *, athlete_id: str = "", plan_refs: set[str] | None = None) -> int:
+        """Efface les jobs d'un athlète ou de ses plans, avec leur répertoire (leur résultat
+        porte des chiffres de son jumeau). Rend leur nombre."""
+        refs = plan_refs or set()
+        ids = [j["id"] for j in self._jobs.lister()
+               if (athlete_id and j.get("athlete_id") == athlete_id)
+               or (j.get("plan_ref") and j.get("plan_ref") in refs)]
+        for job_id in ids:
+            self._jobs.supprimer(job_id)
+        return len(ids)
+
     def balayer_interrompus(self, erreur: str) -> list[str]:
         """Clôt en échec les jobs restés en file ou en cours (orphelins d'un crash).
 

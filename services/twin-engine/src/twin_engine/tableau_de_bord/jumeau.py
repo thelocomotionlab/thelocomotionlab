@@ -1,7 +1,7 @@
 """Le jumeau d'un athlète, gardé sous une forme que le moteur sait RELIRE.
 
-L'archive d'entraînement est lue une fois, à l'ingestion, puis supprimée. Tout ce qui
-vient ensuite — chaque plan, chaque version, sur n'importe quelle course — repart du
+L'archive d'entraînement est lue une fois, à l'ingestion (elle reste chiffrée sur le
+service de dépôt jusqu'à son échéance de conservation). Tout ce qui vient ensuite — chaque plan, chaque version, sur n'importe quelle course — repart du
 jumeau et de la calibration. Il faut donc les garder entiers : un résumé (vitesse
 critique, endurance…) suffit à la fiche de l'athlète, pas à une prédiction.
 
@@ -27,9 +27,10 @@ class JumeauIllisible(RuntimeError):
     """Pas de jumeau relisible pour cet athlète : il faut (ré)ingérer son archive."""
 
 
-def ecrire_le_jumeau(repertoire: Path, twin, calibration) -> None:
+def ecrire_le_jumeau(repertoire: Path, twin, calibration, *, produit_par: dict | None = None) -> None:
     ecrire_json(Path(repertoire) / "jumeau.json", {
         "format": FORMAT, "version": _dossier.VERSION, "twin": _dossier._encode(twin),
+        "produit_par": produit_par or {},
     })
     ecrire_json(Path(repertoire) / "calibration.json", {
         "format": FORMAT, "version": _dossier.VERSION,

@@ -95,12 +95,14 @@ def _depuis(cls: type, brut: Any):
 @dataclass
 class Archive:
     """Ce qu'on sait de l'archive déposée. L'archive elle-même n'est pas dans l'objet :
-    elle vit dans le service de dépôt le temps de l'ingestion, puis chez Valentin."""
+    elle vit, chiffrée, dans le service de dépôt jusqu'à son échéance de conservation
+    (``conservation``) ; ``purgee_le`` dit quand elle en a été effacée."""
 
     nom: str = ""
     taille: int = 0
     sha256: str = ""
     recue_le: str = ""
+    purgee_le: str = ""
 
 
 @dataclass
@@ -154,6 +156,14 @@ class Athlete:
     # n'a pas été réglé sur ses données, avec le journal de chaque bascule.
     registre: dict = field(default_factory=lambda: {"statut": "frais", "depuis": None,
                                                     "journal": []})
+    # Le consentement et la conservation (``conservation``) : la version du texte accepté,
+    # son jour, et l'échéance des données telle que la dernière passe l'a calculée.
+    consentement_version: str = ""
+    consentement_le: str = ""
+    conservation_jusquau: str = ""
+    # Ce qui a produit le jumeau : commit du moteur et empreinte de sa configuration
+    # (``registre.runs``). Un jumeau d'un autre moteur est périmé.
+    jumeau_produit_par: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return _en_json(self)
@@ -175,6 +185,11 @@ class Athlete:
             plans=list(brut.get("plans") or ()),
             registre=(dict(brut["registre"]) if isinstance(brut.get("registre"), dict)
                       else {"statut": "frais", "depuis": None, "journal": []}),
+            consentement_version=str(brut.get("consentement_version") or ""),
+            consentement_le=str(brut.get("consentement_le") or ""),
+            conservation_jusquau=str(brut.get("conservation_jusquau") or ""),
+            jumeau_produit_par=(dict(brut["jumeau_produit_par"])
+                                if isinstance(brut.get("jumeau_produit_par"), dict) else {}),
         )
 
 

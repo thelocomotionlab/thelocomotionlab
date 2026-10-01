@@ -17,9 +17,9 @@ raison de s'y glisser.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
-import shutil
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -72,20 +72,46 @@ class Depot:
     def trouver(self, depot_id: str) -> dict | None:
         return next((d for d in self.lister() if d.get("id") == depot_id), None)
 
-    def telecharger(self, depot_id: str, destination: Path) -> Path:
-        """Copie l'archive vers ``destination``, par blocs, sans la charger en mémoire."""
+    def telecharger(self, depot_id: str, destination: Path, sha256: str | None = None) -> Path:
+        """Copie l'archive vers ``destination``, par blocs, sans la charger en mémoire. Avec
+        ``sha256`` (celui que le dépôt a calculé sur le clair à la réception), une copie qui
+        ne le rend pas est effacée et refusée : l'archive est chiffrée au repos, une clé
+        fausse ou un fichier altéré se voient ici."""
         if not self.servi:
             raise DepotIndisponible("TWIN_DEPOT_ADMIN_TOKEN manquant")
         destination.parent.mkdir(parents=True, exist_ok=True)
         requete = self._requete(f"/twin/depots/{depot_id}/archive")
+        empreinte = hashlib.sha256()
         try:
             with _ouvreur().open(requete, timeout=DELAI_ARCHIVE_S) as reponse, \
                  destination.open("wb") as sortie:
-                shutil.copyfileobj(reponse, sortie, length=1024 * 1024)
+                while bloc := reponse.read(1024 * 1024):
+                    empreinte.update(bloc)
+                    sortie.write(bloc)
         except (urllib.error.URLError, OSError) as exc:
             destination.unlink(missing_ok=True)
             raise DepotIndisponible(f"archive introuvable ou illisible : {exc}") from exc
+        if sha256 and empreinte.hexdigest() != sha256:
+            destination.unlink(missing_ok=True)
+            raise DepotIndisponible("archive altérée : son SHA-256 n'est pas celui du dépôt")
         return destination
+
+    def supprimer(self, depot_id: str) -> bool:
+        """Purge l'archive et le dépôt sur le service (route admin ``DELETE``). Rend False
+        si le dépôt n'existait plus (déjà purgé) ; lève si le service ne répond pas."""
+        if not self.servi:
+            raise DepotIndisponible("TWIN_DEPOT_ADMIN_TOKEN manquant")
+        requete = self._requete(f"/twin/depots/{depot_id}")
+        requete.method = "DELETE"
+        try:
+            with _ouvreur().open(requete, timeout=DELAI_S):
+                return True
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                return False
+            raise DepotIndisponible(f"purge refusée par le dépôt : {exc}") from exc
+        except (urllib.error.URLError, OSError) as exc:
+            raise DepotIndisponible(f"dépôt injoignable : {exc}") from exc
 
 
 __all__ = ["BASE_PAR_DEFAUT", "Depot", "DepotIndisponible"]

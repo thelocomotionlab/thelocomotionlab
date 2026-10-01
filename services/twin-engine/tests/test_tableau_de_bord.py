@@ -79,9 +79,10 @@ def test_athlete_porte_les_champs_du_recapitulatif():
     d = O.Athlete(id="a1").to_dict()
     assert set(d) == {"id", "pseudo", "email", "prenom", "montre", "consent_at",
                       "depot_id", "archive", "ingestion", "jumeau", "niveau", "plans",
-                      "registre"}
+                      "registre", "consentement_version", "consentement_le",
+                      "conservation_jusquau", "jumeau_produit_par"}
     assert d["registre"] == {"statut": "frais", "depuis": None, "journal": []}
-    assert set(d["archive"]) == {"nom", "taille", "sha256", "recue_le"}
+    assert set(d["archive"]) == {"nom", "taille", "sha256", "recue_le", "purgee_le"}
     assert set(d["ingestion"]) == {"statut", "le", "erreur"}
     assert set(d["jumeau"]) == {"vc_kmh", "E", "durabilite_pct", "n_vrais_ultras",
                                 "n_avec_fc", "donnees_jusquau", "plus_long_h",

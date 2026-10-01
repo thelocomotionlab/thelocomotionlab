@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import io
 import json
+import logging
 import re
 import shutil
 import tempfile
@@ -86,6 +87,12 @@ _REF_OK = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}")
 # Les familles de routes qu'un navigateur appelle (infra/caddy/conf.d/api.caddy), vues
 # d'ici — c'est-à-dire APRÈS le retrait du préfixe /twin. Tout appel les concernant vient
 # d'un autre domaine que celui de l'API : il est croisé.
+# La purge quotidienne : une première passe dix minutes après le démarrage, puis une par
+# jour ; si un travail tourne, la passe attend dix minutes de plus.
+PURGE_PREMIERE_S = 600.0
+PURGE_PERIODE_S = 86_400.0
+PURGE_REPRISE_S = 600.0
+
 PREFIXE_ADMIN = "/tableau-de-bord"
 PREFIXE_PLANS = "/plans"
 _CROISEES = (PREFIXE_ADMIN, PREFIXE_PLANS, "/rendu")
@@ -179,6 +186,34 @@ def create_app(cfg: Config | None = None) -> FastAPI:
     app.include_router(routeur_admin())
     app.include_router(routeur_athlete())
     app.include_router(routeur_interne())
+
+    # La purge quotidienne des échéances de conservation (tableau_de_bord.purge) : un fil
+    # qui dort, se réveille une fois par jour et s'arrête avec le service. Lancé au
+    # démarrage du serveur seulement (pas sous un client de test sans contexte).
+    arret = threading.Event()
+
+    def _purges_quotidiennes() -> None:
+        from ..tableau_de_bord.purge import purger
+
+        attente = PURGE_PREMIERE_S
+        while not arret.wait(attente):
+            attente = PURGE_PERIODE_S
+            if store.en_attente():
+                attente = PURGE_REPRISE_S
+                continue
+            try:
+                purger(magasin, cfg, depot=app.state.depot, jobs=store)
+            except Exception:  # noqa: BLE001 — une passe ratée se reprend le lendemain
+                logging.getLogger(__name__).exception("purge quotidienne en échec")
+
+    @app.on_event("startup")
+    def _demarrer_les_purges() -> None:
+        threading.Thread(target=_purges_quotidiennes, name="purges", daemon=True).start()
+
+    @app.on_event("shutdown")
+    def _arreter_les_purges() -> None:
+        arret.set()
+
     # les dossiers rejouables déposés sous leur référence (cf. scripts/course.sh publier)
     dossiers_root = cfg.data_dir / "dossiers"
     debit = _Debit(cfg.api.rendu_simultanes, cfg.api.rendu_par_minute)
