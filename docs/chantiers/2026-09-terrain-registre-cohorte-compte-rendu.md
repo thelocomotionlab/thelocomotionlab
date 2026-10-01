@@ -189,6 +189,10 @@ archive mesure tout :
   ses étiquettes étaient « absentes ». Les trois sont corrigés ; `tools/carte modele` et `banc`
   disent la couverture OSM des sorties d'entraînement, et l'ordre des `--osm` ne change plus
   le cache des cartes. Suite : 788 passés, 43 sautés.
+- 2026-10-01 — **chez Valentin, la suite avec XeLaTeX** : huit tests des routes du plan
+  échouaient depuis le départ de Nice (25/09, 13 h) — leur plan reprenait le carnet de route
+  tel quel, et un départ passé fige le plan. Leur course part désormais un mois après le jour
+  du test. Suite avec XeLaTeX : 826 passés, 5 sautés (les fichiers réels de Nice).
 
 ## Run 1 chez Valentin (à lancer)
 
