@@ -181,3 +181,46 @@ def test_a_race_missing_from_the_archive_is_read_from_its_file(tmp_path):
     montee, descente = pas["segments"]
     assert montee["marche_h"] * 3600 == pytest.approx(600, abs=15)
     assert descente["arrets_h"] * 3600 == pytest.approx(600, abs=2)
+
+
+def test_readings_judge_the_plan_shape_and_report_set_aside_races_apart(tmp_path):
+    """Le tableau et la comparaison lisent la forme du plan ; une course mise à part sort de
+    tous les agrégats et se lit à part, pour tous les runs."""
+    from tools.registre import (_finished, charger, compare_markdown, forme_rows, main,
+                                tableau_markdown)
+    from tools.score_plan import _stand_in
+    from twin_engine.registre import Depot, entete_de_run
+
+    race, course, t, x, lat, lon, cad = _course_et_activite()
+    from tools.passages import passages_for_activity
+
+    pas = passages_for_activity(t, x, lat, lon, course, radius_m=50, official_h=t[-1] / 3600,
+                                cadence=cad, gap=np.ones(t.size), cfg=CFG)
+    reel_h = float(t[-1]) / 3600
+    pred = _stand_in(reel_h, course.deq_km, course.dplus_per_km, stops_model="carved",
+                     stops_rate=None)
+    forme = bloc_forme(course, race, pred, CFG, pas)
+
+    def entree(nom, err):
+        return {"athlete": "A", "race": nom, "date": "2026-06-01", "dnf": False,
+                "official_time_h": reel_h, "model": {"verdict": "🟢"},
+                "prediction": {"central_h": reel_h * (1 + err / 100), "err_pct": err,
+                               "plan_low_h": reel_h * 0.9, "plan_high_h": reel_h * 1.1,
+                               "safety_low_h": reel_h * 0.8, "safety_high_h": reel_h * 1.2,
+                               "in_plan": True, "in_safety": True},
+                "forme": forme}
+
+    depot = Depot(tmp_path / "registre")
+    depot.ecrire_run(entete_de_run(CFG, livre="banc"), [entree("T", 2.0), entree("Nice", 5.0)])
+    assert main(["--depot", str(depot.racine), "--a-part", "A", "Nice", "2026-06-01",
+                 "mise au point"]) == 0
+    entrees, _ = charger(depot, livre_="banc")
+    assert [e["race"] for e in _finished(entrees)] == ["T"]
+    rows = forme_rows(entrees)
+    assert rows[-1]["athlete"] == "TOTAL" and rows[-1]["n"] == 1
+    assert rows[-1]["impose_moy_min"] == pytest.approx(forme["mouvement_impose"]["erreur_moyenne_min"])
+    texte = tableau_markdown(entrees)
+    assert "forme du plan contre les passages réels" in texte
+    assert "Rapportées à part" in texte and "| A | Nice | 2026-06-01 | mise au point |" in texte
+    comparaison = compare_markdown(entrees, entrees)
+    assert "forme du plan, avant → après" in comparaison and "Rapportées à part, après" in comparaison

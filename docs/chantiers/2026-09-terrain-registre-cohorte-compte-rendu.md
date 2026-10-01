@@ -124,6 +124,32 @@ archive mesure tout :
   probabilité de marcher en descente), levier `pacing.descent_fatigue=dminus`, outil
   `tools/terrain` (archive face à un fichier de course). **Chez Valentin** : les traits de son
   archive à la veille de Nice face au fichier de course, au carnet.
+- 2026-10-01 — **run 1 préparé** : `--tableau` et `--compare` lisent la forme du plan (par
+  groupe, et entre deux runs) ; Nice 100M 2026 mise à part (`docs/twin-registre/a_part.json`),
+  hors de tous les agrégats, rapportée sur sa ligne ; manifeste de Val complété (temps officiel,
+  fichier de la montre). Recette du run 1 : `docs/manuel-twin.md`, « Run 1 du chantier
+  terrain ».
+
+## Run 1 chez Valentin (à lancer)
+
+Une passe par archive mesure tout ce qui précède. La recette complète est au manuel
+(« Run 1 du chantier terrain ») ; dans l'ordre :
+
+1. déposer le fichier de montre de Nice sous
+   `_seed/cas_validation/Val/courses/nice-100m-2026-montre.gpx` ;
+2. le test épinglé de l'analyse de référence (`TWIN_NICE2026_GPX=… pytest -k nice_2026`) ;
+3. `tools/banc` sur les quatre manifestes, base et sept variantes de répartition, comparé au
+   registre migré ;
+4. `tools/score_plan` sous chaque loi ;
+5. `tools/terrain` (Val face à Nice) et `tools/registre --servir` (le dossier du plan du
+   20/09) ;
+6. committer `docs/twin-registre/` et me rapporter `/tmp/run1/` (markdown seulement).
+
+Ce que j'en tirerai : l'effet du décodage seul sur le banc (horloges réparées, cadence), la
+forme du plan sous chaque loi hors Nice, les traits de terrain des quatre archives, Val face à
+Nice. La décision suit la règle du prompt : un défaut bascule si le plan s'améliore au-delà
+de Nice sans dégrader le total sur les cas frais — or aucun athlète n'est frais aujourd'hui :
+au mieux, un levier entre dans la configuration de référence de Val.
 
 ## Choix faits à la place de Valentin
 
@@ -159,3 +185,6 @@ archive mesure tout :
 - Fatigue de descente servie au plan : la **relative** (au-delà du ralentissement du reste
   de la sortie au même D−), pour ne pas compter deux fois ce que le fade général dit déjà.
 - Seuil de cadence personnel consigné, pas servi : le servir demande de re-décoder.
+- Nice 100M 2026 mise à part dans le registre par la règle R&D du prompt (« ce qui est ajusté
+  sur Nice se juge ailleurs ») : elle sort de tous les agrégats, arrivée comprise, et se lit
+  sur sa ligne.

@@ -1039,6 +1039,54 @@ Chaque entrée du registre porte `domain_demand` (durée attendue, vitesse de r�
 origine — `ultras`, `plancher` ou `enveloppe` —, seuil, `below`) à côté de l'oracle
 `below_domain` (temps réel sous 10 h) ; le JSON d'un `preview` porte `sufficiency.domain`.
 
+**Run 1 du chantier terrain (DIAGNOSTIC §10.25–10.29), une passe par archive** — le décodage
+(cadence, horloge, distance de la montre), le registre refait, les mesures par tronçon, les
+leviers de répartition et le détecteur se mesurent en une fois. Avant : déposer le fichier
+de la montre de Nice sous le chemin `activite` de l'entrée Nice de `_seed/manifest-val.json`
+(`_seed/cas_validation/Val/courses/nice-100m-2026-montre.gpx`). Depuis `services/twin-engine`,
+venv de la racine activé :
+
+```bash
+M="_seed/manifest-val.json _seed/manifest-crasse.json _seed/manifest-lolo.json _seed/manifest-rapace.json"
+NICE_MONTRE=_seed/cas_validation/Val/courses/nice-100m-2026-montre.gpx
+# 0. l'analyse de référence sur le fichier décodé par le moteur (huit sorties épinglées)
+TWIN_NICE2026_GPX=$NICE_MONTRE pytest -q -k nice_2026
+# 1. banc + passages + radiographie + variantes de répartition, un décodage par archive ;
+#    compare.md oppose le run de base au registre migré (effet du décodage seul)
+PP="calibration.slope_cost=personal_pacing"
+PYTHONPATH=src python -m tools.banc $M --out /tmp/run1 --label run1 \
+  --avant 20260916-000000-registre-migre \
+  --variant PP:$PP \
+  --variant PP0:$PP,calibration.slope_kappa_down_min=0 \
+  --variant PPB:$PP,calibration.slope_curve=bins \
+  --variant PPB2:$PP,calibration.slope_curve=bins,calibration.slope_bins_shrink_hours=2 \
+  --variant PPB20:$PP,calibration.slope_curve=bins,calibration.slope_bins_shrink_hours=20 \
+  --variant DF:pacing.descent_fatigue=dminus \
+  --variant PP0DF:$PP,calibration.slope_kappa_down_min=0,pacing.descent_fatigue=dminus
+# 2. la forme du plan ancré sur le temps officiel, sous chaque loi (registre seul, secondes)
+for v in "" "--set $PP" "--set $PP --set calibration.slope_kappa_down_min=0" \
+         "--set $PP --set calibration.slope_curve=bins" "--set pacing.descent_fatigue=dminus"; do
+  PYTHONPATH=src python -m tools.score_plan $M $v --out "/tmp/run1/score_plan${v//[^0-9a-z]/}.md"
+done
+# 3. Nice : traits de l'archive à la veille face au fichier de course, puis l'entrée servie
+#    (dossier.json de la version servie le 20/09, configuration qui l'a servie)
+PYTHONPATH=src python -m tools.terrain --activite $NICE_MONTRE --athlete Val \
+  --course "Nice 100M 2026" --date 2026-09-25 > /tmp/run1/terrain-nice.md
+PYTHONPATH=src python -m tools.registre --servir <dossier.json du 20/09> --athlete Val \
+  --course "Nice 100M 2026" --date 2026-09-25 --officiel 35:05:00
+# 4. (seulement si une archive est en GPX COROS) la distance de la montre, bloc twin : une
+#    seconde passe, comparée au run 1
+PYTHONPATH=src python -m tools.banc $M --out /tmp/run1-montre --label run1-montre --no-diag \
+  --set twin.gpx_distance=device --avant run1
+git add ../../docs/twin-registre && git commit -m "Run 1 du chantier terrain : registre" && git push
+```
+
+`/tmp/run1/` : `tableau.md` (dont la forme du plan par livre × statut et Nice à part),
+`compare.md`, `compare-<variante>.md` (variante contre la base du même passage : MAE, bandes,
+verdicts, forme du plan), `passages-<athlète>.md` (mouvement, arrêts, marche par tronçon),
+`score_plan*.md`, `terrain-nice.md` — du markdown à coller au carnet ; seuls le registre et
+les manifestes se committent.
+
 ## 9. Déploiement (rappel)
 
 L'infra est **du code** (`infra/`). Le service `twin-engine` est déjà décrit dans `infra/compose.yml`

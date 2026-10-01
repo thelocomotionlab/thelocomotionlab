@@ -1,0 +1,12 @@
+{
+  "_comment": "Courses mises à part, avec leur motif : hors des agrégats, rapportées à part, pour tous les runs qui les rejouent.",
+  "courses": [
+    {
+      "athlete": "Val",
+      "race": "Nice 100M 2026",
+      "date": "2026-09-25",
+      "motif": "Ce qui est ajusté sur Nice se juge ailleurs (règle R&D du chantier terrain) : les leviers de répartition et le détecteur ont été conçus sur ses chiffres.",
+      "le": "2026-10-01"
+    }
+  ]
+}

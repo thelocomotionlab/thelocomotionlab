@@ -12,6 +12,10 @@ modèle a été réglé sur ses données) et par NIVEAU (calibré 🟢/🟠, ven
   * quantiles des scores normalisés |err_rel|/sd_rel — la matière de la future fenêtre
     empirique groupée (``interval_source=pooled``), avec le garde-fou par athlète (les
     courses d'un même athlète ne sont pas indépendantes).
+  * la forme du plan contre les passages réels (bloc ``forme`` : plan réparti sur le
+    mouvement réel, plan servi, arrêts) ;
+  * à part, hors de tous les agrégats, les courses mises à part (``a_part.json``,
+    ``--a-part``), chacune sur sa ligne.
 
 Règle pré-enregistrée (docs/twin-registre-couverture.md) : AUCUNE recalibration sous
 8-10 cas frais ; décision au score, jamais sur un cas isolé ; une décision ne compte que les
@@ -23,6 +27,8 @@ Lancement :
         [--tableau] [--frontiere] [--decision AAAA-MM-JJ] [--compare RUN_A [RUN_B]] [--runs]
     PYTHONPATH=src python -m tools.registre --marquer ATHLÈTE dev|frais "motif"
     PYTHONPATH=src python -m tools.registre --quarantine ATHLÈTE COURSE DATE "motif"
+    PYTHONPATH=src python -m tools.registre --a-part ATHLÈTE COURSE DATE "motif"
+    PYTHONPATH=src python -m tools.registre --servir dossier.json --athlete A --officiel 35:05:00
     PYTHONPATH=src python -m tools.registre --importer export-tableau-de-bord.json
     PYTHONPATH=src python -m tools.registre --migrer ancien-registre.json
 """
@@ -53,10 +59,77 @@ def winkler(lo: float, hi: float, y: float, alpha: float) -> float:
 
 
 def _finished(entries: list[dict]) -> list[dict]:
+    """Les cas qui comptent : finis, prédits, ni en quarantaine ni mis à part."""
     return [e for e in entries
-            if not e.get("dnf") and not e.get("quarantine")
+            if not e.get("dnf") and not e.get("quarantine") and not e.get("a_part")
             and e.get("official_time_h") is not None
             and e.get("prediction") is not None]
+
+
+def forme_rows(entries: list[dict]) -> list[dict]:
+    """La forme du plan jugée contre les passages réels (bloc ``forme``), par athlète et
+    total, sur les cas qui comptent, vendus comme refusés : moyennes par course de l'erreur
+    du plan sous mouvement réel imposé (moyenne, pire tronçon, pire cumul, en minutes, et
+    l'erreur moyenne en % du temps moyen d'un tronçon), du plan servi (erreur moyenne des
+    heures de passage, biais à mi-course), et des arrêts (plan − réel, en heures)."""
+    fin = [e for e in _finished(entries) if e.get("forme")]
+    rows: list[dict] = []
+    for a in sorted({e["athlete"] for e in fin}) + ["TOTAL"]:
+        sub = fin if a == "TOTAL" else [e for e in fin if e["athlete"] == a]
+        if not sub:
+            continue
+        imp = [e["forme"]["mouvement_impose"] for e in sub if e["forme"].get("mouvement_impose")]
+        tot = [e["forme"]["total_predit"] for e in sub if e["forme"].get("total_predit")]
+        arr = [e["forme"]["arrets"]["plan_h"] - e["forme"]["arrets"]["reel_h"] for e in sub
+               if (e["forme"].get("arrets") or {}).get("reel_h") is not None]
+
+        def _m(vals):
+            vals = [v for v in vals if v is not None]
+            return float(np.mean(vals)) if vals else None
+
+        rel = []
+        for i in imp:
+            reel = [t["reel_min"] for t in i.get("troncons", []) if t.get("reel_min")]
+            if reel and i.get("erreur_moyenne_min") is not None:
+                rel.append(100.0 * i["erreur_moyenne_min"] / float(np.mean(reel)))
+        rows.append({"athlete": a, "n": len(sub), "n_impose": len(imp),
+                     "impose_moy_min": _m([i.get("erreur_moyenne_min") for i in imp]),
+                     "impose_moy_pct": _m(rel),
+                     "impose_pire_min": _m([i.get("pire_troncon_min") for i in imp]),
+                     "impose_cumul_min": _m([i.get("pire_cumul_min") for i in imp]),
+                     "servi_moy_min": _m([t.get("erreur_moyenne_min") for t in tot]),
+                     "servi_mi_course_min": _m([t.get("biais_mi_course_min") for t in tot]),
+                     "arrets_ecart_h": _m(arr)})
+    return rows
+
+
+def _md_forme(rows: list[dict]) -> str:
+    lines = ["| athlète | n | imposé : erreur moy. min | imposé : % d'un tronçon | imposé : pire "
+             "tronçon min | imposé : pire cumul min | servi : erreur moy. min | servi : biais "
+             "mi-course min | arrêts plan − réel, h |",
+             "|---|---|---|---|---|---|---|---|---|"]
+    for r in rows:
+        lines.append(f"| {r['athlete']} | {r['n']} | {_f(r['impose_moy_min'])} "
+                     f"| {_f(r['impose_moy_pct'], 1, ' %')} | {_f(r['impose_pire_min'])} "
+                     f"| {_f(r['impose_cumul_min'])} | {_f(r['servi_moy_min'])} "
+                     f"| {_f(r['servi_mi_course_min'])} | {_f(r['arrets_ecart_h'], 2)} |")
+    return "\n".join(lines)
+
+
+def _md_a_part(entries: list[dict]) -> str:
+    """Les courses mises à part, une ligne chacune : ce qu'elles diraient, sans compter."""
+    lines = ["| athlète | course | date | motif | verdict | err % | imposé : erreur moy. / pire "
+             "cumul min | servi : erreur moy. min | arrêts plan / réel, h |",
+             "|---|---|---|---|---|---|---|---|---|"]
+    for e in sorted(entries, key=lambda x: (str(x.get("athlete")), str(x.get("date")))):
+        f = e.get("forme") or {}
+        imp, tot, arr = f.get("mouvement_impose") or {}, f.get("total_predit") or {}, f.get("arrets") or {}
+        lines.append(f"| {e.get('athlete')} | {e.get('race')} | {e.get('date')} | {e.get('a_part')} "
+                     f"| {_verdict(e) or '—'} | {_f((e.get('prediction') or {}).get('err_pct'))} "
+                     f"| {_f(imp.get('erreur_moyenne_min'))} / {_f(imp.get('pire_cumul_min'))} "
+                     f"| {_f(tot.get('erreur_moyenne_min'))} "
+                     f"| {_f(arr.get('plan_h'), 2)} / {_f(arr.get('reel_h'), 2)} |")
+    return "\n".join(lines)
 
 
 def _verdict(e: dict) -> str | None:
@@ -126,6 +199,7 @@ def summarize(entries: list[dict]) -> dict:
     out: dict = {"n_total": len(entries), "n_finished": len(fin),
                  "n_dnf": sum(1 for e in entries if e.get("dnf")),
                  "n_quarantine": sum(1 for e in entries if e.get("quarantine")),
+                 "n_a_part": sum(1 for e in entries if e.get("a_part")),
                  "n_no_prediction": sum(1 for e in entries if e.get("prediction") is None)}
     if not fin:
         return out
@@ -382,6 +456,15 @@ def tableau_markdown(entries: list[dict]) -> str:
         out.append(f"\n**{label} — niveau de base, REFUSÉS (🔴)**\n")
         out.append(_md_refused(refused) if refused else "(aucun refus)")
         out.append(f"\n**{label} — {_garde_line(garde_domaine(group))}")
+        forme = forme_rows(group)
+        if forme:
+            out.append(f"\n**{label} — forme du plan contre les passages réels (vendus et "
+                       "refusés)**\n")
+            out.append(_md_forme(forme))
+    a_part = [e for e in entries if e.get("a_part")]
+    if a_part:
+        out.append("\n**Rapportées à part (hors de tous les agrégats)**\n")
+        out.append(_md_a_part(a_part))
     return "\n".join(out)
 
 
@@ -435,6 +518,31 @@ def compare_markdown(before: list[dict], after: list[dict]) -> str:
                 f"| {_delta_cell(b.get('safety_winkler_rel'), r.get('safety_winkler_rel'), 3)} "
                 f"| {_delta_cell(b.get('plan_width_rel_med_pct'), r.get('plan_width_rel_med_pct'))} "
                 f"| {_delta_cell(b.get('safety_width_rel_med_pct'), r.get('safety_width_rel_med_pct'))} |")
+
+        fb = {r["athlete"]: r for r in forme_rows(gb)}
+        fa = {r["athlete"]: r for r in forme_rows(ga)}
+        if fb or fa:
+            out.append(f"\n**{label} — forme du plan, avant → après (Δ)**\n")
+            out.append("| athlète | n | imposé : erreur moy. min | imposé : pire cumul min | "
+                       "servi : erreur moy. min | servi : biais mi-course min |")
+            out.append("|---|---|---|---|---|---|")
+            for a in [x for x in sorted(set(fb) | set(fa)) if x != "TOTAL"] + ["TOTAL"]:
+                b, r = fb.get(a, {}), fa.get(a, {})
+                if not b and not r:
+                    continue
+                out.append(f"| {a} | {_delta_cell(b.get('n'), r.get('n'), 0)} "
+                           f"| {_delta_cell(b.get('impose_moy_min'), r.get('impose_moy_min'))} "
+                           f"| {_delta_cell(b.get('impose_cumul_min'), r.get('impose_cumul_min'))} "
+                           f"| {_delta_cell(b.get('servi_moy_min'), r.get('servi_moy_min'))} "
+                           f"| {_delta_cell(b.get('servi_mi_course_min'), r.get('servi_mi_course_min'))} |")
+
+    a_part_b = [e for e in before if e.get("a_part")]
+    a_part_a = [e for e in after if e.get("a_part")]
+    if a_part_b or a_part_a:
+        out.append("\n**Rapportées à part, avant**\n")
+        out.append(_md_a_part(a_part_b) if a_part_b else "(aucune)")
+        out.append("\n**Rapportées à part, après**\n")
+        out.append(_md_a_part(a_part_a) if a_part_a else "(aucune)")
 
     kb = {_key(e): e for e in before}
     ka = {_key(e): e for e in after}
@@ -685,6 +793,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--quarantine", nargs=4, metavar=("ATHLETE", "COURSE", "DATE", "MOTIF"),
                     help="met une entrée en quarantaine (exclue des stats de tous les runs, "
                          "conservée et visible avec son motif)")
+    ap.add_argument("--a-part", nargs=4, metavar=("ATHLETE", "COURSE", "DATE", "MOTIF"),
+                    help="met une course à part, avec son motif : hors des agrégats de "
+                         "tous les runs, rapportée à part")
     ap.add_argument("--marquer", nargs=3, metavar=("ATHLETE", "STATUT", "MOTIF"),
                     help="change le statut d'un athlète (dev ou frais), daté du jour et "
                          "journalisé avec son motif")
@@ -711,6 +822,11 @@ def main(argv: list[str] | None = None) -> int:
             print(str(exc), file=sys.stderr)
             return 2
         print(f"{athlete} : {fiche['statut']} depuis le {fiche['depuis']} — {motif}", file=sys.stderr)
+        return 0
+    if args.a_part:
+        ath, race, jour, motif = args.a_part
+        depot.mettre_a_part(ath, race, jour, motif, _aujourdhui())
+        print(f"À part : {ath} / {race} / {jour} — {motif}", file=sys.stderr)
         return 0
     if args.quarantine:
         ath, race, jour, motif = args.quarantine
@@ -812,7 +928,8 @@ def main(argv: list[str] | None = None) -> int:
         s = summarize(group)
         print(f"\n== {label} ==")
         print(f"  entrées : {s['n_total']} (finies {s['n_finished']}, dnf {s['n_dnf']}, "
-              f"quarantaine {s['n_quarantine']}, sans prédiction {s['n_no_prediction']})")
+              f"quarantaine {s['n_quarantine']}, à part {s['n_a_part']}, "
+              f"sans prédiction {s['n_no_prediction']})")
         if not s.get("n_finished"):
             continue
         print(f"  central : biais {s['bias_pct']:+.1f} % · MAE {s['mae_pct']:.1f} % · "

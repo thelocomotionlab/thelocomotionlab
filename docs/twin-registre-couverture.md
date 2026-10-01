@@ -19,6 +19,7 @@ des kilomètres publics ; aucune trace, aucune archive, aucun nom).
 | `servi.json` | le **livre servi**, prospectif : les plans servis puis courus |
 | `athletes.json` | le statut `dev` / `frais` de chaque athlète, daté, avec son journal |
 | `quarantaines.json` | les entrées sorties des statistiques et leur motif, pour tous les runs |
+| `a_part.json` | les courses mises à part, avec leur motif : hors des agrégats de tous les runs, rapportées à part |
 | `passages.json` | les heures de passage réelles d'une course, communes à ses runs et à son entrée servie |
 
 **Le livre banc se régénère à volonté.** Chaque passage de `tools/backtest` ou `tools/banc`
@@ -42,6 +43,15 @@ frais à sa date, et les nomme (`tools/registre --decision AAAA-MM-JJ`).
 **Les lectures séparent toujours livre × statut × niveau** — niveau calibré (🟢/🟠, vendu)
 et niveau de base (🔴, refusé) : `tools/registre`, ses tableaux et ses comparaisons, l'écran
 Registre du tableau de bord.
+
+**La forme du plan** se lit à côté de l'arrivée : une entrée dont la course a ses passages
+porte le bloc `forme` — le plan réparti sur le mouvement réel (erreur moyenne, pire tronçon,
+pire cumul), le plan tel que servi (heures de passage, biais à mi-course), les arrêts et la
+marche réels ; `--tableau` et `--compare` la lisent par groupe, vendus et refusés ensemble.
+
+**Une course mise à part** (`a_part.json`, `tools/registre --a-part`) sort de tous les
+agrégats de tous les runs et garde une ligne à elle dans les tableaux et les comparaisons.
+Nice 100M 2026 (Val) l'est depuis le 2026-10-01, selon la règle R&D ci-dessous.
 
 ## Règles pré-enregistrées
 

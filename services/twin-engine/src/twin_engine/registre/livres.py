@@ -9,6 +9,8 @@ Rangement (``docs/twin-registre/`` par défaut) :
 * ``athletes.json`` — le statut ``dev`` / ``frais`` de chaque athlète et son journal ;
 * ``quarantaines.json`` — les entrées sorties des statistiques, avec leur motif, quel que
   soit le run ;
+* ``a_part.json`` — les courses mises à part, avec leur motif : hors des agrégats,
+  rapportées à part, quel que soit le run ;
 * ``passages.json`` — les heures de passage réelles d'une course, communes à tous les runs
   qui la rejouent et à son entrée servie.
 
@@ -34,6 +36,8 @@ _COMMENTAIRES = {
                      "Une décision ne compte que les athlètes frais à sa date.",
     "quarantaines.json": "Entrées sorties des statistiques, avec leur motif ; valables pour "
                          "tous les runs qui les rejouent.",
+    "a_part.json": "Courses mises à part, avec leur motif : hors des agrégats, rapportées "
+                   "à part, pour tous les runs qui les rejouent.",
     "passages.json": "Heures de passage réelles aux points de découpage des courses passées "
                      "(agrégats : des heures à des kilomètres publics).",
     "servi.json": "Livre servi : les plans servis puis courus. Une entrée dont le résultat est "
@@ -127,6 +131,16 @@ class Depot:
                  if cle(q) != (athlete, race, date)]
         liste.append({"athlete": athlete, "race": race, "date": date, "motif": motif, "le": le})
         self._sauver("quarantaines.json", "quarantaines", sorted(liste, key=cle))
+
+    # -- à part ------------------------------------------------------------------ #
+    def a_part(self) -> dict[tuple[str, str, str], str]:
+        return {cle(q): q["motif"] for q in self._charger("a_part.json", "courses", [])}
+
+    def mettre_a_part(self, athlete: str, race: str, date: str, motif: str, le: str) -> None:
+        liste = [q for q in self._charger("a_part.json", "courses", [])
+                 if cle(q) != (athlete, race, date)]
+        liste.append({"athlete": athlete, "race": race, "date": date, "motif": motif, "le": le})
+        self._sauver("a_part.json", "courses", sorted(liste, key=cle))
 
     # -- passages --------------------------------------------------------------- #
     def passages(self) -> dict[tuple[str, str, str], dict]:
@@ -226,10 +240,11 @@ class Depot:
     # -- lecture annotée -------------------------------------------------------- #
     def annoter(self, entrees: list[dict], livre: str, *, jour: str | None = None) -> list[dict]:
         """Les entrées prêtes à juger : leur livre, le statut de l'athlète (au jour ``jour``,
-        sinon le statut courant ; à défaut l'ancien ``dev_set``), leur quarantaine et leurs
-        passages quand l'entrée ne les porte pas."""
+        sinon le statut courant ; à défaut l'ancien ``dev_set``), leur quarantaine, leur mise à
+        part et leurs passages quand l'entrée ne les porte pas."""
         fiches = self.athletes()
         quarantaines = self.quarantaines()
+        a_part = self.a_part()
         passages = self.passages()
         out = []
         for e in entrees:
@@ -242,6 +257,8 @@ class Depot:
                 a["statut"] = STATUT_DEV if e.get("dev_set") else STATUT_FRAIS
             if k in quarantaines and not a.get("quarantine"):
                 a["quarantine"] = quarantaines[k]
+            if k in a_part:
+                a["a_part"] = a_part[k]
             if k in passages and not a.get("passages"):
                 a["passages"] = passages[k]
             out.append(a)
