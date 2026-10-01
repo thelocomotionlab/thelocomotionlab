@@ -83,7 +83,23 @@ archive mesure tout :
   dépendent de celui qui fait foi ; le plan réellement porté le 25/09 reste à fixer.
 - Durée exacte de conservation et ce qui survit à la purge (défauts du prompt en attendant).
 - Texte public de la page cohorte (relecture juridique), et lecture de la clause 4.6 de l'ODbL
-  pour les chiffres tirés d'OSM remis à un athlète.
+  pour les chiffres tirés d'OSM remis à un athlète. Le brouillon « 2026-10 » se relit dans le
+  tableau de bord (`/services/twin/tableau-de-bord/cohorte`) ; le publier, c'est passer
+  `VERSION_EN_LIGNE` à « 2026-10 » dans `apps/site/lib/twinCohorte.mjs` et remplacer le
+  paragraphe et le texte de partage de `app/services/twin/cohorte/page.jsx` par ceux de la
+  version, puis activer la purge (`cohorte.purge = active`).
+- **Mise en service de la conservation** (opérations sur le VPS, à ton feu vert) : poser
+  `TWIN_DEPOT_ARCHIVE_KEY` (`openssl rand -hex 32`, et une copie hors du VPS) avant de
+  déployer le dépôt — sans elle il refuse les dépôts ; au premier démarrage avec la clé, les
+  archives présentes sont chiffrées sur place. La purge reste en simulation jusqu'à ce que tu
+  passes `cohorte.purge` à `active` : regarde d'abord ce qu'elle effacerait.
+- `services/twin-depot/scripts/rapatrier-depots.py` crée une copie en clair hors du dépôt et
+  purge le VPS : il contredit « un seul endroit ». Le supprimer est une suppression de
+  fichier : à ton accord.
+- L'export du registre porte le pseudo des athlètes vivants (le prénom par défaut) ; importé
+  dans le registre committé, il entre dans l'historique git, que la purge ne peut pas
+  anonymiser après coup. À décider : exporter sous identifiant opaque, ou poser un pseudo
+  choisi avant tout import.
 
 ## Journal
 
@@ -129,6 +145,12 @@ archive mesure tout :
   hors de tous les agrégats, rapportée sur sa ligne ; manifeste de Val complété (temps officiel,
   fichier de la montre). Recette du run 1 : `docs/manuel-twin.md`, « Run 1 du chantier
   terrain ».
+- 2026-10-01 — **étape 3, cohorte** (DIAGNOSTIC §10.30) : archives chiffrées au repos sur le
+  dépôt, version du consentement gardée ; consentement, échéance et provenance du jumeau sur
+  l'athlète ; purge quotidienne (en simulation par défaut) qui efface l'athlète échu et rend
+  ses entrées du registre anonymes ; jumeaux périmés ré-ingérés un à la fois ; « Rejouer au
+  banc » depuis l'écran Athlète ; brouillon de la page cohorte et de sa case (texte
+  « 2026-10 ») en aperçu dans le tableau de bord, **pas publié**.
 
 ## Run 1 chez Valentin (à lancer)
 
@@ -188,3 +210,12 @@ au mieux, un levier entre dans la configuration de référence de Val.
 - Nice 100M 2026 mise à part dans le registre par la règle R&D du prompt (« ce qui est ajusté
   sur Nice se juge ailleurs ») : elle sort de tous les agrégats, arrivée comprise, et se lit
   sur sa ligne.
+- Un consentement d'avant la conservation (« 2026-07 », ou sans version) garde sa promesse :
+  l'archive part dès l'ingestion ; le jumeau, les plans et la page suivent la même échéance
+  de six mois que les autres.
+- La purge est livrée en simulation : effacer des données en production est une opération
+  destructive, elle attend ton feu vert (`cohorte.purge = active`).
+- L'effacement manuel d'un athlète (bouton de la fiche) rend aussi ses entrées anonymes, comme
+  la purge — avant, elles restaient sous pseudonyme.
+- Le brouillon de la page cohorte se relit derrière la serrure du tableau de bord, formulaire
+  en aperçu (il n'envoie rien) ; la case nomme positions, fréquence cardiaque et cadence.

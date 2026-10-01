@@ -14,16 +14,19 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, ChampCompact } from "@locomotionlab/ui";
 import { BadgeEtat, Tableau } from "@locomotionlab/ui/contenu";
 
 import {
   NIVEAUX,
+  conservationDit,
   departLisible,
   duree,
   jourLisible,
   nombre,
+  passeDeLaPurge,
+  signe,
   statutDuDossier,
   statutDuPlan,
   tailleLisible,
@@ -70,6 +73,117 @@ function Chiffre({ titre, valeur, aide }) {
   );
 }
 
+/** Combien de temps ses données restent : l'échéance, le sort de l'archive, et l'alerte
+ *  quand une course visée tombe après. */
+function Conservation({ athlete }) {
+  const { donnees, archive, alerte } = conservationDit(athlete.conservation, athlete.archive_conservee);
+  return (
+    <div className="border-t border-brand-grid pt-4">
+      <p className={ETIQUETTE}>Conservation</p>
+      <p className="mt-2 text-sm leading-relaxed text-brand-soft">{donnees}</p>
+      <p className="mt-1.5 text-xs leading-relaxed text-brand-muted">{archive}</p>
+      {alerte ? <p className="mt-2 text-sm font-semibold text-brand-deep-dark">{alerte}</p> : null}
+    </div>
+  );
+}
+
+/** Les vrais ultras que la calibration a retenus, et le banc : on saisit le temps officiel
+ *  d'une course, le moteur la rejoue avec ce que l'archive savait la veille. */
+function VraisUltras({ athlete }) {
+  const [vue, setVue] = useState(null);
+  const [tour, setTour] = useState(0);
+  const [temps, setTemps] = useState({});
+  const [jobId, setJobId] = useState("");
+  const [message, setMessage] = useState("");
+  useEffect(() => {
+    let vivant = true;
+    appeler(`/athletes/${encodeURIComponent(athlete.id)}/ultras`)
+      .then((lue) => vivant && setVue(lue))
+      .catch((leve) => vivant && setMessage(leve.message));
+    return () => {
+      vivant = false;
+    };
+  }, [athlete.id, tour]);
+  const job = useJob(jobId, () => {
+    setJobId("");
+    setTour((t) => t + 1);
+  });
+
+  if (athlete.ingestion.statut !== "ingere") return null;
+  const ultras = vue?.ultras ?? [];
+  const saisies = ultras.filter((u) => (temps[u.date] ?? "").trim());
+
+  const rejouer = async () => {
+    setMessage("");
+    try {
+      const { job_id: nouveau } = await appeler(`/athletes/${encodeURIComponent(athlete.id)}/banc`, {
+        methode: "POST",
+        corps: { courses: saisies.map((u) => ({ date: u.date, officiel: temps[u.date] })) },
+      });
+      setJobId(nouveau);
+    } catch (leve) {
+      setMessage(leve.message);
+    }
+  };
+
+  return (
+    <div>
+      <h2 className="font-heading text-[22px] font-bold text-brand-text">Vrais ultras</h2>
+      {!ultras.length ? (
+        <p className="mt-2 text-sm text-brand-muted">
+          Aucun vrai ultra retenu par la calibration : rien à rejouer au banc.
+        </p>
+      ) : (
+        <>
+          <div className="mt-2">
+            <Tableau
+              colonnes={["Date", "Durée", "Distance", "D+", "Temps officiel", "Banc"]}
+              cles={ultras.map((u) => u.date)}
+              lignes={ultras.map((u) => [
+                jourLisible(u.date),
+                duree(u.heures),
+                nombre(u.distance_km, 0, "km"),
+                nombre(u.dplus_m, 0, "m"),
+                <ChampCompact
+                  key="t"
+                  label={`Temps officiel du ${jourLisible(u.date)}`}
+                  masquerEtiquette
+                  enTableau
+                  value={temps[u.date] ?? ""}
+                  placeholder="26:30:00"
+                  onChange={(evenement) => setTemps({ ...temps, [u.date]: evenement.target.value })}
+                />,
+                u.rejoue
+                  ? `${duree(u.rejoue.central_h)} prévu, ${signe(u.rejoue.err_pct, 1)} %`
+                  : "—",
+              ])}
+            />
+          </div>
+          <div className="mt-3 flex items-center gap-3">
+            <Button
+              size="sm"
+              variant="secondary"
+              loading={Boolean(jobId)}
+              disabled={Boolean(jobId) || !saisies.length || !vue?.archive_conservee}
+              onClick={rejouer}
+            >
+              Rejouer au banc
+            </Button>
+            <p className="text-xs leading-relaxed text-brand-muted">
+              {jobId
+                ? job?.avancement || "En file."
+                : vue?.archive_conservee
+                  ? "La trace de l'activité du jour sert de parcours ; la coupure est la veille."
+                  : "L'archive n'est plus conservée : le banc ne peut plus la relire."}
+            </p>
+          </div>
+        </>
+      )}
+      {message ? <p className="mt-2 text-xs text-brand-deep-dark">{message}</p> : null}
+    </div>
+  );
+}
+
 function LeJumeau({ athlete }) {
   const { jumeau, ingestion, niveau } = athlete;
   if (ingestion.statut !== "ingere") {
@@ -111,6 +225,17 @@ function LeJumeau({ athlete }) {
           }
         />
       </div>
+
+      {athlete.perime ? (
+        <div className="mt-6 border-t border-brand-grid pt-4">
+          <BadgeEtat ton="derriere">Jumeau périmé</BadgeEtat>
+          <p className="mt-2 text-sm leading-relaxed text-brand-soft">
+            {athlete.archive_conservee
+              ? "Il vient d'un autre moteur que celui qui tourne : ré-ingère-le tant que l'archive est conservée."
+              : "Il vient d'un autre moteur que celui qui tourne, et l'archive n'est plus là pour le recalculer."}
+          </p>
+        </div>
+      ) : null}
 
       <div className="mt-6 border-t border-brand-grid pt-4">
         <BadgeEtat ton={niveau.nom === "calibre" ? "deroule" : "annonce"}>
@@ -338,12 +463,108 @@ function Actions({ athlete, recharger }) {
               Supprimer cet athlète
             </Button>
             <p className="mt-1.5 text-xs leading-relaxed text-brand-muted">
-              Archive, jumeau et plans. Le registre garde ses entrées, sous pseudonyme.
+              Archive, jumeau et plans. Le registre garde ses entrées, anonymes.
             </p>
           </>
         )}
       </div>
     </aside>
+  );
+}
+
+/** Les échéances de conservation, les jumeaux périmés et les passes de purge. La purge
+ *  reste en simulation tant que le moteur n'est pas réglé pour l'activer. */
+function ConservationDuLabo() {
+  const [vue, setVue] = useState(null);
+  const [tour, setTour] = useState(0);
+  const [jobId, setJobId] = useState("");
+  const [message, setMessage] = useState("");
+  useEffect(() => {
+    let vivant = true;
+    appeler("/conservation")
+      .then((lue) => vivant && setVue(lue))
+      .catch((leve) => vivant && setMessage(leve.message));
+    return () => {
+      vivant = false;
+    };
+  }, [tour]);
+  const relire = () => setTour((t) => t + 1);
+  const job = useJob(jobId, () => {
+    setJobId("");
+    relire();
+  });
+  if (!vue) return message ? <p className="text-xs text-brand-deep-dark">{message}</p> : null;
+
+  const perimes = vue.athletes.filter((a) => a.perime && a.archive_conservee);
+  const proches = vue.athletes.filter(
+    (a) => a.jours_restants !== null && (a.jours_restants < 30 || a.courses_apres_echeance.length),
+  );
+  const derniere = vue.journal[vue.journal.length - 1];
+
+  const reingerer = async () => {
+    setMessage("");
+    try {
+      const r = await appeler("/athletes/reingerer-un-perime", { methode: "POST" });
+      if (r.job_id) setJobId(r.job_id);
+      else setMessage("Aucun jumeau périmé dont l'archive est encore conservée.");
+    } catch (leve) {
+      setMessage(leve.message);
+    }
+  };
+  const purger = async () => {
+    setMessage("");
+    try {
+      setMessage(passeDeLaPurge(await appeler("/conservation/purge", { methode: "POST" })));
+      relire();
+    } catch (leve) {
+      setMessage(leve.message);
+    }
+  };
+
+  return (
+    <section className="flex flex-col gap-3 rounded-lg border border-brand-hairline bg-brand-paper px-5 py-4">
+      <p className={ETIQUETTE}>
+        Conservation · {vue.conservation_jours} jours · purge{" "}
+        {vue.mode === "active" ? "active" : "en simulation"}
+      </p>
+      {proches.length ? (
+        <ul className="m-0 flex list-none flex-col gap-1 p-0 text-sm text-brand-text">
+          {proches.map((a) => (
+            <li key={a.id}>
+              <Link
+                href={lienVers("athletes", { id: a.id })}
+                className="font-semibold underline decoration-brand-hairline underline-offset-4 hover:decoration-brand-deep"
+              >
+                {a.pseudo || a.id}
+              </Link>{" "}
+              — {conservationDit(a, a.archive_conservee).donnees}
+              {a.courses_apres_echeance.length ? " Une course visée tombe après." : ""}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-brand-muted">Aucune échéance dans les trente jours.</p>
+      )}
+      <p className="text-xs leading-relaxed text-brand-muted">
+        {derniere ? `Dernière passe : ${passeDeLaPurge(derniere)}` : "Aucune passe de purge encore."}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          variant="secondary"
+          loading={Boolean(jobId)}
+          disabled={Boolean(jobId) || !perimes.length}
+          onClick={reingerer}
+        >
+          Ré-ingérer le prochain périmé{perimes.length ? ` (${perimes.length})` : ""}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={purger}>
+          Lancer une passe de purge
+        </Button>
+      </div>
+      {jobId ? <p className="text-xs text-brand-muted">{job?.avancement || "En file."}</p> : null}
+      {message ? <p className="text-xs text-brand-deep-dark">{message}</p> : null}
+    </section>
   );
 }
 
@@ -398,6 +619,7 @@ export default function Athlete({ athleteId }) {
                 Un athlète est durable : sa deuxième course ne redemande rien.
               </p>
             </div>
+            <ConservationDuLabo />
             <ListeDesAthletes dossiers={vue.dossiers} />
           </>
         )}
@@ -420,7 +642,12 @@ export default function Athlete({ athleteId }) {
               <Ligne terme="Email">{athlete.email}</Ligne>
               <Ligne terme="Montre">{athlete.montre}</Ligne>
               <Ligne terme="Dépôt">{athlete.depot_id}</Ligne>
-              <Ligne terme="Consentement">{jourLisible(athlete.consent_at)}</Ligne>
+              <Ligne terme="Consentement">
+                {[jourLisible(athlete.consentement_le || athlete.consent_at),
+                  athlete.consentement_version ? `texte ${athlete.consentement_version}` : ""]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </Ligne>
               <Ligne terme="Archive">{athlete.archive.nom}</Ligne>
               <Ligne terme="Taille">{tailleLisible(athlete.archive.taille)}</Ligne>
               <Ligne terme="Données jusqu'au">{jourLisible(athlete.jumeau.donnees_jusquau)}</Ligne>
@@ -436,6 +663,7 @@ export default function Athlete({ athleteId }) {
                 Un athlète est durable : sa deuxième course ne redemande rien.
               </p>
             </div>
+            <Conservation athlete={athlete} />
           </aside>
 
           <section className="flex flex-col gap-8 px-8 py-7">
@@ -451,6 +679,7 @@ export default function Athlete({ athleteId }) {
                 <Plans plans={athlete.plans ?? []} />
               </div>
             </div>
+            <VraisUltras athlete={athlete} />
           </section>
 
           <Actions athlete={athlete} recharger={recharger} />

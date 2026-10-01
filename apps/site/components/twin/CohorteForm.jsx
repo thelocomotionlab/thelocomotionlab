@@ -17,6 +17,10 @@
 // Garde-fous côté client : validation « Il manque : … » qui nomme les
 // étapes, extension et taille de l'archive vérifiées au dépôt, honeypot
 // `website` invisible (le service répond un faux succès aux robots).
+//
+// Les textes de consentement viennent de lib/twinCohorte.mjs, par version ; la version
+// part avec le dépôt (`consentementVersion`). `apercu` montre le formulaire d'une
+// version sans rien envoyer.
 
 "use client";
 
@@ -28,6 +32,8 @@ import {
   EXTENSIONS_ARCHIVE,
   MARQUES,
   MAX_ARCHIVE_MO,
+  TEXTES_DE_CONSENTEMENT,
+  VERSION_EN_LIGNE,
 } from "@/lib/twinCohorte.mjs";
 import { messageDErreur, urlDepots } from "@/lib/twinDepot.mjs";
 
@@ -70,7 +76,8 @@ function extensionValide(nom) {
   return EXTENSIONS_ARCHIVE.some((ext) => minuscule.endsWith(ext));
 }
 
-export default function CohorteForm() {
+export default function CohorteForm({ version = VERSION_EN_LIGNE, apercu = false }) {
+  const textes = TEXTES_DE_CONSENTEMENT[version];
   const [marque, setMarque] = useState(null);
   const [fichier, setFichier] = useState(null);
   const [drag, setDrag] = useState(false);
@@ -134,6 +141,11 @@ export default function CohorteForm() {
       return;
     }
 
+    if (apercu) {
+      poserErreur("Aperçu : rien n'est envoyé.");
+      return;
+    }
+
     if (!URL_DEPOT) {
       poserErreur(
         "Le dépôt en ligne n'est pas encore ouvert — écris-moi via la page contact et on s'organise.",
@@ -157,6 +169,7 @@ export default function CohorteForm() {
     data.append("objectifCible", f.objectifCible.trim());
     data.append("montre", marque);
     data.append("consent", "oui");
+    data.append("consentementVersion", version);
     data.append("website", website);
     data.append("archive", fichier, fichier.name);
 
@@ -214,8 +227,7 @@ export default function CohorteForm() {
           dès que ton jumeau est calibré — ton plan de course gratuit suivra.
         </p>
         <p className="mx-auto mt-4 max-w-md text-[12.5px] italic text-gray-500">
-          Conformément à la règle du labo, ton archive sera supprimée
-          immédiatement après analyse.
+          {textes.succes}
         </p>
         <div className="mt-7">
           <Link
@@ -485,8 +497,7 @@ export default function CohorteForm() {
             className="mt-px h-[22px] w-[22px] flex-none cursor-pointer accent-brand-accent-dark"
           />
           <span className="text-sm leading-normal text-gray-700">
-            J&rsquo;accepte que mon archive d&rsquo;entraînement soit utilisée
-            pour calibrer le Locomotion Twin, puis supprimée après analyse.{" "}
+            {textes.case}{" "}
             <span className="text-brand-accent-ink">*</span>
           </span>
         </label>
@@ -503,8 +514,7 @@ export default function CohorteForm() {
             {enEnvoi ? "Envoi en cours…" : "Envoyer mon archive"}
           </button>
           <p className="mt-3 text-[12.5px] italic text-gray-500">
-            Ton archive est supprimée immédiatement après analyse — seuls ton
-            rapport et quelques métadonnées sont conservés.
+            {textes.sousLEnvoi}
           </p>
         </div>
 

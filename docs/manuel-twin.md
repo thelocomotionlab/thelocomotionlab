@@ -340,8 +340,16 @@ passent par le miroir JS des tokens, et qu'une garde à la lettre condamnerait �
 
 ## 5. Où vont les données / confidentialité
 
-- **Archives d'entraînement supprimées immédiatement après analyse** (garde-fou CLAUDE.md). On ne
-  garde que le rapport (le temps du SAV) et un minimum de métadonnées.
+- **Archives de la cohorte** : chiffrées au repos sur le volume du service de dépôt (clé
+  `TWIN_DEPOT_ARCHIVE_KEY`), leur seul endroit ; le moteur n'en fait qu'une copie temporaire
+  le temps d'une ingestion ou d'un banc. Combien de temps elles restent dépend du texte de
+  consentement accepté : « 2026-07 » (la page en ligne aujourd'hui) promettait la suppression
+  après analyse, l'archive part dès l'ingestion ; « 2026-10 » (le brouillon, aperçu dans le
+  tableau de bord) la garde `cohorte.conservation_jours` (183) jours. À l'échéance de ses
+  données, l'athlète entier est effacé (archive, jumeau, plans, pages, jobs) et ses entrées
+  du registre deviennent anonymes. La passe quotidienne de purge est en **simulation** tant
+  que `cohorte.purge` ne vaut pas `active` dans `twin.config.json` : elle compte ce qu'elle
+  effacerait (écran Athlètes, « Conservation ») et n'efface rien.
 - Les **noms de fichiers sont anonymisés** à l'ingestion (les exports RGPD peuvent contenir l'e-mail
   de l'athlète) ; poids, notes privées, descriptions et identifiants d'appareil ne sont **jamais lus**.
 - En local, les données de test vont dans `services/twin-engine/local-data/` (git-ignoré).
@@ -350,9 +358,10 @@ passent par le miroir JS des tokens, et qu'une garde à la lettre condamnerait �
   ses résumés sont les agrégats que l'annexe publie déjà. Il vit sur le volume du moteur, dans
   la version du plan (`/data/plans/<référence>/v<n>/`), jamais dans le dépôt ni sur le site, et
   part avec le plan quand on le supprime depuis l'écran Plan ou la fiche de l'athlète.
-- **Supprimer un athlète** emporte son archive, son jumeau, ses plans, leurs demandes et leurs
-  pages. Le registre garde les entrées de ses courses courues et son statut au registre, sous
-  son pseudonyme (`/data/registre/`) : c'est la couverture du moteur, pas son dossier.
+- **Supprimer un athlète** emporte son archive (purgée du dépôt), son jumeau, ses plans, leurs
+  demandes, ses jobs et leurs pages. Le registre garde les entrées de ses courses courues et
+  son statut, **anonymes** (`/data/registre/`, `/data/registre-banc/`) : c'est la couverture du
+  moteur, pas son dossier.
 
 ## 6. Décrire une course cible (`--race`, optionnel)
 

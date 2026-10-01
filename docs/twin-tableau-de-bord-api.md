@@ -43,7 +43,13 @@ Athlete
   email           canal de contact ; c'est aussi ce qui le reconnaît à sa deuxième course
   prenom, montre  tels que saisis au dépôt
   consent_at      date du consentement, copiée du dépôt
-  archive         { nom, taille, sha256, recue_le }   — l'archive elle-même n'est pas dans l'objet
+  consentement_version, consentement_le
+                  version du texte accepté et son jour, copiés du dépôt
+  conservation_jusquau
+                  échéance des données, recalculée à chaque passe de purge
+  depot_id        le dépôt d'où vient l'archive
+  archive         { nom, taille, sha256, recue_le, purgee_le }
+                                                           — l'archive elle-même n'est pas dans l'objet
   ingestion       { statut: recu | en_cours | ingere | illisible, le, erreur }
   jumeau          { vc_kmh, E, durabilite_pct, n_vrais_ultras, n_avec_fc, donnees_jusquau,
                     plus_long_h, plus_gros_dplus_m }         — vide tant que non ingéré
@@ -51,9 +57,19 @@ Athlete
   plans           [ ref, … ]
   registre        { statut: frais | dev, depuis, journal: [ { le, statut, par, motif }, … ] }
                                                            — statut au registre, journalisé
+  jumeau_produit_par { commit, modifie, empreinte }        — ce qui a calculé le jumeau
 ```
 
-Sur le disque : `athletes/{id}/athlete.json`, `jumeau.json`, `calibration.json`. L'archive vit dans le dépôt le temps de l'ingestion, puis chez toi (rapatriement), jamais durablement sur le VPS.
+`GET …/athletes/{id}` ajoute trois lectures : `conservation` (`{ jusquau, archive_jusquau,
+jours_restants, conservation, courses_apres_echeance }`), `perime` (le jumeau vient d'un autre
+moteur) et `archive_conservee`.
+
+Sur le disque : `athletes/{id}/athlete.json`, `jumeau.json` (avec `produit_par`),
+`calibration.json`, et `banc/` (les traces des courses rejouées au banc). L'archive vit,
+chiffrée, sur le volume du dépôt jusqu'à son échéance de conservation : six mois après le
+consentement sous le texte « 2026-10 » (`cohorte.conservation_jours`), dès l'ingestion sous le
+texte d'avant ; le moteur n'en garde qu'une copie temporaire le temps d'une ingestion ou d'un
+banc.
 
 ### 3.2 Course
 
@@ -154,9 +170,17 @@ Chaque dossier porte l'athlète, la course visée, le départ, le statut et **le
 
 `GET /tableau-de-bord/athletes/{id}` — toi → l'objet complet, avec ses plans.
 `POST /tableau-de-bord/athletes/{id}/ingest` — toi → `{ job_id }` — l'archive est lue depuis le dépôt (ou depuis le fichier déjà rapatrié si tu la renvoies), le jumeau et la calibration se calculent, le niveau est posé. Une ingestion à la fois sur le VPS ; les suivantes attendent.
-`DELETE /tableau-de-bord/athletes/{id}` — toi → 204 — archive, jumeau, plans, page : tout est supprimé. Le registre garde ses entrées sous pseudonyme.
-`POST /tableau-de-bord/athletes/{id}/archive` — toi — un fichier → `{ job_id }` — pour ré-ingérer avec une archive que tu as chez toi, quand le moteur a changé.
+`DELETE /tableau-de-bord/athletes/{id}` — toi → 204 — archive (purgée du dépôt), jumeau, plans, demandes, jobs, page : tout est supprimé. Le registre garde ses entrées, anonymes : un identifiant opaque remplace le pseudo et la référence du plan, le journal de statut ne garde que les statuts et leurs dates. Un dépôt injoignable est noté et repris à la prochaine passe ; « rafraîchir » ne recrée pas l'athlète.
+`POST /tableau-de-bord/athletes/{id}/archive` — toi — un fichier → `{ job_id }` — pour ré-ingérer avec une archive que tu as chez toi.
 `POST /tableau-de-bord/athletes/{id}/statut` `{ statut: dev | frais, motif }` → l'objet complet — le statut au registre change, daté, et le journal gagne une ligne ; sans motif, 422.
+`GET /tableau-de-bord/athletes/{id}/ultras` — toi → `{ ultras: [ { date, heures, distance_km, dplus_m, rejoue } ], archive_conservee }` — les vrais ultras de la calibration, et ce que le banc en a dit.
+`POST /tableau-de-bord/athletes/{id}/banc` `{ courses: [ { date, officiel | abandon, nom? } ] }` → `{ job_id }` — rejoue au banc sur l'archive conservée : la trace de l'activité du jour sert de parcours, la coupure est la veille ; un run au livre banc du tableau de bord (`registre-banc/`), qui sort avec l'export. Archive purgée → 409.
+`POST /tableau-de-bord/athletes/reingerer-un-perime` — toi → `{ athlete_id, job_id, restants }` — ré-ingère le premier athlète dont le jumeau vient d'un autre moteur et dont l'archive est conservée ; un à la fois.
+
+### 5.2 bis Conservation
+
+`GET /tableau-de-bord/conservation` — toi → `{ mode, conservation_jours, athletes: [ … ], journal: [ … ] }` — l'échéance de chaque athlète, ses courses qui tombent après, les jumeaux périmés, les trente dernières passes de purge.
+`POST /tableau-de-bord/conservation/purge` — toi → la ligne du journal — une passe tout de suite. Sous `cohorte.purge = simulation` (défaut), elle compte ce qu'elle effacerait et n'efface rien ; sous `active`, l'athlète échu est effacé comme par `DELETE …/athletes/{id}`. Une passe tourne aussi chaque jour (dix minutes après le démarrage, puis toutes les vingt-quatre heures).
 
 ### 5.3 Bibliothèque et éditeur de course
 
@@ -206,11 +230,11 @@ Chaque dossier porte l'athlète, la course visée, le départ, le statut et **le
 
 ### 6.1 Un dépôt arrive
 
-1. L'athlète dépose sur `/services/twin/cohorte` — inchangé. Le dépôt stocke l'archive et t'envoie l'email habituel.
+1. L'athlète dépose sur `/services/twin/cohorte`. Le dépôt chiffre l'archive au fil de l'upload, garde la version du texte de consentement et t'envoie l'email habituel.
 2. Le dépôt prévient le moteur à la fin de l'upload : l'Athlète est créé (`recu`), l'ingestion mise en file.
 3. L'ingestion tourne : lecture de l'archive, jumeau, calibration, niveau. L'Athlète passe `ingere`. Le verbe suivant devient `composer`.
 4. Tu ouvres la File. Si sa course est en bibliothèque, tu composes ; sinon tu la crées d'abord — une fois pour tous ceux qui la courent.
-5. Tu rapatries l'archive chez toi (script existant), le dépôt se purge.
+5. L'archive reste chiffrée sur le dépôt jusqu'à son échéance ; la passe quotidienne la purge, puis efface l'athlète à l'échéance de ses données.
 
 ### 6.2 Un plan se fait
 

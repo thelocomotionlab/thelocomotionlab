@@ -3201,3 +3201,52 @@ course (`tools/terrain --activite … --athlete Val --course "Nice 100M 2026" --
 2026-09-25`), au carnet ; la pénalité de marche fatiguée de Nice (sortie 7 : 18 %) donne
 l'ordre de grandeur attendu sous les mêmes définitions, à ceci près que le script coupe au
 km 100 et le jumeau à 3000 m de D−.
+
+### 10.30 Chantier terrain — étape 3 : la cohorte, six mois de conservation (2026-10-01)
+
+**Constat.** La page cohorte promettait la suppression de l'archive après analyse ; le moteur
+supprimait sa copie d'ingestion mais l'archive restait en clair sur le volume du dépôt
+jusqu'au rapatriement à la main, un effacement d'athlète laissait l'archive, ses jobs et des
+entrées de registre sous pseudonyme (référence du plan comprise), et « Rafraîchir » recréait
+un athlète effacé. Ce qui sert au développement du Twin (rejouer un athlète quand le moteur
+change, rejouer ses ultras au banc) demandait au contraire de garder l'archive.
+
+**Ce qui change (service de dépôt).** Chiffrement au repos AES-256-GCM au fil de l'upload,
+clé `TWIN_DEPOT_ARCHIVE_KEY` dans l'environnement seulement ; sans clé, dépôt refusé (503) ;
+archives d'avant chiffrées au démarrage ; déchiffrement au fil du téléchargement admin ; la
+version du texte de consentement est gardée avec le dépôt et décide du paragraphe de la
+confirmation envoyée au déposant.
+
+**Ce qui change (moteur, tableau de bord).**
+- L'athlète porte `consentement_version`, `consentement_le`, `conservation_jusquau` ; le bloc
+  `cohorte` de la configuration dit la durée (183 jours), l'option de prolonger jusqu'à 30
+  jours après la course visée (désactivée), les versions qui autorisent la conservation
+  (« 2026-10 ») et le mode de la purge.
+- Purge quotidienne (`tableau_de_bord.purge`, une passe par jour dans le service, et à la
+  demande) : l'athlète échu est effacé — archive sur le dépôt, plans, page, demandes, jobs,
+  dossiers de rendu, jumeau —, ses entrées du registre deviennent anonymes (identifiant opaque
+  tiré au hasard à la place du pseudo et de la référence de plan, journal de statut réduit aux
+  statuts et dates), y compris au livre banc du tableau de bord ; sous l'ancien consentement,
+  l'archive part dès l'ingestion. Journal de purge en comptes. **Mode `simulation` par
+  défaut** : la passe compte et n'efface rien tant que `cohorte.purge` ne vaut pas `active`.
+- Le jumeau garde le commit et l'empreinte de configuration qui l'ont produit ; un jumeau
+  d'un autre moteur est périmé, et « ré-ingérer le prochain périmé » le recalcule, un à la
+  fois, tant que l'archive est conservée. L'ingestion vérifie le SHA-256 de l'archive lue.
+- « Rejouer au banc » : l'écran Athlète liste les vrais ultras de la calibration ; avec le
+  temps officiel, le walk-forward (désormais dans le paquet du moteur,
+  `registre.walkforward`) rejoue la course sur l'archive conservée, la trace de l'activité du
+  jour en guise de parcours ; un run au livre banc du tableau de bord, exporté avec le
+  registre et importé par `tools/registre --importer`.
+- Un nouveau dépôt du même athlète garde son statut au registre ; « Rafraîchir » ne recrée
+  pas un athlète effacé.
+
+**Le texte public** de la page cohorte et sa case (version « 2026-10 », qui nomme la fréquence
+cardiaque, la cadence, les positions, les six mois, le chiffrement, la suppression et
+l'anonymat du registre) sont écrits et testés (`apps/site/lib/twinCohorte.mjs`), relisibles
+dans un aperçu du tableau de bord (`/services/twin/tableau-de-bord/cohorte`, formulaire qui
+n'envoie rien) ; la page publique sert toujours la version « 2026-07 ».
+
+**Tests** : `services/twin-depot` (chiffrement, aller-retour, clé fausse, octet altéré, refus
+sans clé, version du consentement, archives d'avant), `tests/test_conservation.py`
+(échéances, simulation, purge active et anonymat, ancien consentement, dépôt en panne,
+périmés, nouveau dépôt), `tests/test_banc_tableau_de_bord.py`, `apps/site/lib`.

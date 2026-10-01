@@ -10,6 +10,7 @@ import {
   NIVEAUX,
   PAS,
   VERBES,
+  conservationDit,
   departLisible,
   duree,
   echelleDuProfil,
@@ -22,6 +23,7 @@ import {
   longueurQuiTient,
   nombre,
   pasFranchis,
+  passeDeLaPurge,
   signe,
   statutDuDossier,
   statutDuPlan,
@@ -254,3 +256,34 @@ describe("les lignes « Sur ce segment »", () => {
     expect(longueurQuiTient(true)).toBeLessThan(longueurQuiTient(false));
   });
 });
+
+describe("la conservation d'un athlète", () => {
+  it("dit l'échéance, le sort de l'archive et l'alerte", () => {
+    const c = {
+      jusquau: "2027-04-02", archive_jusquau: "2027-04-02", jours_restants: 182,
+      conservation: true, courses_apres_echeance: ["LL-X"],
+    };
+    const dit = conservationDit(c, true);
+    expect(dit.donnees).toBe("Données conservées jusqu'au 02/04/2027 (182 jours).");
+    expect(dit.archive).toBe("Archive chiffrée sur le dépôt, conservée jusqu'au 02/04/2027.");
+    expect(dit.alerte).toBe("Une course visée tombe après l'échéance : le plan disparaîtra avant.");
+    expect(conservationDit({ ...c, jours_restants: -3, courses_apres_echeance: [] }, false)).toEqual({
+      donnees: "Échéance passée le 02/04/2027 : la prochaine passe de purge efface ses données.",
+      archive: "Archive purgée du dépôt.",
+      alerte: "",
+    });
+    expect(conservationDit({ ...c, conservation: false }, true).archive).toContain("dès son ingestion");
+    expect(conservationDit(null, false).donnees).toContain("pas daté");
+  });
+
+  it("lit une passe de purge", () => {
+    expect(passeDeLaPurge({ le: "2026-10-01T03:00:00+00:00", mode: "simulation", athletes: 1,
+                            archives: 2, plans: 1, echecs: 0 }))
+      .toBe("01/10/2026 — simulation : aurait purgé 1 athlète, 2 archives, 1 plan.");
+    expect(passeDeLaPurge({ le: "2026-10-01T03:00:00+00:00", mode: "active", athletes: 0,
+                            archives: 1, plans: 0, echecs: 1 }))
+      .toBe("01/10/2026 — purgé 0 athlète, 1 archive, 0 plan · 1 échec, repris à la prochaine passe.");
+    expect(passeDeLaPurge(null)).toBe("");
+  });
+});
+

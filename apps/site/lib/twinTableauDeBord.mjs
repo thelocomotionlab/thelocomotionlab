@@ -305,3 +305,47 @@ export function lignesPourLeMoteur(lignes) {
 export function longueurQuiTient(nutritionDeclaree) {
   return nutritionDeclaree ? 25 : 40;
 }
+
+/**
+ * Ce que la fiche dit de la conservation d'un athlète, depuis ``conservation`` (échéances
+ * rendues par le moteur) : l'échéance de ses données, le sort de son archive, et l'alerte
+ * quand une course visée tombe après l'échéance.
+ */
+export function conservationDit(conservation, archiveConservee) {
+  const c = conservation ?? {};
+  let donnees;
+  if (!c.jusquau) {
+    donnees = "Échéance inconnue : le consentement n'est pas daté.";
+  } else if (c.jours_restants < 0) {
+    donnees = `Échéance passée le ${jourLisible(c.jusquau)} : la prochaine passe de purge efface ses données.`;
+  } else {
+    const jours = c.jours_restants === 1 ? "1 jour" : `${c.jours_restants} jours`;
+    donnees = `Données conservées jusqu'au ${jourLisible(c.jusquau)} (${jours}).`;
+  }
+  let archive;
+  if (!archiveConservee) {
+    archive = "Archive purgée du dépôt.";
+  } else if (c.conservation) {
+    archive = `Archive chiffrée sur le dépôt, conservée jusqu'au ${jourLisible(c.archive_jusquau)}.`;
+  } else {
+    archive = "Consentement d'avant la conservation : l'archive part dès son ingestion.";
+  }
+  const n = (c.courses_apres_echeance ?? []).length;
+  const alerte = n
+    ? `${n === 1 ? "Une course visée tombe" : `${n} courses visées tombent`} après l'échéance : le plan disparaîtra avant.`
+    : "";
+  return { donnees, archive, alerte };
+}
+
+/** Une ligne du journal des purges, en clair. */
+export function passeDeLaPurge(ligne) {
+  if (!ligne) return "";
+  const simulation = ligne.mode !== "active";
+  const comptes = [
+    `${ligne.athletes} athlète${ligne.athletes > 1 ? "s" : ""}`,
+    `${ligne.archives} archive${ligne.archives > 1 ? "s" : ""}`,
+    `${ligne.plans} plan${ligne.plans > 1 ? "s" : ""}`,
+  ].join(", ");
+  const echecs = ligne.echecs ? ` · ${ligne.echecs} échec${ligne.echecs > 1 ? "s" : ""}, repris à la prochaine passe` : "";
+  return `${jourLisible(ligne.le)} — ${simulation ? "simulation : aurait purgé" : "purgé"} ${comptes}${echecs}.`;
+}

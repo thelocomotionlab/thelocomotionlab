@@ -10,6 +10,41 @@
  *  de services/twin-depot/twin-depot.config.json (et la borne Caddy). */
 export const MAX_ARCHIVE_MO = 2048;
 
+/**
+ * Les textes de consentement, par version — la version voyage avec le dépôt
+ * (`consentementVersion`) et décide de la conservation côté moteur (`cohorte`).
+ * ⚠ Les versions restent en phase avec `consentementVersions` de
+ * services/twin-depot/twin-depot.config.json et `cohorte.versions_conservation` du
+ * moteur (celles qui autorisent la conservation).
+ *
+ * « 2026-07 » : le texte de la maquette de recrutement — l'archive est supprimée
+ * après analyse. « 2026-10 » : la conservation six mois, chiffrée, puis la purge.
+ */
+export const TEXTES_DE_CONSENTEMENT = {
+  "2026-07": {
+    case:
+      "J’accepte que mon archive d’entraînement soit utilisée pour calibrer le Locomotion Twin, puis supprimée après analyse.",
+    sousLEnvoi:
+      "Ton archive est supprimée immédiatement après analyse — seuls ton rapport et quelques métadonnées sont conservés.",
+    succes: "Conformément à la règle du labo, ton archive sera supprimée immédiatement après analyse.",
+    page:
+      "Le Twin apprend sur des données réelles. En rejoignant la cohorte, tu me confies ton archive d’entraînement : elle sert à calibrer et valider le moteur, puis elle est supprimée. En échange, tu recevras ton plan de course gratuit dès que ton jumeau sera prêt.",
+  },
+  "2026-10": {
+    case:
+      "J’accepte que mon archive d’entraînement — positions, fréquence cardiaque, cadence — soit conservée chiffrée six mois pour calibrer et développer le Locomotion Twin, puis supprimée avec mon jumeau, mes plans et ma page ; ce qui reste au registre du labo est anonyme.",
+    sousLEnvoi:
+      "Ton archive est conservée chiffrée six mois, puis supprimée avec ton jumeau, tes plans et ta page. Ce qui reste au registre du labo — ce que le moteur avait prévu, ce que tu as couru — est anonyme.",
+    succes:
+      "Ton archive est conservée chiffrée six mois pour développer le Twin, puis supprimée ; ce qui reste au registre est anonyme.",
+    page:
+      "Le Twin apprend sur des données réelles. En rejoignant la cohorte, tu me confies ton archive d’entraînement : tes sorties, avec leurs positions, ta fréquence cardiaque et ta cadence. Elle sert à calibrer ton jumeau et à développer le moteur, conservée chiffrée pendant six mois, puis supprimée — avec ton jumeau, tes plans et ta page. Ce qui reste au registre du labo est anonyme. En échange, tu reçois ton plan de course gratuit dès que ton jumeau est prêt.",
+  },
+};
+
+/** La version servie par la page en ligne. */
+export const VERSION_EN_LIGNE = "2026-07";
+
 /** Extensions acceptées à l'étape 2 (le ZIP complet reste la voie royale). */
 export const EXTENSIONS_ARCHIVE = [".zip", ".fit", ".tcx", ".gpx"];
 
