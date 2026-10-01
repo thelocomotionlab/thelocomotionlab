@@ -40,8 +40,8 @@ from pathlib import Path
 
 import numpy as np
 
-from twin_engine.carte import (Carte, cle_de_cache, dresser, ecrire_le_cache, lire_le_cache, par_partie,
-                               tranches_de, tranches_du_parcours)
+from twin_engine.carte import (Carte, cle_de_cache, dresser, ecrire_le_cache, hors_des_extraits, lire_le_cache,
+                               par_partie, sans_voie_osm, tranches_de, tranches_du_parcours)
 from twin_engine.carte import osm as _osm
 from twin_engine.carte import raster as _raster
 from twin_engine.carte.modele import Exemples, apprendre, probabilites, sources_compatibles
@@ -162,7 +162,7 @@ def couverture_des_sorties(cartes: dict[str, Carte]) -> tuple[dict[str, dict], i
                 s[0], s[1] = s[0] + v["toute"] * n, s[1] + n
             if v["descentes"] is not None:
                 s[2], s[3] = s[2] + v["descentes"] * nd, s[3] + nd
-        if c.sources.get("osm") and not any(c.variables.get("recale") or []):
+        if sans_voie_osm(c):
             sans_voie += 1
     cov = {nom: {"toute": round(a / na, 3) if na else None, "descentes": round(d / nd, 3) if nd else None}
            for nom, (a, na, d, nd) in sommes.items()}
@@ -177,7 +177,7 @@ def _couverture_des_sorties(cartes: dict[str, Carte]) -> list[str]:
                    f"| {_f(None if v['descentes'] is None else 100 * v['descentes'], 0)} % |")
     if any(c.sources.get("osm") for c in cartes.values()):
         out += ["", f"Sorties sans aucune voie OSM recalée : {sans_voie} sur {len(cartes)} "
-                    "(hors des extraits donnés : leurs étiquettes OSM manquent au modèle)."]
+                    "(hors des extraits donnés : elles n'entrent pas dans l'apprentissage)."]
     return out
 
 
@@ -227,6 +227,10 @@ def _parcours(args, cfg: Config) -> int:
         if ecarts:
             print(f"--modele : sources différentes de la carte ({', '.join(ecarts)}) : "
                   "le modèle ne s'applique pas", file=sys.stderr)
+            return 2
+        refus = hors_des_extraits(c, cfg)
+        if refus:
+            print(f"--modele : {refus} — le modèle ne s'applique pas", file=sys.stderr)
             return 2
         sortie["technicite"] = _technicite(c, modele, cfg, course, args.coupure_km)
         if args.vecu:
@@ -494,10 +498,12 @@ def cartes_des_activites(acts: list[Activite], lecteur: Lecteur) -> dict[str, Ca
 
 
 def exemples_de(acts: list[Activite], cartes: dict[str, Carte]) -> Exemples:
-    """Les fenêtres étiquetées de toutes les activités, sous des identifiants anonymes."""
+    """Les fenêtres étiquetées des activités, sous des identifiants anonymes ; une activité
+    hors des extraits OSM donnés n'en fait pas partie (ses étiquettes seraient « absentes »)."""
     ex = Exemples()
     for k, a in enumerate(acts, start=1):
-        ex.ajouter(f"a{k:05d}", a.fenetres, cartes[a.cle], jour=a.jour.isoformat())
+        if not sans_voie_osm(cartes[a.cle]):
+            ex.ajouter(f"a{k:05d}", a.fenetres, cartes[a.cle], jour=a.jour.isoformat())
     return ex
 
 
@@ -521,6 +527,8 @@ def magasin_des_ultras(acts: list[Activite], cartes: dict[str, Carte], modele: d
     if modele.get("coefficients"):
         for a in acts:
             if a.duree_h < cfg.calibration.genuine_min_hours or (until is not None and a.jour > until):
+                continue
+            if hors_des_extraits(cartes[a.cle], cfg):
                 continue
             pr = probabilites(cartes[a.cle], modele, cfg)
             activites[a.cle] = tranches_pour_le_magasin(a.tranches, pr["p"], pr["p_ref"],
@@ -568,7 +576,7 @@ def terrain_d_une_course(course, acts: list[Activite], cartes: dict[str, Carte],
                          until: date | None, lecteur: Lecteur, cfg: Config) -> dict:
     """Le terrain d'une course pour le moteur (``--terrain``) : modèle arrêté au ``until``,
     profil du parcours, magasin des ultras jusqu'au ``until``."""
-    from twin_engine.carte.modele import profil_de_terrain
+    from twin_engine.carte.modele import identite, profil_de_terrain
 
     sources = next(iter(cartes.values())).sources if cartes else None
     modele = modele_jusqua(ex, until, cfg, sources)
@@ -576,8 +584,10 @@ def terrain_d_une_course(course, acts: list[Activite], cartes: dict[str, Carte],
                     "ultras": magasin_des_ultras(acts, cartes, modele, cfg, until)}
     if modele.get("coefficients"):
         c = lecteur.carte(tranches_du_parcours(course, cfg))
-        bundle["parcours"] = profil_de_terrain(c, modele, cfg, nom=course.name,
-                                               longueur_km=round(float(course.length_km), 3))
+        refus = hors_des_extraits(c, cfg)
+        bundle["parcours"] = ({"version": 1, "course": course.name, "refus": refus, "modele": identite(modele)}
+                              if refus else profil_de_terrain(c, modele, cfg, nom=course.name,
+                                                              longueur_km=round(float(course.length_km), 3)))
     return bundle
 
 
@@ -598,9 +608,9 @@ def _terrain(args, cfg: Config) -> int:
     finally:
         lecteur.fermer()
     Path(args.out).write_text(json.dumps(bundle, ensure_ascii=False), encoding="utf-8")
-    m = bundle["modele"]
+    m, prof = bundle["modele"], bundle["parcours"] or {}
     print(f"{course.name} : {len(bundle['ultras']['activites'])} ultra(s) au magasin, profil "
-          f"{'écrit' if bundle['parcours'] else 'absent'} — "
+          f"{prof.get('refus') or ('écrit' if prof else 'absent')} — "
           + ("signal" if m.get("signal") else f"pas de signal ({m.get('raison') or 'gain hors échantillon insuffisant'})"),
           file=sys.stderr)
     return 0
@@ -613,8 +623,8 @@ def _banc(args, cfg: Config) -> int:
 
     sortie = Path(args.out)
     lignes = ["| athlète | course | coupure | fenêtres (hachées) | descentes sur une voie OSM "
-              "| signal | z activités | z régions |",
-              "|---|---|---|---|---|---|---|---|"]
+              "| signal | z activités | z régions | carte du parcours |",
+              "|---|---|---|---|---|---|---|---|---|"]
     for m in args.manifestes:
         mp = Path(m)
         base = mp.resolve().parent
@@ -653,9 +663,12 @@ def _banc(args, cfg: Config) -> int:
                 zr = (v.get("regions") or {}).get("z")
                 cov, _ = couverture_des_sorties({a.cle: cartes[a.cle] for a in acts if a.jour <= until})
                 osm = (cov.get("recale") or {}).get("descentes")
+                prof = bundle["parcours"] or {}
+                parcours = "hors des extraits OSM" if prof.get("refus") else ("oui" if prof else "—")
                 lignes.append(f"| {man['athlete']} | {r['name']} | {until} | {mo['n_fenetres']} "
                               f"({mo['n_hachees']}) | {_f(None if osm is None else 100 * osm, 0)} % | "
-                              f"{'oui' if mo.get('signal') else 'non'} | {_f(za, 2)} | {_f(zr, 2)} |")
+                              f"{'oui' if mo.get('signal') else 'non'} | {_f(za, 2)} | {_f(zr, 2)} "
+                              f"| {parcours} |")
         finally:
             lecteur.fermer()
     print("\n".join(lignes))

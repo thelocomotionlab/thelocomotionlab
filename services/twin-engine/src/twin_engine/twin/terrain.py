@@ -104,6 +104,8 @@ def profil_compatible(profil: dict | None, course) -> str | None:
         return "pas de profil de terrain"
     if not (profil.get("modele") or {}).get("signal"):
         return "le modèle de carte n'a pas de signal hors échantillon"
+    if profil.get("refus"):
+        return str(profil["refus"])
     km = profil.get("km") or []
     if not km:
         return "profil vide"

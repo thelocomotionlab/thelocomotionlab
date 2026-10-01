@@ -6,8 +6,10 @@ Les variables de la carte sont des entrées, jamais des scores : leur coût s'es
 fenêtres de descente que le détecteur étiquette.
 """
 
-from .carte import NUMERIQUES, Carte, cle_de_cache, dresser, ecrire_le_cache, lire_le_cache, par_partie
+from .carte import (NUMERIQUES, Carte, cle_de_cache, dresser, ecrire_le_cache, hors_des_extraits,
+                    lire_le_cache, par_partie, sans_voie_osm)
 from .tranches import Tranches, geometrie, tranches_de, tranches_du_parcours
 
 __all__ = ["Carte", "NUMERIQUES", "Tranches", "cle_de_cache", "dresser", "ecrire_le_cache",
-           "geometrie", "lire_le_cache", "par_partie", "tranches_de", "tranches_du_parcours"]
+           "geometrie", "hors_des_extraits", "lire_le_cache", "par_partie", "sans_voie_osm",
+           "tranches_de", "tranches_du_parcours"]

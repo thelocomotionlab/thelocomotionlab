@@ -369,6 +369,17 @@ def test_the_tools_make_the_terrain_of_a_race_and_the_bench_serves_it(tmp_path, 
     assert bundle["ultras"]["activites"] == {}
     assert '"lat' not in json.dumps(bundle)
 
+    # une course hors des extraits OSM n'a pas de profil : ses étiquettes seraient « absentes »
+    from dataclasses import replace
+
+    loin = _aller(1, datetime(2026, 6, 1, 7, tzinfo=timezone.utc))
+    (tmp_path / "loin.gpx").write_bytes(_gpx(replace(loin, lat=np.asarray(loin.lat) + 0.5)))
+    assert carte_main(["terrain", "--archive", str(archive), "--until", "2026-05-31",
+                       "--course", str(tmp_path / "loin.gpx"), "--out", str(tmp_path / "loin.json"),
+                       *sources]) == 0
+    refus = json.loads((tmp_path / "loin.json").read_text())["parcours"]["refus"]
+    assert refus.startswith("trace hors des extraits OSM donnés : 0 %")
+
     # la demande de la course contre le vécu des dernières semaines, par tranche de D−
     assert carte_main(["modele", "--archive", str(archive), "--until", "2026-05-31",
                        "--out", str(tmp_path / "m.json"), *sources]) == 0
@@ -391,6 +402,12 @@ def test_the_tools_make_the_terrain_of_a_race_and_the_bench_serves_it(tmp_path, 
     sortie = capsys.readouterr()
     servi = json.loads(sortie.out[: sortie.out.rindex("}") + 1])["course"]["terrain"]
     assert servi["total"] == "differential" and "Terrain de la carte" in sortie.err
+    assert cli_main(["preview", "--training", str(archive), "--course", str(tmp_path / "loin.gpx"),
+                     "--terrain", str(tmp_path / "loin.json"), "--until", "2026-05-31",
+                     "--set", "prediction.terrain_total=differential"]) == 0
+    sortie = capsys.readouterr()
+    servi = json.loads(sortie.out[: sortie.out.rindex("}") + 1])["course"]["terrain"]
+    assert servi["servi"] is False and servi["raison"] == refus
 
     # le banc : un terrain par course, lu par tools/banc --terrain et servi sous le drapeau
     manifeste = {"athlete": "Testeur", "archive": "archive",

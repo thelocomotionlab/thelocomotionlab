@@ -728,7 +728,12 @@ class CarteParams:
     ``plis`` plis d'activités entières ; régions de validation : activités à moins de
     ``region_km`` de proche en proche ; pas de modèle sous ``modele_min_fenetres`` fenêtres
     hachées ou courables ; signal quand la carte réduit la perte hors échantillon d'au moins
-    ``signal_z`` erreurs types."""
+    ``signal_z`` erreurs types.
+
+    Un extrait OSM étant lu, une sortie dont aucune tranche n'est recalée sur une voie est hors
+    des extraits : elle n'entre pas dans l'apprentissage ; un parcours ou un ultra dont moins
+    de ``couverture_osm_min`` des descentes sont recalées ne reçoit pas la carte — toutes ses
+    étiquettes y seraient « absentes », ce que le modèle lirait comme un terrain."""
 
     pas_m: float = 50.0
     rayon_recalage_m: float = 15.0
@@ -743,6 +748,7 @@ class CarteParams:
     region_km: float = 30.0
     modele_min_fenetres: int = 30
     signal_z: float = 2.0
+    couverture_osm_min: float = 0.5
 
 
 @dataclass(frozen=True)

@@ -1155,8 +1155,11 @@ coefficients, validation (perte hors échantillon de la carte contre celle des s
 — classe de pente, D− déjà descendu, nuit —, par activités puis par régions, écart réduit
 `z`, AUC) et `signal`. Sans signal, la carte ne dit rien de la technicité pour cet athlète ;
 le plan n'a pas à s'en servir. Le résumé dit aussi la couverture des sorties d'entraînement :
-une sortie sans aucune voie OSM recalée est hors des extraits donnés, et ses étiquettes OSM
-manquent au modèle tant que l'extrait de sa région n'est pas passé par `--osm`. Les fenêtres d'apprentissage, qui portent
+une sortie sans aucune voie OSM recalée est hors des extraits donnés et n'entre pas dans
+l'apprentissage tant que l'extrait de sa région n'est pas passé par `--osm`. De même, un parcours
+ou un ultra dont moins de la moitié des descentes est recalée (`carte.couverture_osm_min`) ne
+reçoit pas la carte, et le terrain le dit (« trace hors des extraits OSM donnés ») : toutes ses
+étiquettes y seraient « absentes », que le modèle lirait comme un terrain. Les fenêtres d'apprentissage, qui portent
 les centres des activités, restent dans le cache. `parcours --modele … --vecu local-data/carte/exemples.json`
 ajoute la demande de la course contre le vécu des 183 derniers jours, par tranche de D−.
 

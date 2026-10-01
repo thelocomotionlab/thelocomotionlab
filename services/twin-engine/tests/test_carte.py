@@ -305,6 +305,28 @@ def test_the_coverage_of_the_training_runs_counts_every_slice_and_the_runs_off_t
     assert "Sorties sans" not in "\n".join(_couverture_des_sorties({"b": dresser(hors.tranches, CFG)}))
 
 
+def test_a_trace_off_the_extracts_is_kept_out_of_learning_and_refused_the_map():
+    from datetime import date
+
+    from tools.carte import Activite, exemples_de
+    from twin_engine.carte import hors_des_extraits, sans_voie_osm
+    from twin_engine.config import override_config
+
+    couverte = _carte_simple()
+    hors = dresser(tranches_de(*_nord(1000.0, est_m=50_000.0), CFG), CFG, voies=osm_.voies_overpass([]))
+    sans_osm = dresser(couverte.tranches, CFG)
+    assert not sans_voie_osm(couverte) and sans_voie_osm(hors) and not sans_voie_osm(sans_osm)
+    assert hors_des_extraits(couverte, CFG) is None and hors_des_extraits(sans_osm, CFG) is None
+    assert hors_des_extraits(hors, CFG).startswith("trace hors des extraits OSM donnés : 0 %")
+    assert hors_des_extraits(couverte, override_config(CFG, "carte.couverture_osm_min=0.9")) is not None
+
+    fenetre = [{"debut_m": 0.0, "fin_m": 250.0, "hache": True, "classe": 1, "dminus_m": 0.0}]
+    acts = [Activite("a", date(2026, 5, 1), 1.0, couverte.tranches, fenetre),
+            Activite("b", date(2026, 5, 2), 1.0, hors.tranches, fenetre)]
+    ex = exemples_de(acts, {"a": couverte, "b": hors})
+    assert list(ex.jour.values()) == ["2026-05-01"] and len(ex) == 1
+
+
 def test_the_map_round_trips_through_its_cache(tmp_path):
     c = _carte_simple()
     cle = cle_de_cache(c.tranches, CFG, ["osm:test"])

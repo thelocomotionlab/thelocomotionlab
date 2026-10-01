@@ -182,6 +182,13 @@ archive mesure tout :
   attribution des sources d'une carte (ODbL) sur la feuille, l'annexe, la page de l'athlète
   quand une carte a servi. **Décision** : après le run 2 et les courses servies.
 
+- 2026-10-01 — **en préparant la phase de test** : sous un fichier de configuration partiel
+  (`TWIN_CONFIG_PATH`), les profils référence et expérimental se vidaient sans rien dire ; après
+  un banc à variantes, « le dernier run » lu par `score_plan`, `terrain` et `registre` pouvait
+  être une variante ; une trace hors des extraits OSM donnés recevait la carte comme si toutes
+  ses étiquettes étaient « absentes ». Les trois sont corrigés ; `tools/carte modele` et `banc`
+  disent la couverture OSM des sorties d'entraînement. Suite : 787 passés, 43 sautés.
+
 ## Run 1 chez Valentin (à lancer)
 
 Une passe par archive mesure tout ce qui précède. La recette complète est au manuel
@@ -299,3 +306,7 @@ run de base : la réponse est alors « la carte ne dit rien pour cet athlète »
   là où un profil de carte rend les descentes plus hachées que le terrain habituel.
 - Les cartes se gardent dans `services/twin-engine/local-data/carte` (ignoré par git) ; le
   modèle ne porte aucune position, les fenêtres d'apprentissage restent dans ce cache.
+- Un extrait OSM étant donné, une sortie sans aucune voie recalée sort de l'apprentissage, et
+  un parcours ou un ultra dont moins de la moitié des descentes est recalée
+  (`carte.couverture_osm_min = 0.5`) ne reçoit pas la carte : à Nice, 90 % et 100 % des
+  descentes le sont ; une trace hors des extraits, 0 %.

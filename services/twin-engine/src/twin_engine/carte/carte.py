@@ -144,6 +144,25 @@ def par_partie(c: Carte, coupure_km: float, descente_max: float = -0.08) -> dict
     return out
 
 
+def sans_voie_osm(c: Carte) -> bool:
+    """Un extrait OSM a été lu, et aucune tranche de la trace n'est recalée sur une voie :
+    la trace est hors des extraits donnés."""
+    return bool(c.sources.get("osm")) and not any(c.variables.get("recale") or [])
+
+
+def hors_des_extraits(c: Carte, cfg: Config, descente_max: float = -0.08) -> str | None:
+    """Pourquoi la carte ne s'applique pas aux descentes de cette trace faute de voies OSM
+    (None : elle s'applique). Hors des extraits, toutes les étiquettes seraient « absentes »,
+    une modalité que le modèle a apprise sur des voies réelles sans étiquette."""
+    if not c.sources.get("osm"):
+        return None
+    part = (c.couverture(descente_max).get("recale") or {}).get("descentes")
+    if part is None or part >= cfg.carte.couverture_osm_min:
+        return None
+    return (f"trace hors des extraits OSM donnés : {100 * part:.0f} % de ses descentes recalées "
+            f"sur une voie (il en faut {100 * cfg.carte.couverture_osm_min:.0f} %)")
+
+
 def cle_de_cache(t: Tranches, cfg: Config, sources: list[str]) -> str:
     """Une empreinte des tranches, des réglages de la carte et des sources."""
     h = hashlib.sha256()
@@ -170,5 +189,5 @@ def ecrire_le_cache(racine: Path, cle: str, c: Carte) -> Path:
     return chemin
 
 
-__all__ = ["Carte", "NUMERIQUES", "cle_de_cache", "dresser", "ecrire_le_cache", "lire_le_cache",
-           "par_partie"]
+__all__ = ["Carte", "NUMERIQUES", "cle_de_cache", "dresser", "ecrire_le_cache", "hors_des_extraits",
+           "lire_le_cache", "par_partie", "sans_voie_osm"]

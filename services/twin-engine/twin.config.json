@@ -292,7 +292,8 @@
     "plis": 10,
     "region_km": 30.0,
     "modele_min_fenetres": 30,
-    "signal_z": 2.0
+    "signal_z": 2.0,
+    "couverture_osm_min": 0.5
   },
   "profils": {
     "_comment": "Profils de configuration qu'un plan peut servir (twin_engine.profils), choisis sur l'écran Plan et retenus par le registre. Le défaut est ce fichier tel quel ; chaque profil est une liste de surcharges bloc.clé=valeur.",
