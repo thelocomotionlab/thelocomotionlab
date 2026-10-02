@@ -3670,3 +3670,45 @@ plus vite rend du temps aux autres au prorata, total intact ; zones qui se cheva
 grand gain ; une zone dans un segment pèse le coût de la loi servie), `tests/test_repartition_pente.py`
 (écart pondéré : un tronçon de trois minutes ne pèse que son temps ; position ; `--residus LOI`),
 `tests/test_mesures_par_troncon.py` (un tronçon plat ou roulant n'est ni montée ni descente).
+
+### 10.37 Départ et arrivée sur les plans exacts ; le profil Expérimental (2026-10-02)
+
+**Matière.** `tools/score_plan` sous PPB, plans exacts (traces des manifestes), 30 courses de
+développement, Nice 2026 à part : D (départ : les 12 premiers % de la distance 17,5 % plus vite),
+A (arrivée : les 5 derniers km 30 % plus vite), DA, DA3 (arrivée sur 3 km, 45 %), MDA (DA sous
+Minetti).
+
+| loi | erreur par tronçon, min | pire cumul | montées / descentes, min | passages, arrêts compris |
+|---|---|---|---|---|
+| PPB | 7,3 | 20,7 | +8,1 / −0,3 | 1,73 % |
+| D | 6,7 | 19,2 | +4,5 / +2,1 | 1,81 % |
+| A | 7,0 | 21,6 | +9,9 / −4,9 | 1,60 % |
+| DA | 6,4 | 18,4 | +6,3 / −2,6 | 1,48 % |
+| DA3 | 6,3 | 18,1 | +5,7 / −1,6 | 1,49 % |
+| MDA | 7,4 | 21,3 | +18,2 / −13,5 | 1,56 % |
+
+**Course par course** (écart à PPB de l'erreur par tronçon) : D −0,60 min, 23 courses mieux, 7
+moins bien (signe : p = 0,005), pire +1,4 ; A −0,27, 21 / 9 (p = 0,04), pire +4,0 ; DA3 −0,98,
+20 / 7 (p = 0,02), pire +1,7. Le départ tient sur les courses courtes comme sur les longues
+(moins de 8 h : 8 / 2 ; 8 h et plus : 15 / 5) ; l'arrivée, sur les longues seulement (8 h et
+plus : 16 / 4, p = 0,01 ; moins de 8 h : 5 / 5, pire +4,0 à Maratour). Nice 2026 : 9,9 → D 7,9,
+DA3 8,2, A 10,6 : l'arrivée y dessert. Les deux leviers s'ajoutent à la loi de pente : sous
+Minetti, DA mène de 8,1 à 7,4 ; sous PPB, de 7,3 à 6,4. La reconstitution du §10.36 prévoyait
+−1,0 min par course : le plan exact rend −0,9.
+
+**Ce qui reste sous DA** (écart pondéré par le temps) : premier tronçon +2,0 %, dernier +1,2 %
+(+12 % et +18 % sous PPB) ; montées +3,3 %, descentes −1,9 % ; tiers de course et nuit à ±2 %.
+Restent les tronçons plats (moins de 40 m/km : +7,7 %, 21 tronçons), une arrivée propre à chaque
+athlète (dernier tronçon : Crasse −9 %, Val +10 %, Lolo +13 %) et les descentes d'une course à
+l'autre (somme sous DA : −29 min à Nice 50k, −19 au Grand Trail du Lac, +18 à l'UTSM).
+
+**Décision 4 — profil Expérimental.** DA3 y entre (`pacing.start_gain=0.175`,
+`pacing.finish_km=3`, `pacing.finish_gain=0.45`). La référence reste PPB : le départ plus rapide
+change aussi l'allure servie au départ, ce que Valentin tranche. Défauts inchangés.
+
+**Suite.** La carte du parcours (`pacing.terrain=map`) se juge au scoreur : `--terrain` lit les
+profils de `tools/carte banc`, sans run du banc ; la sortie dit où la carte a été servie.
+
+**Tests** : `tests/test_terrain_plan.py` (`score_plan --terrain` : la carte donne du temps à la
+descente technique ; sans profil ou sans pénalité de marche, la raison est dite),
+`tests/test_profils.py`.

@@ -309,10 +309,13 @@
       ]
     },
     "experimental": {
-      "description": "La référence, plus les leviers à l'essai qui se servent sans carte : technicité déclarée reportée sur les descentes, et la marche prévue en descente dans la colonne « Sur ce segment ».",
+      "description": "La référence, plus les leviers à l'essai qui se servent sans carte : un départ et une arrivée plus rapides (les 12 premiers % de la distance 17,5 % plus vite, les 3 derniers km 45 % plus vite, le temps total inchangé), la technicité déclarée reportée sur les descentes, et la marche prévue en descente dans la colonne « Sur ce segment ».",
       "drapeaux": [
         "calibration.slope_cost=personal_pacing",
         "calibration.slope_curve=bins",
+        "pacing.start_gain=0.175",
+        "pacing.finish_km=3",
+        "pacing.finish_gain=0.45",
         "pacing.terrain=declared",
         "report.consignes_marche=1"
       ]

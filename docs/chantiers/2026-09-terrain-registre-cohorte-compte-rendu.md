@@ -216,6 +216,13 @@ archive mesure tout :
   désormais l'écart par le temps (le % moyen gonflait les petits bouts d'arrivée) et lit ce qui
   reste sous une variante (`--residus LOI`).
 
+- 2026-10-02 — **départ et arrivée sur les plans exacts** (DIAGNOSTIC §10.37) : DA3 mène de 7,3
+  à 6,3 min par tronçon (20 courses mieux, 7 moins bien) et les heures de passage, arrêts
+  compris, de 1,73 à 1,49 % du temps ; le départ tient partout, l'arrivée sur les courses de
+  8 h et plus. **Décision 4** : DA3 entre dans le profil Expérimental ; la Référence attend la
+  réponse de Valentin (le départ plus rapide change l'allure servie). `score_plan --terrain`
+  juge la carte du parcours sans run du banc.
+
 ## Run 1 chez Valentin (à lancer)
 
 Une passe par archive mesure tout ce qui précède. La recette complète est au manuel

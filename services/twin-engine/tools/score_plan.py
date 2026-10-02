@@ -38,6 +38,11 @@ levier suivant.
 
     PYTHONPATH=src python -m tools.score_plan <manifestes…> [--run ID] [--depot <dossier>]
         [--out score.md] [--set bloc.clé=valeur …] [--variant NOM:bloc.clé=valeur,… …]
+        [--residus [LOI]] [--terrain <dossier des terrains de tools/carte banc>]
+
+Sous ``pacing.terrain=map``, la carte du parcours se lit dans le dossier ``--terrain`` (un
+profil par course, ``tools/carte banc``) : la sortie dit où elle a été servie, et pourquoi
+pas ailleurs.
 
 Les entrées sont celles d'un run du livre banc (le dernier par défaut), annotées de leurs
 passages (``docs/twin-registre/passages.json``) et du statut de leur athlète.
@@ -58,7 +63,7 @@ from twin_engine.course import RaceSpec, build_course
 from twin_engine.pacing import build_pacing
 from twin_engine.predict import Prediction
 from twin_engine.twin.pente import detail_du_registre, fatigue_servie, repartir
-from twin_engine.twin.terrain import facteur_declare
+from twin_engine.twin.terrain import facteur_carte, facteur_declare, penalites, profil_compatible
 
 from twin_engine.registre import DEFAULT_RACINE, Depot
 from twin_engine.registre.forme import hors_ravito_impose, type_de_troncon
@@ -156,8 +161,24 @@ def score_hors_ravito(course, race: RaceSpec, official_h: float, passages: dict,
             "descentes_min": h["biais_descentes_min"]}
 
 
-def score_registre(registre: dict, manifests: list[Path], cfg) -> list[dict]:
-    """Une ligne par course scorée : athlète, course, dev_set, officiel, variantes."""
+def _profil_de_carte(terrain_dir: Path | None, athlete: str, jour: str) -> dict | None:
+    """Le profil de carte du parcours écrit par ``tools/carte banc``
+    (``<dossier>/<athlète>/<date>.json``, clé ``parcours``), s'il existe."""
+    if terrain_dir is None:
+        return None
+    from tools.banc import _slug
+
+    chemin = Path(terrain_dir) / _slug(athlete) / f"{jour}.json"
+    if not chemin.exists():
+        return None
+    return json.loads(chemin.read_text(encoding="utf-8")).get("parcours")
+
+
+def score_registre(registre: dict, manifests: list[Path], cfg, *,
+                   terrain_dir: Path | None = None) -> list[dict]:
+    """Une ligne par course scorée : athlète, course, dev_set, officiel, variantes.
+    ``terrain_dir`` : les terrains de la carte par course (``tools/carte banc``), servis sous
+    ``pacing.terrain=map``."""
     paths: dict[tuple[str, str, str], tuple[Path, dict]] = {}
     for mp in manifests:
         man = json.loads(mp.read_text(encoding="utf-8"))
@@ -190,10 +211,18 @@ def score_registre(registre: dict, manifests: list[Path], cfg) -> list[dict]:
         # total est ancré, seule la répartition compte ici)
         detail = (detail_du_registre(m, cfg) or {}
                   if cfg.calibration.slope_cost in ("personal", "personal_pacing") else None)
-        # technicité déclarée reportée sur les descentes (pacing.terrain=declared) : le modèle
-        # de marche est au registre ; le terrain de carte, lui, demande le profil du parcours
-        terrain = (facteur_declare(course, m.get("terrain"), cfg)
-                   if cfg.pacing.terrain == "declared" else None)
+        # technicité déclarée (pacing.terrain=declared) ou carte du parcours
+        # (pacing.terrain=map) reportées sur les descentes : la pénalité de marche est au
+        # registre, le profil de carte dans le dossier des terrains
+        terrain, carte = None, None
+        if cfg.pacing.terrain == "declared":
+            terrain = facteur_declare(course, m.get("terrain"), cfg)
+        elif cfg.pacing.terrain == "map":
+            profil = _profil_de_carte(terrain_dir, key[0], key[2])
+            terrain = facteur_carte(course, profil, m.get("terrain"), cfg)
+            carte = ("servie" if terrain is not None else profil_compatible(profil, course)
+                     or ("pénalité de marche inconnue" if penalites(m.get("terrain")) is None
+                         else "rien à reporter"))
         course = repartir(course, detail, cfg, phi=fatigue_servie(m.get("terrain"), cfg),
                           terrain=terrain)
         scores = score_course(course, race, float(official), pas, cfg,
@@ -207,7 +236,7 @@ def score_registre(registre: dict, manifests: list[Path], cfg) -> list[dict]:
                                  splits_delta=m.get("fade_delta_splits"))
         rows.append({"athlete": key[0], "race": key[1], "date": key[2],
                      "dev_set": statut(e) == "dev", "a_part": e.get("a_part"),
-                     "pente_mesuree": detail_du_registre(m, cfg) is not None,
+                     "pente_mesuree": detail_du_registre(m, cfg) is not None, "carte": carte,
                      "hors": hors, "official_h": float(official),
                      "splits_delta": m.get("fade_delta_splits"),
                      "durability_pct": m.get("durability_pct"),
@@ -383,6 +412,22 @@ def residus_markdown(rows: list[dict], loi: str | None = None) -> str:
     return "\n".join(out)
 
 
+def carte_markdown(par_loi: dict[str, list[dict]]) -> str | None:
+    """Où la carte du parcours a été servie (``pacing.terrain=map``), et pourquoi pas
+    ailleurs ; None sans loi qui la demande."""
+    nom, rows = next(((n, rs) for n, rs in par_loi.items() if any(r.get("carte") for r in rs)),
+                     (None, None))
+    if nom is None:
+        return None
+    servies = [r for r in rows if r["carte"] == "servie"]
+    out = [f"**Carte du parcours** (`pacing.terrain=map`, loi {nom}) : servie sur {len(servies)} "
+           f"course{'s' if len(servies) > 1 else ''} sur {len(rows)}", "",
+           "| athlète | course | carte |", "|---|---|---|"]
+    out += [f"| {r['athlete']} | {r['race']}{' (à part)' if r.get('a_part') else ''} | {r['carte']} |"
+            for r in rows]
+    return "\n".join(out)
+
+
 def comparer_lois(par_loi: dict[str, list[dict]], reglages: dict[str, str]) -> str:
     """Une table par groupe : chaque loi sur les mêmes courses, puis la table course par course."""
     out = ["**Lois comparées — répartition jugée hors ravito** (moyennes par course ; montées / "
@@ -488,6 +533,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--variant", action="append", default=[], metavar="NOM:BLOC.CLÉ=VALEUR,…",
                     help="une loi de plus à comparer à la configuration de base (répétable) : "
                          "la sortie s'ouvre sur la table qui les compare")
+    ap.add_argument("--terrain", default=None, metavar="DOSSIER",
+                    help="terrains de la carte par course (tools/carte banc), servis sous "
+                         "pacing.terrain=map")
     ap.add_argument("--residus", nargs="?", const="base", metavar="LOI",
                     help="ce qui reste sous la configuration de base, ou sous la variante LOI : "
                          "écart hors ravito par type de tronçon, position, tiers de course, "
@@ -512,18 +560,23 @@ def main(argv: list[str] | None = None) -> int:
         print(f"--residus {args.residus} : aucune variante de ce nom", file=sys.stderr)
         return 2
     manifestes = [Path(m) for m in args.manifests]
-    rows = score_registre({"entries": entries}, manifestes, cfg)
+    terrain_dir = Path(args.terrain) if args.terrain else None
+    rows = score_registre({"entries": entries}, manifestes, cfg, terrain_dir=terrain_dir)
     par_loi = {"base": rows}
     for nom, cfg_v in variantes.items():
-        par_loi[nom] = score_registre({"entries": entries}, manifestes, cfg_v)
+        par_loi[nom] = score_registre({"entries": entries}, manifestes, cfg_v, terrain_dir=terrain_dir)
     md = render_markdown(rows)
     if args.residus:
         md = (residus_markdown(par_loi[args.residus], None if args.residus == "base" else args.residus)
               + "\n\n---\n\n" + md)
+    carte = carte_markdown(par_loi)
     if variantes:
         reglages = {nom: spec.split(":", 1)[1] for nom, spec in
                     ((spec.split(":", 1)[0].strip(), spec) for spec in args.variant)}
-        md = comparer_lois(par_loi, reglages) + "\n\n---\n\n**Configuration de base, en détail**\n\n" + md
+        md = (comparer_lois(par_loi, reglages) + ("\n\n" + carte if carte else "")
+              + "\n\n---\n\n**Configuration de base, en détail**\n\n" + md)
+    elif carte:
+        md = carte + "\n\n---\n\n" + md
     if args.out:
         Path(args.out).write_text(md + "\n", encoding="utf-8")
         print(f"Score écrit : {args.out} ({len(rows)} courses)", file=sys.stderr)

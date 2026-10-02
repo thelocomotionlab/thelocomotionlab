@@ -428,3 +428,57 @@ def test_the_tools_make_the_terrain_of_a_race_and_the_bench_serves_it(tmp_path, 
     tt = lire_entrees(depot.chemin_du_run(runs["TT"]["id"]))[1][0]
     assert base["course"]["terrain"] is None
     assert tt["course"]["terrain"]["total"] == "differential"
+
+
+def test_score_plan_serves_the_map_from_the_terrain_folder(tmp_path):
+    """``score_plan --terrain`` : sous ``pacing.terrain=map``, la carte du parcours (profil de
+    ``tools/carte banc``) donne du temps à la descente technique, et la sortie dit où elle a
+    été servie ; sans profil ou sans pénalité de marche, elle ne l'est pas, et la raison est dite."""
+    import json as _json
+
+    from tools.banc import _slug
+    from tools.score_plan import main, score_registre
+    from twin_engine.registre import Depot, entete_de_run
+
+    course = _course()
+    noms = ["d", "m", "s", "m2", "a"]
+    hors = [0.45, 0.35, 0.45, 0.40]
+    cumul = np.concatenate([[0.0], np.cumsum(hors)])
+    pas = {"checkpoints": [{"km": float(km), "name": n, "t_h": float(t), "method": "radius"}
+                           for km, n, t in zip(RACE.aid_km, noms, cumul)],
+           "segments": [{"de": noms[i], "a": noms[i + 1], "ecoule_h": hors[i], "ravito_h": 0.0,
+                         "hors_ravito_h": hors[i], "ravito_lu": True} for i in range(4)]}
+    (tmp_path / "course.gpx").write_bytes(_sawtooth_gpx())
+    (tmp_path / "race.json").write_text(_json.dumps(
+        {"name": "Dent", "aid_km": list(RACE.aid_km), "aid_names": list(RACE.aid_names)}), encoding="utf-8")
+    mp = tmp_path / "m.json"
+    mp.write_text(_json.dumps({"athlete": "T", "archive": "a", "races": [
+        {"name": "Dent", "date": "2026-06-01", "official_time": "1:39:00", "gpx": "course.gpx",
+         "race_json": "race.json"}]}), encoding="utf-8")
+    entree = {"athlete": "T", "race": "Dent", "date": "2026-06-01", "official_time_h": float(cumul[-1]),
+              "dnf": False, "model": {"terrain": TRAITS}, "passages": pas}
+    dossier = tmp_path / "terrains"
+    (dossier / _slug("T")).mkdir(parents=True)
+    (dossier / _slug("T") / "2026-06-01.json").write_text(_json.dumps({"parcours": _profil(course)}),
+                                                          encoding="utf-8")
+    carte = override_config(CFG, "pacing.terrain=map")
+
+    sans = score_registre({"entries": [entree]}, [mp], CFG, terrain_dir=dossier)[0]
+    avec = score_registre({"entries": [entree]}, [mp], carte, terrain_dir=dossier)[0]
+    assert sans["carte"] is None and avec["carte"] == "servie"
+    plan = [t["plan_min"] for t in avec["hors"]["troncons"]]
+    ref = [t["plan_min"] for t in sans["hors"]["troncons"]]
+    assert plan[3] > ref[3] and all(a < b for a, b in zip(plan[:3], ref[:3]))
+    assert score_registre({"entries": [entree]}, [mp], carte)[0]["carte"] == "pas de profil de terrain"
+    muet = {**entree, "model": {}}
+    assert (score_registre({"entries": [muet]}, [mp], carte, terrain_dir=dossier)[0]["carte"]
+            == "pénalité de marche inconnue")
+
+    depot = Depot(tmp_path / "registre")
+    depot.ecrire_run(entete_de_run(CFG, livre="banc"), [{k: v for k, v in entree.items() if k != "passages"}])
+    depot.ecrire_passages([("T", "Dent", "2026-06-01", pas)])
+    sortie = tmp_path / "score.md"
+    assert main([str(mp), "--depot", str(depot.racine), "--terrain", str(dossier),
+                 "--variant", "PTM:pacing.terrain=map", "--out", str(sortie)]) == 0
+    md = sortie.read_text(encoding="utf-8")
+    assert "**Carte du parcours** (`pacing.terrain=map`, loi PTM) : servie sur 1 course sur 1" in md
