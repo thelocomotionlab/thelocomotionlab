@@ -3540,3 +3540,64 @@ forme hors ravito : arrêt au sommet sans poids, sommes égales, montée et desc
 opposés ; tableau), `tests/test_repartition_pente.py` (arrêt imprévu de 30 min : il pèse sur les
 passages, pas hors ravito ; loi personnelle à zéro, Minetti trop long en montée et trop court
 en descente ; `--variant` et course à part).
+
+### 10.35 Les lois de répartition jugées hors ravito sur 30 courses ; le profil Référence (2026-10-02)
+
+**Matière.** Le dernier run de base du banc, passages relus avec la mesure hors ravito
+(§10.34), `tools/score_plan --variant` : 30 courses de développement des quatre athlètes
+(aucun athlète frais), Nice 2026 à part. Rapace n'a pas de fréquence cardiaque : aucune loi
+personnelle mesurée, ses cinq courses ne bougent qu'avec le fade.
+
+**Le juge tient.** À Nice, la mesure de la montre rend 16,3 min d'erreur par tronçon sous
+Minetti, 10,0 sous la loi personnelle, 9,0 sans remise en descente ; LiveTrail rendait 17, 9
+et 7 (§10.34).
+
+**Les lois** (moyennes par course ; erreur par tronçon / pire cumul, min ; plan − réel sur les
+montées / descentes, min ; erreur des heures de passage, arrêts compris, % du temps) :
+
+| loi | erreur | montées / descentes | passages |
+|---|---|---|---|
+| Minetti (défaut) | 8,1 / 23,6 | +19,8 / −11,1 | 1,72 |
+| PP — κ personnels | 7,6 / 21,7 | +3,3 / +4,9 | 1,84 |
+| PP0 — κ, descente sans remise | 7,8 / 21,5 | −2,6 / +10,3 | 1,89 |
+| PPB — tranches, rétrécies 5 h | 7,3 / 20,7 | +8,2 / +0,2 | 1,73 |
+| PP0B2 — tranches, 2 h | 7,3 / 20,6 | +4,0 / +4,2 | 1,76 |
+| PP0B20 — tranches, 20 h | 7,5 / 21,9 | +14,1 / −5,6 | 1,71 |
+| DF — fatigue de descente | 8,3 / 24,4 | +21,0 / −12,3 | 1,75 |
+| PP0DF | 7,8 / 22,0 | −0,8 / +8,7 | 1,89 |
+| PP0 et fade 0,10 / 0,20 / `splits` | 8,0 / 23,6 à 24,4 | — | 1,89 à 2,17 |
+
+PP0B rend PPB au chiffre près : sous les tranches, la borne de la descente ne joue pas.
+
+**Course par course** (25 courses avec une loi mesurée, écart à Minetti de l'erreur par
+tronçon) : PPB −0,97 min en moyenne, 17 courses mieux, 6 moins bien (signe : p = 0,035), pire
+perte +2,4 min (Chota 2025) ; PP0B2 −0,92, 16 / 8 (p = 0,15), pire +3,2 ; PP0B20 −0,69, 17 / 4
+(p = 0,007), pire +1,2 ; PP −0,59, 13 / 10, pire +5,1 ; PP0 −0,36, 14 / 11, pire +6,3. Le gain se
+fait en montagne : Montagnhard 2023 9,5 → 5,2 et 2026 9,1 → 5,3, Nice 2024 (Crasse) 10,8 →
+6,7, Lavaredo 14,3 → 11,8, Chianti 11,0 → 9,4, MIUT 24,1 → 21,4, Nice 50k 15,0 → 12,1 ; Nice
+2026, à part, 16,3 → 9,9. Sur les courses roulantes, ±0,3 min.
+
+**Lecture.** La signature de Nice (plan trop long en montée, trop court en descente) est
+générale : +19,8 / −11,1 min par course sous Minetti, chez les trois athlètes mesurés. La loi
+par tranches l'efface sans rien apprendre des courses jugées. La descente sans remise, conçue
+sur Nice, surcorrige ailleurs (+10,3 min sur les descentes) ; la fatigue de descente
+n'apporte rien ; le fade de 0,15 reste le meilleur des quatre essayés. L'erreur des heures de
+passage ne bouge pas (1,72 → 1,73 %) : les arrêts au ravito la dominent, et aucune loi de
+répartition ne les touche.
+
+**Décision 3 — profils.** La **référence** sert la loi par tranches à la répartition
+(`calibration.slope_cost=personal_pacing`, `calibration.slope_curve=bins`, rétrécissement
+5 h) : le gain moyen le plus large, significatif (p = 0,035), pour une perte maximale de
+2,4 min ; plus prudente (p = 0,007, pire perte +1,2), PP0B20 gagne un tiers de moins. Le total
+ne bouge pas, par construction. L'**expérimental** devient la référence plus la
+technicité déclarée sur les descentes et la consigne de marche : la descente sans remise et
+la fatigue de descente en sortent. Défauts inchangés : aucun athlète frais.
+
+**Suite.** Reste 7,3 min par tronçon (8,7 % d'un tronçon). `tools/score_plan --residus`, sous
+la loi de la référence, répartit cet écart par type de tronçon, tiers de course, jour ou nuit,
+dénivelé et durée, pour choisir le levier suivant.
+
+**Tests** : `tests/test_profils.py` (la référence porte la loi par tranches, incluse dans
+l'expérimental), `tests/test_repartition_pente.py` (`--residus` : plan trop long en montée et
+trop court en descente sous Minetti, par tiers de course, sans nuit pour une course sans heure
+de départ).

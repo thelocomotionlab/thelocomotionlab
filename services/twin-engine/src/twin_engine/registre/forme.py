@@ -52,7 +52,7 @@ def hors_ravito_impose(course, plan, segs: list) -> dict | None:
         "pire_cumul_min": _r(np.max(np.abs(np.cumsum(e))), 1),
         "biais_montees_min": _r(e[montee].sum(), 1) if montee else None,
         "biais_descentes_min": _r(e[descente].sum(), 1) if descente else None,
-        "troncons": [{"vers": plan.segments[i].to, "plan_min": _r(impose[j], 1),
+        "troncons": [{"i": i, "vers": plan.segments[i].to, "plan_min": _r(impose[j], 1),
                       "reel_min": _r(reel[j], 1)} for j, i in enumerate(idx)],
     }
 

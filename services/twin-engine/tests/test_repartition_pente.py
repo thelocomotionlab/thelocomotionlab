@@ -299,6 +299,15 @@ def test_score_plan_judges_the_laws_out_of_the_aid_stations(tmp_path):
     assert "| PP0 | calibration.slope_cost=personal_pacing,calibration.slope_kappa_down_min=0 | 1 | 0.0 |" in md
     assert "Configuration de base, en détail" in md and "répartition jugée hors ravito" in md
 
+    # ce qui reste sous Minetti : le plan trop long en montée, trop court en descente
+    assert main([str(mp), "--depot", str(depot.racine), "--residus", "--out", str(sortie)]) == 0
+    md = sortie.read_text(encoding="utf-8")
+    assert md.startswith("**Ce qui reste")
+    lignes = {l.split("|")[2].strip(): l for l in md.splitlines() if l.startswith("| type de tronçon")}
+    assert float(lignes["montée"].split("|")[4]) > 0 > float(lignes["descente"].split("|")[4])
+    assert "| tiers de course | 1er tiers |" in md and "*Par athlète — tiers de course*" in md
+    assert "| jour ou nuit |" not in md                 # course sans heure de départ
+
     depot.mettre_a_part("T", "Dent", "2026-06-01", "mise au point", "2026-10-02")
     assert main([str(mp), "--depot", str(depot.racine), "--variant", variante, "--out", str(sortie)]) == 0
     md = sortie.read_text(encoding="utf-8")

@@ -298,15 +298,17 @@
   "profils": {
     "_comment": "Profils de configuration qu'un plan peut servir (twin_engine.profils), choisis sur l'écran Plan et retenus par le registre. Le défaut est ce fichier tel quel ; chaque profil est une liste de surcharges bloc.clé=valeur.",
     "reference": {
-      "description": "Les drapeaux gardés hors du défaut faute de preuve sur les cas frais, servis à l'athlète dont ils améliorent le plan.",
-      "drapeaux": []
-    },
-    "experimental": {
-      "description": "Les leviers à l'essai qui se servent sans carte : loi de pente personnelle à la répartition, descente sans remise, fatigue de descente, technicité déclarée reportée sur les descentes, et la marche prévue en descente dans la colonne « Sur ce segment ».",
+      "description": "Ta loi de pente, mesurée tranche par tranche sur ton archive, répartit le plan entre les segments ; le temps total ne change pas. Gardée hors du défaut faute de cas frais : sur 30 courses de développement, elle réduit l'erreur par segment sur 17 courses et l'augmente sur 6.",
       "drapeaux": [
         "calibration.slope_cost=personal_pacing",
-        "calibration.slope_kappa_down_min=0",
-        "pacing.descent_fatigue=dminus",
+        "calibration.slope_curve=bins"
+      ]
+    },
+    "experimental": {
+      "description": "La référence, plus les leviers à l'essai qui se servent sans carte : technicité déclarée reportée sur les descentes, et la marche prévue en descente dans la colonne « Sur ce segment ».",
+      "drapeaux": [
+        "calibration.slope_cost=personal_pacing",
+        "calibration.slope_curve=bins",
         "pacing.terrain=declared",
         "report.consignes_marche=1"
       ]

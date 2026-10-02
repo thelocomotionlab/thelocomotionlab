@@ -28,6 +28,11 @@ plan y prévoyait plus long que le réel). C'est la mesure qui départage les lo
 configuration de base, et ouvre la sortie par une table qui les compare. Les courses mises à
 part (``a_part.json``) ne comptent dans aucun groupe : elles se lisent sur leurs lignes.
 
+``--residus`` ajoute ce qui reste sous la configuration de base : l'écart hors ravito de chaque
+tronçon, (plan − réel) ÷ réel, moyenné par type de tronçon (montée, descente, mixte), par
+tiers de course, de jour ou de nuit, par dénivelé au km et par durée — et par athlète pour
+le tiers de course et la nuit. C'est là que se lit le levier suivant.
+
     PYTHONPATH=src python -m tools.score_plan <manifestes…> [--run ID] [--depot <dossier>]
         [--out score.md] [--set bloc.clé=valeur …] [--variant NOM:bloc.clé=valeur,… …]
 
@@ -129,7 +134,19 @@ def score_hors_ravito(course, race: RaceSpec, official_h: float, passages: dict,
     if h is None:
         return None
     reel = [t["reel_min"] for t in h["troncons"]]
-    return {"n": h["n"], "mae_min": h["erreur_moyenne_min"],
+    total, cumul, troncons = float(sum(reel)), 0.0, []
+    for t in h["troncons"]:
+        cs, ps = course.segments[t["i"]], plan.segments[t["i"]]
+        km = max(float(cs.off1 - cs.off0), 1e-6)
+        troncons.append({
+            "plan_min": t["plan_min"], "reel_min": t["reel_min"],
+            "type": ("montée" if cs.dplus_m >= 2.0 * cs.dminus_m
+                     else "descente" if cs.dminus_m >= 2.0 * cs.dplus_m else "mixte"),
+            "phase": (cumul + t["reel_min"] / 2.0) / total if total > 0 else None,
+            "nuit": bool(ps.night) if race.start_time is not None else None,
+            "denivele_m_km": (cs.dplus_m + cs.dminus_m) / km})
+        cumul += t["reel_min"]
+    return {"n": h["n"], "mae_min": h["erreur_moyenne_min"], "troncons": troncons,
             "mae_pct": 100.0 * h["erreur_moyenne_min"] / float(np.mean(reel)) if np.mean(reel) > 0 else None,
             "cumul_min": h["pire_cumul_min"], "montees_min": h["biais_montees_min"],
             "descentes_min": h["biais_descentes_min"]}
@@ -279,6 +296,60 @@ def _md_hors_ravito(rows: list[dict]) -> list[str]:
     return out
 
 
+_CARACTERISTIQUES = (
+    ("type de tronçon", lambda t: t["type"], ("montée", "descente", "mixte")),
+    ("tiers de course", lambda t: (None if t["phase"] is None else
+                                   "1er tiers" if t["phase"] < 1 / 3 else
+                                   "2e tiers" if t["phase"] < 2 / 3 else "dernier tiers"),
+     ("1er tiers", "2e tiers", "dernier tiers")),
+    ("jour ou nuit", lambda t: None if t["nuit"] is None else ("nuit" if t["nuit"] else "jour"),
+     ("jour", "nuit")),
+    ("dénivelé (D+ + D−) au km", lambda t: ("moins de 40 m/km" if t["denivele_m_km"] < 40 else
+                                            "40 à 80 m/km" if t["denivele_m_km"] < 80 else
+                                            "80 m/km et plus"),
+     ("moins de 40 m/km", "40 à 80 m/km", "80 m/km et plus")),
+    ("durée réelle du tronçon", lambda t: ("moins de 45 min" if t["reel_min"] < 45 else
+                                           "45 à 90 min" if t["reel_min"] < 90 else "90 min et plus"),
+     ("moins de 45 min", "45 à 90 min", "90 min et plus")),
+)
+
+
+def _ecarts(troncons: list[dict]) -> tuple[int, float | None, float | None]:
+    r = [(t["plan_min"] - t["reel_min"]) / t["reel_min"] for t in troncons if t["reel_min"]]
+    if not r:
+        return 0, None, None
+    return len(r), 100.0 * float(np.mean(r)), 100.0 * float(np.mean(np.abs(r)))
+
+
+def residus_markdown(rows: list[dict]) -> str:
+    """Ce qui reste, tronçon par tronçon, sous la configuration du scoreur (courses à part
+    exclues) : écart signé et absolu, en % du temps réel hors ravito du tronçon."""
+    compte = [r for r in rows if not r.get("a_part") and r.get("hors")]
+    tous = [t for r in compte for t in r["hors"].get("troncons", [])]
+    out = ["**Ce qui reste — écart hors ravito de chaque tronçon** ((plan − réel) ÷ réel ; > 0 : le "
+           f"plan prévoyait plus long que le réel ; {len(tous)} tronçons, {len(compte)} "
+           f"course{'s' if len(compte) > 1 else ''}, "
+           "courses à part exclues)", "",
+           "| caractéristique | catégorie | tronçons | écart moyen % | écart absolu moyen % |",
+           "|---|---|---|---|---|"]
+    for nom, cle, cats in _CARACTERISTIQUES:
+        for cat in cats:
+            n, moy, absm = _ecarts([t for t in tous if cle(t) == cat])
+            if n:
+                out.append(f"| {nom} | {cat} | {n} | {_f(moy)} | {_f(absm)} |")
+    for nom, cle, cats in _CARACTERISTIQUES[1:3]:
+        out += ["", f"*Par athlète — {nom}* (écart moyen %, tronçons)", "",
+                "| athlète | " + " | ".join(cats) + " |", "|---|" + "---|" * len(cats)]
+        for ath in sorted({r["athlete"] for r in compte}):
+            mes = [t for r in compte if r["athlete"] == ath for t in r["hors"].get("troncons", [])]
+            cells = []
+            for cat in cats:
+                n, moy, _ = _ecarts([t for t in mes if cle(t) == cat])
+                cells.append("—" if not n else f"{_f(moy)} ({n})")
+            out.append(f"| {ath} | " + " | ".join(cells) + " |")
+    return "\n".join(out)
+
+
 def comparer_lois(par_loi: dict[str, list[dict]], reglages: dict[str, str]) -> str:
     """Une table par groupe : chaque loi sur les mêmes courses, puis la table course par course."""
     out = ["**Lois comparées — répartition jugée hors ravito** (moyennes par course ; montées / "
@@ -384,6 +455,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--variant", action="append", default=[], metavar="NOM:BLOC.CLÉ=VALEUR,…",
                     help="une loi de plus à comparer à la configuration de base (répétable) : "
                          "la sortie s'ouvre sur la table qui les compare")
+    ap.add_argument("--residus", action="store_true",
+                    help="ce qui reste sous la configuration de base : écart hors ravito par "
+                         "type de tronçon, tiers de course, jour ou nuit, dénivelé et durée")
     args = ap.parse_args(argv)
     from tools.banc import parse_variants
 
@@ -403,6 +477,8 @@ def main(argv: list[str] | None = None) -> int:
     manifestes = [Path(m) for m in args.manifests]
     rows = score_registre({"entries": entries}, manifestes, cfg)
     md = render_markdown(rows)
+    if args.residus:
+        md = residus_markdown(rows) + "\n\n---\n\n" + md
     if variantes:
         par_loi = {"base": rows}
         for nom, cfg_v in variantes.items():

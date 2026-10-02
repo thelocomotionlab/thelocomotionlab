@@ -822,6 +822,9 @@ PYTHONPATH=src python -m tools.ab_recency <manifests…>  # balaye la demi-vie d
 PYTHONPATH=src python -m tools.score_plan <manifestes…> --variant NOM:bloc.clé=valeur,… [--variant …]
                                                     #   lois de répartition comparées hors ravito, en
                                                     #   une passe, sans archive (dernier run du banc)
+PYTHONPATH=src python -m tools.score_plan <manifestes…> --residus [--set …]   # ce qui reste sous une loi :
+                                                    #   écart hors ravito par type de tronçon, tiers de
+                                                    #   course, jour ou nuit, dénivelé, durée
 PYTHONPATH=src python -m tools.registre --frontiere # jusqu'où resserrer les bandes sans perdre la couverture
 PYTHONPATH=src python -m tools.registre --tableau   # tableau de référence (markdown) : par livre × statut,
                                                     #   vendus/refusés, MAE, biais, couvertures, Winkler relatif,
@@ -1207,8 +1210,10 @@ de carte rendent le run de base, et c'est la réponse.
 « bloc.clé=valeur » du bloc `profils` de `twin.config.json` (hors de la configuration
 effective : l'empreinte du défaut n'en dépend pas ; un fichier partiel passé par
 `TWIN_CONFIG_PATH` garde les profils qu'il ne redéfinit pas). La référence reçoit les drapeaux qu'un run
-garde hors du défaut faute de preuve sur les cas frais ; l'expérimental porte les leviers à
-l'essai qui se servent sans carte. En ligne de commande, `twin-engine preview|full --profil
+garde hors du défaut faute de preuve sur les cas frais — aujourd'hui la loi de pente par
+tranches servie à la répartition (DIAGNOSTIC §10.35) ; l'expérimental, la référence plus les
+leviers à l'essai qui se servent sans carte (technicité déclarée sur les descentes, consigne de
+marche). En ligne de commande, `twin-engine preview|full --profil
 experimental` (les `--set` s'appliquent après) ; au tableau de bord, l'écran Plan ; au livre
 servi, `tools/registre --servir … --profil experimental` quand la version ne le garde pas. Les entrées
 portent `course.terrain` (km ajoutés au Deq, ou la raison du refus), `model.terrain_adjust`

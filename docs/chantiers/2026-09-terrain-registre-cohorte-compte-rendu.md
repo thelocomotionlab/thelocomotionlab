@@ -201,6 +201,12 @@ archive mesure tout :
   course en corrige les deux tiers. Mesure hors ravito au registre et au scoreur
   (`score_plan --variant`).
 
+- 2026-10-02 — **lois de répartition, 30 courses** (DIAGNOSTIC §10.35) : la signature de Nice
+  est générale (plan trop long en montée, trop court en descente sous Minetti) ; la loi par
+  tranches l'efface (17 courses mieux, 6 moins bien, gain en montagne). **Décision 3** : elle
+  entre dans le profil Référence ; l'expérimental perd la descente sans remise et la fatigue de
+  descente. `score_plan --residus` pour la suite.
+
 ## Run 1 chez Valentin (à lancer)
 
 Une passe par archive mesure tout ce qui précède. La recette complète est au manuel
@@ -307,6 +313,10 @@ run de base : la réponse est alors « la carte ne dit rien pour cet athlète »
   défaut (échelle 1) : la variante TA5 du run 2 dira s'il faut la réduire.
 - La marche prévue ne compte que les descentes (la consigne de l'écran Plan parle de
   descentes) ; les passages mesurent la marche en descente dans les mêmes fenêtres.
+- Loi de la référence : les tranches au rétrécissement par défaut (5 h) plutôt qu'à 2 h,
+  presque à égalité en moyenne mais avec moins de courses dégradées (6 contre 8) et une perte
+  maximale plus faible (2,4 contre 3,2 min) ; plutôt qu'à 20 h, plus prudent mais qui gagne un
+  tiers de moins.
 - Profils de configuration : posés dans `twin.config.json` (bloc `profils`, hors de la
   configuration effective : l'empreinte du défaut n'en dépend pas). La **référence** est vide
   tant qu'aucun run n'a gardé de drapeau hors du défaut ; l'**expérimental** porte les leviers
