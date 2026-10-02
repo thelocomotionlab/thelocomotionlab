@@ -824,7 +824,9 @@ PYTHONPATH=src python -m tools.score_plan <manifestes…> --variant NOM:bloc.cl�
                                                     #   une passe, sans archive (dernier run du banc)
 PYTHONPATH=src python -m tools.score_plan <manifestes…> --residus [--set …]   # ce qui reste sous une loi :
                                                     #   écart hors ravito par type de tronçon, tiers de
-                                                    #   course, jour ou nuit, dénivelé, durée
+                                                    #   course, jour ou nuit, dénivelé, durée ; montées
+                                                    #   et descentes croisées avec le tiers, la nuit et
+                                                    #   le dénivelé, et par athlète
 PYTHONPATH=src python -m tools.registre --frontiere # jusqu'où resserrer les bandes sans perdre la couverture
 PYTHONPATH=src python -m tools.registre --tableau   # tableau de référence (markdown) : par livre × statut,
                                                     #   vendus/refusés, MAE, biais, couvertures, Winkler relatif,

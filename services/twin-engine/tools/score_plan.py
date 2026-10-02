@@ -30,8 +30,10 @@ part (``a_part.json``) ne comptent dans aucun groupe : elles se lisent sur leurs
 
 ``--residus`` ajoute ce qui reste sous la configuration de base : l'écart hors ravito de chaque
 tronçon, (plan − réel) ÷ réel, moyenné par type de tronçon (montée, descente, mixte), par
-tiers de course, de jour ou de nuit, par dénivelé au km et par durée — et par athlète pour
-le tiers de course et la nuit. C'est là que se lit le levier suivant.
+tiers de course, de jour ou de nuit, par dénivelé au km et par durée ; puis montées et
+descentes croisées avec le tiers, la nuit et le dénivelé (mêlées, elles s'annulent) ; et par
+athlète pour le type, le tiers de course et la nuit, l'athlète sans mesure de pente signalé.
+C'est là que se lit le levier suivant.
 
     PYTHONPATH=src python -m tools.score_plan <manifestes…> [--run ID] [--depot <dossier>]
         [--out score.md] [--set bloc.clé=valeur …] [--variant NOM:bloc.clé=valeur,… …]
@@ -203,6 +205,7 @@ def score_registre(registre: dict, manifests: list[Path], cfg) -> list[dict]:
                                  splits_delta=m.get("fade_delta_splits"))
         rows.append({"athlete": key[0], "race": key[1], "date": key[2],
                      "dev_set": statut(e) == "dev", "a_part": e.get("a_part"),
+                     "pente_mesuree": detail_du_registre(m, cfg) is not None,
                      "hors": hors, "official_h": float(official),
                      "splits_delta": m.get("fade_delta_splits"),
                      "durability_pct": m.get("durability_pct"),
@@ -321,9 +324,20 @@ def _ecarts(troncons: list[dict]) -> tuple[int, float | None, float | None]:
     return len(r), 100.0 * float(np.mean(r)), 100.0 * float(np.mean(np.abs(r)))
 
 
+def _cellules(troncons: list[dict], cle, cats) -> list[str]:
+    """Écart moyen % et nombre de tronçons de chaque catégorie, « — » sans tronçon."""
+    cells = []
+    for cat in cats:
+        n, moy, _ = _ecarts([t for t in troncons if cle(t) == cat])
+        cells.append("—" if not n else f"{_f(moy)} ({n})")
+    return cells
+
+
 def residus_markdown(rows: list[dict]) -> str:
     """Ce qui reste, tronçon par tronçon, sous la configuration du scoreur (courses à part
-    exclues) : écart signé et absolu, en % du temps réel hors ravito du tronçon."""
+    exclues) : écart signé et absolu, en % du temps réel hors ravito du tronçon. Les tables
+    croisées gardent les montées et les descentes séparées : un plan trop long en montée et
+    trop court en descente s'annulent dans une moyenne qui les mêle."""
     compte = [r for r in rows if not r.get("a_part") and r.get("hors")]
     tous = [t for r in compte for t in r["hors"].get("troncons", [])]
     out = ["**Ce qui reste — écart hors ravito de chaque tronçon** ((plan − réel) ÷ réel ; > 0 : le "
@@ -337,16 +351,27 @@ def residus_markdown(rows: list[dict]) -> str:
             n, moy, absm = _ecarts([t for t in tous if cle(t) == cat])
             if n:
                 out.append(f"| {nom} | {cat} | {n} | {_f(moy)} | {_f(absm)} |")
-    for nom, cle, cats in _CARACTERISTIQUES[1:3]:
+    _, type_de, types = _CARACTERISTIQUES[0]
+    for nom, cle, cats in _CARACTERISTIQUES[1:4]:
+        if not any(cle(t) is not None for t in tous):
+            continue
+        out += ["", f"*Type de tronçon × {nom}* (écart moyen %, tronçons)", "",
+                "| type | " + " | ".join(cats) + " |", "|---|" + "---|" * len(cats)]
+        for typ in types:
+            out.append(f"| {typ} | "
+                       + " | ".join(_cellules([t for t in tous if type_de(t) == typ], cle, cats)) + " |")
+    athletes = sorted({r["athlete"] for r in compte})
+    # sans mesure de pente à l'entraînement (pas de fréquence cardiaque), la loi personnelle
+    # retombe sur Minetti : ses tronçons ne disent rien de la loi servie
+    sans_pente = {a for a in athletes
+                  if not any(r.get("pente_mesuree", True) for r in compte if r["athlete"] == a)}
+    for nom, cle, cats in _CARACTERISTIQUES[:3]:
         out += ["", f"*Par athlète — {nom}* (écart moyen %, tronçons)", "",
                 "| athlète | " + " | ".join(cats) + " |", "|---|" + "---|" * len(cats)]
-        for ath in sorted({r["athlete"] for r in compte}):
+        for ath in athletes:
             mes = [t for r in compte if r["athlete"] == ath for t in r["hors"].get("troncons", [])]
-            cells = []
-            for cat in cats:
-                n, moy, _ = _ecarts([t for t in mes if cle(t) == cat])
-                cells.append("—" if not n else f"{_f(moy)} ({n})")
-            out.append(f"| {ath} | " + " | ".join(cells) + " |")
+            nom_ath = f"{ath} (pente non mesurée : loi standard)" if ath in sans_pente else ath
+            out.append(f"| {nom_ath} | " + " | ".join(_cellules(mes, cle, cats)) + " |")
     return "\n".join(out)
 
 

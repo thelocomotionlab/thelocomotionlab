@@ -3595,9 +3595,11 @@ la fatigue de descente en sortent. Défauts inchangés : aucun athlète frais.
 
 **Suite.** Reste 7,3 min par tronçon (8,7 % d'un tronçon). `tools/score_plan --residus`, sous
 la loi de la référence, répartit cet écart par type de tronçon, tiers de course, jour ou nuit,
-dénivelé et durée, pour choisir le levier suivant.
+dénivelé et durée, et croise le type de tronçon avec le tiers, la nuit et le dénivelé (une
+moyenne qui mêle montées et descentes les annule), pour choisir le levier suivant.
 
 **Tests** : `tests/test_profils.py` (la référence porte la loi par tranches, incluse dans
 l'expérimental), `tests/test_repartition_pente.py` (`--residus` : plan trop long en montée et
 trop court en descente sous Minetti, par tiers de course, sans nuit pour une course sans heure
-de départ).
+de départ ; les tables croisées rendent ±10 % par type là où le tiers lit 0, et signalent
+l'athlète sans mesure de pente).

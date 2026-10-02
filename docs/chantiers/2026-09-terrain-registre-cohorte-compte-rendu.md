@@ -205,7 +205,8 @@ archive mesure tout :
   est générale (plan trop long en montée, trop court en descente sous Minetti) ; la loi par
   tranches l'efface (17 courses mieux, 6 moins bien, gain en montagne). **Décision 3** : elle
   entre dans le profil Référence ; l'expérimental perd la descente sans remise et la fatigue de
-  descente. `score_plan --residus` pour la suite.
+  descente. `score_plan --residus` pour la suite : l'écart restant par type de tronçon, tiers,
+  nuit, dénivelé et durée, montées et descentes croisées avec le tiers, la nuit et le dénivelé.
 
 ## Run 1 chez Valentin (à lancer)
 
