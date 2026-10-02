@@ -87,6 +87,49 @@ def test_each_section_carries_what_happened_in_it():
     assert sans_cadence["segments"][0]["marche_h"] is None and sans_cadence["marche_h"] is None
 
 
+def _avec_arrets(course, v_ms: float, arrets: list[tuple[float, float]]):
+    """Trajectoire 1 Hz le long de la trace, arrêtée aux instants (début, durée) donnés."""
+    total_x = float(course.x_m[-1])
+    t, x, cur, s = [], [], 0.0, 0
+    while True:
+        if s and not any(a <= s < a + d for a, d in arrets):
+            cur = min(cur + v_ms, total_x)
+        t.append(float(s))
+        x.append(cur)
+        s += 1
+        if cur >= total_x:
+            break
+    x = np.array(x)
+    lat = np.interp(x, course.x_m, course.lat_grid)
+    lon = np.interp(x, course.x_m, course.lon_grid)
+    return np.array(t), x, lat, lon
+
+
+def test_the_stop_at_the_aid_station_is_told_apart_from_a_pause_on_the_way():
+    from tools.passages import passages_for_activity, render_markdown
+
+    race = RaceSpec("T", (0.0, 5.0, 10.0), ("départ", "sommet", "arrivée"))
+    course = build_course(_course_gpx(), race, CFG)
+    # dix minutes au sommet (le point de passage), quatre minutes de pause en route plus bas
+    t, x, lat, lon = _avec_arrets(course, 2.0, [(2500, 600), (4400, 240)])
+    pas = passages_for_activity(t, x, lat, lon, course, radius_m=50, official_h=t[-1] / 3600,
+                                gap=np.ones(t.size), cfg=CFG)
+    montee, descente = pas["segments"]
+    assert montee["ravito_h"] == 0.0 and montee["ravito_lu"]
+    assert montee["hors_ravito_h"] == pytest.approx(montee["ecoule_h"])
+    # le séjour au sommet est au ravito ; la pause en route reste dans le temps hors ravito
+    assert descente["ravito_h"] * 3600 == pytest.approx(600, abs=2)
+    assert descente["arrets_h"] * 3600 == pytest.approx(840, abs=3)
+    assert descente["hors_ravito_h"] * 3600 == pytest.approx(descente["ecoule_h"] * 3600 - 600, abs=2)
+    assert pas["ravito_h"] * 3600 == pytest.approx(600, abs=2)
+    assert pas["hors_ravito_h"] == pytest.approx(pas["checkpoints"][-1]["t_h"] - 600 / 3600, abs=0.001)
+    md = render_markdown("Testeur", [("T", {**pas, "activity_date": "2026-05-01"})])
+    assert "dont au ravito | hors ravito" in md and "aux ravitos" in md
+    # sans positions, rien n'est inventé : pas de temps au ravito
+    sans = passages_for_activity(t, x, lat * np.nan, lon, course, radius_m=50, cfg=CFG)
+    assert sans["n_found"] == 0
+
+
 def test_bilan_without_a_checkpoint_is_none():
     d = np.arange(0.0, 1000.0)
     assert bilan_par_troncon(d, None, None, [0, None, 900], CFG) == [None, None]
@@ -108,6 +151,16 @@ def test_plan_shape_is_judged_against_the_real_sections():
     # le plan répartit le mouvement réel : sa somme est le mouvement réel
     assert sum(r["plan_min"] for r in impose["troncons"]) == pytest.approx(
         sum(r["reel_min"] for r in impose["troncons"]), abs=0.2)
+    # hors ravito : l'arrêt au sommet n'y pèse pas ; à vitesse constante, la loi de Minetti
+    # met plus de temps dans la montée que l'athlète, moins dans la descente
+    hors = forme["hors_ravito_impose"]
+    assert hors["n"] == 2
+    montee, descente = pas["segments"]
+    assert hors["troncons"][1]["reel_min"] == pytest.approx(60 * descente["ecoule_h"] - 10, abs=0.1)
+    assert sum(r["plan_min"] for r in hors["troncons"]) == pytest.approx(
+        sum(r["reel_min"] for r in hors["troncons"]), abs=0.2)
+    assert hors["biais_montees_min"] > 0 > hors["biais_descentes_min"]
+    assert hors["biais_montees_min"] == pytest.approx(-hors["biais_descentes_min"], abs=0.2)
     assert impose["troncons"][0]["marche_reelle_min"] == pytest.approx(10.0, abs=0.3)
     assert impose["pire_cumul_min"] >= impose["erreur_moyenne_min"] - 1e-9
     total = forme["total_predit"]
@@ -219,8 +272,9 @@ def test_readings_judge_the_plan_shape_and_report_set_aside_races_apart(tmp_path
     rows = forme_rows(entrees)
     assert rows[-1]["athlete"] == "TOTAL" and rows[-1]["n"] == 1
     assert rows[-1]["impose_moy_min"] == pytest.approx(forme["mouvement_impose"]["erreur_moyenne_min"])
+    assert rows[-1]["hors_moy_min"] == pytest.approx(forme["hors_ravito_impose"]["erreur_moyenne_min"])
     texte = tableau_markdown(entrees)
-    assert "forme du plan contre les passages réels" in texte
+    assert "forme du plan contre les passages réels" in texte and "hors ravito : montées" in texte
     assert "Rapportées à part" in texte and "| A | Nice | 2026-06-01 | mise au point |" in texte
     comparaison = compare_markdown(entrees, entrees)
     assert "forme du plan, avant → après" in comparaison and "Rapportées à part, après" in comparaison

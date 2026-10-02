@@ -85,6 +85,7 @@ def forme_rows(entries: list[dict]) -> list[dict]:
         arr = [e["forme"]["arrets"]["plan_h"] - e["forme"]["arrets"]["reel_h"] for e in sub
                if (e["forme"].get("arrets") or {}).get("reel_h") is not None]
         mar = [e["forme"]["marche_descente"] for e in sub if e["forme"].get("marche_descente")]
+        hors = [e["forme"]["hors_ravito_impose"] for e in sub if e["forme"].get("hors_ravito_impose")]
 
         def _m(vals):
             vals = [v for v in vals if v is not None]
@@ -106,23 +107,33 @@ def forme_rows(entries: list[dict]) -> list[dict]:
                      "n_marche": len(mar),
                      "marche_prevue_min": _m([m.get("prevue_min") for m in mar]),
                      "marche_reelle_min": _m([m.get("reelle_min") for m in mar]),
-                     "marche_erreur_min": _m([m.get("erreur_moyenne_min") for m in mar])})
+                     "marche_erreur_min": _m([m.get("erreur_moyenne_min") for m in mar]),
+                     "n_hors": len(hors),
+                     "hors_moy_min": _m([h.get("erreur_moyenne_min") for h in hors]),
+                     "hors_cumul_min": _m([h.get("pire_cumul_min") for h in hors]),
+                     "hors_montees_min": _m([h.get("biais_montees_min") for h in hors]),
+                     "hors_descentes_min": _m([h.get("biais_descentes_min") for h in hors])})
     return rows
 
 
 def _md_forme(rows: list[dict]) -> str:
     lines = ["| athlète | n | imposé : erreur moy. min | imposé : % d'un tronçon | imposé : pire "
-             "tronçon min | imposé : pire cumul min | servi : erreur moy. min | servi : biais "
-             "mi-course min | arrêts plan − réel, h | marche en descente : prévue / réelle min "
-             "(erreur moy. par tronçon) |",
-             "|---|---|---|---|---|---|---|---|---|---|"]
+             "tronçon min | imposé : pire cumul min | hors ravito : erreur moy. / pire cumul min "
+             "| hors ravito : montées / descentes, plan − réel min | servi : erreur moy. min "
+             "| servi : biais mi-course min | arrêts plan − réel, h | marche en descente : "
+             "prévue / réelle min (erreur moy. par tronçon) |",
+             "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
         marche = ("—" if not r.get("n_marche") else
                   f"{_f(r['marche_prevue_min'])} / {_f(r['marche_reelle_min'])} "
                   f"({_f(r['marche_erreur_min'])})")
+        hors = ("—" if not r.get("n_hors") else
+                f"{_f(r['hors_moy_min'])} / {_f(r['hors_cumul_min'])}")
+        pentes = ("—" if not r.get("n_hors") else
+                  f"{_f(r['hors_montees_min'])} / {_f(r['hors_descentes_min'])}")
         lines.append(f"| {r['athlete']} | {r['n']} | {_f(r['impose_moy_min'])} "
                      f"| {_f(r['impose_moy_pct'], 1, ' %')} | {_f(r['impose_pire_min'])} "
-                     f"| {_f(r['impose_cumul_min'])} | {_f(r['servi_moy_min'])} "
+                     f"| {_f(r['impose_cumul_min'])} | {hors} | {pentes} | {_f(r['servi_moy_min'])} "
                      f"| {_f(r['servi_mi_course_min'])} | {_f(r['arrets_ecart_h'], 2)} | {marche} |")
     return "\n".join(lines)
 
@@ -130,14 +141,18 @@ def _md_forme(rows: list[dict]) -> str:
 def _md_a_part(entries: list[dict]) -> str:
     """Les courses mises à part, une ligne chacune : ce qu'elles diraient, sans compter."""
     lines = ["| athlète | course | date | motif | verdict | err % | imposé : erreur moy. / pire "
-             "cumul min | servi : erreur moy. min | arrêts plan / réel, h |",
-             "|---|---|---|---|---|---|---|---|---|"]
+             "cumul min | hors ravito : erreur moy. / pire cumul min | hors ravito : montées / "
+             "descentes, plan − réel min | servi : erreur moy. min | arrêts plan / réel, h |",
+             "|---|---|---|---|---|---|---|---|---|---|---|"]
     for e in sorted(entries, key=lambda x: (str(x.get("athlete")), str(x.get("date")))):
         f = e.get("forme") or {}
         imp, tot, arr = f.get("mouvement_impose") or {}, f.get("total_predit") or {}, f.get("arrets") or {}
+        hr = f.get("hors_ravito_impose") or {}
         lines.append(f"| {e.get('athlete')} | {e.get('race')} | {e.get('date')} | {e.get('a_part')} "
                      f"| {_verdict(e) or '—'} | {_f((e.get('prediction') or {}).get('err_pct'))} "
                      f"| {_f(imp.get('erreur_moyenne_min'))} / {_f(imp.get('pire_cumul_min'))} "
+                     f"| {_f(hr.get('erreur_moyenne_min'))} / {_f(hr.get('pire_cumul_min'))} "
+                     f"| {_f(hr.get('biais_montees_min'))} / {_f(hr.get('biais_descentes_min'))} "
                      f"| {_f(tot.get('erreur_moyenne_min'))} "
                      f"| {_f(arr.get('plan_h'), 2)} / {_f(arr.get('reel_h'), 2)} |")
     return "\n".join(lines)
@@ -535,9 +550,10 @@ def compare_markdown(before: list[dict], after: list[dict]) -> str:
         if fb or fa:
             out.append(f"\n**{label} — forme du plan, avant → après (Δ)**\n")
             out.append("| athlète | n | imposé : erreur moy. min | imposé : pire cumul min | "
+                       "hors ravito : erreur moy. min | hors ravito : pire cumul min | "
                        "servi : erreur moy. min | servi : biais mi-course min | marche en descente : "
                        "erreur moy. par tronçon min |")
-            out.append("|---|---|---|---|---|---|---|")
+            out.append("|---|---|---|---|---|---|---|---|---|")
             for a in [x for x in sorted(set(fb) | set(fa)) if x != "TOTAL"] + ["TOTAL"]:
                 b, r = fb.get(a, {}), fa.get(a, {})
                 if not b and not r:
@@ -545,6 +561,8 @@ def compare_markdown(before: list[dict], after: list[dict]) -> str:
                 out.append(f"| {a} | {_delta_cell(b.get('n'), r.get('n'), 0)} "
                            f"| {_delta_cell(b.get('impose_moy_min'), r.get('impose_moy_min'))} "
                            f"| {_delta_cell(b.get('impose_cumul_min'), r.get('impose_cumul_min'))} "
+                           f"| {_delta_cell(b.get('hors_moy_min'), r.get('hors_moy_min'))} "
+                           f"| {_delta_cell(b.get('hors_cumul_min'), r.get('hors_cumul_min'))} "
                            f"| {_delta_cell(b.get('servi_moy_min'), r.get('servi_moy_min'))} "
                            f"| {_delta_cell(b.get('servi_mi_course_min'), r.get('servi_mi_course_min'))} "
                            f"| {_delta_cell(b.get('marche_erreur_min'), r.get('marche_erreur_min'))} |")

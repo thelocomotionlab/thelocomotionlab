@@ -3476,3 +3476,67 @@ servi et sur la ligne du Registre), `tests/test_consigne_marche.py` (consigne po
 segment libre le plus long, sous son seul réglage ; « descente technique » et sources de carte
 dans le contexte et l'annexe ; rien sans carte servie), `apps/site/lib/twinTableauDeBord.test.js`
 (profil en clair, aide du profil).
+
+### 10.34 Nice 2026 contre LiveTrail : la répartition, et la mesure hors ravito (2026-10-02)
+
+**Le plan porté.** Les heures de passage du plan du 20/09 (arrivée centrale 33 h 37) sont
+reconstruites à 0,6 min près en moyenne (3 min au pire) par le moteur d'aujourd'hui sur la
+trace finale, avec l'**ancien carnet de route** (167,2 km, celui d'avant le 17/09) et 5 min à
+chaque ravito ; avec le carnet officiel (169,6 km), l'écart monte à 5,6 min, systématique
+après le km 100. Le carnet ne change pas la prédiction (Deq de la trace identique, 205,7 km)
+mais déplaçait les ravitos jusqu'à 1 km : les comparaisons ci-dessous reposent le même plan
+sur les kilomètres officiels.
+
+**Ce que disent les temps officiels.** LiveTrail calcule la vitesse d'un tronçon sans l'arrêt
+au ravito de départ quand il chronomètre entrée et sortie : temps du tronçon − distance ÷
+vitesse = l'arrêt. Somme : 2 h 29, pour 2 h 27 relevées sur le suivi. Aux points à un seul
+chronométrage (Collelongue, Isola, Utelle, Drap), l'arrêt reste dans le tronçon suivant.
+
+| | plan du 20/09 | réel | écart |
+|---|---|---|---|
+| hors ravito | 32 h 22 | 32 h 38 au plus | +16 min au plus (+0,8 %) |
+| aux ravitos | 1 h 15 | 2 h 30 au moins | +1 h 15 (St-Sauveur 36 min, Levens 44, Tourrette-Levens 38) |
+| arrivée | 33 h 37 | 35 h 05 | +1 h 28 |
+
+Les arrêts longs ont été subis (l'athlète le dit) : imprévisibles, ils sortent de l'évaluation
+de la répartition. Le niveau du jumeau tient à moins de 1 % ; la répartition, non : plan −
+réel hors ravito, +1 h 40 sur les quatre montées (Cabane des chasseurs +45 min, Chapelle
+St-Michel +30 au km 131, Rimplas +14, Plateau St-Michel +11), −2 h 01 sur les quatre grandes
+descentes (Isola −31, Utelle −42, Tourrette-Levens −32, Levens −16), ±6 min sur les tronçons
+mixtes et de nuit. La descente vers Isola, au km 39, était déjà 52 % plus lente que le plan :
+la loi de pente avant la fatigue (réserve : ce tronçon porte l'arrêt à Collelongue).
+
+**Les lois de pente, jugées hors ravito** (plan ramené au temps réel hors ravito ; erreur
+moyenne par tronçon / pire tronçon / pire cumul, min ; somme plan − réel sur les montées et
+les descentes) :
+
+| loi servie à la répartition | erreur | montées | descentes |
+|---|---|---|---|
+| Minetti (plan servi) | 17 / 46 / 66 | +103 | −111 |
+| κ mesurés avant la course (0,55 ; 0,50 à la borne) | 9 / 19 / 41 | +22 | −27 |
+| κ montée 0,55, descente sans remise (0) | 7 / 22 / 33 | −6 | −1 |
+| κ montée 0,55, descente −0,5 | 7 / 27 / 25 | −31 | +21 |
+
+Fade de 0,15 (celui du plan servi) contre 0 et 0,30 sous (0,55 ; 0,50) : 9 / 14 / 12 min
+d'erreur moyenne. Les κ ont été mesurés sur l'archive avant la course (§10.15, §10.28) : la loi
+personnelle et sa descente sans remise (`personal_pacing`, `slope_kappa_down_min=0`)
+corrigent les deux tiers de l'erreur de forme sans rien apprendre de Nice. Aller sous zéro en
+descente surcorrige. Reste : la première descente (+20 min, départ rapide) et la montée de
+nuit vers Granges (−22), à lire sur d'autres courses avant d'y toucher.
+
+**La mesure hors ravito, au registre.** Les passages portent désormais, par tronçon, les arrêts
+faits au ravitaillement (`ravito_h` : les arrêts pendant le séjour dans le rayon du point, de
+part et d'autre du passage) et le temps hors ravito (`hors_ravito_h` = écoulé − ces arrêts),
+avec `ravito_lu` quand les deux points sont relevés dans le rayon ; les pauses en route et les
+trous d'enregistrement restent dans le tronçon, comme dans le plan. Le bloc `forme` y ajoute
+`hors_ravito_impose` (erreur moyenne, pire tronçon, pire cumul, sommes plan − réel sur les
+tronçons de montée — D+ au moins double du D− — et de descente), lu par `--tableau`,
+`--compare` et la ligne des courses à part. `tools/score_plan` le calcule sous la source de
+fade servie, et `--variant NOM:bloc.clé=valeur,…` y compare plusieurs lois en une passe, sans
+archive. Défauts inchangés.
+
+**Tests** : `tests/test_mesures_par_troncon.py` (arrêt au ravito distingué d'une pause en route ;
+forme hors ravito : arrêt au sommet sans poids, sommes égales, montée et descente de signes
+opposés ; tableau), `tests/test_repartition_pente.py` (arrêt imprévu de 30 min : il pèse sur les
+passages, pas hors ravito ; loi personnelle à zéro, Minetti trop long en montée et trop court
+en descente ; `--variant` et course à part).

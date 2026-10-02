@@ -72,14 +72,20 @@ def course_a_pied(cadence_spm: np.ndarray | None, cfg: Config) -> np.ndarray | N
 
 def bilan_par_troncon(dist_m: np.ndarray, gap_s: np.ndarray | None,
                       cadence_spm: np.ndarray | None, bornes: list[int | None],
-                      cfg: Config, descente: np.ndarray | None = None) -> list[dict | None]:
+                      cfg: Config, descente: np.ndarray | None = None,
+                      au_ravito: np.ndarray | None = None) -> list[dict | None]:
     """Pour chaque tronçon entre deux bornes consécutives (indices de seconde) : temps
     écoulé, arrêts, mouvement (écoulé − arrêts) et marche (secondes en mouvement à cadence
     de marche ; ``None`` sans cadence), en heures. ``None`` quand une borne manque.
 
     ``descente`` (masque par seconde des fenêtres de descente du détecteur,
     ``twin.descentes.secondes_en_descente``) : en plus, le temps en mouvement en descente et
-    la marche en descente du tronçon."""
+    la marche en descente du tronçon.
+
+    ``au_ravito`` (masque par seconde des séjours aux points de passage) : en plus, les
+    arrêts faits au ravitaillement et le temps hors ravito (écoulé − ces arrêts), celui que
+    le plan répartit et qu'un chronométrage entrée / sortie mesure ; les arrêts en route
+    (pauses, trous d'enregistrement) restent dans le temps hors ravito, comme dans le plan."""
     mouvement = masque_mouvement(dist_m, gap_s, cfg)
     arret = episodes_arret(mouvement, cfg)
     court = course_a_pied(cadence_spm, cfg)
@@ -100,6 +106,10 @@ def bilan_par_troncon(dist_m: np.ndarray, gap_s: np.ndarray | None,
             b["descente_h"] = float(np.count_nonzero(dm)) / 3600.0
             b["marche_descente_h"] = (None if court is None
                                       else float(np.count_nonzero(dm & ~court[i0:i1])) / 3600.0)
+        if au_ravito is not None:
+            ravito = float(np.count_nonzero(arret[i0:i1] & au_ravito[i0:i1]))
+            b["ravito_h"] = ravito / 3600.0
+            b["hors_ravito_h"] = (ecoule - ravito) / 3600.0
         out.append(b)
     return out
 

@@ -97,6 +97,28 @@ def match_checkpoints(t, dist_m, lat, lon, checkpoints, *, radius_m: float = 150
     return out
 
 
+def sejours_aux_points(lat, lon, coords, bornes: list[int | None], radius_m: float) -> np.ndarray:
+    """True à chaque seconde passée au point de passage : la suite continue de secondes à
+    moins de ``radius_m`` du point qui contient son passage relevé (``bornes[k]``). Le
+    départ n'a pas de séjour ; un point relevé hors du rayon (repli « closest ») non plus."""
+    lat = np.asarray(lat, dtype=float)
+    lon = np.asarray(lon, dtype=float)
+    out = np.zeros(lat.size, dtype=bool)
+    for k, (i, (_, la, lo)) in enumerate(zip(bornes, coords)):
+        if k == 0 or i is None:
+            continue
+        dedans = _dist_to_point(lat, lon, la, lo) <= radius_m     # NaN → False
+        if not dedans[i]:
+            continue
+        a, b = i, i
+        while a > 0 and dedans[a - 1]:
+            a -= 1
+        while b + 1 < lat.size and dedans[b + 1]:
+            b += 1
+        out[a:b + 1] = True
+    return out
+
+
 def passages_for_activity(t, dist_m, lat, lon, course, *, radius_m: float = 150.0,
                           official_h: float | None = None, cadence=None, gap=None,
                           cfg=None, alt=None) -> dict:
@@ -127,29 +149,40 @@ def passages_for_activity(t, dist_m, lat, lon, course, *, radius_m: float = 150.
     }
     if cfg is not None:
         out.update(_mouvement_par_troncon(np.asarray(t, dtype=float), dist_m, gap, cadence,
-                                          hits, names, cfg, alt=alt))
+                                          hits, names, cfg, alt=alt, lat=lat, lon=lon,
+                                          coords=coords, radius_m=radius_m))
     return out
 
 
-def _mouvement_par_troncon(t, dist_m, gap, cadence, hits, names, cfg, *, alt=None) -> dict:
+def _mouvement_par_troncon(t, dist_m, gap, cadence, hits, names, cfg, *, alt=None, lat=None,
+                           lon=None, coords=None, radius_m: float | None = None) -> dict:
     """Mouvement, arrêts et marche entre deux points de passage trouvés (arrivée à arrivée :
     l'arrêt à un ravitaillement compte dans le tronçon qui en repart, comme dans le plan) ;
-    descente et marche en descente avec l'altitude."""
+    descente et marche en descente avec l'altitude ; avec les positions, les arrêts faits au
+    ravitaillement et le temps hors ravito (``ravito_lu`` : les deux points du tronçon
+    relevés dans le rayon, leurs séjours mesurables)."""
     from twin_engine.twin.descentes import secondes_en_descente
     from twin_engine.twin.mouvement import bilan_par_troncon
 
     bornes = [None if h["t_s"] is None else int(np.clip(np.searchsorted(t, h["t_s"]), 0, len(t) - 1))
               for h in hits]
     descente = None if alt is None else secondes_en_descente(dist_m, alt, gap, cfg)
-    bilans = bilan_par_troncon(dist_m, gap, cadence, bornes, cfg, descente=descente)
+    au_ravito = (None if lat is None or lon is None or coords is None or radius_m is None
+                 else sejours_aux_points(lat, lon, coords, bornes, radius_m))
+    bilans = bilan_par_troncon(dist_m, gap, cadence, bornes, cfg, descente=descente,
+                               au_ravito=au_ravito)
     segments = [None if b is None else {"de": names[k], "a": names[k + 1],
                                         **{c: (None if v is None else round(v, 4))
                                            for c, v in b.items()}}
                 for k, b in enumerate(bilans)]
+    if au_ravito is not None:
+        for k, s in enumerate(segments):
+            if s is not None:
+                s["ravito_lu"] = all(hits[j]["method"] == "radius" for j in (k, k + 1) if j > 0)
     complets = [s for s in segments if s is not None]
 
     def _somme(cle):
-        vals = [s[cle] for s in complets]
+        vals = [s.get(cle) for s in complets]
         return None if not vals or any(v is None for v in vals) else round(float(sum(vals)), 4)
 
     tw = cfg.twin
@@ -157,6 +190,9 @@ def _mouvement_par_troncon(t, dist_m, gap, cadence, hits, names, cfg, *, alt=Non
               "arrets_h": _somme("arrets_h"), "marche_h": _somme("marche_h")}
     if descente is not None:
         sommes["marche_descente_h"] = _somme("marche_descente_h")
+    if au_ravito is not None:
+        sommes["ravito_h"] = _somme("ravito_h")
+        sommes["hors_ravito_h"] = _somme("hors_ravito_h")
     return {
         **sommes,
         "definitions": {"vitesse_ms": tw.terrain_moving_ms, "trou_max_s": tw.terrain_gap_max_s,
@@ -333,16 +369,20 @@ def render_markdown(athlete: str, results: list[tuple[str, dict | None]]) -> str
                 out.append(f"| {c['km']:.1f} | {c['name']} | {_hm(c['t_h'])} | {c['method']} "
                            f"| {'—' if c['dist_m'] is None else c['dist_m']} |")
             continue
-        out.append("| km | point | passage | méthode | écart m | mouvement | arrêts | marche |")
-        out.append("|---|---|---|---|---|---|---|---|")
+        ravito = any(s is not None and "hors_ravito_h" in s for s in segs)
+        cols = ["mouvement", "arrêts"] + (["dont au ravito", "hors ravito"] if ravito else []) + ["marche"]
+        out.append("| km | point | passage | méthode | écart m | " + " | ".join(cols) + " |")
+        out.append("|---|---|---|---|---|" + "---|" * len(cols))
         for k, c in enumerate(pas["checkpoints"]):
             seg = segs[k - 1] if k > 0 else None
-            cells = (["—", "—", "—"] if seg is None else
-                     [_hm(seg["mouvement_h"]), _hm(seg["arrets_h"]), _hm(seg["marche_h"])])
+            cles = ["mouvement_h", "arrets_h"] + (["ravito_h", "hors_ravito_h"] if ravito else []) + ["marche_h"]
+            cells = ["—"] * len(cles) if seg is None else [_hm(seg.get(c_)) for c_ in cles]
             out.append(f"| {c['km']:.1f} | {c['name']} | {_hm(c['t_h'])} | {c['method']} "
                        f"| {'—' if c['dist_m'] is None else c['dist_m']} | " + " | ".join(cells) + " |")
         out.append(f"\nMouvement {_hm(pas.get('mouvement_h'))} · arrêts {_hm(pas.get('arrets_h'))}"
-                   f" · marche {_hm(pas.get('marche_h'))} (entre le premier et le dernier point trouvés).")
+                   + (f" (dont {_hm(pas.get('ravito_h'))} aux ravitos) · hors ravito "
+                      f"{_hm(pas.get('hors_ravito_h'))}" if ravito else "")
+                   + f" · marche {_hm(pas.get('marche_h'))} (entre le premier et le dernier point trouvés).")
     return "\n".join(out)
 
 

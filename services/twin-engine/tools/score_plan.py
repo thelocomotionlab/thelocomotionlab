@@ -18,8 +18,18 @@ biais signé à mi-course (plan − réel, en minutes : > 0 = l'athlète était 
 plan à mi-parcours, donc le plan le faisait partir trop lentement / finir trop vite).
 Agrégées par athlète × variante, cas de développement et cas frais séparés.
 
+**Hors ravito** (quand les passages portent le temps au ravitaillement) : le plan, ramené au
+temps réellement passé hors des ravitos, contre ce temps tronçon par tronçon — la
+répartition seule, sans les arrêts au ravito, prévisibles ou non ; erreur moyenne par
+tronçon, pire cumul, et somme signée plan − réel sur les montées et les descentes (> 0 : le
+plan y prévoyait plus long que le réel). C'est la mesure qui départage les lois de pente.
+
+``--variant NOM:bloc.clé=valeur,…`` (répétable) rejoue tout sous chaque loi, en plus de la
+configuration de base, et ouvre la sortie par une table qui les compare. Les courses mises à
+part (``a_part.json``) ne comptent dans aucun groupe : elles se lisent sur leurs lignes.
+
     PYTHONPATH=src python -m tools.score_plan <manifestes…> [--run ID] [--depot <dossier>]
-        [--out score.md] [--set bloc.clé=valeur …]
+        [--out score.md] [--set bloc.clé=valeur …] [--variant NOM:bloc.clé=valeur,… …]
 
 Les entrées sont celles d'un run du livre banc (le dernier par défaut), annotées de leurs
 passages (``docs/twin-registre/passages.json``) et du statut de leur athlète.
@@ -43,6 +53,7 @@ from twin_engine.twin.pente import detail_du_registre, fatigue_servie, repartir
 from twin_engine.twin.terrain import facteur_declare
 
 from twin_engine.registre import DEFAULT_RACINE, Depot
+from twin_engine.registre.forme import hors_ravito_impose
 
 from tools.backtest import race_spec_from_meta
 from tools.registre import charger, statut
@@ -103,6 +114,27 @@ def score_course(course, race: RaceSpec, official_h: float, passages: dict, cfg,
     return out
 
 
+def score_hors_ravito(course, race: RaceSpec, official_h: float, passages: dict, cfg,
+                      *, durability_pct: float | None, splits_delta: float | None) -> dict | None:
+    """La répartition jugée hors ravito, sous la source de fade servie (``pacing.fade_source``)
+    : le modèle d'arrêts ne compte pas, le plan étant ramené au temps réel hors ravito."""
+    segs = passages.get("segments")
+    if not segs or len(segs) != len(course.segments):
+        return None
+    pred = _stand_in(official_h, course.deq_km, course.dplus_per_km, stops_model="carved",
+                     stops_rate=None)
+    plan = build_pacing(course, pred, race, cfg, durability_pct=durability_pct,
+                        splits_delta=splits_delta)
+    h = hors_ravito_impose(course, plan, segs)
+    if h is None:
+        return None
+    reel = [t["reel_min"] for t in h["troncons"]]
+    return {"n": h["n"], "mae_min": h["erreur_moyenne_min"],
+            "mae_pct": 100.0 * h["erreur_moyenne_min"] / float(np.mean(reel)) if np.mean(reel) > 0 else None,
+            "cumul_min": h["pire_cumul_min"], "montees_min": h["biais_montees_min"],
+            "descentes_min": h["biais_descentes_min"]}
+
+
 def score_registre(registre: dict, manifests: list[Path], cfg) -> list[dict]:
     """Une ligne par course scorée : athlète, course, dev_set, officiel, variantes."""
     paths: dict[tuple[str, str, str], tuple[Path, dict]] = {}
@@ -149,12 +181,16 @@ def score_registre(registre: dict, manifests: list[Path], cfg) -> list[dict]:
                               stops_rate=m.get("stops_rate_personal"))
         if not scores:
             continue
+        hors = score_hors_ravito(course, race, float(official), pas, cfg,
+                                 durability_pct=m.get("durability_pct"),
+                                 splits_delta=m.get("fade_delta_splits"))
         rows.append({"athlete": key[0], "race": key[1], "date": key[2],
-                     "dev_set": statut(e) == "dev", "official_h": float(official),
+                     "dev_set": statut(e) == "dev", "a_part": e.get("a_part"),
+                     "hors": hors, "official_h": float(official),
                      "splits_delta": m.get("fade_delta_splits"),
                      "durability_pct": m.get("durability_pct"),
                      "stops_rate": m.get("stops_rate_personal"),
-                     "scores": scores})
+                     "scores": scores, "servi": scores.get((cfg.pacing.fade_source, "carved"))})
     return rows
 
 
@@ -181,6 +217,105 @@ def _f(v, nd=1) -> str:
     return "—" if v is None else f"{v:.{nd}f}"
 
 
+def _moy(vals) -> float | None:
+    vals = [v for v in vals if v is not None]
+    return float(np.mean(vals)) if vals else None
+
+
+def groupes(rows: list[dict]) -> list[tuple[str, list[dict]]]:
+    """Cas frais, cas de développement, tous les cas — les courses mises à part n'y comptent pas."""
+    compte = [r for r in rows if not r.get("a_part")]
+    return [("cas frais (décisionnels)", [r for r in compte if not r["dev_set"]]),
+            ("cas de développement (indicatifs)", [r for r in compte if r["dev_set"]]),
+            ("tous les cas", compte)]
+
+
+def agg_hors_ravito(rows: list[dict]) -> dict | None:
+    """Moyennes par course de la répartition jugée hors ravito, et de l'erreur des passages
+    sous la source de fade servie (``servi``)."""
+    h = [r["hors"] for r in rows if r.get("hors")]
+    if not h:
+        return None
+    return {"n": len(h), "mae_min": _moy([x["mae_min"] for x in h]),
+            "mae_pct": _moy([x["mae_pct"] for x in h]), "cumul_min": _moy([x["cumul_min"] for x in h]),
+            "montees_min": _moy([x["montees_min"] for x in h]),
+            "descentes_min": _moy([x["descentes_min"] for x in h]),
+            "passages_pct": _moy([(r.get("servi") or {}).get("mae_pct") for r in rows if r.get("hors")])}
+
+
+def _ligne_hors(debut: str, a: dict) -> str:
+    return (f"{debut} | {a['n']} | {_f(a['mae_min'])} | {_f(a['mae_pct'], 1)} | {_f(a['cumul_min'])} "
+            f"| {_f(a['montees_min'])} | {_f(a['descentes_min'])} | {_f(a['passages_pct'], 2)} |")
+
+
+_TETE_HORS = ("courses | erreur moy. par tronçon, min | % d'un tronçon | pire cumul, min "
+              "| montées, plan − réel min | descentes, plan − réel min | passages : MAE % du temps |")
+
+
+def _md_hors_ravito(rows: list[dict]) -> list[str]:
+    """La répartition jugée hors ravito, par groupe et par athlète, puis les courses à part."""
+    out: list[str] = []
+    for title, grp in groupes(rows):
+        a = agg_hors_ravito(grp)
+        if a is None:
+            continue
+        out.append(f"\n**{title} — répartition jugée hors ravito** (plan ramené au temps réel hors "
+                   "ravito ; montées / descentes : > 0, le plan y prévoyait plus long que le réel)\n")
+        out.append("| athlète | " + _TETE_HORS)
+        out.append("|---|---|---|---|---|---|---|---|")
+        for ath in sorted({r["athlete"] for r in grp}):
+            b = agg_hors_ravito([r for r in grp if r["athlete"] == ath])
+            if b is not None:
+                out.append(_ligne_hors(f"| {ath}", b))
+        out.append(_ligne_hors("| TOTAL", a))
+    a_part = [r for r in rows if r.get("a_part") and r.get("hors")]
+    if a_part:
+        out.append("\n**Rapportées à part — répartition hors ravito** (hors de tous les groupes)\n")
+        out.append("| athlète | course | motif | " + _TETE_HORS)
+        out.append("|---|---|---|---|---|---|---|---|---|---|")
+        for r in a_part:
+            out.append(_ligne_hors(f"| {r['athlete']} | {r['race']} | {r['a_part']}",
+                                   agg_hors_ravito([r])))
+    return out
+
+
+def comparer_lois(par_loi: dict[str, list[dict]], reglages: dict[str, str]) -> str:
+    """Une table par groupe : chaque loi sur les mêmes courses, puis la table course par course."""
+    out = ["**Lois comparées — répartition jugée hors ravito** (moyennes par course ; montées / "
+           "descentes : plan − réel, > 0 = le plan y prévoyait plus long que le réel)", ""]
+    noms = list(par_loi)
+    for i, (title, _) in enumerate(groupes(next(iter(par_loi.values()), []))):
+        lignes = []
+        for nom in noms:
+            a = agg_hors_ravito(groupes(par_loi[nom])[i][1])
+            if a is not None:
+                lignes.append(_ligne_hors(f"| {nom} | {reglages.get(nom) or 'configuration de base'}", a))
+        if lignes:
+            out += [f"\n*{title}*\n", "| loi | réglages | " + _TETE_HORS,
+                    "|---|---|---|---|---|---|---|---|---|", *lignes]
+    cles = []
+    for rows in par_loi.values():
+        for r in rows:
+            k = (r["athlete"], r["race"], r["date"])
+            if r.get("hors") and k not in cles:
+                cles.append(k)
+    if cles:
+        out += ["", "*Course par course — erreur moyenne par tronçon hors ravito, min (montées / "
+                "descentes)*", "", "| athlète | course | " + " | ".join(noms) + " |",
+                "|---|---|" + "---|" * len(noms)]
+        for k in cles:
+            cells = []
+            for nom in noms:
+                r = next((x for x in par_loi[nom] if (x["athlete"], x["race"], x["date"]) == k), None)
+                h = (r or {}).get("hors")
+                cells.append("—" if not h else f"{_f(h['mae_min'])} ({_f(h['montees_min'], 0)} / "
+                                               f"{_f(h['descentes_min'], 0)})")
+            a_part = next((x.get("a_part") for x in par_loi[noms[0]]
+                           if (x["athlete"], x["race"], x["date"]) == k), None)
+            out.append(f"| {k[0]} | {k[1]}{' (à part)' if a_part else ''} | " + " | ".join(cells) + " |")
+    return "\n".join(out)
+
+
 def render_markdown(rows: list[dict]) -> str:
     out: list[str] = []
     if not rows:
@@ -200,10 +335,8 @@ def render_markdown(rows: list[dict]) -> str:
         out.append(f"| {ath} | {len(sub)} | {_f(float(np.median(fd)), 3) if fd else '—'} "
                    f"| {_f(float(np.median(served)), 3) if served else '—'} "
                    f"| {_f(float(np.median(du))) if du else '—'} | {_f(float(np.median(sr))) if sr else '—'} |")
-    groups = [("cas frais (décisionnels)", [r for r in rows if not r["dev_set"]]),
-              ("cas de développement (indicatifs)", [r for r in rows if r["dev_set"]]),
-              ("tous les cas", rows)]
-    for title, grp in groups:
+    out += _md_hors_ravito(rows)
+    for title, grp in groupes(rows):
         if not grp:
             continue
         out.append(f"\n**{title} — forme du plan ancré sur le temps officiel** (n = {len(grp)} courses)\n")
@@ -248,21 +381,35 @@ def main(argv: list[str] | None = None) -> int:
                          "(répétable) — ex. --set pacing.fade_delta=0.2 ou "
                          "--set pacing.fade_delta_max=0.3 pour tester une dérive plus forte "
                          "en quelques secondes, sans archive")
+    ap.add_argument("--variant", action="append", default=[], metavar="NOM:BLOC.CLÉ=VALEUR,…",
+                    help="une loi de plus à comparer à la configuration de base (répétable) : "
+                         "la sortie s'ouvre sur la table qui les compare")
     args = ap.parse_args(argv)
+    from tools.banc import parse_variants
+
     cfg = load_config()
     try:
         for spec in args.set:
             cfg = override_config(cfg, spec)
+        variantes = parse_variants(args.variant, cfg)
     except ValueError as exc:
-        print(f"--set : {exc}", file=sys.stderr)
+        print(f"--set / --variant : {exc}", file=sys.stderr)
         return 2
     try:
         entries, _ = charger(Depot(args.depot), livre_="banc", run=args.run)
     except LookupError as exc:
         print(str(exc), file=sys.stderr)
         return 2
-    rows = score_registre({"entries": entries}, [Path(m) for m in args.manifests], cfg)
+    manifestes = [Path(m) for m in args.manifests]
+    rows = score_registre({"entries": entries}, manifestes, cfg)
     md = render_markdown(rows)
+    if variantes:
+        par_loi = {"base": rows}
+        for nom, cfg_v in variantes.items():
+            par_loi[nom] = score_registre({"entries": entries}, manifestes, cfg_v)
+        reglages = {nom: spec.split(":", 1)[1] for nom, spec in
+                    ((spec.split(":", 1)[0].strip(), spec) for spec in args.variant)}
+        md = comparer_lois(par_loi, reglages) + "\n\n---\n\n**Configuration de base, en détail**\n\n" + md
     if args.out:
         Path(args.out).write_text(md + "\n", encoding="utf-8")
         print(f"Score écrit : {args.out} ({len(rows)} courses)", file=sys.stderr)

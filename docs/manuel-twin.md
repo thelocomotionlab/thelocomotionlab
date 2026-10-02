@@ -778,7 +778,8 @@ niveau.
 
 **Les passages d'une course** (`tools/passages`, ou la passe des passages de `tools/banc`)
 portent, en plus des heures aux points de contrôle, chaque tronçon entre deux points trouvés :
-temps de mouvement, arrêts et, si la cadence est lue, minutes marchées — définitions de
+temps de mouvement, arrêts (dont ceux faits au ravito, pendant le séjour dans le rayon du
+point), temps hors ravito et, si la cadence est lue, minutes marchées — définitions de
 l'analyse de référence, constantes `twin.terrain_*` (en mouvement à ≥ 0,3 m/s hors trou de plus
 de 10 s ; arrêt à partir de 60 s continues ; marche sous 148 pas/min, cadence lissée sur 10 s).
 Un arrêt à un ravitaillement compte dans le tronçon qui en repart, comme dans le plan. Une
@@ -787,7 +788,10 @@ manifeste (`"activite": "chemin/vers/la-course.gpx"`, comme Nice 2026 dans
 `_seed/manifest-val.json`). Une entrée de banc dont la course a ses passages porte le bloc `forme` : la répartition du plan
 jugée contre le réel, sous le mouvement réel imposé (le plan répartit le temps de mouvement
 réellement passé : il ne reste que la forme) et sous le total prédit (écart des heures de
-passage, biais à mi-course), avec arrêts, mouvement et marche réels contre ceux du plan.
+passage, biais à mi-course) et hors ravito (le plan ramené au temps passé hors des ravitos,
+comme un chronométrage entrée / sortie : un arrêt au ravito, prévisible ou non, n'y pèse plus ;
+sommes plan − réel sur les montées et les descentes), avec arrêts, mouvement et marche réels
+contre ceux du plan.
 
 **Un plan servi puis couru** entre au livre servi par le tableau de bord (résultat saisi
 par le laboratoire), ou depuis le dossier de sa version quand il a été servi avant le
@@ -815,6 +819,9 @@ PYTHONPATH=src python -m tools.registre --importer export.json  # fusionne l'exp
 PYTHONPATH=src python -m tools.registre --servir dossier.json --athlete A --officiel 35:05:00   # plan servi
                                                     #   depuis le dossier de sa version → livre servi
 PYTHONPATH=src python -m tools.ab_recency <manifests…>  # balaye la demi-vie de récence (biais de progression)
+PYTHONPATH=src python -m tools.score_plan <manifestes…> --variant NOM:bloc.clé=valeur,… [--variant …]
+                                                    #   lois de répartition comparées hors ravito, en
+                                                    #   une passe, sans archive (dernier run du banc)
 PYTHONPATH=src python -m tools.registre --frontiere # jusqu'où resserrer les bandes sans perdre la couverture
 PYTHONPATH=src python -m tools.registre --tableau   # tableau de référence (markdown) : par livre × statut,
                                                     #   vendus/refusés, MAE, biais, couvertures, Winkler relatif,

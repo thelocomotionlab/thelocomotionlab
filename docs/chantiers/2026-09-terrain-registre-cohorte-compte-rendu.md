@@ -194,6 +194,13 @@ archive mesure tout :
   tel quel, et un départ passé fige le plan. Leur course part désormais un mois après le jour
   du test. Suite avec XeLaTeX : 826 passés, 5 sautés (les fichiers réels de Nice).
 
+- 2026-10-02 — **Nice contre LiveTrail** (DIAGNOSTIC §10.34) : le plan du 20/09 venait de
+  l'ancien carnet de route (167,2 km) ; hors ravito, le jumeau tient à moins de 1 %, l'écart à
+  l'arrivée vient des arrêts au ravito (subis) ; la répartition sous Minetti met 1 h 40 de trop
+  dans les montées et 2 h 01 de moins dans les descentes, la loi personnelle mesurée avant la
+  course en corrige les deux tiers. Mesure hors ravito au registre et au scoreur
+  (`score_plan --variant`).
+
 ## Run 1 chez Valentin (à lancer)
 
 Une passe par archive mesure tout ce qui précède. La recette complète est au manuel
@@ -311,6 +318,10 @@ run de base : la réponse est alors « la carte ne dit rien pour cet athlète »
   là où un profil de carte rend les descentes plus hachées que le terrain habituel.
 - Les cartes se gardent dans `services/twin-engine/local-data/carte` (ignoré par git) ; le
   modèle ne porte aucune position, les fenêtres d'apprentissage restent dans ce cache.
+- Arrêt « au ravito » : un arrêt fait pendant le séjour dans le rayon de détection du point
+  (150 m, celui des passages), avant ou après le passage relevé ; le temps hors ravito garde
+  les pauses en route et les trous d'enregistrement, comme le temps de segment du plan. Un
+  tronçon est de montée quand son D+ fait au moins deux fois son D−, de descente à l'inverse.
 - Un extrait OSM étant donné, une sortie sans aucune voie recalée sort de l'apprentissage, et
   un parcours ou un ultra dont moins de la moitié des descentes est recalée
   (`carte.couverture_osm_min = 0.5`) ne reçoit pas la carte : à Nice, 90 % et 100 % des

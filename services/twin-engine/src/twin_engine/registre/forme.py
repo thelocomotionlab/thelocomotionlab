@@ -6,7 +6,12 @@ Le banc juge l'arrivée ; ce bloc juge la répartition, de deux façons :
   réellement passé : il ne reste que la forme (où le plan met le temps), sans l'erreur de
   total ni les arrêts. Erreur moyenne, pire tronçon et pire cumul, en minutes ;
 * **total prédit** — le plan tel qu'il a été servi, ancré sur la prédiction : écart des
-  heures de passage à chaque point, biais à mi-course, écart à l'arrivée.
+  heures de passage à chaque point, biais à mi-course, écart à l'arrivée ;
+* **hors ravito imposé** — le plan répartit le temps réellement passé hors des ravitos
+  (tronçon moins les arrêts au ravitaillement, comme un chronométrage entrée / sortie) : les
+  pauses en route et les trous d'enregistrement restent dans le tronçon, comme dans le plan,
+  et un arrêt au ravito, prévisible ou non, n'y pèse plus. Erreur moyenne, pire tronçon,
+  pire cumul, et somme signée (plan − réel) sur les tronçons de montée et de descente.
 
 S'y ajoutent les arrêts et le mouvement réels contre ceux du plan, et la marche en descente
 prévue par le modèle à deux allures (``twin.terrain.marche_prevue``, sous le mouvement réel
@@ -21,6 +26,35 @@ import numpy as np
 
 def _r(x, nd=2):
     return None if x is None else round(float(x), nd)
+
+
+def hors_ravito_impose(course, plan, segs: list) -> dict | None:
+    """Le plan, ramené au temps hors ravito réel, contre ce temps tronçon par tronçon ; un
+    tronçon compte quand ses deux points ont un séjour mesurable (``ravito_lu``). Un tronçon
+    est de montée quand son D+ fait au moins deux fois son D−, de descente à l'inverse."""
+    idx = [i for i, sg in enumerate(segs)
+           if sg is not None and sg.get("hors_ravito_h") is not None and sg.get("ravito_lu", True)]
+    if len(idx) < 2:
+        return None
+    reel = np.array([segs[i]["hors_ravito_h"] for i in idx]) * 60.0
+    prevu = np.array([plan.segments[i].t_move_min for i in idx], dtype=float)
+    if prevu.sum() <= 0:
+        return None
+    impose = prevu * reel.sum() / prevu.sum()
+    e = impose - reel
+    cs = course.segments
+    montee = [j for j, i in enumerate(idx) if cs[i].dplus_m >= 2.0 * cs[i].dminus_m]
+    descente = [j for j, i in enumerate(idx) if cs[i].dminus_m >= 2.0 * cs[i].dplus_m]
+    return {
+        "n": len(idx),
+        "erreur_moyenne_min": _r(np.mean(np.abs(e)), 1),
+        "pire_troncon_min": _r(np.max(np.abs(e)), 1),
+        "pire_cumul_min": _r(np.max(np.abs(np.cumsum(e))), 1),
+        "biais_montees_min": _r(e[montee].sum(), 1) if montee else None,
+        "biais_descentes_min": _r(e[descente].sum(), 1) if descente else None,
+        "troncons": [{"vers": plan.segments[i].to, "plan_min": _r(impose[j], 1),
+                      "reel_min": _r(reel[j], 1)} for j, i in enumerate(idx)],
+    }
 
 
 def bloc_forme(course, race, prediction, cfg, passages: dict | None, *,
@@ -79,6 +113,10 @@ def bloc_forme(course, race, prediction, cfg, passages: dict | None, *,
                     "profil_de_carte": profil is not None and profil_compatible(profil, course) is None,
                 }
 
+        hors = hors_ravito_impose(course, plan, segs)
+        if hors is not None:
+            out["hors_ravito_impose"] = hors
+
     reel_t = [c.get("t_h") for c in cps]
     cumul = [s.cum_clock_exact_h if s.cum_clock_exact_h is not None else s.cum_clock_h
              for s in plan.segments]
@@ -101,4 +139,4 @@ def bloc_forme(course, race, prediction, cfg, passages: dict | None, *,
     return out or None
 
 
-__all__ = ["bloc_forme"]
+__all__ = ["bloc_forme", "hors_ravito_impose"]

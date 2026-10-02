@@ -242,3 +242,65 @@ def test_score_plan_replays_the_personal_distribution_from_the_registre(tmp_path
     loi = score_registre(registre, [mp], CFG)[0]["scores"][("config", "carved")]
     perso = score_registre(registre, [mp], PACING)[0]["scores"][("config", "carved")]
     assert perso["mae_min"] < 1e-6 < 0.5 < loi["mae_min"]
+
+
+def test_score_plan_judges_the_laws_out_of_the_aid_stations(tmp_path):
+    """Un arrêt imprévu de 30 min au sommet pèse sur les passages, pas sur la répartition
+    jugée hors ravito : celle-ci rend zéro sous la loi de l'athlète, et sous Minetti un plan
+    trop long dans les montées, trop court dans les descentes. ``--variant`` compare les lois
+    en une passe ; une course mise à part ne compte dans aucun groupe."""
+    import json
+
+    from tools.score_plan import _stand_in, main, score_registre
+    from twin_engine.registre import Depot, entete_de_run
+
+    course = build_course(_sawtooth_gpx(), RACE, CFG)
+    modele = {"slope_kappa_up": 0.6, "slope_kappa_down": 0.5, "slope_kappa_up_raw": 0.6,
+              "slope_kappa_down_raw": -0.2, "slope_hours_up": 40.0, "slope_hours_down": 30.0,
+              "slope_bins": []}
+    vrai = repartir(course, detail_du_registre(modele, PACING), PACING)
+    ref = build_pacing(vrai, _stand_in(2.0, course.deq_km, course.dplus_per_km,
+                                       stops_model="carved", stops_rate=None), RACE, PACING)
+    hors = [s.t_move_min / 60.0 for s in ref.segments]
+    ravito = [0.0, 0.0, 0.5, 0.0]                      # 30 min au départ du sommet « s »
+    ecoule = [h + r for h, r in zip(hors, ravito)]
+    cumul = np.concatenate([[0.0], np.cumsum(ecoule)])
+    noms = ["d", "m", "s", "m2", "a"]
+    pas = {"checkpoints": [{"km": float(km), "name": n, "t_h": float(t), "method": "radius"}
+                           for km, n, t in zip(RACE.aid_km, noms, cumul)],
+           "segments": [{"de": noms[i], "a": noms[i + 1], "ecoule_h": ecoule[i], "ravito_h": ravito[i],
+                         "hors_ravito_h": hors[i], "ravito_lu": True} for i in range(4)]}
+    official = float(cumul[-1])
+    (tmp_path / "course.gpx").write_bytes(_sawtooth_gpx())
+    (tmp_path / "race.json").write_text(json.dumps(
+        {"name": "Dent", "aid_km": list(RACE.aid_km), "aid_names": list(RACE.aid_names)}),
+        encoding="utf-8")
+    mp = tmp_path / "m.json"
+    mp.write_text(json.dumps({"athlete": "T", "archive": "a", "races": [
+        {"name": "Dent", "date": "2026-06-01", "official_time": "2:15:00", "gpx": "course.gpx",
+         "race_json": "race.json"}]}), encoding="utf-8")
+    entree = {"athlete": "T", "race": "Dent", "date": "2026-06-01", "official_time_h": official,
+              "dnf": False, "model": modele}
+
+    loi = score_registre({"entries": [{**entree, "passages": pas}]}, [mp], CFG)[0]
+    perso = score_registre({"entries": [{**entree, "passages": pas}]}, [mp], PACING)[0]
+    assert perso["hors"]["mae_min"] < 1e-6 < 1.0 < perso["servi"]["mae_min"]
+    assert loi["hors"]["mae_min"] > 0.5 and loi["hors"]["montees_min"] > 0 > loi["hors"]["descentes_min"]
+
+    depot = Depot(tmp_path / "registre")
+    depot.ecrire_run(entete_de_run(CFG, livre="banc"), [entree])
+    depot.ecrire_passages([("T", "Dent", "2026-06-01", pas)])
+    sortie = tmp_path / "score.md"
+    variante = "PP0:calibration.slope_cost=personal_pacing,calibration.slope_kappa_down_min=0"
+    assert main([str(mp), "--depot", str(depot.racine), "--variant", variante, "--out", str(sortie)]) == 0
+    md = sortie.read_text(encoding="utf-8")
+    assert md.startswith("**Lois comparées")
+    assert "| base | configuration de base | 1 |" in md
+    assert "| PP0 | calibration.slope_cost=personal_pacing,calibration.slope_kappa_down_min=0 | 1 | 0.0 |" in md
+    assert "Configuration de base, en détail" in md and "répartition jugée hors ravito" in md
+
+    depot.mettre_a_part("T", "Dent", "2026-06-01", "mise au point", "2026-10-02")
+    assert main([str(mp), "--depot", str(depot.racine), "--variant", variante, "--out", str(sortie)]) == 0
+    md = sortie.read_text(encoding="utf-8")
+    assert "| T | Dent (à part) |" in md and "Rapportées à part — répartition hors ravito" in md
+    assert "| base | configuration de base | 1 |" not in md
