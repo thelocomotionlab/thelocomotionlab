@@ -18,6 +18,7 @@
         --course trace.gpx --race course.json --osm … --mnt copernicus --out terrain.json
     # le terrain de chaque course de manifestes, à sa coupure, pour tools/banc --terrain
     PYTHONPATH=src python -m tools.carte banc manifest-a.json … --out <dossier> --osm … --mnt copernicus
+    PYTHONPATH=src python -m tools.carte extraits manifest-a.json … --dossier local-data/osm [--telecharger]
 
 ``--mnt`` : ``copernicus`` (tuiles GLO-30 lues à distance), un fichier (GeoTIFF, mosaïque
 VRT de dalles RGE ALTI), ou un dossier de dalles (``--mnt-crs EPSG:2154`` pour des ``.asc``
@@ -617,6 +618,144 @@ def _terrain(args, cfg: Config) -> int:
     return 0
 
 
+def _taille(url: str) -> int | None:
+    """Taille annoncée d'un fichier distant (octets), None sans réponse."""
+    import urllib.request
+
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, method="HEAD"), timeout=20) as r:
+            n = r.headers.get("Content-Length")
+            return int(n) if n else None
+    except (OSError, ValueError):
+        return None
+
+
+def _telecharger(url: str, chemin: Path) -> None:
+    """Télécharge ``url`` dans ``chemin`` (``.part`` le temps du transfert)."""
+    import urllib.request
+
+    part = chemin.with_name(chemin.name + ".part")
+    with urllib.request.urlopen(url, timeout=60) as r, part.open("wb") as f:
+        lu = 0
+        while bloc := r.read(1 << 20):
+            f.write(bloc)
+            lu += len(bloc)
+            print(f"\r  {chemin.name} : {lu / 1e6:.0f} Mo", end="", file=sys.stderr, flush=True)
+    part.replace(chemin)
+    print(file=sys.stderr)
+
+
+def _extraits(args, cfg: Config) -> int:
+    """Les extraits Geofabrik qui couvrent les courses et les sorties de course à pied des
+    manifestes, le plus petit pour chaque maille de 0,01° ; ceux qui manquent au dossier,
+    téléchargés avec ``--telecharger``. Un extrait qui ne porte aucune course et moins de
+    ``--min-mailles`` mailles de sorties est laissé de côté, et dit."""
+    import urllib.request
+
+    from twin_engine.carte.extraits import INDEX_URL, extrait_de, lire_index, mailles
+    from twin_engine.ingest import iter_activities
+
+    dossier = Path(args.dossier)
+    dossier.mkdir(parents=True, exist_ok=True)
+    chemin_index = Path(args.index) if args.index else dossier / "index-v1.json"
+    if not chemin_index.exists():
+        print(f"  index des extraits : {INDEX_URL}", file=sys.stderr)
+        urllib.request.urlretrieve(INDEX_URL, chemin_index)
+    extraits = lire_index(json.loads(chemin_index.read_text(encoding="utf-8")))
+    par_id = {e.id: e for e in extraits}
+
+    courses: list[tuple[str, str, np.ndarray]] = []
+    sorties: dict[str, np.ndarray] = {}
+    for m in args.manifestes:
+        mp = Path(m)
+        base = mp.resolve().parent
+        man = json.loads(mp.read_text(encoding="utf-8"))
+        ath = man["athlete"]
+        for r in man["races"]:
+            gpx = base / r["gpx"]
+            if not gpx.exists():
+                print(f"  {ath} · {r['name']} : trace introuvable — {gpx}", file=sys.stderr)
+                continue
+            c = _parcours_de(gpx, (base / r["race_json"]) if r.get("race_json") else None, r["name"], cfg)
+            if c.lat_grid is None or c.lon_grid is None:
+                print(f"  {ath} · {r['name']} : trace sans positions", file=sys.stderr)
+                continue
+            courses.append((ath, r["name"], mailles(c.lat_grid, c.lon_grid)))
+        if args.sans_archives:
+            continue
+        archive = (base / man["archive"]).resolve()
+        if not archive.exists():
+            print(f"  {ath} : archive introuvable — {archive}", file=sys.stderr)
+            continue
+        lues = []
+        for k, act in enumerate(iter_activities(archive, running_only=True), start=1):
+            lues.append(mailles(act.lat, act.lon))
+            if k % 50 == 0:
+                print(f"\r  {ath} : {k} sorties lues", end="", file=sys.stderr, flush=True)
+        print(f"\r  {ath} : {len(lues)} sorties lues", file=sys.stderr)
+        sorties[ath] = np.unique(np.concatenate(lues), axis=0) if lues else np.zeros((0, 2))
+
+    tout = [m for _, _, m in courses] + list(sorties.values())
+    pts = np.unique(np.concatenate(tout), axis=0) if tout else np.zeros((0, 2))
+    ou = dict(zip(map(tuple, pts.tolist()), extrait_de(pts[:, 0], pts[:, 1], extraits)))
+
+    def ids(m: np.ndarray) -> list:
+        return [ou[tuple(x)] for x in m.tolist()]
+
+    besoin: dict[str, dict] = {}
+    hors: list[str] = []
+    for ath, nom, m in courses:
+        for i in set(ids(m)):
+            if i is None:
+                hors.append(f"{ath} · {nom}")
+            else:
+                besoin.setdefault(i, {"courses": [], "sorties": {}})["courses"].append(f"{ath} · {nom}")
+    hors_sorties = 0
+    for ath, m in sorties.items():
+        for i in ids(m):
+            if i is None:
+                hors_sorties += 1
+            else:
+                s_ = besoin.setdefault(i, {"courses": [], "sorties": {}})["sorties"]
+                s_[ath] = s_.get(ath, 0) + 1
+    retenus = {i: b for i, b in besoin.items()
+               if b["courses"] or sum(b["sorties"].values()) >= args.min_mailles}
+    ecartes = {i: b for i, b in besoin.items() if i not in retenus}
+
+    def present(e) -> bool:
+        return (dossier / e.url.rsplit("/", 1)[-1]).exists()
+
+    out = ["**Extraits OpenStreetMap des courses et des sorties** (Geofabrik ; pour chaque maille "
+           "de 0,01°, le plus petit extrait qui la contient)", "",
+           "| extrait | courses | sorties (mailles par athlète) | dans le dossier |", "|---|---|---|---|"]
+    for i, b in sorted(retenus.items(), key=lambda kv: par_id[kv[0]].nom):
+        e = par_id[i]
+        sor = ", ".join(f"{a} {n}" for a, n in sorted(b["sorties"].items())) or "—"
+        out.append(f"| {e.nom} (`{i}`) | {' ; '.join(sorted(b['courses'])) or '—'} | {sor} "
+                   f"| {'oui' if present(e) else 'non'} |")
+    if ecartes:
+        out += ["", f"Laissés de côté (aucune course, moins de {args.min_mailles} mailles de sorties) : "
+                + ", ".join(f"{par_id[i].nom} ({sum(b['sorties'].values())})" for i, b in sorted(ecartes.items()))]
+    if hors or hors_sorties:
+        out += ["", f"Hors de tout extrait : {hors_sorties} maille(s) de sorties"
+                + (f" ; courses : {', '.join(sorted(set(hors)))}" if hors else "")]
+    manquants = [par_id[i] for i in sorted(retenus) if not present(par_id[i])]
+    if manquants:
+        tailles = [_taille(e.url) for e in manquants]
+        total = sum(t for t in tailles if t)
+        out += ["", f"À télécharger : {len(manquants)} extrait(s)"
+                + (f", {total / 1e9:.1f} Go annoncés" if total else ""), "", "```"]
+        out += [f"curl -L -o {dossier / e.url.rsplit('/', 1)[-1]} {e.url}" for e in manquants]
+        out += ["```"]
+    else:
+        out += ["", "Tous les extraits nécessaires sont dans le dossier."]
+    print("\n".join(out))
+    if args.telecharger:
+        for e in manquants:
+            _telecharger(e.url, dossier / e.url.rsplit("/", 1)[-1])
+    return 0
+
+
 def _banc(args, cfg: Config) -> int:
     """Le terrain de chaque course des manifestes, à la coupure de la course : un fichier par
     course, ``<sortie>/<athlète>/<date>.json``, que ``tools/banc --terrain`` lit."""
@@ -751,6 +890,18 @@ def main(argv: list[str] | None = None) -> int:
     sb.add_argument("manifestes", nargs="+")
     sb.add_argument("--out", required=True, help="dossier des terrains (<athlète>/<date>.json)")
     _sources_args(sb)
+    se = sub.add_parser("extraits", help="les extraits OpenStreetMap (Geofabrik) des courses et des "
+                                         "sorties des manifestes, téléchargés au besoin")
+    se.add_argument("manifestes", nargs="+")
+    se.add_argument("--dossier", default="local-data/osm", help="dossier des extraits .osm.pbf")
+    se.add_argument("--index", help="index Geofabrik (index-v1.json) ; sinon lu en ligne et gardé "
+                                    "dans le dossier")
+    se.add_argument("--min-mailles", type=int, default=50,
+                    help="mailles de sorties (0,01°) en dessous desquelles un extrait sans course "
+                         "est laissé de côté")
+    se.add_argument("--sans-archives", action="store_true", help="les traces des courses seulement")
+    se.add_argument("--telecharger", action="store_true", help="télécharge les extraits qui manquent")
+    se.add_argument("--set", action="append", default=[], metavar="BLOC.CLÉ=VALEUR")
     args = ap.parse_args(argv)
     cfg = load_config()
     try:
@@ -768,6 +919,8 @@ def main(argv: list[str] | None = None) -> int:
             return _terrain(args, cfg)
         if args.commande == "banc":
             return _banc(args, cfg)
+        if args.commande == "extraits":
+            return _extraits(args, cfg)
         return _modele(args, cfg)
     except FileNotFoundError as exc:
         print(str(exc), file=sys.stderr)

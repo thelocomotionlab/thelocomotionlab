@@ -241,3 +241,19 @@ def test_le_resume_compte_la_couverture_des_deux_bandes():
 def test_le_registre_est_derriere_le_jeton(client):
     assert client.get("/tableau-de-bord/registre").status_code == 401
     assert client.get("/tableau-de-bord/registre/export").status_code == 401
+
+
+def test_a_registry_file_holds_one_race_per_line(tmp_path):
+    """Un run du banc : une ligne par course, relu à l'identique ; le registre se lit en JSON."""
+    from twin_engine.config import load_config
+    from twin_engine.registre import Depot, entete_de_run, lire_entrees
+
+    depot = Depot(tmp_path / "registre")
+    entrees = [{"athlete": "T", "race": f"Course {k}", "date": f"2026-0{k}-01",
+                "forme": {"troncons": [{"plan_min": 60.0 + k, "reel_min": 61.0}] * 20}} for k in range(1, 4)]
+    chemin = depot.ecrire_run(entete_de_run(load_config(), livre="banc"), entrees)
+    texte = chemin.read_text(encoding="utf-8")
+    assert len(texte.splitlines()) == 2 + len(entrees) + 1      # en-tête, « entries », courses, fin
+    entete, relues = lire_entrees(chemin)
+    assert relues == entrees and entete["id"] == chemin.stem
+    assert json.loads(texte)["entries"] == entrees

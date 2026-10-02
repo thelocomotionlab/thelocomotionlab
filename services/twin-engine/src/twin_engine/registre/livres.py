@@ -60,10 +60,24 @@ def _lire(chemin: Path) -> dict:
         return {}
 
 
+def _json_par_ligne(donnees: dict) -> str:
+    """Le JSON d'un fichier du registre, une clé de tête par ligne et un élément de liste par
+    ligne (une course, un athlète) : le fichier reste du JSON, et une course de plus ou de moins
+    fait une ligne de diff, pas des centaines."""
+    parties = []
+    for k, v in donnees.items():
+        cle_json = json.dumps(k, ensure_ascii=False)
+        if isinstance(v, list) and v:
+            parties.append(f"{cle_json}: [\n" + ",\n".join(json.dumps(x, ensure_ascii=False) for x in v) + "\n]")
+        else:
+            parties.append(f"{cle_json}: {json.dumps(v, ensure_ascii=False)}")
+    return "{" + ",\n".join(parties) + "}\n"
+
+
 def _ecrire(chemin: Path, donnees: dict) -> None:
     chemin.parent.mkdir(parents=True, exist_ok=True)
     tmp = chemin.with_name(f"{chemin.name}.tmp")
-    tmp.write_text(json.dumps(donnees, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    tmp.write_text(_json_par_ligne(donnees), encoding="utf-8")
     os.replace(tmp, chemin)
 
 

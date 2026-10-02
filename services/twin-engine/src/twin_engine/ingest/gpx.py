@@ -3,7 +3,8 @@
 Le GPX porte rarement vitesse ou distance : la distance est reconstruite par
 haversine sur lat/lon (dans :meth:`CanonicalActivity.from_samples`). La FC et la
 cadence, quand présentes, vivent dans les extensions (``gpxtpx:hr`` / ``gpxtpx:cad``
-de Garmin et Strava, ``gpxdata:hr`` / ``gpxdata:cadence`` de COROS). La distance que
+de Garmin et Strava, ``gpxdata:hr`` / ``gpxdata:cadence`` de COROS ; la FC aussi sous
+``heartrate``, ``heart_rate``, ``heartRate``, ``HeartRate`` ou ``pulse``). La distance que
 la montre a calculée (``gpxdata:distance``) est gardée à part, dans ``dist_device_m`` :
 le moteur choisit laquelle servir (``twin.gpx_distance``). Le sport est souvent absent
 → laissé à ``None`` (le bundle Strava le renseigne via activities.csv).
@@ -28,6 +29,18 @@ def _number(el) -> float:
         return float(txt)
     except ValueError:
         return np.nan
+
+
+# la FC d'un point : ``hr`` d'abord (Garmin, Strava, COROS), puis les noms d'autres fabricants
+_NOMS_FC = ("hr", "heartrate", "heart_rate", "heartRate", "HeartRate", "pulse")
+
+
+def _fc(pt) -> float:
+    for nom in _NOMS_FC:
+        el = descendant(pt, nom)
+        if el is not None:
+            return _number(el)
+    return np.nan
 
 
 def parse_gpx(data: bytes, source_name: str) -> CanonicalActivity:
@@ -60,7 +73,7 @@ def parse_gpx(data: bytes, source_name: str) -> CanonicalActivity:
         ele = text_of(child(pt, "ele"))
         alt.append(float(ele) if ele is not None else np.nan)
         timestamps.append(parse_iso_time(text_of(child(pt, "time"))))
-        hr.append(_number(descendant(pt, "hr")))
+        hr.append(_fc(pt))
         cad_el = descendant(pt, "cad")
         cad.append(_number(cad_el if cad_el is not None else descendant(pt, "cadence")))
         dist.append(_number(descendant(pt, "distance")))

@@ -558,7 +558,11 @@ plus (sommeil). Les deux exposants et le plus long arrêt sont mesurés et consi
 soit le flag (JSON `twin.alpha_eff`, `twin.alpha_tail` ; registre `model.alpha_eff`,
 `alpha_tail`, `duration_prior_origin`, `envelope_tail_alpha`, `level_n_anchored`,
 `level_shift_mean_pct`, `genuine_floor`) ; `tools/diag_archive` et `tools/diag_ultras`
-impriment le plancher servi et le plus long arrêt de chaque effort long. Le banc a tranché
+impriment le plancher servi et le plus long arrêt de chaque effort long. `tools/fc_brute`
+cherche la FC dans les fichiers bruts d'une archive, sans les adaptateurs du produit (toute
+balise ou champ FIT au nom cardiaque, point par point), et la compare à celle que le moteur lit :
+« brute non lue », l'adaptateur est à corriger ; « aucune FC », elle n'a pas été enregistrée ou
+a été perdue à l'export (`PYTHONPATH=src python -m tools.fc_brute <archive> [--out fc.md]`). Le banc a tranché
 (DIAGNOSTIC §10.14) : B1 (`duration_prior_source=efficiency`, `envelope_tail=efficiency`) a
 d'abord été activé pour le rapport de référence, puis est passé en défaut avec la pile de
 référence (Décision 1, §10.16) ; B2, P et F restent derrière leur flag, non activés.
@@ -780,7 +784,8 @@ TWIN_NICE2026_GPX=/chemin/nice-2026.gpx pytest services/twin-engine -k nice_2026
 le livre banc, un fichier par run marqué du commit, de l'empreinte de configuration et des
 drapeaux hors défaut ; le livre servi ; le statut `dev` / `frais` de chaque athlète ; les
 quarantaines et les passages, communs à tous les runs. Toute lecture sépare livre × statut ×
-niveau.
+niveau. Chaque fichier s'écrit une course (ou un athlète) par ligne : un run de 33 courses tient
+en 36 lignes, et une course de plus fait une ligne de diff.
 
 **Les passages d'une course** (`tools/passages`, ou la passe des passages de `tools/banc`)
 portent, en plus des heures aux points de contrôle, chaque tronçon entre deux points trouvés :
@@ -1202,8 +1207,20 @@ twin-engine preview --training <archive> --course trace.gpx --race course.json \
   --terrain /tmp/terrain.json --set pacing.terrain=map
 ```
 
+Les extraits OpenStreetMap à réunir se déduisent des données : `tools/carte extraits` lit les
+traces des courses et les positions des sorties de course à pied des archives, et l'index de
+Geofabrik (`index-v1.json`, gardé dans le dossier des extraits), et retient pour chaque maille
+de 0,01° l'extrait le plus petit qui la contient ; un extrait sans course et avec moins de
+`--min-mailles` mailles de sorties (50) est laissé de côté, et dit. `--telecharger` va chercher
+ceux qui manquent au dossier :
+
+```bash
+PYTHONPATH=src python -m tools.carte extraits $M --dossier local-data/osm [--telecharger] [--sans-archives]
+```
+
 Au banc (run 2) : un terrain par course des manifestes, chacun à sa coupure, puis le banc sous
-les variantes de terrain, comparées au run de base du même passage :
+les variantes de terrain, comparées au run de base du même passage — ou, pour la seule
+répartition, `tools/score_plan --terrain /tmp/terrains --variant CARTE:pacing.terrain=map` :
 
 ```bash
 PYTHONPATH=src python -m tools.carte banc $M --out /tmp/terrains $SRC > /tmp/run2/carte-banc.md

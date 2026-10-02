@@ -223,6 +223,14 @@ archive mesure tout :
   réponse de Valentin (le départ plus rapide change l'allure servie). `score_plan --terrain`
   juge la carte du parcours sans run du banc.
 
+- 2026-10-02 — **carte internationale, FC brute, registre compact** : `tools/carte extraits`
+  déduit des traces des courses et des sorties des archives les extraits Geofabrik à réunir
+  (le plus petit qui contient chaque maille), et les télécharge ; `tools/fc_brute` cherche la
+  FC dans les fichiers bruts, hors des adaptateurs, et la compare à celle que le moteur lit ;
+  l'adaptateur GPX lit aussi la FC sous `heartrate`, `heart_rate`, `heartRate`, `HeartRate`
+  et `pulse`. Rapace : 0 h de FC lue sur ses 454 sorties, cadence présente. Les fichiers du
+  registre s'écrivent une course par ligne (un run : 36 lignes au lieu de 12 985).
+
 ## Run 1 chez Valentin (à lancer)
 
 Une passe par archive mesure tout ce qui précède. La recette complète est au manuel
