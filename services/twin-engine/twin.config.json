@@ -194,7 +194,11 @@
     "plan_window_high_pct": 75,
     "wide_interval_rel_width": 0.35,
     "descent_fatigue": "none",
-    "terrain": "none"
+    "terrain": "none",
+    "start_share": 0.12,
+    "start_gain": 0.0,
+    "finish_km": 5.0,
+    "finish_gain": 0.0
   },
   "sufficiency": {
     "history_months_green": 6.0,

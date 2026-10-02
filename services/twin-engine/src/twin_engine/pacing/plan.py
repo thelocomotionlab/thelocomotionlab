@@ -16,6 +16,7 @@ import numpy as np
 
 from ..config import Config
 from ..course import CourseProfile, RaceSpec
+from ..course.profile import _grid_index
 from ..course.spec import stops_policy_min
 from ..predict import Prediction
 from .sun import is_night, sun_times
@@ -186,6 +187,31 @@ def _fade_delta(cfg: Config, durability_pct: float | None,
     return p.fade_delta, "config"
 
 
+def _depart_arrivee(course: CourseProfile, cfg: Config) -> np.ndarray:
+    """Facteur de temps de chaque segment quand la première part ``pacing.start_share`` de la
+    distance se court ``start_gain`` plus vite et les ``finish_km`` derniers km ``finish_gain``
+    plus vite (le plus grand gain où les zones se chevauchent) : la part de chaque mètre est
+    son coût de répartition (grille de la loi servie, Deq sinon), divisée par 1 + gain dans
+    une zone. 1 partout sans gain ou sans grille."""
+    p = cfg.pacing
+    n = len(course.segments)
+    km = np.asarray(course.off_km_grid, dtype=float)
+    if (p.start_gain <= 0 and p.finish_gain <= 0) or km.size < 2:
+        return np.ones(n)
+    grille = getattr(course, "repartition_grid", None)
+    cout = (np.asarray(grille, dtype=float) if grille is not None
+            else np.diff(np.asarray(course.deq_grid_m, dtype=float), prepend=0.0))
+    gain = np.maximum(np.where(km <= km[0] + p.start_share * (km[-1] - km[0]), p.start_gain, 0.0),
+                      np.where(km >= km[-1] - p.finish_km, p.finish_gain, 0.0))
+    poids, temps = np.cumsum(cout), np.cumsum(cout / (1.0 + gain))
+    out = np.ones(n)
+    for k, s in enumerate(course.segments):
+        i0, i1 = _grid_index(km, s.off0), _grid_index(km, s.off1)
+        if poids[i1] - poids[i0] > 0:
+            out[k] = (temps[i1] - temps[i0]) / (poids[i1] - poids[i0])
+    return out
+
+
 def build_pacing(
     course: CourseProfile,
     prediction: Prediction,
@@ -266,9 +292,10 @@ def build_pacing(
         t_move = max(tpred - float(stops_min.sum() / 60.0), 0.5 * tpred)  # garde-fou si arrêts > temps réparti
     t_stops_h = float(stops_min.sum() / 60.0)
 
-    # --- normalisation : Σ poids_i / v_i = t_move ---
-    scale = float(np.sum(poids / g) / t_move)
-    t_move_h = poids / (scale * g)
+    # --- normalisation : Σ poids_i / v_i = t_move ; départ et arrivée plus vite (0 : rien) ---
+    temps = poids * _depart_arrivee(course, cfg)
+    scale = float(np.sum(temps / g) / t_move)
+    t_move_h = temps / (scale * g)
     v_ga = deq / t_move_h
     real_speed = off_len / t_move_h
     pace = 60.0 / real_speed

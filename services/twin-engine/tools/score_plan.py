@@ -28,12 +28,13 @@ plan y prévoyait plus long que le réel). C'est la mesure qui départage les lo
 configuration de base, et ouvre la sortie par une table qui les compare. Les courses mises à
 part (``a_part.json``) ne comptent dans aucun groupe : elles se lisent sur leurs lignes.
 
-``--residus`` ajoute ce qui reste sous la configuration de base : l'écart hors ravito de chaque
-tronçon, (plan − réel) ÷ réel, moyenné par type de tronçon (montée, descente, mixte), par
-tiers de course, de jour ou de nuit, par dénivelé au km et par durée ; puis montées et
-descentes croisées avec le tiers, la nuit et le dénivelé (mêlées, elles s'annulent) ; et par
-athlète pour le type, le tiers de course et la nuit, l'athlète sans mesure de pente signalé.
-C'est là que se lit le levier suivant.
+``--residus`` ajoute ce qui reste sous la configuration de base : l'écart hors ravito des
+tronçons, pondéré par leur temps réel (Σ(plan − réel) ÷ Σ réel) et en minutes, par type de
+tronçon (montée, descente, mixte), position (premier, dernier, les autres), tiers de course,
+jour ou nuit, dénivelé au km et durée ; puis montées et descentes croisées avec la position,
+le tiers, la nuit et le dénivelé (mêlées, elles s'annulent) ; et par athlète pour le type, la
+position, le tiers et la nuit, l'athlète sans mesure de pente signalé. C'est là que se lit le
+levier suivant.
 
     PYTHONPATH=src python -m tools.score_plan <manifestes…> [--run ID] [--depot <dossier>]
         [--out score.md] [--set bloc.clé=valeur …] [--variant NOM:bloc.clé=valeur,… …]
@@ -60,7 +61,7 @@ from twin_engine.twin.pente import detail_du_registre, fatigue_servie, repartir
 from twin_engine.twin.terrain import facteur_declare
 
 from twin_engine.registre import DEFAULT_RACINE, Depot
-from twin_engine.registre.forme import hors_ravito_impose
+from twin_engine.registre.forme import hors_ravito_impose, type_de_troncon
 
 from tools.backtest import race_spec_from_meta
 from tools.registre import charger, statut
@@ -142,8 +143,9 @@ def score_hors_ravito(course, race: RaceSpec, official_h: float, passages: dict,
         km = max(float(cs.off1 - cs.off0), 1e-6)
         troncons.append({
             "plan_min": t["plan_min"], "reel_min": t["reel_min"],
-            "type": ("montée" if cs.dplus_m >= 2.0 * cs.dminus_m
-                     else "descente" if cs.dminus_m >= 2.0 * cs.dplus_m else "mixte"),
+            "type": type_de_troncon(cs),
+            "position": ("premier tronçon" if t["i"] == 0 else
+                         "dernier tronçon" if t["i"] == len(course.segments) - 1 else "les autres"),
             "phase": (cumul + t["reel_min"] / 2.0) / total if total > 0 else None,
             "nuit": bool(ps.night) if race.start_time is not None else None,
             "denivele_m_km": (cs.dplus_m + cs.dminus_m) / km})
@@ -299,33 +301,36 @@ def _md_hors_ravito(rows: list[dict]) -> list[str]:
     return out
 
 
-_CARACTERISTIQUES = (
-    ("type de tronçon", lambda t: t["type"], ("montée", "descente", "mixte")),
-    ("tiers de course", lambda t: (None if t["phase"] is None else
-                                   "1er tiers" if t["phase"] < 1 / 3 else
-                                   "2e tiers" if t["phase"] < 2 / 3 else "dernier tiers"),
-     ("1er tiers", "2e tiers", "dernier tiers")),
-    ("jour ou nuit", lambda t: None if t["nuit"] is None else ("nuit" if t["nuit"] else "jour"),
-     ("jour", "nuit")),
-    ("dénivelé (D+ + D−) au km", lambda t: ("moins de 40 m/km" if t["denivele_m_km"] < 40 else
-                                            "40 à 80 m/km" if t["denivele_m_km"] < 80 else
-                                            "80 m/km et plus"),
-     ("moins de 40 m/km", "40 à 80 m/km", "80 m/km et plus")),
-    ("durée réelle du tronçon", lambda t: ("moins de 45 min" if t["reel_min"] < 45 else
-                                           "45 à 90 min" if t["reel_min"] < 90 else "90 min et plus"),
-     ("moins de 45 min", "45 à 90 min", "90 min et plus")),
-)
+_TYPE = ("type de tronçon", lambda t: t["type"], ("montée", "descente", "mixte"))
+_POSITION = ("position", lambda t: t.get("position"), ("premier tronçon", "dernier tronçon", "les autres"))
+_TIERS = ("tiers de course", lambda t: (None if t["phase"] is None else
+                                        "1er tiers" if t["phase"] < 1 / 3 else
+                                        "2e tiers" if t["phase"] < 2 / 3 else "dernier tiers"),
+          ("1er tiers", "2e tiers", "dernier tiers"))
+_NUIT = ("jour ou nuit", lambda t: None if t["nuit"] is None else ("nuit" if t["nuit"] else "jour"),
+         ("jour", "nuit"))
+_DENIVELE = ("dénivelé (D+ + D−) au km", lambda t: ("moins de 40 m/km" if t["denivele_m_km"] < 40 else
+                                                   "40 à 80 m/km" if t["denivele_m_km"] < 80 else
+                                                   "80 m/km et plus"),
+             ("moins de 40 m/km", "40 à 80 m/km", "80 m/km et plus"))
+_DUREE = ("durée réelle du tronçon", lambda t: ("moins de 45 min" if t["reel_min"] < 45 else
+                                               "45 à 90 min" if t["reel_min"] < 90 else "90 min et plus"),
+          ("moins de 45 min", "45 à 90 min", "90 min et plus"))
+_CARACTERISTIQUES = (_TYPE, _POSITION, _TIERS, _NUIT, _DENIVELE, _DUREE)
 
 
 def _ecarts(troncons: list[dict]) -> tuple[int, float | None, float | None]:
-    r = [(t["plan_min"] - t["reel_min"]) / t["reel_min"] for t in troncons if t["reel_min"]]
-    if not r:
+    """Nombre de tronçons, écart pondéré par le temps (Σ(plan − réel) ÷ Σ réel, %) et écart
+    absolu moyen (min) : un tronçon de quelques minutes ne pèse que son temps."""
+    t = [x for x in troncons if x["reel_min"]]
+    if not t:
         return 0, None, None
-    return len(r), 100.0 * float(np.mean(r)), 100.0 * float(np.mean(np.abs(r)))
+    e = np.array([x["plan_min"] - x["reel_min"] for x in t])
+    return len(t), 100.0 * float(e.sum()) / float(sum(x["reel_min"] for x in t)), float(np.mean(np.abs(e)))
 
 
 def _cellules(troncons: list[dict], cle, cats) -> list[str]:
-    """Écart moyen % et nombre de tronçons de chaque catégorie, « — » sans tronçon."""
+    """Écart pondéré % et nombre de tronçons de chaque catégorie, « — » sans tronçon."""
     cells = []
     for cat in cats:
         n, moy, _ = _ecarts([t for t in troncons if cle(t) == cat])
@@ -333,29 +338,30 @@ def _cellules(troncons: list[dict], cle, cats) -> list[str]:
     return cells
 
 
-def residus_markdown(rows: list[dict]) -> str:
+def residus_markdown(rows: list[dict], loi: str | None = None) -> str:
     """Ce qui reste, tronçon par tronçon, sous la configuration du scoreur (courses à part
-    exclues) : écart signé et absolu, en % du temps réel hors ravito du tronçon. Les tables
-    croisées gardent les montées et les descentes séparées : un plan trop long en montée et
-    trop court en descente s'annulent dans une moyenne qui les mêle."""
+    exclues) : écart pondéré par le temps réel hors ravito (%) et écart absolu moyen (min). Les
+    tables croisées gardent les montées et les descentes séparées : un plan trop long en montée
+    et trop court en descente s'annulent dans une moyenne qui les mêle."""
     compte = [r for r in rows if not r.get("a_part") and r.get("hors")]
     tous = [t for r in compte for t in r["hors"].get("troncons", [])]
-    out = ["**Ce qui reste — écart hors ravito de chaque tronçon** ((plan − réel) ÷ réel ; > 0 : le "
-           f"plan prévoyait plus long que le réel ; {len(tous)} tronçons, {len(compte)} "
-           f"course{'s' if len(compte) > 1 else ''}, "
+    out = [f"**Ce qui reste — écart hors ravito des tronçons{f', sous {loi}' if loi else ''}** "
+           "(écart pondéré : Σ(plan − réel) ÷ "
+           "Σ réel ; > 0 : le plan prévoyait plus long que le réel ; écart absolu moyen par tronçon, "
+           f"min ; {len(tous)} tronçons, {len(compte)} course{'s' if len(compte) > 1 else ''}, "
            "courses à part exclues)", "",
-           "| caractéristique | catégorie | tronçons | écart moyen % | écart absolu moyen % |",
+           "| caractéristique | catégorie | tronçons | écart pondéré % | écart absolu moyen, min |",
            "|---|---|---|---|---|"]
     for nom, cle, cats in _CARACTERISTIQUES:
         for cat in cats:
             n, moy, absm = _ecarts([t for t in tous if cle(t) == cat])
             if n:
                 out.append(f"| {nom} | {cat} | {n} | {_f(moy)} | {_f(absm)} |")
-    _, type_de, types = _CARACTERISTIQUES[0]
-    for nom, cle, cats in _CARACTERISTIQUES[1:4]:
+    _, type_de, types = _TYPE
+    for nom, cle, cats in (_POSITION, _TIERS, _NUIT, _DENIVELE):
         if not any(cle(t) is not None for t in tous):
             continue
-        out += ["", f"*Type de tronçon × {nom}* (écart moyen %, tronçons)", "",
+        out += ["", f"*Type de tronçon × {nom}* (écart pondéré %, tronçons)", "",
                 "| type | " + " | ".join(cats) + " |", "|---|" + "---|" * len(cats)]
         for typ in types:
             out.append(f"| {typ} | "
@@ -365,8 +371,10 @@ def residus_markdown(rows: list[dict]) -> str:
     # retombe sur Minetti : ses tronçons ne disent rien de la loi servie
     sans_pente = {a for a in athletes
                   if not any(r.get("pente_mesuree", True) for r in compte if r["athlete"] == a)}
-    for nom, cle, cats in _CARACTERISTIQUES[:3]:
-        out += ["", f"*Par athlète — {nom}* (écart moyen %, tronçons)", "",
+    for nom, cle, cats in (_TYPE, _POSITION, _TIERS, _NUIT):
+        if not any(cle(t) is not None for t in tous):
+            continue
+        out += ["", f"*Par athlète — {nom}* (écart pondéré %, tronçons)", "",
                 "| athlète | " + " | ".join(cats) + " |", "|---|" + "---|" * len(cats)]
         for ath in athletes:
             mes = [t for r in compte if r["athlete"] == ath for t in r["hors"].get("troncons", [])]
@@ -480,9 +488,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--variant", action="append", default=[], metavar="NOM:BLOC.CLÉ=VALEUR,…",
                     help="une loi de plus à comparer à la configuration de base (répétable) : "
                          "la sortie s'ouvre sur la table qui les compare")
-    ap.add_argument("--residus", action="store_true",
-                    help="ce qui reste sous la configuration de base : écart hors ravito par "
-                         "type de tronçon, tiers de course, jour ou nuit, dénivelé et durée")
+    ap.add_argument("--residus", nargs="?", const="base", metavar="LOI",
+                    help="ce qui reste sous la configuration de base, ou sous la variante LOI : "
+                         "écart hors ravito par type de tronçon, position, tiers de course, "
+                         "jour ou nuit, dénivelé et durée")
     args = ap.parse_args(argv)
     from tools.banc import parse_variants
 
@@ -499,15 +508,19 @@ def main(argv: list[str] | None = None) -> int:
     except LookupError as exc:
         print(str(exc), file=sys.stderr)
         return 2
+    if args.residus and args.residus != "base" and args.residus not in variantes:
+        print(f"--residus {args.residus} : aucune variante de ce nom", file=sys.stderr)
+        return 2
     manifestes = [Path(m) for m in args.manifests]
     rows = score_registre({"entries": entries}, manifestes, cfg)
+    par_loi = {"base": rows}
+    for nom, cfg_v in variantes.items():
+        par_loi[nom] = score_registre({"entries": entries}, manifestes, cfg_v)
     md = render_markdown(rows)
     if args.residus:
-        md = residus_markdown(rows) + "\n\n---\n\n" + md
+        md = (residus_markdown(par_loi[args.residus], None if args.residus == "base" else args.residus)
+              + "\n\n---\n\n" + md)
     if variantes:
-        par_loi = {"base": rows}
-        for nom, cfg_v in variantes.items():
-            par_loi[nom] = score_registre({"entries": entries}, manifestes, cfg_v)
         reglages = {nom: spec.split(":", 1)[1] for nom, spec in
                     ((spec.split(":", 1)[0].strip(), spec) for spec in args.variant)}
         md = comparer_lois(par_loi, reglages) + "\n\n---\n\n**Configuration de base, en détail**\n\n" + md

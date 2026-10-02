@@ -278,3 +278,19 @@ def test_readings_judge_the_plan_shape_and_report_set_aside_races_apart(tmp_path
     assert "Rapportées à part" in texte and "| A | Nice | 2026-06-01 | mise au point |" in texte
     comparaison = compare_markdown(entrees, entrees)
     assert "forme du plan, avant → après" in comparaison and "Rapportées à part, après" in comparaison
+
+
+def test_a_flat_or_rolling_segment_is_neither_climb_nor_descent():
+    from types import SimpleNamespace
+
+    from twin_engine.registre.forme import type_de_troncon
+
+    def seg(dplus, dminus, km=10.0):
+        return SimpleNamespace(off0=0.0, off1=km, dplus_m=dplus, dminus_m=dminus)
+
+    assert type_de_troncon(seg(0, 0)) == "mixte"           # plat : 0 ≥ 2 × 0 n'en fait plus une montée
+    assert type_de_troncon(seg(150, 0)) == "mixte"         # 15 m/km : roulant
+    assert type_de_troncon(seg(600, 100)) == "montée"
+    assert type_de_troncon(seg(100, 600)) == "descente"
+    assert type_de_troncon(seg(500, 400)) == "mixte"
+    assert type_de_troncon(seg(60, 0, km=2.0)) == "montée"  # 30 m/km sur un bout de 2 km

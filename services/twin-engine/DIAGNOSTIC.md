@@ -3603,3 +3603,70 @@ l'expérimental), `tests/test_repartition_pente.py` (`--residus` : plan trop lon
 trop court en descente sous Minetti, par tiers de course, sans nuit pour une course sans heure
 de départ ; les tables croisées rendent ±10 % par type là où le tiers lit 0, et signalent
 l'athlète sans mesure de pente).
+
+### 10.36 Ce qui reste sous la loi par tranches : le départ et l'arrivée (2026-10-02)
+
+**Matière.** `tools/score_plan --residus` sous la loi de la référence (PPB), 30 courses de
+développement, Nice 2026 à part ; et les mêmes tronçons reconstitués du registre seul : forme
+du plan de la variante PPB du run 1 (`forme.mouvement_impose`), ramenée au temps hors ravito
+des passages (250 tronçons ; par classe de durée, à 1 point près des chiffres du scoreur).
+
+**La moyenne des écarts relatifs trompait.** Moyenné tronçon par tronçon, l'écart en % donne au
+dernier bout de parcours avant l'arrivée (0,1 à 9 km sous le découpage de 10 km, jusqu'à
++190 % à Lavaredo sur 0,1 km) le poids d'un tronçon de deux heures : 23 des 24 tronçons de
+moins de 45 min sont le dernier, d'où les +34,5 % des tronçons courts, les +27,4 % des
+tronçons de moins de 40 m/km et une part des montées (+9,2 %) et descentes (+8,5 %) prévues
+trop longues. Le scoreur pondère désormais par le temps réel (Σ(plan − réel) ÷ Σ réel), donne
+l'écart absolu en minutes et range les tronçons par position. Un tronçon plat passait en
+montée (0 ≥ 2 × 0) : montée et descente demandent désormais au moins 20 m par km du côté
+dominant, le reste est mixte — les sommes montées / descentes du §10.35 se relisent sous
+cette règle au prochain passage du scoreur.
+
+**Pondéré par le temps, sous PPB :**
+
+| tronçon | n | écart pondéré | écart moyen | plan > réel |
+|---|---|---|---|---|
+| premier | 30 | +12,3 % | +9,0 min | 26 / 30 (signe : p = 6·10⁻⁵) |
+| deuxième | 30 | +0,6 % | +0,4 min | 18 / 30 |
+| avant-dernier | 31 | −2,1 % | −1,9 min | 18 / 31 |
+| dernier | 31 | +17,7 % | +5,8 min | 28 / 31 (p = 5·10⁻⁶) |
+| tous sauf premier et dernier | 189 | −2,5 % | −2,4 min | 83 / 189 |
+
+Sous Minetti, le même dessin (premier +11,1 min, dernier +3,4). Un effet de départ et un effet
+d'arrivée, que le plan ancré sur le total fait payer aux tronçons du milieu. Nice 2026 : premier
+tronçon (8,1 km) +17,6 min, deuxième (8,4 km) +21,5, dernier (10,6 km) +0,1.
+
+**Le levier** (`pacing.start_share`, `start_gain`, `finish_km`, `finish_gain` ; défauts 0,12,
+0, 5, 0 : rien) : la première part de la distance plus vite, les derniers km plus vite, le
+total intact. Sur la reconstitution (temps uniforme dans un tronçon), gains ajustés puis jugés
+course laissée de côté (erreur par tronçon, min) :
+
+| zone de départ | zone d'arrivée | gains | validation croisée | Nice 2026 |
+|---|---|---|---|---|
+| — | — | — | 7,71 | 9,87 |
+| 10 km | 5 km | +15 % / +30 % | 6,68 | 9,85 |
+| 15 km | 5 km | +15 % / +30 % | 6,60 | 9,23 |
+| 12 % de la distance | 5 km | +17,5 % / +30 % | 6,63 | 8,41 |
+| 12 % de la distance | 6 % de la distance | +17,5 % / +30 % | 6,65 | 9,24 |
+
+Avec 12 % et 5 km : 22 courses mieux, 9 moins bien (p = 0,03), erreur moyenne par course 6,97 →
+5,95 ; les pertes sont sur les courses courtes (Lut 36k +2,4, Bélier +2,1, Maratour +1,5), où
+5 km font un quart du parcours.
+
+**Lecture.** Les 30 courses ne départagent pas une zone de départ fixe d'une zone
+proportionnelle ; Nice préfère la seconde, mais elle a servi à départager et ne juge plus ce
+choix. La zone proportionnelle suit le fade, lui aussi rapporté à la distance. Le gain (−1,1 min
+par tronçon) dépasse celui de la loi par tranches (−0,8) ; il est mesuré sur une
+reconstitution : `score_plan` le rejoue sur les plans exacts. Les descentes raides (80 m/km et
+plus) sont justes en moyenne sous PPB, mais d'une course à l'autre leur somme va de −22 min
+(Nice 50k) à +28 (UTSM) : un effet de course plus que de pente.
+
+**Décision** : aucune, flags éteints, en attendant les plans exacts : `score_plan` sous PPB avec
+départ seul, arrivée seule, les deux, les deux sous Minetti, et ce qui reste sous les deux
+(`--residus LOI`).
+
+**Tests** : `tests/test_depart_arrivee.py` (sans gain le plan est inchangé ; le premier quart
+plus vite rend du temps aux autres au prorata, total intact ; zones qui se chevauchent : le plus
+grand gain ; une zone dans un segment pèse le coût de la loi servie), `tests/test_repartition_pente.py`
+(écart pondéré : un tronçon de trois minutes ne pèse que son temps ; position ; `--residus LOI`),
+`tests/test_mesures_par_troncon.py` (un tronçon plat ou roulant n'est ni montée ni descente).

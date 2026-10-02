@@ -521,6 +521,15 @@ class PacingParams:
     #   carte contre le terrain habituel) × la pénalité de marche de l'athlète, fraîche ou
     #   fatiguée. Le total ne change pas, seule la répartition.
     terrain: str = "none"                # {none, declared, map}
+    # --- départ et arrivée -----------------------------------------------------------------
+    # La première part ``start_share`` de la distance officielle se court ``start_gain`` plus
+    # vite que le fade et la loi de pente ne le disent, les ``finish_km`` derniers km
+    # ``finish_gain`` plus vite (0,15 = vitesse × 1,15) ; là où les deux zones se chevauchent,
+    # le plus grand gain. 0 (défaut) : rien. Le total ne change pas, seule la répartition.
+    start_share: float = 0.12
+    start_gain: float = 0.0
+    finish_km: float = 5.0
+    finish_gain: float = 0.0
 
 
 @dataclass(frozen=True)

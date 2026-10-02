@@ -11,7 +11,8 @@ Le banc juge l'arrivée ; ce bloc juge la répartition, de deux façons :
   (tronçon moins les arrêts au ravitaillement, comme un chronométrage entrée / sortie) : les
   pauses en route et les trous d'enregistrement restent dans le tronçon, comme dans le plan,
   et un arrêt au ravito, prévisible ou non, n'y pèse plus. Erreur moyenne, pire tronçon,
-  pire cumul, et somme signée (plan − réel) sur les tronçons de montée et de descente.
+  pire cumul, et somme signée (plan − réel) sur les tronçons de montée et de descente
+  (:func:`type_de_troncon` : le côté dominant, au moins 20 m par km).
 
 S'y ajoutent les arrêts et le mouvement réels contre ceux du plan, et la marche en descente
 prévue par le modèle à deux allures (``twin.terrain.marche_prevue``, sous le mouvement réel
@@ -28,10 +29,22 @@ def _r(x, nd=2):
     return None if x is None else round(float(x), nd)
 
 
+def type_de_troncon(seg) -> str:
+    """« montée » quand le D+ du segment fait au moins deux fois son D− et au moins 20 m par km
+    officiel, « descente » à l'inverse, « mixte » sinon : un tronçon roulant n'est ni l'une ni
+    l'autre, même sans un mètre de D−."""
+    km = max(float(seg.off1 - seg.off0), 1e-6)
+    if seg.dplus_m >= 2.0 * seg.dminus_m and seg.dplus_m >= 20.0 * km:
+        return "montée"
+    if seg.dminus_m >= 2.0 * seg.dplus_m and seg.dminus_m >= 20.0 * km:
+        return "descente"
+    return "mixte"
+
+
 def hors_ravito_impose(course, plan, segs: list) -> dict | None:
     """Le plan, ramené au temps hors ravito réel, contre ce temps tronçon par tronçon ; un
-    tronçon compte quand ses deux points ont un séjour mesurable (``ravito_lu``). Un tronçon
-    est de montée quand son D+ fait au moins deux fois son D−, de descente à l'inverse."""
+    tronçon compte quand ses deux points ont un séjour mesurable (``ravito_lu``). Montée et
+    descente : :func:`type_de_troncon`."""
     idx = [i for i, sg in enumerate(segs)
            if sg is not None and sg.get("hors_ravito_h") is not None and sg.get("ravito_lu", True)]
     if len(idx) < 2:
@@ -43,8 +56,8 @@ def hors_ravito_impose(course, plan, segs: list) -> dict | None:
     impose = prevu * reel.sum() / prevu.sum()
     e = impose - reel
     cs = course.segments
-    montee = [j for j, i in enumerate(idx) if cs[i].dplus_m >= 2.0 * cs[i].dminus_m]
-    descente = [j for j, i in enumerate(idx) if cs[i].dminus_m >= 2.0 * cs[i].dplus_m]
+    montee = [j for j, i in enumerate(idx) if type_de_troncon(cs[i]) == "montée"]
+    descente = [j for j, i in enumerate(idx) if type_de_troncon(cs[i]) == "descente"]
     return {
         "n": len(idx),
         "erreur_moyenne_min": _r(np.mean(np.abs(e)), 1),
@@ -139,4 +152,4 @@ def bloc_forme(course, race, prediction, cfg, passages: dict | None, *,
     return out or None
 
 
-__all__ = ["bloc_forme", "hors_ravito_impose"]
+__all__ = ["bloc_forme", "hors_ravito_impose", "type_de_troncon"]

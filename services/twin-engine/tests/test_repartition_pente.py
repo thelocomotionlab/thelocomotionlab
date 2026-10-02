@@ -309,6 +309,14 @@ def test_score_plan_judges_the_laws_out_of_the_aid_stations(tmp_path):
     assert "| jour ou nuit |" not in md                 # course sans heure de départ
     assert "*Type de tronçon × tiers de course*" in md and "*Type de tronçon × jour ou nuit*" not in md
     assert "*Par athlète — type de tronçon*" in md and "| T | " in md
+    assert "| position | premier tronçon | 1 |" in md and "| position | les autres | 2 |" in md
+    # sous la loi de l'athlète, rien ne reste ; une variante inconnue est refusée
+    assert main([str(mp), "--depot", str(depot.racine), "--variant", variante, "--residus", "PP0",
+                 "--out", str(sortie)]) == 0
+    md = sortie.read_text(encoding="utf-8")
+    assert md.startswith("**Lois comparées") and "des tronçons, sous PP0**" in md
+    assert "| type de tronçon | montée | 2 | 0.0 | 0.0 |" in md
+    assert main([str(mp), "--depot", str(depot.racine), "--residus", "PP9", "--out", str(sortie)]) == 2
 
     depot.mettre_a_part("T", "Dent", "2026-06-01", "mise au point", "2026-10-02")
     assert main([str(mp), "--depot", str(depot.racine), "--variant", variante, "--out", str(sortie)]) == 0
@@ -319,20 +327,22 @@ def test_score_plan_judges_the_laws_out_of_the_aid_stations(tmp_path):
 
 def test_the_residuals_keep_climbs_and_descents_apart():
     """Un plan trop long de 10 % en montée et trop court de 10 % en descente se lit nul sur le
-    tiers de course, et ±10 % une fois croisé par type ; un athlète sans mesure de pente est
-    signalé."""
+    tiers de course, et ±10 % une fois croisé par type ; un tronçon de trois minutes ne pèse que
+    son temps ; un athlète sans mesure de pente est signalé."""
     from tools.score_plan import residus_markdown
 
     def troncon(typ, phase, ecart):
         return {"plan_min": 60.0 * (1 + ecart), "reel_min": 60.0, "type": typ, "phase": phase,
                 "nuit": None, "denivele_m_km": 100.0}
 
+    bout = {**troncon("mixte", 0.95, 0.0), "plan_min": 9.0, "reel_min": 3.0}   # +200 %, 6 min
     rows = [{"athlete": "T", "pente_mesuree": True,
              "hors": {"troncons": [troncon("montée", 0.1, 0.1), troncon("descente", 0.2, -0.1)]}},
             {"athlete": "R", "pente_mesuree": False,
-             "hors": {"troncons": [troncon("mixte", 0.9, 0.0)]}}]
+             "hors": {"troncons": [troncon("mixte", 0.9, 0.0), bout]}}]
     md = residus_markdown(rows)
-    assert "| tiers de course | 1er tiers | 2 | 0.0 | 10.0 |" in md
+    assert "| tiers de course | 1er tiers | 2 | 0.0 | 6.0 |" in md
+    assert "| tiers de course | dernier tiers | 2 | 9.5 | 3.0 |" in md
     assert "| montée | 10.0 (1) | — | — |" in md and "| descente | -10.0 (1) | — | — |" in md
     assert "*Type de tronçon × jour ou nuit*" not in md
     assert "| R (pente non mesurée : loi standard) |" in md and "| T | 10.0 (1) | -10.0 (1) | — |" in md

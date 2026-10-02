@@ -208,6 +208,14 @@ archive mesure tout :
   descente. `score_plan --residus` pour la suite : l'écart restant par type de tronçon, tiers,
   nuit, dénivelé et durée, montées et descentes croisées avec le tiers, la nuit et le dénivelé.
 
+- 2026-10-02 — **ce qui reste sous la loi par tranches** (DIAGNOSTIC §10.36) : le premier tronçon
+  est prévu 9 min trop long (26 courses sur 30), le dernier 6 min (28 sur 31), les autres paient
+  la différence. Levier derrière flags, éteint : `pacing.start_share` / `start_gain` (la première
+  part de la distance plus vite), `pacing.finish_km` / `finish_gain` (les derniers km plus vite).
+  Reconstitué du registre : 7,7 → 6,6 min par tronçon en validation croisée. Le scoreur pondère
+  désormais l'écart par le temps (le % moyen gonflait les petits bouts d'arrivée) et lit ce qui
+  reste sous une variante (`--residus LOI`).
+
 ## Run 1 chez Valentin (à lancer)
 
 Une passe par archive mesure tout ce qui précède. La recette complète est au manuel
@@ -332,7 +340,8 @@ run de base : la réponse est alors « la carte ne dit rien pour cet athlète »
 - Arrêt « au ravito » : un arrêt fait pendant le séjour dans le rayon de détection du point
   (150 m, celui des passages), avant ou après le passage relevé ; le temps hors ravito garde
   les pauses en route et les trous d'enregistrement, comme le temps de segment du plan. Un
-  tronçon est de montée quand son D+ fait au moins deux fois son D−, de descente à l'inverse.
+  tronçon est de montée quand son D+ fait au moins deux fois son D− et au moins 20 m par km,
+  de descente à l'inverse ; mixte sinon, roulant compris (un tronçon plat passait en montée).
 - Un extrait OSM étant donné, une sortie sans aucune voie recalée sort de l'apprentissage, et
   un parcours ou un ultra dont moins de la moitié des descentes est recalée
   (`carte.couverture_osm_min = 0.5`) ne reçoit pas la carte : à Nice, 90 % et 100 % des

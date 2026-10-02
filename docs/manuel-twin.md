@@ -537,6 +537,12 @@ ultras. Le banc a tranché (DIAGNOSTIC §10.9) : seul le Δ du fade change de d�
 dérive de −26 % entre départ et arrivée) ; les trois autres leviers restent derrière leur
 flag, défaut inchangé, et la config de référence de Valentin n'en active aucun.
 
+Départ et arrivée (DIAGNOSTIC §10.36), derrière des flags, défauts inchangés :
+`pacing.start_gain` fait courir la première part `pacing.start_share` de la distance (0,12)
+plus vite que le fade et la loi de pente ne le disent, `pacing.finish_gain` les
+`pacing.finish_km` derniers km (5) ; là où les zones se chevauchent, le plus grand gain. Le
+total ne bouge pas, seule la répartition.
+
 Quatre leviers de la Phase 3 (l'information manquante sur la pente au-delà de 6 h ;
 DIAGNOSTIC §10.10–10.13), derrière des flags, défauts inchangés tant que le banc n'a pas
 parlé : `calibration.duration_prior_source=efficiency|record_tail` fait tirer la pente de la
@@ -822,10 +828,12 @@ PYTHONPATH=src python -m tools.ab_recency <manifests…>  # balaye la demi-vie d
 PYTHONPATH=src python -m tools.score_plan <manifestes…> --variant NOM:bloc.clé=valeur,… [--variant …]
                                                     #   lois de répartition comparées hors ravito, en
                                                     #   une passe, sans archive (dernier run du banc)
-PYTHONPATH=src python -m tools.score_plan <manifestes…> --residus [--set …]   # ce qui reste sous une loi :
-                                                    #   écart hors ravito par type de tronçon, tiers de
-                                                    #   course, jour ou nuit, dénivelé, durée ; montées
-                                                    #   et descentes croisées avec le tiers, la nuit et
+PYTHONPATH=src python -m tools.score_plan <manifestes…> --residus [LOI] [--set …]   # ce qui reste sous
+                                                    #   la base ou la variante LOI : écart hors ravito
+                                                    #   pondéré par le temps et en minutes, par type de
+                                                    #   tronçon, position (premier, dernier), tiers,
+                                                    #   nuit, dénivelé, durée ; montées et descentes
+                                                    #   croisées avec la position, le tiers, la nuit et
                                                     #   le dénivelé, et par athlète
 PYTHONPATH=src python -m tools.registre --frontiere # jusqu'où resserrer les bandes sans perdre la couverture
 PYTHONPATH=src python -m tools.registre --tableau   # tableau de référence (markdown) : par livre × statut,
