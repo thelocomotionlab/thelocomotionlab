@@ -1211,8 +1211,10 @@ Les extraits OpenStreetMap à réunir se déduisent des données : `tools/carte 
 traces des courses et les positions des sorties de course à pied des archives, et l'index de
 Geofabrik (`index-v1.json`, gardé dans le dossier des extraits), et retient pour chaque maille
 de 0,01° l'extrait le plus petit qui la contient ; un extrait sans course et avec moins de
-`--min-mailles` mailles de sorties (50) est laissé de côté, et dit. `--telecharger` va chercher
-ceux qui manquent au dossier :
+`--min-mailles` mailles de sorties (50) est laissé de côté, et dit ; les continents ne comptent
+pas. Une course qu'aucun extrait ne couvre (Madère, hors de l'extrait du Portugal) a ses voies
+par Overpass, dans `<dossier>/overpass`, à passer en `--osm <dossier>/overpass`. `--telecharger`
+va chercher ce qui manque au dossier :
 
 ```bash
 PYTHONPATH=src python -m tools.carte extraits $M --dossier local-data/osm [--telecharger] [--sans-archives]

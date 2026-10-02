@@ -645,14 +645,33 @@ def _telecharger(url: str, chemin: Path) -> None:
     print(file=sys.stderr)
 
 
+def _overpass(requete: str, chemin: Path) -> None:
+    """Enregistre dans ``chemin`` la réponse Overpass de ``requete``."""
+    import urllib.parse
+    import urllib.request
+
+    from twin_engine.carte.extraits import OVERPASS_URL
+
+    corps = urllib.parse.urlencode({"data": requete}).encode()
+    chemin.parent.mkdir(parents=True, exist_ok=True)
+    part = chemin.with_name(chemin.name + ".part")
+    with urllib.request.urlopen(urllib.request.Request(OVERPASS_URL, data=corps), timeout=1200) as r, \
+            part.open("wb") as f:
+        while bloc := r.read(1 << 20):
+            f.write(bloc)
+    part.replace(chemin)
+
+
 def _extraits(args, cfg: Config) -> int:
     """Les extraits Geofabrik qui couvrent les courses et les sorties de course à pied des
     manifestes, le plus petit pour chaque maille de 0,01° ; ceux qui manquent au dossier,
     téléchargés avec ``--telecharger``. Un extrait qui ne porte aucune course et moins de
-    ``--min-mailles`` mailles de sorties est laissé de côté, et dit."""
+    ``--min-mailles`` mailles de sorties est laissé de côté, et dit. Une course qu'aucun extrait
+    ne couvre a ses voies par Overpass, dans ``<dossier>/overpass``."""
     import urllib.request
 
-    from twin_engine.carte.extraits import INDEX_URL, extrait_de, lire_index, mailles
+    from tools.banc import _slug
+    from twin_engine.carte.extraits import INDEX_URL, extrait_de, lire_index, mailles, requete_overpass
     from twin_engine.ingest import iter_activities
 
     dossier = Path(args.dossier)
@@ -704,8 +723,13 @@ def _extraits(args, cfg: Config) -> int:
 
     besoin: dict[str, dict] = {}
     hors: list[str] = []
+    a_overpass: list[tuple[str, np.ndarray]] = []
     for ath, nom, m in courses:
-        for i in set(ids(m)):
+        les_ids = ids(m)
+        if None in les_ids:
+            sans = m[[i is None for i in les_ids]]
+            a_overpass.append((f"{_slug(ath)}-{_slug(nom)}", sans))
+        for i in set(les_ids):
             if i is None:
                 hors.append(f"{ath} · {nom}")
             else:
@@ -721,6 +745,10 @@ def _extraits(args, cfg: Config) -> int:
     retenus = {i: b for i, b in besoin.items()
                if b["courses"] or sum(b["sorties"].values()) >= args.min_mailles}
     ecartes = {i: b for i, b in besoin.items() if i not in retenus}
+
+    dossier_overpass = dossier / "overpass"
+    overpass_manquants = [(nom, m) for nom, m in a_overpass
+                          if not (dossier_overpass / f"{nom}.json").exists()]
 
     def present(e) -> bool:
         return (dossier / e.url.rsplit("/", 1)[-1]).exists()
@@ -739,6 +767,10 @@ def _extraits(args, cfg: Config) -> int:
     if hors or hors_sorties:
         out += ["", f"Hors de tout extrait : {hors_sorties} maille(s) de sorties"
                 + (f" ; courses : {', '.join(sorted(set(hors)))}" if hors else "")]
+    if a_overpass:
+        out += ["", f"Voies par Overpass (`{dossier_overpass}`, à passer en `--osm {dossier_overpass}`) : "
+                + ", ".join(f"{nom}{'' if nom in {n for n, _ in overpass_manquants} else ' (déjà là)'}"
+                            for nom, _ in a_overpass)]
     manquants = [par_id[i] for i in sorted(retenus) if not present(par_id[i])]
     if manquants:
         tailles = [_taille(e.url) for e in manquants]
@@ -747,12 +779,15 @@ def _extraits(args, cfg: Config) -> int:
                 + (f", {total / 1e9:.1f} Go annoncés" if total else ""), "", "```"]
         out += [f"curl -L -o {dossier / e.url.rsplit('/', 1)[-1]} {e.url}" for e in manquants]
         out += ["```"]
-    else:
+    elif not overpass_manquants:
         out += ["", "Tous les extraits nécessaires sont dans le dossier."]
     print("\n".join(out))
     if args.telecharger:
         for e in manquants:
             _telecharger(e.url, dossier / e.url.rsplit("/", 1)[-1])
+        for nom, m in overpass_manquants:
+            print(f"  Overpass : {nom}", file=sys.stderr)
+            _overpass(requete_overpass(m[:, 0], m[:, 1]), dossier_overpass / f"{nom}.json")
     return 0
 
 

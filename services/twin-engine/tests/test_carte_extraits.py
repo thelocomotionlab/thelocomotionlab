@@ -18,10 +18,10 @@ def _carre(o, s, e, n):
 
 
 def _index(*extraits) -> dict:
-    """Un index au format Geofabrik : (id, nom, anneaux…)."""
+    """Un index au format Geofabrik : (id, nom, anneaux…) ; « continent » n'a pas de parent."""
     return {"type": "FeatureCollection", "features": [
         {"type": "Feature",
-         "properties": {"id": i, "name": nom,
+         "properties": {"id": i, "name": nom, **({} if i == "continent" else {"parent": "continent"}),
                         "urls": {"pbf": f"https://download.geofabrik.de/{i}-latest.osm.pbf"}},
          "geometry": {"type": "MultiPolygon", "coordinates": [list(anneaux)]}}
         for i, nom, *anneaux in extraits]}
@@ -30,15 +30,16 @@ def _index(*extraits) -> dict:
 INDEX = _index(("pays", "Pays", _carre(0, 40, 10, 50), _carre(4, 44, 5, 45)),   # un trou
                ("region", "Région", _carre(2, 42, 4, 44)),
                ("enclave", "Enclave", _carre(4, 44, 5, 45)),
-               ("ailleurs", "Ailleurs", _carre(20, 40, 30, 50)))
+               ("ailleurs", "Ailleurs", _carre(20, 40, 30, 50)),
+               ("continent", "Continent", _carre(-30, 20, 60, 80)))
 
 
 def test_each_position_takes_the_smallest_extract_that_holds_it():
     ex = lire_index(INDEX)
-    assert [e.id for e in ex][:2] == ["enclave", "region"]
-    lat = [43.0, 47.0, 44.5, 60.0, 45.0, float("nan")]
-    lon = [3.0, 8.0, 4.5, 60.0, 25.0, 1.0]
-    assert extrait_de(lat, lon, ex) == ["region", "pays", "enclave", None, "ailleurs", None]
+    assert [e.id for e in ex][:2] == ["enclave", "region"] and "continent" not in [e.id for e in ex]
+    lat = [43.0, 47.0, 44.5, 60.0, 45.0, float("nan"), 32.7]
+    lon = [3.0, 8.0, 4.5, 60.0, 25.0, 1.0, -17.0]       # le dernier : seul le continent le couvre
+    assert extrait_de(lat, lon, ex) == ["region", "pays", "enclave", None, "ailleurs", None, None]
     m = mailles([45.001, 45.002, 45.019, float("nan")], [6.001, 6.003, 6.001, 1.0])
     assert m.shape == (2, 2)
 
@@ -64,3 +65,30 @@ def test_the_tool_lists_the_extracts_a_race_needs_and_what_the_folder_lacks(tmp_
     (dossier / "alpes-latest.osm.pbf").write_bytes(b"")
     assert carte.main(argv) == 0
     assert "Tous les extraits nécessaires sont dans le dossier." in capsys.readouterr().out
+
+
+def test_a_race_no_extract_covers_gets_its_ways_from_overpass(tmp_path, monkeypatch, capsys):
+    import tools.carte as carte
+    from twin_engine.carte.extraits import requete_overpass
+
+    requetes = []
+    monkeypatch.setattr(carte, "_overpass", lambda r, chemin: (requetes.append(r), chemin.parent.mkdir(
+        parents=True, exist_ok=True), chemin.write_text('{"elements": []}')))
+    index = tmp_path / "index.json"
+    index.write_text(json.dumps(_index(("continent", "Continent", _carre(0, 40, 10, 50)))), encoding="utf-8")
+    (tmp_path / "course.gpx").write_bytes(_sawtooth_gpx())
+    mp = tmp_path / "m.json"
+    mp.write_text(json.dumps({"athlete": "T", "archive": "absente", "races": [
+        {"name": "Dent", "date": "2026-06-01", "gpx": "course.gpx"}]}), encoding="utf-8")
+    dossier = tmp_path / "osm"
+    argv = ["extraits", str(mp), "--sans-archives", "--index", str(index), "--dossier", str(dossier)]
+    assert carte.main(argv + ["--telecharger"]) == 0
+    md = capsys.readouterr().out
+    assert "Hors de tout extrait : 0 maille(s) de sorties ; courses : T · Dent" in md
+    assert f"--osm {dossier / 'overpass'}" in md
+    assert len(requetes) == 1 and requetes[0].startswith('[out:json]') and 'way["highway"](44.' in requetes[0]
+    assert (dossier / "overpass").is_dir() and len(list((dossier / "overpass").glob("*.json"))) == 1
+    assert carte.main(argv) == 0
+    assert "(déjà là)" in capsys.readouterr().out and len(requetes) == 1
+    assert requete_overpass([45.0, 45.1], [6.0, 6.2]) == (
+        '[out:json][timeout:900];way["highway"](44.9800,5.9800,45.1200,6.2200);out tags geom;')

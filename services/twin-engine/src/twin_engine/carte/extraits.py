@@ -2,8 +2,10 @@
 
 L'index de Geofabrik (``index-v1.json``) donne, pour chaque extrait, son contour (GeoJSON),
 son nom et ses adresses de téléchargement. Pour chaque position, l'extrait retenu est le plus
-petit qui la contient (une région plutôt que son pays, un pays plutôt que son continent) :
-c'est ce qu'il faut télécharger pour qu'aucune trace ne tombe hors des extraits.
+petit qui la contient (une région plutôt que son pays) : c'est ce qu'il faut télécharger pour
+qu'aucune trace ne tombe hors des extraits. Les extraits sans parent (les continents, des
+dizaines de gigaoctets) ne comptent pas : une course qu'aucun autre ne couvre (Madère, hors de
+l'extrait du Portugal) se lit dans une réponse Overpass de sa zone (:func:`requete_overpass`).
 """
 
 from __future__ import annotations
@@ -13,6 +15,7 @@ from typing import NamedTuple
 import numpy as np
 
 INDEX_URL = "https://download.geofabrik.de/index-v1.json"
+OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
 
 class Extrait(NamedTuple):
@@ -25,11 +28,13 @@ class Extrait(NamedTuple):
 
 
 def lire_index(index: dict) -> list[Extrait]:
-    """Les extraits d'un index Geofabrik qui ont un contour et une adresse ``.osm.pbf``, du
-    plus petit au plus grand."""
+    """Les extraits d'un index Geofabrik qui ont un parent, un contour et une adresse
+    ``.osm.pbf``, du plus petit au plus grand."""
     out: list[Extrait] = []
     for f in index.get("features", []):
         p = f.get("properties") or {}
+        if not p.get("parent"):
+            continue
         g = f.get("geometry") or {}
         url = (p.get("urls") or {}).get("pbf")
         coords = g.get("coordinates") or []
@@ -82,6 +87,16 @@ def extrait_de(lat, lon, extraits: list[Extrait]) -> list[str | None]:
     return out.tolist()
 
 
+def requete_overpass(lat, lon, marge_deg: float = 0.02) -> str:
+    """La requête Overpass des voies (``highway=*``, géométrie comprise) de la boîte qui
+    contient les positions, élargie de ``marge_deg``."""
+    lat = np.asarray(lat, dtype=float)
+    lon = np.asarray(lon, dtype=float)
+    s, n = float(np.nanmin(lat)) - marge_deg, float(np.nanmax(lat)) + marge_deg
+    o, e = float(np.nanmin(lon)) - marge_deg, float(np.nanmax(lon)) + marge_deg
+    return f'[out:json][timeout:900];way["highway"]({s:.4f},{o:.4f},{n:.4f},{e:.4f});out tags geom;'
+
+
 def mailles(lat, lon, pas_deg: float = 0.01) -> np.ndarray:
     """Les positions ramenées au centre de leur maille de ``pas_deg`` degrés, sans doublon :
     (n, 2) en (lat, lon)."""
@@ -94,4 +109,5 @@ def mailles(lat, lon, pas_deg: float = 0.01) -> np.ndarray:
     return (m + 0.5) * pas_deg
 
 
-__all__ = ["INDEX_URL", "Extrait", "extrait_de", "lire_index", "mailles"]
+__all__ = ["INDEX_URL", "OVERPASS_URL", "Extrait", "extrait_de", "lire_index", "mailles",
+           "requete_overpass"]
