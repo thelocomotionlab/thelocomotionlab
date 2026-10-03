@@ -394,7 +394,7 @@ def test_despike_rescue_recovers_bursty_distance_channel():
 
     CFG = load_config()
 
-    def _bursty(hours, step_m):
+    def _bursty(hours, step_m, hr=None):
         n = int(hours * 3600)
         t = list(range(n))
         dist = [step_m * (s // 10) for s in t]     # +step_m tous les 10 s, plat entre
@@ -402,6 +402,7 @@ def test_despike_rescue_recovers_bursty_distance_channel():
         # Minetti pondéré par les incréments en rafales gonflerait l'équivalent plat
         return CanonicalActivity.from_samples(
             timestamps=t, dist_m=dist, alt_m=[500.0 + 0.10 * d for d in dist],
+            hr=None if hr is None else [hr] * n,
             sport="running", source_format="fit", source_name="rafales",
         )
 
@@ -419,6 +420,10 @@ def test_despike_rescue_recovers_bursty_distance_channel():
     assert s.has_altitude is False
     st = despike_stats(_bursty(5.0, 20.0), CFG)
     assert st["rescued"] and st["n_bursts"] > 1000              # rafales nombreuses et DISTINCTES
+    # la vitesse seconde par seconde est celle des rafales : aucun découplage, donc aucune
+    # durabilité tirée de ce fichier (cas réel : −244,5 %), la FC restant lue
+    s_fc, _, _ = process_activity(_bursty(5.0, 20.0, hr=145.0), CFG)
+    assert s_fc.has_hr and s_fc.decouple_pct is None
 
     # rollback du D± récupéré : base "zero" → D± nuls (comportement du matin du 2026-07-16)
     cfg_zero = replace(CFG, twin=replace(CFG.twin, despike_rescue_dplus_basis="zero"))

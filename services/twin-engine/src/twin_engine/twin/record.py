@@ -370,10 +370,13 @@ def process_activity_full(act: CanonicalActivity, cfg: Config):
     dd_raw = np.diff(act.dist_m)
     moving_mask = _moving_mask(act.dist_m, cfg.twin.moving_speed_threshold_ms)
 
-    # découplage (durabilité) : nécessite la FC ; sinon None → signalé en aval
+    # découplage (durabilité) : nécessite la FC ; sinon None → signalé en aval. Il compare la
+    # vitesse seconde par seconde des deux moitiés : sur un canal distance sauvé (§9.11), cette
+    # vitesse est celle des rafales, pas celle de l'athlète — rien n'est mesuré
     decouple = None
     hr = act.hr
-    if dur >= cfg.twin.decouple_min_duration_s and np.isfinite(hr).any():
+    if (dur >= cfg.twin.decouple_min_duration_s and np.isfinite(hr).any()
+            and not distance_rescued):
         sp = np.gradient(dga, tg)
         half = n // 2
         # base configurable (C7) : en ``elapsed`` (défaut) toutes les secondes comptent —

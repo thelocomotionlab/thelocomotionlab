@@ -62,6 +62,10 @@
 <% elif plan_low %><< plan_band_word|capitalize >> se joue entre \textbf{<< plan_low >>} et \textbf{<< plan_high >>}.
 <% else %><< safety_word|capitalize >> se joue entre \textbf{<< interval_low >>} et \textbf{<< interval_high >>}.
 <% endif %>\par}
+<% if not sellable %>
+\vspace{3mm}
+{\fontsize{10.5}{16}\selectfont\color{LLDeep}<< verdict_sentence >> Le moteur ne vend pas ce plan : prends ce temps comme un ordre de grandeur, pas comme une cible.\par}
+<% endif %>
 
 \vspace{6mm}
 \LLtuiles{%

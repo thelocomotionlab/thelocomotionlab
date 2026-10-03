@@ -133,6 +133,17 @@ def test_scenario_is_sold_with_full_confidence():
     assert suf.verdict == GREEN
 
 
+def test_a_plan_the_engine_does_not_sell_says_so_on_the_first_page():
+    ctx, _ = context()
+    tex = render_tex(ctx)
+    assert "ne vend pas ce plan" not in tex
+    refuse = {**ctx, "sellable": False,
+              "verdict_sentence": "À ton allure d'ultra, ce parcours se court en 1\\,h."}
+    tex = render_tex(refuse)
+    assert "ce parcours se court en 1\\,h. Le moteur ne vend pas ce plan" in tex
+    assert "ordre de grandeur, pas comme une cible" in tex
+
+
 def test_context_v3_keys():
     ctx, (course, _, _, _, plan, race, _) = context()
     # l'indice de confiance ne s'imprime plus : il reste au dossier (annexe, registre)

@@ -230,6 +230,14 @@ class CalibrationParams:
     genuine_floor: str = "fixed"                         # {fixed, riegel}
     genuine_floor_alpha: float = 0.16
     genuine_max_stop_s: float = 0.0
+    # --- vrais ultras à canal distance sauvé (§9.11) ---------------------------------------
+    # Leur pente seconde par seconde est inexploitable : leur équivalent plat retombe sur la
+    #   distance brute (``raw``, défaut), sous l'équivalent plat de leurs voisins de pente
+    #   exploitable. ``dplus`` : il est estimé depuis leur D± (récupéré en base temps) et le
+    #   surcoût de pente par km de D+ et par km de D− mesuré sur les sorties de l'athlète dont
+    #   la pente est exploitable — au moins ``rescued_slope_min_runs``, sinon distance brute.
+    rescued_slope: str = "raw"                           # {raw, dplus}
+    rescued_slope_min_runs: int = 10
     min_ultras_regression: int = 3
     # pondération par récence (Problème B : non-stationnarité des ultras sur plusieurs saisons)
     recency_halflife_days: float = 365.0                 # demi-vie de la décroissance exponentielle

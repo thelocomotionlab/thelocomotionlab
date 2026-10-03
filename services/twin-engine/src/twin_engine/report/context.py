@@ -743,7 +743,7 @@ def _blocking_sentence(c, cfg) -> str:
     if c.name == "Largeur d'intervalle" and v is not None:
         return (f"La fourchette fait {fr(v * 100, 0)}\\,\\% du temps prédit ; il faudrait "
                 f"descendre sous {fr(s.interval_rel_width_green * 100, 0)}\\,\\%.")
-    return _fr_decimals(f"{c.name} : {c.detail}.")
+    return tex_escape(_fr_decimals(f"{c.name} : {c.detail}."))
 
 
 def _verdict_sentence(sufficiency, calibration, twin, cfg) -> str:

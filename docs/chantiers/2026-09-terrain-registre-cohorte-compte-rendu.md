@@ -240,6 +240,16 @@ archive mesure tout :
   marche. Registre purgé des sept variantes du run 1, écrit une course par ligne. Rapace
   ré-exporte son archive depuis Suunto, avec sa FC : run 2 en cours.
 
+- 2026-10-03 — **run 2, la carte retirée** (DIAGNOSTIC §10.39) : la carte n'améliore ni la
+  répartition (6,3 → 6,3 min) ni le temps total (9,8 → 9,8 et 9,7 %) ; elle est retirée du
+  moteur. La FC de Rapace est lue, mais son export Suunto a perdu ses sorties Garmin : réunies,
+  ses deux archives changent peu ses prédictions. Sa durabilité absurde et une part de son biais
+  lent viennent d'un seul fichier, sa Saintélyon 2024 à canal distance sauvé : plus de
+  découplage sur un tel canal, et `calibration.rescued_slope=dplus` à mesurer au banc. Le PDF
+  d'un plan non vendu le dit. Cohorte : le texte 2026-10 (six mois, recherche, suppression sur
+  demande) passe en ligne, les pages Twin et cohorte sont réécrites, la copie locale des dépôts
+  n'efface plus rien du VPS.
+
 ## Run 1 chez Valentin (à lancer)
 
 Une passe par archive mesure tout ce qui précède. La recette complète est au manuel

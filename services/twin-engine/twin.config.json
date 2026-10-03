@@ -124,6 +124,8 @@
     "genuine_floor": "fixed",
     "genuine_floor_alpha": 0.16,
     "genuine_max_stop_s": 0.0,
+    "rescued_slope": "raw",
+    "rescued_slope_min_runs": 10,
     "min_ultras_regression": 3,
     "recency_halflife_days": 365.0,
     "maximality_mode": "soft_weight",

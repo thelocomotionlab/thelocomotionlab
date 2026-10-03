@@ -389,6 +389,35 @@ def adjusted_km(s: ActivitySummary, slope: tuple[float, float] | None = None) ->
     return float(s.dist_km + slope[0] * up + slope[1] * down)
 
 
+def pente_inexploitable(s: ActivitySummary) -> bool:
+    """Un effort dont la pente seconde par seconde est inexploitable (canal distance sauvé,
+    §9.11) mais dont le D± total est connu : son équivalent plat est sa distance brute."""
+    return (getattr(s, "has_altitude", None) is False and s.dplus_m > 0
+            and not getattr(s, "ga_up_excess_km", None) and not getattr(s, "ga_down_excess_km", None))
+
+
+def surcout_par_km_de_denivele(summaries: list[ActivitySummary], cfg: Config) -> tuple[float, float] | None:
+    """(km d'équivalent plat par km de D+, par km de D−) mesurés sur les sorties de l'athlète
+    dont la pente est exploitable (au moins 100 m de D+ et de D− chacune) ; None sous
+    ``calibration.rescued_slope_min_runs`` sorties."""
+    haut = dplus = bas = dminus = 0.0
+    n = 0
+    for s in summaries:
+        up, down = getattr(s, "ga_up_excess_km", None), getattr(s, "ga_down_excess_km", None)
+        if not getattr(s, "has_altitude", None) or up is None or down is None:
+            continue
+        if s.dplus_m < 100 or s.dminus_m < 100:
+            continue
+        haut += up
+        dplus += s.dplus_m / 1000.0
+        bas += down
+        dminus += s.dminus_m / 1000.0
+        n += 1
+    if n < cfg.calibration.rescued_slope_min_runs or dplus <= 0 or dminus <= 0:
+        return None
+    return haut / dplus, bas / dminus
+
+
 def genuine_gate_failures(s: ActivitySummary, cfg: Config,
                           slope: tuple[float, float] | None = None) -> list[str]:
     """Raisons pour lesquelles un effort N'EST PAS un vrai ultra (liste vide = retenu) : durée,
@@ -445,7 +474,13 @@ def select_genuine_ultras(summaries: list[ActivitySummary], cfg: Config,
     les enregistrements quasi immobiles (bivouac, montre laissée tourner, journées d'étape),
     dont la vitesse hors plateaux est pourtant celle d'une course — au banc de la Phase 2,
     la base hors plateaux sans cette garde a fait entrer des « ultras » à 500 à 1 800 minutes
-    d'arrêt par heure de mouvement (DIAGNOSTIC §10.5)."""
+    d'arrêt par heure de mouvement (DIAGNOSTIC §10.5).
+
+    Sous ``rescued_slope=dplus``, un effort à pente inexploitable (:func:`pente_inexploitable`)
+    reçoit l'équivalent plat de son D± au surcoût par km de dénivelé de l'athlète
+    (:func:`surcout_par_km_de_denivele`), sous les mêmes facteurs de pente que les autres."""
+    par_km = (surcout_par_km_de_denivele(summaries, cfg)
+              if cfg.calibration.rescued_slope == "dplus" else None)
     out: list[GenuineUltra] = []
     for s in summaries:
         # durée, plancher (fixe ou dépendant de la durée), découplage (reconnaissances/randos ;
@@ -453,7 +488,12 @@ def select_genuine_ultras(summaries: list[ActivitySummary], cfg: Config,
         if genuine_gate_failures(s, cfg, slope):
             continue
         hours = _basis_hours(s, cfg)
-        vga_kmh = adjusted_km(s, slope) / hours
+        ga = adjusted_km(s, slope)
+        if par_km is not None and pente_inexploitable(s):
+            k_up, k_down = slope if slope is not None else (1.0, 1.0)
+            ga = (s.dist_km + k_up * par_km[0] * s.dplus_m / 1000.0
+                  + k_down * par_km[1] * s.dminus_m / 1000.0)
+        vga_kmh = ga / hours
         stops_s = getattr(s, "stops_s", None)
         out.append(
             GenuineUltra(
@@ -903,6 +943,15 @@ def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
     slope = twin.slope_factors(cfg)
     notes: list[str] = []
     genuine = select_genuine_ultras(twin.summaries, cfg, slope=slope)
+    if c.rescued_slope == "dplus":
+        n_sauves = sum(1 for x in twin.summaries
+                       if pente_inexploitable(x) and not genuine_gate_failures(x, cfg, slope))
+        if n_sauves:
+            notes.append(
+                f"{n_sauves} vrai(s) ultra(s) à canal distance sauvé : équivalent plat estimé depuis "
+                "leur D±" if surcout_par_km_de_denivele(twin.summaries, cfg) is not None else
+                f"{n_sauves} vrai(s) ultra(s) à canal distance sauvé : trop peu de sorties à pente "
+                "exploitable pour estimer leur équivalent plat, distance brute gardée.")
     slope_kw: dict = {"slope_cost": c.slope_cost, "slope_kappa": slope}
     if c.slope_cost == "personal":
         if slope is None:
@@ -1169,6 +1218,8 @@ __all__ = [
     "DomainDemand",
     "domain_demand",
     "select_genuine_ultras",
+    "pente_inexploitable",
+    "surcout_par_km_de_denivele",
     "maximality_weights",
     "recency_weights",
     "build_calibration",

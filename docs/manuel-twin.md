@@ -351,15 +351,20 @@ passent par le miroir JS des tokens, et qu'une garde à la lettre condamnerait �
 ## 5. Où vont les données / confidentialité
 
 - **Archives de la cohorte** : chiffrées au repos sur le volume du service de dépôt (clé
-  `TWIN_DEPOT_ARCHIVE_KEY`), leur seul endroit ; le moteur n'en fait qu'une copie temporaire
+  `TWIN_DEPOT_ARCHIVE_KEY`) ; le moteur n'en fait qu'une copie temporaire
   le temps d'une ingestion ou d'un banc. Combien de temps elles restent dépend du texte de
-  consentement accepté : « 2026-07 » (la page en ligne aujourd'hui) promettait la suppression
-  après analyse, l'archive part dès l'ingestion ; « 2026-10 » (le brouillon, aperçu dans le
-  tableau de bord) la garde `cohorte.conservation_jours` (183) jours. À l'échéance de ses
+  consentement accepté : « 2026-07 » (l'ancien texte) promettait la suppression après analyse,
+  l'archive part dès l'ingestion ; « 2026-10 » (le texte en ligne) la garde
+  `cohorte.conservation_jours` (183) jours, pour le jumeau et la recherche du labo, et
+  l'athlète peut en demander la suppression à tout moment. À l'échéance de ses
   données, l'athlète entier est effacé (archive, jumeau, plans, pages, jobs) et ses entrées
   du registre deviennent anonymes. La passe quotidienne de purge est en **simulation** tant
   que `cohorte.purge` ne vaut pas `active` dans `twin.config.json` : elle compte ce qu'elle
   effacerait (écran Athlètes, « Conservation ») et n'efface rien.
+- **Une copie de travail** des archives vit sur le poste de Valentin :
+  `services/twin-depot/scripts/rapatrier-depots.py` copie chaque dépôt (archive et
+  métadonnées) sans rien effacer du VPS ; `--purger RÉFÉRENCE` efface un dépôt du VPS et sa
+  copie locale quand un athlète demande la suppression (README du dépôt).
 - Les **noms de fichiers sont anonymisés** à l'ingestion (les exports RGPD peuvent contenir l'e-mail
   de l'athlète) ; poids, notes privées, descriptions et identifiants d'appareil ne sont **jamais lus**.
 - En local, les données de test vont dans `services/twin-engine/local-data/` (git-ignoré).
@@ -1138,6 +1143,13 @@ reporte sur les descentes, au prorata de la probabilité de marcher de l'athlèt
 marche du détecteur) ; le total ne change pas. La carte de technicité (OpenStreetMap, relief,
 occupation du sol), essayée sur la répartition et le total (DIAGNOSTIC §10.31 à §10.39), n'a
 rien apporté de mesurable : elle a été retirée du moteur.
+
+**Vrais ultras à canal distance sauvé** — `calibration.rescued_slope`, `raw` par défaut : un
+ultra dont la distance arrive en rafales (§9.11) garde sa distance brute comme équivalent plat,
+sa pente seconde par seconde étant inexploitable. Sous `dplus`, son équivalent plat est estimé
+depuis son D± (récupéré en base temps) et le surcoût de pente par km de D+ et de D− mesuré sur
+les sorties de l'athlète à pente exploitable (au moins `rescued_slope_min_runs`, 10). Un tel
+fichier ne donne plus de découplage, donc plus de durabilité.
 
 **Profils de configuration** — un plan sert l'un de trois profils : `defaut`
 (`twin.config.json` tel quel), `reference` et `experimental`, deux listes de surcharges

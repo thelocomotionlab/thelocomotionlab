@@ -3738,3 +3738,64 @@ jumeau. Rapace : aucune FC dans ses 689 fichiers (548 Suunto, 139 Garmin), ni br
 
 **Tests** : `tests/test_fc_brute.py` (le verdict juge la course à pied ; une FC non lue d'un autre
 sport est dite sans effet), `tests/test_carte_extraits.py`.
+
+### 10.39 Run 2 : la FC de Rapace, la carte sur le temps total (2026-10-03)
+
+**Matière.** Banc sur les quatre manifestes avec la nouvelle archive de Rapace (export Suunto :
+645 FIT, dont 445 de course, tous avec FC ; 777 GPX « Sports Tracker », aucun reconnu comme de
+la course, faute de sport déclaré), variantes TT (`prediction.terrain_total=differential`) et TA
+(`calibration.terrain_adjust=deq`) ; `tools/score_plan` sous la base, PPB, DA3 et CARTE. Deux
+passes, à 7dcdc6d et à 85b6016, donnent les mêmes 33 entrées.
+
+**La carte n'apporte rien au temps total.** TT : erreur moyenne des vendus 9,8 → 9,8 %,
+couverture 80 % inchangée (69 %), 5 courses mieux, 5 moins bien. TA : 9,8 → 9,7 %, couverture
+inchangée, 5 mieux, 6 moins bien ; sur les seize vendues, 5 mieux (9,3 min en tout, dont
+Lavaredo −5,5 et Chianti −2,5) et une moins bien (+0,4 min) ; Tour des 8 Refuges, non vendue,
++26 min sous les deux variantes. Sur la répartition, CARTE = DA3 : 6,3 min par tronçon,
+passages 1,52 %.
+
+**La FC de Rapace est lue, mais l'archive a perdu des sorties.** L'export Suunto ne contient
+plus les 139 fichiers Garmin de l'ancienne archive. Sorties de course lues à la coupure, de
+l'ancienne à la nouvelle archive : 134 → 18 (Orcières 2024), 184 → 87, 249 → 151, 261 → 163,
+333 → 235, 454 → 356 (Nivolet-Revard 2026). Erreurs du central : Orcières +308 → +146 %,
+Saintélyon 2024 +81 → +20 %, Grand Tour du Lac +29 → +37 %, Coursières 100k 2025 +36 → +30 %,
+UTBV +9 → +14 %, Nivolet-Revard +21 → +23 % : toujours trop lent. Trois verdicts passent de 🔴 à
+🟠 (Saintélyon 2024, Coursières 2025, UTBV) ; vendus, tous athlètes : 14 → 16, erreur moyenne
+8,1 → 9,8 %, biais +1,7 → +4,2 %, couverture 80 % 79 → 69 %. Sa durabilité sort à −244,5 %
+(Lac, Coursières), −126,2 % (UTBV) et −0,5 % (Nivolet) : hors de toute plausibilité. Elle
+n'entre ni dans la prédiction ni dans le plan servi par défaut (dérive `config`) ; l'exposant
+efficacité-durée, tiré de la même FC, entre dans la prédiction par défaut
+(`calibration.envelope_tail` et `calibration.duration_prior_source` à `efficiency`).
+
+**La répartition avec Rapace** : base 8,1 → PPB 7,3 → DA3 6,3 min par tronçon, passages
+1,72 → 1,76 → 1,52 % ; sa loi de pente personnelle est désormais mesurée.
+
+**Les deux archives de Rapace ensemble** (test hors registre, banc sur un dossier qui réunit
+l'ancienne et la nouvelle) : 929 sorties de course lues, 362 doublons écartés, 567 gardées, dont
+444 avec FC — le dédoublonnage garde bien la copie avec FC ; l'ancienne apporte 122 sorties,
+presque toutes de 2022 et 2023. Prédictions : Orcières +146 → +107 %, UTBV +14 → +9 %, les
+quatre autres à un point près. Les sorties manquantes n'expliquent pas le biais lent.
+
+**La durabilité absurde vient d'un seul fichier** : la Saintélyon 2024 de sa montre, canal
+distance sauvé (§9.11 — le cas réel de cette section), découplage −244,5 % ; ses autres longues
+sorties donnent −7,8, +6,7, +11,6, +4,0, +12,8 %. Le découplage compare la vitesse seconde par
+seconde des deux moitiés : sur un canal en rafales, c'est celle des rafales. Corrigé : un canal
+sauvé ne donne plus de découplage (`tests/test_twin.py`). Aucune prédiction servie par défaut
+n'en dépend ; la durabilité affichée de Rapace passe de −244,5 % à « non mesurée » tant que
+la Saintélyon est sa seule sortie de plus de 10 h.
+
+**Le même fichier est le premier vrai ultra de Rapace**, donc l'ancre de ses prédictions
+suivantes — la seule avant Coursières 2025 (`domain_demand.v_ref_kmh` 6,557 = sa vitesse). Sa
+pente étant inexploitable, son équivalent plat est sa distance brute (71,5 km), quand ses
+autres ultras gagnent 12 à 18 % de distance par la pente : sa vitesse ajustée (6,56 km/h) est
+sous-estimée, ce qui tire les prédictions suivantes vers le lent (probable). Levier, derrière
+un drapeau éteint : `calibration.rescued_slope=dplus` estime l'équivalent plat d'un tel ultra
+depuis son D± et le surcoût de pente par km de dénivelé mesuré sur les autres sorties de
+l'athlète (`tests/test_pente_des_ultras_sauves.py`). Critère fixé avant le banc : il entre dans
+le profil Référence s'il baisse d'au moins 0,5 point l'erreur moyenne des courses vendues, sans
+baisser la couverture 80 %, et sans dégrader aucune course de plus d'un point.
+
+**Décisions.** La carte est retirée du moteur (paquet, outil, drapeaux, bloc de configuration,
+options `--terrain`, sources imprimées ; 42 tests). Le PDF d'un plan que la garde de suffisance
+ne vend pas le dit sur sa première page, avec le critère qui le retient : depuis le rapport v3,
+le 🔴 ne s'imprimait plus nulle part (`tests/test_report_v3.py`).
