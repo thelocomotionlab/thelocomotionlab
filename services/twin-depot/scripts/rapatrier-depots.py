@@ -3,7 +3,9 @@
 
 Les archives restent sur le VPS (chiffrées, le temps de conservation accepté par l'athlète) :
 le moteur y relit l'archive d'un athlète pour rejouer ses courses. Ce script en fait une copie
-de travail sur ton poste, pour les analyses ; le relancer ne retélécharge que ce qui manque.
+de travail sur ton poste, pour les analyses ; le relancer ne retélécharge que ce qui manque, et
+efface la copie locale d'un dépôt que le VPS n'a plus (purgé à l'échéance) : la copie ne
+survit pas à la durée promise à l'athlète.
 
 Usage (depuis n'importe où, Python 3 standard, aucune dépendance) :
 
@@ -88,6 +90,15 @@ def main() -> None:
     if args.purger:
         purger(base, token, depots, args.purger, dest_root)
         return
+
+    # une copie locale dont le dépôt n'est plus sur le VPS (purgé à l'échéance) part aussi
+    refs = {d["reference"] for d in depots}
+    if os.path.isdir(dest_root):
+        for nom in sorted(os.listdir(dest_root)):
+            dossier = os.path.join(dest_root, nom)
+            if nom not in refs and os.path.isfile(os.path.join(dossier, "depot.json")):
+                shutil.rmtree(dossier)
+                print(f"• {nom} : plus sur le VPS (échéance ou demande) → copie locale effacée.")
 
     if not depots:
         print("Aucun dépôt sur le VPS — rien à copier.")

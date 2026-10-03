@@ -66,7 +66,7 @@ export const TES_DONNEES = {
     {
       titre: "Où",
       texte:
-        "Sur le serveur du labo, et sur mon ordinateur le temps des analyses. Personne d’autre n’y a accès ; rien n’est vendu ni partagé.",
+        "Sur le serveur du labo, et en copie sur mon ordinateur, effacée en même temps. Personne d’autre n’y a accès ; rien n’est vendu ni partagé.",
     },
     {
       titre: "Tes droits",

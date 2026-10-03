@@ -56,8 +56,8 @@ fichier nettoyé (pas de traversée de chemin).
 Le geste du quotidien : lister, télécharger, **vérifier le SHA-256** (celui calculé par le
 service au dépôt), écrire les métadonnées dans `<référence>/depot.json`. **Rien n'est effacé
 du VPS** : l'archive y reste, chiffrée, le temps de conservation accepté par l'athlète, et le
-moteur y relit ses courses. Relancé, le script ne télécharge que ce qui manque. Depuis ton
-poste :
+moteur y relit ses courses. Relancé, le script ne télécharge que ce qui manque, et efface la
+copie locale d'un dépôt que le VPS n'a plus (purgé à l'échéance). Depuis ton poste :
 
 ```bash
 TWIN_DEPOT_ADMIN_TOKEN=<jeton> services/twin-depot/scripts/rapatrier-depots.py
