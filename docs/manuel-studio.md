@@ -104,12 +104,13 @@ ses propres réglages, sous **RÉGLAGES** :
 - **Chiffre** — la variable, son libellé, son corps, et une **valeur écrite à la main** qui remplace
   le calcul : la montre a toujours raison sur son propre fichier.
 - **Fiche** — les lignes, chacune tirant sa valeur d'une variable ou d'un texte écrit.
-- **Chiffres** (le bloc) — le corps, le nombre de cases par ligne (2 : en carré, 4 : en bandeau,
-  1 : en colonne), l'interligne (l'air entre deux lignes, en part du corps), l'alignement, l'encre
-  des valeurs et celle des libellés, et chaque case : son libellé, sa variable, et une valeur écrite
-  qui passe devant — le chrono officiel quand la trace n'a pas d'horaires. Le bloc se centre dans son
-  cadre ; si une valeur ne tient pas dans sa case, ou les lignes dans la hauteur du cadre, tout le
-  bloc rapetisse d'un même corps.
+- **Chiffres** (le bloc) — le corps et l'encre des valeurs ; la place des libellés (à côté de la
+  valeur, « 170 KM », ou dessous), leur corps et leur encre ; le nombre de cases par ligne (1 : en
+  colonne, 2 : en carré, 4 : en bandeau), l'interligne (l'air entre deux lignes, en part du corps),
+  l'alignement ; et chaque case : son libellé, sa variable, et une valeur écrite qui passe devant —
+  le chrono officiel quand la trace n'a pas d'horaires. Le bloc se centre dans son cadre ; si une
+  case ne tient pas dans sa colonne, ou les lignes dans la hauteur du cadre, tout le bloc rapetisse
+  d'un même rapport, libellés compris.
 - **Texte, forme, icône, marque** — alignement, casse, interlettrage, encre, puce et couleur des
   puces (par défaut, celle du texte), filets, plaque, ombre ;
   forme et coins ; clé d'icône ; variante de la marque, couleur du logo, couleur du nom ou du cercle.

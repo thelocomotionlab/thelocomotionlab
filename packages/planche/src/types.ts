@@ -366,8 +366,8 @@ export type CaseChiffre = {
 
 /**
  * PLUSIEURS CHIFFRES EN UN SEUL ÉLÉMENT : chaque case écrit sa valeur, et son
- * libellé dessous en capitales espacées. Les cases se rangent par lignes de
- * `colonnes` ; toutes les valeurs du bloc partagent un même corps.
+ * libellé en capitales espacées, à côté ou dessous. Les cases se rangent par
+ * lignes de `colonnes` ; toutes les valeurs du bloc partagent un même corps.
  */
 export type ElementChiffres = ElementCommun & {
   type: "chiffres";
@@ -375,8 +375,12 @@ export type ElementChiffres = ElementCommun & {
   /** Les cases par ligne. */
   colonnes: number;
   alignement: "gauche" | "centre";
-  /** Le corps des valeurs, en pixels de planche ; celui des libellés en est 0,3. */
+  /** Le corps des valeurs, en pixels de planche. */
   taille: number;
+  /** Le libellé juste à droite de la valeur, sur sa ligne de base, ou dessous. */
+  placeLibelle: "cote" | "dessous";
+  /** Le corps des libellés, en pixels de planche — `null` : 0,3 du corps des valeurs. */
+  tailleLibelles: number | null;
   /** L'air entre deux lignes de cases, en part du corps des valeurs — `null` : 0,6. */
   entreLignes: number | null;
   /** Vide : l'encre du thème. */

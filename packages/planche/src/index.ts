@@ -213,7 +213,13 @@ export {
   traceNeuve,
 } from "./fabrique.ts";
 
-export { ENTRE_LIGNES, dessinerChiffres, miseEnPageDuBloc, valeurDeLaCase } from "./chiffres.ts";
+export {
+  ENTRE_LIGNES,
+  PART_LIBELLE,
+  dessinerChiffres,
+  miseEnPageDuBloc,
+  valeurDeLaCase,
+} from "./chiffres.ts";
 export type { PlaceDeCase } from "./chiffres.ts";
 
 export {

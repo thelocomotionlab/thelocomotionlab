@@ -201,7 +201,7 @@ export default function TiroirElements({ poste }: { poste: PosteDeTravail }) {
           <button
             type="button"
             className={BOUTON}
-            onClick={() => poser(chiffresNeufs({ x: 0.5, y: 0.66, l: 0.44, h: 0.2 }))}
+            onClick={() => poser(chiffresNeufs({ x: 0.55, y: 0.55, l: 0.39, h: 0.24 }))}
           >
             Chiffres
           </button>

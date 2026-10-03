@@ -56,7 +56,16 @@ const APPARENCE: Record<Element["type"], readonly string[]> = {
   stat: ["taille", "libelle"],
   fiche: ["tailleLibelle", "tailleValeur"],
   // Sans `cases` : ce sont les chiffres de l'autre élément, pas son apparence.
-  chiffres: ["colonnes", "alignement", "taille", "entreLignes", "couleurValeurs", "couleurLibelles"],
+  chiffres: [
+    "colonnes",
+    "alignement",
+    "taille",
+    "placeLibelle",
+    "tailleLibelles",
+    "entreLignes",
+    "couleurValeurs",
+    "couleurLibelles",
+  ],
   cases: ["colonnes", "miniCarte", "miniProfil", "filet", "taille", "couleurs"],
   // Ni `lignes` ni `legende` : copier une APPARENCE ne recopie pas les chiffres
   // de quelqu'un d'autre, ni ce qu'il en dit.

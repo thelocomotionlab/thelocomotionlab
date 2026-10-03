@@ -225,9 +225,9 @@ export function ficheNeuve(boite: Boite, over: Partial<ElementFiche> = {}): Elem
 }
 
 /**
- * Les chiffres d'une sortie en un bloc : distance, dénivelés, durée — deux par
- * ligne. La durée vient d'une trace horodatée ; sans horaires, sa case attend
- * une valeur écrite.
+ * Les chiffres d'une sortie en un bloc : distance, dénivelés, durée — en
+ * colonne, calés à gauche, chaque libellé à côté de sa valeur. La durée vient
+ * d'une trace horodatée ; sans horaires, sa case attend une valeur écrite.
  */
 export function chiffresNeufs(boite: Boite, over: Partial<ElementChiffres> = {}): ElementChiffres {
   return {
@@ -239,9 +239,11 @@ export function chiffresNeufs(boite: Boite, over: Partial<ElementChiffres> = {})
       { variable: "dmoins", valeur: null, libelle: "m D−" },
       { variable: "duree", valeur: null, libelle: "chrono" },
     ],
-    colonnes: 2,
-    alignement: "centre",
+    colonnes: 1,
+    alignement: "gauche",
     taille: 64,
+    placeLibelle: "cote",
+    tailleLibelles: null,
     entreLignes: null,
     couleurValeurs: "",
     couleurLibelles: "",

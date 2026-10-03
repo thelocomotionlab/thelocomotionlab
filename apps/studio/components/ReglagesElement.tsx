@@ -16,6 +16,7 @@ import {
   COULEURS_TEXTE,
   ENTRE_LIGNES,
   GRAISSES,
+  PART_LIBELLE,
   brandColors,
   avecTexteDuGraphique,
   ecrireLesSeries,
@@ -936,12 +937,40 @@ function ReglagesChiffres({ e, poser }: { e: ElementChiffres; poser: Poser<Eleme
     );
   return (
     <>
+      <Titre>Valeurs</Titre>
       <Nombre
-        libelle="Corps"
+        libelle="Corps des valeurs"
         valeur={e.taille}
         suffixe="px"
         onChange={(n) => poser((x) => ({ ...x, taille: Math.max(8, n) }), "corps")}
       />
+      <Couleur
+        libelle="Encre des valeurs"
+        valeur={e.couleurValeurs}
+        onChange={(v) => poser((x) => ({ ...x, couleurValeurs: v }), "encre")}
+      />
+      <Titre>Libellés</Titre>
+      <Choix
+        libelle="Place"
+        valeur={e.placeLibelle ?? "cote"}
+        options={[
+          { cle: "cote", label: "À côté de la valeur" },
+          { cle: "dessous", label: "Sous la valeur" },
+        ]}
+        onChange={(v) => poser((x) => ({ ...x, placeLibelle: v }), "libellés")}
+      />
+      <Nombre
+        libelle="Corps des libellés"
+        valeur={e.tailleLibelles ?? Math.round(e.taille * PART_LIBELLE)}
+        suffixe="px"
+        onChange={(n) => poser((x) => ({ ...x, tailleLibelles: Math.max(6, n) }), "corps")}
+      />
+      <Couleur
+        libelle="Encre des libellés"
+        valeur={e.couleurLibelles}
+        onChange={(v) => poser((x) => ({ ...x, couleurLibelles: v }), "encre")}
+      />
+      <Titre>Disposition</Titre>
       <Nombre
         libelle="Par ligne"
         valeur={e.colonnes}
@@ -968,21 +997,11 @@ function ReglagesChiffres({ e, poser }: { e: ElementChiffres; poser: Poser<Eleme
         ]}
         onChange={(v) => poser((x) => ({ ...x, alignement: v }), "alignement")}
       />
-      <Couleur
-        libelle="Encre des valeurs"
-        valeur={e.couleurValeurs}
-        onChange={(v) => poser((x) => ({ ...x, couleurValeurs: v }), "encre")}
-      />
-      <Couleur
-        libelle="Encre des libellés"
-        valeur={e.couleurLibelles}
-        onChange={(v) => poser((x) => ({ ...x, couleurLibelles: v }), "encre")}
-      />
       <Aide>
-        L&rsquo;interligne est l&rsquo;air entre deux lignes de chiffres, en part du corps. Si
-        une valeur ne tient pas dans sa case, ou les lignes dans la hauteur du cadre, tout le bloc
-        rapetisse d&rsquo;un même corps. « Thème » : l&rsquo;encre du thème pour les valeurs, son
-        accent pour les libellés.
+        L&rsquo;interligne est l&rsquo;air entre deux lignes de chiffres, en part du corps des
+        valeurs. Si une case ne tient pas dans sa colonne, ou les lignes dans la hauteur du cadre,
+        tout le bloc rapetisse d&rsquo;un même rapport, libellés compris. « Thème » : l&rsquo;encre
+        du thème pour les valeurs, son accent pour les libellés.
       </Aide>
       <Titre>Cases</Titre>
       {e.cases.map((cs, i) => (
