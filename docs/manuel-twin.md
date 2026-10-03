@@ -1244,9 +1244,9 @@ de carte rendent le run de base, et c'est la réponse.
 effective : l'empreinte du défaut n'en dépend pas ; un fichier partiel passé par
 `TWIN_CONFIG_PATH` garde les profils qu'il ne redéfinit pas). La référence reçoit les drapeaux qu'un run
 garde hors du défaut faute de preuve sur les cas frais — aujourd'hui la loi de pente par
-tranches servie à la répartition (DIAGNOSTIC §10.35) ; l'expérimental, la référence plus les
-leviers à l'essai qui se servent sans carte (départ et arrivée plus rapides, DIAGNOSTIC §10.37 ;
-technicité déclarée sur les descentes ; consigne de marche). En ligne de commande, `twin-engine preview|full --profil
+tranches et le départ et l'arrivée plus rapides, servis à la répartition (DIAGNOSTIC §10.35,
+§10.37) ; l'expérimental, la référence plus les leviers à l'essai qui se servent sans carte
+(technicité déclarée sur les descentes, consigne de marche). En ligne de commande, `twin-engine preview|full --profil
 experimental` (les `--set` s'appliquent après) ; au tableau de bord, l'écran Plan ; au livre
 servi, `tools/registre --servir … --profil experimental` quand la version ne le garde pas. Les entrées
 portent `course.terrain` (km ajoutés au Deq, ou la raison du refus), `model.terrain_adjust`

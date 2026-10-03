@@ -27,7 +27,7 @@ l'histoire, jamais une loi. Une décision prise hier n'est pas un ordre pour auj
 ## Comment travailler
 
 - Une branche par chantier, des commits logiques. Si le chantier touche plus d'un module : un plan d'abord, le code
-  après validation.
+  après validation. Valentin travaille sous Ubuntu 24.04, en bash.
 - Mode d'emploi du dépôt : `docs/manuel-monorepo.md` ; du studio : `docs/manuel-studio.md`. Déploiement — site,
   studio, passerelle email et VPS sont quatre commandes indépendantes, et Cloudflare Pages ignore silencieusement
   une partie de `next.config.mjs` : `docs/deploy-cloudflare.md`, `docs/runbook-vps.md`.

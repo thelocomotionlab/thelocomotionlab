@@ -235,6 +235,11 @@ archive mesure tout :
   à 6,3 min. Toute la FC de course à pied de Val, Crasse et Lolo est lue ; Rapace n'en a aucune,
   même dans ses fichiers bruts.
 
+- 2026-10-03 — **Décision 5** : DA3 entre dans le profil Référence (loi par tranches, départ et
+  arrivée plus rapides) ; l'Expérimental y ajoute la technicité déclarée et la consigne de
+  marche. Registre purgé des sept variantes du run 1, écrit une course par ligne. Rapace
+  ré-exporte son archive depuis Suunto, avec sa FC : run 2 en cours.
+
 ## Run 1 chez Valentin (à lancer)
 
 Une passe par archive mesure tout ce qui précède. La recette complète est au manuel

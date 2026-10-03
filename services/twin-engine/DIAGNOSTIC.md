@@ -3704,6 +3704,8 @@ l'autre (somme sous DA : −29 min à Nice 50k, −19 au Grand Trail du Lac, +18
 
 **Décision 4 — profil Expérimental.** DA3 y entre (`pacing.start_gain=0.175`,
 `pacing.finish_km=3`, `pacing.finish_gain=0.45`). La référence reste PPB. Défauts inchangés.
+**Décision 5** (2026-10-03) : DA3 entre aussi dans la référence ; l'expérimental garde en plus la
+technicité déclarée et la consigne de marche.
 
 **Suite.** La carte du parcours (`pacing.terrain=map`) se juge au scoreur : `--terrain` lit les
 profils de `tools/carte banc`, sans run du banc ; la sortie dit où la carte a été servie.

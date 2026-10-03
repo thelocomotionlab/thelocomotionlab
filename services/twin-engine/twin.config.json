@@ -302,14 +302,17 @@
   "profils": {
     "_comment": "Profils de configuration qu'un plan peut servir (twin_engine.profils), choisis sur l'écran Plan et retenus par le registre. Le défaut est ce fichier tel quel ; chaque profil est une liste de surcharges bloc.clé=valeur.",
     "reference": {
-      "description": "Ta loi de pente, mesurée tranche par tranche sur ton archive, répartit le plan entre les segments ; le temps total ne change pas. Gardée hors du défaut faute de cas frais : sur 30 courses de développement, elle réduit l'erreur par segment sur 17 courses et l'augmente sur 6.",
+      "description": "Ta loi de pente, mesurée tranche par tranche sur ton archive, répartit le plan entre les segments, avec un départ et une arrivée plus rapides (les 12 premiers % de la distance 17,5 % plus vite, les 3 derniers km 45 % plus vite) ; le temps total ne change pas. Gardés hors du défaut faute de cas frais : sur 30 courses de développement, l'erreur par segment passe de 8,1 à 6,3 min.",
       "drapeaux": [
         "calibration.slope_cost=personal_pacing",
-        "calibration.slope_curve=bins"
+        "calibration.slope_curve=bins",
+        "pacing.start_gain=0.175",
+        "pacing.finish_km=3",
+        "pacing.finish_gain=0.45"
       ]
     },
     "experimental": {
-      "description": "La référence, plus les leviers à l'essai qui se servent sans carte : un départ et une arrivée plus rapides (les 12 premiers % de la distance 17,5 % plus vite, les 3 derniers km 45 % plus vite, le temps total inchangé), la technicité déclarée reportée sur les descentes, et la marche prévue en descente dans la colonne « Sur ce segment ».",
+      "description": "La référence, plus les leviers à l'essai qui se servent sans carte : technicité déclarée reportée sur les descentes, et la marche prévue en descente dans la colonne « Sur ce segment ».",
       "drapeaux": [
         "calibration.slope_cost=personal_pacing",
         "calibration.slope_curve=bins",
