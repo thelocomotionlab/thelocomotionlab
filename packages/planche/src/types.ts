@@ -52,6 +52,7 @@ export type TypeElement =
   | "profil"
   | "stat"
   | "fiche"
+  | "chiffres"
   | "cases"
   | "semaines";
 
@@ -353,6 +354,33 @@ export type ElementFiche = ElementCommun & {
   tailleValeur: number;
 };
 
+/** Une case d'un bloc de chiffres : sa variable, la valeur écrite qui la remplace, son libellé. */
+export type CaseChiffre = {
+  variable: CleVariable | null;
+  /** Écrite, elle passe avant la variable. */
+  valeur: string | null;
+  libelle: string;
+};
+
+/**
+ * PLUSIEURS CHIFFRES EN UN SEUL ÉLÉMENT : chaque case écrit sa valeur, et son
+ * libellé dessous en capitales espacées. Les cases se rangent par lignes de
+ * `colonnes` ; toutes les valeurs du bloc partagent un même corps.
+ */
+export type ElementChiffres = ElementCommun & {
+  type: "chiffres";
+  cases: CaseChiffre[];
+  /** Les cases par ligne. */
+  colonnes: number;
+  alignement: "gauche" | "centre";
+  /** Le corps des valeurs, en pixels de planche ; celui des libellés en est 0,3. */
+  taille: number;
+  /** Vide : l'encre du thème. */
+  couleurValeurs: string;
+  /** Vide : l'accent du thème. */
+  couleurLibelles: string;
+};
+
 /**
  * Ce qu'une case dit d'elle-même.
  *
@@ -472,6 +500,7 @@ export type Element =
   | ElementProfil
   | ElementStat
   | ElementFiche
+  | ElementChiffres
   | ElementCases
   | ElementSemaines;
 
@@ -482,6 +511,7 @@ export type CleModele =
   | "trace"
   | "bandeau"
   | "photo"
+  | "photo-seule"
   | "texte"
   | "intentions"
   | "fiche"

@@ -28,6 +28,7 @@ const NOMS: Record<Element["type"], string> = {
   profil: "Profil",
   stat: "Chiffre",
   fiche: "Fiche",
+  chiffres: "Chiffres",
   cases: "Journées",
   semaines: "Semaines",
 };

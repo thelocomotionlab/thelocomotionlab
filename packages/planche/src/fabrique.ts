@@ -17,6 +17,7 @@ import type {
   Element,
   ElementCases,
   ElementCarte,
+  ElementChiffres,
   ElementFiche,
   ElementForme,
   ElementIcone,
@@ -220,6 +221,41 @@ export function ficheNeuve(boite: Boite, over: Partial<ElementFiche> = {}): Elem
     ],
     ...over,
   };
+}
+
+/**
+ * Les chiffres d'une sortie en un bloc : distance, dénivelés, durée — deux par
+ * ligne. La durée vient d'une trace horodatée ; sans horaires, sa case attend
+ * une valeur écrite.
+ */
+export function chiffresNeufs(boite: Boite, over: Partial<ElementChiffres> = {}): ElementChiffres {
+  return {
+    ...commun("chiffres", boite, "Chiffres"),
+    type: "chiffres",
+    cases: [
+      { variable: "distance", valeur: null, libelle: "km" },
+      { variable: "dplus", valeur: null, libelle: "m D+" },
+      { variable: "dmoins", valeur: null, libelle: "m D−" },
+      { variable: "duree", valeur: null, libelle: "chrono" },
+    ],
+    colonnes: 2,
+    alignement: "centre",
+    taille: 64,
+    couleurValeurs: "",
+    couleurLibelles: "",
+    ...over,
+  };
+}
+
+/** La trace seule : une carte sans fond, sans étiquette de journée ni itinéraire en sourdine. */
+export function traceNeuve(boite: Boite, over: Partial<ElementCarte> = {}): ElementCarte {
+  return carteNeuve(boite, {
+    nom: "Trace",
+    fond: "aucun",
+    etiquettesAuto: false,
+    itineraireSourdine: false,
+    ...over,
+  });
 }
 
 export function carteNeuve(boite: Boite, over: Partial<ElementCarte> = {}): ElementCarte {

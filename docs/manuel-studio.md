@@ -47,7 +47,7 @@ journées obtenues s'affichent avec leur distance et leur D+.
 
 ### 1.3 Poser les planches
 
-**Modèles** propose dix mises en page. Choisir un modèle **recompose la planche courante sans perdre
+**Modèles** propose les mises en page du format choisi. Choisir un modèle **recompose la planche courante sans perdre
 ce qui est écrit** : un titre reste un titre, même si sa place change du tout au tout.
 
 Pour un tour, le plus rapide est le bouton **« + Les N journées »** : il pose une planche par jour,
@@ -61,6 +61,12 @@ déplacement est une seule étape d'historique : Ctrl+Z le défait.
 
 **La flèche du pied** : le pied ne pose plus « glisse → ». Pour la flèche seule en bas à droite,
 **Éléments → Pied de page → Flèche →**, planche par planche — la dernière n'en a pas besoin.
+
+**Une photo nue, et ce qu'on y pose** : le modèle **Photo seule** met la photo plein cadre, sans
+en-tête, sans pied, sans dégradé. Par-dessus, trois pièces qui se posent et se déplacent chacune de
+son côté : **Éléments → Données → Trace** (la trace sans carte, avec ses bornes),
+**Éléments → Données → Chiffres** (distance, D+, D− et chrono en un seul bloc) et
+**Éléments → Marque → Logo**.
 
 ### 1.4 La tranche de journées
 
@@ -97,6 +103,10 @@ ses propres réglages, sous **RÉGLAGES** :
 - **Chiffre** — la variable, son libellé, son corps, et une **valeur écrite à la main** qui remplace
   le calcul : la montre a toujours raison sur son propre fichier.
 - **Fiche** — les lignes, chacune tirant sa valeur d'une variable ou d'un texte écrit.
+- **Chiffres** (le bloc) — le corps, le nombre de cases par ligne (2 : en carré, 4 : en bandeau,
+  1 : en colonne), l'alignement, l'encre des valeurs et celle des libellés, et chaque case : son
+  libellé, sa variable, et une valeur écrite qui passe devant — le chrono officiel quand la trace n'a
+  pas d'horaires. Si une valeur ne tient pas dans sa case, tout le bloc rapetisse d'un même corps.
 - **Texte, forme, icône, marque** — alignement, casse, interlettrage, encre, puce et couleur des
   puces (par défaut, celle du texte), filets, plaque, ombre ;
   forme et coins ; clé d'icône ; variante de la marque.

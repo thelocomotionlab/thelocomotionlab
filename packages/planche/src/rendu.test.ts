@@ -175,6 +175,20 @@ describe("les encres par défaut", () => {
     expect(encreA([{ ...nom, teinte: "#123456" }], "fillText")).toBe("#123456");
   });
 
+  it("tient le logo seul dans sa boîte, quelle qu'en soit la forme", () => {
+    const { p, planche } = projet([]);
+    const c = contexteDeRendu(p, planche, { police: "Ubuntu", logo: {} as never });
+    const pose = (b: BoitePx) => {
+      const ctx = ctxFactice();
+      dessinerElement(ctx, marqueNeuve({ x: 0, y: 0, l: 1, h: 1 }, { variante: "logo" }), b, c);
+      return ctx.ops.find((o) => o.op === "drawImage")!.args.slice(1);
+    };
+    // Plus large que haute : le logo prend la hauteur, calé à gauche.
+    expect(pose({ x: 10, y: 20, l: 500, h: 40 })).toEqual([10, 20, 40, 40]);
+    // Plus haute que large : il prend la largeur, centré en hauteur.
+    expect(pose({ x: 10, y: 20, l: 100, h: 300 })).toEqual([10, 120, 100, 100]);
+  });
+
   it("pose les puces à l'encre du texte, sauf couleur réglée", () => {
     const liste = texte({ contenu: "- un\n- deux", role: "corps", couleur: "#111111", puce: "point" });
     expect(encreA([liste], "fill")).toBe("#111111");

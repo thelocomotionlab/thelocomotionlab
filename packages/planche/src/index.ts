@@ -196,6 +196,7 @@ export type { ContexteModele, Modele, OptionsMobilier } from "./modeles.ts";
 export {
   carteNeuve,
   casesNeuves,
+  chiffresNeufs,
   dupliquer,
   ficheNeuve,
   filetNeuf,
@@ -209,7 +210,10 @@ export {
   statNeuve,
   styleDuRole,
   texteNeuf,
+  traceNeuve,
 } from "./fabrique.ts";
+
+export { casesDuBloc, corpsDuBloc, dessinerChiffres, valeurDeLaCase } from "./chiffres.ts";
 
 export {
   contientUnGroupe,
@@ -275,6 +279,8 @@ export type {
   ElementCases,
   ElementCommun,
   ElementFiche,
+  ElementChiffres,
+  CaseChiffre,
   ElementForme,
   ElementIcone,
   ElementMarque,

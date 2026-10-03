@@ -14,6 +14,7 @@ import { CORPS, LETTRAGE, couleurDuJour, rgba } from "./charte.ts";
 import type { Ctx2D } from "./canvas.ts";
 import { coordsDeCadrage, dessinerCarte, miniCarte } from "./carte.ts";
 import { vocabulaireDIcones } from "./canvas.ts";
+import { dessinerChiffres } from "./chiffres.ts";
 import { dessinerSemaines } from "./semaines.ts";
 import { segmentsMontres, type ContexteRendu } from "./contexte.ts";
 import {
@@ -85,6 +86,8 @@ export function dessinerElement(
       return dessinerStat(ctx, element, boite, c);
     case "fiche":
       return dessinerFiche(ctx, element, boite, c);
+    case "chiffres":
+      return dessinerChiffres(ctx, element, boite, c);
     case "profil":
       return dessinerProfil(ctx, element, boite, c);
     case "semaines":
@@ -551,10 +554,12 @@ function dessinerMarque(ctx: Ctx2D, e: ElementMarque, b: BoitePx, c: ContexteRen
   let x = b.x;
 
   if (e.variante !== "nom" && c.logo) {
-    const cote = b.h;
+    // Seul, le logo tient dans sa boîte quelle qu'en soit la forme ; suivi du
+    // nom, il prend la hauteur de la ligne.
+    const cote = e.variante === "logo" ? Math.min(b.l, b.h) : b.h;
     ctx.save();
     ctx.globalAlpha *= MARQUE_OPACITE;
-    ctx.drawImage(c.logo, x, b.y, cote, cote);
+    ctx.drawImage(c.logo, x, b.y + (b.h - cote) / 2, cote, cote);
     ctx.restore();
     x += cote + taille * 0.5;
   }
