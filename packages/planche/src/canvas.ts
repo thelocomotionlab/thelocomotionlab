@@ -15,7 +15,7 @@ export type Degrade = {
 export type Mesure = { width: number };
 
 /**
- * Ce que le rendu attend d'une image : une photo décodée, le logo, une tuile.
+ * Ce que le rendu attend d'une image : une photo décodée, une tuile.
  *
  * Les quatre sources que le studio dessine vraiment : une photo décodée, un
  * canvas hors écran, une tuile. Toutes portent `width` et `height` en nombres,
@@ -68,6 +68,7 @@ export type Ctx2D = {
   moveTo(x: number, y: number): void;
   lineTo(x: number, y: number): void;
   quadraticCurveTo(cx: number, cy: number, x: number, y: number): void;
+  bezierCurveTo(c1x: number, c1y: number, c2x: number, c2y: number, x: number, y: number): void;
   arc(x: number, y: number, r: number, d: number, f: number): void;
   ellipse(
     x: number,

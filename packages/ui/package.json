@@ -12,6 +12,7 @@
     "./fonts": "./src/fonts.ts",
     "./icones": "./src/icones.ts",
     "./iconesMaison": "./src/iconesMaison.ts",
+    "./logo": "./src/logo.ts",
     "./theme.css": "./src/styles/theme.css",
     "./tokens": "./src/tokens.ts",
     "./tailwind-preset": "./src/tailwind-preset.js"

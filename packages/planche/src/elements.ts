@@ -10,11 +10,13 @@
 // Rotation, opacité et masquage sont posés par l'appelant (`dessinerAvecCadre`).
 // Ici, on dessine à plat dans une boîte droite.
 
+import { brandColors } from "@locomotionlab/ui/tokens";
 import { CORPS, LETTRAGE, couleurDuJour, rgba } from "./charte.ts";
 import type { Ctx2D } from "./canvas.ts";
 import { coordsDeCadrage, dessinerCarte, miniCarte } from "./carte.ts";
 import { vocabulaireDIcones } from "./canvas.ts";
 import { dessinerChiffres } from "./chiffres.ts";
+import { dessinerLogo } from "./logo.ts";
 import { dessinerSemaines } from "./semaines.ts";
 import { segmentsMontres, type ContexteRendu } from "./contexte.ts";
 import {
@@ -51,7 +53,7 @@ import type { PointProfil, Segment } from "@locomotionlab/trace";
 /** Le nom, tel que la navbar du site l'écrit — capitales espacées, sans « The ». */
 const MARQUE = "LOCOMOTION LAB";
 
-/** Le logo est teinté à la couleur du nom : même encre, même présence. */
+/** L'opacité du logo quand il garde son terracotta d'origine. */
 const MARQUE_OPACITE = 0.68;
 
 /** L'interlettrage et la graisse du nom, ceux de la navbar du site. */
@@ -527,6 +529,10 @@ function dessinerMarque(ctx: Ctx2D, e: ElementMarque, b: BoitePx, c: ContexteRen
   // CERCLE de la clôture, seul sur sa planche, garde l'encre pleine.
   const teinte = e.teinte || c.theme.encre;
   const encreDuNom = e.teinte || c.theme.encreFaible;
+  const encreDuLogo = e.couleurLogo || brandColors.deep;
+  // L'atténuation ne vaut que pour le terracotta d'origine : une encre choisie
+  // se peint telle quelle, sinon elle se mélangerait au fond.
+  const attenuation = e.couleurLogo ? 1 : MARQUE_OPACITE;
   ctx.save();
 
   if (e.variante === "cercle") {
@@ -539,11 +545,9 @@ function dessinerMarque(ctx: Ctx2D, e: ElementMarque, b: BoitePx, c: ContexteRen
     ctx.beginPath();
     ctx.arc(cx, cy, rayon - ctx.lineWidth, 0, Math.PI * 2);
     ctx.stroke();
-    if (c.logo) {
-      const cote = rayon * 1.05;
-      ctx.globalAlpha *= MARQUE_OPACITE;
-      ctx.drawImage(c.logo, cx - cote / 2, cy - cote / 2, cote, cote);
-    }
+    const cote = rayon * 1.05;
+    ctx.globalAlpha *= attenuation;
+    dessinerLogo(ctx, cx - cote / 2, cy - cote / 2, cote, encreDuLogo);
     ctx.restore();
     return;
   }
@@ -553,13 +557,13 @@ function dessinerMarque(ctx: Ctx2D, e: ElementMarque, b: BoitePx, c: ContexteRen
   const ligneDeBase = b.y + b.h / 2 + taille * 0.35;
   let x = b.x;
 
-  if (e.variante !== "nom" && c.logo) {
+  if (e.variante !== "nom") {
     // Seul, le logo tient dans sa boîte quelle qu'en soit la forme ; suivi du
     // nom, il prend la hauteur de la ligne.
     const cote = e.variante === "logo" ? Math.min(b.l, b.h) : b.h;
     ctx.save();
-    ctx.globalAlpha *= MARQUE_OPACITE;
-    ctx.drawImage(c.logo, x, b.y + (b.h - cote) / 2, cote, cote);
+    ctx.globalAlpha *= attenuation;
+    dessinerLogo(ctx, x, b.y + (b.h - cote) / 2, cote, encreDuLogo);
     ctx.restore();
     x += cote + taille * 0.5;
   }

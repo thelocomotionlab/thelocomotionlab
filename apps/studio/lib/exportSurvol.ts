@@ -31,7 +31,6 @@ import { imagesEnCache } from "./images";
 import { policeDuLabo } from "./police";
 import { attendreCalme, cadrer, poserLAvancee, poserLeChemin, poserLePoint } from "./scene";
 import { encoder, recetteDisponible, type Avancement } from "./video";
-import { logoDuLabo } from "./export";
 
 export type ResultatSurvol = { blob: Blob; nom: string; codec: string } | null;
 
@@ -77,9 +76,8 @@ export async function exporterSurvol(
   const ctxHud = habillage.getContext("2d");
   if (!ctxHud) return null;
 
-  const logo = await logoDuLabo();
   const segments = decouperTrace(projet.donnees.trace, projet.donnees.coupures);
-  const rendu = { police: policeDuLabo(), logo, segments, images: imagesEnCache() };
+  const rendu = { police: policeDuLabo(), segments, images: imagesEnCache() };
 
   // On agrandit la scène, en gardant de quoi la remettre.
   const avant = { largeur: conteneur.style.width, hauteur: conteneur.style.height };

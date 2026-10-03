@@ -49,6 +49,7 @@ export function ctxFactice(): CtxFactice {
     moveTo: note("moveTo"),
     lineTo: note("lineTo"),
     quadraticCurveTo: note("quadraticCurveTo"),
+    bezierCurveTo: note("bezierCurveTo"),
     arc: note("arc"),
     ellipse: note("ellipse"),
     rect: note("rect"),

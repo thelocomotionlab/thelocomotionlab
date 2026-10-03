@@ -66,7 +66,8 @@ déplacement est une seule étape d'historique : Ctrl+Z le défait.
 en-tête, sans pied, sans dégradé. Par-dessus, trois pièces qui se posent et se déplacent chacune de
 son côté : **Éléments → Données → Trace** (la trace sans carte, avec ses bornes),
 **Éléments → Données → Chiffres** (distance, D+, D− et chrono en un seul bloc) et
-**Éléments → Marque → Logo**.
+**Éléments → Marque → Logo**. Le logo se recolore depuis la barre au-dessus de la sélection
+(terracotta, crème, encre, accent, bleu-vert, fuchsia) ou dans l'inspecteur, **Couleur du logo**.
 
 ### 1.4 La tranche de journées
 
@@ -109,7 +110,7 @@ ses propres réglages, sous **RÉGLAGES** :
   pas d'horaires. Si une valeur ne tient pas dans sa case, tout le bloc rapetisse d'un même corps.
 - **Texte, forme, icône, marque** — alignement, casse, interlettrage, encre, puce et couleur des
   puces (par défaut, celle du texte), filets, plaque, ombre ;
-  forme et coins ; clé d'icône ; variante de la marque.
+  forme et coins ; clé d'icône ; variante de la marque, couleur du logo, couleur du nom ou du cercle.
 
 Partout, le bouton **Thème** à côté d'un sélecteur de couleur rend le réglage au thème — c'est ce qui
 permet à une planche de suivre le passage en clair ou en sombre.

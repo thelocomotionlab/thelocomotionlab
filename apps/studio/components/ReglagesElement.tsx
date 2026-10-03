@@ -547,11 +547,26 @@ function ReglagesMarque({ e, poser }: { e: ElementMarque; poser: Poser<ElementMa
         ]}
         onChange={(v) => poser((x) => ({ ...x, variante: v }), "marque")}
       />
-      <Couleur
-        libelle="Teinte"
-        valeur={e.teinte}
-        onChange={(v) => poser((x) => ({ ...x, teinte: v }), "teinte")}
-      />
+      {e.variante !== "nom" && (
+        <Couleur
+          libelle="Couleur du logo"
+          defaut={brandColors.deep}
+          valeur={e.couleurLogo ?? ""}
+          onChange={(v) => poser((x) => ({ ...x, couleurLogo: v }), "couleur du logo")}
+        />
+      )}
+      {e.variante !== "logo" && (
+        <Couleur
+          libelle={e.variante === "cercle" ? "Couleur du cercle" : "Couleur du nom"}
+          valeur={e.teinte}
+          onChange={(v) => poser((x) => ({ ...x, teinte: v }), "teinte")}
+        />
+      )}
+      {e.variante !== "nom" && (
+        <Aide>
+          « Thème » rend au logo son terracotta, atténué ; une couleur choisie se peint pleine.
+        </Aide>
+      )}
     </>
   );
 }

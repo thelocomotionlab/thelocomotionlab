@@ -89,7 +89,6 @@ export async function rendreHorsEcran(
     segments: decouperTrace(projet.donnees.trace, projet.donnees.coupures),
     fonds: fondsEnCache(),
     images: imagesEnCache(),
-    logo: await logoDuLabo(),
   });
 
   // Les tuiles AVANT de dessiner : à l'écran, une carte qui se complète après
@@ -99,20 +98,6 @@ export async function rendreHorsEcran(
   ctx.scale(echelle, echelle);
   dessinerPlanche(ctx, planche, { ...c, fonds: fondsEnCache() });
   return toile;
-}
-
-let logo: Promise<HTMLImageElement | null> | null = null;
-
-export function logoDuLabo(): Promise<HTMLImageElement | null> {
-  logo ??= new Promise((resolve) => {
-    const img = new Image();
-    img.src = "/images/assets/logo-mark-512.png";
-    img.decode().then(
-      () => resolve(img),
-      () => resolve(null),
-    );
-  });
-  return logo;
 }
 
 export function versBlob(toile: HTMLCanvasElement, r: Reglages): Promise<Blob | null> {

@@ -187,6 +187,7 @@ export function marqueNeuve(boite: Boite, over: Partial<ElementMarque> = {}): El
     type: "marque",
     variante: "logo-nom",
     teinte: "",
+    couleurLogo: "",
     ...over,
   };
 }

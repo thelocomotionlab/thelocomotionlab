@@ -39,7 +39,7 @@ const APPARENCE: Record<Element["type"], readonly string[]> = {
   photo: ["reglages", "voile", "degrades", "coins", "bordure"],
   forme: ["forme", "remplissage", "contour", "coins"],
   icone: ["couleur", "epaisseur"],
-  marque: ["variante", "teinte"],
+  marque: ["variante", "teinte", "couleurLogo"],
   carte: [
     "fond",
     "couleurs",

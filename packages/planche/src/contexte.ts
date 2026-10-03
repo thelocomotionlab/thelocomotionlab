@@ -29,8 +29,6 @@ export type ContexteRendu = {
   police: string;
   /** Les photos du projet, par identifiant de média. */
   images: Map<string, SourceImage>;
-  /** L'empreinte du labo, pour les éléments « marque ». */
-  logo: SourceImage | null;
   /** Les journées découpées, dans l'ordre. */
   segments: Segment[];
   /** La tranche que suivent les éléments liés aux données. */
@@ -56,7 +54,6 @@ export type ContexteRendu = {
 
 export type OptionsContexte = {
   images?: Map<string, SourceImage>;
-  logo?: SourceImage | null;
   segments?: Segment[];
   police?: string;
   fonds?: Map<string, FondPret>;
@@ -80,7 +77,6 @@ export function contexteDeRendu(
     theme: themeDe(projet.theme),
     police: options.police ?? "sans-serif",
     images: options.images ?? new Map(),
-    logo: options.logo ?? null,
     segments,
     tranche: planche.tranche,
     variables: {

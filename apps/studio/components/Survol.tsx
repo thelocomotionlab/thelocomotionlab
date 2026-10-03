@@ -57,7 +57,6 @@ export default function Survol({
   const [prete, setPrete] = useState(false);
   const [image, setImage] = useState(0);
   const [lecture, setLecture] = useState(false);
-  const [logo, setLogo] = useState<HTMLImageElement | null>(null);
   // Incrémenté à chaque montage de scène : c'est ce qui fait reposer la trace
   // et la caméra sur la carte NEUVE. Sans lui, changer de fond laisserait une
   // scène vide, la carte vivant dans une ref que nul effet ne surveille.
@@ -87,9 +86,6 @@ export default function Survol({
   useEffect(() => {
     let vivant = true;
     policeChargee().then(() => vivant && setPrete(true));
-    const img = new Image();
-    img.src = "/images/assets/logo-mark-512.png";
-    img.decode().then(() => vivant && setLogo(img), () => {});
     return () => {
       vivant = false;
     };
@@ -197,12 +193,11 @@ export default function Survol({
     const index = plan.images[image] ?? 0;
     const { contexte, elements } = contexteDuHud(projet, planche, seance?.points[index] ?? null, {
       police: policeDuLabo(),
-      logo,
       segments: decouperTrace(projet.donnees.trace, projet.donnees.coupures),
       images: imagesEnCache(),
     });
     for (const e of elements) dessinerAvecCadre(ctx, e, contexte);
-  }, [projet, planche, image, plan.images, logo, prete, format.width, format.height, seance]);
+  }, [projet, planche, image, plan.images, prete, format.width, format.height, seance]);
 
   const echelle = ajuste;
   const secondes = total > 0 ? (image / plan.imagesParSeconde).toFixed(1) : "0.0";

@@ -25,7 +25,14 @@ import {
   Type,
 } from "lucide-react";
 import { GRAISSES, brandColors } from "@locomotionlab/planche";
-import type { BoitePx, Element, ElementSemaines, ElementTexte, Theme } from "@locomotionlab/planche";
+import type {
+  BoitePx,
+  Element,
+  ElementMarque,
+  ElementSemaines,
+  ElementTexte,
+  Theme,
+} from "@locomotionlab/planche";
 
 /** La hauteur de la barre, et l'air qu'elle garde au-dessus de la sélection. */
 const HAUTEUR = 40;
@@ -39,6 +46,18 @@ function palette(theme: Theme): { valeur: string; nom: string }[] {
     { valeur: brandColors.primary, nom: "Bleu-vert" },
     { valeur: brandColors.deep, nom: "Terracotta" },
     { valeur: brandColors.trace, nom: "Fuchsia" },
+  ];
+}
+
+/** Les encres proposées pour le logo : son terracotta d'origine, puis la charte. */
+function paletteDuLogo(theme: Theme): { valeur: string; nom: string; apercu: string }[] {
+  return [
+    { valeur: "", nom: "Terracotta du logo", apercu: brandColors.deep },
+    { valeur: brandColors.bg, nom: "Crème", apercu: brandColors.bg },
+    { valeur: brandColors.plancheEncre, nom: "Encre", apercu: brandColors.plancheEncre },
+    { valeur: theme.accent, nom: "Accent", apercu: theme.accent },
+    { valeur: brandColors.primary, nom: "Bleu-vert", apercu: brandColors.primary },
+    { valeur: brandColors.trace, nom: "Fuchsia", apercu: brandColors.trace },
   ];
 }
 
@@ -72,6 +91,12 @@ export default function BarreContextuelle({
     choisis.length === 1 && choisis[0]!.type === "semaines" && barreVisee !== null
       ? (choisis[0] as ElementSemaines)
       : null;
+  const marque =
+    choisis.length === 1 &&
+    choisis[0]!.type === "marque" &&
+    (choisis[0] as ElementMarque).variante !== "nom"
+      ? (choisis[0] as ElementMarque)
+      : null;
 
   // La barre se pose au-dessus de la sélection, centrée. Si le haut manque, elle
   // passe dessous : hors du plan de travail, elle ne servirait à rien.
@@ -102,6 +127,33 @@ export default function BarreContextuelle({
     >
       {semaines && barreVisee !== null && (
         <CouleurDeLaBarre semaines={semaines} rang={barreVisee} theme={theme} onRegler={onRegler} />
+      )}
+
+      {marque && (
+        <div className="flex items-center gap-1" role="group" aria-label="Couleur du logo">
+          {paletteDuLogo(theme).map((c) => (
+            <button
+              key={c.nom}
+              type="button"
+              title={c.nom}
+              aria-label={c.nom}
+              aria-pressed={(marque.couleurLogo ?? "") === c.valeur}
+              onClick={() =>
+                onRegler(
+                  (e) => (e.type === "marque" ? { ...e, couleurLogo: c.valeur } : e),
+                  "couleur du logo",
+                )
+              }
+              className={`h-5 w-5 rounded-full border transition-transform motion-reduce:transition-none ${
+                (marque.couleurLogo ?? "") === c.valeur
+                  ? "scale-110 border-brand-primary-dark"
+                  : "border-brand-field hover:scale-110"
+              }`}
+              style={{ background: c.apercu }}
+            />
+          ))}
+          <Separateur />
+        </div>
       )}
 
       {texte && (

@@ -2,6 +2,9 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { decouperTrace, traceDepuisTrackJson } from "@locomotionlab/trace";
 import type { Trace } from "@locomotionlab/trace";
 
+import { brandColors } from "@locomotionlab/ui/tokens";
+import { COTE_LOGO } from "@locomotionlab/ui/logo";
+
 import { definirVocabulaireDIcones } from "./canvas.ts";
 import { PALETTE_JOURS, THEMES } from "./charte.ts";
 import {
@@ -138,7 +141,7 @@ const poses = (ctx: CtxFactice) =>
  */
 function espionner<T>(
   ctx: CtxFactice,
-  methode: "fillText" | "fillRect",
+  methode: "fillText" | "fillRect" | "fill",
   lire: (c: CtxFactice) => T,
 ): () => T | null {
   let vue: T | null = null;
@@ -177,16 +180,37 @@ describe("les encres par défaut", () => {
 
   it("tient le logo seul dans sa boîte, quelle qu'en soit la forme", () => {
     const { p, planche } = projet([]);
-    const c = contexteDeRendu(p, planche, { police: "Ubuntu", logo: {} as never });
+    const c = contexteDeRendu(p, planche, { police: "Ubuntu" });
+    /** Le coin et l'échelle du logo posé : `translate`, puis `scale`. */
     const pose = (b: BoitePx) => {
       const ctx = ctxFactice();
       dessinerElement(ctx, marqueNeuve({ x: 0, y: 0, l: 1, h: 1 }, { variante: "logo" }), b, c);
-      return ctx.ops.find((o) => o.op === "drawImage")!.args.slice(1);
+      const coin = ctx.ops.find((o) => o.op === "translate")!.args;
+      const echelle = ctx.ops.find((o) => o.op === "scale")!.args[0] as number;
+      return [...coin, echelle * COTE_LOGO];
     };
     // Plus large que haute : le logo prend la hauteur, calé à gauche.
-    expect(pose({ x: 10, y: 20, l: 500, h: 40 })).toEqual([10, 20, 40, 40]);
+    const large = pose({ x: 10, y: 20, l: 500, h: 40 });
+    expect(large.slice(0, 2)).toEqual([10, 20]);
+    expect(large[2]).toBeCloseTo(40, 9);
     // Plus haute que large : il prend la largeur, centré en hauteur.
-    expect(pose({ x: 10, y: 20, l: 100, h: 300 })).toEqual([10, 120, 100, 100]);
+    const haute = pose({ x: 10, y: 20, l: 100, h: 300 });
+    expect(haute.slice(0, 2)).toEqual([10, 120]);
+    expect(haute[2]).toBeCloseTo(100, 9);
+  });
+
+  it("peint le logo dans son terracotta atténué, ou pleinement dans l'encre choisie", () => {
+    const { p, planche } = projet([]);
+    const c = contexteDeRendu(p, planche, { police: "Ubuntu" });
+    /** L'encre et l'opacité au moment où le pied se remplit. */
+    const remplissage = (couleurLogo: string) => {
+      const ctx = ctxFactice();
+      const vu = espionner(ctx, "fill", (x) => ({ encre: x.fillStyle, alpha: x.globalAlpha }));
+      dessinerElement(ctx, marqueNeuve({ x: 0, y: 0, l: 1, h: 1 }, { variante: "logo", couleurLogo }), { x: 0, y: 0, l: 100, h: 100 }, c);
+      return vu();
+    };
+    expect(remplissage("")).toEqual({ encre: brandColors.deep, alpha: 0.68 });
+    expect(remplissage("#FEFBF6")).toEqual({ encre: "#FEFBF6", alpha: 1 });
   });
 
   it("pose les puces à l'encre du texte, sauf couleur réglée", () => {

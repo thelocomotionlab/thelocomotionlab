@@ -34,7 +34,7 @@ import { decouperTrace } from "@locomotionlab/trace";
 import { imagesEnCache } from "./images";
 import { policeDuLabo } from "./police";
 import { completerLesFonds, fondsEnCache } from "./tuiles";
-import { enNomDeFichier, logoDuLabo } from "./export";
+import { enNomDeFichier } from "./export";
 
 export type Piece = {
   cle: string;
@@ -127,7 +127,6 @@ export async function rendrePiece(
     segments: decouperTrace(projet.donnees.trace, projet.donnees.coupures),
     fonds: fondsEnCache(),
     images: imagesEnCache(),
-    logo: await logoDuLabo(),
   });
   await completerLesFonds(besoinsDeFond(planche, c));
 

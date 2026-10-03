@@ -208,6 +208,8 @@ export type ElementMarque = ElementCommun & {
   variante: "logo" | "nom" | "logo-nom" | "cercle";
   /** Vide = l'encre du thème : pleine pour le cercle, faible — celle du pied — pour le nom. */
   teinte: string;
+  /** L'encre du logo. Vide : son terracotta, atténué ; une encre choisie se peint pleine. */
+  couleurLogo: string;
 };
 
 /* ------------------------------------------- les éléments liés aux données */

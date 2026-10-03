@@ -24,7 +24,6 @@ import {
   formatDe,
   themeDe,
   type Projet,
-  type SourceImage,
 } from "@locomotionlab/planche";
 import { decouperTrace } from "@locomotionlab/trace";
 
@@ -66,7 +65,6 @@ export default function PlanDeTravail({
   const reperes = useRef<HTMLCanvasElement | null>(null);
   const [ajuste, setAjuste] = useState(0.3);
   const [prete, setPrete] = useState(false);
-  const [logo, setLogo] = useState<SourceImage | null>(null);
   // Incrémenté quand une mosaïque arrive : le rendu se rejoue avec le terrain.
   const [fondsVenus, setFondsVenus] = useState(0);
   const [espace, setEspace] = useState(false);
@@ -84,12 +82,6 @@ export default function PlanDeTravail({
   useEffect(() => {
     let vivant = true;
     policeChargee().then(() => vivant && setPrete(true));
-    const img = new Image();
-    img.src = "/images/assets/logo-mark-512.png";
-    img.decode().then(
-      () => vivant && setLogo(img),
-      () => {},
-    );
     return () => {
       vivant = false;
     };
@@ -175,7 +167,6 @@ export default function PlanDeTravail({
       : courante;
     const c = contexteDeRendu(projet, aDessiner, {
       police: policeDuLabo(),
-      logo,
       segments: decouperTrace(projet.donnees.trace, projet.donnees.coupures),
       fonds: fondsEnCache(),
       images: imagesEnCache(),
@@ -198,7 +189,7 @@ export default function PlanDeTravail({
     return () => {
       vivant = false;
     };
-  }, [projet, courante, format, theme, logo, prete, fondsVenus, manip.edition]);
+  }, [projet, courante, format, theme, prete, fondsVenus, manip.edition]);
 
   /**
    * Ce qu'il faut au chrome pour dessiner un recadrage : la photo, son cadre,
