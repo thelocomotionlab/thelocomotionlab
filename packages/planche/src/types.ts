@@ -377,6 +377,8 @@ export type ElementChiffres = ElementCommun & {
   alignement: "gauche" | "centre";
   /** Le corps des valeurs, en pixels de planche ; celui des libellés en est 0,3. */
   taille: number;
+  /** L'air entre deux lignes de cases, en part du corps des valeurs — `null` : 0,6. */
+  entreLignes: number | null;
   /** Vide : l'encre du thème. */
   couleurValeurs: string;
   /** Vide : l'accent du thème. */

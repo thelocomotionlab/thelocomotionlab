@@ -213,7 +213,8 @@ export {
   traceNeuve,
 } from "./fabrique.ts";
 
-export { casesDuBloc, corpsDuBloc, dessinerChiffres, valeurDeLaCase } from "./chiffres.ts";
+export { ENTRE_LIGNES, dessinerChiffres, miseEnPageDuBloc, valeurDeLaCase } from "./chiffres.ts";
+export type { PlaceDeCase } from "./chiffres.ts";
 
 export {
   contientUnGroupe,

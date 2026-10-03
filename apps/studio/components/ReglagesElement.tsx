@@ -14,6 +14,7 @@ import { useState } from "react";
 import { Eye, EyeOff, Trash2 } from "lucide-react";
 import {
   COULEURS_TEXTE,
+  ENTRE_LIGNES,
   GRAISSES,
   brandColors,
   avecTexteDuGraphique,
@@ -951,6 +952,13 @@ function ReglagesChiffres({ e, poser }: { e: ElementChiffres; poser: Poser<Eleme
           )
         }
       />
+      <Nombre
+        libelle="Interligne"
+        valeur={e.entreLignes ?? ENTRE_LIGNES}
+        pas={0.1}
+        decimales={1}
+        onChange={(n) => poser((x) => ({ ...x, entreLignes: Math.max(0, n) }), "interligne")}
+      />
       <Choix
         libelle="Alignement"
         valeur={e.alignement}
@@ -971,8 +979,10 @@ function ReglagesChiffres({ e, poser }: { e: ElementChiffres; poser: Poser<Eleme
         onChange={(v) => poser((x) => ({ ...x, couleurLibelles: v }), "encre")}
       />
       <Aide>
-        « Thème » : l&rsquo;encre du thème pour les valeurs, son accent pour les libellés. Si une
-        valeur ne tient pas dans sa case, tout le bloc rapetisse d&rsquo;un même corps.
+        L&rsquo;interligne est l&rsquo;air entre deux lignes de chiffres, en part du corps. Si
+        une valeur ne tient pas dans sa case, ou les lignes dans la hauteur du cadre, tout le bloc
+        rapetisse d&rsquo;un même corps. « Thème » : l&rsquo;encre du thème pour les valeurs, son
+        accent pour les libellés.
       </Aide>
       <Titre>Cases</Titre>
       {e.cases.map((cs, i) => (

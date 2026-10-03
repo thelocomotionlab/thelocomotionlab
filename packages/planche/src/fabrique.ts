@@ -242,6 +242,7 @@ export function chiffresNeufs(boite: Boite, over: Partial<ElementChiffres> = {})
     colonnes: 2,
     alignement: "centre",
     taille: 64,
+    entreLignes: null,
     couleurValeurs: "",
     couleurLibelles: "",
     ...over,

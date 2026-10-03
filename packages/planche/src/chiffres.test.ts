@@ -3,7 +3,7 @@ import { traceDepuisTrackJson } from "@locomotionlab/trace";
 
 import { definirVocabulaireDIcones } from "./canvas.ts";
 import { THEMES } from "./charte.ts";
-import { casesDuBloc, corpsDuBloc, dessinerChiffres, valeurDeLaCase } from "./chiffres.ts";
+import { ENTRE_LIGNES, dessinerChiffres, miseEnPageDuBloc, valeurDeLaCase } from "./chiffres.ts";
 import { contexteDeRendu, type ContexteRendu } from "./contexte.ts";
 import { ctxFactice, LETTRE, type CtxFactice } from "./factice.ts";
 import { chiffresNeufs } from "./fabrique.ts";
@@ -80,34 +80,72 @@ function poses(ctx: CtxFactice): { texte: string; encre: string; fonte: string; 
   return vus;
 }
 
-describe("les cases du bloc", () => {
-  it("se rangent deux par ligne par défaut", () => {
-    const cases = casesDuBloc(bloc(), BOITE);
-    expect(cases).toHaveLength(4);
-    expect(cases[0]).toEqual({ x: 100, y: 200, l: 200, h: 150 });
-    expect(cases[1]).toEqual({ x: 300, y: 200, l: 200, h: 150 });
-    expect(cases[2]).toEqual({ x: 100, y: 350, l: 200, h: 150 });
-    expect(cases[3]).toEqual({ x: 300, y: 350, l: 200, h: 150 });
+/** La mise en page, sur un contexte de comptoir. */
+const mise = (e: ElementChiffres, b: BoitePx = BOITE) => miseEnPageDuBloc(ctxFactice(), e, b, contexte());
+
+/** Une ligne de cases, valeur et libellé, en corps des valeurs. */
+const PILE = 0.7 + 0.3 * 1.5;
+
+describe("la mise en page du bloc", () => {
+  it("range deux cases par ligne par défaut", () => {
+    const { taille, places } = mise(bloc());
+    expect(taille).toBe(64);
+    expect(places.map((p) => p.x)).toEqual([100, 300, 100, 300]);
+    expect(new Set(places.map((p) => p.l))).toEqual(new Set([200]));
+    expect(places[0]!.ligneDeBase).toBe(places[1]!.ligneDeBase);
+    expect(places[2]!.ligneDeBase).toBeGreaterThan(places[0]!.ligneDeBase);
   });
 
-  it("tiennent sur une ligne, ou en colonne", () => {
-    const ligne = casesDuBloc(bloc({ colonnes: 4 }), BOITE);
-    expect(ligne.map((c) => c.x)).toEqual([100, 200, 300, 400]);
-    expect(new Set(ligne.map((c) => c.y))).toEqual(new Set([200]));
-    const colonne = casesDuBloc(bloc({ colonnes: 1 }), BOITE);
-    expect(colonne.map((c) => c.y)).toEqual([200, 275, 350, 425]);
+  it("tient sur une ligne, ou en colonne", () => {
+    const ligne = mise(bloc({ colonnes: 4 })).places;
+    expect(ligne.map((p) => p.x)).toEqual([100, 200, 300, 400]);
+    expect(new Set(ligne.map((p) => p.ligneDeBase)).size).toBe(1);
+    const colonne = mise(bloc({ colonnes: 1 }), { ...BOITE, h: 1000 }).places;
+    expect(new Set(colonne.map((p) => p.x))).toEqual(new Set([100]));
+    const pas = colonne.slice(1).map((p, i) => p.ligneDeBase - colonne[i]!.ligneDeBase);
+    for (const v of pas) expect(v).toBeCloseTo(pas[0]!, 9);
     // Plus de colonnes que de cases : une seule ligne, sans case vide.
-    expect(casesDuBloc(bloc({ colonnes: 9 }), BOITE)[3]).toEqual({ x: 400, y: 200, l: 100, h: 300 });
+    expect(mise(bloc({ colonnes: 9 })).places[3]!.x).toBe(400);
   });
 
-  it("centrent une dernière ligne incomplète, sauf alignées à gauche", () => {
+  it("centre une dernière ligne incomplète, sauf alignée à gauche", () => {
     const trois = bloc().cases.slice(0, 3);
-    expect(casesDuBloc(bloc({ cases: trois }), BOITE)[2]!.x).toBe(200);
-    expect(casesDuBloc(bloc({ cases: trois, alignement: "gauche" }), BOITE)[2]!.x).toBe(100);
+    expect(mise(bloc({ cases: trois })).places[2]!.x).toBe(200);
+    expect(mise(bloc({ cases: trois, alignement: "gauche" })).places[2]!.x).toBe(100);
   });
 
-  it("ne rendent rien sans case", () => {
-    expect(casesDuBloc(bloc({ cases: [] }), BOITE)).toEqual([]);
+  it("pose les lignes à l'interligne réglé, et se centre en hauteur dans son cadre", () => {
+    const grand = { ...BOITE, h: 2000 };
+    const pas = (entreLignes: number | null) => {
+      const { places } = mise(bloc({ colonnes: 1, entreLignes }), grand);
+      return places[1]!.ligneDeBase - places[0]!.ligneDeBase;
+    };
+    expect(pas(null)).toBeCloseTo(64 * (PILE + ENTRE_LIGNES), 9);
+    expect(pas(1.5)).toBeCloseTo(64 * (PILE + 1.5), 9);
+    // Collées, jamais l'une sur l'autre : un interligne négatif vaut zéro.
+    expect(pas(-2)).toBeCloseTo(64 * PILE, 9);
+
+    const { places } = mise(bloc({ colonnes: 1 }), grand);
+    const hauteur = 64 * (4 * PILE + 3 * ENTRE_LIGNES);
+    expect(places[0]!.ligneDeBase - 64 * 0.7).toBeCloseTo(grand.y + (grand.h - hauteur) / 2, 9);
+  });
+
+  it("rétrécit pour que les lignes tiennent dans la hauteur, sans se chevaucher", () => {
+    // Quatre lignes dans 270 px : à 64 px de corps, il en faudrait 410.
+    const court = { ...BOITE, h: 270 };
+    const { taille, places } = mise(bloc({ colonnes: 1 }), court);
+    expect(taille).toBeCloseTo(270 / (4 * PILE + 3 * ENTRE_LIGNES), 9);
+    expect(places[0]!.ligneDeBase - taille * 0.7).toBeCloseTo(court.y, 9);
+    expect(places[3]!.ligneDeBase + taille * 0.3 * 1.5).toBeCloseTo(court.y + court.h, 9);
+    for (let i = 1; i < places.length; i += 1) {
+      const libelle = places[i - 1]!.ligneDeBase + taille * 0.3 * 1.5;
+      const chiffres = places[i]!.ligneDeBase - taille * 0.7;
+      expect(chiffres).toBeGreaterThan(libelle);
+    }
+  });
+
+  it("ne rend rien sans case", () => {
+    expect(mise(bloc({ cases: [] })).places).toEqual([]);
   });
 });
 
@@ -130,10 +168,6 @@ describe("les valeurs du bloc", () => {
 });
 
 describe("le corps du bloc", () => {
-  it("reste celui du réglage quand tout tient", () => {
-    expect(corpsDuBloc(ctxFactice(), bloc({ taille: 64 }), BOITE, contexte())).toBe(64);
-  });
-
   it("diminue pour tout le bloc quand une valeur déborde de sa case", () => {
     const e = bloc({
       cases: [
@@ -142,7 +176,7 @@ describe("le corps du bloc", () => {
       ],
     });
     // 30 caractères de comptoir : 300 px, pour une case de 200 × 0,92.
-    const corps = corpsDuBloc(ctxFactice(), e, BOITE, contexte());
+    const corps = mise(e).taille;
     expect(corps).toBeCloseTo(64 * ((200 * 0.92) / (30 * LETTRE)), 6);
     const ctx = ctxFactice();
     const vus = poses(ctx);
@@ -152,7 +186,7 @@ describe("le corps du bloc", () => {
 
   it("diminue aussi pour un libellé trop long", () => {
     const e = bloc({ cases: [{ variable: null, valeur: "1", libelle: "dénivelé positif cumulé sur la course" }] });
-    expect(corpsDuBloc(ctxFactice(), e, { ...BOITE, l: 100 }, contexte())).toBeLessThan(64);
+    expect(mise(e, { ...BOITE, l: 100 }).taille).toBeLessThan(64);
   });
 });
 
