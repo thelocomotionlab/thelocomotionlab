@@ -3703,8 +3703,7 @@ athlète (dernier tronçon : Crasse −9 %, Val +10 %, Lolo +13 %) et les descen
 l'autre (somme sous DA : −29 min à Nice 50k, −19 au Grand Trail du Lac, +18 à l'UTSM).
 
 **Décision 4 — profil Expérimental.** DA3 y entre (`pacing.start_gain=0.175`,
-`pacing.finish_km=3`, `pacing.finish_gain=0.45`). La référence reste PPB : le départ plus rapide
-change aussi l'allure servie au départ, ce que Valentin tranche. Défauts inchangés.
+`pacing.finish_km=3`, `pacing.finish_gain=0.45`). La référence reste PPB. Défauts inchangés.
 
 **Suite.** La carte du parcours (`pacing.terrain=map`) se juge au scoreur : `--terrain` lit les
 profils de `tools/carte banc`, sans run du banc ; la sortie dit où la carte a été servie.
@@ -3712,3 +3711,28 @@ profils de `tools/carte banc`, sans run du banc ; la sortie dit où la carte a �
 **Tests** : `tests/test_terrain_plan.py` (`score_plan --terrain` : la carte donne du temps à la
 descente technique ; sans profil ou sans pénalité de marche, la raison est dite),
 `tests/test_profils.py`.
+
+### 10.38 La carte du parcours sur la répartition ; la FC brute des archives (2026-10-03)
+
+**Matière.** `tools/carte extraits` sur les quatre manifestes : 19 extraits Geofabrik (5,2 Go),
+du Rhône-Alpes à l'Équateur (Chota) et à l'Australie (sorties de Crasse) ; Madère tombe dans
+l'extrait du Portugal. `tools/carte banc` : un profil de carte par course, à sa coupure.
+`tools/score_plan --terrain` sous PPB et DA3, variante CARTE (`pacing.terrain=map`).
+
+**La carte n'apporte rien à la répartition.** Erreur par tronçon 6,3 → 6,3 min ; montées +5,7 →
++5,4, descentes −1,6 → −1,5 ; heures de passage 1,49 → 1,49 %. Servie sur 11 courses sur 31 :
+19 refus faute de signal hors échantillon du modèle de carte à la coupure (quatre courses de Val,
+six de Crasse, quatre de Lolo, les cinq de Rapace), un hors des extraits (Ultra Trilho dos Reis :
+43 % des descentes sur une voie OSM). Là où elle est servie : Chota −0,3 min, MIUT −0,3,
+Montagnhard 2026 −0,2, Tour des 8 Refuges −0,2, UTSM −0,1, Chianti +0,2, Coursières 100k 2026
++0,1, Nice 2026 (à part) +0,6, trois inchangées. Les descentes qui restent fausses d'une course
+à l'autre ne bougent pas (Grand Trail du Lac −18 min, Nice 50k −26, Saintélyon 2024 −19) : la
+carte ne les explique pas.
+
+**La FC brute** (`tools/fc_brute`, lecture indépendante des adaptateurs) : toute la FC de course
+à pied est lue — Val 894 sorties sur 894, Crasse 1528 sur 1528, Lolo 1100 sur 1100 ; une
+vingtaine de fichiers d'autres sports chez Val et Lolo gardent une FC non lue, sans effet sur le
+jumeau. Rapace : aucune FC dans ses 689 fichiers (548 Suunto, 139 Garmin), ni brute ni lue.
+
+**Tests** : `tests/test_fc_brute.py` (le verdict juge la course à pied ; une FC non lue d'un autre
+sport est dite sans effet), `tests/test_carte_extraits.py`.

@@ -219,9 +219,8 @@ archive mesure tout :
 - 2026-10-02 — **départ et arrivée sur les plans exacts** (DIAGNOSTIC §10.37) : DA3 mène de 7,3
   à 6,3 min par tronçon (20 courses mieux, 7 moins bien) et les heures de passage, arrêts
   compris, de 1,73 à 1,49 % du temps ; le départ tient partout, l'arrivée sur les courses de
-  8 h et plus. **Décision 4** : DA3 entre dans le profil Expérimental ; la Référence attend la
-  réponse de Valentin (le départ plus rapide change l'allure servie). `score_plan --terrain`
-  juge la carte du parcours sans run du banc.
+  8 h et plus. **Décision 4** : DA3 entre dans le profil Expérimental ; la Référence reste la
+  loi par tranches. `score_plan --terrain` juge la carte du parcours sans run du banc.
 
 - 2026-10-02 — **carte internationale, FC brute, registre compact** : `tools/carte extraits`
   déduit des traces des courses et des sorties des archives les extraits Geofabrik à réunir
@@ -230,6 +229,11 @@ archive mesure tout :
   l'adaptateur GPX lit aussi la FC sous `heartrate`, `heart_rate`, `heartRate`, `HeartRate`
   et `pulse`. Rapace : 0 h de FC lue sur ses 454 sorties, cadence présente. Les fichiers du
   registre s'écrivent une course par ligne (un run : 36 lignes au lieu de 12 985).
+
+- 2026-10-03 — **la carte sur la répartition** (DIAGNOSTIC §10.38) : 19 extraits, du
+  Rhône-Alpes à l'Équateur ; servie sur 11 courses sur 31, la carte laisse l'erreur par tronçon
+  à 6,3 min. Toute la FC de course à pied de Val, Crasse et Lolo est lue ; Rapace n'en a aucune,
+  même dans ses fichiers bruts.
 
 ## Run 1 chez Valentin (à lancer)
 

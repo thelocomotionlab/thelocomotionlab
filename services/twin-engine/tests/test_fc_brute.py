@@ -56,12 +56,17 @@ def test_the_raw_scan_finds_the_heart_rate_the_engine_misses(tmp_path):
     assert (gpx["fichiers"], gpx["FC brute"], gpx["FC lue"], gpx["brute non lue"]) == (3, 2, 1, 1)
     # une moyenne de tour n'est pas une FC point par point
     assert (tcx["fichiers"], tcx["FC brute"], tcx["FC lue"]) == (1, 0, 0)
+    assert gpx["course : brute non lue"] == 1
     md = rapport(r)
     assert "bpm (1)" in md and "hr (1)" in md and "Essai (3)" in md
-    assert "le moteur ne la lit pas" in md
+    assert "fichier(s) de course à pied et le moteur ne la lit pas" in md
     # les fichiers se nomment comme à l'ingestion : aucun nom d'origine
     assert "b.gpx" not in md and "activity-0000" in md
 
+    # la même FC non lue sur une sortie à vélo : sans effet sur le jumeau, et dit comme tel
+    (tmp_path / "b.gpx").write_text(_gpx("<extensions><bpm>{v}</bpm></extensions>").replace(
+        "<type>running</type>", "<type>cycling</type>"))
+    assert "fichier(s) d'autres sports gardent une FC" in rapport(analyser(tmp_path))
     (tmp_path / "b.gpx").unlink()
     sortie = tmp_path / "fc.md"
     assert main([str(tmp_path), "--out", str(sortie)]) == 0

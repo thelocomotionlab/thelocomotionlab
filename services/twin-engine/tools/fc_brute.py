@@ -116,6 +116,7 @@ def analyser(chemin: Path) -> dict:
         if course:
             c["course : FC brute"] += bool(noms)
             c["course : FC lue"] += lue
+            c["course : brute non lue"] += bool(noms) and not lue
         balises.update(noms)
         if origine:
             origines[origine] += 1
@@ -125,7 +126,7 @@ def analyser(chemin: Path) -> dict:
 def rapport(r: dict) -> str:
     tot = sum((c for c in r["par_format"].values()), Counter())
     cols = ("fichiers", "course à pied", "FC brute", "FC lue", "brute non lue",
-            "course : FC brute", "course : FC lue", "illisibles")
+            "course : FC brute", "course : FC lue", "course : brute non lue", "illisibles")
     out = ["**La FC dans les fichiers bruts** (lecture indépendante du moteur)", "",
            "| format | " + " | ".join(cols) + " |", "|---|" + "---|" * len(cols)]
     for fmt, c in sorted(r["par_format"].items()):
@@ -137,9 +138,13 @@ def rapport(r: dict) -> str:
             + (", ".join(f"{n} ({k})" for n, k in r["origines"].most_common(12)) or "aucun")]
     if r["exemples"]:
         out += ["", "Fichiers dont la FC brute n'est pas lue : " + " ; ".join(r["exemples"])]
-    if tot["brute non lue"]:
-        verdict = (f"la FC est dans {tot['brute non lue']} fichier(s) et le moteur ne la lit pas : "
-                   "l'adaptateur est à corriger.")
+    if tot["course : brute non lue"]:
+        verdict = (f"la FC est dans {tot['course : brute non lue']} fichier(s) de course à pied et "
+                   "le moteur ne la lit pas : l'adaptateur est à corriger.")
+    elif tot["brute non lue"]:
+        verdict = (f"la FC de course à pied est lue partout où elle est ; {tot['brute non lue']} "
+                   "fichier(s) d'autres sports gardent une FC que le moteur ne lit pas, sans effet "
+                   "sur le jumeau, qui ne lit que la course à pied.")
     elif not tot["FC brute"]:
         verdict = ("aucune FC dans les fichiers : elle n'a pas été enregistrée, ou elle a été perdue "
                    "à l'export.")
