@@ -271,13 +271,14 @@
   "profils": {
     "_comment": "Profils de configuration qu'un plan peut servir (twin_engine.profils), choisis sur l'écran Plan et retenus par le registre. Le défaut est ce fichier tel quel ; chaque profil est une liste de surcharges bloc.clé=valeur.",
     "reference": {
-      "description": "Ta loi de pente, mesurée tranche par tranche sur ton archive, répartit le plan entre les segments, avec un départ et une arrivée plus rapides (les 12 premiers % de la distance 17,5 % plus vite, les 3 derniers km 45 % plus vite) ; le temps total ne change pas. Gardés hors du défaut faute de cas frais : sur 30 courses de développement, l'erreur par segment passe de 8,1 à 6,3 min.",
+      "description": "Ta loi de pente, mesurée tranche par tranche sur ton archive, répartit le plan entre les segments, avec un départ et une arrivée plus rapides (les 12 premiers % de la distance 17,5 % plus vite, les 3 derniers km 45 % plus vite). Le temps total ne change que si un de tes vrais ultras a une distance enregistrée par à-coups : son équivalent plat est alors estimé depuis son dénivelé. Gardés hors du défaut faute de cas frais : sur 30 courses de développement, l'erreur par segment passe de 8,1 à 6,3 min ; sur les 16 courses vendues du banc, l'erreur du temps total passe de 9,8 à 8,4 %.",
       "drapeaux": [
         "calibration.slope_cost=personal_pacing",
         "calibration.slope_curve=bins",
         "pacing.start_gain=0.175",
         "pacing.finish_km=3",
-        "pacing.finish_gain=0.45"
+        "pacing.finish_gain=0.45",
+        "calibration.rescued_slope=dplus"
       ]
     },
     "experimental": {
@@ -288,6 +289,7 @@
         "pacing.start_gain=0.175",
         "pacing.finish_km=3",
         "pacing.finish_gain=0.45",
+        "calibration.rescued_slope=dplus",
         "pacing.terrain=declared",
         "report.consignes_marche=1"
       ]

@@ -31,10 +31,11 @@ def test_a_profile_is_a_list_of_overrides_that_the_registre_can_read_back():
     assert set(flags) == {s.split("=")[0] for s in surcharges("experimental")}
     assert empreinte_config(exp) != empreinte_config(CFG)
     # la référence porte la loi de pente par tranche et le départ et l'arrivée plus rapides,
-    # servis à la seule répartition
+    # servis à la seule répartition, et l'équivalent plat estimé des ultras à distance sauvée
     ref = config_du_profil(CFG, "reference")
     assert set(drapeaux_hors_defaut(ref)) == {"calibration.slope_cost", "calibration.slope_curve",
-                                              "pacing.start_gain", "pacing.finish_km", "pacing.finish_gain"}
+                                              "pacing.start_gain", "pacing.finish_km", "pacing.finish_gain",
+                                              "calibration.rescued_slope"}
     assert set(surcharges("reference")) <= set(surcharges("experimental"))
 
 

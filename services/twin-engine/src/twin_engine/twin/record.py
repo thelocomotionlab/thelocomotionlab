@@ -412,7 +412,7 @@ def process_activity_full(act: CanonicalActivity, cfg: Config):
     if has_hr and not slope_unusable and dd_raw.size:
         slope_bins = _slope_bins(dd_used, grad[:-1], hr, moving_mask[1:], cfg)
 
-    # descentes hachées (chantier terrain) : résumé par cellules, sans tableau 1 Hz
+    # descentes hachées : résumé par cellules, sans tableau 1 Hz
     descente = None
     if not slope_unusable and dd_raw.size:
         from .descentes import resume_descentes

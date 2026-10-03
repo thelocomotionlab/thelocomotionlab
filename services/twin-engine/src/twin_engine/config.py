@@ -502,14 +502,14 @@ class PacingParams:
     # toujours servis : le plan v2 les décline en colonnes. Cas étroits (réf. Nice ~0,19) :
     # pas de phrase.
     wide_interval_rel_width: float = 0.35
-    # --- fatigue de descente (chantier terrain) -------------------------------------------
+    # --- fatigue de descente ----------------------------------------------------------------
     # ``none`` (défaut) : le fade s'applique pareil à tout le parcours. ``dminus`` : le temps
     # des descentes (pente ≤ twin.terrain_descent_grade) est multiplié par exp(−φ·D−), D− le
     # dénivelé négatif déjà descendu (km), φ la fatigue de descente RELATIVE de l'athlète
     # (Twin.terrain : ralentissement des descentes courues par km de D−, au-delà de celui du
     # reste de ses sorties au même D−) ; le total ne change pas, seule la répartition.
     descent_fatigue: str = "none"        # {none, dminus}
-    # --- surcoût de terrain à la répartition (chantier terrain, ``twin.terrain``) ------------
+    # --- surcoût de terrain à la répartition (``twin.terrain``) -----------------------------
     # ``none`` (défaut) : rien. ``declared`` : la technicité déclarée de la course se reporte
     #   sur les descentes, au prorata de la probabilité de marcher de l'athlète (classe de
     #   pente, D− déjà descendu). Le total ne change pas, seule la répartition.

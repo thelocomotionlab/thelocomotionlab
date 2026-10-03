@@ -3799,3 +3799,32 @@ baisser la couverture 80 %, et sans dégrader aucune course de plus d'un point.
 options `--terrain`, sources imprimées ; 42 tests). Le PDF d'un plan que la garde de suffisance
 ne vend pas le dit sur sa première page, avec le critère qui le retient : depuis le rapport v3,
 le 🔴 ne s'imprimait plus nulle part (`tests/test_report_v3.py`).
+
+### 10.40 Run 3 : la pente estimée des ultras à distance sauvée (2026-10-03)
+
+**Matière.** Banc sur les quatre manifestes à 30e39af, sans carte, comparé au run 2 ; variante
+ANC (`calibration.rescued_slope=dplus`). L'ancienne archive de Rapace n'était pas sous le
+dossier de son manifeste : le run 3 lit la même archive que le run 2.
+
+**Base inchangée.** Les 33 entrées gardent leurs verdicts et leurs erreurs du central : ni le
+retrait de la carte ni la durabilité ne touchent la prédiction. Seule bouge la marche prévue en
+descente, que le run 2 calculait sur le profil de carte (`--terrain`) : erreur moyenne par
+tronçon 2,5 → 2,6 min (Crasse), 6,1 → 5,9 (Lolo), 1,5 → 1,2 (Val), 2,8 au total.
+
+**ANC passe le critère du §10.39.** Vendus, tous athlètes : erreur moyenne 9,8 → 8,4 % (−1,4
+point ; il en fallait 0,5), biais +4,2 → +2,8 %, couverture 80 % 69 → 69 %, Winkler relatif
+80 % 0,600 → 0,477 ; aucune course moins bien, aucun verdict changé. Seul Rapace bouge :
+Grand Tour du Lac +36,5 → +21,2 %, Coursières 100k 2025 +29,6 → +12,9 %, UTBV +13,7 → +8,0 %,
+Nivolet-Revard +22,7 → +22,4 % ; ses deux courses vendues 21,7 → 10,5 %, son plan servi
+140,7 → 112,4 min d'erreur par tronçon. Orcières et la Saintélyon 2024, courues avant que le
+fichier n'entre dans son archive, ne bougent pas.
+
+**La preuve tient à un fichier.** Le levier vaut pour tout vrai ultra à canal distance sauvé,
+mais le gain mesuré vient d'un seul fichier d'un seul athlète, sur des cas de développement.
+Rapace reste trop lent : +10,5 % sur ses courses vendues, +21 % au Lac, +22 % à
+Nivolet-Revard.
+
+**Décision.** `calibration.rescued_slope=dplus` entre dans les profils référence et
+expérimental (`tests/test_profils.py`) ; le défaut garde `raw`, faute de cas frais. Le chantier
+terrain, registre et cohorte est clos ; son brief et son compte-rendu passent dans
+`docs/archive/`.

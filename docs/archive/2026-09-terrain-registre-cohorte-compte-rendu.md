@@ -250,6 +250,18 @@ archive mesure tout :
   demande) passe en ligne, les pages Twin et cohorte sont réécrites, la copie locale des dépôts
   n'efface plus rien du VPS.
 
+- 2026-10-03 — **run 3, clôture** (DIAGNOSTIC §10.40) : base identique au run 2. La pente
+  estimée des ultras à distance sauvée passe le critère fixé avant le banc (erreur des courses
+  vendues 9,8 → 8,4 %, couverture 80 % inchangée, aucune course moins bien) et entre dans les
+  profils référence et expérimental ; le défaut ne change pas. L'ancienne archive de Rapace n'a
+  pas été lue (hors du dossier de son manifeste) : son effet reste celui du test hors registre
+  du run 2. Les questions ouvertes, à la clôture : conservation de six mois et suppression sur
+  demande ; script de rapatriement sans purge ; prénoms gardés au registre ; pas de relecture
+  juridique ; le plan porté à Nice suivait l'ancien carnet de route (§10.34) ; les questions de
+  carte (tronçons hachés, RGE ALTI, ODbL) tombent avec elle. Hors du chantier : la mise en
+  service de la cohorte (clé sur le VPS, fusion dans `main`, purge à activer), les arrêts de
+  Nice (temps total −4,5 %), le premier cas frais (le Trail des Hauteurs de Rapace, 4 octobre).
+
 ## Run 1 chez Valentin (à lancer)
 
 Une passe par archive mesure tout ce qui précède. La recette complète est au manuel

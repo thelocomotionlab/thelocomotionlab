@@ -1,5 +1,4 @@
-"""Étape 1 du chantier terrain : un fichier de course se décode entier — cadence, distance
-de la montre, horloge réparée.
+"""Un fichier de course se décode entier — cadence, distance de la montre, horloge réparée.
 
 * l'horloge : les trois accidents d'une montre (horodatage isolé aberrant, recul, les deux
   enchaînés) sont réparés comme dans l'analyse de référence, départ et arrivée conservés ;

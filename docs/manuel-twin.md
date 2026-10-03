@@ -1148,8 +1148,9 @@ rien apporté de mesurable : elle a été retirée du moteur.
 ultra dont la distance arrive en rafales (§9.11) garde sa distance brute comme équivalent plat,
 sa pente seconde par seconde étant inexploitable. Sous `dplus`, son équivalent plat est estimé
 depuis son D± (récupéré en base temps) et le surcoût de pente par km de D+ et de D− mesuré sur
-les sorties de l'athlète à pente exploitable (au moins `rescued_slope_min_runs`, 10). Un tel
-fichier ne donne plus de découplage, donc plus de durabilité.
+les sorties de l'athlète à pente exploitable (au moins `rescued_slope_min_runs`, 10) ; servi
+par les profils référence et expérimental (DIAGNOSTIC §10.40). Un tel fichier ne donne plus de
+découplage, donc plus de durabilité.
 
 **Profils de configuration** — un plan sert l'un de trois profils : `defaut`
 (`twin.config.json` tel quel), `reference` et `experimental`, deux listes de surcharges
@@ -1158,8 +1159,9 @@ effective : l'empreinte du défaut n'en dépend pas ; un fichier partiel passé 
 `TWIN_CONFIG_PATH` garde les profils qu'il ne redéfinit pas). La référence reçoit les drapeaux qu'un run
 garde hors du défaut faute de preuve sur les cas frais — aujourd'hui la loi de pente par
 tranches et le départ et l'arrivée plus rapides, servis à la répartition (DIAGNOSTIC §10.35,
-§10.37) ; l'expérimental, la référence plus les leviers à l'essai (technicité déclarée sur les
-descentes, consigne de marche). En ligne de commande, `twin-engine preview|full --profil
+§10.37), et l'équivalent plat estimé des vrais ultras à canal distance sauvé, qui touche le
+total (§10.40) ; l'expérimental, la référence plus les leviers à l'essai (technicité déclarée
+sur les descentes, consigne de marche). En ligne de commande, `twin-engine preview|full --profil
 experimental` (les `--set` s'appliquent après) ; au tableau de bord, l'écran Plan ; au livre
 servi, `tools/registre --servir … --profil experimental` quand la version ne le garde pas. Avec
 des passages, les entrées portent `forme.marche_descente` : la marche prévue en descente contre

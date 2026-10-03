@@ -30,3 +30,8 @@ Documents **terminés ou périmés**, conservés pour la trace (rien n'est suppr
   effectivement en place est décrit par `docs/systeme-de-contenu.md`, et les anciennes URL
   redirigées vivent dans `apps/site/lib/legacyRedirects.mjs`, pas dans la table de migration.
   (Le fichier d'inventaire s'appelait `invetaire-contenus.md` ; la coquille est corrigée ici.)
+
+- `2026-09-terrain-registre-cohorte.md`, `2026-09-terrain-registre-cohorte-compte-rendu.md` — le
+  chantier terrain, registre et cohorte (brief et compte-rendu), clos le 3 octobre 2026. Ses
+  mesures et ses décisions sont au carnet du moteur (`services/twin-engine/DIAGNOSTIC.md`,
+  §10.25 à §10.40) ; son mode d'emploi, au manuel (`docs/manuel-twin.md`).

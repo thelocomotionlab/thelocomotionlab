@@ -58,7 +58,7 @@ class Twin:
     slope_kappa_up: float | None = None       # surcoût de montée de Minetti × κ (None = non mesurable)
     slope_kappa_down: float | None = None     # surcoût de descente × κ
     slope_detail: dict | None = None          # FC0, heures par côté, tranches (f personnel / f loi)
-    # --- chantier terrain : traits lus par le détecteur de descentes hachées (twin.descentes) :
+    # --- traits lus par le détecteur de descentes hachées (twin.descentes) :
     # vitesses par classe, pénalité de marche, fatigue de descente, seuil de cadence, marche
     terrain: dict | None = None
 
