@@ -11,6 +11,6 @@
   "ratePerHour": 12,
   "maxArchiveMo": 2048,
   "montres": ["garmin", "polar", "strava", "coros", "suunto"],
-  "consentementVersions": ["2026-07", "2026-10"],
+  "consentementVersions": ["2026-10", "2026-07"],
   "conservationJours": 183
 }

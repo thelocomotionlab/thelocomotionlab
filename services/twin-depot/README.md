@@ -3,8 +3,8 @@
 Service Node/TS (Fastify) qui reçoit les **archives d'entraînement** des
 athlètes test de la page
 [/outils/twin/cohorte](https://thelocomotionlab.com/outils/twin/cohorte) et
-les pose sur le **volume du VPS** avec leurs métadonnées, en attendant leur
-analyse (calibration du moteur Twin) puis leur **purge**. Conteneurisé
+les pose sur le **volume du VPS** avec leurs métadonnées, chiffrées, le temps de
+conservation accepté par l'athlète, puis les **purge**. Conteneurisé
 (Docker → GHCR → VPS), derrière Caddy sur `depot.thelocomotionlab.com/twin/*`
 (cf. `infra/caddy/conf.d/depot.caddy`).
 
@@ -51,21 +51,23 @@ Garde-fous (pattern `atelier-api`/`email-gateway`) : honeypot `website`
 (basse : les uploads sont lourds), montre validée contre la config, nom de
 fichier nettoyé (pas de traversée de chemin).
 
-## Rapatrier les dépôts en local (et dépouiller le VPS)
+## Copier les dépôts en local
 
-Le geste du quotidien — tout en un : lister, télécharger, **vérifier le
-SHA-256** (celui calculé par le service au dépôt), écrire les métadonnées
-dans `<référence>/depot.json`, puis **purger le VPS** (uniquement après
-vérification). Depuis ton poste :
+Le geste du quotidien : lister, télécharger, **vérifier le SHA-256** (celui calculé par le
+service au dépôt), écrire les métadonnées dans `<référence>/depot.json`. **Rien n'est effacé
+du VPS** : l'archive y reste, chiffrée, le temps de conservation accepté par l'athlète, et le
+moteur y relit ses courses. Relancé, le script ne télécharge que ce qui manque. Depuis ton
+poste :
 
 ```bash
 TWIN_DEPOT_ADMIN_TOKEN=<jeton> services/twin-depot/scripts/rapatrier-depots.py
 # destination par défaut : ~/LocomotionLab/depots-twin (sinon : … rapatrier-depots.py /chemin)
 ```
 
-Python 3 standard, aucune dépendance. En cas d'échec (réseau, SHA différent),
-rien n'est purgé — relancer suffit. Les archives ne vivent alors QUE sur ton
-poste : à supprimer là-bas aussi après analyse (règle du labo).
+Python 3 standard, aucune dépendance. En cas d'échec (réseau, SHA différent), le fichier
+partiel est supprimé — relancer suffit. **Une demande de suppression** d'un athlète :
+`… rapatrier-depots.py --purger LL-TWIN-…` efface son dépôt du VPS et sa copie locale ; son
+jumeau et ses plans s'effacent depuis le tableau de bord (fiche de l'athlète).
 
 À chaque dépôt, **deux emails** partent (même relais SMTP Brevo que le reste,
 variables `SMTP_*` d'`infra/.env`) — chacun **best-effort** : un échec
@@ -98,9 +100,9 @@ Le dépôt garde la version du texte de consentement accepté
 formulaire qui n'en envoie pas vaut la première). Pas de sauvegarde du volume —
 une sauvegarde serait un second endroit — mais **surveiller l'espace disque**.
 
-`scripts/rapatrier-depots.py` télécharge une copie EN CLAIR de chaque archive puis
-purge le VPS : il date d'avant la conservation, et une copie rapatriée est un second
-endroit hors du chiffrement et de la purge.
+`scripts/rapatrier-depots.py` télécharge une copie EN CLAIR de chaque archive sur ton
+poste (cf. plus haut) : un second endroit, hors du chiffrement du volume et de la purge à
+l'échéance — à garder sur un disque chiffré, et à effacer avec le dépôt (`--purger`).
 
 ## Analyse d'un dépôt (côté Valentin)
 
@@ -109,7 +111,7 @@ TOKEN=...   # TWIN_DEPOT_ADMIN_TOKEN d'infra/.env
 BASE=https://depot.thelocomotionlab.com/twin
 curl -s -H "Authorization: Bearer $TOKEN" $BASE/depots | jq
 curl -H "Authorization: Bearer $TOKEN" -OJ $BASE/depots/<id>/archive
-# … analyse (DIAGNOSTIC §8 / golden réel), puis purge :
+# … analyse (DIAGNOSTIC §8 / golden réel). Purge sur demande de l'athlète seulement :
 curl -X DELETE -H "Authorization: Bearer $TOKEN" $BASE/depots/<id>
 ```
 

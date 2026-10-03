@@ -1,10 +1,8 @@
 // app/services/twin/page.jsx
 //
-// LE LOCOMOTION TWIN : ce qu'il fait, ce dont il a besoin, ce que tu
-// récupères, ce qui est fait de tes données, ce que ça coûte.
-//
-// L'index ne porte plus qu'une carte : le détail est ici, et l'appel à la
-// cohorte avec lui — c'est en déposant une archive qu'on obtient son jumeau.
+// LE LOCOMOTION TWIN : le projet, où il en est, ce que tu reçois, ce que deviennent tes
+// données — puis l'appel à la cohorte : c'est en déposant une archive qu'on obtient son
+// jumeau.
 
 import Link from "next/link";
 
@@ -15,7 +13,7 @@ import { filDAriane } from "@/lib/jsonld";
 import { partageDIndex } from "@/lib/seo";
 
 const DESCRIPTION =
-  "Ton jumeau physiologique, et le plan de course qui en découle : ce que fait le Twin, ce dont il a besoin, ce que tu récupères, et ce qui est fait de tes données.";
+  "Un outil d'analyse des données d'entraînement en construction : ton jumeau d'endurance, et le plan de course qui en découle.";
 
 export const metadata = {
   title: "Locomotion Twin",
@@ -33,24 +31,23 @@ const ETIQUETTE =
 /** Les quatre questions auxquelles la page doit répondre. */
 const TWIN = [
   {
-    question: "Ce qu'il fait",
+    question: "Le projet",
     reponse:
-      "À partir de ton archive d'entraînement, le moteur construit ton jumeau physiologique — vitesse critique, endurance, durabilité — puis le confronte au coût réel de la pente le long de ta trace, par simulation, pour en déduire un plan de pacing segment par segment.",
+      "Je construis un outil d'analyse des données d'entraînement et de course. À partir de ton archive, il modélise ton endurance — ta vitesse, ta résistance à la fatigue, ta façon de monter et de descendre — et en tire un plan de course. À terme, il servira à l'accompagnement personnalisé des athlètes.",
   },
   {
-    question: "Ce dont il a besoin",
+    question: "Où on en est",
     reponse:
-      "Ton archive d'entraînement complète (Garmin, Polar, Strava, Coros ou Suunto), déposée telle quelle, et le GPX de ta course cible. Il faut au moins une saison d'archive et des courses passées : c'est sur elles que le jumeau se cale.",
+      "En calibration. Le moteur est validé sur les courses de dix heures et plus, et il progresse avec chaque archive confiée à la cohorte.",
   },
   {
-    question: "Ce que tu récupères",
-    reponse:
-      "Un rapport de pacing segment par segment, avec des fenêtres horaires construites sur tes propres courses, et une relecture du rapport avec moi.",
+    question: "Ce que tu reçois",
+    reponse: "Ton plan de course, gratuitement, dès que ton jumeau est prêt.",
   },
   {
-    question: "Ce qui est fait de tes données",
+    question: "Tes données",
     reponse:
-      "Ton archive sert à calibrer le moteur, puis elle est supprimée immédiatement après analyse. Seuls ton rapport et quelques métadonnées sont conservés. Elle n'est ni revendue, ni partagée.",
+      "Ton archive est conservée chiffrée six mois, pour calibrer ton jumeau et pour la recherche du labo, puis supprimée. Elle n'est ni vendue ni partagée, et tu peux demander sa suppression à tout moment.",
   },
 ];
 
@@ -90,44 +87,12 @@ export default function TwinPage() {
           ))}
         </dl>
 
-        <section className="mt-10 rounded-[14px] border border-brand-hairline bg-brand-paper px-7 py-6 shadow-bloc">
-          <div className="font-mono text-xxs font-bold uppercase tracking-etiquette text-brand-slate">
-            Le périmètre
-          </div>
-          <p className="m-0 mt-2.5 max-w-[40em] font-sans text-lecture font-lecture leading-lecture text-brand-ink [text-wrap:pretty]">
-            Le Twin est calibré sur les efforts de dix heures et plus : sous cette durée, il ne
-            vend pas. Il donne sa pleine confiance quand ton archive contient au moins trois
-            vrais ultras, dont un avec fréquence cardiaque, et des données fraîches. En dessous,
-            tu reçois quand même ton rapport, avec la liste écrite de ce qui manque.
-          </p>
-        </section>
-
-        <section className="mt-6 rounded-[14px] border border-brand-wash-line bg-brand-mist px-7 py-6 shadow-mist">
-          <div className="font-mono text-xxs font-bold uppercase tracking-etiquette text-brand-slate">
-            Ce que ça coûte
-          </div>
-          <p className="m-0 mt-2.5 max-w-[40em] font-sans text-lecture font-lecture leading-lecture text-brand-ink [text-wrap:pretty]">
-            Rien. Le Twin s&rsquo;obtient en échange de ton archive d&rsquo;entraînement : elle
-            sert à valider le moteur sur des données réelles, et ton plan de course est la
-            contrepartie.
-          </p>
-          <p className="m-0 mt-4 max-w-[40em] font-sans text-lecture font-lecture leading-lecture text-brand-soft [text-wrap:pretty]">
-            L&rsquo;outil est en cours de calibration. C&rsquo;est précisément le moment où une
-            archive de plus compte.
-          </p>
-
-          <Link
-            href="/services/twin/cohorte"
-            className="mt-6 inline-block rounded-full bg-brand-accent px-[26px] py-3 font-heading text-[15px] font-semibold text-white no-underline shadow-cta transition-colors hover:bg-brand-accent-dark"
-          >
-            Rejoindre la cohorte
-          </Link>
-        </section>
-
-        <p className="m-0 mt-8 max-w-[40em] font-sans text-lecture font-lecture leading-lecture text-brand-soft [text-wrap:pretty]">
-          Le Twin est le premier module d&rsquo;une plateforme en construction : d&rsquo;autres
-          outils en ligne viendront s&rsquo;y ajouter.
-        </p>
+        <Link
+          href="/services/twin/cohorte"
+          className="mt-10 inline-block rounded-full bg-brand-accent px-[26px] py-3 font-heading text-[15px] font-semibold text-white no-underline shadow-cta transition-colors hover:bg-brand-accent-dark"
+        >
+          Rejoindre la cohorte
+        </Link>
 
         <RetourAIndex href="/services" label="Retour aux services" />
       </article>

@@ -104,9 +104,9 @@ export function paragrapheConservation(depot: Depot, conservationJours: number):
   const fin = new Date(Date.parse(depot.createdAt) + conservationJours * 86_400_000);
   const jusquau = fin.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
   return [
-    "Comme tu l'as accepté, ton archive est conservée chiffrée pour développer le",
-    `Twin, jusqu'au ${jusquau} ; elle est ensuite supprimée, avec ton jumeau, tes plans`,
-    "et ta page. Ce qui reste au registre du labo est anonyme.",
+    "Comme tu l'as accepté, ton archive est conservée chiffrée, pour ton jumeau et pour",
+    `la recherche du labo, jusqu'au ${jusquau} ; elle est ensuite supprimée, avec ton`,
+    "jumeau, tes plans et ta page. Pour la faire supprimer plus tôt, réponds à ce message.",
   ];
 }
 
