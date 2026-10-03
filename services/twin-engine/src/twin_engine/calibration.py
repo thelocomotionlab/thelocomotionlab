@@ -48,9 +48,6 @@ class GenuineUltra:
     n_nights: int | None = None
     longest_climb_m: float | None = None
     longest_descent_m: float | None = None
-    # surcoût de terrain de la carte compté dans sa vitesse ajustée (km de Deq), sous
-    # ``calibration.terrain_adjust=deq`` ; None = pas de profil, ou drapeau éteint
-    terrain_km: float | None = None
 
     @property
     def dplus_per_km(self) -> float:
@@ -137,10 +134,6 @@ class UltraCalibration:
     # --- Phase 5 : coût de pente servi (``minetti`` ou ``personal`` avec ses facteurs) -------
     slope_cost: str = "minetti"
     slope_kappa: tuple[float, float] | None = None       # (montée, descente) ; None = loi fixe
-    # --- terrain de la carte (``terrain_adjust``) : ultras qui le portent, surcoût moyen ------
-    terrain_adjust: str = "off"
-    terrain_n: int = 0
-    terrain_km_mean: float | None = None
 
     @property
     def n_genuine(self) -> int:
@@ -285,9 +278,6 @@ class UltraCalibration:
             "slope_cost": None if self.slope_kappa is None else {
                 "kappa_up": round(self.slope_kappa[0], 4),
                 "kappa_down": round(self.slope_kappa[1], 4)},
-            "terrain": None if self.terrain_adjust == "off" else {
-                "adjust": self.terrain_adjust, "n_ultras": self.terrain_n,
-                "km_mean": None if self.terrain_km_mean is None else round(self.terrain_km_mean, 3)},
             "notes": self.notes,
             "genuine": [g.to_dict() for g in self.genuine],
         }
@@ -445,8 +435,7 @@ def _basis_hours(s: ActivitySummary, cfg: Config) -> float:
 
 
 def select_genuine_ultras(summaries: list[ActivitySummary], cfg: Config,
-                          slope: tuple[float, float] | None = None,
-                          terrain_km: dict[str, float] | None = None) -> list[GenuineUltra]:
+                          slope: tuple[float, float] | None = None) -> list[GenuineUltra]:
     """Vrais ultras engagés : durée > seuil, vitesse ajustée ≥ seuil, découplage < seuil.
 
     Le filtre de durée porte sur le temps ÉCOULÉ (un 10 h avec de longs arrêts reste un ultra) ;
@@ -456,10 +445,7 @@ def select_genuine_ultras(summaries: list[ActivitySummary], cfg: Config,
     les enregistrements quasi immobiles (bivouac, montre laissée tourner, journées d'étape),
     dont la vitesse hors plateaux est pourtant celle d'une course — au banc de la Phase 2,
     la base hors plateaux sans cette garde a fait entrer des « ultras » à 500 à 1 800 minutes
-    d'arrêt par heure de mouvement (DIAGNOSTIC §10.5).
-
-    ``terrain_km`` (heure de départ → km) : le surcoût de terrain de la carte de chaque
-    activité, ajouté à son Deq dans la vitesse servie — la sélection, elle, ne le voit pas."""
+    d'arrêt par heure de mouvement (DIAGNOSTIC §10.5)."""
     out: list[GenuineUltra] = []
     for s in summaries:
         # durée, plancher (fixe ou dépendant de la durée), découplage (reconnaissances/randos ;
@@ -467,8 +453,7 @@ def select_genuine_ultras(summaries: list[ActivitySummary], cfg: Config,
         if genuine_gate_failures(s, cfg, slope):
             continue
         hours = _basis_hours(s, cfg)
-        extra = None if terrain_km is None else terrain_km.get(getattr(s, "start_time", None) or "")
-        vga_kmh = (adjusted_km(s, slope) + (extra or 0.0)) / hours
+        vga_kmh = adjusted_km(s, slope) / hours
         stops_s = getattr(s, "stops_s", None)
         out.append(
             GenuineUltra(
@@ -486,7 +471,6 @@ def select_genuine_ultras(summaries: list[ActivitySummary], cfg: Config,
                 n_nights=getattr(s, "n_nights", None),
                 longest_climb_m=getattr(s, "longest_climb_m", None),
                 longest_descent_m=getattr(s, "longest_descent_m", None),
-                terrain_km=extra,
             )
         )
     return out
@@ -710,11 +694,9 @@ def _pseudo_rows(cfg: Config | None, *, link: str, duration_prior: tuple[float, 
 
 
 def prior_dplus(cfg: Config, link: str) -> float:
-    """Prior population de β2 (D+/km) dans le lien ``link`` ; sous
-    ``terrain_adjust=deq``, multiplié par ``terrain_dplus_prior_scale``."""
+    """Prior population de β2 (D+/km) dans le lien ``link``."""
     c = cfg.calibration
-    prior = c.default_dplus_penalty_log_per_dpkm if link == "log" else c.default_dplus_penalty_kmh_per_dpkm
-    return prior * (c.terrain_dplus_prior_scale if c.terrain_adjust == "deq" else 1.0)
+    return c.default_dplus_penalty_log_per_dpkm if link == "log" else c.default_dplus_penalty_kmh_per_dpkm
 
 
 def _regression_beta(
@@ -914,31 +896,13 @@ def _duration_prior(
     return (-alpha * v_bar, float(c.duration_shrink_lambda)), origin
 
 
-def build_calibration(twin: Twin, cfg: Config, *, terrain: dict | None = None) -> UltraCalibration:
-    """``terrain`` : le magasin des profils de terrain des activités (``tools/carte``), servi
-    sous ``calibration.terrain_adjust=deq``."""
-    from .twin.terrain import surcouts_des_ultras
-
+def build_calibration(twin: Twin, cfg: Config) -> UltraCalibration:
     c = cfg.calibration
     # coût de pente personnel (Phase 5, C1) : la vitesse ajustée de chaque effort, et le
     # plancher qui la juge, portent les mêmes facteurs que le parcours servi
     slope = twin.slope_factors(cfg)
     notes: list[str] = []
-    extras = None
-    if c.terrain_adjust == "deq":
-        extras = surcouts_des_ultras(terrain, getattr(twin, "terrain", None), cfg)
-        if extras is None:
-            notes.append("Terrain dans la calibration demandé, sans magasin de profils applicable "
-                         "(absent, modèle de carte sans signal, ou pénalité de marche inconnue) : "
-                         "Deq des ultras inchangé.")
-    genuine = select_genuine_ultras(twin.summaries, cfg, slope=slope, terrain_km=extras)
-    portes = [g.terrain_km for g in genuine if g.terrain_km is not None]
-    terrain_kw: dict = {"terrain_adjust": c.terrain_adjust, "terrain_n": len(portes),
-                        "terrain_km_mean": float(np.mean(portes)) if portes else None}
-    if extras is not None:
-        notes.append(f"Terrain de la carte : {len(portes)} vrai(s) ultra(s) sur {len(genuine)} "
-                     f"portent un profil" + (f", surcoût moyen {np.mean(portes):+.2f} km de Deq."
-                                            if portes else "."))
+    genuine = select_genuine_ultras(twin.summaries, cfg, slope=slope)
     slope_kw: dict = {"slope_cost": c.slope_cost, "slope_kappa": slope}
     if c.slope_cost == "personal":
         if slope is None:
@@ -1096,7 +1060,7 @@ def build_calibration(twin: Twin, cfg: Config, *, terrain: dict | None = None) -
             night_share_mean=night_mean if night_coef is not None else None,
             night_prior=night_prior if night_coef is not None else None,
             **stops_kw,
-            **slope_kw, **terrain_kw,
+            **slope_kw,
             **level_kw,
         )
 
@@ -1111,7 +1075,7 @@ def build_calibration(twin: Twin, cfg: Config, *, terrain: dict | None = None) -
             n_eff=n_eff, recency_halflife_days=c.recency_halflife_days,
             maximality_mode=c.maximality_mode, maximality_weights=max_w_tuple, link=c.link,
             weights=w_tuple if n else None, **stops_kw,
-            **slope_kw, **terrain_kw,
+            **slope_kw,
         )
 
     penalty = prior_dplus(cfg, "linear")
@@ -1168,7 +1132,7 @@ def build_calibration(twin: Twin, cfg: Config, *, terrain: dict | None = None) -
             link=c.link,
             weights=w_tuple,
             **stops_kw,
-            **slope_kw, **terrain_kw,
+            **slope_kw,
             **level_kw,
             **tail_kw,
         )
@@ -1195,7 +1159,7 @@ def build_calibration(twin: Twin, cfg: Config, *, terrain: dict | None = None) -
         weights=w_tuple if n else None,
         **tail_kw,
         **stops_kw,
-            **slope_kw, **terrain_kw,
+            **slope_kw,
     )
 
 

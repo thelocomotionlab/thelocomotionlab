@@ -23,7 +23,7 @@ _COURSE_PARTAGEE = ("name", "length_km", "dplus_m", "dminus_m", "start_time", "n
                     "segments", "profil")
 _PLAN_PARTAGE = ("segments", "nuit", "parties", "crew", "nutrition", "stops_policy",
                  "anchor", "t_clock_h", "t_move_h", "t_stops_h", "safety_lo_clock",
-                 "safety_hi_clock", "window_tolerance_pct", "sun", "start_time", "attributions")
+                 "safety_hi_clock", "window_tolerance_pct", "sun", "start_time")
 _PREDICTION_PARTAGEE = ("central_h", "central", "plan_low_h", "plan_high_h",
                         "interval_low_h", "interval_high_h")
 _FIGURES_PARTAGEES = ("profil", "pacing")

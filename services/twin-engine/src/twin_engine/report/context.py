@@ -1114,8 +1114,7 @@ def _marche_par_segment(course, plan, twin, cfg) -> list[tuple[int, float, str]]
     minutes = marche_prevue(course, plan, getattr(twin, "terrain", None), cfg)
     if not minutes:
         return None
-    textes = consignes_de_marche(minutes, (getattr(course, "terrain", None) or {}).get(
-        "segments_techniques"))
+    textes = consignes_de_marche(minutes)
     return [(i, float(m), t) for i, (m, t) in enumerate(zip(minutes, textes)) if t]
 
 
@@ -1172,9 +1171,6 @@ def _v3_context(ctx: dict, *, course, twin, calibration, prediction, plan, race,
     consignes_auto = feuille.consignes(
         plan, replace(race, reglages=tuple(replace(r, consigne="") for r in race.reglages)),
         cfg, moments=moments, marche=marche)
-    # une carte a servi le parcours (twin.terrain) : ses sources s'impriment avec le plan
-    terrain = getattr(course, "terrain", None) or {}
-    attributions = list(terrain.get("attributions") or []) if terrain.get("servi", True) else []
 
     def _clock_or_h(clock: str | None, hours: float) -> str:
         return tex_escape(clock) if clock else f"{fr(hours, 1)}\\,h"
@@ -1269,9 +1265,6 @@ def _v3_context(ctx: dict, *, course, twin, calibration, prediction, plan, race,
         "fade_evidence": tex_escape(cfg.report.fade_evidence),
         "consignes_plain": consignes,
         "consignes_auto_plain": consignes_auto,
-        # les sources d'une carte qui a servi le parcours (vide sinon)
-        "attributions_carte": [tex_escape(a) for a in attributions],
-        "attributions_carte_plain": attributions,
         "crew_rows": crew_rows,
         "crew_declared": contacts_declared,
         "finish_row": finish_row,

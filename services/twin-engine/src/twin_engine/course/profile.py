@@ -89,8 +89,6 @@ class CourseProfile:
     # coût par mètre de la répartition sur la grille (technicité comprise), quand une loi
     # de répartition est servie : la marche prévue y répartit le temps d'un segment
     repartition_grid: np.ndarray | None = None
-    # terrain servi au total (``twin.terrain``) : source, km ajoutés au Deq ; None = aucun
-    terrain: dict | None = None
 
     def with_slope_cost(self, kappa_up: float, kappa_down: float) -> "CourseProfile":
         """Le même parcours sous un coût de pente personnel : le surcoût de montée est
@@ -124,20 +122,6 @@ class CourseProfile:
             for s in self.segments])
         return replace(self, repartition_km=poids, repartition=dict(loi), repartition_grid=cout * step)
 
-    def with_terrain(self, facteur: np.ndarray, info: dict) -> "CourseProfile":
-        """Le même parcours dont le total porte le terrain : le coût de chaque mètre du Deq
-        est multiplié par ``facteur`` (1 = rien) ; segments et Deq total recalculés,
-        ``info`` (source, km ajoutés) gardé dans ``terrain``. Facteur de pente inchangé."""
-        inc = np.diff(np.asarray(self.deq_grid_m, dtype=float), prepend=0.0) * np.asarray(facteur, dtype=float)
-        deq_grid = np.cumsum(inc)
-        segments = []
-        for seg in self.segments:
-            i0, i1 = _grid_index(self.off_km_grid, seg.off0), _grid_index(self.off_km_grid, seg.off1)
-            segments.append(replace(seg, deq_km=float((deq_grid[i1] - deq_grid[i0]) / 1000.0)))
-        ajout = float((deq_grid[-1] - self.deq_grid_m[-1]) / 1000.0)
-        return replace(self, deq_grid_m=deq_grid, segments=segments, deq_km=float(deq_grid[-1] / 1000.0),
-                       terrain={**info, "deq_ajoute_km": round(ajout, 3)})
-
     def checkpoint_coords(self) -> list[tuple[float, float, float]]:
         """(km officiel, lat, lon) de chaque point de découpage — le MÊME indice de grille
         que celui qui borne les segments (:func:`_grid_index`)."""
@@ -165,7 +149,6 @@ class CourseProfile:
             "technicity_pct": self.technicity_pct,
             "slope_kappa": None if self.slope_kappa is None else [round(k, 4) for k in self.slope_kappa],
             "repartition": self.repartition,
-            "terrain": self.terrain,
             "segments": [s.to_dict() for s in self.segments],
         }
 

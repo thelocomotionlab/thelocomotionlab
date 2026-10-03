@@ -162,9 +162,7 @@
     "stops_rate_population": 0.0,
     "night_term": "none",
     "night_prior_log_per_share": 0.0,
-    "night_shrink_lambda": 2.0,
-    "terrain_adjust": "off",
-    "terrain_dplus_prior_scale": 1.0
+    "night_shrink_lambda": 2.0
   },
   "prediction": {
     "mc_n": 5000,
@@ -179,8 +177,7 @@
     "environment_term": "off",
     "heat_ref_c": 15.0,
     "heat_cost_per_c": 0.004,
-    "altitude_cost_per_km": 0.05,
-    "terrain_total": "off"
+    "altitude_cost_per_km": 0.05
   },
   "pacing": {
     "fade_delta": 0.15,
@@ -269,36 +266,6 @@
       "2026-10"
     ]
   },
-  "carte": {
-    "pas_m": 50.0,
-    "rayon_recalage_m": 15.0,
-    "angle_cap_max_deg": 45.0,
-    "rayon_rugosite_m": 30.0,
-    "fenetre_geometrie_m": 250.0,
-    "etiquettes": [
-      "highway",
-      "sac_scale",
-      "mtb:scale",
-      "surface",
-      "smoothness",
-      "trail_visibility",
-      "tracktype"
-    ],
-    "modalite_min_fenetres": 20,
-    "l2_grille": [
-      0.3,
-      1.0,
-      3.0,
-      10.0,
-      30.0,
-      100.0
-    ],
-    "plis": 10,
-    "region_km": 30.0,
-    "modele_min_fenetres": 30,
-    "signal_z": 2.0,
-    "couverture_osm_min": 0.5
-  },
   "profils": {
     "_comment": "Profils de configuration qu'un plan peut servir (twin_engine.profils), choisis sur l'écran Plan et retenus par le registre. Le défaut est ce fichier tel quel ; chaque profil est une liste de surcharges bloc.clé=valeur.",
     "reference": {
@@ -312,7 +279,7 @@
       ]
     },
     "experimental": {
-      "description": "La référence, plus les leviers à l'essai qui se servent sans carte : technicité déclarée reportée sur les descentes, et la marche prévue en descente dans la colonne « Sur ce segment ».",
+      "description": "La référence, plus les leviers à l'essai : technicité déclarée reportée sur les descentes, et la marche prévue en descente dans la colonne « Sur ce segment ».",
       "drapeaux": [
         "calibration.slope_cost=personal_pacing",
         "calibration.slope_curve=bins",

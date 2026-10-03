@@ -38,9 +38,6 @@ dependencies = [
 # pypdf est aussi une dépendance d'exécution (assemblage du PDF unique) ; les tests
 # s'en servent pour compter et comparer les pages produites.
 dev = ["pytest>=8", "httpx>=0.27"]
-# la carte de technicité (twin_engine.carte) : extraits OpenStreetMap (.osm.pbf) et rasters
-# (MNT, occupation du sol) ; sans eux, la carte se fait avec ce qu'elle peut lire
-carte = ["osmium>=4", "rasterio>=1.4"]
 
 [project.scripts]
 # CLI du moteur (preview / full / backtest — cf. docs/manuel-twin.md).

@@ -18,9 +18,6 @@ résumé sans tableau à la seconde, selon les définitions de l'analyse de réf
   ajustée à la pente (loi de Minetti) par tranche de dénivelé négatif ; histogramme de la
   cadence lissée en mouvement.
 
-Les fenêtres de descente une par une, avec leur place sur la distance de l'activité
-(:func:`fenetres_de_descente`), servent la carte de technicité (``carte.modele``).
-
 **Dans le jumeau** (:func:`traits_terrain`), sur toutes les activités résumées :
 
 * vitesses par classe de pente, fraîches et fatiguées (sous / au-delà de
@@ -170,7 +167,6 @@ def _fenetres(act, cfg: Config) -> dict | None:
         "classe": classe, "hache": hache, "tranche": tranche, "valide": valide,
         "descente": valide & (g_moy <= tw.terrain_descent_grade),
         "nuit": None if nuit is None else nuit[milieu].astype(bool),
-        "debut_m": d[m][premiers], "fin_m": d[m][derniers], "dminus_m": dminus[m][premiers],
     }
 
 
@@ -222,29 +218,6 @@ def resume_descentes(act, cfg: Config) -> dict | None:
         "nuit_connue": f["nuit"] is not None,
         "unite": getattr(act, "cadence_unit", None),
     }
-
-
-def fenetres_de_descente(act, cfg: Config) -> list[dict]:
-    """Les fenêtres de descente d'une activité décodée, une par une, avec leur place sur la
-    distance de l'activité (``debut_m``, ``fin_m`` : première et dernière seconde en
-    mouvement) : durée, pente moyenne et sa classe, hachée ou non, part marchée, bascules par
-    minute, D− déjà descendu au début, nuit (None si inconnue). Liste vide sans cadence,
-    altitude ou mouvement."""
-    f = _fenetres(act, cfg)
-    if f is None:
-        return []
-    out = []
-    for i in np.flatnonzero(f["descente"]):
-        T = float(f["T"][i])
-        out.append({
-            "debut_m": round(float(f["debut_m"][i]), 1), "fin_m": round(float(f["fin_m"][i]), 1),
-            "s": int(T), "pente": round(float(f["g_moy"][i]), 4), "classe": int(f["classe"][i]),
-            "hache": bool(f["hache"][i]), "part_marche": round(float(f["marche"][i]) / T, 4),
-            "bascules_min": round(float(f["bascules"][i]) / (T / 60.0), 3),
-            "dminus_m": round(float(f["dminus_m"][i]), 1),
-            "nuit": None if f["nuit"] is None else bool(f["nuit"][i]),
-        })
-    return out
 
 
 # --------------------------------------------------------------------------- traits
@@ -478,5 +451,5 @@ def traits_terrain(summaries, cfg: Config) -> dict | None:
     }
 
 
-__all__ = ["fenetres_de_descente", "pente_et_denivele", "resume_descentes", "secondes_en_descente",
+__all__ = ["pente_et_denivele", "resume_descentes", "secondes_en_descente",
            "traits_terrain"]

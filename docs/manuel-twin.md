@@ -321,11 +321,8 @@ configuration et ses drapeaux (`version.json`, clé `configuration`) ; un amende
 sous les mêmes surcharges ; le livre servi les retient (`configuration` de l'entrée, colonne
 « Profil » de l'écran Registre). Sous le profil expérimental, la colonne « Sur ce segment »
 reçoit, sur le segment libre où elle est la plus longue, la marche prévue en descente
-(« descentes : environ N min prévues à la marche » ; « descente technique » quand une carte a
-servi le parcours) — l'écran la montre en gris dans la ligne, comme les autres textes du
-moteur. Une carte qui a servi le parcours imprime ses sources (OpenStreetMap sous ODbL, MNT,
-occupation du sol) sous le profil du rapport, dans la légende de la feuille, dans l'annexe et
-sur la page de l'athlète.
+(« descentes : environ N min prévues à la marche ») — l'écran la montre en gris dans la ligne,
+comme les autres textes du moteur.
 
 **La page de l'athlète** vit ailleurs : `/services/twin/plan/{ref}?k=…`, hors du chemin que
 couvre Access — l'athlète et son assistance l'ouvrent sans compte. C'est la seule route
@@ -833,10 +830,6 @@ PYTHONPATH=src python -m tools.ab_recency <manifests…>  # balaye la demi-vie d
 PYTHONPATH=src python -m tools.score_plan <manifestes…> --variant NOM:bloc.clé=valeur,… [--variant …]
                                                     #   lois de répartition comparées hors ravito, en
                                                     #   une passe, sans archive (dernier run du banc)
-PYTHONPATH=src python -m tools.score_plan <manifestes…> --terrain <dossier> --variant CARTE:pacing.terrain=map
-                                                    #   la carte du parcours jugée sur la répartition,
-                                                    #   profils de tools/carte banc, sans re-décodage ;
-                                                    #   la sortie dit où elle a été servie
 PYTHONPATH=src python -m tools.score_plan <manifestes…> --residus [LOI] [--set …]   # ce qui reste sous
                                                     #   la base ou la variante LOI : écart hors ravito
                                                     #   pondéré par le temps et en minutes, par type de
@@ -1139,104 +1132,12 @@ verdicts, forme du plan), `passages-<athlète>.md` (mouvement, arrêts, marche p
 `score_plan*.md`, `terrain-nice.md` — du markdown à coller au carnet ; seuls le registre et
 les manifestes se committent.
 
-**Carte de technicité (DIAGNOSTIC §10.31)** — par tranche de 50 m d'une trace : géométrie,
-étiquettes OpenStreetMap, rugosité du relief, occupation du sol, géologie si on la donne ; puis
-un modèle par athlète, appris sur ses fenêtres de descente hachées ou courables. Il faut l'extra
-`carte` (`pip install -e '.[carte]'` : osmium, rasterio) et des sources :
-
-- **OpenStreetMap** : un ou plusieurs extraits régionaux Geofabrik (`*-latest.osm.pbf`, licence
-  ODbL) qui couvrent la course et les activités, `--osm` répété ; le pays entier se lit aussi
-  mais demande beaucoup de mémoire. Seules les voies près des traces sont gardées.
-- **Relief** : `--mnt copernicus` lit les tuiles GLO-30 à distance (rien à télécharger). Le
-  RGE ALTI 1 m de l'IGN (France seulement) se donne en mosaïque :
-  `gdalbuildvrt -a_srs EPSG:2154 rgealti.vrt dalles/*.asc`, puis `--mnt rgealti.vrt`. Un
-  modèle ne s'applique qu'à une carte du même MNT : pour des activités hors de France,
-  Copernicus partout.
-- **Occupation du sol** : `--sol worldcover` (ESA, lu à distance). **Géologie** :
-  `--geologie couche.geojson --propriete NOM` (polygones en WGS 84, par exemple la carte
-  harmonisée du BRGM exportée par `ogr2ogr -f GeoJSON -t_srs EPSG:4326`).
-
-Les cartes se gardent dans `services/twin-engine/local-data/carte` (hors git) : un second
-passage ne relit rien. Les sorties impriment les attributions (OSM sous ODbL, Copernicus, ESA,
-IGN, BRGM). Derrière un proxy qui réécrit le TLS, GDAL prend le magasin de certificats donné
-par `CURL_CA_BUNDLE`.
-
-```bash
-SRC="--osm ~/osm/provence-alpes-cote-d-azur-latest.osm.pbf --osm ~/osm/<régions des activités>.osm.pbf \
-     --mnt copernicus --sol worldcover"
-# 1. la trace de Nice : couverture, descentes avant / après le km 100
-PYTHONPATH=src python -m tools.carte parcours --course ../../apps/site/public/tracks/nice-100m-2026.gpx \
-  --race examples/nice-100m.json --coupure-km 100 $SRC > /tmp/run1/carte-nice.md
-# 2. le fichier de la montre : tronçons hachés, fenêtres hachées contre courables face à la carte
-PYTHONPATH=src python -m tools.carte activite --activite $NICE_MONTRE --distance-officielle 167.2 \
-  --coupure-km 100 $SRC > /tmp/run1/carte-nice-montre.md
-# 3. le modèle de Val sur son archive arrêtée la veille, validé hors échantillon
-PYTHONPATH=src python -m tools.carte modele --archive _seed/cas_validation/Val/archives \
-  --until 2026-09-24 --out /tmp/run1/carte-modele-val.json $SRC > /tmp/run1/carte-modele-val.md
-# 4. ce modèle appliqué à Nice : P(hachée) par partie et par segment, frais et au D− du parcours
-PYTHONPATH=src python -m tools.carte parcours --course ../../apps/site/public/tracks/nice-100m-2026.gpx \
-  --race examples/nice-100m.json --coupure-km 100 --modele /tmp/run1/carte-modele-val.json $SRC \
-  > /tmp/run1/carte-nice-val.md
-```
-
-Le modèle (`carte-modele-val.json`) ne contient aucune position : variables retenues,
-coefficients, validation (perte hors échantillon de la carte contre celle des seuls contrôles
-— classe de pente, D− déjà descendu, nuit —, par activités puis par régions, écart réduit
-`z`, AUC) et `signal`. Sans signal, la carte ne dit rien de la technicité pour cet athlète ;
-le plan n'a pas à s'en servir. Le résumé dit aussi la couverture des sorties d'entraînement :
-une sortie sans aucune voie OSM recalée est hors des extraits donnés et n'entre pas dans
-l'apprentissage tant que l'extrait de sa région n'est pas passé par `--osm`. De même, un parcours
-ou un ultra dont moins de la moitié des descentes est recalée (`carte.couverture_osm_min`) ne
-reçoit pas la carte, et le terrain le dit (« trace hors des extraits OSM donnés ») : toutes ses
-étiquettes y seraient « absentes », que le modèle lirait comme un terrain. Les fenêtres d'apprentissage, qui portent
-les centres des activités, restent dans le cache. `parcours --modele … --vecu local-data/carte/exemples.json`
-ajoute la demande de la course contre le vécu des 183 derniers jours, par tranche de D−.
-
-**Terrain dans le plan et la calibration (DIAGNOSTIC §10.32)** — trois drapeaux, éteints par
-défaut : `pacing.terrain` (`declared` : la technicité déclarée reportée sur les descentes ;
-`map` : le surcoût de la carte, répartition seulement), `prediction.terrain_total=differential`
-(le surcoût de la carte dans le Deq de la cible) et `calibration.terrain_adjust=deq` (dans le
-Deq de chaque vrai ultra aussi ; `calibration.terrain_dplus_prior_scale` règle le prior de β2).
-Les termes de carte demandent le **terrain** de la course : modèle arrêté à la coupure, profil
-du parcours, magasin des profils des ultras. Pour une course à venir :
-
-```bash
-PYTHONPATH=src python -m tools.carte terrain --archive <archive> --until <veille> \
-  --course trace.gpx --race course.json --out /tmp/terrain.json $SRC
-twin-engine preview --training <archive> --course trace.gpx --race course.json \
-  --terrain /tmp/terrain.json --set pacing.terrain=map
-```
-
-Les extraits OpenStreetMap à réunir se déduisent des données : `tools/carte extraits` lit les
-traces des courses et les positions des sorties de course à pied des archives, et l'index de
-Geofabrik (`index-v1.json`, gardé dans le dossier des extraits), et retient pour chaque maille
-de 0,01° l'extrait le plus petit qui la contient ; un extrait sans course et avec moins de
-`--min-mailles` mailles de sorties (50) est laissé de côté, et dit ; les continents ne comptent
-pas. Une course qu'aucun extrait ne couvre (Madère, hors de l'extrait du Portugal) a ses voies
-par Overpass, dans `<dossier>/overpass`, à passer en `--osm <dossier>/overpass`. `--telecharger`
-va chercher ce qui manque au dossier :
-
-```bash
-PYTHONPATH=src python -m tools.carte extraits $M --dossier local-data/osm [--telecharger] [--sans-archives]
-```
-
-Au banc (run 2) : un terrain par course des manifestes, chacun à sa coupure, puis le banc sous
-les variantes de terrain, comparées au run de base du même passage — ou, pour la seule
-répartition, `tools/score_plan --terrain /tmp/terrains --variant CARTE:pacing.terrain=map` :
-
-```bash
-PYTHONPATH=src python -m tools.carte banc $M --out /tmp/terrains $SRC > /tmp/run2/carte-banc.md
-PYTHONPATH=src python -m tools.banc $M --out /tmp/run2 --label run2 --terrain /tmp/terrains \
-  --variant PTM:pacing.terrain=map \
-  --variant PTD:pacing.terrain=declared \
-  --variant TT:prediction.terrain_total=differential \
-  --variant TA:calibration.terrain_adjust=deq \
-  --variant TA5:calibration.terrain_adjust=deq,calibration.terrain_dplus_prior_scale=0.5
-```
-
-`carte-banc.md` dit, course par course, si le modèle de l'athlète a un signal à la coupure, et
-quelle part de ses descentes d'entraînement tombe sur une voie OSM : sans signal, les variantes
-de carte rendent le run de base, et c'est la réponse.
+**Technicité déclarée dans le plan** — `pacing.terrain=declared`, éteint par défaut (profil
+expérimental) : la technicité déclarée de la course (`technicity_pct`, `--technicity`) se
+reporte sur les descentes, au prorata de la probabilité de marcher de l'athlète (modèle de
+marche du détecteur) ; le total ne change pas. La carte de technicité (OpenStreetMap, relief,
+occupation du sol), essayée sur la répartition et le total (DIAGNOSTIC §10.31 à §10.39), n'a
+rien apporté de mesurable : elle a été retirée du moteur.
 
 **Profils de configuration** — un plan sert l'un de trois profils : `defaut`
 (`twin.config.json` tel quel), `reference` et `experimental`, deux listes de surcharges
@@ -1245,13 +1146,12 @@ effective : l'empreinte du défaut n'en dépend pas ; un fichier partiel passé 
 `TWIN_CONFIG_PATH` garde les profils qu'il ne redéfinit pas). La référence reçoit les drapeaux qu'un run
 garde hors du défaut faute de preuve sur les cas frais — aujourd'hui la loi de pente par
 tranches et le départ et l'arrivée plus rapides, servis à la répartition (DIAGNOSTIC §10.35,
-§10.37) ; l'expérimental, la référence plus les leviers à l'essai qui se servent sans carte
-(technicité déclarée sur les descentes, consigne de marche). En ligne de commande, `twin-engine preview|full --profil
+§10.37) ; l'expérimental, la référence plus les leviers à l'essai (technicité déclarée sur les
+descentes, consigne de marche). En ligne de commande, `twin-engine preview|full --profil
 experimental` (les `--set` s'appliquent après) ; au tableau de bord, l'écran Plan ; au livre
-servi, `tools/registre --servir … --profil experimental` quand la version ne le garde pas. Les entrées
-portent `course.terrain` (km ajoutés au Deq, ou la raison du refus), `model.terrain_adjust`
-et ses ultras porteurs, et, avec des passages, `forme.marche_descente` : la marche prévue en
-descente contre la marche mesurée, tronçon par tronçon.
+servi, `tools/registre --servir … --profil experimental` quand la version ne le garde pas. Avec
+des passages, les entrées portent `forme.marche_descente` : la marche prévue en descente contre
+la marche mesurée, tronçon par tronçon.
 
 ## 9. Déploiement (rappel)
 

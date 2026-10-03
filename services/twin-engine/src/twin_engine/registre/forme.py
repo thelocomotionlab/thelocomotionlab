@@ -15,7 +15,7 @@ Le banc juge l'arrivée ; ce bloc juge la répartition, de deux façons :
   (:func:`type_de_troncon` : le côté dominant, au moins 20 m par km).
 
 S'y ajoutent les arrêts et le mouvement réels contre ceux du plan, et la marche en descente
-prévue par le modèle à deux allures (``twin.terrain.marche_prevue``, sous le mouvement réel
+prévue par le modèle de marche du détecteur (``twin.terrain.marche_prevue``, sous le mouvement réel
 imposé) contre celle mesurée. Les mesures réelles viennent des passages (``tools/passages`` :
 mouvement, arrêts, marche par tronçon, marche en descente).
 """
@@ -71,12 +71,11 @@ def hors_ravito_impose(course, plan, segs: list) -> dict | None:
 
 
 def bloc_forme(course, race, prediction, cfg, passages: dict | None, *,
-               terrain: dict | None = None, profil: dict | None = None) -> dict | None:
+               terrain: dict | None = None) -> dict | None:
     """Le bloc ``forme`` d'une entrée, ``None`` sans passages exploitables. ``terrain`` : les
-    traits de terrain du jumeau (modèle de marche, parts marchées), ``profil`` : le profil de
-    carte du parcours — de quoi prévoir la marche en descente."""
+    traits de terrain du jumeau (modèle de marche) — de quoi prévoir la marche en descente."""
     from ..pacing.plan import build_pacing
-    from ..twin.terrain import marche_prevue, profil_compatible
+    from ..twin.terrain import marche_prevue
 
     if not passages or prediction is None:
         return None
@@ -96,7 +95,7 @@ def bloc_forme(course, race, prediction, cfg, passages: dict | None, *,
             k_impose = reel.sum() / prevu.sum() if prevu.sum() > 0 else 1.0
             impose = prevu * k_impose
             e = impose - reel
-            marche = marche_prevue(course, plan, terrain, cfg, profil=profil)
+            marche = marche_prevue(course, plan, terrain, cfg)
             troncons = []
             for k, i in enumerate(idx):
                 md = segs[i].get("marche_descente_h")
@@ -123,7 +122,6 @@ def bloc_forme(course, race, prediction, cfg, passages: dict | None, *,
                     "n": len(paires), "prevue_min": _r(pv.sum(), 1), "reelle_min": _r(rl.sum(), 1),
                     "erreur_moyenne_min": _r(np.mean(np.abs(pv - rl)), 1),
                     "pire_troncon_min": _r(np.max(np.abs(pv - rl)), 1),
-                    "profil_de_carte": profil is not None and profil_compatible(profil, course) is None,
                 }
 
         hors = hors_ravito_impose(course, plan, segs)

@@ -442,9 +442,6 @@ def annex_payload(*, ctx: dict, course, twin, calibration, prediction, plan, rac
                          for s, c, a in zip(plan.segments, ctx["consignes_plain"],
                                             ctx.get("consignes_auto_plain")
                                             or ctx["consignes_plain"])],
-            # les sources d'une carte qui a servi le parcours (OpenStreetMap sous ODbL, MNT,
-            # occupation du sol) : la page du plan les imprime avec lui
-            "attributions": list(ctx.get("attributions_carte_plain") or []),
         },
         # la note d'assistance voyage avec le point : c'est elle que le formulaire de
         # l'annexe repropose à l'édition

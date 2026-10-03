@@ -10,7 +10,7 @@ banc (agrégats), le collecteur de la radiographie (efforts longs) et celui des 
     PYTHONPATH=src python -m tools.banc manifest-a.json [manifest-b.json …] --out /tmp/p0
         [--depot <dossier>] [--label NOM] [--set bloc.clé=valeur …] [--avant <run>]
         [--no-diag] [--no-passages] [--min-hours 10] [--min-stop-s 60] [--radius-m 150] [--dry-run]
-        [--variant NOM:bloc.clé=valeur[,bloc.clé=valeur…]] … [--terrain <dossier>]
+        [--variant NOM:bloc.clé=valeur[,bloc.clé=valeur…]] …
 
 Chaque passage écrit au livre banc du registre (``docs/twin-registre/banc/``) un run pour la
 configuration de base et un run par variante, horodatés et marqués du commit, de
@@ -79,11 +79,9 @@ def run_manifest_one_pass(manifest_path: Path, cfg, *, out_dir: Path,
                           min_hours: float | None = None, min_stop_s: float = 60.0,
                           radius_m: float = 150.0,
                           variants: dict[str, object] | None = None,
-                          connus: dict | None = None,
-                          terrain_dir: Path | None = None) -> dict | None:
+                          connus: dict | None = None) -> dict | None:
     """Un manifeste, un décodage, trois produits. ``None`` si l'archive est introuvable.
-    ``connus`` : les passages déjà au registre, servis quand la passe ne les relève pas.
-    ``terrain_dir`` : les terrains de la carte (``tools/carte banc``), un par course."""
+    ``connus`` : les passages déjà au registre, servis quand la passe ne les relève pas."""
     base = manifest_path.resolve().parent
     man = json.loads(manifest_path.read_text(encoding="utf-8"))
     athlete = man["athlete"]
@@ -124,14 +122,13 @@ def run_manifest_one_pass(manifest_path: Path, cfg, *, out_dir: Path,
     par_course = ({k: p for k, (_, p) in enumerate(results)} if results is not None
                   else {k: (connus or {}).get((athlete, r["name"], r["date"]))
                         for k, r in enumerate(man["races"])})
-    terrains = {k: _terrain_de(terrain_dir, athlete, r) for k, r in enumerate(man["races"])}
     entries: list[dict] = []
     for k, r in enumerate(man["races"]):
         print(f"  {athlete} · {r['name']} ({r['date']}) — coupure la veille…",
               file=sys.stderr, flush=True)
         entries.append({"athlete": athlete,
                         **backtest_race(cache, r, cfg, base=base, race_meta=metas.get(k),
-                                        passages=par_course.get(k), terrain=terrains.get(k))})
+                                        passages=par_course.get(k))})
 
     out: dict = {"athlete": athlete, "courses": len(man["races"]), "entries": entries,
                  "variants": {}, "passages": []}
@@ -142,8 +139,7 @@ def run_manifest_one_pass(manifest_path: Path, cfg, *, out_dir: Path,
             out["variants"][name] = [
                 {"athlete": athlete, **backtest_race(cache, r, cfg_v, base=base,
                                                      race_meta=metas.get(k),
-                                                     passages=par_course.get(k),
-                                                     terrain=terrains.get(k))}
+                                                     passages=par_course.get(k))}
                 for k, r in enumerate(man["races"])]
         finally:
             cache.cfg = cfg
@@ -160,17 +156,6 @@ def run_manifest_one_pass(manifest_path: Path, cfg, *, out_dir: Path,
                                                      encoding="utf-8")
         out["passages"] = lignes_de_passages(man, results)
     return out
-
-
-def _terrain_de(terrain_dir: Path | None, athlete: str, race: dict) -> dict | None:
-    """Le terrain de la carte d'une course (``<dossier>/<athlète>/<date>.json``), s'il existe."""
-    if terrain_dir is None:
-        return None
-    chemin = Path(terrain_dir) / _slug(athlete) / f"{race['date']}.json"
-    try:
-        return json.loads(chemin.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None
 
 
 def _avant(depot: Depot, ref: str | None, label: str) -> list[dict] | None:
@@ -211,9 +196,6 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--variant", action="append", default=[], metavar="NOM:BLOC.CLÉ=VALEUR,…",
                     help="rejoue le banc sous une config surchargée (répétable) — un run de "
                          "plus au registre, sorties backtest-/tableau-/compare-<nom> dans --out")
-    ap.add_argument("--terrain", default=None, metavar="DOSSIER",
-                    help="terrains de la carte par course (tools/carte banc) : servis selon "
-                         "pacing.terrain, prediction.terrain_total, calibration.terrain_adjust")
     args = ap.parse_args(argv)
 
     try:
@@ -237,7 +219,7 @@ def main(argv: list[str] | None = None) -> int:
             mp, cfg, out_dir=out_dir, do_diag=not args.no_diag,
             do_passages=not args.no_passages, min_hours=args.min_hours,
             min_stop_s=args.min_stop_s, radius_m=args.radius_m, variants=variants,
-            connus=depot.passages(), terrain_dir=Path(args.terrain) if args.terrain else None,
+            connus=depot.passages(),
         )
         print(file=sys.stderr)
         if res is None:

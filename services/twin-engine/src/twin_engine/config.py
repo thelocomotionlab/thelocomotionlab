@@ -381,14 +381,6 @@ class CalibrationParams:
     night_term: str = "none"                             # {none, prior_shrunk}
     night_prior_log_per_share: float = 0.0               # ln v par unité de part de nuit (0 = sans a priori)
     night_shrink_lambda: float = 2.0
-    # --- terrain de la carte (chantier terrain, ``twin.terrain``) ---------------------------
-    # ``off`` (défaut) : rien. ``deq`` : le Deq de chaque vrai ultra porte son surcoût de
-    #   terrain (profil de carte de son activité, pénalité de marche du jumeau), comme il porte
-    #   la pente, et le parcours cible pareil ; un ultra sans profil garde son Deq. Le prior de
-    #   β2 (D+/km) est multiplié par ``terrain_dplus_prior_scale`` : une part de ce que le
-    #   prior population prête aux parcours montagneux est désormais dans le Deq.
-    terrain_adjust: str = "off"                          # {off, deq}
-    terrain_dplus_prior_scale: float = 1.0
 
 
 @dataclass(frozen=True)
@@ -458,11 +450,6 @@ class PredictionParams:
     heat_ref_c: float = 15.0
     heat_cost_per_c: float = 0.004
     altitude_cost_per_km: float = 0.05
-    # --- terrain de la carte au total (chantier terrain, ``twin.terrain``) ---------------------
-    # ``off`` (défaut) : rien. ``differential`` : le Deq du parcours cible porte le surcoût de
-    #   terrain de son profil de carte, relatif au terrain habituel de l'athlète ; la
-    #   calibration reste intacte (en alternative à ``calibration.terrain_adjust=deq``).
-    terrain_total: str = "off"                           # {off, differential}
 
 
 @dataclass(frozen=True)
@@ -517,10 +504,8 @@ class PacingParams:
     # --- surcoût de terrain à la répartition (chantier terrain, ``twin.terrain``) ------------
     # ``none`` (défaut) : rien. ``declared`` : la technicité déclarée de la course se reporte
     #   sur les descentes, au prorata de la probabilité de marcher de l'athlète (classe de
-    #   pente, D− déjà descendu). ``map`` : le profil de carte du parcours (P(hachée) sous la
-    #   carte contre le terrain habituel) × la pénalité de marche de l'athlète, fraîche ou
-    #   fatiguée. Le total ne change pas, seule la répartition.
-    terrain: str = "none"                # {none, declared, map}
+    #   pente, D− déjà descendu). Le total ne change pas, seule la répartition.
+    terrain: str = "none"                # {none, declared}
     # --- départ et arrivée -----------------------------------------------------------------
     # La première part ``start_share`` de la distance officielle se court ``start_gain`` plus
     # vite que le fade et la loi de pente ne le disent, les ``finish_km`` derniers km
@@ -723,44 +708,6 @@ class ApiParams:
 
 
 @dataclass(frozen=True)
-class CarteParams:
-    """La carte de technicité (``twin_engine.carte``), par tranche de ``pas_m`` mètres d'une
-    trace : recalage sur la voie OpenStreetMap la plus proche à moins de
-    ``rayon_recalage_m`` dont le cap ne s'écarte pas de plus de ``angle_cap_max_deg`` (dans un
-    lacet serré, la moitié du rayon et sans condition de cap), étiquettes ``etiquettes`` lues
-    sur la voie ; rugosité du relief sur un disque de ``rayon_rugosite_m`` autour de la
-    tranche ; géométrie de la trace sur ``fenetre_geometrie_m`` centrés sur la tranche.
-    Les variables d'entrée seulement : leur coût s'estime sur des données (``carte.modele``).
-
-    Le modèle (``carte.modele``) : une modalité vue dans moins de ``modalite_min_fenetres``
-    fenêtres rejoint « autre » ; force de la pénalité L2 choisie dans ``l2_grille`` sur
-    ``plis`` plis d'activités entières ; régions de validation : activités à moins de
-    ``region_km`` de proche en proche ; pas de modèle sous ``modele_min_fenetres`` fenêtres
-    hachées ou courables ; signal quand la carte réduit la perte hors échantillon d'au moins
-    ``signal_z`` erreurs types.
-
-    Un extrait OSM étant lu, une sortie dont aucune tranche n'est recalée sur une voie est hors
-    des extraits : elle n'entre pas dans l'apprentissage ; un parcours ou un ultra dont moins
-    de ``couverture_osm_min`` des descentes sont recalées ne reçoit pas la carte — toutes ses
-    étiquettes y seraient « absentes », ce que le modèle lirait comme un terrain."""
-
-    pas_m: float = 50.0
-    rayon_recalage_m: float = 15.0
-    angle_cap_max_deg: float = 45.0
-    rayon_rugosite_m: float = 30.0
-    fenetre_geometrie_m: float = 250.0
-    etiquettes: tuple[str, ...] = ("highway", "sac_scale", "mtb:scale", "surface", "smoothness",
-                                   "trail_visibility", "tracktype")
-    modalite_min_fenetres: int = 20
-    l2_grille: tuple[float, ...] = (0.3, 1.0, 3.0, 10.0, 30.0, 100.0)
-    plis: int = 10
-    region_km: float = 30.0
-    modele_min_fenetres: int = 30
-    signal_z: float = 2.0
-    couverture_osm_min: float = 0.5
-
-
-@dataclass(frozen=True)
 class CohorteParams:
     """Conservation des données de la cohorte (tableau de bord, ``tableau_de_bord.conservation``).
 
@@ -797,7 +744,6 @@ class Config:
     report: ReportParams = field(default_factory=ReportParams)
     api: ApiParams = field(default_factory=ApiParams)
     cohorte: CohorteParams = field(default_factory=CohorteParams)
-    carte: CarteParams = field(default_factory=CarteParams)
 
 
 # --------------------------------------------------------------------------- #
@@ -891,13 +837,11 @@ def load_config(config_path: str | os.PathLike[str] | None = None) -> Config:
         report=_build(ReportParams, raw.get("report")),
         api=_build(ApiParams, raw.get("api")),
         cohorte=_build(CohorteParams, raw.get("cohorte")),
-        carte=_build(CarteParams, raw.get("carte")),
     )
 
 
 __all__ = [
     "ApiParams",
-    "CarteParams",
     "CohorteParams",
     "Config",
     "override_config",
