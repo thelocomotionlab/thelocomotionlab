@@ -37,13 +37,14 @@ const roles = (p: PlancheImage) => textes(p).map((e) => e.role);
 const types = (p: PlancheImage) => [...new Set(p.elements.map((e) => e.type))];
 
 describe("les modèles", () => {
-  it("en compte douze pour l'image, plus Survol", () => {
-    expect(MODELES).toHaveLength(12);
+  it("en compte treize pour l'image, plus Survol", () => {
+    expect(MODELES).toHaveLength(13);
     expect(MODELES.map((m) => m.cle)).toEqual([
       "carte",
       "trace",
       "bandeau",
       "photo",
+      "photo-seule",
       "texte",
       "intentions",
       "fiche",
@@ -54,6 +55,34 @@ describe("les modèles", () => {
       "chiffres",
     ]);
     expect(instancierSurvol(CTX).type).toBe("survol");
+  });
+
+  it("Photo seule ne pose que la photo, plein cadre, dans tous les formats", () => {
+    for (const format of ["carrousel", "carre", "story"] as const) {
+      const p = instancier("photo-seule", { ...CTX, format });
+      expect(p.elements, format).toHaveLength(1);
+      expect(p.elements[0], format).toMatchObject({
+        type: "photo",
+        x: 0,
+        y: 0,
+        l: 1,
+        h: 1,
+        fondDePlanche: true,
+        degrades: null,
+      });
+      expect(modelesPour(format).map((m) => m.cle), format).toContain("photo-seule");
+    }
+  });
+
+  it("passer de Photo à Photo seule garde la photo et retire tout le reste", () => {
+    const photo = instancier("photo", CTX);
+    const avec = {
+      ...photo,
+      elements: photo.elements.map((e) => (e.type === "photo" ? { ...e, mediaId: "m1" } : e)),
+    };
+    const seule = changerModele(avec, "photo-seule", CTX);
+    expect(seule.elements).toHaveLength(1);
+    expect(seule.elements[0]).toMatchObject({ type: "photo", mediaId: "m1", degrades: null });
   });
 
   it("les deux stories ne se proposent qu'en story", () => {

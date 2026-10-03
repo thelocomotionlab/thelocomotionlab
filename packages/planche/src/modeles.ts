@@ -500,6 +500,14 @@ export const MODELES: Modele[] = [
     },
   },
   {
+    cle: "photo-seule",
+    label: "Photo seule",
+    aide: "La photo plein cadre, sans en-tête, sans pied, sans dégradé.",
+    elements: (f) => [
+      photoNeuve(boite(f, 0, 0, f.width, f.height), { fondDePlanche: true, nom: "Fond" } as never),
+    ],
+  },
+  {
     cle: "texte",
     label: "Texte",
     aide: "Un surtitre, un titre, un paragraphe.",
@@ -880,6 +888,7 @@ function reprendre(neuf: Element, ancien: Element): Element {
     return { ...neuf, mediaId: ancien.mediaId, cadrage: ancien.cadrage, retournee: ancien.retournee };
   }
   if (neuf.type === "fiche" && ancien.type === "fiche") return { ...neuf, lignes: ancien.lignes };
+  if (neuf.type === "chiffres" && ancien.type === "chiffres") return { ...neuf, cases: ancien.cases };
   if (neuf.type === "stat" && ancien.type === "stat") {
     return { ...neuf, variable: ancien.variable, valeurManuelle: ancien.valeurManuelle };
   }
@@ -951,6 +960,7 @@ function porteQuelqueChose(e: Element): boolean {
   if (e.type === "photo") return e.mediaId !== null;
   if (e.type === "fiche") return e.lignes.length > 0;
   if (e.type === "stat") return e.valeurManuelle !== null;
+  if (e.type === "chiffres") return e.cases.some((cs) => cs.valeur !== null && cs.valeur !== "");
   return false;
 }
 

@@ -18,6 +18,7 @@ import { CLES_ICONES } from "@locomotionlab/ui/icones";
 import {
   carteNeuve,
   casesNeuves,
+  chiffresNeufs,
   filetNeuf,
   flecheDuPied,
   formatDe,
@@ -26,6 +27,7 @@ import {
   marqueNeuve,
   profilNeuf,
   semainesNeuves,
+  traceNeuve,
 } from "@locomotionlab/planche";
 import type { Element, PlancheImage, Projet } from "@locomotionlab/planche";
 
@@ -142,14 +144,7 @@ export default function TiroirElements({ poste }: { poste: PosteDeTravail }) {
               type="button"
               className={BOUTON}
               onClick={() =>
-                poser(
-                  marqueNeuve(
-                    variante === "cercle"
-                      ? { x: 0.35, y: 0.35, l: 0.3, h: 0.24 }
-                      : { x: 0.06, y: 0.06, l: 0.48, h: 0.031 },
-                    { variante },
-                  ),
-                )
+                poser(marqueNeuve(boiteDeLaMarque(variante, formatDe(projet.format)), { variante }))
               }
             >
               {label}
@@ -196,6 +191,20 @@ export default function TiroirElements({ poste }: { poste: PosteDeTravail }) {
           >
             Journées
           </button>
+          <button
+            type="button"
+            className={BOUTON}
+            onClick={() => poser(traceNeuve({ x: 0.2, y: 0.15, l: 0.6, h: 0.5 }))}
+          >
+            Trace
+          </button>
+          <button
+            type="button"
+            className={BOUTON}
+            onClick={() => poser(chiffresNeufs({ x: 0.5, y: 0.66, l: 0.44, h: 0.2 }))}
+          >
+            Chiffres
+          </button>
         </div>
         {aCarte && (
           <p className="mt-1.5 text-[11px] leading-snug text-brand-muted">
@@ -240,6 +249,23 @@ export default function TiroirElements({ poste }: { poste: PosteDeTravail }) {
       </section>
     </div>
   );
+}
+
+/**
+ * La boîte d'une marque neuve, en fractions de la planche. Le logo seul naît
+ * carré EN PIXELS : en fractions, un carré se déformerait sur un format 4:5 ou
+ * 9:16.
+ */
+function boiteDeLaMarque(
+  variante: "logo-nom" | "logo" | "cercle",
+  f: { width: number; height: number },
+): { x: number; y: number; l: number; h: number } {
+  if (variante === "cercle") return { x: 0.35, y: 0.35, l: 0.3, h: 0.24 };
+  if (variante === "logo") {
+    const cote = 140;
+    return { x: 0.06, y: 0.06, l: cote / f.width, h: cote / f.height };
+  }
+  return { x: 0.06, y: 0.06, l: 0.48, h: 0.031 };
 }
 
 /**

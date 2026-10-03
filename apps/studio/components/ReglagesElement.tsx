@@ -24,10 +24,12 @@ import {
   VARIABLES,
   couleurDuJour,
   idNeuf,
+  type CaseChiffre,
   type CleVariable,
   type Element,
   type ElementCarte,
   type ElementCases,
+  type ElementChiffres,
   type ElementFiche,
   type ElementForme,
   type ElementIcone,
@@ -908,6 +910,109 @@ function ReglagesFiche({ e, poser }: { e: ElementFiche; poser: Poser<ElementFich
   );
 }
 
+/* ------------------------------------------------------- bloc de chiffres */
+
+function ReglagesChiffres({ e, poser }: { e: ElementChiffres; poser: Poser<ElementChiffres> }) {
+  const maj = (i: number, champ: Partial<CaseChiffre>) =>
+    poser(
+      (x) => ({ ...x, cases: x.cases.map((cs, j) => (i === j ? { ...cs, ...champ } : cs)) }),
+      "chiffres",
+    );
+  return (
+    <>
+      <Nombre
+        libelle="Corps"
+        valeur={e.taille}
+        suffixe="px"
+        onChange={(n) => poser((x) => ({ ...x, taille: Math.max(8, n) }), "corps")}
+      />
+      <Nombre
+        libelle="Par ligne"
+        valeur={e.colonnes}
+        onChange={(n) =>
+          poser(
+            (x) => ({ ...x, colonnes: Math.max(1, Math.min(x.cases.length || 1, Math.round(n))) }),
+            "disposition",
+          )
+        }
+      />
+      <Choix
+        libelle="Alignement"
+        valeur={e.alignement}
+        options={[
+          { cle: "centre", label: "Centré" },
+          { cle: "gauche", label: "À gauche" },
+        ]}
+        onChange={(v) => poser((x) => ({ ...x, alignement: v }), "alignement")}
+      />
+      <Couleur
+        libelle="Encre des valeurs"
+        valeur={e.couleurValeurs}
+        onChange={(v) => poser((x) => ({ ...x, couleurValeurs: v }), "encre")}
+      />
+      <Couleur
+        libelle="Encre des libellés"
+        valeur={e.couleurLibelles}
+        onChange={(v) => poser((x) => ({ ...x, couleurLibelles: v }), "encre")}
+      />
+      <Aide>
+        « Thème » : l&rsquo;encre du thème pour les valeurs, son accent pour les libellés. Si une
+        valeur ne tient pas dans sa case, tout le bloc rapetisse d&rsquo;un même corps.
+      </Aide>
+      <Titre>Cases</Titre>
+      {e.cases.map((cs, i) => (
+        <div key={i} className="mb-1.5 border-l border-brand-hairline pl-2">
+          <div className="flex items-center gap-1">
+            <input
+              type="text"
+              value={cs.libelle}
+              onChange={(ev) => maj(i, { libelle: ev.target.value })}
+              aria-label={`Libellé de la case ${i + 1}`}
+              className="min-w-0 flex-1 rounded border border-brand-field bg-brand-bg px-1.5 py-1 text-[13px]"
+            />
+            <button
+              type="button"
+              onClick={() =>
+                poser((x) => ({ ...x, cases: x.cases.filter((_, j) => j !== i) }), "chiffres")
+              }
+              aria-label={`Retirer la case ${i + 1}`}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-brand-field transition-colors hover:bg-brand-primary/12 motion-reduce:transition-none"
+            >
+              <Trash2 size={13} />
+            </button>
+          </div>
+          <Choix
+            libelle="Source"
+            valeur={cs.variable ?? ""}
+            options={[{ cle: "", label: "Valeur écrite" }, ...OPTIONS_VARIABLES]}
+            onChange={(v) => maj(i, { variable: v ? (v as CleVariable) : null })}
+          />
+          <Mot
+            libelle="Valeur"
+            valeur={cs.valeur ?? ""}
+            placeholder={cs.variable ? "calculée" : ""}
+            onChange={(v) => maj(i, { valeur: v || null })}
+          />
+        </div>
+      ))}
+      <Bouton
+        onClick={() =>
+          poser(
+            (x) => ({ ...x, cases: [...x.cases, { variable: null, valeur: "", libelle: "libellé" }] }),
+            "chiffres",
+          )
+        }
+      >
+        Ajouter une case
+      </Bouton>
+      <Aide>
+        Une valeur écrite passe devant la variable : le chrono officiel, un dénivelé arrondi. Sans
+        horaires dans la trace, la durée reste un tiret tant qu&rsquo;on ne l&rsquo;écrit pas.
+      </Aide>
+    </>
+  );
+}
+
 /* ------------------------------------------------------------------ cases */
 
 function ReglagesCases({
@@ -1317,6 +1422,8 @@ export default function ReglagesElement({
       return <ReglagesStat e={element} poser={poser<ElementStat>("stat")} />;
     case "fiche":
       return <ReglagesFiche e={element} poser={poser<ElementFiche>("fiche")} />;
+    case "chiffres":
+      return <ReglagesChiffres e={element} poser={poser<ElementChiffres>("chiffres")} />;
     case "cases":
       return <ReglagesCases e={element} poser={poser<ElementCases>("cases")} ctx={ctx} />;
     case "semaines":

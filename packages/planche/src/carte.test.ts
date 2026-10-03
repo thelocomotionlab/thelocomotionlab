@@ -15,7 +15,7 @@ import { ctxFactice, type CtxFactice } from "./factice.ts";
 import { besoinsDeFond, dessinerPlanche } from "./rendu.ts";
 import { PALETTE_JOURS, THEMES, couleurDuJour } from "./charte.ts";
 import { brandColors } from "@locomotionlab/ui/tokens";
-import { carteNeuve } from "./fabrique.ts";
+import { carteNeuve, traceNeuve } from "./fabrique.ts";
 import { TILE_SIZE, cadrer, decimerPixels, normX, normY, tuilesDeLaVue } from "./projection.ts";
 import { SCHEMA } from "./types.ts";
 import type { BoitePx, ElementCarte, PlancheImage, Projet } from "./types.ts";
@@ -317,6 +317,19 @@ describe("dessiner une carte", () => {
     // Une trace découpée APRÈS la planche doit se nommer toute seule.
     expect(dits(rendre({ ...carte(), etiquettes: [] }))).toContain("J1");
     expect(dits(rendre({ ...carte(), etiquettes: [] }))).toContain("J2");
+  });
+
+  it("la trace seule n'a ni fond, ni étiquette, ni itinéraire en sourdine", () => {
+    const seule = traceNeuve({ x: 0.2, y: 0.2, l: 0.6, h: 0.4 });
+    expect(seule).toMatchObject({ nom: "Trace", fond: "aucun", etiquettesAuto: false, itineraireSourdine: false });
+    expect(besoinDeFond(seule, { x: 0, y: 0, l: 600, h: 400 }, monde([seule]).c)).toBeNull();
+    const ctx = rendre(seule);
+    expect(dits(ctx)).not.toContain("J1");
+    // Trois journées, chacune un liseré et un trait : rien d'autre ne se trace.
+    expect(ctx.ops.filter((o) => o.op === "stroke").length).toBe(
+      rendre({ ...carte(), itineraireSourdine: false, etiquettesAuto: false, depart: false, arrivee: false })
+        .ops.filter((o) => o.op === "stroke").length + 2,
+    );
   });
 
   it("une entrée RÉÉCRIT l'étiquette de sa journée", () => {
